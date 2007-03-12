@@ -1,4 +1,4 @@
-/*	$NetBSD: ustir.c,v 1.17 2006/11/16 01:33:27 christos Exp $	*/
+/*	$NetBSD: ustir.c,v 1.17.4.1 2007/03/12 05:57:35 rmind Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ustir.c,v 1.17 2006/11/16 01:33:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ustir.c,v 1.17.4.1 2007/03/12 05:57:35 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -220,7 +220,7 @@ Static int ustir_poll(void *h, int events, struct lwp *l);
 Static int ustir_kqfilter(void *h, struct knote *kn);
 
 #ifdef USTIR_DEBUG_IOCTLS
-Static int ustir_ioctl(void *h, u_long cmd, caddr_t addr, int flag, struct lwp *l);
+Static int ustir_ioctl(void *h, u_long cmd, void *addr, int flag, struct lwp *l);
 #endif
 
 Static struct irframe_methods const ustir_methods = {
@@ -1296,7 +1296,7 @@ ustir_kqfilter(void *h, struct knote *kn)
 }
 
 #ifdef USTIR_DEBUG_IOCTLS
-Static int ustir_ioctl(void *h, u_long cmd, caddr_t addr, int flag, struct lwp *l)
+Static int ustir_ioctl(void *h, u_long cmd, void *addr, int flag, struct lwp *l)
 {
 	struct ustir_softc *sc = h;
 	int error;

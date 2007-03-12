@@ -1,4 +1,4 @@
-/*	$NetBSD: ah_input.c,v 1.51.4.1 2007/02/27 16:54:58 yamt Exp $	*/
+/*	$NetBSD: ah_input.c,v 1.51.4.2 2007/03/12 05:59:55 rmind Exp $	*/
 /*	$KAME: ah_input.c,v 1.64 2001/09/04 08:43:19 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ah_input.c,v 1.51.4.1 2007/02/27 16:54:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ah_input.c,v 1.51.4.2 2007/03/12 05:59:55 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -144,8 +144,8 @@ ah4_input(m, va_alist)
 	spi = ah->ah_spi;
 
 	if ((sav = key_allocsa(AF_INET,
-	                      (const caddr_t)&ip->ip_src,
-			      (const caddr_t)&ip->ip_dst,
+	                      (const void *)&ip->ip_src,
+			      (const void *)&ip->ip_dst,
 	                      IPPROTO_AH, spi, sport, dport)) == 0) {
 		ipseclog((LOG_WARNING,
 		    "IPv4 AH input: no key association found for spi %u\n",
@@ -281,14 +281,14 @@ ah4_input(m, va_alist)
     }
 
     {
-	caddr_t sumpos = NULL;
+	void *sumpos = NULL;
 
 	if (sav->flags & SADB_X_EXT_OLD) {
 		/* RFC 1826 */
-		sumpos = (caddr_t)(ah + 1);
+		sumpos = (void *)(ah + 1);
 	} else {
 		/* RFC 2402 */
-		sumpos = (caddr_t)(((struct newah *)ah) + 1);
+		sumpos = (void *)(((struct newah *)ah) + 1);
 	}
 
 	if (bcmp(sumpos, cksum, siz) != 0) {
@@ -395,7 +395,7 @@ ah4_input(m, va_alist)
 		/* ECN consideration. */
 		ip_ecn_egress(ip4_ipsec_ecn, &tos, &ip->ip_tos);
 		if (!key_checktunnelsanity(sav, AF_INET,
-			    (caddr_t)&ip->ip_src, (caddr_t)&ip->ip_dst)) {
+			    (void *)&ip->ip_src, (void *)&ip->ip_dst)) {
 			ipseclog((LOG_NOTICE, "ipsec tunnel address mismatch "
 			    "in IPv4 AH input: %s %s\n",
 			    ipsec4_logpacketstr(ip, spi), ipsec_logsastr(sav)));
@@ -432,7 +432,7 @@ ah4_input(m, va_alist)
 		 * we can compute checksum for multiple AH correctly.
 		 */
 		if (m->m_len >= stripsiz + off) {
-			ovbcopy((caddr_t)ip, ((caddr_t)ip) + stripsiz, off);
+			(void)memmove((char *)ip + stripsiz, ip, off);
 			m->m_data += stripsiz;
 			m->m_len -= stripsiz;
 			m->m_pkthdr.len -= stripsiz;
@@ -529,10 +529,10 @@ ah4_ctlinput(cmd, sa, v)
 		 * Check to see if we have a valid SA corresponding to
 		 * the address in the ICMP message payload.
 		 */
-		ah = (struct ah *)((caddr_t)ip + (ip->ip_hl << 2));
+		ah = (struct ah *)((char *)ip + (ip->ip_hl << 2));
 		if ((sav = key_allocsa(AF_INET,
-				       (caddr_t) &ip->ip_src,
-				       (caddr_t) &ip->ip_dst,
+				       (void *) &ip->ip_src,
+				       (void *) &ip->ip_dst,
 				       IPPROTO_AH, ah->ah_spi, 0, 0)) == NULL)
 			return NULL;
 		if (sav->state != SADB_SASTATE_MATURE &&
@@ -551,7 +551,7 @@ ah4_ctlinput(cmd, sa, v)
 		 * ICMP header, recalculate the new MTU, and create the
 		 * corresponding routing entry.
 		 */
-		icp = (struct icmp *)((caddr_t)ip -
+		icp = (struct icmp *)((char *)ip -
 		    offsetof(struct icmp, icmp_ip));
 		icmp_mtudisc(icp, ip->ip_dst);
 
@@ -600,7 +600,7 @@ ah6_input(struct mbuf **mp, int *offp, int proto)
 	}
 
 	if ((sav = key_allocsa(AF_INET6,
-	                      (caddr_t)&ip6->ip6_src, (caddr_t)&ip6->ip6_dst,
+	                      (void *)&ip6->ip6_src, (void *)&ip6->ip6_dst,
 	                      IPPROTO_AH, spi, 0, 0)) == 0) {
 		ipseclog((LOG_WARNING,
 		    "IPv6 AH input: no key association found for spi %u\n",
@@ -704,14 +704,14 @@ ah6_input(struct mbuf **mp, int *offp, int proto)
 	ipsec6stat.in_ahhist[sav->alg_auth]++;
 
     {
-	caddr_t sumpos = NULL;
+	void *sumpos = NULL;
 
 	if (sav->flags & SADB_X_EXT_OLD) {
 		/* RFC 1826 */
-		sumpos = (caddr_t)(ah + 1);
+		sumpos = (void *)(ah + 1);
 	} else {
 		/* RFC 2402 */
-		sumpos = (caddr_t)(((struct newah *)ah) + 1);
+		sumpos = (void *)(((struct newah *)ah) + 1);
 	}
 
 	if (bcmp(sumpos, cksum, siz) != 0) {
@@ -810,7 +810,7 @@ ah6_input(struct mbuf **mp, int *offp, int proto)
 		/* ECN consideration. */
 		ip6_ecn_egress(ip6_ipsec_ecn, &flowinfo, &ip6->ip6_flow);
 		if (!key_checktunnelsanity(sav, AF_INET6,
-			    (caddr_t)&ip6->ip6_src, (caddr_t)&ip6->ip6_dst)) {
+			    (void *)&ip6->ip6_src, (void *)&ip6->ip6_dst)) {
 			ipseclog((LOG_NOTICE, "ipsec tunnel address mismatch "
 			    "in IPv6 AH input: %s %s\n",
 			    ipsec6_logpacketstr(ip6, spi),
@@ -857,7 +857,7 @@ ah6_input(struct mbuf **mp, int *offp, int proto)
 		 * we can compute checksum for multiple AH correctly.
 		 */
 		if (m->m_len >= stripsiz + off) {
-			ovbcopy((caddr_t)ip6, ((caddr_t)ip6) + stripsiz, off);
+			(void)memmove((char *)ip6 + stripsiz, ip6, off);
 			m->m_data += stripsiz;
 			m->m_len -= stripsiz;
 			m->m_pkthdr.len -= stripsiz;
@@ -956,10 +956,10 @@ ah6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 			 * this should be rare case,
 			 * so we compromise on this copy...
 			 */
-			m_copydata(m, off, sizeof(ah), (caddr_t)&ah);
+			m_copydata(m, off, sizeof(ah), &ah);
 			ahp = &ah;
 		} else
-			ahp = (struct newah *)(mtod(m, caddr_t) + off);
+			ahp = (struct newah *)(mtod(m, char *) + off);
 
 		if (cmd == PRC_MSGSIZE) {
 			int valid = 0;

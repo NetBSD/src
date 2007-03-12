@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_proxy.c,v 1.11 2006/08/30 19:12:56 christos Exp $	*/
+/*	$NetBSD: ip_proxy.c,v 1.11.8.1 2007/03/12 05:57:56 rmind Exp $	*/
 
 /*
  * Copyright (C) 1997-2003 by Darren Reed.
@@ -293,12 +293,12 @@ ipnat_t *nat;
 
 
 int appr_ioctl(data, cmd, mode)
-caddr_t data;
+void *data;
 ioctlcmd_t cmd;
 int mode;
 {
 	ap_ctl_t ctl;
-	caddr_t ptr;
+	void *ptr;
 	int error;
 
 	mode = mode;	/* LINT */
@@ -310,7 +310,7 @@ int mode;
 		ptr = NULL;
 
 		if (ctl.apc_dsize > 0) {
-			KMALLOCS(ptr, caddr_t, ctl.apc_dsize);
+			KMALLOCS(ptr, void *, ctl.apc_dsize);
 			if (ptr == NULL)
 				error = ENOMEM;
 			else {

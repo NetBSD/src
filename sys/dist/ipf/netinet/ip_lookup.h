@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_lookup.h,v 1.3 2006/04/04 16:17:19 martti Exp $	*/
+/*	$NetBSD: ip_lookup.h,v 1.3.14.1 2007/03/12 05:57:55 rmind Exp $	*/
 
 
 #ifndef __IP_LOOKUP_H__
@@ -58,7 +58,7 @@ typedef	struct	iplookuplink	{
 #define	IPLT_ANON	0x80000000
 
 extern int ip_lookup_init __P((void));
-extern int ip_lookup_ioctl __P((caddr_t, ioctlcmd_t, int));
+extern int ip_lookup_ioctl __P((void *, ioctlcmd_t, int));
 extern void ip_lookup_unload __P((void));
 extern void ip_lookup_deref __P((int, void *));
 

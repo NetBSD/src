@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_i810.c,v 1.35 2006/11/16 01:33:08 christos Exp $	*/
+/*	$NetBSD: agp_i810.c,v 1.35.4.1 2007/03/12 05:55:10 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.35 2006/11/16 01:33:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.35.4.1 2007/03/12 05:55:10 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -255,7 +255,7 @@ agp_i810_attach(struct device *parent, struct device *self, void *aux)
 	gatt->ag_entries = AGP_GET_APERTURE(sc) >> AGP_PAGE_SHIFT;
 
 	if (isc->chiptype == CHIP_I810) {
-		caddr_t virtual;
+		void *virtual;
 		int dummyseg;
 
 		/* Some i810s have on-chip memory called dcache */
@@ -436,7 +436,7 @@ agp_i810_detach(struct agp_softc *sc)
 
 	if (sc->chiptype == CHIP_I810) {
 		agp_free_dmamem(sc->as_dmat, gatt->ag_size, gatt->ag_dmamap,
-		    (caddr_t)gatt->ag_virtual, &gatt->ag_dmaseg, 1);
+		    (void *)gatt->ag_virtual, &gatt->ag_dmaseg, 1);
 	}
 	free(sc->gatt, M_AGP);
 

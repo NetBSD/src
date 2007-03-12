@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_input.c,v 1.14 2007/02/10 09:43:05 degroote Exp $	*/
+/*	$NetBSD: ipsec_input.c,v 1.14.2.1 2007/03/12 06:00:05 rmind Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec_input.c,v 1.2.4.2 2003/03/28 20:32:53 sam Exp $	*/
 /*	$OpenBSD: ipsec_input.c,v 1.63 2003/02/20 18:35:43 deraadt Exp $	*/
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_input.c,v 1.14 2007/02/10 09:43:05 degroote Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_input.c,v 1.14.2.1 2007/03/12 06:00:05 rmind Exp $");
 
 /*
  * IPsec input processing.
@@ -142,14 +142,12 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto)
 
 	/* Retrieve the SPI from the relevant IPsec header */
 	if (sproto == IPPROTO_ESP)
-		m_copydata(m, skip, sizeof(u_int32_t), (caddr_t) &spi);
+		m_copydata(m, skip, sizeof(u_int32_t), &spi);
 	else if (sproto == IPPROTO_AH)
-		m_copydata(m, skip + sizeof(u_int32_t), sizeof(u_int32_t),
-		    (caddr_t) &spi);
+		m_copydata(m, skip + sizeof(u_int32_t), sizeof(u_int32_t), &spi);
 	else if (sproto == IPPROTO_IPCOMP) {
 		u_int16_t cpi;
-		m_copydata(m, skip + sizeof(u_int16_t), sizeof(u_int16_t),
-		    (caddr_t) &cpi);
+		m_copydata(m, skip + sizeof(u_int16_t), sizeof(u_int16_t), &cpi);
 		spi = ntohl(htons(cpi));
 	}
 
@@ -166,7 +164,7 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto)
 		dst_address.sin.sin_len = sizeof(struct sockaddr_in);
 		m_copydata(m, offsetof(struct ip, ip_dst),
 		    sizeof(struct in_addr),
-		    (caddr_t) &dst_address.sin.sin_addr);
+		    &dst_address.sin.sin_addr);
 		break;
 #endif /* INET */
 #ifdef INET6
@@ -174,7 +172,7 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto)
 		dst_address.sin6.sin6_len = sizeof(struct sockaddr_in6);
 		m_copydata(m, offsetof(struct ip6_hdr, ip6_dst),
 		    sizeof(struct in6_addr),
-		    (caddr_t) &dst_address.sin6.sin6_addr);
+		    &dst_address.sin6.sin6_addr);
 		break;
 #endif /* INET6 */
 	default:
@@ -315,8 +313,7 @@ ipsec4_common_input_cb(struct mbuf *m, struct secasvar *sav,
 		struct ip ipn;
 
 		/* ipn will now contain the inner IPv4 header */
-		m_copydata(m, ip->ip_hl << 2, sizeof(struct ip),
-		    (caddr_t) &ipn);
+		m_copydata(m, ip->ip_hl << 2, sizeof(struct ip), &ipn);
 
 #ifdef notyet
 		/* XXX PROXY address isn't recorded in SAH */
@@ -354,8 +351,7 @@ ipsec4_common_input_cb(struct mbuf *m, struct secasvar *sav,
 		struct ip6_hdr ip6n;
 
 		/* ip6n will now contain the inner IPv6 header. */
-		m_copydata(m, ip->ip_hl << 2, sizeof(struct ip6_hdr),
-		    (caddr_t) &ip6n);
+		m_copydata(m, ip->ip_hl << 2, sizeof(struct ip6_hdr), &ip6n);
 
 #ifdef notyet
 		/*
@@ -459,8 +455,7 @@ ipsec6_common_input(struct mbuf **mp, int *offp, int proto)
 
 		do {
 			protoff += l;
-			m_copydata(*mp, protoff, sizeof(ip6e),
-			    (caddr_t) &ip6e);
+			m_copydata(*mp, protoff, sizeof(ip6e), &ip6e);
 
 			if (ip6e.ip6e_nxt == IPPROTO_AH)
 				l = (ip6e.ip6e_len + 2) << 2;
@@ -524,7 +519,7 @@ esp6_ctlinput(int cmd, struct sockaddr *sa, void *d)
 		 */
 		bzero(&ip6cp1, sizeof(ip6cp1));
 		ip6cp1.ip6c_src = ip6cp->ip6c_src;
-		pfctlinput2(cmd, sa, (void *)&ip6cp1);
+		pfctlinput2(cmd, sa, &ip6cp1);
 
 		/*
 		 * Then go to special cases that need ESP header information.
@@ -541,7 +536,7 @@ esp6_ctlinput(int cmd, struct sockaddr *sa, void *d)
 			if (m->m_pkthdr.len < off + sizeof (struct esp))
 				return;
 			m_copydata(m, off + offsetof(struct esp, esp_spi),
-				sizeof(u_int32_t), (caddr_t) &spi);
+				sizeof(u_int32_t), &spi);
 			/*
 			 * Check to see if we have a valid SA corresponding to
 			 * the address in the ICMP message payload.
@@ -637,7 +632,7 @@ ipsec6_common_input_cb(struct mbuf *m, struct secasvar *sav, int skip, int proto
 		struct ip ipn;
 
 		/* ipn will now contain the inner IPv4 header */
-		m_copydata(m, skip, sizeof(struct ip), (caddr_t) &ipn);
+		m_copydata(m, skip, sizeof(struct ip), &ipn);
 
 #ifdef notyet
 		/*
@@ -672,8 +667,7 @@ ipsec6_common_input_cb(struct mbuf *m, struct secasvar *sav, int skip, int proto
 		struct ip6_hdr ip6n;
 
 		/* ip6n will now contain the inner IPv6 header. */
-		m_copydata(m, skip, sizeof(struct ip6_hdr),
-		    (caddr_t) &ip6n);
+		m_copydata(m, skip, sizeof(struct ip6_hdr), &ip6n);
 
 #ifdef notyet
 		/*
@@ -738,7 +732,7 @@ ipsec6_common_input_cb(struct mbuf *m, struct secasvar *sav, int skip, int proto
 	key_sa_recordxfer(sav, m);
 
 	/* Retrieve new protocol */
-	m_copydata(m, protoff, sizeof(u_int8_t), (caddr_t) &nxt8);
+	m_copydata(m, protoff, sizeof(u_int8_t), &nxt8);
 
 	/*
 	 * See the end of ip6_input for this logic.

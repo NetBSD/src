@@ -1,4 +1,4 @@
-/*	$NetBSD: emuxki.c,v 1.49 2006/11/16 01:33:08 christos Exp $	*/
+/*	$NetBSD: emuxki.c,v 1.49.4.1 2007/03/12 05:55:13 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.49 2006/11/16 01:33:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.49.4.1 2007/03/12 05:55:13 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -2432,7 +2432,7 @@ emuxki_trigger_output(void *addr, void *start, void *end, int blksize,
 	    params->precision == 16, params->sample_rate)))
 		return error;
 	if ((error = emuxki_voice_set_bufparms(voice, start,
-	    (caddr_t)end - (caddr_t)start, blksize)))
+	    (char *)end - (char *)start, blksize)))
 		return error;
 	emuxki_voice_commit_parms(voice);
 	emuxki_voice_start(voice, inth, inthparam);
@@ -2457,7 +2457,7 @@ emuxki_trigger_input(void *addr, void *start, void *end, int blksize,
 	    params->precision == 16, params->sample_rate)))
 		return error;
 	if ((error = emuxki_voice_set_bufparms(voice, start,
-	    (caddr_t)end - (caddr_t)start, blksize)))
+	    (char *)end - (char *)start, blksize)))
 		return error;
 	emuxki_voice_start(voice, inth, inthparam);
 

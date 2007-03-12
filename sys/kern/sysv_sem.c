@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_sem.c,v 1.67 2007/02/09 21:55:31 ad Exp $	*/
+/*	$NetBSD: sysv_sem.c,v 1.67.2.1 2007/03/12 05:58:43 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.67 2007/02/09 21:55:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.67.2.1 2007/03/12 05:58:43 rmind Exp $");
 
 #define SYSVSEM
 
@@ -698,7 +698,7 @@ sys_semop(struct lwp *l, void *v, register_t *retval)
 			semptr->semncnt++;
 
 		SEM_PRINTF(("semop:  good night!\n"));
-		eval = tsleep((caddr_t)semaptr, (PZERO - 4) | PCATCH,
+		eval = tsleep((void *)semaptr, (PZERO - 4) | PCATCH,
 		    "semwait", 0);
 		SEM_PRINTF(("semop:  good morning (eval=%d)!\n", eval));
 
@@ -797,9 +797,9 @@ done:
 	if (do_wakeup) {
 		SEM_PRINTF(("semop:  doing wakeup\n"));
 #ifdef SEM_WAKEUP
-		sem_wakeup((caddr_t)semaptr);
+		sem_wakeup((void *)semaptr);
 #else
-		wakeup((caddr_t)semaptr);
+		wakeup((void *)semaptr);
 #endif
 		SEM_PRINTF(("semop:  back from wakeup\n"));
 	}
@@ -881,9 +881,9 @@ semexit(struct proc *p, void *v)
 				semaptr->_sem_base[semnum].semval += adjval;
 
 #ifdef SEM_WAKEUP
-			sem_wakeup((caddr_t)semaptr);
+			sem_wakeup((void *)semaptr);
 #else
-			wakeup((caddr_t)semaptr);
+			wakeup((void *)semaptr);
 #endif
 			SEM_PRINTF(("semexit:  back from wakeup\n"));
 		}

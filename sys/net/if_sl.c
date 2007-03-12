@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sl.c,v 1.103.2.1 2007/02/27 16:54:43 yamt Exp $	*/
+/*	$NetBSD: if_sl.c,v 1.103.2.2 2007/03/12 05:59:13 rmind Exp $	*/
 
 /*
  * Copyright (c) 1987, 1989, 1992, 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.103.2.1 2007/02/27 16:54:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.103.2.2 2007/03/12 05:59:13 rmind Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -197,12 +197,12 @@ static struct mbuf *sl_btom(struct sl_softc *, int);
 
 static int	slclose(struct tty *, int);
 static int	slinput(int, struct tty *);
-static int	slioctl(struct ifnet *, u_long, caddr_t);
+static int	slioctl(struct ifnet *, u_long, void *);
 static int	slopen(dev_t, struct tty *);
 static int	sloutput(struct ifnet *, struct mbuf *, const struct sockaddr *,
 			 struct rtentry *);
 static int	slstart(struct tty *);
-static int	sltioctl(struct tty *, u_long, caddr_t, int, struct lwp *);
+static int	sltioctl(struct tty *, u_long, void *, int, struct lwp *);
 
 static struct linesw slip_disc = {
 	.l_name = "slip",
@@ -329,7 +329,7 @@ slopen(dev_t dev, struct tty *tp)
 #endif
 				return ENOBUFS;
 			}
-			tp->t_sc = (caddr_t)sc;
+			tp->t_sc = (void *)sc;
 			sc->sc_ttyp = tp;
 			sc->sc_if.if_baudrate = tp->t_ospeed;
 			s = spltty();
@@ -429,7 +429,7 @@ slclose(struct tty *tp, int flag)
  */
 /* ARGSUSED */
 static int
-sltioctl(struct tty *tp, u_long cmd, caddr_t data, int flag,
+sltioctl(struct tty *tp, u_long cmd, void *data, int flag,
     struct lwp *l)
 {
 	struct sl_softc *sc = (struct sl_softc *)tp->t_sc;
@@ -967,7 +967,7 @@ slintr(void *arg)
 			}
 		}
 #endif
-		m->m_data = (caddr_t) pktstart;
+		m->m_data = (void *) pktstart;
 		m->m_pkthdr.len = m->m_len = len;
 #if NBPFILTER > 0
 		if (sc->sc_if.if_bpf) {
@@ -988,7 +988,7 @@ slintr(void *arg)
 			MGETHDR(n, M_DONTWAIT, MT_DATA);
 			pktlen = m->m_pkthdr.len;
 			M_MOVE_PKTHDR(n, m);
-			memcpy(mtod(n, caddr_t), mtod(m, caddr_t), pktlen);
+			memcpy(mtod(n, void *), mtod(m, void *), pktlen);
 			n->m_len = m->m_len;
 			m_freem(m);
 			m = n;
@@ -1017,7 +1017,7 @@ slintr(void *arg)
  * Process an ioctl request.
  */
 static int
-slioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
+slioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct ifaddr *ifa = (struct ifaddr *)data;
 	struct ifreq *ifr = (struct ifreq *)data;

@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.17 2006/03/29 04:16:51 thorpej Exp $	*/
+/*	$NetBSD: si.c,v 1.17.14.1 2007/03/12 05:57:48 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1996,2000 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: si.c,v 1.17 2006/03/29 04:16:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: si.c,v 1.17.14.1 2007/03/12 05:57:48 rmind Exp $");
 
 #include "opt_ddb.h"
 
@@ -519,7 +519,7 @@ found:
 	 * NOTE: it is not safe to sleep here!
 	 */
 	if (bus_dmamap_load(sc->sc_dmatag, dh->dh_dmamap,
-			    (caddr_t)addr, xlen, NULL, BUS_DMA_NOWAIT) != 0) {
+			    (void *)addr, xlen, NULL, BUS_DMA_NOWAIT) != 0) {
 		/* Can't remap segment */
 		printf("si_dma_alloc: can't remap 0x%lx/0x%x, doing PIO\n",
 			addr, dh->dh_maplen);

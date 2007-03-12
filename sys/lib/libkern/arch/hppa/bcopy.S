@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopy.S,v 1.5 2005/12/11 12:24:42 christos Exp $	*/
+/*	$NetBSD: bcopy.S,v 1.5.26.1 2007/03/12 05:59:06 rmind Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 #include <machine/frame.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-RCSID("$NetBSD: bcopy.S,v 1.5 2005/12/11 12:24:42 christos Exp $")
+RCSID("$NetBSD: bcopy.S,v 1.5.26.1 2007/03/12 05:59:06 rmind Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -549,7 +549,7 @@ EXIT(spcopy)
 
 #ifdef MEMCPY
 /*
- * void *memcpy(void * restrict dst, const void * restrict src, size_t len);
+ * void *memcpy(void *restrict dst, const void *restrict src, size_t len);
  *
  * memcpy is specifically restricted to working on
  * non-overlapping regions, so we can just copy forward.

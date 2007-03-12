@@ -1,4 +1,4 @@
-/*	$NetBSD: dhu.c,v 1.46 2006/10/01 19:28:44 elad Exp $	*/
+/*	$NetBSD: dhu.c,v 1.46.4.1 2007/03/12 05:56:48 rmind Exp $	*/
 /*
  * Copyright (c) 2003, Hugh Graham.
  * Copyright (c) 1992, 1993
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dhu.c,v 1.46 2006/10/01 19:28:44 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dhu.c,v 1.46.4.1 2007/03/12 05:56:48 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -358,7 +358,7 @@ dhurint(arg)
 		}
 
 		if (!(tp->t_state & TS_ISOPEN)) {
-			wakeup((caddr_t)&tp->t_rawq);
+			wakeup((void *)&tp->t_rawq);
 			continue;
 		}
 
@@ -479,7 +479,7 @@ dhuopen(dev, flag, mode, l)
 	while (!(flag & O_NONBLOCK) && !(tp->t_cflag & CLOCAL) &&
 	    !(tp->t_state & TS_CARR_ON)) {
 		tp->t_wopen++;
-		error = ttysleep(tp, (caddr_t)&tp->t_rawq,
+		error = ttysleep(tp, (void *)&tp->t_rawq,
 				TTIPRI | PCATCH, ttopen, 0);
 		tp->t_wopen--;
 		if (error)
@@ -574,7 +574,7 @@ int
 dhuioctl(dev, cmd, data, flag, l)
 	dev_t dev;
 	u_long cmd;
-	caddr_t data;
+	void *data;
 	int flag;
 	struct lwp *l;
 {
@@ -693,7 +693,7 @@ dhustart(tp)
 	if (tp->t_outq.c_cc <= tp->t_lowat) {
 		if (tp->t_state & TS_ASLEEP) {
 			tp->t_state &= ~TS_ASLEEP;
-			wakeup((caddr_t)&tp->t_outq);
+			wakeup((void *)&tp->t_outq);
 		}
 		selwakeup(&tp->t_wsel);
 	}

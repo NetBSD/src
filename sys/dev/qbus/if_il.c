@@ -1,4 +1,4 @@
-/*	$NetBSD: if_il.c,v 1.15 2006/09/07 02:40:33 dogcow Exp $	*/
+/*	$NetBSD: if_il.c,v 1.15.8.1 2007/03/12 05:56:49 rmind Exp $	*/
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_il.c,v 1.15 2006/09/07 02:40:33 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_il.c,v 1.15.8.1 2007/03/12 05:56:49 rmind Exp $");
 
 #include "opt_inet.h"
 
@@ -184,7 +184,7 @@ ilattach(struct device *parent, struct device *self, void *aux)
 	IL_WCSR(IL_CSR, ILC_RESET);
 	(void)ilwait(sc, "reset");
 	sc->sc_ui.ui_size = sizeof(struct il_stats);
-	sc->sc_ui.ui_vaddr = (caddr_t)&sc->sc_stats;
+	sc->sc_ui.ui_vaddr = (void *)&sc->sc_stats;
 	if ((error = uballoc((struct uba_softc *)parent, &sc->sc_ui, 0)))
 		return printf(": failed uballoc, error = %d\n", error);
 
@@ -275,7 +275,7 @@ ilinit(struct ifnet *ifp)
 			return 0;
 		}
 		sc->sc_ui.ui_size = sizeof(sc->sc_isu);
-		sc->sc_ui.ui_vaddr = (caddr_t)&sc->sc_isu;
+		sc->sc_ui.ui_vaddr = (void *)&sc->sc_isu;
 		uballoc((void *)device_parent(&sc->sc_dev), &sc->sc_ui, 0);
 	}
 	sc->sc_scaninterval = ILWATCHINTERVAL;
@@ -305,8 +305,8 @@ ilinit(struct ifnet *ifp)
 	 * wedge the board.
 	 */
 	if (sc->sc_flags & ILF_SETADDR) {
-		bcopy((caddr_t)LLADDR(ifp->if_sadl),
-		    (caddr_t)&sc->sc_isu, ETHER_ADDR_LEN);
+		bcopy((void *)LLADDR(ifp->if_sadl),
+		    (void *)&sc->sc_isu, ETHER_ADDR_LEN);
 		IL_WCSR(IL_BAR, LOWORD(sc->sc_ui.ui_baddr));
 		IL_WCSR(IL_BCR, ETHER_ADDR_LEN);
 		IL_WCSR(IL_CSR, ((sc->sc_ui.ui_baddr >> 2) & IL_EUA)|ILC_LDPA);
@@ -317,8 +317,8 @@ ilinit(struct ifnet *ifp)
 		IL_WCSR(IL_CSR, ((sc->sc_ui.ui_baddr >> 2) & IL_EUA)|ILC_STAT);
 		if (ilwait(sc, "verifying setaddr"))
 			return 0;
-		if (memcmp((caddr_t)sc->sc_stats.ils_addr,
-		    (caddr_t)LLADDR(ifp->if_sadl), ETHER_ADDR_LEN) != 0) {
+		if (memcmp((void *)sc->sc_stats.ils_addr,
+		    (void *)LLADDR(ifp->if_sadl), ETHER_ADDR_LEN) != 0) {
 			printf("%s: setaddr didn't work\n",
 			    sc->sc_dev.dv_xname);
 			return 0;
@@ -593,7 +593,7 @@ iltotal(struct il_softc *sc)
 		*sum++ += *interval++;
 	sc->sc_if.if_collisions = sc->sc_sum.ils_collis;
 	if ((sc->sc_flags & ILF_SETADDR) &&
-	    (memcmp((caddr_t)sc->sc_stats.ils_addr, LLADDR(ifp->if_sadl),
+	    (memcmp((void *)sc->sc_stats.ils_addr, LLADDR(ifp->if_sadl),
 		    ETHER_ADDR_LEN) != 0)) {
 		log(LOG_ERR, "%s: physaddr reverted\n", sc->sc_dev.dv_xname);
 		sc->sc_flags &= ~ILF_RUNNING;
@@ -611,7 +611,7 @@ il_setaddr(u_char *physaddr, struct il_softc *sc)
 	if (! (sc->sc_flags & ILF_RUNNING))
 		return;
 
-	bcopy((caddr_t)physaddr, (caddr_t)is->is_addr, sizeof is->is_addr);
+	bcopy((void *)physaddr, (void *)is->is_addr, sizeof is->is_addr);
 	sc->sc_flags &= ~ILF_RUNNING;
 	sc->sc_flags |= ILF_SETADDR;
 	ilinit(&sc->sc_if);

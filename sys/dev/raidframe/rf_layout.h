@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_layout.h,v 1.16 2005/12/11 12:23:37 christos Exp $	*/
+/*	$NetBSD: rf_layout.h,v 1.16.26.1 2007/03/12 05:56:53 rmind Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -104,7 +104,7 @@ struct RF_PhysDiskAddr_s {
 	RF_SectorCount_t numSector;	/* number of sectors accessed */
 	int     type;		/* used by higher levels: currently, data,
 				 * parity, or q */
-	caddr_t bufPtr;		/* pointer to buffer supplying/receiving data */
+	void *bufPtr;		/* pointer to buffer supplying/receiving data */
 	RF_RaidAddr_t raidAddress;	/* raid address corresponding to this
 					 * physical disk address */
 	RF_PhysDiskAddr_t *next;

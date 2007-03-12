@@ -1,4 +1,4 @@
-/*	$NetBSD: bpfdesc.h,v 1.24 2005/12/10 23:21:38 elad Exp $	*/
+/*	$NetBSD: bpfdesc.h,v 1.24.26.1 2007/03/12 05:59:09 rmind Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -59,9 +59,9 @@ struct bpf_d {
 	 *   fbuf (free) - When read is done, put cluster here.
 	 * On receiving, if sbuf is full and fbuf is 0, packet is dropped.
 	 */
-	caddr_t		bd_sbuf;	/* store slot */
-	caddr_t		bd_hbuf;	/* hold slot */
-	caddr_t		bd_fbuf;	/* free slot */
+	void *		bd_sbuf;	/* store slot */
+	void *		bd_hbuf;	/* hold slot */
+	void *		bd_fbuf;	/* free slot */
 	int 		bd_slen;	/* current length of store buffer */
 	int 		bd_hlen;	/* current length of hold buffer */
 

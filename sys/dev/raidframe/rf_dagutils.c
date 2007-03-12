@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagutils.c,v 1.50 2006/11/16 01:33:23 christos Exp $	*/
+/*	$NetBSD: rf_dagutils.c,v 1.50.4.1 2007/03/12 05:56:51 rmind Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagutils.c,v 1.50 2006/11/16 01:33:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagutils.c,v 1.50.4.1 2007/03/12 05:56:51 rmind Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -1214,7 +1214,7 @@ rf_RangeRestrictPDA(RF_Raid_t *raidPtr, RF_PhysDiskAddr_t *src,
 	dest->numSector = subAddr + RF_MIN(send, dend) + 1 - dest->startSector;
 
 	if (dobuffer)
-		dest->bufPtr += (soffs > doffs) ? rf_RaidAddressToByte(raidPtr, soffs - doffs) : 0;
+		dest->bufPtr = (char *)(dest->bufPtr) + ((soffs > doffs) ? rf_RaidAddressToByte(raidPtr, soffs - doffs) : 0);
 	if (doraidaddr) {
 		dest->raidAddress = rf_RaidAddressOfPrevStripeUnitBoundary(layoutPtr, dest->raidAddress) +
 		    rf_StripeUnitOffset(layoutPtr, dest->startSector);

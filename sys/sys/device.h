@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.92.8.1 2007/02/27 16:55:14 yamt Exp $ */
+/* $NetBSD: device.h,v 1.92.8.2 2007/03/12 06:00:51 rmind Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -340,7 +340,6 @@ int	config_match(device_t, cfdata_t, void *);
 
 device_t config_attach_pseudo(cfdata_t);
 
-void	config_makeroom(int n, struct cfdriver *cd);
 int	config_detach(device_t, int);
 int	config_activate(device_t);
 int	config_deactivate(device_t);

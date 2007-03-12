@@ -1,4 +1,4 @@
-/*	$NetBSD: pf.c,v 1.34.2.1 2007/02/27 16:54:10 yamt Exp $	*/
+/*	$NetBSD: pf.c,v 1.34.2.2 2007/03/12 05:58:08 rmind Exp $	*/
 /*	$OpenBSD: pf.c,v 1.487 2005/04/22 09:53:18 dhartmei Exp $ */
 
 /*
@@ -1343,7 +1343,7 @@ pf_change_ap(struct pf_addr *a, u_int16_t *p, u_int16_t *ic, u_int16_t *pc,
 }
 
 
-/* Changes a u_int32_t.  Uses a void * so there are no align restrictions */
+/* Changes a u_int32_t.  Uses a void *so there are no align restrictions */
 void
 pf_change_a(void *a, u_int16_t *c, u_int32_t an, u_int8_t u)
 {
@@ -1551,7 +1551,7 @@ pf_send_tcp(const struct pf_rule *r, sa_family_t af,
 		h->ip_src.s_addr = saddr->v4.s_addr;
 		h->ip_dst.s_addr = daddr->v4.s_addr;
 
-		th = (struct tcphdr *)((caddr_t)h + sizeof(struct ip));
+		th = (struct tcphdr *)((char *)h + sizeof(struct ip));
 		break;
 #endif /* INET */
 #ifdef INET6
@@ -1564,7 +1564,7 @@ pf_send_tcp(const struct pf_rule *r, sa_family_t af,
 		memcpy(&h6->ip6_src, &saddr->v6, sizeof(struct in6_addr));
 		memcpy(&h6->ip6_dst, &daddr->v6, sizeof(struct in6_addr));
 
-		th = (struct tcphdr *)((caddr_t)h6 + sizeof(struct ip6_hdr));
+		th = (struct tcphdr *)((char *)h6 + sizeof(struct ip6_hdr));
 		break;
 #endif /* INET6 */
 	default:
@@ -1586,7 +1586,7 @@ pf_send_tcp(const struct pf_rule *r, sa_family_t af,
 		opt[0] = TCPOPT_MAXSEG;
 		opt[1] = 4;
 		HTONS(mss);
-		bcopy((caddr_t)&mss, (caddr_t)(opt + 2), 2);
+		bcopy((void *)&mss, (void *)(opt + 2), 2);
 	}
 
 	switch (af) {
@@ -2675,7 +2675,7 @@ pf_get_mss(struct mbuf *m, int off, u_int16_t th_off, sa_family_t af)
 			--hlen;
 			break;
 		case TCPOPT_MAXSEG:
-			bcopy((caddr_t)(opt + 2), (caddr_t)&mss, 2);
+			bcopy((void *)(opt + 2), (void *)&mss, 2);
 			NTOHS(mss);
 			/* FALLTHROUGH */
 		default:
@@ -5425,7 +5425,7 @@ pf_route(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 	ip = mtod(m0, struct ip *);
 
 	ro = &iproute;
-	bzero((caddr_t)ro, sizeof(*ro));
+	bzero((void *)ro, sizeof(*ro));
 	dst = satosin(&ro->ro_dst);
 	dst->sin_family = AF_INET;
 	dst->sin_len = sizeof(*dst);
@@ -6240,7 +6240,7 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0,
 	pd.tot_len = ntohs(h->ip6_plen) + sizeof(struct ip6_hdr);
 	pd.eh = eh;
 
-	off = ((caddr_t)h - m->m_data) + sizeof(struct ip6_hdr);
+	off = ((char *)h - m->m_data) + sizeof(struct ip6_hdr);
 	pd.proto = h->ip6_nxt;
 	do {
 		switch (pd.proto) {

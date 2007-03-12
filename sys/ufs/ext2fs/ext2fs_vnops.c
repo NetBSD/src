@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vnops.c,v 1.72.2.1 2007/02/27 16:55:21 yamt Exp $	*/
+/*	$NetBSD: ext2fs_vnops.c,v 1.72.2.2 2007/03/12 06:00:56 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.72.2.1 2007/02/27 16:55:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.72.2.2 2007/03/12 06:00:56 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -980,7 +980,7 @@ abortit:
 			KASSERT(dp != NULL);
 			dp->i_e2fs_nlink--;
 			dp->i_flag |= IN_CHANGE;
-			error = vn_rdwr(UIO_READ, fvp, (caddr_t)&dirbuf,
+			error = vn_rdwr(UIO_READ, fvp, (void *)&dirbuf,
 				sizeof (struct ext2fs_dirtemplate), (off_t)0,
 				UIO_SYSSPACE, IO_NODELOCKED,
 				tcnp->cn_cred, (size_t *)0, NULL);
@@ -994,7 +994,7 @@ abortit:
 				} else {
 					dirbuf.dotdot_ino = h2fs32(newparent);
 					(void) vn_rdwr(UIO_WRITE, fvp,
-					    (caddr_t)&dirbuf,
+					    (void *)&dirbuf,
 					    sizeof (struct dirtemplate),
 					    (off_t)0, UIO_SYSSPACE,
 					    IO_NODELOCKED|IO_SYNC,
@@ -1110,7 +1110,7 @@ ext2fs_mkdir(void *v)
 		dirtemplate.dotdot_type = EXT2_FT_DIR;
 	}
 	dirtemplate.dotdot_name[0] = dirtemplate.dotdot_name[1] = '.';
-	error = vn_rdwr(UIO_WRITE, tvp, (caddr_t)&dirtemplate,
+	error = vn_rdwr(UIO_WRITE, tvp, (void *)&dirtemplate,
 	    sizeof (dirtemplate), (off_t)0, UIO_SYSSPACE,
 	    IO_NODELOCKED|IO_SYNC, cnp->cn_cred, (size_t *)0, NULL);
 	if (error) {
@@ -1314,7 +1314,7 @@ ext2fs_advlock(void *v)
 {
 	struct vop_advlock_args /* {
 		struct vnode *a_vp;
-		caddr_t  a_id;
+		void * a_id;
 		int  a_op;
 		struct flock *a_fl;
 		int  a_flags;

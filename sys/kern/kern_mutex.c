@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_mutex.c,v 1.4.2.3 2007/02/27 16:54:22 yamt Exp $	*/
+/*	$NetBSD: kern_mutex.c,v 1.4.2.4 2007/03/12 05:58:35 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
 #define	__MUTEX_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.4.2.3 2007/02/27 16:54:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.4.2.4 2007/03/12 05:58:35 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -120,6 +120,9 @@ do {								\
 /*
  * Spin mutex SPL save / restore.
  */
+#ifndef MUTEX_COUNT_BIAS
+#define	MUTEX_COUNT_BIAS	0
+#endif
 
 #define	MUTEX_SPIN_SPLRAISE(mtx)					\
 do {									\
@@ -127,7 +130,7 @@ do {									\
 	int x__cnt, s;							\
 	x__cnt = x__ci->ci_mtx_count--;					\
 	s = splraiseipl(mtx->mtx_ipl);					\
-	if (x__cnt == 0)						\
+	if (x__cnt == MUTEX_COUNT_BIAS)					\
 		x__ci->ci_mtx_oldspl = (s);				\
 } while (/* CONSTCOND */ 0)
 
@@ -136,7 +139,7 @@ do {									\
 	struct cpu_info *x__ci = curcpu();				\
 	int s = x__ci->ci_mtx_oldspl;					\
 	__insn_barrier();						\
-	if (++(x__ci->ci_mtx_count) == 0)				\
+	if (++(x__ci->ci_mtx_count) == MUTEX_COUNT_BIAS)		\
 		splx(s);						\
 } while (/* CONSTCOND */ 0)
 
@@ -187,7 +190,7 @@ MUTEX_ACQUIRE(kmutex_t *mtx, uintptr_t curthread)
 {
 	int rv;
 	rv = MUTEX_CAS(&mtx->mtx_owner, 0UL, curthread);
-	MUTEX_RECEIVE();
+	MUTEX_RECEIVE(mtx);
 	return rv;
 }
 
@@ -196,14 +199,14 @@ MUTEX_SET_WAITERS(kmutex_t *mtx, uintptr_t owner)
 {
 	int rv;
 	rv = MUTEX_CAS(&mtx->mtx_owner, owner, owner | MUTEX_BIT_WAITERS);
-	MUTEX_RECEIVE();
+	MUTEX_RECEIVE(mtx);
 	return rv;
 }
 
 static inline void
 MUTEX_RELEASE(kmutex_t *mtx)
 {
-	MUTEX_GIVE();
+	MUTEX_GIVE(mtx);
 	mtx->mtx_owner = 0;
 }
 
@@ -224,13 +227,13 @@ MUTEX_CLEAR_WAITERS(kmutex_t *mtx)
 #endif
 
 #ifndef __HAVE_MUTEX_STUBS
-__strong_alias(mutex_enter, mutex_vector_enter);
-__strong_alias(mutex_exit, mutex_vector_exit);
+__strong_alias(mutex_enter,mutex_vector_enter);
+__strong_alias(mutex_exit,mutex_vector_exit);
 #endif
 
 #ifndef __HAVE_SPIN_MUTEX_STUBS
-__strong_alias(mutex_spin_enter, mutex_vector_enter);
-__strong_alias(mutex_spin_exit, mutex_vector_exit);
+__strong_alias(mutex_spin_enter,mutex_vector_enter);
+__strong_alias(mutex_spin_exit,mutex_vector_exit);
 #endif
 
 void	mutex_abort(kmutex_t *, const char *, const char *);
@@ -280,7 +283,11 @@ mutex_dump(volatile void *cookie)
  *	generates a lot of machine code in the DIAGNOSTIC case, so
  *	we ask the compiler to not inline it.
  */
-__attribute ((noinline)) __attribute ((noreturn)) void
+
+#if __GNUC_PREREQ__(3, 0)
+__attribute ((noinline)) __attribute ((noreturn))
+#endif
+void
 mutex_abort(kmutex_t *mtx, const char *func, const char *msg)
 {
 
@@ -309,6 +316,11 @@ mutex_init(kmutex_t *mtx, kmutex_type_t type, int ipl)
 		type = (ipl == IPL_NONE ? MUTEX_ADAPTIVE : MUTEX_SPIN);
 
 	switch (type) {
+	case MUTEX_NODEBUG:
+		KASSERT(ipl == IPL_NONE);
+		id = LOCKDEBUG_ALLOC(mtx, NULL);
+		MUTEX_INITIALIZE_ADAPTIVE(mtx, id);
+		break;
 	case MUTEX_ADAPTIVE:
 	case MUTEX_DEFAULT:
 		KASSERT(ipl == IPL_NONE);
@@ -372,15 +384,12 @@ mutex_onproc(uintptr_t owner, struct cpu_info **cip)
 		return 0;
 	l = (struct lwp *)MUTEX_OWNER(owner);
 
-	if ((ci = *cip) != NULL && ci->ci_curlwp == l) {
-		mb_read(); /* XXXSMP Very expensive, necessary? */
+	if ((ci = *cip) != NULL && ci->ci_curlwp == l)
 		return ci->ci_biglock_wanted != l;
-	}
 
 	for (CPU_INFO_FOREACH(cii, ci)) {
 		if (ci->ci_curlwp == l) {
 			*cip = ci;
-			mb_read(); /* XXXSMP Very expensive, necessary? */
 			return ci->ci_biglock_wanted != l;
 		}
 	}
@@ -686,7 +695,7 @@ mutex_vector_exit(kmutex_t *mtx)
 		return;
 	}
 
-	if (__predict_false(panicstr != NULL) || __predict_false(cold)) {
+	if (__predict_false((uintptr_t)panicstr | cold)) {
 		MUTEX_UNLOCKED(mtx);
 		MUTEX_RELEASE(mtx);
 		return;

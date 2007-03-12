@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.34.2.1 2007/02/27 16:55:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.34.2.2 2007/03/12 05:59:57 rmind Exp $");
 
 #include "opt_inet.h"
 
@@ -953,8 +953,8 @@ lookup_addrsel_policy(key)
 struct walkarg {
 	size_t	w_total;
 	size_t	w_given;
-	caddr_t	w_where;
-	caddr_t w_limit;
+	void *	w_where;
+	void *w_limit;
 };
 
 int
@@ -977,11 +977,11 @@ in6_src_sysctl(void *oldp, size_t *oldlenp, void *newp, size_t newlen)
 		struct walkarg w;
 		size_t oldlen = *oldlenp;
 
-		bzero(&w, sizeof(w));
+		memset(&w, 0, sizeof(w));
 		w.w_given = oldlen;
 		w.w_where = oldp;
 		if (oldp)
-			w.w_limit = (caddr_t)oldp + oldlen;
+			w.w_limit = (char *)oldp + oldlen;
 
 		error = walk_addrsel_policy(dump_addrsel_policyent, &w);
 
@@ -999,7 +999,7 @@ in6_src_sysctl(void *oldp, size_t *oldlenp, void *newp, size_t newlen)
 int
 in6_src_ioctl(cmd, data)
 	u_long cmd;
-	caddr_t data;
+	void *data;
 {
 	int i;
 	struct in6_addrpolicy ent0;
@@ -1126,10 +1126,10 @@ dump_addrsel_policyent(struct in6_addrpolicy *pol, void *arg)
 	int error = 0;
 	struct walkarg *w = arg;
 
-	if (w->w_where && w->w_where + sizeof(*pol) <= w->w_limit) {
+	if (w->w_where && (char *)w->w_where + sizeof(*pol) <= (char *)w->w_limit) {
 		if ((error = copyout(pol, w->w_where, sizeof(*pol))) != 0)
 			return error;
-		w->w_where += sizeof(*pol);
+		w->w_where = (char *)w->w_where + sizeof(*pol);
 	}
 	w->w_total += sizeof(*pol);
 

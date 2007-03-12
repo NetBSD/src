@@ -1,4 +1,4 @@
-/* $NetBSD: radeonfb.c,v 1.11 2007/02/09 21:55:27 ad Exp $ */
+/* $NetBSD: radeonfb.c,v 1.11.2.1 2007/03/12 05:55:27 rmind Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.11 2007/02/09 21:55:27 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.11.2.1 2007/03/12 05:55:27 rmind Exp $");
 
 #define RADEONFB_DEFAULT_DEPTH 32
 
@@ -99,7 +99,7 @@ __KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.11 2007/02/09 21:55:27 ad Exp $");
 
 static int radeonfb_match(struct device *, struct cfdata *, void *);
 static void radeonfb_attach(struct device *, struct device *, void *);
-static int radeonfb_ioctl(void *, void *, unsigned long, caddr_t, int,
+static int radeonfb_ioctl(void *, void *, unsigned long, void *, int,
     struct lwp *);
 static paddr_t radeonfb_mmap(void *, void *, off_t, int);
 static int radeonfb_scratch_test(struct radeonfb_softc *, int, uint32_t);
@@ -892,7 +892,7 @@ error:
 
 int
 radeonfb_ioctl(void *v, void *vs,
-    unsigned long cmd, caddr_t d, int flag, struct lwp *l)
+    unsigned long cmd, void *d, int flag, struct lwp *l)
 {
 	struct vcons_data	*vd;
 	struct radeonfb_display	*dp;

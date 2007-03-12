@@ -1,4 +1,4 @@
-/* $NetBSD: if_txpreg.h,v 1.3 2005/12/11 12:22:50 christos Exp $ */
+/* $NetBSD: if_txpreg.h,v 1.3.26.1 2007/03/12 05:55:22 rmind Exp $ */
 
 /*
  * Copyright (c) 2001 Aaron Campbell <aaron@monkey.org>.
@@ -526,7 +526,7 @@ struct txp_hostvar {
 
 struct txp_dma_alloc {
 	u_int64_t		dma_paddr;
-	caddr_t			dma_vaddr;
+	void *			dma_vaddr;
 	bus_dmamap_t		dma_map;
 	bus_dma_segment_t	dma_seg;
 	int			dma_nseg;

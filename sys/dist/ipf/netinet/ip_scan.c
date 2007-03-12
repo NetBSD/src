@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_scan.c,v 1.7 2006/12/27 18:10:03 alc Exp $	*/
+/*	$NetBSD: ip_scan.c,v 1.7.2.1 2007/03/12 05:57:57 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995-2001 by Darren Reed.
@@ -79,8 +79,8 @@ ipfrwlock_t	ipsc_rwlock;
 # endif
 
 
-int ipsc_add __P((caddr_t));
-int ipsc_delete __P((caddr_t));
+int ipsc_add __P((void *));
+int ipsc_delete __P((void *));
 struct ipscan *ipsc_lookup __P((char *));
 int ipsc_matchstr __P((sinfo_t *, char *, int));
 int ipsc_matchisc __P((ipscan_t *, ipstate_t *, int, int, int *));
@@ -107,7 +107,7 @@ void fr_scanunload()
 
 
 int ipsc_add(data)
-caddr_t data;
+void *data;
 {
 	ipscan_t *i, *isc;
 	int err;
@@ -154,7 +154,7 @@ caddr_t data;
 
 
 int ipsc_delete(data)
-caddr_t data;
+void *data;
 {
 	ipscan_t isc, *i;
 	int err;
@@ -549,7 +549,7 @@ ipstate_t *is;
 	i = (0xffff & j) << off;
 #ifdef _KERNEL
 	COPYDATA(*(mb_t **)fin->fin_mp, fin->fin_plen - fin->fin_dlen + thoff,
-		 dlen, (caddr_t)is->is_sbuf[rv] + off);
+		 dlen, (void *)is->is_sbuf[rv] + off);
 #endif
 	is->is_smsk[rv] |= i;
 	for (j = 0, i = is->is_smsk[rv]; i & 1; i >>= 1)
@@ -573,7 +573,7 @@ ipstate_t *is;
 
 
 int fr_scan_ioctl(data, cmd, mode)
-caddr_t data;
+void *data;
 ioctlcmd_t cmd;
 int mode;
 {

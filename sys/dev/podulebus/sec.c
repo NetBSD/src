@@ -1,4 +1,4 @@
-/* $NetBSD: sec.c,v 1.4.10.1 2007/02/27 16:54:03 yamt Exp $ */
+/* $NetBSD: sec.c,v 1.4.10.2 2007/03/12 05:56:47 rmind Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001, 2006 Ben Harris
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sec.c,v 1.4.10.1 2007/02/27 16:54:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sec.c,v 1.4.10.2 2007/03/12 05:56:47 rmind Exp $");
 
 #include <sys/param.h>
 
@@ -78,7 +78,7 @@ struct sec_softc {
 
 	/* Details of the current DMA transfer */
 	bool			sc_dmaactive;
-	caddr_t			sc_dmaaddr;
+	void *			sc_dmaaddr;
 	int			sc_dmaoff;
 	size_t			sc_dmalen;
 	bool			sc_dmain;
@@ -98,7 +98,7 @@ static void sec_attach(struct device *, struct device *, void *);
 static void sec_shutdown(void *);
 
 /* callbacks from MI WD33C93 driver */
-static int sec_dmasetup(struct wd33c93_softc *, caddr_t *, size_t *, int,
+static int sec_dmasetup(struct wd33c93_softc *, void **, size_t *, int,
     size_t *);
 static int sec_dmago(struct wd33c93_softc *);
 static void sec_dmastop(struct wd33c93_softc *);
@@ -361,7 +361,7 @@ sec_copyoutblk(struct sec_softc *sc, int blk)
 	KASSERT(!sc->sc_dmain);
 	off = (blk % SEC_NBLKS) * SEC_DMABLK + sc->sc_dmaoff;
 	len = MIN(SEC_DMABLK, sc->sc_dmalen - (blk * SEC_DMABLK));
-	sec_copyout(sc, sc->sc_dmaaddr + (blk * SEC_DMABLK), off, len);
+	sec_copyout(sc, (char*)sc->sc_dmaaddr + (blk * SEC_DMABLK), off, len);
 }
 
 static void
@@ -375,11 +375,11 @@ sec_copyinblk(struct sec_softc *sc, int blk)
 	KASSERT(sc->sc_dmain);
 	off = (blk % SEC_NBLKS) * SEC_DMABLK + sc->sc_dmaoff;
 	len = MIN(SEC_DMABLK, sc->sc_dmalen - (blk * SEC_DMABLK));
-	sec_copyin(sc, sc->sc_dmaaddr + (blk * SEC_DMABLK), off, len);
+	sec_copyin(sc, (char*)sc->sc_dmaaddr + (blk * SEC_DMABLK), off, len);
 }
 
 static int
-sec_dmasetup(struct wd33c93_softc *sc_sbic, caddr_t *addr, size_t *len,
+sec_dmasetup(struct wd33c93_softc *sc_sbic, void **addr, size_t *len,
     int datain, size_t *dmasize)
 {
 	struct sec_softc *sc = (struct sec_softc *)sc_sbic;
@@ -407,7 +407,7 @@ sec_dmago(struct wd33c93_softc *sc_sbic)
 	struct sec_softc *sc = (struct sec_softc *)sc_sbic;
 
 	dmac_write(sc, NEC71071_MASK, 0xe);
-	sc->sc_dmaactive = TRUE;
+	sc->sc_dmaactive = true;
 	if (!sc->sc_dmain && sc->sc_dmalen > SEC_DMABLK)
 		sec_copyoutblk(sc, 1);
 	return sc->sc_dmalen;
@@ -421,7 +421,7 @@ sec_dmastop(struct wd33c93_softc *sc_sbic)
 	dmac_write(sc, NEC71071_MASK, 0xf);
 	if (sc->sc_dmaactive && sc->sc_dmain)
 		sec_copyinblk(sc, sc->sc_dmablk);
-	sc->sc_dmaactive = FALSE;
+	sc->sc_dmaactive = false;
 }
 
 /*
@@ -479,7 +479,7 @@ sec_dmatc(struct sec_softc *sc)
 			sec_copyoutblk(sc, sc->sc_dmablk + 1);
 	} else {
 		/* All blocks fully processed. */
-		sc->sc_dmaactive = FALSE;
+		sc->sc_dmaactive = false;
 	}
 	if (sc->sc_dmain)
 		sec_copyinblk(sc, sc->sc_dmablk - 1);

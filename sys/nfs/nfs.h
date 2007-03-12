@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.h,v 1.62 2006/12/28 00:39:03 yamt Exp $	*/
+/*	$NetBSD: nfs.h,v 1.62.2.1 2007/03/12 06:00:35 rmind Exp $	*/
 /*
  * Copyright (c) 1989, 1993, 1995
  *	The Regents of the University of California.  All rights reserved.
@@ -133,7 +133,7 @@ extern int nfs_niothreads;              /* Number of async_daemons desired */
  * Oddballs
  */
 #define NFS_CMPFH(n, f, s) \
-	((n)->n_fhsize == (s) && !memcmp((caddr_t)(n)->n_fhp,  (caddr_t)(f),  (s)))
+	((n)->n_fhsize == (s) && !memcmp((void *)(n)->n_fhp,  (void *)(f),  (s)))
 #ifdef NFS_V2_ONLY
 #define NFS_ISV3(v)	(0)
 #else
@@ -192,7 +192,7 @@ struct export_args {
  */
 struct nfsd_args {
 	int	sock;		/* Socket to serve */
-	caddr_t	name;		/* Client addr for connection based sockets */
+	void *	name;		/* Client addr for connection based sockets */
 	int	namelen;	/* Length of name */
 };
 
@@ -326,7 +326,7 @@ struct nfsreq {
 	struct mbuf	*r_mreq;
 	struct mbuf	*r_mrep;
 	struct mbuf	*r_md;
-	caddr_t		r_dpos;
+	void *		r_dpos;
 	struct nfsmount *r_nmp;
 	u_int32_t	r_xid;
 	int		r_flags;	/* flags on request, see below */
@@ -385,14 +385,14 @@ extern TAILQ_HEAD(nfsreqhead, nfsreq) nfs_reqq;
  * Macros for storing/retrieving cookies into directory buffers.
  */
 #define NFS_STASHCOOKIE(dp,off) \
-	*((off_t *)((caddr_t)(dp) + (dp)->d_reclen - sizeof (off_t))) = off
+	*((off_t *)((char *)(dp) + (dp)->d_reclen - sizeof (off_t))) = off
 #define NFS_GETCOOKIE(dp) \
-	(*((off_t *)((caddr_t)(dp) + (dp)->d_reclen - sizeof (off_t))))
+	(*((off_t *)((char *)(dp) + (dp)->d_reclen - sizeof (off_t))))
 #define NFS_STASHCOOKIE32(dp, val) \
-	*((u_int32_t *)((caddr_t)(dp) + (dp)->d_reclen - sizeof (off_t) - \
+	*((u_int32_t *)((char *)(dp) + (dp)->d_reclen - sizeof (off_t) - \
 	    sizeof (int))) = val
 #define NFS_GETCOOKIE32(dp) \
-	(*((u_int32_t *)((caddr_t)(dp) + (dp)->d_reclen - sizeof (off_t) - \
+	(*((u_int32_t *)((char *)(dp) + (dp)->d_reclen - sizeof (off_t) - \
 	    sizeof (int))))
 
 /*
@@ -523,7 +523,7 @@ struct nfsrv_descript {
 	struct mbuf		*nd_mreq;	/* Reply mbuf list */
 	struct mbuf		*nd_nam;	/* and socket addr */
 	struct mbuf		*nd_nam2;	/* return socket addr */
-	caddr_t			nd_dpos;	/* Current dissect pos */
+	void *			nd_dpos;	/* Current dissect pos */
 	u_int32_t		nd_procnum;	/* RPC # */
 	int			nd_stable;	/* storage type */
 	int			nd_flag;	/* nd_flag */
@@ -561,7 +561,7 @@ extern int nfs_numasync;
  */
 #define NFSW_CONTIG(o, n) \
 		((o)->nd_eoff >= (n)->nd_off && \
-		 !memcmp((caddr_t)&(o)->nd_fh, (caddr_t)&(n)->nd_fh, NFSX_V3FH))
+		 !memcmp((void *)&(o)->nd_fh, (void *)&(n)->nd_fh, NFSX_V3FH))
 
 /*
  * Defines for WebNFS

@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_inet.c,v 1.33.2.1 2007/02/27 16:55:12 yamt Exp $	*/
+/*	$NetBSD: tp_inet.c,v 1.33.2.2 2007/03/12 06:00:30 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -73,7 +73,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_inet.c,v 1.33.2.1 2007/02/27 16:55:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_inet.c,v 1.33.2.2 2007/03/12 06:00:30 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -124,7 +124,7 @@ __KERNEL_RCSID(0, "$NetBSD: tp_inet.c,v 1.33.2.1 2007/02/27 16:55:12 yamt Exp $"
  * NOTES:
  */
 void
-in_getsufx(void	*v, u_short *lenp, caddr_t data_out, int which)
+in_getsufx(void	*v, u_short *lenp, void *data_out, int which)
 {
 	struct inpcb   *inp = v;
 	*lenp = sizeof(u_short);
@@ -157,11 +157,11 @@ in_getsufx(void	*v, u_short *lenp, caddr_t data_out, int which)
  */
 /* ARGSUSED */
 void
-in_putsufx(void *v, caddr_t sufxloc, int sufxlen, int which)
+in_putsufx(void *v, void *sufxloc, int sufxlen, int which)
 {
 	struct inpcb   *inp = v;
 	if (which == TP_FOREIGN) {
-		bcopy(sufxloc, (caddr_t) & inp->inp_fport, sizeof(inp->inp_fport));
+		bcopy(sufxloc, (void *) & inp->inp_fport, sizeof(inp->inp_fport));
 	}
 }
 
@@ -215,15 +215,15 @@ in_putnetaddr(void *v, struct sockaddr *nm, int which)
 	struct sockaddr_in *name = (struct sockaddr_in *) nm;
 	switch (which) {
 	case TP_LOCAL:
-		bcopy((caddr_t) & name->sin_addr,
-		      (caddr_t) & inp->inp_laddr, sizeof(struct in_addr));
+		bcopy((void *) & name->sin_addr,
+		      (void *) & inp->inp_laddr, sizeof(struct in_addr));
 		/* won't work if the dst address (name) is INADDR_ANY */
 
 		break;
 	case TP_FOREIGN:
 		if (name != (struct sockaddr_in *) 0) {
-			bcopy((caddr_t) & name->sin_addr,
-			(caddr_t) & inp->inp_faddr, sizeof(struct in_addr));
+			bcopy((void *) & name->sin_addr,
+			(void *) & inp->inp_faddr, sizeof(struct in_addr));
 		}
 	}
 }
@@ -283,7 +283,7 @@ in_getnetaddr(void *v, struct mbuf *name, int which)
 {
 	struct inpcb   *inp = v;
 	struct sockaddr_in *sin = mtod(name, struct sockaddr_in *);
-	bzero((caddr_t) sin, sizeof(*sin));
+	bzero((void *) sin, sizeof(*sin));
 	switch (which) {
 	case TP_LOCAL:
 		sin->sin_addr = inp->inp_laddr;
@@ -428,7 +428,7 @@ tpip_output_dg(struct mbuf *m0, ...)
 	m->m_len = sizeof(struct ip);
 
 	ip = mtod(m, struct ip *);
-	bzero((caddr_t) ip, sizeof *ip);
+	bzero((void *) ip, sizeof *ip);
 
 	ip->ip_p = IPPROTO_TP;
 	if (sizeof(struct ip) + datalen > IP_MAXPACKET) {

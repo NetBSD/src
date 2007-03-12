@@ -1,4 +1,4 @@
-/*	$NetBSD: l2cap_socket.c,v 1.3 2006/11/16 01:33:45 christos Exp $	*/
+/*	$NetBSD: l2cap_socket.c,v 1.3.4.1 2007/03/12 05:59:34 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: l2cap_socket.c,v 1.3 2006/11/16 01:33:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: l2cap_socket.c,v 1.3.4.1 2007/03/12 05:59:34 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/domain.h>
@@ -260,8 +260,11 @@ l2cap_ctloutput(int req, struct socket *so, int level,
 
 	DPRINTFN(2, "%s\n", prcorequests[req]);
 
+	if (pcb == NULL)
+		return EINVAL;
+
 	if (level != BTPROTO_L2CAP)
-		return 0;		// err?
+		return ENOPROTOOPT;
 
 	switch(req) {
 	case PRCO_GETOPT:
@@ -270,7 +273,7 @@ l2cap_ctloutput(int req, struct socket *so, int level,
 		if (m->m_len == 0) {
 			m_freem(m);
 			m = NULL;
-			err = EINVAL;
+			err = ENOPROTOOPT;
 		}
 		*opt = m;
 		break;
@@ -283,7 +286,7 @@ l2cap_ctloutput(int req, struct socket *so, int level,
 		break;
 
 	default:
-		err = EINVAL;
+		err = ENOPROTOOPT;
 		break;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.164 2007/01/19 14:49:11 hannken Exp $	*/
+/*	$NetBSD: vnode.h,v 1.164.2.1 2007/03/12 06:00:56 rmind Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -71,7 +71,7 @@ enum vtagtype	{
 	VT_FDESC, VT_PORTAL, VT_NULL, VT_UMAP, VT_KERNFS, VT_PROCFS,
 	VT_AFS, VT_ISOFS, VT_UNION, VT_ADOSFS, VT_EXT2FS, VT_CODA,
 	VT_FILECORE, VT_NTFS, VT_VFS, VT_OVERLAY, VT_SMBFS, VT_PTYFS,
-	VT_TMPFS, VT_UDF, VT_SYSVBFS, VT_PUFFS
+	VT_TMPFS, VT_UDF, VT_SYSVBFS, VT_PUFFS, VT_HFS
 };
 
 #define	VNODE_TAGS \
@@ -79,7 +79,7 @@ enum vtagtype	{
     "VT_FDESC", "VT_PORTAL", "VT_NULL", "VT_UMAP", "VT_KERNFS", "VT_PROCFS", \
     "VT_AFS", "VT_ISOFS", "VT_UNION", "VT_ADOSFS", "VT_EXT2FS", "VT_CODA", \
     "VT_FILECORE", "VT_NTFS", "VT_VFS", "VT_OVERLAY", "VT_SMBFS", "VT_PTYFS", \
-    "VT_TMPFS", "VT_UDF", "VT_SYSVBFS", "VT_PUFFS"
+    "VT_TMPFS", "VT_UDF", "VT_SYSVBFS", "VT_PUFFS", "VT_HFS"
 
 LIST_HEAD(buflists, buf);
 
@@ -412,7 +412,7 @@ struct vnodeop_desc {
 	 * for each transport layer.  (Support to manage this list is not
 	 * yet part of BSD.)
 	 */
-	caddr_t		*vdesc_transports;
+	void *		*vdesc_transports;
 };
 
 #ifdef _KERNEL
@@ -555,7 +555,7 @@ int	vn_lock(struct vnode *, int);
 void	vn_markexec(struct vnode *);
 int	vn_marktext(struct vnode *);
 int 	vn_open(struct nameidata *, int, int);
-int 	vn_rdwr(enum uio_rw, struct vnode *, caddr_t, int, off_t, enum uio_seg,
+int 	vn_rdwr(enum uio_rw, struct vnode *, void *, int, off_t, enum uio_seg,
     int, kauth_cred_t, size_t *, struct lwp *);
 int	vn_readdir(struct file *, char *, int, u_int, int *, struct lwp *,
     off_t **, int *);

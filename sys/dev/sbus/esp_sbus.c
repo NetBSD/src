@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_sbus.c,v 1.35 2006/03/28 17:38:34 thorpej Exp $	*/
+/*	$NetBSD: esp_sbus.c,v 1.35.14.1 2007/03/12 05:57:07 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_sbus.c,v 1.35 2006/03/28 17:38:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_sbus.c,v 1.35.14.1 2007/03/12 05:57:07 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,7 +99,7 @@ static void	esp_wrreg1(struct ncr53c9x_softc *, int, u_char);
 static int	esp_dma_isintr(struct ncr53c9x_softc *);
 static void	esp_dma_reset(struct ncr53c9x_softc *);
 static int	esp_dma_intr(struct ncr53c9x_softc *);
-static int	esp_dma_setup(struct ncr53c9x_softc *, caddr_t *,
+static int	esp_dma_setup(struct ncr53c9x_softc *, void **,
 				    size_t *, int, size_t *);
 static void	esp_dma_go(struct ncr53c9x_softc *);
 static void	esp_dma_stop(struct ncr53c9x_softc *);
@@ -676,7 +676,7 @@ esp_dma_intr(sc)
 int
 esp_dma_setup(sc, addr, len, datain, dmasize)
 	struct ncr53c9x_softc *sc;
-	caddr_t *addr;
+	void **addr;
 	size_t *len;
 	int datain;
 	size_t *dmasize;

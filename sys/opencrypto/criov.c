@@ -1,4 +1,4 @@
-/*	$NetBSD: criov.c,v 1.4 2005/12/11 12:25:20 christos Exp $ */
+/*	$NetBSD: criov.c,v 1.4.26.1 2007/03/12 06:00:50 rmind Exp $ */
 /*      $OpenBSD: criov.c,v 1.11 2002/06/10 19:36:43 espie Exp $	*/
 
 /*
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: criov.c,v 1.4 2005/12/11 12:25:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: criov.c,v 1.4.26.1 2007/03/12 06:00:50 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,7 +49,7 @@ void
 cuio_copydata(uio, off, len, cp)
 	struct uio *uio;
 	int off, len;
-	caddr_t cp;
+	void *cp;
 {
 	struct iovec *iov = uio->uio_iov;
 	int iol = uio->uio_iovcnt;
@@ -72,9 +72,9 @@ cuio_copydata(uio, off, len, cp)
 		if (iol == 0)
 			panic("cuio_copydata: empty");
 		count = min(iov->iov_len - off, len);
-		bcopy(((caddr_t)iov->iov_base) + off, cp, count);
+		memcpy(cp, (char *)iov->iov_base + off, count);
 		len -= count;
-		cp += count;
+		cp = (char *)cp + count;
 		off = 0;
 		iol--;
 		iov++;
@@ -85,7 +85,7 @@ void
 cuio_copyback(uio, off, len, cp)
 	struct uio *uio;
 	int off, len;
-	caddr_t cp;
+	void *cp;
 {
 	struct iovec *iov = uio->uio_iov;
 	int iol = uio->uio_iovcnt;
@@ -108,9 +108,9 @@ cuio_copyback(uio, off, len, cp)
 		if (iol == 0)
 			panic("uio_copyback: empty");
 		count = min(iov->iov_len - off, len);
-		bcopy(cp, ((caddr_t)iov->iov_base) + off, count);
+		memcpy((char *)iov->iov_base + off, cp, count);
 		len -= count;
-		cp += count;
+		cp = (char *)cp + count;
 		off = 0;
 		iol--;
 		iov++;
@@ -180,7 +180,7 @@ cuio_getptr(struct uio *uio, int loc, int *off)
 
 int
 cuio_apply(struct uio *uio, int off, int len,
-    int (*f)(caddr_t, caddr_t, unsigned int), caddr_t fstate)
+    int (*f)(void *, void *, unsigned int), void *fstate)
 {
 	int rval, ind, uiolen;
 	unsigned int count;
@@ -206,7 +206,7 @@ cuio_apply(struct uio *uio, int off, int len,
 		count = min(uio->uio_iov[ind].iov_len - off, len);
 
 		rval = f(fstate,
-			 ((caddr_t)uio->uio_iov[ind].iov_base + off), count);
+			 ((char *)uio->uio_iov[ind].iov_base + off), count);
 		if (rval)
 			return (rval);
 

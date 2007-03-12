@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sk.c,v 1.36 2007/01/30 11:42:06 msaitoh Exp $	*/
+/*	$NetBSD: if_sk.c,v 1.36.2.1 2007/03/12 05:55:21 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -176,7 +176,7 @@ void sk_rxeof(struct sk_if_softc *);
 void sk_txeof(struct sk_if_softc *);
 int sk_encap(struct sk_if_softc *, struct mbuf *, u_int32_t *);
 void sk_start(struct ifnet *);
-int sk_ioctl(struct ifnet *, u_long, caddr_t);
+int sk_ioctl(struct ifnet *, u_long, void *);
 int sk_init(struct ifnet *);
 void sk_init_xmac(struct sk_if_softc *);
 void sk_init_yukon(struct sk_if_softc *);
@@ -190,7 +190,7 @@ int sk_newbuf(struct sk_if_softc *, int, struct mbuf *, bus_dmamap_t);
 int sk_alloc_jumbo_mem(struct sk_if_softc *);
 void sk_free_jumbo_mem(struct sk_if_softc *);
 void *sk_jalloc(struct sk_if_softc *);
-void sk_jfree(struct mbuf *, caddr_t, size_t, void *);
+void sk_jfree(struct mbuf *, void *, size_t, void *);
 int sk_init_rx_ring(struct sk_if_softc *);
 int sk_init_tx_ring(struct sk_if_softc *);
 u_int8_t sk_vpd_readbyte(struct sk_softc *, int);
@@ -208,9 +208,9 @@ int sk_marv_miibus_readreg(struct device *, int, int);
 void sk_marv_miibus_writereg(struct device *, int, int, int);
 void sk_marv_miibus_statchg(struct device *);
 
-u_int32_t sk_xmac_hash(caddr_t);
-u_int32_t sk_yukon_hash(caddr_t);
-void sk_setfilt(struct sk_if_softc *, caddr_t, int);
+u_int32_t sk_xmac_hash(void *);
+u_int32_t sk_yukon_hash(void *);
+void sk_setfilt(struct sk_if_softc *, void *, int);
 void sk_setmulti(struct sk_if_softc *);
 void sk_tick(void *);
 
@@ -557,7 +557,7 @@ sk_marv_miibus_statchg(struct device *dev)
 #define SK_HASH_BITS		6
 
 u_int32_t
-sk_xmac_hash(caddr_t addr)
+sk_xmac_hash(void *addr)
 {
 	u_int32_t		crc;
 
@@ -568,7 +568,7 @@ sk_xmac_hash(caddr_t addr)
 }
 
 u_int32_t
-sk_yukon_hash(caddr_t addr)
+sk_yukon_hash(void *addr)
 {
 	u_int32_t		crc;
 
@@ -579,8 +579,9 @@ sk_yukon_hash(caddr_t addr)
 }
 
 void
-sk_setfilt(struct sk_if_softc *sc_if, caddr_t addr, int slot)
+sk_setfilt(struct sk_if_softc *sc_if, void *addrv, int slot)
 {
+	char *addr = addrv;
 	int base = XM_RXFILT_ENTRY(slot);
 
 	SK_XM_WRITE_2(sc_if, base, *(u_int16_t *)(&addr[0]));
@@ -604,7 +605,7 @@ sk_setmulti(struct sk_if_softc *sc_if)
 	switch (sc->sk_type) {
 	case SK_GENESIS:
 		for (i = 1; i < XM_RXFILT_MAX; i++)
-			sk_setfilt(sc_if, (caddr_t)&dummy, i);
+			sk_setfilt(sc_if, (void *)&dummy, i);
 
 		SK_XM_WRITE_4(sc_if, XM_MAR0, 0);
 		SK_XM_WRITE_4(sc_if, XM_MAR2, 0);
@@ -763,7 +764,7 @@ sk_newbuf(struct sk_if_softc *sc_if, int i, struct mbuf *m,
 	struct sk_rx_desc	*r;
 
 	if (m == NULL) {
-		caddr_t buf = NULL;
+		void *buf = NULL;
 
 		MGETHDR(m_new, M_DONTWAIT, MT_DATA);
 		if (m_new == NULL) {
@@ -818,7 +819,7 @@ int
 sk_alloc_jumbo_mem(struct sk_if_softc *sc_if)
 {
 	struct sk_softc		*sc = sc_if->sk_softc;
-	caddr_t			ptr, kva;
+	char *ptr, *kva;
 	bus_dma_segment_t	seg;
 	int		i, rseg, state, error;
 	struct sk_jpool_entry   *entry;
@@ -833,7 +834,7 @@ sk_alloc_jumbo_mem(struct sk_if_softc *sc_if)
 	}
 
 	state = 1;
-	if (bus_dmamem_map(sc->sc_dmatag, &seg, rseg, SK_JMEM, &kva,
+	if (bus_dmamem_map(sc->sc_dmatag, &seg, rseg, SK_JMEM, (void **)&kva,
 			   BUS_DMA_NOWAIT)) {
 		aprint_error("%s: can't map dma buffers (%d bytes)\n",
 		    sc->sk_dev.dv_xname, SK_JMEM);
@@ -858,7 +859,7 @@ sk_alloc_jumbo_mem(struct sk_if_softc *sc_if)
 	}
 
 	state = 4;
-	sc_if->sk_cdata.sk_jumbo_buf = (caddr_t)kva;
+	sc_if->sk_cdata.sk_jumbo_buf = (void *)kva;
 	DPRINTFN(1,("sk_jumbo_buf = 0x%p\n", sc_if->sk_cdata.sk_jumbo_buf));
 
 	LIST_INIT(&sc_if->sk_jfree_listhead);
@@ -932,7 +933,7 @@ sk_jalloc(struct sk_if_softc *sc_if)
  * Release a jumbo buffer.
  */
 void
-sk_jfree(struct mbuf *m, caddr_t buf, size_t size, void *arg)
+sk_jfree(struct mbuf *m, void *buf, size_t size, void *arg)
 {
 	struct sk_jpool_entry *entry;
 	struct sk_if_softc *sc;
@@ -992,7 +993,7 @@ sk_ifmedia_sts(struct ifnet *ifp, struct ifmediareq *ifmr)
 }
 
 int
-sk_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
+sk_ioctl(struct ifnet *ifp, u_long command, void *data)
 {
 	struct sk_if_softc *sc_if = ifp->if_softc;
 	struct sk_softc *sc = sc_if->sk_softc;
@@ -1220,7 +1221,7 @@ sk_attach(struct device *parent, struct device *self, void *aux)
 	struct ifnet *ifp;
 	bus_dma_segment_t seg;
 	bus_dmamap_t dmamap;
-	caddr_t kva;
+	void *kva;
 	int i, rseg;
 
 	sc_if->sk_port = sa->skc_port;
@@ -1997,7 +1998,7 @@ sk_watchdog(struct ifnet *ifp)
 }
 
 void
-sk_shutdown(void * v)
+sk_shutdown(void *v)
 {
 	struct sk_if_softc	*sc_if = (struct sk_if_softc *)v;
 	struct sk_softc		*sc = sc_if->sk_softc;

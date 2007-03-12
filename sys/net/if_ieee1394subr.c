@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee1394subr.c,v 1.32.12.1 2007/02/27 16:54:43 yamt Exp $	*/
+/*	$NetBSD: if_ieee1394subr.c,v 1.32.12.2 2007/03/12 05:59:12 rmind Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ieee1394subr.c,v 1.32.12.1 2007/02/27 16:54:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ieee1394subr.c,v 1.32.12.2 2007/03/12 05:59:12 rmind Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -722,7 +722,7 @@ ieee1394_ifdetach(struct ifnet *ifp)
 }
 
 int
-ieee1394_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
+ieee1394_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct ifreq *ifr = (struct ifreq *)data;
 	struct ifaddr *ifa = (struct ifaddr *)data;

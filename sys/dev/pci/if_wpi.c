@@ -1,4 +1,4 @@
-/*  $NetBSD: if_wpi.c,v 1.8 2007/01/25 21:17:38 njoly Exp $    */
+/*  $NetBSD: if_wpi.c,v 1.8.2.1 2007/03/12 05:55:23 rmind Exp $    */
 
 /*-
  * Copyright (c) 2006
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.8 2007/01/25 21:17:38 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.8.2.1 2007/03/12 05:55:23 rmind Exp $");
 
 /*
  * Driver for Intel PRO/Wireless 3945ABG 802.11 network adapters.
@@ -106,7 +106,7 @@ static void wpi_dma_contig_free(struct wpi_dma_info *);
 static int  wpi_alloc_shared(struct wpi_softc *);
 static void wpi_free_shared(struct wpi_softc *);
 static struct wpi_rbuf *wpi_alloc_rbuf(struct wpi_softc *);
-static void wpi_free_rbuf(struct mbuf *, caddr_t, size_t, void *);
+static void wpi_free_rbuf(struct mbuf *, void *, size_t, void *);
 static int  wpi_alloc_rpool(struct wpi_softc *);
 static void wpi_free_rpool(struct wpi_softc *);
 static int  wpi_alloc_rx_ring(struct wpi_softc *, struct wpi_rx_ring *);
@@ -139,7 +139,7 @@ static int  wpi_tx_data(struct wpi_softc *, struct mbuf *,
 	struct ieee80211_node *, int);
 static void wpi_start(struct ifnet *);
 static void wpi_watchdog(struct ifnet *);
-static int  wpi_ioctl(struct ifnet *, u_long, caddr_t);
+static int  wpi_ioctl(struct ifnet *, u_long, void *);
 static void wpi_read_eeprom(struct wpi_softc *);
 static int  wpi_cmd(struct wpi_softc *, int, const void *, int, int);
 static int  wpi_wme_update(struct ieee80211com *);
@@ -561,7 +561,7 @@ wpi_alloc_rbuf(struct wpi_softc *sc)
  * Rx buffer is attached is freed.
  */
 static void
-wpi_free_rbuf(struct mbuf* m, caddr_t buf, size_t size, void *arg)
+wpi_free_rbuf(struct mbuf* m, void *buf, size_t size, void *arg)
 {
 	struct wpi_rbuf *rbuf = arg;
 	struct wpi_softc *sc = rbuf->sc;
@@ -598,7 +598,7 @@ wpi_alloc_rpool(struct wpi_softc *sc)
 	for (i = 0; i < WPI_RBUF_COUNT; i++) {
 		rbuf = &ring->rbuf[i];
 		rbuf->sc = sc;	/* backpointer for callbacks */
-		rbuf->vaddr = ring->buf_dma.vaddr + i * WPI_RBUF_SIZE;
+		rbuf->vaddr = (char *)ring->buf_dma.vaddr + i * WPI_RBUF_SIZE;
 		rbuf->paddr = ring->buf_dma.paddr + i * WPI_RBUF_SIZE;
 
 		SLIST_INSERT_HEAD(&ring->freelist, rbuf, next);
@@ -1075,7 +1075,7 @@ wpi_load_firmware(struct wpi_softc *sc, uint32_t target, const char *fw,
 {
 	bus_dmamap_t map;
 	bus_dma_segment_t seg;
-	caddr_t virtaddr;
+	void *virtaddr;
 	struct wpi_tx_desc desc;
 	int i, ntries, nsegs, error;
 
@@ -1190,8 +1190,8 @@ wpi_rx_intr(struct wpi_softc *sc, struct wpi_rx_desc *desc,
 		return;
 	}
 
-	head = (struct wpi_rx_head *)((caddr_t)(stat + 1) + stat->len);
-	tail = (struct wpi_rx_tail *)((caddr_t)(head + 1) + le16toh(head->len));
+	head = (struct wpi_rx_head *)((char *)(stat + 1) + stat->len);
+	tail = (struct wpi_rx_tail *)((char *)(head + 1) + le16toh(head->len));
 
 	DPRINTFN(4, ("rx intr: idx=%d len=%d stat len=%d rssi=%d rate=%x "
 		"chan=%d tstamp=%llu\n", ring->cur, le32toh(desc->len),
@@ -1233,7 +1233,7 @@ wpi_rx_intr(struct wpi_softc *sc, struct wpi_rx_desc *desc,
 
 	/* finalize mbuf */
 	m->m_pkthdr.rcvif = ifp;
-	m->m_data = (caddr_t)(head + 1);
+	m->m_data = (void *)(head + 1);
 	m->m_pkthdr.len = m->m_len = le16toh(head->len);
 
 #if NBPFILTER > 0
@@ -1646,7 +1646,7 @@ wpi_tx_data(struct wpi_softc *sc, struct mbuf *m0, struct ieee80211_node *ni,
 	tx->len = htole16(m0->m_pkthdr.len);
 
 	/* save and trim IEEE802.11 header */
-	m_copydata(m0, 0, hdrlen, (caddr_t)&tx->wh);
+	m_copydata(m0, 0, hdrlen, (void *)&tx->wh);
 	m_adj(m0, hdrlen);
 
 	error = bus_dmamap_load_mbuf(sc->sc_dmat, data->map, m0,
@@ -1675,7 +1675,7 @@ wpi_tx_data(struct wpi_softc *sc, struct mbuf *m0, struct ieee80211_node *ni,
 			}
 		}
 
-		m_copydata(m0, 0, m0->m_pkthdr.len, mtod(mnew, caddr_t));
+		m_copydata(m0, 0, m0->m_pkthdr.len, mtod(mnew, void *));
 		m_freem(m0);
 		mnew->m_len = mnew->m_pkthdr.len;
 		m0 = mnew;
@@ -1845,7 +1845,7 @@ wpi_watchdog(struct ifnet *ifp)
 }
 
 static int
-wpi_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
+wpi_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 #define IS_RUNNING(ifp) \
 	((ifp->if_flags & IFF_UP) && (ifp->if_flags & IFF_RUNNING))
@@ -2127,7 +2127,7 @@ wpi_setup_beacon(struct wpi_softc *sc, struct ieee80211_node *ni)
 	bcn->flags = htole32(WPI_TX_AUTO_SEQ | WPI_TX_INSERT_TSTAMP);
 
 	/* save and trim IEEE802.11 header */
-	m_copydata(m0, 0, sizeof (struct ieee80211_frame), (caddr_t)&bcn->wh);
+	m_copydata(m0, 0, sizeof (struct ieee80211_frame), (void *)&bcn->wh);
 	m_adj(m0, sizeof (struct ieee80211_frame));
 
 	/* assume beacon frame is contiguous */

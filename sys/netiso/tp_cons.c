@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_cons.c,v 1.24 2007/01/24 13:08:11 hubertf Exp $	*/
+/*	$NetBSD: tp_cons.c,v 1.24.2.1 2007/03/12 06:00:30 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -68,7 +68,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_cons.c,v 1.24 2007/01/24 13:08:11 hubertf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_cons.c,v 1.24.2.1 2007/03/12 06:00:30 rmind Exp $");
 
 #include "opt_iso.h"
 
@@ -117,7 +117,7 @@ tpcons_pcbconnect(void *v, struct mbuf *nam)
 	int             error;
 	if ((error = iso_pcbconnect(isop, nam)) != 0)
 		return error;
-	if ((isop->isop_chan = (caddr_t) pk_attach((struct socket *) 0)) == 0) {
+	if ((isop->isop_chan = (void *) pk_attach((struct socket *) 0)) == 0) {
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_CCONS]) {
 			printf("tpcons_pcbconnect: no pklcd; returns 0x%x\n", error);
@@ -213,14 +213,14 @@ void
 tpcons_input(struct mbuf *m, ...)
 {
 	struct sockaddr *faddr, *laddr;
-	caddr_t         channel;
+	void *        channel;
 	va_list ap;
 	if (m == NULL)
 		return;
 	va_start(ap, m);
 	faddr = va_arg(ap, struct sockaddr *);
 	laddr = va_arg(ap, struct sockaddr *);
-	channel = va_arg(ap, caddr_t);
+	channel = va_arg(ap, void *);
 	va_end(ap);
 
 	m = (struct mbuf *) tp_inputprep(m);
@@ -281,7 +281,7 @@ tpcons_output(struct mbuf *m0, ...)
 	m->m_pkthdr.len = datalen;
 	if (isop->isop_chan == 0) {
 		/* got a restart maybe? */
-		if ((isop->isop_chan = (caddr_t) pk_attach((struct socket *) 0)) == 0) {
+		if ((isop->isop_chan = (void *) pk_attach((struct socket *) 0)) == 0) {
 #ifdef ARGO_DEBUG
 			if (argo_debug[D_CCONS]) {
 				printf("tpcons_output: no pklcd\n");
@@ -319,12 +319,12 @@ int
 tpcons_output_dg(struct mbuf *m0, ...)
 {
 	int             datalen;
-	caddr_t         chan;
+	void *        chan;
 	va_list		ap;
 
 	va_start(ap, m0);
 	datalen = va_arg(ap, int);
-	chan = va_arg(ap, caddr_t);
+	chan = va_arg(ap, void *);
 	va_end(ap);
 
 	return tpcons_output(m0, datalen,

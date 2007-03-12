@@ -1,4 +1,4 @@
-/*	$NetBSD: gtmpsc.c,v 1.22 2007/01/29 01:52:44 hubertf Exp $	*/
+/*	$NetBSD: gtmpsc.c,v 1.22.2.1 2007/03/12 05:55:07 rmind Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtmpsc.c,v 1.22 2007/01/29 01:52:44 hubertf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtmpsc.c,v 1.22.2.1 2007/03/12 05:55:07 rmind Exp $");
 
 #include "opt_kgdb.h"
 
@@ -435,7 +435,7 @@ gtmpscattach(struct device *parent, struct device *self, void *aux)
 	gtmpsc_poll_sdma_t *vmps;
 	gtmpsc_poll_sdma_t *pmps;
 	struct tty *tp;
-	caddr_t kva;
+	void *kva;
 	int rsegs;
 	int err;
 	int s;
@@ -723,7 +723,7 @@ gtmpscpoll(dev_t dev, int events, struct lwp *l)
 }
 
 int
-gtmpscioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+gtmpscioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct gtmpsc_softc *sc = gtmpsc_cd.cd_devs[GTMPSCUNIT(dev)];
 	struct tty *tp = sc->gtmpsc_tty;

@@ -1,4 +1,4 @@
-/*	$NetBSD: key_debug.h,v 1.2 2005/12/10 23:44:08 elad Exp $	*/
+/*	$NetBSD: key_debug.h,v 1.2.26.1 2007/03/12 06:00:10 rmind Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key_debug.h,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: key_debug.h,v 1.10 2001/08/05 08:37:52 itojun Exp $	*/
 
@@ -83,7 +83,7 @@ extern void kdebug_mbuf __P((struct mbuf *));
 struct sockaddr;
 extern void kdebug_sockaddr __P((struct sockaddr *));
 
-extern void ipsec_hexdump __P((caddr_t, int));
-extern void ipsec_bindump __P((caddr_t, int));
+extern void ipsec_hexdump __P((char *, int));
+extern void ipsec_bindump __P((char *, int));
 
 #endif /* !_NETIPSEC_KEY_DEBUG_H_ */

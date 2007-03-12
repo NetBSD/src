@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.99.2.2 2007/02/27 16:55:26 yamt Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.99.2.3 2007/03/12 06:01:12 rmind Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.99.2.2 2007/02/27 16:55:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.99.2.3 2007/03/12 06:01:12 rmind Exp $");
 
 #include "opt_coredump.h"
 #include "opt_kgdb.h"
@@ -114,7 +114,7 @@ static void uvm_uarea_free(vaddr_t);
  */
 
 bool
-uvm_kernacc(caddr_t addr, size_t len, int rw)
+uvm_kernacc(void *addr, size_t len, int rw)
 {
 	bool rv;
 	vaddr_t saddr, eaddr;
@@ -143,7 +143,7 @@ uvm_kernacc(caddr_t addr, size_t len, int rw)
  * we can ensure the change takes place properly.
  */
 void
-uvm_chgkprot(caddr_t addr, size_t len, int rw)
+uvm_chgkprot(void *addr, size_t len, int rw)
 {
 	vm_prot_t prot;
 	paddr_t pa;

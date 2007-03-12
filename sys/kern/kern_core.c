@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_core.c,v 1.2.2.1 2007/02/27 16:54:19 yamt Exp $	*/
+/*	$NetBSD: kern_core.c,v 1.2.2.2 2007/03/12 05:58:32 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_core.c,v 1.2.2.1 2007/02/27 16:54:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_core.c,v 1.2.2.2 2007/03/12 05:58:32 rmind Exp $");
 
 #include "opt_coredump.h"
 
@@ -93,7 +93,7 @@ coredump(struct lwp *l, const char *pattern)
 	p = l->l_proc;
 	vm = p->p_vmspace;
 
-	rw_enter(&proclist_lock, RW_READER);	/* p_session */
+	mutex_enter(&proclist_lock);	/* p_session */
 	mutex_enter(&p->p_mutex);
 
 	/*
@@ -102,7 +102,7 @@ coredump(struct lwp *l, const char *pattern)
 	 */
 	if ((p->p_flag & PK_SUGID) && !security_setidcore_dump) {
 		mutex_exit(&p->p_mutex);
-		rw_exit(&proclist_lock);
+		mutex_exit(&proclist_lock);
 		return EPERM;
 	}
 
@@ -114,7 +114,7 @@ coredump(struct lwp *l, const char *pattern)
 	if (USPACE + ctob(vm->vm_dsize + vm->vm_ssize) >=
 	    p->p_rlimit[RLIMIT_CORE].rlim_cur) {
 		mutex_exit(&p->p_mutex);
-		rw_exit(&proclist_lock);
+		mutex_exit(&proclist_lock);
 		return EFBIG;		/* better error code? */
 	}
 
@@ -136,7 +136,7 @@ restart:
 	    (vp->v_mount->mnt_flag & MNT_NOCOREDUMP) != 0) {
 		error = EPERM;
 		mutex_exit(&p->p_mutex);
-		rw_exit(&proclist_lock);
+		mutex_exit(&proclist_lock);
 		goto done;
 	}
 
@@ -150,7 +150,7 @@ restart:
 	}
 	error = coredump_buildname(p, name, pattern, MAXPATHLEN);
 	mutex_exit(&p->p_mutex);
-	rw_exit(&proclist_lock);
+	mutex_exit(&proclist_lock);
 	if (error)
 		goto done;
 	NDINIT(&nd, LOOKUP, NOFOLLOW, UIO_SYSSPACE, name, l);
@@ -166,7 +166,7 @@ restart:
 		if ((error = vn_start_write(NULL, &mp,
 		    V_WAIT | V_SLEEPONLY | V_PCATCH)) != 0)
 			goto done;
-		rw_enter(&proclist_lock, RW_READER);	/* p_session */
+		mutex_enter(&proclist_lock);	/* p_session */
 		mutex_enter(&p->p_mutex);
 		goto restart;
 	}
@@ -216,7 +216,7 @@ coredump_buildname(struct proc *p, char *dst, const char *src, size_t len)
 	char		*d, *end;
 	int		i;
 
-	LOCK_ASSERT(rw_read_held(&proclist_lock));
+	KASSERT(mutex_owned(&proclist_lock));
 
 	for (s = src, d = dst, end = d + len; *s != '\0'; s++) {
 		if (*s == '%') {

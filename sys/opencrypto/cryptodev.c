@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.c,v 1.25 2006/11/16 01:33:51 christos Exp $ */
+/*	$NetBSD: cryptodev.c,v 1.25.4.1 2007/03/12 06:00:50 rmind Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.25 2006/11/16 01:33:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.25.4.1 2007/03/12 06:00:50 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,11 +73,11 @@ struct csession {
 	u_int32_t	mac;
 	struct auth_hash *thash;
 
-	caddr_t		key;
+	void *		key;
 	int		keylen;
 	u_char		tmp_iv[EALG_MAX_BLOCK_LEN];
 
-	caddr_t		mackey;
+	void *		mackey;
 	int		mackeylen;
 	u_char		tmp_mac[CRYPTO_MAX_MAC_LEN];
 
@@ -96,7 +96,7 @@ struct fcrypt {
 static int	cryptoopen(dev_t dev, int flag, int mode, struct lwp *l);
 static int	cryptoread(dev_t dev, struct uio *uio, int ioflag);
 static int	cryptowrite(dev_t dev, struct uio *uio, int ioflag);
-static int	cryptoioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l);
+static int	cryptoioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l);
 static int	cryptoselect(dev_t dev, int rw, struct lwp *l);
 
 /* Declaration of cloned-device (per-ctxt) entrypoints */
@@ -119,8 +119,8 @@ static const struct fileops cryptofops = {
 static struct	csession *csefind(struct fcrypt *, u_int);
 static int	csedelete(struct fcrypt *, struct csession *);
 static struct	csession *cseadd(struct fcrypt *, struct csession *);
-static struct	csession *csecreate(struct fcrypt *, u_int64_t, caddr_t, u_int64_t,
-    caddr_t, u_int64_t, u_int32_t, u_int32_t, struct enc_xform *,
+static struct	csession *csecreate(struct fcrypt *, u_int64_t, void *, u_int64_t,
+    void *, u_int64_t, u_int32_t, u_int32_t, struct enc_xform *,
     struct auth_hash *);
 static int	csefree(struct csession *);
 
@@ -417,7 +417,7 @@ cryptodev_op(struct csession *cse, struct crypt_op *cop, struct lwp *l)
 	crp->crp_ilen = cop->len;
 	crp->crp_flags = CRYPTO_F_IOV | CRYPTO_F_CBIMM
 		       | (cop->flags & COP_F_BATCH);
-	crp->crp_buf = (caddr_t)&cse->uio;
+	crp->crp_buf = (void *)&cse->uio;
 	crp->crp_callback = (int (*) (struct cryptop *)) cryptodev_cb;
 	crp->crp_sid = cse->sid;
 	crp->crp_opaque = (void *)cse;
@@ -665,8 +665,8 @@ cseadd(struct fcrypt *fcr, struct csession *cse)
 }
 
 static struct csession *
-csecreate(struct fcrypt *fcr, u_int64_t sid, caddr_t key, u_int64_t keylen,
-    caddr_t mackey, u_int64_t mackeylen, u_int32_t cipher, u_int32_t mac,
+csecreate(struct fcrypt *fcr, u_int64_t sid, void *key, u_int64_t keylen,
+    void *mackey, u_int64_t mackeylen, u_int32_t cipher, u_int32_t mac,
     struct enc_xform *txform, struct auth_hash *thash)
 {
 	struct csession *cse;
@@ -724,7 +724,7 @@ cryptowrite(dev_t dev, struct uio *uio, int ioflag)
 }
 
 static int
-cryptoioctl(dev_t dev, u_long cmd, caddr_t data, int flag,
+cryptoioctl(dev_t dev, u_long cmd, void *data, int flag,
     struct lwp *l)
 {
 	struct file *f;
@@ -746,7 +746,7 @@ cryptoioctl(dev_t dev, u_long cmd, caddr_t data, int flag,
 		f->f_flag = FREAD | FWRITE;
 		f->f_type = DTYPE_CRYPTO;
 		f->f_ops = &cryptofops;
-		f->f_data = (caddr_t) fcr;
+		f->f_data = (void *) fcr;
 		*(u_int32_t *)data = fd;
 		FILE_SET_MATURE(f);
 		FILE_UNUSE(f, l);

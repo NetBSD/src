@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_dirhash.c,v 1.12 2007/02/09 21:55:42 ad Exp $	*/
+/*	$NetBSD: ufs_dirhash.c,v 1.12.2.1 2007/03/12 06:01:10 rmind Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Ian Dowse.  All rights reserved.
@@ -400,7 +400,7 @@ restart:
 			if (ufs_blkatoff(vp, (off_t)blkoff, NULL, &bp) != 0)
 				return (EJUSTRETURN);
 		}
-		dp = (struct direct *)(bp->b_data + (offset & bmask));
+		dp = (struct direct *)((char *)bp->b_data + (offset & bmask));
 		if (dp->d_reclen == 0 || dp->d_reclen >
 		    dirblksiz - (offset & (dirblksiz - 1))) {
 			/* Corrupted directory. */

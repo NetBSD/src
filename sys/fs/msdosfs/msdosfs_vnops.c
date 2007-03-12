@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.36.2.1 2007/02/27 16:54:12 yamt Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.36.2.2 2007/03/12 05:58:11 rmind Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.36.2.1 2007/02/27 16:54:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.36.2.2 2007/03/12 05:58:11 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -533,7 +533,7 @@ msdosfs_read(v)
 			brelse(bp);
 			return (error);
 		}
-		error = uiomove(bp->b_data + on, (int) n, uio);
+		error = uiomove((char *)bp->b_data + on, (int) n, uio);
 		brelse(bp);
 	} while (error == 0 && uio->uio_resid > 0 && n != 0);
 
@@ -1551,8 +1551,8 @@ msdosfs_readdir(v)
 		 * Convert from dos directory entries to fs-independent
 		 * directory entries.
 		 */
-		for (dentp = (struct direntry *)(bp->b_data + on);
-		     (char *)dentp < bp->b_data + on + n;
+		for (dentp = (struct direntry *)((char *)bp->b_data + on);
+		     (char *)dentp < (char *)bp->b_data + on + n;
 		     dentp++, offset += sizeof(struct direntry)) {
 #if 0
 

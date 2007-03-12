@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_param.h,v 1.16.26.1 2007/02/27 16:55:12 yamt Exp $	*/
+/*	$NetBSD: tp_param.h,v 1.16.26.2 2007/03/12 06:00:32 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -284,18 +284,18 @@ struct tp_vbp {
 #define vblen(x) (vbptr(x)->tpv_len)
 
 #define vb_putval(dst,type,src)\
-	bcopy((caddr_t)&(src),(caddr_t)&(((struct tp_vbp *)(dst))->tpv_val),\
+	bcopy((void *)&(src),(void *)&(((struct tp_vbp *)(dst))->tpv_val),\
 	sizeof(type))
 
 #define vb_getval(src,type,dst)\
-bcopy((caddr_t)&(((struct tp_vbp *)(src))->tpv_val),(caddr_t)&(dst),sizeof(type))
+bcopy((void *)&(((struct tp_vbp *)(src))->tpv_val),(void *)&(dst),sizeof(type))
 
 #define ADDOPTION(type, DU, len, src)\
-{	caddr_t P;\
-	P = (caddr_t)(DU) + (int)((DU)->tpdu_li);\
+{	char *P;\
+	P = (char *)(DU) + (int)((DU)->tpdu_li);\
 	vbptr(P)->tpv_code = type;\
 	vbptr(P)->tpv_len = len;\
-	bcopy((caddr_t)&src, (caddr_t)&(vbptr(P)->tpv_val), (unsigned)len);\
+	memcpy(&(vbptr(P)->tpv_val), &src, (unsigned)len);\
 	DU->tpdu_li += len+2;/* 1 for code, 1 for length */\
 }
 /******************************************************

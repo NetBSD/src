@@ -1,4 +1,4 @@
-/*	$NetBSD: keydb.h,v 1.26 2005/12/11 00:02:28 elad Exp $	*/
+/*	$NetBSD: keydb.h,v 1.26.26.1 2007/03/12 06:00:34 rmind Exp $	*/
 /*	$KAME: keydb.h,v 1.23 2003/09/07 05:25:20 itojun Exp $	*/
 
 /*
@@ -93,7 +93,7 @@ struct secasvar {
 
 	struct sadb_key *key_auth;	/* Key for Authentication */
 	struct sadb_key *key_enc;	/* Key for Encryption */
-	caddr_t iv;			/* Initilization Vector */
+	void *iv;			/* Initilization Vector */
 	u_int ivlen;			/* length of IV */
 	void *sched;			/* intermediate encryption key */
 	size_t schedlen;

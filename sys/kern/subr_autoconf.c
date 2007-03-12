@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.115.4.1 2007/02/27 16:54:27 yamt Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.115.4.2 2007/03/12 05:58:39 rmind Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.115.4.1 2007/02/27 16:54:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.115.4.2 2007/03/12 05:58:39 rmind Exp $");
 
 #include "opt_ddb.h"
 
@@ -147,6 +147,11 @@ struct matchinfo {
 
 static char *number(char *, int);
 static void mapply(struct matchinfo *, cfdata_t);
+static device_t config_devalloc(const device_t, const cfdata_t, const int *);
+static void config_devdealloc(device_t);
+static void config_makeroom(int, struct cfdriver *);
+static void config_devlink(device_t);
+static void config_devunlink(device_t);
 
 struct deferred_config {
 	TAILQ_ENTRY(deferred_config) dc_queue;
@@ -863,7 +868,7 @@ number(char *ep, int n)
 /*
  * Expand the size of the cd_devs array if necessary.
  */
-void
+static void
 config_makeroom(int n, struct cfdriver *cd)
 {
 	int old, new;
@@ -896,36 +901,67 @@ config_makeroom(int n, struct cfdriver *cd)
 	cd->cd_devs = nsp;
 }
 
-/*
- * Attach a found device.  Allocates memory for device variables.
- */
-device_t
-config_attach_loc(device_t parent, cfdata_t cf,
-	const int *locs, void *aux, cfprint_t print)
+static void
+config_devlink(device_t dev)
 {
-	device_t dev;
-	struct cftable *ct;
+	struct cfdriver *cd = dev->dv_cfdriver;
+
+	/* put this device in the devices array */
+	config_makeroom(dev->dv_unit, cd);
+	if (cd->cd_devs[dev->dv_unit])
+		panic("config_attach: duplicate %s", dev->dv_xname);
+	cd->cd_devs[dev->dv_unit] = dev;
+
+	TAILQ_INSERT_TAIL(&alldevs, dev, dv_list);	/* link up */
+}
+
+static void
+config_devunlink(device_t dev)
+{
+	struct cfdriver *cd = dev->dv_cfdriver;
+	int i;
+
+	/* Unlink from device list. */
+	TAILQ_REMOVE(&alldevs, dev, dv_list);
+
+	/* Remove from cfdriver's array. */
+	cd->cd_devs[dev->dv_unit] = NULL;
+
+	/*
+	 * If the device now has no units in use, deallocate its softc array.
+	 */
+	for (i = 0; i < cd->cd_ndevs; i++)
+		if (cd->cd_devs[i] != NULL)
+			break;
+	if (i == cd->cd_ndevs) {		/* nothing found; deallocate */
+		free(cd->cd_devs, M_DEVBUF);
+		cd->cd_devs = NULL;
+		cd->cd_ndevs = 0;
+	}
+}
+	
+static device_t
+config_devalloc(const device_t parent, const cfdata_t cf, const int *locs)
+{
 	struct cfdriver *cd;
 	struct cfattach *ca;
 	size_t lname, lunit;
 	const char *xunit;
 	int myunit;
 	char num[10];
+	device_t dev;
 	const struct cfiattrdata *ia;
 
-#if defined(SPLASHSCREEN) && defined(SPLASHSCREEN_PROGRESS)
-	if (splash_progress_state)
-		splash_progress_update(splash_progress_state);
-#endif
-
 	cd = config_cfdriver_lookup(cf->cf_name);
-	KASSERT(cd != NULL);
+	if (cd == NULL)
+		return (NULL);
 
 	ca = config_cfattach_lookup_cd(cd, cf->cf_atname);
-	KASSERT(ca != NULL);
+	if (ca == NULL)
+		return (NULL);
 
 	if (ca->ca_devsize < sizeof(struct device))
-		panic("config_attach");
+		panic("config_devalloc");
 
 #ifndef __BROKEN_CONFIG_UNIT_USAGE
 	if (cf->cf_fstate == FSTATE_STAR) {
@@ -938,17 +974,11 @@ config_attach_loc(device_t parent, cfdata_t cf,
 		 */
 	} else {
 		myunit = cf->cf_unit;
-		KASSERT(cf->cf_fstate == FSTATE_NOTFOUND);
-		cf->cf_fstate = FSTATE_FOUND;
-	}
+		if (myunit < cd->cd_ndevs && cd->cd_devs[myunit] != NULL)
+			return (NULL);
+	}	
 #else
 	myunit = cf->cf_unit;
-	if (cf->cf_fstate == FSTATE_STAR)
-		cf->cf_unit++;
-	else {
-		KASSERT(cf->cf_fstate == FSTATE_NOTFOUND);
-		cf->cf_fstate = FSTATE_FOUND;
-	}
 #endif /* ! __BROKEN_CONFIG_UNIT_USAGE */
 
 	/* compute length of name and decimal expansion of unit number */
@@ -956,15 +986,13 @@ config_attach_loc(device_t parent, cfdata_t cf,
 	xunit = number(&num[sizeof(num)], myunit);
 	lunit = &num[sizeof(num)] - xunit;
 	if (lname + lunit > sizeof(dev->dv_xname))
-		panic("config_attach: device name too long");
+		panic("config_devalloc: device name too long");
 
 	/* get memory for all device vars */
 	dev = (device_t)malloc(ca->ca_devsize, M_DEVBUF,
-	    cold ? M_NOWAIT : M_WAITOK);
+			       M_ZERO | (cold ? M_NOWAIT : M_WAITOK));
 	if (!dev)
-	    panic("config_attach: memory allocation for device softc failed");
-	memset(dev, 0, ca->ca_devsize);
-	TAILQ_INSERT_TAIL(&alldevs, dev, dv_list);	/* link up */
+		panic("config_devalloc: memory allocation for device softc failed");
 	dev->dv_class = cd->cd_class;
 	dev->dv_cfdata = cf;
 	dev->dv_cfdriver = cd;
@@ -985,6 +1013,54 @@ config_attach_loc(device_t parent, cfdata_t cf,
 	dev->dv_properties = prop_dictionary_create();
 	KASSERT(dev->dv_properties != NULL);
 
+	return (dev);
+}
+
+static void
+config_devdealloc(device_t dev)
+{
+
+	KASSERT(dev->dv_properties != NULL);
+	prop_object_release(dev->dv_properties);
+
+	if (dev->dv_locators)
+		free(dev->dv_locators, M_DEVBUF);
+
+	free(dev, M_DEVBUF);
+}
+
+/*
+ * Attach a found device.
+ */
+device_t
+config_attach_loc(device_t parent, cfdata_t cf,
+	const int *locs, void *aux, cfprint_t print)
+{
+	device_t dev;
+	struct cftable *ct;
+	const char *drvname;
+
+#if defined(SPLASHSCREEN) && defined(SPLASHSCREEN_PROGRESS)
+	if (splash_progress_state)
+		splash_progress_update(splash_progress_state);
+#endif
+
+	dev = config_devalloc(parent, cf, locs);
+	if (!dev)
+		panic("config_attach: allocation of device softc failed");
+
+	/* XXX redundant - see below? */
+	if (cf->cf_fstate != FSTATE_STAR) {
+		KASSERT(cf->cf_fstate == FSTATE_NOTFOUND);
+		cf->cf_fstate = FSTATE_FOUND;
+	}
+#ifdef __BROKEN_CONFIG_UNIT_USAGE
+	  else
+		cf->cf_unit++;
+#endif
+
+	config_devlink(dev);
+
 	if (config_do_twiddle)
 		twiddle();
 	else
@@ -1003,19 +1079,15 @@ config_attach_loc(device_t parent, cfdata_t cf,
 			(void) (*print)(aux, NULL);
 	}
 
-	/* put this device in the devices array */
-	config_makeroom(dev->dv_unit, cd);
-	if (cd->cd_devs[dev->dv_unit])
-		panic("config_attach: duplicate %s", dev->dv_xname);
-	cd->cd_devs[dev->dv_unit] = dev;
-
 	/*
 	 * Before attaching, clobber any unfound devices that are
 	 * otherwise identical.
+	 * XXX code above is redundant?
 	 */
+	drvname = dev->dv_cfdriver->cd_name;
 	TAILQ_FOREACH(ct, &allcftables, ct_list) {
 		for (cf = ct->ct_cfdata; cf->cf_name; cf++) {
-			if (STREQ(cf->cf_name, cd->cd_name) &&
+			if (STREQ(cf->cf_name, drvname) &&
 			    cf->cf_unit == dev->dv_unit) {
 				if (cf->cf_fstate == FSTATE_NOTFOUND)
 					cf->cf_fstate = FSTATE_FOUND;
@@ -1037,7 +1109,7 @@ config_attach_loc(device_t parent, cfdata_t cf,
 	if (splash_progress_state)
 		splash_progress_update(splash_progress_state);
 #endif
-	(*ca->ca_attach)(parent, dev, aux);
+	(*dev->dv_cfattach->ca_attach)(parent, dev, aux);
 #if defined(SPLASHSCREEN) && defined(SPLASHSCREEN_PROGRESS)
 	if (splash_progress_state)
 		splash_progress_update(splash_progress_state);
@@ -1066,84 +1138,21 @@ device_t
 config_attach_pseudo(cfdata_t cf)
 {
 	device_t dev;
-	struct cfdriver *cd;
-	struct cfattach *ca;
-	size_t lname, lunit;
-	const char *xunit;
-	int myunit;
-	char num[10];
 
-	cd = config_cfdriver_lookup(cf->cf_name);
-	if (cd == NULL)
-		return (NULL);
-
-	ca = config_cfattach_lookup_cd(cd, cf->cf_atname);
-	if (ca == NULL)
-		return (NULL);
-
-	if (ca->ca_devsize < sizeof(struct device))
-		panic("config_attach_pseudo");
-
-	/*
-	 * We just ignore cf_fstate, instead doing everything with
-	 * cf_unit.
-	 *
-	 * XXX Should we change this and use FSTATE_NOTFOUND and
-	 * XXX FSTATE_STAR?
-	 */
-
-	if (cf->cf_unit == DVUNIT_ANY) {
-		for (myunit = 0; myunit < cd->cd_ndevs; myunit++)
-			if (cd->cd_devs[myunit] == NULL)
-				break;
-		/*
-		 * myunit is now the unit of the first NULL device pointer.
-		 */
-	} else {
-		myunit = cf->cf_unit;
-		if (myunit < cd->cd_ndevs && cd->cd_devs[myunit] != NULL)
-			return (NULL);
-	}
-
-	/* compute length of name and decimal expansion of unit number */
-	lname = strlen(cd->cd_name);
-	xunit = number(&num[sizeof(num)], myunit);
-	lunit = &num[sizeof(num)] - xunit;
-	if (lname + lunit > sizeof(dev->dv_xname))
-		panic("config_attach_pseudo: device name too long");
-
-	/* get memory for all device vars */
-	dev = (device_t)malloc(ca->ca_devsize, M_DEVBUF,
-	    cold ? M_NOWAIT : M_WAITOK);
+	dev = config_devalloc(ROOT, cf, NULL);
 	if (!dev)
-		panic("config_attach_pseudo: memory allocation for device "
-		    "softc failed");
-	memset(dev, 0, ca->ca_devsize);
-	TAILQ_INSERT_TAIL(&alldevs, dev, dv_list);	/* link up */
-	dev->dv_class = cd->cd_class;
-	dev->dv_cfdata = cf;
-	dev->dv_cfdriver = cd;
-	dev->dv_cfattach = ca;
-	dev->dv_unit = myunit;
-	memcpy(dev->dv_xname, cd->cd_name, lname);
-	memcpy(dev->dv_xname + lname, xunit, lunit);
-	dev->dv_parent = ROOT;
-	dev->dv_flags = DVF_ACTIVE;	/* always initially active */
-	dev->dv_properties = prop_dictionary_create();
-	KASSERT(dev->dv_properties != NULL);
+		return (NULL);
 
-	/* put this device in the devices array */
-	config_makeroom(dev->dv_unit, cd);
-	if (cd->cd_devs[dev->dv_unit])
-		panic("config_attach_pseudo: duplicate %s", dev->dv_xname);
-	cd->cd_devs[dev->dv_unit] = dev;
+	/* XXX mark busy in cfdata */
+
+	config_devlink(dev);
 
 #if 0	/* XXXJRT not yet */
 #ifdef __HAVE_DEVICE_REGISTER
 	device_register(dev, NULL);	/* like a root node */
 #endif
 #endif
-	(*ca->ca_attach)(ROOT, dev, NULL);
+	(*dev->dv_cfattach->ca_attach)(ROOT, dev, NULL);
 	config_process_deferred(&deferred_config_queue, dev);
 	return (dev);
 }
@@ -1167,7 +1176,7 @@ config_detach(device_t dev, int flags)
 #ifdef DIAGNOSTIC
 	device_t d;
 #endif
-	int rv = 0, i;
+	int rv = 0;
 
 #ifdef DIAGNOSTIC
 	if (dev->dv_cfdata != NULL &&
@@ -1260,39 +1269,13 @@ config_detach(device_t dev, int flags)
 		}
 	}
 
-	/*
-	 * Unlink from device list.
-	 */
-	TAILQ_REMOVE(&alldevs, dev, dv_list);
+	config_devunlink(dev);
 
-	/*
-	 * Remove from cfdriver's array, tell the world (unless it was
-	 * a pseudo-device), and free softc.
-	 */
-	cd->cd_devs[dev->dv_unit] = NULL;
 	if (dev->dv_cfdata != NULL && (flags & DETACH_QUIET) == 0)
 		aprint_normal("%s detached\n", dev->dv_xname);
-	if (dev->dv_locators)
-		free(dev->dv_locators, M_DEVBUF);
-	KASSERT(dev->dv_properties != NULL);
-	prop_object_release(dev->dv_properties);
-	free(dev, M_DEVBUF);
 
-	/*
-	 * If the device now has no units in use, deallocate its softc array.
-	 */
-	for (i = 0; i < cd->cd_ndevs; i++)
-		if (cd->cd_devs[i] != NULL)
-			break;
-	if (i == cd->cd_ndevs) {		/* nothing found; deallocate */
-		free(cd->cd_devs, M_DEVBUF);
-		cd->cd_devs = NULL;
-		cd->cd_ndevs = 0;
-	}
+	config_devdealloc(dev);
 
-	/*
-	 * Return success.
-	 */
 	return (0);
 }
 

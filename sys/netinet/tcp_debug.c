@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_debug.c,v 1.24 2005/12/11 12:24:57 christos Exp $	*/
+/*	$NetBSD: tcp_debug.c,v 1.24.26.1 2007/03/12 05:59:38 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_debug.c,v 1.24 2005/12/11 12:24:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_debug.c,v 1.24.26.1 2007/03/12 05:59:38 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_tcp_debug.h"
@@ -123,15 +123,15 @@ tcp_trace(short act, short ostate, struct tcpcb *tp, struct mbuf *m, int req)
 	td->td_time = iptime();
 	td->td_act = act;
 	td->td_ostate = ostate;
-	td->td_tcb = (caddr_t)tp;
+	td->td_tcb = (void *)tp;
 	if (tp)
 		td->td_cb = *tp;
 	else
-		bzero((caddr_t)&td->td_cb, sizeof (*tp));
+		bzero((void *)&td->td_cb, sizeof (*tp));
 	td->td_family = tp->t_family;
-	bzero((caddr_t)&td->td_ti, sizeof (td->td_ti));
+	bzero((void *)&td->td_ti, sizeof (td->td_ti));
 #ifdef INET6
-	bzero((caddr_t)&td->td_ti6, sizeof (td->td_ti6));
+	bzero((void *)&td->td_ti6, sizeof (td->td_ti6));
 #endif
 	th = NULL;
 	if (m) {
@@ -141,17 +141,17 @@ tcp_trace(short act, short ostate, struct tcpcb *tp, struct mbuf *m, int req)
 		case 4:
 			if (m->m_len < sizeof(td->td_ti))
 				break;
-			bcopy(mtod(m, caddr_t), &td->td_ti, sizeof(td->td_ti));
-			th = (struct tcphdr *)((caddr_t)&td->td_ti + 
+			bcopy(mtod(m, void *), &td->td_ti, sizeof(td->td_ti));
+			th = (struct tcphdr *)((char *)&td->td_ti + 
 			    sizeof(struct ip));
 			break;
 #ifdef INET6
 		case 6:
 			if (m->m_len < sizeof(td->td_ti6))
 				break;
-			bcopy(mtod(m, caddr_t), &td->td_ti6,
+			bcopy(mtod(m, void *), &td->td_ti6,
 				sizeof(td->td_ti6));
-			th = (struct tcphdr *)((caddr_t)&td->td_ti6 + 
+			th = (struct tcphdr *)((char *)&td->td_ti6 + 
 			    sizeof(struct ip6_hdr));
 			break;
 #endif

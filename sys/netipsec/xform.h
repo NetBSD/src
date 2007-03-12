@@ -1,4 +1,4 @@
-/*	$NetBSD: xform.h,v 1.3 2005/12/10 23:44:08 elad Exp $	*/
+/*	$NetBSD: xform.h,v 1.3.26.1 2007/03/12 06:00:11 rmind Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform.h,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ipsp.h,v 1.119 2002/03/14 01:27:11 millert Exp $	*/
 /*
@@ -71,7 +71,7 @@ struct tdb_crypto {
 	u_int8_t		tc_nxt;		/* next protocol, e.g. IPV4 */
 	int			tc_protoff;	/* current protocol offset */
 	int			tc_skip;	/* data offset */
-	caddr_t			tc_ptr;		/* associated crypto data */
+	void *			tc_ptr;		/* associated crypto data */
 };
 
 struct secasvar;

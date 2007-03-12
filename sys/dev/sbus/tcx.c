@@ -1,4 +1,4 @@
-/*	$NetBSD: tcx.c,v 1.20 2007/01/07 12:32:29 jdc Exp $ */
+/*	$NetBSD: tcx.c,v 1.20.2.1 2007/03/12 05:57:08 rmind Exp $ */
 
 /*
  *  Copyright (c) 1996,1998 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcx.c,v 1.20 2007/01/07 12:32:29 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcx.c,v 1.20.2.1 2007/03/12 05:57:08 rmind Exp $");
 
 /*
  * define for cg8 emulation on S24 (24-bit version of tcx) for the SS5;
@@ -427,7 +427,7 @@ int
 tcxioctl(dev, cmd, data, flags, l)
 	dev_t dev;
 	u_long cmd;
-	caddr_t data;
+	void *data;
 	int flags;
 	struct lwp *l;
 {

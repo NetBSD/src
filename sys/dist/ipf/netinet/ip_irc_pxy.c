@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_irc_pxy.c,v 1.7 2006/04/04 16:17:19 martti Exp $	*/
+/*	$NetBSD: ip_irc_pxy.c,v 1.7.14.1 2007/03/12 05:57:54 rmind Exp $	*/
 
 /*
  * Copyright (C) 2000-2003 Darren Reed
@@ -388,13 +388,13 @@ nat_t *nat;
 	 * it is the most likely so use it here to check for a conflicting
 	 * mapping.
 	 */
-	bcopy((caddr_t)fin, (caddr_t)&fi, sizeof(fi));
+	bcopy((void *)fin, (void *)&fi, sizeof(fi));
 	fi.fin_data[0] = sp;
 	fi.fin_data[1] = fin->fin_data[1];
 	nat2 = nat_outlookup(fin, IPN_TCP, nat->nat_p, nat->nat_inip,
 			     ip->ip_dst);
 	if (nat2 == NULL) {
-		bcopy((caddr_t)fin, (caddr_t)&fi, sizeof(fi));
+		bcopy((void *)fin, (void *)&fi, sizeof(fi));
 		bzero((char *)tcp2, sizeof(*tcp2));
 		tcp2->th_win = htons(8192);
 		tcp2->th_sport = sp;

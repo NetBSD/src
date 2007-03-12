@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.111.4.1 2007/02/27 16:54:43 yamt Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.111.4.2 2007/03/12 05:59:12 rmind Exp $	*/
 /*	Id: if_ppp.c,v 1.6 1997/03/04 03:33:00 paulus Exp 	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.111.4.1 2007/02/27 16:54:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.111.4.2 2007/03/12 05:59:12 rmind Exp $");
 
 #include "ppp.h"
 
@@ -167,7 +167,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.111.4.1 2007/02/27 16:54:43 yamt Exp $"
 #include <net/ppp-comp.h>
 #endif
 
-static int	pppsioctl(struct ifnet *, u_long, caddr_t);
+static int	pppsioctl(struct ifnet *, u_long, void *);
 static void	ppp_requeue(struct ppp_softc *);
 static void	ppp_ccp(struct ppp_softc *, struct mbuf *m, int rcvd);
 static void	ppp_ccp_closed(struct ppp_softc *);
@@ -488,7 +488,7 @@ pppdealloc(struct ppp_softc *sc)
  * Ioctl routine for generic ppp devices.
  */
 int
-pppioctl(struct ppp_softc *sc, u_long cmd, caddr_t data, int flag,
+pppioctl(struct ppp_softc *sc, u_long cmd, void *data, int flag,
     struct lwp *l)
 {
     int s, error, flags, mru, npx;
@@ -702,7 +702,7 @@ pppioctl(struct ppp_softc *sc, u_long cmd, caddr_t data, int flag,
 	if (newcodelen != 0) {
 	    newcode = malloc(newcodelen, M_DEVBUF, M_WAITOK);
 	    /* WAITOK -- malloc() never fails. */
-	    if ((error = copyin((caddr_t)nbp->bf_insns, (caddr_t)newcode,
+	    if ((error = copyin((void *)nbp->bf_insns, (void *)newcode,
 			       newcodelen)) != 0) {
 		free(newcode, M_DEVBUF);
 		return error;
@@ -753,7 +753,7 @@ pppioctl(struct ppp_softc *sc, u_long cmd, caddr_t data, int flag,
  * Process an ioctl request to the ppp network interface.
  */
 static int
-pppsioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
+pppsioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
     struct lwp *l = curlwp;	/* XXX */
     struct ppp_softc *sc = ifp->if_softc;
@@ -1633,7 +1633,7 @@ ppp_inproc(struct ppp_softc *sc, struct mbuf *m)
     if (ilen <= MHLEN && M_IS_CLUSTER(m)) {
 	MGETHDR(mp, M_DONTWAIT, MT_DATA);
 	if (mp != NULL) {
-	    m_copydata(m, 0, ilen, mtod(mp, caddr_t));
+	    m_copydata(m, 0, ilen, mtod(mp, void *));
 	    m_freem(m);
 	    m = mp;
 	    m->m_len = ilen;
@@ -1712,6 +1712,10 @@ ppp_inproc(struct ppp_softc *sc, struct mbuf *m)
 	m->m_pkthdr.len -= PPP_HDRLEN;
 	m->m_data += PPP_HDRLEN;
 	m->m_len -= PPP_HDRLEN;
+#ifdef GATEWAY  
+	if (ip6flow_fastforward(m))
+		return;
+#endif
 	schednetisr(NETISR_IPV6);
 	inq = &ip6intrq;
 	break;

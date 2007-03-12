@@ -1,4 +1,4 @@
-/*	$NetBSD: if_devar.h,v 1.46 2006/11/22 01:54:09 uebayasi Exp $	*/
+/*	$NetBSD: if_devar.h,v 1.46.4.1 2007/03/12 05:55:17 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -480,7 +480,7 @@ struct _tulip_softc_t {
     struct intrhand tulip_ih;		/* intrrupt vectoring */
     struct atshutdown tulip_ats;	/* shutdown hook */
 #if _BSDI_VERSION < 199401
-    caddr_t tulip_bpf;			/* for BPF */
+    void *tulip_bpf;			/* for BPF */
 #else
     prf_t tulip_pf;			/* printf function */
 #if _BSDI_VERSION >= 199701
@@ -878,11 +878,11 @@ static void tulip_softintr(void);
 #if defined(TULIP_BUS_DMA) && !defined(TULIP_BUS_DMA_NORX)
 #define TULIP_RXDESC_PRESYNC(sc, di, s)	\
 	bus_dmamap_sync((sc)->tulip_dmatag, (sc)->tulip_rxdescmap, \
-		   (caddr_t) di - (caddr_t) (sc)->tulip_rxdescs, \
+		   (char *) di - (char *) (sc)->tulip_rxdescs, \
 		   (s), BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE)
 #define TULIP_RXDESC_POSTSYNC(sc, di, s)	\
 	bus_dmamap_sync((sc)->tulip_dmatag, (sc)->tulip_rxdescmap, \
-		   (caddr_t) di - (caddr_t) (sc)->tulip_rxdescs, \
+		   (char *) di - (char *) (sc)->tulip_rxdescs, \
 		   (s), BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE)
 #define	TULIP_RXMAP_PRESYNC(sc, map) \
 	bus_dmamap_sync((sc)->tulip_dmatag, (map), 0, (map)->dm_mapsize, \
@@ -905,11 +905,11 @@ static void tulip_softintr(void);
 #if defined(TULIP_BUS_DMA) && !defined(TULIP_BUS_DMA_NOTX)
 #define TULIP_TXDESC_PRESYNC(sc, di, s)	\
 	bus_dmamap_sync((sc)->tulip_dmatag, (sc)->tulip_txdescmap, \
-			(caddr_t) di - (caddr_t) (sc)->tulip_txdescs, \
+			(char *) di - (char *) (sc)->tulip_txdescs, \
 			(s), BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE)
 #define TULIP_TXDESC_POSTSYNC(sc, di, s)	\
 	bus_dmamap_sync((sc)->tulip_dmatag, (sc)->tulip_txdescmap, \
-			(caddr_t) di - (caddr_t) (sc)->tulip_txdescs, \
+			(char *) di - (char *) (sc)->tulip_txdescs, \
 			(s), BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE)
 #define	TULIP_TXMAP_PRESYNC(sc, map) \
 	bus_dmamap_sync((sc)->tulip_dmatag, (map), 0, (map)->dm_mapsize, \

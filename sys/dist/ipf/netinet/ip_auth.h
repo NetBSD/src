@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_auth.h,v 1.3 2006/04/04 16:17:19 martti Exp $	*/
+/*	$NetBSD: ip_auth.h,v 1.3.14.1 2007/03/12 05:57:52 rmind Exp $	*/
 
 /*
  * Copyright (C) 1997-2001 by Darren Reed & Guido Van Rooij.
@@ -62,7 +62,7 @@ extern	int	fr_authflush __P((void));
 extern	mb_t	**fr_authpkts;
 extern	int	fr_newauth __P((mb_t *, fr_info_t *));
 extern	int	fr_preauthcmd __P((ioctlcmd_t, frentry_t *, frentry_t **));
-extern	int	fr_auth_ioctl __P((caddr_t, ioctlcmd_t, int));
+extern	int	fr_auth_ioctl __P((void *, ioctlcmd_t, int));
 extern	int	fr_auth_waiting __P((void));
 
 #endif	/* __IP_AUTH_H__ */

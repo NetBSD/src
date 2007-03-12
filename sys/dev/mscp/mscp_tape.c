@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_tape.c,v 1.29 2006/03/29 07:06:24 thorpej Exp $ */
+/*	$NetBSD: mscp_tape.c,v 1.29.14.1 2007/03/12 05:55:08 rmind Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp_tape.c,v 1.29 2006/03/29 07:06:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp_tape.c,v 1.29.14.1 2007/03/12 05:55:08 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -363,7 +363,7 @@ mtonline(usc, mp)
 {
 	struct mt_softc *mt = (void *)usc;
 
-	wakeup((caddr_t)&mt->mt_state);
+	wakeup((void *)&mt->mt_state);
 	if ((mp->mscp_status & M_ST_MASK) == M_ST_SUCCESS)
 		mt->mt_state = MT_ONLINE;
 
@@ -438,7 +438,7 @@ int
 mtioctl(dev, cmd, data, flag, l)
 	dev_t dev;
 	u_long cmd;
-	caddr_t data;
+	void *data;
 	int flag;
 	struct lwp *l;
 {
@@ -477,7 +477,7 @@ int
 mtdump(dev, blkno, va, size)
 	dev_t	dev;
 	daddr_t blkno;
-	caddr_t va;
+	void *va;
 	size_t	size;
 {
 	return -1;

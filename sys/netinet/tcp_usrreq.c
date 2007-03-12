@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.130 2006/12/06 09:10:45 yamt Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.130.2.1 2007/03/12 05:59:39 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.130 2006/12/06 09:10:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.130.2.1 2007/03/12 05:59:39 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -192,12 +192,12 @@ tcp_usrreq(struct socket *so, int req,
 		switch (family) {
 #ifdef INET
 		case PF_INET:
-			return (in_control(so, (long)m, (caddr_t)nam,
+			return (in_control(so, (long)m, (void *)nam,
 			    (struct ifnet *)control, l));
 #endif
 #ifdef INET6
 		case PF_INET6:
-			return (in6_control(so, (long)m, (caddr_t)nam,
+			return (in6_control(so, (long)m, (void *)nam,
 			    (struct ifnet *)control, l));
 #endif
 		default:
@@ -553,7 +553,7 @@ tcp_usrreq(struct socket *so, int req,
 			break;
 		}
 		m->m_len = 1;
-		*mtod(m, caddr_t) = tp->t_iobc;
+		*mtod(m, char *) = tp->t_iobc;
 		if (((long)nam & MSG_PEEK) == 0)
 			tp->t_oobflags ^= (TCPOOB_HAVEDATA | TCPOOB_HADDATA);
 		break;

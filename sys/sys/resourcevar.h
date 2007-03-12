@@ -1,4 +1,4 @@
-/*	$NetBSD: resourcevar.h,v 1.33 2007/02/09 21:55:37 ad Exp $	*/
+/*	$NetBSD: resourcevar.h,v 1.33.2.1 2007/03/12 06:00:54 rmind Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -50,7 +50,7 @@ struct pstats {
 	struct	itimerval p_timer[3];	/* virtual-time timers */
 
 	struct uprof {			/* profile arguments */
-		caddr_t	pr_base;	/* buffer base */
+		char *	pr_base;	/* buffer base */
 		size_t  pr_size;	/* buffer size */
 		u_long	pr_off;		/* pc offset */
 		u_int   pr_scale;	/* pc scaling */

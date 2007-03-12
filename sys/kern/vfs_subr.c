@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.281.2.1 2007/02/27 16:54:35 yamt Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.281.2.2 2007/03/12 05:58:46 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.281.2.1 2007/02/27 16:54:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.281.2.2 2007/03/12 05:58:46 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -310,7 +310,7 @@ vfs_busy(struct mount *mp, int flags, struct simplelock *interlkp)
 		 */
 		simple_lock(&mp->mnt_slock);
 		mp->mnt_wcnt++;
-		ltsleep((caddr_t)mp, PVFS, "vfs_busy", 0, &mp->mnt_slock);
+		ltsleep((void *)mp, PVFS, "vfs_busy", 0, &mp->mnt_slock);
 		n = --mp->mnt_wcnt;
 		simple_unlock(&mp->mnt_slock);
 		gone = mp->mnt_iflag & IMNT_GONE;
@@ -683,7 +683,7 @@ vwakeup(struct buf *bp)
 			panic("vwakeup: neg numoutput, vp %p", vp);
 		if ((vp->v_flag & VBWAIT) && vp->v_numoutput <= 0) {
 			vp->v_flag &= ~VBWAIT;
-			wakeup((caddr_t)&vp->v_numoutput);
+			wakeup((void *)&vp->v_numoutput);
 		}
 		simple_unlock(&global_v_numoutput_slock);
 	}
@@ -730,7 +730,7 @@ restart:
 		simple_lock(&bp->b_interlock);
 		if (bp->b_flags & B_BUSY) {
 			bp->b_flags |= B_WANTED;
-			error = ltsleep((caddr_t)bp,
+			error = ltsleep((void *)bp,
 				    slpflag | (PRIBIO + 1) | PNORELOCK,
 				    "vinvalbuf", slptimeo, &bp->b_interlock);
 			if (error) {
@@ -749,7 +749,7 @@ restart:
 		simple_lock(&bp->b_interlock);
 		if (bp->b_flags & B_BUSY) {
 			bp->b_flags |= B_WANTED;
-			error = ltsleep((caddr_t)bp,
+			error = ltsleep((void *)bp,
 				    slpflag | (PRIBIO + 1) | PNORELOCK,
 				    "vinvalbuf", slptimeo, &bp->b_interlock);
 			if (error) {
@@ -895,7 +895,7 @@ loop:
 	simple_lock(&global_v_numoutput_slock);
 	while (vp->v_numoutput) {
 		vp->v_flag |= VBWAIT;
-		ltsleep((caddr_t)&vp->v_numoutput, PRIBIO + 1, "vflushbuf", 0,
+		ltsleep((void *)&vp->v_numoutput, PRIBIO + 1, "vflushbuf", 0,
 			&global_v_numoutput_slock);
 	}
 	simple_unlock(&global_v_numoutput_slock);
@@ -1663,7 +1663,7 @@ vclean(struct vnode *vp, int flags, struct lwp *l)
 	if (vp->v_flag & VXWANT) {
 		vp->v_flag &= ~VXWANT;
 		simple_unlock(&vp->v_interlock);
-		wakeup((caddr_t)vp);
+		wakeup((void *)vp);
 	} else
 		simple_unlock(&vp->v_interlock);
 }
@@ -2052,8 +2052,8 @@ again:
 				return (ENOMEM);
 			}
 			simple_unlock(&mntvnode_slock);
-			if ((error = copyout((caddr_t)&vp, bp, VPTRSZ)) ||
-			   (error = copyout((caddr_t)vp, bp + VPTRSZ, VNODESZ)))
+			if ((error = copyout((void *)&vp, bp, VPTRSZ)) ||
+			   (error = copyout((void *)vp, bp + VPTRSZ, VNODESZ)))
 				return (error);
 			bp += VPTRSZ + VNODESZ;
 			simple_lock(&mntvnode_slock);

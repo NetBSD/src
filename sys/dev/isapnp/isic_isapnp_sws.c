@@ -47,7 +47,7 @@
  *		EXPERIMENTAL !!!!
  *		=================
  *
- *	$Id: isic_isapnp_sws.c,v 1.10 2007/01/29 01:52:45 hubertf Exp $
+ *	$Id: isic_isapnp_sws.c,v 1.10.2.1 2007/03/12 05:55:06 rmind Exp $
  *
  *	last edit-date: [Fri Jan  5 11:38:29 2001]
  *
@@ -57,7 +57,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_isapnp_sws.c,v 1.10 2007/01/29 01:52:45 hubertf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_isapnp_sws.c,v 1.10.2.1 2007/03/12 05:55:06 rmind Exp $");
 
 #include "opt_isicpnp.h"
 #ifdef ISICPNP_SEDLBAUER
@@ -302,9 +302,9 @@ isic_attach_sws(struct isa_device *dev)
 	sc->sc_bfifolen = HSCX_FIFO_LEN;
 	dev->id_msize   = 0;
 
-	ISAC_BASE   = (caddr_t) (((u_int) sc->sc_port) + SWS_ISAC);
-	HSCX_A_BASE = (caddr_t) (((u_int) sc->sc_port) + SWS_HSCX0);
-	HSCX_B_BASE = (caddr_t) (((u_int) sc->sc_port) + SWS_HSCX1);
+	ISAC_BASE   = (void *) (((u_int) sc->sc_port) + SWS_ISAC);
+	HSCX_A_BASE = (void *) (((u_int) sc->sc_port) + SWS_HSCX0);
+	HSCX_B_BASE = (void *) (((u_int) sc->sc_port) + SWS_HSCX1);
 
 	/*
 	 * Read HSCX A/B VSTR.  Expected value for the SWS PnP card is

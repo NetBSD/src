@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vfsops.c,v 1.31 2007/01/19 14:49:09 hannken Exp $	*/
+/*	$NetBSD: filecore_vfsops.c,v 1.31.2.1 2007/03/12 05:58:10 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.31 2007/01/19 14:49:09 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.31.2.1 2007/03/12 05:58:10 rmind Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -321,7 +321,8 @@ filecore_mountfs(devvp, mp, l, argp)
 		error = EINVAL;
 		goto out;
 	}
-	fcdr = (struct filecore_disc_record *)(bp->b_data+FILECORE_BB_DISCREC);
+	fcdr = (struct filecore_disc_record *)((char *)(bp->b_data) +
+	    FILECORE_BB_DISCREC);
 	map = ((((8 << fcdr->log2secsize) - fcdr->zone_spare)
 	    * (fcdr->nzones / 2) - 8 * FILECORE_DISCREC_SIZE)
 	    << fcdr->log2bpmb) >> fcdr->log2secsize;
@@ -341,7 +342,7 @@ filecore_mountfs(devvp, mp, l, argp)
 #endif
 	if (error != 0)
 		goto out;
-       	fcdr = (struct filecore_disc_record *)(bp->b_data + 4);
+       	fcdr = (struct filecore_disc_record *)((char *)(bp->b_data) + 4);
 	fcmp = malloc(sizeof *fcmp, M_FILECOREMNT, M_WAITOK);
 	memset(fcmp, 0, sizeof *fcmp);
 	if (fcdr->log2bpmb > fcdr->log2secsize)

@@ -1,4 +1,4 @@
-/*	$NetBSD: uba.c,v 1.74 2006/03/25 04:08:45 thorpej Exp $	   */
+/*	$NetBSD: uba.c,v 1.74.14.1 2007/03/12 05:56:50 rmind Exp $	   */
 /*
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uba.c,v 1.74 2006/03/25 04:08:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uba.c,v 1.74.14.1 2007/03/12 05:56:50 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -302,7 +302,7 @@ ubasearch(struct device *parent, struct cfdata *cf,
 	ua.ua_iot = sc->uh_iot;
 	ua.ua_dmat = sc->uh_dmat;
 
-	if (badaddr((caddr_t)ua.ua_ioh, 2) ||
+	if (badaddr((void *)ua.ua_ioh, 2) ||
 	    (sc->uh_errchk ? (*sc->uh_errchk)(sc):0))
 		goto forgetit;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.97 2005/12/29 14:53:47 tsutsui Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.97.26.1 2007/03/12 06:00:51 rmind Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993
@@ -306,11 +306,11 @@ x(CGD,		17,	"cgd")		/* cryptographic pseudo-disk */ \
 x(VINUM,	18,	"vinum")	/* vinum volume */ \
 x(FLASH,	19,	"flash")	/* flash memory devices */ \
 
-#ifndef OMIT_DKTYPENUMS
+#ifndef _LOCORE
 #define DKTYPE_NUMS(tag, number, name) __CONCAT(DTYPE_,tag=number),
 enum { DKTYPE_DEFN(DKTYPE_NUMS) DKMAXTYPES };
 #undef	DKTYPE_NUMS
-#endif /* OMIT_DKTYPENUMS */
+#endif
 
 #ifdef DKTYPENAMES
 #define	DKTYPE_NAMES(tag, number, name) ARRAY_INIT(number,name),
@@ -350,11 +350,11 @@ x(VINUM,   23, "vinum",      NULL,    NULL)   /* Vinum */ \
 x(UDF,     24, "UDF",        NULL,   "udf")  /* UDF */ \
 x(SYSVBFS, 25, "SysVBFS",    NULL,  "sysvbfs")/* System V boot file system */ \
 
-#ifndef OMIT_FSTYPENUMS
+#ifndef _LOCORE
 #define	FS_TYPENUMS(tag, number, name, fsck, mount) __CONCAT(FS_,tag=number),
 enum { FSTYPE_DEFN(FS_TYPENUMS) FSMAXTYPES };
 #undef	FS_TYPENUMS
-#endif /* OMIT_FSTYPENUMS */
+#endif
 
 #ifdef	FSTYPENAMES
 #define	FS_TYPENAMES(tag, number, name, fsck, mount) ARRAY_INIT(number,name),
@@ -436,6 +436,7 @@ struct disk;
 void	 diskerr(const struct buf *, const char *, const char *, int,
 	    int, const struct disklabel *);
 u_int	 dkcksum(struct disklabel *);
+u_int	 dkcksum_sized(struct disklabel *, size_t);
 int	 setdisklabel(struct disklabel *, struct disklabel *, u_long,
 	    struct cpu_disklabel *);
 const char *readdisklabel(dev_t, void (*)(struct buf *),

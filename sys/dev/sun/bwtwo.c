@@ -1,4 +1,4 @@
-/*	$NetBSD: bwtwo.c,v 1.14 2005/12/11 12:23:56 christos Exp $ */
+/*	$NetBSD: bwtwo.c,v 1.14.26.1 2007/03/12 05:57:11 rmind Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bwtwo.c,v 1.14 2005/12/11 12:23:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bwtwo.c,v 1.14.26.1 2007/03/12 05:57:11 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -232,7 +232,7 @@ int
 bwtwoioctl(dev, cmd, data, flags, l)
 	dev_t dev;
 	u_long cmd;
-	caddr_t data;
+	void *data;
 	int flags;
 	struct lwp *l;
 {

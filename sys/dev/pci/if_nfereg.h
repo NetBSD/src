@@ -1,4 +1,4 @@
-/*	$NetBSD: if_nfereg.h,v 1.3 2007/01/09 10:29:27 tsutsui Exp $	*/
+/*	$NetBSD: if_nfereg.h,v 1.3.2.1 2007/03/12 05:55:20 rmind Exp $	*/
 /*	$OpenBSD: if_nfereg.h,v 1.16 2006/02/22 19:23:44 damien Exp $	*/
 
 /*-
@@ -21,6 +21,9 @@
 
 #define NFE_RX_RING_COUNT	128
 #define NFE_TX_RING_COUNT	64
+
+#define NFE_RX_NEXTDESC(x)	(((x) + 1) & (NFE_RX_RING_COUNT - 1))
+#define NFE_TX_NEXTDESC(x)	(((x) + 1) & (NFE_TX_RING_COUNT - 1))
 
 #define	ETHER_ALIGN		2
 #define NFE_JBYTES		(ETHER_MAX_LEN_JUMBO + ETHER_ALIGN)
@@ -144,9 +147,9 @@
 
 /* Rx/Tx descriptor */
 struct nfe_desc32 {
-	uint32_t	physaddr;
-	uint16_t	length;
-	uint16_t	flags;
+	volatile uint32_t	physaddr;
+	volatile uint16_t	length;
+	volatile uint16_t	flags;
 #define NFE_RX_FIXME_V1		0x6004
 #define NFE_RX_VALID_V1		(1 << 0)
 #define NFE_TX_ERROR_V1		0x7808
@@ -155,12 +158,12 @@ struct nfe_desc32 {
 
 /* V2 Rx/Tx descriptor */
 struct nfe_desc64 {
-	uint32_t	physaddr[2];
-	uint32_t	vtag;
+	volatile uint32_t	physaddr[2];
+	volatile uint32_t	vtag;
 #define NFE_RX_VTAG		(1 << 16)
 #define NFE_TX_VTAG		(1 << 18)
-	uint16_t	length;
-	uint16_t	flags;
+	volatile uint16_t	length;
+	volatile uint16_t	flags;
 #define NFE_RX_FIXME_V2		0x4300
 #define NFE_RX_VALID_V2		(1 << 13)
 #define NFE_RX_IP_CSUMOK	(1 << 12)
@@ -169,7 +172,7 @@ struct nfe_desc64 {
 #define NFE_TX_ERROR_V2		0x5c04
 #define NFE_TX_LASTFRAG_V2	(1 << 13)
 #define NFE_TX_IP_CSUM		(1 << 11)
-#define NFE_TX_TCP_CSUM		(1 << 10)
+#define NFE_TX_TCP_UDP_CSUM	(1 << 10)
 } __packed;
 
 /* flags common to V1/V2 descriptors */

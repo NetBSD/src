@@ -1,4 +1,4 @@
-/*	$NetBSD: ulpt.c,v 1.76 2006/11/16 01:33:27 christos Exp $	*/
+/*	$NetBSD: ulpt.c,v 1.76.4.1 2007/03/12 05:57:32 rmind Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ulpt.c,v 1.24 1999/11/17 22:33:44 n_hibma Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.76 2006/11/16 01:33:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.76.4.1 2007/03/12 05:57:32 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -544,7 +544,7 @@ ulptopen(dev_t dev, int flag, int mode, struct lwp *l)
 		}
 
 		/* wait 1/4 second, give up if we get a signal */
-		error = tsleep((caddr_t)sc, LPTPRI | PCATCH, "ulptop", STEP);
+		error = tsleep((void *)sc, LPTPRI | PCATCH, "ulptop", STEP);
 		if (error != EWOULDBLOCK) {
 			sc->sc_state = 0;
 			goto done;
@@ -833,7 +833,7 @@ ulpt_tick(void *xsc)
 }
 
 int
-ulptioctl(dev_t dev, u_long cmd, caddr_t data,
+ulptioctl(dev_t dev, u_long cmd, void *data,
     int flag, struct lwp *l)
 {
 	return ENODEV;

@@ -1,4 +1,4 @@
-/*	$NetBSD: agp.c,v 1.44 2006/12/18 12:01:48 christos Exp $	*/
+/*	$NetBSD: agp.c,v 1.44.2.1 2007/03/12 05:55:10 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -65,7 +65,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.44 2006/12/18 12:01:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.44.2.1 2007/03/12 05:55:10 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,6 +77,7 @@ __KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.44 2006/12/18 12:01:48 christos Exp $");
 #include <sys/fcntl.h>
 #include <sys/agpio.h>
 #include <sys/proc.h>
+#include <sys/mutex.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -276,10 +277,10 @@ agpattach(struct device *parent, struct device *self, void *aux)
 	sc->as_maxmem = agp_max[i][1] << 20U;
 
 	/*
-	 * The lock is used to prevent re-entry to
+	 * The mutex is used to prevent re-entry to
 	 * agp_generic_bind_memory() since that function can sleep.
 	 */
-	lockinit(&sc->as_lock, PZERO|PCATCH, "agplk", 0, 0);
+	mutex_init(&sc->as_mtx, MUTEX_DRIVER, IPL_NONE);
 
 	TAILQ_INIT(&sc->as_memory);
 
@@ -318,7 +319,7 @@ agp_alloc_gatt(struct agp_softc *sc)
 	u_int32_t apsize = AGP_GET_APERTURE(sc);
 	u_int32_t entries = apsize >> AGP_PAGE_SHIFT;
 	struct agp_gatt *gatt;
-	caddr_t virtual;
+	void *virtual;
 	int dummyseg;
 
 	gatt = malloc(sizeof(struct agp_gatt), M_AGP, M_NOWAIT);
@@ -343,7 +344,7 @@ void
 agp_free_gatt(struct agp_softc *sc, struct agp_gatt *gatt)
 {
 	agp_free_dmamem(sc->as_dmat, gatt->ag_size, gatt->ag_dmamap,
-	    (caddr_t)gatt->ag_virtual, &gatt->ag_dmaseg, 1);
+	    (void *)gatt->ag_virtual, &gatt->ag_dmaseg, 1);
 	free(gatt, M_AGP);
 }
 
@@ -351,7 +352,7 @@ agp_free_gatt(struct agp_softc *sc, struct agp_gatt *gatt)
 int
 agp_generic_detach(struct agp_softc *sc)
 {
-	lockmgr(&sc->as_lock, LK_DRAIN, 0);
+	mutex_destroy(&sc->as_mtx);
 	agp_flush_cache();
 	return 0;
 }
@@ -492,11 +493,11 @@ agp_generic_bind_memory(struct agp_softc *sc, struct agp_memory *mem,
 	bus_addr_t pa;
 	int contigpages, nseg;
 
-	lockmgr(&sc->as_lock, LK_EXCLUSIVE, 0);
+	mutex_enter(&sc->as_mtx);
 
 	if (mem->am_is_bound) {
 		printf("%s: memory already bound\n", sc->as_dev.dv_xname);
-		lockmgr(&sc->as_lock, LK_RELEASE, 0);
+		mutex_exit(&sc->as_mtx);
 		return EINVAL;
 	}
 
@@ -505,7 +506,7 @@ agp_generic_bind_memory(struct agp_softc *sc, struct agp_memory *mem,
 	    || offset + mem->am_size > AGP_GET_APERTURE(sc)) {
 		printf("%s: binding memory at bad offset %#lx\n",
 			      sc->as_dev.dv_xname, (unsigned long) offset);
-		lockmgr(&sc->as_lock, LK_RELEASE, 0);
+		mutex_exit(&sc->as_mtx);
 		return EINVAL;
 	}
 
@@ -528,7 +529,7 @@ agp_generic_bind_memory(struct agp_softc *sc, struct agp_memory *mem,
 		nseg = (mem->am_size / (contigpages * PAGE_SIZE)) + 1;
 		segs = malloc(nseg * sizeof *segs, M_AGP, M_WAITOK);
 		if (segs == NULL) {
-			lockmgr(&sc->as_lock, LK_RELEASE, 0);
+			mutex_exit(&sc->as_mtx);
 			return ENOMEM;
 		}
 		if (bus_dmamem_alloc(sc->as_dmat, mem->am_size, PAGE_SIZE, 0,
@@ -557,7 +558,7 @@ agp_generic_bind_memory(struct agp_softc *sc, struct agp_memory *mem,
 	}
 
 	if (contigpages == 0) {
-		lockmgr(&sc->as_lock, LK_RELEASE, 0);
+		mutex_exit(&sc->as_mtx);
 		return ENOMEM;
 	}
 
@@ -596,7 +597,7 @@ agp_generic_bind_memory(struct agp_softc *sc, struct agp_memory *mem,
 				bus_dmamem_free(sc->as_dmat, mem->am_dmaseg,
 						mem->am_nseg);
 				free(mem->am_dmaseg, M_AGP);
-				lockmgr(&sc->as_lock, LK_RELEASE, 0);
+				mutex_exit(&sc->as_mtx);
 				return error;
 			}
 		}
@@ -617,7 +618,7 @@ agp_generic_bind_memory(struct agp_softc *sc, struct agp_memory *mem,
 	mem->am_offset = offset;
 	mem->am_is_bound = 1;
 
-	lockmgr(&sc->as_lock, LK_RELEASE, 0);
+	mutex_exit(&sc->as_mtx);
 
 	return 0;
 }
@@ -627,11 +628,11 @@ agp_generic_unbind_memory(struct agp_softc *sc, struct agp_memory *mem)
 {
 	int i;
 
-	lockmgr(&sc->as_lock, LK_EXCLUSIVE, 0);
+	mutex_enter(&sc->as_mtx);
 
 	if (!mem->am_is_bound) {
 		printf("%s: memory is not bound\n", sc->as_dev.dv_xname);
-		lockmgr(&sc->as_lock, LK_RELEASE, 0);
+		mutex_exit(&sc->as_mtx);
 		return EINVAL;
 	}
 
@@ -655,7 +656,7 @@ agp_generic_unbind_memory(struct agp_softc *sc, struct agp_memory *mem)
 	mem->am_offset = 0;
 	mem->am_is_bound = 0;
 
-	lockmgr(&sc->as_lock, LK_RELEASE, 0);
+	mutex_exit(&sc->as_mtx);
 
 	return 0;
 }
@@ -834,7 +835,7 @@ agpclose(dev_t dev, int fflag, int devtype,
 }
 
 static int
-agpioctl(dev_t dev, u_long cmd, caddr_t data, int fflag, struct lwp *l)
+agpioctl(dev_t dev, u_long cmd, void *data, int fflag, struct lwp *l)
 {
 	struct agp_softc *sc = device_lookup(&agp_cd, AGPUNIT(dev));
 
@@ -982,7 +983,7 @@ void agp_memory_info(void *dev, void *handle,
 
 int
 agp_alloc_dmamem(bus_dma_tag_t tag, size_t size, int flags,
-		 bus_dmamap_t *mapp, caddr_t *vaddr, bus_addr_t *baddr,
+		 bus_dmamap_t *mapp, void **vaddr, bus_addr_t *baddr,
 		 bus_dma_segment_t *seg, int nseg, int *rseg)
 
 {
@@ -1030,7 +1031,7 @@ out:
 
 void
 agp_free_dmamem(bus_dma_tag_t tag, size_t size, bus_dmamap_t map,
-		caddr_t vaddr, bus_dma_segment_t *seg, int nseg)
+		void *vaddr, bus_dma_segment_t *seg, int nseg)
 {
 
 	bus_dmamap_unload(tag, map);

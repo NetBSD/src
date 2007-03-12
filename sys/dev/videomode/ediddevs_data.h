@@ -1,10 +1,10 @@
-/*	$NetBSD: ediddevs_data.h,v 1.1 2006/05/11 01:49:53 gdamore Exp $	*/
+/*	$NetBSD: ediddevs_data.h,v 1.1.26.1 2007/03/12 05:57:48 rmind Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD
+ *	NetBSD: ediddevs,v 1.1 2006/05/11 01:49:53 gdamore Exp
  */
 
 /*-
@@ -72,6 +72,7 @@ const struct edid_vendor edid_vendors[] = {
 	{ "NEC", EDID_VENDOR_NEC },
 	{ "NOK", EDID_VENDOR_NOK },
 	{ "PHL", EDID_VENDOR_PHL },
+	{ "REL", EDID_VENDOR_REL },
 	{ "SAM", EDID_VENDOR_SAM },
 	{ "SGI", EDID_VENDOR_SGI },
 	{ "SNY", EDID_VENDOR_SNY },
@@ -83,7 +84,7 @@ const struct edid_vendor edid_vendors[] = {
 	{ "VSC", EDID_VENDOR_VSC },
 	{ "ZCM", EDID_VENDOR_ZCM },
 };
-const int edid_nvendors = 43;
+const int edid_nvendors = 44;
 
 const struct edid_product edid_products[] = {
 	{

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.94.2.1 2007/02/27 16:55:03 yamt Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.94.2.2 2007/03/12 05:59:57 rmind Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.94.2.1 2007/02/27 16:55:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.94.2.2 2007/03/12 05:59:57 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -182,6 +182,9 @@ ip6_init()
 	ip6_desync_factor = arc4random() % MAX_TEMP_DESYNC_FACTOR;
 
 	ip6_init2((void *)0);
+#ifdef GATEWAY
+	ip6flow_init();
+#endif
 
 #ifdef PFIL_HOOKS
 	/* Register our Packet Filter hook. */
@@ -298,7 +301,7 @@ ip6_input(struct mbuf *m)
 	 * it.  Otherwise, if it is aligned, make sure the entire base
 	 * IPv6 header is in the first mbuf of the chain.
 	 */
-	if (IP6_HDR_ALIGNED_P(mtod(m, caddr_t)) == 0) {
+	if (IP6_HDR_ALIGNED_P(mtod(m, void *)) == 0) {
 		struct ifnet *inifp = m->m_pkthdr.rcvif;
 		if ((m = m_copyup(m, sizeof(struct ip6_hdr),
 				  (max_linkhdr + 3) & ~3)) == NULL) {
@@ -323,6 +326,17 @@ ip6_input(struct mbuf *m)
 		in6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_hdrerr);
 		goto bad;
 	}
+
+#if defined(IPSEC)
+	/* IPv6 fast forwarding is not compatible with IPsec. */
+	m->m_flags &= ~M_CANFASTFWD;
+#else
+	/*
+	 * Assume that we can create a fast-forward IP flow entry
+	 * based on this packet.
+	 */
+	m->m_flags |= M_CANFASTFWD;
+#endif
 
 #ifdef PFIL_HOOKS
 	/*
@@ -639,7 +653,7 @@ ip6_input(struct mbuf *m)
 			in6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_hdrerr);
 			icmp6_error(m, ICMP6_PARAM_PROB,
 				    ICMP6_PARAMPROB_HEADER,
-				    (caddr_t)&ip6->ip6_plen - (caddr_t)ip6);
+				    (char *)&ip6->ip6_plen - (char *)ip6);
 			return;
 		}
 		IP6_EXTHDR_GET(hbh, struct ip6_hbh *, m, sizeof(struct ip6_hdr),
@@ -936,7 +950,7 @@ ip6_process_hopopts(m, opthead, hbhlen, rtalertp, plenp)
 				return (-1);
 			}
 			optlen = IP6OPT_RTALERT_LEN;
-			bcopy((caddr_t)(opt + 2), (caddr_t)&rtalert_val, 2);
+			bcopy((void *)(opt + 2), (void *)&rtalert_val, 2);
 			*rtalertp = ntohs(rtalert_val);
 			break;
 		case IP6OPT_JUMBO:
@@ -1095,7 +1109,7 @@ ip6_savecontrol(in6p, mp, ip6, m)
 		struct timeval tv;
 
 		microtime(&tv);
-		*mp = sbcreatecontrol((caddr_t) &tv, sizeof(tv),
+		*mp = sbcreatecontrol((void *) &tv, sizeof(tv),
 		    SCM_TIMESTAMP, SOL_SOCKET);
 		if (*mp)
 			mp = &(*mp)->m_next;
@@ -1114,7 +1128,7 @@ ip6_savecontrol(in6p, mp, ip6, m)
 		in6_clearscope(&pi6.ipi6_addr);	/* XXX */
 		pi6.ipi6_ifindex = m->m_pkthdr.rcvif ?
 		    m->m_pkthdr.rcvif->if_index : 0;
-		*mp = sbcreatecontrol((caddr_t) &pi6,
+		*mp = sbcreatecontrol((void *) &pi6,
 		    sizeof(struct in6_pktinfo),
 		    IS2292(IPV6_2292PKTINFO, IPV6_PKTINFO), IPPROTO_IPV6);
 		if (*mp)
@@ -1124,7 +1138,7 @@ ip6_savecontrol(in6p, mp, ip6, m)
 	if (in6p->in6p_flags & IN6P_HOPLIMIT) {
 		int hlim = ip6->ip6_hlim & 0xff;
 
-		*mp = sbcreatecontrol((caddr_t) &hlim, sizeof(int),
+		*mp = sbcreatecontrol((void *) &hlim, sizeof(int),
 		    IS2292(IPV6_2292HOPLIMIT, IPV6_HOPLIMIT), IPPROTO_IPV6);
 		if (*mp)
 			mp = &(*mp)->m_next;
@@ -1138,7 +1152,7 @@ ip6_savecontrol(in6p, mp, ip6, m)
 		flowinfo >>= 20;
 
 		tclass = flowinfo & 0xff;
-		*mp = sbcreatecontrol((caddr_t)&tclass, sizeof(tclass),
+		*mp = sbcreatecontrol((void *)&tclass, sizeof(tclass),
 		    IPV6_TCLASS, IPPROTO_IPV6);
 
 		if (*mp)
@@ -1186,7 +1200,7 @@ ip6_savecontrol(in6p, mp, ip6, m)
 			 * be removed before returning in the RFC 2292.
 			 * Note: this constraint is removed in RFC3542.
 			 */
-			*mp = sbcreatecontrol((caddr_t)hbh, hbhlen,
+			*mp = sbcreatecontrol((void *)hbh, hbhlen,
 			    IS2292(IPV6_2292HOPOPTS, IPV6_HOPOPTS),
 			    IPPROTO_IPV6);
 			if (*mp)
@@ -1248,7 +1262,7 @@ ip6_savecontrol(in6p, mp, ip6, m)
 				if (!in6p->in6p_flags & IN6P_DSTOPTS)
 					break;
 
-				*mp = sbcreatecontrol((caddr_t)ip6e, elen,
+				*mp = sbcreatecontrol((void *)ip6e, elen,
 				    IS2292(IPV6_2292DSTOPTS, IPV6_DSTOPTS),
 				    IPPROTO_IPV6);
 				if (*mp)
@@ -1259,7 +1273,7 @@ ip6_savecontrol(in6p, mp, ip6, m)
 				if (!in6p->in6p_flags & IN6P_RTHDR)
 					break;
 
-				*mp = sbcreatecontrol((caddr_t)ip6e, elen,
+				*mp = sbcreatecontrol((void *)ip6e, elen,
 				    IS2292(IPV6_2292RTHDR, IPV6_RTHDR),
 				    IPPROTO_IPV6);
 				if (*mp)
@@ -1320,7 +1334,7 @@ ip6_notify_pmtu(struct in6pcb *in6p, const struct sockaddr_in6 *dst,
 	if (sa6_recoverscope(&mtuctl.ip6m_addr))
 		return;
 
-	if ((m_mtu = sbcreatecontrol((caddr_t)&mtuctl, sizeof(mtuctl),
+	if ((m_mtu = sbcreatecontrol((void *)&mtuctl, sizeof(mtuctl),
 	    IPV6_PATHMTU, IPPROTO_IPV6)) == NULL)
 		return;
 
@@ -1360,7 +1374,7 @@ ip6_pullexthdr(m, off, nxt)
 	}
 #endif
 
-	m_copydata(m, off, sizeof(ip6e), (caddr_t)&ip6e);
+	m_copydata(m, off, sizeof(ip6e), (void *)&ip6e);
 	if (nxt == IPPROTO_AH)
 		elen = (ip6e.ip6e_len + 2) << 2;
 	else
@@ -1383,7 +1397,7 @@ ip6_pullexthdr(m, off, nxt)
 		return NULL;
 	}
 
-	m_copydata(m, off, elen, mtod(n, caddr_t));
+	m_copydata(m, off, elen, mtod(n, void *));
 	n->m_len = elen;
 	return n;
 }
@@ -1416,7 +1430,7 @@ ip6_get_prevhdr(m, off)
 		nxt = ip6->ip6_nxt;
 		len = sizeof(struct ip6_hdr);
 		while (len < off) {
-			ip6e = (struct ip6_ext *)(mtod(m, caddr_t) + len);
+			ip6e = (struct ip6_ext *)(mtod(m, char *) + len);
 
 			switch (nxt) {
 			case IPPROTO_FRAGMENT:
@@ -1465,7 +1479,7 @@ ip6_nexthdr(m, off, proto, nxtp)
 			return -1;
 		if (m->m_pkthdr.len < off + sizeof(ip6))
 			return -1;
-		m_copydata(m, off, sizeof(ip6), (caddr_t)&ip6);
+		m_copydata(m, off, sizeof(ip6), (void *)&ip6);
 		if (nxtp)
 			*nxtp = ip6.ip6_nxt;
 		off += sizeof(ip6);
@@ -1478,7 +1492,7 @@ ip6_nexthdr(m, off, proto, nxtp)
 		 */
 		if (m->m_pkthdr.len < off + sizeof(fh))
 			return -1;
-		m_copydata(m, off, sizeof(fh), (caddr_t)&fh);
+		m_copydata(m, off, sizeof(fh), (void *)&fh);
 		if ((fh.ip6f_offlg & IP6F_OFF_MASK) != 0)
 			return -1;
 		if (nxtp)
@@ -1489,7 +1503,7 @@ ip6_nexthdr(m, off, proto, nxtp)
 	case IPPROTO_AH:
 		if (m->m_pkthdr.len < off + sizeof(ip6e))
 			return -1;
-		m_copydata(m, off, sizeof(ip6e), (caddr_t)&ip6e);
+		m_copydata(m, off, sizeof(ip6e), (void *)&ip6e);
 		if (nxtp)
 			*nxtp = ip6e.ip6e_nxt;
 		off += (ip6e.ip6e_len + 2) << 2;
@@ -1502,7 +1516,7 @@ ip6_nexthdr(m, off, proto, nxtp)
 	case IPPROTO_DSTOPTS:
 		if (m->m_pkthdr.len < off + sizeof(ip6e))
 			return -1;
-		m_copydata(m, off, sizeof(ip6e), (caddr_t)&ip6e);
+		m_copydata(m, off, sizeof(ip6e), (void *)&ip6e);
 		if (nxtp)
 			*nxtp = ip6e.ip6e_nxt;
 		off += (ip6e.ip6e_len + 1) << 3;
@@ -1590,6 +1604,28 @@ ip6_delaux(m)
 	if (mtag)
 		m_tag_delete(m, mtag);
 }
+
+#ifdef GATEWAY
+/* 
+ * sysctl helper routine for net.inet.ip6.maxflows. Since
+ * we could reduce this value, call ip6flow_reap();
+ */
+static int
+sysctl_net_inet_ip6_maxflows(SYSCTLFN_ARGS)
+{  
+        int s;
+  
+        s = sysctl_lookup(SYSCTLFN_CALL(rnode));
+        if (s)
+                return (s);
+ 
+        s = splsoftnet();
+        ip6flow_reap(0);
+        splx(s);
+ 
+        return (0);
+}
+#endif /* GATEWAY */
 
 /*
  * System control for IP6
@@ -1874,4 +1910,13 @@ SYSCTL_SETUP(sysctl_net_inet6_ip6_setup, "sysctl net.inet6.ip6 subtree setup")
 		       NULL, 0, &ip6_mcast_pmtu, 0,
 		       CTL_NET, PF_INET6, IPPROTO_IPV6,
 		       CTL_CREATE, CTL_EOL);
+#ifdef GATEWAY 
+	sysctl_createv(clog, 0, NULL, NULL,
+			CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+			CTLTYPE_INT, "maxflows",
+			SYSCTL_DESCR("Number of flows for fast forwarding (IPv6)"),
+			sysctl_net_inet_ip6_maxflows, 0, &ip6_maxflows, 0,
+			CTL_NET, PF_INET6, IPPROTO_IPV6,
+			CTL_CREATE, CTL_EOL);
+#endif
 }

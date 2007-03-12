@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_lookup.c,v 1.7 2006/11/16 01:33:34 christos Exp $	*/
+/*	$NetBSD: ip_lookup.c,v 1.7.4.1 2007/03/12 05:57:55 rmind Exp $	*/
 
 /*
  * Copyright (C) 2002-2003 by Darren Reed.
@@ -74,12 +74,12 @@ static const char rcsid[] = "@(#)Id: ip_lookup.c,v 2.35.2.8 2005/11/13 15:35:45 
 #ifdef	IPFILTER_LOOKUP
 int	ip_lookup_inited = 0;
 
-static int iplookup_addnode __P((caddr_t));
-static int iplookup_delnode __P((caddr_t data));
-static int iplookup_addtable __P((caddr_t));
-static int iplookup_deltable __P((caddr_t));
-static int iplookup_stats __P((caddr_t));
-static int iplookup_flush __P((caddr_t));
+static int iplookup_addnode __P((void *));
+static int iplookup_delnode __P((void *data));
+static int iplookup_addtable __P((void *));
+static int iplookup_deltable __P((void *));
+static int iplookup_stats __P((void *));
+static int iplookup_flush __P((void *));
 
 
 /* ------------------------------------------------------------------------ */
@@ -137,7 +137,7 @@ void ip_lookup_unload()
 /* command.                                                                 */
 /* ------------------------------------------------------------------------ */
 int ip_lookup_ioctl(
-caddr_t data,
+void *data,
 ioctlcmd_t cmd,
 int mode
 )
@@ -209,7 +209,7 @@ int mode
 /* add a node to it.                                                        */
 /* ------------------------------------------------------------------------ */
 static int iplookup_addnode(data)
-caddr_t data;
+void *data;
 {
 	ip_pool_node_t node, *m;
 	iplookupop_t op;
@@ -279,7 +279,7 @@ caddr_t data;
 /* in and then deleting the entry that gets found.                          */
 /* ------------------------------------------------------------------------ */
 static int iplookup_delnode(data)
-caddr_t data;
+void *data;
 {
 	ip_pool_node_t node, *m;
 	iplookupop_t op;
@@ -344,7 +344,7 @@ caddr_t data;
 /* for this one.                                                            */
 /* ------------------------------------------------------------------------ */
 static int iplookup_addtable(data)
-caddr_t data;
+void *data;
 {
 	iplookupop_t op;
 	int err;
@@ -396,7 +396,7 @@ caddr_t data;
 /* calls the relevant function to do the cleanup.                           */
 /* ------------------------------------------------------------------------ */
 static int iplookup_deltable(data)
-caddr_t data;
+void *data;
 {
 	iplookupop_t op;
 	int err;
@@ -437,7 +437,7 @@ caddr_t data;
 /* Copy statistical information from inside the kernel back to user space.  */
 /* ------------------------------------------------------------------------ */
 static int iplookup_stats(data)
-caddr_t data;
+void *data;
 {
 	iplookupop_t op;
 	int err;
@@ -472,7 +472,7 @@ caddr_t data;
 /* entry in the hash table/pool or want to remove all groups from those.    */
 /* ------------------------------------------------------------------------ */
 static int iplookup_flush(data)
-caddr_t data;
+void *data;
 {
 	int err, unit, num, type;
 	iplookupflush_t flush;
@@ -534,7 +534,7 @@ void *ptr;
 
 /*ARGSUSED*/
 int ip_lookup_ioctl(data, cmd, mode)
-caddr_t data;
+void *data;
 ioctlcmd_t cmd;
 int mode;
 {

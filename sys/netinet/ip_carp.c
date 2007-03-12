@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_carp.c,v 1.10.4.1 2007/02/27 16:54:54 yamt Exp $	*/
+/*	$NetBSD: ip_carp.c,v 1.10.4.2 2007/03/12 05:59:37 rmind Exp $	*/
 /*	$OpenBSD: ip_carp.c,v 1.113 2005/11/04 08:11:54 mcbride Exp $	*/
 
 /*
@@ -186,7 +186,7 @@ void	carp_send_ad_all(void);
 void	carp_send_ad(void *);
 void	carp_send_arp(struct carp_softc *);
 void	carp_master_down(void *);
-int	carp_ioctl(struct ifnet *, u_long, caddr_t);
+int	carp_ioctl(struct ifnet *, u_long, void *);
 void	carp_start(struct ifnet *);
 void	carp_setrun(struct carp_softc *, sa_family_t);
 void	carp_set_state(struct carp_softc *, int);
@@ -1533,7 +1533,7 @@ carp_set_ifp(struct carp_softc *sc, struct ifnet *ifp)
 
 		/* attach carp interface to physical interface */
 		if (ncif != NULL)
-			ifp->if_carp = (caddr_t)ncif;
+			ifp->if_carp = (void *)ncif;
 		sc->sc_carpdev = ifp;
 		cif = (struct carp_if *)ifp->if_carp;
 		TAILQ_FOREACH(vr, &cif->vhif_vrs, sc_list) {
@@ -1835,7 +1835,7 @@ carp_join_multicast6(struct carp_softc *sc)
 #endif /* INET6 */
 
 int
-carp_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr)
+carp_ioctl(struct ifnet *ifp, u_long cmd, void *addr)
 {
 	struct lwp *l = curlwp;		/* XXX */
 	struct carp_softc *sc = ifp->if_softc, *vr;
@@ -2120,7 +2120,7 @@ carp_ether_addmulti(struct carp_softc *sc, struct ifreq *ifr)
 	memcpy(&mc->mc_addr, &ifr->ifr_addr, ifr->ifr_addr.sa_len);
 	LIST_INSERT_HEAD(&sc->carp_mc_listhead, mc, mc_entries);
 
-	error = (*ifp->if_ioctl)(ifp, SIOCADDMULTI, (caddr_t)ifr);
+	error = (*ifp->if_ioctl)(ifp, SIOCADDMULTI, (void *)ifr);
 	if (error != 0)
 		goto ioctl_failed;
 
@@ -2171,7 +2171,7 @@ carp_ether_delmulti(struct carp_softc *sc, struct ifreq *ifr)
 		return (error);
 
 	/* We no longer use this multicast address.  Tell parent so. */
-	error = (*ifp->if_ioctl)(ifp, SIOCDELMULTI, (caddr_t)ifr);
+	error = (*ifp->if_ioctl)(ifp, SIOCDELMULTI, (void *)ifr);
 	if (error == 0) {
 		/* And forget about this address. */
 		LIST_REMOVE(mc, mc_entries);
@@ -2205,7 +2205,7 @@ carp_ether_purgemulti(struct carp_softc *sc)
 	memcpy(ifr->ifr_name, ifp->if_xname, IFNAMSIZ);
 	while ((mc = LIST_FIRST(&sc->carp_mc_listhead)) != NULL) {
 		memcpy(&ifr->ifr_addr, &mc->mc_addr, mc->mc_addr.ss_len);
-		(void)(*ifp->if_ioctl)(ifp, SIOCDELMULTI, (caddr_t)ifr);
+		(void)(*ifp->if_ioctl)(ifp, SIOCDELMULTI, (void *)ifr);
 		LIST_REMOVE(mc, mc_entries);
 		FREE(mc, M_DEVBUF);
 	}

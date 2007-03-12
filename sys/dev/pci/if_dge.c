@@ -1,4 +1,4 @@
-/*	$NetBSD: if_dge.c,v 1.14 2006/11/16 01:33:08 christos Exp $ */
+/*	$NetBSD: if_dge.c,v 1.14.4.1 2007/03/12 05:55:17 rmind Exp $ */
 
 /*
  * Copyright (c) 2004, SUNET, Swedish University Computer Network.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.14 2006/11/16 01:33:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.14.4.1 2007/03/12 05:55:17 rmind Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -343,7 +343,7 @@ struct dge_softc {
 	rndsource_element_t rnd_source; /* random source */
 #endif
 #ifdef DGE_OFFBYONE_RXBUG
-	caddr_t sc_bugbuf;
+	void *sc_bugbuf;
 	SLIST_HEAD(, rxbugentry) sc_buglist;
 	bus_dmamap_t sc_bugmap;
 	struct rxbugentry *sc_entry;
@@ -483,7 +483,7 @@ struct rxbugentry {
 static int
 dge_alloc_rcvmem(struct dge_softc *sc)
 {
-	caddr_t	ptr, kva;
+	char *ptr, *kva;
 	bus_dma_segment_t seg;
 	int i, rseg, state, error;
 	struct rxbugentry *entry;
@@ -497,7 +497,7 @@ dge_alloc_rcvmem(struct dge_softc *sc)
 	}
 
 	state = 1;
-	if (bus_dmamem_map(sc->sc_dmat, &seg, rseg, DGE_RXMEM, &kva,
+	if (bus_dmamem_map(sc->sc_dmat, &seg, rseg, DGE_RXMEM, (void **)&kva,
 	    BUS_DMA_NOWAIT)) {
 		printf("%s: can't map DMA buffers (%d bytes)\n",
 		    sc->sc_dev.dv_xname, (int)DGE_RXMEM);
@@ -522,7 +522,7 @@ dge_alloc_rcvmem(struct dge_softc *sc)
 	}
 
 	state = 4;
-	sc->sc_bugbuf = (caddr_t)kva;
+	sc->sc_bugbuf = (void *)kva;
 	SLIST_INIT(&sc->sc_buglist);
 
 	/*
@@ -576,14 +576,14 @@ dge_getbuf(struct dge_softc *sc)
 	}
 
 	SLIST_REMOVE_HEAD(&sc->sc_buglist, rb_entry);
-	return sc->sc_bugbuf + entry->rb_slot * DGE_BUFFER_SIZE;
+	return (char *)sc->sc_bugbuf + entry->rb_slot * DGE_BUFFER_SIZE;
 }
 
 /*
  * Release a jumbo buffer.
  */
 static void
-dge_freebuf(struct mbuf *m, caddr_t buf, size_t size, void *arg)
+dge_freebuf(struct mbuf *m, void *buf, size_t size, void *arg)
 {
 	struct rxbugentry *entry;
 	struct dge_softc *sc;
@@ -597,7 +597,7 @@ dge_freebuf(struct mbuf *m, caddr_t buf, size_t size, void *arg)
 
 	/* calculate the slot this buffer belongs to */
 
-	i = (buf - sc->sc_bugbuf) / DGE_BUFFER_SIZE;
+	i = ((char *)buf - (char *)sc->sc_bugbuf) / DGE_BUFFER_SIZE;
 
 	if ((i < 0) || (i >= DGE_NBUFFERS))
 		panic("dge_freebuf: asked to free buffer %d!", i);
@@ -614,7 +614,7 @@ dge_freebuf(struct mbuf *m, caddr_t buf, size_t size, void *arg)
 
 static void	dge_start(struct ifnet *);
 static void	dge_watchdog(struct ifnet *);
-static int	dge_ioctl(struct ifnet *, u_long, caddr_t);
+static int	dge_ioctl(struct ifnet *, u_long, void *);
 static int	dge_init(struct ifnet *);
 static void	dge_stop(struct ifnet *, int);
 
@@ -774,7 +774,7 @@ dge_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	if ((error = bus_dmamem_map(sc->sc_dmat, &seg, rseg,
-	    sizeof(struct dge_control_data), (caddr_t *)&sc->sc_control_data,
+	    sizeof(struct dge_control_data), (void **)&sc->sc_control_data,
 	    0)) != 0) {
 		aprint_error("%s: unable to map control data, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
@@ -993,7 +993,7 @@ dge_attach(struct device *parent, struct device *self, void *aux)
  fail_3:
 	bus_dmamap_destroy(sc->sc_dmat, sc->sc_cddmamap);
  fail_2:
-	bus_dmamem_unmap(sc->sc_dmat, (caddr_t)sc->sc_control_data,
+	bus_dmamem_unmap(sc->sc_dmat, (void *)sc->sc_control_data,
 	    sizeof(struct dge_control_data));
  fail_1:
 	bus_dmamem_free(sc->sc_dmat, &seg, rseg);
@@ -1406,7 +1406,7 @@ dge_watchdog(struct ifnet *ifp)
  *	Handle control requests from the operator.
  */
 static int
-dge_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
+dge_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct dge_softc *sc = ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *) data;
@@ -2106,7 +2106,7 @@ dge_add_rxbuf(struct dge_softc *sc, int idx)
 	struct mbuf *m;
 	int error;
 #ifdef DGE_OFFBYONE_RXBUG
-	caddr_t buf;
+	void *buf;
 #endif
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA);

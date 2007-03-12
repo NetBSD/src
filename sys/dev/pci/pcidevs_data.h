@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.867 2007/02/16 01:35:53 markd Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.867.2.1 2007/03/12 05:55:25 rmind Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.868 2007/02/16 01:35:04 markd Exp
+ *	NetBSD: pcidevs,v 1.872 2007/03/10 21:08:16 christos Exp
  */
 
 /*
@@ -3008,6 +3008,10 @@ static const struct pci_product pci_products[] = {
 	    "Dell PERC 3/QC",
 	},
 	{
+	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_HP_M110_G2,
+	    "HP M110 G2 / ASR-2610SA",
+	},
+	{
 	    PCI_VENDOR_ADDTRON, PCI_PRODUCT_ADDTRON_8139,
 	    "8139 Ethernet",
 	},
@@ -4404,6 +4408,14 @@ static const struct pci_product pci_products[] = {
 	    "Radeon X700 Pro Secondary",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X1300,
+	    "Radeon X1300 Series (RV515)",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X1300_S,
+	    "Radeon X1300 Series (RV515) Secondary",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RS300_7834,
 	    "Radeon 9100 PRO IGP",
 	},
@@ -5382,6 +5394,22 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_CONEXANT, PCI_PRODUCT_CONEXANT_LANFINITY,
 	    "LANfinity MiniPCI 10/100 Ethernet",
+	},
+	{
+	    PCI_VENDOR_CONEXANT, PCI_PRODUCT_CONEXANT_CX2388X,
+	    "CX23880/1/2/3 PCI Video/Audio Decoder",
+	},
+	{
+	    PCI_VENDOR_CONEXANT, PCI_PRODUCT_CONEXANT_CX2388XAUDIO,
+	    "CX23880/1/2/3 PCI Audio Port",
+	},
+	{
+	    PCI_VENDOR_CONEXANT, PCI_PRODUCT_CONEXANT_CX2388XMPEG,
+	    "CX23880/1/2/3 PCI MPEG Port",
+	},
+	{
+	    PCI_VENDOR_CONEXANT, PCI_PRODUCT_CONEXANT_CX2388XIR,
+	    "CX23880/1/2/3 PCI IR Port",
 	},
 	{
 	    PCI_VENDOR_CONTAQ, PCI_PRODUCT_CONTAQ_82C599,
@@ -10196,6 +10224,10 @@ static const struct pci_product pci_products[] = {
 	    "HD-2000 HDTV video capture",
 	},
 	{
+	    PCI_VENDOR_PCHDTV, PCI_PRODUCT_PCHDTV_HD5500,
+	    "HD-5500 HDTV video capture",
+	},
+	{
 	    PCI_VENDOR_PCTECH, PCI_PRODUCT_PCTECH_RZ1000,
 	    "RZ1000",
 	},
@@ -12800,4 +12832,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2606;
+const int pci_nproducts = 2614;

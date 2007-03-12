@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_var.h,v 1.37.14.1 2007/02/27 16:55:03 yamt Exp $	*/
+/*	$NetBSD: ip6_var.h,v 1.37.14.2 2007/03/12 05:59:58 rmind Exp $	*/
 /*	$KAME: ip6_var.h,v 1.33 2000/06/11 14:59:20 jinmei Exp $	*/
 
 /*
@@ -213,6 +213,29 @@ struct	ip6stat {
 
 	u_quad_t ip6s_forward_cachehit;
 	u_quad_t ip6s_forward_cachemiss;
+
+	u_quad_t ip6s_fastforward;      /* packets fast forwarded */ 
+	u_quad_t ip6s_fastforwardflows; /* number of fast forward flows*/
+};
+
+#define IP6FLOW_HASHBITS         6 /* should not be a multiple of 8 */
+
+/* 
+ * Structure for an IPv6 flow (ip6_fastforward).
+ */
+struct ip6flow {
+	LIST_ENTRY(ip6flow) ip6f_list;  /* next in active list */
+	LIST_ENTRY(ip6flow) ip6f_hash;  /* next ip6flow in bucket */
+	struct in6_addr ip6f_dst;       /* destination address */
+	struct in6_addr ip6f_src;       /* source address */
+	struct route_in6 ip6f_ro;       /* associated route entry */
+	u_int32_t ip6f_flow;		/* flow (tos) */
+	u_quad_t ip6f_uses;               /* number of uses in this period */
+	u_quad_t ip6f_last_uses;          /* number of uses in last period */
+	u_quad_t ip6f_dropped;            /* ENOBUFS returned by if_output */
+	u_quad_t ip6f_forwarded;          /* packets forwarded */
+	u_int ip6f_timer;               /* lifetime timer */
+	time_t ip6f_start;              /* creation time */
 };
 
 #ifdef _KERNEL
@@ -277,6 +300,10 @@ extern int	ip6_prefer_tempaddr; /* whether to prefer temporary addresses
 extern int	ip6_use_defzone; /* whether to use the default scope zone
 				    when unspecified */
 
+#ifdef GATEWAY
+extern int      ip6_maxflows;           /* maximum amount of flows for ip6ff */
+#endif
+
 struct in6pcb;
 
 int	icmp6_ctloutput(int, struct socket *, int, int, struct mbuf **);
@@ -328,6 +355,12 @@ void	frag6_init(void);
 int	frag6_input(struct mbuf **, int *, int);
 void	frag6_slowtimo(void);
 void	frag6_drain(void);
+
+void    ip6flow_init(void);
+struct  ip6flow *ip6flow_reap(int);
+void    ip6flow_create(const struct route_in6 *, struct mbuf *);
+void    ip6flow_slowtimo(void);
+void    ip6flow_invalidate_all(void);
 
 void	rip6_init(void);
 int	rip6_input(struct mbuf **, int *, int);

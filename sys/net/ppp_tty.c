@@ -1,4 +1,4 @@
-/*	$NetBSD: ppp_tty.c,v 1.46 2007/01/04 19:07:03 elad Exp $	*/
+/*	$NetBSD: ppp_tty.c,v 1.46.2.1 2007/03/12 05:59:15 rmind Exp $	*/
 /*	Id: ppp_tty.c,v 1.3 1996/07/01 01:04:11 paulus Exp 	*/
 
 /*
@@ -93,7 +93,7 @@
 /* from NetBSD: if_ppp.c,v 1.15.2.2 1994/07/28 05:17:58 cgd Exp */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppp_tty.c,v 1.46 2007/01/04 19:07:03 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppp_tty.c,v 1.46.2.1 2007/03/12 05:59:15 rmind Exp $");
 
 #include "ppp.h"
 
@@ -137,7 +137,7 @@ static int	pppopen(dev_t dev, struct tty *tp);
 static int	pppclose(struct tty *tp, int flag);
 static int	pppread(struct tty *tp, struct uio *uio, int flag);
 static int	pppwrite(struct tty *tp, struct uio *uio, int flag);
-static int	ppptioctl(struct tty *tp, u_long cmd, caddr_t data, int flag,
+static int	ppptioctl(struct tty *tp, u_long cmd, void *data, int flag,
 			  struct lwp *);
 static int	pppinput(int c, struct tty *tp);
 static int	pppstart(struct tty *tp);
@@ -250,7 +250,7 @@ pppopen(dev_t dev, struct tty *tp)
     sc->sc_if.if_flags |= IFF_RUNNING;
     sc->sc_if.if_baudrate = tp->t_ospeed;
 
-    tp->t_sc = (caddr_t) sc;
+    tp->t_sc = (void *) sc;
     ttyflush(tp, FREAD | FWRITE);
 
     splx(s);
@@ -349,7 +349,7 @@ pppread(struct tty *tp, struct uio *uio, int flag)
 	    splx(s);
 	    return (EWOULDBLOCK);
 	}
-	error = ttysleep(tp, (caddr_t)&tp->t_rawq, TTIPRI|PCATCH, ttyin, 0);
+	error = ttysleep(tp, (void *)&tp->t_rawq, TTIPRI|PCATCH, ttyin, 0);
 	if (error) {
 	    splx(s);
 	    return error;
@@ -436,7 +436,7 @@ pppwrite(struct tty *tp, struct uio *uio, int flag)
  */
 /* ARGSUSED */
 static int
-ppptioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct lwp *l)
+ppptioctl(struct tty *tp, u_long cmd, void *data, int flag, struct lwp *l)
 {
     struct ppp_softc *sc = (struct ppp_softc *) tp->t_sc;
     int error, s;
@@ -678,7 +678,7 @@ pppsyncstart(struct ppp_softc *sc)
 		/* call device driver IOCTL to transmit a frame */
 		cdev = cdevsw_lookup(tp->t_dev);
 		if (cdev == NULL ||
-		    (*cdev->d_ioctl)(tp->t_dev, TIOCXMTFRAME, (caddr_t)&m,
+		    (*cdev->d_ioctl)(tp->t_dev, TIOCXMTFRAME, (void *)&m,
 				     0, 0)) {
 			/* busy or error, set as current packet */
 			sc->sc_outm = m;

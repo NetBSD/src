@@ -1,4 +1,4 @@
-/*	$NetBSD: ofcons.c,v 1.29 2006/10/01 19:28:44 elad Exp $	*/
+/*	$NetBSD: ofcons.c,v 1.29.4.1 2007/03/12 05:55:09 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofcons.c,v 1.29 2006/10/01 19:28:44 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofcons.c,v 1.29.4.1 2007/03/12 05:55:09 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -214,7 +214,7 @@ int
 ofcons_ioctl(dev, cmd, data, flag, l)
 	dev_t dev;
 	u_long cmd;
-	caddr_t data;
+	void *data;
 	int flag;
 	struct lwp *l;
 {

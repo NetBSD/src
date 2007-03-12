@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_subr.c,v 1.76.2.1 2007/02/27 16:54:37 yamt Exp $	*/
+/*	$NetBSD: procfs_subr.c,v 1.76.2.2 2007/03/12 05:59:08 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.76.2.1 2007/02/27 16:54:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.76.2.2 2007/03/12 05:59:08 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -578,6 +578,8 @@ void
 procfs_hashdone()
 {
 	hashdone(pfs_hashtbl, M_UFSMNT);
+	mutex_destroy(&pfs_hashlock);
+	mutex_destroy(&pfs_ihash_lock);
 }
 
 struct vnode *
@@ -668,7 +670,7 @@ procfs_proc_lock(int pid, struct proc **bunghole, int notfound)
 	struct proc *tp;
 	int error = 0;
 
-	rw_enter(&proclist_lock, RW_READER);
+	mutex_enter(&proclist_lock);
 
 	if (pid == 0)
 		tp = &proc0;
@@ -681,7 +683,7 @@ procfs_proc_lock(int pid, struct proc **bunghole, int notfound)
 		mutex_exit(&tp->p_mutex);
 	}
 
-	rw_exit(&proclist_lock);
+	mutex_exit(&proclist_lock);
 
 	*bunghole = tp;
 	return error;

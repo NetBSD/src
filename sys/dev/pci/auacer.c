@@ -1,4 +1,4 @@
-/*	$NetBSD: auacer.c,v 1.15 2006/11/16 01:33:08 christos Exp $	*/
+/*	$NetBSD: auacer.c,v 1.15.4.1 2007/03/12 05:55:10 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auacer.c,v 1.15 2006/11/16 01:33:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auacer.c,v 1.15.4.1 2007/03/12 05:55:10 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,7 +79,7 @@ __KERNEL_RCSID(0, "$NetBSD: auacer.c,v 1.15 2006/11/16 01:33:08 christos Exp $")
 
 struct auacer_dma {
 	bus_dmamap_t map;
-	caddr_t addr;
+	void *addr;
 	bus_dma_segment_t segs[1];
 	int nsegs;
 	size_t size;
@@ -994,7 +994,7 @@ auacer_alloc_cdata(struct auacer_softc *sc)
 
 	if ((error = bus_dmamem_map(sc->dmat, &seg, rseg,
 				    sizeof(struct auacer_cdata),
-				    (caddr_t *) &sc->sc_cdata,
+				    (void **) &sc->sc_cdata,
 				    sc->sc_dmamap_flags)) != 0) {
 		printf("%s: unable to map control data, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
@@ -1022,7 +1022,7 @@ auacer_alloc_cdata(struct auacer_softc *sc)
  fail_3:
 	bus_dmamap_destroy(sc->dmat, sc->sc_cddmamap);
  fail_2:
-	bus_dmamem_unmap(sc->dmat, (caddr_t) sc->sc_cdata,
+	bus_dmamem_unmap(sc->dmat, (void *) sc->sc_cdata,
 	    sizeof(struct auacer_cdata));
  fail_1:
 	bus_dmamem_free(sc->dmat, &seg, rseg);

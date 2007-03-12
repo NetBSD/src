@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_script.c,v 1.54.2.1 2007/02/27 16:54:16 yamt Exp $	*/
+/*	$NetBSD: exec_script.c,v 1.54.2.2 2007/03/12 05:58:31 rmind Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_script.c,v 1.54.2.1 2007/02/27 16:54:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_script.c,v 1.54.2.2 2007/03/12 05:58:31 rmind Exp $");
 
 #if defined(SETUIDSCRIPTS) && !defined(FDSCRIPTS)
 #define FDSCRIPTS		/* Need this for safe set-id scripts. */
@@ -203,7 +203,7 @@ check_shell:
 		epp->ep_flags |= EXEC_HASFD;
 		fp->f_type = DTYPE_VNODE;
 		fp->f_ops = &vnops;
-		fp->f_data = (caddr_t) epp->ep_vp;
+		fp->f_data = (void *) epp->ep_vp;
 		fp->f_flag = FREAD;
 		FILE_SET_MATURE(fp);
 		FILE_UNUSE(fp, l);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.177.2.2 2007/02/27 16:54:56 yamt Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.177.2.3 2007/03/12 05:59:38 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.177.2.2 2007/02/27 16:54:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.177.2.3 2007/03/12 05:59:38 rmind Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_inet.h"
@@ -1130,9 +1130,9 @@ in_delayed_cksum(struct mbuf *m)
 		printf("in_delayed_cksum: pullup len %d off %d proto %d\n",
 		    m->m_len, offset, ip->ip_p);
 		 */
-		m_copyback(m, offset, sizeof(csum), (caddr_t) &csum);
+		m_copyback(m, offset, sizeof(csum), (void *) &csum);
 	} else
-		*(u_int16_t *)(mtod(m, caddr_t) + offset) = csum;
+		*(u_int16_t *)(mtod(m, char *) + offset) = csum;
 }
 
 /*
@@ -1182,15 +1182,15 @@ ip_insertoptions(struct mbuf *m, struct mbuf *opt, int *phlen)
 		m = n;
 		m->m_len = optlen + sizeof(struct ip);
 		m->m_data += max_linkhdr;
-		bcopy((caddr_t)ip, mtod(m, caddr_t), sizeof(struct ip));
+		bcopy((void *)ip, mtod(m, void *), sizeof(struct ip));
 	} else {
 		m->m_data -= optlen;
 		m->m_len += optlen;
-		memmove(mtod(m, caddr_t), ip, sizeof(struct ip));
+		memmove(mtod(m, void *), ip, sizeof(struct ip));
 	}
 	m->m_pkthdr.len += optlen;
 	ip = mtod(m, struct ip *);
-	bcopy((caddr_t)p->ipopt_list, (caddr_t)(ip + 1), (unsigned)optlen);
+	bcopy((void *)p->ipopt_list, (void *)(ip + 1), (unsigned)optlen);
 	*phlen = sizeof(struct ip) + optlen;
 	ip->ip_len = htons(ntohs(ip->ip_len) + optlen);
 	return (m);
@@ -1232,7 +1232,7 @@ ip_optcopy(struct ip *ip, struct ip *jp)
 		if (optlen > cnt)
 			optlen = cnt;
 		if (IPOPT_COPIED(opt)) {
-			bcopy((caddr_t)cp, (caddr_t)dp, (unsigned)optlen);
+			bcopy((void *)cp, (void *)dp, (unsigned)optlen);
 			dp += optlen;
 		}
 	}
@@ -1352,7 +1352,7 @@ ip_ctloutput(int op, struct socket *so, int level, int optname,
 #if defined(IPSEC) || defined(FAST_IPSEC)
 		case IP_IPSEC_POLICY:
 		{
-			caddr_t req = NULL;
+			void *req = NULL;
 			size_t len = 0;
 			int priv = 0;
 
@@ -1366,7 +1366,7 @@ ip_ctloutput(int op, struct socket *so, int level, int optname,
 			priv = (in6p->in6p_socket->so_state & SS_PRIV);
 #endif
 			if (m) {
-				req = mtod(m, caddr_t);
+				req = mtod(m, void *);
 				len = m->m_len;
 			}
 			error = ipsec4_set_policy(inp, optname, req, len, priv);
@@ -1390,8 +1390,8 @@ ip_ctloutput(int op, struct socket *so, int level, int optname,
 			MCLAIM(m, so->so_mowner);
 			if (inp->inp_options) {
 				m->m_len = inp->inp_options->m_len;
-				bcopy(mtod(inp->inp_options, caddr_t),
-				    mtod(m, caddr_t), (unsigned)m->m_len);
+				bcopy(mtod(inp->inp_options, void *),
+				    mtod(m, void *), (unsigned)m->m_len);
 			} else
 				m->m_len = 0;
 			break;
@@ -1445,11 +1445,11 @@ ip_ctloutput(int op, struct socket *so, int level, int optname,
 		/* XXX: code broken */
 		case IP_IPSEC_POLICY:
 		{
-			caddr_t req = NULL;
+			void *req = NULL;
 			size_t len = 0;
 
 			if (m) {
-				req = mtod(m, caddr_t);
+				req = mtod(m, void *);
 				len = m->m_len;
 			}
 			error = ipsec4_get_policy(inp, req, len, mp);
@@ -1532,8 +1532,8 @@ ip_pcbopts(struct mbuf **pcbopt, struct mbuf *m)
 	cnt = m->m_len;
 	m->m_len += sizeof(struct in_addr);
 	cp = mtod(m, u_char *) + sizeof(struct in_addr);
-	memmove(cp, mtod(m, caddr_t), (unsigned)cnt);
-	bzero(mtod(m, caddr_t), sizeof(struct in_addr));
+	memmove(cp, mtod(m, void *), (unsigned)cnt);
+	bzero(mtod(m, void *), sizeof(struct in_addr));
 
 	for (; cnt > 0; cnt -= optlen, cp += optlen) {
 		opt = cp[IPOPT_OPTVAL];
@@ -1572,7 +1572,7 @@ ip_pcbopts(struct mbuf **pcbopt, struct mbuf *m)
 			/*
 			 * Move first hop before start of options.
 			 */
-			bcopy((caddr_t)&cp[IPOPT_OFFSET+1], mtod(m, caddr_t),
+			bcopy((void *)&cp[IPOPT_OFFSET+1], mtod(m, void *),
 			    sizeof(struct in_addr));
 			/*
 			 * Then copy rest of options back

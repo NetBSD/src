@@ -1,4 +1,4 @@
-/*	$NetBSD: uscanner.c,v 1.54 2006/11/16 01:33:27 christos Exp $	*/
+/*	$NetBSD: uscanner.c,v 1.54.4.1 2007/03/12 05:57:34 rmind Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.54 2006/11/16 01:33:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.54.4.1 2007/03/12 05:57:34 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -769,7 +769,7 @@ uscannerkqfilter(dev_t dev, struct knote *kn)
 }
 
 int
-uscannerioctl(dev_t dev, u_long cmd, caddr_t addr,
+uscannerioctl(dev_t dev, u_long cmd, void *addr,
     int flag, struct lwp *l)
 {
 	return (EINVAL);

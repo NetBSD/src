@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.94.4.1 2007/02/27 16:54:56 yamt Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.94.4.2 2007/03/12 05:59:38 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.94.4.1 2007/02/27 16:54:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.94.4.2 2007/03/12 05:59:38 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -157,7 +157,7 @@ rip_input(struct mbuf *m, ...)
 	ripsrc.sin_len = sizeof(struct sockaddr_in);
 	ripsrc.sin_addr = ip->ip_src;
 	ripsrc.sin_port = 0;
-	bzero((caddr_t)ripsrc.sin_zero, sizeof(ripsrc.sin_zero));
+	bzero((void *)ripsrc.sin_zero, sizeof(ripsrc.sin_zero));
 
 	/*
 	 * XXX Compatibility: programs using raw IP expect ip_len
@@ -513,7 +513,7 @@ rip_usrreq(struct socket *so, int req,
 #endif
 
 	if (req == PRU_CONTROL)
-		return (in_control(so, (long)m, (caddr_t)nam,
+		return (in_control(so, (long)m, (void *)nam,
 		    (struct ifnet *)control, l));
 
 	s = splsoftnet();

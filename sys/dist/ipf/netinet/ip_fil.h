@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.h,v 1.6 2006/04/04 16:17:19 martti Exp $	*/
+/*	$NetBSD: ip_fil.h,v 1.6.14.1 2007/03/12 05:57:54 rmind Exp $	*/
 
 /*
  * Copyright (C) 1993-2001, 2003 by Darren Reed.
@@ -484,7 +484,7 @@ typedef	struct	frentry {
 
 	union	{
 		void		*fru_data;
-		caddr_t		fru_caddr;
+		void *		fru_caddr;
 		fripf_t		*fru_ipf;
 		frentfunc_t	fru_func;
 	} fr_dun;
@@ -1155,9 +1155,9 @@ extern	struct	ifnet *get_unit __P((char *, int));
 extern	char	*get_ifname __P((struct ifnet *));
 # if defined(__NetBSD__) || defined(__OpenBSD__) || \
 	  (_BSDI_VERSION >= 199701) || (__FreeBSD_version >= 300000)
-extern	int	iplioctl __P((int, ioctlcmd_t, caddr_t, int));
+extern	int	iplioctl __P((int, ioctlcmd_t, void *, int));
 # else
-extern	int	iplioctl __P((int, ioctlcmd_t, caddr_t, int));
+extern	int	iplioctl __P((int, ioctlcmd_t, void *, int));
 # endif
 extern	int	iplopen __P((dev_t, int));
 extern	int	iplclose __P((dev_t, int));
@@ -1186,7 +1186,7 @@ extern	int	iplwrite __P((dev_t, uio_t *, cred_t *));
 #  ifdef __hpux
 extern	int	iplopen __P((dev_t, int, intptr_t, int));
 extern	int	iplclose __P((dev_t, int, int));
-extern	int	iplioctl __P((dev_t, int, caddr_t, int));
+extern	int	iplioctl __P((dev_t, int, void *, int));
 extern	int	iplread __P((dev_t, uio_t *));
 extern	int	iplwrite __P((dev_t, uio_t *));
 extern	int	iplselect __P((dev_t, int));
@@ -1199,7 +1199,7 @@ extern	int	(*fr_checkp) __P((ip_t *, int, void *, int, mb_t **));
 extern	size_t	mbufchainlen __P((mb_t *));
 #  ifdef	__sgi
 #   include <sys/cred.h>
-extern	int	iplioctl __P((dev_t, int, caddr_t, int, cred_t *, int *));
+extern	int	iplioctl __P((dev_t, int, void *, int, cred_t *, int *));
 extern	int	iplopen __P((dev_t *, int, int, cred_t *));
 extern	int	iplclose __P((dev_t, int, int, cred_t *));
 extern	int	iplread __P((dev_t, uio_t *, cred_t *));
@@ -1218,15 +1218,15 @@ extern	int	iplidentify __P((char *));
        defined(__OpenBSD__) || (__FreeBSD_version >= 300000)
 #     if (__FreeBSD_version >= 500024)
 #      if (__FreeBSD_version >= 502116)
-extern	int	iplioctl __P((struct cdev*, u_long, caddr_t, int, struct thread *));
+extern	int	iplioctl __P((struct cdev*, u_long, void *, int, struct thread *));
 #      else
-extern	int	iplioctl __P((dev_t, u_long, caddr_t, int, struct thread *));
+extern	int	iplioctl __P((dev_t, u_long, void *, int, struct thread *));
 #      endif /* __FreeBSD_version >= 502116 */
 #     else
-extern	int	iplioctl __P((dev_t, u_long, caddr_t, int, struct lwp *));
+extern	int	iplioctl __P((dev_t, u_long, void *, int, struct lwp *));
 #     endif /* __FreeBSD_version >= 500024 */
 #    else
-extern	int	iplioctl __P((dev_t, int, caddr_t, int, struct lwp *));
+extern	int	iplioctl __P((dev_t, int, void *, int, struct lwp *));
 #    endif
 #    if (__FreeBSD_version >= 500024)
 #      if (__FreeBSD_version >= 502116)
@@ -1246,7 +1246,7 @@ extern	int	iplioctl __P((struct inode *, struct file *, u_int, u_long));
 #    else
 extern	int	iplopen __P((dev_t, int));
 extern	int	iplclose __P((dev_t, int));
-extern	int	iplioctl __P((dev_t, int, caddr_t, int));
+extern	int	iplioctl __P((dev_t, int, void *, int));
 #    endif
 #   endif /* (_BSDI_VERSION >= 199510) */
 #   if	BSD >= 199306
@@ -1276,7 +1276,7 @@ extern	ipfrwlock_t	ipf_frcache;
 
 extern	char	*memstr __P((const char *, char *, size_t, size_t));
 extern	int	count4bits __P((u_32_t));
-extern	int	frrequest __P((int, ioctlcmd_t, caddr_t, int, int));
+extern	int	frrequest __P((int, ioctlcmd_t, void *, int, int));
 extern	char	*getifname __P((struct ifnet *));
 extern	int	iplattach __P((void));
 extern	int	ipldetach __P((void));
@@ -1351,7 +1351,7 @@ extern	void		fr_getstat __P((struct friostat *));
 extern	int		fr_ifpaddr __P((int, int, void *,
 				struct in_addr *, struct in_addr *));
 extern	int		fr_initialise __P((void));
-extern	void		fr_lock __P((caddr_t, int *));
+extern	void		fr_lock __P((void *, int *));
 extern  int		fr_makefrip __P((int, ip_t *, fr_info_t *));
 extern	int		fr_matchtag __P((ipftag_t *, ipftag_t *));
 extern	int		fr_matchicmpqueryreply __P((int, icmpinfo_t *,
@@ -1363,7 +1363,7 @@ extern	int		fr_scanlist __P((fr_info_t *, u_32_t));
 extern	frentry_t 	*fr_srcgrpmap __P((fr_info_t *, u_32_t *));
 extern	int		fr_tcpudpchk __P((fr_info_t *, frtuc_t *));
 extern	int		fr_verifysrc __P((fr_info_t *fin));
-extern	int		fr_zerostats __P((char *));
+extern	int		fr_zerostats __P((void *));
 
 extern	int	fr_running;
 extern	u_long	fr_frouteok[2];

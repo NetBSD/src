@@ -1,4 +1,4 @@
-/* $NetBSD: if_tireg.h,v 1.17 2005/12/11 12:22:49 christos Exp $ */
+/* $NetBSD: if_tireg.h,v 1.17.26.1 2007/03/12 05:55:21 rmind Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1064,7 +1064,7 @@ struct ti_chain_data {
 	struct mbuf		*ti_rx_jumbo_chain[TI_JUMBO_RX_RING_CNT];
 	struct mbuf		*ti_rx_mini_chain[TI_MINI_RX_RING_CNT];
 	/* Stick the jumbo mem management stuff here too. */
-	caddr_t			ti_jslots[TI_JSLOTS];
+	void *			ti_jslots[TI_JSLOTS];
 	void			*ti_jumbo_buf;
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: fil.c,v 1.28 2006/11/16 01:33:34 christos Exp $	*/
+/*	$NetBSD: fil.c,v 1.28.4.1 2007/03/12 05:57:52 rmind Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -140,7 +140,7 @@ struct file;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.28 2006/11/16 01:33:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.28.4.1 2007/03/12 05:57:52 rmind Exp $");
 #else
 static const char sccsid[] = "@(#)fil.c	1.36 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: fil.c,v 2.243.2.78 2006/03/29 11:19:54 darrenr Exp";
@@ -2973,11 +2973,11 @@ void *l4hdr;
 	 * In case we had to copy the IP & TCP header out of mbufs,
 	 * skip over the mbuf bits which are the header
 	 */
-	if ((caddr_t)ip != mtod(m, caddr_t)) {
-		hlen = (caddr_t)sp - (caddr_t)ip;
+	if ((void *)ip != mtod(m, void *)) {
+		hlen = (void *)sp - (void *)ip;
 		while (hlen) {
 			add = MIN(hlen, m->m_len);
-			sp = (u_short *)(mtod(m, caddr_t) + add);
+			sp = (u_short *)(mtod(m, void *) + add);
 			hlen -= add;
 			if (add == m->m_len) {
 				m = m->m_next;
@@ -2997,12 +2997,12 @@ void *l4hdr;
 		goto nodata;
 
 	while (len > 1) {
-		if (((caddr_t)sp - mtod(m, caddr_t)) >= m->m_len) {
+		if (((void *)sp - mtod(m, void *)) >= m->m_len) {
 			m = m->m_next;
 			PANIC((!m),("fr_cksum(2): not enough data"));
 			sp = mtod(m, u_short *);
 		}
-		if (((caddr_t)(sp + 1) - mtod(m, caddr_t)) > m->m_len) {
+		if (((void *)(sp + 1) - mtod(m, void *)) > m->m_len) {
 			bytes.c[0] = *(u_char *)sp;
 			m = m->m_next;
 			PANIC((!m),("fr_cksum(3): not enough data"));
@@ -3086,7 +3086,7 @@ m_copydata(m, off, len, cp)
 	mb_t *m;
 	int off;
 	int len;
-	caddr_t cp;
+	void *cp;
 {
 	unsigned count;
 
@@ -3104,7 +3104,7 @@ m_copydata(m, off, len, cp)
 		if (m == 0)
 			panic("m_copydata");
 		count = MIN(m->m_len - off, len);
-		bcopy(mtod(m, caddr_t) + off, cp, count);
+		bcopy(mtod(m, void *) + off, cp, count);
 		len -= count;
 		cp += count;
 		off = 0;
@@ -3123,7 +3123,7 @@ m_copyback(m0, off, len, cp)
 	struct	mbuf *m0;
 	int off;
 	int len;
-	caddr_t cp;
+	void *cp;
 {
 	int mlen;
 	struct mbuf *m = m0, *n;
@@ -3145,7 +3145,7 @@ m_copyback(m0, off, len, cp)
 	}
 	while (len > 0) {
 		mlen = min(m->m_len - off, len);
-		bcopy(cp, off + mtod(m, caddr_t), (unsigned)mlen);
+		bcopy(cp, off + mtod(m, void *), (unsigned)mlen);
 		cp += mlen;
 		len -= mlen;
 		mlen += off;
@@ -3743,15 +3743,15 @@ int copyinptr(src, dst, size)
 void *src, *dst;
 size_t size;
 {
-	caddr_t ca;
+	void *ca;
 	int err;
 
 # if SOLARIS
-	err = COPYIN(src, (caddr_t)&ca, sizeof(ca));
+	err = COPYIN(src, (void *)&ca, sizeof(ca));
 	if (err != 0)
 		return err;
 # else
-	bcopy(src, (caddr_t)&ca, sizeof(ca));
+	bcopy(src, (void *)&ca, sizeof(ca));
 # endif
 	err = COPYIN(ca, dst, size);
 	return err;
@@ -3773,10 +3773,10 @@ int copyoutptr(src, dst, size)
 void *src, *dst;
 size_t size;
 {
-	caddr_t ca;
+	void *ca;
 	int err;
 
-	bcopy(dst, (caddr_t)&ca, sizeof(ca));
+	bcopy(dst, (void *)&ca, sizeof(ca));
 	err = COPYOUT(src, ca, size);
 	return err;
 }
@@ -3793,13 +3793,13 @@ size_t size;
 /* in *lockp.                                                               */
 /* ------------------------------------------------------------------------ */
 void fr_lock(data, lockp)
-caddr_t data;
+void *data;
 int *lockp;
 {
 	int arg;
 
-	BCOPYIN(data, (caddr_t)&arg, sizeof(arg));
-	BCOPYOUT((caddr_t)lockp, data, sizeof(*lockp));
+	BCOPYIN(data, (void *)&arg, sizeof(arg));
+	BCOPYOUT((void *)lockp, data, sizeof(*lockp));
 	*lockp = arg;
 }
 
@@ -3952,7 +3952,7 @@ int rev;
 #ifdef	IPFILTER_LOOKUP
 /* ------------------------------------------------------------------------ */
 /* Function:    fr_resolvelookup                                            */
-/* Returns:     void * - NULL = failure, else success.                      */
+/* Returns:     void *- NULL = failure, else success.                      */
 /* Parameters:  type(I)     - type of lookup these parameters are for.      */
 /*              number(I)   - table number to use when searching            */
 /*              funcptr(IO) - pointer to pointer for storing IP address     */
@@ -4036,7 +4036,7 @@ int frrequest(unit, req, data, set, makecopy)
 int unit;
 ioctlcmd_t req;
 int set, makecopy;
-caddr_t data;
+void *data;
 {
 	frentry_t frd, *fp, *f, **fprev, **ftail;
 	int error = 0, in, v;
@@ -4287,7 +4287,7 @@ caddr_t data;
 	for (fp->fr_cksum = 0, p = (u_int *)&fp->fr_func, pp = &fp->fr_cksum;
 	     p < pp; p++)
 		fp->fr_cksum += *p;
-	pp = (u_int *)(fp->fr_caddr + fp->fr_dsize);
+	pp = (u_int *)((char *)fp->fr_caddr + fp->fr_dsize);
 	for (p = (u_int *)fp->fr_data; p < pp; p++)
 		fp->fr_cksum += *p;
 
@@ -5324,7 +5324,7 @@ int type;
 	if ((type < 0) || (type > NUM_OBJ_TYPES-1))
 		return EINVAL;
 
-	BCOPYIN((caddr_t)data, (caddr_t)&obj, sizeof(obj));
+	BCOPYIN((void *)data, (void *)&obj, sizeof(obj));
 
 	if (obj.ipfo_type != type)
 		return EINVAL;
@@ -5349,10 +5349,10 @@ int type;
 #endif
 
 	if ((fr_objbytes[type][0] & 1) != 0) {
-		error = COPYIN((caddr_t)obj.ipfo_ptr, (caddr_t)ptr,
+		error = COPYIN((void *)obj.ipfo_ptr, (void *)ptr,
 				fr_objbytes[type][1]);
 	} else {
-		error = COPYIN((caddr_t)obj.ipfo_ptr, (caddr_t)ptr,
+		error = COPYIN((void *)obj.ipfo_ptr, (void *)ptr,
 				obj.ipfo_size);
 	}
 	return error;
@@ -5386,7 +5386,7 @@ int type, sz;
 	if (((fr_objbytes[type][0] & 1) == 0) || (sz < fr_objbytes[type][1]))
 		return EINVAL;
 
-	BCOPYIN((caddr_t)data, (caddr_t)&obj, sizeof(obj));
+	BCOPYIN((void *)data, (void *)&obj, sizeof(obj));
 
 	if (obj.ipfo_type != type)
 		return EINVAL;
@@ -5403,7 +5403,7 @@ int type, sz;
 		return EINVAL;
 #endif
 
-	error = COPYIN((caddr_t)obj.ipfo_ptr, (caddr_t)ptr, sz);
+	error = COPYIN((void *)obj.ipfo_ptr, (void *)ptr, sz);
 	return error;
 }
 
@@ -5435,7 +5435,7 @@ int type, sz;
 	    (sz < fr_objbytes[type][1]))
 		return EINVAL;
 
-	BCOPYIN((caddr_t)data, (caddr_t)&obj, sizeof(obj));
+	BCOPYIN((void *)data, (void *)&obj, sizeof(obj));
 
 	if (obj.ipfo_type != type)
 		return EINVAL;
@@ -5452,7 +5452,7 @@ int type, sz;
 		return EINVAL;
 #endif
 
-	error = COPYOUT((caddr_t)ptr, (caddr_t)obj.ipfo_ptr, sz);
+	error = COPYOUT((void *)ptr, (void *)obj.ipfo_ptr, sz);
 	return error;
 }
 
@@ -5479,7 +5479,7 @@ int type;
 	if ((type < 0) || (type > NUM_OBJ_TYPES-1))
 		return EINVAL;
 
-	BCOPYIN((caddr_t)data, (caddr_t)&obj, sizeof(obj));
+	BCOPYIN((void *)data, (void *)&obj, sizeof(obj));
 
 	if (obj.ipfo_type != type)
 		return EINVAL;
@@ -5503,7 +5503,7 @@ int type;
 		return EINVAL;
 #endif
 
-	error = COPYOUT((caddr_t)ptr, (caddr_t)obj.ipfo_ptr, obj.ipfo_size);
+	error = COPYOUT((void *)ptr, (void *)obj.ipfo_ptr, obj.ipfo_size);
 	return error;
 }
 
@@ -6283,7 +6283,7 @@ void fr_deinitialise()
 /* the copyout may result in paging (ie network activity.)                  */
 /* ------------------------------------------------------------------------ */
 int	fr_zerostats(data)
-caddr_t	data;
+void *data;
 {
 	friostat_t fio;
 	int error;

@@ -1,10 +1,10 @@
-/*	$NetBSD: ediddevs.h,v 1.1 2006/05/11 01:49:53 gdamore Exp $	*/
+/*	$NetBSD: ediddevs.h,v 1.1.26.1 2007/03/12 05:57:48 rmind Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD
+ *	NetBSD: ediddevs,v 1.1 2006/05/11 01:49:53 gdamore Exp
  */
 
 /*-
@@ -70,6 +70,7 @@
 #define	EDID_VENDOR_NEC	"NEC"
 #define	EDID_VENDOR_NOK	"Nokia Data"
 #define	EDID_VENDOR_PHL	"Philips"
+#define	EDID_VENDOR_REL	"Relisys"
 #define	EDID_VENDOR_SAM	"Samsung"
 #define	EDID_VENDOR_SGI	"SGI"
 #define	EDID_VENDOR_SNY	"Sony"

@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.868 2007/02/16 01:35:04 markd Exp $
+$NetBSD: pcidevs,v 1.868.2.1 2007/03/12 05:55:24 rmind Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -819,6 +819,7 @@ product ADP2 ASR5400S		0x0365	ASR-5400S
 product ADP2 PERC_2QC		0x1364	Dell PERC 2/QC
 /* XXX guess */
 product ADP2 PERC_3QC		0x1365	Dell PERC 3/QC
+product ADP2 HP_M110_G2		0x3227	HP M110 G2 / ASR-2610SA
 
 /* Addtron Products */
 product ADDTRON 8139	0x1360	8139 Ethernet
@@ -1202,6 +1203,8 @@ product ATI RADEON_R423_5D57	0x5d57	Radeon X800XT (R423) 5D57
 product ATI RADEON_X850XT_S	0x5d72	Radeon X850 XT Secondary
 product ATI RADEON_X700		0x5e4b	Radeon X700 Pro
 product ATI RADEON_X700_S	0x5e6b	Radeon X700 Pro Secondary
+product ATI RADEON_X1300	0x7146	Radeon X1300 Series (RV515)
+product ATI RADEON_X1300_S	0x7166	Radeon X1300 Series (RV515) Secondary
 product ATI RADEON_RS300_7834	0x7834	Radeon 9100 PRO IGP
 product ATI RADEON_RS300_7835	0x7835	Radeon 9200 IGP
 
@@ -1513,7 +1516,11 @@ product COMTROL ROCKETPORTP422	0x000f	RocketPort 2 port RS422
 /* Conexant Systems products */
 product CONEXANT SOFTK56	0x2443	SoftK56 PCI Software Modem
 product CONEXANT 56KFAXMODEM	0x1085	HW 56K Fax Modem
-product	CONEXANT LANFINITY	0x1803	LANfinity MiniPCI 10/100 Ethernet
+product CONEXANT LANFINITY	0x1803	LANfinity MiniPCI 10/100 Ethernet
+product CONEXANT CX2388X	0x8800	CX23880/1/2/3 PCI Video/Audio Decoder
+product CONEXANT CX2388XAUDIO	0x8801	CX23880/1/2/3 PCI Audio Port
+product CONEXANT CX2388XMPEG	0x8802	CX23880/1/2/3 PCI MPEG Port
+product CONEXANT CX2388XIR	0x8804	CX23880/1/2/3 PCI IR Port
 
 /* Contaq Microsystems products */
 product CONTAQ 82C599		0x0600	82C599 PCI-VLB Bridge
@@ -2937,6 +2944,7 @@ product PACKETENGINES GNICII	0x0911	G-NIC II Ethernet
 
 /* pcHDTV products */
 product PCHDTV HD2000	0x2000	HD-2000 HDTV video capture
+product PCHDTV HD5500	0x5500	HD-5500 HDTV video capture
 
 /* PC Tech products */
 product PCTECH RZ1000	0x1000	RZ1000

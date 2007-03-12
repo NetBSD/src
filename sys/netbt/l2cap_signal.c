@@ -1,4 +1,4 @@
-/*	$NetBSD: l2cap_signal.c,v 1.3 2006/12/07 21:36:27 plunky Exp $	*/
+/*	$NetBSD: l2cap_signal.c,v 1.3.2.1 2007/03/12 05:59:34 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: l2cap_signal.c,v 1.3 2006/12/07 21:36:27 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: l2cap_signal.c,v 1.3.2.1 2007/03/12 05:59:34 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -404,7 +404,8 @@ l2cap_recv_config_req(struct mbuf *m, struct hci_link *link)
 	cp.flags = le16toh(cp.flags);
 
 	chan = l2cap_cid_lookup(cp.dcid);
-	if (chan == NULL || (chan->lc_state & L2CAP_WAIT_CONFIG_REQ) == 0) {
+	if (chan == NULL || chan->lc_link != link
+	    || (chan->lc_state & L2CAP_WAIT_CONFIG_REQ) == 0) {
 		l2cap_send_command_rej(link, cmd.ident, L2CAP_REJ_INVALID_CID,
 					L2CAP_NULL_CID, cp.dcid);
 		goto out;
@@ -767,7 +768,7 @@ l2cap_recv_disconnect_req(struct mbuf *m, struct hci_link *link)
 	cp.dcid = le16toh(cp.dcid);
 
 	chan = l2cap_cid_lookup(cp.dcid);
-	if (chan == NULL || chan->lc_rcid != cp.scid) {
+	if (chan == NULL || chan->lc_link != link || chan->lc_rcid != cp.scid) {
 		l2cap_send_command_rej(link, cmd.ident, L2CAP_REJ_INVALID_CID,
 					cp.dcid, cp.scid);
 		return;

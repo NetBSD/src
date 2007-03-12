@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660.c,v 1.20 2006/01/25 18:27:23 christos Exp $	*/
+/*	$NetBSD: cd9660.c,v 1.20.24.1 2007/03/12 05:59:07 rmind Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -203,22 +203,22 @@ cd9660_open(const char *path, struct open_file *f)
 		path++;
 
 	while (*path) {
-		if ((caddr_t)pp >= (caddr_t)buf + psize)
+		if ((char *)pp >= (char *)buf + psize)
 			break;
 		if (isonum_722(pp->parent) != parent)
 			break;
 		if (!pnmatch(path, pp)) {
-			pp = (struct ptable_ent *)((caddr_t)pp + PTSIZE(pp));
+			pp = (struct ptable_ent *)((char *)pp + PTSIZE(pp));
 			ent++;
 			continue;
 		}
 		path += isonum_711(pp->namlen) + 1;
 		parent = ent;
 		bno = isonum_732(pp->block) + isonum_711(pp->extlen);
-		while ((caddr_t)pp < (caddr_t)buf + psize) {
+		while ((char *)pp < (char *)buf + psize) {
 			if (isonum_722(pp->parent) == parent)
 				break;
-			pp = (struct ptable_ent *)((caddr_t)pp + PTSIZE(pp));
+			pp = (struct ptable_ent *)((char *)pp + PTSIZE(pp));
 			ent++;
 		}
 	}
@@ -256,7 +256,7 @@ cd9660_open(const char *path, struct open_file *f)
 		if (dirmatch(path, dp))
 			break;
 		psize += isonum_711(dp->length);
-		dp = (struct iso_directory_record *)((caddr_t)dp + isonum_711(dp->length));
+		dp = (struct iso_directory_record *)((char *)dp + isonum_711(dp->length));
 	}
 
 	if (psize >= dsize) {
@@ -331,11 +331,11 @@ cd9660_read(struct open_file *f, void *start, size_t size, size_t *resid)
 				nread = off + size;
 			nread -= off;
 			memcpy(start, buf + off, nread);
-			start = (caddr_t)start + nread;
+			start = (char *)start + nread;
 			fp->off += nread;
 			size -= nread;
 		} else {
-			start = (caddr_t)start + ISO_DEFAULT_BLOCK_SIZE;
+			start = (char *)start + ISO_DEFAULT_BLOCK_SIZE;
 			fp->off += ISO_DEFAULT_BLOCK_SIZE;
 			size -= ISO_DEFAULT_BLOCK_SIZE;
 		}

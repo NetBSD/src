@@ -1,4 +1,4 @@
-/*	$NetBSD: utoppy.c,v 1.8 2006/11/16 01:33:27 christos Exp $	*/
+/*	$NetBSD: utoppy.c,v 1.8.4.1 2007/03/12 05:57:35 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: utoppy.c,v 1.8 2006/11/16 01:33:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: utoppy.c,v 1.8.4.1 2007/03/12 05:57:35 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -535,7 +535,7 @@ utoppy_bulk_transfer(usbd_xfer_handle xfer, usbd_pipe_handle pipe,
 		splx(s);
 		return (err);
 	}
-	error = tsleep((caddr_t)xfer, PZERO, lbl, 0);
+	error = tsleep((void *)xfer, PZERO, lbl, 0);
 	splx(s);
 	if (error) {
 		usbd_abort_pipe(pipe);
@@ -1658,7 +1658,7 @@ utoppywrite(dev_t dev, struct uio *uio, int flags)
 }
 
 int
-utoppyioctl(dev_t dev, u_long cmd, caddr_t data, int flag,
+utoppyioctl(dev_t dev, u_long cmd, void *data, int flag,
     struct lwp *l)
 {
 	struct utoppy_softc *sc;

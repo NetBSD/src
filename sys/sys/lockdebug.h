@@ -1,4 +1,4 @@
-/*	$NetBSD: lockdebug.h,v 1.2 2007/02/09 21:55:37 ad Exp $	*/
+/*	$NetBSD: lockdebug.h,v 1.2.2.1 2007/03/12 06:00:52 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -62,7 +62,6 @@ void	lockdebug_lock_print(void *, void (*)(const char *, ...));
 
 #ifdef LOCKDEBUG
 
-void	lockdebug_init(void);
 u_int	lockdebug_alloc(volatile void *, lockops_t *);
 void	lockdebug_free(volatile void *, u_int);
 void	lockdebug_wantlock(u_int, uintptr_t, int);

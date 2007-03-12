@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.147.2.1 2007/02/28 09:35:39 yamt Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.147.2.2 2007/03/12 06:00:35 rmind Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.147.2.1 2007/02/28 09:35:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.147.2.2 2007/03/12 06:00:35 rmind Exp $");
 
 #include "opt_nfs.h"
 #include "opt_ddb.h"
@@ -87,7 +87,7 @@ nfs_bioread(vp, uio, ioflag, cred, cflag)
 	struct buf *bp = NULL, *rabp;
 	struct nfsmount *nmp = VFSTONFS(vp->v_mount);
 	struct nfsdircache *ndp = NULL, *nndp = NULL;
-	caddr_t baddr;
+	void *baddr;
 	int got_buf = 0, error = 0, n = 0, on = 0, en, enn;
 	int enough = 0;
 	struct dirent *dp, *pdp, *edp, *ep;
@@ -143,7 +143,7 @@ nfs_bioread(vp, uio, ioflag, cred, cflag)
 	    if ((vp->v_flag & VROOT) && vp->v_type == VLNK) {
 		return (nfs_readlinkrpc(vp, uio, cred));
 	    }
-	    baddr = (caddr_t)0;
+	    baddr = (void *)0;
 	    switch (vp->v_type) {
 	    case VREG:
 		nfsstats.biocache_reads++;
@@ -281,7 +281,7 @@ diragain:
 		en = ndp->dc_entry;
 
 		pdp = dp = (struct dirent *)bp->b_data;
-		edp = (struct dirent *)(void *)(bp->b_data + bp->b_bcount -
+		edp = (struct dirent *)(void *)((char *)bp->b_data + bp->b_bcount -
 		    bp->b_resid);
 		enn = 0;
 		while (enn < en && dp < edp) {
@@ -312,7 +312,7 @@ diragain:
 			goto diragain;
 		}
 
-		on = (caddr_t)dp - bp->b_data;
+		on = (char *)dp - (char *)bp->b_data;
 
 		/*
 		 * Cache all entries that may be exported to the
@@ -332,7 +332,7 @@ diragain:
 		} else
 			n = bp->b_bcount - bp->b_resid - on;
 
-		ep = (struct dirent *)(void *)(bp->b_data + on + n);
+		ep = (struct dirent *)(void *)((char *)bp->b_data + on + n);
 
 		/*
 		 * Find last complete entry to copy, caching entries
@@ -386,7 +386,7 @@ diragain:
 			}
 		}
 
-		n = (char *)_DIRENT_NEXT(pdp) - (bp->b_data + on);
+		n = (char *)_DIRENT_NEXT(pdp) - ((char *)bp->b_data + on);
 
 		/*
 		 * If not eof and read aheads are enabled, start one.
@@ -420,7 +420,7 @@ diragain:
 	    if (n > 0) {
 		if (!baddr)
 			baddr = bp->b_data;
-		error = uiomove(baddr + on, (int)n, uio);
+		error = uiomove((char *)baddr + on, (int)n, uio);
 	    }
 	    switch (vp->v_type) {
 	    case VREG:

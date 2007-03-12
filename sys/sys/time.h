@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.56 2006/06/18 21:09:24 uwe Exp $	*/
+/*	$NetBSD: time.h,v 1.56.10.1 2007/03/12 06:00:55 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -265,7 +265,7 @@ __BEGIN_DECLS
 #if (_POSIX_C_SOURCE - 0) >= 200112L || \
     defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE)
 int	getitimer(int, struct itimerval *);
-int	gettimeofday(struct timeval * __restrict, void * __restrict);
+int	gettimeofday(struct timeval * __restrict, void *__restrict);
 int	setitimer(int, const struct itimerval * __restrict,
 	    struct itimerval * __restrict);
 int	utimes(const char *, const struct timeval [2]);
@@ -276,7 +276,7 @@ int	adjtime(const struct timeval *, struct timeval *);
 int	futimes(int, const struct timeval [2]);
 int	lutimes(const char *, const struct timeval [2]);
 int	settimeofday(const struct timeval * __restrict,
-	    const void * __restrict);
+	    const void *__restrict);
 #endif /* _NETBSD_SOURCE */
 __END_DECLS
 

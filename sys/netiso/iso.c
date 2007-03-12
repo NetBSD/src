@@ -1,4 +1,4 @@
-/*	$NetBSD: iso.c,v 1.39.4.1 2007/02/27 16:55:11 yamt Exp $	*/
+/*	$NetBSD: iso.c,v 1.39.4.2 2007/03/12 06:00:29 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -62,7 +62,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iso.c,v 1.39.4.1 2007/02/27 16:55:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iso.c,v 1.39.4.2 2007/03/12 06:00:29 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -230,8 +230,9 @@ iso_netmatch(const struct sockaddr_iso *sisoa,
  *			quantities.
  */
 u_long
-iso_hashchar(caddr_t buf, int len)
+iso_hashchar(void *bufv, int len)
 {
+	char *buf = bufv;
 	u_long h = 0;
 	int    i;
 
@@ -292,7 +293,7 @@ iso_hash(
 	bzero(buf, sizeof(buf));
 
 	bufsize = iso_netof(&siso->siso_addr, buf);
-	hp->afh_nethash = iso_hashchar((caddr_t) buf, bufsize);
+	hp->afh_nethash = iso_hashchar((void *) buf, bufsize);
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_ROUTE]) {
@@ -300,7 +301,7 @@ iso_hash(
 	}
 #endif
 
-	hp->afh_hosthash = iso_hashchar((caddr_t) & siso->siso_addr,
+	hp->afh_hosthash = iso_hashchar((void *) & siso->siso_addr,
 					siso->siso_addr.isoa_len);
 
 #ifdef ARGO_DEBUG
@@ -334,7 +335,7 @@ iso_hash(
 u_int
 iso_netof(
 	struct iso_addr *isoa,	/* address */
-	caddr_t         buf)	/* RESULT: network portion of address here */
+	void *        buf)	/* RESULT: network portion of address here */
 {
 	u_int           len = 1;/* length of afi */
 
@@ -423,7 +424,7 @@ iso_netof(
 		len = 0;
 	}
 
-	bcopy((caddr_t) isoa, buf, len);
+	bcopy((void *) isoa, buf, len);
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_ROUTE]) {
 		printf("iso_netof: isoa ");
@@ -441,7 +442,7 @@ iso_netof(
  */
 /* ARGSUSED */
 int
-iso_control(struct socket *so, u_long cmd, caddr_t data, struct ifnet *ifp,
+iso_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp,
 	struct lwp *l)
 {
 	struct iso_ifreq *ifr = (struct iso_ifreq *) data;
@@ -634,7 +635,7 @@ iso_ifinit(struct ifnet *ifp, struct iso_ifaddr *ia, struct sockaddr_iso *siso,
 	 * and to validate the address if necessary.
 	 */
 	if (ifp->if_ioctl &&
-	    (error = (*ifp->if_ioctl) (ifp, SIOCSIFADDR, (caddr_t) ia))) {
+	    (error = (*ifp->if_ioctl) (ifp, SIOCSIFADDR, (void *) ia))) {
 		splx(s);
 		ia->ia_addr = oldaddr;
 		return (error);
@@ -860,14 +861,14 @@ int
 iso_nlctloutput(
 	int             cmd,		/* command:set or get */
 	int             optname,	/* option of interest */
-	caddr_t         pcb,		/* nl pcb */
+	void *        pcb,		/* nl pcb */
 	struct mbuf    *m)		/* data for set, buffer for get */
 {
 #ifdef TPCONS
 	struct isopcb  *isop = (struct isopcb *) pcb;
 #endif
 	int             error = 0;	/* return value */
-	caddr_t         data;	/* data for option */
+	void *        data;	/* data for option */
 	int             data_len;	/* data's length */
 
 #ifdef ARGO_DEBUG
@@ -880,7 +881,7 @@ iso_nlctloutput(
 	if ((cmd != PRCO_GETOPT) && (cmd != PRCO_SETOPT))
 		return (EOPNOTSUPP);
 
-	data = mtod(m, caddr_t);
+	data = mtod(m, void *);
 	data_len = (m)->m_len;
 
 #ifdef ARGO_DEBUG
@@ -908,7 +909,7 @@ iso_nlctloutput(
 		}
 #endif
 
-		bcopy(data, (caddr_t) isop->isop_x25crud, (unsigned) data_len);
+		bcopy(data, (void *) isop->isop_x25crud, (unsigned) data_len);
 		isop->isop_x25crud_len = data_len;
 		break;
 #endif				/* TPCONS */

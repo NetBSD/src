@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsec.c,v 1.11 2006/11/16 01:33:10 christos Exp $	*/
+/*	$NetBSD: ubsec.c,v 1.11.4.1 2007/03/12 05:55:28 rmind Exp $	*/
 /* $FreeBSD: src/sys/dev/ubsec/ubsec.c,v 1.6.2.6 2003/01/23 21:06:43 sam Exp $ */
 /*	$OpenBSD: ubsec.c,v 1.127 2003/06/04 14:04:58 jason Exp $	*/
 
@@ -1061,11 +1061,11 @@ ubsec_process(void *arg, struct cryptop *crp, int hint)
 				if (crp->crp_flags & CRYPTO_F_IMBUF)
 					m_copyback(q->q_src_m,
 					    enccrd->crd_inject,
-					    8, (caddr_t)ctx.pc_iv);
+					    8, (void *)ctx.pc_iv);
 				else if (crp->crp_flags & CRYPTO_F_IOV)
 					cuio_copyback(q->q_src_io,
 					    enccrd->crd_inject,
-					    8, (caddr_t)ctx.pc_iv);
+					    8, (void *)ctx.pc_iv);
 			}
 		} else {
 			ctx.pc_flags |= htole16(UBS_PKTCTX_INBOUND);
@@ -1074,11 +1074,11 @@ ubsec_process(void *arg, struct cryptop *crp, int hint)
 				bcopy(enccrd->crd_iv, ctx.pc_iv, 8);
 			else if (crp->crp_flags & CRYPTO_F_IMBUF)
 				m_copydata(q->q_src_m, enccrd->crd_inject,
-				    8, (caddr_t)ctx.pc_iv);
+				    8, (void *)ctx.pc_iv);
 			else if (crp->crp_flags & CRYPTO_F_IOV)
 				cuio_copydata(q->q_src_io,
 				    enccrd->crd_inject, 8,
-				    (caddr_t)ctx.pc_iv);
+				    (void *)ctx.pc_iv);
 		}
 
 		ctx.pc_deskey[0] = ses->ses_deskey[0];
@@ -1424,7 +1424,7 @@ ubsec_process(void *arg, struct cryptop *crp, int hint)
 	if (sc->sc_flags & UBS_FLAGS_LONGCTX) {
 		struct ubsec_pktctx_long *ctxl;
 
-		ctxl = (struct ubsec_pktctx_long *)(dmap->d_alloc.dma_vaddr +
+		ctxl = (struct ubsec_pktctx_long *)((char *)dmap->d_alloc.dma_vaddr +
 		    offsetof(struct ubsec_dmachunk, d_ctx));
 
 		/* transform small context into long context */
@@ -1441,8 +1441,8 @@ ubsec_process(void *arg, struct cryptop *crp, int hint)
 		ctxl->pc_iv[0] = ctx.pc_iv[0];
 		ctxl->pc_iv[1] = ctx.pc_iv[1];
 	} else
-		bcopy(&ctx, dmap->d_alloc.dma_vaddr +
-		    offsetof(struct ubsec_dmachunk, d_ctx),
+		memcpy((char *)dmap->d_alloc.dma_vaddr +
+		    offsetof(struct ubsec_dmachunk, d_ctx), &ctx,
 		    sizeof(struct ubsec_pktctx));
 
 	s = splnet();
@@ -1514,7 +1514,7 @@ ubsec_callback(struct ubsec_softc *sc, struct ubsec_q *q)
 
 	if ((crp->crp_flags & CRYPTO_F_IMBUF) && (q->q_src_m != q->q_dst_m)) {
 		m_freem(q->q_src_m);
-		crp->crp_buf = (caddr_t)q->q_dst_m;
+		crp->crp_buf = (void *)q->q_dst_m;
 	}
 
 	/* copy out IV for future use */
@@ -1526,11 +1526,11 @@ ubsec_callback(struct ubsec_softc *sc, struct ubsec_q *q)
 			if (crp->crp_flags & CRYPTO_F_IMBUF)
 				m_copydata((struct mbuf *)crp->crp_buf,
 				    crd->crd_skip + crd->crd_len - 8, 8,
-				    (caddr_t)sc->sc_sessions[q->q_sesn].ses_iv);
+				    (void *)sc->sc_sessions[q->q_sesn].ses_iv);
 			else if (crp->crp_flags & CRYPTO_F_IOV) {
 				cuio_copydata((struct uio *)crp->crp_buf,
 				    crd->crd_skip + crd->crd_len - 8, 8,
-				    (caddr_t)sc->sc_sessions[q->q_sesn].ses_iv);
+				    (void *)sc->sc_sessions[q->q_sesn].ses_iv);
 			}
 			break;
 		}
@@ -1543,9 +1543,9 @@ ubsec_callback(struct ubsec_softc *sc, struct ubsec_q *q)
 		if (crp->crp_flags & CRYPTO_F_IMBUF)
 			m_copyback((struct mbuf *)crp->crp_buf,
 			    crd->crd_inject, 12,
-			    (caddr_t)dmap->d_dma->d_macbuf);
+			    (void *)dmap->d_dma->d_macbuf);
 		else if (crp->crp_flags & CRYPTO_F_IOV && crp->crp_mac)
-			bcopy((caddr_t)dmap->d_dma->d_macbuf,
+			bcopy((void *)dmap->d_dma->d_macbuf,
 			    crp->crp_mac, 12);
 		break;
 	}
@@ -1557,7 +1557,7 @@ static void
 ubsec_mcopy(struct mbuf *srcm, struct mbuf *dstm, int hoffset, int toffset)
 {
 	int i, j, dlen, slen;
-	caddr_t dptr, sptr;
+	char *dptr, *sptr;
 
 	j = 0;
 	sptr = srcm->m_data;

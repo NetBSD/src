@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fpa.c,v 1.47 2006/11/16 01:33:08 christos Exp $	*/
+/*	$NetBSD: if_fpa.c,v 1.47.4.1 2007/03/12 05:55:18 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fpa.c,v 1.47 2006/11/16 01:33:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fpa.c,v 1.47.4.1 2007/03/12 05:55:18 rmind Exp $");
 
 #ifdef __NetBSD__
 #include "opt_inet.h"
@@ -223,7 +223,7 @@ pdq_pci_attach(
 	free((void *) sc, M_DEVBUF);
 	return;
     }
-    bcopy((caddr_t) sc->sc_pdq->pdq_hwaddr.lanaddr_bytes, sc->sc_ac.ac_enaddr, 6);
+    bcopy((void *) sc->sc_pdq->pdq_hwaddr.lanaddr_bytes, sc->sc_ac.ac_enaddr, 6);
     pdqs_pci[unit] = sc;
     pdq_ifattach(sc, pdq_pci_ifwatchdog);
     pci_map_int(config_id, pdq_pci_ifintr, (void*) sc, &net_imask);
@@ -319,7 +319,7 @@ pdq_pci_probe(
     ia->ia_drq = DRQNONE;
 
     /* Get the memory base address; assume the BIOS set it up correctly */
-    ia->ia_maddr = (caddr_t) (pci_inl(pa, PCI_CBMA) & ~7);
+    ia->ia_maddr = (void *) (pci_inl(pa, PCI_CBMA) & ~7);
     pci_outl(pa, PCI_CBMA, 0xFFFFFFFF);
     ia->ia_msize = ((~pci_inl(pa, PCI_CBMA)) | 7) + 1;
     pci_outl(pa, PCI_CBMA, (int) ia->ia_maddr);
@@ -365,7 +365,7 @@ pdq_pci_attach(
 	return;
     }
 
-    bcopy((caddr_t) sc->sc_pdq->pdq_hwaddr.lanaddr_bytes, sc->sc_ac.ac_enaddr, 6);
+    bcopy((void *) sc->sc_pdq->pdq_hwaddr.lanaddr_bytes, sc->sc_ac.ac_enaddr, 6);
 
     pdq_ifattach(sc, pdq_pci_ifwatchdog);
 
@@ -410,7 +410,7 @@ static void
 pdq_pci_attach(
     struct device * const parent,
     struct device * const self,
-    void * const aux)
+    void *const aux)
 {
     pdq_softc_t * const sc = (pdq_softc_t *)self;
     struct pci_attach_args * const pa = (struct pci_attach_args *) aux;

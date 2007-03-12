@@ -1,4 +1,4 @@
-/*      $NetBSD: procfs_linux.c,v 1.32 2007/02/09 21:55:36 ad Exp $      */
+/*      $NetBSD: procfs_linux.c,v 1.32.2.1 2007/03/12 05:59:08 rmind Exp $      */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.32 2007/02/09 21:55:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.32.2.1 2007/03/12 05:59:08 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -220,7 +220,7 @@ procfs_do_pid_stat(struct lwp *curl, struct lwp *l,
 	vm_map_unlock_read(map);
 	uvmspace_free(vm);
 
-	rw_enter(&proclist_lock, RW_READER);
+	mutex_enter(&proclist_lock);
 	mutex_enter(&p->p_mutex);
 	mutex_enter(&p->p_smutex);
 
@@ -286,7 +286,7 @@ procfs_do_pid_stat(struct lwp *curl, struct lwp *l,
 
 	mutex_exit(&p->p_smutex);
 	mutex_exit(&p->p_mutex);
-	rw_exit(&proclist_lock);
+	mutex_exit(&proclist_lock);
 
 	if (len == 0)
 		goto out;

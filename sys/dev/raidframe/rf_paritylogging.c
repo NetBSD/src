@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_paritylogging.c,v 1.27 2006/11/16 01:33:23 christos Exp $	*/
+/*	$NetBSD: rf_paritylogging.c,v 1.27.4.1 2007/03/12 05:56:54 rmind Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_paritylogging.c,v 1.27 2006/11/16 01:33:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_paritylogging.c,v 1.27.4.1 2007/03/12 05:56:54 rmind Exp $");
 
 #include "rf_archs.h"
 
@@ -82,7 +82,7 @@ rf_ConfigureParityLogging(
 	RF_RaidLayout_t *layoutPtr = &raidPtr->Layout;
 	RF_ParityLoggingConfigInfo_t *info;
 	RF_ParityLog_t *l = NULL, *next;
-	caddr_t lHeapPtr;
+	void *lHeapPtr;
 
 	if (rf_numParityRegions <= 0)
 		return(EINVAL);
@@ -230,7 +230,7 @@ rf_ConfigureParityLogging(
 	       raidPtr->numParityLogs);
 	RF_Malloc(raidPtr->parityLogBufferHeap, raidPtr->numParityLogs *
 		  raidPtr->numSectorsPerLog * raidPtr->bytesPerSector,
-		  (caddr_t));
+		  (void *));
 	if (raidPtr->parityLogBufferHeap == NULL)
 		return (ENOMEM);
 	lHeapPtr = raidPtr->parityLogBufferHeap;
@@ -268,7 +268,7 @@ rf_ConfigureParityLogging(
 			l = l->next;
 		}
 		l->bufPtr = lHeapPtr;
-		lHeapPtr += raidPtr->numSectorsPerLog *
+		lHeapPtr = (char *)lHeapPtr + raidPtr->numSectorsPerLog *
 			raidPtr->bytesPerSector;
 		RF_Malloc(l->records, (raidPtr->numSectorsPerLog *
 				       sizeof(RF_ParityLogRecord_t)),
@@ -309,10 +309,10 @@ rf_ConfigureParityLogging(
 	raidPtr->regionBufferPool.emptyBuffersIndex = 0;
 	printf("Allocating %d bytes for regionBufferPool\n",
 	       (int) (raidPtr->regionBufferPool.totalBuffers *
-		      sizeof(caddr_t)));
+		      sizeof(void *)));
 	RF_Malloc(raidPtr->regionBufferPool.buffers,
-		  raidPtr->regionBufferPool.totalBuffers * sizeof(caddr_t),
-		  (caddr_t *));
+		  raidPtr->regionBufferPool.totalBuffers * sizeof(void *),
+		  (void **));
 	if (raidPtr->regionBufferPool.buffers == NULL) {
 		return (ENOMEM);
 	}
@@ -322,7 +322,7 @@ rf_ConfigureParityLogging(
 			      sizeof(char)), i);
 		RF_Malloc(raidPtr->regionBufferPool.buffers[i],
 			  raidPtr->regionBufferPool.bufferSize * sizeof(char),
-			  (caddr_t));
+			  (void *));
 		if (raidPtr->regionBufferPool.buffers[i] == NULL) {
 			for (j = 0; j < i; j++) {
 				RF_Free(raidPtr->regionBufferPool.buffers[i],
@@ -331,7 +331,7 @@ rf_ConfigureParityLogging(
 			}
 			RF_Free(raidPtr->regionBufferPool.buffers,
 				raidPtr->regionBufferPool.totalBuffers *
-				sizeof(caddr_t));
+				sizeof(void *));
 			return (ENOMEM);
 		}
 		printf("raidPtr->regionBufferPool.buffers[%d] = %lx\n", i,
@@ -358,11 +358,11 @@ rf_ConfigureParityLogging(
 	raidPtr->parityBufferPool.emptyBuffersIndex = 0;
 	printf("Allocating %d bytes for parityBufferPool of %d units\n",
 	       (int) (raidPtr->parityBufferPool.totalBuffers *
-		      sizeof(caddr_t)),
+		      sizeof(void *)),
 	       raidPtr->parityBufferPool.totalBuffers );
 	RF_Malloc(raidPtr->parityBufferPool.buffers,
-		  raidPtr->parityBufferPool.totalBuffers * sizeof(caddr_t),
-		  (caddr_t *));
+		  raidPtr->parityBufferPool.totalBuffers * sizeof(void *),
+		  (void **));
 	if (raidPtr->parityBufferPool.buffers == NULL) {
 		return (ENOMEM);
 	}
@@ -372,7 +372,7 @@ rf_ConfigureParityLogging(
 			      sizeof(char)),i);
 		RF_Malloc(raidPtr->parityBufferPool.buffers[i],
 			  raidPtr->parityBufferPool.bufferSize * sizeof(char),
-			  (caddr_t));
+			  (void *));
 		if (raidPtr->parityBufferPool.buffers == NULL) {
 			for (j = 0; j < i; j++) {
 				RF_Free(raidPtr->parityBufferPool.buffers[i],
@@ -381,7 +381,7 @@ rf_ConfigureParityLogging(
 			}
 			RF_Free(raidPtr->parityBufferPool.buffers,
 				raidPtr->regionBufferPool.totalBuffers *
-				sizeof(caddr_t));
+				sizeof(void *));
 			return (ENOMEM);
 		}
 		printf("parityBufferPool.buffers[%d] = %lx\n", i,
@@ -548,7 +548,7 @@ FreeRegionBufferQueue(RF_RegionBufferQueue_t * queue)
 	}
 	for (i = 0; i < queue->totalBuffers; i++)
 		RF_Free(queue->buffers[i], queue->bufferSize);
-	RF_Free(queue->buffers, queue->totalBuffers * sizeof(caddr_t));
+	RF_Free(queue->buffers, queue->totalBuffers * sizeof(void *));
 	RF_UNLOCK_MUTEX(queue->mutex);
 }
 

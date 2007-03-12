@@ -1,4 +1,4 @@
-/*	$NetBSD: if_agr.c,v 1.8.4.1 2007/02/27 16:54:48 yamt Exp $	*/
+/*	$NetBSD: if_agr.c,v 1.8.4.2 2007/03/12 05:59:32 rmind Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_agr.c,v 1.8.4.1 2007/02/27 16:54:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_agr.c,v 1.8.4.2 2007/03/12 05:59:32 rmind Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -73,9 +73,9 @@ static int agr_addport(struct ifnet *, struct ifnet *);
 static int agr_remport(struct ifnet *, struct ifnet *);
 static int agrreq_copyin(const void *, struct agrreq *);
 static int agrreq_copyout(void *, struct agrreq *);
-static int agr_ioctl(struct ifnet *, u_long, caddr_t);
+static int agr_ioctl(struct ifnet *, u_long, void *);
 static struct agr_port *agr_select_tx_port(struct agr_softc *, struct mbuf *);
-static int agr_ioctl_filter(struct ifnet *, u_long, caddr_t);
+static int agr_ioctl_filter(struct ifnet *, u_long, void *);
 static void agr_reset_iftype(struct ifnet *);
 static int agr_config_promisc(struct agr_softc *);
 static int agrport_config_promisc_callback(struct agr_port *, void *);
@@ -204,7 +204,7 @@ agr_xmit_frame(struct ifnet *ifp_port, struct mbuf *m)
 }
 
 int
-agrport_ioctl(struct agr_port *port, u_long cmd, caddr_t arg)
+agrport_ioctl(struct agr_port *port, u_long cmd, void *arg)
 {
 	struct ifnet *ifp = port->port_ifp;
 
@@ -536,7 +536,7 @@ agr_addport(struct ifnet *ifp, struct ifnet *ifp_port)
 	 */
 
 	error = (*ifp_port->if_ioctl)(ifp_port, SIOCSIFADDR,
-	    (caddr_t)TAILQ_FIRST(&ifp->if_addrlist));
+	    (void *)TAILQ_FIRST(&ifp->if_addrlist));
 
 	if (error) {
 		printf("%s: SIOCSIFADDR error %d\n", __func__, error);
@@ -716,7 +716,7 @@ agrport_cleanup(struct agr_softc *sc, struct agr_port *port)
 			memcpy(LLADDR(sdl), port->port_origlladdr, addrlen);
 			memset(&ifa, 0, sizeof(ifa));
 			ifa.ifa_addr = (struct sockaddr *)sdl;
-			error = agrport_ioctl(port, SIOCSIFADDR, (caddr_t)&ifa);
+			error = agrport_ioctl(port, SIOCSIFADDR, (void *)&ifa);
 			free(sdl, M_TEMP);
 		}
 #endif
@@ -759,7 +759,7 @@ agr_ioctl_multi(struct ifnet *ifp, u_long cmd, struct ifreq *ifr)
 
 /* XXX an incomplete hack; can't filter ioctls handled ifioctl(). */
 static int
-agr_ioctl_filter(struct ifnet *ifp, u_long cmd, caddr_t arg)
+agr_ioctl_filter(struct ifnet *ifp, u_long cmd, void *arg)
 {
 	struct agr_port *port = ifp->if_agrprivate;
 	int error;
@@ -812,7 +812,7 @@ agrreq_copyout(void *ubuf, struct agrreq *ar)
 }
 
 static int
-agr_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
+agr_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct agr_softc *sc = ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *)data;

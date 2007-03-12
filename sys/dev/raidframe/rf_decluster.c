@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_decluster.c,v 1.21 2006/11/16 01:33:23 christos Exp $	*/
+/*	$NetBSD: rf_decluster.c,v 1.21.4.1 2007/03/12 05:56:51 rmind Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -48,7 +48,7 @@
  *--------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_decluster.c,v 1.21 2006/11/16 01:33:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_decluster.c,v 1.21.4.1 2007/03/12 05:56:51 rmind Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -649,7 +649,7 @@ rf_SetSpareTable(RF_Raid_t *raidPtr, void *data)
 	/* what we need to copyin is a 2-d array, so first copyin the user
 	 * pointers to the rows in the table */
 	RF_Malloc(ptrs, info->TablesPerSpareRegion * sizeof(RF_SpareTableEntry_t *), (RF_SpareTableEntry_t **));
-	retcode = copyin((caddr_t) data, (caddr_t) ptrs, info->TablesPerSpareRegion * sizeof(RF_SpareTableEntry_t *));
+	retcode = copyin((void *) data, (void *) ptrs, info->TablesPerSpareRegion * sizeof(RF_SpareTableEntry_t *));
 
 	if (retcode)
 		return (retcode);

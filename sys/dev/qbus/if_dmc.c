@@ -1,4 +1,4 @@
-/*	$NetBSD: if_dmc.c,v 1.13 2006/03/29 18:17:36 thorpej Exp $	*/
+/*	$NetBSD: if_dmc.c,v 1.13.14.1 2007/03/12 05:56:48 rmind Exp $	*/
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
  * All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_dmc.c,v 1.13 2006/03/29 18:17:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_dmc.c,v 1.13.14.1 2007/03/12 05:56:48 rmind Exp $");
 
 #undef DMCDEBUG	/* for base table dump on fatal error */
 
@@ -178,7 +178,7 @@ static  void dmcrestart(struct dmc_softc *);
 static  void dmcload(struct dmc_softc *, int, u_short, u_short);
 static  void dmcstart(struct ifnet *);
 static  void dmctimeout(struct ifnet *);
-static  int dmcioctl(struct ifnet *, u_long, caddr_t);
+static  int dmcioctl(struct ifnet *, u_long, void *);
 static  int dmcoutput(struct ifnet *, struct mbuf *, struct sockaddr *,
 	struct rtentry *);
 static  void dmcreset(struct device *);
@@ -327,7 +327,7 @@ dmcinit(struct ifnet *ifp)
 	/* map base table */
 	if ((sc->sc_flag & DMC_BMAPPED) == 0) {
 		sc->sc_ui.ui_size = sizeof(struct dmc_base);
-		sc->sc_ui.ui_vaddr = (caddr_t)&sc->dmc_base;
+		sc->sc_ui.ui_vaddr = (void *)&sc->dmc_base;
 		uballoc((void *)device_parent(&sc->sc_dev), &sc->sc_ui, 0);
 		sc->sc_flag |= DMC_BMAPPED;
 	}
@@ -836,7 +836,7 @@ bad:
  */
 /* ARGSUSED */
 int
-dmcioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
+dmcioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	int s = splnet(), error = 0;
 	register struct dmc_softc *sc = ifp->if_softc;

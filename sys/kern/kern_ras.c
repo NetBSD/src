@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ras.c,v 1.16 2007/02/09 21:55:31 ad Exp $	*/
+/*	$NetBSD: kern_ras.c,v 1.16.2.1 2007/03/12 05:58:36 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ras.c,v 1.16 2007/02/09 21:55:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ras.c,v 1.16.2.1 2007/03/12 05:58:36 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/lock.h>
@@ -71,17 +71,17 @@ int ras_debug = 0;
  * otherwise we return -1.  If we do perform a restart, we
  * mark the sequence as hit.
  */
-caddr_t
-ras_lookup(struct proc *p, caddr_t addr)
+void *
+ras_lookup(struct proc *p, void *addr)
 {
 	struct ras *rp;
-	caddr_t startaddr;
+	void *startaddr;
 
-	startaddr = (caddr_t)-1;
+	startaddr = (void *)-1;
 
 #ifdef DIAGNOSTIC
-	if (addr < (caddr_t)VM_MIN_ADDRESS ||
-	    addr > (caddr_t)VM_MAXUSER_ADDRESS)
+	if (addr < (void *)VM_MIN_ADDRESS ||
+	    addr > (void *)VM_MAXUSER_ADDRESS)
 		return (startaddr);
 #endif
 
@@ -196,15 +196,15 @@ ras_purgeall(struct proc *p)
  * an error.
  */
 static int
-ras_install(struct proc *p, caddr_t addr, size_t len)
+ras_install(struct proc *p, void *addr, size_t len)
 {
 	struct ras *rp;
 	struct ras *newrp;
-	caddr_t endaddr = addr + len;
+	void *endaddr = (char *)addr + len;
 	int nras = 0;
 
-	if (addr < (caddr_t)VM_MIN_ADDRESS ||
-	    endaddr > (caddr_t)VM_MAXUSER_ADDRESS)
+	if (addr < (void *)VM_MIN_ADDRESS ||
+	    endaddr > (void *)VM_MAXUSER_ADDRESS)
 		return (EINVAL);
 
 	if (len <= 0)
@@ -239,10 +239,10 @@ again:
  * match, otherwise we return an error.
  */
 static int
-ras_purge(struct proc *p, caddr_t addr, size_t len)
+ras_purge(struct proc *p, void *addr, size_t len)
 {
 	struct ras *rp;
-	caddr_t endaddr = addr + len;
+	void *endaddr = (char *)addr + len;
 	int error = ESRCH;
 
 	mutex_enter(&p->p_rasmutex);
@@ -272,12 +272,12 @@ sys_rasctl(struct lwp *l, void *v, register_t *retval)
 #if defined(__HAVE_RAS)
 
 	struct sys_rasctl_args /* {
-		syscallarg(caddr_t) addr;
+		syscallarg(void *) addr;
 		syscallarg(size_t) len;
 		syscallarg(int) op;
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
-	caddr_t addr;
+	void *addr;
 	size_t len;
 	int op;
 	int error;
@@ -286,7 +286,7 @@ sys_rasctl(struct lwp *l, void *v, register_t *retval)
 	 * first, extract syscall args from the uap.
 	 */
 
-	addr = (caddr_t)SCARG(uap, addr);
+	addr = (void *)SCARG(uap, addr);
 	len = (size_t)SCARG(uap, len);
 	op = SCARG(uap, op);
 

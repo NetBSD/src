@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ecosubr.c,v 1.21 2006/06/07 22:33:42 kardel Exp $	*/
+/*	$NetBSD: if_ecosubr.c,v 1.21.12.1 2007/03/12 05:59:10 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ecosubr.c,v 1.21 2006/06/07 22:33:42 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ecosubr.c,v 1.21.12.1 2007/03/12 05:59:10 rmind Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -102,7 +102,7 @@ static int eco_output(struct ifnet *, struct mbuf *, struct sockaddr *,
     struct rtentry *);
 static void eco_input(struct ifnet *, struct mbuf *);
 static void eco_start(struct ifnet *);
-static int eco_ioctl(struct ifnet *, u_long, caddr_t);
+static int eco_ioctl(struct ifnet *, u_long, void *);
 
 static int eco_interestingp(struct ifnet *ifp, struct mbuf *m);
 static struct mbuf *eco_immediate(struct ifnet *ifp, struct mbuf *m);
@@ -375,7 +375,7 @@ eco_input(struct ifnet *ifp, struct mbuf *m)
 	/* Copy the mbuf header and trim it off. */
 	/* XXX use m_split? */
 	eh = &ehdr;
-	m_copydata(m, 0, ECO_HDR_LEN, (caddr_t)eh);
+	m_copydata(m, 0, ECO_HDR_LEN, (void *)eh);
 	m_adj(m, ECO_HDR_LEN);
 
 	switch (eh->eco_port) {
@@ -413,7 +413,7 @@ eco_input(struct ifnet *ifp, struct mbuf *m)
 			m1->m_pkthdr.len = m1->m_len;
 			MH_ALIGN(m1, m1->m_len);
 			ah = mtod(m1, struct arphdr *);
-			bzero((caddr_t)ah, m1->m_len);
+			bzero((void *)ah, m1->m_len);
 			ah->ar_pro = htons(ETHERTYPE_IP);
 			ah->ar_hln = ifp->if_data.ifi_addrlen;
 			ah->ar_pln = sizeof(struct in_addr);
@@ -517,7 +517,7 @@ eco_start(struct ifnet *ifp)
 }
 
 static int
-eco_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
+eco_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct ifreq *ifr = (struct ifreq *)data;
 	struct ifaddr *ifa = (struct ifaddr *)data;
@@ -732,7 +732,7 @@ eco_immediate(struct ifnet *ifp, struct mbuf *m)
 		    ECO_ADDR_LEN);
 		memcpy(reh->eco_shost, LLADDR(ifp->if_sadl),
 		    ECO_ADDR_LEN);
-		memcpy(mtod(n, caddr_t) + ECO_SHDR_LEN, machinepeek_data,
+		memcpy(mtod(n, void *) + ECO_SHDR_LEN, machinepeek_data,
 		    sizeof(machinepeek_data));
 		m_freem(m);
 		return n;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fddi.h,v 1.11 2005/12/11 23:05:25 thorpej Exp $	*/
+/*	$NetBSD: if_fddi.h,v 1.11.26.1 2007/03/12 05:59:11 rmind Exp $	*/
 
 /*
  * Copyright (c) 1995 Matt Thomas (thomas@lkg.dec.com)
@@ -88,7 +88,7 @@ struct	fddi_header {
 #define	fddi_sprintf		ether_sprintf
 
 #if defined(__NetBSD__)
-void    fddi_ifattach(struct ifnet *, caddr_t);
+void    fddi_ifattach(struct ifnet *, void *);
 #else
 void    fddi_ifattach(struct ifnet *);
 #endif

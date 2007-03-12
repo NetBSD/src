@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.115 2006/11/16 01:33:45 christos Exp $	*/
+/*	$NetBSD: in.c,v 1.115.4.1 2007/03/12 05:59:35 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.115 2006/11/16 01:33:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.115.4.1 2007/03/12 05:59:35 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet_conf.h"
@@ -144,10 +144,10 @@ __KERNEL_RCSID(0, "$NetBSD: in.c,v 1.115 2006/11/16 01:33:45 christos Exp $");
 #ifdef INET
 static u_int in_mask2len(struct in_addr *);
 static void in_len2mask(struct in_addr *, u_int);
-static int in_lifaddr_ioctl(struct socket *, u_long, caddr_t,
+static int in_lifaddr_ioctl(struct socket *, u_long, void *,
 	struct ifnet *, struct lwp *);
 
-static int in_ifaddrpref_ioctl(struct socket *, u_long, caddr_t,
+static int in_ifaddrpref_ioctl(struct socket *, u_long, void *,
 	struct ifnet *);
 static int in_addprefix(struct in_ifaddr *, int);
 static int in_scrubprefix(struct in_ifaddr *);
@@ -316,7 +316,7 @@ in_len2mask(struct in_addr *mask, u_int len)
  */
 /* ARGSUSED */
 int
-in_control(struct socket *so, u_long cmd, caddr_t data, struct ifnet *ifp,
+in_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp,
     struct lwp *l)
 {
 	struct ifreq *ifr = (struct ifreq *)data;
@@ -405,7 +405,7 @@ in_control(struct socket *so, u_long cmd, caddr_t data, struct ifnet *ifp,
 			       M_IFADDR, M_WAITOK);
 			if (ia == 0)
 				return (ENOBUFS);
-			bzero((caddr_t)ia, sizeof *ia);
+			bzero((void *)ia, sizeof *ia);
 			TAILQ_INSERT_TAIL(&in_ifaddrhead, ia, ia_list);
 			IFAREF(&ia->ia_ifa);
 			TAILQ_INSERT_TAIL(&ifp->if_addrlist, &ia->ia_ifa,
@@ -476,7 +476,7 @@ in_control(struct socket *so, u_long cmd, caddr_t data, struct ifnet *ifp,
 		oldaddr = ia->ia_dstaddr;
 		ia->ia_dstaddr = *satosin(&ifr->ifr_dstaddr);
 		if (ifp->if_ioctl && (error = (*ifp->if_ioctl)
-					(ifp, SIOCSIFDSTADDR, (caddr_t)ia))) {
+					(ifp, SIOCSIFDSTADDR, (void *)ia))) {
 			ia->ia_dstaddr = oldaddr;
 			return (error);
 		}
@@ -641,7 +641,7 @@ in_purgeif(struct ifnet *ifp)		/* MUST be called at splsoftnet() */
  *	other values may be returned from in_ioctl()
  */
 static int
-in_lifaddr_ioctl(struct socket *so, u_long cmd, caddr_t data,
+in_lifaddr_ioctl(struct socket *so, u_long cmd, void *data,
     struct ifnet *ifp, struct lwp *l)
 {
 	struct if_laddrreq *iflr = (struct if_laddrreq *)data;
@@ -712,7 +712,7 @@ in_lifaddr_ioctl(struct socket *so, u_long cmd, caddr_t data,
 		ifra.ifra_mask.sin_len = sizeof(struct sockaddr_in);
 		in_len2mask(&ifra.ifra_mask.sin_addr, iflr->prefixlen);
 
-		return in_control(so, SIOCAIFADDR, (caddr_t)&ifra, ifp, l);
+		return in_control(so, SIOCAIFADDR, (void *)&ifra, ifp, l);
 	    }
 	case SIOCGLIFADDR:
 	case SIOCDLIFADDR:
@@ -798,7 +798,7 @@ in_lifaddr_ioctl(struct socket *so, u_long cmd, caddr_t data,
 			bcopy(&ia->ia_sockmask, &ifra.ifra_dstaddr,
 				ia->ia_sockmask.sin_len);
 
-			return in_control(so, SIOCDIFADDR, (caddr_t)&ifra,
+			return in_control(so, SIOCDIFADDR, (void *)&ifra,
 				ifp, l);
 		}
 	    }
@@ -808,7 +808,7 @@ in_lifaddr_ioctl(struct socket *so, u_long cmd, caddr_t data,
 }
 
 static int
-in_ifaddrpref_ioctl(struct socket *so, u_long cmd, caddr_t data,
+in_ifaddrpref_ioctl(struct socket *so, u_long cmd, void *data,
     struct ifnet *ifp)
 {
 	struct if_addrprefreq *ifap = (struct if_addrprefreq *)data;
@@ -907,7 +907,7 @@ in_ifinit(struct ifnet *ifp, struct in_ifaddr *ia,
 	 * and to validate the address if necessary.
 	 */
 	if (ifp->if_ioctl &&
-	    (error = (*ifp->if_ioctl)(ifp, SIOCSIFADDR, (caddr_t)ia)))
+	    (error = (*ifp->if_ioctl)(ifp, SIOCSIFADDR, (void *)ia)))
 		goto bad;
 	splx(s);
 	if (scrub) {
@@ -1168,7 +1168,7 @@ in_addmulti(struct in_addr *ap, struct ifnet *ifp)
 		satosin(&ifr.ifr_addr)->sin_family = AF_INET;
 		satosin(&ifr.ifr_addr)->sin_addr = *ap;
 		if ((ifp->if_ioctl == NULL) ||
-		    (*ifp->if_ioctl)(ifp, SIOCADDMULTI,(caddr_t)&ifr) != 0) {
+		    (*ifp->if_ioctl)(ifp, SIOCADDMULTI,(void *)&ifr) != 0) {
 			LIST_REMOVE(inm, inm_list);
 			pool_put(&inmulti_pool, inm);
 			splx(s);
@@ -1216,7 +1216,7 @@ in_delmulti(struct in_multi *inm)
 		satosin(&ifr.ifr_addr)->sin_family = AF_INET;
 		satosin(&ifr.ifr_addr)->sin_addr = inm->inm_addr;
 		(*inm->inm_ifp->if_ioctl)(inm->inm_ifp, SIOCDELMULTI,
-							     (caddr_t)&ifr);
+							     (void *)&ifr);
 		pool_put(&inmulti_pool, inm);
 	}
 	splx(s);

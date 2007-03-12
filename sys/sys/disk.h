@@ -1,4 +1,4 @@
-/*	$NetBSD: disk.h,v 1.42 2006/11/25 11:59:58 scw Exp $	*/
+/*	$NetBSD: disk.h,v 1.42.4.1 2007/03/12 06:00:51 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2004 The NetBSD Foundation, Inc.
@@ -450,7 +450,7 @@ struct dkdriver {
 #ifdef notyet
 	int	(*d_open)(dev_t, int, int, struct proc *);
 	int	(*d_close)(dev_t, int, int, struct proc *);
-	int	(*d_ioctl)(dev_t, u_long, caddr_t, int, struct proc *);
+	int	(*d_ioctl)(dev_t, u_long, void *, int, struct proc *);
 	int	(*d_dump)(dev_t);
 	void	(*d_start)(struct buf *, daddr_t);
 	int	(*d_mklabel)(struct disk *);
@@ -480,7 +480,7 @@ struct disk_badsecinfo {
 	uint32_t	dbsi_skip;	/* how many to skip past */
 	uint32_t	dbsi_copied;	/* how many got copied back */
 	uint32_t	dbsi_left;	/* remaining to copy */
-	caddr_t		dbsi_buffer;	/* region to copy disk_badsectors to */
+	void *		dbsi_buffer;	/* region to copy disk_badsectors to */
 };
 
 #define	DK_STRATEGYNAMELEN	32
@@ -508,7 +508,7 @@ void	disk_busy(struct disk *);
 void	disk_unbusy(struct disk *, long, int);
 void	disk_blocksize(struct disk *, int);
 struct disk *disk_find(const char *);
-int	disk_ioctl(struct disk *, u_long, caddr_t, int, struct lwp *);
+int	disk_ioctl(struct disk *, u_long, void *, int, struct lwp *);
 
 int	dkwedge_add(struct dkwedge_info *);
 int	dkwedge_del(struct dkwedge_info *);

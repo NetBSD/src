@@ -1,4 +1,4 @@
-/*	$NetBSD: timepps.h,v 1.15 2006/06/07 22:34:18 kardel Exp $	*/
+/*	$NetBSD: timepps.h,v 1.15.12.1 2007/03/12 06:00:55 rmind Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone
@@ -150,7 +150,7 @@ struct pps_state {
 void pps_capture(struct pps_state *);
 void pps_event(struct pps_state *, int);
 void pps_init(struct pps_state *);
-int pps_ioctl(unsigned long, caddr_t, struct pps_state *);
+int pps_ioctl(unsigned long, void *, struct pps_state *);
 #endif /* __HAVE_TIMECOUNTER */
 
 #else /* !_KERNEL */

@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_ctl.c,v 1.39 2007/02/09 21:55:36 ad Exp $	*/
+/*	$NetBSD: procfs_ctl.c,v 1.39.2.1 2007/03/12 05:59:08 rmind Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_ctl.c,v 1.39 2007/02/09 21:55:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_ctl.c,v 1.39.2.1 2007/03/12 05:59:08 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -140,7 +140,7 @@ procfs_control(curl, l, op, sig, pfs)
 	struct proc *p = l->l_proc;
 	int error = 0;
 
-	rw_enter(&proclist_lock, RW_WRITER);
+	mutex_enter(&proclist_lock);
 	mutex_enter(&p->p_mutex);
 
 	switch (op) {
@@ -251,7 +251,7 @@ procfs_control(curl, l, op, sig, pfs)
 
 	if (error != 0) {
 		mutex_exit(&p->p_mutex);
-		rw_exit(&proclist_lock);
+		mutex_exit(&proclist_lock);
 		return (error);
 	}
 
@@ -328,12 +328,12 @@ procfs_control(curl, l, op, sig, pfs)
 				psignal(p, sig);
 		}
 		mutex_exit(&p->p_smutex);
-		rw_exit(&proclist_lock);
+		mutex_exit(&proclist_lock);
 		return (error);
 
 	case PROCFS_CTL_WAIT:
 		mutex_exit(&p->p_mutex);
-		rw_exit(&proclist_lock);
+		mutex_exit(&proclist_lock);
 
 		/*
 		 * Wait for the target process to stop.
@@ -352,7 +352,7 @@ procfs_control(curl, l, op, sig, pfs)
 	}
 
 	mutex_exit(&p->p_mutex);
-	rw_exit(&proclist_lock);
+	mutex_exit(&proclist_lock);
 	return (error);
 }
 

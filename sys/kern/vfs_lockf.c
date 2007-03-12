@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lockf.c,v 1.57 2007/02/09 21:55:32 ad Exp $	*/
+/*	$NetBSD: vfs_lockf.c,v 1.57.2.1 2007/03/12 05:58:46 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lockf.c,v 1.57 2007/02/09 21:55:32 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lockf.c,v 1.57.2.1 2007/03/12 05:58:46 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,7 +97,7 @@ int	lockf_debug = 0;
 
 /*
  * XXX TODO
- * Misc cleanups: "caddr_t id" should be visible in the API as a
+ * Misc cleanups: "void *id" should be visible in the API as a
  * "struct proc *".
  * (This requires rototilling all VFS's which support advisory locking).
  */

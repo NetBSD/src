@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_raid1.c,v 1.29 2006/11/16 01:33:23 christos Exp $	*/
+/*	$NetBSD: rf_raid1.c,v 1.29.4.1 2007/03/12 05:56:55 rmind Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_raid1.c,v 1.29 2006/11/16 01:33:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_raid1.c,v 1.29.4.1 2007/03/12 05:56:55 rmind Exp $");
 
 #include "rf_raid.h"
 #include "rf_raid1.h"
@@ -554,7 +554,7 @@ rf_SubmitReconBufferRAID1(RF_ReconBuffer_t *rbuf, int keep_it,
 	RF_CallbackDesc_t *cb, *p;
 	RF_ReconBuffer_t *t;
 	RF_Raid_t *raidPtr;
-	caddr_t ta;
+	void *ta;
 
 	retcode = 0;
 
@@ -573,12 +573,11 @@ rf_SubmitReconBufferRAID1(RF_ReconBuffer_t *rbuf, int keep_it,
 	}
 #endif
 	if (rf_reconDebug) {
+		unsigned char *b = rbuf->buffer;
 		printf("RAID1 reconbuffer submit psid %ld buf %lx\n",
 		    (long) rbuf->parityStripeID, (long) rbuf->buffer);
 		printf("RAID1 psid %ld   %02x %02x %02x %02x %02x\n",
-		    (long) rbuf->parityStripeID,
-		    rbuf->buffer[0], rbuf->buffer[1], rbuf->buffer[2], rbuf->buffer[3],
-		    rbuf->buffer[4]);
+		    (long)rbuf->parityStripeID, b[0], b[1], b[2], b[3], b[4]);
 	}
 	RF_LOCK_PSS_MUTEX(raidPtr, rbuf->parityStripeID);
 

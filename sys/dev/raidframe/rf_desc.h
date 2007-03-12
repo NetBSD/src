@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_desc.h,v 1.19 2005/12/11 12:23:37 christos Exp $	*/
+/*	$NetBSD: rf_desc.h,v 1.19.26.1 2007/03/12 05:56:52 rmind Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -70,7 +70,7 @@ struct RF_RaidAccessDesc_s {
 					 * transfer */
 	RF_StripeCount_t numStripes;	/* number of stripes involved in
 					 * access */
-	caddr_t bufPtr;		/* pointer to data buffer */
+	void *bufPtr;		/* pointer to data buffer */
 	RF_RaidAccessFlags_t flags;	/* flags controlling operation */
 	int     state;		/* index into states telling how far along the
 				 * RAID operation has gotten */

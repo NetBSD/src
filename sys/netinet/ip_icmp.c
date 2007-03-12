@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.108.2.1 2007/02/27 16:54:55 yamt Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.108.2.2 2007/03/12 05:59:37 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.108.2.1 2007/02/27 16:54:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.108.2.2 2007/03/12 05:59:37 rmind Exp $");
 
 #include "opt_ipsec.h"
 
@@ -253,7 +253,7 @@ icmp_error(struct mbuf *n, int type, int code, n_long dest,
 		goto freeit;
 	if (oip->ip_p == IPPROTO_ICMP && type != ICMP_REDIRECT &&
 	  n->m_len >= oiplen + ICMP_MINLEN &&
-	  !ICMP_INFOTYPE(((struct icmp *)((caddr_t)oip + oiplen))->icmp_type)) {
+	  !ICMP_INFOTYPE(((struct icmp *)((char *)oip + oiplen))->icmp_type)) {
 		icmpstat.icps_oldicmp++;
 		goto freeit;
 	}
@@ -332,7 +332,7 @@ icmp_error(struct mbuf *n, int type, int code, n_long dest,
 	}
 
 	icp->icmp_code = code;
-	m_copydata(n, 0, icmplen, (caddr_t)&icp->icmp_ip);
+	m_copydata(n, 0, icmplen, (void *)&icp->icmp_ip);
 
 	/*
 	 * Now, copy old ip header (without options)
@@ -828,15 +828,15 @@ icmp_reflect(struct mbuf *m)
 			     */
 			    if (opt == IPOPT_RR || opt == IPOPT_TS ||
 				opt == IPOPT_SECURITY) {
-				    bcopy((caddr_t)cp,
-					mtod(opts, caddr_t) + opts->m_len, len);
+				    memmove(mtod(opts, char *) + opts->m_len,
+					cp, len);
 				    opts->m_len += len;
 			    }
 		    }
 		    /* Terminate & pad, if necessary */
 		    if ((cnt = opts->m_len % 4) != 0) {
 			    for (; cnt < 4; cnt++) {
-				    *(mtod(opts, caddr_t) + opts->m_len) =
+				    *(mtod(opts, char *) + opts->m_len) =
 					IPOPT_EOL;
 				    opts->m_len++;
 			    }
@@ -856,8 +856,8 @@ icmp_reflect(struct mbuf *m)
 		if (m->m_flags & M_PKTHDR)
 			m->m_pkthdr.len -= optlen;
 		optlen += sizeof(struct ip);
-		bcopy((caddr_t)ip + optlen, (caddr_t)(ip + 1),
-			 (unsigned)(m->m_len - sizeof(struct ip)));
+		memmove(ip + 1, (char *)ip + optlen,
+		    (unsigned)(m->m_len - sizeof(struct ip)));
 	}
 	m_tag_delete_nonpersistent(m);
 	m->m_flags &= ~(M_BCAST|M_MCAST);

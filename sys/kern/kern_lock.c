@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.105.2.2 2007/02/27 16:54:21 yamt Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.105.2.3 2007/03/12 05:58:34 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2006 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.105.2.2 2007/02/27 16:54:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.105.2.3 2007/03/12 05:58:34 rmind Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_ddb.h"
@@ -90,6 +90,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.105.2.2 2007/02/27 16:54:21 yamt Exp
 #include <sys/lockdebug.h>
 
 #include <machine/cpu.h>
+#include <machine/stdarg.h>
 
 #include <dev/lockstat.h>
 
@@ -400,6 +401,46 @@ lock_printf(const char *fmt, ...)
 }
 #endif /* LOCKDEBUG */
 
+static void
+lockpanic(volatile struct lock *lkp, const char *fmt, ...)
+{
+	char s[150], b[150];
+#ifdef LOCKDEBUG
+	static const char *locktype[] = {
+	    "*0*", "shared", "exclusive", "upgrade", "exclupgrade",
+	    "downgrade", "release", "drain", "exclother", "*9*",
+	    "*10*", "*11*", "*12*", "*13*", "*14*", "*15*"
+	};
+#endif
+
+	va_list ap;
+	va_start(ap, fmt);
+	vsnprintf(s, sizeof(s), fmt, ap);
+	va_end(ap);
+	bitmask_snprintf(lkp->lk_flags, __LK_FLAG_BITS, b, sizeof(b));
+	panic("%s ("
+#ifdef LOCKDEBUG
+	    "type %s "
+#endif
+	    "flags %s, sharecount %d, exclusivecount %d, "
+	    "recurselevel %d, waitcount %d, wmesg %s"
+#ifdef LOCKDEBUG
+	    ", lock_file %s, unlock_file %s, lock_line %d, unlock_line %d"
+#endif
+	    ")\n",
+	    s, 
+#ifdef LOCKDEBUG
+	    locktype[lkp->lk_flags & LK_TYPE_MASK],
+#endif
+	    b, lkp->lk_sharecount, lkp->lk_exclusivecount,
+	    lkp->lk_recurselevel, lkp->lk_waitcount, lkp->lk_wmesg
+#ifdef LOCKDEBUG
+	    , lkp->lk_lock_file, lkp->lk_unlock_file, lkp->lk_lock_line,
+	    lkp->lk_unlock_line
+#endif
+	);
+}
+
 /*
  * Transfer any waiting processes from one lock to another.
  */
@@ -592,7 +633,7 @@ lockmgr(volatile struct lock *lkp, u_int flags,
 	 * on spin locks.
 	 */
 	if ((flags ^ lkp->lk_flags) & LK_SPIN)
-		panic("lockmgr: sleep/spin mismatch");
+		lockpanic(lkp, "lockmgr: sleep/spin mismatch");
 #endif /* } */
 
 	if (extflags & LK_SPIN) {
@@ -629,10 +670,10 @@ lockmgr(volatile struct lock *lkp, u_int flags,
 	if (lkp->lk_flags & (LK_DRAINING|LK_DRAINED)) {
 #ifdef DIAGNOSTIC /* { */
 		if (lkp->lk_flags & LK_DRAINED)
-			panic("lockmgr: using decommissioned lock");
+			lockpanic(lkp, "lockmgr: using decommissioned lock");
 		if ((flags & LK_TYPE_MASK) != LK_RELEASE ||
 		    WEHOLDIT(lkp, pid, lid, cpu_num) == 0)
-			panic("lockmgr: non-release on draining lock: %d",
+			lockpanic(lkp, "lockmgr: non-release on draining lock: %d",
 			    flags & LK_TYPE_MASK);
 #endif /* DIAGNOSTIC */ /* } */
 		lkp->lk_flags &= ~LK_DRAINING;
@@ -677,7 +718,7 @@ lockmgr(volatile struct lock *lkp, u_int flags,
 	case LK_DOWNGRADE:
 		if (WEHOLDIT(lkp, pid, lid, cpu_num) == 0 ||
 		    lkp->lk_exclusivecount == 0)
-			panic("lockmgr: not holding exclusive lock");
+			lockpanic(lkp, "lockmgr: not holding exclusive lock");
 		lkp->lk_sharecount += lkp->lk_exclusivecount;
 		lkp->lk_flags |= LK_SHARE_NONZERO;
 		lkp->lk_exclusivecount = 0;
@@ -718,7 +759,7 @@ lockmgr(volatile struct lock *lkp, u_int flags,
 		 * will always be unlocked.
 		 */
 		if (WEHOLDIT(lkp, pid, lid, cpu_num) || lkp->lk_sharecount <= 0)
-			panic("lockmgr: upgrade exclusive lock");
+			lockpanic(lkp, "lockmgr: upgrade exclusive lock");
 		lkp->lk_sharecount--;
 		if (lkp->lk_sharecount == 0)
 			lkp->lk_flags &= ~LK_SHARE_NONZERO;
@@ -754,7 +795,7 @@ lockmgr(volatile struct lock *lkp, u_int flags,
 #endif
 			HAVEIT(lkp);
 			if (lkp->lk_exclusivecount != 0)
-				panic("lockmgr: non-zero exclusive count");
+				lockpanic(lkp, "lockmgr: non-zero exclusive count");
 			lkp->lk_exclusivecount = 1;
 			if (extflags & LK_SETRECURSE)
 				lkp->lk_recurselevel = 1;
@@ -781,7 +822,7 @@ lockmgr(volatile struct lock *lkp, u_int flags,
 					error = EDEADLK;
 					break;
 				} else
-					panic("lockmgr: locking against myself");
+					lockpanic(lkp, "lockmgr: locking against myself");
 			}
 			lkp->lk_exclusivecount++;
 			if (extflags & LK_SETRECURSE &&
@@ -826,7 +867,7 @@ lockmgr(volatile struct lock *lkp, u_int flags,
 #endif
 		HAVEIT(lkp);
 		if (lkp->lk_exclusivecount != 0)
-			panic("lockmgr: non-zero exclusive count");
+			lockpanic(lkp, "lockmgr: non-zero exclusive count");
 		lkp->lk_exclusivecount = 1;
 		if (extflags & LK_SETRECURSE)
 			lkp->lk_recurselevel = 1;
@@ -837,11 +878,12 @@ lockmgr(volatile struct lock *lkp, u_int flags,
 		if (lkp->lk_exclusivecount != 0) {
 			if (WEHOLDIT(lkp, pid, lid, cpu_num) == 0) {
 				if (lkp->lk_flags & LK_SPIN) {
-					panic("lockmgr: processor %lu, not "
+					lockpanic(lkp,
+					    "lockmgr: processor %lu, not "
 					    "exclusive lock holder %lu "
 					    "unlocking", cpu_num, lkp->lk_cpu);
 				} else {
-					panic("lockmgr: pid %d, not "
+					lockpanic(lkp, "lockmgr: pid %d, not "
 					    "exclusive lock holder %d "
 					    "unlocking", pid,
 					    lkp->lk_lockholder);
@@ -868,7 +910,7 @@ lockmgr(volatile struct lock *lkp, u_int flags,
 		}
 #ifdef DIAGNOSTIC
 		else
-			panic("lockmgr: release of unlocked lock!");
+			lockpanic(lkp, "lockmgr: release of unlocked lock!");
 #endif
 		WAKEUP_WAITER(lkp);
 		break;
@@ -881,7 +923,7 @@ lockmgr(volatile struct lock *lkp, u_int flags,
 		 * check for an exclusive one.
 		 */
 		if (WEHOLDIT(lkp, pid, lid, cpu_num))
-			panic("lockmgr: draining against myself");
+			lockpanic(lkp, "lockmgr: draining against myself");
 		/*
 		 * If we are just polling, check to see if we will sleep.
 		 */
@@ -913,7 +955,7 @@ lockmgr(volatile struct lock *lkp, u_int flags,
 
 	default:
 		INTERLOCK_RELEASE(lkp, lkp->lk_flags, s);
-		panic("lockmgr: unknown locktype request %d",
+		lockpanic(lkp, "lockmgr: unknown locktype request %d",
 		    flags & LK_TYPE_MASK);
 		/* NOTREACHED */
 	}
@@ -929,7 +971,7 @@ lockmgr(volatile struct lock *lkp, u_int flags,
 	 * we only set lock_shutdown_noblock above if panicstr != NULL.
 	 */
 	if (error && lock_shutdown_noblock)
-		panic("lockmgr: deadlock (see previous panic)");
+		lockpanic(lkp, "lockmgr: deadlock (see previous panic)");
 
 	INTERLOCK_RELEASE(lkp, lkp->lk_flags, s);
 	return (error);
@@ -961,7 +1003,7 @@ spinlock_release_all(volatile struct lock *lkp)
 	if (count != 0) {
 #ifdef DIAGNOSTIC
 		if (WEHOLDIT(lkp, 0, 0, cpu_num) == 0) {
-			panic("spinlock_release_all: processor %lu, not "
+			lockpanic(lkp, "spinlock_release_all: processor %lu, not "
 			    "exclusive lock holder %lu "
 			    "unlocking", (long)cpu_num, lkp->lk_cpu);
 		}
@@ -979,9 +1021,9 @@ spinlock_release_all(volatile struct lock *lkp)
 	}
 #ifdef DIAGNOSTIC
 	else if (lkp->lk_sharecount != 0)
-		panic("spinlock_release_all: release of shared lock!");
+		lockpanic(lkp, "spinlock_release_all: release of shared lock!");
 	else
-		panic("spinlock_release_all: release of unlocked lock!");
+		lockpanic(lkp, "spinlock_release_all: release of unlocked lock!");
 #endif
 	INTERLOCK_RELEASE(lkp, LK_SPIN, s);
 
@@ -1013,7 +1055,7 @@ spinlock_acquire_count(volatile struct lock *lkp, int count)
 
 #ifdef DIAGNOSTIC
 	if (WEHOLDIT(lkp, LK_NOPROC, 0, cpu_num))
-		panic("spinlock_acquire_count: processor %lu already holds lock", (long)cpu_num);
+		lockpanic(lkp, "spinlock_acquire_count: processor %lu already holds lock", (long)cpu_num);
 #endif
 	/*
 	 * Try to acquire the want_exclusive flag.
@@ -1036,7 +1078,7 @@ spinlock_acquire_count(volatile struct lock *lkp, int count)
 #endif
 	HAVEIT(lkp);
 	if (lkp->lk_exclusivecount != 0)
-		panic("lockmgr: non-zero exclusive count");
+		lockpanic(lkp, "lockmgr: non-zero exclusive count");
 	lkp->lk_exclusivecount = count;
 	lkp->lk_recurselevel = 1;
 	COUNT_CPU(cpu_num, count);

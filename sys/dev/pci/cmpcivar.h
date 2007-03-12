@@ -1,4 +1,4 @@
-/*	$NetBSD: cmpcivar.h,v 1.9 2005/12/11 12:22:48 christos Exp $	*/
+/*	$NetBSD: cmpcivar.h,v 1.9.26.1 2007/03/12 05:55:12 rmind Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@ struct cmpci_dmanode {
 	int			cd_nsegs;
 	bus_dma_segment_t	cd_segs[1];
 	bus_dmamap_t		cd_map;
-	caddr_t			cd_addr;
+	void *			cd_addr;
 	size_t			cd_size;
 	struct cmpci_dmanode	*cd_next;
 };

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.h,v 1.26 2005/12/10 23:36:23 elad Exp $	*/
+/*	$NetBSD: ip_mroute.h,v 1.26.26.1 2007/03/12 05:59:38 rmind Exp $	*/
 
 #ifndef _NETINET_IP_MROUTE_H_
 #define _NETINET_IP_MROUTE_H_
@@ -334,7 +334,7 @@ struct bw_meter {
 
 int	ip_mrouter_set(struct socket *, int, struct mbuf **);
 int	ip_mrouter_get(struct socket *, int, struct mbuf **);
-int	mrt_ioctl(struct socket *, u_long, caddr_t);
+int	mrt_ioctl(struct socket *, u_long, void *);
 int	ip_mrouter_done(void);
 void	ip_mrouter_detach(struct ifnet *);
 void	reset_vif(struct vif *);

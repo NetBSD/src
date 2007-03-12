@@ -1,4 +1,4 @@
-/* $NetBSD: piixpm.c,v 1.12 2006/12/10 00:34:52 uwe Exp $ */
+/* $NetBSD: piixpm.c,v 1.12.2.1 2007/03/12 05:55:27 rmind Exp $ */
 /*	$OpenBSD: piixpm.c,v 1.20 2006/02/27 08:25:02 grange Exp $	*/
 
 /*
@@ -69,7 +69,7 @@ struct piixpm_softc {
 	struct lock		sc_i2c_lock;
 	struct {
 		i2c_op_t     op;
-		void *       buf;
+		void *      buf;
 		size_t       len;
 		int          flags;
 		volatile int error;

@@ -78,7 +78,7 @@ void mb_initm(struct mbchain *mbp, struct mbuf *m);
 void mb_done(struct mbchain *mbp);
 struct mbuf *mb_detach(struct mbchain *mbp);
 int  mb_fixhdr(struct mbchain *mbp);
-caddr_t mb_reserve(struct mbchain *mbp, int size);
+void *mb_reserve(struct mbchain *mbp, int size);
 
 int  mb_put_uint8(struct mbchain *mbp, u_int8_t x);
 int  mb_put_uint16be(struct mbchain *mbp, u_int16_t x);
@@ -106,7 +106,7 @@ int  md_get_uint32le(struct mdchain *mdp, u_int32_t *x);
 int  md_get_int64(struct mdchain *mdp, int64_t *x);
 int  md_get_int64be(struct mdchain *mdp, int64_t *x);
 int  md_get_int64le(struct mdchain *mdp, int64_t *x);
-int  md_get_mem(struct mdchain *mdp, caddr_t target, int size, int type);
+int  md_get_mem(struct mdchain *mdp, void *target, int size, int type);
 int  md_get_mbuf(struct mdchain *mdp, int size, struct mbuf **m);
 int  md_get_uio(struct mdchain *mdp, struct uio *uiop, int size);
 

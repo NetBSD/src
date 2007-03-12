@@ -1,4 +1,4 @@
-/*	$NetBSD: qecvar.h,v 1.9 2005/12/11 12:23:44 christos Exp $	*/
+/*	$NetBSD: qecvar.h,v 1.9.26.1 2007/03/12 05:57:08 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@ struct qec_softc {
 	bus_space_handle_t sc_regs;	/* QEC registers */
 	int	sc_nchannels;		/* # of channels on board */
 	int	sc_burst;		/* DVMA burst size in effect */
-	caddr_t	sc_buffer;		/* VA of the buffer we provide */
+	void *	sc_buffer;		/* VA of the buffer we provide */
 	int	sc_bufsiz;		/* Size of buffer */
 
 	u_int	sc_msize;		/* QEC buffer offset per channel */
@@ -55,14 +55,14 @@ struct qec_softc {
 
 struct qec_ring {
 	/* Ring Descriptors */
-	caddr_t		rb_membase;	/* Packet buffer: CPU address */
+	void *		rb_membase;	/* Packet buffer: CPU address */
 	bus_addr_t	rb_dmabase;	/* Packet buffer: DMA address */
 	struct	qec_xd	*rb_txd;	/* Transmit descriptors */
 	bus_addr_t	rb_txddma;	/* DMA address of same */
 	struct	qec_xd	*rb_rxd;	/* Receive descriptors */
 	bus_addr_t	rb_rxddma;	/* DMA address of same */
-	caddr_t		rb_txbuf;	/* Transmit buffers */
-	caddr_t		rb_rxbuf;	/* Receive buffers */
+	void *		rb_txbuf;	/* Transmit buffers */
+	void *		rb_rxbuf;	/* Receive buffers */
 	int		rb_ntbuf;	/* # of transmit buffers */
 	int		rb_nrbuf;	/* # of receive buffers */
 

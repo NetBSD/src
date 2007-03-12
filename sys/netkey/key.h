@@ -1,4 +1,4 @@
-/*	$NetBSD: key.h,v 1.20.26.1 2007/02/27 16:55:13 yamt Exp $	*/
+/*	$NetBSD: key.h,v 1.20.26.2 2007/03/12 06:00:33 rmind Exp $	*/
 /*	$KAME: key.h,v 1.32 2003/09/07 05:25:20 itojun Exp $	*/
 
 /*
@@ -82,7 +82,7 @@ struct mbuf *key_setdumpsa_spi __P((u_int32_t));
 extern int key_parse __P((struct mbuf *, struct socket *));
 extern void key_init __P((void));
 extern int key_checktunnelsanity __P((struct secasvar *, u_int,
-					caddr_t, caddr_t));
+					void *, void *));
 extern void key_sa_recordxfer __P((struct secasvar *, struct mbuf *));
 extern void key_sa_routechange __P((struct sockaddr *));
 extern void key_sa_stir_iv __P((struct secasvar *));
