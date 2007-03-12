@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.159 2007/03/12 13:13:19 rmind Exp $
+#	$NetBSD: BRANCHES,v 1.160 2007/03/12 19:43:38 mjf Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -650,6 +650,16 @@ Scope:		basesrc, syssrc, sharesrc
 Notes:		Citrus Project is developing dynamically-loadable, codeset-
 		independent locale subsystem.  Part of the implementation
 		(LC_CTYPE) called XPG4DL is now integrated to -current.
+
+Branch:		mjf-ufs-trans
+Description:	filesystem transactions for ufs
+Status:		Active
+Start Date:	12 March 2007
+End Date:
+Base Tag:	mjf-ufs-trans-base
+Maintainer:	Matt Fleming <mjf@NetBSD.org>
+Scope:		kernel
+Notes:
 
 Branch:		mrg-vm-swap
 Description:	dynamic swap allocation, swap-to-files support
