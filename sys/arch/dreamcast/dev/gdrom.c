@@ -1,4 +1,4 @@
-/*	$NetBSD: gdrom.c,v 1.20 2007/03/04 05:59:43 christos Exp $	*/
+/*	$NetBSD: gdrom.c,v 1.21 2007/03/12 14:03:47 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: gdrom.c,v 1.20 2007/03/04 05:59:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdrom.c,v 1.21 2007/03/12 14:03:47 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -397,7 +397,8 @@ gdromattach(struct device *parent, struct device *self, void *aux)
 		x = ((volatile uint32_t *)0xa0000000)[p];
 
 	printf(": %s\n", sysasic_intr_string(IPL_BIO));
-	sysasic_intr_establish(SYSASIC_EVENT_GDROM, IPL_BIO, gdrom_intr, sc);
+	sysasic_intr_establish(SYSASIC_EVENT_GDROM, IPL_BIO, SYSASIC_IRL9,
+	    gdrom_intr, sc);
 }
 
 int
