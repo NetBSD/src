@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.134 2007/03/04 06:03:11 christos Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.135 2007/03/12 18:18:34 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.134 2007/03/04 06:03:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.135 2007/03/12 18:18:34 ad Exp $");
 
 #include "opt_sock_counters.h"
 #include "opt_sosend_loan.h"
@@ -95,7 +95,8 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.134 2007/03/04 06:03:11 christos E
 
 #include <uvm/uvm.h>
 
-POOL_INIT(socket_pool, sizeof(struct socket), 0, 0, 0, "sockpl", NULL);
+POOL_INIT(socket_pool, sizeof(struct socket), 0, 0, 0, "sockpl", NULL,
+    IPL_SOFTNET);
 
 MALLOC_DEFINE(M_SOOPTS, "soopts", "socket options");
 MALLOC_DEFINE(M_SONAME, "soname", "socket name");
