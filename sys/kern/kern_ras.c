@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ras.c,v 1.17 2007/03/04 06:03:06 christos Exp $	*/
+/*	$NetBSD: kern_ras.c,v 1.18 2007/03/12 18:18:33 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ras.c,v 1.17 2007/03/04 06:03:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ras.c,v 1.18 2007/03/12 18:18:33 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/lock.h>
@@ -52,7 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_ras.c,v 1.17 2007/03/04 06:03:06 christos Exp $
 #include <uvm/uvm_extern.h>
 
 POOL_INIT(ras_pool, sizeof(struct ras), 0, 0, 0, "raspl",
-    &pool_allocator_nointr);
+    &pool_allocator_nointr, IPL_NONE);
 
 #define MAX_RAS_PER_PROC	16
 
@@ -182,7 +182,9 @@ ras_purgeall(struct proc *p)
                 DPRINTF(("RAS %p-%p, hits %d\n", rp->ras_startaddr,
                     rp->ras_endaddr, rp->ras_hits));
 		LIST_REMOVE(rp, ras_list);
+		mutex_exit(&p->p_rasmutex);
 		pool_put(&ras_pool, rp);
+		mutex_enter(&p->p_rasmutex);
 	}
 	mutex_exit(&p->p_rasmutex);
 

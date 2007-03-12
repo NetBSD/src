@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.109 2007/03/12 16:42:14 ad Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.110 2007/03/12 18:18:33 ad Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991, 1993
@@ -66,9 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.109 2007/03/12 16:42:14 ad Exp $");
-
-#include "opt_lockdebug.h"
+__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.110 2007/03/12 18:18:33 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>

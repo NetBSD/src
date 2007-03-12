@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_object_impl.h,v 1.11 2006/10/18 19:15:46 martin Exp $	*/
+/*	$NetBSD: prop_object_impl.h,v 1.12 2007/03/12 18:18:39 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -216,7 +216,7 @@ struct _prop_object_iterator {
 #define	_PROP_POOL_PUT(p, v)	pool_put(&(p), (v))
 
 #define	_PROP_POOL_INIT(p, s, d)					\
-		POOL_INIT(p, s, 0, 0, 0, d, &pool_allocator_nointr);
+		POOL_INIT(p, s, 0, 0, 0, d, &pool_allocator_nointr, IPL_NONE);
 
 #define	_PROP_MALLOC_DEFINE(t, s, l)					\
 		MALLOC_DEFINE(t, s, l);
