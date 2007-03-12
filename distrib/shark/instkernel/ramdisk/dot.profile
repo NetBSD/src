@@ -1,4 +1,4 @@
-# $NetBSD: dot.profile,v 1.2 2003/07/26 17:07:32 salo Exp $
+# $NetBSD: dot.profile,v 1.3 2007/03/12 14:47:15 jmmv Exp $
 #
 # Copyright (c) 1997 Perry E. Metzger
 # Copyright (c) 1994 Christopher G. Demetriou
@@ -35,8 +35,6 @@
 
 PATH=/sbin:/bin:/usr/bin:/usr/sbin:/
 export PATH
-TERM=pc3
-export TERM
 HOME=/
 export HOME
 
@@ -47,6 +45,38 @@ ROOTDEV=/dev/md0a
 if [ "X${DONEPROFILE}" = "X" ]; then
 	DONEPROFILE=YES
 	export DONEPROFILE
+
+	# get the console device name
+	mount -t mfs swap /var/run
+	dev_mkdb
+	_consdev=`sysctl -n kern.consdev`
+	umount /var/run
+
+	# get the terminal type
+	case ${_consdev} in
+		tty[Ev]*)
+			TERM=pc3
+			;;
+
+		*)
+			_loop=""
+			while [ "X${_loop}" = X"" ]; do
+				echo "" >& 2
+				echo "Setting terminal type.  Options:" >& 2
+				echo "" >& 2
+				echo "  pc3    for graphics console" >& 2
+				echo "  vt100  for dumb serial terminal" >& 2
+				echo "  xterm  for xterm." >& 2
+				echo "" >& 2
+				eval `tset -s -m ":?$TERM"`
+				if [ "X${TERM}" != X"unknown" ]; then
+					_loop="done"
+				fi
+			done
+			unset _loop
+			;;
+	esac
+	export TERM
 
 	# set up some sane defaults
 	echo 'erase ^?, werase ^W, kill ^U, intr ^C'
