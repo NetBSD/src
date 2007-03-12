@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcfb.c,v 1.40 2006/11/16 01:32:50 christos Exp $	*/
+/*	$NetBSD: hpcfb.c,v 1.40.4.1 2007/03/12 05:53:22 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpcfb.c,v 1.40 2006/11/16 01:32:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpcfb.c,v 1.40.4.1 2007/03/12 05:53:22 rmind Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_hpcfb.h"
@@ -180,7 +180,7 @@ int	hpcfbmatch(struct device *, struct cfdata *, void *);
 void	hpcfbattach(struct device *, struct device *, void *);
 int	hpcfbprint(void *, const char *);
 
-int	hpcfb_ioctl(void *, void *, u_long, caddr_t, int, struct lwp *);
+int	hpcfb_ioctl(void *, void *, u_long, void *, int, struct lwp *);
 paddr_t	hpcfb_mmap(void *, void *, off_t, int);
 
 void	hpcfb_refresh_screen(struct hpcfb_softc *);
@@ -443,7 +443,7 @@ hpcfb_init(struct hpcfb_fbconf *fbconf,	struct hpcfb_devconfig *dc)
 	ri = &dc->dc_rinfo;
 	memset(ri, 0, sizeof(struct rasops_info));
 	ri->ri_depth = fbconf->hf_pixel_width;
-	ri->ri_bits = (caddr_t)fbaddr;
+	ri->ri_bits = (void *)fbaddr;
 	ri->ri_width = fbconf->hf_width;
 	ri->ri_height = fbconf->hf_height;
 	ri->ri_stride = fbconf->hf_bytes_per_line;
@@ -554,7 +554,7 @@ hpcfb_cmap_reorder(struct hpcfb_fbconf *fbconf, struct hpcfb_devconfig *dc)
 }
 
 int
-hpcfb_ioctl(void *v, void *vs, u_long cmd, caddr_t data, int flag,
+hpcfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 	struct lwp *l)
 {
 	struct hpcfb_softc *sc = v;

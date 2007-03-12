@@ -1,4 +1,4 @@
-/* $NetBSD: compat_13_machdep.c,v 1.14 2007/02/09 21:55:00 ad Exp $ */
+/* $NetBSD: compat_13_machdep.c,v 1.14.2.1 2007/03/12 05:45:45 rmind Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.14 2007/02/09 21:55:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.14.2.1 2007/03/12 05:45:45 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,7 +81,7 @@ compat_13_sys_sigreturn(l, v, retval)
 	if (ALIGN(scp) != (u_int64_t)scp)
 		return (EINVAL);
 
-	if (copyin((caddr_t)scp, &ksc, sizeof(ksc)) != 0)
+	if (copyin((void *)scp, &ksc, sizeof(ksc)) != 0)
 		return (EFAULT);
 
 	if (ksc.sc_regs[R_ZERO] != 0xACEDBADE)		/* magic number */

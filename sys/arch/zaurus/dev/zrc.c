@@ -1,4 +1,4 @@
-/*	$NetBSD: zrc.c,v 1.2 2006/12/17 16:07:11 peter Exp $	*/
+/*	$NetBSD: zrc.c,v 1.2.8.1 2007/03/12 05:51:50 rmind Exp $	*/
 /*	$OpenBSD: zaurus_remote.c,v 1.1 2005/11/17 05:26:31 uwe Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zrc.c,v 1.2 2006/12/17 16:07:11 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zrc.c,v 1.2.8.1 2007/03/12 05:51:50 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -107,7 +107,7 @@ static void	zrc_input(struct zrc_softc *, int, int);
 
 static int	zrc_enable(void *, int);
 static void	zrc_set_leds(void *, int);
-static int	zrc_ioctl(void *, u_long, caddr_t, int, struct lwp *);
+static int	zrc_ioctl(void *, u_long, void *, int, struct lwp *);
 
 struct wskbd_accessops zrc_accessops = {
 	zrc_enable,
@@ -356,7 +356,7 @@ zrc_set_leds(void *v, int on)
 }
 
 static int
-zrc_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
+zrc_ioctl(void *v, u_long cmd, void *data, int flag, struct lwp *l)
 {
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 	struct zrc_softc *sc = v;

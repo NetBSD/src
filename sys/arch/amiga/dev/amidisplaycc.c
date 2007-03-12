@@ -1,4 +1,4 @@
-/*	$NetBSD: amidisplaycc.c,v 1.19 2006/04/12 19:38:22 jmmv Exp $ */
+/*	$NetBSD: amidisplaycc.c,v 1.19.14.1 2007/03/12 05:46:37 rmind Exp $ */
 
 /*-
  * Copyright (c) 2000 Jukka Andberg.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amidisplaycc.c,v 1.19 2006/04/12 19:38:22 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amidisplaycc.c,v 1.19.14.1 2007/03/12 05:46:37 rmind Exp $");
 
 /*
  * wscons interface to amiga custom chips. Contains the necessary functions
@@ -143,7 +143,7 @@ int  amidisplaycc_allocattr(void *, int, int, int, long *);
 
 
 /* accessops for wscons */
-int amidisplaycc_ioctl(void *, void *, u_long, caddr_t, int, struct lwp *);
+int amidisplaycc_ioctl(void *, void *, u_long, void *, int, struct lwp *);
 paddr_t amidisplaycc_mmap(void *, void *, off_t, int);
 int amidisplaycc_alloc_screen(void *, const struct wsscreen_descr *, void **,
 			      int *, int *, long *);
@@ -1021,7 +1021,7 @@ amidisplaycc_allocattr(void *screen, int fg, int bg, int flags, long *attrp)
 }
 
 int
-amidisplaycc_ioctl(void *dp, void *vs, u_long cmd, caddr_t data, int flag,
+amidisplaycc_ioctl(void *dp, void *vs, u_long cmd, void *data, int flag,
 	struct lwp *l)
 {
 	struct amidisplaycc_softc *adp;

@@ -1,4 +1,4 @@
-/* $NetBSD: dec_2100_a50.c,v 1.59 2006/02/25 17:32:43 thorpej Exp $ */
+/* $NetBSD: dec_2100_a50.c,v 1.59.20.1 2007/03/12 05:45:48 rmind Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 Carnegie-Mellon University.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_2100_a50.c,v 1.59 2006/02/25 17:32:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_2100_a50.c,v 1.59.20.1 2007/03/12 05:45:48 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -139,7 +139,7 @@ dec_2100_a50_cons_init()
 	acp = &apecs_configuration;
 	apecs_init(acp, 0);
 
-	ctb = (struct ctb *)(((caddr_t)hwrpb) + hwrpb->rpb_ctb_off);
+	ctb = (struct ctb *)(((char *)hwrpb) + hwrpb->rpb_ctb_off);
 
 	switch (ctb->ctb_term_type) {
 	case CTB_PRINTERPORT: 

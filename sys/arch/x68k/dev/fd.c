@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.70 2006/04/14 13:09:06 blymn Exp $	*/
+/*	$NetBSD: fd.c,v 1.70.14.1 2007/03/12 05:51:36 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.70 2006/04/14 13:09:06 blymn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.70.14.1 2007/03/12 05:51:36 rmind Exp $");
 
 #include "rnd.h"
 #include "opt_ddb.h"
@@ -302,17 +302,17 @@ static void fd_do_eject(struct fdc_softc *, int);
 void fd_mountroot_hook(struct device *);
 
 /* DMA transfer routines */
-inline static void fdc_dmastart(struct fdc_softc *, int, caddr_t, vsize_t);
+inline static void fdc_dmastart(struct fdc_softc *, int, void *, vsize_t);
 static int fdcdmaintr(void *);
 static int fdcdmaerrintr(void *);
 
 inline static void
-fdc_dmastart(struct fdc_softc *fdc, int read, caddr_t addr, vsize_t count)
+fdc_dmastart(struct fdc_softc *fdc, int read, void *addr, vsize_t count)
 {
 	int error;
 
 	DPRINTF(("fdc_dmastart: %s, addr = %p, count = %ld\n",
-		 read ? "read" : "write", (caddr_t) addr, count));
+		 read ? "read" : "write", (void *) addr, count));
 
 	error = bus_dmamap_load(fdc->sc_dmat, fdc->sc_dmamap, addr, count,
 				0, BUS_DMA_NOWAIT);
@@ -428,7 +428,7 @@ fdcattach(struct device *parent, struct device *self, void *aux)
 
 	fdc->sc_iot = iot;
 	fdc->sc_ioh = ioh;
-	fdc->sc_addr = (void*) ia->ia_addr;
+	fdc->sc_addr = (void *)ia->ia_addr;
 
 	fdc->sc_dmat = ia->ia_dmat;
 	fdc->sc_state = DEVIDLE;
@@ -1187,8 +1187,8 @@ loop:
 		if (fd->sc_part != SEC_P11)
 			goto docopy;
 
-		fdc_dmastart(fdc,
-			     read, bp->b_data + fd->sc_skip, fd->sc_nbytes);
+		fdc_dmastart(fdc, read, (char *)bp->b_data + fd->sc_skip,
+			     fd->sc_nbytes);
 		if (read)
 			out_fdc(iot, ioh, NE7CMD_READ);	/* READ */
 		else
@@ -1260,15 +1260,15 @@ loop:
 		}
 #endif
 		if ((read = bp->b_flags & B_READ)) {
-			memcpy(bp->b_data + fd->sc_skip, fd->sc_copybuf
+			memcpy((char *)bp->b_data + fd->sc_skip, fd->sc_copybuf
 			    + (fd->sc_part & SEC_P01 ? FDC_BSIZE : 0),
 			    FDC_BSIZE);
 			fdc->sc_state = IOCOMPLETE;
 			goto iocomplete2;
 		} else {
-			memcpy(fd->sc_copybuf
+			memcpy((char *)fd->sc_copybuf
 			    + (fd->sc_part & SEC_P01 ? FDC_BSIZE : 0),
-			    bp->b_data + fd->sc_skip, FDC_BSIZE);
+			    (char *)bp->b_data + fd->sc_skip, FDC_BSIZE);
 			fdc_dmastart(fdc, read, fd->sc_copybuf, 1024);
 		}
 		out_fdc(iot, ioh, NE7CMD_WRITE);	/* WRITE */
@@ -1506,10 +1506,10 @@ fdcretry(struct fdc_softc *fdc)
 }
 
 int
-fdioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
+fdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 {
 	struct fd_softc *fd = fd_cd.cd_devs[FDUNIT(dev)];
-	struct fdc_softc *fdc = (void*) device_parent(&fd->sc_dev);
+	struct fdc_softc *fdc = (void *)device_parent(&fd->sc_dev);
 	int unit = FDUNIT(dev);
 	int part = DISKPART(dev);
 	struct disklabel buffer;
@@ -1651,8 +1651,8 @@ fdgetdisklabel(struct fd_softc *sc, dev_t dev)
 void
 fd_mountroot_hook(struct device *dev)
 {
-	struct fd_softc *fd = (void*) dev;
-	struct fdc_softc *fdc = (void*) device_parent(&fd->sc_dev);
+	struct fd_softc *fd = (void *)dev;
+	struct fdc_softc *fdc = (void *)device_parent(&fd->sc_dev);
 	int c;
 
 	/* XXX device_unit() abuse */

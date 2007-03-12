@@ -1,4 +1,4 @@
-/*	$NetBSD: macrom.h,v 1.17 2005/12/24 22:45:35 perry Exp $	*/
+/*	$NetBSD: macrom.h,v 1.17.26.1 2007/03/12 05:49:00 rmind Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -36,10 +36,10 @@
 
 
 /* Low-memory Globals */
-extern caddr_t		ROMBase;	/* Base address of ROM space */
-extern caddr_t		ADBBase;	/* Base address of ADB scratch */
-extern caddr_t		ADBYMM; 	/* Base address of yet more ADB mem */
-extern caddr_t		ADBState;	/* Base address of ADB scratch ? */
+extern void *		ROMBase;	/* Base address of ROM space */
+extern void *		ADBBase;	/* Base address of ADB scratch */
+extern void *		ADBYMM; 	/* Base address of yet more ADB mem */
+extern void *		ADBState;	/* Base address of ADB scratch ? */
 extern void	(*JADBProc)(void); /* ADBReInit pre/post processing */
 extern void	(*Lvl1DT[8])(void); /* VIA1 interrupt table by bit */
 extern void	(*Lvl2DT[8])(void); /* VIA2 interrupt table by bit */
@@ -60,9 +60,9 @@ extern u_long		Time;		/* ticks since startup */
 extern u_short		TimeDBRA;	/* DBRA's per milli */
 extern u_short		ADBDelay;	/* DBRAs per ADB loop, / 8 */
 extern u_char		ToolScratch[8]; /* Yet another 8-byte scratch area */
-extern caddr_t		VIA;		/* VIA1 base address */
-extern caddr_t		mrg_VIA2;	/* VIA2 base address */
-extern caddr_t		SCCRd;		/* SCC read base address */
+extern void *		VIA;		/* VIA1 base address */
+extern void *		mrg_VIA2;	/* VIA2 base address */
+extern void *		SCCRd;		/* SCC read base address */
 extern u_char		FinderName[20]; /* FinderName - Pascal string */
 extern void	(*jSwapMMU)(void); /* Pointer to MMU Swap routine */
 extern void	(*jEgret)(void);	/* Pointer to MMU Swap routine */
@@ -72,20 +72,20 @@ extern u_int32_t	HwCfgFlags3;	/* more hardware config flags */
 extern u_int32_t	ADBReInit_JTBL;	/* pointer to patch table */
 extern void	(*jClkNoMem)(void); /* pointer to ClkNoMem */
 extern u_char		SysParam[20];	/* Place where PRam data gets stored */
-extern caddr_t		ExpandMem;	/* pointer to Expanded Memory used by */
+extern void *		ExpandMem;	/* pointer to Expanded Memory used by */
 					/*  newer ADB routines (since LCIII) */
 extern u_int16_t	VBLQueue;	/* Vertical blanking Queue, unused ? */
-extern caddr_t		VBLQueue_head;	/* Vertical blanking Queue, head */
-extern caddr_t		VBLQueue_tail;	/* Vertical blanking Queue, tail */
-extern caddr_t		jDTInstall;	/* Deferred task mgr trap handler */
+extern void *		VBLQueue_head;	/* Vertical blanking Queue, head */
+extern void *		VBLQueue_tail;	/* Vertical blanking Queue, tail */
+extern void *		jDTInstall;	/* Deferred task mgr trap handler */
 
 extern u_int32_t	**InitEgretJTVec; /* pointer to a jump table for */
 					  /* InitEgret on AV machines */
 
 	/* Types */
 
-typedef caddr_t Ptr;
-typedef caddr_t *Handle;
+typedef void *Ptr;
+typedef void **Handle;
 
 /* ADB Manager */
 typedef struct {
@@ -133,12 +133,12 @@ Handle	GetResource(u_int, short);
 short	ResError(void);
 short	mrg_CountResources(u_int32_t);
 short	Count_Resources(u_int32_t);
-caddr_t	*mrg_GetIndResource(u_int16_t, u_int32_t);
+void *	*mrg_GetIndResource(u_int16_t, u_int32_t);
 
 
 	/* Mac ROM Glue globals for BSD kernel */
-extern caddr_t mrg_romadbintr;
-extern caddr_t mrg_ADBIntrPtr;
+extern void *mrg_romadbintr;
+extern void *mrg_ADBIntrPtr;
 extern u_char mrg_GetResource[];	/* type is almost a lie; 
 					call it an array of bytes of code */
 extern u_char mrg_ResError[];
@@ -166,32 +166,32 @@ typedef struct rsrc_s {
 
 typedef struct romvec_s {
 	const char *romident; 	/* just to print it out */
-	caddr_t adbintr;	/* where is ADB interrupt */
-	caddr_t pmintr; 	/* where is ADB/PM interrupt, on machines */
+	void *adbintr;	/* where is ADB interrupt */
+	void *pmintr; 	/* where is ADB/PM interrupt, on machines */
 				/*  that have it */
-	caddr_t adb130intr;	/* ADBBase[0x130] interrupt; don't know */
+	void *adb130intr;	/* ADBBase[0x130] interrupt; don't know */
 				/*  what it is, but it's important.  Don't */
 				/*  you love reverse engineering? */
-	caddr_t CountADBs;
-	caddr_t GetIndADB;
-	caddr_t GetADBInfo;
-	caddr_t SetADBInfo;
-	caddr_t ADBReInit;
-	caddr_t ADBOp;
-	caddr_t PMgrOp; 	/* On machines that have it */
-	caddr_t WriteParam;
-	caddr_t SetDateTime;
-	caddr_t InitUtil;
-	caddr_t ReadXPRam;
-	caddr_t WriteXPRam;
-	caddr_t jClkNoMem;
-	caddr_t ADBAlternateInit;	/* more fundamental than ABDReInit */
-	caddr_t Egret;
-	caddr_t InitEgret;	/* Set up Buffer for Egret routines */
-	caddr_t ADBReInit_JTBL;
-	caddr_t ROMResourceMap; /* Address of first Resource in linked list */
-	caddr_t FixDiv;
-	caddr_t FixMul;
+	void *CountADBs;
+	void *GetIndADB;
+	void *GetADBInfo;
+	void *SetADBInfo;
+	void *ADBReInit;
+	void *ADBOp;
+	void *PMgrOp; 	/* On machines that have it */
+	void *WriteParam;
+	void *SetDateTime;
+	void *InitUtil;
+	void *ReadXPRam;
+	void *WriteXPRam;
+	void *jClkNoMem;
+	void *ADBAlternateInit;	/* more fundamental than ABDReInit */
+	void *Egret;
+	void *InitEgret;	/* Set up Buffer for Egret routines */
+	void *ADBReInit_JTBL;
+	void *ROMResourceMap; /* Address of first Resource in linked list */
+	void *FixDiv;
+	void *FixMul;
 } romvec_t;
 
 /*
@@ -201,11 +201,11 @@ typedef struct romvec_s {
 /* macrom.c */
 void	mrg_setvectors(romvec_t *);
 int	mrg_romready(void);
-caddr_t	*Get_Ind_Resource(u_int32_t, u_int16_t);
+void *	*Get_Ind_Resource(u_int32_t, u_int16_t);
 void	mrg_initadbintr(void);
 long	mrg_adbintr(void);
 long	mrg_pmintr(void);
-void	mrg_fixupROMBase(caddr_t, caddr_t);
+void	mrg_fixupROMBase(void *, void *);
 int	mrg_Delay(void);
 void	mrg_DTInstall(void);
 void	mrg_execute_deferred(void);

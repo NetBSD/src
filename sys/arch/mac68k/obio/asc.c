@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.48 2007/01/24 13:08:12 hubertf Exp $	*/
+/*	$NetBSD: asc.c,v 1.48.2.1 2007/03/12 05:49:01 rmind Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.48 2007/01/24 13:08:12 hubertf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.48.2.1 2007/03/12 05:49:01 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -249,7 +249,7 @@ ascwrite(dev_t dev, struct uio *uio, int ioflag)
 }
 
 int
-ascioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+ascioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct asc_softc *sc;
 	int error;

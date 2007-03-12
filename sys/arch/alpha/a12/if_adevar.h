@@ -1,4 +1,4 @@
-/*	$NetBSD: if_adevar.h,v 1.4 2002/10/01 01:40:32 thorpej Exp $	*/
+/*	$NetBSD: if_adevar.h,v 1.4.60.1 2007/03/12 05:45:44 rmind Exp $	*/
 
 /*
  * NOTE: this version of if_de was modified for bounce buffers prior
@@ -515,7 +515,7 @@ struct _tulip_softc_t {
     struct intrhand tulip_ih;		/* intrrupt vectoring */
     struct atshutdown tulip_ats;	/* shutdown hook */
 #if _BSDI_VERSION < 199401
-    caddr_t tulip_bpf;			/* for BPF */
+    void *tulip_bpf;			/* for BPF */
 #else
     prf_t tulip_pf;			/* printf function */
 #if _BSDI_VERSION >= 199701

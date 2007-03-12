@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfourteen.c,v 1.47 2006/11/23 19:49:41 elad Exp $ */
+/*	$NetBSD: cgfourteen.c,v 1.47.4.1 2007/03/12 05:50:27 rmind Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -364,7 +364,7 @@ cgfourteenclose(dev_t dev, int flags, int mode, struct lwp *l)
 }
 
 int
-cgfourteenioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct lwp *l)
+cgfourteenioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 {
 	struct cgfourteen_softc *sc = cgfourteen_cd.cd_devs[minor(dev)];
 	struct fbgattr *fba;

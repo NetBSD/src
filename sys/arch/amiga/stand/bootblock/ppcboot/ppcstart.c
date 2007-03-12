@@ -1,4 +1,4 @@
-/* $NetBSD: ppcstart.c,v 1.3 2002/01/26 13:21:11 aymeric Exp $ */
+/* $NetBSD: ppcstart.c,v 1.3.70.1 2007/03/12 05:46:47 rmind Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@ startit(kp, ksize, entry, fmem, fmemsz, cmemsz,
 	*(volatile u_int8_t *)0xf60000 = 0x10;
 	ONESEC *(volatile u_int16_t *)0xdff180 = 0xf80;
 
-	memcpy((caddr_t)0xfff00100, kickstart, kicksize);
+	memcpy((void *)0xfff00100, kickstart, kicksize);
 	*(volatile u_int32_t *)0xfff000f4 = fmem;
 	*(volatile u_int32_t *)0xfff000f8 = kp;
 	*(volatile u_int32_t *)0xfff000fc = ksize;

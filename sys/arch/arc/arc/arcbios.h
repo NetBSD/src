@@ -1,4 +1,4 @@
-/*	$NetBSD: arcbios.h,v 1.9 2006/08/31 19:23:44 tsutsui Exp $	*/
+/*	$NetBSD: arcbios.h,v 1.9.8.1 2007/03/12 05:46:47 rmind Exp $	*/
 /*	$OpenBSD: arcbios.h,v 1.1 1998/01/29 15:06:22 pefo Exp $	*/
 
 /*-
@@ -170,7 +170,7 @@ typedef struct arc_mem {
 	uint32_t	PageCount;	/* Number of pages */
 } arc_mem_t;
 
-typedef caddr_t arc_time_t; /* XXX */
+typedef void *arc_time_t; /* XXX */
 
 typedef struct arc_dsp_stat {
 	uint16_t	CursorXPosition;
@@ -184,7 +184,7 @@ typedef struct arc_dsp_stat {
 	u_char		ReverseVideo;
 } arc_dsp_stat_t;
 
-typedef caddr_t arc_dirent_t; /* XXX */
+typedef void *arc_dirent_t; /* XXX */
 typedef uint32_t arc_open_mode_t; /* XXX */
 typedef uint32_t arc_seek_mode_t; /* XXX */
 typedef uint32_t arc_mount_t; /* XXX */
@@ -238,7 +238,7 @@ typedef struct arc_calls
 		arc_config_t *);	/* Component */
 
 	arc_status_t (*get_config_data)( /* GetConfigurationData 13 */
-		caddr_t,		/* Configuration Data */
+		void *,		/* Configuration Data */
 		arc_config_t *);	/* Component */
 
 	arc_config_t *(*add_child)(	/* AddChild 14 */
@@ -261,7 +261,7 @@ typedef struct arc_calls
 #ifdef arc
 	void (*signal)(			/* Signal 20 */
 		uint32_t,		/* Signal number */
-/**/		caddr_t);		/* Handler */
+/**/		void *);		/* Handler */
 #endif
 #ifdef sgi
 	void *unused;
@@ -287,7 +287,7 @@ typedef struct arc_calls
 
 	arc_status_t (*read)(		/* Read 26 */
 		uint32_t,		/* FileId */
-		caddr_t,		/* Buffer */
+		void *,		/* Buffer */
 		uint32_t,		/* Length */
 		uint32_t *);		/* Count */
 
@@ -296,7 +296,7 @@ typedef struct arc_calls
 
 	arc_status_t (*write)(		/* Write 28 */
 		uint32_t,		/* FileId */
-		caddr_t,		/* Buffer */
+		void *,		/* Buffer */
 		uint32_t,		/* Length */
 		uint32_t *);		/* Count */
 
@@ -342,18 +342,18 @@ typedef struct arc_param_blk
 	uint32_t	length;		/* Length of parameter block */
 	uint16_t	version;	/* ?? */
 	uint16_t	revision;	/* ?? */
-/**/	caddr_t		restart_block;	/* ?? */
-/**/	caddr_t		debug_block;	/* Debugging info -- unused */
-/**/	caddr_t		general_exp_vect; /* ?? */
-/**/	caddr_t		tlb_miss_exp_vect; /* ?? */
+/**/	void *		restart_block;	/* ?? */
+/**/	void *		debug_block;	/* Debugging info -- unused */
+/**/	void *		general_exp_vect; /* ?? */
+/**/	void *		tlb_miss_exp_vect; /* ?? */
 	uint32_t	firmware_length; /* Size of Firmware jumptable in bytes */
 	arc_calls_t	*firmware_vect;	/* Firmware jumptable */
 	uint32_t	vendor_length;	/* Size of Vendor specific jumptable */
-/**/	caddr_t		vendor_vect;	/* Vendor specific jumptable */
+/**/	void *		vendor_vect;	/* Vendor specific jumptable */
 	uint32_t	adapter_count;	/* ?? */
 	uint32_t	adapter0_type;	/* ?? */
 	uint32_t	adapter0_length; /* ?? */
-/**/	caddr_t		adapter0_vect;	/* ?? */
+/**/	void *		adapter0_vect;	/* ?? */
 } arc_param_blk_t;
 
 #define ArcBiosBase ((arc_param_blk_t *) 0x80001000)

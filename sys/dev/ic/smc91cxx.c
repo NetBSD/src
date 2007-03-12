@@ -1,4 +1,4 @@
-/*	$NetBSD: smc91cxx.c,v 1.58 2006/11/16 01:32:52 christos Exp $	*/
+/*	$NetBSD: smc91cxx.c,v 1.58.4.1 2007/03/12 05:53:46 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.58 2006/11/16 01:32:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.58.4.1 2007/03/12 05:53:46 rmind Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -204,7 +204,7 @@ void	smc91cxx_copy_tx_frame(struct smc91cxx_softc *, struct mbuf *);
 void	smc91cxx_resume(struct smc91cxx_softc *);
 void	smc91cxx_stop(struct smc91cxx_softc *);
 void	smc91cxx_watchdog(struct ifnet *);
-int	smc91cxx_ioctl(struct ifnet *, u_long, caddr_t);
+int	smc91cxx_ioctl(struct ifnet *, u_long, void *);
 
 static inline int ether_cmp(void *, void *);
 static inline int
@@ -1162,7 +1162,7 @@ smc91cxx_read(sc)
 	 * is aligned.
 	 */
 	if ((sc->sc_flags & SMC_FLAGS_32BIT_READ) == 0) {
-		m->m_data = (caddr_t) ALIGN(mtod(m, caddr_t) +
+		m->m_data = (char *) ALIGN(mtod(m, char *) +
 		    sizeof(struct ether_header)) - sizeof(struct ether_header);
 
 		eh = mtod(m, struct ether_header *);
@@ -1177,7 +1177,7 @@ smc91cxx_read(sc)
 	} else {
 		u_int8_t *dp;
 
-		m->m_data = (caddr_t) ALIGN(mtod(m, caddr_t));
+		m->m_data = (void *) ALIGN(mtod(m, void *));
 		eh = mtod(m, struct ether_header *);
 		dp = data = mtod(m, u_int8_t *);
 		if (packetlen > 3)
@@ -1244,7 +1244,7 @@ int
 smc91cxx_ioctl(ifp, cmd, data)
 	struct ifnet *ifp;
 	u_long cmd;
-	caddr_t data;
+	void *data;
 {
 	struct smc91cxx_softc *sc = ifp->if_softc;
 	struct ifaddr *ifa = (struct ifaddr *)data;

@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.218 2007/01/04 18:44:45 elad Exp $	*/
+/*	$NetBSD: wi.c,v 1.218.2.1 2007/03/12 05:53:48 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -106,7 +106,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.218 2007/01/04 18:44:45 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.218.2.1 2007/03/12 05:53:48 rmind Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -157,7 +157,7 @@ STATIC void wi_stop(struct ifnet *, int);
 STATIC void wi_start(struct ifnet *);
 STATIC int  wi_reset(struct wi_softc *);
 STATIC void wi_watchdog(struct ifnet *);
-STATIC int  wi_ioctl(struct ifnet *, u_long, caddr_t);
+STATIC int  wi_ioctl(struct ifnet *, u_long, void *);
 STATIC int  wi_media_change(struct ifnet *);
 STATIC void wi_media_status(struct ifnet *, struct ifmediareq *);
 
@@ -189,8 +189,8 @@ STATIC void wi_key_update_begin(struct ieee80211com *);
 STATIC void wi_key_update_end(struct ieee80211com *);
 
 STATIC void wi_push_packet(struct wi_softc *);
-STATIC int  wi_get_cfg(struct ifnet *, u_long, caddr_t);
-STATIC int  wi_set_cfg(struct ifnet *, u_long, caddr_t);
+STATIC int  wi_get_cfg(struct ifnet *, u_long, void *);
+STATIC int  wi_set_cfg(struct ifnet *, u_long, void *);
 STATIC int  wi_cfg_txrate(struct wi_softc *);
 STATIC int  wi_write_txrate(struct wi_softc *, int);
 STATIC int  wi_write_wep(struct wi_softc *);
@@ -1156,7 +1156,7 @@ wi_start(struct ifnet *ifp)
 		if (!IF_IS_EMPTY(&ic->ic_mgtq)) {
 			IF_DEQUEUE(&ic->ic_mgtq, m0);
 			m_copydata(m0, 4, ETHER_ADDR_LEN * 2,
-			    (caddr_t)&frmhdr.wi_ehdr);
+			    (void *)&frmhdr.wi_ehdr);
 			frmhdr.wi_ehdr.ether_type = 0;
                         wh = mtod(m0, struct ieee80211_frame *);
 			ni = (struct ieee80211_node *)m0->m_pkthdr.rcvif;
@@ -1168,7 +1168,7 @@ wi_start(struct ifnet *ifp)
 			IFQ_DEQUEUE(&ifp->if_snd, m0);
 			ifp->if_opackets++;
 			m_copydata(m0, 0, ETHER_HDR_LEN,
-			    (caddr_t)&frmhdr.wi_ehdr);
+			    (void *)&frmhdr.wi_ehdr);
 #if NBPFILTER > 0
 			if (ifp->if_bpf)
 				bpf_mtap(ifp->if_bpf, m0);
@@ -1246,7 +1246,7 @@ wi_start(struct ifnet *ifp)
 			(void)wi_write_txrate(sc, rs->rs_rates[rateidx]);
 
 		m_copydata(m0, 0, sizeof(struct ieee80211_frame),
-		    (caddr_t)&frmhdr.wi_whdr);
+		    (void *)&frmhdr.wi_whdr);
 		m_adj(m0, sizeof(struct ieee80211_frame));
 		frmhdr.wi_dat_len = htole16(m0->m_pkthdr.len);
 		if (IFF_DUMPPKTS(ifp))
@@ -1354,7 +1354,7 @@ wi_watchdog(struct ifnet *ifp)
 }
 
 STATIC int
-wi_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
+wi_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct wi_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
@@ -2140,7 +2140,7 @@ wi_write_ssid(struct wi_softc *sc, int rid, u_int8_t *buf, int buflen)
 }
 
 STATIC int
-wi_get_cfg(struct ifnet *ifp, u_long cmd, caddr_t data)
+wi_get_cfg(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct wi_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
@@ -2241,7 +2241,7 @@ wi_get_cfg(struct ifnet *ifp, u_long cmd, caddr_t data)
 			n = (len - sizeof(n)) / sizeof(struct wi_apinfo);
 		len = sizeof(n) + sizeof(struct wi_apinfo) * n;
 		memcpy(wreq.wi_val, &n, sizeof(n));
-		memcpy((caddr_t)wreq.wi_val + sizeof(n), sc->sc_aps,
+		memcpy((char *)wreq.wi_val + sizeof(n), sc->sc_aps,
 		    sizeof(struct wi_apinfo) * n);
 		break;
 
@@ -2290,7 +2290,7 @@ wi_get_cfg(struct ifnet *ifp, u_long cmd, caddr_t data)
 }
 
 STATIC int
-wi_set_cfg(struct ifnet *ifp, u_long cmd, caddr_t data)
+wi_set_cfg(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct wi_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
@@ -2950,8 +2950,8 @@ wi_mwrite_bap(struct wi_softc *sc, int id, int off, struct mbuf *m0, int totlen)
 		len = min(m->m_len, totlen);
 
 		if (((u_long)m->m_data) % 2 != 0 || len % 2 != 0) {
-			m_copydata(m, 0, totlen, (caddr_t)&sc->sc_txbuf);
-			return wi_write_bap(sc, id, off, (caddr_t)&sc->sc_txbuf,
+			m_copydata(m, 0, totlen, (void *)&sc->sc_txbuf);
+			return wi_write_bap(sc, id, off, (void *)&sc->sc_txbuf,
 			    totlen);
 		}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.33 2007/02/09 21:55:05 ad Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.33.2.1 2007/03/12 05:48:54 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.33 2007/02/09 21:55:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.33.2.1 2007/03/12 05:48:54 rmind Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -267,7 +267,7 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, u_int *flags)
 	gr[_REG_PC] = frame->f_pc;
 
 	if ((ras_pc = (__greg_t)ras_lookup(l->l_proc,
-	    (caddr_t) gr[_REG_PC])) != -1)
+	    (void *) gr[_REG_PC])) != -1)
 		gr[_REG_PC] = ras_pc;
 
 	*flags |= _UC_CPU;

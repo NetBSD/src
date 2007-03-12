@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ptrace.c,v 1.14 2007/02/09 21:55:19 ad Exp $ */
+/*	$NetBSD: linux_ptrace.c,v 1.14.2.1 2007/03/12 05:52:25 rmind Exp $ */
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_ptrace.c,v 1.14 2007/02/09 21:55:19 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_ptrace.c,v 1.14.2.1 2007/03/12 05:52:25 rmind Exp $");
 
 #include "opt_ptrace.h"
 
@@ -197,7 +197,7 @@ linux_sys_ptrace_arch(l, v, retval)	/* XXX Check me! (From NetBSD/i386) */
 		linux_regs->ldsisr = 0;
 		linux_regs->lresult = 0;
 
-		error = copyout(linux_regs, (caddr_t)SCARG(uap, data),
+		error = copyout(linux_regs, (void *)SCARG(uap, data),
 			 sizeof(struct linux_pt_regs));
 		goto out;
 
@@ -206,7 +206,7 @@ linux_sys_ptrace_arch(l, v, retval)	/* XXX Check me! (From NetBSD/i386) */
 		MALLOC(linux_regs, struct linux_pt_regs*, sizeof(*linux_regs),
 		    M_TEMP, M_WAITOK);
 
-		error = copyin((caddr_t)SCARG(uap, data), linux_regs,
+		error = copyin((void *)SCARG(uap, data), linux_regs,
 			 sizeof(struct linux_pt_regs));
 		if (error != 0)
 			goto out;
@@ -238,7 +238,7 @@ linux_sys_ptrace_arch(l, v, retval)	/* XXX Check me! (From NetBSD/i386) */
 
 		memcpy(linux_fpreg, fpregs,
 			min(32*sizeof(double), sizeof(struct fpreg)));
-		error = copyout(linux_fpreg, (caddr_t)SCARG(uap, data),
+		error = copyout(linux_fpreg, (void *)SCARG(uap, data),
 			 32*sizeof(double));
 		goto out;
 
@@ -247,7 +247,7 @@ linux_sys_ptrace_arch(l, v, retval)	/* XXX Check me! (From NetBSD/i386) */
 		    M_TEMP, M_WAITOK);
 		MALLOC(linux_fpreg, double *,
 		    32*sizeof(double), M_TEMP, M_WAITOK);
-		error = copyin((caddr_t)SCARG(uap, data), linux_fpreg,
+		error = copyin((void *)SCARG(uap, data), linux_fpreg,
 			 32*sizeof(double));
 		if (error != 0)
 			goto out;
@@ -315,7 +315,7 @@ linux_sys_ptrace_arch(l, v, retval)	/* XXX Check me! (From NetBSD/i386) */
 			goto out;
 
 		error = copyout (retval,
-		    (caddr_t)SCARG(uap, data), sizeof retval);
+		    (void *)SCARG(uap, data), sizeof retval);
 		*retval = SCARG(uap, data);
 
 		goto out;

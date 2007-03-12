@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.28 2006/04/16 16:39:37 tsutsui Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.28.14.1 2007/03/12 05:48:04 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.28 2006/04/16 16:39:37 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.28.14.1 2007/03/12 05:48:04 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -331,7 +331,7 @@ _hpcmips_bd_map_load_uio(bus_dma_tag_t t, bus_dmamap_t mapx, struct uio *uio,
 	int seg, i, error, first;
 	bus_size_t minlen, resid;
 	struct iovec *iov;
-	caddr_t addr;
+	void *addr;
 
 	/*
 	 * Make sure that on error condition we return "no valid mappings."
@@ -352,7 +352,7 @@ _hpcmips_bd_map_load_uio(bus_dma_tag_t t, bus_dmamap_t mapx, struct uio *uio,
 		 * until we have exhausted the residual count.
 		 */
 		minlen = resid < iov[i].iov_len ? resid : iov[i].iov_len;
-		addr = (caddr_t)iov[i].iov_base;
+		addr = (void *)iov[i].iov_base;
 
 		error = _hpcmips_bd_map_load_buffer(mapx, addr, minlen,
 		    uio->uio_vmspace, flags, &lastaddr, &seg, first);
@@ -627,7 +627,7 @@ _hpcmips_bd_mem_free(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs)
  */
 int
 _hpcmips_bd_mem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
-    size_t size, caddr_t *kvap, int flags)
+    size_t size, void **kvap, int flags)
 {
 	vaddr_t va;
 	bus_addr_t addr;
@@ -641,9 +641,9 @@ _hpcmips_bd_mem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 	 */
 	if (nsegs == 1) {
 		if (flags & BUS_DMA_COHERENT)
-			*kvap = (caddr_t)MIPS_PHYS_TO_KSEG1(segs[0].ds_addr);
+			*kvap = (void *)MIPS_PHYS_TO_KSEG1(segs[0].ds_addr);
 		else
-			*kvap = (caddr_t)MIPS_PHYS_TO_KSEG0(segs[0].ds_addr);
+			*kvap = (void *)MIPS_PHYS_TO_KSEG0(segs[0].ds_addr);
 		return (0);
 	}
 
@@ -654,7 +654,7 @@ _hpcmips_bd_mem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 	if (va == 0)
 		return (ENOMEM);
 
-	*kvap = (caddr_t)va;
+	*kvap = (void *)va;
 
 	for (curseg = 0; curseg < nsegs; curseg++) {
 		for (addr = segs[curseg].ds_addr;
@@ -679,7 +679,7 @@ _hpcmips_bd_mem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
  * bus-specific DMA memory unmapping functions.
  */
 void
-_hpcmips_bd_mem_unmap(bus_dma_tag_t t, caddr_t kva, size_t size)
+_hpcmips_bd_mem_unmap(bus_dma_tag_t t, void *kva, size_t size)
 {
 
 #ifdef DIAGNOSTIC
@@ -691,8 +691,8 @@ _hpcmips_bd_mem_unmap(bus_dma_tag_t t, caddr_t kva, size_t size)
 	 * Nothing to do if we mapped it with KSEG0 or KSEG1 (i.e.
 	 * not in KSEG2).
 	 */
-	if (kva >= (caddr_t)MIPS_KSEG0_START &&
-	    kva < (caddr_t)MIPS_KSEG2_START)
+	if (kva >= (void *)MIPS_KSEG0_START &&
+	    kva < (void *)MIPS_KSEG2_START)
 		return;
 
 	size = round_page(size);
@@ -726,7 +726,7 @@ _hpcmips_bd_mem_mmap(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 			continue;
 		}
 
-		return (mips_btop((caddr_t)segs[i].ds_addr + off));
+		return (mips_btop((char *)segs[i].ds_addr + off));
 	}
 
 	/* Page not found. */

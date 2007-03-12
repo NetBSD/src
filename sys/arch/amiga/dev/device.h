@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)device.h	7.3 (Berkeley) 5/7/91
- *	$Id: device.h,v 1.12 2006/05/14 21:55:09 elad Exp $
+ *	$Id: device.h,v 1.12.8.1 2007/03/12 05:46:38 rmind Exp $
  */
 
 struct driver {
@@ -93,9 +93,9 @@ struct	devqueue {
 #define	MAXSLAVES	8	/* Slaves per controller (SCSI limit) */
 
 struct amiga_hw {
-	caddr_t	hw_pa;		/* physical address of control space */
+	void *	hw_pa;		/* physical address of control space */
 	int	hw_size;	/* size of control space */
-	caddr_t	hw_kva;		/* kernel virtual address of control space */
+	void *	hw_kva;		/* kernel virtual address of control space */
 	int	hw_manufacturer;
 	int	hw_product;	/* autoconfig® parameters */
 	int	hw_serno;	/* serial number, needed by ethernet boards */
@@ -222,5 +222,5 @@ struct pdevinit {
 extern struct amiga_hw sc_table[];
 extern struct amiga_ctlr amiga_cinit[];
 extern struct amiga_device amiga_dinit[];
-extern caddr_t sctova(), sctopa(), iomap();
+extern void *sctova(), sctopa(), iomap();
 #endif

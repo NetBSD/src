@@ -1,4 +1,4 @@
-/* $NetBSD: sbmac.c,v 1.21 2005/12/11 12:18:12 christos Exp $ */
+/* $NetBSD: sbmac.c,v 1.21.26.1 2007/03/12 05:49:24 rmind Exp $ */
 
 /*
  * Copyright 2000, 2001, 2004
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.21 2005/12/11 12:18:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.21.26.1 2007/03/12 05:49:24 rmind Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -255,8 +255,8 @@ static uint64_t sbmac_addr2reg(u_char *ptr);
 static void sbmac_intr(void *xsc, uint32_t status, uint32_t pc);
 static void sbmac_start(struct ifnet *ifp);
 static void sbmac_setmulti(struct sbmac_softc *sc);
-static int sbmac_ether_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data);
-static int sbmac_ioctl(struct ifnet *ifp, u_long command, caddr_t data);
+static int sbmac_ether_ioctl(struct ifnet *ifp, u_long cmd, void *data);
+static int sbmac_ioctl(struct ifnet *ifp, u_long command, void *data);
 static int sbmac_mediachange(struct ifnet *ifp);
 static void sbmac_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr);
 static void sbmac_watchdog(struct ifnet *ifp);
@@ -539,7 +539,7 @@ sbdma_add_rcvbuffer(sbmacdma_t *d, struct mbuf *m)
 	 * fill in the descriptor
 	 */
 
-	d->sbdma_dscrtable[dsc].dscr_a = KVTOPHYS(mtod(m_new, caddr_t)) |
+	d->sbdma_dscrtable[dsc].dscr_a = KVTOPHYS(mtod(m_new, void *)) |
 	    V_DMA_DSCRA_A_SIZE(NUMCACHEBLKS(ETHER_ALIGN + m_new->m_len)) |
 	    M_DMA_DSCRA_INTERRUPT;
 
@@ -618,7 +618,7 @@ sbdma_add_txbuffer(sbmacdma_t *d, struct mbuf *m)
 		 * Loop thru this mbuf record.
 		 * The head mbuf will have SOP set.
 		 */
-		d->sbdma_dscrtable[dsc].dscr_a = KVTOPHYS(mtod(m,caddr_t)) |
+		d->sbdma_dscrtable[dsc].dscr_a = KVTOPHYS(mtod(m,void *)) |
 		    M_DMA_ETHTX_SOP;
 
 		/*
@@ -646,7 +646,7 @@ sbdma_add_txbuffer(sbmacdma_t *d, struct mbuf *m)
 				continue;	/* Skip 0-length mbufs */
 
 			len = m_temp->m_len;
-			addr = KVTOPHYS(mtod(m_temp, caddr_t));
+			addr = KVTOPHYS(mtod(m_temp, void *));
 
 			/*
 			 * Check to see if the mbuf spans a page boundary.  If
@@ -660,7 +660,7 @@ sbdma_add_txbuffer(sbmacdma_t *d, struct mbuf *m)
 				len -= next_len;
 
 				if (addr + len ==
-				    KVTOPHYS(mtod(m_temp, caddr_t) + len)) {
+				    KVTOPHYS(mtod(m_temp, char *) + len)) {
 					SBMAC_EVCNT_INCR(sc->sbm_ev_txkeep);
 					len += next_len;
 					next_len = 0;
@@ -702,7 +702,7 @@ again:
 			num_mbufs++;
 
 			if (next_len != 0) {
-				addr = KVTOPHYS(mtod(m_temp, caddr_t) + len);
+				addr = KVTOPHYS(mtod(m_temp, char *) + len);
 				len = next_len;
 
 				next_len = 0;
@@ -753,7 +753,7 @@ again:
 		 * Copy data
 		 */
 
-		m_copydata(m,0,m->m_pkthdr.len,mtod(m_new,caddr_t));
+		m_copydata(m,0,m->m_pkthdr.len,mtod(m_new,void *));
 		m_new->m_len = m_new->m_pkthdr.len = m->m_pkthdr.len;
 
 		/* Free old mbuf 'm', actual mbuf is now 'm_new' */
@@ -768,7 +768,7 @@ again:
 		 * fill in the descriptor
 		 */
 
-		d->sbdma_dscrtable[dsc].dscr_a = KVTOPHYS(mtod(m_new,caddr_t)) |
+		d->sbdma_dscrtable[dsc].dscr_a = KVTOPHYS(mtod(m_new,void *)) |
 		    V_DMA_DSCRA_A_SIZE(NUMCACHEBLKS(m_new->m_len)) |
 		    M_DMA_DSCRA_INTERRUPT |
 		    M_DMA_ETHTX_SOP;
@@ -1031,9 +1031,9 @@ sbdma_tx_process(struct sbmac_softc *sc, sbmacdma_t *d)
 		d->sbdma_ctxtable[curidx] = NULL;
 
 		/*
-		 * for transmits, we just free buffers.
+		 * for transmits we just free buffers and count packets.
 		 */
-
+		ifp->if_opackets++;
 		m_freem(m);
 
 		/*
@@ -1953,7 +1953,7 @@ sbmac_setmulti(struct sbmac_softc *sc)
  */
 
 static int
-sbmac_ether_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
+sbmac_ether_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct ifaddr *ifa = (struct ifaddr *) data;
 	struct sbmac_softc *sc = ifp->if_softc;
@@ -2015,7 +2015,7 @@ sbmac_ether_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
  */
 
 static int
-sbmac_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
+sbmac_ioctl(struct ifnet *ifp, u_long command, void *data)
 {
 	struct sbmac_softc *sc = ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *) data;

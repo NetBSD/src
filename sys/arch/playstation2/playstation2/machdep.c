@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.16.14.1 2007/02/27 16:52:36 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.16.14.2 2007/03/12 05:49:50 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.16.14.1 2007/02/27 16:52:36 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.16.14.2 2007/03/12 05:49:50 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kloader.h"
@@ -99,14 +99,14 @@ mach_init()
 {
 	extern char kernel_text[], edata[], end[];
 	extern struct user *proc0paddr;
-	caddr_t kernend, v;
+	void *kernend, *v;
 	paddr_t start;
 	size_t size;
 
 	/*
 	 * Clear the BSS segment.
 	 */
-	kernend = (caddr_t)mips_round_page(end);
+	kernend = (void *)mips_round_page(end);
 	memset(edata, 0, kernend - edata);
 
 	/* disable all interrupt */
@@ -162,7 +162,7 @@ mach_init()
 	/*
 	 * Allocate space for proc0's USPACE.
 	 */
-	v = (caddr_t)uvm_pageboot_alloc(USPACE); 
+	v = (void *)uvm_pageboot_alloc(USPACE); 
 	lwp0.l_addr = proc0paddr = (struct user *) v;
 	lwp0.l_md.md_regs = (struct frame *)(v + USPACE) - 1;
 	curpcb = &lwp0.l_addr->u_pcb;

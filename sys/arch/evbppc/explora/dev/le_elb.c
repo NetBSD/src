@@ -1,4 +1,4 @@
-/*	$NetBSD: le_elb.c,v 1.4 2005/12/11 12:17:12 christos Exp $	*/
+/*	$NetBSD: le_elb.c,v 1.4.26.1 2007/03/12 05:47:39 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: le_elb.c,v 1.4 2005/12/11 12:17:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: le_elb.c,v 1.4.26.1 2007/03/12 05:47:39 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -126,7 +126,7 @@ le_elb_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 	if (bus_dmamem_map(msc->sc_dmat, &seg, rseg, LE_MEMSIZE,
-	    (caddr_t *)&sc->sc_mem,
+	    (void **)&sc->sc_mem,
 	    BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) {
 		printf("%s: couldn't map memory for card\n",
 		    sc->sc_dev.dv_xname);
@@ -267,9 +267,9 @@ static void
 le_copytobuf(struct lance_softc *sc, void *from, int boff, int len)
 {
 	struct le_elb_softc *msc = (struct le_elb_softc *)sc;
-	volatile caddr_t buf = (caddr_t)((u_char *)sc->sc_mem+boff);
+	volatile void *buf = (void *)((u_char *)sc->sc_mem+boff);
 
-	memcpy(buf, from, len);
+	memcpy(__UNVOLATILE(buf), from, len);
 
 	bus_dmamap_sync(msc->sc_dmat, msc->sc_dmam, boff, len,
 	    BUS_DMASYNC_PREWRITE);
@@ -282,12 +282,12 @@ static void
 le_copyfrombuf(struct lance_softc *sc, void *to, int boff, int len)
 {
 	struct le_elb_softc *msc = (struct le_elb_softc *)sc;
-	volatile caddr_t buf = (caddr_t)((u_char *)sc->sc_mem+boff);
+	volatile void *buf = (void *)((u_char *)sc->sc_mem+boff);
 
 	bus_dmamap_sync(msc->sc_dmat, msc->sc_dmam, boff, len,
 	    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 
-	memcpy(to, buf, len);
+	memcpy(to, __UNVOLATILE(buf), len);
 }
 
 /*
@@ -297,9 +297,9 @@ static void
 le_zerobuf(struct lance_softc *sc, int boff, int len)  
 {
 	struct le_elb_softc *msc = (struct le_elb_softc *)sc;
-	volatile caddr_t buf = (caddr_t)((u_char *)sc->sc_mem+boff);
+	volatile void *buf = (void *)((u_char *)sc->sc_mem+boff);
 
-	memset(buf, 0, len);
+	memset(__UNVOLATILE(buf), 0, len);
 
 	bus_dmamap_sync(msc->sc_dmat, msc->sc_dmam, boff, len,
 	    BUS_DMASYNC_PREWRITE);

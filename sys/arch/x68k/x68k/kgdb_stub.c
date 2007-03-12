@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_stub.c,v 1.13 2005/12/24 22:45:40 perry Exp $	*/
+/*	$NetBSD: kgdb_stub.c,v 1.13.26.1 2007/03/12 05:51:44 rmind Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -45,13 +45,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kgdb_stub.c,v 1.13 2005/12/24 22:45:40 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kgdb_stub.c,v 1.13.26.1 2007/03/12 05:51:44 rmind Exp $");
 
 #include "opt_kgdb.h"
 
 #ifdef KGDB
 #ifndef lint
-static char rcsid[] = "$NetBSD: kgdb_stub.c,v 1.13 2005/12/24 22:45:40 perry Exp $";
+static char rcsid[] = "$NetBSD: kgdb_stub.c,v 1.13.26.1 2007/03/12 05:51:44 rmind Exp $";
 #endif
 
 #include <sys/param.h>
@@ -519,7 +519,7 @@ kgdb_trap(int type, struct frame *frame)
  * to simulate by simple bounds-checking.
  */
 int
-kgdb_acc(caddr_t addr, int len, int rw)
+kgdb_acc(void *addr, int len, int rw)
 {
 	extern char proc0paddr[], kstack[];	/* XXX */
 	extern char *kernel_map;		/* XXX! */

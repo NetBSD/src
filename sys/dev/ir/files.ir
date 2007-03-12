@@ -1,4 +1,4 @@
-#	$NetBSD: files.ir,v 1.2 2002/10/10 22:07:45 thorpej Exp $
+#	$NetBSD: files.ir,v 1.2.62.1 2007/03/12 05:54:47 rmind Exp $
 
 define	irbus { }
 
@@ -6,7 +6,7 @@ define	irdasir
 define	irframedrv
 
 # IrDA physical frame level driver
-device	irframe { }: irframedrv
+device	irframe: irframedrv
 attach	irframe at irbus
 file	dev/ir/irframe.c		irframe | irframedrv	needs-flag
 

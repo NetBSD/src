@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.43 2007/02/09 21:55:26 ad Exp $
+	$NetBSD: syscalls.master,v 1.43.2.1 2007/03/12 05:53:00 rmind Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -70,7 +70,7 @@
 			    int whence); }
 20	NOARGS MPSAFE	{ pid_t sys_getpid(void); }
 21	STD		{ int ultrix_sys_mount(char *special, char *dir, \
-			     int rdonly, int type, caddr_t data); }
+			     int rdonly, int type, void *data); }
 22	OBSOL		sysV_unmount
 23	NOARGS		{ int sys_setuid(uid_t uid); }
 24	NOARGS		{ uid_t sys_getuid(void); }
@@ -95,7 +95,7 @@
 41	NOARGS		{ int sys_dup(u_int fd); }
 42	NOARGS		{ int sys_pipe(void); }
 43	OBSOL		v7 times
-44	NOARGS		{ int sys_profil(caddr_t samples, u_int size, \
+44	NOARGS		{ int sys_profil(void *samples, u_int size, \
 			    u_int offset, u_int scale); }
 45	UNIMPL
 46	OBSOL		v7 setgid
@@ -106,7 +106,7 @@
 51	NOARGS		{ int sys_acct(char *path); }
 52	UNIMPL
 53	UNIMPL		syslock
-54	STD		{ int ultrix_sys_ioctl(int fd, u_long com, caddr_t data); }
+54	STD		{ int ultrix_sys_ioctl(int fd, u_long com, void *data); }
 55	NOARGS		{ int sys_reboot(int opt); }
 56	UNIMPL		v7 mpxchan
 57	NOARGS		{ int sys_symlink(char *path, char *link); }
@@ -124,17 +124,17 @@
 68	OBSOL		vwrite
 69	NOARGS		{ int sys_sbrk(intptr_t incr); }
 70	NOARGS		{ int sys_sstk(int incr); }
-71	STD		{ int ultrix_sys_mmap(caddr_t addr, size_t len, \
+71	STD		{ int ultrix_sys_mmap(void *addr, size_t len, \
 			    int prot, u_int flags, int fd, long pos); }
 72	NOARGS		{ int sys_ovadvise(int anom); } vadvise
-73	NOARGS		{ int sys_munmap(caddr_t addr, size_t len); }
-74	NOARGS		{ int sys_mprotect(caddr_t addr, size_t len, \
+73	NOARGS		{ int sys_munmap(void *addr, size_t len); }
+74	NOARGS		{ int sys_mprotect(void *addr, size_t len, \
 			    int prot); }
-75	NOARGS		{ int sys_madvise(caddr_t addr, size_t len, \
+75	NOARGS		{ int sys_madvise(void *addr, size_t len, \
 			    int behav); }
 76	STD		{ int ultrix_sys_vhangup(void); }
 77	UNIMPL		old vlimit
-78	NOARGS		{ int sys_mincore(caddr_t addr, int len, char *vec); }
+78	NOARGS		{ int sys_mincore(void *addr, int len, char *vec); }
 79	NOARGS		{ int sys_getgroups(u_int gidsetsize, gid_t *gidset); }
 80	NOARGS		{ int sys_setgroups(u_int gidsetsize, gid_t *gidset); }
 81	NOARGS		{ int sys_getpgrp(void); }
@@ -160,19 +160,19 @@
 95	NOARGS		{ int sys_fsync(int fd); }
 96	NOARGS		{ int sys_setpriority(int which, int who, int prio); }
 97	NOARGS		{ int compat_30_sys_socket(int domain, int type, int protocol); }
-98	NOARGS		{ int sys_connect(int s, caddr_t name, int namelen); }
-99	NOARGS		{ int compat_43_sys_accept(int s, caddr_t name, \
+98	NOARGS		{ int sys_connect(int s, void *name, int namelen); }
+99	NOARGS		{ int compat_43_sys_accept(int s, void *name, \
 			    int *anamelen); }
 100	NOARGS		{ int sys_getpriority(int which, int who); }
-101	NOARGS		{ int compat_43_sys_send(int s, caddr_t buf, int len, \
+101	NOARGS		{ int compat_43_sys_send(int s, void *buf, int len, \
 			    int flags); }
-102	NOARGS		{ int compat_43_sys_recv(int s, caddr_t buf, int len, \
+102	NOARGS		{ int compat_43_sys_recv(int s, void *buf, int len, \
 			    int flags); }
 103	STD			{ int ultrix_sys_sigreturn(struct sigcontext * \
 							sigcntxp); }
-104	NOARGS		{ int sys_bind(int s, caddr_t name, int namelen); }
+104	NOARGS		{ int sys_bind(int s, void *name, int namelen); }
 105	STD		{ int ultrix_sys_setsockopt(int s, int level, \
-			    int name, caddr_t val, int valsize); }
+			    int name, void *val, int valsize); }
 106	NOARGS		{ int sys_listen(int s, int backlog); }
 107	UNIMPL		vtimes
 108	STD		{ int ultrix_sys_sigvec(int signum, \
@@ -184,14 +184,14 @@
 			    struct sigstack *oss); }
 113	NOARGS		{ int compat_43_sys_recvmsg(int s, \
 			    struct omsghdr *msg, int flags); }
-114	NOARGS		{ int compat_43_sys_sendmsg(int s, caddr_t msg, \
+114	NOARGS		{ int compat_43_sys_sendmsg(int s, void *msg, \
 			    int flags); }
 115	OBSOL		vtrace
 116	NOARGS		{ int sys_gettimeofday(struct timeval *tp, \
 			    struct timezone *tzp); }
 117	NOARGS		{ int sys_getrusage(int who, struct rusage *rusage); }
 118	NOARGS		{ int sys_getsockopt(int s, int level, int name, \
-			    caddr_t val, int *avalsize); }
+			    void *val, int *avalsize); }
 119	UNIMPL		resuba
 120	NOARGS		{ int sys_readv(int fd, struct iovec *iovp, \
 			    u_int iovcnt); }
@@ -201,8 +201,8 @@
 			    struct timezone *tzp); }
 123	NOARGS		{ int sys___posix_fchown(int fd, int uid, int gid); }
 124	NOARGS		{ int sys_fchmod(int fd, int mode); }
-125	NOARGS		{ int compat_43_sys_recvfrom(int s, caddr_t buf, \
-			    size_t len, int flags, caddr_t from, \
+125	NOARGS		{ int compat_43_sys_recvfrom(int s, void *buf, \
+			    size_t len, int flags, void *from, \
 			    int *fromlenaddr); }
 126	NOARGS		{ int sys_setreuid(int ruid, int euid); }
 127	NOARGS		{ int sys_setregid(int rgid, int egid); }
@@ -211,8 +211,8 @@
 130	NOARGS		{ int compat_43_sys_ftruncate(int fd, long length); }
 131	NOARGS		{ int sys_flock(int fd, int how); }
 132	UNIMPL
-133	NOARGS		{ int sys_sendto(int s, caddr_t buf, size_t len, \
-			    int flags, caddr_t to, int tolen); }
+133	NOARGS		{ int sys_sendto(int s, void *buf, size_t len, \
+			    int flags, void *to, int tolen); }
 134	NOARGS		{ int sys_shutdown(int s, int how); }
 135	NOARGS		{ int sys_socketpair(int domain, int type, \
 			    int protocol, int *rsv); }
@@ -222,7 +222,7 @@
 139	STD		{ int ultrix_sys_sigcleanup(struct sigcontext *sigcntxp); }
 140	NOARGS		{ int sys_adjtime(struct timeval *delta, \
 			    struct timeval *olddelta); }
-141	NOARGS		{ int compat_43_sys_getpeername(int fdes, caddr_t asa, \
+141	NOARGS		{ int compat_43_sys_getpeername(int fdes, void *asa, \
 			    int *alen); }
 142	NOARGS		{ int compat_43_sys_gethostid(void); }
 143	UNIMPL		old sethostid
@@ -234,7 +234,7 @@
 147	UNIMPL
 148	UNIMPL		setquota
 149	UNIMPL	 	quota /* needs to be nullop to boot on Ultrix root partition*/
-150	NOARGS		{ int compat_43_sys_getsockname(int fdes, caddr_t asa, \
+150	NOARGS		{ int compat_43_sys_getsockname(int fdes, void *asa, \
 			    int *alen); }
 151	UNIMPL		sysmips /* 4 args */
 #ifdef __mips
@@ -274,10 +274,10 @@
 			    int len); }
 167	UNIMPL
 168	STD		{ int ultrix_sys_quotactl(int cmd, char *special, \
-			    int uid, caddr_t addr); }
+			    int uid, void *addr); }
 169	STD		{ int ultrix_sys_exportfs(char *path, char *ex); }
 170	UNIMPL		{ int ultrix_sys_mount(char *special, char *dir, \
-			     int rdonly, int type, caddr_t data); }
+			     int rdonly, int type, void *data); }
 171	UNIMPL	4 hdwconf
 172	UNIMPL		msgctl
 173	UNIMPL		msgget

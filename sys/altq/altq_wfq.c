@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_wfq.c,v 1.17 2006/11/16 01:32:37 christos Exp $	*/
+/*	$NetBSD: altq_wfq.c,v 1.17.4.1 2007/03/12 05:45:09 rmind Exp $	*/
 /*	$KAME: altq_wfq.c,v 1.14 2005/04/13 03:44:25 suz Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_wfq.c,v 1.17 2006/11/16 01:32:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_wfq.c,v 1.17.4.1 2007/03/12 05:45:09 rmind Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -634,7 +634,7 @@ wfqclose(dev_t dev, int flag, int fmt,
 }
 
 int
-wfqioctl(dev_t dev, ioctlcmd_t cmd, caddr_t addr, int flag,
+wfqioctl(dev_t dev, ioctlcmd_t cmd, void *addr, int flag,
     struct lwp *l)
 {
 	int	error = 0;

@@ -1,4 +1,4 @@
-/* $NetBSD: cs89x0isa.c,v 1.11 2005/12/11 12:22:02 christos Exp $ */
+/* $NetBSD: cs89x0isa.c,v 1.11.26.1 2007/03/12 05:54:48 rmind Exp $ */
 
 /*
  * Copyright 1997
@@ -36,7 +36,7 @@
 /* isa DMA routines for cs89x0 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs89x0isa.c,v 1.11 2005/12/11 12:22:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs89x0isa.c,v 1.11.26.1 2007/03/12 05:54:48 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,7 +108,7 @@ cs_isa_dma_attach(struct cs_softc *sc)
 			goto after_dma_block;
 		}
 		if (isa_dmamem_map(isc->sc_ic, isc->sc_drq, dma_addr,
-		    CS8900_DMASIZE, &isc->sc_dmabase,
+		    CS8900_DMASIZE, (void **)&isc->sc_dmabase,
 		       BUS_DMA_NOWAIT | BUS_DMA_COHERENT /* XXX */ ) != 0) {
 			printf("%s: unable to map DMA buffer\n",
 			    sc->sc_dev.dv_xname);

@@ -1,4 +1,4 @@
-/* $NetBSD: sci.c,v 1.45 2006/10/01 20:31:50 elad Exp $ */
+/* $NetBSD: sci.c,v 1.45.4.1 2007/03/12 05:50:13 rmind Exp $ */
 
 /*-
  * Copyright (C) 1999 T.Horiuchi and SAITOH Masanobu.  All rights reserved.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sci.c,v 1.45 2006/10/01 20:31:50 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sci.c,v 1.45.4.1 2007/03/12 05:50:13 rmind Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_sci.h"
@@ -805,7 +805,7 @@ scitty(dev_t dev)
 }
 
 int
-sciioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+sciioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct sci_softc *sc = sci_cd.cd_devs[SCIUNIT(dev)];
 	struct tty *tp = sc->sc_tty;

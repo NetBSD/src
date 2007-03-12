@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.41 2006/10/01 18:56:21 elad Exp $	*/
+/*	$NetBSD: pccons.c,v 1.41.4.1 2007/03/12 05:47:23 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.41 2006/10/01 18:56:21 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.41.4.1 2007/03/12 05:47:23 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_xserver.h"
@@ -1002,7 +1002,7 @@ int
 pcioctl(dev, cmd, data, flag, l)
 	dev_t dev;
 	u_long cmd;
-	caddr_t data;
+	void *data;
 	int flag;
 	struct lwp *l;
 {

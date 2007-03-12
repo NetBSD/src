@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.6 2007/02/16 02:53:48 ad Exp $ */
+/* $NetBSD: intr.h,v 1.6.2.1 2007/03/12 05:48:43 rmind Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -47,16 +47,18 @@
 #include <machine/psl.h>
 
 #define splnone()	spl0()
-#define splsoftclock()  splraise1()
-#define splsoftnet()    splraise1()
-#define splbio()        spl2()
-#define splnet()        spl3()
-#define spltty()        spl6()
-#define splclock()      spl5()
-#define splstatclock()	spl5()
-#define splvm()         spl7()
-#define splhigh()       spl7()
-#define splsched()      spl7()
+#define splsoft()	splraise1()
+#define splsoftclock()	splsoft()
+#define splsoftnet()	splsoft()
+#define splsoftserial()	splsoft()
+#define splbio()	splraise2()
+#define splnet()	splraise3()
+#define spltty()	splraise6()
+#define splclock()	splraise5()
+#define splstatclock()	splraise5()
+#define splvm()		spl7()
+#define splhigh()	spl7()
+#define splsched()	spl7()
 #define spllock()	spl7()
 
 /* watch out for side effects */
@@ -67,22 +69,24 @@ int spl0 __P((void));
 #define	IPL_NONE	0
 #define	IPL_SOFTCLOCK	1
 #define	IPL_SOFTNET	2
-#define	IPL_BIO		3
-#define	IPL_NET		4
-#define	IPL_CLOCK	5
-#define	IPL_STATCLOCK	6
-#define	IPL_TTY		7
-#define	IPL_VM		8
-#define	IPL_SCHED	9
-#define	IPL_HIGH	10
-#define	IPL_LOCK	11
-#define	NIPLS		12
+#define	IPL_SOFTSERIAL	3
+#define	IPL_SOFT	4
+#define	IPL_BIO		5
+#define	IPL_NET		6
+#define	IPL_CLOCK	7
+#define	IPL_STATCLOCK	8
+#define	IPL_TTY		9
+#define	IPL_VM		10
+#define	IPL_SCHED	11
+#define	IPL_HIGH	12
+#define	IPL_LOCK	13
+#define	NIPL		14
 
-extern const int ipl2spl_table[NIPLS];
+extern const int ipl2spl_table[NIPL];
 
 typedef int ipl_t;
 typedef struct {
-	int _spl;
+	uint16_t _spl;
 } ipl_cookie_t;
 
 static inline ipl_cookie_t
@@ -98,6 +102,9 @@ splraiseipl(ipl_cookie_t icookie)
 
 	return _splraise(icookie._spl);
 }
+
+#include <m68k/softintr.h>
+
 #endif /* _KERNEL */
 
 #endif	/* _MACHINE_INTR_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.12 2005/12/24 20:07:04 perry Exp $	*/
+/*	$NetBSD: fpu.c,v 1.12.26.1 2007/03/12 05:48:17 rmind Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.12 2005/12/24 20:07:04 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.12.26.1 2007/03/12 05:48:17 rmind Exp $");
 
 #include <sys/param.h>       
 #include <sys/systm.h>
@@ -282,7 +282,7 @@ hppa_fpu_ls(struct trapframe *frame, struct lwp *l)
 	log2size = (inst & OPCODE_DOUBLE) ? 3 : 2;
 
 	/* Get the floating point register. */
-	fpreg = ((caddr_t)l->l_addr->u_pcb.pcb_fpregs) + (inst_t << log2size);
+	fpreg = ((char *)l->l_addr->u_pcb.pcb_fpregs) + (inst_t << log2size);
 
 	/* Get the base register. */
 	base = FRAME_REG(frame, inst_b, r0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.31 2007/02/15 15:40:51 ad Exp $	*/
+/*	$NetBSD: fss.c,v 1.31.2.1 2007/03/12 05:53:03 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.31 2007/02/15 15:40:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.31.2.1 2007/03/12 05:53:03 rmind Exp $");
 
 #include "fss.h"
 
@@ -139,7 +139,7 @@ static void fss_cluster_iodone(struct buf *);
 static void fss_read_cluster(struct fss_softc *, u_int32_t);
 static void fss_bs_thread(void *);
 static int fss_bs_io(struct fss_softc *, fss_io_type,
-    u_int32_t, off_t, int, caddr_t);
+    u_int32_t, off_t, int, void *);
 static u_int32_t *fss_bs_indir(struct fss_softc *, u_int32_t);
 
 const struct bdevsw fss_bdevsw = {
@@ -262,7 +262,7 @@ fss_write(dev_t dev, struct uio *uio, int flags)
 }
 
 int
-fss_ioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+fss_ioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	int error;
 	struct fss_softc *sc;
@@ -346,7 +346,7 @@ fss_size(dev_t dev)
 }
 
 int
-fss_dump(dev_t dev, daddr_t blkno, caddr_t va,
+fss_dump(dev_t dev, daddr_t blkno, void *va,
     size_t size)
 {
 	return EROFS;
@@ -841,7 +841,7 @@ static void
 fss_read_cluster(struct fss_softc *sc, u_int32_t cl)
 {
 	int s, todo, len;
-	caddr_t addr;
+	char *addr;
 	daddr_t dblk;
 	struct buf *bp;
 	struct fss_cache *scp, *scl;
@@ -890,7 +890,7 @@ restart:
 	addr = scp->fc_data;
 	if (cl == sc->sc_clcount-1) {
 		todo = sc->sc_clresid;
-		memset(addr+todo, 0, FSS_CLSIZE(sc)-todo);
+		memset((char *)addr + todo, 0, FSS_CLSIZE(sc) - todo);
 	} else
 		todo = FSS_CLSIZE(sc);
 	while (todo > 0) {
@@ -943,7 +943,7 @@ restart:
  */
 static int
 fss_bs_io(struct fss_softc *sc, fss_io_type rw,
-    u_int32_t cl, off_t off, int len, caddr_t data)
+    u_int32_t cl, off_t off, int len, void *data)
 {
 	int error;
 
@@ -983,7 +983,7 @@ fss_bs_indir(struct fss_softc *sc, u_int32_t cl)
 	if (sc->sc_indir_dirty) {
 		FSS_STAT_INC(sc, indir_write);
 		if (fss_bs_io(sc, FSS_WRITE, sc->sc_indir_cur, 0,
-		    FSS_CLSIZE(sc), (caddr_t)sc->sc_indir_data) != 0)
+		    FSS_CLSIZE(sc), (void *)sc->sc_indir_data) != 0)
 			return NULL;
 		setbit(sc->sc_indir_valid, sc->sc_indir_cur);
 	}
@@ -994,7 +994,7 @@ fss_bs_indir(struct fss_softc *sc, u_int32_t cl)
 	if (isset(sc->sc_indir_valid, sc->sc_indir_cur)) {
 		FSS_STAT_INC(sc, indir_read);
 		if (fss_bs_io(sc, FSS_READ, sc->sc_indir_cur, 0,
-		    FSS_CLSIZE(sc), (caddr_t)sc->sc_indir_data) != 0)
+		    FSS_CLSIZE(sc), (void *)sc->sc_indir_data) != 0)
 			return NULL;
 	} else
 		memset(sc->sc_indir_data, 0, FSS_CLSIZE(sc));
@@ -1012,7 +1012,7 @@ fss_bs_thread(void *arg)
 {
 	int error, len, nfreed, nio, s;
 	long off;
-	caddr_t addr;
+	char *addr;
 	u_int32_t c, cl, ch, *indirp;
 	struct buf *bp, *nbp;
 	struct fss_softc *sc;
@@ -1212,7 +1212,7 @@ fss_bs_thread(void *arg)
 					    scp->fc_cluster == c)
 						break;
 				if (scp < scl)
-					memcpy(addr, scp->fc_data+off, len);
+					memcpy(addr, (char *)scp->fc_data+off, len);
 				else
 					memset(addr, 0, len);
 				continue;

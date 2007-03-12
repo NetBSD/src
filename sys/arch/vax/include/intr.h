@@ -1,4 +1,4 @@
-/* 	$NetBSD: intr.h,v 1.23 2007/02/16 02:53:51 ad Exp $	*/
+/* 	$NetBSD: intr.h,v 1.23.2.1 2007/03/12 05:51:13 rmind Exp $	*/
 
 /*
  * Copyright (c) 1998 Matt Thomas.
@@ -79,42 +79,47 @@
 #ifdef _KERNEL
 typedef int ipl_t;
 
-static inline ipl_t
-splx(ipl_t new_ipl)
-{
-	ipl_t old_ipl = mfpr(PR_IPL);
-	mtpr(new_ipl, PR_IPL);
-	return old_ipl;
-}
-
 static inline void
 _splset(ipl_t ipl)
 {
 	mtpr(ipl, PR_IPL);
 }
 
+static inline ipl_t
+_splget(void)
+{
+	return mfpr(PR_IPL);
+}
+
+static inline ipl_t
+splx(ipl_t new_ipl)
+{
+	ipl_t old_ipl = _splget();
+	_splset(new_ipl);
+	return old_ipl;
+}
+
 typedef struct {
-	ipl_t _ipl;
+	uint8_t _ipl;
 } ipl_cookie_t;
 
 static inline ipl_cookie_t
 makeiplcookie(ipl_t ipl)
 {
-
-	return (ipl_cookie_t){._ipl = ipl};
+	return (ipl_cookie_t){._ipl = (uint8_t)ipl};
 }
 
 static inline int
 splraiseipl(ipl_cookie_t icookie)
 {
-	register ipl_t __val;
 	ipl_t newipl = icookie._ipl;
+	ipl_t oldipl;
 
-	__asm volatile ("mfpr %1,%0" : "=&g" (__val) : "g" (PR_IPL));
-	if (newipl > __val) {
+	oldipl = _splget();
+	if (newipl > oldipl) {
 		_splset(newipl);
 	}
-	return __val;
+	return oldipl;
 }
 
 #define _setsirr(reg)	mtpr((reg), PR_SIRR)

@@ -1,4 +1,4 @@
-/*	$NetBSD: gten.c,v 1.14 2006/05/09 02:48:36 garbled Exp $	*/
+/*	$NetBSD: gten.c,v 1.14.14.1 2007/03/12 05:50:09 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gten.c,v 1.14 2006/05/09 02:48:36 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gten.c,v 1.14.14.1 2007/03/12 05:50:09 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -88,7 +88,7 @@ static struct wsscreen_list gten_screenlist = {
 	sizeof(_gten_scrlist) / sizeof(struct wsscreen_descr *), _gten_scrlist
 };
 
-static int gten_ioctl(void *, void *, u_long, caddr_t, int, struct proc *);
+static int gten_ioctl(void *, void *, u_long, void *, int, struct proc *);
 static paddr_t gten_mmap(void *, void *, off_t, int);
 static int gten_alloc_screen(void *, const struct wsscreen_descr *,
 			     void **, int *, int *, long *);
@@ -248,7 +248,7 @@ gten_common_init(struct rasops_info *ri)
 }
 
 static int
-gten_ioctl(void *v, void *vs, u_long cmd, caddr_t data, int flag,
+gten_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
     struct proc *p)
 {
 	struct gten_softc *gt = v;

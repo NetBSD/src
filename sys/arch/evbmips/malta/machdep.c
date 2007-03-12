@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.22 2005/12/24 20:07:03 perry Exp $	*/
+/*	$NetBSD: machdep.c,v 1.22.26.1 2007/03/12 05:47:39 rmind Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.22 2005/12/24 20:07:03 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.22.26.1 2007/03/12 05:47:39 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -200,7 +200,7 @@ mach_init(int argc, char **argv, yamon_env_var *envp, u_long memsize)
 {
 	struct malta_config *mcp = &malta_configuration;
 	bus_space_handle_t sh;
-	caddr_t kernend, v;
+	void *kernend, *v;
         u_long first, last;
 	char *cp;
 	int freqok, i, howto;
@@ -216,8 +216,8 @@ mach_init(int argc, char **argv, yamon_env_var *envp, u_long memsize)
 	/*
 	 * Clear the BSS segment.
 	 */
-	kernend = (caddr_t)mips_round_page(end);
-	memset(edata, 0, kernend - edata);
+	kernend = (void *)mips_round_page(end);
+	memset(edata, 0, (char *)kernend - edata);
 
 	/* save the yamon environment pointer */
 	yamon_envp = envp;
@@ -320,9 +320,9 @@ mach_init(int argc, char **argv, yamon_env_var *envp, u_long memsize)
 	/*
 	 * Allocate space for proc0's USPACE.
 	 */
-	v = (caddr_t)uvm_pageboot_alloc(USPACE); 
+	v = (void *)uvm_pageboot_alloc(USPACE); 
 	lwp0.l_addr = proc0paddr = (struct user *)v;
-	lwp0.l_md.md_regs = (struct frame *)(v + USPACE) - 1;
+	lwp0.l_md.md_regs = (struct frame *)((char *)v + USPACE) - 1;
 	curpcb = &lwp0.l_addr->u_pcb;
 	curpcb->pcb_context[11] = MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.3 2006/07/19 21:11:44 ad Exp $	*/
+/*	$NetBSD: syscall.c,v 1.3.12.1 2007/03/12 05:49:48 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.3 2006/07/19 21:11:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.3.12.1 2007/03/12 05:49:48 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -119,7 +119,7 @@ syscall_intern(struct proc *p)
 void
 syscall_plain(struct syscframe frame)
 {
-	caddr_t params;
+	void *params;
 	const struct sysent *callp;
 	struct lwp *l;
 	struct proc *p;
@@ -142,7 +142,7 @@ syscall_plain(struct syscframe frame)
 	nsys = p->p_emul->e_nsysent;
 	callp = p->p_emul->e_sysent;
 
-	params = (caddr_t)frame.sf_regs.r_sp + sizeof(int);
+	params = (void *)frame.sf_regs.r_sp + sizeof(int);
 
 	switch (code) {
 	case SYS_syscall:
@@ -171,7 +171,7 @@ syscall_plain(struct syscframe frame)
 		callp += code;
 	argsize = callp->sy_argsize;
 	if (argsize) {
-		error = copyin(params, (caddr_t)args, argsize);
+		error = copyin(params, (void *)args, argsize);
 		if (error)
 			goto bad;
 	}
@@ -222,7 +222,7 @@ syscall_plain(struct syscframe frame)
 void
 syscall_fancy(struct syscframe frame)
 {
-	caddr_t params;
+	void *params;
 	const struct sysent *callp;
 	struct lwp *l;
 	struct proc *p;
@@ -245,7 +245,7 @@ syscall_fancy(struct syscframe frame)
 	nsys = p->p_emul->e_nsysent;
 	callp = p->p_emul->e_sysent;
 
-	params = (caddr_t)frame.sf_regs.r_sp + sizeof(int);
+	params = (void *)frame.sf_regs.r_sp + sizeof(int);
 
 	switch (code) {
 	case SYS_syscall:
@@ -274,7 +274,7 @@ syscall_fancy(struct syscframe frame)
 		callp += code;
 	argsize = callp->sy_argsize;
 	if (argsize) {
-		error = copyin(params, (caddr_t)args, argsize);
+		error = copyin(params, (void *)args, argsize);
 		if (error)
 			goto bad;
 	}

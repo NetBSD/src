@@ -1,4 +1,4 @@
-/*	$NetBSD: audio_if.h,v 1.61.14.1 2007/02/27 16:53:48 yamt Exp $	*/
+/*	$NetBSD: audio_if.h,v 1.61.14.2 2007/03/12 05:53:02 rmind Exp $	*/
 
 /*
  * Copyright (c) 1994 Havard Eidnes.
@@ -235,7 +235,7 @@ struct audio_hw_if {
 		    void (*)(void *), void *, const audio_params_t *);
 	int	(*trigger_input)(void *, void *, void *, int,
 		    void (*)(void *), void *, const audio_params_t *);
-	int	(*dev_ioctl)(void *, u_long, caddr_t, int, struct lwp *);
+	int	(*dev_ioctl)(void *, u_long, void *, int, struct lwp *);
 	int	(*powerstate)(void *, int);
 #define	AUDIOPOWER_ON	1
 #define	AUDIOPOWER_OFF	0

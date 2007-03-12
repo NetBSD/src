@@ -1,4 +1,4 @@
-/*	$NetBSD: ka630.c,v 1.27 2006/09/05 19:32:57 matt Exp $	*/
+/*	$NetBSD: ka630.c,v 1.27.8.1 2007/03/12 05:51:17 rmind Exp $	*/
 /*-
  * Copyright (c) 1982, 1988, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka630.c,v 1.27 2006/09/05 19:32:57 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka630.c,v 1.27.8.1 2007/03/12 05:51:17 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -54,7 +54,7 @@ static struct uvaxIIcpu *uvaxIIcpu_ptr;
 
 static void ka630_conf __P((void));
 static void ka630_memerr __P((void));
-static int ka630_mchk __P((caddr_t));
+static int ka630_mchk __P((void *));
 static void ka630_halt __P((void));
 static void ka630_reboot __P((int));
 static void ka630_clrf __P((void));
@@ -117,7 +117,7 @@ struct mc78032frame {
 
 int
 ka630_mchk(cmcf)
-	caddr_t cmcf;
+	void *cmcf;
 {
 	register struct mc78032frame *mcf = (struct mc78032frame *)cmcf;
 	register u_int type = mcf->mc63_summary;

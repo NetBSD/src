@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_sockio.c,v 1.28 2007/02/09 21:55:24 ad Exp $	 */
+/*	$NetBSD: svr4_sockio.c,v 1.28.2.1 2007/03/12 05:52:46 rmind Exp $	 */
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_sockio.c,v 1.28 2007/02/09 21:55:24 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_sockio.c,v 1.28.2.1 2007/03/12 05:52:46 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -92,7 +92,7 @@ bsd_to_svr4_flags(bf)
 
 int
 svr4_sock_ioctl(struct file *fp, struct lwp *l, register_t *retval,
-    int fd, u_long cmd, caddr_t data)
+    int fd, u_long cmd, void *data)
 {
 	int error;
 	int (*ctl)(struct file *, u_long,  void *, struct lwp *) =
@@ -172,7 +172,7 @@ svr4_sock_ioctl(struct file *fp, struct lwp *l, register_t *retval,
 			    sizeof(br.ifr_name));
 
 			if ((error = (*ctl)(fp, SIOCGIFFLAGS,
-					    (caddr_t) &br, l)) != 0) {
+					    (void *) &br, l)) != 0) {
 				DPRINTF(("SIOCGIFFLAGS %s: error %d\n",
 					 sr.svr4_ifr_name, error));
 				return error;
@@ -197,7 +197,7 @@ svr4_sock_ioctl(struct file *fp, struct lwp *l, register_t *retval,
 				sc.svr4_ifc_len));
 
 			if ((error = (*ctl)(fp, OSIOCGIFCONF,
-					    (caddr_t) &sc, l)) != 0)
+					    (void *) &sc, l)) != 0)
 				return error;
 
 			DPRINTF(("SIOCGIFCONF\n"));

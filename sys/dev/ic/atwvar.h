@@ -1,4 +1,4 @@
-/*	$NetBSD: atwvar.h,v 1.22 2006/08/31 19:24:37 dyoung Exp $	*/
+/*	$NetBSD: atwvar.h,v 1.22.8.1 2007/03/12 05:53:27 rmind Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 The NetBSD Foundation, Inc.  All rights reserved.
@@ -223,7 +223,7 @@ struct atw_softc {
 	u_int16_t		*sc_srom;
 	u_int16_t		sc_sromsz;
 
-	caddr_t			sc_radiobpf;
+	void *			sc_radiobpf;
 
 	bus_dma_segment_t	sc_cdseg;	/* control data memory */
 	int			sc_cdnseg;	/* number of segments */

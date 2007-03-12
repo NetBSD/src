@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.12 2007/02/16 02:53:51 ad Exp $	*/
+/*	$NetBSD: intr.h,v 1.12.2.1 2007/03/12 05:51:42 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,10 +41,23 @@
 
 #include <machine/psl.h>
 
-#if defined(_KERNEL) && !defined(_LOCORE)
-
 /* spl0 requires checking for software interrupts */
 void	spl0(void);
+
+#define splsoft()	splraise1()
+#define splsoftclock()	splsoft()
+#define splsoftnet()	splsoft()
+#define splsoftserial()	splsoft()
+#define splbio()	splraise3()
+#define splnet()        splraise4()
+#define spltty()        splraise4()
+#define splvm()         splraise4()
+#define splserial()     splraise5()
+#define splclock()      splraise6()
+#define splstatclock()  splclock()
+#define splhigh()       spl7()
+#define splsched()      spl7()
+#define spllock()       spl7()
 
 #define	splnone()	spl0()
 #define	splzs()		splraise5()	/* disallow serial interrupts */
@@ -53,54 +66,36 @@ void	spl0(void);
 #define splx(s)         ((s) & PSL_IPL ? _spl(s) : spl0())
 
 #define	IPL_NONE	0
-#define	IPL_SOFTCLOCK	(PSL_S|PSL_IPL1)
-#define	IPL_SOFTNET	(PSL_S|PSL_IPL1)
-#define	IPL_BIO		(PSL_S|PSL_IPL3)
-#define	IPL_NET		(PSL_S|PSL_IPL4)
-#define	IPL_TTY		(PSL_S|PSL_IPL4)
-#define	IPL_VM		(PSL_S|PSL_IPL4)
-#define	IPL_CLOCK	(PSL_S|PSL_IPL6)
-#define	IPL_STATCLOCK	(PSL_S|PSL_IPL6)
-#define	IPL_SCHED	(PSL_S|PSL_IPL7)
-#define	IPL_HIGH	(PSL_S|PSL_IPL7)
-#define	IPL_LOCK	(PSL_S|PSL_IPL7)
+#define	IPL_SOFTCLOCK	1
+#define	IPL_SOFTNET	2
+#define	IPL_SOFTSERIAL	3
+#define	IPL_SOFT	4
+#define	IPL_BIO		5
+#define	IPL_NET		6
+#define	IPL_TTY		7
+#define	IPL_VM		8
+#define	IPL_SERIAL	9
+#define	IPL_CLOCK	10
+#define	IPL_STATCLOCK	IPL_CLOCK
+#define	IPL_HIGH	11
+#define	IPL_SCHED	IPL_HIGH
+#define	IPL_LOCK	IPL_HIGH
+#define	NIPL		12
 
 typedef int ipl_t;
 typedef struct {
-	ipl_t _ipl;
+	uint16_t _psl;
 } ipl_cookie_t;
 
-static inline ipl_cookie_t
-makeiplcookie(ipl_t ipl)
-{
-
-	return (ipl_cookie_t){._ipl = ipl};
-}
+ipl_cookie_t makeiplcookie(ipl_t);
 
 static inline int
 splraiseipl(ipl_cookie_t icookie)
 {
 
-	return _splraise(icookie._ipl);
+	return _splraise(icookie._psl);
 }
 
-#include <sys/spl.h>
+#include <m68k/softintr.h>
 
-/*
- * simulated software interrupt register
- */
-extern unsigned char ssir;
-
-#define SIR_NET		0x1
-#define SIR_CLOCK	0x2
-#define SIR_SERIAL	0x4
-#define SIR_KBD		0x8
-
-#define siroff(x)	ssir &= ~(x)
-#define setsoftnet()	ssir |= SIR_NET
-#define setsoftclock()	ssir |= SIR_CLOCK
-#define setsoftserial() ssir |= SIR_SERIAL
-#define setsoftkbd()    ssir |= SIR_KBD
-
-#endif /* _KERNEL && ! _LOCORE */
-#endif
+#endif /* !_X68K_INTR_H_ */

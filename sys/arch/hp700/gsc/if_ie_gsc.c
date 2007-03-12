@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_gsc.c,v 1.12 2005/12/24 20:07:03 perry Exp $	*/
+/*	$NetBSD: if_ie_gsc.c,v 1.12.26.1 2007/03/12 05:47:59 rmind Exp $	*/
 
 /*	$OpenBSD: if_ie_gsc.c,v 1.6 2001/01/12 22:57:04 mickey Exp $	*/
 
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie_gsc.c,v 1.12 2005/12/24 20:07:03 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie_gsc.c,v 1.12.26.1 2007/03/12 05:47:59 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -251,7 +251,7 @@ ie_gsc_read16(struct ie_softc *sc, int offset)
 	"	ldh	0(%1), %0	\n"
 	"	fdc	%%r0(%1)	\n"
 	: "=&r" (val)
-	: "r" ((caddr_t)sc->sc_maddr + offset));
+	: "r" ((char *)sc->sc_maddr + offset));
 	return (val);
 }
 
@@ -263,7 +263,7 @@ ie_gsc_write16(struct ie_softc *sc, int offset, uint16_t v)
 	"	sth	%0, 0(%1)	\n"
 	"	fdc	%%r0(%1)	\n"
 	: /* no outputs */
-	: "r" (v), "r" ((caddr_t)sc->sc_maddr + offset));
+	: "r" (v), "r" ((char *)sc->sc_maddr + offset));
 }
 
 void
@@ -283,7 +283,7 @@ ie_gsc_write24(struct ie_softc *sc, int offset, int addr)
 	"	fdc	%%r0(%1)		\n"
 	"	fdc	%%r21(%1)		\n"
 	: /* No outputs */
-	: "r" (addr), "r" ((caddr_t)sc->sc_maddr + offset)
+	: "r" (addr), "r" ((char *)sc->sc_maddr + offset)
 	: "r21", "r22");
 }
 
@@ -292,7 +292,7 @@ ie_gsc_memcopyin(struct ie_softc *sc, void *p, int offset, size_t size)
 {
 	struct ie_gsc_softc *gsc = (struct ie_gsc_softc *) sc;
 
-	memcpy(p, (caddr_t)sc->sc_maddr + offset, size);
+	memcpy(p, (char *)sc->sc_maddr + offset, size);
 	bus_dmamap_sync(gsc->iemt, sc->sc_dmamap, offset, size,
 			BUS_DMASYNC_PREREAD);
 	hp700_led_blink(HP700_LED_NETRCV);
@@ -303,7 +303,7 @@ ie_gsc_memcopyout(struct ie_softc *sc, const void *p, int offset, size_t size)
 {
 	struct ie_gsc_softc *gsc = (struct ie_gsc_softc *) sc;
 
-	memcpy((caddr_t)sc->sc_maddr + offset, p, size);
+	memcpy((char *)sc->sc_maddr + offset, p, size);
 	bus_dmamap_sync(gsc->iemt, sc->sc_dmamap, offset, size,
 			BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
 	hp700_led_blink(HP700_LED_NETSND);
@@ -356,8 +356,8 @@ i82596_probe(struct ie_softc *sc)
 
 #if I82596_DEBUG
 	printf (": test %x:%x\n%s",
-		*((volatile int32_t *)((caddr_t)sc->sc_maddr + 0)),
-		*((volatile int32_t *)((caddr_t)sc->sc_maddr + 4)),
+		*((volatile int32_t *)((char *)sc->sc_maddr + 0)),
+		*((volatile int32_t *)((char *)sc->sc_maddr + 4)),
 		sc->sc_dev.dv_xname);
 #endif
 	return 1;
@@ -427,7 +427,7 @@ ie_gsc_attach(struct device *parent, struct device *self, void *aux)
 	 * Map that physical memory into kernel virtual space.
 	 */
 	if (bus_dmamem_map(gsc->iemt, &seg, rseg, sc->sc_msize,
-			   (caddr_t *)&sc->sc_maddr, BUS_DMA_NOWAIT)) {
+			   (void **)&sc->sc_maddr, BUS_DMA_NOWAIT)) {
 		printf (": cannot map DMA memory\n");
 		bus_dmamem_free(gsc->iemt, &seg, rseg);
 		return;
@@ -440,7 +440,7 @@ ie_gsc_attach(struct device *parent, struct device *self, void *aux)
 			      0, BUS_DMA_NOWAIT, &sc->sc_dmamap)) {
 		printf(": cannot create DMA map\n");
 		bus_dmamem_unmap(gsc->iemt,
-				 (caddr_t)sc->sc_maddr, sc->sc_msize);
+				 (void *)sc->sc_maddr, sc->sc_msize);
 		bus_dmamem_free(gsc->iemt, &seg, rseg);
 		return;
 	}
@@ -454,7 +454,7 @@ ie_gsc_attach(struct device *parent, struct device *self, void *aux)
 		printf(": cannot load DMA map\n");
 		bus_dmamap_destroy(gsc->iemt, sc->sc_dmamap);
 		bus_dmamem_unmap(gsc->iemt,
-				 (caddr_t)sc->sc_maddr, sc->sc_msize);
+				 (void *)sc->sc_maddr, sc->sc_msize);
 		bus_dmamem_free(gsc->iemt, &seg, rseg);
 		return;
 	}
@@ -518,7 +518,7 @@ ie_gsc_attach(struct device *parent, struct device *self, void *aux)
 	if (!rv) {
 		bus_dmamap_destroy(gsc->iemt, sc->sc_dmamap);
 		bus_dmamem_unmap(gsc->iemt,
-				 (caddr_t)sc->sc_maddr, sc->sc_msize);
+				 (void *)sc->sc_maddr, sc->sc_msize);
 		bus_dmamem_free(gsc->iemt, &seg, rseg);
 		return;
 	}

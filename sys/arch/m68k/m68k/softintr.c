@@ -1,4 +1,4 @@
-/*	$NetBSD: softintr.c,v 1.12 2007/02/15 12:43:17 tsutsui Exp $	*/
+/*	$NetBSD: softintr.c,v 1.1.4.2 2007/03/12 05:48:54 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,19 +37,20 @@
  */
 
 /*
- * Generic soft interrupt implementation for hp300.
+ * Generic soft interrupt implementation for m68k ports which use
+ * hp300 style simulated software interrupt with VAX REI emulation.
+ *
  * Based heavily on the alpha implementation by Jason Thorpe.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: softintr.c,v 1.12 2007/02/15 12:43:17 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: softintr.c,v 1.1.4.2 2007/03/12 05:48:54 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/proc.h>
 #include <sys/malloc.h>
-#include <sys/sched.h>
-#include <sys/vmmeter.h>
+
+#include <net/netisr.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -58,36 +59,38 @@ __KERNEL_RCSID(0, "$NetBSD: softintr.c,v 1.12 2007/02/15 12:43:17 tsutsui Exp $"
 #include <machine/cpu.h>
 #include <machine/intr.h>
 
-struct hp300_soft_intrhand	*softnet_intrhand;
+struct m68k_soft_intrhand *softnet_intrhand;
 volatile uint8_t ssir;
 
-static struct hp300_soft_intr hp300_soft_intrs[SI_NQUEUES];
+static struct m68k_soft_intr m68k_soft_intrs[SI_NQUEUES];
+
+static void netintr(void);
 
 /*
  * softintr_init()
  *
- *	Initialise hp300 software interrupt subsystem.
+ *	Initialise hp300 style software interrupt subsystem.
  */
 void
 softintr_init(void)
 {
 	static const char *softintr_names[] = SI_QUEUENAMES;
-	struct hp300_soft_intr *hsi;
+	struct m68k_soft_intr *msi;
 	int i;
 
 	for (i = 0; i < SI_NQUEUES; i++) {
-		hsi = &hp300_soft_intrs[i];
-		LIST_INIT(&hsi->hsi_q);
-		hsi->hsi_ipl = i;
-		evcnt_attach_dynamic(&hsi->hsi_evcnt, EVCNT_TYPE_INTR,
+		msi = &m68k_soft_intrs[i];
+		LIST_INIT(&msi->msi_q);
+		msi->msi_ipl = i;
+		evcnt_attach_dynamic(&msi->msi_evcnt, EVCNT_TYPE_INTR,
 		    NULL, "soft", softintr_names[i]);
 	}
 
 	/* Establish legacy software interrupt handlers */
 	softnet_intrhand = softintr_establish(IPL_SOFTNET,
-	    (void (*)(void *)) netintr, NULL);
+	    (void (*)(void *))netintr, NULL);
 
-	assert(softnet_intrhand != NULL);
+	KASSERT(softnet_intrhand != NULL);
 }
 
 /*
@@ -98,31 +101,32 @@ softintr_init(void)
 void
 softintr_dispatch(void)
 {
-	struct hp300_soft_intr *hsi;
-	struct hp300_soft_intrhand *sih;
-	int handled;
+	struct m68k_soft_intr *msi;
+	struct m68k_soft_intrhand *sih;
+	bool handled;
 	uint8_t mask;
 
 	do {
+		handled = false;
 		mask = 0x01;
-		for (hsi = hp300_soft_intrs, handled = 0;
-		    hsi < &hp300_soft_intrs[SI_NQUEUES];
-		    hsi++, mask <<= 1) {
+		for (msi = m68k_soft_intrs;
+		    msi < &m68k_soft_intrs[SI_NQUEUES];
+		    msi++, mask <<= 1) {
 
 			if ((ssir & mask) == 0)
 				continue;
 
-			hsi->hsi_evcnt.ev_count++;
-			handled++;
+			msi->msi_evcnt.ev_count++;
+			handled = true;
 			single_inst_bclr_b(ssir, mask);
 
-			for (sih = LIST_FIRST(&hsi->hsi_q);
+			for (sih = LIST_FIRST(&msi->msi_q);
 			     sih != NULL;
 			     sih = LIST_NEXT(sih, sih_q)) {
 				if (sih->sih_pending) {
 					uvmexp.softs++;
 					sih->sih_pending = 0;
-					(*sih->sih_fn)(sih->sih_arg);
+					(*sih->sih_func)(sih->sih_arg);
 				}
 			}
 		}
@@ -160,23 +164,23 @@ ipl2si(ipl_t ipl)
 void *
 softintr_establish(int ipl, void (*func)(void *), void *arg)
 {
-	struct hp300_soft_intr *hsi;
-	struct hp300_soft_intrhand *sih;
+	struct m68k_soft_intr *msi;
+	struct m68k_soft_intrhand *sih;
 	int s;
 
 	if (__predict_false(ipl >= NIPL || ipl < 0 || func == NULL))
-		panic("softintr_establish");
+		panic("%s: invalid ipl (%d) or function", __func__, ipl);
 
-	hsi = &hp300_soft_intrs[ipl2si(ipl)];
+	msi = &m68k_soft_intrs[ipl2si(ipl)];
 
-	sih = malloc(sizeof(struct hp300_soft_intrhand), M_DEVBUF, M_NOWAIT);
+	sih = malloc(sizeof(struct m68k_soft_intrhand), M_DEVBUF, M_NOWAIT);
 	if (__predict_true(sih != NULL)) {
-		sih->sih_intrhead = hsi;
-		sih->sih_fn = func;
+		sih->sih_intrhead = msi;
+		sih->sih_func = func;
 		sih->sih_arg = arg;
 		sih->sih_pending = 0;
 		s = splsoft();
-		LIST_INSERT_HEAD(&hsi->hsi_q, sih, sih_q);
+		LIST_INSERT_HEAD(&msi->msi_q, sih, sih_q);
 		splx(s);
 	}
 	return sih;
@@ -190,12 +194,44 @@ softintr_establish(int ipl, void (*func)(void *), void *arg)
 void
 softintr_disestablish(void *arg)
 {
-	struct hp300_soft_intrhand *sih = arg;
+	struct m68k_soft_intrhand *sih;
 	int s;
+
+	sih = arg;
 
 	s = splsoft();
 	LIST_REMOVE(sih, sih_q);
 	splx(s);
 
 	free(sih, M_DEVBUF);
+}
+
+void
+netintr(void)
+{
+	int s, isr;
+
+	for (;;) {
+		s = splhigh();
+		isr = netisr;
+		netisr = 0;
+		splx(s);
+
+		if (isr == 0)
+			return;
+
+#define DONETISR(bit, func)						\
+		do {							\
+			if (isr & (1 << bit))				\
+				func();					\
+		} while (/* CONSTCOND */0)
+
+		s = splsoftnet();
+
+#include <net/netisr_dispatch.h>
+
+#undef DONETISR
+
+		splx(s);
+	}
 }

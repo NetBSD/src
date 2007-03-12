@@ -1,4 +1,4 @@
-/*	$NetBSD: leds.c,v 1.11 2006/10/03 13:02:32 tsutsui Exp $	*/
+/*	$NetBSD: leds.c,v 1.11.4.1 2007/03/12 05:51:09 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: leds.c,v 1.11 2006/10/03 13:02:32 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: leds.c,v 1.11.4.1 2007/03/12 05:51:09 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -145,7 +145,7 @@ leds_uio(struct uio *uio)
 {
 	int cnt, error;
 	int off;	/* NOT off_t */
-	caddr_t va;
+	void *va;
 
 	off = uio->uio_offset;
 	if ((off < 0) || (off > sizeof(ledpat)))

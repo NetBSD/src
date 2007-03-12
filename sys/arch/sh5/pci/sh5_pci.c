@@ -1,4 +1,4 @@
-/*	$NetBSD: sh5_pci.c,v 1.13 2005/12/11 12:19:02 christos Exp $	*/
+/*	$NetBSD: sh5_pci.c,v 1.13.26.1 2007/03/12 05:50:16 rmind Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sh5_pci.c,v 1.13 2005/12/11 12:19:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sh5_pci.c,v 1.13.26.1 2007/03/12 05:50:16 rmind Exp $");
 
 #include "opt_pci.h"
 
@@ -133,8 +133,8 @@ static int	sh5pci_dmamem_alloc(void *, bus_size_t, bus_size_t, bus_size_t,
 		    bus_dma_segment_t *, int, int *, int);
 static void	sh5pci_dmamem_free(void *, bus_dma_segment_t *, int);
 static int	sh5pci_dmamem_map(void *, bus_dma_segment_t *, int, size_t,
-		    caddr_t *, int);
-static void	sh5pci_dmamem_unmap(void *, caddr_t, size_t);
+		    void **, int);
+static void	sh5pci_dmamem_unmap(void *, void *, size_t);
 static paddr_t	sh5pci_dmamem_mmap(void *, bus_dma_segment_t *, int,
 		    off_t, int, int);
 
@@ -548,7 +548,7 @@ sh5pci_dmamem_free(void *arg, bus_dma_segment_t *segs, int nsegs)
 
 static int
 sh5pci_dmamem_map(void *arg, bus_dma_segment_t *segs, int nsegs,
-    size_t size, caddr_t *kvap, int flags)
+    size_t size, void **kvap, int flags)
 {
 	struct sh5pci_softc *sc = arg;
 
@@ -556,7 +556,7 @@ sh5pci_dmamem_map(void *arg, bus_dma_segment_t *segs, int nsegs,
 }
 
 static void
-sh5pci_dmamem_unmap(void *arg, caddr_t kva, size_t size)
+sh5pci_dmamem_unmap(void *arg, void *kva, size_t size)
 {
 	struct sh5pci_softc *sc = arg;
 

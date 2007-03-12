@@ -1,4 +1,4 @@
-/*	$NetBSD: isadma.c,v 1.54 2005/12/11 12:22:02 christos Exp $	*/
+/*	$NetBSD: isadma.c,v 1.54.26.1 2007/03/12 05:54:50 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isadma.c,v 1.54 2005/12/11 12:22:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isadma.c,v 1.54.26.1 2007/03/12 05:54:50 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -681,7 +681,7 @@ _isa_dmamem_map(ids, chan, addr, size, kvap, flags)
 	int chan;
 	bus_addr_t addr;
 	bus_size_t size;
-	caddr_t *kvap;
+	void **kvap;
 	int flags;
 {
 	bus_dma_segment_t seg;
@@ -701,7 +701,7 @@ void
 _isa_dmamem_unmap(ids, chan, kva, size)
 	struct isa_dma_state *ids;
 	int chan;
-	caddr_t kva;
+	void *kva;
 	size_t size;
 {
 
@@ -761,7 +761,7 @@ _isa_malloc(ids, chan, size, pool, flags)
 	int flags;
 {
 	bus_addr_t addr;
-	caddr_t kva;
+	void *kva;
 	int bflags;
 	struct isa_mem *m;
 
@@ -795,7 +795,7 @@ _isa_free(addr, pool)
 	struct malloc_type *pool;
 {
 	struct isa_mem **mp, *m;
-	caddr_t kva = (caddr_t)addr;
+	void *kva = (void *)addr;
 
 	for(mp = &isa_mem_head; *mp && (*mp)->kva != kva;
 	    mp = &(*mp)->next)
@@ -819,7 +819,7 @@ _isa_mappage(mem, off, prot)
 {
 	struct isa_mem *m;
 
-	for(m = isa_mem_head; m && m->kva != (caddr_t)mem; m = m->next)
+	for(m = isa_mem_head; m && m->kva != (void *)mem; m = m->next)
 		;
 	if (!m) {
 		printf("_isa_mappage: mapping unallocted memory\n");

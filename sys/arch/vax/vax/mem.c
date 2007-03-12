@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.34 2006/12/26 10:43:44 elad Exp $	*/
+/*	$NetBSD: mem.c,v 1.34.2.1 2007/03/12 05:51:19 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.34 2006/12/26 10:43:44 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.34.2.1 2007/03/12 05:51:19 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -97,7 +97,7 @@ __KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.34 2006/12/26 10:43:44 elad Exp $");
 #define DEV_LEDS	13	/* minor device 13 is leds */
 
 extern	paddr_t avail_end;
-static	caddr_t zeropage;
+static	void *zeropage;
 
 dev_type_read(mmrw);
 dev_type_ioctl(mmioctl);
@@ -135,15 +135,15 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 			}
 
 			c = min(iov->iov_len, MAXPHYS);
-			error = uiomove((caddr_t)v + KERNBASE, c, uio);
+			error = uiomove((char *)v + KERNBASE, c, uio);
 			continue;
 		case DEV_KMEM:
 			v = uio->uio_offset;
 			c = min(iov->iov_len, MAXPHYS);
-			if (!uvm_kernacc((caddr_t)v, c,
+			if (!uvm_kernacc((void *)v, c,
 			    uio->uio_rw == UIO_READ ? B_READ : B_WRITE))
 				return (EFAULT);
-			error = uiomove((caddr_t)v, c, uio);
+			error = uiomove((void *)v, c, uio);
 			continue;
 
 		case DEV_NULL:
@@ -157,7 +157,7 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 				break;
 			}
 			if (zeropage == NULL) {
-				zeropage = (caddr_t)
+				zeropage = (void *)
 				    malloc(PAGE_SIZE, M_TEMP, M_WAITOK);
 				bzero(zeropage, PAGE_SIZE);
 			}
@@ -176,7 +176,7 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 		}
 		if (error)
 			break;
-		iov->iov_base = (caddr_t)iov->iov_base + c;
+		iov->iov_base = (char *)iov->iov_base + c;
 		iov->iov_len -= c;
 		uio->uio_offset += c;
 		uio->uio_resid -= c;

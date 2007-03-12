@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.146 2007/01/08 16:54:15 chs Exp $	*/
+/*	$NetBSD: locore.s,v 1.146.2.1 2007/03/12 05:48:59 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -879,7 +879,7 @@ ENTRY_NOPROFILE(lev7intr)
 ENTRY_NOPROFILE(rtclock_intr)
 	movl	%d2,%sp@-		| save %d2
 	movw	%sr,%d2			| save SPL
-	movw	_C_LABEL(mac68k_ipls)+MAC68K_IPL_CLOCK*2,%sr
+	movw	_C_LABEL(mac68k_ipls)+IPL_CLOCK*2,%sr
 					| raise SPL to splclock()
 	movl	%a6@,%a1		| unwind to frame in intr_dispatch
 	lea	%a1@(28),%a1		| push pointer to interrupt frame
@@ -1221,7 +1221,7 @@ Ldoboot1:
 Lebootcode:
 
 /*
- * u_long ptest040(caddr_t addr, u_int fc);
+ * u_long ptest040(void *addr, u_int fc);
  *
  * ptest040() does an 040 PTESTR (addr) and returns the 040 MMUSR iff
  * translation is enabled.  This allows us to find the physical address

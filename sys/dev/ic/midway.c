@@ -1,4 +1,4 @@
-/*	$NetBSD: midway.c,v 1.74 2007/01/04 18:44:45 elad Exp $	*/
+/*	$NetBSD: midway.c,v 1.74.2.1 2007/03/12 05:53:38 rmind Exp $	*/
 /*	(sync'd to midway.c 1.68)	*/
 
 /*
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midway.c,v 1.74 2007/01/04 18:44:45 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midway.c,v 1.74.2.1 2007/03/12 05:53:38 rmind Exp $");
 
 #include "opt_natm.h"
 
@@ -344,10 +344,10 @@ STATIC INLINE	int en_b2sz(int) __attribute__ ((unused));
 STATIC		void en_dmaprobe(struct en_softc *);
 STATIC		int en_dmaprobe_doit(struct en_softc *, u_int8_t *,
 		    u_int8_t *, int);
-STATIC INLINE	int en_dqneed(struct en_softc *, caddr_t, u_int,
+STATIC INLINE	int en_dqneed(struct en_softc *, void *, u_int,
 		    u_int) __attribute__ ((unused));
 STATIC		void en_init(struct en_softc *);
-STATIC		int en_ioctl(struct ifnet *, EN_IOCTL_CMDT, caddr_t);
+STATIC		int en_ioctl(struct ifnet *, EN_IOCTL_CMDT, void *);
 STATIC INLINE	int en_k2sz(int) __attribute__ ((unused));
 STATIC		void en_loadvc(struct en_softc *, int);
 STATIC		int en_mfix(struct en_softc *, struct mbuf **,
@@ -607,7 +607,7 @@ int sz;
 STATIC INLINE int en_dqneed(sc, data, len, tx)
 
 struct en_softc *sc;
-caddr_t data;
+void *data;
 u_int len, tx;
 
 {
@@ -633,7 +633,7 @@ u_int len, tx;
         result++;
         sz = min(len, sizeof(u_int32_t) - needalign);
         len -= sz;
-        data += sz;
+        data = (char *)data + sz;
       }
     }
 
@@ -1152,7 +1152,7 @@ STATIC int en_ioctl(ifp, cmd, data)
 
 struct ifnet *ifp;
 EN_IOCTL_CMDT cmd;
-caddr_t data;
+void *data;
 
 {
 #ifdef MISSING_IF_SOFTC
@@ -1904,7 +1904,7 @@ struct mbuf **mm, *prev;
     if ((m->m_flags & M_EXT) == 0) {
       memmove(d - off, d, m->m_len);   /* ALIGN! (with costly data copy...) */
       d -= off;
-      m->m_data = (caddr_t)d;
+      m->m_data = (void *)d;
     } else {
       /* can't write to an M_EXT mbuf since it may be shared */
       MGET(new, M_DONTWAIT, MT_DATA);
@@ -1947,7 +1947,7 @@ struct mbuf **mm, *prev;
     *d++ = *cp++;
     m->m_len++;
     nxt->m_len--;
-    nxt->m_data = (caddr_t)cp;
+    nxt->m_data = (void *)cp;
   }
   return(1);
 }
@@ -2003,7 +2003,7 @@ STATIC int en_makeexclusive(sc, mm, prev)
 
 	    if (off > 0) {
 		memmove(d - off, d, m->m_len);
-		m->m_data = (caddr_t)d - off;
+		m->m_data = (void *)d - off;
 	    }
 	}
     }
@@ -2036,7 +2036,7 @@ struct mbuf **mm, *prev;
     if ((m->m_flags & M_EXT) == 0) {
       memmove(d - off, d, m->m_len);   /* ALIGN! (with costly data copy...) */
       d -= off;
-      m->m_data = (caddr_t)d;
+      m->m_data = (void *)d;
     } else {
       /* can't write to an M_EXT mbuf since it may be shared */
       if (en_makeexclusive(sc, &m, prev) == 0)
@@ -2074,7 +2074,7 @@ struct mbuf **mm, *prev;
     *d++ = *cp++;
     m->m_len++;
     nxt->m_len--;
-    nxt->m_data = (caddr_t)cp;
+    nxt->m_data = (void *)cp;
   }
   if (nxt != NULL && nxt->m_len == 0)
       m->m_next = m_free(nxt);
@@ -2170,7 +2170,7 @@ again:
     if (len == 0)
       continue;			/* atm_pseudohdr alone in first mbuf */
 
-    dtqneed += en_dqneed(sc, (caddr_t) cp, len, 1);
+    dtqneed += en_dqneed(sc, (void *) cp, len, 1);
   }
 
   if ((launch.need % sizeof(u_int32_t)) != 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sq.c,v 1.30.2.1 2007/02/27 16:52:57 yamt Exp $	*/
+/*	$NetBSD: if_sq.c,v 1.30.2.2 2007/03/12 05:50:11 rmind Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sq.c,v 1.30.2.1 2007/02/27 16:52:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sq.c,v 1.30.2.2 2007/03/12 05:50:11 rmind Exp $");
 
 #include "bpfilter.h"
 
@@ -108,7 +108,7 @@ static int	sq_init(struct ifnet *);
 static void	sq_start(struct ifnet *);
 static void	sq_stop(struct ifnet *, int);
 static void	sq_watchdog(struct ifnet *);
-static int	sq_ioctl(struct ifnet *, u_long, caddr_t);
+static int	sq_ioctl(struct ifnet *, u_long, void *);
 
 static void	sq_set_filter(struct sq_softc *);
 static int	sq_intr(void *);
@@ -215,7 +215,7 @@ sq_attach(struct device *parent, struct device *self, void *aux)
 
 	if ((err = bus_dmamem_map(sc->sc_dmat, &sc->sc_cdseg, sc->sc_ncdseg,
 				  sizeof(struct sq_control),
-				  (caddr_t *)&sc->sc_control,
+				  (void **)&sc->sc_control,
 				  BUS_DMA_NOWAIT | BUS_DMA_COHERENT)) != 0) {
 		printf(": unable to map control data, error = %d\n", err);
 		goto fail_1;
@@ -361,7 +361,7 @@ fail_4:
 fail_3:
 	bus_dmamap_destroy(sc->sc_dmat, sc->sc_cdmap);
 fail_2:
-	bus_dmamem_unmap(sc->sc_dmat, (caddr_t) sc->sc_control,
+	bus_dmamem_unmap(sc->sc_dmat, (void *) sc->sc_control,
 				      sizeof(struct sq_control));
 fail_1:
 	bus_dmamem_free(sc->sc_dmat, &sc->sc_cdseg, sc->sc_ncdseg);
@@ -503,7 +503,7 @@ sq_set_filter(struct sq_softc *sc)
 }
 
 int
-sq_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
+sq_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	int s, error = 0;
 
@@ -593,7 +593,7 @@ sq_start(struct ifnet *ifp)
 				}
 			}
 
-			m_copydata(m0, 0, m0->m_pkthdr.len, mtod(m, caddr_t));
+			m_copydata(m0, 0, m0->m_pkthdr.len, mtod(m, void *));
 			if (m0->m_pkthdr.len < ETHER_PAD_LEN) {
 				memset(mtod(m, char *) + m0->m_pkthdr.len, 0,
 				    ETHER_PAD_LEN - m0->m_pkthdr.len);
@@ -897,7 +897,7 @@ sq_trace_dump(struct sq_softc *sc)
 }
 
 static int
-sq_intr(void * arg)
+sq_intr(void *arg)
 {
 	struct sq_softc *sc = arg;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
@@ -1326,7 +1326,7 @@ void
 sq_dump_buffer(u_int32_t addr, u_int32_t len)
 {
 	u_int i;
-	u_char* physaddr = (char*) MIPS_PHYS_TO_KSEG1((caddr_t)addr);
+	u_char* physaddr = (char*) MIPS_PHYS_TO_KSEG1((void *)addr);
 
 	if (len == 0)
 		return;

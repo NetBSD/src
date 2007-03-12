@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.c,v 1.72 2007/01/13 19:41:12 cube Exp $ */
+/* $NetBSD: isp_netbsd.c,v 1.72.2.1 2007/03/12 05:53:36 rmind Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_netbsd.c,v 1.72 2007/01/13 19:41:12 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_netbsd.c,v 1.72.2.1 2007/03/12 05:53:36 rmind Exp $");
 
 #include <dev/ic/isp_netbsd.h>
 #include <sys/scsiio.h>
@@ -89,7 +89,7 @@ static void ispminphys(struct buf *);
 static INLINE void ispcmd(struct ispsoftc *, XS_T *);
 static void isprequest(struct scsipi_channel *, scsipi_adapter_req_t, void *);
 static int
-ispioctl(struct scsipi_channel *, u_long, caddr_t, int, struct proc *);
+ispioctl(struct scsipi_channel *, u_long, void *, int, struct proc *);
 
 static void isp_polled_cmd(struct ispsoftc *, XS_T *);
 static void isp_dog(void *);
@@ -233,7 +233,7 @@ ispminphys(struct buf *bp)
 }
 
 static int
-ispioctl(struct scsipi_channel *chan, u_long cmd, caddr_t addr,
+ispioctl(struct scsipi_channel *chan, u_long cmd, void *addr,
     int flag, struct proc *p)
 {
 	struct ispsoftc *isp = (void *)chan->chan_adapter->adapt_dev;

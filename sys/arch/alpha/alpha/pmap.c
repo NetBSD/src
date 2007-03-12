@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.215.14.1 2007/02/27 16:48:41 yamt Exp $ */
+/* $NetBSD: pmap.c,v 1.215.14.2 2007/03/12 05:45:51 rmind Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -145,7 +145,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.215.14.1 2007/02/27 16:48:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.215.14.2 2007/03/12 05:45:51 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -550,8 +550,8 @@ static int	pmap_physpage_delref(void *);
 	 */								\
 	int isactive_ = PMAP_ISACTIVE_TEST(pm, cpu_id);			\
 									\
-	if (curlwp != NULL && curproc->p_vmspace != NULL &&	\
-	   ((curproc->p_flag & P_WEXIT) == 0) &&			\
+	if (curlwp != NULL && curproc->p_vmspace != NULL &&		\
+	   ((curproc->p_sflag & PS_WEXIT) == 0) &&			\
 	   (isactive_ ^ ((pm) == curproc->p_vmspace->vm_map.pmap)))	\
 		panic("PMAP_ISACTIVE");					\
 	(isactive_);							\
@@ -1121,7 +1121,7 @@ pmap_steal_memory(vsize_t size, vaddr_t *vstartp, vaddr_t *vendp)
 		}
 
 		va = ALPHA_PHYS_TO_K0SEG(pa);
-		memset((caddr_t)va, 0, size);
+		memset((void *)va, 0, size);
 		pmap_pages_stolen += npgs;
 		return (va);
 	}
@@ -2409,14 +2409,15 @@ pmap_zero_page(paddr_t phys)
 void
 pmap_copy_page(paddr_t src, paddr_t dst)
 {
-	caddr_t s, d;
+	const void *s;
+	void *d;
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
 		printf("pmap_copy_page(%lx, %lx)\n", src, dst);
 #endif
-        s = (caddr_t)ALPHA_PHYS_TO_K0SEG(src);
-        d = (caddr_t)ALPHA_PHYS_TO_K0SEG(dst);
+        s = (const void *)ALPHA_PHYS_TO_K0SEG(src);
+        d = (void *)ALPHA_PHYS_TO_K0SEG(dst);
 	memcpy(d, s, PAGE_SIZE);
 }
 

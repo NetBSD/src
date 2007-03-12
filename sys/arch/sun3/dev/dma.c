@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.17 2007/02/03 05:17:30 tsutsui Exp $ */
+/*	$NetBSD: dma.c,v 1.17.2.1 2007/03/12 05:51:05 rmind Exp $ */
 
 /*
  * Copyright (c) 1994 Paul Kranenburg.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dma.c,v 1.17 2007/02/03 05:17:30 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dma.c,v 1.17.2.1 2007/03/12 05:51:05 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -239,7 +239,7 @@ dma_reset(struct dma_softc *sc)
  * setup a dma transfer
  */
 int 
-dma_setup(struct dma_softc *sc, caddr_t *addr, size_t *len, int datain,
+dma_setup(struct dma_softc *sc, void **addr, size_t *len, int datain,
     size_t *dmasize)
 {
 	uint32_t csr;
@@ -407,7 +407,7 @@ espdmaintr(struct dma_softc *sc)
 	}
 
 	*sc->sc_dmalen -= trans;
-	*sc->sc_dmaaddr += trans;
+	*sc->sc_dmaaddr = (char *)*sc->sc_dmaaddr + trans;
 
 #if 0	/* this is not normal operation just yet */
 	if (*sc->sc_dmalen == 0 ||

@@ -1,4 +1,4 @@
-/* $NetBSD: mfi.c,v 1.2 2006/12/20 21:44:06 bouyer Exp $ */
+/* $NetBSD: mfi.c,v 1.2.10.1 2007/03/12 05:53:38 rmind Exp $ */
 /* $OpenBSD: mfi.c,v 1.66 2006/11/28 23:59:45 dlg Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.2 2006/12/20 21:44:06 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.2.10.1 2007/03/12 05:53:38 rmind Exp $");
 
 /* #include "bio.h" XXX */
 
@@ -64,7 +64,7 @@ uint32_t	mfi_debug = 0
 
 void	mfi_scsipi_request(struct scsipi_channel *,
 		scsipi_adapter_req_t, void *);
-int	mfi_scsi_ioctl(struct scsipi_channel *, u_long, caddr_t, int,
+int	mfi_scsi_ioctl(struct scsipi_channel *, u_long, void *, int,
 		struct proc *);
 void	mfiminphys(struct buf *bp);
 
@@ -94,7 +94,7 @@ int		mfi_mgmt(struct mfi_softc *, uint32_t, uint32_t, uint32_t,
 void		mfi_mgmt_done(struct mfi_ccb *);
 
 #if NBIO > 0
-int		mfi_ioctl(struct device *, u_long, caddr_t);
+int		mfi_ioctl(struct device *, u_long, void *);
 int		mfi_ioctl_inq(struct mfi_softc *, struct bioc_inq *);
 int		mfi_ioctl_vol(struct mfi_softc *, struct bioc_vol *);
 int		mfi_ioctl_disk(struct mfi_softc *, struct bioc_disk *);
@@ -1287,7 +1287,7 @@ mfi_mgmt_done(struct mfi_ccb *ccb)
 
 
 int
-mfi_scsi_ioctl(struct scsipi_channel *chan, u_long cmd, caddr_t arg,
+mfi_scsi_ioctl(struct scsipi_channel *chan, u_long cmd, void *arg,
     int flag, struct proc *p)
 {
 		return (ENOTTY);
@@ -1295,7 +1295,7 @@ mfi_scsi_ioctl(struct scsipi_channel *chan, u_long cmd, caddr_t arg,
 
 #if NBIO > 0
 int
-mfi_ioctl(struct device *dev, u_long cmd, caddr_t addr)
+mfi_ioctl(struct device *dev, u_long cmd, void *addr)
 {
 	struct mfi_softc	*sc = (struct mfi_softc *)dev;
 	int error = 0;

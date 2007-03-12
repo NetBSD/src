@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mcvar.h,v 1.12 2006/12/12 11:46:33 martin Exp $	*/
+/*	$NetBSD: if_mcvar.h,v 1.12.2.1 2007/03/12 05:48:57 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@azeotrope.org>
@@ -82,7 +82,7 @@ struct mc_softc {
 	bus_dmamap_t	sc_dmam_tx, sc_dmam_rx;
 	bus_dma_segment_t	sc_dmasegs_tx, sc_dmasegs_rx;
 
-	caddr_t		sc_txbuf, sc_rxbuf;
+	uint8_t		*sc_txbuf, *sc_rxbuf;
 	bus_addr_t	sc_txbuf_phys, sc_rxbuf_phys;
 	int		sc_tail;
 	int		sc_rxset;

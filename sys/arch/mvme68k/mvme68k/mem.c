@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.24 2005/12/11 12:18:17 christos Exp $	*/
+/*	$NetBSD: mem.c,v 1.24.26.1 2007/03/12 05:49:37 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.24 2005/12/11 12:18:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.24.26.1 2007/03/12 05:49:37 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,7 +92,7 @@ __KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.24 2005/12/11 12:18:17 christos Exp $");
 #include <uvm/uvm_extern.h>
 
 extern u_int lowram;
-static caddr_t devzeropage;
+static void *devzeropage;
 
 dev_type_read(mmrw);
 dev_type_ioctl(mmioctl);
@@ -121,7 +121,7 @@ mmrw(dev, uio, flags)
 		/* lock against other uses of shared vmmap */
 		while (physlock > 0) {
 			physlock++;
-			error = tsleep((caddr_t)&physlock, PZERO | PCATCH,
+			error = tsleep((void *)&physlock, PZERO | PCATCH,
 			    "mmrw", 0);
 			if (error)
 				return (error);
@@ -155,7 +155,7 @@ mmrw(dev, uio, flags)
 			pmap_update(pmap_kernel());
 			o = uio->uio_offset & PGOFSET;
 			c = min(uio->uio_resid, (int)(PAGE_SIZE - o));
-			error = uiomove((caddr_t)vmmap + o, c, uio);
+			error = uiomove(vmmap + o, c, uio);
 			pmap_remove(pmap_kernel(), (vaddr_t)vmmap,
 			    (vaddr_t)vmmap + PAGE_SIZE);
 			pmap_update(pmap_kernel());
@@ -164,10 +164,10 @@ mmrw(dev, uio, flags)
 		case DEV_KMEM:
 			v = uio->uio_offset;
 			c = min(iov->iov_len, MAXPHYS);
-			if (!uvm_kernacc((caddr_t)v, c,
+			if (!uvm_kernacc((void *)v, c,
 			    uio->uio_rw == UIO_READ ? B_READ : B_WRITE))
 				return (EFAULT);
-			error = uiomove((caddr_t)v, c, uio);
+			error = uiomove((void *)v, c, uio);
 			continue;
 
 		case DEV_NULL:
@@ -188,7 +188,7 @@ mmrw(dev, uio, flags)
 			 * is a global zeroed page, the null segment table.
 			 */
 			if (devzeropage == NULL) {
-				extern caddr_t Segtabzero;
+				extern void *Segtabzero;
 				devzeropage = Segtabzero;
 			}
 			c = min(iov->iov_len, PAGE_SIZE);
@@ -200,7 +200,7 @@ mmrw(dev, uio, flags)
 		}
 		if (error)
 			break;
-		iov->iov_base = (caddr_t)iov->iov_base + c;
+		iov->iov_base = (char *)iov->iov_base + c;
 		iov->iov_len -= c;
 		uio->uio_offset += c;
 		uio->uio_resid -= c;
@@ -210,7 +210,7 @@ mmrw(dev, uio, flags)
 unlock:
 #endif
 		if (physlock > 1)
-			wakeup((caddr_t)&physlock);
+			wakeup((void *)&physlock);
 		physlock = 0;
 	}
 	return (error);

@@ -1,4 +1,4 @@
-/*	$NetBSD: nexus.h,v 1.23 2005/12/11 12:19:34 christos Exp $	*/
+/*	$NetBSD: nexus.h,v 1.23.26.1 2007/03/12 05:51:14 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -108,7 +108,7 @@ struct sbi_attach_args {
 /* Memory device struct. This should be somewhere else */
 struct mem_softc {
 	struct	device sc_dev;
-	caddr_t	sc_memaddr;
+	void *	sc_memaddr;
 	int	sc_memtype;
 	int	sc_memnr;
 };

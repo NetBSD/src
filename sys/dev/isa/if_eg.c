@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eg.c,v 1.71 2006/11/16 01:33:00 christos Exp $	*/
+/*	$NetBSD: if_eg.c,v 1.71.4.1 2007/03/12 05:54:49 rmind Exp $	*/
 
 /*
  * Copyright (c) 1993 Dean Huxley <dean@fsa.ca>
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_eg.c,v 1.71 2006/11/16 01:33:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eg.c,v 1.71.4.1 2007/03/12 05:54:49 rmind Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -113,8 +113,8 @@ struct eg_softc {
 	short	 eg_ram;		/* Amount of RAM on the card */
 	u_int8_t eg_pcb[EG_PCBLEN];	/* Primary Command Block buffer */
 	u_int8_t eg_incount;		/* Number of buffers currently used */
-	caddr_t	eg_inbuf;		/* Incoming packet buffer */
-	caddr_t	eg_outbuf;		/* Outgoing packet buffer */
+	void *	eg_inbuf;		/* Incoming packet buffer */
+	void *	eg_outbuf;		/* Outgoing packet buffer */
 
 #if NRND > 0
 	rndsource_element_t rnd_source;
@@ -129,13 +129,13 @@ CFATTACH_DECL(eg, sizeof(struct eg_softc),
 
 int egintr(void *);
 void eginit(struct eg_softc *);
-int egioctl(struct ifnet *, u_long, caddr_t);
+int egioctl(struct ifnet *, u_long, void *);
 void egrecv(struct eg_softc *);
 void egstart(struct ifnet *);
 void egwatchdog(struct ifnet *);
 void egreset(struct eg_softc *);
-void egread(struct eg_softc *, caddr_t, int);
-struct mbuf *egget(struct eg_softc *, caddr_t, int);
+void egread(struct eg_softc *, void *, int);
+struct mbuf *egget(struct eg_softc *, void *, int);
 void egstop(struct eg_softc *);
 
 static inline void egprintpcb(u_int8_t *);
@@ -597,7 +597,7 @@ egstart(ifp)
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	struct mbuf *m0, *m;
-	caddr_t buffer;
+	char *buffer;
 	int len;
 	u_int16_t *ptr;
 
@@ -644,7 +644,7 @@ loop:
 
 	buffer = sc->eg_outbuf;
 	for (m = m0; m != 0; m = m->m_next) {
-		memcpy(buffer, mtod(m, caddr_t), m->m_len);
+		memcpy(buffer, mtod(m, void *), m->m_len);
 		buffer += m->m_len;
 	}
 	if (len > m0->m_pkthdr.len)
@@ -755,7 +755,7 @@ egintr(arg)
 void
 egread(sc, buf, len)
 	struct eg_softc *sc;
-	caddr_t buf;
+	void *buf;
 	int len;
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
@@ -796,7 +796,7 @@ egread(sc, buf, len)
 struct mbuf *
 egget(sc, buf, totlen)
 	struct eg_softc *sc;
-	caddr_t buf;
+	void *buf;
 	int totlen;
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
@@ -820,8 +820,8 @@ egget(sc, buf, totlen)
 		}
 
 		m->m_len = len = min(totlen, len);
-		memcpy(mtod(m, caddr_t), (caddr_t)buf, len);
-		buf += len;
+		memcpy(mtod(m, void *), buf, len);
+		buf = (char *)buf + len;
 
 		totlen -= len;
 		if (totlen > 0) {
@@ -844,7 +844,7 @@ int
 egioctl(ifp, cmd, data)
 	struct ifnet *ifp;
 	u_long cmd;
-	caddr_t data;
+	void *data;
 {
 	struct eg_softc *sc = ifp->if_softc;
 	struct ifaddr *ifa = (struct ifaddr *)data;

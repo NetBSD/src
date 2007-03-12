@@ -1,4 +1,4 @@
-/*	$NetBSD: boot32.c,v 1.29 2006/08/19 22:44:57 bjh21 Exp $	*/
+/*	$NetBSD: boot32.c,v 1.29.8.1 2007/03/12 05:45:23 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2002 Reinoud Zandijk
@@ -908,7 +908,7 @@ main(int argc, char **argv)
 ssize_t
 boot32_read(int f, void *addr, size_t size)
 {
-	caddr_t fragaddr;
+	void *fragaddr;
 	size_t fragsize;
 	ssize_t bytes_read, total;
 
@@ -919,7 +919,7 @@ boot32_read(int f, void *addr, size_t size)
 		if (size < nbpp) fragsize = size;/* clip to size left	*/
 
 		/* get a page for a fragment */
-		fragaddr = (caddr_t)get_relocated_page((u_long) addr -
+		fragaddr = (void *)get_relocated_page((u_long) addr -
 		    pv_offset, fragsize)->logical;
 
 		bytes_read = read(f, fragaddr, fragsize);
@@ -939,7 +939,7 @@ boot32_read(int f, void *addr, size_t size)
 void *
 boot32_memcpy(void *dst, const void *src, size_t size)
 {
-	caddr_t fragaddr;
+	void *fragaddr;
 	size_t fragsize;
 
 	/* printf("memcpy to %p from %p for %ld bytes\n", dst, src, size); */
@@ -948,7 +948,7 @@ boot32_memcpy(void *dst, const void *src, size_t size)
 		if (size < nbpp) fragsize = size;/* clip to size left	*/
 
 		/* get a page for a fragment */
-		fragaddr = (caddr_t)get_relocated_page((u_long) dst -
+		fragaddr = (void *)get_relocated_page((u_long) dst -
 		    pv_offset, fragsize)->logical;
 		memcpy(fragaddr, src, size);
 
@@ -963,7 +963,7 @@ boot32_memcpy(void *dst, const void *src, size_t size)
 void *
 boot32_memset(void *dst, int c, size_t size)
 {
-	caddr_t fragaddr;
+	void *fragaddr;
 	size_t fragsize;
 
 	/* printf("memset %p for %ld bytes with %d\n", dst, size, c); */
@@ -972,7 +972,7 @@ boot32_memset(void *dst, int c, size_t size)
 		if (size < nbpp) fragsize = size;/* clip to size left	*/
 
 		/* get a page for a fragment */
-		fragaddr = (caddr_t)get_relocated_page((u_long)dst - pv_offset,
+		fragaddr = (void *)get_relocated_page((u_long)dst - pv_offset,
 		    fragsize)->logical;
 		memset(fragaddr, c, fragsize);
 

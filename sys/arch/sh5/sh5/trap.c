@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.43 2007/02/09 21:55:12 ad Exp $	*/
+/*	$NetBSD: trap.c,v 1.43.2.1 2007/03/12 05:50:17 rmind Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.43 2007/02/09 21:55:12 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.43.2.1 2007/03/12 05:50:17 rmind Exp $");
 
 #include "opt_ddb.h"
 
@@ -164,7 +164,7 @@ trap(struct lwp *l, struct trapframe *tf)
 	struct proc *p;
 	u_int traptype;
 	vaddr_t vaddr;
-	caddr_t pcb_onfault;
+	void *pcb_onfault;
 	vm_prot_t ftype;
 	ksiginfo_t ksi;
 
@@ -317,7 +317,7 @@ trap(struct lwp *l, struct trapframe *tf)
 		 * the current limit and we need to reflect that as an access
 		 * error.
 		 */
-		if ((caddr_t)va >= vm->vm_maxsaddr) {
+		if ((void *)va >= vm->vm_maxsaddr) {
 			if (rv == 0)
 				uvm_grow(p, va);
 			else if (rv == EACCES)

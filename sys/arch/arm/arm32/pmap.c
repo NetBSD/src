@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.158.2.1 2007/02/27 16:49:32 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.158.2.2 2007/03/12 05:47:02 rmind Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -212,7 +212,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.158.2.1 2007/02/27 16:49:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.158.2.2 2007/03/12 05:47:02 rmind Exp $");
 
 #ifdef PMAP_DEBUG
 
@@ -307,7 +307,7 @@ static paddr_t pmap_kernel_l2ptp_phys;
 static pt_entry_t *csrc_pte, *cdst_pte;
 static vaddr_t csrcp, cdstp;
 char *memhook;
-extern caddr_t msgbufaddr;
+extern void *msgbufaddr;
 
 /*
  * Flag to indicate if pmap_init() has done its thing

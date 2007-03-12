@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.30.4.1 2007/02/27 16:51:07 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.30.4.2 2007/03/12 05:48:17 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.30.4.1 2007/02/27 16:51:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.30.4.2 2007/03/12 05:48:17 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -493,7 +493,7 @@ pmap_pv_find_va(pa_space_t space, vaddr_t va)
 		pv = pv->pv_hash;
 
 	PMAP_PRINTF(PDB_PV_FIND_VA, ("(0x%x:%p) = %p\n",
-					  space, (caddr_t)va, pv));
+					  space, (void *)va, pv));
 	return pv;
 }
 
@@ -838,7 +838,7 @@ pmap_bootstrap(vaddr_t *vstart, vaddr_t *vend)
 	/*
 	 * Allocate various tables and structures.
 	 */
-	addr = hppa_round_page(*vstart);
+	addr = round_page(*vstart);
 	virtual_end = *vend;
 
 	/*
@@ -864,7 +864,7 @@ pmap_bootstrap(vaddr_t *vstart, vaddr_t *vend)
 		hptp->hpt_entry   = NULL;
 	}
 	PMAP_PRINTF(PDB_INIT, (": hpt_table 0x%lx @ %p\n", size + 1,
-	    (caddr_t)addr));
+	    (void *)addr));
 	/*
 	 * load cr25 with the address of the HPT table
 	 * NB: It sez CR_VTOP, but we (and the TLB handlers) know better ...
@@ -912,17 +912,17 @@ pmap_bootstrap(vaddr_t *vstart, vaddr_t *vend)
 	 * as it only leads to lost virtual space, not lost physical
 	 * pages.
 	 */
-	addr = hppa_round_page(addr);
+	addr = round_page(addr);
 	virtual_steal = addr;
 	addr += totalphysmem * sizeof(struct vm_page);
-	memset((caddr_t) virtual_steal, 0, addr - virtual_steal);
+	memset((void *) virtual_steal, 0, addr - virtual_steal);
 	
 	/*
 	 * We now have a rough idea of where managed kernel virtual
 	 * space will begin, and we can start mapping everything
 	 * before that.
 	 */
-	addr = hppa_round_page(addr);
+	addr = round_page(addr);
 	*vstart = addr;
 	
 	/*
@@ -932,7 +932,7 @@ pmap_bootstrap(vaddr_t *vstart, vaddr_t *vend)
 	 * before the kernel text that can be mapped for page copying 
 	 * and zeroing.
 	 */
-	tmp_vpages[1] = hppa_trunc_page((vaddr_t) &kernel_text) - PAGE_SIZE;
+	tmp_vpages[1] = trunc_page((vaddr_t) &kernel_text) - PAGE_SIZE;
 	tmp_vpages[0] = tmp_vpages[1] - PAGE_SIZE;
 
 	/*
@@ -1081,7 +1081,7 @@ pmap_bootstrap(vaddr_t *vstart, vaddr_t *vend)
 	 
 	/* The first segment runs from [resvmem..kernel_text). */
 	phys_start = resvmem;
-	phys_end = atop(hppa_trunc_page(&kernel_text));
+	phys_end = atop(&kernel_text);
 
 	PMAP_PRINTF(PDB_INIT, (": phys segment 0x%05x 0x%05x\n",
 	    (u_int)phys_start, (u_int)phys_end));
@@ -1143,7 +1143,7 @@ pmap_steal_memory(vsize_t size, vaddr_t *startp, vaddr_t *endp)
 		*endp = virtual_end;
 
 	/* Round the allocation up to a page. */
-	size = hppa_round_page(size);
+	size = round_page(size);
 
 	/* We must panic if we cannot steal the memory. */
 	if (size > virtual_start - virtual_steal)
@@ -1368,8 +1368,8 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 
 	/* Get a handle on the mapping we want to enter. */
 	space = pmap_sid(pmap, va);
-	va = hppa_trunc_page(va);
-	pa = hppa_trunc_page(pa);
+	va = trunc_page(va);
+	pa = trunc_page(pa);
 	tlbpage = tlbbtop(pa);
 	tlbprot = pmap_prot(pmap, prot) | pmap->pmap_pid;
 	if (wired)
@@ -1383,7 +1383,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 #ifdef PMAPDEBUG
 	if (!pmap_initialized || (pmapdebug & PDB_ENTER))
 		PMAP_PRINTF(0, ("(%p, %p, %p, %x, %swired)\n", 
-				pmap, (caddr_t)va, (caddr_t)pa,
+				pmap, (void *)va, (void *)pa,
 				prot, wired? "" : "un"));
 #endif
 
@@ -1455,9 +1455,9 @@ pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 	int s;
 
 	PMAP_PRINTF(PDB_REMOVE, ("(%p, %p, %p)\n", 
-				 pmap, (caddr_t)sva, (caddr_t)eva));
+				 pmap, (void *)sva, (void *)eva));
 
-	sva = hppa_trunc_page(sva);
+	sva = trunc_page(sva);
 	space = pmap_sid(pmap, sva);
 
 	s = splvm();
@@ -1474,7 +1474,7 @@ pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 			}
 			pmap_pv_remove(pv);
 			PMAP_PRINTF(PDB_REMOVE, (": removed %p for 0x%x:%p\n",
-						 pv, space, (caddr_t)sva));
+						 pv, space, (void *)sva));
 		}
 		sva += PAGE_SIZE;
 	}
@@ -1496,7 +1496,7 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
 	int s;
 
-	PMAP_PRINTF(PDB_PROTECT, ("(%p, %x)\n", (caddr_t)pa, prot));
+	PMAP_PRINTF(PDB_PROTECT, ("(%p, %x)\n", (void *)pa, prot));
 
 	switch (prot) {
 	case VM_PROT_ALL:
@@ -1567,14 +1567,14 @@ pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 	int s;
 
 	PMAP_PRINTF(PDB_PROTECT, ("(%p, %p, %p, %x)\n", 
-				 pmap, (caddr_t)sva, (caddr_t)eva, prot));
+				 pmap, (void *)sva, (void *)eva, prot));
 
 	if (prot == VM_PROT_NONE) {
 		pmap_remove(pmap, sva, eva);
 		return;
 	}
 
-	sva = hppa_trunc_page(sva);
+	sva = trunc_page(sva);
 	space = pmap_sid(pmap, sva);
 	tlbprot = pmap_prot(pmap, prot);
 
@@ -1610,8 +1610,8 @@ pmap_unwire(pmap_t pmap, vaddr_t va)
 	struct pv_entry *pv;
 	int s;
 
-	va = hppa_trunc_page(va);
-	PMAP_PRINTF(PDB_WIRING, ("(%p, %p)\n", pmap, (caddr_t)va));
+	va = trunc_page(va);
+	PMAP_PRINTF(PDB_WIRING, ("(%p, %p)\n", pmap, (void *)va));
 
 	simple_lock(&pmap->pmap_lock);
 
@@ -1644,18 +1644,18 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 	int s;
 
 	off = va;
-	off -= (va = hppa_trunc_page(va));
+	off -= (va = trunc_page(va));
 
 	s = splvm();
 	if ((pv = pmap_pv_find_va(pmap_sid(pmap, va), va))) {
 		if (pap != NULL)
 			*pap = tlbptob(pv->pv_tlbpage) + off;
 		PMAP_PRINTF(PDB_EXTRACT, ("(%p, %p) = %p\n",
-				pmap, (caddr_t)va, 
-				(caddr_t)(tlbptob(pv->pv_tlbpage) + off)));
+				pmap, (void *)va, 
+				(void *)(tlbptob(pv->pv_tlbpage) + off)));
 	} else {
 		PMAP_PRINTF(PDB_EXTRACT, ("(%p, %p) unmapped\n",
-					 pmap, (caddr_t)va));
+					 pmap, (void *)va));
 	}
 	splx(s);
 	return (pv != NULL);
@@ -1672,7 +1672,7 @@ pmap_zero_page(paddr_t pa)
 	struct pv_entry *pv;
 	int s;
 
-	PMAP_PRINTF(PDB_ZERO, ("(%p)\n", (caddr_t)pa));
+	PMAP_PRINTF(PDB_ZERO, ("(%p)\n", (void *)pa));
 
 	s = splvm(); /* XXX are we already that high? */
 
@@ -1681,7 +1681,7 @@ pmap_zero_page(paddr_t pa)
 			TLB_AR_KRW | TLB_UNMANAGED | TLB_WIRED);
 
 	/* Zero it. */
-	memset((caddr_t)tmp_vpages[1], 0, PAGE_SIZE);
+	memset((void *)tmp_vpages[1], 0, PAGE_SIZE);
 
 	/* Unmap the physical page. */
 	pmap_pv_remove(pv);
@@ -1703,7 +1703,7 @@ pmap_copy_page(paddr_t spa, paddr_t dpa)
 	struct pv_entry *spv, *dpv;
 	int s;
 
-	PMAP_PRINTF(PDB_COPY, ("(%p, %p)\n", (caddr_t)spa, (caddr_t)dpa));
+	PMAP_PRINTF(PDB_COPY, ("(%p, %p)\n", (void *)spa, (void *)dpa));
 
 	s = splvm(); /* XXX are we already that high? */
 
@@ -1714,7 +1714,7 @@ pmap_copy_page(paddr_t spa, paddr_t dpa)
 			TLB_AR_KRW | TLB_UNMANAGED | TLB_WIRED);
 
 	/* Do the copy. */
-	memcpy((caddr_t)tmp_vpages[1], (const caddr_t)tmp_vpages[0], PAGE_SIZE);
+	memcpy((void *)tmp_vpages[1], (const void *)tmp_vpages[0], PAGE_SIZE);
 
 	/* Unmap the pages. */
 	pmap_pv_remove(spv);
@@ -1796,7 +1796,7 @@ pmap_clear_modify(struct vm_page *pg)
 {
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
 	bool ret = pmap_clear_bit(pa, TLB_DIRTY);
-	PMAP_PRINTF(PDB_BITS, ("(%p) = %d\n", (caddr_t)pa, ret));
+	PMAP_PRINTF(PDB_BITS, ("(%p) = %d\n", (void *)pa, ret));
 	return ret;
 }
 
@@ -1810,7 +1810,7 @@ pmap_is_modified(struct vm_page *pg)
 {
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
 	bool ret = pmap_test_bit(pa, TLB_DIRTY);
-	PMAP_PRINTF(PDB_BITS, ("(%p) = %d\n", (caddr_t)pa, ret));
+	PMAP_PRINTF(PDB_BITS, ("(%p) = %d\n", (void *)pa, ret));
 	return ret;
 }
 
@@ -1827,7 +1827,7 @@ pmap_clear_reference(struct vm_page *pg)
 {
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
 	bool ret = pmap_clear_bit(pa, TLB_REF);
-	PMAP_PRINTF(PDB_BITS, ("(%p) = %d\n", (caddr_t)pa, ret));
+	PMAP_PRINTF(PDB_BITS, ("(%p) = %d\n", (void *)pa, ret));
 	return ret;
 }
 
@@ -1841,7 +1841,7 @@ pmap_is_referenced(struct vm_page *pg)
 {
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
 	bool ret = pmap_test_bit(pa, TLB_REF);
-	PMAP_PRINTF(PDB_BITS, ("(%p) = %d\n", (caddr_t)pa, ret));
+	PMAP_PRINTF(PDB_BITS, ("(%p) = %d\n", (void *)pa, ret));
 	return ret;
 }
 
@@ -1864,8 +1864,8 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 #endif /* PMAPDEBUG */
 
 	PMAP_PRINTF(PDB_KENTER, ("(%p, %p, %x)\n", 
-				 (caddr_t)va, (caddr_t)pa, prot));
-	va = hppa_trunc_page(va);
+				 (void *)va, (void *)pa, prot));
+	va = trunc_page(va);
 	tlbprot = TLB_WIRED | TLB_UNMANAGED;
 	tlbprot |= (prot & PMAP_NC) ? TLB_UNCACHEABLE : 0;
 	tlbprot |= pmap_prot(pmap_kernel(), prot & VM_PROT_ALL);
@@ -1898,13 +1898,13 @@ pmap_kremove(vaddr_t va, vsize_t size)
 #endif /* PMAPDEBUG */
 
 	PMAP_PRINTF(PDB_KENTER, ("(%p, %x)\n", 
-				 (caddr_t)va, (u_int)size));
+				 (void *)va, (u_int)size));
 
 	size += va;
-	va = hppa_trunc_page(va);
+	va = trunc_page(va);
 	size -= va;
 	s = splvm();
-	for (size = hppa_round_page(size); size;
+	for (size = round_page(size); size;
 	    size -= PAGE_SIZE, va += PAGE_SIZE) {
 		pv = pmap_pv_find_va(HPPA_SID_KERNEL, va);
 		if (pv) {
@@ -1912,7 +1912,7 @@ pmap_kremove(vaddr_t va, vsize_t size)
 			pmap_pv_remove(pv);
 		} else {
 			PMAP_PRINTF(PDB_REMOVE, (": no pv for %p\n",
-						 (caddr_t)va));
+						 (void *)va));
 		}
 	}
 	splx(s);
@@ -1934,7 +1934,7 @@ pmap_redzone(vaddr_t sva, vaddr_t eva, int create)
 	u_int tlbprot;
 	int s;
 	
-	sva = hppa_trunc_page(sva);
+	sva = trunc_page(sva);
 	tlbprot = (create ? TLB_AR_NA : TLB_AR_KRW);
 	s = splvm();
 	for(va = sva; va < eva; va += PAGE_SIZE) {

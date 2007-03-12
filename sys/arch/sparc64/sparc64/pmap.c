@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.184.4.1 2007/02/27 16:53:15 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.184.4.2 2007/03/12 05:50:49 rmind Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.184.4.1 2007/02/27 16:53:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.184.4.2 2007/03/12 05:50:49 rmind Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -663,7 +663,7 @@ pmap_bootstrap(u_long kernelstart, u_long kernelend)
 			(void *)msgbufp));
 	}
 	msgbufmapped = 1;	/* enable message buffer */
-	initmsgbuf((caddr_t)msgbufp, msgbufsiz);
+	initmsgbuf((void *)msgbufp, msgbufsiz);
 
 	/*
 	 * Find out how much RAM we have installed.
@@ -1112,7 +1112,7 @@ pmap_bootstrap(u_long kernelstart, u_long kernelend)
 			 ("Done inserting cpu_info into pmap_kernel()\n"));
 	}
 
-	vmmap = (vaddr_t)reserve_dumppages((caddr_t)(u_long)vmmap);
+	vmmap = (vaddr_t)reserve_dumppages((void *)(u_long)vmmap);
 
 	/*
 	 * Set up bounds of allocatable memory for vmstat et al.
@@ -2170,7 +2170,7 @@ pmap_dumpsize()
  *	phys_ram_seg_t[phys_installed_size]  physical memory segments
  */
 int
-pmap_dumpmmu(int (*dump)(dev_t, daddr_t, caddr_t, size_t), daddr_t blkno)
+pmap_dumpmmu(int (*dump)(dev_t, daddr_t, void *, size_t), daddr_t blkno)
 {
 	kcore_seg_t	*kseg;
 	cpu_kcore_hdr_t	*kcpu;
@@ -2187,7 +2187,7 @@ pmap_dumpmmu(int (*dump)(dev_t, daddr_t, caddr_t, size_t), daddr_t blkno)
 		*bp++ = *sp++;						\
 		if (bp >= ep) {						\
 			error = (*dump)(dumpdev, blkno,			\
-					(caddr_t)buffer, dbtob(1));	\
+					(void *)buffer, dbtob(1));	\
 			if (error != 0)					\
 				return (error);				\
 			++blkno;					\
@@ -2240,7 +2240,7 @@ pmap_dumpmmu(int (*dump)(dev_t, daddr_t, caddr_t, size_t), daddr_t blkno)
 	}
 
 	if (bp != buffer)
-		error = (*dump)(dumpdev, blkno++, (caddr_t)buffer, dbtob(1));
+		error = (*dump)(dumpdev, blkno++, (void *)buffer, dbtob(1));
 
 	return (error);
 }

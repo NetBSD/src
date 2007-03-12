@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530sc.c,v 1.22 2005/12/11 12:21:29 christos Exp $	*/
+/*	$NetBSD: z8530sc.c,v 1.22.26.1 2007/03/12 05:53:49 rmind Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: z8530sc.c,v 1.22 2005/12/11 12:21:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: z8530sc.c,v 1.22.26.1 2007/03/12 05:53:49 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -188,11 +188,11 @@ zs_loadchannelregs(cs)
 	else
 		v = 0;
 
-	if (memcmp((caddr_t)cs->cs_preg, (caddr_t)cs->cs_creg, 16) == 0 && !v)
+	if (memcmp((void *)cs->cs_preg, (void *)cs->cs_creg, 16) == 0 && !v)
 		return;	/* only change if values are different */
 
 	/* Copy "pending" regs to "current" */
-	memcpy((caddr_t)cs->cs_creg, (caddr_t)cs->cs_preg, 16);
+	memcpy((void *)cs->cs_creg, (void *)cs->cs_preg, 16);
 	reg = cs->cs_creg;	/* current regs */
 
 	/* disable interrupts */

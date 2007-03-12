@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.43.4.1 2007/02/27 16:52:51 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.43.4.2 2007/03/12 05:50:07 rmind Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.43.4.1 2007/02/27 16:52:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.43.4.2 2007/03/12 05:50:07 rmind Exp $");
 
 #include "opt_ppcarch.h"
 #include "opt_altivec.h"
@@ -550,7 +550,7 @@ mfrtcltbl(void)
 void
 tlbia(void)
 {
-	caddr_t i;
+	char *i;
 	
 	SYNC();
 #if defined(PPC_OEA)
@@ -560,7 +560,7 @@ tlbia(void)
 	 * This needs to be a per-CPU callback to do the appropriate thing
 	 * for the CPU. XXX
 	 */
-	for (i = 0; i < (caddr_t)0x00040000; i += 0x00001000) {
+	for (i = 0; i < (char *)0x00040000; i += 0x00001000) {
 		TLBIE(i);
 		EIEIO();
 		SYNC();
@@ -568,7 +568,7 @@ tlbia(void)
 #elif defined (PPC_OEA64) || defined (PPC_OEA64_BRIDGE)
 	printf("Invalidating ALL TLB entries......\n");
 	/* This is specifically for the 970, 970UM v1.6 pp. 140. */
-	for (i = 0; i <= (caddr_t)0xFF000; i += 0x00001000) {
+	for (i = 0; i <= (void *)0xFF000; i += 0x00001000) {
 		TLBIEL(i);
 		EIEIO();
 		SYNC();
@@ -1197,7 +1197,7 @@ pmap_create(void)
 	pmap_t pm;
 
 	pm = pool_get(&pmap_pool, PR_WAITOK);
-	memset((caddr_t)pm, 0, sizeof *pm);
+	memset((void *)pm, 0, sizeof *pm);
 	pmap_pinit(pm);
 	
 	DPRINTFN(CREATE,("pmap_create: pm %p:\n"
@@ -2951,7 +2951,7 @@ pmap_steal_memory(vsize_t vsize, vaddr_t *vstartp, vaddr_t *vendp)
 	}
 
 	va = (vaddr_t) pa;
-	memset((caddr_t) va, 0, size);
+	memset((void *) va, 0, size);
 	pmap_pages_stolen += npgs;
 #ifdef DEBUG
 	if (pmapdebug && npgs > 1) {

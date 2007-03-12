@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm,v 1.82 2007/01/06 00:50:54 christos Exp $
+#	$NetBSD: files.arm,v 1.82.2.1 2007/03/12 05:47:03 rmind Exp $
 
 # temporary define to allow easy moving to ../arch/arm/arm32
 defflag				ARM32
@@ -22,6 +22,9 @@ defflag  opt_cpuoptions.h	ARM9_CACHE_WRITE_THROUGH
 
 # Interrupt implementation header definition.
 defparam opt_arm_intr_impl.h	ARM_INTR_IMPL
+
+# ARM-specific debug options
+defflag	opt_arm_debug.h		ARM_LOCK_CAS_DEBUG
 
 # Board-specific bus_space(9) definitions
 defflag  opt_arm_bus_space.h	__BUS_SPACE_HAS_STREAM_METHODS
@@ -115,6 +118,7 @@ file	arch/arm/arm/cpufunc_asm_xscale.S	cpu_xscale_80200 |
 						    cpu_xscale_pxa250 |
 						    cpu_xscale_pxa270
 file	arch/arm/arm/cpufunc_asm_ixp12x0.S	cpu_ixp12x0
+file	arch/arm/arm/lock_cas.S
 file	arch/arm/arm/process_machdep.c
 file	arch/arm/arm/procfs_machdep.c		procfs
 file	arch/arm/arm/sig_machdep.c

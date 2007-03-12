@@ -1,4 +1,4 @@
-/*	$NetBSD: mt.c,v 1.36 2007/02/15 18:33:26 reinoud Exp $	*/
+/*	$NetBSD: mt.c,v 1.36.2.1 2007/03/12 05:47:44 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mt.c,v 1.36 2007/02/15 18:33:26 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mt.c,v 1.36.2.1 2007/03/12 05:47:44 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -339,7 +339,7 @@ mtopen(dev_t dev, int flag, int mode, struct lwp *l)
 			goto errout;
 		if (!(sc->sc_flags & MTF_REW))
 			break;
-		if (tsleep((caddr_t) &lbolt, PCATCH | (PZERO + 1),
+		if (tsleep((void *) &lbolt, PCATCH | (PZERO + 1),
 		    "mt", 0) != 0) {
 			error = EINTR;
 			goto errout;
@@ -946,7 +946,7 @@ mtwrite(dev_t dev, struct uio *uio, int flags)
 }
 
 static int
-mtioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+mtioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct mtop *op;
 	int cnt;

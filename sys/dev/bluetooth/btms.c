@@ -1,4 +1,4 @@
-/*	$NetBSD: btms.c,v 1.5 2006/11/16 01:32:48 christos Exp $	*/
+/*	$NetBSD: btms.c,v 1.5.4.1 2007/03/12 05:53:09 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btms.c,v 1.5 2006/11/16 01:32:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btms.c,v 1.5.4.1 2007/03/12 05:53:09 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -93,7 +93,7 @@ CFATTACH_DECL(btms, sizeof(struct btms_softc),
 
 /* wsmouse(4) accessops */
 static int	btms_wsmouse_enable(void *);
-static int	btms_wsmouse_ioctl(void *, unsigned long, caddr_t, int, struct lwp *);
+static int	btms_wsmouse_ioctl(void *, unsigned long, void *, int, struct lwp *);
 static void	btms_wsmouse_disable(void *);
 
 static const struct wsmouse_accessops btms_wsmouse_accessops = {
@@ -286,7 +286,7 @@ btms_wsmouse_enable(void *self)
 }
 
 static int
-btms_wsmouse_ioctl(void *self, unsigned long cmd, caddr_t data,
+btms_wsmouse_ioctl(void *self, unsigned long cmd, void *data,
     int flag, struct lwp *l)
 {
 	/* struct btms_softc *sc = (struct btms_softc *)self; */

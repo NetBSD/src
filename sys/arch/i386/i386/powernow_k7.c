@@ -1,4 +1,4 @@
-/*	$NetBSD: powernow_k7.c,v 1.22.2.1 2007/02/27 16:51:44 yamt Exp $ */
+/*	$NetBSD: powernow_k7.c,v 1.22.2.2 2007/03/12 05:48:23 rmind Exp $ */
 /*	$OpenBSD: powernow-k7.c,v 1.24 2006/06/16 05:58:50 gwk Exp $ */
 
 /*-
@@ -66,7 +66,7 @@
 /* AMD POWERNOW K7 driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powernow_k7.c,v 1.22.2.1 2007/02/27 16:51:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powernow_k7.c,v 1.22.2.2 2007/03/12 05:48:23 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -134,15 +134,15 @@ pnow_cpu_check(uint32_t real_cpusig, uint32_t pst_cpusig)
 	int j;
 
 	if (real_cpusig == pst_cpusig)
-		return TRUE;
+		return true;
 
 	for (j = 0; pnow_cpu_quirk[j].rcpusig != 0; j++) {
 		if ((real_cpusig == pnow_cpu_quirk[j].rcpusig) &&
 		    (pst_cpusig == pnow_cpu_quirk[j].pcpusig))
-			return TRUE;
+			return true;
 	}
 
-	return FALSE;
+	return false;
 }
 
 int

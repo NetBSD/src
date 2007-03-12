@@ -1,4 +1,4 @@
-/*	$NetBSD: msiiep.c,v 1.34 2005/12/24 23:24:02 perry Exp $ */
+/*	$NetBSD: msiiep.c,v 1.34.26.1 2007/03/12 05:50:43 rmind Exp $ */
 
 /*
  * Copyright (c) 2001 Valeriy E. Ushakov
@@ -27,7 +27,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msiiep.c,v 1.34 2005/12/24 23:24:02 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msiiep.c,v 1.34.26.1 2007/03/12 05:50:43 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -169,7 +169,7 @@ static int	mspcic_dmamap_load(bus_dma_tag_t, bus_dmamap_t,
 				   void *, bus_size_t, struct proc *, int);
 static void	mspcic_dmamap_unload(bus_dma_tag_t, bus_dmamap_t);
 static int	mspcic_dmamem_map(bus_dma_tag_t, bus_dma_segment_t *,
-				  int, size_t, caddr_t *, int);
+				  int, size_t, void **, int);
 
 static struct sparc_bus_dma_tag mspcic_dma_tag = {
 	NULL,			/* _cookie */
@@ -666,7 +666,7 @@ mspcic_dmamap_unload(bus_dma_tag_t t, bus_dmamap_t dmam)
 
 static int
 mspcic_dmamem_map(bus_dma_tag_t tag, bus_dma_segment_t *segs, int nsegs,
-		  size_t size, caddr_t *kvap, int flags)
+		  size_t size, void **kvap, int flags)
 {
 	struct pglist *mlist;
 	struct vm_page *m;
@@ -685,7 +685,7 @@ mspcic_dmamem_map(bus_dma_tag_t tag, bus_dma_segment_t *segs, int nsegs,
 		return (ENOMEM);
 
 	segs[0]._ds_va = va;
-	*kvap = (caddr_t)va;
+	*kvap = (void *)va;
 
 	/*
 	 * Map the pages allocated in _bus_dmamem_alloc()

@@ -1,4 +1,4 @@
-/*	$NetBSD: wds.c,v 1.65 2006/11/16 01:33:00 christos Exp $	*/
+/*	$NetBSD: wds.c,v 1.65.4.1 2007/03/12 05:54:51 rmind Exp $	*/
 
 /*
  * XXX
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wds.c,v 1.65 2006/11/16 01:33:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wds.c,v 1.65.4.1 2007/03/12 05:54:51 rmind Exp $");
 
 #include "opt_ddb.h"
 
@@ -652,7 +652,7 @@ wds_create_scbs(sc, mem, size)
 			return (error);
 		}
 		TAILQ_INSERT_TAIL(&sc->sc_free_scb, scb, chain);
-		scb = (struct wds_scb *)((caddr_t)scb +
+		scb = (struct wds_scb *)((char *)scb +
 			ALIGN(sizeof(struct wds_scb)));
 		size -= ALIGN(sizeof(struct wds_scb));
 		sc->sc_numscbs++;
@@ -991,14 +991,14 @@ wds_init(sc, isreset)
 	if (bus_dmamem_alloc(sc->sc_dmat, PAGE_SIZE, PAGE_SIZE, 0, &seg, 1,
 	    &rseg, BUS_DMA_NOWAIT) ||
 	    bus_dmamem_map(sc->sc_dmat, &seg, rseg, PAGE_SIZE,
-	    (caddr_t *)&wmbx, BUS_DMA_NOWAIT|BUS_DMA_COHERENT))
+	    (void **)&wmbx, BUS_DMA_NOWAIT|BUS_DMA_COHERENT))
 		panic("wds_init: can't create or map mailbox");
 
 	/*
 	 * Since DMA memory allocation is always rounded up to a
 	 * page size, create some scbs from the leftovers.
 	 */
-	if (wds_create_scbs(sc, ((caddr_t)wmbx) +
+	if (wds_create_scbs(sc, ((char *)wmbx) +
 	    ALIGN(sizeof(struct wds_mbx)),
 	    PAGE_SIZE - ALIGN(sizeof(struct wds_mbx))))
 		panic("wds_init: can't create scbs");

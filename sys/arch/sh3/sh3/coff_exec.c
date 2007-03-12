@@ -1,4 +1,4 @@
-/*	$NetBSD: coff_exec.c,v 1.25 2006/07/23 22:06:07 ad Exp $	*/
+/*	$NetBSD: coff_exec.c,v 1.25.10.1 2007/03/12 05:50:14 rmind Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Scott Bartram
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coff_exec.c,v 1.25 2006/07/23 22:06:07 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coff_exec.c,v 1.25.10.1 2007/03/12 05:50:14 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -196,7 +196,7 @@ coff_find_section(struct lwp *l, struct vnode *vp, struct coff_filehdr *fp,
 	pos = COFF_HDR_SIZE;
 	for (i = 0; i < fp->f_nscns; i++, pos += sizeof(struct coff_scnhdr)) {
 		siz = sizeof(struct coff_scnhdr);
-		error = vn_rdwr(UIO_READ, vp, (caddr_t) sh,
+		error = vn_rdwr(UIO_READ, vp, (void *) sh,
 		    siz, pos, UIO_SYSSPACE, IO_NODELOCKED, l->l_cred,
 		    &resid, NULL);
 		if (error) {
@@ -332,7 +332,7 @@ exec_coff_prep_zmagic(struct lwp *l, struct exec_package *epp,
 		DPRINTF(("COFF shlib size %d offset %d\n",
 		    sh.s_size, sh.s_scnptr));
 
-		error = vn_rdwr(UIO_READ, epp->ep_vp, (caddr_t) buf,
+		error = vn_rdwr(UIO_READ, epp->ep_vp, (void *) buf,
 		    len, sh.s_scnptr,
 		    UIO_SYSSPACE, IO_NODELOCKED, l->l_cred,
 		    &resid, NULL);
@@ -378,7 +378,7 @@ coff_load_shlib(struct lwp *l, char *path, struct exec_package *epp)
 	struct nameidata nd;
 	struct coff_filehdr fh, *fhp = &fh;
 	struct coff_scnhdr sh, *shp = &sh;
-	caddr_t sg = stackgap_init(p, 0);
+	void *sg = stackgap_init(p, 0);
 
 	/*
 	 * 1. open shlib file
@@ -396,7 +396,7 @@ coff_load_shlib(struct lwp *l, char *path, struct exec_package *epp)
 	}
 
 	siz = sizeof(struct coff_filehdr);
-	error = vn_rdwr(UIO_READ, nd.ni_vp, (caddr_t) fhp, siz, 0,
+	error = vn_rdwr(UIO_READ, nd.ni_vp, (void *) fhp, siz, 0,
 	    UIO_SYSSPACE, IO_NODELOCKED, l->l_cred, &resid, NULL);
 	if (error) {
 		DPRINTF(("filehdr read error %d\n", error));

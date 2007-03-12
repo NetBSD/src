@@ -1,4 +1,4 @@
-/*	$NetBSD: gencons.c,v 1.46 2007/02/16 01:34:03 matt Exp $	*/
+/*	$NetBSD: gencons.c,v 1.46.2.1 2007/03/12 05:51:16 rmind Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -36,7 +36,7 @@
  /* All bugs are subject to removal without further notice */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gencons.c,v 1.46 2007/02/16 01:34:03 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gencons.c,v 1.46.2.1 2007/03/12 05:51:16 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_cputype.h"
@@ -174,7 +174,7 @@ gencnpoll(dev_t dev, int events, struct lwp *l)
 }
 
 int
-gencnioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+gencnioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct tty *tp = gc_softc[minor(dev)].gencn_tty;
 	int error;
@@ -208,7 +208,7 @@ gencnstart(struct tty *tp)
 	} else {
 		if (tp->t_state & TS_ASLEEP) {
 			tp->t_state &= ~TS_ASLEEP;
-			wakeup((caddr_t)cl);
+			wakeup((void *)cl);
 		}
 		selwakeup(&tp->t_wsel);
 	}

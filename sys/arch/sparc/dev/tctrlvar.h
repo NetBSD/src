@@ -1,4 +1,4 @@
-/*	$NetBSD: tctrlvar.h,v 1.5 2006/03/06 21:43:29 macallan Exp $ */
+/*	$NetBSD: tctrlvar.h,v 1.5.18.1 2007/03/12 05:50:29 rmind Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 struct tctlrdriver {
         int     (*tctrld_open)(dev_t, int, int, struct proc *);
         int     (*tctrld_close)(dev_t, int, int, struct proc *);
-        int     (*tctrld_ioctl)(dev_t, u_long, caddr_t, int, struct proc *);
+        int     (*tctrld_ioctl)(dev_t, u_long, void *, int, struct proc *);
 	int	(*tctrld_poll)(dev_t, int, struct proc *);
 };
 

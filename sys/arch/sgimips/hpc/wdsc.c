@@ -1,4 +1,4 @@
-/*	$NetBSD: wdsc.c,v 1.18.2.1 2007/02/27 16:52:57 yamt Exp $	*/
+/*	$NetBSD: wdsc.c,v 1.18.2.2 2007/03/12 05:50:12 rmind Exp $	*/
 
 /*
  * Copyright (c) 2001 Wayne Knowles
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdsc.c,v 1.18.2.1 2007/02/27 16:52:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdsc.c,v 1.18.2.2 2007/03/12 05:50:12 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,7 +83,7 @@ int	wdsc_match	(struct device *, struct cfdata *, void *);
 CFATTACH_DECL(wdsc, sizeof(struct wdsc_softc),
     wdsc_match, wdsc_attach, NULL, NULL);
 
-int	wdsc_dmasetup	(struct wd33c93_softc *, caddr_t *,size_t *,
+int	wdsc_dmasetup	(struct wd33c93_softc *, void **,size_t *,
 				int, size_t *);
 int	wdsc_dmago	(struct wd33c93_softc *);
 void	wdsc_dmastop	(struct wd33c93_softc *);
@@ -205,7 +205,7 @@ wdsc_attach(struct device *pdp, struct device *dp, void *auxp)
  * Requires splbio() interrupts to be disabled by the caller
  */
 int
-wdsc_dmasetup(struct wd33c93_softc *dev, caddr_t *addr, size_t *len, int datain, size_t *dmasize)
+wdsc_dmasetup(struct wd33c93_softc *dev, void **addr, size_t *len, int datain, size_t *dmasize)
 {
 	struct wdsc_softc *wsc = (void *)dev;
 	struct hpc_dma_softc *dsc = &wsc->sc_hpcdma;

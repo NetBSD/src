@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.55 2007/02/09 21:55:24 ad Exp $
+	$NetBSD: syscalls.master,v 1.55.2.1 2007/03/12 05:52:47 rmind Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -75,7 +75,7 @@
 15	NOARGS		{ int sys_chmod(char *path, int mode); }
 16	NOARGS		{ int sys___posix_chown(char *path, int uid, \
 			    int gid); } chown
-17	STD		{ int svr4_sys_break(caddr_t nsize); }
+17	STD		{ int svr4_sys_break(void *nsize); }
 18	STD		{ int svr4_sys_stat(const char* path, \
 			    struct svr4_stat* ub); }
 19	NOARGS		{ long compat_43_sys_lseek(int fd, long offset, \
@@ -131,7 +131,7 @@
 53	UNIMPL		semsys
 #endif
 54	STD		{ int svr4_sys_ioctl(int fd, u_long com, \
-			    caddr_t data); }
+			    void *data); }
 55	UNIMPL		uadmin
 56	UNIMPL		exch
 57	STD		{ int svr4_sys_utssys(void *a1, void *a2, int sel, \
@@ -240,8 +240,8 @@
 			    struct svr4_rlimit *rlp); }
 130	NOARGS		{ int sys___posix_lchown(char *path, int uid, \
 			    int gid); } lchown
-131	STD		{ int svr4_sys_memcntl(void * addr, \
-			    svr4_size_t len, int cmd, void * arg, \
+131	STD		{ int svr4_sys_memcntl(void *addr, \
+			    svr4_size_t len, int cmd, void *arg, \
 			    int attr, int mask); }
 132	UNIMPL		getpmsg
 133	UNIMPL		putpmsg
@@ -385,14 +385,14 @@
 235	NOARGS		{ int sys_connect(int s, const struct sockaddr *name, \
 			    int namelen); }
 236	NOARGS		{ int sys_shutdown(int s, int how); }
-237	NOARGS		{ int compat_43_sys_recv(int s, caddr_t buf, int len, \
+237	NOARGS		{ int compat_43_sys_recv(int s, void *buf, int len, \
 			    int flags); }
 238	NOARGS		{ ssize_t compat_43_sys_recvfrom(int s, void *buf, \
 			    size_t len, int flags, struct sockaddr *from, \
 			    int *fromlenaddr); }
 239	NOARGS		{ ssize_t compat_43_sys_recvmsg(int s, \
 			    struct msghdr *msg, int flags); }
-240	NOARGS		{ int compat_43_sys_send(int s, caddr_t buf, int len, \
+240	NOARGS		{ int compat_43_sys_send(int s, void *buf, int len, \
 			    int flags); }
 241	NOARGS		{ ssize_t compat_43_sys_sendmsg(int s, \
 			    const struct msghdr *msg, int flags); }

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.33.26.1 2007/02/27 16:49:52 yamt Exp $	*/
+/*	$NetBSD: bus.h,v 1.33.26.2 2007/03/12 05:47:22 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@ typedef u_long	bus_size_t;
  * Access methods for bus resources and address space.
  */
 typedef struct atari_bus_space	*bus_space_tag_t;
-typedef caddr_t			bus_space_handle_t;
+typedef u_long			bus_space_handle_t;
 
 #define	BUS_SPACE_MAP_CACHEABLE		0x01
 #define	BUS_SPACE_MAP_LINEAR		0x02
@@ -706,8 +706,8 @@ int	bus_dmamem_alloc_range __P((bus_dma_tag_t tag, bus_size_t size,
 void	bus_dmamem_free __P((bus_dma_tag_t tag, bus_dma_segment_t *segs,
 	    int nsegs));
 int	bus_dmamem_map __P((bus_dma_tag_t tag, bus_dma_segment_t *segs,
-	    int nsegs, size_t size, caddr_t *kvap, int flags));
-void	bus_dmamem_unmap __P((bus_dma_tag_t tag, caddr_t kva,
+	    int nsegs, size_t size, void **kvap, int flags));
+void	bus_dmamem_unmap __P((bus_dma_tag_t tag, void *kva,
 	    size_t size));
 paddr_t	bus_dmamem_mmap __P((bus_dma_tag_t tag, bus_dma_segment_t *segs,
 	    int nsegs, off_t off, int prot, int flags));

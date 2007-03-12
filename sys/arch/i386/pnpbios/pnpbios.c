@@ -1,4 +1,4 @@
-/* $NetBSD: pnpbios.c,v 1.57 2006/12/10 03:20:49 uwe Exp $ */
+/* $NetBSD: pnpbios.c,v 1.57.2.1 2007/03/12 05:48:38 rmind Exp $ */
 
 /*
  * Copyright (c) 2000 Jason R. Thorpe.  All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pnpbios.c,v 1.57 2006/12/10 03:20:49 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pnpbios.c,v 1.57.2.1 2007/03/12 05:48:38 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -125,8 +125,8 @@ static int	pnpbios_sendmessage(int);
 #endif
 
 /* configuration stuff */
-static caddr_t	pnpbios_mapit(u_long, u_long, int);
-static caddr_t	pnpbios_find(void);
+static void *	pnpbios_mapit(u_long, u_long, int);
+static void *	pnpbios_find(void);
 static int	pnpbios_match(struct device *,
 			    struct cfdata *, void *);
 static void	pnpbios_attach(struct device *,
@@ -193,7 +193,7 @@ CFATTACH_DECL(pnpbios, sizeof(struct pnpbios_softc),
 
 int pnpbios_enabled = 1;
 size_t pnpbios_entry;
-caddr_t pnpbios_scratchbuf;
+char *pnpbios_scratchbuf;
 
 /*
  * There can be only one of these, and the i386 ISA code needs to
@@ -203,21 +203,21 @@ struct pnpbios_softc *pnpbios_softc;
 
 #define PNPBIOS_SIGNATURE ('$' | ('P' << 8) | ('n' << 16) | ('P' << 24))
 
-static caddr_t
+static void *
 pnpbios_find(void)
 {
-	caddr_t p, c;
+	char *p, *c;
 	uint8_t cksum;
 	size_t structlen;
 
-	for (p = (caddr_t)ISA_HOLE_VADDR(0xf0000);
-	     p <= (caddr_t)ISA_HOLE_VADDR(0xffff0);
+	for (p = (char *)ISA_HOLE_VADDR(0xf0000);
+	     p <= (char *)ISA_HOLE_VADDR(0xffff0);
 	     p += 16) {
 		if (*(int *)p != PNPBIOS_SIGNATURE)
 			continue;
 		structlen = *(uint8_t *)(p + 5);
 		if ((structlen < 0x21) ||
-		    ((p + structlen - 1) > (caddr_t)ISA_HOLE_VADDR(0xfffff)))
+		    ((p + structlen - 1) > (char *)ISA_HOLE_VADDR(0xfffff)))
 			continue;
 
 		cksum = 0;
@@ -256,7 +256,7 @@ pnpbios_match(struct device *parent, struct cfdata *match,
 	return (pnpbios_enabled);
 }
 
-static caddr_t
+static void *
 pnpbios_mapit(u_long addr, u_long len, int prot)
 {
 	u_long startpa, pa, endpa;
@@ -273,7 +273,7 @@ pnpbios_mapit(u_long addr, u_long len, int prot)
 		pmap_kenter_pa(va, pa, prot);
 	pmap_update(pmap_kernel());
 
-	return ((caddr_t)(startva + (addr - startpa)));
+	return ((void *)(startva + (addr - startpa)));
 }
 
 static void
@@ -281,9 +281,9 @@ pnpbios_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pnpbios_softc *sc = (struct pnpbios_softc *)self;
 	struct pnpbios_attach_args *paa = aux;
-	caddr_t p;
+	char *p;
 	unsigned int codepbase, datapbase, evaddrp;
-	caddr_t codeva, datava;
+	void *codeva, *datava;
 	extern char pnpbiostramp[], epnpbiostramp[];
 	int res, num, size;
 #ifdef PNPBIOSEVENTS
@@ -537,7 +537,7 @@ pnpbios_getnumnodes(int *nump, size_t *sizep)
 	*--help = 0; /* buffer offset for numnodes */
 	*--help = PNP_FC_GET_NUM_NODES;
 
-	res = pnpbioscall(((caddr_t)help) - pnpbios_scratchbuf);
+	res = pnpbioscall(((char *)help) - pnpbios_scratchbuf);
 	if (res)
 		return (res);
 
@@ -562,7 +562,7 @@ pnpbios_getnode(int flags, int *idxp, uint8_t *buf, size_t len)
 
 	*(short *)(pnpbios_scratchbuf + 0) = *idxp;
 
-	res = pnpbioscall(((caddr_t)help) - pnpbios_scratchbuf);
+	res = pnpbioscall(((char *)help) - pnpbios_scratchbuf);
 	if (res)
 		return (res);
 
@@ -589,7 +589,7 @@ pnpbios_setnode(int flags, int idx, const uint8_t *buf, size_t len)
 
 	memcpy(pnpbios_scratchbuf, buf, len);
 
-	return (pnpbioscall(((caddr_t)help) - pnpbios_scratchbuf));
+	return (pnpbioscall(((void *)help) - pnpbios_scratchbuf));
 }
 #endif /* 0 */
 
@@ -605,7 +605,7 @@ pnpbios_getevent(uint16_t *event)
 	*--help = 0; /* buffer offset for message data */
 	*--help = PNP_FC_GET_EVENT;
 
-	res = pnpbioscall(((caddr_t)help) - pnpbios_scratchbuf);
+	res = pnpbioscall(((void *)help) - pnpbios_scratchbuf);
 	*event = pnpbios_scratchbuf[0] + (pnpbios_scratchbuf[1] << 8);
 	return (res);
 }
@@ -619,7 +619,7 @@ pnpbios_sendmessage(int msg)
 	*--help = msg;
 	*--help = PNP_FC_SEND_MESSAGE;
 
-	return (pnpbioscall(((caddr_t)help) - pnpbios_scratchbuf));
+	return (pnpbioscall(((void *)help) - pnpbios_scratchbuf));
 }
 
 static int
@@ -633,7 +633,7 @@ pnpbios_getdockinfo(struct pnpdockinfo *di)
 	*--help = 0; /* buffer offset for dock info */
 	*--help = PNP_FC_GET_DOCK_INFO;
 
-	res = pnpbioscall(((caddr_t)help) - pnpbios_scratchbuf);
+	res = pnpbioscall(((void *)help) - pnpbios_scratchbuf);
 	memcpy(di, pnpbios_scratchbuf, sizeof(*di));
 	return (res);
 }
@@ -658,12 +658,12 @@ pnpbios_getapmtable(uint8_t *tab, size_t *len)
 	*--help = PNP_FC_GET_APM_TABLE;
 
 	origlen = *len;
-	stacklen = (caddr_t)help - pnpbios_scratchbuf;
+	stacklen = (void *)help - pnpbios_scratchbuf;
 	if (origlen > PNPBIOS_BUFSIZE - stacklen - 2)
 		origlen = PNPBIOS_BUFSIZE - stacklen - 2;
 	*(uint16_t *)(pnpbios_scratchbuf) = origlen;
 
-	res = pnpbioscall(((caddr_t)help) - pnpbios_scratchbuf);
+	res = pnpbioscall(((void *)help) - pnpbios_scratchbuf);
 	*len = *(uint16_t *)pnpbios_scratchbuf;
 	if (res)
 		return (res);

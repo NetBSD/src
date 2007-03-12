@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ipc.c,v 1.38 2007/02/09 21:55:19 ad Exp $	*/
+/*	$NetBSD: linux_ipc.c,v 1.38.2.1 2007/03/12 05:52:27 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_ipc.c,v 1.38 2007/02/09 21:55:19 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_ipc.c,v 1.38.2.1 2007/03/12 05:52:27 rmind Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -338,7 +338,7 @@ linux_sys_msgctl(l, v, retval)
 		syscallarg(struct linux_msqid_ds *) buf;
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
-	caddr_t sg;
+	void *sg;
 	struct sys___msgctl13_args nua;
 	struct msqid_ds *bmp, bm;
 	struct linux_msqid_ds lm;
@@ -425,7 +425,7 @@ linux_sys_shmat(l, v, retval)
 		return error;
 
 #ifndef __amd64__
-	if ((error = copyout(&retval[0], (caddr_t) SCARG(uap, raddr),
+	if ((error = copyout(&retval[0], (void *) SCARG(uap, raddr),
 	     sizeof retval[0])))
 		return error;
 
@@ -528,7 +528,7 @@ linux_sys_shmctl(l, v, retval)
 		syscallarg(struct linux_shmid_ds *) buf;
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
-	caddr_t sg;
+	void *sg;
 	struct sys___shmctl13_args nua;
 	struct shmid_ds *bsp, bs;
 	struct linux_shmid_ds ls;

@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_16_machdep.c,v 1.9 2007/02/09 21:55:12 ad Exp $ */
+/*	$NetBSD: compat_16_machdep.c,v 1.9.2.1 2007/03/12 05:50:48 rmind Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.9 2007/02/09 21:55:12 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.9.2.1 2007/03/12 05:50:48 rmind Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -175,7 +175,7 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 		   fp, &(((struct rwindow *)newsp)->rw_in[6]),
 		   (void *)(unsigned long)tf->tf_out[6]);
 #endif
-	error = (rwindow_save(l) || copyout((caddr_t)&sf, (caddr_t)fp, sizeof sf) || 
+	error = (rwindow_save(l) || copyout((void *)&sf, (void *)fp, sizeof sf) || 
 #ifdef NOT_DEBUG
 	    copyin(oldsp, &tmpwin, sizeof(tmpwin)) || copyout(&tmpwin, newsp, sizeof(tmpwin)) ||
 #endif
@@ -297,7 +297,7 @@ compat_16_sys___sigreturn14(l, v, retval)
 	}
 #endif
 	scp = SCARG(uap, sigcntxp);
- 	if ((vaddr_t)scp & 3 || (error = copyin((caddr_t)scp, &sc, sizeof sc) != 0))
+ 	if ((vaddr_t)scp & 3 || (error = copyin((void *)scp, &sc, sizeof sc) != 0))
 #ifdef DEBUG
 	{
 		printf("sigreturn14: copyin failed: scp=%p\n", scp);

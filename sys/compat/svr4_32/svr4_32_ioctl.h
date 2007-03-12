@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_ioctl.h,v 1.2 2003/01/19 16:47:14 thorpej Exp $	 */
+/*	$NetBSD: svr4_32_ioctl.h,v 1.2.56.1 2007/03/12 05:52:47 rmind Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -42,16 +42,16 @@
 #include <compat/svr4/svr4_ioctl.h>
 
 int	svr4_32_stream_ti_ioctl __P((struct file *, struct lwp *, register_t *,
-			          int, u_long, caddr_t));
+			          int, u_long, void *));
 int	svr4_32_stream_ioctl    __P((struct file *, struct lwp *, register_t *,
-				  int, u_long, caddr_t));
+				  int, u_long, void *));
 int	svr4_32_term_ioctl      __P((struct file *, struct lwp *, register_t *,
-				  int, u_long, caddr_t));
+				  int, u_long, void *));
 int	svr4_32_ttold_ioctl     __P((struct file *, struct lwp *, register_t *,
-				  int, u_long, caddr_t));
+				  int, u_long, void *));
 int	svr4_32_fil_ioctl	__P((struct file *, struct lwp *, register_t *,
-				  int, u_long, caddr_t));
+				  int, u_long, void *));
 int	svr4_32_sock_ioctl	__P((struct file *, struct lwp *, register_t *,
-				  int, u_long, caddr_t));
+				  int, u_long, void *));
 
 #endif /* !_SVR4_32_IOCTL_H_ */

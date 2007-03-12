@@ -1,4 +1,4 @@
-/*	$NetBSD: ka670.c,v 1.12 2006/09/05 19:32:57 matt Exp $	*/
+/*	$NetBSD: ka670.c,v 1.12.8.1 2007/03/12 05:51:18 rmind Exp $	*/
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka670.c,v 1.12 2006/09/05 19:32:57 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka670.c,v 1.12.8.1 2007/03/12 05:51:18 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -56,7 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: ka670.c,v 1.12 2006/09/05 19:32:57 matt Exp $");
 
 static	void ka670_conf __P((void));
 
-static	int ka670_mchk __P((caddr_t));
+static	int ka670_mchk __P((void *));
 static	void ka670_memerr __P((void));
 static	int ka670_cache_init __P((void));	/* "int mapen" as argument? */
 
@@ -123,7 +123,7 @@ static int ka670_error_count = 0;
 
 int
 ka670_mchk(addr)
-	caddr_t addr;
+	void *addr;
 {
 	register struct ka670_mcframe *mcf = (void*)addr;
 

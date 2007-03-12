@@ -1,4 +1,4 @@
-/* $NetBSD: dec_1000a.c,v 1.23 2006/02/25 17:32:43 thorpej Exp $ */
+/* $NetBSD: dec_1000a.c,v 1.23.20.1 2007/03/12 05:45:47 rmind Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_1000a.c,v 1.23 2006/02/25 17:32:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_1000a.c,v 1.23.20.1 2007/03/12 05:45:47 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -188,7 +188,7 @@ dec_1000a_cons_init()
 		pcichipset = &acp->ac_pc;
 	}
 
-	ctb = (struct ctb *)(((caddr_t)hwrpb) + hwrpb->rpb_ctb_off);
+	ctb = (struct ctb *)(((char *)hwrpb) + hwrpb->rpb_ctb_off);
 
 	switch (ctb->ctb_term_type) {
 	case CTB_PRINTERPORT: 

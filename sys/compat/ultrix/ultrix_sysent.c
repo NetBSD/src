@@ -1,4 +1,4 @@
-/* $NetBSD: ultrix_sysent.c,v 1.54 2007/02/09 21:55:26 ad Exp $ */
+/* $NetBSD: ultrix_sysent.c,v 1.54.2.1 2007/03/12 05:53:01 rmind Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_sysent.c,v 1.54 2007/02/09 21:55:26 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_sysent.c,v 1.54.2.1 2007/03/12 05:53:01 rmind Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
@@ -384,7 +384,7 @@ struct sysent ultrix_sysent[] = {
 	{ 2, s(struct ultrix_sys_exportfs_args), 0,
 	    ultrix_sys_exportfs },		/* 169 = exportfs */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 170 = unimplemented { int ultrix_sys_mount ( char * special , char * dir , int rdonly , int type , caddr_t data ) ; } */
+	    sys_nosys },			/* 170 = unimplemented { int ultrix_sys_mount ( char * special , char * dir , int rdonly , int type , void *data ) ; } */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 171 = unimplemented 4 hdwconf */
 	{ 0, 0, 0,

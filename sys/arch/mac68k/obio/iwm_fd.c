@@ -1,4 +1,4 @@
-/*	$NetBSD: iwm_fd.c,v 1.35 2005/12/11 12:18:03 christos Exp $	*/
+/*	$NetBSD: iwm_fd.c,v 1.35.26.1 2007/03/12 05:49:02 rmind Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 Hauke Fath.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iwm_fd.c,v 1.35 2005/12/11 12:18:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iwm_fd.c,v 1.35.26.1 2007/03/12 05:49:02 rmind Exp $");
 
 #ifdef _LKM
 #define IWMCF_DRIVE 0
@@ -816,7 +816,7 @@ fdclose(dev_t dev, int flags, int devType, struct lwp *l)
  * we do not support them.
  */
 int
-fdioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct lwp *l)
+fdioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 {
 	int result, fdUnit, fdType;
 	fd_softc_t *fd;

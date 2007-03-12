@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.13 2005/11/14 19:11:24 uwe Exp $ */
+/*	$NetBSD: process_machdep.c,v 1.13.26.1 2007/03/12 05:50:44 rmind Exp $ */
 
 /*
  * Copyright (c) 1993 The Regents of the University of California.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.13 2005/11/14 19:11:24 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.13.26.1 2007/03/12 05:50:44 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,7 +114,7 @@ process_read_regs(struct lwp *p, struct reg *regs)
 {
 
 	/* NOTE: struct reg == struct trapframe */
-	bcopy(p->l_md.md_tf, (caddr_t)regs, sizeof(struct reg));
+	bcopy(p->l_md.md_tf, (void *)regs, sizeof(struct reg));
 	return (0);
 }
 
@@ -138,7 +138,7 @@ process_sstep(struct lwp *p, int sstep)
 }
 
 int
-process_set_pc(struct lwp *p, caddr_t addr)
+process_set_pc(struct lwp *p, void *addr)
 {
 
 	p->l_md.md_tf->tf_pc = (u_int)addr;

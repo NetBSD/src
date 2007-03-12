@@ -1,4 +1,4 @@
-/*	$NetBSD: lcspx.c,v 1.5 2006/04/12 19:38:23 jmmv Exp $ */
+/*	$NetBSD: lcspx.c,v 1.5.14.1 2007/03/12 05:51:35 rmind Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lcspx.c,v 1.5 2006/04/12 19:38:23 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lcspx.c,v 1.5.14.1 2007/03/12 05:51:35 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -131,7 +131,7 @@ static  u_char *qf;
 	    line * SPX_XWIDTH + dot]
 
 
-static int	lcspx_ioctl(void *, void *, u_long, caddr_t, int, struct lwp *);
+static int	lcspx_ioctl(void *, void *, u_long, void *, int, struct lwp *);
 static paddr_t	lcspx_mmap(void *, void *, off_t, int);
 static int	lcspx_alloc_screen(void *, const struct wsscreen_descr *,
 				      void **, int *, int *, long *);
@@ -194,7 +194,7 @@ lcspx_attach(struct device *parent, struct device *self, void *aux)
 	printf("\n");
 	aa.console = lcspxaddr != NULL;
 	if (lcspxaddr == 0)
-		lcspxaddr = (caddr_t)vax_map_physmem(va->va_paddr, (SPXSIZE/VAX_NBPG));
+		lcspxaddr = (void *)vax_map_physmem(va->va_paddr, (SPXSIZE/VAX_NBPG));
 	if (lcspxaddr == 0) {
 		printf("%s: Couldn't alloc graphics memory.\n", self->dv_xname);
 		return;
@@ -367,7 +367,7 @@ lcspx_allocattr(void *id, int fg, int bg, int flags, long *attrp)
 }
 
 int
-lcspx_ioctl(void *v, void *vs, u_long cmd, caddr_t data, int flag,
+lcspx_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 	struct lwp *l)
 {
 	struct wsdisplay_fbinfo *fb = (void *)data;
@@ -509,7 +509,7 @@ lcspxcnprobe(struct consdev *cndev)
 
 	if (vax_confdata & 8)
 		return; /* Diagnostic console */
-	lcspxaddr = (caddr_t)virtual_avail;
+	lcspxaddr = (void *)virtual_avail;
 	virtual_avail += SPXSIZE;
 	ioaccess((vaddr_t)lcspxaddr, SPXADDR, (SPXSIZE/VAX_NBPG));
 	cndev->cn_pri = CN_INTERNAL;

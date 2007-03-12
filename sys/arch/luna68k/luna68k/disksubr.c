@@ -1,4 +1,4 @@
-/* $NetBSD: disksubr.c,v 1.20 2006/11/25 11:59:56 scw Exp $ */
+/* $NetBSD: disksubr.c,v 1.20.4.1 2007/03/12 05:48:43 rmind Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.20 2006/11/25 11:59:56 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.20.4.1 2007/03/12 05:48:43 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -369,7 +369,7 @@ disklabel_om_to_bsd(cp, lp)
 	if (cksum != 0)
 		return ("UniOS disk label, bad checksum");
 
-	memset((caddr_t)lp, 0, sizeof(struct disklabel));
+	memset((void *)lp, 0, sizeof(struct disklabel));
 	/* Format conversion. */
 	lp->d_magic = DISKMAGIC;
 	lp->d_magic2 = DISKMAGIC;

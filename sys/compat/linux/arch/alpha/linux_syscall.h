@@ -1,4 +1,4 @@
-/* $NetBSD: linux_syscall.h,v 1.61 2006/09/01 21:19:44 matt Exp $ */
+/* $NetBSD: linux_syscall.h,v 1.61.8.1 2007/03/12 05:52:14 rmind Exp $ */
 
 /*
  * System call numbers.
@@ -103,7 +103,7 @@
 /* syscall: "sigpending" ret: "int" args: "linux_old_sigset_t *" */
 #define	LINUX_SYS_sigpending	52
 
-/* syscall: "ioctl" ret: "int" args: "int" "u_long" "caddr_t" */
+/* syscall: "ioctl" ret: "int" args: "int" "u_long" "void *" */
 #define	LINUX_SYS_ioctl	54
 
 /* syscall: "symlink" ret: "int" args: "const char *" "const char *" */
@@ -190,10 +190,10 @@
 /* syscall: "getpriority" ret: "int" args: "int" "int" */
 #define	LINUX_SYS_getpriority	100
 
-/* syscall: "send" ret: "int" args: "int" "caddr_t" "int" "int" */
+/* syscall: "send" ret: "int" args: "int" "void *" "int" "int" */
 #define	LINUX_SYS_send	101
 
-/* syscall: "recv" ret: "int" args: "int" "caddr_t" "int" "int" */
+/* syscall: "recv" ret: "int" args: "int" "void *" "int" "int" */
 #define	LINUX_SYS_recv	102
 
 /* syscall: "sigreturn" ret: "int" args: "struct linux_sigframe *" */
@@ -208,7 +208,7 @@
 /* syscall: "listen" ret: "int" args: "int" "int" */
 #define	LINUX_SYS_listen	106
 
-/* syscall: "sigsuspend" ret: "int" args: "caddr_t" "int" "int" */
+/* syscall: "sigsuspend" ret: "int" args: "void *" "int" "int" */
 #define	LINUX_SYS_sigsuspend	111
 
 /* syscall: "sigstack" ret: "int" args: "struct sigstack *" "struct sigstack *" */
@@ -274,7 +274,7 @@
 /* syscall: "rmdir" ret: "int" args: "const char *" */
 #define	LINUX_SYS_rmdir	137
 
-/* syscall: "getpeername" ret: "int" args: "int" "caddr_t" "int *" */
+/* syscall: "getpeername" ret: "int" args: "int" "void *" "int *" */
 #define	LINUX_SYS_getpeername	141
 
 /* syscall: "getrlimit" ret: "int" args: "int" "struct orlimit *" */
@@ -286,7 +286,7 @@
 /* syscall: "setsid" ret: "int" args: */
 #define	LINUX_SYS_setsid	147
 
-/* syscall: "getsockname" ret: "int" args: "int" "caddr_t" "int *" */
+/* syscall: "getsockname" ret: "int" args: "int" "void *" "int *" */
 #define	LINUX_SYS_getsockname	150
 
 /* syscall: "sigaction" ret: "int" args: "int" "const struct linux_old_sigaction *" "struct linux_old_sigaction *" */
@@ -352,7 +352,7 @@
 
 #else
 #endif
-/* syscall: "msync" ret: "int" args: "caddr_t" "int" "int" */
+/* syscall: "msync" ret: "int" args: "void *" "int" "int" */
 #define	LINUX_SYS_msync	217
 
 /* syscall: "getpgid" ret: "int" args: "int" */

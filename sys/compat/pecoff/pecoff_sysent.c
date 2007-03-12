@@ -1,4 +1,4 @@
-/* $NetBSD: pecoff_sysent.c,v 1.28 2007/02/09 21:55:24 ad Exp $ */
+/* $NetBSD: pecoff_sysent.c,v 1.28.2.1 2007/03/12 05:52:42 rmind Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pecoff_sysent.c,v 1.28 2007/02/09 21:55:24 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pecoff_sysent.c,v 1.28.2.1 2007/03/12 05:52:42 rmind Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -189,7 +189,7 @@ struct sysent pecoff_sysent[] = {
 	{ 0, 0, 0,
 	    sys_nosys },			/* 64 = excluded { int sys_getpagesize ( void ) ; } ogetpagesize */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 65 = excluded { int sys_msync ( caddr_t addr , size_t len ) ; } */
+	    sys_nosys },			/* 65 = excluded { int sys_msync ( void *addr , size_t len ) ; } */
 	{ 0, 0, 0,
 	    sys_vfork },			/* 66 = vfork */
 	{ 0, 0, 0,
@@ -201,7 +201,7 @@ struct sysent pecoff_sysent[] = {
 	{ 1, s(struct sys_sstk_args), 0,
 	    sys_sstk },				/* 70 = sstk */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 71 = excluded { int sys_mmap ( caddr_t addr , size_t len , int prot , int flags , int fd , long pos ) ; } ommap */
+	    sys_nosys },			/* 71 = excluded { int sys_mmap ( void *addr , size_t len , int prot , int flags , int fd , long pos ) ; } ommap */
 	{ 1, s(struct sys_ovadvise_args), 0,
 	    sys_ovadvise },			/* 72 = vadvise */
 	{ 2, s(struct sys_munmap_args), 0,
@@ -257,13 +257,13 @@ struct sysent pecoff_sysent[] = {
 	{ 3, s(struct sys_connect_args), 0,
 	    sys_connect },			/* 98 = connect */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 99 = excluded { int sys_accept ( int s , caddr_t name , int * anamelen ) ; } oaccept */
+	    sys_nosys },			/* 99 = excluded { int sys_accept ( int s , void *name , int * anamelen ) ; } oaccept */
 	{ 2, s(struct sys_getpriority_args), 0,
 	    sys_getpriority },			/* 100 = getpriority */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 101 = excluded { int sys_send ( int s , caddr_t buf , int len , int flags ) ; } osend */
+	    sys_nosys },			/* 101 = excluded { int sys_send ( int s , void *buf , int len , int flags ) ; } osend */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 102 = excluded { int sys_recv ( int s , caddr_t buf , int len , int flags ) ; } orecv */
+	    sys_nosys },			/* 102 = excluded { int sys_recv ( int s , void *buf , int len , int flags ) ; } orecv */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 103 = excluded { int sys_sigreturn ( struct sigcontext13 * sigcntxp ) ; } sigreturn13 */
 	{ 3, s(struct sys_bind_args), 0,
@@ -287,7 +287,7 @@ struct sysent pecoff_sysent[] = {
 	{ 0, 0, 0,
 	    sys_nosys },			/* 113 = excluded { int sys_recvmsg ( int s , struct omsghdr * msg , int flags ) ; } orecvmsg */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 114 = excluded { int sys_sendmsg ( int s , caddr_t msg , int flags ) ; } osendmsg */
+	    sys_nosys },			/* 114 = excluded { int sys_sendmsg ( int s , void *msg , int flags ) ; } osendmsg */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 115 = obsolete vtrace */
 	{ 2, s(struct sys_gettimeofday_args), 0,
@@ -309,7 +309,7 @@ struct sysent pecoff_sysent[] = {
 	{ 2, s(struct sys_fchmod_args), 0,
 	    sys_fchmod },			/* 124 = fchmod */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 125 = excluded { int sys_recvfrom ( int s , caddr_t buf , size_t len , int flags , caddr_t from , int * fromlenaddr ) ; } orecvfrom */
+	    sys_nosys },			/* 125 = excluded { int sys_recvfrom ( int s , void *buf , size_t len , int flags , void *from , int * fromlenaddr ) ; } orecvfrom */
 	{ 2, s(struct sys_setreuid_args), 0,
 	    sys_setreuid },			/* 126 = setreuid */
 	{ 2, s(struct sys_setregid_args), 0,
@@ -341,7 +341,7 @@ struct sysent pecoff_sysent[] = {
 	{ 2, s(struct sys_adjtime_args), 0,
 	    sys_adjtime },			/* 140 = adjtime */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 141 = excluded { int sys_getpeername ( int fdes , caddr_t asa , int * alen ) ; } ogetpeername */
+	    sys_nosys },			/* 141 = excluded { int sys_getpeername ( int fdes , void *asa , int * alen ) ; } ogetpeername */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 142 = excluded { int32_t sys_gethostid ( void ) ; } ogethostid */
 	{ 0, 0, 0,
@@ -359,7 +359,7 @@ struct sysent pecoff_sysent[] = {
 	{ 0, 0, 0,
 	    sys_nosys },			/* 149 = excluded { int sys_quota ( void ) ; } oquota */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 150 = excluded { int sys_getsockname ( int fdec , caddr_t asa , int * alen ) ; } ogetsockname */
+	    sys_nosys },			/* 150 = excluded { int sys_getsockname ( int fdec , void *asa , int * alen ) ; } ogetsockname */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 151 = unimplemented */
 	{ 0, 0, 0,

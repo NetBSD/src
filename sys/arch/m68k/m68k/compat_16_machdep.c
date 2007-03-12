@@ -1,4 +1,4 @@
-/*    $NetBSD: compat_16_machdep.c,v 1.9 2007/02/09 21:55:05 ad Exp $   */
+/*    $NetBSD: compat_16_machdep.c,v 1.9.2.1 2007/03/12 05:48:53 rmind Exp $   */
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.9 2007/02/09 21:55:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.9.2.1 2007/03/12 05:48:53 rmind Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -330,7 +330,7 @@ compat_16_sys___sigreturn14(struct lwp *l, void *v, register_t *retval)
 	 * See if there is anything to do before we go to the
 	 * expense of copying in close to 1/2K of data
 	 */
-	flags = fuword((caddr_t)rf);
+	flags = fuword((void *)rf);
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW)
 		printf("sigreturn(%d): sc_ap %x flags %x\n",
@@ -340,7 +340,7 @@ compat_16_sys___sigreturn14(struct lwp *l, void *v, register_t *retval)
 	if (flags == -1)
 		return EINVAL;
 
-	if (flags == 0 || copyin((caddr_t)rf, &tstate, sizeof(tstate)) != 0)
+	if (flags == 0 || copyin((void *)rf, &tstate, sizeof(tstate)) != 0)
 		goto restore;
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)

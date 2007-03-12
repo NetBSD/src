@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.23 2005/11/27 14:01:45 yamt Exp $	*/
+/*	$NetBSD: intr.c,v 1.23.26.1 2007/03/12 05:48:59 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.23 2005/11/27 14:01:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.23.26.1 2007/03/12 05:48:59 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,7 +94,7 @@ int	intr_debug = 0;
  * IIfx/Q700/900/950/etc. where the interrupt controller may be reprogrammed
  * to interrupt on different levels as listed in locore.s
  */
-u_short mac68k_ipls[MAC68K_NIPLS];
+u_short mac68k_ipls[NIPL];
 
 extern	int intrcnt[];		/* from locore.s */
 
@@ -115,48 +115,51 @@ intr_init(void)
 	const char	*inames;
 	char		*g_inames;
 
-	mac68k_ipls[MAC68K_IPL_NONE] = 0;
-	mac68k_ipls[MAC68K_IPL_SOFT] = PSL_S|PSL_IPL1;
-	mac68k_ipls[MAC68K_IPL_SERIAL] = PSL_S|PSL_IPL4;
-	mac68k_ipls[MAC68K_IPL_HIGH] = PSL_S|PSL_IPL7;
+	mac68k_ipls[IPL_NONE]       = 0;
+	mac68k_ipls[IPL_SOFTCLOCK]  = PSL_S|PSL_IPL1;
+	mac68k_ipls[IPL_SOFTNET]    = PSL_S|PSL_IPL1;
+	mac68k_ipls[IPL_SOFTSERIAL] = PSL_S|PSL_IPL1;
+	mac68k_ipls[IPL_SOFT]       = PSL_S|PSL_IPL1;
+	mac68k_ipls[IPL_SERIAL]     = PSL_S|PSL_IPL4;
+	mac68k_ipls[IPL_HIGH]       = PSL_S|PSL_IPL7;
 
 	g_inames = (char *) &intrnames;
 	if (mac68k_machine.aux_interrupts) {
 		inames = AUX_INAMES;
 
 		/* Standard spl(9) interrupt priorities */
-		mac68k_ipls[MAC68K_IPL_BIO] = (PSL_S | PSL_IPL2);
-		mac68k_ipls[MAC68K_IPL_NET] = (PSL_S | PSL_IPL3);
-		mac68k_ipls[MAC68K_IPL_TTY] = (PSL_S | PSL_IPL1);
-		mac68k_ipls[MAC68K_IPL_IMP] = (PSL_S | PSL_IPL6);
-		mac68k_ipls[MAC68K_IPL_STATCLOCK] = (PSL_S | PSL_IPL6);
-		mac68k_ipls[MAC68K_IPL_CLOCK] = (PSL_S | PSL_IPL6);
-		mac68k_ipls[MAC68K_IPL_SCHED] = (PSL_S | PSL_IPL6);
+		mac68k_ipls[IPL_BIO]       = (PSL_S | PSL_IPL2);
+		mac68k_ipls[IPL_NET]       = (PSL_S | PSL_IPL3);
+		mac68k_ipls[IPL_TTY]       = (PSL_S | PSL_IPL1);
+		mac68k_ipls[IPL_VM]        = (PSL_S | PSL_IPL6);
+		mac68k_ipls[IPL_STATCLOCK] = (PSL_S | PSL_IPL6);
+		mac68k_ipls[IPL_CLOCK]     = (PSL_S | PSL_IPL6);
+		mac68k_ipls[IPL_SCHED]     = (PSL_S | PSL_IPL6);
 
 		/* Non-standard interrupt priorities */
-		mac68k_ipls[MAC68K_IPL_ADB] = (PSL_S | PSL_IPL6);
-		mac68k_ipls[MAC68K_IPL_AUDIO] = (PSL_S | PSL_IPL5);
+		mac68k_ipls[IPL_ADB]       = (PSL_S | PSL_IPL6);
+		mac68k_ipls[IPL_AUDIO]     = (PSL_S | PSL_IPL5);
 
 	} else {
 		inames = STD_INAMES;
 
 		/* Standard spl(9) interrupt priorities */
-		mac68k_ipls[MAC68K_IPL_BIO] = (PSL_S | PSL_IPL2);
-		mac68k_ipls[MAC68K_IPL_NET] = (PSL_S | PSL_IPL2);
-		mac68k_ipls[MAC68K_IPL_TTY] = (PSL_S | PSL_IPL1);
-		mac68k_ipls[MAC68K_IPL_IMP] = (PSL_S | PSL_IPL2);
-		mac68k_ipls[MAC68K_IPL_STATCLOCK] = (PSL_S | PSL_IPL2);
-		mac68k_ipls[MAC68K_IPL_CLOCK] = (PSL_S | PSL_IPL2);
-		mac68k_ipls[MAC68K_IPL_SCHED] = (PSL_S | PSL_IPL3);
+		mac68k_ipls[IPL_BIO]       = (PSL_S | PSL_IPL2);
+		mac68k_ipls[IPL_NET]       = (PSL_S | PSL_IPL2);
+		mac68k_ipls[IPL_TTY]       = (PSL_S | PSL_IPL1);
+		mac68k_ipls[IPL_VM]        = (PSL_S | PSL_IPL2);
+		mac68k_ipls[IPL_STATCLOCK] = (PSL_S | PSL_IPL2);
+		mac68k_ipls[IPL_CLOCK]     = (PSL_S | PSL_IPL2);
+		mac68k_ipls[IPL_SCHED]     = (PSL_S | PSL_IPL3);
 
 		/* Non-standard interrupt priorities */
-		mac68k_ipls[MAC68K_IPL_ADB] = (PSL_S | PSL_IPL1);
-		mac68k_ipls[MAC68K_IPL_AUDIO] = (PSL_S | PSL_IPL2);
+		mac68k_ipls[IPL_ADB]       = (PSL_S | PSL_IPL1);
+		mac68k_ipls[IPL_AUDIO]     = (PSL_S | PSL_IPL2);
 
 		if (current_mac_model->class == MACH_CLASSAV) {
 			inames = AV_INAMES;
-			mac68k_ipls[MAC68K_IPL_BIO] =
-			    mac68k_ipls[MAC68K_IPL_NET] = (PSL_S | PSL_IPL4);
+			mac68k_ipls[IPL_BIO] = (PSL_S | PSL_IPL4);
+			mac68k_ipls[IPL_NET] = (PSL_S | PSL_IPL4);
 		}
 	}
 
@@ -181,29 +184,28 @@ intr_computeipl(void)
 {
 	/*
 	 * Enforce the following relationship, as defined in spl(9):
-	 * `bio <= net <= tty <= imp <= statclock <= clock <= sched <= serial'
+	 * `bio <= net <= tty <= vm <= statclock <= clock <= sched <= serial'
 	 */
-	if (mac68k_ipls[MAC68K_IPL_BIO] > mac68k_ipls[MAC68K_IPL_NET])
-		mac68k_ipls[MAC68K_IPL_NET] = mac68k_ipls[MAC68K_IPL_BIO];
+	if (mac68k_ipls[IPL_BIO] > mac68k_ipls[IPL_NET])
+		mac68k_ipls[IPL_NET] = mac68k_ipls[IPL_BIO];
 
-	if (mac68k_ipls[MAC68K_IPL_NET] > mac68k_ipls[MAC68K_IPL_TTY])
-		mac68k_ipls[MAC68K_IPL_TTY] = mac68k_ipls[MAC68K_IPL_NET];
+	if (mac68k_ipls[IPL_NET] > mac68k_ipls[IPL_TTY])
+		mac68k_ipls[IPL_TTY] = mac68k_ipls[IPL_NET];
 
-	if (mac68k_ipls[MAC68K_IPL_TTY] > mac68k_ipls[MAC68K_IPL_IMP])
-		mac68k_ipls[MAC68K_IPL_IMP] = mac68k_ipls[MAC68K_IPL_TTY];
+	if (mac68k_ipls[IPL_TTY] > mac68k_ipls[IPL_VM])
+		mac68k_ipls[IPL_VM] = mac68k_ipls[IPL_TTY];
 
-	if (mac68k_ipls[MAC68K_IPL_IMP] > mac68k_ipls[MAC68K_IPL_STATCLOCK])
-		mac68k_ipls[MAC68K_IPL_STATCLOCK] = mac68k_ipls[MAC68K_IPL_IMP];
+	if (mac68k_ipls[IPL_VM] > mac68k_ipls[IPL_STATCLOCK])
+		mac68k_ipls[IPL_STATCLOCK] = mac68k_ipls[IPL_VM];
 
-	if (mac68k_ipls[MAC68K_IPL_STATCLOCK] > mac68k_ipls[MAC68K_IPL_CLOCK])
-		mac68k_ipls[MAC68K_IPL_CLOCK] =
-		    mac68k_ipls[MAC68K_IPL_STATCLOCK];
+	if (mac68k_ipls[IPL_STATCLOCK] > mac68k_ipls[IPL_CLOCK])
+		mac68k_ipls[IPL_CLOCK] = mac68k_ipls[IPL_STATCLOCK];
 
-	if (mac68k_ipls[MAC68K_IPL_CLOCK] > mac68k_ipls[MAC68K_IPL_SCHED])
-		mac68k_ipls[MAC68K_IPL_SCHED] = mac68k_ipls[MAC68K_IPL_CLOCK];
+	if (mac68k_ipls[IPL_CLOCK] > mac68k_ipls[IPL_SCHED])
+		mac68k_ipls[IPL_SCHED] = mac68k_ipls[IPL_CLOCK];
 
-	if (mac68k_ipls[MAC68K_IPL_SCHED] > mac68k_ipls[MAC68K_IPL_SERIAL])
-		mac68k_ipls[MAC68K_IPL_SERIAL] = mac68k_ipls[MAC68K_IPL_SCHED];
+	if (mac68k_ipls[IPL_SCHED] > mac68k_ipls[IPL_SERIAL])
+		mac68k_ipls[IPL_SERIAL] = mac68k_ipls[IPL_SCHED];
 }
 
 /*
@@ -278,29 +280,4 @@ intr_noint(void *arg)
 		printf("intr_noint: ipl %d\n", (int)arg);
 #endif
 	return 0;
-}
-
-void
-netintr(void)
-{
-	int s, isr;
-
-	for (;;) {
-		s = splhigh();
-		isr = netisr;
-		netisr = 0;
-		splx(s);
-
-		if (isr == 0)
-			return;
-
-#define DONETISR(bit, fn) do {		\
-	if (isr & (1 << bit))		\
-		fn();			\
-} while (0)
-
-#include <net/netisr_dispatch.h>
-
-#undef DONETISR
-	}
 }

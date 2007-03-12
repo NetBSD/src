@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_obio.c,v 1.21 2005/12/11 12:19:20 christos Exp $	*/
+/*	$NetBSD: if_ie_obio.c,v 1.21.26.1 2007/03/12 05:51:06 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie_obio.c,v 1.21 2005/12/11 12:19:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie_obio.c,v 1.21.26.1 2007/03/12 05:51:06 rmind Exp $");
 
 #include "opt_inet.h"
 
@@ -123,7 +123,7 @@ ie_obio_attach(struct device *parent, struct device *self, void *args)
 	 * memory access goes to the high 16 megabytes
 	 * of the on-board memory space (on-board DVMA).
 	 */
-	sc->sc_iobase = (caddr_t)DVMA_OBIO_SLAVE_BASE;
+	sc->sc_iobase = (void *)DVMA_OBIO_SLAVE_BASE;
 
 	/*
 	 * The on-board "ie" just uses main memory, so
@@ -146,7 +146,7 @@ ie_obio_attach(struct device *parent, struct device *self, void *args)
 	 * SCP happens to fall in a page used by the
 	 * PROM monitor, which the PROM knows about.
 	 */
-	sc->scp = (volatile void *) (sc->sc_iobase + IE_SCP_ADDR);
+	sc->scp = (volatile void *)((char *)sc->sc_iobase + IE_SCP_ADDR);
 
 	/*
 	 * The rest of ram is used for buffers.

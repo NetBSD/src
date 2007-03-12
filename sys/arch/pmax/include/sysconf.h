@@ -1,4 +1,4 @@
-/*	$NetBSD: sysconf.h,v 1.10 2000/06/06 00:08:27 nisimura Exp $	*/
+/*	$NetBSD: sysconf.h,v 1.10.82.1 2007/03/12 05:49:51 rmind Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -70,7 +70,7 @@ struct platform {
 	void	(*iointr) __P((unsigned, unsigned, unsigned, unsigned));
 	void	(*intr_establish) __P((struct device *, void *, int,
 		    int (*)(void *), void *));
-	int	(*memsize) __P((caddr_t));
+	int	(*memsize) __P((void *));
 	unsigned (*clkread) __P((void));
 };
 
@@ -89,8 +89,8 @@ extern struct platform platform;
 extern struct sysinit sysinit[];
 extern int nsysinit;
 
-int	memsize_scan __P((caddr_t));
-int	memsize_bitmap __P((caddr_t));
+int	memsize_scan __P((void *));
+int	memsize_bitmap __P((void *));
 void	platform_not_configured __P((void));
 void	platform_not_supported __P((void));
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.194.2.1 2007/02/27 16:53:15 yamt Exp $ */
+/*	$NetBSD: machdep.c,v 1.194.2.2 2007/03/12 05:50:49 rmind Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.194.2.1 2007/02/27 16:53:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.194.2.2 2007/03/12 05:50:49 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -154,7 +154,7 @@ extern vaddr_t avail_end;
 
 int	physmem;
 
-extern	caddr_t msgbufaddr;
+extern	void *msgbufaddr;
 
 /*
  * Maximum number of DMA segments we'll allow in dmamem_load()
@@ -459,7 +459,7 @@ getframe(struct lwp *l, int sig, int *onstack)
 	    && (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
 
 	if (*onstack)
-		return ((caddr_t)l->l_sigstk.ss_sp + l->l_sigstk.ss_size);
+		return ((char *)l->l_sigstk.ss_sp + l->l_sigstk.ss_size);
 	else
 		return (void *)((uintptr_t)tf->tf_out[6] + STACK_OFFSET);
 }
@@ -693,12 +693,12 @@ cpu_dumpconf()
 #define	BYTES_PER_DUMP	(PAGE_SIZE)	/* must be a multiple of pagesize */
 static vaddr_t dumpspace;
 
-caddr_t
-reserve_dumppages(caddr_t p)
+void *
+reserve_dumppages(void *p)
 {
 
 	dumpspace = (vaddr_t)p;
-	return (p + BYTES_PER_DUMP);
+	return (char *)p + BYTES_PER_DUMP;
 }
 
 /*
@@ -710,7 +710,7 @@ dumpsys()
 	const struct bdevsw *bdev;
 	register int psize;
 	daddr_t blkno;
-	register int (*dump)(dev_t, daddr_t, caddr_t, size_t);
+	register int (*dump)(dev_t, daddr_t, void *, size_t);
 	int j, error = 0;
 	unsigned long todo;
 	register struct mem_region *mp;
@@ -784,7 +784,7 @@ dumpsys()
 			pmap_kenter_pa(dumpspace, maddr, VM_PROT_READ);
 			pmap_update(pmap_kernel());
 			error = (*dump)(dumpdev, blkno,
-					(caddr_t)dumpspace, (int)n);
+					(void *)dumpspace, (int)n);
 			pmap_kremove(dumpspace, n);
 			pmap_update(pmap_kernel());
 			if (error)
@@ -1410,7 +1410,7 @@ _bus_dmamem_free(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs)
  */
 int
 _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
-	size_t size, caddr_t *kvap, int flags)
+	size_t size, void **kvap, int flags)
 {
 	vaddr_t va, sva;
 	int r, cbit;
@@ -1446,7 +1446,7 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 	if (va + size != sva + oversize)
 		uvm_unmap(kernel_map, va + size, sva + oversize);
 
-	*kvap = (caddr_t)va;
+	*kvap = (void *)va;
 	return (0);
 }
 
@@ -1455,7 +1455,7 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
  * bus-specific DMA memory unmapping functions.
  */
 void
-_bus_dmamem_unmap(bus_dma_tag_t t, caddr_t kva, size_t size)
+_bus_dmamem_unmap(bus_dma_tag_t t, void *kva, size_t size)
 {
 
 #ifdef DIAGNOSTIC
@@ -1803,7 +1803,7 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 #endif /* __arch64__ */
 
 	if ((ras_pc = (__greg_t)ras_lookup(l->l_proc,
-	    (caddr_t) gr[_REG_PC])) != -1) {
+	    (void *) gr[_REG_PC])) != -1) {
 		gr[_REG_PC] = ras_pc;
 		gr[_REG_nPC] = ras_pc + 4;
 	}

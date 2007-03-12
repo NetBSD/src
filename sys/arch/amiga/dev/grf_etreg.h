@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_etreg.h,v 1.6 2005/12/24 20:06:47 perry Exp $	*/
+/*	$NetBSD: grf_etreg.h,v 1.6.26.1 2007/03/12 05:46:40 rmind Exp $	*/
 
 /*
  * Copyright (c) 1996 Tobias Abt
@@ -359,23 +359,23 @@ static inline void RegOffpass(volatile void *ba) {
 	delay(200000);
 }
 
-static inline unsigned char RAttr(volatile void * ba, short idx) {
+static inline unsigned char RAttr(volatile void *ba, short idx) {
 	if(vgar(ba, GREG_STATUS1_R));
 	vgaw(ba, ACT_ADDRESS_W, idx);
 	return vgar (ba, ACT_ADDRESS_R);
 }
 
-static inline unsigned char RSeq(volatile void * ba, short idx) {
+static inline unsigned char RSeq(volatile void *ba, short idx) {
 	vgaw (ba, SEQ_ADDRESS, idx);
 	return vgar (ba, SEQ_ADDRESS_R);
 }
 
-static inline unsigned char RCrt(volatile void * ba, short idx) {
+static inline unsigned char RCrt(volatile void *ba, short idx) {
 	vgaw (ba, CRT_ADDRESS, idx);
 	return vgar (ba, CRT_ADDRESS_R);
 }
 
-static inline unsigned char RGfx(volatile void * ba, short idx) {
+static inline unsigned char RGfx(volatile void *ba, short idx) {
 	vgaw(ba, GCT_ADDRESS, idx);
 	return vgar (ba, GCT_ADDRESS_R);
 }

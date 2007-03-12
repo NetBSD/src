@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.141 2007/02/10 18:16:18 hannken Exp $ */
+/*	$NetBSD: trap.c,v 1.141.2.1 2007/03/12 05:50:50 rmind Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.141 2007/02/10 18:16:18 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.141.2.1 2007/03/12 05:50:50 rmind Exp $");
 
 #define NEW_FPSTATE
 
@@ -760,7 +760,7 @@ badtrap:
 		fplwp = NULL;
 		/* tf->tf_psr &= ~PSR_EF; */	/* share_fpu will do this */
 		if (l->l_md.md_fpstate->fs_qsize == 0) {
-			error = copyin((caddr_t)pc,
+			error = copyin((void *)pc,
 			    &l->l_md.md_fpstate->fs_queue[0].fq_instr,
 			    sizeof(int));
 			if (error) {
@@ -796,7 +796,7 @@ badtrap:
 
 	case T_BREAKPOINT:
 		if (LIST_EMPTY(&p->p_raslist) ||
-		    (ras_lookup(p, (caddr_t)(intptr_t)tf->tf_pc) == (caddr_t)-1)) {
+		    (ras_lookup(p, (void *)(intptr_t)tf->tf_pc) == (void *)-1)) {
 			sig = SIGTRAP;
 			KSI_INIT_TRAP(&ksi);
 			ksi.ksi_trap = type;
@@ -920,7 +920,7 @@ rwindow_save(struct lwp *l)
 			}
 #endif
 			rwdest += BIAS;
-			if (copyout((caddr_t)&rw[i], (caddr_t)(u_long)rwdest,
+			if (copyout((void *)&rw[i], (void *)(u_long)rwdest,
 				    sizeof(*rw))) {
 #ifdef DEBUG
 			if (rwindow_debug & (RW_ERR | RW_64))
@@ -933,7 +933,7 @@ rwindow_save(struct lwp *l)
 #ifdef DEBUG
 			if (rwindow_debug & RW_64) {
 				printf("Finished copyout(%p, %p, %lx)\n",
-					(caddr_t)&rw[i], (caddr_t)(long)rwdest,
+					(void *)&rw[i], (void *)(long)rwdest,
                                 	sizeof(*rw));
 				Debugger();
 			}
@@ -947,7 +947,7 @@ rwindow_save(struct lwp *l)
 				rwstack.rw_in[j] = (int)rw[i].rw_in[j];
 			}
 			/* Must truncate rwdest */
-			if (copyout(&rwstack, (caddr_t)(u_long)(u_int)rwdest,
+			if (copyout(&rwstack, (void *)(u_long)(u_int)rwdest,
 				    sizeof(rwstack))) {
 #ifdef DEBUG
 				if (rwindow_debug & RW_ERR)
@@ -1152,7 +1152,7 @@ data_access_fault(struct trapframe64 *tf, unsigned int type, vaddr_t pc,
 	 * the current limit and we need to reflect that as an access
 	 * error.
 	 */
-	if ((caddr_t)va >= vm->vm_maxsaddr) {
+	if ((void *)va >= vm->vm_maxsaddr) {
 		if (rv == 0)
 			uvm_grow(p, va);
 		else if (rv == EACCES)
@@ -1488,7 +1488,7 @@ text_access_fault(struct trapframe64 *tf, unsigned int type, vaddr_t pc,
 	 * the current limit and we need to reflect that as an access
 	 * error.
 	 */
-	if ((caddr_t)va >= vm->vm_maxsaddr) {
+	if ((void *)va >= vm->vm_maxsaddr) {
 		if (rv == 0)
 			uvm_grow(p, va);
 	}
@@ -1668,7 +1668,7 @@ text_access_error(struct trapframe64 *tf, unsigned int type, vaddr_t pc,
 	 * the current limit and we need to reflect that as an access
 	 * error.
 	 */
-	if ((caddr_t)va >= vm->vm_maxsaddr) {
+	if ((void *)va >= vm->vm_maxsaddr) {
 		if (rv == 0)
 			uvm_grow(p, va);
 		else if (rv == EACCES)

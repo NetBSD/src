@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.32 2007/02/09 21:55:11 ad Exp $	*/
+/*	$NetBSD: syscall.c,v 1.32.2.1 2007/03/12 05:50:08 rmind Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -55,7 +55,7 @@
 
 #define	FIRSTARG	3		/* first argument is in reg 3 */
 #define	NARGREG		8		/* 8 args are in registers */
-#define	MOREARGS(sp)	((caddr_t)((uintptr_t)(sp) + 8)) /* more args go here */
+#define	MOREARGS(sp)	((void *)((uintptr_t)(sp) + 8)) /* more args go here */
 
 #ifndef EMULNAME
 #include <sys/syscall.h>
@@ -63,7 +63,7 @@
 #define EMULNAME(x)	(x)
 #define EMULNAMEU(x)	(x)
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.32 2007/02/09 21:55:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.32.2.1 2007/03/12 05:50:08 rmind Exp $");
 
 void
 child_return(void *arg)

@@ -1,4 +1,4 @@
-#	$NetBSD: files.cesfic,v 1.14 2005/12/11 12:17:05 christos Exp $
+#	$NetBSD: files.cesfic,v 1.14.26.1 2007/03/12 05:47:33 rmind Exp $
 #
 # cesfic-specific configuration info
 
@@ -61,6 +61,7 @@ file	arch/m68k/m68k/db_memrw.c		ddb | kgdb
 file	arch/m68k/m68k/kgdb_machdep.c		kgdb
 file	arch/m68k/m68k/pmap_motorola.c
 file	arch/m68k/m68k/procfs_machdep.c		procfs
+file	arch/m68k/m68k/softintr.c
 file	arch/m68k/m68k/sys_machdep.c
 file	arch/m68k/m68k/vm_machdep.c
 

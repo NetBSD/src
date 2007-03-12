@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.9 2005/12/24 20:07:19 perry Exp $	*/
+/*	$NetBSD: if_le.c,v 1.9.26.1 2007/03/12 05:49:35 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.9 2005/12/24 20:07:19 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.9.26.1 2007/03/12 05:49:35 rmind Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -174,7 +174,7 @@ le_attach(parent, self, aux)
 
 	u_char *id;
 	int i;
-	caddr_t kvaddr;
+	void *kvaddr;
 
 	id = (u_char *)ETHER_ID;
 	lesc->sc_bustag = ca->ca_bustag;

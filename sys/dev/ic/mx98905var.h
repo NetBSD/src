@@ -1,4 +1,4 @@
-/*	$NetBSD: mx98905var.h,v 1.1 2001/12/15 17:47:35 bjh21 Exp $	*/
+/*	$NetBSD: mx98905var.h,v 1.1.74.1 2007/03/12 05:53:39 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 
 void	mx98905_attach(struct dp8390_softc *);
 int	mx98905_write_mbuf(struct dp8390_softc *, struct mbuf *, int);
-int	mx98905_ring_copy(struct dp8390_softc *, int, caddr_t, u_short);
+int	mx98905_ring_copy(struct dp8390_softc *, int, void *, u_short);
 void	mx98905_read_hdr(struct dp8390_softc *, int, struct dp8390_ring *);
 void	mx98905_readmem(bus_space_tag_t, bus_space_handle_t,
     bus_space_tag_t, bus_space_handle_t, int, u_int8_t *, size_t, int);

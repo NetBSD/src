@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.13 2006/09/13 07:13:03 gdamore Exp $	*/
+/*	$NetBSD: clock.c,v 1.13.6.1 2007/03/12 05:50:25 rmind Exp $	*/
 
 /*
  * Copyright 1997
@@ -154,7 +154,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.13 2006/09/13 07:13:03 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.13.6.1 2007/03/12 05:50:25 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -165,6 +165,7 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.13 2006/09/13 07:13:03 gdamore Exp $");
 
 #include <machine/cpu.h>
 #include <machine/intr.h>
+#include <machine/irqhandler.h>
 #include <machine/pio.h>
 #include <arm/cpufunc.h>
 

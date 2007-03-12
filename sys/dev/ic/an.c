@@ -1,4 +1,4 @@
-/*	$NetBSD: an.c,v 1.47 2007/01/04 18:44:45 elad Exp $	*/
+/*	$NetBSD: an.c,v 1.47.2.1 2007/03/12 05:53:26 rmind Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: an.c,v 1.47 2007/01/04 18:44:45 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: an.c,v 1.47.2.1 2007/03/12 05:53:26 rmind Exp $");
 
 #include "bpfilter.h"
 
@@ -123,7 +123,7 @@ static int	an_init(struct ifnet *);
 static void	an_stop(struct ifnet *, int);
 static void	an_start(struct ifnet *);
 static void	an_watchdog(struct ifnet *);
-static int	an_ioctl(struct ifnet *, u_long, caddr_t);
+static int	an_ioctl(struct ifnet *, u_long, void *);
 static int	an_media_change(struct ifnet *);
 static void	an_media_status(struct ifnet *, struct ifmediareq *);
 
@@ -783,13 +783,13 @@ an_start(struct ifnet *ifp)
 		if (ic->ic_flags & IEEE80211_F_PRIVACY)
 			wh->i_fc[1] |= IEEE80211_FC1_WEP;
 		m_copydata(m, 0, sizeof(struct ieee80211_frame),
-		    (caddr_t)&frmhdr.an_whdr);
+		    (void *)&frmhdr.an_whdr);
 
 		/* insert payload length in front of llc/snap */
 		len = htons(m->m_pkthdr.len - sizeof(struct ieee80211_frame));
 		m_adj(m, sizeof(struct ieee80211_frame) - sizeof(len));
 		if (mtod(m, u_long) & 0x01)
-			memcpy(mtod(m, caddr_t), &len, sizeof(len));
+			memcpy(mtod(m, void *), &len, sizeof(len));
 		else
 			*mtod(m, u_int16_t *) = len;
 
@@ -913,7 +913,7 @@ an_watchdog(struct ifnet *ifp)
 }
 
 static int
-an_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
+an_ioctl(struct ifnet *ifp, u_long command, void *data)
 {
 	struct an_softc *sc = ifp->if_softc;
 	int s, error = 0;
@@ -1763,7 +1763,7 @@ an_mwrite_bap(struct an_softc *sc, int id, int off, struct mbuf *m, int totlen)
 		len = min(m->m_len, totlen);
 
 		if ((mtod(m, u_long) & 0x1) || (len & 0x1)) {
-			m_copydata(m, 0, totlen, (caddr_t)&sc->sc_buf.sc_txbuf);
+			m_copydata(m, 0, totlen, (void *)&sc->sc_buf.sc_txbuf);
 			cnt = (totlen + 1) / 2;
 			CSR_WRITE_MULTI_STREAM_2(sc, AN_DATA0,
 			    sc->sc_buf.sc_val, cnt);

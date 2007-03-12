@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.82 2007/01/24 13:08:14 hubertf Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.82.2.1 2007/03/12 05:47:55 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2002 The NetBSD Foundation, Inc.
@@ -143,7 +143,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.82 2007/01/24 13:08:14 hubertf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.82.2.1 2007/03/12 05:47:55 rmind Exp $");
 
 #include "hil.h"
 #include "dvbox.h"
@@ -218,8 +218,7 @@ static int	dio_scan(int (*func)(bus_space_tag_t, bus_addr_t, int));
 static int	dio_scode_probe(int,
 		    int (*func)(bus_space_tag_t, bus_addr_t, int));
 
-extern	caddr_t internalhpib;
-extern	char *extiobase;
+extern	void *internalhpib;
 
 /* How we were booted. */
 u_int	bootdev;
@@ -318,8 +317,8 @@ mainbusattach(struct device *parent, struct device *self, void *aux)
 }
 
 static int
-mainbussearch(struct device *parent, struct cfdata *cf,
-	      const int *ldesc, void *aux)
+mainbussearch(struct device *parent, struct cfdata *cf, const int *ldesc,
+    void *aux)
 {
 
 	if (config_match(parent, cf, NULL) > 0)
@@ -911,12 +910,11 @@ dio_scan(int (*func)(bus_space_tag_t, bus_addr_t, int))
 }
 
 static int
-dio_scode_probe(int scode,
-    int (*func)(bus_space_tag_t, bus_addr_t, int))
+dio_scode_probe(int scode, int (*func)(bus_space_tag_t, bus_addr_t, int))
 {
 	struct bus_space_tag tag;
 	bus_space_tag_t bst;
-	caddr_t pa, va;
+	void *pa, *va;
 
 	bst = &tag;
 	memset(bst, 0, sizeof(struct bus_space_tag));
@@ -949,7 +947,7 @@ iomap_init(void)
 	/* extiobase is initialized by pmap_bootstrap(). */
 	extio_ex = extent_create("extio", (u_long) extiobase,
 	    (u_long) extiobase + (ptoa(EIOMAPSIZE) - 1), M_DEVBUF,
-	    (caddr_t) extio_ex_storage, sizeof(extio_ex_storage),
+	    (void *) extio_ex_storage, sizeof(extio_ex_storage),
 	    EX_NOCOALESCE|EX_NOWAIT);
 }
 
@@ -957,8 +955,8 @@ iomap_init(void)
  * Allocate/deallocate a cache-inhibited range of kernel virtual address
  * space mapping the indicated physical address range [pa - pa+size)
  */
-caddr_t
-iomap(caddr_t pa, int size)
+void *
+iomap(void *pa, int size)
 {
 	u_long kva;
 	int error;
@@ -974,15 +972,15 @@ iomap(caddr_t pa, int size)
 	if (error)
 		return 0;
 
-	physaccess((caddr_t) kva, pa, size, PG_RW|PG_CI);
-	return (caddr_t)kva;
+	physaccess((void *) kva, pa, size, PG_RW|PG_CI);
+	return (void *)kva;
 }
 
 /*
  * Unmap a previously mapped device.
  */
 void
-iounmap(caddr_t kva, int size)
+iounmap(void *kva, int size)
 {
 
 #ifdef DEBUG

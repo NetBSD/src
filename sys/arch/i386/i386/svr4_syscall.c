@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_syscall.c,v 1.34 2007/02/09 21:55:05 ad Exp $	*/
+/*	$NetBSD: svr4_syscall.c,v 1.34.2.1 2007/03/12 05:48:24 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_syscall.c,v 1.34 2007/02/09 21:55:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_syscall.c,v 1.34.2.1 2007/03/12 05:48:24 rmind Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -83,8 +83,8 @@ void
 svr4_syscall_plain(frame)
 	struct trapframe *frame;
 {
-	register caddr_t params;
-	register const struct sysent *callp;
+	char *params;
+	const struct sysent *callp;
 	struct lwp *l;
 	int error;
 	size_t argsize;
@@ -96,7 +96,7 @@ svr4_syscall_plain(frame)
 
 	code = frame->tf_eax;
 	callp = svr4_sysent;
-	params = (caddr_t)frame->tf_esp + sizeof(int);
+	params = (char *)frame->tf_esp + sizeof(int);
 
 	switch (code) {
 	case SYS_syscall:
@@ -114,7 +114,7 @@ svr4_syscall_plain(frame)
 	callp += code;
 	argsize = callp->sy_argsize;
 	if (argsize) {
-		error = copyin(params, (caddr_t)args, argsize);
+		error = copyin(params, (void *)args, argsize);
 		if (error)
 			goto bad;
 	}
@@ -163,9 +163,9 @@ void
 svr4_syscall_fancy(frame)
 	struct trapframe *frame;
 {
-	register caddr_t params;
-	register const struct sysent *callp;
-	register struct lwp *l;
+	char *params;
+	const struct sysent *callp;
+	struct lwp *l;
 	int error;
 	size_t argsize;
 	register_t code, args[8], rval[2];
@@ -176,7 +176,7 @@ svr4_syscall_fancy(frame)
 
 	code = frame->tf_eax;
 	callp = svr4_sysent;
-	params = (caddr_t)frame->tf_esp + sizeof(int);
+	params = (char *)frame->tf_esp + sizeof(int);
 
 	switch (code) {
 	case SYS_syscall:
@@ -194,7 +194,7 @@ svr4_syscall_fancy(frame)
 	callp += code;
 	argsize = callp->sy_argsize;
 	if (argsize) {
-		error = copyin(params, (caddr_t)args, argsize);
+		error = copyin(params, (void *)args, argsize);
 		if (error)
 			goto bad;
 	}

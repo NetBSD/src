@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_machdep.c,v 1.53 2005/11/16 00:49:03 uwe Exp $	*/
+/*	$NetBSD: vme_machdep.c,v 1.53.26.1 2007/03/12 05:50:29 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vme_machdep.c,v 1.53 2005/11/16 00:49:03 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vme_machdep.c,v 1.53.26.1 2007/03/12 05:50:29 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/extent.h>
@@ -156,12 +156,12 @@ static void	sparc_vme_iommu_dmamap_sync(bus_dma_tag_t, bus_dmamap_t,
 
 #if defined(SUN4) || defined(SUN4M)
 static int	sparc_vme_dmamem_map(bus_dma_tag_t, bus_dma_segment_t *,
-		    int, size_t, caddr_t *, int);
+		    int, size_t, void **, int);
 #endif
 
 #if 0
 static void	sparc_vme_dmamap_destroy(bus_dma_tag_t, bus_dmamap_t);
-static void	sparc_vme_dmamem_unmap(bus_dma_tag_t, caddr_t, size_t);
+static void	sparc_vme_dmamem_unmap(bus_dma_tag_t, void *, size_t);
 static paddr_t	sparc_vme_dmamem_mmap(bus_dma_tag_t,
 		    bus_dma_segment_t *, int, off_t, int, int);
 #endif
@@ -627,7 +627,7 @@ vmeintr4(void *arg)
 
 	level = (ihp->pri << 1) | 1;
 
-	vec = ldcontrolb((caddr_t)(AC_VMEINTVEC | level));
+	vec = ldcontrolb((void *)(AC_VMEINTVEC | level));
 
 	if (vec == -1) {
 #ifdef DEBUG
@@ -694,7 +694,7 @@ vmeintr4m(void *arg)
 
 	saveonfault = (u_long)xpcb->pcb_onfault;
 	vec = fkbyte(addr, xpcb);
-	xpcb->pcb_onfault = (caddr_t)saveonfault;
+	xpcb->pcb_onfault = (void *)saveonfault;
 
 	splx(s);
 	}
@@ -1079,7 +1079,7 @@ sparc_vme_iommu_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map,
 #if defined(SUN4) || defined(SUN4M)
 static int
 sparc_vme_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
-		     size_t size, caddr_t *kvap, int flags)
+		     size_t size, void **kvap, int flags)
 {
 	struct sparcvme_softc	*sc = (struct sparcvme_softc *)t->_cookie;
 

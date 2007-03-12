@@ -1,4 +1,4 @@
-/* $NetBSD: autoconf.c,v 1.6 2005/12/11 12:17:52 christos Exp $ */
+/* $NetBSD: autoconf.c,v 1.6.26.1 2007/03/12 05:48:43 rmind Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.6 2005/12/11 12:17:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.6.26.1 2007/03/12 05:48:43 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,6 +64,7 @@ cpu_configure()
 
 	(void)splhigh();
 	isrinit();
+	softintr_init();
 	if (config_rootfound("mainbus", NULL) == NULL)
 		panic("autoconfig failed, no root");
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ka650.c,v 1.31 2006/09/05 19:32:57 matt Exp $	*/
+/*	$NetBSD: ka650.c,v 1.31.8.1 2007/03/12 05:51:17 rmind Exp $	*/
 /*
  * Copyright (c) 1988 The Regents of the University of California.
  * All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka650.c,v 1.31 2006/09/05 19:32:57 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka650.c,v 1.31.8.1 2007/03/12 05:51:17 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -69,7 +69,7 @@ static	void	ka650_halt __P((void));
 static	void	ka650_reboot __P((int));
 static	void    uvaxIII_conf __P((void));
 static	void    uvaxIII_memerr __P((void));
-static	int     uvaxIII_mchk __P((caddr_t));
+static	int     uvaxIII_mchk __P((void *));
 
 struct	cpu_dep	ka650_calls = {
 	0, /* No special page stealing anymore */
@@ -183,7 +183,7 @@ struct mc650frame {
 
 int
 uvaxIII_mchk(cmcf)
-	caddr_t cmcf;
+	void *cmcf;
 {
 	register struct mc650frame *mcf = (struct mc650frame *)cmcf;
 	register u_int type = mcf->mc65_summary;

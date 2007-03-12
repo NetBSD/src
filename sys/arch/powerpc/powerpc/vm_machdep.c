@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.68 2007/02/09 21:55:11 ad Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.68.2.1 2007/03/12 05:50:09 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.68 2007/02/09 21:55:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.68.2.1 2007/03/12 05:50:09 rmind Exp $");
 
 #include "opt_altivec.h"
 #include "opt_multiprocessor.h"
@@ -85,7 +85,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	struct trapframe *tf;
 	struct callframe *cf;
 	struct switchframe *sf;
-	caddr_t stktop1, stktop2;
+	char *stktop1, *stktop2;
 	void fork_trampoline(void);
 	struct pcb *pcb = &l2->l_addr->u_pcb;
 
@@ -112,8 +112,8 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	/*
 	 * Setup the trap frame for the new process
 	 */
-	stktop1 = (caddr_t)trapframe(l1);
-	stktop2 = (caddr_t)trapframe(l2);
+	stktop1 = (void *)trapframe(l1);
+	stktop2 = (void *)trapframe(l2);
 	memcpy(stktop2, stktop1, sizeof(struct trapframe));
 
 	/*
@@ -131,7 +131,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	 * for an extra call frame (or at least space for callee
 	 * to store LR).
 	 */
-	stktop2 = (caddr_t)((uintptr_t)stktop2 & ~(CALLFRAMELEN-1));
+	stktop2 = (void *)((uintptr_t)stktop2 & ~(CALLFRAMELEN-1));
 
 	/*
 	 * There happens to be a callframe, too.
@@ -363,7 +363,7 @@ vmapbuf(struct buf *bp, vsize_t len)
 	off = (vaddr_t)bp->b_data - faddr;
 	len = round_page(off + len);
 	taddr = uvm_km_alloc(phys_map, len, 0, UVM_KMF_VAONLY | UVM_KMF_WAITVA);
-	bp->b_data = (caddr_t)(taddr + off);
+	bp->b_data = (void *)(taddr + off);
 	for (; len > 0; len -= PAGE_SIZE) {
 		(void) pmap_extract(vm_map_pmap(&bp->b_proc->p_vmspace->vm_map),
 		    faddr, &pa);

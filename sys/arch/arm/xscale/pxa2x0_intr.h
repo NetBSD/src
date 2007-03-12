@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_intr.h,v 1.9 2006/12/17 16:03:33 peter Exp $ */
+/*	$NetBSD: pxa2x0_intr.h,v 1.9.2.1 2007/03/12 05:47:08 rmind Exp $ */
 
 /* Derived from i80321_intr.h */
 
@@ -54,9 +54,9 @@
 #include <arm/xscale/pxa2x0reg.h>
 
 vaddr_t pxaic_base;		/* Shared with pxa2x0_irq.S */
-#define read_icu(offset) (*(volatile uint32_t *)(pxaic_base+(offset)))
+#define read_icu(offset) (*(volatile uint32_t *)(pxaic_base + (offset)))
 #define write_icu(offset,value) \
- (*(volatile uint32_t *)(pxaic_base+(offset))=(value))
+ (*(volatile uint32_t *)(pxaic_base + (offset)) = (value))
 
 extern volatile int current_spl_level;
 extern volatile int intr_mask;
@@ -73,9 +73,10 @@ void pxa2x0_do_pending(void);
 static inline void
 pxa2x0_setipl(int new)
 {
+
 	current_spl_level = new;
 	intr_mask = pxa2x0_imask[current_spl_level];
-	write_icu( SAIPIC_MR, intr_mask );
+	write_icu(SAIPIC_MR, intr_mask);
 }
 
 
@@ -97,16 +98,16 @@ pxa2x0_splx(int new)
 static inline int
 pxa2x0_splraise(int ipl)
 {
-	int	old, psw;
+	int old, psw;
 
 	old = current_spl_level;
-	if( ipl > current_spl_level ){
+	if (ipl > current_spl_level) {
 		psw = disable_interrupts(I32_bit);
 		pxa2x0_setipl(ipl);
 		restore_interrupts(psw);
 	}
 
-	return (old);
+	return old;
 }
 
 static inline int
@@ -114,19 +115,21 @@ pxa2x0_spllower(int ipl)
 {
 	int old = current_spl_level;
 	int psw = disable_interrupts(I32_bit);
+
 	pxa2x0_splx(ipl);
 	restore_interrupts(psw);
-	return(old);
+	return old;
 }
 
 static inline void
 pxa2x0_setsoftintr(int si)
 {
-	atomic_set_bit( (u_int *)__UNVOLATILE(&softint_pending),
-		SI_TO_IRQBIT(si) );
+
+	atomic_set_bit((u_int *)__UNVOLATILE(&softint_pending),
+	    SI_TO_IRQBIT(si));
 
 	/* Process unmasked pending soft interrupts. */
-	if ( softint_pending & intr_mask )
+	if (softint_pending & intr_mask)
 		pxa2x0_do_pending();
 }
 
@@ -136,15 +139,16 @@ pxa2x0_setsoftintr(int si)
  * XXX: This shouldn't be here.
  */
 static inline int
-find_first_bit( uint32_t bits )
+find_first_bit(uint32_t bits)
 {
 	int count;
 
-	/* since CLZ is available only on ARMv5, this isn't portable
+	/*
+	 * Since CLZ is available only on ARMv5, this isn't portable
 	 * to all ARM CPUs.  This file is for PXA2[15]0 processor. 
 	 */
 	__asm( "clz %0, %1" : "=r" (count) : "r" (bits) );
-	return 31-count;
+	return 31 - count;
 }
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_rhreg.h,v 1.15 2005/12/24 20:06:47 perry Exp $	*/
+/*	$NetBSD: grf_rhreg.h,v 1.15.26.1 2007/03/12 05:46:40 rmind Exp $	*/
 
 /*
  * Copyright (c) 1994 Markus Wild
@@ -152,7 +152,7 @@ struct MonDef {
 
 /* The prototypes for C++, prototypes for C (with explanations) below */
 
-"C" unsigned char * RZ3Init         (volatile void * HardWareAddress, struct MonDef * md);
+"C" unsigned char * RZ3Init         (volatile void *HardWareAddress, struct MonDef * md);
 "C" void            RZ3SetCursorPos (unsigned short pos);
 "C" void            RZ3AlphaErase   (unsigned short xd, unsigned short yd,
                                             unsigned short  w, unsigned short  h );
@@ -174,7 +174,7 @@ struct MonDef {
 /* The prototypes for C */
 /* with a little explanation */
 
-	unsigned char * RZ3Init(volatile void * BoardAddress, struct MonDef * md);
+	unsigned char * RZ3Init(volatile void *BoardAddress, struct MonDef * md);
 
 /*
  * This routine initialises the Retina Z3 hardware, opens a
@@ -652,22 +652,22 @@ struct MonDef {
 	vgaw(ba, PLL_ADDRESS_W, (val >> 8)); } while (0)
 
 
-static inline unsigned char RAttr(volatile void * ba, short idx) {
+static inline unsigned char RAttr(volatile void *ba, short idx) {
 	vgaw (ba, ACT_ADDRESS, idx);
 	return vgar (ba, ACT_ADDRESS_R);
 }
 
-static inline unsigned char RSeq(volatile void * ba, short idx) {
+static inline unsigned char RSeq(volatile void *ba, short idx) {
 	vgaw (ba, SEQ_ADDRESS, idx);
 	return vgar (ba, SEQ_ADDRESS_R);
 }
 
-static inline unsigned char RCrt(volatile void * ba, short idx) {
+static inline unsigned char RCrt(volatile void *ba, short idx) {
 	vgaw (ba, CRT_ADDRESS, idx);
 	return vgar (ba, CRT_ADDRESS_R);
 }
 
-static inline unsigned char RGfx(volatile void * ba, short idx) {
+static inline unsigned char RGfx(volatile void *ba, short idx) {
 	vgaw(ba, GCT_ADDRESS, idx);
 	return vgar (ba, GCT_ADDRESS_R);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.h,v 1.8 1996/02/22 10:11:41 leo Exp $	*/
+/*	$NetBSD: dma.h,v 1.8.118.1 2007/03/12 05:47:22 rmind Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -99,7 +99,7 @@ typedef void (*dma_farg)(void*);
 int	st_dmagrab __P((dma_farg, dma_farg, void *, int *, int));
 void	st_dmafree __P((void *, int *));
 int	st_dmawanted __P((void));
-void	st_dmaaddr_set __P((caddr_t));
+void	st_dmaaddr_set __P((void *));
 u_long	st_dmaaddr_get __P((void));
 void	st_dmacomm __P((int, int));
 #endif /* _KERNEL	*/

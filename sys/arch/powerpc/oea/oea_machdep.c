@@ -1,4 +1,4 @@
-/*	$NetBSD: oea_machdep.c,v 1.30.2.1 2007/02/27 16:52:50 yamt Exp $	*/
+/*	$NetBSD: oea_machdep.c,v 1.30.2.2 2007/03/12 05:50:07 rmind Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.30.2.1 2007/02/27 16:52:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.30.2.2 2007/03/12 05:50:07 rmind Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -660,7 +660,7 @@ void
 oea_startup(const char *model)
 {
 	uintptr_t sz;
-	caddr_t v;
+	void *v;
 	vaddr_t minaddr, maxaddr;
 	char pbuf[9];
 	u_int i;
@@ -675,7 +675,7 @@ oea_startup(const char *model)
 	 * it via mapped pages.  [This prevents unneeded BAT switches.]
 	 */
         sz = round_page(MSGBUFSIZE);
-	v = (caddr_t) msgbuf_paddr;
+	v = (void *) msgbuf_paddr;
 	if (msgbuf_paddr + sz > SEGMENT_LENGTH) {
 		minaddr = 0;
 		if (uvm_map(kernel_map, &minaddr, sz,
@@ -683,7 +683,7 @@ oea_startup(const char *model)
 				UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE,
 				    UVM_INH_NONE, UVM_ADV_NORMAL, 0)) != 0)
 			panic("startup: cannot allocate VM for msgbuf");
-		v = (caddr_t)minaddr;
+		v = (void *)minaddr;
 		for (i = 0; i < sz; i += PAGE_SIZE) {
 			pmap_kenter_pa(minaddr + i, msgbuf_paddr + i,
 			    VM_PROT_READ|VM_PROT_WRITE);
@@ -778,14 +778,14 @@ softnet(int pendisr)
  * Convert kernel VA to physical address
  */
 paddr_t
-kvtop(caddr_t addr)
+kvtop(void *addr)
 {
 	vaddr_t va;
 	paddr_t pa;
 	uintptr_t off;
 	extern char end[];
 
-	if (addr < end)
+	if (addr < (void *)end)
 		return (paddr_t)addr;
 
 	va = trunc_page((vaddr_t)addr);

@@ -1,4 +1,4 @@
-/* 	$NetBSD: ioapic.c,v 1.17 2007/02/09 21:55:14 ad Exp $	*/
+/* 	$NetBSD: ioapic.c,v 1.17.2.1 2007/03/12 05:51:46 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.17 2007/02/09 21:55:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.17.2.1 2007/03/12 05:51:46 rmind Exp $");
 
 #include "opt_ddb.h"
 
@@ -264,11 +264,8 @@ CFATTACH_DECL(ioapic, sizeof(struct ioapic_softc),
 int
 ioapic_match(struct device *parent, struct cfdata *match, void *aux)
 {
-	struct apic_attach_args *aaa = (struct apic_attach_args *) aux;
 
-	if (strcmp(aaa->aaa_name, match->cf_name) == 0)
-		return 1;
-	return 0;
+	return 1;
 }
 
 /*
@@ -286,7 +283,7 @@ ioapic_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_flags = aaa->flags;
 	sc->sc_pic.pic_apicid = aaa->apic_id;
 
-	printf(" apid %d (I/O APIC)\n", aaa->apic_id);
+	printf("\n");
 
 	if (ioapic_find(aaa->apic_id) != NULL) {
 		printf("%s: duplicate apic id (ignored)\n",

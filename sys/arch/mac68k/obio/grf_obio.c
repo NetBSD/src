@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_obio.c,v 1.52 2005/12/11 12:18:03 christos Exp $	*/
+/*	$NetBSD: grf_obio.c,v 1.52.26.1 2007/03/12 05:49:02 rmind Exp $	*/
 
 /*
  * Copyright (C) 1998 Scott Reynolds
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_obio.c,v 1.52 2005/12/11 12:18:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_obio.c,v 1.52.26.1 2007/03/12 05:49:02 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -345,7 +345,7 @@ grfiv_attach(struct device *parent, struct device *self, void *aux)
 	gm->hres = 80;				/* XXX hack */
 	gm->vres = 80;				/* XXX hack */
 	gm->fbsize = gm->height * gm->rowbytes;
-	gm->fbbase = (caddr_t)sc->sc_handle.base; /* XXX yet another hack */
+	gm->fbbase = (void *)sc->sc_handle.base; /* XXX yet another hack */
 	gm->fboff = sc->sc_fbofs;
 
 	/* Perform common video attachment. */

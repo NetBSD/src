@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.50 2007/02/09 21:55:06 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.50.2.1 2007/03/12 05:49:25 rmind Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,7 +76,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.50 2007/02/09 21:55:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.50.2.1 2007/03/12 05:49:25 rmind Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -166,7 +166,7 @@ int initcpu __P((void));
 void configure __P((void));
 
 void mach_init __P((int, char *[], char*[], u_int, char *));
-int  memsize_scan __P((caddr_t));
+int  memsize_scan __P((void *));
 
 #ifdef DEBUG
 /* stacktrace code violates prototypes to get callee's registers */
@@ -190,7 +190,7 @@ extern void pizazz_init __P((void));
 /* platform-specific initialization vector */
 static void	unimpl_cons_init __P((void));
 static void	unimpl_iointr __P((unsigned, unsigned, unsigned, unsigned));
-static int	unimpl_memsize __P((caddr_t));
+static int	unimpl_memsize __P((void *));
 static void	unimpl_intr_establish __P((int, int (*)__P((void *)), void *));
 
 struct platform platform = {
@@ -235,15 +235,15 @@ mach_init(argc, argv, envp, bim, bip)
 	char   *bip;
 {
 	u_long first, last;
-	caddr_t kernend, v;
+	void *kernend, *v;
 	char *cp;
 	int i, howto;
 	extern char edata[], end[];
 	const char *bi_msg;
 #if NKSYMS || defined(DDB) || defined(LKM)
 	int nsym = 0;
-	caddr_t ssym = 0;
-	caddr_t esym = 0;
+	void *ssym = 0;
+	void *esym = 0;
 	struct btinfo_symtab *bi_syms;
 #endif
 
@@ -262,7 +262,7 @@ mach_init(argc, argv, envp, bim, bip)
 		bi_msg = "invalid bootinfo (standalone boot?)\n";
 
 	/* clear the BSS segment */
-	kernend = (caddr_t)mips_round_page(end);
+	kernend = (void *)mips_round_page(end);
 	memset(edata, 0, end - edata);
 
 #if NKSYMS || defined(DDB) || defined(LKM)
@@ -271,9 +271,9 @@ mach_init(argc, argv, envp, bim, bip)
 	/* Load sysmbol table if present */
 	if (bi_syms != NULL) {
 		nsym = bi_syms->nsym;
-		ssym = (caddr_t)bi_syms->ssym;
-		esym = (caddr_t)bi_syms->esym;
-		kernend = (caddr_t)mips_round_page(esym);
+		ssym = (void *)bi_syms->ssym;
+		esym = (void *)bi_syms->esym;
+		kernend = (void *)mips_round_page(esym);
 	}
 #endif
 
@@ -332,7 +332,7 @@ mach_init(argc, argv, envp, bim, bip)
 #if NKSYMS || defined(DDB) || defined(LKM)
 	/* init symbols if present */
 	if (esym)
-		ksyms_init(esym - ssym, ssym, esym);
+		ksyms_init((char *)esym - (char *)ssym, ssym, esym);
 #endif
 #ifdef DDB
 	if (boothowto & RB_KDB)
@@ -374,9 +374,9 @@ mach_init(argc, argv, envp, bim, bip)
 	/*
 	 * Allocate space for proc0's USPACE.
 	 */
-	v = (caddr_t)uvm_pageboot_alloc(USPACE); 
+	v = (void *)uvm_pageboot_alloc(USPACE); 
 	lwp0.l_addr = proc0paddr = (struct user *)v;
-	lwp0.l_md.md_regs = (struct frame *)(v + USPACE) - 1;
+	lwp0.l_md.md_regs = (struct frame *)((char *)v + USPACE) - 1;
 	curpcb = &lwp0.l_addr->u_pcb;
 	curpcb->pcb_context[11] = MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
 
@@ -418,12 +418,12 @@ cpu_startup()
 	 * limits the number of processes exec'ing at any time.
 	 */
 	exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				   16 * NCARGS, TRUE, FALSE, NULL);
+				   16 * NCARGS, true, false, NULL);
 	/*
 	 * Allocate a submap for physio
 	 */
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				   VM_PHYS_SIZE, TRUE, FALSE, NULL);
+				   VM_PHYS_SIZE, true, false, NULL);
 
 	/*
 	 * No need to allocate an mbuf cluster submap.  Mbuf clusters
@@ -569,7 +569,7 @@ unimpl_iointr(mask, pc, statusreg, causereg)
 
 static int
 unimpl_memsize(first)
-caddr_t first;
+void *first;
 {
 
 	panic("sysconf.init didn't set memsize");
@@ -597,7 +597,7 @@ delay(n)
  */
 int
 memsize_scan(first)
-	caddr_t first;
+	void *first;
 {
 	volatile int *vp, *vp0;
 	int mem, tmp, tmp0;

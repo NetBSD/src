@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.17 2007/01/11 19:51:39 bouyer Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.17.2.1 2007/03/12 05:51:50 rmind Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.17 2007/01/11 19:51:39 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.17.2.1 2007/03/12 05:51:50 rmind Exp $");
 
 #include "opt_xen.h"
 #include "rnd.h"
@@ -625,7 +625,7 @@ xbdwrite(dev_t dev, struct uio *uio, int flags)
 }
 
 int
-xbdioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+xbdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct	xbd_xenbus_softc *sc = xbd_cd.cd_devs[DISKUNIT(dev)];
 	struct	dk_softc *dksc;
@@ -650,7 +650,7 @@ xbdioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 }
 
 int
-xbddump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
+xbddump(dev_t dev, daddr_t blkno, void *va, size_t size)
 {
 	struct	xbd_xenbus_softc *sc = xbd_cd.cd_devs[DISKUNIT(dev)];
 

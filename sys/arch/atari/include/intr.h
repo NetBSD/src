@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.13 2007/02/16 02:53:45 ad Exp $	*/
+/*	$NetBSD: intr.h,v 1.13.2.1 2007/03/12 05:47:22 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -86,21 +86,21 @@ int spl0 __P((void));
 
 typedef int ipl_t;
 typedef struct {
-	int _ipl;
+	uint16_t _psl;
 } ipl_cookie_t;
 
 static inline ipl_cookie_t
 makeiplcookie(ipl_t ipl)
 {
 
-	return (ipl_cookie_t){._ipl = ipl};
+	return (ipl_cookie_t){._psl = ipl};
 }
 
 static inline int
 splraiseipl(ipl_cookie_t icookie)
 {
 
-	return _splraise(icookie._ipl);
+	return _splraise(icookie._psl);
 }
 #endif /* _KERNEL */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: qv.c,v 1.16 2005/11/26 20:27:51 thorpej Exp $	*/
+/*	$NetBSD: qv.c,v 1.16.26.1 2007/03/12 05:51:14 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1988
@@ -123,7 +123,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qv.c,v 1.16 2005/11/26 20:27:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qv.c,v 1.16.26.1 2007/03/12 05:51:14 rmind Exp $");
 
 #include "qv.h"
 #if NQV > 0
@@ -291,7 +291,7 @@ const struct cdevsw qv_cdevsw = {
 
 /*ARGSUSED*/
 qvprobe(reg, ctlr)
-	caddr_t reg;
+	void *reg;
 	int ctlr;
 {
 	register int br, cvec;		/* these are ``value-result'' */
@@ -395,7 +395,7 @@ qvopen(dev, flag, mode, p)
 		return (EBUSY);
 	qvaddr = (struct qvdevice *)ui->ui_addr;
         qv_scn->qvaddr = qvaddr;
-	tp->t_addr = (caddr_t)qvaddr;
+	tp->t_addr = (void *)qvaddr;
 	tp->t_oproc = qvstart;
 
 	if ((tp->t_state&TS_ISOPEN) == 0) {
@@ -682,7 +682,7 @@ int
 qvioctl(dev, cmd, data, flag, p)
 	dev_t dev;
 	u_long cmd;
-	register caddr_t data;
+	register void *data;
 	int flag;
 	struct proc *p;
 {
@@ -698,7 +698,7 @@ qvioctl(dev, cmd, data, flag, p)
 	 */
 	switch( cmd ) {
 	case QIOCGINFO:					/* return screen info */
-		bcopy((caddr_t)qp, data, sizeof (struct qv_info));
+		bcopy((void *)qp, data, sizeof (struct qv_info));
 		break;
 
 	case QIOCSMSTATE:				/* set mouse state */
@@ -984,7 +984,7 @@ qvstart(tp)
 	if ( tp->t_outq.c_cc<= tp->t_lowat ) {
 		if (tp->t_state&TS_ASLEEP){
 			tp->t_state &= ~TS_ASLEEP;
-			wakeup((caddr_t)&tp->t_outq);
+			wakeup((void *)&tp->t_outq);
 		}
 	}
 	tp->t_state &= ~TS_BUSY;
@@ -1190,7 +1190,7 @@ qvscroll()
 	 * Save the first 15 scanlines so that we can put them at
 	 * the bottom when done.
 	 */
-	bcopy((caddr_t)qp->scanmap, (caddr_t)tmpscanlines, sizeof tmpscanlines);
+	bcopy((void *)qp->scanmap, (void *)tmpscanlines, sizeof tmpscanlines);
 
 	/*
 	 * Clear the wrapping line so that it won't flash on the bottom
@@ -1203,13 +1203,13 @@ qvscroll()
 	/*
 	 * Now move the scanlines down 
 	 */
-	bcopy((caddr_t)(qp->scanmap+15), (caddr_t)qp->scanmap,
+	bcopy((void *)(qp->scanmap+15), (void *)qp->scanmap,
 	      (qp->row * 15) * sizeof (short) );
 
 	/*
 	 * Now put the other lines back
 	 */
-	bcopy((caddr_t)tmpscanlines, (caddr_t)(qp->scanmap+(qp->row * 15)),
+	bcopy((void *)tmpscanlines, (void *)(qp->scanmap+(qp->row * 15)),
 	      sizeof (tmpscanlines) );
 
 }
@@ -1277,7 +1277,7 @@ qvcons_init()
          */
         devptr = (short *)((char *)umem[0] + (qb->qb_memsize * VAX_NBPG));
         qvaddr = (struct qvdevice *)((u_int)devptr + ubdevreg(QVSSCSR));
-        if (badaddr((caddr_t)qvaddr, sizeof(short)))
+        if (badaddr((void *)qvaddr, sizeof(short)))
                 return 0;
         /*
          * Okay the device is there lets set it up
@@ -1296,7 +1296,7 @@ struct qvdevice *qvaddr;
 int unit;
 int probed;
 {
-        caddr_t qvssmem;		/* pointer to the display mem   */
+        void *qvssmem;		/* pointer to the display mem   */
         register i;			/* simple index                 */
 	register struct qv_info *qp;
         register int *pte;

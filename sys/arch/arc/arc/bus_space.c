@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.8 2005/12/11 12:16:37 christos Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.8.26.1 2007/03/12 05:46:48 rmind Exp $	*/
 /*	NetBSD: bus_machdep.c,v 1.1 2000/01/26 18:48:00 drochner Exp 	*/
 
 /*-
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.8 2005/12/11 12:16:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.8.26.1 2007/03/12 05:46:48 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,7 +78,7 @@ arc_bus_space_init(bus_space_tag_t bst, const char *name, paddr_t paddr,
 }
 
 void
-arc_bus_space_init_extent(bus_space_tag_t bst, caddr_t storage,
+arc_bus_space_init_extent(bus_space_tag_t bst, void *storage,
     size_t storagesize)
 {
 

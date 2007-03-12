@@ -1,4 +1,4 @@
-/*	$NetBSD: sun2.c,v 1.7 2005/12/11 12:19:29 christos Exp $	*/
+/*	$NetBSD: sun2.c,v 1.7.26.1 2007/03/12 05:51:11 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -438,13 +438,13 @@ sun2_map_mem_run(void *entry)
 				pte | PA_PGNUM(MEM_CHUNK1_COPY_PHYS + off));
 		
 		/* Copy this segment. */
-		memcpy((caddr_t)(MEM_CHUNK1_COPY_VIRT + (off - NBSG)),
-		       (caddr_t)(MEM_CHUNK1_LOAD_VIRT + (off - NBSG)),
+		memcpy((void *)(MEM_CHUNK1_COPY_VIRT + (off - NBSG)),
+		       (void *)(MEM_CHUNK1_LOAD_VIRT + (off - NBSG)),
 		       NBSG);
 	}
 		
 	/* Tell our caller where in virtual space to enter. */
-	return ((caddr_t)entry) - MEM_CHUNK0_LOAD_VIRT;
+	return ((void *)entry) - MEM_CHUNK0_LOAD_VIRT;
 }
 
 void 

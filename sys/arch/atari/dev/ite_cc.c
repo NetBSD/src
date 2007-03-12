@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_cc.c,v 1.26 2006/03/26 04:44:08 thorpej Exp $	*/
+/*	$NetBSD: ite_cc.c,v 1.26.14.1 2007/03/12 05:47:20 rmind Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite_cc.c,v 1.26 2006/03/26 04:44:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite_cc.c,v 1.26.14.1 2007/03/12 05:47:20 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -92,7 +92,7 @@ extern font_info	font_info_8x16;
 
 static void view_init __P((struct ite_softc *));
 static void view_deinit __P((struct ite_softc *));
-static int  itecc_ioctl __P((struct ite_softc *, u_long, caddr_t, int,
+static int  itecc_ioctl __P((struct ite_softc *, u_long, void *, int,
 							struct lwp *));
 static int  ite_newsize __P((struct ite_softc *, struct itewinsize *));
 static void cursor32 __P((struct ite_softc *, int));
@@ -389,7 +389,7 @@ struct itewinsize	*winsz;
 	vs.depth  = winsz->depth;
 
 	error = (*view_cdevsw.d_ioctl)(ip->grf->g_viewdev, VIOCSSIZE,
-				       (caddr_t)&vs, 0, NOLWP);
+				       (void *)&vs, 0, NOLWP);
 	view  = viewview(ip->grf->g_viewdev);
 
 	/*
@@ -460,7 +460,7 @@ int
 itecc_ioctl(ip, cmd, addr, flag, l)
 struct ite_softc	*ip;
 u_long			cmd;
-caddr_t			addr;
+void *			addr;
 int			flag;
 struct lwp		*l;
 {
@@ -489,7 +489,7 @@ struct lwp		*l;
 			 * XXX this is messy, but works 
 			 */
 			(*ite_cdevsw.d_ioctl)(ip->grf->g_itedev, TIOCSWINSZ,
-					      (caddr_t)&ws, 0, l);
+					      (void *)&ws, 0, l);
 		}
 		break;
 	case VIOCSCMAP:

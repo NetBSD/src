@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_misc.c,v 1.105 2007/02/09 21:55:26 ad Exp $	*/
+/*	$NetBSD: ultrix_misc.c,v 1.105.2.1 2007/03/12 05:53:00 rmind Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_misc.c,v 1.105 2007/02/09 21:55:26 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_misc.c,v 1.105.2.1 2007/03/12 05:53:00 rmind Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
@@ -282,7 +282,7 @@ ultrix_sys_select(struct lwp *l, void *v, register_t *retval)
 
 	/* Check for negative timeval */
 	if (SCARG(uap, tv)) {
-		error = copyin((caddr_t)SCARG(uap, tv), (caddr_t)&atv,
+		error = copyin((void *)SCARG(uap, tv), (void *)&atv,
 			       sizeof(atv));
 		if (error)
 			goto done;
@@ -388,7 +388,7 @@ ultrix_sys_setsockopt(struct lwp *l, void *v, register_t *retval)
 	}
 	if (SCARG(uap, val)) {
 		m = m_get(M_WAIT, MT_SOOPTS);
-		error = copyin(SCARG(uap, val), mtod(m, caddr_t),
+		error = copyin(SCARG(uap, val), mtod(m, void *),
 		    (u_int)SCARG(uap, valsize));
 		if (error) {
 			(void) m_free(m);
@@ -439,7 +439,7 @@ ultrix_sys_uname(struct lwp *l, void *v, register_t *retval)
 	*dp = '\0';
 	strncpy(sut.machine, machine, sizeof(sut.machine) - 1);
 
-	return copyout((caddr_t)&sut, (caddr_t)SCARG(uap, name),
+	return copyout((void *)&sut, (void *)SCARG(uap, name),
 	    sizeof(struct ultrix_utsname));
 }
 
@@ -473,7 +473,7 @@ ultrix_sys_nfssvc(struct lwp *l, void *v, register_t *retval)
 	struct sys_nfssvc_args outuap;
 	struct sockaddr sa;
 	int error;
-	caddr_t sg = stackgap_init(p, 0);
+	void *sg = stackgap_init(p, 0);
 
 	memset(&outuap, 0, sizeof outuap);
 	SCARG(&outuap, fd) = SCARG(uap, fd);
@@ -604,7 +604,7 @@ ultrix_sys_sigpending(struct lwp *l, void *v, register_t *retval)
 	sigpending1(l, &ss);
 	mask = ss.__bits[0];
 
-	return (copyout((caddr_t)&mask, (caddr_t)SCARG(uap, mask), sizeof(int)));
+	return (copyout((void *)&mask, (void *)SCARG(uap, mask), sizeof(int)));
 }
 
 int
@@ -792,7 +792,7 @@ ultrix_sys_fcntl(struct lwp *l, void *v, register_t *retval)
 	int error;
 	struct ultrix_flock ufl;
 	struct flock fl, *flp = NULL;	/* XXX gcc */
-	caddr_t sg;
+	void *sg;
 	struct sys_fcntl_args *args, fca;
 
 	switch (SCARG(uap, cmd)) {

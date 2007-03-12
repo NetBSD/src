@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_lwp.c,v 1.1.6.2 2007/02/27 16:53:38 yamt Exp $	*/
+/*	$NetBSD: netbsd32_lwp.c,v 1.1.6.3 2007/03/12 05:52:32 rmind Exp $	*/
 
 /*
  *  Copyright (c) 2005, 2006, 2007 The NetBSD Foundation.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_lwp.c,v 1.1.6.2 2007/02/27 16:53:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_lwp.c,v 1.1.6.3 2007/03/12 05:52:32 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -144,7 +144,7 @@ netbsd32__lwp_park(struct lwp *l, void *v, register_t *retval)
 		struct timespec ts;
 		struct netbsd32_timespec ts32;
 		int error;
-		caddr_t sg;
+		void *sg;
 
 		if ((error = copyin(NETBSD32PTR64(SCARG(uap, ts)), &ts32,
 		    sizeof ts32)) != 0)

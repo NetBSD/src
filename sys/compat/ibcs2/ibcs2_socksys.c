@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_socksys.c,v 1.15 2007/02/09 21:55:18 ad Exp $	*/
+/*	$NetBSD: ibcs2_socksys.c,v 1.15.2.1 2007/03/12 05:52:11 rmind Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Scott Bartram
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_socksys.c,v 1.15 2007/02/09 21:55:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_socksys.c,v 1.15.2.1 2007/03/12 05:52:11 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,7 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: ibcs2_socksys.c,v 1.15 2007/02/09 21:55:18 ad Exp $"
 struct ibcs2_socksys_args {
 	int     fd;
 	int     magic;
-	caddr_t argsp;
+	void *argsp;
 };
 
 int
@@ -72,7 +72,7 @@ ibcs2_socksys(l, v, retval)
 	 * The others are (and should be) only legal on sockets.
 	 */
 
-	error = copyin(uap->argsp, (caddr_t)realargs, sizeof(realargs));
+	error = copyin(uap->argsp, (void *)realargs, sizeof(realargs));
 	if (error)
 		return error;
 	DPRINTF(("ibcs2_socksys: %08x %08x %08x %08x %08x %08x %08x\n",

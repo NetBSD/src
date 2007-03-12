@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_resource.c,v 1.7 2007/02/09 21:55:18 ad Exp $ */
+/*	$NetBSD: irix_resource.c,v 1.7.2.1 2007/03/12 05:52:13 rmind Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_resource.c,v 1.7 2007/02/09 21:55:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_resource.c,v 1.7.2.1 2007/03/12 05:52:13 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -106,7 +106,7 @@ irix_sys_getrlimit(l, v, retval)
 		syscallarg(struct irix_rlimit *) rlp;
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
-	caddr_t sg = stackgap_init(p, 0);
+	void *sg = stackgap_init(p, 0);
 	struct sys_getrlimit_args cup;
 	struct rlimit rlp;
 	struct irix_rlimit irlp;
@@ -148,7 +148,7 @@ irix_sys_getrlimit64(l, v, retval)
 		syscallarg(struct irix_rlimit64 *) rlp;
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
-	caddr_t sg = stackgap_init(p, 0);
+	void *sg = stackgap_init(p, 0);
 	struct sys_getrlimit_args cup;
 	struct rlimit rlp;
 	struct irix_rlimit64 irlp;
@@ -190,7 +190,7 @@ irix_sys_setrlimit(l, v, retval)
 		syscallarg(const struct irix_rlimit *) rlp;
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
-	caddr_t sg = stackgap_init(p, 0);
+	void *sg = stackgap_init(p, 0);
 	struct sys_setrlimit_args cup;
 	struct rlimit rlp;
 	struct irix_rlimit irlp;
@@ -229,7 +229,7 @@ irix_sys_setrlimit64(l, v, retval)
 		syscallarg(const struct irix_rlimit64 *) rlp;
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
-	caddr_t sg = stackgap_init(p, 0);
+	void *sg = stackgap_init(p, 0);
 	struct sys_setrlimit_args cup;
 	struct rlimit rlp;
 	struct irix_rlimit64 irlp;

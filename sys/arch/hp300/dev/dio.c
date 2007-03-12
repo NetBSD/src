@@ -1,4 +1,4 @@
-/*	$NetBSD: dio.c,v 1.34 2006/07/21 18:05:30 tsutsui Exp $	*/
+/*	$NetBSD: dio.c,v 1.34.10.1 2007/03/12 05:47:43 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dio.c,v 1.34 2006/07/21 18:05:30 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dio.c,v 1.34.10.1 2007/03/12 05:47:43 rmind Exp $");
 
 #define	_HP300_INTR_H_PRIVATE
 
@@ -104,7 +104,7 @@ dioattach(struct device *parent, struct device *self, void *aux)
 	struct dio_softc *sc = (struct dio_softc *)self;
 	struct dio_attach_args da;
 	bus_addr_t pa;
-	caddr_t va;
+	void *va;
 	bus_space_tag_t bst = &sc->sc_tag;
 	bus_space_handle_t bsh;
 	int scode, scmax, scodesize;

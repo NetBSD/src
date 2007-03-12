@@ -1,4 +1,4 @@
-/*	$NetBSD: fdcvar.h,v 1.3 2005/12/11 12:16:39 christos Exp $	*/
+/*	$NetBSD: fdcvar.h,v 1.3.26.1 2007/03/12 05:46:50 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -126,7 +126,7 @@ struct fdc_softc {
 	u_char sc_status[7];		/* copy of registers */
 
 	/* DMA functions set from MD code */
-	void (*sc_dma_start)(struct fdc_softc *, caddr_t, size_t, int);
+	void (*sc_dma_start)(struct fdc_softc *, void *, size_t, int);
 	void (*sc_dma_abort)(struct fdc_softc *);
 	void (*sc_dma_done)(struct fdc_softc *);
 };

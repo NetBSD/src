@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_sbdio.c,v 1.1 2005/12/29 15:20:09 tsutsui Exp $	*/
+/*	$NetBSD: if_le_sbdio.c,v 1.1.28.1 2007/03/12 05:47:42 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2005 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_sbdio.c,v 1.1 2005/12/29 15:20:09 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_sbdio.c,v 1.1.28.1 2007/03/12 05:47:42 rmind Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -122,7 +122,7 @@ le_sbdio_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 	if (bus_dmamem_map(lesc->sc_dmat, &seg, rseg, LE_MEMSIZE,
-	    (caddr_t *)&sc->sc_mem, BUS_DMA_NOWAIT|BUS_DMA_COHERENT) != 0) {
+	    (void **)&sc->sc_mem, BUS_DMA_NOWAIT|BUS_DMA_COHERENT) != 0) {
 		printf(": can't map DMA memory\n");
 		return;
 	}

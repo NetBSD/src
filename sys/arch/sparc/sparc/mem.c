@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.38 2005/11/14 19:11:24 uwe Exp $ */
+/*	$NetBSD: mem.c,v 1.38.26.1 2007/03/12 05:50:43 rmind Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.38 2005/11/14 19:11:24 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.38.26.1 2007/03/12 05:50:43 rmind Exp $");
 
 #include "opt_sparc_arch.h"
 
@@ -96,7 +96,7 @@ __KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.38 2005/11/14 19:11:24 uwe Exp $");
 
 extern vaddr_t prom_vstart;
 extern vaddr_t prom_vend;
-caddr_t zeropage;
+void *zeropage;
 
 dev_type_read(mmrw);
 dev_type_ioctl(mmioctl);
@@ -117,13 +117,13 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 	int error = 0;
 	static int physlock;
 	vm_prot_t prot;
-	extern caddr_t vmmap;
+	extern void *vmmap;
 
 	if (minor(dev) == DEV_MEM) {
 		/* lock against other uses of shared vmmap */
 		while (physlock > 0) {
 			physlock++;
-			error = tsleep((caddr_t)&physlock, PZERO | PCATCH,
+			error = tsleep((void *)&physlock, PZERO | PCATCH,
 			    "mmrw", 0);
 			if (error)
 				return (error);
@@ -159,7 +159,7 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 			pmap_update(pmap_kernel());
 			o = uio->uio_offset & PGOFSET;
 			c = min(uio->uio_resid, (int)(PAGE_SIZE - o));
-			error = uiomove((caddr_t)vmmap + o, c, uio);
+			error = uiomove((char *)vmmap + o, c, uio);
 			pmap_remove(pmap_kernel(),
 			    (vaddr_t)vmmap, (vaddr_t)vmmap + PAGE_SIZE);
 			pmap_update(pmap_kernel());
@@ -175,7 +175,7 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 				c = min(iov->iov_len, prom_vend - prom_vstart);
 			} else {
 				c = min(iov->iov_len, MAXPHYS);
-				if (!uvm_kernacc((caddr_t)va, c,
+				if (!uvm_kernacc((void *)va, c,
 				    uio->uio_rw == UIO_READ ? B_READ : B_WRITE))
 					return (EFAULT);
 			}
@@ -205,7 +205,7 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 				return(0);
 			}
 			if (zeropage == NULL) {
-				zeropage = (caddr_t)
+				zeropage = (void *)
 				    malloc(PAGE_SIZE, M_TEMP, M_WAITOK);
 				bzero(zeropage, PAGE_SIZE);
 			}
@@ -224,7 +224,7 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 	if (minor(dev) == 0) {
 unlock:
 		if (physlock > 1)
-			wakeup((caddr_t)&physlock);
+			wakeup((void *)&physlock);
 		physlock = 0;
 	}
 	return (error);

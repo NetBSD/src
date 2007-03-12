@@ -1,4 +1,4 @@
-/* $NetBSD: ispvar.h,v 1.64 2005/12/11 12:21:27 christos Exp $ */
+/* $NetBSD: ispvar.h,v 1.64.26.1 2007/03/12 05:53:36 rmind Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -187,7 +187,7 @@ typedef	u_int32_t	isp_dma_addr_t;
 #define	RESULT_QUEUE_LEN(x)		\
 	(((MAXISPREQUEST(x) >> 2) < 64)? 64 : MAXISPREQUEST(x) >> 2)
 #endif
-#define	ISP_QUEUE_ENTRY(q, idx)		((q) + ((idx) * QENTRY_LEN))
+#define	ISP_QUEUE_ENTRY(q, idx)		((char *)(q) + ((idx) * QENTRY_LEN))
 #define	ISP_QUEUE_SIZE(n)		((n) * QENTRY_LEN)
 #define	ISP_NXT_QENTRY(idx, qlen)	(((idx) + 1) & ((qlen)-1))
 #define	ISP_QFREE(in, out, qlen)	\
@@ -338,7 +338,7 @@ typedef struct {
 	/*
 	 * Scratch DMA mapped in area to fetch Port Database stuff, etc.
 	 */
-	caddr_t			isp_scratch;
+	void *			isp_scratch;
 	isp_dma_addr_t		isp_scdma;
 #ifdef	ISP_FW_CRASH_DUMP
 	u_int16_t		*isp_dump_data;
@@ -389,7 +389,7 @@ typedef struct ispsoftc {
 	 * may contain some volatile state (e.g., current loop state).
 	 */
 
-	void * 			isp_param;	/* type specific */
+	void *			isp_param;	/* type specific */
 	u_int16_t		isp_fwrev[3];	/* Loaded F/W revision */
 	u_int16_t		isp_romfw_rev[3]; /* PROM F/W revision */
 	u_int16_t		isp_maxcmds;	/* max possible I/O cmds */
@@ -459,8 +459,8 @@ typedef struct ispsoftc {
 	/*
 	 * request/result queue pointers and DMA handles for them.
 	 */
-	caddr_t			isp_rquest;
-	caddr_t			isp_result;
+	void *			isp_rquest;
+	void *			isp_result;
 	isp_dma_addr_t		isp_rquest_dma;
 	isp_dma_addr_t		isp_result_dma;
 } ispsoftc_t;

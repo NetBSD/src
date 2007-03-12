@@ -1,4 +1,4 @@
-/*      $NetBSD: sa11x0_com.c,v 1.37 2006/10/01 20:31:49 elad Exp $        */
+/*      $NetBSD: sa11x0_com.c,v 1.37.4.1 2007/03/12 05:47:08 rmind Exp $        */
 
 /*-
  * Copyright (c) 1998, 1999, 2001 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa11x0_com.c,v 1.37 2006/10/01 20:31:49 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa11x0_com.c,v 1.37.4.1 2007/03/12 05:47:08 rmind Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -712,7 +712,7 @@ sacomtty(dev_t dev)
 }
 
 int
-sacomioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+sacomioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct sacom_softc *sc = device_lookup(&sacom_cd, COMUNIT(dev));
 	struct tty *tp = sc->sc_tty;

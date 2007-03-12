@@ -1,4 +1,4 @@
-/*	$NetBSD: mt.c,v 1.8 2007/02/15 18:33:26 reinoud Exp $ */
+/*	$NetBSD: mt.c,v 1.8.2.1 2007/03/12 05:53:21 rmind Exp $ */
 
 /*-
  * Copyright (c) 1996-2003 The NetBSD Foundation, Inc.
@@ -121,7 +121,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mt.c,v 1.8 2007/02/15 18:33:26 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mt.c,v 1.8.2.1 2007/03/12 05:53:21 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -407,7 +407,7 @@ mtopen(dev, flag, mode, l)
 			goto errout;
 		if (!(sc->sc_flags & MTF_REW))
 			break;
-		if (tsleep((caddr_t) &lbolt, PCATCH | (PZERO + 1),
+		if (tsleep((void *) &lbolt, PCATCH | (PZERO + 1),
 		    "mt", 0) != 0) {
 			error = EINTR;
 			goto errout;
@@ -1051,7 +1051,7 @@ int
 mtioctl(dev, cmd, data, flag, l)
 	dev_t dev;
 	u_long cmd;
-	caddr_t data;
+	void *data;
 	int flag;
 	struct lwp *l;
 {

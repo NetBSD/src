@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.45 2006/09/05 05:32:30 mhitch Exp $ */
+/*	$NetBSD: clock.c,v 1.45.8.1 2007/03/12 05:46:38 rmind Exp $ */
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.45 2006/09/05 05:32:30 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.45.8.1 2007/03/12 05:46:38 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -433,7 +433,7 @@ clockopen(dev_t dev, int flags)
 int
 clockclose(dev_t dev, int flags)
 {
-	(void) clockunmmap(dev, (caddr_t)0, curproc);	/* XXX */
+	(void) clockunmmap(dev, (void *)0, curproc);	/* XXX */
 	stopclock();
 	clockon = 0;
 	return(0);
@@ -441,18 +441,18 @@ clockclose(dev_t dev, int flags)
 
 /*ARGSUSED*/
 int
-clockioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+clockioctl(dev_t dev, u_long cmd, void *data, int flag, struct proc *p)
 {
 	int error = 0;
 
 	switch (cmd) {
 
 	case CLOCKMAP:
-		error = clockmmap(dev, (caddr_t *)data, p);
+		error = clockmmap(dev, (void **)data, p);
 		break;
 
 	case CLOCKUNMAP:
-		error = clockunmmap(dev, *(caddr_t *)data, p);
+		error = clockunmmap(dev, *(void **)data, p);
 		break;
 
 	case CLOCKGETRES:
@@ -474,7 +474,7 @@ clockmap(dev_t dev, int off, int prot)
 }
 
 int
-clockmmap(dev_t dev, caddr_t *addrp, struct proc *p)
+clockmmap(dev_t dev, void **addrp, struct proc *p)
 {
 	int error;
 	struct vnode vn;
@@ -485,17 +485,17 @@ clockmmap(dev_t dev, caddr_t *addrp, struct proc *p)
 	if (*addrp)
 		flags |= MAP_FIXED;
 	else
-		*addrp = (caddr_t)0x1000000;	/* XXX */
+		*addrp = (void *)0x1000000;	/* XXX */
 	vn.v_type = VCHR;			/* XXX */
 	vn.v_specinfo = &si;			/* XXX */
 	vn.v_rdev = dev;			/* XXX */
 	error = vm_mmap(&p->p_vmspace->vm_map, (vm_offset_t *)addrp,
-			PAGE_SIZE, VM_PROT_ALL, flags, (caddr_t)&vn, 0);
+			PAGE_SIZE, VM_PROT_ALL, flags, (void *)&vn, 0);
 	return(error);
 }
 
 int
-clockunmmap(dev_t dev, caddr_t addr, struct proc *p)
+clockunmmap(dev_t dev, void *addr, struct proc *p)
 {
 	int rv;
 
@@ -634,7 +634,7 @@ stopprofclock(void)
  * Assumes it is called with clock interrupts blocked.
  */
 void
-profclock(caddr_t pc, int ps)
+profclock(void *pc, int ps)
 {
 	/*
 	 * Came from user mode.

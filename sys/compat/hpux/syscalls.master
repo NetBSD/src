@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.29 2007/02/09 21:55:16 ad Exp $
+	$NetBSD: syscalls.master,v 1.29.2.1 2007/03/12 05:52:00 rmind Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -93,8 +93,8 @@
 			    struct hpux_ostat *sb); }
 29	STD		{ int hpux_sys_pause_6x(void); }
 30	STD		{ int hpux_sys_utime_6x(char *fname, time_t *tptr); }
-31	STD		{ int hpux_sys_stty_6x(int fd, caddr_t arg); }
-32	STD		{ int hpux_sys_gtty_6x(int fd, caddr_t arg); }
+31	STD		{ int hpux_sys_stty_6x(int fd, void *arg); }
+32	STD		{ int hpux_sys_gtty_6x(int fd, void *arg); }
 33	STD		{ int hpux_sys_access(const char *path, int flags); }
 34	STD		{ int hpux_sys_nice_6x(int nval); }
 35	STD		{ int hpux_sys_ftime_6x(struct hpux_timeb *tp); }
@@ -108,7 +108,7 @@
 41	NOARGS		{ int sys_dup(int fd); }
 42	NOARGS		{ int sys_pipe(void); }
 43	STD		{ int hpux_sys_times_6x(struct tms *tms); }
-44	NOARGS		{ int sys_profil(caddr_t samples, u_int size, \
+44	NOARGS		{ int sys_profil(void *samples, u_int size, \
 			    u_int offset, u_int scale); }
 
 45	UNIMPL		ki_syscall
@@ -120,7 +120,7 @@
 51	UNIMPL		acct
 52	UNIMPL
 53	UNIMPL
-54	STD		{ int hpux_sys_ioctl(int fd, int com, caddr_t data); }
+54	STD		{ int hpux_sys_ioctl(int fd, int com, void *data); }
 55	UNIMPL		reboot
 56	STD		{ int hpux_sys_symlink(const char *path, \
 			    const char *link); }
@@ -141,11 +141,11 @@
 68	NOARGS		{ int hpux_sys_write(int fd, char *buf, u_int nbyte); } vwrite
 69	UNIMPL
 70	UNIMPL
-71	STD		{ int hpux_sys_mmap(caddr_t addr, size_t len, \
+71	STD		{ int hpux_sys_mmap(void *addr, size_t len, \
 			    int prot, int flags, int fd, long pos); }
 72	UNIMPL
-73	NOARGS		{ int sys_munmap(caddr_t addr, size_t len); }
-74	NOARGS		{ int sys_mprotect(caddr_t addr, size_t len, \
+73	NOARGS		{ int sys_munmap(void *addr, size_t len); }
+74	NOARGS		{ int sys_mprotect(void *addr, size_t len, \
 			    int prot); }
 75	UNIMPL
 76	UNIMPL
@@ -402,32 +402,32 @@
 272	NOARGS		{ int sys_fchdir(int fd); }
 273	UNIMPL		getmount_cnt
 274	UNIMPL		getmount_entry
-275	NOARGS		{ int compat_43_sys_accept(int s, caddr_t name, \
+275	NOARGS		{ int compat_43_sys_accept(int s, void *name, \
 			    int *anamelen); }
-276	NOARGS		{ int sys_bind(int s, caddr_t name, int namelen); }
-277	NOARGS		{ int sys_connect(int s, caddr_t name, int namelen); }
-278	NOARGS		{ int compat_43_sys_getpeername(int fdes, caddr_t asa, \
+276	NOARGS		{ int sys_bind(int s, void *name, int namelen); }
+277	NOARGS		{ int sys_connect(int s, void *name, int namelen); }
+278	NOARGS		{ int compat_43_sys_getpeername(int fdes, void *asa, \
 			    int *alen); }
-279	NOARGS		{ int compat_43_sys_getsockname(int fdec, caddr_t asa, \
+279	NOARGS		{ int compat_43_sys_getsockname(int fdec, void *asa, \
 			    int *alen); }
 280	NOARGS		{ int sys_getsockopt(int s, int level, int name, \
-			    caddr_t val, int *avalsize); }
+			    void *val, int *avalsize); }
 281	NOARGS		{ int sys_listen(int s, int backlog); }
-282	NOARGS		{ int compat_43_sys_recv(int s, caddr_t buf, int len, \
+282	NOARGS		{ int compat_43_sys_recv(int s, void *buf, int len, \
 			    int flags); }
-283	NOARGS		{ int compat_43_sys_recvfrom(int s, caddr_t buf, \
-			    size_t len, int flags, caddr_t from, \
+283	NOARGS		{ int compat_43_sys_recvfrom(int s, void *buf, \
+			    size_t len, int flags, void *from, \
 			    int *fromlenaddr); }
 284	NOARGS		{ int compat_43_sys_recvmsg(int s, \
 			    struct omsghdr *msg, int flags); }
-285	NOARGS		{ int compat_43_sys_send(int s, caddr_t buf, int len, \
+285	NOARGS		{ int compat_43_sys_send(int s, void *buf, int len, \
 			    int flags); }
-286	NOARGS		{ int compat_43_sys_sendmsg(int s, caddr_t msg, \
+286	NOARGS		{ int compat_43_sys_sendmsg(int s, void *msg, \
 			    int flags); }
-287	NOARGS		{ int sys_sendto(int s, caddr_t buf, size_t len, \
-			    int flags, caddr_t to, int tolen); }
+287	NOARGS		{ int sys_sendto(int s, void *buf, size_t len, \
+			    int flags, void *to, int tolen); }
 288	STD		{ int hpux_sys_setsockopt2(int s, int level, int name, \
-			    caddr_t val, int valsize); }
+			    void *val, int valsize); }
 289	NOARGS		{ int sys_shutdown(int s, int how); }
 290	NOARGS		{ int compat_30_sys_socket(int domain, int type, int protocol); }
 291	NOARGS		{ int sys_socketpair(int domain, int type, \

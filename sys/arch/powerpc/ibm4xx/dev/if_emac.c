@@ -1,4 +1,4 @@
-/*	$NetBSD: if_emac.c,v 1.27 2006/10/16 18:14:35 kiyohara Exp $	*/
+/*	$NetBSD: if_emac.c,v 1.27.4.1 2007/03/12 05:49:53 rmind Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_emac.c,v 1.27 2006/10/16 18:14:35 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_emac.c,v 1.27.4.1 2007/03/12 05:49:53 rmind Exp $");
 
 #include "bpfilter.h"
 
@@ -252,7 +252,7 @@ static void	emac_attach(struct device *, struct device *, void *);
 
 static int	emac_add_rxbuf(struct emac_softc *, int);
 static int	emac_init(struct ifnet *);
-static int	emac_ioctl(struct ifnet *, u_long, caddr_t);
+static int	emac_ioctl(struct ifnet *, u_long, void *);
 static void	emac_reset(struct emac_softc *);
 static void	emac_rxdrain(struct emac_softc *);
 static int	emac_txreap(struct emac_softc *);
@@ -343,7 +343,7 @@ emac_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	if ((error = bus_dmamem_map(sc->sc_dmat, &seg, nseg,
-	    sizeof(struct emac_control_data), (caddr_t *)&sc->sc_control_data,
+	    sizeof(struct emac_control_data), (void **)&sc->sc_control_data,
 	    BUS_DMA_COHERENT)) != 0) {
 		printf("%s: unable to map control data, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
@@ -512,7 +512,7 @@ fail_4:
 fail_3:
 	bus_dmamap_destroy(sc->sc_dmat, sc->sc_cddmamap);
 fail_2:
-	bus_dmamem_unmap(sc->sc_dmat, (caddr_t)sc->sc_control_data,
+	bus_dmamem_unmap(sc->sc_dmat, (void *)sc->sc_control_data,
 	    sizeof(struct emac_control_data));
 fail_1:
 	bus_dmamem_free(sc->sc_dmat, &seg, nseg);
@@ -1010,7 +1010,7 @@ emac_stop(struct ifnet *ifp, int disable)
 
 /* ifnet interface function */
 static int
-emac_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
+emac_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct emac_softc *sc = ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *)data;
@@ -1367,8 +1367,8 @@ emac_rxeob_intr(void *arg)
 			MGETHDR(m, M_DONTWAIT, MT_DATA);
 			if (m == NULL)
 				goto dropit;
-			memcpy(mtod(m, caddr_t),
-			    mtod(rxs->rxs_mbuf, caddr_t), len);
+			memcpy(mtod(m, void *),
+			    mtod(rxs->rxs_mbuf, void *), len);
 			EMAC_INIT_RXDESC(sc, i);
 			bus_dmamap_sync(sc->sc_dmat, rxs->rxs_dmamap, 0,
 			    rxs->rxs_dmamap->dm_mapsize,

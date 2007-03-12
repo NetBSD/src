@@ -1,4 +1,4 @@
-/*	$NetBSD: nullcons_subr.c,v 1.4 2005/12/11 12:20:53 christos Exp $	*/
+/*	$NetBSD: nullcons_subr.c,v 1.4.26.1 2007/03/12 05:53:05 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nullcons_subr.c,v 1.4 2005/12/11 12:20:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nullcons_subr.c,v 1.4.26.1 2007/03/12 05:53:05 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -88,7 +88,7 @@ int
 nullcndev_ioctl(dev, cmd, data, flag, l)
 	dev_t dev;
 	u_long cmd;
-	caddr_t data;
+	void *data;
 	int flag;
 	struct lwp *l;
 {

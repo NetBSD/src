@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.40 2006/11/25 11:59:58 scw Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.40.4.1 2007/03/12 05:51:16 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.40 2006/11/25 11:59:58 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.40.4.1 2007/03/12 05:51:16 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,7 +96,7 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *),
 	if (biowait(bp)) {
 		msg = "I/O error";
 	} else {
-		dlp = (struct disklabel *)(bp->b_data + LABELOFFSET);
+		dlp = (struct disklabel *)((char *)bp->b_data + LABELOFFSET);
 		if (dlp->d_magic != DISKMAGIC || dlp->d_magic2 != DISKMAGIC) {
 			msg = "no disk label";
 		} else if (dlp->d_npartitions > MAXPARTITIONS ||
@@ -260,7 +260,7 @@ writedisklabel(dev_t dev, void (*strat)(struct buf *),
 	(*strat)(bp);
 	if ((error = biowait(bp)))
 		goto done;
-	dlp = (struct disklabel *)(bp->b_data + LABELOFFSET);
+	dlp = (struct disklabel *)((char *)bp->b_data + LABELOFFSET);
 	bcopy(lp, dlp, sizeof(struct disklabel));
 	bp->b_flags &= ~(B_READ|B_DONE);
 	bp->b_flags |= B_WRITE;
@@ -298,7 +298,7 @@ disk_reallymapin(struct buf *bp, struct pte *map, int reg, int flag)
 	volatile pt_entry_t *io;
 	pt_entry_t *pte;
 	int pfnum, npf, o;
-	caddr_t addr;
+	void *addr;
 
 	o = (int)bp->b_data & VAX_PGOFSET;
 	npf = vax_btoc(bp->b_bcount + o) + 1;

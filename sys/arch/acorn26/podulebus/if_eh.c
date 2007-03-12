@@ -1,4 +1,4 @@
-/* $NetBSD: if_eh.c,v 1.10 2007/01/24 13:08:12 hubertf Exp $ */
+/* $NetBSD: if_eh.c,v 1.10.2.1 2007/03/12 05:45:15 rmind Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -52,7 +52,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: if_eh.c,v 1.10 2007/01/24 13:08:12 hubertf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eh.c,v 1.10.2.1 2007/03/12 05:45:15 rmind Exp $");
 
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -109,7 +109,7 @@ struct eh_softc {
 };
 
 int	eh_write_mbuf(struct dp8390_softc *, struct mbuf *, int);
-int	eh_ring_copy(struct dp8390_softc *, int, caddr_t, u_short);
+int	eh_ring_copy(struct dp8390_softc *, int, void *, u_short);
 void	eh_read_hdr(struct dp8390_softc *, int, struct dp8390_ring *);
 int	eh_test_mem(struct dp8390_softc *);
 
@@ -527,24 +527,25 @@ eh_write_mbuf(struct dp8390_softc *dsc, struct mbuf *m, int buf)
  * ring-wrap.
  */
 int
-eh_ring_copy(struct dp8390_softc *dsc, int src, caddr_t dst, u_short amount)
+eh_ring_copy(struct dp8390_softc *dsc, int src, void *dst_arg, u_short amount)
 {
 	struct eh_softc *sc = (struct eh_softc *)dsc;
 	u_short tmp_amount;
+	u_int8_t *dst = dst_arg;
 
 	/* Does copy wrap to lower addr in ring buffer? */
 	if (src + amount > dsc->mem_end) {
 		tmp_amount = dsc->mem_end - src;
 
 		/* Copy amount up to end of NIC memory. */
-		eh_readmem(sc, src, (u_int8_t *)dst, tmp_amount);
+		eh_readmem(sc, src, dst, tmp_amount);
 
 		amount -= tmp_amount;
 		src = dsc->mem_ring;
 		dst += tmp_amount;
 	}
 
-	eh_readmem(sc, src, (u_int8_t *)dst, amount);
+	eh_readmem(sc, src, dst, amount);
 
 	return (src + amount);
 }

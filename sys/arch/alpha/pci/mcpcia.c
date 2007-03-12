@@ -1,4 +1,4 @@
-/* $NetBSD: mcpcia.c,v 1.19 2005/12/11 12:16:17 christos Exp $ */
+/* $NetBSD: mcpcia.c,v 1.19.26.1 2007/03/12 05:46:14 rmind Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcpcia.c,v 1.19 2005/12/11 12:16:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcpcia.c,v 1.19.26.1 2007/03/12 05:46:14 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,7 +91,7 @@ __KERNEL_RCSID(0, "$NetBSD: mcpcia.c,v 1.19 2005/12/11 12:16:17 christos Exp $")
 #include <alpha/pci/mcpciavar.h>
 #include <alpha/pci/pci_kn300.h>
 
-#define KV(_addr)	((caddr_t)ALPHA_PHYS_TO_K0SEG((_addr)))
+#define KV(_addr)	((void *)ALPHA_PHYS_TO_K0SEG((_addr)))
 #define	MCPCIA_SYSBASE(mc)	\
 	((((unsigned long) (mc)->cc_gid) << MCBUS_GID_SHIFT) | \
 	 (((unsigned long) (mc)->cc_mid) << MCBUS_MID_SHIFT) | \

@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.161.2.1 2007/02/27 16:53:48 yamt Exp $	*/
+/*	$NetBSD: vnd.c,v 1.161.2.2 2007/03/12 05:53:06 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -137,7 +137,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.161.2.1 2007/02/27 16:53:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.161.2.2 2007/03/12 05:53:06 rmind Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -452,12 +452,9 @@ vndstrategy(struct buf *bp)
 	daddr_t blkno;
 	int s = splbio();
 
-	bp->b_resid = bp->b_bcount;
-
 	if ((vnd->sc_flags & VNF_INITED) == 0) {
 		bp->b_error = ENXIO;
-		bp->b_flags |= B_ERROR;
-		goto done;
+		goto bad;
 	}
 
 	/*
@@ -465,8 +462,7 @@ vndstrategy(struct buf *bp)
 	 */
 	if ((bp->b_bcount % lp->d_secsize) != 0) {
 		bp->b_error = EINVAL;
-		bp->b_flags |= B_ERROR;
-		goto done;
+		goto bad;
 	}
 
 	/*
@@ -474,7 +470,11 @@ vndstrategy(struct buf *bp)
 	 */
 	if ((vnd->sc_flags & VNF_READONLY) && !(bp->b_flags & B_READ)) {
 		bp->b_error = EACCES;
-		bp->b_flags |= B_ERROR;
+		goto bad;
+	}
+
+	/* If it's a nil transfer, wake up the top half now. */
+	if (bp->b_bcount == 0) {
 		goto done;
 	}
 
@@ -491,10 +491,6 @@ vndstrategy(struct buf *bp)
 		    bp, vnd->sc_flags & (VNF_WLABEL|VNF_LABELLING)) <= 0)
 			goto done;
 	}
-
-	/* If it's a nil transfer, wake up the top half now. */
-	if (bp->b_bcount == 0)
-		goto done;
 
 	/*
 	 * Put the block number in terms of the logical blocksize
@@ -523,7 +519,11 @@ vndstrategy(struct buf *bp)
 	wakeup(&vnd->sc_tab);
 	splx(s);
 	return;
+
+bad:
+	bp->b_flags |= B_ERROR;
 done:
+	bp->b_resid = bp->b_bcount;
 	biodone(bp);
 	splx(s);
 }
@@ -622,7 +622,7 @@ vndthread(void *arg)
 		bp->b_private = obp;
 		bp->b_vp = vnd->sc_vp;
 		bp->b_data = obp->b_data;
-		bp->b_bcount = bp->b_resid = obp->b_bcount;
+		bp->b_bcount = obp->b_bcount;
 		BIO_COPYPRIO(bp, obp);
 
 		/* Handle the request using the appropriate operations. */
@@ -757,6 +757,7 @@ handle_with_strategy(struct vnd_softc *vnd, const struct buf *obp,
 	 * the client rather than the server.
 	 */
 	error = 0;
+	bp->b_resid = bp->b_bcount;
 	for (offset = 0, resid = bp->b_resid; resid;
 	    resid -= sz, offset += sz) {
 		struct buf *nbp;
@@ -918,7 +919,7 @@ vnd_cget(struct lwp *l, int unit, int *un, struct vattr *va)
 
 /* ARGSUSED */
 static int
-vndioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	int unit = vndunit(dev);
 	struct vnd_softc *vnd;
@@ -1019,7 +1020,7 @@ vndioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 			M_TEMP, M_WAITOK);
  
 			/* read compressed file header */
-			error = vn_rdwr(UIO_READ, nd.ni_vp, (caddr_t)ch,
+			error = vn_rdwr(UIO_READ, nd.ni_vp, (void *)ch,
 			  sizeof(struct vnd_comp_header), 0, UIO_SYSSPACE,
 			  IO_UNIT|IO_NODELOCKED, l->l_cred, NULL, NULL);
 			if(error) {
@@ -1059,7 +1060,7 @@ vndioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
  
 			/* read in the offsets */
 			error = vn_rdwr(UIO_READ, nd.ni_vp,
-			  (caddr_t)vnd->sc_comp_offsets,
+			  (void *)vnd->sc_comp_offsets,
 			  sizeof(u_int64_t) * vnd->sc_comp_numoffs,
 			  sizeof(struct vnd_comp_header), UIO_SYSSPACE,
 			  IO_UNIT|IO_NODELOCKED, l->l_cred, NULL, NULL);
@@ -1595,7 +1596,7 @@ vndsize(dev_t dev)
 }
 
 static int
-vnddump(dev_t dev, daddr_t blkno, caddr_t va,
+vnddump(dev_t dev, daddr_t blkno, void *va,
     size_t size)
 {
 
@@ -1736,7 +1737,7 @@ compstrategy(struct buf *bp, off_t bn)
 	    (struct vnd_softc *)device_lookup(&vnd_cd, unit);
 	u_int32_t comp_block;
 	struct uio auio;
-	caddr_t addr;
+	char *addr;
 	int s;
 
 	/* set up constants for data move */
@@ -1745,6 +1746,7 @@ compstrategy(struct buf *bp, off_t bn)
 
 	/* read, and transfer the data */
 	addr = bp->b_data;
+	bp->b_resid = bp->b_bcount;
 	s = splbio();
 	while (bp->b_resid > 0) {
 		unsigned length;

@@ -1,4 +1,4 @@
-/* $NetBSD: if_iereg.h,v 1.1 2001/10/05 22:27:56 reinoud Exp $ */
+/* $NetBSD: if_iereg.h,v 1.1.78.1 2007/03/12 05:45:23 rmind Exp $ */
 
 /*
  * Copyright (C) 1994 Wolfgang Solfrank.
@@ -148,7 +148,7 @@ struct ie_sys_conf_ptr {
 	u_short mbz;			/* must be zero */
 	u_char ie_bus_use;		/* true if 8-bit only */
 	u_char mbz2[5];			/* must be zero */
-	caddr_t ie_iscp_ptr;		/* 24-bit physaddr of ISCP */
+	void *ie_iscp_ptr;		/* 24-bit physaddr of ISCP */
 };
 
 /*
@@ -166,7 +166,7 @@ struct ie_int_sys_conf_ptr {
 	u_char ie_busy;			/* zeroed after init */
 	u_char mbz;
 	u_short ie_scb_offset;		/* 16-bit physaddr of next struct */
-	caddr_t ie_base;		/* 24-bit physaddr for all 16-bit vars */
+	void *ie_base;		/* 24-bit physaddr for all 16-bit vars */
 };
 
 /*
@@ -251,7 +251,7 @@ struct ie_recv_frame_desc {
 struct ie_recv_buf_desc {
 	u_short ie_rbd_actual;		/* status for this buffer */
 	u_short ie_rbd_next;		/* 16-pointer to next RBD */
-	caddr_t ie_rbd_buffer;		/* 24-pointer to buffer for this RBD */
+	void *ie_rbd_buffer;		/* 24-pointer to buffer for this RBD */
 	u_short ie_rbd_length;		/* length of the buffer */
 	u_short mbz;			/* must be zero */
 };
@@ -314,7 +314,7 @@ struct ie_xmit_cmd {
 struct ie_xmit_buf {
 	u_short ie_xmit_flags;		/* see below */
 	u_short ie_xmit_next;		/* 16-pointer to next desc. */
-	caddr_t ie_xmit_buf;		/* 24-pointer to the actual buffer */
+	void *ie_xmit_buf;		/* 24-pointer to the actual buffer */
 };
 
 #define IE_XMIT_LAST 0x8000	/* this TBD is the last one */

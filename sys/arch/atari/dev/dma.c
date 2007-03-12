@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.17 2005/12/11 12:16:54 christos Exp $	*/
+/*	$NetBSD: dma.c,v 1.17.26.1 2007/03/12 05:47:19 rmind Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dma.c,v 1.17 2005/12/11 12:16:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dma.c,v 1.17.26.1 2007/03/12 05:47:19 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -198,7 +198,7 @@ int	*lock_stat;
 		*req->lock_stat = DMA_LOCK_GRANT;
 
 		if (req->call_func == NULL)
-			wakeup((caddr_t)&dma_active);
+			wakeup((void *)&dma_active);
 		else {
 		    /*
 		     * Call next request through softint handler. This avoids
@@ -251,7 +251,7 @@ int	sr;	/* sr at time of interrupt */
  */
 void
 st_dmaaddr_set(address)
-caddr_t	address;
+void *	address;
 {
 	register u_long ad = (u_long)address;
 

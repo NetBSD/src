@@ -1,4 +1,4 @@
-/* $NetBSD: atppc.c,v 1.22 2006/12/25 18:39:48 wiz Exp $ */
+/* $NetBSD: atppc.c,v 1.22.2.1 2007/03/12 05:53:27 rmind Exp $ */
 
 /*
  * Copyright (c) 2001 Alcove - Nicolas Souchu
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atppc.c,v 1.22 2006/12/25 18:39:48 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atppc.c,v 1.22.2.1 2007/03/12 05:53:27 rmind Exp $");
 
 #include "opt_atppc.h"
 
@@ -131,7 +131,7 @@ static void atppc_fifo_write_error(struct atppc_softc * const,
 /* Miscellaneous */
 static int atppc_poll_str(const struct atppc_softc * const, const u_int8_t,
 	const u_int8_t);
-static int atppc_wait_interrupt(struct atppc_softc * const, const caddr_t,
+static int atppc_wait_interrupt(struct atppc_softc * const, const void *,
 	const u_int8_t);
 
 
@@ -2388,7 +2388,7 @@ atppc_poll_str(const struct atppc_softc * const atppc, const u_int8_t status,
 
 /* Wait for interrupt for MAXBUSYWAIT: returns 0 if acknowledge received. */
 static int
-atppc_wait_interrupt(struct atppc_softc * const atppc, const caddr_t where,
+atppc_wait_interrupt(struct atppc_softc * const atppc, const void *where,
 	const u_int8_t irqstat)
 {
 	int error = EIO;

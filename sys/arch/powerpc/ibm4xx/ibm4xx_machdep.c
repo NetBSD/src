@@ -1,4 +1,4 @@
-/*	$NetBSD: ibm4xx_machdep.c,v 1.5.26.1 2007/02/27 16:52:43 yamt Exp $	*/
+/*	$NetBSD: ibm4xx_machdep.c,v 1.5.26.2 2007/03/12 05:49:52 rmind Exp $	*/
 /*	Original: ibm40x_machdep.c,v 1.3 2005/01/17 17:19:36 shige Exp $ */
 
 /*
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibm4xx_machdep.c,v 1.5.26.1 2007/02/27 16:52:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibm4xx_machdep.c,v 1.5.26.2 2007/03/12 05:49:52 rmind Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -290,9 +290,9 @@ ibm4xx_cpu_startup(const char *model)
 	for (i = 0; i < btoc(MSGBUFSIZE); i++)
 		pmap_kenter_pa(msgbuf_vaddr + i * PAGE_SIZE,
 		    msgbuf_paddr + i * PAGE_SIZE, VM_PROT_READ|VM_PROT_WRITE);
-	initmsgbuf((caddr_t)msgbuf_vaddr, round_page(MSGBUFSIZE));
+	initmsgbuf((void *)msgbuf_vaddr, round_page(MSGBUFSIZE));
 #else
-	initmsgbuf((caddr_t)msgbuf, round_page(MSGBUFSIZE));
+	initmsgbuf((void *)msgbuf, round_page(MSGBUFSIZE));
 #endif
 
 	printf("%s%s", copyright, version);

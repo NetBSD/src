@@ -1,4 +1,4 @@
-/*	$NetBSD: button.c,v 1.1 2006/09/01 21:26:18 uwe Exp $	*/
+/*	$NetBSD: button.c,v 1.1.14.1 2007/03/12 05:48:42 rmind Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: button.c,v 1.1 2006/09/01 21:26:18 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: button.c,v 1.1.14.1 2007/03/12 05:48:42 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -184,7 +184,7 @@ btnclose(dev_t dev, int flag, int mode, struct lwp *l)
 }
 
 int
-btnioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+btnioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	int error = 0;
 

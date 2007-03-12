@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_et.c,v 1.25 2006/03/29 18:05:57 thomas Exp $	*/
+/*	$NetBSD: grfabs_et.c,v 1.25.14.1 2007/03/12 05:47:20 rmind Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grfabs_et.c,v 1.25 2006/03/29 18:05:57 thomas Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grfabs_et.c,v 1.25.14.1 2007/03/12 05:47:20 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/queue.h>
@@ -154,8 +154,8 @@ static bmap_t	con_bm; /* XXX */
 
 struct grfabs_et_priv {
 	pcitag_t		pci_tag;
-	volatile caddr_t	regkva;
-	volatile caddr_t	memkva;
+	void			*regkva;
+	void 			*memkva;
 	u_int			linbase;
 	int			regsz;
 	int			memsz;
@@ -250,11 +250,14 @@ view_t *v;
 	int		sv_size;
 	u_short		*src, *dst;
 	save_area_t	*sa;
+	volatile u_char *ba;
 
 	if (!atari_realconfig)
 		return;
 
-	if (RGfx(et_priv.regkva, GCT_ID_MISC) & 1) {
+	ba = et_priv.regkva;
+
+	if (RGfx(ba, GCT_ID_MISC) & 1) {
 #if 0 /* XXX: Can't use printf here.... */
 		printf("et_save_view: Don't know how to save"
 			" a graphics mode\n");
@@ -267,7 +270,7 @@ view_t *v;
 	/*
 	 * Calculate the size of the copy
 	 */
-	font_height = RCrt(et_priv.regkva, CRT_ID_MAX_ROW_ADDRESS) & 0x1f;
+	font_height = RCrt(ba, CRT_ID_MAX_ROW_ADDRESS) & 0x1f;
 	sv_size = bm->bytes_per_row * (bm->rows / (font_height + 1));
 	sv_size = min(SAVEBUF_SIZE, sv_size);
 
@@ -334,12 +337,12 @@ u_char   depth;
 	 * Initialize the bitmap
 	 */
 	bm->plane         = et_priv.memkva;
-	bm->vga_address   = (caddr_t)kvtop(et_priv.memkva);
+	bm->vga_address   = (void *)kvtop(et_priv.memkva);
 	bm->vga_base      = VGA_BASE;
-	bm->hw_address    = (caddr_t)(PCI_MEM_PHYS | et_priv.linbase);
+	bm->hw_address    = (void *)(PCI_MEM_PHYS | et_priv.linbase);
 	bm->lin_base      = et_priv.linbase;
 	bm->regs          = et_priv.regkva;
-	bm->hw_regs       = (caddr_t)kvtop(et_priv.regkva);
+	bm->hw_regs       = (void *)kvtop(et_priv.regkva);
 	bm->reg_size      = REG_MAPPABLE;
 	bm->phys_mappable = FRAME_MAPPABLE;
 	bm->vga_mappable  = VGA_MAPPABLE;
@@ -457,7 +460,7 @@ et_probe_card()
 
 #ifdef ET4000_HAS_2MB_MEM
 		/* set KEY to access the tseng private registers */
-		ba = (volatile caddr_t)pci_io_addr;
+		ba = (volatile void *)pci_io_addr;
 		vgaw(ba, GREG_HERCULESCOMPAT, 0x03);
 		vgaw(ba, GREG_DISPMODECONTROL, 0xa0);
 
@@ -472,8 +475,8 @@ et_probe_card()
 	/*
 	 * The things below are setup in atari_init.c
 	 */
-	et_priv.regkva  = (volatile caddr_t)pci_io_addr;
-	et_priv.memkva  = (volatile caddr_t)pci_mem_addr;
+	et_priv.regkva  = (void *)pci_io_addr;
+	et_priv.memkva  = (void *)pci_mem_addr;
 	et_priv.linbase = PCI_LINMEMBASE; /* XXX pci_conf_read??? */
 	et_priv.memsz   = PCI_VGA_SIZE;
 	et_priv.regsz   = PCI_IO_SIZE;

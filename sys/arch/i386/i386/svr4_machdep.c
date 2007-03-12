@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.82 2007/02/09 21:55:04 ad Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.82.2.1 2007/03/12 05:48:24 rmind Exp $	 */
 
 /*-
  * Copyright (c) 1994, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.82 2007/02/09 21:55:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.82.2.1 2007/03/12 05:48:24 rmind Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -77,7 +77,7 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.82 2007/02/09 21:55:04 ad Exp $")
 #include <machine/vmparam.h>
 #include <machine/svr4_machdep.h>
 
-static void svr4_getsiginfo(union svr4_siginfo *, int, u_long, caddr_t);
+static void svr4_getsiginfo(union svr4_siginfo *, int, u_long, void *);
 void svr4_fasttrap(struct trapframe);
 
 #ifdef DEBUG_SVR4
@@ -271,7 +271,7 @@ svr4_getsiginfo(si, sig, code, addr)
 	union svr4_siginfo	*si;
 	int			 sig;
 	u_long			 code;
-	caddr_t			 addr;
+	void *			 addr;
 {
 	si->si_signo = native_to_svr4_signo[sig];
 	si->si_errno = 0;
@@ -394,7 +394,7 @@ svr4_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	 *	  modify many kernel files to enable that]
 	 */
 	svr4_getcontext(l, &frame.sf_uc);
-	svr4_getsiginfo(&frame.sf_si, sig, code, (caddr_t) tf->tf_eip);
+	svr4_getsiginfo(&frame.sf_si, sig, code, (void *) tf->tf_eip);
 
 	/* Build stack frame for signal trampoline. */
 	frame.sf_signum = frame.sf_si.si_signo;
@@ -441,7 +441,7 @@ svr4_sys_sysarch(l, v, retval)
 	struct svr4_sys_sysarch_args *uap = v;
 #ifdef USER_LDT
 	struct proc *p = l->l_proc;
-	caddr_t sg = stackgap_init(p, 0);
+	void *sg = stackgap_init(p, 0);
 	int error;
 #endif
 	*retval = 0;	/* XXX: What to do */

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_termios.c,v 1.2 2006/08/25 16:17:05 manu Exp $ */
+/*	$NetBSD: linux32_termios.c,v 1.2.10.1 2007/03/12 05:52:30 rmind Exp $ */
 
 /*-
  * Copyright (c) 1995-2006  The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_termios.c,v 1.2 2006/08/25 16:17:05 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_termios.c,v 1.2.10.1 2007/03/12 05:52:30 rmind Exp $");
 
 #include "opt_compat_linux32.h"
 
@@ -107,7 +107,7 @@ linux32_ioctl_termios(l, uap, retval)
 
 	switch (com & 0xffff) {
 	case LINUX32_TCGETS:
-		error = (*bsdioctl)(fp, TIOCGETA, (caddr_t)&tmpbts, l);
+		error = (*bsdioctl)(fp, TIOCGETA, (void *)&tmpbts, l);
 		if (error)
 			goto out;
 		bsd_termios_to_linux32_termios(&tmpbts, &tmplts);
@@ -122,7 +122,7 @@ linux32_ioctl_termios(l, uap, retval)
 		 * First fill in all fields, so that we keep the current
 		 * values for fields that Linux doesn't know about.
 		 */
-		error = (*bsdioctl)(fp, TIOCGETA, (caddr_t)&tmpbts, l);
+		error = (*bsdioctl)(fp, TIOCGETA, (void *)&tmpbts, l);
 		if (error)
 			goto out;
 		if ((error = copyin(NETBSD32PTR64(SCARG(uap, data)), 
@@ -140,10 +140,10 @@ linux32_ioctl_termios(l, uap, retval)
 			com = TIOCSETAF;
 			break;
 		}
-		error = (*bsdioctl)(fp, com, (caddr_t)&tmpbts, l);
+		error = (*bsdioctl)(fp, com, (void *)&tmpbts, l);
 		goto out;
 	case LINUX32_TCGETA:
-		error = (*bsdioctl)(fp, TIOCGETA, (caddr_t)&tmpbts, l);
+		error = (*bsdioctl)(fp, TIOCGETA, (void *)&tmpbts, l);
 		if (error)
 			goto out;
 		bsd_termios_to_linux32_termio(&tmpbts, &tmplt);
@@ -158,7 +158,7 @@ linux32_ioctl_termios(l, uap, retval)
 		 * First fill in all fields, so that we keep the current
 		 * values for fields that Linux doesn't know about.
 		 */
-		error = (*bsdioctl)(fp, TIOCGETA, (caddr_t)&tmpbts, l);
+		error = (*bsdioctl)(fp, TIOCGETA, (void *)&tmpbts, l);
 		if (error)
 			goto out;
 		if ((error = copyin(NETBSD32PTR64(SCARG(uap, data)), 
@@ -176,7 +176,7 @@ linux32_ioctl_termios(l, uap, retval)
 			com = TIOCSETAF;
 			break;
 		}
-		error = (*bsdioctl)(fp, com, (caddr_t)&tmpbts, l);
+		error = (*bsdioctl)(fp, com, (void *)&tmpbts, l);
 		goto out;
 	case LINUX32_TCFLSH:
 		switch((u_long)NETBSD32PTR64(SCARG(uap, data))) {
@@ -193,10 +193,10 @@ linux32_ioctl_termios(l, uap, retval)
 			error = EINVAL;
 			goto out;
 		}
-		error = (*bsdioctl)(fp, TIOCFLUSH, (caddr_t)&idat, l);
+		error = (*bsdioctl)(fp, TIOCFLUSH, (void *)&idat, l);
 		goto out;
 	case LINUX32_TIOCGETD:
-		error = (*bsdioctl)(fp, TIOCGETD, (caddr_t)&idat, l);
+		error = (*bsdioctl)(fp, TIOCGETD, (void *)&idat, l);
 		if (error)
 			goto out;
 		switch (idat) {
@@ -251,7 +251,7 @@ linux32_ioctl_termios(l, uap, retval)
 			error = EINVAL;
 			goto out;
 		}
-		error = (*bsdioctl)(fp, TIOCSETD, (caddr_t)&idat, l);
+		error = (*bsdioctl)(fp, TIOCSETD, (void *)&idat, l);
 		goto out;
 	case LINUX32_TIOCLINUX:
 		if ((error = copyin(NETBSD32PTR64(SCARG(uap, data)), 
@@ -331,7 +331,7 @@ linux32_ioctl_termios(l, uap, retval)
 	case LINUX32_TIOCGPTN:
 #ifndef NO_DEV_PTM
 		{
-			caddr_t sg = stackgap_init(l->l_proc, 0);
+			void *sg = stackgap_init(l->l_proc, 0);
 			struct ptmget ptm;
 			struct ptmget *ptmp = stackgap_alloc(l->l_proc, &sg,
 				sizeof(*ptmp));

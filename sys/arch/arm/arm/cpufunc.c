@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.78 2007/01/06 00:50:54 christos Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.78.2.1 2007/03/12 05:47:00 rmind Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.78 2007/01/06 00:50:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.78.2.1 2007/03/12 05:47:00 rmind Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_cpuoptions.h"
@@ -105,6 +105,122 @@ int	arm_dcache_align_mask;
 
 /* 1 == use cpu_sleep(), 0 == don't */
 int cpu_do_powersave;
+
+#ifdef CPU_ARM2
+struct cpu_functions arm2_cpufuncs = {
+	/* CPU functions */
+	
+	arm2_id,			/* id			*/
+	cpufunc_nullop,			/* cpwait		*/
+
+	/* MMU functions */
+
+	(void *)cpufunc_nullop,		/* control		*/
+	NULL,				/* domain		*/
+	NULL,				/* setttb		*/
+	NULL,				/* faultstatus		*/
+	NULL,				/* faultaddress		*/
+
+	/* TLB functions */
+
+	cpufunc_nullop,			/* tlb_flushID		*/
+	(void *)cpufunc_nullop,		/* tlb_flushID_SE	*/
+	cpufunc_nullop,			/* tlb_flushI		*/
+	(void *)cpufunc_nullop,		/* tlb_flushI_SE	*/
+	cpufunc_nullop,			/* tlb_flushD		*/
+	(void *)cpufunc_nullop,		/* tlb_flushD_SE	*/
+
+	/* Cache operations */
+
+	cpufunc_nullop,			/* icache_sync_all	*/
+	(void *) cpufunc_nullop,	/* icache_sync_range	*/
+
+	arm3_cache_flush,		/* dcache_wbinv_all	*/
+	(void *)cpufunc_nullop,		/* dcache_wbinv_range	*/
+	(void *)cpufunc_nullop,		/* dcache_inv_range	*/
+	(void *)cpufunc_nullop,		/* dcache_wb_range	*/
+
+	cpufunc_nullop,			/* idcache_wbinv_all	*/
+	(void *)cpufunc_nullop,		/* idcache_wbinv_range	*/
+
+	/* Other functions */
+
+	cpufunc_nullop,			/* flush_prefetchbuf	*/
+	cpufunc_nullop,			/* drain_writebuf	*/
+	cpufunc_nullop,			/* flush_brnchtgt_C	*/
+	(void *)cpufunc_nullop,		/* flush_brnchtgt_E	*/
+
+	(void *)cpufunc_nullop,		/* sleep		*/
+
+	/* Soft functions */
+
+	early_abort_fixup,		/* dataabt_fixup	*/
+	cpufunc_null_fixup,		/* prefetchabt_fixup	*/
+
+	NULL,				/* context_switch	*/
+
+	(void *)cpufunc_nullop		/* cpu setup		*/
+
+};
+#endif	/* CPU_ARM2 */
+
+#ifdef CPU_ARM250
+struct cpu_functions arm250_cpufuncs = {
+	/* CPU functions */
+	
+	arm250_id,			/* id			*/
+	cpufunc_nullop,			/* cpwait		*/
+
+	/* MMU functions */
+
+	(void *)cpufunc_nullop,		/* control		*/
+	NULL,				/* domain		*/
+	NULL,				/* setttb		*/
+	NULL,				/* faultstatus		*/
+	NULL,				/* faultaddress		*/
+
+	/* TLB functions */
+
+	cpufunc_nullop,			/* tlb_flushID		*/
+	(void *)cpufunc_nullop,		/* tlb_flushID_SE	*/
+	cpufunc_nullop,			/* tlb_flushI		*/
+	(void *)cpufunc_nullop,		/* tlb_flushI_SE	*/
+	cpufunc_nullop,			/* tlb_flushD		*/
+	(void *)cpufunc_nullop,		/* tlb_flushD_SE	*/
+
+	/* Cache operations */
+
+	cpufunc_nullop,			/* icache_sync_all	*/
+	(void *) cpufunc_nullop,	/* icache_sync_range	*/
+
+	arm3_cache_flush,		/* dcache_wbinv_all	*/
+	(void *)cpufunc_nullop,		/* dcache_wbinv_range	*/
+	(void *)cpufunc_nullop,		/* dcache_inv_range	*/
+	(void *)cpufunc_nullop,		/* dcache_wb_range	*/
+
+	cpufunc_nullop,			/* idcache_wbinv_all	*/
+	(void *)cpufunc_nullop,		/* idcache_wbinv_range	*/
+
+	/* Other functions */
+
+	cpufunc_nullop,			/* flush_prefetchbuf	*/
+	cpufunc_nullop,			/* drain_writebuf	*/
+	cpufunc_nullop,			/* flush_brnchtgt_C	*/
+	(void *)cpufunc_nullop,		/* flush_brnchtgt_E	*/
+
+	(void *)cpufunc_nullop,		/* sleep		*/
+
+	/* Soft functions */
+
+	early_abort_fixup,		/* dataabt_fixup	*/
+	cpufunc_null_fixup,		/* prefetchabt_fixup	*/
+
+	NULL,				/* context_switch	*/
+
+	(void *)cpufunc_nullop		/* cpu setup		*/
+
+};
+#endif	/* CPU_ARM250 */
 
 #ifdef CPU_ARM3
 struct cpu_functions arm3_cpufuncs = {
@@ -897,7 +1013,7 @@ get_cachetype_cp15()
 	 * reserved ID register is encountered, the System Control
 	 * processor returns the value of the main ID register.
 	 */
-	if (ctype == cpufunc_id())
+	if (ctype == cpu_id())
 		goto out;
 
 	if ((ctype & CPU_CT_S) == 0)
@@ -991,7 +1107,7 @@ static void
 get_cachetype_table()
 {
 	int i;
-	u_int32_t cpuid = cpufunc_id();
+	u_int32_t cpuid = cpu_id();
 
 	for (i = 0; cachetab[i].ct_cpuid != 0; i++) {
 		if (cachetab[i].ct_cpuid == (cpuid & CPU_ID_CPU_MASK)) {
@@ -1021,14 +1137,31 @@ get_cachetype_table()
 int
 set_cpufuncs()
 {
-	cputype = cpufunc_id();
-	cputype &= CPU_ID_CPU_MASK;
+	if (cputype == 0) {
+		cputype = cpufunc_id();
+		cputype &= CPU_ID_CPU_MASK;
+	}
 
 	/*
 	 * NOTE: cpu_do_powersave defaults to off.  If we encounter a
 	 * CPU type where we want to use it by default, then we set it.
 	 */
-
+#ifdef CPU_ARM2
+	if (cputype == CPU_ID_ARM2) {
+		cpufuncs = arm2_cpufuncs;
+		cpu_reset_needs_v4_MMU_disable = 0;
+		get_cachetype_table();
+		return 0;
+	}
+#endif /* CPU_ARM2 */
+#ifdef CPU_ARM250
+	if (cputype == CPU_ID_ARM250) {
+		cpufuncs = arm250_cpufuncs;
+		cpu_reset_needs_v4_MMU_disable = 0;
+		get_cachetype_table();
+		return 0;
+	}
+#endif
 #ifdef CPU_ARM3
 	if ((cputype & CPU_ID_IMPLEMENTOR_MASK) == CPU_ID_ARM_LTD &&
 	    (cputype & 0x00000f00) == 0x00000300) {
@@ -1321,6 +1454,22 @@ set_cpufuncs()
 	panic("No support for this CPU type (%08x) in kernel", cputype);
 	return(ARCHITECTURE_NOT_PRESENT);
 }
+
+#ifdef CPU_ARM2
+u_int arm2_id(void)
+{
+
+	return CPU_ID_ARM2;
+}
+#endif /* CPU_ARM2 */
+
+#ifdef CPU_ARM250
+u_int arm250_id(void)
+{
+
+	return CPU_ID_ARM250;
+}
+#endif /* CPU_ARM250 */
 
 /*
  * Fixup routines for data and prefetch aborts.

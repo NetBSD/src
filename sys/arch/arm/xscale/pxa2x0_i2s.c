@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_i2s.c,v 1.1.8.1 2007/02/27 16:49:41 yamt Exp $	*/
+/*	$NetBSD: pxa2x0_i2s.c,v 1.1.8.2 2007/03/12 05:47:08 rmind Exp $	*/
 /*	$OpenBSD: pxa2x0_i2s.c,v 1.7 2006/04/04 11:45:40 pascoe Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_i2s.c,v 1.1.8.1 2007/02/27 16:49:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_i2s.c,v 1.1.8.2 2007/03/12 05:47:08 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -35,7 +35,7 @@ __KERNEL_RCSID(0, "$NetBSD: pxa2x0_i2s.c,v 1.1.8.1 2007/02/27 16:49:41 yamt Exp 
 
 struct pxa2x0_i2s_dma {
 	struct pxa2x0_i2s_dma *next;
-	caddr_t addr;
+	void *addr;
 	size_t size;
 	bus_dmamap_t map;
 #define	I2S_N_SEGS	1
@@ -371,8 +371,8 @@ pxa2x0_i2s_start_output(void *hdl, void *block, int bsize,
 	sc->sc_txarg = tx_arg;
 
 	/* Find mapping which contains block completely */
-	for (p = sc->sc_dmas; p && (((caddr_t)block < p->addr) ||
-	    ((caddr_t)block + bsize > p->addr + p->size)); p = p->next)
+	for (p = sc->sc_dmas; p != NULL && (((char *)block < (char *)p->addr) ||
+	    ((char *)block + bsize > (char *)p->addr + p->size)); p = p->next)
 		continue;	/* Nothing */
 
 	if (p == NULL) {
@@ -383,7 +383,7 @@ pxa2x0_i2s_start_output(void *hdl, void *block, int bsize,
 	sc->sc_txdma = p;
 
 	p->segs[0].ds_addr = p->map->dm_segs[0].ds_addr
-	                         + ((caddr_t)block - p->addr);
+	                         + ((char *)block - (char *)p->addr);
 	p->segs[0].ds_len = bsize;
 
 	dx = p->dx;
@@ -420,8 +420,8 @@ pxa2x0_i2s_start_input(void *hdl, void *block, int bsize,
 	sc->sc_rxarg = rx_arg;
 
 	/* Find mapping which contains block completely */
-	for (p = sc->sc_dmas; p != NULL && (((caddr_t)block < p->addr) ||
-	    ((caddr_t)block + bsize > p->addr + p->size)); p = p->next)
+	for (p = sc->sc_dmas; p != NULL && (((char *)block < (char *)p->addr) ||
+	    ((char *)block + bsize > (char *)p->addr + p->size)); p = p->next)
 		continue;	/* Nothing */
 
 	if (p == NULL) {
@@ -432,7 +432,7 @@ pxa2x0_i2s_start_input(void *hdl, void *block, int bsize,
 
 	sc->sc_rxdma = p;
 	p->segs[0].ds_addr = p->map->dm_segs[0].ds_addr
-	                         + ((caddr_t)block - p->addr);
+	                         + ((char *)block - (char *)p->addr);
 	p->segs[0].ds_len = bsize;
 
 	dx = p->dx;

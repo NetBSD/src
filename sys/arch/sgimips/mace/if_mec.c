@@ -1,4 +1,4 @@
-/* $NetBSD: if_mec.c,v 1.9 2007/02/04 06:16:12 tsutsui Exp $ */
+/* $NetBSD: if_mec.c,v 1.9.2.1 2007/03/12 05:50:12 rmind Exp $ */
 
 /*
  * Copyright (c) 2004 Izumi Tsutsui.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.9 2007/02/04 06:16:12 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.9.2.1 2007/03/12 05:50:12 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "bpfilter.h"
@@ -347,7 +347,7 @@ STATIC int	mec_init(struct ifnet * ifp);
 STATIC void	mec_start(struct ifnet *);
 STATIC void	mec_watchdog(struct ifnet *);
 STATIC void	mec_tick(void *);
-STATIC int	mec_ioctl(struct ifnet *, u_long, caddr_t);
+STATIC int	mec_ioctl(struct ifnet *, u_long, void *);
 STATIC void	mec_reset(struct mec_softc *);
 STATIC void	mec_setfilter(struct mec_softc *);
 STATIC int	mec_intr(void *arg);
@@ -415,7 +415,7 @@ mec_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	if ((err = bus_dmamem_map(sc->sc_dmat, &seg, rseg,
 	    sizeof(struct mec_control_data),
-	    (caddr_t *)&sc->sc_control_data, /*BUS_DMA_COHERENT*/ 0)) != 0) {
+	    (void **)&sc->sc_control_data, /*BUS_DMA_COHERENT*/ 0)) != 0) {
 		printf(": unable to map control data, error = %d\n", err);
 		goto fail_1;
 	}
@@ -532,7 +532,7 @@ mec_attach(struct device *parent, struct device *self, void *aux)
  fail_3:
 	bus_dmamap_destroy(sc->sc_dmat, sc->sc_cddmamap);
  fail_2:
-	bus_dmamem_unmap(sc->sc_dmat, (caddr_t)sc->sc_control_data,
+	bus_dmamem_unmap(sc->sc_dmat, (void *)sc->sc_control_data,
 	    sizeof(struct mec_control_data));
  fail_1:
 	bus_dmamem_free(sc->sc_dmat, &seg, rseg);
@@ -910,7 +910,7 @@ mec_start(struct ifnet *ifp)
 				 * so we always have to copy some data anyway.
 				 */
 				m->m_data += MEC_ETHER_ALIGN;
-				m_copydata(m0, 0, len, mtod(m, caddr_t));
+				m_copydata(m0, 0, len, mtod(m, void *));
 				m->m_pkthdr.len = m->m_len = len;
 				error = bus_dmamap_load_mbuf(sc->sc_dmat,
 				    dmamap, m, BUS_DMA_WRITE | BUS_DMA_NOWAIT);
@@ -943,7 +943,7 @@ mec_start(struct ifnet *ifp)
 				    "buflen = %d, bufoff = %d\n",
 				    buflen, bufoff));
 				memcpy(txd->txd_buf + bufoff,
-				    mtod(m0, caddr_t), buflen);
+				    mtod(m0, void *), buflen);
 				txs->txs_flags |= MEC_TXS_TXDBUF | buflen;
 			}
 #if 1
@@ -958,7 +958,7 @@ mec_start(struct ifnet *ifp)
 				buflen = MEC_TXD_ALIGN;
 				bufoff = MEC_TXD_BUFSTART(buflen);
 				memcpy(txd->txd_buf + bufoff,
-				    mtod(m0, caddr_t), buflen);
+				    mtod(m0, void *), buflen);
 				DPRINTF(MEC_DEBUG_START,
 				    ("mec_start: aligned, "
 				    "buflen = %d, bufoff = %d\n",
@@ -1095,7 +1095,7 @@ mec_stop(struct ifnet *ifp, int disable)
 }
 
 STATIC int
-mec_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
+mec_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct mec_softc *sc = ifp->if_softc;
 	struct ifreq *ifr = (void *)data;
@@ -1377,7 +1377,7 @@ mec_rxintr(struct mec_softc *sc)
 		 * RX buffer, but we copy whole buffer to avoid unaligned copy.
 		 */
 		MEC_RXBUFSYNC(sc, i, len, BUS_DMASYNC_POSTREAD);
-		memcpy(mtod(m, caddr_t), rxd->rxd_buf, MEC_ETHER_ALIGN + len);
+		memcpy(mtod(m, void *), rxd->rxd_buf, MEC_ETHER_ALIGN + len);
 		MEC_RXBUFSYNC(sc, i, ETHER_MAX_LEN, BUS_DMASYNC_PREREAD);
 		m->m_data += MEC_ETHER_ALIGN;
 

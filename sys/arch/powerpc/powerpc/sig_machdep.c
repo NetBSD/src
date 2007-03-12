@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.28 2007/02/10 16:08:16 ad Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.28.2.1 2007/03/12 05:50:08 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.28 2007/02/10 16:08:16 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.28.2.1 2007/03/12 05:50:08 rmind Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ppcarch.h"
@@ -104,8 +104,8 @@ sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	/*
 	 * Copy the siginfo and ucontext onto the user's stack.
 	 */
-	error = (copyout(&ksi->ksi_info, (caddr_t)sip, sizeof(ksi->ksi_info)) != 0 ||
-	    copyout(&uc, (caddr_t)ucp, sizeof(uc)) != 0);
+	error = (copyout(&ksi->ksi_info, (void *)sip, sizeof(ksi->ksi_info)) != 0 ||
+	    copyout(&uc, (void *)ucp, sizeof(uc)) != 0);
 	mutex_enter(&p->p_smutex);
 
 	if (error) {

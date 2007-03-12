@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.95 2006/11/12 07:16:14 itohy Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.95.4.1 2007/03/12 05:53:31 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.95 2006/11/12 07:16:14 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.95.4.1 2007/03/12 05:53:31 rmind Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -242,7 +242,7 @@ ex_config(sc)
 	attach_stage = 1;
 
 	if ((error = bus_dmamem_map(sc->sc_dmat, &sc->sc_useg, sc->sc_urseg,
-	    EX_NUPD * sizeof (struct ex_upd), (caddr_t *)&sc->sc_upd,
+	    EX_NUPD * sizeof (struct ex_upd), (void **)&sc->sc_upd,
 	    BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
 		aprint_error("%s: can't map upload descriptors, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
@@ -290,7 +290,7 @@ ex_config(sc)
 	attach_stage = 5;
 
 	if ((error = bus_dmamem_map(sc->sc_dmat, &sc->sc_dseg, sc->sc_drseg,
-	    DPDMEM_SIZE + EX_IP4CSUMTX_PADLEN, (caddr_t *)&sc->sc_dpd,
+	    DPDMEM_SIZE + EX_IP4CSUMTX_PADLEN, (void **)&sc->sc_dpd,
 	    BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
 		aprint_error("%s: can't map download descriptors, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
@@ -517,7 +517,7 @@ ex_config(sc)
 		/* FALLTHROUGH */
 
 	case 6:
-		bus_dmamem_unmap(sc->sc_dmat, (caddr_t)sc->sc_dpd,
+		bus_dmamem_unmap(sc->sc_dmat, (void *)sc->sc_dpd,
 		    EX_NDPD * sizeof (struct ex_dpd));
 		/* FALLTHROUGH */
 
@@ -534,7 +534,7 @@ ex_config(sc)
 		/* FALLTHROUGH */
 
 	case 2:
-		bus_dmamem_unmap(sc->sc_dmat, (caddr_t)sc->sc_upd,
+		bus_dmamem_unmap(sc->sc_dmat, (void *)sc->sc_upd,
 		    EX_NUPD * sizeof (struct ex_upd));
 		/* FALLTHROUGH */
 
@@ -1128,7 +1128,7 @@ ex_start(ifp)
 				}
 			}
 			m_copydata(mb_head, 0, mb_head->m_pkthdr.len,
-			    mtod(mn, caddr_t));
+			    mtod(mn, void *));
 			mn->m_pkthdr.len = mn->m_len = mb_head->m_pkthdr.len;
 			m_freem(mb_head);
 			mb_head = mn;
@@ -1246,7 +1246,7 @@ ex_start(ifp)
 	if (sc->tx_head) {
 		sc->tx_tail->tx_dpd->dpd_fsh |= htole32(EX_DPD_DNIND);
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_dpd_dmamap,
-		    ((caddr_t)sc->tx_tail->tx_dpd - (caddr_t)sc->sc_dpd),
+		    ((char *)sc->tx_tail->tx_dpd - (char *)sc->sc_dpd),
 		    sizeof (struct ex_dpd),
 		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 		ifp->if_flags |= IFF_OACTIVE;
@@ -1333,7 +1333,7 @@ ex_intr(arg)
 			    txp = txp->tx_next) {
 				bus_dmamap_sync(sc->sc_dmat,
 				    sc->sc_dpd_dmamap,
-				    (caddr_t)txp->tx_dpd - (caddr_t)sc->sc_dpd,
+				    (char *)txp->tx_dpd - (char *)sc->sc_dpd,
 				    sizeof (struct ex_dpd),
 				    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 				if (txp->tx_mbhead != NULL) {
@@ -1381,7 +1381,7 @@ ex_intr(arg)
 			    rxmap->dm_mapsize,
 			    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 			bus_dmamap_sync(sc->sc_dmat, sc->sc_upd_dmamap,
-			    ((caddr_t)upd - (caddr_t)sc->sc_upd),
+			    ((char *)upd - (char *)sc->sc_upd),
 			    sizeof (struct ex_upd),
 			    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 			pktstat = le32toh(upd->upd_pktstatus);
@@ -1479,7 +1479,7 @@ int
 ex_ioctl(ifp, cmd, data)
 	struct ifnet *ifp;
 	u_long cmd;
-	caddr_t data;
+	void *data;
 {
 	struct ex_softc *sc = ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *)data;
@@ -1667,7 +1667,7 @@ ex_stop(ifp, disable)
 		bus_dmamap_unload(sc->sc_dmat, tx->tx_dmamap);
 		tx->tx_dpd->dpd_fsh = tx->tx_dpd->dpd_nextptr = 0;
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_dpd_dmamap,
-		    ((caddr_t)tx->tx_dpd - (caddr_t)sc->sc_dpd),
+		    ((char *)tx->tx_dpd - (char *)sc->sc_dpd),
 		    sizeof (struct ex_dpd),
 		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 	}
@@ -1787,12 +1787,12 @@ ex_detach(sc)
 		bus_dmamap_destroy(sc->sc_dmat, sc->sc_tx_dmamaps[i]);
 	bus_dmamap_unload(sc->sc_dmat, sc->sc_dpd_dmamap);
 	bus_dmamap_destroy(sc->sc_dmat, sc->sc_dpd_dmamap);
-	bus_dmamem_unmap(sc->sc_dmat, (caddr_t)sc->sc_dpd,
+	bus_dmamem_unmap(sc->sc_dmat, (void *)sc->sc_dpd,
 	    EX_NDPD * sizeof (struct ex_dpd));
 	bus_dmamem_free(sc->sc_dmat, &sc->sc_dseg, sc->sc_drseg);
 	bus_dmamap_unload(sc->sc_dmat, sc->sc_upd_dmamap);
 	bus_dmamap_destroy(sc->sc_dmat, sc->sc_upd_dmamap);
-	bus_dmamem_unmap(sc->sc_dmat, (caddr_t)sc->sc_upd,
+	bus_dmamem_unmap(sc->sc_dmat, (void *)sc->sc_upd,
 	    EX_NUPD * sizeof (struct ex_upd));
 	bus_dmamem_free(sc->sc_dmat, &sc->sc_useg, sc->sc_urseg);
 
@@ -1933,9 +1933,9 @@ ex_add_rxbuf(sc, rxd)
 	if (sc->rx_head != NULL) {
 		sc->rx_tail->rx_next = rxd;
 		sc->rx_tail->rx_upd->upd_nextptr = htole32(sc->sc_upddma +
-		    ((caddr_t)rxd->rx_upd - (caddr_t)sc->sc_upd));
+		    ((char *)rxd->rx_upd - (char *)sc->sc_upd));
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_upd_dmamap,
-		    (caddr_t)sc->rx_tail->rx_upd - (caddr_t)sc->sc_upd,
+		    (char *)sc->rx_tail->rx_upd - (char *)sc->sc_upd,
 		    sizeof (struct ex_upd),
 		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 	} else {
@@ -1946,7 +1946,7 @@ ex_add_rxbuf(sc, rxd)
 	bus_dmamap_sync(sc->sc_dmat, rxmap, 0, rxmap->dm_mapsize,
 	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_upd_dmamap,
-	    ((caddr_t)rxd->rx_upd - (caddr_t)sc->sc_upd),
+	    ((char *)rxd->rx_upd - (char *)sc->sc_upd),
 	    sizeof (struct ex_upd), BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 	return (rval);
 }

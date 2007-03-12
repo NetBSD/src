@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_cdnr.c,v 1.18 2006/11/16 01:32:37 christos Exp $	*/
+/*	$NetBSD: altq_cdnr.c,v 1.18.4.1 2007/03/12 05:45:01 rmind Exp $	*/
 /*	$KAME: altq_cdnr.c,v 1.15 2005/04/13 03:44:24 suz Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_cdnr.c,v 1.18 2006/11/16 01:32:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_cdnr.c,v 1.18.4.1 2007/03/12 05:45:01 rmind Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -1126,7 +1126,7 @@ cdnrcmd_get_stats(struct cdnr_get_stats *ap)
 			continue;
 		}
 
-		if ((error = copyout((caddr_t)&tce, (caddr_t)usp++,
+		if ((error = copyout((void *)&tce, (void *)usp++,
 				     sizeof(tce))) != 0)
 			return (error);
 
@@ -1176,7 +1176,7 @@ cdnrclose(dev_t dev, int flag, int fmt,
 }
 
 int
-cdnrioctl(dev_t dev, ioctlcmd_t cmd, caddr_t addr, int flag,
+cdnrioctl(dev_t dev, ioctlcmd_t cmd, void *addr, int flag,
     struct lwp *l)
 {
 	struct top_cdnr *top;

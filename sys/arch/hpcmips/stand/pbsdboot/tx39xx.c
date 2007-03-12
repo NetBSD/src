@@ -1,4 +1,4 @@
-/* $NetBSD: tx39xx.c,v 1.5 2000/01/16 23:30:13 uch Exp $ */
+/* $NetBSD: tx39xx.c,v 1.5.82.1 2007/03/12 05:48:15 rmind Exp $ */
 
 /*-
  * Copyright (c) 1999 Shin Takemura, UCHIYAMA Yasushi
@@ -121,16 +121,16 @@ tx39xx_asm_code_holder()
 	 *    int i			t0
 	 *
 	 * struct map_s {
-	 *   caddr_t entry;	+0
-	 *   caddr_t base;	+4
+	 *   void *entry;	+0
+	 *   void *base;	+4
 	 *   int pagesize;	+8
 	 *   int leafsize;	+12
 	 *   int nleaves;	+16
-	 *   caddr_t arg0;	+20
-	 *   caddr_t arg1;  +24
-	 *   caddr_t arg2;	+28
-	 *   caddr_t arg3;	+32
-	 *   caddr_t *leaf[32];	+36
+	 *   void *arg0;	+20
+	 *   void *arg1;  +24
+	 *   void *arg2;	+28
+	 *   void *arg3;	+32
+	 *   void **leaf[32];	+36
 	 *
 	 */
 	__asm(

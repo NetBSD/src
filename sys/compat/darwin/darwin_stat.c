@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_stat.c,v 1.6 2007/02/09 21:55:16 ad Exp $ */
+/*	$NetBSD: darwin_stat.c,v 1.6.2.1 2007/03/12 05:51:56 rmind Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_stat.c,v 1.6 2007/02/09 21:55:16 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_stat.c,v 1.6.2.1 2007/03/12 05:51:56 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -71,7 +71,7 @@ darwin_sys_stat(l, v, retval)
 	} */ *uap = v;
 	struct compat_12_sys_stat_args cup;
 	struct proc *p = l->l_proc;
-	caddr_t sg = stackgap_init(p, 0);
+	void *sg = stackgap_init(p, 0);
 	struct stat12 st;
 	struct stat12 *stp;
 	int error;
@@ -109,7 +109,7 @@ darwin_sys_fstat(l, v, retval)
 	} */ *uap = v;
 	struct compat_12_sys_fstat_args cup;
 	struct proc *p = l->l_proc;
-	caddr_t sg = stackgap_init(p, 0);
+	void *sg = stackgap_init(p, 0);
 	struct stat12 st;
 	struct stat12 *stp;
 	int error;
@@ -146,7 +146,7 @@ darwin_sys_lstat(l, v, retval)
 	} */ *uap = v;
 	struct compat_12_sys_lstat_args cup;
 	struct proc *p = l->l_proc;
-	caddr_t sg = stackgap_init(p, 0);
+	void *sg = stackgap_init(p, 0);
 	struct stat12 st;
 	struct stat12 *stp;
 	int error;
@@ -185,7 +185,7 @@ darwin_sys_mknod(l, v, retval)
 	} */ *uap = v;
 	struct sys_mknod_args cup;
 	struct proc *p = l->l_proc;
-	caddr_t sg = stackgap_init(p, 0);
+	void *sg = stackgap_init(p, 0);
 
 	CHECK_ALT_CREAT(l, &sg, SCARG(uap, path));
 

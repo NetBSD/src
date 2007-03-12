@@ -1,4 +1,4 @@
-/*	$NetBSD: mace.c,v 1.8 2005/11/26 06:18:40 tsutsui Exp $	*/
+/*	$NetBSD: mace.c,v 1.8.26.1 2007/03/12 05:50:12 rmind Exp $	*/
 
 /*
  * Copyright (c) 2003 Christopher Sekiya
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mace.c,v 1.8 2005/11/26 06:18:40 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mace.c,v 1.8.26.1 2007/03/12 05:50:12 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -154,7 +154,7 @@ mace_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	if ((bus_dmamem_map(sc->dmat, &sc->seg, sc->nsegs, 32768,
-	    (caddr_t *)&sc->isa_ringbuffer, BUS_DMA_NOWAIT | BUS_DMA_COHERENT))
+	    (void **)&sc->isa_ringbuffer, BUS_DMA_NOWAIT | BUS_DMA_COHERENT))
 	    != 0) {
 		printf(": unable to map control data\n");
 		return;

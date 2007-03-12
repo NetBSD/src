@@ -1,4 +1,4 @@
-/*	$NetBSD: smc90cx6.c,v 1.46 2006/12/25 18:41:45 wiz Exp $ */
+/*	$NetBSD: smc90cx6.c,v 1.46.2.1 2007/03/12 05:53:46 rmind Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc90cx6.c,v 1.46 2006/12/25 18:41:45 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc90cx6.c,v 1.46.2.1 2007/03/12 05:53:46 rmind Exp $");
 
 /* #define BAHSOFTCOPY */
 #define BAHRETRANSMIT /**/
@@ -137,7 +137,7 @@ void	bah_reset(struct bah_softc *);
 void	bah_stop(struct bah_softc *);
 void	bah_start(struct ifnet *);
 int	bahintr(void *);
-int	bah_ioctl(struct ifnet *, unsigned long, caddr_t);
+int	bah_ioctl(struct ifnet *, unsigned long, void *);
 void	bah_watchdog(struct ifnet *);
 void	bah_srint(void *vsc);
 static	void bah_tint(struct bah_softc *, int);
@@ -458,7 +458,7 @@ bah_start(ifp)
 	for (mp = m; mp; mp = mp->m_next) {
 		if ((len = mp->m_len)) {		/* YAMS */
 			bus_space_write_region_1(bst_m, mem, bah_ram_ptr,
-			    mtod(mp, caddr_t), len);
+			    mtod(mp, void *), len);
 
 			bah_ram_ptr += len;
 		}
@@ -910,7 +910,7 @@ int
 bah_ioctl(ifp, command, data)
 	struct ifnet *ifp;
 	u_long command;
-	caddr_t data;
+	void *data;
 {
 	struct bah_softc *sc;
 	struct ifaddr *ifa;

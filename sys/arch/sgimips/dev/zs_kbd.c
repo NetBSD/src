@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_kbd.c,v 1.6 2005/12/11 12:18:52 christos Exp $	*/
+/*	$NetBSD: zs_kbd.c,v 1.6.26.1 2007/03/12 05:50:10 rmind Exp $	*/
 
 /*
  * Copyright (c) 2004 Steve Rumble
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs_kbd.c,v 1.6 2005/12/11 12:18:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_kbd.c,v 1.6.26.1 2007/03/12 05:50:10 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -130,7 +130,7 @@ static void	zskbd_wskbd_set_leds(void *, int);
 static int	zskbd_wskbd_get_leds(void *);
 static void	zskbd_wskbd_set_keyclick(void *, int);
 static int	zskbd_wskbd_get_keyclick(void *);
-static int	zskbd_wskbd_ioctl(void *, u_long, caddr_t, int, struct lwp *);
+static int	zskbd_wskbd_ioctl(void *, u_long, void *, int, struct lwp *);
 
 void		zskbd_cnattach(int, int);
 static void	zskbd_wskbd_getc(void *, u_int *, int *);
@@ -519,7 +519,7 @@ zskbd_wskbd_get_keyclick(void *cookie)
 
 static int
 zskbd_wskbd_ioctl(void *cookie, u_long cmd,
-		  caddr_t data, int flag, struct lwp *l)
+		  void *data, int flag, struct lwp *l)
 {
 
 	switch (cmd) {

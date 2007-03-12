@@ -1,4 +1,4 @@
-/*	$NetBSD: vm86.c,v 1.44 2007/02/09 21:55:05 ad Exp $	*/
+/*	$NetBSD: vm86.c,v 1.44.2.1 2007/03/12 05:48:24 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm86.c,v 1.44 2007/02/09 21:55:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm86.c,v 1.44.2.1 2007/03/12 05:48:24 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,7 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: vm86.c,v 1.44 2007/02/09 21:55:05 ad Exp $");
 #include <machine/vm86.h>
 
 static void fast_intxx(struct lwp *, int);
-static inline int is_bitset(int, caddr_t);
+static inline int is_bitset(int, void *);
 
 #define	CS(tf)		(*(u_short *)&tf->tf_cs)
 #define	IP(tf)		(*(u_short *)&tf->tf_eip)
@@ -112,11 +112,11 @@ static inline int is_bitset(int, caddr_t);
 static inline int
 is_bitset(nr, bitmap)
 	int nr;
-	caddr_t bitmap;
+	void *bitmap;
 {
 	u_int byte;		/* bt instruction doesn't do
 					   bytes--it examines ints! */
-	bitmap += nr / NBBY;
+	bitmap = (char *)bitmap + (nr / NBBY);
 	nr = nr % NBBY;
 	byte = fubyte(bitmap);
 
@@ -172,7 +172,7 @@ fast_intxx(l, intrno)
 	 * Fetch intr handler info from "real-mode" IDT based at addr 0 in
 	 * the user address space.
 	 */
-	if (copyin((caddr_t)(intrno * sizeof(ihand)), &ihand, sizeof(ihand))) {
+	if (copyin((void *)(intrno * sizeof(ihand)), &ihand, sizeof(ihand))) {
 		/*
 		 * No IDT!  What Linux does here is simply call back into
 		 * userspace with the VM86_INTx arg as if it was a revectored

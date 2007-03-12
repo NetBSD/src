@@ -1,4 +1,4 @@
-/* $NetBSD: locore.h,v 1.74 2006/02/16 20:17:14 perry Exp $ */
+/* $NetBSD: locore.h,v 1.74.20.1 2007/03/12 05:49:21 rmind Exp $ */
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -61,7 +61,7 @@ void	mips3_TLBWriteIndexedVPS(int, struct tlb *);
 void	mips3_wbflush(void);
 void	mips3_proc_trampoline(void);
 void	mips3_cpu_switch_resume(void);
-void	mips3_pagezero(caddr_t dst);
+void	mips3_pagezero(void *dst);
 
 #ifdef MIPS3_5900
 void	mips5900_SetPID(int);
@@ -74,7 +74,7 @@ void	mips5900_TLBWriteIndexedVPS(int, struct tlb *);
 void	mips5900_wbflush(void);
 void	mips5900_proc_trampoline(void);
 void	mips5900_cpu_switch_resume(void);
-void	mips5900_pagezero(caddr_t dst);
+void	mips5900_pagezero(void *dst);
 #endif
 #endif
 
@@ -102,7 +102,7 @@ void	mips64_TLBWriteIndexedVPS(int, struct tlb *);
 void	mips64_wbflush(void);
 void	mips64_proc_trampoline(void);
 void	mips64_cpu_switch_resume(void);
-void	mips64_pagezero(caddr_t dst);
+void	mips64_pagezero(void *dst);
 #endif
 
 #if defined(MIPS3) || defined(MIPS4) || defined(MIPS32) || defined(MIPS64)
@@ -312,8 +312,8 @@ extern mips_prid_t cpu_id;
 extern mips_prid_t fpu_id;
 extern int	mips_num_tlb_entries;
 
-void mips_pagecopy(caddr_t dst, caddr_t src);
-void mips_pagezero(caddr_t dst);
+void mips_pagecopy(void *dst, void *src);
+void mips_pagezero(void *dst);
 
 #ifdef __HAVE_MIPS_MACHDEP_CACHE_CONFIG
 void mips_machdep_cache_config(void);

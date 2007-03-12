@@ -1,4 +1,4 @@
-/*	$NetBSD: grfioctl.h,v 1.4 2005/12/11 12:18:06 christos Exp $	*/
+/*	$NetBSD: grfioctl.h,v 1.4.26.1 2007/03/12 05:49:19 rmind Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -80,9 +80,9 @@
 #define _MACPPC_GRFIOCTL_H_
 
 struct	grfinfo {
-	caddr_t	gd_regaddr;		/* control registers physaddr */
+	void *	gd_regaddr;		/* control registers physaddr */
 	int	gd_regsize;		/* control registers size */
-	caddr_t	gd_fbaddr;		/* frame buffer physaddr */
+	void *	gd_fbaddr;		/* frame buffer physaddr */
 	int	gd_fbsize;		/* frame buffer size */
 	short	gd_colors;		/* number of colors */
 	short	gd_planes;		/* number of planes */
@@ -91,7 +91,7 @@ struct	grfinfo {
 	int	gd_fbrowbytes;		/* frame buffer rowbytes */
 	int	gd_dwidth;		/* displayed part width */
 	int	gd_dheight;		/* displayed part height */
-	caddr_t	gd_devaddr;		/* physaddr of the device */
+	void *	gd_devaddr;		/* physaddr of the device */
 	int	gd_devsize;		/* size of the device */
 	int	gd_pad[4];		/* for future expansion */
 };

@@ -1,4 +1,4 @@
-/*	$NetBSD: sii_ds.c,v 1.2 2006/07/29 19:10:57 ad Exp $	*/
+/*	$NetBSD: sii_ds.c,v 1.2.10.1 2007/03/12 05:49:51 rmind Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -16,7 +16,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sii_ds.c,v 1.2 2006/07/29 19:10:57 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sii_ds.c,v 1.2.10.1 2007/03/12 05:49:51 rmind Exp $");
 
 #include "sii.h"
 
@@ -77,7 +77,7 @@ sii_ds_match(parent, match, aux)
 	void *aux;
 {
 	struct ibus_attach_args *ia = aux;
-	void * siiaddr;
+	void *siiaddr;
 
 	if (strcmp(ia->ia_name, "sii") != 0)
 		return (0);

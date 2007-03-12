@@ -1,4 +1,4 @@
-/*	$NetBSD: firewirereg.h,v 1.3 2005/12/11 12:22:02 christos Exp $	*/
+/*	$NetBSD: firewirereg.h,v 1.3.28.1 2007/03/12 05:54:45 rmind Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -158,7 +158,7 @@ struct firewire_comm{
 	uint32_t (*cyctimer) (struct  firewire_comm *);
 	void (*ibr) (struct firewire_comm *);
 	uint32_t (*set_bmr) (struct firewire_comm *, uint32_t);
-	int (*ioctl) (DEV_T, u_long, caddr_t, int, fw_proc *);
+	int (*ioctl) (DEV_T, u_long, void *, int, fw_proc *);
 	int (*irx_enable) (struct firewire_comm *, int);
 	int (*irx_disable) (struct firewire_comm *, int);
 	int (*itx_enable) (struct firewire_comm *, int);
@@ -202,7 +202,7 @@ struct fw_xferq {
 	STAILQ_HEAD(, fw_bulkxfer) stdma;
 	struct fw_bulkxfer *stproc;
 	struct selinfo rsel;
-	caddr_t sc;
+	void *sc;
 	void (*hand) (struct fw_xferq *);
 };
 
@@ -210,8 +210,8 @@ struct fw_bulkxfer{
 	int poffset;
 	struct mbuf *mbuf;
 	STAILQ_ENTRY(fw_bulkxfer) link;
-	caddr_t start;
-	caddr_t end;
+	void *start;
+	void *end;
 	int resp;
 };
 
@@ -225,7 +225,7 @@ struct fw_bind{
 };
 
 struct fw_xfer{
-	caddr_t sc;
+	void *sc;
 	struct firewire_comm *fc;
 	struct fw_xferq *q;
 	struct timeval tv;

@@ -1,4 +1,4 @@
-/*	$NetBSD: gus.c,v 1.96 2006/11/16 01:33:00 christos Exp $	*/
+/*	$NetBSD: gus.c,v 1.96.4.1 2007/03/12 05:54:48 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1999 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gus.c,v 1.96 2006/11/16 01:33:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gus.c,v 1.96.4.1 2007/03/12 05:54:48 rmind Exp $");
 
 #include "gus.h"
 #if NGUS > 0
@@ -345,7 +345,7 @@ int	gusstats = 0;
 struct dma_record {
 	struct timeval tv;
 	u_long gusaddr;
-	caddr_t bsdaddr;
+	void *bsdaddr;
 	u_short count;
 	u_char channel;
 	u_char direction;
@@ -362,10 +362,10 @@ int	gusopen(void *, int);
 void	gusclose(void *);
 void	gusmax_close(void *);
 int	gusintr(void *);
-int	gus_set_in_gain(caddr_t, u_int, u_char);
-int	gus_get_in_gain(caddr_t);
-int	gus_set_out_gain(caddr_t, u_int, u_char);
-int	gus_get_out_gain(caddr_t);
+int	gus_set_in_gain(void *, u_int, u_char);
+int	gus_get_in_gain(void *);
+int	gus_set_out_gain(void *, u_int, u_char);
+int	gus_get_out_gain(void *);
 int	gus_set_params(void *, int, int, audio_params_t *,
 	    audio_params_t *, stream_filter_list_t *, stream_filter_list_t *);
 int	gusmax_set_params(void *, int, int, audio_params_t *,
@@ -393,7 +393,7 @@ STATIC int	gus_mic_ctl(void *, int);
 STATIC int	gus_linein_ctl(void *, int);
 STATIC int	gus_test_iobase(bus_space_tag_t, int);
 STATIC void	guspoke(bus_space_tag_t, bus_space_handle_t, long, u_char);
-STATIC void	gusdmaout(struct gus_softc *, int, u_long, caddr_t, int);
+STATIC void	gusdmaout(struct gus_softc *, int, u_long, void *, int);
 STATIC int	gus_init_cs4231(struct gus_softc *);
 STATIC void	gus_init_ics2101(struct gus_softc *);
 
@@ -1239,7 +1239,7 @@ stereo_dmaintr(void *arg)
 	}
 #endif
 
-	gusdmaout(sc, sa->flags, sa->dmabuf, (caddr_t) sa->buffer, sa->size);
+	gusdmaout(sc, sa->flags, sa->dmabuf, (void *) sa->buffer, sa->size);
 
 	sa->flags = 0;
 	sa->dmabuf = 0;
@@ -1331,7 +1331,7 @@ gus_dma_output(void *addr, void *tbuf, int size,
 	}
 #endif
 
-	gusdmaout(sc, flags, boarddma, (caddr_t) buffer, size);
+	gusdmaout(sc, flags, boarddma, (void *) buffer, size);
 
 	return 0;
 }
@@ -2010,7 +2010,7 @@ gus_continue_playing(struct gus_softc *sc, int voice)
  */
 STATIC void
 gusdmaout(struct gus_softc *sc, int flags,
-	  u_long gusaddr, caddr_t buffaddr, int length)
+	  u_long gusaddr, void *buffaddr, int length)
 {
 	unsigned char c;
 	bus_space_tag_t iot;
@@ -2362,7 +2362,7 @@ gus_set_params(
  */
 
 int
-gusmax_round_blocksize(void * addr, int blocksize,
+gusmax_round_blocksize(void *addr, int blocksize,
 		       int mode, const audio_params_t *param)
 {
 	struct ad1848_isa_softc *ac;
@@ -2375,7 +2375,7 @@ gusmax_round_blocksize(void * addr, int blocksize,
 }
 
 int
-gus_round_blocksize(void * addr, int blocksize,
+gus_round_blocksize(void *addr, int blocksize,
     int mode, const audio_params_t *param)
 {
 	struct gus_softc *sc;
@@ -2411,7 +2411,7 @@ gus_round_blocksize(void * addr, int blocksize,
 }
 
 int
-gus_get_out_gain(caddr_t addr)
+gus_get_out_gain(void *addr)
 {
 	struct gus_softc *sc;
 
@@ -2441,7 +2441,7 @@ gus_set_voices(struct gus_softc *sc, int voices)
  * Actually set the settings of various values on the card
  */
 int
-gusmax_commit_settings(void * addr)
+gusmax_commit_settings(void *addr)
 {
 	struct ad1848_isa_softc *ac;
 	struct gus_softc *sc;
@@ -3009,7 +3009,7 @@ gus_getdev(void *addr, struct audio_device *dev)
  */
 
 int
-gus_set_in_gain(caddr_t addr, u_int gain,
+gus_set_in_gain(void *addr, u_int gain,
     u_char balance)
 {
 
@@ -3018,7 +3018,7 @@ gus_set_in_gain(caddr_t addr, u_int gain,
 }
 
 int
-gus_get_in_gain(caddr_t addr)
+gus_get_in_gain(void *addr)
 {
 
 	DPRINTF(("gus_get_in_gain called\n"));

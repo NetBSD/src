@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_wait.c,v 1.11 2007/02/09 21:55:22 ad Exp $	*/
+/*	$NetBSD: netbsd32_wait.c,v 1.11.2.1 2007/03/12 05:52:34 rmind Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_wait.c,v 1.11 2007/02/09 21:55:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_wait.c,v 1.11.2.1 2007/03/12 05:52:34 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,7 +60,7 @@ netbsd32_wait4(l, v, retval)
 		syscallarg(netbsd32_rusagep_t) rusage;
 	} */ *uap = v;
 	struct sys_wait4_args ua;
-	caddr_t sg;
+	void *sg;
 	struct rusage *ruup = NULL;
 	int error;
 
@@ -127,6 +127,6 @@ netbsd32_getrusage(l, v, retval)
 		return (EINVAL);
 	}
 	netbsd32_from_rusage(rup, &ru);
-	return (copyout(&ru, (caddr_t)NETBSD32PTR64(SCARG(uap, rusage)),
+	return (copyout(&ru, (void *)NETBSD32PTR64(SCARG(uap, rusage)),
 	    sizeof(ru)));
 }

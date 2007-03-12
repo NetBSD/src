@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_filio.c,v 1.10 2007/02/09 21:55:26 ad Exp $	 */
+/*	$NetBSD: svr4_32_filio.c,v 1.10.2.1 2007/03/12 05:52:47 rmind Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_filio.c,v 1.10 2007/02/09 21:55:26 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_filio.c,v 1.10.2.1 2007/03/12 05:52:47 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -72,7 +72,7 @@ svr4_32_fil_ioctl(fp, l, retval, fd, cmd, data)
 	register_t *retval;
 	int fd;
 	u_long cmd;
-	caddr_t data;
+	void *data;
 {
 	int error;
 	int num;

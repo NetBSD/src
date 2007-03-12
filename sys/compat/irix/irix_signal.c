@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_signal.c,v 1.36 2007/02/16 00:39:16 ad Exp $ */
+/*	$NetBSD: irix_signal.c,v 1.36.2.1 2007/03/12 05:52:13 rmind Exp $ */
 
 /*-
  * Copyright (c) 1994, 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_signal.c,v 1.36 2007/02/16 00:39:16 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_signal.c,v 1.36.2.1 2007/03/12 05:52:13 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -75,7 +75,7 @@ extern const int svr4_to_native_signo[];
 static int irix_wait_siginfo __P((struct proc *, int, int,
     struct irix_irix5_siginfo *));
 static void irix_signal_siginfo __P((struct irix_irix5_siginfo *,
-    int, u_long, caddr_t));
+    int, u_long, void *));
 static void irix_set_ucontext __P((struct irix_ucontext*, const sigset_t *,
     int, struct lwp *));
 static void irix_set_sigcontext __P((struct irix_sigcontext*, const sigset_t *,
@@ -153,7 +153,7 @@ irix_signal_siginfo(isi, sig, code, addr)
 	struct irix_irix5_siginfo *isi;
 	int sig;
 	u_long code;
-	caddr_t addr;
+	void *addr;
 {
 	if (sig < 0 || sig >= SVR4_NSIG) {
 		isi->isi_errno = IRIX_EINVAL;
@@ -299,7 +299,7 @@ irix_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	 * Allocate space for the signal handler context.
 	 */
 	if (onstack)
-		sp = (void *)((caddr_t)l->l_sigstk.ss_sp
+		sp = (void *)((char *)l->l_sigstk.ss_sp
 		    + l->l_sigstk.ss_size);
 	else
 		/* cast for _MIPS_BSD_API == _MIPS_BSD_API_LP32_64CLEAN case */
@@ -312,7 +312,7 @@ irix_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	if (SIGACTION(p, ksi->ksi_signo).sa_flags & SA_SIGINFO) {
 		irix_set_ucontext(&sf.isf_ctx.iss.iuc, mask, ksi->ksi_trap, l);
 		irix_signal_siginfo(&sf.isf_ctx.iss.iis, ksi->ksi_signo,
-		    ksi->ksi_trap, (caddr_t)f->f_regs[_R_BADVADDR]);
+		    ksi->ksi_trap, (void *)f->f_regs[_R_BADVADDR]);
 	} else {
 		irix_set_sigcontext(&sf.isf_ctx.isc, mask, ksi->ksi_trap, l);
 	}
@@ -897,17 +897,17 @@ irix_sys_waitsys(l, v, retval)
 	if (SCARG(uap, options) & (SVR4_WSTOPPED|SVR4_WCONTINUED))
 		options |= WUNTRACED;
 
-	rw_enter(&proclist_lock, RW_WRITER);
+	mutex_enter(&proclist_lock);
 	error = find_stopped_child(parent, SCARG(uap,pid), options, &child,
 	    &status);
 	stat = child->p_stat;	/* XXXSMP */
 	if (error != 0) {
-		rw_exit(&proclist_lock);
+		mutex_exit(&proclist_lock);
 		return error;
 	}
 	*retval = 0;
 	if (child == NULL) {
-		rw_exit(&proclist_lock);
+		mutex_exit(&proclist_lock);
 		return irix_wait_siginfo(NULL, 0, stat, SCARG(uap, info));
 	}
 
@@ -917,7 +917,7 @@ irix_sys_waitsys(l, v, retval)
 #endif
 		if ((error = irix_wait_siginfo(child, status, stat,
 		    SCARG(uap, info))) != 0) {
-			rw_exit(&proclist_lock);
+			mutex_exit(&proclist_lock);
 			return error;
 		}
 
@@ -925,7 +925,7 @@ irix_sys_waitsys(l, v, retval)
 #ifdef DEBUG_IRIX
 			printf(("irix_sys_wait(): Don't wait\n"));
 #endif
-			rw_exit(&proclist_lock);
+			mutex_exit(&proclist_lock);
 			return 0;
 		}
 
@@ -933,7 +933,7 @@ irix_sys_waitsys(l, v, retval)
 		proc_free(child, (SCARG(uap, ru) == NULL ? NULL : &ru));
 
 		if (SCARG(uap, ru))
-			error = copyout(&ru, (caddr_t)SCARG(uap, ru), sizeof(ru));
+			error = copyout(&ru, (void *)SCARG(uap, ru), sizeof(ru));
 
 		return error;
 	}
@@ -943,7 +943,7 @@ irix_sys_waitsys(l, v, retval)
 #ifdef DEBUG_IRIX
 	printf("jobcontrol %d\n", child->p_pid);
 #endif
-	rw_exit(&proclist_lock);
+	mutex_exit(&proclist_lock);
 	return irix_wait_siginfo(child, W_STOPCODE(status), stat,
 	    SCARG(uap, info));
 }
@@ -964,7 +964,7 @@ irix_sys_sigprocmask(l, v, retval)
 	int error;
 	sigset_t *obss;
 	irix_sigset_t niss, oiss;
-	caddr_t sg;
+	void *sg;
 
 	SCARG(&cup, how) = SCARG(uap, how);
 	SCARG(&cup, set) = (const svr4_sigset_t *)SCARG(uap, set);

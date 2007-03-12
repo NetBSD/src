@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_ap.c,v 1.19 2006/03/28 17:38:26 thorpej Exp $	*/
+/*	$NetBSD: zs_ap.c,v 1.19.14.1 2007/03/12 05:49:41 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs_ap.c,v 1.19 2006/03/28 17:38:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_ap.c,v 1.19.14.1 2007/03/12 05:49:41 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,7 +113,7 @@ struct zschan {
 	volatile u_char zc_data;	/* data */
 };
 
-static caddr_t zsaddr[NZS];
+static void *zsaddr[NZS];
 
 /* Flags from cninit() */
 static int zs_hwflags[NZS][2];
@@ -149,7 +149,7 @@ static void zs_putc(void *, int);
 struct zschan *
 zs_get_chan_addr(int zs_unit, int channel)
 {
-	caddr_t addr;
+	void *addr;
 	struct zschan *zc;
 
 	if (zs_unit >= NZS)
@@ -158,9 +158,9 @@ zs_get_chan_addr(int zs_unit, int channel)
 	if (addr == NULL)
 		return NULL;
 	if (channel == 0) {
-		zc = (void *)(addr + PORTA_OFFSET);
+		zc = (void *)((char *)addr + PORTA_OFFSET);
 	} else {
-		zc = (void *)(addr + PORTB_OFFSET);
+		zc = (void *)((char *)addr + PORTB_OFFSET);
 	}
 	return zc;
 }
@@ -222,7 +222,7 @@ zs_ap_attach(struct device *parent, struct device *self, void *aux)
 	static int didintr;
 
 	zs_unit = device_unit(&zsc->zsc_dev);
-	zsaddr[zs_unit] = (caddr_t)apa->apa_hwbase;
+	zsaddr[zs_unit] = (void *)apa->apa_hwbase;
 
 	printf(" slot%d addr 0x%lx\n", apa->apa_slotno, apa->apa_hwbase);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_compat.c,v 1.85.2.1 2007/02/27 16:53:33 yamt Exp $	*/
+/*	$NetBSD: hpux_compat.c,v 1.85.2.2 2007/03/12 05:51:58 rmind Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_compat.c,v 1.85.2.1 2007/02/27 16:53:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_compat.c,v 1.85.2.2 2007/03/12 05:51:58 rmind Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -206,7 +206,7 @@ hpux_sys_wait(struct lwp *l, void *v, register_t *retval)
 	SCARG(&w4, options) = 0;
 
 	if (SCARG(uap, status) == NULL) {
-		caddr_t sg = stackgap_init(p, 0);
+		void *sg = stackgap_init(p, 0);
 		SCARG(&w4, status) = stackgap_alloc(p, &sg, sz);
 	}
 	else
@@ -423,8 +423,8 @@ hpux_sys_utssys(struct lwp *l, void *v, register_t *retval)
 		strncpy(ut.machine, machine, sizeof(ut.machine));
 		ut.machine[sizeof(ut.machine) - 1] = '\0';
 
-		error = copyout((caddr_t)&ut,
-		    (caddr_t)SCARG(uap, uts), sizeof(ut));
+		error = copyout((void *)&ut,
+		    (void *)SCARG(uap, uts), sizeof(ut));
 		break;
 
 	/* gethostname */
@@ -436,7 +436,7 @@ hpux_sys_utssys(struct lwp *l, void *v, register_t *retval)
 			break;
 		} else if (i > hostnamelen + 1)
 			i = hostnamelen + 1;
-		error = copyout((caddr_t)hostname, (caddr_t)SCARG(uap, uts), i);
+		error = copyout((void *)hostname, (void *)SCARG(uap, uts), i);
 		break;
 
 	case 1:	/* ?? */
@@ -549,7 +549,7 @@ hpux_sys_rtprio(struct lwp *lp, void *v, register_t *retval)
 	    SCARG(uap, prio) != RTPRIO_RTOFF)
 		return (EINVAL);
 
-	rw_enter(&proclist_lock, RW_READER);
+	mutex_enter(&proclist_lock);
 	if (SCARG(uap, pid) == 0)
 		p = lp->l_proc;
 	else {
@@ -567,7 +567,7 @@ hpux_sys_rtprio(struct lwp *lp, void *v, register_t *retval)
 	switch (SCARG(uap, prio)) {
 
 	case RTPRIO_NOCHG:
-		rw_exit(&proclist_lock);
+		mutex_exit(&proclist_lock);
 		return 0;
 
 	case RTPRIO_RTOFF:
@@ -583,7 +583,7 @@ hpux_sys_rtprio(struct lwp *lp, void *v, register_t *retval)
 	mutex_enter(&p->p_mutex);
 	error = donice(lp, p, nice);
 	mutex_exit(&p->p_mutex);
-	rw_exit(&proclist_lock);
+	mutex_exit(&proclist_lock);
 	if (error == EACCES)
 		error = EPERM;
 	return (error);
@@ -675,7 +675,7 @@ hpux_sys_mmap(struct lwp *l, void *v, register_t *retval)
 {
 	struct hpux_sys_mmap_args *uap = v;
 	struct sys_mmap_args /* {
-		syscallarg(caddr_t) addr;
+		syscallarg(void *) addr;
 		syscallarg(size_t) len;
 		syscallarg(int) prot;
 		syscallarg(int) flags;
@@ -739,17 +739,17 @@ hpux_sys_ioctl(struct lwp *l, void *v, register_t *retval)
 	struct hpux_sys_ioctl_args /* {
 		syscallarg(int) fd;
 		syscallarg(int) com;
-		syscallarg(caddr_t) data;
+		syscallarg(void *) data;
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
 	struct filedesc *fdp = p->p_fd;
 	struct file *fp;
 	int com, error = 0;
 	u_int size;
-	caddr_t memp = 0;
+	void *memp = 0;
 #define STK_PARAMS	128
 	char stkbuf[STK_PARAMS];
-	caddr_t dt = stkbuf;
+	void *dt = stkbuf;
 
 	com = SCARG(uap, com);
 
@@ -777,7 +777,7 @@ hpux_sys_ioctl(struct lwp *l, void *v, register_t *retval)
 	}
 
 	if (size > sizeof (stkbuf)) {
-		memp = (caddr_t)malloc((u_long)size, M_IOCTLOPS, M_WAITOK);
+		memp = (void *)malloc((u_long)size, M_IOCTLOPS, M_WAITOK);
 		dt = memp;
 	}
 
@@ -787,7 +787,7 @@ hpux_sys_ioctl(struct lwp *l, void *v, register_t *retval)
 			if (error)
 				goto out;
 		} else
-			*(caddr_t *)dt = SCARG(uap, data);
+			*(void **)dt = SCARG(uap, data);
 	} else if ((com&IOC_OUT) && size)
 		/*
 		 * Zero the buffer so the user always
@@ -795,7 +795,7 @@ hpux_sys_ioctl(struct lwp *l, void *v, register_t *retval)
 		 */
 		memset(dt, 0, size);
 	else if (com&IOC_VOID)
-		*(caddr_t *)dt = SCARG(uap, data);
+		*(void **)dt = SCARG(uap, data);
 
 	switch (com) {
 
@@ -815,7 +815,7 @@ hpux_sys_ioctl(struct lwp *l, void *v, register_t *retval)
 		if ((*ofp & (HPUX_UF_NONBLOCK_ON|HPUX_UF_FNDELAY_ON)) == 0) {
 			tmp = *ofp & HPUX_UF_FIONBIO_ON;
 			error = (*fp->f_ops->fo_ioctl)(fp, FIONBIO,
-						       (caddr_t)&tmp, l);
+						       (void *)&tmp, l);
 		}
 		break;
 	}
@@ -896,10 +896,10 @@ hpux_sys_getpgrp2(struct lwp *lp, void *v, register_t *retval)
 	if (SCARG(uap, pid) == 0)
 		SCARG(uap, pid) = cp->p_pid;
 
-	rw_enter(&proclist_lock, RW_READER);
+	mutex_enter(&proclist_lock);
 	p = p_find(SCARG(uap, pid), PFIND_LOCKED);
 	if (p == 0) {
-		rw_exit(&proclist_lock);
+		mutex_exit(&proclist_lock);
 		return (ESRCH);
 	}
 	mutex_enter(&p->p_mutex);
@@ -907,12 +907,12 @@ hpux_sys_getpgrp2(struct lwp *lp, void *v, register_t *retval)
 	    kauth_cred_geteuid(p->p_cred) != kauth_cred_geteuid(lp->l_cred) &&
 	    !inferior(p, cp)) {
 		mutex_exit(&p->p_mutex);
-		rw_exit(&proclist_lock);
+		mutex_exit(&proclist_lock);
 		return (EPERM);
 	}
 	mutex_exit(&p->p_mutex);
 	*retval = p->p_pgid;
-	rw_exit(&proclist_lock);
+	mutex_exit(&proclist_lock);
 	return (0);
 }
 
@@ -1177,7 +1177,7 @@ hpux_sys_ftime_6x(struct lwp *l, void *v, register_t *retval)
 	/* NetBSD has no kernel notion of timezone -- fake it. */
 	tb.timezone = 0;
 	tb.dstflag = 0;
-	return (copyout((caddr_t)&tb, (caddr_t)SCARG(uap, tp), sizeof (tb)));
+	return (copyout((void *)&tb, (void *)SCARG(uap, tp), sizeof (tb)));
 }
 
 int
@@ -1306,7 +1306,7 @@ hpux_sys_times_6x(struct lwp *l, void *v, register_t *retval)
 	atms.tms_stime = hpux_scale(&rs);
 	atms.tms_cutime = hpux_scale(&p->p_stats->p_cru.ru_utime);
 	atms.tms_cstime = hpux_scale(&p->p_stats->p_cru.ru_stime);
-	error = copyout((caddr_t)&atms, (caddr_t)SCARG(uap, tms),
+	error = copyout((void *)&atms, (void *)SCARG(uap, tms),
 	    sizeof (atms));
 	if (error == 0) {
 		microtime(&tv);
@@ -1345,7 +1345,7 @@ hpux_sys_utime_6x(struct lwp *l, void *v, register_t *retval)
 	struct nameidata nd;
 
 	if (SCARG(uap, tptr)) {
-		error = copyin((caddr_t)SCARG(uap, tptr), (caddr_t)tv,
+		error = copyin((void *)SCARG(uap, tptr), (void *)tv,
 		    sizeof (tv));
 		if (error)
 			return (error);

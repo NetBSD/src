@@ -1,4 +1,4 @@
-/*	$NetBSD: mlxvar.h,v 1.12 2006/02/16 20:17:16 perry Exp $	*/
+/*	$NetBSD: mlxvar.h,v 1.12.20.1 2007/03/12 05:53:38 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -138,7 +138,7 @@ struct mlx_softc {
 	int			mlx_nccbs;
 	int			mlx_nccbs_ctrl;
 
-	caddr_t			mlx_sgls;
+	void *			mlx_sgls;
 	bus_addr_t		mlx_sgls_paddr;
 
 	int	(*mlx_submit)(struct mlx_softc *, struct mlx_ccb *);

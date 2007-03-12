@@ -1,4 +1,4 @@
-/*	$NetBSD: intio_dmac.c,v 1.23 2005/12/11 12:19:37 christos Exp $	*/
+/*	$NetBSD: intio_dmac.c,v 1.23.26.1 2007/03/12 05:51:37 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intio_dmac.c,v 1.23 2005/12/11 12:19:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intio_dmac.c,v 1.23.26.1 2007/03/12 05:51:37 rmind Exp $");
 
 #include "opt_m680x0.h"
 
@@ -94,7 +94,7 @@ dmac_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct intio_attach_args *ia = aux;
 
-	if (strcmp (ia->ia_name, "dmac") != 0)
+	if (strcmp(ia->ia_name, "dmac") != 0)
 		return (0);
 	if (dmac_attached)
 		return (0);
@@ -121,7 +121,7 @@ dmac_attach(struct device *parent, struct device *self, void *aux)
 	dmac_attached = 1;
 
 	ia->ia_size = DMAC_CHAN_SIZE * DMAC_NCHAN;
-	r = intio_map_allocate_region (parent, ia, INTIO_MAP_ALLOCATE);
+	r = intio_map_allocate_region(parent, ia, INTIO_MAP_ALLOCATE);
 #ifdef DIAGNOSTIC
 	if (r)
 		panic ("IO map for DMAC corruption??");
@@ -129,10 +129,10 @@ dmac_attach(struct device *parent, struct device *self, void *aux)
 
 	((struct intio_softc*) parent)->sc_dmac = self;
 	sc->sc_bst = ia->ia_bst;
-	bus_space_map (sc->sc_bst, ia->ia_addr, ia->ia_size, 0, &sc->sc_bht);
+	bus_space_map(sc->sc_bst, ia->ia_addr, ia->ia_size, 0, &sc->sc_bht);
 	dmac_init_channels(sc);
 
-	printf (": HD63450 DMAC\n%s: 4 channels available.\n", self->dv_xname);
+	printf(": HD63450 DMAC\n%s: 4 channels available.\n", self->dv_xname);
 }
 
 static void
@@ -140,7 +140,7 @@ dmac_init_channels(struct dmac_softc *sc)
 {
 	int i;
 
-	DPRINTF (3, ("dmac_init_channels\n"));
+	DPRINTF(3, ("dmac_init_channels\n"));
 	for (i=0; i<DMAC_NCHAN; i++) {
 		sc->sc_channels[i].ch_channel = i;
 		sc->sc_channels[i].ch_name[0] = 0;
@@ -166,24 +166,24 @@ dmac_alloc_channel(struct device *self, int ch, const char *name, int normalv,
     dmac_intr_handler_t normal, void *normalarg, int errorv,
     dmac_intr_handler_t error, void *errorarg)
 {
-	struct intio_softc *intio = (void*) self;
-	struct dmac_softc *sc = (void*) intio->sc_dmac;
+	struct intio_softc *intio = (void *)self;
+	struct dmac_softc *sc = (void *)intio->sc_dmac;
 	struct dmac_channel_stat *chan = &sc->sc_channels[ch];
 	char intrname[16];
 #ifdef DMAC_ARRAYCHAIN
 	int r, dummy;
 #endif
 
-	printf ("%s: allocating ch %d for %s.\n",
+	printf("%s: allocating ch %d for %s.\n",
 		sc->sc_dev.dv_xname, ch, name);
-	DPRINTF (3, ("dmamap=%p\n", (void*) chan->ch_xfer.dx_dmamap));
+	DPRINTF(3, ("dmamap=%p\n", (void *)chan->ch_xfer.dx_dmamap));
 #ifdef DIAGNOSTIC
 	if (ch < 0 || ch >= DMAC_NCHAN)
-		panic ("Invalid DMAC channel.");
+		panic("Invalid DMAC channel.");
 	if (chan->ch_name[0])
-		panic ("DMAC: channel in use.");
+		panic("DMAC: channel in use.");
 	if (strlen(name) > 8)
-	  	panic ("DMAC: wrong user name.");
+	  	panic("DMAC: wrong user name.");
 #endif
 
 #ifdef DMAC_ARRAYCHAIN
@@ -193,14 +193,14 @@ dmac_alloc_channel(struct device *self, int ch, const char *name, int normalv,
 			     4, 0, &chan->ch_seg[0], 1, &dummy,
 			     BUS_DMA_NOWAIT);
 	if (r)
-		panic ("DMAC: cannot alloc DMA safe memory");
+		panic("DMAC: cannot alloc DMA safe memory");
 	r = bus_dmamem_map(intio->sc_dmat,
 			   &chan->ch_seg[0], 1,
 			   sizeof(struct dmac_sg_array) * DMAC_MAPSIZE,
-			   (caddr_t*) &chan->ch_map,
+			   (void **) &chan->ch_map,
 			   BUS_DMA_NOWAIT|BUS_DMA_COHERENT);
 	if (r)
-		panic ("DMAC: cannot map DMA safe memory");
+		panic("DMAC: cannot map DMA safe memory");
 #endif
 
 	/* fill the channel status structure by the default values. */
@@ -217,34 +217,34 @@ dmac_alloc_channel(struct device *self, int ch, const char *name, int normalv,
 	chan->ch_xfer.dx_dmamap = 0;
 
 	/* setup the device-specific registers */
-	bus_space_write_1 (sc->sc_bst, chan->ch_bht, DMAC_REG_CSR, 0xff);
-	bus_space_write_1 (sc->sc_bst, chan->ch_bht,
+	bus_space_write_1(sc->sc_bst, chan->ch_bht, DMAC_REG_CSR, 0xff);
+	bus_space_write_1(sc->sc_bst, chan->ch_bht,
 			   DMAC_REG_DCR, chan->ch_dcr);
-	bus_space_write_1 (sc->sc_bst, chan->ch_bht, DMAC_REG_CPR, 0);
+	bus_space_write_1(sc->sc_bst, chan->ch_bht, DMAC_REG_CPR, 0);
 
 	/*
 	 * X68k physical user space is a subset of the kernel space;
 	 * the memory is always included in the physical user space,
 	 * while the device is not.
 	 */
-	bus_space_write_1 (sc->sc_bst, chan->ch_bht,
+	bus_space_write_1(sc->sc_bst, chan->ch_bht,
 			   DMAC_REG_BFCR, DMAC_FC_USER_DATA);
-	bus_space_write_1 (sc->sc_bst, chan->ch_bht,
+	bus_space_write_1(sc->sc_bst, chan->ch_bht,
 			   DMAC_REG_MFCR, DMAC_FC_USER_DATA);
-	bus_space_write_1 (sc->sc_bst, chan->ch_bht,
+	bus_space_write_1(sc->sc_bst, chan->ch_bht,
 			   DMAC_REG_DFCR, DMAC_FC_KERNEL_DATA);
 
 	/* setup the interrupt handlers */
-	bus_space_write_1 (sc->sc_bst, chan->ch_bht, DMAC_REG_NIVR, normalv);
-	bus_space_write_1 (sc->sc_bst, chan->ch_bht, DMAC_REG_EIVR, errorv);
+	bus_space_write_1(sc->sc_bst, chan->ch_bht, DMAC_REG_NIVR, normalv);
+	bus_space_write_1(sc->sc_bst, chan->ch_bht, DMAC_REG_EIVR, errorv);
 
 	strcpy(intrname, name);
 	strcat(intrname, "dma");
-	intio_intr_establish (normalv, intrname, dmac_done, chan);
+	intio_intr_establish(normalv, intrname, dmac_done, chan);
 
 	strcpy(intrname, name);
 	strcat(intrname, "dmaerr");
-	intio_intr_establish (errorv, intrname, dmac_error, chan);
+	intio_intr_establish(errorv, intrname, dmac_error, chan);
 
 	return chan;
 }
@@ -252,19 +252,19 @@ dmac_alloc_channel(struct device *self, int ch, const char *name, int normalv,
 int
 dmac_free_channel(struct device *self, int ch, void *channel)
 {
-	struct intio_softc *intio = (void*) self;
-	struct dmac_softc *sc = (void*) intio->sc_dmac;
+	struct intio_softc *intio = (void *)self;
+	struct dmac_softc *sc = (void *)intio->sc_dmac;
 	struct dmac_channel_stat *chan = &sc->sc_channels[ch];
 
-	DPRINTF (3, ("dmac_free_channel, %d\n", ch));
-	DPRINTF (3, ("dmamap=%p\n", (void*) chan->ch_xfer.dx_dmamap));
+	DPRINTF(3, ("dmac_free_channel, %d\n", ch));
+	DPRINTF(3, ("dmamap=%p\n", (void *)chan->ch_xfer.dx_dmamap));
 	if (chan != channel)
 		return -1;
 	if (ch != chan->ch_channel)
 		return -1;
 
 #ifdef DMAC_ARRAYCHAIN
-	bus_dmamem_unmap(intio->sc_dmat, (caddr_t) chan->ch_map,
+	bus_dmamem_unmap(intio->sc_dmat, (void *)chan->ch_map,
 			 sizeof(struct dmac_sg_array) * DMAC_MAPSIZE);
 	bus_dmamem_free(intio->sc_dmat, &chan->ch_seg[0], 1);
 #endif
@@ -284,7 +284,7 @@ dmac_alloc_xfer(struct dmac_channel_stat *chan, bus_dma_tag_t dmat,
 {
 	struct dmac_dma_xfer *xf = &chan->ch_xfer;
 
-	DPRINTF (3, ("dmac_alloc_xfer\n"));
+	DPRINTF(3, ("dmac_alloc_xfer\n"));
 	xf->dx_channel = chan;
 	xf->dx_dmamap = dmamap;
 	xf->dx_tag = dmat;
@@ -302,7 +302,7 @@ dmac_load_xfer(struct device *self, struct dmac_dma_xfer *xf)
 	struct dmac_softc *sc = (void *)self;
 	struct dmac_channel_stat *chan = xf->dx_channel;
 
-	DPRINTF (3, ("dmac_load_xfer\n"));
+	DPRINTF(3, ("dmac_load_xfer\n"));
 
 	xf->dx_ocr &= ~DMAC_OCR_CHAIN_MASK;
 	if (xf->dx_dmamap->dm_nsegs == 1)
@@ -328,7 +328,7 @@ dmac_prepare_xfer(struct dmac_channel_stat *chan, bus_dma_tag_t dmat,
     bus_dmamap_t dmamap, int dir, int scr, void *dar)
 {
 	struct dmac_dma_xfer *xf;
-	struct dmac_softc *sc = (struct dmac_softc*) chan->ch_softc;
+	struct dmac_softc *sc = (struct dmac_softc *)chan->ch_softc;
 
 	xf = dmac_alloc_xfer(chan, dmat, dmamap);
 
@@ -358,7 +358,7 @@ int
 dmac_start_xfer_offset(struct device *self, struct dmac_dma_xfer *xf,
     u_int offset, u_int size)
 {
-	struct dmac_softc *sc = (void*) self;
+	struct dmac_softc *sc = (void *)self;
 	struct dmac_channel_stat *chan = xf->dx_channel;
 	struct x68k_bus_dmamap *dmamap = xf->dx_dmamap;
 	int go = DMAC_CCR_STR|DMAC_CCR_INT;
@@ -366,7 +366,7 @@ dmac_start_xfer_offset(struct device *self, struct dmac_dma_xfer *xf,
 	int c;
 #endif
 
-	DPRINTF (3, ("dmac_start_xfer\n"));
+	DPRINTF(3, ("dmac_start_xfer\n"));
 #ifdef DMAC_DEBUG
 	debugchan=chan;
 #endif
@@ -374,7 +374,7 @@ dmac_start_xfer_offset(struct device *self, struct dmac_dma_xfer *xf,
 	if (size == 0) {
 #ifdef DIAGNOSTIC
 		if (offset != 0)
-			panic ("dmac_start_xfer_offset: invalid offset %x",
+			panic("dmac_start_xfer_offset: invalid offset %x",
 			       offset);
 #endif
 		size = dmamap->dm_mapsize;
@@ -386,11 +386,11 @@ dmac_start_xfer_offset(struct device *self, struct dmac_dma_xfer *xf,
 		panic("dmac_start_xfer: DMA transfer in progress");
 #endif
 #endif
-	DPRINTF (3, ("First program:\n"));
+	DPRINTF(3, ("First program:\n"));
 #ifdef DIAGNOSTIC
 	if ((offset >= dmamap->dm_mapsize) ||
 	    (offset + size > dmamap->dm_mapsize))
-		panic ("dmac_start_xfer_offset: invalid offset: "
+		panic("dmac_start_xfer_offset: invalid offset: "
 			"offset=%d, size=%d, mapsize=%ld",
 		       offset, size, dmamap->dm_mapsize);
 #endif
@@ -399,7 +399,7 @@ dmac_start_xfer_offset(struct device *self, struct dmac_dma_xfer *xf,
 		DPRINTF(3, ("single block mode\n"));
 #ifdef DIAGNOSTIC
 		if (dmamap->dm_mapsize != dmamap->dm_segs[0].ds_len)
-			panic ("dmac_start_xfer_offset: dmamap curruption");
+			panic("dmac_start_xfer_offset: dmamap curruption");
 #endif
 		if (offset == xf->dx_nextoff &&
 		    size == xf->dx_nextsize) {
@@ -427,20 +427,20 @@ dmac_start_xfer_offset(struct device *self, struct dmac_dma_xfer *xf,
 		bus_space_write_2(sc->sc_bst, chan->ch_bht,
 				  DMAC_REG_BTCR, c);
 #else
-		panic ("DMAC: unexpected use of arraychaining mode");
+		panic("DMAC: unexpected use of arraychaining mode");
 #endif
 	}
 
 	bus_space_write_1(sc->sc_bst, chan->ch_bht, DMAC_REG_CSR, 0xff);
 
 	/* START!! */
-	DDUMPREGS (3, ("first start\n"));
+	DDUMPREGS(3, ("first start\n"));
 
 #ifdef DMAC_ARRAYCHAIN
 #if defined(M68040) || defined(M68060)
 	/* flush data cache for the map */
 	if (dmamap->dm_nsegs != 1 && mmutype == MMU_68040)
-		dma_cachectl((caddr_t) xf->dx_array,
+		dma_cachectl((void *) xf->dx_array,
 			     sizeof(struct dmac_sg_array) * c);
 #endif
 #endif
@@ -468,15 +468,15 @@ dmac_program_arraychain(struct device *self, struct dmac_dma_xfer *xf,
 
 	/* XXX not yet!! */
 	if (offset != 0 || size != map->dm_mapsize)
-		panic ("dmac_program_arraychain: unsupported offset/size");
+		panic("dmac_program_arraychain: unsupported offset/size");
 
-	DPRINTF (3, ("dmac_program_arraychain\n"));
+	DPRINTF(3, ("dmac_program_arraychain\n"));
 	for (i=0, j=xf->dx_done; i<DMAC_MAPSIZE && j<map->dm_nsegs;
 	     i++, j++) {
 		xf->dx_array[i].da_addr = map->dm_segs[j].ds_addr;
 #ifdef DIAGNOSTIC
 		if (map->dm_segs[j].ds_len > DMAC_MAXSEGSZ)
-			panic ("dmac_program_arraychain: wrong map: %ld",
+			panic("dmac_program_arraychain: wrong map: %ld",
 			       map->dm_segs[j].ds_len);
 #endif
 		xf->dx_array[i].da_count = map->dm_segs[j].ds_len;
@@ -494,14 +494,14 @@ static int
 dmac_done(void *arg)
 {
 	struct dmac_channel_stat *chan = arg;
-	struct dmac_softc *sc = (void*) chan->ch_softc;
+	struct dmac_softc *sc = (void *)chan->ch_softc;
 #ifdef DMAC_ARRAYCHAIN
 	struct dmac_dma_xfer *xf = &chan->ch_xfer;
 	struct x68k_bus_dmamap *map = xf->dx_dmamap;
 	int c;
 #endif
 
-	DPRINTF (3, ("dmac_done\n"));
+	DPRINTF(3, ("dmac_done\n"));
 
 	bus_space_write_1(sc->sc_bst, chan->ch_bht, DMAC_REG_CSR, 0xff);
 
@@ -510,15 +510,15 @@ dmac_done(void *arg)
 		xf->dx_done = 0;
 #endif
 		/* Done */
-		return (*chan->ch_normal) (chan->ch_normalarg);
+		return (*chan->ch_normal)(chan->ch_normalarg);
 #ifdef DMAC_ARRAYCHAIN
 	}
 #endif
 
 #ifdef DMAC_ARRAYCHAIN
 	/* Continue transfer */
-	DPRINTF (3, ("reprograming\n"));
-	c = dmac_program_arraychain (&sc->sc_dev, xf, 0, map->dm_mapsize);
+	DPRINTF(3, ("reprograming\n"));
+	c = dmac_program_arraychain(&sc->sc_dev, xf, 0, map->dm_mapsize);
 
 	bus_space_write_1(sc->sc_bst, chan->ch_bht, DMAC_REG_CSR, 0xff);
 	bus_space_write_4(sc->sc_bst, chan->ch_bht,
@@ -528,7 +528,7 @@ dmac_done(void *arg)
 	bus_space_write_2(sc->sc_bst, chan->ch_bht, DMAC_REG_BTCR, c);
 
 	/* START!! */
-	DDUMPREGS (3, ("restart\n"));
+	DDUMPREGS(3, ("restart\n"));
 	bus_space_write_1(sc->sc_bst, chan->ch_bht,
 			  DMAC_REG_CCR, DMAC_CCR_STR|DMAC_CCR_INT);
 
@@ -540,9 +540,9 @@ static int
 dmac_error(void *arg)
 {
 	struct dmac_channel_stat *chan = arg;
-	struct dmac_softc *sc = (void*) chan->ch_softc;
+	struct dmac_softc *sc = (void *)chan->ch_softc;
 
-	printf ("DMAC transfer error CSR=%02x, CER=%02x\n",
+	printf("DMAC transfer error CSR=%02x, CER=%02x\n",
 		bus_space_read_1(sc->sc_bst, chan->ch_bht, DMAC_REG_CSR),
 		bus_space_read_1(sc->sc_bst, chan->ch_bht, DMAC_REG_CER));
 	DDUMPREGS(3, ("registers were:\n"));
@@ -554,13 +554,13 @@ dmac_error(void *arg)
 	chan->ch_xfer.dx_done = 0;
 #endif
 
-	return (*chan->ch_error) (chan->ch_errorarg);
+	return (*chan->ch_error)(chan->ch_errorarg);
 }
 
 int
 dmac_abort_xfer(struct device *self, struct dmac_dma_xfer *xf)
 {
-	struct dmac_softc *sc = (void*) self;
+	struct dmac_softc *sc = (void *)self;
 	struct dmac_channel_stat *chan = xf->dx_channel;
 
 	bus_space_write_1(sc->sc_bst, chan->ch_bht, DMAC_REG_CCR,
@@ -580,10 +580,10 @@ dmac_dump_regs(void)
 
 	if ((chan == 0) || (dmacdebug & 0xf0))
 		return 0;
-	sc = (void*) chan->ch_softc;
+	sc = (void *)chan->ch_softc;
 
-	printf ("DMAC channel %d registers\n", chan->ch_channel);
-	printf ("CSR=%02x, CER=%02x, DCR=%02x, OCR=%02x, SCR=%02x, "
+	printf("DMAC channel %d registers\n", chan->ch_channel);
+	printf("CSR=%02x, CER=%02x, DCR=%02x, OCR=%02x, SCR=%02x, "
 		"CCR=%02x, CPR=%02x, GCR=%02x\n",
 		bus_space_read_1(sc->sc_bst, chan->ch_bht, DMAC_REG_CSR),
 		bus_space_read_1(sc->sc_bst, chan->ch_bht, DMAC_REG_CER),
@@ -593,7 +593,7 @@ dmac_dump_regs(void)
 		bus_space_read_1(sc->sc_bst, chan->ch_bht, DMAC_REG_CCR),
 		bus_space_read_1(sc->sc_bst, chan->ch_bht, DMAC_REG_CPR),
 		bus_space_read_1(sc->sc_bst, chan->ch_bht, DMAC_REG_GCR));
-	printf ("NIVR=%02x, EIVR=%02x, MTCR=%04x, BTCR=%04x, DFCR=%02x, "
+	printf("NIVR=%02x, EIVR=%02x, MTCR=%04x, BTCR=%04x, DFCR=%02x, "
 		"MFCR=%02x, BFCR=%02x\n",
 		bus_space_read_1(sc->sc_bst, chan->ch_bht, DMAC_REG_NIVR),
 		bus_space_read_1(sc->sc_bst, chan->ch_bht, DMAC_REG_EIVR),
@@ -602,7 +602,7 @@ dmac_dump_regs(void)
 		bus_space_read_1(sc->sc_bst, chan->ch_bht, DMAC_REG_DFCR),
 		bus_space_read_1(sc->sc_bst, chan->ch_bht, DMAC_REG_MFCR),
 		bus_space_read_1(sc->sc_bst, chan->ch_bht, DMAC_REG_BFCR));
-	printf ("DAR=%08x, MAR=%08x, BAR=%08x\n",
+	printf("DAR=%08x, MAR=%08x, BAR=%08x\n",
 		bus_space_read_4(sc->sc_bst, chan->ch_bht, DMAC_REG_DAR),
 		bus_space_read_4(sc->sc_bst, chan->ch_bht, DMAC_REG_MAR),
 		bus_space_read_4(sc->sc_bst, chan->ch_bht, DMAC_REG_BAR));

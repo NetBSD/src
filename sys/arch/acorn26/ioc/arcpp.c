@@ -1,4 +1,4 @@
-/* $NetBSD: arcpp.c,v 1.7 2006/02/12 10:30:30 bjh21 Exp $ */
+/* $NetBSD: arcpp.c,v 1.7.20.1 2007/03/12 05:45:14 rmind Exp $ */
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -52,7 +52,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: arcpp.c,v 1.7 2006/02/12 10:30:30 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arcpp.c,v 1.7.20.1 2007/03/12 05:45:14 rmind Exp $");
 
 #include <sys/conf.h>
 #include <sys/device.h>
@@ -202,7 +202,7 @@ arcppopen(dev_t dev, int flag, int mode, struct lwp *l)
 	/* wait till ready (printer running diagnostics) */
 	irq_enable(sc->sc_bih);
 	/* XXX Is it really appropriate to time out? */
-	error = tsleep((caddr_t)sc, ARCPPPRI | PCATCH, "arcppopen", TIMEOUT);
+	error = tsleep((void *)sc, ARCPPPRI | PCATCH, "arcppopen", TIMEOUT);
 	if (error == EWOULDBLOCK) {
 		sc->sc_state = 0;
 		return EBUSY;
@@ -256,7 +256,7 @@ arcpppushbytes(sc)
 			arcppintr(sc);
 			splx(s);
 		}
-		error = tsleep((caddr_t)sc, ARCPPPRI | PCATCH, "arcppwr", 0);
+		error = tsleep((void *)sc, ARCPPPRI | PCATCH, "arcppwr", 0);
 		if (error)
 			return error;
 	}
@@ -318,7 +318,7 @@ arcppintr(void *arg)
 
 	if (sc->sc_count == 0)
 		/* none, wake up the top half to get more */
-		wakeup((caddr_t)sc);
+		wakeup((void *)sc);
 
 	return 1;
 }

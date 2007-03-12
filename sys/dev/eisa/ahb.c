@@ -1,4 +1,4 @@
-/*	$NetBSD: ahb.c,v 1.47 2006/11/16 01:32:50 christos Exp $	*/
+/*	$NetBSD: ahb.c,v 1.47.4.1 2007/03/12 05:53:10 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahb.c,v 1.47 2006/11/16 01:32:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahb.c,v 1.47.4.1 2007/03/12 05:53:10 rmind Exp $");
 
 #include "opt_ddb.h"
 
@@ -720,7 +720,7 @@ ahb_init(struct ahb_softc *sc)
 		return (error);
 	}
 	if ((error = bus_dmamem_map(sc->sc_dmat, &seg, rseg,
-	    ECBSIZE, (caddr_t *)&sc->sc_ecbs,
+	    ECBSIZE, (void **)&sc->sc_ecbs,
 	    BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
 		printf("%s: unable to map ecbs, error = %d\n",
 		    sc->sc_dev.dv_xname, error);

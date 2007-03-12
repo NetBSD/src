@@ -1,4 +1,4 @@
-/*	$NetBSD: we.c,v 1.11 2006/03/29 04:16:49 thorpej Exp $	*/
+/*	$NetBSD: we.c,v 1.11.14.1 2007/03/12 05:53:48 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: we.c,v 1.11 2006/03/29 04:16:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: we.c,v 1.11.14.1 2007/03/12 05:53:48 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,7 +100,7 @@ static void	we_mediastatus(struct dp8390_softc *, struct ifmediareq *);
 static void	we_recv_int(struct dp8390_softc *);
 static void	we_init_card(struct dp8390_softc *);
 static int	we_write_mbuf(struct dp8390_softc *, struct mbuf *, int);
-static int	we_ring_copy(struct dp8390_softc *, int, caddr_t, u_short);
+static int	we_ring_copy(struct dp8390_softc *, int, void *, u_short);
 static void	we_read_hdr(struct dp8390_softc *, int, struct dp8390_ring *);
 static int	we_test_mem(struct dp8390_softc *);
 
@@ -456,12 +456,13 @@ we_write_mbuf(sc, m, buf)
 }
 
 static int
-we_ring_copy(sc, src, dst, amount)
+we_ring_copy(sc, src, dstv, amount)
 	struct dp8390_softc *sc;
 	int src;
-	caddr_t dst;
+	void *dstv;
 	u_short amount;
 {
+	char *dst = dstv;
 	struct we_softc *wsc = (struct we_softc *)sc;
 	u_short tmp_amount;
 

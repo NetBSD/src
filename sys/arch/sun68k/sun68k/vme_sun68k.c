@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_sun68k.c,v 1.11 2005/12/11 12:19:29 christos Exp $	*/
+/*	$NetBSD: vme_sun68k.c,v 1.11.26.1 2007/03/12 05:51:11 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vme_sun68k.c,v 1.11 2005/12/11 12:19:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vme_sun68k.c,v 1.11.26.1 2007/03/12 05:51:11 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/extent.h>
@@ -309,7 +309,7 @@ sun68k_vme_intr_establish(void *cookie, vme_intr_handle_t vih, int pri,
 }
 
 void
-sun68k_vme_unmap(void * cookie, vme_mapresc_t resc)
+sun68k_vme_unmap(void *cookie, vme_mapresc_t resc)
 {
 	/* Not implemented */
 	panic("sun68k_vme_unmap");

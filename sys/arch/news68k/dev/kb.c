@@ -1,4 +1,4 @@
-/*	$NetBSD: kb.c,v 1.7 2005/12/11 12:18:23 christos Exp $	*/
+/*	$NetBSD: kb.c,v 1.7.26.1 2007/03/12 05:49:38 rmind Exp $	*/
 
 /*
  * Copyright (c) 2001 Izumi Tsutsui.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kb.c,v 1.7 2005/12/11 12:18:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kb.c,v 1.7.26.1 2007/03/12 05:49:38 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,7 +50,7 @@ void	kb_cngetc(void *, u_int *, int *);
 void	kb_cnpollc(void *, int);
 int	kb_enable(void *, int);
 void	kb_set_leds(void *, int);
-int	kb_ioctl(void *, u_long, caddr_t, int, struct lwp *);
+int	kb_ioctl(void *, u_long, void *, int, struct lwp *);
 
 extern struct wscons_keydesc newskb_keydesctab[];
 
@@ -144,7 +144,7 @@ kb_set_leds(void *v, int on)
 }
 
 int
-kb_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
+kb_ioctl(void *v, u_long cmd, void *data, int flag, struct lwp *l)
 {
 #if 0
 	struct console_softc *cs = v;

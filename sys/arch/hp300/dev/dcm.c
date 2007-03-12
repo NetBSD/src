@@ -1,4 +1,4 @@
-/*	$NetBSD: dcm.c,v 1.76 2006/10/01 16:50:11 elad Exp $	*/
+/*	$NetBSD: dcm.c,v 1.76.4.1 2007/03/12 05:47:42 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -123,7 +123,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dcm.c,v 1.76 2006/10/01 16:50:11 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dcm.c,v 1.76.4.1 2007/03/12 05:47:42 rmind Exp $");
 
 #include "opt_kgdb.h"
 
@@ -994,7 +994,7 @@ dcmmint(struct dcm_softc *sc, int port, int mcnd)
 }
 
 static int
-dcmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+dcmioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct dcm_softc *sc;
 	struct tty *tp;
@@ -1224,7 +1224,7 @@ dcmstart(struct tty *tp)
 	if (tp->t_outq.c_cc <= tp->t_lowat) {
 		if (tp->t_state&TS_ASLEEP) {
 			tp->t_state &= ~TS_ASLEEP;
-			wakeup((caddr_t)&tp->t_outq);
+			wakeup((void *)&tp->t_outq);
 		}
 		selwakeup(&tp->t_wsel);
 	}
@@ -1540,7 +1540,7 @@ int
 dcmcnattach(bus_space_tag_t bst, bus_addr_t addr, int scode)
 {
 	bus_space_handle_t bsh;
-	caddr_t va;
+	void *va;
 	struct dcmdevice *dcm;
 	int maj;
 

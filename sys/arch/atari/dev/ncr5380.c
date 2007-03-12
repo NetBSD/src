@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380.c,v 1.52 2006/02/25 02:28:56 wiz Exp $	*/
+/*	$NetBSD: ncr5380.c,v 1.52.20.1 2007/03/12 05:47:21 rmind Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr5380.c,v 1.52 2006/02/25 02:28:56 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr5380.c,v 1.52.20.1 2007/03/12 05:47:21 rmind Exp $");
 
 /*
  * Bit mask of targets you want debugging to be shown
@@ -1813,7 +1813,7 @@ SC_REQ	*reqp;
 {
 	u_long			phy_buf;
 	u_long			phy_len;
-	caddr_t			req_addr;
+	char			*req_addr;
 	u_long			req_len;
 	struct dma_chain	*dm;
 
@@ -1821,7 +1821,7 @@ SC_REQ	*reqp;
 	 * Initialize locals and requests' DMA-chain.
 	 */
 	req_len        = reqp->xdata_len;
-	req_addr       = (caddr_t)reqp->xdata_ptr;
+	req_addr       = (void *)reqp->xdata_ptr;
 	dm             = reqp->dm_cur = reqp->dm_last = reqp->dm_chain;
 	dm->dm_count   = dm->dm_addr = 0;
 	reqp->dr_flag &= ~DRIVER_BOUNCING;

@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.48 2006/10/01 18:56:21 elad Exp $	*/
+/*	$NetBSD: pccons.c,v 1.48.4.1 2007/03/12 05:46:48 rmind Exp $	*/
 /*	$OpenBSD: pccons.c,v 1.22 1999/01/30 22:39:37 imp Exp $	*/
 /*	NetBSD: pccons.c,v 1.89 1995/05/04 19:35:20 cgd Exp	*/
 
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.48 2006/10/01 18:56:21 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.48.4.1 2007/03/12 05:46:48 rmind Exp $");
 
 #include "opt_ddb.h"
 
@@ -711,7 +711,7 @@ pcintr(void *arg)
 }
 
 int
-pcioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+pcioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct pc_softc *sc = pc_cd.cd_devs[PCUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
@@ -1669,7 +1669,7 @@ top:
 			shift_state |= KB_SCROLL;
 			lock_state ^= KB_SCROLL;
 			if ((lock_state & KB_SCROLL) == 0)
-				wakeup((caddr_t)&lock_state);
+				wakeup((void *)&lock_state);
 			async_update();
 			break;
 		}
@@ -1752,7 +1752,7 @@ top:
 			shift_state |= KB_SCROLL;
 			lock_state ^= KB_SCROLL;
 			if ((lock_state & KB_SCROLL) == 0)
-				wakeup((caddr_t)&lock_state);
+				wakeup((void *)&lock_state);
 			async_update();
 			break;
 		/*

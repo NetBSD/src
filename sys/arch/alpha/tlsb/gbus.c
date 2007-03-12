@@ -1,4 +1,4 @@
-/* $NetBSD: gbus.c,v 1.18 2005/12/11 12:16:21 christos Exp $ */
+/* $NetBSD: gbus.c,v 1.18.26.1 2007/03/12 05:46:15 rmind Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: gbus.c,v 1.18 2005/12/11 12:16:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gbus.c,v 1.18.26.1 2007/03/12 05:46:15 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,7 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: gbus.c,v 1.18 2005/12/11 12:16:21 christos Exp $");
 
 #include "locators.h"
 
-#define KV(_addr)	((caddr_t)ALPHA_PHYS_TO_K0SEG((_addr)))
+#define KV(_addr)	((void *)ALPHA_PHYS_TO_K0SEG((_addr)))
 
 struct gbus_softc {
 	struct device	sc_dev;

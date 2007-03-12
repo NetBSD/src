@@ -1,4 +1,4 @@
-/*	$NetBSD: midisynvar.h,v 1.10 2006/06/30 13:56:25 chap Exp $	*/
+/*	$NetBSD: midisynvar.h,v 1.10.10.1 2007/03/12 05:53:05 rmind Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@ typedef struct midisyn midisyn;
 struct midisyn_methods {
 	int  (*open)	(midisyn *, int /* flags */);
 	void (*close)   (midisyn *);
-	int  (*ioctl)   (midisyn *, u_long, caddr_t, int, struct lwp *);
+	int  (*ioctl)   (midisyn *, u_long, void *, int, struct lwp *);
 	/*
 	 * allocv(midisyn *ms, uint_fast8_t chan, uint_fast8_t key);
 	 * Allocate one of the devices actual voices (stealing one if

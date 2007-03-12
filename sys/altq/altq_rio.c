@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_rio.c,v 1.18 2007/01/24 13:08:11 hubertf Exp $	*/
+/*	$NetBSD: altq_rio.c,v 1.18.2.1 2007/03/12 05:45:06 rmind Exp $	*/
 /*	$KAME: altq_rio.c,v 1.19 2005/04/13 03:44:25 suz Exp $	*/
 
 /*
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_rio.c,v 1.18 2007/01/24 13:08:11 hubertf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_rio.c,v 1.18.2.1 2007/03/12 05:45:06 rmind Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -500,7 +500,7 @@ rioclose(dev_t dev, int flag, int fmt,
 }
 
 int
-rioioctl(dev_t dev, ioctlcmd_t cmd, caddr_t addr, int flag,
+rioioctl(dev_t dev, ioctlcmd_t cmd, void *addr, int flag,
     struct lwp *l)
 {
 	rio_queue_t *rqp;

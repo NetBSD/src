@@ -1,4 +1,4 @@
-/*	$NetBSD: atari5380.c,v 1.41 2006/05/10 06:24:02 skrll Exp $	*/
+/*	$NetBSD: atari5380.c,v 1.41.14.1 2007/03/12 05:47:19 rmind Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atari5380.c,v 1.41 2006/05/10 06:24:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atari5380.c,v 1.41.14.1 2007/03/12 05:47:19 rmind Exp $");
 
 #include "opt_atariscsi.h"
 
@@ -826,7 +826,7 @@ u_int	dir, nsects;
 SC_REQ	*reqp;
 {
 	dir <<= 8;
-	st_dmaaddr_set((caddr_t)reqp->dm_cur->dm_addr);
+	st_dmaaddr_set((void *)reqp->dm_cur->dm_addr);
 	DMA->dma_mode = 0x90 | dir;
 	DMA->dma_mode = 0x90 | (dir ^ DMA_WRBIT);
 	DMA->dma_mode = 0x90 | dir;

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 2006/06/29 03:46:43 lukem Exp $
+#	$NetBSD: Makefile,v 1.20.10.1 2007/03/12 05:51:42 rmind Exp $
 
 NOMAN=		# defined
 
@@ -36,7 +36,7 @@ vers.c:	${VERSIONFILE}
 	${HOST_SH} ${S}/conf/newvers_stand.sh -DM ${.ALLSRC} ${MACHINE} ${NEWVERSWHAT}
 
 CFLAGS=	-Os -fomit-frame-pointer
-CFLAGS+= -W -Wall -Wconversion -Wstrict-prototypes -Wmissing-prototypes
+CFLAGS+= -W -Wall -Wstrict-prototypes -Wmissing-prototypes
 CPPFLAGS+= -DTEXTADDR="0x$(TEXT)" -DBOOT_TEXTADDR="0x$(BOOT_TEXT)"
 CPPFLAGS+= -DBOOT=\"$(BOOT)\" -DBOOT_VERS=\"$(VERSION)\"
 CPPFLAGS+= -DSCSI_ADHOC_BOOTPART

@@ -1,4 +1,4 @@
-/*	$NetBSD: pbsdboot.h,v 1.10 2000/08/29 15:10:18 takemura Exp $	*/
+/*	$NetBSD: pbsdboot.h,v 1.10.78.1 2007/03/12 05:48:14 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura.
@@ -60,16 +60,16 @@ BOOL VirtualCopy(LPVOID, LPVOID, DWORD, DWORD);
  *  structure declarations
  */
 struct map_s {
-	caddr_t entry;
-	caddr_t base;
+	void *entry;
+	void *base;
 	int pagesize;
 	int leafsize;
 	int nleaves;
-	caddr_t arg0;
-	caddr_t arg1;
-	caddr_t arg2;
-	caddr_t arg3;
-	caddr_t *leaf[32];
+	void *arg0;
+	void *arg1;
+	void *arg2;
+	void *arg3;
+	void **leaf[32];
 };
 
 struct preference_s {
@@ -105,7 +105,7 @@ struct system_info {
 	DWORD si_pagesize;
 	unsigned char *si_asmcode;
 	int si_asmcodelen;
-	int (*si_boot) __P((caddr_t));
+	int (*si_boot) __P((void *));
 	int si_intrvec;
 };
 extern struct system_info system_info;
@@ -127,24 +127,24 @@ int CreateMainWindow(HINSTANCE hInstance, HWND hWnd, LPCTSTR name, int cmdbar_he
 /*
  *  vmem.c
  */
-int vmem_exec(caddr_t entry, int argc, char *argv[], struct bootinfo *bi);
-caddr_t vmem_get(caddr_t phys_addr, int *length);
-int vmem_init(caddr_t start, caddr_t end);
+int vmem_exec(void *entry, int argc, char *argv[], struct bootinfo *bi);
+void *vmem_get(void *phys_addr, int *length);
+int vmem_init(void *start, void *end);
 void vmem_dump_map(void);
-caddr_t vtophysaddr(caddr_t page);
+void *vtophysaddr(void *page);
 void vmem_free(void);
-caddr_t vmem_alloc(void);
+void *vmem_alloc(void);
 
 /*
  *  elf.c
  */
-int getinfo(int fd, caddr_t *start, caddr_t *end);
-int loadfile(int fd, caddr_t *entry);
+int getinfo(int fd, void **start, void **end);
+int loadfile(int fd, void **entry);
 
 /*
  *  mips.c
  */
-int mips_boot(caddr_t map);
+int mips_boot(void *map);
 
 /*
  *  pbsdboot.c

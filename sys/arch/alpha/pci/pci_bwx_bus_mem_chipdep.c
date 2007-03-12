@@ -1,4 +1,4 @@
-/* $NetBSD: pci_bwx_bus_mem_chipdep.c,v 1.19 2005/12/11 12:16:17 christos Exp $ */
+/* $NetBSD: pci_bwx_bus_mem_chipdep.c,v 1.19.26.1 2007/03/12 05:46:15 rmind Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: pci_bwx_bus_mem_chipdep.c,v 1.19 2005/12/11 12:16:17 christos Exp $");
+__KERNEL_RCSID(1, "$NetBSD: pci_bwx_bus_mem_chipdep.c,v 1.19.26.1 2007/03/12 05:46:15 rmind Exp $");
 
 #include <sys/extent.h>
 
@@ -309,7 +309,7 @@ __C(CHIP,_bus_mem_init)(t, v)
 	t->abs_c_8 =		__C(CHIP,_mem_copy_region_8);
 
 	ex = extent_create(__S(__C(CHIP,_bus_mem)), 0x0UL, 0xffffffffUL,
-	    M_DEVBUF, (caddr_t)CHIP_MEM_EX_STORE(v), CHIP_MEM_EX_STORE_SIZE(v),
+	    M_DEVBUF, (void *)CHIP_MEM_EX_STORE(v), CHIP_MEM_EX_STORE_SIZE(v),
 	    EX_NOWAIT|EX_NOCOALESCE);
 
         CHIP_MEM_EXTENT(v) = ex;

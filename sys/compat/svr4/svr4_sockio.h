@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_sockio.h,v 1.6 2006/04/02 07:17:16 christos Exp $	 */
+/*	$NetBSD: svr4_sockio.h,v 1.6.14.1 2007/03/12 05:52:46 rmind Exp $	 */
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -179,7 +179,7 @@ struct svr4_lifnum {
 struct svr4_ifconf {
 	int	svr4_ifc_len;
 	union {
-		caddr_t			 ifcu_buf;
+		void *			 ifcu_buf;
 		struct svr4_ifreq 	*ifcu_req;
 	} ifc_ifcu;
 

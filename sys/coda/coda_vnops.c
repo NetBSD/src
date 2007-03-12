@@ -6,7 +6,7 @@ mkdir
 rmdir
 symlink
 */
-/*	$NetBSD: coda_vnops.c,v 1.51 2006/12/09 16:11:50 chs Exp $	*/
+/*	$NetBSD: coda_vnops.c,v 1.51.2.1 2007/03/12 05:51:51 rmind Exp $	*/
 
 /*
  *
@@ -54,7 +54,7 @@ symlink
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.51 2006/12/09 16:11:50 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.51.2.1 2007/03/12 05:51:51 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -477,7 +477,7 @@ coda_ioctl(void *v)
     struct vop_ioctl_args *ap = v;
     struct vnode *vp = ap->a_vp;
     int com = ap->a_command;
-    caddr_t data = ap->a_data;
+    void *data = ap->a_data;
     int flag = ap->a_fflag;
     kauth_cred_t cred = ap->a_cred;
     struct lwp  *l = ap->a_l;

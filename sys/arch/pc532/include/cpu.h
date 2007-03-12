@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.46 2007/02/16 02:53:49 ad Exp $	*/
+/*	$NetBSD: cpu.h,v 1.46.2.1 2007/03/12 05:49:47 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -126,7 +126,7 @@ void	softnet(void *);
 void	icu_init(u_char *);
 
 /* vm_machdep.c */
-int	kvtop(caddr_t);
+int	kvtop(void *);
 
 #endif /* _KERNEL */
 

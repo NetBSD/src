@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.32 2006/03/28 17:38:28 thorpej Exp $	*/
+/*	$NetBSD: grf.c,v 1.32.14.1 2007/03/12 05:51:37 rmind Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.32 2006/03/28 17:38:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.32.14.1 2007/03/12 05:51:37 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -127,8 +127,8 @@ int grfdebug = 0;
 static int grfon(struct grf_softc *);
 static int grfoff(struct grf_softc *);
 static off_t grfaddr(struct grf_softc *, off_t);
-static int grfmap(dev_t, caddr_t *, struct proc *);
-static int grfunmap(dev_t, caddr_t, struct proc *);
+static int grfmap(dev_t, void **, struct proc *);
+static int grfunmap(dev_t, void *, struct proc *);
 
 extern struct cfdriver grf_cd;
 
@@ -187,7 +187,7 @@ grfclose(dev_t dev, int flags, int mode, struct lwp *l)
 
 /*ARGSUSED*/
 int
-grfioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+grfioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	int unit = GRFUNIT(dev);
 	struct grf_softc *gp = grf_cd.cd_devs[unit];
@@ -200,7 +200,7 @@ grfioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 	switch (cmd) {
 
 	case GRFIOCGINFO:
-		memcpy(data, (caddr_t)&gp->g_display, sizeof(struct grfinfo));
+		memcpy(data, (void *)&gp->g_display, sizeof(struct grfinfo));
 		break;
 
 	case GRFIOCON:
@@ -212,11 +212,11 @@ grfioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		break;
 
 	case GRFIOCMAP:
-		error = grfmap(dev, (caddr_t *)data, l->l_proc);
+		error = grfmap(dev, (void **)data, l->l_proc);
 		break;
 
 	case GRFIOCUNMAP:
-		error = grfunmap(dev, *(caddr_t *)data, l->l_proc);
+		error = grfunmap(dev, *(void **)data, l->l_proc);
 		break;
 
 	case GRFSETVMODE:
@@ -253,7 +253,7 @@ grfon(struct grf_softc *gp)
 	 */
 	iteoff(unit, 2);
 
-	return (*gp->g_sw->gd_mode)(gp, GM_GRFON, (caddr_t) 0);
+	return (*gp->g_sw->gd_mode)(gp, GM_GRFON, (void *) 0);
 }
 
 int
@@ -263,9 +263,9 @@ grfoff(struct grf_softc *gp)
 	int error;
 
 #if 0				/* always fails in EINVAL... */
-	(void) grfunmap(dev, (caddr_t) 0, curproc);
+	(void) grfunmap(dev, (void *) 0, curproc);
 #endif
-	error = (*gp->g_sw->gd_mode)(gp, GM_GRFOFF, (caddr_t) 0);
+	error = (*gp->g_sw->gd_mode)(gp, GM_GRFOFF, (void *) 0);
 	/* XXX: see comment for iteoff above */
 	iteon(unit, 2);
 
@@ -291,7 +291,7 @@ grfaddr(struct grf_softc *gp, off_t off)
 }
 
 int
-grfmap(dev_t dev, caddr_t *addrp, struct proc *p)
+grfmap(dev_t dev, void **addrp, struct proc *p)
 {
 	struct grf_softc *gp = grf_cd.cd_devs[GRFUNIT(dev)];
 	int len, error;
@@ -310,13 +310,13 @@ grfmap(dev_t dev, caddr_t *addrp, struct proc *p)
 		flags |= MAP_FIXED;
 	else
 		*addrp =
-		    (caddr_t)VM_DEFAULT_ADDRESS(p->p_vmspace->vm_daddr, len);
+		    (void *)VM_DEFAULT_ADDRESS(p->p_vmspace->vm_daddr, len);
 	vn.v_type = VCHR;			/* XXX */
 	vn.v_specinfo = &si;			/* XXX */
 	vn.v_rdev = dev;			/* XXX */
 	error = uvm_mmap(&p->p_vmspace->vm_map, (vaddr_t *)addrp,
 			 (vsize_t)len, VM_PROT_ALL, VM_PROT_ALL,
-			 flags, (caddr_t)&vn, 0,
+			 flags, (void *)&vn, 0,
 			 p->p_rlimit[RLIMIT_MEMLOCK].rlim_cur);
 	if (error == 0)
 		(void) (*gp->g_sw->gd_mode)(gp, GM_MAP, *addrp);
@@ -325,7 +325,7 @@ grfmap(dev_t dev, caddr_t *addrp, struct proc *p)
 }
 
 int
-grfunmap(dev_t dev, caddr_t addr, struct proc *p)
+grfunmap(dev_t dev, void *addr, struct proc *p)
 {
 	struct grf_softc *gp = grf_cd.cd_devs[GRFUNIT(dev)];
 	vsize_t size;

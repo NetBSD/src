@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho.c,v 1.79 2006/03/08 23:46:24 lukem Exp $	*/
+/*	$NetBSD: psycho.c,v 1.79.16.1 2007/03/12 05:50:46 rmind Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Eduardo E. Horvath
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.79 2006/03/08 23:46:24 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.79.16.1 2007/03/12 05:50:46 rmind Exp $");
 
 #include "opt_ddb.h"
 
@@ -122,8 +122,8 @@ int psycho_dmamem_alloc(bus_dma_tag_t, bus_size_t, bus_size_t, bus_size_t,
 	bus_dma_segment_t *, int, int *, int);
 void psycho_dmamem_free(bus_dma_tag_t, bus_dma_segment_t *, int);
 int psycho_dmamem_map(bus_dma_tag_t, bus_dma_segment_t *, int, size_t,
-	caddr_t *, int);
-void psycho_dmamem_unmap(bus_dma_tag_t, caddr_t, size_t);
+	void **, int);
+void psycho_dmamem_unmap(bus_dma_tag_t, void *, size_t);
 
 /* base pci_chipset */
 extern struct sparc_pci_chipset _sparc_pci_chipset;
@@ -1381,7 +1381,7 @@ psycho_dmamem_free(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs)
 
 int
 psycho_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
-	size_t size, caddr_t *kvap, int flags)
+	size_t size, void **kvap, int flags)
 {
 	struct psycho_pbm *pp = (struct psycho_pbm *)t->_cookie;
 
@@ -1389,7 +1389,7 @@ psycho_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 }
 
 void
-psycho_dmamem_unmap(bus_dma_tag_t t, caddr_t kva, size_t size)
+psycho_dmamem_unmap(bus_dma_tag_t t, void *kva, size_t size)
 {
 	struct psycho_pbm *pp = (struct psycho_pbm *)t->_cookie;
 

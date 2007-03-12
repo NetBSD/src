@@ -1,4 +1,4 @@
-/*	$NetBSD: ka820.c,v 1.46 2006/09/05 19:32:57 matt Exp $	*/
+/*	$NetBSD: ka820.c,v 1.46.8.1 2007/03/12 05:51:18 rmind Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka820.c,v 1.46 2006/09/05 19:32:57 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka820.c,v 1.46.8.1 2007/03/12 05:51:18 rmind Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -81,7 +81,7 @@ static int ka820_match(struct device *, struct cfdata *, void *);
 static void ka820_attach(struct device *, struct device *, void*);
 static void ka820_memerr(void);
 static void ka820_conf(void);
-static int ka820_mchk(caddr_t);
+static int ka820_mchk(void *);
 static int ka820_gettime(volatile struct timeval *);
 static void ka820_settime(volatile struct timeval *);
 static void rxcdintr(void *);
@@ -421,7 +421,7 @@ struct mc8200frame {
 };
 
 static int
-ka820_mchk(caddr_t cmcf)
+ka820_mchk(void *cmcf)
 {
 	register struct mc8200frame *mcf = (struct mc8200frame *)cmcf;
 	register int i, type = mcf->mc82_summary;

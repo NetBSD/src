@@ -1,4 +1,4 @@
-/*	$NetBSD: isabus.c,v 1.36 2006/07/02 04:22:38 tsutsui Exp $	*/
+/*	$NetBSD: isabus.c,v 1.36.10.1 2007/03/12 05:46:49 rmind Exp $	*/
 /*	$OpenBSD: isabus.c,v 1.15 1998/03/16 09:38:46 pefo Exp $	*/
 /*	NetBSD: isa.c,v 1.33 1995/06/28 04:30:51 cgd Exp 	*/
 
@@ -120,7 +120,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isabus.c,v 1.36 2006/07/02 04:22:38 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isabus.c,v 1.36.10.1 2007/03/12 05:46:49 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -196,9 +196,9 @@ isabrattach(struct isabr_softc *sc)
 	sc->arc_isa_cs.ic_intr_establish = isabr_intr_establish;
 	sc->arc_isa_cs.ic_intr_disestablish = isabr_intr_disestablish;
 
-	arc_bus_space_init_extent(&arc_bus_mem, (caddr_t)isa_mem_ex_storage,
+	arc_bus_space_init_extent(&arc_bus_mem, (void *)isa_mem_ex_storage,
 	    sizeof(isa_mem_ex_storage));
-	arc_bus_space_init_extent(&arc_bus_io, (caddr_t)isa_io_ex_storage,
+	arc_bus_space_init_extent(&arc_bus_io, (void *)isa_io_ex_storage,
 	    sizeof(isa_io_ex_storage));
 
 	iba.iba_iot = &arc_bus_io;

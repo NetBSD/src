@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_obio.c,v 1.19 2006/03/28 17:38:27 thorpej Exp $	*/
+/*	$NetBSD: esp_obio.c,v 1.19.14.1 2007/03/12 05:50:28 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_obio.c,v 1.19 2006/03/28 17:38:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_obio.c,v 1.19.14.1 2007/03/12 05:50:28 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -89,7 +89,7 @@ static void	esp_write_reg(struct ncr53c9x_softc *, int, u_char);
 static int	esp_dma_isintr(struct ncr53c9x_softc *);
 static void	esp_dma_reset(struct ncr53c9x_softc *);
 static int	esp_dma_intr(struct ncr53c9x_softc *);
-static int	esp_dma_setup(struct ncr53c9x_softc *, caddr_t *,
+static int	esp_dma_setup(struct ncr53c9x_softc *, void **,
 				    size_t *, int, size_t *);
 static void	esp_dma_go(struct ncr53c9x_softc *);
 static void	esp_dma_stop(struct ncr53c9x_softc *);
@@ -309,7 +309,7 @@ esp_dma_intr(struct ncr53c9x_softc *sc)
 }
 
 static int
-esp_dma_setup(struct ncr53c9x_softc *sc, caddr_t *addr, size_t *len,
+esp_dma_setup(struct ncr53c9x_softc *sc, void **addr, size_t *len,
 	      int datain, size_t *dmasize)
 {
 	struct esp_softc *esc = (struct esp_softc *)sc;

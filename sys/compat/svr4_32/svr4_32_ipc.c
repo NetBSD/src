@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_ipc.c,v 1.12 2007/02/09 21:55:26 ad Exp $	*/
+/*	$NetBSD: svr4_32_ipc.c,v 1.12.2.1 2007/03/12 05:52:48 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_ipc.c,v 1.12 2007/02/09 21:55:26 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_ipc.c,v 1.12.2.1 2007/03/12 05:52:48 rmind Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -235,7 +235,7 @@ svr4_32_semctl(l, v, retval)
 	}
 
 	if (cmd == IPC_SET) {
-		error = copyin((caddr_t)(u_long)SCARG(uap, arg).buf,
+		error = copyin((void *)(u_long)SCARG(uap, arg).buf,
 			       &ssembuf, sizeof(ssembuf));
 		if (error)
 			return (error);
@@ -247,7 +247,7 @@ svr4_32_semctl(l, v, retval)
 
 	if (error == 0 && cmd == IPC_STAT) {
 		bsd_to_svr4_32_semid_ds(&sembuf, &ssembuf);
-		error = copyout(&ssembuf, (caddr_t)(u_long)SCARG(uap, arg).buf,
+		error = copyout(&ssembuf, (void *)(u_long)SCARG(uap, arg).buf,
 				sizeof(ssembuf));
 	}
 
@@ -464,7 +464,7 @@ svr4_32_msgctl(l, v, retval)
 	struct sys___msgctl13_args ap;
 	struct svr4_32_msqid_ds ss;
 	struct msqid_ds bs;
-	caddr_t sg = stackgap_init(p, 0);
+	void *sg = stackgap_init(p, 0);
 
 	SCARG(&ap, msqid) = SCARG(uap, msqid);
 	SCARG(&ap, cmd) = SCARG(uap, cmd);
@@ -479,11 +479,11 @@ svr4_32_msgctl(l, v, retval)
 		if (error)
 			return error;
 		bsd_to_svr4_32_msqid_ds(&bs, &ss);
-		return copyout(&ss, (caddr_t)(u_long)SCARG(uap, buf), sizeof ss);
+		return copyout(&ss, (void *)(u_long)SCARG(uap, buf), sizeof ss);
 
 	case SVR4_IPC_SET:
 		SCARG(&ap, cmd) = IPC_SET;
-		error = copyin((caddr_t)(u_long)SCARG(uap, buf), &ss, sizeof ss);
+		error = copyin((void *)(u_long)SCARG(uap, buf), &ss, sizeof ss);
 		if (error)
 			return error;
 		svr4_32_to_bsd_msqid_ds(&ss, &bs);
@@ -494,7 +494,7 @@ svr4_32_msgctl(l, v, retval)
 
 	case SVR4_IPC_RMID:
 		SCARG(&ap, cmd) = IPC_RMID;
-		error = copyin((caddr_t)(u_long)SCARG(uap, buf), &ss, sizeof ss);
+		error = copyin((void *)(u_long)SCARG(uap, buf), &ss, sizeof ss);
 		if (error)
 			return error;
 		svr4_32_to_bsd_msqid_ds(&ss, &bs);
@@ -653,7 +653,7 @@ svr4_32_shmctl(l, v, retval)
 	struct svr4_32_sys_shmctl_args *uap = v;
 	int error;
 	struct proc *p = l->l_proc;
-	caddr_t sg = stackgap_init(p, 0);
+	void *sg = stackgap_init(p, 0);
 	struct sys___shmctl13_args ap;
 	struct shmid_ds bs;
 	struct svr4_32_shmid_ds ss;
@@ -667,8 +667,8 @@ svr4_32_shmctl(l, v, retval)
 		case SVR4_IPC_RMID:
 		case SVR4_SHM_LOCK:
 		case SVR4_SHM_UNLOCK:
-			error = copyin((caddr_t)(u_long)SCARG(uap, buf),
-				       (caddr_t)&ss, sizeof ss);
+			error = copyin((void *)(u_long)SCARG(uap, buf),
+				       (void *)&ss, sizeof ss);
 			if (error)
 				return error;
 			svr4_32_to_bsd_shmid_ds(&ss, &bs);
@@ -695,7 +695,7 @@ svr4_32_shmctl(l, v, retval)
 		if (error)
 			return error;
 		bsd_to_svr4_32_shmid_ds(&bs, &ss);
-		return copyout(&ss, (caddr_t)(u_long)SCARG(uap, buf), sizeof ss);
+		return copyout(&ss, (void *)(u_long)SCARG(uap, buf), sizeof ss);
 
 	case SVR4_IPC_SET:
 		SCARG(&ap, cmd) = IPC_SET;

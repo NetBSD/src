@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.6 2007/02/16 02:53:45 ad Exp $	*/
+/*	$NetBSD: intr.h,v 1.6.2.1 2007/03/12 05:47:33 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -116,22 +116,24 @@ int	spl0 __P((void));
 #define	IPL_NONE	0
 #define	IPL_SOFTCLOCK	1
 #define	IPL_SOFTNET	2
-#define	IPL_BIO		3
-#define	IPL_NET		4
-#define	IPL_TTY		5
-#define	IPL_VM		6
-#define	IPL_CLOCK	7
-#define	IPL_STATCLOCK	8
-#define	IPL_SCHED	9
-#define	IPL_HIGH	10
-#define	IPL_LOCK	11
-#define	NIPLS		12
+#define	IPL_SOFTSERIAL	3
+#define	IPL_SOFT	4
+#define	IPL_BIO		5
+#define	IPL_NET		6
+#define	IPL_TTY		7
+#define	IPL_VM		8
+#define	IPL_CLOCK	9
+#define	IPL_STATCLOCK	10
+#define	IPL_SCHED	11
+#define	IPL_HIGH	12
+#define	IPL_LOCK	13
+#define	NIPL		14
 
-extern int ipl2spl_table[NIPLS];
+extern int ipl2spl_table[NIPL];
 
 typedef int ipl_t;
 typedef struct {
-	int _ipl;
+	uint16_t _ipl;
 } ipl_cookie_t;
 
 static inline ipl_cookie_t
@@ -147,6 +149,9 @@ splraiseipl(ipl_cookie_t icookie)
 
 	return _splraise(ipl2spl_table[icookie._ipl]);
 }
+
+#include <m68k/softintr.h>
+
 #endif /* _KERNEL && !_LOCORE */
 
 #endif /* !_CESFIC_INTR_H_ */

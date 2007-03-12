@@ -1,4 +1,4 @@
-/* $NetBSD: pxa2x0_lcd.c,v 1.16 2006/12/18 15:30:56 nonaka Exp $ */
+/* $NetBSD: pxa2x0_lcd.c,v 1.16.2.1 2007/03/12 05:47:08 rmind Exp $ */
 
 /*
  * Copyright (c) 2002  Genetec Corporation.  All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_lcd.c,v 1.16 2006/12/18 15:30:56 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_lcd.c,v 1.16.2.1 2007/03/12 05:47:08 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -528,7 +528,7 @@ pxa2x0_lcd_new_screen(struct pxa2x0_lcd_softc *sc, int depth,
 	}
 
 	error = bus_dmamem_map(dma_tag, scr->segs, scr->nsegs, size,
-	    (caddr_t *)&scr->buf_va, busdma_flag | BUS_DMA_COHERENT);
+	    (void **)&scr->buf_va, busdma_flag | BUS_DMA_COHERENT);
 	if (error)
 		goto bad;
 
@@ -550,7 +550,7 @@ pxa2x0_lcd_new_screen(struct pxa2x0_lcd_softc *sc, int depth,
 
 	/* make descriptors at the top of mapped memory */
 	desc = (struct lcd_dma_descriptor *)(
-		(caddr_t)(scr->buf_va) + roundup(size, PAGE_SIZE) -
+		(char *)(scr->buf_va) + roundup(size, PAGE_SIZE) -
 			  3*sizeof *desc);
 
 	desc[0].fdadr = desc_pa;
@@ -819,7 +819,7 @@ pxa2x0_lcd_free_screen(void *v, void *cookie)
 }
 
 int
-pxa2x0_lcd_ioctl(void *v, void *vs, u_long cmd, caddr_t data, int flag,
+pxa2x0_lcd_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 	struct lwp *l)
 {
 	struct pxa2x0_lcd_softc *sc = v;

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_uselib.c,v 1.19 2007/02/09 21:55:19 ad Exp $	*/
+/*	$NetBSD: linux_uselib.c,v 1.19.2.1 2007/03/12 05:52:29 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_uselib.c,v 1.19 2007/02/09 21:55:19 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_uselib.c,v 1.19.2.1 2007/03/12 05:52:29 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,7 +93,7 @@ linux_sys_uselib(struct lwp *l, void *v, register_t *retval)
 	struct linux_sys_uselib_args /* {
 		syscallarg(const char *) path;
 	} */ *uap = v;
-	caddr_t sg;
+	void *sg;
 	long bsize, dsize, tsize, taddr, baddr, daddr;
 	struct nameidata ni;
 	struct vnode *vp;
@@ -112,7 +112,7 @@ linux_sys_uselib(struct lwp *l, void *v, register_t *retval)
 
 	vp = ni.ni_vp;
 
-	if ((error = vn_rdwr(UIO_READ, vp, (caddr_t) &hdr, LINUX_AOUT_HDR_SIZE,
+	if ((error = vn_rdwr(UIO_READ, vp, (void *) &hdr, LINUX_AOUT_HDR_SIZE,
 			     0, UIO_SYSSPACE, IO_NODELOCKED, l->l_cred,
 			     &rem, NULL))) {
 		vrele(vp);

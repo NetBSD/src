@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.18 2006/04/15 12:41:45 tsutsui Exp $	*/
+/*	$NetBSD: asc.c,v 1.18.14.1 2007/03/12 05:46:49 rmind Exp $	*/
 
 /*
  * Copyright (c) 2003 Izumi Tsutsui.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.18 2006/04/15 12:41:45 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.18.14.1 2007/03/12 05:46:49 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,7 +91,7 @@ void asc_write_reg(struct ncr53c9x_softc *, int, u_char);
 int asc_dma_isintr(struct ncr53c9x_softc *);
 void asc_dma_reset(struct ncr53c9x_softc *);
 int asc_dma_intr(struct ncr53c9x_softc *);
-int asc_dma_setup(struct ncr53c9x_softc *, caddr_t *, size_t *, int, size_t *);
+int asc_dma_setup(struct ncr53c9x_softc *, void **, size_t *, int, size_t *);
 void asc_dma_go(struct ncr53c9x_softc *);
 void asc_dma_stop(struct ncr53c9x_softc *);
 int asc_dma_isactive(struct ncr53c9x_softc *);
@@ -377,7 +377,7 @@ asc_dma_intr(struct ncr53c9x_softc *sc)
 }
 
 int
-asc_dma_setup(struct ncr53c9x_softc *sc, caddr_t *addr, size_t *len,
+asc_dma_setup(struct ncr53c9x_softc *sc, void **addr, size_t *len,
     int datain, size_t *dmasize)
 {
 	struct asc_softc *asc = (struct asc_softc *)sc;
@@ -386,7 +386,7 @@ asc_dma_setup(struct ncr53c9x_softc *sc, caddr_t *addr, size_t *len,
 	bus_space_write_4(asc->sc_iot, asc->sc_dmaioh, R4030_DMA_ENAB, 0);
 	bus_space_write_4(asc->sc_iot, asc->sc_dmaioh, R4030_DMA_MODE, 0);
 
-	asc->sc_dmaaddr = addr;
+	asc->sc_dmaaddr = (char **)addr;
 	asc->sc_dmalen = len;
 	asc->sc_dmasize = *dmasize;
 	asc->sc_datain = datain;

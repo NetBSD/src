@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.23 2005/12/11 12:17:52 christos Exp $ */
+/* $NetBSD: locore.s,v 1.23.26.1 2007/03/12 05:48:44 rmind Exp $ */
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -866,7 +866,6 @@ ENTRY_NOPROFILE(lev5intr)
  * This code is complicated by the fact that sendsig may have been called
  * necessitating a stack cleanup.
  */
-BSS(ssir,1)
 
 ASENTRY_NOPROFILE(rei)
 	tstl	_C_LABEL(astpending)	| AST pending?

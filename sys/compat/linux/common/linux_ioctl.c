@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ioctl.c,v 1.46 2007/02/09 21:55:19 ad Exp $	*/
+/*	$NetBSD: linux_ioctl.c,v 1.46.2.1 2007/03/12 05:52:27 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_ioctl.c,v 1.46 2007/02/09 21:55:19 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_ioctl.c,v 1.46.2.1 2007/03/12 05:52:27 rmind Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "sequencer.h"
@@ -84,7 +84,7 @@ linux_sys_ioctl(l, v, retval)
 	struct linux_sys_ioctl_args /* {
 		syscallarg(int) fd;
 		syscallarg(u_long) com;
-		syscallarg(caddr_t) data;
+		syscallarg(void *) data;
 	} */ *uap = v;
 	int error;
 

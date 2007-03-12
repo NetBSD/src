@@ -1,4 +1,4 @@
-/*	$NetBSD: ppi.c,v 1.35 2007/02/16 14:00:17 ad Exp $	*/
+/*	$NetBSD: ppi.c,v 1.35.2.1 2007/03/12 05:47:45 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppi.c,v 1.35 2007/02/16 14:00:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppi.c,v 1.35.2.1 2007/03/12 05:47:45 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -447,7 +447,7 @@ again:
 }
 
 static int
-ppiioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+ppiioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct ppi_softc *sc = ppi_cd.cd_devs[UNIT(dev)];
 	struct ppiparam *pp, *upp;

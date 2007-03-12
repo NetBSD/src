@@ -1,4 +1,4 @@
-#	$NetBSD: GUMSTIX,v 1.6.2.1 2007/02/27 16:50:04 yamt Exp $
+#	$NetBSD: GUMSTIX,v 1.6.2.2 2007/03/12 05:47:37 rmind Exp $
 #
 #	GUMSTIX -- Gumstix, Inc. gumstix platforms kernel
 #
@@ -362,8 +362,8 @@ sqphy*	at mii? phy ?			# Seeq 80220/80221/80223 PHYs
 
 # Bluetooth Device Hub
 #bthub*	at bt3c?
-#bthub*	at ubt?
 bthub*	at btuart?
+#bthub*	at ubt?
 
 # Bluetooth HID support
 #bthidev* at bthub?

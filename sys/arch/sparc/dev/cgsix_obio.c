@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix_obio.c,v 1.20 2007/02/08 20:30:50 jdc Exp $ */
+/*	$NetBSD: cgsix_obio.c,v 1.20.2.1 2007/03/12 05:50:28 rmind Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgsix_obio.c,v 1.20 2007/02/08 20:30:50 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgsix_obio.c,v 1.20.2.1 2007/03/12 05:50:28 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -219,7 +219,7 @@ cgsixattach(struct device *parent, struct device *self, void *aux)
 			printf("%s: cannot map pixels\n", self->dv_xname);
 			return;
 		}
-		sc->sc_fb.fb_pixels = (caddr_t)bh;
+		sc->sc_fb.fb_pixels = (void *)bh;
 	}
 
 	cg6attach(sc, name, isconsole);

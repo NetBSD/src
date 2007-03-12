@@ -1,4 +1,4 @@
-/*	$NetBSD: fwmem.c,v 1.2 2005/12/11 12:22:02 christos Exp $	*/
+/*	$NetBSD: fwmem.c,v 1.2.28.1 2007/03/12 05:54:46 rmind Exp $	*/
 /*-
  * Copyright (c) 2002-2003
  * 	Hidetoshi Shimokawa. All rights reserved.
@@ -216,7 +216,7 @@ struct fwmem_softc {
 static struct fw_xfer *
 fwmem_xfer_req(
 	struct fw_device *fwdev,
-	caddr_t sc,
+	void *sc,
 	int spd,
 	int slen,
 	int rlen,
@@ -245,7 +245,7 @@ fwmem_xfer_req(
 struct fw_xfer *
 fwmem_read_quad(
 	struct fw_device *fwdev,
-	caddr_t	sc,
+	void *	sc,
 	uint8_t spd,
 	uint16_t dst_hi,
 	uint32_t dst_lo,
@@ -282,7 +282,7 @@ fwmem_read_quad(
 struct fw_xfer *
 fwmem_write_quad(
 	struct fw_device *fwdev,
-	caddr_t	sc,
+	void *	sc,
 	uint8_t spd,
 	uint16_t dst_hi,
 	uint32_t dst_lo,
@@ -318,7 +318,7 @@ fwmem_write_quad(
 struct fw_xfer *
 fwmem_read_block(
 	struct fw_device *fwdev,
-	caddr_t	sc,
+	void *	sc,
 	uint8_t spd,
 	uint16_t dst_hi,
 	uint32_t dst_lo,
@@ -356,7 +356,7 @@ fwmem_read_block(
 struct fw_xfer *
 fwmem_write_block(
 	struct fw_device *fwdev,
-	caddr_t	sc,
+	void *	sc,
 	uint8_t spd,
 	uint16_t dst_hi,
 	uint32_t dst_lo,

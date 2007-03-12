@@ -1,4 +1,4 @@
-/* $NetBSD: s3c24x0_lcd.c,v 1.4 2006/04/15 17:00:11 jmmv Exp $ */
+/* $NetBSD: s3c24x0_lcd.c,v 1.4.14.1 2007/03/12 05:47:07 rmind Exp $ */
 
 /*
  * Copyright (c) 2004  Genetec Corporation.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c24x0_lcd.c,v 1.4 2006/04/15 17:00:11 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c24x0_lcd.c,v 1.4.14.1 2007/03/12 05:47:07 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -366,7 +366,7 @@ s3c24x0_lcd_new_screen(struct s3c24x0_lcd_softc *sc,
 		goto bad;
 
 	error = bus_dmamem_map(sc->dma_tag, scr->segs, scr->nsegs,
-	    size, (caddr_t *)&(scr->buf_va), busdma_flag | BUS_DMA_COHERENT);
+	    size, (void **)&(scr->buf_va), busdma_flag | BUS_DMA_COHERENT);
 	if (error)
 		goto bad;
 
@@ -617,7 +617,7 @@ s3c24x0_lcd_free_screen(void *v, void *cookie)
 }
 
 int
-s3c24x0_lcd_ioctl(void *v, void *vs, u_long cmd, caddr_t data, int flag,
+s3c24x0_lcd_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
     struct lwp *l)
 {
 	struct s3c24x0_lcd_softc *sc = v;

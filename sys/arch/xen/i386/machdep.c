@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.33.2.1 2007/02/27 16:53:28 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.33.2.2 2007/03/12 05:51:48 rmind Exp $	*/
 /*	NetBSD: machdep.c,v 1.559 2004/07/22 15:12:46 mycroft Exp 	*/
 
 /*-
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.33.2.1 2007/02/27 16:53:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.33.2.2 2007/03/12 05:51:48 rmind Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -318,7 +318,7 @@ cpu_startup()
 		    msgbuf_paddr + x * PAGE_SIZE, VM_PROT_READ|VM_PROT_WRITE);
 	pmap_update(pmap_kernel());
 
-	initmsgbuf((caddr_t)msgbuf_vaddr, round_page(MSGBUFSIZE));
+	initmsgbuf((void *)msgbuf_vaddr, round_page(MSGBUFSIZE));
 
 	printf("%s%s", copyright, version);
 
@@ -376,7 +376,7 @@ i386_proc0_tss_ldt_init()
 	cpu_info_primary.ci_curpcb = pcb = &lwp0.l_addr->u_pcb;
 
 	pcb->pcb_tss.tss_ioopt =
-	    ((caddr_t)pcb->pcb_iomap - (caddr_t)&pcb->pcb_tss) << 16
+	    ((char *)pcb->pcb_iomap - (char *)&pcb->pcb_tss) << 16
 		| SEL_KPL;		/* i/o pl */
 
 	for (x = 0; x < sizeof(pcb->pcb_iomap) / 4; x++)
@@ -412,7 +412,7 @@ i386_init_pcb_tss_ldt(struct cpu_info *ci)
 	struct pcb *pcb = ci->ci_idle_pcb;
 
 	pcb->pcb_tss.tss_ioopt =
-	    ((caddr_t)pcb->pcb_iomap - (caddr_t)&pcb->pcb_tss) << 16
+	    ((char *)pcb->pcb_iomap - (char *)&pcb->pcb_tss) << 16
 		| SEL_KPL;		/* i/o pl */
 	for (x = 0; x < sizeof(pcb->pcb_iomap) / 4; x++)
 		pcb->pcb_iomap[x] = 0xffffffff;
@@ -881,7 +881,7 @@ cpu_dump_mempagecnt()
 int
 cpu_dump()
 {
-	int (*dump)(dev_t, daddr_t, caddr_t, size_t);
+	int (*dump)(dev_t, daddr_t, void *, size_t);
 	char buf[dbtob(1)];
 	kcore_seg_t *segp;
 	cpu_kcore_hdr_t *cpuhdrp;
@@ -920,7 +920,7 @@ cpu_dump()
 		memsegp[i].size = mem_clusters[i].size;
 	}
 
-	return (dump(dumpdev, dumplo, (caddr_t)buf, dbtob(1)));
+	return (dump(dumpdev, dumplo, (void *)buf, dbtob(1)));
 }
 
 /*
@@ -993,7 +993,7 @@ dumpsys()
 	int psize;
 	daddr_t blkno;
 	const struct bdevsw *bdev;
-	int (*dump)(dev_t, daddr_t, caddr_t, size_t);
+	int (*dump)(dev_t, daddr_t, void *, size_t);
 	int error;
 
 	/* Save registers. */
@@ -1058,7 +1058,7 @@ dumpsys()
 				pmap_kenter_pa(dumpspace + m, maddr + m,
 				    VM_PROT_READ);
 
-			error = (*dump)(dumpdev, blkno, (caddr_t)dumpspace, n);
+			error = (*dump)(dumpdev, blkno, (void *)dumpspace, n);
 			if (error)
 				goto err;
 			maddr += n;
@@ -1884,7 +1884,7 @@ init386(paddr_t first_avail)
 		       (paddr_t)BIOSTRAMP_BASE,	/* physical */
 		       VM_PROT_ALL);		/* protection */
 	pmap_update(pmap_kernel());
-	memcpy((caddr_t)BIOSTRAMP_BASE, biostramp_image, biostramp_image_size);
+	memcpy((void *)BIOSTRAMP_BASE, biostramp_image, biostramp_image_size);
 #ifdef DEBUG_BIOSCALL
 	printf("biostramp installed @ %x\n", BIOSTRAMP_BASE);
 #endif
@@ -2243,7 +2243,7 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 	gr[_REG_ERR]    = tf->tf_err;
 
 	if ((ras_eip = (__greg_t)ras_lookup(l->l_proc,
-	    (caddr_t) gr[_REG_EIP])) != -1)
+	    (void *) gr[_REG_EIP])) != -1)
 		gr[_REG_EIP] = ras_eip;
 
 	*flags |= _UC_CPU;

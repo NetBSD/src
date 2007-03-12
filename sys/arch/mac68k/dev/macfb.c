@@ -1,4 +1,4 @@
-/* $NetBSD: macfb.c,v 1.14 2006/04/12 19:38:23 jmmv Exp $ */
+/* $NetBSD: macfb.c,v 1.14.14.1 2007/03/12 05:48:57 rmind Exp $ */
 /*
  * Copyright (c) 1998 Matt DeBergalis
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: macfb.c,v 1.14 2006/04/12 19:38:23 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: macfb.c,v 1.14.14.1 2007/03/12 05:48:57 rmind Exp $");
 
 #include "opt_wsdisplay_compat.h"
 #include "grf.h"
@@ -90,7 +90,7 @@ const struct wsscreen_list macfb_screenlist = {
 	_macfb_scrlist
 };
 
-static int	macfb_ioctl(void *, void *, u_long, caddr_t, int, struct lwp *);
+static int	macfb_ioctl(void *, void *, u_long, void *, int, struct lwp *);
 static paddr_t	macfb_mmap(void *, void *, off_t, int);
 static int	macfb_alloc_screen(void *, const struct wsscreen_descr *,
 		    void **, int *, int *, long *);
@@ -246,7 +246,7 @@ macfb_attach(struct device *parent, struct device *self, void *aux)
 
 
 int
-macfb_ioctl(void *v, void *vs, u_long cmd, caddr_t data, int flag,
+macfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 	struct lwp *l)
 {
 	struct macfb_softc *sc = v;

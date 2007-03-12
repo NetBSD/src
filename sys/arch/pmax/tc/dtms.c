@@ -1,4 +1,4 @@
-/*	$NetBSD: dtms.c,v 1.7 2006/11/12 19:00:43 plunky Exp $	*/
+/*	$NetBSD: dtms.c,v 1.7.4.1 2007/03/12 05:49:52 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dtms.c,v 1.7 2006/11/12 19:00:43 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dtms.c,v 1.7.4.1 2007/03/12 05:49:52 rmind Exp $");
 
 #include "locators.h"
 
@@ -65,7 +65,7 @@ int	dtms_match(struct device *, struct cfdata *, void *);
 void	dtms_attach(struct device *, struct device *, void *);
 int	dtms_input(void *, int);
 int	dtms_enable(void *);
-int	dtms_ioctl(void *, u_long, caddr_t, int, struct lwp *);
+int	dtms_ioctl(void *, u_long, void *, int, struct lwp *);
 void	dtms_disable(void *);
 void	dtms_handler(void *, struct dt_msg *);
 
@@ -132,7 +132,7 @@ dtms_disable(void *cookie)
 }
 
 int
-dtms_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
+dtms_ioctl(void *v, u_long cmd, void *data, int flag, struct lwp *l)
 {
 
 	if (cmd == WSMOUSEIO_GTYPE) {

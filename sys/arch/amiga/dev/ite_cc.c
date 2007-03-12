@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_cc.c,v 1.37 2005/12/11 12:16:28 christos Exp $ */
+/*	$NetBSD: ite_cc.c,v 1.37.26.1 2007/03/12 05:46:42 rmind Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -33,7 +33,7 @@
 #include "opt_amigaccgrf.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite_cc.c,v 1.37 2005/12/11 12:16:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite_cc.c,v 1.37.26.1 2007/03/12 05:46:42 rmind Exp $");
 
 #include "grfcc.h"
 #if NGRFCC > 0
@@ -211,7 +211,7 @@ ite_newsize(struct ite_softc *ip, struct itewinsize *winsz)
 	vs.height = winsz->height;
 	vs.depth = winsz->depth;
 	/* XXX type of vs ? */
-	error = (*view_cdevsw.d_ioctl)(0, VIOCSSIZE, (caddr_t)&vs, -1, NULL);
+	error = (*view_cdevsw.d_ioctl)(0, VIOCSSIZE, (void *)&vs, -1, NULL);
 
 	/*
 	 * Reinitialize our structs
@@ -312,7 +312,7 @@ view_init(register struct ite_softc *ip)
 }
 
 int
-ite_grf_ioctl(struct ite_softc *ip, u_long cmd, caddr_t addr, int flag,
+ite_grf_ioctl(struct ite_softc *ip, u_long cmd, void *addr, int flag,
               struct lwp *l)
 {
 	struct winsize ws;
@@ -350,7 +350,7 @@ ite_grf_ioctl(struct ite_softc *ip, u_long cmd, caddr_t addr, int flag,
 			 * XXX this is messy, but works
 			 */
 			(*ite_cdevsw.d_ioctl)(0, TIOCSWINSZ,
-					      (caddr_t)&ws, 0, l);
+					      (void *)&ws, 0, l);
 		}
 		break;
 	case ITEIOCDSPWIN:

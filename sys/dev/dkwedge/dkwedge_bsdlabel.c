@@ -1,4 +1,4 @@
-/*	$NetBSD: dkwedge_bsdlabel.c,v 1.9 2006/11/16 01:32:50 christos Exp $	*/
+/*	$NetBSD: dkwedge_bsdlabel.c,v 1.9.4.1 2007/03/12 05:53:10 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -86,10 +86,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dkwedge_bsdlabel.c,v 1.9 2006/11/16 01:32:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dkwedge_bsdlabel.c,v 1.9.4.1 2007/03/12 05:53:10 rmind Exp $");
 
 #include <sys/param.h>
+#ifdef _KERNEL
 #include <sys/systm.h>
+#endif
 #include <sys/proc.h>
 #include <sys/errno.h>
 #include <sys/disk.h>
@@ -224,8 +226,9 @@ static int
 validate_label(mbr_args_t *a, daddr_t label_sector, size_t label_offset)
 {
 	struct disklabel *lp;
-	caddr_t lp_lim;
+	void *lp_lim;
 	int i, error;
+	u_int checksum;
 
 	error = dkwedge_read(a->pdk, a->vp, label_sector, a->buf, DEV_BSIZE);
 	if (error) {
@@ -241,11 +244,11 @@ validate_label(mbr_args_t *a, daddr_t label_sector, size_t label_offset)
 	 * in the sector.
 	 */
 	lp = a->buf;
-	lp_lim = (caddr_t)a->buf + DEV_BSIZE - DISKLABEL_MINSIZE;
-	for (;; lp = (void *)((caddr_t)lp + sizeof(uint32_t))) {
-		if ((caddr_t)lp > lp_lim)
+	lp_lim = (char *)a->buf + DEV_BSIZE - DISKLABEL_MINSIZE;
+	for (;; lp = (void *)((char *)lp + sizeof(uint32_t))) {
+		if ((char *)lp > (char *)lp_lim)
 			return (SCAN_CONTINUE);
-		label_offset = (size_t)((caddr_t)lp - (caddr_t)a->buf);
+		label_offset = (size_t)((char *)lp - (char *)a->buf);
 		if (lp->d_magic != DISKMAGIC || lp->d_magic2 != DISKMAGIC) {
 			if (lp->d_magic == bswap32(DISKMAGIC) &&
 			    lp->d_magic2 == bswap32(DISKMAGIC)) {
@@ -253,9 +256,9 @@ validate_label(mbr_args_t *a, daddr_t label_sector, size_t label_offset)
 				 * Label is in the other byte order; validate
 				 * its length, then byte-swap it.
 				 */
-				if ((caddr_t)lp +
+				if ((char *)lp +
 				    DISKLABEL_SIZE(bswap16(lp->d_npartitions)) >
-				    (caddr_t)a->buf + DEV_BSIZE) {
+				    (char *)a->buf + DEV_BSIZE) {
 					aprint_error("%s: BSD disklabel @ "
 					    "%" PRId64
 					    "+%zd has bogus partition "
@@ -264,6 +267,8 @@ validate_label(mbr_args_t *a, daddr_t label_sector, size_t label_offset)
 					    bswap16(lp->d_npartitions));
 					continue;
 				}
+				checksum = dkcksum_sized(lp,
+				    bswap16(lp->d_npartitions));
 				swap_disklabel(lp);
 			} else
 				continue;
@@ -271,21 +276,22 @@ validate_label(mbr_args_t *a, daddr_t label_sector, size_t label_offset)
 			/*
 			 * Validate the disklabel length.
 			 */
-			if ((caddr_t)lp + DISKLABEL_SIZE(lp->d_npartitions) >
-			    (caddr_t)a->buf + DEV_BSIZE) {
+			if ((char *)lp + DISKLABEL_SIZE(lp->d_npartitions) >
+			    (char *)a->buf + DEV_BSIZE) {
 				aprint_error("%s: BSD disklabel @ %" PRId64
 				    "+%zd has bogus partition count (%u)\n",
 				    a->pdk->dk_name, label_sector,
 				    label_offset, lp->d_npartitions);
 				continue;
 			}
+			checksum = dkcksum(lp);
 		}
 
 		/*
 		 * Disklabel is now in the right order and we have validated
 		 * the partition count, checksum it as the final check.
 		 */
-		if (dkcksum(lp) != 0) {
+		if (checksum != 0) {
 			aprint_error("%s: BSD disklabel @ %" PRId64
 			    "+%zd has bad checksum\n", a->pdk->dk_name,
 			    label_sector, label_offset);
@@ -325,7 +331,7 @@ validate_label(mbr_args_t *a, daddr_t label_sector, size_t label_offset)
 			 * These get historical disk naming style
 			 * wedge names.
 			 */
-			snprintf(dkw.dkw_wname, sizeof(dkw.dkw_wname),
+			snprintf((char *)&dkw.dkw_wname, sizeof(dkw.dkw_wname),
 			    "%s%c", a->pdk->dk_name, 'a' + i);
 
 			error = dkwedge_add(&dkw);
@@ -438,6 +444,14 @@ look_netbsd_part(mbr_args_t *a, struct mbr_partition *dp, int slot,
 
 	return (SCAN_CONTINUE);
 }
+ 
+#ifdef _KERNEL
+#define	DKW_MALLOC(SZ)	malloc((SZ), M_DEVBUF, M_WAITOK)
+#define	DKW_FREE(PTR)	free((PTR), M_DEVBUF)
+#else
+#define	DKW_MALLOC(SZ)	malloc((SZ))
+#define	DKW_FREE(PTR)	free((PTR))
+#endif
 
 static int
 dkwedge_discover_bsdlabel(struct disk *pdk, struct vnode *vp)
@@ -448,7 +462,7 @@ dkwedge_discover_bsdlabel(struct disk *pdk, struct vnode *vp)
 
 	a.pdk = pdk;
 	a.vp = vp;
-	a.buf = malloc(DEV_BSIZE, M_DEVBUF, M_WAITOK);
+	a.buf = DKW_MALLOC(DEV_BSIZE);
 	a.error = 0;
 
 	/* MBR search. */
@@ -472,8 +486,10 @@ dkwedge_discover_bsdlabel(struct disk *pdk, struct vnode *vp)
 	/* No NetBSD disklabel found. */
 	a.error = ESRCH;
  out:
-	free(a.buf, M_DEVBUF);
+	DKW_FREE(a.buf);
 	return (a.error);
 }
 
+#ifdef _KERNEL
 DKWEDGE_DISCOVERY_METHOD_DECL(BSD44, 5, dkwedge_discover_bsdlabel);
+#endif

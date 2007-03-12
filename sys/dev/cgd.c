@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.43 2007/01/19 18:59:59 cbiere Exp $ */
+/* $NetBSD: cgd.c,v 1.43.2.1 2007/03/12 05:53:02 rmind Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.43 2007/01/19 18:59:59 cbiere Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.43.2.1 2007/03/12 05:53:02 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -92,7 +92,7 @@ static int	cgd_ioctl_set(struct cgd_softc *, void *, struct lwp *);
 static int	cgd_ioctl_clr(struct cgd_softc *, void *, struct lwp *);
 static int	cgdinit(struct cgd_softc *, const char *, struct vnode *,
 			struct lwp *);
-static void	cgd_cipher(struct cgd_softc *, caddr_t, caddr_t,
+static void	cgd_cipher(struct cgd_softc *, void *, void *,
 			   size_t, daddr_t, size_t, int);
 
 /* Pseudo-disk Interface */
@@ -259,7 +259,7 @@ static void *
 cgd_getdata(struct dk_softc *dksc, unsigned long size)
 {
 	struct	cgd_softc *cs =dksc->sc_osc;
-	caddr_t	data = NULL;
+	void *	data = NULL;
 
 	simple_lock(&cs->sc_slock);
 	if (cs->sc_data_used == 0) {
@@ -275,7 +275,7 @@ cgd_getdata(struct dk_softc *dksc, unsigned long size)
 }
 
 static void
-cgd_putdata(struct dk_softc *dksc, caddr_t data)
+cgd_putdata(struct dk_softc *dksc, void *data)
 {
 	struct	cgd_softc *cs =dksc->sc_osc;
 
@@ -293,8 +293,8 @@ cgdstart(struct dk_softc *dksc, struct buf *bp)
 {
 	struct	cgd_softc *cs = dksc->sc_osc;
 	struct	buf *nbp;
-	caddr_t	addr;
-	caddr_t	newaddr;
+	void *	addr;
+	void *	newaddr;
 	daddr_t	bn;
 
 	DPRINTF_FOLLOW(("cgdstart(%p, %p)\n", dksc, bp));
@@ -428,7 +428,7 @@ cgdwrite(dev_t dev, struct uio *uio, int flags)
 }
 
 static int
-cgdioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+cgdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct	cgd_softc *cs;
 	struct	dk_softc *dksc;
@@ -476,7 +476,7 @@ cgdioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 }
 
 static int
-cgddump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
+cgddump(dev_t dev, daddr_t blkno, void *va, size_t size)
 {
 	struct	cgd_softc *cs;
 
@@ -718,9 +718,11 @@ blkno2blkno_buf(char *sbuf, daddr_t blkno)
 }
 
 static void
-cgd_cipher(struct cgd_softc *cs, caddr_t dst, caddr_t src,
-	   size_t len, daddr_t blkno, size_t secsize, int dir)
+cgd_cipher(struct cgd_softc *cs, void *dstv, void *srcv,
+    size_t len, daddr_t blkno, size_t secsize, int dir)
 {
+	char		*dst = dstv;
+	char 		*src = srcv;
 	cfunc_cipher	*cipher = cs->sc_cfuncs->cf_cipher;
 	struct uio	dstuio;
 	struct uio	srcuio;

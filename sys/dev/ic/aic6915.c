@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6915.c,v 1.15 2005/12/24 20:27:29 perry Exp $	*/
+/*	$NetBSD: aic6915.c,v 1.15.26.1 2007/03/12 05:53:25 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic6915.c,v 1.15 2005/12/24 20:27:29 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic6915.c,v 1.15.26.1 2007/03/12 05:53:25 rmind Exp $");
 
 #include "bpfilter.h"
 
@@ -78,7 +78,7 @@ __KERNEL_RCSID(0, "$NetBSD: aic6915.c,v 1.15 2005/12/24 20:27:29 perry Exp $");
 
 static void	sf_start(struct ifnet *);
 static void	sf_watchdog(struct ifnet *);
-static int	sf_ioctl(struct ifnet *, u_long, caddr_t);
+static int	sf_ioctl(struct ifnet *, u_long, void *);
 static int	sf_init(struct ifnet *);
 static void	sf_stop(struct ifnet *, int);
 
@@ -197,7 +197,7 @@ sf_attach(struct sf_softc *sc)
 	}
 
 	if ((error = bus_dmamem_map(sc->sc_dmat, &seg, rseg,
-	    sizeof(struct sf_control_data), (caddr_t *)&sc->sc_control_data,
+	    sizeof(struct sf_control_data), (void **)&sc->sc_control_data,
 	    BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
 		printf("%s: unable to map control data, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
@@ -326,7 +326,7 @@ sf_attach(struct sf_softc *sc)
  fail_3:
 	bus_dmamap_destroy(sc->sc_dmat, sc->sc_cddmamap);
  fail_2:
-	bus_dmamem_unmap(sc->sc_dmat, (caddr_t) sc->sc_control_data,
+	bus_dmamem_unmap(sc->sc_dmat, (void *) sc->sc_control_data,
 	    sizeof(struct sf_control_data));
  fail_1:
 	bus_dmamem_free(sc->sc_dmat, &seg, rseg);
@@ -418,7 +418,7 @@ sf_start(struct ifnet *ifp)
 					break;
 				}
 			}
-			m_copydata(m0, 0, m0->m_pkthdr.len, mtod(m, caddr_t));
+			m_copydata(m0, 0, m0->m_pkthdr.len, mtod(m, void *));
 			m->m_pkthdr.len = m->m_len = m0->m_pkthdr.len;
 			error = bus_dmamap_load_mbuf(sc->sc_dmat, dmamap,
 			    m, BUS_DMA_WRITE|BUS_DMA_NOWAIT);
@@ -524,7 +524,7 @@ sf_watchdog(struct ifnet *ifp)
  *	Handle control requests from the operator.
  */
 static int
-sf_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
+sf_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct sf_softc *sc = ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *) data;
@@ -799,7 +799,7 @@ sf_rxintr(struct sf_softc *sc)
 		 * Note that we use cluster for incoming frames, so the
 		 * buffer is virtually contiguous.
 		 */
-		memcpy(mtod(m, caddr_t), mtod(ds->ds_mbuf, caddr_t), len);
+		memcpy(mtod(m, void *), mtod(ds->ds_mbuf, void *), len);
 
 		/* Allow the receive descriptor to continue using its mbuf. */
 		SF_INIT_RXDESC(sc, rxidx);

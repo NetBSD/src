@@ -1,4 +1,4 @@
-/* $NetBSD: freebsd_syscallargs.h,v 1.69 2006/09/01 21:19:44 matt Exp $ */
+/* $NetBSD: freebsd_syscallargs.h,v 1.69.8.1 2007/03/12 05:51:58 rmind Exp $ */
 
 /*
  * System call argument lists.
@@ -72,7 +72,7 @@ struct freebsd_sys_mount_args {
 	syscallarg(int) type;
 	syscallarg(const char *) path;
 	syscallarg(int) flags;
-	syscallarg(caddr_t) data;
+	syscallarg(void *) data;
 };
 
 struct freebsd_sys_unmount_args {
@@ -83,7 +83,7 @@ struct freebsd_sys_unmount_args {
 struct freebsd_sys_ptrace_args {
 	syscallarg(int) req;
 	syscallarg(pid_t) pid;
-	syscallarg(caddr_t) addr;
+	syscallarg(void *) addr;
 	syscallarg(int) data;
 };
 
@@ -113,7 +113,7 @@ struct compat_43_freebsd_sys_lstat_args {
 struct freebsd_sys_ioctl_args {
 	syscallarg(int) fd;
 	syscallarg(u_long) com;
-	syscallarg(caddr_t) data;
+	syscallarg(void *) data;
 };
 
 struct freebsd_sys_revoke_args {
@@ -142,7 +142,7 @@ struct freebsd_sys_chroot_args {
 };
 
 struct freebsd_sys_msync_args {
-	syscallarg(caddr_t) addr;
+	syscallarg(void *) addr;
 	syscallarg(size_t) len;
 	syscallarg(int) flags;
 };
@@ -259,7 +259,7 @@ struct freebsd_sys_pathconf_args {
 };
 
 struct freebsd_sys_mmap_args {
-	syscallarg(caddr_t) addr;
+	syscallarg(void *) addr;
 	syscallarg(size_t) len;
 	syscallarg(int) prot;
 	syscallarg(int) flags;

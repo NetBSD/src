@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_obio.c,v 1.3 2006/02/23 05:37:47 thorpej Exp $ */
+/*	$NetBSD: if_ne_obio.c,v 1.3.20.1 2007/03/12 05:47:37 rmind Exp $ */
 
 /*
  * Copyright (c) 2002, 2003  Genetec corp.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_obio.c,v 1.3 2006/02/23 05:37:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_obio.c,v 1.3.20.1 2007/03/12 05:47:37 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,8 +68,8 @@ struct ne_obio_softc {
 	int  intr_no;
 };
 
-int	ne_obio_match( struct device *, struct cfdata *, void * );
-void	ne_obio_attach( struct device *, struct device *, void * );
+int	ne_obio_match( struct device *, struct cfdata *, void *);
+void	ne_obio_attach( struct device *, struct device *, void *);
 
 
 CFATTACH_DECL(ne_obio, sizeof (struct ne_obio_softc), ne_obio_match, ne_obio_attach,

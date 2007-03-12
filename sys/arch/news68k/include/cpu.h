@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.25 2007/02/16 02:53:49 ad Exp $	*/
+/*	$NetBSD: cpu.h,v 1.25.2.1 2007/03/12 05:49:39 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -232,7 +232,7 @@ struct pcb;
 void m68881_save(struct fpframe *);
 void m68881_restore(struct fpframe *);
 
-int suline(caddr_t, caddr_t);
+int suline(void *, void *);
 void savectx(struct pcb *);
 void switch_exit(struct lwp *);
 void switch_lwp_exit(struct lwp *);
@@ -250,16 +250,16 @@ void ecacheon(void);
 void ecacheoff(void);
 
 /* machdep.c functions */
-int badaddr(caddr_t, int);
-int badbaddr(caddr_t);
+int badaddr(void *, int);
+int badbaddr(void *);
 
 /* sys_machdep.c functions */
 int cachectl1(unsigned long, vaddr_t, size_t, struct proc *);
 
 /* vm_machdep.c functions */
-void physaccess(caddr_t, caddr_t, int, int);
-void physunaccess(caddr_t, int);
-int kvtop(caddr_t);
+void physaccess(void *, void *, int, int);
+void physunaccess(void *, int);
+int kvtop(void *);
 
 #endif
 

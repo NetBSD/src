@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_LAPTOP,v 1.220 2007/01/24 19:46:26 tls Exp $
+#	$NetBSD: GENERIC_LAPTOP,v 1.220.2.1 2007/03/12 05:48:19 rmind Exp $
 #	From: NetBSD: GENERIC,v 1.414 2001/07/30 19:59:05 ad Exp
 #
 #	GENERIC_LAPTOP -- GENERIC with cardbus and some USB devices enabled
@@ -8,7 +8,7 @@ include "arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.220 $"
+#ident 		"GENERIC-$Revision: 1.220.2.1 $"
 
 maxusers	32		# estimated number of users
 
@@ -144,6 +144,7 @@ file-system	SMBFS		# experimental - CIFS; also needs nsmb (below)
 file-system	PTYFS		# /dev/ptm support
 file-system	TMPFS		# Efficient memory file-system
 #file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
+#file-system	HFS		# expreimental - Apple HFS+ (read-only)
 
 # File system options
 options 	QUOTA		# UFS quotas
@@ -284,6 +285,7 @@ acpitz* 	at acpi?		# ACPI Thermal Zone
 #attimer*	at acpi?		# AT Timer
 #com* 		at acpi?		# Serial communications interface
 #fdc* 		at acpi?		# Floppy disk controller
+#hpet*		at acpi?		# High Precision Event Timer
 #joy*		at acpi?		# Joystick/Game port
 #lpt* 		at acpi?		# Parallel port
 #mpu*		at acpi?		# Roland MPU-401 MIDI UART
@@ -871,6 +873,7 @@ ubt* at uhub? port ? configuration ? interface ?
 
 # Bluetooth Device Hub
 bthub* at bt3c?
+bthub* at btuart?
 bthub* at ubt?
 
 # Bluetooth HID support
@@ -969,6 +972,7 @@ pseudo-device	sequencer	1	# MIDI sequencer
 pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness as well (BROKEN)
 pseudo-device	clockctl		# user control of clock subsystem
+pseudo-device	btuart			# Bluetooth HCI UART (H4)
 
 # a pseudo device needed for Coda	# also needs CODA (above)
 pseudo-device	vcoda		4	# coda minicache <-> venus comm.

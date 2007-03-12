@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.27 2007/02/15 18:33:26 reinoud Exp $	*/
+/*	$NetBSD: fd.c,v 1.27.2.1 2007/03/12 05:45:22 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.27 2007/02/15 18:33:26 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.27.2.1 2007/03/12 05:45:22 rmind Exp $");
 
 #include "opt_ddb.h"
 
@@ -1326,7 +1326,7 @@ int
 fdioctl(dev, cmd, addr, flag, l)
 	dev_t dev;
 	u_long cmd;
-	caddr_t addr;
+	void *addr;
 	int flag;
 	struct lwp *l;
 {
@@ -1532,7 +1532,7 @@ fdformat(dev, finfo, l)
 		       + finfo->head * type->sectrac) * FDC_BSIZE / DEV_BSIZE;
 
 	bp->b_bcount = sizeof(struct fd_idfield_data) * finfo->fd_formb_nsecs;
-	bp->b_data = (caddr_t)finfo;
+	bp->b_data = (void *)finfo;
 
 #ifdef DEBUG
 	printf("fdformat: blkno %llx count %lx\n",
@@ -1545,7 +1545,7 @@ fdformat(dev, finfo, l)
 	/* ...and wait for it to complete */
 	s = splbio();
 	while(!(bp->b_flags & B_DONE)) {
-		rv = tsleep((caddr_t)bp, PRIBIO, "fdform", 20 * hz);
+		rv = tsleep((void *)bp, PRIBIO, "fdform", 20 * hz);
 		if (rv == EWOULDBLOCK)
 			break;
 	}
@@ -1631,8 +1631,8 @@ load_memory_disc_from_floppy(md, dev)
 		if (biowait(bp))
 			panic("Cannot load floppy image");
                                                  
-		memcpy((caddr_t)md->md_addr + loop * fd_types[type].sectrac
-		    * DEV_BSIZE, (caddr_t)bp->b_data,
+		memcpy((void *)md->md_addr + loop * fd_types[type].sectrac
+		    * DEV_BSIZE, (void *)bp->b_data,
 		    fd_types[type].sectrac * DEV_BSIZE);
 	}
 	printf("\x08\x08\x08\x08\x08\x08%4dK done\n",

@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.20 2006/11/25 11:59:56 scw Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.20.4.1 2007/03/12 05:48:00 rmind Exp $	*/
 
 /*	$OpenBSD: disksubr.c,v 1.6 2000/10/18 21:00:34 mickey Exp $	*/
 
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.20 2006/11/25 11:59:56 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.20.4.1 2007/03/12 05:48:00 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,7 +116,7 @@ readbsdlabel(struct buf *bp, void (*strat)(struct buf *), int cyl, int sec,
 	 * the label, otherwise, just look at the specific location
 	 * we're given.
 	 */
-	dlp = (struct disklabel *)(bp->b_data + (off >= 0 ? off : 0));
+	dlp = (struct disklabel *)((char *)bp->b_data + (off >= 0 ? off : 0));
 	do {
 		if (dlp->d_magic != DISKMAGIC || dlp->d_magic2 != DISKMAGIC) {
 			if (msg == NULL)
@@ -134,8 +134,8 @@ readbsdlabel(struct buf *bp, void (*strat)(struct buf *), int cyl, int sec,
 		if (off >= 0)
 			break;
 		dlp = (struct disklabel *)((char *)dlp + sizeof(int32_t));
-	} while (dlp <= (struct disklabel *)(bp->b_data + lp->d_secsize -
-	    sizeof(*dlp)));
+	} while (dlp <= (struct disklabel *)((char *)bp->b_data +
+		 lp->d_secsize - sizeof(*dlp)));
 	return (msg);
 }
 
@@ -368,7 +368,7 @@ writedisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 		bp->b_bcount = lp->d_secsize;
 	}
 
-	*(struct disklabel *)(bp->b_data + labeloffset) = *lp;
+	*(struct disklabel *)((char *)bp->b_data + labeloffset) = *lp;
 
 	bp->b_flags = B_BUSY | B_WRITE;
 	(*strat)(bp);

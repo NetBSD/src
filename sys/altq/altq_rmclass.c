@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_rmclass.c,v 1.19 2006/12/20 17:03:20 rpaulo Exp $	*/
+/*	$NetBSD: altq_rmclass.c,v 1.19.2.1 2007/03/12 05:45:08 rmind Exp $	*/
 /*	$KAME: altq_rmclass.c,v 1.19 2005/04/13 03:44:25 suz Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_rmclass.c,v 1.19 2006/12/20 17:03:20 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_rmclass.c,v 1.19.2.1 2007/03/12 05:45:08 rmind Exp $");
 
 /* #ident "@(#)rm_class.c  1.48     97/12/05 SMI" */
 
@@ -1532,7 +1532,7 @@ rmc_delay_action(struct rm_class *cl, struct rm_class *borrow)
 		} else
 			t = 2;
 		CALLOUT_RESET(&cl->callout_, t,
-			      (timeout_t *)rmc_restart, (caddr_t)cl);
+			      (timeout_t *)rmc_restart, (void *)cl);
 	}
 }
 

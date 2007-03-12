@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ptrace.c,v 1.16 2007/02/09 21:55:18 ad Exp $	*/
+/*	$NetBSD: linux_ptrace.c,v 1.16.2.1 2007/03/12 05:52:16 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_ptrace.c,v 1.16 2007/02/09 21:55:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_ptrace.c,v 1.16.2.1 2007/03/12 05:52:16 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -227,7 +227,7 @@ linux_sys_ptrace_arch(l, v, retval)
 		linux_regs->esp = regs->r_esp;
 		linux_regs->xss = regs->r_ss;
 
-		error = copyout(linux_regs, (caddr_t)SCARG(uap, data),
+		error = copyout(linux_regs, (void *)SCARG(uap, data),
 		    sizeof(struct linux_reg));
 		goto out;
 
@@ -236,7 +236,7 @@ linux_sys_ptrace_arch(l, v, retval)
 		MALLOC(linux_regs, struct linux_reg *, sizeof(struct linux_reg),
 			M_TEMP, M_WAITOK);
 
-		error = copyin((caddr_t)SCARG(uap, data), linux_regs,
+		error = copyin((void *)SCARG(uap, data), linux_regs,
 		    sizeof(struct linux_reg));
 		if (error != 0)
 			goto out;
@@ -275,7 +275,7 @@ linux_sys_ptrace_arch(l, v, retval)
 
 		memcpy(linux_fpregs, fpregs,
 			min(sizeof(struct linux_fpctx), sizeof(struct fpreg)));
-		error = copyout(linux_fpregs, (caddr_t)SCARG(uap, data),
+		error = copyout(linux_fpregs, (void *)SCARG(uap, data),
 		    sizeof(struct linux_fpctx));
 		goto out;
 
@@ -284,7 +284,7 @@ linux_sys_ptrace_arch(l, v, retval)
 			M_TEMP, M_WAITOK);
 		MALLOC(linux_fpregs, struct linux_fpctx *,
 			sizeof(struct linux_fpctx), M_TEMP, M_WAITOK);
-		error = copyin((caddr_t)SCARG(uap, data), linux_fpregs,
+		error = copyin((void *)SCARG(uap, data), linux_fpregs,
 		    sizeof(struct linux_fpctx));
 		if (error != 0)
 			goto out;

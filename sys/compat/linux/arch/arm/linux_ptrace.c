@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ptrace.c,v 1.7.2.1 2007/02/27 16:53:35 yamt Exp $	*/
+/*	$NetBSD: linux_ptrace.c,v 1.7.2.2 2007/03/12 05:52:15 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_ptrace.c,v 1.7.2.1 2007/02/27 16:53:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_ptrace.c,v 1.7.2.2 2007/03/12 05:52:15 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -181,7 +181,7 @@ linux_sys_ptrace_arch(l, v, retval)
 		linux_regs->uregs[LINUX_REG_CPSR] = regs->r_cpsr;
 		linux_regs->uregs[LINUX_REG_ORIG_R0] = regs->r[0];
 
-		error = copyout(linux_regs, (caddr_t)SCARG(uap, data),
+		error = copyout(linux_regs, (void *)SCARG(uap, data),
 		    sizeof(struct linux_reg));
 		goto out;
 
@@ -190,7 +190,7 @@ linux_sys_ptrace_arch(l, v, retval)
 		MALLOC(linux_regs, struct linux_reg *, sizeof(struct linux_reg),
 			M_TEMP, M_WAITOK);
 
-		error = copyin((caddr_t)SCARG(uap, data), linux_regs,
+		error = copyin((void *)SCARG(uap, data), linux_regs,
 		    sizeof(struct linux_reg));
 		if (error != 0)
 			goto out;

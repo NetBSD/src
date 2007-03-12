@@ -1,4 +1,4 @@
-/*	$NetBSD: ka410.c,v 1.29 2006/09/05 19:32:57 matt Exp $ */
+/*	$NetBSD: ka410.c,v 1.29.8.1 2007/03/12 05:51:16 rmind Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka410.c,v 1.29 2006/09/05 19:32:57 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka410.c,v 1.29.8.1 2007/03/12 05:51:16 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -57,13 +57,13 @@ __KERNEL_RCSID(0, "$NetBSD: ka410.c,v 1.29 2006/09/05 19:32:57 matt Exp $");
 
 static	void	ka410_conf __P((void));
 static	void	ka410_memerr __P((void));
-static	int	ka410_mchk __P((caddr_t));
+static	int	ka410_mchk __P((void *));
 static	void	ka410_halt __P((void));
 static	void	ka410_reboot __P((int));
 static	void	ka41_cache_enable __P((void));
 static	void	ka410_clrf __P((void));
 
-static	caddr_t	l2cache;	/* mapped in address */
+static	void *	l2cache;	/* mapped in address */
 static	long 	*cacr;		/* l2csche ctlr reg */
 
 /* 
@@ -140,7 +140,7 @@ ka410_memerr()
 
 int
 ka410_mchk(addr)
-	caddr_t addr;
+	void *addr;
 {
 	panic("Machine check");
 	return 0;

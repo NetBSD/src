@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_machdep.c,v 1.20.2.1 2007/02/27 16:53:17 yamt Exp $	*/
+/*	$NetBSD: sunos32_machdep.c,v 1.20.2.2 2007/03/12 05:50:50 rmind Exp $	*/
 /* from: NetBSD: sunos_machdep.c,v 1.14 2001/01/29 01:37:56 mrg Exp 	*/
 
 /*
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos32_machdep.c,v 1.20.2.1 2007/02/27 16:53:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos32_machdep.c,v 1.20.2.2 2007/03/12 05:50:50 rmind Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -192,7 +192,7 @@ sunos32_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 
 	if (onstack)
 		fp = (struct sunos32_sigframe *)
-		     ((caddr_t)l->l_sigstk.ss_sp + l->l_sigstk.ss_size);
+		     ((char *)l->l_sigstk.ss_sp + l->l_sigstk.ss_size);
 	else
 		fp = (struct sunos32_sigframe *)oldsp;
 
@@ -253,8 +253,8 @@ sunos32_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	    printf("sunos32_sendsig: saving sf to %p, setting stack pointer %p to %p\n",
 		   fp, &(((struct rwindow32 *)newsp)->rw_in[6]), oldsp);
 #endif
-	error = (rwindow_save(l) || copyout((caddr_t)&sf, (caddr_t)fp, sizeof sf) || 
-	    copyout((caddr_t)&oldsp32, &(((struct rwindow32 *)newsp)->rw_in[6]), sizeof oldsp32));
+	error = (rwindow_save(l) || copyout((void *)&sf, (void *)fp, sizeof sf) || 
+	    copyout((void *)&oldsp32, &(((struct rwindow32 *)newsp)->rw_in[6]), sizeof oldsp32));
 	mutex_enter(&p->p_smutex);
 	if (error) {
 		/*
@@ -333,7 +333,7 @@ sunos32_sys_sigreturn(l, v, retval)
 #endif
 
 	scp = (struct sunos32_sigcontext *)(u_long)SCARG(uap, sigcntxp);
-	if ((vaddr_t)scp & 3 || (copyin((caddr_t)scp, &sc, sizeof sc) != 0))
+	if ((vaddr_t)scp & 3 || (copyin((void *)scp, &sc, sizeof sc) != 0))
 		return (EFAULT);
 	scp = &sc;
 
@@ -398,7 +398,7 @@ ev_out32(struct firm_event *e, int n, struct uio *uio)
 		e32.value = e->value;
 		e32.time.tv_sec = e->time.tv_sec;
 		e32.time.tv_usec = e->time.tv_usec;
-		error = uiomove((caddr_t)&e32, sizeof(e32), uio);
+		error = uiomove((void *)&e32, sizeof(e32), uio);
 		e++;
 	}
 	return (error);

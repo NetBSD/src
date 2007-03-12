@@ -1,4 +1,4 @@
-/* $NetBSD: ultrix_syscall.h,v 1.52 2006/07/13 23:48:08 pavel Exp $ */
+/* $NetBSD: ultrix_syscall.h,v 1.52.10.1 2007/03/12 05:53:00 rmind Exp $ */
 
 /*
  * System call numbers.
@@ -69,7 +69,7 @@
 /* syscall: "getpid" ret: "pid_t" args: */
 #define	ULTRIX_SYS_getpid	20
 
-/* syscall: "mount" ret: "int" args: "char *" "char *" "int" "int" "caddr_t" */
+/* syscall: "mount" ret: "int" args: "char *" "char *" "int" "int" "void *" */
 #define	ULTRIX_SYS_mount	21
 
 				/* 22 is obsolete sysV_unmount */
@@ -112,7 +112,7 @@
 #define	ULTRIX_SYS_pipe	42
 
 				/* 43 is obsolete v7 times */
-/* syscall: "profil" ret: "int" args: "caddr_t" "u_int" "u_int" "u_int" */
+/* syscall: "profil" ret: "int" args: "void *" "u_int" "u_int" "u_int" */
 #define	ULTRIX_SYS_profil	44
 
 				/* 46 is obsolete v7 setgid */
@@ -122,7 +122,7 @@
 /* syscall: "acct" ret: "int" args: "char *" */
 #define	ULTRIX_SYS_acct	51
 
-/* syscall: "ioctl" ret: "int" args: "int" "u_long" "caddr_t" */
+/* syscall: "ioctl" ret: "int" args: "int" "u_long" "void *" */
 #define	ULTRIX_SYS_ioctl	54
 
 /* syscall: "reboot" ret: "int" args: "int" */
@@ -160,25 +160,25 @@
 /* syscall: "sstk" ret: "int" args: "int" */
 #define	ULTRIX_SYS_sstk	70
 
-/* syscall: "mmap" ret: "int" args: "caddr_t" "size_t" "int" "u_int" "int" "long" */
+/* syscall: "mmap" ret: "int" args: "void *" "size_t" "int" "u_int" "int" "long" */
 #define	ULTRIX_SYS_mmap	71
 
 /* syscall: "vadvise" ret: "int" args: "int" */
 #define	ULTRIX_SYS_vadvise	72
 
-/* syscall: "munmap" ret: "int" args: "caddr_t" "size_t" */
+/* syscall: "munmap" ret: "int" args: "void *" "size_t" */
 #define	ULTRIX_SYS_munmap	73
 
-/* syscall: "mprotect" ret: "int" args: "caddr_t" "size_t" "int" */
+/* syscall: "mprotect" ret: "int" args: "void *" "size_t" "int" */
 #define	ULTRIX_SYS_mprotect	74
 
-/* syscall: "madvise" ret: "int" args: "caddr_t" "size_t" "int" */
+/* syscall: "madvise" ret: "int" args: "void *" "size_t" "int" */
 #define	ULTRIX_SYS_madvise	75
 
 /* syscall: "vhangup" ret: "int" args: */
 #define	ULTRIX_SYS_vhangup	76
 
-/* syscall: "mincore" ret: "int" args: "caddr_t" "int" "char *" */
+/* syscall: "mincore" ret: "int" args: "void *" "int" "char *" */
 #define	ULTRIX_SYS_mincore	78
 
 /* syscall: "getgroups" ret: "int" args: "u_int" "gid_t *" */
@@ -232,28 +232,28 @@
 /* syscall: "socket" ret: "int" args: "int" "int" "int" */
 #define	ULTRIX_SYS_socket	97
 
-/* syscall: "connect" ret: "int" args: "int" "caddr_t" "int" */
+/* syscall: "connect" ret: "int" args: "int" "void *" "int" */
 #define	ULTRIX_SYS_connect	98
 
-/* syscall: "accept" ret: "int" args: "int" "caddr_t" "int *" */
+/* syscall: "accept" ret: "int" args: "int" "void *" "int *" */
 #define	ULTRIX_SYS_accept	99
 
 /* syscall: "getpriority" ret: "int" args: "int" "int" */
 #define	ULTRIX_SYS_getpriority	100
 
-/* syscall: "send" ret: "int" args: "int" "caddr_t" "int" "int" */
+/* syscall: "send" ret: "int" args: "int" "void *" "int" "int" */
 #define	ULTRIX_SYS_send	101
 
-/* syscall: "recv" ret: "int" args: "int" "caddr_t" "int" "int" */
+/* syscall: "recv" ret: "int" args: "int" "void *" "int" "int" */
 #define	ULTRIX_SYS_recv	102
 
 /* syscall: "sigreturn" ret: "int" args: "struct sigcontext *" */
 #define	ULTRIX_SYS_sigreturn	103
 
-/* syscall: "bind" ret: "int" args: "int" "caddr_t" "int" */
+/* syscall: "bind" ret: "int" args: "int" "void *" "int" */
 #define	ULTRIX_SYS_bind	104
 
-/* syscall: "setsockopt" ret: "int" args: "int" "int" "int" "caddr_t" "int" */
+/* syscall: "setsockopt" ret: "int" args: "int" "int" "int" "void *" "int" */
 #define	ULTRIX_SYS_setsockopt	105
 
 /* syscall: "listen" ret: "int" args: "int" "int" */
@@ -277,7 +277,7 @@
 /* syscall: "recvmsg" ret: "int" args: "int" "struct omsghdr *" "int" */
 #define	ULTRIX_SYS_recvmsg	113
 
-/* syscall: "sendmsg" ret: "int" args: "int" "caddr_t" "int" */
+/* syscall: "sendmsg" ret: "int" args: "int" "void *" "int" */
 #define	ULTRIX_SYS_sendmsg	114
 
 				/* 115 is obsolete vtrace */
@@ -287,7 +287,7 @@
 /* syscall: "getrusage" ret: "int" args: "int" "struct rusage *" */
 #define	ULTRIX_SYS_getrusage	117
 
-/* syscall: "getsockopt" ret: "int" args: "int" "int" "int" "caddr_t" "int *" */
+/* syscall: "getsockopt" ret: "int" args: "int" "int" "int" "void *" "int *" */
 #define	ULTRIX_SYS_getsockopt	118
 
 /* syscall: "readv" ret: "int" args: "int" "struct iovec *" "u_int" */
@@ -305,7 +305,7 @@
 /* syscall: "fchmod" ret: "int" args: "int" "int" */
 #define	ULTRIX_SYS_fchmod	124
 
-/* syscall: "recvfrom" ret: "int" args: "int" "caddr_t" "size_t" "int" "caddr_t" "int *" */
+/* syscall: "recvfrom" ret: "int" args: "int" "void *" "size_t" "int" "void *" "int *" */
 #define	ULTRIX_SYS_recvfrom	125
 
 /* syscall: "setreuid" ret: "int" args: "int" "int" */
@@ -326,7 +326,7 @@
 /* syscall: "flock" ret: "int" args: "int" "int" */
 #define	ULTRIX_SYS_flock	131
 
-/* syscall: "sendto" ret: "int" args: "int" "caddr_t" "size_t" "int" "caddr_t" "int" */
+/* syscall: "sendto" ret: "int" args: "int" "void *" "size_t" "int" "void *" "int" */
 #define	ULTRIX_SYS_sendto	133
 
 /* syscall: "shutdown" ret: "int" args: "int" "int" */
@@ -350,7 +350,7 @@
 /* syscall: "adjtime" ret: "int" args: "struct timeval *" "struct timeval *" */
 #define	ULTRIX_SYS_adjtime	140
 
-/* syscall: "getpeername" ret: "int" args: "int" "caddr_t" "int *" */
+/* syscall: "getpeername" ret: "int" args: "int" "void *" "int *" */
 #define	ULTRIX_SYS_getpeername	141
 
 /* syscall: "gethostid" ret: "int" args: */
@@ -365,7 +365,7 @@
 /* syscall: "killpg" ret: "int" args: "int" "int" */
 #define	ULTRIX_SYS_killpg	146
 
-/* syscall: "getsockname" ret: "int" args: "int" "caddr_t" "int *" */
+/* syscall: "getsockname" ret: "int" args: "int" "void *" "int *" */
 #define	ULTRIX_SYS_getsockname	150
 
 #ifdef __mips
@@ -407,7 +407,7 @@
 /* syscall: "setdomainname" ret: "int" args: "char *" "int" */
 #define	ULTRIX_SYS_setdomainname	166
 
-/* syscall: "quotactl" ret: "int" args: "int" "char *" "int" "caddr_t" */
+/* syscall: "quotactl" ret: "int" args: "int" "char *" "int" "void *" */
 #define	ULTRIX_SYS_quotactl	168
 
 /* syscall: "exportfs" ret: "int" args: "char *" "char *" */

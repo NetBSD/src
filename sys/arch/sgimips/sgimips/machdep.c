@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.106.2.1 2007/02/27 16:52:58 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.106.2.2 2007/03/12 05:50:13 rmind Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.106.2.1 2007/02/27 16:52:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.106.2.2 2007/03/12 05:50:13 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -233,7 +233,7 @@ struct platform platform = {
  */
 int	safepri = MIPS1_PSL_LOWIPL;
 
-extern caddr_t esym;
+extern void *esym;
 extern u_int32_t ssir;
 extern struct user *proc0paddr;
 
@@ -255,12 +255,12 @@ mach_init(int argc, char **argv, int magic, struct btinfo_common *btinfo)
 	extern char kernel_text[], _end[];
 	paddr_t first, last;
 	int firstpfn, lastpfn;
-	caddr_t v;
+	void *v;
 	vsize_t size;
 	struct arcbios_mem *mem;
 	const char *cpufreq;
 	struct btinfo_symtab *bi_syms;
-	caddr_t ssym;
+	void *ssym;
 	vaddr_t kernend;
 	int kernstartpfn, kernendpfn;
 	int i, rv, nsym;
@@ -292,8 +292,8 @@ mach_init(int argc, char **argv, int magic, struct btinfo_common *btinfo)
 		bi_syms = lookup_bootinfo(BTINFO_SYMTAB);
 		if (bi_syms != NULL) {
 			nsym = bi_syms->nsym;
-			ssym = (caddr_t) bi_syms->ssym;
-			esym = (caddr_t) bi_syms->esym;
+			ssym = (void *) bi_syms->ssym;
+			esym = (void *) bi_syms->esym;
 			kernend = round_page((vaddr_t) esym);
 		}
 	}
@@ -615,9 +615,9 @@ mach_init(int argc, char **argv, int magic, struct btinfo_common *btinfo)
 	/*
 	 * Allocate space for proc0's USPACE.
 	 */
-	v = (caddr_t)uvm_pageboot_alloc(USPACE);
+	v = (void *)uvm_pageboot_alloc(USPACE);
 	lwp0.l_addr = proc0paddr = (struct user *)v;
-	lwp0.l_md.md_regs = (struct frame *)(v + USPACE) - 1;
+	lwp0.l_md.md_regs = (struct frame *)((char *)v + USPACE) - 1;
 	curpcb = &lwp0.l_addr->u_pcb;
 	curpcb->pcb_context[11] = MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
 }

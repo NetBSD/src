@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp12x0_com.c,v 1.29 2006/10/01 20:31:49 elad Exp $ */
+/*	$NetBSD: ixp12x0_com.c,v 1.29.4.1 2007/03/12 05:47:06 rmind Exp $ */
 /*
  * Copyright (c) 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp12x0_com.c,v 1.29 2006/10/01 20:31:49 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp12x0_com.c,v 1.29.4.1 2007/03/12 05:47:06 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -710,7 +710,7 @@ ixpcomtty(dev)
 }
 
 int
-ixpcomioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+ixpcomioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct ixpcom_softc *sc = device_lookup(&ixpcom_cd, COMUNIT(dev));
 	struct tty *tp = sc->sc_tty;

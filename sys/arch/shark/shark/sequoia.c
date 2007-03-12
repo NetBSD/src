@@ -1,4 +1,4 @@
-/*	$NetBSD: sequoia.c,v 1.7 2006/09/12 17:50:53 gdamore Exp $	*/
+/*	$NetBSD: sequoia.c,v 1.7.6.1 2007/03/12 05:50:27 rmind Exp $	*/
 
 /*
  * Copyright 1997
@@ -40,7 +40,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sequoia.c,v 1.7 2006/09/12 17:50:53 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sequoia.c,v 1.7.6.1 2007/03/12 05:50:27 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -141,7 +141,7 @@ static struct callout led_timo_ch = CALLOUT_INITIALIZER;
 **
 */
 static void ledSetBiled(int color);
-static void ledTimeout(void * arg);
+static void ledTimeout(void *arg);
 
 /*
 ** 
@@ -488,7 +488,7 @@ void ledPanic       (void)
     ledSetBiled(LED_BILED_RED);
 }
 
-static void   ledTimeout(void * arg)
+static void   ledTimeout(void *arg)
 {
     int timeSpan;   /* in usec */
     struct timeval now;

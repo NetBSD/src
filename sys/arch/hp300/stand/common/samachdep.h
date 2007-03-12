@@ -1,4 +1,4 @@
-/*	$NetBSD: samachdep.h,v 1.14 2006/07/02 11:24:43 tsutsui Exp $	*/
+/*	$NetBSD: samachdep.h,v 1.14.10.1 2007/03/12 05:47:58 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -97,7 +97,7 @@ int tgetchar(void);
 extern	u_int bootdev;
 extern	int machineid, mmuid;
 extern	int howto;
-int badaddr(caddr_t);
+int badaddr(void *);
 void call_req_reboot(void);
 void romout(int, char *);
 void _transfer(char *, int, int, int, char *, char *);

@@ -1,4 +1,4 @@
-/* $NetBSD: disksubr.c,v 1.31 2006/11/25 13:09:14 scw Exp $ */
+/* $NetBSD: disksubr.c,v 1.31.4.1 2007/03/12 05:45:50 rmind Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.31 2006/11/25 13:09:14 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.31.4.1 2007/03/12 05:45:50 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,7 +92,7 @@ readdisklabel(dev, strat, lp, clp)
 		goto done;
 	}
 
-	dlp = (struct disklabel *)(bp->b_data + LABELOFFSET);
+	dlp = (struct disklabel *)((char *)bp->b_data + LABELOFFSET);
 	if (dlp->d_magic == DISKMAGIC) {
 		if (dkcksum(dlp))
 			msg = "NetBSD disk label corrupted";
@@ -226,7 +226,7 @@ writedisklabel(dev, strat, lp, clp)
 	if ((error = biowait(bp)) != 0)
 		goto done;
 
-	dlp = (struct disklabel *)(bp->b_data + LABELOFFSET);
+	dlp = (struct disklabel *)((char *)bp->b_data + LABELOFFSET);
 	*dlp = *lp;     /* struct assignment */
 
 	/*

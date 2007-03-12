@@ -1,4 +1,4 @@
-/*	$NetBSD: mca_machdep.h,v 1.10 2005/12/26 19:23:59 perry Exp $	*/
+/*	$NetBSD: mca_machdep.h,v 1.10.26.1 2007/03/12 05:48:36 rmind Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@ int	mca_nmi(void);
  * Types provided to machine-independent MCA code.
  */
 struct x86_mca_chipset {
-        void * /*struct mca_dma_state*/ ic_dmastate;
+        void */*struct mca_dma_state*/ ic_dmastate;
 };
 
 typedef struct x86_mca_chipset *mca_chipset_tag_t;

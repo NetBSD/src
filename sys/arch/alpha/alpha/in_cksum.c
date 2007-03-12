@@ -1,4 +1,4 @@
-/* $NetBSD: in_cksum.c,v 1.13 2005/12/11 12:16:10 christos Exp $ */
+/* $NetBSD: in_cksum.c,v 1.13.26.1 2007/03/12 05:45:50 rmind Exp $ */
 
 /*
  * Copyright (c) 1988, 1992, 1993
@@ -68,7 +68,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: in_cksum.c,v 1.13 2005/12/11 12:16:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_cksum.c,v 1.13.26.1 2007/03/12 05:45:50 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -119,7 +119,7 @@ union q_util {
 };
 
 static u_int64_t
-in_cksumdata(register caddr_t buf, register int len)
+in_cksumdata(register void *buf, register int len)
 {
 	const u_int32_t *lw = (u_int32_t *) buf;
 	u_int64_t sum = 0;
@@ -205,7 +205,7 @@ in_cksum(register struct mbuf *m, register int len)
 	register u_int64_t sum = 0;
 	register int mlen = 0;
 	register int clen = 0;
-	register caddr_t addr;
+	register void *addr;
 	union q_util q_util;
 	union l_util l_util;
 
@@ -215,7 +215,7 @@ in_cksum(register struct mbuf *m, register int len)
 		mlen = m->m_len;
 		if (len < mlen)
 			mlen = len;
-		addr = mtod(m, caddr_t);
+		addr = mtod(m, void *);
 		if ((clen ^ (long) addr) & 1)
 			sum += in_cksumdata(addr, mlen) << 8;
 		else
@@ -235,7 +235,7 @@ in4_cksum(struct mbuf *m, u_int8_t nxt, int off, int len)
 	register u_int64_t sum = 0;
 	register int mlen = 0;
 	register int clen = 0;
-	register caddr_t addr;
+	register void *addr;
 	union q_util q_util;
 	union l_util l_util; 
 	struct ipovly ipov;
@@ -254,7 +254,7 @@ in4_cksum(struct mbuf *m, u_int8_t nxt, int off, int len)
 		ipov.ih_src = mtod(m, struct ip *)->ip_src;
 		ipov.ih_dst = mtod(m, struct ip *)->ip_dst;
 
-		sum += in_cksumdata((caddr_t) &ipov, sizeof(ipov));
+		sum += in_cksumdata((void *) &ipov, sizeof(ipov));
 	}
 
 	/* skip over unnecessary part */
@@ -271,7 +271,7 @@ in4_cksum(struct mbuf *m, u_int8_t nxt, int off, int len)
 		mlen = m->m_len - off;
 		if (len < mlen)
 			mlen = len;
-		addr = mtod(m, caddr_t) + off;
+		addr = mtod(m, void *) + off;
 		if ((clen ^ (long) addr) & 1)
 			sum += in_cksumdata(addr, mlen) << 8;
 		else

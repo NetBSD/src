@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.14 2006/12/26 10:43:44 elad Exp $	*/
+/*	$NetBSD: mem.c,v 1.14.2.1 2007/03/12 05:50:16 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -74,7 +74,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.14 2006/12/26 10:43:44 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.14.2.1 2007/03/12 05:50:16 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -91,7 +91,7 @@ __KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.14 2006/12/26 10:43:44 elad Exp $");
 #include <uvm/uvm_extern.h>
 
 extern vaddr_t vmmap;
-static caddr_t zeropage;
+static void *zeropage;
 static volatile int physlock;
 
 dev_type_read(mmrw);
@@ -147,7 +147,7 @@ mmrw(dev, uio, flags)
 			pmap_update(pmap_kernel());
 			o = uio->uio_offset & PGOFSET;
 			c = min(uio->uio_resid, (int)(PAGE_SIZE - o));
-			error = uiomove((caddr_t)vmmap + o, c, uio);
+			error = uiomove((void *)vmmap + o, c, uio);
 			pmap_remove(pmap_kernel(), vmmap, vmmap + PAGE_SIZE);
 			pmap_update(pmap_kernel());
 			break;
@@ -156,11 +156,11 @@ mmrw(dev, uio, flags)
 			v = uio->uio_offset;
 			c = min(iov->iov_len, MAXPHYS);
 			if ((v >= VM_MIN_KERNEL_ADDRESS &&
-			    !uvm_kernacc((caddr_t)v, c,
+			    !uvm_kernacc((void *)v, c,
 			    uio->uio_rw == UIO_READ ? B_READ : B_WRITE)) ||
 			    v < SH5_KSEG0_BASE)
 				return (EFAULT);
-			error = uiomove((caddr_t)v, c, uio);
+			error = uiomove((void *)v, c, uio);
 			break;
 
 		case DEV_NULL:
@@ -174,7 +174,7 @@ mmrw(dev, uio, flags)
 				return (0);
 			}
 			if (zeropage == NULL) {
-				zeropage = (caddr_t)
+				zeropage = (void *)
 				    malloc(PAGE_SIZE, M_TEMP, M_WAITOK);
 				memset(zeropage, 0, PAGE_SIZE);
 			}

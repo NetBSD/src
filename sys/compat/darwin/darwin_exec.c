@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_exec.c,v 1.48.2.1 2007/02/27 16:53:32 yamt Exp $ */
+/*	$NetBSD: darwin_exec.c,v 1.48.2.2 2007/03/12 05:51:55 rmind Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include "opt_compat_darwin.h" /* For COMPAT_DARWIN in mach_port.h */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_exec.c,v 1.48.2.1 2007/02/27 16:53:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_exec.c,v 1.48.2.2 2007/03/12 05:51:55 rmind Exp $");
 
 #include "opt_syscall_debug.h"
 
@@ -334,7 +334,7 @@ darwin_e_proc_exit(p)
 	u_char kgreen[256];
 	u_char kblue[256];
 	struct lwp *l;
-	caddr_t sg = stackgap_init(p, 0);
+	void *sg = stackgap_init(p, 0);
 
 	ded = p->p_emuldata;
 	l = LIST_FIRST(&p->p_lwps);
@@ -363,7 +363,7 @@ darwin_e_proc_exit(p)
 	if (ded->ded_wsdev != NODEV) {
 		mode = WSDISPLAYIO_MODE_EMUL;
 		error = (*wsdisplay_cdevsw.d_ioctl)(ded->ded_wsdev,
-		    WSDISPLAYIO_SMODE, (caddr_t)&mode, 0, l);
+		    WSDISPLAYIO_SMODE, (void *)&mode, 0, l);
 #ifdef DEBUG_DARWIN
 		if (error != 0)
 			printf("Unable to switch back to text mode\n");
@@ -390,7 +390,7 @@ darwin_e_proc_exit(p)
 		    ((error = copyout(kgreen, green, 256)) != 0) ||
 		    ((error = copyout(kblue, blue, 256)) != 0))
 			error = (*wsdisplay_cdevsw.d_ioctl)(ded->ded_wsdev,
-			    WSDISPLAYIO_PUTCMAP, (caddr_t)&cmap, 0, l);
+			    WSDISPLAYIO_PUTCMAP, (void *)&cmap, 0, l);
 #ifdef DEBUG_DARWIN
 		if (error != 0)
 			printf("Cannot revert colormap (error %d)\n", error);

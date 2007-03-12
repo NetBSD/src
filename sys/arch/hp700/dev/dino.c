@@ -1,4 +1,4 @@
-/*	$NetBSD: dino.c,v 1.4 2005/12/11 12:17:24 christos Exp $ */
+/*	$NetBSD: dino.c,v 1.4.26.1 2007/03/12 05:47:59 rmind Exp $ */
 
 /*	$OpenBSD: dino.c,v 1.5 2004/02/13 20:39:31 mickey Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dino.c,v 1.4 2005/12/11 12:17:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dino.c,v 1.4.26.1 2007/03/12 05:47:59 rmind Exp $");
 
 /* #include "cardbus.h" */
 
@@ -246,8 +246,8 @@ void dino_dmamap_sync(void *, bus_dmamap_t, bus_addr_t, bus_size_t, int);
 int dino_dmamem_alloc(void *, bus_size_t, bus_size_t, bus_size_t, 
     bus_dma_segment_t *, int, int *, int);
 void dino_dmamem_free(void *, bus_dma_segment_t *, int);
-int dino_dmamem_map(void *, bus_dma_segment_t *, int, size_t, caddr_t *, int);
-void dino_dmamem_unmap(void *, caddr_t, size_t);
+int dino_dmamem_map(void *, bus_dma_segment_t *, int, size_t, void **, int);
+void dino_dmamem_unmap(void *, void *, size_t);
 paddr_t dino_dmamem_mmap(void *, bus_dma_segment_t *, int, off_t, int, int);
 
 
@@ -1507,7 +1507,7 @@ dino_dmamem_free(void *v, bus_dma_segment_t *segs, int nsegs)
 
 int
 dino_dmamem_map(void *v, bus_dma_segment_t *segs, int nsegs, size_t size,
-    caddr_t *kvap, int flags)
+    void **kvap, int flags)
 {
 	struct dino_softc *sc = v;
 
@@ -1515,7 +1515,7 @@ dino_dmamem_map(void *v, bus_dma_segment_t *segs, int nsegs, size_t size,
 }
 
 void
-dino_dmamem_unmap(void *v, caddr_t kva, size_t size)
+dino_dmamem_unmap(void *v, void *kva, size_t size)
 {
 	struct dino_softc *sc = v;
 

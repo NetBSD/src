@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_shark_machdep.c,v 1.6.26.1 2007/02/27 16:53:06 yamt Exp $	*/
+/*	$NetBSD: isa_shark_machdep.c,v 1.6.26.2 2007/03/12 05:50:25 rmind Exp $	*/
 
 /*
  * Copyright 1997
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_shark_machdep.c,v 1.6.26.1 2007/02/27 16:53:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_shark_machdep.c,v 1.6.26.2 2007/03/12 05:50:25 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: isa_shark_machdep.c,v 1.6.26.1 2007/02/27 16:53:06 y
 #include <sys/malloc.h>
 
 #include <machine/intr.h>
+#include <machine/irqhandler.h>
 #include <machine/pio.h>
 
 #include <dev/isa/isareg.h>
@@ -170,7 +171,6 @@ isa_intr_establish(ic, irq, type, level, ih_fun, ih_arg)
 	int (*ih_fun) __P((void *));
 	void *ih_arg;
 {
-	const char *name;
 	irqhandler_t *ih;
 
 	/* no point in sleeping unless someone can free memory. */
@@ -189,15 +189,9 @@ isa_intr_establish(ic, irq, type, level, ih_fun, ih_arg)
 	ih->ih_func = ih_fun;
 	ih->ih_arg = ih_arg;
 	ih->ih_level = level;
-	if (irq >= 0 && irq < __arraycount(isa_intr_names)) {
-		name = isa_intr_names[irq];
-	} else {
-		snprintf(ih->ih_evname, sizeof(ih->ih_evname), "irq %2d", irq);
-		name = ih->ih_evname;
-	}
-	evcnt_attach_dynamic(&ih->ih_ev, EVCNT_TYPE_INTR, NULL, "isa", name);
+	KASSERT(irq >= 0 && irq < __arraycount(isa_intr_names));
 
-	if (irq_claim(irq, ih) == -1)
+	if (irq_claim(irq, ih, "isa", isa_intr_names[irq]) == -1)
 		panic("isa_intr_establish: can't install handler");
 
 	return (ih);

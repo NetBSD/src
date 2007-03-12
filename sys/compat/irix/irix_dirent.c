@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_dirent.c,v 1.16 2006/03/01 12:38:12 yamt Exp $ */
+/*	$NetBSD: irix_dirent.c,v 1.16.20.1 2007/03/12 05:52:12 rmind Exp $ */
 
 /*-
  * Copyright (c) 1994, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_dirent.c,v 1.16 2006/03/01 12:38:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_dirent.c,v 1.16.20.1 2007/03/12 05:52:12 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -85,9 +85,9 @@ irix_sys_ngetdents(l, v, retval)
 	struct proc *p = l->l_proc;
 	struct dirent *bdp;
 	struct vnode *vp;
-	caddr_t inp, buf;	/* BSD-format */
+	char *inp, *buf;	/* BSD-format */
 	int len, reclen;	/* BSD-format */
-	caddr_t outp;		/* SVR4-format */
+	char *outp;		/* SVR4-format */
 	int resid, svr4_reclen;	/* SVR4-format */
 	struct file *fp;
 	struct uio auio;
@@ -174,7 +174,7 @@ again:
 		idb.d_off = (irix_off_t)off;
 		idb.d_reclen = (u_short)svr4_reclen;
 		strlcpy(idb.d_name, bdp->d_name, sizeof(idb.d_name));
-		if ((error = copyout((caddr_t)&idb, outp, svr4_reclen)))
+		if ((error = copyout((void *)&idb, outp, svr4_reclen)))
 			goto out;
 		/* advance past this real entry */
 		inp += reclen;
@@ -244,9 +244,9 @@ irix_sys_ngetdents64(l, v, retval)
 	struct dirent *bdp;
 	struct proc *p = l->l_proc;
 	struct vnode *vp;
-	caddr_t inp, buf;	/* BSD-format */
+	char *inp, *buf;	/* BSD-format */
 	int len, reclen;	/* BSD-format */
-	caddr_t outp;		/* SVR4-format */
+	char *outp;		/* SVR4-format */
 	int resid, svr4_reclen;	/* SVR4-format */
 	struct file *fp;
 	struct uio auio;
@@ -332,7 +332,7 @@ again:
 		idb.d_off = (irix_off64_t)off;
 		idb.d_reclen = (u_short)svr4_reclen;
 		strlcpy(idb.d_name, bdp->d_name, sizeof(idb.d_name));
-		if ((error = copyout((caddr_t)&idb, outp, svr4_reclen)))
+		if ((error = copyout((void *)&idb, outp, svr4_reclen)))
 			goto out;
 		/* advance past this real entry */
 		inp += reclen;

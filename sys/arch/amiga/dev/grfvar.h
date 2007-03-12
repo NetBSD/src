@@ -1,4 +1,4 @@
-/*	$NetBSD: grfvar.h,v 1.19 2005/12/11 12:16:28 christos Exp $	*/
+/*	$NetBSD: grfvar.h,v 1.19.26.1 2007/03/12 05:46:41 rmind Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -86,13 +86,13 @@ struct ite_softc;
 struct	grf_softc {
 	struct device  g_device;	/* config sets this up. */
 	struct grfinfo g_display;	/* hardware description (for ioctl) */
-	volatile caddr_t g_regkva;	/* KVA of registers */
-	volatile caddr_t g_fbkva;	/* KVA of framebuffer */
+	volatile void *g_regkva;	/* KVA of registers */
+	volatile void *g_fbkva;	/* KVA of framebuffer */
 	int     g_flags;		/* software flags */
 	int	g_unit;			/* grf unit we want/have */
 	dev_t	g_itedev;		/* ite device number */
 	dev_t	g_grfdev;		/* grf device number */
-	caddr_t g_data;			/* device dependent data */
+	void *g_data;			/* device dependent data */
 	int  (*g_mode)(struct grf_softc *, u_long, void *, u_long, int);
 	int    g_conpri;		/* priority of ite as console */
 	void (*g_iteinit)(struct ite_softc *);

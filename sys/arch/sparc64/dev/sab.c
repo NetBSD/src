@@ -1,4 +1,4 @@
-/*	$NetBSD: sab.c,v 1.36 2006/10/19 21:52:12 martin Exp $	*/
+/*	$NetBSD: sab.c,v 1.36.4.1 2007/03/12 05:50:46 rmind Exp $	*/
 /*	$OpenBSD: sab.c,v 1.7 2002/04/08 17:49:42 jason Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sab.c,v 1.36 2006/10/19 21:52:12 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sab.c,v 1.36.4.1 2007/03/12 05:50:46 rmind Exp $");
 
 #include "opt_kgdb.h"
 #include <sys/types.h>
@@ -808,7 +808,7 @@ sabwrite(dev_t dev, struct uio *uio, int flags)
 }
 
 int
-sabioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct lwp *l)
+sabioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 {
 	struct sabtty_softc *sc = device_lookup(&sabtty_cd, SABUNIT(dev));
 	struct tty *tp = sc->sc_tty;

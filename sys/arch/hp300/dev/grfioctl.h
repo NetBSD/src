@@ -1,4 +1,4 @@
-/*	$NetBSD: grfioctl.h,v 1.7 2005/12/11 12:17:14 christos Exp $	*/
+/*	$NetBSD: grfioctl.h,v 1.7.26.1 2007/03/12 05:47:44 rmind Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -78,9 +78,9 @@
 
 struct	grfinfo {
 	int	gd_id;			/* HPUX identifier */
-	caddr_t	gd_regaddr;		/* control registers physaddr */
+	uint8_t *gd_regaddr;		/* control registers physaddr */
 	int	gd_regsize;		/* control registers size */
-	caddr_t	gd_fbaddr;		/* frame buffer physaddr */
+	uint8_t *gd_fbaddr;		/* frame buffer physaddr */
 	int	gd_fbsize;		/* frame buffer size */
 	short	gd_colors;		/* number of colors */
 	short	gd_planes;		/* number of planes */
@@ -119,8 +119,8 @@ struct	grf_fbinfo {
 	int	npl, nplbytes;
 	char	name[32];
 	int	attr;
-	caddr_t	fbbase, regbase;
-	caddr_t	regions[6];
+	uint8_t *fbbase, *regbase;
+	void 	*regions[6];
 };
 
 #ifndef _IOH

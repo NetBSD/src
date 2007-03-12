@@ -1,4 +1,4 @@
-/*      $NetBSD: opms.c,v 1.18 2007/01/24 13:08:12 hubertf Exp $        */
+/*      $NetBSD: opms.c,v 1.18.2.1 2007/03/12 05:50:26 rmind Exp $        */
 
 /*
  * Copyright 1997
@@ -91,7 +91,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opms.c,v 1.18 2007/01/24 13:08:12 hubertf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opms.c,v 1.18.2.1 2007/03/12 05:50:26 rmind Exp $");
 
 #include "opms.h"
 #if NOPMS > 1
@@ -598,7 +598,7 @@ opmsread(dev, uio, flag)
         else
         {
             sc->sc_state |= PMS_ASLP;
-            error = tsleep((caddr_t)sc, PZERO | PCATCH, "opmsread", 0);
+            error = tsleep((void *)sc, PZERO | PCATCH, "opmsread", 0);
             if (error) 
             {
                 sc->sc_state &= ~PMS_ASLP;
@@ -674,7 +674,7 @@ int
 opmsioctl(dev, cmd, addr, flag, l)
     dev_t       dev;
     u_long      cmd;
-    caddr_t     addr;
+    void *    addr;
     int         flag;
     struct lwp *l;
 {
@@ -906,7 +906,7 @@ opmsintr(arg)
                         if (sc->sc_state & PMS_ASLP) 
                         {
                             sc->sc_state &= ~PMS_ASLP;
-                            wakeup((caddr_t)sc);
+                            wakeup((void *)sc);
                         }
                         /* Wakeup any selects waiting */
                         selwakeup(&sc->sc_rsel);

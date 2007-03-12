@@ -1,4 +1,4 @@
-/*	$NetBSD: ofcons.c,v 1.19 2006/10/01 18:56:22 elad Exp $	*/
+/*	$NetBSD: ofcons.c,v 1.19.4.1 2007/03/12 05:49:06 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofcons.c,v 1.19 2006/10/01 18:56:22 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofcons.c,v 1.19.4.1 2007/03/12 05:49:06 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -192,7 +192,7 @@ ofcpoll(dev_t dev, int events, struct lwp *l)
 }
 
 int
-ofcioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+ofcioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct ofcons_softc *sc = macofcons_cd.cd_devs[minor(dev)];
 	struct tty *tp = sc->of_tty;

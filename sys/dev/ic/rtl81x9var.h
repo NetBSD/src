@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9var.h,v 1.37 2006/11/25 02:42:18 tsutsui Exp $	*/
+/*	$NetBSD: rtl81x9var.h,v 1.37.4.1 2007/03/12 05:53:44 rmind Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -199,7 +199,7 @@ struct rtk_softc {
 	int			sc_dmanseg;	/* for rtk(4) */
 
 	bus_dmamap_t 		recv_dmamap;	/* for rtk(4) */
-	caddr_t			rtk_rx_buf;
+	void *			rtk_rx_buf;
 
 	struct rtk_tx_desc	rtk_tx_descs[RTK_TX_LIST_CNT];
 	SIMPLEQ_HEAD(, rtk_tx_desc) rtk_tx_free;

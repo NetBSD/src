@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.7 2007/02/09 21:55:12 ad Exp $	*/
+/*	$NetBSD: syscall.c,v 1.7.2.1 2007/03/12 05:50:15 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -112,7 +112,7 @@ static void
 syscall_plain(struct lwp *l, struct trapframe *tf)
 {
 	struct proc *p = l->l_proc;
-	caddr_t params;
+	void *params;
 	const struct sysent *callp;
 	int error, opc, nsys;
 	size_t argsize;
@@ -126,7 +126,7 @@ syscall_plain(struct lwp *l, struct trapframe *tf)
 	nsys = p->p_emul->e_nsysent;
 	callp = p->p_emul->e_sysent;
 
-	params = (caddr_t)tf->tf_r15;
+	params = (void *)tf->tf_r15;
 
 	switch (code) {
 	case SYS_syscall:
@@ -167,7 +167,7 @@ syscall_plain(struct lwp *l, struct trapframe *tf)
 			args[2] = tf->tf_r7;
 			if (argsize > 3 * sizeof(int)) {
 				argsize -= 3 * sizeof(int);
-				error = copyin(params, (caddr_t)&args[3],
+				error = copyin(params, (void *)&args[3],
 					       argsize);
 			} else
 				error = 0;
@@ -180,7 +180,7 @@ syscall_plain(struct lwp *l, struct trapframe *tf)
 			args[1] = tf->tf_r7;
 			if (argsize > 2 * sizeof(int)) {
 				argsize -= 2 * sizeof(int);
-				error = copyin(params, (caddr_t)&args[2],
+				error = copyin(params, (void *)&args[2],
 					       argsize);
 			} else
 				error = 0;
@@ -194,7 +194,7 @@ syscall_plain(struct lwp *l, struct trapframe *tf)
 			args[3] = tf->tf_r7;
 			if (argsize > 4 * sizeof(int)) {
 				argsize -= 4 * sizeof(int);
-				error = copyin(params, (caddr_t)&args[4],
+				error = copyin(params, (void *)&args[4],
 					       argsize);
 			} else
 				error = 0;
@@ -245,7 +245,7 @@ static void
 syscall_fancy(struct lwp *l, struct trapframe *tf)
 {
 	struct proc *p = l->l_proc;
-	caddr_t params;
+	void *params;
 	const struct sysent *callp;
 	int error, opc, nsys;
 	size_t argsize;
@@ -259,7 +259,7 @@ syscall_fancy(struct lwp *l, struct trapframe *tf)
 	nsys = p->p_emul->e_nsysent;
 	callp = p->p_emul->e_sysent;
 
-	params = (caddr_t)tf->tf_r15;
+	params = (void *)tf->tf_r15;
 
 	switch (code) {
 	case SYS_syscall:
@@ -300,7 +300,7 @@ syscall_fancy(struct lwp *l, struct trapframe *tf)
 			args[2] = tf->tf_r7;
 			if (argsize > 3 * sizeof(int)) {
 				argsize -= 3 * sizeof(int);
-				error = copyin(params, (caddr_t)&args[3],
+				error = copyin(params, (void *)&args[3],
 					       argsize);
 			} else
 				error = 0;
@@ -313,7 +313,7 @@ syscall_fancy(struct lwp *l, struct trapframe *tf)
 			args[1] = tf->tf_r7;
 			if (argsize > 2 * sizeof(int)) {
 				argsize -= 2 * sizeof(int);
-				error = copyin(params, (caddr_t)&args[2],
+				error = copyin(params, (void *)&args[2],
 					       argsize);
 			} else
 				error = 0;
@@ -327,7 +327,7 @@ syscall_fancy(struct lwp *l, struct trapframe *tf)
 			args[3] = tf->tf_r7;
 			if (argsize > 4 * sizeof(int)) {
 				argsize -= 4 * sizeof(int);
-				error = copyin(params, (caddr_t)&args[4],
+				error = copyin(params, (void *)&args[4],
 					       argsize);
 			} else
 				error = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: iomod.h,v 1.2 2002/08/25 20:20:01 fredette Exp $	*/
+/*	$NetBSD: iomod.h,v 1.2.60.1 2007/03/12 05:48:01 rmind Exp $	*/
 
 /*	$OpenBSD: iomod.h,v 1.8 2000/05/15 15:16:41 mickey Exp $	*/
 
@@ -327,12 +327,12 @@ struct iomod {
 	u_int	io_eim;		/* (WO) External Interrupt Message address */
 	u_int	io_dc_rw;	/* write address of IODC to read IODC data */
 	u_int	io_ii_rw;	/* read/clear external intrpt msg (bit-26) */
-	caddr_t	io_dma_link;	/* pointer to "next quad" in DMA chain */
+	void *	io_dma_link;	/* pointer to "next quad" in DMA chain */
 	u_int	io_dma_command;	/* (RO) chain command to exec on "next quad" */
-	caddr_t	io_dma_address;	/* (RO) start of DMA */
+	void *	io_dma_address;	/* (RO) start of DMA */
 	u_int	io_dma_count;	/* (RO) number of bytes remaining to xfer */
-	caddr_t	io_flex;	/* (WO) HPA flex addr, LSB: bus master flag */
-	caddr_t	io_spa;		/* (WO) SPA space; 0-20:addr, 24-31:iodc_spa */
+	void *	io_flex;	/* (WO) HPA flex addr, LSB: bus master flag */
+	void *	io_spa;		/* (WO) SPA space; 0-20:addr, 24-31:iodc_spa */
 	u_int	resv1[2];	/* (reserved) */
 	u_int	io_command;	/* (WO) module commands (see below) */
 	u_int	io_status;	/* (RO) error returns (see below) */
@@ -340,13 +340,13 @@ struct iomod {
 	u_int	io_test;	/* (RO) self-test information */
 /* ARS (Auxiliary Register Set) */
 	u_int	io_err_sadd;	/* (RO) slave bus error or memory error addr */
-	caddr_t	chain_addr;	/* start address of chain RAM */
+	void *	chain_addr;	/* start address of chain RAM */
 	u_int	sub_mask_clr;	/* ignore intrpts on sub-channel (bitmask) */
 	u_int	sub_mask_set;	/* service intrpts on sub-channel (bitmask) */
 	u_int	diagnostic;	/* diagnostic use (reserved) */
 	u_int	resv2[2];	/* (reserved) */
-	caddr_t	nmi_address;	/* address to send data to when NMI detected */
-	caddr_t	nmi_data;	/* NMI data to be sent */
+	void *	nmi_address;	/* address to send data to when NMI detected */
+	void *	nmi_data;	/* NMI data to be sent */
 	u_int	resv3[3];	/* (reserved) */
 	u_int	io_mem_low;	/* bottom of memory address range */
 	u_int	io_mem_high;	/* top of memory address range */
@@ -369,7 +369,7 @@ struct iomod {
 
 /* io_spa */
 #define	IOSPA(spa,iodc_data)	\
-	((volatile caddr_t)		\
+	((volatile void *)		\
 	 (spa | iodc_data.iodc_spa_shift | iodc_data.iodc_spa_enb << 5 | \
 	  iodc_data.iodc_spa_pack << 6 | iodc_data.iodc_spa_io << 7))
 

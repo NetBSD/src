@@ -1,4 +1,4 @@
-/*	$NetBSD: rt2560var.h,v 1.4 2006/09/25 22:14:01 jmcneill Exp $	*/
+/*	$NetBSD: rt2560var.h,v 1.4.4.1 2007/03/12 05:53:42 rmind Exp $	*/
 /*	$OpenBSD: rt2560var.h,v 1.2 2006/01/14 12:43:27 damien Exp $  */
 
 /*-
@@ -151,7 +151,7 @@ struct rt2560_softc {
 	int			dwelltime;
 
 #if NBPFILTER > 0
-	caddr_t			sc_drvbpf;
+	void *			sc_drvbpf;
 
 	union {
 		struct rt2560_rx_radiotap_header th;

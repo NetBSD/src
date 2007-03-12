@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.79 2007/02/16 02:53:51 ad Exp $ */
+/*	$NetBSD: cpu.h,v 1.79.2.1 2007/03/12 05:50:29 rmind Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -189,9 +189,9 @@ struct dkbad;
 int isbad(struct dkbad *, int, int, int);
 
 /* machdep.c */
-int	ldcontrolb(caddr_t);
+int	ldcontrolb(void *);
 void	dumpconf(void);
-caddr_t	reserve_dumppages(caddr_t);
+void *	reserve_dumppages(void *);
 void	wcopy(const void *, void *, u_int);
 void	wzero(void *, u_int);
 
@@ -204,14 +204,14 @@ void	schedintr(void *);
 struct fpstate;
 void	savefpstate(struct fpstate *);
 void	loadfpstate(struct fpstate *);
-int	probeget(caddr_t, int);
+int	probeget(void *, int);
 void	write_all_windows(void);
 void	write_user_windows(void);
 void 	proc_trampoline(void);
 struct pcb;
 void	snapshot(struct pcb *);
 struct frame *getfp(void);
-int	xldcontrolb(caddr_t, struct pcb *);
+int	xldcontrolb(void *, struct pcb *);
 void	copywords(const void *, void *, size_t);
 void	qcopy(const void *, void *, size_t);
 void	qzero(void *, size_t);

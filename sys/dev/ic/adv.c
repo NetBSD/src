@@ -1,4 +1,4 @@
-/*	$NetBSD: adv.c,v 1.38 2006/08/17 17:11:27 christos Exp $	*/
+/*	$NetBSD: adv.c,v 1.38.8.1 2007/03/12 05:53:24 rmind Exp $	*/
 
 /*
  * Generic driver for the Advanced Systems Inc. Narrow SCSI controllers
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adv.c,v 1.38 2006/08/17 17:11:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adv.c,v 1.38.8.1 2007/03/12 05:53:24 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -123,7 +123,7 @@ adv_alloc_control_data(sc)
 	}
 	if ((error = bus_dmamem_map(sc->sc_dmat, &sc->sc_control_seg,
 			   sc->sc_control_nsegs, sizeof(struct adv_control),
-			   (caddr_t *) & sc->sc_control,
+			   (void **) & sc->sc_control,
 			   BUS_DMA_NOWAIT | BUS_DMA_COHERENT)) != 0) {
 		printf("%s: unable to map control structures, error = %d\n",
 		       sc->sc_dev.dv_xname, error);
@@ -165,7 +165,7 @@ adv_free_control_data(sc)
 	bus_dmamap_destroy(sc->sc_dmat, sc->sc_dmamap_control);
 	sc->sc_dmamap_control = NULL;
 
-	bus_dmamem_unmap(sc->sc_dmat, (caddr_t) sc->sc_control,
+	bus_dmamem_unmap(sc->sc_dmat, (void *) sc->sc_control,
 	    sizeof(struct adv_control));
 	bus_dmamem_free(sc->sc_dmat, &sc->sc_control_seg,
 	    sc->sc_control_nsegs);

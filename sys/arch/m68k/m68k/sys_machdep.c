@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.8.2.1 2007/02/27 16:51:58 yamt Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.8.2.2 2007/03/12 05:48:55 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -207,23 +207,23 @@ sys_sysarch(struct lwp *l, void *v, register_t *retval)
 
 /*ARGSUSED1*/
 int
-dma_cachectl(caddr_t addr, int len)
+dma_cachectl(void *addr, int len)
 {
 #if defined(M68040) || defined(M68060)
 	int inc = 0;
 	int pa = 0;
-	caddr_t end;
+	void *end;
 
 	if (mmutype != MMU_68040) {
 		return 0;
 	}
 
-	end = addr + len;
+	end = (char*)addr + len;
 	if (len <= 1024) {
-		addr = (caddr_t)((vaddr_t)addr & ~0xf);
+		addr = (void *)((vaddr_t)addr & ~0xf);
 		inc = 16;
 	} else {
-		addr = (caddr_t)((vaddr_t)addr & ~PGOFSET);
+		addr = (void *)((vaddr_t)addr & ~PGOFSET);
 		inc = PAGE_SIZE;
 	}
 	do {
@@ -241,7 +241,7 @@ dma_cachectl(caddr_t addr, int len)
 			ICPP(pa);
 		}
 		pa += inc;
-		addr += inc;
+		addr = (char*)addr + inc;
 	} while (addr < end);
 #endif	/* defined(M68040) || defined(M68060) */
 	return 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_ms.c,v 1.5 2006/11/12 19:00:43 plunky Exp $	*/
+/*	$NetBSD: zs_ms.c,v 1.5.4.1 2007/03/12 05:50:10 rmind Exp $	*/
 
 /*
  * Copyright (c) 2004 Steve Rumble
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs_ms.c,v 1.5 2006/11/12 19:00:43 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_ms.c,v 1.5.4.1 2007/03/12 05:50:10 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,7 +99,7 @@ static void	zsms_softint(struct zs_chanstate *);
 static void	zsms_wsmouse_input(struct zsms_softc *);
 static int	zsms_wsmouse_enable(void *);
 static void	zsms_wsmouse_disable(void *);
-static int	zsms_wsmouse_ioctl(void *, u_long, caddr_t, int,
+static int	zsms_wsmouse_ioctl(void *, u_long, void *, int,
 						   struct lwp *);
 
 CFATTACH_DECL(zsms, sizeof(struct zsms_softc),
@@ -308,7 +308,7 @@ zsms_wsmouse_disable(void *cookie)
 
 static int
 zsms_wsmouse_ioctl(void *cookie, u_long cmd,
-		   caddr_t data, int flag, struct lwp *l)
+		   void *data, int flag, struct lwp *l)
 {
 	switch (cmd) {
 	case WSMOUSEIO_GTYPE:

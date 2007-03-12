@@ -1,4 +1,4 @@
-/*	$NetBSD: scsireg.h,v 1.10 2005/12/11 12:18:24 christos Exp $	*/
+/*	$NetBSD: scsireg.h,v 1.10.26.1 2007/03/12 05:49:41 rmind Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -159,9 +159,9 @@
 
 #ifdef CPU_DOUBLE
 # ifdef __mips__
-#  define	ipc_phys(x)	(caddr_t)K0_TT0(x)
+#  define	ipc_phys(x)	(void *)K0_TT0(x)
 # else
-#  define	ipc_phys(x)	(caddr_t)((int)(x) & ~0x80000000)
+#  define	ipc_phys(x)	(void *)((int)(x) & ~0x80000000)
 # endif
 # ifdef news3800
 #  define	splsc		spl4
@@ -170,7 +170,7 @@
 #endif /* CPU_DOUBLE */
 
 #ifdef CPU_SINGLE
-# define	ipc_phys(x)	(caddr_t)(x)
+# define	ipc_phys(x)	(void *)(x)
 # ifdef news3400
 #  define	splsc		splbio		/* Lite2 used spl3 */
 #  define	splscon		spl2 XXX not used

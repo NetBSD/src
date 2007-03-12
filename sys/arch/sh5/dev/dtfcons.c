@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfcons.c,v 1.8 2005/12/11 12:19:00 christos Exp $	*/
+/*	$NetBSD: dtfcons.c,v 1.8.26.1 2007/03/12 05:50:15 rmind Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dtfcons.c,v 1.8 2005/12/11 12:19:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dtfcons.c,v 1.8.26.1 2007/03/12 05:50:15 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -146,7 +146,7 @@ dtfconstty(dev_t dev)
 }
 
 int
-dtfconsioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+dtfconsioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	return (ENOTTY);
 }

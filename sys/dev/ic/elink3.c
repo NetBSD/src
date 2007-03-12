@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.120 2006/11/16 01:32:51 christos Exp $	*/
+/*	$NetBSD: elink3.c,v 1.120.4.1 2007/03/12 05:53:31 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elink3.c,v 1.120 2006/11/16 01:32:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elink3.c,v 1.120.4.1 2007/03/12 05:53:31 rmind Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -195,7 +195,7 @@ static void eptxstat(struct ep_softc *);
 static int epstatus(struct ep_softc *);
 int	epinit(struct ifnet *);
 void	epstop(struct ifnet *, int);
-int	epioctl(struct ifnet *, u_long, caddr_t);
+int	epioctl(struct ifnet *, u_long, void *);
 void	epstart(struct ifnet *);
 void	epwatchdog(struct ifnet *);
 void	epreset(struct ep_softc *);
@@ -1595,7 +1595,7 @@ epget(sc, totlen)
 	bus_size_t rxreg;
 	int len, remaining;
 	int s;
-	caddr_t newdata;
+	void *newdata;
 	u_long offset;
 
 	m = sc->mb[sc->next_mb];
@@ -1638,8 +1638,8 @@ epget(sc, totlen)
 	}
 
 	/* align the struct ip header */
-	newdata = (caddr_t) ALIGN(m->m_data + sizeof(struct ether_header))
-		    - sizeof(struct ether_header);
+	newdata = (char *)ALIGN(m->m_data + sizeof(struct ether_header))
+	    - sizeof(struct ether_header);
 	m->m_data = newdata;
 	m->m_len = totlen;
 
@@ -1726,7 +1726,7 @@ int
 epioctl(ifp, cmd, data)
 	struct ifnet *ifp;
 	u_long cmd;
-	caddr_t data;
+	void *data;
 {
 	struct ep_softc *sc = ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *)data;

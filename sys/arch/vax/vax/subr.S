@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.S,v 1.14 2007/02/09 21:55:13 ad Exp $	   */
+/*	$NetBSD: subr.S,v 1.14.2.1 2007/03/12 05:51:20 rmind Exp $	   */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -206,7 +206,8 @@ _C_LABEL(ultrix_esigcode):
 
 	.align	2
 	.globl	_C_LABEL(idsptch), _C_LABEL(eidsptch)
-_C_LABEL(idsptch):	pushr	$0x3f
+_C_LABEL(idsptch):
+	pushr	$0x3f
 	.word	0x9f16		# jsb to absolute address
 	.long	_C_LABEL(cmn_idsptch)	# the absolute address
 	.long	0		# the callback interrupt routine
@@ -215,16 +216,32 @@ _C_LABEL(idsptch):	pushr	$0x3f
 _C_LABEL(eidsptch):
 
 _C_LABEL(cmn_idsptch):
+#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
+	calls	$0,_C_LABEL(krnlock)
+#endif
 	movl	(%sp)+,%r0	# get pointer to idspvec
 	movl	8(%r0),%r1	# get evcnt pointer
 	beql	1f		# no ptr, skip increment
 	incl	EV_COUNT(%r1)	# increment low longword
 	adwc	$0,EV_COUNT+4(%r1) # add any carry to hi longword
 1:	incl	_C_LABEL(uvmexp)+UVME_INTRS	# increment uvmexp.intrs
+#if 0
+	pushl	%r0
+	movq	(%r0),-(%sp)
+	pushab	2f
+	calls	$3,_C_LABEL(printf)
+	movl	(%sp)+,%r0
+#endif
 	pushl	4(%r0)		# push argument
 	calls	$1,*(%r0)	# call interrupt routine
+#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
+	calls	$0,_C_LABEL(krnunlock)
+#endif
 	popr	$0x3f		# pop registers
 	rei			# return from interrut
+#if 0
+2:	.asciz	"intr %p(%p)\n"
+#endif
 
 ENTRY(badaddr,0)			# Called with addr,b/w/l
 	mfpr	$PR_IPL,%r0	# splhigh()
@@ -581,7 +598,7 @@ ENTRY(fuswintr,0)
 	movl	%r1,%r0
 	ret
 
-#if defined(MULTIPROCESSOR)
+#if defined(MULTIPROCESSOR) || defined(DEBUG) || defined(DIAGNOSTIC) || defined(LOCKDEBUG)
 
 JSBENTRY(Slock)
 1:	bbssi	$0,(%r1),1b

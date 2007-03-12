@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.18 2006/11/25 11:59:57 scw Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.18.4.1 2007/03/12 05:49:46 rmind Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.18 2006/11/25 11:59:57 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.18.4.1 2007/03/12 05:49:46 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -105,7 +105,7 @@ get_netbsd_label(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 		goto done;
 
 	for (dlp = (struct disklabel *)bp->b_data;
-	     dlp <= (struct disklabel *)(bp->b_data + lp->d_secsize -
+	     dlp <= (struct disklabel *)((char *)bp->b_data + lp->d_secsize -
 					 sizeof (*dlp));
 	     dlp = (struct disklabel *)((char *)dlp + sizeof(long))) {
 		if (dlp->d_magic == DISKMAGIC
@@ -161,11 +161,11 @@ mbr_to_label(dev_t dev, void (*strat)(struct buf *), daddr_t bno,
 	if (biowait(bp))
 		goto done;
 
-	if (get_short(bp->b_data + MBR_MAGIC_OFFSET) != MBR_MAGIC)
+	if (get_short((char *)bp->b_data + MBR_MAGIC_OFFSET) != MBR_MAGIC)
 		goto done;
 
 	/* Extract info from MBR partition table */
-	mp = (struct mbr_partition *)(bp->b_data + MBR_PART_OFFSET);
+	mp = (struct mbr_partition *)((char *)bp->b_data + MBR_PART_OFFSET);
 	for (i = 0; i < MBR_PART_COUNT; i++, mp++) {
 		if (get_long(&mp->mbrp_size) == 0) {
 			continue;

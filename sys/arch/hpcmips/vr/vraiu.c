@@ -1,4 +1,4 @@
-/*	$NetBSD: vraiu.c,v 1.11 2005/12/11 12:17:34 christos Exp $	*/
+/*	$NetBSD: vraiu.c,v 1.11.26.1 2007/03/12 05:48:16 rmind Exp $	*/
 
 /*
  * Copyright (c) 2001 HAMAJIMA Katsuomi. All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vraiu.c,v 1.11 2005/12/11 12:17:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vraiu.c,v 1.11.26.1 2007/03/12 05:48:16 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -226,7 +226,7 @@ vraiu_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 	if (bus_dmamem_map(sc->sc_dmat, &segs, rsegs, AUDIO_BUF_SIZE,
-			   (caddr_t *)&sc->sc_buf,
+			   (void **)&sc->sc_buf,
 			   BUS_DMA_NOWAIT | BUS_DMA_COHERENT)) {
 		printf(": can't map memory.\n");
 		bus_dmamem_free(sc->sc_dmat, &segs, rsegs);
@@ -235,7 +235,7 @@ vraiu_attach(struct device *parent, struct device *self, void *aux)
 	if (bus_dmamap_create(sc->sc_dmat, AUDIO_BUF_SIZE, 1, AUDIO_BUF_SIZE,
 			      0, BUS_DMA_NOWAIT, &sc->sc_dmap)) {
 		printf(": can't create DMA map.\n");
-		bus_dmamem_unmap(sc->sc_dmat, (caddr_t)sc->sc_buf,
+		bus_dmamem_unmap(sc->sc_dmat, (void *)sc->sc_buf,
 				 AUDIO_BUF_SIZE);
 		bus_dmamem_free(sc->sc_dmat, &segs, rsegs);
 		return;
@@ -244,7 +244,7 @@ vraiu_attach(struct device *parent, struct device *self, void *aux)
 				   AUDIO_BUF_SIZE, NULL, BUS_DMA_NOWAIT)) {
 		printf(": can't load DMA map.\n");
 		bus_dmamap_destroy(sc->sc_dmat, sc->sc_dmap);
-		bus_dmamem_unmap(sc->sc_dmat, (caddr_t)sc->sc_buf,
+		bus_dmamem_unmap(sc->sc_dmat, (void *)sc->sc_buf,
 				 AUDIO_BUF_SIZE);
 		bus_dmamem_free(sc->sc_dmat, &segs, rsegs);
 		return;
@@ -253,7 +253,7 @@ vraiu_attach(struct device *parent, struct device *self, void *aux)
 		printf(": can't set DMA address.\n");
 		bus_dmamap_unload(sc->sc_dmat, sc->sc_dmap);
 		bus_dmamap_destroy(sc->sc_dmat, sc->sc_dmap);
-		bus_dmamem_unmap(sc->sc_dmat, (caddr_t)sc->sc_buf,
+		bus_dmamem_unmap(sc->sc_dmat, (void *)sc->sc_buf,
 				 AUDIO_BUF_SIZE);
 		bus_dmamem_free(sc->sc_dmat, &segs, rsegs);
 		return;

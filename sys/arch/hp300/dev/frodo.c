@@ -1,4 +1,4 @@
-/*	$NetBSD: frodo.c,v 1.26 2006/07/20 13:21:38 tsutsui Exp $	*/
+/*	$NetBSD: frodo.c,v 1.26.10.1 2007/03/12 05:47:43 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: frodo.c,v 1.26 2006/07/20 13:21:38 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: frodo.c,v 1.26.10.1 2007/03/12 05:47:43 rmind Exp $");
 
 #define	_HP300_INTR_H_PRIVATE
 
@@ -141,7 +141,7 @@ frodomatch(struct device *parent, struct cfdata *match, void *aux)
 	if (strcmp(ia->ia_modname, "frodo") != 0)
 		return 0;
 
-	if (badaddr((caddr_t)ia->ia_addr))
+	if (badaddr((void *)ia->ia_addr))
 		return 0;
 
 	frodo_matched = 1;

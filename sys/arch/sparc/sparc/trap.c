@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.171 2007/02/09 21:55:12 ad Exp $ */
+/*	$NetBSD: trap.c,v 1.171.2.1 2007/03/12 05:50:44 rmind Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.171 2007/02/09 21:55:12 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.171.2.1 2007/03/12 05:50:44 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_svr4.h"
@@ -504,7 +504,7 @@ badtrap:
 		break;
 
 #define read_rw(src, dst) \
-	copyin((caddr_t)(src), (caddr_t)(dst), sizeof(struct rwindow))
+	copyin((void *)(src), (void *)(dst), sizeof(struct rwindow))
 
 	case T_RWRET:
 		/*
@@ -746,7 +746,7 @@ rwindow_save(struct lwp *l)
 		if (rwindow_debug)
 			printf(" [%d]0x%x", cpuinfo.ci_cpuid, rw[1].rw_in[6]);
 #endif
-		if (copyout((caddr_t)rw, (caddr_t)rw[1].rw_in[6],
+		if (copyout((void *)rw, (void *)rw[1].rw_in[6],
 		    sizeof *rw))
 			return (-1);
 		rw++;
@@ -913,7 +913,7 @@ mem_access_fault(unsigned type, int ser, u_int v, int pc, int psr,
 	 * the current limit and we need to reflect that as an access
 	 * error.
 	 */
-	if ((caddr_t)va >= vm->vm_maxsaddr
+	if ((void *)va >= vm->vm_maxsaddr
 #ifdef COMPAT_SUNOS
 	    && !(p->p_emul == &emul_sunos && va < USRSTACK -
 		 (vaddr_t)p->p_limit->pl_rlimit[RLIMIT_STACK].rlim_cur +
@@ -1208,7 +1208,7 @@ mem_access_fault4m(unsigned type, u_int sfsr, u_int sfva, struct trapframe *tf)
 	 * the current limit and we need to reflect that as an access
 	 * error.
 	 */
-	if (rv == 0 && (caddr_t)va >= vm->vm_maxsaddr)
+	if (rv == 0 && (void *)va >= vm->vm_maxsaddr)
 		uvm_grow(p, va);
 	if (rv != 0) {
 		/*

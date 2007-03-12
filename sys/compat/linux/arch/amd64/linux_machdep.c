@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.17.2.1 2007/02/27 16:53:35 yamt Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.17.2.2 2007/03/12 05:52:14 rmind Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.17.2.1 2007/02/27 16:53:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.17.2.2 2007/03/12 05:52:14 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -141,10 +141,10 @@ linux_sendsig(ksi, mask)
 	
 	/* Allocate space for the signal handler context. */
 	if (onstack)
-		sp = ((caddr_t)l->l_sigstk.ss_sp +
+		sp = ((char *)l->l_sigstk.ss_sp +
 		    l->l_sigstk.ss_size);
 	else
-		sp = (caddr_t)tf->tf_rsp - 128;
+		sp = (char *)tf->tf_rsp - 128;
 
 	/* 
 	 * Save FPU state, if any 

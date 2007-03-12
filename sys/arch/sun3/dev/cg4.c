@@ -1,4 +1,4 @@
-/*	$NetBSD: cg4.c,v 1.35 2006/03/29 04:16:48 thorpej Exp $	*/
+/*	$NetBSD: cg4.c,v 1.35.14.1 2007/03/12 05:51:04 rmind Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cg4.c,v 1.35 2006/03/29 04:16:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cg4.c,v 1.35.14.1 2007/03/12 05:51:04 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -336,7 +336,7 @@ cg4open(dev_t dev, int flags, int mode, struct lwp *l)
 }
 
 int 
-cg4ioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct lwp *l)
+cg4ioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 {
 	struct cg4_softc *sc = cgfour_cd.cd_devs[minor(dev)];
 

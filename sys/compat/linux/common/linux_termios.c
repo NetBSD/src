@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_termios.c,v 1.28 2007/02/09 21:55:19 ad Exp $	*/
+/*	$NetBSD: linux_termios.c,v 1.28.2.1 2007/03/12 05:52:28 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_termios.c,v 1.28 2007/02/09 21:55:19 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_termios.c,v 1.28.2.1 2007/03/12 05:52:28 rmind Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ptm.h"
@@ -74,7 +74,7 @@ linux_ioctl_termios(l, uap, retval)
 	struct linux_sys_ioctl_args /* {
 		syscallarg(int) fd;
 		syscallarg(u_long) com;
-		syscallarg(caddr_t) data;
+		syscallarg(void *) data;
 	} */ *uap;
 	register_t *retval;
 {
@@ -107,7 +107,7 @@ linux_ioctl_termios(l, uap, retval)
 
 	switch (com & 0xffff) {
 	case LINUX_TCGETS:
-		error = (*bsdioctl)(fp, TIOCGETA, (caddr_t)&tmpbts, l);
+		error = (*bsdioctl)(fp, TIOCGETA, (void *)&tmpbts, l);
 		if (error)
 			goto out;
 		bsd_termios_to_linux_termios(&tmpbts, &tmplts);
@@ -120,7 +120,7 @@ linux_ioctl_termios(l, uap, retval)
 		 * First fill in all fields, so that we keep the current
 		 * values for fields that Linux doesn't know about.
 		 */
-		error = (*bsdioctl)(fp, TIOCGETA, (caddr_t)&tmpbts, l);
+		error = (*bsdioctl)(fp, TIOCGETA, (void *)&tmpbts, l);
 		if (error)
 			goto out;
 		error = copyin(SCARG(uap, data), &tmplts, sizeof tmplts);
@@ -138,10 +138,10 @@ linux_ioctl_termios(l, uap, retval)
 			com = TIOCSETAF;
 			break;
 		}
-		error = (*bsdioctl)(fp, com, (caddr_t)&tmpbts, l);
+		error = (*bsdioctl)(fp, com, (void *)&tmpbts, l);
 		goto out;
 	case LINUX_TCGETA:
-		error = (*bsdioctl)(fp, TIOCGETA, (caddr_t)&tmpbts, l);
+		error = (*bsdioctl)(fp, TIOCGETA, (void *)&tmpbts, l);
 		if (error)
 			goto out;
 		bsd_termios_to_linux_termio(&tmpbts, &tmplt);
@@ -154,7 +154,7 @@ linux_ioctl_termios(l, uap, retval)
 		 * First fill in all fields, so that we keep the current
 		 * values for fields that Linux doesn't know about.
 		 */
-		error = (*bsdioctl)(fp, TIOCGETA, (caddr_t)&tmpbts, l);
+		error = (*bsdioctl)(fp, TIOCGETA, (void *)&tmpbts, l);
 		if (error)
 			goto out;
 		error = copyin(SCARG(uap, data), &tmplt, sizeof tmplt);
@@ -172,7 +172,7 @@ linux_ioctl_termios(l, uap, retval)
 			com = TIOCSETAF;
 			break;
 		}
-		error = (*bsdioctl)(fp, com, (caddr_t)&tmpbts, l);
+		error = (*bsdioctl)(fp, com, (void *)&tmpbts, l);
 		goto out;
 	case LINUX_TCFLSH:
 		switch((u_long)SCARG(uap, data)) {
@@ -189,10 +189,10 @@ linux_ioctl_termios(l, uap, retval)
 			error = EINVAL;
 			goto out;
 		}
-		error = (*bsdioctl)(fp, TIOCFLUSH, (caddr_t)&idat, l);
+		error = (*bsdioctl)(fp, TIOCFLUSH, (void *)&idat, l);
 		goto out;
 	case LINUX_TIOCGETD:
-		error = (*bsdioctl)(fp, TIOCGETD, (caddr_t)&idat, l);
+		error = (*bsdioctl)(fp, TIOCGETD, (void *)&idat, l);
 		if (error)
 			goto out;
 		switch (idat) {
@@ -246,7 +246,7 @@ linux_ioctl_termios(l, uap, retval)
 			error = EINVAL;
 			goto out;
 		}
-		error = (*bsdioctl)(fp, TIOCSETD, (caddr_t)&idat, l);
+		error = (*bsdioctl)(fp, TIOCSETD, (void *)&idat, l);
 		goto out;
 	case LINUX_TIOCLINUX:
 		error = copyin(SCARG(uap, data), &tioclinux, sizeof tioclinux);
@@ -325,7 +325,7 @@ linux_ioctl_termios(l, uap, retval)
 	case LINUX_TIOCGPTN:
 #ifndef NO_DEV_PTM
 		{
-			caddr_t sg = stackgap_init(l->l_proc, 0);
+			void *sg = stackgap_init(l->l_proc, 0);
 			struct ptmget ptm, *ptmp = stackgap_alloc(l->l_proc, &sg,
 				sizeof(*ptmp));
 

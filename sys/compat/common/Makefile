@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.37 2006/06/26 21:23:57 mrg Exp $
+#	$NetBSD: Makefile,v 1.37.10.1 2007/03/12 05:51:52 rmind Exp $
 
 LIB=		compat
 NOPIC=		# defined
 LLIBS=		# defined
 
-CPPFLAGS=	${COMPATCPPFLAGS}
+CPPFLAGS=	${COMPATCPPFLAGS} ${SKIP_AUTODEP::=}
 
 .PATH.c: ${COMPATDIR}
 

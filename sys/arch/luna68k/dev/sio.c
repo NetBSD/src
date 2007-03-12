@@ -1,4 +1,4 @@
-/* $NetBSD: sio.c,v 1.3 2003/01/01 01:42:13 thorpej Exp $ */
+/* $NetBSD: sio.c,v 1.3.56.1 2007/03/12 05:48:42 rmind Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sio.c,v 1.3 2003/01/01 01:42:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sio.c,v 1.3.56.1 2007/03/12 05:48:42 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,7 +71,7 @@ sio_match(parent, cf, aux)
 
 	if (strcmp(ma->ma_name, sio_cd.cd_name))
 		return 0;
-	if (badaddr((caddr_t)ma->ma_addr, 4))
+	if (badaddr((void *)ma->ma_addr, 4))
 		return 0;
 	return 1;
 }
@@ -89,7 +89,7 @@ sio_attach(parent, self, aux)
 
 	printf(": 7201a\n");
 
-	sc->scp_ctl = (caddr_t)ma->ma_addr;
+	sc->scp_ctl = (void *)ma->ma_addr;
 	sc->scp_intr[0] = sc->scp_intr[1] = nullintr;
 	for (channel = 0; channel < 2; channel++) {
 		sio_args.channel = channel;

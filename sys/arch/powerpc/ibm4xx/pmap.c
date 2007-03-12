@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.44.4.1 2007/02/27 16:52:43 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.44.4.2 2007/03/12 05:49:52 rmind Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.44.4.1 2007/02/27 16:52:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.44.4.2 2007/03/12 05:49:52 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -92,7 +92,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.44.4.1 2007/02/27 16:52:43 yamt Exp $");
  * 4GB.  At 16KB/page it is 256K entries or 2MB.
  */
 #define KERNMAP_SIZE	((0xffffffffU/PAGE_SIZE)+1)
-caddr_t kernmap;
+void *kernmap;
 
 #define MINCTX		2
 #define NUMCTX		256
@@ -273,7 +273,7 @@ pmap_bootstrap(u_int kernelstart, u_int kernelend)
 	 * Allocate the kernel page table at the end of
 	 * kernel space so it's in the locked TTE.
 	 */
-	kernmap = (caddr_t)kernelend;
+	kernmap = (void *)kernelend;
 
 	/*
 	 * Initialize kernel page table.
@@ -693,7 +693,7 @@ pmap_zero_page(paddr_t pa)
 {
 
 #ifdef PPC_4XX_NOCACHE
-	memset((caddr_t)pa, 0, PAGE_SIZE);
+	memset((void *)pa, 0, PAGE_SIZE);
 #else
 	int i;
 
@@ -711,7 +711,7 @@ void
 pmap_copy_page(paddr_t src, paddr_t dst)
 {
 
-	memcpy((caddr_t)dst, (caddr_t)src, PAGE_SIZE);
+	memcpy((void *)dst, (void *)src, PAGE_SIZE);
 	dcache_flush_page(dst);
 }
 

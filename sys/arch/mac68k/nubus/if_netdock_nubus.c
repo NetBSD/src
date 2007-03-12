@@ -1,4 +1,4 @@
-/*	$NetBSD: if_netdock_nubus.c,v 1.11 2005/12/24 23:24:01 perry Exp $	*/
+/*	$NetBSD: if_netdock_nubus.c,v 1.11.26.1 2007/03/12 05:49:01 rmind Exp $	*/
 
 /*
  * Copyright (C) 2000,2002 Daishi Kato <daishi@axlight.com>
@@ -43,7 +43,7 @@
 /***********************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_netdock_nubus.c,v 1.11 2005/12/24 23:24:01 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_netdock_nubus.c,v 1.11.26.1 2007/03/12 05:49:01 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -146,7 +146,7 @@ void	netdock_intr(void *);
 static void	netdock_watchdog(struct ifnet *);
 static int	netdock_init(struct netdock_softc *);
 static int	netdock_stop(struct netdock_softc *);
-static int	netdock_ioctl(struct ifnet *, u_long, caddr_t);
+static int	netdock_ioctl(struct ifnet *, u_long, void *);
 static void	netdock_start(struct ifnet *);
 static void	netdock_reset(struct netdock_softc *);
 static void	netdock_txint(struct netdock_softc *);
@@ -374,7 +374,7 @@ netdock_setup(struct netdock_softc *sc, u_int8_t *lladdr)
 }
 
 static int
-netdock_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
+netdock_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct ifaddr *ifa;
 	struct ifreq *ifr;
@@ -822,7 +822,7 @@ netdock_get(struct netdock_softc *sc, int datalen)
 		}
 
 		if (mp == &top) {
-			caddr_t newdata = (caddr_t)
+			char *newdata = (char *)
 			    ALIGN(m->m_data + sizeof(struct ether_header)) -
 			    sizeof(struct ether_header);
 			len -= newdata - m->m_data;

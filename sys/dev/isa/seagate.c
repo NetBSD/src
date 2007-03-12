@@ -1,4 +1,4 @@
-/*	$NetBSD: seagate.c,v 1.61 2006/11/16 01:33:00 christos Exp $	*/
+/*	$NetBSD: seagate.c,v 1.61.4.1 2007/03/12 05:54:51 rmind Exp $	*/
 
 /*
  * ST01/02, Future Domain TMC-885, TMC-950 SCSI driver
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: seagate.c,v 1.61 2006/11/16 01:33:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: seagate.c,v 1.61.4.1 2007/03/12 05:54:51 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -194,9 +194,9 @@ struct sea_softc {
 	void *sc_ih;
 
 	int type;			/* board type */
-	caddr_t	maddr;			/* Base address for card */
-	caddr_t	maddr_cr_sr;		/* Address of control and status reg */
-	caddr_t	maddr_dr;		/* Address of data register */
+	void *	maddr;			/* Base address for card */
+	void *	maddr_cr_sr;		/* Address of control and status reg */
+	void *	maddr_dr;		/* Address of data register */
 
 	struct scsipi_adapter sc_adapter;
 	struct scsipi_channel sc_channel;
@@ -332,7 +332,7 @@ seaprobe(struct device *parent, struct cfdata *match,
 {
 	struct isa_attach_args *ia = aux;
 	int i, type = 0;
-	caddr_t maddr;
+	void *maddr;
 
 	if (ia->ia_niomem < 1)
 		return (0);
@@ -352,7 +352,7 @@ seaprobe(struct device *parent, struct cfdata *match,
 
 	/* check board type */	/* No way to define this through config */
 	for (i = 0; i < nsignatures; i++)
-		if (!memcmp(maddr + signatures[i].offset,
+		if (!memcmp((char *)maddr + signatures[i].offset,
 		    signatures[i].signature, signatures[i].length)) {
 			type = signatures[i].type;
 			break;
@@ -399,7 +399,7 @@ seaattach(struct device *parent, struct device *self, void *aux)
 
 	/* check board type */	/* No way to define this through config */
 	for (i = 0; i < nsignatures; i++)
-		if (!memcmp(sea->maddr + signatures[i].offset,
+		if (!memcmp((char *)sea->maddr + signatures[i].offset,
 		    signatures[i].signature, signatures[i].length)) {
 			sea->type = signatures[i].type;
 			break;
@@ -1341,7 +1341,7 @@ sea_information_transfer(sea)
 						break;
 					if (!(phase & STAT_IO)) {
 #ifdef SEA_ASSEMBLER
-						caddr_t junk;
+						void *junk;
 						__asm("cld\n\t\
 						    rep\n\t\
 						    movsl" :
@@ -1358,7 +1358,7 @@ sea_information_transfer(sea)
 #endif
 					} else {
 #ifdef SEA_ASSEMBLER
-						caddr_t junk;
+						void *junk;
 						__asm("cld\n\t\
 						    rep\n\t\
 						    movsl" :

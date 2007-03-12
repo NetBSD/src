@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.116.2.1 2007/02/27 16:52:52 yamt Exp $	*/
+/*	$NetBSD: trap.c,v 1.116.2.2 2007/03/12 05:50:09 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.116.2.1 2007/02/27 16:52:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.116.2.2 2007/03/12 05:50:09 rmind Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -106,7 +106,7 @@ trap(struct trapframe *frame)
 	case EXC_TRC|EXC_USER:
 		frame->srr1 &= ~PSL_SE;
 		if (LIST_EMPTY(&p->p_raslist) ||
-		    ras_lookup(p, (caddr_t)frame->srr0) == (caddr_t) -1) {
+		    ras_lookup(p, (void *)frame->srr0) == (void *) -1) {
 			KSI_INIT_TRAP(&ksi);
 			ksi.ksi_signo = SIGTRAP;
 			ksi.ksi_trap = EXC_TRC;
@@ -422,7 +422,7 @@ trap(struct trapframe *frame)
 		if (frame->srr1 & 0x00020000) {	/* Bit 14 is set if trap */
 			KERNEL_LOCK(1, l);
 			if (LIST_EMPTY(&p->p_raslist) ||
-			    ras_lookup(p, (caddr_t)frame->srr0) == (caddr_t) -1) {
+			    ras_lookup(p, (void *)frame->srr0) == (void *) -1) {
 				KSI_INIT_TRAP(&ksi);
 				ksi.ksi_signo = SIGTRAP;
 				ksi.ksi_trap = EXC_PGM;
@@ -752,7 +752,7 @@ int
 emulated_opcode(struct lwp *l, struct trapframe *tf)
 {
 	uint32_t opcode;
-	if (copyin((caddr_t)tf->srr0, &opcode, sizeof(opcode)) != 0)
+	if (copyin((void *)tf->srr0, &opcode, sizeof(opcode)) != 0)
 		return 0;
 
 #define	OPC_MFSPR_CODE		0x7c0002a6

@@ -1,4 +1,4 @@
-/* $NetBSD: darwin_syscall.h,v 1.48 2005/12/11 12:19:56 christos Exp $ */
+/* $NetBSD: darwin_syscall.h,v 1.48.26.1 2007/03/12 05:51:56 rmind Exp $ */
 
 /*
  * System call numbers.
@@ -61,7 +61,7 @@
 /* syscall: "geteuid" ret: "uid_t" args: */
 #define	DARWIN_SYS_geteuid	25
 
-/* syscall: "ptrace" ret: "int" args: "int" "pid_t" "caddr_t" "int" */
+/* syscall: "ptrace" ret: "int" args: "int" "pid_t" "void *" "int" */
 #define	DARWIN_SYS_ptrace	26
 
 /* syscall: "recvmsg" ret: "ssize_t" args: "int" "struct msghdr *" "int" */
@@ -103,7 +103,7 @@
 /* syscall: "getegid" ret: "gid_t" args: */
 #define	DARWIN_SYS_getegid	43
 
-/* syscall: "profil" ret: "int" args: "caddr_t" "size_t" "u_long" "u_int" */
+/* syscall: "profil" ret: "int" args: "void *" "size_t" "u_long" "u_int" */
 #define	DARWIN_SYS_profil	44
 
 #if defined(KTRACE) || !defined(_KERNEL)
@@ -155,7 +155,7 @@
 /* syscall: "ogetpagesize" ret: "int" args: */
 #define	DARWIN_SYS_ogetpagesize	64
 
-/* syscall: "msync" ret: "int" args: "caddr_t" "size_t" */
+/* syscall: "msync" ret: "int" args: "void *" "size_t" */
 #define	DARWIN_SYS_msync	65
 
 /* syscall: "vfork" ret: "int" args: */
@@ -169,7 +169,7 @@
 /* syscall: "sstk" ret: "int" args: "int" */
 #define	DARWIN_SYS_sstk	70
 
-/* syscall: "ommap" ret: "int" args: "caddr_t" "size_t" "int" "int" "int" "long" */
+/* syscall: "ommap" ret: "int" args: "void *" "size_t" "int" "int" "int" "long" */
 #define	DARWIN_SYS_ommap	71
 
 /* syscall: "vadvise" ret: "int" args: "int" */
@@ -238,16 +238,16 @@
 /* syscall: "connect" ret: "int" args: "int" "const struct sockaddr *" "unsigned int" */
 #define	DARWIN_SYS_connect	98
 
-/* syscall: "oaccept" ret: "int" args: "int" "caddr_t" "int *" */
+/* syscall: "oaccept" ret: "int" args: "int" "void *" "int *" */
 #define	DARWIN_SYS_oaccept	99
 
 /* syscall: "getpriority" ret: "int" args: "int" "int" */
 #define	DARWIN_SYS_getpriority	100
 
-/* syscall: "osend" ret: "int" args: "int" "caddr_t" "int" "int" */
+/* syscall: "osend" ret: "int" args: "int" "void *" "int" "int" */
 #define	DARWIN_SYS_osend	101
 
-/* syscall: "orecv" ret: "int" args: "int" "caddr_t" "int" "int" */
+/* syscall: "orecv" ret: "int" args: "int" "void *" "int" "int" */
 #define	DARWIN_SYS_orecv	102
 
 /* syscall: "sigreturn_x2" ret: "int" args: "struct darwin_ucontext *" */
@@ -280,7 +280,7 @@
 /* syscall: "orecvmsg" ret: "int" args: "int" "struct omsghdr *" "int" */
 #define	DARWIN_SYS_orecvmsg	113
 
-/* syscall: "osendmsg" ret: "int" args: "int" "caddr_t" "int" */
+/* syscall: "osendmsg" ret: "int" args: "int" "void *" "int" */
 #define	DARWIN_SYS_osendmsg	114
 
 /* syscall: "gettimeofday" ret: "int" args: "struct timeval *" "struct timezone *" */
@@ -307,7 +307,7 @@
 /* syscall: "fchmod" ret: "int" args: "int" "mode_t" */
 #define	DARWIN_SYS_fchmod	124
 
-/* syscall: "orecvfrom" ret: "int" args: "int" "caddr_t" "size_t" "int" "caddr_t" "int *" */
+/* syscall: "orecvfrom" ret: "int" args: "int" "void *" "size_t" "int" "void *" "int *" */
 #define	DARWIN_SYS_orecvfrom	125
 
 /* syscall: "setreuid" ret: "int" args: "uid_t" "uid_t" */
@@ -334,7 +334,7 @@
 /* syscall: "adjtime" ret: "int" args: "const struct timeval *" "struct timeval *" */
 #define	DARWIN_SYS_adjtime	140
 
-/* syscall: "ogetpeername" ret: "int" args: "int" "caddr_t" "int *" */
+/* syscall: "ogetpeername" ret: "int" args: "int" "void *" "int *" */
 #define	DARWIN_SYS_ogetpeername	141
 
 /* syscall: "ogethostid" ret: "int32_t" args: */
@@ -352,7 +352,7 @@
 /* syscall: "setsid" ret: "int" args: */
 #define	DARWIN_SYS_setsid	147
 
-/* syscall: "ogetsockname" ret: "int" args: "int" "caddr_t" "int *" */
+/* syscall: "ogetsockname" ret: "int" args: "int" "void *" "int *" */
 #define	DARWIN_SYS_ogetsockname	150
 
 #if defined(NFS) || defined(NFSSERVER) || !defined(_KERNEL)
@@ -441,7 +441,7 @@
 /* syscall: "getattrlist" ret: "int" args: "const char *" "struct darwin_attrlist *" "void *" "size_t" "unsigned long" */
 #define	DARWIN_SYS_getattrlist	220
 
-/* syscall: "load_shared_file" ret: "int" args: "char *" "caddr_t" "u_long" "caddr_t *" "int" "mach_sf_mapping_t *" "int *" */
+/* syscall: "load_shared_file" ret: "int" args: "char *" "void *" "u_long" "void **" "int" "mach_sf_mapping_t *" "int *" */
 #define	DARWIN_SYS_load_shared_file	296
 
 /* syscall: "pthread_exit" ret: "void" args: "void *" */

@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfour.c,v 1.42 2006/03/29 04:16:47 thorpej Exp $	*/
+/*	$NetBSD: cgfour.c,v 1.42.14.1 2007/03/12 05:50:27 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgfour.c,v 1.42 2006/03/29 04:16:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgfour.c,v 1.42.14.1 2007/03/12 05:50:27 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -332,7 +332,7 @@ cgfouropen(dev_t dev, int flags, int mode, struct lwp *l)
 }
 
 int
-cgfourioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct lwp *l)
+cgfourioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 {
 #if defined(SUN4)
 	struct cgfour_softc *sc = cgfour_cd.cd_devs[minor(dev)];

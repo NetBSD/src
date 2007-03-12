@@ -1,4 +1,4 @@
-/* $NetBSD: xboxfb.c,v 1.9 2007/01/07 19:40:50 jmcneill Exp $ */
+/* $NetBSD: xboxfb.c,v 1.9.4.1 2007/03/12 05:48:39 rmind Exp $ */
 
 /*
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -151,7 +151,7 @@ struct wsscreen_list xboxfb_screenlist = {
 		_xboxfb_scrlist
 };
 
-static int	xboxfb_ioctl(void *, void *, u_long, caddr_t, int,
+static int	xboxfb_ioctl(void *, void *, u_long, void *, int,
 			struct lwp *);
 static paddr_t	xboxfb_mmap(void *, void *, off_t, int);
 static void	xboxfb_init_screen(void *, struct vcons_screen *, int,
@@ -234,7 +234,7 @@ xboxfb_attach(struct device *parent, struct device *self, void *aux)
  */
 
 static int
-xboxfb_ioctl(void *v, void*vs, u_long cmd, caddr_t data, int flag,
+xboxfb_ioctl(void *v, void*vs, u_long cmd, void *data, int flag,
 	struct lwp *l)
 {
 	struct vcons_data *vd = v;

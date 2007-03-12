@@ -1,4 +1,4 @@
-/* $NetBSD: locore.S,v 1.10 2006/10/07 13:36:31 bjh21 Exp $ */
+/* $NetBSD: locore.S,v 1.10.4.1 2007/03/12 05:45:10 rmind Exp $ */
 /*
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -41,6 +41,7 @@
 
 #include <sys/syscall.h>
 #include <arm/armreg.h>
+#include <arm/atomic.h>
 #include <arm/trap.h>
 #include "assym.h"
 
@@ -311,6 +312,7 @@ Lirq_to_ast:
 	bl	_C_LABEL(ast)
 	b	pull_trapframe
 
+#ifdef ATOMIC_SET_BIT_NONINLINE_REQUIRED
 /* LINTSTUB: Func: void atomic_set_bit(u_int *address, u_int setmask) */
 ENTRY(atomic_set_bit)
 	/* disable interrupts */
@@ -334,6 +336,7 @@ ENTRY(atomic_clear_bit)
 	/* restore interrupt state and return */
 	movs	pc, lr
 
+#endif /* ATOMIC_SET_BIT_NONINLINE_REQUIRED */
 /* XXX: Return type should be register_t */
 /* LINTSTUB: Func: int set_r13_irq(register_t r13_irq) */
 ENTRY(set_r13_irq)
@@ -441,4 +444,4 @@ ENTRY(cpu_Debugger)
 	ldmfd	r13!, {pc}
 #endif
 
-RCSID("$NetBSD: locore.S,v 1.10 2006/10/07 13:36:31 bjh21 Exp $")
+RCSID("$NetBSD: locore.S,v 1.10.4.1 2007/03/12 05:45:10 rmind Exp $")

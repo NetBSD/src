@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_ataraid.c,v 1.18 2006/11/16 01:32:47 christos Exp $	*/
+/*	$NetBSD: ld_ataraid.c,v 1.18.4.1 2007/03/12 05:53:08 rmind Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_ataraid.c,v 1.18 2006/11/16 01:32:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_ataraid.c,v 1.18.4.1 2007/03/12 05:53:08 rmind Exp $");
 
 #include "rnd.h"
 
@@ -239,7 +239,7 @@ ld_ataraid_attach(struct device *parent, struct device *self,
 
 static struct cbuf *
 ld_ataraid_make_cbuf(struct ld_ataraid_softc *sc, struct buf *bp,
-    u_int comp, daddr_t bn, caddr_t addr, long bcount)
+    u_int comp, daddr_t bn, void *addr, long bcount)
 {
 	struct cbuf *cbp;
 
@@ -273,7 +273,7 @@ ld_ataraid_start_span(struct ld_softc *ld, struct buf *bp)
 	struct ataraid_disk_info *adi;
 	SIMPLEQ_HEAD(, cbuf) cbufq;
 	struct cbuf *cbp;
-	caddr_t addr;
+	char *addr;
 	daddr_t bn;
 	long bcount, rcount;
 	u_int comp;
@@ -338,7 +338,7 @@ ld_ataraid_start_raid0(struct ld_softc *ld, struct buf *bp)
 	struct ataraid_disk_info *adi;
 	SIMPLEQ_HEAD(, cbuf) cbufq;
 	struct cbuf *cbp, *other_cbp;
-	caddr_t addr;
+	char *addr;
 	daddr_t bn, cbn, tbn, off;
 	long bcount, rcount;
 	u_int comp;

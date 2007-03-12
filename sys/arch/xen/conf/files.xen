@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.55.2.1 2007/02/27 16:53:26 yamt Exp $
+#	$NetBSD: files.xen,v 1.55.2.2 2007/03/12 05:51:47 rmind Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -116,6 +116,7 @@ file	arch/xen/i386/bios32.c		bios32 needs-flag
 
 # i386 specific mainbus attributes
 define cpubus { [apid = -1] }
+define ioapicbus { [apid = -1] }
 define apmbus {}
 define pnpbiosbus {}
 define vesabiosbus {}  
@@ -127,7 +128,7 @@ define ipmibus {}
 # System bus types
 #
 
-device mainbus: cpubus, hypervisorbus, bios32, ipmibus
+device mainbus: cpubus, ioapicbus, hypervisorbus, bios32, ipmibus
 attach	mainbus at root
 file	arch/xen/i386/mainbus.c		mainbus
 
@@ -223,7 +224,7 @@ file    arch/i386/pci/pci_addr_fixup.c  pci_addr_fixup
 file	arch/x86/x86/apic.c		ioapic
 
 device ioapic
-attach ioapic at cpubus
+attach ioapic at ioapicbus
 file	arch/x86/x86/ioapic.c		ioapic needs-flag
 
 #IPMI device

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.127 2007/02/09 21:55:13 ad Exp $	*/
+/*	$NetBSD: trap.c,v 1.127.2.1 2007/03/12 05:51:10 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.127 2007/02/09 21:55:13 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.127.2.1 2007/03/12 05:51:10 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -258,7 +258,7 @@ trap(int type, u_int code, u_int v, struct trapframe tf)
 	ksiginfo_t ksi;
 	int tmp;
 	u_quad_t sticks;
-	caddr_t onfault;
+	void *onfault;
 
 	uvmexp.traps++;
 	l = curlwp;
@@ -493,8 +493,8 @@ trap(int type, u_int code, u_int v, struct trapframe tf)
 		 * If we were doing profiling ticks or other user mode
 		 * stuff from interrupt code, Just Say No.
 		 */
-		if (l->l_addr->u_pcb.pcb_onfault == (caddr_t)fubail ||
-		    l->l_addr->u_pcb.pcb_onfault == (caddr_t)subail)
+		if (l->l_addr->u_pcb.pcb_onfault == (void *)fubail ||
+		    l->l_addr->u_pcb.pcb_onfault == (void *)subail)
 		{
 #ifdef	DEBUG
 			if (mmudebug & MDB_CPFAULT) {
@@ -574,7 +574,7 @@ trap(int type, u_int code, u_int v, struct trapframe tf)
 		 * error.
 		 */
 		if (rv == 0) {
-			if (map != kernel_map && (caddr_t)va >= vm->vm_maxsaddr)
+			if (map != kernel_map && (void *)va >= vm->vm_maxsaddr)
 				uvm_grow(p, va);
 			goto finish;
 		}

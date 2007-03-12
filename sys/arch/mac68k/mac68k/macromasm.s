@@ -1,4 +1,4 @@
-/*	$NetBSD: macromasm.s,v 1.20 2002/05/30 22:04:55 thorpej Exp $	*/
+/*	$NetBSD: macromasm.s,v 1.20.60.1 2007/03/12 05:49:00 rmind Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -378,7 +378,7 @@ ENTRY(mrg_GetIndResource)
 /* Original from WRU: 960120
  * sp@(4)	u_int16_t  rsrc_index
  * sp@(6)	u_int32_t  rsrc_type
- * sp@(10)	caddr_t   *rsrc_handle
+ * sp@(10)	void *  *rsrc_handle
  */
 	movl	%sp@(6),%a0
 	clrl	%d0

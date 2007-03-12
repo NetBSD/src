@@ -1,4 +1,4 @@
-/*	$NetBSD: leo.c,v 1.10 2005/12/11 12:17:02 christos Exp $	*/
+/*	$NetBSD: leo.c,v 1.10.26.1 2007/03/12 05:47:23 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1997 maximum entropy <entropy@zippy.bernstein.com>
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: leo.c,v 1.10 2005/12/11 12:17:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: leo.c,v 1.10.26.1 2007/03/12 05:47:23 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -393,7 +393,7 @@ leomove(dev, uio, flags)
                 if (uio->uio_rw == UIO_READ)
                         bus_space_read_region_1(sc->sc_memt, sc->sc_memh,
                                         offset, smallbuf, size);
-                if ((error = uiomove((caddr_t)smallbuf, size, uio)))
+                if ((error = uiomove((void *)smallbuf, size, uio)))
                         return (error);
                 if (uio->uio_rw == UIO_WRITE)
                         bus_space_write_region_1(sc->sc_memt, sc->sc_memh,
@@ -406,7 +406,7 @@ int
 leoioctl(dev, cmd, data, flags, p)
 	dev_t dev;
 	u_long cmd;
-	caddr_t data;
+	void *data;
 	int flags;
 	struct proc *p;
 {

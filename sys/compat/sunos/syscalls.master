@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.66 2007/02/09 21:55:24 ad Exp $
+	$NetBSD: syscalls.master,v 1.66.2.1 2007/03/12 05:52:44 rmind Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -80,7 +80,7 @@
 24	NOARGS		{ uid_t sys_getuid_with_euid(void); }
 25	STD		{ int sunos_sys_stime(time_t *tp); }
 26	STD		{ long sunos_sys_ptrace(int req, pid_t pid, \
-			    caddr_t addr, int data, char *addr2); }
+			    void *addr, int data, char *addr2); }
 27	UNIMPL		old_sunos_alarm
 28	UNIMPL		old_sunos_fstat
 29	UNIMPL		old_sunos_pause
@@ -100,7 +100,7 @@
 41	NOARGS		{ int sys_dup(u_int fd); }
 42	NOARGS		{ int sys_pipe(void); }
 43	UNIMPL		sunos_times
-44	NOARGS		{ int sys_profil(caddr_t samples, u_int size, \
+44	NOARGS		{ int sys_profil(void *samples, u_int size, \
 			    u_int offset, u_int scale); }
 45	UNIMPL
 46	NOARGS		{ int sys_setgid(uid_t gid); }
@@ -113,7 +113,7 @@
 53	STD		{ int sunos_sys_mctl(void *addr, int len, int func, \
 			    void *arg); }
 54	STD		{ int sunos_sys_ioctl(int fd, u_long com, \
-			    caddr_t data); }
+			    void *data); }
 55	STD		{ int sunos_sys_reboot(int howto, char *bootstr); }
 56	OBSOL		sunos_owait3
 57	NOARGS		{ int sys_symlink(char *path, char *link); }
@@ -125,7 +125,7 @@
 62	NOARGS		{ int compat_43_sys_fstat(int fd, struct stat43 *sb); }
 63	UNIMPL
 64	NOARGS		{ int compat_43_sys_getpagesize(void); }
-65	STD		{ int sunos_sys_omsync(caddr_t addr, size_t len, \
+65	STD		{ int sunos_sys_omsync(void *addr, size_t len, \
 			    int flags); }
 66	NOARGS		{ int sys_vfork(void); }
 67	OBSOL		vread
@@ -168,18 +168,18 @@
 95	NOARGS		{ int sys_fsync(int fd); }
 96	NOARGS		{ int sys_setpriority(int which, int who, int prio); }
 97	STD		{ int sunos_sys_socket(int domain, int type, int protocol); }
-98	NOARGS		{ int sys_connect(int s, caddr_t name, int namelen); }
-99	NOARGS		{ int compat_43_sys_accept(int s, caddr_t name, \
+98	NOARGS		{ int sys_connect(int s, void *name, int namelen); }
+99	NOARGS		{ int compat_43_sys_accept(int s, void *name, \
 			    int *anamelen); }
 100	NOARGS		{ int sys_getpriority(int which, int who); }
-101	NOARGS		{ int compat_43_sys_send(int s, caddr_t buf, int len, \
+101	NOARGS		{ int compat_43_sys_send(int s, void *buf, int len, \
 			    int flags); }
-102	NOARGS		{ int compat_43_sys_recv(int s, caddr_t buf, int len, \
+102	NOARGS		{ int compat_43_sys_recv(int s, void *buf, int len, \
 			    int flags); }
 103	UNIMPL		old socketaddr
-104	NOARGS		{ int sys_bind(int s, caddr_t name, int namelen); }
+104	NOARGS		{ int sys_bind(int s, void *name, int namelen); }
 105	STD		{ int sunos_sys_setsockopt(int s, int level, int name, \
-			    caddr_t val, int valsize); }
+			    void *val, int valsize); }
 106	NOARGS		{ int sys_listen(int s, int backlog); }
 107	UNIMPL		vtimes
 108	STD		{ int sunos_sys_sigvec(int signum, struct sigvec *nsv, \
@@ -191,14 +191,14 @@
 			    struct sigstack *oss); }
 113	NOARGS		{ int compat_43_sys_recvmsg(int s, \
 			    struct omsghdr *msg, int flags); }
-114	NOARGS		{ int compat_43_sys_sendmsg(int s, caddr_t msg, \
+114	NOARGS		{ int compat_43_sys_sendmsg(int s, void *msg, \
 			    int flags); }
 115	OBSOL		vtrace
 116	NOARGS		{ int sys_gettimeofday(struct timeval *tp, \
 			    struct timezone *tzp); }
 117	NOARGS		{ int sys_getrusage(int who, struct rusage *rusage); }
 118	NOARGS		{ int sys_getsockopt(int s, int level, int name, \
-			    caddr_t val, int *avalsize); }
+			    void *val, int *avalsize); }
 119	UNIMPL
 120	NOARGS		{ int sys_readv(int fd, struct iovec *iovp, \
 			    u_int iovcnt); }
@@ -208,8 +208,8 @@
 			    struct timezone *tzp); }
 123	NOARGS		{ int sys_fchown(int fd, int uid, int gid); }
 124	NOARGS		{ int sys_fchmod(int fd, int mode); }
-125	NOARGS		{ int compat_43_sys_recvfrom(int s, caddr_t buf, \
-			    size_t len, int flags, caddr_t from, \
+125	NOARGS		{ int compat_43_sys_recvfrom(int s, void *buf, \
+			    size_t len, int flags, void *from, \
 			    int *fromlenaddr); }
 126	NOARGS		{ int sys_setreuid(int ruid, int euid); }
 127	NOARGS		{ int sys_setregid(int rgid, int egid); }
@@ -218,8 +218,8 @@
 130	NOARGS		{ int compat_43_sys_ftruncate(int fd, long length); }
 131	NOARGS		{ int sys_flock(int fd, int how); }
 132	UNIMPL
-133	NOARGS		{ int sys_sendto(int s, caddr_t buf, size_t len, \
-			    int flags, caddr_t to, int tolen); }
+133	NOARGS		{ int sys_sendto(int s, void *buf, size_t len, \
+			    int flags, void *to, int tolen); }
 134	NOARGS		{ int sys_shutdown(int s, int how); }
 135	STD		{ int sunos_sys_socketpair(int domain, int type, \
 			    int protocol, int *rsv); }
@@ -229,7 +229,7 @@
 139	STD		{ int sunos_sys_sigreturn(struct sigcontext *sigcntxp); }
 140	NOARGS		{ int sys_adjtime(struct timeval *delta, \
 			    struct timeval *olddelta); }
-141	NOARGS		{ int compat_43_sys_getpeername(int fdes, caddr_t asa, \
+141	NOARGS		{ int compat_43_sys_getpeername(int fdes, void *asa, \
 			    int *alen); }
 142	NOARGS		{ int compat_43_sys_gethostid(void); }
 143	UNIMPL		old sethostid
@@ -241,7 +241,7 @@
 147	UNIMPL
 148	UNIMPL
 149	UNIMPL
-150	NOARGS		{ int compat_43_sys_getsockname(int fdes, caddr_t asa, \
+150	NOARGS		{ int compat_43_sys_getsockname(int fdes, void *asa, \
 			    int *alen); }
 151	UNIMPL		getmsg
 152	UNIMPL		putmsg
@@ -273,10 +273,10 @@
 			    int len); }
 164	UNIMPL		rtschedule
 165	STD		{ int sunos_sys_quotactl(int cmd, char *special, \
-			    int uid, caddr_t addr); }
+			    int uid, void *addr); }
 166	STD		{ int sunos_sys_exportfs(char *path, char *ex); }
 167	STD		{ int sunos_sys_mount(char *type, char *dir, \
-			    int flags, caddr_t data); }
+			    int flags, void *data); }
 168	STD		{ int sunos_sys_ustat(int dev, \
 			    struct sunos_ustat *buf); }
 #ifdef SYSVSEM

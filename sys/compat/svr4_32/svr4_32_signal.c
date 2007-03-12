@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_signal.c,v 1.18 2007/02/09 21:55:26 ad Exp $	 */
+/*	$NetBSD: svr4_32_signal.c,v 1.18.2.1 2007/03/12 05:52:48 rmind Exp $	 */
 
 /*-
  * Copyright (c) 1994, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_signal.c,v 1.18 2007/02/09 21:55:26 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_signal.c,v 1.18.2.1 2007/03/12 05:52:48 rmind Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_svr4.h"
@@ -320,7 +320,7 @@ svr4_32_to_native_sigaltstack(sss, bss)
 	struct sigaltstack *bss;
 {
 
-	bss->ss_sp = (caddr_t)(u_long)sss->ss_sp;
+	bss->ss_sp = (void *)(u_long)sss->ss_sp;
 	bss->ss_size = sss->ss_size;
 	bss->ss_flags = 0;
 	if ((sss->ss_flags & SVR4_SS_DISABLE) != 0)
@@ -363,7 +363,7 @@ svr4_32_sys_sigaction(l, v, retval)
 	int error;
 
 	if (SCARG(uap, nsa)) {
-		error = copyin((caddr_t)(u_long)SCARG(uap, nsa),
+		error = copyin((void *)(u_long)SCARG(uap, nsa),
 			       &nssa, sizeof(nssa));
 		if (error)
 			return (error);
@@ -377,7 +377,7 @@ svr4_32_sys_sigaction(l, v, retval)
 		return (error);
 	if (SCARG(uap, osa)) {
 		native_to_svr4_32_sigaction(&obsa, &ossa);
-		error = copyout(&ossa, (caddr_t)(u_long)SCARG(uap, osa),
+		error = copyout(&ossa, (void *)(u_long)SCARG(uap, osa),
 				sizeof(ossa));
 		if (error)
 			return (error);
@@ -401,7 +401,7 @@ svr4_32_sys_sigaltstack(l, v, retval)
 	int error;
 
 	if (SCARG(uap, nss)) {
-		error = copyin((caddr_t)(u_long)SCARG(uap, nss),
+		error = copyin((void *)(u_long)SCARG(uap, nss),
 			       &nsss, sizeof(nsss));
 		if (error)
 			return (error);
@@ -416,7 +416,7 @@ svr4_32_sys_sigaltstack(l, v, retval)
 		return (error);
 	if (SCARG(uap, oss)) {
 		native_to_svr4_32_sigaltstack(&obss, &osss);
-		error = copyout(&osss, (caddr_t)(u_long)SCARG(uap, oss),
+		error = copyout(&osss, (void *)(u_long)SCARG(uap, oss),
 				sizeof(osss));
 		if (error)
 			return (error);
@@ -537,7 +537,7 @@ svr4_32_sys_sigprocmask(l, v, retval)
 	}
 
 	if (SCARG(uap, set)) {
-		error = copyin((caddr_t)(u_long)SCARG(uap, set),
+		error = copyin((void *)(u_long)SCARG(uap, set),
 			       &nsss, sizeof(nsss));
 		if (error)
 			return error;
@@ -551,7 +551,7 @@ svr4_32_sys_sigprocmask(l, v, retval)
 		return error;
 	if (SCARG(uap, oset)) {
 		native_to_svr4_32_sigset(&obss, &osss);
-		error = copyout(&osss, (caddr_t)(u_long)SCARG(uap, oset),
+		error = copyout(&osss, (void *)(u_long)SCARG(uap, oset),
 				sizeof(osss));
 		if (error)
 			return error;
@@ -585,7 +585,7 @@ svr4_32_sys_sigpending(l, v, retval)
 	default:
 		return (EINVAL);
 	}
-	return (copyout(&sss, (caddr_t)(u_long)SCARG(uap, set), sizeof(sss)));
+	return (copyout(&sss, (void *)(u_long)SCARG(uap, set), sizeof(sss)));
 }
 
 int
@@ -602,7 +602,7 @@ svr4_32_sys_sigsuspend(l, v, retval)
 	int error;
 
 	if (SCARG(uap, set)) {
-		error = copyin((caddr_t)(u_long)SCARG(uap, set), &sss, sizeof(sss));
+		error = copyin((void *)(u_long)SCARG(uap, set), &sss, sizeof(sss));
 		if (error)
 			return (error);
 		svr4_32_to_native_sigset(&sss, &bss);
@@ -685,7 +685,7 @@ svr4_32_setcontext(l, uc)
 		return error;
 
 	/* set link */
-	l->l_ctxlink = (caddr_t)(u_long)uc->uc_link;
+	l->l_ctxlink = (void *)(u_long)uc->uc_link;
 
 	mutex_enter(&p->p_smutex);
 
@@ -724,13 +724,13 @@ svr4_32_sys_context(l, v, retval)
 	case SVR4_GETCONTEXT:
 		DPRINTF(("getcontext(%p)\n", SCARG(uap, uc)));
 		svr4_32_getcontext(l, &uc, &l->l_sigmask);
-		return copyout(&uc, (caddr_t)(u_long)SCARG(uap, uc), sizeof(uc));
+		return copyout(&uc, (void *)(u_long)SCARG(uap, uc), sizeof(uc));
 
 	case SVR4_SETCONTEXT:
 		DPRINTF(("setcontext(%p)\n", SCARG(uap, uc)));
 		if (!SCARG(uap, uc))
 			exit1(l, W_EXITCODE(0, 0));
-		else if ((error = copyin((caddr_t)(u_long)SCARG(uap, uc),
+		else if ((error = copyin((void *)(u_long)SCARG(uap, uc),
 					 &uc, sizeof(uc))) != 0)
 			return error;
 		else

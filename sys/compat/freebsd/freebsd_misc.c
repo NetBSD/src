@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_misc.c,v 1.28 2007/02/09 21:55:16 ad Exp $	*/
+/*	$NetBSD: freebsd_misc.c,v 1.28.2.1 2007/03/12 05:51:57 rmind Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_misc.c,v 1.28 2007/02/09 21:55:16 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_misc.c,v 1.28.2.1 2007/03/12 05:51:57 rmind Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ntp.h"
@@ -71,7 +71,7 @@ freebsd_sys_msync(l, v, retval)
 	register_t *retval;
 {
 	struct freebsd_sys_msync_args /* {
-		syscallarg(caddr_t) addr;
+		syscallarg(void *) addr;
 		syscallarg(size_t) len;
 		syscallarg(int) flags;
 	} */ *uap = v;
@@ -95,7 +95,7 @@ freebsd_sys_mmap(l, v, retval)
 	register_t *retval;
 {
 	struct freebsd_sys_mmap_args /* {
-		syscallarg(caddr_t) addr;
+		syscallarg(void *) addr;
 		syscallarg(size_t) len;
 		syscallarg(int) prot;
 		syscallarg(int) flags;

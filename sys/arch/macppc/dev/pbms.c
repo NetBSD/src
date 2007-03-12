@@ -1,4 +1,4 @@
-/* $Id: pbms.c,v 1.4 2006/11/12 19:00:43 plunky Exp $ */
+/* $Id: pbms.c,v 1.4.4.1 2007/03/12 05:49:06 rmind Exp $ */
 
 /*
  * Copyright (c) 2005, Johan Wallén
@@ -288,7 +288,7 @@ struct pbms_softc {
 static void pbms_intr(struct uhidev *, void *, unsigned int);
 static int pbms_enable(void *);
 static void pbms_disable(void *);
-static int pbms_ioctl(void *, unsigned long, caddr_t, int, struct lwp *);
+static int pbms_ioctl(void *, unsigned long, void *, int, struct lwp *);
 static void reorder_sample(signed char *, signed char *);
 static int compute_delta(struct pbms_softc *, int *, int *, int *, uint32_t *);
 static int detect_pos(int *, int, int, int, int *, int *);
@@ -462,7 +462,7 @@ pbms_disable(void *v)
 /* XXX ioctl not implemented. */
 
 static int
-pbms_ioctl(void *v, unsigned long cmd, caddr_t data, int flag, struct lwp *p)
+pbms_ioctl(void *v, unsigned long cmd, void *data, int flag, struct lwp *p)
 {
 	return EPASSTHROUGH;
 }

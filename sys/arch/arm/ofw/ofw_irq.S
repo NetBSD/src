@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_irq.S,v 1.5 2006/09/27 21:42:05 manu Exp $	*/
+/*	$NetBSD: ofw_irq.S,v 1.5.4.1 2007/03/12 05:47:06 rmind Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -38,8 +38,6 @@
  *
  * Created      : 27/09/94
  */
-
-#include "opt_irqstats.h"
 
 #include "assym.h"
 #include <machine/asm.h>
@@ -94,6 +92,8 @@ Lirq_entry:
 
 Lofwirqstk:			/* hack */
 	.word	ofwirqstk + 4096
+
+LOCK_CAS_CHECK_LOCALS
 
 AST_ALIGNMENT_FAULT_LOCALS
 
@@ -253,12 +253,12 @@ Lfind_highest_ipl:
 	/* Update the irq masks */
 	bl	_C_LABEL(irq_setmasks)
 
-        mrs     r0, cpsr_all		/* Enable IRQ's */
+	mrs     r0, cpsr_all		/* Enable IRQ's */
 	bic	r0, r0, #I32_bit
 	msr	cpsr_all, r0
 
 	ldr	r7, Lirqhandlers
-        mov	r9, #0x00000001
+	mov	r9, #0x00000001
 
 irqloop:
 	/* This would benefit from a special ffs type routine */
@@ -271,25 +271,10 @@ irqloop:
 	moveq	r0, r8			/* IRQ requests as arg 0 */
 	beq	_C_LABEL(stray_irqhandler) /* call special handler */
 
-        ldr	r0, Lcnt
+	ldr	r0, Lcnt
 	ldr	r1, [r0, #(V_INTR)]
 	add	r1, r1, #0x00000001
 	str	r1, [r0, #(V_INTR)]
-
-/*
- * XXX: Should stats be accumlated for every interrupt routine called
- * or for every physical interrupt that is serviced.
- */
-
-#ifdef IRQSTATS
-        ldr	r0, Lintrcnt
-	ldr	r1, [r6, #(IH_NUM)]
-
-	add	r0, r0, r1, lsl #2
-	ldr	r1, [r0]
-	add	r1, r1, #0x00000001
-	str	r1, [r0]
-#endif	/* IRQSTATS */
 
 irqchainloop:
 	ldr	r0, [r6, #(IH_ARG)]	/* Get argument pointer */
@@ -304,8 +289,15 @@ irqchainloop:
 	ldr	r6, [r6, #(IH_NEXT)]
 	teq	r6, #0x00000000
 	bne	irqchainloop
+	b	nextirq
 
 irqdone:
+	add	r3, r6, #IH_EV_COUNT	/* get address of ih's ev_count */
+	ldmia   r3, {r1-r2}		/* load ev_count */
+	adds	r1, r1, #0x00000001	/* 64bit incr (lo) */
+	adc     r2, r2, #0x00000000	/* 64bit incr (hi) */
+	stmia   r3, {r1-r2}		/* store ev_count */
+
 nextirq:
 	add	r7, r7, #0x00000004	/* update pointer to handlers */
 	mov	r9, r9, lsl #1		/* move on to next bit */
@@ -325,15 +317,17 @@ nextirq:
 	bl	_C_LABEL(dosoftints)	/* Handle the soft interrupts */
 
 	/* Kill IRQ's in preparation for exit */
-        mrs     r0, cpsr_all
-        orr     r0, r0, #(I32_bit)
-        msr     cpsr_all, r0
+	mrs     r0, cpsr_all
+	orr     r0, r0, #(I32_bit)
+	msr     cpsr_all, r0
 
 	/* Decrement the nest count */
 	ldr	r0, Lcurrent_intr_depth
 	ldr	r1, [r0]
 	sub	r1, r1, #1
 	str	r1, [r0]
+
+	LOCK_CAS_CHECK
 
 	DO_AST_AND_RESTORE_ALIGNMENT_FAULTS
 	PULLFRAMEFROMSVCANDEXIT
@@ -353,10 +347,6 @@ ENTRY(irq_setmasks)
 
 Lcnt:
 	.word	_C_LABEL(uvmexp)
-
-Lintrcnt:
-	.word	_C_LABEL(intrcnt)
-
 
 Lirqhandlers:
 	.word	_C_LABEL(irqhandlers)	/* Pointer to array of irqhandlers */
@@ -489,106 +479,3 @@ _C_LABEL(ofw_ticktmp):
 
 ofwirqstk:			/* hack */
 	.space	4096
-
-#ifdef IRQSTATS
-/* These symbols are used by vmstat */
-
-	.text
-	.global	_C_LABEL(_intrnames)
-_C_LABEL(_intrnames):
-	.word	_C_LABEL(intrnames)
-
-	.data
-
-        .globl  _C_LABEL(intrnames), _C_LABEL(eintrnames), _C_LABEL(intrcnt), _C_LABEL(sintrcnt), _C_LABEL(eintrcnt)
-_C_LABEL(intrnames):
-	.asciz	"interrupt  0 "
-	.asciz	"interrupt  1 "
-	.asciz	"interrupt  2 "
-	.asciz	"interrupt  3 "
-	.asciz	"interrupt  4 "
-	.asciz	"interrupt  5 "
-	.asciz	"interrupt  6 "
-	.asciz	"interrupt  7 "
-	.asciz	"interrupt  8 "
-	.asciz	"interrupt  9 "
-	.asciz	"interrupt 10 "
-	.asciz	"interrupt 11 "
-	.asciz	"interrupt 12 "
-	.asciz	"interrupt 13 "
-	.asciz	"interrupt 14 "
-	.asciz	"interrupt 15 "
-	.asciz	"interrupt 16 "
-	.asciz	"interrupt 17 "
-	.asciz	"interrupt 18 "
-	.asciz	"interrupt 19 "
-	.asciz	"interrupt 20 "
-	.asciz	"interrupt 21 "
-	.asciz	"interrupt 22 "
-	.asciz	"interrupt 23 "
-	.asciz	"interrupt 24 "
-	.asciz	"interrupt 25 "
-	.asciz	"interrupt 26 "
-	.asciz	"interrupt 27 "
-	.asciz	"interrupt 28 "
-	.asciz	"interrupt 29 "
-	.asciz	"interrupt 30 "
-	.asciz	"interrupt 31 "
-
-_C_LABEL(sintrnames):
-	.asciz	"softclock    "
-	.asciz	"softnet      "
-	.asciz	"softserial   "
-	.asciz	"softintr  3  "
-	.asciz	"softintr  4  "
-	.asciz	"softintr  5  "
-	.asciz	"softintr  6  "
-	.asciz	"softintr  7   "
-	.asciz	"softintr  8  "
-	.asciz	"softintr  9  "
-	.asciz	"softintr 10  "
-	.asciz	"softintr 11  "
-	.asciz	"softintr 12  "
-	.asciz	"softintr 13  "
-	.asciz	"softintr 14  "
-	.asciz	"softintr 15  "
-	.asciz	"softintr 16  "
-	.asciz	"softintr 17  "
-	.asciz	"softintr 18  "
-	.asciz	"softintr 19  "
-	.asciz	"softintr 20  "
-	.asciz	"softintr 21  "
-	.asciz	"softintr 22  "
-	.asciz	"softintr 23  "
-	.asciz	"softintr 24  "
-	.asciz	"softintr 25  "
-	.asciz	"softintr 26  "
-	.asciz	"softintr 27  "
-	.asciz	"softintr 28  "
-	.asciz	"softintr 29  "
-	.asciz	"softintr 30  "
-	.asciz	"softintr 31  "
-_C_LABEL(eintrnames):
-
-	.bss
-	.align	0
-_C_LABEL(intrcnt):
-	.space	32*4	/* XXX Should be linked to number of interrupts */
-
-_C_LABEL(sintrcnt):
-	.space	32*4	/* XXX Should be linked to number of interrupts */
-_C_LABEL(eintrcnt):
-
-#else	/* IRQSTATS */
-/* Dummy entries to keep vmstat happy */
-
-	.text
-        .globl  _C_LABEL(intrnames), _C_LABEL(eintrnames), _C_LABEL(intrcnt), _C_LABEL(eintrcnt)
-_C_LABEL(intrnames):
-	.long	0
-_C_LABEL(eintrnames):
-
-_C_LABEL(intrcnt):
-	.long	0
-_C_LABEL(eintrcnt):
-#endif	/* IRQSTATS */

@@ -1,4 +1,4 @@
-/*	$NetBSD: kd.c,v 1.43 2007/02/16 13:55:42 ad Exp $	*/
+/*	$NetBSD: kd.c,v 1.43.2.1 2007/03/12 05:50:46 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kd.c,v 1.43 2007/02/16 13:55:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kd.c,v 1.43.2.1 2007/03/12 05:50:46 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -273,7 +273,7 @@ kdpoll(dev_t dev, int events, struct lwp *l)
 }
 
 int
-kdioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+kdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct kd_softc *kd;
 	struct tty *tp;
@@ -350,7 +350,7 @@ kdstart(struct tty *tp)
 	if (cl->c_cc <= tp->t_lowat) {
 		if (tp->t_state & TS_ASLEEP) {
 			tp->t_state &= ~TS_ASLEEP;
-			wakeup((caddr_t)cl);
+			wakeup((void *)cl);
 		}
 		selwakeup(&tp->t_wsel);
 	}

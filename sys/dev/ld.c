@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.44.2.1 2007/02/27 16:53:48 yamt Exp $	*/
+/*	$NetBSD: ld.c,v 1.44.2.2 2007/03/12 05:53:04 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.44.2.1 2007/02/27 16:53:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.44.2.2 2007/03/12 05:53:04 rmind Exp $");
 
 #include "rnd.h"
 
@@ -384,7 +384,7 @@ ldwrite(dev_t dev, struct uio *uio, int ioflag)
 
 /* ARGSUSED */
 static int
-ldioctl(dev_t dev, u_long cmd, caddr_t addr, int32_t flag, struct lwp *l)
+ldioctl(dev_t dev, u_long cmd, void *addr, int32_t flag, struct lwp *l)
 {
 	struct ld_softc *sc;
 	int part, unit, error;
@@ -778,8 +778,9 @@ ldgetdefaultlabel(struct ld_softc *sc, struct disklabel *lp)
  * Take a dump.
  */
 static int
-lddump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
+lddump(dev_t dev, daddr_t blkno, void *vav, size_t size)
 {
+	char *va = vav;
 	struct ld_softc *sc;
 	struct disklabel *lp;
 	int unit, part, nsects, sectoff, towrt, nblk, maxblkcnt, rv;

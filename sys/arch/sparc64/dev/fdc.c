@@ -1,4 +1,4 @@
-/*	$NetBSD: fdc.c,v 1.2 2007/02/15 18:33:27 reinoud Exp $	*/
+/*	$NetBSD: fdc.c,v 1.2.2.1 2007/03/12 05:50:45 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -108,7 +108,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdc.c,v 1.2 2007/02/15 18:33:27 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdc.c,v 1.2.2.1 2007/03/12 05:50:45 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -140,6 +140,11 @@ __KERNEL_RCSID(0, "$NetBSD: fdc.c,v 1.2 2007/02/15 18:33:27 reinoud Exp $");
 #include <machine/autoconf.h>
 #include <machine/intr.h>
 
+#ifdef SUN4
+#include <sparc/sparc/auxreg.h>
+#include <sparc/dev/fdreg.h>
+#include <sparc/dev/fdvar.h>
+#elif SUN4U
 #include <dev/ebus/ebusreg.h>
 #include <dev/ebus/ebusvar.h>
 /* #include <sparc/sparc/auxreg.h> */
@@ -147,6 +152,9 @@ __KERNEL_RCSID(0, "$NetBSD: fdc.c,v 1.2 2007/02/15 18:33:27 reinoud Exp $");
 #include <sparc64/dev/auxiovar.h>
 #include <sparc64/dev/fdcreg.h>
 #include <sparc64/dev/fdcvar.h>
+#endif
+
+#include <prop/proplib.h>
 
 #define FDUNIT(dev)	(minor(dev) / 8)
 #define FDTYPE(dev)	(minor(dev) % 8)
@@ -232,23 +240,38 @@ struct fdc_softc {
 	void		*sc_sicookie;	/* softintr(9) cookie */
 };
 
-#ifndef SUN4U
+#ifdef SUN4
 extern	struct fdcio	*fdciop;	/* I/O descriptor used in fdintr.s */
 #endif
 
 /* controller driver configuration */
+#ifdef SUN4
+int	fdcmatch_mainbus(struct device *, struct cfdata *, void*);
+int	fdcmatch_obio(struct device *, struct cfdata *, void *);
+void	fdcattach_mainbus(struct device *, struct device *, void *);
+void	fdcattach_obio(struct device *, struct device *, void *);
+#elif SUN4U
 int	fdcmatch_sbus(struct device *, struct cfdata *, void *);
 int	fdcmatch_ebus(struct device *, struct cfdata *, void *);
 void	fdcattach_sbus(struct device *, struct device *, void *);
 void	fdcattach_ebus(struct device *, struct device *, void *);
+#endif
 
 int	fdcattach(struct fdc_softc *, int);
 
+#ifdef SUN4
+CFATTACH_DECL(fdc_mainbus, sizeof(struct fdc_softc),
+    fdcmatch_mainbus, fdcattach_mainbus, NULL, NULL);
+
+CFATTACH_DECL(fdc_obio, sizeof(struct fdc_softc),
+    fdcmatch_obio, fdcattach_obio, NULL, NULL);
+#elif SUN4U
 CFATTACH_DECL(fdc_sbus, sizeof(struct fdc_softc),
     fdcmatch_sbus, fdcattach_sbus, NULL, NULL);
 
 CFATTACH_DECL(fdc_ebus, sizeof(struct fdc_softc),
     fdcmatch_ebus, fdcattach_ebus, NULL, NULL);
+#endif
 
 inline struct fd_type *fd_dev_to_type(struct fd_softc *, dev_t);
 
@@ -276,7 +299,7 @@ struct fd_type {
 
 /* The order of entries in the following table is important -- BEWARE! */
 struct fd_type fd_types[] = {
-	{ 18,2,36,2,0xff,0xcf,0x1b,0x54,80,2880,1,FDC_500KBPS,0xf6,1, "1.44MB"    }, /* 1.44MB diskette */
+	{ 18,2,36,2,0xff,0xcf,0x1b,0x6c,80,2880,1,FDC_500KBPS,0xf6,1, "1.44MB"    }, /* 1.44MB diskette */
 	{  9,2,18,2,0xff,0xdf,0x2a,0x50,80,1440,1,FDC_250KBPS,0xf6,1, "720KB"    }, /* 3.5" 720kB diskette */
 	{  9,2,18,2,0xff,0xdf,0x2a,0x50,40, 720,2,FDC_250KBPS,0xf6,1, "360KB/x"  }, /* 360kB in 720kB drive */
 	{  8,2,16,3,0xff,0xdf,0x35,0x74,77,1232,1,FDC_500KBPS,0xf6,1, "1.2MB/NEC" } /* 1.2 MB japanese format */
@@ -376,10 +399,66 @@ static void establish_chip_type(
 		bus_addr_t,
 		bus_size_t,
 		bus_space_handle_t);
+static void	fd_set_properties(struct fd_softc *);
 
 #ifdef MEMORY_DISK_HOOKS
-int	fd_read_md_image(size_t *, caddr_t *);
+int	fd_read_md_image(size_t *, void **);
 #endif
+
+#ifdef SUN4
+#define OBP_FDNAME	(CPU_ISSUN4M ? "SUNW,fdtwo" : "fd")
+
+int
+fdcmatch_mainbus(struct device *parent, struct cfdata *match, void *aux)
+{
+	struct mainbus_attach_args *ma = aux;
+
+	/*
+	 * Floppy controller is on mainbus on sun4c.
+	 */
+	if (!CPU_ISSUN4C)
+		return 0;
+
+	/* sun4c PROMs call the controller "fd" */
+	if (strcmp("fd", ma->ma_name) != 0)
+		return 0;
+
+	return bus_space_probe(ma->ma_bustag,
+			       ma->ma_paddr,
+			       1,	/* probe size */
+			       0,	/* offset */
+			       0,	/* flags */
+			       NULL, NULL);
+}
+
+int
+fdcmatch_obio(struct device *parent, struct cfdata *match, void *aux)
+{
+	union obio_attach_args *uoba = aux;
+	struct sbus_attach_args *sa;
+
+	/*
+	 * Floppy controller is on obio on sun4m.
+	 */
+	if (uoba->uoba_isobio4 != 0)
+		return 0;
+
+	sa = &uoba->uoba_sbus;
+
+	/* sun4m PROMs call the controller "SUNW,fdtwo" */
+	if (strcmp("SUNW,fdtwo", sa->sa_name) != 0)
+		return 0;
+
+	return bus_space_probe(sa->sa_bustag,
+			sbus_bus_addr(sa->sa_bustag,
+					sa->sa_slot, sa->sa_offset),
+			1,	/* probe size */
+			0,	/* offset */
+			0,	/* flags */
+			NULL, NULL);
+}
+
+#elif SUN4U
 
 int
 fdcmatch_sbus(struct device *parent, struct cfdata *match, void *aux)
@@ -396,6 +475,7 @@ fdcmatch_ebus(struct device *parent, struct cfdata *match, void *aux)
 
 	return strcmp("fdthree", ea->ea_name) == 0;
 }
+#endif
 
 static void
 establish_chip_type(struct fdc_softc *fdc,
@@ -416,7 +496,7 @@ establish_chip_type(struct fdc_softc *fdc,
 		/* It isn't a 82077 */
 		return;
 
-#ifndef SUN4U
+#ifdef SUN4
 	/* Then probe the DOR register offset */
 	if (bus_space_probe(tag, addr,
 			    1,			/* probe size */
@@ -524,6 +604,74 @@ fdconf(struct fdc_softc *fdc)
 #endif
 }
 
+#ifdef SUN4
+void
+fdcattach_mainbus(struct device *parent, struct device *self, void *aux)
+{
+	struct fdc_softc *fdc = (void *)self;
+	struct mainbus_attach_args *ma = aux;
+
+	fdc->sc_bustag = ma->ma_bustag;
+
+	if (bus_space_map(
+			ma->ma_bustag,
+			ma->ma_paddr,
+			ma->ma_size,
+			BUS_SPACE_MAP_LINEAR,
+			&fdc->sc_handle) != 0) {
+		printf("%s: cannot map registers\n", self->dv_xname);
+		return;
+	}
+
+	establish_chip_type(fdc,
+			    ma->ma_bustag,
+			    ma->ma_paddr,
+			    ma->ma_size,
+			    fdc->sc_handle);
+
+	if (fdcattach(fdc, ma->ma_pri) != 0)
+		bus_space_unmap(ma->ma_bustag, fdc->sc_handle, ma->ma_size);
+}
+
+void
+fdcattach_obio(struct device *parent, struct device *self, void *aux)
+{
+	struct fdc_softc *fdc = (void *)self;
+	union obio_attach_args *uoba = aux;
+	struct sbus_attach_args *sa = &uoba->uoba_sbus;
+
+	if (sa->sa_nintr == 0) {
+		printf(": no interrupt line configured\n");
+		return;
+	}
+
+	fdc->sc_bustag = sa->sa_bustag;
+
+	if (sbus_bus_map(sa->sa_bustag,
+			 sa->sa_slot, sa->sa_offset, sa->sa_size,
+			 BUS_SPACE_MAP_LINEAR, &fdc->sc_handle) != 0) {
+		printf("%s: cannot map control registers\n",
+			self->dv_xname);
+		return;
+	}
+
+	establish_chip_type(fdc,
+		sa->sa_bustag,
+		sbus_bus_addr(sa->sa_bustag, sa->sa_slot, sa->sa_offset),
+		sa->sa_size,
+		fdc->sc_handle);
+
+	if (strcmp(prom_getpropstring(sa->sa_node, "status"), "disabled") == 0) {
+		print(": no drives attached\n");
+		return;
+	}
+
+	if (fdcattach(fdc, sa->sa_pri) != 0)
+		bus_space_unmap(sa->sa_bustag, fdc->sc_handle, sa->sa_size);
+}
+
+#elif SUN4U
+
 void
 fdcattach_sbus(struct device *parent, struct device *self, void *aux)
 {
@@ -612,9 +760,12 @@ fdcattach_ebus(struct device *parent, struct device *self, void *aux)
 	if (prom_getproplen(ea->ea_node, "manual") >= 0)
 		fdc->sc_flags |= FDC_NOEJECT;
 
-	/* XXX unmapping if it fails */
-	fdcattach(fdc, ea->ea_intr[0]);
+	if (fdcattach(fdc, ea->ea_intr[0]) != 0)
+		if (map_vaddr == 0)
+			bus_space_unmap(ea->ea_bustag, fdc->sc_handle,
+			    ea->ea_reg[0].size);
 }
+#endif
 
 int
 fdcattach(struct fdc_softc *fdc, int pri)
@@ -656,26 +807,42 @@ fdcattach(struct fdc_softc *fdc, int pri)
 		return -1;
 	}
 
-#ifndef SUN4U
-	fdciop = &fdc->sc_io;
-#endif
-	if (bus_intr_establish(fdc->sc_bustag, pri, IPL_BIO,
-				fdc_c_hwintr, fdc) == NULL) {
-		printf("\n%s: cannot register interrupt handler\n",
-			fdc->sc_dev.dv_xname);
-		return -1;
-	}
-
+#ifdef SUN4
+	fdc->sc_sicookie = softintr_establish(IPL_BIO, fdcswintr, fdc);
+#elif SUN4U
 	fdc->sc_sicookie = softintr_establish(IPL_FDSOFT, fdcswintr, fdc);
+#endif
 	if (fdc->sc_sicookie == NULL) {
 		printf("\n%s: cannot register soft interrupt handler\n",
 			fdc->sc_dev.dv_xname);
+		callout_stop(&fdc->sc_timo_ch);
+		callout_stop(&fdc->sc_intr_ch);
 		return -1;
 	}
+#ifdef SUN4
+	printf(" softpri %d: chip 8207%c\n", IPL_SOFTFDC, code);
+#elif SUN4U
 	printf(" softpri %d: chip 8207%c", PIL_FDSOFT, code);
 	if (fdc->sc_flags & FDC_NOEJECT)
 		printf(": manual eject");
 	printf("\n");
+#endif
+
+#ifdef SUN4
+	fdciop = &fdc->sc_io;
+	if (bus_intr_establish2(fdc->sc_bustag, pri, 0
+				fdc_c_hwintr, fdc, fdchwintr) == NULL) {
+#elif SUN4U
+	if (bus_intr_establish(fdc->sc_bustag, pri, IPL_BIO,
+				fdc_c_hwintr, fdc) == NULL) {
+#endif
+		printf("\n%s: cannot register interrupt handler\n",
+			fdc->sc_dev.dv_xname);
+		callout_stop(&fdc->sc_timo_ch);
+		callout_stop(&fdc->sc_intr_ch);
+		softintr_disestablish(fdc->sc_sicookie);
+		return -1;
+	}
 
 	evcnt_attach_dynamic(&fdc->sc_intrcnt, EVCNT_TYPE_INTR, NULL,
 	    fdc->sc_dev.dv_xname, "intr");
@@ -717,7 +884,7 @@ fdmatch(struct device *parent, struct cfdata *match, void *aux)
 				  drive | FDO_FRST | FDO_MOEN(drive));
 		/* wait for motor to spin up */
 		delay(250000);
-#ifndef SUN4U
+#ifdef SUN4
 	} else {
 		auxregbisc(AUXIO4C_FDS, 0);
 #endif
@@ -763,7 +930,7 @@ fdmatch(struct device *parent, struct cfdata *match, void *aux)
 	if ((fdc->sc_flags & FDC_82077) != 0) {
 		/* deselect drive and turn motor off */
 		bus_space_write_1(t, h, fdc->sc_reg_dor, FDO_FRST | FDO_DS);
-#ifndef SUN4U
+#ifdef SUN4
 	} else {
 		auxregbisc(0, AUXIO4C_FDS);
 #endif
@@ -818,6 +985,8 @@ fdattach(struct device *parent, struct device *self, void *aux)
 	 * with RB_ASKNAME and get selected as the boot device.
 	 */
 	mountroothook_establish(fd_mountroot_hook, &fd->sc_dv);
+
+	fd_set_properties(fd);
 
 	/* Make sure the drive motor gets turned off at shutdown time. */
 	fd->sc_sdhook = shutdownhook_establish(fd_motor_off, fd);
@@ -881,9 +1050,9 @@ fdstrategy(struct buf *bp)
 
 #ifdef FD_DEBUG
 	if (fdc_debug > 1)
-	    printf("fdstrategy: b_blkno %lld b_bcount %d blkno %lld cylin %d\n",
+	    printf("fdstrategy: b_blkno %lld b_bcount %d blkno %lld cylin %d sz %d\n",
 		    (long long)bp->b_blkno, bp->b_bcount,
-		    (long long)fd->sc_blkno, bp->b_cylinder);
+		    (long long)fd->sc_blkno, bp->b_cylinder, sz);
 #endif
 
 	/* Queue transfer on drive, activate drive and controller if idle. */
@@ -997,7 +1166,7 @@ fd_set_motor(struct fdc_softc *fdc)
 				status |= FDO_MOEN(n);
 		bus_space_write_1(fdc->sc_bustag, fdc->sc_handle,
 				  fdc->sc_reg_dor, status);
-#ifndef SUN4U
+#ifdef SUN4
 	} else {
 
 		for (n = 0; n < 4; n++) {
@@ -1034,7 +1203,7 @@ fd_motor_on(void *arg)
 	s = splbio();
 	fd->sc_flags &= ~FD_MOTOR_WAIT;
 	if ((fdc->sc_drives.tqh_first == fd) && (fdc->sc_state == MOTORWAIT))
-		(void) fdcstate(fdc);
+		(void)fdcstate(fdc);
 	splx(s);
 }
 
@@ -1097,14 +1266,14 @@ int
 fdc_diskchange(struct fdc_softc *fdc)
 {
 
-#ifndef SUN4U
+#ifdef SUN4
 	if (CPU_ISSUN4M && (fdc->sc_flags & FDC_82077) != 0) {
 #endif
 		bus_space_tag_t t = fdc->sc_bustag;
 		bus_space_handle_t h = fdc->sc_handle;
 		uint8_t v = bus_space_read_1(t, h, fdc->sc_reg_dir);
 		return (v & FDI_DCHG) != 0;
-#ifndef SUN4U
+#ifdef SUN4
 	} else if (CPU_ISSUN4C) {
 		return (*AUXIO4C_REG & AUXIO4C_FDC) != 0;
 	}
@@ -1365,8 +1534,12 @@ fdc_c_hwintr(void *arg)
 			softintr_schedule(fdc->sc_sicookie);
 #ifdef FD_DEBUG
 			if (fdc_debug > 1)
+#ifdef SUN4
+				printf("fdc: overrun: tc = %d\n", fdc->sc_tc);
+#elif SUN4U
 				printf("fdc: overrun: msr = %x, tc = %d\n",
 				    msr, fdc->sc_tc);
+#endif
 #endif
 			break;
 		}
@@ -1601,7 +1774,7 @@ loop:
 		read = bp->b_flags & B_READ;
 
 		/* Setup for pseudo DMA */
-		fdc->sc_data = bp->b_data + fd->sc_skip;
+		fdc->sc_data = (char *)bp->b_data + fd->sc_skip;
 		fdc->sc_tc = fd->sc_nbytes;
 
 		bus_space_write_1(fdc->sc_bustag, fdc->sc_handle,
@@ -1937,7 +2110,7 @@ fdcretry(struct fdc_softc *fdc)
 }
 
 int
-fdioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
+fdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 {
 	struct fd_softc *fd;
 	struct fdc_softc *fdc;
@@ -2195,7 +2368,7 @@ fdformat(dev_t dev, struct ne7_fd_formb *finfo, struct proc *p)
 		      / DEV_BSIZE;
 
 	bp->b_bcount = sizeof(struct fd_idfield_data) * finfo->fd_formb_nsecs;
-	bp->b_data = (caddr_t)finfo;
+	bp->b_data = (void *)finfo;
 
 #ifdef FD_DEBUG
 	if (fdc_debug) {
@@ -2299,7 +2472,7 @@ fd_do_eject(struct fd_softc *fd)
 {
 	struct fdc_softc *fdc = (void *)device_parent(&fd->sc_dv);
 
-#ifndef SUN4U
+#ifdef SUN4
 	if (CPU_ISSUN4C) {
 		auxregbisc(AUXIO4C_FDS, AUXIO4C_FEJ);
 		delay(10);
@@ -2316,7 +2489,7 @@ fd_do_eject(struct fd_softc *fd)
 		delay(10);
 		bus_space_write_1(t, h, fdc->sc_reg_dor, FDO_FRST | FDO_DS);
 		return;
-#ifndef SUN4U
+#ifdef SUN4
 	}
 #endif
 }
@@ -2343,16 +2516,16 @@ fd_mountroot_hook(struct device *dev)
 #define FDMICROROOTSIZE ((2*18*80) << DEV_BSHIFT)
 
 int
-fd_read_md_image(size_t	*sizep, caddr_t	*addrp)
+fd_read_md_image(size_t	*sizep, void **addrp)
 {
 	struct buf buf, *bp = &buf;
 	dev_t dev;
 	off_t offset;
-	caddr_t addr;
+	char *addr;
 
 	dev = makedev(54,0);	/* XXX */
 
-	MALLOC(addr, caddr_t, FDMICROROOTSIZE, M_DEVBUF, M_WAITOK);
+	MALLOC(addr, void *, FDMICROROOTSIZE, M_DEVBUF, M_WAITOK);
 	*addrp = addr;
 
 	if (fdopen(dev, 0, S_IFCHR, NULL))
@@ -2371,7 +2544,7 @@ fd_read_md_image(size_t	*sizep, caddr_t	*addrp)
 		bp->b_data = addr;
 		fdstrategy(bp);
 		while ((bp->b_flags & B_DONE) == 0) {
-			tsleep((caddr_t)bp, PRIBIO + 1, "physio", 0);
+			tsleep((void *)bp, PRIBIO + 1, "physio", 0);
 		}
 		if (bp->b_error)
 			panic("fd: mountroot: fdread error %d", bp->b_error);
@@ -2390,3 +2563,59 @@ fd_read_md_image(size_t	*sizep, caddr_t	*addrp)
 	return 0;
 }
 #endif /* MEMORY_DISK_HOOKS */
+
+static void
+fd_set_properties(struct fd_softc *fd)
+{
+	prop_dictionary_t disk_info, odisk_info, geom;
+	struct fd_type *fdt;
+	int secsize;
+
+	fdt = fd->sc_deftype;
+
+	disk_info = prop_dictionary_create();
+
+	geom = prop_dictionary_create();
+
+	prop_dictionary_set_uint64(geom, "sectors-per-unit",
+	    fdt->size);
+
+	switch (fdt->secsize) {
+	case 2:
+		secsize = 512;
+		break;
+	case 3:
+		secsize = 1024;
+		break;
+	default:
+		secsize = 0;
+	}
+
+	prop_dictionary_set_uint32(geom, "sector-size",
+	    secsize);
+
+	prop_dictionary_set_uint16(geom, "sectors-per-track",
+	    fdt->sectrac);
+
+	prop_dictionary_set_uint16(geom, "tracks-per-cylinder",
+	    fdt->heads);
+
+	prop_dictionary_set_uint64(geom, "cylinders-per-unit",
+	    fdt->cylinders);
+
+	prop_dictionary_set(disk_info, "geometry", geom);
+	prop_object_release(geom);
+
+	prop_dictionary_set(device_properties(&fd->sc_dv),
+	    "disk-info", disk_info);
+
+	/*
+	 * Don't release disk_info here; we keep a reference to it.
+	 * disk_detach() will release it when we go away.
+	 */
+
+	odisk_info = fd->sc_dk.dk_info;
+	fd->sc_dk.dk_info = disk_info;
+	if (odisk_info)
+		prop_object_release(odisk_info);
+}

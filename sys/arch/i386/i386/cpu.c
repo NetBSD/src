@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.33.2.1 2007/02/17 10:30:44 yamt Exp $ */
+/* $NetBSD: cpu.c,v 1.33.2.2 2007/03/12 05:48:21 rmind Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.33.2.1 2007/02/17 10:30:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.33.2.2 2007/03/12 05:48:21 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -129,8 +129,8 @@ struct cpu_softc {
 
 int mp_cpu_start(struct cpu_info *); 
 void mp_cpu_start_cleanup(struct cpu_info *);
-struct cpu_functions mp_cpu_funcs = { mp_cpu_start, NULL,
-				      mp_cpu_start_cleanup };
+const struct cpu_functions mp_cpu_funcs = { mp_cpu_start, NULL,
+					    mp_cpu_start_cleanup };
 
 
 CFATTACH_DECL(cpu, sizeof(struct cpu_softc),
@@ -336,7 +336,7 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 		break;
 
 	case CPU_ROLE_BP:
-		aprint_normal(": apid %d (boot processor)\n", caa->cpu_number);
+		aprint_normal(": (boot processor)\n");
 		ci->ci_flags |= CPUF_PRESENT | CPUF_BSP | CPUF_PRIMARY;
 		cpu_intr_init(ci);
 		identifycpu(ci);
@@ -359,8 +359,7 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 		/*
 		 * report on an AP
 		 */
-		aprint_normal(": apid %d (application processor)\n",
-		    caa->cpu_number);
+		aprint_normal(": (application processor)\n");
 
 #if defined(MULTIPROCESSOR)
 		cpu_intr_init(ci);
@@ -669,7 +668,7 @@ cpu_copy_trampoline()
 	pmap_kenter_pa((vaddr_t)MP_TRAMPOLINE,	/* virtual */
 	    (paddr_t)MP_TRAMPOLINE,	/* physical */
 	    VM_PROT_ALL);		/* protection */
-	memcpy((caddr_t)MP_TRAMPOLINE,
+	memcpy((void *)MP_TRAMPOLINE,
 	    cpu_spinup_trampoline,
 	    cpu_spinup_trampoline_end-cpu_spinup_trampoline);
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: bus_dma.h,v 1.6.26.1 2007/02/27 16:51:57 yamt Exp $ */
+/* $NetBSD: bus_dma.h,v 1.6.26.2 2007/03/12 05:48:45 rmind Exp $ */
 
 /*
  * This file was extracted from from alpha/include/bus.h
@@ -166,8 +166,8 @@ struct m68k_bus_dma_tag {
 	void	(*_dmamem_free)(bus_dma_tag_t,
 		    bus_dma_segment_t *, int);
 	int	(*_dmamem_map)(bus_dma_tag_t, bus_dma_segment_t *,
-		    int, size_t, caddr_t *, int);
-	void	(*_dmamem_unmap)(bus_dma_tag_t, caddr_t, size_t);
+		    int, size_t, void **, int);
+	void	(*_dmamem_unmap)(bus_dma_tag_t, void *, size_t);
 	paddr_t	(*_dmamem_mmap)(bus_dma_tag_t, bus_dma_segment_t *,
 		    int, off_t, int, int);
 };
@@ -254,8 +254,8 @@ int	_bus_dmamem_alloc(bus_dma_tag_t tag, bus_size_t size,
 void	_bus_dmamem_free(bus_dma_tag_t tag, bus_dma_segment_t *segs,
 	    int nsegs);
 int	_bus_dmamem_map(bus_dma_tag_t tag, bus_dma_segment_t *segs,
-	    int nsegs, size_t size, caddr_t *kvap, int flags);
-void	_bus_dmamem_unmap(bus_dma_tag_t tag, caddr_t kva,
+	    int nsegs, size_t size, void **kvap, int flags);
+void	_bus_dmamem_unmap(bus_dma_tag_t tag, void *kva,
 	    size_t size);
 paddr_t	_bus_dmamem_mmap(bus_dma_tag_t tag, bus_dma_segment_t *segs,
 	    int nsegs, off_t off, int prot, int flags);

@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_exec_ecoff.c,v 1.15 2007/02/09 21:55:23 ad Exp $ */
+/* $NetBSD: osf1_exec_ecoff.c,v 1.15.2.1 2007/03/12 05:52:39 rmind Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_exec_ecoff.c,v 1.15 2007/02/09 21:55:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_exec_ecoff.c,v 1.15.2.1 2007/03/12 05:52:39 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -254,7 +254,7 @@ osf1_exec_ecoff_dynamic(struct lwp *l, struct exec_package *epp)
 	/*
 	 * read the header, and make sure we got all of it.
 	 */
-        if ((error = vn_rdwr(UIO_READ, ldr_vp, (caddr_t)&ldr_exechdr,
+        if ((error = vn_rdwr(UIO_READ, ldr_vp, (void *)&ldr_exechdr,
 	    sizeof ldr_exechdr, 0, UIO_SYSSPACE, 0, l->l_cred,
 	    &resid, NULL)) != 0)
                 goto bad;

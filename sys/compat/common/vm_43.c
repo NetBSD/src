@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_43.c,v 1.14 2007/02/09 21:55:16 ad Exp $	*/
+/*	$NetBSD: vm_43.c,v 1.14.2.1 2007/03/12 05:51:55 rmind Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_43.c,v 1.14 2007/02/09 21:55:16 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_43.c,v 1.14.2.1 2007/03/12 05:51:55 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,7 +112,7 @@ int
 compat_43_sys_mmap(struct lwp *l, void *v, register_t *retval)
 {
 	struct compat_43_sys_mmap_args /* {
-		syscallarg(caddr_t) addr;
+		syscallarg(void *) addr;
 		syscallarg(size_t) len;
 		syscallarg(int) prot;
 		syscallarg(int) flags;
@@ -120,7 +120,7 @@ compat_43_sys_mmap(struct lwp *l, void *v, register_t *retval)
 		syscallarg(long) pos;
 	} */ *uap = v;
 	struct sys_mmap_args /* {
-		syscallarg(caddr_t) addr;
+		syscallarg(void *) addr;
 		syscallarg(size_t) len;
 		syscallarg(int) prot;
 		syscallarg(int) flags;

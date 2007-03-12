@@ -1,4 +1,4 @@
-/*	$NetBSD: mhavar.h,v 1.7 2005/12/11 12:19:37 christos Exp $	*/
+/*	$NetBSD: mhavar.h,v 1.7.26.1 2007/03/12 05:51:39 rmind Exp $	*/
 
 /*
  * Copyright (c) 1994 Peter Galbavy.  All rights reserved.
@@ -138,7 +138,7 @@ struct mha_softc {
 	bus_dma_segment_t	sc_dmaseg[1];
 	int			sc_ndmasegs;
 	bus_dmamap_t		sc_dmamap;
-	caddr_t			sc_dmabuf;
+	void *			sc_dmabuf;
 	u_char			*sc_p;
 	u_int32_t		sc_dmasize;
 };

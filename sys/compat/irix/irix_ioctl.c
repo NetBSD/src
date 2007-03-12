@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_ioctl.c,v 1.12 2007/02/09 21:55:18 ad Exp $ */
+/*	$NetBSD: irix_ioctl.c,v 1.12.2.1 2007/03/12 05:52:12 rmind Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_ioctl.c,v 1.12 2007/02/09 21:55:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_ioctl.c,v 1.12.2.1 2007/03/12 05:52:12 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -79,19 +79,19 @@ irix_sys_ioctl(l, v, retval)
 	struct irix_sys_ioctl_args /* {
 		syscallarg(int) fd;
 		syscallarg(u_long) com;
-		syscallarg(caddr_t) data;
+		syscallarg(void *) data;
 	} */ *uap = v;
 	extern const struct cdevsw irix_usema_cdevsw;
 	struct proc *p = l->l_proc;
 	u_long	cmd;
-	caddr_t data;
+	void *data;
 	struct file *fp;
 	struct filedesc *fdp;
 	struct vnode *vp;
 	struct vattr vattr;
 	struct irix_ioctl_usrdata iiu;
 	struct irix_ioctl_usrdata *iiup;
-	caddr_t sg = stackgap_init(p, 0);
+	void *sg = stackgap_init(p, 0);
 	int error, val;
 
 	/*
@@ -136,7 +136,7 @@ irix_sys_ioctl(l, v, retval)
 		iiup = stackgap_alloc(p, &sg, sizeof(iiu));
 		iiu.iiu_data = data;
 		iiu.iiu_retval = retval;
-		data = (caddr_t)iiup;
+		data = (void *)iiup;
 		if ((error = copyout(&iiu, iiup, sizeof(iiu))) != 0)
 			goto out;
 

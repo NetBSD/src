@@ -1,4 +1,4 @@
-/*	$NetBSD: if_snvar.h,v 1.7 2005/12/24 20:07:24 perry Exp $	*/
+/*	$NetBSD: if_snvar.h,v 1.7.26.1 2007/03/12 05:49:40 rmind Exp $	*/
 
 /*
  * Copyright (c) 1991   Algorithmics Ltd (http://www.algor.co.uk)
@@ -77,7 +77,7 @@ wbflush(void)
 typedef struct mtd {
 	void		*mtd_txp;
 	uint32_t	mtd_vtxp;
-	caddr_t		mtd_buf;
+	void 		*mtd_buf;
 	uint32_t	mtd_vbuf;
 	struct mbuf	*mtd_mbuf;
 } mtd_t;
@@ -90,7 +90,7 @@ struct sn_softc {
 	struct ethercom	sc_ethercom;
 #define sc_if	sc_ethercom.ec_if	/* network visible interface */
 
-	caddr_t		sc_hwbase;	/* hardware base address */
+	void *		sc_hwbase;	/* hardware base address */
 	volatile uint16_t *sc_regbase;	/* register base address */
 
 	int		bitmode;	/* 32 bit mode == 1, 16 == 0 */
@@ -107,10 +107,10 @@ struct sn_softc {
 	int		sc_rxmark;	/* current hw pos in rda ring */
 	int		sc_rdamark;	/* current sw pos in rda ring */
 	int		sc_nrda;	/* total number of RDAs */
-	caddr_t		p_rda;
+	void		*p_rda;
 	uint32_t	v_rda;
 
-	caddr_t		rbuf[NRBA];
+	void 		*rbuf[NRBA];
 
 	struct mtd	mtda[NTDA];
 	int		mtd_hw;		/* idx of first mtd given to hw */

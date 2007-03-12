@@ -1,4 +1,4 @@
-/* $NetBSD: sunos_syscall.h,v 1.76 2006/09/01 21:19:45 matt Exp $ */
+/* $NetBSD: sunos_syscall.h,v 1.76.8.1 2007/03/12 05:52:43 rmind Exp $ */
 
 /*
  * System call numbers.
@@ -79,7 +79,7 @@
 /* syscall: "stime" ret: "int" args: "time_t *" */
 #define	SUNOS_SYS_stime	25
 
-/* syscall: "ptrace" ret: "long" args: "int" "pid_t" "caddr_t" "int" "char *" */
+/* syscall: "ptrace" ret: "long" args: "int" "pid_t" "void *" "int" "char *" */
 #define	SUNOS_SYS_ptrace	26
 
 /* syscall: "access" ret: "int" args: "const char *" "int" */
@@ -103,7 +103,7 @@
 /* syscall: "pipe" ret: "int" args: */
 #define	SUNOS_SYS_pipe	42
 
-/* syscall: "profil" ret: "int" args: "caddr_t" "u_int" "u_int" "u_int" */
+/* syscall: "profil" ret: "int" args: "void *" "u_int" "u_int" "u_int" */
 #define	SUNOS_SYS_profil	44
 
 /* syscall: "setgid" ret: "int" args: "uid_t" */
@@ -118,7 +118,7 @@
 /* syscall: "mctl" ret: "int" args: "void *" "int" "int" "void *" */
 #define	SUNOS_SYS_mctl	53
 
-/* syscall: "ioctl" ret: "int" args: "int" "u_long" "caddr_t" */
+/* syscall: "ioctl" ret: "int" args: "int" "u_long" "void *" */
 #define	SUNOS_SYS_ioctl	54
 
 /* syscall: "reboot" ret: "int" args: "int" "char *" */
@@ -146,7 +146,7 @@
 /* syscall: "getpagesize" ret: "int" args: */
 #define	SUNOS_SYS_getpagesize	64
 
-/* syscall: "omsync" ret: "int" args: "caddr_t" "size_t" "int" */
+/* syscall: "omsync" ret: "int" args: "void *" "size_t" "int" */
 #define	SUNOS_SYS_omsync	65
 
 /* syscall: "vfork" ret: "int" args: */
@@ -229,25 +229,25 @@
 /* syscall: "socket" ret: "int" args: "int" "int" "int" */
 #define	SUNOS_SYS_socket	97
 
-/* syscall: "connect" ret: "int" args: "int" "caddr_t" "int" */
+/* syscall: "connect" ret: "int" args: "int" "void *" "int" */
 #define	SUNOS_SYS_connect	98
 
-/* syscall: "accept" ret: "int" args: "int" "caddr_t" "int *" */
+/* syscall: "accept" ret: "int" args: "int" "void *" "int *" */
 #define	SUNOS_SYS_accept	99
 
 /* syscall: "getpriority" ret: "int" args: "int" "int" */
 #define	SUNOS_SYS_getpriority	100
 
-/* syscall: "send" ret: "int" args: "int" "caddr_t" "int" "int" */
+/* syscall: "send" ret: "int" args: "int" "void *" "int" "int" */
 #define	SUNOS_SYS_send	101
 
-/* syscall: "recv" ret: "int" args: "int" "caddr_t" "int" "int" */
+/* syscall: "recv" ret: "int" args: "int" "void *" "int" "int" */
 #define	SUNOS_SYS_recv	102
 
-/* syscall: "bind" ret: "int" args: "int" "caddr_t" "int" */
+/* syscall: "bind" ret: "int" args: "int" "void *" "int" */
 #define	SUNOS_SYS_bind	104
 
-/* syscall: "setsockopt" ret: "int" args: "int" "int" "int" "caddr_t" "int" */
+/* syscall: "setsockopt" ret: "int" args: "int" "int" "int" "void *" "int" */
 #define	SUNOS_SYS_setsockopt	105
 
 /* syscall: "listen" ret: "int" args: "int" "int" */
@@ -271,7 +271,7 @@
 /* syscall: "recvmsg" ret: "int" args: "int" "struct omsghdr *" "int" */
 #define	SUNOS_SYS_recvmsg	113
 
-/* syscall: "sendmsg" ret: "int" args: "int" "caddr_t" "int" */
+/* syscall: "sendmsg" ret: "int" args: "int" "void *" "int" */
 #define	SUNOS_SYS_sendmsg	114
 
 				/* 115 is obsolete vtrace */
@@ -281,7 +281,7 @@
 /* syscall: "getrusage" ret: "int" args: "int" "struct rusage *" */
 #define	SUNOS_SYS_getrusage	117
 
-/* syscall: "getsockopt" ret: "int" args: "int" "int" "int" "caddr_t" "int *" */
+/* syscall: "getsockopt" ret: "int" args: "int" "int" "int" "void *" "int *" */
 #define	SUNOS_SYS_getsockopt	118
 
 /* syscall: "readv" ret: "int" args: "int" "struct iovec *" "u_int" */
@@ -299,7 +299,7 @@
 /* syscall: "fchmod" ret: "int" args: "int" "int" */
 #define	SUNOS_SYS_fchmod	124
 
-/* syscall: "recvfrom" ret: "int" args: "int" "caddr_t" "size_t" "int" "caddr_t" "int *" */
+/* syscall: "recvfrom" ret: "int" args: "int" "void *" "size_t" "int" "void *" "int *" */
 #define	SUNOS_SYS_recvfrom	125
 
 /* syscall: "setreuid" ret: "int" args: "int" "int" */
@@ -320,7 +320,7 @@
 /* syscall: "flock" ret: "int" args: "int" "int" */
 #define	SUNOS_SYS_flock	131
 
-/* syscall: "sendto" ret: "int" args: "int" "caddr_t" "size_t" "int" "caddr_t" "int" */
+/* syscall: "sendto" ret: "int" args: "int" "void *" "size_t" "int" "void *" "int" */
 #define	SUNOS_SYS_sendto	133
 
 /* syscall: "shutdown" ret: "int" args: "int" "int" */
@@ -344,7 +344,7 @@
 /* syscall: "adjtime" ret: "int" args: "struct timeval *" "struct timeval *" */
 #define	SUNOS_SYS_adjtime	140
 
-/* syscall: "getpeername" ret: "int" args: "int" "caddr_t" "int *" */
+/* syscall: "getpeername" ret: "int" args: "int" "void *" "int *" */
 #define	SUNOS_SYS_getpeername	141
 
 /* syscall: "gethostid" ret: "int" args: */
@@ -359,7 +359,7 @@
 /* syscall: "killpg" ret: "int" args: "int" "int" */
 #define	SUNOS_SYS_killpg	146
 
-/* syscall: "getsockname" ret: "int" args: "int" "caddr_t" "int *" */
+/* syscall: "getsockname" ret: "int" args: "int" "void *" "int *" */
 #define	SUNOS_SYS_getsockname	150
 
 /* syscall: "poll" ret: "int" args: "struct pollfd *" "u_int" "int" */
@@ -398,13 +398,13 @@
 /* syscall: "setdomainname" ret: "int" args: "char *" "int" */
 #define	SUNOS_SYS_setdomainname	163
 
-/* syscall: "quotactl" ret: "int" args: "int" "char *" "int" "caddr_t" */
+/* syscall: "quotactl" ret: "int" args: "int" "char *" "int" "void *" */
 #define	SUNOS_SYS_quotactl	165
 
 /* syscall: "exportfs" ret: "int" args: "char *" "char *" */
 #define	SUNOS_SYS_exportfs	166
 
-/* syscall: "mount" ret: "int" args: "char *" "char *" "int" "caddr_t" */
+/* syscall: "mount" ret: "int" args: "char *" "char *" "int" "void *" */
 #define	SUNOS_SYS_mount	167
 
 /* syscall: "ustat" ret: "int" args: "int" "struct sunos_ustat *" */

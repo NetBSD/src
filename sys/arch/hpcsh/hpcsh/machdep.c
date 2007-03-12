@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.53.14.1 2007/02/27 16:50:59 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.53.14.2 2007/03/12 05:48:16 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.53.14.1 2007/02/27 16:50:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.53.14.2 2007/03/12 05:48:16 rmind Exp $");
 
 #include "opt_md.h"
 #include "opt_ddb.h"
@@ -254,7 +254,7 @@ machine_startup(int argc, char *argv[], struct bootinfo *bi)
 		size_t fssz;
 		fssz = sh3_round_page(mfs_initminiroot((void *)kernend));
 #ifdef MEMORY_DISK_DYNAMIC
-		md_root_setconf((caddr_t)kernend, fssz);
+		md_root_setconf((void *)kernend, fssz);
 #endif
 		kernend += fssz;
 	}

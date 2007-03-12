@@ -1,4 +1,4 @@
-/*	$NetBSD: pdc.c,v 1.19 2006/10/01 20:31:50 elad Exp $	*/
+/*	$NetBSD: pdc.c,v 1.19.4.1 2007/03/12 05:47:59 rmind Exp $	*/
 
 /*	$OpenBSD: pdc.c,v 1.14 2001/04/29 21:05:43 mickey Exp $	*/
 
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pdc.c,v 1.19 2006/10/01 20:31:50 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pdc.c,v 1.19.4.1 2007/03/12 05:47:59 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -283,7 +283,7 @@ pdcpoll(dev_t dev, int events, struct lwp *l)
 }  
 
 int
-pdcioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+pdcioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	int unit = minor(dev);
 	int error;
@@ -324,7 +324,7 @@ pdcstart(struct tty *tp)
 	if (tp->t_outq.c_cc <= tp->t_lowat) {
 		if (tp->t_state & TS_ASLEEP) {
 			tp->t_state &= ~TS_ASLEEP;
-			wakeup((caddr_t)&tp->t_outq);
+			wakeup((void *)&tp->t_outq);
 		}
 		selwakeup(&tp->t_wsel);
 	}

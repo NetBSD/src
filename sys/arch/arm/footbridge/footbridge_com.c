@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_com.c,v 1.22 2006/10/01 20:31:49 elad Exp $	*/
+/*	$NetBSD: footbridge_com.c,v 1.22.4.1 2007/03/12 05:47:03 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1997 Mark Brinicombe
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: footbridge_com.c,v 1.22 2006/10/01 20:31:49 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: footbridge_com.c,v 1.22.4.1 2007/03/12 05:47:03 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ddbparam.h"
@@ -346,7 +346,7 @@ int
 fcomioctl(dev, cmd, data, flag, l)
 	dev_t dev;
 	u_long cmd;
-	caddr_t data;
+	void *data;
 	int flag;
 	struct lwp *l;
 {

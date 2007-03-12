@@ -1,4 +1,4 @@
-/*	$NetBSD: start_dos.S,v 1.8 2003/02/25 11:17:36 dsl Exp $	*/
+/*	$NetBSD: start_dos.S,v 1.8.56.1 2007/03/12 05:48:38 rmind Exp $	*/
 	
 /*
  * startup for DOS .COM programs
@@ -545,7 +545,7 @@ xdone:
 
 /*
 	Allocate a block of XMS memory with the requested size
-		void * xmsalloc(long int kBytes);
+		void *xmsalloc(long int kBytes);
 
 	Depends on _xmsdrv being set by getextmem() before first call
 	to this function.

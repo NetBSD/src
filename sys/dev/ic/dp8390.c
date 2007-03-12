@@ -1,4 +1,4 @@
-/*	$NetBSD: dp8390.c,v 1.62 2007/01/13 19:46:21 cube Exp $	*/
+/*	$NetBSD: dp8390.c,v 1.62.2.1 2007/03/12 05:53:30 rmind Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -14,7 +14,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dp8390.c,v 1.62 2007/01/13 19:46:21 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dp8390.c,v 1.62.2.1 2007/03/12 05:53:30 rmind Exp $");
 
 #include "opt_ipkdb.h"
 #include "opt_inet.h"
@@ -73,7 +73,7 @@ static inline void	dp8390_xmit(struct dp8390_softc *);
 static inline void	dp8390_read_hdr(struct dp8390_softc *,
 			    int, struct dp8390_ring *);
 static inline int	dp8390_ring_copy(struct dp8390_softc *,
-			    int, caddr_t, u_short);
+			    int, void *, u_short);
 static inline int	dp8390_write_mbuf(struct dp8390_softc *,
 			    struct mbuf *, int);
 
@@ -862,7 +862,7 @@ int
 dp8390_ioctl(ifp, cmd, data)
 	struct ifnet *ifp;
 	u_long cmd;
-	caddr_t data;
+	void *data;
 {
 	struct dp8390_softc *sc = ifp->if_softc;
 	struct ifaddr *ifa = (struct ifaddr *) data;
@@ -1097,7 +1097,7 @@ dp8390_get(sc, src, total_len)
 		 * Make sure the data after the Ethernet header is aligned.
 		 */
 		if (m == m0) {
-			caddr_t newdata = (caddr_t)
+			char *newdata = (char *)
 			    ALIGN(m->m_data + sizeof(struct ether_header)) -
 			    sizeof(struct ether_header);
 			len -= newdata - m->m_data;
@@ -1106,9 +1106,9 @@ dp8390_get(sc, src, total_len)
 
 		m->m_len = len = min(total_len, len);
 		if (sc->ring_copy)
-			src = (*sc->ring_copy)(sc, src, mtod(m, caddr_t), len);
+			src = (*sc->ring_copy)(sc, src, mtod(m, void *), len);
 		else
-			src = dp8390_ring_copy(sc, src, mtod(m, caddr_t), len);
+			src = dp8390_ring_copy(sc, src, mtod(m, void *), len);
 
 		total_len -= len;
 		if (total_len > 0) {
@@ -1188,7 +1188,7 @@ static inline int
 dp8390_ring_copy(sc, src, dst, amount)
 	struct dp8390_softc *sc;
 	int src;
-	caddr_t dst;
+	void *dst;
 	u_short amount;
 {
 	bus_space_tag_t buft = sc->sc_buft;
@@ -1204,7 +1204,7 @@ dp8390_ring_copy(sc, src, dst, amount)
 
 		amount -= tmp_amount;
 		src = sc->mem_ring;
-		dst += tmp_amount;
+		dst = (char *)dst + tmp_amount;
 	}
 	bus_space_read_region_1(buft, bufh, src, dst, amount);
 

@@ -1,6 +1,6 @@
 #undef DEBUG_DARWIN
 #undef DEBUG_MACH
-/*	$NetBSD: darwin_mman.c,v 1.22 2007/02/09 21:55:16 ad Exp $ */
+/*	$NetBSD: darwin_mman.c,v 1.22.2.1 2007/03/12 05:51:55 rmind Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_mman.c,v 1.22 2007/02/09 21:55:16 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_mman.c,v 1.22.2.1 2007/03/12 05:51:55 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -74,9 +74,9 @@ darwin_sys_load_shared_file(l, v, retval)
 {
 	struct darwin_sys_load_shared_file_args /* {
 		syscallarg(char *) filename;
-		syscallarg(caddr_t) addr;
+		syscallarg(void *) addr;
 		syscallarg(u_long) len;
-		syscallarg(caddr_t *) base;
+		syscallarg(void **) base;
 		syscallarg(int) count:
 		syscallarg(mach_sf_mapping_t *) mappings;
 		syscallarg(int *) flags;

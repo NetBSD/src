@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.11 2007/02/09 21:55:14 ad Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.11.2.1 2007/03/12 05:51:48 rmind Exp $	*/
 /*	NetBSD: sys_machdep.c,v 1.70 2003/10/27 14:11:47 junyoung Exp 	*/
 
 /*-
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.11 2007/02/09 21:55:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.11.2.1 2007/03/12 05:51:48 rmind Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_mtrr.h"
@@ -321,7 +321,7 @@ i386_set_ldt(l, args, retval)
 		}
 
 		memcpy(new_ldt, old_ldt, old_len);
-		memset((caddr_t)new_ldt + old_len, 0, new_len - old_len);
+		memset((void *)new_ldt + old_len, 0, new_len - old_len);
 
 		if (old_ldt != ldt)
 			uvm_km_free(kernel_map, (vaddr_t)old_ldt, old_len,

@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_irq.S,v 1.9 2006/03/05 11:30:58 peter Exp $	*/
+/*	$NetBSD: sa11x0_irq.S,v 1.9.20.1 2007/03/12 05:47:08 rmind Exp $	*/
 
 /*
  * Copyright (c) 1998 Mark Brinicombe.
@@ -66,6 +66,8 @@ _C_LABEL(saipic_base):
 Ldbg_str:
 	.asciz	"irq_entry %x %x\n"
 #endif
+
+LOCK_CAS_CHECK_LOCALS
 
 AST_ALIGNMENT_FAULT_LOCALS
 
@@ -243,6 +245,8 @@ nextirq:
 	ldr	r1, [r0]
 	sub	r1, r1, #1
 	str	r1, [r0]
+
+	LOCK_CAS_CHECK
 
 	DO_AST_AND_RESTORE_ALIGNMENT_FAULTS
 	PULLFRAMEFROMSVCANDEXIT

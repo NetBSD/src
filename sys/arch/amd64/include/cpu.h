@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.14.2.1 2007/03/03 15:42:49 yamt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.14.2.2 2007/03/12 05:46:36 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -102,7 +102,7 @@ struct cpu_info {
 	u_int32_t	ci_signature;
 	u_int64_t	ci_tsc_freq;
 
-	struct cpu_functions *ci_func;
+	const struct cpu_functions *ci_func;
 	void (*cpu_setup) __P((struct cpu_info *));
 	void (*ci_info) __P((struct cpu_info *));
 
@@ -271,7 +271,7 @@ void cpu_init_msrs __P((struct cpu_info *));
 
 
 /* vm_machdep.c */
-int kvtop __P((caddr_t));
+int kvtop __P((void *));
 
 /* trap.c */
 void	child_return __P((void *));

@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.13 2005/12/11 12:19:20 christos Exp $ */
+/*	$NetBSD: fb.c,v 1.13.26.1 2007/03/12 05:51:05 rmind Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fb.c,v 1.13 2005/12/11 12:19:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fb.c,v 1.13.26.1 2007/03/12 05:51:05 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,7 +103,7 @@ fbclose(dev_t dev, int flags, int mode, struct lwp *l)
 }
 
 int 
-fbioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct lwp *l)
+fbioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 {
 	return (fbioctlfb(devfb, cmd, data));
 }
@@ -118,7 +118,7 @@ fbmmap(dev_t dev, off_t off, int prot)
  * Common fb ioctl function
  */
 int 
-fbioctlfb(struct fbdevice *fb, u_long cmd, caddr_t data)
+fbioctlfb(struct fbdevice *fb, u_long cmd, void *data)
 {
 	struct fbdriver *fbd = fb->fb_driver;
 	void *vp = (void *)data;

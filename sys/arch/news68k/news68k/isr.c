@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.14 2007/02/16 21:46:27 tsutsui Exp $	*/
+/*	$NetBSD: isr.c,v 1.14.2.1 2007/03/12 05:49:40 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -46,15 +46,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.14 2007/02/16 21:46:27 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.14.2.1 2007/03/12 05:49:40 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
 
 #include <uvm/uvm_extern.h>
-
-#include <net/netisr.h>
 
 #include <machine/cpu.h>
 #include <machine/intr.h>
@@ -297,28 +295,6 @@ get_vector_entry(int entry)
 	return (void *)vectab[entry];
 }
 
-void
-netintr(void)
-{
-	int s, isr;
-
-	s = splnet();
-	isr = netisr;
-	netisr = 0;
-	splx(s);
-
-#define DONETISR(bit, fn) do {		\
-	if (isr & (1 << bit)) {		\
-		fn();			\
-	}				\
-} while (0)
-
-#include <net/netisr_dispatch.h>
-
-#undef DONETISR
-
-}
-
 static const int ipl2psl_table[] = {
 	[IPL_NONE] = PSL_IPL0,
 	[IPL_SOFT] = PSL_IPL2,
@@ -333,8 +309,6 @@ static const int ipl2psl_table[] = {
 	[IPL_SERIAL] = PSL_IPL5,
 	[IPL_CLOCK] = PSL_IPL6,
 	[IPL_HIGH] = PSL_IPL7,
-	[IPL_SCHED] = PSL_IPL7,
-	[IPL_LOCK] = PSL_IPL7,
 };
 
 ipl_cookie_t

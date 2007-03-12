@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup.c,v 1.34 2007/02/09 21:55:04 ad Exp $	*/
+/*	$NetBSD: acpi_wakeup.c,v 1.34.2.1 2007/03/12 05:48:18 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.34 2007/02/09 21:55:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.34.2.1 2007/03/12 05:48:18 rmind Exp $");
 
 /*-
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
@@ -112,7 +112,7 @@ acpi_md_get_npages_of_wakecode(void)
 void
 acpi_md_install_wakecode(paddr_t pa)
 {
-	bcopy(wakecode, (caddr_t)pa, sizeof(wakecode));
+	bcopy(wakecode, (void *)pa, sizeof(wakecode));
 	phys_wakeup = pa;
 	aprint_verbose("acpi: wakecode is installed at 0x%lX, size=%u\n",
 	       pa, sizeof(wakecode));

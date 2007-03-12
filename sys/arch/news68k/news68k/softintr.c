@@ -1,4 +1,4 @@
-/*	$NetBSD: softintr.c,v 1.2 2007/02/10 13:08:30 tsutsui Exp $	*/
+/*	$NetBSD: softintr.c,v 1.2.2.1 2007/03/12 05:49:40 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -52,6 +52,8 @@ __KERNEL_RCSID(0, "$NetBSD");
 #include <sys/sched.h>
 #include <sys/vmmeter.h>
 
+#include <net/netisr.h>
+
 #include <uvm/uvm_extern.h>
 
 #include <machine/cpu.h>
@@ -64,6 +66,8 @@ struct news68k_soft_intrhand	*softnet_intrhand;
 static struct news68k_soft_intr news68k_soft_intrs[SI_NQUEUES];
 
 extern void _softintr(void);	/* locore.s */
+
+static void netintr(void);
 
 static inline int
 ssir_pending(volatile unsigned char *ssptr)
@@ -218,4 +222,27 @@ softintr_disestablish(void *arg)
 	splx(s);
 
 	free(sih, M_DEVBUF);
+}
+
+void
+netintr(void)
+{
+	int s, isr;
+
+	s = splnet();
+	isr = netisr;
+	netisr = 0;
+	splx(s);
+
+#define DONETISR(bit, func)						\
+	do {								\
+		if (isr & (1 << bit)) {					\
+			func();						\
+		}							\
+	} while (/* CONSTCOND */0)
+
+#include <net/netisr_dispatch.h>
+
+#undef DONETISR
+
 }

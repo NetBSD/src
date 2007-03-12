@@ -1,4 +1,4 @@
-/*	$NetBSD: athioctl.h,v 1.13 2006/10/07 20:54:40 gdt Exp $	*/
+/*	$NetBSD: athioctl.h,v 1.13.4.1 2007/03/12 05:53:26 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -121,8 +121,8 @@ struct ath_diag {
 #define	ATH_DIAG_OUT	0x0000		/* copy out results (always) */
 #define	ATH_DIAG_ID	0x0fff
 	u_int16_t ad_in_size;		/* pack to fit, yech */
-	caddr_t	ad_in_data;
-	caddr_t	ad_out_data;
+	void *	ad_in_data;
+	void *	ad_out_data;
 	u_int	ad_out_size;
 
 };

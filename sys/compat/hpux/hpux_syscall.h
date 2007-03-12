@@ -1,4 +1,4 @@
-/* $NetBSD: hpux_syscall.h,v 1.38 2006/06/26 21:30:50 mrg Exp $ */
+/* $NetBSD: hpux_syscall.h,v 1.38.10.1 2007/03/12 05:51:59 rmind Exp $ */
 
 /*
  * System call numbers.
@@ -100,10 +100,10 @@
 /* syscall: "utime_6x" ret: "int" args: "char *" "time_t *" */
 #define	HPUX_SYS_utime_6x	30
 
-/* syscall: "stty_6x" ret: "int" args: "int" "caddr_t" */
+/* syscall: "stty_6x" ret: "int" args: "int" "void *" */
 #define	HPUX_SYS_stty_6x	31
 
-/* syscall: "gtty_6x" ret: "int" args: "int" "caddr_t" */
+/* syscall: "gtty_6x" ret: "int" args: "int" "void *" */
 #define	HPUX_SYS_gtty_6x	32
 
 /* syscall: "access" ret: "int" args: "const char *" "int" */
@@ -139,7 +139,7 @@
 /* syscall: "times_6x" ret: "int" args: "struct tms *" */
 #define	HPUX_SYS_times_6x	43
 
-/* syscall: "profil" ret: "int" args: "caddr_t" "u_int" "u_int" "u_int" */
+/* syscall: "profil" ret: "int" args: "void *" "u_int" "u_int" "u_int" */
 #define	HPUX_SYS_profil	44
 
 /* syscall: "setgid" ret: "int" args: "gid_t" */
@@ -151,7 +151,7 @@
 /* syscall: "ssig_6x" ret: "int" args: "int" "sig_t" */
 #define	HPUX_SYS_ssig_6x	48
 
-/* syscall: "ioctl" ret: "int" args: "int" "int" "caddr_t" */
+/* syscall: "ioctl" ret: "int" args: "int" "int" "void *" */
 #define	HPUX_SYS_ioctl	54
 
 /* syscall: "symlink" ret: "int" args: "const char *" "const char *" */
@@ -187,13 +187,13 @@
 /* syscall: "vwrite" ret: "int" args: "int" "char *" "u_int" */
 #define	HPUX_SYS_vwrite	68
 
-/* syscall: "mmap" ret: "int" args: "caddr_t" "size_t" "int" "int" "int" "long" */
+/* syscall: "mmap" ret: "int" args: "void *" "size_t" "int" "int" "int" "long" */
 #define	HPUX_SYS_mmap	71
 
-/* syscall: "munmap" ret: "int" args: "caddr_t" "size_t" */
+/* syscall: "munmap" ret: "int" args: "void *" "size_t" */
 #define	HPUX_SYS_munmap	73
 
-/* syscall: "mprotect" ret: "int" args: "caddr_t" "size_t" "int" */
+/* syscall: "mprotect" ret: "int" args: "void *" "size_t" "int" */
 #define	HPUX_SYS_mprotect	74
 
 /* syscall: "getgroups" ret: "int" args: "u_int" "gid_t *" */
@@ -394,46 +394,46 @@
 /* syscall: "fchdir" ret: "int" args: "int" */
 #define	HPUX_SYS_fchdir	272
 
-/* syscall: "accept" ret: "int" args: "int" "caddr_t" "int *" */
+/* syscall: "accept" ret: "int" args: "int" "void *" "int *" */
 #define	HPUX_SYS_accept	275
 
-/* syscall: "bind" ret: "int" args: "int" "caddr_t" "int" */
+/* syscall: "bind" ret: "int" args: "int" "void *" "int" */
 #define	HPUX_SYS_bind	276
 
-/* syscall: "connect" ret: "int" args: "int" "caddr_t" "int" */
+/* syscall: "connect" ret: "int" args: "int" "void *" "int" */
 #define	HPUX_SYS_connect	277
 
-/* syscall: "getpeername" ret: "int" args: "int" "caddr_t" "int *" */
+/* syscall: "getpeername" ret: "int" args: "int" "void *" "int *" */
 #define	HPUX_SYS_getpeername	278
 
-/* syscall: "getsockname" ret: "int" args: "int" "caddr_t" "int *" */
+/* syscall: "getsockname" ret: "int" args: "int" "void *" "int *" */
 #define	HPUX_SYS_getsockname	279
 
-/* syscall: "getsockopt" ret: "int" args: "int" "int" "int" "caddr_t" "int *" */
+/* syscall: "getsockopt" ret: "int" args: "int" "int" "int" "void *" "int *" */
 #define	HPUX_SYS_getsockopt	280
 
 /* syscall: "listen" ret: "int" args: "int" "int" */
 #define	HPUX_SYS_listen	281
 
-/* syscall: "recv" ret: "int" args: "int" "caddr_t" "int" "int" */
+/* syscall: "recv" ret: "int" args: "int" "void *" "int" "int" */
 #define	HPUX_SYS_recv	282
 
-/* syscall: "recvfrom" ret: "int" args: "int" "caddr_t" "size_t" "int" "caddr_t" "int *" */
+/* syscall: "recvfrom" ret: "int" args: "int" "void *" "size_t" "int" "void *" "int *" */
 #define	HPUX_SYS_recvfrom	283
 
 /* syscall: "recvmsg" ret: "int" args: "int" "struct omsghdr *" "int" */
 #define	HPUX_SYS_recvmsg	284
 
-/* syscall: "send" ret: "int" args: "int" "caddr_t" "int" "int" */
+/* syscall: "send" ret: "int" args: "int" "void *" "int" "int" */
 #define	HPUX_SYS_send	285
 
-/* syscall: "sendmsg" ret: "int" args: "int" "caddr_t" "int" */
+/* syscall: "sendmsg" ret: "int" args: "int" "void *" "int" */
 #define	HPUX_SYS_sendmsg	286
 
-/* syscall: "sendto" ret: "int" args: "int" "caddr_t" "size_t" "int" "caddr_t" "int" */
+/* syscall: "sendto" ret: "int" args: "int" "void *" "size_t" "int" "void *" "int" */
 #define	HPUX_SYS_sendto	287
 
-/* syscall: "setsockopt2" ret: "int" args: "int" "int" "int" "caddr_t" "int" */
+/* syscall: "setsockopt2" ret: "int" args: "int" "int" "int" "void *" "int" */
 #define	HPUX_SYS_setsockopt2	288
 
 /* syscall: "shutdown" ret: "int" args: "int" "int" */

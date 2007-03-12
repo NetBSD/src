@@ -1,4 +1,4 @@
-/*	$NetBSD: alloc.c,v 1.3 2006/01/25 18:28:26 christos Exp $	*/
+/*	$NetBSD: alloc.c,v 1.3.24.1 2007/03/12 05:48:14 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura.
@@ -37,7 +37,7 @@
  */
 #include <stand.h>
 
-void * malloc(size_t size);
+void *malloc(size_t size);
 
 void *
 alloc(size_t size);

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.49.4.1 2007/02/27 16:51:36 yamt Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.49.4.2 2007/03/12 05:48:21 rmind Exp $	*/
 
 /*
  * Mach Operating System
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.49.4.1 2007/02/27 16:51:36 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.49.4.2 2007/03/12 05:48:21 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -222,9 +222,9 @@ kdb_trap(type, code, regs)
 	ddb_regs.tf_ss &= 0xffff;
 	s = splhigh();
 	db_active++;
-	cnpollc(TRUE);
+	cnpollc(true);
 	db_trap(type, code);
-	cnpollc(FALSE);
+	cnpollc(false);
 	db_active--;
 	splx(s);
 #ifdef MULTIPROCESSOR

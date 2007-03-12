@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.2.26.1 2007/02/27 16:52:32 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.2.26.2 2007/03/12 05:49:49 rmind Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -82,7 +82,7 @@ void
 pmap_bootstrap()
 {
 	int i, guardpage;
-	extern caddr_t msgbufaddr;
+	extern void *msgbufaddr;
 	TUNION uu;
 
 	/*

@@ -1,4 +1,4 @@
-/* $NetBSD: au_himem_space.c,v 1.5.20.1 2007/02/27 16:52:00 yamt Exp $ */
+/* $NetBSD: au_himem_space.c,v 1.5.20.2 2007/03/12 05:49:20 rmind Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: au_himem_space.c,v 1.5.20.1 2007/02/27 16:52:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: au_himem_space.c,v 1.5.20.2 2007/03/12 05:49:20 rmind Exp $");
 
 /*
  * This provides mappings for the upper I/O regions used on some
@@ -288,7 +288,7 @@ au_himem_unmap(void *cookie, bus_space_handle_t bsh, bus_size_t size, int acct)
 	 * extent manager.  this is the unfortunate thing about using
 	 * virtual memory instead of just a 1:1 mapping scheme.
 	 */
-	if (pmap_extract(pmap_kernel(), va, &pa) == FALSE)
+	if (pmap_extract(pmap_kernel(), va, &pa) == false)
 		panic("au_himem_unmap: virtual address invalid!");
 
 	/* now remove it from the pmap */

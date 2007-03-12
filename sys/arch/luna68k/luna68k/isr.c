@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.9 2006/12/21 15:55:23 yamt Exp $	*/
+/*	$NetBSD: isr.c,v 1.9.2.1 2007/03/12 05:48:44 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.9 2006/12/21 15:55:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.9.2.1 2007/03/12 05:48:44 rmind Exp $");
 
 /*
  * Link and dispatch interrupts.
@@ -296,17 +296,19 @@ netintr()
 
 }
 
-const int ipl2spl_table[NIPLS] = {
-	[IPL_NONE] = PSL_S|PSL_IPL0,
-	[IPL_SOFTCLOCK] = PSL_S|PSL_IPL1,
-	[IPL_SOFTNET] = PSL_S|PSL_IPL1,
-	[IPL_BIO] = PSL_S|PSL_IPL2,
-	[IPL_NET] = PSL_S|PSL_IPL3,
-	[IPL_CLOCK] = PSL_S|PSL_IPL5,
-	[IPL_STATCLOCK] = PSL_S|PSL_IPL5,
-	[IPL_TTY] = PSL_S|PSL_IPL6,
-	[IPL_VM] = PSL_S|PSL_IPL7,
-	[IPL_SCHED] = PSL_S|PSL_IPL7,
-	[IPL_HIGH] = PSL_S|PSL_IPL7,
-	[IPL_LOCK] = PSL_S|PSL_IPL7,
+const int ipl2spl_table[NIPL] = {
+	[IPL_NONE]       = PSL_S|PSL_IPL0,
+	[IPL_SOFTCLOCK]  = PSL_S|PSL_IPL1,
+	[IPL_SOFTNET]    = PSL_S|PSL_IPL1,
+	[IPL_SOFTSERIAL] = PSL_S|PSL_IPL1,
+	[IPL_SOFT]       = PSL_S|PSL_IPL1,
+	[IPL_BIO]        = PSL_S|PSL_IPL2,
+	[IPL_NET]        = PSL_S|PSL_IPL3,
+	[IPL_CLOCK]      = PSL_S|PSL_IPL5,
+	[IPL_STATCLOCK]  = PSL_S|PSL_IPL5,
+	[IPL_TTY]        = PSL_S|PSL_IPL6,
+	[IPL_VM]         = PSL_S|PSL_IPL7,
+	[IPL_SCHED]      = PSL_S|PSL_IPL7,
+	[IPL_HIGH]       = PSL_S|PSL_IPL7,
+	[IPL_LOCK]       = PSL_S|PSL_IPL7,
 };

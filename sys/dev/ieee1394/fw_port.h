@@ -1,4 +1,4 @@
-/*	$NetBSD: fw_port.h,v 1.20 2006/11/16 01:32:59 christos Exp $	*/
+/*	$NetBSD: fw_port.h,v 1.20.4.1 2007/03/12 05:54:45 rmind Exp $	*/
 /*
  * Copyright (c) 2004 KIYOHARA Takashi
  * All rights reserved.
@@ -158,7 +158,7 @@ typedef struct proc fw_proc;
 #define FW_IOCTL(dname)					\
 	int						\
 	__CONCAT(dname,_ioctl)				\
-	    (DEV_T dev, u_long cmd, caddr_t data, int flag, fw_proc *td)
+	    (DEV_T dev, u_long cmd, void *data, int flag, fw_proc *td)
 #define FW_IOCTL_START			\
 	int unit = DEV2UNIT(dev);       \
 	__attribute__((__unused__))struct firewire_softc *sc = \
@@ -671,7 +671,7 @@ struct fwbus_attach_args {
 #define FW_IOCTL(dname)					\
 	int						\
 	__CONCAT(dname,_ioctl)				\
-	    (dev_t _dev, u_long cmd, caddr_t data,	\
+	    (dev_t _dev, u_long cmd, void *data,	\
 	    int flag, fw_proc *td)
 #define FW_IOCTL_START					\
 	int unit = DEV2UNIT(_dev);			\
@@ -1232,7 +1232,7 @@ fw_bus_dmamem_alloc(fw_bus_dma_tag_t ft, void **vp, int f, bus_dmamap_t *mp)
 	    BUS_DMA_BUS1 | BUS_DMA_BUS2 | BUS_DMA_BUS3 | BUS_DMA_BUS4 |
 	    BUS_DMA_COHERENT | BUS_DMA_NOCACHE);
 	err = bus_dmamem_map(ft->tag,
-	    &segs, nsegs, ft->size, (caddr_t *)vp, mf);
+	    &segs, nsegs, ft->size, (void **)vp, mf);
 	if (err) {
 		printf("fw_bus_dmamem_alloc: failed(2)\n");
 		bus_dmamem_free(ft->tag, &segs, nsegs);
@@ -1248,7 +1248,7 @@ fw_bus_dmamem_alloc(fw_bus_dma_tag_t ft, void **vp, int f, bus_dmamap_t *mp)
 	    ft->size, nsegs, ft->maxsegsz, ft->boundary, cf, mp);
 	if (err) {
 		printf("fw_bus_dmamem_alloc: failed(3)\n");
-		bus_dmamem_unmap(ft->tag, (caddr_t)*vp, ft->size);
+		bus_dmamem_unmap(ft->tag, (void *)*vp, ft->size);
 		bus_dmamem_free(ft->tag, &segs, nsegs);\
 	}
 
@@ -1284,6 +1284,6 @@ fw_bus_dmamem_alloc(fw_bus_dma_tag_t ft, void **vp, int f, bus_dmamap_t *mp)
 #endif
 #endif
 #if defined(__NetBSD__)
-#define vm_offset_t caddr_t
+#define vm_offset_t void *
 #endif
 #endif

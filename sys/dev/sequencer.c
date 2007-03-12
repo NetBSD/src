@@ -1,4 +1,4 @@
-/*	$NetBSD: sequencer.c,v 1.39 2007/02/09 21:55:26 ad Exp $	*/
+/*	$NetBSD: sequencer.c,v 1.39.2.1 2007/03/12 05:53:06 rmind Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.39 2007/02/09 21:55:26 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.39.2.1 2007/03/12 05:53:06 rmind Exp $");
 
 #include "sequencer.h"
 
@@ -460,7 +460,7 @@ sequencerwrite(dev_t dev, struct uio *uio, int ioflag)
 }
 
 static int
-sequencerioctl(dev_t dev, u_long cmd, caddr_t addr, int flag,
+sequencerioctl(dev_t dev, u_long cmd, void *addr, int flag,
     struct lwp *l)
 {
 	struct sequencer_softc *sc = &seqdevs[SEQUENCERUNIT(dev)];
@@ -529,10 +529,10 @@ sequencerioctl(dev_t dev, u_long cmd, caddr_t addr, int flag,
 
 	case SEQUENCER_OUTOFBAND:
 		DPRINTFN(3, ("sequencer_ioctl: OOB=%02x %02x %02x %02x %02x %02x %02x %02x\n",
-			     *(u_char *)addr, *(u_char *)(addr+1),
-			     *(u_char *)(addr+2), *(u_char *)(addr+3),
-			     *(u_char *)(addr+4), *(u_char *)(addr+5),
-			     *(u_char *)(addr+6), *(u_char *)(addr+7)));
+			     *(u_char *)addr, *((u_char *)addr+1),
+			     *((u_char *)addr+2), *((u_char *)addr+3),
+			     *((u_char *)addr+4), *((u_char *)addr+5),
+			     *((u_char *)addr+6), *((u_char *)addr+7)));
 		if ( !(sc->flags & FWRITE ) )
 		        return EBADF;
 		error = seq_do_command(sc, (seq_event_t *)addr);

@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx.c,v 1.36 2006/11/16 01:32:50 christos Exp $	*/
+/*	$NetBSD: aic79xx.c,v 1.36.4.1 2007/03/12 05:53:25 rmind Exp $	*/
 
 /*
  * Core routines and tables shareable across OS platforms.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic79xx.c,v 1.36 2006/11/16 01:32:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic79xx.c,v 1.36.4.1 2007/03/12 05:53:25 rmind Exp $");
 
 #include <dev/ic/aic79xx_osm.h>
 #include <dev/ic/aic79xx_inline.h>
@@ -251,7 +251,7 @@ static int ahd_createdmamem(bus_dma_tag_t tag,
 			    int size,
 			    int flags,
 			    bus_dmamap_t *mapp,
-			    caddr_t *vaddr,
+			    void **vaddr,
 			    bus_addr_t *baddr,
 			    bus_dma_segment_t *seg,
 			    int *nseg,
@@ -260,7 +260,7 @@ static int ahd_createdmamem(bus_dma_tag_t tag,
 static void ahd_freedmamem(bus_dma_tag_t tag,
 			   int size,
 			   bus_dmamap_t map,
-			   caddr_t vaddr,
+			   void *vaddr,
 			   bus_dma_segment_t *seg,
 			   int nseg);
 
@@ -5171,7 +5171,7 @@ ahd_free(struct ahd_softc *ahd)
 	case 1:
 	  	bus_dmamap_unload(ahd->parent_dmat, ahd->shared_data_map.dmamap);
 		bus_dmamap_destroy(ahd->parent_dmat, ahd->shared_data_map.dmamap);
-		bus_dmamem_unmap(ahd->parent_dmat, (caddr_t)ahd->qoutfifo, ahd->shared_data_size);
+		bus_dmamem_unmap(ahd->parent_dmat, (void *)ahd->qoutfifo, ahd->shared_data_size);
 		bus_dmamem_free(ahd->parent_dmat, &ahd->shared_data_map.dmasegs, ahd->shared_data_map.nseg);
 		break;
 	case 0:
@@ -5508,7 +5508,7 @@ ahd_fini_scbdata(struct ahd_softc *ahd)
 		while ((sns_map = SLIST_FIRST(&scb_data->sense_maps)) != NULL) {
 			SLIST_REMOVE_HEAD(&scb_data->sense_maps, links);
 			ahd_freedmamem(ahd->parent_dmat, PAGE_SIZE,
-				       sns_map->dmamap, (caddr_t)sns_map->vaddr,
+				       sns_map->dmamap, (void *)sns_map->vaddr,
 				       &sns_map->dmasegs, sns_map->nseg);
 			free(sns_map, M_DEVBUF);
 		}
@@ -5521,7 +5521,7 @@ ahd_fini_scbdata(struct ahd_softc *ahd)
 		while ((sg_map = SLIST_FIRST(&scb_data->sg_maps)) != NULL) {
 			SLIST_REMOVE_HEAD(&scb_data->sg_maps, links);
 			ahd_freedmamem(ahd->parent_dmat, ahd_sglist_allocsize(ahd),
-				       sg_map->dmamap, (caddr_t)sg_map->vaddr,
+				       sg_map->dmamap, (void *)sg_map->vaddr,
 				       &sg_map->dmasegs, sg_map->nseg);
 			free(sg_map, M_DEVBUF);
 		}
@@ -5534,7 +5534,7 @@ ahd_fini_scbdata(struct ahd_softc *ahd)
 		while ((hscb_map = SLIST_FIRST(&scb_data->hscb_maps)) != NULL) {
 			SLIST_REMOVE_HEAD(&scb_data->hscb_maps, links);
 			ahd_freedmamem(ahd->parent_dmat, PAGE_SIZE,
-				       hscb_map->dmamap, (caddr_t)hscb_map->vaddr,
+				       hscb_map->dmamap, (void *)hscb_map->vaddr,
 				       &hscb_map->dmasegs, hscb_map->nseg);
 			free(hscb_map, M_DEVBUF);
 		}
@@ -5772,7 +5772,7 @@ ahd_alloc_scbs(struct ahd_softc *ahd)
 
 		/* Allocate the next batch of hardware SCBs */
 		if (ahd_createdmamem(ahd->parent_dmat, PAGE_SIZE, ahd->sc_dmaflags,
-				     &hscb_map->dmamap, (caddr_t *)&hscb_map->vaddr,
+				     &hscb_map->dmamap, (void **)&hscb_map->vaddr,
 				     &hscb_map->physaddr, &hscb_map->dmasegs,
 				     &hscb_map->nseg, ahd_name(ahd),
 				     "hardware SCB structures") < 0) {
@@ -5807,7 +5807,7 @@ ahd_alloc_scbs(struct ahd_softc *ahd)
 
 		/* Allocate the next batch of S/G lists */
 		if (ahd_createdmamem(ahd->parent_dmat, ahd_sglist_allocsize(ahd), ahd->sc_dmaflags,
-				     &sg_map->dmamap, (caddr_t *)&sg_map->vaddr,
+				     &sg_map->dmamap, (void **)&sg_map->vaddr,
 				     &sg_map->physaddr, &sg_map->dmasegs,
 				     &sg_map->nseg, ahd_name(ahd),
 				     "SG data structures") < 0) {
@@ -5847,7 +5847,7 @@ ahd_alloc_scbs(struct ahd_softc *ahd)
 
 		/* Allocate the next batch of sense buffers */
 		if (ahd_createdmamem(ahd->parent_dmat, PAGE_SIZE, ahd->sc_dmaflags,
-				     &sense_map->dmamap, (caddr_t *)&sense_map->vaddr,
+				     &sense_map->dmamap, (void **)&sense_map->vaddr,
 				     &sense_map->physaddr, &sense_map->dmasegs,
 				     &sense_map->nseg, ahd_name(ahd),
 				     "Sense Data structures") < 0) {
@@ -6055,7 +6055,7 @@ ahd_init(struct ahd_softc *ahd)
 
 	if (ahd_createdmamem(ahd->parent_dmat, ahd->shared_data_size,
 			     ahd->sc_dmaflags,
-			     &ahd->shared_data_map.dmamap, (caddr_t *)&ahd->shared_data_map.vaddr,
+			     &ahd->shared_data_map.dmamap, (void **)&ahd->shared_data_map.vaddr,
 			     &ahd->shared_data_map.physaddr, &ahd->shared_data_map.dmasegs,
 			     &ahd->shared_data_map.nseg, ahd_name(ahd), "shared data") < 0)
 		return (ENOMEM);
@@ -9720,7 +9720,7 @@ ahd_createdmamem(tag, size, flags, mapp, vaddr, baddr, seg, nseg, myname, what)
 	int size;
 	int flags;
 	bus_dmamap_t *mapp;
-	caddr_t *vaddr;
+	void **vaddr;
 	bus_addr_t *baddr;
 	bus_dma_segment_t *seg;
 	int *nseg;
@@ -9787,7 +9787,7 @@ ahd_freedmamem(tag, size, map, vaddr, seg, nseg)
 	bus_dma_tag_t tag;
 	int size;
 	bus_dmamap_t map;
-	caddr_t vaddr;
+	void *vaddr;
 	bus_dma_segment_t *seg;
 	int nseg;
 {

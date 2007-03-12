@@ -1,4 +1,4 @@
-/*	$NetBSD: biconsdev.c,v 1.17 2006/10/01 19:28:43 elad Exp $	*/
+/*	$NetBSD: biconsdev.c,v 1.17.4.1 2007/03/12 05:53:22 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: biconsdev.c,v 1.17 2006/10/01 19:28:43 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: biconsdev.c,v 1.17.4.1 2007/03/12 05:53:22 rmind Exp $");
 
 #include "biconsdev.h"
 #include <sys/param.h>
@@ -156,7 +156,7 @@ biconsdev_output(struct tty *tp)
 	if (tp->t_outq.c_cc <= tp->t_lowat) {
 		if (tp->t_state&TS_ASLEEP) {
 			tp->t_state &= ~TS_ASLEEP;
-			wakeup((caddr_t)&tp->t_outq);
+			wakeup((void *)&tp->t_outq);
 		}
 		selwakeup(&tp->t_wsel);
 	}
@@ -240,7 +240,7 @@ biconsdevtty(dev_t dev)
 }
 
 int
-biconsdevioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+biconsdevioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct tty *tp = &biconsdev_tty[0];
 	int error;

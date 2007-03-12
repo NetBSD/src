@@ -1,4 +1,4 @@
-/*	$NetBSD: tctrl.c,v 1.36 2007/01/04 17:50:00 elad Exp $	*/
+/*	$NetBSD: tctrl.c,v 1.36.2.1 2007/03/12 05:50:29 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2005, 2006 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tctrl.c,v 1.36 2007/01/04 17:50:00 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tctrl.c,v 1.36.2.1 2007/03/12 05:50:29 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1095,7 +1095,7 @@ tctrlclose(dev_t dev, int flags, int mode, struct lwp *l)
 }
 
 int
-tctrlioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct lwp *l)
+tctrlioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 {
 	struct tctrl_req req, *reqn;
 	struct tctrl_pwr *pwrreq;

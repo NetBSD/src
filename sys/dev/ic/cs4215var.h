@@ -1,7 +1,7 @@
-/*	$NetBSD: cs4215var.h,v 1.2 2005/12/11 12:21:26 christos Exp $	*/
+/*	$NetBSD: cs4215var.h,v 1.2.28.1 2007/03/12 05:53:29 rmind Exp $	*/
 
 /*
- * Copyright (c) 2001 Jared D. McNeill <jmcneill@invisible.yi.org>
+ * Copyright (c) 2001 Jared D. McNeill <jmcneill@NetBSD.org>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -37,9 +37,15 @@
 #include <sys/types.h>
 
 struct cs4215_state {
-	volatile u_int8_t	data[4];
-	volatile u_int8_t	control[4];
-	volatile u_int8_t	onboard, offset;
-	volatile u_int32_t	status;
-	volatile u_int32_t	version;
+	union {
+		volatile uint32_t	ldata;
+		volatile uint8_t	bdata[4];
+	} d;
+	union {
+		volatile uint32_t	lcontrol;
+		volatile uint8_t	bcontrol[4];
+	} c;
+	volatile uint8_t	onboard, offset;
+	volatile uint32_t	status;
+	volatile uint32_t	version;
 };

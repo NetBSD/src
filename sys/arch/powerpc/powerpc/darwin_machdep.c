@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_machdep.c,v 1.19 2005/12/11 12:18:46 christos Exp $ */
+/*	$NetBSD: darwin_machdep.c,v 1.19.26.1 2007/03/12 05:50:08 rmind Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_machdep.c,v 1.19 2005/12/11 12:18:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_machdep.c,v 1.19.26.1 2007/03/12 05:50:08 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,7 +96,7 @@ darwin_sendsig(ksi, mask)
 	/* Set the new stack pointer sfp */
 	if (onstack) {
 		sfp = (struct darwin_sigframe *)
-		    ((caddr_t)p->p_sigctx.ps_sigstk.ss_sp +
+		    ((void *)p->p_sigctx.ps_sigstk.ss_sp +
 		    p->p_sigctx.ps_sigstk.ss_size);
 		stack_size = p->p_sigctx.ps_sigstk.ss_size;
 	} else {

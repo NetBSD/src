@@ -1,4 +1,4 @@
-/* $NetBSD: hd44780_subr.c,v 1.9 2006/04/12 19:38:23 jmmv Exp $ */
+/* $NetBSD: hd44780_subr.c,v 1.9.14.1 2007/03/12 05:53:32 rmind Exp $ */
 
 /*
  * Copyright (c) 2002 Dennis I. Chernoivanov
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd44780_subr.c,v 1.9 2006/04/12 19:38:23 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd44780_subr.c,v 1.9.14.1 2007/03/12 05:53:32 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,7 +88,7 @@ const struct wsdisplay_emulops hlcd_emulops = {
 	hlcd_allocattr
 };
 
-static int	hlcd_ioctl(void *, void *, u_long, caddr_t, int, struct lwp *);
+static int	hlcd_ioctl(void *, void *, u_long, void *, int, struct lwp *);
 static paddr_t	hlcd_mmap(void *, void *, off_t, int);
 static int	hlcd_alloc_screen(void *, const struct wsscreen_descr *,
 		    void **, int *, int *, long *);
@@ -232,7 +232,7 @@ hlcd_ioctl(v, vs, cmd, data, flag, l)
 	void *v;
 	void *vs;
 	u_long cmd;
-	caddr_t data;
+	void *data;
 	int flag;
 	struct lwp *l;
 {
@@ -507,7 +507,7 @@ int
 hd44780_ioctl_subr(sc, cmd, data)
 	struct hd44780_chip *sc;
 	u_long cmd;
-	caddr_t data;
+	void *data;
 {
 	u_int8_t tmp;
 	int error = 0;

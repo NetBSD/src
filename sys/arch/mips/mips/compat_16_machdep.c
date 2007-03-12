@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_16_machdep.c,v 1.8 2007/02/09 21:55:06 ad Exp $	*/
+/*	$NetBSD: compat_16_machdep.c,v 1.8.2.1 2007/03/12 05:49:22 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 	
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.8 2007/02/09 21:55:06 ad Exp $"); 
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.8.2.1 2007/03/12 05:49:22 rmind Exp $"); 
 
 #include "opt_cputype.h"
 #include "opt_compat_netbsd.h"
@@ -152,7 +152,7 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *returnmask)
 	sendsig_reset(l, sig);
 
 	mutex_exit(&p->p_smutex);
-	error = copyout(&ksc, (caddr_t)scp, sizeof(ksc));
+	error = copyout(&ksc, (void *)scp, sizeof(ksc));
 	mutex_enter(&p->p_smutex);
 
 	if (error != 0) {

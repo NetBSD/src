@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.81.2.1 2007/02/27 16:53:53 yamt Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.81.2.2 2007/03/12 05:53:42 rmind Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -157,7 +157,7 @@ static void re_rxeof(struct rtk_softc *);
 static void re_txeof(struct rtk_softc *);
 static void re_tick(void *);
 static void re_start(struct ifnet *);
-static int re_ioctl(struct ifnet *, u_long, caddr_t);
+static int re_ioctl(struct ifnet *, u_long, void *);
 static int re_init(struct ifnet *);
 static void re_stop(struct ifnet *, int);
 static void re_watchdog(struct ifnet *);
@@ -649,7 +649,7 @@ re_attach(struct rtk_softc *sc)
 	/* Load the map for the TX ring. */
 	if ((error = bus_dmamem_map(sc->sc_dmat, &sc->re_ldata.re_tx_listseg,
 	    sc->re_ldata.re_tx_listnseg, RE_TX_LIST_SZ(sc),
-	    (caddr_t *)&sc->re_ldata.re_tx_list,
+	    (void **)&sc->re_ldata.re_tx_list,
 	    BUS_DMA_COHERENT | BUS_DMA_NOWAIT)) != 0) {
 		aprint_error("%s: can't map tx list, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
@@ -700,7 +700,7 @@ re_attach(struct rtk_softc *sc)
 	/* Load the map for the RX ring. */
 	if ((error = bus_dmamem_map(sc->sc_dmat, &sc->re_ldata.re_rx_listseg,
 	    sc->re_ldata.re_rx_listnseg, RE_RX_DMAMEM_SZ,
-	    (caddr_t *)&sc->re_ldata.re_rx_list,
+	    (void **)&sc->re_ldata.re_rx_list,
 	    BUS_DMA_COHERENT | BUS_DMA_NOWAIT)) != 0) {
 		aprint_error("%s: can't map rx list, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
@@ -824,7 +824,7 @@ re_attach(struct rtk_softc *sc)
 	bus_dmamap_destroy(sc->sc_dmat, sc->re_ldata.re_rx_list_map);
  fail_6:
 	bus_dmamem_unmap(sc->sc_dmat,
-	    (caddr_t)sc->re_ldata.re_rx_list, RE_RX_DMAMEM_SZ);
+	    (void *)sc->re_ldata.re_rx_list, RE_RX_DMAMEM_SZ);
  fail_5:
 	bus_dmamem_free(sc->sc_dmat,
 	    &sc->re_ldata.re_rx_listseg, sc->re_ldata.re_rx_listnseg);
@@ -842,7 +842,7 @@ re_attach(struct rtk_softc *sc)
 	bus_dmamap_destroy(sc->sc_dmat, sc->re_ldata.re_tx_list_map);
  fail_2:
 	bus_dmamem_unmap(sc->sc_dmat,
-	    (caddr_t)sc->re_ldata.re_tx_list, RE_TX_LIST_SZ(sc));
+	    (void *)sc->re_ldata.re_tx_list, RE_TX_LIST_SZ(sc));
  fail_1:
 	bus_dmamem_free(sc->sc_dmat,
 	    &sc->re_ldata.re_tx_listseg, sc->re_ldata.re_tx_listnseg);
@@ -914,7 +914,7 @@ re_detach(struct rtk_softc *sc)
 	bus_dmamap_unload(sc->sc_dmat, sc->re_ldata.re_rx_list_map);
 	bus_dmamap_destroy(sc->sc_dmat, sc->re_ldata.re_rx_list_map);
 	bus_dmamem_unmap(sc->sc_dmat,
-	    (caddr_t)sc->re_ldata.re_rx_list, RE_RX_DMAMEM_SZ);
+	    (void *)sc->re_ldata.re_rx_list, RE_RX_DMAMEM_SZ);
 	bus_dmamem_free(sc->sc_dmat,
 	    &sc->re_ldata.re_rx_listseg, sc->re_ldata.re_rx_listnseg);
 
@@ -928,7 +928,7 @@ re_detach(struct rtk_softc *sc)
 	bus_dmamap_unload(sc->sc_dmat, sc->re_ldata.re_tx_list_map);
 	bus_dmamap_destroy(sc->sc_dmat, sc->re_ldata.re_tx_list_map);
 	bus_dmamem_unmap(sc->sc_dmat,
-	    (caddr_t)sc->re_ldata.re_tx_list, RE_TX_LIST_SZ(sc));
+	    (void *)sc->re_ldata.re_tx_list, RE_TX_LIST_SZ(sc));
 	bus_dmamem_free(sc->sc_dmat,
 	    &sc->re_ldata.re_tx_listseg, sc->re_ldata.re_tx_listnseg);
 
@@ -1977,7 +1977,7 @@ re_ifmedia_sts(struct ifnet *ifp, struct ifmediareq *ifmr)
 }
 
 static int
-re_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
+re_ioctl(struct ifnet *ifp, u_long command, void *data)
 {
 	struct rtk_softc	*sc = ifp->if_softc;
 	struct ifreq		*ifr = (struct ifreq *) data;

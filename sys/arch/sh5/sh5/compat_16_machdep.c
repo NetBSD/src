@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_16_machdep.c,v 1.3 2007/02/09 21:55:12 ad Exp $	*/
+/*	$NetBSD: compat_16_machdep.c,v 1.3.2.1 2007/03/12 05:50:16 rmind Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.3 2007/02/09 21:55:12 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.3.2.1 2007/03/12 05:50:16 rmind Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -81,11 +81,11 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *returnmask)
 	rndfsize = ((fsize + 15) / 16) * 16;
 
 	if (onstack)
-		scp = (struct sigcontext *)((caddr_t)p->p_sigctx.ps_sigstk.ss_sp
+		scp = (struct sigcontext *)((void *)p->p_sigctx.ps_sigstk.ss_sp
 		    + p->p_sigctx.ps_sigstk.ss_size);
 	else
 		scp = (struct sigcontext *)(intptr_t)tf->tf_caller.r15;
-	scp = (struct sigcontext *)((caddr_t)scp - rndfsize);
+	scp = (struct sigcontext *)((void *)scp - rndfsize);
 
 	process_read_regs(l, &ksc.sc_regs);
 	ksc.sc_regs.r_regs[24] = 0xACEBABE5ULL;	/* magic number */
@@ -110,7 +110,7 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *returnmask)
 	/* Save signal mask */
 	ksc.sc_mask = *returnmask;
 
-	if (copyout(&ksc, (caddr_t)scp, fsize) != 0) {
+	if (copyout(&ksc, (void *)scp, fsize) != 0) {
 		/*
 		 * Process has trashed its stack; give it an illegal
 		 * instruction to halt it in its tracks.
@@ -182,7 +182,7 @@ compat_16_sys___sigreturn14(struct lwp *l, void *v, register_t *retval)
 	if (ALIGN(scp) != (intptr_t)scp)
 		return (EINVAL);
 
-	if (copyin((caddr_t)scp, &ksc, sizeof(ksc)) != 0)
+	if (copyin((void *)scp, &ksc, sizeof(ksc)) != 0)
 		return (EFAULT);
 
 	if (ksc.sc_regs.r_regs[24] != 0xACEBABE5ULL)	/* magic number */

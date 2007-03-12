@@ -1,4 +1,4 @@
-/*	$NetBSD: ct.c,v 1.47 2006/07/21 10:01:39 tsutsui Exp $	*/
+/*	$NetBSD: ct.c,v 1.47.10.1 2007/03/12 05:47:42 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ct.c,v 1.47 2006/07/21 10:01:39 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ct.c,v 1.47.10.1 2007/03/12 05:47:42 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -893,7 +893,7 @@ ctwrite(dev_t dev, struct uio *uio, int flags)
 
 /*ARGSUSED*/
 static int
-ctioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+ctioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct mtop *op;
 	int cnt;

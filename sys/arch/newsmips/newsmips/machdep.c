@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.87 2007/02/09 21:55:07 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.87.2.1 2007/03/12 05:49:42 rmind Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,7 +76,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.87 2007/02/09 21:55:07 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.87.2.1 2007/03/12 05:49:42 rmind Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -243,7 +243,7 @@ void
 mach_init(int x_boothowto, int x_bootdev, int x_bootname, int x_maxmem)
 {
 	u_long first, last;
-	caddr_t kernend, v;
+	char *kernend, *v;
 	struct btinfo_magic *bi_magic;
 	struct btinfo_bootarg *bi_arg;
 	struct btinfo_systype *bi_systype;
@@ -324,10 +324,10 @@ mach_init(int x_boothowto, int x_bootdev, int x_bootname, int x_maxmem)
 	*(int *)(MIPS_PHYS_TO_KSEG1(MACH_BOOTDEV_ADDR)) = x_bootdev;
 	*(int *)(MIPS_PHYS_TO_KSEG1(MACH_BOOTSW_ADDR)) = x_boothowto;
 
-	kernend = (caddr_t)mips_round_page(end);
+	kernend = (char *)mips_round_page(end);
 #if NKSYMS || defined(DDB) || defined(LKM)
 	if (nsym)
-		kernend = (caddr_t)mips_round_page(esym);
+		kernend = (char *)mips_round_page(esym);
 #endif
 
 	/*
@@ -399,7 +399,7 @@ mach_init(int x_boothowto, int x_bootdev, int x_bootname, int x_maxmem)
 	/*
 	 * Allocate space for lwp0's USPACE.
 	 */
-	v = (caddr_t)uvm_pageboot_alloc(USPACE);
+	v = (char *)uvm_pageboot_alloc(USPACE);
 	lwp0.l_addr = proc0paddr = (struct user *)v;
 	lwp0.l_md.md_regs = (struct frame *)(v + USPACE) - 1;
 	curpcb = &lwp0.l_addr->u_pcb;
@@ -489,12 +489,12 @@ cpu_startup(void)
 	 * limits the number of processes exec'ing at any time.
 	 */
 	exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-	    16 * NCARGS, VM_MAP_PAGEABLE, FALSE, NULL);
+	    16 * NCARGS, VM_MAP_PAGEABLE, false, NULL);
 	/*
 	 * Allocate a submap for physio
 	 */
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-	    VM_PHYS_SIZE, 0, FALSE, NULL);
+	    VM_PHYS_SIZE, 0, false, NULL);
 
 	/*
 	 * No need to allocate an mbuf cluster submap.  Mbuf clusters

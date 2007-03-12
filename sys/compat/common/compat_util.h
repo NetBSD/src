@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_util.h,v 1.16 2005/12/11 12:19:56 christos Exp $	*/
+/*	$NetBSD: compat_util.h,v 1.16.26.1 2007/03/12 05:51:52 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -76,10 +76,10 @@ struct emul_flags_xtab {
 	unsigned long nval;
 };
 
-caddr_t	stackgap_init(const struct proc *, size_t);
-void	*stackgap_alloc(const struct proc *, caddr_t *, size_t);
+void *	stackgap_init(const struct proc *, size_t);
+void	*stackgap_alloc(const struct proc *, void **, size_t);
 
-int emul_find(struct lwp *, caddr_t *, const char *, const char *,
+int emul_find(struct lwp *, void **, const char *, const char *,
 		   const char **, int);
 
 int emul_find_interp(struct lwp *, const char *, char *);

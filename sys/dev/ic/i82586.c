@@ -1,4 +1,4 @@
-/*	$NetBSD: i82586.c,v 1.57 2006/11/16 01:32:51 christos Exp $	*/
+/*	$NetBSD: i82586.c,v 1.57.4.1 2007/03/12 05:53:34 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -144,7 +144,7 @@ Mode of operation:
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82586.c,v 1.57 2006/11/16 01:32:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82586.c,v 1.57.4.1 2007/03/12 05:53:34 rmind Exp $");
 
 #include "bpfilter.h"
 
@@ -176,7 +176,7 @@ __KERNEL_RCSID(0, "$NetBSD: i82586.c,v 1.57 2006/11/16 01:32:51 christos Exp $")
 void	 	i82586_reset(struct ie_softc *, int);
 void 		i82586_watchdog(struct ifnet *);
 int 		i82586_init(struct ifnet *);
-int 		i82586_ioctl(struct ifnet *, u_long, caddr_t);
+int 		i82586_ioctl(struct ifnet *, u_long, void *);
 void 		i82586_start(struct ifnet *);
 void 		i82586_stop(struct ifnet *, int);
 
@@ -964,7 +964,7 @@ ieget(sc, head, totlen)
 		}
 
 		if (m == m0) {
-			caddr_t newdata = (caddr_t)
+			char *newdata = (char *)
 			    ALIGN(m->m_data + sizeof(struct ether_header)) -
 			    sizeof(struct ether_header);
 			len -= newdata - m->m_data;
@@ -989,7 +989,7 @@ ieget(sc, head, totlen)
 	/*
 	 * Copy the Ethernet header into the mbuf chain.
 	 */
-	memcpy(mtod(m, caddr_t), &eh, sizeof(struct ether_header));
+	memcpy(mtod(m, void *), &eh, sizeof(struct ether_header));
 	thismboff = sizeof(struct ether_header);
 	thisrboff = sizeof(struct ether_header);
 	resid -= sizeof(struct ether_header);
@@ -1004,7 +1004,7 @@ ieget(sc, head, totlen)
 		    thismblen = m->m_len - thismboff;
 		len = min(thisrblen, thismblen);
 
-		(sc->memcopyin)(sc, mtod(m, caddr_t) + thismboff,
+		(sc->memcopyin)(sc, mtod(m, char *) + thismboff,
 				IE_RBUF_ADDR(sc,head) + thisrboff,
 				(u_int)len);
 		resid -= len;
@@ -1220,7 +1220,7 @@ i82586_start(ifp)
 
 		buffer = IE_XBUF_ADDR(sc, head);
 		for (m = m0; m != 0; m = m->m_next) {
-			(sc->memcopyout)(sc, mtod(m,caddr_t), buffer, m->m_len);
+			(sc->memcopyout)(sc, mtod(m,void *), buffer, m->m_len);
 			buffer += m->m_len;
 		}
 		len = m0->m_pkthdr.len;
@@ -1647,7 +1647,7 @@ ie_mc_setup(sc, cmdbuf)
 
 	setup_simple_command(sc, IE_CMD_MCAST, cmdbuf);
 
-	(sc->memcopyout)(sc, (caddr_t)sc->mcast_addrs,
+	(sc->memcopyout)(sc, (void *)sc->mcast_addrs,
 			 IE_CMD_MCAST_MADDR(cmdbuf),
 			 sc->mcast_count * ETHER_ADDR_LEN);
 
@@ -1795,7 +1795,7 @@ int
 i82586_ioctl(ifp, cmd, data)
 	struct ifnet *ifp;
 	u_long cmd;
-	caddr_t data;
+	void *data;
 {
 	struct ie_softc *sc = ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *)data;

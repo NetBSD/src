@@ -1,4 +1,4 @@
-/*	$NetBSD: rt2560.c,v 1.7 2006/11/16 01:32:52 christos Exp $	*/
+/*	$NetBSD: rt2560.c,v 1.7.4.1 2007/03/12 05:53:41 rmind Exp $	*/
 /*	$OpenBSD: rt2560.c,v 1.15 2006/04/20 20:31:12 miod Exp $  */
 /*	$FreeBSD: rt2560.c,v 1.3 2006/03/21 21:15:43 damien Exp $*/
 
@@ -24,7 +24,7 @@
  * http://www.ralinktech.com/
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rt2560.c,v 1.7 2006/11/16 01:32:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rt2560.c,v 1.7.4.1 2007/03/12 05:53:41 rmind Exp $");
 
 #include "bpfilter.h"
 
@@ -126,7 +126,7 @@ static int	rt2560_tx_data(struct rt2560_softc *, struct mbuf *,
 static void	rt2560_start(struct ifnet *);
 static void	rt2560_watchdog(struct ifnet *);
 static int	rt2560_reset(struct ifnet *);
-static int	rt2560_ioctl(struct ifnet *, u_long, caddr_t);
+static int	rt2560_ioctl(struct ifnet *, u_long, void *);
 static void	rt2560_bbp_write(struct rt2560_softc *, uint8_t, uint8_t);
 static uint8_t	rt2560_bbp_read(struct rt2560_softc *, uint8_t);
 static void	rt2560_rf_write(struct rt2560_softc *, uint8_t, uint32_t);
@@ -561,7 +561,7 @@ rt2560_alloc_tx_ring(struct rt2560_softc *sc, struct rt2560_tx_ring *ring,
 	}
 
 	error = bus_dmamem_map(sc->sc_dmat, &ring->seg, nsegs,
-	    count * RT2560_TX_DESC_SIZE, (caddr_t *)&ring->desc,
+	    count * RT2560_TX_DESC_SIZE, (void **)&ring->desc,
 	    BUS_DMA_NOWAIT);
 	if (error != 0) {
 		printf("%s: could not map desc DMA memory\n",
@@ -652,7 +652,7 @@ rt2560_free_tx_ring(struct rt2560_softc *sc, struct rt2560_tx_ring *ring)
 		bus_dmamap_sync(sc->sc_dmat, ring->map, 0,
 		    ring->map->dm_mapsize, BUS_DMASYNC_POSTWRITE);
 		bus_dmamap_unload(sc->sc_dmat, ring->map);
-		bus_dmamem_unmap(sc->sc_dmat, (caddr_t)ring->desc,
+		bus_dmamem_unmap(sc->sc_dmat, (void *)ring->desc,
 		    ring->count * RT2560_TX_DESC_SIZE);
 		bus_dmamem_free(sc->sc_dmat, &ring->seg, 1);
 	}
@@ -709,7 +709,7 @@ rt2560_alloc_rx_ring(struct rt2560_softc *sc, struct rt2560_rx_ring *ring,
 	}
 
 	error = bus_dmamem_map(sc->sc_dmat, &ring->seg, nsegs,
-	    count * RT2560_RX_DESC_SIZE, (caddr_t *)&ring->desc,
+	    count * RT2560_RX_DESC_SIZE, (void **)&ring->desc,
 	    BUS_DMA_NOWAIT);
 	if (error != 0) {
 		printf("%s: could not map desc DMA memory\n",
@@ -817,7 +817,7 @@ rt2560_free_rx_ring(struct rt2560_softc *sc, struct rt2560_rx_ring *ring)
 		bus_dmamap_sync(sc->sc_dmat, ring->map, 0,
 		    ring->map->dm_mapsize, BUS_DMASYNC_POSTWRITE);
 		bus_dmamap_unload(sc->sc_dmat, ring->map);
-		bus_dmamem_unmap(sc->sc_dmat, (caddr_t)ring->desc,
+		bus_dmamem_unmap(sc->sc_dmat, (void *)ring->desc,
 		    ring->count * RT2560_RX_DESC_SIZE);
 		bus_dmamem_free(sc->sc_dmat, &ring->seg, 1);
 	}
@@ -1365,7 +1365,7 @@ rt2560_decryption_intr(struct rt2560_softc *sc)
 			tap->wr_antsignal = desc->rssi;
 
 			M_COPY_PKTHDR(&mb, m);
-			mb.m_data = (caddr_t)tap;
+			mb.m_data = (void *)tap;
 			mb.m_len = sc->sc_txtap_len;
 			mb.m_next = m;
 			mb.m_pkthdr.len += mb.m_len;
@@ -1830,7 +1830,7 @@ rt2560_tx_mgt(struct rt2560_softc *sc, struct mbuf *m0,
 		tap->wt_antenna = sc->tx_ant;
 
 		M_COPY_PKTHDR(&mb, m0);
-		mb.m_data = (caddr_t)tap;
+		mb.m_data = (void *)tap;
 		mb.m_len = sc->sc_txtap_len;
 		mb.m_next = m0;
 		mb.m_pkthdr.len += mb.m_len;
@@ -2044,7 +2044,7 @@ rt2560_tx_data(struct rt2560_softc *sc, struct mbuf *m0,
 			}
 		}
 
-		m_copydata(m0, 0, m0->m_pkthdr.len, mtod(mnew, caddr_t));
+		m_copydata(m0, 0, m0->m_pkthdr.len, mtod(mnew, void *));
 		m_freem(m0);
 		mnew->m_len = mnew->m_pkthdr.len;
 		m0 = mnew;
@@ -2074,7 +2074,7 @@ rt2560_tx_data(struct rt2560_softc *sc, struct mbuf *m0,
 		tap->wt_antenna = sc->tx_ant;
 
 		M_COPY_PKTHDR(&mb, m0);
-		mb.m_data = (caddr_t)tap;
+		mb.m_data = (void *)tap;
 		mb.m_len = sc->sc_txtap_len;
 		mb.m_next = m0;
 		mb.m_pkthdr.len += mb.m_len;
@@ -2248,7 +2248,7 @@ rt2560_reset(struct ifnet *ifp)
 }
 
 int
-rt2560_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
+rt2560_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct rt2560_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;

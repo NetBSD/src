@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_net.c,v 1.46 2007/02/09 21:55:24 ad Exp $	*/
+/*	$NetBSD: svr4_net.c,v 1.46.2.1 2007/03/12 05:52:45 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_net.c,v 1.46 2007/02/09 21:55:24 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_net.c,v 1.46.2.1 2007/03/12 05:52:45 rmind Exp $");
 
 #define COMPAT_SVR4 1
 
@@ -247,7 +247,7 @@ svr4_ptm_alloc(p)
 	 */
 	char ptyname[] = "/dev/ptyXX";
 	static const char ttyletters[] = "pqrstuvwxyzPQRST";
-	caddr_t sg = stackgap_init(p, 0);
+	void *sg = stackgap_init(p, 0);
 	char *path = stackgap_alloc(p, &sg, sizeof(ptyname));
 	struct sys_open_args oa;
 	int l = 0, n = 0;

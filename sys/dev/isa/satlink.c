@@ -1,4 +1,4 @@
-/*	$NetBSD: satlink.c,v 1.30 2006/11/16 01:33:00 christos Exp $	*/
+/*	$NetBSD: satlink.c,v 1.30.4.1 2007/03/12 05:54:51 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: satlink.c,v 1.30 2006/11/16 01:33:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: satlink.c,v 1.30.4.1 2007/03/12 05:54:51 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,7 +80,7 @@ struct satlink_softc {
 	isa_chipset_tag_t sc_ic;	/* ISA chipset info */
 	int	sc_drq;			/* the DRQ we're using */
 	bus_size_t sc_bufsize;		/* DMA buffer size */
-	caddr_t	sc_buf;			/* ring buffer for incoming data */
+	void *	sc_buf;			/* ring buffer for incoming data */
 	int	sc_uptr;		/* user index into ring buffer */
 	int	sc_sptr;		/* satlink index into ring buffer */
 	int	sc_flags;		/* misc. flags. */
@@ -343,7 +343,7 @@ satlinkread(dev, uio, flags)
 		/*
 		 * Easy case - no wrap-around.
 		 */
-		error = uiomove(&sc->sc_buf[sc->sc_uptr], count, uio);
+		error = uiomove((char *)sc->sc_buf + sc->sc_uptr, count, uio);
 		if (error == 0) {
 			sc->sc_uptr += count;
 			if (sc->sc_uptr == sc->sc_bufsize)
@@ -359,7 +359,7 @@ satlinkread(dev, uio, flags)
 	oresid = uio->uio_resid;
 	if (wrapcnt > uio->uio_resid)
 		wrapcnt = uio->uio_resid;
-	error = uiomove(&sc->sc_buf[sc->sc_uptr], wrapcnt, uio);
+	error = uiomove((char *)sc->sc_buf + sc->sc_uptr, wrapcnt, uio);
 	sc->sc_uptr = 0;
 	if (error != 0 || wrapcnt == oresid)
 		return (error);
@@ -375,7 +375,7 @@ satlinkread(dev, uio, flags)
 }
 
 int
-satlinkioctl(dev_t dev, u_long cmd, caddr_t data, int flags,
+satlinkioctl(dev_t dev, u_long cmd, void *data, int flags,
     struct lwp *l)
 {
 	struct satlink_softc *sc = device_lookup(&satlink_cd, minor(dev));

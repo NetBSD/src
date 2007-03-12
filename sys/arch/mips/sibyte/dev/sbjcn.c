@@ -1,4 +1,4 @@
-/* $NetBSD: sbjcn.c,v 1.15 2006/10/01 20:31:50 elad Exp $ */
+/* $NetBSD: sbjcn.c,v 1.15.4.1 2007/03/12 05:49:24 rmind Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbjcn.c,v 1.15 2006/10/01 20:31:50 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbjcn.c,v 1.15.4.1 2007/03/12 05:49:24 rmind Exp $");
 
 #define	SBJCN_DEBUG
 
@@ -676,7 +676,7 @@ sbjcntty(dev_t dev)
 }
 
 int
-sbjcnioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+sbjcnioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct sbjcn_softc *sc = sbjcn_cd.cd_devs[SBJCN_UNIT(dev)];
 	struct sbjcn_channel *ch = &sc->sc_channels[SBJCN_CHAN(dev)];

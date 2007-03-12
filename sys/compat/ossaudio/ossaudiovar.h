@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudiovar.h,v 1.11 2005/12/11 12:20:23 christos Exp $	*/
+/*	$NetBSD: ossaudiovar.h,v 1.11.26.1 2007/03/12 05:52:42 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 struct oss_sys_ioctl_args {
 	syscallarg(int) fd;
 	syscallarg(u_long) com;
-	syscallarg(caddr_t) data;
+	syscallarg(void *) data;
 };
 
 #define OSS_IOCPARM_MASK    0xfff           /* parameters must be < 4096 bytes */

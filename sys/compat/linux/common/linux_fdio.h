@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_fdio.h,v 1.3 2005/12/11 12:20:19 christos Exp $	*/
+/*	$NetBSD: linux_fdio.h,v 1.3.26.1 2007/03/12 05:52:26 rmind Exp $	*/
 
 /*
  * Copyright (c) 2000 Wasabi Systems, Inc.
@@ -138,7 +138,7 @@ struct linux_floppy_write_errors {
 struct linux_floppy_raw_cmd {
 	u_int flags;
 	void *data;
-	caddr_t kernel_data;
+	void *kernel_data;
 	struct floppy_raw_cmd *next;
 	long length;
 	long phys_length;

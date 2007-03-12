@@ -1,4 +1,4 @@
-/*	$NetBSD: ioa.h,v 1.11 2005/12/11 12:19:34 christos Exp $	*/
+/*	$NetBSD: ioa.h,v 1.11.26.1 2007/03/12 05:51:13 rmind Exp $	*/
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -59,7 +59,7 @@
 #define	NIOA8600	2	/* Number of SBI possible on a VAX86x0 */
 #define IOASIZE		0x2000000
 #define IOAMAPSIZ 	512		/* Map one page to get at SBIA regs */
-#define	IOA8600(i)	((caddr_t)(0x20080000+IOASIZE*i))
+#define	IOA8600(i)	((void *)(0x20080000+IOASIZE*i))
 
 struct	sbia_regs
 {

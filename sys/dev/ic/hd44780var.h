@@ -1,4 +1,4 @@
-/* $NetBSD: hd44780var.h,v 1.4 2005/12/11 12:21:26 christos Exp $ */
+/* $NetBSD: hd44780var.h,v 1.4.26.1 2007/03/12 05:53:32 rmind Exp $ */
 
 /*
  * Copyright (c) 2002 Dennis I. Chernoivanov
@@ -137,7 +137,7 @@ void hd44780_attach_subr(struct hd44780_chip *);
 void hd44780_busy_wait(struct hd44780_chip *, u_int32_t);
 int  hd44780_init(struct hd44780_chip *);
 int  hd44780_chipinit(struct hd44780_chip *, u_int32_t);
-int  hd44780_ioctl_subr(struct hd44780_chip *, u_long, caddr_t);
+int  hd44780_ioctl_subr(struct hd44780_chip *, u_long, void *);
 void hd44780_ddram_redraw(struct hd44780_chip *, u_int32_t, struct hd44780_io *);
 
 #define HD_DDRAM_READ	0x0

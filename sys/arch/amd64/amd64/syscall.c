@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.22 2007/02/09 21:55:01 ad Exp $	*/
+/*	$NetBSD: syscall.c,v 1.22.2.1 2007/03/12 05:46:33 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.22 2007/02/09 21:55:01 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.22.2.1 2007/03/12 05:46:33 rmind Exp $");
 
 #include "opt_ktrace.h"
 
@@ -102,7 +102,7 @@ syscall_intern(struct proc *p)
 static void
 syscall_plain(struct trapframe *frame)
 {
-	caddr_t params;
+	void *params;
 	const struct sysent *callp;
 	struct proc *p;
 	struct lwp *l;
@@ -158,8 +158,8 @@ syscall_plain(struct trapframe *frame)
 		}
 		if (argsize > 6) {
 			argsize -= 6;
-			params = (caddr_t)frame->tf_rsp + sizeof(register_t);
-			error = copyin(params, (caddr_t)&args[6],
+			params = (char *)frame->tf_rsp + sizeof(register_t);
+			error = copyin(params, (void *)&args[6],
 					argsize << 3);
 			if (error != 0)
 				goto bad;
@@ -209,7 +209,7 @@ syscall_plain(struct trapframe *frame)
 static void
 syscall_fancy(struct trapframe *frame)
 {
-	caddr_t params;
+	void *params;
 	const struct sysent *callp;
 	struct proc *p;
 	struct lwp *l;
@@ -265,8 +265,8 @@ syscall_fancy(struct trapframe *frame)
 		}
 		if (argsize > 6) {
 			argsize -= 6;
-			params = (caddr_t)frame->tf_rsp + sizeof(register_t);
-			error = copyin(params, (caddr_t)&args[6],
+			params = (char *)frame->tf_rsp + sizeof(register_t);
+			error = copyin(params, (void *)&args[6],
 					argsize << 3);
 			if (error != 0)
 				goto bad;

@@ -1,4 +1,4 @@
-/* $NetBSD: mcclock_tlsb.c,v 1.11 2006/11/24 19:46:58 christos Exp $ */
+/* $NetBSD: mcclock_tlsb.c,v 1.11.4.1 2007/03/12 05:46:15 rmind Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcclock_tlsb.c,v 1.11 2006/11/24 19:46:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock_tlsb.c,v 1.11.4.1 2007/03/12 05:46:15 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -50,7 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: mcclock_tlsb.c,v 1.11 2006/11/24 19:46:58 christos E
 
 #include <dev/ic/mc146818reg.h>
 
-#define	KV(_addr)	((caddr_t)ALPHA_PHYS_TO_K0SEG((_addr)))
+#define	KV(_addr)	((void *)ALPHA_PHYS_TO_K0SEG((_addr)))
 /*
  * Registers are 64 bytes apart (and 1 byte wide)
  */

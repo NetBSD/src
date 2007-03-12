@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_info_43.c,v 1.28 2007/02/15 20:32:48 ad Exp $	*/
+/*	$NetBSD: kern_info_43.c,v 1.28.2.1 2007/03/12 05:51:53 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_info_43.c,v 1.28 2007/02/15 20:32:48 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_info_43.c,v 1.28.2.1 2007/03/12 05:51:53 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -149,8 +149,8 @@ compat_43_sys_getkerninfo(struct lwp *l, void *v, register_t *retval)
 	int error, name[6];
 	size_t size;
 
-	if (SCARG(uap, size) && (error = copyin((caddr_t)SCARG(uap, size),
-	    (caddr_t)&size, sizeof(size))))
+	if (SCARG(uap, size) && (error = copyin((void *)SCARG(uap, size),
+	    (void *)&size, sizeof(size))))
 		return (error);
 
 	switch (SCARG(uap, op) & 0xff00) {
@@ -273,7 +273,7 @@ compat_43_sys_getkerninfo(struct lwp *l, void *v, register_t *retval)
 		return (error);
 	*retval = size;
 	if (SCARG(uap, size))
-		error = copyout((caddr_t)&size, (caddr_t)SCARG(uap, size),
+		error = copyout((void *)&size, (void *)SCARG(uap, size),
 		    sizeof(size));
 	return (error);
 }

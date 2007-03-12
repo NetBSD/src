@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_signal.c,v 1.23 2007/02/09 21:55:16 ad Exp $ */
+/*	$NetBSD: darwin_signal.c,v 1.23.2.1 2007/03/12 05:51:56 rmind Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_signal.c,v 1.23 2007/02/09 21:55:16 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_signal.c,v 1.23.2.1 2007/03/12 05:51:56 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -79,7 +79,7 @@ darwin_sys_sigaction(l, v, retval)
 	struct sigaction *nsa, *osa;
 	struct sigaction13 sa13;
 	struct proc *p = l->l_proc;
-	caddr_t sg = stackgap_init(p, 0);
+	void *sg = stackgap_init(p, 0);
 	int error;
 
 	if ((error = copyin(SCARG(uap, nsa), &dsa, sizeof(dsa))) != 0)
@@ -187,7 +187,7 @@ darwin_sys_sigprocmask(l, v, retval)
 	sigset_t *ubset = NULL;
 	sigset_t *uboset = NULL;
 
-	caddr_t sg = stackgap_init(p, 0);
+	void *sg = stackgap_init(p, 0);
 	ubset = stackgap_alloc(p, &sg, sizeof(*ubset));
 	if (SCARG(uap, oset) != NULL)
 		uboset = stackgap_alloc(p, &sg, sizeof(*uboset));

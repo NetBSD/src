@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.42 2006/02/16 20:17:13 perry Exp $	*/
+/*	$NetBSD: pmap.h,v 1.42.20.1 2007/03/12 05:46:46 rmind Exp $	*/
 
 /* 
  * Copyright (c) 1991 Regents of the University of California.
@@ -153,7 +153,7 @@ struct pv_page {
 
 #ifdef	_KERNEL
 extern u_int		*Sysmap;
-extern caddr_t		vmmap;		/* map for mem, dumps, etc. */
+extern void *		vmmap;		/* map for mem, dumps, etc. */
 extern struct pmap	kernel_pmap_store;
 
 #define	pmap_kernel()		(&kernel_pmap_store)

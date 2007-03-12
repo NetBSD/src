@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_tty.c,v 1.30 2005/12/11 12:20:02 christos Exp $	*/
+/*	$NetBSD: hpux_tty.c,v 1.30.26.1 2007/03/12 05:52:00 rmind Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_tty.c,v 1.30 2005/12/11 12:20:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_tty.c,v 1.30.26.1 2007/03/12 05:52:00 rmind Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_43.h"
@@ -113,7 +113,7 @@ __KERNEL_RCSID(0, "$NetBSD: hpux_tty.c,v 1.30 2005/12/11 12:20:02 christos Exp $
 int
 hpux_termio(fd, com, data, l)
 	int fd, com;
-	caddr_t data;
+	void *data;
 	struct lwp *l;
 {
 	struct proc *p = l->l_proc;
@@ -136,7 +136,7 @@ hpux_termio(fd, com, data, l)
 		/*
 		 * Get BSD terminal state
 		 */
-		if ((error = (*ioctlrout)(fp, TIOCGETA, (caddr_t)&tios, l)))
+		if ((error = (*ioctlrout)(fp, TIOCGETA, (void *)&tios, l)))
 			break;
 		memset((char *)&htios, 0, sizeof htios);
 		/*
@@ -211,7 +211,7 @@ hpux_termio(fd, com, data, l)
 		 */
 		if (!newi) {
 			line = 0;
-			(void) (*ioctlrout)(fp, TIOCGETD, (caddr_t)&line, l);
+			(void) (*ioctlrout)(fp, TIOCGETD, (void *)&line, l);
 			htios.c_reserved = line;
 		}
 		/*
@@ -264,7 +264,7 @@ hpux_termio(fd, com, data, l)
 		/*
 		 * Get old characteristics and determine if we are a tty.
 		 */
-		if ((error = (*ioctlrout)(fp, TIOCGETA, (caddr_t)&tios, l)))
+		if ((error = (*ioctlrout)(fp, TIOCGETA, (void *)&tios, l)))
 			break;
 		if (newi)
 			memcpy((char *)&htios, data, sizeof htios);
@@ -369,7 +369,7 @@ hpux_termio(fd, com, data, l)
 			com = TIOCSETAW;
 		else
 			com = TIOCSETAF;
-		error = (*ioctlrout)(fp, com, (caddr_t)&tios, l);
+		error = (*ioctlrout)(fp, com, (void *)&tios, l);
 		if (error == 0) {
 			/*
 			 * Set line discipline
@@ -377,7 +377,7 @@ hpux_termio(fd, com, data, l)
 			if (!newi) {
 				line = htios.c_reserved;
 				(void) (*ioctlrout)(fp, TIOCSETD,
-						    (caddr_t)&line, l);
+						    (void *)&line, l);
 			}
 			/*
 			 * Set non-blocking IO if VMIN == VTIME == 0, clear
@@ -526,7 +526,7 @@ hpux_sys_stty_6x(l, v, retval)
 {
 	struct hpux_sys_stty_6x_args /* {
 		syscallarg(int) fd;
-		syscallarg(caddr_t) arg;
+		syscallarg(void *) arg;
 	} */ *uap = v;
 
 	return (getsettty(l, SCARG(uap, fd), HPUXTIOCGETP, SCARG(uap, arg)));
@@ -540,7 +540,7 @@ hpux_sys_gtty_6x(l, v, retval)
 {
 	struct hpux_sys_gtty_6x_args /* {
 		syscallarg(int) fd;
-		syscallarg(caddr_t) arg;
+		syscallarg(void *) arg;
 	} */ *uap = v;
 
 	return (getsettty(l, SCARG(uap, fd), HPUXTIOCSETP, SCARG(uap, arg)));
@@ -554,7 +554,7 @@ int
 getsettty(l, fdes, com, cmarg)
 	struct lwp *l;
 	int fdes, com;
-	caddr_t cmarg;
+	void *cmarg;
 {
 	struct proc *p = l->l_proc;
 	struct filedesc *fdp = p->p_fd;
@@ -570,7 +570,7 @@ getsettty(l, fdes, com, cmarg)
 		return (EBADF);
 
 	if (com == HPUXTIOCSETP) {
-		if ((error = copyin(cmarg, (caddr_t)&hsb, sizeof hsb)))
+		if ((error = copyin(cmarg, (void *)&hsb, sizeof hsb)))
 			return (error);
 		sb.sg_ispeed = hsb.sg_ispeed;
 		sb.sg_ospeed = hsb.sg_ospeed;
@@ -581,13 +581,13 @@ getsettty(l, fdes, com, cmarg)
 			sb.sg_flags |= XTABS;
 		if (hsb.sg_flags & V7_HUPCL)
 			(void)(*fp->f_ops->fo_ioctl)
-				(fp, TIOCHPCL, (caddr_t)0, l);
+				(fp, TIOCHPCL, (void *)0, l);
 		com = TIOCSETP;
 	} else {
-		memset((caddr_t)&hsb, 0, sizeof hsb);
+		memset((void *)&hsb, 0, sizeof hsb);
 		com = TIOCGETP;
 	}
-	error = (*fp->f_ops->fo_ioctl)(fp, com, (caddr_t)&sb, l);
+	error = (*fp->f_ops->fo_ioctl)(fp, com, (void *)&sb, l);
 	if (error == 0 && com == TIOCGETP) {
 		hsb.sg_ispeed = sb.sg_ispeed;
 		hsb.sg_ospeed = sb.sg_ospeed;
@@ -596,7 +596,7 @@ getsettty(l, fdes, com, cmarg)
 		hsb.sg_flags = sb.sg_flags & ~(V7_HUPCL|V7_XTABS|V7_NOAL);
 		if (sb.sg_flags & XTABS)
 			hsb.sg_flags |= V7_XTABS;
-		error = copyout((caddr_t)&hsb, cmarg, sizeof hsb);
+		error = copyout((void *)&hsb, cmarg, sizeof hsb);
 	}
 	return (error);
 }

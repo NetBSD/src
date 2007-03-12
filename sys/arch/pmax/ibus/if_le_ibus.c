@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_ibus.c,v 1.9 2005/12/11 12:18:36 christos Exp $	*/
+/*	$NetBSD: if_le_ibus.c,v 1.9.26.1 2007/03/12 05:49:50 rmind Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_ibus.c,v 1.9 2005/12/11 12:18:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_ibus.c,v 1.9.26.1 2007/03/12 05:49:50 rmind Exp $");
 
 #include "opt_inet.h"
 
@@ -102,8 +102,8 @@ le_pmax_attach(struct device *parent, struct device *self, void *aux)
 void
 le_dec_copytobuf_gap2(struct lance_softc *sc, void *fromv, int boff, int len)
 {
-	volatile caddr_t buf = sc->sc_mem;
-	caddr_t from = fromv;
+	volatile char *buf = sc->sc_mem;
+	char *from = fromv;
 	volatile u_int16_t *bptr;
 
 	if (boff & 0x1) {
@@ -127,8 +127,8 @@ le_dec_copytobuf_gap2(struct lance_softc *sc, void *fromv, int boff, int len)
 void
 le_dec_copyfrombuf_gap2(struct lance_softc *sc, void *tov, int boff, int len)
 {
-	volatile caddr_t buf = sc->sc_mem;
-	caddr_t to = tov;
+	volatile void *buf = sc->sc_mem;
+	char *to = tov;
 	volatile u_int16_t *bptr;
 	u_int16_t tmp;
 
@@ -154,7 +154,7 @@ le_dec_copyfrombuf_gap2(struct lance_softc *sc, void *tov, int boff, int len)
 static void
 le_dec_zerobuf_gap2(struct lance_softc *sc, int boff, int len)
 {
-	volatile caddr_t buf = sc->sc_mem;
+	volatile void *buf = sc->sc_mem;
 	volatile u_int16_t *bptr;
 
 	if ((unsigned)boff & 0x1) {

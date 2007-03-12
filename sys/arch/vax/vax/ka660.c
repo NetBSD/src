@@ -1,4 +1,4 @@
-/*	$NetBSD: ka660.c,v 1.7 2006/09/05 19:32:57 matt Exp $	*/
+/*	$NetBSD: ka660.c,v 1.7.8.1 2007/03/12 05:51:18 rmind Exp $	*/
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka660.c,v 1.7 2006/09/05 19:32:57 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka660.c,v 1.7.8.1 2007/03/12 05:51:18 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -64,7 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: ka660.c,v 1.7 2006/09/05 19:32:57 matt Exp $");
 
 static void    ka660_conf(void);
 static void    ka660_memerr(void);
-static int     ka660_mchk(caddr_t);
+static int     ka660_mchk(void *);
 static void    ka660_cache_enable(void);
 
 struct vs_cpu *ka660_cpu;
@@ -133,7 +133,7 @@ ka660_memerr()
 
 int
 ka660_mchk(addr)
-	caddr_t addr;
+	void *addr;
 {
 	panic("Machine check");
 	return 0;

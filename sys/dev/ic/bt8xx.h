@@ -1,4 +1,4 @@
-/*	$NetBSD: bt8xx.h,v 1.7 2003/05/03 18:11:16 wiz Exp $	*/
+/*	$NetBSD: bt8xx.h,v 1.7.56.1 2007/03/12 05:53:28 rmind Exp $	*/
 
 /* This file is merged from ioctl_meteor.h and ioctl_bt848.h from FreeBSD. */
 /* The copyright below only applies to the ioctl_meteor.h part of this file. */
@@ -188,7 +188,7 @@ struct meteor_mem {
 				    kernel increments, user decrements */
 
 		/* reference to mmapped data */
-	caddr_t	buf;		 /* The real space (virtual addr) */
+	void *	buf;		 /* The real space (virtual addr) */
 };
 
 /* $SourceForge: ioctl_bt848.h,v 1.4 2003/03/11 23:11:29 thomasklausner Exp $ */

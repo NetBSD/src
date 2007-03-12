@@ -1,4 +1,4 @@
-/*	$NetBSD: macrom.c,v 1.61 2006/09/09 03:51:04 tsutsui Exp $	*/
+/*	$NetBSD: macrom.c,v 1.61.6.1 2007/03/12 05:49:00 rmind Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: macrom.c,v 1.61 2006/09/09 03:51:04 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: macrom.c,v 1.61.6.1 2007/03/12 05:49:00 rmind Exp $");
 
 #include "opt_adb.h"
 #include "opt_ddb.h"
@@ -109,16 +109,16 @@ u_int32_t mrg_AVInitEgretJT[] = {
 	0x40841380, 0x4083A390, 0x408411F0
 };
 
-caddr_t	mrg_romadbintr = (caddr_t)0;	/* ROM ADB interrupt */
-caddr_t	mrg_rompmintr = 0;		/* ROM PM (?) interrupt */
+void *	mrg_romadbintr = (void *)0;	/* ROM ADB interrupt */
+void *	mrg_rompmintr = 0;		/* ROM PM (?) interrupt */
 const char *mrg_romident = NULL;		/* ident string for ROMs */
-caddr_t	mrg_ADBAlternateInit = 0;
-caddr_t	mrg_InitEgret = 0;
-caddr_t	mrg_ADBIntrPtr = (caddr_t)0x0;	/* ADB interrupt taken from MacOS vector table*/
-caddr_t	ROMResourceMap = 0;
+void *	mrg_ADBAlternateInit = 0;
+void *	mrg_InitEgret = 0;
+void *	mrg_ADBIntrPtr = (void *)0x0;	/* ADB interrupt taken from MacOS vector table*/
+void *	ROMResourceMap = 0;
 extern romvec_t *mrg_MacOSROMVectors;
 #if defined(MRG_TEST) || defined(MRG_DEBUG)
-caddr_t	ResHndls[] = {
+void *	ResHndls[] = {
 	0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0,
@@ -126,12 +126,14 @@ caddr_t	ResHndls[] = {
 	0, 0, 0, 0, 0, 0
 };
 #else
-caddr_t	ResHndls[] = {
+void *	ResHndls[] = {
 	0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0
 };
 #endif
+
+void *dtmgr_softintr_cookie;
 
 /*
  * Last straw functions; we didn't set them up, so freak out!
@@ -168,24 +170,24 @@ mrg_Delay(void)
  * Handle the Deferred Task manager here
  *
  */
-static caddr_t	mrg_DTList = NULL;
+static void *	mrg_DTList = NULL;
 
 void
 mrg_DTInstall(void)
 {
-	caddr_t	ptr, prev;
-	caddr_t *cptr, *cprev;
+	void *ptr, *prev;
+	void **cptr, **cprev;
 
 	__asm volatile ("movl %%a0,%0" : "=g" (ptr));
 
-	prev = (caddr_t)&mrg_DTList;
-	while (*(caddr_t *)prev != NULL) 
-		prev = *(caddr_t *)prev;
-	cptr = (caddr_t *)ptr;
-	cprev = (caddr_t *)prev;
+	prev = (void *)&mrg_DTList;
+	while (*(void **)prev != NULL) 
+		prev = *(void **)prev;
+	cptr = (void **)ptr;
+	cprev = (void **)prev;
 	*cptr = NULL;
 	*cprev = ptr;
-	setsoftdtmgr();
+	softintr_schedule(dtmgr_softintr_cookie);
 
 	__asm volatile ("clrl %%d0" : : : "d0");
 }
@@ -193,13 +195,13 @@ mrg_DTInstall(void)
 void
 mrg_execute_deferred(void)
 {
-	caddr_t ptr;
+	void *ptr;
 	int s;
 
 	while (mrg_DTList != NULL) {
 		s = splhigh();
-		ptr = *(caddr_t *)mrg_DTList;
-		mrg_DTList = *(caddr_t *)ptr;
+		ptr = *(void **)mrg_DTList;
+		mrg_DTList = *(void **)ptr;
 		splx(s);
 
 		__asm volatile (
@@ -220,10 +222,10 @@ mrg_VBLQueue(void)
 #define vblAddr 6
 #define vblCount 10
 #define vblPhase 12
-	caddr_t vbltask;
-	caddr_t last_vbltask;
+	char *vbltask;
+	char *last_vbltask;
 	
-	last_vbltask = (caddr_t)&VBLQueue_head;
+	last_vbltask = (char *)&VBLQueue_head;
 	vbltask = VBLQueue_head;
 	while (0 != vbltask) {
 		if (0 != *((u_int16_t *)(vbltask + vblPhase)))
@@ -242,7 +244,7 @@ mrg_VBLQueue(void)
 			"	jbsr	%%a1@		\n"
 			"	movml	%%sp@+,#0x7fff"
 				: : "g" (vbltask),
-				    "g" (*((caddr_t)(vbltask + vblAddr)))
+				    "g" (*((char *)(vbltask + vblAddr)))
 				: "a0","a1");
 #if defined(MRG_DEBUG)
 			printf("mrg: mrg_VBLQueue: back from VBL task\n");
@@ -263,7 +265,7 @@ mrg_VBLQueue(void)
 			}
 		}
 		last_vbltask = vbltask;
-		vbltask = (caddr_t) *((u_int32_t *)(vbltask + qLink));
+		vbltask = (void *) *((u_int32_t *)(vbltask + qLink));
 	}
 }
 
@@ -307,7 +309,7 @@ Count_Resources(u_int32_t rsrc_type)
 #endif
 		if (rsrc_type == 0 || (rsrc_type == rsrc->name))
 			count++;
-		rsrc = rsrc->next == 0 ? 0 : (rsrc_t *)(rsrc->next + ROMBase);
+		rsrc = rsrc->next == 0 ? 0 : (rsrc_t *)(rsrc->next + (char *)ROMBase);
 	}
 
 #if defined(MRG_DEBUG)
@@ -316,7 +318,7 @@ Count_Resources(u_int32_t rsrc_type)
 	return count;
 }
 
-caddr_t *
+void **
 Get_Ind_Resource(u_int32_t rsrc_type, u_int16_t rsrc_ind)
 {
 	rsrc_t *rsrc = (rsrc_t *)ROMResourceMap;
@@ -337,18 +339,18 @@ Get_Ind_Resource(u_int32_t rsrc_type, u_int16_t rsrc_ind)
 			rsrc_ind--;
 			if (rsrc_ind == 0) {
 				for (i = 0;
-				    i < sizeof(ResHndls) / sizeof(caddr_t); i++)
+				    i < sizeof(ResHndls) / sizeof(void *); i++)
 					if ((ResHndls[i] == 0) ||
-					    (ResHndls[i] == (caddr_t)(rsrc->next + ROMBase))) {
-						ResHndls[i] = (caddr_t)(rsrc->body + ROMBase);
-						return (caddr_t *)&ResHndls[i];
+					    (ResHndls[i] == (void *)(rsrc->next + (char *)ROMBase))) {
+						ResHndls[i] = (void *)(rsrc->body + (char *)ROMBase);
+						return (void **)&ResHndls[i];
 					}
 				panic("ResHndls table too small!");
 			}
 		}
-		rsrc = rsrc->next == 0 ? 0 : (rsrc_t *)(rsrc->next + ROMBase);
+		rsrc = rsrc->next == 0 ? 0 : (rsrc_t *)(rsrc->next + (char *)ROMBase);
 	}
-	return (caddr_t *)0;
+	return (void **)0;
 }
 
 void
@@ -487,7 +489,7 @@ mrg_NewPtr(void)
 	int result = noErr;
 	u_int numbytes;
 /*	u_int32_t trapword; */
-	caddr_t ptr;
+	char *ptr;
 
 	__asm volatile ("movl	%%d0,%0" : "=g" (numbytes) : : "d0");
 
@@ -522,7 +524,7 @@ int
 mrg_DisposPtr(void)
 {
 	int result = noErr;
-	caddr_t ptr;
+	char *ptr;
 
 	__asm volatile("movl	%%a0,%0" : "=g" (ptr) : : "a0");
 
@@ -541,7 +543,7 @@ mrg_DisposPtr(void)
 int
 mrg_GetPtrSize(void)
 {
-	caddr_t ptr;
+	char *ptr;
 
 	__asm volatile("movl	%%a0,%0" : "=g" (ptr) : : "a0");
 
@@ -558,7 +560,7 @@ mrg_GetPtrSize(void)
 int
 mrg_SetPtrSize(void)
 {
-	caddr_t ptr;
+	void *ptr;
 	int newbytes;
 
 	__asm volatile(
@@ -587,8 +589,8 @@ mrg_StripAddress(void)
 int
 mrg_SetTrapAddress(void)
 {
-	extern caddr_t mrg_OStraps[];
-	caddr_t ptr;
+	extern void *mrg_OStraps[];
+	void *ptr;
 	int trap_num;
 
 	__asm volatile(
@@ -624,29 +626,29 @@ mrg_SetTrapAddress(void)
  *  from taking an unexpected side trip into the MacROMs on
  *  those systems we don't have fully decoded.
  */
-caddr_t mrg_OStraps[256] = {
+void *mrg_OStraps[256] = {
 #ifdef __GNUC__
 		/* God, I love gcc.  see GCC2 manual, section 2.17, */
 		/* "labeled elements in initializers." */
-	[0x1e]	(caddr_t)mrg_NewPtr,
-		(caddr_t)mrg_DisposPtr,
-		(caddr_t)mrg_SetPtrSize,
-		(caddr_t)mrg_GetPtrSize,
-	[0x2f]	(caddr_t)__UNCONST(mrg_PostEvent),	/* XXXGCC ? */
-	[0x3b]	(caddr_t)mrg_Delay,	
-	[0x47]	(caddr_t)mrg_SetTrapAddress,
-	[0x55]	(caddr_t)__UNCONST(mrg_StripAddress),	/* XXXGCC ? */
-	[0x82]	(caddr_t)mrg_DTInstall,
+	[0x1e]	(void *)mrg_NewPtr,
+		(void *)mrg_DisposPtr,
+		(void *)mrg_SetPtrSize,
+		(void *)mrg_GetPtrSize,
+	[0x2f]	(void *)__UNCONST(mrg_PostEvent),	/* XXXGCC ? */
+	[0x3b]	(void *)mrg_Delay,	
+	[0x47]	(void *)mrg_SetTrapAddress,
+	[0x55]	(void *)__UNCONST(mrg_StripAddress),	/* XXXGCC ? */
+	[0x82]	(void *)mrg_DTInstall,
 #else
 #error "Using a GNU C extension."
 #endif
 };
 
-caddr_t mrg_ToolBoxtraps[1024] = {
-	[0x19c] (caddr_t)mrg_CountResources,
-	[0x19d] (caddr_t)mrg_GetIndResource,
-	[0x1a0] (caddr_t)mrg_GetResource,
-	[0x1af] (caddr_t)mrg_ResError,
+void *mrg_ToolBoxtraps[1024] = {
+	[0x19c] (void *)mrg_CountResources,
+	[0x19d] (void *)mrg_GetIndResource,
+	[0x1a0] (void *)mrg_GetResource,
+	[0x1af] (void *)mrg_ResError,
 };
 
 /*
@@ -655,7 +657,7 @@ caddr_t mrg_ToolBoxtraps[1024] = {
 void
 mrg_aline_super(struct frame *frame)
 {
-	caddr_t trapaddr;
+	void *trapaddr;
 	u_short trapword;
 	int isOStrap;
 	int trapnum;
@@ -804,19 +806,19 @@ mrg_init(void)
 	const char *findername = "MacBSD FakeFinder";
 	int i;
 #if defined(MRG_TEST)
-	caddr_t ptr;
+	void *ptr;
 	short rcnt;
 	int sizeptr;
 	extern short mrg_ResErr;
-	caddr_t *handle;
+	void **handle;
 #endif
 	
 	/*
 	 * Clear the VBLQueue.
 	 */
 	VBLQueue = (u_int16_t) 0;
-	VBLQueue_head = (caddr_t) 0;
-	VBLQueue_tail = (caddr_t) 0;
+	VBLQueue_head = (void *) 0;
+	VBLQueue_tail = (void *) 0;
 					 
 #if defined(MRG_TEST)
 	if (ROMResourceMap) {
@@ -921,7 +923,7 @@ mrg_init(void)
 	ADBYMM = &mrg_adbstore3[0];
 	MinusOne = 0xffffffff;
 	Lo3Bytes = 0x00ffffff;
-	VIA = (caddr_t)__UNVOLATILE(Via1Base);
+	VIA = (void *)__UNVOLATILE(Via1Base);
 	MMU32Bit = 1; /* ?means MMU is in 32 bit mode? */
   	if (TimeDBRA == 0)
 		TimeDBRA = 0xa3b;		/* BARF default is Mac II */
@@ -949,11 +951,13 @@ mrg_init(void)
 	/* probably very dangerous */
 	jADBOp = (void (*)(void))mrg_OStraps[0x7c];
 
-	mrg_VIA2 = (caddr_t)((caddr_t)__UNVOLATILE(Via1Base) + 
+	mrg_VIA2 = (void *)((char *)__UNVOLATILE(Via1Base) + 
 	    VIA2 * 0x2000);	/* see via.h */
-	SCCRd = (caddr_t)__UNVOLATILE(sccA);/* ser.c ; we run before serinit */
+	SCCRd = (void *)__UNVOLATILE(sccA);/* ser.c ; we run before serinit */
 
-	jDTInstall = (caddr_t)mrg_DTInstall;
+	jDTInstall = (void *)mrg_DTInstall;
+	dtmgr_softintr_cookie = softintr_establish(IPL_SOFT,
+	    (void (*)(void *))mrg_execute_deferred, NULL);
 
 	/* AV ROMs want this low memory vector to point to a jump table */
 	InitEgretJTVec = (u_int32_t **)(void *)&mrg_AVInitEgretJT;
@@ -969,7 +973,7 @@ mrg_init(void)
 
 #if defined(MRG_TEST)
 	printf("Allocating a pointer...\n");
-	ptr = (caddr_t)NewPtr(1024);
+	ptr = (void *)NewPtr(1024);
 	printf("Result is 0x%lx.\n", (long)ptr);
 	sizeptr = GetPtrSize((Ptr)ptr);
 	printf("Pointer size is %d\n", sizeptr);
@@ -1131,7 +1135,7 @@ mrg_initadbintr(void)
  *        once and all in one place.
  */
 void
-mrg_fixupROMBase(caddr_t obase, caddr_t nbase)
+mrg_fixupROMBase(void *obase, void *nbase)
 {
 	u_int32_t oldbase, newbase;
 	romvec_t *rom;
@@ -1156,12 +1160,12 @@ mrg_fixupROMBase(caddr_t obase, caddr_t nbase)
 		    (long)mrg_ADBIntrPtr);
 	} else
 		mrg_romadbintr = rom->adbintr == 0 ?
-		    0 : rom->adbintr - oldbase + newbase;
+		    0 : (char *)rom->adbintr - oldbase + newbase;
 
 	mrg_rompmintr = rom->pmintr == 0 ?
-	    0 : rom->pmintr - oldbase + newbase;
+	    0 : (char *)rom->pmintr - oldbase + newbase;
 	mrg_ADBAlternateInit = rom->ADBAlternateInit == 0 ?
-	    0 : rom->ADBAlternateInit - oldbase + newbase;
+	    0 : (char *)rom->ADBAlternateInit - oldbase + newbase;
 
 	/*
 	 * mrg_adbstore becomes ADBBase
@@ -1170,41 +1174,41 @@ mrg_fixupROMBase(caddr_t obase, caddr_t nbase)
 	    0 : (u_int32_t) rom->adb130intr - oldbase + newbase;
 
 	mrg_OStraps[0x77] = rom->CountADBs == 0 ?
-	    0 : rom->CountADBs - oldbase + newbase;
+	    0 : (char *)rom->CountADBs - oldbase + newbase;
 	mrg_OStraps[0x78] = rom->GetIndADB == 0 ?
-	    0 : rom->GetIndADB - oldbase + newbase;
+	    0 : (char *)rom->GetIndADB - oldbase + newbase;
 	mrg_OStraps[0x79] = rom-> GetADBInfo == 0 ?
-	    0 : rom->GetADBInfo - oldbase + newbase;
+	    0 : (char *)rom->GetADBInfo - oldbase + newbase;
 	mrg_OStraps[0x7a] = rom->SetADBInfo == 0 ?
-	    0 : rom->SetADBInfo - oldbase + newbase;
+	    0 : (char *)rom->SetADBInfo - oldbase + newbase;
 	mrg_OStraps[0x7b] = rom->ADBReInit == 0 ?
-	    0 : rom->ADBReInit - oldbase + newbase;
+	    0 : (char *)rom->ADBReInit - oldbase + newbase;
 	mrg_OStraps[0x7c] = rom->ADBOp == 0 ?
-	    0 : rom->ADBOp - oldbase + newbase;
+	    0 : (char *)rom->ADBOp - oldbase + newbase;
 	mrg_OStraps[0x85] = rom->PMgrOp == 0 ?
-	    0 : rom->PMgrOp - oldbase + newbase;
+	    0 : (char *)rom->PMgrOp - oldbase + newbase;
 	mrg_OStraps[0x51] = rom->ReadXPRam == 0 ?
-	    0 : rom->ReadXPRam - oldbase + newbase;
+	    0 : (char *)rom->ReadXPRam - oldbase + newbase;
 	mrg_OStraps[0x38] = rom->WriteParam == 0 ?
-	    0 : rom->WriteParam - oldbase + newbase;/* WriteParam*/
+	    0 : (char *)rom->WriteParam - oldbase + newbase;/* WriteParam*/
 	mrg_OStraps[0x3a] = rom->SetDateTime == 0 ?
-	    0 : rom->SetDateTime - oldbase + newbase;/*SetDateTime*/
+	    0 : (char *)rom->SetDateTime - oldbase + newbase;/*SetDateTime*/
 	mrg_OStraps[0x3f] = rom->InitUtil == 0 ?
-	    0 : rom->InitUtil - oldbase + newbase;  /* InitUtil */
+	    0 : (char *)rom->InitUtil - oldbase + newbase;  /* InitUtil */
 	mrg_OStraps[0x51] = rom->ReadXPRam == 0 ?
-	    0 : rom->ReadXPRam - oldbase + newbase; /* ReadXPRam */
+	    0 : (char *)rom->ReadXPRam - oldbase + newbase; /* ReadXPRam */
 	mrg_OStraps[0x52] = rom->WriteXPRam == 0 ?
-	    0 : rom->WriteXPRam - oldbase + newbase;/* WriteXPRam */
+	    0 : (char *)rom->WriteXPRam - oldbase + newbase;/* WriteXPRam */
 
 	if (rom->Egret == 0) {
 		jEgret = 0;
 		mrg_OStraps[0x92] = 0;
 	} else {
-		jEgret = (void (*))(rom->Egret - oldbase + newbase);
-		mrg_OStraps[0x92] = rom->Egret - oldbase + newbase;
+		jEgret = (void (*))((char *)rom->Egret - oldbase + newbase);
+		mrg_OStraps[0x92] = (char *)rom->Egret - oldbase + newbase;
 	}
 	mrg_InitEgret = rom->InitEgret == 0 ?
-	    0 : rom->InitEgret - oldbase + newbase;
+	    0 : (char *)rom->InitEgret - oldbase + newbase;
 
 	if (rom->jClkNoMem == 0) {
 		printf("WARNING: don't have a value for jClkNoMem, ");
@@ -1212,7 +1216,7 @@ mrg_fixupROMBase(caddr_t obase, caddr_t nbase)
 		printf("Can't read RTC without it. Using MacOS boot time.\n");
 		jClkNoMem = 0;
 	} else
-		jClkNoMem = (void (*))(rom->jClkNoMem - oldbase + newbase);
+		jClkNoMem = (void (*))((char *)rom->jClkNoMem - oldbase + newbase);
 	/*
 	 * Get the ToolBox Routines we may need.  These are
 	 * used in the ADB Initialization of some systems.
@@ -1222,9 +1226,9 @@ mrg_fixupROMBase(caddr_t obase, caddr_t nbase)
 	 * what we'll need to complete initialization on the system.
 	 */
 	mrg_ToolBoxtraps[0x04d] = rom->FixDiv == 0 ?
-	    (caddr_t)mrg_FixDiv : rom->FixDiv - oldbase + newbase;
+	    (void *)mrg_FixDiv : (char *)rom->FixDiv - oldbase + newbase;
 	mrg_ToolBoxtraps[0x068] = rom->FixMul == 0 ?
-	    (caddr_t)mrg_FixMul : rom->FixMul - oldbase + newbase;
+	    (void *)mrg_FixMul : (char *)rom->FixMul - oldbase + newbase;
 
 	/*
 	 * Some systems also require this to be setup for use in
@@ -1251,7 +1255,7 @@ mrg_fixupROMBase(caddr_t obase, caddr_t nbase)
 	 * in the ROM which will be mapped in mrg_InitResources.
 	 */
 	ROMResourceMap = rom->ROMResourceMap == 0 ?
-	    0 : (void (*))(rom->ROMResourceMap - oldbase + newbase);
+	    0 : (void (*))((char *)rom->ROMResourceMap - oldbase + newbase);
 
 	for (i = 0; i < sizeof(mrg_AVInitEgretJT) / sizeof(mrg_AVInitEgretJT[0]); i++)
 		mrg_AVInitEgretJT[i] = mrg_AVInitEgretJT[i] == 0 ?

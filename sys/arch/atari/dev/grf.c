@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.35 2005/12/11 12:16:54 christos Exp $	*/
+/*	$NetBSD: grf.c,v 1.35.26.1 2007/03/12 05:47:20 rmind Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.35 2005/12/11 12:16:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.35.26.1 2007/03/12 05:47:20 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -246,7 +246,7 @@ grfioctl(dev, cmd, data, flag, l)
 dev_t		dev;
 u_long		cmd;
 int		flag;
-caddr_t		data;
+void *		data;
 struct lwp	*l;
 {
 	struct grf_softc	*gp;
@@ -259,10 +259,10 @@ struct lwp	*l;
 	switch (cmd) {
 	case OGRFIOCGINFO:
 	        /* argl.. no bank-member.. */
-	  	bcopy((caddr_t)&gp->g_display, data, sizeof(struct grfinfo)-4);
+	  	bcopy((void *)&gp->g_display, data, sizeof(struct grfinfo)-4);
 		break;
 	case GRFIOCGINFO:
-		bcopy((caddr_t)&gp->g_display, data, sizeof(struct grfinfo));
+		bcopy((void *)&gp->g_display, data, sizeof(struct grfinfo));
 		break;
 	case GRFIOCON:
 		error = grfon(dev);
@@ -424,10 +424,10 @@ struct grf_softc *gp;
 
 	gi = &gp->g_display;
 
-	(*view_cdevsw.d_ioctl)(gp->g_viewdev, VIOCGBMAP, (caddr_t)&bm,
+	(*view_cdevsw.d_ioctl)(gp->g_viewdev, VIOCGBMAP, (void *)&bm,
 			       0, NOLWP);
   
-	gp->g_data = (caddr_t) 0xDeadBeaf; /* not particularly clean.. */
+	gp->g_data = (void *) 0xDeadBeaf; /* not particularly clean.. */
   
 	gi->gd_fbaddr  = bm.hw_address;
 	gi->gd_fbsize  = bm.phys_mappable;
@@ -438,7 +438,7 @@ struct grf_softc *gp;
 	gi->gd_vgasize = bm.vga_mappable;
 	gi->gd_vgabase = bm.vga_base;
 
-	if((*view_cdevsw.d_ioctl)(gp->g_viewdev, VIOCGSIZE, (caddr_t)&vs, 0,
+	if((*view_cdevsw.d_ioctl)(gp->g_viewdev, VIOCGSIZE, (void *)&vs, 0,
 				  NOLWP)) {
 		/*
 		 * fill in some default values...

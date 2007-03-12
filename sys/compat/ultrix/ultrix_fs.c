@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_fs.c,v 1.35 2007/02/09 21:55:26 ad Exp $	*/
+/*	$NetBSD: ultrix_fs.c,v 1.35.2.1 2007/03/12 05:53:00 rmind Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jonathan Stone
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_fs.c,v 1.35 2007/02/09 21:55:26 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_fs.c,v 1.35.2.1 2007/03/12 05:53:00 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -244,7 +244,7 @@ ultrix_sys_getmnt(struct lwp *l, void *v, register_t *retval)
 		 * Find out how many mount list entries to skip, and skip
 		 * them.
 		 */
-		if ((error = copyin((caddr_t)SCARG(uap, start), &start,
+		if ((error = copyin((void *)SCARG(uap, start), &start,
 				    sizeof(*SCARG(uap, start))))  != 0)
 			goto bad;
 		simple_lock(&mountlist_slock);
@@ -279,7 +279,7 @@ ultrix_sys_getmnt(struct lwp *l, void *v, register_t *retval)
 			if (path == NULL ||
 			    strcmp(path, sp->f_mntonname) == 0) {
 				make_ultrix_mntent(sp, &tem);
-				if ((error = copyout((caddr_t)&tem, sfsp,
+				if ((error = copyout((void *)&tem, sfsp,
 						     sizeof(tem))) != 0)
 					goto bad;
 				sfsp++;
@@ -354,7 +354,7 @@ ultrix_sys_mount(struct lwp *l, void *v, register_t *retval)
 	struct sys_mount_args nuap;
 	char *native_fstype;
 
-	caddr_t usp = stackgap_init(p, 0);
+	char *usp = stackgap_init(p, 0);
 
 	memset(&nuap, 0, sizeof(nuap));
 	SCARG(&nuap, flags) = 0;

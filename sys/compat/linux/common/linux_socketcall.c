@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socketcall.c,v 1.31 2007/02/09 21:55:19 ad Exp $	*/
+/*	$NetBSD: linux_socketcall.c,v 1.31.2.1 2007/03/12 05:52:28 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socketcall.c,v 1.31 2007/02/09 21:55:19 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socketcall.c,v 1.31.2.1 2007/03/12 05:52:28 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -133,7 +133,7 @@ linux_sys_socketcall(l, v, retval)
 	if (SCARG(uap, what) < 0 || SCARG(uap, what) > LINUX_MAX_SOCKETCALL)
 		return ENOSYS;
 
-	if ((error = copyin((caddr_t) SCARG(uap, args), (caddr_t) &lda,
+	if ((error = copyin((void *) SCARG(uap, args), (void *) &lda,
 	    linux_socketcall[SCARG(uap, what)].argsize))) {
 		DPRINTF(("copyin for %s failed %d\n",
 		linux_socketcall[SCARG(uap, what)].name, error));

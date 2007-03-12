@@ -1,4 +1,4 @@
-/*	$NetBSD: rwlock.h,v 1.1.6.2 2007/02/27 16:49:36 yamt Exp $	*/
+/*	$NetBSD: rwlock.h,v 1.1.6.3 2007/03/12 05:47:05 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006 The NetBSD Foundation, Inc.
@@ -39,8 +39,6 @@
 #ifndef _ARM_RWLOCK_H_
 #define	_ARM_RWLOCK_H_
 
-#include <arm/atomic.h>
-
 struct krwlock {
 	volatile uintptr_t	rw_owner;
 	uint32_t		rw_id;
@@ -53,7 +51,9 @@ struct krwlock {
 #define	RW_RECEIVE(rw)			/* nothing */
 #define	RW_GIVE(rw)			/* nothing */
 
-#define	RW_CAS(p, o, n)			atomic_cas((p), (o), (n))
+bool	_lock_cas(volatile uintptr_t *, uintptr_t, uintptr_t);
+
+#define	RW_CAS(p, o, n)			_lock_cas((p), (o), (n))
 
 #endif	/* __RWLOCK_PRIVATE */
 

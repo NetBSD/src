@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.47 2006/11/16 01:32:45 christos Exp $	*/
+/*	$NetBSD: md.c,v 1.47.4.1 2007/03/12 05:53:04 rmind Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross, Leo Weppelman.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: md.c,v 1.47 2006/11/16 01:32:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: md.c,v 1.47.4.1 2007/03/12 05:53:04 rmind Exp $");
 
 #include "opt_md.h"
 
@@ -311,7 +311,7 @@ mdstrategy(struct buf *bp)
 {
 	int unit;
 	struct md_softc	*sc;
-	caddr_t	addr;
+	void *	addr;
 	size_t off, xfer;
 
 	unit = MD_UNIT(bp->b_dev);
@@ -328,7 +328,7 @@ mdstrategy(struct buf *bp)
 	case MD_UMEM_SERVER:
 		/* Just add this job to the server's queue. */
 		BUFQ_PUT(sc->sc_buflist, bp);
-		wakeup((caddr_t)sc);
+		wakeup((void *)sc);
 		/* see md_server_loop() */
 		/* no biodone in this case */
 		return;
@@ -347,7 +347,7 @@ mdstrategy(struct buf *bp)
 		xfer = bp->b_resid;
 		if (xfer > (sc->sc_size - off))
 			xfer = (sc->sc_size - off);
-		addr = sc->sc_addr + off;
+		addr = (char *)sc->sc_addr + off;
 		if (bp->b_flags & B_READ)
 			memcpy(bp->b_data, addr, xfer);
 		else
@@ -367,7 +367,7 @@ mdstrategy(struct buf *bp)
 }
 
 static int
-mdioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+mdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	int unit;
 	struct md_softc *sc;
@@ -423,7 +423,7 @@ md_ioctl_kalloc(struct md_softc *sc, struct md_conf *umd,
 		return ENOMEM;
 
 	/* This unit is now configured. */
-	sc->sc_addr = (caddr_t)addr; 	/* kernel space */
+	sc->sc_addr = (void *)addr; 	/* kernel space */
 	sc->sc_size = (size_t)size;
 	sc->sc_type = MD_KMEM_ALLOCATED;
 	return 0;
@@ -443,7 +443,7 @@ md_ioctl_server(struct md_softc *sc, struct md_conf *umd,
 	int error;
 
 	/* Sanity check addr, size. */
-	end = (vaddr_t) (umd->md_addr + umd->md_size);
+	end = (vaddr_t) ((char *)umd->md_addr + umd->md_size);
 
 	if ((end >= VM_MAXUSER_ADDRESS) ||
 		(end < ((vaddr_t) umd->md_addr)) )
@@ -471,7 +471,7 @@ static int
 md_server_loop(struct md_softc *sc)
 {
 	struct buf *bp;
-	caddr_t addr;	/* user space address */
+	void *addr;	/* user space address */
 	size_t off;	/* offset into "device" */
 	size_t xfer;	/* amount to transfer */
 	int error;
@@ -479,7 +479,7 @@ md_server_loop(struct md_softc *sc)
 	for (;;) {
 		/* Wait for some work to arrive. */
 		while ((bp = BUFQ_GET(sc->sc_buflist)) == NULL) {
-			error = tsleep((caddr_t)sc, md_sleep_pri, "md_idle", 0);
+			error = tsleep((void *)sc, md_sleep_pri, "md_idle", 0);
 			if (error)
 				return error;
 		}
@@ -497,7 +497,7 @@ md_server_loop(struct md_softc *sc)
 		xfer = bp->b_resid;
 		if (xfer > (sc->sc_size - off))
 			xfer = (sc->sc_size - off);
-		addr = sc->sc_addr + off;
+		addr = (char *)sc->sc_addr + off;
 		if (bp->b_flags & B_READ)
 			error = copyin(addr, bp->b_data, xfer);
 		else

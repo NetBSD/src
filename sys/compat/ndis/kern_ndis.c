@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sys/compat/ndis/kern_ndis.c,v 1.60.2.5 2005/04/01 17:14:20 wpaul Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: kern_ndis.c,v 1.9 2007/02/09 21:55:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ndis.c,v 1.9.2.1 2007/03/12 05:52:30 rmind Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1409,7 +1409,7 @@ ndis_return_packet(buf, arg)
 	void			*buf;	/* not used */
 	void			*arg;
 #else
-ndis_return_packet(struct mbuf *m, caddr_t buf,
+ndis_return_packet(struct mbuf *m, void *buf,
     size_t size, void *arg)
 #endif
 

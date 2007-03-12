@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.125 2006/11/24 19:46:59 christos Exp $  */
+/*	$NetBSD: atw.c,v 1.125.4.1 2007/03/12 05:53:27 rmind Exp $  */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.125 2006/11/24 19:46:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.125.4.1 2007/03/12 05:53:27 rmind Exp $");
 
 #include "bpfilter.h"
 
@@ -193,7 +193,7 @@ static int	atw_si4126_read(struct atw_softc *, u_int, u_int *);
 
 /* ifnet methods */
 int	atw_init(struct ifnet *);
-int	atw_ioctl(struct ifnet *, u_long, caddr_t);
+int	atw_ioctl(struct ifnet *, u_long, void *);
 void	atw_start(struct ifnet *);
 void	atw_stop(struct ifnet *, int);
 void	atw_watchdog(struct ifnet *);
@@ -589,7 +589,7 @@ atw_attach(struct atw_softc *sc)
 	}
 
 	if ((error = bus_dmamem_map(sc->sc_dmat, &sc->sc_cdseg, sc->sc_cdnseg,
-	    sizeof(struct atw_control_data), (caddr_t *)&sc->sc_control_data,
+	    sizeof(struct atw_control_data), (void **)&sc->sc_control_data,
 	    BUS_DMA_COHERENT)) != 0) {
 		printf("%s: unable to map control data, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
@@ -909,7 +909,7 @@ atw_attach(struct atw_softc *sc)
  fail_3:
 	bus_dmamap_destroy(sc->sc_dmat, sc->sc_cddmamap);
  fail_2:
-	bus_dmamem_unmap(sc->sc_dmat, (caddr_t)sc->sc_control_data,
+	bus_dmamem_unmap(sc->sc_dmat, (void *)sc->sc_control_data,
 	    sizeof(struct atw_control_data));
  fail_1:
 	bus_dmamem_free(sc->sc_dmat, &sc->sc_cdseg, sc->sc_cdnseg);
@@ -2764,7 +2764,7 @@ atw_detach(struct atw_softc *sc)
 	}
 	bus_dmamap_unload(sc->sc_dmat, sc->sc_cddmamap);
 	bus_dmamap_destroy(sc->sc_dmat, sc->sc_cddmamap);
-	bus_dmamem_unmap(sc->sc_dmat, (caddr_t)sc->sc_control_data,
+	bus_dmamem_unmap(sc->sc_dmat, (void *)sc->sc_control_data,
 	    sizeof(struct atw_control_data));
 	bus_dmamem_free(sc->sc_dmat, &sc->sc_cdseg, sc->sc_cdnseg);
 
@@ -3203,7 +3203,7 @@ atw_rxintr(struct atw_softc *sc)
 			tap->ar_antsignal = (int)rssi;
 			/* TBD tap->ar_flags */
 
-			bpf_mtap2(sc->sc_radiobpf, (caddr_t)tap,
+			bpf_mtap2(sc->sc_radiobpf, (void *)tap,
 			    tap->ar_ihdr.it_len, m);
  		}
  #endif /* NPBFILTER > 0 */
@@ -3508,7 +3508,7 @@ atw_start(struct ifnet *ifp)
 		 * Pass the packet to any BPF listeners.
 		 */
 		if (ic->ic_rawbpf != NULL)
-			bpf_mtap((caddr_t)ic->ic_rawbpf, m0);
+			bpf_mtap((void *)ic->ic_rawbpf, m0);
 
 		if (sc->sc_radiobpf != NULL) {
 			struct atw_tx_radiotap_header *tap = &sc->sc_txtap;
@@ -3519,7 +3519,7 @@ atw_start(struct ifnet *ifp)
 
 			/* TBD tap->at_flags */
 
-			bpf_mtap2(sc->sc_radiobpf, (caddr_t)tap,
+			bpf_mtap2(sc->sc_radiobpf, (void *)tap,
 			    tap->at_ihdr.it_len, m0);
 		}
 #endif /* NBPFILTER > 0 */
@@ -3650,7 +3650,7 @@ atw_start(struct ifnet *ifp)
 					break;
 				}
 			}
-			m_copydata(m0, 0, m0->m_pkthdr.len, mtod(m, caddr_t));
+			m_copydata(m0, 0, m0->m_pkthdr.len, mtod(m, void *));
 			m->m_pkthdr.len = m->m_len = m0->m_pkthdr.len;
 			m_freem(m0);
 			m0 = m;
@@ -3848,7 +3848,7 @@ atw_power(int why, void *arg)
  *	Handle control requests from the operator.
  */
 int
-atw_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
+atw_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct atw_softc *sc = ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *)data;

@@ -1,4 +1,4 @@
-/* $NetBSD: freebsd_syscall.h,v 1.66 2006/09/01 21:19:44 matt Exp $ */
+/* $NetBSD: freebsd_syscall.h,v 1.66.8.1 2007/03/12 05:51:58 rmind Exp $ */
 
 /*
  * System call numbers.
@@ -71,7 +71,7 @@
 /* syscall: "getpid_with_ppid" ret: "pid_t" args: */
 #define	FREEBSD_SYS_getpid_with_ppid	20
 
-/* syscall: "mount" ret: "int" args: "int" "const char *" "int" "caddr_t" */
+/* syscall: "mount" ret: "int" args: "int" "const char *" "int" "void *" */
 #define	FREEBSD_SYS_mount	21
 
 /* syscall: "unmount" ret: "int" args: "const char *" "int" */
@@ -86,25 +86,25 @@
 /* syscall: "geteuid" ret: "uid_t" args: */
 #define	FREEBSD_SYS_geteuid	25
 
-/* syscall: "ptrace" ret: "int" args: "int" "pid_t" "caddr_t" "int" */
+/* syscall: "ptrace" ret: "int" args: "int" "pid_t" "void *" "int" */
 #define	FREEBSD_SYS_ptrace	26
 
 /* syscall: "recvmsg" ret: "int" args: "int" "struct msghdr *" "int" */
 #define	FREEBSD_SYS_recvmsg	27
 
-/* syscall: "sendmsg" ret: "int" args: "int" "caddr_t" "int" */
+/* syscall: "sendmsg" ret: "int" args: "int" "void *" "int" */
 #define	FREEBSD_SYS_sendmsg	28
 
-/* syscall: "recvfrom" ret: "int" args: "int" "caddr_t" "size_t" "int" "caddr_t" "int *" */
+/* syscall: "recvfrom" ret: "int" args: "int" "void *" "size_t" "int" "void *" "int *" */
 #define	FREEBSD_SYS_recvfrom	29
 
-/* syscall: "accept" ret: "int" args: "int" "caddr_t" "int *" */
+/* syscall: "accept" ret: "int" args: "int" "void *" "int *" */
 #define	FREEBSD_SYS_accept	30
 
-/* syscall: "getpeername" ret: "int" args: "int" "caddr_t" "int *" */
+/* syscall: "getpeername" ret: "int" args: "int" "void *" "int *" */
 #define	FREEBSD_SYS_getpeername	31
 
-/* syscall: "getsockname" ret: "int" args: "int" "caddr_t" "int *" */
+/* syscall: "getsockname" ret: "int" args: "int" "void *" "int *" */
 #define	FREEBSD_SYS_getsockname	32
 
 /* syscall: "access" ret: "int" args: "const char *" "int" */
@@ -140,7 +140,7 @@
 /* syscall: "getegid" ret: "gid_t" args: */
 #define	FREEBSD_SYS_getegid	43
 
-/* syscall: "profil" ret: "int" args: "caddr_t" "u_int" "u_int" "u_int" */
+/* syscall: "profil" ret: "int" args: "void *" "u_int" "u_int" "u_int" */
 #define	FREEBSD_SYS_profil	44
 
 #ifdef KTRACE
@@ -174,7 +174,7 @@
 /* syscall: "sigaltstack" ret: "int" args: "const struct sigaltstack13 *" "struct sigaltstack13 *" */
 #define	FREEBSD_SYS_sigaltstack	53
 
-/* syscall: "ioctl" ret: "int" args: "int" "u_long" "caddr_t" */
+/* syscall: "ioctl" ret: "int" args: "int" "u_long" "void *" */
 #define	FREEBSD_SYS_ioctl	54
 
 /* syscall: "oreboot" ret: "int" args: "int" */
@@ -207,7 +207,7 @@
 /* syscall: "ogetpagesize" ret: "int" args: */
 #define	FREEBSD_SYS_ogetpagesize	64
 
-/* syscall: "msync" ret: "int" args: "caddr_t" "size_t" "int" */
+/* syscall: "msync" ret: "int" args: "void *" "size_t" "int" */
 #define	FREEBSD_SYS_msync	65
 
 /* syscall: "vfork" ret: "int" args: */
@@ -221,24 +221,24 @@
 /* syscall: "sstk" ret: "int" args: "int" */
 #define	FREEBSD_SYS_sstk	70
 
-/* syscall: "ommap" ret: "int" args: "caddr_t" "size_t" "int" "int" "int" "long" */
+/* syscall: "ommap" ret: "int" args: "void *" "size_t" "int" "int" "int" "long" */
 #define	FREEBSD_SYS_ommap	71
 
 /* syscall: "vadvise" ret: "int" args: "int" */
 #define	FREEBSD_SYS_vadvise	72
 
-/* syscall: "munmap" ret: "int" args: "caddr_t" "size_t" */
+/* syscall: "munmap" ret: "int" args: "void *" "size_t" */
 #define	FREEBSD_SYS_munmap	73
 
-/* syscall: "mprotect" ret: "int" args: "caddr_t" "size_t" "int" */
+/* syscall: "mprotect" ret: "int" args: "void *" "size_t" "int" */
 #define	FREEBSD_SYS_mprotect	74
 
-/* syscall: "madvise" ret: "int" args: "caddr_t" "size_t" "int" */
+/* syscall: "madvise" ret: "int" args: "void *" "size_t" "int" */
 #define	FREEBSD_SYS_madvise	75
 
 				/* 76 is obsolete vhangup */
 				/* 77 is obsolete vlimit */
-/* syscall: "mincore" ret: "int" args: "caddr_t" "size_t" "char *" */
+/* syscall: "mincore" ret: "int" args: "void *" "size_t" "char *" */
 #define	FREEBSD_SYS_mincore	78
 
 /* syscall: "getgroups" ret: "int" args: "u_int" "gid_t *" */
@@ -292,28 +292,28 @@
 /* syscall: "socket" ret: "int" args: "int" "int" "int" */
 #define	FREEBSD_SYS_socket	97
 
-/* syscall: "connect" ret: "int" args: "int" "caddr_t" "int" */
+/* syscall: "connect" ret: "int" args: "int" "void *" "int" */
 #define	FREEBSD_SYS_connect	98
 
-/* syscall: "oaccept" ret: "int" args: "int" "caddr_t" "int *" */
+/* syscall: "oaccept" ret: "int" args: "int" "void *" "int *" */
 #define	FREEBSD_SYS_oaccept	99
 
 /* syscall: "getpriority" ret: "int" args: "int" "int" */
 #define	FREEBSD_SYS_getpriority	100
 
-/* syscall: "osend" ret: "int" args: "int" "caddr_t" "int" "int" */
+/* syscall: "osend" ret: "int" args: "int" "void *" "int" "int" */
 #define	FREEBSD_SYS_osend	101
 
-/* syscall: "orecv" ret: "int" args: "int" "caddr_t" "int" "int" */
+/* syscall: "orecv" ret: "int" args: "int" "void *" "int" "int" */
 #define	FREEBSD_SYS_orecv	102
 
 /* syscall: "sigreturn" ret: "int" args: "struct freebsd_sigcontext *" */
 #define	FREEBSD_SYS_sigreturn	103
 
-/* syscall: "bind" ret: "int" args: "int" "caddr_t" "int" */
+/* syscall: "bind" ret: "int" args: "int" "void *" "int" */
 #define	FREEBSD_SYS_bind	104
 
-/* syscall: "setsockopt" ret: "int" args: "int" "int" "int" "caddr_t" "int" */
+/* syscall: "setsockopt" ret: "int" args: "int" "int" "int" "void *" "int" */
 #define	FREEBSD_SYS_setsockopt	105
 
 /* syscall: "listen" ret: "int" args: "int" "int" */
@@ -338,7 +338,7 @@
 /* syscall: "orecvmsg" ret: "int" args: "int" "struct omsghdr *" "int" */
 #define	FREEBSD_SYS_orecvmsg	113
 
-/* syscall: "osendmsg" ret: "int" args: "int" "caddr_t" "int" */
+/* syscall: "osendmsg" ret: "int" args: "int" "void *" "int" */
 #define	FREEBSD_SYS_osendmsg	114
 
 #ifdef TRACE
@@ -354,7 +354,7 @@
 /* syscall: "getrusage" ret: "int" args: "int" "struct rusage *" */
 #define	FREEBSD_SYS_getrusage	117
 
-/* syscall: "getsockopt" ret: "int" args: "int" "int" "int" "caddr_t" "int *" */
+/* syscall: "getsockopt" ret: "int" args: "int" "int" "int" "void *" "int *" */
 #define	FREEBSD_SYS_getsockopt	118
 
 				/* 119 is obsolete resuba */
@@ -373,7 +373,7 @@
 /* syscall: "fchmod" ret: "int" args: "int" "int" */
 #define	FREEBSD_SYS_fchmod	124
 
-/* syscall: "orecvfrom" ret: "int" args: "int" "caddr_t" "size_t" "int" "caddr_t" "int *" */
+/* syscall: "orecvfrom" ret: "int" args: "int" "void *" "size_t" "int" "void *" "int *" */
 #define	FREEBSD_SYS_orecvfrom	125
 
 /* syscall: "setreuid" ret: "int" args: "int" "int" */
@@ -397,7 +397,7 @@
 /* syscall: "mkfifo" ret: "int" args: "const char *" "int" */
 #define	FREEBSD_SYS_mkfifo	132
 
-/* syscall: "sendto" ret: "int" args: "int" "caddr_t" "size_t" "int" "caddr_t" "int" */
+/* syscall: "sendto" ret: "int" args: "int" "void *" "size_t" "int" "void *" "int" */
 #define	FREEBSD_SYS_sendto	133
 
 /* syscall: "shutdown" ret: "int" args: "int" "int" */
@@ -419,7 +419,7 @@
 /* syscall: "adjtime" ret: "int" args: "struct timeval *" "struct timeval *" */
 #define	FREEBSD_SYS_adjtime	140
 
-/* syscall: "ogetpeername" ret: "int" args: "int" "caddr_t" "int *" */
+/* syscall: "ogetpeername" ret: "int" args: "int" "void *" "int *" */
 #define	FREEBSD_SYS_ogetpeername	141
 
 /* syscall: "ogethostid" ret: "int32_t" args: */
@@ -440,17 +440,17 @@
 /* syscall: "setsid" ret: "int" args: */
 #define	FREEBSD_SYS_setsid	147
 
-/* syscall: "quotactl" ret: "int" args: "char *" "int" "int" "caddr_t" */
+/* syscall: "quotactl" ret: "int" args: "char *" "int" "int" "void *" */
 #define	FREEBSD_SYS_quotactl	148
 
 /* syscall: "oquota" ret: "int" args: */
 #define	FREEBSD_SYS_oquota	149
 
-/* syscall: "ogetsockname" ret: "int" args: "int" "caddr_t" "int *" */
+/* syscall: "ogetsockname" ret: "int" args: "int" "void *" "int *" */
 #define	FREEBSD_SYS_ogetsockname	150
 
 #if defined(NFS) || defined(NFSSERVER)
-/* syscall: "nfssvc" ret: "int" args: "int" "caddr_t" */
+/* syscall: "nfssvc" ret: "int" args: "int" "void *" */
 #define	FREEBSD_SYS_nfssvc	155
 
 #else
@@ -564,7 +564,7 @@
 /* syscall: "getdirentries" ret: "int" args: "int" "char *" "u_int" "long *" */
 #define	FREEBSD_SYS_getdirentries	196
 
-/* syscall: "mmap" ret: "caddr_t" args: "caddr_t" "size_t" "int" "int" "int" "long" "off_t" */
+/* syscall: "mmap" ret: "void *" args: "void *" "size_t" "int" "int" "int" "long" "off_t" */
 #define	FREEBSD_SYS_mmap	197
 
 /* syscall: "__syscall" ret: "int" args: */
@@ -582,10 +582,10 @@
 /* syscall: "sysctl" ret: "int" args: "int *" "u_int" "void *" "size_t *" "void *" "size_t" */
 #define	FREEBSD_SYS_sysctl	202
 
-/* syscall: "mlock" ret: "int" args: "caddr_t" "size_t" */
+/* syscall: "mlock" ret: "int" args: "void *" "size_t" */
 #define	FREEBSD_SYS_mlock	203
 
-/* syscall: "munlock" ret: "int" args: "caddr_t" "size_t" */
+/* syscall: "munlock" ret: "int" args: "void *" "size_t" */
 #define	FREEBSD_SYS_munlock	204
 
 #ifdef FREEBSD_BASED_ON_44LITE_R2

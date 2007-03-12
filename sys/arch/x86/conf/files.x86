@@ -1,0 +1,69 @@
+#	$NetBSD: files.x86,v 1.23.2.2 2007/03/12 05:51:45 rmind Exp $
+
+# options for MP configuration through the MP spec
+defflag opt_mpbios.h MPBIOS MPVERBOSE MPDEBUG MPBIOS_SCANPCI
+
+# MTRR support
+defflag                 MTRR
+
+# PCI fixup options
+defflag opt_pcifixup.h	PCI_ADDR_FIXUP PCI_BUS_FIXUP
+			PCI_INTR_FIXUP PCI_INTR_FIXUP_FORCE
+
+# AMD Powernow/Cool`n'Quiet Technology
+defflag opt_powernow_k8.h	POWERNOW_K8
+
+# VIA PadLock support
+defflag	opt_viapadlock.h	VIA_PADLOCK:	opencrypto
+file	arch/x86/x86/via_padlock.c	via_padlock
+
+define  cpubus { [apid = -1] }
+define  ioapicbus { [apid = -1] }
+define  ipmibus {}
+
+file	arch/x86/x86/apic.c		ioapic | lapic
+file	arch/x86/x86/bus_dma.c
+file	arch/x86/x86/bus_space.c
+file	arch/x86/x86/cacheinfo.c
+file	arch/x86/x86/consinit.c
+file	arch/x86/x86/errata.c
+file	arch/x86/x86/i8259.c
+file	arch/x86/x86/intr.c
+file	arch/x86/x86/ipi.c		multiprocessor
+file	arch/x86/x86/lock_machdep.c	lockdebug
+file	arch/x86/x86/mtrr_i686.c	mtrr
+file 	arch/x86/x86/patch.c
+file	arch/x86/x86/softintr.c
+file	arch/x86/x86/x86_autoconf.c
+file	arch/x86/x86/x86_machdep.c
+
+define lapic
+file	arch/x86/x86/lapic.c		lapic needs-flag
+
+device ioapic: lapic
+attach ioapic at ioapicbus
+file	arch/x86/x86/ioapic.c		ioapic needs-flag
+
+# MP configuration using Intel SMP specification 1.4
+file 	arch/x86/x86/mpbios.c		mpbios
+
+# MP configuration using ACPI
+file 	arch/x86/x86/mpacpi.c		acpi
+
+file    arch/x86/x86/acpi_machdep.c	acpi
+
+file	arch/x86/pci/pci_machdep.c	pci
+file	arch/x86/pci/pci_intr_machdep.c	pci
+
+file	arch/x86/isa/isa_machdep.c	isa
+
+file	arch/x86/pci/pciide_machdep.c	pciide_common
+
+# Powernow common functions
+file	arch/x86/x86/powernow_k8.c	powernow_k8
+file	arch/x86/x86/powernow_common.c	powernow_k8 | powernow_k7
+
+#IPMI device
+device ipmi : sysmon_envsys, sysmon_wdog
+attach ipmi at ipmibus
+file	arch/x86/x86/ipmi.c		ipmi needs-flag

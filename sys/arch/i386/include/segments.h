@@ -1,4 +1,4 @@
-/*	$NetBSD: segments.h,v 1.41 2004/03/05 11:33:27 junyoung Exp $	*/
+/*	$NetBSD: segments.h,v 1.41.54.1 2007/03/12 05:48:37 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -267,13 +267,16 @@ void idt_vec_free(int);
  * relocatable fashion (even when in protected mode); mapping the zero page
  * via the GEXTBIOSDATA_SEL allows these buggy BIOSes to continue to work
  * under NetBSD.
+ *
+ * The order if the first 5 descriptors is special; the sysenter/sysexit
+ * instructions depend on them.
  */
 #define	GNULL_SEL	0	/* Null descriptor */
 #define	GCODE_SEL	1	/* Kernel code descriptor */
 #define	GDATA_SEL	2	/* Kernel data descriptor */
-#define	GLDT_SEL	3	/* Default LDT descriptor */
-#define	GUCODE_SEL	4	/* User code descriptor */
-#define	GUDATA_SEL	5	/* User data descriptor */
+#define	GUCODE_SEL	3	/* User code descriptor */
+#define	GUDATA_SEL	4	/* User data descriptor */
+#define	GLDT_SEL	5	/* Default LDT descriptor */
 #define GCPU_SEL	6	/* per-CPU segment */
 #define	GMACHCALLS_SEL	7	/* Darwin (mach trap) system call gate */
 #define	GEXTBIOSDATA_SEL 8	/* magic to catch BIOS refs to EBDA */

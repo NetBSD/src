@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.27 2005/12/11 12:17:18 christos Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.27.26.1 2007/03/12 05:47:56 rmind Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.27 2005/12/11 12:17:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.27.26.1 2007/03/12 05:47:56 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -82,8 +82,9 @@ void	pmap_bootstrap __P((paddr_t, paddr_t));
  *	ledbase:	SPU LEDs
  *	msgbufaddr:	kernel message buffer
  */
-caddr_t		CADDR1, CADDR2, vmmap, ledbase;
-extern caddr_t	msgbufaddr;
+void *CADDR1, *CADDR2, *ledbase;
+char *vmmap;
+void *msgbufaddr;
 
 /*
  * Bootstrap the VM system.
@@ -508,15 +509,15 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 
 		RELOC(bootinfo_va, vaddr_t) = (vaddr_t)va;
 		va += PAGE_SIZE;
-		RELOC(CADDR1, caddr_t) = (caddr_t)va;
+		RELOC(CADDR1, void *) = (void *)va;
 		va += PAGE_SIZE;
-		RELOC(CADDR2, caddr_t) = (caddr_t)va;
+		RELOC(CADDR2, void *) = (void *)va;
 		va += PAGE_SIZE;
-		RELOC(vmmap, caddr_t) = (caddr_t)va;
+		RELOC(vmmap, void *) = (void *)va;
 		va += PAGE_SIZE;
-		RELOC(ledbase, caddr_t) = (caddr_t)va;
+		RELOC(ledbase, void *) = (void *)va;
 		va += PAGE_SIZE;
-		RELOC(msgbufaddr, caddr_t) = (caddr_t)va;
+		RELOC(msgbufaddr, void *) = (void *)va;
 		va += m68k_round_page(MSGBUFSIZE);
 		RELOC(virtual_avail, vaddr_t) = va;
 	}

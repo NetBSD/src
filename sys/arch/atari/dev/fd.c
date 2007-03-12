@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.53 2005/12/24 23:23:59 perry Exp $	*/
+/*	$NetBSD: fd.c,v 1.53.26.1 2007/03/12 05:47:20 rmind Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.53 2005/12/24 23:23:59 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.53.26.1 2007/03/12 05:47:20 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -147,7 +147,7 @@ struct fd_softc {
 	short		flags;		/* misc flags			*/
 	short		part;		/* Current open partition	*/
 	int		sector;		/* logical sector for I/O	*/
-	caddr_t		io_data;	/* KVA for data transfer	*/
+	char		*io_data;	/* KVA for data transfer	*/
 	int		io_bytes;	/* bytes left for I/O		*/
 	int		io_dir;		/* B_READ/B_WRITE		*/
 	int		errcnt;		/* current error count		*/
@@ -416,7 +416,7 @@ fdioctl(dev, cmd, addr, flag, l)
 dev_t		dev;
 u_long		cmd;
 int		flag;
-caddr_t		addr;
+void *		addr;
 struct lwp	*l;
 {
 	struct fd_softc *sc;
@@ -500,7 +500,7 @@ struct lwp	*l;
 	 */
 	sps = splbio();
 	while(sc->flags & FLPF_INOPEN)
-		tsleep((caddr_t)sc, PRIBIO, "fdopen", 0);
+		tsleep((void *)sc, PRIBIO, "fdopen", 0);
 	splx(sps);
 
 	if(!(sc->flags & FLPF_ISOPEN)) {
@@ -534,9 +534,9 @@ struct lwp	*l;
 		st_dmagrab((dma_farg)fdcint, (dma_farg)fdstatus, sc,
 								&lock_stat, 0);
 		while(sc->flags & FLPF_GETSTAT)
-			tsleep((caddr_t)sc, PRIBIO, "fdopen", 0);
+			tsleep((void *)sc, PRIBIO, "fdopen", 0);
 		splx(sps);
-		wakeup((caddr_t)sc);
+		wakeup((void *)sc);
 
 		if((sc->flags & FLPF_WRTPROT) && (flags & FWRITE)) {
 			sc->flags = 0;
@@ -934,7 +934,7 @@ struct fd_softc	*sc;
 			bcopy(sc->io_data, sc->bounceb, SECTOR_SIZE);
 		sc->flags |= FLPF_BOUNCE;
 	}
-	st_dmaaddr_set((caddr_t)phys_addr);	/* DMA address setup */
+	st_dmaaddr_set((void *)phys_addr);	/* DMA address setup */
 
 #ifdef FLP_DEBUG
 	printf("fd_xfer:Start io (io_addr:%lx)\n", (u_long)kvtop(sc->io_data));
@@ -1001,7 +1001,7 @@ struct fd_softc	*sc;
 			if(fd_state == FLP_STAT) {
 				sc->flags |= FLPF_EMPTY;
 				sc->flags &= ~FLPF_GETSTAT;
-				wakeup((caddr_t)sc);
+				wakeup((void *)sc);
 				fddone(sc);
 				return;
 			}
@@ -1028,7 +1028,7 @@ struct fd_softc	*sc;
 
 			if(fd_state == FLP_STAT) {
 				sc->flags &= ~FLPF_GETSTAT;
-				wakeup((caddr_t)sc);
+				wakeup((void *)sc);
 				fddone(sc);
 				return;
 			}

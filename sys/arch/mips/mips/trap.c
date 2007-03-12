@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.207 2007/02/09 21:55:06 ad Exp $	*/
+/*	$NetBSD: trap.c,v 1.207.2.1 2007/03/12 05:49:23 rmind Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.207 2007/02/09 21:55:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.207.2.1 2007/03/12 05:49:23 rmind Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ktrace.h"
@@ -353,7 +353,7 @@ trap(unsigned int status, unsigned int cause, vaddr_t vaddr, vaddr_t opc,
 		if (l == NULL || l->l_addr->u_pcb.pcb_onfault == NULL)
 			goto dopanic;
 		/* check for fuswintr() or suswintr() getting a page fault */
-		if (l->l_addr->u_pcb.pcb_onfault == (caddr_t)fswintrberr) {
+		if (l->l_addr->u_pcb.pcb_onfault == (void *)fswintrberr) {
 			frame->tf_regs[TF_EPC] = (int)fswintrberr;
 			return; /* KERN */
 		}
@@ -390,7 +390,7 @@ trap(unsigned int status, unsigned int cause, vaddr_t vaddr, vaddr_t opc,
 		 * the current limit and we need to reflect that as an access
 		 * error.
 		 */
-		if ((caddr_t)va >= vm->vm_maxsaddr) {
+		if ((void *)va >= vm->vm_maxsaddr) {
 			if (rv == 0)
 				uvm_grow(p, va);
 			else if (rv == EACCES)
@@ -512,11 +512,11 @@ trap(unsigned int status, unsigned int cause, vaddr_t vaddr, vaddr_t opc,
 			sa = trunc_page(va);
 			ea = round_page(va + sizeof(int) - 1);
 			rv = uvm_map_protect(&p->p_vmspace->vm_map,
-				sa, ea, VM_PROT_ALL, FALSE);
+				sa, ea, VM_PROT_ALL, false);
 			if (rv == 0) {
 				rv = suiword((void *)va, l->l_md.md_ss_instr);
 				(void)uvm_map_protect(&p->p_vmspace->vm_map,
-				sa, ea, VM_PROT_READ|VM_PROT_EXECUTE, FALSE);
+				sa, ea, VM_PROT_READ|VM_PROT_EXECUTE, false);
 			}
 		}
 		mips_icache_sync_all();		/* XXXJRT -- necessary? */
@@ -660,7 +660,7 @@ mips_singlestep(struct lwp *l)
 	 * a RAS, and set the breakpoint just past it.
 	 */
 	if (!LIST_EMPTY(&p->p_raslist)) {
-		while (ras_lookup(p, (caddr_t)va) != (caddr_t)-1)
+		while (ras_lookup(p, (void *)va) != (void *)-1)
 			va += sizeof(int);
 	}
 
@@ -672,11 +672,11 @@ mips_singlestep(struct lwp *l)
 		sa = trunc_page(va);
 		ea = round_page(va + sizeof(int) - 1);
 		rv = uvm_map_protect(&p->p_vmspace->vm_map,
-		    sa, ea, VM_PROT_ALL, FALSE);
+		    sa, ea, VM_PROT_ALL, false);
 		if (rv == 0) {
 			rv = suiword((void *)va, MIPS_BREAK_SSTEP);
 			(void)uvm_map_protect(&p->p_vmspace->vm_map,
-			    sa, ea, VM_PROT_READ|VM_PROT_EXECUTE, FALSE);
+			    sa, ea, VM_PROT_READ|VM_PROT_EXECUTE, false);
 		}
 	}
 #if 0

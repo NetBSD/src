@@ -1,4 +1,4 @@
-/*	$NetBSD: kttcp.c,v 1.23 2007/02/09 21:55:26 ad Exp $	*/
+/*	$NetBSD: kttcp.c,v 1.23.2.1 2007/03/12 05:53:04 rmind Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kttcp.c,v 1.23 2007/02/09 21:55:26 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kttcp.c,v 1.23.2.1 2007/03/12 05:53:04 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -86,7 +86,7 @@ kttcpattach(int count)
 }
 
 int
-kttcpioctl(dev_t dev, u_long cmd, caddr_t data, int flag,
+kttcpioctl(dev_t dev, u_long cmd, void *data, int flag,
     struct lwp *l)
 {
 	int error;

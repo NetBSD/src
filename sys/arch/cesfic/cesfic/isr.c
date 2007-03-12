@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.6 2006/12/21 15:55:22 yamt Exp $	*/
+/*	$NetBSD: isr.c,v 1.6.2.1 2007/03/12 05:47:32 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.6 2006/12/21 15:55:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.6.2.1 2007/03/12 05:47:32 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -296,26 +296,12 @@ isrdispatch(evec)
 		printf("isrdispatch: stray level %d interrupt\n", ipl);
 }
 
-void netintr(void);
-
-void
-netintr()
-{
-#define DONETISR(bit, fn) do {			\
-		if (netisr & (1 << bit))	\
-			netisr &= ~(1 << bit);	\
-			fn();			\
-		} while(0)
-
-#include <net/netisr_dispatch.h>
-
-#undef DONETISR
-}
-
-int ipl2spl_table[NIPLS] = {
+int ipl2spl_table[NIPL] = {
 	[IPL_NONE] = PSL_S|PSL_IPL0,
 	[IPL_SOFTCLOCK] = PSL_S|PSL_IPL1,
 	[IPL_SOFTNET] = PSL_S|PSL_IPL1,
+	[IPL_SOFTSERIAL] = PSL_S|PSL_IPL1,
+	[IPL_SOFT] = PSL_S|PSL_IPL1,
 	[IPL_BIO] = PSL_S|PSL_IPL3,
 	[IPL_NET] = PSL_S|PSL_IPL3,
 	[IPL_TTY] = PSL_S|PSL_IPL3,

@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.58 2007/01/04 17:50:00 elad Exp $	*/
+/*	$NetBSD: xy.c,v 1.58.2.1 2007/03/12 05:51:08 rmind Exp $	*/
 
 /*
  *
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.58 2007/01/04 17:50:00 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.58.2.1 2007/03/12 05:51:08 rmind Exp $");
 
 #undef XYC_DEBUG		/* full debug */
 #undef XYC_DIAG			/* extra sanity checks */
@@ -171,7 +171,7 @@ int	xyc_remove_iorq(struct xyc_softc *);
 int	xyc_reset(struct xyc_softc *, int, struct xy_iorq *, int,
 	    struct xy_softc *);
 inline void xyc_rqinit(struct xy_iorq *, struct xyc_softc *, struct xy_softc *,
-	    int, u_long, int, caddr_t, struct buf *);
+	    int, u_long, int, void *, struct buf *);
 void	xyc_rqtopb(struct xy_iorq *, struct xy_iopb *, int, int);
 void	xyc_start(struct xyc_softc *, struct xy_iorq *);
 int	xyc_startbuf(struct xyc_softc *, struct xy_softc *, struct buf *);
@@ -717,7 +717,7 @@ xyclose(dev_t dev, int flag, int fmt, struct lwp *l)
  * xydump: crash dump system
  */
 int 
-xydump(dev_t dev, daddr_t blkno, caddr_t va, size_t sz)
+xydump(dev_t dev, daddr_t blkno, void *va, size_t sz)
 {
 	int     unit, part;
 	struct xy_softc *xy;
@@ -752,7 +752,7 @@ xydump(dev_t dev, daddr_t blkno, caddr_t va, size_t sz)
  * xyioctl: ioctls on XY drives.   based on ioctl's of other netbsd disks.
  */
 int 
-xyioctl(dev_t dev, u_long command, caddr_t addr, int flag, struct lwp *l)
+xyioctl(dev_t dev, u_long command, void *addr, int flag, struct lwp *l)
 {
 	struct xy_softc *xy;
 	struct xd_iocmd *xio;
@@ -1067,7 +1067,7 @@ xycintr(void *v)
 
 inline void 
 xyc_rqinit(struct xy_iorq *rq, struct xyc_softc *xyc, struct xy_softc *xy,
-    int md, u_long blk, int cnt, caddr_t db, struct buf *bp)
+    int md, u_long blk, int cnt, void *db, struct buf *bp)
 {
 	rq->xyc = xyc;
 	rq->xy = xy;
@@ -1199,7 +1199,7 @@ xyc_startbuf(struct xyc_softc *xycsc, struct xy_softc *xysc, struct buf *bp)
 	struct xy_iorq *iorq;
 	struct xy_iopb *iopb;
 	u_long  block;
-	caddr_t dbuf;
+	void *dbuf;
 
 	iorq = xysc->xyrq;
 	iopb = iorq->iopb;
@@ -1914,7 +1914,7 @@ int
 xyc_ioctlcmd(struct xy_softc *xy, dev_t dev, struct xd_iocmd *xio)
 {
 	int     s, err, rqno;
-	void * dvmabuf = NULL;
+	void *dvmabuf = NULL;
 	struct xyc_softc *xycsc;
 
 	/* check sanity of requested command */

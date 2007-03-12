@@ -1,4 +1,4 @@
-/*	$NetBSD: gvpio.c,v 1.15 2006/12/21 15:55:21 yamt Exp $ */
+/*	$NetBSD: gvpio.c,v 1.15.2.1 2007/03/12 05:46:41 rmind Exp $ */
 
 /*
  * Copyright (c) 1997 Ignatios Souvatzis
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gvpio.c,v 1.15 2006/12/21 15:55:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gvpio.c,v 1.15.2.1 2007/03/12 05:46:41 rmind Exp $");
 
 /*
  * GVP I/O Extender
@@ -60,7 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: gvpio.c,v 1.15 2006/12/21 15:55:21 yamt Exp $");
 struct gvpio_softc {
 	struct device sc_dev;
 	struct bus_space_tag sc_bst;
-	caddr_t sc_cntr;
+	void *sc_cntr;
 	LIST_HEAD(, gvpcom_int_hdl) sc_comhdls;
 	struct isr sc_comisr;
 };
@@ -107,7 +107,7 @@ gvpioattach(struct device *parent, struct device *self, void *auxp)
 	struct gvpio_devs  *giosd;
 	struct gvpbus_args *gap;
 	struct supio_attach_args supa;
-	volatile caddr_t gbase;
+	volatile void *gbase;
 	u_int16_t needpsl;
 
 	giosc = (struct gvpio_softc *)self;
@@ -187,7 +187,7 @@ gvp_com_intr(void *p)
 {
 	struct gvpio_softc *sc;
 	struct gvpcom_int_hdl *np;
-	volatile caddr_t cntr;
+	volatile void *cntr;
 
 	sc = (struct gvpio_softc *)p;
 

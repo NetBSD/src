@@ -1,4 +1,4 @@
-/*	$NetBSD: cg2.c,v 1.26 2005/12/11 12:19:20 christos Exp $	*/
+/*	$NetBSD: cg2.c,v 1.26.26.1 2007/03/12 05:51:04 rmind Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cg2.c,v 1.26 2005/12/11 12:19:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cg2.c,v 1.26.26.1 2007/03/12 05:51:04 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -205,7 +205,7 @@ cg2open(dev_t dev, int flags, int mode, struct lwp *l)
 }
 
 int 
-cg2ioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct lwp *l)
+cg2ioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 {
 	struct cg2_softc *sc = cgtwo_cd.cd_devs[minor(dev)];
 

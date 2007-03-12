@@ -1,4 +1,4 @@
-/* $NetBSD: asc_ioasic.c,v 1.16 2006/03/08 23:46:24 lukem Exp $ */
+/* $NetBSD: asc_ioasic.c,v 1.16.16.1 2007/03/12 05:49:51 rmind Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: asc_ioasic.c,v 1.16 2006/03/08 23:46:24 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc_ioasic.c,v 1.16.16.1 2007/03/12 05:49:51 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -68,7 +68,7 @@ struct asc_softc {
 	bus_space_handle_t sc_scsi_bsh;		/* ASC register handle */
 	bus_dma_tag_t sc_dmat;			/* bus dma tag */
 	bus_dmamap_t sc_dmamap;			/* bus dmamap */
-	caddr_t *sc_dmaaddr;
+	void **sc_dmaaddr;
 	size_t *sc_dmalen;
 	size_t sc_dmasize;
 	unsigned sc_flags;
@@ -89,7 +89,7 @@ static int	asc_dma_isintr __P((struct ncr53c9x_softc *sc));
 static void	asc_ioasic_reset __P((struct ncr53c9x_softc *));
 static int	asc_ioasic_intr __P((struct ncr53c9x_softc *));
 static int	asc_ioasic_setup __P((struct ncr53c9x_softc *,
-				caddr_t *, size_t *, int, size_t *));
+				void **, size_t *, int, size_t *));
 static void	asc_ioasic_go __P((struct ncr53c9x_softc *));
 static void	asc_ioasic_stop __P((struct ncr53c9x_softc *));
 static int	asc_dma_isactive __P((struct ncr53c9x_softc *));
@@ -219,7 +219,7 @@ asc_ioasic_reset(sc)
 int
 asc_ioasic_setup(sc, addr, len, ispullup, dmasize)
 	struct ncr53c9x_softc *sc;
-	caddr_t *addr;
+	void **addr;
 	size_t *len;
 	int ispullup;
 	size_t *dmasize;
@@ -407,7 +407,7 @@ asc_ioasic_intr(sc)
 	asc->sc_flags &= ~ASC_MAPLOADED;
 
 	*asc->sc_dmalen -= trans;
-	*asc->sc_dmaaddr += trans;
+	*asc->sc_dmaaddr = (char *)(*asc->sc_dmaaddr) + trans;
 	
 	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: msc.c,v 1.36.4.1 2007/02/27 16:49:01 yamt Exp $ */
+/*	$NetBSD: msc.c,v 1.36.4.2 2007/03/12 05:46:44 rmind Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msc.c,v 1.36.4.1 2007/02/27 16:49:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msc.c,v 1.36.4.2 2007/03/12 05:46:44 rmind Exp $");
 
 #include "msc.h"
 
@@ -438,7 +438,7 @@ mscopen(dev_t dev, int flag, int mode, struct lwp *l)
 #if DEBUG_CD
 		printf("msc%d: %d waiting for CD\n", msc->unit, MSCLINE(dev));
 #endif
-		error = ttysleep(tp, (caddr_t)&tp->t_rawq, TTIPRI | PCATCH, ttopen, 0);
+		error = ttysleep(tp, (void *)&tp->t_rawq, TTIPRI | PCATCH, ttopen, 0);
 		tp->t_wopen--;
 
 		if (error) {
@@ -778,7 +778,7 @@ NoRoomForYa:
 
 
 int
-mscioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+mscioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	register struct tty *tp;
 	register int slot;
@@ -1006,7 +1006,7 @@ mscstart(register struct tty *tp)
 	if (cc <= tp->t_lowat) {
 		if (tp->t_state & TS_ASLEEP) {
 			tp->t_state &= ~TS_ASLEEP;
-			wakeup((caddr_t)&tp->t_outq);
+			wakeup((void *)&tp->t_outq);
 		}
 		selwakeup(&tp->t_wsel);
 	}

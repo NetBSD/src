@@ -1,4 +1,4 @@
-/*	$NetBSD: epcom.c,v 1.13 2006/10/01 20:31:49 elad Exp $ */
+/*	$NetBSD: epcom.c,v 1.13.4.1 2007/03/12 05:47:03 rmind Exp $ */
 /*
  * Copyright (c) 1998, 1999, 2001, 2002, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epcom.c,v 1.13 2006/10/01 20:31:49 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epcom.c,v 1.13.4.1 2007/03/12 05:47:03 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -655,7 +655,7 @@ epcomtty(dev_t dev)
 }
 
 int
-epcomioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+epcomioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct epcom_softc *sc = device_lookup(&epcom_cd, COMUNIT(dev));
 	struct tty *tp = sc->sc_tty;

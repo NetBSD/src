@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.40 2007/02/09 21:55:04 ad Exp $	*/
+/*	$NetBSD: trap.c,v 1.40.2.1 2007/03/12 05:48:18 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.40 2007/02/09 21:55:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.40.2.1 2007/03/12 05:48:18 rmind Exp $");
 
 /* #define INTRDEBUG */
 /* #define TRAPDEBUG */
@@ -452,7 +452,7 @@ do {							\
 	} else {
 		SANITY(USERMODE(tf->tf_iioq_head));
 		SANITY(USERMODE(tf->tf_iioq_tail));
-		SANITY(l != NULL && tf->tf_cr30 == kvtop((caddr_t)l->l_addr));
+		SANITY(l != NULL && tf->tf_cr30 == kvtop((void *)l->l_addr));
 	}
 #undef SANITY
 	if (sanity_frame == tf) {
@@ -800,7 +800,7 @@ do_onfault:
 		else
 			map = &vm->vm_map;
 
-		va = hppa_trunc_page(va);
+		va = trunc_page(va);
 
 		if (map->pmap->pmap_space != space) {
 #ifdef TRAPDEBUG

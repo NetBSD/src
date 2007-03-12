@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.52 2006/11/30 05:14:24 mhitch Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.52.4.1 2007/03/12 05:46:36 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.52 2006/11/30 05:14:24 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.52.4.1 2007/03/12 05:46:36 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -209,7 +209,7 @@ readdisklabel(dev, strat, lp, clp)
 				msg = "rdb bad checksum";
 		}
 		/* Check for native NetBSD label? */
-		dlp = (struct disklabel *)(bp->b_data + LABELOFFSET);
+		dlp = (struct disklabel *)((char*)bp->b_data + LABELOFFSET);
 		if (dlp->d_magic == DISKMAGIC) {
 			if (dkcksum(dlp))
 				msg = "NetBSD disk label corrupted";
@@ -568,7 +568,7 @@ writedisklabel(dev, strat, lp, clp)
 	if ((error = biowait(bp)) != 0)
 		goto done;
 
-	dlp = (struct disklabel *)(bp->b_data + LABELOFFSET);
+	dlp = (struct disklabel *)((char*)bp->b_data + LABELOFFSET);
 	*dlp = *lp;     /* struct assignment */
 
 	bp->b_flags &= ~(B_READ|B_DONE);

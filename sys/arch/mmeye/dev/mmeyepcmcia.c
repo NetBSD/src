@@ -1,4 +1,4 @@
-/*	$NetBSD: mmeyepcmcia.c,v 1.11 2005/12/24 20:07:19 perry Exp $	*/
+/*	$NetBSD: mmeyepcmcia.c,v 1.11.26.1 2007/03/12 05:49:35 rmind Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mmeyepcmcia.c,v 1.11 2005/12/24 20:07:19 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mmeyepcmcia.c,v 1.11.26.1 2007/03/12 05:49:35 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -397,7 +397,7 @@ mmeyepcmcia_event_thread(void *arg)
 		} else {
 			splx(s);
 			/* sleep .25s to be enqueued chatterling interrupts */
-			(void) tsleep((caddr_t)mmeyepcmcia_event_thread, PWAIT,
+			(void) tsleep((void *)mmeyepcmcia_event_thread, PWAIT,
 			    "mmeyepcmciass", hz/4);
 		}
 		s = splhigh();

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_conv.h,v 1.14 2006/02/16 20:17:15 perry Exp $	*/
+/*	$NetBSD: netbsd32_conv.h,v 1.14.20.1 2007/03/12 05:52:31 rmind Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -234,10 +234,10 @@ netbsd32_to_msghdr(mhp32, mhp)
 	struct msghdr *mhp;
 {
 
-	mhp->msg_name = (caddr_t)(u_long)mhp32->msg_name;
+	mhp->msg_name = (void *)(u_long)mhp32->msg_name;
 	mhp->msg_namelen = mhp32->msg_namelen;
 	mhp->msg_iovlen = (size_t)mhp32->msg_iovlen;
-	mhp->msg_control = (caddr_t)(u_long)mhp32->msg_control;
+	mhp->msg_control = (void *)(u_long)mhp32->msg_control;
 	mhp->msg_controllen = mhp32->msg_controllen;
 	mhp->msg_flags = mhp32->msg_flags;
 }

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.cats.inc,v 1.17 2005/11/24 12:54:29 dbj Exp $
+#	$NetBSD: Makefile.cats.inc,v 1.17.26.1 2007/03/12 05:47:32 rmind Exp $
 
 MACHINE_ARCH=	arm
 CPPFLAGS+=	-D${MACHINE}
@@ -17,7 +17,7 @@ LINKFLAGS=	-T ldscript
 
 SYSTEM_LD_HEAD_EXTRA+=; \
 	( cat ${ARM}/conf/kern.ldscript.head ; \
-	  OBJDUMP=${OBJDUMP} ${HOST_SH} ${ARM}/conf/mkldscript.sh \
+	  OBJDUMP=${OBJDUMP} ${HOST_SH} $S/conf/mkldscript.sh \
 		${SYSTEM_OBJ} ; \
 	  cat ${ARM}/conf/kern.ldscript.tail ) > ldscript
 

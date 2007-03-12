@@ -1,4 +1,4 @@
-/*	$NetBSD: siop2.c,v 1.26 2006/03/08 23:46:22 lukem Exp $ */
+/*	$NetBSD: siop2.c,v 1.26.16.1 2007/03/12 05:46:45 rmind Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -70,7 +70,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop2.c,v 1.26 2006/03/08 23:46:22 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop2.c,v 1.26.16.1 2007/03/12 05:46:45 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -536,7 +536,7 @@ siopnginitialize(struct siop_softc *sc)
 	 * Also should verify that dev doesn't span non-contiguous
 	 * physical pages.
 	 */
-	sc->sc_scriptspa = kvtop((caddr_t)__UNCONST(siopng_scripts));
+	sc->sc_scriptspa = kvtop((void *)__UNCONST(siopng_scripts));
 
 	/*
 	 * malloc sc_acb to ensure that DS is on a long word boundary.
@@ -887,7 +887,7 @@ siopng_start(struct siop_softc *sc, int target, int lun, u_char *cbuf,
 #endif
 
 	/* push data cache for all data the 53c720/770 needs to access */
-	dma_cachectl ((caddr_t)acb, sizeof (struct siop_acb));
+	dma_cachectl ((void *)acb, sizeof (struct siop_acb));
 	dma_cachectl (cbuf, clen);
 	if (buf != NULL && len != 0)
 		dma_cachectl (buf, len);
@@ -908,7 +908,7 @@ siopng_start(struct siop_softc *sc, int target, int lun, u_char *cbuf,
 #ifndef FIXME
 		rp->siop_scntl3 = sc->sc_sync[target].scntl3;
 #endif
-		rp->siop_dsa = kvtop((caddr_t)&acb->ds);
+		rp->siop_dsa = kvtop((void *)&acb->ds);
 		rp->siop_dsp = sc->sc_scriptspa;
 		SIOP_TRACE('s',1,0,0)
 	} else {
@@ -975,9 +975,9 @@ siopng_checkintr(struct siop_softc *sc, u_char istat, u_char dstat,
 	if (dstat & SIOP_DSTAT_SIR && rp->siop_dsps == 0xff00) {
 		/* Normal completion status, or check condition */
 #ifdef DEBUG
-		if (rp->siop_dsa != kvtop((caddr_t)&acb->ds)) {
+		if (rp->siop_dsa != kvtop((void *)&acb->ds)) {
 			printf ("siopng: invalid dsa: %lx %x\n", rp->siop_dsa,
-			    kvtop((caddr_t)&acb->ds));
+			    kvtop((void *)&acb->ds));
 			panic("*** siopng DSA invalid ***");
 		}
 #endif
@@ -1155,7 +1155,7 @@ siopng_checkintr(struct siop_softc *sc, u_char istat, u_char dstat,
 				}
 			}
 #endif
-			dma_cachectl ((caddr_t)acb, sizeof(*acb));
+			dma_cachectl ((void *)acb, sizeof(*acb));
 		}
 #ifdef DEBUG
 		SIOP_TRACE('m',rp->siop_sbcl,(rp->siop_dsp>>8),rp->siop_dsp);
@@ -1346,7 +1346,7 @@ siopng_dump(sc);
 			}
 			if (j < DMAMAXIO)
 				acb->ds.chain[j].datalen = 0;
-			DCIAS(kvtop((caddr_t)&acb->ds.chain));
+			DCIAS(kvtop((void *)&acb->ds.chain));
 		}
 		++sc->sc_tinfo[target].dconns;
 		/*
@@ -1408,7 +1408,7 @@ siopng_dump(sc);
 			sc->sc_flags |= acb->status;
 			acb->status = 0;
 			DCIAS(kvtop(&acb->stat[0]));
-			rp->siop_dsa = kvtop((caddr_t)&acb->ds);
+			rp->siop_dsa = kvtop((void *)&acb->ds);
 			rp->siop_sxfer =
 				sc->sc_sync[acb->xs->xs_periph->periph_target].sxfer;
 #ifndef FIXME
@@ -1423,7 +1423,7 @@ siopng_dump(sc);
 			    sc->nexus_list.tqh_first);
 			panic("unable to find reselecting device");
 		}
-		dma_cachectl ((caddr_t)acb, sizeof(*acb));
+		dma_cachectl ((void *)acb, sizeof(*acb));
 		rp->siop_temp = 0;
 		rp->siop_dcntl |= SIOP_DCNTL_STD;
 		return (0);
@@ -1456,7 +1456,7 @@ siopng_dump(sc);
 		}
 		target = sc->sc_nexus->xs->xs_periph->periph_target;
 		rp->siop_temp = 0;
-		rp->siop_dsa = kvtop((caddr_t)&sc->sc_nexus->ds);
+		rp->siop_dsa = kvtop((void *)&sc->sc_nexus->ds);
 		rp->siop_sxfer = sc->sc_sync[target].sxfer;
 #ifndef FIXME
 		rp->siop_scntl3 = sc->sc_sync[target].scntl3;
@@ -1512,7 +1512,7 @@ bad_phase:
 	 */
 	printf ("siopngchkintr: target %x ds %p\n", target, &acb->ds);
 	printf ("scripts %lx ds %x rp %x dsp %lx dcmd %lx\n", sc->sc_scriptspa,
-	    kvtop((caddr_t)&acb->ds), kvtop((caddr_t)__UNVOLATILE(rp)), 
+	    kvtop((void *)&acb->ds), kvtop((void *)__UNVOLATILE(rp)), 
 	    rp->siop_dsp, *((long *)__UNVOLATILE(&rp->siop_dcmd)));
 	printf ("siopngchkintr: istat %x dstat %x sist %x dsps %lx dsa %lx sbcl %x sts %x msg %x %x sfbr %x\n",
 	    istat, dstat, sist, rp->siop_dsps, rp->siop_dsa,

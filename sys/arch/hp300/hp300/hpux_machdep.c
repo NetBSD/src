@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_machdep.c,v 1.46 2007/02/10 10:16:33 ad Exp $	*/
+/*	$NetBSD: hpux_machdep.c,v 1.46.2.1 2007/03/12 05:47:55 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_machdep.c,v 1.46 2007/02/10 10:16:33 ad Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: hpux_machdep.c,v 1.46.2.1 2007/03/12 05:47:55 rmind Exp $");                                                  
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -222,7 +222,7 @@ hpux_cpu_vmcmd(struct lwp *l, struct exec_vmcmd *ev)
 #if 0 /* XXX - unable to handle HPUX coredumps */
 	/* Make sure we have room. */
 	if (ev->ev_len <= sizeof(p->p_addr->u_md.md_exec))
-		memcpy(p->p_addr->u_md.md_exec, (caddr_t)ev->ev_addr,
+		memcpy(p->p_addr->u_md.md_exec, (void *)ev->ev_addr,
 		    ev->ev_len);
 #endif
 
@@ -630,7 +630,7 @@ hpux_sys_sigreturn(struct lwp *l, void *v, register_t *retval)
 	 * See if there is anything to do before we go to the
 	 * expense of copying in close to 1/2K of data
 	 */
-	flags = fuword((caddr_t)rf);
+	flags = fuword((void *)rf);
 #ifdef DEBUG
 	if (hpuxsigdebug & SDB_FOLLOW)
 		printf("hpux_sigreturn(%d): sc_ap %x flags %x\n",
@@ -642,7 +642,7 @@ hpux_sys_sigreturn(struct lwp *l, void *v, register_t *retval)
 	if (flags == -1)
 		return EINVAL;
 
-	if (flags == 0 || copyin((caddr_t)rf, (caddr_t)&tstate, sizeof tstate))
+	if (flags == 0 || copyin((void *)rf, (void *)&tstate, sizeof tstate))
 		goto restore;
 #ifdef DEBUG
 	if ((hpuxsigdebug & SDB_KSTACK) && p->p_pid == hpuxsigpid)

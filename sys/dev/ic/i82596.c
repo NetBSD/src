@@ -1,4 +1,4 @@
-/* $NetBSD: i82596.c,v 1.14 2006/07/12 05:12:06 skrll Exp $ */
+/* $NetBSD: i82596.c,v 1.14.10.1 2007/03/12 05:53:34 rmind Exp $ */
 
 /*
  * Copyright (c) 2003 Jochen Kunz.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82596.c,v 1.14 2006/07/12 05:12:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82596.c,v 1.14.10.1 2007/03/12 05:53:34 rmind Exp $");
 
 /* autoconfig and device stuff */
 #include <sys/param.h>
@@ -90,7 +90,7 @@ static void iee_mediastatus(struct ifnet *, struct ifmediareq *);
 
 /* interface routines to upper protocols */
 static void iee_start(struct ifnet *);			/* initiate output */
-static int iee_ioctl(struct ifnet *, u_long, caddr_t);	/* ioctl routine */
+static int iee_ioctl(struct ifnet *, u_long, void *);	/* ioctl routine */
 static int iee_init(struct ifnet *);			/* init routine */
 static void iee_stop(struct ifnet *, int);		/* stop routine */
 static void iee_watchdog(struct ifnet *);		/* timer routine */
@@ -643,7 +643,7 @@ iee_start(struct ifnet *ifp)
 				continue;
 			}
 			m_copydata(sc->sc_tx_mbuf[t], 0,
-			    sc->sc_tx_mbuf[t]->m_pkthdr.len, mtod(m, caddr_t));
+			    sc->sc_tx_mbuf[t]->m_pkthdr.len, mtod(m, void *));
 			m->m_pkthdr.len = sc->sc_tx_mbuf[t]->m_pkthdr.len;
 			m->m_len = sc->sc_tx_mbuf[t]->m_pkthdr.len;
 			m_freem(sc->sc_tx_mbuf[t]);
@@ -697,7 +697,7 @@ iee_start(struct ifnet *ifp)
 
 /* ioctl routine */
 int
-iee_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
+iee_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct iee_softc *sc = ifp->if_softc;
 	int s;

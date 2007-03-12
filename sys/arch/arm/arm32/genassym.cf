@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.29.4.1 2007/02/27 16:49:31 yamt Exp $
+#	$NetBSD: genassym.cf,v 1.29.4.2 2007/03/12 05:47:02 rmind Exp $
 
 # Copyright (c) 1982, 1990 The Regents of the University of California.
 # All rights reserved.
@@ -141,6 +141,8 @@ define	SIGEMT			SIGEMT
 define	TF_R0			offsetof(struct trapframe, tf_r0)
 define	TF_R10			offsetof(struct trapframe, tf_r10)
 define	TF_PC			offsetof(struct trapframe, tf_pc)
+
+define	IF_PC			offsetof(struct irqframe, if_pc)
 
 define	PROCSIZE		sizeof(struct proc)
 define	TRAPFRAMESIZE		sizeof(struct trapframe)

@@ -1,4 +1,4 @@
-/* $NetBSD: grtwo.c,v 1.9 2006/12/29 05:26:30 rumble Exp $	 */
+/* $NetBSD: grtwo.c,v 1.9.2.1 2007/03/12 05:50:11 rmind Exp $	 */
 
 /*
  * Copyright (c) 2004 Christopher SEKIYA
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grtwo.c,v 1.9 2006/12/29 05:26:30 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grtwo.c,v 1.9.2.1 2007/03/12 05:50:11 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,7 +101,7 @@ static void     grtwo_eraserows(void *, int, int, long);
 static int      grtwo_allocattr(void *, int, int, int, long *);
 
 /* accessops */
-static int      grtwo_ioctl(void *, void *, u_long, caddr_t, int, struct lwp *);
+static int      grtwo_ioctl(void *, void *, u_long, void *, int, struct lwp *);
 static paddr_t  grtwo_mmap(void *, void *, off_t, int);
 static int
 grtwo_alloc_screen(void *, const struct wsscreen_descr *,
@@ -727,7 +727,7 @@ grtwo_allocattr(void *c, int fg, int bg, int flags, long *attr)
 /* wsdisplay accessops */
 
 static int
-grtwo_ioctl(void *c, void *vs, u_long cmd, caddr_t data, int flag,
+grtwo_ioctl(void *c, void *vs, u_long cmd, void *data, int flag,
 	struct lwp *l)
 {
 	struct grtwo_softc *sc = c;

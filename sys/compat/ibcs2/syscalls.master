@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.32 2007/02/09 21:55:18 ad Exp $
+	$NetBSD: syscalls.master,v 1.32.2.1 2007/03/12 05:52:12 rmind Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -67,7 +67,7 @@
 15	STD		{ int ibcs2_sys_chmod(const char *path, int mode); }
 16	STD		{ int ibcs2_sys_chown(const char *path, int uid, \
 			    int gid); }
-17	NOARGS		{ int sys_obreak(caddr_t nsize); }
+17	NOARGS		{ int sys_obreak(void *nsize); }
 18	STD		{ int ibcs2_sys_stat(const char* path, \
 			    struct ibcs2_stat *st); }
 19	NOARGS		{ long compat_43_sys_lseek(int fd, long offset, \
@@ -95,7 +95,7 @@
 37	STD		{ int ibcs2_sys_kill(int pid, int signo); }
 38	STD		{ int ibcs2_sys_fstatfs(int fd, \
 			    struct ibcs2_statfs *buf, int len, int fstype); }
-39	STD		{ int ibcs2_sys_pgrpsys(int type, caddr_t dummy, \
+39	STD		{ int ibcs2_sys_pgrpsys(int type, void *dummy, \
 			    int pid, int pgid); }
 40	UNIMPL		ibcs2_xenix
 41	NOARGS		{ int sys_dup(u_int fd); }
@@ -126,9 +126,9 @@
 #else
 53	UNIMPL		semsys
 #endif
-54	STD		{ int ibcs2_sys_ioctl(int fd, int cmd, caddr_t data); }
+54	STD		{ int ibcs2_sys_ioctl(int fd, int cmd, void *data); }
 55	STD		{ int ibcs2_sys_uadmin(int cmd, int func, \
-			    caddr_t data); }
+			    void *data); }
 56	UNIMPL
 57	STD		{ int ibcs2_sys_utssys(int a1, int a2, int flag); }
 58	NOARGS		{ int sys_fsync(int fd); }
@@ -159,7 +159,7 @@
 			    int nbytes); }
 82	UNIMPL
 83	UNIMPL
-84	STD		{ int ibcs2_sys_sysfs(int cmd, caddr_t d1, char *buf); }
+84	STD		{ int ibcs2_sys_sysfs(int cmd, void *d1, char *buf); }
 85	STD		{ int ibcs2_sys_getmsg(int fd, \
 			    struct ibcs2_stropts *ctl, \
 			    struct ibcs2_stropts *dat, int *flags); }

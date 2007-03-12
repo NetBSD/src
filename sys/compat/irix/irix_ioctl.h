@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_ioctl.h,v 1.5 2005/12/11 12:20:12 christos Exp $ */
+/*	$NetBSD: irix_ioctl.h,v 1.5.26.1 2007/03/12 05:52:12 rmind Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 #include <compat/svr4/svr4_ioctl.h>
 
 struct irix_ioctl_usrdata {
-	caddr_t iiu_data;
+	void *iiu_data;
 	register_t *iiu_retval;
 };
 

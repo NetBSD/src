@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.32.2.1 2007/02/27 16:48:43 yamt Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.32.2.2 2007/03/12 05:46:17 rmind Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.32.2.1 2007/02/27 16:48:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.32.2.2 2007/03/12 05:46:17 rmind Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_coredump.h"
@@ -183,8 +183,7 @@ netbsd32_sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 	/* Allocate space for the signal handler context. */
 	if (onstack)
 		fp = (struct netbsd32_sigframe_sigcontext *)
-		    ((caddr_t)l->l_sigstk.ss_sp +
-					  l->l_sigstk.ss_size);
+		    ((char *)l->l_sigstk.ss_sp + l->l_sigstk.ss_size);
 	else
 		fp = (struct netbsd32_sigframe_sigcontext *)tf->tf_rsp;
 	fp--;
@@ -286,8 +285,7 @@ netbsd32_sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	/* Allocate space for the signal handler context. */
 	if (onstack)
 		fp = (struct netbsd32_sigframe_siginfo *)
-		    ((caddr_t)l->l_sigstk.ss_sp +
-					  l->l_sigstk.ss_size);
+		    ((char *)l->l_sigstk.ss_sp + l->l_sigstk.ss_size);
 	else
 		fp = (struct netbsd32_sigframe_siginfo *)tf->tf_rsp;
 
@@ -379,7 +377,7 @@ compat_16_netbsd32___sigreturn14(struct lwp *l, void *v, register_t *retval)
 	 * program jumps out of a signal handler.
 	 */
 	scp = (struct netbsd32_sigcontext *)(uintptr_t)SCARG(uap, sigcntxp);
-	if (copyin((caddr_t)scp, &context, sizeof(*scp)) != 0)
+	if (copyin((void *)scp, &context, sizeof(*scp)) != 0)
 		return (EFAULT);
 
 	/* Restore register context. */
@@ -892,7 +890,7 @@ cpu_getmcontext32(struct lwp *l, mcontext32_t *mcp, unsigned int *flags)
 	gr[_REG32_ERR]    = tf->tf_err;
 
 	if ((ras_eip = (__greg32_t)(uintptr_t)ras_lookup(l->l_proc,
-	    (caddr_t) (uintptr_t)gr[_REG32_EIP])) != -1)
+	    (void *) (uintptr_t)gr[_REG32_EIP])) != -1)
 		gr[_REG32_EIP] = ras_eip;
 
 	*flags |= _UC_CPU;

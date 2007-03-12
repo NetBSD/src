@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_socket.c,v 1.15 2007/02/09 21:55:23 ad Exp $ */
+/* $NetBSD: osf1_socket.c,v 1.15.2.1 2007/03/12 05:52:40 rmind Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_socket.c,v 1.15 2007/02/09 21:55:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_socket.c,v 1.15.2.1 2007/03/12 05:52:40 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,7 +101,7 @@ osf1_sys_sendmsg_xopen(l, v, retval)
 	struct msghdr bsd_msghdr;
 	struct iovec bsd_iovec, *bsd_iovec_ptr;
 	unsigned long leftovers;
-	caddr_t sg;
+	void *sg;
 	unsigned int i;
 	int error;
 

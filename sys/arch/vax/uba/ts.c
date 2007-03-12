@@ -1,4 +1,4 @@
-/*	$NetBSD: ts.c,v 1.31 2006/03/28 17:38:28 thorpej Exp $ */
+/*	$NetBSD: ts.c,v 1.31.14.1 2007/03/12 05:51:14 rmind Exp $ */
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ts.c,v 1.31 2006/03/28 17:38:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ts.c,v 1.31.14.1 2007/03/12 05:51:14 rmind Exp $");
 
 #define TS11_COMPAT	/* don't use extended features provided by TS05 */
 
@@ -263,7 +263,7 @@ tsinit (sc)
 		 */
 		sc->sc_ubainfo = uballoc((struct uba_softc *)
 		    device_parent(&sc->sc_dev),
-		    (caddr_t)&ts[unit], sizeof (struct ts), TS_UBAFLAGS);
+		    (void *)&ts[unit], sizeof (struct ts), TS_UBAFLAGS);
 		sc->sc_ts = (struct ts *)(UBAI_ADDR(sc->sc_ubainfo));
 		sc->sc_mapped = 1;
 	}
@@ -415,7 +415,7 @@ tscommand (dev, cmd, count)
 	debug (("tscommand: calling biowait ...\n"));
 	biowait (bp);
 	if (bp->b_flags & B_WANTED)
-		wakeup ((caddr_t)bp);
+		wakeup ((void *)bp);
 	bp->b_flags &= B_ERROR;
 }
 
@@ -1223,7 +1223,7 @@ int
 tsioctl (dev, cmd, data, flag, p)
 	dev_t dev;
 	u_long cmd;
-	caddr_t data;
+	void *data;
 	int flag;
 	struct proc *p;
 {
@@ -1353,7 +1353,7 @@ int
 tsdump(dev, blkno, va, size)
 	dev_t dev;
 	daddr_t blkno;
-	caddr_t va;
+	void *va;
 	size_t size;
 {
 	trace (("tsdump (%x)\n", dev));

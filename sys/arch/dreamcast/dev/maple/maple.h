@@ -1,4 +1,4 @@
-/*	$NetBSD: maple.h,v 1.9 2005/12/11 12:17:06 christos Exp $	*/
+/*	$NetBSD: maple.h,v 1.9.26.1 2007/03/12 05:47:36 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -148,6 +148,6 @@ extern void	maple_command(struct device *, struct maple_unit *,
 extern uint32_t	maple_get_function_data(struct maple_devinfo *, int);
 extern void	maple_run_polling(struct device *);
 extern int	maple_unit_ioctl(struct device *, struct maple_unit *,
-		    u_long, caddr_t, int, struct lwp *);
+		    u_long, void *, int, struct lwp *);
 
 #endif /* _DREAMCAST_DEV_MAPLE_MAPLE_H_ */

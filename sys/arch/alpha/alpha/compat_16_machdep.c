@@ -1,4 +1,4 @@
-/* $NetBSD: compat_16_machdep.c,v 1.10 2007/02/09 21:55:00 ad Exp $ */
+/* $NetBSD: compat_16_machdep.c,v 1.10.2.1 2007/03/12 05:45:47 rmind Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -92,7 +92,7 @@
 #include <machine/cpu.h>
 #include <machine/reg.h>
 
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.10 2007/02/09 21:55:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.10.2.1 2007/03/12 05:45:47 rmind Exp $");
 
 
 #ifdef DEBUG
@@ -170,7 +170,7 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 
 	sendsig_reset(l, sig);
 	mutex_exit(&p->p_smutex);
-	error = copyout(&frame, (caddr_t)fp, sizeof(frame));
+	error = copyout(&frame, (void *)fp, sizeof(frame));
 	mutex_enter(&p->p_smutex);
 
 	if (error != 0) {
@@ -274,7 +274,7 @@ compat_16_sys___sigreturn14(l, v, retval)
 	if (ALIGN(scp) != (u_int64_t)scp)
 		return (EINVAL);
 
-	if (copyin((caddr_t)scp, &ksc, sizeof(ksc)) != 0)
+	if (copyin((void *)scp, &ksc, sizeof(ksc)) != 0)
 		return (EFAULT);
 
 	if (ksc.sc_regs[R_ZERO] != 0xACEDBADE)		/* magic number */

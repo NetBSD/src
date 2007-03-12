@@ -1,4 +1,4 @@
-/*	$NetBSD: tropic.c,v 1.29 2006/11/16 01:32:52 christos Exp $	*/
+/*	$NetBSD: tropic.c,v 1.29.4.1 2007/03/12 05:53:46 rmind Exp $	*/
 
 /*
  * Ported to NetBSD by Onno van der Linden
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tropic.c,v 1.29 2006/11/16 01:32:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tropic.c,v 1.29.4.1 2007/03/12 05:53:46 rmind Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -1508,7 +1508,7 @@ struct ifnet *ifp;
 		 * Make sure data after the MAC header is aligned.
 		 */
 		if (m == m0) {
-			caddr_t newdata = (caddr_t)
+			char *newdata = (char *)
 			   ALIGN(m->m_data + sizeof(struct token_header)) -
 			   sizeof(struct token_header);
 			len -= newdata - m->m_data;
@@ -1541,7 +1541,7 @@ int
 tr_ioctl(ifp, cmd, data)
 struct ifnet *ifp;
 u_long cmd;
-caddr_t data;
+void *data;
 {
 	struct tr_softc *sc = ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *) data;

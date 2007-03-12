@@ -1,4 +1,4 @@
-/*	$NetBSD: joy.c,v 1.13 2006/11/16 01:32:51 christos Exp $	*/
+/*	$NetBSD: joy.c,v 1.13.4.1 2007/03/12 05:53:36 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1995 Jean-Marc Zucconi
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: joy.c,v 1.13 2006/11/16 01:32:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: joy.c,v 1.13.4.1 2007/03/12 05:53:36 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -179,7 +179,7 @@ joyread(dev_t dev, struct uio *uio, int flag)
 }
 
 int
-joyioctl(dev_t dev, u_long cmd, caddr_t data, int flag,
+joyioctl(dev_t dev, u_long cmd, void *data, int flag,
     struct lwp *l)
 {
 	int unit = JOYUNIT(dev);

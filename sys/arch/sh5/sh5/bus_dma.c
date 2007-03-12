@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.17 2006/03/01 12:38:12 yamt Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.17.20.1 2007/03/12 05:50:16 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.17 2006/03/01 12:38:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.17.20.1 2007/03/12 05:50:16 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,8 +73,8 @@ static int _bus_dmamem_alloc(void *, bus_size_t, bus_size_t, bus_size_t,
 		bus_dma_segment_t *, int, int *, int);
 static void _bus_dmamem_free(void *, bus_dma_segment_t *, int);
 static int _bus_dmamem_map(void *, bus_dma_segment_t *, int, size_t,
-		caddr_t *, int);
-static void _bus_dmamem_unmap(void *, caddr_t, size_t);
+		void **, int);
+static void _bus_dmamem_unmap(void *, void *, size_t);
 static paddr_t _bus_dmamem_mmap(void *, bus_dma_segment_t *, int,
 		off_t, int, int);
 
@@ -380,7 +380,7 @@ _bus_dmamap_load_uio_direct(void *cookie, bus_dmamap_t map, struct uio *uio,
 	int seg, i, error, first;
 	bus_size_t minlen, resid;
 	struct iovec *iov;
-	caddr_t addr;
+	void *addr;
 
 	/*
 	 * Make sure that on error condition we return "no valid mappings."
@@ -402,7 +402,7 @@ _bus_dmamap_load_uio_direct(void *cookie, bus_dmamap_t map, struct uio *uio,
 		 * until we have exhausted the residual count.
 		 */
 		minlen = resid < iov[i].iov_len ? resid : iov[i].iov_len;
-		addr = (caddr_t)iov[i].iov_base;
+		addr = (void *)iov[i].iov_base;
 
 		if (minlen == 0)
 			continue;
@@ -744,7 +744,7 @@ _bus_dmamem_free(void *cookie, bus_dma_segment_t *segs, int nsegs)
 /*ARGSUSED*/
 static int
 _bus_dmamem_map(void *cookie, bus_dma_segment_t *segs, int nsegs,
-    size_t size, caddr_t *kvap, int flags)
+    size_t size, void **kvap, int flags)
 {
 	vaddr_t va;
 	bus_addr_t addr;
@@ -759,7 +759,7 @@ _bus_dmamem_map(void *cookie, bus_dma_segment_t *segs, int nsegs,
 	if (va == 0)
 		return (ENOMEM);
 
-	*kvap = (caddr_t)va;
+	*kvap = (void *)va;
 
 	for (curseg = 0; curseg < nsegs; curseg++) {
 		for (addr = segs[curseg]._ds_cpuaddr;
@@ -789,7 +789,7 @@ _bus_dmamem_map(void *cookie, bus_dma_segment_t *segs, int nsegs,
  */
 /*ARGSUSED*/
 static void
-_bus_dmamem_unmap(void *cookie, caddr_t kva, size_t size)
+_bus_dmamem_unmap(void *cookie, void *kva, size_t size)
 {
 
 #ifdef DIAGNOSTIC
@@ -834,7 +834,7 @@ _bus_dmamem_mmap(void *cookie, bus_dma_segment_t *segs, int nsegs,
 		 * XXXSCW: What about BUS_DMA_COHERENT ??
 		 */
 
-		return (sh5_btop((caddr_t)(intptr_t)(segs[i]._ds_cpuaddr +
+		return (sh5_btop((void *)(intptr_t)(segs[i]._ds_cpuaddr +
 		    off)));
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.6 2005/12/11 12:17:53 christos Exp $	*/
+/*	$NetBSD: pcb.h,v 1.6.26.1 2007/03/12 05:48:45 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -89,7 +89,7 @@ struct pcb {
 	int	__pcb_spare0;
 	int	pcb_usp;	/* user stack pointer */
 	int	pcb_regs[12];	/* D2-D7, A2-A7 */
-	caddr_t	pcb_onfault;	/* for copyin/out faults */
+	void *	pcb_onfault;	/* for copyin/out faults */
 	struct	fpframe pcb_fpregs; /* 68881/2 context save area */
 };
 

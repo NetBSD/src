@@ -1,4 +1,4 @@
-/*	$NetBSD: ams.c,v 1.17 2006/11/12 19:00:43 plunky Exp $	*/
+/*	$NetBSD: ams.c,v 1.17.4.1 2007/03/12 05:48:56 rmind Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ams.c,v 1.17 2006/11/12 19:00:43 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ams.c,v 1.17.4.1 2007/03/12 05:48:56 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -80,7 +80,7 @@ CFATTACH_DECL(ams, sizeof(struct ams_softc),
 extern struct cfdriver ams_cd;
 
 int ams_enable(void *);
-int ams_ioctl(void *, u_long, caddr_t, int, struct lwp *);
+int ams_ioctl(void *, u_long, void *, int, struct lwp *);
 void ams_disable(void *);
 
 const struct wsmouse_accessops ams_accessops = {
@@ -122,7 +122,7 @@ amsattach(struct device *parent, struct device *self, void *aux)
 	sc->sc_devid[4] = 0;
 
 	adbinfo.siServiceRtPtr = (Ptr)adb_ms_asmcomplete;
-	adbinfo.siDataAreaAddr = (caddr_t)sc;
+	adbinfo.siDataAreaAddr = (void *)sc;
 
 	ems_init(sc);
 
@@ -384,10 +384,11 @@ ems_init(struct ams_softc *sc)
  * an ADB event record.
  */
 void 
-ms_adbcomplete(caddr_t buffer, caddr_t data_area, int adb_command)
+ms_adbcomplete(void *buffer, void *data_area, int adb_command)
 {
 	adb_event_t event;
 	struct ams_softc *amsc;
+	uint8_t *buf = (uint8_t*)buffer;
 	int adbaddr;
 #ifdef ADB_DEBUG
 	int i;
@@ -401,32 +402,32 @@ ms_adbcomplete(caddr_t buffer, caddr_t data_area, int adb_command)
 
 	if ((amsc->handler_id == ADBMS_EXTENDED) && (amsc->sc_devid[0] == 0)) {
 		/* massage the data to look like EMP data */
-		if ((buffer[3] & 0x04) == 0x04)
-			buffer[1] &= 0x7f;
+		if ((buf[3] & 0x04) == 0x04)
+			buf[1] &= 0x7f;
 		else
-			buffer[1] |= 0x80;
-		if ((buffer[3] & 0x02) == 0x02)
-			buffer[2] &= 0x7f;
+			buf[1] |= 0x80;
+		if ((buf[3] & 0x02) == 0x02)
+			buf[2] &= 0x7f;
 		else
-			buffer[2] |= 0x80;
-		if ((buffer[3] & 0x01) == 0x01)
-			buffer[3] = 0x00;
+			buf[2] |= 0x80;
+		if ((buf[3] & 0x01) == 0x01)
+			buf[3] = 0x00;
 		else
-			buffer[3] = 0x80;
+			buf[3] = 0x80;
 	}
 
 	event.addr = adbaddr;
 	event.hand_id = amsc->handler_id;
 	event.def_addr = amsc->origaddr;
-	event.byte_count = buffer[0];
-	memcpy(event.bytes, buffer + 1, event.byte_count);
+	event.byte_count = buf[0];
+	memcpy(event.bytes, buf + 1, event.byte_count);
 
 #ifdef ADB_DEBUG
 	if (adb_debug) {
-		printf("ams: from %d at %d (org %d) %d:", event.addr,
-		    event.hand_id, event.def_addr, buffer[0]);
-		for (i = 1; i <= buffer[0]; i++)
-			printf(" %x", buffer[i]);
+		printf("ams: from %d at %d (org %d) %u:", event.addr,
+		    event.hand_id, event.def_addr, buf[0]);
+		for (i = 1; i <= buf[0]; i++)
+			printf(" %x", buf[i]);
 		printf("\n");
 	}
 #endif
@@ -519,7 +520,7 @@ ams_enable(void *v)
 }
 
 int
-ams_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
+ams_ioctl(void *v, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	return (EPASSTHROUGH);
 }

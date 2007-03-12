@@ -1,4 +1,4 @@
-/*	$NetBSD: smc83c170.c,v 1.63 2006/04/16 00:38:59 tsutsui Exp $	*/
+/*	$NetBSD: smc83c170.c,v 1.63.14.1 2007/03/12 05:53:45 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc83c170.c,v 1.63 2006/04/16 00:38:59 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc83c170.c,v 1.63.14.1 2007/03/12 05:53:45 rmind Exp $");
 
 #include "bpfilter.h"
 
@@ -80,7 +80,7 @@ __KERNEL_RCSID(0, "$NetBSD: smc83c170.c,v 1.63 2006/04/16 00:38:59 tsutsui Exp $
 
 void	epic_start(struct ifnet *);
 void	epic_watchdog(struct ifnet *);
-int	epic_ioctl(struct ifnet *, u_long, caddr_t);
+int	epic_ioctl(struct ifnet *, u_long, void *);
 int	epic_init(struct ifnet *);
 void	epic_stop(struct ifnet *, int);
 
@@ -142,7 +142,7 @@ epic_attach(sc)
 
 	if ((error = bus_dmamem_map(sc->sc_dmat, &seg, rseg,
 	    sizeof(struct epic_control_data) + ETHER_PAD_LEN,
-	    (caddr_t *)&sc->sc_control_data,
+	    (void **)&sc->sc_control_data,
 	    BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
 		aprint_error("%s: unable to map control data, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
@@ -335,7 +335,7 @@ epic_attach(sc)
  fail_3:
 	bus_dmamap_destroy(sc->sc_dmat, sc->sc_cddmamap);
  fail_2:
-	bus_dmamem_unmap(sc->sc_dmat, (caddr_t)sc->sc_control_data,
+	bus_dmamem_unmap(sc->sc_dmat, (void *)sc->sc_control_data,
 	    sizeof(struct epic_control_data));
  fail_1:
 	bus_dmamem_free(sc->sc_dmat, &seg, rseg);
@@ -430,7 +430,7 @@ epic_start(ifp)
 					break;
 				}
 			}
-			m_copydata(m0, 0, m0->m_pkthdr.len, mtod(m, caddr_t));
+			m_copydata(m0, 0, m0->m_pkthdr.len, mtod(m, void *));
 			m->m_pkthdr.len = m->m_len = m0->m_pkthdr.len;
 			error = bus_dmamap_load_mbuf(sc->sc_dmat, dmamap,
 			    m, BUS_DMA_WRITE|BUS_DMA_NOWAIT);
@@ -567,7 +567,7 @@ int
 epic_ioctl(ifp, cmd, data)
 	struct ifnet *ifp;
 	u_long cmd;
-	caddr_t data;
+	void *data;
 {
 	struct epic_softc *sc = ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *)data;
@@ -709,8 +709,8 @@ epic_intr(arg)
 				MGETHDR(m, M_DONTWAIT, MT_DATA);
 				if (m == NULL)
 					goto dropit;
-				memcpy(mtod(m, caddr_t),
-				    mtod(ds->ds_mbuf, caddr_t), len);
+				memcpy(mtod(m, void *),
+				    mtod(ds->ds_mbuf, void *), len);
 				EPIC_INIT_RXDESC(sc, i);
 				bus_dmamap_sync(sc->sc_dmat, ds->ds_dmamap, 0,
 				    ds->ds_dmamap->dm_mapsize,

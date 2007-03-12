@@ -1,4 +1,4 @@
-/*	$NetBSD: pdc.h,v 1.5 2005/12/11 12:17:24 christos Exp $	*/
+/*	$NetBSD: pdc.h,v 1.5.26.1 2007/03/12 05:48:01 rmind Exp $	*/
 
 /*	$OpenBSD: pdc.h,v 1.15 2000/12/06 17:18:57 deraadt Exp $	*/
 
@@ -598,7 +598,7 @@ struct pz_device {
 #define	pz_mod		pz_dp.dp_mod
 #define	pz_layers	pz_dp.dp_layers
 	struct iomod *pz_hpa;	/* HPA base address of device */
-	caddr_t	pz_spa;		/* SPA base address (zero if no SPA exists) */
+	void *	pz_spa;		/* SPA base address (zero if no SPA exists) */
 	iodcio_t pz_iodc_io;	/* entry point of device's driver routines */
 	short	pz_resv;	/* (reserved) */
 	u_short	pz_class;	/* (see below) */

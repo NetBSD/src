@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.16 2007/02/16 02:53:49 ad Exp $	*/
+/*	$NetBSD: intr.h,v 1.16.2.1 2007/03/12 05:49:39 rmind Exp $	*/
 
 /*
  *
@@ -43,7 +43,6 @@
 #include <machine/psl.h>
 #include <m68k/asm_single.h>
 
-#ifdef _KERNEL
 #define	IPL_NONE	0
 #define	IPL_SOFTCLOCK	1
 #define	IPL_SOFTNET	2
@@ -77,7 +76,7 @@
 
 typedef int ipl_t;
 typedef struct {
-	ipl_t _psl;
+	uint16_t _psl;
 } ipl_cookie_t;
 
 ipl_cookie_t makeiplcookie(ipl_t);
@@ -158,7 +157,5 @@ void softintr_dispatch(void);
 extern struct news68k_soft_intrhand *softnet_intrhand;
 
 #define	setsoftnet()	softintr_schedule(softnet_intrhand)
-
-#endif /* _KERNEL */
 
 #endif /* _NEWS68K_INTR_H_ */

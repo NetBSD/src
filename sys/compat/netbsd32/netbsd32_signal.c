@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_signal.c,v 1.19.2.1 2007/02/27 16:53:39 yamt Exp $	*/
+/*	$NetBSD: netbsd32_signal.c,v 1.19.2.2 2007/03/12 05:52:32 rmind Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_signal.c,v 1.19.2.1 2007/02/27 16:53:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_signal.c,v 1.19.2.2 2007/03/12 05:52:32 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,7 +118,7 @@ netbsd32___sigaltstack14(l, v, retval)
 	int error;
 
 	if (SCARG(uap, nss)) {
-		error = copyin((caddr_t)NETBSD32PTR64(SCARG(uap, nss)), &s32,
+		error = copyin((void *)NETBSD32PTR64(SCARG(uap, nss)), &s32,
 		    sizeof(s32));
 		if (error)
 			return (error);
@@ -134,7 +134,7 @@ netbsd32___sigaltstack14(l, v, retval)
 		s32.ss_sp = (netbsd32_voidp)(u_long)oss.ss_sp;
 		s32.ss_size = (netbsd32_size_t)oss.ss_size;
 		s32.ss_flags = oss.ss_flags;
-		error = copyout(&s32, (caddr_t)NETBSD32PTR64(SCARG(uap, oss)),
+		error = copyout(&s32, (void *)NETBSD32PTR64(SCARG(uap, oss)),
 		    sizeof(s32));
 		if (error)
 			return (error);
@@ -159,7 +159,7 @@ netbsd32___sigaction14(l, v, retval)
 	int error;
 
 	if (SCARG(uap, nsa)) {
-		error = copyin((caddr_t)NETBSD32PTR64(SCARG(uap, nsa)), &sa32,
+		error = copyin((void *)NETBSD32PTR64(SCARG(uap, nsa)), &sa32,
 		    sizeof(sa32));
 		if (error)
 			return (error);
@@ -176,7 +176,7 @@ netbsd32___sigaction14(l, v, retval)
 		sa32.netbsd32_sa_handler = (netbsd32_voidp)(u_long)osa.sa_handler;
 		sa32.netbsd32_sa_mask = osa.sa_mask;
 		sa32.netbsd32_sa_flags = osa.sa_flags;
-		error = copyout(&sa32, (caddr_t)NETBSD32PTR64(SCARG(uap, osa)),
+		error = copyout(&sa32, (void *)NETBSD32PTR64(SCARG(uap, osa)),
 		    sizeof(sa32));
 		if (error)
 			return (error);
@@ -203,7 +203,7 @@ netbsd32___sigaction_sigtramp(l, v, retval)
 	int error;
 
 	if (SCARG(uap, nsa)) {
-		error = copyin((caddr_t)NETBSD32PTR64(SCARG(uap, nsa)), &sa32,
+		error = copyin((void *)NETBSD32PTR64(SCARG(uap, nsa)), &sa32,
 		    sizeof(sa32));
 		if (error)
 			return (error);
@@ -220,7 +220,7 @@ netbsd32___sigaction_sigtramp(l, v, retval)
 		sa32.netbsd32_sa_handler = (netbsd32_voidp)(u_long)osa.sa_handler;
 		sa32.netbsd32_sa_mask = osa.sa_mask;
 		sa32.netbsd32_sa_flags = osa.sa_flags;
-		error = copyout(&sa32, (caddr_t)NETBSD32PTR64(SCARG(uap, osa)),
+		error = copyout(&sa32, (void *)NETBSD32PTR64(SCARG(uap, osa)),
 		    sizeof(sa32));
 		if (error)
 			return (error);

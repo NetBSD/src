@@ -2,7 +2,7 @@
 | author: chapuni(webmaster@chapuni.com)
 |         Yasha(itohy@NetBSD.org)
 |
-| $NetBSD: boot.S,v 1.7 2005/12/11 12:19:44 christos Exp $
+| $NetBSD: boot.S,v 1.7.26.1 2007/03/12 05:51:42 rmind Exp $
 
 #include <machine/asm.h>
 #include "iocscall.h"
@@ -294,7 +294,7 @@ first_kbyte:
 
 		.word	0
 
-| int badbaddr __P((caddr_t adr));
+| int badbaddr __P((void *adr));
 |	check if the given address is valid for byte read
 |	return: 0: valid, 1: not valid
 

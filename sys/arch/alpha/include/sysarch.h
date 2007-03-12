@@ -1,4 +1,4 @@
-/* $NetBSD: sysarch.h,v 1.11 2005/12/11 12:16:16 christos Exp $ */
+/* $NetBSD: sysarch.h,v 1.11.26.1 2007/03/12 05:46:09 rmind Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@ extern	struct alpha_pci_chipset *alpha_pci_chipset;
 #include <sys/cdefs.h>
 
 struct alpha_bus_window {
-	caddr_t		abw_addr;
+	void *		abw_addr;
 	size_t		abw_size;
 	struct alpha_bus_space_translation abw_abst;
 };

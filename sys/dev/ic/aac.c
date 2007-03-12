@@ -1,4 +1,4 @@
-/*	$NetBSD: aac.c,v 1.29 2006/11/16 01:32:50 christos Exp $	*/
+/*	$NetBSD: aac.c,v 1.29.4.1 2007/03/12 05:53:24 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aac.c,v 1.29 2006/11/16 01:32:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aac.c,v 1.29.4.1 2007/03/12 05:53:24 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -206,7 +206,7 @@ aac_attach(struct aac_softc *sc)
 	}
 	state++;
 	if ((rv = bus_dmamem_map(sc->sc_dmat, &sc->sc_fibs_seg, nsegs, size,
-	    (caddr_t *)&sc->sc_fibs, 0)) != 0) {
+	    (void **)&sc->sc_fibs, 0)) != 0) {
 		aprint_error("%s: can't map fibs structure\n",
 		    sc->sc_dv.dv_xname);
 		goto bail_out;
@@ -268,7 +268,7 @@ aac_attach(struct aac_softc *sc)
 
  bail_out:
  	bus_dmamap_unload(sc->sc_dmat, sc->sc_common_dmamap);
-	bus_dmamem_unmap(sc->sc_dmat, (caddr_t)sc->sc_common,
+	bus_dmamem_unmap(sc->sc_dmat, (void *)sc->sc_common,
 	    sizeof(*sc->sc_common));
 	bus_dmamem_free(sc->sc_dmat, &sc->sc_common_seg, 1);
 	bus_dmamap_destroy(sc->sc_dmat, sc->sc_common_dmamap);
@@ -276,7 +276,7 @@ aac_attach(struct aac_softc *sc)
  	if (state > 3)
  		bus_dmamap_unload(sc->sc_dmat, sc->sc_fibs_dmamap);
 	if (state > 2)
-		bus_dmamem_unmap(sc->sc_dmat, (caddr_t)sc->sc_fibs, size);
+		bus_dmamem_unmap(sc->sc_dmat, (void *)sc->sc_fibs, size);
 	if (state > 1)
 		bus_dmamem_free(sc->sc_dmat, &sc->sc_fibs_seg, 1);
 	if (state > 0)
@@ -473,7 +473,7 @@ aac_init(struct aac_softc *sc)
 	}
 	state++;
 	if ((rv = bus_dmamem_map(sc->sc_dmat, &sc->sc_common_seg, nsegs,
-	    sizeof(*sc->sc_common), (caddr_t *)&sc->sc_common, 0)) != 0) {
+	    sizeof(*sc->sc_common), (void **)&sc->sc_common, 0)) != 0) {
 		aprint_error("%s: can't map common structure\n",
 		    sc->sc_dv.dv_xname);
 		goto bail_out;
@@ -530,7 +530,7 @@ aac_init(struct aac_softc *sc)
 	qoff &= ~(AAC_QUEUE_ALIGN - 1);
 	sc->sc_queues = (struct aac_queue_table *)((uintptr_t)sc->sc_common + qoff);
 	ip->CommHeaderAddress = htole32(sc->sc_common_seg.ds_addr +
-	    ((caddr_t)sc->sc_queues - (caddr_t)sc->sc_common));
+	    ((char *)sc->sc_queues - (char *)sc->sc_common));
 	memset(sc->sc_queues, 0, sizeof(struct aac_queue_table));
 
 	norm = htole32(AAC_HOST_NORM_CMD_ENTRIES);
@@ -629,7 +629,7 @@ aac_init(struct aac_softc *sc)
  	if (state > 2)
  		bus_dmamap_unload(sc->sc_dmat, sc->sc_common_dmamap);
 	if (state > 1)
-		bus_dmamem_unmap(sc->sc_dmat, (caddr_t)sc->sc_common,
+		bus_dmamem_unmap(sc->sc_dmat, (void *)sc->sc_common,
 		    sizeof(*sc->sc_common));
 	if (state > 0)
 		bus_dmamem_free(sc->sc_dmat, &sc->sc_common_seg, 1);
@@ -819,7 +819,7 @@ aac_host_command(struct aac_softc *sc)
 			break;	/* nothing to do */
 
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_common_dmamap,
-		    (caddr_t)fib - (caddr_t)sc->sc_common, sizeof(*fib),
+		    (char *)fib - (char *)sc->sc_common, sizeof(*fib),
 		    BUS_DMASYNC_POSTREAD);
 
 		switch (le16toh(fib->Header.Command)) {
@@ -837,7 +837,7 @@ aac_host_command(struct aac_softc *sc)
 		}
 
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_common_dmamap,
-		    (caddr_t)fib - (caddr_t)sc->sc_common, sizeof(*fib),
+		    (char *)fib - (char *)sc->sc_common, sizeof(*fib),
 		    BUS_DMASYNC_PREREAD);
 
 		/* XXX reply to FIBs requesting responses ?? */
@@ -864,14 +864,14 @@ aac_host_response(struct aac_softc *sc)
 			break;	/* nothing to do */
 
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_fibs_dmamap,
-		    (caddr_t)fib - (caddr_t)sc->sc_fibs, sizeof(*fib),
+		    (char *)fib - (char *)sc->sc_fibs, sizeof(*fib),
 		    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD);
 
 		if ((fib->Header.SenderData & 0x80000000) == 0) {
 			/* Not valid; not sent by us. */
 			AAC_PRINT_FIB(sc, fib);
 		} else {
-			ac = (struct aac_ccb *)((caddr_t)sc->sc_ccbs +
+			ac = (struct aac_ccb *)((char *)sc->sc_ccbs +
 			    (fib->Header.SenderData & 0x7fffffff));
 			fib->Header.SenderData = 0;
 			SIMPLEQ_INSERT_TAIL(&sc->sc_ccb_complete, ac, ac_chain);
@@ -982,7 +982,7 @@ aac_sync_fib(struct aac_softc *sc, u_int32_t command, u_int32_t xferstate,
 	}
 
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_common_dmamap,
-	    (caddr_t)fib - (caddr_t)sc->sc_common, sizeof(*fib),
+	    (char *)fib - (char *)sc->sc_common, sizeof(*fib),
 	    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
 
 	/*
@@ -996,7 +996,7 @@ aac_sync_fib(struct aac_softc *sc, u_int32_t command, u_int32_t xferstate,
 	}
 
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_common_dmamap,
-	    (caddr_t)fib - (caddr_t)sc->sc_common, sizeof(*fib),
+	    (char *)fib - (char *)sc->sc_common, sizeof(*fib),
 	    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD);
 
 	/*
@@ -1148,10 +1148,10 @@ aac_ccb_submit(struct aac_softc *sc, struct aac_ccb *ac)
 
 	/* Save a pointer to the command for speedy reverse-lookup. */
 	ac->ac_fib->Header.SenderData =
-	    (u_int32_t)((caddr_t)ac - (caddr_t)sc->sc_ccbs) | 0x80000000;
+	    (u_int32_t)((char *)ac - (char *)sc->sc_ccbs) | 0x80000000;
 
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_fibs_dmamap,
-	    (caddr_t)ac->ac_fib - (caddr_t)sc->sc_fibs, sizeof(*ac->ac_fib),
+	    (char *)ac->ac_fib - (char *)sc->sc_fibs, sizeof(*ac->ac_fib),
 	    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
 
 	/* Put the FIB on the outbound queue. */
@@ -1200,7 +1200,7 @@ aac_enqueue_fib(struct aac_softc *sc, int queue, struct aac_fib *fib)
 	fib_addr = le32toh(fib->Header.ReceiverFibAddress);
 
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_common_dmamap,
-	    (caddr_t)sc->sc_common->ac_qbuf - (caddr_t)sc->sc_common,
+	    (char *)sc->sc_common->ac_qbuf - (char *)sc->sc_common,
 	    sizeof(sc->sc_common->ac_qbuf),
 	    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD);
 
@@ -1224,7 +1224,7 @@ aac_enqueue_fib(struct aac_softc *sc, int queue, struct aac_fib *fib)
 	sc->sc_queues->qt_qindex[queue][AAC_PRODUCER_INDEX] = htole32(pi + 1);
 
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_common_dmamap,
-	    (caddr_t)sc->sc_common->ac_qbuf - (caddr_t)sc->sc_common,
+	    (char *)sc->sc_common->ac_qbuf - (char *)sc->sc_common,
 	    sizeof(sc->sc_common->ac_qbuf),
 	    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
 
@@ -1247,7 +1247,7 @@ aac_dequeue_fib(struct aac_softc *sc, int queue, u_int32_t *fib_size,
 	int notify;
 
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_common_dmamap,
-	    (caddr_t)sc->sc_common->ac_qbuf - (caddr_t)sc->sc_common,
+	    (char *)sc->sc_common->ac_qbuf - (char *)sc->sc_common,
 	    sizeof(sc->sc_common->ac_qbuf),
 	    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD);
 
@@ -1276,7 +1276,7 @@ aac_dequeue_fib(struct aac_softc *sc, int queue, u_int32_t *fib_size,
 	sc->sc_queues->qt_qindex[queue][AAC_CONSUMER_INDEX] = ci + 1;
 
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_common_dmamap,
-	    (caddr_t)sc->sc_common->ac_qbuf - (caddr_t)sc->sc_common,
+	    (char *)sc->sc_common->ac_qbuf - (char *)sc->sc_common,
 	    sizeof(sc->sc_common->ac_qbuf),
 	    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
 

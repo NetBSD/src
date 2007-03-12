@@ -1,4 +1,4 @@
-/*	$NetBSD: macros.h,v 1.37 2006/07/08 00:25:24 matt Exp $	*/
+/*	$NetBSD: macros.h,v 1.37.10.1 2007/03/12 05:51:13 rmind Exp $	*/
 
 /*
  * Copyright (c) 1994, 1998, 2000 Ludd, University of Lule}, Sweden.
@@ -77,7 +77,7 @@ vax_insque(void *p, void *q)
 #define _insque vax_insque
 
 #if 0
-static __inline void * __attribute__((__unused__))
+static __inline void *__attribute__((__unused__))
 vax_memcpy(void *to, const void *from, size_t len)
 {
 	if (len > 65535) {
@@ -92,7 +92,7 @@ vax_memcpy(void *to, const void *from, size_t len)
 }
 #define memcpy vax_memcpy
 
-static __inline void * __attribute__((__unused__))
+static __inline void *__attribute__((__unused__))
 vax_memmove(void *to, const void *from, size_t len)
 {
 	if (len > 65535) {
@@ -108,7 +108,7 @@ vax_memmove(void *to, const void *from, size_t len)
 #define memmove vax_memmove
 #endif
 
-static __inline void * __attribute__((__unused__))
+static __inline void *__attribute__((__unused__))
 vax_memset(void *block, int c, size_t len)
 {
 	if (len > 65535) {
@@ -222,7 +222,7 @@ strncpy(char *cp, const char *c2, size_t len)
         return  cp;
 }
 
-static __inline void * __attribute__((__unused__))
+static __inline void *__attribute__((__unused__))
 memchr(const void *cp, int c, size_t len)
 {
         void *ret;
@@ -387,7 +387,7 @@ insqti(void *entry, void *header) {
  * Returns -1 if interlock failed, 0 if queue empty, address of the 
  * removed element otherwise.
  */
-static __inline void * __attribute__((__unused__))
+static __inline void *__attribute__((__unused__))
 remqhi(void *header) {
 	register void *ret;
 

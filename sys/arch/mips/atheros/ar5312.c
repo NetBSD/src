@@ -1,4 +1,4 @@
-/* $NetBSD: ar5312.c,v 1.3 2006/09/26 06:37:32 gdamore Exp $ */
+/* $NetBSD: ar5312.c,v 1.3.6.1 2007/03/12 05:49:20 rmind Exp $ */
 
 /*
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -214,7 +214,7 @@ addprop_data(struct device *dev, const char *name, const uint8_t *data,
 	prop_data_t	pd;
 	pd = prop_data_create_data(data, len);
 	KASSERT(pd != NULL);
-	if (prop_dictionary_set(device_properties(dev), name, pd) == FALSE) {
+	if (prop_dictionary_set(device_properties(dev), name, pd) == false) {
 		printf("WARNING: unable to set %s property for %s\n",
 		    name, device_xname(dev));
 	}
@@ -227,7 +227,7 @@ addprop_integer(struct device *dev, const char *name, uint32_t val)
 	prop_number_t	pn;
 	pn = prop_number_create_integer(val);
 	KASSERT(pn != NULL);
-	if (prop_dictionary_set(device_properties(dev), name, pn) == FALSE) {
+	if (prop_dictionary_set(device_properties(dev), name, pn) == false) {
 		printf("WARNING: unable to set %s property for %s",
 		    name, device_xname(dev));
 	}

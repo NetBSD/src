@@ -1,4 +1,4 @@
-/* $NetBSD: xbd.c,v 1.36 2006/05/05 19:25:26 jld Exp $ */
+/* $NetBSD: xbd.c,v 1.36.14.1 2007/03/12 05:51:49 rmind Exp $ */
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd.c,v 1.36 2006/05/05 19:25:26 jld Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd.c,v 1.36.14.1 2007/03/12 05:51:49 rmind Exp $");
 
 #include "xbd_hypervisor.h"
 #include "rnd.h"
@@ -969,7 +969,7 @@ control_send(blkif_request_t *req, blkif_response_t *rsp)
  retry:
 	while ((req_prod - resp_cons) == BLKIF_RING_SIZE) {
 		/* XXX where is the wakeup ? */
-		tsleep((caddr_t) &req_prod, PUSER | PCATCH,
+		tsleep((void *) &req_prod, PUSER | PCATCH,
 		    "blkfront", 0);
 	}
 
@@ -995,7 +995,7 @@ control_send(blkif_request_t *req, blkif_response_t *rsp)
 	restore_flags(flags);
 
 	while (!blkif_control_rsp_valid) {
-		tsleep((caddr_t)&blkif_control_rsp_valid, PUSER | PCATCH,
+		tsleep((void *)&blkif_control_rsp_valid, PUSER | PCATCH,
 		    "blkfront", 0);
 	}
 
@@ -1604,7 +1604,7 @@ xbd_response_handler(void *arg)
 			memcpy(&blkif_control_rsp, ring_resp,
 			    sizeof(*ring_resp));
 			blkif_control_rsp_valid = 1;
-			wakeup((caddr_t)&blkif_control_rsp_valid);
+			wakeup((void *)&blkif_control_rsp_valid);
 			break;
 		default:
 			panic("unknown response");
@@ -1650,7 +1650,7 @@ xbdwrite(dev_t dev, struct uio *uio, int flags)
 }
 
 int
-xbdioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+xbdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct	xbd_softc *xs;
 	struct	dk_softc *dksc;
@@ -1678,7 +1678,7 @@ xbdioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 }
 
 int
-xbdioctl_cdev(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+xbdioctl_cdev(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	dev_t bdev;
 
@@ -1689,7 +1689,7 @@ xbdioctl_cdev(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 }
 
 int
-xbddump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
+xbddump(dev_t dev, daddr_t blkno, void *va, size_t size)
 {
 	struct	xbd_softc *xs;
 

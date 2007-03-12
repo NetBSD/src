@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.49 2006/11/24 22:04:24 wiz Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.49.4.1 2007/03/12 05:51:43 rmind Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.49 2006/11/24 22:04:24 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.49.4.1 2007/03/12 05:51:43 rmind Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "scsibus.h"
@@ -72,6 +72,8 @@ void
 cpu_configure(void)
 {
 	x68k_realconfig = 1;
+
+	softintr_init();
 
 	if (config_rootfound("mainbus", NULL) == NULL)
 		panic("no mainbus found");

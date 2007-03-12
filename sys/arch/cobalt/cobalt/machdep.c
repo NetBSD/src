@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.77.2.1 2007/02/27 16:49:53 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.77.2.2 2007/03/12 05:47:34 rmind Exp $	*/
 
 /*
  * Copyright (c) 2006 Izumi Tsutsui.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.77.2.1 2007/02/27 16:49:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.77.2.2 2007/03/12 05:47:34 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -152,7 +152,7 @@ static u_int read_board_id(void);
  */
 int	safepri = MIPS1_PSL_LOWIPL;
 
-extern caddr_t esym;
+extern void *esym;
 extern struct user *proc0paddr;
 
 
@@ -163,13 +163,13 @@ extern struct user *proc0paddr;
 void
 mach_init(unsigned int memsize, u_int bim, char *bip)
 {
-	caddr_t kernend, v;
+	void *kernend, *v;
 	u_long first, last;
 	extern char edata[], end[];
 	const char *bi_msg;
 #if NKSYMS || defined(DDB) || defined(LKM)
 	int nsym = 0;
-	caddr_t ssym = 0;
+	void *ssym = 0;
 	struct btinfo_symtab *bi_syms;
 #endif
 
@@ -181,12 +181,12 @@ mach_init(unsigned int memsize, u_int bim, char *bip)
 	    ((Elf_Ehdr *)end)->e_ident[EI_CLASS] == ELFCLASS) {
 		esym = end;
 		esym += ((Elf_Ehdr *)end)->e_entry;
-		kernend = (caddr_t)mips_round_page(esym);
+		kernend = (void *)mips_round_page(esym);
 		memset(edata, 0, end - edata);
 	} else
 #endif
 	{
-		kernend = (caddr_t)mips_round_page(end);
+		kernend = (void *)mips_round_page(end);
 		memset(edata, 0, kernend - edata);
 	}
 
@@ -209,9 +209,9 @@ mach_init(unsigned int memsize, u_int bim, char *bip)
 	/* Load symbol table if present */
 	if (bi_syms != NULL) {
 		nsym = bi_syms->nsym;
-		ssym = (caddr_t)bi_syms->ssym;
-		esym = (caddr_t)bi_syms->esym;
-		kernend = (caddr_t)mips_round_page(esym);
+		ssym = (void *)bi_syms->ssym;
+		esym = (void *)bi_syms->esym;
+		kernend = (void *)mips_round_page(esym);
 	}
 #endif
 
@@ -309,7 +309,7 @@ mach_init(unsigned int memsize, u_int bim, char *bip)
 	/*
 	 * Allocate space for proc0's USPACE.
 	 */
-	v = (caddr_t)uvm_pageboot_alloc(USPACE);
+	v = (void *)uvm_pageboot_alloc(USPACE);
 	lwp0.l_addr = proc0paddr = (struct user *)v;
 	lwp0.l_md.md_regs = (struct frame *)(v + USPACE) - 1;
 	curpcb = &lwp0.l_addr->u_pcb;

@@ -1,4 +1,4 @@
-/*	$NetBSD: rrunner.c,v 1.60 2007/01/04 18:44:45 elad Exp $	*/
+/*	$NetBSD: rrunner.c,v 1.60.2.1 2007/03/12 05:53:41 rmind Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rrunner.c,v 1.60 2007/01/04 18:44:45 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rrunner.c,v 1.60.2.1 2007/03/12 05:53:41 rmind Exp $");
 
 #include "opt_inet.h"
 
@@ -111,7 +111,7 @@ u_int32_t max_write_len;
 /* Network device driver and initialization framework routines */
 
 void eshinit(struct esh_softc *);
-int  eshioctl(struct ifnet *, u_long, caddr_t);
+int  eshioctl(struct ifnet *, u_long, void *);
 void eshreset(struct esh_softc *);
 void eshstart(struct ifnet *);
 static int eshstatus(struct esh_softc *);
@@ -167,7 +167,7 @@ static void eshstart_cleanup(struct esh_softc *, u_int16_t, int);
 
 static struct esh_dmainfo *esh_new_dmainfo(struct esh_softc *);
 static void esh_free_dmainfo(struct esh_softc *, struct esh_dmainfo *);
-static int esh_generic_ioctl(struct esh_softc *, u_long, caddr_t, u_long,
+static int esh_generic_ioctl(struct esh_softc *, u_long, void *, u_long,
 				  struct lwp *);
 
 #ifdef ESH_PRINTF
@@ -232,7 +232,7 @@ eshconfig(sc)
 	}
 
 	error = bus_dmamem_map(sc->sc_dmat, &sc->sc_dmaseg, rseg,
-			       sc->sc_dma_size, &sc->sc_dma_addr,
+			       sc->sc_dma_size, (void **)&sc->sc_dma_addr,
 			       BUS_DMA_NOWAIT | BUS_DMA_COHERENT);
 	if (error) {
 		aprint_error(
@@ -779,7 +779,7 @@ esh_fpopen(dev_t dev, int oflags, int devtype,
 
 	ring_ctl = &sc->sc_recv_ring_table[ulp];
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_dma,
-			(caddr_t) ring_ctl - (caddr_t) sc->sc_dma_addr,
+			(char *) ring_ctl - (char *) sc->sc_dma_addr,
 			sizeof(*ring_ctl),
 			BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 	if (ring_ctl->rr_entry_size != 0) {
@@ -820,7 +820,7 @@ esh_fpopen(dev_t dev, int oflags, int devtype,
 	}
 
 	error = bus_dmamem_map(sc->sc_dmat, &recv->ec_dmaseg, rseg,
-			       size, (caddr_t *) &recv->ec_descr,
+			       size, (void **) &recv->ec_descr,
 			       BUS_DMA_WAITOK | BUS_DMA_COHERENT);
 	if (error) {
 		printf("%s:  couldn't map memory for FP receive ring\n",
@@ -867,7 +867,7 @@ esh_fpopen(dev_t dev, int oflags, int devtype,
 	sc->sc_fp_recv[ulp] = recv;
 
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_dma,
-			(caddr_t) ring_ctl - (caddr_t) sc->sc_dma_addr,
+			(char *) ring_ctl - (char *) sc->sc_dma_addr,
 			sizeof(*ring_ctl),
 			BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
@@ -911,7 +911,7 @@ bad_fp_ring_create:
 bad_fp_dmamap_load:
 	bus_dmamap_destroy(sc->sc_dmat, recv->ec_dma);
 bad_fp_dmamap_create:
-	bus_dmamem_unmap(sc->sc_dmat, (caddr_t) recv->ec_descr, size);
+	bus_dmamem_unmap(sc->sc_dmat, (void *) recv->ec_descr, size);
 bad_fp_dmamem_map:
 	bus_dmamem_free(sc->sc_dmat, &recv->ec_dmaseg, rseg);
 bad_fp_dmamem_alloc:
@@ -979,7 +979,7 @@ esh_fpclose(dev_t dev, int fflag, int devtype,
 
 	bus_dmamap_unload(sc->sc_dmat, ring->ec_dma);
 	bus_dmamap_destroy(sc->sc_dmat, ring->ec_dma);
-	bus_dmamem_unmap(sc->sc_dmat, (caddr_t) ring->ec_descr,
+	bus_dmamem_unmap(sc->sc_dmat, (void *) ring->ec_descr,
 			 RR_FP_RECV_RING_SIZE * sizeof(struct rr_descr));
 	bus_dmamem_free(sc->sc_dmat, &ring->ec_dmaseg, ring->ec_dma->dm_nsegs);
 	free(ring, M_DEVBUF);
@@ -2475,7 +2475,7 @@ esh_init_snap_ring(sc)
 
 	if (ring->rr_entry_size == 0) {
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_dma,
-				(caddr_t) ring - (caddr_t) sc->sc_dma_addr,
+				(char *) ring - (char *) sc->sc_dma_addr,
 				sizeof(*ring),
 				BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
@@ -2489,7 +2489,7 @@ esh_init_snap_ring(sc)
 		ring->rr_mode = RR_RR_IP;
 
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_dma,
-				(caddr_t) ring - (caddr_t) sc->sc_dma_addr,
+				(char *) ring - (char *) sc->sc_dma_addr,
 				sizeof(ring),
 				BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 		esh_send_cmd(sc, RR_CC_ENABLE_RING, HIPPI_ULP_802,
@@ -2946,7 +2946,7 @@ int
 eshioctl(ifp, cmd, data)
 	struct ifnet *ifp;
 	u_long cmd;
-	caddr_t data;
+	void *data;
 {
 	int error = 0;
 	struct esh_softc *sc = ifp->if_softc;
@@ -3059,7 +3059,7 @@ ioctl_done:
 
 
 static int
-esh_generic_ioctl(struct esh_softc *sc, u_long cmd, caddr_t data,
+esh_generic_ioctl(struct esh_softc *sc, u_long cmd, void *data,
 		  u_long len, struct lwp *l)
 {
 	struct ifnet *ifp = &sc->sc_if;
@@ -3100,7 +3100,7 @@ esh_generic_ioctl(struct esh_softc *sc, u_long cmd, caddr_t data,
 		if (len != sizeof(struct rr_tuning))
 			error = EMSGSIZE;
 		else {
-			error = copyout((caddr_t) &sc->sc_tune, data,
+			error = copyout((void *) &sc->sc_tune, data,
 					sizeof(struct rr_tuning));
 		}
 		break;
@@ -3110,7 +3110,7 @@ esh_generic_ioctl(struct esh_softc *sc, u_long cmd, caddr_t data,
 			if (len != sizeof(struct rr_tuning)) {
 				error = EMSGSIZE;
 			} else {
-				error = copyin(data, (caddr_t) &sc->sc_tune,
+				error = copyin(data, (void *) &sc->sc_tune,
 					       sizeof(struct rr_tuning));
 			}
 		} else {
@@ -3122,7 +3122,7 @@ esh_generic_ioctl(struct esh_softc *sc, u_long cmd, caddr_t data,
 		if (len != sizeof(struct rr_stats))
 			error = EMSGSIZE;
 		else
-			error = copyout((caddr_t) &sc->sc_gen_info->ri_stats,
+			error = copyout((void *) &sc->sc_gen_info->ri_stats,
 					data, sizeof(struct rr_stats));
 		break;
 
@@ -3138,7 +3138,7 @@ esh_generic_ioctl(struct esh_softc *sc, u_long cmd, caddr_t data,
 			break;
 		}
 
-		error = copyin(data, (caddr_t) &rr_eeprom, sizeof(rr_eeprom));
+		error = copyin(data, (void *) &rr_eeprom, sizeof(rr_eeprom));
 		if (error != 0)
 			break;
 
@@ -3189,13 +3189,13 @@ esh_generic_ioctl(struct esh_softc *sc, u_long cmd, caddr_t data,
 				value = esh_read_eeprom(sc, address);
 				address += RR_EE_WORD_LEN;
 				if (copyout(&value,
-					    (caddr_t) rr_eeprom.ifr_buffer + i,
+					    (char *) rr_eeprom.ifr_buffer + i,
 					    sizeof(u_int32_t)) != 0) {
 					error = EFAULT;
 					break;
 				}
 			} else {
-				if (copyin((caddr_t) rr_eeprom.ifr_buffer + i,
+				if (copyin((char *) rr_eeprom.ifr_buffer + i,
 					   &value, sizeof(u_int32_t)) != 0) {
 					error = EFAULT;
 					break;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ibus.c,v 1.13 2005/12/11 12:18:36 christos Exp $	*/
+/*	$NetBSD: ibus.c,v 1.13.26.1 2007/03/12 05:49:50 rmind Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: ibus.c,v 1.13 2005/12/11 12:18:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibus.c,v 1.13.26.1 2007/03/12 05:49:50 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,7 +62,7 @@ ibusattach(parent, self, aux)
 	for (i = 0; i < ida->ida_ndevs; i++) {
 		ia = &ida->ida_devs[i];
 		if (ia->ia_basz != 0 &&
-		    badaddr((caddr_t)ia->ia_addr, ia->ia_basz) != 0)
+		    badaddr((void *)ia->ia_addr, ia->ia_basz) != 0)
 			continue;
 
 		locs[IBUSCF_ADDR] = MIPS_KSEG1_TO_PHYS(ia->ia_addr);

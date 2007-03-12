@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.198 2006/06/07 22:38:49 kardel Exp $ */
+/*	$NetBSD: cpu.c,v 1.198.12.1 2007/03/12 05:50:42 rmind Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.198 2006/06/07 22:38:49 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.198.12.1 2007/03/12 05:50:42 rmind Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -245,8 +245,8 @@ alloc_cpuinfo(void)
 	if (va == 0)
 		panic("alloc_cpuinfo: no virtual space");
 
-	cpi->vpage[0] = (caddr_t)(va + 0);
-	cpi->vpage[1] = (caddr_t)(va + PAGE_SIZE);
+	cpi->vpage[0] = (void *)(va + 0);
+	cpi->vpage[1] = (void *)(va + PAGE_SIZE);
 
 	return (cpi);
 }
@@ -607,7 +607,7 @@ void
 cpu_spinup(struct cpu_info *cpi)
 {
 	struct openprom_addr oa;
-	caddr_t pc = (caddr_t)cpu_hatch;
+	void *pc = (void *)cpu_hatch;
 	int n;
 
 	/* Setup CPU-specific MMU tables */
@@ -634,7 +634,7 @@ cpu_spinup(struct cpu_info *cpi)
 	 * Wait for this CPU to spin up.
 	 */
 	for (n = 10000; n != 0; n--) {
-		cache_flush((caddr_t) __UNVOLATILE(&cpi->flags),
+		cache_flush((void *) __UNVOLATILE(&cpi->flags),
 			    sizeof(cpi->flags));
 		if (cpi->flags & CPUFLG_HATCHED)
 			return;
@@ -1243,7 +1243,7 @@ sun4_hotfix(struct cpu_info *sc)
 {
 
 	if ((sc->flags & CPUFLG_SUN4CACHEBUG) != 0)
-		kvm_uncache((caddr_t)trapbase, 1);
+		kvm_uncache((char *)trapbase, 1);
 
 	/* Use the hardware-assisted page flush routine, if present */
 	if (sc->cacheinfo.c_hwflush)

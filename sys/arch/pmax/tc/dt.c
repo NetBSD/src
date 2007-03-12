@@ -1,4 +1,4 @@
-/*	$NetBSD: dt.c,v 1.6 2005/12/11 12:18:41 christos Exp $	*/
+/*	$NetBSD: dt.c,v 1.6.26.1 2007/03/12 05:49:52 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -140,7 +140,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dt.c,v 1.6 2005/12/11 12:18:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dt.c,v 1.6.26.1 2007/03/12 05:49:52 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -201,7 +201,7 @@ dt_match(struct device *parent, struct cfdata *match, void *aux)
 	if (strcmp(d->iada_modname, "dtop") != 0)
 		return (0);
 
-	if (badaddr((caddr_t)(d->iada_addr), 2))
+	if (badaddr((void *)(d->iada_addr), 2))
 		return (0);
 
 	return (1);

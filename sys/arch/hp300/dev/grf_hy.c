@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_hy.c,v 1.32 2006/07/21 18:40:58 tsutsui Exp $	*/
+/*	$NetBSD: grf_hy.c,v 1.32.10.1 2007/03/12 05:47:43 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -120,7 +120,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_hy.c,v 1.32 2006/07/21 18:40:58 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_hy.c,v 1.32.10.1 2007/03/12 05:47:43 rmind Exp $");
 
 #include "opt_compat_hpux.h"
 
@@ -156,8 +156,8 @@ __KERNEL_RCSID(0, "$NetBSD: grf_hy.c,v 1.32 2006/07/21 18:40:58 tsutsui Exp $");
 
 #include "ite.h"
 
-static int	hy_init(struct grf_data *gp, int, caddr_t);
-static int	hy_mode(struct grf_data *gp, int, caddr_t);
+static int	hy_init(struct grf_data *gp, int, uint8_t *);
+static int	hy_mode(struct grf_data *gp, int, void *);
 
 static int	hyper_dio_match(struct device *, struct cfdata *, void *);
 static void	hyper_dio_attach(struct device *, struct device *, void *);
@@ -173,7 +173,7 @@ static struct grfsw hyper_grfsw = {
 };
 
 static int hyperconscode;
-static caddr_t hyperconaddr;
+static void *hyperconaddr;
 
 #if NITE > 0
 static void	hyper_init(struct ite_data *);
@@ -211,7 +211,7 @@ hyper_dio_attach(struct device *parent, struct device *self, void *aux)
 	struct grfdev_softc *sc = (struct grfdev_softc *)self;
 	struct dio_attach_args *da = aux;
 	bus_space_handle_t bsh;
-	caddr_t grf;
+	void *grf;
 
 	sc->sc_scode = da->da_scode;
 	if (sc->sc_scode == hyperconscode)
@@ -236,9 +236,9 @@ hyper_dio_attach(struct device *parent, struct device *self, void *aux)
  * Returns 0 if hardware not present, non-zero ow.
  */
 static int
-hy_init(struct grf_data *gp, int scode, caddr_t addr)
+hy_init(struct grf_data *gp, int scode, uint8_t *addr)
 {
-	struct hyboxfb *hy = (struct hyboxfb *) addr;
+	struct hyboxfb *hy = (struct hyboxfb *)addr;
 	struct grfinfo *gi = &gp->g_display;
 	int fboff;
 
@@ -248,7 +248,7 @@ hy_init(struct grf_data *gp, int scode, caddr_t addr)
 	 */
 	if (scode != hyperconscode) {
 		if (ISIIOVA(addr))
-			gi->gd_regaddr = (caddr_t) IIOP(addr);
+			gi->gd_regaddr = (void *)IIOP(addr);
 		else
 			gi->gd_regaddr = dio_scodetopa(scode);
 		gi->gd_regsize = 0x20000;
@@ -256,16 +256,16 @@ hy_init(struct grf_data *gp, int scode, caddr_t addr)
 		gi->gd_fbheight = (hy->fbhmsb << 8) | hy->fbhlsb;
 		gi->gd_fbsize = (gi->gd_fbwidth * gi->gd_fbheight) >> 3;
 		fboff = (hy->fbomsb << 8) | hy->fbolsb;
-		gi->gd_fbaddr = (caddr_t) (*((u_char *)addr + fboff) << 16);
-		if (gi->gd_regaddr >= (caddr_t)DIOIIBASE) {
+		gi->gd_fbaddr = (void *)(*(addr + fboff) << 16);
+		if ((vaddr_t)gi->gd_regaddr >= DIOIIBASE) {
 			/*
 			 * For DIO II space the fbaddr just computed is
 			 * the offset from the select code base (regaddr)
 			 * of the framebuffer.  Hence it is also implicitly
 			 * the size of the register set.
 			 */
-			gi->gd_regsize = (int) gi->gd_fbaddr;
-			gi->gd_fbaddr += (int) gi->gd_regaddr;
+			gi->gd_regsize = (int)gi->gd_fbaddr;
+			gi->gd_fbaddr += (int)gi->gd_regaddr;
 			gp->g_regkva = addr;
 			gp->g_fbkva = addr + gi->gd_regsize;
 		} else {
@@ -291,7 +291,7 @@ hy_init(struct grf_data *gp, int scode, caddr_t addr)
  * Function may not be needed anymore.
  */
 static int
-hy_mode(struct grf_data *gp, int cmd, caddr_t data)
+hy_mode(struct grf_data *gp, int cmd, void *data)
 {
 	int error = 0;
 
@@ -757,7 +757,7 @@ int
 hypercnattach(bus_space_tag_t bst, bus_addr_t addr, int scode)
 {
 	bus_space_handle_t bsh;
-	caddr_t va;
+	void *va;
 	struct grfreg *grf;
 	struct grf_data *gp = &grf_cn;
 	int size;

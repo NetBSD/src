@@ -1,4 +1,4 @@
-/*	$NetBSD: bivideo.c,v 1.25 2006/10/10 23:09:21 he Exp $	*/
+/*	$NetBSD: bivideo.c,v 1.25.4.1 2007/03/12 05:53:22 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bivideo.c,v 1.25 2006/10/10 23:09:21 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bivideo.c,v 1.25.4.1 2007/03/12 05:53:22 rmind Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_hpcfb.h"
@@ -81,7 +81,7 @@ int bivideo_dont_attach = 0;
  */
 int	bivideomatch(struct device *, struct cfdata *, void *);
 void	bivideoattach(struct device *, struct device *, void *);
-int	bivideo_ioctl(void *, u_long, caddr_t, int, struct lwp *);
+int	bivideo_ioctl(void *, u_long, void *, int, struct lwp *);
 paddr_t	bivideo_mmap(void *, off_t, int);
 
 struct bivideo_softc {
@@ -374,7 +374,7 @@ bivideo_update_powerstate(struct bivideo_softc *sc, int updates)
 }
 
 int
-bivideo_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
+bivideo_ioctl(void *v, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct bivideo_softc *sc = (struct bivideo_softc *)v;
 	struct hpcfb_fbconf *fbconf;

@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_iohidsystem.c,v 1.37 2006/11/16 01:32:42 christos Exp $ */
+/*	$NetBSD: darwin_iohidsystem.c,v 1.37.4.1 2007/03/12 05:51:55 rmind Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_iohidsystem.c,v 1.37 2006/11/16 01:32:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_iohidsystem.c,v 1.37.4.1 2007/03/12 05:51:55 rmind Exp $");
 
 #include "opt_ktrace.h"
 
@@ -347,13 +347,13 @@ darwin_iohidsystem_connect_method_structi_structo(args)
 		wsevt.type = WSCONS_EVENT_MOUSE_ABSOLUTE_X;
 		wsevt.value = pt->x;
 		if ((error = (wsmux->d_ioctl)(dev,
-		    WSMUXIO_INJECTEVENT, (caddr_t)&wsevt, 0,  l)) != 0)
+		    WSMUXIO_INJECTEVENT, (void *)&wsevt, 0,  l)) != 0)
 			return mach_msg_error(args, error);
 
 		wsevt.type = WSCONS_EVENT_MOUSE_ABSOLUTE_Y;
 		wsevt.value = pt->y;
 		if ((error = (wsmux->d_ioctl)(dev,
-		    WSMUXIO_INJECTEVENT, (caddr_t)&wsevt, 0, l)) != 0)
+		    WSMUXIO_INJECTEVENT, (void *)&wsevt, 0, l)) != 0)
 			return mach_msg_error(args, error);
 
 		rep->rep_outcount = 0;
@@ -764,7 +764,7 @@ darwin_iohidsystem_postfake(l)
 
 	wsevt.type = 0;
 	wsevt.value = 0;
-	(wsmux->d_ioctl)(dev, WSMUXIO_INJECTEVENT, (caddr_t)&wsevt, 0,  l);
+	(wsmux->d_ioctl)(dev, WSMUXIO_INJECTEVENT, (void *)&wsevt, 0,  l);
 
 	return;
 }

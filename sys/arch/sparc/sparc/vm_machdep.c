@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.88.2.1 2007/02/27 16:53:12 yamt Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.88.2.2 2007/03/12 05:50:45 rmind Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.88.2.1 2007/02/27 16:53:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.88.2.2 2007/03/12 05:50:45 rmind Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_coredump.h"
@@ -98,7 +98,7 @@ vmapbuf(struct buf *bp, vsize_t len)
 	off = (vaddr_t)bp->b_data - uva;
 	len = round_page(off + len);
 	kva = uvm_km_alloc(kernel_map, len, 0, UVM_KMF_VAONLY | UVM_KMF_WAITVA);
-	bp->b_data = (caddr_t)(kva + off);
+	bp->b_data = (void *)(kva + off);
 
 	/*
 	 * We have to flush any write-back cache on the
@@ -106,7 +106,7 @@ vmapbuf(struct buf *bp, vsize_t len)
 	 * have the correct contents.
 	 */
 	if (CACHEINFO.c_vactype != VAC_NONE)
-		cache_flush((caddr_t)uva, len);
+		cache_flush((void *)uva, len);
 
 	upmap = vm_map_pmap(&bp->b_proc->p_vmspace->vm_map);
 	kpmap = vm_map_pmap(kernel_map);
@@ -212,7 +212,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2,
 		panic("cpu_lwp_fork: curlwp");
 #endif
 
-	bcopy((caddr_t)opcb, (caddr_t)npcb, sizeof(struct pcb));
+	bcopy((void *)opcb, (void *)npcb, sizeof(struct pcb));
 	if (l1->l_md.md_fpstate != NULL) {
 		struct cpu_info *cpi;
 		int s;
@@ -368,7 +368,7 @@ cpu_coredump(struct lwp *l, void *iocookie, struct core *chdr)
 			savefpstate(l->l_md.md_fpstate);
 		md_core.md_fpstate = *l->l_md.md_fpstate;
 	} else
-		bzero((caddr_t)&md_core.md_fpstate, sizeof(struct fpstate));
+		bzero((void *)&md_core.md_fpstate, sizeof(struct fpstate));
 
 	CORE_SETMAGIC(cseg, CORESEGMAGIC, MID_MACHINE, CORE_CPU);
 	cseg.c_addr = 0;

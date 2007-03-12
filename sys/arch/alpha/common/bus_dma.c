@@ -1,4 +1,4 @@
-/* $NetBSD: bus_dma.c,v 1.62 2006/03/01 12:38:10 yamt Exp $ */
+/* $NetBSD: bus_dma.c,v 1.62.20.1 2007/03/12 05:46:06 rmind Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.62 2006/03/01 12:38:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.62.20.1 2007/03/12 05:46:06 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -370,7 +370,7 @@ _bus_dmamap_load_uio_direct(bus_dma_tag_t t, bus_dmamap_t map,
 	bus_size_t minlen, resid;
 	struct vmspace *vm;
 	struct iovec *iov;
-	caddr_t addr;
+	void *addr;
 
 	/*
 	 * Make sure that on error condition we return "no valid mappings."
@@ -394,7 +394,7 @@ _bus_dmamap_load_uio_direct(bus_dma_tag_t t, bus_dmamap_t map,
 		 * until we have exhausted the residual count.
 		 */
 		minlen = resid < iov[i].iov_len ? resid : iov[i].iov_len;
-		addr = (caddr_t)iov[i].iov_base;
+		addr = (void *)iov[i].iov_base;
 
 		error = _bus_dmamap_load_buffer_direct(t, map,
 		    addr, minlen, vm, flags, &lastaddr, &seg, first);
@@ -567,7 +567,7 @@ _bus_dmamem_free(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs)
  */
 int
 _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
-    size_t size, caddr_t *kvap, int flags)
+    size_t size, void **kvap, int flags)
 {
 	vaddr_t va;
 	bus_addr_t addr;
@@ -580,7 +580,7 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 	 * TLB thrashing.
 	 */
 	if (nsegs == 1) {
-		*kvap = (caddr_t)ALPHA_PHYS_TO_K0SEG(segs[0].ds_addr);
+		*kvap = (void *)ALPHA_PHYS_TO_K0SEG(segs[0].ds_addr);
 		return (0);
 	}
 
@@ -591,7 +591,7 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 	if (va == 0)
 		return (ENOMEM);
 
-	*kvap = (caddr_t)va;
+	*kvap = (void *)va;
 
 	for (curseg = 0; curseg < nsegs; curseg++) {
 		for (addr = segs[curseg].ds_addr;
@@ -614,7 +614,7 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
  * bus-specific DMA memory unmapping functions.
  */
 void
-_bus_dmamem_unmap(bus_dma_tag_t t, caddr_t kva, size_t size)
+_bus_dmamem_unmap(bus_dma_tag_t t, void *kva, size_t size)
 {
 
 #ifdef DIAGNOSTIC
@@ -625,8 +625,8 @@ _bus_dmamem_unmap(bus_dma_tag_t t, caddr_t kva, size_t size)
 	/*
 	 * Nothing to do if we mapped it with K0SEG.
 	 */
-	if (kva >= (caddr_t)ALPHA_K0SEG_BASE &&
-	    kva <= (caddr_t)ALPHA_K0SEG_END)
+	if (kva >= (void *)ALPHA_K0SEG_BASE &&
+	    kva <= (void *)ALPHA_K0SEG_END)
 		return;
 
 	size = round_page(size);
@@ -660,7 +660,7 @@ _bus_dmamem_mmap(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 			continue;
 		}
 
-		return (alpha_btop((caddr_t)segs[i].ds_addr + off));
+		return (alpha_btop((char *)segs[i].ds_addr + off));
 	}
 
 	/* Page not found. */

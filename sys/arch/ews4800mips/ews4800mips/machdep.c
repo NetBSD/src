@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.2.22.1 2007/02/27 16:50:19 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.2.22.2 2007/03/12 05:47:41 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.2.22.1 2007/02/27 16:50:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.2.22.2 2007/03/12 05:47:41 rmind Exp $");
 
 #include "opt_ddb.h"
 
@@ -100,7 +100,7 @@ mach_init(int argc, char *argv[], struct bootinfo *bi)
 {
 	extern char kernel_text[], edata[], end[];
 	extern struct user *proc0paddr;
-	caddr_t v;
+	void *v;
 	int i;
 
 	/* Clear BSS */
@@ -122,7 +122,7 @@ mach_init(int argc, char *argv[], struct bootinfo *bi)
 
 	/* Fill mem_clusters and mem_cluster_cnt */
 	(*platform.mem_init)(kernel_text,
-	    (bi && bi->bi_nsym) ? (caddr_t)bi->bi_esym : end);
+	    (bi && bi->bi_nsym) ? (void *)bi->bi_esym : end);
 
 	/*
 	 * make sure that we don't call BIOS console from now
@@ -165,9 +165,9 @@ mach_init(int argc, char *argv[], struct bootinfo *bi)
 
 	pmap_bootstrap();
 
-	v = (caddr_t)uvm_pageboot_alloc(USPACE);	/* proc0 USPACE */
+	v = (void *)uvm_pageboot_alloc(USPACE);	/* proc0 USPACE */
 	lwp0.l_addr = proc0paddr = (struct user *) v;
-	lwp0.l_md.md_regs = (struct frame *)(v + USPACE) - 1;
+	lwp0.l_md.md_regs = (struct frame *)((char *)v + USPACE) - 1;
 	curpcb = &lwp0.l_addr->u_pcb;
 	curpcb->pcb_context[11] = MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
 }

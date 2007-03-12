@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_resource.c,v 1.6 2007/02/09 21:55:23 ad Exp $ */
+/* $NetBSD: osf1_resource.c,v 1.6.2.1 2007/03/12 05:52:40 rmind Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_resource.c,v 1.6 2007/02/09 21:55:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_resource.c,v 1.6.2.1 2007/03/12 05:52:40 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,7 +98,7 @@ osf1_sys_getrusage(l, v, retval)
 	struct sys_getrusage_args a;
 	struct osf1_rusage osf1_rusage;
 	struct rusage netbsd_rusage;
-	caddr_t sg;
+	void *sg;
 	int error;
 
 	switch (SCARG(uap, who)) {
@@ -120,12 +120,12 @@ osf1_sys_getrusage(l, v, retval)
 
 	error = sys_getrusage(l, &a, retval);
 	if (error == 0)
-                error = copyin((caddr_t)SCARG(&a, rusage),
-		    (caddr_t)&netbsd_rusage, sizeof netbsd_rusage);
+                error = copyin((void *)SCARG(&a, rusage),
+		    (void *)&netbsd_rusage, sizeof netbsd_rusage);
 	if (error == 0) {
 		osf1_cvt_rusage_from_native(&netbsd_rusage, &osf1_rusage);
-                error = copyout((caddr_t)&osf1_rusage,
-		    (caddr_t)SCARG(uap, rusage), sizeof osf1_rusage);
+                error = copyout((void *)&osf1_rusage,
+		    (void *)SCARG(uap, rusage), sizeof osf1_rusage);
 	}
 
 	return (error);

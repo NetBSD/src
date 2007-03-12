@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.169.2.1 2007/02/27 16:52:09 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.169.2.2 2007/03/12 05:49:23 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.169.2.1 2007/02/27 16:52:09 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.169.2.2 2007/03/12 05:49:23 rmind Exp $");
 
 /*
  *	Manages physical address maps.
@@ -213,10 +213,10 @@ struct pool pmap_pv_pool;
 #endif
 int		pmap_pv_lowat = PMAP_PV_LOWAT;
 
-bool		pmap_initialized = FALSE;
+bool		pmap_initialized = false;
 
 #define PAGE_IS_MANAGED(pa)	\
-	(pmap_initialized == TRUE && vm_physseg_find(atop(pa), NULL) != -1)
+	(pmap_initialized == true && vm_physseg_find(atop(pa), NULL) != -1)
 
 #define PMAP_IS_ACTIVE(pm)						\
 	((pm) == pmap_kernel() || 					\
@@ -435,7 +435,7 @@ pmap_steal_memory(vsize_t size, vaddr_t *vstartp, vaddr_t *vendp)
 	npgs = atop(size);
 
 	for (bank = 0; bank < vm_nphysseg; bank++) {
-		if (uvm.page_init_done == TRUE)
+		if (uvm.page_init_done == true)
 			panic("pmap_steal_memory: called _after_ bootstrap");
 
 		if (vm_physmem[bank].avail_start != vm_physmem[bank].start ||
@@ -469,7 +469,7 @@ pmap_steal_memory(vsize_t size, vaddr_t *vstartp, vaddr_t *vendp)
 		}
 
 		va = MIPS_PHYS_TO_KSEG0(pa);
-		memset((caddr_t)va, 0, size);
+		memset((void *)va, 0, size);
 		return va;
 	}
 
@@ -518,7 +518,7 @@ pmap_init(void)
 	/*
 	 * Now it is safe to enable pv entry recording.
 	 */
-	pmap_initialized = TRUE;
+	pmap_initialized = true;
 
 #ifdef MIPS3
 	if (MIPS_HAS_R4K_MMU) {
@@ -1510,7 +1510,7 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 			if (pmapdebug & PDB_FOLLOW)
 				printf("not in segmap\n");
 #endif
-			return FALSE;
+			return false;
 		}
 		pte += (va >> PGSHIFT) & (NPTEPG - 1);
 	}
@@ -1519,7 +1519,7 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 		if (pmapdebug & PDB_FOLLOW)
 			printf("PTE not valid\n");
 #endif
-		return FALSE;
+		return false;
 	}
 	pa = mips_tlbpfn_to_paddr(pte->pt_entry) | (va & PGOFSET);
 done:
@@ -1530,7 +1530,7 @@ done:
 	if (pmapdebug & PDB_FOLLOW)
 		printf("pa 0x%lx\n", (u_long)pa);
 #endif
-	return TRUE;
+	return true;
 }
 
 /*
@@ -1605,7 +1605,7 @@ pmap_zero_page(paddr_t phys)
 	}
 #endif
 
-	mips_pagezero((caddr_t)va);
+	mips_pagezero((void *)va);
 
 #if defined(MIPS3_PLUS)	/* XXX mmu XXX */
 	/*
@@ -1662,8 +1662,8 @@ pmap_copy_page(paddr_t src, paddr_t dst)
 	}
 #endif	/* MIPS3_PLUS */
 
-	mips_pagecopy((caddr_t)MIPS_PHYS_TO_KSEG0(dst),
-		      (caddr_t)MIPS_PHYS_TO_KSEG0(src));
+	mips_pagecopy((void *)MIPS_PHYS_TO_KSEG0(dst),
+		      (void *)MIPS_PHYS_TO_KSEG0(src));
 
 #if defined(MIPS3_PLUS) /* XXX mmu XXX */
 	/*
@@ -1745,7 +1745,7 @@ pmap_clear_modify(struct vm_page *pg)
 	}
 	pv = pg->mdpage.pvh_list;
 	if (pv->pv_pmap == NULL) {
-		return TRUE;
+		return true;
 	}
 
 	/*
@@ -1781,7 +1781,7 @@ pmap_clear_modify(struct vm_page *pg)
 			MIPS_TBIS(va | asid);
 		}
 	}
-	return TRUE;
+	return true;
 }
 
 /*

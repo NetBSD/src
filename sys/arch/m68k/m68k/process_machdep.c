@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.26 2006/07/22 06:34:42 tsutsui Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.26.10.1 2007/03/12 05:48:54 rmind Exp $	*/
 
 /*
  * Copyright (c) 1993 Christopher G. Demetriou
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.26 2006/07/22 06:34:42 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.26.10.1 2007/03/12 05:48:54 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -164,7 +164,7 @@ process_sstep(struct lwp *l, int sstep)
 }
 
 int
-process_set_pc(struct lwp *l, caddr_t addr)
+process_set_pc(struct lwp *l, void *addr)
 {
 	struct frame *frame = process_frame(l);
 

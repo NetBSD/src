@@ -1,4 +1,4 @@
-/*	$NetBSD: mlx.c,v 1.49.2.1 2007/02/27 16:53:52 yamt Exp $	*/
+/*	$NetBSD: mlx.c,v 1.49.2.2 2007/03/12 05:53:38 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mlx.c,v 1.49.2.1 2007/02/27 16:53:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mlx.c,v 1.49.2.2 2007/03/12 05:53:38 rmind Exp $");
 
 #include "ld.h"
 
@@ -288,7 +288,7 @@ mlx_init(struct mlx_softc *mlx, const char *intrstr)
 	}
 
 	if ((rv = bus_dmamem_map(mlx->mlx_dmat, &seg, rseg, size,
-	    (caddr_t *)&mlx->mlx_sgls,
+	    (void **)&mlx->mlx_sgls,
 	    BUS_DMA_NOWAIT | BUS_DMA_COHERENT)) != 0) {
 		printf("%s: unable to map sglists, rv = %d\n",
 		    mlx->mlx_dv.dv_xname, rv);
@@ -726,7 +726,7 @@ mlxclose(dev_t dev, int flag, int mode,
  * Handle control operations.
  */
 int
-mlxioctl(dev_t dev, u_long cmd, caddr_t data, int flag,
+mlxioctl(dev_t dev, u_long cmd, void *data, int flag,
     struct lwp *l)
 {
 	struct mlx_softc *mlx;
@@ -1943,7 +1943,7 @@ mlx_ccb_map(struct mlx_softc *mlx, struct mlx_ccb *mc, void *data, int size,
 	mc->mc_xfer_phys = xfer->dm_segs[0].ds_addr;
 
 	sgloff = MLX_SGL_SIZE * mc->mc_ident;
-	sge = (struct mlx_sgentry *)((caddr_t)mlx->mlx_sgls + sgloff);
+	sge = (struct mlx_sgentry *)((char *)mlx->mlx_sgls + sgloff);
 
 	for (i = 0; i < nsegs; i++, sge++) {
 		sge->sge_addr = htole32(xfer->dm_segs[i].ds_addr);

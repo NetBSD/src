@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.54 2007/02/16 02:53:50 ad Exp $	*/
+/*	$NetBSD: cpu.h,v 1.54.2.1 2007/03/12 05:50:06 rmind Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -319,7 +319,7 @@ void oea_init(void (*)(void));
 void oea_startup(const char *);
 void oea_dumpsys(void);
 void oea_install_extint(void (*)(void));
-paddr_t kvtop(caddr_t); 
+paddr_t kvtop(void *); 
 void softnet(int);
 
 extern paddr_t msgbuf_paddr;

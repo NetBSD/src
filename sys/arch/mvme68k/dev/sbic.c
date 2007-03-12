@@ -1,4 +1,4 @@
-/*	$NetBSD: sbic.c,v 1.28 2006/03/08 23:46:23 lukem Exp $	*/
+/*	$NetBSD: sbic.c,v 1.28.16.1 2007/03/12 05:49:36 rmind Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbic.c,v 1.28 2006/03/08 23:46:23 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbic.c,v 1.28.16.1 2007/03/12 05:49:36 rmind Exp $");
 
 #include "opt_ddb.h"
 
@@ -347,11 +347,11 @@ sbic_load_ptrs(dev)
          * do kvm to pa mappings
          */
         vaddr = acb->sc_kv.dc_addr;
-        paddr = acb->sc_pa.dc_addr = (char *) kvtop((caddr_t)vaddr);
+        paddr = acb->sc_pa.dc_addr = (char *) kvtop((void *)vaddr);
 
         for (count = (PAGE_SIZE - ((int)vaddr & PGOFSET));
              count < acb->sc_kv.dc_count &&
-             (char*)kvtop((caddr_t)(vaddr + count + 4)) == paddr + count + 4;
+             (char*)kvtop((void *)(vaddr + count + 4)) == paddr + count + 4;
              count += PAGE_SIZE)
             ;   /* Do nothing */
 
@@ -445,7 +445,7 @@ sbic_scsi_request(chan, req, arg)
         acb->clen           = xs->cmdlen;
         acb->sc_kv.dc_addr  = xs->data;
         acb->sc_kv.dc_count = xs->datalen;
-        acb->pa_addr        = xs->data ? (char *)kvtop((caddr_t)xs->data) : 0;
+        acb->pa_addr        = xs->data ? (char *)kvtop((void *)xs->data) : 0;
         memcpy(&acb->cmd, xs->cmd, xs->cmdlen);
 
         if ( flags & XS_CTL_POLL ) {
@@ -1593,9 +1593,9 @@ sbicgo(dev, xs)
     addr  = acb->sc_kv.dc_addr;
     count = acb->sc_kv.dc_count;
 
-    if ( count && ((char *)kvtop((caddr_t)addr) != acb->sc_pa.dc_addr) ) {
+    if ( count && ((char *)kvtop((void *)addr) != acb->sc_pa.dc_addr) ) {
         printf("sbic: DMA buffer mapping changed %p->%x\n",
-                acb->sc_pa.dc_addr, kvtop((caddr_t)addr));
+                acb->sc_pa.dc_addr, kvtop((void *)addr));
 #ifdef DDB
         Debugger();
 #endif
@@ -2580,7 +2580,7 @@ sbiccheckdmap(bp, len, mask)
 
     while ( len ) {
 
-        phy_buf = kvtop((caddr_t)buffer);
+        phy_buf = kvtop((void *)buffer);
         phy_len = PAGE_SIZE - ((int) buffer & PGOFSET);
 
         if ( len < phy_len )

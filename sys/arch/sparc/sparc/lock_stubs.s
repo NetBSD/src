@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.s,v 1.3.2.1 2007/02/27 16:53:11 yamt Exp $	*/
+/*	$NetBSD: lock_stubs.s,v 1.3.2.2 2007/03/12 05:50:43 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -113,14 +113,13 @@ _ENTRY(_C_LABEL(mutex_exit))
 	sethi	%hi(0xff000000), %o2		! finish constructing
 	or	%o1, %o2, %o1			!   lock word
 	ld	[%o0], %o2			! get lock word
-	sub	%o1, %o2, %o2			! -> 0 if we own lock
-	bnz	_C_LABEL(mutex_vector_exit)	! no, hard case
+	cmp	%o1, %o2			! -> 0 if we own lock
+	bne	_C_LABEL(mutex_vector_exit)	! no, hard case
 	 nop
-	st	%g0, [%o0]			! and release lock
 	ldub	[%o0 + MTX_LOCK], %o3		! get has-waiters indicator
 	tst	%o3				! has waiters?
 	bnz	_C_LABEL(mutex_wakeup)		! yes, hard case
-	 nop
+	 st	%g0, [%o0]			! and release lock
 	retl
 	 nop
 
@@ -128,31 +127,30 @@ _ENTRY(_C_LABEL(mutex_exit))
  * void mutex_spin_enter(kmutex_t *);
  */
 _ENTRY(_C_LABEL(mutex_spin_enter))
-	sethi	%hi(CPUINFO_VA), %g4
-	ld	[ %g4 + CPUINFO_MTX_COUNT ], %o5
-	add	%o5, -1, %g1
-	st	%g1, [ %g4 + CPUINFO_MTX_COUNT ]
-	ldub	[ %o0 + MTX_IPL ], %g2
-	rd	%psr, %g1
-	sll	%g2, 8, %g2
-	and	%g1, PSR_PIL, %g3
-	cmp	%g3, %g2
+	sethi	%hi(CPUINFO_VA), %o4
+	ld	[ %o4 + CPUINFO_MTX_COUNT ], %o5
+	sub	%o5, 1, %o1
+	st	%o1, [ %o4 + CPUINFO_MTX_COUNT ]
+	ldub	[ %o0 + MTX_IPL ], %o2
+	rd	%psr, %o1
+	sll	%o2, 8, %o2
+	and	%o1, PSR_PIL, %o3
+	cmp	%o3, %o2
 	bge	1f
 	 tst	%o5
-	andn	%g1, %g3, %g1
-	or	%g2, %g1, %g1
-	mov	%g1, %psr
+	andn	%o1, PSR_PIL, %o1
+	wr	%o2, %o1, %psr
 	nop
 	nop
 	nop
 	tst	%o5
 1:
-	bnz,a	2f
-	 st	%g3, [ %g4 + CPUINFO_MTX_OLDSPL ]
+	bz,a	2f
+	 st	%o3, [ %o4 + CPUINFO_MTX_OLDSPL ]
 2:
 #if defined(MULTIPROCESSOR) || defined(DIAGNOSTIC)
-	ldstub  [ %o0 + MTX_LOCK ], %g2
-	tst	%g2
+	ldstub  [ %o0 + MTX_LOCK ], %o2
+	tst	%o2
 	bnz	_C_LABEL(mutex_spin_retry)
 	 nop
 #endif
@@ -163,24 +161,25 @@ _ENTRY(_C_LABEL(mutex_spin_enter))
  * void mutex_spin_exit(kmutex_t *);
  */
 _ENTRY(_C_LABEL(mutex_spin_exit))
+
 #if defined(DIAGNOSTIC)
-	ldub	[ %o0 + MTX_LOCK ], %g1
-	cmp	%g1, __SIMPLELOCK_LOCKED
-	bne,a	_C_LABEL(mutex_vector_exit)
-	 clrb	[ %o0 + MTX_LOCK ]
+	ldub	[ %o0 + MTX_LOCK ], %o1
+	tst	%o1
+	bz	_C_LABEL(mutex_vector_exit)
+	 nop
+	clrb	[ %o0 + MTX_LOCK ]
 #elif defined(MULTIPROCESSOR)
 	clrb	[ %o0 + MTX_LOCK ]
 #endif
-	sethi	 %hi(CPUINFO_VA), %g2
-	ld	[ %g2 + CPUINFO_MTX_OLDSPL ], %g3
-	ld	[ %g2 + CPUINFO_MTX_COUNT ], %g1
-	inc	%g1
-	tst	%g1
+	sethi	 %hi(CPUINFO_VA), %o2
+	ld	[ %o2 + CPUINFO_MTX_OLDSPL ], %o3
+	ld	[ %o2 + CPUINFO_MTX_COUNT ], %o1
+	addcc	%o1, 1, %o4
 	bnz	1f
-	 st	%g1, [ %g2 + CPUINFO_MTX_COUNT ]
-	rd	%psr, %g1
-	and	%g1, ~PSR_PIL, %g1
-	wr	%g1, %g3, %psr
+	 st	%o4, [ %o2 + CPUINFO_MTX_COUNT ]
+	rd	%psr, %o1
+	andn	%o1, PSR_PIL, %o1
+	wr	%o3, %o1, %psr
 	nop
 	nop
 	nop

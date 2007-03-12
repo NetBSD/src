@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.6 2007/02/09 21:55:14 ad Exp $	*/
+/*	$NetBSD: cpu.c,v 1.6.2.1 2007/03/12 05:51:47 rmind Exp $	*/
 /* NetBSD: cpu.c,v 1.18 2004/02/20 17:35:01 yamt Exp  */
 
 /*-
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.6 2007/02/09 21:55:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.6.2.1 2007/03/12 05:51:47 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -106,6 +106,10 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.6 2007/02/09 21:55:14 ad Exp $");
 #include <machine/tlog.h>
 #include <machine/pio.h>
 
+#ifdef XEN3
+#include <machine/vcpuvar.h>
+#endif
+
 #if NLAPIC > 0
 #include <machine/apicvar.h>
 #include <machine/i82489reg.h>
@@ -135,8 +139,8 @@ struct cpu_softc {
 
 int mp_cpu_start(struct cpu_info *); 
 void mp_cpu_start_cleanup(struct cpu_info *);
-struct cpu_functions mp_cpu_funcs = { mp_cpu_start, NULL,
-				      mp_cpu_start_cleanup };
+const struct cpu_functions mp_cpu_funcs = { mp_cpu_start, NULL,
+					    mp_cpu_start_cleanup };
 
 
 CFATTACH_DECL(cpu, sizeof(struct cpu_softc),
@@ -223,11 +227,8 @@ cpu_match(parent, match, aux)
 	struct cfdata *match;
 	void *aux;
 {
-	struct cpu_attach_args *caa = aux;
 
-	if (strcmp(caa->caa_name, match->cf_name) == 0)
-		return 1;
-	return 0;
+	return 1;
 }
 
 void
@@ -273,7 +274,7 @@ cpu_attach(parent, self, aux)
 		break;
 
 	case CPU_ROLE_BP:
-		printf("apid %d (boot processor)\n", caa->cpu_number);
+		printf("(boot processor)\n");
 		ci->ci_flags |= CPUF_PRESENT | CPUF_BSP | CPUF_PRIMARY;
 #if NIOAPIC > 0
 		ioapic_bsp_id = caa->cpu_number;
@@ -284,7 +285,7 @@ cpu_attach(parent, self, aux)
 		/*
 		 * report on an AP
 		 */
-		printf("apid %d (application processor)\n", caa->cpu_number);
+		printf("(application processor)\n");
 		break;
 
 	default:
@@ -303,9 +304,9 @@ vcpu_match(parent, match, aux)
 	struct cfdata *match;
 	void *aux;
 {
-	struct cpu_attach_args *caa = aux;
+	struct vcpu_attach_args *vcaa = aux;
 
-	if (strcmp(caa->caa_name, match->cf_name) == 0)
+	if (strcmp(vcaa->vcaa_name, match->cf_name) == 0)
 		return 1;
 	return 0;
 }
@@ -315,7 +316,9 @@ vcpu_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	cpu_attach_common(parent, self, aux);
+	struct vcpu_attach_args *vcaa = aux;
+
+	cpu_attach_common(parent, self, &vcaa->vcaa_caa);
 }
 #endif
 
@@ -757,7 +760,7 @@ cpu_copy_trampoline()
 	pmap_kenter_pa((vaddr_t)MP_TRAMPOLINE,	/* virtual */
 	    (paddr_t)MP_TRAMPOLINE,	/* physical */
 	    VM_PROT_ALL);		/* protection */
-	memcpy((caddr_t)MP_TRAMPOLINE,
+	memcpy((void *)MP_TRAMPOLINE,
 	    cpu_spinup_trampoline,
 	    cpu_spinup_trampoline_end-cpu_spinup_trampoline);
 }

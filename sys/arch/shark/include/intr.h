@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.4.2.1 2007/02/27 16:53:04 yamt Exp $	*/
+/*	$NetBSD: intr.h,v 1.4.2.2 2007/03/12 05:50:25 rmind Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -33,8 +33,8 @@
  * SUCH DAMAGE.
  */
 
-#ifndef _ARM32_INTR_H_
-#define _ARM32_INTR_H_
+#ifndef _SHARK_INTR_H_
+#define _SHARK_INTR_H_
 
 /* Define the various Interrupt Priority Levels */
 
@@ -65,7 +65,6 @@
 #define	IST_EDGE	2	/* edge-triggered */
 #define	IST_LEVEL	3	/* level-triggered */
 
-#include <machine/irqhandler.h>
 #include <arm/arm32/psl.h>
 
-#endif	/* _ARM32_INTR_H */
+#endif	/* _SHARK_INTR_H */

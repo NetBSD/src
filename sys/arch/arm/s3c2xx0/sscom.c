@@ -1,4 +1,4 @@
-/*	$NetBSD: sscom.c,v 1.21 2006/10/01 20:31:49 elad Exp $ */
+/*	$NetBSD: sscom.c,v 1.21.4.1 2007/03/12 05:47:07 rmind Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sscom.c,v 1.21 2006/10/01 20:31:49 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sscom.c,v 1.21.4.1 2007/03/12 05:47:07 rmind Exp $");
 
 #include "opt_sscom.h"
 #include "opt_ddb.h"
@@ -812,7 +812,7 @@ sscomtty(dev_t dev)
 }
 
 int
-sscomioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+sscomioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct sscom_softc *sc = device_lookup(&sscom_cd, SSCOMUNIT(dev));
 	struct tty *tp = sc->sc_tty;

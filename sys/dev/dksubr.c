@@ -1,4 +1,4 @@
-/* $NetBSD: dksubr.c,v 1.27 2006/11/16 01:32:45 christos Exp $ */
+/* $NetBSD: dksubr.c,v 1.27.4.1 2007/03/12 05:53:03 rmind Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.27 2006/11/16 01:32:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.27.4.1 2007/03/12 05:53:03 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -297,7 +297,7 @@ dk_size(struct dk_intf *di, struct dk_softc *dksc, dev_t dev)
 
 int
 dk_ioctl(struct dk_intf *di, struct dk_softc *dksc, dev_t dev,
-	    u_long cmd, caddr_t data, int flag, struct lwp *l)
+	    u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct	disklabel *lp;
 	struct	disk *dk;
@@ -516,7 +516,7 @@ static volatile int	dk_dumping = 0;
 /* ARGSUSED */
 int
 dk_dump(struct dk_intf *di, struct dk_softc *dksc, dev_t dev,
-    daddr_t blkno, caddr_t va, size_t size)
+    daddr_t blkno, void *va, size_t size)
 {
 
 	/*

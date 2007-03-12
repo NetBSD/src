@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.141.2.1 2007/02/27 16:49:50 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.141.2.2 2007/03/12 05:47:18 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.141.2.1 2007/02/27 16:49:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.141.2.2 2007/03/12 05:47:18 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -145,7 +145,7 @@ struct vm_map *exec_map = NULL;
 struct vm_map *mb_map = NULL;
 struct vm_map *phys_map = NULL;
 
-caddr_t	msgbufaddr;
+void *	msgbufaddr;
 vaddr_t	msgbufpa;
 
 int	physmem = MAXMEM;	/* max supported memory, changes to actual */
@@ -523,7 +523,7 @@ dumpsys()
 {
 	const struct bdevsw *bdev;
 	daddr_t	blkno;		/* Current block to write	*/
-	int	(*dump) __P((dev_t, daddr_t, caddr_t, size_t));
+	int	(*dump) __P((dev_t, daddr_t, void *, size_t));
 				/* Dumping function		*/
 	u_long	maddr;		/* PA being dumped		*/
 	int	segbytes;	/* Number of bytes in this seg.	*/
@@ -602,7 +602,7 @@ dumpsys()
 		 */
 		if (maddr != 0) { /* XXX kvtop chokes on this	*/
 			(void)pmap_map(dumpspace, maddr, maddr+n, VM_PROT_READ);
-			error = (*dump)(dumpdev, blkno, (caddr_t)dumpspace, n);
+			error = (*dump)(dumpdev, blkno, (void *)dumpspace, n);
 			if (error)
 				break;
 		}
@@ -723,7 +723,7 @@ int	*nofault;
 
 int
 badbaddr(addr, size)
-	register caddr_t addr;
+	register void *addr;
 	int		 size;
 {
 	register int i;

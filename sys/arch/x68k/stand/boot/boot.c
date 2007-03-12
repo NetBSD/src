@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.10 2005/12/11 12:19:44 christos Exp $	*/
+/*	$NetBSD: boot.c,v 1.10.26.1 2007/03/12 05:51:42 rmind Exp $	*/
 
 /*
  * Copyright (c) 2001 Minoura Makoto
@@ -57,7 +57,7 @@ static void ls(char *);
 int bootmenu(void);
 void bootmain(int);
 extern int detectmpu(void);
-extern int badbaddr(caddr_t);
+extern int badbaddr(void *);
 
 /* from boot_ufs/bootmain.c */
 static int

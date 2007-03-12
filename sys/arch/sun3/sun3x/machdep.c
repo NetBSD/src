@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.105.2.1 2007/02/27 16:53:20 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.105.2.2 2007/03/12 05:51:10 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.105.2.1 2007/02/27 16:53:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.105.2.2 2007/03/12 05:51:10 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -144,7 +144,7 @@ struct vm_map *phys_map = NULL;
 
 int	physmem;
 int	fputype;
-caddr_t	msgbufaddr;
+void *	msgbufaddr;
 
 /* Virtual page frame for /dev/mem (see mem.c) */
 vaddr_t vmmap;
@@ -217,7 +217,7 @@ consinit(void)
 void 
 cpu_startup(void)
 {
-	caddr_t v;
+	char *v;
 	vaddr_t minaddr, maxaddr;
 	char pbuf[9];
 
@@ -231,8 +231,8 @@ cpu_startup(void)
 	 * Its mapping was prepared in pmap_bootstrap().
 	 * Also, offset some to avoid PROM scribbles.
 	 */
-	v = (caddr_t) KERNBASE;
-	msgbufaddr = (caddr_t)(v + MSGBUFOFF);
+	v = (char *)KERNBASE;
+	msgbufaddr = v + MSGBUFOFF;
 	initmsgbuf(msgbufaddr, MSGBUFSIZE);
 
 	/*

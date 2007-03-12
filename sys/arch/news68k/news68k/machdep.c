@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.64 2007/02/10 02:03:51 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.64.2.1 2007/03/12 05:49:40 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.64 2007/02/10 02:03:51 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.64.2.1 2007/03/12 05:49:40 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -144,7 +144,6 @@ struct vm_map *exec_map = NULL;
 struct vm_map *mb_map = NULL;
 struct vm_map *phys_map = NULL;
 
-caddr_t	msgbufaddr;
 int	maxmem;			/* max memory per process */
 int	physmem = MAXMEM;	/* max supported memory, changes to actual */
 /*
@@ -162,7 +161,7 @@ extern u_int ctrl_led_phys;
 static void identifycpu(void);
 static void initcpu(void);
 static int cpu_dumpsize(void);
-static int cpu_dump(int (*)(dev_t, daddr_t, caddr_t, size_t), daddr_t *);
+static int cpu_dump(int (*)(dev_t, daddr_t, void *, size_t), daddr_t *);
 static void cpu_init_kcore_hdr(void);
 
 #ifdef news1700
@@ -274,19 +273,19 @@ cpu_startup(void)
 	 * limits the number of processes exec'ing at any time.
 	 */
 	exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-	    16 * NCARGS, VM_MAP_PAGEABLE, FALSE, NULL);
+	    16 * NCARGS, VM_MAP_PAGEABLE, false, NULL);
 
 	/*
 	 * Allocate a submap for physio
 	 */
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-	    VM_PHYS_SIZE, 0, FALSE, NULL);
+	    VM_PHYS_SIZE, 0, false, NULL);
 
 	/*
 	 * Finally, allocate mbuf cluster submap.
 	 */
 	mb_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-	    nmbclusters * mclbytes, VM_MAP_INTRSAFE, FALSE, NULL);
+	    nmbclusters * mclbytes, VM_MAP_INTRSAFE, false, NULL);
 
 #ifdef DEBUG
 	pmapdebug = opmapdebug;
@@ -517,7 +516,7 @@ cpu_dumpsize(void)
  * Called by dumpsys() to dump the machine-dependent header.
  */
 static int
-cpu_dump(int (*dump)(dev_t, daddr_t, caddr_t, size_t), daddr_t *blknop)
+cpu_dump(int (*dump)(dev_t, daddr_t, void *, size_t), daddr_t *blknop)
 {
 	int buf[MDHDRSIZE / sizeof(int)];
 	cpu_kcore_hdr_t *chdr;
@@ -533,7 +532,7 @@ cpu_dump(int (*dump)(dev_t, daddr_t, caddr_t, size_t), daddr_t *blknop)
 	kseg->c_size = MDHDRSIZE - ALIGN(sizeof(kcore_seg_t));
 
 	memcpy(chdr, &cpu_kcore_hdr, sizeof(cpu_kcore_hdr_t));
-	error = (*dump)(dumpdev, *blknop, (caddr_t)buf, sizeof(buf));
+	error = (*dump)(dumpdev, *blknop, (void *)buf, sizeof(buf));
 	*blknop += btodb(sizeof(buf));
 	return error;
 }
@@ -598,7 +597,7 @@ dumpsys(void)
 	const struct bdevsw *bdev;
 	daddr_t blkno;		/* current block to write */
 				/* dump routine */
-	int (*dump)(dev_t, daddr_t, caddr_t, size_t);
+	int (*dump)(dev_t, daddr_t, void *, size_t);
 	int pg;			/* page being dumped */
 	paddr_t maddr;		/* PA being dumped */
 	int error;		/* error code from (*dump)() */
@@ -712,7 +711,7 @@ straytrap(int pc, u_short evec)
 int	*nofault;
 
 int
-badaddr(caddr_t addr, int nbytes)
+badaddr(void *addr, int nbytes)
 {
 	int i;
 	label_t	faultbuf;
@@ -747,7 +746,7 @@ badaddr(caddr_t addr, int nbytes)
 }
 
 int
-badbaddr(caddr_t addr)
+badbaddr(void *addr)
 {
 	int i;
 	label_t	faultbuf;

@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.13 2005/12/24 20:06:52 perry Exp $	*/
+/*	$NetBSD: types.h,v 1.13.26.1 2007/03/12 05:47:05 rmind Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -61,7 +61,15 @@ typedef unsigned long	pmc_ctr_t;
 
 typedef int		register_t;
 
+/*
+ * This should have always been an 8-bit type, but since it's been exposed
+ * to user-space, we don't want ABI breakage there.
+ */
+#if defined(_KERNEL)
+typedef volatile unsigned char	__cpu_simple_lock_t;
+#else
 typedef	volatile int		__cpu_simple_lock_t;
+#endif /* _KERNEL */
 
 #define	__SIMPLELOCK_LOCKED	1
 #define	__SIMPLELOCK_UNLOCKED	0

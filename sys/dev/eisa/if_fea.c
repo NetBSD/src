@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fea.c,v 1.33 2006/11/16 01:32:50 christos Exp $	*/
+/*	$NetBSD: if_fea.c,v 1.33.4.1 2007/03/12 05:53:10 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fea.c,v 1.33 2006/11/16 01:32:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fea.c,v 1.33.4.1 2007/03/12 05:53:10 rmind Exp $");
 
 #include "opt_inet.h"
 
@@ -310,7 +310,7 @@ pdq_eisa_attach(
 	return -1;
     }
 
-    bcopy((caddr_t) sc->sc_pdq->pdq_hwaddr.lanaddr_bytes, sc->sc_ac.ac_enaddr, 6);
+    bcopy((void *) sc->sc_pdq->pdq_hwaddr.lanaddr_bytes, sc->sc_ac.ac_enaddr, 6);
     pdq_ifattach(sc, pdq_eisa_ifwatchdog);
 
     ed->kdc->kdc_state = DC_BUSY;	 /* host adapters always busy */
@@ -382,7 +382,7 @@ pdq_eisa_probe(
     /* EISA bus masters don't use host DMA channels */
     ia->ia_drq = DRQNONE;
 
-    ia->ia_maddr = (caddr_t) maddr;
+    ia->ia_maddr = (void *) maddr;
     ia->ia_msize = msiz;
     return 1;
 }
@@ -413,7 +413,7 @@ pdq_eisa_attach(
 	return;
     }
 
-    bcopy((caddr_t) sc->sc_pdq->pdq_hwaddr.lanaddr_bytes, sc->sc_ac.ac_enaddr, 6);
+    bcopy((void *) sc->sc_pdq->pdq_hwaddr.lanaddr_bytes, sc->sc_ac.ac_enaddr, 6);
 
     pdq_ifattach(sc, pdq_eisa_ifwatchdog);
 

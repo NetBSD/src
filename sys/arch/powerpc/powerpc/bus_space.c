@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.9 2006/08/31 23:14:38 freza Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.9.8.1 2007/03/12 05:50:07 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.9 2006/08/31 23:14:38 freza Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.9.8.1 2007/03/12 05:50:07 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -402,7 +402,7 @@ static int extent_flags;
 
 int
 bus_space_init(struct powerpc_bus_space *t, const char *extent_name,
-	caddr_t storage, size_t storage_size)
+	void *storage, size_t storage_size)
 {
 	if (t->pbs_extent == NULL) {
 		t->pbs_extent = extent_create(extent_name, t->pbs_base,

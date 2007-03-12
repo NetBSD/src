@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.29 2005/12/11 12:19:45 christos Exp $	*/
+/*	$NetBSD: bus.c,v 1.29.26.1 2007/03/12 05:51:43 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.29 2005/12/11 12:19:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.29.26.1 2007/03/12 05:51:43 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -224,7 +224,7 @@ x68k_bus_dmamap_load_uio(bus_dma_tag_t t, bus_dmamap_t map, struct uio *uio,
 	bus_size_t minlen, resid;
 	struct proc *p = NULL;
 	struct iovec *iov;
-	caddr_t addr;
+	void *addr;
 
 	/*
 	 * Make sure that on error condition we return "no valid mappings."
@@ -253,7 +253,7 @@ x68k_bus_dmamap_load_uio(bus_dma_tag_t t, bus_dmamap_t map, struct uio *uio,
 		 * until we have exhausted the residual count.
 		 */
 		minlen = resid < iov[i].iov_len ? resid : iov[i].iov_len;
-		addr = (caddr_t)iov[i].iov_base;
+		addr = (void *)iov[i].iov_base;
 
 		error = x68k_bus_dmamap_load_buffer(map, addr, minlen,
 		    p, flags, &lastaddr, &seg, first);
@@ -450,7 +450,7 @@ x68k_bus_dmamem_free(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs)
  */
 int
 x68k_bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
-    size_t size, caddr_t *kvap, int flags)
+    size_t size, void **kvap, int flags)
 {
 	vaddr_t va;
 	bus_addr_t addr;
@@ -465,7 +465,7 @@ x68k_bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 	if (va == 0)
 		return (ENOMEM);
 
-	*kvap = (caddr_t)va;
+	*kvap = (void *)va;
 
 	for (curseg = 0; curseg < nsegs; curseg++) {
 		for (addr = segs[curseg].ds_addr;
@@ -488,7 +488,7 @@ x68k_bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
  * bus-specific DMA memory unmapping functions.
  */
 void
-x68k_bus_dmamem_unmap(bus_dma_tag_t t, caddr_t kva, size_t size)
+x68k_bus_dmamem_unmap(bus_dma_tag_t t, void *kva, size_t size)
 {
 #ifdef DIAGNOSTIC
 	if (m68k_page_offset(kva))
@@ -527,7 +527,7 @@ x68k_bus_dmamem_mmap(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 			continue;
 		}
 
-		return (m68k_btop((caddr_t)segs[i].ds_addr + off));
+		return (m68k_btop((char *)segs[i].ds_addr + off));
 	}
 
 	/* Page not found. */

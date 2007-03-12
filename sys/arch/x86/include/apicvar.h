@@ -1,4 +1,4 @@
-/* 	$NetBSD: apicvar.h,v 1.3 2005/05/29 21:37:02 christos Exp $ */
+/* 	$NetBSD: apicvar.h,v 1.3.34.1 2007/03/12 05:51:45 rmind Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -42,7 +42,6 @@
 #define _X86_APICVAR_H_
 
 struct apic_attach_args {
-	const char *aaa_name;
 	int apic_id;
 	int apic_version;
 	int flags;

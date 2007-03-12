@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cc.c,v 1.35 2003/01/01 00:28:57 thorpej Exp $ */
+/*	$NetBSD: grf_cc.c,v 1.35.56.1 2007/03/12 05:46:39 rmind Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_cc.c,v 1.35 2003/01/01 00:28:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_cc.c,v 1.35.56.1 2007/03/12 05:46:39 rmind Exp $");
 
 #include "grfcc.h"
 #if NGRFCC > 0
@@ -193,16 +193,16 @@ grf_cc_on(struct grf_softc *gp)
 	gi = &gp->g_display;
 
 	/* XXX type of bm ? */
-	(*view_cdevsw.d_ioctl)(0, VIOCGBMAP, (caddr_t)&bm, -1, NULL);
+	(*view_cdevsw.d_ioctl)(0, VIOCGBMAP, (void *)&bm, -1, NULL);
 
-	gp->g_data = (caddr_t) 0xDeadBeaf; /* not particularly clean.. */
+	gp->g_data = (void *) 0xDeadBeaf; /* not particularly clean.. */
 
-	gi->gd_regaddr = (caddr_t) 0xdff000;	/* depricated */
+	gi->gd_regaddr = (void *) 0xdff000;	/* depricated */
 	gi->gd_regsize = round_page(sizeof (custom));
 	gi->gd_fbaddr  = bm.hardware_address;
 	gi->gd_fbsize  = bm.depth*bm.bytes_per_row*bm.rows;
 
-	if ((*view_cdevsw.d_ioctl)(0, VIOCGSIZE, (caddr_t)&vs, -1, NULL)) {
+	if ((*view_cdevsw.d_ioctl)(0, VIOCGSIZE, (void *)&vs, -1, NULL)) {
 		/* XXX type of vs ? */
 		/* fill in some default values... XXX */
 		vs.width = 640;

@@ -1,4 +1,4 @@
-/*	$NetBSD: cd18xx.c,v 1.18 2006/10/01 20:31:50 elad Exp $	*/
+/*	$NetBSD: cd18xx.c,v 1.18.4.1 2007/03/12 05:53:29 rmind Exp $	*/
 
 /* XXXad does this even compile? */
 
@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd18xx.c,v 1.18 2006/10/01 20:31:50 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd18xx.c,v 1.18.4.1 2007/03/12 05:53:29 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -611,7 +611,7 @@ int
 cdttyioctl(dev, cmd, data, flag, p)
 	dev_t dev;
 	u_long cmd;
-	caddr_t data;
+	void *data;
 	int flag;
 	struct proc *p;
 {
@@ -691,7 +691,7 @@ cdttystart(tp)
 	if (tp->t_outq.c_cc <= tp->t_lowat) {
 		if (ISSET(tp->t_state, TS_ASLEEP)) {
 			CLR(tp->t_state, TS_ASLEEP);
-			wakeup((caddr_t)&tp->t_outq);
+			wakeup((void *)&tp->t_outq);
 		}
 		selwakeup(&tp->t_wsel);
 		if (tp->t_outq.c_cc == 0)

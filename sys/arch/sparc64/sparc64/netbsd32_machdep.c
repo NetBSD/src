@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.66.2.1 2007/02/27 16:53:15 yamt Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.66.2.2 2007/03/12 05:50:49 rmind Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.66.2.1 2007/02/27 16:53:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.66.2.2 2007/03/12 05:50:49 rmind Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -252,9 +252,9 @@ netbsd32_sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 	    printf("sendsig: saving sf to %p, setting stack pointer %p to %p\n",
 		   fp, &(((struct rwindow32 *)newsp)->rw_in[6]), oldsp);
 #endif
-	kwin = (struct rwindow32 *)(((caddr_t)tf)-CCFSZ);
+	kwin = (struct rwindow32 *)((char *)tf - CCFSZ);
 	error = (rwindow_save(l) || 
-	    copyout((caddr_t)&sf, (caddr_t)fp, sizeof sf) || 
+	    copyout((void *)&sf, (void *)fp, sizeof sf) || 
 	    suword(&(((struct rwindow32 *)newsp)->rw_in[6]), (u_long)oldsp));
 	mutex_enter(&p->p_smutex);
 	if (error) {
@@ -336,7 +336,7 @@ netbsd32_sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	/* Allocate space for the signal handler context. */
 	if (onstack)
 		fp = (struct sparc32_sigframe_siginfo *)
-		    ((caddr_t)l->l_sigstk.ss_sp +
+		    ((char *)l->l_sigstk.ss_sp +
 					  l->l_sigstk.ss_size);
 	else
 		fp = (struct sparc32_sigframe_siginfo *)oldsp;
@@ -453,7 +453,7 @@ compat_13_netbsd32_sigreturn(l, v, retval)
 	}
 #endif
 	scp = (struct netbsd32_sigcontext13 *)(u_long)SCARG(uap, sigcntxp);
- 	if ((vaddr_t)scp & 3 || (copyin((caddr_t)scp, &sc, sizeof sc) != 0))
+ 	if ((vaddr_t)scp & 3 || (copyin((void *)scp, &sc, sizeof sc) != 0))
 	{
 #ifdef DEBUG
 		printf("compat_13_netbsd32_sigreturn: copyin failed\n");
@@ -548,7 +548,7 @@ compat_16_netbsd32___sigreturn14(l, v, retval)
 	}
 #endif
 	scp = (struct netbsd32_sigcontext *)(u_long)SCARG(uap, sigcntxp);
- 	if ((vaddr_t)scp & 3 || (copyin((caddr_t)scp, &sc, sizeof sc) != 0))
+ 	if ((vaddr_t)scp & 3 || (copyin((void *)scp, &sc, sizeof sc) != 0))
 	{
 #ifdef DEBUG
 		printf("netbsd32_sigreturn14: copyin failed: scp=%p\n", scp);
@@ -955,7 +955,7 @@ ev_out32(struct firm_event *e, int n, struct uio *uio)
 		e32.value = e->value;
 		e32.time.tv_sec = e->time.tv_sec;
 		e32.time.tv_usec = e->time.tv_usec;
-		error = uiomove((caddr_t)&e32, sizeof(e32), uio);
+		error = uiomove((void *)&e32, sizeof(e32), uio);
 		e++;
 	}
 	return (error);
@@ -1137,7 +1137,7 @@ netbsd32_md_ioctl(fp, cmd, data32, l)
 	struct lwp *l;
 {
 	u_int size;
-	caddr_t data, memp = NULL;
+	void *data, *memp = NULL;
 #define STK_PARAMS	128
 	u_long stkbuf[STK_PARAMS/sizeof(u_long)];
 	int error;

@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls_43.c,v 1.27 2007/02/09 21:55:16 ad Exp $	*/
+/*	$NetBSD: uipc_syscalls_43.c,v 1.27.2.1 2007/03/12 05:51:53 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_43.c,v 1.27 2007/02/09 21:55:16 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_43.c,v 1.27.2.1 2007/03/12 05:51:53 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,14 +68,14 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_43.c,v 1.27 2007/02/09 21:55:16 ad Exp
  * connect(2), bind(2), sendto(2)
  */
 
-static int compat_43_sa_put(caddr_t);
+static int compat_43_sa_put(void *);
 
 int
 compat_43_sys_accept(struct lwp *l, void *v, register_t *retval)
 {
 	struct compat_43_sys_accept_args /* {
 		syscallarg(int) s;
-		syscallarg(caddr_t) name;
+		syscallarg(void *) name;
 		syscallarg(int *) anamelen;
 	} */ *uap = v;
 	int error;
@@ -95,7 +95,7 @@ compat_43_sys_getpeername(struct lwp *l, void *v, register_t *retval)
 {
 	struct compat_43_sys_getpeername_args /* {
 		syscallarg(int) fdes;
-		syscallarg(caddr_t) asa;
+		syscallarg(void *) asa;
 		syscallarg(int *) alen;
 	} */ *uap = v;
 
@@ -115,7 +115,7 @@ compat_43_sys_getsockname(struct lwp *l, void *v, register_t *retval)
 {
 	struct compat_43_sys_getsockname_args /* {
 		syscallarg(int) fdes;
-		syscallarg(caddr_t) asa;
+		syscallarg(void *) asa;
 		syscallarg(int *) alen;
 	} */ *uap = v;
 	int error;
@@ -134,7 +134,7 @@ compat_43_sys_recv(struct lwp *l, void *v, register_t *retval)
 {
 	struct compat_43_sys_recv_args /* {
 		syscallarg(int) s;
-		syscallarg(caddr_t) buf;
+		syscallarg(void *) buf;
 		syscallarg(int) len;
 		syscallarg(int) flags;
 	} */ *uap = v;
@@ -155,10 +155,10 @@ compat_43_sys_recvfrom(struct lwp *l, void *v, register_t *retval)
 {
 	struct compat_43_sys_recvfrom_args /* {
 		syscallarg(int) s;
-		syscallarg(caddr_t) buf;
+		syscallarg(void *) buf;
 		syscallarg(size_t) len;
 		syscallarg(int) flags;
-		syscallarg(caddr_t) from;
+		syscallarg(void *) from;
 		syscallarg(int *) fromlenaddr;
 	} */ *uap = v;
 	int error;
@@ -190,7 +190,7 @@ compat_43_sys_recvmsg(struct lwp *l, void *v, register_t *retval)
 	struct iovec aiov[UIO_SMALLIOV], *iov;
 	int error;
 
-	error = copyin((caddr_t)SCARG(uap, msg), (caddr_t)&omsg,
+	error = copyin((void *)SCARG(uap, msg), (void *)&omsg,
 	    sizeof (struct omsghdr));
 	if (error)
 		return (error);
@@ -202,7 +202,7 @@ compat_43_sys_recvmsg(struct lwp *l, void *v, register_t *retval)
 	} else
 		iov = aiov;
 
-	error = copyin((caddr_t)omsg.msg_iov, (caddr_t)iov,
+	error = copyin((void *)omsg.msg_iov, (void *)iov,
 	    (unsigned)(omsg.msg_iovlen * sizeof (struct iovec)));
 	if (error)
 		goto done;
@@ -218,7 +218,7 @@ compat_43_sys_recvmsg(struct lwp *l, void *v, register_t *retval)
 	 * DTRT.
 	 */
 	if (omsg.msg_accrights && omsg.msg_accrightslen) {
-		caddr_t sg = stackgap_init(p, 0);
+		void *sg = stackgap_init(p, 0);
 		struct cmsg *ucmsg;
 
 		/* it was this way in 4.4BSD */
@@ -237,7 +237,7 @@ compat_43_sys_recvmsg(struct lwp *l, void *v, register_t *retval)
 	}
 
 	error = recvit(l, SCARG(uap, s), &msg,
-	    (caddr_t)&SCARG(uap, msg)->msg_namelen, retval);
+	    (void *)&SCARG(uap, msg)->msg_namelen, retval);
 
 	/*
 	 * If there is any control information and it's SCM_RIGHTS,
@@ -290,7 +290,7 @@ compat_43_sys_send(struct lwp *l, void *v, register_t *retval)
 {
 	struct compat_43_sys_send_args /* {
 		syscallarg(int) s;
-		syscallarg(caddr_t) buf;
+		syscallarg(void *) buf;
 		syscallarg(int) len;
 		syscallarg(int) flags;
 	} */ *uap = v;
@@ -315,7 +315,7 @@ compat_43_sys_sendmsg(struct lwp *l, void *v, register_t *retval)
 {
 	struct compat_43_sys_sendmsg_args /* {
 		syscallarg(int) s;
-		syscallarg(caddr_t) msg;
+		syscallarg(void *) msg;
 		syscallarg(int) flags;
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
@@ -323,9 +323,9 @@ compat_43_sys_sendmsg(struct lwp *l, void *v, register_t *retval)
 	struct msghdr msg;
 	struct iovec aiov[UIO_SMALLIOV], *iov;
 	int error;
-	caddr_t sg = stackgap_init(p, 0);
+	void *sg = stackgap_init(p, 0);
 
-	error = copyin(SCARG(uap, msg), (caddr_t)&omsg,
+	error = copyin(SCARG(uap, msg), (void *)&omsg,
 	    sizeof (struct omsghdr));
 	if (error)
 		return (error);
@@ -336,7 +336,7 @@ compat_43_sys_sendmsg(struct lwp *l, void *v, register_t *retval)
 		    M_IOV, M_WAITOK);
 	} else
 		iov = aiov;
-	error = copyin((caddr_t)omsg.msg_iov, (caddr_t)iov,
+	error = copyin((void *)omsg.msg_iov, (void *)iov,
 	    (unsigned)(omsg.msg_iovlen * sizeof (struct iovec)));
 	if (error)
 		goto done;
@@ -423,7 +423,7 @@ done:
 
 static int
 compat_43_sa_put(from)
-	caddr_t from;
+	void *from;
 {
 	struct osockaddr *osa = (struct osockaddr *) from;
 	struct sockaddr sa;
@@ -436,7 +436,7 @@ compat_43_sa_put(from)
 	 */
 	len = sizeof(sa.sa_len) + sizeof(sa.sa_family);
 
-	error = copyin((caddr_t) osa, (caddr_t) &sa, len);
+	error = copyin((void *) osa, (void *) &sa, len);
 	if (error)
 		return (error);
 
@@ -451,7 +451,7 @@ compat_43_sa_put(from)
 }
 
 int
-compat_ifioctl(struct socket *so, u_long cmd, caddr_t data, struct lwp *l)
+compat_ifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 {
 	int error, ocmd = cmd;
 	struct ifreq *ifr = (struct ifreq *)data;

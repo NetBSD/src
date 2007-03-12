@@ -1,4 +1,4 @@
-/*	$NetBSD: dcm.c,v 1.6 2005/12/11 12:17:19 christos Exp $	*/
+/*	$NetBSD: dcm.c,v 1.6.26.1 2007/03/12 05:47:57 rmind Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -93,7 +93,7 @@ dcmprobe(struct consdev *cp)
 	struct dcmdevice *dcm;
 
 	for (hw = sc_table; hw < &sc_table[MAXCTLRS]; hw++)
-		if (HW_ISDEV(hw, D_COMMDCM) && !badaddr((caddr_t)hw->hw_kva))
+		if (HW_ISDEV(hw, D_COMMDCM) && !badaddr((void *)hw->hw_kva))
 			break;
 	if (!HW_ISDEV(hw, D_COMMDCM)) {
 		cp->cn_pri = CN_DEAD;

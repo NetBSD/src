@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.6 2005/12/11 12:18:17 christos Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.6.26.1 2007/03/12 05:49:36 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.6 2005/12/11 12:18:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.6.26.1 2007/03/12 05:49:36 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,7 +81,7 @@ _bus_space_map(cookie, addr, size, flags, bushp)
 	bus_space_handle_t *bushp;
 {
 	bus_dma_segment_t seg;
-	caddr_t va;
+	void *va;
 
 	if (addr >= intiobase_phys && addr < intiotop_phys) {
 #ifdef DEBUG
@@ -110,7 +110,7 @@ _bus_space_map(cookie, addr, size, flags, bushp)
 	/*
 	 * The handle is really the virtual address we just mapped
 	 */
-	*bushp = (bus_space_handle_t) (va + m68k_page_offset(addr));
+	*bushp = (bus_space_handle_t) ((char *)va + m68k_page_offset(addr));
 
 	return (0);
 }
@@ -129,7 +129,7 @@ _bus_space_unmap(cookie, bush, size)
 	bush = m68k_trunc_page(bush);
 	size = m68k_round_page(size);
 
-	_bus_dmamem_unmap(NULL, (caddr_t) bush, size);
+	_bus_dmamem_unmap(NULL, (void *) bush, size);
 }
 
 /* ARGSUSED */

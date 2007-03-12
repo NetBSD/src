@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.596.2.10 2007/03/03 08:44:01 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.596.2.11 2007/03/12 05:48:22 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.596.2.10 2007/03/03 08:44:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.596.2.11 2007/03/12 05:48:22 rmind Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -437,7 +437,7 @@ cpu_startup()
 	}
 	pmap_update(pmap_kernel());
 
-	initmsgbuf((caddr_t)msgbuf_vaddr, sz);
+	initmsgbuf((void *)msgbuf_vaddr, sz);
 
 	printf("%s%s", copyright, version);
 
@@ -467,19 +467,19 @@ cpu_startup()
 	 * limits the number of processes exec'ing at any time.
 	 */
 	exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				   16*NCARGS, VM_MAP_PAGEABLE, FALSE, NULL);
+				   16*NCARGS, VM_MAP_PAGEABLE, false, NULL);
 
 	/*
 	 * Allocate a submap for physio
 	 */
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				   VM_PHYS_SIZE, 0, FALSE, NULL);
+				   VM_PHYS_SIZE, 0, false, NULL);
 
 	/*
 	 * Finally, allocate mbuf cluster submap.
 	 */
 	mb_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-	    nmbclusters * mclbytes, VM_MAP_INTRSAFE, FALSE, NULL);
+	    nmbclusters * mclbytes, VM_MAP_INTRSAFE, false, NULL);
 
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
@@ -504,7 +504,7 @@ i386_proc0_tss_ldt_init()
 	l = &lwp0;
 	pcb = &l->l_addr->u_pcb;
 	pcb->pcb_tss.tss_ioopt =
-	    ((caddr_t)pcb->pcb_iomap - (caddr_t)&pcb->pcb_tss) << 16;
+	    ((char *)pcb->pcb_iomap - (char *)&pcb->pcb_tss) << 16;
 
 	for (x = 0; x < sizeof(pcb->pcb_iomap) / 4; x++)
 		pcb->pcb_iomap[x] = 0xffffffff;
@@ -964,7 +964,7 @@ cpu_dump_mempagecnt()
 int
 cpu_dump()
 {
-	int (*dump)(dev_t, daddr_t, caddr_t, size_t);
+	int (*dump)(dev_t, daddr_t, void *, size_t);
 	char bf[dbtob(1)];
 	kcore_seg_t *segp;
 	cpu_kcore_hdr_t *cpuhdrp;
@@ -1003,7 +1003,7 @@ cpu_dump()
 		memsegp[i].size = mem_clusters[i].size;
 	}
 
-	return (dump(dumpdev, dumplo, (caddr_t)bf, dbtob(1)));
+	return (dump(dumpdev, dumplo, (void *)bf, dbtob(1)));
 }
 
 /*
@@ -1076,7 +1076,7 @@ dumpsys()
 	int psize;
 	daddr_t blkno;
 	const struct bdevsw *bdev;
-	int (*dump)(dev_t, daddr_t, caddr_t, size_t);
+	int (*dump)(dev_t, daddr_t, void *, size_t);
 	int error;
 
 	/* Save registers. */
@@ -1141,7 +1141,7 @@ dumpsys()
 				pmap_kenter_pa(dumpspace + m, maddr + m,
 				    VM_PROT_READ);
 
-			error = (*dump)(dumpdev, blkno, (caddr_t)dumpspace, n);
+			error = (*dump)(dumpdev, blkno, (void *)dumpspace, n);
 			if (error)
 				goto err;
 			maddr += n;
@@ -1905,7 +1905,7 @@ init386(paddr_t first_avail)
 		       (paddr_t)BIOSTRAMP_BASE,	/* physical */
 		       VM_PROT_ALL);		/* protection */
 	pmap_update(pmap_kernel());
-	memcpy((caddr_t)BIOSTRAMP_BASE, biostramp_image, biostramp_image_size);
+	memcpy((void *)BIOSTRAMP_BASE, biostramp_image, biostramp_image_size);
 #ifdef DEBUG_BIOSCALL
 	printf("biostramp installed @ %x\n", BIOSTRAMP_BASE);
 #endif
@@ -2013,7 +2013,7 @@ init386(paddr_t first_avail)
 #if defined(MULTIBOOT)
 		loaded = multiboot_ksyms_init();
 #else
-		loaded = FALSE;
+		loaded = false;
 #endif
 		if (!loaded) {
 		    symtab = lookup_bootinfo(BTINFO_SYMTAB);
@@ -2223,7 +2223,7 @@ cpu_reset()
 	 * Try to cause a triple fault and watchdog reset by making the IDT
 	 * invalid and causing a fault.
 	 */
-	memset((caddr_t)idt, 0, NIDT * sizeof(idt[0]));
+	memset((void *)idt, 0, NIDT * sizeof(idt[0]));
 	setregion(&region, idt, NIDT * sizeof(idt[0]) - 1);
 	lidt(&region);
 	__asm volatile("divl %0,%1" : : "q" (0), "a" (0));
@@ -2233,7 +2233,7 @@ cpu_reset()
 	 * Try to cause a triple fault and watchdog reset by unmapping the
 	 * entire address space and doing a TLB flush.
 	 */
-	memset((caddr_t)PTD, 0, PAGE_SIZE);
+	memset((void *)PTD, 0, PAGE_SIZE);
 	tlbflush();
 #endif
 
@@ -2280,7 +2280,7 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 	gr[_REG_ERR]    = tf->tf_err;
 
 	if ((ras_eip = (__greg_t)ras_lookup(l->l_proc,
-	    (caddr_t) gr[_REG_EIP])) != -1)
+	    (void *) gr[_REG_EIP])) != -1)
 		gr[_REG_EIP] = ras_eip;
 
 	*flags |= _UC_CPU;

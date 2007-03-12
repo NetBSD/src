@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.10.4.1 2007/02/27 16:50:50 yamt Exp $	*/
+/*	$NetBSD: bus.h,v 1.10.4.2 2007/03/12 05:48:00 rmind Exp $	*/
 
 /*	$OpenBSD: bus.h,v 1.13 2001/07/30 14:15:59 art Exp $	*/
 
@@ -389,8 +389,8 @@ struct hppa_bus_dma_tag {
 		    bus_size_t, bus_dma_segment_t *, int, int *, int);
 	void	(*_dmamem_free)(void *, bus_dma_segment_t *, int);
 	int	(*_dmamem_map)(void *, bus_dma_segment_t *,
-		    int, size_t, caddr_t *, int);
-	void	(*_dmamem_unmap)(void *, caddr_t, size_t);
+		    int, size_t, void **, int);
+	void	(*_dmamem_unmap)(void *, void *, size_t);
 	paddr_t	(*_dmamem_mmap)(void *, bus_dma_segment_t *,
 		    int, off_t, int, int);
 };

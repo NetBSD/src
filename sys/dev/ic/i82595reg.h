@@ -1,4 +1,4 @@
-/*	$NetBSD: i82595reg.h,v 1.8 2005/12/11 12:21:26 christos Exp $	*/
+/*	$NetBSD: i82595reg.h,v 1.8.26.1 2007/03/12 05:53:34 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -175,7 +175,7 @@
 
 #define EEPPW1		1
 #define		EEPP_Int	0x0007
-#define		EEPP_INTMAP	{3, 5, 9, 10, 11, -1, -1, -1}
+#define		EEPP_INTMAP	{9, 3, 5, 10, 11, -1, -1, -1}
 #define		EEPP_RINTMAP	{0xff, 0xff, 0x02, 0x00, 0xff, 0x01, 0xff, \
 				 0xff, 0xff, 0x02, 0x03, 0x04 }
 

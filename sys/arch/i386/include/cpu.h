@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.133.2.4 2007/03/03 09:23:29 yamt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.133.2.5 2007/03/12 05:48:36 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -137,7 +137,7 @@ struct cpu_info {
 	uint32_t	ci_cpu_serial[3]; /* PIII serial number */
 	uint64_t	ci_tsc_freq;	 /* cpu cycles/second */
 
-	struct cpu_functions *ci_func;  /* start/stop functions */
+	const struct cpu_functions *ci_func;  /* start/stop functions */
 	void (*cpu_setup)(struct cpu_info *);
  					/* proc-dependant init */
 	void (*ci_info)(struct cpu_info *);
@@ -381,7 +381,7 @@ void	npxsave_lwp(struct lwp *, int);
 void	npxsave_cpu(struct cpu_info *, int);
 
 /* vm_machdep.c */
-int kvtop(caddr_t);
+int kvtop(void *);
 
 #ifdef MATH_EMULATE
 /* math_emulate.c */

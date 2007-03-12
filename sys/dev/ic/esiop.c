@@ -1,4 +1,4 @@
-/*	$NetBSD: esiop.c,v 1.38 2006/11/02 15:08:30 garbled Exp $	*/
+/*	$NetBSD: esiop.c,v 1.38.4.1 2007/03/12 05:53:32 rmind Exp $	*/
 
 /*
  * Copyright (c) 2002 Manuel Bouyer.
@@ -33,7 +33,7 @@
 /* SYM53c7/8xx PCI-SCSI I/O Processors driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esiop.c,v 1.38 2006/11/02 15:08:30 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esiop.c,v 1.38.4.1 2007/03/12 05:53:32 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1921,7 +1921,7 @@ esiop_morecbd(sc)
 		goto bad2;
 	}
 	error = bus_dmamem_map(sc->sc_c.sc_dmat, &seg, rseg, PAGE_SIZE,
-	    (caddr_t *)&newcbd->xfers, BUS_DMA_NOWAIT|BUS_DMA_COHERENT);
+	    (void **)&newcbd->xfers, BUS_DMA_NOWAIT|BUS_DMA_COHERENT);
 	if (error) {
 		printf("%s: unable to map cbd DMA memory, error = %d\n",
 		    sc->sc_c.sc_dev.dv_xname, error);
@@ -1993,7 +1993,7 @@ esiop_morecbd(sc)
 		TAILQ_INSERT_TAIL(&sc->free_list, &newcbd->cmds[i], next);
 		splx(s);
 #ifdef SIOP_DEBUG
-		printf("tables[%d]: in=0x%x out=0x%x status=0x%x\n", i
+		printf("tables[%d]: in=0x%x out=0x%x status=0x%x\n", i,
 		    le32toh(newcbd->cmds[i].cmd_tables->t_msgin.addr),
 		    le32toh(newcbd->cmds[i].cmd_tables->t_msgout.addr),
 		    le32toh(newcbd->cmds[i].cmd_tables->t_status.addr));
