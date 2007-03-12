@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1016 2007/03/10 00:53:44 dbj Exp $
+#	$NetBSD: mi,v 1.1017 2007/03/12 16:34:08 ad Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -1870,6 +1870,7 @@
 ./usr/include/sys/signal.h			comp-c-include
 ./usr/include/sys/signalvar.h			comp-c-include
 ./usr/include/sys/sigtypes.h			comp-c-include
+./usr/include/sys/simplelock.h			comp-c-include
 ./usr/include/sys/sleepq.h			comp-c-include
 ./usr/include/sys/socket.h			comp-c-include
 ./usr/include/sys/socketvar.h			comp-c-include
