@@ -1,4 +1,4 @@
-/* $NetBSD: pipe.h,v 1.19 2007/03/04 06:03:41 christos Exp $ */
+/* $NetBSD: pipe.h,v 1.20 2007/03/12 16:20:53 ad Exp $ */
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -104,7 +104,9 @@ struct pipemapping {
  * Two of these are linked together to produce bi-directional pipes.
  */
 struct pipe {
-	struct	simplelock pipe_slock;	/* pipe mutex */
+	kmutex_t pipe_lock;		/* pipe mutex */
+	kcondvar_t pipe_cv;		/* general synchronization */
+	kcondvar_t pipe_lkcv;		/* locking */
 	struct	pipebuf pipe_buffer;	/* data storage */
 	struct	pipemapping pipe_map;	/* pipe mapping for direct I/O */
 	struct	selinfo pipe_sel;	/* for compat with select */
@@ -138,9 +140,6 @@ struct pipe {
 
 #ifdef _KERNEL
 int sysctl_dopipe(int *, u_int, void *, size_t *, void *, size_t);
-
-#define PIPE_LOCK(pipe)		simple_lock(&(pipe)->pipe_slock);
-#define PIPE_UNLOCK(pipe)	simple_unlock(&(pipe)->pipe_slock);
-
 #endif /* _KERNEL */
+
 #endif /* !_SYS_PIPE_H_ */
