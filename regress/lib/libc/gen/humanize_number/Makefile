@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2004/07/14 22:47:31 enami Exp $
+#	$NetBSD: Makefile,v 1.2 2007/03/12 03:39:57 enami Exp $
 
 NOMAN=	# defined
 
@@ -9,7 +9,8 @@ SRCS=	hntest.c
 
 # Pass -DINTREE to make to test the one in source tree directly.
 .if defined(INTREE)
-.PATH:  ${NETBSDSRCDIR}/lib/libc/gen
+.PATH:  	${NETBSDSRCDIR}/lib/libc/gen
+CPPFLAGS+=	-I${NETBSDSRCDIR}/lib/libc/include
 SRCS+=	humanize_number.c
 .endif
 
