@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_kbd.c,v 1.2.4.1 2007/02/27 16:53:50 yamt Exp $	*/
+/*	$NetBSD: adb_kbd.c,v 1.2.4.2 2007/03/12 05:53:07 rmind Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb_kbd.c,v 1.2.4.1 2007/02/27 16:53:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb_kbd.c,v 1.2.4.2 2007/03/12 05:53:07 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -103,7 +103,7 @@ CFATTACH_DECL(adbkbd, sizeof(struct adbkbd_softc),
 extern struct cfdriver akbd_cd;
 
 static int adbkbd_enable(void *, int);
-static int adbkbd_ioctl(void *, u_long, caddr_t, int, struct lwp *);
+static int adbkbd_ioctl(void *, u_long, void *, int, struct lwp *);
 static void adbkbd_set_leds(void *, int);
 static void adbkbd_handler(void *, int, uint8_t *);
 
@@ -131,7 +131,7 @@ struct wskbd_mapdata adbkbd_keymapdata = {
 };
 
 static int adbkms_enable(void *);
-static int adbkms_ioctl(void *, u_long, caddr_t, int, struct lwp *);
+static int adbkms_ioctl(void *, u_long, void *, int, struct lwp *);
 static void adbkms_disable(void *);
 
 const struct wsmouse_accessops adbkms_accessops = {
@@ -507,7 +507,7 @@ adbkbd_enable(void *v, int on)
 }
 
 static int
-adbkbd_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
+adbkbd_ioctl(void *v, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct adbkbd_softc *sc = (struct adbkbd_softc *) v;
 
@@ -595,7 +595,7 @@ adbkms_enable(void *v)
 }
 
 static int
-adbkms_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
+adbkms_ioctl(void *v, u_long cmd, void *data, int flag, struct lwp *l)
 {
 
 	switch (cmd) {

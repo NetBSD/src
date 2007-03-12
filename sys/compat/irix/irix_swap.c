@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_swap.c,v 1.16 2007/02/09 21:55:18 ad Exp $ */
+/*	$NetBSD: irix_swap.c,v 1.16.2.1 2007/03/12 05:52:13 rmind Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_swap.c,v 1.16 2007/02/09 21:55:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_swap.c,v 1.16.2.1 2007/03/12 05:52:13 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -132,7 +132,7 @@ irix_sys_swapctl(l, v, retval)
 		if ((error = copyin(SCARG(uap, arg), &ist, sizeof(ist))) != 0)
 			return error;
 
-		uise = (struct irix_swapent *)((caddr_t)SCARG(uap, arg) +
+		uise = (struct irix_swapent *)((char *)SCARG(uap, arg) +
 		    sizeof(ist.swt_n));
 
 		len = sizeof(struct swapent) * ist.swt_n;

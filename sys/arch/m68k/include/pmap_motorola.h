@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.h,v 1.10 2006/02/16 20:17:13 perry Exp $	*/
+/*	$NetBSD: pmap_motorola.h,v 1.10.20.1 2007/03/12 05:48:45 rmind Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -182,6 +182,8 @@ pmap_remove_all(struct pmap *pmap)
 
 extern pt_entry_t	*Sysmap;
 extern char		*vmmap;		/* map for mem, dumps, etc. */
+extern void		*CADDR1, *CADDR2;
+extern void		*msgbufaddr;
 
 vaddr_t	pmap_map(vaddr_t, paddr_t, paddr_t, int);
 void	pmap_procwr(struct proc *, vaddr_t, size_t);

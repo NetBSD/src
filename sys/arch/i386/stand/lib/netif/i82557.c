@@ -1,4 +1,4 @@
-/* $NetBSD: i82557.c,v 1.8 2005/12/26 19:24:00 perry Exp $ */
+/* $NetBSD: i82557.c,v 1.8.26.1 2007/03/12 05:48:39 rmind Exp $ */
 
 /*
  * Copyright (c) 1998, 1999
@@ -64,7 +64,7 @@ static union _sndbuf {
 #define	PCI_MODE1_ENABLE	0x80000000UL
 static pcihdl_t mytag = PCI_MODE1_ENABLE | (PCIDEVNO << 11);
 
-extern caddr_t mapmem __P((int, int));
+extern void *mapmem __P((int, int));
 void *dmamem; /* virtual */
 #define RECVBUF_PHYS DMABASE
 #define RECVBUF_VIRT dmamem
@@ -413,7 +413,7 @@ EtherReceive(pkt, maxlen)
 	if (rfa->rfa_status & FXP_RFA_STATUS_C) {
 		len = rfa->actual_size & 0x7ff;
 		if (len <= maxlen) {
-			memcpy(pkt, (caddr_t) rfa + RFA_SIZE, maxlen);
+			memcpy(pkt, (void *) rfa + RFA_SIZE, maxlen);
 #if 0
 			printf("rfa status=%x, len=%x\n",
 			       rfa->rfa_status, len);

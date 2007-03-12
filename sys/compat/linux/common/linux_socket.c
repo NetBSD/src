@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.70 2007/02/11 08:00:59 mlelstv Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.70.2.1 2007/03/12 05:52:28 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.70 2007/02/11 08:00:59 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.70.2.1 2007/03/12 05:52:28 rmind Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -121,7 +121,7 @@ int linux_to_bsd_ip_sockopt __P((int));
 int linux_to_bsd_tcp_sockopt __P((int));
 int linux_to_bsd_udp_sockopt __P((int));
 int linux_getifhwaddr __P((struct lwp *, register_t *, u_int, void *));
-static int linux_sa_get __P((struct lwp *, int, caddr_t *, struct sockaddr **,
+static int linux_sa_get __P((struct lwp *, int, void **, struct sockaddr **,
 		const struct osockaddr *, socklen_t *));
 static int linux_sa_put __P((struct osockaddr *osa));
 static int linux_to_bsd_msg_flags __P((int));
@@ -394,7 +394,7 @@ linux_sys_sendto(l, v, retval)
 	if (SCARG(uap, to)) {
 		struct sockaddr *sa;
 		int error;
-		caddr_t sg = stackgap_init(p, 0);
+		void *sg = stackgap_init(p, 0);
 
 		error = linux_sa_get(l, SCARG(uap, s), &sg, &sa,
 		    SCARG(uap, to), &tolen);
@@ -424,11 +424,11 @@ linux_sys_sendmsg(l, v, retval)
 	struct msghdr	msg;
 	int		error;
 	struct iovec	aiov[UIO_SMALLIOV], *iov;
-	caddr_t sg = 0;
+	void *sg = 0;
 	int		bflags;
 	u_int8_t	*control=NULL;
 
-	error = copyin(SCARG(uap, msg), (caddr_t)&msg, sizeof(msg));
+	error = copyin(SCARG(uap, msg), (void *)&msg, sizeof(msg));
 	if (error)
 		return (error);
 	if ((unsigned int)msg.msg_iovlen > UIO_SMALLIOV) {
@@ -439,7 +439,7 @@ linux_sys_sendmsg(l, v, retval)
 	} else
 		iov = aiov;
 	if ((unsigned int)msg.msg_iovlen > 0) {
-		error = copyin((caddr_t)msg.msg_iov, (caddr_t)iov,
+		error = copyin((void *)msg.msg_iov, (void *)iov,
 		    (size_t)(msg.msg_iovlen * sizeof(struct iovec)));
 		if (error)
 			goto done;
@@ -692,7 +692,7 @@ linux_sys_recvmsg(l, v, retval)
 			return (error);
 
 		if (CMSG_FIRSTHDR(&msg)) {
-			caddr_t sg;
+			void *sg;
 
 			/* Need to fit within stackgap */
 			if (msg.msg_controllen > STACKGAPLEN/2) {
@@ -736,7 +736,7 @@ linux_sys_recvmsg(l, v, retval)
 		goto done;
 
 	/* Fixup sockaddr */
-	error = copyin((caddr_t)SCARG(uap, msg), (caddr_t)&msg,
+	error = copyin((void *)SCARG(uap, msg), (void *)&msg,
 		       sizeof(msg));
 	if (error)
 		goto done;
@@ -1142,7 +1142,7 @@ linux_getifhwaddr(struct lwp *l, register_t *retval, u_int fd,
 		goto out;
 	}
 
-	error = copyin(data, (caddr_t)&lreq, sizeof(lreq));
+	error = copyin(data, (void *)&lreq, sizeof(lreq));
 	if (error)
 		goto out;
 	lreq.if_name[IF_NAME_LEN-1] = '\0';		/* just in case */
@@ -1165,13 +1165,13 @@ linux_getifhwaddr(struct lwp *l, register_t *retval, u_int fd,
 				if (sadl->sdl_family != AF_LINK ||
 				    sadl->sdl_type != IFT_ETHER)
 					continue;
-				memcpy((caddr_t)&lreq.hwaddr.sa_data,
+				memcpy((void *)&lreq.hwaddr.sa_data,
 				       LLADDR(sadl),
 				       MIN(sadl->sdl_alen,
 					   sizeof(lreq.hwaddr.sa_data)));
 				lreq.hwaddr.sa_family =
 					sadl->sdl_family;
-				error = copyout((caddr_t)&lreq, data,
+				error = copyout((void *)&lreq, data,
 						sizeof(lreq));
 				goto out;
 			}
@@ -1209,13 +1209,13 @@ linux_getifhwaddr(struct lwp *l, register_t *retval, u_int fd,
 					if (ifnum--)
 						/* not the reqested iface */
 						continue;
-					memcpy((caddr_t)&lreq.hwaddr.sa_data,
+					memcpy((void *)&lreq.hwaddr.sa_data,
 					       LLADDR(sadl),
 					       MIN(sadl->sdl_alen,
 						   sizeof(lreq.hwaddr.sa_data)));
 					lreq.hwaddr.sa_family =
 						sadl->sdl_family;
-					error = copyout((caddr_t)&lreq, data,
+					error = copyout((void *)&lreq, data,
 							sizeof(lreq));
 					found = 1;
 					break;
@@ -1238,7 +1238,7 @@ linux_ioctl_socket(l, uap, retval)
 	struct linux_sys_ioctl_args /* {
 		syscallarg(int) fd;
 		syscallarg(u_long) com;
-		syscallarg(caddr_t) data;
+		syscallarg(void *) data;
 	} */ *uap;
 	register_t *retval;
 {
@@ -1275,7 +1275,7 @@ linux_ioctl_socket(l, uap, retval)
 		ioctlf = fp->f_ops->fo_ioctl;
 		pt.com = SCARG(uap, com);
 		pt.data = SCARG(uap, data);
-		error = ioctlf(fp, PTIOCLINUX, (caddr_t)&pt, l);
+		error = ioctlf(fp, PTIOCLINUX, (void *)&pt, l);
 		/*
 		 * XXX hack: if the function returns EJUSTRETURN,
 		 * it has stuffed a sysctl return value in pt.data.
@@ -1355,7 +1355,7 @@ linux_sys_connect(l, v, retval)
 	int		error;
 	struct sockaddr *sa;
 	struct sys_connect_args bca;
-	caddr_t sg = stackgap_init(p, 0);
+	void *sg = stackgap_init(p, 0);
 	socklen_t namlen;
 
 	namlen = SCARG(uap, namelen);
@@ -1418,7 +1418,7 @@ linux_sys_bind(l, v, retval)
 	SCARG(&bsa, s) = SCARG(uap, s);
 	if (SCARG(uap, name)) {
 		struct sockaddr *sa;
-		caddr_t sg = stackgap_init(p, 0);
+		void *sg = stackgap_init(p, 0);
 
 		error = linux_sa_get(l, SCARG(uap, s), &sg, &sa,
 		    SCARG(uap, name), &namlen);
@@ -1441,7 +1441,7 @@ linux_sys_getsockname(l, v, retval)
 {
 	struct linux_sys_getsockname_args /* {
 		syscallarg(int) fdes;
-		syscallarg(caddr_t) asa;
+		syscallarg(void *) asa;
 		syscallarg(int *) alen;
 	} */ *uap = v;
 	int error;
@@ -1463,7 +1463,7 @@ linux_sys_getpeername(l, v, retval)
 {
 	struct sys_getpeername_args /* {
 		syscallarg(int) fdes;
-		syscallarg(caddr_t) asa;
+		syscallarg(void *) asa;
 		syscallarg(int *) alen;
 	} */ *uap = v;
 	int error;
@@ -1486,7 +1486,7 @@ static int
 linux_sa_get(l, s, sgp, sap, osa, osalen)
 	struct lwp *l;
 	int s;
-	caddr_t *sgp;
+	void **sgp;
 	struct sockaddr **sap;
 	const struct osockaddr *osa;
 	socklen_t *osalen;
@@ -1522,7 +1522,7 @@ linux_sa_get(l, s, sgp, sap, osa, osalen)
 
 	kosa = (struct osockaddr *) malloc(alloclen, M_TEMP, M_WAITOK);
 
-	if ((error = copyin(osa, (caddr_t) kosa, *osalen))) {
+	if ((error = copyin(osa, (void *) kosa, *osalen))) {
 		DPRINTF(("error copying osa %d\n", error));
 		goto out;
 	}
@@ -1633,7 +1633,7 @@ linux_sa_put(osa)
 	 */
 	len = sizeof(sa.sa_len) + sizeof(sa.sa_family);
 
-	error = copyin((caddr_t) osa, (caddr_t) &sa, len);
+	error = copyin((void *) osa, (void *) &sa, len);
 	if (error)
 		return (error);
 
@@ -1685,7 +1685,7 @@ linux_sys_send(l, v, retval)
 {
 	struct linux_sys_send_args /* {
 		syscallarg(int) s;
-		syscallarg(caddr_t) buf;
+		syscallarg(void *) buf;
 		syscallarg(int) len;
 		syscallarg(int) flags;
 	} */ *uap = v;

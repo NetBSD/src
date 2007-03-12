@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.17 2006/07/13 20:03:34 uwe Exp $ */
+/*	$NetBSD: bootxx.c,v 1.17.10.1 2007/03/12 05:50:45 rmind Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@ struct shared_bbinfo bbinfo = {
 };
 
 int	main(void);
-void	loadboot(struct open_file *, caddr_t);
+void	loadboot(struct open_file *, char *);
 
 int
 main(void)
@@ -95,10 +95,10 @@ main(void)
 			prom_bootdevice != NULL ? prom_bootdevice : "unknown");
 	}
 
-	(void)loadboot(&io, (caddr_t)PROM_LOADADDR);
+	(void)loadboot(&io, (void *)PROM_LOADADDR);
 	(io.f_dev->dv_close)(&io);
 
-	arg = (prom_version() == PROM_OLDMON) ? (caddr_t)PROM_LOADADDR : romp;
+	arg = (prom_version() == PROM_OLDMON) ? (void *)PROM_LOADADDR : romp;
 	(*entry)(arg);
 	_rtt();
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_sebuf.c,v 1.13 2005/12/11 12:19:20 christos Exp $	*/
+/*	$NetBSD: if_ie_sebuf.c,v 1.13.26.1 2007/03/12 05:51:06 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie_sebuf.c,v 1.13 2005/12/11 12:19:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie_sebuf.c,v 1.13.26.1 2007/03/12 05:51:06 rmind Exp $");
 
 #include "opt_inet.h"
 
@@ -157,7 +157,7 @@ ie_sebuf_attach(struct device *parent, struct device *self, void *args)
 	 * Note: device needs the SCP at the end.
 	 */
 	sc->sc_msize -= 0x10000;
-	sc->sc_maddr += 0x10000;
+	sc->sc_maddr = (char *)sc->sc_maddr + 0x10000;
 
 	/*
 	 * Set the System Configuration Pointer (SCP).
@@ -168,7 +168,7 @@ ie_sebuf_attach(struct device *parent, struct device *self, void *args)
 	 * at the end of the RAM on the VME board.
 	 */
 	off = IE_SCP_ADDR & 0xFFFF;
-	sc->scp = (volatile void *) (sc->sc_maddr + off);
+	sc->scp = (volatile void *)((char *)sc->sc_maddr + off);
 
 	/*
 	 * The rest of ram is used for buffers, etc.

@@ -1,4 +1,4 @@
-/*	$NetBSD: abtn.c,v 1.11 2005/12/11 12:18:03 christos Exp $	*/
+/*	$NetBSD: abtn.c,v 1.11.26.1 2007/03/12 05:49:03 rmind Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: abtn.c,v 1.11 2005/12/11 12:18:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: abtn.c,v 1.11.26.1 2007/03/12 05:49:03 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -63,7 +63,7 @@ struct abtn_softc {
 
 static int abtn_match __P((struct device *, struct cfdata *, void *));
 static void abtn_attach __P((struct device *, struct device *, void *));
-static void abtn_adbcomplete __P((caddr_t, caddr_t, int));
+static void abtn_adbcomplete __P((uint8_t *, uint8_t *, int));
 
 CFATTACH_DECL(abtn, sizeof(struct abtn_softc),
     abtn_match, abtn_attach, NULL, NULL);
@@ -105,7 +105,7 @@ abtn_attach(parent, self, aux)
 	sc->handler_id = aa->handler_id;
 
 	adbinfo.siServiceRtPtr = (Ptr)abtn_adbcomplete;
-	adbinfo.siDataAreaAddr = (caddr_t)sc;
+	adbinfo.siDataAreaAddr = (void *)sc;
 
 	SetADBInfo(&adbinfo, sc->adbaddr);
 }
@@ -114,7 +114,7 @@ extern struct cfdriver akbd_cd;
 
 void
 abtn_adbcomplete(buffer, data, adb_command)
-	caddr_t buffer, data;
+	uint8_t *buffer, *data;
 	int adb_command;
 {
 	struct abtn_softc *sc = (struct abtn_softc *)data;

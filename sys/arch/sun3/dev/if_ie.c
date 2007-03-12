@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.44 2005/12/11 12:19:20 christos Exp $ */
+/*	$NetBSD: if_ie.c,v 1.44.26.1 2007/03/12 05:51:06 rmind Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.
@@ -98,7 +98,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.44 2005/12/11 12:19:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.44.26.1 2007/03/12 05:51:06 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -183,7 +183,7 @@ int 	ie_run_tdr = 0;
 
 static void iewatchdog(struct ifnet *);
 static int ieinit(struct ie_softc *);
-static int ieioctl(struct ifnet *, u_long, caddr_t);
+static int ieioctl(struct ifnet *, u_long, void *);
 static void iestart(struct ifnet *);
 static void iereset(struct ie_softc *);
 static int ie_setupram(struct ie_softc *);
@@ -204,7 +204,7 @@ static void mc_reset(struct ie_softc *);
 static void run_tdr(struct ie_softc *, struct ie_tdr_cmd *);
 static void iememinit(struct ie_softc *);
 
-static inline char * Align(char *);
+static inline char *Align(char *);
 static inline u_int Swap32(u_int);
 static inline u_int vtop24(struct ie_softc *, void *);
 static inline u_short vtop16sw(struct ie_softc *, void *);
@@ -229,7 +229,7 @@ vtop24(struct ie_softc *sc, void *ptr)
 {
 	u_int pa;
 
-	pa = ((caddr_t)ptr) - sc->sc_iobase;
+	pa = (vaddr_t)ptr - (vaddr_t)sc->sc_iobase;
 #ifdef	IEDEBUG
 	if (pa & ~0xffFFff)
 		panic("ie:vtop24");
@@ -243,7 +243,7 @@ vtop16sw(struct ie_softc *sc, void *ptr)
 {
 	u_int pa;
 
-	pa = ((caddr_t)ptr) - sc->sc_maddr;
+	pa = (vaddr_t)ptr - (vaddr_t)sc->sc_maddr;
 #ifdef	IEDEBUG
 	if (pa & ~0xFFff)
 		panic("ie:vtop16");
@@ -269,7 +269,7 @@ Swap32(u_int x)
 }
 
 static inline char *
-Align(caddr_t ptr)
+Align(char *ptr)
 {
 	u_long  l = (u_long)ptr;
 
@@ -632,7 +632,7 @@ ietint(struct ie_softc *sc)
 	 * indicating that we should do it.
 	 */
 	if (sc->want_mcsetup) {
-		mc_setup(sc, (caddr_t)sc->xmit_cbuffs[sc->xctail]);
+		mc_setup(sc, (void *)sc->xmit_cbuffs[sc->xctail]);
 		sc->want_mcsetup = 0;
 	}
 
@@ -817,7 +817,7 @@ ieget(struct ie_softc *sc, int *to_bpf)
 	/*
 	 * Snarf the Ethernet header.
 	 */
-	(sc->sc_memcpy)((caddr_t)&eh, (caddr_t)sc->cbuffs[head],
+	(sc->sc_memcpy)((void *)&eh, (void *)sc->cbuffs[head],
 	    sizeof(struct ether_header));
 
 	/*
@@ -865,7 +865,7 @@ ieget(struct ie_softc *sc, int *to_bpf)
 		}
 
 		if (mp == &top) {
-			caddr_t newdata = (caddr_t)
+			char *newdata = (char *)
 			    ALIGN(m->m_data + sizeof(struct ether_header)) -
 			    sizeof(struct ether_header);
 			len -= newdata - m->m_data; 
@@ -885,7 +885,7 @@ ieget(struct ie_softc *sc, int *to_bpf)
 	/*
 	 * Copy the Ethernet header into the mbuf chain.
 	 */
-	memcpy(mtod(m, caddr_t), &eh, sizeof(struct ether_header));
+	memcpy(mtod(m, void *), &eh, sizeof(struct ether_header));
 	thismboff = sizeof(struct ether_header);
 	thisrboff = sizeof(struct ether_header);
 	resid -= sizeof(struct ether_header);
@@ -900,8 +900,8 @@ ieget(struct ie_softc *sc, int *to_bpf)
 		int thismblen = m->m_len - thismboff;
 
 		len = min(thisrblen, thismblen);
-		(sc->sc_memcpy)(mtod(m, caddr_t) + thismboff,
-		    (caddr_t)(sc->cbuffs[head] + thisrboff),
+		(sc->sc_memcpy)(mtod(m, char *) + thismboff,
+		    (void *)(sc->cbuffs[head] + thisrboff),
 		    (u_int)len);
 		resid -= len;
 
@@ -1089,7 +1089,7 @@ iestart(struct ifnet *ifp)
 
 		buffer = sc->xmit_cbuffs[sc->xchead];
 		for (m = m0; m != 0; m = m->m_next) {
-			(sc->sc_memcpy)(buffer, mtod(m, caddr_t), m->m_len);
+			(sc->sc_memcpy)(buffer, mtod(m, void *), m->m_len);
 			buffer += m->m_len;
 		}
 		if (m0->m_pkthdr.len < ETHER_MIN_LEN - ETHER_CRC_LEN) {
@@ -1373,8 +1373,8 @@ mc_setup(struct ie_softc *sc, void *ptr)
 	cmd->com.ie_cmd_cmd = IE_CMD_MCAST | IE_CMD_LAST;
 	cmd->com.ie_cmd_link = SWAP(0xffff);
 
-	(sc->sc_memcpy)((caddr_t)cmd->ie_mcast_addrs,
-	    (caddr_t)sc->mcast_addrs,
+	(sc->sc_memcpy)((void *)cmd->ie_mcast_addrs,
+	    (void *)sc->mcast_addrs,
 	    sc->mcast_count * sizeof *sc->mcast_addrs);
 
 	cmd->ie_mcast_bytes =
@@ -1460,7 +1460,7 @@ ieinit(struct ie_softc *sc)
 		cmd->com.ie_cmd_cmd = IE_CMD_IASETUP | IE_CMD_LAST;
 		cmd->com.ie_cmd_link = SWAP(0xffff);
 
-		(sc->sc_memcpy)((caddr_t)&cmd->ie_address,
+		(sc->sc_memcpy)((void *)&cmd->ie_address,
 		    LLADDR(ifp->if_sadl), sizeof(cmd->ie_address));
 
 		if (cmd_and_wait(sc, IE_CU_START, cmd, IE_STAT_COMPL) ||
@@ -1511,7 +1511,7 @@ iestop(struct ie_softc *sc)
 }
 
 static int 
-ieioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
+ieioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct ie_softc *sc = ifp->if_softc;
 	struct ifaddr *ifa = (struct ifaddr *)data;

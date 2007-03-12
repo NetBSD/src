@@ -1,4 +1,4 @@
-/*	$NetBSD: igsfb.c,v 1.41 2007/01/13 19:45:28 cube Exp $ */
+/*	$NetBSD: igsfb.c,v 1.41.2.1 2007/03/12 05:53:35 rmind Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Valeriy E. Ushakov
@@ -31,7 +31,7 @@
  * Integraphics Systems IGA 168x and CyberPro series.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igsfb.c,v 1.41 2007/01/13 19:45:28 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igsfb.c,v 1.41.2.1 2007/03/12 05:53:35 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,7 +78,7 @@ static const struct wsscreen_list igsfb_screenlist = {
  * wsdisplay_accessops
  */
 
-static int	igsfb_ioctl(void *, void *, u_long, caddr_t, int, struct lwp *);
+static int	igsfb_ioctl(void *, void *, u_long, void *, int, struct lwp *);
 static paddr_t	igsfb_mmap(void *, void *, off_t, int);
 
 static struct wsdisplay_accessops igsfb_accessops = {
@@ -589,7 +589,7 @@ igsfb_mmap(void *v, void *vs, off_t offset, int prot)
  * wsdisplay_accessops: ioctl()
  */
 static int
-igsfb_ioctl(void *v, void *vs, u_long cmd, caddr_t data, int flag,
+igsfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 	struct lwp *l)
 {
 	struct vcons_data *vd = v;

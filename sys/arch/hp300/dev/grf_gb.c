@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_gb.c,v 1.34 2006/07/21 18:40:58 tsutsui Exp $	*/
+/*	$NetBSD: grf_gb.c,v 1.34.10.1 2007/03/12 05:47:43 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -121,7 +121,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_gb.c,v 1.34 2006/07/21 18:40:58 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_gb.c,v 1.34.10.1 2007/03/12 05:47:43 rmind Exp $");
 
 #include "opt_compat_hpux.h"
 
@@ -162,8 +162,8 @@ static u_char crtc_init_data[CRTC_DATA_LENGTH] = {
 	0x30, 0x00, 0x0f, 0x00, 0x00, 0x00, 0x00
 };
 
-static int	gb_init(struct grf_data *gp, int, caddr_t);
-static int	gb_mode(struct grf_data *gp, int, caddr_t);
+static int	gb_init(struct grf_data *gp, int, uint8_t *);
+static int	gb_mode(struct grf_data *gp, int, void *);
 static void	gb_microcode(struct gboxfb *);
 
 static int	gbox_intio_match(struct device *, struct cfdata *, void *);
@@ -186,7 +186,7 @@ static struct grfsw gbox_grfsw = {
 };
 
 static int gbconscode;
-static caddr_t gbconaddr;
+static void *gbconaddr;
 
 #if NITE > 0
 static void	gbox_init(struct ite_data *);
@@ -214,7 +214,7 @@ gbox_intio_match(struct device *parent, struct cfdata *match, void *aux)
 	if (strcmp("fb",ia->ia_modname) != 0)
 		return 0;
 
-	if (badaddr((caddr_t)ia->ia_addr))
+	if (badaddr((void *)ia->ia_addr))
 		return 0;
 
 	grf = (struct grfreg *)ia->ia_addr;
@@ -232,9 +232,9 @@ gbox_intio_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct grfdev_softc *sc = (struct grfdev_softc *)self;
 	struct intio_attach_args *ia = aux;
-	caddr_t grf;
+	void *grf;
 
-	grf = (caddr_t)ia->ia_addr;
+	grf = (void *)ia->ia_addr;
 	sc->sc_scode = -1;	/* XXX internal i/o */
 
 	sc->sc_isconsole = (sc->sc_scode == gbconscode);
@@ -259,7 +259,7 @@ gbox_dio_attach(struct device *parent, struct device *self, void *aux)
 	struct grfdev_softc *sc = (struct grfdev_softc *)self;
 	struct dio_attach_args *da = aux;
 	bus_space_handle_t bsh;
-	caddr_t grf;
+	void *grf;
 
 	sc->sc_scode = da->da_scode;
 	if (sc->sc_scode == gbconscode)
@@ -284,11 +284,12 @@ gbox_dio_attach(struct device *parent, struct device *self, void *aux)
  * Returns 0 if hardware not present, non-zero ow.
  */
 int
-gb_init(struct grf_data *gp, int scode, caddr_t addr)
+gb_init(struct grf_data *gp, int scode, uint8_t *addr)
 {
 	struct gboxfb *gbp;
 	struct grfinfo *gi = &gp->g_display;
-	u_char *fbp, save;
+	volatile uint8_t *fbp;
+	uint8_t save;
 	int fboff;
 
 	/*
@@ -296,9 +297,9 @@ gb_init(struct grf_data *gp, int scode, caddr_t addr)
 	 * no need to repeat this.
 	 */
 	if (scode != gbconscode) {
-		gbp = (struct gboxfb *) addr;
+		gbp = (struct gboxfb *)addr;
 		if (ISIIOVA(addr))
-			gi->gd_regaddr = (caddr_t) IIOP(addr);
+			gi->gd_regaddr = (void *)IIOP(addr);
 		else
 			gi->gd_regaddr = dio_scodetopa(scode);
 		gi->gd_regsize = 0x10000;
@@ -306,7 +307,7 @@ gb_init(struct grf_data *gp, int scode, caddr_t addr)
 		gi->gd_fbheight = 1024;		/* XXX */
 		gi->gd_fbsize = gi->gd_fbwidth * gi->gd_fbheight;
 		fboff = (gbp->fbomsb << 8) | gbp->fbolsb;
-		gi->gd_fbaddr = (caddr_t) (*((u_char *)addr + fboff) << 16);
+		gi->gd_fbaddr = (void *)(*(addr + fboff) << 16);
 		gp->g_regkva = addr;
 		gp->g_fbkva = iomap(gi->gd_fbaddr, gi->gd_fbsize);
 		gi->gd_dwidth = 1024;		/* XXX */
@@ -315,7 +316,7 @@ gb_init(struct grf_data *gp, int scode, caddr_t addr)
 		/*
 		 * The minimal info here is from the Gatorbox X driver.
 		 */
-		fbp = (u_char *) gp->g_fbkva;
+		fbp = gp->g_fbkva;
 		gbp->write_protect = 0;
 		gbp->interrupt = 4;		/** fb_enable ? **/
 		gbp->rep_rule = 3;		/* GXcopy */
@@ -357,7 +358,7 @@ gb_microcode(struct gboxfb *gbp)
  * Return a UNIX error number or 0 for success.
  */
 int
-gb_mode(struct grf_data *gp, int cmd, caddr_t data)
+gb_mode(struct grf_data *gp, int cmd, void *data)
 {
 	struct gboxfb *gbp;
 	int error = 0;
@@ -615,7 +616,7 @@ int
 gboxcnattach(bus_space_tag_t bst, bus_addr_t addr, int scode)
 {
 	bus_space_handle_t bsh;
-	caddr_t va;
+	void *va;
 	struct grfreg *grf;
 	struct grf_data *gp = &grf_cn;
 	int size;

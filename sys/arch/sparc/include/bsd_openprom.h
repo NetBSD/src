@@ -1,4 +1,4 @@
-/*	$NetBSD: bsd_openprom.h,v 1.23 2005/12/11 12:19:05 christos Exp $ */
+/*	$NetBSD: bsd_openprom.h,v 1.23.26.1 2007/03/12 05:50:29 rmind Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -102,12 +102,12 @@ struct v2devops {
 	int	(*v2_fd_phandle)(int);
 
 	/* Memory allocation and release. */
-	void	*(*v2_malloc)(caddr_t, u_int);
-	void	(*v2_free)(caddr_t, u_int);
+	void	*(*v2_malloc)(void *, u_int);
+	void	(*v2_free)(void *, u_int);
 
 	/* Device memory mapper. */
-	caddr_t	(*v2_mmap)(caddr_t, int, u_int, u_int);
-	void	(*v2_munmap)(caddr_t, u_int);
+	void *	(*v2_mmap)(void *, int, u_int, u_int);
+	void	(*v2_munmap)(void *, u_int);
 
 	/* Device open, close, etc. */
 	int	(*v2_open)(const char *);
@@ -127,7 +127,7 @@ struct v2devops {
  */
 struct v0mlist {
 	struct	v0mlist *next;
-	caddr_t	addr;
+	void *	addr;
 	u_int	nbytes;
 };
 
@@ -287,13 +287,13 @@ struct promvec {
 	 * all memory references go to the PROM, so the PROM can do it
 	 * easily.
 	 */
-	void	(*pv_setctxt)(int, caddr_t, int);
+	void	(*pv_setctxt)(int, void *, int);
 
 	/*
 	 * The following are V3 ROM functions to handle MP machines in the
 	 * Sun4m series. They have undefined results when run on a uniprocessor!
 	 */
-	int	(*pv_v3cpustart)(int, struct openprom_addr *, int, caddr_t);
+	int	(*pv_v3cpustart)(int, struct openprom_addr *, int, void *);
 	int 	(*pv_v3cpustop)(int);
 	int	(*pv_v3cpuidle)(int);
 	int 	(*pv_v3cpuresume)(int);

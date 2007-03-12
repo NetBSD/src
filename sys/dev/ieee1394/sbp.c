@@ -1,4 +1,4 @@
-/*	$NetBSD: sbp.c,v 1.14 2006/12/22 03:27:49 kiyohara Exp $	*/
+/*	$NetBSD: sbp.c,v 1.14.2.1 2007/03/12 05:54:46 rmind Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -1531,7 +1531,7 @@ sbp_write_cmd(struct sbp_dev *sdev, int tcode, int offset)
 	else
 		xfer->send.pay_len = 0;
 
-	xfer->sc = (caddr_t)sdev;
+	xfer->sc = (void *)sdev;
 	fp = &xfer->send.hdr;
 	fp->mode.wreqq.dest_hi = sdev->login->cmd_hi;
 	fp->mode.wreqq.dest_lo = sdev->login->cmd_lo + offset;
@@ -1617,7 +1617,7 @@ start:
 	splx(s);
 
 	callout_reset(&target->mgm_ocb_timeout, 5*hz,
-				sbp_mgm_timeout, (caddr_t)ocb);
+				sbp_mgm_timeout, (void *)ocb);
 	xfer = sbp_write_cmd(sdev, FWTCODE_WREQB, 0);
 	if(xfer == NULL){
 		return;
@@ -2901,7 +2901,7 @@ END_DEBUG
 #if defined(__DragonFly__) || defined(__NetBSD__)
 				callout_stop(&SCSI_XFER_CALLOUT(ocb->sxfer));
 #else
-				untimeout(sbp_timeout, (caddr_t)ocb,
+				untimeout(sbp_timeout, (void *)ocb,
 						SCSI_XFER_CALLOUT(ocb->sxfer));
 #endif
 			if (ntohl(ocb->orb[4]) & 0xffff) {
@@ -2976,7 +2976,7 @@ END_DEBUG
 		    mstohz(SCSI_XFER_TIMEOUT(ocb->sxfer)), sbp_timeout, ocb);
 #else
 		SCSI_XFER_CALLOUT(ocb->sxfer) = timeout(sbp_timeout,
-		    (caddr_t)ocb, mstohz(SCSI_XFER_TIMEOUT(ocb->sxfer)));
+		    (void *)ocb, mstohz(SCSI_XFER_TIMEOUT(ocb->sxfer)));
 #endif
 
 	if (use_doorbell && prev == NULL)
@@ -3064,7 +3064,7 @@ END_DEBUG
 #if defined(__DragonFly__ ) || defined(__NetBSD__)
 		callout_stop(&SCSI_XFER_CALLOUT(ocb->sxfer));
 #else
-		untimeout(sbp_timeout, (caddr_t)ocb,
+		untimeout(sbp_timeout, (void *)ocb,
 					SCSI_XFER_CALLOUT(ocb->sxfer));
 #endif
 		SCSI_XFER_ERROR(ocb->sxfer) = status;

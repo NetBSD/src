@@ -1,4 +1,4 @@
-/* $NetBSD: g42xxeb_kmkbd.c,v 1.4 2006/02/23 23:57:32 he Exp $ */
+/* $NetBSD: g42xxeb_kmkbd.c,v 1.4.20.1 2007/03/12 05:47:37 rmind Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003, 2005 Genetec corp.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: g42xxeb_kmkbd.c,v 1.4 2006/02/23 23:57:32 he Exp $" );
+__KERNEL_RCSID(0, "$NetBSD: g42xxeb_kmkbd.c,v 1.4.20.1 2007/03/12 05:47:37 rmind Exp $" );
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,7 +94,7 @@ CFATTACH_DECL(kmkbd, sizeof(struct kmkbd_softc),
 
 static  int	kmkbd_enable(void *, int);
 static  void	kmkbd_set_leds(void *, int);
-static  int	kmkbd_ioctl(void *, u_long, caddr_t, int, struct lwp *);
+static  int	kmkbd_ioctl(void *, u_long, void *, int, struct lwp *);
 
 const struct wskbd_accessops kmkbd_accessops = {
 	kmkbd_enable,
@@ -263,7 +263,7 @@ kmkbd_set_leds(void *v, int leds)
 }
 
 static int
-kmkbd_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
+kmkbd_ioctl(void *v, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	/*struct kmkbd_softc *sc = v;*/
 

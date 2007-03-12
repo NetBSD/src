@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.5 2006/06/10 12:42:37 tsutsui Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.5.14.1 2007/03/12 05:47:41 rmind Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.5 2006/06/10 12:42:37 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.5.14.1 2007/03/12 05:47:41 rmind Exp $");
 
 /* #define	BUS_DMA_DEBUG */
 #include <sys/param.h>
@@ -633,7 +633,7 @@ _bus_dmamem_free(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs)
  */
 int
 _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
-    size_t size, caddr_t *kvap, int flags)
+    size_t size, void **kvap, int flags)
 {
 	vaddr_t va;
 	bus_addr_t addr;
@@ -685,7 +685,7 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
  * bus-specific DMA memory unmapping functions.
  */
 void
-_bus_dmamem_unmap(bus_dma_tag_t t, caddr_t kva, size_t size)
+_bus_dmamem_unmap(bus_dma_tag_t t, void *kva, size_t size)
 {
 
 #ifdef DIAGNOSTIC
@@ -697,8 +697,8 @@ _bus_dmamem_unmap(bus_dma_tag_t t, caddr_t kva, size_t size)
 	 * Nothing to do if we mapped it with KSEG0 or KSEG1 (i.e.
 	 * not in KSEG2).
 	 */
-	if (kva >= (caddr_t)MIPS_KSEG0_START &&
-	    kva < (caddr_t)MIPS_KSEG2_START)
+	if (kva >= (void *)MIPS_KSEG0_START &&
+	    kva < (void *)MIPS_KSEG2_START)
 		return;
 
 	size = round_page(size);
@@ -732,7 +732,7 @@ _bus_dmamem_mmap(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 			continue;
 		}
 
-		return mips_btop((caddr_t)segs[i].ds_addr + off);
+		return mips_btop((void *)segs[i].ds_addr + off);
 	}
 
 	/* Page not found. */

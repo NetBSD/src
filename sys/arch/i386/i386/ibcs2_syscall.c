@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_syscall.c,v 1.35 2007/02/09 21:55:04 ad Exp $	*/
+/*	$NetBSD: ibcs2_syscall.c,v 1.35.2.1 2007/03/12 05:48:22 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_syscall.c,v 1.35 2007/02/09 21:55:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_syscall.c,v 1.35.2.1 2007/03/12 05:48:22 rmind Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -84,8 +84,8 @@ void
 ibcs2_syscall_plain(frame)
 	struct trapframe *frame;
 {
-	register caddr_t params;
-	register const struct sysent *callp;
+	char *params;
+	const struct sysent *callp;
 	struct lwp *l;
 	int error;
 	size_t argsize;
@@ -99,7 +99,7 @@ ibcs2_syscall_plain(frame)
 	if (IBCS2_HIGH_SYSCALL(code))
 		code = IBCS2_CVT_HIGH_SYSCALL(code);
 	callp = ibcs2_sysent;
-	params = (caddr_t)frame->tf_esp + sizeof(int);
+	params = (char *)frame->tf_esp + sizeof(int);
 
 	switch (code) {
 	case SYS_syscall:
@@ -117,7 +117,7 @@ ibcs2_syscall_plain(frame)
 	callp += code;
 	argsize = callp->sy_argsize;
 	if (argsize) {
-		error = copyin(params, (caddr_t)args, argsize);
+		error = copyin(params, (void *)args, argsize);
 		if (error)
 			goto bad;
 	}
@@ -166,8 +166,8 @@ void
 ibcs2_syscall_fancy(frame)
 	struct trapframe *frame;
 {
-	register caddr_t params;
-	register const struct sysent *callp;
+	char * params;
+	const struct sysent *callp;
 	struct lwp *l;
 	int error;
 	size_t argsize;
@@ -181,7 +181,7 @@ ibcs2_syscall_fancy(frame)
 	if (IBCS2_HIGH_SYSCALL(code))
 		code = IBCS2_CVT_HIGH_SYSCALL(code);
 	callp = ibcs2_sysent;
-	params = (caddr_t)frame->tf_esp + sizeof(int);
+	params = (char *)frame->tf_esp + sizeof(int);
 
 	switch (code) {
 	case SYS_syscall:
@@ -199,7 +199,7 @@ ibcs2_syscall_fancy(frame)
 	callp += code;
 	argsize = callp->sy_argsize;
 	if (argsize) {
-		error = copyin(params, (caddr_t)args, argsize);
+		error = copyin(params, (void *)args, argsize);
 		if (error)
 			goto bad;
 	}

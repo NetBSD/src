@@ -1,4 +1,4 @@
-/*	$NetBSD: fb_sbdio.c,v 1.2.16.1 2007/02/27 16:50:21 yamt Exp $	*/
+/*	$NetBSD: fb_sbdio.c,v 1.2.16.2 2007/03/12 05:47:42 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #define WIRED_FB_TLB
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fb_sbdio.c,v 1.2.16.1 2007/02/27 16:50:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fb_sbdio.c,v 1.2.16.2 2007/03/12 05:47:42 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,7 +78,7 @@ void fb_sbdio_attach(struct device *, struct device *, void *);
 CFATTACH_DECL(fb_sbdio, sizeof(struct fb_softc),
     fb_sbdio_match, fb_sbdio_attach, NULL, NULL);
 
-int _fb_ioctl(void *, void *, u_long, caddr_t, int, struct lwp *);
+int _fb_ioctl(void *, void *, u_long, void *, int, struct lwp *);
 paddr_t _fb_mmap(void *, void *, off_t, int);
 int _fb_alloc_screen(void *, const struct wsscreen_descr *, void **,
     int *, int *, long *);
@@ -276,7 +276,7 @@ fb_sbdio_cnattach(uint32_t mem, uint32_t reg, int flags)
 }
 
 int
-_fb_ioctl(void *v, void *vs, u_long cmd, caddr_t data, int flag, struct lwp *l)
+_fb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct fb_softc *sc = v;
 	struct wsdisplay_fbinfo *fbinfo = (void *)data;

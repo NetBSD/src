@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.10 2006/03/28 17:38:24 thorpej Exp $	*/
+/*	$NetBSD: zs.c,v 1.10.14.1 2007/03/12 05:47:33 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.10 2006/03/28 17:38:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.10.14.1 2007/03/12 05:47:33 rmind Exp $");
 
 #include "opt_ddb.h"
 
@@ -74,7 +74,6 @@ void zs_putc __P((void*, int));
 
 static struct zs_chanstate zs_conschan_store;
 static int zs_hwflags[2][2];
-int zssoftpending;
 
 extern struct cfdriver zsc_cd;
 
@@ -216,42 +215,11 @@ zshard(arg)
 			continue;
 		rval |= zsc_intr_hard(zsc);
 		if ((zsc->zsc_cs[0]->cs_softreq) ||
-			(zsc->zsc_cs[1]->cs_softreq))
-		{
-			/* zsc_req_softint(zsc); */
-			/* We are at splzs here, so no need to lock. */
-			if (zssoftpending == 0) {
-				zssoftpending = 1;
-				setsoftzs();
-			}
+		    (zsc->zsc_cs[1]->cs_softreq)) {
+			softintr_schedule(zsc->zsc_softintr_cookie);
 		}
 	}
 	return (rval);
-}
-
-void
-softzs()
-{
-	register struct zsc_softc *zsc;
-	register int unit;
-
-	/* This is not the only ISR on this IPL. */
-	if (zssoftpending == 0)
-		return;
-
-	/*
-	 * The soft intr. bit will be set by zshard only if
-	 * the variable zssoftpending is zero.
-	 */
-	zssoftpending = 0;
-
-	for (unit = 0; unit < zsc_cd.cd_ndevs; ++unit) {
-		zsc = zsc_cd.cd_devs[unit];
-		if (zsc == NULL)
-			continue;
-		(void) zsc_intr_soft(zsc);
-	}
-	return;
 }
 
 u_char

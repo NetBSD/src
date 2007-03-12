@@ -1,4 +1,4 @@
-/* $NetBSD: vga.c,v 1.91 2006/11/16 01:32:52 christos Exp $ */
+/* $NetBSD: vga.c,v 1.91.4.1 2007/03/12 05:53:47 rmind Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -35,7 +35,7 @@
 #include "opt_wsmsgattrs.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.91 2006/11/16 01:32:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.91.4.1 2007/03/12 05:53:47 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -279,7 +279,7 @@ const struct wsscreen_list vga_screenlist = {
 	_vga_scrlist_mono
 };
 
-static int	vga_ioctl(void *, void *, u_long, caddr_t, int, struct lwp *);
+static int	vga_ioctl(void *, void *, u_long, void *, int, struct lwp *);
 static paddr_t	vga_mmap(void *, void *, off_t, int);
 static int	vga_alloc_screen(void *, const struct wsscreen_descr *,
 				 void **, int *, int *, long *);
@@ -789,7 +789,7 @@ vga_set_video(struct vga_config *vc, int state)
 }
 
 int
-vga_ioctl(void *v, void *vs, u_long cmd, caddr_t data, int flag, struct lwp *l)
+vga_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct vga_config *vc = v;
 	struct vgascreen *scr = vs;

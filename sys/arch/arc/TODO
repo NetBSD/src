@@ -1,4 +1,4 @@
-$NetBSD: TODO,v 1.24 2005/11/16 14:25:15 tsutsui Exp $
+$NetBSD: TODO,v 1.24.26.1 2007/03/12 05:46:47 rmind Exp $
 
 To do list (in some particular order)
 XXX some entries might be obsolete.
@@ -80,23 +80,7 @@ XXX some entries might be obsolete.
     o	redesign interrupt handler framework.
 	i/o bus devices should have sane IPL, but currently doesn't.
 
-	also, current MIPS interrupt handler has overblocking and
-	other problems as follows:
-
-	-   SR_INT_IE should be enabled before calling hardclock().
-	    Since this is not done currently, spllowersoftclock()
-	    on hardclock() doesn't have effect, and softclock() is
-	    handled with all interrupt disabled in this case.
-		-> overblocking, possibly causes missing hardclock()
-
-	-   MIPS3_CLKF_BASEPRI() doesn't work correctly,
-	    when MIPS_INT_MASK_5 (== MIPS_INT_MASK_CLOCK) is disabled.
-		-> micro optimization on hardclock() doesn't work.
-		   but currently this may make hardclock() latency better
-		   due to above SR_INT_IE problem.
-	    s/MIPS_INT_MASK/MIPS3_INT_MASK/ makes this work, although tricky.
-
-	-   make CLKF_INTR() work.
+    o	make CLKF_INTR() work.
 
     o	it is better to always disable the MIPS3 internal timer interrupts
 	(i.e. MIPS_INT_MASK_5) if it is not needed for the system.

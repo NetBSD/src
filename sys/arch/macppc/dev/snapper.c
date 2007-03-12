@@ -1,4 +1,4 @@
-/*	$NetBSD: snapper.c,v 1.15 2006/12/17 21:26:04 macallan Exp $	*/
+/*	$NetBSD: snapper.c,v 1.15.2.1 2007/03/12 05:49:06 rmind Exp $	*/
 /*	Id: snapper.c,v 1.11 2002/10/31 17:42:13 tsubai Exp	*/
 /*     Id: i2s.c,v 1.12 2005/01/15 14:32:35 tsubai Exp         */
 /*-
@@ -789,7 +789,7 @@ snapper_set_params(void *h, int setmode, int usemode,
 
 		fil = mode == AUMODE_PLAY ? pfil : rfil;
 		if (auconv_set_converter(snapper_formats, SNAPPER_NFORMATS,
-					 mode, p, TRUE, fil) < 0) {
+					 mode, p, true, fil) < 0) {
 			DPRINTF("snapper_set_params: auconv_set_converter failed\n");
 			return EINVAL;
 		}

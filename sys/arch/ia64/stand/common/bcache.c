@@ -1,4 +1,4 @@
-/*	$NetBSD: bcache.c,v 1.2 2006/04/22 07:58:52 cherry Exp $	*/
+/*	$NetBSD: bcache.c,v 1.2.22.1 2007/03/12 05:48:40 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998 Michael Smith <msmith@freebsd.org>
@@ -59,7 +59,7 @@ struct bcachectl
 };
 
 static struct bcachectl	*bcache_ctl;
-static caddr_t		bcache_data;
+static void *		bcache_data;
 static bitstr_t		*bcache_miss;
 static u_int		bcache_nblks;
 static u_int		bcache_blksize;
@@ -68,8 +68,8 @@ static u_int		bcache_flushes;
 static u_int		bcache_bcount;
 
 static void	bcache_invalidate(daddr_t blkno);
-static void	bcache_insert(caddr_t buf, daddr_t blkno);
-static int	bcache_lookup(caddr_t buf, daddr_t blkno);
+static void	bcache_insert(void *buf, daddr_t blkno);
+static int	bcache_lookup(void *buf, daddr_t blkno);
 
 /*
  * Initialise the cache for (nblks) of (bsize).
@@ -165,7 +165,7 @@ read_strategy(void *devdata, int unit, int rw, daddr_t blk, size_t size,
     struct bcache_devdata	*dd = (struct bcache_devdata *)devdata;
     int				p_size, result;
     daddr_t			p_blk, i, j, nblk;
-    caddr_t			p_buf;
+    void *			p_buf;
 
     nblk = size / bcache_blksize;
     result = 0;
@@ -261,7 +261,7 @@ bcache_strategy(void *devdata, int unit, int rw, daddr_t blk, size_t size,
  * XXX the LRU algorithm will fail after 2^31 blocks have been transferred.
  */
 static void
-bcache_insert(caddr_t buf, daddr_t blkno) 
+bcache_insert(void *buf, daddr_t blkno) 
 {
     time_t	now;
     int		cand, ocount;
@@ -297,7 +297,7 @@ bcache_insert(caddr_t buf, daddr_t blkno)
  * if successful and return zero, or return nonzero on failure.
  */
 static int
-bcache_lookup(caddr_t buf, daddr_t blkno)
+bcache_lookup(void *buf, daddr_t blkno)
 {
     time_t	now;
     u_int	i;

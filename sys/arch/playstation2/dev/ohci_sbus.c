@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci_sbus.c,v 1.6 2005/12/11 12:18:35 christos Exp $	*/
+/*	$NetBSD: ohci_sbus.c,v 1.6.26.1 2007/03/12 05:49:49 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci_sbus.c,v 1.6 2005/12/11 12:18:35 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci_sbus.c,v 1.6.26.1 2007/03/12 05:49:49 rmind Exp $");
 
 #include <sys/param.h>
 
@@ -79,8 +79,8 @@ STATIC int _ohci_sbus_mem_alloc(bus_dma_tag_t, bus_size_t, bus_size_t,
     bus_size_t, bus_dma_segment_t *, int, int *, int);
 STATIC void _ohci_sbus_mem_free(bus_dma_tag_t, bus_dma_segment_t *, int);
 STATIC int _ohci_sbus_mem_map(bus_dma_tag_t, bus_dma_segment_t *, int, size_t,
-    caddr_t *, int);
-STATIC void _ohci_sbus_mem_unmap(bus_dma_tag_t, caddr_t, size_t);
+    void **, int);
+STATIC void _ohci_sbus_mem_unmap(bus_dma_tag_t, void *, size_t);
 
 struct playstation2_bus_dma_tag ohci_bus_dma_tag = {
 	_bus_dmamap_create,
@@ -224,7 +224,7 @@ _ohci_sbus_mem_free(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs)
 
 int
 _ohci_sbus_mem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs, size_t size,
-    caddr_t *kvap, int flags)
+    void **kvap, int flags)
 {
 	struct ohci_sbus_softc *sc = t->_dmachip_cookie;
 	struct ohci_dma_segment *ds;
@@ -234,7 +234,7 @@ _ohci_sbus_mem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs, size_t s
 	    ds = LIST_NEXT(ds, ds_link)) {
 		if (ds->ds_iopdma_seg.iop_paddr == addr) {
 
-			*kvap = (caddr_t)ds->ds_iopdma_seg.ee_vaddr;
+			*kvap = (void *)ds->ds_iopdma_seg.ee_vaddr;
 
 			return (0);
 		}
@@ -244,7 +244,7 @@ _ohci_sbus_mem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs, size_t s
 }
 
 void
-_ohci_sbus_mem_unmap(bus_dma_tag_t t, caddr_t kva, size_t size)
+_ohci_sbus_mem_unmap(bus_dma_tag_t t, void *kva, size_t size)
 {
 	/* nothing to do */
 }

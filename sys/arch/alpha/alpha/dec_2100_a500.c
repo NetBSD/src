@@ -1,4 +1,4 @@
-/* $NetBSD: dec_2100_a500.c,v 1.15 2006/10/07 18:04:38 elad Exp $ */
+/* $NetBSD: dec_2100_a500.c,v 1.15.4.1 2007/03/12 05:45:48 rmind Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_2100_a500.c,v 1.15 2006/10/07 18:04:38 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_2100_a500.c,v 1.15.4.1 2007/03/12 05:45:48 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -159,7 +159,7 @@ dec_2100_a500_cons_init(void)
 	u_int64_t ctbslot;
 	struct ttwoga_config *tcp;
 
-	ctb = (struct ctb *)(((caddr_t)hwrpb) + hwrpb->rpb_ctb_off);
+	ctb = (struct ctb *)(((char *)hwrpb) + hwrpb->rpb_ctb_off);
 	ctbslot = ctb->ctb_turboslot;
 
 	tcp = ttwoga_init(0, 0);

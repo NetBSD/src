@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iee_sbdio.c,v 1.1 2005/12/29 15:20:09 tsutsui Exp $	*/
+/*	$NetBSD: if_iee_sbdio.c,v 1.1.28.1 2007/03/12 05:47:42 rmind Exp $	*/
 
 /*
  * Copyright (c) 2003 Jochen Kunz.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iee_sbdio.c,v 1.1 2005/12/29 15:20:09 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iee_sbdio.c,v 1.1.28.1 2007/03/12 05:47:42 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,7 +109,7 @@ iee_sbdio_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	if (bus_dmamem_map(sc->sc_dmat, &sc->sc_dma_segs, rsegs, IEE_SHMEM_MAX,
-		&sc->sc_shmem_addr, BUS_DMA_NOWAIT) != 0) {
+		(void **)sc->sc_shmem_addr, BUS_DMA_NOWAIT) != 0) {
 		aprint_normal(": iee_sbdio_attach: can't map DMA memory\n");
 		bus_dmamem_free(sc->sc_dmat, &sc->sc_dma_segs, rsegs);
 		return;
@@ -134,7 +134,7 @@ iee_sbdio_attach(struct device *parent, struct device *self, void *aux)
 	memset(sc->sc_shmem_addr, 0, IEE_SHMEM_MAX);
 
 	mips_dcache_wbinv_range((vaddr_t)sc->sc_shmem_addr, IEE_SHMEM_MAX);
-	sc->sc_shmem_addr = (caddr_t)((vaddr_t)sc->sc_shmem_addr |
+	sc->sc_shmem_addr = (void *)((vaddr_t)sc->sc_shmem_addr |
 	    MIPS_KSEG1_START);
 
 	/* Setup SYSBUS byte. TR2 specific? -uch */

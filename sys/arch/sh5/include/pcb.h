@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.3 2002/08/26 10:32:56 scw Exp $	*/
+/*	$NetBSD: pcb.h,v 1.3.62.1 2007/03/12 05:50:16 rmind Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
 
 struct pcb {
 	struct switchframe pcb_ctx;	/* Saved kernel context (must be 1st) */
-	caddr_t	pcb_onfault;		/* copyin/out fault return address */
+	void *	pcb_onfault;		/* copyin/out fault return address */
 };
 
 extern int sh5_savectx(u_int, int, struct pcb *);

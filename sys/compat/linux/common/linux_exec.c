@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.c,v 1.91.2.1 2007/02/27 16:53:37 yamt Exp $	*/
+/*	$NetBSD: linux_exec.c,v 1.91.2.2 2007/03/12 05:52:26 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995, 1998, 2000, 2007 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec.c,v 1.91.2.1 2007/02/27 16:53:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec.c,v 1.91.2.2 2007/03/12 05:52:26 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,7 +105,7 @@ linux_sys_execve(l, v, retval)
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
 	struct sys_execve_args ap;
-	caddr_t sg;
+	void *sg;
 
 	sg = stackgap_init(p, 0);
 	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
@@ -212,7 +212,7 @@ linux_e_proc_init(p, parent, forkflags)
 		 * use our own vmspace.
 		 */
 		vm = (parent) ? parent->p_vmspace : p->p_vmspace;
-		s->p_break = vm->vm_daddr + ctob(vm->vm_dsize);
+		s->p_break = (char *)vm->vm_daddr + ctob(vm->vm_dsize);
 
 		/*
 		 * Linux threads are emulated as NetBSD processes (not lwp)
@@ -341,7 +341,7 @@ linux_nptl_proc_exit(p)
 {
 	struct linux_emuldata *e = p->p_emuldata;
 
-	rw_enter(&proclist_lock, RW_WRITER);
+	mutex_enter(&proclist_lock);
 
 	/* 
 	 * Check if we are a thread group leader victim of another 
@@ -367,7 +367,7 @@ linux_nptl_proc_exit(p)
 		cv_broadcast(&initproc->p_waitcv);
 	}
 
-	rw_exit(&proclist_lock);
+	mutex_exit(&proclist_lock);
 
 	/* Emulate LINUX_CLONE_CHILD_CLEARTID */
 	if (e->clear_tid != NULL) {

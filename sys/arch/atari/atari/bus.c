@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.42 2006/03/01 12:38:11 yamt Exp $	*/
+/*	$NetBSD: bus.c,v 1.42.20.1 2007/03/12 05:47:18 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.42 2006/03/01 12:38:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.42.20.1 2007/03/12 05:47:18 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,7 +95,7 @@ pt_entry_t	*ptep;
 u_long		size;
 {
 	bootm_ex = extent_create("bootmem", va, va + size, M_DEVBUF,
-	    (caddr_t)bootm_ex_storage, sizeof(bootm_ex_storage),
+	    (void *)bootm_ex_storage, sizeof(bootm_ex_storage),
 	    EX_NOCOALESCE|EX_NOWAIT);
 	bootm_ptep = ptep;
 }
@@ -259,7 +259,7 @@ bus_space_handle_t	*bshp;
 		va = bootm_alloc(pa, endpa - pa, flags);
 		if (va == 0)
 			return (ENOMEM);
-		*bshp = (caddr_t)(va + (bpa & PGOFSET));
+		*bshp = va + (bpa & PGOFSET);
 		return (0);
 	}
 
@@ -268,7 +268,7 @@ bus_space_handle_t	*bshp;
 	if (va == 0)
 		return (ENOMEM);
 
-	*bshp = (caddr_t)(va + (bpa & PGOFSET));
+	*bshp = va + (bpa & PGOFSET);
 
 	for(; pa < endpa; pa += PAGE_SIZE, va += PAGE_SIZE) {
 		u_int	*ptep, npte;
@@ -301,7 +301,7 @@ bus_size_t		size;
 	paddr_t bpa;
 
 	va = m68k_trunc_page(bsh);
-	endva = m68k_round_page((bsh + size) - 1);
+	endva = m68k_round_page(((char *)bsh + size) - 1);
 #ifdef DIAGNOSTIC
 	if (endva < va)
 		panic("unmap_iospace: overflow");
@@ -528,7 +528,7 @@ _bus_dmamap_load_uio(t, map, uio, flags)
 	int seg, i, error, first;
 	bus_size_t minlen, resid;
 	struct iovec *iov;
-	caddr_t addr;
+	void *addr;
 
 	/*
 	 * Make sure that on error condition we return "no valid mappings."
@@ -549,7 +549,7 @@ _bus_dmamap_load_uio(t, map, uio, flags)
 		 * until we have exhausted the residual count.
 		 */
 		minlen = resid < iov[i].iov_len ? resid : iov[i].iov_len;
-		addr = (caddr_t)iov[i].iov_base;
+		addr = (void *)iov[i].iov_base;
 
 		error = _bus_dmamap_load_buffer(t, map, addr, minlen,
 		    uio->uio_vmspace, flags, &lastaddr, &seg, first);
@@ -712,7 +712,7 @@ bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 	bus_dma_segment_t *segs;
 	int nsegs;
 	size_t size;
-	caddr_t *kvap;
+	void **kvap;
 	int flags;
 {
 	vaddr_t va;
@@ -730,7 +730,7 @@ bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 	if (va == 0)
 		return (ENOMEM);
 
-	*kvap = (caddr_t)va;
+	*kvap = (void *)va;
 
 	for (curseg = 0; curseg < nsegs; curseg++) {
 		for (addr = segs[curseg].ds_addr;
@@ -755,7 +755,7 @@ bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 void
 bus_dmamem_unmap(t, kva, size)
 	bus_dma_tag_t t;
-	caddr_t kva;
+	void *kva;
 	size_t size;
 {
 
@@ -802,7 +802,7 @@ bus_dmamem_mmap(t, segs, nsegs, off, prot, flags)
 			continue;
 		}
 
-		return (m68k_btop((caddr_t)segs[i].ds_addr - offset + off));
+		return (m68k_btop((char *)segs[i].ds_addr - offset + off));
 	}
 
 	/* Page not found. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: promlib.h,v 1.21 2005/12/11 12:19:06 christos Exp $ */
+/*	$NetBSD: promlib.h,v 1.21.26.1 2007/03/12 05:50:30 rmind Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -97,10 +97,10 @@ struct promops {
 	void	*po_tickdata;
 
 	/* sun4/sun4c only */
-	void	(*po_setcontext)(int ctxt, caddr_t va, int pmeg);
+	void	(*po_setcontext)(int ctxt, void *va, int pmeg);
 
 	/* MP functions (OBP v3 only) */
-	int	(*po_cpustart)(int, struct openprom_addr *, int, caddr_t);
+	int	(*po_cpustart)(int, struct openprom_addr *, int, void *);
 	int	(*po_cpustop)(int);
 	int	(*po_cpuidle)(int);
 	int	(*po_cpuresume)(int);

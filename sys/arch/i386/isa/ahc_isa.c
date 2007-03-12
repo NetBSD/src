@@ -1,4 +1,4 @@
-/*	$NetBSD: ahc_isa.c,v 1.32 2006/11/16 01:32:38 christos Exp $	*/
+/*	$NetBSD: ahc_isa.c,v 1.32.4.1 2007/03/12 05:48:37 rmind Exp $	*/
 
 /*
  * Product specific probe and attach routines for:
@@ -117,7 +117,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahc_isa.c,v 1.32 2006/11/16 01:32:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahc_isa.c,v 1.32.4.1 2007/03/12 05:48:37 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -422,7 +422,7 @@ ahc_isa_attach(struct device *parent, struct device *self, void *aux)
 	if (ahc_softc_init(ahc) != 0)
 		goto free_io;
 
-	ahc_intr_enable(ahc, FALSE);
+	ahc_intr_enable(ahc, false);
 
 	if (ahc_reset(ahc) != 0)
 		goto free_io;

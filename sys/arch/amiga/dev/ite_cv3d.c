@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_cv3d.c,v 1.5 2002/01/28 09:57:00 aymeric Exp $ */
+/*	$NetBSD: ite_cv3d.c,v 1.5.70.1 2007/03/12 05:46:42 rmind Exp $ */
 
 /*
  * Copyright (c) 1995 Michael Teske
@@ -40,7 +40,7 @@
 #include "opt_amigacons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite_cv3d.c,v 1.5 2002/01/28 09:57:00 aymeric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite_cv3d.c,v 1.5.70.1 2007/03/12 05:46:42 rmind Exp $");
 
 #include "grfcv3d.h"
 #if NGRFCV3D > 0
@@ -180,7 +180,7 @@ cv3d_ite_init(register struct ite_softc *ip)
 void
 cv3d_cursor(struct ite_softc *ip, int flag)
 {
-	volatile caddr_t ba = ip->grf->g_regkva;
+	volatile void *ba = ip->grf->g_regkva;
 
 	switch (flag) {
 	    case DRAW_CURSOR:
@@ -205,20 +205,20 @@ cv3d_cursor(struct ite_softc *ip, int flag)
 void
 cv3d_putc(struct ite_softc *ip, int c, int dy, int dx, int mode)
 {
-	caddr_t fb = ip->grf->g_fbkva;
+	volatile void *fb = ip->grf->g_fbkva;
 	unsigned char attr;
-	unsigned char *cp;
+	volatile unsigned char *cp;
 
 	attr = (unsigned char) ((mode & ATTR_INV) ? (0x70) : (0x07));
 	if (mode & ATTR_UL)     attr  = 0x01;
 	if (mode & ATTR_BOLD)   attr |= 0x08;
 	if (mode & ATTR_BLINK)  attr |= 0x80;
 
-	cp = fb + ((cv3d_rowc[dy] + dx) << 2); /* *4 */
+	cp = (volatile char*)fb + ((cv3d_rowc[dy] + dx) << 2); /* *4 */
 	*cp++ = (unsigned char) c;
 	*cp = (unsigned char) attr;
 
-	cp = (unsigned char *) &console_buffer[cv3d_rowc[dy]+dx];
+	cp = (volatile unsigned char *) &console_buffer[cv3d_rowc[dy]+dx];
 	*cp++ = (unsigned char) c;
 	*cp = (unsigned char) attr;
 }
@@ -231,10 +231,12 @@ cv3d_clear(struct ite_softc *ip, int sy, int sx, int h, int w)
 	 * which describe continuous regions.  For a VT200 terminal,
 	 * this is safe behavior.
 	 */
-	unsigned short  *dst;
+	volatile unsigned short  *dst;
 	int len;
 
-	dst = (unsigned short *) (ip->grf->g_fbkva + (((sy * ip->cols) + sx) << 2));
+	dst = (volatile unsigned short *)
+		((volatile char*)ip->grf->g_fbkva +
+		 (((sy * ip->cols) + sx) << 2));
 
 	for (len = w * h; len > 0 ; len--) {
 		*dst = 0x2007;
@@ -250,11 +252,12 @@ cv3d_clear(struct ite_softc *ip, int sy, int sx, int h, int w)
 void
 cv3d_scroll(struct ite_softc *ip, int sy, int sx, int count, int dir)
 {
-	unsigned short *src, *dst, *dst2;
+	volatile unsigned short *src, *dst, *dst2;
 	int i;
 	int len;
 
-	src = (unsigned short *)(ip->grf->g_fbkva + (cv3d_rowc[sy] << 2));
+	src = (volatile unsigned short *)
+		((volatile char*)ip->grf->g_fbkva + (cv3d_rowc[sy] << 2));
 
 	switch (dir) {
 	    case SCROLL_UP:
@@ -265,13 +268,13 @@ cv3d_scroll(struct ite_softc *ip, int sy, int sx, int count, int dir)
 
 		if (count > sy) { /* boundary checks */
 			dst2 = console_buffer;
-			dst = (unsigned short *)(ip->grf->g_fbkva);
+			dst = (volatile unsigned short *)(ip->grf->g_fbkva);
 			len -= cv3d_rowc[(count - sy)];
 			src += cv3d_rowc[(count - sy)];
 		} else
 			dst2 = &console_buffer[cv3d_rowc[(sy-count)]];
 
-		bcopy (src, dst2, len << 1);
+		bcopy (__UNVOLATILE(src), __UNVOLATILE(dst2), len << 1);
 
 		for (i = 0; i < len; i++) {
 			*dst++ = *dst2++;
@@ -288,7 +291,7 @@ cv3d_scroll(struct ite_softc *ip, int sy, int sx, int count, int dir)
 		if (len < 0)
 			return;  /* do some boundary check */
 
-		bcopy (src, dst2, len << 1);
+		bcopy (__UNVOLATILE(src), __UNVOLATILE(dst2), len << 1);
 
 		for (i = 0; i < len; i++) {
 			*dst++ = *dst2++;
@@ -300,7 +303,7 @@ cv3d_scroll(struct ite_softc *ip, int sy, int sx, int count, int dir)
 		src = &console_buffer[cv3d_rowc[sy] + sx];
 		len = ip->cols - (sx + count);
 		dst2 = &console_buffer[cv3d_rowc[sy] + sx + count];
-		bcopy (src, dst2, len << 1);
+		bcopy (__UNVOLATILE(src), __UNVOLATILE(dst2), len << 1);
 
 		for (i = 0; i < len; i++) {
 			*dst++ = *dst2++;
@@ -312,7 +315,7 @@ cv3d_scroll(struct ite_softc *ip, int sy, int sx, int count, int dir)
 		src = &console_buffer[cv3d_rowc[sy] + sx];
 		len = ip->cols - sx;
 		dst2 = &console_buffer[cv3d_rowc[sy] + sx - count];
-		bcopy (src, dst2, len << 1);
+		bcopy (__UNVOLATILE(src), __UNVOLATILE(dst2), len << 1);
 
 		for (i = 0; i < len; i++) {
 			*dst++ = *dst2++;

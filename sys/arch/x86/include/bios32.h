@@ -1,4 +1,4 @@
-/*	$NetBSD: bios32.h,v 1.2 2003/10/27 13:43:48 junyoung Exp $	*/
+/*	$NetBSD: bios32.h,v 1.2.54.1 2007/03/12 05:51:45 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@ struct bios32_entry_info {
 typedef struct bios32_entry_info *bios32_entry_info_t;
 
 struct bios32_entry {
-	caddr_t		offset;
+	void *		offset;
 	u_int16_t	segment;
 } __attribute__((__packed__));
 

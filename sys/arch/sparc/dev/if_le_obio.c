@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_obio.c,v 1.23 2005/11/16 01:09:49 uwe Exp $	*/
+/*	$NetBSD: if_le_obio.c,v 1.23.26.1 2007/03/12 05:50:28 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_obio.c,v 1.23 2005/11/16 01:09:49 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_obio.c,v 1.23.26.1 2007/03/12 05:50:28 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -173,7 +173,7 @@ leattach_obio(struct device *parent, struct device *self, void *aux)
 	}
 	/* Map DMA buffer into kernel space */
 	if ((error = bus_dmamem_map(dmatag, &seg, rseg, MEMSIZE,
-			   (caddr_t *)&sc->sc_mem,
+			   (void **)&sc->sc_mem,
 			   BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
 		printf("%s: DMA memory map error %d\n", self->dv_xname, error);
 		bus_dmamem_free(lesc->sc_dmatag, &seg, rseg);
@@ -185,7 +185,7 @@ leattach_obio(struct device *parent, struct device *self, void *aux)
 				     BUS_DMA_NOWAIT)) != 0) {
 		printf("%s: DMA buffer map load error %d\n",
 			self->dv_xname, error);
-		bus_dmamem_unmap(dmatag, (caddr_t)sc->sc_mem, MEMSIZE);
+		bus_dmamem_unmap(dmatag, (void *)sc->sc_mem, MEMSIZE);
 		bus_dmamem_free(dmatag, &seg, rseg);
 		return;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.53.8.1 2007/02/27 16:53:01 yamt Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.53.8.2 2007/03/12 05:50:15 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.53.8.1 2007/02/27 16:53:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.53.8.2 2007/03/12 05:50:15 rmind Exp $");
 
 #include "opt_kstack_debug.h"
 #include "opt_coredump.h"
@@ -395,7 +395,7 @@ vmapbuf(struct buf *bp, vsize_t len)
 	off = (vaddr_t)bp->b_data - faddr;
 	len = round_page(off + len);
 	taddr = uvm_km_alloc(phys_map, len, 0, UVM_KMF_VAONLY | UVM_KMF_WAITVA);
-	bp->b_data = (caddr_t)(taddr + off);
+	bp->b_data = (void *)(taddr + off);
 	/*
 	 * The region is locked, so we expect that pmap_pte() will return
 	 * non-NULL.

@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.17 2005/12/11 12:19:02 christos Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.17.26.1 2007/03/12 05:50:17 rmind Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.17 2005/12/11 12:19:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.17.26.1 2007/03/12 05:50:17 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,10 +67,10 @@ setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 
 	/* This cannot fail, as copyargs() has already used copyout() on it */
 #ifdef DIAGNOSTIC
-	if (copyin((caddr_t)(uintptr_t)sstack, &argc, sizeof(argc)) != 0)
+	if (copyin((void *)(uintptr_t)sstack, &argc, sizeof(argc)) != 0)
 		panic("setregs: argc copyin failed!");
 #else
-	(void) copyin((caddr_t)(uintptr_t)sstack, &argc, sizeof(argc));
+	(void) copyin((void *)(uintptr_t)sstack, &argc, sizeof(argc));
 #endif
 
 	memset(tf, 0, sizeof(*tf));
@@ -362,7 +362,7 @@ process_sstep(struct lwp *l, int set)
  * XXX: This will barf when userland's sizeof(void *) != kernel's.
  */
 int
-process_set_pc(struct lwp *l, caddr_t pc)
+process_set_pc(struct lwp *l, void *pc)
 {
 
 	l->l_md.md_regs->tf_state.sf_spc = (register_t)(uintptr_t)pc;

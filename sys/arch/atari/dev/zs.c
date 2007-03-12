@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.51 2006/10/01 20:31:50 elad Exp $	*/
+/*	$NetBSD: zs.c,v 1.51.4.1 2007/03/12 05:47:21 rmind Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.51 2006/10/01 20:31:50 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.51.4.1 2007/03/12 05:47:21 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -805,8 +805,8 @@ again:
 				c = zc->zc_csr;
 				if((c & ZSRR0_DCD) == 0)
 					cs->cs_preg[3] &= ~ZSWR3_HFC;
-				bcopy((caddr_t)cs->cs_preg,
-				    (caddr_t)cs->cs_creg, 16);
+				bcopy((void *)cs->cs_preg,
+				    (void *)cs->cs_creg, 16);
 				zs_loadchannelregs(zc, cs->cs_creg);
 				splx(sps);
 				cs->cs_heldchange = 0;
@@ -821,7 +821,7 @@ again:
 			if(tp->t_state & TS_FLUSH)
 				tp->t_state &= ~TS_FLUSH;
 			else ndflush(&tp->t_outq,cs->cs_tba
-						- (caddr_t)tp->t_outq.c_cf);
+						- tp->t_outq.c_cf);
 			line->l_start(tp);
 			break;
 
@@ -858,7 +858,7 @@ int
 zsioctl(dev, cmd, data, flag, l)
 dev_t		dev;
 u_long		cmd;
-caddr_t		data;
+void *		data;
 int		flag;
 struct lwp	*l;
 {
@@ -1004,7 +1004,7 @@ register struct tty *tp;
 	if(tp->t_outq.c_cc <= tp->t_lowat) {
 		if(tp->t_state & TS_ASLEEP) {
 			tp->t_state &= ~TS_ASLEEP;
-			wakeup((caddr_t)&tp->t_outq);
+			wakeup((void *)&tp->t_outq);
 		}
 		selwakeup(&tp->t_wsel);
 	}
@@ -1076,7 +1076,7 @@ zs_shutdown(cs)
 	 */
 	if(tp->t_cflag & HUPCL) {
 		zs_modem(cs, 0, DMSET);
-		(void)tsleep((caddr_t)cs, TTIPRI, ttclos, hz);
+		(void)tsleep((void *)cs, TTIPRI, ttclos, hz);
 	}
 
 	/* Clear any break condition set with TIOCSBRK. */
@@ -1194,7 +1194,7 @@ register struct termios	*t;
 			cs->cs_tbc = 0;
 			cs->cs_heldchange = 1;
 		} else {
-			bcopy((caddr_t)cs->cs_preg, (caddr_t)cs->cs_creg, 16);
+			bcopy((void *)cs->cs_preg, (void *)cs->cs_creg, 16);
 			zs_loadchannelregs(cs->cs_zc, cs->cs_creg);
 		}
 	}

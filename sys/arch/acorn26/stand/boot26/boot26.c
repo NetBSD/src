@@ -1,4 +1,4 @@
-/*	$NetBSD: boot26.c,v 1.4 2005/12/11 12:16:05 christos Exp $	*/
+/*	$NetBSD: boot26.c,v 1.4.26.1 2007/03/12 05:45:16 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 Ben Harris
@@ -121,15 +121,15 @@ main(int argc, char **argv)
 	bootconfig.version = 0;
 	bootconfig.boothowto = howto;
 	bootconfig.bootdev = -1;
-	bootconfig.ssym = (caddr_t)marks[MARK_SYM] - MEMC_PHYS_BASE;
-	bootconfig.esym = (caddr_t)marks[MARK_END] - MEMC_PHYS_BASE;
+	bootconfig.ssym = (void *)marks[MARK_SYM] - MEMC_PHYS_BASE;
+	bootconfig.esym = (void *)marks[MARK_END] - MEMC_PHYS_BASE;
 	bootconfig.nbpp = nbpp;
 	bootconfig.npages = npages;
-	bootconfig.freebase = (caddr_t)marks[MARK_END] - MEMC_PHYS_BASE;
+	bootconfig.freebase = (void *)marks[MARK_END] - MEMC_PHYS_BASE;
 	bootconfig.xpixels = vdu_var(os_MODEVAR_XWIND_LIMIT) + 1;
 	bootconfig.ypixels = vdu_var(os_MODEVAR_YWIND_LIMIT) + 1;
 	bootconfig.bpp = 1 << vdu_var(os_MODEVAR_LOG2_BPP);
-	bootconfig.screenbase = (caddr_t)vdu_var(os_VDUVAR_DISPLAY_START) +
+	bootconfig.screenbase = (void *)vdu_var(os_VDUVAR_DISPLAY_START) +
 	    vdu_var(os_VDUVAR_TOTAL_SCREEN_SIZE) - MEMC_PHYS_BASE;
 	bootconfig.screensize = vdu_var(os_VDUVAR_TOTAL_SCREEN_SIZE);
 	os_byte(osbyte_OUTPUT_CURSOR_POSITION, 0, 0, NULL, &crow);
@@ -177,12 +177,12 @@ get_mem_map(struct os_mem_map_request *pginfo, enum pgstatus *pgstatus,
 		if (pginfo[i].access == os_AREA_ACCESS_NONE) {
 			if (debug) printf(".");
 		} else {
-			if (pginfo[i].map < (caddr_t)0x0008000) {
+			if (pginfo[i].map < (void *)0x0008000) {
 				if (debug) printf("0");
-			} else if (pginfo[i].map < (caddr_t)HIMEM) {
+			} else if (pginfo[i].map < (void *)HIMEM) {
 				pgstatus[i] = USED_BOOT;
 				if (debug) printf("+");
-			} else if (pginfo[i].map < (caddr_t)0x1000000) {
+			} else if (pginfo[i].map < (void *)0x1000000) {
 				if (pginfo[i].access ==
 				    os_AREA_ACCESS_READ_WRITE) {
 					pgstatus[i] = FREE;
@@ -190,17 +190,17 @@ get_mem_map(struct os_mem_map_request *pginfo, enum pgstatus *pgstatus,
 				} else {
 					if (debug) printf("a");
 				}
-			} else if (pginfo[i].map < (caddr_t)0x1400000) {
+			} else if (pginfo[i].map < (void *)0x1400000) {
 				if (debug) printf("d");
-			} else if (pginfo[i].map < (caddr_t)0x1800000) {
+			} else if (pginfo[i].map < (void *)0x1800000) {
 				if (debug) printf("s");
-			} else if (pginfo[i].map < (caddr_t)0x1c00000) {
+			} else if (pginfo[i].map < (void *)0x1c00000) {
 				if (debug) printf("m");
-			} else if (pginfo[i].map < (caddr_t)0x1e00000) {
+			} else if (pginfo[i].map < (void *)0x1e00000) {
 				if (debug) printf("h");
-			} else if (pginfo[i].map < (caddr_t)0x1f00000) {
+			} else if (pginfo[i].map < (void *)0x1f00000) {
 				if (debug) printf("f");
-			} else if (pginfo[i].map < (caddr_t)0x2000000) {
+			} else if (pginfo[i].map < (void *)0x2000000) {
 				if (debug) printf("S");
 			}
 		}
@@ -221,12 +221,12 @@ get_mem_map(struct os_mem_map_request *pginfo, enum pgstatus *pgstatus,
  * At present, there's no relocation mechanism, so we panic if its use
  * is required.
  */
-static caddr_t
-get_page(caddr_t target)
+static void *
+get_page(void *target)
 {
 	int ppn;
 
-	ppn = ((caddr_t)target - MEMC_PHYS_BASE) / nbpp;
+	ppn = ((void *)target - MEMC_PHYS_BASE) / nbpp;
 	if (pgstatus[ppn] != FREE)
 		panic("Page %d not free", ppn);
 	return pginfo[ppn].map;
@@ -235,7 +235,7 @@ get_page(caddr_t target)
 ssize_t
 boot26_read(int f, void *addr, size_t size)
 {
-	caddr_t fragaddr;
+	void *fragaddr;
 	size_t fragsize;
 	ssize_t retval, total;
 
@@ -260,7 +260,7 @@ boot26_read(int f, void *addr, size_t size)
 void *
 boot26_memcpy(void *dst, const void *src, size_t size)
 {
-	caddr_t fragaddr;
+	void *fragaddr;
 	size_t fragsize;
 	void *addr = dst;
 
@@ -280,7 +280,7 @@ boot26_memcpy(void *dst, const void *src, size_t size)
 void *
 boot26_memset(void *dst, int c, size_t size)
 {
-	caddr_t fragaddr;
+	void *fragaddr;
 	size_t fragsize;
 	void *addr = dst;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530var.h,v 1.9 2005/12/11 12:18:06 christos Exp $	*/
+/*	$NetBSD: z8530var.h,v 1.9.26.1 2007/03/12 05:49:19 rmind Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -169,7 +169,7 @@ void  zs_write_data __P((struct zs_chanstate *cs, u_char val));
 #define splzs spltty
 
 /* Hook for MD ioctl support */
-int	zsmdioctl __P((struct zs_chanstate *cs, u_long cmd, caddr_t data));
+int	zsmdioctl __P((struct zs_chanstate *cs, u_long cmd, void *data));
 /* XXX - This is a bit gross... */
 #define ZS_MD_IOCTL(cs, cmd, data) zsmdioctl(cs, cmd, data)
 
@@ -192,5 +192,5 @@ void zs_kgdb_init __P((void));
 
 #ifdef ZS_TXDMA
 void zstty_txdma_int __P((void *));
-void zs_dma_setup __P((struct zs_chanstate *, caddr_t, int));
+void zs_dma_setup __P((struct zs_chanstate *, void *, int));
 #endif

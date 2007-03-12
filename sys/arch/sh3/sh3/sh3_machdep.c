@@ -1,4 +1,4 @@
-/*	$NetBSD: sh3_machdep.c,v 1.60.2.1 2007/02/27 16:53:01 yamt Exp $	*/
+/*	$NetBSD: sh3_machdep.c,v 1.60.2.2 2007/03/12 05:50:15 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2002 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sh3_machdep.c,v 1.60.2.1 2007/02/27 16:53:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sh3_machdep.c,v 1.60.2.2 2007/03/12 05:50:15 rmind Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_memsize.h"
@@ -530,7 +530,7 @@ compat_16_sys___sigreturn14(struct lwp *l, void *v, register_t *retval)
 	 * program jumps out of a signal handler.
 	 */
 	scp = SCARG(uap, sigcntxp);
-	if (copyin((caddr_t)scp, &context, sizeof(*scp)) != 0)
+	if (copyin((void *)scp, &context, sizeof(*scp)) != 0)
 		return (EFAULT);
 
 	/* Restore signal context. */
@@ -610,7 +610,7 @@ cpu_getmcontext(l, mcp, flags)
 	gr[_REG_R15]    = tf->tf_r15;
 
 	if ((ras_pc = (__greg_t)ras_lookup(l->l_proc,
-	    (caddr_t) gr[_REG_PC])) != -1)
+	    (void *) gr[_REG_PC])) != -1)
 		gr[_REG_PC] = ras_pc;
 
 	*flags |= _UC_CPU;
@@ -692,7 +692,7 @@ setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 	tf->tf_r1 = 0;
 	tf->tf_r2 = 0;
 	tf->tf_r3 = 0;
-	tf->tf_r4 = fuword((caddr_t)stack);	/* argc */
+	tf->tf_r4 = fuword((void *)stack);	/* argc */
 	tf->tf_r5 = stack + 4;			/* argv */
 	tf->tf_r6 = stack + 4 * tf->tf_r4 + 8;	/* envp */
 	tf->tf_r7 = 0;

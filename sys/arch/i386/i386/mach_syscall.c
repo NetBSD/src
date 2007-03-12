@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_syscall.c,v 1.21 2007/02/09 21:55:04 ad Exp $	*/
+/*	$NetBSD: mach_syscall.c,v 1.21.2.1 2007/03/12 05:48:22 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_syscall.c,v 1.21 2007/02/09 21:55:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_syscall.c,v 1.21.2.1 2007/03/12 05:48:22 rmind Exp $");
 
 #include "opt_vm86.h"
 
@@ -81,7 +81,7 @@ void
 mach_syscall_plain(frame)
 	struct trapframe *frame;
 {
-	caddr_t params;
+	char *params;
 	const struct sysent *callp;
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
@@ -93,7 +93,7 @@ mach_syscall_plain(frame)
 	LWP_CACHE_CREDS(l, p);
 
 	code = frame->tf_eax;
-	params = (caddr_t)frame->tf_esp + sizeof(int);
+	params = (char *)frame->tf_esp + sizeof(int);
 
 	switch (code) {
 	case SYS_syscall:
@@ -130,7 +130,7 @@ mach_syscall_plain(frame)
 	callp += code;
 	argsize = callp->sy_argsize;
 	if (argsize) {
-		error = copyin(params, (caddr_t)args, argsize);
+		error = copyin(params, (void *)args, argsize);
 		if (error)
 			goto bad;
 	}
@@ -169,7 +169,7 @@ void
 mach_syscall_fancy(frame)
 	struct trapframe *frame;
 {
-	caddr_t params;
+	char *params;
 	const struct sysent *callp;
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
@@ -182,7 +182,7 @@ mach_syscall_fancy(frame)
 
 	code = frame->tf_eax;
 	realcode = code;
-	params = (caddr_t)frame->tf_esp + sizeof(int);
+	params = (char *)frame->tf_esp + sizeof(int);
 
 	switch (code) {
 	case SYS_syscall:
@@ -218,7 +218,7 @@ mach_syscall_fancy(frame)
 	callp += code;
 	argsize = callp->sy_argsize;
 	if (argsize) {
-		error = copyin(params, (caddr_t)args, argsize);
+		error = copyin(params, (void *)args, argsize);
 		if (error)
 			goto bad;
 	}

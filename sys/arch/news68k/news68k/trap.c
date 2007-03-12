@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.49 2007/02/10 02:01:26 tsutsui Exp $	*/
+/*	$NetBSD: trap.c,v 1.49.2.1 2007/03/12 05:49:40 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.49 2007/02/10 02:01:26 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.49.2.1 2007/03/12 05:49:40 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -636,7 +636,7 @@ trap(int type, u_int code, u_int v, struct frame frame)
 		 * error.
 		 */
 		if (rv == 0) {
-			if (map != kernel_map && (caddr_t)va >= vm->vm_maxsaddr)
+			if (map != kernel_map && (void *)va >= vm->vm_maxsaddr)
 				uvm_grow(p, va);
 
 			if (type == T_MMUFLT) {
@@ -708,7 +708,7 @@ writeback(struct frame *fp, int docachepush)
 	struct proc *p = l->l_proc;
 	int err = 0;
 	u_int fa;
-	caddr_t oonfault = l->l_addr->u_pcb.pcb_onfault;
+	void *oonfault = l->l_addr->u_pcb.pcb_onfault;
 	paddr_t pa;
 
 #ifdef DEBUG
@@ -751,7 +751,7 @@ writeback(struct frame *fp, int docachepush)
 			    VM_PROT_WRITE|PMAP_WIRED);
 			pmap_update(pmap_kernel());
 			fa = (u_int)&vmmap[m68k_page_offset(f->f_fa) & ~0xF];
-			memcpy((caddr_t)fa, (caddr_t)&f->f_pd0, 16);
+			memcpy((void *)fa, (void *)&f->f_pd0, 16);
 			(void) pmap_extract(pmap_kernel(), (vaddr_t)fa, &pa);
 			DCFL(pa);
 			pmap_remove(pmap_kernel(), (vaddr_t)vmmap,
@@ -776,11 +776,11 @@ writeback(struct frame *fp, int docachepush)
 		wbstats.move16s++;
 #endif
 		if (KDFAULT(f->f_wb1s))
-			memcpy((caddr_t)(f->f_fa & ~0xF),
-			    (caddr_t)&f->f_pd0, 16);
+			memcpy((void *)(f->f_fa & ~0xF),
+			    (void *)&f->f_pd0, 16);
 		else
-			err = suline((caddr_t)(f->f_fa & ~0xF),
-			    (caddr_t)&f->f_pd0);
+			err = suline((void *)(f->f_fa & ~0xF),
+			    (void *)&f->f_pd0);
 		if (err) {
 			fa = f->f_fa & ~0xF;
 #ifdef DEBUG
@@ -812,7 +812,7 @@ writeback(struct frame *fp, int docachepush)
 			if (KDFAULT(f->f_wb1s))
 				*(long *)f->f_wb1a = wb1d;
 			else
-				err = suword((caddr_t)f->f_wb1a, wb1d);
+				err = suword((void *)f->f_wb1a, wb1d);
 			break;
 		case SSW4_SZB:
 			off = 24 - off;
@@ -821,7 +821,7 @@ writeback(struct frame *fp, int docachepush)
 			if (KDFAULT(f->f_wb1s))
 				*(char *)f->f_wb1a = wb1d;
 			else
-				err = subyte((caddr_t)f->f_wb1a, wb1d);
+				err = subyte((void *)f->f_wb1a, wb1d);
 			break;
 		case SSW4_SZW:
 			off = (off + 16) % 32;
@@ -830,7 +830,7 @@ writeback(struct frame *fp, int docachepush)
 			if (KDFAULT(f->f_wb1s))
 				*(short *)f->f_wb1a = wb1d;
 			else
-				err = susword((caddr_t)f->f_wb1a, wb1d);
+				err = susword((void *)f->f_wb1a, wb1d);
 			break;
 		}
 		if (err) {
@@ -862,19 +862,19 @@ writeback(struct frame *fp, int docachepush)
 			if (KDFAULT(f->f_wb2s))
 				*(long *)f->f_wb2a = f->f_wb2d;
 			else
-				err = suword((caddr_t)f->f_wb2a, f->f_wb2d);
+				err = suword((void *)f->f_wb2a, f->f_wb2d);
 			break;
 		case SSW4_SZB:
 			if (KDFAULT(f->f_wb2s))
 				*(char *)f->f_wb2a = f->f_wb2d;
 			else
-				err = subyte((caddr_t)f->f_wb2a, f->f_wb2d);
+				err = subyte((void *)f->f_wb2a, f->f_wb2d);
 			break;
 		case SSW4_SZW:
 			if (KDFAULT(f->f_wb2s))
 				*(short *)f->f_wb2a = f->f_wb2d;
 			else
-				err = susword((caddr_t)f->f_wb2a, f->f_wb2d);
+				err = susword((void *)f->f_wb2a, f->f_wb2d);
 			break;
 		}
 		if (err) {
@@ -902,19 +902,19 @@ writeback(struct frame *fp, int docachepush)
 			if (KDFAULT(f->f_wb3s))
 				*(long *)f->f_wb3a = f->f_wb3d;
 			else
-				err = suword((caddr_t)f->f_wb3a, f->f_wb3d);
+				err = suword((void *)f->f_wb3a, f->f_wb3d);
 			break;
 		case SSW4_SZB:
 			if (KDFAULT(f->f_wb3s))
 				*(char *)f->f_wb3a = f->f_wb3d;
 			else
-				err = subyte((caddr_t)f->f_wb3a, f->f_wb3d);
+				err = subyte((void *)f->f_wb3a, f->f_wb3d);
 			break;
 		case SSW4_SZW:
 			if (KDFAULT(f->f_wb3s))
 				*(short *)f->f_wb3a = f->f_wb3d;
 			else
-				err = susword((caddr_t)f->f_wb3a, f->f_wb3d);
+				err = susword((void *)f->f_wb3a, f->f_wb3d);
 			break;
 #ifdef DEBUG
 		case SSW4_SZLN:
@@ -976,10 +976,10 @@ dumpwb(int num, u_short s, u_int a, u_int d)
 	       num, a, d, f7sz[(s & SSW4_SZMASK) >> 5],
 	       f7tt[(s & SSW4_TTMASK) >> 3], f7tm[s & SSW4_TMMASK]);
 	printf("               PA ");
-	if (pmap_extract(p->p_vmspace->vm_map.pmap, (vaddr_t)a, &pa) == FALSE)
+	if (pmap_extract(p->p_vmspace->vm_map.pmap, (vaddr_t)a, &pa) == false)
 		printf("<invalid address>");
 	else
-		printf("%lx, current value %lx", pa, fuword((caddr_t)a));
+		printf("%lx, current value %lx", pa, fuword((void *)a));
 	printf("\n");
 }
 #endif

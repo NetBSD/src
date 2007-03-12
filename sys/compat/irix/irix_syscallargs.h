@@ -1,4 +1,4 @@
-/* $NetBSD: irix_syscallargs.h,v 1.55 2005/12/11 12:20:12 christos Exp $ */
+/* $NetBSD: irix_syscallargs.h,v 1.55.26.1 2007/03/12 05:52:13 rmind Exp $ */
 
 /*
  * System call argument lists.
@@ -34,7 +34,7 @@ struct irix_sys_open_args {
 };
 
 struct irix_sys_break_args {
-	syscallarg(caddr_t) nsize;
+	syscallarg(void *) nsize;
 };
 
 struct irix_sys_syssgi_args {
@@ -65,7 +65,7 @@ struct irix_sys_shmsys_args {
 struct irix_sys_ioctl_args {
 	syscallarg(int) fd;
 	syscallarg(u_long) com;
-	syscallarg(caddr_t) data;
+	syscallarg(void *) data;
 };
 
 struct irix_sys_sysmp_args {
@@ -146,7 +146,7 @@ struct irix_sys_sprocsp_args {
 	syscallarg(void *) entry;
 	syscallarg(unsigned int) inh;
 	syscallarg(void *) arg;
-	syscallarg(caddr_t) sp;
+	syscallarg(void *) sp;
 	syscallarg(irix_size_t) len;
 };
 
@@ -286,7 +286,7 @@ struct irix_sys_pidsprocsp_args {
 	syscallarg(void *) entry;
 	syscallarg(unsigned int) inh;
 	syscallarg(void *) arg;
-	syscallarg(caddr_t) sp;
+	syscallarg(void *) sp;
 	syscallarg(irix_size_t) len;
 	syscallarg(irix_pid_t) pid;
 };

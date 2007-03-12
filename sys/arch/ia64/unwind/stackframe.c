@@ -1,4 +1,4 @@
-/*	$NetBSD: stackframe.c,v 1.1.26.1 2007/02/27 16:51:56 yamt Exp $	*/
+/*	$NetBSD: stackframe.c,v 1.1.26.2 2007/03/12 05:48:40 rmind Exp $	*/
 
 /* Contributed to the NetBSD foundation by Cherry G. Mathew <cherry@mahiti.org>
  * This file contains routines to use decoded unwind descriptor entries
@@ -37,7 +37,7 @@ void buildrecordchain(uint64_t unwind_infop, struct recordchain *xxx)
 	uint64_t unwindstart, unwindend;
 	uint64_t unwindlen;
 	uint64_t region_len = 0;
-	bool region_type = FALSE; /* Prologue */
+	bool region_type = false; /* Prologue */
 
 	struct unwind_hdr_t {
 		uint64_t uwh;
@@ -76,7 +76,7 @@ void buildrecordchain(uint64_t unwind_infop, struct recordchain *xxx)
 
 		if ((nextrecp = unwind_decode_R2(recptr, &strc[rec_cnt].udesc))){
 			region_len = strc[rec_cnt].udesc.R2.rlen;
-			region_type = FALSE; /* R2 regions are prologue regions */
+			region_type = false; /* R2 regions are prologue regions */
 			strc[rec_cnt].type = R2;
 			recptr = nextrecp;
 			continue;
@@ -90,7 +90,7 @@ void buildrecordchain(uint64_t unwind_infop, struct recordchain *xxx)
 			continue;
 		}
 
-		if(region_type == FALSE) { /* Prologue Region */
+		if(region_type == false) { /* Prologue Region */
 			if ((nextrecp = unwind_decode_P1(recptr, &strc[rec_cnt].udesc))){
 				strc[rec_cnt].type = P1;
 				recptr = nextrecp;
@@ -976,7 +976,7 @@ struct staterecord *buildrecordstack(struct recordchain *rchain, uint64_t procof
 			rdepth = procoffset - roffset;
 			if (rdepth < 0) goto out; /* Overshot Region containing procoffset. Bailout. */ 
 			roffset += rlen;
-			rtype = FALSE; /* prologue region */
+			rtype = false; /* prologue region */
 			pushrecord(&current_state);
 
 			/* R2 has save info. Continue down. */

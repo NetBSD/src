@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.7 2006/05/12 06:05:23 simonb Exp $	*/
+/*	$NetBSD: sd.c,v 1.7.14.1 2007/03/12 05:49:48 rmind Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -139,7 +139,7 @@ sdgetinfo(struct sd_softc *ss)
 	int i, err;
 
 	lp = &sd_softc[ss->sc_ctlr][ss->sc_unit].sc_label;
-	memset((caddr_t)lp, 0, sizeof *lp);
+	memset((void *)lp, 0, sizeof *lp);
 	lp->d_secsize = DEV_BSIZE;
 	lp->d_secpercyl = 1;
 	lp->d_npartitions = MAXPARTITIONS;

@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.24 2007/02/09 21:55:06 ad Exp $	*/
+/*	$NetBSD: svr4_machdep.c,v 1.24.2.1 2007/03/12 05:48:55 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.24 2007/02/09 21:55:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.24.2.1 2007/03/12 05:48:55 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,7 +71,7 @@ extern short exframesize[];
 extern void	m68881_restore(struct fpframe *);
 extern void	m68881_save(struct fpframe *);
 static void	svr4_getsiginfo(union svr4_siginfo *, int, unsigned long,
-		    caddr_t);
+		    void *);
 
 void
 svr4_setregs(struct lwp *l, struct exec_package *epp, u_long stack)
@@ -214,7 +214,7 @@ svr4_setmcontext(struct lwp *l, svr4_mcontext_t *mc, u_long flags)
 }
 
 static void
-svr4_getsiginfo(union svr4_siginfo *sip, int sig, u_long code, caddr_t addr)
+svr4_getsiginfo(union svr4_siginfo *sip, int sig, u_long code, void *addr)
 {
 
 	/*
@@ -250,7 +250,7 @@ svr4_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 
 	svr4_getcontext(l, &sf.sf_uc);
 	/* Passing the PC is *wrong*! */
-	svr4_getsiginfo(&sf.sf_si, sig, code, (caddr_t)frame->f_pc);
+	svr4_getsiginfo(&sf.sf_si, sig, code, (void *)frame->f_pc);
 
 	/* Build stack frame for signal trampoline. */
 	sf.sf_signum = sf.sf_si.si_signo;

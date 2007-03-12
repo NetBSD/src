@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.36.4.1 2007/02/27 16:50:49 yamt Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.36.4.2 2007/03/12 05:48:00 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.36.4.1 2007/02/27 16:50:49 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.36.4.2 2007/03/12 05:48:00 rmind Exp $");
 
 #include "locators.h"
 #include "opt_power_switch.h"
@@ -174,8 +174,8 @@ void mbus_dmamap_unload(void *, bus_dmamap_t);
 void mbus_dmamap_sync(void *, bus_dmamap_t, bus_addr_t, bus_size_t, int);
 int mbus_dmamem_alloc(void *, bus_size_t, bus_size_t, bus_size_t, bus_dma_segment_t *, int, int *, int);
 void mbus_dmamem_free(void *, bus_dma_segment_t *, int);
-int mbus_dmamem_map(void *, bus_dma_segment_t *, int, size_t, caddr_t *, int);
-void mbus_dmamem_unmap(void *, caddr_t, size_t);
+int mbus_dmamem_map(void *, bus_dma_segment_t *, int, size_t, void **, int);
+void mbus_dmamem_unmap(void *, void *, size_t);
 paddr_t mbus_dmamem_mmap(void *, bus_dma_segment_t *, int, off_t, int, int);
 int _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
     bus_size_t buflen, struct vmspace *vm, int flags, paddr_t *lastaddrp, 
@@ -330,7 +330,7 @@ mbus_map(void *v, bus_addr_t bpa, bus_size_t size, int flags,
 	offset = (bpa & PGOFSET);
 	bpa -= offset;
 	size += offset;
-	size = hppa_round_page(size);
+	size = round_page(size);
 
 	/*
 	 * Allocate the region of I/O space.
@@ -368,7 +368,7 @@ mbus_unmap(void *v, bus_space_handle_t bsh, bus_size_t size)
 	offset = bsh & PGOFSET;
 	bsh -= offset;
 	size += offset;
-	size = hppa_round_page(size);
+	size = round_page(size);
 
 	/*
 	 * Unmap the region of I/O space.
@@ -405,7 +405,7 @@ mbus_alloc(void *v, bus_addr_t rstart, bus_addr_t rend, bus_size_t size,
 	 */
 	if (align < PAGE_SIZE)
 		align = PAGE_SIZE;
-	size = hppa_round_page(size);
+	size = round_page(size);
 
 	/*
 	 * Allocate the region of I/O space.
@@ -984,7 +984,7 @@ mbus_dmamap_load_uio(void *v, bus_dmamap_t map, struct uio *uio,
 	int seg, i, error, first;
 	bus_size_t minlen, resid;
 	struct iovec *iov;
-	caddr_t addr;
+	void *addr;
 
 	/*
 	 * Make sure that on error condition we return "no valid mappings."
@@ -1004,7 +1004,7 @@ mbus_dmamap_load_uio(void *v, bus_dmamap_t map, struct uio *uio,
 		 * until we have exhausted the residual count.
 		 */
 		minlen = MIN(resid, iov[i].iov_len);
-		addr = (caddr_t)iov[i].iov_base;
+		addr = (void *)iov[i].iov_base;
 
 		error = _bus_dmamap_load_buffer(NULL, map, addr, minlen,
 		    uio->uio_vmspace, flags, &lastaddr, &seg, first);
@@ -1279,7 +1279,7 @@ mbus_dmamem_free(void *v, bus_dma_segment_t *segs, int nsegs)
  */
 int
 mbus_dmamem_map(void *v, bus_dma_segment_t *segs, int nsegs, size_t size,
-    caddr_t *kvap, int flags)
+    void **kvap, int flags)
 {
 	struct vm_page *pg;
 	struct pglist *pglist;
@@ -1294,7 +1294,7 @@ mbus_dmamem_map(void *v, bus_dma_segment_t *segs, int nsegs, size_t size,
 	if (segs[0]._ds_mlist == NULL) {
 		if (size > segs[0].ds_len)
 			panic("mbus_dmamem_map: size botch");
-		*kvap = (caddr_t)segs[0]._ds_va;
+		*kvap = (void *)segs[0]._ds_va;
 		return (0);
 	}
 
@@ -1305,7 +1305,7 @@ mbus_dmamem_map(void *v, bus_dma_segment_t *segs, int nsegs, size_t size,
 
 	/* Stash that in the first segment. */
 	segs[0]._ds_va = va;
-	*kvap = (caddr_t)va;
+	*kvap = (void *)va;
 
 	/* Map the allocated pages into the chunk. */
 	pglist = segs[0]._ds_mlist;
@@ -1325,7 +1325,7 @@ mbus_dmamem_map(void *v, bus_dma_segment_t *segs, int nsegs, size_t size,
  * bus-specific DMA memory unmapping functions.
  */
 void
-mbus_dmamem_unmap(void *v, caddr_t kva, size_t size)
+mbus_dmamem_unmap(void *v, void *kva, size_t size)
 {
 
 #ifdef DIAGNOSTIC
@@ -1337,7 +1337,7 @@ mbus_dmamem_unmap(void *v, caddr_t kva, size_t size)
 	 * XXX fredette - this is gross, but it is needed
 	 * to support the 24-bit DMA address stuff.
 	 */
-	if (dma24_ex != NULL && kva < (caddr_t) (1 << 24))
+	if (dma24_ex != NULL && kva < (void *) (1 << 24))
 		return;
 
 	size = round_page(size);

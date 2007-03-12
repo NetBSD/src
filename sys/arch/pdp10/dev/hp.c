@@ -1,4 +1,4 @@
-/*	$NetBSD: hp.c,v 1.6 2006/04/14 13:09:05 blymn Exp $ */
+/*	$NetBSD: hp.c,v 1.6.14.1 2007/03/12 05:49:48 rmind Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -350,7 +350,7 @@ hpclose(dev_t dev, int flag, int fmt, struct lwp *l)
 }
 
 int
-hpioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
+hpioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 {
 	struct	hp_softc *sc = hp_cd.cd_devs[DISKUNIT(dev)];
 	struct	disklabel *lp = sc->sc_disk.dk_label;
@@ -488,7 +488,7 @@ hpsize(dev_t dev)
 }
 
 int
-hpdump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
+hpdump(dev_t dev, daddr_t blkno, void *va, size_t size)
 {
 	return 0;
 }

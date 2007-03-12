@@ -1,4 +1,4 @@
-/*	$NetBSD: sbc.c,v 1.51 2006/08/04 01:56:42 mhitch Exp $	*/
+/*	$NetBSD: sbc.c,v 1.51.10.1 2007/03/12 05:48:58 rmind Exp $	*/
 
 /*
  * Copyright (C) 1996 Scott Reynolds.  All rights reserved.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbc.c,v 1.51 2006/08/04 01:56:42 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbc.c,v 1.51.10.1 2007/03/12 05:48:58 rmind Exp $");
 
 #include "opt_ddb.h"
 
@@ -94,7 +94,7 @@ int	sbc_link_flags = 0 /* | SDEV_DB2 */;
 int	sbc_options = 0 /* | SBC_PDMA */;
 
 extern label_t	*nofault;
-extern caddr_t	m68k_fault_addr;
+extern void *	m68k_fault_addr;
 
 static	int	sbc_wait_busy(struct ncr5380_softc *);
 static	int	sbc_ready(struct ncr5380_softc *);

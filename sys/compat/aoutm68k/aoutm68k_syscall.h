@@ -1,4 +1,4 @@
-/* $NetBSD: aoutm68k_syscall.h,v 1.26 2006/09/01 21:19:44 matt Exp $ */
+/* $NetBSD: aoutm68k_syscall.h,v 1.26.8.1 2007/03/12 05:51:52 rmind Exp $ */
 
 /*
  * System call numbers.
@@ -98,7 +98,7 @@
 /* syscall: "geteuid" ret: "uid_t" args: */
 #define	AOUTM68K_SYS_geteuid	25
 
-/* syscall: "ptrace" ret: "int" args: "int" "pid_t" "caddr_t" "int" */
+/* syscall: "ptrace" ret: "int" args: "int" "pid_t" "void *" "int" */
 #define	AOUTM68K_SYS_ptrace	26
 
 /* syscall: "recvmsg" ret: "ssize_t" args: "int" "struct msghdr *" "int" */
@@ -160,7 +160,7 @@
 /* syscall: "getegid" ret: "gid_t" args: */
 #define	AOUTM68K_SYS_getegid	43
 
-/* syscall: "profil" ret: "int" args: "caddr_t" "size_t" "u_long" "u_int" */
+/* syscall: "profil" ret: "int" args: "void *" "size_t" "u_long" "u_int" */
 #define	AOUTM68K_SYS_profil	44
 
 #if defined(KTRACE) || !defined(_KERNEL)
@@ -251,7 +251,7 @@
 				/* 64 is excluded compat_43_sys_getpagesize */
 #endif
 #if defined(COMPAT_12) || !defined(_KERNEL)
-/* syscall: "msync" ret: "int" args: "caddr_t" "size_t" */
+/* syscall: "msync" ret: "int" args: "void *" "size_t" */
 #define	AOUTM68K_SYS_msync	65
 
 #else
@@ -269,7 +269,7 @@
 #define	AOUTM68K_SYS_sstk	70
 
 #if defined(COMPAT_43) || !defined(_KERNEL)
-/* syscall: "ommap" ret: "int" args: "caddr_t" "size_t" "int" "int" "int" "long" */
+/* syscall: "ommap" ret: "int" args: "void *" "size_t" "int" "int" "int" "long" */
 #define	AOUTM68K_SYS_ommap	71
 
 #else
@@ -289,7 +289,7 @@
 
 				/* 76 is obsolete vhangup */
 				/* 77 is obsolete vlimit */
-/* syscall: "mincore" ret: "int" args: "caddr_t" "size_t" "char *" */
+/* syscall: "mincore" ret: "int" args: "void *" "size_t" "char *" */
 #define	AOUTM68K_SYS_mincore	78
 
 /* syscall: "getgroups" ret: "int" args: "int" "gid_t *" */
@@ -361,7 +361,7 @@
 #define	AOUTM68K_SYS_connect	98
 
 #if defined(COMPAT_43) || !defined(_KERNEL)
-/* syscall: "oaccept" ret: "int" args: "int" "caddr_t" "int *" */
+/* syscall: "oaccept" ret: "int" args: "int" "void *" "int *" */
 #define	AOUTM68K_SYS_oaccept	99
 
 #else
@@ -371,10 +371,10 @@
 #define	AOUTM68K_SYS_getpriority	100
 
 #if defined(COMPAT_43) || !defined(_KERNEL)
-/* syscall: "osend" ret: "int" args: "int" "caddr_t" "int" "int" */
+/* syscall: "osend" ret: "int" args: "int" "void *" "int" "int" */
 #define	AOUTM68K_SYS_osend	101
 
-/* syscall: "orecv" ret: "int" args: "int" "caddr_t" "int" "int" */
+/* syscall: "orecv" ret: "int" args: "int" "void *" "int" "int" */
 #define	AOUTM68K_SYS_orecv	102
 
 #else
@@ -427,7 +427,7 @@
 /* syscall: "orecvmsg" ret: "int" args: "int" "struct omsghdr *" "int" */
 #define	AOUTM68K_SYS_orecvmsg	113
 
-/* syscall: "osendmsg" ret: "int" args: "int" "caddr_t" "int" */
+/* syscall: "osendmsg" ret: "int" args: "int" "void *" "int" */
 #define	AOUTM68K_SYS_osendmsg	114
 
 #else
@@ -462,7 +462,7 @@
 #define	AOUTM68K_SYS_fchmod	124
 
 #if defined(COMPAT_43) || !defined(_KERNEL)
-/* syscall: "orecvfrom" ret: "int" args: "int" "caddr_t" "size_t" "int" "caddr_t" "int *" */
+/* syscall: "orecvfrom" ret: "int" args: "int" "void *" "size_t" "int" "void *" "int *" */
 #define	AOUTM68K_SYS_orecvfrom	125
 
 #else
@@ -517,7 +517,7 @@
 #define	AOUTM68K_SYS_adjtime	140
 
 #if defined(COMPAT_43) || !defined(_KERNEL)
-/* syscall: "ogetpeername" ret: "int" args: "int" "caddr_t" "int *" */
+/* syscall: "ogetpeername" ret: "int" args: "int" "void *" "int *" */
 #define	AOUTM68K_SYS_ogetpeername	141
 
 /* syscall: "ogethostid" ret: "int32_t" args: */
@@ -546,14 +546,14 @@
 /* syscall: "setsid" ret: "int" args: */
 #define	AOUTM68K_SYS_setsid	147
 
-/* syscall: "quotactl" ret: "int" args: "const char *" "int" "int" "caddr_t" */
+/* syscall: "quotactl" ret: "int" args: "const char *" "int" "int" "void *" */
 #define	AOUTM68K_SYS_quotactl	148
 
 #if defined(COMPAT_43) || !defined(_KERNEL)
 /* syscall: "oquota" ret: "int" args: */
 #define	AOUTM68K_SYS_oquota	149
 
-/* syscall: "ogetsockname" ret: "int" args: "int" "caddr_t" "int *" */
+/* syscall: "ogetsockname" ret: "int" args: "int" "void *" "int *" */
 #define	AOUTM68K_SYS_ogetsockname	150
 
 #else

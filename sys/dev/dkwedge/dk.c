@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.21 2007/02/15 16:04:12 yamt Exp $	*/
+/*	$NetBSD: dk.c,v 1.21.2.1 2007/03/12 05:53:10 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.21 2007/02/15 16:04:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.21.2.1 2007/03/12 05:53:10 rmind Exp $");
 
 #include "opt_dkwedge.h"
 
@@ -1165,7 +1165,7 @@ dkwrite(dev_t dev, struct uio *uio, int flags)
  *	Perform an ioctl request on a wedge.
  */
 static int
-dkioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+dkioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct dkwedge_softc *sc = dkwedge_lookup(dev);
 	int error = 0;
@@ -1251,7 +1251,7 @@ dksize(dev_t dev)
  *	Perform a crash dump to a wedge.
  */
 static int
-dkdump(dev_t dev, daddr_t blkno, caddr_t va,
+dkdump(dev_t dev, daddr_t blkno, void *va,
     size_t size)
 {
 

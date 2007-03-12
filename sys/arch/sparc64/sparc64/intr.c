@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.52 2006/10/15 19:59:50 martin Exp $ */
+/*	$NetBSD: intr.c,v 1.52.4.1 2007/03/12 05:50:49 rmind Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.52 2006/10/15 19:59:50 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.52.4.1 2007/03/12 05:50:49 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "pcons.h"
@@ -197,7 +197,7 @@ struct intrhand *intrhand[16] = {
  * a handler to hand out interrupts.
  */
 int
-intr_list_handler(void * arg)
+intr_list_handler(void *arg)
 {
 	int claimed = 0;
 	struct intrhand *ih = (struct intrhand *)arg;

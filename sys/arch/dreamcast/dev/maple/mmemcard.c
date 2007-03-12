@@ -1,4 +1,4 @@
-/*	$NetBSD: mmemcard.c,v 1.8 2006/03/28 17:38:24 thorpej Exp $	*/
+/*	$NetBSD: mmemcard.c,v 1.8.14.1 2007/03/12 05:47:36 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mmemcard.c,v 1.8 2006/03/28 17:38:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mmemcard.c,v 1.8.14.1 2007/03/12 05:47:36 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -869,7 +869,7 @@ mmemdone(struct mmem_softc *sc, struct mmem_pt *pt, int err)
 	KASSERT(bp);
 
 	if (err) {
-		bcnt = sc->sc_iobuf - bp->b_data;
+		bcnt = (char *)sc->sc_iobuf - (char *)bp->b_data;
 		bp->b_resid = bp->b_bcount - bcnt;
 
 		/* raise error if no block is read */
@@ -886,7 +886,8 @@ mmemdone(struct mmem_softc *sc, struct mmem_pt *pt, int err)
 		/* terminate current transfer */
 		sc->sc_bp = NULL;
 		s = splbio();
-		disk_unbusy(&pt->pt_dk, sc->sc_iobuf - bp->b_data,
+		disk_unbusy(&pt->pt_dk,
+		    (char *)sc->sc_iobuf - (char *)bp->b_data,
 		    sc->sc_stat == MMEM_READ);
 		biodone(bp);
 		splx(s);
@@ -916,7 +917,7 @@ mmemwrite(dev_t dev, struct uio *uio, int flags)
 }
 
 int
-mmemioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+mmemioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	int diskunit, unit, part;
 	struct mmem_softc *sc;

@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86960.c,v 1.65 2006/09/07 02:40:32 dogcow Exp $	*/
+/*	$NetBSD: mb86960.c,v 1.65.8.1 2007/03/12 05:53:37 rmind Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb86960.c,v 1.65 2006/09/07 02:40:32 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb86960.c,v 1.65.8.1 2007/03/12 05:53:37 rmind Exp $");
 
 /*
  * Device driver for Fujitsu MB86960A/MB86965A based Ethernet cards.
@@ -96,7 +96,7 @@ __KERNEL_RCSID(0, "$NetBSD: mb86960.c,v 1.65 2006/09/07 02:40:32 dogcow Exp $");
 
 /* Standard driver entry points.  These can be static. */
 void	mb86960_init(struct mb86960_softc *);
-int	mb86960_ioctl(struct ifnet *, u_long, caddr_t);
+int	mb86960_ioctl(struct ifnet *, u_long, void *);
 void	mb86960_start(struct ifnet *);
 void	mb86960_reset(struct mb86960_softc *);
 void	mb86960_watchdog(struct ifnet *);
@@ -1171,7 +1171,7 @@ mb86960_intr(void *arg)
  * Process an ioctl request.  This code needs some work - it looks pretty ugly.
  */
 int
-mb86960_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
+mb86960_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct mb86960_softc *sc = ifp->if_softc;
 	struct ifaddr *ifa = (struct ifaddr *)data;

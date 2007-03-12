@@ -1,4 +1,4 @@
-/* $NetBSD: siotty.c,v 1.19 2006/10/01 18:56:22 elad Exp $ */
+/* $NetBSD: siotty.c,v 1.19.4.1 2007/03/12 05:48:43 rmind Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: siotty.c,v 1.19 2006/10/01 18:56:22 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siotty.c,v 1.19.4.1 2007/03/12 05:48:43 rmind Exp $");
 
 #include "opt_ddb.h"
 
@@ -220,7 +220,7 @@ siostart(tp)
 	if (tp->t_outq.c_cc <= tp->t_lowat) {
 		if (tp->t_state & TS_ASLEEP) {
 			tp->t_state &= ~TS_ASLEEP;
-			wakeup((caddr_t)&tp->t_outq);
+			wakeup((void *)&tp->t_outq);
 		}
 		selwakeup(&tp->t_wsel);
 	}
@@ -485,7 +485,7 @@ int
 sioioctl(dev, cmd, data, flag, l)
 	dev_t dev;
 	u_long cmd;
-	caddr_t data;
+	void *data;
 	int flag;
 	struct lwp *l;
 {

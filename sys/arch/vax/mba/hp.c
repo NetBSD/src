@@ -1,4 +1,4 @@
-/*	$NetBSD: hp.c,v 1.42 2006/04/16 09:34:56 he Exp $ */
+/*	$NetBSD: hp.c,v 1.42.14.1 2007/03/12 05:51:14 rmind Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hp.c,v 1.42 2006/04/16 09:34:56 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hp.c,v 1.42.14.1 2007/03/12 05:51:14 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -314,7 +314,7 @@ hpclose(dev_t dev, int flag, int fmt, struct lwp *l)
 }
 
 int
-hpioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
+hpioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 {
 	struct	hp_softc *sc = hp_cd.cd_devs[DISKUNIT(dev)];
 	struct	disklabel *lp = sc->sc_disk.dk_label;

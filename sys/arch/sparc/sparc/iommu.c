@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.84 2006/11/24 19:46:58 christos Exp $ */
+/*	$NetBSD: iommu.c,v 1.84.4.1 2007/03/12 05:50:42 rmind Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.84 2006/11/24 19:46:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.84.4.1 2007/03/12 05:50:42 rmind Exp $");
 
 #include "opt_sparc_arch.h"
 
@@ -106,8 +106,8 @@ void	iommu_dmamap_sync(bus_dma_tag_t, bus_dmamap_t, bus_addr_t,
 			bus_size_t, int);
 
 int	iommu_dmamem_map(bus_dma_tag_t, bus_dma_segment_t *,
-			int, size_t, caddr_t *, int);
-void	iommu_dmamem_unmap(bus_dma_tag_t, caddr_t, size_t);
+			int, size_t, void **, int);
+void	iommu_dmamem_unmap(bus_dma_tag_t, void *, size_t);
 paddr_t	iommu_dmamem_mmap(bus_dma_tag_t, bus_dma_segment_t *,
 			int, off_t, int, int);
 int	iommu_dvma_alloc(struct iommu_softc *, bus_dmamap_t, vaddr_t,
@@ -740,7 +740,7 @@ iommu_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map,
  */
 int
 iommu_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
-		 size_t size, caddr_t *kvap, int flags)
+		 size_t size, void **kvap, int flags)
 {
 	struct iommu_softc *sc = t->_cookie;
 	struct vm_page *m;
@@ -770,7 +770,7 @@ iommu_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 		return (ENOMEM);
 
 	segs[0]._ds_va = va;
-	*kvap = (caddr_t)va;
+	*kvap = (void *)va;
 
 	/*
 	 * Map the pages allocated in _bus_dmamem_alloc() to the
@@ -797,7 +797,7 @@ iommu_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 }
 
 void
-iommu_dmamem_unmap(bus_dma_tag_t t, caddr_t kva, size_t size)
+iommu_dmamem_unmap(bus_dma_tag_t t, void *kva, size_t size)
 {
 
 #ifdef DIAGNOSTIC

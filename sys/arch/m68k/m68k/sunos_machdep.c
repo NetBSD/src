@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_machdep.c,v 1.33 2007/02/09 21:55:05 ad Exp $	*/
+/*	$NetBSD: sunos_machdep.c,v 1.33.2.1 2007/03/12 05:48:54 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_machdep.c,v 1.33 2007/02/09 21:55:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_machdep.c,v 1.33.2.1 2007/03/12 05:48:54 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -251,7 +251,7 @@ sunos_sys_sigreturn(struct lwp *l, void *v, register_t *retval)
 #endif
 	if ((int)scp & 1)
 		return EINVAL;
-	if (copyin((caddr_t)scp, (caddr_t)&tsigc, sizeof(tsigc)) != 0)
+	if (copyin((void *)scp, (void *)&tsigc, sizeof(tsigc)) != 0)
 		return EFAULT;
 	scp = &tsigc;
 

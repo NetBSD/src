@@ -1,4 +1,4 @@
-/*	$NetBSD: if_altq.h,v 1.11 2006/10/12 19:59:08 peter Exp $	*/
+/*	$NetBSD: if_altq.h,v 1.11.4.1 2007/03/12 05:45:09 rmind Exp $	*/
 /*	$KAME: if_altq.h,v 1.12 2005/04/13 03:44:25 suz Exp $	*/
 
 /*
@@ -88,7 +88,7 @@ struct	ifaltq {
 struct altq_pktattr {
 	void	*pattr_class;		/* sched class set by classifier */
 	int	pattr_af;		/* address family */
-	caddr_t	pattr_hdr;		/* saved header position in mbuf */
+	void *	pattr_hdr;		/* saved header position in mbuf */
 };
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: dp83932.c,v 1.13 2005/12/11 12:21:26 christos Exp $	*/
+/*	$NetBSD: dp83932.c,v 1.13.26.1 2007/03/12 05:53:30 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dp83932.c,v 1.13 2005/12/11 12:21:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dp83932.c,v 1.13.26.1 2007/03/12 05:53:30 rmind Exp $");
 
 #include "bpfilter.h"
 
@@ -74,7 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: dp83932.c,v 1.13 2005/12/11 12:21:26 christos Exp $"
 
 void	sonic_start(struct ifnet *);
 void	sonic_watchdog(struct ifnet *);
-int	sonic_ioctl(struct ifnet *, u_long, caddr_t);
+int	sonic_ioctl(struct ifnet *, u_long, void *);
 int	sonic_init(struct ifnet *);
 void	sonic_stop(struct ifnet *, int);
 
@@ -124,7 +124,7 @@ sonic_attach(struct sonic_softc *sc, const uint8_t *enaddr)
 	}
 
 	if ((error = bus_dmamem_map(sc->sc_dmat, &seg, rseg,
-	    cdatasize + ETHER_PAD_LEN, (caddr_t *) &sc->sc_cdata16,
+	    cdatasize + ETHER_PAD_LEN, (void **) &sc->sc_cdata16,
 	    BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
 		printf("%s: unable to map control data, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
@@ -249,7 +249,7 @@ sonic_attach(struct sonic_softc *sc, const uint8_t *enaddr)
  fail_3:
 	bus_dmamap_destroy(sc->sc_dmat, sc->sc_cddmamap);
  fail_2:
-	bus_dmamem_unmap(sc->sc_dmat, (caddr_t) sc->sc_cdata16, cdatasize);
+	bus_dmamem_unmap(sc->sc_dmat, (void *) sc->sc_cdata16, cdatasize);
  fail_1:
 	bus_dmamem_free(sc->sc_dmat, &seg, rseg);
  fail_0:
@@ -344,7 +344,7 @@ sonic_start(struct ifnet *ifp)
 					break;
 				}
 			}
-			m_copydata(m0, 0, m0->m_pkthdr.len, mtod(m, caddr_t));
+			m_copydata(m0, 0, m0->m_pkthdr.len, mtod(m, void *));
 			m->m_pkthdr.len = m->m_len = m0->m_pkthdr.len;
 			error = bus_dmamap_load_mbuf(sc->sc_dmat, dmamap,
 			    m, BUS_DMA_WRITE|BUS_DMA_NOWAIT);
@@ -545,7 +545,7 @@ sonic_watchdog(struct ifnet *ifp)
  *	Handle control requests from the operator.
  */
 int
-sonic_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
+sonic_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	int s, error;
 
@@ -794,7 +794,7 @@ sonic_rxintr(struct sonic_softc *sc)
 			 * Note that we use a cluster for incoming frames,
 			 * so the buffer is virtually contiguous.
 			 */
-			memcpy(mtod(m, caddr_t), mtod(ds->ds_mbuf, caddr_t),
+			memcpy(mtod(m, void *), mtod(ds->ds_mbuf, void *),
 			    len);
 			SONIC_INIT_RXDESC(sc, i);
 			bus_dmamap_sync(sc->sc_dmat, ds->ds_dmamap, 0,
@@ -816,7 +816,7 @@ sonic_rxintr(struct sonic_softc *sc)
 			 * Note that we use a cluster for incoming frames,
 			 * so the buffer is virtually contiguous.
 			 */
-			memcpy(mtod(m, caddr_t), mtod(ds->ds_mbuf, caddr_t),
+			memcpy(mtod(m, void *), mtod(ds->ds_mbuf, void *),
 			    len);
 			SONIC_INIT_RXDESC(sc, i);
 			bus_dmamap_sync(sc->sc_dmat, ds->ds_dmamap, 0,

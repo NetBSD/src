@@ -1,4 +1,4 @@
-/*	$NetBSD: dpti.c,v 1.32 2007/02/15 15:40:51 ad Exp $	*/
+/*	$NetBSD: dpti.c,v 1.32.2.1 2007/03/12 05:53:23 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2007 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpti.c,v 1.32 2007/02/15 15:40:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpti.c,v 1.32.2.1 2007/03/12 05:53:23 rmind Exp $");
 
 #include "opt_i2o.h"
 
@@ -138,10 +138,10 @@ static struct dpt_sig dpti_sig = {
 
 void	dpti_attach(struct device *, struct device *, void *);
 int	dpti_blinkled(struct dpti_softc *);
-int	dpti_ctlrinfo(struct dpti_softc *, int, caddr_t);
+int	dpti_ctlrinfo(struct dpti_softc *, int, void *);
 int	dpti_match(struct device *, struct cfdata *, void *);
-int	dpti_passthrough(struct dpti_softc *, caddr_t, struct proc *);
-int	dpti_sysinfo(struct dpti_softc *, int, caddr_t);
+int	dpti_passthrough(struct dpti_softc *, void *, struct proc *);
+int	dpti_sysinfo(struct dpti_softc *, int, void *);
 
 dev_type_open(dptiopen);
 dev_type_ioctl(dptiioctl);
@@ -218,7 +218,7 @@ dptiopen(dev_t dev, int flag, int mode,
 }
 
 int
-dptiioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+dptiioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct iop_softc *iop;
 	struct dpti_softc *sc;
@@ -261,7 +261,7 @@ dptiioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 			i = 0;
 
 		if (size == 0) {
-			rv = copyout(&i, *(caddr_t *)data, sizeof(i));
+			rv = copyout(&i, *(void **)data, sizeof(i));
 			break;
 		}
 
@@ -288,7 +288,7 @@ dptiioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		if (linux)
 			rv = dpti_passthrough(sc, data, l->l_proc);
 		else
-			rv = dpti_passthrough(sc, *(caddr_t *)data, l->l_proc);
+			rv = dpti_passthrough(sc, *(void **)data, l->l_proc);
 
 		sc->sc_nactive--;
 		wakeup_one(&sc->sc_nactive);
@@ -333,7 +333,7 @@ dpti_blinkled(struct dpti_softc *sc)
 }
 
 int
-dpti_ctlrinfo(struct dpti_softc *sc, int size, caddr_t data)
+dpti_ctlrinfo(struct dpti_softc *sc, int size, void *data)
 {
 	struct dpt_ctlrinfo info;
 	struct iop_softc *iop;
@@ -354,17 +354,17 @@ dpti_ctlrinfo(struct dpti_softc *sc, int size, caddr_t data)
 	info.hbaFlags = FLG_OSD_PCI_VALID | FLG_OSD_DMA | FLG_OSD_I2O;
 	info.Interrupt = 10;			/* XXX */
 
-	if (size > sizeof(*data)) {
+	if (size > sizeof(char)) {
 		memcpy(data, &info, min(sizeof(info), size));
 		rv = 0;
 	} else
-		rv = copyout(&info, *(caddr_t *)data, sizeof(info));
+		rv = copyout(&info, *(void **)data, sizeof(info));
 
 	return (rv);
 }
 
 int
-dpti_sysinfo(struct dpti_softc *sc, int size, caddr_t data)
+dpti_sysinfo(struct dpti_softc *sc, int size, void *data)
 {
 	struct dpt_sysinfo info;
 	int rv;
@@ -439,17 +439,17 @@ dpti_sysinfo(struct dpti_softc *sc, int size, caddr_t data)
 	/*
 	 * Copy out the info structure to the user.
 	 */
-	if (size > sizeof(*data)) {
+	if (size > sizeof(char)) {
 		memcpy(data, &info, min(sizeof(info), size));
 		rv = 0;
 	} else
-		rv = copyout(&info, *(caddr_t *)data, sizeof(info));
+		rv = copyout(&info, *(void **)data, sizeof(info));
 
 	return (rv);
 }
 
 int
-dpti_passthrough(struct dpti_softc *sc, caddr_t data, struct proc *proc)
+dpti_passthrough(struct dpti_softc *sc, void *data, struct proc *proc)
 {
 	struct iop_softc *iop;
 	struct i2o_msg mh, *mf;
@@ -510,7 +510,7 @@ dpti_passthrough(struct dpti_softc *sc, caddr_t data, struct proc *proc)
 
 	case I2O_EXEC_STATUS_GET:
 		if ((rv = iop_status_get(iop, 0)) == 0)
-			rv = copyout(&iop->sc_status, data + msgsize,
+			rv = copyout(&iop->sc_status, (char *)data + msgsize,
 			    sizeof(iop->sc_status));
 		return (rv);
 	}
@@ -527,7 +527,7 @@ dpti_passthrough(struct dpti_softc *sc, caddr_t data, struct proc *proc)
 	/*
 	 * Determine the size of the reply frame, and copy it in.
 	 */
-	if ((rv = copyin(data + msgsize, &rh, sizeof(rh))) != 0) {
+	if ((rv = copyin((char *)data + msgsize, &rh, sizeof(rh))) != 0) {
 		DPRINTF(("%s: reply copyin failed\n",
 		    sc->sc_dv.dv_xname));
 		return (rv);
@@ -540,7 +540,7 @@ dpti_passthrough(struct dpti_softc *sc, caddr_t data, struct proc *proc)
 		return (EINVAL);
 	}
 
-	if ((rv = copyin(data + msgsize, rbtmp, repsize)) != 0) {
+	if ((rv = copyin((char *)data + msgsize, rbtmp, repsize)) != 0) {
 		DPRINTF(("%s: reply too large\n", sc->sc_dv.dv_xname));
 		return (rv);
 	}
@@ -587,7 +587,7 @@ dpti_passthrough(struct dpti_softc *sc, caddr_t data, struct proc *proc)
 					goto bad;
 				}
 
-				bufs[nbuf].db_ptr = (caddr_t)p[1];
+				bufs[nbuf].db_ptr = (void *)p[1];
 				bufs[nbuf].db_proc = proc;
 				bufs[nbuf].db_size = p[0] & 0x00ffffff;
 
@@ -655,7 +655,7 @@ dpti_passthrough(struct dpti_softc *sc, caddr_t data, struct proc *proc)
 
 			for (i = 0, sz = 0; i < bufs[nbuf].db_nfrag; i++) {
 				rv = copyin(bufs[nbuf].db_frags[i].iov_base,
-				    bufs[nbuf].db_ptr + sz,
+				    (char *)bufs[nbuf].db_ptr + sz,
 				    bufs[nbuf].db_frags[i].iov_len);
 				if (rv != 0) {
 					DPRINTF(("%s: frag copyin\n",
@@ -714,7 +714,7 @@ dpti_passthrough(struct dpti_softc *sc, caddr_t data, struct proc *proc)
 	/*
 	 * Copy out the reply frame.
 	 */
-	if ((rv = copyout(rbtmp, data + msgsize, repsize)) != 0) {
+	if ((rv = copyout(rbtmp, (char *)data + msgsize, repsize)) != 0) {
 		DPRINTF(("%s: reply copyout() failed\n",
 		    sc->sc_dv.dv_xname));
 	}
@@ -735,7 +735,7 @@ dpti_passthrough(struct dpti_softc *sc, caddr_t data, struct proc *proc)
 
 		if (!bufs[i].db_out && rv == 0) {
 			for (j = 0, sz = 0; j < bufs[i].db_nfrag; j++) {
-				rv = copyout(bufs[i].db_ptr + sz,
+				rv = copyout((char *)bufs[i].db_ptr + sz,
 				    bufs[i].db_frags[j].iov_base,
 				    bufs[i].db_frags[j].iov_len);
 				if (rv != 0)

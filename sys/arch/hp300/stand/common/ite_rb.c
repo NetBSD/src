@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_rb.c,v 1.6 2006/01/28 12:00:57 tsutsui Exp $	*/
+/*	$NetBSD: ite_rb.c,v 1.6.24.1 2007/03/12 05:47:58 rmind Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -116,14 +116,14 @@ rbox_init(struct ite_data *ip)
 	rb_waitbusy(regbase);
 	
 	for(i = 0; i < 16; i++) {
-		*(ip->regbase + 0x63c3 + i * 4) = 0x0;
-		*(ip->regbase + 0x6403 + i * 4) = 0x0;
-		*(ip->regbase + 0x6803 + i * 4) = 0x0;
-		*(ip->regbase + 0x6c03 + i * 4) = 0x0;
-		*(ip->regbase + 0x73c3 + i * 4) = 0x0;
-		*(ip->regbase + 0x7403 + i * 4) = 0x0;
-		*(ip->regbase + 0x7803 + i * 4) = 0x0;
-		*(ip->regbase + 0x7c03 + i * 4) = 0x0;
+		*((char *)ip->regbase + 0x63c3 + i * 4) = 0x0;
+		*((char *)ip->regbase + 0x6403 + i * 4) = 0x0;
+		*((char *)ip->regbase + 0x6803 + i * 4) = 0x0;
+		*((char *)ip->regbase + 0x6c03 + i * 4) = 0x0;
+		*((char *)ip->regbase + 0x73c3 + i * 4) = 0x0;
+		*((char *)ip->regbase + 0x7403 + i * 4) = 0x0;
+		*((char *)ip->regbase + 0x7803 + i * 4) = 0x0;
+		*((char *)ip->regbase + 0x7c03 + i * 4) = 0x0;
 	}
 
 	regbase->rep_rule = 0x33;

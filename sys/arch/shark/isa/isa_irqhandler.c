@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_irqhandler.c,v 1.8.14.1 2007/02/27 16:53:05 yamt Exp $	*/
+/*	$NetBSD: isa_irqhandler.c,v 1.8.14.2 2007/03/12 05:50:25 rmind Exp $	*/
 
 /*
  * Copyright 1997
@@ -75,9 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_irqhandler.c,v 1.8.14.1 2007/02/27 16:53:05 yamt Exp $");
-
-#include "opt_irqstats.h"
+__KERNEL_RCSID(0, "$NetBSD: isa_irqhandler.c,v 1.8.14.2 2007/03/12 05:50:25 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,6 +85,7 @@ __KERNEL_RCSID(0, "$NetBSD: isa_irqhandler.c,v 1.8.14.1 2007/02/27 16:53:05 yamt
 #include <uvm/uvm_extern.h>
 
 #include <machine/intr.h>
+#include <machine/irqhandler.h>
 #include <machine/cpu.h>
 
 irqhandler_t *irqhandlers[NIRQS];
@@ -97,8 +96,6 @@ u_int actual_mask;
 u_int disabled_mask;
 u_int spl_mask;
 u_int irqmasks[IPL_LEVELS];
-
-extern char *_intrnames;
 
 /* Prototypes */
 
@@ -152,9 +149,11 @@ irq_init()
  */
 
 int
-irq_claim(irq, handler)
+irq_claim(irq, handler, group, name)
 	int irq;
 	irqhandler_t *handler;
+	const char *group;
+	const char *name;
 {
 
 #ifdef DIAGNOSTIC
@@ -179,6 +178,10 @@ irq_claim(irq, handler)
 	/* Make sure the level is valid */
 	if (handler->ih_level < 0 || handler->ih_level >= IPL_LEVELS)
     	        return(-1);
+
+	/* Attach evcnt */
+	evcnt_attach_dynamic(&handler->ih_ev, EVCNT_TYPE_INTR, NULL,
+	    group, name);
 
 	/* Attach handler at top of chain */
 	handler->ih_next = irqhandlers[irq];
@@ -231,12 +234,12 @@ irq_release(irq, handler)
 		return(-1);
 
 	/* Locate the handler */
-	irqhand = irqhandlers[irq];
 	prehand = &irqhandlers[irq];
+	irqhand = *prehand;
     
 	while (irqhand && handler != irqhand) {
-		prehand = &irqhand;
-		irqhand = irqhand->ih_next;
+		prehand = &irqhand->ih_next;
+		irqhand = *prehand;
 	}
 
 	/* Remove the handler if located */
@@ -245,12 +248,14 @@ irq_release(irq, handler)
 	else
 		return(-1);
 
-	/* Now the handler has been removed from the chain mark is as inactive */
+	/* The handler has been removed from the chain so mark it as inactive */
 	irqhand->ih_flags &= ~IRQ_FLAG_ACTIVE;
 
 	/* Make sure the head of the handler list is active */
 	if (irqhandlers[irq])
 		irqhandlers[irq]->ih_flags |= IRQ_FLAG_ACTIVE;
+
+	evcnt_detach(&irqhand->ih_ev);
 
 	irq_calculatemasks();
 
@@ -301,15 +306,19 @@ irq_calculatemasks()
 	 * Enforce a hierarchy that gives slow devices a better chance at not
 	 * dropping data.
 	 */
+	irqmasks[IPL_SOFT] &= irqmasks[IPL_NONE];
+	irqmasks[IPL_SOFTCLOCK] &= irqmasks[IPL_SOFT];
+	irqmasks[IPL_SOFTNET] &= irqmasks[IPL_SOFTCLOCK];
+	irqmasks[IPL_BIO] &= irqmasks[IPL_SOFTNET];
 	irqmasks[IPL_NET] &= irqmasks[IPL_BIO];
-	irqmasks[IPL_TTY] &= irqmasks[IPL_NET];
-
+	irqmasks[IPL_SOFTSERIAL] &= irqmasks[IPL_NET];
+	irqmasks[IPL_TTY] &= irqmasks[IPL_SOFTSERIAL];
+	
 	/*
 	 * There are tty, network and disk drivers that use free() at interrupt
 	 * time, so imp > (tty | net | bio).
 	 */
 	irqmasks[IPL_VM] &= irqmasks[IPL_TTY];
-
 	irqmasks[IPL_AUDIO] &= irqmasks[IPL_VM];
 
 	/*
@@ -317,11 +326,12 @@ irq_calculatemasks()
 	 * network, and disk drivers, statclock > (tty | net | bio).
 	 */
 	irqmasks[IPL_CLOCK] &= irqmasks[IPL_AUDIO];
+	irqmasks[IPL_STATCLOCK] &= irqmasks[IPL_CLOCK];
 
 	/*
 	 * IPL_HIGH must block everything that can manipulate a run queue.
 	 */
-	irqmasks[IPL_HIGH] &= irqmasks[IPL_CLOCK];
+	irqmasks[IPL_HIGH] &= irqmasks[IPL_STATCLOCK];
 
 	/*
 	 * We need serial drivers to run at the absolute highest priority to
@@ -332,12 +342,13 @@ irq_calculatemasks()
 
 
 void *
-intr_claim(irq, level, name, ih_func, ih_arg)
+intr_claim(irq, level, ih_func, ih_arg, group, name)
 	int irq;
 	int level;
-	const char *name;
-	int (*ih_func) __P((void *));
+	int (*ih_func)(void *);
 	void *ih_arg;
+	const char *group;
+	const char *name;
 {
 	irqhandler_t *ih;
 
@@ -349,16 +360,10 @@ intr_claim(irq, level, name, ih_func, ih_arg)
 	ih->ih_func = ih_func;
 	ih->ih_arg = ih_arg;
 	ih->ih_flags = 0;
-	if (name == NULL) {
-		snprintf(ih->ih_evname, sizeof(ih->ih_evname), "irq %2d", irq);
-		name = ih->ih_evname;
-	}
-	evcnt_attach_dynamic(&ih->ih_ev, EVCNT_TYPE_INTR, NULL, NULL, name);
 
-	if (irq_claim(irq, ih) != 0) {
-		evcnt_detach(&ih->ih_ev);
+	if (irq_claim(irq, ih, group, name) != 0) 
 		return(NULL);
-	}
+
 	return(ih);
 }
 
@@ -369,7 +374,6 @@ intr_release(arg)
 	irqhandler_t *ih = (irqhandler_t *)arg;
 
 	if (irq_release(ih->ih_num, ih) == 0) {
-		evcnt_detach(&ih->ih_ev);
 		free(ih, M_DEVBUF);
 		return(0);
 	}

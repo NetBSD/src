@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.7 2006/06/25 17:37:43 tsutsui Exp $	*/
+/*	$NetBSD: rd.c,v 1.7.10.1 2007/03/12 05:47:58 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -255,7 +255,7 @@ rdgetinfo(struct rd_softc *rs)
 	int err, savepart;
 	size_t i;
 
-	memset((caddr_t)lp, 0, sizeof *lp);
+	memset((void *)lp, 0, sizeof *lp);
 	lp->d_secsize = DEV_BSIZE;
 
 	/* Disklabel is always from RAW_PART. */

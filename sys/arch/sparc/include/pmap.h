@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.76.26.1 2007/02/27 16:53:09 yamt Exp $ */
+/*	$NetBSD: pmap.h,v 1.76.26.2 2007/03/12 05:50:30 rmind Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -240,7 +240,7 @@ extern psize_t		vm_num_phys;
 				       : PMAP_IOENC_4(io))
 
 int	pmap_dumpsize(void);
-int	pmap_dumpmmu(int (*)(dev_t, daddr_t, caddr_t, size_t), daddr_t);
+int	pmap_dumpmmu(int (*)(dev_t, daddr_t, void *, size_t), daddr_t);
 
 #define	pmap_kernel()	(&kernel_pmap_store)
 #define	pmap_resident_count(pm)	((pm)->pm_stats.resident_count)
@@ -273,7 +273,7 @@ void		pmap_virtual_space(vaddr_t *, vaddr_t *);
 vaddr_t		pmap_growkernel(vaddr_t);
 #endif
 void		pmap_redzone(void);
-void		kvm_uncache(caddr_t, int);
+void		kvm_uncache(char *, int);
 struct user;
 int		mmu_pagein(struct pmap *pm, vaddr_t, int);
 void		pmap_writetext(unsigned char *, int);

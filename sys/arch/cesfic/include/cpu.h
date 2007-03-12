@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.13 2007/02/16 02:53:45 ad Exp $	*/
+/*	$NetBSD: cpu.h,v 1.13.2.1 2007/03/12 05:47:33 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -156,22 +156,6 @@ extern int want_resched;	/* resched() was called */
 extern int astpending;		/* need to trap before returning to user mode */
 #define aston() (astpending++)
 
-/*
- * simulated software interrupt register
- */
-extern unsigned char ssir;
-
-#define SIR_NET		0x1
-#define SIR_CLOCK	0x2
-#define SIR_ZS		0x4
-
-#define siroff(x)	ssir &= ~(x)
-#define setsoftnet()	ssir |= SIR_NET
-#define setsoftclock()	ssir |= SIR_CLOCK
-#define setsoftzs()	ssir |= SIR_ZS
-
-void softzs __P((void));
-
 #endif /* _KERNEL */
 
 /*
@@ -202,7 +186,7 @@ struct pcb;
 /* locore.s functions */
 void	m68881_save __P((struct fpframe *));
 void	m68881_restore __P((struct fpframe *));
-int	suline __P((caddr_t, caddr_t));
+int	suline __P((void *, void *));
 void	savectx __P((struct pcb *));
 void	switch_exit __P((struct lwp *));
 void	switch_lwp_exit __P((struct lwp *));
@@ -213,16 +197,16 @@ void	doboot __P((void))
 	__attribute__((__noreturn__));
 
 /* machdep.c functions */
-int	badaddr __P((caddr_t));
-int	badbaddr __P((caddr_t));
+int	badaddr __P((void *));
+int	badbaddr __P((void *));
 
 /* sys_machdep.c functions */
 int	cachectl1 __P((unsigned long, vaddr_t, size_t, struct proc *));
 
 /* vm_machdep.c functions */
-void	physaccess __P((caddr_t, caddr_t, int, int));
-void	physunaccess __P((caddr_t, int));
-int	kvtop __P((caddr_t));
+void	physaccess __P((void *, void *, int, int));
+void	physunaccess __P((void *, int));
+int	kvtop __P((void *));
 
 void kgdb_panic __P((void));
 

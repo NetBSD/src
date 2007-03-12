@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_descrip.c,v 1.20 2007/02/09 21:55:23 ad Exp $ */
+/* $NetBSD: osf1_descrip.c,v 1.20.2.1 2007/03/12 05:52:39 rmind Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_descrip.c,v 1.20 2007/02/09 21:55:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_descrip.c,v 1.20.2.1 2007/03/12 05:52:39 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,7 +98,7 @@ osf1_sys_fcntl(l, v, retval)
 	struct osf1_flock oflock;
 	struct flock nflock;
 	unsigned long xfl, leftovers;
-	caddr_t sg;
+	void *sg;
 	int error;
 
 	sg = stackgap_init(p, 0);
@@ -256,7 +256,7 @@ osf1_sys_fstat(l, v, retval)
 
 	osf1_cvt_stat_from_native(&ub, &oub);
 	if (error == 0)
-		error = copyout((caddr_t)&oub, (caddr_t)SCARG(uap, sb),
+		error = copyout((void *)&oub, (void *)SCARG(uap, sb),
 		    sizeof (oub));
 
 	return (error);
@@ -288,7 +288,7 @@ osf1_sys_fstat2(l, v, retval)
 
 	osf1_cvt_stat2_from_native(&ub, &oub);
 	if (error == 0)
-		error = copyout((caddr_t)&oub, (caddr_t)SCARG(uap, sb),
+		error = copyout((void *)&oub, (void *)SCARG(uap, sb),
 		    sizeof (oub));
 
 	return (error);

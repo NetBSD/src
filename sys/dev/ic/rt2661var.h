@@ -1,4 +1,4 @@
-/*	$NetBSD: rt2661var.h,v 1.5 2006/06/09 19:17:46 drochner Exp $	*/
+/*	$NetBSD: rt2661var.h,v 1.5.20.1 2007/03/12 05:53:42 rmind Exp $	*/
 /*	$OpenBSD: rt2661var.h,v 1.4 2006/02/25 12:56:47 damien Exp $	*/
 
 /*-
@@ -152,7 +152,7 @@ struct rt2661_softc {
 	uint8_t				bbp64;
 
 #if NBPFILTER > 0
-	caddr_t			sc_drvbpf;
+	void *			sc_drvbpf;
 
 	union {
 		struct rt2661_rx_radiotap_header th;

@@ -1,4 +1,4 @@
-/*	$NetBSD: am79c950.c,v 1.19 2007/01/24 13:08:12 hubertf Exp $	*/
+/*	$NetBSD: am79c950.c,v 1.19.2.1 2007/03/12 05:49:03 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@bga.com>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: am79c950.c,v 1.19 2007/01/24 13:08:12 hubertf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: am79c950.c,v 1.19.2.1 2007/03/12 05:49:03 rmind Exp $");
 
 #include "opt_inet.h"
 
@@ -80,14 +80,14 @@ __KERNEL_RCSID(0, "$NetBSD: am79c950.c,v 1.19 2007/01/24 13:08:12 hubertf Exp $"
 hide void	mcwatchdog __P((struct ifnet *));
 hide int	mcinit __P((struct mc_softc *sc));
 hide int	mcstop __P((struct mc_softc *sc));
-hide int	mcioctl __P((struct ifnet *ifp, u_long cmd, caddr_t data));
+hide int	mcioctl __P((struct ifnet *ifp, u_long cmd, void *data));
 hide void	mcstart __P((struct ifnet *ifp));
 hide void	mcreset __P((struct mc_softc *sc));
 
 integrate u_int	maceput __P((struct mc_softc *sc, struct mbuf *m0));
 integrate void	mc_tint __P((struct mc_softc *sc));
-integrate void	mace_read __P((struct mc_softc *, caddr_t, int));
-integrate struct mbuf *mace_get __P((struct mc_softc *, caddr_t, int));
+integrate void	mace_read __P((struct mc_softc *, uint8_t *, int));
+integrate struct mbuf *mace_get __P((struct mc_softc *, uint8_t *, int));
 static void mace_calcladrf __P((struct ethercom *ac, u_int8_t *af));
 static inline u_int16_t ether_cmp __P((void *, void *));
 static int mc_mediachange __P((struct ifnet *));
@@ -181,7 +181,7 @@ hide int
 mcioctl(ifp, cmd, data)
 	struct ifnet *ifp;
 	u_long cmd;
-	caddr_t data;
+	void *data;
 {
 	struct mc_softc *sc = ifp->if_softc;
 	struct ifaddr *ifa;
@@ -599,7 +599,7 @@ mc_rint(sc)
 integrate void
 mace_read(sc, pkt, len)
 	struct mc_softc *sc;
-	caddr_t pkt;
+	uint8_t *pkt;
 	int len;
 {
 	struct ifnet *ifp = &sc->sc_if;
@@ -642,7 +642,7 @@ mace_read(sc, pkt, len)
 integrate struct mbuf *
 mace_get(sc, pkt, totlen)
 	struct mc_softc *sc;
-	caddr_t pkt;
+	uint8_t *pkt;
 	int totlen;
 {
 	register struct mbuf *m;
@@ -677,7 +677,7 @@ mace_get(sc, pkt, totlen)
 			len = MCLBYTES;
 		}
 		m->m_len = len = min(totlen, len);
-		memcpy(mtod(m, caddr_t), pkt, len);
+		memcpy(mtod(m, void *), pkt, len);
 		pkt += len;
 		totlen -= len;
 		*mp = m;

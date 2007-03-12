@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_ioctl.c,v 1.13 2007/02/09 21:55:26 ad Exp $	 */
+/*	$NetBSD: svr4_32_ioctl.c,v 1.13.2.1 2007/03/12 05:52:47 rmind Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_ioctl.c,v 1.13 2007/02/09 21:55:26 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_ioctl.c,v 1.13.2.1 2007/03/12 05:52:47 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -110,7 +110,7 @@ svr4_32_sys_ioctl(l, v, retval)
 	struct filedesc	*fdp;
 	u_long		 cmd;
 	int (*fun) __P((struct file *, struct lwp *, register_t *,
-			int, u_long, caddr_t));
+			int, u_long, void *));
 #ifdef DEBUG_SVR4
 	char		 dir[4];
 	char		 c;
@@ -161,5 +161,5 @@ svr4_32_sys_ioctl(l, v, retval)
 		return 0;	/* XXX: really ENOSYS */
 	}
 	return (*fun)(fp, l, retval, SCARG(uap, fd), cmd,
-		      (caddr_t)(u_long)SCARG(uap, data));
+		      (void *)(u_long)SCARG(uap, data));
 }

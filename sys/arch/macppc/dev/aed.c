@@ -1,4 +1,4 @@
-/*	$NetBSD: aed.c,v 1.17 2006/03/29 04:16:45 thorpej Exp $	*/
+/*	$NetBSD: aed.c,v 1.17.14.1 2007/03/12 05:49:03 rmind Exp $	*/
 
 /*
  * Copyright (C) 1994	Bradley A. Grantham
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aed.c,v 1.17 2006/03/29 04:16:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aed.c,v 1.17.14.1 2007/03/12 05:49:03 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -492,7 +492,7 @@ aedread(dev, uio, flag)
 	firstmove = (aed_sc->sc_evq_tail + total > AED_MAX_EVENTS)
 	    ? (AED_MAX_EVENTS - aed_sc->sc_evq_tail) : total;
 
-	error = uiomove((caddr_t) & aed_sc->sc_evq[aed_sc->sc_evq_tail],
+	error = uiomove((void *) & aed_sc->sc_evq[aed_sc->sc_evq_tail],
 	    firstmove * sizeof(adb_event_t), uio);
 	if (error) {
 		splx(s);
@@ -501,7 +501,7 @@ aedread(dev, uio, flag)
 	moremove = total - firstmove;
 
 	if (moremove > 0) {
-		error = uiomove((caddr_t) & aed_sc->sc_evq[0],
+		error = uiomove((void *) & aed_sc->sc_evq[0],
 		    moremove * sizeof(adb_event_t), uio);
 		if (error) {
 			splx(s);
@@ -518,7 +518,7 @@ int
 aedioctl(dev, cmd, data, flag, l)
     dev_t dev;
     u_long cmd;
-    caddr_t data;
+    void *data;
     int flag;
     struct lwp *l;
 {

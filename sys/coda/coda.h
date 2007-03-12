@@ -1,4 +1,4 @@
-/* $NetBSD: coda.h,v 1.13 2006/03/02 14:24:57 gdt Exp $ */
+/* $NetBSD: coda.h,v 1.13.20.1 2007/03/12 05:51:51 rmind Exp $ */
 
 /*
 
@@ -62,7 +62,7 @@ typedef unsigned int u_int;
 typedef unsigned short u_short;
 typedef u_long ino_t;
 typedef u_long dev_t;
-typedef void * caddr_t;
+typedef void *void *;
 #ifdef DOS
 typedef unsigned __int64 u_quad_t;
 #else
@@ -429,7 +429,7 @@ struct coda_ioctl_in {
 struct coda_ioctl_out {
     struct coda_out_hdr oh;
     int	len;
-    caddr_t	data;		/* Place holder for data. */
+    void *	data;		/* Place holder for data. */
 };
 
 
@@ -578,7 +578,7 @@ struct coda_readdir_in {
 struct coda_readdir_out {
     struct coda_out_hdr oh;
     int	size;
-    caddr_t	data;		/* Place holder for data. */
+    void *	data;		/* Place holder for data. */
 };
 
 /* coda_symlink: NO_OUT */
@@ -603,7 +603,7 @@ struct coda_readlink_in {
 struct coda_readlink_out {
     struct coda_out_hdr oh;
     int	count;
-    caddr_t	data;		/* Place holder for data. */
+    void *	data;		/* Place holder for data. */
 };
 
 
@@ -792,7 +792,7 @@ union coda_downcalls {
 
 #define PIOCPARM_MASK 0x0000ffff
 struct ViceIoctl {
-        caddr_t in, out;        /* Data to be transferred in, or out */
+        void *in, *out;		/* Data to be transferred in, or out */
         short in_size;          /* Size of input buffer <= 2K */
         short out_size;         /* Maximum size of output buffer, <= 2K */
 };

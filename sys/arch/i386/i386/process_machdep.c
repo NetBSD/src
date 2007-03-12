@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.60.4.1 2007/02/27 16:51:45 yamt Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.60.4.2 2007/03/12 05:48:24 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.60.4.1 2007/02/27 16:51:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.60.4.2 2007/03/12 05:48:24 rmind Exp $");
 
 #include "opt_vm86.h"
 #include "opt_ptrace.h"
@@ -391,7 +391,7 @@ process_sstep(struct lwp *l, int sstep)
 }
 
 int
-process_set_pc(struct lwp *l, caddr_t addr)
+process_set_pc(struct lwp *l, void *addr)
 {
 	struct trapframe *tf = process_frame(l);
 
@@ -464,7 +464,7 @@ ptrace_machdep_dorequest(
     struct lwp *l,
     struct lwp *lt,
     int req,
-    caddr_t addr,
+    void *addr,
     int data
 )
 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: firewire.c,v 1.11 2006/11/16 01:32:59 christos Exp $	*/
+/*	$NetBSD: firewire.c,v 1.11.4.1 2007/03/12 05:54:44 rmind Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -2004,7 +2004,7 @@ fw_rcv(struct fw_rcv_buf *rb)
 			selwakeuppri(&xferq->rsel, FWPRI);
 		if (xferq->flag & FWXFERQ_WAKEUP) {
 			xferq->flag &= ~FWXFERQ_WAKEUP;
-			wakeup((caddr_t)xferq);
+			wakeup((void *)xferq);
 		}
 		if (xferq->flag & FWXFERQ_HANDLER) {
 			xferq->hand(xferq);
@@ -2122,7 +2122,7 @@ fw_vmaccess(struct fw_xfer *xfer){
 			xfer->send.len = 12;
 			sfp = (struct fw_pkt *)xfer->send.buf;
 			bcopy(rfp->mode.wreqb.payload,
-				(caddr_t)ntohl(rfp->mode.wreqb.dest_lo), ntohs(rfp->mode.wreqb.len));
+				(void *)ntohl(rfp->mode.wreqb.dest_lo), ntohs(rfp->mode.wreqb.len));
 			sfp->mode.wres.tcode = FWTCODE_WRES;
 			sfp->mode.wres.rtcode = 0;
 			break;
@@ -2137,7 +2137,7 @@ fw_vmaccess(struct fw_xfer *xfer){
 			xfer->send.buf = malloc(16 + rfp->mode.rreqb.len, M_FW, M_NOWAIT);
 			xfer->send.len = 16 + ntohs(rfp->mode.rreqb.len);
 			sfp = (struct fw_pkt *)xfer->send.buf;
-			bcopy((caddr_t)ntohl(rfp->mode.rreqb.dest_lo),
+			bcopy((void *)ntohl(rfp->mode.rreqb.dest_lo),
 				sfp->mode.rresb.payload, (uint16_t)ntohs(rfp->mode.rreqb.len));
 			sfp->mode.rresb.tcode = FWTCODE_RRESB;
 			sfp->mode.rresb.len = rfp->mode.rreqb.len;

@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.831.2.2 2007/02/20 21:48:44 rmind Exp $
+#	$NetBSD: files,v 1.831.2.3 2007/03/12 05:53:01 rmind Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -960,6 +960,9 @@ file	dev/ic/lm700x.c			lm700x
 define acpipmtimer
 file	dev/ic/acpipmtimer.c	acpipmtimer
 
+device 	hpet
+file 	dev/ic/hpet.c		hpet			needs-flag
+
 # Definitions for wscons
 # device attributes: display, display with emulator, keyboard, and mouse
 #
@@ -1194,6 +1197,7 @@ include "coda/files.coda"
 include "fs/adosfs/files.adosfs"
 include "fs/cd9660/files.cd9660"
 include "fs/filecorefs/files.filecorefs"
+include "fs/hfs/files.hfs"
 include "fs/msdosfs/files.msdosfs"
 include "fs/ntfs/files.ntfs"
 include "fs/ptyfs/files.ptyfs"

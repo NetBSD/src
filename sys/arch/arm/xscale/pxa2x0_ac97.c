@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_ac97.c,v 1.3.26.1 2007/02/27 16:49:39 yamt Exp $	*/
+/*	$NetBSD: pxa2x0_ac97.c,v 1.3.26.2 2007/03/12 05:47:08 rmind Exp $	*/
 
 /*
  * Copyright (c) 2003, 2005 Wasabi Systems, Inc.
@@ -62,7 +62,7 @@
 
 struct acu_dma {
 	bus_dmamap_t ad_map;
-	caddr_t ad_addr;
+	void *ad_addr;
 #define	ACU_N_SEGS	1	/* XXX: We don't support > 1 */
 	bus_dma_segment_t ad_segs[ACU_N_SEGS];
 	int ad_nsegs;

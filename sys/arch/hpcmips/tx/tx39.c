@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39.c,v 1.35 2005/12/24 20:07:04 perry Exp $ */
+/*	$NetBSD: tx39.c,v 1.35.26.1 2007/03/12 05:48:15 rmind Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tx39.c,v 1.35 2005/12/24 20:07:04 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tx39.c,v 1.35.26.1 2007/03/12 05:48:15 rmind Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -97,7 +97,7 @@ void	tx39clock_cpuspeed(int *, int *);
 
 /* TX39-specific initialization vector */
 void	tx_cons_init(void);
-void    tx_fb_init(caddr_t *);
+void    tx_fb_init(void **);
 void    tx_mem_init(paddr_t);
 void	tx_find_dram(paddr_t, paddr_t);
 void	tx_reboot(int, char *);
@@ -148,7 +148,7 @@ tx_init()
 }
 
 void
-tx_fb_init(caddr_t *kernend)
+tx_fb_init(void **kernend)
 {
 #ifdef TX391X
 	paddr_t fb_end;
@@ -158,7 +158,7 @@ tx_fb_init(caddr_t *kernend)
 	tx3912video_init(MIPS_KSEG0_TO_PHYS(*kernend), &fb_end);
 			 
 	/* Skip V-RAM area */
-	*kernend = (caddr_t)MIPS_PHYS_TO_KSEG0(fb_end);
+	*kernend = (void *)MIPS_PHYS_TO_KSEG0(fb_end);
 #endif /* TX391X */
 #ifdef TX392X 
 	/* 
@@ -186,13 +186,13 @@ tx_mem_init(paddr_t kernend)
 void
 tx_find_dram(paddr_t start, paddr_t end)
 {
-	caddr_t page, startaddr, endaddr;
+	char *page, *startaddr, *endaddr;
 	u_int32_t magic0, magic1;
 #define MAGIC0		(*(volatile u_int32_t *)(page + 0))
 #define MAGIC1		(*(volatile u_int32_t *)(page + 4))
 
-	startaddr = (void *)MIPS_PHYS_TO_KSEG1(start);
-	endaddr = (void *)MIPS_PHYS_TO_KSEG1(end);
+	startaddr = (char *)MIPS_PHYS_TO_KSEG1(start);
+	endaddr = (char *)MIPS_PHYS_TO_KSEG1(end);
 
 	page = startaddr;
 	if (badaddr(page, 4))

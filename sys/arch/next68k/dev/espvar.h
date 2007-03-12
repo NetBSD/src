@@ -1,4 +1,4 @@
-/*	$NetBSD: espvar.h,v 1.15 2003/05/03 18:10:55 wiz Exp $	*/
+/*	$NetBSD: espvar.h,v 1.15.56.1 2007/03/12 05:49:42 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -43,9 +43,9 @@ struct esp_softc {
 	bus_space_tag_t	sc_bst;				
 	bus_space_handle_t sc_bsh;	/* the device registers */
 
-	caddr_t *sc_dmaaddr;		/* saved argument to esp_dma_setup */
-	size_t  *sc_dmalen;		/* saved argument to esp_dma_setup */
-	size_t  sc_dmasize;		/* saved argument to esp_dma_setup */
+	void **sc_dmaaddr;		/* saved argument to esp_dma_setup */
+	size_t *sc_dmalen;		/* saved argument to esp_dma_setup */
+	size_t sc_dmasize;		/* saved argument to esp_dma_setup */
 	int sc_datain;			/* saved argument to esp_dma_setup */
 
 #define ESP_LOADED_MAIN   (0x01)
@@ -60,12 +60,12 @@ struct esp_softc {
 	/* To deal with begin alignment problems, we stuff the fifo
 	 * with a begin buffer
 	 */
-	caddr_t       sc_begin;		/* pointer to start io buf, NULL if invalid */
-	size_t        sc_begin_size;	/*  */
+	uint8_t *sc_begin;		/* pointer to start io buf, NULL if invalid */
+	size_t sc_begin_size;		/*  */
 
-	bus_dmamap_t  sc_main_dmamap;	/* I/O DMA map */
-	caddr_t       sc_main;		/* pointer to main io buf, NULL if invalid */
-	size_t        sc_main_size;	/* aligned length of main io buf we are using */
+	bus_dmamap_t sc_main_dmamap;	/* I/O DMA map */
+	uint8_t *sc_main;		/* pointer to main io buf, NULL if invalid */
+	size_t sc_main_size;		/* aligned length of main io buf we are using */
 
 	/* To deal with end alignment problems, we copy the end of the DMA
 	 * buffer into a "tail" buffer that we can control more carefully.
@@ -75,9 +75,9 @@ struct esp_softc {
 #define ESP_DMA_MAXTAIL 128
 #define ESP_DMA_TAILBUFSIZE (ESP_DMA_MAXTAIL+2*DMA_ENDALIGNMENT+ESP_DMA_OVERRUN)
 	bus_dmamap_t  sc_tail_dmamap;
-	caddr_t sc_tail;	/* pointer into sc_tailbuf, NULL if invalid */
+	uint8_t *sc_tail;	/* pointer into sc_tailbuf, NULL if invalid */
 	size_t  sc_tail_size;	/* aligned length of tailbuf we are using */
-	u_char sc_tailbuf[ESP_DMA_TAILBUFSIZE];
+	uint8_t sc_tailbuf[ESP_DMA_TAILBUFSIZE];
 };
 
 #ifndef ESP_MAX_DMASIZE

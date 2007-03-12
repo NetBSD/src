@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_vm.c,v 1.54 2007/02/09 21:55:22 ad Exp $ */
+/*	$NetBSD: mach_vm.c,v 1.54.2.1 2007/03/12 05:52:30 rmind Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include "opt_ktrace.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_vm.c,v 1.54 2007/02/09 21:55:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_vm.c,v 1.54.2.1 2007/03/12 05:52:30 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -206,7 +206,7 @@ mach_vm_allocate(args)
 	if (size == 0)
 		goto out;
 
-	SCARG(&cup, addr) = (caddr_t)addr;
+	SCARG(&cup, addr) = (void *)addr;
 	SCARG(&cup, len) = size;
 	SCARG(&cup, prot) = PROT_READ | PROT_WRITE;
 	SCARG(&cup, flags) = MAP_ANON;
@@ -248,7 +248,7 @@ mach_vm_deallocate(args)
 	    (void *)req->req_address, (long)req->req_size);
 #endif
 
-	SCARG(&cup, addr) = (caddr_t)req->req_address;
+	SCARG(&cup, addr) = (void *)req->req_address;
 	SCARG(&cup, len) = req->req_size;
 
 	if ((error = sys_munmap(tl, &cup, &rep->rep_retval)) != 0)
@@ -690,7 +690,7 @@ mach_vm_copy(args)
 	size_t *msglen = args->rsize;
 	char *tmpbuf;
 	int error;
-	caddr_t src, dst;
+	char *src, *dst;
 	size_t size;
 
 #ifdef DEBUG_MACH_VM
@@ -702,8 +702,8 @@ mach_vm_copy(args)
 	    (req->req_size & (PAGE_SIZE - 1)))
 		return mach_msg_error(args, EINVAL);
 
-	src = (caddr_t)req->req_src;
-	dst = (caddr_t)req->req_addr;
+	src = (void *)req->req_src;
+	dst = (void *)req->req_addr;
 	size = (size_t)req->req_size;
 
 	tmpbuf = malloc(PAGE_SIZE, M_TEMP, M_WAITOK);

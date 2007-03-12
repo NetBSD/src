@@ -1,4 +1,4 @@
-/*	$NetBSD: cs89x0.c,v 1.20 2006/09/24 03:53:08 jmcneill Exp $	*/
+/*	$NetBSD: cs89x0.c,v 1.20.4.1 2007/03/12 05:53:30 rmind Exp $	*/
 
 /*
  * Copyright (c) 2004 Christopher Gilbert
@@ -212,7 +212,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs89x0.c,v 1.20 2006/09/24 03:53:08 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs89x0.c,v 1.20.4.1 2007/03/12 05:53:30 rmind Exp $");
 
 #include "opt_inet.h"
 
@@ -270,7 +270,7 @@ int	cs_get_params(struct cs_softc *);
 int	cs_get_enaddr(struct cs_softc *);
 int	cs_reset_chip(struct cs_softc *);
 void	cs_reset(void *);
-int	cs_ioctl(struct ifnet *, u_long, caddr_t);
+int	cs_ioctl(struct ifnet *, u_long, void *);
 void	cs_initChip(struct cs_softc *);
 void	cs_buffer_event(struct cs_softc *, u_int16_t);
 void	cs_transmit_event(struct cs_softc *, u_int16_t);
@@ -1324,7 +1324,7 @@ cs_reset(void *arg)
 }
 
 int
-cs_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
+cs_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct cs_softc *sc = ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *) data;

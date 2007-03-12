@@ -1,4 +1,4 @@
-/*	$NetBSD: ka6400.c,v 1.10 2007/02/15 20:32:48 ad Exp $	*/
+/*	$NetBSD: ka6400.c,v 1.10.2.1 2007/03/12 05:51:17 rmind Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka6400.c,v 1.10 2007/02/15 20:32:48 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka6400.c,v 1.10.2.1 2007/03/12 05:51:17 rmind Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -75,7 +75,7 @@ static int ka6400_match(struct device *, struct cfdata *, void *);
 static void ka6400_attach(struct device *, struct device *, void*);
 static void ka6400_memerr(void);
 static void ka6400_conf(void);
-static int ka6400_mchk(caddr_t);
+static int ka6400_mchk(void *);
 static void ka6400_steal_pages(void);
 #if defined(MULTIPROCESSOR)
 static void ka6400_startslave(struct device *, struct cpu_info *);
@@ -247,7 +247,7 @@ struct mc6400frame {
 };
 
 static int
-ka6400_mchk(caddr_t cmcf)
+ka6400_mchk(void *cmcf)
 {
 	return (MCHK_PANIC);
 }

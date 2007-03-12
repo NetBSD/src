@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_info_09.c,v 1.18 2007/02/09 21:55:16 ad Exp $	*/
+/*	$NetBSD: kern_info_09.c,v 1.18.2.1 2007/03/12 05:51:53 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_info_09.c,v 1.18 2007/02/09 21:55:16 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_info_09.c,v 1.18.2.1 2007/03/12 05:51:53 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,6 +116,6 @@ compat_09_sys_uname(struct lwp *l, void *v,
 		*dp++ = *cp;
 	*dp = '\0';
 	strncpy(outsname.machine, MACHINE, sizeof(outsname.machine));
-	return (copyout((caddr_t)&outsname, (caddr_t)SCARG(uap, name),
+	return (copyout((void *)&outsname, (void *)SCARG(uap, name),
 			sizeof(struct outsname)));
 }

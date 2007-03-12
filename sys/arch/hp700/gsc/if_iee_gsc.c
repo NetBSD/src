@@ -1,4 +1,4 @@
-/* $NetBSD: if_iee_gsc.c,v 1.3 2007/02/01 21:09:42 skrll Exp $ */
+/* $NetBSD: if_iee_gsc.c,v 1.3.2.1 2007/03/12 05:48:00 rmind Exp $ */
 
 /*
  * Copyright (c) 2003 Jochen Kunz.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iee_gsc.c,v 1.3 2007/02/01 21:09:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iee_gsc.c,v 1.3.2.1 2007/03/12 05:48:00 rmind Exp $");
 
 /* autoconfig and device stuff */
 #include <sys/param.h>
@@ -254,7 +254,7 @@ iee_gsc_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 	if (bus_dmamem_map(sc->sc_dmat, &sc->sc_dma_segs, rsegs, IEE_SHMEM_MAX, 
-	    &sc->sc_shmem_addr, BUS_DMA_NOWAIT) != 0) {
+	    (void **)&sc->sc_shmem_addr, BUS_DMA_NOWAIT) != 0) {
 		aprint_normal(": iee_gsc_attach: can't map DMA memory\n");
 		bus_dmamem_free(sc->sc_dmat, &sc->sc_dma_segs, rsegs);
 		return;

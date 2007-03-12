@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.29 2007/02/09 21:55:19 ad Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.29.2.1 2007/03/12 05:52:17 rmind Exp $ */
 
 /*-
  * Copyright (c) 1995, 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.29 2007/02/09 21:55:19 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.29.2.1 2007/03/12 05:52:17 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -157,7 +157,7 @@ linux_sendsig(ksi, mask)
 	 */
 	if (onstack)
 		fp = (struct linux_sigframe *)
-		    ((caddr_t)l->l_sigstk.ss_sp
+		    ((void *)l->l_sigstk.ss_sp
 		    + l->l_sigstk.ss_size);
 	else
 		/* cast for _MIPS_BSD_API == _MIPS_BSD_API_LP32_64CLEAN case */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_exec_coff.c,v 1.17 2006/07/23 22:06:08 ad Exp $	*/
+/*	$NetBSD: ibcs2_exec_coff.c,v 1.17.10.1 2007/03/12 05:52:09 rmind Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_exec_coff.c,v 1.17 2006/07/23 22:06:08 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_exec_coff.c,v 1.17.10.1 2007/03/12 05:52:09 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -331,7 +331,7 @@ coff_find_section(l, vp, fp, sh, s_type)
 	pos = COFF_HDR_SIZE;
 	for (i = 0; i < fp->f_nscns; i++, pos += sizeof(struct coff_scnhdr)) {
 		siz = sizeof(struct coff_scnhdr);
-		error = vn_rdwr(UIO_READ, vp, (caddr_t) sh,
+		error = vn_rdwr(UIO_READ, vp, (void *) sh,
 		    siz, pos, UIO_SYSSPACE, IO_NODELOCKED, l->l_cred,
 		    &resid, NULL);
 		if (error) {
@@ -549,7 +549,7 @@ coff_load_shlib(l, path, epp)
 	}
 
 	siz = sizeof(struct coff_filehdr);
-	error = vn_rdwr(UIO_READ, nd.ni_vp, (caddr_t) fhp, siz, 0,
+	error = vn_rdwr(UIO_READ, nd.ni_vp, (void *) fhp, siz, 0,
 	    UIO_SYSSPACE, IO_NODELOCKED, l->l_cred, &resid, l);
 	if (error) {
 	    DPRINTF(("filehdr read error %d\n", error));

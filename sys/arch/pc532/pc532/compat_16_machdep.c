@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_16_machdep.c,v 1.4 2007/02/09 21:55:09 ad Exp $	*/
+/*	$NetBSD: compat_16_machdep.c,v 1.4.2.1 2007/03/12 05:49:47 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1987, 1990 The Regents of the University of California.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.4 2007/02/09 21:55:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.4.2.1 2007/03/12 05:49:47 rmind Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -213,7 +213,7 @@ compat_16_sys___sigreturn14(struct lwp *l, void *v, register_t *retval)
 	 * program jumps out of a signal handler.
 	 */
 	scp = SCARG(uap, sigcntxp);
-	if (copyin((caddr_t)scp, &context, sizeof(*scp)) != 0)
+	if (copyin((void *)scp, &context, sizeof(*scp)) != 0)
 		return (EFAULT);
 
 	/* Restore the register context. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: fdc_jazzio.c,v 1.11 2005/12/11 12:16:39 christos Exp $	*/
+/*	$NetBSD: fdc_jazzio.c,v 1.11.26.1 2007/03/12 05:46:50 rmind Exp $	*/
 /*	$OpenBSD: fd.c,v 1.6 1998/10/03 21:18:57 millert Exp $	*/
 /*	NetBSD: fd.c,v 1.78 1995/07/04 07:23:09 mycroft Exp 	*/
 
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdc_jazzio.c,v 1.11 2005/12/11 12:16:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdc_jazzio.c,v 1.11.26.1 2007/03/12 05:46:50 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,7 +94,7 @@ int fdc_jazzio_probe(struct device *, struct cfdata *, void *);
 void fdc_jazzio_attach(struct device *, struct device *, void *);
 
 /* MD DMA hook functions */
-void fdc_jazzio_dma_start(struct fdc_softc *, caddr_t, size_t, int);
+void fdc_jazzio_dma_start(struct fdc_softc *, void *, size_t, int);
 void fdc_jazzio_dma_abort(struct fdc_softc *);
 void fdc_jazzio_dma_done(struct fdc_softc *);
 
@@ -210,7 +210,7 @@ fdc_jazzio_attach(struct device *parent, struct device *self, void *aux)
 }
 
 void
-fdc_jazzio_dma_start(struct fdc_softc *fdc, caddr_t addr, size_t size,
+fdc_jazzio_dma_start(struct fdc_softc *fdc, void *addr, size_t size,
     int datain)
 {
 	struct fdc_jazzio_softc *jsc = (void *)fdc;

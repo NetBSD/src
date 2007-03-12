@@ -1,4 +1,4 @@
-#	$NetBSD: files.ofppc,v 1.25 2007/01/14 22:18:02 aymeric Exp $
+#	$NetBSD: files.ofppc,v 1.25.2.1 2007/03/12 05:49:45 rmind Exp $
 #
 # NetBSD/ofppc configuration info
 #
@@ -24,6 +24,8 @@ file	dev/cons.c
 file	dev/cninit.c
 
 file	arch/powerpc/powerpc/procfs_machdep.c	procfs
+file	arch/powerpc/powerpc/softintr.c
+
 #
 # CPU specific OpenFirmware code
 #

@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.23 2006/11/25 11:59:56 scw Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.23.4.1 2007/03/12 05:46:48 rmind Exp $	*/
 /*	$OpenBSD: disksubr.c,v 1.14 1997/05/08 00:14:29 deraadt Exp $	*/
 /*	NetBSD: disksubr.c,v 1.40 1999/05/06 15:45:51 christos Exp	*/
 
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.23 2006/11/25 11:59:56 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.23.4.1 2007/03/12 05:46:48 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,7 +83,8 @@ mbr_findslice(struct mbr_partition *dp, struct buf *bp)
 #endif
 
 	/* XXX how do we check veracity/bounds of this? */
-	memcpy(dp, bp->b_data + MBR_PART_OFFSET, MBR_PART_COUNT * sizeof(*dp));
+	memcpy(dp, (char *)bp->b_data + MBR_PART_OFFSET,
+		MBR_PART_COUNT * sizeof(*dp));
 
 	/* look for NetBSD partition */
 	for (i = 0; i < MBR_PART_COUNT; i++) {
@@ -279,8 +280,8 @@ nombrpart:
 		goto done;
 	}
 	for (dlp = (struct disklabel *)bp->b_data;
-	    dlp <= (struct disklabel *)(bp->b_data + lp->d_secsize -
-	    sizeof(*dlp));
+	    dlp <= (struct disklabel *)((char *)bp->b_data + lp->d_secsize -
+		    sizeof(*dlp));
 	    dlp = (struct disklabel *)((char *)dlp + sizeof(long))) {
 		if (dlp->d_magic != DISKMAGIC || dlp->d_magic2 != DISKMAGIC) {
 			if (msg == NULL)
@@ -482,8 +483,8 @@ nombrpart:
 	if ((error = biowait(bp)) != 0)
 		goto done;
 	for (dlp = (struct disklabel *)bp->b_data;
-	    dlp <= (struct disklabel *)(bp->b_data + lp->d_secsize -
-	    sizeof(*dlp));
+	    dlp <= (struct disklabel *)((char *)bp->b_data + lp->d_secsize -
+		    sizeof(*dlp));
 	    dlp = (struct disklabel *)((char *)dlp + sizeof(long))) {
 		if (dlp->d_magic == DISKMAGIC && dlp->d_magic2 == DISKMAGIC &&
 		    dkcksum(dlp) == 0) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.22.2.1 2007/02/27 16:53:28 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.22.2.2 2007/03/12 05:51:48 rmind Exp $	*/
 /*	NetBSD: pmap.c,v 1.179 2004/10/10 09:55:24 yamt Exp		*/
 
 /*
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.22.2.1 2007/02/27 16:53:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.22.2.2 2007/03/12 05:51:48 rmind Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"
@@ -459,7 +459,7 @@ struct pool pmap_pmap_pool;
  * special VAs and the PTEs that map them
  */
 static pt_entry_t *csrc_pte, *cdst_pte, *zero_pte, *ptp_pte;
-static caddr_t csrcp, cdstp, zerop, ptpp;
+static void *csrcp, *cdstp, *zerop, *ptpp;
 
 /*
  * pool and cache that PDPs are allocated from
@@ -472,7 +472,7 @@ u_int pmap_pdp_cache_generation;
 int	pmap_pdp_ctor(void *, void *, int);
 void	pmap_pdp_dtor(void *, void *);
 
-caddr_t vmmap; /* XXX: used by mem.c... it should really uvm_map_reserve it */
+void *vmmap; /* XXX: used by mem.c... it should really uvm_map_reserve it */
 
 extern vaddr_t idt_vaddr;			/* we allocate IDT early */
 extern paddr_t idt_paddr;
@@ -1182,27 +1182,27 @@ pmap_bootstrap(kva_start)
 	 * as well; we could waste less space if we knew the largest
 	 * CPU ID beforehand.
 	 */
-	csrcp = (caddr_t) virtual_avail;  csrc_pte = pte;
+	csrcp = (char *) virtual_avail;  csrc_pte = pte;
 
-	cdstp = (caddr_t) virtual_avail+PAGE_SIZE;  cdst_pte = pte+1;
+	cdstp = (char *) virtual_avail+PAGE_SIZE;  cdst_pte = pte+1;
 
-	zerop = (caddr_t) virtual_avail+PAGE_SIZE*2;  zero_pte = pte+2;
+	zerop = (char *) virtual_avail+PAGE_SIZE*2;  zero_pte = pte+2;
 
-	ptpp = (caddr_t) virtual_avail+PAGE_SIZE*3;  ptp_pte = pte+3;
+	ptpp = (char *) virtual_avail+PAGE_SIZE*3;  ptp_pte = pte+3;
 
 	virtual_avail += PAGE_SIZE * X86_MAXPROCS * NPTECL;
 	pte += X86_MAXPROCS * NPTECL;
 #else
-	csrcp = (caddr_t) virtual_avail;  csrc_pte = pte;  /* allocate */
+	csrcp = (void *) virtual_avail;  csrc_pte = pte;  /* allocate */
 	virtual_avail += PAGE_SIZE; pte++;			     /* advance */
 
-	cdstp = (caddr_t) virtual_avail;  cdst_pte = pte;
+	cdstp = (void *) virtual_avail;  cdst_pte = pte;
 	virtual_avail += PAGE_SIZE; pte++;
 
-	zerop = (caddr_t) virtual_avail;  zero_pte = pte;
+	zerop = (void *) virtual_avail;  zero_pte = pte;
 	virtual_avail += PAGE_SIZE; pte++;
 
-	ptpp = (caddr_t) virtual_avail;  ptp_pte = pte;
+	ptpp = (void *) virtual_avail;  ptp_pte = pte;
 	virtual_avail += PAGE_SIZE; pte++;
 #endif
 
@@ -2432,7 +2432,7 @@ pmap_zero_page(pa)
 #endif
 	pt_entry_t *zpte = PTESLEW(zero_pte, id);
 	pt_entry_t *maptp;
-	caddr_t zerova = VASLEW(zerop, id);
+	void *zerova = VASLEW(zerop, id);
 
 #ifdef DIAGNOSTIC
 	if (PTE_GET(zpte))
@@ -2463,7 +2463,7 @@ pmap_pageidlezero(pa)
 #endif
 	pt_entry_t *zpte = PTESLEW(zero_pte, id);
 	pt_entry_t *maptp;
-	caddr_t zerova = VASLEW(zerop, id);
+	void *zerova = VASLEW(zerop, id);
 	bool rv = true;
 	int *ptr;
 	int *ep;
@@ -2524,8 +2524,8 @@ pmap_copy_page(srcpa, dstpa)
 #endif
 	pt_entry_t *spte = PTESLEW(csrc_pte,id), *maspte;
 	pt_entry_t *dpte = PTESLEW(cdst_pte,id), *madpte;
-	caddr_t csrcva = VASLEW(csrcp, id);
-	caddr_t cdstva = VASLEW(cdstp, id);
+	void *csrcva = VASLEW(csrcp, id);
+	void *cdstva = VASLEW(cdstp, id);
 
 #ifdef DIAGNOSTIC
 	if (PTE_GET(spte) || PTE_GET(dpte))

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_qn.c,v 1.25 2006/05/10 06:24:02 skrll Exp $ */
+/*	$NetBSD: if_qn.c,v 1.25.14.1 2007/03/12 05:46:42 rmind Exp $ */
 
 /*
  * Copyright (c) 1995 Mika Kortelainen
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_qn.c,v 1.25 2006/05/10 06:24:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_qn.c,v 1.25.14.1 2007/03/12 05:46:42 rmind Exp $");
 
 #include "qn.h"
 #if NQN > 0
@@ -149,7 +149,7 @@ struct	qn_softc {
 	u_short	volatile *nic_len;
 	u_char	transmit_pending;
 #if NBPFILTER > 0
-	caddr_t	sc_bpf;
+	void *	sc_bpf;
 #endif
 } qn_softc[NQN];
 
@@ -162,7 +162,7 @@ struct	qn_softc {
 int	qnmatch(struct device *, struct cfdata *, void *);
 void	qnattach(struct device *, struct device *, void *);
 int	qnintr(void *);
-int	qnioctl(struct ifnet *, u_long, caddr_t);
+int	qnioctl(struct ifnet *, u_long, void *);
 void	qnstart(struct ifnet *);
 void	qnwatchdog(struct ifnet *);
 void	qnreset(struct qn_softc *);
@@ -592,7 +592,7 @@ qn_get_packet(struct qn_softc *sc, u_short len)
 			len1 = amount;
 
 		word_copy_from_card(nic_fifo_ptr,
-		    (u_short *)(mtod(m, caddr_t) + m->m_len),
+		    (u_short *)(mtod(m, char *) + m->m_len),
 		    len1);
 		m->m_len += len1;
 		len -= len1;
@@ -817,7 +817,7 @@ qnintr(void *arg)
  * I somehow think that this is quite a common excuse... ;-)
  */
 int
-qnioctl(register struct ifnet *ifp, u_long command, caddr_t data)
+qnioctl(register struct ifnet *ifp, u_long command, void *data)
 {
 	struct qn_softc *sc = ifp->if_softc;
 	register struct ifaddr *ifa = (struct ifaddr *)data;

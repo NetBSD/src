@@ -1,4 +1,4 @@
-/* $NetBSD: pecoff_syscall.h,v 1.27 2007/02/09 21:55:24 ad Exp $ */
+/* $NetBSD: pecoff_syscall.h,v 1.27.2.1 2007/03/12 05:52:42 rmind Exp $ */
 
 /*
  * System call numbers.
@@ -98,7 +98,7 @@
 /* syscall: "geteuid" ret: "uid_t" args: */
 #define	PECOFF_SYS_geteuid	25
 
-/* syscall: "ptrace" ret: "int" args: "int" "pid_t" "caddr_t" "int" */
+/* syscall: "ptrace" ret: "int" args: "int" "pid_t" "void *" "int" */
 #define	PECOFF_SYS_ptrace	26
 
 /* syscall: "recvmsg" ret: "ssize_t" args: "int" "struct msghdr *" "int" */
@@ -148,7 +148,7 @@
 /* syscall: "getegid" ret: "gid_t" args: */
 #define	PECOFF_SYS_getegid	43
 
-/* syscall: "profil" ret: "int" args: "caddr_t" "size_t" "u_long" "u_int" */
+/* syscall: "profil" ret: "int" args: "void *" "size_t" "u_long" "u_int" */
 #define	PECOFF_SYS_profil	44
 
 #if defined(KTRACE) || !defined(_KERNEL)
@@ -205,7 +205,7 @@
 				/* 62 is excluded { int sys_fstat ( int fd , struct stat43 * sb ) ; } fstat43 */
 				/* 63 is excluded { int sys_getkerninfo ( int op , char * where , int * size , int arg ) ; } ogetkerninfo */
 				/* 64 is excluded { int sys_getpagesize ( void ) ; } ogetpagesize */
-				/* 65 is excluded { int sys_msync ( caddr_t addr , size_t len ) ; } */
+				/* 65 is excluded { int sys_msync ( void *addr , size_t len ) ; } */
 /* syscall: "vfork" ret: "int" args: */
 #define	PECOFF_SYS_vfork	66
 
@@ -217,7 +217,7 @@
 /* syscall: "sstk" ret: "int" args: "int" */
 #define	PECOFF_SYS_sstk	70
 
-				/* 71 is excluded { int sys_mmap ( caddr_t addr , size_t len , int prot , int flags , int fd , long pos ) ; } ommap */
+				/* 71 is excluded { int sys_mmap ( void *addr , size_t len , int prot , int flags , int fd , long pos ) ; } ommap */
 /* syscall: "vadvise" ret: "int" args: "int" */
 #define	PECOFF_SYS_vadvise	72
 
@@ -279,12 +279,12 @@
 /* syscall: "connect" ret: "int" args: "int" "const struct sockaddr *" "unsigned int" */
 #define	PECOFF_SYS_connect	98
 
-				/* 99 is excluded { int sys_accept ( int s , caddr_t name , int * anamelen ) ; } oaccept */
+				/* 99 is excluded { int sys_accept ( int s , void *name , int * anamelen ) ; } oaccept */
 /* syscall: "getpriority" ret: "int" args: "int" "id_t" */
 #define	PECOFF_SYS_getpriority	100
 
-				/* 101 is excluded { int sys_send ( int s , caddr_t buf , int len , int flags ) ; } osend */
-				/* 102 is excluded { int sys_recv ( int s , caddr_t buf , int len , int flags ) ; } orecv */
+				/* 101 is excluded { int sys_send ( int s , void *buf , int len , int flags ) ; } osend */
+				/* 102 is excluded { int sys_recv ( int s , void *buf , int len , int flags ) ; } orecv */
 				/* 103 is excluded { int sys_sigreturn ( struct sigcontext13 * sigcntxp ) ; } sigreturn13 */
 /* syscall: "bind" ret: "int" args: "int" "const struct sockaddr *" "unsigned int" */
 #define	PECOFF_SYS_bind	104
@@ -302,7 +302,7 @@
 				/* 111 is excluded { int sys_sigsuspend ( int mask ) ; } sigsuspend13 */
 				/* 112 is excluded { int sys_sigstack ( struct sigstack * nss , struct sigstack * oss ) ; } osigstack */
 				/* 113 is excluded { int sys_recvmsg ( int s , struct omsghdr * msg , int flags ) ; } orecvmsg */
-				/* 114 is excluded { int sys_sendmsg ( int s , caddr_t msg , int flags ) ; } osendmsg */
+				/* 114 is excluded { int sys_sendmsg ( int s , void *msg , int flags ) ; } osendmsg */
 				/* 115 is obsolete vtrace */
 /* syscall: "gettimeofday" ret: "int" args: "struct timeval *" "void *" */
 #define	PECOFF_SYS_gettimeofday	116
@@ -329,7 +329,7 @@
 /* syscall: "fchmod" ret: "int" args: "int" "mode_t" */
 #define	PECOFF_SYS_fchmod	124
 
-				/* 125 is excluded { int sys_recvfrom ( int s , caddr_t buf , size_t len , int flags , caddr_t from , int * fromlenaddr ) ; } orecvfrom */
+				/* 125 is excluded { int sys_recvfrom ( int s , void *buf , size_t len , int flags , void *from , int * fromlenaddr ) ; } orecvfrom */
 /* syscall: "setreuid" ret: "int" args: "uid_t" "uid_t" */
 #define	PECOFF_SYS_setreuid	126
 
@@ -369,7 +369,7 @@
 /* syscall: "adjtime" ret: "int" args: "const struct timeval *" "struct timeval *" */
 #define	PECOFF_SYS_adjtime	140
 
-				/* 141 is excluded { int sys_getpeername ( int fdes , caddr_t asa , int * alen ) ; } ogetpeername */
+				/* 141 is excluded { int sys_getpeername ( int fdes , void *asa , int * alen ) ; } ogetpeername */
 				/* 142 is excluded { int32_t sys_gethostid ( void ) ; } ogethostid */
 				/* 143 is excluded { int sys_sethostid ( int32_t hostid ) ; } osethostid */
 				/* 144 is excluded { int sys_getrlimit ( int which , struct orlimit * rlp ) ; } ogetrlimit */
@@ -378,11 +378,11 @@
 /* syscall: "setsid" ret: "int" args: */
 #define	PECOFF_SYS_setsid	147
 
-/* syscall: "quotactl" ret: "int" args: "const char *" "int" "int" "caddr_t" */
+/* syscall: "quotactl" ret: "int" args: "const char *" "int" "int" "void *" */
 #define	PECOFF_SYS_quotactl	148
 
 				/* 149 is excluded { int sys_quota ( void ) ; } oquota */
-				/* 150 is excluded { int sys_getsockname ( int fdec , caddr_t asa , int * alen ) ; } ogetsockname */
+				/* 150 is excluded { int sys_getsockname ( int fdec , void *asa , int * alen ) ; } ogetsockname */
 #if defined(NFS) || defined(NFSSERVER) || !defined(_KERNEL)
 /* syscall: "nfssvc" ret: "int" args: "int" "void *" */
 #define	PECOFF_SYS_nfssvc	155
@@ -864,7 +864,7 @@
 /* syscall: "pmc_control" ret: "int" args: "int" "int" "void *" */
 #define	PECOFF_SYS_pmc_control	342
 
-/* syscall: "rasctl" ret: "int" args: "caddr_t" "size_t" "int" */
+/* syscall: "rasctl" ret: "int" args: "void *" "size_t" "int" */
 #define	PECOFF_SYS_rasctl	343
 
 /* syscall: "kqueue" ret: "int" args: */

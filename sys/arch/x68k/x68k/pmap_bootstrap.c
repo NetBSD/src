@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.29 2005/12/11 12:19:45 christos Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.29.26.1 2007/03/12 05:51:44 rmind Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.29 2005/12/11 12:19:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.29.26.1 2007/03/12 05:51:44 rmind Exp $");
 
 #include "opt_m680x0.h"
 
@@ -48,7 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.29 2005/12/11 12:19:45 christos
 #include <arch/x68k/x68k/iodevice.h>
 
 
-#define RELOC(v, t)	*((t*)((caddr_t)&(v) + firstpa))
+#define RELOC(v, t)	*((t*)((char *)&(v) + firstpa))
 
 extern char *etext;
 extern int Sysptsize;
@@ -74,8 +74,9 @@ void	pmap_bootstrap(paddr_t, paddr_t);
  *	vmmap:		/dev/mem, crash dumps, parity error checking
  *	msgbufaddr:	kernel message buffer
  */
-caddr_t		CADDR1, CADDR2, vmmap;
-extern caddr_t	msgbufaddr;
+void *CADDR1, *CADDR2;
+char *vmmap;
+void *msgbufaddr;
 
 /*
  * Bootstrap the VM system.
@@ -448,13 +449,13 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	{
 		vaddr_t va = RELOC(virtual_avail, vaddr_t);
 
-		RELOC(CADDR1, caddr_t) = (caddr_t)va;
+		RELOC(CADDR1, void *) = (void *)va;
 		va += PAGE_SIZE;
-		RELOC(CADDR2, caddr_t) = (caddr_t)va;
+		RELOC(CADDR2, void *) = (void *)va;
 		va += PAGE_SIZE;
-		RELOC(vmmap, caddr_t) = (caddr_t)va;
+		RELOC(vmmap, void *) = (void *)va;
 		va += PAGE_SIZE;
-		RELOC(msgbufaddr, caddr_t) = (caddr_t)va;
+		RELOC(msgbufaddr, void *) = (void *)va;
 		va += m68k_round_page(MSGBUFSIZE);
 		RELOC(virtual_avail, vaddr_t) = va;
 	}

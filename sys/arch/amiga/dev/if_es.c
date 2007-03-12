@@ -1,4 +1,4 @@
-/*	$NetBSD: if_es.c,v 1.37 2005/12/11 12:16:28 christos Exp $ */
+/*	$NetBSD: if_es.c,v 1.37.26.1 2007/03/12 05:46:42 rmind Exp $ */
 
 /*
  * Copyright (c) 1995 Michael L. Hitch
@@ -38,7 +38,7 @@
 #include "opt_ns.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_es.c,v 1.37 2005/12/11 12:16:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_es.c,v 1.37.26.1 2007/03/12 05:46:42 rmind Exp $");
 
 #include "bpfilter.h"
 
@@ -123,7 +123,7 @@ void	es_dump_smcregs(char *, union smcregs *);
 int esintr(void *);
 void esstart(struct ifnet *);
 void eswatchdog(struct ifnet *);
-int esioctl(struct ifnet *, u_long, caddr_t);
+int esioctl(struct ifnet *, u_long, void *);
 void esrint(struct es_softc *);
 void estint(struct es_softc *);
 void esinit(struct es_softc *);
@@ -699,7 +699,7 @@ esrint(struct es_softc *sc)
 		}
 		m->m_len = len = min(pktlen, len);
 #ifdef USEPKTBUF
-		bcopy((caddr_t)b, mtod(m, caddr_t), len);
+		bcopy((void *)b, mtod(m, void *), len);
 		b += len;
 #else	/* USEPKTBUF */
 		buf = mtod(m, u_short *);
@@ -848,7 +848,7 @@ esstart(struct ifnet *ifp)
 #ifdef USEPKTBUF
 		i = 0;
 		for (m0 = m; m; m = m->m_next) {
-			bcopy(mtod(m, caddr_t), (char *)pktbuf + i, m->m_len);
+			bcopy(mtod(m, void *), (char *)pktbuf + i, m->m_len);
 			i += m->m_len;
 		}
 
@@ -961,7 +961,7 @@ esstart(struct ifnet *ifp)
 }
 
 int
-esioctl(register struct ifnet *ifp, u_long command, caddr_t data)
+esioctl(register struct ifnet *ifp, u_long command, void *data)
 {
 	struct es_softc *sc = ifp->if_softc;
 	register struct ifaddr *ifa = (struct ifaddr *)data;

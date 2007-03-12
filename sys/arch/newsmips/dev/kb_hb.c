@@ -1,4 +1,4 @@
-/*	$NetBSD: kb_hb.c,v 1.10 2005/12/11 12:18:24 christos Exp $	*/
+/*	$NetBSD: kb_hb.c,v 1.10.26.1 2007/03/12 05:49:41 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kb_hb.c,v 1.10 2005/12/11 12:18:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kb_hb.c,v 1.10.26.1 2007/03/12 05:49:41 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -65,7 +65,7 @@ void kb_hb_cnpollc(void *, int);
 
 int kb_hb_enable(void *, int);
 void kb_hb_setleds(void *, int);
-int kb_hb_ioctl(void *, u_long, caddr_t, int, struct lwp *);
+int kb_hb_ioctl(void *, u_long, void *, int, struct lwp *);
 
 extern struct wscons_keydesc newskb_keydesctab[];
 
@@ -210,7 +210,7 @@ kb_hb_setleds(void *v, int on)
 }
 
 int
-kb_hb_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
+kb_hb_ioctl(void *v, u_long cmd, void *data, int flag, struct lwp *l)
 {
 
 	switch (cmd) {

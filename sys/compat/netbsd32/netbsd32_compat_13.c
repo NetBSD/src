@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_13.c,v 1.16 2007/02/09 21:55:22 ad Exp $	*/
+/*	$NetBSD: netbsd32_compat_13.c,v 1.16.2.1 2007/03/12 05:52:31 rmind Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_13.c,v 1.16 2007/02/09 21:55:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_13.c,v 1.16.2.1 2007/03/12 05:52:31 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,7 +60,7 @@ compat_13_netbsd32_sigaltstack13(l, v, retval)
 	struct compat_13_sys_sigaltstack_args ua;
 	struct sigaltstack13 ss13, *nss13up, *oss13up;
 	struct netbsd32_sigaltstack13 s32ss;
-	caddr_t sg;
+	void *sg;
 	int error;
 
 	if (!SCARG(uap, nss))
@@ -74,7 +74,7 @@ compat_13_netbsd32_sigaltstack13(l, v, retval)
 	else
 		SCARG(&ua, oss) = NULL;
 
-	error = copyin((caddr_t)NETBSD32PTR64(SCARG(uap, nss)),
+	error = copyin((void *)NETBSD32PTR64(SCARG(uap, nss)),
 	    &s32ss, sizeof s32ss);
 	if (error)
 		return (error);
@@ -96,7 +96,7 @@ compat_13_netbsd32_sigaltstack13(l, v, retval)
 		s32ss.ss_sp = (netbsd32_charp)(u_long)ss13.ss_sp;
 		s32ss.ss_size = ss13.ss_size;
 		s32ss.ss_flags = ss13.ss_flags;
-		error = copyout(&s32ss, (caddr_t)NETBSD32PTR64(SCARG(uap, nss)),
+		error = copyout(&s32ss, (void *)NETBSD32PTR64(SCARG(uap, nss)),
 		    sizeof s32ss);
 		if (error)
 			return (error);

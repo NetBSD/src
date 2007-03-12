@@ -1,4 +1,4 @@
-/*	$NetBSD: audiobell.c,v 1.4 2006/03/28 17:38:29 thorpej Exp $	*/
+/*	$NetBSD: audiobell.c,v 1.4.14.1 2007/03/12 05:53:02 rmind Exp $	*/
 
 /*
  * Copyright (c) 1999 Richard Earnshaw
@@ -31,7 +31,7 @@
  */
 
 #include <sys/types.h>
-__KERNEL_RCSID(0, "$NetBSD: audiobell.c,v 1.4 2006/03/28 17:38:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audiobell.c,v 1.4.14.1 2007/03/12 05:53:02 rmind Exp $");
 
 #include <sys/audioio.h>
 #include <sys/conf.h>
@@ -152,7 +152,7 @@ audiobell(void *arg, u_int pitch, u_int period, u_int volume, int poll)
 	if (buf == NULL) goto out;
 	if (audiobell_synthesize(buf, pitch, period, volume) != 0) goto out;
 
-	aiov.iov_base = (caddr_t)buf;
+	aiov.iov_base = (void *)buf;
 	aiov.iov_len = period * 8;
 	auio.uio_iov = &aiov;
 	auio.uio_iovcnt = 1;

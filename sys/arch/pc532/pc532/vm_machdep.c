@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.67.4.1 2007/02/27 16:52:24 yamt Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.67.4.2 2007/03/12 05:49:48 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.67.4.1 2007/02/27 16:52:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.67.4.2 2007/03/12 05:49:48 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,7 +98,7 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.67.4.1 2007/02/27 16:52:24 yamt Exp
 
 extern struct lwp *fpu_lwp;
 
-void	setredzone(u_short *, caddr_t);
+void	setredzone(u_short *, void *);
 
 /*
  * Finish a fork operation, with process p2 nearly set up.
@@ -295,7 +295,7 @@ cpu_coredump(struct lwp *l, void *iocookie, struct core *chdr)
 /*
  * Set a red zone in the kernel stack after the u. area.
  */
-setredzone(u_short *pte, caddr_t vaddr)
+setredzone(u_short *pte, void *vaddr)
 {
 
 /*
@@ -315,7 +315,7 @@ setredzone(u_short *pte, caddr_t vaddr)
  * Convert kernel VA to physical address
  */
 int
-kvtop(caddr_t addr)
+kvtop(void *addr)
 {
 	paddr_t pa;
 
@@ -341,7 +341,7 @@ vmapbuf(struct buf *bp, vsize_t len)
 	off = (vaddr_t)bp->b_data - faddr;
 	len = round_page(off + len);
 	taddr= uvm_km_alloc(phys_map, len, 0, UVM_KMF_VAONLY | UVM_KMF_WAITVA);
-	bp->b_data = (caddr_t)(taddr + off);
+	bp->b_data = (void *)(taddr + off);
 	/*
 	 * The region is locked, so we expect that pmap_pte() will return
 	 * non-NULL.

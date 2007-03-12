@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.28.2.2 2007/03/03 15:42:49 yamt Exp $	*/
+/*	$NetBSD: trap.c,v 1.28.2.3 2007/03/12 05:46:34 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.28.2.2 2007/03/03 15:42:49 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.28.2.3 2007/03/12 05:46:34 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -186,7 +186,7 @@ trap(frame)
 #endif
 	struct trapframe *vframe;
 	void *resume;
-	caddr_t onfault;
+	void *onfault;
 	int error;
 	uint64_t cr2;
 	ksiginfo_t ksi;
@@ -489,7 +489,7 @@ faultcommon:
 		error = uvm_fault(map, va, ftype);
 		pcb->pcb_onfault = onfault;
 		if (error == 0) {
-			if (map != kernel_map && (caddr_t)va >= vm->vm_maxsaddr)
+			if (map != kernel_map && (void *)va >= vm->vm_maxsaddr)
 				uvm_grow(p, va);
 
 			if (type == T_PAGEFLT) {
@@ -557,7 +557,7 @@ faultcommon:
 	trace:
 #endif
 		if (LIST_EMPTY(&p->p_raslist) ||
-		    (ras_lookup(p, (caddr_t)frame->tf_rip) == (caddr_t)-1)) {
+		    (ras_lookup(p, (void *)frame->tf_rip) == (void *)-1)) {
 			KSI_INIT_TRAP(&ksi);
 			ksi.ksi_signo = SIGTRAP;
 			ksi.ksi_trap = type & ~T_USER;

@@ -1,4 +1,4 @@
-/*	$NetBSD: msiiepreg.h,v 1.8 2005/12/11 12:19:08 christos Exp $ */
+/*	$NetBSD: msiiepreg.h,v 1.8.26.1 2007/03/12 05:50:43 rmind Exp $ */
 
 /*
  * Copyright (c) 2001 Valeriy E. Ushakov
@@ -191,6 +191,7 @@ struct msiiep_pcic_reg {
 	 * 9.8  Processor and system counters:
 	 *      (limit, counter, non-resetting limit)
 	 */
+#define MSIIEP_COUNTER_LIMIT	0x80000000
 
 	/* processor counter (xor user timer that we don't use) */
 	uint32_t	pcic_pclr;		/* @ac/4  9.8.1 */

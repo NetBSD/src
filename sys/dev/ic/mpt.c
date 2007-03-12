@@ -1,4 +1,4 @@
-/*	$NetBSD: mpt.c,v 1.7 2005/12/24 20:27:30 perry Exp $	*/
+/*	$NetBSD: mpt.c,v 1.7.26.1 2007/03/12 05:53:39 rmind Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 by Greg Ansley
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpt.c,v 1.7 2005/12/24 20:27:30 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpt.c,v 1.7.26.1 2007/03/12 05:53:39 rmind Exp $");
 
 #include <dev/ic/mpt.h>
 
@@ -632,7 +632,7 @@ mpt_read_cfg_page(mpt_softc_t *mpt, int PageAddress, fCONFIG_PAGE_HEADER *hdr)
 	    cfgp->Header.PageNumber == 1) {
 		amt = sizeof (fCONFIG_PAGE_SCSI_DEVICE_1);
 	}
-	bcopy(((caddr_t)req->req_vbuf)+CFG_DATA_OFF, hdr, amt);
+	memcpy(hdr, (char *)req->req_vbuf + CFG_DATA_OFF, amt);
 	mpt_free_request(mpt, req);
 	return (0);
 }
@@ -692,7 +692,7 @@ mpt_write_cfg_page(mpt_softc_t *mpt, int PageAddress, fCONFIG_PAGE_HEADER *hdr)
 	    cfgp->Header.PageNumber == 1) {
 		amt = sizeof (fCONFIG_PAGE_SCSI_DEVICE_1);
 	}
-	bcopy(hdr, ((caddr_t)req->req_vbuf)+CFG_DATA_OFF, amt);
+	memcpy((char *)req->req_vbuf + CFG_DATA_OFF, hdr, amt);
 	/* Restore stripped out attributes */
 	hdr->PageType |= hdr_attr;
 

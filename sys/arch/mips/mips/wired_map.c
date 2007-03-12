@@ -1,4 +1,4 @@
-/*	$NetBSD: wired_map.c,v 1.2.28.1 2007/02/27 16:52:10 yamt Exp $	*/
+/*	$NetBSD: wired_map.c,v 1.2.28.2 2007/03/12 05:49:24 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2005 Tadpole Computer Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wired_map.c,v 1.2.28.1 2007/02/27 16:52:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wired_map.c,v 1.2.28.2 2007/03/12 05:49:24 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,7 +118,7 @@ mips3_wired_enter_page(vaddr_t va, paddr_t pa, vsize_t pgsize)
 #ifdef DIAGNOSTIC
 			printf("mips3_wired_map: entries exhausted\n");
 #endif
-			return FALSE;
+			return false;
 		}
 
 		index = mips3_nwired_page;
@@ -158,7 +158,7 @@ mips3_wired_enter_page(vaddr_t va, paddr_t pa, vsize_t pgsize)
 		    MIPS3_PG_IOPAGE(
 			    PMAP_CCA_FOR_PA(mips3_wired_map[index].pa1));
 	MachTLBWriteIndexedVPS(MIPS3_TLB_WIRED_UPAGES + index, &tlb);
-	return TRUE;
+	return true;
 }
 
 
@@ -193,9 +193,9 @@ mips3_wired_enter_region(vaddr_t va, paddr_t pa, vsize_t size)
 
 	while (va < vend) {
 		if (!mips3_wired_enter_page(va, pa, MIPS3_WIRED_SIZE))
-			return FALSE;
+			return false;
 		va += MIPS3_WIRED_SIZE;
 		pa += MIPS3_WIRED_SIZE;
 	}
-	return TRUE;
+	return true;
 }

@@ -1,4 +1,4 @@
-/* $Id: if_ae.c,v 1.4 2006/09/24 03:53:08 jmcneill Exp $ */
+/* $Id: if_ae.c,v 1.4.4.1 2007/03/12 05:49:21 rmind Exp $ */
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ae.c,v 1.4 2006/09/24 03:53:08 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ae.c,v 1.4.4.1 2007/03/12 05:49:21 rmind Exp $");
 
 #include "bpfilter.h"
 
@@ -169,7 +169,7 @@ static void	ae_mediastatus(struct ifnet *, struct ifmediareq *);
 
 static void	ae_start(struct ifnet *);
 static void	ae_watchdog(struct ifnet *);
-static int	ae_ioctl(struct ifnet *, u_long, caddr_t);
+static int	ae_ioctl(struct ifnet *, u_long, void *);
 static int	ae_init(struct ifnet *);
 static void	ae_stop(struct ifnet *, int);
 
@@ -293,7 +293,7 @@ ae_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	if ((error = bus_dmamem_map(sc->sc_dmat, &sc->sc_cdseg, sc->sc_cdnseg,
-	    sizeof(struct ae_control_data), (caddr_t *)&sc->sc_control_data,
+	    sizeof(struct ae_control_data), (void **)&sc->sc_control_data,
 	    BUS_DMA_COHERENT)) != 0) {
 		printf("%s: unable to map control data, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
@@ -441,7 +441,7 @@ ae_attach(struct device *parent, struct device *self, void *aux)
  fail_4:
 	bus_dmamap_destroy(sc->sc_dmat, sc->sc_cddmamap);
  fail_3:
-	bus_dmamem_unmap(sc->sc_dmat, (caddr_t)sc->sc_control_data,
+	bus_dmamem_unmap(sc->sc_dmat, (void *)sc->sc_control_data,
 	    sizeof(struct ae_control_data));
  fail_2:
 	bus_dmamem_free(sc->sc_dmat, &sc->sc_cdseg, sc->sc_cdnseg);
@@ -534,7 +534,7 @@ ae_detach(struct device *self, int flags)
 	}
 	bus_dmamap_unload(sc->sc_dmat, sc->sc_cddmamap);
 	bus_dmamap_destroy(sc->sc_dmat, sc->sc_cddmamap);
-	bus_dmamem_unmap(sc->sc_dmat, (caddr_t)sc->sc_control_data,
+	bus_dmamem_unmap(sc->sc_dmat, (void *)sc->sc_control_data,
 	    sizeof(struct ae_control_data));
 	bus_dmamem_free(sc->sc_dmat, &sc->sc_cdseg, sc->sc_cdnseg);
 
@@ -633,7 +633,7 @@ ae_start(struct ifnet *ifp)
 					break;
 				}
 			}
-			m_copydata(m0, 0, m0->m_pkthdr.len, mtod(m, caddr_t));
+			m_copydata(m0, 0, m0->m_pkthdr.len, mtod(m, void *));
 			m->m_pkthdr.len = m->m_len = m0->m_pkthdr.len;
 			error = bus_dmamap_load_mbuf(sc->sc_dmat, dmamap,
 			    m, BUS_DMA_WRITE|BUS_DMA_NOWAIT);
@@ -828,7 +828,7 @@ ae_watchdog(struct ifnet *ifp)
  *	Handle control requests from the operator.
  */
 static int
-ae_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
+ae_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct ae_softc *sc = ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *)data;
@@ -1159,7 +1159,7 @@ ae_rxintr(struct ae_softc *sc)
 		 * Note that we use clusters for incoming frames, so the
 		 * buffer is virtually contiguous.
 		 */
-		memcpy(mtod(m, caddr_t), mtod(rxs->rxs_mbuf, caddr_t), len);
+		memcpy(mtod(m, void *), mtod(rxs->rxs_mbuf, void *), len);
 
 		/* Allow the receive descriptor to continue using its mbuf. */
 		AE_INIT_RXDESC(sc, i);

@@ -37,7 +37,7 @@
  *	isic - I4B Siemens ISDN Chipset Driver for Teles S0/16 and clones
  *	=================================================================
  *
- *	$Id: isic_isa_tel_s016.c,v 1.7 2005/12/11 12:22:03 christos Exp $
+ *	$Id: isic_isa_tel_s016.c,v 1.7.26.1 2007/03/12 05:54:50 rmind Exp $
  *
  *      last edit-date: [Fri Jan  5 11:37:22 2001]
  *
@@ -50,7 +50,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_isa_tel_s016.c,v 1.7 2005/12/11 12:22:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_isa_tel_s016.c,v 1.7.26.1 2007/03/12 05:54:50 rmind Exp $");
 
 #include "opt_isicisa.h"
 #ifdef ISICISA_TEL_S0_16
@@ -275,7 +275,7 @@ isic_probe_s016(struct isa_device *dev)
 			return(0);
 			break;
 	}
-	sc->sc_vmem_addr = (caddr_t) dev->id_maddr;
+	sc->sc_vmem_addr = (void *) dev->id_maddr;
 	dev->id_msize = 0x1000;
 
 	/* check card signature */
@@ -325,12 +325,12 @@ isic_probe_s016(struct isa_device *dev)
 
 	/* setup ISAC base addr */
 
-	ISAC_BASE = (caddr_t) ((dev->id_maddr) + 0x100);
+	ISAC_BASE = (void *) ((dev->id_maddr) + 0x100);
 
 	/* setup HSCX base addr */
 
-	HSCX_A_BASE = (caddr_t) ((dev->id_maddr) + 0x180);
-	HSCX_B_BASE = (caddr_t) ((dev->id_maddr) + 0x1c0);
+	HSCX_A_BASE = (void *) ((dev->id_maddr) + 0x180);
+	HSCX_B_BASE = (void *) ((dev->id_maddr) + 0x1c0);
 
 	return (1);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: riscoscalls.h,v 1.3 2005/12/11 12:16:05 christos Exp $	*/
+/*	$NetBSD: riscoscalls.h,v 1.3.26.1 2007/03/12 05:45:21 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -241,7 +241,7 @@ extern void osmemory_page_op(int fromto, struct page_info *block, int num_pages)
 
 /* Misc */
 #ifndef __ASSEMBLER__
-extern char *os_get_env(caddr_t *, void **);
+extern char *os_get_env(void **, void **);
 
 extern void os_exit(os_error const *, int) __attribute__((noreturn));
 
@@ -278,7 +278,7 @@ extern void os_read_mem_map_info(int *, int *);
 
 struct os_mem_map_request {
 	int page_no;
-	caddr_t map;
+	void *map;
 	int access;
 #define os_AREA_ACCESS_READ_WRITE	0
 #define os_AREA_ACCESS_READ_ONLY	1

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fwip.c,v 1.6 2006/11/16 01:32:59 christos Exp $	*/
+/*	$NetBSD: if_fwip.c,v 1.6.4.1 2007/03/12 05:54:46 rmind Exp $	*/
 /*-
  * Copyright (c) 2004
  *	Doug Rabson
@@ -118,7 +118,7 @@ int fwipactivate (struct device *, enum devact);
 #endif  
 /* network interface */
 static void fwip_start (struct ifnet *);
-static int fwip_ioctl (struct ifnet *, u_long, caddr_t);
+static int fwip_ioctl (struct ifnet *, u_long, void *);
 IF_INIT(fwip);
 IF_STOP(fwip);
 
@@ -434,7 +434,7 @@ found:
 		xferq->flag &= ~0xff;
 		xferq->flag |= broadcast_channel & 0xff;
 		/* register fwip_input handler */
-		xferq->sc = (caddr_t) fwip;
+		xferq->sc = (void *) fwip;
 		xferq->hand = fwip_stream_input;
 		xferq->bnchunk = rx_queue_len;
 		xferq->bnpacket = 1;
@@ -482,7 +482,7 @@ found:
 			xfer->recv.pay_len = MCLBYTES;
 			xfer->hand = fwip_unicast_input;
 			xfer->fc = fc;
-			xfer->sc = (caddr_t)fwip;
+			xfer->sc = (void *)fwip;
 			xfer->mbuf = m;
 			STAILQ_INSERT_TAIL(&fwip->fwb.xferlist, xfer, link);
 		}
@@ -495,7 +495,7 @@ found:
 				break;
 			xfer->send.spd = tx_speed;
 			xfer->fc = fwip->fd.fc;
-			xfer->sc = (caddr_t)fwip;
+			xfer->sc = (void *)fwip;
 			xfer->hand = fwip_output_callback;
 			STAILQ_INSERT_TAIL(&fwip->xferlist, xfer, link);
 		}
@@ -521,7 +521,7 @@ found:
 }
 
 static int
-fwip_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
+fwip_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	IF_IOCTL_START(fwip, fwip);
 	int s, error;

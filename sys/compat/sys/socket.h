@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.h,v 1.4 2006/06/26 21:23:58 mrg Exp $	*/
+/*	$NetBSD: socket.h,v 1.4.10.1 2007/03/12 05:53:00 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1985, 1986, 1988, 1993, 1994
@@ -47,11 +47,11 @@ struct osockaddr {
  * 4.3-compat message header
  */
 struct omsghdr {
-	caddr_t		msg_name;	/* optional address */
+	void *		msg_name;	/* optional address */
 	int		msg_namelen;	/* size of address */
 	struct iovec	*msg_iov;	/* scatter/gather array */
 	int		msg_iovlen;	/* # elements in msg_iov */
-	caddr_t		msg_accrights;	/* access rights sent/received */
+	void *		msg_accrights;	/* access rights sent/received */
 	int		msg_accrightslen;
 };
 
@@ -59,7 +59,7 @@ struct omsghdr {
 __BEGIN_DECLS
 struct socket;
 struct proc;
-int compat_ifioctl(struct socket *, u_long, caddr_t, struct lwp *);
+int compat_ifioctl(struct socket *, u_long, void *, struct lwp *);
 __END_DECLS
 #else
 int	__socket30(int, int, int);

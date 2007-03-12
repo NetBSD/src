@@ -1,4 +1,4 @@
-/*	$NetBSD: rrunnervar.h,v 1.11 2005/12/11 12:21:28 christos Exp $	*/
+/*	$NetBSD: rrunnervar.h,v 1.11.26.1 2007/03/12 05:53:41 rmind Exp $	*/
 
 /* Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -169,7 +169,7 @@ struct esh_softc {
 					        data structures in host memory
 					        that are DMA'ed to the NIC */
 	bus_dmamap_t		sc_dma;	     /* dma map for the segment */
-	caddr_t			sc_dma_addr; /* address in kernel of DMA mem */
+	char 		        *sc_dma_addr; /* address in kernel of DMA mem */
 	bus_size_t		sc_dma_size; /* size of dma-able region */
 
 	u_int8_t	(*sc_bist_read)(struct esh_softc *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_blue.c,v 1.21 2006/11/16 01:32:37 christos Exp $	*/
+/*	$NetBSD: altq_blue.c,v 1.21.4.1 2007/03/12 05:45:00 rmind Exp $	*/
 /*	$KAME: altq_blue.c,v 1.15 2005/04/13 03:44:24 suz Exp $	*/
 
 /*
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_blue.c,v 1.21 2006/11/16 01:32:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_blue.c,v 1.21.4.1 2007/03/12 05:45:00 rmind Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -149,7 +149,7 @@ blueclose(dev_t dev, int flag, int fmt,
 }
 
 int
-blueioctl(dev_t dev, ioctlcmd_t cmd, caddr_t addr, int flag,
+blueioctl(dev_t dev, ioctlcmd_t cmd, void *addr, int flag,
     struct lwp *l)
 {
 	blue_queue_t *rqp;
@@ -527,8 +527,8 @@ mark_ecn(struct mbuf *m, struct altq_pktattr *pktattr, int flags)
 
 	/* verify that pattr_hdr is within the mbuf data */
 	for (m0 = m; m0 != NULL; m0 = m0->m_next)
-		if ((pktattr->pattr_hdr >= m0->m_data) &&
-		    (pktattr->pattr_hdr < m0->m_data + m0->m_len))
+		if (((char *)pktattr->pattr_hdr >= m0->m_data) &&
+		    ((char *)pktattr->pattr_hdr < m0->m_data + m0->m_len))
 			break;
 	if (m0 == NULL) {
 		/* ick, pattr_hdr is stale */

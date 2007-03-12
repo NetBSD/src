@@ -1,4 +1,4 @@
-/* $NetBSD: memcreg.h,v 1.2 2002/03/24 23:37:43 bjh21 Exp $ */
+/* $NetBSD: memcreg.h,v 1.2.68.1 2007/03/12 05:45:13 rmind Exp $ */
 /*-
  * Copyright (c) 1997, 1998 Ben Harris
  * All rights reserved.
@@ -60,11 +60,11 @@
  */
 
 /* General memory-map layout provided by MEMC */
-#define MEMC_PHYS_BASE		((caddr_t)0x02000000)
-#define MEMC_IO_BASE		((caddr_t)0x03000000)
-#define MEMC_VIDC_BASE		((caddr_t)0x03400000)
-#define MEMC_ROM_LOW_BASE	((caddr_t)0x03400000)
-#define MEMC_ROM_HIGH_BASE	((caddr_t)0x03800000)
+#define MEMC_PHYS_BASE		((void *)0x02000000)
+#define MEMC_IO_BASE		((void *)0x03000000)
+#define MEMC_VIDC_BASE		((void *)0x03400000)
+#define MEMC_ROM_LOW_BASE	((void *)0x03400000)
+#define MEMC_ROM_HIGH_BASE	((void *)0x03800000)
 
 /*
  * Each MEMC can manage 4Mb in 128 pages.  The memory map only has

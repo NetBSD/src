@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.1 2006/09/01 21:26:18 uwe Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.1.14.1 2007/03/12 05:48:42 rmind Exp $	*/
 
 /*
  * Copyright (c) 2005 NONAKA Kimihiro
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.1 2006/09/01 21:26:18 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.1.14.1 2007/03/12 05:48:42 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -615,7 +615,7 @@ _bus_dmamem_free(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs)
 
 int
 _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
-    size_t size, caddr_t *kvap, int flags)
+    size_t size, void **kvap, int flags)
 {
 	const uvm_flag_t kmflags = (flags & BUS_DMA_NOWAIT) ? UVM_KMF_NOWAIT:0;
 	vaddr_t va;
@@ -630,9 +630,9 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 	 */
 	if (nsegs == 1) {
 		if (flags & BUS_DMA_COHERENT) {
-			*kvap = (caddr_t)SH3_PHYS_TO_P2SEG(segs[0].ds_addr);
+			*kvap = (void *)SH3_PHYS_TO_P2SEG(segs[0].ds_addr);
 		} else {
-			*kvap = (caddr_t)SH3_PHYS_TO_P1SEG(segs[0].ds_addr);
+			*kvap = (void *)SH3_PHYS_TO_P1SEG(segs[0].ds_addr);
 		}
 		DPRINTF(("bus_dmamem_map: addr = 0x%08lx, kva = %p\n", segs[0].ds_addr, *kvap));
 		return 0;
@@ -645,7 +645,7 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 	if (va == 0)
 		return (ENOMEM);
 
-	*kvap = (caddr_t)va;
+	*kvap = (void *)va;
 	for (curseg = 0; curseg < nsegs; curseg++) {
 		DPRINTF(("bus_dmamem_map: segs[%d]: ds_addr = 0x%08lx, ds_len = %ld\n", curseg, segs[curseg].ds_addr, segs[curseg].ds_len));
 		for (addr = segs[curseg].ds_addr;
@@ -663,7 +663,7 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 }
 
 void
-_bus_dmamem_unmap(bus_dma_tag_t t, caddr_t kva, size_t size)
+_bus_dmamem_unmap(bus_dma_tag_t t, void *kva, size_t size)
 {
 
 	DPRINTF(("bus_dmamem_unmap: t = %p, kva = %p, size = %d\n", t, kva, size));
@@ -676,8 +676,8 @@ _bus_dmamem_unmap(bus_dma_tag_t t, caddr_t kva, size_t size)
         /*
 	 * Nothing to do if we mapped it with P[12]SEG.
 	 */
-	if ((kva >= (caddr_t)SH3_P1SEG_BASE)
-	 && (kva <= (caddr_t)SH3_P2SEG_END)) {
+	if ((kva >= (void *)SH3_P1SEG_BASE)
+	 && (kva <= (void *)SH3_P2SEG_END)) {
 		return;
 	}
 

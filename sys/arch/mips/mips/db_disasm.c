@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.16.26.1 2007/02/27 16:52:04 yamt Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.16.26.2 2007/03/12 05:49:22 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.16.26.1 2007/02/27 16:52:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.16.26.2 2007/03/12 05:49:22 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -186,7 +186,7 @@ db_disasm(db_addr_t loc, bool altfmt)
 db_addr_t
 db_disasm_insn(int insn, db_addr_t loc, bool altfmt)
 {
-	bool bdslot = FALSE;
+	bool bdslot = false;
 	InstFmt i;
 
 	i.word = insn;
@@ -245,7 +245,7 @@ db_disasm_insn(int insn, db_addr_t loc, bool altfmt)
 		case OP_JR:
 		case OP_JALR:
 			db_printf("\t%s", reg_name[i.RType.rs]);
-			bdslot = TRUE;
+			bdslot = true;
 			break;
 		case OP_MTLO:
 		case OP_MTHI:
@@ -324,7 +324,7 @@ db_disasm_insn(int insn, db_addr_t loc, bool altfmt)
 		    reg_name[i.IType.rt]);
 	pr_displ:
 		print_addr(loc + 4 + ((short)i.IType.imm << 2));
-		bdslot = TRUE;
+		bdslot = true;
 		break;
 
 	case OP_COP0:
@@ -409,7 +409,7 @@ db_disasm_insn(int insn, db_addr_t loc, bool altfmt)
 	case OP_JAL:
 		db_printf("%s\t", op_name[i.JType.op]);
 		print_addr((loc & 0xF0000000) | (i.JType.target << 2));
-		bdslot = TRUE;
+		bdslot = true;
 		break;
 
 	case OP_LWC1:
@@ -486,7 +486,7 @@ db_disasm_insn(int insn, db_addr_t loc, bool altfmt)
 	db_printf("\n");
 	if (bdslot) {
 		db_printf("\t\tbdslot:\t");
-		db_disasm(loc+4, FALSE);
+		db_disasm(loc+4, false);
 		return (loc + 8);
 	}
 	return (loc + 4);

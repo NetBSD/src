@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.258 2007/01/10 20:59:10 cube Exp $	*/
+/*	$NetBSD: com.c,v 1.258.2.1 2007/03/12 05:53:29 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.258 2007/01/10 20:59:10 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.258.2.1 2007/03/12 05:53:29 rmind Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -1001,7 +1001,7 @@ comtty(dev_t dev)
 }
 
 int
-comioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+comioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct com_softc *sc = device_lookup(&com_cd, COMUNIT(dev));
 	struct tty *tp = sc->sc_tty;

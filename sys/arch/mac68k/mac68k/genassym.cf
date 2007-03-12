@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.28 2005/12/11 12:18:03 christos Exp $
+#	$NetBSD: genassym.cf,v 1.28.26.1 2007/03/12 05:48:59 rmind Exp $
 
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -126,7 +126,7 @@ define	SPL3			(PSL_S | PSL_IPL3)
 define	SPL4			(PSL_S | PSL_IPL4)
 define	SPL5			(PSL_S | PSL_IPL5)
 define	SPL6			(PSL_S | PSL_IPL6)
-define	MAC68K_IPL_CLOCK	MAC68K_IPL_CLOCK
+define	IPL_CLOCK		IPL_CLOCK
 
 # magic
 define	FC_USERD		FC_USERD

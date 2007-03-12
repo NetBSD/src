@@ -1,4 +1,4 @@
-/*	$NetBSD: int_bus_dma.c,v 1.14 2005/12/11 12:17:09 christos Exp $	*/
+/*	$NetBSD: int_bus_dma.c,v 1.14.26.1 2007/03/12 05:47:37 rmind Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
 #define	_ARM32_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: int_bus_dma.c,v 1.14 2005/12/11 12:17:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: int_bus_dma.c,v 1.14.26.1 2007/03/12 05:47:37 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -458,8 +458,8 @@ integrator_bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map,
 			/*
 			 * Copy the caller's buffer to the bounce buffer.
 			 */
-			memcpy((char *)cookie->id_bouncebuf + offset,
-			    (char *)cookie->id_origbuf + offset, len);
+			memcpy((uint8_t *)cookie->id_bouncebuf + offset,
+			    (uint8_t *)cookie->id_origbuf + offset, len);
 			cpu_dcache_wbinv_range((vaddr_t)cookie->id_bouncebuf +
 			    offset, len);
 		}
@@ -471,8 +471,8 @@ integrator_bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map,
 			/*
 			 * Copy the bounce buffer to the caller's buffer.
 			 */
-			memcpy((char *)cookie->id_origbuf + offset,
-			    (char *)cookie->id_bouncebuf + offset, len);
+			memcpy((uint8_t *)cookie->id_origbuf + offset,
+			    (uint8_t *)cookie->id_bouncebuf + offset, len);
 		}
 
 		/*
@@ -490,7 +490,7 @@ integrator_bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map,
 			 * Copy the caller's buffer to the bounce buffer.
 			 */
 			m_copydata(m0, offset, len,
-			    (char *)cookie->id_bouncebuf + offset);
+			    (uint8_t *)cookie->id_bouncebuf + offset);
 			cpu_dcache_wb_range((vaddr_t)cookie->id_bouncebuf +
 			    offset, len);
 		}
@@ -518,8 +518,8 @@ integrator_bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map,
 				minlen = len < m->m_len - moff ?
 				    len : m->m_len - moff;
 
-				memcpy(mtod(m, caddr_t) + moff,
-				    (char *)cookie->id_bouncebuf + offset,
+				memcpy(mtod(m, uint8_t *) + moff,
+				    (uint8_t *)cookie->id_bouncebuf + offset,
 				    minlen);
 
 				moff = 0;
@@ -596,7 +596,7 @@ integrator_dma_alloc_bouncebuf(bus_dma_tag_t t, bus_dmamap_t map,
 	}
 	error = _bus_dmamem_map(t, cookie->id_bouncesegs,
 	    cookie->id_nbouncesegs, cookie->id_bouncebuflen,
-	    (caddr_t *)&cookie->id_bouncebuf, flags);
+	    (void **)&cookie->id_bouncebuf, flags);
 
  out:
 	if (error) {

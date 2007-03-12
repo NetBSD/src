@@ -1,4 +1,4 @@
-/*	$NetBSD: mappedcopy.c,v 1.22.10.1 2007/02/27 16:51:58 yamt Exp $	*/
+/*	$NetBSD: mappedcopy.c,v 1.22.10.2 2007/03/12 05:48:54 rmind Exp $	*/
 
 /*
  * XXX This doesn't work yet.  Soon.  --thorpej@NetBSD.org
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mappedcopy.c,v 1.22.10.1 2007/02/27 16:51:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mappedcopy.c,v 1.22.10.2 2007/03/12 05:48:54 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,12 +106,12 @@ int	mappedcopyoutcount;
  */
 u_int	mappedcopysize = -1;
 
-static caddr_t caddr1 = 0;
+static void *caddr1 = 0;
 
 int
 mappedcopyin(void *f, void *t, size_t count)
 {
-	caddr_t fromp = f, top = t;
+	void *fromp = f, *top = t;
 	vaddr_t kva;
 	paddr_t upa;
 	register size_t len;
@@ -127,7 +127,7 @@ mappedcopyin(void *f, void *t, size_t count)
 #endif
 
 	if (CADDR1 == 0)
-		CADDR1 = (caddr_t) uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
+		CADDR1 = (void *) uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
 		    UVM_KMF_VAONLY);
 
 	kva = (vaddr_t)CADDR1;
@@ -152,7 +152,7 @@ mappedcopyin(void *f, void *t, size_t count)
 		    VM_PROT_READ, VM_PROT_READ | PMAP_WIRED);
 		pmap_update(pmap_kernel());
 		if (len == PAGE_SIZE && alignable && off == 0)
-			copypage((caddr_t)kva, top);
+			copypage((void *)kva, top);
 		else
 			memcpy(top, (void *)(kva + off), len);
 		fromp += len;
@@ -169,7 +169,7 @@ mappedcopyin(void *f, void *t, size_t count)
 int
 mappedcopyout(void *f, void *t, size_t count)
 {
-	caddr_t fromp = f, top = t;
+	void *fromp = f, *top = t;
 	vaddr_t kva;
 	paddr_t upa;
 	size_t len;
@@ -185,7 +185,7 @@ mappedcopyout(void *f, void *t, size_t count)
 #endif
 
 	if (CADDR2 == 0)
-		CADDR2 = (caddr_t) uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
+		CADDR2 = (void *) uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
 		    UVM_KMF_VAONLY);
 
 	kva = (vaddr_t) CADDR2;
@@ -211,7 +211,7 @@ mappedcopyout(void *f, void *t, size_t count)
 		    VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
 		pmap_update(pmap_kernel());
 		if (len == PAGE_SIZE && alignable && off == 0)
-			copypage(fromp, (caddr_t)kva);
+			copypage(fromp, (void *)kva);
 		else
 			memcpy((void *)(kva + off), fromp, len);
 		fromp += len;

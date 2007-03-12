@@ -1,4 +1,4 @@
-/* $NetBSD: ega.c,v 1.20 2006/04/12 19:38:23 jmmv Exp $ */
+/* $NetBSD: ega.c,v 1.20.14.1 2007/03/12 05:54:48 rmind Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ega.c,v 1.20 2006/04/12 19:38:23 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ega.c,v 1.20.14.1 2007/03/12 05:54:48 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -210,7 +210,7 @@ const struct wsscreen_list ega_screenlist = {
 	_ega_scrlist_mono
 };
 
-static int ega_ioctl(void *, void *, u_long, caddr_t, int, struct proc *);
+static int ega_ioctl(void *, void *, u_long, void *, int, struct proc *);
 static paddr_t ega_mmap(void *, void *, off_t, int);
 static int ega_alloc_screen(void *, const struct wsscreen_descr *,
 			    void **, int *, int *, long *);
@@ -589,7 +589,7 @@ ega_ioctl(v, vs, cmd, data, flag, p)
 	void *v;
 	void *vs;
 	u_long cmd;
-	caddr_t data;
+	void *data;
 	int flag;
 	struct proc *p;
 {

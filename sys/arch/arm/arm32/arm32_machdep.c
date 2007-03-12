@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.46.26.1 2007/02/27 16:49:18 yamt Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.46.26.2 2007/03/12 05:47:01 rmind Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.46.26.1 2007/02/27 16:49:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.46.26.2 2007/03/12 05:47:01 rmind Exp $");
 
 #include "opt_md.h"
 #include "opt_pmap_debug.h"
@@ -89,7 +89,7 @@ char	machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
 /* Our exported CPU info; we can have only one. */
 struct cpu_info cpu_info_store;
 
-caddr_t	msgbufaddr;
+void *	msgbufaddr;
 extern paddr_t msgbufphys;
 
 int kernel_debug = 0;

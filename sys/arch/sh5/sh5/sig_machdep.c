@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.21 2007/02/09 21:55:12 ad Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.21.2.1 2007/03/12 05:50:17 rmind Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.21 2007/02/09 21:55:12 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.21.2.1 2007/03/12 05:50:17 rmind Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -86,11 +86,11 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *returnmask)
 	fsize = sizeof(kss);
 	if (onstack)
 		ssp = (struct sigframe_siginfo *)
-		    ((caddr_t)p->p_sigctx.ps_sigstk.ss_sp
+		    ((void *)p->p_sigctx.ps_sigstk.ss_sp
 		    + p->p_sigctx.ps_sigstk.ss_size);
 	else
 		ssp = (struct sigframe_siginfo *)(intptr_t)tf->tf_caller.r15;
-	ssp = (struct sigframe_siginfo *)((caddr_t)ssp - ((fsize + 15) & ~15));
+	ssp = (struct sigframe_siginfo *)((void *)ssp - ((fsize + 15) & ~15));
 
 	/* Build stack frame for signal trampoline. */
 	kss.sf_si._info = ksi->ksi_info;
@@ -101,7 +101,7 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *returnmask)
 	    ? _UC_SETSTACK : _UC_CLRSTACK;
 	cpu_getmcontext(l, &kss.sf_uc.uc_mcontext, &kss.sf_uc.uc_flags);
 
-	if (copyout(&kss, (caddr_t)ssp, fsize) != 0) {
+	if (copyout(&kss, (void *)ssp, fsize) != 0) {
 		/*
 		 * Process has trashed its stack; give it an illegal
 		 * instruction to halt it in its tracks.
@@ -148,7 +148,7 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 	process_read_regs(l, (struct reg *)(void *)gr);
 
 	if ((ras_pc = (__greg_t)(intptr_t) ras_lookup(l->l_proc,
-	    (caddr_t)(intptr_t) gr[_REG_PC])) != -1)
+	    (void *)(intptr_t) gr[_REG_PC])) != -1)
 		gr[_REG_PC] = ras_pc;
 
 	*flags |= _UC_CPU;

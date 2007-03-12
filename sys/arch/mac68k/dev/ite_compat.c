@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_compat.c,v 1.9 2005/12/11 12:18:02 christos Exp $	*/
+/*	$NetBSD: ite_compat.c,v 1.9.26.1 2007/03/12 05:48:57 rmind Exp $	*/
 
 /*
  * Copyright (C) 2000 Scott Reynolds
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite_compat.c,v 1.9 2005/12/11 12:18:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite_compat.c,v 1.9.26.1 2007/03/12 05:48:57 rmind Exp $");
 
 #include "ite.h"
 #include "wsdisplay.h"
@@ -139,7 +139,7 @@ itetty(dev_t dev)
 
 /*ARGSUSED*/
 int
-iteioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
+iteioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 {
 	if (!ite_initted)
 		return (ENXIO);

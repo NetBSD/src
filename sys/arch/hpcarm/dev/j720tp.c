@@ -1,4 +1,4 @@
-/*	$NetBSD: j720tp.c,v 1.4 2006/11/12 19:00:42 plunky Exp $	*/
+/*	$NetBSD: j720tp.c,v 1.4.4.1 2007/03/12 05:48:03 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 /* Jornada 720 touch-panel driver. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: j720tp.c,v 1.4 2006/11/12 19:00:42 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: j720tp.c,v 1.4.4.1 2007/03/12 05:48:03 rmind Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_j720tp.h"
@@ -111,13 +111,13 @@ static int	j720tp_match(struct device *, struct cfdata *, void *);
 static void	j720tp_attach(struct device *, struct device *, void *);
 
 static int	j720tp_wsmouse_enable(void *);
-static int	j720tp_wsmouse_ioctl(void *, u_long, caddr_t, int,
+static int	j720tp_wsmouse_ioctl(void *, u_long, void *, int,
 			struct lwp *);
 static void	j720tp_wsmouse_disable(void *);
 
 static int	j720tp_wskbd_enable(void *, int);
 static void	j720tp_wskbd_set_leds(void *, int);
-static int	j720tp_wskbd_ioctl(void *, u_long, caddr_t, int, struct lwp *);
+static int	j720tp_wskbd_ioctl(void *, u_long, void *, int, struct lwp *);
 
 static void	j720tp_enable_intr(struct j720tp_softc *);
 static void	j720tp_disable_intr(struct j720tp_softc *);
@@ -278,7 +278,7 @@ j720tp_wsmouse_enable(void *self)
 }
 
 static int
-j720tp_wsmouse_ioctl(void *self, u_long cmd, caddr_t data, int flag,
+j720tp_wsmouse_ioctl(void *self, u_long cmd, void *data, int flag,
     struct lwp *l)
 {
 	struct j720tp_softc *sc = self;
@@ -322,7 +322,7 @@ j720tp_wskbd_set_leds(void *self, int leds)
 }
 
 static int
-j720tp_wskbd_ioctl(void *self, u_long cmd, caddr_t data, int flag,
+j720tp_wskbd_ioctl(void *self, u_long cmd, void *data, int flag,
     struct lwp *l)
 {
 #ifdef WSDISPLAY_COMPAT_RAWKBD

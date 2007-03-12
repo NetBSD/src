@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.109 2007/02/09 21:55:01 ad Exp $ */
+/* $NetBSD: locore.s,v 1.109.2.1 2007/03/12 05:45:50 rmind Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.109 2007/02/09 21:55:01 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.109.2.1 2007/03/12 05:45:50 rmind Exp $");
 
 #include "assym.h"
 
@@ -696,7 +696,9 @@ LEAF(idle, 0)
 	ldl	t0, sched_whichqs		/* look for non-empty queue */
 	bne	t0, 4f
 2:	lda	t0, uvm
-	ldl	t0, UVM_PAGE_IDLE_ZERO(t0)	/* should we zero some pages? */
+	ldq_u	t1, UVM_PAGE_IDLE_ZERO(t0)
+	lda	t0, UVM_PAGE_IDLE_ZERO(t0)	/* should we zero some pages? */
+	extbl	t1, t0, t0
 	beq	t0, 3f				/* nope. */
 	CALL(uvm_pageidlezero)
 3:	ldl	t0, sched_whichqs		/* look for non-empty queue */

@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.293.2.1 2007/02/27 16:48:40 yamt Exp $ */
+/* $NetBSD: machdep.c,v 1.293.2.2 2007/03/12 05:45:50 rmind Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.293.2.1 2007/02/27 16:48:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.293.2.2 2007/03/12 05:45:50 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -146,7 +146,7 @@ struct vm_map *exec_map = NULL;
 struct vm_map *mb_map = NULL;
 struct vm_map *phys_map = NULL;
 
-caddr_t msgbufaddr;
+void *msgbufaddr;
 
 int	maxmem;			/* max memory per process */
 
@@ -444,7 +444,7 @@ nobootinfo:
 	 * its best to detect things things that have never been seen
 	 * before...
 	 */
-	mddtp = (struct mddt *)(((caddr_t)hwrpb) + hwrpb->rpb_memdat_off);
+	mddtp = (struct mddt *)(((char *)hwrpb) + hwrpb->rpb_memdat_off);
 
 	/* MDDT SANITY CHECKING */
 	mddtweird = 0;
@@ -620,7 +620,7 @@ nobootinfo:
 
 		vps->end -= atop(sz);
 		vps->avail_end -= atop(sz);
-		msgbufaddr = (caddr_t) ALPHA_PHYS_TO_K0SEG(ptoa(vps->end));
+		msgbufaddr = (void *) ALPHA_PHYS_TO_K0SEG(ptoa(vps->end));
 		initmsgbuf(msgbufaddr, sz);
 
 		/* Remove the last segment if it now has no pages. */
@@ -906,8 +906,8 @@ alpha_dsr_sysname()
 	if (hwrpb->rpb_version < HWRPB_DSRDB_MINVERS)
 		return (NULL);
 
-	dsr = (struct dsrdb *)(((caddr_t)hwrpb) + hwrpb->rpb_dsrdb_off);
-	sysname = (const char *)((caddr_t)dsr + (dsr->dsr_sysname_off +
+	dsr = (struct dsrdb *)(((char *)hwrpb) + hwrpb->rpb_dsrdb_off);
+	sysname = (const char *)((char *)dsr + (dsr->dsr_sysname_off +
 	    sizeof(u_int64_t)));
 	return (sysname);
 }
@@ -1116,7 +1116,7 @@ cpu_dump_mempagecnt()
 int
 cpu_dump()
 {
-	int (*dump) __P((dev_t, daddr_t, caddr_t, size_t));
+	int (*dump) __P((dev_t, daddr_t, void *, size_t));
 	char buf[dbtob(1)];
 	kcore_seg_t *segp;
 	cpu_kcore_hdr_t *cpuhdrp;
@@ -1156,7 +1156,7 @@ cpu_dump()
 		memsegp[i].size = mem_clusters[i].size & ~PAGE_MASK;
 	}
 
-	return (dump(dumpdev, dumplo, (caddr_t)buf, dbtob(1)));
+	return (dump(dumpdev, dumplo, (void *)buf, dbtob(1)));
 }
 
 /*
@@ -1219,7 +1219,7 @@ dumpsys()
 	u_long maddr;
 	int psize;
 	daddr_t blkno;
-	int (*dump) __P((dev_t, daddr_t, caddr_t, size_t));
+	int (*dump) __P((dev_t, daddr_t, void *, size_t));
 	int error;
 
 	/* Save registers. */
@@ -1278,7 +1278,7 @@ dumpsys()
 				n =  BYTES_PER_DUMP;
 	
 			error = (*dump)(dumpdev, blkno,
-			    (caddr_t)ALPHA_PHYS_TO_K0SEG(maddr), n);
+			    (void *)ALPHA_PHYS_TO_K0SEG(maddr), n);
 			if (error)
 				goto err;
 			maddr += n;
@@ -1432,7 +1432,7 @@ regdump(framep)
 void *
 getframe(const struct lwp *l, int sig, int *onstack)
 {
-	void * frame;
+	void *frame;
 
 	/* Do we need to jump onto the signal stack? */
 	*onstack =
@@ -1440,7 +1440,7 @@ getframe(const struct lwp *l, int sig, int *onstack)
 	    (SIGACTION(l->l_proc, sig).sa_flags & SA_ONSTACK) != 0;
 
 	if (*onstack)
-		frame = (void *)((caddr_t)l->l_sigstk.ss_sp +
+		frame = (void *)((char *)l->l_sigstk.ss_sp +
 					l->l_sigstk.ss_size);
 	else
 		frame = (void *)(alpha_pal_rdusp());
@@ -1940,7 +1940,7 @@ cpu_getmcontext(l, mcp, flags)
 	gr[_REG_PS] = frame->tf_regs[FRAME_PS];
 
 	if ((ras_pc = (__greg_t)ras_lookup(l->l_proc,
-	    (caddr_t) gr[_REG_PC])) != -1)
+	    (void *) gr[_REG_PC])) != -1)
 		gr[_REG_PC] = ras_pc;
 
 	*flags |= _UC_CPU | _UC_UNIQUE;

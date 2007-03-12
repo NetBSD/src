@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.15 2006/11/25 11:59:56 scw Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.15.4.1 2007/03/12 05:47:01 rmind Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.15 2006/11/25 11:59:56 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.15.4.1 2007/03/12 05:47:01 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -198,7 +198,7 @@ readdisklabel(dev, strat, lp, osdep)
 		goto done;
 	}
 	for (dlp = (struct disklabel *)bp->b_data;
-	    dlp <= (struct disklabel *)(bp->b_data + lp->d_secsize - sizeof(*dlp));
+	    dlp <= (struct disklabel *)((char *)bp->b_data + lp->d_secsize - sizeof(*dlp));
 	    dlp = (struct disklabel *)((char *)dlp + sizeof(long))) {
 		if (dlp->d_magic != DISKMAGIC || dlp->d_magic2 != DISKMAGIC) {
 			continue;
@@ -385,7 +385,7 @@ writedisklabel(dev, strat, lp, osdep)
 	if ((error = biowait(bp)))
 		goto done;
 	for (dlp = (struct disklabel *)bp->b_data;
-	    dlp <= (struct disklabel *)(bp->b_data + lp->d_secsize - sizeof(*dlp));
+	    dlp <= (struct disklabel *)((char *)bp->b_data + lp->d_secsize - sizeof(*dlp));
 	    dlp = (struct disklabel *)((char *)dlp + sizeof(long))) {
 		if (dlp->d_magic == DISKMAGIC && dlp->d_magic2 == DISKMAGIC &&
 		    dkcksum(dlp) == 0) {

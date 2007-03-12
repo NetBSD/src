@@ -1,4 +1,4 @@
-/*	$NetBSD: bw2.c,v 1.30 2006/03/29 04:16:48 thorpej Exp $	*/
+/*	$NetBSD: bw2.c,v 1.30.14.1 2007/03/12 05:51:04 rmind Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bw2.c,v 1.30 2006/03/29 04:16:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bw2.c,v 1.30.14.1 2007/03/12 05:51:04 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -296,7 +296,7 @@ bw2open(dev_t dev, int flags, int mode, struct lwp *l)
 }
 
 int 
-bw2ioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct lwp *l)
+bw2ioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 {
 	struct bw2_softc *sc = bwtwo_cd.cd_devs[minor(dev)];
 

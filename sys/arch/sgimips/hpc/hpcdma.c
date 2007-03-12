@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcdma.c,v 1.11 2005/12/11 12:18:53 christos Exp $	*/
+/*	$NetBSD: hpcdma.c,v 1.11.26.1 2007/03/12 05:50:11 rmind Exp $	*/
 
 /*
  * Copyright (c) 2001 Wayne Knowles
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpcdma.c,v 1.11 2005/12/11 12:18:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpcdma.c,v 1.11.26.1 2007/03/12 05:50:11 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,7 +100,7 @@ hpcdma_init(struct hpc_attach_args *haa, struct hpc_dma_softc *sc, int ndesc)
 	}
 	/* Map pages into kernel memory */
 	if (bus_dmamem_map(sc->sc_dmat, &seg, rseg, allocsz,
-			   (caddr_t *)&sc->sc_desc_kva, BUS_DMA_NOWAIT)) {
+			   (void **)&sc->sc_desc_kva, BUS_DMA_NOWAIT)) {
 		printf(": can't map sglist\n");
 		bus_dmamem_free(sc->sc_dmat, &seg, rseg);
 		return;

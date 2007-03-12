@@ -1,4 +1,4 @@
-/*	$NetBSD: iop.c,v 1.63 2007/02/15 15:40:51 ad Exp $	*/
+/*	$NetBSD: iop.c,v 1.63.2.1 2007/03/12 05:53:23 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.63 2007/02/15 15:40:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.63.2.1 2007/03/12 05:53:23 rmind Exp $");
 
 #include "opt_i2o.h"
 #include "iop.h"
@@ -1670,7 +1670,7 @@ iop_handle_reply(struct iop_softc *sc, u_int32_t rmfa)
 	u_int off, ictx, tctx, status, size;
 
 	off = (int)(rmfa - sc->sc_rep_phys);
-	rb = (struct i2o_reply *)(sc->sc_rep + off);
+	rb = (struct i2o_reply *)((char *)sc->sc_rep + off);
 
 	/* Perform reply queue DMA synchronisation. */
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_rep_dmamap, off,
@@ -2516,7 +2516,7 @@ iopclose(dev_t dev, int flag, int mode,
 }
 
 int
-iopioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+iopioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct iop_softc *sc;
 	struct iovec *iov;

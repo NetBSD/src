@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.134.2.1 2007/02/27 16:53:23 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.134.2.2 2007/03/12 05:51:44 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.134.2.1 2007/02/27 16:53:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.134.2.2 2007/03/12 05:51:44 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -164,7 +164,6 @@ extern u_int lowram;
 extern int end, *esym;
 extern psize_t mem_size;
 
-caddr_t	msgbufaddr;
 int	maxmem;			/* max memory per process */
 int	physmem = MAXMEM;	/* max supported memory, changes to actual */
 
@@ -178,10 +177,10 @@ int	safepri = PSL_LOWIPL;
 void    identifycpu(void);
 void    initcpu(void);
 int	cpu_dumpsize(void);
-int	cpu_dump(int (*)(dev_t, daddr_t, caddr_t, size_t), daddr_t *);
+int	cpu_dump(int (*)(dev_t, daddr_t, void *, size_t), daddr_t *);
 void	cpu_init_kcore_hdr(void);
 #ifdef EXTENDED_MEMORY
-static int mem_exists(caddr_t, u_long);
+static int mem_exists(void *, u_long);
 static void setmemrange(void);
 #endif
 
@@ -621,7 +620,7 @@ cpu_dumpsize(void)
  * Called by dumpsys() to dump the machine-dependent header.
  */
 int
-cpu_dump(int (*dump)(dev_t, daddr_t, caddr_t, size_t), daddr_t *blknop)
+cpu_dump(int (*dump)(dev_t, daddr_t, void *, size_t), daddr_t *blknop)
 {
 	int buf[MDHDRSIZE / sizeof(int)];
 	cpu_kcore_hdr_t *chdr;
@@ -637,7 +636,7 @@ cpu_dump(int (*dump)(dev_t, daddr_t, caddr_t, size_t), daddr_t *blknop)
 	kseg->c_size = MDHDRSIZE - ALIGN(sizeof(kcore_seg_t));
 
 	memcpy(chdr, &cpu_kcore_hdr, sizeof(cpu_kcore_hdr_t));
-	error = (*dump)(dumpdev, *blknop, (caddr_t)buf, sizeof(buf));
+	error = (*dump)(dumpdev, *blknop, (void *)buf, sizeof(buf));
 	*blknop += btodb(sizeof(buf));
 	return (error);
 }
@@ -705,7 +704,7 @@ dumpsys(void)
 	const struct bdevsw *bdev;
 	daddr_t blkno;		/* current block to write */
 				/* dump routine */
-	int (*dump)(dev_t, daddr_t, caddr_t, size_t);
+	int (*dump)(dev_t, daddr_t, void *, size_t);
 	int pg;			/* page being dumped */
 	paddr_t maddr;		/* PA being dumped */
 	int seg;		/* RAM segment being dumped */
@@ -811,7 +810,7 @@ initcpu(void)
 {
 	/* XXX should init '40 vecs here, too */
 #if defined(M68060)
-	extern caddr_t vectab[256];
+	extern void *vectab[256];
 #if defined(M060SP)
 	extern u_int8_t I_CALL_TOP[];
 	extern u_int8_t FP_CALL_TOP[];
@@ -903,28 +902,31 @@ badbaddr(volatile void *addr)
 	return(0);
 }
 
-void netintr(void);
-
-void
-netintr(void)
-{
-
-#define DONETISR(bit, fn) do {		\
-	if (netisr & (1 << bit)) {	\
-		netisr &= ~(1 << bit);	\
-		fn();			\
-	}				\
-} while (0)
-
-#include <net/netisr_dispatch.h>
-
-#undef DONETISR
-}
-
 void
 intrhand(int sr)
 {
 	printf("intrhand: unexpected sr 0x%x\n", sr);
+}
+
+static const int ipl2psl_table[] = {
+	[IPL_NONE]       = PSL_IPL0,
+	[IPL_SOFT]       = PSL_IPL1,
+	[IPL_SOFTCLOCK]  = PSL_IPL1,
+	[IPL_SOFTNET]    = PSL_IPL1,
+	[IPL_SOFTSERIAL] = PSL_IPL1,
+	[IPL_BIO]        = PSL_IPL3,
+	[IPL_NET]        = PSL_IPL4,
+	[IPL_TTY]        = PSL_IPL4,
+	[IPL_VM]         = PSL_IPL4,
+	[IPL_CLOCK]      = PSL_IPL6,
+	[IPL_HIGH]       = PSL_IPL7,
+};
+
+ipl_cookie_t
+makeiplcookie(ipl_t ipl)
+{
+
+	return (ipl_cookie_t){._psl = ipl2psl_table[ipl] | PSL_S};
 }
 
 #if (defined(DDB) || defined(DEBUG)) && !defined(PANICBUTTON)
@@ -1048,14 +1050,14 @@ static int em_debug = 0;
 #endif
 
 static struct memlist {
-	caddr_t base;
+	void *base;
 	psize_t min;
 	psize_t max;
 } memlist[] = {
 	/* TS-6BE16 16MB memory */
-	{(caddr_t)0x01000000, 0x01000000, 0x01000000},
+	{(void *)0x01000000, 0x01000000, 0x01000000},
 	/* 060turbo SIMM slot (4--128MB) */
-	{(caddr_t)0x10000000, 0x00400000, 0x08000000},
+	{(void *)0x10000000, 0x00400000, 0x08000000},
 };
 static vaddr_t mem_v, base_v;
 
@@ -1063,15 +1065,15 @@ static vaddr_t mem_v, base_v;
  * check memory existency
  */
 static int
-mem_exists(caddr_t mem, u_long basemax)
+mem_exists(void *mem, u_long basemax)
 {
 	/* most variables must be register! */
 	volatile unsigned char *m, *b;
 	unsigned char save_m, save_b=0;	/* XXX: shutup gcc */
 	int baseismem;
 	int exists = 0;
-	caddr_t base;
-	caddr_t begin_check, end_check;
+	void *base;
+	void *begin_check, *end_check;
 	label_t	faultbuf;
 
 	DPRINTF (("Enter mem_exists(%p, %x)\n", mem, basemax));
@@ -1082,7 +1084,7 @@ mem_exists(caddr_t mem, u_long basemax)
 	DPRINTF ((" done.\n"));
 
 	/* only 24bits are significant on normal X680x0 systems */
-	base = (caddr_t)((u_long)mem & 0x00FFFFFF);
+	base = (void *)((u_long)mem & 0x00FFFFFF);
 	DPRINTF ((" pmap_enter(%p, %p) for shadow... ", base_v, base));
 	pmap_enter(pmap_kernel(), base_v, (paddr_t)base,
 		   VM_PROT_READ|VM_PROT_WRITE, VM_PROT_READ|PMAP_WIRED);
@@ -1096,7 +1098,7 @@ mem_exists(caddr_t mem, u_long basemax)
 	__asm("lea %%pc@(begin_check_mem),%0" : "=a"(begin_check));
 	__asm("lea %%pc@(end_check_mem),%0" : "=a"(end_check));
 	if (base >= begin_check && base < end_check) {
-		size_t off = end_check - begin_check;
+		size_t off = (char*)end_check - (char*)begin_check;
 
 		DPRINTF ((" Adjusting the testing area.\n"));
 		m -= off;
@@ -1123,7 +1125,7 @@ mem_exists(caddr_t mem, u_long basemax)
 	 *
 	 * I hope this would be no harm....
 	 */
-	baseismem = base < (caddr_t)basemax;
+	baseismem = base < (void *)basemax;
 
 __asm("begin_check_mem:");
 	/* save original value (base must be saved first) */
@@ -1219,9 +1221,9 @@ setmemrange(void)
 		h = 0;
 		/* range check */
 		for (s = minimum; s <= maximum; s += 0x00100000) {
-			if (!mem_exists(mlist[i].base + s - 4, basemax))
+			if (!mem_exists((char*)mlist[i].base + s - 4, basemax))
 				break;
-			h = (u_long)(mlist[i].base + s);
+			h = (u_long)((char*)mlist[i].base + s);
 		}
 		if ((u_long)mlist[i].base < h) {
 			uvm_page_physload(atop(mlist[i].base), atop(h),

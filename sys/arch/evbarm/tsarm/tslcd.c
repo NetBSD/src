@@ -1,4 +1,4 @@
-/* $NetBSD: tslcd.c,v 1.8 2007/01/24 13:08:13 hubertf Exp $ */
+/* $NetBSD: tslcd.c,v 1.8.2.1 2007/03/12 05:47:38 rmind Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tslcd.c,v 1.8 2007/01/24 13:08:13 hubertf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tslcd.c,v 1.8.2.1 2007/03/12 05:47:38 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -324,7 +324,7 @@ int
 tslcdioctl(dev, cmd, data, flag, l)
 	dev_t dev;
 	u_long cmd;
-	caddr_t data;
+	void *data;
 	int flag;
 	struct lwp *l;
 {

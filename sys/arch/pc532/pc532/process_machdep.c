@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.17.14.1 2007/02/27 16:52:24 yamt Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.17.14.2 2007/03/12 05:49:48 rmind Exp $	*/
 
 /*
  * Copyright (c) 1993 The Regents of the University of California.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.17.14.1 2007/02/27 16:52:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.17.14.2 2007/03/12 05:49:48 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -184,7 +184,7 @@ process_sstep(struct lwp *l, int sstep)
 }
 
 int
-process_set_pc(struct lwp *l, caddr_t addr)
+process_set_pc(struct lwp *l, void *addr)
 {
 	struct reg *pregs;
 

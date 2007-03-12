@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_rh.c,v 1.10 2002/01/28 09:57:00 aymeric Exp $ */
+/*	$NetBSD: ite_rh.c,v 1.10.70.1 2007/03/12 05:46:43 rmind Exp $ */
 
 /*
  * Copyright (c) 1994 Markus Wild
@@ -33,7 +33,7 @@
 #include "opt_retina.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite_rh.c,v 1.10 2002/01/28 09:57:00 aymeric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite_rh.c,v 1.10.70.1 2007/03/12 05:46:43 rmind Exp $");
 
 #include "grfrh.h"
 #if NGRFRH > 0
@@ -218,7 +218,7 @@ void
 rh_scroll(struct ite_softc *ip, int sy, int sx, int count, int dir)
 {
 #ifndef	RETINA_SPEED_HACK
-	u_long * fb = (u_long *) ip->grf->g_fbkva;
+	u_long *fb = (u_long *)__UNVOLATILE(ip->grf->g_fbkva);
 #endif
 
 	rh_cursor(ip, ERASE_CURSOR);

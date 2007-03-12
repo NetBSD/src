@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.2 2006/04/08 14:52:09 cherry Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.2.26.1 2007/03/12 05:48:40 rmind Exp $	*/
 
 /*
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.2 2006/04/08 14:52:09 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.2.26.1 2007/03/12 05:48:40 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/ptrace.h>
@@ -74,7 +74,7 @@ process_write_fpregs(struct lwp *l, const struct fpreg *fpregs)
  * Set the process's program counter.
  */
 int
-process_set_pc(struct lwp *l, caddr_t addr)
+process_set_pc(struct lwp *l, void *addr)
 {
 	return 0;
 }

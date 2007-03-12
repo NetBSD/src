@@ -1,4 +1,4 @@
-/*	$NetBSD: ct.c,v 1.9 2007/01/13 18:46:37 cube Exp $ */
+/*	$NetBSD: ct.c,v 1.9.2.1 2007/03/12 05:53:21 rmind Exp $ */
 
 /*-
  * Copyright (c) 1996-2003 The NetBSD Foundation, Inc.
@@ -128,7 +128,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ct.c,v 1.9 2007/01/13 18:46:37 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ct.c,v 1.9.2.1 2007/03/12 05:53:21 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -914,7 +914,7 @@ ctioctl(dev, cmd, data, flag, l)
 	dev_t dev;
 	u_long cmd;
 	int flag;
-	caddr_t data;
+	void *data;
 	struct lwp *l;
 {
 	struct mtop *op;

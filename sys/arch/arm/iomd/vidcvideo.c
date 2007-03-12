@@ -1,4 +1,4 @@
-/* $NetBSD: vidcvideo.c,v 1.30 2007/01/24 13:08:14 hubertf Exp $ */
+/* $NetBSD: vidcvideo.c,v 1.30.2.1 2007/03/12 05:47:06 rmind Exp $ */
 
 /*
  * Copyright (c) 2001 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vidcvideo.c,v 1.30 2007/01/24 13:08:14 hubertf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidcvideo.c,v 1.30.2.1 2007/03/12 05:47:06 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -154,7 +154,7 @@ static const struct wsscreen_list vidcvideo_screenlist = {
 	_vidcvideo_scrlist
 };
 
-static int	vidcvideoioctl(void *, void *, u_long, caddr_t, int,
+static int	vidcvideoioctl(void *, void *, u_long, void *, int,
     struct lwp *);
 static paddr_t	vidcvideommap(void *, void *, off_t, int);
 
@@ -392,7 +392,7 @@ vidcvideo_attach(struct device *parent, struct device *self, void *aux)
 
 
 static int
-vidcvideoioctl(void *v, void *vs, u_long cmd, caddr_t data, int flag,
+vidcvideoioctl(void *v, void *vs, u_long cmd, void *data, int flag,
     struct lwp *l)
 {
 	struct vidcvideo_softc *sc = v;

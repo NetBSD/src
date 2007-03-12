@@ -1,4 +1,4 @@
-/*	$NetBSD: mb8795.c,v 1.39 2006/09/07 02:40:31 dogcow Exp $	*/
+/*	$NetBSD: mb8795.c,v 1.39.8.1 2007/03/12 05:49:42 rmind Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb8795.c,v 1.39 2006/09/07 02:40:31 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb8795.c,v 1.39.8.1 2007/03/12 05:49:42 rmind Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -583,7 +583,7 @@ mb8795_shutdown(void *arg)
 
 /****************************************************************/
 int
-mb8795_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
+mb8795_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct mb8795_softc *sc = ifp->if_softc;
 	struct ifaddr *ifa = (struct ifaddr *)data;

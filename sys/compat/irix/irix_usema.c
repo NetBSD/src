@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_usema.c,v 1.17 2007/01/23 10:35:05 he Exp $ */
+/*	$NetBSD: irix_usema.c,v 1.17.2.1 2007/03/12 05:52:13 rmind Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_usema.c,v 1.17 2007/01/23 10:35:05 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_usema.c,v 1.17.2.1 2007/03/12 05:52:13 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -179,13 +179,13 @@ irix_usema_ioctl(v)
 	struct vop_ioctl_args /* {
 		struct vnode *a_vp;
 		u_long a_command;
-		caddr_t  a_data;
+		void * a_data;
 		int  a_fflag;
 		kauth_cred_t a_cred;
 		struct lwp *a_l;
 	} */ *ap = v;
 	u_long cmd = ap->a_command;
-	caddr_t data = ap->a_data;
+	void *data = ap->a_data;
 	struct vnode *vp = ap->a_vp;
 	struct irix_usema_rec *iur;
 	struct irix_waiting_proc_rec *iwpr;

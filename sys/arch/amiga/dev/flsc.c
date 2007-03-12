@@ -1,4 +1,4 @@
-/*	$NetBSD: flsc.c,v 1.37 2006/03/29 04:16:45 thorpej Exp $ */
+/*	$NetBSD: flsc.c,v 1.37.14.1 2007/03/12 05:46:39 rmind Exp $ */
 
 /*
  * Copyright (c) 1997 Michael L. Hitch
@@ -44,7 +44,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: flsc.c,v 1.37 2006/03/29 04:16:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: flsc.c,v 1.37.14.1 2007/03/12 05:46:39 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -90,7 +90,7 @@ void	flsc_write_reg(struct ncr53c9x_softc *, int, u_char);
 int	flsc_dma_isintr(struct ncr53c9x_softc *);
 void	flsc_dma_reset(struct ncr53c9x_softc *);
 int	flsc_dma_intr(struct ncr53c9x_softc *);
-int	flsc_dma_setup(struct ncr53c9x_softc *, caddr_t *,
+int	flsc_dma_setup(struct ncr53c9x_softc *, void **,
 	    size_t *, int, size_t *);
 void	flsc_dma_go(struct ncr53c9x_softc *);
 void	flsc_dma_stop(struct ncr53c9x_softc *);
@@ -477,7 +477,7 @@ if (fsc->sc_dmasize < 8 && cnt)
 }
 
 int
-flsc_dma_setup(struct ncr53c9x_softc *sc, caddr_t *addr, size_t *len,
+flsc_dma_setup(struct ncr53c9x_softc *sc, void **addr, size_t *len,
                int datain, size_t *dmasize)
 {
 	struct flsc_softc *fsc = (struct flsc_softc *)sc;
@@ -485,7 +485,7 @@ flsc_dma_setup(struct ncr53c9x_softc *sc, caddr_t *addr, size_t *len,
 	u_char *ptr;
 	size_t xfer;
 
-	fsc->sc_dmaaddr = addr;
+	fsc->sc_dmaaddr = (char **)addr;
 	fsc->sc_pdmalen = len;
 	fsc->sc_datain = datain;
 	fsc->sc_dmasize = *dmasize;
@@ -560,7 +560,7 @@ flsc_dma_setup(struct ncr53c9x_softc *sc, caddr_t *addr, size_t *len,
 	 * If unaligned address, read unaligned bytes into alignment buffer
 	 */
 	else if ((int)ptr & 3 || xfer & 3) {
-		pa = kvtop((caddr_t)fsc->sc_alignbuf);
+		pa = kvtop((void *)fsc->sc_alignbuf);
 		xfer = fsc->sc_dmasize = min(xfer, sizeof (fsc->sc_unalignbuf));
 		NCR_DMA(("flsc_dma_setup: align read by %d bytes\n", xfer));
 		fsc->sc_xfr_align = 1;
@@ -572,7 +572,7 @@ flsc_dma_setup(struct ncr53c9x_softc *sc, caddr_t *addr, size_t *len,
 	else if (fsc->sc_dmasize < 4) {
 		NCR_DMA(("flsc_dma_setup: read remaining %d bytes\n",
 		    fsc->sc_dmasize));
-		pa = kvtop((caddr_t)fsc->sc_alignbuf);
+		pa = kvtop((void *)fsc->sc_alignbuf);
 		fsc->sc_xfr_align = 1;
 	}
 	/*
@@ -584,7 +584,7 @@ flsc_dma_setup(struct ncr53c9x_softc *sc, caddr_t *addr, size_t *len,
 	}
 
 	while (xfer < fsc->sc_dmasize) {
-		if ((pa + xfer) != kvtop(*addr + xfer))
+		if ((pa + xfer) != kvtop((char*)*addr + xfer))
 			break;
 		if ((fsc->sc_dmasize - xfer) < PAGE_SIZE)
 			xfer = fsc->sc_dmasize;

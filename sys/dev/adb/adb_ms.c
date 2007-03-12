@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_ms.c,v 1.4.2.1 2007/02/27 16:53:50 yamt Exp $	*/
+/*	$NetBSD: adb_ms.c,v 1.4.2.2 2007/03/12 05:53:07 rmind Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb_ms.c,v 1.4.2.1 2007/02/27 16:53:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb_ms.c,v 1.4.2.2 2007/03/12 05:53:07 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -120,7 +120,7 @@ CFATTACH_DECL(adbms, sizeof(struct adbms_softc),
     adbms_match, adbms_attach, NULL, NULL);
 
 static int adbms_enable(void *);
-static int adbms_ioctl(void *, u_long, caddr_t, int, struct lwp *);
+static int adbms_ioctl(void *, u_long, void *, int, struct lwp *);
 static void adbms_disable(void *);
 
 /*
@@ -668,7 +668,7 @@ adbms_enable(void *v)
 }
 
 static int
-adbms_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
+adbms_ioctl(void *v, u_long cmd, void *data, int flag, struct lwp *l)
 {
 
 	switch (cmd) {

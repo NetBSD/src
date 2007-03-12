@@ -1,4 +1,4 @@
-/*	$NetBSD: ether_bpf.c,v 1.4 2005/12/11 12:17:49 christos Exp $	*/
+/*	$NetBSD: ether_bpf.c,v 1.4.26.1 2007/03/12 05:48:39 rmind Exp $	*/
 
 /*
  * Copyright (c) 1998
@@ -141,7 +141,7 @@ int EtherInit(ha)
 		return (0);
 	}
 
-#define _offsetof(t, m) ((int)((caddr_t)&((t *)0)->m))
+#define _offsetof(t, m) ((int)((void *)&((t *)0)->m))
 	sdllen = _offsetof(struct sockaddr_dl,
 			   sdl_data[0]) + strlen(BPF_IFNAME) + 6;
 	sdlp = malloc(sdllen);

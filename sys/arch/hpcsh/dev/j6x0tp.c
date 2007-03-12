@@ -1,4 +1,4 @@
-/*	$NetBSD: j6x0tp.c,v 1.15 2006/11/12 19:00:42 plunky Exp $ */
+/*	$NetBSD: j6x0tp.c,v 1.15.4.1 2007/03/12 05:48:16 rmind Exp $ */
 
 /*
  * Copyright (c) 2003 Valeriy E. Ushakov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: j6x0tp.c,v 1.15 2006/11/12 19:00:42 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: j6x0tp.c,v 1.15.4.1 2007/03/12 05:48:16 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -133,14 +133,14 @@ static void	j6x0tp_attach(struct device *, struct device *, void *);
 
 /* wsmouse accessops */
 static int	j6x0tp_wsmouse_enable(void *);
-static int	j6x0tp_wsmouse_ioctl(void *, u_long, caddr_t, int,
+static int	j6x0tp_wsmouse_ioctl(void *, u_long, void *, int,
 				     struct lwp *);
 static void	j6x0tp_wsmouse_disable(void *);
 
 /* wskbd accessops */
 static int	j6x0tp_wskbd_enable(void *, int);
 static void	j6x0tp_wskbd_set_leds(void *, int);
-static int	j6x0tp_wskbd_ioctl(void *, u_long, caddr_t, int,
+static int	j6x0tp_wskbd_ioctl(void *, u_long, void *, int,
 				   struct lwp *);
 
 /* internal driver routines */
@@ -275,7 +275,7 @@ j6x0tp_attach(struct device *parent, struct device *self, void *aux)
 	/* init calibration, set default parameters */
 	tpcalib_init(&sc->sc_tpcalib);
 	tpcalib_ioctl(&sc->sc_tpcalib, WSMOUSEIO_SCALIBCOORDS,
-		      (caddr_t)__UNCONST(&j6x0tp_default_calib), 0, 0);
+		      (void *)__UNCONST(&j6x0tp_default_calib), 0, 0);
 
 	/* used when in polling mode */
 	callout_init(&sc->sc_touch_ch);
@@ -658,7 +658,7 @@ j6x0tp_get_hard_icon(int rawx, int rawy)
 
 
 static int
-j6x0tp_wsmouse_ioctl(void *self, u_long cmd, caddr_t data, int flag,
+j6x0tp_wsmouse_ioctl(void *self, u_long cmd, void *data, int flag,
 		     struct lwp *l)
 {
 	struct j6x0tp_softc *sc = (struct j6x0tp_softc *)self;
@@ -668,7 +668,7 @@ j6x0tp_wsmouse_ioctl(void *self, u_long cmd, caddr_t data, int flag,
 
 
 static int
-j6x0tp_wskbd_ioctl(void *self, u_long cmd, caddr_t data, int flag,
+j6x0tp_wskbd_ioctl(void *self, u_long cmd, void *data, int flag,
 		     struct lwp *l)
 {
 	/* struct j6x0tp_softc *sc = (struct j6x0tp_softc *)self; */

@@ -1,4 +1,4 @@
-/*	$NetBSD: bha.c,v 1.67 2006/08/17 17:11:28 christos Exp $	*/
+/*	$NetBSD: bha.c,v 1.67.8.1 2007/03/12 05:53:28 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bha.c,v 1.67 2006/08/17 17:11:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bha.c,v 1.67.8.1 2007/03/12 05:53:28 rmind Exp $");
 
 #include "opt_ddb.h"
 
@@ -1648,7 +1648,7 @@ bha_create_mailbox(struct bha_softc *sc)
 	}
 
 	error = bus_dmamem_map(sc->sc_dmat, &seg, rseg, size,
-	    (caddr_t *)&sc->sc_mbo, sc->sc_dmaflags | BUS_DMA_COHERENT);
+	    (void **)&sc->sc_mbo, sc->sc_dmaflags | BUS_DMA_COHERENT);
 	if (error) {
 		aprint_error("%s: unable to map mailboxes, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
@@ -1681,7 +1681,7 @@ bha_create_mailbox(struct bha_softc *sc)
  bad_3:
 	bus_dmamap_destroy(sc->sc_dmat, sc->sc_dmamap_mbox);
  bad_2:
-	bus_dmamem_unmap(sc->sc_dmat, (caddr_t)sc->sc_mbo, size);
+	bus_dmamem_unmap(sc->sc_dmat, (void *)sc->sc_mbo, size);
  bad_1:
 	bus_dmamem_free(sc->sc_dmat, &seg, rseg);
  bad_0:
@@ -1855,7 +1855,7 @@ bha_create_ccbs(struct bha_softc *sc, int count)
  bad_3:
 	bus_dmamap_destroy(sc->sc_dmat, ccbmap);
  bad_2:
-	bus_dmamem_unmap(sc->sc_dmat, (caddr_t)bcg, PAGE_SIZE);
+	bus_dmamem_unmap(sc->sc_dmat, (void *)bcg, PAGE_SIZE);
  bad_1:
 	bus_dmamem_free(sc->sc_dmat, &seg, rseg);
  bad_0:

@@ -1,4 +1,4 @@
-/*	$NetBSD: stand_user.c,v 1.4 2005/12/11 12:17:49 christos Exp $	*/
+/*	$NetBSD: stand_user.c,v 1.4.26.1 2007/03/12 05:48:39 rmind Exp $	*/
 
 /*
  * Copyright (c) 1998
@@ -100,11 +100,11 @@ saputchar(c)
 
 static int memfd, memcnt;
 
-caddr_t
+void *
 mapmem(offset, len)
 	int offset, len;
 {
-	caddr_t base;
+	void *base;
 
 	if (memcnt == 0)
 		memfd = open("/dev/mem", O_RDWR, 0);
@@ -114,7 +114,7 @@ mapmem(offset, len)
 	}
 	base = mmap(0, len, PROT_READ | PROT_WRITE, MAP_SHARED,
 		    memfd, offset);
-	if (base == (caddr_t)-1) {
+	if (base == (void *)-1) {
 		warn("mmap %x-%x", offset, offset + len - 1);
 		return (0);
 	}
@@ -124,7 +124,7 @@ mapmem(offset, len)
 
 void
 unmapmem(addr, len)
-	caddr_t addr;
+	void *addr;
 	int len;
 {
 	munmap(addr, len);

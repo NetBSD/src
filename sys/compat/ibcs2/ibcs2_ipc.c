@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_ipc.c,v 1.22 2007/02/09 21:55:17 ad Exp $	*/
+/*	$NetBSD: ibcs2_ipc.c,v 1.22.2.1 2007/03/12 05:52:11 rmind Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Bartram
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_ipc.c,v 1.22 2007/02/09 21:55:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_ipc.c,v 1.22.2.1 2007/03/12 05:52:11 rmind Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -205,7 +205,7 @@ ibcs2_sys_msgsys(l, v, retval)
 	case 1: {			/* msgctl */
 		int error;
 		struct compat_10_sys_msgsys_args margs;
-		caddr_t sg = stackgap_init(p, 0);
+		void *sg = stackgap_init(p, 0);
 
 		SCARG(&margs, which) = 0;
 		SCARG(&margs, a2) = SCARG(uap, a2);
@@ -351,7 +351,7 @@ ibcs2_sys_semsys(l, v, retval)
 		    {
 			    struct ibcs2_semid_ds *isp, isi;
 			    struct semid_ds14 *sp, s;
-			    caddr_t sg = stackgap_init(p, 0);
+			    void *sg = stackgap_init(p, 0);
 
 			    isp = (struct ibcs2_semid_ds *)SCARG(uap, a5);
 			    sp = stackgap_alloc(p, &sg, sizeof(struct semid_ds14));
@@ -359,27 +359,27 @@ ibcs2_sys_semsys(l, v, retval)
 			    error = compat_10_sys_semsys(l, uap, retval);
 			    if (error)
 				    return error;
-			    error = copyin((caddr_t)sp, (caddr_t)&s,
+			    error = copyin((void *)sp, (void *)&s,
 					   sizeof(s));
 			    if (error)
 				    return error;
 			    cvt_semid2isemid(&s, &isi);
-			    return copyout((caddr_t)&isi, (caddr_t)isp,
+			    return copyout((void *)&isi, (void *)isp,
 					   sizeof(isi));
 		    }
 		case IBCS2_IPC_SET:
 		    {
 			    struct ibcs2_semid_ds isp;
 			    struct semid_ds14 *sp, s;
-			    caddr_t sg = stackgap_init(p, 0);
+			    void *sg = stackgap_init(p, 0);
 
-			    error = copyin((caddr_t)SCARG(uap, a5),
-					   (caddr_t)&isp, sizeof(isp));
+			    error = copyin((void *)SCARG(uap, a5),
+					   (void *)&isp, sizeof(isp));
 			    if (error)
 				    return error;
 			    cvt_isemid2semid(&isp, &s);
 			    sp = stackgap_alloc(p, &sg, sizeof(s));
-			    error = copyout((caddr_t)&s, (caddr_t)sp,
+			    error = copyout((void *)&s, (void *)sp,
 					    sizeof(s));
 			    if (error)
 				    return error;
@@ -486,7 +486,7 @@ ibcs2_sys_shmsys(l, v, retval)
 		    {
 			    struct ibcs2_shmid_ds *isp, is;
 			    struct shmid_ds14 *sp, s;
-			    caddr_t sg = stackgap_init(p, 0);
+			    void *sg = stackgap_init(p, 0);
 
 			    isp = (struct ibcs2_shmid_ds *)SCARG(uap, a4);
 			    sp = stackgap_alloc(p, &sg, sizeof(*sp));
@@ -494,28 +494,28 @@ ibcs2_sys_shmsys(l, v, retval)
 			    error = compat_10_sys_shmsys(l, uap, retval);
 			    if (error)
 				    return error;
-			    error = copyin((caddr_t)sp, (caddr_t)&s,
+			    error = copyin((void *)sp, (void *)&s,
 					   sizeof(s));
 			    if (error)
 				    return error;
 			    cvt_shmid2ishmid(&s, &is);
-			    return copyout((caddr_t)&is, (caddr_t)isp,
+			    return copyout((void *)&is, (void *)isp,
 					   sizeof(is));
 		    }
 		case IBCS2_IPC_SET:
 		    {
 			    struct ibcs2_shmid_ds is;
 			    struct shmid_ds14 *sp, s;
-			    caddr_t sg = stackgap_init(p, 0);
+			    void *sg = stackgap_init(p, 0);
 
-			    error = copyin((caddr_t)SCARG(uap, a4),
-					   (caddr_t)&is, sizeof(is));
+			    error = copyin((void *)SCARG(uap, a4),
+					   (void *)&is, sizeof(is));
 			    if (error)
 				    return error;
 			    cvt_ishmid2shmid(&is, &s);
 			    sp = stackgap_alloc(p, &sg, sizeof(*sp));
 			    SCARG(uap, a4) = (int)sp;
-			    error = copyout((caddr_t)&s, (caddr_t)sp,
+			    error = copyout((void *)&s, (void *)sp,
 					    sizeof(s));
 			    if (error)
 				    return error;

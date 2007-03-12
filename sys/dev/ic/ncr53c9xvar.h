@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9xvar.h,v 1.47 2005/12/11 12:21:28 christos Exp $	*/
+/*	$NetBSD: ncr53c9xvar.h,v 1.47.26.1 2007/03/12 05:53:40 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -259,7 +259,7 @@ struct ncr53c9x_glue {
 	void	(*gl_dma_reset)(struct ncr53c9x_softc *);
 	int	(*gl_dma_intr)(struct ncr53c9x_softc *);
 	int	(*gl_dma_setup)(struct ncr53c9x_softc *,
-		    caddr_t *, size_t *, int, size_t *);
+		    void **, size_t *, int, size_t *);
 	void	(*gl_dma_go)(struct ncr53c9x_softc *);
 	void	(*gl_dma_stop)(struct ncr53c9x_softc *);
 	int	(*gl_dma_isactive)(struct ncr53c9x_softc *);
@@ -307,7 +307,7 @@ struct ncr53c9x_softc {
 	struct ncr53c9x_tinfo *sc_tinfo;
 
 	/* Data about the current nexus (updated for every cmd switch) */
-	caddr_t	sc_dp;		/* Current data pointer */
+	void *	sc_dp;		/* Current data pointer */
 	ssize_t	sc_dleft;	/* Data left to transfer */
 
 	/* Adapter state */
@@ -325,13 +325,13 @@ struct ncr53c9x_softc {
 	u_short	sc_msgoutq;	/* What messages have been sent so far? */
 
 	u_char	*sc_omess;	/* MSGOUT buffer */
-	caddr_t	sc_omp;		/* Message pointer (for multibyte messages) */
+	void *	sc_omp;		/* Message pointer (for multibyte messages) */
 	size_t	sc_omlen;
 	u_char	*sc_imess;	/* MSGIN buffer */
-	caddr_t	sc_imp;		/* Message pointer (for multibyte messages) */
+	void *	sc_imp;		/* Message pointer (for multibyte messages) */
 	size_t	sc_imlen;
 
-	caddr_t	sc_cmdp;	/* Command pointer (for DMAed commands) */
+	void *	sc_cmdp;	/* Command pointer (for DMAed commands) */
 	size_t	sc_cmdlen;	/* Size of command in transit */
 
 	/* Hardware attributes */

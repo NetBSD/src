@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.2.2.1 2007/02/27 16:50:14 yamt Exp $ */
+/*	$NetBSD: machdep.c,v 1.2.2.2 2007/03/12 05:47:40 rmind Exp $ */
 
 /*
  * Copyright (c) 2006 Jachym Holecek
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.2.2.1 2007/02/27 16:50:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.2.2.2 2007/03/12 05:47:40 rmind Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -315,7 +315,7 @@ cpu_startup(void)
 	curcpu()->ci_khz = cpuspeed / 1000;
 
 	/* Initialize error message buffer. */
-	initmsgbuf((caddr_t)msgbuf, round_page(MSGBUFSIZE));
+	initmsgbuf((void *)msgbuf, round_page(MSGBUFSIZE));
 
 	printf("%s%s", copyright, version);
 

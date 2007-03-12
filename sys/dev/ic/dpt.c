@@ -1,4 +1,4 @@
-/*	$NetBSD: dpt.c,v 1.55 2006/12/02 03:10:42 elad Exp $	*/
+/*	$NetBSD: dpt.c,v 1.55.2.1 2007/03/12 05:53:30 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.55 2006/12/02 03:10:42 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.55.2.1 2007/03/12 05:53:30 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -356,7 +356,7 @@ dpt_init(struct dpt_softc *sc, const char *intrstr)
 	}
 
 	if ((rv = bus_dmamem_map(sc->sc_dmat, &seg, rseg, mapsize,
-	    (caddr_t *)&sc->sc_ccbs, BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
+	    (void **)&sc->sc_ccbs, BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
 		aprint_error("%s: unable to map CCBs, rv = %d\n",
 		    sc->sc_dv.dv_xname, rv);
 		return;
@@ -376,9 +376,9 @@ dpt_init(struct dpt_softc *sc, const char *intrstr)
 		return;
 	}
 
-	sc->sc_stp = (struct eata_sp *)((caddr_t)sc->sc_ccbs + sc->sc_stpoff);
+	sc->sc_stp = (struct eata_sp *)((char *)sc->sc_ccbs + sc->sc_stpoff);
 	sc->sc_stppa = sc->sc_dmamap->dm_segs[0].ds_addr + sc->sc_stpoff;
-	sc->sc_scr = (caddr_t)sc->sc_ccbs + sc->sc_scroff;
+	sc->sc_scr = (char *)sc->sc_ccbs + sc->sc_scroff;
 	sc->sc_scrpa = sc->sc_dmamap->dm_segs[0].ds_addr + sc->sc_scroff;
 	sc->sc_stp->sp_ccbid = -1;
 
@@ -1125,7 +1125,7 @@ dptopen(dev_t dev, int flag, int mode, struct lwp *l)
 }
 
 int
-dptioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+dptioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct dpt_softc *sc;
 	int rv;

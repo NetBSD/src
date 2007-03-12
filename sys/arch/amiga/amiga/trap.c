@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.111 2007/02/09 21:55:01 ad Exp $	*/
+/*	$NetBSD: trap.c,v 1.111.2.1 2007/03/12 05:46:37 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
 #include "opt_fpu_emulate.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.111 2007/02/09 21:55:01 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.111.2.1 2007/03/12 05:46:37 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -497,7 +497,7 @@ trapmmufault(type, code, v, fp, l, sticks)
 	 * error.
 	 */
 	if (rv == 0) {
-		if (map != kernel_map && (caddr_t)va >= vm->vm_maxsaddr)
+		if (map != kernel_map && (void *)va >= vm->vm_maxsaddr)
 			uvm_grow(p, va); 
 
 		if (type == T_MMUFLT)
@@ -753,8 +753,8 @@ trap(type, code, v, frame)
 	 */
 	case T_MMUFLT:
 		if (l && l->l_addr &&
-		    (l->l_addr->u_pcb.pcb_onfault == (caddr_t)fubail ||
-		    l->l_addr->u_pcb.pcb_onfault == (caddr_t)subail)) {
+		    (l->l_addr->u_pcb.pcb_onfault == (void *)fubail ||
+		    l->l_addr->u_pcb.pcb_onfault == (void *)subail)) {
 			trapcpfault(l, &frame);
 			return;
 		}
@@ -873,7 +873,7 @@ _write_back (wb, wb_sts, wb_data, wb_addr, wb_map)
 
 	if ((wb_sts & WBS_TMMASK) == FC_USERD &&
 	    !curpcb->pcb_onfault) {
-	    	curpcb->pcb_onfault = (caddr_t) _wb_fault;
+	    	curpcb->pcb_onfault = (void *) _wb_fault;
 	}
 
 	switch(wb_sts & WBS_SZMASK) {
@@ -897,7 +897,7 @@ _write_back (wb, wb_sts, wb_data, wb_addr, wb_map)
 		break;
 
 	}
-	if (curpcb->pcb_onfault == (caddr_t) _wb_fault)
+	if (curpcb->pcb_onfault == (void *) _wb_fault)
 		curpcb->pcb_onfault = NULL;
 	if ((wb_sts & WBS_TMMASK) != FC_USERD)
 		__asm volatile ("movec %0,%%dfc\n" : : "d" (FC_USERD));

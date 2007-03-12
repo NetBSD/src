@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_direct.c,v 1.56 2007/01/24 13:08:12 hubertf Exp $	*/
+/*	$NetBSD: adb_direct.c,v 1.56.2.1 2007/03/12 05:48:56 rmind Exp $	*/
 
 /* From: adb_direct.c 2.02 4/18/97 jpw */
 
@@ -62,7 +62,7 @@
 #ifdef __NetBSD__
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb_direct.c,v 1.56 2007/01/24 13:08:12 hubertf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb_direct.c,v 1.56.2.1 2007/03/12 05:48:56 rmind Exp $");
 
 #include "opt_adb.h"
 
@@ -271,6 +271,8 @@ int	tickle_serial = 0;		/* the last packet tickled */
 int	adb_cuda_serial = 0;		/* the current packet */
 
 struct callout adb_cuda_tickle_ch = CALLOUT_INITIALIZER;
+
+void *adb_softintr_cookie;
 
 extern struct mac68k_machine_S mac68k_machine;
 
@@ -1725,7 +1727,7 @@ adb_pass_up(struct adbCommand *in)
 	if (adb_polling)
 		adb_soft_intr();
 	else
-		setsoftadb();
+		softintr_schedule(adb_softintr_cookie);
 
 	return;
 }

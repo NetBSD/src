@@ -1,4 +1,4 @@
-/* $NetBSD: linux_syscall.h,v 1.28 2006/09/01 21:19:44 matt Exp $ */
+/* $NetBSD: linux_syscall.h,v 1.28.8.1 2007/03/12 05:52:15 rmind Exp $ */
 
 /*
  * System call numbers.
@@ -148,7 +148,7 @@
 #define	LINUX_SYS_acct	51
 
 				/* 53 is obsolete lock */
-/* syscall: "ioctl" ret: "int" args: "int" "u_long" "caddr_t" */
+/* syscall: "ioctl" ret: "int" args: "int" "u_long" "void *" */
 #define	LINUX_SYS_ioctl	54
 
 /* syscall: "fcntl" ret: "int" args: "int" "int" "void *" */
@@ -195,7 +195,7 @@
 /* syscall: "setregid" ret: "int" args: "gid_t" "gid_t" */
 #define	LINUX_SYS_setregid	71
 
-/* syscall: "sigsuspend" ret: "int" args: "caddr_t" "int" "int" */
+/* syscall: "sigsuspend" ret: "int" args: "void *" "int" "int" */
 #define	LINUX_SYS_sigsuspend	72
 
 /* syscall: "sigpending" ret: "int" args: "linux_old_sigset_t *" */
@@ -250,13 +250,13 @@
 /* syscall: "reboot" ret: "int" args: "int" "int" "int" "void *" */
 #define	LINUX_SYS_reboot	88
 
-/* syscall: "readdir" ret: "int" args: "int" "caddr_t" "unsigned int" */
+/* syscall: "readdir" ret: "int" args: "int" "void *" "unsigned int" */
 #define	LINUX_SYS_readdir	89
 
 /* syscall: "old_mmap" ret: "int" args: "struct linux_oldmmap *" */
 #define	LINUX_SYS_old_mmap	90
 
-/* syscall: "munmap" ret: "int" args: "caddr_t" "int" */
+/* syscall: "munmap" ret: "int" args: "void *" "int" */
 #define	LINUX_SYS_munmap	91
 
 /* syscall: "truncate" ret: "int" args: "const char *" "long" */
@@ -277,7 +277,7 @@
 /* syscall: "setpriority" ret: "int" args: "int" "int" "int" */
 #define	LINUX_SYS_setpriority	97
 
-/* syscall: "profil" ret: "int" args: "caddr_t" "u_int" "u_int" "u_int" */
+/* syscall: "profil" ret: "int" args: "void *" "u_int" "u_int" "u_int" */
 #define	LINUX_SYS_profil	98
 
 /* syscall: "statfs" ret: "int" args: "const char *" "struct linux_statfs *" */
@@ -316,7 +316,7 @@
 /* syscall: "sysinfo" ret: "int" args: "struct linux_sysinfo *" */
 #define	LINUX_SYS_sysinfo	116
 
-/* syscall: "ipc" ret: "int" args: "int" "int" "int" "int" "caddr_t" */
+/* syscall: "ipc" ret: "int" args: "int" "int" "int" "int" "void *" */
 #define	LINUX_SYS_ipc	117
 
 /* syscall: "fsync" ret: "int" args: "int" */
@@ -355,7 +355,7 @@
 /* syscall: "getfsuid" ret: "int" args: */
 #define	LINUX_SYS_getfsuid	139
 
-/* syscall: "llseek" ret: "int" args: "int" "u_int32_t" "u_int32_t" "caddr_t" "int" */
+/* syscall: "llseek" ret: "int" args: "int" "u_int32_t" "u_int32_t" "void *" "int" */
 #define	LINUX_SYS_llseek	140
 
 /* syscall: "getdents" ret: "int" args: "int" "struct linux_dirent *" "unsigned int" */
@@ -367,7 +367,7 @@
 /* syscall: "flock" ret: "int" args: "int" "int" */
 #define	LINUX_SYS_flock	143
 
-/* syscall: "msync" ret: "int" args: "caddr_t" "int" "int" */
+/* syscall: "msync" ret: "int" args: "void *" "int" "int" */
 #define	LINUX_SYS_msync	144
 
 /* syscall: "readv" ret: "int" args: "int" "struct iovec *" "u_int" */
@@ -385,10 +385,10 @@
 /* syscall: "__sysctl" ret: "int" args: "struct linux___sysctl *" */
 #define	LINUX_SYS___sysctl	149
 
-/* syscall: "mlock" ret: "int" args: "caddr_t" "size_t" */
+/* syscall: "mlock" ret: "int" args: "void *" "size_t" */
 #define	LINUX_SYS_mlock	150
 
-/* syscall: "munlock" ret: "int" args: "caddr_t" "size_t" */
+/* syscall: "munlock" ret: "int" args: "void *" "size_t" */
 #define	LINUX_SYS_munlock	151
 
 /* syscall: "mlockall" ret: "int" args: "int" */

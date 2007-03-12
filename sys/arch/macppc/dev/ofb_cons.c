@@ -1,4 +1,4 @@
-/*	$NetBSD: ofb_cons.c,v 1.6 2007/02/05 04:02:01 macallan Exp $	*/
+/*	$NetBSD: ofb_cons.c,v 1.6.2.1 2007/03/12 05:49:06 rmind Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofb_cons.c,v 1.6 2007/02/05 04:02:01 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofb_cons.c,v 1.6.2.1 2007/03/12 05:49:06 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -197,7 +197,7 @@ ofb_init_rasops(int node, struct rasops_info *ri)
 		OF_interpret("frame-buffer-adr", 0, 1, &fbaddr);
 
 	if (width == -1 || height == -1 || fbaddr == 0 || fbaddr == -1)
-		return FALSE;
+		return false;
 
 	/* Enable write-through cache. */
 #if defined (PPC_OEA) && !defined (PPC_OEA64) && !defined (PPC_OEA64_BRIDGE)
@@ -257,7 +257,7 @@ ofb_init_rasops(int node, struct rasops_info *ri)
 		    width / ri->ri_font->fontwidth);
 	}
 
-	return TRUE;
+	return true;
 }
 #else	/* NWSDISPLAY > 0 */
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cv3d.c,v 1.19 2006/11/24 22:04:21 wiz Exp $ */
+/*	$NetBSD: grf_cv3d.c,v 1.19.4.1 2007/03/12 05:46:40 rmind Exp $ */
 
 /*
  * Copyright (c) 1995 Michael Teske
@@ -33,7 +33,7 @@
 #include "opt_amigacons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_cv3d.c,v 1.19 2006/11/24 22:04:21 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_cv3d.c,v 1.19.4.1 2007/03/12 05:46:40 rmind Exp $");
 
 #include "grfcv3d.h"
 #if NGRFCV3D > 0
@@ -94,7 +94,7 @@ int	grfcv3dmatch(struct device *, struct cfdata *, void *);
 void	grfcv3dattach(struct device *, struct device *, void *);
 int	grfcv3dprint(void *, const char *);
 
-static int cv3d_has_4mb(volatile caddr_t);
+static int cv3d_has_4mb(volatile void *);
 static unsigned short cv3d_compute_clock(unsigned long);
 void	cv3d_boardinit(struct grf_softc *);
 int	cv3d_getvmode(struct grf_softc *, struct grfvideo_mode *);
@@ -109,8 +109,8 @@ int	cv3d_toggle(struct grf_softc *);
 int	cv3d_mondefok(struct grfvideo_mode *);
 int	cv3d_load_mon(struct grf_softc *, struct grfcv3dtext_mode *);
 void	cv3d_inittextmode(struct grf_softc *);
-static	inline void cv3dscreen(int, volatile caddr_t);
-static	inline void cv3d_gfx_on_off(int, volatile caddr_t);
+static	inline void cv3dscreen(int, volatile void *);
+static	inline void cv3d_gfx_on_off(int, volatile void *);
 
 #ifdef CV3D_HARDWARE_CURSOR
 int	cv3d_getspritepos(struct grf_softc *, struct grf_position *);
@@ -250,13 +250,13 @@ static unsigned char clocks[]={
 
 
 /* Board Address of CV64/3D */
-static volatile caddr_t cv3d_boardaddr;
+static volatile void *cv3d_boardaddr;
 static int cv3d_fbsize;
 
-static volatile caddr_t cv3d_memory_io_base;
-static volatile caddr_t cv3d_register_base;
-static volatile caddr_t cv3d_vcode_switch_base;
-static volatile caddr_t cv3d_special_register_base;
+static volatile void *cv3d_memory_io_base;
+static volatile void *cv3d_register_base;
+static volatile void *cv3d_vcode_switch_base;
+static volatile void *cv3d_special_register_base;
 
 /*
  * Memory clock (binpatchable).
@@ -278,7 +278,7 @@ static struct cfdata *cfdata;
  * Return 0 for 2MB, 1 for 4MB
  */
 static int
-cv3d_has_4mb(volatile caddr_t fb)
+cv3d_has_4mb(volatile void *fb)
 {
 #if 0	/* XXX */
 	volatile unsigned long *testfbw, *testfbr;
@@ -383,29 +383,29 @@ grfcv3dattach(struct device *pdp, struct device *dp, void *auxp)
 	} else {
 		if (cv3d_zorroIII) {
 			gp->g_fbkva =
-			    (volatile caddr_t)cv3d_boardaddr + 0x04800000;
+			    (volatile char *)cv3d_boardaddr + 0x04800000;
 			cv3d_memory_io_base =
-			    (volatile caddr_t)cv3d_boardaddr + 0x05000000;
+			    (volatile char *)cv3d_boardaddr + 0x05000000;
 			cv3d_register_base =
-			    (volatile caddr_t)cv3d_boardaddr + 0x05008000;
+			    (volatile char *)cv3d_boardaddr + 0x05008000;
 			cv3d_vcode_switch_base =
-			    (volatile caddr_t)cv3d_boardaddr + 0x08000000;
+			    (volatile char *)cv3d_boardaddr + 0x08000000;
 			cv3d_special_register_base =
-			    (volatile caddr_t)cv3d_boardaddr + 0x0C000000;
+			    (volatile char *)cv3d_boardaddr + 0x0C000000;
 		} else {
 			gp->g_fbkva =
-			    (volatile caddr_t)cv3d_boardaddr + 0x00000000;
+			    (volatile char *)cv3d_boardaddr + 0x00000000;
 			cv3d_memory_io_base =
-			    (volatile caddr_t)cv3d_boardaddr + 0x003E0000;
+			    (volatile char *)cv3d_boardaddr + 0x003E0000;
 			cv3d_register_base =
-			    (volatile caddr_t)cv3d_boardaddr + 0x003C8000;
+			    (volatile char *)cv3d_boardaddr + 0x003C8000;
 			cv3d_vcode_switch_base =
-			    (volatile caddr_t)cv3d_boardaddr + 0x003A0000;
+			    (volatile char *)cv3d_boardaddr + 0x003A0000;
 			cv3d_special_register_base =
-			    (volatile caddr_t)cv3d_boardaddr + 0x003C0000;
+			    (volatile char *)cv3d_boardaddr + 0x003C0000;
 		}
 
-		gp->g_regkva = (volatile caddr_t)cv3d_register_base;
+		gp->g_regkva = (volatile void *)cv3d_register_base;
 
 		gp->g_unit = GRF_CV3D_UNIT;
 		gp->g_mode = cv3d_mode;
@@ -500,7 +500,8 @@ cv3d_compute_clock(unsigned long freq)
 void
 cv3d_boardinit(struct grf_softc *gp)
 {
-	volatile caddr_t ba, special;
+	volatile void *ba;
+	volatile char *special;
 	unsigned char test;
 	unsigned int clockpar;
 	int i;
@@ -510,12 +511,13 @@ cv3d_boardinit(struct grf_softc *gp)
 
 	/* PCI config */
 	if (cv3d_zorroIII) {
-		special = (cv3d_special_register_base + 0x000E0000);
+		special = ((volatile char*)cv3d_special_register_base +
+			0x000E0000);
 	} else {
-		special = (cv3d_special_register_base);
+		special = ((volatile char*)cv3d_special_register_base);
 	}
-	*((short *)(special + 0x10)) = 0;
-	*((long *)(special + 0x4)) = 0x02000003;
+	*((volatile short *)(special + 0x10)) = 0;
+	*((volatile long *)(special + 0x4)) = 0x02000003;
 
 	/* Wakeup Chip */
 	vgawio(cv3d_boardaddr, SREG_VIDEO_SUBS_ENABLE, 1);
@@ -728,9 +730,9 @@ cv3d_boardinit(struct grf_softc *gp)
 
 
 	gi = &gp->g_display;
-	gi->gd_regaddr	= (caddr_t) kvtop (ba);
+	gi->gd_regaddr	= (void *) kvtop (__UNVOLATILE(ba));
 	gi->gd_regsize	= 64 * 1024;
-	gi->gd_fbaddr	= (caddr_t) kvtop (gp->g_fbkva);
+	gi->gd_fbaddr	= (void *) kvtop (__UNVOLATILE(gp->g_fbkva));
 	gi->gd_fbsize	= cv3d_fbsize;
 }
 
@@ -788,7 +790,7 @@ cv3d_setvmode(struct grf_softc *gp, unsigned mode)
 int
 cv3d_blank(struct grf_softc *gp, int *on)
 {
-	volatile caddr_t ba;
+	volatile void *ba;
 
 	ba = gp->g_regkva;
 	cv3d_gfx_on_off(*on > 0 ? 0 : 1, ba);
@@ -952,7 +954,7 @@ cv3d_setmonitor(struct grf_softc *gp, struct grfvideo_mode *gv)
 int
 cv3d_getcmap(struct grf_softc *gfp, struct grf_colormap *cmap)
 {
-	volatile caddr_t ba;
+	volatile void *ba;
 	u_char red[256], green[256], blue[256], *rp, *gp, *bp;
 	short x;
 	int error;
@@ -990,7 +992,7 @@ cv3d_getcmap(struct grf_softc *gfp, struct grf_colormap *cmap)
 int
 cv3d_putcmap(struct grf_softc *gfp, struct grf_colormap *cmap)
 {
-	volatile caddr_t ba;
+	volatile void *ba;
 	u_char red[256], green[256], blue[256], *rp, *gp, *bp;
 	short x;
 	int error;
@@ -1027,7 +1029,7 @@ cv3d_putcmap(struct grf_softc *gfp, struct grf_colormap *cmap)
 int
 cv3d_toggle(struct grf_softc *gp)
 {
-	volatile caddr_t ba;
+	volatile void *ba;
 
 	ba = gp->g_regkva;
 #ifndef CV3DCONSOLE
@@ -1115,7 +1117,7 @@ cv3d_load_mon(struct grf_softc *gp, struct grfcv3dtext_mode *md)
 {
 	struct grfvideo_mode *gv;
 	struct grfinfo *gi;
-	volatile caddr_t ba, fb;
+	volatile void *ba, *fb;
 	unsigned short mnr;
 	unsigned short HT, HDE, HBS, HBE, HSS, HSE, VDE, VBS, VBE, VSS,
 		VSE, VT;
@@ -1143,7 +1145,7 @@ cv3d_load_mon(struct grf_softc *gp, struct grfcv3dtext_mode *md)
 	cv3d_gfx_on_off(1, ba);
 
 	/* provide all needed information in grf device-independent locations */
-	gp->g_data		= (caddr_t) gv;
+	gp->g_data		= (void *) gv;
 	gi = &gp->g_display;
 	gi->gd_colors		= 1 << gv->depth;
 	gi->gd_planes		= gv->depth;
@@ -1397,7 +1399,7 @@ cv3d_load_mon(struct grf_softc *gp, struct grfcv3dtext_mode *md)
 	}
 
 	if (cv3d_zorroIII) {
-		gp->g_fbkva = (volatile caddr_t)cv3d_boardaddr + 0x04000000 +
+		gp->g_fbkva = (volatile char *)cv3d_boardaddr + 0x04000000 +
 				(0x00400000 * fb_flag);
 	} else {
 		/* XXX This is totaly untested */
@@ -1485,8 +1487,9 @@ void
 cv3d_inittextmode(struct grf_softc *gp)
 {
 	struct grfcv3dtext_mode *tm = (struct grfcv3dtext_mode *)gp->g_data;
-	volatile caddr_t ba, fb;
-	unsigned char *c, *f, y;
+	volatile void *ba, *fb;
+	volatile unsigned char *c;
+	unsigned char *f, y;
 	unsigned short z;
 
 	ba = gp->g_regkva;
@@ -1501,7 +1504,7 @@ cv3d_inittextmode(struct grf_softc *gp)
 	 * The font is loaded in plane 2.
 	 */
 
-	c = (unsigned char *) fb;
+	c = (volatile unsigned char *) fb;
 
 	/* clear screen */
 	for (z = 0; z < tm->cols * tm->rows * 3; z++) {
@@ -1511,7 +1514,7 @@ cv3d_inittextmode(struct grf_softc *gp)
 		*c++ = 0;
 	}
 
-	c = (unsigned char *) (fb) + (32 * tm->fdstart * 4 + 2);
+	c = (volatile unsigned char *)fb + (32 * tm->fdstart * 4 + 2);
 	f = tm->fdata;
 	for (z = tm->fdstart; z <= tm->fdend; z++, c += (32 - tm->fy) * 4)
 		for (y = 0; y < tm->fy; y++) {
@@ -1520,7 +1523,7 @@ cv3d_inittextmode(struct grf_softc *gp)
 		}
 
 	/* print out a little init msg */
-	c = (unsigned char *)(fb) + (tm->cols - 9) * 4;
+	c = (volatile unsigned char *)fb + (tm->cols - 9) * 4;
 	*c++ = 'C';
 	*c++ = 0x0c;
 	c +=2;
@@ -1550,16 +1553,16 @@ cv3d_inittextmode(struct grf_softc *gp)
  * ba = boardaddr
  */
 static inline void
-cv3dscreen(int toggle, volatile caddr_t ba)
+cv3dscreen(int toggle, volatile void *ba)
 {
-	*((short *)(ba)) = (toggle & 1);
+	*((volatile short *)(ba)) = (toggle & 1);
 }
 
 
 /* 0 = on, 1= off */
 /* ba= registerbase */
 static inline void
-cv3d_gfx_on_off(int toggle, volatile caddr_t ba)
+cv3d_gfx_on_off(int toggle, volatile void *ba)
 {
 	int r;
 
@@ -1587,7 +1590,7 @@ int
 cv3d_getspritepos(struct grf_softc *gp, struct grf_position *pos)
 {
 	int hi,lo;
-	volatile caddr_t ba = gp->g_regkva;
+	volatile void *ba = gp->g_regkva;
 
 	hi = RCrt(ba, CRT_ID_HWGC_ORIGIN_Y_HI);
 	lo = RCrt(ba, CRT_ID_HWGC_ORIGIN_Y_LO);
@@ -1603,7 +1606,7 @@ cv3d_getspritepos(struct grf_softc *gp, struct grf_position *pos)
 int
 cv3d_setspritepos(struct grf_softc *gp, struct grf_position *pos)
 {
-	volatile caddr_t ba = gp->g_regkva;
+	volatile void *ba = gp->g_regkva;
 	short x, y;
 	static short savex, savey;
 	short xoff, yoff;
@@ -1653,7 +1656,7 @@ M2I(short val)
 int
 cv3d_getspriteinfo(struct grf_softc *gp, struct grf_spriteinfo *info)
 {
-	volatile caddr_t ba, fb;
+	volatile void *ba, fb;
 
 	ba = gp->g_regkva;
 	fb = gp->g_fbkva;
@@ -1701,8 +1704,8 @@ cv3d_getspriteinfo(struct grf_softc *gp, struct grf_spriteinfo *info)
 void
 cv3d_setup_hwc(struct grf_softc *gp)
 {
-	volatile caddr_t ba = gp->g_regkva;
-	volatile caddr_t hwc;
+	volatile void *ba = gp->g_regkva;
+	volatile void *hwc;
 	int test;
 
 	if (gp->g_display.gd_planes <= 4)
@@ -1780,7 +1783,7 @@ cv3d_setup_hwc(struct grf_softc *gp)
 int
 cv3d_setspriteinfo(struct grf_softc *gp, struct grf_spriteinfo *info)
 {
-	volatile caddr_t ba, fb;
+	volatile void *ba, fb;
 	int depth = gp->g_display.gd_planes;
 
 	ba = gp->g_regkva;
@@ -1954,7 +1957,7 @@ cv3d_setspriteinfo(struct grf_softc *gp, struct grf_spriteinfo *info)
 		cv3d_setspritepos(gp, &info->pos);
 	}
 	if (info->set & GRFSPRSET_CMAP) {
-		volatile caddr_t hwc;
+		volatile void *hwc;
 		int test;
 
 		/* reset colour stack */

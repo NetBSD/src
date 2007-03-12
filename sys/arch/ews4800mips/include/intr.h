@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.3 2007/02/16 02:53:45 ad Exp $	*/
+/*	$NetBSD: intr.h,v 1.3.2.1 2007/03/12 05:47:41 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2004 The NetBSD Foundation, Inc.
@@ -88,8 +88,6 @@
 #define IST_EDGE	2	/* edge-triggered */
 #define IST_LEVEL	3	/* level-triggered */
 
-#ifdef _KERNEL
-
 extern const uint32_t *ipl_sr_bits;
 
 extern int		_splraise(int);
@@ -130,5 +128,4 @@ void intr_disestablish(void *);
 
 #include <mips/softintr.h>
 
-#endif /* _KERNEL */
 #endif /* !_EWS4800MIPS_INTR_H_ */

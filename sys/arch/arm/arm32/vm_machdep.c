@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.35.14.1 2007/02/27 16:49:33 yamt Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.35.14.2 2007/03/12 05:47:03 rmind Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.35.14.1 2007/02/27 16:49:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.35.14.2 2007/03/12 05:47:03 rmind Exp $");
 
 #include "opt_armfpe.h"
 #include "opt_pmap_debug.h"
@@ -340,7 +340,7 @@ vmapbuf(bp, len)
 	off = (vaddr_t)bp->b_data - faddr;
 	len = round_page(off + len);
 	taddr = uvm_km_alloc(phys_map, len, 0, UVM_KMF_VAONLY | UVM_KMF_WAITVA);
-	bp->b_data = (caddr_t)(taddr + off);
+	bp->b_data = (void *)(taddr + off);
 
 	/*
 	 * The region is locked, so we expect that pmap_pte() will return

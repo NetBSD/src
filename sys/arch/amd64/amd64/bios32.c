@@ -1,4 +1,4 @@
-/*	$NetBSD: bios32.c,v 1.4 2005/12/24 20:06:47 perry Exp $	*/
+/*	$NetBSD: bios32.c,v 1.4.26.1 2007/03/12 05:46:15 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bios32.c,v 1.4 2005/12/24 20:06:47 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bios32.c,v 1.4.26.1 2007/03/12 05:46:15 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,12 +94,12 @@ bios32_init()
 {
 #if 0	/* XXXfvdl need to set up compatibility segment for this */
 	paddr_t entry = 0;
-	caddr_t p;
+	void *p;
 	unsigned char cksum;
 	int i;
 
-	for (p = (caddr_t)ISA_HOLE_VADDR(BIOS32_START);
-	     p < (caddr_t)ISA_HOLE_VADDR(BIOS32_END);
+	for (p = (void *)ISA_HOLE_VADDR(BIOS32_START);
+	     p < (void *)ISA_HOLE_VADDR(BIOS32_END);
 	     p += 16) {
 		if (*(int *)p != BIOS32_MAKESIG('_', '3', '2', '_'))
 			continue;
@@ -128,7 +128,7 @@ bios32_init()
 	}
 
 	if (entry != 0) {
-		bios32_entry.offset = (caddr_t)ISA_HOLE_VADDR(entry);
+		bios32_entry.offset = (void *)ISA_HOLE_VADDR(entry);
 		bios32_entry.segment = GSEL(GCODE_SEL, SEL_KPL);
 	}
 #endif
@@ -169,7 +169,7 @@ bios32_service(service, e, ei)
 		return (0);
 	}
 
-	e->offset = (caddr_t)ISA_HOLE_VADDR(entry);
+	e->offset = (void *)ISA_HOLE_VADDR(entry);
 	e->segment = GSEL(GCODE_SEL, SEL_KPL);
 
 	ei->bei_base = ebx;

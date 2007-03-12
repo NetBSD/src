@@ -1,4 +1,4 @@
-/*	$NetBSD: le_bus.c,v 1.11 2006/01/29 21:42:41 dsl Exp $	*/
+/*	$NetBSD: le_bus.c,v 1.11.24.1 2007/03/12 05:47:18 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: le_bus.c,v 1.11 2006/01/29 21:42:41 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: le_bus.c,v 1.11.24.1 2007/03/12 05:47:18 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -359,7 +359,7 @@ leb_bus_space_peek_1(t, h, o)
     bus_space_handle_t	h;
     bus_size_t		o;
 {
-    return(!badbaddr((caddr_t)(h + o), 1));
+    return(!badbaddr((void *)(h + o), 1));
 }
 
 static int 
@@ -368,7 +368,7 @@ leb_bus_space_peek_2(t, h, o)
     bus_space_handle_t	h;
     bus_size_t		o;
 {
-    return(!badbaddr((caddr_t)(h + o), 2));
+    return(!badbaddr((void *)(h + o), 2));
 }
 
 static int 
@@ -377,7 +377,7 @@ leb_bus_space_peek_4(t, h, o)
     bus_space_handle_t	h;
     bus_size_t		o;
 {
-    return(!badbaddr((caddr_t)(h + o), 4));
+    return(!badbaddr((void *)(h + o), 4));
 }
 
 static int 
@@ -386,7 +386,7 @@ leb_bus_space_peek_8(t, h, o)
     bus_space_handle_t	h;
     bus_size_t		o;
 {
-    return(!badbaddr((caddr_t)(h + o), 8));
+    return(!badbaddr((void *)(h + o), 8));
 }
 
 /*

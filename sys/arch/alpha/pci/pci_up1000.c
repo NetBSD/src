@@ -1,4 +1,4 @@
-/* $NetBSD: pci_up1000.c,v 1.8 2002/05/15 16:57:43 thorpej Exp $ */
+/* $NetBSD: pci_up1000.c,v 1.8.64.1 2007/03/12 05:46:15 rmind Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_up1000.c,v 1.8 2002/05/15 16:57:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_up1000.c,v 1.8.64.1 2007/03/12 05:46:15 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -81,6 +81,7 @@ void	*api_up1000_pciide_compat_intr_establish(void *, struct device *,
 void
 pci_up1000_pickintr(struct irongate_config *icp)
 {
+#if NSIO
 	bus_space_tag_t iot = &icp->ic_iot;
 	pci_chipset_tag_t pc = &icp->ic_pc;
 
@@ -94,7 +95,6 @@ pci_up1000_pickintr(struct irongate_config *icp)
 	pc->pc_pciide_compat_intr_establish =
 	    api_up1000_pciide_compat_intr_establish;
 
-#if NSIO
 	sio_intr_setup(pc, iot);
 #else
 	panic("pci_up1000_pickintr: no I/O interrupt handler (no sio)");

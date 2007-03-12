@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_10.c,v 1.17 2007/02/09 21:55:22 ad Exp $	*/
+/*	$NetBSD: netbsd32_compat_10.c,v 1.17.2.1 2007/03/12 05:52:31 rmind Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass and Charles M. Hannum.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_10.c,v 1.17 2007/02/09 21:55:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_10.c,v 1.17.2.1 2007/03/12 05:52:31 rmind Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sysv.h"
@@ -85,7 +85,7 @@ compat_10_netbsd32_sys_semsys(l, v, retval)
 	struct sys_semconfig_args /* {
 		syscallarg(int) flag;
 	} */ semconfig_args;
-	caddr_t sg = stackgap_init(p, 0);
+	void *sg = stackgap_init(p, 0);
 
 	switch (SCARG(uap, which)) {
 	case 0:						/* __semctl() */

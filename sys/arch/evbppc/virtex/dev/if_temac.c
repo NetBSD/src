@@ -1,4 +1,4 @@
-/* 	$NetBSD: if_temac.c,v 1.1 2006/12/02 22:18:47 freza Exp $ */
+/* 	$NetBSD: if_temac.c,v 1.1.8.1 2007/03/12 05:47:40 rmind Exp $ */
 
 /*
  * Copyright (c) 2006 Jachym Holecek
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_temac.c,v 1.1 2006/12/02 22:18:47 freza Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_temac.c,v 1.1.8.1 2007/03/12 05:47:40 rmind Exp $");
 
 #include "bpfilter.h"
 
@@ -200,7 +200,7 @@ static void 	temac_attach(struct device *, struct device *, void *);
 
 /* Ifnet interface. */
 static int 	temac_init(struct ifnet *);
-static int 	temac_ioctl(struct ifnet *, u_long, caddr_t);
+static int 	temac_ioctl(struct ifnet *, u_long, void *);
 static void 	temac_start(struct ifnet *);
 static void 	temac_stop(struct ifnet *, int);
 
@@ -391,7 +391,7 @@ temac_attach(struct device *parent, struct device *self, void *aux)
 
 	if ((error = bus_dmamem_map(sc->sc_dmat, &seg, nseg,
 	    sizeof(struct temac_control),
-	    (caddr_t *)&sc->sc_control_data, BUS_DMA_COHERENT)) != 0) {
+	    (void **)&sc->sc_control_data, BUS_DMA_COHERENT)) != 0) {
 	    	printf("%s: could not map control data\n",
 	    	    sc->sc_dev.dv_xname);
 		goto fail_1;
@@ -570,7 +570,7 @@ temac_attach(struct device *parent, struct device *self, void *aux)
  fail_3:
 	bus_dmamap_destroy(sc->sc_dmat, sc->sc_control_dmap);
  fail_2:
-	bus_dmamem_unmap(sc->sc_dmat, (caddr_t)sc->sc_control_data,
+	bus_dmamem_unmap(sc->sc_dmat, (void *)sc->sc_control_data,
 	    sizeof(struct temac_control));
  fail_1:
 	bus_dmamem_free(sc->sc_dmat, &seg, nseg);
@@ -646,7 +646,7 @@ temac_init(struct ifnet *ifp)
 }
 
 static int
-temac_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
+temac_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct temac_softc 	*sc = (struct temac_softc *)ifp->if_softc;
 	struct ifreq 		*ifr = (struct ifreq *)data;

@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.23.2.1 2007/02/27 16:53:01 yamt Exp $	*/
+/*	$NetBSD: mem.c,v 1.23.2.2 2007/03/12 05:50:14 rmind Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.23.2.1 2007/02/27 16:53:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.23.2.2 2007/03/12 05:50:14 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,7 +92,7 @@ __KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.23.2.1 2007/02/27 16:53:01 yamt Exp $");
 #include <sys/kauth.h>
 #include <uvm/uvm_extern.h>
 
-caddr_t zeropage;
+void *zeropage;
 bool __mm_mem_addr(paddr_t);
 
 dev_type_read(mmrw);
@@ -132,7 +132,7 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 			if (__mm_mem_addr(v)) {
 				o = v & PGOFSET;
 				c = min(uio->uio_resid, (int)(PAGE_SIZE - o));
-				error = uiomove((caddr_t)SH3_PHYS_TO_P1SEG(v),
+				error = uiomove((void *)SH3_PHYS_TO_P1SEG(v),
 				    c, uio);
 			} else {
 				return (EFAULT);
@@ -156,7 +156,7 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 			if (!uvm_kernacc((void *)v, c,
 			    uio->uio_rw == UIO_READ ? B_READ : B_WRITE))
 				return (EFAULT);
-			error = uiomove((caddr_t)v, c, uio);
+			error = uiomove((void *)v, c, uio);
 			break;
 
 		case DEV_NULL:

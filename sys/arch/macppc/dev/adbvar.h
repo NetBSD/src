@@ -1,4 +1,4 @@
-/*	$NetBSD: adbvar.h,v 1.11 2005/12/11 12:18:03 christos Exp $	*/
+/*	$NetBSD: adbvar.h,v 1.11.26.1 2007/03/12 05:49:03 rmind Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -58,8 +58,8 @@ extern adb_trace_xlate_t adb_trace_xlations[];
 extern int	adb_debug;
 #endif
 
-typedef caddr_t Ptr;
-typedef caddr_t *Handle;
+typedef void *Ptr;
+typedef void **Handle;
 
 /* ADB Manager */
 typedef struct {
@@ -78,7 +78,7 @@ struct adb_softc {
 	char *sc_regbase;
 };
 
-typedef void (adbComp)(caddr_t, volatile int *, int);
+typedef void (adbComp)(void *, volatile int *, int);
 
 /* adb_direct.c */
 extern int adbHardware;
@@ -110,4 +110,4 @@ int	adb_read_date_time __P((unsigned long *t));
 int	adb_set_date_time __P((unsigned long t));
 
 int	adb_op_sync __P((Ptr, adbComp *, Ptr, short));
-void	adb_op_comprout __P((caddr_t, volatile int *, int));
+void	adb_op_comprout __P((void *, volatile int *, int));

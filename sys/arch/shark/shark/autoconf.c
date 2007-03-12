@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.6.26.1 2007/02/27 16:53:06 yamt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.6.26.2 2007/03/12 05:50:26 rmind Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.6.26.1 2007/02/27 16:53:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.6.26.2 2007/03/12 05:50:26 rmind Exp $");
 
 #include "opt_md.h"
 
@@ -57,6 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.6.26.1 2007/02/27 16:53:06 yamt Exp $
 #include <sys/malloc.h>
 #include <machine/bootconfig.h>
 #include <machine/intr.h>
+#include <machine/irqhandler.h>
 
 #include "isa.h"
 

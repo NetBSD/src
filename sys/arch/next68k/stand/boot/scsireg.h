@@ -1,4 +1,4 @@
-/*	$NetBSD: scsireg.h,v 1.1.1.1 1998/06/09 07:53:06 dbj Exp $	*/
+/*	$NetBSD: scsireg.h,v 1.1.1.1.102.1 2007/03/12 05:49:45 rmind Exp $	*/
 /*
  * Copyright (c) 1994, 1997 Rolf Grossmann
  * All rights reserved.
@@ -38,9 +38,9 @@
 #define	SLOT_ID_BMAP	0x00100000
 #endif
 
-#define	P_SCSI_CSR	((caddr_t)(SLOT_ID+0x02000010))
-#define	P_SCSI		((caddr_t)(SLOT_ID_BMAP+0x02014000))
-#define	P_FLOPPY	((caddr_t)(SLOT_ID_BMAP+0x02014100))
+#define	P_SCSI_CSR	((void *)(SLOT_ID+0x02000010))
+#define	P_SCSI		((void *)(SLOT_ID_BMAP+0x02014000))
+#define	P_FLOPPY	((uint8_t *)(SLOT_ID_BMAP+0x02014100))
 
 #define	SCSI_INTR	(1<<12)	/* I_BIT(I_SCSI) */
 

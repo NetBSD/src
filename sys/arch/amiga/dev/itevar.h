@@ -1,4 +1,4 @@
-/*	$NetBSD: itevar.h,v 1.18 2005/12/11 12:16:28 christos Exp $	*/
+/*	$NetBSD: itevar.h,v 1.18.26.1 2007/03/12 05:46:43 rmind Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -208,6 +208,6 @@ int	ite_param(struct tty *, struct termios *);
 void	ite_reset(struct ite_softc *);
 int	ite_cnfilter(u_char, enum caller);
 void	ite_filter(u_char ,enum caller);
-int	ite_grf_ioctl(struct ite_softc *, u_long, caddr_t, int, struct lwp *);
+int	ite_grf_ioctl(struct ite_softc *, u_long, void *, int, struct lwp *);
 
 #endif /* _ITEVAR_H */

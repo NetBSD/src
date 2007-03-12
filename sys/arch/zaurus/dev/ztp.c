@@ -1,4 +1,4 @@
-/*	$NetBSD: ztp.c,v 1.1 2006/12/17 16:07:11 peter Exp $	*/
+/*	$NetBSD: ztp.c,v 1.1.8.1 2007/03/12 05:51:51 rmind Exp $	*/
 /* $OpenBSD: zts.c,v 1.9 2005/04/24 18:55:49 uwe Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ztp.c,v 1.1 2006/12/17 16:07:11 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ztp.c,v 1.1.8.1 2007/03/12 05:51:51 rmind Exp $");
 
 #include "lcd.h"
 
@@ -106,7 +106,7 @@ static void	ztp_disable(void *);
 static void	ztp_power(int, void *);
 static void	ztp_poll(void *);
 static int	ztp_irq(void *);
-static int	ztp_ioctl(void *, u_long, caddr_t, int, struct lwp *);
+static int	ztp_ioctl(void *, u_long, void *, int, struct lwp *);
 
 const struct wsmouse_accessops ztp_accessops = {
         ztp_enable,
@@ -580,7 +580,7 @@ ztp_irq(void *v)
 }
 
 static int
-ztp_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
+ztp_ioctl(void *v, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct ztp_softc *sc = (struct ztp_softc *)v;
 	struct wsmouse_id *id;

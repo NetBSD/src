@@ -1,4 +1,4 @@
-/* $NetBSD: dwlpx_pci.c,v 1.11 2002/09/27 15:35:37 provos Exp $ */
+/* $NetBSD: dwlpx_pci.c,v 1.11.60.1 2007/03/12 05:46:14 rmind Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dwlpx_pci.c,v 1.11 2002/09/27 15:35:37 provos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwlpx_pci.c,v 1.11.60.1 2007/03/12 05:46:14 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,7 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: dwlpx_pci.c,v 1.11 2002/09/27 15:35:37 provos Exp $"
 #include <alpha/pci/dwlpxreg.h>
 #include <alpha/pci/dwlpxvar.h>
 
-#define	KV(_addr)	((caddr_t)ALPHA_PHYS_TO_K0SEG((_addr)))
+#define	KV(_addr)	((void *)ALPHA_PHYS_TO_K0SEG((_addr)))
 
 void		dwlpx_attach_hook __P((struct device *, struct device *,
 		    struct pcibus_attach_args *));

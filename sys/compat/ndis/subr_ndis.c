@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sys/compat/ndis/subr_ndis.c,v 1.67.2.7 2005/03/31 21:50:11 wpaul Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: subr_ndis.c,v 1.6 2006/11/16 01:32:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_ndis.c,v 1.6.4.1 2007/03/12 05:52:30 rmind Exp $");
 #endif
 
 /*
@@ -296,7 +296,7 @@ __stdcall static void NdisGetFirstBufferFromPacket(ndis_packet *,
 __stdcall static void NdisGetFirstBufferFromPacketSafe(ndis_packet *,
 	ndis_buffer **, void **, uint32_t *, uint32_t *, uint32_t);
 #ifdef __FreeBSD__
-static int ndis_find_sym(linker_file_t, char *, char *, caddr_t *);
+static int ndis_find_sym(linker_file_t, char *, char *, void **);
 __stdcall static void NdisOpenFile(ndis_status *, ndis_handle *, uint32_t *,
 	ndis_unicode_string *, ndis_physaddr);
 __stdcall static void NdisMapFile(ndis_status *, void **, ndis_handle);
@@ -1894,7 +1894,7 @@ NdisMAllocateSharedMemory(
 	}
 
 	error = bus_dmamem_map(sh->ndis_stag, &segs, nsegs, 
-				len, /*(caddr_t *)&vaddr*/ (caddr_t *)vaddr, BUS_DMA_NOWAIT);
+				len, /*(void **)&vaddr*/ (void **)vaddr, BUS_DMA_NOWAIT);
 
 	/* printf("*vaddr = %x\n", (unsigned int)*vaddr); */
 	
@@ -3194,7 +3194,7 @@ ndis_find_sym(lf, filename, suffix, sym)
 	linker_file_t		lf;
 	char			*filename;
 	char			*suffix;
-	caddr_t			*sym;
+	void *			*sym;
 {
 	char			*fullsym;
 	char			*suf;
@@ -3249,7 +3249,7 @@ NdisOpenFile(status, filehandle, filelength, filename, highestaddr)
 	ndis_fh			*fh;
 	char			*path;
 	linker_file_t		head, lf;
-	caddr_t			kldstart, kldend;
+	void			*kldstart, *kldend;
 
 	ndis_unicode_to_ascii(filename->us_buf,
 	    filename->us_len, &afilename);
@@ -3373,7 +3373,7 @@ NdisMapFile(status, mappedbuffer, filehandle)
 	ndis_fh			*fh;
 	struct thread		*td = curthread;
 	linker_file_t		lf;
-	caddr_t			kldstart;
+	void *			kldstart;
 	int			error, resid;
 
 	if (filehandle == NULL) {

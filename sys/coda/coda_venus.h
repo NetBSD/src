@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_venus.h,v 1.10 2006/05/14 21:24:49 elad Exp $	*/
+/*	$NetBSD: coda_venus.h,v 1.10.14.1 2007/03/12 05:51:51 rmind Exp $	*/
 
 /*
  *
@@ -53,7 +53,7 @@ venus_write(void);
 
 int
 venus_ioctl(void *mdp, CodaFid *fid,
-	int com, int flag, caddr_t data,
+	int com, int flag, void *data,
 	kauth_cred_t cred, struct lwp *l);
 
 int

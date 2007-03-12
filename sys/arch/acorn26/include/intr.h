@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.10 2007/02/16 02:53:43 ad Exp $ */
+/* $NetBSD: intr.h,v 1.10.2.1 2007/03/12 05:45:12 rmind Exp $ */
 /*-
  * Copyright (c) 1998, 2000 Ben Harris
  * All rights reserved.
@@ -86,7 +86,7 @@ extern int raisespl(int);
 extern void lowerspl(int);
 extern int hardsplx(int);
 
-typedef int ipl_t;
+typedef uint8_t ipl_t;
 typedef struct {
 	ipl_t _ipl;
 } ipl_cookie_t;

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.23.12.1 2007/02/27 16:49:03 yamt Exp $	*/
+/*	$NetBSD: bus.h,v 1.23.12.2 2007/03/12 05:46:49 rmind Exp $	*/
 /*	NetBSD: bus.h,v 1.27 2000/03/15 16:44:50 drochner Exp 	*/
 /*	$OpenBSD: bus.h,v 1.15 1999/08/11 23:15:21 niklas Exp $	*/
 
@@ -175,7 +175,7 @@ struct arc_bus_space {
 void	arc_bus_space_malloc_set_safe(void);
 void	arc_bus_space_init(bus_space_tag_t, const char *,
 	    paddr_t, vaddr_t, bus_addr_t, bus_size_t);
-void	arc_bus_space_init_extent(bus_space_tag_t, caddr_t, size_t);
+void	arc_bus_space_init_extent(bus_space_tag_t, void *, size_t);
 void	arc_bus_space_set_aligned_stride(bus_space_tag_t, unsigned int);
 void	arc_sparse_bus_space_init(bus_space_tag_t, const char *,
 	    paddr_t, bus_addr_t, bus_size_t);
@@ -766,8 +766,8 @@ struct arc_bus_dma_tag {
 		    bus_size_t, bus_dma_segment_t *, int, int *, int);
 	void	(*_dmamem_free)(bus_dma_tag_t, bus_dma_segment_t *, int);
 	int	(*_dmamem_map)(bus_dma_tag_t, bus_dma_segment_t *,
-		    int, size_t, caddr_t *, int);
-	void	(*_dmamem_unmap)(bus_dma_tag_t, caddr_t, size_t);
+		    int, size_t, void **, int);
+	void	(*_dmamem_unmap)(bus_dma_tag_t, void *, size_t);
 	paddr_t	(*_dmamem_mmap)(bus_dma_tag_t, bus_dma_segment_t *,
 		    int, off_t, int, int);
 };
@@ -858,8 +858,8 @@ int	_bus_dmamem_alloc_range(bus_dma_tag_t tag, bus_size_t size,
 void	_bus_dmamem_free(bus_dma_tag_t tag, bus_dma_segment_t *segs,
 	    int nsegs);
 int	_bus_dmamem_map(bus_dma_tag_t tag, bus_dma_segment_t *segs,
-	    int nsegs, size_t size, caddr_t *kvap, int flags);
-void	_bus_dmamem_unmap(bus_dma_tag_t tag, caddr_t kva,
+	    int nsegs, size_t size, void **kvap, int flags);
+void	_bus_dmamem_unmap(bus_dma_tag_t tag, void *kva,
 	    size_t size);
 paddr_t	_bus_dmamem_mmap(bus_dma_tag_t tag, bus_dma_segment_t *segs,
 	    int nsegs, off_t off, int prot, int flags);

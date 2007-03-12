@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.118.6.1 2007/02/27 16:48:59 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.118.6.2 2007/03/12 05:46:37 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.118.6.1 2007/02/27 16:48:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.118.6.2 2007/03/12 05:46:37 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -294,7 +294,7 @@ static int	pmap_ishift;	/* segment table index shift */
 int		protostfree;	/* prototype (default) free ST map */
 #endif
 
-extern caddr_t	msgbufaddr;
+extern void *	msgbufaddr;
 extern paddr_t	msgbufpa;
 
 u_long	noncontig_enable;
@@ -330,7 +330,7 @@ void		pmap_collect1(pmap_t, paddr_t, paddr_t);
 /*
  * All those kernel PT submaps that BSD is so fond of
  */
-caddr_t	CADDR1, CADDR2, vmmap;
+void 	*CADDR1, *CADDR2, *vmmap;
 u_int	*CMAP1, *CMAP2, *vmpte, *msgbufmap;
 
 #define	PAGE_IS_MANAGED(pa)	(pmap_initialized			\
@@ -477,10 +477,10 @@ pmap_bootstrap(firstaddr, loadaddr)
 	va = virtual_avail;
 	pte = pmap_pte(pmap_kernel(), va);
 
-	SYSMAP(caddr_t	,CMAP1	   ,CADDR1	 ,1			)
-	SYSMAP(caddr_t	,CMAP2	   ,CADDR2	 ,1			)
-	SYSMAP(caddr_t	,vmpte	   ,vmmap	 ,1			)
-	SYSMAP(caddr_t	,msgbufmap ,msgbufaddr   ,btoc(MSGBUFSIZE)	)
+	SYSMAP(void *	,CMAP1	   ,CADDR1	 ,1			)
+	SYSMAP(void *	,CMAP2	   ,CADDR2	 ,1			)
+	SYSMAP(void *	,vmpte	   ,vmmap	 ,1			)
+	SYSMAP(void *	,msgbufmap ,msgbufaddr   ,btoc(MSGBUFSIZE)	)
 
 	DCIS();
 
@@ -874,7 +874,7 @@ pmap_destroy(pmap)
 	simple_unlock(&pmap->pm_lock);
 	if (count == 0) {
 		pmap_release(pmap);
-		free((caddr_t)pmap, M_VMPMAP);
+		free((void *)pmap, M_VMPMAP);
 	}
 }
 
@@ -2507,15 +2507,15 @@ pmap_enter_ptpage(pmap, va)
 	if (mmutype == MMU_68040) {
 		if (*ste == SG_NV) {
 			int ix;
-			caddr_t addr;
+			void *addr;
 
 			ix = bmtol2(pmap->pm_stfree);
 			if (ix == -1)
 				panic("enter_pt: out of address space");
 			pmap->pm_stfree &= ~l2tobm(ix);
-			addr = (caddr_t)&pmap->pm_stab[ix * SG4_LEV2SIZE];
+			addr = (void *)&pmap->pm_stab[ix * SG4_LEV2SIZE];
 			bzero(addr, SG4_LEV2SIZE * sizeof(st_entry_t));
-			addr = (caddr_t)&pmap->pm_stpa[ix * SG4_LEV2SIZE];
+			addr = (void *)&pmap->pm_stpa[ix * SG4_LEV2SIZE];
 			*ste = (u_int) addr | SG_RW | SG_U | SG_V;
 #ifdef DEBUG
 			if (pmapdebug & (PDB_ENTER|PDB_PTPAGE|PDB_SEGTAB))

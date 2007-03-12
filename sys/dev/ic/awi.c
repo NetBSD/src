@@ -1,4 +1,4 @@
-/*	$NetBSD: awi.c,v 1.73 2006/10/04 15:36:23 christos Exp $	*/
+/*	$NetBSD: awi.c,v 1.73.4.1 2007/03/12 05:53:28 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: awi.c,v 1.73 2006/10/04 15:36:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awi.c,v 1.73.4.1 2007/03/12 05:53:28 rmind Exp $");
 #endif
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/dev/awi/awi.c,v 1.30 2004/01/15 13:30:06 onoe Exp $");
@@ -159,7 +159,7 @@ static int  awi_init(struct ifnet *);
 static void awi_stop(struct ifnet *, int);
 static void awi_start(struct ifnet *);
 static void awi_watchdog(struct ifnet *);
-static int  awi_ioctl(struct ifnet *, u_long, caddr_t);
+static int  awi_ioctl(struct ifnet *, u_long, void *);
 static int  awi_media_change(struct ifnet *);
 static void awi_media_status(struct ifnet *, struct ifmediareq *);
 static int  awi_mode_init(struct awi_softc *);
@@ -919,7 +919,7 @@ awi_watchdog(struct ifnet *ifp)
 }
 
 static int
-awi_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
+awi_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct awi_softc *sc = ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *)data;
@@ -1338,7 +1338,7 @@ awi_devget(struct awi_softc *sc, u_int32_t off, u_int16_t len)
 		if (top == NULL) {
 			int hdrlen = sizeof(struct ieee80211_frame) +
 			    sizeof(struct llc);
-			caddr_t newdata = (caddr_t)
+			char *newdata = (char *)
 			    ALIGN(m->m_data + hdrlen) - hdrlen;
 			m->m_len -= newdata - m->m_data;
 			m->m_data = newdata;
@@ -2174,16 +2174,16 @@ awi_ether_modcap(struct awi_softc *sc, struct mbuf *m)
 		if (m == NULL)
 			return NULL;
 	}
-	memcpy(&wh, mtod(m, caddr_t), sizeof(wh));
+	memcpy(&wh, mtod(m, void *), sizeof(wh));
 	if (wh.i_fc[0] != (IEEE80211_FC0_VERSION_0 | IEEE80211_FC0_TYPE_DATA))
 		return m;
-	memcpy(&eh, mtod(m, caddr_t) + sizeof(wh), sizeof(eh));
+	memcpy(&eh, mtod(m, char *) + sizeof(wh), sizeof(eh));
 	m_adj(m, sizeof(eh) - sizeof(*llc));
 	if (ic->ic_opmode == IEEE80211_M_IBSS ||
 	    ic->ic_opmode == IEEE80211_M_AHDEMO)
 		IEEE80211_ADDR_COPY(wh.i_addr2, eh.ether_shost);
-	memcpy(mtod(m, caddr_t), &wh, sizeof(wh));
-	llc = (struct llc *)(mtod(m, caddr_t) + sizeof(wh));
+	memcpy(mtod(m, void *), &wh, sizeof(wh));
+	llc = (struct llc *)(mtod(m, char *) + sizeof(wh));
 	llc->llc_dsap = llc->llc_ssap = LLC_SNAP_LSAP;
 	llc->llc_control = LLC_UI;
 	llc->llc_snap.org_code[0] = 0;

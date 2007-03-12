@@ -1,4 +1,4 @@
-/*	$NetBSD: cgeight.c,v 1.43 2006/03/29 04:16:47 thorpej Exp $	*/
+/*	$NetBSD: cgeight.c,v 1.43.14.1 2007/03/12 05:50:27 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgeight.c,v 1.43 2006/03/29 04:16:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgeight.c,v 1.43.14.1 2007/03/12 05:50:27 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -340,7 +340,7 @@ cgeightopen(dev_t dev, int flags, int mode, struct lwp *l)
 }
 
 int
-cgeightioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct lwp *l)
+cgeightioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 {
 #if defined(SUN4)
 	struct cgeight_softc *sc = cgeight_cd.cd_devs[minor(dev)];

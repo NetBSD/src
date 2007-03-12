@@ -1,4 +1,4 @@
-/*	$NetBSD: bthub.c,v 1.8 2006/11/16 01:32:48 christos Exp $	*/
+/*	$NetBSD: bthub.c,v 1.8.4.1 2007/03/12 05:53:09 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bthub.c,v 1.8 2006/11/16 01:32:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bthub.c,v 1.8.4.1 2007/03/12 05:53:09 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -149,7 +149,7 @@ bthub_detach(struct device *self, int flags)
  */
 
 int
-bthubioctl(dev_t devno, unsigned long cmd, caddr_t data, int flag, struct lwp *l)
+bthubioctl(dev_t devno, unsigned long cmd, void *data, int flag, struct lwp *l)
 {
 	prop_dictionary_t dict;
 	int err;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ath.c,v 1.81 2007/01/29 01:52:45 hubertf Exp $	*/
+/*	$NetBSD: ath.c,v 1.81.2.1 2007/03/12 05:53:26 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.104 2005/09/16 10:09:23 ru Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.81 2007/01/29 01:52:45 hubertf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.81.2.1 2007/03/12 05:53:26 rmind Exp $");
 #endif
 
 /*
@@ -133,7 +133,7 @@ static void	ath_stop(struct ifnet *, int);
 static void	ath_start(struct ifnet *);
 static int	ath_media_change(struct ifnet *);
 static void	ath_watchdog(struct ifnet *);
-static int	ath_ioctl(struct ifnet *, u_long, caddr_t);
+static int	ath_ioctl(struct ifnet *, u_long, void *);
 static void	ath_fatal_proc(void *, int);
 static void	ath_rxorn_proc(void *, int);
 static void	ath_bmiss_proc(void *, int);
@@ -1886,15 +1886,15 @@ ath_calcrxfilter(struct ath_softc *sc, enum ieee80211_state state)
 }
 
 static void
-ath_mcastfilter_accum(caddr_t dl, u_int32_t *mfilt)
+ath_mcastfilter_accum(void *dl, u_int32_t *mfilt)
 {
 	u_int32_t val;
 	u_int8_t pos;
 
 	/* calculate XOR of eight 6bit values */
-	val = LE_READ_4(dl + 0);
+	val = LE_READ_4((char *)dl + 0);
 	pos = (val >> 18) ^ (val >> 12) ^ (val >> 6) ^ val;
-	val = LE_READ_4(dl + 3);
+	val = LE_READ_4((char *)dl + 3);
 	pos ^= (val >> 18) ^ (val >> 12) ^ (val >> 6) ^ val;
 	pos &= 0x3f;
 	mfilt[pos / 32] |= (1 << (pos % 32));
@@ -1963,13 +1963,13 @@ ath_mode_init(struct ath_softc *sc)
 		mfilt[0] = mfilt[1] = 0;
 		IF_ADDR_LOCK(ifp);
 		TAILQ_FOREACH(ifma, &ifp->if_multiaddrs, ifma_link) {
-			caddr_t dl;
+			void *dl;
 
 			/* calculate XOR of eight 6bit values */
 			dl = LLADDR((struct sockaddr_dl *) ifma->ifma_addr);
-			val = LE_READ_4(dl + 0);
+			val = LE_READ_4((char *)dl + 0);
 			pos = (val >> 18) ^ (val >> 12) ^ (val >> 6) ^ val;
-			val = LE_READ_4(dl + 3);
+			val = LE_READ_4((char *)dl + 3);
 			pos ^= (val >> 18) ^ (val >> 12) ^ (val >> 6) ^ val;
 			pos &= 0x3f;
 			mfilt[pos / 32] |= (1 << (pos % 32));
@@ -2565,7 +2565,7 @@ ath_descdma_setup(struct ath_softc *sc,
 	const char *name, int nbuf, int ndesc)
 {
 #define	DS2PHYS(_dd, _ds) \
-	((_dd)->dd_desc_paddr + ((caddr_t)(_ds) - (caddr_t)(_dd)->dd_desc))
+	((_dd)->dd_desc_paddr + ((char *)(_ds) - (char *)(_dd)->dd_desc))
 	struct ifnet *ifp = &sc->sc_if;
 	struct ath_desc *ds;
 	struct ath_buf *bf;
@@ -2592,7 +2592,7 @@ ath_descdma_setup(struct ath_softc *sc,
 	}
 
 	error = bus_dmamem_map(dd->dd_dmat, &dd->dd_dseg, dd->dd_dnseg,
-	    dd->dd_desc_len, (caddr_t *)&dd->dd_desc, BUS_DMA_COHERENT);
+	    dd->dd_desc_len, (void **)&dd->dd_desc, BUS_DMA_COHERENT);
 	if (error != 0) {
 		if_printf(ifp, "unable to map %u %s descriptors, error = %u\n",
 		    nbuf * ndesc, dd->dd_name, error);
@@ -2653,7 +2653,7 @@ fail4:
 fail3:
 	bus_dmamap_destroy(dd->dd_dmat, dd->dd_dmamap);
 fail2:
-	bus_dmamem_unmap(dd->dd_dmat, (caddr_t)dd->dd_desc, dd->dd_desc_len);
+	bus_dmamem_unmap(dd->dd_dmat, (void *)dd->dd_desc, dd->dd_desc_len);
 fail1:
 	bus_dmamem_free(dd->dd_dmat, &dd->dd_dseg, dd->dd_dnseg);
 fail0:
@@ -2671,7 +2671,7 @@ ath_descdma_cleanup(struct ath_softc *sc,
 
 	bus_dmamap_unload(dd->dd_dmat, dd->dd_dmamap);
 	bus_dmamap_destroy(dd->dd_dmat, dd->dd_dmamap);
-	bus_dmamem_unmap(dd->dd_dmat, (caddr_t)dd->dd_desc, dd->dd_desc_len);
+	bus_dmamem_unmap(dd->dd_dmat, (void *)dd->dd_desc, dd->dd_desc_len);
 	bus_dmamem_free(dd->dd_dmat, &dd->dd_dseg, dd->dd_dnseg);
 
 	STAILQ_FOREACH(bf, head, bf_list) {
@@ -2951,7 +2951,7 @@ static void
 ath_rx_proc(void *arg, int npending)
 {
 #define	PA2DESC(_sc, _pa) \
-	((struct ath_desc *)((caddr_t)(_sc)->sc_rxdma.dd_desc + \
+	((struct ath_desc *)((char *)(_sc)->sc_rxdma.dd_desc + \
 		((_pa) - (_sc)->sc_rxdma.dd_desc_paddr)))
 	struct ath_softc *sc = arg;
 	struct ath_buf *bf;
@@ -3143,7 +3143,7 @@ rx_accept:
 		}
 
 		if (IFF_DUMPPKTS(sc, ATH_DEBUG_RECV)) {
-			ieee80211_dump_pkt(mtod(m, caddr_t), len,
+			ieee80211_dump_pkt(mtod(m, void *), len,
 				   sc->sc_hwmap[ds->ds_rxstat.rs_rate].ieeerate,
 				   ds->ds_rxstat.rs_rssi);
 		}
@@ -3867,7 +3867,7 @@ ath_tx_start(struct ath_softc *sc, struct ieee80211_node *ni, struct ath_buf *bf
 		ctsrate = 0;
 
 	if (IFF_DUMPPKTS(sc, ATH_DEBUG_XMIT))
-		ieee80211_dump_pkt(mtod(m0, caddr_t), m0->m_len,
+		ieee80211_dump_pkt(mtod(m0, void *), m0->m_len,
 			sc->sc_hwmap[txrate].ieeerate, -1);
 #if NBPFILTER > 0
 	if (ic->ic_rawbpf)
@@ -4014,7 +4014,7 @@ ath_tx_processq(struct ath_softc *sc, struct ath_txq *txq)
 
 	DPRINTF(sc, ATH_DEBUG_TX_PROC, "%s: tx queue %u head %p link %p\n",
 		__func__, txq->axq_qnum,
-		(caddr_t)(uintptr_t) ath_hal_gettxbuf(sc->sc_ah, txq->axq_qnum),
+		(void *)(uintptr_t) ath_hal_gettxbuf(sc->sc_ah, txq->axq_qnum),
 		txq->axq_link);
 	nacked = 0;
 	for (;;) {
@@ -4254,7 +4254,7 @@ ath_tx_stopdma(struct ath_softc *sc, struct ath_txq *txq)
 	(void) ath_hal_stoptxdma(ah, txq->axq_qnum);
 	DPRINTF(sc, ATH_DEBUG_RESET, "%s: tx queue [%u] %p, link %p\n",
 	    __func__, txq->axq_qnum,
-	    (caddr_t)(uintptr_t) ath_hal_gettxbuf(ah, txq->axq_qnum),
+	    (void *)(uintptr_t) ath_hal_gettxbuf(ah, txq->axq_qnum),
 	    txq->axq_link);
 }
 
@@ -4274,7 +4274,7 @@ ath_draintxq(struct ath_softc *sc)
 		(void) ath_hal_stoptxdma(ah, sc->sc_bhalq);
 		DPRINTF(sc, ATH_DEBUG_RESET,
 		    "%s: beacon queue %p\n", __func__,
-		    (caddr_t)(uintptr_t) ath_hal_gettxbuf(ah, sc->sc_bhalq));
+		    (void *)(uintptr_t) ath_hal_gettxbuf(ah, sc->sc_bhalq));
 		for (i = 0; i < HAL_NUM_TX_QUEUES; i++)
 			if (ATH_TXQ_SETUP(sc, i))
 				ath_tx_stopdma(sc, &sc->sc_txq[i]);
@@ -4293,7 +4293,7 @@ static void
 ath_stoprecv(struct ath_softc *sc)
 {
 #define	PA2DESC(_sc, _pa) \
-	((struct ath_desc *)((caddr_t)(_sc)->sc_rxdma.dd_desc + \
+	((struct ath_desc *)((char *)(_sc)->sc_rxdma.dd_desc + \
 		((_pa) - (_sc)->sc_rxdma.dd_desc_paddr)))
 	struct ath_hal *ah = sc->sc_ah;
 
@@ -4306,7 +4306,7 @@ ath_stoprecv(struct ath_softc *sc)
 		struct ath_buf *bf;
 
 		printf("%s: rx queue %p, link %p\n", __func__,
-			(caddr_t)(uintptr_t) ath_hal_getrxbuf(ah), sc->sc_rxlink);
+			(void *)(uintptr_t) ath_hal_getrxbuf(ah), sc->sc_rxlink);
 		STAILQ_FOREACH(bf, &sc->sc_rxbuf, bf_list) {
 			struct ath_desc *ds = bf->bf_desc;
 			HAL_STATUS status = ath_hal_rxprocdesc(ah, ds,
@@ -5217,7 +5217,7 @@ bad:
 }
 
 static int
-ath_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
+ath_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 #define	IS_RUNNING(ifp) \
 	((ifp->if_flags & IFF_UP) && (ifp->if_flags & IFF_RUNNING))

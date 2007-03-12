@@ -1,4 +1,4 @@
-/*	$NetBSD: intio.c,v 1.25 2006/07/20 13:21:38 tsutsui Exp $	*/
+/*	$NetBSD: intio.c,v 1.25.10.1 2007/03/12 05:47:44 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998, 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intio.c,v 1.25 2006/07/20 13:21:38 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intio.c,v 1.25.10.1 2007/03/12 05:47:44 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,7 +100,7 @@ static const struct intio_builtins intio_4xx_builtins[] = {
 #endif
 
 static int intio_matched = 0;
-extern caddr_t internalhpib;
+extern void *internalhpib;
 
 static int
 intiomatch(struct device *parent, struct cfdata *match, void *aux)

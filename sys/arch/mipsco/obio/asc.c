@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.17 2005/12/24 20:07:19 perry Exp $	*/
+/*	$NetBSD: asc.c,v 1.17.26.1 2007/03/12 05:49:35 rmind Exp $	*/
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.17 2005/12/24 20:07:19 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.17.26.1 2007/03/12 05:49:35 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -72,7 +72,7 @@ struct asc_softc {
 	bus_space_handle_t	dm_bsh;		/* RAMBO registers */
 	bus_dma_tag_t		sc_dmat;
         bus_dmamap_t		sc_dmamap;
-        caddr_t			*sc_dmaaddr;
+        void *			*sc_dmaaddr;
 	size_t			*sc_dmalen;
 	size_t			sc_dmasize;
 	int			sc_flags;
@@ -98,7 +98,7 @@ static void	asc_write_reg (struct ncr53c9x_softc *, int, u_char);
 static int	asc_dma_isintr (struct ncr53c9x_softc *);
 static void	asc_dma_reset (struct ncr53c9x_softc *);
 static int	asc_dma_intr (struct ncr53c9x_softc *);
-static int	asc_dma_setup (struct ncr53c9x_softc *, caddr_t *,
+static int	asc_dma_setup (struct ncr53c9x_softc *, void **,
 				    size_t *, int, size_t *);
 static void	asc_dma_go (struct ncr53c9x_softc *);
 static void	asc_dma_stop (struct ncr53c9x_softc *);
@@ -291,7 +291,7 @@ asc_dma_reset(struct ncr53c9x_softc *sc)
  */
 
 static int
-asc_dma_setup(struct ncr53c9x_softc *sc, caddr_t *addr, size_t *len,
+asc_dma_setup(struct ncr53c9x_softc *sc, void **addr, size_t *len,
 	      int datain, size_t *dmasize)
 {
 	struct asc_softc *esc = (struct asc_softc *)sc;
@@ -472,7 +472,7 @@ asc_dma_intr(struct ncr53c9x_softc *sc)
 			  : BUS_DMASYNC_POSTWRITE);
 	bus_dmamap_unload(esc->sc_dmat, esc->sc_dmamap);
 
-	*esc->sc_dmaaddr += trans;
+	*esc->sc_dmaaddr = (char *)*esc->sc_dmaaddr + trans;
 	*esc->sc_dmalen  -= trans;
 
 	esc->sc_flags = DMA_IDLE;

@@ -1,4 +1,4 @@
-/* $NetBSD: amigatypes.h,v 1.5 2002/01/26 13:18:57 aymeric Exp $ */
+/* $NetBSD: amigatypes.h,v 1.5.70.1 2007/03/12 05:46:46 rmind Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@ struct MemNode;
 
 /* real structs */
 
-struct TagItem {u_int32_t item; void * data;};
+struct TagItem {u_int32_t item; void *data;};
 
 struct Library {
 	u_int8_t Dmy1[20];

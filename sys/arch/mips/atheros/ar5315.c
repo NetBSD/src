@@ -1,4 +1,4 @@
-/* $NetBSD: ar5315.c,v 1.3 2006/10/07 07:18:02 gdamore Exp $ */
+/* $NetBSD: ar5315.c,v 1.3.10.1 2007/03/12 05:49:21 rmind Exp $ */
 
 /*
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -48,7 +48,7 @@
  * family.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ar5315.c,v 1.3 2006/10/07 07:18:02 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ar5315.c,v 1.3.10.1 2007/03/12 05:49:21 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -245,7 +245,7 @@ addprop_data(struct device *dev, const char *name, const uint8_t *data,
 	prop_data_t	pd;
 	pd = prop_data_create_data(data, len);
 	KASSERT(pd != NULL);
-	if (prop_dictionary_set(device_properties(dev), name, pd) == FALSE) {
+	if (prop_dictionary_set(device_properties(dev), name, pd) == false) {
 		printf("WARNING: unable to set %s property for %s\n",
 		    name, device_xname(dev));
 	}
@@ -258,7 +258,7 @@ addprop_integer(struct device *dev, const char *name, uint32_t val)
 	prop_number_t	pn;
 	pn = prop_number_create_integer(val);
 	KASSERT(pn != NULL);
-	if (prop_dictionary_set(device_properties(dev), name, pn) == FALSE) {
+	if (prop_dictionary_set(device_properties(dev), name, pn) == false) {
 		printf("WARNING: unable to set %s property for %s",
 		    name, device_xname(dev));
 	}

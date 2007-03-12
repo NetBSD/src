@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_syscall.h,v 1.54 2005/12/11 12:20:23 christos Exp $ */
+/* $NetBSD: osf1_syscall.h,v 1.54.26.1 2007/03/12 05:52:40 rmind Exp $ */
 
 /*
  * System call numbers.
@@ -61,7 +61,7 @@
 /* syscall: "getpid_with_ppid" ret: "pid_t" args: */
 #define	OSF1_SYS_getpid_with_ppid	20
 
-/* syscall: "mount" ret: "int" args: "int" "const char *" "int" "caddr_t" */
+/* syscall: "mount" ret: "int" args: "int" "const char *" "int" "void *" */
 #define	OSF1_SYS_mount	21
 
 /* syscall: "unmount" ret: "int" args: "const char *" "int" */
@@ -97,7 +97,7 @@
 /* syscall: "pipe" ret: "int" args: */
 #define	OSF1_SYS_pipe	42
 
-/* syscall: "set_program_attributes" ret: "int" args: "caddr_t" "unsigned long" "caddr_t" "unsigned long" */
+/* syscall: "set_program_attributes" ret: "int" args: "void *" "unsigned long" "void *" "unsigned long" */
 #define	OSF1_SYS_set_program_attributes	43
 
 /* syscall: "open" ret: "int" args: "const char *" "int" "int" */
@@ -122,7 +122,7 @@
 /* syscall: "classcntl" ret: "int" args: "int" "int" "int" "int" */
 #define	OSF1_SYS_classcntl	53
 
-/* syscall: "ioctl" ret: "int" args: "int" "int" "caddr_t" */
+/* syscall: "ioctl" ret: "int" args: "int" "int" "void *" */
 #define	OSF1_SYS_ioctl	54
 
 /* syscall: "reboot" ret: "int" args: "int" */
@@ -161,10 +161,10 @@
 /* syscall: "lstat" ret: "int" args: "const char *" "struct osf1_stat *" */
 #define	OSF1_SYS_lstat	68
 
-/* syscall: "mmap" ret: "caddr_t" args: "caddr_t" "size_t" "int" "int" "int" "off_t" */
+/* syscall: "mmap" ret: "void *" args: "void *" "size_t" "int" "int" "int" "off_t" */
 #define	OSF1_SYS_mmap	71
 
-/* syscall: "munmap" ret: "int" args: "caddr_t" "size_t" */
+/* syscall: "munmap" ret: "int" args: "void *" "size_t" */
 #define	OSF1_SYS_munmap	73
 
 /* syscall: "mprotect" ret: "int" args: "void *" "size_t" "int" */
@@ -221,28 +221,28 @@
 /* syscall: "socket" ret: "int" args: "int" "int" "int" */
 #define	OSF1_SYS_socket	97
 
-/* syscall: "connect" ret: "int" args: "int" "caddr_t" "int" */
+/* syscall: "connect" ret: "int" args: "int" "void *" "int" */
 #define	OSF1_SYS_connect	98
 
-/* syscall: "accept" ret: "int" args: "int" "caddr_t" "int *" */
+/* syscall: "accept" ret: "int" args: "int" "void *" "int *" */
 #define	OSF1_SYS_accept	99
 
 /* syscall: "getpriority" ret: "int" args: "int" "int" */
 #define	OSF1_SYS_getpriority	100
 
-/* syscall: "send" ret: "int" args: "int" "caddr_t" "int" "int" */
+/* syscall: "send" ret: "int" args: "int" "void *" "int" "int" */
 #define	OSF1_SYS_send	101
 
-/* syscall: "recv" ret: "int" args: "int" "caddr_t" "int" "int" */
+/* syscall: "recv" ret: "int" args: "int" "void *" "int" "int" */
 #define	OSF1_SYS_recv	102
 
 /* syscall: "sigreturn" ret: "int" args: "struct sigcontext13 *" */
 #define	OSF1_SYS_sigreturn	103
 
-/* syscall: "bind" ret: "int" args: "int" "caddr_t" "int" */
+/* syscall: "bind" ret: "int" args: "int" "void *" "int" */
 #define	OSF1_SYS_bind	104
 
-/* syscall: "setsockopt" ret: "int" args: "int" "int" "int" "caddr_t" "int" */
+/* syscall: "setsockopt" ret: "int" args: "int" "int" "int" "void *" "int" */
 #define	OSF1_SYS_setsockopt	105
 
 /* syscall: "listen" ret: "int" args: "int" "int" */
@@ -261,7 +261,7 @@
 /* syscall: "getrusage" ret: "int" args: "int" "struct osf1_rusage *" */
 #define	OSF1_SYS_getrusage	117
 
-/* syscall: "getsockopt" ret: "int" args: "int" "int" "int" "caddr_t" "int *" */
+/* syscall: "getsockopt" ret: "int" args: "int" "int" "int" "void *" "int *" */
 #define	OSF1_SYS_getsockopt	118
 
 /* syscall: "readv" ret: "int" args: "int" "struct osf1_iovec *" "u_int" */
@@ -279,7 +279,7 @@
 /* syscall: "fchmod" ret: "int" args: "int" "int" */
 #define	OSF1_SYS_fchmod	124
 
-/* syscall: "recvfrom" ret: "int" args: "int" "caddr_t" "size_t" "int" "caddr_t" "int *" */
+/* syscall: "recvfrom" ret: "int" args: "int" "void *" "size_t" "int" "void *" "int *" */
 #define	OSF1_SYS_recvfrom	125
 
 /* syscall: "setreuid" ret: "int" args: "uid_t" "uid_t" */
@@ -303,7 +303,7 @@
 /* syscall: "setgid" ret: "int" args: "gid_t" */
 #define	OSF1_SYS_setgid	132
 
-/* syscall: "sendto" ret: "int" args: "int" "caddr_t" "size_t" "int" "struct sockaddr *" "int" */
+/* syscall: "sendto" ret: "int" args: "int" "void *" "size_t" "int" "struct sockaddr *" "int" */
 #define	OSF1_SYS_sendto	133
 
 /* syscall: "shutdown" ret: "int" args: "int" "int" */
@@ -322,7 +322,7 @@
 #define	OSF1_SYS_utimes	138
 
 				/* 139 is obsolete 4.2 sigreturn */
-/* syscall: "getpeername" ret: "int" args: "int" "caddr_t" "int *" */
+/* syscall: "getpeername" ret: "int" args: "int" "void *" "int *" */
 #define	OSF1_SYS_getpeername	141
 
 /* syscall: "gethostid" ret: "int32_t" args: */
@@ -343,7 +343,7 @@
 /* syscall: "quota" ret: "int" args: */
 #define	OSF1_SYS_quota	149
 
-/* syscall: "getsockname" ret: "int" args: "int" "caddr_t" "int *" */
+/* syscall: "getsockname" ret: "int" args: "int" "void *" "int *" */
 #define	OSF1_SYS_getsockname	150
 
 /* syscall: "sigaction" ret: "int" args: "int" "struct osf1_sigaction *" "struct osf1_sigaction *" */
@@ -409,10 +409,10 @@
 /* syscall: "usleep_thread" ret: "int" args: "struct osf1_timeval *" "struct osf1_timeval *" */
 #define	OSF1_SYS_usleep_thread	251
 
-/* syscall: "getsysinfo" ret: "int" args: "u_long" "caddr_t" "u_long" "caddr_t" "u_long" */
+/* syscall: "getsysinfo" ret: "int" args: "u_long" "void *" "u_long" "void *" "u_long" */
 #define	OSF1_SYS_getsysinfo	256
 
-/* syscall: "setsysinfo" ret: "int" args: "u_long" "caddr_t" "u_long" "caddr_t" "u_long" */
+/* syscall: "setsysinfo" ret: "int" args: "u_long" "void *" "u_long" "void *" "u_long" */
 #define	OSF1_SYS_setsysinfo	257
 
 #define	OSF1_SYS_MAXSYSCALL	267

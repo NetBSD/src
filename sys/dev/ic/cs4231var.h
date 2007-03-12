@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4231var.h,v 1.6 2005/12/11 12:21:26 christos Exp $	*/
+/*	$NetBSD: cs4231var.h,v 1.6.26.1 2007/03/12 05:53:30 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 struct cs_dma {
 	struct	cs_dma	*next;
-	caddr_t		addr;
+	void *		addr;
 	bus_dmamap_t	dmamap;
 	bus_dma_segment_t segs[1];
 	int		nsegs;

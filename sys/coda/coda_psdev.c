@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_psdev.c,v 1.35 2007/02/09 21:55:16 ad Exp $	*/
+/*	$NetBSD: coda_psdev.c,v 1.35.2.1 2007/03/12 05:51:51 rmind Exp $	*/
 
 /*
  *
@@ -54,7 +54,7 @@
 /* These routines are the device entry points for Venus. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_psdev.c,v 1.35 2007/02/09 21:55:16 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_psdev.c,v 1.35.2.1 2007/03/12 05:51:51 rmind Exp $");
 
 extern int coda_nc_initialized;    /* Set if cache has been initialized */
 
@@ -113,13 +113,13 @@ const struct cdevsw vcoda_cdevsw = {
 
 struct vmsg {
     struct queue vm_chain;
-    caddr_t	 vm_data;
+    void *	 vm_data;
     u_short	 vm_flags;
     u_short      vm_inSize;	/* Size is at most 5000 bytes */
     u_short	 vm_outSize;
     u_short	 vm_opcode; 	/* copied from data to save ptr lookup */
     int		 vm_unique;
-    caddr_t	 vm_sleep;	/* Not used by Mach. */
+    void *	 vm_sleep;	/* Not used by Mach. */
 };
 
 #define	VM_READ	    1
@@ -217,8 +217,8 @@ vc_nb_close(dev_t dev, int flag, int mode, struct lwp *l)
 	/* Free signal request messages and don't wakeup cause
 	   no one is waiting. */
 	if (vmp->vm_opcode == CODA_SIGNAL) {
-	    CODA_FREE((caddr_t)vmp->vm_data, (u_int)VC_IN_NO_DATA);
-	    CODA_FREE((caddr_t)vmp, (u_int)sizeof(struct vmsg));
+	    CODA_FREE((void *)vmp->vm_data, (u_int)VC_IN_NO_DATA);
+	    CODA_FREE((void *)vmp, (u_int)sizeof(struct vmsg));
 	    continue;
 	}
 	outstanding_upcalls++;
@@ -292,8 +292,8 @@ vc_nb_read(dev_t dev, struct uio *uiop, int flag)
 	if (codadebug)
 	    myprintf(("vcread: signal msg (%d, %d)\n",
 		      vmp->vm_opcode, vmp->vm_unique));
-	CODA_FREE((caddr_t)vmp->vm_data, (u_int)VC_IN_NO_DATA);
-	CODA_FREE((caddr_t)vmp, (u_int)sizeof(struct vmsg));
+	CODA_FREE((void *)vmp->vm_data, (u_int)VC_IN_NO_DATA);
+	CODA_FREE((void *)vmp, (u_int)sizeof(struct vmsg));
 	return(error);
     }
 
@@ -323,7 +323,7 @@ vc_nb_write(dev_t dev, struct uio *uiop, int flag)
 
     /* Peek at the opcode, unique without transfering the data. */
     uiop->uio_rw = UIO_WRITE;
-    error = uiomove((caddr_t)tbuf, sizeof(int) * 2, uiop);
+    error = uiomove((void *)tbuf, sizeof(int) * 2, uiop);
     if (error) {
 	myprintf(("vcwrite: error (%d) on uiomove\n", error));
 	return(EINVAL);
@@ -340,7 +340,7 @@ vc_nb_write(dev_t dev, struct uio *uiop, int flag)
 
 	/* get the rest of the data. */
 	uiop->uio_rw = UIO_WRITE;
-	error = uiomove((caddr_t)&pbuf.coda_purgeuser.oh.result, sizeof(pbuf) - (sizeof(int)*2), uiop);
+	error = uiomove((void *)&pbuf.coda_purgeuser.oh.result, sizeof(pbuf) - (sizeof(int)*2), uiop);
 	if (error) {
 	    myprintf(("vcwrite: error (%d) on uiomove (Op %ld seq %ld)\n",
 		      error, opcode, seq));
@@ -382,7 +382,7 @@ vc_nb_write(dev_t dev, struct uio *uiop, int flag)
 
     tbuf[0] = uiop->uio_resid; 	/* Save this value. */
     uiop->uio_rw = UIO_WRITE;
-    error = uiomove((caddr_t) &out->result, vmp->vm_outSize - (sizeof(int) * 2), uiop);
+    error = uiomove((void *) &out->result, vmp->vm_outSize - (sizeof(int) * 2), uiop);
     if (error) {
 	myprintf(("vcwrite: error (%d) on uiomove (op %ld seq %ld)\n",
 		  error, opcode, seq));
@@ -401,7 +401,7 @@ vc_nb_write(dev_t dev, struct uio *uiop, int flag)
 }
 
 int
-vc_nb_ioctl(dev_t dev, u_long cmd, caddr_t addr, int flag,
+vc_nb_ioctl(dev_t dev, u_long cmd, void *addr, int flag,
     struct lwp *l)
 {
     ENTRY;
@@ -547,7 +547,7 @@ struct coda_clstat coda_clstat;
 
 int
 coda_call(struct coda_mntinfo *mntinfo, int inSize, int *outSize,
-	caddr_t buffer)
+	void *buffer)
 {
 	struct vcomm *vcp;
 	struct vmsg *vmp;

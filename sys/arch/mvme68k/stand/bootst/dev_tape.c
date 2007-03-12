@@ -1,4 +1,4 @@
-/*	$NetBSD: dev_tape.c,v 1.7 2005/12/11 12:18:19 christos Exp $	*/
+/*	$NetBSD: dev_tape.c,v 1.7.26.1 2007/03/12 05:49:37 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -106,7 +106,7 @@ tape_open(struct open_file *f, ...)
 	 * (determines what gets opened)
 	 */
 	ti = &tape_ioreq;
-	memset((caddr_t)ti, 0, sizeof(*ti));
+	memset((void *)ti, 0, sizeof(*ti));
 
 	ti->ctrl_lun = bugargs.ctrl_lun;
 	ti->dev_lun = bugargs.dev_lun;
@@ -174,7 +174,7 @@ tape_strategy(devdata, flag, dblk, size, buf, rsize)
 }
 
 int
-tape_ioctl(struct open_file *f, u_long cmd, void * data)
+tape_ioctl(struct open_file *f, u_long cmd, void *data)
 {
 	return EIO;
 }

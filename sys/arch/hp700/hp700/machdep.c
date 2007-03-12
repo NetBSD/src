@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.33.2.1 2007/02/27 16:50:49 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.33.2.2 2007/03/12 05:48:00 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.33.2.1 2007/02/27 16:50:49 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.33.2.2 2007/03/12 05:48:00 rmind Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -149,7 +149,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.33.2.1 2007/02/27 16:50:49 yamt Exp $"
 /*
  * Different kinds of flags used throughout the kernel.
  */
-caddr_t msgbufaddr;
+void *msgbufaddr;
 
 /*
  * cache configuration, for most machines is the same
@@ -472,7 +472,7 @@ hppa_init(paddr_t start)
 	p = &os_hpmc;
 	if (pdc_call((iodcio_t)pdc, 0, PDC_INSTR, PDC_INSTR_DFLT, p))
 		*p = 0x08000240;
-	p[7] = ((caddr_t) &os_hpmc_cont_end) - ((caddr_t) &os_hpmc_cont);
+	p[7] = ((char *) &os_hpmc_cont_end) - ((char *) &os_hpmc_cont);
 	p[6] = (u_int) &os_hpmc_cont;
 	p[5] = -(p[0] + p[1] + p[2] + p[3] + p[4] + p[6] + p[7]);
 	p = &os_hpmc_cont;
@@ -700,10 +700,10 @@ hppa_init(paddr_t start)
 	/* we hope this won't fail */
 	hp700_io_extent = extent_create("io",
 	    HPPA_IOSPACE, 0xffffffff, M_DEVBUF,
-	    (caddr_t)hp700_io_extent_store, sizeof(hp700_io_extent_store),
+	    (void *)hp700_io_extent_store, sizeof(hp700_io_extent_store),
 	    EX_NOCOALESCE|EX_NOWAIT);
 
-	vstart = hppa_round_page(start);
+	vstart = round_page(start);
 	vend = VM_MAX_KERNEL_ADDRESS;
 
 	/*
@@ -713,16 +713,16 @@ hppa_init(paddr_t start)
 	physmem = totalphysmem;
 
 	/* Allocate the msgbuf. */
-	msgbufaddr = (caddr_t) vstart;
+	msgbufaddr = (void *) vstart;
 	vstart += MSGBUFSIZE;
-	vstart = hppa_round_page(vstart);
+	vstart = round_page(vstart);
 
 	/* Allocate the 24-bit DMA region. */
 	dma24_ex = extent_create("dma24", vstart, vstart + DMA24_SIZE, M_DEVBUF,
-	    (caddr_t)dma24_ex_storage, sizeof(dma24_ex_storage),
+	    (void *)dma24_ex_storage, sizeof(dma24_ex_storage),
 	    EX_NOCOALESCE|EX_NOWAIT);
 	vstart += DMA24_SIZE;
-	vstart = hppa_round_page(vstart);
+	vstart = round_page(vstart);
 
 	/* Allocate and initialize the BTLB slots array. */
 	btlb_slots = (struct btlb_slot *) ALIGN(vstart);
@@ -746,7 +746,7 @@ do {									\
 	BTLB_SLOTS(vinfo.num_c, BTLB_SLOT_CBTLB | BTLB_SLOT_VARIABLE_RANGE);
 #undef BTLB_SLOTS
 	btlb_slots_count = (btlb_slot - btlb_slots);
-	vstart = hppa_round_page((vaddr_t) btlb_slot);
+	vstart = round_page((vaddr_t) btlb_slot);
 	
 	/* Calculate the OS_TOC handler checksum. */
 	p = (u_int *) &os_toc;
@@ -755,7 +755,7 @@ do {									\
 
 	/* Install the OS_TOC handler. */
 	PAGE0->ivec_toc = os_toc;
-	PAGE0->ivec_toclen = ((caddr_t) &os_toc_end) - ((caddr_t) &os_toc);
+	PAGE0->ivec_toclen = ((char *) &os_toc_end) - ((char *) &os_toc);
 
 	pmap_bootstrap(&vstart, &vend);
 
@@ -1590,7 +1590,7 @@ cpu_dump(void)
 	if (bdev == NULL)
 		return (-1);
 
-	return (*bdev->d_dump)(dumpdev, dumplo, (caddr_t)buf, dbtob(1));
+	return (*bdev->d_dump)(dumpdev, dumplo, (void *)buf, dbtob(1));
 }
 
 /*
@@ -1603,9 +1603,9 @@ dumpsys(void)
 {
 	const struct bdevsw *bdev;
 	int psize, bytes, i, n;
-	caddr_t maddr;
+	char *maddr;
 	daddr_t blkno;
-	int (*dump)(dev_t, daddr_t, caddr_t, size_t);
+	int (*dump)(dev_t, daddr_t, void *, size_t);
 	int error;
 
 	if (dumpdev == NODEV)
@@ -1711,9 +1711,9 @@ setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 	/* setup terminal stack frame */
 	stack = (u_long)STACK_ALIGN(stack, 63);
 	tf->tf_r3 = stack;
-	suword((caddr_t)(stack), 0);
+	suword((void *)(stack), 0);
 	stack += HPPA_FRAME_SIZE;
-	suword((caddr_t)(stack + HPPA_FRAME_PSP), 0);
+	suword((void *)(stack + HPPA_FRAME_PSP), 0);
 	tf->tf_sp = stack;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.9.20.1 2007/02/27 16:51:04 yamt Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.9.20.2 2007/03/12 05:48:17 rmind Exp $	*/
 
 /*	$OpenBSD: db_disasm.c,v 1.9 2000/04/18 20:02:45 mickey Exp $	*/
 
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.9.20.1 2007/02/27 16:51:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.9.20.2 2007/03/12 05:48:17 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2251,7 +2251,7 @@ db_disasm(vaddr_t loc, bool flag)
 	iExInit();
 
 	if (USERMODE(loc)) {
-		if (copyin((caddr_t)(loc &~ HPPA_PC_PRIV_MASK),
+		if (copyin((void *)(loc &~ HPPA_PC_PRIV_MASK),
 		    &instruct, sizeof(instruct)))
 			instruct.w = 0;
 	} else

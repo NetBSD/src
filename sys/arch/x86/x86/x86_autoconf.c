@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_autoconf.c,v 1.24 2006/10/06 02:29:08 yamt Exp $	*/
+/*	$NetBSD: x86_autoconf.c,v 1.24.4.1 2007/03/12 05:51:47 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -328,7 +328,7 @@ match_bootwedge(struct device *dv, struct btinfo_bootwedge *biw)
 	MD5Init(&ctx);
 	for (blk = biw->matchblk, nblks = biw->matchnblks;
 	     nblks != 0; nblks--, blk++) {
-		error = vn_rdwr(UIO_READ, tmpvn, (caddr_t) bf,
+		error = vn_rdwr(UIO_READ, tmpvn, (void *) bf,
 		    sizeof(bf), blk * DEV_BSIZE, UIO_SYSSPACE,
 		    0, NOCRED, NULL, NULL);
 		if (error) {

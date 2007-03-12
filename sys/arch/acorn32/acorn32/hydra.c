@@ -1,4 +1,4 @@
-/*	$NetBSD: hydra.c,v 1.22 2006/08/05 23:03:21 bjh21 Exp $	*/
+/*	$NetBSD: hydra.c,v 1.22.10.1 2007/03/12 05:45:22 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2002 Ben Harris
@@ -31,7 +31,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: hydra.c,v 1.22 2006/08/05 23:03:21 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hydra.c,v 1.22.10.1 2007/03/12 05:45:22 rmind Exp $");
 
 #include <sys/callout.h>
 #include <sys/device.h>
@@ -228,7 +228,7 @@ hydra_probe_slave(struct hydra_softc *sc, int slave)
 	bus_space_handle_t ioh = sc->sc_ioh;
 	int i, ret;
 
-	memcpy((caddr_t)sc->sc_bootpage_va, hydra_probecode,
+	memcpy((void *)sc->sc_bootpage_va, hydra_probecode,
 	    hydra_eprobecode - hydra_probecode);
 	bus_space_write_1(iot, ioh, HYDRA_MMU_SET, 1 << slave);
 	bus_space_write_1(iot, ioh, HYDRA_HALT_SET, 1 << slave);
@@ -367,7 +367,7 @@ cpu_hydra_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/* Copy hatch code to boot page, and set up arguments */
-	memcpy((caddr_t)sc->sc_bootpage_va, hydra_hatchcode,
+	memcpy((void *)sc->sc_bootpage_va, hydra_hatchcode,
 	    hydra_ehatchcode - hydra_hatchcode);
 	KASSERT(hydra_ehatchcode - hydra_hatchcode <= HYDRABOOT_VARS);
 	hb = (struct hydraboot_vars *)(sc->sc_bootpage_va + HYDRABOOT_VARS);

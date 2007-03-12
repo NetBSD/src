@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.55 2007/02/09 21:15:54 macallan Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.55.2.1 2007/03/12 05:49:19 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.55 2007/02/09 21:15:54 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.55.2.1 2007/03/12 05:49:19 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -280,7 +280,7 @@ device_register(dev, aux)
 				sub = OF_peer(sub);
 			}
 			if (sub == console_node) {
-				console = TRUE;
+				console = true;
 			}
 		}
 

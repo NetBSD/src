@@ -1,4 +1,4 @@
-/* $NetBSD: hpux_syscallargs.h,v 1.35 2006/06/26 21:30:50 mrg Exp $ */
+/* $NetBSD: hpux_syscallargs.h,v 1.35.10.1 2007/03/12 05:51:59 rmind Exp $ */
 
 /*
  * System call argument lists.
@@ -123,12 +123,12 @@ struct hpux_sys_utime_6x_args {
 
 struct hpux_sys_stty_6x_args {
 	syscallarg(int) fd;
-	syscallarg(caddr_t) arg;
+	syscallarg(void *) arg;
 };
 
 struct hpux_sys_gtty_6x_args {
 	syscallarg(int) fd;
-	syscallarg(caddr_t) arg;
+	syscallarg(void *) arg;
 };
 
 struct hpux_sys_access_args {
@@ -171,7 +171,7 @@ struct hpux_sys_ssig_6x_args {
 struct hpux_sys_ioctl_args {
 	syscallarg(int) fd;
 	syscallarg(int) com;
-	syscallarg(caddr_t) data;
+	syscallarg(void *) data;
 };
 
 struct hpux_sys_symlink_args {
@@ -209,7 +209,7 @@ struct hpux_sys_ulimit_args {
 };
 
 struct hpux_sys_mmap_args {
-	syscallarg(caddr_t) addr;
+	syscallarg(void *) addr;
 	syscallarg(size_t) len;
 	syscallarg(int) prot;
 	syscallarg(int) flags;
@@ -409,7 +409,7 @@ struct hpux_sys_setsockopt2_args {
 	syscallarg(int) s;
 	syscallarg(int) level;
 	syscallarg(int) name;
-	syscallarg(caddr_t) val;
+	syscallarg(void *) val;
 	syscallarg(int) valsize;
 };
 #ifdef SYSVSEM

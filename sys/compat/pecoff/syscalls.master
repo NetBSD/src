@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.26 2007/02/09 21:55:24 ad Exp $
+	$NetBSD: syscalls.master,v 1.26.2.1 2007/03/12 05:52:43 rmind Exp $
 ; based on NetBSD: syscalls.master,v 1.150 2005/11/29 22:52:02 yamt Exp
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -115,7 +115,7 @@
 24	NOARGS		{ uid_t sys_getuid(void); }
 #endif
 25	NOARGS		{ uid_t sys_geteuid(void); }
-26	NOARGS		{ int sys_ptrace(int req, pid_t pid, caddr_t addr, \
+26	NOARGS		{ int sys_ptrace(int req, pid_t pid, void *addr, \
 			    int data); }
 27	NOARGS		{ ssize_t sys_recvmsg(int s, struct msghdr *msg, \
 			    int flags); }
@@ -144,7 +144,7 @@
 41	NOARGS		{ int sys_dup(int fd); }
 42	NOARGS		{ int sys_pipe(void); }
 43	NOARGS		{ gid_t sys_getegid(void); }
-44	NOARGS		{ int sys_profil(caddr_t samples, size_t size, \
+44	NOARGS		{ int sys_profil(void *samples, size_t size, \
 			    u_long offset, u_int scale); }
 #if defined(KTRACE) || !defined(_KERNEL)
 45	NOARGS		{ int sys_ktrace(const char *fname, int ops, \
@@ -185,14 +185,14 @@
 63	EXCL		{ int sys_getkerninfo(int op, char *where, int *size, \
 			    int arg); } ogetkerninfo
 64	EXCL		{ int sys_getpagesize(void); } ogetpagesize
-65	EXCL		{ int sys_msync(caddr_t addr, size_t len); }
+65	EXCL		{ int sys_msync(void *addr, size_t len); }
 ; XXX COMPAT_??? for 4.4BSD-compatible vfork(2)?
 66	NOARGS		{ int sys_vfork(void); }
 67	OBSOL		vread
 68	OBSOL		vwrite
 69	NOARGS		{ int sys_sbrk(intptr_t incr); }
 70	NOARGS		{ int sys_sstk(int incr); }
-71	EXCL		{ int sys_mmap(caddr_t addr, size_t len, int prot, \
+71	EXCL		{ int sys_mmap(void *addr, size_t len, int prot, \
 			    int flags, int fd, long pos); } ommap
 72	NOARGS		{ int sys_ovadvise(int anom); } vadvise
 73	NOARGS		{ int sys_munmap(void *addr, size_t len); }
@@ -233,12 +233,12 @@
 97	NOARGS		{ int compat_30_sys_socket(int domain, int type, int protocol); }
 98	NOARGS		{ int sys_connect(int s, const struct sockaddr *name, \
 			    unsigned int namelen); }
-99	EXCL		{ int sys_accept(int s, caddr_t name, \
+99	EXCL		{ int sys_accept(int s, void *name, \
 			    int *anamelen); } oaccept
 100	NOARGS		{ int sys_getpriority(int which, id_t who); }
-101	EXCL		{ int sys_send(int s, caddr_t buf, int len, \
+101	EXCL		{ int sys_send(int s, void *buf, int len, \
 			    int flags); } osend
-102	EXCL		{ int sys_recv(int s, caddr_t buf, int len, \
+102	EXCL		{ int sys_recv(int s, void *buf, int len, \
 			    int flags); } orecv
 103	EXCL		{ int sys_sigreturn(struct sigcontext13 *sigcntxp); } \
 			    sigreturn13
@@ -257,7 +257,7 @@
 			    struct sigstack *oss); } osigstack
 113	EXCL		{ int sys_recvmsg(int s, struct omsghdr *msg, \
 			    int flags); } orecvmsg
-114	EXCL		{ int sys_sendmsg(int s, caddr_t msg, int flags); } \
+114	EXCL		{ int sys_sendmsg(int s, void *msg, int flags); } \
 			    osendmsg
 115	OBSOL		vtrace
 116	NOARGS		{ int sys_gettimeofday(struct timeval *tp, \
@@ -274,8 +274,8 @@
 			    void *tzp); }
 123	NOARGS		{ int sys_fchown(int fd, uid_t uid, gid_t gid); }
 124	NOARGS		{ int sys_fchmod(int fd, mode_t mode); }
-125	EXCL		{ int sys_recvfrom(int s, caddr_t buf, size_t len, \
-			    int flags, caddr_t from, int *fromlenaddr); } \
+125	EXCL		{ int sys_recvfrom(int s, void *buf, size_t len, \
+			    int flags, void *from, int *fromlenaddr); } \
 			    orecvfrom
 126	NOARGS		{ int sys_setreuid(uid_t ruid, uid_t euid); }
 127	NOARGS		{ int sys_setregid(gid_t rgid, gid_t egid); }
@@ -299,7 +299,7 @@
 139	OBSOL		4.2 sigreturn
 140	NOARGS		{ int sys_adjtime(const struct timeval *delta, \
 			    struct timeval *olddelta); }
-141	EXCL		{ int sys_getpeername(int fdes, caddr_t asa, \
+141	EXCL		{ int sys_getpeername(int fdes, void *asa, \
 			    int *alen); } ogetpeername
 142	EXCL		{ int32_t sys_gethostid(void); } ogethostid
 143	EXCL		{ int sys_sethostid(int32_t hostid); } osethostid
@@ -310,9 +310,9 @@
 146	EXCL		{ int sys_killpg(int pgid, int signum); } okillpg
 147	NOARGS		{ int sys_setsid(void); }
 148	NOARGS		{ int sys_quotactl(const char *path, int cmd, \
-			    int uid, caddr_t arg); }
+			    int uid, void *arg); }
 149	EXCL		{ int sys_quota(void); } oquota
-150	EXCL		{ int sys_getsockname(int fdec, caddr_t asa, \
+150	EXCL		{ int sys_getsockname(int fdec, void *asa, \
 			    int *alen); } ogetsockname
 
 ; Syscalls 151-180 inclusive are reserved for vendor-specific
@@ -727,7 +727,7 @@
 			    const void *tramp, int vers); }
 341	NOARGS		{ int sys_pmc_get_info(int ctr, int op, void *args); }
 342	NOARGS		{ int sys_pmc_control(int ctr, int op, void *args); }
-343	NOARGS		{ int sys_rasctl(caddr_t addr, size_t len, int op); }
+343	NOARGS		{ int sys_rasctl(void *addr, size_t len, int op); }
 344	NOARGS		{ int sys_kqueue(void); }
 345	NOARGS		{ int sys_kevent(int fd, \
 			    const struct kevent *changelist, size_t nchanges, \

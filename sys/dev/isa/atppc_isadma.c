@@ -1,4 +1,4 @@
-/* $NetBSD: atppc_isadma.c,v 1.3 2005/12/11 12:22:02 christos Exp $ */
+/* $NetBSD: atppc_isadma.c,v 1.3.26.1 2007/03/12 05:54:48 rmind Exp $ */
 
 /*-
  * Copyright (c) 2001 Alcove - Nicolas Souchu
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atppc_isadma.c,v 1.3 2005/12/11 12:22:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atppc_isadma.c,v 1.3.26.1 2007/03/12 05:54:48 rmind Exp $");
 
 #include "opt_atppc.h"
 
@@ -77,7 +77,7 @@ atppc_isadma_setup(struct atppc_softc * lsc, isa_chipset_tag_t ic, int drq)
 
 /* Start DMA operation over ISA bus */
 int
-atppc_isadma_start(isa_chipset_tag_t ic, int drq, void * buf, u_int nbytes,
+atppc_isadma_start(isa_chipset_tag_t ic, int drq, void *buf, u_int nbytes,
 	u_int8_t mode)
 {
 	return (isa_dmastart(ic, drq, buf, nbytes, NULL,
@@ -104,7 +104,7 @@ atppc_isadma_abort(isa_chipset_tag_t ic, int drq)
 
 /* Allocate memory for DMA over ISA bus */
 int
-atppc_isadma_malloc(isa_chipset_tag_t ic, int drq, caddr_t *buf, bus_addr_t *bus_addr, bus_size_t size)
+atppc_isadma_malloc(isa_chipset_tag_t ic, int drq, void **buf, bus_addr_t *bus_addr, bus_size_t size)
 {
 	int error;
 
@@ -121,7 +121,7 @@ atppc_isadma_malloc(isa_chipset_tag_t ic, int drq, caddr_t *buf, bus_addr_t *bus
 
 /* Free memory allocated by atppc_isadma_malloc() */
 void
-atppc_isadma_free(isa_chipset_tag_t ic, int drq, caddr_t * buf, bus_addr_t * bus_addr, bus_size_t size)
+atppc_isadma_free(isa_chipset_tag_t ic, int drq, void ** buf, bus_addr_t * bus_addr, bus_size_t size)
 {
 	isa_dmamem_unmap(ic, drq, *buf, size);
 	isa_dmamem_free(ic, drq, *bus_addr, size);

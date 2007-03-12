@@ -1,4 +1,4 @@
-/*	$NetBSD: amsvar.h,v 1.7 2005/12/11 12:18:02 christos Exp $	*/
+/*	$NetBSD: amsvar.h,v 1.7.26.1 2007/03/12 05:48:56 rmind Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -59,7 +59,7 @@ struct ams_softc {
 #define MSCLASS_MOUSE		1
 #define MSCLASS_TRACKBALL	2       
 
-void	ms_adbcomplete(caddr_t, caddr_t, int);
+void	ms_adbcomplete(void *, void *, int);
 void	ams_handoff(adb_event_t *, struct ams_softc *);
 
 #endif /* _MAC68K_MSVAR_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.136 2007/01/24 13:08:14 hubertf Exp $ */
+/*	$NetBSD: autoconf.c,v 1.136.2.1 2007/03/12 05:50:48 rmind Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.136 2007/01/24 13:08:14 hubertf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.136.2.1 2007/03/12 05:50:48 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -557,7 +557,7 @@ mbprint(void *aux, const char *name)
 
 int
 mainbus_match(struct device * parent, struct cfdata * cf,
-	void * aux)
+	void *aux)
 {
 
 	return (1);
@@ -572,7 +572,7 @@ mainbus_match(struct device * parent, struct cfdata * cf,
  */
 static void
 mainbus_attach(struct device * parent, struct device *dev,
-	void * aux)
+	void *aux)
 {
 extern struct sparc_bus_dma_tag mainbus_dma_tag;
 extern struct sparc_bus_space_tag mainbus_space_tag;

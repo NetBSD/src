@@ -1,4 +1,4 @@
-/*	$NetBSD: spc.c,v 1.30 2006/02/23 05:37:49 thorpej Exp $	*/
+/*	$NetBSD: spc.c,v 1.30.20.1 2007/03/12 05:51:40 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spc.c,v 1.30 2006/02/23 05:37:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spc.c,v 1.30.20.1 2007/03/12 05:51:40 rmind Exp $");
 
 #include "opt_ddb.h"
 
@@ -63,10 +63,10 @@ __KERNEL_RCSID(0, "$NetBSD: spc.c,v 1.30 2006/02/23 05:37:49 thorpej Exp $");
 static int spc_intio_match(struct device *, struct cfdata *, void *);
 static void spc_intio_attach(struct device *, struct device *, void *);
 
-CFATTACH_DECL(spc_intio, sizeof (struct spc_softc),
+CFATTACH_DECL(spc_intio, sizeof(struct spc_softc),
     spc_intio_match, spc_intio_attach, NULL, NULL);
 
-static int 
+static int
 spc_intio_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct intio_attach_args *ia = aux;
@@ -89,7 +89,7 @@ spc_intio_match(struct device *parent, struct cfdata *cf, void *aux)
 	return 1;
 }
 
-static void 
+static void
 spc_intio_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct spc_softc *sc = (struct spc_softc *)self;
@@ -97,7 +97,7 @@ spc_intio_attach(struct device *parent, struct device *self, void *aux)
 	bus_space_tag_t iot = ia->ia_bst;
 	bus_space_handle_t ioh;
 
-	printf ("\n");
+	printf("\n");
 
 	intio_map_allocate_region(device_parent(parent), ia,
 				  INTIO_MAP_ALLOCATE);
@@ -112,7 +112,7 @@ spc_intio_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_initiator = IODEVbase->io_sram[0x70] & 0x7; /* XXX */
 
 	if (intio_intr_establish(ia->ia_intr, "spc", spc_intr, sc))
-		panic ("spcattach: interrupt vector busy");
+		panic("spcattach: interrupt vector busy");
 
 	spc_attach(sc);
 }

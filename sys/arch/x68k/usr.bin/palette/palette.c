@@ -1,4 +1,4 @@
-/*	$NetBSD: palette.c,v 1.6 2006/08/04 02:30:00 mhitch Exp $	*/
+/*	$NetBSD: palette.c,v 1.6.10.1 2007/03/12 05:51:43 rmind Exp $	*/
 /*
  * pelette - manipulate text colormap for NetBSD/x68k.
  * author: Masaru Oki
@@ -7,7 +7,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: palette.c,v 1.6 2006/08/04 02:30:00 mhitch Exp $");
+__RCSID("$NetBSD: palette.c,v 1.6.10.1 2007/03/12 05:51:43 rmind Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -44,7 +44,7 @@ main(int argc, char *argv[])
 
 	mapaddr = mmap(0, PALETTE_SIZE, PROT_READ | PROT_WRITE,
 		       MAP_FILE | MAP_SHARED, fd, PALETTE_OFFSET);
-	if (mapaddr == (caddr_t)-1) {
+	if (mapaddr == (void *)-1) {
 		perror("mmap");
 		close(fd);
 		exit(1);

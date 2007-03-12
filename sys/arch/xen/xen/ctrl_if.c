@@ -1,4 +1,4 @@
-/*	$NetBSD: ctrl_if.c,v 1.13 2006/03/17 06:04:24 jld Exp $	*/
+/*	$NetBSD: ctrl_if.c,v 1.13.14.1 2007/03/12 05:51:49 rmind Exp $	*/
 
 /******************************************************************************
  * ctrl_if.c
@@ -9,7 +9,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ctrl_if.c,v 1.13 2006/03/17 06:04:24 jld Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ctrl_if.c,v 1.13.14.1 2007/03/12 05:51:49 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -294,7 +294,7 @@ ctrl_if_send_message_block(
 #if 1
 		HYPERVISOR_yield();
 #else
-		rc = tsleep((caddr_t) &ctrl_if_tx_wait, PUSER | PCATCH,
+		rc = tsleep((void *) &ctrl_if_tx_wait, PUSER | PCATCH,
 		    "ctrl_if", 0);
 		if (rc)
 			break;
@@ -343,7 +343,7 @@ ctrl_if_send_message_and_get_response(
     {
 	    if ( wait.done )
 		    break;
-	    tsleep((caddr_t)&wait, PUSER | PCATCH, "ctrl_if", 0);
+	    tsleep((void *)&wait, PUSER | PCATCH, "ctrl_if", 0);
     }
 
     return 0;

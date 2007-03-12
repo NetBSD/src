@@ -1,4 +1,4 @@
-/* $NetBSD: dec_kn20aa.c,v 1.57 2006/02/25 17:32:43 thorpej Exp $ */
+/* $NetBSD: dec_kn20aa.c,v 1.57.20.1 2007/03/12 05:45:50 rmind Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 Carnegie-Mellon University.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_kn20aa.c,v 1.57 2006/02/25 17:32:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_kn20aa.c,v 1.57.20.1 2007/03/12 05:45:50 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,7 +128,7 @@ dec_kn20aa_cons_init()
 	ccp = &cia_configuration;
 	cia_init(ccp, 0);
 
-	ctb = (struct ctb *)(((caddr_t)hwrpb) + hwrpb->rpb_ctb_off);
+	ctb = (struct ctb *)(((char *)hwrpb) + hwrpb->rpb_ctb_off);
 
 	switch (ctb->ctb_term_type) {
 	case CTB_PRINTERPORT: 

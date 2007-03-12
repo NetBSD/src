@@ -1,4 +1,4 @@
-/*	$NetBSD: pm.c,v 1.4 2006/04/12 19:38:23 jmmv Exp $	*/
+/*	$NetBSD: pm.c,v 1.4.14.1 2007/03/12 05:49:50 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pm.c,v 1.4 2006/04/12 19:38:23 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pm.c,v 1.4.14.1 2007/03/12 05:49:50 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,7 +128,7 @@ struct pm_softc {
 
 int	pm_match(struct device *, struct cfdata *, void *);
 void	pm_attach(struct device *, struct device *, void *);
-int	pm_ioctl(void *, void *, u_long, caddr_t, int, struct lwp *);
+int	pm_ioctl(void *, void *, u_long, void *, int, struct lwp *);
 paddr_t	pm_mmap(void *, void *, off_t, int);
 int	pm_alloc_screen(void *, const struct wsscreen_descr *,
 				void **, int *, int *, long *);
@@ -182,10 +182,10 @@ int
 pm_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct ibus_attach_args *ia;
-	caddr_t pmaddr;
+	void *pmaddr;
 
 	ia = aux;
-	pmaddr = (caddr_t)ia->ia_addr;
+	pmaddr = (void *)ia->ia_addr;
 
 	if (strcmp(ia->ia_name, "pm") != 0)
 		return (0);
@@ -408,7 +408,7 @@ pm_cursor_on(struct pm_softc *sc)
 }
 
 int
-pm_ioctl(void *v, void *vs, u_long cmd, caddr_t data, int flag, struct lwp *l)
+pm_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct pm_softc *sc;
 	struct rasops_info *ri;

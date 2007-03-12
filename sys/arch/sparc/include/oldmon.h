@@ -1,4 +1,4 @@
-/*	$NetBSD: oldmon.h,v 1.16 2006/03/04 03:39:02 uwe Exp $ */
+/*	$NetBSD: oldmon.h,v 1.16.20.1 2007/03/12 05:50:30 rmind Exp $ */
 
 /*
  * Copyright (C) 1985 Regents of the University of California
@@ -229,7 +229,7 @@ struct om_vector {
 	/* Assorted other things */
 	u_long	romvecVersion;		/* Version # of Romvec */
 	struct globram *globRam;	/* monitor global variables */
-	caddr_t	kbdZscc;		/* Addr of keyboard in use */
+	void *	kbdZscc;		/* Addr of keyboard in use */
 
 	int	*keyrInit;		/* ms before kbd repeat */
 	u_char	*keyrTick; 		/* ms between repetitions */
@@ -242,7 +242,7 @@ struct om_vector {
 				__attribute__((noreturn));
 	u_char	**memorybitmap;		/* V1: &{0 or &bits} */
 	void	(*setcxsegmap)		/* Set seg in any context */
-		    (int, caddr_t, int);
+		    (int, void *, int);
 	void	(**vector_cmd)(u_long, char *);
 					/* V2: Handler for 'v' cmd */
   	u_long	*ExpectedTrapSig;

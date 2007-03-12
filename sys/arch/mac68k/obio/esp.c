@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.44 2006/03/08 23:46:23 lukem Exp $	*/
+/*	$NetBSD: esp.c,v 1.44.16.1 2007/03/12 05:49:01 rmind Exp $	*/
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.44 2006/03/08 23:46:23 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.44.16.1 2007/03/12 05:49:01 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -123,14 +123,14 @@ void	esp_write_reg(struct ncr53c9x_softc *, int, u_char);
 int	esp_dma_isintr(struct ncr53c9x_softc *);
 void	esp_dma_reset(struct ncr53c9x_softc *);
 int	esp_dma_intr(struct ncr53c9x_softc *);
-int	esp_dma_setup(struct ncr53c9x_softc *, caddr_t *, size_t *, int,
+int	esp_dma_setup(struct ncr53c9x_softc *, void **, size_t *, int,
 	    size_t *);
 void	esp_dma_go(struct ncr53c9x_softc *);
 void	esp_dma_stop(struct ncr53c9x_softc *);
 int	esp_dma_isactive(struct ncr53c9x_softc *);
 void	esp_quick_write_reg(struct ncr53c9x_softc *, int, u_char);
 int	esp_quick_dma_intr(struct ncr53c9x_softc *);
-int	esp_quick_dma_setup(struct ncr53c9x_softc *, caddr_t *, size_t *, int,
+int	esp_quick_dma_setup(struct ncr53c9x_softc *, void **, size_t *, int,
 	     size_t *);
 void	esp_quick_dma_go(struct ncr53c9x_softc *);
 
@@ -449,12 +449,12 @@ esp_dma_intr(struct ncr53c9x_softc *sc)
 }
 
 int
-esp_dma_setup(struct ncr53c9x_softc *sc, caddr_t *addr, size_t *len, int datain,
+esp_dma_setup(struct ncr53c9x_softc *sc, void **addr, size_t *len, int datain,
     size_t *dmasize)
 {
 	struct esp_softc *esc = (struct esp_softc *)sc;
 
-	esc->sc_dmaaddr = addr;
+	esc->sc_dmaaddr = (char **)addr;
 	esc->sc_dmalen = len;
 	esc->sc_datain = datain;
 	esc->sc_dmasize = *dmasize;
@@ -550,12 +550,12 @@ esp_quick_dma_intr(struct ncr53c9x_softc *sc)
 }
 
 int
-esp_quick_dma_setup(struct ncr53c9x_softc *sc, caddr_t *addr, size_t *len,
+esp_quick_dma_setup(struct ncr53c9x_softc *sc, void **addr, size_t *len,
     int datain, size_t *dmasize)
 {
 	struct esp_softc *esc = (struct esp_softc *)sc;
 
-	esc->sc_dmaaddr = addr;
+	esc->sc_dmaaddr = (char **)addr;
 	esc->sc_dmalen = len;
 
 	if (*len & 1) {

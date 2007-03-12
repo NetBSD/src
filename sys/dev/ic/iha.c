@@ -1,4 +1,4 @@
-/*	$NetBSD: iha.c,v 1.34 2006/05/21 23:56:09 christos Exp $ */
+/*	$NetBSD: iha.c,v 1.34.12.1 2007/03/12 05:53:35 rmind Exp $ */
 
 /*-
  * Device driver for the INI-9XXXU/UW or INIC-940/950 PCI SCSI Controller.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iha.c,v 1.34 2006/05/21 23:56:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iha.c,v 1.34.12.1 2007/03/12 05:53:35 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -620,7 +620,7 @@ iha_alloc_sglist(struct iha_softc *sc)
 		return (error);
 	}
 	if ((error = bus_dmamem_map(sc->sc_dmat, &seg, rseg,
-	    IHA_SG_SIZE * IHA_MAX_SCB, (caddr_t *)&sc->sc_sglist,
+	    IHA_SG_SIZE * IHA_MAX_SCB, (void **)&sc->sc_sglist,
 	    BUS_DMA_NOWAIT | BUS_DMA_COHERENT)) != 0) {
 		printf(": unable to map sglist, error = %d\n", error);
 		return (error);

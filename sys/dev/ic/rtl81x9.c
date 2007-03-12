@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9.c,v 1.70 2007/02/16 13:01:48 tsutsui Exp $	*/
+/*	$NetBSD: rtl81x9.c,v 1.70.2.1 2007/03/12 05:53:43 rmind Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.70 2007/02/16 13:01:48 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.70.2.1 2007/03/12 05:53:43 rmind Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -135,7 +135,7 @@ STATIC void rtk_reset(struct rtk_softc *);
 STATIC void rtk_rxeof(struct rtk_softc *);
 STATIC void rtk_txeof(struct rtk_softc *);
 STATIC void rtk_start(struct ifnet *);
-STATIC int rtk_ioctl(struct ifnet *, u_long, caddr_t);
+STATIC int rtk_ioctl(struct ifnet *, u_long, void *);
 STATIC int rtk_init(struct ifnet *);
 STATIC void rtk_stop(struct ifnet *, int);
 
@@ -668,7 +668,7 @@ rtk_attach(struct rtk_softc *sc)
 	}
 
 	if ((error = bus_dmamem_map(sc->sc_dmat, &sc->sc_dmaseg, sc->sc_dmanseg,
-	    RTK_RXBUFLEN + 16, (caddr_t *)&sc->rtk_rx_buf,
+	    RTK_RXBUFLEN + 16, (void **)&sc->rtk_rx_buf,
 	    BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
 		printf("%s: can't map recv buffer, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
@@ -789,7 +789,7 @@ rtk_attach(struct rtk_softc *sc)
  fail_3:
 	bus_dmamap_destroy(sc->sc_dmat, sc->recv_dmamap);
  fail_2:
-	bus_dmamem_unmap(sc->sc_dmat, (caddr_t)sc->rtk_rx_buf,
+	bus_dmamem_unmap(sc->sc_dmat, (void *)sc->rtk_rx_buf,
 	    RTK_RXBUFLEN + 16);
  fail_1:
 	bus_dmamem_free(sc->sc_dmat, &sc->sc_dmaseg, sc->sc_dmanseg);
@@ -885,7 +885,7 @@ rtk_detach(struct rtk_softc *sc)
 			bus_dmamap_destroy(sc->sc_dmat, txd->txd_dmamap);
 	}
 	bus_dmamap_destroy(sc->sc_dmat, sc->recv_dmamap);
-	bus_dmamem_unmap(sc->sc_dmat, (caddr_t)sc->rtk_rx_buf,
+	bus_dmamem_unmap(sc->sc_dmat, (void *)sc->rtk_rx_buf,
 	    RTK_RXBUFLEN + 16);
 	bus_dmamem_free(sc->sc_dmat, &sc->sc_dmaseg, sc->sc_dmanseg);
 
@@ -987,7 +987,7 @@ rtk_rxeof(struct rtk_softc *sc)
 {
 	struct mbuf *m;
 	struct ifnet *ifp;
-	caddr_t rxbufpos, dst;
+	char *rxbufpos, *dst;
 	u_int total_len, wrap;
 	uint32_t rxstat;
 	uint16_t cur_rx, new_rx;
@@ -1008,7 +1008,7 @@ rtk_rxeof(struct rtk_softc *sc)
 	rx_bytes = 0;
 
 	while ((CSR_READ_1(sc, RTK_COMMAND) & RTK_CMD_EMPTY_RXBUF) == 0) {
-		rxbufpos = sc->rtk_rx_buf + cur_rx;
+		rxbufpos = (char *)sc->rtk_rx_buf + cur_rx;
 		bus_dmamap_sync(sc->sc_dmat, sc->recv_dmamap, cur_rx,
 		    RTK_RXSTAT_LEN, BUS_DMASYNC_POSTREAD);
 		rxstat = le32toh(*(uint32_t *)rxbufpos);
@@ -1073,7 +1073,7 @@ rtk_rxeof(struct rtk_softc *sc)
 		 * of the Rx area, if necessary.
 		 */
 		cur_rx = (cur_rx + RTK_RXSTAT_LEN) % RTK_RXBUFLEN;
-		rxbufpos = sc->rtk_rx_buf + cur_rx;
+		rxbufpos = (char *)sc->rtk_rx_buf + cur_rx;
 
 		/*
 		 * Compute the number of bytes at which the packet
@@ -1123,7 +1123,7 @@ rtk_rxeof(struct rtk_softc *sc)
 		m->m_data += RTK_ETHER_ALIGN;	/* for alignment */
 		m->m_pkthdr.rcvif = ifp;
 		m->m_pkthdr.len = m->m_len = total_len;
-		dst = mtod(m, caddr_t);
+		dst = mtod(m, void *);
 
 		/*
 		 * If the packet wraps, copy up to the wrapping point.
@@ -1338,12 +1338,12 @@ rtk_start(struct ifnet *ifp)
 				}
 			}
 			m_copydata(m_head, 0, m_head->m_pkthdr.len,
-			    mtod(m_new, caddr_t));
+			    mtod(m_new, void *));
 			m_new->m_pkthdr.len = m_new->m_len =
 			    m_head->m_pkthdr.len;
 			if (m_head->m_pkthdr.len < ETHER_PAD_LEN) {
 				memset(
-				    mtod(m_new, caddr_t) + m_head->m_pkthdr.len,
+				    mtod(m_new, char *) + m_head->m_pkthdr.len,
 				    0, ETHER_PAD_LEN - m_head->m_pkthdr.len);
 				m_new->m_pkthdr.len = m_new->m_len =
 				    ETHER_PAD_LEN;
@@ -1535,7 +1535,7 @@ rtk_ifmedia_sts(struct ifnet *ifp, struct ifmediareq *ifmr)
 }
 
 STATIC int
-rtk_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
+rtk_ioctl(struct ifnet *ifp, u_long command, void *data)
 {
 	struct rtk_softc *sc = ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *)data;

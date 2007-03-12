@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.47 2005/12/06 17:06:00 tsutsui Exp $	*/
+/*	$NetBSD: param.h,v 1.47.26.1 2007/03/12 05:47:56 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -85,13 +85,6 @@
 #define	_MACHINE	hp300
 #define	MACHINE		"hp300"
 
-#ifdef _KERNEL
-/*
- * Interrupt glue.
- */
-#include <machine/intr.h>
-#endif /* _KERNEL */
-
 #define	PGSHIFT		12		/* LOG2(NBPG) */
 #define	KERNBASE	0x00000000	/* start of kernel virtual */
 
@@ -120,6 +113,8 @@
 #define	NKMEMPAGES_MAX_DEFAULT	((8 * 1024 * 1024) >> PAGE_SHIFT)
 
 #if defined(_KERNEL) && !defined(_LOCORE)
+#include <machine/intr.h>
+
 #define	delay(us)	_delay((us) << 8)
 #define DELAY(us)	delay(us)
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.6 2005/12/11 12:18:13 christos Exp $ 	*/
+/*	$NetBSD: bus_space.c,v 1.6.26.1 2007/03/12 05:49:25 rmind Exp $ 	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.6 2005/12/11 12:18:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.6.26.1 2007/03/12 05:49:25 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,7 +81,7 @@ mipsco_bus_space_init(bst, name, paddr, vaddr, start, size)
 void
 mipsco_bus_space_init_extent(bst, storage, storagesize)
 	bus_space_tag_t bst;
-	caddr_t storage;
+	void *storage;
 	size_t storagesize;
 {
 	bst->bs_extent = extent_create(bst->bs_name,
@@ -181,7 +181,7 @@ mipsco_bus_space_paddr(bst, bsh, pap)
 	paddr_t *pap;
 {
 	if (bsh < MIPS_KSEG0_START) /* KUSEG */
-		panic("mipsco_bus_space_paddr(%p): bad address", (caddr_t)bsh);
+		panic("mipsco_bus_space_paddr(%p): bad address", (void *)bsh);
 	else if (bsh < MIPS_KSEG1_START) /* KSEG0 */
 		*pap = MIPS_KSEG0_TO_PHYS(bsh);
 	else if (bsh < MIPS_KSEG2_START) /* KSEG1 */
@@ -234,7 +234,7 @@ mipsco_bus_space_unmap(bst, bsh, size)
 		err = bus_space_paddr(bst, bsh, &pa);
 		if (err)
 			panic("mipsco_bus_space_unmap: %s va %p: error %d",
-			    bst->bs_name, (caddr_t)bsh, err);
+			    bst->bs_name, (void *)bsh, err);
 		addr = (bus_size_t)(pa - bst->bs_pbase) + bst->bs_start;
 		extent_free(bst->bs_extent, addr, size,
 		    EX_NOWAIT | malloc_safe);

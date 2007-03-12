@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eca.c,v 1.5 2006/02/12 10:32:46 bjh21 Exp $	*/
+/*	$NetBSD: if_eca.c,v 1.5.20.1 2007/03/12 05:45:14 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -29,7 +29,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: if_eca.c,v 1.5 2006/02/12 10:32:46 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eca.c,v 1.5.20.1 2007/03/12 05:45:14 rmind Exp $");
 
 #include <sys/device.h>
 #include <sys/malloc.h>
@@ -473,7 +473,7 @@ eca_gotframe(void *arg)
 		if (eca_init_rxbuf(sc, M_DONTWAIT) == 0) {
 			ifp->if_ipackets++; /* XXX packet vs frame? */
 			/* Trim the tail of the mbuf chain. */
-			mtail->m_len = (caddr_t)(fr.fr_r9) - mtail->m_data;
+			mtail->m_len = (void *)(fr.fr_r9) - mtail->m_data;
 			m_freem(mtail->m_next);
 			mtail->m_next = NULL;
 			/* Set up the header of the chain. */
@@ -492,7 +492,7 @@ eca_gotframe(void *arg)
 		mtail = sc->sc_fiqstate.efs_rx_curmbuf;
 		log(LOG_ERR, "%s: Rx overrun (state = %d, len = %ld)\n",
 		    sc->sc_dev.dv_xname, sc->sc_ec.ec_state,
-		    (caddr_t)(fr.fr_r9) - mtail->m_data);
+		    (void *)(fr.fr_r9) - mtail->m_data);
 		ifp->if_ierrors++;
 
 		/* Discard the rest of the frame. */

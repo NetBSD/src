@@ -1,4 +1,4 @@
-/* $NetBSD: rmreloc.c,v 1.2 2006/06/25 21:32:41 christos Exp $ */
+/* $NetBSD: rmreloc.c,v 1.2.12.1 2007/03/12 05:45:24 rmind Exp $ */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -55,7 +55,7 @@
 
 #include <riscoscalls.h>
 
-os_error *relocate_self(Elf_Dyn *, caddr_t, caddr_t);
+os_error *relocate_self(Elf_Dyn *, void *, void *);
 
 #define assert(x) /* nothing */
 
@@ -66,7 +66,7 @@ os_error *relocate_self(Elf_Dyn *, caddr_t, caddr_t);
  */
 
 typedef struct {
-	caddr_t         relocbase;	/* Reloc const = mapbase - *vaddrbase */
+	void *        relocbase;	/* Reloc const = mapbase - *vaddrbase */
 	Elf_Dyn        *dynamic;	/* Dynamic section */
 	const Elf_Rel  *rel;		/* Relocation entries */
 	const Elf_Rel  *rellim;		/* Limit of Relocation entries */
@@ -103,7 +103,7 @@ static struct os_error bad_reloc = {
 };
 
 os_error *
-relocate_self(Elf_Dyn *dynamic, caddr_t oldbase, caddr_t newbase)
+relocate_self(Elf_Dyn *dynamic, void *oldbase, void *newbase)
 {
 	Elf_Dyn *dynp;
 	Obj_Entry o = { 0 };
@@ -128,7 +128,7 @@ relocate_self(Elf_Dyn *dynamic, caddr_t oldbase, caddr_t newbase)
 		}
 	}
 
-	obj->rellim = (const Elf_Rel *)((caddr_t)obj->rel + relsz);
+	obj->rellim = (const Elf_Rel *)((void *)obj->rel + relsz);
 
 	for (rel = obj->rel; rel < obj->rellim; rel++) {
 		Elf_Addr        *where;

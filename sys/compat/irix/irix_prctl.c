@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_prctl.c,v 1.35 2007/02/09 21:55:18 ad Exp $ */
+/*	$NetBSD: irix_prctl.c,v 1.35.2.1 2007/03/12 05:52:12 rmind Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_prctl.c,v 1.35 2007/02/09 21:55:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_prctl.c,v 1.35.2.1 2007/03/12 05:52:12 rmind Exp $");
 
 #include <sys/errno.h>
 #include <sys/types.h>
@@ -79,7 +79,7 @@ struct irix_sproc_child_args {
 	int isc_child_done;
 };
 static void irix_sproc_child __P((struct irix_sproc_child_args *));
-static int irix_sproc __P((void *, unsigned int, void *, caddr_t, size_t,
+static int irix_sproc __P((void *, unsigned int, void *, void *, size_t,
     pid_t, struct lwp *, register_t *));
 static struct irix_shared_regions_rec *irix_isrr_create __P((vaddr_t,
     vsize_t, int));
@@ -218,7 +218,7 @@ irix_sys_pidsprocsp(l, v, retval)
 		syscallarg(void *) entry;
 		syscallarg(unsigned) inh;
 		syscallarg(void *) arg;
-		syscallarg(caddr_t) sp;
+		syscallarg(void *) sp;
 		syscallarg(irix_size_t) len;
 		syscallarg(irix_pid_t) pid;
 	} */ *uap = v;
@@ -240,7 +240,7 @@ irix_sys_sprocsp(l, v, retval)
 		syscallarg(void *) entry;
 		syscallarg(unsigned) inh;
 		syscallarg(void *) arg;
-		syscallarg(caddr_t) sp;
+		syscallarg(void *) sp;
 		syscallarg(irix_size_t) len;
 	} */ *uap = v;
 
@@ -271,7 +271,7 @@ irix_sproc(entry, inh, arg, sp, len, pid, l, retval)
 	void *entry;
 	unsigned int inh;
 	void *arg;
-	caddr_t sp;
+	void *sp;
 	size_t len;
 	pid_t pid;
 	struct lwp *l;
@@ -340,7 +340,7 @@ irix_sproc(entry, inh, arg, sp, len, pid, l, retval)
 			sp = p->p_vmspace->vm_maxsaddr;
 
 			/* Compute new stacks's bottom address */
-			sp = (caddr_t)trunc_page((u_long)sp - len);
+			sp = (void *)trunc_page((u_long)sp - len);
 		}
 
 		/* Now map the new stack */
@@ -364,12 +364,13 @@ irix_sproc(entry, inh, arg, sp, len, pid, l, retval)
 
 		/* Update stack parameters for the share group members */
 		ied = (struct irix_emuldata *)p->p_emuldata;
-		stacksize = (p->p_vmspace->vm_minsaddr - sp) / PAGE_SIZE;
+		stacksize = ((char *)p->p_vmspace->vm_minsaddr - (char *)sp)
+		    / PAGE_SIZE;
 
 
 		(void)lockmgr(&isg->isg_lock, LK_EXCLUSIVE, NULL);
 		LIST_FOREACH(iedp, &isg->isg_head, ied_sglist) {
-			iedp->ied_p->p_vmspace->vm_maxsaddr = (caddr_t)sp;
+			iedp->ied_p->p_vmspace->vm_maxsaddr = (void *)sp;
 			iedp->ied_p->p_vmspace->vm_ssize = stacksize;
 		}
 		(void)lockmgr(&isg->isg_lock, LK_RELEASE, NULL);

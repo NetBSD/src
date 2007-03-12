@@ -1,4 +1,4 @@
-/*	$NetBSD: si_sebuf.c,v 1.24 2006/03/29 04:16:48 thorpej Exp $	*/
+/*	$NetBSD: si_sebuf.c,v 1.24.14.1 2007/03/12 05:51:07 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: si_sebuf.c,v 1.24 2006/03/29 04:16:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: si_sebuf.c,v 1.24.14.1 2007/03/12 05:51:07 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -658,7 +658,7 @@ se_dma_free(struct ncr5380_softc *ncr_sc)
 	if (dh->dh_flags & SIDH_BUSY) {
 		/* XXX: Should separate allocation and mapping. */
 		/* XXX: Give back the DMA space. */
-		/* XXX: free((caddr_t)dh->dh_dma, dh->dh_maplen); */
+		/* XXX: free((void *)dh->dh_dma, dh->dh_maplen); */
 		dh->dh_dma = 0;
 		dh->dh_flags = 0;
 	}

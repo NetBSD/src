@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_socket.c,v 1.12 2007/02/09 21:55:16 ad Exp $ */
+/*	$NetBSD: darwin_socket.c,v 1.12.2.1 2007/03/12 05:51:56 rmind Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_socket.c,v 1.12 2007/02/09 21:55:16 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_socket.c,v 1.12.2.1 2007/03/12 05:51:56 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -246,7 +246,7 @@ darwin_sys_recvfrom(l, v, retval)
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
 	struct sys_recvfrom_args cup;
-	caddr_t sg = stackgap_init(p, 0);
+	void *sg = stackgap_init(p, 0);
 	struct sockaddr_storage nss;
 	struct sockaddr_storage dss;
 	struct sockaddr_storage *nssp;
@@ -305,7 +305,7 @@ darwin_sys_accept(l, v, retval)
 	} */ *uap = v;
 	struct sys_accept_args cup;
 	struct proc *p = l->l_proc;
-	caddr_t sg = stackgap_init(p, 0);
+	void *sg = stackgap_init(p, 0);
 	struct sockaddr_storage nss;
 	struct sockaddr_storage dss;
 	struct sockaddr_storage *nssp;
@@ -358,7 +358,7 @@ darwin_sys_getpeername(l, v, retval)
 	} */ *uap = v;
 	struct sys_getpeername_args cup;
 	struct proc *p = l->l_proc;
-	caddr_t sg = stackgap_init(p, 0);
+	void *sg = stackgap_init(p, 0);
 	struct sockaddr_storage nss;
 	struct sockaddr_storage dss;
 	struct sockaddr_storage *nssp;
@@ -411,7 +411,7 @@ darwin_sys_getsockname(l, v, retval)
 	} */ *uap = v;
 	struct sys_getsockname_args cup;
 	struct proc *p = l->l_proc;
-	caddr_t sg = stackgap_init(p, 0);
+	void *sg = stackgap_init(p, 0);
 	struct sockaddr_storage nss;
 	struct sockaddr_storage dss;
 	struct sockaddr_storage *nssp;
@@ -464,7 +464,7 @@ darwin_sys_connect(l, v, retval)
 	} */ *uap = v;
 	struct sys_connect_args cup;
 	struct proc *p = l->l_proc;
-	caddr_t sg = stackgap_init(p, 0);
+	void *sg = stackgap_init(p, 0);
 	struct sockaddr_storage nss;
 	struct sockaddr_storage dss;
 	struct sockaddr_storage *nssp;
@@ -507,7 +507,7 @@ darwin_sys_bind(l, v, retval)
 	} */ *uap = v;
 	struct sys_bind_args cup;
 	struct proc *p = l->l_proc;
-	caddr_t sg = stackgap_init(p, 0);
+	void *sg = stackgap_init(p, 0);
 	struct sockaddr_storage nss;
 	struct sockaddr_storage dss;
 	struct sockaddr_storage *nssp;
@@ -553,7 +553,7 @@ darwin_sys_sendto(l, v, retval)
 	} */ *uap = v;
 	struct sys_sendto_args cup;
 	struct proc *p = l->l_proc;
-	caddr_t sg = stackgap_init(p, 0);
+	void *sg = stackgap_init(p, 0);
 	struct sockaddr_storage nss;
 	struct sockaddr_storage dss;
 	struct sockaddr_storage *nssp;

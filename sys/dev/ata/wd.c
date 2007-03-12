@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.336 2007/02/09 21:55:27 ad Exp $ */
+/*	$NetBSD: wd.c,v 1.336.2.1 2007/03/12 05:53:08 rmind Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.336 2007/02/09 21:55:27 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.336.2.1 2007/03/12 05:53:08 rmind Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -656,7 +656,7 @@ wd_split_mod15_write(struct buf *bp)
 	 * using the same opening.
 	 */
 	bp->b_flags = obp->b_flags | B_CALL;
-	bp->b_data += bp->b_bcount;
+	bp->b_data = (char *)bp->b_data + bp->b_bcount;
 	bp->b_blkno += (bp->b_bcount / 512);
 	bp->b_rawblkno += (bp->b_bcount / 512);
 	__wdstart(sc, bp);
@@ -1152,7 +1152,7 @@ wdperror(const struct wd_softc *wd)
 }
 
 int
-wdioctl(dev_t dev, u_long xfer, caddr_t addr, int flag, struct lwp *l)
+wdioctl(dev_t dev, u_long xfer, void *addr, int flag, struct lwp *l)
 {
 	struct wd_softc *wd = device_lookup(&wd_cd, WDUNIT(dev));
 	int error = 0, s;
@@ -1186,7 +1186,7 @@ wdioctl(dev_t dev, u_long xfer, caddr_t addr, int flag, struct lwp *l)
 		struct disk_badsecinfo dbsi;
 		struct disk_badsectors *dbs;
 		size_t available;
-		caddr_t laddr;
+		void *laddr;
 
 		dbsi = *(struct disk_badsecinfo *)addr;
 		missing = wd->sc_bscount;
@@ -1556,7 +1556,7 @@ static int wddumprecalibrated = 0;
  * Dump core after a system crash.
  */
 int
-wddump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
+wddump(dev_t dev, daddr_t blkno, void *va, size_t size)
 {
 	struct wd_softc *wd;	/* disk unit to do the I/O */
 	struct disklabel *lp;   /* disk's disklabel */

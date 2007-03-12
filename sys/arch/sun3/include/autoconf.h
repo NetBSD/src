@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.24 2006/10/05 14:46:12 tsutsui Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.24.4.1 2007/03/12 05:51:09 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -82,12 +82,12 @@ extern struct sun68k_bus_space_tag mainbus_space_tag;
 int bus_scan(struct device *, struct cfdata *, const int *, void *);
 int bus_print(void *, const char *);
 int bus_peek(int, int, int);
-void * bus_mapin(int, int, int);
+void *bus_mapin(int, int, int);
 void bus_mapout(void *, int);
-void * bus_tmapin(int, int);
+void *bus_tmapin(int, int);
 void bus_tmapout(void *);
 
 /* Bus-error tolerant access to mapped address. */
-int 	peek_byte(caddr_t);
-int 	peek_word(caddr_t);
-int 	peek_long(caddr_t);
+int 	peek_byte(void *);
+int 	peek_word(void *);
+int 	peek_long(void *);

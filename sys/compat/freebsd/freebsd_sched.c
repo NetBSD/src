@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_sched.c,v 1.7.2.1 2007/02/27 16:53:33 yamt Exp $	*/
+/*	$NetBSD: freebsd_sched.c,v 1.7.2.2 2007/03/12 05:51:58 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_sched.c,v 1.7.2.1 2007/02/27 16:53:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_sched.c,v 1.7.2.2 2007/03/12 05:51:58 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -82,7 +82,7 @@ check_proc_access(struct lwp *l, pid_t pid)
 	if (pid < 0)
 		return EINVAL;
 
-	rw_enter(&proclist_lock, RW_READER);
+	mutex_enter(&proclist_lock);
 
 	p = p_find(pid, PFIND_LOCKED | PFIND_UNLOCK_FAIL);
 	if (p == NULL)
@@ -95,11 +95,11 @@ check_proc_access(struct lwp *l, pid_t pid)
 	    kauth_cred_geteuid(pc) == kauth_cred_getuid(p->p_cred) ||
 	    kauth_cred_getuid(pc) == kauth_cred_geteuid(p->p_cred) ||
 	    kauth_cred_geteuid(pc) == kauth_cred_geteuid(p->p_cred))) {
-		rw_exit(&proclist_lock);
+		mutex_exit(&proclist_lock);
 		if (kauth_authorize_generic(pc, KAUTH_GENERIC_ISSUSER, NULL) != 0)
 		    return EPERM;
 	} else
-		rw_exit(&proclist_lock);
+		mutex_exit(&proclist_lock);
 
 	return 0;
 }

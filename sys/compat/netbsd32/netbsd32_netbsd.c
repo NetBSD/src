@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.116.2.1 2007/02/27 16:53:39 yamt Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.116.2.2 2007/03/12 05:52:32 rmind Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.116.2.1 2007/02/27 16:53:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.116.2.2 2007/03/12 05:52:32 rmind Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -252,7 +252,7 @@ netbsd32_open(l, v, retval)
 		syscallarg(mode_t) mode;
 	} */ *uap = v;
 	struct sys_open_args ua;
-	caddr_t sg;
+	void *sg;
 
 	NETBSD32TOP_UAP(path, const char);
 	NETBSD32TO64_UAP(flags);
@@ -472,7 +472,7 @@ netbsd32_ptrace(l, v, retval)
 
 	NETBSD32TO64_UAP(req);
 	NETBSD32TO64_UAP(pid);
-	NETBSD32TOX64_UAP(addr, caddr_t);
+	NETBSD32TOX64_UAP(addr, void *);
 	NETBSD32TO64_UAP(data);
 #ifdef _LKM
 	return (*sysent[SYS_ptrace].sy_call)(l, &ua, retval);
@@ -553,7 +553,7 @@ netbsd32_access(l, v, retval)
 		syscallarg(int) flags;
 	} */ *uap = v;
 	struct sys_access_args ua;
-	caddr_t sg;
+	void *sg;
 
 	NETBSD32TOP_UAP(path, const char);
 	NETBSD32TO64_UAP(flags);
@@ -665,7 +665,7 @@ netbsd32_profil(l, v, retval)
 	} */ *uap = v;
 	struct sys_profil_args ua;
 
-	NETBSD32TOX64_UAP(samples, caddr_t);
+	NETBSD32TOX64_UAP(samples, void *);
 	NETBSD32TOX_UAP(size, size_t);
 	NETBSD32TOX_UAP(offset, u_long);
 	NETBSD32TO64_UAP(scale);
@@ -771,7 +771,7 @@ netbsd32_revoke(l, v, retval)
 		syscallarg(const netbsd32_charp) path;
 	} */ *uap = v;
 	struct sys_revoke_args ua;
-	caddr_t sg;
+	void *sg;
 
 	NETBSD32TOP_UAP(path, const char);
 	sg = stackgap_init(l->l_proc, 0);
@@ -810,7 +810,7 @@ netbsd32_readlink(l, v, retval)
 		syscallarg(netbsd32_size_t) count;
 	} */ *uap = v;
 	struct sys_readlink_args ua;
-	caddr_t sg;
+	void *sg;
 
 	NETBSD32TOP_UAP(path, const char);
 	NETBSD32TOP_UAP(buf, char);
@@ -949,7 +949,7 @@ netbsd32_mincore(l, v, retval)
 	} */ *uap = v;
 	struct sys_mincore_args ua;
 
-	NETBSD32TOX64_UAP(addr, caddr_t);
+	NETBSD32TOX64_UAP(addr, void *);
 	NETBSD32TOX_UAP(len, size_t);
 	NETBSD32TOP_UAP(vec, char);
 	return (sys_mincore(l, &ua, retval));
@@ -982,7 +982,7 @@ netbsd32_getgroups(l, v, retval)
 	/* Should convert gid_t to netbsd32_gid_t, but they're the same */
 	grbuf = malloc(ngrp * sizeof(*grbuf), M_TEMP, M_WAITOK);
 	kauth_cred_getgroups(pc, grbuf, ngrp);
-	error = copyout(grbuf, (caddr_t)NETBSD32PTR64(SCARG(uap, gidset)),
+	error = copyout(grbuf, (void *)NETBSD32PTR64(SCARG(uap, gidset)),
 			ngrp * sizeof(*grbuf));
 	free(grbuf, M_TEMP);
 	if (error)
@@ -1445,7 +1445,7 @@ netbsd32_quotactl(l, v, retval)
 	NETBSD32TOP_UAP(path, const char);
 	NETBSD32TO64_UAP(cmd);
 	NETBSD32TO64_UAP(uid);
-	NETBSD32TOX64_UAP(arg, caddr_t);
+	NETBSD32TOX64_UAP(arg, void *);
 	return (sys_quotactl(l, &ua, retval));
 }
 
@@ -1726,7 +1726,7 @@ netbsd32_getrlimit(l, v, retval)
 	if ((u_int)which >= RLIM_NLIMITS)
 		return (EINVAL);
 	return (copyout(&l->l_proc->p_rlimit[which],
-	    (caddr_t)NETBSD32PTR64(SCARG(uap, rlp)), sizeof(struct rlimit)));
+	    (void *)NETBSD32PTR64(SCARG(uap, rlp)), sizeof(struct rlimit)));
 }
 
 int
@@ -1743,7 +1743,7 @@ netbsd32_setrlimit(l, v, retval)
 	struct rlimit alim;
 	int error;
 
-	error = copyin((caddr_t)NETBSD32PTR64(SCARG(uap, rlp)), &alim,
+	error = copyin((void *)NETBSD32PTR64(SCARG(uap, rlp)), &alim,
 	    sizeof(struct rlimit));
 	if (error)
 		return (error);
@@ -2659,7 +2659,7 @@ netbsd32_rasctl(struct lwp *l, void *v, register_t *retval)
 	} */ *uap = v;
 	struct sys_rasctl_args ua;
 
-	NETBSD32TOX64_UAP(addr, caddr_t);
+	NETBSD32TOX64_UAP(addr, void *);
 	NETBSD32TOX_UAP(len, size_t);
 	NETBSD32TO64_UAP(op);
 	return sys_rasctl(l, &ua, retval);

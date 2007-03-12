@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_ulreg.h,v 1.8 2005/12/24 20:06:47 perry Exp $	*/
+/*	$NetBSD: grf_ulreg.h,v 1.8.26.1 2007/03/12 05:46:41 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -108,7 +108,7 @@ struct grf_ul_softc {
 };
 
 #ifdef _KERNEL
-void gsp_write(struct gspregs *gsp, u_int16_t *data, size_t size);
+void gsp_write(volatile struct gspregs *gsp, u_int16_t *data, size_t size);
 int grful_cnprobe(void);
 void grful_iteinit(struct grf_softc *gp);
 #endif

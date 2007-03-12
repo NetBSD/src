@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_gv.c,v 1.11 2005/12/11 12:19:37 christos Exp $	*/
+/*	$NetBSD: grf_gv.c,v 1.11.26.1 2007/03/12 05:51:37 rmind Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_gv.c,v 1.11 2005/12/11 12:19:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_gv.c,v 1.11.26.1 2007/03/12 05:51:37 rmind Exp $");
 
 #include "opt_compat_hpux.h"
 
@@ -96,15 +96,15 @@ __KERNEL_RCSID(0, "$NetBSD: grf_gv.c,v 1.11 2005/12/11 12:19:37 christos Exp $")
 
 #include <machine/cpu.h>
 
-int gv_init(struct grf_softc *, caddr_t);
-int gv_mode(struct grf_softc *, u_long, caddr_t);
+int gv_init(struct grf_softc *, void *);
+int gv_mode(struct grf_softc *, u_long, void *);
 
 /* Initialize hardware.
  * Must fill in the grfinfo structure in g_softc.
  * Returns 0 if hardware not present, non-zero ow.
  */
 int
-gv_init(struct grf_softc *gp, caddr_t addr)
+gv_init(struct grf_softc *gp, void *addr)
 {
 	struct grfinfo *gi = &gp->g_display;
 
@@ -152,7 +152,7 @@ gv_init(struct grf_softc *gp, caddr_t addr)
  */
 /*ARGSUSED*/
 int
-gv_mode(struct grf_softc *gp, u_long cmd, caddr_t data)
+gv_mode(struct grf_softc *gp, u_long cmd, void *data)
 {
 	int error = 0;
 

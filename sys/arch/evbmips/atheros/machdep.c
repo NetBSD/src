@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.5 2006/09/26 06:37:32 gdamore Exp $ */
+/* $NetBSD: machdep.c,v 1.5.4.1 2007/03/12 05:47:38 rmind Exp $ */
 
 /*
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -147,7 +147,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.5 2006/09/26 06:37:32 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.5.4.1 2007/03/12 05:47:38 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -221,17 +221,17 @@ cal_timer(void)
 void
 mach_init(void)
 {
-	caddr_t kernend;
+	void *kernend;
 	u_long first, last;
-	caddr_t				v;
+	void *				v;
 	uint32_t			memsize;
 
 	extern char edata[], end[];	/* XXX */
 
 	/* clear the BSS segment */
-	kernend = (caddr_t)mips_round_page(end);
+	kernend = (void *)mips_round_page(end);
 
-	memset(edata, 0, kernend - (caddr_t)edata);
+	memset(edata, 0, (char *)kernend - edata);
 
 	/* setup early console */
 	ar531x_early_console();
@@ -311,9 +311,9 @@ mach_init(void)
 	/*
 	 * Init mapping for u page(s) for proc0.
 	 */
-	v = (caddr_t) uvm_pageboot_alloc(USPACE);
+	v = (void *) uvm_pageboot_alloc(USPACE);
 	lwp0.l_addr = proc0paddr = (struct user *)v;
-	lwp0.l_md.md_regs = (struct frame *)(v + USPACE) - 1;
+	lwp0.l_md.md_regs = (struct frame *)((char *)v + USPACE) - 1;
 	curpcb = &lwp0.l_addr->u_pcb;
 	curpcb->pcb_context[11] = MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
 

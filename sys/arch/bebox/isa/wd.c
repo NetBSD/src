@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.8 2006/05/14 21:55:10 elad Exp $	*/
+/*	$NetBSD: wd.c,v 1.8.8.1 2007/03/12 05:47:24 rmind Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.8 2006/05/14 21:55:10 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.8.8.1 2007/03/12 05:47:24 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1369,7 +1369,7 @@ int
 wdioctl(dev, cmd, addr, flag, p)
 	dev_t dev;
 	u_long cmd;
-	caddr_t addr;
+	void *addr;
 	int flag;
 	struct proc *p;
 {
@@ -1522,7 +1522,7 @@ int
 wddump(dev, blkno, va, size)
         dev_t dev;
         daddr_t blkno;
-        caddr_t va;
+        void *va;
         size_t size;
 {
 	struct wd_softc *wd;	/* disk unit to do the I/O */
@@ -1649,7 +1649,7 @@ int
 wddump(dev, blkno, va, size)
         dev_t dev;
         daddr_t blkno;
-        caddr_t va;
+        void *va;
         size_t size;
 {
 

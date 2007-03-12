@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.75 2006/10/01 18:56:21 elad Exp $ */
+/*	$NetBSD: ite.c,v 1.75.4.1 2007/03/12 05:46:42 rmind Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.75 2006/10/01 18:56:21 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.75.4.1 2007/03/12 05:46:42 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -557,7 +557,7 @@ itetty(dev_t dev)
 }
 
 int
-iteioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
+iteioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 {
 	struct iterepeat *irp;
 	struct ite_softc *ip;
@@ -664,7 +664,7 @@ itestart(struct tty *tp)
 		if (rbp->c_cc <= tp->t_lowat) {
 			if (tp->t_state & TS_ASLEEP) {
 				tp->t_state &= ~TS_ASLEEP;
-				wakeup((caddr_t) rbp);
+				wakeup((void *) rbp);
 			}
 			selwakeup(&tp->t_wsel);
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: awacs.c,v 1.25 2007/01/17 23:34:29 macallan Exp $	*/
+/*	$NetBSD: awacs.c,v 1.25.2.1 2007/03/12 05:49:05 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awacs.c,v 1.25 2007/01/17 23:34:29 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awacs.c,v 1.25.2.1 2007/03/12 05:49:05 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -655,7 +655,7 @@ awacs_set_params(void *h, int setmode, int usemode,
 		}
 		awacs_write_reg(sc, AWACS_BYTE_SWAP, 0);
 		i = auconv_set_converter(sc->sc_formats, AWACS_NFORMATS,
-					 mode, p, TRUE, fil);
+					 mode, p, true, fil);
 		if (i < 0)
 			return EINVAL;
 		if (i == AWACS_FORMATS_LE)

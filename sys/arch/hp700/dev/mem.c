@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.12 2005/12/11 12:17:24 christos Exp $	*/
+/*	$NetBSD: mem.c,v 1.12.26.1 2007/03/12 05:47:59 rmind Exp $	*/
 
 /*	$OpenBSD: mem.c,v 1.5 2001/05/05 20:56:36 art Exp $	*/
 
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.12 2005/12/11 12:17:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.12.26.1 2007/03/12 05:47:59 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -167,7 +167,7 @@ const struct cdevsw mem_cdevsw = {
 	nostop, notty, nopoll, mmmmap,
 };
 
-static caddr_t zeropage;
+static void *zeropage;
 
 /* A lock for the vmmap. */
 static struct lock vmmap_lock;
@@ -333,7 +333,7 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 			pmap_update(pmap_kernel());
 			o = v & PGOFSET;
 			c = min(uio->uio_resid, (int)(PAGE_SIZE - o));
-			error = uiomove((caddr_t)vmmap + o, c, uio);
+			error = uiomove((char *)vmmap + o, c, uio);
 			pmap_remove(pmap_kernel(), (vaddr_t)vmmap,
 			    (vaddr_t)vmmap + PAGE_SIZE);
 			pmap_update(pmap_kernel());
@@ -347,12 +347,12 @@ use_kmem:
 			o = v & PGOFSET;
 			c = min(uio->uio_resid, (int)(PAGE_SIZE - o));
 			rw = (uio->uio_rw == UIO_READ) ? B_READ : B_WRITE;
-			if (!uvm_kernacc((caddr_t)v, c, rw)) {
+			if (!uvm_kernacc((void *)v, c, rw)) {
 				error = EFAULT;
 				/* this will break us out of the loop */
 				continue;
 			}
-			error = uiomove((caddr_t)v, c, uio);
+			error = uiomove((void *)v, c, uio);
 			break;
 
 		case DEV_NULL:				/*  /dev/null  */
@@ -371,7 +371,7 @@ use_kmem:
 			 * of memory for use with /dev/zero.
 			 */
 			if (zeropage == NULL) {
-				zeropage = (caddr_t)
+				zeropage = (void *)
 				    malloc(PAGE_SIZE, M_TEMP, M_WAITOK);
 				memset(zeropage, 0, PAGE_SIZE);
 			}

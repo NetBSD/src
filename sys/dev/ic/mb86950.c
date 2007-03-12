@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86950.c,v 1.8 2006/11/16 01:32:51 christos Exp $	*/
+/*	$NetBSD: mb86950.c,v 1.8.4.1 2007/03/12 05:53:37 rmind Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -67,7 +67,7 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb86950.c,v 1.8 2006/11/16 01:32:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb86950.c,v 1.8.4.1 2007/03/12 05:53:37 rmind Exp $");
 
 /*
  * Device driver for Fujitsu mb86950 based Ethernet cards.
@@ -167,7 +167,7 @@ __KERNEL_RCSID(0, "$NetBSD: mb86950.c,v 1.8 2006/11/16 01:32:51 christos Exp $")
 #endif /* __BUS_SPACE_HAS_STREAM_METHODS */
 
 /* Standard driver entry points.  These can be static. */
-int		mb86950_ioctl	__P((struct ifnet *, u_long, caddr_t));
+int		mb86950_ioctl	__P((struct ifnet *, u_long, void *));
 void	mb86950_init	__P((struct mb86950_softc *));
 void	mb86950_start	__P((struct ifnet *));
 void	mb86950_watchdog __P((struct ifnet *));
@@ -447,7 +447,7 @@ int
 mb86950_ioctl(ifp, cmd, data)
 	struct ifnet *ifp;
 	u_long cmd;
-	caddr_t data;
+	void *data;
 {
 	struct mb86950_softc *sc = ifp->if_softc;
 	struct ifaddr *ifa = (struct ifaddr *)data;

@@ -1,4 +1,4 @@
-/*	$NetBSD: iopvar.h,v 1.17 2007/02/15 15:40:52 ad Exp $	*/
+/*	$NetBSD: iopvar.h,v 1.17.2.1 2007/03/12 05:53:24 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2007 The NetBSD Foundation, Inc.
@@ -124,7 +124,7 @@ struct iop_softc {
 	bus_dmamap_t	sc_rep_dmamap;	/* Reply frames DMA map */
 	int		sc_rep_size;	/* Reply frames size */
 	bus_addr_t	sc_rep_phys;	/* Reply frames PA */
-	caddr_t		sc_rep;		/* Reply frames VA */
+	void *		sc_rep;		/* Reply frames VA */
 
 	int		sc_maxib;	/* Max inbound (-> IOP) queue depth */
 	int		sc_maxob;	/* Max outbound (<- IOP) queue depth */
@@ -147,7 +147,7 @@ struct iop_softc {
 	struct iop_initiator sc_eventii;/* IOP event handler */
 	bus_dmamap_t	sc_scr_dmamap;  /* Scratch DMA map */
 	bus_dma_segment_t sc_scr_seg[1];/* Scratch DMA segment */
-	caddr_t		sc_scr;		/* Scratch memory VA */
+	void *		sc_scr;		/* Scratch memory VA */
 
 	bus_space_tag_t	sc_bus_memt;	/* Parent bus memory tag */
 	bus_space_tag_t	sc_bus_iot;	/* Parent but I/O tag */

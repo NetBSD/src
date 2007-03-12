@@ -1,4 +1,4 @@
-/*	$NetBSD: dmac.c,v 1.3 2005/12/24 20:07:32 perry Exp $	*/
+/*	$NetBSD: dmac.c,v 1.3.26.1 2007/03/12 05:50:15 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dmac.c,v 1.3 2005/12/24 20:07:32 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dmac.c,v 1.3.26.1 2007/03/12 05:50:15 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -70,7 +70,7 @@ struct dmac_softc {
 #ifdef DMAC_PMAP_CHANNEL
 	bus_dmamap_t sc_zero_map;
 	bus_dma_segment_t sc_zero_seg;
-	caddr_t sc_zero_kva;
+	void *sc_zero_kva;
 #endif
 };
 

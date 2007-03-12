@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.83 2006/05/13 08:56:08 skrll Exp $	*/
+/*	$NetBSD: locore.s,v 1.83.14.1 2007/03/12 05:49:47 rmind Exp $	*/
 
 /*
  * Copyright (c) 1993 Philip A. Nelson.
@@ -176,7 +176,7 @@ GLOBAL(esigcode)
  */
 
 /*
- * int copyout(caddr_t from, caddr_t to, size_t len);
+ * int copyout(void *from, void *to, size_t len);
  *
  * Copy len bytes into the user's address space.
  */
@@ -232,7 +232,7 @@ KENTRY(copyout, 12)
 	ret	ARGS
 
 /*
- * int copyin(caddr_t from, caddr_t to, size_t len);
+ * int copyin(void *from, void *to, size_t len);
  *
  * Copy len bytes from the user's address space.
  */
@@ -279,7 +279,7 @@ ASLOCAL(copy_fault)
 	ret	ARGS
 
 /*
- * int copyoutstr(caddr_t from, caddr_t to, size_t maxlen, size_t *lencopied);
+ * int copyoutstr(void *from, void *to, size_t maxlen, size_t *lencopied);
  *
  * Copy a NUL-terminated string, at most maxlen characters long, into the
  * user's address space.  Return the number of characters copied (including
@@ -309,7 +309,7 @@ KENTRY(copyoutstr, 16)
 	br	_ASM_LABEL(copystr_return)
 
 /*
- * int copyinstr(caddr_t from, caddr_t to, size_t maxlen, size_t *lencopied);
+ * int copyinstr(void *from, void *to, size_t maxlen, size_t *lencopied);
  *
  * Copy a NUL-terminated string, at most maxlen characters long, from the
  * user's address space.  Return the number of characters copied (including
@@ -357,7 +357,7 @@ ASLOCAL(copystr_return)
 	ret	ARGS
 
 /*
- * int copystr(caddr_t from, caddr_t to, size_t maxlen, size_t *lencopied);
+ * int copystr(void *from, void *to, size_t maxlen, size_t *lencopied);
  *
  * Copy a NUL-terminated string, at most maxlen characters long.  Return the
  * number of characters copied (including the NUL) in *lencopied.  If the
@@ -498,7 +498,7 @@ KENTRY(kcopy, 12)
 	ret	ARGS
 
 /*
- * fuword(caddr_t uaddr);
+ * fuword(void *uaddr);
  * Fetch an int from the user's address space.
  */
 KENTRY(fuword, 4)
@@ -516,7 +516,7 @@ KENTRY(fuword, 4)
 	ret	ARGS
 
 /*
- * fuswintr(caddr_t uaddr);
+ * fuswintr(void *uaddr);
  * Fetch a short from the user's address space.  Can be called during an
  * interrupt.
  */
@@ -531,7 +531,7 @@ KENTRY(fuswintr, 4)
 	ret	ARGS
 
 /*
- * fubyte(caddr_t uaddr);
+ * fubyte(void *uaddr);
  * Fetch a byte from the user's address space.
  */
 KENTRY(fubyte, 4)
@@ -545,7 +545,7 @@ KENTRY(fubyte, 4)
 	ret	ARGS
 
 /*
- * suword(caddr_t uaddr, int x);
+ * suword(void *uaddr, int x);
  * Store an int in the user's address space.
  */
 KENTRY(suword, 8)
@@ -558,7 +558,7 @@ KENTRY(suword, 8)
 	ret	ARGS
 
 /*
- * suswintr(caddr_t uaddr, short x);
+ * suswintr(void *uaddr, short x);
  * Store a short in the user's address space.  Can be called during an
  * interrupt.
  */
@@ -572,7 +572,7 @@ KENTRY(suswintr, 8)
 	ret	ARGS
 
 /*
- * subyte(caddr_t uaddr, char x);
+ * subyte(void *uaddr, char x);
  * Store a byte in the user's address space.
  */
 KENTRY(subyte, 8)

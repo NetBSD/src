@@ -1,4 +1,4 @@
-/*	$NetBSD: spkr.c,v 1.16.14.1 2007/02/27 16:49:52 yamt Exp $	*/
+/*	$NetBSD: spkr.c,v 1.16.14.2 2007/03/12 05:47:23 rmind Exp $	*/
 
 /*
  * spkr.c -- device driver for console speaker on 80386
@@ -10,7 +10,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spkr.c,v 1.16.14.1 2007/02/27 16:49:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spkr.c,v 1.16.14.2 2007/03/12 05:47:23 rmind Exp $");
 
 #include "spkr.h"
 #if NSPKR > 0
@@ -517,7 +517,7 @@ int spkrclose(dev, flags, mode, p)
 int spkrioctl(dev, cmd, data, flag, p)
     dev_t dev;
     u_long cmd;
-    caddr_t data;
+    void *data;
     int	flag;
     struct proc *p;
 {
@@ -538,7 +538,7 @@ int spkrioctl(dev, cmd, data, flag, p)
     }
     else if (cmd == SPKRTUNE)
     {
-	tone_t  *tp = (tone_t *)(*(caddr_t *)data);
+	tone_t  *tp = (tone_t *)(*(void **)data);
 	tone_t ttp;
 	int error;
 

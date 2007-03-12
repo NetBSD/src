@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.49 2005/12/11 12:19:27 christos Exp $	*/
+/*	$NetBSD: mem.c,v 1.49.26.1 2007/03/12 05:51:10 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.49 2005/12/11 12:19:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.49.26.1 2007/03/12 05:51:10 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,8 +111,8 @@ __KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.49 2005/12/11 12:19:27 christos Exp $");
 #define DEV_EEPROM	11 	/* minor device 11 is eeprom */
 #define DEV_LEDS	13 	/* minor device 13 is leds */
 
-static int promacc(caddr_t, int, int);
-static caddr_t devzeropage;
+static int promacc(void *, int, int);
+static void *devzeropage;
 
 dev_type_read(mmrw);
 dev_type_ioctl(mmioctl);
@@ -140,7 +140,7 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 		/* lock against other uses of shared vmmap */
 		while (physlock > 0) {
 			physlock++;
-			error = tsleep((caddr_t)&physlock, PZERO | PCATCH,
+			error = tsleep((void *)&physlock, PZERO | PCATCH,
 			    "mmrw", 0);
 			if (error)
 				return (error);
@@ -189,7 +189,7 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 			pmap_update(pmap_kernel());
 			o = v & PGOFSET;
 			c = min(uio->uio_resid, (int)(PAGE_SIZE - o));
-			error = uiomove((caddr_t)vmmap + o, c, uio);
+			error = uiomove((char *)vmmap + o, c, uio);
 			pmap_remove(pmap_kernel(), (vaddr_t)vmmap,
 			    (vaddr_t)vmmap + PAGE_SIZE);
 			pmap_update(pmap_kernel());
@@ -211,14 +211,14 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 			o = v & PGOFSET;
 			c = min(uio->uio_resid, (int)(PAGE_SIZE - o));
 			rw = (uio->uio_rw == UIO_READ) ? B_READ : B_WRITE;
-			if (!(uvm_kernacc((caddr_t)v, c, rw) ||
-			      promacc((caddr_t)v, c, rw)))
+			if (!(uvm_kernacc((void *)v, c, rw) ||
+			      promacc((void *)v, c, rw)))
 			{
 				error = EFAULT;
 				/* Note: case 0 can get here, so must unlock! */
 				goto unlock;
 			}
-			error = uiomove((caddr_t)v, c, uio);
+			error = uiomove((void *)v, c, uio);
 			break;
 
 		case DEV_NULL:
@@ -242,7 +242,7 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 			 * of memory for use with /dev/zero.
 			 */
 			if (devzeropage == NULL) {
-				devzeropage = (caddr_t)
+				devzeropage = (void *)
 				    malloc(PAGE_SIZE, M_TEMP, M_WAITOK);
 				memset(devzeropage, 0, PAGE_SIZE);
 			}
@@ -268,7 +268,7 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 unlock:
 	if (minor(dev) == DEV_MEM) {
 		if (physlock > 1)
-			wakeup((caddr_t)&physlock);
+			wakeup((void *)&physlock);
 		physlock = 0;
 	}
 	return (error);
@@ -327,7 +327,7 @@ mmmmap(dev_t dev, off_t off, int prot)
  * Return non-zero if access at VA is allowed.
  */
 static int 
-promacc(caddr_t va, int len, int rw)
+promacc(void *va, int len, int rw)
 {
 	vaddr_t sva, eva;
 

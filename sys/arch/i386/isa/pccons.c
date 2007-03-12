@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.182 2006/11/16 01:32:38 christos Exp $	*/
+/*	$NetBSD: pccons.c,v 1.182.4.1 2007/03/12 05:48:38 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.182 2006/11/16 01:32:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.182.4.1 2007/03/12 05:48:38 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_xserver.h"
@@ -961,7 +961,7 @@ pcintr(void *arg)
 #endif
 
 int
-pcioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+pcioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct pc_softc *sc = pc_cd.cd_devs[PCUNIT(dev)];
 	struct tty *tp = sc->sc_tty;

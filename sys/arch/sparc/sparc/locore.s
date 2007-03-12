@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.228.2.1 2007/02/27 16:53:11 yamt Exp $	*/
+/*	$NetBSD: locore.s,v 1.228.2.2 2007/03/12 05:50:43 rmind Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -4432,12 +4432,14 @@ Lgandul:	nop
 	b,a	2f
 
 1:
+#if 0 /* currently there are no NOP_ON_4_4C_* */
 	MUNGE(NOP_ON_4_4C_1)
+#endif
 
 2:
 
 #undef MUNGE
-#endif
+#endif /* (SUN4 || SUN4C) && (SUN4M || SUN4D) */
 
 	/*
 	 * Step 4: change the trap base register, now that our trap handlers
@@ -5594,7 +5596,7 @@ ENTRY(subyte)
 /* probeget and probeset are meant to be used during autoconfiguration */
 
 /*
- * probeget(addr, size) caddr_t addr; int size;
+ * probeget(addr, size) void *addr; int size;
  *
  * Read or write a (byte,word,longword) from the given address.
  * Like {fu,su}{byte,halfword,word} but our caller is supposed
@@ -5621,7 +5623,7 @@ ENTRY(probeget)
 	 st	%g0, [%o2 + PCB_ONFAULT]
 
 /*
- * probeset(addr, size, val) caddr_t addr; int size, val;
+ * probeset(addr, size, val) void *addr; int size, val;
  *
  * As above, but we return 0 on success.
  */
@@ -5645,7 +5647,7 @@ ENTRY(probeset)
 	 st	%g0, [%o3 + PCB_ONFAULT]
 
 /*
- * int xldcontrolb(caddr_t, pcb)
+ * int xldcontrolb(void *, pcb)
  *		    %o0     %o1
  *
  * read a byte from the specified address in ASI_CONTROL space.
@@ -5661,7 +5663,7 @@ ENTRY(xldcontrolb)
 	 st	%g0, [%o2 + PCB_ONFAULT]
 
 /*
- * int fkbyte(caddr_t, pcb)
+ * int fkbyte(void *, pcb)
  *	      %o0      %o1
  *
  * Just like fubyte(), but for kernel space.
@@ -6533,10 +6535,6 @@ _ENTRY(_C_LABEL(hypersparc_pure_vcache_flush))
 
 #endif /* SUN4M */
 
-#if (defined(SUN4C) || defined(SUN4)) && defined(SUN4M)
-NOP_ON_4_4C_1:
-	 add	%g3, 4, %g3
-#endif
 
 /*
  * delay function

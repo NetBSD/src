@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.49 2007/02/16 02:53:46 ad Exp $	*/
+/*	$NetBSD: cpu.h,v 1.49.2.1 2007/03/12 05:47:56 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -185,7 +185,7 @@ extern int astpending;		/* need to trap before returning to user mode */
  */
 
 #ifdef _KERNEL
-extern	char *intiobase, *intiolimit;
+extern	char *intiobase, *intiolimit, *extiobase;
 extern	void (*vectab[])(void);
 
 struct frame;
@@ -195,7 +195,7 @@ struct pcb;
 /* locore.s functions */
 void	m68881_save(struct fpframe *);
 void	m68881_restore(struct fpframe *);
-int	suline(caddr_t, caddr_t);
+int	suline(void *, void *);
 void	savectx(struct pcb *);
 void	switch_exit(struct lwp *);
 void	switch_lwp_exit(struct lwp *);
@@ -210,16 +210,16 @@ void	ecacheoff(void);
 void	hp300_calibrate_delay(void);
 
 /* machdep.c functions */
-int	badaddr(caddr_t);
-int	badbaddr(caddr_t);
+int	badaddr(void *);
+int	badbaddr(void *);
 
 /* sys_machdep.c functions */
 int	cachectl1(unsigned long, vaddr_t, size_t, struct proc *);
 
 /* vm_machdep.c functions */
-void	physaccess(caddr_t, caddr_t, int, int);
-void	physunaccess(caddr_t, int);
-int	kvtop(caddr_t);
+void	physaccess(void *, void *, int, int);
+void	physunaccess(void *, int);
+int	kvtop(void *);
 
 /* what is this supposed to do? i.e. how is it different than startrtclock? */
 #define	enablertclock()

@@ -1,4 +1,4 @@
-/*	$NetBSD: nmi_mainbus.c,v 1.7 2005/12/11 12:19:36 christos Exp $	   */
+/*	$NetBSD: nmi_mainbus.c,v 1.7.26.1 2007/03/12 05:51:19 rmind Exp $	   */
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nmi_mainbus.c,v 1.7 2005/12/11 12:19:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nmi_mainbus.c,v 1.7.26.1 2007/03/12 05:51:19 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -110,7 +110,7 @@ nmi_mainbus_attach(struct device *parent, struct device *self, void *aux)
 		if (r)
 			vax_unmap_physmem((vaddr_t)r, 1);
 		r = (int *)vax_map_physmem(NBIA_REGS(nbia), 1);
-		if (badaddr((caddr_t)r, 4))
+		if (badaddr((void *)r, 4))
 			continue;
 		na.slot = 2 * nbia;
 		if (r[1] & 2)

@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_proc.h,v 1.5 2005/12/11 12:19:56 christos Exp $ */
+/*	$NetBSD: darwin_proc.h,v 1.5.26.1 2007/03/12 05:51:56 rmind Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -75,15 +75,15 @@ struct darwin_pcred {
 
 struct darwin_vmspace {
 	int     vm_refcnt;
-	caddr_t vm_shm;
+	void *vm_shm;
 	segsz_t vm_rssize;
 	segsz_t vm_swrss;
 	segsz_t vm_tsize;
 	segsz_t vm_dsize;
 	segsz_t vm_ssize;
-	caddr_t vm_taddr;
-	caddr_t vm_daddr;
-	caddr_t vm_maxsaddr;
+	void *vm_taddr;
+	void *vm_daddr;
+	void *vm_maxsaddr;
 };
 
 struct darwin_extern_proc {
@@ -101,7 +101,7 @@ struct darwin_extern_proc {
 	pid_t	p_pid;
 	pid_t	p_oppid;
 	int	p_dupfd;
-	caddr_t user_stack;
+	void *user_stack;
 	void	*exit_thread;
 	int	p_debugger;
 	mach_boolean_t	sigwait;

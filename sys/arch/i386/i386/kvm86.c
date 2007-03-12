@@ -1,4 +1,4 @@
-/* $NetBSD: kvm86.c,v 1.12 2007/02/15 15:40:50 ad Exp $ */
+/* $NetBSD: kvm86.c,v 1.12.2.1 2007/03/12 05:48:22 rmind Exp $ */
 
 /*
  * Copyright (c) 2002
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kvm86.c,v 1.12 2007/02/15 15:40:50 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kvm86.c,v 1.12.2.1 2007/03/12 05:48:22 rmind Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -110,7 +110,7 @@ kvm86_init()
 	for (i = 0; i < sizeof(vmd->iomap) / 4; i++)
 		vmd->iomap[i] = 0;
 	pcb->pcb_tss.tss_ioopt =
-		((caddr_t)vmd->iomap - (caddr_t)&pcb->pcb_tss) << 16;
+		((char *)vmd->iomap - (char *)&pcb->pcb_tss) << 16;
 
 	/* setup TSS descriptor (including our iomap) */
 	setsegment(&vmd->sd, &pcb->pcb_tss,

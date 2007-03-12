@@ -1,4 +1,4 @@
-/* $NetBSD: atppc_isa.c,v 1.9 2006/03/29 04:16:49 thorpej Exp $ */
+/* $NetBSD: atppc_isa.c,v 1.9.14.1 2007/03/12 05:54:47 rmind Exp $ */
 
 /*-
  * Copyright (c) 2001 Alcove - Nicolas Souchu
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atppc_isa.c,v 1.9 2006/03/29 04:16:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atppc_isa.c,v 1.9.14.1 2007/03/12 05:54:47 rmind Exp $");
 
 #include "opt_atppc.h"
 
@@ -83,9 +83,9 @@ static int atppc_isa_dma_start(struct atppc_softc *, void *, u_int,
 	u_int8_t);
 static int atppc_isa_dma_finish(struct atppc_softc *);
 static int atppc_isa_dma_abort(struct atppc_softc *);
-static int atppc_isa_dma_malloc(struct device *, caddr_t *, bus_addr_t *,
+static int atppc_isa_dma_malloc(struct device *, void **, bus_addr_t *,
 	bus_size_t);
-static void atppc_isa_dma_free(struct device *, caddr_t *, bus_addr_t *,
+static void atppc_isa_dma_free(struct device *, void **, bus_addr_t *,
 	bus_size_t);
 
 CFATTACH_DECL(atppc_isa, sizeof(struct atppc_isa_softc), atppc_isa_probe,
@@ -226,7 +226,7 @@ atppc_isa_dma_abort(struct atppc_softc *lsc)
 
 /* Allocate memory for DMA over ISA bus */
 static int
-atppc_isa_dma_malloc(struct device *dev, caddr_t *buf, bus_addr_t *bus_addr,
+atppc_isa_dma_malloc(struct device *dev, void **buf, bus_addr_t *bus_addr,
 	bus_size_t size)
 {
 	struct atppc_isa_softc *sc = (struct atppc_isa_softc *)dev;
@@ -236,7 +236,7 @@ atppc_isa_dma_malloc(struct device *dev, caddr_t *buf, bus_addr_t *bus_addr,
 
 /* Free memory allocated by atppc_isa_dma_malloc() */
 static void
-atppc_isa_dma_free(struct device *dev, caddr_t *buf, bus_addr_t *bus_addr,
+atppc_isa_dma_free(struct device *dev, void **buf, bus_addr_t *bus_addr,
 	bus_size_t size)
 {
 	struct atppc_isa_softc *sc = (struct atppc_isa_softc *)dev;

@@ -1,4 +1,4 @@
-/*	$NetBSD: grfioctl.h,v 1.12 2005/12/11 12:18:03 christos Exp $	*/
+/*	$NetBSD: grfioctl.h,v 1.12.26.1 2007/03/12 05:48:58 rmind Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -82,7 +82,7 @@
 struct grfmode {
 	u_int8_t	mode_id;	/* Identifier for mode              */
 	u_int8_t	pad0;
-	caddr_t		fbbase;		/* Base of page of frame buffer     */
+	void *		fbbase;		/* Base of page of frame buffer     */
 	u_int32_t	fbsize;		/* Size of frame buffer             */
 	u_int16_t	fboff;		/* Offset of frame buffer from base */
 	u_int16_t	rowbytes;	/* Screen rowbytes                  */
@@ -125,9 +125,9 @@ struct grfmodes {
  */
 struct	grfinfo {
 	int	gd_id;			/* HPUX identifier */
-	caddr_t	gd_regaddr;		/* control registers physaddr */
+	void *	gd_regaddr;		/* control registers physaddr */
 	int	gd_regsize;		/* control registers size */
-	caddr_t	gd_fbaddr;		/* frame buffer physaddr */
+	void *	gd_fbaddr;		/* frame buffer physaddr */
 	int	gd_fbsize;		/* frame buffer size */
 	short	gd_colors;		/* number of colors */
 	short	gd_planes;		/* number of planes */

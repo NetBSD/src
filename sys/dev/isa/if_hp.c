@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hp.c,v 1.40 2006/09/07 02:40:32 dogcow Exp $	*/
+/*	$NetBSD: if_hp.c,v 1.40.8.1 2007/03/12 05:54:49 rmind Exp $	*/
 
 /* XXX THIS DRIVER IS BROKEN.  IT WILL NOT EVEN COMPILE. */
 
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_hp.c,v 1.40 2006/09/07 02:40:32 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_hp.c,v 1.40.8.1 2007/03/12 05:54:49 rmind Exp $");
 
 #include "hp.h"
 #if NHP > 0
@@ -162,7 +162,7 @@ struct hp_softc {
 	short   ns_mode;	/* word/byte mode */
 	short   ns_rcr;
 #if NBPFILTER > 0
-	caddr_t ns_bpf;
+	void *ns_bpf;
 #endif
 	u_int8_t ns_addrp[ETHER_ADDR_LEN]; /* hardware Ethernet address */
 
@@ -246,7 +246,7 @@ hpprobe(dvp)
  */
 hpfetch(ns, up, ad, len)
 	struct hp_softc *ns;
-	caddr_t up;
+	void *up;
 {
 	u_char  cmd;
 	int	hpc = ns->ns_port;
@@ -287,10 +287,10 @@ hpfetch(ns, up, ad, len)
 
 #ifdef HP_32BIT
 	if (ns->ns_mode & DSDC_WTS)
-		len = (caddr_t) insd(hpc + hp_data, up, len >> 2) - up;
+		len = (void *) insd(hpc + hp_data, up, len >> 2) - up;
 	else
 #endif
-		len = (caddr_t) insw(hpc + hp_data, up, len >> 1) - up;
+		len = (void *) insw(hpc + hp_data, up, len >> 1) - up;
 
 #ifdef HP_DEBUG
 	printf("hpfetch: done len=%d\n", len);
@@ -308,7 +308,7 @@ hpfetch(ns, up, ad, len)
  */
 hpput(ns, up, ad, len)
 	struct hp_softc *ns;
-	caddr_t up;
+	void *up;
 {
 	u_char  cmd;
 	int	hpc = ns->ns_port;
@@ -361,10 +361,10 @@ hpput(ns, up, ad, len)
 
 #ifdef HP_32BIT
 	if (ns->ns_mode & DSDC_WTS)
-		len = (caddr_t) outsd(hpc + hp_data, up, len >> 2) - up;
+		len = (void *) outsd(hpc + hp_data, up, len >> 2) - up;
 	else
 #endif
-		len = (caddr_t) outsw(hpc + hp_data, up, len >> 1) - up;
+		len = (void *) outsw(hpc + hp_data, up, len >> 1) - up;
 
 #ifdef HP_DEBUG
 	printf("hpput: done len=%d\n", len);
@@ -594,14 +594,14 @@ hpstart(ifp)
 	for (m0 = m; m != 0;) {
 		if (m->m_len & 1 && t > m->m_len) {
 			m->m_len -= 1;
-			hpput(ns, mtod(m, caddr_t), buffer, m->m_len);
+			hpput(ns, mtod(m, void *), buffer, m->m_len);
 			t -= m->m_len;
 			buffer += m->m_len;
 			m->m_data += m->m_len;
 			m->m_len = 1;
 			m = m_pullup(m, 2);
 		} else {
-			hpput(ns, mtod(m, caddr_t), buffer, m->m_len);
+			hpput(ns, mtod(m, void *), buffer, m->m_len);
 			t -= m->m_len;
 			buffer += m->m_len;
 			MFREE(m, m0);
@@ -695,7 +695,7 @@ loop:
 #endif
 
 			/* get length */
-			hpfetch(ns, (caddr_t) & ns->ns_ph, addr, sizeof ns->ns_ph);
+			hpfetch(ns, (void *) & ns->ns_ph, addr, sizeof ns->ns_ph);
 			addr += sizeof ns->ns_ph;
 
 #ifdef HP_DEBUG
@@ -711,7 +711,7 @@ loop:
 				/* Get packet header */
 				if (len > 14)
 					len = 14;
-				hpfetch(ns, (caddr_t) (ns->ns_pb), addr, len);
+				hpfetch(ns, (void *) (ns->ns_pb), addr, len);
 
 				/* move boundary up */
 				bnry = ns->ns_ph.pr_nxtpg;
@@ -755,7 +755,7 @@ loop:
 				while (1);
 			}
 			/* read packet */
-			hpfetch(ns, (caddr_t) (ns->ns_pb), addr, len);
+			hpfetch(ns, (void *) (ns->ns_pb), addr, len);
 
 			/* move boundary up */
 			bnry = ns->ns_ph.pr_nxtpg;
@@ -774,7 +774,7 @@ loop:
 			len -= sizeof(struct ether_header) + sizeof(long);
 
 			/* process packet */
-			hpread(ns, (caddr_t) (ns->ns_pb), len);
+			hpread(ns, (void *) (ns->ns_pb), len);
 		}
 	}
 	/* Transmit error */
@@ -840,7 +840,7 @@ hpread(ns, buf, len)
 	 */
 	eh = (struct ether_header *) buf;
 	etype = ntohs((u_short) eh->ether_type);
-#define	hpdataaddr(eh, off, type)	((type)(((caddr_t)((eh)+1)+(off))))
+#define	hpdataaddr(eh, off, type)	((type)(((void *)((eh)+1)+(off))))
 	if (etype >= ETHERTYPE_TRAIL &&
 	    etype < ETHERTYPE_TRAIL + ETHERTYPE_NTRAILER) {
 		off = (etype - ETHERTYPE_TRAIL) * 512;
@@ -896,13 +896,13 @@ hpread(ns, buf, len)
  */
 struct mbuf *
 hpget(buf, totlen, off0, ifp)
-	caddr_t buf;
+	void *buf;
 	int     totlen, off0;
 	struct ifnet *ifp;
 {
 	struct mbuf *top, **mp, *m, *p;
 	int     off = off0, len;
-	caddr_t cp = buf;
+	void *cp = buf;
 	char   *epkt;
 
 	buf += sizeof(struct ether_header);
@@ -950,7 +950,7 @@ hpget(buf, totlen, off0, ifp)
 			} else
 				len = m->m_len;
 		}
-		memcpy(mtod(m, caddr_t), cp, (unsigned) len);
+		memcpy(mtod(m, void *), cp, (unsigned) len);
 		cp += len;
 		*mp = m;
 		mp = &m->m_next;
@@ -966,7 +966,7 @@ hpget(buf, totlen, off0, ifp)
 hpioctl(ifp, cmd, data)
 	struct ifnet *ifp;
 	u_long	cmd;
-	caddr_t data;
+	void *data;
 {
 	struct ifaddr *ifa = (struct ifaddr *) data;
 	struct hp_softc *ns = &hp_softc[ifp->if_unit];
@@ -1012,7 +1012,7 @@ hpioctl(ifp, cmd, data)
 
 #ifdef notdef
 	case SIOCGHWADDR:
-		memcpy((caddr_t) & ifr->ifr_data, (caddr_t) ns->ns_addrp,
+		memcpy((void *) & ifr->ifr_data, (void *) ns->ns_addrp,
 		    sizeof(ns->ns_addrp));
 		break;
 #endif

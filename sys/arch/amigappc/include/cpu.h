@@ -1,4 +1,4 @@
-/*      $NetBSD: cpu.h,v 1.13 2007/02/16 02:53:44 ad Exp $ */
+/*      $NetBSD: cpu.h,v 1.13.2.1 2007/03/12 05:46:47 rmind Exp $ */
 
 /*
  * Copyright (C) 1995-1997 Wolfgang Solfrank.
@@ -46,7 +46,7 @@
 #ifdef _KERNEL
 
 u_long	clkread	__P((void));
-void	physaccess	__P((caddr_t, caddr_t, int, int));
+void	physaccess	__P((void *, void *, int, int));
 
 #endif /* _KERNEL */
 

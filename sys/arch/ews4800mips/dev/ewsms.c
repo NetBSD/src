@@ -1,4 +1,4 @@
-/*	$NetBSD: ewsms.c,v 1.2.4.1 2007/02/27 16:50:18 yamt Exp $	*/
+/*	$NetBSD: ewsms.c,v 1.2.4.2 2007/03/12 05:47:41 rmind Exp $	*/
 
 /*
  * Copyright (c) 2004 Steve Rumble
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ewsms.c,v 1.2.4.1 2007/02/27 16:50:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ewsms.c,v 1.2.4.2 2007/03/12 05:47:41 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,7 +114,7 @@ static void ewsms_zsc_softint(struct zs_chanstate *);
 static void ewsms_wsmouse_input(struct ewsms_softc *);
 static int  ewsms_wsmouse_enable(void *);
 static void ewsms_wsmouse_disable(void *);
-static int  ewsms_wsmouse_ioctl(void *, u_long, caddr_t, int, struct lwp *);
+static int  ewsms_wsmouse_ioctl(void *, u_long, void *, int, struct lwp *);
 
 CFATTACH_DECL(ewsms_zsc, sizeof(struct ewsms_softc),
     ewsms_zsc_match, ewsms_zsc_attach, NULL, NULL);
@@ -370,7 +370,7 @@ ewsms_wsmouse_disable(void *cookie)
 }
 
 static int
-ewsms_wsmouse_ioctl(void *cookie, u_long cmd, caddr_t data, int flag,
+ewsms_wsmouse_ioctl(void *cookie, u_long cmd, void *data, int flag,
     struct lwp *l)
 {
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.95 2005/11/16 22:10:58 uwe Exp $ */
+/*	$NetBSD: cache.c,v 1.95.26.1 2007/03/12 05:50:41 rmind Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.95 2005/11/16 22:10:58 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.95.26.1 2007/03/12 05:50:41 rmind Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_sparc_arch.h"
@@ -511,7 +511,7 @@ sun4_vcache_flush_page_hw(int va, int ctx)
 #define CACHE_FLUSH_MAGIC	(CACHEINFO.c_totalsize / PAGE_SIZE)
 
 void
-sun4_cache_flush(caddr_t base, u_int len)
+sun4_cache_flush(void *base, u_int len)
 {
 	int i, ls, baseoff;
 	char *p;
@@ -766,7 +766,7 @@ srmmu_vcache_flush_range(int va, int len, int ctx)
  */
 
 void
-srmmu_cache_flush(caddr_t base, u_int len)
+srmmu_cache_flush(void *base, u_int len)
 {
 	int ctx = getcontext4m();
 	int i, baseoff;
@@ -824,7 +824,7 @@ srmmu_cache_flush(caddr_t base, u_int len)
 #else
 		srmmu_vcache_flush_region(VA_VREG(base), ctx);
 #endif
-		base += NBPRG;
+		base = ((char *)base + NBPRG);
 	}
 }
 
@@ -832,7 +832,7 @@ int ms1_cacheflush_magic = 0;
 #define MS1_CACHEFLUSH_MAGIC	ms1_cacheflush_magic
 
 void
-ms1_cache_flush(caddr_t base, u_int len)
+ms1_cache_flush(void *base, u_int len)
 {
 
 	/*
@@ -927,7 +927,7 @@ cypress_cache_flush_all(void)
 
 
 void
-viking_cache_flush(caddr_t base, u_int len)
+viking_cache_flush(void *base, u_int len)
 {
 }
 

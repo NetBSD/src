@@ -1,4 +1,4 @@
-/*	$NetBSD: md_hooks.c,v 1.7 2005/12/11 12:16:05 christos Exp $	*/
+/*	$NetBSD: md_hooks.c,v 1.7.26.1 2007/03/12 05:45:22 rmind Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: md_hooks.c,v 1.7 2005/12/11 12:16:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: md_hooks.c,v 1.7.26.1 2007/03/12 05:45:22 rmind Exp $");
 
 #include "opt_md.h"
 
@@ -69,7 +69,7 @@ md_attach_hook(unit, md)
 	if (unit == 0) {
 #ifdef MEMORY_DISK_ROOT_SIZE
 		/* Setup root ramdisk */
-		md->md_addr = (caddr_t) md_root_image;
+		md->md_addr = (void *) md_root_image;
 		md->md_size = (size_t)  md_root_size;
 		md->md_type = MD_KMEM_FIXED;
 #else	/* MEMORY_DISK_ROOT_SIZE */
@@ -79,7 +79,7 @@ md_attach_hook(unit, md)
 #endif	/* OLD_MEMORY_DISK_SIZE */
 		if (md_root_size != 0) {
 			md->md_size = round_page(md_root_size);
-			md->md_addr = (caddr_t)uvm_km_alloc(kernel_map,
+			md->md_addr = (void *)uvm_km_alloc(kernel_map,
 			    md_root_size, 0, UVM_KMF_WIRED | UVM_KMF_ZERO);
 			md->md_type = MD_KMEM_FIXED;
 			bootmd = md;

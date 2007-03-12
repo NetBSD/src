@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.155.2.1 2007/02/27 16:53:22 yamt Exp $	 */
+/* $NetBSD: machdep.c,v 1.155.2.2 2007/03/12 05:51:19 rmind Exp $	 */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.155.2.1 2007/02/27 16:53:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.155.2.2 2007/03/12 05:51:19 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -145,7 +145,7 @@ extern vaddr_t virtual_avail, virtual_end;
 char		machine[] = MACHINE;		/* from <machine/param.h> */
 char		machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
 char		cpu_model[100];
-caddr_t		msgbufaddr;
+void *		msgbufaddr;
 int		physmem;
 int		*symtab_start;
 int		*symtab_end;
@@ -326,7 +326,7 @@ consinit()
 	KASSERT(iospace != 0);
 	iomap_ex = extent_create("iomap", iospace + VAX_NBPG,
 	    iospace + ((IOSPSZ * VAX_NBPG) - 1), M_DEVBUF,
-	    (caddr_t) iomap_ex_storage, sizeof(iomap_ex_storage),
+	    (void *) iomap_ex_storage, sizeof(iomap_ex_storage),
 	    EX_NOCOALESCE|EX_NOWAIT);
 #ifdef DEBUG
 	iospace_inited = 1;
@@ -505,7 +505,7 @@ process_write_regs(l, regs)
 int
 process_set_pc(l, addr)
 	struct	lwp *l;
-	caddr_t addr;
+	void *addr;
 {
 	struct	trapframe *tf;
 	void	*ptr;

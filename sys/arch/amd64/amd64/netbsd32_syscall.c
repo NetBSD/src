@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_syscall.c,v 1.14.2.1 2007/02/27 16:48:45 yamt Exp $	*/
+/*	$NetBSD: netbsd32_syscall.c,v 1.14.2.2 2007/03/12 05:46:20 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_syscall.c,v 1.14.2.1 2007/02/27 16:48:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_syscall.c,v 1.14.2.2 2007/03/12 05:46:20 rmind Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -79,7 +79,7 @@ void
 netbsd32_syscall_plain(frame)
 	struct trapframe *frame;
 {
-	caddr_t params;
+	char *params;
 	const struct sysent *callp;
 	struct proc *p;
 	struct lwp *l;
@@ -95,7 +95,7 @@ netbsd32_syscall_plain(frame)
 
 	code = frame->tf_rax;
 	callp = p->p_emul->e_sysent;
-	params = (caddr_t)frame->tf_rsp + sizeof(int);
+	params = (char *)frame->tf_rsp + sizeof(int);
 
 	switch (code) {
 	case SYS_syscall:
@@ -121,7 +121,7 @@ netbsd32_syscall_plain(frame)
 	callp += code;
 	argsize = callp->sy_argsize;
 	if (argsize) {
-		error = copyin(params, (caddr_t)args, argsize);
+		error = copyin(params, (void *)args, argsize);
 		if (error)
 			goto bad;
 	}
@@ -167,7 +167,7 @@ void
 netbsd32_syscall_fancy(frame)
 	struct trapframe *frame;
 {
-	caddr_t params;
+	char *params;
 	const struct sysent *callp;
 	struct proc *p;
 	struct lwp *l;
@@ -187,7 +187,7 @@ netbsd32_syscall_fancy(frame)
 
 	code = frame->tf_rax;
 	callp = p->p_emul->e_sysent;
-	params = (caddr_t)frame->tf_rsp + sizeof(int);
+	params = (char *)frame->tf_rsp + sizeof(int);
 
 	switch (code) {
 	case SYS_syscall:
@@ -213,7 +213,7 @@ netbsd32_syscall_fancy(frame)
 	callp += code;
 	argsize = callp->sy_argsize;
 	if (argsize) {
-		error = copyin(params, (caddr_t)args, argsize);
+		error = copyin(params, (void *)args, argsize);
 		if (error)
 			goto bad;
 	}

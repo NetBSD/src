@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.c,v 1.62 2007/02/09 21:55:26 ad Exp $	*/
+/*	$NetBSD: cons.c,v 1.62.2.1 2007/03/12 05:53:03 rmind Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cons.c,v 1.62 2007/02/09 21:55:26 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cons.c,v 1.62.2.1 2007/03/12 05:53:03 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -228,7 +228,7 @@ cnwrite(dev_t dev, struct uio *uio, int flag)
 }
 
 int
-cnioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+cnioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	const struct cdevsw *cdev;
 	int error;

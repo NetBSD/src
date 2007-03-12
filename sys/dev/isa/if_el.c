@@ -1,4 +1,4 @@
-/*	$NetBSD: if_el.c,v 1.76 2006/11/16 01:33:00 christos Exp $	*/
+/*	$NetBSD: if_el.c,v 1.76.4.1 2007/03/12 05:54:49 rmind Exp $	*/
 
 /*
  * Copyright (c) 1994, Matthew E. Kimmel.  Permission is hereby granted
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_el.c,v 1.76 2006/11/16 01:33:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_el.c,v 1.76.4.1 2007/03/12 05:54:49 rmind Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -92,7 +92,7 @@ struct el_softc {
  */
 int elintr(void *);
 void elinit(struct el_softc *);
-int elioctl(struct ifnet *, u_long, caddr_t);
+int elioctl(struct ifnet *, u_long, void *);
 void elstart(struct ifnet *);
 void elwatchdog(struct ifnet *);
 void elreset(struct el_softc *);
@@ -685,7 +685,7 @@ int
 elioctl(ifp, cmd, data)
 	struct ifnet *ifp;
 	u_long cmd;
-	caddr_t data;
+	void *data;
 {
 	struct el_softc *sc = ifp->if_softc;
 	struct ifaddr *ifa = (struct ifaddr *)data;

@@ -1,4 +1,4 @@
-/*      $NetBSD: cpu.h,v 1.75 2007/02/16 01:34:02 matt Exp $      */
+/*      $NetBSD: cpu.h,v 1.75.2.1 2007/03/12 05:51:13 rmind Exp $      */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden
@@ -75,7 +75,7 @@ struct cpu_info;
 
 struct cpu_dep {
 	void	(*cpu_steal_pages)(void); /* pmap init before mm is on */
-	int	(*cpu_mchk)(caddr_t);   /* Machine check handling */
+	int	(*cpu_mchk)(void *);   /* Machine check handling */
 	void	(*cpu_memerr)(void); /* Memory subsystem errors */
 	    /* Autoconfiguration */
 	void	(*cpu_conf)(void);
@@ -223,7 +223,7 @@ void	cpu_boot_secondary_processors(void);
 void	cpu_send_ipi(int, int);
 void	cpu_handle_ipi(void);
 #endif
-int	badaddr(caddr_t, int);
+int	badaddr(void *, int);
 void	dumpconf(void);
 void	dumpsys(void);
 void	swapconf(void);
