@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.31 2007/03/11 23:54:03 uwe Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.32 2007/03/12 00:32:56 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 #include <sh3/mmu_sh3.h>
 #include <sh3/mmu_sh4.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore_subr.S,v 1.31 2007/03/11 23:54:03 uwe Exp $")
+__KERNEL_RCSID(0, "$NetBSD: locore_subr.S,v 1.32 2007/03/12 00:32:56 uwe Exp $")
 
 
 /*
@@ -202,21 +202,11 @@ ENTRY(cpu_switchto)
 
 
 /*
- * LINTSTUB: Func: void cpu_exit(struct lwp *l)
- *	Just fall-through to the switch_exit below.
+ * LINTSTUB: Func: void cpu_do_exit(struct lwp *l)
+ *	Switch to the lwp0's kernel stack, then jump into the middle
+ *	of cpu_switch to find and switch to a new lwp.
  */
-ENTRY(cpu_exit)
-	mov.l	.L_switch_exit_lwp_exit2, r5	/* exit_func to call */
-	/* FALLTHROUGH */
-
-/*
- * LINTSTUB: Func: void switch_exit(struct lwp *l, void (*exit_func)(struct lwp *))
- *	Called only from cpu_exit(l).  Before we call exit_func to
- *	free lwp's resources (including kernel stack) we need to
- *	switch to the lwp0's kernel stack.  Then we jump into the
- *	middle of cpu_switch to find and switch to a new lwp.
- */
-ALTENTRY(switch_exit)
+ENTRY(cpu_do_exit)
 	mov.l	.L_switch_exit_lwp0_pcb, r1
 	mov.l	.L_switch_exit_curpcb, r0
 	mov.l	@r1, r1
@@ -233,21 +223,16 @@ ALTENTRY(switch_exit)
 	mov	r3, r15
 	__EXCEPTION_UNBLOCK(r0, r1)
 
-	/* safe to call (*exit_func)(l); now */
-	jsr	@r5
-	 nop			/* lwp is already in r4 */
-
 	/* proceed to cpu_switch */
 	bra	.L_find_and_switch
 	 mov	#0, r4		/* no "previous" lwp */
 
 	.align 2
-.L_switch_exit_lwp_exit2:
-	.long	_C_LABEL(lwp_exit2)
 .L_switch_exit_lwp0_pcb:
 	.long	_C_LABEL(lwp0) + L_MD_PCB
 .L_switch_exit_curpcb:
 	.long	_C_LABEL(curpcb)
+	SET_ENTRY_SIZE(cpu_do_exit)
 
 
 #ifdef SH3
