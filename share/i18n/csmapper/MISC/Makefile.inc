@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.11 2006/11/29 15:45:26 tnozaki Exp $
+# $NetBSD: Makefile.inc,v 1.12 2007/03/13 16:34:38 tnozaki Exp $
 
 .PATH: ${.CURDIR}/MISC
 
@@ -9,13 +9,11 @@ MAPS_MISC=		ATARIST%UCS.mps \
 			HP-ROMAN8%UCS.mps \
 			MULELAO-1%UCS.mps \
 			NEXTSTEP%UCS.mps \
-			PTCP154%UCS.mps \
 			TDS565%UCS.mps \
 			UCS%ATARIST.mps \
 			UCS%HP-ROMAN8.mps \
 			UCS%MULELAO-1.mps \
 			UCS%NEXTSTEP.mps \
-			UCS%PTCP154.mps \
 			UCS%TDS565.mps
 
 mapper.dir.MISC: ${.CURDIR}/MISC/mapper.dir.MISC.src
