@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.161 2007/03/13 17:31:46 ad Exp $
+#	$NetBSD: BRANCHES,v 1.162 2007/03/13 17:56:14 ad Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -429,7 +429,14 @@ Notes:
 		- Replace all simplelocks with mutexes
 		- Remove spinlockmgr
 		- Make memory allocators MP safe
-		- Make trap handling MP safe
+		- Make trap handling MP safe: push kernel lock acquire
+		  back into pager ops.
+
+		Only i386 is currently update.  Most per architecture
+		changes need to be made in the pmap module.  LFS is not
+		currently stable due interaction between the pagedaemon (?)
+		and the HOLDRELE() in lfs_segment.c.  It may trash your
+		filesystem..
 
 		Most of the locks replaced are now sleep/adaptive locks or
 		spin locks at IPL_VM.  Assuming audio interrupt handlers
