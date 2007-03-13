@@ -1,4 +1,4 @@
-/*	$NetBSD: psshfs.c,v 1.8 2007/02/15 13:07:29 pooka Exp $	*/
+/*	$NetBSD: psshfs.c,v 1.9 2007/03/13 18:00:34 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: psshfs.c,v 1.8 2007/02/15 13:07:29 pooka Exp $");
+__RCSID("$NetBSD: psshfs.c,v 1.9 2007/03/13 18:00:34 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -271,11 +271,15 @@ handlebuf(struct psshfs_ctx *pctx, struct psbuf *datapb,
 	pb->psr = psrtmp;
 	free(datapb);
 
+	/* don't allow both cc and handler func, but allow neither */
 	assert((pb->psr.pcc && pb->psr.func) == 0);
 	if (pb->psr.pcc) {
 		puffs_docc(pb->psr.pcc, ppr);
-	} else {
+	} else if (pb->psr.func) {
 		pb->psr.func(pctx, pb, pb->psr.arg);
+	} else {
+		assert(pb->psr.arg == NULL);
+		psbuf_destroy(pb);
 	}
 }
 

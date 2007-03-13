@@ -1,4 +1,4 @@
-/*	$NetBSD: node.c,v 1.9 2007/02/27 13:28:39 pooka Exp $	*/
+/*	$NetBSD: node.c,v 1.10 2007/03/13 18:00:34 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: node.c,v 1.9 2007/02/27 13:28:39 pooka Exp $");
+__RCSID("$NetBSD: node.c,v 1.10 2007/03/13 18:00:34 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -258,7 +258,7 @@ psshfs_node_read(struct puffs_cc *pcc, void *opc, uint8_t *buf,
 
 	if (pn->pn_va.va_type == VDIR) {
 		rv = EISDIR;
-		goto out;
+		goto err;
 	}
 
 	puffs_vattr_null(&va);
@@ -271,7 +271,7 @@ psshfs_node_read(struct puffs_cc *pcc, void *opc, uint8_t *buf,
 
 	rv = psbuf_expect_handle(pb, &fhand, &fhandlen);
 	if (rv)
-		goto out;
+		goto err;
 
 	readlen = *resid;
 	reqid = NEXTREQ(pctx);
@@ -290,13 +290,12 @@ psshfs_node_read(struct puffs_cc *pcc, void *opc, uint8_t *buf,
 	reqid = NEXTREQ(pctx);
 	psbuf_recycle(pb, PSB_OUT);
 	psbuf_req_data(pb, SSH_FXP_CLOSE, reqid, fhand, fhandlen);
-	pssh_outbuf_enqueue(pctx, pb, pcc, reqid);
 
-	puffs_cc_yield(pcc);
+	pssh_outbuf_enqueue_nocc(pctx, pb, NULL, NULL, reqid);
+	free(fhand);
+	return 0;
 
-	/* don't care */
-
- out:
+ err:
 	free(fhand);
 	PSSHFSRETURN(rv);
 }
@@ -315,7 +314,7 @@ psshfs_node_write(struct puffs_cc *pcc, void *opc, uint8_t *buf,
 
 	if (pn->pn_va.va_type == VDIR) {
 		rv = EISDIR;
-		goto out;
+		goto err;
 	}
 
 	/*
@@ -334,7 +333,7 @@ psshfs_node_write(struct puffs_cc *pcc, void *opc, uint8_t *buf,
 	kludgeva2.va_mode = 0700;
 	rv = psshfs_node_setattr(pcc, opc, &kludgeva2, cred, 0);
 	if (rv)
-		goto out;
+		goto err;
 
 	/* XXXcontinuation: ok, file is mode 700 now, we can open it rw */
 
@@ -360,7 +359,7 @@ psshfs_node_write(struct puffs_cc *pcc, void *opc, uint8_t *buf,
 
 	rv = psbuf_expect_handle(pb, &fhand, &fhandlen);
 	if (rv)
-		goto out;
+		goto err;
 
 	/* moreXXX: file is open, revert old creds for crying out loud! */
 	rv = psshfs_node_setattr(pcc, opc, &kludgeva1, cred, 0);
@@ -390,12 +389,12 @@ psshfs_node_write(struct puffs_cc *pcc, void *opc, uint8_t *buf,
 	reqid = NEXTREQ(pctx);
 	psbuf_recycle(pb, PSB_OUT);
 	psbuf_req_data(pb, SSH_FXP_CLOSE, reqid, fhand, fhandlen);
-	pssh_outbuf_enqueue(pctx, pb, pcc, reqid);
 
-	puffs_cc_yield(pcc);
+	pssh_outbuf_enqueue_nocc(pctx, pb, NULL, NULL, reqid);
+	free(fhand);
+	return 0;
 
-	/* dontcare */
- out:
+ err:
 	free(fhand);
 	PSSHFSRETURN(rv);
 }

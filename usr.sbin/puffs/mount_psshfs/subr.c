@@ -1,4 +1,4 @@
-/*      $NetBSD: subr.c,v 1.10 2007/02/27 14:17:14 pooka Exp $        */
+/*      $NetBSD: subr.c,v 1.11 2007/03/13 18:00:34 pooka Exp $        */
         
 /*      
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
         
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: subr.c,v 1.10 2007/02/27 14:17:14 pooka Exp $");
+__RCSID("$NetBSD: subr.c,v 1.11 2007/03/13 18:00:34 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -284,16 +284,14 @@ sftp_readdir(struct puffs_cc *pcc, struct psshfs_ctx *pctx,
 	reqid = NEXTREQ(pctx);
 	psbuf_recycle(pb, PSB_OUT);
 	psbuf_req_data(pb, SSH_FXP_CLOSE, reqid, dhand, dhandlen);
-	pssh_outbuf_enqueue(pctx, pb, pcc, reqid);
 
-	puffs_cc_yield(pcc);
-
-	/* EDONTCARE for the response */
+	pssh_outbuf_enqueue_nocc(pctx, pb, NULL, NULL, reqid);
+	free(dhand);
+	return 0;
 
  wayout:
 	free(dhand);
-	psbuf_destroy(pb);
-	return rv;
+	PSSHFSRETURN(rv);
 }
 
 struct puffs_node *
@@ -380,9 +378,15 @@ doreclaim(struct puffs_node *pn)
 	psn_parent = psn->parent->pn_data;
 	psn_parent->childcount--;
 
+	/*
+	 * Null out entry from directory.  Do not treat a missing entry
+	 * as an invariant error, since the node might be removed from
+	 * under us, and we might do a readdir before the reclaim resulting
+	 * in no directory entry in the parent directory.
+	 */
 	dent = lookup_by_entry(psn_parent->dir, psn_parent->dentnext, pn);
-	assert(dent);
-	dent->entry = NULL;
+	if (dent)
+		dent->entry = NULL;
 
 	if (pn->pn_va.va_type == VDIR)
 		freedircache(psn->dir, psn->dentnext);
