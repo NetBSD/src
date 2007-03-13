@@ -1,4 +1,4 @@
-/*	$NetBSD: ubt.c,v 1.23 2007/03/12 20:32:00 plunky Exp $	*/
+/*	$NetBSD: ubt.c,v 1.24 2007/03/13 13:51:55 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.23 2007/03/12 20:32:00 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.24 2007/03/13 13:51:55 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -296,21 +296,15 @@ static const struct usb_devno ubt_ignore[] = {
 USB_MATCH(ubt)
 {
 	USB_MATCH_START(ubt, uaa);
-	usb_device_descriptor_t *dd;
 
 	DPRINTFN(50, "ubt_match\n");
-
-	if (uaa->iface != NULL)
-		return UMATCH_NONE;
 
 	if (usb_lookup(ubt_ignore, uaa->vendor, uaa->product))
 		return UMATCH_NONE;
 
-	dd = usbd_get_device_descriptor(uaa->device);
-	if (dd != NULL
-	    && dd->bDeviceClass == UDCLASS_WIRELESS
-	    && dd->bDeviceSubClass == UDSUBCLASS_RF
-	    && dd->bDeviceProtocol == UDPROTO_BLUETOOTH)
+	if (uaa->class == UDCLASS_WIRELESS
+	    && uaa->subclass == UDSUBCLASS_RF
+	    && uaa->proto == UDPROTO_BLUETOOTH)
 		return UMATCH_DEVCLASS_DEVSUBCLASS_DEVPROTO;
 
 	return UMATCH_NONE;
