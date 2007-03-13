@@ -1,4 +1,4 @@
-/* 	$NetBSD: refuse_opt.c,v 1.2 2007/02/28 21:48:46 agc Exp $	*/
+/* 	$NetBSD: refuse_opt.c,v 1.3 2007/03/13 20:50:47 agc Exp $	*/
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -80,28 +80,63 @@ static int fuse_opt_popt(struct fuse_opt_option *, const struct fuse_opt *);
  *
  */
 
-/* ARGSUSED */
+#define ARGS_CHUNK	32
+
+static int
+growargs(struct fuse_args *args, const char *func)
+{
+	if (args->allocated == 0) {
+		NEWARRAY(char *, args->argv, ARGS_CHUNK,
+			func, return 0);
+		args->allocated = ARGS_CHUNK;
+	} else if (args->argc % ARGS_CHUNK == 0) {
+		args->allocated += ARGS_CHUNK;
+		RENEW(char *, args->argv, args->allocated,
+			func, return 0);
+	}
+	return 1;
+}
+
 int
 fuse_opt_add_arg(struct fuse_args *args, const char *arg)
 {
 	DPRINTF(("%s: arguments passed: [arg:%s]\n", __func__, arg));
-        return EXIT_SUCCESS;
+	if (!growargs(args, "fuse_opt_add_arg")) {
+		return 1;
+	}
+	args->argv[args->argc++] = strdup(arg);
+        return 0;
 }
 
-/* ARGSUSED */
 void
 fuse_opt_free_args(struct fuse_args *args)
 {
-	/* nada */
+	int	i;
+
+	for (i = 0 ; i < args->allocated ; i++) {
+		(void) free(args->argv[i]);
+	}
+	if (args->allocated > 0) {
+		FREE(args->argv);
+	}
+	(void) memset(args, 0x0, sizeof(*args));
 }
 
-/* ARGSUSED */
 int
 fuse_opt_insert_arg(struct fuse_args *args, int pos, const char *arg)
 {
-	DPRINTF(("%s: arguments passed: [pos=%d] [arg=%s]\n",
-	    __func__, pos, arg));
-	return EXIT_SUCCESS;
+	int	i;
+
+__fuse_pargs("fuse_opt_insert_arg1", args->argc, args->argv);
+	if (!growargs(args, "fuse_opt_insert_arg")) {
+		return 1;
+	}
+	for (i = args->argc++ ; i > pos ; --i) {
+		args->argv[i] = args->argv[i - 1];
+	}
+	args->argv[pos] = strdup(arg);
+__fuse_pargs("fuse_opt_insert_arg2", args->argc, args->argv);
+	return 0;
 }
 
 /* ARGSUSED */
@@ -109,7 +144,7 @@ int fuse_opt_add_opt(char **opts, const char *opt)
 {
 	DPRINTF(("%s: arguments passed: [opts=%s] [opt=%s]\n",
 	    __func__, *opts, opt));
-	return EXIT_SUCCESS;
+	return 0;
 }
 
 /*
@@ -121,10 +156,10 @@ fuse_opt_match(const struct fuse_opt *opts, const char *opt)
 {
 	while (opts++) {
 		if (strcmp(opt, opts->templ) == 0)
-			return EXIT_SUCCESS;
+			return 0;
 	}
 
-	return EXIT_FAILURE;
+	return 1;
 }
 
 /*
@@ -144,7 +179,7 @@ fuse_opt_popt(struct fuse_opt_option *foo, const struct fuse_opt *opts)
 	
 	if (!foo->option) {
 		(void)fprintf(stderr, "fuse: missing argument after -o\n");
-		return EXIT_FAILURE;
+		return 1;
 	}
 	/* 
 	 * iterate over argv and opts to see
@@ -187,11 +222,11 @@ fuse_opt_popt(struct fuse_opt_option *foo, const struct fuse_opt *opts)
 		if (!found) {
 			(void)fprintf(stderr, "fuse: '%s' is not a "
 			    "valid option\n", match);
-			return EXIT_FAILURE;
+			return 1;
 		}
 	}
 
-	return EXIT_SUCCESS;
+	return 0;
 }
 
 /* ARGSUSED1 */
@@ -201,10 +236,18 @@ fuse_opt_parse(struct fuse_args *args, void *data,
 {
 	struct fuse_opt_option foo;
 	char *buf;
-	int i, rv = EXIT_SUCCESS;
+	int i, rv = 0;
 
-	if (!args || !args->argv || !args->argc || !proc)
+	if (!args || !args->argv || !args->argc || !proc) {
+		if (__fuse_debug(0)) {
+			printf("fuse_opt_parse: null args\n");
+		}
 		return 0;
+	}
+
+	if (__fuse_debug(0)) {
+		__fuse_pargs("fuse_opt_parse", args->argc, args->argv);
+	}
 
 	if (args->argc == 1)
 		return proc(foo.data, *args->argv, FUSE_OPT_KEY_OPT, args);
@@ -262,7 +305,7 @@ fuse_opt_parse(struct fuse_args *args, void *data,
 
 				/* argument needs to be discarded */
 				if (foo.key == FUSE_OPT_KEY_DISCARD) {
-					rv = EXIT_FAILURE;
+					rv = 1;
 					break;
 				}
 
@@ -283,7 +326,7 @@ fuse_opt_parse(struct fuse_args *args, void *data,
 		/* unknown option, how could that happen? */
 		} else {
 			DPRINTF(("%s: unknown option\n", __func__));
-			rv = EXIT_FAILURE;
+			rv = 1;
 			break;
 		}
 	}
