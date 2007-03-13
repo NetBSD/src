@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.160 2007/03/12 19:43:38 mjf Exp $
+#	$NetBSD: BRANCHES,v 1.161 2007/03/13 17:31:46 ad Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -211,7 +211,7 @@ Notes:
 Branch:		ad-audiomp
 Description:	Add MP locking to the audio drivers
 Status:		Active
-Start Date:	28 Febuary 2006
+Start Date:	28 Febuary 2007
 End Date:
 Base Tag:	ad-audiomp-base
 Maintainer:	Andrew Doran <ad@NetBSD.org>
@@ -416,6 +416,48 @@ Notes:		Kernels built from this branch are not expected
 		Ports known to compile on this branch:
 			alpha
 			i386
+
+Branch:		vmlocking
+Description:	Make memory allocators and trap handling MP safe
+Status:		Active
+Start Date:	13 March 2007
+End Date:
+Base Tag:	vmlocking-base
+Maintainer:	Andrew Doran <ad@NetBSD.org>
+Scope:		kernel
+Notes:
+		- Replace all simplelocks with mutexes
+		- Remove spinlockmgr
+		- Make memory allocators MP safe
+		- Make trap handling MP safe
+
+		Most of the locks replaced are now sleep/adaptive locks or
+		spin locks at IPL_VM.  Assuming audio interrupt handlers
+		are made MP safe there are far fewer potential deadlocks
+		against the kernel lock.
+
+		v_interlock becomes an adaptive mutex so now acquring
+		it can potentially block, similarly for other locks
+		that were before simplelocks.  This needs to be audited
+		carefully.
+
+		Use vnodes in general needs to be audited, as vnodes can
+		now be inspected without the kernel lock held.
+
+		Acquiring locks in the pmap module can now block, meaning
+		that the current pmap, cpu or lazy pmap status can change
+		out from underneath the requestor.  This also needs to be
+		audited.
+
+		Currently, i386 has the necessary modifications, and has
+		trap handling and a few calls to allocators out from under
+		the kernel lock.  There are still problems that need to be
+		debugged.
+
+		Need to check that whenever a lock is initialized, it is
+		also destroyed.
+
+		Lots of testing required.
 
 Branch:		yamt-idlelwp
 Description:	idle lwp, and some changes depending on it.
