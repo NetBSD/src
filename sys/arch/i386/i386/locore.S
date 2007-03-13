@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.45.2.3 2007/02/27 16:51:38 yamt Exp $	*/
+/*	$NetBSD: locore.S,v 1.45.2.4 2007/03/13 01:55:47 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004 The NetBSD Foundation, Inc.
@@ -865,9 +865,8 @@ switch_return:
 
 check_ras:
 	movl	L_MD_REGS(%edi),%ebx
-	movl	TF_EIP(%ebx),%eax
-	pushl	%eax
-	pushl	%esi
+	pushl	TF_EIP(%ebx)
+	pushl	L_PROC(%edi)
 	call	_C_LABEL(ras_lookup)
 	addl	$8,%esp
 	cmpl	$-1,%eax
