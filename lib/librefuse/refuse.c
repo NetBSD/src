@@ -1,4 +1,4 @@
-/*	$NetBSD: refuse.c,v 1.42 2007/03/13 22:25:32 agc Exp $	*/
+/*	$NetBSD: refuse.c,v 1.43 2007/03/13 22:47:04 agc Exp $	*/
 
 /*
  * Copyright © 2007 Alistair Crooks.  All rights reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: refuse.c,v 1.42 2007/03/13 22:25:32 agc Exp $");
+__RCSID("$NetBSD: refuse.c,v 1.43 2007/03/13 22:47:04 agc Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -40,20 +40,6 @@ __RCSID("$NetBSD: refuse.c,v 1.42 2007/03/13 22:25:32 agc Exp $");
 #include <unistd.h>
 
 #include "defs.h"
-
-/* 
-This module implements refuse, a re-implementation of the FUSE model,
-using puffs and libpuffs.  It is intended to be source code compatible
-with FUSE.  Specifically, it implements FUSE versions 2.5 and 2.6,
-although some effort was put in to make it backwards compatible (by
-Antti, not me).
-
-The error codes returned from refuse require some explanation.  Linux
-error codes in the kernel are negative, whereas traditional NetBSD
-error codes are positive.  For this reason, negative error codes are
-returned from refuse, so that they are reported correctly to the
-invoking application.
-*/
 
 typedef uint64_t	 fuse_ino_t;
 
@@ -80,11 +66,11 @@ struct fuse_config {
 	int		intr_signal;
 };
 
-/* the fuse channel describes the physical attributes of the FUSE instance */
 struct fuse_chan {
-	const char		*dir;		/* directory */
-	struct fuse_args	*args;		/* arguments to FUSE/puffs */
-	struct puffs_usermount	*pu;		/* puffs information */
+	const char *dir;
+	struct fuse_args *args;
+
+	struct puffs_usermount *pu;
 };
 
 /* this is the private fuse structure */
@@ -107,48 +93,26 @@ struct fuse {
 	int			intr_installed;
 };
 
-/* this struct describes a directory handle */
 struct puffs_fuse_dirh {
-	void		*dbuf;			/* directory buffer */
-	struct dirent	*d;			/* pointer to its dirent */
-	size_t		reslen;			/* result length */
-	size_t		bufsize;		/* buffer size */
+	void *dbuf;
+	struct dirent *d;
+
+	size_t reslen;
+	size_t bufsize;
 };
 
-/* this struct describes a node in refuse land */
-typedef struct refusenode {
-	struct fuse_file_info	file_info;	/* file information */
-	struct puffs_fuse_dirh	dirh;		/* directory handle */
-	int			opencount;	/* # of times opened */
-	int			flags;		/* associated flags */
-} refusenode_t;
+struct refusenode {
+	struct fuse_file_info	file_info;
+	struct puffs_fuse_dirh	dirh;
+	int opencount;
+	int flags;
+};
 #define RN_ROOT		0x01
 #define RN_OPEN		0x02	/* XXX: could just use opencount */
 
-/* debugging functions */
+static int fuse_setattr(struct fuse *, struct puffs_node *,
+			const char *, const struct vattr *);
 
-/* change the debug level by increment */
-int
-__fuse_debug(int incr)
-{
-	static int	__fuse_debug_level;
-
-	return __fuse_debug_level += incr;
-}
-
-/* print argv vector */
-void
-__fuse_pargs(const char *s, int argc, char **argv)
-{
-	int	i;
-
-	for (i = 0 ; i < argc ; i++) {
-		printf("%s: argv[%d] = `%s'\n", s, i, argv[i]);
-	}
-}
-
-
-/* create a new struct puffs_node and return it */
 static struct puffs_node *
 newrn(struct puffs_usermount *pu)
 {
@@ -161,7 +125,6 @@ newrn(struct puffs_usermount *pu)
 	return pn;
 }
 
-/* destroy a struct puffs_node */
 static void
 nukern(struct puffs_node *pn)
 {
@@ -175,7 +138,7 @@ nukern(struct puffs_node *pn)
 static ino_t fakeino = 3;
 
 /*
- * XXX: do this differently if/when we grow thread support
+ * XXX: do this otherwise if/when we grow thread support
  *
  * XXX2: does not consistently supply uid, gid or pid currently
  */
@@ -190,22 +153,19 @@ fill_dirbuf(struct puffs_fuse_dirh *dh, const char *name, ino_t dino,
 	/* initial? */
 	if (dh->bufsize == 0) {
 		dh->dbuf = malloc(DIR_CHUNKSIZE);
-		if (dh->dbuf == NULL) {
-			err(EXIT_FAILURE, "fill_dirbuf");
-		}
+		if (dh->dbuf == NULL)
+			err(1, "fill_dirbuf");
 		dh->d = dh->dbuf;
 		dh->reslen = dh->bufsize = DIR_CHUNKSIZE;
 	}
 
-	if (puffs_nextdent(&dh->d, name, dino, dtype, &dh->reslen)) {
+	if (puffs_nextdent(&dh->d, name, dino, dtype, &dh->reslen))
 		return 0;
-	}
 
 	/* try to increase buffer space */
 	dh->dbuf = realloc(dh->dbuf, dh->bufsize + DIR_CHUNKSIZE);
-	if (dh->dbuf == NULL) {
-		err(EXIT_FAILURE, "fill_dirbuf realloc");
-	}
+	if (dh->dbuf == NULL)
+		err(1, "fill_dirbuf realloc");
 	dh->d = (void *)((uint8_t *)dh->dbuf + (dh->bufsize - dh->reslen));
 	dh->reslen += DIR_CHUNKSIZE;
 	dh->bufsize += DIR_CHUNKSIZE;
@@ -237,15 +197,18 @@ puffs_fuse_fill_dir(void *buf, const char *name,
 static int
 puffs_fuse_dirfil(fuse_dirh_t h, const char *name, int type, ino_t ino)
 {
-	ino_t	dino;
-	int	dtype;
+	ino_t dino;
+	int dtype;
 
-	if ((dtype = type) == 0) {
+	if (type == 0)
 		dtype = DT_UNKNOWN;
-	}
-	if ((dino = ino) == 0) {
+	else
+		dtype = type;
+
+	if (ino)
+		dino = ino;
+	else
 		dino = fakeino++;
-	}
 
 	return fill_dirbuf(h, name, dino, dtype);
 }
@@ -474,7 +437,7 @@ puffs_fuse_node_readlink(struct puffs_cc *pcc, void *opc,
 	ret = (*fuse->op.readlink)(path, linkname, *linklen);
 
 	if (ret == 0) {
-		p = memchr(linkname, 0x0, *linklen);
+		p = memchr(linkname, '\0', *linklen);
 		if (!p)
 			return EINVAL;
 
@@ -885,11 +848,11 @@ puffs_fuse_node_readdir(struct puffs_cc *pcc, void *opc,
 	size_t *reslen)
 {
 	struct puffs_usermount	*pu = puffs_cc_getusermount(pcc);
-	struct puffs_fuse_dirh	*dirh;
 	struct puffs_node	*pn = opc;
 	struct refusenode	*rn = pn->pn_data;
-	struct dirent		*fromdent;
+	struct puffs_fuse_dirh	*dirh;
 	struct fuse		*fuse;
+	struct dirent		*fromdent;
 	const char		*path = PNPATH(pn);
 	int			ret;
 
@@ -983,14 +946,9 @@ puffs_fuse_fs_statvfs(struct puffs_cc *pcc, struct statvfs *svfsb, pid_t pid)
 
 	fuse = (struct fuse *)pu->pu_privdata;
 	if (fuse->op.statfs == NULL) {
-#ifdef REFUSE_INHERIT_FS_CHARACTERISTICS
 		if ((ret = statvfs(PNPATH(pu->pu_pn_root), svfsb)) == -1) {
 			return errno;
 		}
-#else
-		(void) memset(svfsb, 0x0, sizeof(*svfsb));
-		ret = 0;
-#endif
 	} else {
 		ret = (*fuse->op.statfs)(PNPATH(pu->pu_pn_root), svfsb);
 	}
@@ -1001,27 +959,40 @@ puffs_fuse_fs_statvfs(struct puffs_cc *pcc, struct statvfs *svfsb, pid_t pid)
 
 /* End of puffs_fuse operations */
 
-
 /* ARGSUSED3 */
 int
 fuse_main_real(int argc, char **argv, const struct fuse_operations *ops,
 	size_t size, void *userdata)
 {
-	struct fuse_chan	*fc;
-	struct fuse_args	 args;
 	struct fuse		*fuse;
+	struct fuse_chan	*fc;
+	char			 name[64];
+	char			*slash;
 	int			 ret;
 
-	(void) memset(&args, 0x0, sizeof(args));
-	args.argc = argc;
-	args.argv = argv;
-
-	if (__fuse_debug(0)) {
-		__fuse_pargs("fuse_main_real", argc, argv);
+	/* whilst this (assigning the pu_privdata in the puffs
+	 * usermount struct to be the fuse struct) might seem like
+	 * we are chasing our tail here, the logic is as follows:
+		+ the operation wrapper gets called with the puffs
+		  calling conventions
+		+ we need to fix up args first
+		+ then call the fuse user-supplied operation
+		+ then we fix up any values on return that we need to
+		+ and fix up any nodes, etc
+	 * so we need to be able to get at the fuse ops from within the
+	 * puffs_usermount struct
+	 */
+	if ((slash = strrchr(*argv, '/')) == NULL) {
+		slash = *argv;
+	} else {
+		slash += 1;
 	}
-	fc = fuse_mount(argv[argc - 1], &args);
+	(void) snprintf(name, sizeof(name), "refuse:%s", slash);
+
 	/* XXX: stuff name into fuse_args */
-	fuse = fuse_new(fc, fc->args, ops, size, userdata);
+
+	fc = fuse_mount(argv[argc - 1], NULL);
+	fuse = fuse_new(fc, NULL, ops, size, userdata);
 
 	ret = fuse_loop(fuse);
 
@@ -1037,29 +1008,13 @@ fuse_main_real(int argc, char **argv, const struct fuse_operations *ops,
 struct fuse_chan *
 fuse_mount(const char *dir, struct fuse_args *args)
 {
-	struct fuse_chan	*fc;
+ 	struct fuse_chan *fc;
 
-	NEW(struct fuse_chan, fc, "fuse_mount", return NULL);
+ 	NEW(struct fuse_chan, fc, "fuse_mount", exit(EXIT_FAILURE));
 
-	if (dir) {
-		fc->dir = strdup(dir);
-	}
-
-	if (args && args->argc > 0) {
-		NEW(struct fuse_args, fc->args, "fuse_mount2", return NULL);
-
-		/* yes, we do need to deep copy */
-		fc->args->allocated = ((args->argc / 32) + 1) * 32;
-		NEWARRAY(char *, fc->args->argv, fc->args->allocated, "fuse_mount3", return NULL);
-
-		for (fc->args->argc = 0 ; fc->args->argc < args->argc ; ) {
-			if (args->argv[fc->args->argc] != NULL) {
-				fc->args->argv[fc->args->argc] = strdup(args->argv[fc->args->argc]);
-				fc->args->argc += 1;
-			}
-		}
-	}
-
+ 	fc->dir = strdup(dir);
+ 	fc->args = args; /* XXXX: do we need to deep copy? */
+  
 	return fc;
 }
 
@@ -1070,13 +1025,11 @@ fuse_new(struct fuse_chan *fc, struct fuse_args *args,
 {
 	struct puffs_usermount	*pu;
 	struct puffs_pathobj	*po_root;
-	struct refusenode	*rn_root;
 	struct puffs_ops	*pops;
+	struct refusenode	*rn_root;
 	struct statvfs		svfsb;
 	struct stat		st;
 	struct fuse		*fuse;
-	char			 name[64];
-	char			*slash;
 
 	NEW(struct fuse, fuse, "fuse_new", exit(EXIT_FAILURE));
 
@@ -1118,23 +1071,8 @@ fuse_new(struct fuse_chan *fc, struct fuse_args *args,
         PUFFSOP_SET(pops, puffs_fuse, node, write);
         PUFFSOP_SET(pops, puffs_fuse, node, reclaim);
 
-	/* work out what we'll call ourselves in df output */
-	if (args == NULL) {
-		args = fc->args;
-	}
-	if (args == NULL || args->argv == NULL || args->argv[0] == NULL) {
-		(void) strlcpy(name, "refuse", sizeof(name));
-	} else {
-		if ((slash = strrchr(*args->argv, '/')) == NULL) {
-			slash = *args->argv;
-		} else {
-			slash += 1;
-		}
-		(void) snprintf(name, sizeof(name), "refuse:%s", slash);
-	}
-
 	pu = puffs_mount(pops, fc->dir, MNT_NODEV | MNT_NOSUID,
-			 name, NULL,
+			 "refuse", NULL,
 			 PUFFS_FLAG_BUILDPATH
 			   | PUFFS_FLAG_OPDUMP
 			   | PUFFS_KFLAG_NOCACHE,
@@ -1143,18 +1081,6 @@ fuse_new(struct fuse_chan *fc, struct fuse_args *args,
 		err(EXIT_FAILURE, "puffs_mount");
 	}
 	fc->pu = pu;
-	/* whilst this (assigning the pu_privdata in the puffs
-	 * usermount struct to be the fuse struct) might seem like
-	 * we are chasing our tail here, the logic is as follows:
-		+ the operation wrapper gets called with the puffs
-		  calling conventions
-		+ we need to fix up args first
-		+ then call the fuse user-supplied operation
-		+ then we fix up any values on return that we need to
-		+ and fix up any nodes, etc
-	 * so we need to be able to get at the fuse ops from within the
-	 * puffs_usermount struct
-	 */
 	pu->pu_privdata = fuse;
 
 	pu->pu_pn_root = newrn(pu);
