@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.807 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.808 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -64,3 +64,5 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		different bootable kenrels on the iso images. Enable ACPI
 		in default INSTALL and GENERIC kernels. [bouyer 20070306]
 	openssh: import 4.6 [christos 20070310]
+	acpi: ASUS AI Booster Hardware monitor driver, adapted from
+		FreeBSD for envsys(9). [xtraeme 20070313]
