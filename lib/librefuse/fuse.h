@@ -26,7 +26,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #ifndef FUSE_H_
-#define FUSE_H_	20070312
+#define FUSE_H_	20070123
 
 #include <sys/types.h>
 
@@ -38,6 +38,7 @@ extern "C" {
 #endif
 
 struct fuse;
+struct fuse_args; /* XXXsupportme */
 
 struct fuse_file_info {
 	int32_t		flags;
@@ -154,9 +155,6 @@ void fuse_destroy(struct fuse *);
 
 void fuse_unmount(const char *, struct fuse_chan *);
 
-int __fuse_debug(int);
-void __fuse_pargs(const char *, int, char **);
-
 #if FUSE_USE_VERSION == 22
 #define fuse_unmount fuse_unmount_compat22
 #endif
@@ -169,7 +167,5 @@ void fuse_unmount_compat22(const char *);
 #ifdef __cplusplus
 }
 #endif
-
-#include <fuse_opt.h>
 
 #endif
