@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_extent.c,v 1.62.2.1 2007/03/13 16:51:56 ad Exp $	*/
+/*	$NetBSD: subr_extent.c,v 1.62.2.2 2007/03/13 17:50:57 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_extent.c,v 1.62.2.1 2007/03/13 16:51:56 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_extent.c,v 1.62.2.2 2007/03/13 17:50:57 ad Exp $");
 
 #ifdef _KERNEL
 #include "opt_lockdebug.h"
@@ -150,7 +150,6 @@ extent_alloc_region_descriptor(struct extent *ex, int flags)
 {
 	struct extent_region *rp;
 	int exflags;
-	int s;
 
 	/*
 	 * If the kernel memory allocator is not yet running, we can't
@@ -200,11 +199,9 @@ extent_alloc_region_descriptor(struct extent *ex, int flags)
 	}
 
  alloc:
-	s = splhigh();
 	if (expool_initialized == 0)
 		expool_init();
 	rp = pool_get(&expool, (flags & EX_WAITOK) ? PR_WAITOK : 0);
-	splx(s);
 
 	if (rp != NULL)
 		rp->er_flags = ER_ALLOC;
@@ -275,7 +272,6 @@ extent_create(const char *name, u_long start, u_long end,
 	size_t sz = storagesize;
 	struct extent_region *rp;
 	int fixed_extent = (storage != NULL);
-	int s;
 
 #ifdef DIAGNOSTIC
 	/* Check arguments. */
@@ -321,10 +317,8 @@ extent_create(const char *name, u_long start, u_long end,
 			LIST_INSERT_HEAD(&fex->fex_freelist, rp, er_link);
 		}
 	} else {
-		s = splhigh();
 		if (expool_initialized == 0)
 			expool_init();
-		splx(s);
 
 		ex = (struct extent *)malloc(sizeof(struct extent),
 		    mtype, (flags & EX_WAITOK) ? M_WAITOK : M_NOWAIT);

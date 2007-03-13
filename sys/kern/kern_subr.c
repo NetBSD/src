@@ -1,7 +1,7 @@
-/*	$NetBSD: kern_subr.c,v 1.156 2007/03/08 21:25:27 ad Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.156.2.1 2007/03/13 17:50:57 ad Exp $	*/
 
 /*-
- * Copyright (c) 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998, 1999, 2002, 2007, 2006 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.156 2007/03/08 21:25:27 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.156.2.1 2007/03/13 17:50:57 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -1433,4 +1433,22 @@ trace_exit(struct lwp *l, register_t code, void *args, register_t rval[],
 	}
 #endif
 #endif /* SYSCALL_DEBUG || {K,P,SYS}TRACE */
+}
+
+/*
+ * Disable kernel preemption.
+ */
+void
+crit_enter(void)
+{
+	/* nothing */
+}
+
+/*
+ * Reenable kernel preemption.
+ */
+void
+crit_exit(void)
+{
+	/* nothing */
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.86 2007/02/20 16:21:04 ad Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.86.4.1 2007/03/13 17:51:21 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.86 2007/02/20 16:21:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.86.4.1 2007/03/13 17:51:21 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -274,7 +274,7 @@ ffs_fsync(void *v)
 	 * First, flush all pages in range.
 	 */
 
-	simple_lock(&vp->v_interlock);
+	mutex_enter(&vp->v_interlock);
 	error = VOP_PUTPAGES(vp, trunc_page(ap->a_offlo),
 	    round_page(ap->a_offhi), PGO_CLEANIT |
 	    ((ap->a_flags & FSYNC_WAIT) ? PGO_SYNCIO : 0));
@@ -296,28 +296,28 @@ ffs_fsync(void *v)
 		for (i = 0; i < num; i++) {
 			bp = incore(vp, ia[i].in_lbn);
 			if (bp != NULL) {
-				simple_lock(&bp->b_interlock);
+				mutex_enter(&bp->b_interlock);
 				if (!(bp->b_flags & B_BUSY) && (bp->b_flags & B_DELWRI)) {
 					bp->b_flags |= B_BUSY | B_VFLUSH;
-					simple_unlock(&bp->b_interlock);
+					mutex_exit(&bp->b_interlock);
 					splx(s);
 					bawrite(bp);
 					s = splbio();
 				} else {
-					simple_unlock(&bp->b_interlock);
+					mutex_exit(&bp->b_interlock);
 				}
 			}
 		}
 	}
 
 	if (ap->a_flags & FSYNC_WAIT) {
-		simple_lock(&global_v_numoutput_slock);
+		mutex_enter(&global_v_numoutput_lock);
 		while (vp->v_numoutput > 0) {
 			vp->v_flag |= VBWAIT;
-			ltsleep(&vp->v_numoutput, PRIBIO + 1, "fsync_range", 0,
-				&global_v_numoutput_slock);
+			mtsleep(&vp->v_numoutput, PRIBIO + 1, "fsync_range", 0,
+				&global_v_numoutput_lock);
 		}
-		simple_unlock(&global_v_numoutput_slock);
+		mutex_exit(&global_v_numoutput_lock);
 	}
 	splx(s);
 
@@ -368,7 +368,7 @@ ffs_full_fsync(void *v)
 	 */
 
 	if (vp->v_type == VREG || vp->v_type == VBLK) {
-		simple_lock(&vp->v_interlock);
+		mutex_enter(&vp->v_interlock);
 		error = VOP_PUTPAGES(vp, 0, 0, PGO_ALLPAGES | PGO_CLEANIT |
 		    ((ap->a_flags & FSYNC_WAIT) ? PGO_SYNCIO : 0) |
 		    (fstrans_getstate(vp->v_mount) == FSTRANS_SUSPENDING ?
@@ -389,18 +389,18 @@ loop:
 		bp->b_flags &= ~B_SCANNED;
 	for (bp = LIST_FIRST(&vp->v_dirtyblkhd); bp; bp = nbp) {
 		nbp = LIST_NEXT(bp, b_vnbufs);
-		simple_lock(&bp->b_interlock);
+		mutex_enter(&bp->b_interlock);
 		if (bp->b_flags & (B_BUSY | B_SCANNED)) {
-			simple_unlock(&bp->b_interlock);
+			mutex_exit(&bp->b_interlock);
 			continue;
 		}
 		if ((bp->b_flags & B_DELWRI) == 0)
 			panic("ffs_fsync: not dirty");
 		if (skipmeta && bp->b_lblkno < 0) {
-			simple_unlock(&bp->b_interlock);
+			mutex_exit(&bp->b_interlock);
 			continue;
 		}
-		simple_unlock(&bp->b_interlock);
+		mutex_exit(&bp->b_interlock);
 		bp->b_flags |= B_BUSY | B_VFLUSH | B_SCANNED;
 		splx(s);
 		/*
@@ -424,13 +424,13 @@ loop:
 		goto loop;
 	}
 	if (ap->a_flags & FSYNC_WAIT) {
-		simple_lock(&global_v_numoutput_slock);
+		mutex_enter(&global_v_numoutput_lock);
 		while (vp->v_numoutput) {
 			vp->v_flag |= VBWAIT;
-			(void) ltsleep(&vp->v_numoutput, PRIBIO + 1,
-			    "ffsfsync", 0, &global_v_numoutput_slock);
+			(void) mtsleep(&vp->v_numoutput, PRIBIO + 1,
+			    "ffsfsync", 0, &global_v_numoutput_lock);
 		}
-		simple_unlock(&global_v_numoutput_slock);
+		mutex_exit(&global_v_numoutput_lock);
 		splx(s);
 
 		/*
@@ -544,7 +544,7 @@ ffs_getpages(void *v)
 	     blkoff(fs, *ap->a_count << PAGE_SHIFT) != 0) &&
 	    DOINGSOFTDEP(ap->a_vp)) {
 		if ((ap->a_flags & PGO_LOCKED) == 0) {
-			simple_unlock(&vp->v_interlock);
+			mutex_exit(&vp->v_interlock);
 		}
 		return EINVAL;
 	}

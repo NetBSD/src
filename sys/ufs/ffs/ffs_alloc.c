@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.98 2007/03/04 06:03:43 christos Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.98.2.1 2007/03/13 17:51:19 ad Exp $	*/
 
 /*
  * Copyright (c) 2002 Networks Associates Technology, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.98 2007/03/04 06:03:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.98.2.1 2007/03/13 17:51:19 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -134,14 +134,14 @@ ffs_alloc(struct inode *ip, daddr_t lbn, daddr_t bpref, int size,
 		voff_t off = trunc_page(lblktosize(fs, lbn));
 		voff_t endoff = round_page(lblktosize(fs, lbn) + size);
 
-		simple_lock(&uobj->vmobjlock);
+		mutex_enter(&uobj->vmobjlock);
 		while (off < endoff) {
 			pg = uvm_pagelookup(uobj, off);
 			KASSERT(pg != NULL);
 			KASSERT(pg->owner == curproc->p_pid);
 			off += PAGE_SIZE;
 		}
-		simple_unlock(&uobj->vmobjlock);
+		mutex_exit(&uobj->vmobjlock);
 	}
 #endif
 
@@ -214,7 +214,7 @@ ffs_realloccg(struct inode *ip, daddr_t lbprev, daddr_t bpref, int osize,
 		voff_t off = trunc_page(lblktosize(fs, lbprev));
 		voff_t endoff = round_page(lblktosize(fs, lbprev) + osize);
 
-		simple_lock(&uobj->vmobjlock);
+		mutex_enter(&uobj->vmobjlock);
 		while (off < endoff) {
 			pg = uvm_pagelookup(uobj, off);
 			KASSERT(pg != NULL);
@@ -222,7 +222,7 @@ ffs_realloccg(struct inode *ip, daddr_t lbprev, daddr_t bpref, int osize,
 			KASSERT((pg->flags & PG_CLEAN) == 0);
 			off += PAGE_SIZE;
 		}
-		simple_unlock(&uobj->vmobjlock);
+		mutex_exit(&uobj->vmobjlock);
 	}
 #endif
 

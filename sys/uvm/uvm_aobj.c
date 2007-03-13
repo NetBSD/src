@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.87.4.1 2007/03/13 16:52:08 ad Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.87.4.2 2007/03/13 17:51:54 ad Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.87.4.1 2007/03/13 16:52:08 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.87.4.2 2007/03/13 17:51:54 ad Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -212,7 +212,7 @@ struct uvm_pagerops aobj_pager = {
  */
 
 static LIST_HEAD(aobjlist, uvm_aobj) uao_list;
-static struct simplelock uao_list_lock;
+static kmutex_t uao_list_lock;
 
 /*
  * functions
@@ -400,7 +400,7 @@ uao_free(struct uvm_aobj *aobj)
 {
 	int swpgonlydelta = 0;
 
-	simple_unlock(&aobj->u_obj.vmobjlock);
+	mutex_exit(&aobj->u_obj.vmobjlock);
 
 #if defined(VMSWAP)
 	uao_dropswap_range1(aobj, 0, 0);
@@ -434,10 +434,10 @@ uao_free(struct uvm_aobj *aobj)
 	 */
 
 	if (swpgonlydelta > 0) {
-		simple_lock(&uvm.swap_data_lock);
+		mutex_enter(&uvm_swap_data_lock);
 		KASSERT(uvmexp.swpgonly >= swpgonlydelta);
 		uvmexp.swpgonly -= swpgonlydelta;
-		simple_unlock(&uvm.swap_data_lock);
+		mutex_exit(&uvm_swap_data_lock);
 	}
 }
 
@@ -529,9 +529,9 @@ uao_create(vsize_t size, int flags)
  	 * now that aobj is ready, add it to the global list
  	 */
 
-	simple_lock(&uao_list_lock);
+	mutex_enter(&uao_list_lock);
 	LIST_INSERT_HEAD(&uao_list, aobj, u_list);
-	simple_unlock(&uao_list_lock);
+	mutex_exit(&uao_list_lock);
 	return(&aobj->u_obj);
 }
 
@@ -552,7 +552,7 @@ uao_init(void)
 		return;
 	uao_initialized = true;
 	LIST_INIT(&uao_list);
-	simple_lock_init(&uao_list_lock);
+	mutex_init(&uao_list_lock, MUTEX_DEFAULT, IPL_NONE);
 }
 
 /*
@@ -565,9 +565,9 @@ uao_init(void)
 void
 uao_reference(struct uvm_object *uobj)
 {
-	simple_lock(&uobj->vmobjlock);
+	mutex_enter(&uobj->vmobjlock);
 	uao_reference_locked(uobj);
-	simple_unlock(&uobj->vmobjlock);
+	mutex_exit(&uobj->vmobjlock);
 }
 
 /*
@@ -606,7 +606,7 @@ uao_reference_locked(struct uvm_object *uobj)
 void
 uao_detach(struct uvm_object *uobj)
 {
-	simple_lock(&uobj->vmobjlock);
+	mutex_enter(&uobj->vmobjlock);
 	uao_detach_locked(uobj);
 }
 
@@ -631,14 +631,14 @@ uao_detach_locked(struct uvm_object *uobj)
  	 */
 
 	if (UVM_OBJ_IS_KERN_OBJECT(uobj)) {
-		simple_unlock(&uobj->vmobjlock);
+		mutex_exit(&uobj->vmobjlock);
 		return;
 	}
 
 	UVMHIST_LOG(maphist,"  (uobj=0x%x)  ref=%d", uobj,uobj->uo_refs,0,0);
 	uobj->uo_refs--;
 	if (uobj->uo_refs) {
-		simple_unlock(&uobj->vmobjlock);
+		mutex_exit(&uobj->vmobjlock);
 		UVMHIST_LOG(maphist, "<- done (rc>0)", 0,0,0,0);
 		return;
 	}
@@ -647,9 +647,9 @@ uao_detach_locked(struct uvm_object *uobj)
  	 * remove the aobj from the global list.
  	 */
 
-	simple_lock(&uao_list_lock);
+	mutex_enter(&uao_list_lock);
 	LIST_REMOVE(aobj, u_list);
-	simple_unlock(&uao_list_lock);
+	mutex_exit(&uao_list_lock);
 
 	/*
  	 * free all the pages left in the aobj.  for each page,
@@ -658,22 +658,22 @@ uao_detach_locked(struct uvm_object *uobj)
 	 * free the page itself.
  	 */
 
-	uvm_lock_pageq();
+	mutex_enter(&uvm_pageqlock);
 	while ((pg = TAILQ_FIRST(&uobj->memq)) != NULL) {
 		pmap_page_protect(pg, VM_PROT_NONE);
 		if (pg->flags & PG_BUSY) {
 			pg->flags |= PG_WANTED;
-			uvm_unlock_pageq();
+			mutex_exit(&uvm_pageqlock);
 			UVM_UNLOCK_AND_WAIT(pg, &uobj->vmobjlock, false,
 			    "uao_det", 0);
-			simple_lock(&uobj->vmobjlock);
-			uvm_lock_pageq();
+			mutex_enter(&uobj->vmobjlock);
+			mutex_enter(&uvm_pageqlock);
 			continue;
 		}
 		uao_dropswap(&aobj->u_obj, pg->offset >> PAGE_SHIFT);
 		uvm_pagefree(pg);
 	}
-	uvm_unlock_pageq();
+	mutex_exit(&uvm_pageqlock);
 
 	/*
  	 * finally, free the aobj itself.
@@ -760,7 +760,7 @@ uao_put(struct uvm_object *uobj, voff_t start, voff_t stop, int flags)
 	 */
 
 	if ((flags & (PGO_DEACTIVATE|PGO_FREE)) == 0) {
-		simple_unlock(&uobj->vmobjlock);
+		mutex_exit(&uobj->vmobjlock);
 		return 0;
 	}
 
@@ -791,7 +791,7 @@ uao_put(struct uvm_object *uobj, voff_t start, voff_t stop, int flags)
 		nextpg = NULL;	/* Quell compiler warning */
 	}
 
-	uvm_lock_pageq();
+	mutex_enter(&uvm_pageqlock);
 
 	/* locked: both page queues and uobj */
 	for (;;) {
@@ -854,11 +854,11 @@ uao_put(struct uvm_object *uobj, voff_t start, voff_t stop, int flags)
 					TAILQ_INSERT_BEFORE(pg, &curmp, listq);
 				}
 				pg->flags |= PG_WANTED;
-				uvm_unlock_pageq();
+				mutex_exit(&uvm_pageqlock);
 				UVM_UNLOCK_AND_WAIT(pg, &uobj->vmobjlock, 0,
 				    "uao_put", 0);
-				simple_lock(&uobj->vmobjlock);
-				uvm_lock_pageq();
+				mutex_enter(&uobj->vmobjlock);
+				mutex_enter(&uvm_pageqlock);
 				if (by_list) {
 					nextpg = TAILQ_NEXT(&curmp, listq);
 					TAILQ_REMOVE(&uobj->memq, &curmp,
@@ -879,12 +879,12 @@ uao_put(struct uvm_object *uobj, voff_t start, voff_t stop, int flags)
 			continue;
 		}
 	}
-	uvm_unlock_pageq();
+	mutex_exit(&uvm_pageqlock);
 	if (by_list) {
 		TAILQ_REMOVE(&uobj->memq, &endmp, listq);
 		PRELE(curlwp);
 	}
-	simple_unlock(&uobj->vmobjlock);
+	mutex_exit(&uobj->vmobjlock);
 	return 0;
 }
 
@@ -1058,11 +1058,11 @@ gotpage:
 
 				/* out of RAM? */
 				if (ptmp == NULL) {
-					simple_unlock(&uobj->vmobjlock);
+					mutex_exit(&uobj->vmobjlock);
 					UVMHIST_LOG(pdhist,
 					    "sleeping, ptmp == NULL\n",0,0,0,0);
 					uvm_wait("uao_getpage");
-					simple_lock(&uobj->vmobjlock);
+					mutex_enter(&uobj->vmobjlock);
 					continue;
 				}
 
@@ -1089,7 +1089,7 @@ gotpage:
 				    ptmp->flags,0,0,0);
 				UVM_UNLOCK_AND_WAIT(ptmp, &uobj->vmobjlock,
 				    false, "uao_get", 0);
-				simple_lock(&uobj->vmobjlock);
+				mutex_enter(&uobj->vmobjlock);
 				continue;
 			}
 
@@ -1144,9 +1144,9 @@ gotpage:
 			 * unlock object for i/o, relock when done.
 			 */
 
-			simple_unlock(&uobj->vmobjlock);
+			mutex_exit(&uobj->vmobjlock);
 			error = uvm_swap_get(ptmp, swslot, PGO_SYNCIO);
-			simple_lock(&uobj->vmobjlock);
+			mutex_enter(&uobj->vmobjlock);
 
 			/*
 			 * I/O done.  check for errors.
@@ -1171,10 +1171,10 @@ gotpage:
 					uvm_swap_markbad(swslot, 1);
 				}
 
-				uvm_lock_pageq();
+				mutex_enter(&uvm_pageqlock);
 				uvm_pagefree(ptmp);
-				uvm_unlock_pageq();
-				simple_unlock(&uobj->vmobjlock);
+				mutex_exit(&uvm_pageqlock);
+				mutex_exit(&uobj->vmobjlock);
 				return error;
 			}
 #else /* defined(VMSWAP) */
@@ -1207,7 +1207,7 @@ gotpage:
  	 */
 
 done:
-	simple_unlock(&uobj->vmobjlock);
+	mutex_exit(&uobj->vmobjlock);
 	UVMHIST_LOG(pdhist, "<- done (OK)",0,0,0,0);
 	return 0;
 }
@@ -1249,7 +1249,7 @@ uao_swap_off(int startslot, int endslot)
 	 */
 
 restart:
-	simple_lock(&uao_list_lock);
+	mutex_enter(&uao_list_lock);
 	for (aobj = LIST_FIRST(&uao_list);
 	     aobj != NULL;
 	     aobj = nextaobj) {
@@ -1260,8 +1260,8 @@ restart:
 		 * so this should be a rare case.
 		 */
 
-		if (!simple_lock_try(&aobj->u_obj.vmobjlock)) {
-			simple_unlock(&uao_list_lock);
+		if (!mutex_tryenter(&aobj->u_obj.vmobjlock)) {
+			mutex_exit(&uao_list_lock);
 			goto restart;
 		}
 
@@ -1276,7 +1276,7 @@ restart:
 		 * now it's safe to unlock the uao list.
 		 */
 
-		simple_unlock(&uao_list_lock);
+		mutex_exit(&uao_list_lock);
 
 		/*
 		 * page in any pages in the swslot range.
@@ -1294,7 +1294,7 @@ restart:
 		 * relock the list and drop our ref on the aobj.
 		 */
 
-		simple_lock(&uao_list_lock);
+		mutex_enter(&uao_list_lock);
 		nextaobj = LIST_NEXT(aobj, u_list);
 		uao_detach_locked(&aobj->u_obj);
 	}
@@ -1302,7 +1302,7 @@ restart:
 	/*
 	 * done with traversal, unlock the list
 	 */
-	simple_unlock(&uao_list_lock);
+	mutex_exit(&uao_list_lock);
 	return false;
 }
 
@@ -1409,7 +1409,7 @@ uao_pagein_page(struct uvm_aobj *aobj, int pageidx)
 	 * relock and finish up.
 	 */
 
-	simple_lock(&aobj->u_obj.vmobjlock);
+	mutex_enter(&aobj->u_obj.vmobjlock);
 	switch (rv) {
 	case 0:
 		break;
@@ -1438,10 +1438,10 @@ uao_pagein_page(struct uvm_aobj *aobj, int pageidx)
 	/*
 	 * make sure it's on a page queue.
 	 */
-	uvm_lock_pageq();
+	mutex_enter(&uvm_pageqlock);
 	if (pg->wire_count == 0)
 		uvm_pageenqueue(pg);
-	uvm_unlock_pageq();
+	mutex_exit(&uvm_pageqlock);
 
 	if (pg->flags & PG_WANTED) {
 		wakeup(pg);
@@ -1464,7 +1464,7 @@ uao_dropswap_range(struct uvm_object *uobj, voff_t start, voff_t end)
 {
 	struct uvm_aobj *aobj = (struct uvm_aobj *)uobj;
 
-	LOCK_ASSERT(simple_lock_held(&uobj->vmobjlock));
+	KASSERT(mutex_owned(&uobj->vmobjlock));
 
 	uao_dropswap_range1(aobj, start, end);
 }
@@ -1558,10 +1558,10 @@ uao_dropswap_range1(struct uvm_aobj *aobj, voff_t start, voff_t end)
 	 */
 
 	if (swpgonlydelta > 0) {
-		simple_lock(&uvm.swap_data_lock);
+		mutex_enter(&uvm_swap_data_lock);
 		KASSERT(uvmexp.swpgonly >= swpgonlydelta);
 		uvmexp.swpgonly -= swpgonlydelta;
-		simple_unlock(&uvm.swap_data_lock);
+		mutex_exit(&uvm_swap_data_lock);
 	}
 }
 

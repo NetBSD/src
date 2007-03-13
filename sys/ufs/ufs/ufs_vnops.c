@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.152 2007/03/04 06:03:48 christos Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.152.2.1 2007/03/13 17:51:53 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.152 2007/03/04 06:03:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.152.2.1 2007/03/13 17:51:53 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -227,10 +227,10 @@ ufs_close(void *v)
 
 	vp = ap->a_vp;
 	ip = VTOI(vp);
-	simple_lock(&vp->v_interlock);
+	mutex_enter(&vp->v_interlock);
 	if (vp->v_usecount > 1)
 		UFS_ITIMES(vp, NULL, NULL, NULL);
-	simple_unlock(&vp->v_interlock);
+	mutex_exit(&vp->v_interlock);
 	return (0);
 }
 
@@ -1959,10 +1959,10 @@ ufsspec_close(void *v)
 
 	vp = ap->a_vp;
 	ip = VTOI(vp);
-	simple_lock(&vp->v_interlock);
+	mutex_enter(&vp->v_interlock);
 	if (vp->v_usecount > 1)
 		UFS_ITIMES(vp, NULL, NULL, NULL);
-	simple_unlock(&vp->v_interlock);
+	mutex_exit(&vp->v_interlock);
 	return (VOCALL (spec_vnodeop_p, VOFFSET(vop_close), ap));
 }
 
@@ -2025,10 +2025,10 @@ ufsfifo_close(void *v)
 
 	vp = ap->a_vp;
 	ip = VTOI(vp);
-	simple_lock(&vp->v_interlock);
+	mutex_enter(&vp->v_interlock);
 	if (ap->a_vp->v_usecount > 1)
 		UFS_ITIMES(vp, NULL, NULL, NULL);
-	simple_unlock(&vp->v_interlock);
+	mutex_exit(&vp->v_interlock);
 	return (VOCALL (fifo_vnodeop_p, VOFFSET(vop_close), ap));
 }
 
@@ -2353,7 +2353,7 @@ ufs_lock(void *v)
 	    fstrans_is_owner(mp) &&
 	    fstrans_getstate(mp) == FSTRANS_SUSPENDING) {
 		if ((ap->a_flags & LK_INTERLOCK) != 0)
-			simple_unlock(&vp->v_interlock);
+			mutex_exit(&vp->v_interlock);
 		return 0;
 	}
 	return (lockmgr(vp->v_vnlock, ap->a_flags, &vp->v_interlock));
@@ -2379,7 +2379,7 @@ ufs_unlock(void *v)
 	    fstrans_is_owner(mp) &&
 	    fstrans_getstate(mp) == FSTRANS_SUSPENDING) {
 		if ((ap->a_flags & LK_INTERLOCK) != 0)
-			simple_unlock(&vp->v_interlock);
+			mutex_exit(&vp->v_interlock);
 		return 0;
 	}
 	return (lockmgr(vp->v_vnlock, ap->a_flags | LK_RELEASE,

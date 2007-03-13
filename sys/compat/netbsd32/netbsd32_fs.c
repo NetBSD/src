@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_fs.c,v 1.36.2.1 2007/03/13 16:50:19 ad Exp $	*/
+/*	$NetBSD: netbsd32_fs.c,v 1.36.2.2 2007/03/13 17:50:27 ad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.36.2.1 2007/03/13 16:50:19 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.36.2.2 2007/03/13 17:50:27 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -480,18 +480,18 @@ netbsd32_getvfsstat(l, v, retval)
 	    M_WAITOK);
 	s32 = (struct netbsd32_statvfs *)
 	    malloc(sizeof(struct netbsd32_statvfs), M_TEMP, M_WAITOK);
-	simple_lock(&mountlist_slock);
+	mutex_enter(&mountlist_lock);
 	count = 0;
 	for (mp = CIRCLEQ_FIRST(&mountlist); mp != (void *)&mountlist;
 	     mp = nmp) {
-		if (vfs_busy(mp, LK_NOWAIT, &mountlist_slock)) {
+		if (vfs_busy(mp, LK_NOWAIT, &mountlist_lock)) {
 			nmp = CIRCLEQ_NEXT(mp, mnt_list);
 			continue;
 		}
 		if (sfsp && count < maxcount) {
 			error = dostatvfs(mp, sbuf, l, SCARG(uap, flags), 0);
 			if (error) {
-				simple_lock(&mountlist_slock);
+				mutex_enter(&mountlist_lock);
 				nmp = CIRCLEQ_NEXT(mp, mnt_list);
 				vfs_unbusy(mp);
 				continue;
@@ -506,11 +506,11 @@ netbsd32_getvfsstat(l, v, retval)
 			root |= strcmp(sbuf->f_mntonname, "/") == 0;
 		}
 		count++;
-		simple_lock(&mountlist_slock);
+		mutex_enter(&mountlist_lock);
 		nmp = CIRCLEQ_NEXT(mp, mnt_list);
 		vfs_unbusy(mp);
 	}
-	simple_unlock(&mountlist_slock);
+	mutex_exit(&mountlist_lock);
 	if (root == 0 && p->p_cwdi->cwdi_rdir) {
 		/*
 		 * fake a root entry

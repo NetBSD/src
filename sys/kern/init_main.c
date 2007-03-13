@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.299.2.1 2007/03/13 16:51:49 ad Exp $	*/
+/*	$NetBSD: init_main.c,v 1.299.2.2 2007/03/13 17:50:50 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.299.2.1 2007/03/13 16:51:49 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.299.2.2 2007/03/13 17:50:50 ad Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_kcont.h"
@@ -455,8 +455,10 @@ main(void)
 	/* Initialize system accouting. */
 	acct_init();
 
+#ifndef PIPE_SOCKETPAIR
 	/* Initialize pipes. */
 	pipe_init();
+#endif
 
 	/* Kick off timeout driven events by calling first time. */
 	schedcpu(NULL);

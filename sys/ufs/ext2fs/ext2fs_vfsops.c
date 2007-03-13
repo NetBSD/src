@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.109.2.1 2007/03/13 16:52:06 ad Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.109.2.2 2007/03/13 17:51:19 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.109.2.1 2007/03/13 16:52:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.109.2.2 2007/03/13 17:51:19 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -227,9 +227,9 @@ ext2fs_mountroot(void)
 		free(mp, M_MOUNT);
 		return (error);
 	}
-	simple_lock(&mountlist_slock);
+	mutex_enter(&mountlist_lock);
 	CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
-	simple_unlock(&mountlist_slock);
+	mutex_exit(&mountlist_lock);
 	ump = VFSTOUFS(mp);
 	fs = ump->um_e2fs;
 	memset(fs->e2fs_fsmnt, 0, sizeof(fs->e2fs_fsmnt));
@@ -546,23 +546,23 @@ loop:
 	 * NOTE: not using the TAILQ_FOREACH here since in this loop vgone()
 	 * and vclean() can be called indirectly
 	 */
-	simple_lock(&mntvnode_slock);
+	mutex_enter(&mntvnode_lock);
 	for (vp = TAILQ_FIRST(&mountp->mnt_vnodelist); vp; vp = nvp) {
 		if (vp->v_mount != mountp) {
-			simple_unlock(&mntvnode_slock);
+			mutex_exit(&mntvnode_lock);
 			goto loop;
 		}
 		/*
 		 * Step 4: invalidate all inactive vnodes.
 		 */
-		if (vrecycle(vp, &mntvnode_slock, l))
+		if (vrecycle(vp, &mntvnode_lock, l))
 			goto loop;
 		/*
 		 * Step 5: invalidate all cached file data.
 		 */
-		simple_lock(&vp->v_interlock);
+		mutex_enter(&vp->v_interlock);
 		nvp = TAILQ_NEXT(vp, v_mntvnodes);
-		simple_unlock(&mntvnode_slock);
+		mutex_exit(&mntvnode_lock);
 		if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK))
 			goto loop;
 		if (vinvalbuf(vp, 0, cred, l, 0, 0))
@@ -582,9 +582,9 @@ loop:
 		e2fs_iload((struct ext2fs_dinode *)cp, ip->i_din.e2fs_din);
 		brelse(bp);
 		vput(vp);
-		simple_lock(&mntvnode_slock);
+		mutex_enter(&mntvnode_lock);
 	}
-	simple_unlock(&mntvnode_slock);
+	mutex_exit(&mntvnode_lock);
 	return (0);
 }
 
@@ -850,7 +850,7 @@ ext2fs_sync(struct mount *mp, int waitfor, kauth_cred_t cred, struct lwp *l)
 	/*
 	 * Write back each (modified) inode.
 	 */
-	simple_lock(&mntvnode_slock);
+	mutex_enter(&mntvnode_lock);
 loop:
 	/*
 	 * NOTE: not using the TAILQ_FOREACH here since in this loop vgone()
@@ -863,7 +863,7 @@ loop:
 		 */
 		if (vp->v_mount != mp)
 			goto loop;
-		simple_lock(&vp->v_interlock);
+		mutex_enter(&vp->v_interlock);
 		nvp = TAILQ_NEXT(vp, v_mntvnodes);
 		ip = VTOI(vp);
 		if (vp->v_type == VNON ||
@@ -872,13 +872,13 @@ loop:
 		     LIST_EMPTY(&vp->v_dirtyblkhd) &&
 		     vp->v_uobj.uo_npages == 0))
 		{
-			simple_unlock(&vp->v_interlock);
+			mutex_exit(&vp->v_interlock);
 			continue;
 		}
-		simple_unlock(&mntvnode_slock);
+		mutex_exit(&mntvnode_lock);
 		error = vget(vp, LK_EXCLUSIVE | LK_NOWAIT | LK_INTERLOCK);
 		if (error) {
-			simple_lock(&mntvnode_slock);
+			mutex_enter(&mntvnode_lock);
 			if (error == ENOENT)
 				goto loop;
 			continue;
@@ -891,9 +891,9 @@ loop:
 		if (error)
 			allerror = error;
 		vput(vp);
-		simple_lock(&mntvnode_slock);
+		mutex_enter(&mntvnode_lock);
 	}
-	simple_unlock(&mntvnode_slock);
+	mutex_exit(&mntvnode_lock);
 	/*
 	 * Force stale file system control information to be flushed.
 	 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota.c,v 1.44 2007/03/04 06:03:48 christos Exp $	*/
+/*	$NetBSD: ufs_quota.c,v 1.44.2.1 2007/03/13 17:51:52 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.44 2007/03/04 06:03:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.44.2.1 2007/03/13 17:51:52 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -600,7 +600,7 @@ qsync(struct mount *mp)
 	 * Search vnodes associated with this mount point,
 	 * synchronizing any modified dquot structures.
 	 */
-	simple_lock(&mntvnode_slock);
+	mutex_enter(&mntvnode_lock);
 again:
 	TAILQ_FOREACH(vp, &mp->mnt_vnodelist, v_mntvnodes) {
 		nextvp = TAILQ_NEXT(vp, v_mntvnodes);
@@ -608,11 +608,11 @@ again:
 			goto again;
 		if (vp->v_type == VNON)
 			continue;
-		simple_lock(&vp->v_interlock);
-		simple_unlock(&mntvnode_slock);
+		mutex_enter(&vp->v_interlock);
+		mutex_exit(&mntvnode_lock);
 		error = vget(vp, LK_EXCLUSIVE | LK_NOWAIT | LK_INTERLOCK);
 		if (error) {
-			simple_lock(&mntvnode_slock);
+			mutex_enter(&mntvnode_lock);
 			if (error == ENOENT)
 				goto again;
 			continue;
@@ -623,12 +623,12 @@ again:
 				dqsync(vp, dq);
 		}
 		vput(vp);
-		simple_lock(&mntvnode_slock);
+		mutex_enter(&mntvnode_lock);
 		/* if the list changed, start again */
 		if (TAILQ_NEXT(vp, v_mntvnodes) != nextvp)
 			goto again;
 	}
-	simple_unlock(&mntvnode_slock);
+	mutex_exit(&mntvnode_lock);
 	return (0);
 }
 

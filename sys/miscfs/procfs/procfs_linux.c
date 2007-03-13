@@ -1,4 +1,4 @@
-/*      $NetBSD: procfs_linux.c,v 1.33 2007/03/09 14:11:23 ad Exp $      */
+/*      $NetBSD: procfs_linux.c,v 1.33.2.1 2007/03/13 17:51:09 ad Exp $      */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.33 2007/03/09 14:11:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.33.2.1 2007/03/13 17:51:09 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -363,10 +363,10 @@ procfs_domounts(struct lwp *curl, struct proc *p,
 	/* XXX elad - may need filtering. */
 
 	bf = malloc(LBFSZ, M_TEMP, M_WAITOK);
-	simple_lock(&mountlist_slock);
+	mutex_enter(&mountlist_lock);
 	for (mp = CIRCLEQ_FIRST(&mountlist); mp != (void *)&mountlist;
 	     mp = nmp) {
-		if (vfs_busy(mp, LK_NOWAIT, &mountlist_slock)) {
+		if (vfs_busy(mp, LK_NOWAIT, &mountlist_lock)) {
 			nmp = CIRCLEQ_NEXT(mp, mnt_list);
 			continue;
 		}
@@ -396,11 +396,11 @@ procfs_domounts(struct lwp *curl, struct proc *p,
 		memcpy(mtab + mtabsz, bf, len);
 		mtabsz += len;
 
-		simple_lock(&mountlist_slock);
+		mutex_exit(&mountlist_lock);
 		nmp = CIRCLEQ_NEXT(mp, mnt_list);
 		vfs_unbusy(mp);
 	}
-	simple_unlock(&mountlist_slock);
+	mutex_exit(&mountlist_lock);
 	free(bf, M_TEMP);
 
 	if (mtabsz > 0) {

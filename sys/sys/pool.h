@@ -1,4 +1,4 @@
-/*	$NetBSD: pool.h,v 1.55.6.1 2007/03/13 16:52:05 ad Exp $	*/
+/*	$NetBSD: pool.h,v 1.55.6.2 2007/03/13 17:51:18 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -49,7 +49,8 @@
 #endif
 
 #ifdef __POOL_EXPOSE
-#include <sys/lock.h>
+#include <sys/mutex.h>
+#include <sys/condvar.h>
 #include <sys/queue.h>
 #include <sys/time.h>
 #include <sys/tree.h>
@@ -86,7 +87,7 @@ struct pool_cache {
 	struct pool_cache_grouplist
 			pc_partgroups;	/* list of partial cache groups */
 	struct pool	*pc_pool;	/* parent pool */
-	struct simplelock pc_slock;	/* mutex */
+	kmutex_t	pc_lock;	/* mutex */
 
 	int		(*pc_ctor)(void *, void *, int);
 	void		(*pc_dtor)(void *, void *);
@@ -111,7 +112,7 @@ struct pool_allocator {
 	unsigned int	pa_pagesz;
 
 	/* The following fields are for internal use only. */
-	struct simplelock pa_slock;
+	kmutex_t	pa_lock;
 	TAILQ_HEAD(, pool) pa_list;	/* list of pools using this allocator */
 	int		pa_flags;
 #define	PA_INITIALIZED	0x01
@@ -173,7 +174,7 @@ struct pool {
 #define PR_NOALIGN	0x800	/* don't assume backend alignment */
 
 	/*
-	 * `pr_slock' protects the pool's data structures when removing
+	 * `pr_lock' protects the pool's data structures when removing
 	 * items from or returning items to the pool, or when reading
 	 * or updating read/write fields in the pool descriptor.
 	 *
@@ -181,7 +182,9 @@ struct pool {
 	 * scheme.  They will be called with the pool descriptor _unlocked_,
 	 * since the page allocators may block.
 	 */
-	struct simplelock	pr_slock;
+	kmutex_t	pr_lock;
+	kcondvar_t	pr_cv;
+	int		pr_ipl;
 
 	SPLAY_HEAD(phtree, pool_item_header) pr_phtree;
 

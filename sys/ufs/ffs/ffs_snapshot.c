@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.43 2007/03/04 06:03:43 christos Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.43.2.1 2007/03/13 17:51:20 ad Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.43 2007/03/04 06:03:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.43.2.1 2007/03/13 17:51:20 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -79,10 +79,10 @@ __KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.43 2007/03/04 06:03:43 christos E
 #define ufs2_daddr_t	int64_t
 #define ufs_lbn_t	daddr_t
 #define VI_MTX(v)	(&(v)->v_interlock)
-#define VI_LOCK(v)	simple_lock(&(v)->v_interlock)
-#define VI_UNLOCK(v)	simple_unlock(&(v)->v_interlock)
-#define MNT_ILOCK(v)	simple_lock(&mntvnode_slock)
-#define MNT_IUNLOCK(v)	simple_unlock(&mntvnode_slock)
+#define VI_LOCK(v)	mutex_enter(&(v)->v_interlock)
+#define VI_UNLOCK(v)	mutex_exit(&(v)->v_interlock)
+#define MNT_ILOCK(v)	mutex_enter(&mntvnode_lock)
+#define MNT_IUNLOCK(v)	mutex_exit(&mntvnode_lock)
 
 #if !defined(FFS_NO_SNAPSHOT)
 static int cgaccount(int, struct vnode *, void *, int);
@@ -649,7 +649,7 @@ out:
 	 * Clean all dirty buffers now to avoid UBC inconsistencies.
 	 */
 	if (!error) {
-		simple_lock(&vp->v_interlock);
+		mutex_enter(&vp->v_interlock);
 		error = VOP_PUTPAGES(vp, 0, 0,
 		    PGO_ALLPAGES|PGO_CLEANIT|PGO_SYNCIO|PGO_FREE);
 	}
@@ -657,7 +657,7 @@ out:
 		s = splbio();
 		for (bp = LIST_FIRST(&vp->v_dirtyblkhd); bp; bp = nbp) {
 			nbp = LIST_NEXT(bp, b_vnbufs);
-			simple_lock(&bp->b_interlock);
+			mutex_enter(&bp->b_interlock);
 			splx(s);
 			if ((bp->b_flags & (B_DELWRI|B_BUSY)) != B_DELWRI)
 				panic("ffs_snapshot: not dirty or busy, bp %p",
@@ -665,17 +665,17 @@ out:
 			bp->b_flags |= B_BUSY|B_VFLUSH;
 			if (LIST_FIRST(&bp->b_dep) == NULL)
 				bp->b_flags |= B_NOCACHE;
-			simple_unlock(&bp->b_interlock);
+			mutex_exit(&bp->b_interlock);
 			bwrite(bp);
 			s = splbio();
 		}
-		simple_lock(&global_v_numoutput_slock);
+		mutex_enter(&global_v_numoutput_lock);
 		while (vp->v_numoutput) {
 			vp->v_flag |= VBWAIT;
-			ltsleep((void *)&vp->v_numoutput, PRIBIO+1,
-			    "snapflushbuf", 0, &global_v_numoutput_slock);
+			mtsleep((void *)&vp->v_numoutput, PRIBIO+1,
+			    "snapflushbuf", 0, &global_v_numoutput_lock);
 		}
-		simple_unlock(&global_v_numoutput_slock);
+		mutex_exit(&global_v_numoutput_lock);
 		splx(s);
 	}
 	if (sbbuf)
@@ -2035,7 +2035,7 @@ readvnblk(struct vnode *vp, void *data, ufs2_daddr_t lbn)
 
 	if (bn != (daddr_t)-1) {
 		offset = dbtob(bn);
-		simple_lock(&vp->v_interlock);
+		mutex_enter(&vp->v_interlock);
 		error = VOP_PUTPAGES(vp, trunc_page(offset),
 		    round_page(offset+fs->fs_bsize),
 		    PGO_CLEANIT|PGO_SYNCIO|PGO_FREE);
@@ -2065,7 +2065,7 @@ writevnblk(struct vnode *vp, void *data, ufs2_daddr_t lbn)
 
 	offset = lblktosize(fs, (off_t)lbn);
 	s = cow_enter();
-	simple_lock(&vp->v_interlock);
+	mutex_enter(&vp->v_interlock);
 	error = VOP_PUTPAGES(vp, trunc_page(offset),
 	    round_page(offset+fs->fs_bsize), PGO_CLEANIT|PGO_SYNCIO|PGO_FREE);
 	if (error == 0)

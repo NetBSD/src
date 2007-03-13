@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.306 2007/03/10 16:50:01 dsl Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.306.2.1 2007/03/13 17:51:02 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.306 2007/03/10 16:50:01 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.306.2.1 2007/03/13 17:51:02 ad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -335,7 +335,7 @@ mount_domount(struct lwp *l, struct vnode *vp, const char *fstype,
 
 	TAILQ_INIT(&mp->mnt_vnodelist);
 	lockinit(&mp->mnt_lock, PVFS, "vfslock", 0, 0);
-	simple_lock_init(&mp->mnt_slock);
+	mutex_init(&mp->mnt_mutex, MUTEX_DEFAULT, IPL_NONE);
 	(void)vfs_busy(mp, LK_NOWAIT, 0);
 
 	mp->mnt_op->vfs_refcount++;
@@ -367,9 +367,9 @@ mount_domount(struct lwp *l, struct vnode *vp, const char *fstype,
 	if (!error) {
 		mp->mnt_iflag &= ~IMNT_WANTRDWR;
 		vp->v_mountedhere = mp;
-		simple_lock(&mountlist_slock);
+		mutex_enter(&mountlist_lock);
 		CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
-		simple_unlock(&mountlist_slock);
+		mutex_exit(&mountlist_lock);
 		VOP_UNLOCK(vp, 0);
 		checkdirs(vp);
 		if ((mp->mnt_flag & (MNT_RDONLY | MNT_ASYNC)) == 0)
@@ -601,7 +601,7 @@ dounmount(struct mount *mp, int flags, struct lwp *l)
 		return (error);
 #endif /* NVERIEXEC > 0 */
 
-	simple_lock(&mountlist_slock);
+	mutex_enter(&mountlist_lock);
 	vfs_unbusy(mp);
 	used_syncer = (mp->mnt_syncer != NULL);
 
@@ -624,7 +624,7 @@ dounmount(struct mount *mp, int flags, struct lwp *l)
 
 	mp->mnt_iflag |= IMNT_UNMOUNT;
 	mp->mnt_unmounter = l;
-	lockmgr(&mp->mnt_lock, LK_DRAIN | LK_INTERLOCK, &mountlist_slock);
+	lockmgr(&mp->mnt_lock, LK_DRAIN | LK_INTERLOCK, &mountlist_lock);
 	vn_start_write(NULL, &mp, V_WAIT);
 
 	async = mp->mnt_flag & MNT_ASYNC;
@@ -643,7 +643,7 @@ dounmount(struct mount *mp, int flags, struct lwp *l)
 	if (error == 0 || (flags & MNT_FORCE))
 		error = VFS_UNMOUNT(mp, flags, l);
 	vn_finished_write(mp, 0);
-	simple_lock(&mountlist_slock);
+	mutex_enter(&mountlist_lock);
 	if (error) {
 		if ((mp->mnt_flag & (MNT_RDONLY | MNT_ASYNC)) == 0)
 			(void) vfs_allocate_syncvnode(mp);
@@ -651,16 +651,16 @@ dounmount(struct mount *mp, int flags, struct lwp *l)
 		mp->mnt_unmounter = NULL;
 		mp->mnt_flag |= async;
 		lockmgr(&mp->mnt_lock, LK_RELEASE | LK_INTERLOCK | LK_REENABLE,
-		    &mountlist_slock);
+		    &mountlist_lock);
 		if (used_syncer)
 			mutex_exit(&syncer_mutex);
-		simple_lock(&mp->mnt_slock);
+		mutex_enter(&mp->mnt_mutex);
 		while (mp->mnt_wcnt > 0) {
 			wakeup(mp);
-			ltsleep(&mp->mnt_wcnt, PVFS, "mntwcnt1",
-				0, &mp->mnt_slock);
+			mtsleep(&mp->mnt_wcnt, PVFS, "mntwcnt1",
+				0, &mp->mnt_mutex);
 		}
-		simple_unlock(&mp->mnt_slock);
+		mutex_exit(&mp->mnt_mutex);
 		return (error);
 	}
 	CIRCLEQ_REMOVE(&mountlist, mp, mnt_list);
@@ -670,19 +670,20 @@ dounmount(struct mount *mp, int flags, struct lwp *l)
 	if (TAILQ_FIRST(&mp->mnt_vnodelist) != NULL)
 		panic("unmount: dangling vnode");
 	mp->mnt_iflag |= IMNT_GONE;
-	lockmgr(&mp->mnt_lock, LK_RELEASE | LK_INTERLOCK, &mountlist_slock);
+	lockmgr(&mp->mnt_lock, LK_RELEASE | LK_INTERLOCK, &mountlist_lock);
 	if (coveredvp != NULLVP)
 		vrele(coveredvp);
 	mount_finispecific(mp);
 	if (used_syncer)
 		mutex_exit(&syncer_mutex);
-	simple_lock(&mp->mnt_slock);
+	mutex_enter(&mp->mnt_mutex);
 	while (mp->mnt_wcnt > 0) {
 		wakeup(mp);
-		ltsleep(&mp->mnt_wcnt, PVFS, "mntwcnt2", 0, &mp->mnt_slock);
+		mtsleep(&mp->mnt_wcnt, PVFS, "mntwcnt2", 0, &mp->mnt_mutex);
 	}
-	simple_unlock(&mp->mnt_slock);
+	mutex_exit(&mp->mnt_mutex);
 	vfs_hooks_unmount(mp);
+	mutex_destroy(&mp->mnt_mutex);
 	free(mp, M_MOUNT);
 	return (0);
 }
@@ -705,9 +706,9 @@ sys_sync(struct lwp *l, void *v, register_t *retval)
 	if (l == NULL)
 		l = &lwp0;
 
-	simple_lock(&mountlist_slock);
+	mutex_enter(&mountlist_lock);
 	for (mp = mountlist.cqh_last; mp != (void *)&mountlist; mp = nmp) {
-		if (vfs_busy(mp, LK_NOWAIT, &mountlist_slock)) {
+		if (vfs_busy(mp, LK_NOWAIT, &mountlist_lock)) {
 			nmp = mp->mnt_list.cqe_prev;
 			continue;
 		}
@@ -720,12 +721,12 @@ sys_sync(struct lwp *l, void *v, register_t *retval)
 				 mp->mnt_flag |= MNT_ASYNC;
 			vn_finished_write(mp, 0);
 		}
-		simple_lock(&mountlist_slock);
+		mutex_enter(&mountlist_lock);
 		nmp = mp->mnt_list.cqe_prev;
 		vfs_unbusy(mp);
 
 	}
-	simple_unlock(&mountlist_slock);
+	mutex_exit(&mountlist_lock);
 #ifdef DEBUG
 	if (syncprt)
 		vfs_bufstats();
@@ -917,18 +918,18 @@ sys_getvfsstat(struct lwp *l, void *v, register_t *retval)
 	sb = STATVFSBUF_GET();
 	maxcount = SCARG(uap, bufsize) / sizeof(struct statvfs);
 	sfsp = SCARG(uap, buf);
-	simple_lock(&mountlist_slock);
+	mutex_enter(&mountlist_lock);
 	count = 0;
 	for (mp = CIRCLEQ_FIRST(&mountlist); mp != (void *)&mountlist;
 	     mp = nmp) {
-		if (vfs_busy(mp, LK_NOWAIT, &mountlist_slock)) {
+		if (vfs_busy(mp, LK_NOWAIT, &mountlist_lock)) {
 			nmp = CIRCLEQ_NEXT(mp, mnt_list);
 			continue;
 		}
 		if (sfsp && count < maxcount) {
 			error = dostatvfs(mp, sb, l, SCARG(uap, flags), 0);
 			if (error) {
-				simple_lock(&mountlist_slock);
+				mutex_enter(&mountlist_lock);
 				nmp = CIRCLEQ_NEXT(mp, mnt_list);
 				vfs_unbusy(mp);
 				continue;
@@ -942,11 +943,11 @@ sys_getvfsstat(struct lwp *l, void *v, register_t *retval)
 			root |= strcmp(sb->f_mntonname, "/") == 0;
 		}
 		count++;
-		simple_lock(&mountlist_slock);
+		mutex_enter(&mountlist_lock);
 		nmp = CIRCLEQ_NEXT(mp, mnt_list);
 		vfs_unbusy(mp);
 	}
-	simple_unlock(&mountlist_slock);
+	mutex_exit(&mountlist_lock);
 	if (root == 0 && p->p_cwdi->cwdi_rdir) {
 		/*
 		 * fake a root entry

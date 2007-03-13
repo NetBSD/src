@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lockf.c,v 1.58.2.1 2007/03/13 16:51:59 ad Exp $	*/
+/*	$NetBSD: vfs_lockf.c,v 1.58.2.2 2007/03/13 17:51:01 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lockf.c,v 1.58.2.1 2007/03/13 16:51:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lockf.c,v 1.58.2.2 2007/03/13 17:51:01 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -496,7 +496,7 @@ lf_getblock(struct lockf *lock)
  */
 static int
 lf_setlock(struct lockf *lock, struct lockf **sparelock,
-    struct simplelock *interlock)
+    kmutex_t *interlock)
 {
 	struct lockf *block;
 	struct lockf **head = lock->lf_head;
@@ -612,7 +612,7 @@ lf_setlock(struct lockf *lock, struct lockf **sparelock,
 			lf_printlist("lf_setlock", block);
 		}
 #endif /* LOCKF_DEBUG */
-		error = ltsleep(lock, priority, lockstr, 0, interlock);
+		error = mtsleep(lock, priority, lockstr, 0, interlock);
 
 		/*
 		 * We may have been awakened by a signal (in
@@ -802,7 +802,7 @@ lf_advlock(struct vop_advlock_args *ap, struct lockf **head, off_t size)
 	struct flock *fl = ap->a_fl;
 	struct lockf *lock = NULL;
 	struct lockf *sparelock;
-	struct simplelock *interlock = &ap->a_vp->v_interlock;
+	kmutex_t *interlock = &ap->a_vp->v_interlock;
 	off_t start, end;
 	int error = 0;
 
@@ -867,7 +867,7 @@ lf_advlock(struct vop_advlock_args *ap, struct lockf **head, off_t size)
 		goto quit;
 	}
 
-	simple_lock(interlock);
+	mutex_enter(interlock);
 
 	/*
 	 * Avoid the common case of unlocking when inode has no locks.
@@ -929,7 +929,7 @@ lf_advlock(struct vop_advlock_args *ap, struct lockf **head, off_t size)
 	}
 
 quit_unlock:
-	simple_unlock(interlock);
+	mutex_exit(interlock);
 quit:
 	if (lock)
 		lf_free(lock);

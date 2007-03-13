@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vfsops.c,v 1.28.6.1 2007/03/13 16:51:36 ad Exp $	*/
+/*	$NetBSD: puffs_vfsops.c,v 1.28.6.2 2007/03/13 17:50:48 ad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.28.6.1 2007/03/13 16:51:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.28.6.2 2007/03/13 17:50:48 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -455,23 +455,23 @@ pageflush(struct mount *mp, int waitfor, int suspending)
 	 * for the fs server, which should handle data and metadata for
 	 * all the nodes it knows to exist.
 	 */
-	simple_lock(&mntvnode_slock);
+	mutex_enter(&mntvnode_lock);
  loop:
 	for (vp = TAILQ_FIRST(&mp->mnt_vnodelist); vp; vp = nvp) {
 		/* check if we're on the right list */
 		if (vp->v_mount != mp)
 			goto loop;
 
-		simple_lock(&vp->v_interlock);
+		mutex_enter(&vp->v_interlock);
 		pn = VPTOPP(vp);
 		nvp = TAILQ_NEXT(vp, v_mntvnodes);
 
 		if (vp->v_type != VREG || UVM_OBJ_IS_CLEAN(&vp->v_uobj)) {
-			simple_unlock(&vp->v_interlock);
+			mutex_exit(&vp->v_interlock);
 			continue;
 		}
 
-		simple_unlock(&mntvnode_slock);
+		mutex_exit(&mntvnode_lock);
 
 		/*
 		 * Here we try to get a reference to the vnode and to
@@ -493,7 +493,7 @@ pageflush(struct mount *mp, int waitfor, int suspending)
 		 */
 		rv = vget(vp, LK_EXCLUSIVE | LK_NOWAIT | LK_INTERLOCK);
 		if (rv) {
-			simple_lock(&mntvnode_slock);
+			mutex_enter(&mntvnode_lock);
 			if (rv == ENOENT)
 				goto loop;
 			continue;
@@ -520,21 +520,21 @@ pageflush(struct mount *mp, int waitfor, int suspending)
 		 * storage.
 		 * TODO: Maybe also hint the user server of this twist?
 		 */
-		simple_lock(&vp->v_interlock);
+		mutex_enter(&vp->v_interlock);
 		if (suspending || waitfor == MNT_LAZY)
 			pn->pn_stat |= PNODE_SUSPEND;
 		rv = VOP_PUTPAGES(vp, 0, 0, ppflags);
 		if (suspending || waitfor == MNT_LAZY) {
-			simple_lock(&vp->v_interlock);
+			mutex_enter(&vp->v_interlock);
 			pn->pn_stat &= ~PNODE_SUSPEND;
-			simple_unlock(&vp->v_interlock);
+			mutex_exit(&vp->v_interlock);
 		}
 		if (rv)
 			error = rv;
 		vput(vp);
-		simple_lock(&mntvnode_slock);
+		mutex_enter(&mntvnode_lock);
 	}
-	simple_unlock(&mntvnode_slock);
+	mutex_exit(&mntvnode_lock);
 
 	return error;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.148.2.1 2007/03/13 16:52:03 ad Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.148.2.2 2007/03/13 17:51:13 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.148.2.1 2007/03/13 16:52:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.148.2.2 2007/03/13 17:51:13 ad Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -1797,7 +1797,7 @@ nfs_rcvlock(rep)
 		slpflag = PCATCH;
 	else
 		slpflag = 0;
-	simple_lock(&nmp->nm_slock);
+	mutex_enter(&nmp->nm_lock);
 	while (*flagp & NFSMNT_RCVLOCK) {
 		if (nfs_sigintr(rep->r_nmp, rep, rep->r_lwp)) {
 			error = EINTR;
@@ -1805,8 +1805,8 @@ nfs_rcvlock(rep)
 		}
 		*flagp |= NFSMNT_WANTRCV;
 		nmp->nm_waiters++;
-		(void) ltsleep(flagp, slpflag | (PZERO - 1), "nfsrcvlk",
-			slptimeo, &nmp->nm_slock);
+		(void) mtsleep(flagp, slpflag | (PZERO - 1), "nfsrcvlk",
+			slptimeo, &nmp->nm_lock);
 		nmp->nm_waiters--;
 		if (*flagp & NFSMNT_DISMNT) {
 			wakeup(&nmp->nm_waiters);
@@ -1829,7 +1829,7 @@ nfs_rcvlock(rep)
 	}
 	*flagp |= NFSMNT_RCVLOCK;
 quit:
-	simple_unlock(&nmp->nm_slock);
+	mutex_exit(&nmp->nm_lock);
 	return error;
 }
 
@@ -1842,7 +1842,7 @@ nfs_rcvunlock(nmp)
 {
 	int *flagp = &nmp->nm_iflag;
 
-	simple_lock(&nmp->nm_slock);
+	mutex_enter(&nmp->nm_lock);
 	if ((*flagp & NFSMNT_RCVLOCK) == 0)
 		panic("nfs rcvunlock");
 	*flagp &= ~NFSMNT_RCVLOCK;
@@ -1850,7 +1850,7 @@ nfs_rcvunlock(nmp)
 		*flagp &= ~NFSMNT_WANTRCV;
 		wakeup((void *)flagp);
 	}
-	simple_unlock(&nmp->nm_slock);
+	mutex_exit(&nmp->nm_lock);
 }
 
 /*

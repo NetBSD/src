@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.61.2.1 2007/03/13 16:51:53 ad Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.61.2.2 2007/03/13 17:50:53 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -204,7 +204,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.61.2.1 2007/03/13 16:51:53 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.61.2.2 2007/03/13 17:50:53 ad Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -542,8 +542,10 @@ newlwp(struct lwp *l1, struct proc *p2, vaddr_t uaddr, bool inmem,
 		*rnewlwpp = l2;
 
 	l2->l_addr = UAREA_TO_USER(uaddr);
+	KERNEL_LOCK(1, curlwp);
 	uvm_lwp_fork(l1, l2, stack, stacksize, func,
 	    (arg != NULL) ? arg : l2);
+	KERNEL_UNLOCK_ONE(curlwp);
 
 	mutex_enter(&p2->p_smutex);
 
@@ -779,7 +781,6 @@ lwp_free(struct lwp *l, int recycle, int last)
 	 *
 	 * We don't recycle the VM resources at this time.
 	 */
-	KERNEL_LOCK(1, curlwp);		/* XXXSMP */
 	if (!recycle && l->l_ts != &turnstile0)
 		pool_cache_put(&turnstile_cache, l->l_ts);
 #ifndef __NO_CPU_LWP_FREE
@@ -790,7 +791,6 @@ lwp_free(struct lwp *l, int recycle, int last)
 	KASSERT(l->l_inheritedprio == MAXPRI);
 	if (!recycle)
 		pool_put(&lwp_pool, l);
-	KERNEL_UNLOCK_ONE(curlwp);	/* XXXSMP */
 }
 
 /*
@@ -951,11 +951,8 @@ lwp_update_creds(struct lwp *l)
 	kauth_cred_hold(p->p_cred);
 	l->l_cred = p->p_cred;
 	mutex_exit(&p->p_mutex);
-	if (oc != NULL) {
-		KERNEL_LOCK(1, l);	/* XXXSMP */
+	if (oc != NULL)
 		kauth_cred_free(oc);
-		KERNEL_UNLOCK_ONE(l);	/* XXXSMP */
-	}
 }
 
 /*

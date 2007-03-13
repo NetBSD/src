@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.168 2007/03/06 16:09:21 drochner Exp $
+	$NetBSD: syscalls.master,v 1.168.2.1 2007/03/13 17:51:00 ad Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -638,7 +638,7 @@
 				size_t len); }
 307	STD		{ int sys_getcontext(struct __ucontext *ucp); }
 308	STD		{ int sys_setcontext(const struct __ucontext *ucp); }
-309	STD		{ int sys__lwp_create(const struct __ucontext *ucp, \
+309	STD MPSAFE	{ int sys__lwp_create(const struct __ucontext *ucp, \
 				u_long flags, lwpid_t *new_lwp); }
 310	STD		{ int sys__lwp_exit(void); }
 311	STD MPSAFE	{ lwpid_t sys__lwp_self(void); }

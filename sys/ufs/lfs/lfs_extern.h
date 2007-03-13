@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_extern.h,v 1.88 2007/03/04 06:03:45 christos Exp $	*/
+/*	$NetBSD: lfs_extern.h,v 1.88.2.1 2007/03/13 17:51:23 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -120,8 +120,10 @@ extern int locked_queue_count;
 extern long locked_queue_bytes;
 extern int lfs_subsys_pages;
 extern int lfs_dirvcount;
-extern struct simplelock lfs_subsys_lock;
+extern kmutex_t lfs_subsys_lock;
 extern int lfs_debug_log_subsys[];
+extern kcondvar_t lfs_writing_cv;
+extern kcondvar_t locked_queue_cv;
 
 __BEGIN_DECLS
 /* lfs_alloc.c */

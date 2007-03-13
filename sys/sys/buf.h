@@ -1,4 +1,4 @@
-/*     $NetBSD: buf.h,v 1.95 2007/03/04 06:03:40 christos Exp $ */
+/*     $NetBSD: buf.h,v 1.95.2.1 2007/03/13 17:51:18 ad Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -78,7 +78,8 @@
 
 #include <sys/pool.h>
 #include <sys/queue.h>
-#include <sys/lock.h>
+#include <sys/mutex.h>
+#include <sys/condvar.h>
 #if defined(_KERNEL)
 #include <sys/workqueue.h>
 #endif /* defined(_KERNEL) */
@@ -125,7 +126,8 @@ struct buf {
 	} b_u;
 #define	b_actq	b_u.u_actq
 #define	b_work	b_u.u_work
-	struct simplelock b_interlock;	/* Lock for b_flags changes */
+	kmutex_t b_interlock;		/* Lock for b_flags changes */
+	kcondvar_t b_cv;		/* For signalling */
 	volatile int b_flags;		/* B_* flags. */
 	int	b_error;		/* Errno value. */
 	int	b_prio;			/* Hint for buffer queue discipline. */
@@ -173,9 +175,16 @@ struct buf {
 #define	BUF_INIT(bp)							\
 do {									\
 	LIST_INIT(&(bp)->b_dep);					\
-	simple_lock_init(&(bp)->b_interlock);				\
+	mutex_init(&(bp)->b_interlock, MUTEX_DRIVER, IPL_BIO);		\
+	cv_init(&(bp)->b_cv, "bufwait");				\
 	(bp)->b_dev = NODEV;						\
 	BIO_SETPRIO((bp), BPRIO_DEFAULT);				\
+} while (/*CONSTCOND*/0)
+
+#define	BUF_DESTROY(bp)							\
+do {									\
+	mutex_destroy(&(bp)->b_interlock);				\
+	cv_destroy(&(bp)->b_cv);					\
 } while (/*CONSTCOND*/0)
 
 /*

@@ -1,4 +1,4 @@
-/*	 $NetBSD: nfsnode.h,v 1.61 2007/02/15 16:01:51 yamt Exp $	*/
+/*	 $NetBSD: nfsnode.h,v 1.61.6.1 2007/03/13 17:51:17 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -216,7 +216,7 @@ LIST_HEAD(nfsnodehashhead, nfsnode);
  * Per-nfsiod datas
  */
 struct nfs_iod {
-	struct simplelock nid_slock;
+	kmutex_t nid_lock;
 	struct proc *nid_proc;
 	struct proc *nid_want;
 	struct nfsmount *nid_mount;

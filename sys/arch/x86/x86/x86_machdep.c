@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.8 2007/03/01 11:49:26 yamt Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.8.2.1 2007/03/13 17:50:25 ad Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.8 2007/03/01 11:49:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.8.2.1 2007/03/13 17:50:25 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -45,6 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.8 2007/03/01 11:49:26 yamt Exp $")
 #include <sys/kcore.h>
 #include <sys/errno.h>
 #include <sys/kauth.h>
+#include <sys/mutex.h>
 
 #include <machine/bootinfo.h>
 #include <machine/vmparam.h>

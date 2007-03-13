@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.201 2007/03/04 06:03:46 christos Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.201.2.1 2007/03/13 17:51:51 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.201 2007/03/04 06:03:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.201.2.1 2007/03/13 17:51:51 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -290,9 +290,9 @@ lfs_fsync(void *v)
 	 * activity from the pagedaemon.
 	 */
 	if (ap->a_flags & FSYNC_LAZY) {
-		simple_lock(&lfs_subsys_lock);
+		mutex_enter(&lfs_subsys_lock);
 		wakeup(&lfs_writer_daemon);
-		simple_unlock(&lfs_subsys_lock);
+		mutex_exit(&lfs_subsys_lock);
 		return 0;
 	}
 
@@ -307,7 +307,7 @@ lfs_fsync(void *v)
 	}
 
 	wait = (ap->a_flags & FSYNC_WAIT);
-	simple_lock(&vp->v_interlock);
+	mutex_enter(&vp->v_interlock);
 	error = VOP_PUTPAGES(vp, trunc_page(ap->a_offlo),
 			round_page(ap->a_offhi),
 			PGO_CLEANIT | (wait ? PGO_SYNCIO : 0));
@@ -319,8 +319,11 @@ lfs_fsync(void *v)
 		error = VOP_IOCTL(VTOI(vp)->i_devvp, DIOCCACHESYNC, &l, FWRITE,
 				  ap->a_l->l_cred, ap->a_l);
 	}
-	if (wait && !VPISEMPTY(vp))
+	if (wait && !VPISEMPTY(vp)) {
+		mutex_enter(&VTOI(vp)->i_lfs->lfs_interlock);
 		LFS_SET_UINO(VTOI(vp), IN_MODIFIED);
+		mutex_exit(&VTOI(vp)->i_lfs->lfs_interlock);
+	}
 
 	return error;
 }
@@ -345,7 +348,9 @@ lfs_inactive(void *v)
 	 * Streamline this process by not giving it more dirty blocks.
 	 */
 	if (VTOI(ap->a_vp)->i_number == LFS_IFILE_INUM) {
+		mutex_enter(&VTOI(ap->a_vp)->i_lfs->lfs_interlock);
 		LFS_CLR_UINO(VTOI(ap->a_vp), IN_ALLMOD);
+		mutex_exit(&VTOI(ap->a_vp)->i_lfs->lfs_interlock);
 		VOP_UNLOCK(ap->a_vp, 0);
 		return 0;
 	}
@@ -391,45 +396,45 @@ lfs_set_dirop(struct vnode *dvp, struct vnode *vp)
 		return (error);
 
     restart:
-	simple_lock(&fs->lfs_interlock);
+	mutex_enter(&fs->lfs_interlock);
 	if (fs->lfs_dirops == 0) {
-		simple_unlock(&fs->lfs_interlock);
+		mutex_exit(&fs->lfs_interlock);
 		lfs_check(dvp, LFS_UNUSED_LBN, 0);
-		simple_lock(&fs->lfs_interlock);
+		mutex_enter(&fs->lfs_interlock);
 	}
 	while (fs->lfs_writer) {
-		error = ltsleep(&fs->lfs_dirops, (PRIBIO + 1) | PCATCH,
+		error = mtsleep(&fs->lfs_dirops, (PRIBIO + 1) | PCATCH,
 				"lfs_sdirop", 0, &fs->lfs_interlock);
 		if (error == EINTR) {
-			simple_unlock(&fs->lfs_interlock);
+			mutex_exit(&fs->lfs_interlock);
 			goto unreserve;
 		}
 	}
-	simple_lock(&lfs_subsys_lock);
+	mutex_enter(&lfs_subsys_lock);
 	if (lfs_dirvcount > LFS_MAX_DIROP && fs->lfs_dirops == 0) {
 		wakeup(&lfs_writer_daemon);
-		simple_unlock(&lfs_subsys_lock);
-		simple_unlock(&fs->lfs_interlock);
+		mutex_exit(&lfs_subsys_lock);
+		mutex_exit(&fs->lfs_interlock);
 		preempt();
 		goto restart;
 	}
 
 	if (lfs_dirvcount > LFS_MAX_DIROP) {
-		simple_unlock(&fs->lfs_interlock);
+		mutex_exit(&fs->lfs_interlock);
 		DLOG((DLOG_DIROP, "lfs_set_dirop: sleeping with dirops=%d, "
 		      "dirvcount=%d\n", fs->lfs_dirops, lfs_dirvcount));
-		if ((error = ltsleep(&lfs_dirvcount,
+		if ((error = mtsleep(&lfs_dirvcount,
 		    PCATCH | PUSER | PNORELOCK, "lfs_maxdirop", 0,
 		    &lfs_subsys_lock)) != 0) {
 			goto unreserve;
 		}
 		goto restart;
 	}
-	simple_unlock(&lfs_subsys_lock);
+	mutex_exit(&lfs_subsys_lock);
 
 	++fs->lfs_dirops;
 	fs->lfs_doifile = 1;
-	simple_unlock(&fs->lfs_interlock);
+	mutex_exit(&fs->lfs_interlock);
 
 	/* Hold a reference so SET_ENDOP will be happy */
 	vref(dvp);
@@ -481,7 +486,7 @@ lfs_set_dirop_create(struct vnode *dvp, struct vnode **vpp)
 
 #define	SET_ENDOP_BASE(fs, dvp, str)					\
 	do {								\
-		simple_lock(&(fs)->lfs_interlock);			\
+		mutex_enter(&(fs)->lfs_interlock);			\
 		--(fs)->lfs_dirops;					\
 		if (!(fs)->lfs_dirops) {				\
 			if ((fs)->lfs_nadirop) {			\
@@ -490,10 +495,10 @@ lfs_set_dirop_create(struct vnode *dvp, struct vnode **vpp)
 					(fs)->lfs_nadirop);		\
 			}						\
 			wakeup(&(fs)->lfs_writer);			\
-			simple_unlock(&(fs)->lfs_interlock);		\
+			mutex_exit(&(fs)->lfs_interlock);		\
 			lfs_check((dvp), LFS_UNUSED_LBN, 0);		\
 		} else							\
-			simple_unlock(&(fs)->lfs_interlock);		\
+			mutex_exit(&(fs)->lfs_interlock);		\
 	} while(0)
 #define SET_ENDOP_CREATE(fs, dvp, nvpp, str)				\
 	do {								\
@@ -528,14 +533,14 @@ lfs_mark_vnode(struct vnode *vp)
 	struct inode *ip = VTOI(vp);
 	struct lfs *fs = ip->i_lfs;
 
-	simple_lock(&fs->lfs_interlock);
+	mutex_enter(&fs->lfs_interlock);
 	if (!(ip->i_flag & IN_ADIROP)) {
 		if (!(vp->v_flag & VDIROP)) {
 			(void)lfs_vref(vp);
-			simple_lock(&lfs_subsys_lock);
+			mutex_enter(&lfs_subsys_lock);
 			++lfs_dirvcount;
 			++fs->lfs_dirvcount;
-			simple_unlock(&lfs_subsys_lock);
+			mutex_exit(&lfs_subsys_lock);
 			TAILQ_INSERT_TAIL(&fs->lfs_dchainhd, ip, i_lfs_dchain);
 			vp->v_flag |= VDIROP;
 		}
@@ -543,7 +548,7 @@ lfs_mark_vnode(struct vnode *vp)
 		ip->i_flag |= IN_ADIROP;
 	} else
 		KASSERT(vp->v_flag & VDIROP);
-	simple_unlock(&fs->lfs_interlock);
+	mutex_exit(&fs->lfs_interlock);
 }
 
 void
@@ -553,9 +558,9 @@ lfs_unmark_vnode(struct vnode *vp)
 
 	if (ip && (ip->i_flag & IN_ADIROP)) {
 		KASSERT(vp->v_flag & VDIROP);
-		simple_lock(&ip->i_lfs->lfs_interlock);
+		mutex_enter(&ip->i_lfs->lfs_interlock);
 		--ip->i_lfs->lfs_nadirop;
-		simple_unlock(&ip->i_lfs->lfs_interlock);
+		mutex_exit(&ip->i_lfs->lfs_interlock);
 		ip->i_flag &= ~IN_ADIROP;
 	}
 }
@@ -954,10 +959,11 @@ lfs_setattr(void *v)
 static int
 lfs_wrapgo(struct lfs *fs, struct inode *ip, int waitfor)
 {
-	if (lockstatus(&fs->lfs_stoplock) != LK_EXCLUSIVE)
+	if (fs->lfs_stoplwp != curlwp)
 		return EBUSY;
 
-	lockmgr(&fs->lfs_stoplock, LK_RELEASE, &fs->lfs_interlock);
+	fs->lfs_stoplwp = NULL;
+	cv_signal(&fs->lfs_stopcv);
 
 	KASSERT(fs->lfs_nowrap > 0);
 	if (fs->lfs_nowrap <= 0) {
@@ -970,7 +976,7 @@ lfs_wrapgo(struct lfs *fs, struct inode *ip, int waitfor)
 		lfs_wakeup_cleaner(fs);
 	}
 	if (waitfor) {
-		ltsleep(&fs->lfs_nextseg, PCATCH | PUSER,
+		mtsleep(&fs->lfs_nextseg, PCATCH | PUSER,
 			"segment", 0, &fs->lfs_interlock);
 	}
 
@@ -995,11 +1001,11 @@ lfs_close(void *v)
 	struct lfs *fs = ip->i_lfs;
 
 	if ((ip->i_number == ROOTINO || ip->i_number == LFS_IFILE_INUM) &&
-	    lockstatus(&fs->lfs_stoplock) == LK_EXCLUSIVE) {
-		simple_lock(&fs->lfs_interlock);
+	    fs->lfs_stoplwp == curlwp) {
+		mutex_enter(&fs->lfs_interlock);
 		log(LOG_NOTICE, "lfs_close: releasing log wrap control\n");
 		lfs_wrapgo(fs, ip, 0);
-		simple_unlock(&fs->lfs_interlock);
+		mutex_exit(&fs->lfs_interlock);
 	}
 
 	if (vp == ip->i_lfs->lfs_ivnode &&
@@ -1079,7 +1085,9 @@ lfs_reclaim(void *v)
 
 	KASSERT(ip->i_nlink == ip->i_ffs_effnlink);
 
+	mutex_enter(&ip->i_lfs->lfs_interlock);
 	LFS_CLR_UINO(ip, IN_ALLMOD);
+	mutex_exit(&ip->i_lfs->lfs_interlock);
 	if ((error = ufs_reclaim(vp, ap->a_l)))
 		return (error);
 	pool_put(&lfs_dinode_pool, ip->i_din.ffs1_din);
@@ -1147,9 +1155,9 @@ lfs_strategy(void *v)
 	}
 
 	slept = 1;
-	simple_lock(&fs->lfs_interlock);
+	mutex_enter(&fs->lfs_interlock);
 	while (slept && fs->lfs_seglock) {
-		simple_unlock(&fs->lfs_interlock);
+		mutex_exit(&fs->lfs_interlock);
 		/*
 		 * Look through list of intervals.
 		 * There will only be intervals to look through
@@ -1173,29 +1181,29 @@ lfs_strategy(void *v)
 				DLOG((DLOG_CLEAN,
 				      "lfs_strategy: sleeping on ino %d lbn %"
 				      PRId64 "\n", ip->i_number, bp->b_lblkno));
-				simple_lock(&fs->lfs_interlock);
+				mutex_enter(&fs->lfs_interlock);
 				if (LFS_SEGLOCK_HELD(fs) && fs->lfs_iocount) {
 					/* Cleaner can't wait for itself */
-					ltsleep(&fs->lfs_iocount,
+					mtsleep(&fs->lfs_iocount,
 						(PRIBIO + 1) | PNORELOCK,
 						"clean2", 0,
 						&fs->lfs_interlock);
 					slept = 1;
 					break;
 				} else if (fs->lfs_seglock) {
-					ltsleep(&fs->lfs_seglock,
+					mtsleep(&fs->lfs_seglock,
 						(PRIBIO + 1) | PNORELOCK,
 						"clean1", 0,
 						&fs->lfs_interlock);
 					slept = 1;
 					break;
 				}
-				simple_unlock(&fs->lfs_interlock);
+				mutex_exit(&fs->lfs_interlock);
 			}
 		}
-		simple_lock(&fs->lfs_interlock);
+		mutex_enter(&fs->lfs_interlock);
 	}
-	simple_unlock(&fs->lfs_interlock);
+	mutex_exit(&fs->lfs_interlock);
 
 	vp = ip->i_devvp;
 	VOP_STRATEGY(vp, bp);
@@ -1217,12 +1225,12 @@ lfs_flush_dirops(struct lfs *fs)
 	if (fs->lfs_ronly)
 		return;
 
-	simple_lock(&fs->lfs_interlock);
+	mutex_enter(&fs->lfs_interlock);
 	if (TAILQ_FIRST(&fs->lfs_dchainhd) == NULL) {
-		simple_unlock(&fs->lfs_interlock);
+		mutex_exit(&fs->lfs_interlock);
 		return;
 	} else
-		simple_unlock(&fs->lfs_interlock);
+		mutex_exit(&fs->lfs_interlock);
 
 	if (lfs_dostats)
 		++lfs_stats.flush_invoked;
@@ -1249,10 +1257,10 @@ lfs_flush_dirops(struct lfs *fs)
 	 * no dirops are active.
 	 *
 	 */
-	simple_lock(&fs->lfs_interlock);
+	mutex_enter(&fs->lfs_interlock);
 	for (ip = TAILQ_FIRST(&fs->lfs_dchainhd); ip != NULL; ip = nip) {
 		nip = TAILQ_NEXT(ip, i_lfs_dchain);
-		simple_unlock(&fs->lfs_interlock);
+		mutex_exit(&fs->lfs_interlock);
 		vp = ITOV(ip);
 
 		KASSERT((ip->i_flag & IN_ADIROP) == 0);
@@ -1268,7 +1276,7 @@ lfs_flush_dirops(struct lfs *fs)
 		 * unnecessarily.
 		 */
 		if (vp->v_flag & (VXLOCK | VFREEING)) {
-			simple_lock(&fs->lfs_interlock);
+			mutex_enter(&fs->lfs_interlock);
 			continue;
 		}
 		waslocked = VOP_ISLOCKED(vp);
@@ -1277,16 +1285,18 @@ lfs_flush_dirops(struct lfs *fs)
 			lfs_writefile(fs, sp, vp);
 			if (!VPISEMPTY(vp) && !WRITEINPROG(vp) &&
 			    !(ip->i_flag & IN_ALLMOD)) {
+			    	mutex_enter(&fs->lfs_interlock);
 				LFS_SET_UINO(ip, IN_MODIFIED);
+			    	mutex_exit(&fs->lfs_interlock);
 			}
 		}
 		KDASSERT(ip->i_number != LFS_IFILE_INUM);
 		(void) lfs_writeinode(fs, sp, ip);
+		mutex_enter(&fs->lfs_interlock);
 		if (waslocked == LK_EXCLOTHER)
 			LFS_SET_UINO(ip, IN_MODIFIED);
-		simple_lock(&fs->lfs_interlock);
 	}
-	simple_unlock(&fs->lfs_interlock);
+	mutex_exit(&fs->lfs_interlock);
 	/* We've written all the dirops there are */
 	((SEGSUM *)(sp->segsum))->ss_flags &= ~(SS_CONT);
 	lfs_finalize_fs_seguse(fs);
@@ -1315,12 +1325,12 @@ lfs_flush_pchain(struct lfs *fs)
 	if (fs->lfs_ronly)
 		return;
 
-	simple_lock(&fs->lfs_interlock);
+	mutex_enter(&fs->lfs_interlock);
 	if (TAILQ_FIRST(&fs->lfs_pchainhd) == NULL) {
-		simple_unlock(&fs->lfs_interlock);
+		mutex_exit(&fs->lfs_interlock);
 		return;
 	} else
-		simple_unlock(&fs->lfs_interlock);
+		mutex_exit(&fs->lfs_interlock);
 
 	/* Get dirops out of the way */
 	lfs_flush_dirops(fs);
@@ -1341,7 +1351,7 @@ lfs_flush_pchain(struct lfs *fs)
 	 * We're very conservative about what we write; we want to be
 	 * fast and async.
 	 */
-	simple_lock(&fs->lfs_interlock);
+	mutex_enter(&fs->lfs_interlock);
     top:
 	for (ip = TAILQ_FIRST(&fs->lfs_pchainhd); ip != NULL; ip = nip) {
 		nip = TAILQ_NEXT(ip, i_lfs_pchain);
@@ -1356,18 +1366,20 @@ lfs_flush_pchain(struct lfs *fs)
 			continue;
 		if (lfs_vref(vp))
 			continue;
-		simple_unlock(&fs->lfs_interlock);
+		mutex_exit(&fs->lfs_interlock);
 
 		if (VOP_ISLOCKED(vp)) {
 			lfs_vunref(vp);
-			simple_lock(&fs->lfs_interlock);
+			mutex_enter(&fs->lfs_interlock);
 			continue;
 		}
 
 		error = lfs_writefile(fs, sp, vp);
 		if (!VPISEMPTY(vp) && !WRITEINPROG(vp) &&
 		    !(ip->i_flag & IN_ALLMOD)) {
+		    	mutex_enter(&fs->lfs_interlock);
 			LFS_SET_UINO(ip, IN_MODIFIED);
+		    	mutex_exit(&fs->lfs_interlock);
 		}
 		KDASSERT(ip->i_number != LFS_IFILE_INUM);
 		(void) lfs_writeinode(fs, sp, ip);
@@ -1376,12 +1388,12 @@ lfs_flush_pchain(struct lfs *fs)
 
 		if (error == EAGAIN) {
 			lfs_writeseg(fs, sp);
-			simple_lock(&fs->lfs_interlock);
+			mutex_enter(&fs->lfs_interlock);
 			break;
 		}
-		simple_lock(&fs->lfs_interlock);
+		mutex_enter(&fs->lfs_interlock);
 	}
-	simple_unlock(&fs->lfs_interlock);
+	mutex_exit(&fs->lfs_interlock);
 	(void) lfs_writeseg(fs, sp);
 	lfs_segunlock(fs);
 }
@@ -1444,16 +1456,16 @@ lfs_fcntl(void *v)
 	    case LFCNSEGWAIT:
 	    case LFCNSEGWAIT_COMPAT:
 		tvp = (struct timeval *)ap->a_data;
-		simple_lock(&fs->lfs_interlock);
+		mutex_enter(&fs->lfs_interlock);
 		++fs->lfs_sleepers;
-		simple_unlock(&fs->lfs_interlock);
+		mutex_exit(&fs->lfs_interlock);
 
 		error = lfs_segwait(fsidp, tvp);
 
-		simple_lock(&fs->lfs_interlock);
+		mutex_enter(&fs->lfs_interlock);
 		if (--fs->lfs_sleepers == 0)
 			wakeup(&fs->lfs_sleepers);
-		simple_unlock(&fs->lfs_interlock);
+		mutex_exit(&fs->lfs_interlock);
 		return error;
 
 	    case LFCNBMAPV:
@@ -1470,9 +1482,9 @@ lfs_fcntl(void *v)
 			return error;
 		}
 
-		simple_lock(&fs->lfs_interlock);
+		mutex_enter(&fs->lfs_interlock);
 		++fs->lfs_sleepers;
-		simple_unlock(&fs->lfs_interlock);
+		mutex_exit(&fs->lfs_interlock);
 		if (ap->a_command == LFCNBMAPV)
 			error = lfs_bmapv(l->l_proc, fsidp, blkiov, blkcnt);
 		else /* LFCNMARKV */
@@ -1480,10 +1492,10 @@ lfs_fcntl(void *v)
 		if (error == 0)
 			error = copyout(blkiov, blkvp.blkiov,
 					blkcnt * sizeof(BLOCK_INFO));
-		simple_lock(&fs->lfs_interlock);
+		mutex_enter(&fs->lfs_interlock);
 		if (--fs->lfs_sleepers == 0)
 			wakeup(&fs->lfs_sleepers);
-		simple_unlock(&fs->lfs_interlock);
+		mutex_exit(&fs->lfs_interlock);
 		lfs_free(fs, blkiov, LFS_NB_BLKIOV);
 		return error;
 
@@ -1565,25 +1577,27 @@ lfs_fcntl(void *v)
 		 * a snapshot of the filesystem, without necessarily
 		 * requiring that all fs activity stops.
 		 */
-		if (lockstatus(&fs->lfs_stoplock))
+		if (fs->lfs_stoplwp == curlwp)
 			return EALREADY;
 
-		simple_lock(&fs->lfs_interlock);
-		lockmgr(&fs->lfs_stoplock, LK_EXCLUSIVE, &fs->lfs_interlock);
+		mutex_enter(&fs->lfs_interlock);
+		while (fs->lfs_stoplwp != NULL)
+			cv_wait(&fs->lfs_stopcv, &fs->lfs_interlock);
+		fs->lfs_stoplwp = curlwp;
 		if (fs->lfs_nowrap == 0)
 			log(LOG_NOTICE, "%s: disabled log wrap\n", fs->lfs_fsmnt);
 		++fs->lfs_nowrap;
 		if (*(int *)ap->a_data == 1 ||
 		    ap->a_command == LFCNWRAPSTOP_COMPAT) {
 			log(LOG_NOTICE, "LFCNSTOPWRAP waiting for log wrap\n");
-			error = ltsleep(&fs->lfs_nowrap, PCATCH | PUSER,
+			error = mtsleep(&fs->lfs_nowrap, PCATCH | PUSER,
 				"segwrap", 0, &fs->lfs_interlock);
 			log(LOG_NOTICE, "LFCNSTOPWRAP done waiting\n");
 			if (error) {
 				lfs_wrapgo(fs, VTOI(ap->a_vp), 0);
 			}
 		}
-		simple_unlock(&fs->lfs_interlock);
+		mutex_exit(&fs->lfs_interlock);
 		return 0;
 
 	    case LFCNWRAPGO:
@@ -1593,21 +1607,23 @@ lfs_fcntl(void *v)
 		 * If the argument is 1, it sleeps until a new segment
 		 * is selected.
 		 */
-		simple_lock(&fs->lfs_interlock);
+		mutex_enter(&fs->lfs_interlock);
 		error = lfs_wrapgo(fs, VTOI(ap->a_vp),
 				   (ap->a_command == LFCNWRAPGO_COMPAT ? 1 :
 				    *((int *)ap->a_data)));
-		simple_unlock(&fs->lfs_interlock);
+		mutex_exit(&fs->lfs_interlock);
 		return error;
 
 	    case LFCNWRAPPASS:
-		if (lockstatus(&fs->lfs_stoplock) != LK_EXCLUSIVE)
-			return EALREADY;
 		if ((VTOI(ap->a_vp)->i_lfs_iflags & LFSI_WRAPWAIT))
 			return EALREADY;
-		simple_lock(&fs->lfs_interlock);
+		mutex_enter(&fs->lfs_interlock);
+		if (fs->lfs_stoplwp != curlwp) {
+			mutex_exit(&fs->lfs_interlock);
+			return EALREADY;
+		}
 		if (fs->lfs_nowrap == 0) {
-			simple_unlock(&fs->lfs_interlock);
+			mutex_exit(&fs->lfs_interlock);
 			return EBUSY;
 		}
 		fs->lfs_wrappass = 1;
@@ -1617,19 +1633,19 @@ lfs_fcntl(void *v)
 			lfs_vref(ap->a_vp);
 			VTOI(ap->a_vp)->i_lfs_iflags |= LFSI_WRAPWAIT;
 			log(LOG_NOTICE, "LFCNPASS waiting for log wrap\n");
-			error = ltsleep(&fs->lfs_nowrap, PCATCH | PUSER,
+			error = mtsleep(&fs->lfs_nowrap, PCATCH | PUSER,
 				"segwrap", 0, &fs->lfs_interlock);
 			log(LOG_NOTICE, "LFCNPASS done waiting\n");
 			VTOI(ap->a_vp)->i_lfs_iflags &= ~LFSI_WRAPWAIT;
 			lfs_vunref(ap->a_vp);
 		}
-		simple_unlock(&fs->lfs_interlock);
+		mutex_exit(&fs->lfs_interlock);
 		return error;
 
 	    case LFCNWRAPSTATUS:
-		simple_lock(&fs->lfs_interlock);
+		mutex_enter(&fs->lfs_interlock);
 		*(int *)ap->a_data = fs->lfs_wrapstatus;
-		simple_unlock(&fs->lfs_interlock);
+		mutex_exit(&fs->lfs_interlock);
 		return 0;
 
 	    default:
@@ -1657,7 +1673,9 @@ lfs_getpages(void *v)
 		return EPERM;
 	}
 	if ((ap->a_access_type & VM_PROT_WRITE) != 0) {
+		mutex_enter(&VTOI(ap->a_vp)->i_lfs->lfs_interlock);
 		LFS_SET_UINO(VTOI(ap->a_vp), IN_MODIFIED);
+		mutex_exit(&VTOI(ap->a_vp)->i_lfs->lfs_interlock);
 	}
 
 	/*
@@ -1761,7 +1779,7 @@ check_dirty(struct lfs *fs, struct vnode *vp,
 				pg->flags |= PG_WANTED;
 				UVM_UNLOCK_AND_WAIT(pg, &vp->v_interlock, 0,
 						    "lfsput", 0);
-				simple_lock(&vp->v_interlock);
+				mutex_enter(&vp->v_interlock);
 				if (by_list) {
 					if (i > 0)
 						uvm_page_unbusy(pgs, i);
@@ -1804,9 +1822,9 @@ check_dirty(struct lfs *fs, struct vnode *vp,
 					 * Wire the page so that
 					 * pdaemon doesn't see it again.
 					 */
-					uvm_lock_pageq();
+					mutex_enter(&uvm_pageqlock);
 					uvm_pagewire(pg);
-					uvm_unlock_pageq();
+					mutex_exit(&uvm_pageqlock);
 
 					/* Suspended write flag */
 					pg->flags |= PG_DELWRI;
@@ -1901,7 +1919,7 @@ lfs_putpages(void *v)
 
 	/* Putpages does nothing for metadata. */
 	if (vp == fs->lfs_ivnode || vp->v_type != VREG) {
-		simple_unlock(&vp->v_interlock);
+		mutex_exit(&vp->v_interlock);
 		return 0;
 	}
 
@@ -1917,15 +1935,15 @@ lfs_putpages(void *v)
 			vn_syncer_remove_from_worklist(vp);
 		}
 		splx(s);
-		simple_unlock(&vp->v_interlock);
+		mutex_exit(&vp->v_interlock);
 		
 		/* Remove us from paging queue, if we were on it */
-		simple_lock(&fs->lfs_interlock);
+		mutex_enter(&fs->lfs_interlock);
 		if (ip->i_flags & IN_PAGING) {
 			ip->i_flags &= ~IN_PAGING;
 			TAILQ_REMOVE(&fs->lfs_pchainhd, ip, i_lfs_pchain);
 		}
-		simple_unlock(&fs->lfs_interlock);
+		mutex_exit(&fs->lfs_interlock);
 		return 0;
 	}
 
@@ -1947,15 +1965,15 @@ lfs_putpages(void *v)
 				pg->flags |= PG_WANTED;
 				UVM_UNLOCK_AND_WAIT(pg, &vp->v_interlock, 0,
 						    "lfsput2", 0);
-				simple_lock(&vp->v_interlock);
+				mutex_enter(&vp->v_interlock);
 			}
-			uvm_lock_pageq();
+			mutex_enter(&uvm_pageqlock);
 			uvm_pageactivate(pg);
-			uvm_unlock_pageq();
+			mutex_exit(&uvm_pageqlock);
 		}
 		ap->a_offlo = blkeof;
 		if (ap->a_offhi > 0 && ap->a_offhi <= ap->a_offlo) {
-			simple_unlock(&vp->v_interlock);
+			mutex_exit(&vp->v_interlock);
 			return 0;
 		}
 	}
@@ -1981,7 +1999,7 @@ lfs_putpages(void *v)
 	KASSERT(startoffset > 0 || endoffset >= startoffset);
 	if (startoffset == endoffset) {
 		/* Nothing to do, why were we called? */
-		simple_unlock(&vp->v_interlock);
+		mutex_exit(&vp->v_interlock);
 		DLOG((DLOG_PAGE, "lfs_putpages: startoffset = endoffset = %"
 		      PRId64 "\n", startoffset));
 		return 0;
@@ -2007,7 +2025,7 @@ lfs_putpages(void *v)
 		r = check_dirty(fs, vp, startoffset, endoffset, blkeof,
 				ap->a_flags, 1);
 		if (r < 0) {
-			simple_unlock(&vp->v_interlock);
+			mutex_exit(&vp->v_interlock);
 			return EDEADLK;
 		}
 		if (r > 0)
@@ -2027,7 +2045,7 @@ lfs_putpages(void *v)
 
 		/* Start over. */
 		preempt();
-		simple_lock(&vp->v_interlock);
+		mutex_enter(&vp->v_interlock);
 	} while(1);
 
 	/*
@@ -2038,16 +2056,16 @@ lfs_putpages(void *v)
 	 * notice the pager inode queue and act on that.
 	 */
 	if (pagedaemon) {
-		simple_lock(&fs->lfs_interlock);
+		mutex_enter(&fs->lfs_interlock);
 		if (!(ip->i_flags & IN_PAGING)) {
 			ip->i_flags |= IN_PAGING;
 			TAILQ_INSERT_TAIL(&fs->lfs_pchainhd, ip, i_lfs_pchain);
 		}
-		simple_lock(&lfs_subsys_lock);
+		mutex_enter(&lfs_subsys_lock);
 		wakeup(&lfs_writer_daemon);
-		simple_unlock(&lfs_subsys_lock);
-		simple_unlock(&fs->lfs_interlock);
-		simple_unlock(&vp->v_interlock);
+		mutex_exit(&lfs_subsys_lock);
+		mutex_exit(&fs->lfs_interlock);
+		mutex_exit(&vp->v_interlock);
 		preempt();
 		return EWOULDBLOCK;
 	}
@@ -2064,19 +2082,19 @@ lfs_putpages(void *v)
 
 		DLOG((DLOG_PAGE, "lfs_putpages: flushing VDIROP\n"));
 		locked = (VOP_ISLOCKED(vp) == LK_EXCLUSIVE);
-		simple_unlock(&vp->v_interlock);
+		mutex_exit(&vp->v_interlock);
 		lfs_writer_enter(fs, "ppdirop");
 		if (locked)
 			VOP_UNLOCK(vp, 0);
 
-		simple_lock(&fs->lfs_interlock);
+		mutex_enter(&fs->lfs_interlock);
 		lfs_flush_fs(fs, sync ? SEGM_SYNC : 0);
-		simple_unlock(&fs->lfs_interlock);
+		mutex_exit(&fs->lfs_interlock);
 
-		simple_lock(&vp->v_interlock);
+		mutex_enter(&vp->v_interlock);
 		if (locked) {
 			VOP_LOCK(vp, LK_EXCLUSIVE | LK_INTERLOCK);
-			simple_lock(&vp->v_interlock);
+			mutex_enter(&vp->v_interlock);
 		}
 		lfs_writer_leave(fs);
 
@@ -2101,14 +2119,14 @@ lfs_putpages(void *v)
     get_seglock:
 	seglocked = (ap->a_flags & PGO_LOCKED) != 0;
 	if (!seglocked) {
-		simple_unlock(&vp->v_interlock);
+		mutex_exit(&vp->v_interlock);
 		/*
 		 * Take the seglock, because we are going to be writing pages.
 		 */
 		error = lfs_seglock(fs, SEGM_PROT | (sync ? SEGM_SYNC : 0));
 		if (error != 0)
 			return error;
-		simple_lock(&vp->v_interlock);
+		mutex_enter(&vp->v_interlock);
 	}
 
 	/*
@@ -2144,7 +2162,7 @@ lfs_putpages(void *v)
 again:
 	if (check_dirty(fs, vp, startoffset, endoffset, blkeof,
 	    ap->a_flags, 0) < 0) {
-		simple_unlock(&vp->v_interlock);
+		mutex_exit(&vp->v_interlock);
 		sp->vp = NULL;
 		if (!seglocked) {
 			lfs_release_finfo(fs);
@@ -2154,7 +2172,7 @@ again:
 			return EDEADLK;
 		/* else seglocked == 0 */
 		preempt();
-		simple_lock(&vp->v_interlock);
+		mutex_enter(&vp->v_interlock);
 		goto get_seglock;
 	}
 
@@ -2183,7 +2201,7 @@ again:
 
 		/* We've lost the interlock.  Start over. */
 		if (error == EDEADLK) {
-			simple_lock(&vp->v_interlock);
+			mutex_enter(&vp->v_interlock);
 			goto again;
 		}
 	}
@@ -2222,12 +2240,12 @@ again:
 	 * Remove us from paging queue, since we've now written all our
 	 * pages.
 	 */
-	simple_lock(&fs->lfs_interlock);
+	mutex_enter(&fs->lfs_interlock);
 	if (ip->i_flags & IN_PAGING) {
 		ip->i_flags &= ~IN_PAGING;
 		TAILQ_REMOVE(&fs->lfs_pchainhd, ip, i_lfs_pchain);
 	}
-	simple_unlock(&fs->lfs_interlock);
+	mutex_exit(&fs->lfs_interlock);
 
 	/*
 	 * XXX - with the malloc/copy writeseg, the pages are freed by now
@@ -2244,15 +2262,15 @@ again:
 	 */
 	if (sync) {
 		s = splbio();
-		simple_lock(&global_v_numoutput_slock);
+		mutex_enter(&global_v_numoutput_lock);
 		while (vp->v_numoutput > 0) {
 			DLOG((DLOG_PAGE, "lfs_putpages: ino %d sleeping on"
 			      " num %d\n", ip->i_number, vp->v_numoutput));
 			vp->v_flag |= VBWAIT;
-			ltsleep(&vp->v_numoutput, PRIBIO + 1, "lfs_vn", 0,
-			    &global_v_numoutput_slock);
+			mtsleep(&vp->v_numoutput, PRIBIO + 1, "lfs_vn", 0,
+			    &global_v_numoutput_lock);
 		}
-		simple_unlock(&global_v_numoutput_slock);
+		mutex_exit(&global_v_numoutput_lock);
 		splx(s);
 	}
 	return error;

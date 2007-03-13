@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.86.2.1 2007/03/13 16:52:06 ad Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.86.2.2 2007/03/13 17:51:20 ad Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.86.2.1 2007/03/13 16:52:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.86.2.2 2007/03/13 17:51:20 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -66,7 +66,7 @@ static POOL_INIT(sdpcpool, sizeof(struct buf), 0, 0, 0, "sdpcpool",
     &pool_allocator_nointr, IPL_NONE);
 u_int softdep_lockedbufs;
 
-extern struct simplelock bqueue_slock; /* XXX */
+extern kmutex_t bqueue_lock; /* XXX */
 
 MALLOC_DEFINE(M_PAGEDEP, "pagedep", "file page dependencies");
 MALLOC_DEFINE(M_INODEDEP, "inodedep", "Inode depependencies");
@@ -507,14 +507,13 @@ softdep_freequeue_process(void)
 static char emerginoblk[MAXBSIZE];
 static int emerginoblk_inuse;
 static const struct buf *emerginoblk_origbp;
-static struct simplelock emerginoblk_slock = SIMPLELOCK_INITIALIZER;
+static kmutex_t emerginoblk_lock;
 
 static inline void *
 inodedep_allocdino(struct inodedep *inodedep, const struct buf *origbp,
     size_t size)
 {
 	void *vp;
-	int s;
 
 	KASSERT(inodedep->id_savedino1 == NULL);
 
@@ -525,17 +524,15 @@ inodedep_allocdino(struct inodedep *inodedep, const struct buf *origbp,
 	if (vp)
 		return vp;
 
-	s = splbio();
-	simple_lock(&emerginoblk_slock);
+	mutex_enter(&emerginoblk_lock);
 	while (emerginoblk_inuse && emerginoblk_origbp != origbp)
-		ltsleep(&emerginoblk_inuse, PVM, "emdino", 0,
-		    &emerginoblk_slock);
+		mtsleep(&emerginoblk_inuse, PVM, "emdino", 0,
+		    &emerginoblk_lock);
 	emerginoblk_origbp = origbp;
 	emerginoblk_inuse++;
 	KASSERT(emerginoblk_inuse <= sizeof(emerginoblk) /
 	    MIN(sizeof(struct ufs1_dinode), sizeof(struct ufs2_dinode)));
-	simple_unlock(&emerginoblk_slock);
-	splx(s);
+	mutex_exit(&emerginoblk_lock);
 
 	KASSERT(inodedep->id_savedino1 == NULL);
 
@@ -560,11 +557,11 @@ inodedep_freedino(struct inodedep *inodedep)
 
 		KASSERT(emerginoblk_inuse > 0);
 		s = splbio();
-		simple_lock(&emerginoblk_slock);
+		mutex_enter(&emerginoblk_lock);
 		emerginoblk_inuse--;
 		if (emerginoblk_inuse == 0)
 			wakeup(&emerginoblk_inuse);
-		simple_unlock(&emerginoblk_slock);
+		mutex_exit(&emerginoblk_lock);
 		splx(s);
 
 		return;
@@ -1210,6 +1207,8 @@ void
 softdep_initialize()
 {
 	int i;
+
+	mutex_init(&emerginoblk_lock, MUTEX_DRIVER, IPL_BIO);
 
 	LIST_INIT(&mkdirlisthd);
 	LIST_INIT(&softdep_workitem_pending);
@@ -4788,15 +4787,15 @@ softdep_fsync_mountdev(vp)
 	if (vp->v_type != VBLK)
 		panic("softdep_fsync_mountdev: vnode not VBLK");
 	ACQUIRE_LOCK(&lk);
-	simple_lock(&bqueue_slock);
+	mutex_enter(&bqueue_lock);
 	for (bp = vp->v_dirtyblkhd.lh_first; bp; bp = nbp) {
 		nbp = bp->b_vnbufs.le_next;
-		simple_lock(&bp->b_interlock);
+		mutex_enter(&bp->b_interlock);
 		/*
 		 * If it is already scheduled, skip to the next buffer.
 		 */
 		if (bp->b_flags & B_BUSY) {
-			simple_unlock(&bp->b_interlock);
+			mutex_exit(&bp->b_interlock);
 			continue;
 		}
 		if ((bp->b_flags & B_DELWRI) == 0)
@@ -4807,24 +4806,24 @@ softdep_fsync_mountdev(vp)
 		 */
 		if ((wk = LIST_FIRST(&bp->b_dep)) == NULL ||
 		    wk->wk_type != D_BMSAFEMAP) {
-			simple_unlock(&bp->b_interlock);
+			mutex_exit(&bp->b_interlock);
 			continue;
 		}
 		bremfree(bp);
-		simple_unlock(&bqueue_slock);
+		mutex_exit(&bqueue_lock);
 		bp->b_flags |= B_BUSY;
-		simple_unlock(&bp->b_interlock);
+		mutex_exit(&bp->b_interlock);
 		FREE_LOCK(&lk);
 		(void) bawrite(bp);
 		ACQUIRE_LOCK(&lk);
-		simple_lock(&bqueue_slock);
+		mutex_enter(&bqueue_lock);
 		/*
 		 * Since we may have slept during the I/O, we need
 		 * to start from a known point.
 		 */
 		nbp = vp->v_dirtyblkhd.lh_first;
 	}
-	simple_unlock(&bqueue_slock);
+	mutex_exit(&bqueue_lock);
 	drain_output(vp, 1);
 	FREE_LOCK(&lk);
 }
@@ -5156,7 +5155,7 @@ flush_inodedep_deps(fs, ino)
 
 		if (vp != NULL) {
 			FREE_LOCK(&lk);
-			simple_lock(&vp->v_interlock);
+			mutex_enter(&vp->v_interlock);
 			error = VOP_PUTPAGES(vp, 0, 0,
 			    PGO_ALLPAGES | PGO_CLEANIT |
 			    (waitfor == MNT_NOWAIT ? 0: PGO_SYNCIO));
@@ -5676,26 +5675,26 @@ again:
 
 		if ((bp = *bpp) == NULL)
 			return (0);
-		simple_lock(&bp->b_interlock);
+		mutex_enter(&bp->b_interlock);
 		if ((bp->b_flags & B_BUSY) == 0)
 			break;
 		if (waitfor != MNT_WAIT) {
-			simple_unlock(&bp->b_interlock);
+			mutex_exit(&bp->b_interlock);
 			return (0);
 		}
 		bp->b_flags |= B_WANTED;
 		s = FREE_LOCK_INTERLOCKED(&lk);
-		(void) ltsleep(bp, (PRIBIO + 1) | PNORELOCK, "softgetdbuf", 0,
+		(void) mtsleep(bp, (PRIBIO + 1) | PNORELOCK, "softgetdbuf", 0,
 		    &bp->b_interlock);
 		ACQUIRE_LOCK_INTERLOCKED(&lk, s);
 	}
-	LOCK_ASSERT(simple_lock_held(&bp->b_interlock));
+	LOCK_ASSERT(mutex_owned(&bp->b_interlock));
 	if ((bp->b_flags & B_DELWRI) == 0) {
-		simple_unlock(&bp->b_interlock);
+		mutex_exit(&bp->b_interlock);
 		return (0);
 	}
-	if (!simple_lock_try(&bqueue_slock)) {
-		simple_unlock(&bp->b_interlock);
+	if (!mutex_tryenter(&bqueue_lock)) {
+		mutex_exit(&bp->b_interlock);
 		goto again;
 	}
 #if 1
@@ -5704,8 +5703,8 @@ again:
 #else
 	bp->b_flags |= B_BUSY | B_VFLUSH;
 #endif
-	simple_unlock(&bqueue_slock);
-	simple_unlock(&bp->b_interlock);
+	mutex_exit(&bqueue_lock);
+	mutex_exit(&bp->b_interlock);
 	return (1);
 }
 
@@ -5721,17 +5720,17 @@ drain_output(vp, islocked)
 
 	if (!islocked)
 		ACQUIRE_LOCK(&lk);
-	simple_lock(&global_v_numoutput_slock);
+	mutex_enter(&global_v_numoutput_lock);
 	while (vp->v_numoutput) {
 		int s;
 
 		vp->v_flag |= VBWAIT;
 		s = FREE_LOCK_INTERLOCKED(&lk);
-		ltsleep((void *)&vp->v_numoutput, PRIBIO + 1, "drainvp", 0,
-			&global_v_numoutput_slock);
+		mtsleep((void *)&vp->v_numoutput, PRIBIO + 1, "drainvp", 0,
+			&global_v_numoutput_lock);
 		ACQUIRE_LOCK_INTERLOCKED(&lk, s);
 	}
-	simple_unlock(&global_v_numoutput_slock);
+	mutex_exit(&global_v_numoutput_lock);
 	if (!islocked)
 		FREE_LOCK(&lk);
 }

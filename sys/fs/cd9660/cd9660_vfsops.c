@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.40 2007/03/04 06:02:59 christos Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.40.2.1 2007/03/13 17:50:37 ad Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.40 2007/03/04 06:02:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.40.2.1 2007/03/13 17:50:37 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -149,9 +149,9 @@ cd9660_mountroot()
 		free(mp, M_MOUNT);
 		return (error);
 	}
-	simple_lock(&mountlist_slock);
+	mutex_enter(&mountlist_lock);
 	CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
-	simple_unlock(&mountlist_slock);
+	mutex_exit(&mountlist_lock);
 	(void)cd9660_statvfs(mp, &mp->mnt_stat, l);
 	vfs_unbusy(mp);
 	return (0);

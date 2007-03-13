@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.107 2007/03/04 06:03:45 christos Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.107.2.1 2007/03/13 17:51:25 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.107 2007/03/04 06:03:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.107.2.1 2007/03/13 17:51:25 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -151,14 +151,14 @@ lfs_update(struct vnode *vp, const struct timespec *acc,
 	 * for our inode completes, if we are called with UPDATE_WAIT set.
 	 */
 	s = splbio();
-	simple_lock(&vp->v_interlock);
+	mutex_enter(&vp->v_interlock);
 	while ((updflags & (UPDATE_WAIT|UPDATE_DIROP)) == UPDATE_WAIT &&
 	    WRITEINPROG(vp)) {
 		DLOG((DLOG_SEG, "lfs_update: sleeping on ino %d"
 		      " (in progress)\n", ip->i_number));
-		ltsleep(vp, (PRIBIO+1), "lfs_update", 0, &vp->v_interlock);
+		mtsleep(vp, (PRIBIO+1), "lfs_update", 0, &vp->v_interlock);
 	}
-	simple_unlock(&vp->v_interlock);
+	mutex_exit(&vp->v_interlock);
 	splx(s);
 	LFS_ITIMES(ip, acc, mod, NULL);
 	if (updflags & UPDATE_CLOSE)
@@ -171,7 +171,7 @@ lfs_update(struct vnode *vp, const struct timespec *acc,
 	/* If sync, push back the vnode and any dirty blocks it may have. */
 	if ((updflags & (UPDATE_WAIT|UPDATE_DIROP)) == UPDATE_WAIT) {
 		/* Avoid flushing VDIROP. */
-		simple_lock(&fs->lfs_interlock);
+		mutex_enter(&fs->lfs_interlock);
 		++fs->lfs_diropwait;
 		while (vp->v_flag & VDIROP) {
 			DLOG((DLOG_DIROP, "lfs_update: sleeping on inode %d"
@@ -181,13 +181,13 @@ lfs_update(struct vnode *vp, const struct timespec *acc,
 			if (fs->lfs_dirops == 0)
 				lfs_flush_fs(fs, SEGM_SYNC);
 			else
-				ltsleep(&fs->lfs_writer, PRIBIO+1, "lfs_fsync",
+				mtsleep(&fs->lfs_writer, PRIBIO+1, "lfs_fsync",
 					0, &fs->lfs_interlock);
 			/* XXX KS - by falling out here, are we writing the vn
 			twice? */
 		}
 		--fs->lfs_diropwait;
-		simple_unlock(&fs->lfs_interlock);
+		mutex_exit(&fs->lfs_interlock);
 		return lfs_vflush(vp);
 	}
 	return 0;
@@ -290,7 +290,7 @@ lfs_truncate(struct vnode *ovp, off_t length, int ioflag,
 					return error;
 				if (ioflag & IO_SYNC) {
 					ovp->v_size = eob;
-					simple_lock(&ovp->v_interlock);
+					mutex_enter(&ovp->v_interlock);
 					VOP_PUTPAGES(ovp,
 					    trunc_page(osize & fs->lfs_bmask),
 					    round_page(eob),
@@ -369,9 +369,9 @@ lfs_truncate(struct vnode *ovp, off_t length, int ioflag,
 			       (u_int)(size - offset));
 		allocbuf(bp, size, 1);
 		if ((bp->b_flags & (B_LOCKED | B_CALL)) == B_LOCKED) {
-			simple_lock(&lfs_subsys_lock);
+			mutex_enter(&lfs_subsys_lock);
 			locked_queue_bytes -= obufsize - bp->b_bufsize;
-			simple_unlock(&lfs_subsys_lock);
+			mutex_exit(&lfs_subsys_lock);
 		}
 		if (bp->b_flags & B_DELWRI)
 			fs->lfs_avail += odb - btofsb(fs, size);
@@ -403,7 +403,7 @@ lfs_truncate(struct vnode *ovp, off_t length, int ioflag,
 		eoz = MIN(lblktosize(fs, xlbn) + size, osize);
 		uvm_vnp_zerorange(ovp, length, eoz - length);
 		if (round_page(eoz) > round_page(length)) {
-			simple_lock(&ovp->v_interlock);
+			mutex_enter(&ovp->v_interlock);
 			error = VOP_PUTPAGES(ovp, round_page(length),
 			    round_page(eoz),
 			    PGO_CLEANIT | PGO_DEACTIVATE |
@@ -568,9 +568,9 @@ done:
 	oip->i_size = oip->i_ffs1_size = length;
 	oip->i_lfs_effnblks -= blocksreleased;
 	oip->i_ffs1_blocks -= real_released;
-	simple_lock(&fs->lfs_interlock);
+	mutex_enter(&fs->lfs_interlock);
 	fs->lfs_bfree += blocksreleased;
-	simple_unlock(&fs->lfs_interlock);
+	mutex_exit(&fs->lfs_interlock);
 #ifdef DIAGNOSTIC
 	if (oip->i_size == 0 &&
 	    (oip->i_ffs1_blocks != 0 || oip->i_lfs_effnblks != 0)) {
@@ -583,12 +583,12 @@ done:
 	/*
 	 * If we truncated to zero, take us off the paging queue.
 	 */
-	simple_lock(&fs->lfs_interlock);
+	mutex_enter(&fs->lfs_interlock);
 	if (oip->i_size == 0 && oip->i_flags & IN_PAGING) {
 		oip->i_flags &= ~IN_PAGING;
 		TAILQ_REMOVE(&fs->lfs_pchainhd, oip, i_lfs_pchain);
 	}
-	simple_unlock(&fs->lfs_interlock);
+	mutex_exit(&fs->lfs_interlock);
 
 	oip->i_flag |= IN_CHANGE;
 #ifdef QUOTA
@@ -845,7 +845,7 @@ lfs_vtruncbuf(struct vnode *vp, daddr_t lbn, int slpflag, int slptimeo)
 	voff_t off;
 
 	off = round_page((voff_t)lbn << vp->v_mount->mnt_fs_bshift);
-	simple_lock(&vp->v_interlock);
+	mutex_enter(&vp->v_interlock);
 	error = VOP_PUTPAGES(vp, off, 0, PGO_FREE | PGO_SYNCIO);
 	if (error)
 		return error;
@@ -859,10 +859,10 @@ restart:
 		nbp = LIST_NEXT(bp, b_vnbufs);
 		if (bp->b_lblkno < lbn)
 			continue;
-		simple_lock(&bp->b_interlock);
+		mutex_enter(&bp->b_interlock);
 		if (bp->b_flags & B_BUSY) {
 			bp->b_flags |= B_WANTED;
-			error = ltsleep(bp, slpflag | (PRIBIO + 1) | PNORELOCK,
+			error = mtsleep(bp, slpflag | (PRIBIO + 1) | PNORELOCK,
 			    "lfs_vtruncbuf", slptimeo, &bp->b_interlock);
 			if (error) {
 				splx(s);
@@ -877,7 +877,7 @@ restart:
 			wakeup(&fs->lfs_avail);
 		}
 		LFS_UNLOCK_BUF(bp);
-		simple_unlock(&bp->b_interlock);
+		mutex_exit(&bp->b_interlock);
 		brelse(bp);
 	}
 
@@ -885,10 +885,10 @@ restart:
 		nbp = LIST_NEXT(bp, b_vnbufs);
 		if (bp->b_lblkno < lbn)
 			continue;
-		simple_lock(&bp->b_interlock);
+		mutex_enter(&bp->b_interlock);
 		if (bp->b_flags & B_BUSY) {
 			bp->b_flags |= B_WANTED;
-			error = ltsleep(bp, slpflag | (PRIBIO + 1) | PNORELOCK,
+			error = mtsleep(bp, slpflag | (PRIBIO + 1) | PNORELOCK,
 			    "lfs_vtruncbuf", slptimeo, &bp->b_interlock);
 			if (error) {
 				splx(s);
@@ -903,7 +903,7 @@ restart:
 			wakeup(&fs->lfs_avail);
 		}
 		LFS_UNLOCK_BUF(bp);
-		simple_unlock(&bp->b_interlock);
+		mutex_exit(&bp->b_interlock);
 		brelse(bp);
 	}
 

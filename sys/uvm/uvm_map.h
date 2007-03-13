@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.h,v 1.56 2007/02/22 06:05:01 thorpej Exp $	*/
+/*	$NetBSD: uvm_map.h,v 1.56.4.1 2007/03/13 17:51:56 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -224,12 +224,12 @@ struct vm_map {
 	int			nentries;	/* Number of entries */
 	vsize_t			size;		/* virtual size */
 	int			ref_count;	/* Reference count */
-	struct simplelock	ref_lock;	/* Lock for ref_count field */
+	kmutex_t		ref_lock;	/* Lock for ref_count field */
 	struct vm_map_entry *	hint;		/* hint for quick lookups */
-	struct simplelock	hint_lock;	/* lock for hint storage */
+	kmutex_t		hint_lock;	/* lock for hint storage */
 	struct vm_map_entry *	first_free;	/* First free space hint */
 	int			flags;		/* flags */
-	struct simplelock	flags_lock;	/* Lock for flags field */
+	kmutex_t		flags_lock;	/* Lock for flags field */
 	unsigned int		timestamp;	/* Version number */
 };
 
@@ -291,9 +291,9 @@ struct uvm_map_args {
 #ifdef _KERNEL
 #define	vm_map_modflags(map, set, clear)				\
 do {									\
-	simple_lock(&(map)->flags_lock);				\
+	mutex_enter(&(map)->flags_lock);				\
 	(map)->flags = ((map)->flags | (set)) & ~(clear);		\
-	simple_unlock(&(map)->flags_lock);				\
+	mutex_exit(&(map)->flags_lock);					\
 } while (/*CONSTCOND*/ 0)
 #endif /* _KERNEL */
 
@@ -412,11 +412,11 @@ vm_map_lock_try(struct vm_map *map)
 	bool rv;
 
 	if (map->flags & VM_MAP_INTRSAFE)
-		rv = simple_lock_try(&map->lock.lk_interlock);
+		rv = mutex_tryenter(&map->lock.lk_interlock);
 	else {
-		simple_lock(&map->flags_lock);
+		mutex_enter(&map->flags_lock);
 		if (map->flags & VM_MAP_BUSY) {
-			simple_unlock(&map->flags_lock);
+			mutex_exit(&map->flags_lock);
 			return (false);
 		}
 		rv = (lockmgr(&map->lock, LK_EXCLUSIVE|LK_NOWAIT|LK_INTERLOCK,
@@ -435,15 +435,15 @@ vm_map_lock(struct vm_map *map)
 	int error;
 
 	if (map->flags & VM_MAP_INTRSAFE) {
-		simple_lock(&map->lock.lk_interlock);
+		mutex_enter(&map->lock.lk_interlock);
 		return;
 	}
 
  try_again:
-	simple_lock(&map->flags_lock);
+	mutex_enter(&map->flags_lock);
 	while (map->flags & VM_MAP_BUSY) {
 		map->flags |= VM_MAP_WANTLOCK;
-		ltsleep(&map->flags, PVM, vmmapbsy, 0, &map->flags_lock);
+		mtsleep(&map->flags, PVM, vmmapbsy, 0, &map->flags_lock);
 	}
 
 	error = lockmgr(&map->lock, LK_EXCLUSIVE|LK_SLEEPFAIL|LK_INTERLOCK,
@@ -472,7 +472,7 @@ do {									\
 #define	vm_map_unlock(map)						\
 do {									\
 	if ((map)->flags & VM_MAP_INTRSAFE)				\
-		simple_unlock(&(map)->lock.lk_interlock);		\
+		mutex_exit(&(map)->lock.lk_interlock);			\
 	else								\
 		(void) lockmgr(&(map)->lock, LK_RELEASE, NULL);		\
 } while (/*CONSTCOND*/ 0)
@@ -496,19 +496,19 @@ do {									\
 
 #define	vm_map_busy(map)						\
 do {									\
-	simple_lock(&(map)->flags_lock);				\
+	mutex_enter(&(map)->flags_lock);				\
 	(map)->flags |= VM_MAP_BUSY;					\
-	simple_unlock(&(map)->flags_lock);				\
+	mutex_exit(&(map)->flags_lock);					\
 } while (/*CONSTCOND*/ 0)
 
 #define	vm_map_unbusy(map)						\
 do {									\
 	int oflags;							\
 									\
-	simple_lock(&(map)->flags_lock);				\
+	mutex_enter(&(map)->flags_lock);				\
 	oflags = (map)->flags;						\
 	(map)->flags &= ~(VM_MAP_BUSY|VM_MAP_WANTLOCK);			\
-	simple_unlock(&(map)->flags_lock);				\
+	mutex_exit(&(map)->flags_lock);				\
 	if (oflags & VM_MAP_WANTLOCK)					\
 		wakeup(&(map)->flags);					\
 } while (/*CONSTCOND*/ 0)

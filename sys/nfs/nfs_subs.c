@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.184 2007/03/09 05:55:33 yamt Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.184.2.1 2007/03/13 17:51:13 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.184 2007/03/09 05:55:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.184.2.1 2007/03/13 17:51:13 ad Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -1162,9 +1162,9 @@ nfs_dirhash(off)
 }
 
 #define	_NFSDC_MTX(np)		(&NFSTOV(np)->v_interlock)
-#define	NFSDC_LOCK(np)		simple_lock(_NFSDC_MTX(np))
-#define	NFSDC_UNLOCK(np)	simple_unlock(_NFSDC_MTX(np))
-#define	NFSDC_ASSERT_LOCKED(np) LOCK_ASSERT(simple_lock_held(_NFSDC_MTX(np)))
+#define	NFSDC_LOCK(np)		mutex_enter(_NFSDC_MTX(np))
+#define	NFSDC_UNLOCK(np)	mutex_exit(_NFSDC_MTX(np))
+#define	NFSDC_ASSERT_LOCKED(np) KASSERT(mutex_owned(_NFSDC_MTX(np)))
 
 void
 nfs_initdircache(vp)
@@ -1491,6 +1491,10 @@ nfs_invaldircache(vp, flags)
 static int
 nfs_init0(void)
 {
+	extern krwlock_t netexport_lock;	/* XXX */
+
+	rw_init(&netexport_lock);
+
 	nfsrtt.pos = 0;
 	rpc_vers = txdr_unsigned(RPC_VER2);
 	rpc_call = txdr_unsigned(RPC_CALL);
@@ -1769,7 +1773,7 @@ nfs_loadattrcache(vpp, fp, vaper, flags)
 					np->n_flag |= NTRUNCDELAYED;
 				} else {
 					genfs_node_wrlock(vp);
-					simple_lock(&vp->v_interlock);
+					mutex_enter(&vp->v_interlock);
 					(void)VOP_PUTPAGES(vp, 0,
 					    0, PGO_SYNCIO | PGO_CLEANIT |
 					    PGO_FREE | PGO_ALLPAGES);
@@ -1847,7 +1851,7 @@ nfs_delayedtruncate(vp)
 	if (np->n_flag & NTRUNCDELAYED) {
 		np->n_flag &= ~NTRUNCDELAYED;
 		genfs_node_wrlock(vp);
-		simple_lock(&vp->v_interlock);
+		mutex_enter(&vp->v_interlock);
 		(void)VOP_PUTPAGES(vp, 0,
 		    0, PGO_SYNCIO | PGO_CLEANIT | PGO_FREE | PGO_ALLPAGES);
 		uvm_vnp_setsize(vp, np->n_size);
@@ -1916,7 +1920,7 @@ nfs_check_wccdata(struct nfsnode *np, const struct timespec *ctime,
 			 * caching.  it's a compromise.
 			 */
 
-			simple_lock(&nmp->nm_slock);
+			mutex_enter(&nmp->nm_lock);
 #if defined(DEBUG)
 			if (!NFS_WCCKLUDGE(nmp, now)) {
 				printf("%s: inaccurate wcc data (%s) detected,"
@@ -1937,11 +1941,11 @@ nfs_check_wccdata(struct nfsnode *np, const struct timespec *ctime,
 #endif
 			nmp->nm_iflag |= NFSMNT_WCCKLUDGE;
 			nmp->nm_wcckludgetime = now;
-			simple_unlock(&nmp->nm_slock);
+			mutex_exit(&nmp->nm_lock);
 		} else if (NFS_WCCKLUDGE(nmp, now)) {
 			error = EPERM; /* XXX */
 		} else if (nmp->nm_iflag & NFSMNT_WCCKLUDGE) {
-			simple_lock(&nmp->nm_slock);
+			mutex_enter(&nmp->nm_lock);
 			if (nmp->nm_iflag & NFSMNT_WCCKLUDGE) {
 #if defined(DEBUG)
 				printf("%s: re-enabling wcc\n",
@@ -1949,7 +1953,7 @@ nfs_check_wccdata(struct nfsnode *np, const struct timespec *ctime,
 #endif
 				nmp->nm_iflag &= ~NFSMNT_WCCKLUDGE;
 			}
-			simple_unlock(&nmp->nm_slock);
+			mutex_exit(&nmp->nm_lock);
 		}
 	}
 
@@ -2661,15 +2665,15 @@ nfs_clearcommit(mp)
 		    np->n_pushedhi = 0;
 		np->n_commitflags &=
 		    ~(NFS_COMMIT_PUSH_VALID | NFS_COMMIT_PUSHED_VALID);
-		simple_lock(&vp->v_uobj.vmobjlock);
+		mutex_enter(&vp->v_uobj.vmobjlock);
 		TAILQ_FOREACH(pg, &vp->v_uobj.memq, listq) {
 			pg->flags &= ~PG_NEEDCOMMIT;
 		}
-		simple_unlock(&vp->v_uobj.vmobjlock);
+		mutex_exit(&vp->v_uobj.vmobjlock);
 	}
-	simple_lock(&nmp->nm_slock);
+	mutex_enter(&nmp->nm_lock);
 	nmp->nm_iflag &= ~NFSMNT_STALEWRITEVERF;
-	simple_unlock(&nmp->nm_slock);
+	mutex_exit(&nmp->nm_lock);
 	rw_exit(&nmp->nm_writeverflock);
 }
 

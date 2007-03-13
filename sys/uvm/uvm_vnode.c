@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.81 2007/03/04 06:03:49 christos Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.81.2.1 2007/03/13 17:51:58 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.81 2007/03/04 06:03:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.81.2.1 2007/03/13 17:51:58 ad Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -138,13 +138,13 @@ uvn_attach(void *arg, vm_prot_t accessprot)
 	 * first get a lock on the uobj.
 	 */
 
-	simple_lock(&uobj->vmobjlock);
+	mutex_enter(&uobj->vmobjlock);
 	while (vp->v_flag & VXLOCK) {
 		vp->v_flag |= VXWANT;
 		UVMHIST_LOG(maphist, "  SLEEPING on blocked vn",0,0,0,0);
 		UVM_UNLOCK_AND_WAIT(uobj, &uobj->vmobjlock, false,
 		    "uvn_attach", 0);
-		simple_lock(&uobj->vmobjlock);
+		mutex_enter(&uobj->vmobjlock);
 		UVMHIST_LOG(maphist,"  WOKE UP",0,0,0,0);
 	}
 
@@ -154,7 +154,7 @@ uvn_attach(void *arg, vm_prot_t accessprot)
 	if (vp->v_type == VBLK) {
 		bdev = bdevsw_lookup(vp->v_rdev);
 		if (bdev == NULL || bdev->d_type != D_DISK) {
-			simple_unlock(&uobj->vmobjlock);
+			mutex_exit(&uobj->vmobjlock);
 			UVMHIST_LOG(maphist,"<- done (VBLK not D_DISK!)",
 				    0,0,0,0);
 			return(NULL);
@@ -170,7 +170,7 @@ uvn_attach(void *arg, vm_prot_t accessprot)
 
 
 	vp->v_flag |= VXLOCK;
-	simple_unlock(&uobj->vmobjlock); /* drop lock in case we sleep */
+	mutex_exit(&uobj->vmobjlock); /* drop lock in case we sleep */
 		/* XXX: curproc? */
 	if (vp->v_type == VBLK) {
 		/*
@@ -200,7 +200,7 @@ uvn_attach(void *arg, vm_prot_t accessprot)
 	}
 
 	/* relock object */
-	simple_lock(&uobj->vmobjlock);
+	mutex_enter(&uobj->vmobjlock);
 
 	if (vp->v_flag & VXWANT) {
 		wakeup(vp);
@@ -208,7 +208,7 @@ uvn_attach(void *arg, vm_prot_t accessprot)
 	vp->v_flag &= ~(VXLOCK|VXWANT);
 
 	if (result != 0) {
-		simple_unlock(&uobj->vmobjlock);
+		mutex_exit(&uobj->vmobjlock);
 		UVMHIST_LOG(maphist,"<- done (VOP_GETATTR FAILED!)", 0,0,0,0);
 		return(NULL);
 	}
@@ -216,9 +216,10 @@ uvn_attach(void *arg, vm_prot_t accessprot)
 
 	}
 
-	simple_unlock(&uobj->vmobjlock);
+	mutex_exit(&uobj->vmobjlock);
 	UVMHIST_LOG(maphist,"<- done, refcnt=%d", vp->v_usecount,
 	    0, 0, 0);
+
 	return uobj;
 }
 
@@ -269,9 +270,12 @@ uvn_put(struct uvm_object *uobj, voff_t offlo, voff_t offhi, int flags)
 	struct vnode *vp = (struct vnode *)uobj;
 	int error;
 
-	LOCK_ASSERT(simple_lock_held(&vp->v_interlock));
+	KERNEL_LOCK(1, curlwp);
+	KASSERT(mutex_owned(&vp->v_interlock));
 	error = VOP_PUTPAGES(vp, offlo, offhi, flags);
-	LOCK_ASSERT(!simple_lock_held(&vp->v_interlock));
+	KASSERT(!mutex_owned(&vp->v_interlock));
+	KERNEL_UNLOCK_ONE(curlwp);
+
 	return error;
 }
 
@@ -301,20 +305,22 @@ uvn_get(struct uvm_object *uobj, voff_t offset,
 	UVMHIST_LOG(ubchist, "vp %p off 0x%x", vp, (int)offset, 0,0);
 
 	if ((access_type & VM_PROT_WRITE) == 0 && (flags & PGO_LOCKED) == 0) {
-		simple_unlock(&vp->v_interlock);
+		mutex_exit(&vp->v_interlock);
 		vn_ra_allocctx(vp);
 		uvm_ra_request(vp->v_ractx, advice, uobj, offset,
 		    *npagesp << PAGE_SHIFT);
-		simple_lock(&vp->v_interlock);
+		mutex_enter(&vp->v_interlock);
 	}
 
+	KERNEL_LOCK(1, curlwp);
 	error = VOP_GETPAGES(vp, offset, pps, npagesp, centeridx,
 			     access_type, advice, flags);
+	KERNEL_UNLOCK_ONE(curlwp);
 
-	LOCK_ASSERT(((flags & PGO_LOCKED) != 0 &&
-		     simple_lock_held(&vp->v_interlock)) ||
+	KASSERT(((flags & PGO_LOCKED) != 0 &&
+		     mutex_owned(&vp->v_interlock)) ||
 		    ((flags & PGO_LOCKED) == 0 &&
-		     !simple_lock_held(&vp->v_interlock)));
+		     !mutex_owned(&vp->v_interlock)));
 	return error;
 }
 
@@ -388,9 +394,9 @@ uvn_findpage(struct uvm_object *uobj, voff_t offset, struct vm_page **pgp,
 					UVMHIST_LOG(ubchist, "nowait",0,0,0,0);
 					return 0;
 				}
-				simple_unlock(&uobj->vmobjlock);
+				mutex_exit(&uobj->vmobjlock);
 				uvm_wait("uvn_fp1");
-				simple_lock(&uobj->vmobjlock);
+				mutex_enter(&uobj->vmobjlock);
 				continue;
 			}
 			UVMHIST_LOG(ubchist, "alloced %p", pg,0,0,0);
@@ -410,7 +416,7 @@ uvn_findpage(struct uvm_object *uobj, voff_t offset, struct vm_page **pgp,
 			UVMHIST_LOG(ubchist, "wait %p", pg,0,0,0);
 			UVM_UNLOCK_AND_WAIT(pg, &uobj->vmobjlock, 0,
 					    "uvn_fp2", 0);
-			simple_lock(&uobj->vmobjlock);
+			mutex_enter(&uobj->vmobjlock);
 			continue;
 		}
 
@@ -460,7 +466,7 @@ uvm_vnp_setsize(struct vnode *vp, voff_t newsize)
 	voff_t oldsize;
 	UVMHIST_FUNC("uvm_vnp_setsize"); UVMHIST_CALLED(ubchist);
 
-	simple_lock(&uobj->vmobjlock);
+	mutex_enter(&uobj->vmobjlock);
 	UVMHIST_LOG(ubchist, "vp %p old 0x%x new 0x%x",
 	    vp, vp->v_size, newsize, 0);
 
@@ -472,10 +478,10 @@ uvm_vnp_setsize(struct vnode *vp, voff_t newsize)
 	oldsize = vp->v_size;
 	if (oldsize > pgend && oldsize != VSIZENOTSET) {
 		(void) uvn_put(uobj, pgend, 0, PGO_FREE | PGO_SYNCIO);
-		simple_lock(&uobj->vmobjlock);
+		mutex_enter(&uobj->vmobjlock);
 	}
 	vp->v_size = newsize;
-	simple_unlock(&uobj->vmobjlock);
+	mutex_exit(&uobj->vmobjlock);
 }
 
 /*

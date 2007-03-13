@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.169.2.1 2007/03/13 16:51:53 ad Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.169.2.2 2007/03/13 17:50:51 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.169.2.1 2007/03/13 16:51:53 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.169.2.2 2007/03/13 17:50:51 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -701,10 +701,8 @@ sys_wait4(struct lwp *l, void *v, register_t *retval)
 	retval[0] = child->p_pid;
 
 	if (P_ZOMBIE(child)) {
-		KERNEL_LOCK(1, l);		/* XXXSMP */
 		/* proc_free() will release the proclist_lock. */
 		proc_free(child, (SCARG(uap, rusage) == NULL ? NULL : &ru));
-		KERNEL_UNLOCK_ONE(l);		/* XXXSMP */
 
 		if (SCARG(uap, rusage))
 			error = copyout(&ru, SCARG(uap, rusage), sizeof(ru));

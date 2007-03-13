@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_mutex.c,v 1.11.2.1 2007/03/13 16:51:54 ad Exp $	*/
+/*	$NetBSD: kern_mutex.c,v 1.11.2.2 2007/03/13 17:50:54 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
 #define	__MUTEX_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.11.2.1 2007/03/13 16:51:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.11.2.2 2007/03/13 17:50:54 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -705,6 +705,23 @@ mutex_vector_exit(kmutex_t *mtx)
 	MUTEX_DASSERT(mtx, curthread != 0);
 	MUTEX_ASSERT(mtx, MUTEX_OWNER(mtx->mtx_owner) == curthread);
 	MUTEX_UNLOCKED(mtx);
+
+#ifdef LOCKDEBUG
+	/*
+	 * Avoid having to take the turnstile chain lock every time
+	 * around.  Raise the priority level to splhigh() in order
+	 * to disable preemption and so make the following atomic.
+	 */
+	{
+		int s = splhigh();
+		if (!MUTEX_HAS_WAITERS(mtx)) {
+			MUTEX_RELEASE(mtx);
+			splx(s);
+			return;
+		}
+		splx(s);
+	}
+#endif
 
 	/*
 	 * Get this lock's turnstile.  This gets the interlock on

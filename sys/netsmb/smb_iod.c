@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_iod.c,v 1.26 2006/04/12 01:16:02 christos Exp $	*/
+/*	$NetBSD: smb_iod.c,v 1.26.18.1 2007/03/13 17:51:12 ad Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_iod.c,v 1.26 2006/04/12 01:16:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_iod.c,v 1.26.18.1 2007/03/13 17:51:12 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -409,7 +409,7 @@ smb_iod_request(struct smbiod *iod, int event, void *ident)
 		return 0;
 	}
 	smb_iod_wakeup(iod);
-	ltsleep(evp, PWAIT | PNORELOCK, "smbevw", 0, SMB_IOD_EVLOCKPTR(iod));
+	mtsleep(evp, PWAIT | PNORELOCK, "smbevw", 0, SMB_IOD_EVLOCKPTR(iod));
 	error = evp->ev_error;
 	free(evp, M_SMBIOD);
 	return error;
@@ -475,7 +475,7 @@ smb_iod_addrq(struct smb_rq *rqp)
 			break;
 		iod->iod_muxwant++;
 		/* XXX use interruptible sleep? */
-		ltsleep(&iod->iod_muxwant, PWAIT, "smbmux",
+		mtsleep(&iod->iod_muxwant, PWAIT, "smbmux",
 			0, SMB_IOD_RQLOCKPTR(iod));
 	}
 	iod->iod_muxcnt++;
@@ -501,7 +501,7 @@ smb_iod_removerq(struct smb_rq *rqp)
 	SMB_IOD_RQLOCK(iod);
 	while (rqp->sr_flags & SMBR_XLOCK) {
 		rqp->sr_flags |= SMBR_XLOCKWANT;
-		ltsleep(rqp, PWAIT, "smbxrm", 0, SMB_IOD_RQLOCKPTR(iod));
+		mtsleep(rqp, PWAIT, "smbxrm", 0, SMB_IOD_RQLOCKPTR(iod));
 	}
 	SIMPLEQ_REMOVE(&iod->iod_rqlist, rqp, smb_rq, sr_link);
 	iod->iod_muxcnt--;
@@ -535,7 +535,7 @@ smb_iod_waitrq(struct smb_rq *rqp)
 	SMBRQ_SLOCK(rqp);
 	if (rqp->sr_rpgen == rqp->sr_rplast) {
 		/* XXX interruptible sleep? */
-		ltsleep(&rqp->sr_state, PWAIT, "smbwrq", 0,
+		mtsleep(&rqp->sr_state, PWAIT, "smbwrq", 0,
 			SMBRQ_SLOCKPTR(rqp));
 	}
 	rqp->sr_rplast++;

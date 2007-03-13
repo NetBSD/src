@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.119 2007/02/22 06:05:01 thorpej Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.119.4.1 2007/03/13 17:51:57 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.119 2007/02/22 06:05:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.119.4.1 2007/03/13 17:51:57 ad Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -178,9 +178,9 @@ uvm_pageinsert_after(struct vm_page *pg, struct vm_page *where)
 	KASSERT(where == NULL || (where->flags & PG_TABLED));
 	KASSERT(where == NULL || (where->uobject == uobj));
 	buck = &uvm.page_hash[uvm_pagehash(uobj, pg->offset)];
-	simple_lock(&uvm.hashlock);
+	mutex_enter(&uvm_hashlock);
 	TAILQ_INSERT_TAIL(buck, pg, hashq);
-	simple_unlock(&uvm.hashlock);
+	mutex_exit(&uvm_hashlock);
 
 	if (UVM_OBJ_IS_VNODE(uobj)) {
 		if (uobj->uo_npages == 0) {
@@ -227,9 +227,9 @@ uvm_pageremove(struct vm_page *pg)
 
 	KASSERT(pg->flags & PG_TABLED);
 	buck = &uvm.page_hash[uvm_pagehash(uobj, pg->offset)];
-	simple_lock(&uvm.hashlock);
+	mutex_enter(&uvm_hashlock);
 	TAILQ_REMOVE(buck, pg, hashq);
-	simple_unlock(&uvm.hashlock);
+	mutex_exit(&uvm_hashlock);
 
 	if (UVM_OBJ_IS_VNODE(uobj)) {
 		if (uobj->uo_npages == 1) {
@@ -288,8 +288,8 @@ uvm_page_init(vaddr_t *kvm_startp, vaddr_t *kvm_endp)
 	 */
 
 	uvmpdpol_init();
-	simple_lock_init(&uvm.pageqlock);
-	simple_lock_init(&uvm.fpageqlock);
+	mutex_init(&uvm_pageqlock, MUTEX_DRIVER, IPL_NONE);
+	mutex_init(&uvm_fpageqlock, MUTEX_DRIVER, IPL_VM);
 
 	/*
 	 * init the <obj,offset> => <page> hash table.  for now
@@ -301,7 +301,7 @@ uvm_page_init(vaddr_t *kvm_startp, vaddr_t *kvm_endp)
 	uvm.page_hashmask = 0;			/* mask for hash function */
 	uvm.page_hash = &uvm_bootbucket;	/* install bootstrap bucket */
 	TAILQ_INIT(uvm.page_hash);		/* init hash table */
-	simple_lock_init(&uvm.hashlock);	/* init hash table lock */
+	mutex_init(&uvm_hashlock, MUTEX_DRIVER, IPL_VM);/* init hash table lock */
 
 	/*
 	 * allocate vm_page structures.
@@ -412,7 +412,7 @@ uvm_page_init(vaddr_t *kvm_startp, vaddr_t *kvm_endp)
 	 * init locks for kernel threads
 	 */
 
-	simple_lock_init(&uvm.pagedaemon_lock);
+	mutex_init(&uvm_pagedaemon_lock, MUTEX_DEFAULT, IPL_NONE);
 
 	/*
 	 * init various thresholds.
@@ -866,7 +866,7 @@ uvm_page_rehash(void)
 	 * now replace the old buckets with the new ones and rehash everything
 	 */
 
-	simple_lock(&uvm.hashlock);
+	mutex_enter(&uvm_hashlock);
 	uvm.page_hash = newbuckets;
 	uvm.page_nhash = bucketcount;
 	uvm.page_hashmask = bucketcount - 1;  /* power of 2 */
@@ -880,7 +880,7 @@ uvm_page_rehash(void)
 			  pg, hashq);
 		}
 	}
-	simple_unlock(&uvm.hashlock);
+	mutex_exit(&uvm_hashlock);
 
 	/*
 	 * free old bucket array if is not the boot-time table
@@ -903,7 +903,7 @@ uvm_page_recolor(int newncolors)
 	struct pgfreelist pgfl;
 	struct vm_page *pg;
 	vsize_t bucketcount;
-	int s, lcv, color, i, ocolors;
+	int lcv, color, i, ocolors;
 
 	if (newncolors <= uvmexp.ncolors)
 		return;
@@ -922,11 +922,11 @@ uvm_page_recolor(int newncolors)
 		return;
 	}
 
-	s = uvm_lock_fpageq();
+	mutex_enter(&uvm_fpageqlock);
 
 	/* Make sure we should still do this. */
 	if (newncolors <= uvmexp.ncolors) {
-		uvm_unlock_fpageq(s);
+		mutex_exit(&uvm_fpageqlock);
 		free(bucketarray, M_VMPAGE);
 		return;
 	}
@@ -958,13 +958,13 @@ uvm_page_recolor(int newncolors)
 	}
 
 	if (have_recolored_pages) {
-		uvm_unlock_fpageq(s);
+		mutex_exit(&uvm_fpageqlock);
 		free(oldbucketarray, M_VMPAGE);
 		return;
 	}
 
 	have_recolored_pages = true;
-	uvm_unlock_fpageq(s);
+	mutex_exit(&uvm_fpageqlock);
 }
 
 /*
@@ -1032,17 +1032,17 @@ struct vm_page *
 uvm_pagealloc_strat(struct uvm_object *obj, voff_t off, struct vm_anon *anon,
     int flags, int strat, int free_list)
 {
-	int lcv, try1, try2, s, zeroit = 0, color;
+	int lcv, try1, try2, zeroit = 0, color;
 	struct vm_page *pg;
 	bool use_reserve;
 
 	KASSERT(obj == NULL || anon == NULL);
 	KASSERT(anon == NULL || off == 0);
 	KASSERT(off == trunc_page(off));
-	LOCK_ASSERT(obj == NULL || simple_lock_held(&obj->vmobjlock));
-	LOCK_ASSERT(anon == NULL || simple_lock_held(&anon->an_lock));
+	KASSERT(obj == NULL || mutex_owned(&obj->vmobjlock));
+	KASSERT(anon == NULL || mutex_owned(&anon->an_lock));
 
-	s = uvm_lock_fpageq();
+	mutex_enter(&uvm_fpageqlock);
 
 	/*
 	 * This implements a global round-robin page coloring
@@ -1152,7 +1152,7 @@ uvm_pagealloc_strat(struct uvm_object *obj, voff_t off, struct vm_anon *anon,
 			zeroit = 1;
 		}
 	}
-	uvm_unlock_fpageq(s);
+	mutex_exit(&uvm_fpageqlock);
 
 	pg->offset = off;
 	pg->uobject = obj;
@@ -1186,7 +1186,7 @@ uvm_pagealloc_strat(struct uvm_object *obj, voff_t off, struct vm_anon *anon,
 	return(pg);
 
  fail:
-	uvm_unlock_fpageq(s);
+	mutex_exit(&uvm_fpageqlock);
 	return (NULL);
 }
 
@@ -1204,7 +1204,7 @@ uvm_pagereplace(struct vm_page *oldpg, struct vm_page *newpg)
 	KASSERT(oldpg->uobject != NULL);
 	KASSERT((newpg->flags & PG_TABLED) == 0);
 	KASSERT(newpg->uobject == NULL);
-	LOCK_ASSERT(simple_lock_held(&oldpg->uobject->vmobjlock));
+	KASSERT(mutex_owned(&oldpg->uobject->vmobjlock));
 
 	newpg->uobject = oldpg->uobject;
 	newpg->offset = oldpg->offset;
@@ -1253,7 +1253,7 @@ uvm_pagezerocheck(struct vm_page *pg)
 	int *p, *ep;
 
 	KASSERT(uvm_zerocheckkva != 0);
-	LOCK_ASSERT(simple_lock_held(&uvm.fpageqlock));
+	KASSERT(mutex_owned(&uvm_fpageqlock));
 
 	/*
 	 * XXX assuming pmap_kenter_pa and pmap_kremove never call
@@ -1287,17 +1287,16 @@ uvm_pagezerocheck(struct vm_page *pg)
 void
 uvm_pagefree(struct vm_page *pg)
 {
-	int s;
 	struct pglist *pgfl;
 	bool iszero;
 
 	KASSERT((pg->flags & PG_PAGEOUT) == 0);
-	LOCK_ASSERT(simple_lock_held(&uvm.pageqlock) ||
-		    !uvmpdpol_pageisqueued_p(pg));
-	LOCK_ASSERT(pg->uobject == NULL ||
-		    simple_lock_held(&pg->uobject->vmobjlock));
-	LOCK_ASSERT(pg->uobject != NULL || pg->uanon == NULL ||
-		    simple_lock_held(&pg->uanon->an_lock));
+	KASSERT(mutex_owned(&uvm_pageqlock) ||
+		!uvmpdpol_pageisqueued_p(pg));
+	KASSERT(pg->uobject == NULL ||
+		mutex_owned(&pg->uobject->vmobjlock));
+	KASSERT(pg->uobject != NULL || pg->uanon == NULL ||
+		mutex_owned(&pg->uanon->an_lock));
 
 #ifdef DEBUG
 	if (pg->uobject == (void *)0xdeadbeef &&
@@ -1395,7 +1394,7 @@ uvm_pagefree(struct vm_page *pg)
 	pg->uanon = (void *)0xdeadbeef;
 #endif
 
-	s = uvm_lock_fpageq();
+	mutex_enter(&uvm_fpageqlock);
 
 #ifdef DEBUG
 	if (iszero)
@@ -1410,7 +1409,7 @@ uvm_pagefree(struct vm_page *pg)
 	if (uvmexp.zeropages < UVM_PAGEZERO_TARGET)
 		uvm.page_idle_zero = vm_page_zero_enable;
 
-	uvm_unlock_fpageq(s);
+	mutex_exit(&uvm_fpageqlock);
 }
 
 /*
@@ -1436,11 +1435,11 @@ uvm_page_unbusy(struct vm_page **pgs, int npgs)
 			continue;
 		}
 
-		LOCK_ASSERT(pg->uobject == NULL ||
-		    simple_lock_held(&pg->uobject->vmobjlock));
-		LOCK_ASSERT(pg->uobject != NULL ||
+		KASSERT(pg->uobject == NULL ||
+		    mutex_owned(&pg->uobject->vmobjlock));
+		KASSERT(pg->uobject != NULL ||
 		    (pg->uanon != NULL &&
-		    simple_lock_held(&pg->uanon->an_lock)));
+		    mutex_owned(&pg->uanon->an_lock)));
 
 		KASSERT(pg->flags & PG_BUSY);
 		KASSERT((pg->flags & PG_PAGEOUT) == 0);
@@ -1482,9 +1481,9 @@ uvm_page_own(struct vm_page *pg, const char *tag)
 	uobj = pg->uobject;
 	anon = pg->uanon;
 	if (uobj != NULL) {
-		LOCK_ASSERT(simple_lock_held(&uobj->vmobjlock));
+		KASSERT(mutex_owned(&uobj->vmobjlock));
 	} else if (anon != NULL) {
-		LOCK_ASSERT(simple_lock_held(&anon->an_lock));
+		KASSERT(mutex_owned(&anon->an_lock));
 	}
 
 	KASSERT((pg->flags & PG_WANTED) == 0);
@@ -1533,11 +1532,11 @@ uvm_pageidlezero(void)
 {
 	struct vm_page *pg;
 	struct pgfreelist *pgfl;
-	int free_list, s, firstbucket;
+	int free_list, firstbucket;
 	static int nextbucket;
 
 	KERNEL_LOCK(1, NULL);
-	s = uvm_lock_fpageq();
+	mutex_enter(&uvm_fpageqlock);
 	firstbucket = nextbucket;
 	do {
 		if (sched_whichqs != 0)
@@ -1557,7 +1556,7 @@ uvm_pageidlezero(void)
 				    nextbucket].pgfl_queues[PGFL_UNKNOWN],
 				    pg, pageq);
 				uvmexp.free--;
-				uvm_unlock_fpageq(s);
+				mutex_exit(&uvm_fpageqlock);
 				KERNEL_UNLOCK_LAST(NULL);
 #ifdef PMAP_PAGEIDLEZERO
 				if (!PMAP_PAGEIDLEZERO(VM_PAGE_TO_PHYS(pg))) {
@@ -1570,7 +1569,7 @@ uvm_pageidlezero(void)
 					 */
 
 					KERNEL_LOCK(1, NULL);
-					s = uvm_lock_fpageq();
+					mutex_enter(&uvm_fpageqlock);
 					TAILQ_INSERT_HEAD(&pgfl->pgfl_buckets[
 					    nextbucket].pgfl_queues[
 					    PGFL_UNKNOWN], pg, pageq);
@@ -1584,7 +1583,7 @@ uvm_pageidlezero(void)
 				pg->flags |= PG_ZERO;
 
 				KERNEL_LOCK(1, NULL);
-				s = uvm_lock_fpageq();
+				mutex_enter(&uvm_fpageqlock);
 				TAILQ_INSERT_HEAD(&pgfl->pgfl_buckets[
 				    nextbucket].pgfl_queues[PGFL_ZEROS],
 				    pg, pageq);
@@ -1595,41 +1594,8 @@ uvm_pageidlezero(void)
 		nextbucket = (nextbucket + 1) & uvmexp.colormask;
 	} while (nextbucket != firstbucket);
 quit:
-	uvm_unlock_fpageq(s);
+	mutex_exit(&uvm_fpageqlock);
 	KERNEL_UNLOCK_LAST(NULL);
-}
-
-/*
- * uvm_lock_fpageq: lock the free page queue
- *
- * => free page queue can be accessed in interrupt context, so this
- *	blocks all interrupts that can cause memory allocation, and
- *	returns the previous interrupt level.
- */
-
-int
-uvm_lock_fpageq(void)
-{
-	int s;
-
-	s = splvm();
-	simple_lock(&uvm.fpageqlock);
-	return (s);
-}
-
-/*
- * uvm_unlock_fpageq: unlock the free page queue
- *
- * => caller must supply interrupt level returned by uvm_lock_fpageq()
- *	so that it may be restored.
- */
-
-void
-uvm_unlock_fpageq(int s)
-{
-
-	simple_unlock(&uvm.fpageqlock);
-	splx(s);
 }
 
 /*
@@ -1646,13 +1612,13 @@ uvm_pagelookup(struct uvm_object *obj, voff_t off)
 	struct pglist *buck;
 
 	buck = &uvm.page_hash[uvm_pagehash(obj,off)];
-	simple_lock(&uvm.hashlock);
+	mutex_enter(&uvm_hashlock);
 	TAILQ_FOREACH(pg, buck, hashq) {
 		if (pg->uobject == obj && pg->offset == off) {
 			break;
 		}
 	}
-	simple_unlock(&uvm.hashlock);
+	mutex_exit(&uvm_hashlock);
 	KASSERT(pg == NULL || obj->uo_npages != 0);
 	KASSERT(pg == NULL || (pg->flags & (PG_RELEASED|PG_PAGEOUT)) == 0 ||
 		(pg->flags & PG_BUSY) != 0);
@@ -1668,7 +1634,7 @@ uvm_pagelookup(struct uvm_object *obj, voff_t off)
 void
 uvm_pagewire(struct vm_page *pg)
 {
-	UVM_LOCK_ASSERT_PAGEQ();
+	KASSERT(mutex_owned(&uvm_pageqlock));
 #if defined(READAHEAD_STATS)
 	if ((pg->pqflags & PQ_READAHEAD) != 0) {
 		uvm_ra_hit.ev_count++;
@@ -1692,7 +1658,7 @@ uvm_pagewire(struct vm_page *pg)
 void
 uvm_pageunwire(struct vm_page *pg)
 {
-	UVM_LOCK_ASSERT_PAGEQ();
+	KASSERT(mutex_owned(&uvm_pageqlock));
 	pg->wire_count--;
 	if (pg->wire_count == 0) {
 		uvm_pageactivate(pg);
@@ -1713,7 +1679,7 @@ void
 uvm_pagedeactivate(struct vm_page *pg)
 {
 
-	UVM_LOCK_ASSERT_PAGEQ();
+	KASSERT(mutex_owned(&uvm_pageqlock));
 	KASSERT(pg->wire_count != 0 || uvmpdpol_pageisqueued_p(pg));
 	uvmpdpol_pagedeactivate(pg);
 }
@@ -1728,7 +1694,7 @@ void
 uvm_pageactivate(struct vm_page *pg)
 {
 
-	UVM_LOCK_ASSERT_PAGEQ();
+	KASSERT(mutex_owned(&uvm_pageqlock));
 #if defined(READAHEAD_STATS)
 	if ((pg->pqflags & PQ_READAHEAD) != 0) {
 		uvm_ra_hit.ev_count++;
@@ -1751,7 +1717,7 @@ uvm_pagedequeue(struct vm_page *pg)
 
 #if defined(LOCKDEBUG)
 	if (uvmpdpol_pageisqueued_p(pg)) {
-		UVM_LOCK_ASSERT_PAGEQ();
+		KASSERT(mutex_owned(&uvm_pageqlock));
 	}
 #endif /* defined(LOCKDEBUG) */
 	uvmpdpol_pagedequeue(pg);
@@ -1766,7 +1732,7 @@ void
 uvm_pageenqueue(struct vm_page *pg)
 {
 
-	UVM_LOCK_ASSERT_PAGEQ();
+	KASSERT(mutex_owned(&uvm_pageqlock));
 	if (pg->wire_count != 0) {
 		return;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_stat.h,v 1.39 2006/02/16 20:17:20 perry Exp $	*/
+/*	$NetBSD: uvm_stat.h,v 1.39.24.1 2007/03/13 17:51:58 ad Exp $	*/
 
 /*
  *
@@ -70,7 +70,7 @@ struct uvm_history {
 	int f; 				/* next free one */
 	int unused;			/* old location of struct simplelock */
 	struct uvm_history_ent *e;	/* the malloc'd entries */
-	struct simplelock l;		/* lock on this history */
+	kmutex_t l;			/* lock on this history */
 };
 
 LIST_HEAD(uvm_history_head, uvm_history);
@@ -117,7 +117,7 @@ do { \
 	(NAME).namelen = strlen(__STRING(NAME)); \
 	(NAME).n = (N); \
 	(NAME).f = 0; \
-	simple_lock_init(&(NAME).l); \
+	mutex_init(&(NAME).l, MUTEX_SPIN, IPL_HIGH); \
 	(NAME).e = (struct uvm_history_ent *) \
 		malloc(sizeof(struct uvm_history_ent) * (N), M_TEMP, \
 		    M_WAITOK); \
@@ -131,7 +131,7 @@ do { \
 	(NAME).namelen = strlen(__STRING(NAME)); \
 	(NAME).n = sizeof(BUF) / sizeof(struct uvm_history_ent); \
 	(NAME).f = 0; \
-	simple_lock_init(&(NAME).l); \
+	mutex_init((&(NAME).l, MUTEX_SPIN, IPL_HIGH); \
 	(NAME).e = (struct uvm_history_ent *) (BUF); \
 	memset((NAME).e, 0, sizeof(struct uvm_history_ent) * (NAME).n); \
 	LIST_INSERT_HEAD(&uvm_histories, &(NAME), list); \
@@ -152,12 +152,11 @@ do { \
 
 #define UVMHIST_LOG(NAME,FMT,A,B,C,D) \
 do { \
-	int _i_, _s_ = splhigh(); \
-	simple_lock(&(NAME).l); \
+	int _i_; \
+	mutex_enter(&(NAME).l); \
 	_i_ = (NAME).f; \
 	(NAME).f = (_i_ + 1 < (NAME).n) ? _i_ + 1 : 0; \
-	simple_unlock(&(NAME).l); \
-	splx(_s_); \
+	mutex_exit(&(NAME).l); \
 	if (!cold) \
 		microtime(&(NAME).e[_i_].tv); \
 	(NAME).e[_i_].cpunum = cpu_number(); \
@@ -176,11 +175,9 @@ do { \
 #define UVMHIST_CALLED(NAME) \
 do { \
 	{ \
-		int _s = splhigh(); \
-		simple_lock(&(NAME).l); \
+		mutex_enter(&(NAME).l); \
 		_uvmhist_call = _uvmhist_cnt++; \
-		simple_unlock(&(NAME).l); \
-		splx(_s); \
+		mutex_exit(&(NAME).l); \
 	} \
 	UVMHIST_LOG(NAME,"called!", 0, 0, 0, 0); \
 } while (/*CONSTCOND*/ 0)

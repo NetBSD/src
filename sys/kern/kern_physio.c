@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_physio.c,v 1.80 2007/03/04 06:03:05 christos Exp $	*/
+/*	$NetBSD: kern_physio.c,v 1.80.2.1 2007/03/13 17:50:55 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_physio.c,v 1.80 2007/03/04 06:03:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_physio.c,v 1.80.2.1 2007/03/13 17:50:55 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -157,7 +157,7 @@ physio_done(struct work *wk, void *dummy)
 	vunmapbuf(bp, todo);
 	uvm_vsunlock(bp->b_proc->p_vmspace, bp->b_data, todo);
 
-	simple_lock(&mbp->b_interlock);
+	mutex_enter(&mbp->b_interlock);
 	if (__predict_false(done != todo)) {
 		off_t endoffset = dbtob(bp->b_blkno) + done;
 
@@ -206,7 +206,7 @@ physio_done(struct work *wk, void *dummy)
 		mbp->b_flags &= ~B_WANTED;
 		wakeup(mbp);
 	}
-	simple_unlock(&mbp->b_interlock);
+	mutex_exit(&mbp->b_interlock);
 
 	putphysbuf(bp);
 }
@@ -231,11 +231,11 @@ physio_wait(struct buf *bp, int n, const char *wchan)
 {
 	int error = 0;
 
-	LOCK_ASSERT(simple_lock_held(&bp->b_interlock));
+	KASSERT(mutex_owned(&bp->b_interlock));
 
 	while (bp->b_running > n) {
 		bp->b_flags |= B_WANTED;
-		error = ltsleep(bp, PRIBIO + 1, wchan, 0, &bp->b_interlock);
+		error = mtsleep(bp, PRIBIO + 1, wchan, 0, &bp->b_interlock);
 		if (error) {
 			break;
 		}
@@ -272,7 +272,7 @@ physio(void (*strategy)(struct buf *), struct buf *obp, dev_t dev, int flags,
 	struct iovec *iovp;
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
-	int i, s;
+	int i;
 	int error;
 	int error2;
 	struct buf *bp = NULL;
@@ -291,24 +291,21 @@ physio(void (*strategy)(struct buf *), struct buf *obp, dev_t dev, int flags,
 
 	/* Make sure we have a buffer, creating one if necessary. */
 	if (obp != NULL) {
-		/* [raise the processor priority level to splbio;] */
-		s = splbio();
-		simple_lock(&obp->b_interlock);
+		mutex_enter(&obp->b_interlock);
 
 		/* [while the buffer is marked busy] */
 		while (obp->b_flags & B_BUSY) {
 			/* [mark the buffer wanted] */
 			obp->b_flags |= B_WANTED;
 			/* [wait until the buffer is available] */
-			ltsleep(obp, PRIBIO+1, "physbuf", 0, &obp->b_interlock);
+			mtsleep(obp, PRIBIO+1, "physbuf", 0, &obp->b_interlock);
 		}
 
 		/* Mark it busy, so nobody else will use it. */
 		obp->b_flags = B_BUSY | B_DONTFREE;
 
 		/* [lower the priority level] */
-		simple_unlock(&obp->b_interlock);
-		splx(s);
+		mutex_exit(&obp->b_interlock);
 
 		concurrency = 0; /* see "XXXkludge" comment below */
 	}
@@ -327,7 +324,7 @@ physio(void (*strategy)(struct buf *), struct buf *obp, dev_t dev, int flags,
 			size_t todo;
 			vaddr_t endp;
 
-			simple_lock(&mbp->b_interlock);
+			mutex_enter(&mbp->b_interlock);
 			if ((mbp->b_flags & B_ERROR) != 0) {
 				goto done_locked;
 			}
@@ -336,7 +333,7 @@ physio(void (*strategy)(struct buf *), struct buf *obp, dev_t dev, int flags,
 			if (error) {
 				goto done_locked;
 			}
-			simple_unlock(&mbp->b_interlock);
+			mutex_exit(&mbp->b_interlock);
 			if (obp != NULL) {
 				/*
 				 * XXXkludge
@@ -410,9 +407,9 @@ physio(void (*strategy)(struct buf *), struct buf *obp, dev_t dev, int flags,
 
 			BIO_SETPRIO(bp, BPRIO_TIMECRITICAL);
 
-			simple_lock(&mbp->b_interlock);
+			mutex_enter(&mbp->b_interlock);
 			mbp->b_running++;
-			simple_unlock(&mbp->b_interlock);
+			mutex_exit(&mbp->b_interlock);
 
 			/* [call strategy to start the transfer] */
 			(*strategy)(bp);
@@ -426,13 +423,13 @@ physio(void (*strategy)(struct buf *), struct buf *obp, dev_t dev, int flags,
 	}
 
 done:
-	simple_lock(&mbp->b_interlock);
+	mutex_enter(&mbp->b_interlock);
 done_locked:
 	error2 = physio_wait(mbp, 0, "physio2");
 	if (error == 0) {
 		error = error2;
 	}
-	simple_unlock(&mbp->b_interlock);
+	mutex_exit(&mbp->b_interlock);
 
 	if ((mbp->b_flags & B_ERROR) != 0) {
 		off_t delta;
@@ -465,16 +462,14 @@ done_locked:
 		 * [if another process is waiting for the raw I/O buffer,
 		 *    wake up processes waiting to do physical I/O;
 		 */
-		s = splbio();
-		simple_lock(&obp->b_interlock);
+		mutex_enter(&obp->b_interlock);
 		obp->b_flags &=
 		    ~(B_BUSY | B_PHYS | B_RAW | B_CALL | B_DONTFREE);
 		if ((obp->b_flags & B_WANTED) != 0) {
 			obp->b_flags &= ~B_WANTED;
 			wakeup(obp);
 		}
-		simple_unlock(&obp->b_interlock);
-		splx(s);
+		mutex_exit(&obp->b_interlock);
 	}
 	PRELE(l);
 

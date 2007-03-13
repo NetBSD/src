@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.61 2006/09/27 17:10:34 cube Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.61.8.1 2007/03/13 17:50:25 ad Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -135,15 +135,15 @@
 #define	VM_FREELIST_FIRST16	1
 
 #define	__HAVE_VM_PAGE_MD
-#define	VM_MDPAGE_INIT(pg)					\
-	memset(&(pg)->mdpage, 0, sizeof((pg)->mdpage));		\
-	simple_lock_init(&(pg)->mdpage.mp_pvhead.pvh_lock);	\
+#define	VM_MDPAGE_INIT(pg)							\
+	memset(&(pg)->mdpage, 0, sizeof((pg)->mdpage));				\
+	mutex_init(&(pg)->mdpage.mp_pvhead.pvh_lock, MUTEX_NODEBUG, IPL_NONE);	\
 	SPLAY_INIT(&(pg)->mdpage.mp_pvhead.pvh_root);
 
 struct pv_entry;
 
 struct pv_head {
-	struct simplelock pvh_lock;	/* locks every pv in this tree */
+	kmutex_t pvh_lock;		/* locks every pv in this tree */
 	SPLAY_HEAD(pvtree, pv_entry) pvh_root;
 					/* head of tree (locked by pvh_lock) */
 };
