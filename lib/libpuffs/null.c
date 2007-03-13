@@ -1,4 +1,4 @@
-/*	$NetBSD: null.c,v 1.8 2007/02/15 19:33:51 pooka Exp $	*/
+/*	$NetBSD: null.c,v 1.9 2007/03/13 17:05:23 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: null.c,v 1.8 2007/02/15 19:33:51 pooka Exp $");
+__RCSID("$NetBSD: null.c,v 1.9 2007/03/13 17:05:23 pooka Exp $");
 #endif /* !lint */
 
 /*
@@ -47,6 +47,7 @@ __RCSID("$NetBSD: null.c,v 1.8 2007/02/15 19:33:51 pooka Exp $");
 #include <fcntl.h>
 #include <puffs.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 
 PUFFSOP_PROTOS(puffs_null)
@@ -125,6 +126,17 @@ writeableopen(const char *path)
 }
 
 /*ARGSUSED*/
+static void *
+inodecmp(struct puffs_usermount *pu, struct puffs_node *pn, void *arg)
+{
+	ino_t *cmpino = arg;
+
+	if (pn->pn_va.va_fileid == *cmpino)
+		return pn;
+	return NULL;
+}
+
+/*ARGSUSED*/
 int
 puffs_null_fs_statvfs(struct puffs_cc *pcc, struct statvfs *svfsb, pid_t pid)
 {
@@ -158,10 +170,8 @@ puffs_null_node_lookup(struct puffs_cc *pcc, void *opc, void **newnode,
 	if (rv)
 		return rv;
 
-	/* XXX: UNCONST is wrong, fix the interface */
 	/* XXX2: nodewalk is a bit too slow here */
-	pn_res = puffs_pn_nodewalk(pu, puffs_path_walkcmp,
-	    __UNCONST(&pcn->pcn_po_full));
+	pn_res = puffs_pn_nodewalk(pu, inodecmp, &sb.st_ino);
 
 	if (pn_res == NULL) {
 		pn_res = puffs_pn_new(pu, NULL);
