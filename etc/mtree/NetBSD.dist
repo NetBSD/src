@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.335 2007/03/08 16:26:27 tnozaki Exp $
+#	$NetBSD: NetBSD.dist,v 1.336 2007/03/13 16:34:37 tnozaki Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -499,6 +499,7 @@
 ./usr/share/i18n/csmapper/ISO-8859
 ./usr/share/i18n/csmapper/ISO646
 ./usr/share/i18n/csmapper/JIS
+./usr/share/i18n/csmapper/KAZAKH
 ./usr/share/i18n/csmapper/KOI
 ./usr/share/i18n/csmapper/KS
 ./usr/share/i18n/csmapper/MISC
@@ -515,6 +516,7 @@
 ./usr/share/i18n/esdb/ISO-2022
 ./usr/share/i18n/esdb/ISO-8859
 ./usr/share/i18n/esdb/ISO646
+./usr/share/i18n/esdb/KAZAKH
 ./usr/share/i18n/esdb/KOI
 ./usr/share/i18n/esdb/MISC
 ./usr/share/i18n/esdb/TCVN
