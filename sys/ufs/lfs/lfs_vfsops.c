@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.232 2007/03/12 18:18:38 ad Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.233 2007/03/13 02:11:28 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.232 2007/03/12 18:18:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.233 2007/03/13 02:11:28 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -287,13 +287,13 @@ lfs_init()
 #ifdef _LKM
 	malloc_type_attach(M_SEGMENT);
 	pool_init(&lfs_inode_pool, sizeof(struct inode), 0, 0, 0,
-	    "lfsinopl", &pool_allocator_nointr);
+	    "lfsinopl", &pool_allocator_nointr, IPL_NONE);
 	pool_init(&lfs_dinode_pool, sizeof(struct ufs1_dinode), 0, 0, 0,
-	    "lfsdinopl", &pool_allocator_nointr);
+	    "lfsdinopl", &pool_allocator_nointr, IPL_NONE);
 	pool_init(&lfs_inoext_pool, sizeof(struct lfs_inode_ext), 8, 0, 0,
-	    "lfsinoextpl", &pool_allocator_nointr);
+	    "lfsinoextpl", &pool_allocator_nointr, IPL_NONE);
 	pool_init(&lfs_lbnentry_pool, sizeof(struct lbnentry), 0, 0, 0,
-	    "lfslbnpool", &pool_allocator_nointr);
+	    "lfslbnpool", &pool_allocator_nointr, IPL_NONE);
 #endif
 	ufs_init();
 
