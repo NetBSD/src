@@ -1,4 +1,4 @@
-/*	$NetBSD: hntest.c,v 1.4 2007/03/12 03:38:21 enami Exp $	*/
+/*	$NetBSD: hntest.c,v 1.5 2007/03/13 02:56:18 enami Exp $	*/
 
 #include <err.h>
 #include <inttypes.h>
@@ -53,7 +53,8 @@ const struct hnopts {
 
 	/*
 	 * Failure case reported by Greg Troxel <gdt@NetBSD.org>.
-	 * It incorrectly returns 5 with filling the buffer with "1000".
+	 * Rev. 1.11 incorrectly returns 5 with filling the buffer
+	 * with "1000".
 	 */
 	{ 5, 1048258238, "",
 	  HN_AUTOSCALE, HN_B | HN_NOSPACE | HN_DECIMAL, 4, "1.0G" },
