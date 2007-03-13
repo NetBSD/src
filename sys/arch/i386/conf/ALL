@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.86 2007/03/13 06:01:07 xtraeme Exp $
+# $NetBSD: ALL,v 1.87 2007/03/13 23:49:38 xtraeme Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.86 $"
+#ident 		"ALL-$Revision: 1.87 $"
 
 maxusers	32		# estimated number of users
 
@@ -523,6 +523,10 @@ options 	VESAFB_HEIGHT=480
 options 	VESAFB_DEPTH=8
 options 	VESAFB_PM		# power management support
 wsdisplay*	at vesafb? console ?
+
+# VIA Unichrome framebuffer console
+unichromefb*   at pci? dev ? function ?
+wsdisplay*     at unichromefb?
 
 attimer0	at isa?
 pcppi0		at isa?
