@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.817 2007/03/13 04:09:28 xtraeme Exp $
+# $NetBSD: GENERIC,v 1.818 2007/03/13 23:49:38 xtraeme Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.817 $"
+#ident 		"GENERIC-$Revision: 1.818 $"
 
 maxusers	32		# estimated number of users
 
@@ -534,6 +534,10 @@ wsmouse*	at pms? mux 0
 #options 	VESAFB_DEPTH=8
 #options 	VESAFB_PM		# power management support
 #wsdisplay*	at vesafb? console ?
+
+# VIA Unichrome framebuffer console
+#unichromefb* 	at pci? dev ? function ?
+#wsdisplay* 	at unichromefb?
 
 attimer0	at isa?
 pcppi0		at isa?

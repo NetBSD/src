@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_LAPTOP,v 1.225 2007/03/13 04:09:29 xtraeme Exp $
+#	$NetBSD: GENERIC_LAPTOP,v 1.226 2007/03/13 23:49:39 xtraeme Exp $
 #	From: NetBSD: GENERIC,v 1.414 2001/07/30 19:59:05 ad Exp
 #
 #	GENERIC_LAPTOP -- GENERIC with cardbus and some USB devices enabled
@@ -8,7 +8,7 @@ include "arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.225 $"
+#ident 		"GENERIC-$Revision: 1.226 $"
 
 maxusers	32		# estimated number of users
 
@@ -427,6 +427,20 @@ wsdisplay*	at vga? console ?
 wsdisplay*	at pcdisplay? console ?
 wskbd*		at pckbd? console ?
 wsmouse*	at pms? mux 0
+
+# VESA framebuffer console
+#options        KVM86                   # required for vesabios
+#vesabios*      at vesabiosbus?
+#vesafb*        at vesabios?
+#options        VESAFB_WIDTH=640
+#options        VESAFB_HEIGHT=480
+#options        VESAFB_DEPTH=8
+#options        VESAFB_PM               # power management support
+#wsdisplay*     at vesafb? console ?
+
+# VIA Unichrome framebuffer console
+#unichromefb*   at pci? dev ? function ?
+#wsdisplay*     at unichromefb?
 
 attimer0	at isa?
 pcppi0		at isa?
