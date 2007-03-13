@@ -1,4 +1,4 @@
-/*	$NetBSD: refuse.c,v 1.41 2007/03/13 20:50:47 agc Exp $	*/
+/*	$NetBSD: refuse.c,v 1.42 2007/03/13 22:25:32 agc Exp $	*/
 
 /*
  * Copyright © 2007 Alistair Crooks.  All rights reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: refuse.c,v 1.41 2007/03/13 20:50:47 agc Exp $");
+__RCSID("$NetBSD: refuse.c,v 1.42 2007/03/13 22:25:32 agc Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -1038,11 +1038,12 @@ struct fuse_chan *
 fuse_mount(const char *dir, struct fuse_args *args)
 {
 	struct fuse_chan	*fc;
-	int			i;
 
 	NEW(struct fuse_chan, fc, "fuse_mount", return NULL);
 
-	fc->dir = strdup(dir);
+	if (dir) {
+		fc->dir = strdup(dir);
+	}
 
 	if (args && args->argc > 0) {
 		NEW(struct fuse_args, fc->args, "fuse_mount2", return NULL);
@@ -1051,8 +1052,11 @@ fuse_mount(const char *dir, struct fuse_args *args)
 		fc->args->allocated = ((args->argc / 32) + 1) * 32;
 		NEWARRAY(char *, fc->args->argv, fc->args->allocated, "fuse_mount3", return NULL);
 
-		for (i = 0 ; i < args->argc ; i++) {
-			fc->args->argv[i] = strdup(args->argv[i]);
+		for (fc->args->argc = 0 ; fc->args->argc < args->argc ; ) {
+			if (args->argv[fc->args->argc] != NULL) {
+				fc->args->argv[fc->args->argc] = strdup(args->argv[fc->args->argc]);
+				fc->args->argc += 1;
+			}
 		}
 	}
 
