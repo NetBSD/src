@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_extent.c,v 1.64 2007/03/13 13:25:57 dogcow Exp $	*/
+/*	$NetBSD: subr_extent.c,v 1.65 2007/03/13 15:59:47 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_extent.c,v 1.64 2007/03/13 13:25:57 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_extent.c,v 1.65 2007/03/13 15:59:47 ad Exp $");
 
 #ifdef _KERNEL
 #include "opt_lockdebug.h"
@@ -95,10 +95,6 @@ panic(a)			printf(a)
 splhigh()			(1)
 #define	\
 splx(s)				((void)(s))
-
-#undef simple_lock_init
-#undef simple_lock
-#undef simple_unlock
 
 #define	\
 simple_lock_init(l)		((void)(l))
