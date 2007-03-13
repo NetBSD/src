@@ -1,9 +1,10 @@
-/*     $NetBSD: vfs_syscalls.h,v 1.1 2007/03/10 16:50:01 dsl Exp $        */
+/*     $NetBSD: vfs_syscalls.h,v 1.1.2.1 2007/03/13 16:52:06 ad Exp $        */
 
 #ifndef _SYS_VFS_SYSCALLS_H_
 #define _SYS_VFS_SYSCALLS_H_
 
 struct stat;
+struct statvfs;
 
 /*
  * syscall helpers for compat code.

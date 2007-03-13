@@ -1,4 +1,4 @@
-/*	$NetBSD: dmover_request.c,v 1.1 2002/08/02 00:30:39 thorpej Exp $	*/
+/*	$NetBSD: dmover_request.c,v 1.1.70.1 2007/03/13 16:50:22 ad Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dmover_request.c,v 1.1 2002/08/02 00:30:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dmover_request.c,v 1.1.70.1 2007/03/13 16:50:22 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/lock.h>
@@ -65,7 +65,7 @@ dmover_request_initialize(void)
 	simple_lock(&initialized_slock);
 	if (__predict_true(initialized == 0)) {
 		pool_init(&dmover_request_pool, sizeof(struct dmover_request),
-		    0, 0, 0, "dmreq", NULL);
+		    0, 0, 0, "dmreq", NULL, IPL_BIO);
 		pool_cache_init(&dmover_request_cache, &dmover_request_pool,
 		    NULL, NULL, NULL);
 		initialized = 1;

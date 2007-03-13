@@ -1,4 +1,4 @@
-/*	$NetBSD: uhidev.c,v 1.33 2007/01/22 19:39:37 ghen Exp $	*/
+/*	$NetBSD: uhidev.c,v 1.33.6.1 2007/03/13 16:50:52 ad Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.33 2007/01/22 19:39:37 ghen Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.33.6.1 2007/03/13 16:50:52 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,20 +89,16 @@ USB_DECLARE_DRIVER(uhidev);
 
 USB_MATCH(uhidev)
 {
-	USB_MATCH_START(uhidev, uaa);
-	usb_interface_descriptor_t *id;
+	USB_IFMATCH_START(uhidev, uaa);
 
-	if (uaa->iface == NULL)
-		return (UMATCH_NONE);
-	id = usbd_get_interface_descriptor(uaa->iface);
-	if (id == NULL || id->bInterfaceClass != UICLASS_HID)
+	if (uaa->class != UICLASS_HID)
 		return (UMATCH_NONE);
 	return (UMATCH_IFACECLASS_GENERIC);
 }
 
 USB_ATTACH(uhidev)
 {
-	USB_ATTACH_START(uhidev, sc, uaa);
+	USB_IFATTACH_START(uhidev, sc, uaa);
 	usbd_interface_handle iface = uaa->iface;
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;

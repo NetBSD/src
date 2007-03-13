@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.128 2007/03/04 06:03:07 christos Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.128.2.1 2007/03/13 16:51:56 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.128 2007/03/04 06:03:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.128.2.1 2007/03/13 16:51:56 ad Exp $");
 
 #include "opt_pool.h"
 #include "opt_poollog.h"
@@ -560,7 +560,7 @@ pool_subsystem_init(void)
 	__link_set_foreach(pi, pools)
 		pool_init((*pi)->pp, (*pi)->size, (*pi)->align,
 		    (*pi)->align_offset, (*pi)->flags, (*pi)->wchan,
-		    (*pi)->palloc);
+		    (*pi)->palloc, (*pi)->ipl);
 
 	while ((pa = SLIST_FIRST(&pa_deferinitq)) != NULL) {
 		KASSERT(pa->pa_backingmapptr != NULL);
@@ -578,7 +578,7 @@ pool_subsystem_init(void)
  */
 void
 pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
-    const char *wchan, struct pool_allocator *palloc)
+    const char *wchan, struct pool_allocator *palloc, int ipl)
 {
 #ifdef DEBUG
 	struct pool *pp1;
@@ -792,14 +792,14 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 				    + nelem * sizeof(pool_item_freelist_t);
 			}
 			pool_init(&phpool[idx], sz, 0, 0, 0,
-			    phpool_names[idx], &pool_allocator_meta);
+			    phpool_names[idx], &pool_allocator_meta, IPL_VM);
 		}
 #ifdef POOL_SUBPAGE
 		pool_init(&psppool, POOL_SUBPAGE, POOL_SUBPAGE, 0,
-		    PR_RECURSIVE, "psppool", &pool_allocator_meta);
+		    PR_RECURSIVE, "psppool", &pool_allocator_meta, IPL_VM);
 #endif
 		pool_init(&pcgpool, sizeof(struct pool_cache_group), 0, 0,
-		    0, "pcgpool", &pool_allocator_meta);
+		    0, "pcgpool", &pool_allocator_meta, IPL_VM);
 	}
 
 	/* Insert into the list of all pools. */

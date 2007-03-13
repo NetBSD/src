@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_file.c,v 1.33 2007/03/04 06:01:15 christos Exp $	*/
+/*	$NetBSD: hpux_file.c,v 1.33.2.1 2007/03/13 16:50:17 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -119,7 +119,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_file.c,v 1.33 2007/03/04 06:01:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_file.c,v 1.33.2.1 2007/03/13 16:50:17 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -140,6 +140,7 @@ __KERNEL_RCSID(0, "$NetBSD: hpux_file.c,v 1.33 2007/03/04 06:01:15 christos Exp 
 #include <sys/mount.h>
 #include <sys/ipc.h>
 #include <sys/user.h>
+#include <sys/vfs_syscalls.h>
 #include <sys/mman.h>
 
 #include <machine/cpu.h>
@@ -448,29 +449,17 @@ hpux_sys_fstat(l, v, retval)
 		syscallarg(int) fd;
 		syscallarg(struct hpux_stat *) sb;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
-	struct sys___fstat30_args fsa;
 	struct hpux_stat tmphst;
-	struct stat *st, tmpst;
-	void *sg;
+	struct stat sb;
 	int error;
 
-	sg = stackgap_init(p, 0);
+	error = do_sys_fstat(l, SCARG(uap, fd), &sb);
+	if (error)
+		return error;
 
-	st = stackgap_alloc(p, &sg, sizeof (struct stat));
+	bsd_to_hpux_stat(&sb, &tmphst);
 
-	SCARG(&fsa, fd) = SCARG(uap, fd);
-	SCARG(&fsa, sb) = st;
-
-	if ((error = sys___fstat30(l, &fsa, retval)))
-		return (error);
-
-	if ((error = copyin(st, &tmpst, sizeof(tmpst))))
-		return (error);
-
-	bsd_to_hpux_stat(&tmpst, &tmphst);
-
-	return (copyout(&tmphst, SCARG(uap, sb), sizeof(struct hpux_stat)));
+	return copyout(&tmphst, SCARG(uap, sb), sizeof(struct hpux_stat));
 }
 
 /*
@@ -483,7 +472,7 @@ hpux_sys_stat(l, v, retval)
 	register_t *retval;
 {
 
-	return (hpux_stat1(l, v, retval, 0));
+	return (hpux_stat1(l, v, retval, FOLLOW));
 }
 
 /*
@@ -496,51 +485,38 @@ hpux_sys_lstat(l, v, retval)
 	register_t *retval;
 {
 
-	return (hpux_stat1(l, v, retval, 1));
+	return (hpux_stat1(l, v, retval, NOFOLLOW));
 }
 
 /*
  * Do the meat of stat(2) and lstat(2).
  */
 static int
-hpux_stat1(l, v, retval, dolstat)
+hpux_stat1(l, v, retval, flags)
 	struct lwp *l;
 	void *v;
 	register_t *retval;
-	int dolstat;
+	int flags;
 {
 	struct hpux_sys_stat_args /* {
 		syscallarg(const char *) path;
 		syscallarg(struct hpux_stat *) sb;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
-	struct sys___stat30_args sa;
 	struct hpux_stat tmphst;
-	struct stat *st, tmpst;
+	struct stat sb;
 	void *sg;
 	int error;
 
-	sg = stackgap_init(p, 0);
-	st = stackgap_alloc(p, &sg, sizeof (struct stat));
+	sg = stackgap_init(l->l_proc, 0);
 	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
-	SCARG(&sa, ub) = st;
-	SCARG(&sa, path) = SCARG(uap, path);
-
-	if (dolstat)
-		error = sys___lstat30(l, &sa, retval);
-	else
-		error = sys___stat30(l, &sa, retval);
-
+	error = do_sys_stat(l, SCARG(uap, path), flags, &sb);
 	if (error)
 		return (error);
 
-	if ((error = copyin(st, &tmpst, sizeof(tmpst))))
-		return (error);
+	bsd_to_hpux_stat(&sb, &tmphst);
 
-	bsd_to_hpux_stat(&tmpst, &tmphst);
-
-	return (copyout(&tmphst, SCARG(uap, sb), sizeof(struct hpux_stat)));
+	return copyout(&tmphst, SCARG(uap, sb), sizeof(struct hpux_stat));
 }
 
 /*
@@ -556,29 +532,17 @@ hpux_sys_fstat_6x(l, v, retval)
 		syscallarg(int) fd;
 		syscallarg(struct hpux_ostat *) sb;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
-	struct sys___fstat30_args fsa;
 	struct hpux_ostat tmphst;
-	struct stat *st, tmpst;
-	void *sg;
+	struct stat sb;
 	int error;
 
-	sg = stackgap_init(p, 0);
+	error = do_sys_fstat(l, SCARG(uap, fd), &sb);
+	if (error)
+		return error;
 
-	st = stackgap_alloc(p, &sg, sizeof (struct stat));
+	bsd_to_hpux_ostat(&sb, &tmphst);
 
-	SCARG(&fsa, fd) = SCARG(uap, fd);
-	SCARG(&fsa, sb) = st;
-
-	if ((error = sys___fstat30(l, &fsa, retval)))
-		return (error);
-
-	if ((error = copyin(st, &tmpst, sizeof(tmpst))))
-		return (error);
-
-	bsd_to_hpux_ostat(&tmpst, &tmphst);
-
-	return (copyout(&tmphst, SCARG(uap, sb), sizeof(struct hpux_ostat)));
+	return copyout(&tmphst, SCARG(uap, sb), sizeof(struct hpux_ostat));
 }
 
 /*
@@ -594,28 +558,19 @@ hpux_sys_stat_6x(l, v, retval)
 		syscallarg(const char *) path;
 		syscallarg(struct hpux_ostat *) sb;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
-	struct sys___stat30_args sa;
 	struct hpux_ostat tmphst;
-	struct stat *st, tmpst;
+	struct stat sb;
 	void *sg;
 	int error;
 
-	sg = stackgap_init(p, 0);
-
+	sg = stackgap_init(l->l_proc, 0);
 	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
-	st = stackgap_alloc(p, &sg, sizeof (struct stat));
-	SCARG(&sa, ub) = st;
-	SCARG(&sa, path) = SCARG(uap, path);
-
-	if ((error = sys___stat30(l, &sa, retval)))
+	error = do_sys_stat(l, SCARG(uap, path), FOLLOW, &sb);
+	if (error)
 		return (error);
 
-	if ((error = copyin(st, &tmpst, sizeof(tmpst))))
-		return (error);
-
-	bsd_to_hpux_ostat(&tmpst, &tmphst);
+	bsd_to_hpux_ostat(&sb, &tmphst);
 
 	return (copyout(&tmphst, SCARG(uap, sb), sizeof(struct hpux_ostat)));
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: iopaau.c,v 1.12 2005/12/11 12:16:51 christos Exp $	*/
+/*	$NetBSD: iopaau.c,v 1.12.30.1 2007/03/13 16:49:56 ad Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iopaau.c,v 1.12 2005/12/11 12:16:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iopaau.c,v 1.12.30.1 2007/03/13 16:49:56 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/pool.h>
@@ -656,10 +656,10 @@ iopaau_attach(struct iopaau_softc *sc)
 	 */
 	pool_init(&aau_desc_4_pool, sizeof(struct aau_desc_4),
 	    8 * 4, offsetof(struct aau_desc_4, d_nda), 0, "aaud4pl",
-	    NULL);
+	    NULL, IPL_VM);
 	pool_init(&aau_desc_8_pool, sizeof(struct aau_desc_8),
 	    8 * 4, offsetof(struct aau_desc_8, d_nda), 0, "aaud8pl",
-	    NULL);
+	    NULL, IPL_VM);
 
 	pool_cache_init(&iopaau_desc_4_cache, &aau_desc_4_pool,
 	    iopaau_desc_ctor, NULL, NULL);

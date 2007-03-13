@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.109 2007/02/26 13:15:32 drochner Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.109.4.1 2007/03/13 16:50:33 ad Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.109 2007/02/26 13:15:32 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.109.4.1 2007/03/13 16:50:33 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -366,17 +366,11 @@ USB_DECLARE_DRIVER(uaudio);
 
 USB_MATCH(uaudio)
 {
-	USB_MATCH_START(uaudio, uaa);
-	usb_interface_descriptor_t *id;
+	USB_IFMATCH_START(uaudio, uaa);
 
-	if (uaa->iface == NULL)
-		return UMATCH_NONE;
-
-	id = usbd_get_interface_descriptor(uaa->iface);
 	/* Trigger on the control interface. */
-	if (id == NULL ||
-	    id->bInterfaceClass != UICLASS_AUDIO ||
-	    id->bInterfaceSubClass != UISUBCLASS_AUDIOCONTROL ||
+	if (uaa->class != UICLASS_AUDIO ||
+	    uaa->subclass != UISUBCLASS_AUDIOCONTROL ||
 	    (usbd_get_quirks(uaa->device)->uq_flags & UQ_BAD_AUDIO))
 		return UMATCH_NONE;
 
@@ -385,7 +379,7 @@ USB_MATCH(uaudio)
 
 USB_ATTACH(uaudio)
 {
-	USB_ATTACH_START(uaudio, sc, uaa);
+	USB_IFATTACH_START(uaudio, sc, uaa);
 	usb_interface_descriptor_t *id;
 	usb_config_descriptor_t *cdesc;
 	char *devinfop;

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.816 2007/03/10 10:54:53 bouyer Exp $
+# $NetBSD: GENERIC,v 1.816.2.1 2007/03/13 16:49:58 ad Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.816 $"
+#ident 		"GENERIC-$Revision: 1.816.2.1 $"
 
 maxusers	32		# estimated number of users
 
@@ -351,6 +351,7 @@ acpilid* 	at acpi?		# ACPI Lid Switch
 acpitz* 	at acpi?		# ACPI Thermal Zone
 
 # Mainboard devices
+aiboost*	at acpi?		# ASUS AI Booster Hardware Monitor
 attimer*	at acpi?		# AT Timer
 com* 		at acpi?		# Serial communications interface
 #fdc* 		at acpi?		# Floppy disk controller

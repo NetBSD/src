@@ -1,4 +1,4 @@
-/*	$NetBSD: bmd.c,v 1.7 2007/03/05 20:38:19 he Exp $	*/
+/*	$NetBSD: bmd.c,v 1.7.2.1 2007/03/13 16:50:10 ad Exp $	*/
 
 /*
  * Copyright (c) 2002 Tetsuya Isaki. All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bmd.c,v 1.7 2007/03/05 20:38:19 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bmd.c,v 1.7.2.1 2007/03/13 16:50:10 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -308,7 +308,7 @@ bmdstrategy(struct buf *bp)
 				pg_offset, data, pg_resid);
 		}
 
-		data = (char*)data + pg_resid;
+		data = (char *)data + pg_resid;
 		offset += pg_resid;
 		resid -= pg_resid;
 		bp->b_resid -= pg_resid;

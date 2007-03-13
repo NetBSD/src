@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_flow.c,v 1.2 2007/03/08 17:09:15 liamjfoy Exp $	*/
+/*	$NetBSD: ip6_flow.c,v 1.2.2.1 2007/03/13 16:52:03 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -83,7 +83,8 @@
  * ether/fddi_input -> ip6flow_fastfoward -> if_output
  */
 
-POOL_INIT(ip6flow_pool, sizeof(struct ip6flow), 0, 0, 0, "ip6flowpl", NULL);
+POOL_INIT(ip6flow_pool, sizeof(struct ip6flow), 0, 0, 0, "ip6flowpl", NULL,
+    IPL_NET);
 
 LIST_HEAD(ip6flowhead, ip6flow);
 

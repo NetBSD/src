@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.220 2007/03/04 14:46:45 yamt Exp $ */
+/* $NetBSD: pmap.c,v 1.220.2.1 2007/03/13 16:49:53 ad Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -145,7 +145,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.220 2007/03/04 14:46:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.220.2.1 2007/03/13 16:49:53 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -945,13 +945,13 @@ pmap_bootstrap(paddr_t ptaddr, u_int maxasn, u_long ncpuids)
 	pmap_ncpuids = ncpuids;
 	pool_init(&pmap_pmap_pool,
 	    PMAP_SIZEOF(pmap_ncpuids), 0, 0, 0, "pmappl",
-	    &pool_allocator_nointr);
+	    &pool_allocator_nointr, IPL_NONE);
 	pool_init(&pmap_l1pt_pool, PAGE_SIZE, 0, 0, 0, "l1ptpl",
-	    &pmap_l1pt_allocator);
+	    &pmap_l1pt_allocator, IPL_NONE);
 	pool_cache_init(&pmap_l1pt_cache, &pmap_l1pt_pool, pmap_l1pt_ctor,
 	    NULL, NULL);
 	pool_init(&pmap_pv_pool, sizeof(struct pv_entry), 0, 0, 0, "pvpl",
-	    &pmap_pv_page_allocator);
+	    &pmap_pv_page_allocator, IPL_NONE);
 
 	TAILQ_INIT(&pmap_all_pmaps);
 

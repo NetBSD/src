@@ -1,4 +1,4 @@
-/*	$NetBSD: umodem.c,v 1.55 2007/01/29 01:52:45 hubertf Exp $	*/
+/*	$NetBSD: umodem.c,v 1.55.6.1 2007/03/13 16:51:02 ad Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umodem.c,v 1.55 2007/01/29 01:52:45 hubertf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umodem.c,v 1.55.6.1 2007/03/13 16:51:02 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,20 +92,16 @@ USB_DECLARE_DRIVER(umodem);
 
 USB_MATCH(umodem)
 {
-	USB_MATCH_START(umodem, uaa);
+	USB_IFMATCH_START(umodem, uaa);
 	usb_interface_descriptor_t *id;
 	int cm, acm;
 
-	if (uaa->iface == NULL)
+	if (uaa->class != UICLASS_CDC ||
+	    uaa->subclass != UISUBCLASS_ABSTRACT_CONTROL_MODEL ||
+	    uaa->proto != UIPROTO_CDC_AT)
 		return (UMATCH_NONE);
 
 	id = usbd_get_interface_descriptor(uaa->iface);
-	if (id == NULL ||
-	    id->bInterfaceClass != UICLASS_CDC ||
-	    id->bInterfaceSubClass != UISUBCLASS_ABSTRACT_CONTROL_MODEL ||
-	    id->bInterfaceProtocol != UIPROTO_CDC_AT)
-		return (UMATCH_NONE);
-
 	if (umodem_get_caps(uaa->device, &cm, &acm, id) == -1)
 		return (UMATCH_NONE);
 
@@ -114,7 +110,7 @@ USB_MATCH(umodem)
 
 USB_ATTACH(umodem)
 {
-	USB_ATTACH_START(umodem, sc, uaa);
+	USB_IFATTACH_START(umodem, sc, uaa);
 	struct ucom_attach_args uca;
 
 	uca.portno = UCOM_UNK_PORTNO;

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.148 2007/03/04 06:03:37 christos Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.148.2.1 2007/03/13 16:52:03 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.148 2007/03/04 06:03:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.148.2.1 2007/03/13 16:52:03 ad Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -2567,7 +2567,7 @@ nfsdreq_init(void)
 {
 
 	pool_init(&nfs_srvdesc_pool, sizeof(struct nfsrv_descript),
-	    0, 0, 0, "nfsrvdescpl", &pool_allocator_nointr);
+	    0, 0, 0, "nfsrvdescpl", &pool_allocator_nointr, IPL_NONE);
 }
 
 struct nfsrv_descript *

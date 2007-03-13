@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.37 2007/03/04 06:03:03 christos Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.37.2.1 2007/03/13 16:51:52 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.37 2007/03/04 06:03:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.37.2.1 2007/03/13 16:51:52 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,8 +104,10 @@ static const struct filterops file_filtops =
 static const struct filterops timer_filtops =
 	{ 0, filt_timerattach, filt_timerdetach, filt_timer };
 
-static POOL_INIT(kqueue_pool, sizeof(struct kqueue), 0, 0, 0, "kqueuepl", NULL);
-static POOL_INIT(knote_pool, sizeof(struct knote), 0, 0, 0, "knotepl", NULL);
+static POOL_INIT(kqueue_pool, sizeof(struct kqueue), 0, 0, 0, "kqueuepl", NULL,
+    IPL_VM);
+static POOL_INIT(knote_pool, sizeof(struct knote), 0, 0, 0, "knotepl", NULL,
+    IPL_VM);
 static int	kq_ncallouts = 0;
 static int	kq_calloutmax = (4 * 1024);
 

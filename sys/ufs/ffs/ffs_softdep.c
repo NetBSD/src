@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.86 2007/03/04 06:03:43 christos Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.86.2.1 2007/03/13 16:52:06 ad Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.86 2007/03/04 06:03:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.86.2.1 2007/03/13 16:52:06 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -63,7 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.86 2007/03/04 06:03:43 christos Ex
 #include <uvm/uvm.h>
 
 static POOL_INIT(sdpcpool, sizeof(struct buf), 0, 0, 0, "sdpcpool",
-    &pool_allocator_nointr);
+    &pool_allocator_nointr, IPL_NONE);
 u_int softdep_lockedbufs;
 
 extern struct simplelock bqueue_slock; /* XXX */
@@ -390,33 +390,33 @@ sema_release(semap)
  */
 
 static POOL_INIT(pagedep_pool, sizeof(struct pagedep), 0, 0, 0, "pagedeppl",
-    &pool_allocator_nointr);
+    &pool_allocator_nointr, IPL_NONE);
 static POOL_INIT(inodedep_pool, sizeof(struct inodedep), 0, 0, 0, "inodedeppl",
-    &pool_allocator_nointr);
+    &pool_allocator_nointr, IPL_NONE);
 static POOL_INIT(newblk_pool, sizeof(struct newblk), 0, 0, 0, "newblkpl",
-    &pool_allocator_nointr);
+    &pool_allocator_nointr, IPL_NONE);
 static POOL_INIT(bmsafemap_pool, sizeof(struct bmsafemap), 0, 0, 0,
-    "bmsafemappl", &pool_allocator_nointr);
+    "bmsafemappl", &pool_allocator_nointr, IPL_NONE);
 static POOL_INIT(allocdirect_pool, sizeof(struct allocdirect), 0, 0, 0,
-    "allocdirectpl", &pool_allocator_nointr);
+    "allocdirectpl", &pool_allocator_nointr, IPL_NONE);
 static POOL_INIT(indirdep_pool, sizeof(struct indirdep), 0, 0, 0, "indirdeppl",
-    &pool_allocator_nointr);
+    &pool_allocator_nointr, IPL_NONE);
 static POOL_INIT(allocindir_pool, sizeof(struct allocindir), 0, 0, 0,
-    "allocindirpl", &pool_allocator_nointr);
+    "allocindirpl", &pool_allocator_nointr, IPL_NONE);
 static POOL_INIT(freefrag_pool, sizeof(struct freefrag), 0, 0, 0,
-    "freefragpl", &pool_allocator_nointr);
+    "freefragpl", &pool_allocator_nointr, IPL_NONE);
 static POOL_INIT(freeblks_pool, sizeof(struct freeblks), 0, 0, 0,
-    "freeblkspl", &pool_allocator_nointr);
+    "freeblkspl", &pool_allocator_nointr, IPL_NONE);
 static POOL_INIT(freefile_pool, sizeof(struct freefile), 0, 0, 0,
-    "freefilepl", &pool_allocator_nointr);
+    "freefilepl", &pool_allocator_nointr, IPL_NONE);
 static POOL_INIT(diradd_pool, sizeof(struct diradd), 0, 0, 0, "diraddpl",
-    &pool_allocator_nointr);
+    &pool_allocator_nointr, IPL_NONE);
 static POOL_INIT(mkdir_pool, sizeof(struct mkdir), 0, 0, 0, "mkdirpl",
-    &pool_allocator_nointr);
+    &pool_allocator_nointr, IPL_NONE);
 static POOL_INIT(dirrem_pool, sizeof(struct dirrem), 0, 0, 0, "dirrempl",
-    &pool_allocator_nointr);
+    &pool_allocator_nointr, IPL_NONE);
 static POOL_INIT(newdirblk_pool, sizeof (struct newdirblk), 0, 0, 0,
-    "newdirblkpl", &pool_allocator_nointr);
+    "newdirblkpl", &pool_allocator_nointr, IPL_NONE);
 
 static inline void
 softdep_free(struct worklist *item, int type)

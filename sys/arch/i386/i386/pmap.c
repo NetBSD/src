@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.202 2007/03/07 21:43:45 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.202.2.1 2007/03/13 16:49:59 ad Exp $	*/
 
 /*
  *
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.202 2007/03/07 21:43:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.202.2.1 2007/03/13 16:49:59 ad Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"
@@ -1015,7 +1015,7 @@ pmap_bootstrap(kva_start)
 	 */
 
 	pool_init(&pmap_pmap_pool, sizeof(struct pmap), 0, 0, 0, "pmappl",
-	    &pool_allocator_nointr);
+	    &pool_allocator_nointr, IPL_NONE);
 
 	/*
 	 * Initialize the TLB shootdown queues.
@@ -1032,9 +1032,9 @@ pmap_bootstrap(kva_start)
 	 * initialize the PDE pool and cache.
 	 */
 	pool_init(&pmap_pdp_pool, PAGE_SIZE, 0, 0, 0, "pdppl",
-		  &pool_allocator_nointr);
+	    &pool_allocator_nointr, IPL_NONE);
 	pool_cache_init(&pmap_pdp_cache, &pmap_pdp_pool,
-			pmap_pdp_ctor, NULL, NULL);
+	    pmap_pdp_ctor, NULL, NULL);
 
 	/*
 	 * ensure the TLB is sync'd with reality by flushing it...

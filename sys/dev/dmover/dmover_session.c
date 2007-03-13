@@ -1,4 +1,4 @@
-/*	$NetBSD: dmover_session.c,v 1.3 2005/12/11 12:21:20 christos Exp $	*/
+/*	$NetBSD: dmover_session.c,v 1.3.30.1 2007/03/13 16:50:22 ad Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dmover_session.c,v 1.3 2005/12/11 12:21:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dmover_session.c,v 1.3.30.1 2007/03/13 16:50:22 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/lock.h>
@@ -62,7 +62,7 @@ dmover_session_initialize(void)
 	simple_lock(&initialized_slock);
 	if (__predict_true(initialized == 0)) {
 		pool_init(&dmover_session_pool, sizeof(struct dmover_session),
-		    0, 0, 0, "dmses", &pool_allocator_nointr);
+		    0, 0, 0, "dmses", &pool_allocator_nointr, IPL_NONE);
 		initialized = 1;
 	}
 	simple_unlock(&initialized_slock);

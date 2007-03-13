@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.28 2007/03/04 06:01:06 christos Exp $	*/
+/*	$NetBSD: kbd.c,v 1.28.2.1 2007/03/13 16:50:11 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.28 2007/03/04 06:01:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.28.2.1 2007/03/13 16:50:11 ad Exp $");
 
 #include "ite.h"
 #include "bell.h"
@@ -71,7 +71,7 @@ struct kbd_softc {
 };
 
 void	kbdenable(int);
-int	kbdintr (void *);
+int	kbdintr(void *);
 void	kbdsoftint(void *);
 void	kbd_bell(int);
 int	kbdcngetc(void);
@@ -99,7 +99,7 @@ const struct cdevsw kbd_cdevsw = {
 	nostop, notty, kbdpoll, nommap, kbdkqfilter,
 };
 
-static int 
+static int
 kbdmatch(struct device *parent, struct cfdata *cf, void *aux)
 {
 
@@ -111,7 +111,7 @@ kbdmatch(struct device *parent, struct cfdata *cf, void *aux)
 	return (1);
 }
 
-static void 
+static void
 kbdattach(struct device *parent, struct device *self, void *aux)
 {
 	struct kbd_softc *sc = (void *)self;
@@ -139,7 +139,7 @@ kbdattach(struct device *parent, struct device *self, void *aux)
 #define KEY_CODE(c)  ((c) & 0x7f)
 #define KEY_UP(c)    ((c) & 0x80)
 
-void 
+void
 kbdenable(int mode)	/* 1: interrupt, 0: poll */
 {
 
@@ -171,7 +171,7 @@ kbdenable(int mode)	/* 1: interrupt, 0: poll */
 
 extern struct cfdriver kbd_cd;
 
-int 
+int
 kbdopen(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	struct kbd_softc *k;
@@ -191,7 +191,7 @@ kbdopen(dev_t dev, int flags, int mode, struct lwp *l)
 	return (0);
 }
 
-int 
+int
 kbdclose(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	struct kbd_softc *k = kbd_cd.cd_devs[minor(dev)];
@@ -205,7 +205,7 @@ kbdclose(dev_t dev, int flags, int mode, struct lwp *l)
 }
 
 
-int 
+int
 kbdread(dev_t dev, struct uio *uio, int flags)
 {
 	struct kbd_softc *k = kbd_cd.cd_devs[minor(dev)];
@@ -220,7 +220,7 @@ void opm_bell_on(void);
 void opm_bell_off(void);
 #endif
 
-int 
+int
 kbdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct kbd_softc *k = kbd_cd.cd_devs[minor(dev)];
@@ -292,7 +292,7 @@ kbdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 }
 
 
-int 
+int
 kbdpoll(dev_t dev, int events, struct lwp *l)
 {
 	struct kbd_softc *k;
@@ -316,7 +316,7 @@ static u_char kbdbuf[KBDBUFSIZ];
 static int kbdputoff = 0;
 static int kbdgetoff = 0;
 
-int 
+int
 kbdintr(void *arg)
 {
 	u_char c, st;
@@ -359,7 +359,7 @@ kbdintr(void *arg)
 	return 0;
 }
 
-void 
+void
 kbdsoftint(void *arg)			/* what if ite is not configured? */
 {
 	int s;
@@ -373,7 +373,7 @@ kbdsoftint(void *arg)			/* what if ite is not configured? */
 	splx(s);
 }
 
-void 
+void
 kbd_bell(int mode)
 {
 #if NBELL > 0
@@ -386,13 +386,13 @@ kbd_bell(int mode)
 
 unsigned char kbdled;
 
-void 
+void
 kbd_setLED(void)
 {
         mfp_send_usart(~kbdled | 0x80);
 }
 
-int 
+int
 kbd_send_command(int cmd)
 {
 	switch (cmd) {

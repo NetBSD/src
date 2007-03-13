@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.193 2007/03/09 14:11:27 ad Exp $	*/
+/*	$NetBSD: tty.c,v 1.193.2.1 2007/03/13 16:51:57 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.193 2007/03/09 14:11:27 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.193.2.1 2007/03/13 16:51:57 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -163,12 +163,12 @@ unsigned char const char_type[] = {
 #undef	TB
 #undef	VT
 
-struct simplelock ttylist_slock = SIMPLELOCK_INITIALIZER;
+kmutex_t ttylist_lock;
 struct ttylist_head ttylist = TAILQ_HEAD_INITIALIZER(ttylist);
 int tty_count;
 
 POOL_INIT(tty_pool, sizeof(struct tty), 0, 0, 0, "ttypl",
-    &pool_allocator_nointr);
+    &pool_allocator_nointr, IPL_NONE);
 
 uint64_t tk_cancc;
 uint64_t tk_nin;
@@ -2599,11 +2599,17 @@ ttysleep(struct tty *tp, void *chan, int pri, const char *wmesg, int timo)
 void
 tty_attach(struct tty *tp)
 {
+	static bool again;
 
-	simple_lock(&ttylist_slock);
+	if (!again) {
+		again = true;
+		mutex_init(&ttylist_lock, MUTEX_DEFAULT, IPL_NONE);
+	}
+
+	mutex_enter(&ttylist_lock);
 	TAILQ_INSERT_TAIL(&ttylist, tp, tty_link);
 	++tty_count;
-	simple_unlock(&ttylist_slock);
+	mutex_exit(&ttylist_lock);
 }
 
 /*
@@ -2613,14 +2619,14 @@ void
 tty_detach(struct tty *tp)
 {
 
-	simple_lock(&ttylist_slock);
+	mutex_enter(&ttylist_lock);
 	--tty_count;
 #ifdef DIAGNOSTIC
 	if (tty_count < 0)
 		panic("tty_detach: tty_count < 0");
 #endif
 	TAILQ_REMOVE(&ttylist, tp, tty_link);
-	simple_unlock(&ttylist_slock);
+	mutex_exit(&ttylist_lock);
 }
 
 /*

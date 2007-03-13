@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.17 2007/03/05 16:51:03 drochner Exp $	*/
+/*	$NetBSD: cpu.h,v 1.17.2.1 2007/03/13 16:50:16 ad Exp $	*/
 /*	NetBSD: cpu.h,v 1.113 2004/02/20 17:35:01 yamt Exp 	*/
 
 /*-
@@ -56,7 +56,7 @@
 #include <x86/cacheinfo.h>
 
 #include <sys/device.h>
-#include <sys/lock.h>			/* will also get LOCKDEBUG */
+#include <sys/simplelock.h>		/* will also get LOCKDEBUG */
 #include <sys/cpu_data.h>
 #include <sys/cc_microtime.h>
 

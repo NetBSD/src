@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.47 2007/03/04 06:00:34 christos Exp $	*/
+/*	$NetBSD: pmap.c,v 1.47.2.1 2007/03/13 16:50:03 ad Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.47 2007/03/04 06:00:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.47.2.1 2007/03/13 16:50:03 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -483,7 +483,8 @@ pmap_init(void)
 	splx(s);
 
 	/* Setup a pool for additional pvlist structures */
-	pool_init(&pv_pool, sizeof(struct pv_entry), 0, 0, 0, "pv_entry", NULL);
+	pool_init(&pv_pool, sizeof(struct pv_entry), 0, 0, 0, "pv_entry", NULL,
+	    IPL_VM);
 }
 
 /*

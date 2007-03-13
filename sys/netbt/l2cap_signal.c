@@ -1,4 +1,4 @@
-/*	$NetBSD: l2cap_signal.c,v 1.4 2007/03/05 19:04:46 plunky Exp $	*/
+/*	$NetBSD: l2cap_signal.c,v 1.4.2.1 2007/03/13 16:52:01 ad Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: l2cap_signal.c,v 1.4 2007/03/05 19:04:46 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: l2cap_signal.c,v 1.4.2.1 2007/03/13 16:52:01 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -300,7 +300,8 @@ l2cap_recv_connect_req(struct mbuf *m, struct hci_link *link)
 		l2cap_send_signal(link, L2CAP_CONNECT_RSP, cmd.ident,
 						sizeof(rp), &rp);
 
-		new->lc_state = L2CAP_WAIT_CONFIG_REQ | L2CAP_WAIT_CONFIG_RSP;
+		new->lc_state = L2CAP_WAIT_CONFIG;
+		new->lc_flags |= (L2CAP_WAIT_CONFIG_REQ | L2CAP_WAIT_CONFIG_RSP);
 		l2cap_send_config_req(new);
 		return;
 	}
@@ -355,7 +356,8 @@ l2cap_recv_connect_rsp(struct mbuf *m, struct hci_link *link)
 		 */
 		l2cap_request_free(req);
 		chan->lc_rcid = cp.dcid;
-		chan->lc_state = L2CAP_WAIT_CONFIG_REQ | L2CAP_WAIT_CONFIG_RSP;
+		chan->lc_state = L2CAP_WAIT_CONFIG;
+		chan->lc_flags |= (L2CAP_WAIT_CONFIG_REQ | L2CAP_WAIT_CONFIG_RSP);
 		l2cap_send_config_req(chan);
 		break;
 
@@ -405,7 +407,9 @@ l2cap_recv_config_req(struct mbuf *m, struct hci_link *link)
 
 	chan = l2cap_cid_lookup(cp.dcid);
 	if (chan == NULL || chan->lc_link != link
-	    || (chan->lc_state & L2CAP_WAIT_CONFIG_REQ) == 0) {
+	    || chan->lc_state != L2CAP_WAIT_CONFIG
+	    || (chan->lc_flags & L2CAP_WAIT_CONFIG_REQ) == 0) {
+		/* XXX we should really accept reconfiguration requests */
 		l2cap_send_command_rej(link, cmd.ident, L2CAP_REJ_INVALID_CID,
 					L2CAP_NULL_CID, cp.dcid);
 		goto out;
@@ -522,9 +526,9 @@ l2cap_recv_config_req(struct mbuf *m, struct hci_link *link)
 	if ((cp.flags & L2CAP_OPT_CFLAG_BIT) == 0
 	    && rp.result == le16toh(L2CAP_SUCCESS)) {
 
-		chan->lc_state &= ~L2CAP_WAIT_CONFIG_REQ;
+		chan->lc_flags &= ~L2CAP_WAIT_CONFIG_REQ;
 
-		if ((chan->lc_state & L2CAP_WAIT_CONFIG_RSP) == 0) {
+		if ((chan->lc_flags & L2CAP_WAIT_CONFIG_RSP) == 0) {
 			chan->lc_state = L2CAP_OPEN;
 			// XXX how to distinguish REconfiguration?
 			(*chan->lc_proto->connected)(chan->lc_upper);
@@ -577,7 +581,8 @@ l2cap_recv_config_rsp(struct mbuf *m, struct hci_link *link)
 
 	l2cap_request_free(req);
 
-	if (chan == NULL || (chan->lc_state & L2CAP_WAIT_CONFIG_RSP) == 0)
+	if (chan == NULL || chan->lc_state != L2CAP_WAIT_CONFIG
+	    || (chan->lc_flags & L2CAP_WAIT_CONFIG_RSP) == 0)
 		goto out;
 
 	if ((cp.flags & L2CAP_OPT_CFLAG_BIT)) {
@@ -609,9 +614,9 @@ l2cap_recv_config_rsp(struct mbuf *m, struct hci_link *link)
 		 * ignore those..
 		 */
 		if ((cp.flags & L2CAP_OPT_CFLAG_BIT) == 0) {
-			chan->lc_state &= ~L2CAP_WAIT_CONFIG_RSP;
+			chan->lc_flags &= ~L2CAP_WAIT_CONFIG_RSP;
 
-			if ((chan->lc_state & L2CAP_WAIT_CONFIG_REQ) == 0) {
+			if ((chan->lc_flags & L2CAP_WAIT_CONFIG_REQ) == 0) {
 				chan->lc_state = L2CAP_OPEN;
 				// XXX how to distinguish REconfiguration?
 				(*chan->lc_proto->connected)(chan->lc_upper);

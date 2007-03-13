@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.871 2007/03/09 22:10:40 xtraeme Exp $
+$NetBSD: pcidevs,v 1.871.2.1 2007/03/13 16:50:27 ad Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -819,6 +819,7 @@ product ADP2 ASR5400S		0x0365	ASR-5400S
 product ADP2 PERC_2QC		0x1364	Dell PERC 2/QC
 /* XXX guess */
 product ADP2 PERC_3QC		0x1365	Dell PERC 3/QC
+product ADP2 HP_M110_G2		0x3227	HP M110 G2 / ASR-2610SA
 
 /* Addtron Products */
 product ADDTRON 8139	0x1360	8139 Ethernet

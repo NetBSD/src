@@ -1,4 +1,4 @@
-/*	$NetBSD: sram.c,v 1.14 2007/03/04 06:01:07 christos Exp $	*/
+/*	$NetBSD: sram.c,v 1.14.2.1 2007/03/13 16:50:13 ad Exp $	*/
 
 /*
  * Copyright (c) 1994 Kazuhisa Shimizu.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sram.c,v 1.14 2007/03/04 06:01:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sram.c,v 1.14.2.1 2007/03/13 16:50:13 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -66,11 +66,11 @@ const struct cdevsw sram_cdevsw = {
 	nostop, notty, nopoll, nommap, nokqfilter,
 };
 
-/* 
+/*
  *  functions for probeing.
  */
 /* ARGSUSED */
-void 
+void
 sramattach(int num)
 {
 	sram_softc.flags = 0;
@@ -83,7 +83,7 @@ sramattach(int num)
  */
 
 /*ARGSUSED*/
-int 
+int
 sramopen(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	struct sram_softc *su = &sram_softc;
@@ -110,7 +110,7 @@ sramopen(dev_t dev, int flags, int mode, struct lwp *l)
 }
 
 /*ARGSUSED*/
-int 
+int
 sramclose(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	struct sram_softc *su = &sram_softc;
@@ -129,7 +129,7 @@ sramclose(dev_t dev, int flags, int mode, struct lwp *l)
 }
 
 /*ARGSUSED*/
-int 
+int
 sramioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	int error = 0;
@@ -149,8 +149,8 @@ sramioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			return(EPERM);
 #ifdef DEBUG
 		if (sramdebug & SRAM_DEBUG_IOCTL) {
-    			printf("Sram ioctl SIOGSRAM address=%p\n", data);
-    			printf("Sram ioctl SIOGSRAM offset=%x\n", sram_io->offset);
+			printf("Sram ioctl SIOGSRAM address=%p\n", data);
+			printf("Sram ioctl SIOGSRAM offset=%x\n", sram_io->offset);
 		}
 #endif
 		if (sram_io == NULL ||
@@ -164,8 +164,8 @@ sramioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			return(EPERM);
 #ifdef DEBUG
 		if (sramdebug & SRAM_DEBUG_IOCTL) {
-    			printf("Sram ioctl SIOPSRAM address=%p\n", data);
-    			printf("Sram ioctl SIOPSRAM offset=%x\n", sram_io->offset);
+			printf("Sram ioctl SIOPSRAM address=%p\n", data);
+			printf("Sram ioctl SIOPSRAM offset=%x\n", sram_io->offset);
 		}
 #endif
 		if (sram_io == NULL ||
@@ -173,7 +173,7 @@ sramioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			return(EFAULT);
 #ifdef DEBUG
 		if (sramdebug & SRAM_DEBUG_DONTDOIT) {
-			printf ("Sram ioctl SIOPSRAM: skipping actual write\n");
+			printf("Sram ioctl SIOPSRAM: skipping actual write\n");
 			break;
 		}
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_readahead.c,v 1.2 2005/11/29 23:37:59 yamt Exp $	*/
+/*	$NetBSD: uvm_readahead.c,v 1.2.34.1 2007/03/13 16:52:09 ad Exp $	*/
 
 /*-
  * Copyright (c)2003, 2005 YAMAMOTO Takashi,
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_readahead.c,v 1.2 2005/11/29 23:37:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_readahead.c,v 1.2.34.1 2007/03/13 16:52:09 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/pool.h>
@@ -78,7 +78,7 @@ static struct uvm_ractx *ra_allocctx(void);
 static void ra_freectx(struct uvm_ractx *);
 
 static POOL_INIT(ractx_pool, sizeof(struct uvm_ractx), 0, 0, 0, "ractx",
-    &pool_allocator_nointr);
+    &pool_allocator_nointr, IPL_NONE);
 
 static struct uvm_ractx *
 ra_allocctx(void)

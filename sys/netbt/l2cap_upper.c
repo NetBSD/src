@@ -1,4 +1,4 @@
-/*	$NetBSD: l2cap_upper.c,v 1.2 2007/03/05 19:11:54 plunky Exp $	*/
+/*	$NetBSD: l2cap_upper.c,v 1.2.2.1 2007/03/13 16:52:01 ad Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: l2cap_upper.c,v 1.2 2007/03/05 19:11:54 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: l2cap_upper.c,v 1.2.2.1 2007/03/13 16:52:01 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -224,7 +224,8 @@ l2cap_disconnect(struct l2cap_channel *chan, int linger)
 {
 	int err = 0;
 
-	if (chan->lc_state & (L2CAP_CLOSED | L2CAP_WAIT_DISCONNECT))
+	if (chan->lc_state == L2CAP_CLOSED
+	    || chan->lc_state == L2CAP_WAIT_DISCONNECT)
 		return EINVAL;
 
 	chan->lc_flags |= L2CAP_SHUTDOWN;

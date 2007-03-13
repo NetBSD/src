@@ -1,4 +1,4 @@
-/*	$NetBSD: bzivsc.c,v 1.22 2007/03/05 18:35:58 he Exp $ */
+/*	$NetBSD: bzivsc.c,v 1.22.2.1 2007/03/13 16:49:54 ad Exp $ */
 
 /*
  * Copyright (c) 1997 Michael L. Hitch
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bzivsc.c,v 1.22 2007/03/05 18:35:58 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bzivsc.c,v 1.22.2.1 2007/03/13 16:49:54 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -336,7 +336,7 @@ bzivsc_dma_setup(struct ncr53c9x_softc *sc, void **addr, size_t *len,
 	u_char *ptr;
 	size_t xfer;
 
-	bsc->sc_dmaaddr = *addr;
+	bsc->sc_dmaaddr = (char **)addr;
 	bsc->sc_pdmalen = len;
 	bsc->sc_datain = datain;
 	bsc->sc_dmasize = *dmasize;

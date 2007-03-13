@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.16 2007/03/05 16:51:00 drochner Exp $	*/
+/*	$NetBSD: cpu.h,v 1.16.2.1 2007/03/13 16:49:54 ad Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -53,7 +53,7 @@
 #include <x86/cacheinfo.h>
 
 #include <sys/device.h>
-#include <sys/lock.h>
+#include <sys/simplelock.h>
 #include <sys/cpu_data.h>
 #include <sys/cc_microtime.h>
 

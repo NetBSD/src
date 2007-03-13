@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.6 2007/03/09 21:35:33 thorpej Exp $	*/
+/*	$NetBSD: mutex.h,v 1.6.2.1 2007/03/13 16:50:09 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
 
 struct kmutex {
 	uintptr_t	mtx_pad1;
-	uint32_t	mtx_pad2[2];
+	uint32_t	mtx_pad2;
 };
 
 #else	/* __MUTEX_PRIVATE */
@@ -94,19 +94,26 @@ struct kmutex {
 struct kmutex {
 	/* Adaptive mutex */
 	union {
-		volatile uintptr_t	mtxu_owner;	/* 0-3 */
-		__cpu_simple_lock_t	mtxu_lock;	/* 0 */
+		volatile uintptr_t	u_owner;		/* 0-3 */
+		struct {
+			uint8_t			s_dummylo;	/* 0 */
+			__cpu_simple_lock_t	s_lock;		/* 1 */
+			ipl_cookie_t		s_ipl;		/* 2 */
+			uint8_t			s_dummyhi;	/* 3 */
+		} u_s;
 	} mtx_u;
-	ipl_cookie_t			mtx_ipl;	/* 4-7 */
-	uint32_t			mtx_id;		/* 8-11 */
+	uint32_t			mtx_id;			/* 4-7 */
 };
-#define	mtx_owner	mtx_u.mtxu_owner
-#define	mtx_lock	mtx_u.mtxu_lock
+#define	mtx_owner	mtx_u.u_owner
+#define	mtx_lock	mtx_u.u_s.s_lock
+#define	mtx_ipl		mtx_u.u_s.s_ipl
 
 #define	__HAVE_MUTEX_STUBS		1
 #define	__HAVE_SPIN_MUTEX_STUBS		1
 
-#define	MUTEX_NO_SPIN_ACTIVE_P(ci)	((ci)->ci_mtx_count == 1)
+#ifndef LOCKDEBUG
+#define	MUTEX_COUNT_BIAS		1
+#endif
 
 static inline uintptr_t
 MUTEX_OWNER(uintptr_t owner)
@@ -143,6 +150,7 @@ static inline void
 MUTEX_INITIALIZE_SPIN(kmutex_t *mtx, u_int id, int ipl)
 {
 	mtx->mtx_id = (id << 1) | 1;
+	mtx->mtx_owner = 0x80000000;
 	mtx->mtx_ipl = makeiplcookie(ipl);
 	mtx->mtx_lock = 0;
 }
@@ -165,7 +173,7 @@ MUTEX_DESTROY(kmutex_t *mtx)
 static inline u_int
 MUTEX_GETID(volatile kmutex_t *mtx)
 {
-	return (mtx)->mtx_id >> 1;
+	return mtx->mtx_id >> 1;
 }
 
 static inline bool

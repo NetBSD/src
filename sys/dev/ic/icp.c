@@ -1,4 +1,4 @@
-/*	$NetBSD: icp.c,v 1.23 2007/03/04 06:01:56 christos Exp $	*/
+/*	$NetBSD: icp.c,v 1.23.2.1 2007/03/13 16:50:22 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icp.c,v 1.23 2007/03/04 06:01:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icp.c,v 1.23.2.1 2007/03/13 16:50:22 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -416,7 +416,8 @@ icp_init(struct icp_softc *icp, const char *intrstr)
 	/*
 	 * Count the controller, and we're done!
 	 */
-	icp_count++;
+	if (icp_count++ == 0)
+		mutex_init(&icp_ioctl_mutex, MUTEX_DEFAULT, IPL_NONE);
 
 	return (0);
 

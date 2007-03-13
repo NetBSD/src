@@ -1,4 +1,4 @@
-/*	$NetBSD: flsc.c,v 1.39 2007/03/05 18:46:41 he Exp $ */
+/*	$NetBSD: flsc.c,v 1.39.2.1 2007/03/13 16:49:55 ad Exp $ */
 
 /*
  * Copyright (c) 1997 Michael L. Hitch
@@ -44,7 +44,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: flsc.c,v 1.39 2007/03/05 18:46:41 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: flsc.c,v 1.39.2.1 2007/03/13 16:49:55 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -485,7 +485,7 @@ flsc_dma_setup(struct ncr53c9x_softc *sc, void **addr, size_t *len,
 	u_char *ptr;
 	size_t xfer;
 
-	fsc->sc_dmaaddr = *addr;
+	fsc->sc_dmaaddr = (char **)addr;
 	fsc->sc_pdmalen = len;
 	fsc->sc_datain = datain;
 	fsc->sc_dmasize = *dmasize;

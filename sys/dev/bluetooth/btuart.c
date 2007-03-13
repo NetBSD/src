@@ -1,4 +1,4 @@
-/*	$NetBSD: btuart.c,v 1.3 2007/03/06 19:50:28 plunky Exp $	*/
+/*	$NetBSD: btuart.c,v 1.3.2.1 2007/03/13 16:50:22 ad Exp $	*/
 /*
  * Copyright (c) 2006, 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btuart.c,v 1.3 2007/03/06 19:50:28 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btuart.c,v 1.3.2.1 2007/03/13 16:50:22 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1066,7 +1066,7 @@ bth4open(dev_t device __unused, struct tty *tp)
 	static char name[] = "btuart";
 
 	if ((error = kauth_authorize_device_tty(l->l_cred,
-	    KAUTH_DEVICE_TTY_OPEN, tp)) != 0)
+	    KAUTH_GENERIC_ISSUSER, tp)) != 0)
 		return error;
 
 	s = spltty();

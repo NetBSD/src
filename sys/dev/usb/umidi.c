@@ -1,4 +1,4 @@
-/*	$NetBSD: umidi.c,v 1.29 2007/02/26 13:14:11 drochner Exp $	*/
+/*	$NetBSD: umidi.c,v 1.29.4.1 2007/03/13 16:50:56 ad Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.29 2007/02/26 13:14:11 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.29.4.1 2007/03/13 16:50:56 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -162,21 +162,15 @@ USB_DECLARE_DRIVER(umidi);
 
 USB_MATCH(umidi)
 {
-	USB_MATCH_START(umidi, uaa);
-	usb_interface_descriptor_t *id;
+	USB_IFMATCH_START(umidi, uaa);
 
 	DPRINTFN(1,("umidi_match\n"));
-
-	if (uaa->iface == NULL)
-		return UMATCH_NONE;
 
 	if (umidi_search_quirk(uaa->vendor, uaa->product, uaa->ifaceno))
 		return UMATCH_IFACECLASS_IFACESUBCLASS;
 
-	id = usbd_get_interface_descriptor(uaa->iface);
-	if (id!=NULL &&
-	    id->bInterfaceClass==UICLASS_AUDIO &&
-	    id->bInterfaceSubClass==UISUBCLASS_MIDISTREAM)
+	if (uaa->class == UICLASS_AUDIO &&
+	    uaa->subclass == UISUBCLASS_MIDISTREAM)
 		return UMATCH_IFACECLASS_IFACESUBCLASS;
 
 	return UMATCH_NONE;
@@ -185,7 +179,7 @@ USB_MATCH(umidi)
 USB_ATTACH(umidi)
 {
 	usbd_status err;
-	USB_ATTACH_START(umidi, sc, uaa);
+	USB_IFATTACH_START(umidi, sc, uaa);
 	char *devinfop;
 
 	DPRINTFN(1,("umidi_attach\n"));

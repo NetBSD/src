@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_stat.c,v 1.37 2007/03/04 06:01:17 christos Exp $	*/
+/*	$NetBSD: ibcs2_stat.c,v 1.37.2.1 2007/03/13 16:50:17 ad Exp $	*/
 /*
  * Copyright (c) 1995, 1998 Scott Bartram
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_stat.c,v 1.37 2007/03/04 06:01:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_stat.c,v 1.37.2.1 2007/03/13 16:50:17 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,6 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: ibcs2_stat.c,v 1.37 2007/03/04 06:01:17 christos Exp
 #include <sys/mount.h>
 #include <sys/vnode.h>
 #include <sys/syscallargs.h>
+#include <sys/vfs_syscalls.h>
 
 #include <compat/ibcs2/ibcs2_types.h>
 #include <compat/ibcs2/ibcs2_fcntl.h>
@@ -241,8 +242,7 @@ ibcs2_sys_fstatvfs(struct lwp *l, void *v, register_t *retval)
 	if ((error = VFS_STATVFS(mp, sp, l)) != 0)
 		goto out;
 	sp->f_flag = mp->mnt_flag & MNT_VISFLAGMASK;
-	error = cvt_statvfs(sp, (void *)SCARG(uap, buf),
-			   sizeof(struct ibcs2_statvfs));
+	error = cvt_statvfs(sp, SCARG(uap, buf), sizeof(struct ibcs2_statvfs));
  out:
 	FILE_UNUSE(fp, l);
 	return (error);
@@ -258,23 +258,19 @@ ibcs2_sys_stat(l, v, retval)
 		syscallarg(const char *) path;
 		syscallarg(struct ibcs2_stat *) st;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
-	struct stat st;
+	struct stat sb;
 	struct ibcs2_stat ibcs2_st;
-	struct sys___stat30_args cup;
 	int error;
-	void *sg = stackgap_init(p, 0);
-	SCARG(&cup, ub) = stackgap_alloc(p, &sg, sizeof(st));
-	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
-	SCARG(&cup, path) = SCARG(uap, path);
+	void *sg = stackgap_init(l->l_proc, 0);
 
-	if ((error = sys___stat30(l, &cup, retval)) != 0)
+	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
+
+	error = do_sys_stat(l, SCARG(uap, path), FOLLOW, &sb);
+	if (error != 0)
 		return error;
-	if ((error = copyin(SCARG(&cup, ub), &st, sizeof(st))) != 0)
-		return error;
-	bsd_stat2ibcs_stat(&st, &ibcs2_st);
-	return copyout((void *)&ibcs2_st, (void *)SCARG(uap, st),
-		       ibcs2_stat_len);
+
+	bsd_stat2ibcs_stat(&sb, &ibcs2_st);
+	return copyout(&ibcs2_st, SCARG(uap, st), sizeof (ibcs2_st));
 }
 
 int
@@ -287,24 +283,20 @@ ibcs2_sys_lstat(l, v, retval)
 		syscallarg(const char *) path;
 		syscallarg(struct ibcs2_stat *) st;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
-	struct stat st;
+	struct stat sb;
 	struct ibcs2_stat ibcs2_st;
-	struct sys___lstat30_args cup;
 	int error;
-	void *sg = stackgap_init(p, 0);
+	void *sg = stackgap_init(l->l_proc, 0);
 
-	SCARG(&cup, ub) = stackgap_alloc(p, &sg, sizeof(st));
 	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
-	SCARG(&cup, path) = SCARG(uap, path);
 
-	if ((error = sys___lstat30(l, &cup, retval)) != 0)
+	error = do_sys_stat(l, SCARG(uap, path), NOFOLLOW, &sb);
+	if (error != 0)
 		return error;
-	if ((error = copyin(SCARG(&cup, ub), &st, sizeof(st))) != 0)
-		return error;
-	bsd_stat2ibcs_stat(&st, &ibcs2_st);
+
+	bsd_stat2ibcs_stat(&sb, &ibcs2_st);
 	return copyout((void *)&ibcs2_st, (void *)SCARG(uap, st),
-		       ibcs2_stat_len);
+		       sizeof (ibcs2_st));
 }
 
 int
@@ -317,22 +309,16 @@ ibcs2_sys_fstat(l, v, retval)
 		syscallarg(int) fd;
 		syscallarg(struct ibcs2_stat *) st;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
-	struct stat st;
+	struct stat sb;
 	struct ibcs2_stat ibcs2_st;
-	struct sys___fstat30_args cup;
 	int error;
-	void *sg = stackgap_init(p, 0);
 
-	SCARG(&cup, fd) = SCARG(uap, fd);
-	SCARG(&cup, sb) = stackgap_alloc(p, &sg, sizeof(st));
-	if ((error = sys___fstat30(l, &cup, retval)) != 0)
+	error = do_sys_fstat(l, SCARG(uap, fd), &sb);
+	if (error != 0)
 		return error;
-	if ((error = copyin(SCARG(&cup, sb), &st, sizeof(st))) != 0)
-		return error;
-	bsd_stat2ibcs_stat(&st, &ibcs2_st);
-	return copyout((void *)&ibcs2_st, (void *)SCARG(uap, st),
-		       ibcs2_stat_len);
+
+	bsd_stat2ibcs_stat(&sb, &ibcs2_st);
+	return copyout(&ibcs2_st, SCARG(uap, st), sizeof (ibcs2_st));
 }
 
 int

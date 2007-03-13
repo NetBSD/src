@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.24 2007/03/04 06:01:06 christos Exp $ */
+/*	$NetBSD: ms.c,v 1.24.2.1 2007/03/13 16:50:12 ad Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.24 2007/03/04 06:01:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.24.2.1 2007/03/13 16:50:12 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -159,11 +159,11 @@ const struct cdevsw ms_cdevsw ={
 /*
  * ms_match: how is this zs channel configured?
  */
-int 
+int
 ms_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct zsc_attach_args *args = aux;
-	struct zsc_softc *zsc = (void*) parent;
+	struct zsc_softc *zsc = (void *)parent;
 
 	/* Exact match required for the mouse. */
 	if (cf->cf_loc[ZSCCF_CHANNEL] != args->channel)
@@ -176,11 +176,11 @@ ms_match(struct device *parent, struct cfdata *cf, void *aux)
 	return 2;
 }
 
-void 
+void
 ms_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct zsc_softc *zsc = (void *) parent;
-	struct ms_softc *ms = (void *) self;
+	struct zsc_softc *zsc = (void *)parent;
+	struct ms_softc *ms = (void *)self;
 	struct zs_chanstate *cs;
 	struct cfdata *cf;
 	int reset, s;
@@ -201,14 +201,14 @@ ms_attach(struct device *parent, struct device *self, void *aux)
 	/* We don't care about status or tx interrupts. */
 	cs->cs_preg[1] = ZSWR1_RIE;
 	cs->cs_preg[4] = ZSWR4_CLK_X16 | ZSWR4_TWOSB;
-	(void) zs_set_speed(cs, MS_BPS);
+	(void)zs_set_speed(cs, MS_BPS);
 	zs_loadchannelregs(cs);
 	splx(s);
 
 	/* Initialize translator. */
 	ms->ms_ready = 0;
 
-	printf ("\n");
+	printf("\n");
 }
 
 /****************************************************************
@@ -216,7 +216,7 @@ ms_attach(struct device *parent, struct device *self, void *aux)
  *  (open,close,read,write,...)
  ****************************************************************/
 
-int 
+int
 msopen(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	struct ms_softc *ms;
@@ -246,7 +246,7 @@ msopen(dev_t dev, int flags, int mode, struct lwp *l)
 	return (0);
 }
 
-int 
+int
 msclose(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	struct ms_softc *ms;
@@ -260,7 +260,7 @@ msclose(dev_t dev, int flags, int mode, struct lwp *l)
 	return (0);
 }
 
-int 
+int
 msread(dev_t dev, struct uio *uio, int flags)
 {
 	struct ms_softc *ms;
@@ -269,7 +269,7 @@ msread(dev_t dev, struct uio *uio, int flags)
 	return (ev_read(&ms->ms_events, uio, flags));
 }
 
-int 
+int
 msioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct ms_softc *ms;
@@ -309,7 +309,7 @@ msioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	return (ENOTTY);
 }
 
-int 
+int
 mspoll(dev_t dev, int events, struct lwp *l)
 {
 	struct ms_softc *ms;
@@ -337,7 +337,7 @@ static void ms_input(struct ms_softc *, int);
 /*
  * Called by our ms_softint() routine on input.
  */
-static void 
+static void
 ms_input(struct ms_softc *ms, int c)
 {
 	struct firm_event *fe;
@@ -463,7 +463,7 @@ static void ms_stint(struct zs_chanstate *, int);
 static void ms_txint(struct zs_chanstate *);
 static void ms_softint(struct zs_chanstate *);
 
-static void 
+static void
 ms_rxint(struct zs_chanstate *cs)
 {
 	struct ms_softc *ms;
@@ -504,7 +504,7 @@ ms_rxint(struct zs_chanstate *cs)
 }
 
 
-static void 
+static void
 ms_txint(struct zs_chanstate *cs)
 {
 	struct ms_softc *ms;
@@ -517,7 +517,7 @@ ms_txint(struct zs_chanstate *cs)
 }
 
 
-static void 
+static void
 ms_stint(struct zs_chanstate *cs, int force)
 {
 	struct ms_softc *ms;
@@ -544,7 +544,7 @@ ms_stint(struct zs_chanstate *cs, int force)
 }
 
 
-static void 
+static void
 ms_softint(struct zs_chanstate *cs)
 {
 	struct ms_softc *ms;
@@ -618,7 +618,7 @@ struct zsops zsops_ms = {
 };
 
 
-static void 
+static void
 ms_trigger(struct zs_chanstate *cs, int onoff)
 {
 	/* for front connected one */
@@ -630,14 +630,14 @@ ms_trigger(struct zs_chanstate *cs, int onoff)
 	zs_write_reg(cs, 5, cs->cs_preg[5]);
 
 	/* for keyborad connected one */
-	mfp_send_usart (onoff | 0x40);
+	mfp_send_usart(onoff | 0x40);
 }
 
 /*
  * mouse timer interrupt.
  * called after system tick interrupt is done.
  */
-void 
+void
 ms_modem(void *arg)
 {
 	struct ms_softc *ms = arg;

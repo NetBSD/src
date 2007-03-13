@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vfsops.c,v 1.62 2007/01/19 14:49:09 hannken Exp $	*/
+/*	$NetBSD: smbfs_vfsops.c,v 1.62.6.1 2007/03/13 16:51:36 ad Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.62 2007/01/19 14:49:09 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.62.6.1 2007/03/13 16:51:36 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_quota.h"
@@ -112,7 +112,7 @@ void smbfs_done(void);
 int smbfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp);
 
 POOL_INIT(smbfs_node_pool, sizeof(struct smbnode), 0, 0, 0, "smbfsnopl",
-    &pool_allocator_nointr);
+    &pool_allocator_nointr, IPL_NONE);
 extern struct vnodeopv_desc smbfs_vnodeop_opv_desc;
 
 static const struct vnodeopv_desc *smbfs_vnodeopv_descs[] = {
@@ -375,7 +375,7 @@ smbfs_init(void)
 	malloc_type_attach(M_SMBFSDATA);
 	malloc_type_attach(M_SMBFSHASH);
 	pool_init(&smbfs_node_pool, sizeof(struct smbnode), 0, 0, 0,
-	    "smbfsnopl", &pool_allocator_nointr);
+	    "smbfsnopl", &pool_allocator_nointr, IPL_NONE);
 #endif
 
 	SMBVDEBUG("init.\n");

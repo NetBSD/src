@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_extent.c,v 1.62 2007/03/04 06:03:07 christos Exp $	*/
+/*	$NetBSD: subr_extent.c,v 1.62.2.1 2007/03/13 16:51:56 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_extent.c,v 1.62 2007/03/04 06:03:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_extent.c,v 1.62.2.1 2007/03/13 16:51:56 ad Exp $");
 
 #ifdef _KERNEL
 #include "opt_lockdebug.h"
@@ -132,7 +132,7 @@ expool_init(void)
 
 #if defined(_KERNEL)
 	pool_init(&expool, sizeof(struct extent_region), 0, 0, 0,
-	    "extent", NULL);
+	    "extent", NULL, IPL_VM);
 #else
 	expool.pr_size = sizeof(struct extent_region);
 #endif

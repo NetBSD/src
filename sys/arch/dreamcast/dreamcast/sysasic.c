@@ -1,4 +1,4 @@
-/*	$NetBSD: sysasic.c,v 1.12 2005/12/24 22:45:34 perry Exp $	*/
+/*	$NetBSD: sysasic.c,v 1.12.30.1 2007/03/13 16:49:57 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysasic.c,v 1.12 2005/12/24 22:45:34 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysasic.c,v 1.12.30.1 2007/03/13 16:49:57 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,10 +54,6 @@ __KERNEL_RCSID(0, "$NetBSD: sysasic.c,v 1.12 2005/12/24 22:45:34 perry Exp $");
 #define SYSASIC_IRQ_LEVEL_9	2
 #define SYSASIC_IRQ_LEVEL_MAX	2
 #define SYSASIC_IRQ_INDEX_TO_IRQ(i)	(13 - 2 * (i))
-
-#define IPL_IRL9	IPL_BIO
-#define IPL_IRL11	IPL_NET
-#define IPL_IRL13	IPL_TTY
 
 /* per-irq */
 struct sysasic_intrhand {
@@ -82,19 +78,19 @@ struct	syh_eventhand {
 int sysasic_intr(void *);
 
 const char * __pure
-sysasic_intr_string(int ipl)
+sysasic_intr_string(int irl)
 {
 
-	switch (ipl) {
+	switch (irl) {
 	default:
 #ifdef DEBUG
-		panic("sysasic_intr_string: unknown ipl %d", ipl);
+		panic("sysasic_intr_string: unknown IRL%d", irl);
 #endif
-	case IPL_IRL9:
+	case SYSASIC_IRL9:
 		return "SH4 IRL 9";
-	case IPL_IRL11:
+	case SYSASIC_IRL11:
 		return "SH4 IRL 11";
-	case IPL_IRL13:
+	case SYSASIC_IRL13:
 		return "SH4 IRL 13";
 	}
 	/* NOTREACHED */
@@ -104,7 +100,8 @@ sysasic_intr_string(int ipl)
  * Set up an interrupt handler to start being called.
  */
 void *
-sysasic_intr_establish(int event, int ipl, int (*ih_fun)(void *), void *ih_arg)
+sysasic_intr_establish(int event, int ipl, int irl, int (*ih_fun)(void *),
+    void *ih_arg)
 {
 	struct sysasic_intrhand *syh;
 	struct syh_eventhand *hnd;
@@ -126,18 +123,18 @@ sysasic_intr_establish(int event, int ipl, int (*ih_fun)(void *), void *ih_arg)
 	 * We use IPL to specify the IRQ for clearness, that is, we use
 	 * a splxxx() and IPL_XXX pair in a device driver.
 	 */
-	switch (ipl) {
+	switch (irl) {
 	default:
 #ifdef DEBUG
-		panic("sysasic_intr_establish: unknown ipl %d", ipl);
+		panic("sysasic_intr_establish: unknown IRL %d", irl);
 #endif
-	case IPL_IRL9:
+	case SYSASIC_IRL9:
 		idx = SYSASIC_IRQ_LEVEL_9;
 		break;
-	case IPL_IRL11:
+	case SYSASIC_IRL11:
 		idx = SYSASIC_IRQ_LEVEL_11;
 		break;
-	case IPL_IRL13:
+	case SYSASIC_IRL13:
 		idx = SYSASIC_IRQ_LEVEL_13;
 		break;
 	}
@@ -147,7 +144,7 @@ sysasic_intr_establish(int event, int ipl, int (*ih_fun)(void *), void *ih_arg)
 	if (syh->syh_intc == NULL) {
 		syh->syh_idx	= idx;
 		syh->syh_intc	= intc_intr_establish(idx2evt[idx], IST_LEVEL,
-		    ipl, sysasic_intr, syh);
+		    irl, sysasic_intr, syh);
 	}
 
 #ifdef DEBUG

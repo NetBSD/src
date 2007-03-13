@@ -1,4 +1,4 @@
-/*	$NetBSD: if_udav.c,v 1.16 2007/03/04 06:02:48 christos Exp $	*/
+/*	$NetBSD: if_udav.c,v 1.16.2.1 2007/03/13 16:50:33 ad Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 /*
  * Copyright (c) 2003
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.16 2007/03/04 06:02:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.16.2.1 2007/03/13 16:50:33 ad Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -164,9 +164,6 @@ static const struct udav_type {
 USB_MATCH(udav)
 {
 	USB_MATCH_START(udav, uaa);
-
-	if (uaa->iface != NULL)
-		return (UMATCH_NONE);
 
 	return (udav_lookup(uaa->vendor, uaa->product) != NULL ?
 		UMATCH_VENDOR_PRODUCT : UMATCH_NONE);

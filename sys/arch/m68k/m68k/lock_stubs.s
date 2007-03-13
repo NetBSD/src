@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.s,v 1.1 2007/02/15 02:48:48 mhitch Exp $	*/
+/*	$NetBSD: lock_stubs.s,v 1.1.8.1 2007/03/13 16:50:00 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
 	.file	"lock_stubs.s"
 	.text
 
-#ifndef	__mc68010__
+#if !defined(__mc68010__)
 /*
  * int _lock_cas(uintptr_t *val, uintptr_t old, uintptr_t new);
  */
@@ -63,6 +63,32 @@ ENTRY(_lock_cas)
 	rts
 1:	movq	#1,%d0
 	rts
+#else /* __mc68010__ */
+/*
+ * int _lock_cas(uintptr_t *val, uintptr_t old, uintptr_t new);
+ *
+ * The 68010 does not have a cas instruction, so we implement this as
+ * a restartable atomic sequence.  For an example of how this is used,
+ * see sun68k/sun68k/isr.c
+ */
+ENTRY_NOPROFILE(_lock_cas)
+	movl	%sp@(4),%a0
+
+	.globl _C_LABEL(_lock_cas_ras_start)
+_C_LABEL(_lock_cas_ras_start):
+	movl	%a0@,%d0
+	cmpl	%sp@(8),%d0
+	jne	1f
+	movl	%sp@(12),%a0@
+	.globl	_C_LABEL(_lock_cas_ras_end)
+_C_LABEL(_lock_cas_ras_end):
+
+	movq	#1,%d0
+	rts
+1:
+	clrl	%d0
+	rts
+#endif /* ! __mc68010__ */
 
 #if !defined(LOCKDEBUG)
 
@@ -70,28 +96,28 @@ ENTRY(_lock_cas)
  * void mutex_enter(kmutex_t *mtx);
  */
 ENTRY(mutex_enter)
+#if !defined(__mc68010__)
 	movq	#0,%d0
 	movl	_C_LABEL(curlwp),%d1
 	movl	%sp@(4),%a0
 	casl	%d0,%d1,%a0@
 	bnes	1f
 	rts
+#endif /* !__mc68010__ */
 1:	jra	_C_LABEL(mutex_vector_enter)
 
 /*
  * void mutex_exit(kmutex_t *mtx);
  */
 ENTRY(mutex_exit)
+#if !defined(__mc68010__)
 	movl	_C_LABEL(curlwp),%d0
 	movq	#0,%d1
 	movl	%sp@(4),%a0
 	casl	%d0,%d1,%a0@
 	bnes	1f
 	rts
+#endif /* !__mc68010__ */
 1:	jra	_C_LABEL(mutex_vector_exit)
 
-
 #endif	/* !LOCKDEBUG */
-#else	/* __mc68010__ */
-#error no locking stubs for 68010 yet
-#endif	/* __mc68010__ */

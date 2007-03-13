@@ -1,4 +1,4 @@
-/*	$NetBSD: cg4.c,v 1.36 2007/03/04 06:00:52 christos Exp $	*/
+/*	$NetBSD: cg4.c,v 1.36.2.1 2007/03/13 16:50:07 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cg4.c,v 1.36 2007/03/04 06:00:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cg4.c,v 1.36.2.1 2007/03/13 16:50:07 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -209,7 +209,7 @@ cg4match(struct device *parent, struct cfdata *cf, void *args)
 			return (0);
 		if (p4id != P4_ID_COLOR8P1) {
 #ifdef	DEBUG
-			printf("cgfour at 0x%x match p4id=0x%x fails\n",
+			printf("cgfour at 0x%lx match p4id=0x%x fails\n",
 				   ca->ca_paddr, p4id & 0xFF);
 #endif
 			return (0);

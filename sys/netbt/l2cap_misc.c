@@ -1,4 +1,4 @@
-/*	$NetBSD: l2cap_misc.c,v 1.1 2006/06/19 15:44:45 gdamore Exp $	*/
+/*	$NetBSD: l2cap_misc.c,v 1.1.24.1 2007/03/13 16:52:01 ad Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: l2cap_misc.c,v 1.1 2006/06/19 15:44:45 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: l2cap_misc.c,v 1.1.24.1 2007/03/13 16:52:01 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -49,8 +49,10 @@ struct l2cap_channel_list
 struct l2cap_channel_list
 	l2cap_listen_list = LIST_HEAD_INITIALIZER(l2cap_listen_list);
 
-POOL_INIT(l2cap_req_pool, sizeof(struct l2cap_req), 0, 0, 0, "l2cap_req", NULL);
-POOL_INIT(l2cap_pdu_pool, sizeof(struct l2cap_pdu), 0, 0, 0, "l2cap_pdu", NULL);
+POOL_INIT(l2cap_req_pool, sizeof(struct l2cap_req), 0, 0, 0, "l2cap_req", NULL,
+    IPL_SOFTNET);
+POOL_INIT(l2cap_pdu_pool, sizeof(struct l2cap_pdu), 0, 0, 0, "l2cap_pdu", NULL,
+    IPL_SOFTNET);
 
 const l2cap_qos_t l2cap_default_qos = {
 	0,			/* flags */

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.153 2007/03/10 16:50:01 dsl Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.153.2.1 2007/03/13 16:51:52 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.153 2007/03/10 16:50:01 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.153.2.1 2007/03/13 16:51:52 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,11 +70,11 @@ __KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.153 2007/03/10 16:50:01 dsl Exp $
 struct filelist	filehead;	/* head of list of open files */
 int		nfiles;		/* actual number of open files */
 POOL_INIT(file_pool, sizeof(struct file), 0, 0, 0, "filepl",
-    &pool_allocator_nointr);
+    &pool_allocator_nointr, IPL_NONE);
 POOL_INIT(cwdi_pool, sizeof(struct cwdinfo), 0, 0, 0, "cwdipl",
-    &pool_allocator_nointr);
+    &pool_allocator_nointr, IPL_NONE);
 POOL_INIT(filedesc0_pool, sizeof(struct filedesc0), 0, 0, 0, "fdescpl",
-    &pool_allocator_nointr);
+    &pool_allocator_nointr, IPL_NONE);
 
 /* Global file list lock */
 static struct simplelock filelist_slock = SIMPLELOCK_INITIALIZER;

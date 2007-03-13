@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_misc.c,v 1.45 2007/03/04 07:54:09 christos Exp $	*/
+/*	$NetBSD: sunos32_misc.c,v 1.45.2.1 2007/03/13 16:50:20 ad Exp $	*/
 /* from :NetBSD: sunos_misc.c,v 1.107 2000/12/01 19:25:10 jdolecek Exp	*/
 
 /*
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.45 2007/03/04 07:54:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.45.2.1 2007/03/13 16:50:20 ad Exp $");
 
 #define COMPAT_SUNOS 1
 
@@ -125,6 +125,7 @@ __KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.45 2007/03/04 07:54:09 christos E
 #include <sys/exec.h>
 #include <sys/swap.h>
 #include <sys/kauth.h>
+#include <sys/vfs_syscalls.h>
 
 #include <compat/netbsd32/netbsd32.h>
 #include <compat/netbsd32/netbsd32_syscallargs.h>
@@ -309,7 +310,6 @@ sunos32_sys_stat(l, v, retval)
 	struct proc *p = l->l_proc;
 	struct netbsd32_stat43 sb32;
 	struct stat sb;
-	struct nameidata nd;
 	void *sg;
 	const char *path;
 	int error;
@@ -318,15 +318,11 @@ sunos32_sys_stat(l, v, retval)
 	sg = stackgap_init(p, 0);
 	SUNOS32_CHECK_ALT_EXIST(l, &sg, path);
 
-	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE, path, l);
-	if ((error = namei(&nd)) != 0)
-		return (error);
-	error = vn_stat(nd.ni_vp, &sb, l);
-	vput(nd.ni_vp);
+	error = do_sys_stat(l, path, FOLLOW, &sb);
 	if (error)
 		return (error);
 	sunos32_from___stat13(&sb, &sb32);
-	error = copyout((void *)&sb32, (void *)(u_long)SCARG(uap, ub), sizeof (sb32));
+	error = copyout(&sb32, (void *)(uintptr_t)SCARG(uap, ub), sizeof (sb32));
 	return (error);
 }
 

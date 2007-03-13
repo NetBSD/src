@@ -1,4 +1,4 @@
-/*	$NetBSD: si_vme.c,v 1.26 2007/02/03 18:02:57 tsutsui Exp $	*/
+/*	$NetBSD: si_vme.c,v 1.26.6.1 2007/03/13 16:50:07 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  ****************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: si_vme.c,v 1.26 2007/02/03 18:02:57 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: si_vme.c,v 1.26.6.1 2007/03/13 16:50:07 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -163,7 +163,7 @@ si_vme_match(struct device *parent, struct cfdata *cf, void *aux)
 	if (bus_peek(ca->ca_bustype, probe_addr, 1) != -1) {
 		/* Something responded at 2K+1.  Maybe an "sc" board? */
 #ifdef	DEBUG
-		printf("si_vme_match: May be an `sc' board at pa=0x%x\n",
+		printf("si_vme_match: May be an `sc' board at pa=0x%lx\n",
 			   ca->ca_paddr);
 #endif
 		return(0);

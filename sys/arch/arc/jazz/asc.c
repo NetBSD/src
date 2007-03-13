@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.20 2007/03/06 13:54:44 he Exp $	*/
+/*	$NetBSD: asc.c,v 1.20.2.1 2007/03/13 16:49:55 ad Exp $	*/
 
 /*
  * Copyright (c) 2003 Izumi Tsutsui.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.20 2007/03/06 13:54:44 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.20.2.1 2007/03/13 16:49:55 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -386,7 +386,7 @@ asc_dma_setup(struct ncr53c9x_softc *sc, void **addr, size_t *len,
 	bus_space_write_4(asc->sc_iot, asc->sc_dmaioh, R4030_DMA_ENAB, 0);
 	bus_space_write_4(asc->sc_iot, asc->sc_dmaioh, R4030_DMA_MODE, 0);
 
-	asc->sc_dmaaddr = *addr;
+	asc->sc_dmaaddr = (char **)addr;
 	asc->sc_dmalen = len;
 	asc->sc_dmasize = *dmasize;
 	asc->sc_datain = datain;

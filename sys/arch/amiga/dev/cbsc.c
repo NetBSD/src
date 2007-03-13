@@ -1,4 +1,4 @@
-/*	$NetBSD: cbsc.c,v 1.24 2007/03/05 18:41:32 he Exp $ */
+/*	$NetBSD: cbsc.c,v 1.24.2.1 2007/03/13 16:49:55 ad Exp $ */
 
 /*
  * Copyright (c) 1997 Michael L. Hitch
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cbsc.c,v 1.24 2007/03/05 18:41:32 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cbsc.c,v 1.24.2.1 2007/03/13 16:49:55 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -344,7 +344,7 @@ cbsc_dma_setup(struct ncr53c9x_softc *sc, void **addr, size_t *len,
 	u_char *ptr;
 	size_t xfer;
 
-	csc->sc_dmaaddr = *addr;
+	csc->sc_dmaaddr = (char **)addr;
 	csc->sc_pdmalen = len;
 	csc->sc_datain = datain;
 	csc->sc_dmasize = *dmasize;

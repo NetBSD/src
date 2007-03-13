@@ -1,4 +1,4 @@
-/*	$NetBSD: wd33c93.c,v 1.10 2007/03/05 17:55:19 he Exp $	*/
+/*	$NetBSD: wd33c93.c,v 1.10.2.1 2007/03/13 16:50:24 ad Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd33c93.c,v 1.10 2007/03/05 17:55:19 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd33c93.c,v 1.10.2.1 2007/03/13 16:50:24 ad Exp $");
 
 #include "opt_ddb.h"
 
@@ -244,7 +244,7 @@ wd33c93_init(struct wd33c93_softc *dev)
 	if (!wd33c93_pool_initialized) {
 		/* All instances share the same pool */
 		pool_init(&wd33c93_pool, sizeof(struct wd33c93_acb), 0, 0, 0,
-		    "wd33c93_acb", NULL);
+		    "wd33c93_acb", NULL, IPL_BIO);
 		++wd33c93_pool_initialized;
 	}
 

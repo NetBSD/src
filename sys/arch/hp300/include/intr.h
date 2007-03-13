@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.22 2007/03/04 09:59:53 tsutsui Exp $	*/
+/*	$NetBSD: intr.h,v 1.22.2.1 2007/03/13 16:49:58 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ extern u_short hp300_ipl2psl[];
 
 typedef int ipl_t;
 typedef struct {
-	int _psl;
+	uint16_t _psl;
 } ipl_cookie_t;
 
 static inline ipl_cookie_t

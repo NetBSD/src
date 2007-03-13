@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.11 2006/09/03 21:43:56 gdamore Exp $	*/
+/*	$NetBSD: clock.c,v 1.11.12.1 2007/03/13 16:50:06 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.11 2006/09/03 21:43:56 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.11.12.1 2007/03/13 16:50:06 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,6 +95,7 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.11 2006/09/03 21:43:56 gdamore Exp $");
 
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
+#include <machine/frame.h>
 #include <machine/leds.h>
 
 #include <sun2/sun2/control.h>
@@ -307,4 +308,6 @@ clock_intr(struct clockframe cf)
 
 	/* Call common clock interrupt handler. */
 	hardclock(&cf);
+
+	LOCK_CAS_CHECK(&cf);
 }

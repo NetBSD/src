@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.18 2007/03/08 16:37:43 tsutsui Exp $	*/
+/*	$NetBSD: intr.h,v 1.18.2.1 2007/03/13 16:50:02 ad Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds
@@ -80,7 +80,7 @@
 
 typedef int ipl_t;
 typedef struct {
-	ipl_t _psl;
+	uint16_t _psl;
 } ipl_cookie_t;
 
 extern const int ipl2psl_table[NIPL];

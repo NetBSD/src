@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.3 2007/02/15 02:48:48 mhitch Exp $	*/
+/*	$NetBSD: mutex.h,v 1.3.8.1 2007/03/13 16:50:00 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 
 struct kmutex {
 	uintptr_t	mtx_pad1;
-	uint32_t	mtx_pad2[3];
+	uint32_t	mtx_pad2;
 };
 
 #else	/* __MUTEX_PRIVATE */
@@ -51,11 +51,22 @@ struct kmutex {
 #include <machine/lock.h>
 
 struct kmutex {
-	volatile uintptr_t	mtx_owner;
-	ipl_cookie_t		mtx_ipl;
-	__cpu_simple_lock_t	mtx_lock;
-	volatile uint32_t	mtx_id;
+	union {
+		/* Adaptive mutex */
+		volatile uintptr_t	mtxu_owner;	/* 0-3 */
+
+		struct {
+			ipl_cookie_t		mtxs_ipl;	/* 0-1 */
+			__cpu_simple_lock_t	mtxs_lock;	/* 2 */
+			uint8_t			mtxs_unused;	/* 3 */
+		} s;
+	} u;
+	volatile uint32_t	mtx_id;			/* 4-7 */
 };
+
+#define	mtx_owner		u.mtxu_owner
+#define	mtx_ipl			u.s.mtxs_ipl
+#define	mtx_lock		u.s.mtxs_lock
 
 #define	__HAVE_SIMPLE_MUTEXES		1
 #define	__HAVE_MUTEX_STUBS		1

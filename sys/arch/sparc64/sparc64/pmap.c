@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.186 2007/03/04 06:00:51 christos Exp $	*/
+/*	$NetBSD: pmap.c,v 1.186.2.1 2007/03/13 16:50:06 ad Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.186 2007/03/04 06:00:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.186.2.1 2007/03/13 16:50:06 ad Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -1173,9 +1173,9 @@ pmap_init()
 	 * initialize the pmap pools.
 	 */
 	pool_init(&pmap_pmap_pool, sizeof(struct pmap), 0, 0, 0, "pmappl",
-	    &pool_allocator_nointr);
+	    &pool_allocator_nointr, IPL_NONE);
 	pool_init(&pmap_pv_pool, sizeof(struct pv_entry), 0, 0, 0, "pv_entry",
-	    &pool_allocator_nointr);
+	    &pool_allocator_nointr, IPL_NONE);
 
 	vm_first_phys = avail_start;
 	vm_num_phys = avail_end - avail_start;

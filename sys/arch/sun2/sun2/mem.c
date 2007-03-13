@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.15 2007/03/04 06:00:52 christos Exp $	*/
+/*	$NetBSD: mem.c,v 1.15.2.1 2007/03/13 16:50:06 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.15 2007/03/04 06:00:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.15.2.1 2007/03/13 16:50:06 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -182,12 +182,12 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 			/* Temporarily map the memory at vmmap. */
 			prot = uio->uio_rw == UIO_READ ? VM_PROT_READ :
 			    VM_PROT_WRITE;
-			pmap_enter(pmap_kernel(), (vaddr_t)vmmap,
+			pmap_enter(pmap_kernel(), vmmap,
 			    trunc_page(v), prot, prot|PMAP_WIRED);
 			pmap_update(pmap_kernel());
 			o = v & PGOFSET;
 			c = min(uio->uio_resid, (int)(PAGE_SIZE - o));
-			error = uiomove((void *)vmmap + o, c, uio);
+			error = uiomove((void *)(vmmap + o), c, uio);
 			pmap_remove(pmap_kernel(), (vaddr_t)vmmap,
 			    (vaddr_t)vmmap + PAGE_SIZE);
 			pmap_update(pmap_kernel());

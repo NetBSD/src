@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.72 2007/03/05 20:41:48 he Exp $	*/
+/*	$NetBSD: fd.c,v 1.72.2.1 2007/03/13 16:50:11 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.72 2007/03/05 20:41:48 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.72.2.1 2007/03/13 16:50:11 ad Exp $");
 
 #include "rnd.h"
 #include "opt_ddb.h"
@@ -428,7 +428,7 @@ fdcattach(struct device *parent, struct device *self, void *aux)
 
 	fdc->sc_iot = iot;
 	fdc->sc_ioh = ioh;
-	fdc->sc_addr = (void*) ia->ia_addr;
+	fdc->sc_addr = (void *)ia->ia_addr;
 
 	fdc->sc_dmat = ia->ia_dmat;
 	fdc->sc_state = DEVIDLE;
@@ -1187,7 +1187,7 @@ loop:
 		if (fd->sc_part != SEC_P11)
 			goto docopy;
 
-		fdc_dmastart(fdc, read, (char*)bp->b_data + fd->sc_skip,
+		fdc_dmastart(fdc, read, (char *)bp->b_data + fd->sc_skip,
 			     fd->sc_nbytes);
 		if (read)
 			out_fdc(iot, ioh, NE7CMD_READ);	/* READ */
@@ -1260,15 +1260,15 @@ loop:
 		}
 #endif
 		if ((read = bp->b_flags & B_READ)) {
-			memcpy((char*)bp->b_data + fd->sc_skip, fd->sc_copybuf
+			memcpy((char *)bp->b_data + fd->sc_skip, fd->sc_copybuf
 			    + (fd->sc_part & SEC_P01 ? FDC_BSIZE : 0),
 			    FDC_BSIZE);
 			fdc->sc_state = IOCOMPLETE;
 			goto iocomplete2;
 		} else {
-			memcpy((char*)fd->sc_copybuf
+			memcpy((char *)fd->sc_copybuf
 			    + (fd->sc_part & SEC_P01 ? FDC_BSIZE : 0),
-			    (char*)bp->b_data + fd->sc_skip, FDC_BSIZE);
+			    (char *)bp->b_data + fd->sc_skip, FDC_BSIZE);
 			fdc_dmastart(fdc, read, fd->sc_copybuf, 1024);
 		}
 		out_fdc(iot, ioh, NE7CMD_WRITE);	/* WRITE */
@@ -1509,7 +1509,7 @@ int
 fdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 {
 	struct fd_softc *fd = fd_cd.cd_devs[FDUNIT(dev)];
-	struct fdc_softc *fdc = (void*) device_parent(&fd->sc_dev);
+	struct fdc_softc *fdc = (void *)device_parent(&fd->sc_dev);
 	int unit = FDUNIT(dev);
 	int part = DISKPART(dev);
 	struct disklabel buffer;
@@ -1651,8 +1651,8 @@ fdgetdisklabel(struct fd_softc *sc, dev_t dev)
 void
 fd_mountroot_hook(struct device *dev)
 {
-	struct fd_softc *fd = (void*) dev;
-	struct fdc_softc *fdc = (void*) device_parent(&fd->sc_dev);
+	struct fd_softc *fd = (void *)dev;
+	struct fdc_softc *fdc = (void *)device_parent(&fd->sc_dev);
 	int c;
 
 	/* XXX device_unit() abuse */
