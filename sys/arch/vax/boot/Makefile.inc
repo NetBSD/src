@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile.inc,v 1.12 2006/09/06 00:31:22 matt Exp $
+#	$NetBSD: Makefile.inc,v 1.13 2007/03/13 17:54:07 ragge Exp $
 
-RELOC=0x2f0000
+RELOC=0x3f0000
 .PATH:	${.CURDIR}/../../vax ${.CURDIR}/../common
 
 CPPFLAGS+=-I.
