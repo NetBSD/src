@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_inode.c,v 1.64 2007/01/29 15:42:50 hannken Exp $	*/
+/*	$NetBSD: ufs_inode.c,v 1.64.6.1 2007/03/13 17:51:52 ad Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.64 2007/01/29 15:42:50 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.64.6.1 2007/03/13 17:51:52 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -123,9 +123,9 @@ ufs_inactive(void *v)
 		ip->i_mode = 0;
 		DIP_ASSIGN(ip, mode, 0);
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
-		simple_lock(&vp->v_interlock);
+		mutex_enter(&vp->v_interlock);
 		vp->v_flag |= VFREEING;
-		simple_unlock(&vp->v_interlock);
+		mutex_exit(&vp->v_interlock);
 		if (DOINGSOFTDEP(vp))
 			softdep_change_linkcnt(ip);
 		UFS_VFREE(vp, ip->i_number, mode);
@@ -238,23 +238,23 @@ ufs_balloc_range(struct vnode *vp, off_t off, off_t len, kauth_cred_t cred,
 	pagestart = trunc_page(off) & ~(bsize - 1);
 	npages = MIN(ppb, (round_page(neweob) - pagestart) >> PAGE_SHIFT);
 	memset(pgs, 0, npages * sizeof(struct vm_page *));
-	simple_lock(&uobj->vmobjlock);
+	mutex_enter(&uobj->vmobjlock);
 	error = VOP_GETPAGES(vp, pagestart, pgs, &npages, 0,
 	    VM_PROT_WRITE, 0,
 	    PGO_SYNCIO|PGO_PASTEOF|PGO_NOBLOCKALLOC|PGO_NOTIMESTAMP);
 	if (error) {
 		return error;
 	}
-	simple_lock(&uobj->vmobjlock);
-	uvm_lock_pageq();
+	mutex_enter(&uobj->vmobjlock);
+	mutex_enter(&uvm_pageqlock);
 	for (i = 0; i < npages; i++) {
 		UVMHIST_LOG(ubchist, "got pgs[%d] %p", i, pgs[i],0,0);
 		KASSERT((pgs[i]->flags & PG_RELEASED) == 0);
 		pgs[i]->flags &= ~PG_CLEAN;
 		uvm_pageactivate(pgs[i]);
 	}
-	uvm_unlock_pageq();
-	simple_unlock(&uobj->vmobjlock);
+	mutex_exit(&uvm_pageqlock);
+	mutex_exit(&uobj->vmobjlock);
 
 	/*
 	 * adjust off to be block-aligned.
@@ -278,7 +278,7 @@ ufs_balloc_range(struct vnode *vp, off_t off, off_t len, kauth_cred_t cred,
 	 */
 
 	GOP_SIZE(vp, off + len, &eob, 0);
-	simple_lock(&uobj->vmobjlock);
+	mutex_enter(&uobj->vmobjlock);
 	for (i = 0; i < npages; i++) {
 		if (error) {
 			pgs[i]->flags |= PG_RELEASED;
@@ -288,12 +288,12 @@ ufs_balloc_range(struct vnode *vp, off_t off, off_t len, kauth_cred_t cred,
 		}
 	}
 	if (error) {
-		uvm_lock_pageq();
+		mutex_enter(&uvm_pageqlock);
 		uvm_page_unbusy(pgs, npages);
-		uvm_unlock_pageq();
+		mutex_exit(&uvm_pageqlock);
 	} else {
 		uvm_page_unbusy(pgs, npages);
 	}
-	simple_unlock(&uobj->vmobjlock);
+	mutex_exit(&uobj->vmobjlock);
 	return error;
 }

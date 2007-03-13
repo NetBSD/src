@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.122.2.1 2007/03/13 16:52:09 ad Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.122.2.2 2007/03/13 17:51:58 ad Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.122.2.1 2007/03/13 16:52:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.122.2.2 2007/03/13 17:51:58 ad Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -85,10 +85,10 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.122.2.1 2007/03/13 16:52:09 ad Exp $"
  * CIRCLEQ of "swapdev" structures at that priority.
  *
  * locking:
- *  - swap_syscall_lock (sleep lock): this lock serializes the swapctl
+ *  - swap_syscall_lock (krwlock_t): this lock serializes the swapctl
  *    system call and prevents the swap priority list from changing
  *    while we are in the middle of a system call (e.g. SWAP_STATS).
- *  - uvm.swap_data_lock (simple_lock): this lock protects all swap data
+ *  - uvm_swap_data_lock (kmutex_t): this lock protects all swap data
  *    structures including the priority list, the swapdev structures,
  *    and the swapmap arena.
  *
@@ -186,26 +186,6 @@ POOL_INIT(vndxfer_pool, sizeof(struct vndxfer), 0, 0, 0, "swp vnx", NULL,
 POOL_INIT(vndbuf_pool, sizeof(struct vndbuf), 0, 0, 0, "swp vnd", NULL,
     IPL_BIO);
 
-#define	getvndxfer(vnx)	do {						\
-	int sp = splbio();						\
-	vnx = pool_get(&vndxfer_pool, PR_WAITOK);			\
-	splx(sp);							\
-} while (/*CONSTCOND*/ 0)
-
-#define putvndxfer(vnx) {						\
-	pool_put(&vndxfer_pool, (void *)(vnx));				\
-}
-
-#define	getvndbuf(vbp)	do {						\
-	int sp = splbio();						\
-	vbp = pool_get(&vndbuf_pool, PR_WAITOK);			\
-	splx(sp);							\
-} while (/*CONSTCOND*/ 0)
-
-#define putvndbuf(vbp) {						\
-	pool_put(&vndbuf_pool, (void *)(vbp));				\
-}
-
 /*
  * local variables
  */
@@ -262,10 +242,10 @@ uvm_swap_init(void)
 	uvmexp.nswapdev = 0;
 	rw_init(&swap_syscall_lock);
 	cv_init(&uvm.scheduler_cv, "schedule");
-	simple_lock_init(&uvm.swap_data_lock);
+	mutex_init(&uvm_swap_data_lock, MUTEX_DEFAULT, IPL_NONE);
 
 	/* XXXSMP should be at IPL_VM, but for audio interrupt handlers. */
-	mutex_init(&uvm.scheduler_mutex, MUTEX_SPIN, IPL_SCHED);
+	mutex_init(&uvm_scheduler_mutex, MUTEX_SPIN, IPL_SCHED);
 
 	if (bdevvp(swapdev, &swapdev_vp))
 		panic("uvm_swap_init: can't get vnode for swap device");
@@ -296,7 +276,7 @@ uvm_swap_init(void)
 /*
  * swaplist_insert: insert swap device "sdp" into the global list
  *
- * => caller must hold both swap_syscall_lock and uvm.swap_data_lock
+ * => caller must hold both swap_syscall_lock and uvm_swap_data_lock
  * => caller must provide a newly malloc'd swappri structure (we will
  *	FREE it if we don't need it... this it to prevent malloc blocking
  *	here while adding swap)
@@ -350,7 +330,7 @@ swaplist_insert(struct swapdev *sdp, struct swappri *newspp, int priority)
  * swaplist_find: find and optionally remove a swap device from the
  *	global list.
  *
- * => caller must hold both swap_syscall_lock and uvm.swap_data_lock
+ * => caller must hold both swap_syscall_lock and uvm_swap_data_lock
  * => we return the swapdev we found (and removed)
  */
 static struct swapdev *
@@ -382,7 +362,7 @@ swaplist_find(struct vnode *vp, bool remove)
  * swaplist_trim: scan priority list for empty priority entries and kill
  *	them.
  *
- * => caller must hold both swap_syscall_lock and uvm.swap_data_lock
+ * => caller must hold both swap_syscall_lock and uvm_swap_data_lock
  */
 static void
 swaplist_trim(void)
@@ -404,7 +384,7 @@ swaplist_trim(void)
  *	to the "swapdev" that maps that section of the drum.
  *
  * => each swapdev takes one big contig chunk of the drum
- * => caller must hold uvm.swap_data_lock
+ * => caller must hold uvm_swap_data_lock
  */
 static struct swapdev *
 swapdrum_getsdp(int pgno)
@@ -477,7 +457,7 @@ sys_swapctl(struct lwp *l, void *v, register_t *retval)
 	 *
 	 * note that the swap_priority list can't change as long
 	 * as we are holding the swap_syscall_lock.  we don't want
-	 * to grab the uvm.swap_data_lock because we may fault&sleep during
+	 * to grab the uvm_swap_data_lock because we may fault&sleep during
 	 * copyout() and we don't want to be holding that lock then!
 	 */
 	if (SCARG(uap, cmd) == SWAP_STATS
@@ -584,14 +564,14 @@ sys_swapctl(struct lwp *l, void *v, register_t *retval)
 		 */
 		priority = SCARG(uap, misc);
 		spp = malloc(sizeof *spp, M_VMSWAP, M_WAITOK);
-		simple_lock(&uvm.swap_data_lock);
+		mutex_enter(&uvm_swap_data_lock);
 		if ((sdp = swaplist_find(vp, true)) == NULL) {
 			error = ENOENT;
 		} else {
 			swaplist_insert(sdp, spp, priority);
 			swaplist_trim();
 		}
-		simple_unlock(&uvm.swap_data_lock);
+		mutex_exit(&uvm_swap_data_lock);
 		if (error)
 			free(spp, M_VMSWAP);
 		break;
@@ -613,17 +593,17 @@ sys_swapctl(struct lwp *l, void *v, register_t *retval)
 		sdp->swd_vp = vp;
 		sdp->swd_dev = (vp->v_type == VBLK) ? vp->v_rdev : NODEV;
 		bufq_alloc(&sdp->swd_tab, "disksort", BUFQ_SORT_RAWBLOCK);
-		simple_lock(&uvm.swap_data_lock);
+		mutex_enter(&uvm_swap_data_lock);
 		if (swaplist_find(vp, false) != NULL) {
 			error = EBUSY;
-			simple_unlock(&uvm.swap_data_lock);
+			mutex_exit(&uvm_swap_data_lock);
 			bufq_free(sdp->swd_tab);
 			free(sdp, M_VMSWAP);
 			free(spp, M_VMSWAP);
 			break;
 		}
 		swaplist_insert(sdp, spp, priority);
-		simple_unlock(&uvm.swap_data_lock);
+		mutex_exit(&uvm_swap_data_lock);
 
 		sdp->swd_pathlen = len;
 		sdp->swd_path = malloc(sdp->swd_pathlen, M_VMSWAP, M_WAITOK);
@@ -638,10 +618,10 @@ sys_swapctl(struct lwp *l, void *v, register_t *retval)
 		 */
 
 		if ((error = swap_on(l, sdp)) != 0) {
-			simple_lock(&uvm.swap_data_lock);
+			mutex_enter(&uvm_swap_data_lock);
 			(void) swaplist_find(vp, true);  /* kill fake entry */
 			swaplist_trim();
-			simple_unlock(&uvm.swap_data_lock);
+			mutex_exit(&uvm_swap_data_lock);
 			bufq_free(sdp->swd_tab);
 			free(sdp->swd_path, M_VMSWAP);
 			free(sdp, M_VMSWAP);
@@ -650,9 +630,9 @@ sys_swapctl(struct lwp *l, void *v, register_t *retval)
 		break;
 
 	case SWAP_OFF:
-		simple_lock(&uvm.swap_data_lock);
+		mutex_enter(&uvm_swap_data_lock);
 		if ((sdp = swaplist_find(vp, false)) == NULL) {
-			simple_unlock(&uvm.swap_data_lock);
+			mutex_exit(&uvm_swap_data_lock);
 			error = ENXIO;
 			break;
 		}
@@ -662,7 +642,7 @@ sys_swapctl(struct lwp *l, void *v, register_t *retval)
 		 * can't stop swapping from it (again).
 		 */
 		if ((sdp->swd_flags & (SWF_INUSE|SWF_ENABLE)) == 0) {
-			simple_unlock(&uvm.swap_data_lock);
+			mutex_exit(&uvm_swap_data_lock);
 			error = EBUSY;
 			break;
 		}
@@ -765,7 +745,7 @@ uvm_swap_stats_locked(int cmd, struct swapent *sep, int sec, register_t *retval)
  *
  * => we avoid the start of the disk (to protect disk labels)
  * => we also avoid the miniroot, if we are swapping to root.
- * => caller should leave uvm.swap_data_lock unlocked, we may lock it
+ * => caller should leave uvm_swap_data_lock unlocked, we may lock it
  *	if needed.
  */
 static int
@@ -953,12 +933,12 @@ swap_on(struct lwp *l, struct swapdev *sdp)
 	sdp->swd_drumoffset = (int)result;
 	sdp->swd_drumsize = npages;
 	sdp->swd_npages = size;
-	simple_lock(&uvm.swap_data_lock);
+	mutex_enter(&uvm_swap_data_lock);
 	sdp->swd_flags &= ~SWF_FAKE;	/* going live */
 	sdp->swd_flags |= (SWF_INUSE|SWF_ENABLE);
 	uvmexp.swpages += size;
 	uvmexp.swpgavail += size;
-	simple_unlock(&uvm.swap_data_lock);
+	mutex_exit(&uvm_swap_data_lock);
 	return (0);
 
 	/*
@@ -992,7 +972,7 @@ swap_off(struct lwp *l, struct swapdev *sdp)
 	/* disable the swap area being removed */
 	sdp->swd_flags &= ~SWF_ENABLE;
 	uvmexp.swpgavail -= npages;
-	simple_unlock(&uvm.swap_data_lock);
+	mutex_exit(&uvm_swap_data_lock);
 
 	/*
 	 * the idea is to find all the pages that are paged out to this
@@ -1011,10 +991,10 @@ swap_off(struct lwp *l, struct swapdev *sdp)
 	}
 
 	if (error) {
-		simple_lock(&uvm.swap_data_lock);
+		mutex_enter(&uvm_swap_data_lock);
 		sdp->swd_flags |= SWF_ENABLE;
 		uvmexp.swpgavail += npages;
-		simple_unlock(&uvm.swap_data_lock);
+		mutex_exit(&uvm_swap_data_lock);
 
 		return error;
 	}
@@ -1029,14 +1009,14 @@ swap_off(struct lwp *l, struct swapdev *sdp)
 		(void) VOP_CLOSE(sdp->swd_vp, FREAD|FWRITE, l->l_cred, l);
 	}
 
-	simple_lock(&uvm.swap_data_lock);
+	mutex_enter(&uvm_swap_data_lock);
 	uvmexp.swpages -= npages;
 	uvmexp.swpginuse -= sdp->swd_npgbad;
 
 	if (swaplist_find(sdp->swd_vp, true) == NULL)
 		panic("swap_off: swapdev not in list");
 	swaplist_trim();
-	simple_unlock(&uvm.swap_data_lock);
+	mutex_exit(&uvm_swap_data_lock);
 
 	/*
 	 * free all resources!
@@ -1071,9 +1051,9 @@ swstrategy(struct buf *bp)
 	 * in it (i.e. the blocks we are doing I/O on).
 	 */
 	pageno = dbtob((int64_t)bp->b_blkno) >> PAGE_SHIFT;
-	simple_lock(&uvm.swap_data_lock);
+	mutex_enter(&uvm_swap_data_lock);
 	sdp = swapdrum_getsdp(pageno);
-	simple_unlock(&uvm.swap_data_lock);
+	mutex_exit(&uvm_swap_data_lock);
 	if (sdp == NULL) {
 		bp->b_error = EINVAL;
 		bp->b_flags |= B_ERROR;
@@ -1194,7 +1174,7 @@ sw_reg_strategy(struct swapdev *sdp, struct buf *bp, int bn)
 	 * allocate a vndxfer head for this transfer and point it to
 	 * our buffer.
 	 */
-	getvndxfer(vnx);
+	vnx = pool_get(&vndxfer_pool, PR_WAITOK);
 	vnx->vx_flags = VX_BUSY;
 	vnx->vx_error = 0;
 	vnx->vx_pending = 0;
@@ -1269,7 +1249,7 @@ sw_reg_strategy(struct swapdev *sdp, struct buf *bp, int bn)
 		 * at the front of the nbp structure so that you can
 		 * cast pointers between the two structure easily.
 		 */
-		getvndbuf(nbp);
+		nbp = pool_get(&vndbuf_pool, PR_WAITOK);
 		BUF_INIT(&nbp->vb_buf);
 		nbp->vb_buf.b_flags    = bp->b_flags | B_CALL;
 		nbp->vb_buf.b_bcount   = sz;
@@ -1292,7 +1272,8 @@ sw_reg_strategy(struct swapdev *sdp, struct buf *bp, int bn)
 		 */
 		s = splbio();
 		if (vnx->vx_error != 0) {
-			putvndbuf(nbp);
+			BUF_DESTROY(&nbp->vb_buf);
+			pool_put(&vndbuf_pool, nbp);
 			goto out;
 		}
 		vnx->vx_pending++;
@@ -1318,7 +1299,7 @@ out: /* Arrive here at splbio */
 			bp->b_error = vnx->vx_error;
 			bp->b_flags |= B_ERROR;
 		}
-		putvndxfer(vnx);
+		pool_put(&vndxfer_pool, vnx);
 		biodone(bp);
 	}
 	splx(s);
@@ -1397,7 +1378,8 @@ sw_reg_iodone(struct buf *bp)
 	/*
 	 * kill vbp structure
 	 */
-	putvndbuf(vbp);
+	BUF_DESTROY(&vbp->vb_buf);
+	pool_put(&vndbuf_pool, vbp);
 
 	/*
 	 * wrap up this transaction if it has run to completion or, in
@@ -1408,7 +1390,7 @@ sw_reg_iodone(struct buf *bp)
 		pbp->b_flags |= B_ERROR;
 		pbp->b_error = vnx->vx_error;
 		if ((vnx->vx_flags & VX_BUSY) == 0 && vnx->vx_pending == 0) {
-			putvndxfer(vnx);
+			pool_put(&vndxfer_pool, vnx);
 			biodone(pbp);
 		}
 	} else if (pbp->b_resid == 0) {
@@ -1416,7 +1398,7 @@ sw_reg_iodone(struct buf *bp)
 		if ((vnx->vx_flags & VX_BUSY) == 0) {
 			UVMHIST_LOG(pdhist, "  iodone error=%d !",
 			    pbp, vnx->vx_error, 0, 0);
-			putvndxfer(vnx);
+			pool_put(&vndxfer_pool, vnx);
 			biodone(pbp);
 		}
 	}
@@ -1437,7 +1419,7 @@ sw_reg_iodone(struct buf *bp)
  *	allocate in a priority we "rotate" the circle queue.
  * => space can be freed with uvm_swap_free
  * => we return the page slot number in /dev/drum (0 == invalid slot)
- * => we lock uvm.swap_data_lock
+ * => we lock uvm_swap_data_lock
  * => XXXMRG: "LESSOK" INTERFACE NEEDED TO EXTENT SYSTEM
  */
 int
@@ -1456,7 +1438,7 @@ uvm_swap_alloc(int *nslots /* IN/OUT */, bool lessok)
 	/*
 	 * lock data lock, convert slots into blocks, and enter loop
 	 */
-	simple_lock(&uvm.swap_data_lock);
+	mutex_enter(&uvm_swap_data_lock);
 
 ReTry:	/* XXXMRG */
 	LIST_FOREACH(spp, &swap_priority, spi_swappri) {
@@ -1481,7 +1463,7 @@ ReTry:	/* XXXMRG */
 			CIRCLEQ_INSERT_TAIL(&spp->spi_swapdev, sdp, swd_next);
 			sdp->swd_npginuse += *nslots;
 			uvmexp.swpginuse += *nslots;
-			simple_unlock(&uvm.swap_data_lock);
+			mutex_exit(&uvm_swap_data_lock);
 			/* done!  return drum slot number */
 			UVMHIST_LOG(pdhist,
 			    "success!  returning %d slots starting at %d",
@@ -1498,7 +1480,7 @@ ReTry:	/* XXXMRG */
 	}
 	/* XXXMRG: END HACK */
 
-	simple_unlock(&uvm.swap_data_lock);
+	mutex_exit(&uvm_swap_data_lock);
 	return 0;
 }
 
@@ -1507,10 +1489,10 @@ uvm_swapisfull(void)
 {
 	bool rv;
 
-	simple_lock(&uvm.swap_data_lock);
+	mutex_enter(&uvm_swap_data_lock);
 	KASSERT(uvmexp.swpgonly <= uvmexp.swpages);
 	rv = (uvmexp.swpgonly >= uvmexp.swpgavail);
-	simple_unlock(&uvm.swap_data_lock);
+	mutex_exit(&uvm_swap_data_lock);
 
 	return (rv);
 }
@@ -1518,7 +1500,7 @@ uvm_swapisfull(void)
 /*
  * uvm_swap_markbad: keep track of swap ranges where we've had i/o errors
  *
- * => we lock uvm.swap_data_lock
+ * => we lock uvm_swap_data_lock
  */
 void
 uvm_swap_markbad(int startslot, int nslots)
@@ -1526,7 +1508,7 @@ uvm_swap_markbad(int startslot, int nslots)
 	struct swapdev *sdp;
 	UVMHIST_FUNC("uvm_swap_markbad"); UVMHIST_CALLED(pdhist);
 
-	simple_lock(&uvm.swap_data_lock);
+	mutex_enter(&uvm_swap_data_lock);
 	sdp = swapdrum_getsdp(startslot);
 	KASSERT(sdp != NULL);
 
@@ -1541,14 +1523,14 @@ uvm_swap_markbad(int startslot, int nslots)
 	uvmexp.swpgonly -= nslots;
 	sdp->swd_npgbad += nslots;
 	UVMHIST_LOG(pdhist, "now %d bad", sdp->swd_npgbad, 0,0,0);
-	simple_unlock(&uvm.swap_data_lock);
+	mutex_exit(&uvm_swap_data_lock);
 }
 
 /*
  * uvm_swap_free: free swap slots
  *
  * => this can be all or part of an allocation made by uvm_swap_alloc
- * => we lock uvm.swap_data_lock
+ * => we lock uvm_swap_data_lock
  */
 void
 uvm_swap_free(int startslot, int nslots)
@@ -1573,7 +1555,7 @@ uvm_swap_free(int startslot, int nslots)
 	 * lookup and access the extent.
 	 */
 
-	simple_lock(&uvm.swap_data_lock);
+	mutex_enter(&uvm_swap_data_lock);
 	sdp = swapdrum_getsdp(startslot);
 	KASSERT(uvmexp.nswapdev >= 1);
 	KASSERT(sdp != NULL);
@@ -1581,7 +1563,7 @@ uvm_swap_free(int startslot, int nslots)
 	blist_free(sdp->swd_blist, startslot - sdp->swd_drumoffset, nslots);
 	sdp->swd_npginuse -= nslots;
 	uvmexp.swpginuse -= nslots;
-	simple_unlock(&uvm.swap_data_lock);
+	mutex_exit(&uvm_swap_data_lock);
 }
 
 /*
@@ -1625,10 +1607,10 @@ uvm_swap_get(struct vm_page *page, int swslot, int flags)
 		 * this page is no longer only in swap.
 		 */
 
-		simple_lock(&uvm.swap_data_lock);
+		mutex_enter(&uvm_swap_data_lock);
 		KASSERT(uvmexp.swpgonly > 0);
 		uvmexp.swpgonly--;
-		simple_unlock(&uvm.swap_data_lock);
+		mutex_exit(&uvm_swap_data_lock);
 	}
 	return error;
 }
@@ -1692,9 +1674,7 @@ uvm_swap_io(struct vm_page **pps, int startslot, int npages, int flags)
 	 */
 
 	if (write) {
-		s = splbio();
 		V_INCR_NUMOUTPUT(swapdev_vp);
-		splx(s);
 	}
 
 	/*
@@ -1720,9 +1700,12 @@ uvm_swap_io(struct vm_page **pps, int startslot, int npages, int flags)
 	 * now we start the I/O, and if async, return.
 	 */
 
+	KERNEL_LOCK(1, curlwp);
 	VOP_STRATEGY(swapdev_vp, bp);
-	if (async)
+	if (async) {
+		KERNEL_UNLOCK_ONE(curlwp);
 		return 0;
+	}
 
 	/*
 	 * must be sync i/o.   wait for it to finish
@@ -1746,5 +1729,7 @@ uvm_swap_io(struct vm_page **pps, int startslot, int npages, int flags)
 	putiobuf(bp);
 	splx(s);
 	UVMHIST_LOG(pdhist, "<- done (sync)  error=%d", error, 0, 0, 0);
+
+	KERNEL_UNLOCK_ONE(curlwp);
 	return (error);
 }

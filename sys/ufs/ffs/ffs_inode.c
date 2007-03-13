@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.86 2007/03/04 06:03:43 christos Exp $	*/
+/*	$NetBSD: ffs_inode.c,v 1.86.2.1 2007/03/13 17:51:19 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.86 2007/03/04 06:03:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.86.2.1 2007/03/13 17:51:19 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -236,7 +236,7 @@ ffs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred,
 				return error;
 			if (ioflag & IO_SYNC) {
 				ovp->v_size = eob;
-				simple_lock(&ovp->v_interlock);
+				mutex_enter(&ovp->v_interlock);
 				VOP_PUTPAGES(ovp,
 				    trunc_page(osize & fs->fs_bmask),
 				    round_page(eob), PGO_CLEANIT | PGO_SYNCIO);
@@ -286,7 +286,7 @@ ffs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred,
 		    osize);
 		uvm_vnp_zerorange(ovp, length, eoz - length);
 		if (round_page(eoz) > round_page(length)) {
-			simple_lock(&ovp->v_interlock);
+			mutex_enter(&ovp->v_interlock);
 			error = VOP_PUTPAGES(ovp, round_page(length),
 			    round_page(eoz),
 			    PGO_CLEANIT | PGO_DEACTIVATE |

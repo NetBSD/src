@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.135 2007/03/09 14:11:27 ad Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.135.2.1 2007/03/13 17:51:04 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.135 2007/03/09 14:11:27 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.135.2.1 2007/03/13 17:51:04 ad Exp $");
 
 #include "fs_union.h"
 #include "veriexec.h"
@@ -692,14 +692,14 @@ vn_lock(struct vnode *vp, int flags)
 
 	do {
 		if ((flags & LK_INTERLOCK) == 0)
-			simple_lock(&vp->v_interlock);
+			mutex_enter(&vp->v_interlock);
 		if (vp->v_flag & VXLOCK) {
 			if (flags & LK_NOWAIT) {
-				simple_unlock(&vp->v_interlock);
+				mutex_exit(&vp->v_interlock);
 				return EBUSY;
 			}
 			vp->v_flag |= VXWANT;
-			ltsleep(vp, PINOD | PNORELOCK,
+			mtsleep(vp, PINOD | PNORELOCK,
 			    "vn_lock", 0, &vp->v_interlock);
 			error = ENOENT;
 		} else {
@@ -753,7 +753,6 @@ int
 vn_cow_establish(struct vnode *vp,
     int (*func)(void *, struct buf *), void *cookie)
 {
-	int s;
 	struct spec_cow_entry *e;
 
 	MALLOC(e, struct spec_cow_entry *, sizeof(struct spec_cow_entry),
@@ -761,18 +760,18 @@ vn_cow_establish(struct vnode *vp,
 	e->ce_func = func;
 	e->ce_cookie = cookie;
 
-	SPEC_COW_LOCK(vp->v_specinfo, s);
+	mutex_enter(&vp->v_spec_cow_lock);
 	vp->v_spec_cow_req++;
 	while (vp->v_spec_cow_count > 0)
-		ltsleep(&vp->v_spec_cow_req, PRIBIO, "cowlist", 0,
-		    &vp->v_spec_cow_slock);
+		mtsleep(&vp->v_spec_cow_req, PRIBIO, "cowlist", 0,
+		    &vp->v_spec_cow_lock);
 
 	SLIST_INSERT_HEAD(&vp->v_spec_cow_head, e, ce_list);
 
 	vp->v_spec_cow_req--;
 	if (vp->v_spec_cow_req == 0)
 		wakeup(&vp->v_spec_cow_req);
-	SPEC_COW_UNLOCK(vp->v_specinfo, s);
+	mutex_exit(&vp->v_spec_cow_lock);
 
 	return 0;
 }
@@ -781,14 +780,13 @@ int
 vn_cow_disestablish(struct vnode *vp,
     int (*func)(void *, struct buf *), void *cookie)
 {
-	int s;
 	struct spec_cow_entry *e;
 
-	SPEC_COW_LOCK(vp->v_specinfo, s);
+	mutex_enter(&vp->v_spec_cow_lock);
 	vp->v_spec_cow_req++;
 	while (vp->v_spec_cow_count > 0)
-		ltsleep(&vp->v_spec_cow_req, PRIBIO, "cowlist", 0,
-		    &vp->v_spec_cow_slock);
+		mtsleep(&vp->v_spec_cow_req, PRIBIO, "cowlist", 0,
+		    &vp->v_spec_cow_lock);
 
 	SLIST_FOREACH(e, &vp->v_spec_cow_head, ce_list)
 		if (e->ce_func == func && e->ce_cookie == cookie) {
@@ -801,7 +799,7 @@ vn_cow_disestablish(struct vnode *vp,
 	vp->v_spec_cow_req--;
 	if (vp->v_spec_cow_req == 0)
 		wakeup(&vp->v_spec_cow_req);
-	SPEC_COW_UNLOCK(vp->v_specinfo, s);
+	mutex_exit(&vp->v_spec_cow_lock);
 
 	return e ? 0 : EINVAL;
 }
@@ -959,17 +957,17 @@ vn_ra_allocctx(struct vnode *vp)
 	if (vp->v_ractx != NULL) {
 		return;
 	}
-	simple_lock(&vp->v_interlock);
+	mutex_enter(&vp->v_interlock);
 	if (vp->v_ractx == NULL) {
-		simple_unlock(&vp->v_interlock);
+		mutex_exit(&vp->v_interlock);
 		ra = uvm_ra_allocctx();
-		simple_lock(&vp->v_interlock);
+		mutex_enter(&vp->v_interlock);
 		if (ra != NULL && vp->v_ractx == NULL) {
 			vp->v_ractx = ra;
 			ra = NULL;
 		}
 	}
-	simple_unlock(&vp->v_interlock);
+	mutex_exit(&vp->v_interlock);
 	if (ra != NULL) {
 		uvm_ra_freectx(ra);
 	}

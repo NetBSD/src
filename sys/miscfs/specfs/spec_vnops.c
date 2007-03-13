@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.98 2007/03/04 06:03:14 christos Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.98.2.1 2007/03/13 17:51:10 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.98 2007/03/04 06:03:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.98.2.1 2007/03/13 17:51:10 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -455,11 +455,11 @@ spec_ioctl(v)
 
 	vp = ap->a_vp;
 	dev = NODEV;
-	simple_lock(&vp->v_interlock);
+	mutex_enter(&vp->v_interlock);
 	if ((vp->v_flag & VXLOCK) == 0 && vp->v_specinfo) {
 		dev = vp->v_rdev;
 	}
-	simple_unlock(&vp->v_interlock);
+	mutex_exit(&vp->v_interlock);
 	if (dev == NODEV) {
 		return ENXIO;
 	}
@@ -513,11 +513,11 @@ spec_poll(v)
 
 	vp = ap->a_vp;
 	dev = NODEV;
-	simple_lock(&vp->v_interlock);
+	mutex_enter(&vp->v_interlock);
 	if ((vp->v_flag & VXLOCK) == 0 && vp->v_specinfo) {
 		dev = vp->v_rdev;
 	}
-	simple_unlock(&vp->v_interlock);
+	mutex_exit(&vp->v_interlock);
 	if (dev == NODEV) {
 		return POLLERR;
 	}
@@ -600,7 +600,7 @@ spec_strategy(v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct buf *bp = ap->a_bp;
-	int error, s;
+	int error;
 	struct spec_cow_entry *e;
 
 	error = 0;
@@ -610,23 +610,23 @@ spec_strategy(v)
 		(*bioops.io_start)(bp);
 
 	if (!(bp->b_flags & B_READ) && !SLIST_EMPTY(&vp->v_spec_cow_head)) {
-		SPEC_COW_LOCK(vp->v_specinfo, s);
+		mutex_enter(&vp->v_spec_cow_lock);
 		while (vp->v_spec_cow_req > 0)
-			ltsleep(&vp->v_spec_cow_req, PRIBIO, "cowlist", 0,
-			    &vp->v_spec_cow_slock);
+			mtsleep(&vp->v_spec_cow_req, PRIBIO, "cowlist", 0,
+			    &vp->v_spec_cow_lock);
 		vp->v_spec_cow_count++;
-		SPEC_COW_UNLOCK(vp->v_specinfo, s);
+		mutex_exit(&vp->v_spec_cow_lock);
 
 		SLIST_FOREACH(e, &vp->v_spec_cow_head, ce_list) {
 			if ((error = (*e->ce_func)(e->ce_cookie, bp)) != 0)
 				break;
 		}
 
-		SPEC_COW_LOCK(vp->v_specinfo, s);
+		mutex_enter(&vp->v_spec_cow_lock);
 		vp->v_spec_cow_count--;
 		if (vp->v_spec_cow_req && vp->v_spec_cow_count == 0)
 			wakeup(&vp->v_spec_cow_req);
-		SPEC_COW_UNLOCK(vp->v_specinfo, s);
+		mutex_exit(&vp->v_spec_cow_lock);
 	}
 
 	if (error) {

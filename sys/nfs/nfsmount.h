@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsmount.h,v 1.42 2007/02/15 16:01:51 yamt Exp $	*/
+/*	$NetBSD: nfsmount.h,v 1.42.6.1 2007/03/13 17:51:17 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -125,7 +125,7 @@ struct nfs_args {
  * Holds NFS specific information for mount.
  */
 struct	nfsmount {
-	struct simplelock nm_slock;	/* Lock for this structure */
+	kmutex_t nm_lock;		/* Lock for this structure */
 	int	nm_flag;		/* Flags for soft/hard... */
 	struct	mount *nm_mountp;	/* Vfs structure for this filesystem */
 	int	nm_numgrps;		/* Max. size of groupslist */

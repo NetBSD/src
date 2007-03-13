@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_20.c,v 1.16 2007/02/09 21:55:16 ad Exp $	*/
+/*	$NetBSD: vfs_syscalls_20.c,v 1.16.6.1 2007/03/13 17:50:26 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_20.c,v 1.16 2007/02/09 21:55:16 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_20.c,v 1.16.6.1 2007/03/13 17:50:26 ad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -221,18 +221,18 @@ compat_20_sys_getfsstat(l, v, retval)
 	sbuf = malloc(sizeof(*sbuf), M_TEMP, M_WAITOK);
 	maxcount = (size_t)SCARG(uap, bufsize) / sizeof(struct statfs12);
 	sfsp = SCARG(uap, buf);
-	simple_lock(&mountlist_slock);
+	mutex_enter(&mountlist_lock);
 	count = 0;
 	for (mp = CIRCLEQ_FIRST(&mountlist); mp != (void *)&mountlist;
 	     mp = nmp) {
-		if (vfs_busy(mp, LK_NOWAIT, &mountlist_slock)) {
+		if (vfs_busy(mp, LK_NOWAIT, &mountlist_lock)) {
 			nmp = CIRCLEQ_NEXT(mp, mnt_list);
 			continue;
 		}
 		if (sfsp && count < maxcount) {
 			error = dostatvfs(mp, sbuf, l, SCARG(uap, flags), 0);
 			if (error) {
-				simple_lock(&mountlist_slock);
+				mutex_enter(&mountlist_lock);
 				nmp = CIRCLEQ_NEXT(mp, mnt_list);
 				vfs_unbusy(mp);
 				continue;
@@ -246,11 +246,11 @@ compat_20_sys_getfsstat(l, v, retval)
 			root |= strcmp(sbuf->f_mntonname, "/") == 0;
 		}
 		count++;
-		simple_lock(&mountlist_slock);
+		mutex_exit(&mountlist_lock);
 		nmp = CIRCLEQ_NEXT(mp, mnt_list);
 		vfs_unbusy(mp);
 	}
-	simple_unlock(&mountlist_slock);
+	mutex_exit(&mountlist_lock);
 	if (root == 0 && l->l_proc->p_cwdi->cwdi_rdir) {
 		/*
 		 * fake a root entry

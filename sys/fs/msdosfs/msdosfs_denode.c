@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_denode.c,v 1.19.2.1 2007/03/13 16:51:35 ad Exp $	*/
+/*	$NetBSD: msdosfs_denode.c,v 1.19.2.2 2007/03/13 17:50:37 ad Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.19.2.1 2007/03/13 16:51:35 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.19.2.2 2007/03/13 17:50:37 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -172,7 +172,7 @@ loop:
 		    dev == dep->de_dev &&
 		    dep->de_refcnt != 0) {
 			vp = DETOV(dep);
-			simple_lock(&vp->v_interlock);
+			mutex_enter(&vp->v_interlock);
 			simple_unlock(&msdosfs_ihash_slock);
 			if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK))
 				goto loop;
@@ -684,7 +684,7 @@ out:
 		vp->v_usecount, dep->de_Name[0]);
 #endif
 	if (dep->de_Name[0] == SLOT_DELETED)
-		vrecycle(vp, (struct simplelock *)0, l);
+		vrecycle(vp, NULL, l);
 	return (error);
 }
 

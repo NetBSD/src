@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.h,v 1.47 2007/02/21 23:00:14 thorpej Exp $	*/
+/*	$NetBSD: uvm_page.h,v 1.47.4.1 2007/03/13 17:51:57 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -261,9 +261,6 @@ void uvm_page_rehash(void);
 void uvm_page_recolor(int);
 void uvm_pageidlezero(void);
 
-int uvm_lock_fpageq(void);
-void uvm_unlock_fpageq(int);
-
 void uvm_pageactivate(struct vm_page *);
 vaddr_t uvm_pageboot_alloc(vsize_t);
 void uvm_pagecopy(struct vm_page *, struct vm_page *);
@@ -289,10 +286,6 @@ static int vm_physseg_find(paddr_t, int *);
  */
 
 #define UVM_PAGE_HASH_PENALTY	4	/* XXX: a guess */
-
-#define uvm_lock_pageq()	simple_lock(&uvm.pageqlock)
-#define uvm_unlock_pageq()	simple_unlock(&uvm.pageqlock)
-#define	UVM_LOCK_ASSERT_PAGEQ()	LOCK_ASSERT(simple_lock_held(&uvm.pageqlock))
 
 #define uvm_pagehash(obj,off) \
 	(((unsigned long)obj+(unsigned long)atop(off)) & uvm.page_hashmask)

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.108 2007/03/04 06:03:48 christos Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.108.2.1 2007/03/13 17:51:56 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.108 2007/03/04 06:03:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.108.2.1 2007/03/13 17:51:56 ad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_pax.h"
@@ -219,7 +219,7 @@ sys_mincore(struct lwp *l, void *v, register_t *retval)
 		if (amap != NULL)
 			amap_lock(amap);
 		if (uobj != NULL)
-			simple_lock(&uobj->vmobjlock);
+			mutex_enter(&uobj->vmobjlock);
 
 		for (/* nothing */; start < lim; start += PAGE_SIZE, vec++) {
 			pgi = 0;
@@ -255,7 +255,7 @@ sys_mincore(struct lwp *l, void *v, register_t *retval)
 			(void) subyte(vec, pgi);
 		}
 		if (uobj != NULL)
-			simple_unlock(&uobj->vmobjlock);
+			mutex_exit(&uobj->vmobjlock);
 		if (amap != NULL)
 			amap_unlock(amap);
 	}
@@ -1165,12 +1165,12 @@ uvm_mmap(map, addr, size, prot, maxprot, flags, handle, foff, locklimit)
 			(maxprot & VM_PROT_WRITE) != 0;
 		if ((vp->v_flag & VMAPPED) == 0 || needwritemap) {
 			vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-			simple_lock(&vp->v_interlock);
+			mutex_enter(&vp->v_interlock);
 			vp->v_flag |= VMAPPED;
 			if (needwritemap) {
 				vp->v_flag |= VWRITEMAP;
 			}
-			simple_unlock(&vp->v_interlock);
+			mutex_exit(&vp->v_interlock);
 			VOP_UNLOCK(vp, 0);
 		}
 	}

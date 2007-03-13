@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.252 2007/03/04 06:03:38 christos Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.252.2.1 2007/03/13 17:51:15 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.252 2007/03/04 06:03:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.252.2.1 2007/03/13 17:51:15 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_nfs.h"
@@ -1435,7 +1435,7 @@ retry:
 				else if (committed == NFSV3WRITE_DATASYNC &&
 					commit == NFSV3WRITE_UNSTABLE)
 					committed = commit;
-				simple_lock(&nmp->nm_slock);
+				mutex_enter(&nmp->nm_lock);
 				if ((nmp->nm_iflag & NFSMNT_HASWRITEVERF) == 0){
 					memcpy(nmp->nm_writeverf, tl,
 					    NFSX_V3WRITEVERF);
@@ -1458,7 +1458,7 @@ retry:
 						    NFSMNT_STALEWRITEVERF;
 					}
 				}
-				simple_unlock(&nmp->nm_slock);
+				mutex_exit(&nmp->nm_lock);
 			}
 		} else
 #endif
@@ -3150,12 +3150,12 @@ nfs_commit(vp, offset, cnt, l)
 	    (unsigned long)(offset + cnt));
 #endif
 
-	simple_lock(&nmp->nm_slock);
+	mutex_enter(&nmp->nm_lock);
 	if ((nmp->nm_iflag & NFSMNT_HASWRITEVERF) == 0) {
-		simple_unlock(&nmp->nm_slock);
+		mutex_exit(&nmp->nm_lock);
 		return (0);
 	}
-	simple_unlock(&nmp->nm_slock);
+	mutex_exit(&nmp->nm_lock);
 	nfsstats.rpccnt[NFSPROC_COMMIT]++;
 	np = VTONFS(vp);
 	nfsm_reqhead(np, NFSPROC_COMMIT, NFSX_FH(1));
@@ -3168,14 +3168,14 @@ nfs_commit(vp, offset, cnt, l)
 	nfsm_wcc_data(vp, wccflag, NAC_NOTRUNC, false);
 	if (!error) {
 		nfsm_dissect(tl, u_int32_t *, NFSX_V3WRITEVERF);
-		simple_lock(&nmp->nm_slock);
+		mutex_enter(&nmp->nm_lock);
 		if ((nmp->nm_iflag & NFSMNT_STALEWRITEVERF) ||
 		    memcmp(nmp->nm_writeverf, tl, NFSX_V3WRITEVERF)) {
 			memcpy(nmp->nm_writeverf, tl, NFSX_V3WRITEVERF);
 			error = NFSERR_STALEWRITEVERF;
 			nmp->nm_iflag |= NFSMNT_STALEWRITEVERF;
 		}
-		simple_unlock(&nmp->nm_slock);
+		mutex_exit(&nmp->nm_lock);
 	}
 	nfsm_reqdone;
 	return (error);
@@ -3280,7 +3280,7 @@ nfs_flush(struct vnode *vp, kauth_cred_t cred, int waitfor, struct lwp *l,
 	int flushflags = PGO_ALLPAGES|PGO_CLEANIT|PGO_SYNCIO;
 	UVMHIST_FUNC("nfs_flush"); UVMHIST_CALLED(ubchist);
 
-	simple_lock(&vp->v_interlock);
+	mutex_enter(&vp->v_interlock);
 	error = VOP_PUTPAGES(vp, 0, 0, flushflags);
 	if (np->n_flag & NWRITEERR) {
 		error = np->n_error;

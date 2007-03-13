@@ -1,4 +1,4 @@
-/*	$NetBSD: specificdata.h,v 1.2 2006/10/11 05:37:32 thorpej Exp $	*/
+/*	$NetBSD: specificdata.h,v 1.2.14.1 2007/03/13 17:51:18 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@ typedef struct specificdata_container *specificdata_container_t;
 
 typedef struct {
 	specificdata_container_t specdataref_container;
-	struct simplelock specdataref_slock;
+	kmutex_t specdataref_lock;
 } specificdata_reference;
 
 specificdata_domain_t	specificdata_domain_create(void);

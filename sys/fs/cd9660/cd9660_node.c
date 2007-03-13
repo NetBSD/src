@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_node.c,v 1.14.4.1 2007/03/13 16:51:31 ad Exp $	*/
+/*	$NetBSD: cd9660_node.c,v 1.14.4.2 2007/03/13 17:50:37 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_node.c,v 1.14.4.1 2007/03/13 16:51:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_node.c,v 1.14.4.2 2007/03/13 17:50:37 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -237,7 +237,7 @@ loop:
 	LIST_FOREACH(ip, &isohashtbl[INOHASH(dev, inum)], i_hash) {
 		if (inum == ip->i_number && dev == ip->i_dev) {
 			vp = ITOV(ip);
-			simple_lock(&vp->v_interlock);
+			mutex_enter(&vp->v_interlock);
 			simple_unlock(&cd9660_ihash_slock);
 			if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK))
 				goto loop;
@@ -306,7 +306,7 @@ cd9660_inactive(v)
 	 * so that it can be reused immediately.
 	 */
 	if (ip->inode.iso_mode == 0)
-		vrecycle(vp, (struct simplelock *)0, l);
+		vrecycle(vp, NULL, l);
 	return error;
 }
 

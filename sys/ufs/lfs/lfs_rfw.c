@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_rfw.c,v 1.3 2006/09/01 19:41:28 perseant Exp $	*/
+/*	$NetBSD: lfs_rfw.c,v 1.3.16.1 2007/03/13 17:51:28 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #ifdef LFS_KERNEL_RFW
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_rfw.c,v 1.3 2006/09/01 19:41:28 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_rfw.c,v 1.3.16.1 2007/03/13 17:51:28 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -201,15 +201,15 @@ lfs_rf_valloc(struct lfs *fs, ino_t ino, int vers, struct lwp *l,
 		lfs_unmark_vnode(vp);
 		(void)lfs_vunref(vp);
 		vp->v_flag &= ~VDIROP;
-		simple_lock(&fs->lfs_interlock);
-		simple_lock(&lfs_subsys_lock);
+		mutex_enter(&fs->lfs_interlock);
+		mutex_enter(&lfs_subsys_lock);
 		--lfs_dirvcount;
-		simple_unlock(&lfs_subsys_lock);
+		mutex_exit(&lfs_subsys_lock);
 		--fs->lfs_dirvcount;
 		TAILQ_REMOVE(&fs->lfs_dchainhd, ip, i_lfs_dchain);
 		wakeup(&lfs_dirvcount);
 		wakeup(&fs->lfs_dirvcount);
-		simple_unlock(&fs->lfs_interlock);
+		mutex_exit(&fs->lfs_interlock);
 	}
 	*vpp = vp;
 	return error;
@@ -576,12 +576,12 @@ check_segsum(struct lfs *fs, daddr_t offset, u_int64_t nextserial,
 	if (flags & CHECK_UPDATE) {
 		fs->lfs_avail -= (offset - oldoffset);
 		/* Don't clog the buffer queue */
-		simple_lock(&lfs_subsys_lock);
+		mutex_enter(&lfs_subsys_lock);
 		if (locked_queue_count > LFS_MAX_BUFS ||
 		    locked_queue_bytes > LFS_MAX_BYTES) {
 			lfs_flush(fs, SEGM_CKP, 0);
 		}
-		simple_unlock(&lfs_subsys_lock);
+		mutex_exit(&lfs_subsys_lock);
 	}
 
     err2:

@@ -1,4 +1,4 @@
-/*	$NetBSD: specdev.h,v 1.30 2006/05/14 21:32:21 elad Exp $	*/
+/*	$NetBSD: specdev.h,v 1.30.18.1 2007/03/13 17:51:11 ad Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -50,7 +50,7 @@ struct specinfo {
 	struct	mount *si_mountpoint;
 	dev_t	si_rdev;
 	struct	lockf *si_lockf;
-	struct simplelock si_cow_slock;
+	kmutex_t si_cow_lock;
 	SLIST_HEAD(, spec_cow_entry) si_cow_head;
 	int si_cow_req;
 	int si_cow_count;
@@ -63,21 +63,19 @@ struct specinfo {
 #define v_specnext	v_specinfo->si_specnext
 #define v_speclockf	v_specinfo->si_lockf
 #define v_specmountpoint v_specinfo->si_mountpoint
-#define v_spec_cow_slock v_specinfo->si_cow_slock
+#define v_spec_cow_lock v_specinfo->si_cow_lock
 #define v_spec_cow_head	v_specinfo->si_cow_head
 #define v_spec_cow_req	v_specinfo->si_cow_req
 #define v_spec_cow_count v_specinfo->si_cow_count
 
-#define SPEC_COW_LOCK(si, s) \
+#define SPEC_COW_LOCK(si) \
 	do { \
-		(s) = splbio(); \
-		simple_lock(&(si)->si_cow_slock) ; \
+		mutex_enter(&(si)->si_cow_lock) ; \
 	} while (/*CONSTCOND*/0)
 
-#define SPEC_COW_UNLOCK(si, s) \
+#define SPEC_COW_UNLOCK(si) \
 	do { \
-		simple_unlock(&(si)->si_cow_slock) ; \
-		splx((s)); \
+		mutex_exit(&(si)->si_cow_lock) ; \
 	} while (/*CONSTCOND*/0)
 
 /*

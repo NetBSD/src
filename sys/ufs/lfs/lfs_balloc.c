@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_balloc.c,v 1.62 2007/02/15 15:40:54 ad Exp $	*/
+/*	$NetBSD: lfs_balloc.c,v 1.62.6.1 2007/03/13 17:51:22 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.62 2007/02/15 15:40:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.62.6.1 2007/03/13 17:51:22 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -198,9 +198,9 @@ lfs_balloc(struct vnode *vp, off_t startoffset, int iosize, kauth_cred_t cred,
 					clrbuf(bp);
 			}
 			ip->i_lfs_effnblks += bb;
-			simple_lock(&fs->lfs_interlock);
+			mutex_enter(&fs->lfs_interlock);
 			fs->lfs_bfree -= bb;
-			simple_unlock(&fs->lfs_interlock);
+			mutex_exit(&fs->lfs_interlock);
 			ip->i_ffs1_db[lbn] = UNWRITTEN;
 		} else {
 			if (nsize <= osize) {
@@ -242,9 +242,9 @@ lfs_balloc(struct vnode *vp, off_t startoffset, int iosize, kauth_cred_t cred,
 		}
 	}
 	if (ISSPACE(fs, bcount, cred)) {
-		simple_lock(&fs->lfs_interlock);
+		mutex_enter(&fs->lfs_interlock);
 		fs->lfs_bfree -= bcount;
-		simple_unlock(&fs->lfs_interlock);
+		mutex_exit(&fs->lfs_interlock);
 		ip->i_lfs_effnblks += bcount;
 	} else {
 		return ENOSPC;
@@ -448,9 +448,9 @@ lfs_fragextend(struct vnode *vp, int osize, int nsize, daddr_t lbn, struct buf *
 		fs->lfs_avail -= bb;
 	}
 
-	simple_lock(&fs->lfs_interlock);
+	mutex_enter(&fs->lfs_interlock);
 	fs->lfs_bfree -= bb;
-	simple_unlock(&fs->lfs_interlock);
+	mutex_exit(&fs->lfs_interlock);
 	ip->i_lfs_effnblks += bb;
 	ip->i_flag |= IN_CHANGE | IN_UPDATE;
 
@@ -460,9 +460,9 @@ lfs_fragextend(struct vnode *vp, int osize, int nsize, daddr_t lbn, struct buf *
 
 		/* Adjust locked-list accounting */
 		if (((*bpp)->b_flags & (B_LOCKED | B_CALL)) == B_LOCKED) {
-			simple_lock(&lfs_subsys_lock);
+			mutex_enter(&lfs_subsys_lock);
 			locked_queue_bytes += (*bpp)->b_bufsize - obufsize;
-			simple_unlock(&lfs_subsys_lock);
+			mutex_exit(&lfs_subsys_lock);
 		}
 
 		bzero((char *)((*bpp)->b_data) + osize, (u_int)(nsize - osize));
@@ -519,14 +519,14 @@ lfs_register_block(struct vnode *vp, daddr_t lbn)
 	}
 
 	++ip->i_lfs_nbtree;
-	simple_lock(&fs->lfs_interlock);
+	mutex_enter(&fs->lfs_interlock);
 	fs->lfs_favail += btofsb(fs, (1 << fs->lfs_bshift));
 	fs->lfs_pages += fs->lfs_bsize >> PAGE_SHIFT;
-	simple_lock(&lfs_subsys_lock);
+	mutex_enter(&lfs_subsys_lock);
 	++locked_fakequeue_count;
 	lfs_subsys_pages += fs->lfs_bsize >> PAGE_SHIFT;
-	simple_unlock(&lfs_subsys_lock);
-	simple_unlock(&fs->lfs_interlock);
+	mutex_exit(&lfs_subsys_lock);
+	mutex_exit(&fs->lfs_interlock);
 }
 
 static void
@@ -537,16 +537,16 @@ lfs_do_deregister(struct lfs *fs, struct inode *ip, struct lbnentry *lbp)
 	--ip->i_lfs_nbtree;
 	SPLAY_REMOVE(lfs_splay, &ip->i_lfs_lbtree, lbp);
 	pool_put(&lfs_lbnentry_pool, lbp);
-	simple_lock(&fs->lfs_interlock);
+	mutex_enter(&fs->lfs_interlock);
 	if (fs->lfs_favail > btofsb(fs, (1 << fs->lfs_bshift)))
 		fs->lfs_favail -= btofsb(fs, (1 << fs->lfs_bshift));
 	fs->lfs_pages -= fs->lfs_bsize >> PAGE_SHIFT;
-	simple_lock(&lfs_subsys_lock);
+	mutex_enter(&lfs_subsys_lock);
 	if (locked_fakequeue_count > 0)
 		--locked_fakequeue_count;
 	lfs_subsys_pages -= fs->lfs_bsize >> PAGE_SHIFT;
-	simple_unlock(&lfs_subsys_lock);
-	simple_unlock(&fs->lfs_interlock);
+	mutex_exit(&lfs_subsys_lock);
+	mutex_exit(&fs->lfs_interlock);
 }
 
 void

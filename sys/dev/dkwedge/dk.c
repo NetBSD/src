@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.22 2007/03/04 06:01:45 christos Exp $	*/
+/*	$NetBSD: dk.c,v 1.22.2.1 2007/03/13 17:50:28 ad Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.22 2007/03/04 06:01:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.22.2.1 2007/03/13 17:50:28 ad Exp $");
 
 #include "opt_dkwedge.h"
 
@@ -122,12 +122,11 @@ const struct cdevsw dk_cdevsw = {
 
 static struct dkwedge_softc **dkwedges;
 static u_int ndkwedges;
-static struct lock dkwedges_lock = LOCK_INITIALIZER(PRIBIO, "dkwgs", 0, 0);
+static krwlock_t dkwedges_lock;
 
 static LIST_HEAD(, dkwedge_discovery_method) dkwedge_discovery_methods;
 static int dkwedge_discovery_methods_initialized;
-static struct lock dkwedge_discovery_methods_lock =
-    LOCK_INITIALIZER(PRIBIO, "dkddm", 0, 0);
+static krwlock_t dkwedge_discovery_methods_lock;
 
 /*
  * dkwedge_match:
@@ -189,6 +188,7 @@ dkwedge_cfglue_init(void)
 			panic("dkwedge: unable to attach cfattach");
 
 		dkwedge_cfglue_initialized = 1;
+		rw_init(&dkwedges_lock);
 	}
 	simple_unlock(&dkwedge_cfglue_initialized_slock);
 }
@@ -354,7 +354,9 @@ dkwedge_add(struct dkwedge_info *dkw)
 	sc->sc_cfdata.cf_fstate = FSTATE_STAR;
 
 	/* Insert the larval wedge into the array. */
-	(void) lockmgr(&dkwedges_lock, LK_EXCLUSIVE, NULL);
+#if 0
+	rw_enter(&dkwedges_lock, RW_WRITER);
+#endif
 	for (error = 0;;) {
 		struct dkwedge_softc **scpp;
 
@@ -388,7 +390,9 @@ dkwedge_add(struct dkwedge_info *dkw)
 			break;
 		}
 	}
-	(void) lockmgr(&dkwedges_lock, LK_RELEASE, NULL);
+#if 0
+	rw_exit(&dkwedges_lock);
+#endif
 	if (error) {
 		(void) lockmgr(&pdk->dk_openlock, LK_EXCLUSIVE, NULL);
 		pdk->dk_nwedges--;
@@ -413,9 +417,13 @@ dkwedge_add(struct dkwedge_info *dkw)
 		aprint_error("%s%u: unable to attach pseudo-device\n",
 		    sc->sc_cfdata.cf_name, sc->sc_cfdata.cf_unit);
 
-		(void) lockmgr(&dkwedges_lock, LK_EXCLUSIVE, NULL);
+#if 0
+		rw_enter(&dkwedges_lock, RW_WRITER);
+#endif
 		dkwedges[sc->sc_cfdata.cf_unit] = NULL;
-		(void) lockmgr(&dkwedges_lock, LK_RELEASE, NULL);
+#if 0
+		rw_exit(&dkwedges_lock);
+#endif
 
 		(void) lockmgr(&pdk->dk_openlock, LK_EXCLUSIVE, NULL);
 		pdk->dk_nwedges--;
@@ -466,7 +474,9 @@ dkwedge_del(struct dkwedge_info *dkw)
 
 	/* Find our softc. */
 	dkw->dkw_devname[sizeof(dkw->dkw_devname) - 1] = '\0';
-	(void) lockmgr(&dkwedges_lock, LK_EXCLUSIVE, NULL);
+#if 0
+	rw_enter(&dkwedges_lock, RW_WRITER);
+#endif
 	for (unit = 0; unit < ndkwedges; unit++) {
 		if ((sc = dkwedges[unit]) != NULL &&
 		    strcmp(sc->sc_dev->dv_xname, dkw->dkw_devname) == 0 &&
@@ -476,7 +486,9 @@ dkwedge_del(struct dkwedge_info *dkw)
 			break;
 		}
 	}
-	(void) lockmgr(&dkwedges_lock, LK_RELEASE, NULL);
+#if 0
+	rw_exit(&dkwedges_lock);
+#endif
 	if (unit == ndkwedges)
 		return (ESRCH);
 
@@ -538,10 +550,14 @@ dkwedge_del(struct dkwedge_info *dkw)
 	disk_detach(&sc->sc_dk);
 
 	/* Poof. */
-	(void) lockmgr(&dkwedges_lock, LK_EXCLUSIVE, NULL);
+#if 0
+	rw_enter(&dkwedges_lock, RW_WRITER);
+#endif
 	dkwedges[unit] = NULL;
 	sc->sc_state = DKW_STATE_DEAD;
-	(void) lockmgr(&dkwedges_lock, LK_RELEASE, NULL);
+#if 0
+	rw_exit(&dkwedges_lock);
+#endif
 
 	free(sc, M_DKWEDGE);
 
@@ -654,7 +670,9 @@ dkwedge_set_bootwedge(struct device *parent, daddr_t startblk, uint64_t nblks)
 	struct dkwedge_softc *sc;
 	int i;
 
-	(void) lockmgr(&dkwedges_lock, LK_EXCLUSIVE, NULL);
+#if 0
+	rw_enter(&dkwedges_lock, RW_WRITER);
+#endif
 	for (i = 0; i < ndkwedges; i++) {
 		if ((sc = dkwedges[i]) == NULL)
 			continue;
@@ -677,7 +695,9 @@ dkwedge_set_bootwedge(struct device *parent, daddr_t startblk, uint64_t nblks)
 	 * XXX What if we don't find one?  Should we create a special
 	 * XXX root wedge?
 	 */
-	(void) lockmgr(&dkwedges_lock, LK_RELEASE, NULL);
+#if 0
+	rw_exit(&dkwedges_lock);
+#endif
 }
 
 /*
@@ -699,13 +719,12 @@ dkwedge_discover_init(void)
 	struct dkwedge_discovery_method * const *ddmp;
 	struct dkwedge_discovery_method *lddm, *ddm;
 
-	(void) lockmgr(&dkwedge_discovery_methods_lock, LK_EXCLUSIVE, NULL);
-
-	if (dkwedge_discovery_methods_initialized) {
-		(void) lockmgr(&dkwedge_discovery_methods_lock, LK_RELEASE,
-			       NULL);
+	if (dkwedge_discovery_methods_initialized)
 		return;
-	}
+	dkwedge_discovery_methods_initialized = 1;
+
+	rw_init(&dkwedge_discovery_methods_lock);
+	rw_enter(&dkwedge_discovery_methods_lock, RW_WRITER);
 
 	LIST_INIT(&dkwedge_discovery_methods);
 
@@ -741,9 +760,7 @@ dkwedge_discover_init(void)
 		}
 	}
 
-	dkwedge_discovery_methods_initialized = 1;
-
-	(void) lockmgr(&dkwedge_discovery_methods_lock, LK_RELEASE, NULL);
+	rw_exit(&dkwedge_discovery_methods_lock);
 }
 
 #ifdef DKWEDGE_AUTODISCOVER
@@ -774,7 +791,7 @@ dkwedge_discover(struct disk *pdk)
 	if (dkwedge_discovery_methods_initialized == 0)
 		dkwedge_discover_init();
 
-	(void) lockmgr(&dkwedge_discovery_methods_lock, LK_SHARED, NULL);
+	rw_enter(&dkwedge_discovery_methods_lock, RW_READER);
 
 	error = dkwedge_compute_pdev(pdk->dk_name, &pdev);
 	if (error) {
@@ -827,7 +844,7 @@ dkwedge_discover(struct disk *pdk)
 		/* We'll just assume the vnode has been cleaned up. */
 	}
  out:
-	(void) lockmgr(&dkwedge_discovery_methods_lock, LK_RELEASE, NULL);
+	rw_exit(&dkwedge_discovery_methods_lock);
 }
 
 /*

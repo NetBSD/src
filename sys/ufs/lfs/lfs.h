@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.118 2007/02/15 15:40:54 ad Exp $	*/
+/*	$NetBSD: lfs.h,v 1.118.6.1 2007/03/13 17:51:21 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -70,6 +70,7 @@
 #define _UFS_LFS_LFS_H_
 
 #include <sys/rwlock.h>
+#include <sys/mutex.h>
 
 /*
  * Compile-time options for LFS.
@@ -192,23 +193,23 @@ typedef struct lfs_res_blk {
 
 # define LFS_LOCK_BUF(bp) do {						\
 	if (((bp)->b_flags & (B_LOCKED | B_CALL)) == 0) {		\
-		simple_lock(&lfs_subsys_lock);				\
+		mutex_enter(&lfs_subsys_lock);				\
 		++locked_queue_count;					\
 		locked_queue_bytes += bp->b_bufsize;			\
-		simple_unlock(&lfs_subsys_lock);			\
+		mutex_exit(&lfs_subsys_lock);			\
 	}								\
 	(bp)->b_flags |= B_LOCKED;					\
 } while (0)
 
 # define LFS_UNLOCK_BUF(bp) do {					\
 	if (((bp)->b_flags & (B_LOCKED | B_CALL)) == B_LOCKED) {	\
-		simple_lock(&lfs_subsys_lock);				\
+		mutex_enter(&lfs_subsys_lock);				\
 		--locked_queue_count;					\
 		locked_queue_bytes -= bp->b_bufsize;			\
 		if (locked_queue_count < LFS_WAIT_BUFS &&		\
 		    locked_queue_bytes < LFS_WAIT_BYTES)		\
 			wakeup(&locked_queue_count);			\
-		simple_unlock(&lfs_subsys_lock);			\
+		mutex_exit(&lfs_subsys_lock);			\
 	}								\
 	(bp)->b_flags &= ~B_LOCKED;					\
 } while (0)
@@ -247,7 +248,7 @@ extern struct lfs_log_entry lfs_log[LFS_LOGLENGTH];
 #  define LFS_ENTER_LOG(theop, thefile, theline, lbn, theflags, thepid) do {\
 	int _s;								\
 									\
-	simple_lock(&lfs_subsys_lock);					\
+	mutex_enter(&lfs_subsys_lock);					\
 	_s = splbio();							\
 	lfs_log[lfs_lognum].op = theop;					\
 	lfs_log[lfs_lognum].file = thefile;				\
@@ -257,7 +258,7 @@ extern struct lfs_log_entry lfs_log[LFS_LOGLENGTH];
 	lfs_log[lfs_lognum].flags = (theflags);				\
 	lfs_lognum = (lfs_lognum + 1) % LFS_LOGLENGTH;			\
 	splx(_s);							\
-	simple_unlock(&lfs_subsys_lock);				\
+	mutex_exit(&lfs_subsys_lock);				\
 } while (0)
 
 #  define LFS_BCLEAN_LOG(fs, bp) do {					\
@@ -316,7 +317,6 @@ struct lfid {
 #define IN_ALLMOD (IN_MODIFIED|IN_ACCESS|IN_CHANGE|IN_UPDATE|IN_MODIFY|IN_ACCESSED|IN_CLEANING)
 
 #define LFS_SET_UINO(ip, flags) do {					\
-	simple_lock(&(ip)->i_lfs->lfs_interlock);			\
 	if (((flags) & IN_ACCESSED) && !((ip)->i_flag & IN_ACCESSED))	\
 		++(ip)->i_lfs->lfs_uinodes;				\
 	if (((flags) & IN_CLEANING) && !((ip)->i_flag & IN_CLEANING))	\
@@ -324,11 +324,9 @@ struct lfid {
 	if (((flags) & IN_MODIFIED) && !((ip)->i_flag & IN_MODIFIED))	\
 		++(ip)->i_lfs->lfs_uinodes;				\
 	(ip)->i_flag |= (flags);					\
-	simple_unlock(&(ip)->i_lfs->lfs_interlock);			\
 } while (0)
 
 #define LFS_CLR_UINO(ip, flags) do {					\
-	simple_lock(&(ip)->i_lfs->lfs_interlock);			\
 	if (((flags) & IN_ACCESSED) && ((ip)->i_flag & IN_ACCESSED))	\
 		--(ip)->i_lfs->lfs_uinodes;				\
 	if (((flags) & IN_CLEANING) && ((ip)->i_flag & IN_CLEANING))	\
@@ -339,7 +337,6 @@ struct lfid {
 	if ((ip)->i_lfs->lfs_uinodes < 0) {				\
 		panic("lfs_uinodes < 0");				\
 	}								\
-	simple_unlock(&(ip)->i_lfs->lfs_interlock);			\
 } while (0)
 
 #define LFS_ITIMES(ip, acc, mod, cre) \
@@ -396,15 +393,11 @@ struct segusage_v1 {
 #ifdef _KERNEL
 # define SHARE_IFLOCK(F) 						\
   do {									\
-	simple_lock(&(F)->lfs_interlock);				\
-	lockmgr(&(F)->lfs_iflock, LK_SHARED, &(F)->lfs_interlock);	\
-	simple_unlock(&(F)->lfs_interlock);				\
+	rw_enter(&(F)->lfs_iflock, RW_READER);				\
   } while(0)
 # define UNSHARE_IFLOCK(F)						\
   do {									\
-	simple_lock(&(F)->lfs_interlock);				\
-	lockmgr(&(F)->lfs_iflock, LK_RELEASE, &(F)->lfs_interlock);	\
-	simple_unlock(&(F)->lfs_interlock);				\
+	rw_exit(&(F)->lfs_iflock);					\
   } while(0)
 #else /* ! _KERNEL */
 # define SHARE_IFLOCK(F)
@@ -529,7 +522,7 @@ typedef struct _cleanerinfo {
  * Synchronize the Ifile cleaner info with current avail and bfree.
  */
 #define LFS_SYNC_CLEANERINFO(cip, fs, bp, w) do {		 	\
-    simple_lock(&(fs)->lfs_interlock);					\
+    mutex_enter(&(fs)->lfs_interlock);					\
     if ((w) || (cip)->bfree != (fs)->lfs_bfree ||		 	\
 	(cip)->avail != (fs)->lfs_avail - (fs)->lfs_ravail - 		\
 	(fs)->lfs_favail) {	 					\
@@ -539,10 +532,10 @@ typedef struct _cleanerinfo {
 	if (((bp)->b_flags & B_GATHERED) == 0) {		 	\
 		(fs)->lfs_flags |= LFS_IFDIRTY;			 	\
 	}								\
-	simple_unlock(&(fs)->lfs_interlock);				\
+	mutex_exit(&(fs)->lfs_interlock);				\
 	(void) LFS_BWRITE_LOG(bp); /* Ifile */			 	\
     } else {							 	\
-	simple_unlock(&(fs)->lfs_interlock);				\
+	mutex_exit(&(fs)->lfs_interlock);				\
 	brelse(bp);						 	\
     }									\
 } while (0)
@@ -566,9 +559,9 @@ typedef struct _cleanerinfo {
 		LFS_CLEANERINFO((CIP), (FS), (BP));			\
 		(CIP)->free_head = (VAL);				\
 		LFS_BWRITE_LOG(BP);					\
-		simple_lock(&fs->lfs_interlock);			\
+		mutex_enter(&fs->lfs_interlock);			\
 		(FS)->lfs_flags |= LFS_IFDIRTY;				\
-		simple_unlock(&fs->lfs_interlock);			\
+		mutex_exit(&fs->lfs_interlock);				\
 	}								\
 } while (0)
 
@@ -582,9 +575,9 @@ typedef struct _cleanerinfo {
 	LFS_CLEANERINFO((CIP), (FS), (BP));				\
 	(CIP)->free_tail = (VAL);					\
 	LFS_BWRITE_LOG(BP);						\
-	simple_lock(&fs->lfs_interlock);				\
+	mutex_enter(&fs->lfs_interlock);				\
 	(FS)->lfs_flags |= LFS_IFDIRTY;					\
-	simple_unlock(&fs->lfs_interlock);				\
+	mutex_exit(&fs->lfs_interlock);					\
 } while (0)
 
 /*
@@ -825,8 +818,9 @@ struct lfs {
 	size_t lfs_devbsize;		/* Device block size */
 	size_t lfs_devbshift;		/* Device block shift */
 	krwlock_t lfs_fraglock;
-	struct lock lfs_iflock;		/* Ifile lock */
-	struct lock lfs_stoplock;	/* Wrap lock */
+	krwlock_t lfs_iflock;		/* Ifile lock */
+	kcondvar_t lfs_stopcv;		/* Wrap lock */
+	struct lwp *lfs_stoplwp;
 	pid_t lfs_rfpid;		/* Process ID of roll-forward agent */
 	int	  lfs_nadirop;		/* number of active dirop nodes */
 	long	  lfs_ravail;		/* blocks pre-reserved for writing */
@@ -845,8 +839,8 @@ struct lfs {
 #endif /* _KERNEL */
 #define LFS_MAX_CLEANIND 64
 	int32_t  lfs_cleanint[LFS_MAX_CLEANIND]; /* Active cleaning intervals */
-	int 	 lfs_cleanind;	/* Index into intervals */
-	struct simplelock lfs_interlock;  /* lock for lfs_seglock */
+	int 	 lfs_cleanind;		/* Index into intervals */
+	kmutex_t lfs_interlock;		/* lock for lfs_seglock */
 	int lfs_sleepers;		/* # procs sleeping this fs */
 	int lfs_pages;			/* dirty pages blaming this fs */
 	lfs_bm_t *lfs_ino_bitmap;	/* Inuse inodes bitmap */

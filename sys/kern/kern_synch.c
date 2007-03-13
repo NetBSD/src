@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.186.2.1 2007/03/13 16:51:55 ad Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.186.2.2 2007/03/13 17:50:57 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.186.2.1 2007/03/13 16:51:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.186.2.2 2007/03/13 17:50:57 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kstack.h"
@@ -646,7 +646,6 @@ mi_switch(struct lwp *l, struct lwp *newl)
 	LOCK_ASSERT(lwp_locked(l, NULL));
 
 #ifdef LOCKDEBUG
-	spinlock_switchcheck();
 	simple_lock_switchcheck();
 #endif
 #ifdef KSTACK_CHECK_MAGIC

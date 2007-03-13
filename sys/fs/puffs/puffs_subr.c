@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_subr.c,v 1.22.2.1 2007/03/13 16:51:36 ad Exp $	*/
+/*	$NetBSD: puffs_subr.c,v 1.22.2.2 2007/03/13 17:50:48 ad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_subr.c,v 1.22.2.1 2007/03/13 16:51:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_subr.c,v 1.22.2.2 2007/03/13 17:50:48 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -125,9 +125,9 @@ puffs_getvnode(struct mount *mp, void *cookie, enum vtype type,
 	}
 
 	/* So it's not dead yet.. good.. inform new vnode of its master */
-	simple_lock(&mntvnode_slock);
+	mutex_enter(&mntvnode_lock);
 	TAILQ_INSERT_TAIL(&mp->mnt_vnodelist, vp, v_mntvnodes);
-	simple_unlock(&mntvnode_slock);
+	mutex_exit(&mntvnode_lock);
 	vp->v_mount = mp;
 
 	/*

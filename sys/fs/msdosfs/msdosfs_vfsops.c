@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.44 2007/02/17 18:39:15 kochi Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.44.4.1 2007/03/13 17:50:38 ad Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.44 2007/02/17 18:39:15 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.44.4.1 2007/03/13 17:50:38 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -232,9 +232,9 @@ msdosfs_mountroot()
 		return (error);
 	}
 
-	simple_lock(&mountlist_slock);
+	mutex_enter(&mountlist_lock);
 	CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
-	simple_unlock(&mountlist_slock);
+	mutex_exit(&mountlist_lock);
 	(void)msdosfs_statvfs(mp, &mp->mnt_stat, l);
 	vfs_unbusy(mp);
 	return (0);
@@ -977,7 +977,7 @@ msdosfs_sync(mp, waitfor, cred, l)
 	/*
 	 * Write back each (modified) denode.
 	 */
-	simple_lock(&mntvnode_slock);
+	mutex_enter(&mntvnode_lock);
 loop:
 	for (vp = TAILQ_FIRST(&mp->mnt_vnodelist); vp; vp = nvp) {
 		/*
@@ -986,7 +986,7 @@ loop:
 		 */
 		if (vp->v_mount != mp)
 			goto loop;
-		simple_lock(&vp->v_interlock);
+		mutex_enter(&vp->v_interlock);
 		nvp = TAILQ_NEXT(vp, v_mntvnodes);
 		dep = VTODE(vp);
 		if (waitfor == MNT_LAZY || vp->v_type == VNON ||
@@ -994,13 +994,13 @@ loop:
 		    (DE_ACCESS | DE_CREATE | DE_UPDATE | DE_MODIFIED)) == 0) &&
 		     (LIST_EMPTY(&vp->v_dirtyblkhd) &&
 		      vp->v_uobj.uo_npages == 0))) {
-			simple_unlock(&vp->v_interlock);
+			mutex_exit(&vp->v_interlock);
 			continue;
 		}
-		simple_unlock(&mntvnode_slock);
+		mutex_exit(&mntvnode_lock);
 		error = vget(vp, LK_EXCLUSIVE | LK_NOWAIT | LK_INTERLOCK);
 		if (error) {
-			simple_lock(&mntvnode_slock);
+			mutex_enter(&mntvnode_lock);
 			if (error == ENOENT)
 				goto loop;
 			continue;
@@ -1009,9 +1009,9 @@ loop:
 		    waitfor == MNT_WAIT ? FSYNC_WAIT : 0, 0, 0, l)) != 0)
 			allerror = error;
 		vput(vp);
-		simple_lock(&mntvnode_slock);
+		mutex_exit(&mntvnode_lock);
 	}
-	simple_unlock(&mntvnode_slock);
+	mutex_exit(&mntvnode_lock);
 	/*
 	 * Force stale file system control information to be flushed.
 	 */

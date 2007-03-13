@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_fs.c,v 1.37 2007/03/05 13:56:24 he Exp $	*/
+/*	$NetBSD: ultrix_fs.c,v 1.37.2.1 2007/03/13 17:50:27 ad Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jonathan Stone
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_fs.c,v 1.37 2007/03/05 13:56:24 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_fs.c,v 1.37.2.1 2007/03/13 17:50:27 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -247,17 +247,17 @@ ultrix_sys_getmnt(struct lwp *l, void *v, register_t *retval)
 		if ((error = copyin((void *)SCARG(uap, start), &start,
 				    sizeof(*SCARG(uap, start))))  != 0)
 			goto bad;
-		simple_lock(&mountlist_slock);
+		mutex_enter(&mountlist_lock);
 		for (skip = start, mp = mountlist.cqh_first;
 		    mp != (void*)&mountlist && skip-- > 0; mp = nmp)
 			nmp = mp->mnt_list.cqe_next;
-		simple_unlock(&mountlist_slock);
+		mutex_exit(&mountlist_lock);
 	}
 
-	simple_lock(&mountlist_slock);
+	mutex_enter(&mountlist_lock);
 	for (count = 0, mp = mountlist.cqh_first;
 	    mp != (void*)&mountlist && count < maxcount; mp = nmp) {
-		if (vfs_busy(mp, LK_NOWAIT, &mountlist_slock)) {
+		if (vfs_busy(mp, LK_NOWAIT, &mountlist_lock)) {
 			nmp = mp->mnt_list.cqe_next;
 			continue;
 		}
@@ -286,11 +286,11 @@ ultrix_sys_getmnt(struct lwp *l, void *v, register_t *retval)
 				count++;
 			}
 		}
-		simple_lock(&mountlist_slock);
+		mutex_enter(&mountlist_lock);
 		nmp = mp->mnt_list.cqe_next;
 		vfs_unbusy(mp);
 	}
-	simple_unlock(&mountlist_slock);
+	mutex_exit(&mountlist_lock);
 
 	if (sfsp != NULL && count > maxcount)
 		*retval = maxcount;

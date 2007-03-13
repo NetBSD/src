@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_subr.c,v 1.21 2006/12/09 16:11:52 chs Exp $	*/
+/*	$NetBSD: layer_subr.c,v 1.21.6.1 2007/03/13 17:51:08 ad Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_subr.c,v 1.21 2006/12/09 16:11:52 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: layer_subr.c,v 1.21.6.1 2007/03/13 17:51:08 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -157,10 +157,10 @@ loop:
 			 * the layer vp's lock separately afterward, but only
 			 * if it does not share the lower vp's lock.
 			 */
-			simple_unlock(&lmp->layerm_hashlock);
+			mutex_exit(&lmp->layerm_hashlock);
 			error = vget(vp, 0);
 			if (error) {
-				simple_lock(&lmp->layerm_hashlock);
+				mutex_enter(&lmp->layerm_hashlock);
 				goto loop;
 			}
 			LAYERFS_UPPERLOCK(vp, LK_EXCLUSIVE, error);
@@ -213,7 +213,7 @@ layer_node_alloc(mp, lowervp, vpp)
 	 * check to see if someone else has beaten us to it.
 	 * (We could have slept in MALLOC.)
 	 */
-	simple_lock(&lmp->layerm_hashlock);
+	mutex_enter(&lmp->layerm_hashlock);
 	if ((nvp = layer_node_find(mp, lowervp)) != NULL) {
 		*vpp = nvp;
 
@@ -253,7 +253,7 @@ layer_node_alloc(mp, lowervp, vpp)
 	hd = LAYER_NHASH(lmp, lowervp);
 	LIST_INSERT_HEAD(hd, xp, layer_hash);
 	uvm_vnp_setsize(vp, 0);
-	simple_unlock(&lmp->layerm_hashlock);
+	mutex_exit(&lmp->layerm_hashlock);
 	return (0);
 }
 
@@ -275,7 +275,7 @@ layer_node_create(mp, lowervp, newvpp)
 	struct vnode *aliasvp;
 	struct layer_mount *lmp = MOUNTTOLAYERMOUNT(mp);
 
-	simple_lock(&lmp->layerm_hashlock);
+	mutex_enter(&lmp->layerm_hashlock);
 	aliasvp = layer_node_find(mp, lowervp);
 	if (aliasvp != NULL) {
 		/*
@@ -290,7 +290,7 @@ layer_node_create(mp, lowervp, newvpp)
 	} else {
 		int error;
 
-		simple_unlock(&lmp->layerm_hashlock);
+		mutex_exit(&lmp->layerm_hashlock);
 
 		/*
 		 * Get new vnode.

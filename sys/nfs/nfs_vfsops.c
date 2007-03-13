@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.174 2007/03/04 06:03:38 christos Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.174.2.1 2007/03/13 17:51:14 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.174 2007/03/04 06:03:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.174.2.1 2007/03/13 17:51:14 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -363,9 +363,9 @@ nfs_mountroot()
 	/*
 	 * Link it into the mount list.
 	 */
-	simple_lock(&mountlist_slock);
+	mutex_enter(&mountlist_lock);
 	CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
-	simple_unlock(&mountlist_slock);
+	mutex_exit(&mountlist_lock);
 	rootvp = vp;
 	mp->mnt_vnodecovered = NULLVP;
 	vfs_unbusy(mp);
@@ -724,7 +724,7 @@ mountnfs(argp, mp, nam, pth, hst, vpp, l)
 		TAILQ_INIT(&nmp->nm_uidlruhead);
 		TAILQ_INIT(&nmp->nm_bufq);
 		rw_init(&nmp->nm_writeverflock);
-		simple_lock_init(&nmp->nm_slock);
+		mutex_init(&nmp->nm_lock, MUTEX_DEFAULT, IPL_NONE);
 	}
 	vfs_getnewfsid(mp);
 	nmp->nm_mountp = mp;
@@ -818,6 +818,7 @@ mountnfs(argp, mp, nam, pth, hst, vpp, l)
 bad:
 	nfs_disconnect(nmp);
 	rw_destroy(&nmp->nm_writeverflock);
+	mutex_destroy(&nmp->nm_lock);
 	free((void *)nmp, M_NFSMNT);
 	m_freem(nam);
 	return (error);

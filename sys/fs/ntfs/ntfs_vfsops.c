@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.49 2007/03/04 06:03:01 christos Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.49.2.1 2007/03/13 17:50:45 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.49 2007/03/04 06:03:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.49.2.1 2007/03/13 17:50:45 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -162,9 +162,9 @@ ntfs_mountroot()
 		return (error);
 	}
 
-	simple_lock(&mountlist_slock);
+	mutex_enter(&mountlist_lock);
 	CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
-	simple_unlock(&mountlist_slock);
+	mutex_exit(&mountlist_lock);
 	(void)ntfs_statvfs(mp, &mp->mnt_stat, l);
 	vfs_unbusy(mp);
 	return (0);

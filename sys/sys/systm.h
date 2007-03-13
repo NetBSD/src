@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.196 2007/03/04 06:03:42 christos Exp $	*/
+/*	$NetBSD: systm.h,v 1.196.2.1 2007/03/13 17:51:18 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -476,5 +476,9 @@ void _kernel_lock_assert_unlocked(void);
 #define	KERNEL_UNLOCK_LAST(l)		KERNEL_UNLOCK(-1, (l), NULL)
 #define	KERNEL_UNLOCK_ALL(l, p)		KERNEL_UNLOCK(0, (l), (p))
 #define	KERNEL_UNLOCK_ONE(l)		KERNEL_UNLOCK(1, (l), NULL)
+
+/* Preemption control. */
+void	crit_enter(void);
+void	crit_exit(void);
 
 #endif	/* !_SYS_SYSTM_H_ */

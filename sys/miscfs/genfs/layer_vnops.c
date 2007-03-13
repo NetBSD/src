@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_vnops.c,v 1.29 2006/12/09 16:11:52 chs Exp $	*/
+/*	$NetBSD: layer_vnops.c,v 1.29.6.1 2007/03/13 17:51:08 ad Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -67,8 +67,8 @@
  *
  * Ancestors:
  *	@(#)lofs_vnops.c	1.2 (Berkeley) 6/18/92
- *	$Id: layer_vnops.c,v 1.29 2006/12/09 16:11:52 chs Exp $
- *	$Id: layer_vnops.c,v 1.29 2006/12/09 16:11:52 chs Exp $
+ *	$Id: layer_vnops.c,v 1.29.6.1 2007/03/13 17:51:08 ad Exp $
+ *	$Id: layer_vnops.c,v 1.29.6.1 2007/03/13 17:51:08 ad Exp $
  *	...and...
  *	@(#)null_vnodeops.c 1.20 92/07/07 UCLA Ficus project
  */
@@ -233,7 +233,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.29 2006/12/09 16:11:52 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.29.6.1 2007/03/13 17:51:08 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -638,7 +638,7 @@ layer_lock(v)
 		 */
 		lowervp = LAYERVPTOLOWERVP(vp);
 		if (flags & LK_INTERLOCK) {
-			simple_unlock(&vp->v_interlock);
+			mutex_exit(&vp->v_interlock);
 			flags &= ~LK_INTERLOCK;
 		}
 		if ((flags & LK_TYPE_MASK) == LK_DRAIN) {
@@ -674,7 +674,7 @@ layer_unlock(v)
 			&vp->v_interlock));
 	} else {
 		if (flags & LK_INTERLOCK) {
-			simple_unlock(&vp->v_interlock);
+			mutex_exit(&vp->v_interlock);
 			flags &= ~LK_INTERLOCK;
 		}
 		VOP_UNLOCK(LAYERVPTOLOWERVP(vp), flags);
@@ -875,9 +875,9 @@ layer_reclaim(v)
 		lmp->layerm_rootvp = NULL;
 	}
 	xp->layer_lowervp = NULL;
-	simple_lock(&lmp->layerm_hashlock);
+	mutex_enter(&lmp->layerm_hashlock);
 	LIST_REMOVE(xp, layer_hash);
-	simple_unlock(&lmp->layerm_hashlock);
+	mutex_exit(&lmp->layerm_hashlock);
 	FREE(vp->v_data, M_TEMP);
 	vp->v_data = NULL;
 	vrele(lowervp);
@@ -970,8 +970,8 @@ layer_getpages(v)
 		return EBUSY;
 	}
 	ap->a_vp = LAYERVPTOLOWERVP(vp);
-	simple_unlock(&vp->v_interlock);
-	simple_lock(&ap->a_vp->v_interlock);
+	mutex_exit(&vp->v_interlock);
+	mutex_enter(&ap->a_vp->v_interlock);
 	error = VCALL(ap->a_vp, VOFFSET(vop_getpages), ap);
 	return error;
 }
@@ -994,8 +994,8 @@ layer_putpages(v)
 	 */
 
 	ap->a_vp = LAYERVPTOLOWERVP(vp);
-	simple_unlock(&vp->v_interlock);
-	simple_lock(&ap->a_vp->v_interlock);
+	mutex_exit(&vp->v_interlock);
+	mutex_enter(&ap->a_vp->v_interlock);
 	error = VCALL(ap->a_vp, VOFFSET(vop_putpages), ap);
 	return error;
 }

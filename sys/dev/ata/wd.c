@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.337 2007/03/04 06:01:44 christos Exp $ */
+/*	$NetBSD: wd.c,v 1.337.2.1 2007/03/13 17:50:27 ad Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.337 2007/03/04 06:01:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.337.2.1 2007/03/13 17:50:27 ad Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -1924,7 +1924,7 @@ wi_get(void)
 	int s;
 
 	wi = malloc(sizeof(struct wd_ioctl), M_TEMP, M_WAITOK|M_ZERO);
-	simple_lock_init(&wi->wi_bp.b_interlock);
+	BUF_INIT(&wi->wi_bp);
 	s = splbio();
 	LIST_INSERT_HEAD(&wi_head, wi, wi_list);
 	splx(s);
@@ -1943,6 +1943,7 @@ wi_free(struct wd_ioctl *wi)
 	s = splbio();
 	LIST_REMOVE(wi, wi_list);
 	splx(s);
+	BUF_DESTROY(&wi->wi_bp);
 	free(wi, M_TEMP);
 }
 

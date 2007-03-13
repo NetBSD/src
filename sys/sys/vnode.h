@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.167 2007/03/06 11:28:46 dillo Exp $	*/
+/*	$NetBSD: vnode.h,v 1.167.2.1 2007/03/13 17:51:19 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -85,10 +85,10 @@ LIST_HEAD(buflists, buf);
 
 /*
  * Reading or writing any of these items requires holding the appropriate lock.
- * v_freelist is locked by the global vnode_free_list simple lock.
- * v_mntvnodes is locked by the global mntvnodes simple lock.
+ * v_freelist is locked by the global vnode_free_list lock.
+ * v_mntvnodes is locked by the global mntvnodes lock.
  * v_flag, v_usecount, v_holdcount and v_writecount are
- *     locked by the v_interlock simple lock
+ *     locked by the v_interlock lock
  *
  * Each underlying filesystem allocates its own private area and hangs
  * it from v_data.
@@ -215,11 +215,11 @@ struct vattr {
  * Define a convenience macro to increment by one.
  * Note: the only place where v_numoutput is decremented is in vwakeup().
  */
-extern struct simplelock global_v_numoutput_slock;
+extern kmutex_t global_v_numoutput_lock;
 #define	V_INCR_NUMOUTPUT(vp) do {			\
-	simple_lock(&global_v_numoutput_slock);		\
+	mutex_enter(&global_v_numoutput_lock);		\
 	(vp)->v_numoutput++;				\
-	simple_unlock(&global_v_numoutput_slock);	\
+	mutex_exit(&global_v_numoutput_lock);		\
 } while (/*CONSTCOND*/ 0)
 
 /*
@@ -299,7 +299,7 @@ extern const int	vttoif_tab[];
 TAILQ_HEAD(freelst, vnode);
 extern struct freelst	vnode_hold_list; /* free vnodes referencing buffers */
 extern struct freelst	vnode_free_list; /* vnode free list */
-extern struct simplelock vnode_free_list_slock;
+extern kmutex_t	vnode_free_list_lock;
 
 void holdrelel(struct vnode *);
 void vholdl(struct vnode *);
@@ -317,9 +317,9 @@ static __inline void
 holdrele(struct vnode *vp)
 {
 
-	simple_lock(&vp->v_interlock);
+	mutex_enter(&vp->v_interlock);
 	holdrelel(vp);
-	simple_unlock(&vp->v_interlock);
+	mutex_exit(&vp->v_interlock);
 }
 
 /*
@@ -329,9 +329,9 @@ static __inline void
 vhold(struct vnode *vp)
 {
 
-	simple_lock(&vp->v_interlock);
+	mutex_enter(&vp->v_interlock);
 	vholdl(vp);
-	simple_unlock(&vp->v_interlock);
+	mutex_exit(&vp->v_interlock);
 }
 
 #define	NULLVP	((struct vnode *)NULL)
@@ -428,7 +428,7 @@ extern struct vnodeop_desc	*vnodeop_descs[];
 /*
  * Interlock for scanning list of vnodes attached to a mountpoint
  */
-extern struct simplelock	mntvnode_slock;
+extern kmutex_t		mntvnode_lock;
 
 /*
  * Union filesystem hook for vn_readdir().
@@ -542,7 +542,7 @@ void	vgonel(struct vnode *, struct lwp *);
 int	vinvalbuf(struct vnode *, int, kauth_cred_t, struct lwp *, int, int);
 void	vprint(const char *, struct vnode *);
 void 	vput(struct vnode *);
-int	vrecycle(struct vnode *, struct simplelock *, struct lwp *);
+int	vrecycle(struct vnode *, kmutex_t *, struct lwp *);
 void 	vrele(struct vnode *);
 int	vtruncbuf(struct vnode *, daddr_t, int, int);
 void	vwakeup(struct buf *);

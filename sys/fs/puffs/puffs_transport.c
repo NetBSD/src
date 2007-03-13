@@ -1,4 +1,4 @@
-/* $NetBSD: puffs_transport.c,v 1.8 2007/02/16 17:23:59 hannken Exp $ */
+/* $NetBSD: puffs_transport.c,v 1.8.6.1 2007/03/13 17:50:48 ad Exp $ */
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_transport.c,v 1.8 2007/02/16 17:23:59 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_transport.c,v 1.8.6.1 2007/03/13 17:50:48 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -267,18 +267,18 @@ puffs_fop_close(struct file *fp, struct lwp *l)
 	 * wait for syncer_mutex.  Otherwise the mointpoint can be
 	 * wiped out while we wait.
 	 */
-	simple_lock(&mp->mnt_slock);
+	mutex_enter(&mp->mnt_mutex);
 	mp->mnt_wcnt++;
-	simple_unlock(&mp->mnt_slock);
+	mutex_exit(&mp->mnt_mutex);
 
 	mutex_enter(&syncer_mutex);
 
-	simple_lock(&mp->mnt_slock);
+	mutex_enter(&mp->mnt_mutex);
 	mp->mnt_wcnt--;
 	if (mp->mnt_wcnt == 0)
 		wakeup(&mp->mnt_wcnt);
 	gone = mp->mnt_iflag & IMNT_GONE;
-	simple_unlock(&mp->mnt_slock);
+	mutex_exit(&mp->mnt_mutex);
 	if (gone) {
 		mutex_exit(&syncer_mutex);
 		goto out;

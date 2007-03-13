@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_subr.c,v 1.79 2007/03/09 14:11:23 ad Exp $	*/
+/*	$NetBSD: procfs_subr.c,v 1.79.2.1 2007/03/13 17:51:09 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.79 2007/03/09 14:11:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.79.2.1 2007/03/13 17:51:09 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -600,7 +600,7 @@ loop:
 		vp = PFSTOV(pp);
 		if (pid == pp->pfs_pid && pp->pfs_type == type &&
 		    pp->pfs_fd == fd && vp->v_mount == mp) {
-			simple_lock(&vp->v_interlock);
+			mutex_enter(&vp->v_interlock);
 			mutex_exit(&pfs_ihash_lock);
 			if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK))
 				goto loop;
@@ -621,7 +621,7 @@ procfs_hashins(pp)
 	struct pfs_hashhead *ppp;
 
 	/* lock the pfsnode, then put it on the appropriate hash list */
-	lockmgr(&pp->pfs_vnode->v_lock, LK_EXCLUSIVE, (struct simplelock *)0);
+	lockmgr(&pp->pfs_vnode->v_lock, LK_EXCLUSIVE, NULL);
 
 	mutex_enter(&pfs_ihash_lock);
 	ppp = &pfs_hashtbl[PFSPIDHASH(pp->pfs_pid)];

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.104 2007/03/04 06:03:48 christos Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.104.2.1 2007/03/13 17:51:55 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.104 2007/03/04 06:03:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.104.2.1 2007/03/13 17:51:55 ad Exp $");
 
 #include "opt_coredump.h"
 #include "opt_kgdb.h"
@@ -98,7 +98,7 @@ static void uvm_swapout(struct lwp *);
 #define UVM_NUAREA_MAX 16
 static vaddr_t uvm_uareas;
 static int uvm_nuarea;
-static struct simplelock uvm_uareas_slock = SIMPLELOCK_INITIALIZER;
+kmutex_t uvm_uareas_slock;
 #define	UAREA_NEXTFREE(uarea)	(*(vaddr_t *)(UAREA_TO_USER(uarea)))
 
 static void uvm_uarea_free(vaddr_t);
@@ -292,16 +292,16 @@ uvm_uarea_alloc(vaddr_t *uaddrp)
 #define USPACE_ALIGN    0
 #endif
 
-	simple_lock(&uvm_uareas_slock);
+	mutex_enter(&uvm_uareas_slock);
 	if (uvm_nuarea > 0) {
 		uaddr = uvm_uareas;
 		uvm_uareas = UAREA_NEXTFREE(uaddr);
 		uvm_nuarea--;
-		simple_unlock(&uvm_uareas_slock);
+		mutex_exit(&uvm_uareas_slock);
 		*uaddrp = uaddr;
 		return true;
 	} else {
-		simple_unlock(&uvm_uareas_slock);
+		mutex_exit(&uvm_uareas_slock);
 		*uaddrp = uvm_km_alloc(kernel_map, USPACE, USPACE_ALIGN,
 		    UVM_KMF_PAGEABLE);
 		return false;
@@ -315,11 +315,11 @@ uvm_uarea_alloc(vaddr_t *uaddrp)
 static inline void
 uvm_uarea_free(vaddr_t uaddr)
 {
-	simple_lock(&uvm_uareas_slock);
+	mutex_enter(&uvm_uareas_slock);
 	UAREA_NEXTFREE(uaddr) = uvm_uareas;
 	uvm_uareas = uaddr;
 	uvm_nuarea++;
-	simple_unlock(&uvm_uareas_slock);
+	mutex_exit(&uvm_uareas_slock);
 }
 
 /*
@@ -336,16 +336,16 @@ uvm_uarea_drain(bool empty)
 	if (uvm_nuarea <= leave)
 		return;
 
-	simple_lock(&uvm_uareas_slock);
+	mutex_enter(&uvm_uareas_slock);
 	while(uvm_nuarea > leave) {
 		uaddr = uvm_uareas;
 		uvm_uareas = UAREA_NEXTFREE(uaddr);
 		uvm_nuarea--;
-		simple_unlock(&uvm_uareas_slock);
+		mutex_exit(&uvm_uareas_slock);
 		uvm_km_free(kernel_map, uaddr, USPACE, UVM_KMF_PAGEABLE);
-		simple_lock(&uvm_uareas_slock);
+		mutex_enter(&uvm_uareas_slock);
 	}
-	simple_unlock(&uvm_uareas_slock);
+	mutex_exit(&uvm_uareas_slock);
 }
 
 /*
@@ -463,10 +463,10 @@ uvm_kick_scheduler(void)
 	if (uvm.swap_running == false)
 		return;
 
-	mutex_enter(&uvm.scheduler_mutex);
+	mutex_enter(&uvm_scheduler_mutex);
 	uvm.scheduler_kicked = true;
 	cv_signal(&uvm.scheduler_cv);
-	mutex_exit(&uvm.scheduler_mutex);
+	mutex_exit(&uvm_scheduler_mutex);
 }
 
 /*
@@ -491,10 +491,10 @@ uvm_scheduler(void)
 
 	for (;;) {
 #ifdef DEBUG
-		mutex_enter(&uvm.scheduler_mutex);
+		mutex_enter(&uvm_scheduler_mutex);
 		while (!enableswap)
-			cv_wait(&uvm.scheduler_cv, &uvm.scheduler_mutex);
-		mutex_exit(&uvm.scheduler_mutex);
+			cv_wait(&uvm.scheduler_cv, &uvm_scheduler_mutex);
+		mutex_exit(&uvm_scheduler_mutex);
 #endif
 		ll = NULL;		/* process to choose */
 		ppri = INT_MIN;		/* its priority */
@@ -521,12 +521,12 @@ uvm_scheduler(void)
 		 * Nothing to do, back to sleep
 		 */
 		if ((l = ll) == NULL) {
-			mutex_enter(&uvm.scheduler_mutex);
+			mutex_enter(&uvm_scheduler_mutex);
 			if (uvm.scheduler_kicked == false)
 				cv_wait(&uvm.scheduler_cv,
-				    &uvm.scheduler_mutex);
+				    &uvm_scheduler_mutex);
 			uvm.scheduler_kicked = false;
-			mutex_exit(&uvm.scheduler_mutex);
+			mutex_exit(&uvm_scheduler_mutex);
 			continue;
 		}
 

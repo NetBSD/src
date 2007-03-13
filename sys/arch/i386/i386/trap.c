@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.217 2007/03/04 05:59:58 christos Exp $	*/
+/*	$NetBSD: trap.c,v 1.217.2.1 2007/03/13 17:50:24 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2005 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.217 2007/03/04 05:59:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.217.2.1 2007/03/13 17:50:24 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -575,7 +575,6 @@ copyfault:
 			goto we_re_toast;
 #endif
 		cr2 = rcr2();
-		KERNEL_LOCK(1, NULL);
 		goto faultcommon;
 
 	case T_PAGEFLT|T_USER: {	/* page fault */
@@ -587,7 +586,6 @@ copyfault:
 
 		cr2 = rcr2();
 		KASSERT(l != NULL);
-		KERNEL_LOCK(1, l);
 	faultcommon:
 		vm = p->p_vmspace;
 		if (vm == NULL)
@@ -628,8 +626,6 @@ copyfault:
 				uvm_grow(p, va);
 
 			if (type == T_PAGEFLT) {
-				KERNEL_UNLOCK_ONE(NULL);
-
 				/*
 				 * we need to switch pmap now if we're in
 				 * the middle of copyin/out.
@@ -658,7 +654,6 @@ copyfault:
 
 		if (type == T_PAGEFLT) {
 			if (pcb->pcb_onfault != 0) {
-				KERNEL_UNLOCK_ONE(NULL);
 				goto copyfault;
 			}
 			printf("uvm_fault(%p, %#lx, %d) -> %#x\n",
@@ -675,11 +670,6 @@ copyfault:
 			ksi.ksi_signo = SIGSEGV;
 		}
 		(*p->p_emul->e_trapsignal)(l, &ksi);
-		if (type != T_PAGEFLT) {
-			KERNEL_UNLOCK_LAST(l);
-		} else {
-			KERNEL_UNLOCK_ONE(NULL);
-		}
 		break;
 	}
 
