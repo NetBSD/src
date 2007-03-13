@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.93 2007/02/21 23:00:13 thorpej Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.93.4.1 2007/03/13 16:52:08 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.93 2007/02/21 23:00:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.93.4.1 2007/03/13 16:52:08 ad Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -216,6 +216,7 @@ km_vacache_init(struct vm_map *map, const char *name, size_t size)
 	struct vm_map_kernel *vmk;
 	struct pool *pp;
 	struct pool_allocator *pa;
+	int ipl;
 
 	KASSERT(VM_MAP_IS_KERNEL(map));
 	KASSERT(size < (vm_map_max(map) - vm_map_min(map)) / 2); /* sanity */
@@ -229,7 +230,14 @@ km_vacache_init(struct vm_map *map, const char *name, size_t size)
 	pa->pa_pagesz = (unsigned int)size;
 	pa->pa_backingmap = map;
 	pa->pa_backingmapptr = NULL;
-	pool_init(pp, PAGE_SIZE, 0, 0, PR_NOTOUCH | PR_RECURSIVE, name, pa);
+
+	if ((map->flags & VM_MAP_INTRSAFE) != 0)
+		ipl = IPL_VM;
+	else
+		ipl = IPL_NONE;
+
+	pool_init(pp, PAGE_SIZE, 0, 0, PR_NOTOUCH | PR_RECURSIVE, name, pa,
+	    ipl);
 }
 
 void

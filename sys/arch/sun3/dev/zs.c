@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.78 2006/10/05 14:46:11 tsutsui Exp $	*/
+/*	$NetBSD: zs.c,v 1.78.8.1 2007/03/13 16:50:07 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.78 2006/10/05 14:46:11 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.78.8.1 2007/03/13 16:50:07 ad Exp $");
 
 #include "opt_kgdb.h"
 
@@ -211,7 +211,6 @@ CFATTACH_DECL(zsc, sizeof(struct zsc_softc),
 extern struct cfdriver zsc_cd;
 
 static int zshard(void *);
-static void zssoft(void *);
 static int zs_get_speed(struct zs_chanstate *);
 
 
@@ -346,7 +345,8 @@ zs_attach(struct device *parent, struct device *self, void *aux)
 		didintr = 1;
 		isr_add_autovect(zshard, NULL, ca->ca_intpri);
 	}
-	zsc->zs_si = softintr_establish(IPL_SOFTSERIAL, zssoft, zsc);
+	zsc->zs_si = softintr_establish(IPL_SOFTSERIAL,
+	    (void (*)(void *))zsc_intr_soft, zsc);
 	/* XXX; evcnt_attach() ? */
 
 	/*
@@ -410,22 +410,6 @@ zshard(void *arg)
 
 	return (rval);
 }
-
-/*
- * Similar scheme as for zshard (look at all of them)
- */
-static void
-zssoft(void *arg)
-{
-	struct zsc_softc *zsc = arg;
-	int s;
-
-	/* Make sure we call the tty layer at spltty. */
-	s = spltty();
-	(void)zsc_intr_soft(zsc);
-	splx(s);
-}
-
 
 /*
  * Compute the current baud rate given a ZS channel.

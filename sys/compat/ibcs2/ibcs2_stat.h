@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_stat.h,v 1.3 2000/08/17 15:16:01 matt Exp $	*/
+/*	$NetBSD: ibcs2_stat.h,v 1.3.82.1 2007/03/13 16:50:17 ad Exp $	*/
 
 /*
  * Copyright (c) 1994 Scott Bartram
@@ -48,8 +48,6 @@ struct ibcs2_stat {
 	ibcs2_time_t	st_mtim;
 	ibcs2_time_t	st_ctim;
 };
-
-#define ibcs2_stat_len	(sizeof(struct ibcs2_stat))
 
 #define IBCS2_S_IFMT		0xf000
 #define IBCS2_S_IFIFO		0x1000

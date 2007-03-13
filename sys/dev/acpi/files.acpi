@@ -1,4 +1,4 @@
-#	$NetBSD: files.acpi,v 1.42 2007/03/08 14:26:28 njoly Exp $
+#	$NetBSD: files.acpi,v 1.42.2.1 2007/03/13 16:50:21 ad Exp $
 
 include "dev/acpi/acpica/files.acpica"
 
@@ -100,3 +100,7 @@ file	dev/acpi/ym_acpi.c		ym_acpi
 attach 	hpet at acpinodebus with hpet_acpi
 file 	dev/acpi/hpet_acpi.c		hpet_acpi
 
+# ASUS AI Booster
+device	aiboost: sysmon_envsys
+attach	aiboost at acpinodebus
+file	dev/acpi/acpi_aiboost.c		aiboost

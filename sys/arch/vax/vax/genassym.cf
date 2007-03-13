@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.31 2007/02/17 05:34:07 matt Exp $
+#	$NetBSD: genassym.cf,v 1.31.6.1 2007/03/13 16:50:09 ad Exp $
 #
 # Copyright (c) 1997 Ludd, University of Lule}, Sweden.
 # All rights reserved.
@@ -157,6 +157,9 @@ define	PSL_IS		PSL_IS
 define	MTX_OWNER	offsetof(struct kmutex, mtx_owner)
 define	MTX_IPL		offsetof(struct kmutex, mtx_ipl)
 define	MTX_ID		offsetof(struct kmutex, mtx_id)
+ifdef	MUTEX_COUNT_BIAS
+define	MTX_COUNT_BIAS	MUTEX_COUNT_BIAS
+endif
 
 define	RW_OWNER	offsetof(struct krwlock, rw_owner)
 define	RW_LOCK		offsetof(struct krwlock, rw_lock)

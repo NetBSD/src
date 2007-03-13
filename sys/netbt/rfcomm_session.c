@@ -1,4 +1,4 @@
-/*	$NetBSD: rfcomm_session.c,v 1.5 2007/03/05 19:05:57 plunky Exp $	*/
+/*	$NetBSD: rfcomm_session.c,v 1.5.2.1 2007/03/13 16:52:01 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rfcomm_session.c,v 1.5 2007/03/05 19:05:57 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rfcomm_session.c,v 1.5.2.1 2007/03/13 16:52:01 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -93,7 +93,7 @@ struct rfcomm_session_list
 	rfcomm_session_listen = LIST_HEAD_INITIALIZER(rfcomm_session_listen);
 
 POOL_INIT(rfcomm_credit_pool, sizeof(struct rfcomm_credit),
-		0, 0, 0, "rfcomm_credit", NULL);
+		0, 0, 0, "rfcomm_credit", NULL, IPL_SOFTNET);
 
 /*
  * RFCOMM System Parameters (see section 5.3)

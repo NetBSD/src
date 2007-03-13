@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.98 2007/03/09 14:11:23 ad Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.98.2.1 2007/03/13 16:51:50 ad Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.98 2007/03/09 14:11:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.98.2.1 2007/03/13 16:51:50 ad Exp $");
 
 #include "opt_sysv.h"
 #include "opt_multiprocessor.h"
@@ -2937,6 +2937,8 @@ fill_lwp(struct lwp *l, struct kinfo_lwp *kl)
 #else
 	kl->l_cpuid = KI_NOCPU;
 #endif
+	kl->l_rtime_sec = l->l_rtime.tv_sec;
+	kl->l_rtime_usec = l->l_rtime.tv_usec;
 }
 
 /*

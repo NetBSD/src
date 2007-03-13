@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_init.c,v 1.32 2006/11/01 10:17:59 yamt Exp $	*/
+/*	$NetBSD: vfs_init.c,v 1.32.8.1 2007/03/13 16:51:59 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_init.c,v 1.32 2006/11/01 10:17:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_init.c,v 1.32.8.1 2007/03/13 16:51:59 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -310,7 +310,7 @@ vfsinit(void)
 	 * Initialize the namei pathname buffer pool and cache.
 	 */
 	pool_init(&pnbuf_pool, MAXPATHLEN, 0, 0, 0, "pnbufpl",
-	     &pool_allocator_nointr);
+	    &pool_allocator_nointr, IPL_NONE);
 	pool_cache_init(&pnbuf_cache, &pnbuf_pool, NULL, NULL, NULL);
 
 	/*

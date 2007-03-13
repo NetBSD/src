@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_apm.c,v 1.8 2006/11/16 01:32:47 christos Exp $	*/
+/*	$NetBSD: acpi_apm.c,v 1.8.10.1 2007/03/13 16:50:21 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_apm.c,v 1.8 2006/11/16 01:32:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_apm.c,v 1.8.10.1 2007/03/13 16:50:21 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -296,6 +296,8 @@ acpiapm_get_powstat(void *opaque, u_int batteryid,
 	pinfo->battery_state = APM_BATT_UNKNOWN; /* ignored */
 	pinfo->battery_life = APM_BATT_LIFE_UNKNOWN;
 
+	sysmonopen_envsys(0, 0, 0, &lwp0);
+
 	for (i = 0;; i++) {
 		const char *desc;
 		int data;
@@ -345,6 +347,7 @@ acpiapm_get_powstat(void *opaque, u_int batteryid,
 			discharge_valid = 1;
 		}
 	}
+	sysmonclose_envsys(0, 0, 0, &lwp0);
 
 	if (cap_valid > 0)  {
 		if (warncap != -1 && cap < warncap)

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_turnstile.c,v 1.6 2007/02/27 15:07:29 yamt Exp $	*/
+/*	$NetBSD: kern_turnstile.c,v 1.6.2.1 2007/03/13 16:51:56 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.6 2007/02/27 15:07:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.6.2.1 2007/03/13 16:51:56 ad Exp $");
 
 #include "opt_lockdebug.h"
 #include "opt_multiprocessor.h"
@@ -120,7 +120,7 @@ turnstile_init(void)
 	}
 
 	pool_init(&turnstile_pool, sizeof(turnstile_t), 0, 0, 0,
-	    "tstilepl", &pool_allocator_nointr);
+	    "tstilepl", &pool_allocator_nointr, IPL_NONE);
 	pool_cache_init(&turnstile_cache, &turnstile_pool,
 	    turnstile_ctor, NULL, NULL);
 

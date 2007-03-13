@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.48 2007/03/04 06:01:06 christos Exp $	*/
+/*	$NetBSD: ite.c,v 1.48.2.1 2007/03/13 16:50:11 ad Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.48 2007/03/04 06:01:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.48.2.1 2007/03/13 16:50:11 ad Exp $");
 
 #include "ite.h"
 #if NITE > 0
@@ -209,7 +209,7 @@ const struct cdevsw ite_cdevsw = {
 	nostop, itetty, itepoll, nommap, ttykqfilter, D_TTY
 };
 
-int 
+int
 itematch(struct device *pdp, struct cfdata *cdp, void *auxp)
 {
 	struct grf_softc *gp;
@@ -225,7 +225,7 @@ itematch(struct device *pdp, struct cfdata *cdp, void *auxp)
  * iteinit() is the standard entry point for initialization of
  * an ite device, it is also called from ite_cninit().
  */
-void 
+void
 iteattach(struct device *pdp, struct device *dp, void *auxp)
 {
 	struct ite_softc *ip;
@@ -272,7 +272,7 @@ getitesp(dev_t dev)
 	return(&con_itesoftc);
 }
 
-void 
+void
 iteinit(dev_t dev)
 {
 	struct ite_softc *ip;
@@ -300,7 +300,7 @@ iteinit(dev_t dev)
 /*
  * Perform functions necessary to setup device as a terminal emulator.
  */
-int 
+int
 iteon(dev_t dev, int flag)
 {
 	int unit = UNIT(dev);
@@ -327,7 +327,7 @@ iteon(dev_t dev, int flag)
 	if (flag & 2)
 		ite_reset(ip);
 #if NKBD > 0
-	mfp_send_usart (0x49);	/* XXX */
+	mfp_send_usart(0x49);	/* XXX */
 #endif
 	return(0);
 }
@@ -338,7 +338,7 @@ iteon(dev_t dev, int flag)
  * Deinit'ing the console every time leads to a very active
  * screen when processing /etc/rc.
  */
-void 
+void
 iteoff(dev_t dev, int flag)
 {
 	int unit = UNIT(dev);
@@ -367,7 +367,7 @@ iteoff(dev_t dev, int flag)
 	if ((flag & 2) == 0 && (ip->flags & ITE_ISCONS) == 0) {
 		ip->flags &= ~ITE_ACTIVE;
 #if NKBD > 0
-		mfp_send_usart (0x48);	/* XXX */
+		mfp_send_usart(0x48);	/* XXX */
 #endif
 	}
 }
@@ -377,7 +377,7 @@ iteoff(dev_t dev, int flag)
  */
 
 /* ARGSUSED */
-int 
+int
 iteopen(dev_t dev, int mode, int devtype, struct lwp *l)
 {
 	int unit = UNIT(dev);
@@ -424,7 +424,7 @@ iteopen(dev_t dev, int mode, int devtype, struct lwp *l)
 }
 
 /*ARGSUSED*/
-int 
+int
 iteclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct tty *tp = ite_tty[UNIT(dev)];
@@ -439,7 +439,7 @@ iteclose(dev_t dev, int flag, int mode, struct lwp *l)
 	return(0);
 }
 
-int 
+int
 iteread(dev_t dev, struct uio *uio, int flag)
 {
 	struct tty *tp = ite_tty[UNIT(dev)];
@@ -447,7 +447,7 @@ iteread(dev_t dev, struct uio *uio, int flag)
 	return ((*tp->t_linesw->l_read)(tp, uio, flag));
 }
 
-int 
+int
 itewrite(dev_t dev, struct uio *uio, int flag)
 {
 	struct tty *tp = ite_tty[UNIT(dev)];
@@ -455,7 +455,7 @@ itewrite(dev_t dev, struct uio *uio, int flag)
 	return ((*tp->t_linesw->l_write)(tp, uio, flag));
 }
 
-int 
+int
 itepoll(dev_t dev, int events, struct lwp *l)
 {
 	struct tty *tp = ite_tty[UNIT(dev)];
@@ -470,7 +470,7 @@ itetty(dev_t dev)
 	return (ite_tty[UNIT(dev)]);
 }
 
-int 
+int
 iteioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 {
 	struct iterepeat *irp;
@@ -512,7 +512,7 @@ iteioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 #if x68k
 	case ITELOADFONT:
 		if (addr) {
-			memcpy(kern_font, addr, 4096 /*sizeof (kernel_font)*/);
+			memcpy(kern_font, addr, 4096 /*sizeof(kernel_font)*/);
 			ite_set_glyph();
 			return 0;
 		} else
@@ -520,7 +520,7 @@ iteioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 
 	case ITETVCTRL:
 		if (addr && *(u_int8_t *)addr < 0x40) {
-			return mfp_send_usart (* (u_int8_t *)addr);
+			return mfp_send_usart(* (u_int8_t *)addr);
 		} else {
 			return EFAULT;
 		}
@@ -529,7 +529,7 @@ iteioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 	return (EPASSTHROUGH);
 }
 
-void 
+void
 itestart(struct tty *tp)
 {
 	struct clist *rbp;
@@ -575,7 +575,7 @@ out:
 
 /* XXX called after changes made in underlying grf layer. */
 /* I want to nuke this */
-void 
+void
 ite_reinit(dev_t dev)
 {
 	struct ite_softc *ip;
@@ -590,7 +590,7 @@ ite_reinit(dev_t dev)
 	iteinit(dev);
 }
 
-void 
+void
 ite_reset(struct ite_softc *ip)
 {
 	int i;
@@ -632,8 +632,7 @@ ite_reset(struct ite_softc *ip)
 
 /* Used in console at startup only */
 int
-ite_cnfilter(c)
-	u_char c;
+ite_cnfilter(u_char c)
 {
 	static u_char mod = 0;
 	struct key key;
@@ -669,7 +668,7 @@ ite_cnfilter(c)
 			mask = KBD_MOD_RMETA;
 			break;
 
-		case KBD_CAPS_LOCK:    
+		case KBD_CAPS_LOCK:
 			/*
 			 * capslock already behaves `right', don't need to
 			 * keep track of the state in here.
@@ -696,7 +695,7 @@ ite_cnfilter(c)
 		} else if (up)
 			mod &= ~mask;
 		else mod |= mask;
-		splx (s);
+		splx(s);
 		return -1;
 	}
 
@@ -744,7 +743,7 @@ ite_cnfilter(c)
 }
 
 /* And now the old stuff. */
-inline static void 
+inline static void
 itesendch(int ch)
 {
 	(*kbd_tty->t_linesw->l_rint)(ch, kbd_tty);
@@ -752,8 +751,7 @@ itesendch(int ch)
 
 
 void
-ite_filter(c)
-	u_char c;
+ite_filter(u_char c)
 {
 	static u_short mod = 0;
 	unsigned char code, *str;
@@ -765,7 +763,7 @@ ite_filter(c)
 		return;
 
 	/* have to make sure we're at spltty in here */
-	s = spltty ();
+	s = spltty();
 
 	up = c & 0x80 ? 1 : 0;
 	c &= 0x7f;
@@ -782,11 +780,11 @@ ite_filter(c)
 		case KBD_LEFT_ALT:
 			mask = KBD_MOD_LALT;
 			break;
-    
+
 		case KBD_RIGHT_ALT:
 			mask = KBD_MOD_RALT;
 			break;
-      
+
 		case KBD_LEFT_META:
 			mask = KBD_MOD_LMETA;
 			break;
@@ -837,12 +835,12 @@ ite_filter(c)
 		 * codes up here are either special (like reset warning),
 		 * or not yet defined
 		 */
-		splx (s);
+		splx(s);
 		return;
 	}
 
 	if (up) {
-		splx (s);
+		splx(s);
 		return;
 	}
 
@@ -852,7 +850,7 @@ ite_filter(c)
 	 */
 	if (mod == (KBD_MOD_LALT|KBD_MOD_LMETA) && c == 0x63) {
 		memcpy(&kbdmap, &ascii_kbdmap, sizeof(struct kbdmap));
-		splx (s);
+		splx(s);
 		return;
 	}
 
@@ -876,7 +874,7 @@ ite_filter(c)
  
 	/* handle dead keys */
 	if (key.mode & KBD_MODE_DEAD) {
-		splx (s);
+		splx(s);
 		return;
 	}
   	/* if not string, apply META and CTRL modifiers */
@@ -898,9 +896,9 @@ ite_filter(c)
 		 * keypad-appmode sends SS3 followed by the above
 		 * translated character
 		 */
-		(*kbd_tty->t_linesw->l_rint) (27, kbd_tty);
-		(*kbd_tty->t_linesw->l_rint) ('O', kbd_tty);
-		(*kbd_tty->t_linesw->l_rint) (out[cp - in], kbd_tty);
+		(*kbd_tty->t_linesw->l_rint)(27, kbd_tty);
+		(*kbd_tty->t_linesw->l_rint)('O', kbd_tty);
+		(*kbd_tty->t_linesw->l_rint)(out[cp - in], kbd_tty);
 		splx(s);
 		return;
 	} else {
@@ -929,7 +927,7 @@ ite_filter(c)
 		 * in the default keymap
 		 */
 		for (i = *str++; i; i--)
-			(*kbd_tty->t_linesw->l_rint) (*str++, kbd_tty);
+			(*kbd_tty->t_linesw->l_rint)(*str++, kbd_tty);
 		splx(s);
 		return;
 	}
@@ -940,14 +938,14 @@ ite_filter(c)
 }
 
 /* helper functions, makes the code below more readable */
-inline static void 
+inline static void
 ite_sendstr(struct ite_softc *ip, const char *str)
 {
 	while (*str)
-		itesendch (*str++);
+		itesendch(*str++);
 }
 
-inline static void 
+inline static void
 alignment_display(struct ite_softc *ip)
 {
 	int i, j;
@@ -958,7 +956,7 @@ alignment_display(struct ite_softc *ip)
 	attrclr(ip, 0, 0, ip->rows, ip->cols);
 }
 
-inline static void 
+inline static void
 snap_cury(struct ite_softc *ip)
 {
 	if (ip->inside_margins) {
@@ -969,7 +967,7 @@ snap_cury(struct ite_softc *ip)
 	}
 }
 
-inline static void 
+inline static void
 ite_dnchar(struct ite_softc *ip, int n)
 {
 	n = min(n, ip->cols - ip->curx);
@@ -983,7 +981,7 @@ ite_dnchar(struct ite_softc *ip, int n)
 		SUBR_PUTC(ip, ' ', ip->cury, ip->cols - n - 1, ATTR_NOR);
 }
 
-static void 
+static void
 ite_inchar(struct ite_softc *ip, int n)
 {
 	int c = ip->save_char;
@@ -1000,7 +998,7 @@ ite_inchar(struct ite_softc *ip, int n)
 	ip->save_char = c;
 }
 
-inline static void 
+inline static void
 ite_clrtoeol(struct ite_softc *ip)
 {
 	int y = ip->cury, x = ip->curx;
@@ -1010,7 +1008,7 @@ ite_clrtoeol(struct ite_softc *ip)
 	}
 }
 
-inline static void 
+inline static void
 ite_clrtobol(struct ite_softc *ip)
 {
 	int y = ip->cury, x = min(ip->curx + 1, ip->cols);
@@ -1018,7 +1016,7 @@ ite_clrtobol(struct ite_softc *ip)
 	attrclr(ip, y, 0, 1, x);
 }
 
-inline static void 
+inline static void
 ite_clrline(struct ite_softc *ip)
 {
 	int y = ip->cury;
@@ -1026,7 +1024,7 @@ ite_clrline(struct ite_softc *ip)
 	attrclr(ip, y, 0, 1, ip->cols);
 }
 
-inline static void 
+inline static void
 ite_clrtoeos(struct ite_softc *ip)
 {
 	ite_clrtoeol(ip);
@@ -1036,7 +1034,7 @@ ite_clrtoeos(struct ite_softc *ip)
 	}
 }
 
-inline static void 
+inline static void
 ite_clrtobos(struct ite_softc *ip)
 {
 	ite_clrtobol(ip);
@@ -1046,7 +1044,7 @@ ite_clrtobos(struct ite_softc *ip)
 	}
 }
 
-inline static void 
+inline static void
 ite_clrscreen(struct ite_softc *ip)
 {
 	SUBR_CLEAR(ip, 0, 0, ip->rows, ip->cols);
@@ -1055,7 +1053,7 @@ ite_clrscreen(struct ite_softc *ip)
 
 
 
-inline static void 
+inline static void
 ite_dnline(struct ite_softc *ip, int n)
 {
 	/*
@@ -1075,7 +1073,7 @@ ite_dnline(struct ite_softc *ip, int n)
 	attrclr(ip, ip->bottom_margin - n + 1, 0, n, ip->cols);
 }
 
-inline static void 
+inline static void
 ite_inline(struct ite_softc *ip, int n)
 {
 	/*
@@ -1098,7 +1096,7 @@ ite_inline(struct ite_softc *ip, int n)
 	ip->curx = 0;
 }
 
-inline static void 
+inline static void
 ite_index(struct ite_softc *ip)
 {
 	++ip->cury;
@@ -1110,7 +1108,7 @@ ite_index(struct ite_softc *ip)
 	/*clr_attr(ip, ATTR_INV);*/
 }
 
-inline static void 
+inline static void
 ite_lf(struct ite_softc *ip)
 {
 	++ip->cury;
@@ -1132,14 +1130,14 @@ ite_lf(struct ite_softc *ip)
 	ip->save_char = 0;
 }
 
-inline static void 
+inline static void
 ite_crlf(struct ite_softc *ip)
 {
 	ip->curx = 0;
 	ite_lf (ip);
 }
 
-inline static void 
+inline static void
 ite_cr(struct ite_softc *ip)
 {
 	if (ip->curx) {
@@ -1147,7 +1145,7 @@ ite_cr(struct ite_softc *ip)
 	}
 }
 
-inline static void 
+inline static void
 ite_rlf(struct ite_softc *ip)
 {
 	ip->cury--;
@@ -1159,7 +1157,7 @@ ite_rlf(struct ite_softc *ip)
 	clr_attr(ip, ATTR_INV);
 }
 
-inline static int 
+inline static int
 atoi(const char *cp)
 {
 	int n;
@@ -1169,7 +1167,7 @@ atoi(const char *cp)
 	return n;
 }
 
-inline static int 
+inline static int
 ite_argnum(struct ite_softc *ip)
 {
 	char ch;
@@ -1180,13 +1178,13 @@ ite_argnum(struct ite_softc *ip)
 		return 1;
 	ch = *ip->ap;
 	*ip->ap = 0;
-	n = atoi (ip->argbuf);
+	n = atoi(ip->argbuf);
 	*ip->ap = ch;
 
 	return n;
 }
 
-inline static int 
+inline static int
 ite_zargnum(struct ite_softc *ip)
 {
 	char ch;
@@ -1197,17 +1195,14 @@ ite_zargnum(struct ite_softc *ip)
 		return 0;
 	ch = *ip->ap;
 	*ip->ap = 0;	/* terminate string */
-	n = atoi (ip->argbuf);
+	n = atoi(ip->argbuf);
 	*ip->ap = ch;
   
 	return n;	/* don't "n ? n : 1" here, <CSI>0m != <CSI>1m ! */
 }
 
 void
-ite_putstr(s, len, dev)
-	const u_char *s;
-	int len;
-	dev_t dev;
+ite_putstr(const u_char *s, int len, dev_t dev)
 {
 	struct ite_softc *ip;
 	int i;
@@ -1225,7 +1220,7 @@ ite_putstr(s, len, dev)
 	SUBR_CURSOR(ip, END_CURSOROPT);
 }
 
-void 
+void
 iteputchar(int c, struct ite_softc *ip)
 {
 	int n, x, y;
@@ -1390,7 +1385,7 @@ iteputchar(int c, struct ite_softc *ip)
 
 			case 'c':
 				/* hard terminal reset .. */
-				ite_reset (ip);
+				ite_reset(ip);
 				SUBR_CURSOR(ip, MOVE_CURSOR);
 				ip->escape = 0;
 				return;
@@ -1441,9 +1436,9 @@ iteputchar(int c, struct ite_softc *ip)
 
 			case 'Z':	/* request ID */
 				if (ip->emul_level == EMUL_VT100)
-					ite_sendstr (ip, "\033[61;0c"); /* XXX not clean */
+					ite_sendstr(ip, "\033[61;0c"); /* XXX not clean */
 				else
-					ite_sendstr (ip, "\033[63;0c"); /* XXX not clean */
+					ite_sendstr(ip, "\033[63;0c"); /* XXX not clean */
 				ip->escape = 0;
 				return;
 
@@ -1548,7 +1543,7 @@ iteputchar(int c, struct ite_softc *ip)
 
 			case '8':
 				/* screen alignment pattern... */
-				alignment_display (ip);
+				alignment_display(ip);
 				ip->escape = 0;
 				return;
 
@@ -1594,15 +1589,15 @@ iteputchar(int c, struct ite_softc *ip)
 				/* device attributes */
 				*ip->ap = 0;
 				if (ip->argbuf[0] == '>') {
-					ite_sendstr (ip, "\033[>24;0;0;0c");
+					ite_sendstr(ip, "\033[>24;0;0;0c");
 				} else
 					switch (ite_zargnum(ip)) {
 					case 0:
 						/* primary DA request, send primary DA response */
 						if (ip->emul_level == EMUL_VT100)
-							ite_sendstr (ip, "\033[?1;1c");
+							ite_sendstr(ip, "\033[?1;1c");
 						else
-							ite_sendstr (ip, "\033[63;0c");
+							ite_sendstr(ip, "\033[63;0c");
 						break;
 					}
 				ip->escape = 0;
@@ -1611,13 +1606,13 @@ iteputchar(int c, struct ite_softc *ip)
 			case 'n':
 				switch (ite_zargnum(ip)) {
 				case 5:
-					ite_sendstr (ip, "\033[0n");	/* no malfunction */
+					ite_sendstr(ip, "\033[0n");	/* no malfunction */
 					break;
 				case 6:
 					/* cursor position report */
-					sprintf (ip->argbuf, "\033[%d;%dR", 
+					sprintf(ip->argbuf, "\033[%d;%dR", 
 						 ip->cury + 1, ip->curx + 1);
-					ite_sendstr (ip, ip->argbuf);
+					ite_sendstr(ip, ip->argbuf);
 					break;
 				}
 				ip->escape = 0;
@@ -1628,10 +1623,10 @@ iteputchar(int c, struct ite_softc *ip)
 				switch (ite_zargnum(ip)) {
 				case 0:
 					/* Fake some terminal parameters.  */
-					ite_sendstr (ip, "\033[2;1;1;112;112;1;0x");
+					ite_sendstr(ip, "\033[2;1;1;112;112;1;0x");
 					break;
 				case 1:
-					ite_sendstr (ip, "\033[3;1;1;112;112;1;0x");
+					ite_sendstr(ip, "\033[3;1;1;112;112;1;0x");
 					break;
 				}
 				ip->escape = 0;
@@ -1660,7 +1655,7 @@ iteputchar(int c, struct ite_softc *ip)
 
 			case 'h': /* set mode */
 			case 'l': /* reset mode */
-				n = ite_zargnum (ip);
+				n = ite_zargnum(ip);
 				switch (n) {
 				case 4:
 					ip->imode = (c == 'h');	/* insert/replace mode */
@@ -1675,28 +1670,28 @@ iteputchar(int c, struct ite_softc *ip)
 
 			case 'M':
 				/* delete line */
-				ite_dnline (ip, ite_argnum (ip));
+				ite_dnline(ip, ite_argnum(ip));
 				ip->escape = 0;
 				return;
 
 
 			case 'L':
 				/* insert line */
-				ite_inline (ip, ite_argnum (ip));
+				ite_inline(ip, ite_argnum(ip));
 				ip->escape = 0;
 				return;
 
 
 			case 'P':
 				/* delete char */
-				ite_dnchar (ip, ite_argnum (ip));
+				ite_dnchar(ip, ite_argnum(ip));
 				ip->escape = 0;
 				return;
 
 
 			case '@':
 				/* insert char(s) */
-				ite_inchar (ip, ite_argnum (ip));
+				ite_inchar(ip, ite_argnum(ip));
 				ip->escape = 0;
 				return;
 
@@ -1710,12 +1705,13 @@ iteputchar(int c, struct ite_softc *ip)
 				   a vt320 termcap entry.. who is right?
 				   It's supposed to set the horizontal cursor position. */
 				*ip->ap = 0;
-				x = atoi (ip->argbuf);
-				if (x) x--;
+				x = atoi(ip->argbuf);
+				if (x)
+					x--;
 				ip->curx = min(x, ip->cols - 1);
 				ip->escape = 0;
 				SUBR_CURSOR(ip, MOVE_CURSOR);
-				clr_attr (ip, ATTR_INV);
+				clr_attr(ip, ATTR_INV);
 				return;
 
 
@@ -1723,28 +1719,31 @@ iteputchar(int c, struct ite_softc *ip)
 				/* same thing here, this one's for setting the absolute
 				   vertical cursor position. Not documented... */
 				*ip->ap = 0;
-				y = atoi (ip->argbuf);
-				if (y) y--;
+				y = atoi(ip->argbuf);
+				if (y)
+					y--;
 				if (ip->inside_margins)
 					y += ip->top_margin;
 				ip->cury = min(y, ip->rows - 1);
 				ip->escape = 0;
 				snap_cury(ip);
 				SUBR_CURSOR(ip, MOVE_CURSOR);
-				clr_attr (ip, ATTR_INV);
+				clr_attr(ip, ATTR_INV);
 				return;
 
 
 			case 'H':
 			case 'f':
 				*ip->ap = 0;
-				y = atoi (ip->argbuf);
+				y = atoi(ip->argbuf);
 				x = 0;
 				cp = strchr(ip->argbuf, ';');
 				if (cp)
-					x = atoi (cp + 1);
-				if (x) x--;
-				if (y) y--;
+					x = atoi(cp + 1);
+				if (x)
+					x--;
+				if (y)
+					y--;
 				if (ip->inside_margins)
 					y += ip->top_margin;
 				ip->cury = min(y, ip->rows - 1);
@@ -1752,14 +1751,15 @@ iteputchar(int c, struct ite_softc *ip)
 				ip->escape = 0;
 				snap_cury(ip);
 				SUBR_CURSOR(ip, MOVE_CURSOR);
-				/*clr_attr (ip, ATTR_INV);*/
+				/*clr_attr(ip, ATTR_INV);*/
 				return;
 
 			case 'A':
 				/* cursor up */
-				n = ite_argnum (ip);
+				n = ite_argnum(ip);
 				n = ip->cury - (n ? n : 1);
-				if (n < 0) n = 0;
+				if (n < 0)
+					n = 0;
 				if (ip->inside_margins)
 					n = max(ip->top_margin, n);
 				else if (n == ip->top_margin - 1)
@@ -1769,12 +1769,12 @@ iteputchar(int c, struct ite_softc *ip)
 				ip->cury = n;
 				ip->escape = 0;
 				SUBR_CURSOR(ip, MOVE_CURSOR);
-				clr_attr (ip, ATTR_INV);
+				clr_attr(ip, ATTR_INV);
 				return;
 
 			case 'B':
 				/* cursor down */
-				n = ite_argnum (ip);
+				n = ite_argnum(ip);
 				n = ip->cury + (n ? n : 1);
 				n = min(ip->rows - 1, n);
 #if 0
@@ -1790,35 +1790,35 @@ iteputchar(int c, struct ite_softc *ip)
 				ip->cury = n;
 				ip->escape = 0;
 				SUBR_CURSOR(ip, MOVE_CURSOR);
-				clr_attr (ip, ATTR_INV);
+				clr_attr(ip, ATTR_INV);
 				return;
 
 			case 'C':
 				/* cursor forward */
-				n = ite_argnum (ip);
+				n = ite_argnum(ip);
 				n = n ? n : 1;
 				ip->curx = min(ip->curx + n, ip->cols - 1);
 				ip->escape = 0;
 				SUBR_CURSOR(ip, MOVE_CURSOR);
-				clr_attr (ip, ATTR_INV);
+				clr_attr(ip, ATTR_INV);
 				return;
 
 			case 'D':
 				/* cursor backward */
-				n = ite_argnum (ip);
+				n = ite_argnum(ip);
 				n = n ? n : 1;
 				n = ip->curx - n;
 				ip->curx = n >= 0 ? n : 0;
 				ip->escape = 0;
 				SUBR_CURSOR(ip, MOVE_CURSOR);
-				clr_attr (ip, ATTR_INV);
+				clr_attr(ip, ATTR_INV);
 				return;
 
 
 			case 'J':
 				/* erase screen */
 				*ip->ap = 0;
-				n = ite_zargnum (ip);
+				n = ite_zargnum(ip);
 				if (n == 0)
 					ite_clrtoeos(ip);
 				else if (n == 1)
@@ -1831,7 +1831,7 @@ iteputchar(int c, struct ite_softc *ip)
 
 			case 'K':
 				/* erase line */
-				n = ite_zargnum (ip);
+				n = ite_zargnum(ip);
 				if (n == 0)
 					ite_clrtoeol(ip);
 				else if (n == 1)
@@ -1843,7 +1843,7 @@ iteputchar(int c, struct ite_softc *ip)
 
 			case 'S':
 				/* scroll up */
-				n = ite_zargnum (ip);
+				n = ite_zargnum(ip);
 				if (n <= 0)
 					n = 1;
 				else if (n > ip->rows-1)
@@ -1854,7 +1854,7 @@ iteputchar(int c, struct ite_softc *ip)
 
 			case 'T':
 				/* scroll down */
-				n = ite_zargnum (ip);
+				n = ite_zargnum(ip);
 				if (n <= 0)
 					n = 1;
 				else if (n > ip->rows-1)
@@ -1884,12 +1884,12 @@ iteputchar(int c, struct ite_softc *ip)
 				/* set scrolling region */
 				ip->escape = 0;
 				*ip->ap = 0;
-				x = atoi (ip->argbuf);
+				x = atoi(ip->argbuf);
 				x = x ? x : 1;
 				y = ip->rows;
 				cp = strchr(ip->argbuf, ';');
 				if (cp) {
-					y = atoi (cp + 1);
+					y = atoi(cp + 1);
 					y = y ? y : ip->rows;
 				}
 				if (y <= x)
@@ -1918,36 +1918,36 @@ iteputchar(int c, struct ite_softc *ip)
 					switch (*c_p) {
 					case 0:
 					case '0':
-						clr_attr (ip, ATTR_ALL);
+						clr_attr(ip, ATTR_ALL);
 						ip->fgcolor = 7;
 						ip->bgcolor = 0;
 						c_p++;
 						break;
 
 					case '1':
-						set_attr (ip, ATTR_BOLD);
+						set_attr(ip, ATTR_BOLD);
 						c_p++;
 						break;
 
 					case '2':
 						switch (c_p[1]) {
 						case '2':
-							clr_attr (ip, ATTR_BOLD);
+							clr_attr(ip, ATTR_BOLD);
 							c_p += 2;
 							break;
 
 						case '4':
-							clr_attr (ip, ATTR_UL);
+							clr_attr(ip, ATTR_UL);
 							c_p += 2;
 							break;
 
 						case '5':
-							clr_attr (ip, ATTR_BLINK);
+							clr_attr(ip, ATTR_BLINK);
 							c_p += 2;
 							break;
 
 						case '7':
-							clr_attr (ip, ATTR_INV);
+							clr_attr(ip, ATTR_INV);
 							c_p += 2;
 							break;
 
@@ -1980,19 +1980,19 @@ iteputchar(int c, struct ite_softc *ip)
 							c_p += 2;
 							break;
 						default:
-							set_attr (ip, ATTR_UL);
+							set_attr(ip, ATTR_UL);
 							c_p++;
 							break;
 						}
 						break;
 
 					case '5':
-						set_attr (ip, ATTR_BLINK);
+						set_attr(ip, ATTR_BLINK);
 						c_p++;
 						break;
 
 					case '7':
-						set_attr (ip, ATTR_INV);
+						set_attr(ip, ATTR_INV);
 						c_p++;
 						break;
 
@@ -2009,7 +2009,7 @@ iteputchar(int c, struct ite_softc *ip)
 
 			case 'u':
 				/* DECRQTSR */
-				ite_sendstr (ip, "\033P\033\\");
+				ite_sendstr(ip, "\033P\033\\");
 				ip->escape = 0;
 				return;
 
@@ -2039,15 +2039,15 @@ iteputchar(int c, struct ite_softc *ip)
 				if (ip->ap == &ip->argbuf[2]) {
 					if (!strncmp(ip->argbuf, "15", 2))
 						/* printer status: no printer */
-						ite_sendstr (ip, "\033[13n");
+						ite_sendstr(ip, "\033[13n");
 
 					else if (!strncmp(ip->argbuf, "25", 2))
 						/* udk status */
-						ite_sendstr (ip, "\033[20n");
+						ite_sendstr(ip, "\033[20n");
 
 					else if (!strncmp(ip->argbuf, "26", 2))
 						/* keyboard dialect: US */
-						ite_sendstr (ip, "\033[27;1n");
+						ite_sendstr(ip, "\033[27;1n");
 				}
 				ip->escape = 0;
 				return;
@@ -2055,7 +2055,7 @@ iteputchar(int c, struct ite_softc *ip)
 
 			case 'h': /* set dec private modes */
 			case 'l': /* reset dec private modes */
-				n = ite_zargnum (ip);
+				n = ite_zargnum(ip);
 				switch (n) {
 				case 1:
 					/* CKM - cursor key mode */
@@ -2159,13 +2159,13 @@ iteputchar(int c, struct ite_softc *ip)
 		/* cr->crlf distinction is done here, on output, 
 		   not on input! */
 		if (ip->linefeed_newline)
-			ite_crlf (ip);
+			ite_crlf(ip);
 		else
-			ite_lf (ip);
+			ite_lf(ip);
 		break;
 
 	case CR:
-		ite_cr (ip);
+		ite_cr(ip);
 		break;
 
 
@@ -2211,11 +2211,11 @@ iteputchar(int c, struct ite_softc *ip)
 
 	/* now it gets weird.. 8bit control sequences.. */
 	case IND:	/* index: move cursor down, scroll */
-		ite_index (ip);
+		ite_index(ip);
 		break;
 		
 	case NEL:	/* next line. next line, first pos. */
-		ite_crlf (ip);
+		ite_crlf(ip);
 		break;
 
 	case HTS:	/* set horizontal tab */
@@ -2224,7 +2224,7 @@ iteputchar(int c, struct ite_softc *ip)
 		break;
 		
 	case RI:	/* reverse index */
-		ite_rlf (ip);
+		ite_rlf(ip);
 		break;
 
 	case SS2:	/* go into G2 for one character */
@@ -2301,7 +2301,7 @@ iteputchar(int c, struct ite_softc *ip)
 	}
 }
 
-static void 
+static void
 iteprecheckwrap(struct ite_softc *ip)
 {
 	if (ip->auto_wrap && ip->curx + (ip->save_char ? 1 : 0) == ip->cols) {
@@ -2317,7 +2317,7 @@ iteprecheckwrap(struct ite_softc *ip)
 	}
 }
 
-static void 
+static void
 itecheckwrap(struct ite_softc *ip)
 {
 #if 0
@@ -2359,7 +2359,7 @@ extern int kbdcngetc(void);
  * Return a priority in consdev->cn_pri field highest wins.  This function
  * is called before any devices have been probed.
  */
-void 
+void
 itecnprobe(struct consdev *cd)
 {
 	int maj;
@@ -2386,7 +2386,7 @@ itecnprobe(struct consdev *cd)
 
 }
 
-void 
+void
 itecninit(struct consdev *cd)
 {
 	struct ite_softc *ip;
@@ -2403,7 +2403,7 @@ itecninit(struct consdev *cd)
  * being probed in the normal fasion, thus we can finish setting
  * up this ite now that the system is more functional.
  */
-void 
+void
 itecnfinish(struct ite_softc *ip)
 {
 	static int done;
@@ -2414,7 +2414,7 @@ itecnfinish(struct ite_softc *ip)
 }
 
 /*ARGSUSED*/
-int 
+int
 itecngetc(dev_t dev)
 {
 	int c;
@@ -2426,7 +2426,7 @@ itecngetc(dev_t dev)
 	return (c);
 }
 
-void 
+void
 itecnputc(dev_t dev, int c)
 {
 	static int paniced = 0;

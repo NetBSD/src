@@ -1,4 +1,4 @@
-/*	$NetBSD: icpvar.h,v 1.8 2007/03/04 06:01:56 christos Exp $	*/
+/*	$NetBSD: icpvar.h,v 1.8.2.1 2007/03/13 16:50:23 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -38,6 +38,8 @@
 
 #ifndef _IC_ICPVAR_H_
 #define _IC_ICPVAR_H_
+
+#include <sys/mutex.h>
 
 #include <dev/ic/icp_ioctl.h>
 
@@ -263,5 +265,7 @@ gdt_evt_str *icp_store_event(struct icp_softc *, u_int16_t, u_int16_t,
 int	icp_read_event(struct icp_softc *, int, gdt_evt_str *);
 void	icp_readapp_event(struct icp_softc *, u_int8_t, gdt_evt_str *);
 void	icp_clear_events(struct icp_softc *);
+
+extern kmutex_t icp_ioctl_mutex;
 
 #endif	/* !_IC_ICPVAR_H_ */

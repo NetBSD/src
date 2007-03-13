@@ -1,4 +1,4 @@
-/*	$NetBSD: gapspci_pci.c,v 1.9 2006/08/07 17:36:53 tsutsui Exp $	*/
+/*	$NetBSD: gapspci_pci.c,v 1.9.14.1 2007/03/13 16:49:57 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: gapspci_pci.c,v 1.9 2006/08/07 17:36:53 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gapspci_pci.c,v 1.9.14.1 2007/03/13 16:49:57 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -208,7 +208,7 @@ gaps_intr_establish(void *v, pci_intr_handle_t ih, int level,
     int (*func)(void *), void *arg)
 {
 
-	return sysasic_intr_establish(ih, IPL_NET, func, arg);
+	return sysasic_intr_establish(ih, level, SYSASIC_IRL11, func, arg);
 }
 
 void

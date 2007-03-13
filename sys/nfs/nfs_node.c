@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_node.c,v 1.92 2007/02/21 23:00:08 thorpej Exp $	*/
+/*	$NetBSD: nfs_node.c,v 1.92.4.1 2007/03/13 16:52:03 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.92 2007/02/21 23:00:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.92.4.1 2007/03/13 16:52:03 ad Exp $");
 
 #include "opt_nfs.h"
 
@@ -64,9 +64,9 @@ u_long nfsnodehash;
 struct lock nfs_hashlock;
 
 POOL_INIT(nfs_node_pool, sizeof(struct nfsnode), 0, 0, 0, "nfsnodepl",
-    &pool_allocator_nointr);
+    &pool_allocator_nointr, IPL_NONE);
 POOL_INIT(nfs_vattr_pool, sizeof(struct vattr), 0, 0, 0, "nfsvapl",
-    &pool_allocator_nointr);
+    &pool_allocator_nointr, IPL_NONE);
 
 MALLOC_DEFINE(M_NFSBIGFH, "NFS bigfh", "NFS big filehandle");
 MALLOC_DEFINE(M_NFSNODE, "NFS node", "NFS vnode private part");

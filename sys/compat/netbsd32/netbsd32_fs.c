@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_fs.c,v 1.36 2007/03/04 06:01:26 christos Exp $	*/
+/*	$NetBSD: netbsd32_fs.c,v 1.36.2.1 2007/03/13 16:50:19 ad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.36 2007/03/04 06:01:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.36.2.1 2007/03/13 16:50:19 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.36 2007/03/04 06:01:26 christos Ex
 #include <sys/proc.h>
 #include <sys/dirent.h>
 #include <sys/kauth.h>
+#include <sys/vfs_syscalls.h>
 
 #include <compat/netbsd32/netbsd32.h>
 #include <compat/netbsd32/netbsd32_syscallargs.h>
@@ -677,7 +678,6 @@ netbsd32_sys___stat30(l, v, retval)
 	struct netbsd32_stat sb32;
 	struct stat sb;
 	int error;
-	struct nameidata nd;
 	void *sg;
 	const char *path;
 	struct proc *p = l->l_proc;
@@ -686,13 +686,7 @@ netbsd32_sys___stat30(l, v, retval)
 	sg = stackgap_init(p, 0);
 	CHECK_ALT_EXIST(l, &sg, path);
 
-	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE, path, l);
-	if ((error = namei(&nd)) != 0)
-		return (error);
-	error = vn_stat(nd.ni_vp, &sb, l);
-	vput(nd.ni_vp);
-	if (error)
-		return (error);
+	error = do_sys_stat(l, path, FOLLOW, &sb);
 	netbsd32_from___stat30(&sb, &sb32);
 	error = copyout(&sb32, (void *)NETBSD32PTR64(SCARG(uap, ub)),
 	    sizeof(sb32));
@@ -745,7 +739,6 @@ netbsd32_sys___lstat30(l, v, retval)
 	struct netbsd32_stat sb32;
 	struct stat sb;
 	int error;
-	struct nameidata nd;
 	void *sg;
 	const char *path;
 	struct proc *p = l->l_proc;
@@ -754,11 +747,7 @@ netbsd32_sys___lstat30(l, v, retval)
 	sg = stackgap_init(p, 0);
 	CHECK_ALT_EXIST(l, &sg, path);
 
-	NDINIT(&nd, LOOKUP, NOFOLLOW | LOCKLEAF, UIO_USERSPACE, path, l);
-	if ((error = namei(&nd)) != 0)
-		return (error);
-	error = vn_stat(nd.ni_vp, &sb, l);
-	vput(nd.ni_vp);
+	error = do_sys_stat(l, path, NOFOLLOW, &sb);
 	if (error)
 		return (error);
 	netbsd32_from___stat30(&sb, &sb32);

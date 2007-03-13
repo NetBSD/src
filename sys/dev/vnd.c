@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.165 2007/03/09 05:28:37 yamt Exp $	*/
+/*	$NetBSD: vnd.c,v 1.165.2.1 2007/03/13 16:50:21 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -137,7 +137,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.165 2007/03/09 05:28:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.165.2.1 2007/03/13 16:50:21 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -1210,7 +1210,7 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 
 		/* Initialize the xfer and buffer pools. */
 		pool_init(&vnd->sc_vxpool, sizeof(struct vndxfer), 0,
-		    0, 0, "vndxpl", NULL);
+		    0, 0, "vndxpl", NULL, IPL_BIO);
 
 		/* Try and read the disklabel. */
 		vndgetdisklabel(dev, vnd);

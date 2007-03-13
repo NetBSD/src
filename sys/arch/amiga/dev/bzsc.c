@@ -1,4 +1,4 @@
-/*	$NetBSD: bzsc.c,v 1.40 2007/03/05 18:37:31 he Exp $ */
+/*	$NetBSD: bzsc.c,v 1.40.2.1 2007/03/13 16:49:54 ad Exp $ */
 
 /*
  * Copyright (c) 1997 Michael L. Hitch
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bzsc.c,v 1.40 2007/03/05 18:37:31 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bzsc.c,v 1.40.2.1 2007/03/13 16:49:54 ad Exp $");
 
 /*
  * Initial amiga Blizzard 1230-II driver by Daniel Widenfalk.  Conversion to
@@ -340,7 +340,7 @@ bzsc_dma_setup(struct ncr53c9x_softc *sc, void **addr, size_t *len,
 	u_char *ptr;
 	size_t xfer;
 
-	bsc->sc_dmaaddr = *addr;
+	bsc->sc_dmaaddr = (char **)addr;
 	bsc->sc_pdmalen = len;
 	bsc->sc_datain = datain;
 	bsc->sc_dmasize = *dmasize;

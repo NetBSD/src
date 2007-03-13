@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.245 2007/03/05 00:50:53 liamjfoy Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.245.2.1 2007/03/13 16:52:02 ad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.245 2007/03/05 00:50:53 liamjfoy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.245.2.1 2007/03/13 16:52:02 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_gateway.h"
@@ -334,8 +334,10 @@ do {									\
 
 #define	IPQ_UNLOCK()		ipq_unlock()
 
-POOL_INIT(inmulti_pool, sizeof(struct in_multi), 0, 0, 0, "inmltpl", NULL);
-POOL_INIT(ipqent_pool, sizeof(struct ipqent), 0, 0, 0, "ipqepl", NULL);
+POOL_INIT(inmulti_pool, sizeof(struct in_multi), 0, 0, 0, "inmltpl", NULL,
+    IPL_SOFTNET);
+POOL_INIT(ipqent_pool, sizeof(struct ipqent), 0, 0, 0, "ipqepl", NULL,
+    IPL_VM);
 
 #ifdef INET_CSUM_COUNTERS
 #include <sys/device.h>

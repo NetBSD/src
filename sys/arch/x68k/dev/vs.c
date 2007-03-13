@@ -1,4 +1,4 @@
-/*	$NetBSD: vs.c,v 1.31 2007/03/04 06:01:07 christos Exp $	*/
+/*	$NetBSD: vs.c,v 1.31.2.1 2007/03/13 16:50:13 ad Exp $	*/
 
 /*
  * Copyright (c) 2001 Tetsuya Isaki. All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vs.c,v 1.31 2007/03/04 06:01:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vs.c,v 1.31.2.1 2007/03/13 16:50:13 ad Exp $");
 
 #include "audio.h"
 #include "vs.h"
@@ -509,7 +509,7 @@ vs_trigger_output(void *hdl, void *start, void *end, int bsize,
 	sc->sc_pintr = intr;
 	sc->sc_parg  = arg;
 	sc->sc_current.blksize = bsize;
-	sc->sc_current.bufsize = (char*)end - (char*)start;
+	sc->sc_current.bufsize = (char *)end - (char *)start;
 	sc->sc_current.dmap = 0;
 
 	/* Find DMA buffer. */
@@ -558,7 +558,7 @@ vs_trigger_input(void *hdl, void *start, void *end, int bsize,
 	sc->sc_rintr = intr;
 	sc->sc_rarg  = arg;
 	sc->sc_current.blksize = bsize;
-	sc->sc_current.bufsize = (char*)end - (char*)start;
+	sc->sc_current.bufsize = (char *)end - (char *)start;
 	sc->sc_current.dmap = 0;
 
 	/* Find DMA buffer. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: uplcom.c,v 1.53 2007/03/04 06:02:50 christos Exp $	*/
+/*	$NetBSD: uplcom.c,v 1.53.2.1 2007/03/13 16:51:04 ad Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uplcom.c,v 1.53 2007/03/04 06:02:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uplcom.c,v 1.53.2.1 2007/03/13 16:51:04 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -213,9 +213,6 @@ USB_MATCH(uplcom)
 {
 	USB_MATCH_START(uplcom, uaa);
 
-	if (uaa->iface != NULL)
-		return (UMATCH_NONE);
-
 	return (uplcom_lookup(uaa->vendor, uaa->product) != NULL ?
 		UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
 }
@@ -224,7 +221,6 @@ USB_ATTACH(uplcom)
 {
 	USB_ATTACH_START(uplcom, sc, uaa);
 	usbd_device_handle dev = uaa->device;
-	usb_device_descriptor_t *ddesc;
 	usb_config_descriptor_t *cdesc;
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
@@ -257,15 +253,6 @@ USB_ATTACH(uplcom)
 		USB_ATTACH_ERROR_RETURN;
 	}
 
-	/* get the device descriptor */
-	ddesc = usbd_get_device_descriptor(sc->sc_udev);
-	if (ddesc == NULL) {
-		printf("%s: failed to get device descriptor\n",
-		    USBDEVNAME(sc->sc_dev));
-		sc->sc_dying = 1;
-		USB_ATTACH_ERROR_RETURN;
-	}
-
 	/* determine chip type */
 	for (i = 0; uplcom_devs_ext[i].vendor != 0; i++) {
 		if (uplcom_devs_ext[i].vendor == uaa->vendor &&
@@ -282,7 +269,7 @@ USB_ATTACH(uplcom)
 	 * The bcdDevice field should also distinguish these versions,
 	 * but who knows.
 	 */
-	if (UGETW(ddesc->bcdDevice) == 0x0300)
+	if (uaa->release == 0x0300)
 		sc->sc_type = UPLCOM_TYPE_HX;
 	else
 		sc->sc_type = UPLCOM_TYPE_0;

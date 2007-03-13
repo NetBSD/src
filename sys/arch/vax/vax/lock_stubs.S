@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.2 2007/02/17 05:34:07 matt Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.2.8.1 2007/03/13 16:50:09 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -36,10 +36,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_lockdebug.h"
 #include "opt_multiprocessor.h"
 #include <machine/asm.h>
 #include "assym.h"
 
+#ifndef LOCKDEBUG
 /*
  * void mutex_enter(kmutex_t *);
  *
@@ -64,12 +66,13 @@ NENTRY(mutex_enter, 0)
  */
 NENTRY(mutex_exit, 0)
 	movl	4(%ap), %r0			/* get mutex */
+	blbs	MTX_ID(%r0), 1f			/* go slow if this is SPIN */
 	mfpr	$PR_SSP, %r1			/* get curcpu */
 	cmpl	(%r0),CI_CURLWP(%r1)		/* is the owner still us and */
 						/*    no waiters? */
-	bneq	2f				/*   no, slow path */
+	bneq	1f				/*   no, slow path */
 	clrl	(%r0)				/* clear owner */
-2:	ret
+	ret
 
 1:	callg	(%ap), _C_LABEL(mutex_vector_exit)
 	ret
@@ -83,14 +86,13 @@ NENTRY(mutex_spin_enter, 0)
 	blbc	MTX_ID(%r0), 3f
 #endif
 	mfpr	$PR_IPL, %r2			/* get current IPL */
-	cmpl	MTX_IPL(%r0), %r2		/* does mutex have > IPL? */
+	movzbl	MTX_IPL(%r0), %r3
+	cmpl	%r3, %r2			/* does mutex have > IPL? */
 	bleq	1f				/*   no, leave IPL alone */ 
-	mtpr	MTX_IPL(%r0), $PR_IPL		/*   yes, raise IPL */
+	mtpr	%r3, $PR_IPL			/*   yes, raise IPL */
 1:	mfpr	$PR_SSP, %r1			/* get curcpu */
-	decl	CI_MTX_COUNT(%r1)		/* decr mutex count */
-	bneq	2f				/* was mutex count < 1 */
+	sobgeq	CI_MTX_COUNT(%r1), 2f		/* decr mutex count */
 	movl	%r2, CI_MTX_OLDSPL(%r1)		/*   save was-current IPL */
-2:
 #if defined(DIAGNOSTIC) || defined(MULTIPROCESSOR)
 	bbssi	$0, (%r0), 3f			/* take out mutex */
 	ret
@@ -111,8 +113,7 @@ NENTRY(mutex_spin_exit, 0)
 #endif
 	mfpr	$PR_SSP, %r1			/* get curcpu */
 	movl	CI_MTX_OLDSPL(%r1), %r2		/* fetch oldspl */
-	incl	CI_MTX_COUNT(%r1)		/* incr mtx count */
-	bleq	1f				/* was it positive? */
+	aoblss	$MTX_COUNT_BIAS, CI_MTX_COUNT(%r1), 1f	 /* incr mtx count */
 	mtpr	%r2, $PR_IPL			/*   yes, restore saved ipl */
 1:	ret	
 
@@ -121,27 +122,33 @@ NENTRY(mutex_spin_exit, 0)
 	ret
 #endif
 
+#endif /* LOCKDEBUG */
+
 /*
- * bool _rw_cas(krwlock_t *rw, uintptr_t old, uintptr_t new);
- * {
- *         bool rv = false;
- *         while (rw->rw_owner == old) {
- *                 if (__cpu_simple_try_lock(&rw->rw_lock)) {
- *                         if (old == rw->rw_owner) {
- *                                 rw->rw_owner = new;
- *                                 rv = true;
- *                         }
- *                         __cpu_simple_unlock(&rw->rw_lock);
- *                         break;
- *                 }
- *         }
- *         return rv;
- * }
+ *	bool _rw_cas(krwlock_t *rw, uintptr_t old, uintptr_t new);
+ *	{
+ *		bool rv = false;
+ *		int cnt = 4;
+ *		while (rw->rw_owner == old && --cnt != 0) {
+ *			if (__cpu_simple_try_lock(&rw->rw_lock)) {
+ *				if (old == rw->rw_owner) {
+ *					rw->rw_owner = new;
+ *					rv = true;
+ *				}
+ *				__cpu_simple_unlock(&rw->rw_lock);
+ *				break;
+ *			}
+ *		}
+ *		return rv;
+ *	}
  */
 NENTRY(_rw_cas, 0)
 	clrl	%r0			/* rv = false */
+	movl	$4, %r3			/* cnt = 4 */
 	movq	4(%ap), %r1		/* cache rw, old */
-1:	cmpl	(%r1), %r2		/* rw->rw_owner == old? */
+1:	decl	%r3			/* --cnt */
+	beql	2f			/* if cnt == 0, return */
+	cmpl	(%r1), %r2		/* rw->rw_owner == old? */
 	bneq	2f			/*    nope, return */
 	bbssi	$0, RW_LOCK(%r1), 1b	/* get lock, loop if failure */
 	cmpl	(%r1), %r2		/* rw->rw_owner still == old? */

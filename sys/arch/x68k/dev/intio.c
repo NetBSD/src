@@ -1,4 +1,4 @@
-/*	$NetBSD: intio.c,v 1.30 2007/03/05 20:46:21 he Exp $	*/
+/*	$NetBSD: intio.c,v 1.30.2.1 2007/03/13 16:50:11 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998 NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intio.c,v 1.30 2007/03/05 20:46:21 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intio.c,v 1.30.2.1 2007/03/13 16:50:11 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -195,7 +195,7 @@ intio_attach(struct device *parent, struct device *self, void *aux)
 
 	intio_attached = 1;
 
-	printf (" mapped at %8p\n", intiobase);
+	printf(" mapped at %8p\n", intiobase);
 
 	sc->sc_map = extent_create("intiomap",
 				  PHYS_INTIODEV,
@@ -208,7 +208,7 @@ intio_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_dmat = &intio_bus_dma;
 	sc->sc_dmac = 0;
 
-	memset(iiv, 0, sizeof (struct intio_interrupt_vector) * 256);
+	memset(iiv, 0, sizeof(struct intio_interrupt_vector) * 256);
 
 	ia.ia_bst = sc->sc_bst;
 	ia.ia_dmat = sc->sc_dmat;
@@ -243,13 +243,13 @@ intio_print(void *aux, const char *name)
 	struct intio_attach_args *ia = aux;
 
 /*	if (ia->ia_addr > 0)	*/
-		aprint_normal (" addr 0x%06x", ia->ia_addr);
+		aprint_normal(" addr 0x%06x", ia->ia_addr);
 	if (ia->ia_intr > 0)
-		aprint_normal (" intr 0x%02x", ia->ia_intr);
+		aprint_normal(" intr 0x%02x", ia->ia_intr);
 	if (ia->ia_dma >= 0) {
-		aprint_normal (" using DMA ch%d", ia->ia_dma);
+		aprint_normal(" using DMA ch%d", ia->ia_dma);
 		if (ia->ia_dmaintr > 0)
-			aprint_normal (" intr 0x%02x and 0x%02x",
+			aprint_normal(" intr 0x%02x and 0x%02x",
 				ia->ia_dmaintr, ia->ia_dmaintr+1);
 	}
 
@@ -268,14 +268,14 @@ intio_map_allocate_region(struct device *parent, struct intio_attach_args *ia,
 	struct extent *map = sc->sc_map;
 	int r;
 
-	r = extent_alloc_region (map, ia->ia_addr, ia->ia_size, 0);
+	r = extent_alloc_region(map, ia->ia_addr, ia->ia_size, 0);
 #ifdef DEBUG
 	if (intio_debug)
-		extent_print (map);
+		extent_print(map);
 #endif
 	if (r == 0) {
 		if (flag != INTIO_MAP_ALLOCATE)
-		extent_free (map, ia->ia_addr, ia->ia_size, 0);
+		extent_free(map, ia->ia_addr, ia->ia_size, 0);
 		return 0;
 	} 
 
@@ -288,10 +288,10 @@ intio_map_free_region(struct device *parent, struct intio_attach_args *ia)
 	struct intio_softc *sc = (struct intio_softc*) parent;
 	struct extent *map = sc->sc_map;
 
-	extent_free (map, ia->ia_addr, ia->ia_size, 0);
+	extent_free(map, ia->ia_addr, ia->ia_size, 0);
 #ifdef DEBUG
 	if (intio_debug)
-		extent_print (map);
+		extent_print(map);
 #endif
 	return 0;
 }
@@ -299,8 +299,8 @@ intio_map_free_region(struct device *parent, struct intio_attach_args *ia)
 void
 intio_alloc_system_ports(struct intio_softc *sc)
 {
-	extent_alloc_region (sc->sc_map, INTIO_SYSPORT, 16, 0);
-	extent_alloc_region (sc->sc_map, INTIO_SICILIAN, 0x2000, 0);
+	extent_alloc_region(sc->sc_map, INTIO_SYSPORT, 16, 0);
+	extent_alloc_region(sc->sc_map, INTIO_SICILIAN, 0x2000, 0);
 }
 
 
@@ -352,7 +352,7 @@ intio_intr_establish(int vector, const char *name, intio_intr_handler_t handler,
     void *arg)
 {
 	if (vector < 16)
-		panic ("Invalid interrupt vector");
+		panic("Invalid interrupt vector");
 	if (iiv[vector].iiv_handler)
 		return EBUSY;
 	iiv[vector].iiv_handler = handler;
@@ -373,8 +373,8 @@ scan_intrnames(const char *name)
 	for (;;) {
 		if (*p == 0) {	/* new intr */
 			if (p + strlen(name) >= eintrnames)
-				panic ("Interrupt statics buffer overrun.");
-			strcpy (p, name);
+				panic("Interrupt statics buffer overrun.");
+			strcpy(p, name);
 			break;
 		}
 		if (strcmp(p, name) == 0)
@@ -408,14 +408,14 @@ intio_intr(struct frame *frame)
 	/* LOWER TO APPROPRIATE IPL AT VERY FIRST IN THE HANDLER!! */
 #endif
 	if (iiv[vector].iiv_handler == 0) {
-		printf ("Stray interrupt: %d type %x, pc %x\n",
+		printf("Stray interrupt: %d type %x, pc %x\n",
 			vector, frame->f_format, frame->f_pc);
 		return 0;
 	}
 
 	intrcnt[iiv[vector].iiv_intrcntoff]++;
 
-	return (*(iiv[vector].iiv_handler)) (iiv[vector].iiv_arg);
+	return (*(iiv[vector].iiv_handler))(iiv[vector].iiv_arg);
 }
 
 /*
@@ -429,7 +429,7 @@ intio_set_ivec(int vec)
 	vec &= 0xfc;
 
 	if (intio_ivec && intio_ivec != (vec & 0xfc))
-		panic ("Wrong interrupt vector for Sicilian.");
+		panic("Wrong interrupt vector for Sicilian.");
 
 	intio_ivec = vec;
 	intio_set_sicilian_ivec(vec);

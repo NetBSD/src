@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.61 2007/03/04 06:00:41 christos Exp $	*/
+/*	$NetBSD: pmap.c,v 1.61.2.1 2007/03/13 16:50:04 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.61 2007/03/04 06:00:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.61.2.1 2007/03/13 16:50:04 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -218,9 +218,9 @@ pmap_init()
 
 	/* Initialize pmap module */
 	pool_init(&__pmap_pmap_pool, sizeof(struct pmap), 0, 0, 0, "pmappl",
-	    &pool_allocator_nointr);
+	    &pool_allocator_nointr, IPL_NONE);
 	pool_init(&__pmap_pv_pool, sizeof(struct pv_entry), 0, 0, 0, "pvpl",
-	    &pmap_pv_page_allocator);
+	    &pmap_pv_page_allocator, IPL_NONE);
 	pool_setlowat(&__pmap_pv_pool, 16);
 
 #ifdef SH4

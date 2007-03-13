@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_30.c,v 1.17 2007/03/04 06:01:26 christos Exp $	*/
+/*	$NetBSD: netbsd32_compat_30.c,v 1.17.2.1 2007/03/13 16:50:19 ad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_30.c,v 1.17 2007/03/04 06:01:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_30.c,v 1.17.2.1 2007/03/13 16:50:19 ad Exp $");
 
 #include "opt_nfsserver.h"
 
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_30.c,v 1.17 2007/03/04 06:01:26 chri
 #include <sys/proc.h>
 #include <sys/dirent.h>
 #include <sys/kauth.h>
+#include <sys/vfs_syscalls.h>
 
 #include <compat/netbsd32/netbsd32.h>
 #include <compat/netbsd32/netbsd32_syscallargs.h>
@@ -111,7 +112,6 @@ compat_30_netbsd32___stat13(l, v, retval)
 	struct netbsd32_stat13 sb32;
 	struct stat sb;
 	int error;
-	struct nameidata nd;
 	void *sg;
 	const char *path;
 	struct proc *p = l->l_proc;
@@ -120,11 +120,7 @@ compat_30_netbsd32___stat13(l, v, retval)
 	sg = stackgap_init(p, 0);
 	CHECK_ALT_EXIST(l, &sg, path);
 
-	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE, path, l);
-	if ((error = namei(&nd)) != 0)
-		return (error);
-	error = vn_stat(nd.ni_vp, &sb, l);
-	vput(nd.ni_vp);
+	error = do_sys_stat(l, path, FOLLOW, &sb);
 	if (error)
 		return (error);
 	netbsd32_from___stat13(&sb, &sb32);
@@ -179,7 +175,6 @@ compat_30_netbsd32___lstat13(l, v, retval)
 	struct netbsd32_stat13 sb32;
 	struct stat sb;
 	int error;
-	struct nameidata nd;
 	void *sg;
 	const char *path;
 	struct proc *p = l->l_proc;
@@ -188,11 +183,7 @@ compat_30_netbsd32___lstat13(l, v, retval)
 	sg = stackgap_init(p, 0);
 	CHECK_ALT_EXIST(l, &sg, path);
 
-	NDINIT(&nd, LOOKUP, NOFOLLOW | LOCKLEAF, UIO_USERSPACE, path, l);
-	if ((error = namei(&nd)) != 0)
-		return (error);
-	error = vn_stat(nd.ni_vp, &sb, l);
-	vput(nd.ni_vp);
+	error = do_sys_stat(l, path, NOFOLLOW, &sb);
 	if (error)
 		return (error);
 	netbsd32_from___stat13(&sb, &sb32);

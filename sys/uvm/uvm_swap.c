@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.122 2007/03/04 06:03:49 christos Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.122.2.1 2007/03/13 16:52:09 ad Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.122 2007/03/04 06:03:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.122.2.1 2007/03/13 16:52:09 ad Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -181,8 +181,10 @@ struct vndbuf {
 /*
  * We keep a of pool vndbuf's and vndxfer structures.
  */
-POOL_INIT(vndxfer_pool, sizeof(struct vndxfer), 0, 0, 0, "swp vnx", NULL);
-POOL_INIT(vndbuf_pool, sizeof(struct vndbuf), 0, 0, 0, "swp vnd", NULL);
+POOL_INIT(vndxfer_pool, sizeof(struct vndxfer), 0, 0, 0, "swp vnx", NULL,
+    IPL_BIO);
+POOL_INIT(vndbuf_pool, sizeof(struct vndbuf), 0, 0, 0, "swp vnd", NULL,
+    IPL_BIO);
 
 #define	getvndxfer(vnx)	do {						\
 	int sp = splbio();						\

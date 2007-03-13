@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.13 2007/03/04 05:59:49 christos Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.13.2.1 2007/03/13 16:49:57 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.13 2007/03/04 05:59:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.13.2.1 2007/03/13 16:49:57 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -145,8 +145,8 @@ bus_space_unmap(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size)
 	size = m68k_round_page(offset + size);
 
 #ifdef DIAGNOSTIC
-	if ((void *)bsh < extiobase ||
-	    (void *)bsh >= (extiobase + ptoa(EIOMAPSIZE)))
+	if (bsh < (vaddr_t)extiobase ||
+	    bsh >= ((vaddr_t)extiobase + ptoa(EIOMAPSIZE)))
 		panic("bus_space_unmap: bad bus space handle");
 #endif
 

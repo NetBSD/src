@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file.c,v 1.80 2007/03/09 14:11:28 ad Exp $	*/
+/*	$NetBSD: linux_file.c,v 1.80.2.1 2007/03/13 16:50:18 ad Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.80 2007/03/09 14:11:28 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.80.2.1 2007/03/13 16:50:18 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.80 2007/03/09 14:11:28 ad Exp $");
 #include <sys/kernel.h>
 #include <sys/mount.h>
 #include <sys/malloc.h>
+#include <sys/namei.h>
 #include <sys/vnode.h>
 #include <sys/tty.h>
 #include <sys/socketvar.h>
@@ -62,6 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.80 2007/03/09 14:11:28 ad Exp $");
 #include <sys/pipe.h>
 
 #include <sys/syscallargs.h>
+#include <sys/vfs_syscalls.h>
 
 #include <compat/linux/common/linux_types.h>
 #include <compat/linux/common/linux_signal.h>
@@ -542,72 +544,44 @@ linux_sys_fstat(l, v, retval)
 		syscallarg(int) fd;
 		syscallarg(linux_stat *) sp;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
-	struct sys___fstat30_args fsa;
 	struct linux_stat tmplst;
-	struct stat *st,tmpst;
-	void *sg;
+	struct stat tmpst;
 	int error;
 
-	sg = stackgap_init(p, 0);
-
-	st = stackgap_alloc(p, &sg, sizeof (struct stat));
-
-	SCARG(&fsa, fd) = SCARG(uap, fd);
-	SCARG(&fsa, sb) = st;
-
-	if ((error = sys___fstat30(l, &fsa, retval)))
+	error = do_sys_fstat(l, SCARG(uap, fd), &tmpst);
+	if (error != 0)
 		return error;
-
-	if ((error = copyin(st, &tmpst, sizeof tmpst)))
-		return error;
-
 	bsd_to_linux_stat(&tmpst, &tmplst);
 
-	if ((error = copyout(&tmplst, SCARG(uap, sp), sizeof tmplst)))
-		return error;
-
-	return 0;
+	return copyout(&tmplst, SCARG(uap, sp), sizeof tmplst);
 }
 
 static int
-linux_stat1(l, v, retval, dolstat)
+linux_stat1(l, v, retval, flags)
 	struct lwp *l;
 	void *v;
 	register_t *retval;
-	int dolstat;
+	int flags;
 {
-	struct sys___stat30_args sa;
 	struct linux_stat tmplst;
-	struct stat *st, tmpst;
-	struct proc *p = l->l_proc;
+	struct stat tmpst;
 	void *sg;
 	int error;
 	struct linux_sys_stat_args *uap = v;
 
-	sg = stackgap_init(p, 0);
-	st = stackgap_alloc(p, &sg, sizeof (struct stat));
-	if (dolstat)
+	sg = stackgap_init(l->l_proc, 0);
+	if (flags == NOFOLLOW)
 		CHECK_ALT_SYMLINK(l, &sg, SCARG(uap, path));
 	else
 		CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
-	SCARG(&sa, ub) = st;
-	SCARG(&sa, path) = SCARG(uap, path);
-
-	if ((error = (dolstat ? sys___lstat30(l, &sa, retval) :
-				sys___stat30(l, &sa, retval))))
-		return error;
-
-	if ((error = copyin(st, &tmpst, sizeof tmpst)))
+	error = do_sys_stat(l, SCARG(uap, path), flags, &tmpst);
+	if (error != 0)
 		return error;
 
 	bsd_to_linux_stat(&tmpst, &tmplst);
 
-	if ((error = copyout(&tmplst, SCARG(uap, sp), sizeof tmplst)))
-		return error;
-
-	return 0;
+	return copyout(&tmplst, SCARG(uap, sp), sizeof tmplst);
 }
 
 int
@@ -621,7 +595,7 @@ linux_sys_stat(l, v, retval)
 		syscallarg(struct linux_stat *) sp;
 	} */ *uap = v;
 
-	return linux_stat1(l, uap, retval, 0);
+	return linux_stat1(l, uap, retval, FOLLOW);
 }
 
 /* Note: this is "newlstat" in the Linux sources */
@@ -637,7 +611,7 @@ linux_sys_lstat(l, v, retval)
 		syscallarg(struct linux_stat *) sp;
 	} */ *uap = v;
 
-	return linux_stat1(l, uap, retval, 1);
+	return linux_stat1(l, uap, retval, NOFOLLOW);
 }
 #endif /* !__amd64__ */
 

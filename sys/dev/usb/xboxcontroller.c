@@ -1,4 +1,4 @@
-/* $NetBSD: xboxcontroller.c,v 1.4 2007/03/04 06:02:50 christos Exp $ */
+/* $NetBSD: xboxcontroller.c,v 1.4.2.1 2007/03/13 16:51:18 ad Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xboxcontroller.c,v 1.4 2007/03/04 06:02:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xboxcontroller.c,v 1.4.2.1 2007/03/13 16:51:18 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,9 +89,6 @@ USB_DECLARE_DRIVER(xboxcontroller);
 USB_MATCH(xboxcontroller)
 {
 	USB_MATCH_START(xboxcontroller, uaa);
-
-	if (uaa->iface != NULL)
-		return UMATCH_NONE;
 
 	if (uaa->vendor == USB_VENDOR_MICROSOFT) {
 		switch (uaa->product) {

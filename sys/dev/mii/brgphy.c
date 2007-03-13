@@ -1,4 +1,4 @@
-/*	$NetBSD: brgphy.c,v 1.32 2007/03/10 09:13:07 msaitoh Exp $	*/
+/*	$NetBSD: brgphy.c,v 1.32.2.1 2007/03/13 16:50:24 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: brgphy.c,v 1.32 2007/03/10 09:13:07 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: brgphy.c,v 1.32.2.1 2007/03/13 16:50:24 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -352,7 +352,7 @@ setit:
 			    speed|BMCR_AUTOEN|BMCR_STARTNEG);
 
 			if (sc->mii_mpd_model != MII_MODEL_BROADCOM_BCM5701)
- 				break;
+				break;
 
 			if (mii->mii_media.ifm_media & IFM_ETH_MASTER)
 				gig |= GTCR_MAN_MS | GTCR_ADV_MS;
@@ -512,7 +512,7 @@ brgphy_loop(struct mii_softc *sc)
 	int i;
 
 	PHY_WRITE(sc, MII_BMCR, BMCR_LOOP);
- 	for (i = 0; i < 15000; i++) {
+	for (i = 0; i < 15000; i++) {
 		bmsr = PHY_READ(sc, MII_BMSR);
 		if (!(bmsr & BMSR_LINK))
 			break;
@@ -642,7 +642,7 @@ bcm5704_load_dspcode(struct mii_softc *sc)
 		uint16_t	val;
 	} dspcode[] = {
 		{ 0x1c,				0x8d68 },
-   		{ 0x1c,				0x8d68 },
+		{ 0x1c,				0x8d68 },
 		{ 0,				0 },
 	};
 	int i;

@@ -1,4 +1,4 @@
-/*	$NetBSD: opmbell.c,v 1.15 2007/03/04 06:01:06 christos Exp $	*/
+/*	$NetBSD: opmbell.c,v 1.15.2.1 2007/03/13 16:50:12 ad Exp $	*/
 
 /*
  * Copyright (c) 1995 MINOURA Makoto, Takuya Harakawa.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opmbell.c,v 1.15 2007/03/04 06:01:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opmbell.c,v 1.15.2.1 2007/03/13 16:50:12 ad Exp $");
 
 #include "bell.h"
 #if NBELL > 0
@@ -59,6 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: opmbell.c,v 1.15 2007/03/04 06:01:06 christos Exp $"
 #include <sys/callout.h>
 #include <sys/conf.h>
 #include <sys/event.h>
+#include <sys/kernel.h>
 
 #include <machine/opmbellio.h>
 
@@ -121,7 +122,7 @@ const struct cdevsw bell_cdevsw = {
 	nostop, notty, nopoll, nommap, nokqfilter,
 };
 
-void 
+void
 bellattach(int num)
 {
 	char *mem;
@@ -157,7 +158,7 @@ bellattach(int num)
 	}
 }
 
-int 
+int
 bellopen(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	int unit = UNIT(dev);
@@ -175,7 +176,7 @@ bellopen(dev_t dev, int flags, int mode, struct lwp *l)
 	return 0;
 }
 
-int 
+int
 bellclose(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	int unit = UNIT(dev);
@@ -185,7 +186,7 @@ bellclose(dev_t dev, int flags, int mode, struct lwp *l)
 	return 0;
 }
 
-int 
+int
 bellioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 {
 	int unit = UNIT(dev);
@@ -194,49 +195,49 @@ bellioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 	switch (cmd) {
 	case BELLIOCGPARAM:
 	  {
-	      struct bell_info *bp = (struct bell_info *)addr;
-	      if (!(sc->sc_flags & FREAD))
-		  return EBADF;
+		struct bell_info *bp = (struct bell_info *)addr;
+		if (!(sc->sc_flags & FREAD))
+			return EBADF;
 
-	      bp->volume = sc->volume;
-	      bp->pitch = sc->pitch;
-	      bp->msec = sc->msec;
-	      break;
+		bp->volume = sc->volume;
+		bp->pitch = sc->pitch;
+		bp->msec = sc->msec;
+		break;
 	  }
 
 	case BELLIOCSPARAM:
 	  {
-	      struct bell_info *bp = (struct bell_info *)addr;
+		struct bell_info *bp = (struct bell_info *)addr;
 
-	      if (!(sc->sc_flags & FWRITE))
-		  return EBADF;
+		if (!(sc->sc_flags & FWRITE))
+			return EBADF;
 
-	      return opm_bell_setup(bp);
+		return opm_bell_setup(bp);
 	  }
 
 	case BELLIOCGVOICE:
-	    if (!(sc->sc_flags & FREAD))
-		return EBADF;
+		if (!(sc->sc_flags & FREAD))
+			return EBADF;
 
-	    if (addr == NULL)
-		return EFAULT;
+		if (addr == NULL)
+			return EFAULT;
 
-	    memcpy(addr, &vtab[unit], sizeof(struct opm_voice));
-	    break;
+		memcpy(addr, &vtab[unit], sizeof(struct opm_voice));
+		break;
 
 	case BELLIOCSVOICE:
-	    if (!(sc->sc_flags & FWRITE))
-		return EBADF;
+		if (!(sc->sc_flags & FWRITE))
+			return EBADF;
 
-	    if (addr == NULL)
-		return EFAULT;
+		if (addr == NULL)
+			return EFAULT;
 
-	    memcpy(&vtab[unit], addr, sizeof(struct opm_voice));
-	    opm_set_voice(sc->ch, &vtab[unit]);
-	    break;
+		memcpy(&vtab[unit], addr, sizeof(struct opm_voice));
+		opm_set_voice(sc->ch, &vtab[unit]);
+		break;
 
 	default:
-	    return EINVAL;
+		return EINVAL;
 	}
 	return 0;
 }
@@ -359,7 +360,7 @@ static u_int note[] = {
 	0x16e8, 0x16f0, 0x16f4, 0x16f8,
 };
 
-static u_int 
+static u_int
 bell_pitchtokey(u_int pitch)
 {
 	int i, oct;
@@ -380,7 +381,7 @@ bell_pitchtokey(u_int pitch)
  * Its values have been calculated as table[i] = -15 * log10(i/100)
  * with an obvious exception for i = 0; This log-table converts a linear
  * volume-scaling (0...100) to a logarithmic scaling as present in the
- * OPM chips. so: Volume 50% = 6 db. 
+ * OPM chips. so: Volume 50% = 6 db.
  */
 
 static u_char vol_table[] = {
@@ -399,7 +400,7 @@ static u_char vol_table[] = {
 	0x00, 0x00, 0x00, 0x00, 0x00,
 };
 
-void 
+void
 bell_on(struct bell_softc *sc)
 {
 	int sps;
@@ -413,7 +414,7 @@ bell_on(struct bell_softc *sc)
 	sc->sc_flags |= BELLF_ON;
 }
 
-void 
+void
 bell_off(struct bell_softc *sc)
 {
 	if (sc->sc_flags & BELLF_ON) {
@@ -422,7 +423,7 @@ bell_off(struct bell_softc *sc)
 	}
 }
 
-void 
+void
 opm_bell(void)
 {
 	struct bell_softc *sc = &bell_softc[0];
@@ -443,7 +444,7 @@ opm_bell(void)
 	}
 }
 
-static void 
+static void
 bell_timeout(void *arg)
 {
 	struct bell_softc *sc = &bell_softc[0];
@@ -453,7 +454,7 @@ bell_timeout(void *arg)
 	callout_stop(&bell_ch);
 }
 
-void 
+void
 opm_bell_on(void)
 {
 	struct bell_softc *sc = &bell_softc[0];
@@ -466,7 +467,7 @@ opm_bell_on(void)
 	bell_on(sc);
 }
 
-void 
+void
 opm_bell_off(void)
 {
 	struct bell_softc *sc = &bell_softc[0];
@@ -475,7 +476,7 @@ opm_bell_off(void)
 		bell_off(sc);
 }
 
-int 
+int
 opm_bell_setup(struct bell_info *data)
 {
 	struct bell_softc *sc = &bell_softc[0];
@@ -493,10 +494,9 @@ opm_bell_setup(struct bell_info *data)
 	return 0;
 }
 
-int 
+int
 bellmstohz(int m)
 {
-	extern int hz;
 	int h = m;
 
 	if (h > 0) {

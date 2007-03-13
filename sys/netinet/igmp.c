@@ -1,4 +1,4 @@
-/*	$NetBSD: igmp.c,v 1.43 2006/10/05 17:35:19 tls Exp $	*/
+/*	$NetBSD: igmp.c,v 1.43.8.1 2007/03/13 16:52:01 ad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igmp.c,v 1.43 2006/10/05 17:35:19 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igmp.c,v 1.43.8.1 2007/03/13 16:52:01 ad Exp $");
 
 #include "opt_mrouting.h"
 
@@ -65,7 +65,8 @@ __KERNEL_RCSID(0, "$NetBSD: igmp.c,v 1.43 2006/10/05 17:35:19 tls Exp $");
 
 #define IP_MULTICASTOPTS	0
 
-POOL_INIT(igmp_rti_pool, sizeof(struct router_info), 0, 0, 0, "igmppl", NULL);
+POOL_INIT(igmp_rti_pool, sizeof(struct router_info), 0, 0, 0, "igmppl", NULL,
+    IPL_SOFTNET);
 struct igmpstat igmpstat;
 int igmp_timers_are_running;
 static LIST_HEAD(, router_info) rti_head = LIST_HEAD_INITIALIZER(rti_head);

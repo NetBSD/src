@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vfsops.c,v 1.28 2007/02/16 17:24:00 hannken Exp $	*/
+/*	$NetBSD: puffs_vfsops.c,v 1.28.6.1 2007/03/13 16:51:36 ad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.28 2007/02/16 17:24:00 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.28.6.1 2007/03/13 16:51:36 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -594,7 +594,7 @@ puffs_init()
 #ifdef _LKM
 	malloc_type_attach(M_PUFFS);
 	pool_init(&puffs_pnpool, sizeof(struct puffs_node), 0, 0, 0,
-	    "puffspnpl", &pool_allocator_nointr);
+	    "puffspnpl", &pool_allocator_nointr, IPL_NONE);
 #endif
 
 	return;

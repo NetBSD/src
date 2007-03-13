@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.85 2007/03/06 11:28:46 dillo Exp $
+# $NetBSD: ALL,v 1.85.2.1 2007/03/13 16:49:58 ad Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.85 $"
+#ident 		"ALL-$Revision: 1.85.2.1 $"
 
 maxusers	32		# estimated number of users
 
@@ -341,6 +341,7 @@ acpilid* 	at acpi?		# ACPI Lid Switch
 acpitz* 	at acpi?		# ACPI Thermal Zone
 
 # Mainboard devices
+aiboost* 	at acpi?		# ASUS AI Booster Hardware monitor
 attimer*	at acpi?		# AT Timer
 com* 		at acpi?		# Serial communications interface
 fdc* 		at acpi?		# Floppy disk controller

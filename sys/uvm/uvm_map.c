@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.235 2007/03/04 06:03:48 christos Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.235.2.1 2007/03/13 16:52:09 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.235 2007/03/04 06:03:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.235.2.1 2007/03/13 16:52:09 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -142,14 +142,14 @@ const char vmmapbsy[] = "vmmapbsy";
  */
 
 POOL_INIT(uvm_vmspace_pool, sizeof(struct vmspace), 0, 0, 0, "vmsppl",
-    &pool_allocator_nointr);
+    &pool_allocator_nointr, IPL_NONE);
 
 /*
  * pool for dynamically-allocated map entries.
  */
 
 POOL_INIT(uvm_map_entry_pool, sizeof(struct vm_map_entry), 0, 0, 0, "vmmpepl",
-    &pool_allocator_nointr);
+    &pool_allocator_nointr, IPL_NONE);
 
 MALLOC_DEFINE(M_VMMAP, "VM map", "VM map structures");
 MALLOC_DEFINE(M_VMPMAP, "VM pmap", "VM pmap");

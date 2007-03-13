@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.107 2007/03/09 14:11:25 ad Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.107.2.1 2007/03/13 16:51:54 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.107 2007/03/09 14:11:25 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.107.2.1 2007/03/13 16:51:54 ad Exp $");
 
 #include "opt_kstack.h"
 #include "opt_maxuprc.h"
@@ -216,17 +216,17 @@ int maxuprc = MAXUPRC;
 int cmask = CMASK;
 
 POOL_INIT(proc_pool, sizeof(struct proc), 0, 0, 0, "procpl",
-    &pool_allocator_nointr);
+    &pool_allocator_nointr, IPL_NONE);
 POOL_INIT(pgrp_pool, sizeof(struct pgrp), 0, 0, 0, "pgrppl",
-    &pool_allocator_nointr);
+    &pool_allocator_nointr, IPL_NONE);
 POOL_INIT(plimit_pool, sizeof(struct plimit), 0, 0, 0, "plimitpl",
-    &pool_allocator_nointr);
+    &pool_allocator_nointr, IPL_NONE);
 POOL_INIT(pstats_pool, sizeof(struct pstats), 0, 0, 0, "pstatspl",
-    &pool_allocator_nointr);
+    &pool_allocator_nointr, IPL_NONE);
 POOL_INIT(rusage_pool, sizeof(struct rusage), 0, 0, 0, "rusgepl",
-    &pool_allocator_nointr);
+    &pool_allocator_nointr, IPL_NONE);
 POOL_INIT(session_pool, sizeof(struct session), 0, 0, 0, "sessionpl",
-    &pool_allocator_nointr);
+    &pool_allocator_nointr, IPL_NONE);
 
 MALLOC_DEFINE(M_EMULDATA, "emuldata", "Per-process emulation data");
 MALLOC_DEFINE(M_PROC, "proc", "Proc structures");

@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_port.c,v 1.60 2006/11/16 01:32:44 christos Exp $ */
+/*	$NetBSD: mach_port.c,v 1.60.8.1 2007/03/13 16:50:19 ad Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include "opt_compat_darwin.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_port.c,v 1.60 2006/11/16 01:32:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_port.c,v 1.60.8.1 2007/03/13 16:50:19 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -645,9 +645,9 @@ void
 mach_port_init(void)
 {
 	pool_init(&mach_port_pool, sizeof (struct mach_port),
-	    0, 0, 0, "mach_port_pool", NULL);
+	    0, 0, 0, "mach_port_pool", NULL, IPL_NONE);
 	pool_init(&mach_right_pool, sizeof (struct mach_right),
-	    0, 0, 0, "mach_right_pool", NULL);
+	    0, 0, 0, "mach_right_pool", NULL, IPL_NONE);
 
 	mach_bootstrap_port = mach_port_get();
 	mach_clock_port = mach_port_get();

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_flow.c,v 1.41 2007/03/04 06:03:21 christos Exp $	*/
+/*	$NetBSD: ip_flow.c,v 1.41.2.1 2007/03/13 16:52:01 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.41 2007/03/04 06:03:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.41.2.1 2007/03/13 16:52:01 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,7 +66,8 @@ __KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.41 2007/03/04 06:03:21 christos Exp $"
 #include <netinet/in_var.h>
 #include <netinet/ip_var.h>
 
-POOL_INIT(ipflow_pool, sizeof(struct ipflow), 0, 0, 0, "ipflowpl", NULL);
+POOL_INIT(ipflow_pool, sizeof(struct ipflow), 0, 0, 0, "ipflowpl", NULL,
+    IPL_NET);
 
 LIST_HEAD(ipflowhead, ipflow);
 

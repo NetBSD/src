@@ -1,4 +1,4 @@
-/*	$NetBSD: uirda.c,v 1.23 2007/02/26 13:36:01 drochner Exp $	*/
+/*	$NetBSD: uirda.c,v 1.23.4.1 2007/03/13 16:50:54 ad Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uirda.c,v 1.23 2007/02/26 13:36:01 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uirda.c,v 1.23.4.1 2007/03/13 16:50:54 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -266,29 +266,23 @@ USB_DECLARE_DRIVER(uirda);
 
 USB_MATCH(uirda)
 {
-	USB_MATCH_START(uirda, uaa);
-	usb_interface_descriptor_t *id;
+	USB_IFMATCH_START(uirda, uaa);
 
 	DPRINTFN(50,("uirda_match\n"));
-
-	if (uaa->iface == NULL)
-		return (UMATCH_NONE);
 
 	if (uirda_lookup(uaa->vendor, uaa->product) != NULL)
 		return (UMATCH_VENDOR_PRODUCT);
 
-	id = usbd_get_interface_descriptor(uaa->iface);
-	if (id != NULL &&
-	    id->bInterfaceClass == UICLASS_APPL_SPEC &&
-	    id->bInterfaceSubClass == UISUBCLASS_IRDA &&
-	    id->bInterfaceProtocol == UIPROTO_IRDA)
+	if (uaa->class == UICLASS_APPL_SPEC &&
+	    uaa->subclass == UISUBCLASS_IRDA &&
+	    uaa->proto == UIPROTO_IRDA)
 		return (UMATCH_IFACECLASS_IFACESUBCLASS_IFACEPROTO);
 	return (UMATCH_NONE);
 }
 
 USB_ATTACH(uirda)
 {
-	USB_ATTACH_START(uirda, sc, uaa);
+	USB_IFATTACH_START(uirda, sc, uaa);
 	usbd_device_handle	dev = uaa->device;
 	usbd_interface_handle	iface = uaa->iface;
 	char			*devinfop;

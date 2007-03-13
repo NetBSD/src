@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.14 2007/03/04 05:28:38 tsutsui Exp $	*/
+/*	$NetBSD: intr.h,v 1.14.2.1 2007/03/13 16:50:14 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -40,8 +40,6 @@
 #define	_X68K_INTR_H_
 
 #include <machine/psl.h>
-
-#if defined(_KERNEL) && !defined(_LOCORE)
 
 /* spl0 requires checking for software interrupts */
 void	spl0(void);
@@ -86,7 +84,7 @@ void	spl0(void);
 
 typedef int ipl_t;
 typedef struct {
-	ipl_t _psl;
+	uint16_t _psl;
 } ipl_cookie_t;
 
 ipl_cookie_t makeiplcookie(ipl_t);
@@ -99,7 +97,5 @@ splraiseipl(ipl_cookie_t icookie)
 }
 
 #include <m68k/softintr.h>
-
-#endif /* _KERNEL && ! _LOCORE */
 
 #endif /* !_X68K_INTR_H_ */

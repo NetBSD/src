@@ -1,8 +1,0 @@
-#	$NetBSD: dot.shrc,v 1.2 2006/09/14 13:01:32 pavel Exp $
-
-. /etc/shrc
-
-case "$-" in *i*)
-	# interactive mode settings go here
-	;;
-esac

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.226 2007/03/09 15:57:34 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.226.2.1 2007/03/13 16:50:29 ad Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -146,7 +146,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.226 2007/03/09 15:57:34 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.226.2.1 2007/03/13 16:50:29 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -3413,7 +3413,7 @@ void
 rf_pool_init(struct pool *p, size_t size, const char *w_chan,
 	     size_t xmin, size_t xmax)
 {
-	pool_init(p, size, 0, 0, 0, w_chan, NULL);
+	pool_init(p, size, 0, 0, 0, w_chan, NULL, IPL_BIO);
 	pool_sethiwat(p, xmax);
 	pool_prime(p, xmin);
 	pool_setlowat(p, xmin);

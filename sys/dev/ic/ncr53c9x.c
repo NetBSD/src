@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.126 2007/03/04 06:01:59 christos Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.126.2.1 2007/03/13 16:50:23 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.126 2007/03/04 06:01:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.126.2.1 2007/03/13 16:50:23 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -508,7 +508,7 @@ ncr53c9x_init(sc, doreset)
 	if (!ecb_pool_initialized) {
 		/* All instances share this pool */
 		pool_init(&ecb_pool, sizeof(struct ncr53c9x_ecb), 0, 0, 0,
-		    "ncr53c9x_ecb", NULL);
+		    "ncr53c9x_ecb", NULL, IPL_BIO);
 		/* make sure to always have some items to play with */
 		if (pool_prime(&ecb_pool, 1) == ENOMEM) {
 			printf("WARNING: not enough memory for ncr53c9x_ecb\n");

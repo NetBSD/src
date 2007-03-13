@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.55 2007/03/04 05:59:54 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.55.2.1 2007/03/13 16:49:58 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.55 2007/03/04 05:59:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.55.2.1 2007/03/13 16:49:58 ad Exp $");
 
 #include "opt_md.h"
 #include "opt_ddb.h"
@@ -159,11 +159,14 @@ static int	__check_dram(paddr_t, paddr_t);
 int		mem_cluster_cnt;
 phys_ram_seg_t	mem_clusters[VM_PHYSSEG_MAX];
 
-void main(void) __attribute__((__noreturn__));
-void machine_startup(int, char *[], struct bootinfo *)
-	__attribute__((__noreturn__));
+/* hpcapm: machine_sleep() */
 void (*__sleep_func)(void *);	/* model dependent sleep function holder */
 void *__sleep_ctx;
+
+extern void main(void) __attribute__((__noreturn__));
+void machine_startup(int, char *[], struct bootinfo *)
+	__attribute__((__noreturn__));
+
 
 void
 machine_startup(int argc, char *argv[], struct bootinfo *bi)
@@ -337,6 +340,7 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 		       CTL_MACHDEP, CPU_CONSDEV, CTL_EOL);
 }
 
+/* hpcapm */
 void
 machine_sleep(void)
 {
@@ -345,10 +349,11 @@ machine_sleep(void)
 		__sleep_func(__sleep_ctx);
 }
 
+/* hpcapm */
 void
 machine_standby(void)
 {
-	// notyet
+	/* notyet */
 }
 
 void
@@ -424,7 +429,7 @@ cpu_reboot(int howto, char *bootstr)
 }
 
 /* return # of physical pages. */
-int
+static int
 mem_cluster_init(paddr_t addr)
 {
 	phys_ram_seg_t *seg;
@@ -473,7 +478,7 @@ mem_cluster_init(paddr_t addr)
 	return (npages);
 }
 
-void
+static void
 mem_cluster_load(void)
 {
 	paddr_t start, end;
@@ -495,7 +500,7 @@ mem_cluster_load(void)
 	sh_dcache_wbinv_all();
 }
 
-void
+static void
 __find_dram_shadow(paddr_t start, paddr_t end)
 {
 	vaddr_t page, startaddr, endaddr;
@@ -544,7 +549,7 @@ __find_dram_shadow(paddr_t start, paddr_t end)
 }
 
 #ifdef NARLY_MEMORY_PROBE
-int
+static int
 __check_dram(paddr_t start, paddr_t end)
 {
 	uint8_t *page;

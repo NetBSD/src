@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.95 2007/02/22 16:45:49 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.95.4.1 2007/03/13 16:50:08 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.95 2007/02/22 16:45:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.95.4.1 2007/03/13 16:50:08 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -1103,7 +1103,7 @@ pmap_init(void)
 
 	/** Initialize the pmap pools **/
 	pool_init(&pmap_pmap_pool, sizeof(struct pmap), 0, 0, 0, "pmappl",
-	    &pool_allocator_nointr);
+	    &pool_allocator_nointr, IPL_NONE);
 }
 
 /* pmap_init_a_tables()			INTERNAL

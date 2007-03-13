@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.86 2007/03/04 06:01:44 christos Exp $	*/
+/*	$NetBSD: ata.c,v 1.86.2.1 2007/03/13 16:50:22 ad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.86 2007/03/04 06:01:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.86.2.1 2007/03/13 16:50:22 ad Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -79,7 +79,8 @@ int atadebug_mask = 0;
 #define ATADEBUG_PRINT(args, level)
 #endif
 
-POOL_INIT(ata_xfer_pool, sizeof(struct ata_xfer), 0, 0, 0, "ataspl", NULL);
+POOL_INIT(ata_xfer_pool, sizeof(struct ata_xfer), 0, 0, 0, "ataspl", NULL,
+    IPL_BIO);
 
 /*
  * A queue of atabus instances, used to ensure the same bus probe order

@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: via_padlock.c,v 1.2 2007/03/04 06:01:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: via_padlock.c,v 1.2.2.1 2007/03/13 16:50:15 ad Exp $");
 
 #include "opt_viapadlock.h"
 
@@ -360,7 +360,7 @@ via_padlock_crypto_encdec(struct cryptop *crp, struct cryptodesc *crd,
 				cuio_copyback((struct uio *)crp->crp_buf,
 				    crd->crd_inject, 16, sc->op_iv);
 			else
-				memcpy(crp->crp_buf + crd->crd_inject,
+				memcpy((char *)crp->crp_buf + crd->crd_inject,
 				    sc->op_iv, 16);
 		}
 	} else {
@@ -376,7 +376,7 @@ via_padlock_crypto_encdec(struct cryptop *crp, struct cryptodesc *crd,
 				cuio_copydata((struct uio *)crp->crp_buf,
 				    crd->crd_inject, 16, sc->op_iv);
 			else
-				memcpy(sc->op_iv, crp->crp_buf +
+				memcpy(sc->op_iv, (char *)crp->crp_buf +
 				    crd->crd_inject, 16);
 		}
 	}
@@ -388,7 +388,7 @@ via_padlock_crypto_encdec(struct cryptop *crp, struct cryptodesc *crd,
 		cuio_copydata((struct uio *)crp->crp_buf,
 		    crd->crd_skip, crd->crd_len, sc->op_buf);
 	else
-		memcpy(sc->op_buf, crp->crp_buf + crd->crd_skip,
+		memcpy(sc->op_buf, (char *)crp->crp_buf + crd->crd_skip,
 		    crd->crd_len);
 
 	sc->op_cw[1] = sc->op_cw[2] = sc->op_cw[3] = 0;
@@ -402,7 +402,7 @@ via_padlock_crypto_encdec(struct cryptop *crp, struct cryptodesc *crd,
 		cuio_copyback((struct uio *)crp->crp_buf,
 		    crd->crd_skip, crd->crd_len, sc->op_buf);
 	else
-		memcpy(crp->crp_buf + crd->crd_skip, sc->op_buf,
+		memcpy((char *)crp->crp_buf + crd->crd_skip, sc->op_buf,
 		    crd->crd_len);
 
 	/* copy out last block for use as next session IV */
@@ -416,8 +416,8 @@ via_padlock_crypto_encdec(struct cryptop *crp, struct cryptodesc *crd,
 			    crd->crd_skip + crd->crd_len - 16, 16,
 			    ses->ses_iv);
 		else
-			memcpy(ses->ses_iv, crp->crp_buf + crd->crd_skip +
-			    crd->crd_len - 16, 16);
+			memcpy(ses->ses_iv, (char *)crp->crp_buf +
+			    crd->crd_skip + crd->crd_len - 16, 16);
 	}
 
 	if (sc->op_buf != NULL) {

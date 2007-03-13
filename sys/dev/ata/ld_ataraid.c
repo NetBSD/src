@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_ataraid.c,v 1.19 2007/03/04 06:01:44 christos Exp $	*/
+/*	$NetBSD: ld_ataraid.c,v 1.19.2.1 2007/03/13 16:50:22 ad Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_ataraid.c,v 1.19 2007/03/04 06:01:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_ataraid.c,v 1.19.2.1 2007/03/13 16:50:22 ad Exp $");
 
 #include "rnd.h"
 
@@ -135,7 +135,7 @@ ld_ataraid_attach(struct device *parent, struct device *self,
 	if (ld_ataraid_initialized == 0) {
 		ld_ataraid_initialized = 1;
 		pool_init(&ld_ataraid_cbufpl, sizeof(struct cbuf), 0,
-		    0, 0, "ldcbuf", NULL);
+		    0, 0, "ldcbuf", NULL, IPL_BIO);
 	}
 
 	sc->sc_aai = aai;	/* this data persists */

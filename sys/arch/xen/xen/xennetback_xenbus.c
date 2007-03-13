@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback_xenbus.c,v 1.14 2007/03/05 04:03:57 dogcow Exp $      */
+/*      $NetBSD: xennetback_xenbus.c,v 1.14.2.1 2007/03/13 16:50:16 ad Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -222,9 +222,10 @@ xvifattach(int n)
 
 	/* initialise pools */
 	pool_init(&xni_pkt_pool, sizeof(struct xni_pkt), 0, 0, 0,
-	    "xnbpkt", NULL);
+	    "xnbpkt", NULL, IPL_VM);
 #if MCLBYTES != PAGE_SIZE
-	pool_init(&xmit_pages_pool, PAGE_SIZE, 0, 0, 0, "xnbxm", NULL);
+	pool_init(&xmit_pages_pool, PAGE_SIZE, 0, 0, 0, "xnbxm", NULL,
+	    IPL_VM);
 	pool_cache_init(&xmit_pages_pool_cache, &xmit_pages_pool,
 	    NULL, NULL, NULL);
 	xmit_pages_pool_cachep = &xmit_pages_pool_cache;

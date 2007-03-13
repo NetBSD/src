@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.85 2007/02/26 13:33:09 drochner Exp $	*/
+/*	$NetBSD: uhub.c,v 1.85.4.1 2007/03/13 16:50:53 ad Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.85 2007/02/26 13:33:09 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.85.4.1 2007/03/13 16:50:53 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,13 +77,13 @@ int	uhubdebug = 0;
 struct uhub_softc {
 	USBBASEDEVICE		sc_dev;		/* base device */
 	usbd_device_handle	sc_hub;		/* USB device */
+	int			sc_proto;	/* device protocol */
 	usbd_pipe_handle	sc_ipipe;	/* interrupt pipe */
 	u_int8_t		*sc_status;
 	u_char			sc_running;
 };
-#define UHUB_PROTO(sc) ((sc)->sc_hub->ddesc.bDeviceProtocol)
-#define UHUB_IS_HIGH_SPEED(sc) (UHUB_PROTO(sc) != UDPROTO_FSHUB)
-#define UHUB_IS_SINGLE_TT(sc) (UHUB_PROTO(sc) == UDPROTO_HSHUBSTT)
+#define UHUB_IS_HIGH_SPEED(sc) ((sc)->sc_proto != UDPROTO_FSHUB)
+#define UHUB_IS_SINGLE_TT(sc) ((sc)->sc_proto == UDPROTO_HSHUBSTT)
 
 Static usbd_status uhub_explore(usbd_device_handle hub);
 Static void uhub_intr(usbd_xfer_handle, usbd_private_handle,usbd_status);
@@ -126,14 +126,13 @@ Static	driver_t uhubroot_driver = {
 USB_MATCH(uhub)
 {
 	USB_MATCH_START(uhub, uaa);
-	usb_device_descriptor_t *dd = usbd_get_device_descriptor(uaa->device);
 
 	DPRINTFN(5,("uhub_match, dd=%p\n", dd));
 	/*
 	 * The subclass for hubs seems to be 0 for some and 1 for others,
 	 * so we just ignore the subclass.
 	 */
-	if (uaa->iface == NULL && dd->bDeviceClass == UDCLASS_HUB)
+	if (uaa->class == UDCLASS_HUB)
 		return (UMATCH_DEVCLASS_DEVSUBCLASS);
 	return (UMATCH_NONE);
 }
@@ -157,6 +156,7 @@ USB_ATTACH(uhub)
 
 	DPRINTFN(1,("uhub_attach\n"));
 	sc->sc_hub = dev;
+	sc->sc_proto = uaa->proto;
 
 	devinfop = usbd_devinfo_alloc(dev, 1);
 	USB_ATTACH_SETUP;
