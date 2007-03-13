@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.h,v 1.73 2007/03/13 13:51:56 drochner Exp $	*/
+/*	$NetBSD: usbdi.h,v 1.74 2007/03/13 15:00:07 drochner Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.h,v 1.18 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -37,6 +37,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#ifndef _USBDI_H_
+#define _USBDI_H_
 
 typedef struct usbd_bus		*usbd_bus_handle;
 typedef struct usbd_device	*usbd_device_handle;
@@ -253,7 +256,6 @@ struct usbif_attach_arg {
 	int			nifaces; /* number of interfaces */
 };
 
-#if defined(__NetBSD__) || defined(__OpenBSD__)
 /* Match codes. */
 #define UMATCH_HIGHEST					15
 /* First five codes is for a whole device. */
@@ -276,39 +278,9 @@ struct usbif_attach_arg {
 /* No match */
 #define UMATCH_NONE					 0
 
-#elif defined(__FreeBSD__)
-/* FreeBSD needs values less than zero */
-#define UMATCH_VENDOR_PRODUCT_REV			(-10)
-#define UMATCH_VENDOR_PRODUCT				(-20)
-#define UMATCH_VENDOR_DEVCLASS_DEVPROTO			(-30)
-#define UMATCH_DEVCLASS_DEVSUBCLASS_DEVPROTO		(-40)
-#define UMATCH_DEVCLASS_DEVSUBCLASS			(-50)
-#define UMATCH_VENDOR_PRODUCT_REV_CONF_IFACE		(-60)
-#define UMATCH_VENDOR_PRODUCT_CONF_IFACE		(-70)
-#define UMATCH_VENDOR_IFACESUBCLASS_IFACEPROTO		(-80)
-#define UMATCH_VENDOR_IFACESUBCLASS			(-90)
-#define UMATCH_IFACECLASS_IFACESUBCLASS_IFACEPROTO	(-100)
-#define UMATCH_IFACECLASS_IFACESUBCLASS			(-110)
-#define UMATCH_IFACECLASS				(-120)
-#define UMATCH_IFACECLASS_GENERIC			(-130)
-#define UMATCH_GENERIC					(-140)
-#define UMATCH_NONE					(ENXIO)
-
-#endif
-
-#if defined(__FreeBSD__)
-int usbd_driver_load(module_t mod, int what, void *arg);
-#endif
-
 /* XXX Perhaps USB should have its own levels? */
-#ifdef USB_USE_SOFTINTR
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 #define splusb splsoftnet
-#else
-#define	splusb splsoftclock
-#endif /* __HAVE_GENERIC_SOFT_INTERRUPTS */
-#else
-#define splusb splbio
-#endif /* USB_USE_SOFTINTR */
 #define splhardusb splbio
 #define IPL_USB IPL_BIO
+
+#endif /* _USBDI_H_ */
