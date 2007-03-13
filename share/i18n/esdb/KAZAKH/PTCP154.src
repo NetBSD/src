@@ -1,4 +1,4 @@
-# $NetBSD: PTCP154.src,v 1.1 2006/03/28 14:44:01 tnozaki Exp $
+# $NetBSD: PTCP154.src,v 1.1 2007/03/13 16:34:39 tnozaki Exp $
 
 NAME		"PTCP154"
 ENCODING	"NONE"
