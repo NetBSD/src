@@ -1,4 +1,4 @@
-/*	$NetBSD: urio.c,v 1.27 2007/03/04 06:02:50 christos Exp $	*/
+/*	$NetBSD: urio.c,v 1.28 2007/03/13 13:51:56 drochner Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: urio.c,v 1.27 2007/03/04 06:02:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: urio.c,v 1.28 2007/03/13 13:51:56 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -154,9 +154,6 @@ USB_MATCH(urio)
 	USB_MATCH_START(urio, uaa);
 
 	DPRINTFN(50,("urio_match\n"));
-
-	if (uaa->iface != NULL)
-		return (UMATCH_NONE);
 
 	return (urio_lookup(uaa->vendor, uaa->product) != NULL ?
 		UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
