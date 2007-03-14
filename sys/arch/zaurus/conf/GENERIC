@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.3 2007/02/25 13:46:40 nonaka Exp $
+#	$NetBSD: GENERIC,v 1.4 2007/03/14 12:27:25 drochner Exp $
 #
 # GENERIC machine description file
 #
@@ -239,7 +239,7 @@ pxaudc0 at pxaip?	# USB Device Controller
 
 # USB Hubs
 #uhub* at usb?
-#uhub* at uhub? port ? configuration ? interface ?
+#uhub* at uhub? port ?
 
 # USB HID device
 #uhidev* at uhub? port ? configuration ? interface ?
