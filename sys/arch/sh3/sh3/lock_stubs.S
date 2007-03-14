@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.3 2007/03/14 01:14:25 uwe Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.4 2007/03/14 01:20:20 uwe Exp $	*/
 
 /*
  * Copyright (c) 2007 Valeriy E. Ushakov
@@ -32,6 +32,7 @@
 
 /*
  * LINTSTUB: include <sys/types.h>
+ * LINTSTUB: include <sys/mutex.h>
  */
 
 
