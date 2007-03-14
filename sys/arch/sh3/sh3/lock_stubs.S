@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.2 2007/02/23 03:24:47 uwe Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.3 2007/03/14 01:14:25 uwe Exp $	*/
 
 /*
  * Copyright (c) 2007 Valeriy E. Ushakov
@@ -57,3 +57,48 @@ NENTRY(_lock_cas)
 	ldc	r7, sr		! restore SR (cannot be in delay slot)
 	rts
 	 nop
+
+
+/*
+ * LINTSTUB: Func: void mutex_enter(kmutex_t *mtx);
+ */
+NENTRY(mutex_enter)
+	sts.l	pr, @-sp
+	mov.l	.L_curlwp, r6
+	mov	#0, r5
+	bsr	_lock_cas	! _lock_cas(&mtx->mtx_owner, 0, curlwp)
+	 mov.l	@r6, r6
+	tst	r0, r0
+	bf.s	1f		! return if success
+	 lds.l	@sp+, pr
+	mov.l	.L_mutex_vector_enter, r0
+	jmp	@r0		! otherwise - hard case
+	 nop
+	/* NOTREACHED */
+1:	rts
+	 nop
+
+
+/*
+ * LINTSTUB: Func: void mutex_exit(kmutex_t *mtx);
+ */
+NENTRY(mutex_exit)
+	sts.l	pr, @-sp
+	mov.l	.L_curlwp, r5
+	mov	#0, r6
+	bsr	_lock_cas	! _lock_cas(&mtx->mtx_owner, curlwp, 0)
+	 mov.l	@r5, r5
+	tst	r0, r0
+	bf.s	1f		! return if success
+	 lds.l	@sp+, pr
+	mov.l	.L_mutex_vector_exit, r0
+	jmp	@r0		! otherwise - hard case
+	 nop
+	/* NOTREACHED */
+1:	rts
+	 nop
+
+	.align 2
+.L_curlwp:		.long	_C_LABEL(curlwp)
+.L_mutex_vector_enter:	.long	_C_LABEL(mutex_vector_enter)
+.L_mutex_vector_exit:	.long	_C_LABEL(mutex_vector_exit)
