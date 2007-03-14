@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.809 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.810 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -65,4 +65,4 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		in default INSTALL and GENERIC kernels. [bouyer 20070306]
 	openssh: import 4.6 [christos 20070310]
 	aiboost(4): ASUS AI Booster ACPI Hardware monitor driver,
-		adapted from FreeBSD for envsys(9). [xtraeme 20070313]
+		adapted from FreeBSD for envsys(4). [xtraeme 20070313]
