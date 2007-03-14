@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_lwp.c,v 1.13 2007/03/14 23:00:32 yamt Exp $	*/
+/*	$NetBSD: sys_lwp.c,v 1.14 2007/03/14 23:07:27 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.13 2007/03/14 23:00:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.14 2007/03/14 23:07:27 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -509,15 +509,15 @@ sys__lwp_park(struct lwp *l, void *v, register_t *retval)
 	    &lwp_park_sobj);
 	error = sleepq_unblock(timo, 1);
 	switch (error) {
-		case EWOULDBLOCK:
-			error = ETIMEDOUT;
-			break;
-		case ERESTART:
-			error = EINTR;
-			break;
-		default:
-			/* nothing */
-			break;
+	case EWOULDBLOCK:
+		error = ETIMEDOUT;
+		break;
+	case ERESTART:
+		error = EINTR;
+		break;
+	default:
+		/* nothing */
+		break;
 	}
 	return error;
 }
