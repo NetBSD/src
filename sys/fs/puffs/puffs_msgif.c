@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.c,v 1.19 2007/02/27 23:43:23 pooka Exp $	*/
+/*	$NetBSD: puffs_msgif.c,v 1.20 2007/03/14 12:13:58 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.19 2007/02/27 23:43:23 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.20 2007/03/14 12:13:58 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/fstrans.h>
@@ -151,8 +151,6 @@ puffs_vntouser_req(struct puffs_mount *pmp, int optype,
 
 /*
  * vnode level request, copy routines can adjust "kernbuf".
- * We overload park_copylen != park_maxlen to signal that the park
- * in question is of adjusting type.
  */
 int
 puffs_vntouser_adjbuf(struct puffs_mount *pmp, int optype,
@@ -178,6 +176,42 @@ puffs_vntouser_adjbuf(struct puffs_mount *pmp, int optype,
 	*buflen = park.park_copylen;
 
 	return error;
+}
+
+/*
+ * File server interaction is async from caller perspective.
+ * biodone(bp)J is signalled in putop.
+ */
+void
+puffs_vntouser_bioread_async(struct puffs_mount *pmp, void *cookie,
+	size_t tomove, off_t offset, struct buf *bp,
+	struct vnode *vp1, struct vnode *vp2)
+{
+	struct puffs_park *ppark;
+	struct puffs_vnreq_read *read_argp;
+
+	MALLOC(ppark, struct puffs_park *, sizeof(struct puffs_park),
+	    M_PUFFS, M_WAITOK);
+	MALLOC(read_argp, struct puffs_vnreq_read *,
+	    sizeof(struct puffs_vnreq_read), M_PUFFS, M_WAITOK | M_ZERO);
+
+	read_argp->pvnr_ioflag = 0;
+	read_argp->pvnr_resid = tomove;
+	read_argp->pvnr_offset = offset;
+	puffs_credcvt(&read_argp->pvnr_cred, FSCRED);
+
+	ppark->park_preq = (void *)read_argp;
+	ppark->park_preq->preq_opclass = PUFFSOP_VN;
+	ppark->park_preq->preq_optype = PUFFS_VN_READ;
+	ppark->park_preq->preq_cookie = cookie;
+
+	ppark->park_copylen = sizeof(struct puffs_vnreq_read);
+	ppark->park_maxlen = sizeof(struct puffs_vnreq_read) + tomove;
+	ppark->park_bp = bp;
+	ppark->park_flags
+	    = PUFFS_PARKFLAG_ADJUSTABLE | PUFFS_PARKFLAG_ASYNCBIOREAD;
+
+	(void)touser(pmp, ppark, puffs_getreqid(pmp), vp1, vp2);
 }
 
 /*
@@ -240,6 +274,7 @@ touser(struct puffs_mount *pmp, struct puffs_park *ppark, uint64_t reqid,
 	 * Yes, this is bordering disgusting.  Barfbags are on me.
 	 */
 	if (PUFFSOP_WANTREPLY(ppark->park_preq->preq_opclass)
+	   && (ppark->park_flags & PUFFS_PARKFLAG_ASYNCBIOREAD) == 0
 	   && (l->l_flag & LW_PENDSIG) != 0 && sigispending(l, 0)) {
 		if (PUFFSOP_OPCLASS(preq->preq_opclass) == PUFFSOP_VN
 		    && preq->preq_optype == PUFFS_VN_INACTIVE) {
@@ -314,14 +349,15 @@ touser(struct puffs_mount *pmp, struct puffs_park *ppark, uint64_t reqid,
 	 */
 	simple_unlock(&pmp->pmp_lock);
 
-	DPRINTF(("touser: enqueueing req %" PRIu64 ", preq: %p, park: %p, "
-	    "c/t: 0x%x/0x%x\n", preq->preq_id, preq, ppark, preq->preq_opclass,
-	    preq->preq_optype));
+	DPRINTF(("touser: req %" PRIu64 ", preq: %p, park: %p, "
+	    "c/t: 0x%x/0x%x, f: 0x%x\n", preq->preq_id, preq, ppark,
+	    preq->preq_opclass, preq->preq_optype, ppark->park_flags));
 
 	wakeup(&pmp->pmp_req_touser);
 	selnotify(pmp->pmp_sel, 0);
 
-	if (PUFFSOP_WANTREPLY(ppark->park_preq->preq_opclass)) {
+	if (PUFFSOP_WANTREPLY(ppark->park_preq->preq_opclass)
+	    && (ppark->park_flags & PUFFS_PARKFLAG_ASYNCBIOREAD) == 0) {
 		struct puffs_park *valetpark = NULL;
 		int error;
 
@@ -555,12 +591,16 @@ puffs_getop(struct puffs_mount *pmp, struct puffs_reqh_get *phg, int nonblock)
 	return error;
 }
 
+/*
+ * urgh, too complex, be very very careful while editing, i.e. NEEDS CLEANUP
+ */
 int
 puffs_putop(struct puffs_mount *pmp, struct puffs_reqh_put *php)
 {
 	struct puffs_park *park;
 	struct puffs_req tmpreq;
 	struct puffs_req *nextpreq;
+	struct buf *bp;
 	void *userbuf;
 	uint64_t id;
 	size_t reqlen;
@@ -649,6 +689,27 @@ puffs_putop(struct puffs_mount *pmp, struct puffs_reqh_put *php)
 		if (error)
 			goto loopout;
 		nextpreq = park->park_preq;
+		bp = park->park_bp;
+
+		if (park->park_flags & PUFFS_PARKFLAG_ASYNCBIOREAD) {
+			struct puffs_vnreq_read *read_argp;
+			size_t moved;
+
+			bp->b_error = park->park_preq->preq_rv;
+
+			DPRINTF(("puffs_putop: async bioread for park %p, "
+			    "bp %p, error %d\n", park, bp, bp->b_error));
+
+			if (bp->b_error == 0) {
+				read_argp = (void *)park->park_preq;
+				moved = park->park_maxlen
+				    - sizeof(struct puffs_vnreq_read)
+				    - read_argp->pvnr_resid;
+				memcpy(bp->b_data, read_argp->pvnr_data, moved);
+				bp->b_resid = bp->b_bcount - moved;
+				biodone(bp);
+			}
+		}
 
  next:
 		/* all's well, prepare for next op */
@@ -658,10 +719,21 @@ puffs_putop(struct puffs_mount *pmp, struct puffs_reqh_put *php)
 		donesome++;
 
  loopout:
-		if (error && park->park_preq)
+		if (error && park->park_preq) {
 			park->park_preq->preq_rv = error;
+			if (park->park_flags & PUFFS_PARKFLAG_ASYNCBIOREAD) {
+				bp = park->park_bp;
+				bp->b_error = error;
+				bp->b_flags |= B_ERROR;
+				biodone(bp);
+			}
+		}
 
 		if (wgone) {
+			FREE(park, M_PUFFS);
+			simple_lock(&pmp->pmp_lock);
+		} else if (park->park_flags & PUFFS_PARKFLAG_ASYNCBIOREAD) {
+			free(park->park_preq, M_PUFFS);
 			FREE(park, M_PUFFS);
 			simple_lock(&pmp->pmp_lock);
 		} else {
