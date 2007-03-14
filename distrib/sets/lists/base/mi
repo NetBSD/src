@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.696 2007/03/13 16:34:37 tnozaki Exp $
+# $NetBSD: mi,v 1.697 2007/03/14 15:49:25 tnozaki Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -2501,6 +2501,8 @@
 ./usr/share/locale/tr/LC_MESSAGES		base-locale-tr
 ./usr/share/locale/tr/LC_MESSAGES/tar.mo	base-obsolete		obsolete
 ./usr/share/locale/tr/LC_MESSAGES/texinfo.mo	base-texinfo_locale-tr	nls
+./usr/share/locale/tr_TR.ISO8859-9		base-locale-tr
+./usr/share/locale/tr_TR.ISO8859-9/LC_CTYPE	base-locale-tr		nls
 ./usr/share/locale/uk				base-locale-share
 ./usr/share/locale/uk/LC_MESSAGES		base-locale-share
 ./usr/share/locale/uk_UA.CP1251			base-locale-uk
