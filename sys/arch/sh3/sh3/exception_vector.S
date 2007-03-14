@@ -1,4 +1,4 @@
-/*	$NetBSD: exception_vector.S,v 1.20 2006/09/21 20:40:16 uwe Exp $	*/
+/*	$NetBSD: exception_vector.S,v 1.21 2007/03/14 22:38:00 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
 #include <sh3/mmu_sh3.h>
 #include <sh3/mmu_sh4.h>
 
-__KERNEL_RCSID(0, "$NetBSD: exception_vector.S,v 1.20 2006/09/21 20:40:16 uwe Exp $")
+__KERNEL_RCSID(0, "$NetBSD: exception_vector.S,v 1.21 2007/03/14 22:38:00 uwe Exp $")
 
 
 /*
@@ -72,50 +72,50 @@ NENTRY(sh_vector_generic)
 	__INTR_MASK(r0, r1)
 	/* Identify exception cause */
 	MOV	(EXPEVT, r0)
-	mov.l	@r0,	r0
-	mov.l	r0,	@(TF_EXPEVT, r14) /* trapframe->tf_expevt = EXPEVT */
+	mov.l	@r0, r0
+	mov.l	r0, @(TF_EXPEVT, r14)	/* trapframe->tf_expevt = EXPEVT */
 	/* Get curlwp */
 	mov.l	_L.curlwp, r1
-	mov.l	@r1,	r4	/* 1st arg */
+	mov.l	@r1, r4			/* 1st arg */
 	/* Get TEA */
-	MOV	(TEA,	r1)
-	mov.l	@r1,	r6	/* 3rd arg */
+	MOV	(TEA, r1)
+	mov.l	@r1, r6			/* 3rd arg */
 	/* Check TLB exception or not */
 	mov.l	_L.TLB_PROT_ST, r1
-	cmp/hi	r1,	r0
+	cmp/hi	r1, r0
 	bt	1f
 
 	/* tlb_exception(curlwp, trapframe, TEA); */
 	__EXCEPTION_UNBLOCK(r0, r1)
 	mov.l	_L.tlb, r0
 	jsr	@r0
-	 mov	r14,	r5	/* 2nd arg */
+	 mov	r14, r5			/* 2nd arg */
 	bra	2f
 	 nop
 
 	/* general_exception(curlwp, trapframe, TEA); */
-1:	mov	r4,	r8
+1:	mov	r4, r8
 #ifdef DDB
-	mov	#0,	r2
+	mov	#0, r2
 	MOV	(BBRA, r1)
-	mov.w	r2,	@r1	/* disable UBC */
-	mov.l	r2,	@(TF_UBC, r14)	/* clear trapframe->tf_ubc */
+	mov.w	r2, @r1			/* disable UBC */
+	mov.l	r2, @(TF_UBC, r14)	/* clear trapframe->tf_ubc */
 #endif /* DDB */
 	__EXCEPTION_UNBLOCK(r0, r1)
 	mov.l	_L.general, r0
 	jsr	@r0
-	 mov	r14,	r5	/* 2nd arg */
+	 mov	r14, r5			/* 2nd arg */
 
 	/* Check for ASTs on exit to user mode. */
-	mov	r8,	r4
-	mov.l	_L.ast,	r0
+	mov	r8, r4
+	mov.l	_L.ast, r0
 	jsr	@r0
-	 mov	r14,	r5
+	 mov	r14, r5
 #ifdef DDB	/* BBRA = trapframe->tf_ubc */
 	__EXCEPTION_BLOCK(r0, r1)
 	mov.l	@(TF_UBC, r14), r0
 	MOV	(BBRA, r1)
-	mov.w	r0,	@r1
+	mov.w	r0, @r1
 #endif /* DDB */
 2:	__EXCEPTION_RETURN
 	/* NOTREACHED */
@@ -145,48 +145,48 @@ VECTOR_END_MARKER(sh_vector_generic_end)
 NENTRY(sh3_vector_tlbmiss)
 	__EXCEPTION_ENTRY
 	mov	#(SH3_TEA & 0xff), r0
-	mov.l	@r0,	r6	/* 3rd arg: va = TEA */
+	mov.l	@r0, r6		/* 3rd arg: va = TEA */
 #if !defined(P1_STACK)
 	/* Load kernel stack */
 	mov.l	__L.VPN_MASK, r0
-	and	r6,	r0
-	tst	r0,	r0	/* check VPN == 0 */
+	and	r6, r0
+	tst	r0, r0		/* check VPN == 0 */
 	bt	6f
 	mov.l	_L.CURUPTE, r1
-	mov.l	@r1,	r1
-	mov	#UPAGES,r3
-	mov	#1,	r2
-4:	mov.l	@r1+,	r7
-	cmp/eq	r7,	r0	/* md_upte.addr: u-area VPN */
+	mov.l	@r1, r1
+	mov	#UPAGES, r3
+	mov	#1, r2
+4:	mov.l	@r1+, r7
+	cmp/eq	r7, r0		/* md_upte.addr: u-area VPN */
 	bt	5f
-	add	#4,	r1	/* skip md_upte.data */
-	cmp/eq	r2,	r3
+	add	#4, r1		/* skip md_upte.data */
+	cmp/eq	r2, r3
 	bf/s	4b
-	 add	#1,	r2
+	 add	#1, r2
 	bra	7f		/* pull insn at 6f into delay slot */
 	 mov	#(SH3_EXPEVT & 0xff), r0
-5:	mov.l	@r1,	r2	/* md_upte.data: u-area PTE */
+5:	mov.l	@r1, r2		/* md_upte.data: u-area PTE */
 	mov	#(SH3_PTEL & 0xff), r1
-	mov.l	r2,	@r1
+	mov.l	r2, @r1
 	mov	#(SH3_PTEH & 0xff), r1
-	mov.l	@r1,	r2
+	mov.l	@r1, r2
 	mov.l	__L.VPN_MASK, r0
-	and	r2,	r0
-	mov.l	r0,	@r1	/* ASID 0 */
+	and	r2, r0
+	mov.l	r0, @r1		/* ASID 0 */
 	ldtlb
 	bra	3f
-	 mov.l	r2,	@r1	/* restore ASID */
+	 mov.l	r2, @r1		/* restore ASID */
 #endif /* !P1_STACK */
 6:	mov	#(SH3_EXPEVT & 0xff), r0
-7:	mov.l	@r0,	r0
-	mov.l	r0,	@(TF_EXPEVT, r14) /* trapframe->tf_expevt = EXPEVT */
-	mov.l	2f,	r0
-	mov.l	@r0,	r4	/* 1st arg */
+7:	mov.l	@r0, r0
+	mov.l	r0, @(TF_EXPEVT, r14)	/* trapframe->tf_expevt = EXPEVT */
+	mov.l	2f, r0
+	mov.l	@r0, r4		/* 1st arg */
 	__INTR_MASK(r0, r1)
 	__EXCEPTION_UNBLOCK(r0, r1)
-	mov.l	1f,	r0
+	mov.l	1f, r0
 	jsr	@r0
-	 mov	r14,	r5	/* 2nd arg */
+	 mov	r14, r5		/* 2nd arg */
 3:	__EXCEPTION_RETURN
 	.align	2
 2:		.long	_C_LABEL(curlwp)
@@ -211,17 +211,17 @@ VECTOR_END_MARKER(sh3_vector_tlbmiss_end)
 NENTRY(sh4_vector_tlbmiss)
 	__EXCEPTION_ENTRY
 	mov.l	_L.TEA4, r0
-	mov.l	@r0,	r6
+	mov.l	@r0, r6
 	mov.l	_L.EXPEVT4, r0
-	mov.l	@r0,	r0
-	mov.l	r0,	@(TF_EXPEVT, r14) /* trapframe->tf_expevt = EXPEVT */
-	mov.l	2f,	r0
-	mov.l	@r0,	r4	/* 1st arg */
+	mov.l	@r0, r0
+	mov.l	r0, @(TF_EXPEVT, r14)	/* trapframe->tf_expevt = EXPEVT */
+	mov.l	2f, r0
+	mov.l	@r0, r4			/* 1st arg */
 	__INTR_MASK(r0, r1)
 	__EXCEPTION_UNBLOCK(r0, r1)
-	mov.l	1f,	r0
+	mov.l	1f, r0
 	jsr	@r0
-	 mov	r14,	r5	/* 2nd arg */
+	 mov	r14, r5			/* 2nd arg */
 	__EXCEPTION_RETURN
 	.align	2
 1:		.long	_C_LABEL(tlb_exception)
@@ -243,27 +243,27 @@ VECTOR_END_MARKER(sh4_vector_tlbmiss_end)
  */
 NENTRY(sh_vector_interrupt)
 	__EXCEPTION_ENTRY
-	xor	r0,	r0
-	mov.l	r0,	@(TF_EXPEVT, r14) /* (for debug) */
-	stc	r0_bank,r6	/* ssp */
+	xor	r0, r0
+	mov.l	r0, @(TF_EXPEVT, r14)	/* (for debug) */
+	stc	r0_bank, r6		/* ssp */
 	/* Enable exception for P3 access */
 	__INTR_MASK(r0, r1)
 	__EXCEPTION_UNBLOCK(r0, r1)
 	/* uvmexp.intrs++ */
 	mov.l	__L.uvmexp.intrs, r0
-	mov.l	@r0,	r1
-	add	#1	r1
-	mov.l	r1,	@r0
+	mov.l	@r0, r1
+	add	#1 r1
+	mov.l	r1, @r0
 	/* Dispatch interrupt handler */
 	mov.l	__L.intc_intr, r0
 	jsr	@r0		/* intc_intr(ssr, spc, ssp) */
 	 nop
 	/* Check for ASTs on exit to user mode. */
-	mov.l	1f,	r0
-	mov.l	@r0,	r4	/* 1st arg */
+	mov.l	1f, r0
+	mov.l	@r0, r4		/* 1st arg */
 	mov.l	__L.ast, r0
 	jsr	@r0
-	 mov	r14,	r5	/* 2nd arg */
+	 mov	r14, r5		/* 2nd arg */
 	__EXCEPTION_RETURN
 	.align	2
 1:			.long	_C_LABEL(curlwp)
