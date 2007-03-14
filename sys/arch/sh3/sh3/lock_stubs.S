@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.5 2007/03/14 02:01:19 uwe Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.6 2007/03/14 05:03:52 uwe Exp $	*/
 
 /*
  * Copyright (c) 2007 Valeriy E. Ushakov
@@ -42,25 +42,23 @@
 /*
  * LINTSTUB: Func: int _lock_cas(volatile uintptr_t *ptr, uintptr_t old, uintptr_t new);
  *
- *	Brute force with splhigh() for now.  Need to be redone as RAS.
+ *	Atomic compare-and-swap for kernel use.  SuperH machines are
+ *	uniprocessor, so we need to be atomic only w.r.t. interrupts.
+ *	Implement this as (the only in-kernel) RAS, with restart check
+ *	done in ast() on return from interrupt.
  */
 NENTRY(_lock_cas)
-	mov	#PSL_IMASK, r2	! 0xf0 - gets sign extended
-	stc	sr, r3
-	extu.b	r2, r2		! undo sign extention
-	mov	r3, r7		! preserve SR
-	or	r2, r3		! mask all interrupts
-	ldc	r3, sr
-
+ALTENTRY(_lock_cas_ras_start)
 	mov.l	@r4, r1
 	cmp/eq	r1, r5		! T = (*ptr == old)
 	bf.s	1f
 	 movt	r0		! retval = T
 	mov.l	r6, @r4		! *ptr = new
-1:
-	ldc	r7, sr		! restore SR (cannot be in delay slot)
-	rts
+ALTENTRY(_lock_cas_ras_end)
+1:	rts
 	 nop
+	SET_ENTRY_SIZE(_lock_cas)
+
 
 #if !defined(LOCKDEBUG)
 
