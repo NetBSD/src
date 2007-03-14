@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.52 2007/02/20 19:45:37 pooka Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.53 2007/03/14 12:13:58 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.52 2007/02/20 19:45:37 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.53 2007/03/14 12:13:58 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/fstrans.h>
@@ -1785,21 +1785,22 @@ puffs_strategy(void *v)
 		dowritefaf = 1;
 
 #ifdef DIAGNOSTIC
-	if (dowritefaf)
-		KASSERT((bp->b_flags & B_READ) == 0);
 	if (curproc == uvm.pagedaemon_proc)
 		KASSERT(dowritefaf);
 #endif
 
-	if (bp->b_flags & B_READ) {
+	tomove = PUFFS_TOMOVE(bp->b_bcount, pmp);
+
+	if ((bp->b_flags & (B_READ | B_ASYNC)) == (B_READ | B_ASYNC)) {
+		puffs_vntouser_bioread_async(pmp, VPTOPNC(vp), tomove,
+		    bp->b_blkno << DEV_BSHIFT, bp, LOCKEDVP(vp), NULL);
+	} else if (bp->b_flags & B_READ) {
 		argsize = sizeof(struct puffs_vnreq_read);
 		read_argp = malloc(argsize, M_PUFFS, M_NOWAIT | M_ZERO);
 		if (read_argp == NULL) {
 			error = ENOMEM;
 			goto out;
 		}
-
-		tomove = PUFFS_TOMOVE(bp->b_bcount, pmp);
 
 		read_argp->pvnr_ioflag = 0;
 		read_argp->pvnr_resid = tomove;
@@ -1829,8 +1830,6 @@ puffs_strategy(void *v)
 			error = ENOMEM;
 			goto out;
 		}
-
-		tomove = PUFFS_TOMOVE(bp->b_bcount, pmp);
 
 		write_argp->pvnr_ioflag = 0;
 		write_argp->pvnr_resid = tomove;
@@ -1877,7 +1876,8 @@ puffs_strategy(void *v)
 		bp->b_flags |= B_ERROR;
 	}
 
-	biodone(bp);
+	if ((bp->b_flags & (B_READ | B_ASYNC)) != (B_READ | B_ASYNC))
+		biodone(bp);
 	return error;
 }
 
