@@ -1,4 +1,4 @@
-.\"	$NetBSD: aiboost.4,v 1.1 2007/03/14 00:43:51 xtraeme Exp $
+.\"	$NetBSD: aiboost.4,v 1.2 2007/03/14 07:10:51 wiz Exp $
 .\"
 .\" Copyright (c) 2007 Juan Romero Pardines
 .\" All rights reserved.
@@ -36,14 +36,15 @@ The
 .Nm
 driver provides support for monitoring the hardware sensors in recent
 .Tn ASUS
-motherboards. The driver uses ACPI as the backend to fetch
-sensor values and descriptions and it's compatible with the
+motherboards.
+The driver uses ACPI as the backend to fetch sensor values and
+descriptions and provides its data via the
 .Xr envsys 4
 interface.
 .Pp
 The
 .Nm
-driver tipically has 7 sensors, depends on the motherboard and
+driver typically has 7 sensors, depending on the motherboard and
 chipset:
 .Bl -column "Sensor" "Units" "Typical" -offset indent
 .It Sy "Sensor" Ta Sy "Units" Ta Sy "Typical Use"
@@ -76,10 +77,8 @@ and
 who adapted the code for
 .Nx .
 .Sh BUGS
-It's possible to modify voltages via the ACPI methods
-in the DSDT, but for now the driver only reports sensor's
-value. CPU Q-Fan is another thing that it's tipically
-specified in the ACPI namespace, and in the future we should
-handle this feature (to enable or disable automatic/manual
-fan mode).
-
+It's possible to modify voltages via the ACPI methods in the DSDT,
+but for now the driver only reports the sensors' values.
+CPU Q-Fan is another thing that is typically specified in the ACPI
+namespace, and in the future we should handle this feature (to
+enable or disable automatic/manual fan mode).
