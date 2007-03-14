@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.6 2007/03/14 05:03:52 uwe Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.7 2007/03/14 05:38:28 uwe Exp $	*/
 
 /*
  * Copyright (c) 2007 Valeriy E. Ushakov
@@ -51,12 +51,11 @@ NENTRY(_lock_cas)
 ALTENTRY(_lock_cas_ras_start)
 	mov.l	@r4, r1
 	cmp/eq	r1, r5		! T = (*ptr == old)
-	bf.s	1f
-	 movt	r0		! retval = T
+	bf	1f
 	mov.l	r6, @r4		! *ptr = new
 ALTENTRY(_lock_cas_ras_end)
 1:	rts
-	 nop
+	 movt	r0		! retval = T
 	SET_ENTRY_SIZE(_lock_cas)
 
 
@@ -71,15 +70,16 @@ NENTRY(mutex_enter)
 	mov	#0, r5
 	bsr	_lock_cas	! _lock_cas(&mtx->mtx_owner, 0, curlwp)
 	 mov.l	@r6, r6
-	tst	r0, r0
-	bf.s	1f		! return if success
+	tst	r0, r0		! failed?
+	bt.s	1f		! hard case
 	 lds.l	@sp+, pr
-	mov.l	.L_mutex_vector_enter, r0
-	jmp	@r0		! otherwise - hard case
+	rts
+	 nop
+
+1:	mov.l	.L_mutex_vector_enter, r0
+	jmp	@r0
 	 nop
 	/* NOTREACHED */
-1:	rts
-	 nop
 
 
 /*
@@ -91,15 +91,16 @@ NENTRY(mutex_exit)
 	mov	#0, r6
 	bsr	_lock_cas	! _lock_cas(&mtx->mtx_owner, curlwp, 0)
 	 mov.l	@r5, r5
-	tst	r0, r0
-	bf.s	1f		! return if success
+	tst	r0, r0		! failed?
+	bt.s	1f		! hard case
 	 lds.l	@sp+, pr
-	mov.l	.L_mutex_vector_exit, r0
-	jmp	@r0		! otherwise - hard case
+	rts
+	 nop
+
+1:	mov.l	.L_mutex_vector_exit, r0
+	jmp	@r0
 	 nop
 	/* NOTREACHED */
-1:	rts
-	 nop
 
 	.align 2
 .L_curlwp:		.long	_C_LABEL(curlwp)
