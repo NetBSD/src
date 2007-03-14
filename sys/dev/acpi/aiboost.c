@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_aiboost.c,v 1.1 2007/03/13 04:01:51 xtraeme Exp $ */
+/* $NetBSD: aiboost.c,v 1.1 2007/03/14 00:43:04 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_aiboost.c,v 1.1 2007/03/13 04:01:51 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aiboost.c,v 1.1 2007/03/14 00:43:04 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
