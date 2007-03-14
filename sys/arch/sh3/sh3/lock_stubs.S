@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.4 2007/03/14 01:20:20 uwe Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.5 2007/03/14 02:01:19 uwe Exp $	*/
 
 /*
  * Copyright (c) 2007 Valeriy E. Ushakov
@@ -30,6 +30,9 @@
 #include <sh3/asm.h>
 #include <sh3/psl.h>
 
+#include "opt_lockdebug.h"
+
+
 /*
  * LINTSTUB: include <sys/types.h>
  * LINTSTUB: include <sys/mutex.h>
@@ -59,6 +62,7 @@ NENTRY(_lock_cas)
 	rts
 	 nop
 
+#if !defined(LOCKDEBUG)
 
 /*
  * LINTSTUB: Func: void mutex_enter(kmutex_t *mtx);
@@ -103,3 +107,5 @@ NENTRY(mutex_exit)
 .L_curlwp:		.long	_C_LABEL(curlwp)
 .L_mutex_vector_enter:	.long	_C_LABEL(mutex_vector_enter)
 .L_mutex_vector_exit:	.long	_C_LABEL(mutex_vector_exit)
+
+#endif /* !LOCKDEBUG */
