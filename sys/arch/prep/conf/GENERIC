@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.131 2006/11/11 18:47:11 jmmv Exp $
+# $NetBSD: GENERIC,v 1.132 2007/03/14 12:27:25 drochner Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/prep/conf/std.prep"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.131 $"
+#ident		"GENERIC-$Revision: 1.132 $"
 
 maxusers	32
 
@@ -412,7 +412,7 @@ ukphy*	at mii? phy ?			# generic unknown PHYs
 
 # USB Hubs
 #uhub*	at usb?
-#uhub*	at uhub? port ? configuration ? interface ?
+#uhub*	at uhub? port ?
 
 # USB HID device
 #uhidev*	at uhub? port ? configuration ? interface ?
