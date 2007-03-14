@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_subr.c,v 1.23 2007/03/12 18:18:32 ad Exp $	*/
+/*	$NetBSD: puffs_subr.c,v 1.24 2007/03/14 12:13:58 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_subr.c,v 1.23 2007/03/12 18:18:32 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_subr.c,v 1.24 2007/03/14 12:13:58 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -472,6 +472,7 @@ void
 puffs_userdead(struct puffs_mount *pmp)
 {
 	struct puffs_park *park;
+	struct buf *bp;
 
 	/*
 	 * Mark filesystem status as dying so that operations don't
@@ -484,7 +485,14 @@ puffs_userdead(struct puffs_mount *pmp)
 		if (park->park_preq)
 			park->park_preq->preq_rv = ENXIO;
 		TAILQ_REMOVE(&pmp->pmp_req_replywait, park, park_entries);
-		wakeup(park);
+		if (park->park_flags & PUFFS_PARKFLAG_ASYNCBIOREAD) {
+			bp = park->park_bp;
+			bp->b_error = ENXIO;
+			bp->b_flags |= B_ERROR;
+			biodone(bp);
+		} else {
+			wakeup(park);
+		}
 	}
 
 	/* wakeup waiters for completion of vfs/vnode requests */
@@ -492,7 +500,14 @@ puffs_userdead(struct puffs_mount *pmp)
 		if (park->park_preq)
 			park->park_preq->preq_rv = ENXIO;
 		TAILQ_REMOVE(&pmp->pmp_req_touser, park, park_entries);
-		wakeup(park);
+		if (park->park_flags & PUFFS_PARKFLAG_ASYNCBIOREAD) {
+			bp = park->park_bp;
+			bp->b_error = ENXIO;
+			bp->b_flags |= B_ERROR;
+			biodone(bp);
+		} else {
+			wakeup(park);
+		}
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_sys.h,v 1.25 2007/02/27 23:43:23 pooka Exp $	*/
+/*	$NetBSD: puffs_sys.h,v 1.26 2007/03/14 12:13:58 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -68,18 +68,21 @@ struct puffs_park {
 	uint64_t		park_id;	/* duplicate of preq_id */
 
 	size_t			park_copylen;	/* userspace copylength	*/
-	size_t 			park_maxlen;	/* max size, only for "adj" */
+	size_t			park_maxlen;	/* max size, ADJUSTABLE	*/
+	struct buf		*park_bp;	/* bp, ASYNCBIOREAD	*/
 
 	int			park_flags;
 
 	TAILQ_ENTRY(puffs_park) park_entries;
 };
+
 #define PUFFS_PARKFLAG_PROCESSING	0x01
 #define PUFFS_PARKFLAG_RQUEUE		0x02
 #define PUFFS_PARKFLAG_RECVREPLY	0x04
 #define PUFFS_PARKFLAG_DONE		0x08
 #define PUFFS_PARKFLAG_WAITERGONE	0x10
 #define PUFFS_PARKFLAG_ADJUSTABLE	0x20
+#define PUFFS_PARKFLAG_ASYNCBIOREAD	0x40
 
 #define PUFFS_SIZEOPREQ_UIO_IN 1
 #define PUFFS_SIZEOPREQ_UIO_OUT 2
@@ -189,6 +192,9 @@ void	puffs_suspendtouser(struct puffs_mount *, int);
 int	puffs_vntouser(struct puffs_mount *, int, void *, size_t, void *,
 		       struct vnode *, struct vnode *);
 void	puffs_vntouser_faf(struct puffs_mount *, int, void *, size_t, void *);
+void	puffs_vntouser_bioread_async(struct puffs_mount *, void *,
+				     size_t, off_t, struct buf *,
+				     struct vnode *, struct vnode *);
 int	puffs_vntouser_req(struct puffs_mount *, int, void *, size_t,
 			   void *, uint64_t, struct vnode *, struct vnode *);
 int	puffs_vntouser_adjbuf(struct puffs_mount *, int, void **, size_t *,
