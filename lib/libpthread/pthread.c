@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.66 2007/03/05 23:55:40 ad Exp $	*/
+/*	$NetBSD: pthread.c,v 1.67 2007/03/14 23:33:42 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.66 2007/03/05 23:55:40 ad Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.67 2007/03/14 23:33:42 ad Exp $");
 
 #include <err.h>
 #include <errno.h>
@@ -981,10 +981,6 @@ pthread__park(pthread_t self, pthread_spin_t *lock,
 		if (_lwp_park(abstime, NULL, queue) != 0) {
 			switch (rv = errno) {
 			case EINTR:
-				/* Check for cancellation. */
-				if (cancelpt && self->pt_cancel)
-					break;
-				/* FALLTHROUGH */
 			case EALREADY:
 				rv = 0;
 				break;
@@ -996,6 +992,18 @@ pthread__park(pthread_t self, pthread_spin_t *lock,
 				    self, rv));	
 				break;
 			}
+		}
+		/* Check for cancellation. */
+		if (cancelpt && self->pt_cancel) {
+			/*
+			 * Ensure visibility of the correct value.
+			 * _lwp_park/_lwp_wakeup also provide a
+			 * barrier.
+			 */
+			pthread_spinlock(self, &self->pt_flaglock);
+			if (self->pt_cancel)
+				rv = EINTR;
+			pthread_spinunlock(self, &self->pt_flaglock);
 		}
 		pthread_spinlock(self, lock);
 	} while (self->pt_sleepobj != NULL && rv == 0);
@@ -1021,26 +1029,28 @@ pthread__unpark(pthread_t self, pthread_spin_t *lock,
 {
 	int rv;
 
-	if (target != NULL) {
-		SDPRINTF(("(pthread__unpark %p) queue %p target %p\n",
-		    self, queue, target));
-
-		/*
-		 * Easy: the thread has already been removed from
-		 * the queue, so just awaken it.
-		 */
-		target->pt_sleepobj = NULL;
-		target->pt_sleeponq = 0;
+	if (target == NULL) {
 		pthread_spinunlock(self, lock);
-		rv = _lwp_unpark(target->pt_lid, queue);
+		return;
+	}
 
-		if (rv != 0 && errno != EALREADY && errno != EINTR) {
-			SDPRINTF(("(pthread__unpark %p) syscall rv=%d\n",
-			    self, rv));
-			OOPS("_lwp_unpark failed");
-		}
-	} else
-		pthread_spinunlock(self, lock);
+	SDPRINTF(("(pthread__unpark %p) queue %p target %p\n",
+	    self, queue, target));
+
+	/*
+	 * Easy: the thread has already been removed from
+	 * the queue, so just awaken it.
+	 */
+	target->pt_sleepobj = NULL;
+	target->pt_sleeponq = 0;
+	pthread_spinunlock(self, lock);
+	rv = _lwp_unpark(target->pt_lid, queue);
+
+	if (rv != 0 && errno != EALREADY && errno != EINTR) {
+		SDPRINTF(("(pthread__unpark %p) syscall rv=%d\n",
+		    self, rv));
+		OOPS("_lwp_unpark failed");
+	}
 }
 
 void
