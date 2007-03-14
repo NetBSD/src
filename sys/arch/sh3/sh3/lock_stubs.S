@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.7 2007/03/14 05:38:28 uwe Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.8 2007/03/14 06:42:46 uwe Exp $	*/
 
 /*
  * Copyright (c) 2007 Valeriy E. Ushakov
@@ -46,6 +46,11 @@
  *	uniprocessor, so we need to be atomic only w.r.t. interrupts.
  *	Implement this as (the only in-kernel) RAS, with restart check
  *	done in ast() on return from interrupt.
+ *
+ *	Mutex stubs below depend on this function:
+ *	    r4 - preserved, passed along to mutex_vector_{enter,exit}
+ *	    r7 - preserved, used to save pr (to avoid touching stack)
+ *	     T - still reflects cas success status (to avoid another test)
  */
 NENTRY(_lock_cas)
 ALTENTRY(_lock_cas_ras_start)
@@ -65,17 +70,18 @@ ALTENTRY(_lock_cas_ras_end)
  * LINTSTUB: Func: void mutex_enter(kmutex_t *mtx);
  */
 NENTRY(mutex_enter)
-	sts.l	pr, @-sp
+	sts	pr, r7		! depend on _lock_cas not clobbering r7
 	mov.l	.L_curlwp, r6
 	mov	#0, r5
 	bsr	_lock_cas	! _lock_cas(&mtx->mtx_owner, 0, curlwp)
 	 mov.l	@r6, r6
-	tst	r0, r0		! failed?
-	bt.s	1f		! hard case
-	 lds.l	@sp+, pr
+	!! T bit still indicates if cas was successful
+	bf.s	1f		! hard case if cas failed
+	 lds	r7, pr
 	rts
 	 nop
 
+	!! depend on _lock_cas not clobbering mtx in r4
 1:	mov.l	.L_mutex_vector_enter, r0
 	jmp	@r0
 	 nop
@@ -86,17 +92,18 @@ NENTRY(mutex_enter)
  * LINTSTUB: Func: void mutex_exit(kmutex_t *mtx);
  */
 NENTRY(mutex_exit)
-	sts.l	pr, @-sp
+	sts	pr, r7		! depend on _lock_cas not clobbering r7
 	mov.l	.L_curlwp, r5
 	mov	#0, r6
 	bsr	_lock_cas	! _lock_cas(&mtx->mtx_owner, curlwp, 0)
 	 mov.l	@r5, r5
-	tst	r0, r0		! failed?
-	bt.s	1f		! hard case
-	 lds.l	@sp+, pr
+	!! T bit still indicates if cas was successful
+	bf.s	1f		! hard case if cas failed
+	 lds	r7, pr
 	rts
 	 nop
 
+	!! depend on _lock_cas not clobbering mtx in r4
 1:	mov.l	.L_mutex_vector_exit, r0
 	jmp	@r0
 	 nop
