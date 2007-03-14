@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_cond.c,v 1.26 2007/03/05 23:55:54 ad Exp $	*/
+/*	$NetBSD: pthread_cond.c,v 1.27 2007/03/14 23:34:48 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_cond.c,v 1.26 2007/03/05 23:55:54 ad Exp $");
+__RCSID("$NetBSD: pthread_cond.c,v 1.27 2007/03/14 23:34:48 ad Exp $");
 
 #include <errno.h>
 #include <sys/time.h>
@@ -224,26 +224,23 @@ pthread_cond_signal(pthread_cond_t *cond)
 	SDPRINTF(("(cond signal %p) Signaling %p\n",
 	    pthread__self(), cond));
 
-	if (!PTQ_EMPTY(&cond->ptc_waiters)) {
-		self = pthread__self();
-		pthread_spinlock(self, &cond->ptc_lock);
-		signaled = PTQ_FIRST(&cond->ptc_waiters);
-		if (signaled != NULL) {
-			PTQ_REMOVE(&cond->ptc_waiters, signaled, pt_sleep);
-#ifdef ERRORCHECK
-			if (PTQ_EMPTY(&cond->ptc_waiters))
-				cond->ptc_mutex = NULL;
-#endif
-			pthread__unpark(self, &cond->ptc_lock,
-			    &cond->ptc_waiters, signaled);
-			PTHREADD_ADD(PTHREADD_COND_WOKEUP);
-		} else {
-#ifdef ERRORCHECK
+	if (PTQ_EMPTY(&cond->ptc_waiters))
+		return 0;
+
+	self = pthread__self();
+	pthread_spinlock(self, &cond->ptc_lock);
+	signaled = PTQ_FIRST(&cond->ptc_waiters);
+	if (signaled != NULL) {
+		PTQ_REMOVE(&cond->ptc_waiters, signaled, pt_sleep);
+		if (PTQ_EMPTY(&cond->ptc_waiters))
 			cond->ptc_mutex = NULL;
-#endif
-			pthread_spinunlock(self, &cond->ptc_lock);
-		}
+		pthread__unpark(self, &cond->ptc_lock,
+		    &cond->ptc_waiters, signaled);
+		PTHREADD_ADD(PTHREADD_COND_WOKEUP);
+		return 0;
 	}
+	cond->ptc_mutex = NULL;
+	pthread_spinunlock(self, &cond->ptc_lock);
 
 	return 0;
 }
@@ -260,15 +257,14 @@ pthread_cond_broadcast(pthread_cond_t *cond)
 	SDPRINTF(("(cond signal %p) Broadcasting %p\n",
 	    pthread__self(), cond));
 
-	if (!PTQ_EMPTY(&cond->ptc_waiters)) {
-		self = pthread__self();
-		pthread_spinlock(self, &cond->ptc_lock);
-#ifdef ERRORCHECK
-		cond->ptc_mutex = NULL;
-#endif
-		pthread__unpark_all(self, &cond->ptc_lock, &cond->ptc_waiters);
-		PTHREADD_ADD(PTHREADD_COND_WOKEUP);
-	}
+	if (PTQ_EMPTY(&cond->ptc_waiters))
+		return 0;
+
+	self = pthread__self();
+	pthread_spinlock(self, &cond->ptc_lock);
+	cond->ptc_mutex = NULL;
+	pthread__unpark_all(self, &cond->ptc_lock, &cond->ptc_waiters);
+	PTHREADD_ADD(PTHREADD_COND_WOKEUP);
 
 	return 0;
 
