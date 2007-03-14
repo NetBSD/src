@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.25 2007/03/08 16:26:27 tnozaki Exp $
+# $NetBSD: Makefile,v 1.26 2007/03/14 15:49:26 tnozaki Exp $
 
 NOMAN=	# defined
 
@@ -263,6 +263,9 @@ LOCALES += sv_SE.ISO8859-1
 
 LOCALES += sv_SE.ISO8859-15
  LOCALESRC_sv_SE.ISO8859-15 = en_US.DIS_8859-15
+
+LOCALES += tr_TR.ISO8859-9
+ LOCALESRC_tr_TR.ISO8859-9 = tr_TR.ISO8859-9
 
 LOCALES += uk_UA.ISO8859-5
  LOCALESRC_uk_UA.ISO8859-5 = ru_RU.ISO_8859-5
