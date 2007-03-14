@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_dbg.c,v 1.34 2007/03/02 18:54:01 ad Exp $	*/
+/*	$NetBSD: pthread_dbg.c,v 1.35 2007/03/14 21:09:01 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_dbg.c,v 1.34 2007/03/02 18:54:01 ad Exp $");
+__RCSID("$NetBSD: pthread_dbg.c,v 1.35 2007/03/14 21:09:01 skrll Exp $");
 
 #define __EXPOSE_STACK 1
 
@@ -98,38 +98,6 @@ td_open(struct td_proc_callbacks_t *cb, void *arg, td_proc_t **procp)
 		goto error;
 	}
 	proc->allqaddr = addr;
-
-	val = LOOKUP(proc, "pthread__runqueue", &addr);
-	if (val != 0) {
-		if (val == TD_ERR_NOSYM)
-			val = TD_ERR_NOLIB;
-		goto error;
-	}
-	proc->runqaddr = addr;
-
-	val = LOOKUP(proc, "pthread__idlequeue", &addr);
-	if (val != 0) {
-		if (val == TD_ERR_NOSYM)
-			val = TD_ERR_NOLIB;
-		goto error;
-	}
-	proc->idleqaddr = addr;
-
-	val = LOOKUP(proc, "pthread__suspqueue", &addr);
-	if (val != 0) {
-		if (val == TD_ERR_NOSYM)
-			val = TD_ERR_NOLIB;
-		goto error;
-	}
-	proc->suspqaddr = addr;
-
-	val = LOOKUP(proc, "pthread__maxlwps", &addr);
-	if (val != 0) {
-		if (val == TD_ERR_NOSYM)
-			val = TD_ERR_NOLIB;
-		goto error;
-	}
-	proc->maxlwpsaddr = addr;
 
 	val = LOOKUP(proc, "pthread__tsd_alloc", &addr);
 	if (val != 0) {
