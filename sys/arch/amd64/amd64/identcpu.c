@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.12 2007/03/15 00:04:37 xtraeme Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.13 2007/03/15 00:28:58 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.12 2007/03/15 00:04:37 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.13 2007/03/15 00:28:58 xtraeme Exp $");
 
 #include "opt_powernow_k8.h"
 
@@ -129,8 +129,6 @@ identifycpu(struct cpu_info *ci)
 	x86_errata(ci, vendor);
 	x86_patch();
 
-	/* Pentium 4 Thermal Control Circuitry */
-	p4tcc_init(ci);
 }
 
 void
