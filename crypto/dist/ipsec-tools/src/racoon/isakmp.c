@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp.c,v 1.20.6.3 2007/02/20 09:09:27 vanhu Exp $	*/
+/*	$NetBSD: isakmp.c,v 1.20.6.4 2007/03/15 10:38:34 vanhu Exp $	*/
 
 /* Id: isakmp.c,v 1.74 2006/05/07 21:32:59 manubsd Exp */
 
@@ -1931,7 +1931,7 @@ isakmp_ph1resend(iph1)
 {
 	/* Note: NEVER do the rem/del here, it will be done by the caller or by the _stub function
 	 */
-	if (iph1->retry_counter < 0) {
+	if (iph1->retry_counter <= 0) {
 		plog(LLV_ERROR, LOCATION, NULL,
 			"phase1 negotiation failed due to time up. %s\n",
 			isakmp_pindex(&iph1->index, iph1->msgid));
@@ -1991,7 +1991,7 @@ isakmp_ph2resend(iph2)
 		return -1;
 	}
 
-	if (iph2->retry_counter < 0) {
+	if (iph2->retry_counter <= 0) {
 		plog(LLV_ERROR, LOCATION, NULL,
 			"phase2 negotiation failed due to time up. %s\n",
 				isakmp_pindex(&iph2->ph1->index, iph2->msgid));
