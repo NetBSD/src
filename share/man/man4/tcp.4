@@ -1,4 +1,4 @@
-.\"	$NetBSD: tcp.4,v 1.21 2006/10/20 09:39:55 yamt Exp $
+.\"	$NetBSD: tcp.4,v 1.22 2007/03/15 23:43:18 gdt Exp $
 .\"	$FreeBSD: tcp.4,v 1.11.2.16 2004/02/16 22:21:47 bms Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)tcp.4	8.1 (Berkeley) 6/5/93
 .\"
-.Dd October 20, 2006
+.Dd March 15, 2007
 .Dt TCP 4
 .Os
 .Sh NAME
@@ -199,7 +199,7 @@ There are many adjustable parameters that control various aspects
 of the
 .Nx
 TCP behavior; these parameters are documented in
-.Xr sysctl 3 ,
+.Xr sysctl 7 ,
 and they include:
 .Bl -bullet -compact
 .It
@@ -261,7 +261,7 @@ exists.
 .Sh SEE ALSO
 .Xr getsockopt 2 ,
 .Xr socket 2 ,
-.Xr sysctl 3 ,
+.Xr sysctl 7 ,
 .Xr inet 4 ,
 .Xr inet6 4 ,
 .Xr intro 4 ,
