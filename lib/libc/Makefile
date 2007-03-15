@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.127 2006/03/11 21:07:18 christos Exp $
+#	$NetBSD: Makefile,v 1.128 2007/03/15 00:59:32 matt Exp $
 #	@(#)Makefile	8.2 (Berkeley) 2/3/94
 #
 # All library objects contain sccsid strings by default; they may be
@@ -105,6 +105,10 @@ FILESDIR=	/var/db
 # workaround for I18N stuffs: build singlebyte setlocale() for libc.a,
 # multibyte for libc.so.  the quirk should be removed when we support
 # dlopen() from within statically linked binaries.
-CSHLIBFLAGS+=	-D_I18N_DYNAMIC
+.if ${MKPICLIB} != "no"
+CPPPICFLAGS+=	-D_I18N_DYNAMIC
+.elif ${MKPIC} != "no"
+CPPFLAGS+=	-D_I18N_DYNAMIC
+.endif
 
 .include <bsd.lib.mk>
