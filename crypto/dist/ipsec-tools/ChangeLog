@@ -1,3 +1,7 @@
+2007-03-15  Yvan Vanhullebus  <vanhu@netasq.com>
+	* src/racoon/isakmp.c: Consider a negociation timeout when
+	retry_counter is <=0 instead of < 0.
+
 ---------------------------------------------
 
 	0.7.beta2 released
