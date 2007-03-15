@@ -1,4 +1,4 @@
-#	$NetBSD: files.x86,v 1.25 2007/03/15 00:03:24 xtraeme Exp $
+#	$NetBSD: files.x86,v 1.26 2007/03/15 00:28:57 xtraeme Exp $
 
 # options for MP configuration through the MP spec
 defflag opt_mpbios.h MPBIOS MPVERBOSE MPDEBUG MPBIOS_SCANPCI
@@ -62,9 +62,6 @@ file	arch/x86/pci/pciide_machdep.c	pciide_common
 # Powernow common functions
 file	arch/x86/x86/powernow_k8.c	powernow_k8
 file	arch/x86/x86/powernow_common.c	powernow_k8 | powernow_k7
-
-# Pentium 4 Thermal Control Circuitry driver
-file	arch/x86/x86/p4tcc.c
 
 #IPMI device
 device ipmi : sysmon_envsys, sysmon_wdog
