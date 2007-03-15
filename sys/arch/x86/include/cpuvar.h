@@ -1,4 +1,4 @@
-/* 	$NetBSD: cpuvar.h,v 1.9 2007/03/15 00:03:24 xtraeme Exp $ */
+/* 	$NetBSD: cpuvar.h,v 1.10 2007/03/15 00:28:57 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -109,7 +109,5 @@ void cpu_init(struct cpu_info *);
 void cpu_init_first(void);
 
 #endif
-
-void p4tcc_init(struct cpu_info *);
 
 #endif /* !_X86_CPUVAR_H_ */
