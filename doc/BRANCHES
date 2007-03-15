@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.162 2007/03/13 17:56:14 ad Exp $
+#	$NetBSD: BRANCHES,v 1.163 2007/03/15 02:36:27 reinoud Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -500,6 +500,27 @@ Base Tag:	yamt-lazymbuf-base4
 Maintainer:	YAMAMOTO Takashi <yamt@NetBSD.org>
 Scope:		src/sys  (src/common is tagged but not branched)
 Notes:		
+
+Branch:		reinoud-bufcleanup
+Description:	implement and evaluate struct buf usage cleanup strategies
+			1. use of bio_ops per buffer.
+			2. allow chaining/overloading of functions in bio_ops
+			   and provide some private context.
+			3. extend the bio_ops with commenly used functionality
+			   like pending action counting, custom context passing,
+			   last minute processing of buffer data, buffer cache
+			   etc.
+			4. investigate the use of the kcont()
+			   continuation-passing framework for async io
+			   completion notification for bufs
+Status:		Active
+Start Date:	Thu Mar 15 2007
+End Date:
+Base Tag:	reinoud-bufcleanup-base
+Maintainer:	Reinoud Zandijk <reinoud@NetBSD.org>
+Scope:		src/sys and src/common
+Notes:		Used as expiriment sandbox and if successful hopefully one day
+		to be intergrated.
 
 
 ########################################################################
