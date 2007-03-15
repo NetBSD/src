@@ -1,4 +1,4 @@
-/*	$NetBSD: exception_vector.S,v 1.23 2007/03/15 01:54:18 uwe Exp $	*/
+/*	$NetBSD: exception_vector.S,v 1.24 2007/03/15 23:13:59 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 #define _ALIGN_TEXT	.align 5
 #include <sh3/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: exception_vector.S,v 1.23 2007/03/15 01:54:18 uwe Exp $")
+__KERNEL_RCSID(0, "$NetBSD: exception_vector.S,v 1.24 2007/03/15 23:13:59 uwe Exp $")
 
 
 /*
@@ -153,49 +153,62 @@ VECTOR_END_MARKER(sh_vector_generic_end)
 NENTRY(sh3_vector_tlbmiss)
 	__EXCEPTION_ENTRY
 	mov	#(SH3_TEA & 0xff), r0
-	mov.l	@r0, r6		/* 3rd arg: va = TEA */
+	mov.l	@r0, r6		! 3rd arg: va = TEA
+
+	!! if kernel stack is in P3, handle it here fast
 #if !defined(P1_STACK)
-	/* Load kernel stack */
 	mov.l	.L3_VPN_MASK, r0
-	and	r6, r0
-	tst	r0, r0		/* check VPN == 0 */
-	bt	6f
+	and	r6, r0		! vpn
+	tst	r0, r0
+	bt	6f		! punt if vpn is 0
+
 	mov.l	.L3_CURUPTE, r1
-	mov.l	@r1, r1
-	mov	#UPAGES, r3
-	mov	#1, r2
-4:	mov.l	@r1+, r7
-	cmp/eq	r7, r0		/* md_upte.addr: u-area VPN */
-	bt	5f
-	add	#4, r1		/* skip md_upte.data */
+	mov.l	@r1, r1		! upte = &l->l_md.md_upte[0]
+	mov	#UPAGES, r3	! loop limit
+	mov	#1, r2		! loop count
+
+	!! for each page of u-area
+4:	mov.l	@r1+, r7	! upte->addr: u-area VPN
+	cmp/eq	r7, r0		! if (vpn == upte->addr)
+	bt	5f		!     goto found;
+	add	#4, r1		! skip, upte->data; point to next md_upte[i]
 	cmp/eq	r2, r3
 	bf/s	4b
 	 add	#1, r2
-	bra	7f		/* pull insn at 6f into delay slot */
+
+	!! not a page of u-area, proceed to handler
+	bra	7f		! pull insn at 6f into delay slot
 	 mov	#(SH3_EXPEVT & 0xff), r0
-5:	mov.l	@r1, r2		/* md_upte.data: u-area PTE */
+
+	!! load entry for this uarea page into tlb
+5:	mov.l	@r1, r2		! upte->data: u-area PTE
 	mov	#(SH3_PTEL & 0xff), r1
 	mov.l	r2, @r1
+
 	mov	#(SH3_PTEH & 0xff), r1
 	mov.l	@r1, r2
 	mov.l	.L3_VPN_MASK, r0
 	and	r2, r0
-	mov.l	r0, @r1		/* ASID 0 */
+	mov.l	r0, @r1		! ASID 0
+
 	ldtlb
-	bra	3f
-	 mov.l	r2, @r1		/* restore ASID */
+
+	bra	99f		! return
+	 mov.l	r2, @r1		!  restore ASID
 #endif /* !P1_STACK */
+
+	!! tlb_exception(curlwp, trapframe, tea)
 6:	mov	#(SH3_EXPEVT & 0xff), r0
 7:	mov.l	@r0, r0
-	mov.l	r0, @(TF_EXPEVT, r14)	/* tf->tf_expevt = EXPEVT */
+	mov.l	r0, @(TF_EXPEVT, r14)	! tf->tf_expevt = EXPEVT
 	mov.l	.L3_curlwp, r0
-	mov.l	@r0, r4		/* 1st arg */
+	mov.l	@r0, r4			! 1st arg: curlwp
 	__INTR_MASK(r0, r1)
 	__EXCEPTION_UNBLOCK(r0, r1)
 	mov.l	.L3_tlb_exception, r0
 	jsr	@r0
-	 mov	r14, r5		/* 2nd arg */
-3:	__EXCEPTION_RETURN
+	 mov	r14, r5			! 2nd arg: trap frame
+99:	__EXCEPTION_RETURN
 
 	.align	5
 .L3_curlwp:		.long	_C_LABEL(curlwp)
