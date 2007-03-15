@@ -1,4 +1,4 @@
-/*	$NetBSD: exception_vector.S,v 1.22 2007/03/15 00:00:38 uwe Exp $	*/
+/*	$NetBSD: exception_vector.S,v 1.23 2007/03/15 01:54:18 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,14 +38,21 @@
 #include "assym.h"
 
 #include <sh3/param.h>
-#include <sh3/asm.h>
 #include <sh3/locore.h>
 #include <sh3/exception.h>
 #include <sh3/ubcreg.h>
 #include <sh3/mmu_sh3.h>
 #include <sh3/mmu_sh4.h>
 
-__KERNEL_RCSID(0, "$NetBSD: exception_vector.S,v 1.22 2007/03/15 00:00:38 uwe Exp $")
+/* 
+ * Align vectors more strictly here (where we don't really care) so
+ * that .align 5 (i.e. 32B cache line) before data block does the
+ * right thing w.r.t. final destinations after vectors are copied.
+ */
+#define _ALIGN_TEXT	.align 5
+#include <sh3/asm.h>
+
+__KERNEL_RCSID(0, "$NetBSD: exception_vector.S,v 1.23 2007/03/15 01:54:18 uwe Exp $")
 
 
 /*
@@ -120,7 +127,7 @@ NENTRY(sh_vector_generic)
 #endif /* DDB */
 2:	__EXCEPTION_RETURN
 
-	.align	2
+	.align	5
 .Lg_curlwp:		.long	_C_LABEL(curlwp)
 REG_SYMBOL(EXPEVT)
 REG_SYMBOL(BBRA)
@@ -190,7 +197,7 @@ NENTRY(sh3_vector_tlbmiss)
 	 mov	r14, r5		/* 2nd arg */
 3:	__EXCEPTION_RETURN
 
-	.align	2
+	.align	5
 .L3_curlwp:		.long	_C_LABEL(curlwp)
 .L3_tlb_exception:	.long	_C_LABEL(tlb_exception)
 .L3_VPN_MASK:		.long	0xfffff000
@@ -226,7 +233,7 @@ NENTRY(sh4_vector_tlbmiss)
 	 mov	r14, r5			/* 2nd arg */
 	__EXCEPTION_RETURN
 
-	.align	2
+	.align	5
 .L4_tlb_exception:	.long	_C_LABEL(tlb_exception)
 .L4_curlwp:		.long	_C_LABEL(curlwp)
 .L4_EXPEVT4:		.long	SH4_EXPEVT
@@ -269,7 +276,7 @@ NENTRY(sh_vector_interrupt)
 	 mov	r14, r5		/* 2nd arg */
 	__EXCEPTION_RETURN
 
-	.align	2
+	.align	5
 .Li_curlwp:		.long	_C_LABEL(curlwp)
 .Li_intc_intr:		.long	_C_LABEL(intc_intr)
 .Li_ast:		.long	_C_LABEL(ast)
