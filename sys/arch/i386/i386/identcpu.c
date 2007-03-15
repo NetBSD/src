@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.58 2007/03/09 14:15:34 ad Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.59 2007/03/15 00:04:37 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.58 2007/03/09 14:15:34 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.59 2007/03/15 00:04:37 xtraeme Exp $");
 
 #include "opt_cputype.h"
 #include "opt_enhanced_speedstep.h"
@@ -1797,4 +1797,7 @@ identifycpu(struct cpu_info *ci)
 
 	x86_errata(ci, cpu_vendor);
 	x86_patch();
+
+	/* Pentium 4 Thermal Control Circuitry */
+	p4tcc_init(ci);
 }
