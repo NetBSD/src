@@ -1,4 +1,4 @@
-/*	$NetBSD: grabmyaddr.c,v 1.4 2006/09/09 16:22:09 manu Exp $	*/
+/*	$NetBSD: grabmyaddr.c,v 1.4.6.1 2007/03/15 14:15:00 vanhu Exp $	*/
 
 /* Id: grabmyaddr.c,v 1.27 2006/04/06 16:27:05 manubsd Exp */
 
@@ -854,7 +854,7 @@ initmyaddr()
 
 	memset(&nl, 0, sizeof(nl));
 	nl.nl_family = AF_NETLINK;
-	nl.nl_groups = RTMGRP_IPV4_IFADDR|RTMGRP_LINK;
+	nl.nl_groups = RTMGRP_IPV4_IFADDR|RTMGRP_LINK|RTMGRP_IPV6_IFADDR;
 
 	if (bind(lcconf->rtsock, (struct sockaddr*)&nl, sizeof(nl)) < 0) {
 		plog(LLV_ERROR, LOCATION, NULL,
