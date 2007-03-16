@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_c.c,v 1.20 2007/03/16 18:20:40 uwe Exp $	*/
+/*	$NetBSD: locore_c.c,v 1.21 2007/03/16 18:31:36 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2002, 2007 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locore_c.c,v 1.20 2007/03/16 18:20:40 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore_c.c,v 1.21 2007/03/16 18:31:36 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -235,19 +235,23 @@ idle(void)
 void
 sh3_switch_setup(struct lwp *l)
 {
-	pt_entry_t *pte;
-	struct md_upte *md_upte = l->l_md.md_upte;
+	struct md_upte *md_upte;
 	uint32_t vpn;
+	pt_entry_t *pte;
 	int i;
 
-	vpn = (uint32_t)l->l_addr;
-	vpn &= ~PGOFSET;
-	for (i = 0; i < UPAGES; i++, vpn += PAGE_SIZE, md_upte++) {
+	md_upte = l->l_md.md_upte;
+	vpn = sh3_trunc_page(l->l_addr);
+
+	for (i = 0; i < UPAGES; ++i) {
 		pte = __pmap_kpte_lookup(vpn);
 		KDASSERT(pte && *pte != 0);
 
 		md_upte->addr = vpn;
 		md_upte->data = (*pte & PG_HW_BITS) | PG_D | PG_V;
+		++md_upte;
+
+		vpn += PAGE_SIZE;
 	}
 }
 #endif /* SH3 */
@@ -260,26 +264,32 @@ sh3_switch_setup(struct lwp *l)
 void
 sh4_switch_setup(struct lwp *l)
 {
-	pt_entry_t *pte;
-	struct md_upte *md_upte = l->l_md.md_upte;
+	struct md_upte *md_upte;
 	uint32_t vpn;
+	pt_entry_t *pte;
 	int i, e;
 
-	vpn = (uint32_t)l->l_addr;
-	vpn &= ~PGOFSET;
+	md_upte = l->l_md.md_upte;
+	vpn = sh3_trunc_page(l->l_addr);
 	e = SH4_UTLB_ENTRY - UPAGES;
-	for (i = 0; i < UPAGES; i++, e++, vpn += PAGE_SIZE) {
+
+	for (i = 0; i < UPAGES; ++i) {
 		pte = __pmap_kpte_lookup(vpn);
 		KDASSERT(pte && *pte != 0);
+
 		/* Address array */
 		md_upte->addr = SH4_UTLB_AA | (e << SH4_UTLB_E_SHIFT);
 		md_upte->data = vpn | SH4_UTLB_AA_D | SH4_UTLB_AA_V;
-		md_upte++;
+		++md_upte;
+
 		/* Data array */
 		md_upte->addr = SH4_UTLB_DA1 | (e << SH4_UTLB_E_SHIFT);
 		md_upte->data = (*pte & PG_HW_BITS) |
 		    SH4_UTLB_DA1_D | SH4_UTLB_DA1_V;
-		md_upte++;
+		++md_upte;
+
+		vpn += PAGE_SIZE;
+		++e;
 	}
 }
 #endif /* SH4 */
