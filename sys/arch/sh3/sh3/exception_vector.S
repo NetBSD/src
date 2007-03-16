@@ -1,4 +1,4 @@
-/*	$NetBSD: exception_vector.S,v 1.24 2007/03/15 23:13:59 uwe Exp $	*/
+/*	$NetBSD: exception_vector.S,v 1.25 2007/03/16 04:22:22 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 #define _ALIGN_TEXT	.align 5
 #include <sh3/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: exception_vector.S,v 1.24 2007/03/15 23:13:59 uwe Exp $")
+__KERNEL_RCSID(0, "$NetBSD: exception_vector.S,v 1.25 2007/03/16 04:22:22 uwe Exp $")
 
 
 /*
@@ -165,16 +165,14 @@ NENTRY(sh3_vector_tlbmiss)
 	mov.l	.L3_CURUPTE, r1
 	mov.l	@r1, r1		! upte = &l->l_md.md_upte[0]
 	mov	#UPAGES, r3	! loop limit
-	mov	#1, r2		! loop count
 
 	!! for each page of u-area
 4:	mov.l	@r1+, r7	! upte->addr: u-area VPN
 	cmp/eq	r7, r0		! if (vpn == upte->addr)
-	bt	5f		!     goto found;
-	add	#4, r1		! skip, upte->data; point to next md_upte[i]
-	cmp/eq	r2, r3
+	bt/s	5f		!     goto found;
+	 dt	r3
 	bf/s	4b
-	 add	#1, r2
+	 add	#4, r1		! skip upte->data; point to next md_upte[i]
 
 	!! not a page of u-area, proceed to handler
 	bra	7f		! pull insn at 6f into delay slot
