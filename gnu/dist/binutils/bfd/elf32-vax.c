@@ -730,7 +730,7 @@ elf_vax_check_relocs (abfd, info, sec, relocs)
 		&& (!info->symbolic
 		    || !h->def_regular)))
 	    {
-	      if (h != NULL)
+	      if (h != NULL && (sec->flags & SEC_CODE) != 0)
 		{
 		  /* Make sure a plt entry is created for this symbol if
 		     it turns out to be a function defined by a dynamic
@@ -1690,8 +1690,9 @@ elf_vax_relocate_section (output_bfd, info, input_bfd, input_section,
 	      && ((r_type != R_VAX_PC8
 		   && r_type != R_VAX_PC16
 		   && r_type != R_VAX_PC32)
-		  || (!info->symbolic
-		      || !h->def_regular)))
+	          || ((input_section->flags & SEC_CODE) != 0
+		      && (!info->symbolic
+			  || (!h->def_regular && h->type != STT_SECTION)))))
 	    {
 	      Elf_Internal_Rela outrel;
 	      bfd_byte *loc;
@@ -1780,8 +1781,8 @@ elf_vax_relocate_section (output_bfd, info, input_bfd, input_section,
 		    }
 		}
 
-	      if (!strcmp (bfd_get_section_name (input_bfd, input_section),
-			   ".text") != 0 ||
+	      if (strcmp (bfd_get_section_name (input_bfd, input_section),
+			   ".text") == 0 ||
 		  (info->shared
 		   && ELF32_R_TYPE(outrel.r_info) != R_VAX_32
 		   && ELF32_R_TYPE(outrel.r_info) != R_VAX_RELATIVE
