@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_c.c,v 1.19 2007/03/12 00:32:56 uwe Exp $	*/
+/*	$NetBSD: locore_c.c,v 1.20 2007/03/16 18:20:40 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2002, 2007 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locore_c.c,v 1.19 2007/03/12 00:32:56 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore_c.c,v 1.20 2007/03/16 18:20:40 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -151,6 +151,7 @@ cpu_exit(struct lwp *l)
     cpu_do_exit(l);
 }
 
+
 /*
  * Prepare context switch from olwp to nlwp.
  * This code is shared by cpu_switch and cpu_switchto.
@@ -183,6 +184,7 @@ cpu_switch_prepare(struct lwp *olwp, struct lwp *nlwp)
 	return (nlwp);
 }
 
+
 /*
  * Find the highest priority lwp and prepare to switching to it.
  */
@@ -208,13 +210,13 @@ cpu_switch_search(struct lwp *olwp)
 	return (cpu_switch_prepare(olwp, l));
 }
 
+
 /*
- * void idle(void):
- *	When no processes are on the run queue, wait for something to come
- *	ready. Separated function for profiling.
+ * When no processes are on the run queue, wait for something to come
+ * ready.  Separate function for profiling.
  */
 void
-idle()
+idle(void)
 {
 
 	spl0();
@@ -224,11 +226,11 @@ idle()
 	splsched();
 }
 
+
 #ifndef P1_STACK
 #ifdef SH3
 /*
- * void sh3_switch_setup(struct lwp *l):
- *	prepare kernel stack PTE table. TLB miss handler check these.
+ * Prepare kernel stack PTE table.  TLB miss handler checks these.
  */
 void
 sh3_switch_setup(struct lwp *l)
@@ -250,10 +252,10 @@ sh3_switch_setup(struct lwp *l)
 }
 #endif /* SH3 */
 
+
 #ifdef SH4
 /*
- * void sh4_switch_setup(struct lwp *l):
- *	prepare kernel stack PTE table. sh4_switch_resume wired this PTE.
+ * Prepare kernel stack PTE table.  sh4_switch_resume wires these PTEs.
  */
 void
 sh4_switch_setup(struct lwp *l)
@@ -283,11 +285,12 @@ sh4_switch_setup(struct lwp *l)
 #endif /* SH4 */
 #endif /* !P1_STACK */
 
+
 /*
- * copystr(void *from, void *to, size_t maxlen, size_t *lencopied);
- * Copy a NUL-terminated string, at most maxlen characters long.  Return the
- * number of characters copied (including the NUL) in *lencopied.  If the
- * string is too long, return ENAMETOOLONG; else return 0.
+ * Copy a NUL-terminated string, at most maxlen characters long.
+ * Return the number of characters copied (including the NUL) in
+ * *lencopied.  If the string is too long, return ENAMETOOLONG,
+ * else return 0.
  */
 int
 copystr(const void *kfaddr, void *kdaddr, size_t maxlen, size_t *lencopied)
