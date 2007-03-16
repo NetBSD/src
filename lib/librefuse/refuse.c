@@ -1,4 +1,4 @@
-/*	$NetBSD: refuse.c,v 1.43 2007/03/13 22:47:04 agc Exp $	*/
+/*	$NetBSD: refuse.c,v 1.44 2007/03/16 08:17:36 pooka Exp $	*/
 
 /*
  * Copyright © 2007 Alistair Crooks.  All rights reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: refuse.c,v 1.43 2007/03/13 22:47:04 agc Exp $");
+__RCSID("$NetBSD: refuse.c,v 1.44 2007/03/16 08:17:36 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -455,7 +455,7 @@ puffs_fuse_node_mknod(struct puffs_cc *pcc, void *opc, void **newnode,
 {
 	struct puffs_usermount	*pu = puffs_cc_getusermount(pcc);
 	struct fuse		*fuse;
-	mode_t			 mode = va->va_mode;
+	mode_t			 mode;
 	const char		*path = PCNPATH(pcn);
 	int			ret;
 
@@ -465,6 +465,7 @@ puffs_fuse_node_mknod(struct puffs_cc *pcc, void *opc, void **newnode,
 	}
 
 	/* wrap up return code */
+	mode = puffs_addvtype2mode(va->va_mode, va->va_type);
 	ret = (*fuse->op.mknod)(path, mode, va->va_rdev);
 
 	if (ret == 0) {
