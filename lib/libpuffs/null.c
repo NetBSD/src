@@ -1,4 +1,4 @@
-/*	$NetBSD: null.c,v 1.10 2007/03/16 07:43:14 pooka Exp $	*/
+/*	$NetBSD: null.c,v 1.11 2007/03/16 08:14:49 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: null.c,v 1.10 2007/03/16 07:43:14 pooka Exp $");
+__RCSID("$NetBSD: null.c,v 1.11 2007/03/16 08:14:49 pooka Exp $");
 #endif /* !lint */
 
 /*
@@ -224,9 +224,11 @@ puffs_null_node_mknod(struct puffs_cc *pcc, void *opc, void **newnode,
 {
 	struct puffs_usermount *pu = puffs_cc_getusermount(pcc);
 	struct puffs_node *pn;
+	mode_t mode;
 	int rv;
 
-	if (mknod(PCNPATH(pcn), va->va_mode, va->va_rdev) == -1)
+	mode = puffs_addvtype2mode(va->va_mode, va->va_type);
+	if (mknod(PCNPATH(pcn), mode, va->va_rdev) == -1)
 		return errno;
 
 	if ((rv = processvattr(PCNPATH(pcn), va, 0)) != 0) {
