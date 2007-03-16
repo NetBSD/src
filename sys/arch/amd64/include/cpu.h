@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.18 2007/03/16 06:20:36 xtraeme Exp $	*/
+/*	$NetBSD: cpu.h,v 1.19 2007/03/16 18:52:03 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -102,6 +102,7 @@ struct cpu_info {
 	u_int32_t	ci_ipis;
 
 	u_int32_t	ci_feature_flags;
+	uint32_t	ci_feature2_flags;
 	u_int32_t	ci_signature;
 	u_int64_t	ci_tsc_freq;
 
