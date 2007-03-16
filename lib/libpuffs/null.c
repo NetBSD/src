@@ -1,4 +1,4 @@
-/*	$NetBSD: null.c,v 1.9 2007/03/13 17:05:23 pooka Exp $	*/
+/*	$NetBSD: null.c,v 1.10 2007/03/16 07:43:14 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: null.c,v 1.9 2007/03/13 17:05:23 pooka Exp $");
+__RCSID("$NetBSD: null.c,v 1.10 2007/03/16 07:43:14 pooka Exp $");
 #endif /* !lint */
 
 /*
@@ -168,7 +168,7 @@ puffs_null_node_lookup(struct puffs_cc *pcc, void *opc, void **newnode,
 	 */
 	rv = lstat(PCNPATH(pcn), &sb);
 	if (rv)
-		return rv;
+		return errno;
 
 	/* XXX2: nodewalk is a bit too slow here */
 	pn_res = puffs_pn_nodewalk(pu, inodecmp, &sb.st_ino);
