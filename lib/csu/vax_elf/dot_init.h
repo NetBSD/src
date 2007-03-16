@@ -1,4 +1,4 @@
-/* $NetBSD: dot_init.h,v 1.3 2007/03/16 22:20:50 matt Exp $ */
+/* $NetBSD: dot_init.h,v 1.4 2007/03/16 22:50:22 matt Exp $ */
 
 /*-
  * Copyright (c) 2001 Ross Harvey
@@ -39,6 +39,8 @@
 #define	MD_SECTION_PROLOGUE(sect, entry_pt)			\
 		__asm (						\
 		"	.section "#sect",\"ax\",@progbits\n"	\
+		"	.globl	" #entry_pt "\n"		\
+		"	.type	" #entry_pt "@function\n"	\
 		"	.align	1\n"				\
 		#entry_pt":\n"					\
 		"	.word 0\n"				\
@@ -57,8 +59,8 @@
 		"	calls	$0,"#func"\n"			\
 		"	.previous");
 
-#define	MD_INIT_SECTION_PROLOGUE MD_SECTION_PROLOGUE(.init, init_fallthru)
-#define	MD_FINI_SECTION_PROLOGUE MD_SECTION_PROLOGUE(.fini, fini_fallthru)
+#define	MD_INIT_SECTION_PROLOGUE MD_SECTION_PROLOGUE(.init, _init)
+#define	MD_FINI_SECTION_PROLOGUE MD_SECTION_PROLOGUE(.fini, _fini)
 
 #define	MD_INIT_SECTION_EPILOGUE MD_SECTION_EPILOGUE(.init)
 #define	MD_FINI_SECTION_EPILOGUE MD_SECTION_EPILOGUE(.fini)
