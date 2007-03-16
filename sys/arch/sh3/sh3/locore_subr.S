@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.33 2007/03/16 01:30:56 uwe Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.34 2007/03/16 02:27:16 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 #include <sh3/mmu_sh3.h>
 #include <sh3/mmu_sh4.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore_subr.S,v 1.33 2007/03/16 01:30:56 uwe Exp $")
+__KERNEL_RCSID(0, "$NetBSD: locore_subr.S,v 1.34 2007/03/16 02:27:16 uwe Exp $")
 
 
 /*
@@ -451,9 +451,16 @@ NENTRY(_cpu_spin)
 
 
 /*
- * proc_trapmpoline:
- *	Call the service funciton with one argument specified by the r12 and r11
- *	respectively. setted by cpu_fork().
+ * proc_trampoline:
+ *	cpu_lwp_fork() and cpu_setfunc() arrange for proc_trampoline()
+ *	to run when that process gets chosen in cpu_switch().  The
+ *	switch frame will contain a function pointer in r12, and an
+ *	argument to pass to it in r11 (we abuse the callee-saved
+ *	registers).
+ *
+ *	The trampoline calls the function that is indended to do some
+ *	additional setup.  When the function returns, the trampoline
+ *	returns to the user mode.
  */
 NENTRY(proc_trampoline)
 	jsr	@r12
