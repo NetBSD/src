@@ -449,7 +449,6 @@ misc-krb5-examples example configuration files for Kerberos5
 misc-netutil-examples example configuration files for network software
 misc-ntp-htmldoc HTML documentation for ntp(8) software
 misc-pf-examples
-misc-ntp-htmldoc	HTML documentation for NTP 
 misc-postfix-examples example configuration files for postfix
 misc-postfix-htmldoc	HTML documentation for postfix 
 misc-psd-doc the Programmer's Supplementary Documentation for BSD
