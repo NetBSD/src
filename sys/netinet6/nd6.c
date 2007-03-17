@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.112 2007/03/15 23:35:25 dyoung Exp $	*/
+/*	$NetBSD: nd6.c,v 1.113 2007/03/17 06:32:46 dyoung Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.112 2007/03/15 23:35:25 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.113 2007/03/17 06:32:46 dyoung Exp $");
 
 #include "opt_ipsec.h"
 
@@ -1296,6 +1296,7 @@ nd6_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info)
 				 */
 				if (ifa != rt->rt_ifa)
 					rt_replace_ifa(rt, ifa);
+				rt->rt_flags &= ~RTF_CLONED;
 			}
 		} else if (rt->rt_flags & RTF_ANNOUNCE) {
 			nd6_llinfo_settimer(ln, -1);
