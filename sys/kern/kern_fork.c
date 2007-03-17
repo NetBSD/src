@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.131.2.4 2007/03/12 05:58:34 rmind Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.131.2.5 2007/03/17 16:54:37 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001, 2004 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.131.2.4 2007/03/12 05:58:34 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.131.2.5 2007/03/17 16:54:37 rmind Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -520,7 +520,7 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 		lwp_lock(l2);
 		l2->l_stat = LSRUN;
 		l2->l_flag |= tmp;
-		sched_enqueue(l2);
+		sched_enqueue(l2, false);
 		lwp_unlock(l2);
 	}
 
