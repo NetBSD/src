@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.163 2007/03/15 02:36:27 reinoud Exp $
+#	$NetBSD: BRANCHES,v 1.164 2007/03/17 17:24:44 reinoud Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -502,7 +502,9 @@ Scope:		src/sys  (src/common is tagged but not branched)
 Notes:		
 
 Branch:		reinoud-bufcleanup
-Description:	implement and evaluate struct buf usage cleanup strategies
+Description:	implement and evaluate struct buf usage cleanup strategies.
+		Ideas currently in mind (preference for b):
+		a)
 			1. use of bio_ops per buffer.
 			2. allow chaining/overloading of functions in bio_ops
 			   and provide some private context.
@@ -513,6 +515,16 @@ Description:	implement and evaluate struct buf usage cleanup strategies
 			4. investigate the use of the kcont()
 			   continuation-passing framework for async io
 			   completion notification for bufs
+			...
+		b)
+			1. all sequencing use of B_CALL replaced by
+			   device-threads, if possible generic code around BUFQ
+			2. possibly use kcont() for async IO finished signalling
+			3. counter of pending and queued actions requestable
+			   by IOCTL interface?
+			4. implement `last minute buffer fixup' calls and maybe
+			   even finished I/O calls as vnode operations
+			...
 Status:		Active
 Start Date:	Thu Mar 15 2007
 End Date:
