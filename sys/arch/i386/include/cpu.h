@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.133.2.5 2007/03/12 05:48:36 rmind Exp $	*/
+/*	$NetBSD: cpu.h,v 1.133.2.6 2007/03/17 17:42:24 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -57,7 +57,7 @@
 #include <x86/via_padlock.h>
 
 #include <sys/device.h>
-#include <sys/lock.h>			/* will also get LOCKDEBUG */
+#include <sys/simplelock.h>			/* will also get LOCKDEBUG */
 #include <sys/cpu_data.h>
 #include <sys/cc_microtime.h>
 
