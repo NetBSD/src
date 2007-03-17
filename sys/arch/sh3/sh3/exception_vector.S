@@ -1,4 +1,4 @@
-/*	$NetBSD: exception_vector.S,v 1.25 2007/03/16 04:22:22 uwe Exp $	*/
+/*	$NetBSD: exception_vector.S,v 1.26 2007/03/17 14:23:07 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 #define _ALIGN_TEXT	.align 5
 #include <sh3/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: exception_vector.S,v 1.25 2007/03/16 04:22:22 uwe Exp $")
+__KERNEL_RCSID(0, "$NetBSD: exception_vector.S,v 1.26 2007/03/17 14:23:07 uwe Exp $")
 
 
 /*
@@ -162,7 +162,7 @@ NENTRY(sh3_vector_tlbmiss)
 	tst	r0, r0
 	bt	6f		! punt if vpn is 0
 
-	mov.l	.L3_CURUPTE, r1
+	mov.l	.L3_curupte, r1
 	mov.l	@r1, r1		! upte = &l->l_md.md_upte[0]
 	mov	#UPAGES, r3	! loop limit
 
@@ -212,7 +212,7 @@ NENTRY(sh3_vector_tlbmiss)
 .L3_curlwp:		.long	_C_LABEL(curlwp)
 .L3_tlb_exception:	.long	_C_LABEL(tlb_exception)
 .L3_VPN_MASK:		.long	0xfffff000
-.L3_CURUPTE:		.long	_C_LABEL(curupte)
+.L3_curupte:		.long	_C_LABEL(curupte)
 
 /* LINTSTUB: Var: char sh3_vector_tlbmiss_end[1]; */
 VECTOR_END_MARKER(sh3_vector_tlbmiss_end)
