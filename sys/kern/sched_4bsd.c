@@ -1,4 +1,4 @@
-/*	$NetBSD: sched_4bsd.c,v 1.1.2.10 2007/03/10 13:40:49 rmind Exp $	*/
+/*	$NetBSD: sched_4bsd.c,v 1.1.2.11 2007/03/17 16:54:37 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.1.2.10 2007/03/10 13:40:49 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.1.2.11 2007/03/17 16:54:37 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -601,7 +601,7 @@ sched_proc_exit(struct proc *parent, struct proc *child)
 
 /*
  * The primitives that manipulate the run queues.  whichqs tells which
- * of the 32 queues qs have processes in them.  sched_enqueue puts processes
+ * of the 32 queues qs have processes in them.  sched_enqueue() puts processes
  * into queues, sched_dequeue removes them from queues.  The running process is
  * on no queue, other processes are on a queue related to p->p_priority,
  * divided by 4 actually to shrink the 0-127 range of priorities into the 32
@@ -667,7 +667,7 @@ checkrunqueue(int whichq, struct lwp *l)
 #endif /* RQDEBUG */
 
 void
-sched_enqueue(struct lwp *l)
+sched_enqueue(struct lwp *l, bool ctxswitch)
 {
 	struct prochd *rq;
 	struct lwp *prev;
@@ -735,17 +735,6 @@ sched_switch(struct lwp *l)
 {
 	const struct prochd *rq;
 	int whichq;
-
-	KASSERT(l != NULL);
-	KASSERT(l->l_stat != LSRUN);
-
-	if (l->l_stat == LSONPROC) {
-		KASSERT(lwp_locked(l, &sched_mutex));
-		l->l_stat = LSRUN;
-		if ((l->l_flag & LW_IDLE) == 0) {
-			sched_enqueue(l);
-		}
-	}
 
 	if (sched_whichqs == 0) {
 		return NULL;

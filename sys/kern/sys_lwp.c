@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_lwp.c,v 1.3.2.3 2007/03/12 05:58:41 rmind Exp $	*/
+/*	$NetBSD: sys_lwp.c,v 1.3.2.4 2007/03/17 16:54:38 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.3.2.3 2007/03/12 05:58:41 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.3.2.4 2007/03/17 16:54:38 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -156,7 +156,7 @@ sys__lwp_create(struct lwp *l, void *v, register_t *retval)
 			KASSERT(lwp_locked(l2, &sched_mutex));
 			p->p_nrlwps++;
 			l2->l_stat = LSRUN;
-			sched_enqueue(l2);
+			sched_enqueue(l2, false);
 		}
 	} else
 		l2->l_stat = LSSUSPENDED;
