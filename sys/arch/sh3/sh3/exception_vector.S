@@ -1,4 +1,4 @@
-/*	$NetBSD: exception_vector.S,v 1.26 2007/03/17 14:23:07 uwe Exp $	*/
+/*	$NetBSD: exception_vector.S,v 1.27 2007/03/17 17:23:31 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 #define _ALIGN_TEXT	.align 5
 #include <sh3/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: exception_vector.S,v 1.26 2007/03/17 14:23:07 uwe Exp $")
+__KERNEL_RCSID(0, "$NetBSD: exception_vector.S,v 1.27 2007/03/17 17:23:31 uwe Exp $")
 
 
 /*
@@ -179,20 +179,16 @@ NENTRY(sh3_vector_tlbmiss)
 	 mov	#(SH3_EXPEVT & 0xff), r0
 
 	!! load entry for this uarea page into tlb
-5:	mov.l	@r1, r2		! upte->data: u-area PTE
-	mov	#(SH3_PTEL & 0xff), r1
-	mov.l	r2, @r1
-
-	mov	#(SH3_PTEH & 0xff), r1
-	mov.l	@r1, r2
-	mov.l	.L3_VPN_MASK, r0
-	and	r2, r0
-	mov.l	r0, @r1		! ASID 0
+5:	mov	#(SH3_PTEH & 0xff), r2
+	mov.l	@r1, r1		! md_upte[i]->data
+	mov.l	@r2, r3		! save ASID
+	mov.l	r0, @r2		! SH3_PTEH = { VPN, ASID = 0 }
+	mov.l	r1, @(4, r2)	! SH3_PTEL = md_upte[i]->data
 
 	ldtlb
 
 	bra	99f		! return
-	 mov.l	r2, @r1		!  restore ASID
+	 mov.l	r3, @r2		!  restore ASID
 #endif /* !P1_STACK */
 
 	!! tlb_exception(curlwp, trapframe, tea)
