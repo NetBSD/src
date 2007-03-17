@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.177.2.15 2007/03/12 05:58:38 rmind Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.177.2.16 2007/03/17 16:54:37 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.177.2.15 2007/03/12 05:58:38 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.177.2.16 2007/03/17 16:54:37 rmind Exp $");
 
 #include "opt_kstack.h"
 #include "opt_lockdebug.h"
@@ -420,6 +420,18 @@ mi_switch(struct lwp *l)
 #endif
 
 	/*
+	 * If on the CPU and we have gotten this far, then we must yield.
+	 */
+	KASSERT(l->l_stat != LSRUN);
+	if (l->l_stat == LSONPROC) {
+		KASSERT(lwp_locked(l, &sched_mutex));
+		l->l_stat = LSRUN;
+		if ((l->l_flag & LW_IDLE) == 0) {
+			sched_enqueue(l, true);
+		}
+	}
+
+	/*
 	 * Process is about to yield the CPU; clear the appropriate
 	 * scheduling flags.
 	 */
@@ -442,16 +454,15 @@ mi_switch(struct lwp *l)
 	}
 #endif
 	/*
-	 * Let sched_switch() select the LWP to run the CPU next. 
+	 * Let sched_nextlwp() select the LWP to run the CPU next. 
 	 * If no LWP is runnable, switch to the idle LWP.
-	 * Please note that sched_switch() will enqueue the LWP.
 	 */
-	newl = sched_switch(l);
-	if (newl == NULL) {
+	newl = sched_nextlwp(l);
+	if (newl) {
+		sched_dequeue(newl);
+	} else {
 		newl = l->l_cpu->ci_data.cpu_idlelwp;
 		KASSERT(newl != NULL);
-	} else {
-		sched_dequeue(newl);
 	}
 	KASSERT(lwp_locked(newl, &sched_mutex));
 	newl->l_stat = LSONPROC;
@@ -585,7 +596,7 @@ setrunnable(struct lwp *l)
 	l->l_slptime = 0;
 
 	if (l->l_flag & LW_INMEM) {
-		sched_enqueue(l);
+		sched_enqueue(l, false);
 		resched_cpu(l);
 		lwp_unlock(l);
 	} else {
@@ -768,7 +779,7 @@ sched_changepri(struct lwp *l, pri_t pri)
 
 	sched_dequeue(l);
 	l->l_priority = pri;
-	sched_enqueue(l);
+	sched_enqueue(l, false);
 	resched_cpu(l);
 }
 
@@ -785,7 +796,7 @@ sched_lendpri(struct lwp *l, pri_t pri)
 
 	sched_dequeue(l);
 	l->l_inheritedprio = pri;
-	sched_enqueue(l);
+	sched_enqueue(l, false);
 	resched_cpu(l);
 }
 
