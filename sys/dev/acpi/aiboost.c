@@ -1,4 +1,4 @@
-/* $NetBSD: aiboost.c,v 1.1 2007/03/14 00:43:04 xtraeme Exp $ */
+/* $NetBSD: aiboost.c,v 1.2 2007/03/18 22:36:11 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aiboost.c,v 1.1 2007/03/14 00:43:04 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aiboost.c,v 1.2 2007/03/18 22:36:11 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,7 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: aiboost.c,v 1.1 2007/03/14 00:43:04 xtraeme Exp $");
 #include <dev/sysmon/sysmonvar.h>
 
 #ifdef AIBOOST_DEBUG
-#define DPRINTF(x)		do { printf(x); } while (/* CONSTCOND */ 0)
+#define DPRINTF(x)		do { printf x; } while (/* CONSTCOND */ 0)
 #else
 #define DPRINTF(x)
 #endif
