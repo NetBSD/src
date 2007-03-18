@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.c,v 1.30 2007/03/04 07:54:08 christos Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.c,v 1.30.6.1 2007/03/18 00:06:36 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.30 2007/03/04 07:54:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.30.6.1 2007/03/18 00:06:36 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -231,8 +231,8 @@ netbsd32_from_partinfo(p, s32p, cmd)
 	u_long cmd;
 {
 
-	s32p->disklab = (netbsd32_disklabel_tp_t)(u_long)p->disklab;
-	s32p->part = s32p->part;
+	NETBSD32PTR32(s32p->disklab, p->disklab);
+	NETBSD32PTR32(s32p->part, p->part);
 }
 
 #if 0
@@ -268,7 +268,7 @@ netbsd32_from_ifreq(p, s32p, cmd)
 	 */
 	*s32p->ifr_name = *p->ifr_name;
 	if (cmd == SIOCGIFDATA || cmd == SIOCZIFDATA)
-		s32p->ifr_data = (netbsd32_caddr_t)(u_long)s32p->ifr_data;
+		NETBSD32PTR32(s32p->ifr_data, p->ifr_data);
 }
 
 static inline void
@@ -280,7 +280,7 @@ netbsd32_from_ifconf(p, s32p, cmd)
 
 	s32p->ifc_len = p->ifc_len;
 	/* ifc_buf & ifc_req are the same size so this works */
-	s32p->ifc_buf = (netbsd32_caddr_t)(u_long)p->ifc_buf;
+	NETBSD32PTR32(s32p->ifc_buf, p->ifc_buf);
 }
 
 static inline void

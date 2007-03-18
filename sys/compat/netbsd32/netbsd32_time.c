@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_time.c,v 1.25 2007/03/04 06:01:27 christos Exp $	*/
+/*	$NetBSD: netbsd32_time.c,v 1.25.6.1 2007/03/18 00:06:37 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_time.c,v 1.25 2007/03/04 06:01:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_time.c,v 1.25.6.1 2007/03/18 00:06:37 reinoud Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ntp.h"
@@ -68,7 +68,7 @@ netbsd32_ntp_gettime(l, v, retval)
 	struct ntptimeval ntv;
 	int error = 0;
 
-	if (SCARG(uap, ntvp)) {
+	if (NETBSD32PTR64(SCARG(uap, ntvp))) {
 		ntp_gettime(&ntv);
 
 		ntv32.time.tv_sec = ntv.time.tv_sec;
@@ -77,8 +77,8 @@ netbsd32_ntp_gettime(l, v, retval)
 		ntv32.esterror = (netbsd32_long)ntv.esterror;
 		ntv32.tai = (netbsd32_long)ntv.tai;
 		ntv32.time_state = ntv.time_state;
-		error = copyout((void *)&ntv32,
-		    (void *)NETBSD32PTR64(SCARG(uap, ntvp)), sizeof(ntv32));
+		error = copyout(&ntv32,
+		    NETBSD32PTR64(SCARG(uap, ntvp)), sizeof(ntv32));
 	}
 	if (!error) {
 		*retval = ntp_timestatus();
@@ -101,15 +101,15 @@ compat_30_netbsd32_ntp_gettime(l, v, retval)
 	struct ntptimeval ntv;
 	int error = 0;
 
-	if (SCARG(uap, ntvp)) {
+	if (NETBSD32PTR64(SCARG(uap, ntvp))) {
 		ntp_gettime(&ntv);
 
 		ntv32.time.tv_sec = ntv.time.tv_sec;
 		ntv32.time.tv_usec = ntv.time.tv_nsec / 1000;
 		ntv32.maxerror = (netbsd32_long)ntv.maxerror;
 		ntv32.esterror = (netbsd32_long)ntv.esterror;
-		error = copyout((void *)&ntv32,
-		    (void *)NETBSD32PTR64(SCARG(uap, ntvp)), sizeof(ntv32));
+		error = copyout(&ntv32,
+		    NETBSD32PTR64(SCARG(uap, ntvp)), sizeof(ntv32));
 	}
 	if (!error) {
 		*retval = ntp_timestatus();
@@ -220,7 +220,7 @@ netbsd32_setitimer(l, v, retval)
 			return (error);
 		netbsd32_to_itimerval(&s32it, &aitv);
 	}
-	if (SCARG(uap, oitv) != 0) {
+	if (SCARG_P32(uap, oitv) != 0) {
 		SCARG(&getargs, which) = which;
 		SCARG(&getargs, itv) = SCARG(uap, oitv);
 		if ((error = netbsd32_getitimer(l, &getargs, retval)) != 0)
@@ -271,15 +271,15 @@ netbsd32_gettimeofday(l, v, retval)
 	int error = 0;
 	struct netbsd32_timezone tzfake;
 
-	if (SCARG(uap, tp)) {
+	if (SCARG_P32(uap, tp)) {
 		microtime(&atv);
 		netbsd32_from_timeval(&atv, &tv32);
-		error = copyout(&tv32, (void *)NETBSD32PTR64(SCARG(uap, tp)),
+		error = copyout(&tv32, NETBSD32PTR64(SCARG(uap, tp)),
 		    sizeof(tv32));
 		if (error)
 			return (error);
 	}
-	if (SCARG(uap, tzp)) {
+	if (SCARG_P32(uap, tzp)) {
 		/*
 		 * NetBSD has no kernel notion of time zone, so we just
 		 * fake up a timezone struct and return it if demanded.
@@ -287,7 +287,7 @@ netbsd32_gettimeofday(l, v, retval)
 		tzfake.tz_minuteswest = 0;
 		tzfake.tz_dsttime = 0;
 		error = copyout(&tzfake,
-		    (void *)NETBSD32PTR64(SCARG(uap, tzp)), sizeof(tzfake));
+		    NETBSD32PTR64(SCARG(uap, tzp)), sizeof(tzfake));
 	}
 	return (error);
 }
@@ -318,14 +318,14 @@ netbsd32_settimeofday(l, v, retval)
 	 * NetBSD has no kernel notion of time zone, and only an
 	 * obsolete program would try to set it, so we log a warning.
 	 */
-	if (SCARG(uap, tzp))
+	if (SCARG_P32(uap, tzp))
 		printf("pid %d attempted to set the "
 		    "(obsolete) kernel time zone\n", p->p_pid);
 
-	if (SCARG(uap, tv) == 0)
+	if (SCARG_P32(uap, tv) == 0)
 		return 0;
 
-	if ((error = copyin((void *)NETBSD32PTR64(SCARG(uap, tv)), &atv32,
+	if ((error = copyin(NETBSD32PTR64(SCARG(uap, tv)), &atv32,
 	    sizeof(atv32))) != 0)
 		return error;
 
@@ -356,7 +356,7 @@ netbsd32_adjtime(l, v, retval)
 	{
 		extern int time_adjusted;     /* in kern_ntptime.c */
 		extern int64_t time_adjtime;  /* in kern_ntptime.c */
-		if (SCARG(uap, olddelta)) {
+		if (SCARG_P32(uap, olddelta)) {
 			atv.tv_sec = time_adjtime / 1000000;
 			atv.tv_usec = time_adjtime % 1000000;
 			if (atv.tv_usec < 0) {
@@ -364,14 +364,14 @@ netbsd32_adjtime(l, v, retval)
 				atv.tv_sec--;
 			}
 			(void) copyout(&atv,
-				       (void *)NETBSD32PTR64(SCARG(uap, olddelta)), 
+				       NETBSD32PTR64(SCARG(uap, olddelta)), 
 				       sizeof(atv));
 			if (error)
 				return (error);
 		}
 	
-		if (SCARG(uap, delta)) {
-			error = copyin((void *)NETBSD32PTR64(SCARG(uap, delta)), &atv,
+		if (SCARG_P32(uap, delta)) {
+			error = copyin(NETBSD32PTR64(SCARG(uap, delta)), &atv,
 				       sizeof(struct timeval));
 			if (error)
 				return (error);
@@ -390,7 +390,7 @@ netbsd32_adjtime(l, v, retval)
 		extern long bigadj, timedelta;
 		extern int tickdelta;
 		int s;
-		error = copyin((void *)NETBSD32PTR64(SCARG(uap, delta)), &atv,
+		error = copyin(NETBSD32PTR64(SCARG(uap, delta)), &atv,
 			       sizeof(struct timeval));
 		if (error)
 			return (error);
@@ -422,11 +422,11 @@ netbsd32_adjtime(l, v, retval)
 		tickdelta = ntickdelta;
 		splx(s);
 
-		if (SCARG(uap, olddelta)) {
+		if (SCARG_P32(uap, olddelta)) {
 			atv.tv_sec = odelta / 1000000;
 			atv.tv_usec = odelta % 1000000;
 			(void) copyout(&atv,
-				       (void *)NETBSD32PTR64(SCARG(uap, olddelta)), sizeof(atv));
+				       NETBSD32PTR64(SCARG(uap, olddelta)), sizeof(atv));
 		}
 	}
 #endif /* !__HAVE_TIMECOUNTER */
@@ -454,8 +454,7 @@ netbsd32_clock_gettime(l, v, retval)
 	nanotime(&ats);
 	netbsd32_from_timespec(&ats, &ts32);
 
-	return copyout(&ts32, (void *)NETBSD32PTR64(SCARG(uap, tp)),
-	    sizeof(ts32));
+	return copyout(&ts32, NETBSD32PTR64(SCARG(uap, tp)), sizeof(ts32));
 }
 
 int
@@ -482,7 +481,7 @@ netbsd32_clock_settime(l, v, retval)
 	if (clock_id != CLOCK_REALTIME)
 		return (EINVAL);
 
-	if ((error = copyin((void *)NETBSD32PTR64(SCARG(uap, tp)), &ts32,
+	if ((error = copyin(NETBSD32PTR64(SCARG(uap, tp)), &ts32,
 	    sizeof(ts32))) != 0)
 		return (error);
 
@@ -509,13 +508,12 @@ netbsd32_clock_getres(l, v, retval)
 	if (clock_id != CLOCK_REALTIME)
 		return (EINVAL);
 
-	if (SCARG(uap, tp)) {
+	if (SCARG_P32(uap, tp)) {
 		ts.tv_sec = 0;
 		ts.tv_nsec = 1000000000 / hz;
 
 		netbsd32_from_timespec(&ts, &ts32);
-		error = copyout(&ts, (void *)NETBSD32PTR64(SCARG(uap, tp)),
-		    sizeof(ts));
+		error = copyout(&ts, NETBSD32PTR64(SCARG(uap, tp)), sizeof(ts));
 	}
 
 	return error;
@@ -538,8 +536,7 @@ netbsd32_nanosleep(l, v, retval)
 	struct timeval atv, utv, ctime;
 	int error, timo;
 
-	error = copyin((void *)NETBSD32PTR64(SCARG(uap, rqtp)), (void *)&ts32,
-	    sizeof(ts32));
+	error = copyin(NETBSD32PTR64(SCARG(uap, rqtp)), &ts32, sizeof(ts32));
 	if (error)
 		return (error);
 
@@ -563,7 +560,7 @@ netbsd32_nanosleep(l, v, retval)
 	if (error == EWOULDBLOCK)
 		error = 0;
 
-	if (SCARG(uap, rmtp)) {
+	if (SCARG_P32(uap, rmtp)) {
 		int error1;
 
 		getmicrotime(&utv);
@@ -643,7 +640,7 @@ netbsd32_timer_settime(struct lwp *l, void *v, register_t *retval)
 	netbsd32_to_timespec(&its32.it_interval, &value.it_interval);
 	netbsd32_to_timespec(&its32.it_value, &value.it_value);
 
-	if (SCARG(uap, ovalue))
+	if (SCARG_P32(uap, ovalue))
 		ovp = &ovalue;
 
 	if ((error = dotimer_settime(SCARG(uap, timerid), &value, ovp,

@@ -1,8 +1,0 @@
-.\"	$NetBSD: legal,v 1.7 2002/05/20 23:48:49 itojun Exp $
-.
-.\"	NOTE:	This file is shared between the sparc and the sparc64
-.
-.It
-This product includes software developed by the Alice Group.
-.It
-This product includes software developed by David Miller.

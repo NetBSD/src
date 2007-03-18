@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.872 2007/03/10 21:08:47 christos Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.872.4.1 2007/03/18 00:06:43 reinoud Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.872 2007/03/10 21:08:16 christos Exp
+ *	NetBSD: pcidevs,v 1.873 2007/03/17 06:43:52 dyoung Exp
  */
 
 /*
@@ -836,6 +836,7 @@
 #define	PCI_PRODUCT_ADMTEK_AL981	0x0981		/* AL981 (Comet) 10/100 Ethernet */
 #define	PCI_PRODUCT_ADMTEK_AN983	0x0985		/* AN983 (Centaur-P) 10/100 Ethernet */
 #define	PCI_PRODUCT_ADMTEK_AN985	0x1985		/* AN985 (Centaur-C) 10/100 Ethernet */
+#define	PCI_PRODUCT_ADMTEK_ADM5120	0x5120		/* Infineon ADM5120 PCI host bridge */
 #define	PCI_PRODUCT_ADMTEK_ADM8211	0x8201		/* ADM8211 11Mbps 802.11b WLAN */
 #define	PCI_PRODUCT_ADMTEK_ADM9511	0x9511		/* ADM9511 (Centaur-II) 10/100 Ethernet */
 #define	PCI_PRODUCT_ADMTEK_ADM9513	0x9513		/* ADM9513 (Centaur-II) 10/100 Ethernet */

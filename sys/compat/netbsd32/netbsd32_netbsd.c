@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.119 2007/03/04 07:54:08 christos Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.119.6.1 2007/03/18 00:06:37 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.119 2007/03/04 07:54:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.119.6.1 2007/03/18 00:06:37 reinoud Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -472,7 +472,7 @@ netbsd32_ptrace(l, v, retval)
 
 	NETBSD32TO64_UAP(req);
 	NETBSD32TO64_UAP(pid);
-	NETBSD32TOX64_UAP(addr, void *);
+	NETBSD32TOP_UAP(addr, void *);
 	NETBSD32TO64_UAP(data);
 #ifdef _LKM
 	return (*sysent[SYS_ptrace].sy_call)(l, &ua, retval);
@@ -665,7 +665,7 @@ netbsd32_profil(l, v, retval)
 	} */ *uap = v;
 	struct sys_profil_args ua;
 
-	NETBSD32TOX64_UAP(samples, void *);
+	NETBSD32TOP_UAP(samples, void *);
 	NETBSD32TOX_UAP(size, size_t);
 	NETBSD32TOX_UAP(offset, u_long);
 	NETBSD32TO64_UAP(scale);
@@ -949,7 +949,7 @@ netbsd32_mincore(l, v, retval)
 	} */ *uap = v;
 	struct sys_mincore_args ua;
 
-	NETBSD32TOX64_UAP(addr, void *);
+	NETBSD32TOP_UAP(addr, void *);
 	NETBSD32TOX_UAP(len, size_t);
 	NETBSD32TOP_UAP(vec, char);
 	return (sys_mincore(l, &ua, retval));
@@ -1445,7 +1445,7 @@ netbsd32_quotactl(l, v, retval)
 	NETBSD32TOP_UAP(path, const char);
 	NETBSD32TO64_UAP(cmd);
 	NETBSD32TO64_UAP(uid);
-	NETBSD32TOX64_UAP(arg, void *);
+	NETBSD32TOP_UAP(arg, void *);
 	return (sys_quotactl(l, &ua, retval));
 }
 
@@ -2659,7 +2659,7 @@ netbsd32_rasctl(struct lwp *l, void *v, register_t *retval)
 	} */ *uap = v;
 	struct sys_rasctl_args ua;
 
-	NETBSD32TOX64_UAP(addr, void *);
+	NETBSD32TOP_UAP(addr, void *);
 	NETBSD32TOX_UAP(len, size_t);
 	NETBSD32TO64_UAP(op);
 	return sys_rasctl(l, &ua, retval);

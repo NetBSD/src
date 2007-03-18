@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_wait.c,v 1.12 2007/03/04 06:01:27 christos Exp $	*/
+/*	$NetBSD: netbsd32_wait.c,v 1.12.6.1 2007/03/18 00:06:38 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_wait.c,v 1.12 2007/03/04 06:01:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_wait.c,v 1.12.6.1 2007/03/18 00:06:38 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,7 +64,7 @@ netbsd32_wait4(l, v, retval)
 	struct rusage *ruup = NULL;
 	int error;
 
-	if (SCARG(uap, rusage)) {
+	if (SCARG_P32(uap, rusage)) {
 		sg = stackgap_init(l->l_proc, sizeof(*ruup));
 		ruup = (struct rusage *)stackgap_alloc(l->l_proc, &sg,
 		    sizeof(*ruup));
