@@ -1,4 +1,4 @@
-/*	$NetBSD: powernow_k8.c,v 1.7 2006/09/03 04:55:30 christos Exp $ */
+/*	$NetBSD: powernow_k8.c,v 1.8 2007/03/18 04:41:03 xtraeme Exp $ */
 /*	$OpenBSD: powernow-k8.c,v 1.8 2006/06/16 05:58:50 gwk Exp $ */
 
 /*-
@@ -66,7 +66,7 @@
 /* AMD POWERNOW K8 driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powernow_k8.c,v 1.7 2006/09/03 04:55:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powernow_k8.c,v 1.8 2007/03/18 04:41:03 xtraeme Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -327,18 +327,15 @@ k8pnow_states(struct powernow_cpu_state *cstate, uint32_t cpusig,
 }
 
 void
-k8_powernow_init(void)
+k8_powernow_init(struct cpu_info *ci)
 {
 	uint64_t status;
 	uint32_t maxfid, maxvid, i;
 	const struct sysctlnode *freqnode, *node, *pnownode;
 	struct powernow_cpu_state *cstate;
-	struct cpu_info *ci;
 	char *cpuname;
 	const char *techname;
 	size_t len;
-
-	ci = curcpu();
 
 	freq_names_len = 0;
 	cpuname = ci->ci_dev->dv_xname;
