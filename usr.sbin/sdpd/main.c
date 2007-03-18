@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.1 2006/06/19 15:44:56 gdamore Exp $	*/
+/*	$NetBSD: main.c,v 1.2 2007/03/18 10:00:42 plunky Exp $	*/
 
 /*
  * main.c
@@ -27,7 +27,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: main.c,v 1.1 2006/06/19 15:44:56 gdamore Exp $
+ * $Id: main.c,v 1.2 2007/03/18 10:00:42 plunky Exp $
  * $FreeBSD: src/usr.sbin/bluetooth/sdpd/main.c,v 1.1 2004/01/20 20:48:26 emax Exp $
  */
 
@@ -35,7 +35,7 @@
 __COPYRIGHT("@(#) Copyright (c) 2006 Itronix, Inc.\n"
 	    "@(#) Copyright (c) 2004 Maksim Yevmenkin <m_evmenkin@yahoo.com>\n"
 	    "All rights reserved.\n");
-__RCSID("$NetBSD: main.c,v 1.1 2006/06/19 15:44:56 gdamore Exp $");
+__RCSID("$NetBSD: main.c,v 1.2 2007/03/18 10:00:42 plunky Exp $");
 
 #include <sys/select.h>
 #include <bluetooth.h>
@@ -75,10 +75,11 @@ main(int argc, char *argv[])
 	server_t		 server;
 	char const		*control = SDP_LOCAL_PATH;
 	char const		*user = "nobody", *group = "nobody";
+	char const		*sgroup = NULL;
 	int32_t			 detach = 1, opt;
 	struct sigaction	 sa;
 
-	while ((opt = getopt(argc, argv, "c:dg:hu:")) != -1) {
+	while ((opt = getopt(argc, argv, "c:dG:g:hu:")) != -1) {
 		switch (opt) {
 		case 'c': /* control */
 			control = optarg;
@@ -86,6 +87,10 @@ main(int argc, char *argv[])
 
 		case 'd': /* do not detach */
 			detach = 0;
+			break;
+
+		case 'G': /* super group */
+			sgroup = optarg;
 			break;
 
 		case 'g': /* group */
@@ -132,7 +137,7 @@ main(int argc, char *argv[])
 	}
 
 	/* Initialize server */
-	if (server_init(&server, control) < 0)
+	if (server_init(&server, control, sgroup) < 0)
 		exit(1);
 
 	if ((user != NULL || group != NULL) && drop_root(user, group) < 0)
@@ -234,6 +239,7 @@ usage(void)
 "Where options are:\n" \
 "	-c	specify control socket name (default %s)\n" \
 "	-d	do not detach (run in foreground)\n" \
+"	-G grp	allow privileges to group\n" \
 "	-g grp	specify group\n" \
 "	-h	display usage and exit\n" \
 "	-u usr	specify user\n",

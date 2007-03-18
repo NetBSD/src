@@ -1,4 +1,4 @@
-.\" $NetBSD: sdpd.8,v 1.1 2006/06/19 15:44:56 gdamore Exp $
+.\" $NetBSD: sdpd.8,v 1.2 2007/03/18 10:00:42 plunky Exp $
 .\"
 .\" Copyright (c) 2004 Maksim Yevmenkin <m_evmenkin@yahoo.com>
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $Id: sdpd.8,v 1.1 2006/06/19 15:44:56 gdamore Exp $
+.\" $Id: sdpd.8,v 1.2 2007/03/18 10:00:42 plunky Exp $
 .\" $FreeBSD: src/usr.sbin/bluetooth/sdpd/sdpd.8,v 1.5 2005/12/06 17:56:36 emax Exp $
 .\"
 .Dd January 13, 2004
@@ -37,6 +37,7 @@
 .Nm
 .Op Fl dh
 .Op Fl c Ar path
+.Op Fl G Ar group
 .Op Fl g Ar group
 .Op Fl u Ar user
 .Sh DESCRIPTION
@@ -77,6 +78,12 @@ Do not detach from the controlling terminal.
 Specify path to the control socket.
 The default path is
 .Pa /var/run/sdp .
+.It Fl G Ar group
+Grant permission to members of the
+.Ar group
+to modify the
+.Nm
+Service Database.
 .It Fl g Ar group
 Specifies the group the
 .Nm
@@ -116,10 +123,11 @@ Requests to register, remove or change service can only be made via the
 control socket.
 The
 .Nm
-daemon will check peer's credentials and will only accept the request if
-the application has the same effective user ID as the
-.Dq Li root
-user ID.
+daemon will check the peer's credentials and will only accept the request
+when the peer is the superuser, of if the peer is a member of the group
+specified with the
+.Fl G
+option.
 .Pp
 The
 .Nm
