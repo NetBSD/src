@@ -1,4 +1,4 @@
-/*	$NetBSD: powernow_k8.c,v 1.8 2007/03/18 04:41:03 xtraeme Exp $ */
+/*	$NetBSD: powernow_k8.c,v 1.9 2007/03/18 07:21:40 xtraeme Exp $ */
 /*	$OpenBSD: powernow-k8.c,v 1.8 2006/06/16 05:58:50 gwk Exp $ */
 
 /*-
@@ -66,15 +66,16 @@
 /* AMD POWERNOW K8 driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powernow_k8.c,v 1.8 2007/03/18 04:41:03 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powernow_k8.c,v 1.9 2007/03/18 07:21:40 xtraeme Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/sysctl.h>
+#include <sys/once.h>
 
-#include <x86/include/powernow.h>
+#include <x86/powernow.h>
 
 #include <dev/isa/isareg.h>
 
@@ -106,7 +107,8 @@ int k8pnow_decode_pst(struct powernow_cpu_state *, uint8_t *);
 int k8pnow_states(struct powernow_cpu_state *, uint32_t, unsigned int,
     unsigned int);
 int k8_powernow_setperf(unsigned int);
-
+static int k8_powernow_init_once(void);
+static void k8_powernow_init_main(struct cpu_info *);
 
 int k8pnow_sysctl_helper(SYSCTLFN_ARGS)
 {
@@ -326,8 +328,27 @@ k8pnow_states(struct powernow_cpu_state *cstate, uint32_t cpusig,
 
 }
 
+static int
+k8_powernow_init_once(void)
+{
+	k8_powernow_init_main();
+	return 0;
+}
+
 void
-k8_powernow_init(struct cpu_info *ci)
+k8_powernow_init(void)
+{
+	int error;
+	static ONCE_DECL(powernow_initialized);
+
+	error = RUN_ONCE(&powernow_initialized, k8_powernow_init_once);
+	if (__predict_false(error != 0)) {
+		return;
+	}
+}
+
+static void
+k8_powernow_init_main(void)
 {
 	uint64_t status;
 	uint32_t maxfid, maxvid, i;
@@ -338,7 +359,7 @@ k8_powernow_init(struct cpu_info *ci)
 	size_t len;
 
 	freq_names_len = 0;
-	cpuname = ci->ci_dev->dv_xname;
+	cpuname = curcpu()->ci_dev->dv_xname;
 
 	cstate = malloc(sizeof(struct powernow_cpu_state), M_DEVBUF, M_NOWAIT);
 	if (!cstate) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: powernow.h,v 1.7 2007/03/18 04:41:03 xtraeme Exp $	*/
+/*	$NetBSD: powernow.h,v 1.8 2007/03/18 07:21:40 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2004 Martin Végiard.
@@ -182,7 +182,7 @@ void k7_powernow_init(void);
 void k7_powernow_destroy(void);
 
 /* x86/x86/powernow_k8.c */
-void k8_powernow_init(struct cpu_info *);
+void k8_powernow_init(void);
 void k8_powernow_destroy(void);
 
 #endif
