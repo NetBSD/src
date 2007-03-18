@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.47 2007/03/12 02:22:43 matt Exp $	 */
+/*	$NetBSD: clock.c,v 1.47.4.1 2007/03/18 00:06:34 reinoud Exp $	 */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.47 2007/03/12 02:22:43 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.47.4.1 2007/03/18 00:06:34 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -135,7 +135,6 @@ cpu_initclocks(void)
 	mtpr(0x800000d1, PR_ICCS); /* Start clock and enable interrupt */
 
 	todr_attach(&todr_handle);
-	printf("cpu_initclocks: %#x\n", mfpr(PR_ICCS));
 }
 
 int

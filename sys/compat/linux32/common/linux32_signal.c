@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_signal.c,v 1.2 2007/02/15 15:29:52 ad Exp $ */
+/*	$NetBSD: linux32_signal.c,v 1.2.10.1 2007/03/18 00:06:35 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -151,10 +151,10 @@ native_to_linux32_sigaction(lsa, bsa)
 	struct linux32_sigaction *lsa;
 	const struct sigaction *bsa;
 {
-	lsa->linux_sa_handler = (linux32_handler_t)(long)bsa->sa_handler;
+	NETBSD32PTR32(lsa->linux_sa_handler, bsa->sa_handler);
 	native_to_linux32_sigset(&lsa->linux_sa_mask, &bsa->sa_mask);
 	lsa->linux_sa_flags = native_to_linux32_sigflags(bsa->sa_flags);
-	lsa->linux_sa_restorer = (linux32_restorer_t)NULL;
+	NETBSD32PTR32(lsa->linux_sa_restorer, NULL);
 }
 
 void
@@ -162,7 +162,7 @@ native_to_linux32_sigaltstack(lss, bss)
 	struct linux32_sigaltstack *lss;
 	const struct sigaltstack *bss;
 {
-	lss->ss_sp = (netbsd32_voidp)(long)bss->ss_sp;
+	NETBSD32PTR32(lss->ss_sp, bss->ss_sp);
 	lss->ss_size = bss->ss_size;
 	if (bss->ss_flags & SS_ONSTACK)
 	    lss->ss_flags = LINUX32_SS_ONSTACK;

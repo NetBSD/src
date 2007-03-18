@@ -1,4 +1,4 @@
-/*	$NetBSD: l2cap_upper.c,v 1.3 2007/03/12 20:34:54 plunky Exp $	*/
+/*	$NetBSD: l2cap_upper.c,v 1.3.2.1 2007/03/18 00:06:45 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: l2cap_upper.c,v 1.3 2007/03/12 20:34:54 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: l2cap_upper.c,v 1.3.2.1 2007/03/18 00:06:45 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -426,15 +426,7 @@ l2cap_setopt(struct l2cap_channel *chan, int opt, void *addr)
 		break;
 
 	case SO_L2CAP_OQOS:	/* set Outgoing QoS flow spec */
-		// XXX
-		// memcpy(&chan->lc_oqos, addr, sizeof(l2cap_qos_t));
-		//break;
-
 	case SO_L2CAP_FLUSH:	/* set Outgoing Flush Timeout */
-		// XXX
-		// chan->lc_flush = *(uint16_t *)addr;
-		//break;
-
 	default:
 		err = ENOPROTOOPT;
 		break;

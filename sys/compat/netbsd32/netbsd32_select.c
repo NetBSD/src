@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_select.c,v 1.10 2007/03/04 06:01:27 christos Exp $	*/
+/*	$NetBSD: netbsd32_select.c,v 1.10.6.1 2007/03/18 00:06:37 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_select.c,v 1.10 2007/03/04 06:01:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_select.c,v 1.10.6.1 2007/03/18 00:06:37 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,9 +66,9 @@ netbsd32_select(struct lwp *l, void *v, register_t *retval)
 	struct netbsd32_timeval tv32;
 	struct timeval atv, *tv = NULL;
 
-	if (SCARG(uap, tv)) {
+	if (NETBSD32PTR64(SCARG(uap, tv))) {
 		if ((error = copyin(NETBSD32PTR64(SCARG(uap, tv)),
-		    (void *)&tv32, sizeof(tv32))) != 0)
+		    &tv32, sizeof(tv32))) != 0)
 			return error;
 		netbsd32_to_timeval(&tv32, &atv);
 		tv = &atv;
@@ -99,18 +99,18 @@ netbsd32_pselect(l, v, retval)
 	struct timeval atv, *tv = NULL;
 	sigset_t amask, *mask = NULL;
 
-	if (SCARG(uap, ts)) {
+	if (NETBSD32PTR64(SCARG(uap, ts))) {
 		if ((error = copyin(NETBSD32PTR64(SCARG(uap, ts)),
-		    (void *)&ts32, sizeof(ts32))) != 0)
+		    &ts32, sizeof(ts32))) != 0)
 			return error;
 		netbsd32_to_timespec(&ts32, &ts);
 		atv.tv_sec = ts.tv_sec;
 		atv.tv_usec = ts.tv_nsec / 1000;
 		tv = &atv;
 	}
-	if (SCARG(uap, mask)) {
+	if (NETBSD32PTR64(SCARG(uap, mask))) {
 		if ((error = copyin(NETBSD32PTR64(SCARG(uap, mask)),
-		    (void *)&amask, sizeof(amask))) != 0)
+		    &amask, sizeof(amask))) != 0)
 			return error;
 		mask = &amask;
 	}
@@ -138,18 +138,18 @@ netbsd32_pollts(l, v, retval)
 	struct timeval atv, *tv = NULL;
 	sigset_t amask, *mask = NULL;
 
-	if (SCARG(uap, ts)) {
+	if (NETBSD32PTR64(SCARG(uap, ts))) {
 		if ((error = copyin(NETBSD32PTR64(SCARG(uap, ts)),
-		    (void *)&ts32, sizeof(ts32))) != 0)
+		    &ts32, sizeof(ts32))) != 0)
 			return error;
 		netbsd32_to_timespec(&ts32, &ts);
 		atv.tv_sec = ts.tv_sec;
 		atv.tv_usec = ts.tv_nsec / 1000;
 		tv = &atv;
 	}
-	if (SCARG(uap, mask)) {
+	if (NETBSD32PTR64( SCARG(uap, mask))) {
 		if ((error = copyin(NETBSD32PTR64(SCARG(uap, mask)),
-		    (void *)&amask, sizeof(amask))) != 0)
+		    &amask, sizeof(amask))) != 0)
 			return error;
 		mask = &amask;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_termios.c,v 1.3 2007/03/04 06:01:25 christos Exp $ */
+/*	$NetBSD: linux32_termios.c,v 1.3.6.1 2007/03/18 00:06:35 reinoud Exp $ */
 
 /*-
  * Copyright (c) 1995-2006  The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_termios.c,v 1.3 2007/03/04 06:01:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_termios.c,v 1.3.6.1 2007/03/18 00:06:35 reinoud Exp $");
 
 #include "opt_compat_linux32.h"
 
@@ -338,7 +338,7 @@ linux32_ioctl_termios(l, uap, retval)
 
 			SCARG(&ia, fd) = SCARG(uap, fd);
 			SCARG(&ia, com) = TIOCPTSNAME;
-			SCARG(&ia, data) = (netbsd32_u_long)(u_long)ptmp;
+			NETBSD32PTR32(SCARG(&ia, data), ptmp);
 
 			if ((error = sys_ioctl(curlwp, &ia, retval)) != 0)
 				goto out;
