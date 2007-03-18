@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia_codec.c,v 1.34 2007/03/18 11:49:21 kent Exp $	*/
+/*	$NetBSD: azalia_codec.c,v 1.35 2007/03/18 14:16:00 kent Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia_codec.c,v 1.34 2007/03/18 11:49:21 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia_codec.c,v 1.35 2007/03/18 14:16:00 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -509,7 +509,8 @@ generic_mixer_init(codec_t *this)
 		w = &this->w[i];
 
 		/* selector */
-		if (w->type != COP_AWTYPE_AUDIO_MIXER && w->nconnections >= 2) {
+		if (w->type != COP_AWTYPE_AUDIO_MIXER &&
+		    w->type != COP_AWTYPE_POWER && w->nconnections >= 2) {
 			MIXER_REG_PROLOG;
 			GMIDPRINTF(("%s: selector %s\n", __func__, w->name));
 			snprintf(d->label.name, sizeof(d->label.name),
