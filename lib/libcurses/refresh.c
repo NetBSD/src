@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.63.6.9 2007/02/28 10:34:46 blymn Exp $	*/
+/*	$NetBSD: refresh.c,v 1.63.6.10 2007/03/18 10:04:59 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.7 (Berkeley) 8/13/94";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.63.6.9 2007/02/28 10:34:46 blymn Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.63.6.10 2007/03/18 10:04:59 jdc Exp $");
 #endif
 #endif				/* not lint */
 
@@ -569,7 +569,7 @@ doupdate(void)
 
 		}
 #ifdef DEBUG
-		__CTRACE(__CTRACE_REFRESH, "t%d\t%d\n",
+		__CTRACE(__CTRACE_REFRESH, "\t%d\t%d\n",
 		    *wlp->firstchp, *wlp->lastchp);
 #endif /* DEBUG */
 	}
@@ -766,7 +766,8 @@ makech(int wy)
 		__CTRACE(__CTRACE_REFRESH, "makech: csp=(%x,%x,%x,%x,%p)\n",
 			csp->ch, csp->attr, win->bch, win->battr, csp->nsp);
 #endif /* DEBUG */
-		if (cellcmp(csp, nsp)) {
+		if (((nsp->attr & __WCWIDTH) != __WCWIDTH) &&
+		    cellcmp(nsp, csp)) {
 			if (wx <= lch) {
 				while (wx <= lch && cellcmp( csp, nsp )) {
 					nsp++;
@@ -792,10 +793,22 @@ makech(int wy)
 		while (wx <= lch && memcmp(nsp, csp, sizeof(__LDATA)) != 0) {
 			if (ce != NULL &&
 			    wx >= nlsp && nsp->ch == ' ' && nsp->attr == lspc) {
-
+				/* Are we continuing a multircell character? */
+				if ((nsp->attr & __WCWIDTH) == __WCWIDTH) {
+#ifdef DEBUG
+					__CTRACE(__CTRACE_REFRESH,
+						"Skipping continuation cell\n");
+					wx++;
+					csp->ch = nsp->ch;
+					csp->attr = nsp->attr;
+					nsp++;
+					csp++;
+					continue;
+				}
+#endif
 #else
-               while ( !cellcmp(nsp, csp) && wx <= lch) {
-                       if (ce != NULL && wx >= nlsp
+		while (!cellcmp(nsp, csp) && wx <= lch) {
+			if (ce != NULL && wx >= nlsp
 			   && nsp->ch == (wchar_t)btowc((int)' ') /* XXX */
 			   && (nsp->attr & WA_ATTRIBUTES) == lspc) {
 
@@ -1061,6 +1074,10 @@ makech(int wy)
 				}
 #ifndef HAVE_WCHAR
 				__cputchar((int) nsp->ch);
+#ifdef DEBUG
+				__CTRACE(__CTRACE_REFRESH,
+				    "makech: putchar(%c)\n", nsp->ch & 0177);
+#endif
 #else
 				if (WCOL(*nsp) > 0) {
 					__cputwchar((int) nsp->ch);
@@ -1073,10 +1090,6 @@ makech(int wy)
 				}
 #endif /* HAVE_WCHAR */
 			}
-#ifdef DEBUG
-			__CTRACE(__CTRACE_REFRESH, "makech: putchar(%c)\n",
-			    nsp->ch & 0177);
-#endif
 			if (__tc_uc && ((nsp->attr & __STANDOUT) ||
 			    (nsp->attr & __UNDERSCORE))) {
 				__cputchar('\b');
@@ -1777,9 +1790,11 @@ __cursesi_putnsp(nschar_t *nsp, const int wy, const int wx)
 	p = nsp;
 	while (p != NULL) {
 		__cputwchar((int) p->ch);
+#ifdef BEBUG
 		__CTRACE(__CTRACE_REFRESH,
 		       "_cursesi_putnsp: (%d,%d) non-spacing putwchar(0x%x)\n",
 			 wy, wx - 1, p->ch);
+#endif
 		p = p->next;
 	}
 }
