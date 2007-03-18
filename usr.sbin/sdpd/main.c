@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.2 2007/03/18 10:00:42 plunky Exp $	*/
+/*	$NetBSD: main.c,v 1.3 2007/03/18 15:53:55 plunky Exp $	*/
 
 /*
  * main.c
@@ -27,7 +27,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: main.c,v 1.2 2007/03/18 10:00:42 plunky Exp $
+ * $Id: main.c,v 1.3 2007/03/18 15:53:55 plunky Exp $
  * $FreeBSD: src/usr.sbin/bluetooth/sdpd/main.c,v 1.1 2004/01/20 20:48:26 emax Exp $
  */
 
@@ -35,7 +35,7 @@
 __COPYRIGHT("@(#) Copyright (c) 2006 Itronix, Inc.\n"
 	    "@(#) Copyright (c) 2004 Maksim Yevmenkin <m_evmenkin@yahoo.com>\n"
 	    "All rights reserved.\n");
-__RCSID("$NetBSD: main.c,v 1.2 2007/03/18 10:00:42 plunky Exp $");
+__RCSID("$NetBSD: main.c,v 1.3 2007/03/18 15:53:55 plunky Exp $");
 
 #include <sys/select.h>
 #include <bluetooth.h>
@@ -74,7 +74,7 @@ main(int argc, char *argv[])
 {
 	server_t		 server;
 	char const		*control = SDP_LOCAL_PATH;
-	char const		*user = "nobody", *group = "nobody";
+	char const		*user = "_sdpd", *group = "_sdpd";
 	char const		*sgroup = NULL;
 	int32_t			 detach = 1, opt;
 	struct sigaction	 sa;
