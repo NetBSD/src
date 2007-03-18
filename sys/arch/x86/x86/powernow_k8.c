@@ -1,4 +1,4 @@
-/*	$NetBSD: powernow_k8.c,v 1.11 2007/03/18 07:40:29 xtraeme Exp $ */
+/*	$NetBSD: powernow_k8.c,v 1.12 2007/03/18 07:56:01 xtraeme Exp $ */
 /*	$OpenBSD: powernow-k8.c,v 1.8 2006/06/16 05:58:50 gwk Exp $ */
 
 /*-
@@ -66,7 +66,7 @@
 /* AMD POWERNOW K8 driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powernow_k8.c,v 1.11 2007/03/18 07:40:29 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powernow_k8.c,v 1.12 2007/03/18 07:56:01 xtraeme Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -108,7 +108,7 @@ int k8pnow_states(struct powernow_cpu_state *, uint32_t, unsigned int,
     unsigned int);
 int k8_powernow_setperf(unsigned int);
 static int k8_powernow_init_once(void);
-static void k8_powernow_init_main(struct cpu_info *);
+static void k8_powernow_init_main(void);
 
 int k8pnow_sysctl_helper(SYSCTLFN_ARGS)
 {
@@ -382,7 +382,7 @@ k8_powernow_init_main(void)
 	else
 		techname = "Cool`n'Quiet";
 
-	if (k8pnow_states(cstate, ci->ci_signature, maxfid, maxvid)) {
+	if (k8pnow_states(cstate, curcpu()->ci_signature, maxfid, maxvid)) {
 		freq_names_len = cstate->n_states * (sizeof("9999 ")-1) + 1;
 		freq_names = malloc(freq_names_len, M_SYSCTLDATA, M_WAITOK);
 		freq_names[0] = '\0';
