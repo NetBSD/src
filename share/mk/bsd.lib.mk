@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.270 2006/11/23 12:05:26 martin Exp $
+#	$NetBSD: bsd.lib.mk,v 1.271 2007/03/18 09:08:45 tsutsui Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -112,7 +112,7 @@ SHLIB_FULLVERSION=${SHLIB_MAJOR}
 # SHLIB_LDSTARTFILE:	support .o file, call C++ file-level constructors
 # SHLIB_LDENDFILE:	support .o file, call C++ file-level destructors
 # FPICFLAGS:		flags for ${FC} to compile .[fF] files to .so objects.
-# CPPICFLAGS:		flags for ${CPP} to preprocess .[sS] files for ${AS}
+# CPPPICFLAGS:		flags for ${CPP} to preprocess .[sS] files for ${AS}
 # CPICFLAGS:		flags for ${CC} to compile .[cC] files to pic objects.
 # CSHLIBFLAGS:		flags for ${CC} to compile .[cC] files to .so objects.
 #			(usually includes ${CPICFLAGS})
