@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.136 2007/03/12 16:43:30 ad Exp $	*/
+/*	$NetBSD: cpu.h,v 1.137 2007/03/18 07:21:41 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -424,7 +424,7 @@ void x86_bus_space_mallocok(void);
 #include <machine/psl.h>	/* Must be after struct cpu_info declaration */
 
 /* est.c */
-void	est_init(struct cpu_info *, int);
+void	est_init(int);
 
 #endif /* _KERNEL */
 
