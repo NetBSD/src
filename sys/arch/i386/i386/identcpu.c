@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.60 2007/03/15 00:28:58 xtraeme Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.61 2007/03/18 04:41:03 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.60 2007/03/15 00:28:58 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.61 2007/03/18 04:41:03 xtraeme Exp $");
 
 #include "opt_cputype.h"
 #include "opt_enhanced_speedstep.h"
@@ -1786,7 +1786,7 @@ identifycpu(struct cpu_info *ci)
 #endif
 #ifdef POWERNOW_K8
 		case 15:
-			k8_powernow_init();
+			k8_powernow_init(ci);
 			break;
 #endif
 		default:
