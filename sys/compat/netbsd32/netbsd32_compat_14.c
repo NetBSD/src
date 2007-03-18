@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_14.c,v 1.15 2007/03/04 06:01:26 christos Exp $	*/
+/*	$NetBSD: netbsd32_compat_14.c,v 1.15.6.1 2007/03/18 00:06:36 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1999 Eduardo E. Horvath
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_14.c,v 1.15 2007/03/04 06:01:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_14.c,v 1.15.6.1 2007/03/18 00:06:36 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/ipc.h>
@@ -294,7 +294,7 @@ compat_14_netbsd32___semctl(l, v, retval)
 	}
 
 	if (pass_arg != NULL) {
-		error = copyin((void *)NETBSD32PTR64(SCARG(uap, arg)), &arg,
+		error = copyin(NETBSD32IPTR64(SCARG(uap, arg)), &arg,
 		    sizeof(arg));
 		if (error)
 			return (error);

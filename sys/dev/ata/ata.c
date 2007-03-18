@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.87 2007/03/12 18:18:30 ad Exp $	*/
+/*	$NetBSD: ata.c,v 1.87.4.1 2007/03/18 00:06:41 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -30,11 +30,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.87 2007/03/12 18:18:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.87.4.1 2007/03/18 00:06:41 reinoud Exp $");
 
-#ifndef ATADEBUG
-#define ATADEBUG
-#endif /* ATADEBUG */
+#include "opt_ata.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -578,7 +576,7 @@ ata_get_params(struct ata_drive_datas *drvp, u_int8_t flags,
 	int i;
 	u_int16_t *p;
 
-	ATADEBUG_PRINT(("ata_get_parms\n"), DEBUG_FUNCS);
+	ATADEBUG_PRINT(("%s\n", __func__), DEBUG_FUNCS);
 
 	memset(tb, 0, DEV_BSIZE);
 	memset(prms, 0, sizeof(struct ataparams));

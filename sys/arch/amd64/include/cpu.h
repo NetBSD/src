@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.17 2007/03/12 16:43:11 ad Exp $	*/
+/*	$NetBSD: cpu.h,v 1.17.4.1 2007/03/18 00:06:31 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -102,12 +102,13 @@ struct cpu_info {
 	u_int32_t	ci_ipis;
 
 	u_int32_t	ci_feature_flags;
+	uint32_t	ci_feature2_flags;
 	u_int32_t	ci_signature;
 	u_int64_t	ci_tsc_freq;
 
 	const struct cpu_functions *ci_func;
-	void (*cpu_setup) __P((struct cpu_info *));
-	void (*ci_info) __P((struct cpu_info *));
+	void (*cpu_setup)(struct cpu_info *);
+	void (*ci_info)(struct cpu_info *);
 
 	int		ci_want_resched;
 	int		ci_astpending;
@@ -161,8 +162,8 @@ extern struct cpu_info *cpu_info_list;
 
 extern struct cpu_info *cpu_info[X86_MAXPROCS];
 
-void cpu_boot_secondary_processors __P((void));
-void cpu_init_idle_pcbs __P((void));    
+void cpu_boot_secondary_processors(void);
+void cpu_init_idle_pcbs(void);    
 
 
 #else /* !MULTIPROCESSOR */
@@ -229,7 +230,7 @@ extern void cpu_signotify(struct lwp *);
 /*
  * We need a machine-independent name for this.
  */
-extern void (*delay_func) __P((int));
+extern void (*delay_func)(int);
 
 #define DELAY(x)		(*delay_func)(x)
 #define delay(x)		(*delay_func)(x)
@@ -249,52 +250,49 @@ extern int cpuid_level;
 
 /* identcpu.c */
 
-void	identifycpu __P((struct cpu_info *));
-void cpu_probe_features __P((struct cpu_info *));
+void	identifycpu(struct cpu_info *);
+void cpu_probe_features(struct cpu_info *);
 
 /* machdep.c */
-void	dumpconf __P((void));
-int	cpu_maxproc __P((void));
-void	cpu_reset __P((void));
-void	x86_64_proc0_tss_ldt_init __P((void));
-void	x86_64_init_pcb_tss_ldt __P((struct cpu_info *));
-void	cpu_proc_fork __P((struct proc *, struct proc *));
+void	dumpconf(void);
+int	cpu_maxproc(void);
+void	cpu_reset(void);
+void	x86_64_proc0_tss_ldt_init(void);
+void	x86_64_init_pcb_tss_ldt(struct cpu_info *);
+void	cpu_proc_fork(struct proc *, struct proc *);
 
 struct region_descriptor;
-void	lgdt __P((struct region_descriptor *));
-void	fillw __P((short, void *, size_t));
+void	lgdt(struct region_descriptor *);
+void	fillw(short, void *, size_t);
 
 struct pcb;
-void	savectx __P((struct pcb *));
-void	switch_exit __P((struct lwp *, void (*)(struct lwp *)));
-void	proc_trampoline __P((void));
-void	child_trampoline __P((void));
+void	savectx(struct pcb *);
+void	switch_exit(struct lwp *, void (*)(struct lwp *));
+void	proc_trampoline(void);
+void	child_trampoline(void);
 
 /* clock.c */
-void	initrtclock __P((u_long));
-void	startrtclock __P((void));
-void	i8254_delay __P((int));
-void	i8254_microtime __P((struct timeval *));
-void	i8254_initclocks __P((void));
+void	initrtclock(u_long);
+void	startrtclock(void);
+void	i8254_delay(int);
+void	i8254_microtime(struct timeval *);
+void	i8254_initclocks(void);
 
-void cpu_init_msrs __P((struct cpu_info *));
+void cpu_init_msrs(struct cpu_info *);
 
 
 /* vm_machdep.c */
-int kvtop __P((void *));
+int kvtop(void *);
 
 /* trap.c */
-void	child_return __P((void *));
+void	child_return(void *);
 
 /* consinit.c */
-void kgdb_port_init __P((void));
+void kgdb_port_init(void);
 
 /* bus_machdep.c */
-void x86_bus_space_init __P((void));
-void x86_bus_space_mallocok __P((void));
-
-/* powernow_k8.c */
-void k8_powernow_init(void);
+void x86_bus_space_init(void);
+void x86_bus_space_mallocok(void);
 
 #endif /* _KERNEL */
 

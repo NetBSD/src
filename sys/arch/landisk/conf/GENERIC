@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.4 2007/03/14 12:27:24 drochner Exp $
+# $NetBSD: GENERIC,v 1.4.2.1 2007/03/18 00:06:32 reinoud Exp $
 #
 # GENERIC machine description file
 #
@@ -22,11 +22,12 @@ include		"arch/landisk/conf/std.landisk"
 
 options         INCLUDE_CONFIG_FILE     # embed config file in kernel binary
 
-#ident          "GENERIC-$Revision: 1.4 $"
+#ident          "GENERIC-$Revision: 1.4.2.1 $"
 
 maxusers	16		# estimated number of users
 
-makeoptions     COPTS="-O -m4-nofpu"
+makeoptions	CPUFLAGS="-m4-nofpu"		# XXX: move to std.landisk?
+#makeoptions     COPTS="-Os -freorder-blocks"	# -O2 is too -falign-* zealous
 options 	SYMTAB_SPACE=512000
 
 # CPU-related options.

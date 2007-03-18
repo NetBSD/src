@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_signal.c,v 1.19 2007/03/04 06:01:37 christos Exp $	 */
+/*	$NetBSD: svr4_32_signal.c,v 1.19.6.1 2007/03/18 00:06:40 reinoud Exp $	 */
 
 /*-
  * Copyright (c) 1994, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_signal.c,v 1.19 2007/03/04 06:01:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_signal.c,v 1.19.6.1 2007/03/18 00:06:40 reinoud Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_svr4.h"
@@ -269,7 +269,7 @@ svr4_32_to_native_sigaction(ssa, bsa)
 	struct sigaction *bsa;
 {
 
-	bsa->sa_handler = (sig_t)(u_long) ssa->svr4_32_sa_handler;
+	bsa->sa_handler = NETBSD32PTR64(ssa->svr4_32_sa_handler);
 	svr4_32_to_native_sigset(&ssa->svr4_32_sa_mask, &bsa->sa_mask);
 	bsa->sa_flags = 0;
 	if ((ssa->svr4_32_sa_flags & SVR4_SA_ONSTACK) != 0)
@@ -299,7 +299,7 @@ native_to_svr4_32_sigaction(bsa, ssa)
 	struct svr4_32_sigaction *ssa;
 {
 
-	ssa->svr4_32_sa_handler = (svr4_32_sig_t)(u_long) bsa->sa_handler;
+	NETBSD32PTR32(ssa->svr4_32_sa_handler, bsa->sa_handler);
 	native_to_svr4_32_sigset(&bsa->sa_mask, &ssa->svr4_32_sa_mask);
 	ssa->svr4_32_sa_flags = 0;
 	if ((bsa->sa_flags & SA_ONSTACK) != 0)
@@ -320,7 +320,7 @@ svr4_32_to_native_sigaltstack(sss, bss)
 	struct sigaltstack *bss;
 {
 
-	bss->ss_sp = (void *)(u_long)sss->ss_sp;
+	bss->ss_sp = NETBSD32PTR64(sss->ss_sp);
 	bss->ss_size = sss->ss_size;
 	bss->ss_flags = 0;
 	if ((sss->ss_flags & SVR4_SS_DISABLE) != 0)
@@ -338,7 +338,7 @@ native_to_svr4_32_sigaltstack(bss, sss)
 	struct svr4_32_sigaltstack *sss;
 {
 
-	sss->ss_sp = (u_long)bss->ss_sp;
+	NETBSD32PTR32(sss->ss_sp, bss->ss_sp);
 	sss->ss_size = bss->ss_size;
 	sss->ss_flags = 0;
 	if ((bss->ss_flags & SS_DISABLE) != 0)
@@ -362,8 +362,8 @@ svr4_32_sys_sigaction(l, v, retval)
 	struct sigaction nbsa, obsa;
 	int error;
 
-	if (SCARG(uap, nsa)) {
-		error = copyin((void *)(u_long)SCARG(uap, nsa),
+	if (SCARG_P32(uap, nsa)) {
+		error = copyin(SCARG_P32(uap, nsa),
 			       &nssa, sizeof(nssa));
 		if (error)
 			return (error);
@@ -371,13 +371,13 @@ svr4_32_sys_sigaction(l, v, retval)
 	}
 	error = sigaction1(l,
 			   svr4_to_native_signo[SVR4_SIGNO(SCARG(uap, signum))],
-	    SCARG(uap, nsa) ? &nbsa : 0, SCARG(uap, osa) ? &obsa : 0,
+	    SCARG_P32(uap, nsa) ? &nbsa : 0, SCARG_P32(uap, osa) ? &obsa : 0,
 	    NULL, 0);
 	if (error)
 		return (error);
-	if (SCARG(uap, osa)) {
+	if (SCARG_P32(uap, osa)) {
 		native_to_svr4_32_sigaction(&obsa, &ossa);
-		error = copyout(&ossa, (void *)(u_long)SCARG(uap, osa),
+		error = copyout(&ossa, SCARG_P32(uap, osa),
 				sizeof(ossa));
 		if (error)
 			return (error);
@@ -400,8 +400,8 @@ svr4_32_sys_sigaltstack(l, v, retval)
 	struct proc *p;
 	int error;
 
-	if (SCARG(uap, nss)) {
-		error = copyin((void *)(u_long)SCARG(uap, nss),
+	if (SCARG_P32(uap, nss)) {
+		error = copyin(SCARG_P32(uap, nss),
 			       &nsss, sizeof(nsss));
 		if (error)
 			return (error);
@@ -411,12 +411,12 @@ svr4_32_sys_sigaltstack(l, v, retval)
 		mutex_exit(&p->p_smutex);
 	}
 	error = sigaltstack1(l,
-	    SCARG(uap, nss) ? &nbss : 0, SCARG(uap, oss) ? &obss : 0);
+	    SCARG_P32(uap, nss) ? &nbss : 0, SCARG_P32(uap, oss) ? &obss : 0);
 	if (error)
 		return (error);
-	if (SCARG(uap, oss)) {
+	if (SCARG_P32(uap, oss)) {
 		native_to_svr4_32_sigaltstack(&obss, &osss);
-		error = copyout(&osss, (void *)(u_long)SCARG(uap, oss),
+		error = copyout(&osss, SCARG_P32(uap, oss),
 				sizeof(osss));
 		if (error)
 			return (error);
@@ -531,13 +531,13 @@ svr4_32_sys_sigprocmask(l, v, retval)
 		how = SIG_SETMASK;
 		break;
 	default:
-		if (SCARG(uap, set))
+		if (SCARG_P32(uap, set))
 			return EINVAL;
 		break;
 	}
 
-	if (SCARG(uap, set)) {
-		error = copyin((void *)(u_long)SCARG(uap, set),
+	if (SCARG_P32(uap, set)) {
+		error = copyin(SCARG_P32(uap, set),
 			       &nsss, sizeof(nsss));
 		if (error)
 			return error;
@@ -545,13 +545,13 @@ svr4_32_sys_sigprocmask(l, v, retval)
 	}
 	mutex_enter(&p->p_smutex);
 	error = sigprocmask1(l, how,
-	    SCARG(uap, set) ? &nbss : NULL, SCARG(uap, oset) ? &obss : NULL);
+	    SCARG_P32(uap, set) ? &nbss : NULL, SCARG_P32(uap, oset) ? &obss : NULL);
 	mutex_exit(&p->p_smutex);
 	if (error)
 		return error;
-	if (SCARG(uap, oset)) {
+	if (SCARG_P32(uap, oset)) {
 		native_to_svr4_32_sigset(&obss, &osss);
-		error = copyout(&osss, (void *)(u_long)SCARG(uap, oset),
+		error = copyout(&osss, SCARG_P32(uap, oset),
 				sizeof(osss));
 		if (error)
 			return error;
@@ -585,7 +585,7 @@ svr4_32_sys_sigpending(l, v, retval)
 	default:
 		return (EINVAL);
 	}
-	return (copyout(&sss, (void *)(u_long)SCARG(uap, set), sizeof(sss)));
+	return (copyout(&sss, SCARG_P32(uap, set), sizeof(sss)));
 }
 
 int
@@ -601,14 +601,14 @@ svr4_32_sys_sigsuspend(l, v, retval)
 	sigset_t bss;
 	int error;
 
-	if (SCARG(uap, set)) {
-		error = copyin((void *)(u_long)SCARG(uap, set), &sss, sizeof(sss));
+	if (SCARG_P32(uap, set)) {
+		error = copyin(SCARG_P32(uap, set), &sss, sizeof(sss));
 		if (error)
 			return (error);
 		svr4_32_to_native_sigset(&sss, &bss);
 	}
 
-	return (sigsuspend1(l, SCARG(uap, set) ? &bss : 0));
+	return (sigsuspend1(l, SCARG_P32(uap, set) ? &bss : 0));
 }
 
 int
@@ -653,13 +653,13 @@ svr4_32_getcontext(l, uc, mask)
 	sp = svr4_32_getmcontext(l, &uc->uc_mcontext, &uc->uc_flags);
 
 	/* get link */
-	uc->uc_link = (u_long)l->l_ctxlink;
+	NETBSD32PTR32(uc->uc_link, l->l_ctxlink);
 
 	/* get stack state. XXX: solaris appears to do this */
 #if 0
 	svr4_32_to_native_sigaltstack(&uc->uc_stack, &p->p_sigacts->ps_sigstk);
 #else
-	ss->ss_sp = (((u_long) sp) & ~(16384 - 1));
+	NETBSD32PTR32(ss->ss_sp, (void *)(((u_long) sp) & ~(16384 - 1)));
 	ss->ss_size = 16384;
 	ss->ss_flags = 0;
 #endif
@@ -685,7 +685,7 @@ svr4_32_setcontext(l, uc)
 		return error;
 
 	/* set link */
-	l->l_ctxlink = (void *)(u_long)uc->uc_link;
+	l->l_ctxlink = NETBSD32PTR64(uc->uc_link);
 
 	mutex_enter(&p->p_smutex);
 
@@ -724,13 +724,13 @@ svr4_32_sys_context(l, v, retval)
 	case SVR4_GETCONTEXT:
 		DPRINTF(("getcontext(%p)\n", SCARG(uap, uc)));
 		svr4_32_getcontext(l, &uc, &l->l_sigmask);
-		return copyout(&uc, (void *)(u_long)SCARG(uap, uc), sizeof(uc));
+		return copyout(&uc, SCARG_P32(uap, uc), sizeof(uc));
 
 	case SVR4_SETCONTEXT:
 		DPRINTF(("setcontext(%p)\n", SCARG(uap, uc)));
-		if (!SCARG(uap, uc))
+		if (!SCARG_P32(uap, uc))
 			exit1(l, W_EXITCODE(0, 0));
-		else if ((error = copyin((void *)(u_long)SCARG(uap, uc),
+		else if ((error = copyin(SCARG_P32(uap, uc),
 					 &uc, sizeof(uc))) != 0)
 			return error;
 		else

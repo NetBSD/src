@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_time.c,v 1.8 2007/03/04 06:01:25 christos Exp $ */
+/*	$NetBSD: linux32_time.c,v 1.8.6.1 2007/03/18 00:06:35 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_time.c,v 1.8 2007/03/04 06:01:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_time.c,v 1.8.6.1 2007/03/18 00:06:35 reinoud Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -140,7 +140,7 @@ linux32_sys_time(l, v, retval)
 
         tt = (linux32_time_t)atv.tv_sec;
 
-        if (SCARG(uap, t) && (error = copyout(&tt, 
+        if (NETBSD32PTR64(SCARG(uap, t)) && (error = copyout(&tt, 
 	    NETBSD32PTR64(SCARG(uap, t)), sizeof(tt))))
                 return error;
 

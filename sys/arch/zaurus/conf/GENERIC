@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.4 2007/03/14 12:27:25 drochner Exp $
+#	$NetBSD: GENERIC,v 1.4.2.1 2007/03/18 00:06:34 reinoud Exp $
 #
 # GENERIC machine description file
 #
@@ -45,7 +45,7 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 # File systems
 file-system	FFS		# UFS
 #file-system	EXT2FS		# second extended file system (linux)
-#file-system	LFS		# log-structured file system
+file-system	LFS		# log-structured file system
 file-system	MFS		# memory file system
 file-system	NFS		# Network File System client
 #file-system	NTFS		# Windows/NT file system (experimental)
@@ -315,3 +315,4 @@ pseudo-device	ksyms			# /dev/ksyms
 # wscons pseudo-devices
 pseudo-device	wsmux			# mouse & keyboard multiplexor
 pseudo-device	wsfont
+pseudo-device   bpfilter                # Berkeley packet filter#

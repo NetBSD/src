@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_misc.c,v 1.43 2007/03/09 14:11:29 ad Exp $	 */
+/*	$NetBSD: svr4_32_misc.c,v 1.43.6.1 2007/03/18 00:06:39 reinoud Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_misc.c,v 1.43 2007/03/09 14:11:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_misc.c,v 1.43.6.1 2007/03/18 00:06:39 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -136,13 +136,13 @@ svr4_32_sys_wait(l, v, retval)
 	SCARG(&w4, rusage) = NULL;
 	SCARG(&w4, options) = 0;
 
-	if (SCARG(uap, status) == 0) {
+	if (SCARG_P32(uap, status) == 0) {
 		void *sg = stackgap_init(p, 0);
 
 		SCARG(&w4, status) = stackgap_alloc(p, &sg, sz);
 	}
 	else
-		SCARG(&w4, status) = (int *)(u_long)SCARG(uap, status);
+		SCARG(&w4, status) = SCARG_P32(uap, status);
 
 	SCARG(&w4, pid) = WAIT_ANY;
 
@@ -168,8 +168,8 @@ svr4_32_sys_wait(l, v, retval)
 	 */
 	retval[1] = st;
 
-	if (SCARG(uap, status))
-		if ((error = copyout(&st, (void *)(u_long)SCARG(uap, status),
+	if (SCARG_P32(uap, status))
+		if ((error = copyout(&st, SCARG_P32(uap, status),
 				     sizeof(st))) != 0)
 			return error;
 
@@ -195,7 +195,7 @@ svr4_32_sys_execv(l, v, retval)
 
 	SCARG(&ap, path) = SCARG(uap, path);
 	SCARG(&ap, argp) = SCARG(uap, argp);
-	SCARG(&ap, envp) = 0;
+	NETBSD32PTR32(SCARG(&ap, envp), 0);
 
 	return netbsd32_execve(l, &ap, retval);
 }
@@ -217,10 +217,10 @@ svr4_32_sys_execve(p, v, retval)
 
 	sg = stackgap_init(p, 0);
 
-	SCARG(&ap, path) = (const char *)(u_long)SCARG(uap, path);
+	SCARG(&ap, path) = SCARG_P32(uap, path);
 	CHECK_ALT_EXIST(l, &sg, SCARG(&ap, path));
-	SCARG(&ap, argp) = (char **)(u_long)SCARG(uap, argp);
-	SCARG(&ap, envp) = (char **)(u_long)SCARG(uap, envp);
+	SCARG(&ap, argp) = SCARG_P32(uap, argp);
+	SCARG(&ap, envp) = SCARG_P32(uap, envp);
 
 	return netbsd32_execve(p, &ap, retval);
 }
@@ -240,8 +240,8 @@ svr4_32_sys_time(l, v, retval)
 	microtime(&tv);
 	ntv.tv_sec = tv.tv_sec;
 	ntv.tv_usec = tv.tv_usec;
-	if (SCARG(uap, t))
-		error = copyout(&ntv.tv_sec, (void *)(u_long)SCARG(uap, t),
+	if (SCARG_P32(uap, t))
+		error = copyout(&ntv.tv_sec, SCARG_P32(uap, t),
 				sizeof(ntv.tv_sec));
 	*retval = (int) ntv.tv_sec;
 
@@ -317,7 +317,7 @@ again:
 		goto out;
 
 	inp = sbuf;
-	outp = (char *)(u_long) SCARG(uap, dp);
+	outp = SCARG_P32(uap, dp);
 	resid = SCARG(uap, nbytes);
 	if ((len = buflen - auio.uio_resid) == 0)
 		goto eof;
@@ -364,7 +364,7 @@ again:
 	}
 
 	/* if we squished out the whole block, try again */
-	if (outp == (char *)(u_long) SCARG(uap, dp))
+	if (outp == SCARG_P32(uap, dp))
 		goto again;
 	fp->f_offset = off;	/* update the vnode offset */
 
@@ -442,7 +442,7 @@ again:
 		goto out;
 
 	inp = sbuf;
-	outp = (void *)(u_long)SCARG(uap, buf);
+	outp = SCARG_P32(uap, buf);
 	resid = SCARG(uap, nbytes);
 	if ((len = buflen - auio.uio_resid) == 0)
 		goto eof;
@@ -490,7 +490,7 @@ again:
 	}
 
 	/* if we squished out the whole block, try again */
-	if (outp == (void *)(u_long)SCARG(uap, buf))
+	if (outp == SCARG_P32(uap, buf))
 		goto again;
 	fp->f_offset = off;	/* update the vnode offset */
 
@@ -549,7 +549,7 @@ svr4_32_sys_mmap(l, v, retval)
 	SCARG(&mm, prot) = SCARG(uap, prot);
 	SCARG(&mm, len) = SCARG(uap, len);
 	SCARG(&mm, fd) = SCARG(uap, fd);
-	SCARG(&mm, addr) = (void *)(u_long)SCARG(uap, addr);
+	SCARG(&mm, addr) = SCARG_P32(uap, addr);
 	SCARG(&mm, pos) = SCARG(uap, pos);
 
 	error = sys_mmap(l, &mm, retval);
@@ -586,7 +586,7 @@ svr4_32_sys_mmap64(l, v, retval)
 	SCARG(&mm, prot) = SCARG(uap, prot);
 	SCARG(&mm, len) = SCARG(uap, len);
 	SCARG(&mm, fd) = SCARG(uap, fd);
-	SCARG(&mm, addr) = (void *)(u_long)SCARG(uap, addr);
+	SCARG(&mm, addr) = SCARG_P32(uap, addr);
 	SCARG(&mm, pos) = SCARG(uap, pos);
 
 	error = sys_mmap(l, &mm, retval);
@@ -634,7 +634,7 @@ svr4_32_sys_mknod(l, v, retval)
 {
 	struct svr4_32_sys_mknod_args *uap = v;
 	return svr4_32_mknod(l, retval,
-			  (void *)(u_long)SCARG(uap, path), SCARG(uap, mode),
+			  SCARG_P32(uap, path), SCARG(uap, mode),
 			  svr4_32_to_bsd_odev_t(SCARG(uap, dev)));
 }
 
@@ -647,7 +647,7 @@ svr4_32_sys_xmknod(l, v, retval)
 {
 	struct svr4_32_sys_xmknod_args *uap = v;
 	return svr4_32_mknod(l, retval,
-			  (void *)(u_long)SCARG(uap, path), SCARG(uap, mode),
+			  SCARG_P32(uap, path), SCARG(uap, mode),
 			  svr4_32_to_bsd_dev_t(SCARG(uap, dev)));
 }
 
@@ -815,7 +815,7 @@ svr4_32_sys_break(l, v, retval)
 	int error;
 
 	old = (vaddr_t) vm->vm_daddr;
-	new = round_page((vaddr_t)SCARG(uap, nsize));
+	new = round_page((vaddr_t)SCARG_P32(uap, nsize));
 
 	if (new - old > p->p_rlimit[RLIMIT_DATA].rlim_cur && new > old)
 		return ENOMEM;
@@ -897,7 +897,7 @@ svr4_32_sys_times(l, v, retval)
 	microtime(&t);
 	*retval = timeval_to_clock_t(&t);
 
-	return copyout(&tms, (void *)(u_long)SCARG(uap, tp), sizeof(tms));
+	return copyout(&tms, SCARG_P32(uap, tp), sizeof(tms));
 }
 
 
@@ -1064,7 +1064,7 @@ svr4_32_hrtcntl(p, uap, retval)
 				DPRINTF(("clk == %d\n", SCARG(uap, clk)));
 				return EINVAL;
 			}
-			if (SCARG(uap, ti) == 0) {
+			if (SCARG_P32(uap, ti) == 0) {
 				DPRINTF(("ti NULL\n"));
 				return EINVAL;
 			}
@@ -1072,7 +1072,7 @@ svr4_32_hrtcntl(p, uap, retval)
 			t.h_sec = tv.tv_sec;
 			t.h_rem = tv.tv_usec;
 			t.h_res = SVR4_HRT_USEC;
-			return copyout(&t, (void *)(u_long)SCARG(uap, ti),
+			return copyout(&t, SCARG_P32(uap, ti),
 				       sizeof(t));
 		}
 
@@ -1128,7 +1128,7 @@ svr4_32_setinfo(p, st, si)
 	int st;
 	svr4_32_siginfo_tp si;
 {
-	svr4_32_siginfo_t *s = (svr4_32_siginfo_t *)(u_long)si;
+	svr4_32_siginfo_t *s = NETBSD32PTR64(si);
 	svr4_32_siginfo_t i;
 	int sig;
 
@@ -1362,7 +1362,7 @@ svr4_32_sys_statvfs(l, v, retval)
 	struct statvfs *fs = stackgap_alloc(p, &sg, sizeof(struct statvfs));
 	int error;
 
-	SCARG(&fs_args, path) = (void *)(u_long)SCARG(uap, path);
+	SCARG(&fs_args, path) = SCARG_P32(uap, path);
 	CHECK_ALT_EXIST(l, &sg, SCARG(&fs_args, path));
 	SCARG(&fs_args, buf) = fs;
 	SCARG(&fs_args, flags) = ST_WAIT;
@@ -1370,8 +1370,7 @@ svr4_32_sys_statvfs(l, v, retval)
 	if ((error = sys_statvfs1(l, &fs_args, retval)) != 0)
 		return error;
 
-	return svr4_copystatvfs((struct svr4_32_statvfs *)
-		((intptr_t)SCARG(uap, fs)), fs);
+	return svr4_copystatvfs(SCARG_P32(uap, fs), fs);
 }
 
 
@@ -1395,8 +1394,7 @@ svr4_32_sys_fstatvfs(l, v, retval)
 	if ((error = sys_fstatvfs1(l, &fs_args, retval)) != 0)
 		return error;
 
-	return svr4_copystatvfs((struct svr4_32_statvfs *)
-		((intptr_t)SCARG(uap, fs)), fs);
+	return svr4_copystatvfs(SCARG_P32(uap, fs), fs);
 }
 
 
@@ -1413,7 +1411,7 @@ svr4_32_sys_statvfs64(l, v, retval)
 	struct statvfs *fs = stackgap_alloc(p, &sg, sizeof(struct statvfs));
 	int error;
 
-	SCARG(&fs_args, path) = (void *)(u_long)SCARG(uap, path);
+	SCARG(&fs_args, path) = SCARG_P32(uap, path);
 	CHECK_ALT_EXIST(l, &sg, SCARG(&fs_args, path));
 	SCARG(&fs_args, buf) = fs;
 	SCARG(&fs_args, flags) = ST_WAIT;
@@ -1421,8 +1419,7 @@ svr4_32_sys_statvfs64(l, v, retval)
 	if ((error = sys_statvfs1(l, &fs_args, retval)) != 0)
 		return error;
 
-	return svr4_copystatvfs64((struct svr4_32_statvfs64 *)
-		((intptr_t)SCARG(uap, fs)), fs);
+	return svr4_copystatvfs64(SCARG_P32(uap, fs), fs);
 }
 
 
@@ -1446,8 +1443,7 @@ svr4_32_sys_fstatvfs64(l, v, retval)
 	if ((error = sys_fstatvfs1(l, &fs_args, retval)) != 0)
 		return error;
 
-	return svr4_copystatvfs64((struct svr4_32_statvfs64 *)
-		((intptr_t)SCARG(uap, fs)), fs);
+	return svr4_copystatvfs64(SCARG_P32(uap, fs), fs);
 }
 
 
@@ -1501,11 +1497,11 @@ svr4_32_sys_gettimeofday(l, v, retval)
 {
 	struct svr4_32_sys_gettimeofday_args *uap = v;
 
-	if (SCARG(uap, tp)) {
+	if (SCARG_P32(uap, tp)) {
 		struct timeval atv;
 
 		microtime(&atv);
-		return copyout(&atv, (void *)(u_long)SCARG(uap, tp), sizeof (atv));
+		return copyout(&atv, SCARG_P32(uap, tp), sizeof (atv));
 	}
 
 	return 0;
@@ -1575,9 +1571,9 @@ svr4_32_sys_memcntl(l, v, retval)
 		{
 			struct sys___msync13_args msa;
 
-			SCARG(&msa, addr) = (void *)(u_long)SCARG(uap, addr);
+			SCARG(&msa, addr) = SCARG_P32(uap, addr);
 			SCARG(&msa, len) = SCARG(uap, len);
-			SCARG(&msa, flags) = (int)(u_long)SCARG(uap, arg);
+			SCARG(&msa, flags) = (uintptr_t)SCARG_P32(uap, arg);
 
 			return sys___msync13(l, &msa, retval);
 		}
@@ -1585,9 +1581,9 @@ svr4_32_sys_memcntl(l, v, retval)
 		{
 			struct sys_madvise_args maa;
 
-			SCARG(&maa, addr) = (void *)(u_long)SCARG(uap, addr);
+			SCARG(&maa, addr) = SCARG_P32(uap, addr);
 			SCARG(&maa, len) = SCARG(uap, len);
-			SCARG(&maa, behav) = (int)(u_long)SCARG(uap, arg);
+			SCARG(&maa, behav) = (uintptr_t)SCARG_P32(uap, arg);
 
 			return sys_madvise(l, &maa, retval);
 		}
@@ -1638,13 +1634,13 @@ svr4_32_sys_resolvepath(l, v, retval)
 	size_t len;
 
 	NDINIT(&nd, LOOKUP, NOFOLLOW | SAVENAME, UIO_USERSPACE,
-	    (const char *)(u_long)SCARG(uap, path), l);
+	    SCARG_P32(uap, path), l);
 
 	if ((error = namei(&nd)) != 0)
 		return error;
 
 	if ((error = copyoutstr(nd.ni_cnd.cn_pnbuf,
-	    (void *)(u_long)SCARG(uap, buf),
+	    SCARG_P32(uap, buf),
 	    SCARG(uap, bufsiz), &len)) != 0)
 		goto bad;
 

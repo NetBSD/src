@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_stat.c,v 1.25 2007/03/10 21:40:26 dsl Exp $	 */
+/*	$NetBSD: svr4_32_stat.c,v 1.25.4.1 2007/03/18 00:06:40 reinoud Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_stat.c,v 1.25 2007/03/10 21:40:26 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_stat.c,v 1.25.4.1 2007/03/18 00:06:40 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -206,7 +206,7 @@ svr4_32_sys_stat(l, v, retval)
 	if (S_ISSOCK(st.st_mode))
 		(void) svr4_add_socket(p, SCARG(&cup, path), &st);
 
-	return copyout(&svr4_st, (void *)(u_long)SCARG(uap, ub),
+	return copyout(&svr4_st, SCARG_P32(uap, ub),
 			     sizeof svr4_st);
 #endif
 }
@@ -247,7 +247,7 @@ svr4_32_sys_lstat(l, v, retval)
 	if (S_ISSOCK(st.st_mode))
 		(void) svr4_add_socket(p, SCARG(&cup, path), &st);
 
-	return copyout(&svr4_st, (void *)(u_long)SCARG(uap, ub),
+	return copyout(&svr4_st, SCARG_P32(uap, ub),
 			     sizeof svr4_st);
 #endif
 }
@@ -280,7 +280,7 @@ svr4_32_sys_fstat(l, v, retval)
 
 	bsd_to_svr4_32_stat(&st, &svr4_st);
 
-	return copyout(&svr4_st, (void *)(u_long)SCARG(uap, ub),
+	return copyout(&svr4_st, SCARG_P32(uap, ub),
 			     sizeof svr4_st);
 #endif
 }
@@ -296,7 +296,7 @@ svr4_32_sys_xstat(l, v, retval)
 	struct stat		st;
 	struct svr4_32_xstat	svr4_st;
 	int			error;
-	const char *path = (void *)(intptr_t)SCARG(uap, path);
+	const char *path = SCARG_P32(uap, path);
 
 	void *sg = stackgap_init(l->l_proc, 0);
 
@@ -311,7 +311,7 @@ svr4_32_sys_xstat(l, v, retval)
 	if (S_ISSOCK(st.st_mode))
 		(void) svr4_add_socket(l->l_proc, path, &st);
 
-	return copyout(&svr4_st, (void *)(u_long)SCARG(uap, ub),
+	return copyout(&svr4_st, SCARG_P32(uap, ub),
 			     sizeof svr4_st);
 }
 
@@ -326,7 +326,7 @@ svr4_32_sys_lxstat(l, v, retval)
 	struct stat		st;
 	struct svr4_32_xstat	svr4_st;
 	int			error;
-	const char *path = (void *)(intptr_t)SCARG(uap, path);
+	const char *path = SCARG_P32(uap, path);
 
 	void *sg = stackgap_init(l->l_proc, 0);
 
@@ -341,7 +341,7 @@ svr4_32_sys_lxstat(l, v, retval)
 	if (S_ISSOCK(st.st_mode))
 		(void) svr4_add_socket(l->l_proc, path, &st);
 
-	return copyout(&svr4_st, (void *)(u_long)SCARG(uap, ub),
+	return copyout(&svr4_st, SCARG_P32(uap, ub),
 			     sizeof svr4_st);
 }
 
@@ -363,7 +363,7 @@ svr4_32_sys_fxstat(l, v, retval)
 
 	bsd_to_svr4_32_xstat(&st, &svr4_st);
 
-	return copyout(&svr4_st, (void *)(u_long)SCARG(uap, sb),
+	return copyout(&svr4_st, SCARG_P32(uap, sb),
 			     sizeof svr4_st);
 }
 
@@ -378,7 +378,7 @@ svr4_32_sys_stat64(l, v, retval)
 	struct stat		st;
 	struct svr4_32_stat64	svr4_st;
 	int			error;
-	const char *path = (void *)(intptr_t)SCARG(uap, path);
+	const char *path = SCARG_P32(uap, path);
 
 	void *sg = stackgap_init(l->l_proc, 0);
 
@@ -393,7 +393,7 @@ svr4_32_sys_stat64(l, v, retval)
 	if (S_ISSOCK(st.st_mode))
 		(void) svr4_add_socket(l->l_proc, path, &st);
 
-	return copyout(&svr4_st,  (void *)(u_long)SCARG(uap, sb),
+	return copyout(&svr4_st,  SCARG_P32(uap, sb),
 			     sizeof svr4_st);
 }
 
@@ -408,7 +408,7 @@ svr4_32_sys_lstat64(l, v, retval)
 	struct stat		st;
 	struct svr4_32_stat64	svr4_st;
 	int			error;
-	const char *path = (void *)(intptr_t)SCARG(uap, path);
+	const char *path = SCARG_P32(uap, path);
 
 	void *sg = stackgap_init(l->l_proc, 0);
 
@@ -423,7 +423,7 @@ svr4_32_sys_lstat64(l, v, retval)
 	if (S_ISSOCK(st.st_mode))
 		(void) svr4_add_socket(l->l_proc, path, &st);
 
-	return copyout(&svr4_st, (void *)(u_long)SCARG(uap, sb),
+	return copyout(&svr4_st, SCARG_P32(uap, sb),
 			     sizeof svr4_st);
 }
 
@@ -445,7 +445,7 @@ svr4_32_sys_fstat64(l, v, retval)
 
 	bsd_to_svr4_32_stat64(&st, &svr4_st);
 
-	return copyout(&svr4_st, (void *)(u_long)SCARG(uap, sb),
+	return copyout(&svr4_st, SCARG_P32(uap, sb),
 			     sizeof svr4_st);
 }
 
@@ -474,7 +474,7 @@ svr4_32_ustat(l, v, retval)
          * XXX: should set f_tfree and f_tinode at least
          * How do we translate dev -> fstat? (and then to svr4_32_ustat)
          */
-	if ((error = copyout(&us, (void *)(u_long)SCARG(uap, name),
+	if ((error = copyout(&us, SCARG_P32(uap, name),
 			     sizeof us)) != 0)
 		return (error);
 
@@ -509,7 +509,7 @@ svr4_32_sys_uname(l, v, retval)
 	strncpy(sut.machine, machine, sizeof(sut.machine));
 	sut.machine[sizeof(sut.machine) - 1] = '\0';
 
-	return copyout((void *) &sut, (void *)(u_long)SCARG(uap, name),
+	return copyout((void *) &sut, SCARG_P32(uap, name),
 		       sizeof(struct svr4_utsname));
 }
 
@@ -626,23 +626,23 @@ svr4_32_sys_systeminfo(l, v, retval)
 		if (len < rlen)
 			rlen = len;
 
-		if (SCARG(uap, buf)) {
-			error = copyout(str, (void *)(u_long)SCARG(uap, buf),
+		if (SCARG_P32(uap, buf)) {
+			error = copyout(str, SCARG_P32(uap, buf),
 			    rlen);
 			if (error)
 				return error;
 			if (rlen > 0) {
 				/* make sure we are NULL terminated */
 				buf[0] = '\0';
-				error = copyout(buf, &(((char *)(u_long)
-				    SCARG(uap, buf))[rlen - 1]), 1);
+				error = copyout(buf, &(((char *)
+				    SCARG_P32(uap, buf))[rlen - 1]), 1);
 			}
 		}
 		else
 			error = 0;
 	}
 	else {
-		error = copyinstr((void *)(u_long)SCARG(uap, buf), buf,
+		error = copyinstr(SCARG_P32(uap, buf), buf,
 				  sizeof(buf), &len);
 		if (error)
 			return error;
@@ -674,7 +674,7 @@ svr4_32_sys_utssys(l, v, retval)
 	case 2:		/* ustat(2)  */
 		{
 			struct svr4_32_ustat_args ua;
-			SCARG(&ua, dev) = (svr4_32_dev_t) SCARG(uap, a2);
+			SCARG(&ua, dev) =  (uintptr_t)SCARG_P32(uap, a2);
 			SCARG(&ua, name) = SCARG(uap, a1);
 			return svr4_32_ustat(l, &ua, retval);
 		}
@@ -705,10 +705,10 @@ svr4_32_sys_utime(l, v, retval)
 	void *sg = stackgap_init(p, 0);
 
 	ttp = stackgap_alloc(p, &sg, sizeof(tbuf));
-	SCARG(&ap, path) = (const char *)(u_long)SCARG(uap, path);
+	SCARG(&ap, path) = SCARG_P32(uap, path);
 	CHECK_ALT_EXIST(l, &sg, SCARG(&ap, path));
-	if (SCARG(uap, ubuf)) {
-		if ((error = copyin((void *)(u_long)SCARG(uap, ubuf),
+	if (SCARG_P32(uap, ubuf)) {
+		if ((error = copyin(SCARG_P32(uap, ubuf),
 				    &ub, sizeof(ub))) != 0)
 			return error;
 		tbuf[0].tv_sec = ub.actime;
@@ -736,9 +736,9 @@ svr4_32_sys_utimes(l, v, retval)
 	struct proc *p = l->l_proc;
 	struct sys_utimes_args ua;
 	void *sg = stackgap_init(p, 0);
-	SCARG(&ua, path) = (const char *)(u_long)SCARG(uap, path);
+	SCARG(&ua, path) = SCARG_P32(uap, path);
 	CHECK_ALT_EXIST(l, &sg, SCARG(&ua, path));
-	SCARG(&ua, tptr) = (const struct timeval *)(u_long)SCARG(uap, tptr);
+	SCARG(&ua, tptr) = SCARG_P32(uap, tptr);
 
 	return sys_utimes(l, &ua, retval);
 }
@@ -808,7 +808,7 @@ svr4_32_sys_pathconf(l, v, retval)
 	} */ ua;
 	void *sg = stackgap_init(p, 0);
 
-	SCARG(&ua, path) = (char *)(u_long)SCARG(uap, path);
+	SCARG(&ua, path) = SCARG_P32(uap, path);
 
 	CHECK_ALT_EXIST(l, &sg, SCARG(&ua, path));
 

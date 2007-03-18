@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_sem.c,v 1.2 2007/02/09 21:55:22 ad Exp $	*/
+/*	$NetBSD: netbsd32_sem.c,v 1.2.10.1 2007/03/18 00:06:37 reinoud Exp $	*/
 
 /*
  *  Copyright (c) 2006 The NetBSD Foundation.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_sem.c,v 1.2 2007/02/09 21:55:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_sem.c,v 1.2.10.1 2007/03/18 00:06:37 reinoud Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_posix.h"
@@ -65,7 +65,8 @@ netbsd32_ksem_copyout(const void *src, void *dst, size_t size)
 
 	KASSERT(size == sizeof(semid_t));
 
-	id32 = (netbsd32_semidp_t)(*idp & 0xffffffff);
+	/* Returning a kernel pointer to userspace sucks badly :-( */
+	id32 = (netbsd32_semid_t)*idp;
 	return copyout(&id32, outidp, sizeof(id32));
 }
 

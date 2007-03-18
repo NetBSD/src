@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_stat.c,v 1.16 2007/03/10 21:40:24 dsl Exp $ */
+/*	$NetBSD: irix_stat.c,v 1.16.4.1 2007/03/18 00:06:35 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,14 +37,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_stat.c,v 1.16 2007/03/10 21:40:24 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_stat.c,v 1.16.4.1 2007/03/18 00:06:35 reinoud Exp $");
 
 #include <sys/errno.h>
 #include <sys/types.h>
 #include <sys/signal.h>
 #include <sys/param.h>
+#include <sys/filedesc.h>
 #include <sys/proc.h>
 #include <sys/mount.h>
+#include <sys/namei.h>
 #include <sys/stdint.h>
 #include <sys/stat.h>
 #include <sys/systm.h>
@@ -168,11 +170,11 @@ irix_sys_xstat(l, v, retval)
 
 	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
-	error = do_sys_stat(l, SCARG(uap, path), FOLLOW, &st)
+	error = do_sys_stat(l, SCARG(uap, path), FOLLOW, &st);
 	if (error != 0)
 		return error;
 
-	return convert_irix_stat(&sb, SCARG(uap, buf), SCARG(uap, version));
+	return convert_irix_stat(&st, SCARG(uap, buf), SCARG(uap, version));
 }
 
 int
@@ -192,10 +194,10 @@ irix_sys_lxstat(l, v, retval)
 
 	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
-	error = do_sys_stat(l, SCARG(uap, path), NOFOLLOW, &st)
+	error = do_sys_stat(l, SCARG(uap, path), NOFOLLOW, &st);
 	if (error != 0)
 		return error;
-	return convert_irix_stat(&sb, SCARG(uap, buf), SCARG(uap, version));
+	return convert_irix_stat(&st, SCARG(uap, buf), SCARG(uap, version));
 }
 
 int
@@ -212,8 +214,8 @@ irix_sys_fxstat(l, v, retval)
 	struct stat st;
 	int error;
 
-	error = do_sys_fstat(l, SCARG(uap, fd), &st)
+	error = do_sys_fstat(l, SCARG(uap, fd), &st);
 	if (error != 0)
 		return error;
-	return convert_irix_stat(&sb, SCARG(uap, buf), SCARG(uap, version));
+	return convert_irix_stat(&st, SCARG(uap, buf), SCARG(uap, version));
 }

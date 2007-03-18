@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_exec_elf32.c,v 1.5 2006/08/07 14:19:57 manu Exp $ */
+/*	$NetBSD: linux32_exec_elf32.c,v 1.5.20.1 2007/03/18 00:06:35 reinoud Exp $ */
 
 /*-                     
  * Copyright (c) 1995, 1998, 2000, 2001,2006 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_exec_elf32.c,v 1.5 2006/08/07 14:19:57 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_exec_elf32.c,v 1.5.20.1 2007/03/18 00:06:35 reinoud Exp $");
 
 #define	ELFSIZE		32
 
@@ -174,10 +174,10 @@ linux32_elf32_copyargs(struct lwp *l, struct exec_package *pack,
 
 	i = 0;
 	esd.ai[i].a_type = LINUX_AT_SYSINFO;
-	esd.ai[i++].a_v = (netbsd32_pointer_t)(long)&esdp->kernel_vsyscall[0];
+	esd.ai[i++].a_v = NETBSD32PTR32I(&esdp->kernel_vsyscall[0]);
 
 	esd.ai[i].a_type = LINUX_AT_SYSINFO_EHDR;
-	esd.ai[i++].a_v = (netbsd32_pointer_t)(long)&esdp->elfhdr;
+	esd.ai[i++].a_v = NETBSD32PTR32I(&esdp->elfhdr);
 
 	esd.ai[i].a_type = LINUX_AT_HWCAP;
 	esd.ai[i++].a_v = LINUX32_CPUCAP;
@@ -224,7 +224,7 @@ linux32_elf32_copyargs(struct lwp *l, struct exec_package *pack,
 	esd.ai[i++].a_v = 0;
 
 	esd.ai[i].a_type = LINUX_AT_PLATFORM;
-	esd.ai[i++].a_v = (netbsd32_pointer_t)(long)&esdp->hw_platform[0];
+	esd.ai[i++].a_v = NETBSD32PTR32I(&esdp->hw_platform[0]);
 
 	esd.ai[i].a_type = AT_NULL;
 	esd.ai[i++].a_v = 0;

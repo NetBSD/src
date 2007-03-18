@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_conv.h,v 1.15 2007/03/04 06:01:26 christos Exp $	*/
+/*	$NetBSD: netbsd32_conv.h,v 1.15.6.1 2007/03/18 00:06:36 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -234,10 +234,10 @@ netbsd32_to_msghdr(mhp32, mhp)
 	struct msghdr *mhp;
 {
 
-	mhp->msg_name = (void *)(u_long)mhp32->msg_name;
+	mhp->msg_name = NETBSD32PTR64(mhp32->msg_name);
 	mhp->msg_namelen = mhp32->msg_namelen;
 	mhp->msg_iovlen = (size_t)mhp32->msg_iovlen;
-	mhp->msg_control = (void *)(u_long)mhp32->msg_control;
+	mhp->msg_control = NETBSD32PTR64(mhp32->msg_control);
 	mhp->msg_controllen = mhp32->msg_controllen;
 	mhp->msg_flags = mhp32->msg_flags;
 }
@@ -435,7 +435,7 @@ netbsd32_to_msg(m32p, mp)
 	struct msg *mp;
 {
 
-	mp->msg_next = (struct msg *)(u_long)m32p->msg_next;
+	mp->msg_next = NETBSD32PTR64(m32p->msg_next);
 	mp->msg_type = (long)m32p->msg_type;
 	mp->msg_ts = m32p->msg_ts;
 	mp->msg_spot = m32p->msg_spot;
@@ -447,7 +447,7 @@ netbsd32_from_msg(mp, m32p)
 	struct netbsd32_msg *m32p;
 {
 
-	m32p->msg_next = (netbsd32_msgp_t)(u_long)mp->msg_next;
+	NETBSD32PTR32(m32p->msg_next, mp->msg_next);
 	m32p->msg_type = (netbsd32_long)mp->msg_type;
 	m32p->msg_ts = mp->msg_ts;
 	m32p->msg_spot = mp->msg_spot;
@@ -460,8 +460,8 @@ netbsd32_to_msqid_ds(ds32p, dsp)
 {
 
 	netbsd32_to_ipc_perm(&ds32p->msg_perm, &dsp->msg_perm);
-	netbsd32_to_msg((struct netbsd32_msg *)(u_long)ds32p->_msg_first, dsp->_msg_first);
-	netbsd32_to_msg((struct netbsd32_msg *)(u_long)ds32p->_msg_last, dsp->_msg_last);
+	netbsd32_to_msg(NETBSD32PTR64(ds32p->_msg_first), dsp->_msg_first);
+	netbsd32_to_msg(NETBSD32PTR64(ds32p->_msg_last), dsp->_msg_last);
 	dsp->_msg_cbytes = (u_long)ds32p->_msg_cbytes;
 	dsp->msg_qnum = (u_long)ds32p->msg_qnum;
 	dsp->msg_qbytes = (u_long)ds32p->msg_qbytes;
@@ -479,8 +479,8 @@ netbsd32_from_msqid_ds(dsp, ds32p)
 {
 
 	netbsd32_from_ipc_perm(&dsp->msg_perm, &ds32p->msg_perm);
-	netbsd32_from_msg(dsp->_msg_first, (struct netbsd32_msg *)(u_long)ds32p->_msg_first);
-	netbsd32_from_msg(dsp->_msg_last, (struct netbsd32_msg *)(u_long)ds32p->_msg_last);
+	netbsd32_from_msg(dsp->_msg_first, NETBSD32PTR64(ds32p->_msg_first));
+	netbsd32_from_msg(dsp->_msg_last, NETBSD32PTR64(ds32p->_msg_last));
 	ds32p->_msg_cbytes = (netbsd32_u_long)dsp->_msg_cbytes;
 	ds32p->msg_qnum = (netbsd32_u_long)dsp->msg_qnum;
 	ds32p->msg_qbytes = (netbsd32_u_long)dsp->msg_qbytes;
@@ -505,7 +505,7 @@ netbsd32_to_shmid_ds(ds32p, dsp)
 	dsp->shm_atime = (long)ds32p->shm_atime;
 	dsp->shm_dtime = (long)ds32p->shm_dtime;
 	dsp->shm_ctime = (long)ds32p->shm_ctime;
-	dsp->_shm_internal = (void *)(u_long)ds32p->_shm_internal;
+	dsp->_shm_internal = NETBSD32PTR64(ds32p->_shm_internal);
 }
 
 static __inline void
@@ -522,7 +522,7 @@ netbsd32_from_shmid_ds(dsp, ds32p)
 	ds32p->shm_atime = (netbsd32_long)dsp->shm_atime;
 	ds32p->shm_dtime = (netbsd32_long)dsp->shm_dtime;
 	ds32p->shm_ctime = (netbsd32_long)dsp->shm_ctime;
-	ds32p->_shm_internal = (netbsd32_voidp)(u_long)dsp->_shm_internal;
+	NETBSD32PTR32(ds32p->_shm_internal, dsp->_shm_internal);
 }
 
 static __inline void
@@ -532,7 +532,7 @@ netbsd32_to_semid_ds(s32dsp, dsp)
 {
 
 	netbsd32_to_ipc_perm(&s32dsp->sem_perm, &dsp->sem_perm);
-	dsp->_sem_base = (struct __sem *)(u_long)s32dsp->_sem_base;
+	dsp->_sem_base = NETBSD32PTR64(s32dsp->_sem_base);
 	dsp->sem_nsems = s32dsp->sem_nsems;
 	dsp->sem_otime = s32dsp->sem_otime;
 	dsp->sem_ctime = s32dsp->sem_ctime;
@@ -545,7 +545,7 @@ netbsd32_from_semid_ds(dsp, s32dsp)
 {
 
 	netbsd32_from_ipc_perm(&dsp->sem_perm, &s32dsp->sem_perm);
-	s32dsp->_sem_base = (netbsd32_semp_t)(u_long)dsp->_sem_base;
+	NETBSD32PTR32(s32dsp->_sem_base, dsp->_sem_base);
 	s32dsp->sem_nsems = dsp->sem_nsems;
 	s32dsp->sem_otime = dsp->sem_otime;
 	s32dsp->sem_ctime = dsp->sem_ctime;
@@ -595,8 +595,8 @@ netbsd32_to_sigevent(const struct netbsd32_sigevent *ev32, struct sigevent *ev)
 	 *     sigev_notify_attributes are  currently unused
 	 */
 	ev->sigev_value.sival_int = ev32->sigev_value.sival_int;
-	ev->sigev_notify_function = (void *)(intptr_t)ev32->sigev_notify_function;
-	ev->sigev_notify_attributes = (void *)(intptr_t)ev32->sigev_notify_attributes;
+	ev->sigev_notify_function = NETBSD32PTR64(ev32->sigev_notify_function);
+	ev->sigev_notify_attributes = NETBSD32PTR64(ev32->sigev_notify_attributes);
 }
 
 static __inline int

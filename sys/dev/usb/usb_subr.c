@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.144 2007/03/13 13:51:56 drochner Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.144.2.1 2007/03/18 00:06:44 reinoud Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.144 2007/03/13 13:51:56 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.144.2.1 2007/03/18 00:06:44 reinoud Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_usbverbose.h"
@@ -567,6 +567,13 @@ usbd_set_config_index(usbd_device_handle dev, int index, int msg)
 	int i, ifcidx, nifc, len, selfpowered, power;
 
 	DPRINTFN(5,("usbd_set_config_index: dev=%p index=%d\n", dev, index));
+
+	if (index >= dev->ddesc.bNumConfigurations &&
+	    index != USB_UNCONFIG_NO) {
+		/* panic? */
+		printf("usbd_set_config_index: illegal index\n");
+		return (USBD_INVAL);
+	}
 
 	/* XXX check that all interfaces are idle */
 	if (dev->config != USB_UNCONFIG_NO) {

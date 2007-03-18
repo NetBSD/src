@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_fs.c,v 1.37 2007/03/10 21:40:25 dsl Exp $	*/
+/*	$NetBSD: netbsd32_fs.c,v 1.37.4.1 2007/03/18 00:06:36 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.37 2007/03/10 21:40:25 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.37.4.1 2007/03/18 00:06:36 reinoud Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -354,12 +354,12 @@ change_utimes32(vp, tptr, l)
 	int error;
 
 	VATTR_NULL(&vattr);
-	if (tptr == 0) {
+	if (NETBSD32PTR64(tptr) == 0) {
 		microtime(&tv[0]);
 		tv[1] = tv[0];
 		vattr.va_vaflags |= VA_UTIMES_NULL;
 	} else {
-		error = copyin((void *)NETBSD32PTR64(tptr), tv32,
+		error = copyin(NETBSD32PTR64(tptr), tv32,
 		    sizeof(tv32));
 		if (error)
 			return (error);

@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.11 2007/03/07 18:00:20 njoly Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.11.6.1 2007/03/18 00:06:31 reinoud Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.11 2007/03/07 18:00:20 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.11.6.1 2007/03/18 00:06:31 reinoud Exp $");
 
 #include "opt_powernow_k8.h"
 
@@ -60,9 +60,9 @@ identifycpu(struct cpu_info *ci)
 	char buf[512];
 	u_int32_t brand[12];
 	int vendor;
-	const char *feature_str[3];
+	const char *feature_str[3], *feature2_str[1];
 
-	CPUID(1, ci->ci_signature, val, dummy, ci->ci_feature_flags);
+	CPUID(1, ci->ci_signature, val, ci->ci_feature2_flags, ci->ci_feature_flags);
 	CPUID(0x80000001, dummy, dummy, dummy, val);
 	ci->ci_feature_flags |= val;
 
@@ -84,12 +84,12 @@ identifycpu(struct cpu_info *ci)
 
 	amd_cpu_cacheinfo(ci);
 
-	printf("%s: %s", ci->ci_dev->dv_xname, cpu_model);
+	aprint_normal("%s: %s", ci->ci_dev->dv_xname, cpu_model);
 
 	if (ci->ci_tsc_freq != 0)
-		printf(", %lu.%02lu MHz", (ci->ci_tsc_freq + 4999) / 1000000,
+		aprint_normal(", %lu.%02lu MHz", (ci->ci_tsc_freq + 4999) / 1000000,
 		    ((ci->ci_tsc_freq + 4999) / 10000) % 100);
-	printf("\n");
+	aprint_normal("\n");
 
 	if (vendor == CPUVENDOR_INTEL) {
 		feature_str[0] = CPUID_FLAGS1;
@@ -101,20 +101,28 @@ identifycpu(struct cpu_info *ci)
 		feature_str[2] = CPUID_EXT_FLAGS3;
 	}
 
+	feature2_str[0] = CPUID2_FLAGS;
+
 	if ((ci->ci_feature_flags & CPUID_MASK1) != 0) {
 		bitmask_snprintf(ci->ci_feature_flags,
 		    feature_str[0], buf, sizeof(buf));
-		printf("%s: features: %s\n", ci->ci_dev->dv_xname, buf);
+		aprint_normal("%s: features: %s\n", ci->ci_dev->dv_xname, buf);
 	}
 	if ((ci->ci_feature_flags & CPUID_MASK2) != 0) {
 		bitmask_snprintf(ci->ci_feature_flags,
 		    feature_str[1], buf, sizeof(buf));
-		printf("%s: features: %s\n", ci->ci_dev->dv_xname, buf);
+		aprint_normal("%s: features: %s\n", ci->ci_dev->dv_xname, buf);
 	}
 	if ((ci->ci_feature_flags & CPUID_MASK3) != 0) {
 		bitmask_snprintf(ci->ci_feature_flags,
 		    feature_str[2], buf, sizeof(buf));
-		printf("%s: features: %s\n", ci->ci_dev->dv_xname, buf);
+		aprint_normal("%s: features: %s\n", ci->ci_dev->dv_xname, buf);
+	}
+
+	if (ci->ci_feature2_flags) {
+		bitmask_snprintf(ci->ci_feature2_flags,
+		    feature2_str[0], buf, sizeof(buf));
+		aprint_normal("%s: features2: %s\n", ci->ci_dev->dv_xname, buf);
 	}
 
 	x86_print_cacheinfo(ci);
@@ -128,6 +136,7 @@ identifycpu(struct cpu_info *ci)
 
 	x86_errata(ci, vendor);
 	x86_patch();
+
 }
 
 void

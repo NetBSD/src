@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_lwp.c,v 1.2 2007/03/04 06:01:26 christos Exp $	*/
+/*	$NetBSD: netbsd32_lwp.c,v 1.2.6.1 2007/03/18 00:06:37 reinoud Exp $	*/
 
 /*
  *  Copyright (c) 2005, 2006, 2007 The NetBSD Foundation.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_lwp.c,v 1.2 2007/03/04 06:01:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_lwp.c,v 1.2.6.1 2007/03/18 00:06:37 reinoud Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -140,7 +140,7 @@ netbsd32__lwp_park(struct lwp *l, void *v, register_t *retval)
 	struct sys__lwp_park_args ua;
 	struct timespec *tsp = NULL;
 
-	if (SCARG(uap, ts)) {
+	if (NETBSD32PTR64(SCARG(uap, ts))) {
 		struct timespec ts;
 		struct netbsd32_timespec ts32;
 		int error;
