@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.c,v 1.31 2007/03/16 22:21:41 dsl Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.c,v 1.32 2007/03/18 21:38:33 dsl Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.31 2007/03/16 22:21:41 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.32 2007/03/18 21:38:33 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -425,16 +425,14 @@ printf("netbsd32_ioctl(%d, %x, %x): %s group %c base %d len %d\n",
 		data32 = (void *)stkbuf32;
 	if (com&IOC_IN) {
 		if (size32) {
-			error = copyin((void *)NETBSD32PTR64(SCARG(uap, data)),
-			    data32, size32);
+			error = copyin(SCARG_P32(uap, data), data32, size32);
 			if (error) {
 				if (memp32)
 					free(memp32, M_IOCTLOPS);
 				goto out;
 			}
 		} else
-			*(void **)data32 =
-			    (void *)NETBSD32PTR64(SCARG(uap, data));
+			*(void **)data32 = SCARG_P32(uap, data);
 	} else if ((com&IOC_OUT) && size32)
 		/*
 		 * Zero the buffer so the user always
@@ -442,7 +440,7 @@ printf("netbsd32_ioctl(%d, %x, %x): %s group %c base %d len %d\n",
 		 */
 		memset(data32, 0, size32);
 	else if (com&IOC_VOID)
-		*(void **)data32 = (void *)NETBSD32PTR64(SCARG(uap, data));
+		*(void **)data32 = SCARG_P32(uap, data);
 
 	/*
 	 * convert various structures, pointers, and other objects that
@@ -572,8 +570,7 @@ printf("netbsd32_ioctl(%d, %x, %x): %s group %c base %d len %d\n",
 	 * already set and checked above.
 	 */
 	if (error == 0 && (com&IOC_OUT) && size32)
-		error = copyout(data32,
-		    (void *)NETBSD32PTR64(SCARG(uap, data)), size32);
+		error = copyout(data32, SCARG_P32(uap, data), size32);
 
 	/* if we malloced data, free it here */
 	if (memp32)
