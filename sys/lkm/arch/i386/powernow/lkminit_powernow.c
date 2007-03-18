@@ -1,4 +1,4 @@
-/*	$NetBSD: lkminit_powernow.c,v 1.9 2007/03/18 04:41:03 xtraeme Exp $	*/
+/*	$NetBSD: lkminit_powernow.c,v 1.10 2007/03/18 07:28:37 xtraeme Exp $	*/
 
 /*
  * Derived from:
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_powernow.c,v 1.9 2007/03/18 04:41:03 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkminit_powernow.c,v 1.10 2007/03/18 07:28:37 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,12 +76,12 @@ powernow_mod_handle(struct lkm_table *lkmtp, int cmd)
 		if (lkmexists(lkmtp))
 			return EEXIST;
 	
-		if (powernow_probe(ci)) {
-			pn_family = CPUID2FAMILY(ci->ci_signature);
+		if (powernow_probe(curcpu())) {
+			pn_family = CPUID2FAMILY(curcpu()->ci_signature);
 			if (pn_family == 6)
 				k7_powernow_init();
 			else if (pn_family == 15)
-				k8_powernow_init(curcpu());
+				k8_powernow_init();
 			else
 				err = ENODEV;
 		} else
