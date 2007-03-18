@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia_codec.c,v 1.33 2007/03/11 15:42:00 kent Exp $	*/
+/*	$NetBSD: azalia_codec.c,v 1.34 2007/03/18 11:49:21 kent Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia_codec.c,v 1.33 2007/03/11 15:42:00 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia_codec.c,v 1.34 2007/03/18 11:49:21 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -2577,9 +2577,9 @@ ad1988_init_dacgroup(codec_t *this)
 {
 	static const convgroupset_t dacs = {
 		-1, 3,
-		{{4, {0x03, 0x04, 0x05, 0x06}},	/* analog 8ch */
+		{{4, {0x04, 0x05, 0x06, 0x0a}},	/* analog 8ch */
 		 {1, {0x02}},	/* digital */
-		 {1, {0x0a}}}};	/* another analog */
+		 {1, {0x03}}}};	/* another analog */
 	static const convgroupset_t adcs = {
 		-1, 2,
 		{{2, {0x08, 0x09, 0x0f}}, /* analog 6ch */
