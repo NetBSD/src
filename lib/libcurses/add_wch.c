@@ -1,4 +1,4 @@
-/*   $NetBSD: add_wch.c,v 1.1.2.6 2007/02/26 09:49:28 blymn Exp $ */
+/*   $NetBSD: add_wch.c,v 1.1.2.7 2007/03/18 10:00:32 jdc Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: add_wch.c,v 1.1.2.6 2007/02/26 09:49:28 blymn Exp $");
+__RCSID("$NetBSD: add_wch.c,v 1.1.2.7 2007/03/18 10:00:32 jdc Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -107,10 +107,12 @@ wadd_wch(WINDOW *win, const cchar_t *wch)
 #ifndef HAVE_WCHAR
 	return ERR;
 #else
-	int x = win->curx, y = win->cury, i;
+	int x = win->curx, y = win->cury;
 	__LINE *lnp = NULL;
 
 #ifdef DEBUG
+	int i;
+
 	for (i = 0; i < win->maxy; i++) {
 		assert(win->lines[i]->sentinel == SENTINEL_VALUE);
 	}
