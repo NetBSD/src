@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.183 2007/03/04 06:03:15 christos Exp $	*/
+/*	$NetBSD: if.c,v 1.184 2007/03/18 20:05:52 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.183 2007/03/04 06:03:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.184 2007/03/18 20:05:52 dyoung Exp $");
 
 #include "opt_inet.h"
 
@@ -584,12 +584,6 @@ if_detach(struct ifnet *ifp)
 		carp_ifdetach(ifp);
 #endif
 
-#ifdef PFIL_HOOKS
-	(void)pfil_run_hooks(&if_pfil,
-	    (struct mbuf **)PFIL_IFNET_DETACH, ifp, PFIL_IFNET);
-	(void)pfil_head_unregister(&ifp->if_pfil);
-#endif
-
 	/*
 	 * Rip all the addresses off the interface.  This should make
 	 * all of the routes go away.
@@ -687,6 +681,12 @@ again:
 				    (struct mbuf *) ifp, curlwp);
 		}
 	}
+
+#ifdef PFIL_HOOKS
+	(void)pfil_run_hooks(&if_pfil,
+	    (struct mbuf **)PFIL_IFNET_DETACH, ifp, PFIL_IFNET);
+	(void)pfil_head_unregister(&ifp->if_pfil);
+#endif
 
 	/* Announce that the interface is gone. */
 	rt_ifannouncemsg(ifp, IFAN_DEPARTURE);
