@@ -1,4 +1,4 @@
-/*	$NetBSD: powernow_k8.c,v 1.10 2007/03/18 07:23:53 xtraeme Exp $ */
+/*	$NetBSD: powernow_k8.c,v 1.11 2007/03/18 07:40:29 xtraeme Exp $ */
 /*	$OpenBSD: powernow-k8.c,v 1.8 2006/06/16 05:58:50 gwk Exp $ */
 
 /*-
@@ -66,7 +66,7 @@
 /* AMD POWERNOW K8 driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powernow_k8.c,v 1.10 2007/03/18 07:23:53 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powernow_k8.c,v 1.11 2007/03/18 07:40:29 xtraeme Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -411,10 +411,7 @@ k8_powernow_init_main(void)
 
 	if (k8pnow_current_state == NULL) {
 		DPRINTF(("%s: k8pnow_current_state is NULL!\n", __func__));
-		free(cstate, M_DEVBUF);
-		if (freq_names)
-			free(freq_names, M_SYSCTLDATA);
-		return;
+		goto err;
 	}
 
 	/* Create sysctl machdep.powernow.frequency. */
