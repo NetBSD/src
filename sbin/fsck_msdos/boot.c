@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.12 2007/03/10 00:30:36 hubertf Exp $	*/
+/*	$NetBSD: boot.c,v 1.13 2007/03/19 18:30:40 gdt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1997 Wolfgang Solfrank
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: boot.c,v 1.12 2007/03/10 00:30:36 hubertf Exp $");
+__RCSID("$NetBSD: boot.c,v 1.13 2007/03/19 18:30:40 gdt Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -53,6 +53,7 @@ readboot(int dosfs, struct bootblock *boot)
 	u_char fsinfo[2 * DOSBOOTBLOCKSIZE];
 	u_char backup[DOSBOOTBLOCKSIZE];
 	int ret = FSOK;
+	int i;
 	
 	if (read(dosfs, block, sizeof block) < sizeof block) {
 		perr("could not read boot block");
@@ -158,12 +159,22 @@ readboot(int dosfs, struct bootblock *boot)
 		}
 		backup[65] = block[65];				/* XXX */
 		if (memcmp(block + 11, backup + 11, 79)) {
-			/* Correct?					XXX */
-			pfatal("backup doesn't compare to primary bootblock");
-			if (alwaysno)
-				pfatal("\n");
-			else
-				return FSFATAL;
+			/*
+			 * XXX We require a reference that explains
+			 * that these bytes need to match, or should
+			 * drop the check.  gdt@ has observed
+			 * filesystems that work fine under Windows XP
+			 * and NetBSD that do not match, so the
+			 * requirement is suspect.  For now, just
+			 * print out useful information and continue.
+			 */
+			pfatal("backup (block %d) mismatch with primary bootblock:\n",
+			        boot->Backup);
+			for (i = 11; i < 11 + 90; i++) {
+				if (block[i] != backup[i])
+					pfatal("\ti=%d\tprimary 0x%02x\tbackup 0x%02x\n",
+					       i, block[i], backup[i]);
+			}
 		}
 		/* Check backup FSInfo?					XXX */
 	}
