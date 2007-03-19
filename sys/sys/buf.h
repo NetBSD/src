@@ -1,4 +1,4 @@
-/*     $NetBSD: buf.h,v 1.95.6.1 2007/03/19 23:07:31 reinoud Exp $ */
+/*     $NetBSD: buf.h,v 1.95.6.2 2007/03/19 23:27:19 reinoud Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -144,7 +144,7 @@ struct buf {
 	int	b_resid;		/* Remaining I/O. */
 	dev_t	b_dev;			/* Device associated with buffer. */
 	struct {
-		void *	b_addr;		/* Memory, superblocks, indirect etc. */
+		void *b_addr;		/* Pointer to payload in kernel VM */
 	} b_un;
 	daddr_t	b_blkno;		/* Underlying physical block number
 					   (partition relative) */
