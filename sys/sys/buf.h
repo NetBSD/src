@@ -1,4 +1,4 @@
-/*     $NetBSD: buf.h,v 1.95 2007/03/04 06:03:40 christos Exp $ */
+/*     $NetBSD: buf.h,v 1.95.6.1 2007/03/19 23:07:31 reinoud Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -116,6 +116,16 @@ struct bio_ops {
 /*
  * The buffer header describes an I/O operation in the kernel.
  */
+/*
+ * XXX union b_u needs to be first.
+ *
+ * buf->b_work is cast to struct buf in * kern_physio, uvm_pages, uvm_pdeamon
+ * and lfs_segmet.
+ *
+ * b_actq is not casted but could be moved. In the current situation a buf
+ * can't be enqueued with BUFQ_* while on a workqueue like in physio,
+ * uvm_pager or uvm_pdeamonr
+ */
 struct buf {
 	union {
 		TAILQ_ENTRY(buf) u_actq; /* Device driver queue when active. */
@@ -222,7 +232,11 @@ do {									\
     "\33VFLUSH"
 
 
+#if 0
 /*
+ * XXX not used anymore; only use was in ffs_reallocbuf wich was commented out
+ * and has bitrotted since.
+ *
  * This structure describes a clustered I/O.  It is stored in the b_saveaddr
  * field of the buffer on which I/O is done.  At I/O completion, cluster
  * callback uses the structure to parcel I/O's to individual buffers, and
@@ -235,6 +249,7 @@ struct cluster_save {
 	int	bs_nchildren;		/* Number of associated buffers. */
 	struct buf **bs_children;	/* List of associated buffers. */
 };
+#endif
 
 /*
  * Zero out the buffer's data area.
