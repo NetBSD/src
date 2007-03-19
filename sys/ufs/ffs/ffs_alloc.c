@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.98 2007/03/04 06:03:43 christos Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.98.6.1 2007/03/19 23:55:48 reinoud Exp $	*/
 
 /*
  * Copyright (c) 2002 Networks Associates Technology, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.98 2007/03/04 06:03:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.98.6.1 2007/03/19 23:55:48 reinoud Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -413,6 +413,22 @@ struct ctldebug debug15 = { "prtrealloc", &prtrealloc };
 /*
  * NOTE: when re-enabling this, it must be updated for UFS2.
  */
+
+/*
+ * XXX from buf.h; preserved just in case this code is restored to life.
+ *
+ * This structure describes a clustered I/O.  It is stored in the b_saveaddr
+ * field of the buffer on which I/O is done.  At I/O completion, cluster
+ * callback uses the structure to parcel I/O's to individual buffers, and
+ * then free's this structure.
+ */
+struct cluster_save {
+	long	bs_bcount;		/* Saved b_bcount. */
+	long	bs_bufsize;		/* Saved b_bufsize. */
+	void	*bs_saveaddr;		/* Saved b_addr. */
+	int	bs_nchildren;		/* Number of associated buffers. */
+	struct buf **bs_children;	/* List of associated buffers. */
+};
 
 int doasyncfree = 1;
 

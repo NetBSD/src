@@ -1,4 +1,4 @@
-/*     $NetBSD: buf.h,v 1.95.6.2 2007/03/19 23:27:19 reinoud Exp $ */
+/*     $NetBSD: buf.h,v 1.95.6.3 2007/03/19 23:55:48 reinoud Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -230,26 +230,6 @@ do {									\
     "\11DIRTY\12DONE\14ERROR\15GATHERED\16INVAL\17LOCKED\20NOCACHE" \
     "\22CACHE\23PHYS\24RAW\25READ\26TAPE\30WANTED\31FSPRIVATE\32DEVPRIVATE" \
     "\33VFLUSH"
-
-
-#if 0
-/*
- * XXX not used anymore; only use was in ffs_reallocbuf wich was commented out
- * and has bitrotted since.
- *
- * This structure describes a clustered I/O.  It is stored in the b_saveaddr
- * field of the buffer on which I/O is done.  At I/O completion, cluster
- * callback uses the structure to parcel I/O's to individual buffers, and
- * then free's this structure.
- */
-struct cluster_save {
-	long	bs_bcount;		/* Saved b_bcount. */
-	long	bs_bufsize;		/* Saved b_bufsize. */
-	void	*bs_saveaddr;		/* Saved b_addr. */
-	int	bs_nchildren;		/* Number of associated buffers. */
-	struct buf **bs_children;	/* List of associated buffers. */
-};
-#endif
 
 /*
  * Zero out the buffer's data area.
