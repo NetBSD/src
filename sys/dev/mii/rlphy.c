@@ -1,4 +1,4 @@
-/*	$NetBSD: rlphy.c,v 1.12 2006/11/16 01:33:06 christos Exp $	*/
+/*	$NetBSD: rlphy.c,v 1.13 2007/03/19 12:23:30 tsutsui Exp $	*/
 /*	$OpenBSD: rlphy.c,v 1.20 2005/07/31 05:27:30 pvalchev Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rlphy.c,v 1.12 2006/11/16 01:33:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rlphy.c,v 1.13 2007/03/19 12:23:30 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,8 +65,10 @@ CFATTACH_DECL(rlphy, sizeof(struct mii_softc),
 int	rlphy_service(struct mii_softc *, struct mii_data *, int);
 void	rlphy_status(struct mii_softc *);
 
+static void rlphy_reset(struct mii_softc *);
+
 const struct mii_phy_funcs rlphy_funcs = {
-	rlphy_service, rlphy_status, mii_phy_reset,
+	rlphy_service, rlphy_status, rlphy_reset,
 };
 
 static const struct mii_phydesc rlphys[] = {
@@ -330,4 +332,17 @@ rlphy_status(struct mii_softc *sc)
 
 	} else
 		mii->mii_media_active = ife->ifm_media;
+}
+
+static void
+rlphy_reset(struct mii_softc *sc)
+{
+
+	mii_phy_reset(sc);
+
+	/*
+	 * XXX RealTek PHY doesn't set the BMCR properly after
+	 * XXX reset, which breaks autonegotiation.
+	 */
+	PHY_WRITE(sc, MII_BMCR, BMCR_AUTOEN);
 }
