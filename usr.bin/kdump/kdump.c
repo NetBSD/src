@@ -1,4 +1,4 @@
-/*	$NetBSD: kdump.c,v 1.89 2007/02/09 22:08:48 ad Exp $	*/
+/*	$NetBSD: kdump.c,v 1.90 2007/03/19 18:51:09 njoly Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: kdump.c,v 1.89 2007/02/09 22:08:48 ad Exp $");
+__RCSID("$NetBSD: kdump.c,v 1.90 2007/03/19 18:51:09 njoly Exp $");
 #endif
 #endif /* not lint */
 
@@ -413,6 +413,7 @@ static void
 ioctldecode(u_long cmd)
 {
 	char dirbuf[4], *dir = dirbuf;
+	int c;
 
 	if (cmd & IOC_IN)
 		*dir++ = 'W';
@@ -420,7 +421,11 @@ ioctldecode(u_long cmd)
 		*dir++ = 'R';
 	*dir = '\0';
 
-	printf(",_IO%s('%c',", dirbuf, (int) ((cmd >> 8) & 0xff));
+	c = (cmd >> 8) & 0xff;
+	if (isprint(c))
+		printf(",_IO%s('%c',", dirbuf, c);
+	else
+		printf(",_IO%s(0x%02x,", dirbuf, c);
 	output_long(cmd & 0xff, decimal == 0);
 	if ((cmd & IOC_VOID) == 0) {
 		putchar(',');
