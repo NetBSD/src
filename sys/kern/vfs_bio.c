@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.171 2007/03/12 18:18:34 ad Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.171.4.1 2007/03/19 23:27:18 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -82,7 +82,7 @@
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.171 2007/03/12 18:18:34 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.171.4.1 2007/03/19 23:27:18 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1530,7 +1530,7 @@ sysctl_fillbuf(struct buf *i, struct buf_sysctl *o)
 	o->b_bufsize = i->b_bufsize;
 	o->b_bcount = i->b_bcount;
 	o->b_resid = i->b_resid;
-	o->b_addr = PTRTOUINT64(i->b_un.b_addr);
+	o->b_addr = PTRTOUINT64(i->b_data);
 	o->b_blkno = i->b_blkno;
 	o->b_rawblkno = i->b_rawblkno;
 	o->b_iodone = PTRTOUINT64(i->b_iodone);
