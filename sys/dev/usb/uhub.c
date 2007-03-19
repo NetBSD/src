@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.87 2007/03/15 15:29:09 drochner Exp $	*/
+/*	$NetBSD: uhub.c,v 1.88 2007/03/19 14:02:56 drochner Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.87 2007/03/15 15:29:09 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.88 2007/03/19 14:02:56 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -133,7 +133,7 @@ USB_MATCH(uhub)
 {
 	USB_MATCH_START(uhub, uaa);
 
-	DPRINTFN(5,("uhub_match, dd=%p\n", dd));
+	DPRINTFN(5,("uhub_match, uaa=%p\n", uaa));
 	/*
 	 * The subclass for hubs seems to be 0 for some and 1 for others,
 	 * so we just ignore the subclass.
