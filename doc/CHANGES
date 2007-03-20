@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.812 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.813 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -8,6 +8,7 @@ containing just the word `help' to `majordomo@NetBSD.org'.]
 
 
 Changes from NetBSD 4.0 to NetBSD 5.0:
+	evbmips: add Infineon ADM5120 port. [dyoung 20070320]
 	ipv6: add ipv6 fast forward. [liamjfoy 20070307]
 	openssl: Import OpenSSL 0.9.8e. [mjf 20070307]
 	evbppc: add support for Xilinx Virtex II-Pro/4-FX. [freza 20061202]
