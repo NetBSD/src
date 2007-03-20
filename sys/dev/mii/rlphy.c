@@ -1,4 +1,4 @@
-/*	$NetBSD: rlphy.c,v 1.13 2007/03/19 12:23:30 tsutsui Exp $	*/
+/*	$NetBSD: rlphy.c,v 1.14 2007/03/20 10:17:18 tsutsui Exp $	*/
 /*	$OpenBSD: rlphy.c,v 1.20 2005/07/31 05:27:30 pvalchev Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rlphy.c,v 1.13 2007/03/19 12:23:30 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rlphy.c,v 1.14 2007/03/20 10:17:18 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,6 +55,11 @@ __KERNEL_RCSID(0, "$NetBSD: rlphy.c,v 1.13 2007/03/19 12:23:30 tsutsui Exp $");
 #include <dev/mii/miidevs.h>
 #include <machine/bus.h>
 #include <dev/ic/rtl81x9reg.h>
+
+struct rlphy_softc {
+	struct mii_softc sc_mii;
+	int sc_rtl8201l;
+};
 
 int	rlphymatch(struct device *, struct cfdata *, void *);
 void	rlphyattach(struct device *, struct device *, void *);
@@ -106,11 +111,13 @@ rlphymatch(struct device *parent, struct cfdata *match, void *aux)
 void
 rlphyattach(struct device *parent, struct device *self, void *aux)
 {
-	struct mii_softc *sc = device_private(self);
+	struct rlphy_softc *rsc = device_private(self);
+	struct mii_softc *sc = &rsc->sc_mii;
 	struct mii_attach_args *ma = aux;
 	struct mii_data *mii = ma->mii_data;
 
 	if (MII_MODEL(ma->mii_id2) == MII_MODEL_yyREALTEK_RTL8201L) {
+		rsc->sc_rtl8201l = 1;
 		aprint_normal(": %s, rev. %d\n", MII_STR_yyREALTEK_RTL8201L,
 		    MII_REV(ma->mii_id2));
 	} else
@@ -241,6 +248,7 @@ rlphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 void
 rlphy_status(struct mii_softc *sc)
 {
+	struct rlphy_softc *rsc = (void *)sc;
 	struct mii_data *mii = sc->mii_pdata;
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 	int bmsr, bmcr, anlpar;
@@ -318,16 +326,16 @@ rlphy_status(struct mii_softc *sc)
 		 *   can test the 'SPEED10' bit of the MAC's media status
 		 *   register.
 		 */
-		if (device_is_a(device_parent(&sc->mii_dev), "rtk")) {
-			if (PHY_READ(sc, RTK_MEDIASTAT) & RTK_MEDIASTAT_SPEED10)
-				mii->mii_media_active |= IFM_10_T;
-			else
-				mii->mii_media_active |= IFM_100_TX;
-		} else {
+		if (rsc->sc_rtl8201l) {
 			if (PHY_READ(sc, 0x0019) & 0x01)
 				mii->mii_media_active |= IFM_100_TX;
 			else
 				mii->mii_media_active |= IFM_10_T;
+		} else {
+			if (PHY_READ(sc, RTK_MEDIASTAT) & RTK_MEDIASTAT_SPEED10)
+				mii->mii_media_active |= IFM_10_T;
+			else
+				mii->mii_media_active |= IFM_100_TX;
 		}
 
 	} else
