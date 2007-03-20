@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_i810.c,v 1.36 2007/03/04 06:02:15 christos Exp $	*/
+/*	$NetBSD: agp_i810.c,v 1.37 2007/03/20 18:05:31 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.36 2007/03/04 06:02:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.37 2007/03/20 18:05:31 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -155,6 +155,7 @@ agp_i810_attach(struct device *parent, struct device *self, void *aux)
 	struct agp_i810_softc *isc;
 	struct agp_gatt *gatt;
 	int error, apbase;
+	bus_size_t mmadrsize;
 
 	isc = malloc(sizeof *isc, M_AGP, M_NOWAIT|M_ZERO);
 	if (isc == NULL) {
@@ -217,6 +218,9 @@ agp_i810_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	if (isc->chiptype == CHIP_I915) {
+		pci_mapreg_info(isc->vga_pa.pa_pc, isc->vga_pa.pa_tag,
+				AGP_I915_MMADR, PCI_MAPREG_TYPE_MEM, NULL,
+				&mmadrsize, NULL);
 		error = pci_mapreg_map(&isc->vga_pa, AGP_I915_MMADR,
 		    PCI_MAPREG_TYPE_MEM, 0, &isc->bst, &isc->bsh, NULL, NULL);
 		if (error != 0) {
@@ -406,6 +410,12 @@ agp_i810_attach(struct device *parent, struct device *self, void *aux)
 	if (isc->sc_powerhook == NULL)
 		printf("%s: WARNING: unable to establish PCI power hook\n",
 		    sc->as_dev.dv_xname);
+
+	/*      
+	 * another device (drm) may need access to this region
+	 * we do not need it anymore
+	 */     
+	bus_space_unmap(isc->bst, isc->bsh, mmadrsize);
 
 	return 0;
 }
@@ -713,6 +723,8 @@ agp_i810_bind_memory(struct agp_softc *sc, struct agp_memory *mem,
 	 * to the GTT through the MMIO window.
 	 * Until the issue is solved, simply restore it.
 	 */
+
+#if 0
 	regval = bus_space_read_4(isc->bst, isc->bsh, AGP_I810_PGTBL_CTL);
 	if (regval != (isc->gatt->ag_physical | 1)) {
 		printf("agp_i810_bind_memory: PGTBL_CTL is 0x%x - fixing\n",
@@ -720,6 +732,8 @@ agp_i810_bind_memory(struct agp_softc *sc, struct agp_memory *mem,
 		bus_space_write_4(isc->bst, isc->bsh, AGP_I810_PGTBL_CTL,
 				  isc->gatt->ag_physical | 1);
 	}
+#endif
+	regval = 0;
 
 	if (mem->am_type == 2) {
 		WRITEGTT(offset, mem->am_physical | 1);
