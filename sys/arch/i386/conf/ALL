@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.89 2007/03/15 17:06:17 dogcow Exp $
+# $NetBSD: ALL,v 1.90 2007/03/20 21:29:28 xtraeme Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.89 $"
+#ident 		"ALL-$Revision: 1.90 $"
 
 maxusers	32		# estimated number of users
 
@@ -43,6 +43,9 @@ options 	POWERNOW_K7
 
 # AMD PowerNow! and Cool`n'Quiet technology
 options 	POWERNOW_K8
+
+# Intel(R) On Demand Clock Modulation (aka ODCM)
+options       INTEL_ONDEMAND_CLOCKMOD
 
 options 	MTRR		# memory-type range register syscall support
 # doesn't work with MP just yet..
