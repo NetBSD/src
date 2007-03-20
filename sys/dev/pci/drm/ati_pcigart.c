@@ -34,7 +34,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/drm/ati_pcigart.c,v 1.3 2005/11/28 23:13:52 anholt Exp $");
 */
 
-#include "drmP.h"
+#include <dev/drm/drmP.h>
 
 #define ATI_PCIGART_PAGE_SIZE		4096	/* PCI GART page size */
 #define ATI_MAX_PCIGART_PAGES		8192	/* 32 MB aperture, 4K pages */

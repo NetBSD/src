@@ -36,11 +36,11 @@
 __FBSDID("$FreeBSD: src/sys/dev/drm/r300_cmdbuf.c,v 1.5 2006/05/17 06:36:28 anholt Exp $");
 */
 
-#include "drmP.h"
-#include "drm.h"
-#include "radeon_drm.h"
-#include "radeon_drv.h"
-#include "r300_reg.h"
+#include <dev/drm/drmP.h>
+#include <dev/drm/drm.h>
+#include <dev/pci/drm/radeon_drm.h>
+#include <dev/pci/drm/radeon_drv.h>
+#include <dev/pci/drm/r300_reg.h>
 
 #define R300_SIMULTANEOUS_CLIPRECTS		4
 

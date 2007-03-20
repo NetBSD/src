@@ -40,10 +40,10 @@
 __FBSDID("$FreeBSD: src/sys/dev/drm/mach64_irq.c,v 1.2 2005/11/28 23:13:53 anholt Exp $");
 */
 
-#include "drmP.h"
-#include "drm.h"
-#include "mach64_drm.h"
-#include "mach64_drv.h"
+#include <dev/drm/drmP.h>
+#include <dev/drm/drm.h>
+#include <dev/pci/drm/mach64_drm.h>
+#include <dev/pci/drm/mach64_drv.h>
 
 irqreturn_t mach64_driver_irq_handler(DRM_IRQ_ARGS)
 {
