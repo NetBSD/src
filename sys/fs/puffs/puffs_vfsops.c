@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vfsops.c,v 1.29 2007/03/13 14:16:07 ad Exp $	*/
+/*	$NetBSD: puffs_vfsops.c,v 1.30 2007/03/20 10:21:59 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.29 2007/03/13 14:16:07 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.30 2007/03/20 10:21:59 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -433,11 +433,12 @@ puffs_statvfs(struct mount *mp, struct statvfs *sbp, struct lwp *l)
 }
 
 static int
-pageflush(struct mount *mp, int waitfor, int suspending)
+pageflush(struct mount *mp, kauth_cred_t cred,
+	int waitfor, int suspending, struct lwp *l)
 {
 	struct puffs_node *pn;
 	struct vnode *vp, *nvp;
-	int error, rv, ppflags;
+	int error, rv;
 
 	KASSERT(((waitfor == MNT_WAIT) && suspending) == 0);
 	KASSERT((suspending == 0)
@@ -445,9 +446,6 @@ pageflush(struct mount *mp, int waitfor, int suspending)
 	      && fstrans_getstate(mp) == FSTRANS_SUSPENDING));
 
 	error = 0;
-	ppflags = PGO_CLEANIT | PGO_ALLPAGES;
-	if (waitfor == MNT_WAIT)
-		ppflags |= PGO_SYNCIO;
 
 	/*
 	 * Sync all cached data from regular vnodes (which are not
@@ -520,10 +518,12 @@ pageflush(struct mount *mp, int waitfor, int suspending)
 		 * storage.
 		 * TODO: Maybe also hint the user server of this twist?
 		 */
-		simple_lock(&vp->v_interlock);
-		if (suspending || waitfor == MNT_LAZY)
+		if (suspending || waitfor == MNT_LAZY) {
+			simple_lock(&vp->v_interlock);
 			pn->pn_stat |= PNODE_SUSPEND;
-		rv = VOP_PUTPAGES(vp, 0, 0, ppflags);
+			simple_unlock(&vp->v_interlock);
+		}
+		rv = VOP_FSYNC(vp, cred, waitfor, 0, 0, l);
 		if (suspending || waitfor == MNT_LAZY) {
 			simple_lock(&vp->v_interlock);
 			pn->pn_stat &= ~PNODE_SUSPEND;
@@ -547,7 +547,7 @@ puffs_sync(struct mount *mp, int waitfor, struct kauth_cred *cred,
 
 	PUFFS_VFSREQ(sync);
 
-	error = pageflush(mp, waitfor, 0);
+	error = pageflush(mp, cred, waitfor, 0, l);
 
 	/* sync fs */
 	sync_arg.pvfsr_waitfor = waitfor;
@@ -633,7 +633,7 @@ puffs_suspendctl(struct mount *mp, int cmd)
 			break;
 		puffs_suspendtouser(pmp, PUFFS_SUSPEND_START);
 
-		error = pageflush(mp, 0, 1);
+		error = pageflush(mp, FSCRED, 0, 1, curlwp);
 		if (error == 0)
 			error = fstrans_setstate(mp, FSTRANS_SUSPENDED);
 
