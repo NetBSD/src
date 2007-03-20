@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.h,v 1.33 2007/03/20 10:22:23 pooka Exp $	*/
+/*	$NetBSD: puffs.h,v 1.34 2007/03/20 18:28:08 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -98,6 +98,9 @@ struct puffs_usermount;
  */
 #define PUFFS_VNOVAL (-1)
 #define PUFFS_IO_APPEND 0x20
+#define PUFFS_VEXEC	01
+#define PUFFS_VWRITE	02
+#define PUFFS_VREAD	04
 
 #define PUFFS_FSYNC_DATAONLY 0x0002
 #define PUFFS_FSYNC_CACHE    0x0100
@@ -391,7 +394,7 @@ int	puffs_cred_isjuggernaut(const struct puffs_cred *pcr);
 #define PUFFSOP_SETFSNOP(ops, opname)					\
     (ops)->puffs_fs_##opname = puffs_fsnop_##opname
 
-#define PUFFS_DEVEL_LIBVERSION 9
+#define PUFFS_DEVEL_LIBVERSION 10
 #define puffs_mount(a,b,c,d,e,f,g) \
     _puffs_mount(PUFFS_DEVEL_LIBVERSION,a,b,c,d,e,f,g)
 
@@ -451,6 +454,8 @@ int		puffs_vtype2dt(enum vtype);
 enum vtype	puffs_mode2vt(mode_t);
 void		puffs_stat2vattr(struct vattr *va, const struct stat *);
 mode_t		puffs_addvtype2mode(mode_t, enum vtype);
+int		puffs_access(enum vtype, mode_t, uid_t, gid_t, mode_t,
+			     const struct puffs_cred *);
 
 /*
  * Requests
