@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.h,v 1.32 2007/03/16 08:14:49 pooka Exp $	*/
+/*	$NetBSD: puffs.h,v 1.33 2007/03/20 10:22:23 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -65,6 +65,14 @@ struct puffs_pathinfo {
 	struct puffs_pathobj *pi_new;
 };
 
+/* describes one segment cached in the kernel */
+struct puffs_kcache {
+	off_t	pkc_start;
+	off_t	pkc_end;
+
+	LIST_ENTRY(puffs_kcache) pkc_entries;
+};
+
 /* XXX: might disappear from here into a private header */
 struct puffs_node {
 	off_t			pn_size;
@@ -77,6 +85,8 @@ struct puffs_node {
 
 	struct puffs_usermount 	*pn_mnt;
 	LIST_ENTRY(puffs_node)	pn_entries;
+
+	LIST_HEAD(,puffs_kcache)pn_cacheinfo;	/* PUFFS_KFLAG_CACHE	*/
 };
 
 
@@ -198,6 +208,9 @@ struct puffs_ops {
 	    uint8_t *, off_t, size_t *, const struct puffs_cred *, int);
 	int (*puffs_node_write)(struct puffs_cc *, void *,
 	    uint8_t *, off_t, size_t *, const struct puffs_cred *, int);
+
+	int (*puffs_cache_write)(struct puffs_usermount *,
+		void *, size_t, struct puffs_cacherun *);
 };
 
 typedef	int (*pu_pathbuild_fn)(struct puffs_usermount *,
@@ -365,7 +378,10 @@ int	puffs_cred_isjuggernaut(const struct puffs_cred *pcr);
 	int fsname##_node_read(struct puffs_cc *, void *,		\
 	    uint8_t *, off_t, size_t *, const struct puffs_cred *, int);\
 	int fsname##_node_write(struct puffs_cc *, void *,		\
-	    uint8_t *, off_t, size_t *, const struct puffs_cred *, int);
+	    uint8_t *, off_t, size_t *, const struct puffs_cred *, int);\
+									\
+	int fsname##_cache_write(struct puffs_usermount *, void *,	\
+	    size_t, struct puffs_cacheinfo *);
 
 #define PUFFSOP_INIT(ops)						\
     ops = malloc(sizeof(struct puffs_ops));				\
@@ -375,7 +391,7 @@ int	puffs_cred_isjuggernaut(const struct puffs_cred *pcr);
 #define PUFFSOP_SETFSNOP(ops, opname)					\
     (ops)->puffs_fs_##opname = puffs_fsnop_##opname
 
-#define PUFFS_DEVEL_LIBVERSION 8
+#define PUFFS_DEVEL_LIBVERSION 9
 #define puffs_mount(a,b,c,d,e,f,g) \
     _puffs_mount(PUFFS_DEVEL_LIBVERSION,a,b,c,d,e,f,g)
 
@@ -483,6 +499,8 @@ int	puffs_docc(struct puffs_cc *, struct puffs_putreq *);
 
 int	puffs_inval_namecache_dir(struct puffs_usermount *, void *);
 int	puffs_inval_namecache_all(struct puffs_usermount *);
+
+int	puffs_inval_pagecache_node(struct puffs_usermount *, void *);
 
 /*
  * Path constructicons
