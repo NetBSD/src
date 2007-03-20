@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.h,v 1.20 2007/03/20 10:21:58 pooka Exp $	*/
+/*	$NetBSD: puffs_msgif.h,v 1.21 2007/03/20 18:28:49 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -322,9 +322,9 @@ struct puffs_kcn {
 #define PUFFSLOOKUP_RENAME	3	/* setup for file renaming */
 #define PUFFSLOOKUP_OPMASK	3	/* mask for operation */
 
-#define PUFFSLOOKUP_FOLLOW	0x04	/* follow final symlink */
-#define PUFFSLOOKUP_NOFOLLOW	0x08	/* don't follow final symlink */
-#define PUFFSLOOKUP_OPTIONS	0x0c
+#define PUFFSLOOKUP_FOLLOW	0x00004	/* follow final symlink */
+#define PUFFSLOOKUP_NOFOLLOW	0x00008	/* don't follow final symlink */
+#define PUFFSLOOKUP_ISLASTCN	0x08000 /* is last component of lookup */
 
 /*
  * Next come the individual requests.  They are all subclassed from
