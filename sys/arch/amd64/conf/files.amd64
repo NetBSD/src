@@ -1,4 +1,4 @@
-#	$NetBSD: files.amd64,v 1.34 2007/03/20 21:29:29 xtraeme Exp $
+#	$NetBSD: files.amd64,v 1.35 2007/03/20 21:30:27 xtraeme Exp $
 #
 # new style config file for amd64 architecture
 #
@@ -190,7 +190,6 @@ file	arch/amd64/amd64/linux32_syscall.c		compat_linux32
 # OSS audio driver compatibility
 include	"compat/ossaudio/files.ossaudio"
 
-file	compat/ndis/winx64_wrap.S			compat_ndis
 #
 # CARDBUS
 #
