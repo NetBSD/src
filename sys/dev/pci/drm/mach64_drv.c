@@ -38,11 +38,11 @@ __FBSDID("$FreeBSD: src/sys/dev/drm/mach64_drv.c,v 1.3 2005/12/20 22:44:36 jhb E
 
 #include <sys/types.h>
 
-#include "drmP.h"
-#include "drm.h"
-#include "mach64_drm.h"
-#include "mach64_drv.h"
-#include "drm_pciids.h"
+#include <dev/drm/drmP.h>
+#include <dev/drm/drm.h>
+#include <dev/pci/drm/mach64_drm.h>
+#include <dev/pci/drm/mach64_drv.h>
+#include <dev/pci/drm/drm_pciids.h>
 
 /* drv_PCI_IDs comes from drm_pciids.h, generated from drm_pciids.txt. */
 static drm_pci_id_list_t mach64_pciidlist[] = {
