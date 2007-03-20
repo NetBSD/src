@@ -35,10 +35,10 @@
 __FBSDID("$FreeBSD: src/sys/dev/drm/radeon_irq.c,v 1.7 2005/11/28 23:13:54 anholt Exp $");
 */
 
-#include "drmP.h"
-#include "drm.h"
-#include "radeon_drm.h"
-#include "radeon_drv.h"
+#include <dev/drm/drmP.h>
+#include <dev/drm/drm.h>
+#include <dev/pci/drm/radeon_drm.h>
+#include <dev/pci/drm/radeon_drv.h>
 
 static __inline__ u32 radeon_acknowledge_irqs(drm_radeon_private_t * dev_priv,
 					      u32 mask)
