@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.90.2.2 2007/03/12 05:46:05 rmind Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.90.2.3 2007/03/20 12:07:13 yamt Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.90.2.2 2007/03/12 05:46:05 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.90.2.3 2007/03/20 12:07:13 yamt Exp $");
 #include "opt_coredump.h"
 
 #include <sys/param.h>
@@ -104,20 +104,6 @@ void
 cpu_lwp_free2(struct lwp *l)
 {
 	(void) l;
-}
-
-/*
- * cpu_exit is called as the last action during exit.
- * We block interrupts and call switch_exit.  switch_exit switches
- * to proc0's PCB and stack, then jumps into the middle of cpu_switch,
- * as if it were switching from proc0.
- */
-void
-cpu_exit(struct lwp *l)
-{
-	(void) splhigh();
-	switch_exit(l, lwp_exit2);
-	/* NOTREACHED */
 }
 
 /*
@@ -208,16 +194,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 		l2tf->tf_regs[FRAME_A3] = 0;		/* no error */
 		l2tf->tf_regs[FRAME_A4] = 1;		/* is child */
 
-		up->u_pcb.pcb_hw.apcb_ksp = (u_int64_t)l2tf;	
-		up->u_pcb.pcb_context[0] =
-		    (u_int64_t)func;			/* s0: pc */
-		up->u_pcb.pcb_context[1] =
-		    (u_int64_t)exception_return;	/* s1: ra */
-		up->u_pcb.pcb_context[2] =
-		    (u_int64_t)arg;			/* s2: arg */
-		up->u_pcb.pcb_context[7] =
-		    (u_int64_t)proc_trampoline;		/* ra: assembly magic */
-		up->u_pcb.pcb_context[8] = ALPHA_PSL_IPL_0; /* ps: IPL */
+		cpu_setfunc(l2, func, arg);
 	}
 }
 
@@ -237,10 +214,10 @@ cpu_setfunc(l, func, arg)
 	    (u_int64_t)exception_return;	/* s1: ra */
 	up->u_pcb.pcb_context[2] =
 	    (u_int64_t)arg;			/* s2: arg */
+	up->u_pcb.pcb_context[3] =
+	    (u_int64_t)l;			/* s3: lwp */
 	up->u_pcb.pcb_context[7] =
-	    (u_int64_t)proc_trampoline;		/* ra: assembly magic */
-	up->u_pcb.pcb_context[8] = ALPHA_PSL_IPL_0; /* ps: IPL */
-
+	    (u_int64_t)lwp_trampoline;		/* ra: assembly magic */
 }	
 
 /*
