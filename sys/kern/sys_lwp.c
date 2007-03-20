@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_lwp.c,v 1.15 2007/03/14 23:58:24 ad Exp $	*/
+/*	$NetBSD: sys_lwp.c,v 1.16 2007/03/20 23:25:17 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.15 2007/03/14 23:58:24 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.16 2007/03/20 23:25:17 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,7 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.15 2007/03/14 23:58:24 ad Exp $");
 #define	LWP_UNPARK_MAX		1024
 
 syncobj_t lwp_park_sobj = {
-	SOBJ_SLEEPQ_SORTED,
+	SOBJ_SLEEPQ_FIFO,
 	sleepq_unsleep,
 	sleepq_changepri,
 	sleepq_lendpri,
@@ -265,23 +265,19 @@ sys__lwp_wakeup(struct lwp *l, void *v, register_t *retval)
 	t->l_flag |= (LW_CANCELLED | LW_UNPARKED);
 
 	if (t->l_stat != LSSLEEP) {
+		lwp_unlock(t);
 		error = ENODEV;
-		goto bad;
-	}
-
-	if ((t->l_flag & LW_SINTR) == 0) {
+	} else if ((t->l_flag & LW_SINTR) == 0) {
+		lwp_unlock(t);
 		error = EBUSY;
-		goto bad;
+	} else {
+		/* Wake it up.  lwp_unsleep() will release the LWP lock. */
+		lwp_unsleep(t);
+		error = 0;
 	}
 
-	/* Wake it up.  setrunnable() will release the LWP lock. */
-	setrunnable(t);
 	mutex_exit(&p->p_smutex);
-	return 0;
 
- bad:
- 	lwp_unlock(t);
-	mutex_exit(&p->p_smutex);
 	return error;
 }
 
@@ -544,7 +540,7 @@ sys__lwp_unpark(struct lwp *l, void *v, register_t *retval)
 	 */
 	if (t->l_syncobj == &lwp_park_sobj) {
 		/* Releases the LWP lock. */
-		setrunnable(t);
+		lwp_unsleep(t);
 	} else {
 		/*
 		 * Set the operation pending.  The next call to _lwp_park
@@ -652,7 +648,7 @@ sys__lwp_unpark_all(struct lwp *l, void *v, register_t *retval)
 		 */
 		if (t->l_syncobj == &lwp_park_sobj) {
 			/* Releases the LWP lock. */
-			setrunnable(t);
+			lwp_unsleep(t);
 		} else {
 			/*
 			 * Set the operation pending.  The next call to
