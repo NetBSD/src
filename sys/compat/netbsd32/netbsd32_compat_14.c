@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_14.c,v 1.18 2007/03/20 08:12:42 cube Exp $	*/
+/*	$NetBSD: netbsd32_compat_14.c,v 1.19 2007/03/20 08:25:37 cube Exp $	*/
 
 /*
  * Copyright (c) 1999 Eduardo E. Horvath
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_14.c,v 1.18 2007/03/20 08:12:42 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_14.c,v 1.19 2007/03/20 08:25:37 cube Exp $");
 
 #include <sys/param.h>
 #include <sys/ipc.h>
@@ -254,7 +254,7 @@ compat_14_netbsd32_msgctl(l, v, retval)
 	if (error == 0 && cmd == IPC_STAT) {
 		native_to_netbsd32_msqid_ds14(&msqbuf, &omsqbuf);
 		error = copyout(&omsqbuf,
-		    SCARG_P32(uap, buf)), sizeof(omsqbuf);
+		    SCARG_P32(uap, buf), sizeof(omsqbuf));
 	}
 
 	return (error);
@@ -335,7 +335,7 @@ compat_14_netbsd32_shmctl(l, v, retval)
 	cmd = SCARG(uap, cmd);
 
 	if (cmd == IPC_SET) {
-		error = copyin(SCARG_P32(uap, buf)), &oshmbuf, sizeof(oshmbuf);
+		error = copyin(SCARG_P32(uap, buf), &oshmbuf, sizeof(oshmbuf));
 		if (error)
 			return (error);
 		netbsd32_shmid_ds14_to_native(&oshmbuf, &shmbuf);
