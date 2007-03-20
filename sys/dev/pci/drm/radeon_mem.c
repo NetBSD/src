@@ -34,10 +34,10 @@
 __FBSDID("$FreeBSD: src/sys/dev/drm/radeon_mem.c,v 1.8 2005/11/28 23:13:54 anholt Exp $");
 */
 
-#include "drmP.h"
-#include "drm.h"
-#include "radeon_drm.h"
-#include "radeon_drv.h"
+#include <dev/drm/drmP.h>
+#include <dev/drm/drm.h>
+#include <dev/pci/drm/radeon_drm.h>
+#include <dev/pci/drm/radeon_drv.h>
 
 /* Very simple allocator for GART memory, working on a static range
  * already mapped into each client's address space.

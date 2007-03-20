@@ -33,11 +33,11 @@
 __FBSDID("$FreeBSD: src/sys/dev/drm/radeon_cp.c,v 1.19 2006/09/07 23:04:47 anholt Exp $");
 */
 
-#include "drmP.h"
-#include "drm.h"
-#include "radeon_drm.h"
-#include "radeon_drv.h"
-#include "r300_reg.h"
+#include <dev/drm/drmP.h>
+#include <dev/drm/drm.h>
+#include <dev/pci/drm/radeon_drm.h>
+#include <dev/pci/drm/radeon_drv.h>
+#include <dev/pci/drm/r300_reg.h>
 
 #define RADEON_FIFO_DEBUG	0
 
