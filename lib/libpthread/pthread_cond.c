@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_cond.c,v 1.27 2007/03/14 23:34:48 ad Exp $	*/
+/*	$NetBSD: pthread_cond.c,v 1.28 2007/03/20 23:49:58 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_cond.c,v 1.27 2007/03/14 23:34:48 ad Exp $");
+__RCSID("$NetBSD: pthread_cond.c,v 1.28 2007/03/20 23:49:58 ad Exp $");
 
 #include <errno.h>
 #include <sys/time.h>
@@ -121,24 +121,23 @@ pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex)
 	if (__predict_false(self->pt_cancel))
 		pthread_exit(PTHREAD_CANCELED);
 	pthread_spinlock(self, &cond->ptc_lock);
-#ifdef ERRORCHECK
 	if (cond->ptc_mutex == NULL)
 		cond->ptc_mutex = mutex;
-	else
+	else {
+#ifdef ERRORCHECK
 		pthread__error(EINVAL,
 		    "Multiple mutexes used for condition wait", 
 		    cond->ptc_mutex == mutex);
 #endif
+	}
 	PTQ_INSERT_HEAD(&cond->ptc_waiters, self, pt_sleep);
 	self->pt_sleeponq = 1;
 	self->pt_sleepobj = &cond->ptc_waiters;
 	pthread_mutex_unlock(mutex);
 	(void)pthread__park(self, &cond->ptc_lock, &cond->ptc_waiters,
 	    NULL, 1);
-#ifdef ERRORCHECK
 	if (PTQ_EMPTY(&cond->ptc_waiters))
 		cond->ptc_mutex = NULL;
-#endif		
 	pthread_spinunlock(self, &cond->ptc_lock);
 	pthread_mutex_lock(mutex);
 
@@ -181,24 +180,23 @@ pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex,
 	if (__predict_false(self->pt_cancel))
 		pthread_exit(PTHREAD_CANCELED);
 	pthread_spinlock(self, &cond->ptc_lock);
-#ifdef ERRORCHECK
 	if (cond->ptc_mutex == NULL)
 		cond->ptc_mutex = mutex;
-	else
+	else {
+#ifdef ERRORCHECK
 		pthread__error(EINVAL,
 		    "Multiple mutexes used for condition wait",
 		    cond->ptc_mutex == mutex);
 #endif
+	}
 	PTQ_INSERT_HEAD(&cond->ptc_waiters, self, pt_sleep);
 	self->pt_sleeponq = 1;
 	self->pt_sleepobj = &cond->ptc_waiters;
 	pthread_mutex_unlock(mutex);
 	retval = pthread__park(self, &cond->ptc_lock, &cond->ptc_waiters,
 	    abstime, 1);
-#ifdef ERRORCHECK
 	if (PTQ_EMPTY(&cond->ptc_waiters))
 		cond->ptc_mutex = NULL;
-#endif		
 	pthread_spinunlock(self, &cond->ptc_lock);
 
 	SDPRINTF(("(cond timed wait %p) Woke up on %p, mutex %p\n",
@@ -216,6 +214,7 @@ int
 pthread_cond_signal(pthread_cond_t *cond)
 {
 	pthread_t self, signaled;
+	pthread_mutex_t *mutex;
 
 	pthread__error(EINVAL, "Invalid condition variable",
 	    cond->ptc_magic == _PT_COND_MAGIC);
@@ -229,18 +228,48 @@ pthread_cond_signal(pthread_cond_t *cond)
 
 	self = pthread__self();
 	pthread_spinlock(self, &cond->ptc_lock);
-	signaled = PTQ_FIRST(&cond->ptc_waiters);
-	if (signaled != NULL) {
-		PTQ_REMOVE(&cond->ptc_waiters, signaled, pt_sleep);
-		if (PTQ_EMPTY(&cond->ptc_waiters))
-			cond->ptc_mutex = NULL;
+
+	/*
+	 * Find a thread that is still blocked (no pending wakeup).
+	 * A wakeup can be pending if we have interrupted unpark_all
+	 * as it releases the interlock.
+	 */
+	PTQ_FOREACH(signaled, &cond->ptc_waiters, pt_sleep) {	
+		if (signaled->pt_sleepobj != NULL)
+			break;
+	}
+	if (__predict_false(signaled == NULL)) {
+		cond->ptc_mutex = NULL;
+		pthread_spinunlock(self, &cond->ptc_lock);
+		return 0;
+	}
+
+	/*
+	 * Pull the thread off the queue.
+	 */
+	PTQ_REMOVE(&cond->ptc_waiters, signaled, pt_sleep);
+	mutex = cond->ptc_mutex;
+	if (PTQ_EMPTY(&cond->ptc_waiters))
+		cond->ptc_mutex = NULL;
+
+	/*
+	 * For all valid uses of pthread_cond_signal(), the caller will
+	 * hold the mutex that the target is using to synchronize with.
+	 * To avoid the target awakening and immediatley blocking on the
+	 * mutex, transfer the thread to be awoken to the mutex's waiters
+	 * list.  The waiter will be set running when the caller (this
+	 * thread) releases the mutex.
+	 */
+	if (self->pt_mutexhint != NULL && self->pt_mutexhint == mutex) {
+		pthread_spinunlock(self, &cond->ptc_lock);
+		pthread_spinlock(self, &mutex->ptm_interlock);
+		PTQ_INSERT_HEAD(&mutex->ptm_blocked, signaled, pt_sleep);
+		pthread_spinunlock(self, &mutex->ptm_interlock);
+	} else {
 		pthread__unpark(self, &cond->ptc_lock,
 		    &cond->ptc_waiters, signaled);
 		PTHREADD_ADD(PTHREADD_COND_WOKEUP);
-		return 0;
 	}
-	cond->ptc_mutex = NULL;
-	pthread_spinunlock(self, &cond->ptc_lock);
 
 	return 0;
 }
@@ -249,9 +278,11 @@ pthread_cond_signal(pthread_cond_t *cond)
 int
 pthread_cond_broadcast(pthread_cond_t *cond)
 {
-	pthread_t self;
+	pthread_t self, signaled, next;
+	pthread_mutex_t *mutex;
 
-	pthread__error(EINVAL, "Invalid condition variable", cond->ptc_magic == _PT_COND_MAGIC);
+	pthread__error(EINVAL, "Invalid condition variable",
+	    cond->ptc_magic == _PT_COND_MAGIC);
 
 	PTHREADD_ADD(PTHREADD_COND_BROADCAST);
 	SDPRINTF(("(cond signal %p) Broadcasting %p\n",
@@ -262,8 +293,31 @@ pthread_cond_broadcast(pthread_cond_t *cond)
 
 	self = pthread__self();
 	pthread_spinlock(self, &cond->ptc_lock);
+	mutex = cond->ptc_mutex;
 	cond->ptc_mutex = NULL;
-	pthread__unpark_all(self, &cond->ptc_lock, &cond->ptc_waiters);
+
+	/*
+	 * Try to transfer waiters to the mutex's waiters list (see
+	 * pthread_cond_signal()).  Only transfer waiters for which
+	 * there is no pending wakeup.
+	 */
+	if (self->pt_mutexhint != NULL && self->pt_mutexhint == mutex) {
+		pthread_spinlock(self, &mutex->ptm_interlock);
+		for (signaled = PTQ_FIRST(&cond->ptc_waiters);
+		    signaled != NULL;
+		    signaled = next) {	
+		    	next = PTQ_NEXT(signaled, pt_sleep);
+		    	if (__predict_false(signaled->pt_sleepobj == NULL))
+		    		continue;
+		    	PTQ_REMOVE(&cond->ptc_waiters, signaled, pt_sleep);
+		    	PTQ_INSERT_HEAD(&mutex->ptm_blocked, signaled,
+		    	    pt_sleep);
+		}
+		pthread_spinunlock(self, &mutex->ptm_interlock);
+		pthread_spinunlock(self, &cond->ptc_lock);
+	} else
+		pthread__unpark_all(self, &cond->ptc_lock, &cond->ptc_waiters);
+
 	PTHREADD_ADD(PTHREADD_COND_WOKEUP);
 
 	return 0;
