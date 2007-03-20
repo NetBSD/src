@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs_subr.c,v 1.11 2007/03/11 10:08:37 pooka Exp $	*/
+/*	$NetBSD: dtfs_subr.c,v 1.12 2007/03/20 18:30:30 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -81,15 +81,22 @@ dtfs_baseattrs(struct vattr *vap, enum vtype type, ino_t id)
  * implement your own fs.
  */
 struct puffs_node *
-dtfs_genfile(struct puffs_node *dir, const char *name, enum vtype type)
+dtfs_genfile(struct puffs_node *dir, const struct puffs_cn *pcn,
+	enum vtype type)
 {
 	struct dtfs_file *df_dir, *dff;
 	struct dtfs_dirent *dfd;
 	struct dtfs_mount *dtm;
 	struct puffs_node *newpn;
+	uid_t uid;
+	int rv;
 
 	assert(dir->pn_va.va_type == VDIR);
 	assert(dir->pn_mnt != NULL);
+
+	uid = 0;
+	rv = puffs_cred_getuid(&pcn->pcn_cred, &uid);
+	assert(rv == 0);
 
 	if (type == VDIR) {
 		dff = dtfs_newdir();
@@ -106,9 +113,12 @@ dtfs_genfile(struct puffs_node *dir, const char *name, enum vtype type)
 	df_dir = dir->pn_data;
 	dfd = emalloc(sizeof(struct dtfs_dirent));
 	dfd->dfd_node = newpn;
-	dfd->dfd_name = estrdup(name);
+	dfd->dfd_name = estrdup(pcn->pcn_name);
 	dfd->dfd_parent = dir;
 	dtfs_adddent(dir, dfd);
+
+	newpn->pn_va.va_uid = uid;
+	newpn->pn_va.va_gid = dir->pn_va.va_gid;
 
 	return newpn;
 }
