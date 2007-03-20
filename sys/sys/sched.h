@@ -1,4 +1,4 @@
-/* $NetBSD: sched.h,v 1.30.2.9 2007/03/17 16:54:38 rmind Exp $ */
+/* $NetBSD: sched.h,v 1.30.2.10 2007/03/20 11:26:51 yamt Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2007 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@ void sched_setup(void);		/* Setup scheduler, e.g. kick off timeout driven events
 
 /* Main scheduler functions */
 void sched_tick(struct cpu_info *); /* Maybe resched after spc_ticks hardclock() ticks */
-void sched_clock(struct lwp *); /* Called from statclock(), e.g. to handle priority adjustment */
+void sched_schedclock(struct lwp *); /* Called from schedclock(), e.g. to handle priority adjustment */
 
 /* Runqueue-related functions */
 inline bool sched_curcpu_runnable_p(void); /* Indicate runnable processes on current CPU */
@@ -199,6 +199,8 @@ inline void resched_cpu(struct lwp *); /* Arrange reschedule */
 void setrunnable(struct lwp *);
 void preempt(void);
 int mi_switch(struct lwp *);
+
+void schedclock(struct lwp *);
 
 #endif	/* _KERNEL */
 #endif	/* _SYS_SCHED_H_ */
