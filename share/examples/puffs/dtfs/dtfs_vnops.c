@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs_vnops.c,v 1.16 2007/03/11 10:08:37 pooka Exp $	*/
+/*	$NetBSD: dtfs_vnops.c,v 1.17 2007/03/20 18:30:30 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -46,8 +46,10 @@ dtfs_node_lookup(struct puffs_cc *pcc, void *opc, void **newnode,
 	enum vtype *newtype, voff_t *newsize, dev_t *newrdev,
 	const struct puffs_cn *pcn)
 {
+	struct puffs_node *pn_dir = opc;
 	struct dtfs_file *df = DTFS_CTOF(opc);
 	struct dtfs_dirent *dfd;
+	int rv;
 
 	/* parent dir? */
 	if (PCNISDOTDOT(pcn)) {
@@ -68,10 +70,29 @@ dtfs_node_lookup(struct puffs_cc *pcc, void *opc, void **newnode,
 		return 0;
 	}
 
+	if ((pcn->pcn_flags & PUFFSLOOKUP_ISLASTCN)
+	    && (pcn->pcn_nameiop == PUFFSLOOKUP_CREATE ||
+	      pcn->pcn_nameiop == PUFFSLOOKUP_RENAME)) {
+		rv = puffs_access(VDIR, pn_dir->pn_va.va_mode,
+		    pn_dir->pn_va.va_uid, pn_dir->pn_va.va_gid,
+		    PUFFS_VWRITE, &pcn->pcn_cred);
+		if (rv)
+			return rv;
+	}
+
 	return ENOENT;
 }
 
-/* no credcheck */
+int
+dtfs_node_access(struct puffs_cc *pcc, void *opc, int acc_mode,
+	const struct puffs_cred *pcr, pid_t pid)
+{
+	struct puffs_node *pn = opc;
+
+	return puffs_access(pn->pn_va.va_type, pn->pn_va.va_mode,
+	    pn->pn_va.va_uid, pn->pn_va.va_gid, acc_mode, pcr);
+}
+
 int
 dtfs_node_getattr(struct puffs_cc *pcc, void *opc,
 	struct vattr *va, const struct puffs_cred *pcr, pid_t pid)
@@ -86,7 +107,6 @@ dtfs_node_getattr(struct puffs_cc *pcc, void *opc,
 	return 0;
 }
 
-/* no credcheck */
 int
 dtfs_node_setattr(struct puffs_cc *pcc, void *opc,
 	const struct vattr *va, const struct puffs_cred *pcr, pid_t pid)
@@ -129,7 +149,7 @@ dtfs_node_create(struct puffs_cc *pcc, void *opc, void **newnode,
 	if (!(va->va_type == VREG || va->va_type == VSOCK))
 		return ENODEV;
 
-	pn_new = dtfs_genfile(pn_parent, pcn->pcn_name, va->va_type);
+	pn_new = dtfs_genfile(pn_parent, pcn, va->va_type);
 	puffs_setvattr(&pn_new->pn_va, va);
 
 	*newnode = pn_new;
@@ -159,7 +179,7 @@ dtfs_node_mkdir(struct puffs_cc *pcc, void *opc, void **newnode,
 	struct puffs_node *pn_parent = opc;
 	struct puffs_node *pn_new;
 
-	pn_new = dtfs_genfile(pn_parent, pcn->pcn_name, VDIR);
+	pn_new = dtfs_genfile(pn_parent, pcn, VDIR);
 	puffs_setvattr(&pn_new->pn_va, va);
 
 	*newnode = pn_new;
@@ -286,7 +306,7 @@ dtfs_node_symlink(struct puffs_cc *pcc, void *opc, void **newnode,
 	if (va->va_type != VLNK)
 		return ENODEV;
 
-	pn_new = dtfs_genfile(pn_parent, pcn_src->pcn_name, VLNK);
+	pn_new = dtfs_genfile(pn_parent, pcn_src, VLNK);
 	puffs_setvattr(&pn_new->pn_va, va);
 	df_new = DTFS_PTOF(pn_new);
 	df_new->df_linktarget = estrdup(link_target);
@@ -323,7 +343,7 @@ dtfs_node_mknod(struct puffs_cc *pcc, void *opc, void **newnode,
 	    || va->va_type == VFIFO))
 		return EINVAL;
 
-	pn_new = dtfs_genfile(pn_parent, pcn->pcn_name, va->va_type);
+	pn_new = dtfs_genfile(pn_parent, pcn, va->va_type);
 	puffs_setvattr(&pn_new->pn_va, va);
 
 	df = DTFS_PTOF(pn_new);
