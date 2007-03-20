@@ -1,4 +1,4 @@
-/*	$NetBSD: opdump.c,v 1.8 2007/02/18 17:36:48 pooka Exp $	*/
+/*	$NetBSD: opdump.c,v 1.9 2007/03/20 10:22:22 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: opdump.c,v 1.8 2007/02/18 17:36:48 pooka Exp $");
+__RCSID("$NetBSD: opdump.c,v 1.9 2007/03/20 10:22:22 pooka Exp $");
 #endif /* !lint */
 
 #include <puffs.h>
@@ -110,14 +110,28 @@ const char *vnop_revmap[] = {
 	"PUFFS_VN_DELETEEXTATTR",
 	"PUFFS_VN_SETEXTATTR",
 };
+const char *cacheop_revmap[] = {
+	"PUFFS_CACHE_WRITE"
+};
 
 void
 puffsdump_req(struct puffs_req *preq)
 {
 	const char **map;
 
-	map = PUFFSOP_OPCLASS(preq->preq_opclass) == PUFFSOP_VFS
-	    ? vfsop_revmap : vnop_revmap;
+	map = NULL; /* yes, we are all interested in your opinion, gcc */
+	switch (PUFFSOP_OPCLASS(preq->preq_opclass)) {
+	case PUFFSOP_VFS:
+		map = vfsop_revmap;
+		break;
+	case PUFFSOP_VN:
+		map = vnop_revmap;
+		break;
+	case PUFFSOP_CACHE:
+		map = cacheop_revmap;
+		break;
+	}
+		
 	printf("\treqid: %" PRIu64 ", opclass %d%s, optype: %s, "
 	    "cookie: %p,\n\t\taux: %p, auxlen: %zu\n",
 	    preq->preq_id, PUFFSOP_OPCLASS(preq->preq_opclass),

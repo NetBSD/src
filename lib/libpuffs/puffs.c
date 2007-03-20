@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.c,v 1.32 2007/02/18 17:38:10 pooka Exp $	*/
+/*	$NetBSD: puffs.c,v 1.33 2007/03/20 10:22:23 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: puffs.c,v 1.32 2007/02/18 17:38:10 pooka Exp $");
+__RCSID("$NetBSD: puffs.c,v 1.33 2007/03/20 10:22:23 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -354,6 +354,22 @@ puffs_dopreq(struct puffs_usermount *pu, struct puffs_req *preq,
 {
 	struct puffs_cc *pcc;
 	int rv;
+
+	/*
+	 * XXX: the structure is currently a mess.  anyway, trap
+	 * the cacheops here already, since they don't need a cc.
+	 * I really should get around to revamping the operation
+	 * dispatching code one of these days.
+	 */
+	if (PUFFSOP_OPCLASS(preq->preq_opclass) == PUFFSOP_CACHE) {
+		struct puffs_cacheinfo *pci = (void *)preq;
+
+		if (pu->pu_ops.puffs_cache_write == NULL)
+			return 0;
+
+		pu->pu_ops.puffs_cache_write(pu, preq->preq_cookie,
+		    pci->pcache_nruns, pci->pcache_runs);
+	}
 
 	if (pu->pu_flags & PUFFS_FLAG_OPDUMP)
 		puffsdump_req(preq);
