@@ -1,4 +1,4 @@
-/*     $NetBSD: buf.h,v 1.95.6.4 2007/03/20 00:00:55 reinoud Exp $ */
+/*     $NetBSD: buf.h,v 1.95.6.5 2007/03/20 01:07:28 reinoud Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -135,6 +135,8 @@ struct buf {
 	} b_u;
 #define	b_actq	b_u.u_actq
 #define	b_work	b_u.u_work
+
+	/* tranfer and status */
 	struct simplelock b_interlock;	/* Lock for b_flags changes */
 	volatile int b_flags;		/* B_* flags. */
 	int	b_error;		/* Errno value. */
@@ -142,23 +144,29 @@ struct buf {
 	int	b_bufsize;		/* Allocated buffer size. */
 	int	b_bcount;		/* Valid bytes in buffer. */
 	int	b_resid;		/* Remaining I/O. */
-	dev_t	b_dev;			/* Device associated with buffer. */
 	struct {
 		void *b_addr;		/* Pointer to payload in kernel VM */
 	} b_un;
 #define	b_data	 b_un.b_addr
 	/* XXX b_un.b_addr does *not* have to be changeable. */
+	void *b_saveaddr;		/* Original b_addr for vmapbuf/physio.*/
 
+	/* block number identification */
+	daddr_t	b_lblkno;		/* Logical block number. */
 	daddr_t	b_blkno;		/* Underlying physical block number
 					   (partition relative) */
 	daddr_t	b_rawblkno;		/* Raw underlying physical block
 					   number (not partition relative) */
+
+	/* buffer associations */
+	dev_t	b_dev;			/* Device associated with buffer. */
+	struct  proc *b_proc;		/* Associated proc if B_PHYS set. */
+	struct	vnode *b_vp;		/* File associated with buffer. */
+	struct  workhead b_dep;		/* List of filesystem dependencies. */
+
+	/* callback mechanism */
 					/* Function to call upon completion. */
 	void	(*b_iodone)(struct buf *);
-	struct  proc *b_proc;		/* Associated proc if B_PHYS set. */
-	struct	vnode *b_vp;		/* File vnode. */
-	struct  workhead b_dep;		/* List of filesystem dependencies. */
-	void	*b_saveaddr;		/* Original b_addr for physio. */
 
 	/*
 	 * private data for owner.
@@ -179,7 +187,6 @@ struct buf {
 	LIST_ENTRY(buf) b_hash;		/* Hash chain. */
 	LIST_ENTRY(buf) b_vnbufs;	/* Buffer's associated vnode. */
 	TAILQ_ENTRY(buf) b_freelist;	/* Free list position if not active. */
-	daddr_t	b_lblkno;		/* Logical block number. */
 	int b_freelistindex;		/* Free list index. (BQ_) */
 };
 
