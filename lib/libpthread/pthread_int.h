@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.39 2007/03/05 23:55:40 ad Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.40 2007/03/20 23:33:10 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007 The NetBSD Foundation, Inc.
@@ -82,6 +82,7 @@ struct	__pthread_st {
 	pthread_spin_t pt_flaglock;	/* lock on pt_flag */
 	int	pt_cancel;	/* Deferred cancellation */
 	int	pt_spinlocks;	/* Number of spinlocks held. */
+	void	*pt_mutexhint;	/* Last mutex held. */
 	int	pt_sleeponq;	/* on a sleep queue */
 	int	pt_errno;	/* Thread-specific errno. */
 

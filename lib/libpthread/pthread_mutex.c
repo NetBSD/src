@@ -1,11 +1,11 @@
-/*	$NetBSD: pthread_mutex.c,v 1.26 2007/03/05 23:56:18 ad Exp $	*/
+/*	$NetBSD: pthread_mutex.c,v 1.27 2007/03/20 23:33:10 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003, 2006, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Nathan J. Williams, and by Jason R. Thorpe.
+ * by Nathan J. Williams, by Jason R. Thorpe, and by Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_mutex.c,v 1.26 2007/03/05 23:56:18 ad Exp $");
+__RCSID("$NetBSD: pthread_mutex.c,v 1.27 2007/03/20 23:33:10 ad Exp $");
 
 #include <errno.h>
 #include <limits.h>
@@ -47,7 +47,7 @@ __RCSID("$NetBSD: pthread_mutex.c,v 1.26 2007/03/05 23:56:18 ad Exp $");
 #include "pthread.h"
 #include "pthread_int.h"
 
-static int pthread_mutex_lock_slow(pthread_mutex_t *);
+static int pthread_mutex_lock_slow(pthread_t, pthread_mutex_t *);
 
 __strong_alias(__libc_mutex_init,pthread_mutex_init)
 __strong_alias(__libc_mutex_lock,pthread_mutex_lock)
@@ -158,43 +158,40 @@ pthread_mutex_destroy(pthread_mutex_t *mutex)
 int
 pthread_mutex_lock(pthread_mutex_t *mutex)
 {
+	pthread_t self;
 	int error;
 
+	self = pthread__self();
+
 	PTHREADD_ADD(PTHREADD_MUTEX_LOCK);
+
 	/*
 	 * Note that if we get the lock, we don't have to deal with any
 	 * non-default lock type handling.
 	 */
 	if (__predict_false(pthread__simple_lock_try(&mutex->ptm_lock) == 0)) {
-		error = pthread_mutex_lock_slow(mutex);
+		error = pthread_mutex_lock_slow(self, mutex);
 		if (error)
 			return error;
 	}
 
-	/* We have the lock! */
 	/*
-	 * Identifying ourselves may be slow, and this assignment is
-	 * only needed for (a) debugging identity of the owning thread
-	 * and (b) handling errorcheck and recursive mutexes. It's
-	 * better to just stash our stack pointer here and let those
-	 * slow exception cases compute the stack->thread mapping.
+	 * We have the lock!
 	 */
-	mutex->ptm_owner = (pthread_t)pthread__sp();
+	self->pt_mutexhint = mutex;
+	mutex->ptm_owner = self;
 
 	return 0;
 }
 
 
 static int
-pthread_mutex_lock_slow(pthread_mutex_t *mutex)
+pthread_mutex_lock_slow(pthread_t self, pthread_mutex_t *mutex)
 {
-	pthread_t self;
 	extern int pthread__started;
 
 	pthread__error(EINVAL, "Invalid mutex",
 	    mutex->ptm_magic == _PT_MUTEX_MAGIC);
-
-	self = pthread__self();
 
 	PTHREADD_ADD(PTHREADD_MUTEX_LOCK_SLOW);
 	while (/*CONSTCOND*/1) {
@@ -217,7 +214,7 @@ pthread_mutex_lock_slow(pthread_mutex_t *mutex)
 
 			GET_MUTEX_PRIVATE(mutex, mp);
 
-			if (pthread__id(mutex->ptm_owner) == self) {
+			if (mutex->ptm_owner == self) {
 				switch (mp->type) {
 				case PTHREAD_MUTEX_ERRORCHECK:
 					PTQ_REMOVE(&mutex->ptm_blocked, self,
@@ -286,23 +283,24 @@ pthread_mutex_lock_slow(pthread_mutex_t *mutex)
 int
 pthread_mutex_trylock(pthread_mutex_t *mutex)
 {
+	struct mutex_private *mp;
+	pthread_t self;
 
 	pthread__error(EINVAL, "Invalid mutex",
 	    mutex->ptm_magic == _PT_MUTEX_MAGIC);
 
+	self = pthread__self();
+
 	PTHREADD_ADD(PTHREADD_MUTEX_TRYLOCK);
 	if (pthread__simple_lock_try(&mutex->ptm_lock) == 0) {
-		struct mutex_private *mp;
-
-		GET_MUTEX_PRIVATE(mutex, mp);
-
 		/*
 		 * These tests can be performed without holding the
 		 * interlock because these fields are only modified
 		 * if we know we own the mutex.
 		 */
-		if ((mp->type == PTHREAD_MUTEX_RECURSIVE) &&
-		    (pthread__id(mutex->ptm_owner) == pthread__self())) {
+		GET_MUTEX_PRIVATE(mutex, mp);
+		if (mp->type == PTHREAD_MUTEX_RECURSIVE &&
+		    mutex->ptm_owner == self) {
 			if (mp->recursecount == INT_MAX)
 				return EAGAIN;
 			mp->recursecount++;
@@ -312,8 +310,8 @@ pthread_mutex_trylock(pthread_mutex_t *mutex)
 		return EBUSY;
 	}
 
-	/* see comment at the end of pthread_mutex_lock() */
-	mutex->ptm_owner = (pthread_t)pthread__sp();
+	mutex->ptm_owner = self;
+	self->pt_mutexhint = mutex;
 
 	return 0;
 }
@@ -323,7 +321,7 @@ int
 pthread_mutex_unlock(pthread_mutex_t *mutex)
 {
 	struct mutex_private *mp;
-	pthread_t self, blocked; 
+	pthread_t self;
 	int weown;
 
 	pthread__error(EINVAL, "Invalid mutex",
@@ -339,7 +337,7 @@ pthread_mutex_unlock(pthread_mutex_t *mutex)
 	 * interlock because these fields are only modified
 	 * if we know we own the mutex.
 	 */
-	weown = (pthread__id(mutex->ptm_owner) == self);
+	weown = (mutex->ptm_owner == self);
 	switch (mp->type) {
 	case PTHREAD_MUTEX_RECURSIVE:
 		if (!weown)
@@ -365,6 +363,7 @@ pthread_mutex_unlock(pthread_mutex_t *mutex)
 
 	mutex->ptm_owner = NULL;
 	pthread__simple_unlock(&mutex->ptm_lock);
+
 	/*
 	 * Do a double-checked locking dance to see if there are any
 	 * waiters.  If we don't see any waiters, we can exit, because
@@ -374,15 +373,15 @@ pthread_mutex_unlock(pthread_mutex_t *mutex)
 	 * lock that happened between the unlock above and this
 	 * examination of the queue; if so, no harm is done, as the
 	 * waiter will loop and see that the mutex is still locked.
+	 *
+	 * Note that waiters may have been transferred here from a
+	 * condition variable.
 	 */
+	if (self->pt_mutexhint == mutex)
+		self->pt_mutexhint = NULL;
+
 	pthread_spinlock(self, &mutex->ptm_interlock);
-	if ((blocked = PTQ_FIRST(&mutex->ptm_blocked)) != NULL) {
-		PTQ_REMOVE(&mutex->ptm_blocked, blocked, pt_sleep);
-		PTHREADD_ADD(PTHREADD_MUTEX_UNLOCK_UNBLOCK);
-		pthread__unpark(self, &mutex->ptm_interlock,
-		    &mutex->ptm_blocked, blocked);
-	} else
-		pthread_spinunlock(self, &mutex->ptm_interlock);
+	pthread__unpark_all(self, &mutex->ptm_interlock, &mutex->ptm_blocked);
 
 	return 0;
 }
