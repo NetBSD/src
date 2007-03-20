@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.c,v 1.20 2007/03/14 12:13:58 pooka Exp $	*/
+/*	$NetBSD: puffs_msgif.c,v 1.21 2007/03/20 10:21:58 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.20 2007/03/14 12:13:58 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.21 2007/03/20 10:21:58 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/fstrans.h>
@@ -240,6 +240,21 @@ puffs_vntouser_faf(struct puffs_mount *pmp, int optype,
 	ppark->park_flags = 0;
 
 	(void)touser(pmp, ppark, 0, NULL, NULL);
+}
+
+void
+puffs_cacheop(struct puffs_mount *pmp, struct puffs_park *ppark,
+	struct puffs_cacheinfo *pcinfo, size_t pcilen, void *cookie)
+{
+
+	ppark->park_preq = (struct puffs_req *)pcinfo;
+	ppark->park_preq->preq_opclass = PUFFSOP_CACHE | PUFFSOPFLAG_FAF;
+	ppark->park_preq->preq_optype = PCACHE_TYPE_WRITE; /* XXX */
+	ppark->park_preq->preq_cookie = cookie;
+
+	ppark->park_maxlen = ppark->park_copylen = pcilen;
+
+	(void)touser(pmp, ppark, 0, NULL, NULL); 
 }
 
 /*

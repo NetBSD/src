@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_sys.h,v 1.26 2007/03/14 12:13:58 pooka Exp $	*/
+/*	$NetBSD: puffs_sys.h,v 1.27 2007/03/20 10:21:59 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -134,6 +134,8 @@ extern int puffsdebug; /* puffs_subr.c */
 
 #define PUFFS_DOCACHE(pmp)	(((pmp)->pmp_flags & PUFFS_KFLAG_NOCACHE) == 0)
 
+#define PUFFS_WCACHEINFO(pmp)	0
+
 TAILQ_HEAD(puffs_wq, puffs_park);
 LIST_HEAD(puffs_node_hashlist, puffs_node);
 struct puffs_mount {
@@ -169,18 +171,28 @@ struct puffs_mount {
 #define PUFFSTAT_RUNNING	2
 #define PUFFSTAT_DYING		3 /* Do you want your possessions identified? */
 
+
 #define PNODE_NOREFS	0x01	/* vnode inactive, no backend reference	*/
 #define PNODE_SUSPEND	0x02	/* issue all operations as FAF		*/
-#if 0
-#define PNODE_LOCKED	0x0
-#define PNODE_WANTED	0x0
-#endif
+
+#define PNODE_METACACHE_ATIME	0x10	/* cache atime metadata */
+#define PNODE_METACACHE_CTIME	0x20	/* cache atime metadata */
+#define PNODE_METACACHE_MTIME	0x40	/* cache atime metadata */
+#define PNODE_METACACHE_SIZE	0x80	/* cache atime metadata */
+#define PNODE_METACACHE_MASK	0xf0
+
 struct puffs_node {
 	struct genfs_node pn_gnode;	/* genfs glue			*/
 
 	void		*pn_cookie;	/* userspace pnode cookie	*/
 	struct vnode	*pn_vp;		/* backpointer to vnode		*/
 	uint32_t	pn_stat;	/* node status			*/
+
+	/* metacache */
+	struct timespec	pn_mc_atime;
+	struct timespec	pn_mc_ctime;
+	struct timespec	pn_mc_mtime;
+	u_quad_t	pn_mc_size;
 
 	LIST_ENTRY(puffs_node) pn_hashent;
 };
@@ -199,6 +211,10 @@ int	puffs_vntouser_req(struct puffs_mount *, int, void *, size_t,
 			   void *, uint64_t, struct vnode *, struct vnode *);
 int	puffs_vntouser_adjbuf(struct puffs_mount *, int, void **, size_t *,
 		              size_t, void *, struct vnode *, struct vnode *);
+void	puffs_vntouser_faf(struct puffs_mount *, int, void *, size_t, void *);
+void	puffs_cacheop(struct puffs_mount *, struct puffs_park *,
+		      struct puffs_cacheinfo *, size_t, void *);
+struct puffs_park *puffs_cacheop_alloc(void);
 
 int	puffs_getvnode(struct mount *, void *, enum vtype, voff_t, dev_t,
 		       struct vnode **);
