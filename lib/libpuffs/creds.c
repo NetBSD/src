@@ -1,4 +1,4 @@
-/*	$NetBSD: creds.c,v 1.3 2006/10/23 01:23:42 christos Exp $	*/
+/*	$NetBSD: creds.c,v 1.4 2007/03/20 18:28:08 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: creds.c,v 1.3 2006/10/23 01:23:42 christos Exp $");
+__RCSID("$NetBSD: creds.c,v 1.4 2007/03/20 18:28:08 pooka Exp $");
 #endif /* !lint */
 
 /*
@@ -130,4 +130,59 @@ puffs_cred_isjuggernaut(const struct puffs_cred *pcr)
 
 	return puffs_cred_isuid(pcr, 0) || puffs_cred_iskernel(pcr)
 	    || puffs_cred_isfs(pcr);
+}
+
+/*
+ * Gerneic routine for checking file access rights.  Modeled after
+ * vaccess() in the kernel.
+ */
+int
+puffs_access(enum vtype type, mode_t file_mode, uid_t uid, gid_t gid,
+	mode_t acc_mode, const struct puffs_cred *pcr)
+{
+	mode_t mask;
+
+	/* megapower */
+	if (puffs_cred_iskernel(pcr) || puffs_cred_isfs(pcr))
+		return 0;
+
+	/* superuser, allow all except exec if *ALL* exec bits are unset */
+	if (puffs_cred_isuid(pcr, 0)) {
+		if ((acc_mode & PUFFS_VEXEC) && type != VDIR &&
+		    (file_mode & (S_IXUSR|S_IXGRP|S_IXOTH)) == 0)
+			return EACCES;
+		return 0;
+	}
+
+	mask = 0;
+	/* owner */
+	if (puffs_cred_isuid(pcr, uid)) {
+		if (acc_mode & PUFFS_VEXEC)
+			mask |= S_IXUSR;
+		if (acc_mode & PUFFS_VREAD)
+			mask |= S_IRUSR;
+		if (acc_mode & PUFFS_VWRITE)
+			mask |= S_IWUSR;
+	/* group */
+	} else if (puffs_cred_hasgroup(pcr, gid)) {
+		if (acc_mode & PUFFS_VEXEC)
+			mask |= S_IXGRP;
+		if (acc_mode & PUFFS_VREAD)
+			mask |= S_IRGRP;
+		if (acc_mode & PUFFS_VWRITE)
+			mask |= S_IWGRP;
+	/* other */
+	} else {
+		if (acc_mode & PUFFS_VEXEC)
+			mask |= S_IXOTH;
+		if (acc_mode & PUFFS_VREAD)
+			mask |= S_IROTH;
+		if (acc_mode & PUFFS_VWRITE)
+			mask |= S_IWOTH;
+	}
+
+	if ((file_mode & mask) == mask)
+		return 0;
+	else
+		return EACCES;
 }

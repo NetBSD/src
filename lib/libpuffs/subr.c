@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.c,v 1.15 2007/03/16 08:14:49 pooka Exp $	*/
+/*	$NetBSD: subr.c,v 1.16 2007/03/20 18:28:08 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006 Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: subr.c,v 1.15 2007/03/16 08:14:49 pooka Exp $");
+__RCSID("$NetBSD: subr.c,v 1.16 2007/03/20 18:28:08 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -39,6 +39,7 @@ __RCSID("$NetBSD: subr.c,v 1.15 2007/03/16 08:14:49 pooka Exp $");
 #include <sys/dirent.h>
 
 #include <assert.h>
+#include <errno.h>
 #include <puffs.h>
 #include <stdlib.h>
 #include <stdio.h>
