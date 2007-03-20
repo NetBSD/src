@@ -1,4 +1,4 @@
-/*     $NetBSD: buf.h,v 1.95.6.3 2007/03/19 23:55:48 reinoud Exp $ */
+/*     $NetBSD: buf.h,v 1.95.6.4 2007/03/20 00:00:55 reinoud Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -146,6 +146,9 @@ struct buf {
 	struct {
 		void *b_addr;		/* Pointer to payload in kernel VM */
 	} b_un;
+#define	b_data	 b_un.b_addr
+	/* XXX b_un.b_addr does *not* have to be changeable. */
+
 	daddr_t	b_blkno;		/* Underlying physical block number
 					   (partition relative) */
 	daddr_t	b_rawblkno;		/* Raw underlying physical block
@@ -193,9 +196,6 @@ do {									\
  * to be maintained in the `b_resid' field.
  */
 #define	b_cylinder b_resid		/* Cylinder number for disksort(). */
-
-/* Device driver compatibility definitions. */
-#define	b_data	 b_un.b_addr		/* b_un.b_addr is not changeable. */
 
 /*
  * These flags are kept in b_flags.
