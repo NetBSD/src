@@ -1,4 +1,4 @@
-/*	$NetBSD: powernow_k8.c,v 1.13 2007/03/18 14:30:54 xtraeme Exp $ */
+/*	$NetBSD: powernow_k8.c,v 1.14 2007/03/20 21:13:06 xtraeme Exp $ */
 /*	$OpenBSD: powernow-k8.c,v 1.8 2006/06/16 05:58:50 gwk Exp $ */
 
 /*-
@@ -66,7 +66,7 @@
 /* AMD POWERNOW K8 driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powernow_k8.c,v 1.13 2007/03/18 14:30:54 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powernow_k8.c,v 1.14 2007/03/20 21:13:06 xtraeme Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -75,6 +75,7 @@ __KERNEL_RCSID(0, "$NetBSD: powernow_k8.c,v 1.13 2007/03/18 14:30:54 xtraeme Exp
 #include <sys/sysctl.h>
 #include <sys/once.h>
 
+#include <x86/cpu_msr.h>
 #include <x86/powernow.h>
 
 #include <dev/isa/isareg.h>
@@ -83,6 +84,20 @@ __KERNEL_RCSID(0, "$NetBSD: powernow_k8.c,v 1.13 2007/03/18 14:30:54 xtraeme Exp
 #include <machine/cpu.h>
 #include <machine/cpufunc.h>
 #include <machine/bus.h>
+
+/* 
+ * Overwrite our previous WRITE_FIDVID macro with the one used by
+ * the msr_cpu_broadcast framework, which will work in UP and SMP.
+ */
+#undef WRITE_FIDVID
+#define WRITE_FIDVID(fid, vid, ctrl)					\
+	mcb.msr_mask = ((ctrl) << 32);					\
+	mcb.msr_value = ((1ULL << 16) | ((vid) << 8) | (fid));		\
+	mcb.msr_type = MSR_AMDK7_FIDVID_CTL;				\
+	if (msr_cpu_broadcast(&mcb, MSR_CPU_BROADCAST_WRITE)) {		\
+		DPRINTF(("%s: failed\n", __func__));			\
+		return EINVAL;						\
+	}
 
 #ifdef _LKM
 static struct sysctllog *sysctllog;
@@ -151,6 +166,7 @@ k8_powernow_setperf(unsigned int freq)
 	int cfid, cvid, fid = 0, vid = 0;
 	int rvo;
 	struct powernow_cpu_state *ccstate;
+	struct msr_cpu_broadcast mcb;
 
 	/*
 	 * We dont do a k8pnow_read_pending_wait here, need to ensure that the
