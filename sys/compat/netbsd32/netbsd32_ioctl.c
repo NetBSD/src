@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.c,v 1.32 2007/03/18 21:38:33 dsl Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.c,v 1.33 2007/03/20 11:02:18 njoly Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -33,7 +33,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.32 2007/03/18 21:38:33 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.33 2007/03/20 11:02:18 njoly Exp $");
+
+#if defined(_KERNEL_OPT)
+#include "opt_ktrace.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,6 +55,9 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.32 2007/03/18 21:38:33 dsl Exp 
 #include <sys/ttycom.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
+#ifdef KTRACE
+#include <sys/ktrace.h>
+#endif
 
 #ifdef __sparc__
 #include <dev/sun/fbio.h>
@@ -431,6 +438,15 @@ printf("netbsd32_ioctl(%d, %x, %x): %s group %c base %d len %d\n",
 					free(memp32, M_IOCTLOPS);
 				goto out;
 			}
+#ifdef KTRACE
+			if (KTRPOINT(p, KTR_GENIO)) {
+				struct iovec iov;
+				iov.iov_base = SCARG_P32(uap, data);
+				iov.iov_len = size32;
+				ktrgenio(l, SCARG(uap, fd), UIO_WRITE, &iov,
+				    size32, 0);
+			}
+#endif
 		} else
 			*(void **)data32 = SCARG_P32(uap, data);
 	} else if ((com&IOC_OUT) && size32)
@@ -569,8 +585,18 @@ printf("netbsd32_ioctl(%d, %x, %x): %s group %c base %d len %d\n",
 	 * Copy any data to user, size was
 	 * already set and checked above.
 	 */
-	if (error == 0 && (com&IOC_OUT) && size32)
+	if (error == 0 && (com&IOC_OUT) && size32) {
 		error = copyout(data32, SCARG_P32(uap, data), size32);
+#ifdef KTRACE
+		if (KTRPOINT(p, KTR_GENIO)) {
+			struct iovec iov;
+			iov.iov_base = SCARG_P32(uap, data);
+			iov.iov_len = size32;
+			ktrgenio(l, SCARG(uap, fd), UIO_READ, &iov,
+			    size32, error);
+		}
+#endif
+	}
 
 	/* if we malloced data, free it here */
 	if (memp32)
