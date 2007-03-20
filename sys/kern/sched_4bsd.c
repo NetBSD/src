@@ -1,4 +1,4 @@
-/*	$NetBSD: sched_4bsd.c,v 1.1.2.12 2007/03/17 17:11:43 rmind Exp $	*/
+/*	$NetBSD: sched_4bsd.c,v 1.1.2.13 2007/03/20 11:26:51 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.1.2.12 2007/03/17 17:11:43 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.1.2.13 2007/03/20 11:26:51 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -530,7 +530,7 @@ resetprocpriority(struct proc *p)
  */
 
 void
-sched_clock(struct lwp *l)
+sched_schedclock(struct lwp *l)
 {
 	struct proc *p = l->l_proc;
 

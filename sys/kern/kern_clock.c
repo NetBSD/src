@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.106.2.4 2007/02/27 16:54:19 yamt Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.106.2.5 2007/03/20 11:26:51 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.106.2.4 2007/02/27 16:54:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.106.2.5 2007/03/20 11:26:51 yamt Exp $");
 
 #include "opt_ntp.h"
 #include "opt_multiprocessor.h"
@@ -1127,6 +1127,16 @@ proftick(struct clockframe *frame)
 }
 #endif
 
+void
+schedclock(struct lwp *l)
+{
+
+	if ((l->l_flag & LW_IDLE) != 0)
+		return;
+
+	sched_schedclock(l);
+}
+
 /*
  * Statistics clock.  Grab profile sample, and if divider reaches 0,
  * do process and kernel statistics.
@@ -1235,12 +1245,10 @@ statclock(struct clockframe *frame)
 	}
 	spc->spc_pscnt = psdiv;
 
-	if (p == NULL) {
-		return;
+	if (p != NULL) {
+		++p->p_cpticks;
+		mutex_spin_exit(&p->p_stmutex);
 	}
-
-	++p->p_cpticks;
-	mutex_spin_exit(&p->p_stmutex);
 
 	/*
 	 * If no separate schedclock is provided, call it here
@@ -1248,7 +1256,7 @@ statclock(struct clockframe *frame)
 	 */
 	if (schedhz == 0) {
 		if ((int)(--ci->ci_schedstate.spc_schedticks) <= 0) {
-			sched_clock(l);
+			schedclock(l);
 			ci->ci_schedstate.spc_schedticks = statscheddiv;
 		}
 	}
