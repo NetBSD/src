@@ -1,4 +1,4 @@
-/* 	$NetBSD: cpuvar.h,v 1.10 2007/03/15 00:28:57 xtraeme Exp $ */
+/* 	$NetBSD: cpuvar.h,v 1.11 2007/03/20 21:22:03 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -94,6 +94,7 @@ struct cpu_attach_args {
 #ifdef _KERNEL
 
 #include "opt_multiprocessor.h"
+#include "opt_intel_odcm.h"
 
 #ifdef MULTIPROCESSOR
 extern u_int32_t cpus_running;
@@ -107,6 +108,10 @@ void x86_errata(struct cpu_info *, int);
 void identifycpu(struct cpu_info *);
 void cpu_init(struct cpu_info *);
 void cpu_init_first(void);
+
+#ifdef INTEL_ONDEMAND_CLOCKMOD
+void clockmod_init(void);
+#endif
 
 #endif
 
