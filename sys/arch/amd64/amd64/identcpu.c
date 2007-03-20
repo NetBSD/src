@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.16 2007/03/18 07:21:41 xtraeme Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.17 2007/03/20 21:22:03 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,8 +36,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.16 2007/03/18 07:21:41 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.17 2007/03/20 21:22:03 xtraeme Exp $");
 
+#include "opt_intel_odcm.h"
 #include "opt_powernow_k8.h"
 
 #include <sys/types.h>
@@ -137,6 +138,9 @@ identifycpu(struct cpu_info *ci)
 	x86_errata(ci, vendor);
 	x86_patch();
 
+#ifdef INTEL_ONDEMAND_CLOCKMOD
+	clockmod_init();
+#endif
 }
 
 void

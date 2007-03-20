@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.62 2007/03/18 07:21:41 xtraeme Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.63 2007/03/20 21:22:03 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,10 +37,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.62 2007/03/18 07:21:41 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.63 2007/03/20 21:22:03 xtraeme Exp $");
 
 #include "opt_cputype.h"
 #include "opt_enhanced_speedstep.h"
+#include "opt_intel_odcm.h"
 #include "opt_powernow_k7.h"
 #include "opt_powernow_k8.h"
 
@@ -54,8 +55,9 @@ __KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.62 2007/03/18 07:21:41 xtraeme Exp $"
 #include <machine/pio.h>
 #include <machine/cpu.h>
 #include <x86/cacheinfo.h>
-#include <x86/include/cpuvar.h>
-#include <x86/include/powernow.h>
+#include <x86/cpuvar.h>
+#include <x86/cpu_msr.h>
+#include <x86/powernow.h>
 
 static const struct x86_cache_info
 intel_cpuid_cache_info[] = {
@@ -1795,6 +1797,9 @@ identifycpu(struct cpu_info *ci)
 	}
 #endif /* POWERNOW_K7 || POWERNOW_K8 */
 
+#ifdef INTEL_ONDEMAND_CLOCKMOD
+	clockmod_init();
+#endif
 	x86_errata(ci, cpu_vendor);
 	x86_patch();
 
