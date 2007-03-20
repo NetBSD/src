@@ -1,4 +1,4 @@
-/*	$NetBSD: est.c,v 1.33 2007/03/18 07:21:41 xtraeme Exp $	*/
+/*	$NetBSD: est.c,v 1.34 2007/03/20 21:12:22 xtraeme Exp $	*/
 /*
  * Copyright (c) 2003 Michael Eriksson.
  * All rights reserved.
@@ -86,13 +86,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: est.c,v 1.33 2007/03/18 07:21:41 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: est.c,v 1.34 2007/03/20 21:12:22 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/sysctl.h>
 #include <sys/once.h>
+
+#include <x86/cpu_msr.h>
 
 #include <machine/cpu.h>
 #include <machine/specialreg.h>
@@ -852,6 +854,7 @@ static void est_init_main(int);
 static int
 est_sysctl_helper(SYSCTLFN_ARGS)
 {
+	struct msr_cpu_broadcast mcb;
 	struct sysctlnode	node;
 	int			fq, oldfq, error;
 
@@ -876,16 +879,17 @@ est_sysctl_helper(SYSCTLFN_ARGS)
 	/* support writing to ...frequency.target */
 	if (rnode->sysctl_num == est_node_target && fq != oldfq) {
 		int		i;
-		uint64_t	msr;
 
 		for (i = est_fqlist->n - 1; i > 0; i--)
 			if (MSR2MHZ(est_fqlist->table[i], bus_clock) >= fq)
 				break;
 		fq = MSR2MHZ(est_fqlist->table[i], bus_clock);
-		msr = rdmsr(MSR_PERF_CTL);
-		msr &= ~0xffffULL;
-		msr |= est_fqlist->table[i];
-		wrmsr(MSR_PERF_CTL, msr);
+		mcb.msr_type = MSR_PERF_CTL;
+		mcb.msr_mask = 0xffffULL;
+		mcb.msr_value = est_fqlist->table[i];
+
+		if (msr_cpu_broadcast(&mcb, MSR_CPU_BROADCAST_WRITE))
+			return EINVAL;
 	}
 
 	return 0;
