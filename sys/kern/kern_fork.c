@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.136.2.1 2007/03/13 16:51:53 ad Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.136.2.2 2007/03/21 20:16:31 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001, 2004 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.136.2.1 2007/03/13 16:51:53 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.136.2.2 2007/03/21 20:16:31 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -362,9 +362,9 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 		p2->p_limit = limcopy(p1);
 		mutex_exit(&p1->p_mutex);
 	} else {
-		simple_lock(&p1->p_limit->p_slock);
+		mutex_enter(&p1->p_limit->p_lock);
 		p1->p_limit->p_refcnt++;
-		simple_unlock(&p1->p_limit->p_slock);
+		mutex_exit(&p1->p_limit->p_lock);
 		p2->p_limit = p1->p_limit;
 	}
 
