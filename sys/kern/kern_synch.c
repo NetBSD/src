@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.177.2.16 2007/03/17 16:54:37 rmind Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.177.2.17 2007/03/21 22:04:18 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.177.2.16 2007/03/17 16:54:37 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.177.2.17 2007/03/21 22:04:18 ad Exp $");
 
 #include "opt_kstack.h"
 #include "opt_lockdebug.h"
@@ -332,14 +332,11 @@ sched_switch_unlock(struct lwp *old, struct lwp *new)
 
 	if (old != NULL) {
 		LOCKDEBUG_BARRIER(old->l_mutex, 1);
+		lwp_unlock(old);
 	} else {
 		LOCKDEBUG_BARRIER(NULL, 1);
 	}
-
 	curlwp = new;
-	if (old != NULL) {
-		lwp_unlock(old);
-	}
 	spl0();
 }
 
@@ -467,6 +464,7 @@ mi_switch(struct lwp *l)
 	KASSERT(lwp_locked(newl, &sched_mutex));
 	newl->l_stat = LSONPROC;
 	newl->l_cpu = l->l_cpu;
+	newl->l_flag |= LW_RUNNING;
 
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	if (l->l_mutex != &sched_mutex) {
@@ -480,6 +478,7 @@ mi_switch(struct lwp *l)
 
 		uvmexp.swtch++;
 		pmap_deactivate(l);
+		l->l_flag &= ~LW_RUNNING;
 		prevlwp = cpu_switchto(l, newl);
 		sched_switch_unlock(prevlwp, l);
 		pmap_activate(l);
@@ -573,14 +572,8 @@ setrunnable(struct lwp *l)
 	/*
 	 * If the LWP is still on the CPU, mark it as LSONPROC.  It may be
 	 * about to call mi_switch(), in which case it will yield.
-	 *
-	 * XXXSMP Will need to change for preemption.
 	 */
-#ifdef MULTIPROCESSOR
-	if (l->l_cpu->ci_curlwp == l) {
-#else
-	if (l == curlwp) {
-#endif
+	if ((l->l_flag & LW_RUNNING) != 0) {
 		l->l_stat = LSONPROC;
 		l->l_slptime = 0;
 		lwp_unlock(l);
@@ -752,10 +745,6 @@ resched_cpu(struct lwp *l)
 	 * are ways to handle this situation, but they're not
 	 * currently very pretty, and we also need to weigh the
 	 * cost of moving a process from one CPU to another.
-	 *
-	 * XXXSMP
-	 * There is also the issue of locking the other CPU's
-	 * sched state, which we currently do not do.
 	 */
 	ci = (l->l_cpu != NULL) ? l->l_cpu : curcpu();
 	if (pri < ci->ci_schedstate.spc_curpriority)

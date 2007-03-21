@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sleepq.c,v 1.4.2.6 2007/03/17 16:54:37 rmind Exp $	*/
+/*	$NetBSD: kern_sleepq.c,v 1.4.2.7 2007/03/21 22:04:18 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.4.2.6 2007/03/17 16:54:37 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.4.2.7 2007/03/21 22:04:18 ad Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -147,24 +147,14 @@ sleepq_remove(sleepq_t *sq, struct lwp *l)
 		return 0;
 	}
 
-	sched_lock(1);
-	lwp_setlock(l, &sched_mutex);
-
 	/*
 	 * If the LWP is still on the CPU, mark it as LSONPROC.  It may be
 	 * about to call mi_switch(), in which case it will yield.
-	 *
-	 * XXXSMP Will need to change for preemption.
 	 */
-	ci = l->l_cpu;
-#ifdef MULTIPROCESSOR
-	if (ci->ci_curlwp == l) {
-#else
-	if (l == curlwp) {
-#endif
+	if ((l->l_flag & LW_RUNNING) != 0) {
 		l->l_stat = LSONPROC;
 		l->l_slptime = 0;
-		sched_unlock(1);
+		lwp_setlock(l, &sched_mutex);
 		return 0;
 	}
 
@@ -172,10 +162,13 @@ sleepq_remove(sleepq_t *sq, struct lwp *l)
 	 * Set it running.  We'll try to get the last CPU that ran
 	 * this LWP to pick it up again.
 	 */
+	sched_lock(1);
+	lwp_setlock(l, &sched_mutex);
 	sched_setrunnable(l);
 	l->l_stat = LSRUN;
 	l->l_slptime = 0;
 	if ((l->l_flag & LW_INMEM) != 0) {
+		ci = l->l_cpu;
 		sched_enqueue(l, false);
 		if (lwp_eprio(l) < ci->ci_schedstate.spc_curpriority)
 			cpu_need_resched(ci, 0);
