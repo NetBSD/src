@@ -1,4 +1,4 @@
-/* 	$NetBSD: cpuvar.h,v 1.11 2007/03/20 21:22:03 xtraeme Exp $ */
+/* 	$NetBSD: cpuvar.h,v 1.12 2007/03/21 00:16:52 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -94,7 +94,9 @@ struct cpu_attach_args {
 #ifdef _KERNEL
 
 #include "opt_multiprocessor.h"
+#ifndef XEN
 #include "opt_intel_odcm.h"
+#endif
 
 #ifdef MULTIPROCESSOR
 extern u_int32_t cpus_running;
