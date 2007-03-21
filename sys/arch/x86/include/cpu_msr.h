@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_msr.h,v 1.1 2007/03/20 21:07:38 xtraeme Exp $ */
+/* $NetBSD: cpu_msr.h,v 1.2 2007/03/21 06:36:42 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -46,9 +46,6 @@
 
 #ifdef _KERNEL
 
-#define MSR_CPU_BROADCAST_READ		0x0001
-#define MSR_CPU_BROADCAST_WRITE 	0x0002
-
 struct msr_cpu_broadcast {
 	int msr_type;
 	uint64_t msr_value;
@@ -56,10 +53,9 @@ struct msr_cpu_broadcast {
 };
 
 void		x86_init(void);
-void		msr_read_ipi(struct cpu_info *);
 void		msr_write_ipi(struct cpu_info *);
 void		msr_cpu_broadcast_initmtx(void);
-int		msr_cpu_broadcast(struct msr_cpu_broadcast *, int);
+void		msr_cpu_broadcast(struct msr_cpu_broadcast *);
 
 #endif /* ! _KERNEL */
 
