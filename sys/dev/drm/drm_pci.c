@@ -106,7 +106,7 @@ drm_pci_alloc(drm_device_t *dev, size_t size, size_t align, dma_addr_t maxaddr)
 		return NULL;
 	}
 #elif defined(__NetBSD__)
-	ret = bus_dmamem_alloc(dev->pa.pa_dmat, size, align, size,
+	ret = bus_dmamem_alloc(dev->pa.pa_dmat, size, align, 0,
 	    &dmah->seg, 1, &nsegs, BUS_DMA_NOWAIT);
 	if (ret != 0) {
 		aprint_error("%s: bus_dmamem_alloc(%zd, %zd) returned %d\n",
