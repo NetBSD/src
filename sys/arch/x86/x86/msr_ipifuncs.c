@@ -1,4 +1,4 @@
-/* $NetBSD: msr_ipifuncs.c,v 1.1 2007/03/20 21:07:39 xtraeme Exp $ */
+/* $NetBSD: msr_ipifuncs.c,v 1.2 2007/03/21 06:36:43 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,15 +37,15 @@
  */
 
 /*
- * Generic IPI handlers to make reads and writes to a MSR on x86, in
- * all CPUs available in the system.
+ * Generic IPI handler to make writes to a MSR on x86, in all
+ * CPUs available in the system.
  *
  * Thanks to Andrew Doran, Michael Van Elst and Quentin Garnier for
  * help and information provided.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msr_ipifuncs.c,v 1.1 2007/03/20 21:07:39 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msr_ipifuncs.c,v 1.2 2007/03/21 06:36:43 xtraeme Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -58,7 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: msr_ipifuncs.c,v 1.1 2007/03/20 21:07:39 xtraeme Exp
 #include <machine/cpu.h>
 #include <machine/intrdefs.h>
 
-/* #define MSR_CPU_BROADCAST_DEBUG */
+#define MSR_CPU_BROADCAST_DEBUG
 
 #ifdef MSR_CPU_BROADCAST_DEBUG
 #define DPRINTF(x)	do { printf x; } while (/* CONSTCOND */ 0)
@@ -72,24 +72,6 @@ static volatile uint64_t msr_setmask;
 static volatile int msr_type;
 static volatile int msr_runcount;
 
-static void msr_cpu_broadcast_main(struct msr_cpu_broadcast *, int);
-
-/*
- * This function will read the value of the MSR defined in msr_type
- * and will return it in ci_msr_rvalue (per-cpu).
- */
-void
-msr_read_ipi(struct cpu_info *ci)
-{
-	/* Assign current value for the MSR msr_type. */
-	ci->ci_msr_rvalue = rdmsr(msr_type);
-
-	/* 
-	 * Increement the counter atomically, this cpu has
-	 * finished the operation correctly.
-	 */
-	__asm volatile ("lock; incl (%0)" :: "r" (&msr_runcount));
-}
 
 /*
  * This function will write the value of msr_setvalue in the MSR msr_type
@@ -122,14 +104,20 @@ msr_write_ipi(struct cpu_info *ci)
 
 /*
  * Main function. Assigns values provided by the driver into the global
- * variables, necessary for the IPI handlers. If mode is true, a write
- * operation will be performed, otherwise a read operation. 
+ * variables, necessary for the IPI handler.
  */
-static void
-msr_cpu_broadcast_main(struct msr_cpu_broadcast *mcb, int mode)
+void
+msr_cpu_broadcast(struct msr_cpu_broadcast *mcb)
 {
 	CPU_INFO_ITERATOR cii;
 	struct cpu_info *ci;
+
+	if (!mcb->msr_type)
+		panic("msr_type not defined");
+
+	DPRINTF(("%s: mcb->msr_value=%" PRIu64 " mcb->msr_type=%d "
+	    "mcb->msr_mask=%" PRIu64 "\n", __func__,
+	    mcb->msr_value, mcb->msr_type, mcb->msr_mask));
 
 	DPRINTF(("\n%s: ---- START ----\n", __func__));
 
@@ -137,15 +125,12 @@ msr_cpu_broadcast_main(struct msr_cpu_broadcast *mcb, int mode)
 	mutex_enter(&msr_mtx);
 
 	/* Initialize counter, the task has not run in any cpu yet. */
-	msr_runcount = msr_setmask = msr_setvalue = 0;
+	msr_runcount = 0;
 
 	/* Assign requested MSR type, value and mask. */
 	msr_type = mcb->msr_type;
-
-	if (mode) {
-		msr_setvalue = mcb->msr_value;
-		msr_setmask = mcb->msr_mask;
-	}
+	msr_setvalue = mcb->msr_value;
+	msr_setmask = mcb->msr_mask;
 
 	/* 
 	 * Issue a full memory barrier, to make sure the operations
@@ -153,35 +138,17 @@ msr_cpu_broadcast_main(struct msr_cpu_broadcast *mcb, int mode)
 	 */
 	mb_memory();
 
-	if (mode) {	/* Write mode */
+	DPRINTF(("%s: before write\n", __func__));
 
-		DPRINTF(("%s: before write\n", __func__));
-
-		/* Run the IPI write handler in the CPUs. */
-		msr_write_ipi(curcpu());
+	/* Run the IPI write handler in the CPUs. */
+	msr_write_ipi(curcpu());
 
 #ifdef MULTIPROCESSOR
-		if (ncpu > 1)
-			x86_broadcast_ipi(X86_IPI_WRITE_MSR);
+	if (ncpu > 1)
+		x86_broadcast_ipi(X86_IPI_WRITE_MSR);
 #endif
 
-		DPRINTF(("%s: after write\n", __func__));
-
-	} else {	/* Read mode */
-
-		DPRINTF(("%s: before read\n", __func__));
-
-		/* Run the IPI read handler in the CPUs. */
-		msr_read_ipi(curcpu());
-
-#ifdef MULTIPROCESSOR
-		if (ncpu > 1)
-			x86_broadcast_ipi(X86_IPI_READ_MSR);
-#endif
-
-		DPRINTF(("%s: after read\n", __func__));
-	}
-
+	DPRINTF(("%s: after write\n", __func__));
 	DPRINTF(("%s: before pause\n", __func__));
 	DPRINTF(("%s: msr_runcount=%d ncpu=%d\n", __func__,
 	    msr_runcount, ncpu));
@@ -211,55 +178,4 @@ void
 msr_cpu_broadcast_initmtx(void)
 {
 	mutex_init(&msr_mtx, MUTEX_DRIVER, IPL_NONE);
-}
-
-/*
- * This is the function used by the drivers using this framework.
- * The driver is reponsible to set apropiately its members:
- *
- * 	mcb->msr_type	type of the MSR requested by the driver,
- * 			e.g MSR_PERF_STATUS.
- *
- * 	mcb->msr_value	value that will be set in the MSR, when a
- * 			write operation is requested by the driver.
- *
- * 	mcb->msr_mask	value that will be used to mask the returned
- * 			value of the rdmsr(msr_type) call in the write
- * 			operation.
- *
- * msr_type needs to be defined, otherwise EINVAL is returned.
- *
- * When calling this function, a mode must be selected. Currently
- * two modes are implemented:
- *
- * 	MSR_CPU_BROADCAST_READ	Performs a read operation.
- *
- * 	MSR_CPU_BROADCAST_WRITE	Performs a write operation.
- *
- * If an invalid mode is specified, EINVAL is returned.
- */
-int
-msr_cpu_broadcast(struct msr_cpu_broadcast *mcb, int mode)
-{
-	if (!mcb->msr_type) {
-		DPRINTF(("%s: msr_type is empty\n", __func__));
-		return EINVAL;
-	}
-
-	DPRINTF(("%s: mcb->msr_value=%" PRIu64 " mcb->msr_type=%d "
-	    "mcb->msr_mask=%" PRIu64 "\n", __func__,
-	    mcb->msr_value, mcb->msr_type, mcb->msr_mask));
-
-	switch (mode) {
-	case MSR_CPU_BROADCAST_READ:
-		msr_cpu_broadcast_main(mcb, false);
-		break;
-	case MSR_CPU_BROADCAST_WRITE:
-		msr_cpu_broadcast_main(mcb, true);
-		break;
-	default:
-		return EINVAL;
-	}
-
-	return 0;
 }

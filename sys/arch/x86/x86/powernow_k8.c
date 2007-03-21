@@ -1,4 +1,4 @@
-/*	$NetBSD: powernow_k8.c,v 1.14 2007/03/20 21:13:06 xtraeme Exp $ */
+/*	$NetBSD: powernow_k8.c,v 1.15 2007/03/21 06:36:43 xtraeme Exp $ */
 /*	$OpenBSD: powernow-k8.c,v 1.8 2006/06/16 05:58:50 gwk Exp $ */
 
 /*-
@@ -66,7 +66,7 @@
 /* AMD POWERNOW K8 driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powernow_k8.c,v 1.14 2007/03/20 21:13:06 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powernow_k8.c,v 1.15 2007/03/21 06:36:43 xtraeme Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -94,10 +94,7 @@ __KERNEL_RCSID(0, "$NetBSD: powernow_k8.c,v 1.14 2007/03/20 21:13:06 xtraeme Exp
 	mcb.msr_mask = ((ctrl) << 32);					\
 	mcb.msr_value = ((1ULL << 16) | ((vid) << 8) | (fid));		\
 	mcb.msr_type = MSR_AMDK7_FIDVID_CTL;				\
-	if (msr_cpu_broadcast(&mcb, MSR_CPU_BROADCAST_WRITE)) {		\
-		DPRINTF(("%s: failed\n", __func__));			\
-		return EINVAL;						\
-	}
+	msr_cpu_broadcast(&mcb);
 
 #ifdef _LKM
 static struct sysctllog *sysctllog;

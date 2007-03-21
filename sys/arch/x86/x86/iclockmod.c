@@ -1,4 +1,4 @@
-/*	$NetBSD: iclockmod.c,v 1.4 2007/03/21 05:27:49 xtraeme Exp $ */
+/*	$NetBSD: iclockmod.c,v 1.5 2007/03/21 06:36:43 xtraeme Exp $ */
 /*      $OpenBSD: p4tcc.c,v 1.13 2006/12/20 17:50:40 gwk Exp $ */
 
 /*
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iclockmod.c,v 1.4 2007/03/21 05:27:49 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iclockmod.c,v 1.5 2007/03/21 06:36:43 xtraeme Exp $");
 
 #include "opt_intel_odcm.h"
 
@@ -122,8 +122,7 @@ clockmod_setstate(int level)
 	else
 		mcb.msr_value = 0; /* max state */
 
-	if (msr_cpu_broadcast(&mcb, MSR_CPU_BROADCAST_WRITE))
-		return;
+	msr_cpu_broadcast(&mcb);
 }
 
 static int
