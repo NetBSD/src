@@ -1,4 +1,4 @@
-/*	$NetBSD: est.c,v 1.34 2007/03/20 21:12:22 xtraeme Exp $	*/
+/*	$NetBSD: est.c,v 1.35 2007/03/21 06:36:43 xtraeme Exp $	*/
 /*
  * Copyright (c) 2003 Michael Eriksson.
  * All rights reserved.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: est.c,v 1.34 2007/03/20 21:12:22 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: est.c,v 1.35 2007/03/21 06:36:43 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -887,9 +887,7 @@ est_sysctl_helper(SYSCTLFN_ARGS)
 		mcb.msr_type = MSR_PERF_CTL;
 		mcb.msr_mask = 0xffffULL;
 		mcb.msr_value = est_fqlist->table[i];
-
-		if (msr_cpu_broadcast(&mcb, MSR_CPU_BROADCAST_WRITE))
-			return EINVAL;
+		msr_cpu_broadcast(&mcb);
 	}
 
 	return 0;
@@ -915,7 +913,7 @@ est_init(int vendor)
 }
 
 static void
-est_init_main( int vendor)
+est_init_main(int vendor)
 {
 	const struct fqlist	*fql;
 	const struct sysctlnode	*node, *estnode, *freqnode;
