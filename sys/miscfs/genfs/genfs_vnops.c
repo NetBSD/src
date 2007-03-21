@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.150.2.1 2007/03/13 17:51:07 ad Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.150.2.2 2007/03/21 20:11:55 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.150.2.1 2007/03/13 17:51:07 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.150.2.2 2007/03/21 20:11:55 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1099,11 +1099,9 @@ genfs_putpages(void *v)
 	}
 
 	error = 0;
-	s = splbio();
 	mutex_enter(&global_v_numoutput_lock);
 	wasclean = (vp->v_numoutput == 0);
 	mutex_exit(&global_v_numoutput_lock);
-	splx(s);
 	off = startoff;
 	if (endoff == 0 || flags & PGO_ALLPAGES) {
 		endoff = trunc_page(LLONG_MAX);
@@ -1436,23 +1434,18 @@ genfs_putpages(void *v)
 #if !defined(DEBUG)
 skip_scan:
 #endif /* !defined(DEBUG) */
-	if (!wasclean && !async) {
-		s = splbio();
-		/*
-		 * XXX - we want mutex_exit(&global_v_numoutput_lock);
-		 *	 but the slot in ltsleep() is taken!
-		 * XXX - try to recover from missed wakeups with a timeout..
-		 *	 must think of something better.
-		 */
-		while (vp->v_numoutput != 0) {
-			vp->v_flag |= VBWAIT;
-			UVM_UNLOCK_AND_WAIT(&vp->v_numoutput, slock, false,
-			    "genput2", hz);
-			mutex_enter(slock);
-		}
-		splx(s);
-	}
 	mutex_exit(slock);
+
+	/*
+	 * Safe to test v_numoutput unlocked as any increase in
+	 * its value will be visible here (although may be stale).
+	 */
+	if (!wasclean && !async && vp->v_numoutput != 0) {
+		mutex_enter(&global_v_numoutput_lock);
+		while (vp->v_numoutput != 0)
+			cv_wait(&vp->v_outputcv, &global_v_numoutput_lock);
+		mutex_exit(&global_v_numoutput_lock);
+	}
 
 	if (has_trans)
 		fstrans_done(vp->v_mount);
@@ -1523,11 +1516,9 @@ genfs_do_io(struct vnode *vp, off_t off, vaddr_t kva, size_t len, int flags,
 	KASSERT(bytes != 0);
 
 	if (write) {
-		s = splbio();
 		mutex_enter(&global_v_numoutput_lock);
 		vp->v_numoutput += 2;
 		mutex_exit(&global_v_numoutput_lock);
-		splx(s);
 	}
 	mbp = getiobuf();
 	UVMHIST_LOG(ubchist, "vp %p mbp %p num now %d bytes 0x%x",

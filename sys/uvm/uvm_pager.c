@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.81.4.1 2007/03/13 17:51:57 ad Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.81.4.2 2007/03/21 20:12:00 ad Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.81.4.1 2007/03/13 17:51:57 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.81.4.2 2007/03/21 20:12:00 ad Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -242,7 +242,7 @@ uvm_pagermapout(vaddr_t kva, int npages)
 /*
  * interrupt-context iodone handler for nested i/o bufs.
  *
- * => must be at splbio().
+ * => the buffer is private so need not be locked here
  */
 
 void
@@ -265,8 +265,6 @@ uvm_aio_biodone1(struct buf *bp)
 /*
  * interrupt-context iodone handler for single-buf i/os
  * or the top-level buf of a nested-buf i/o.
- *
- * => must be at splbio().
  */
 
 void
@@ -290,7 +288,7 @@ uvm_aio_aiodone(struct buf *bp)
 	struct vm_page *pg, *pgs[npages];
 	struct uvm_object *uobj;
 	kmutex_t *slock;
-	int s, i, error, swslot;
+	int i, error, swslot;
 	bool write, swap;
 	UVMHIST_FUNC("uvm_aio_aiodone"); UVMHIST_CALLED(ubchist);
 	UVMHIST_LOG(ubchist, "bp %p", bp, 0,0,0);
@@ -470,12 +468,10 @@ uvm_aio_aiodone(struct buf *bp)
 		uvmexp.pdpending--;
 #endif /* defined(VMSWAP) */
 	}
-	s = splbio();
 	if (write && (bp->b_flags & B_AGE) != 0) {
 		vwakeup(bp);
 	}
 	putiobuf(bp);
-	splx(s);
 }
 
 /*

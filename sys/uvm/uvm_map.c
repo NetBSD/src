@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.235.2.2 2007/03/13 17:51:56 ad Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.235.2.3 2007/03/21 20:11:59 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.235.2.2 2007/03/13 17:51:56 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.235.2.3 2007/03/21 20:11:59 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -2772,8 +2772,7 @@ uvm_map_setup_kernel(struct vm_map_kernel *map,
 {
 
 	uvm_map_setup(&map->vmk_map, vmin, vmax, flags);
-
-	callback_head_init(&map->vmk_reclaim_callback);
+	callback_head_init(&map->vmk_reclaim_callback, IPL_VM);
 	LIST_INIT(&map->vmk_kentry_free);
 	map->vmk_merged_entries = NULL;
 }

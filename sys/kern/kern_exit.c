@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.169.2.2 2007/03/13 17:50:51 ad Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.169.2.3 2007/03/21 20:11:51 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.169.2.2 2007/03/13 17:50:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.169.2.3 2007/03/21 20:11:51 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -193,14 +193,13 @@ void
 exit1(struct lwp *l, int rv)
 {
 	struct proc	*p, *q, *nq;
-	int		s;
 	ksiginfo_t	ksi;
 	ksiginfoq_t	kq;
 	int		wakeinit;
 
 	p = l->l_proc;
 
-	LOCK_ASSERT(mutex_owned(&p->p_smutex));
+	KASSERT(mutex_owned(&p->p_smutex));
 
 	if (__predict_false(p == initproc))
 		panic("init died (signal %d, exit %d)",
@@ -353,8 +352,7 @@ exit1(struct lwp *l, int rv)
 			 * and revoke access to controlling terminal.
 			 */
 			tp = sp->s_ttyp;
-			s = spltty();
-			TTY_LOCK(tp);
+			mutex_enter(&tp->t_lock);
 			if (tp->t_session == sp) {
 				if (tp->t_pgrp) {
 					mutex_enter(&proclist_mutex);
@@ -364,8 +362,7 @@ exit1(struct lwp *l, int rv)
 				/* we can't guarantee the revoke will do this */
 				tp->t_pgrp = NULL;
 				tp->t_session = NULL;
-				TTY_UNLOCK(tp);
-				splx(s);
+				mutex_exit(&tp->t_lock);
 				SESSRELE(sp);
 				mutex_exit(&proclist_lock);
 				(void) ttywait(tp);
@@ -376,10 +373,8 @@ exit1(struct lwp *l, int rv)
 				 * if we blocked.
 				 */
 				vprevoke = sp->s_ttyvp;
-			} else {
-				TTY_UNLOCK(tp);
-				splx(s);
-			}
+			} else
+				mutex_exit(&tp->t_lock);
 			vprele = sp->s_ttyvp;
 			sp->s_ttyvp = NULL;
 			/*

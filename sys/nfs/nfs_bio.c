@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.151.2.1 2007/03/13 17:51:12 ad Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.151.2.2 2007/03/21 20:11:57 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.151.2.1 2007/03/13 17:51:12 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.151.2.2 2007/03/21 20:11:57 ad Exp $");
 
 #include "opt_nfs.h"
 #include "opt_ddb.h"
@@ -627,15 +627,15 @@ nfs_vinvalbuf(vp, flags, cred, l, intrflg)
 {
 	struct nfsnode *np = VTONFS(vp);
 	struct nfsmount *nmp = VFSTONFS(vp->v_mount);
-	int error = 0, slpflag, slptimeo;
+	int error = 0, catch, slptimeo;
 
 	if ((nmp->nm_flag & NFSMNT_INT) == 0)
 		intrflg = 0;
 	if (intrflg) {
-		slpflag = PCATCH;
+		catch = true;
 		slptimeo = 2 * hz;
 	} else {
-		slpflag = 0;
+		catch = false;
 		slptimeo = 0;
 	}
 	/*
@@ -657,7 +657,7 @@ nfs_vinvalbuf(vp, flags, cred, l, intrflg)
 	 */
 	np->n_flag |= NFLUSHINPROG;
 	mutex_exit(&vp->v_interlock);
-	error = vinvalbuf(vp, flags, cred, l, slpflag, 0);
+	error = vinvalbuf(vp, flags, cred, l, catch, 0);
 	while (error) {
 		if (intrflg && nfs_sigintr(nmp, NULL, l)) {
 			error = EINTR;

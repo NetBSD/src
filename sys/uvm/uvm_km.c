@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.93.4.2 2007/03/13 17:51:55 ad Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.93.4.3 2007/03/21 20:11:59 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -90,10 +90,8 @@
  *
  * the vm system has several standard kernel submaps, including:
  *   kmem_map => contains only wired kernel memory for the kernel
- *		malloc.   *** access to kmem_map must be protected
- *		by splvm() because we are allowed to call malloc()
- *		at interrupt time ***
- *   mb_map => memory for large mbufs,  *** protected by splvm ***
+ *		malloc.
+ *   mb_map => memory for large mbufs,
  *   pager_map => used to map "buf" structures into kernel space
  *   exec_map => used during exec to handle exec args
  *   etc...
@@ -130,7 +128,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.93.4.2 2007/03/13 17:51:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.93.4.3 2007/03/21 20:11:59 ad Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -266,16 +264,8 @@ void
 uvm_km_va_drain(struct vm_map *map, uvm_flag_t flags)
 {
 	struct vm_map_kernel *vmk = vm_map_to_kernel(map);
-	const bool intrsafe = (map->flags & VM_MAP_INTRSAFE) != 0;
-	int s = 0xdeadbeaf; /* XXX: gcc */
 
-	if (intrsafe) {
-		s = splvm();
-	}
 	callback_run_roundrobin(&vmk->vmk_reclaim_callback, NULL);
-	if (intrsafe) {
-		splx(s);
-	}
 }
 
 /*

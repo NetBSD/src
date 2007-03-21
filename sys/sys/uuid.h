@@ -1,4 +1,4 @@
-/*	$NetBSD: uuid.h,v 1.3 2005/12/11 12:25:21 christos Exp $	*/
+/*	$NetBSD: uuid.h,v 1.3.30.1 2007/03/21 20:11:58 ad Exp $	*/
 
 /*
  * Copyright (c) 2002 Marcel Moolenaar
@@ -66,6 +66,7 @@ void	uuid_dec_be(const void *, struct uuid *);
 void	uuid_dec_le(const void *, struct uuid *);
 void	uuid_enc_be(void *, const struct uuid *);
 void	uuid_enc_le(void *, const struct uuid *);
+void	uuid_init(void);
 
 #else	/* _KERNEL */
 

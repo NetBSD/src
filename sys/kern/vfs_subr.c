@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.283.2.2 2007/03/13 17:51:02 ad Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.283.2.3 2007/03/21 20:11:54 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.283.2.2 2007/03/13 17:51:02 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.283.2.3 2007/03/21 20:11:54 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -197,7 +197,6 @@ vntblinit(void)
 	mutex_init(&mntvnode_lock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&vnode_free_list_lock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&spechash_lock, MUTEX_DEFAULT, IPL_NONE);
-
 	mutex_init(&global_v_numoutput_lock, MUTEX_DRIVER, IPL_BIO);
 
 	mount_specificdata_domain = specificdata_domain_create();
@@ -219,6 +218,9 @@ vfs_drainvnodes(long target, struct lwp *l)
 		vp = getcleanvnode(l);
 		if (vp == NULL)
 			return EBUSY; /* give up */
+		mutex_destroy(&vp->v_interlock);
+		cv_destroy(&vp->v_cv);
+		cv_destroy(&vp->v_outputcv);
 		pool_put(&vnode_pool, vp);
 		mutex_enter(&vnode_free_list_lock);
 		numvnodes--;
@@ -598,6 +600,8 @@ getnewvnode(enum vtagtype tag, struct mount *mp, int (**vops)(void *),
 	*vpp = vp;
 	vp->v_data = 0;
 	mutex_init(&vp->v_interlock, MUTEX_DEFAULT, IPL_NONE);
+	cv_init(&vp->v_cv, "vnode");
+	cv_init(&vp->v_outputcv, "vnout");
 
 	/*
 	 * initialize uvm_object within vnode.
@@ -689,10 +693,8 @@ vwakeup(struct buf *bp)
 		mutex_enter(&global_v_numoutput_lock);
 		if (--vp->v_numoutput < 0)
 			panic("vwakeup: neg numoutput, vp %p", vp);
-		if ((vp->v_flag & VBWAIT) && vp->v_numoutput <= 0) {
-			vp->v_flag &= ~VBWAIT;
-			wakeup((void *)&vp->v_numoutput);
-		}
+		if (vp->v_numoutput <= 0)
+			cv_broadcast(&vp->v_outputcv);
 		mutex_exit(&global_v_numoutput_lock);
 	}
 }
@@ -704,12 +706,12 @@ vwakeup(struct buf *bp)
  */
 int
 vinvalbuf(struct vnode *vp, int flags, kauth_cred_t cred, struct lwp *l,
-    int slpflag, int slptimeo)
+	  bool catch, int slptimeo)
 {
 	struct buf *bp, *nbp;
-	int s, error;
+	int error;
 	int flushflags = PGO_ALLPAGES | PGO_FREE | PGO_SYNCIO |
-		(flags & V_SAVE ? PGO_CLEANIT : 0);
+	    (flags & V_SAVE ? PGO_CLEANIT : 0);
 
 	/* XXXUBC this doesn't look at flags or slp* */
 	mutex_enter(&vp->v_interlock);
@@ -722,15 +724,8 @@ vinvalbuf(struct vnode *vp, int flags, kauth_cred_t cred, struct lwp *l,
 		error = VOP_FSYNC(vp, cred, FSYNC_WAIT|FSYNC_RECLAIM, 0, 0, l);
 		if (error)
 		        return (error);
-#ifdef DIAGNOSTIC
-		s = splbio();
-		if (vp->v_numoutput > 0 || !LIST_EMPTY(&vp->v_dirtyblkhd))
-		        panic("vinvalbuf: dirty bufs, vp %p", vp);
-		splx(s);
-#endif
+		KASSERT(vp->v_numoutput == 0 && LIST_EMPTY(&vp->v_dirtyblkhd));
 	}
-
-	s = splbio();
 
 restart:
 	for (bp = LIST_FIRST(&vp->v_cleanblkhd); bp; bp = nbp) {
@@ -738,13 +733,15 @@ restart:
 		mutex_enter(&bp->b_interlock);
 		if (bp->b_flags & B_BUSY) {
 			bp->b_flags |= B_WANTED;
-			error = mtsleep((void *)bp,
-				    slpflag | (PRIBIO + 1) | PNORELOCK,
-				    "vinvalbuf", slptimeo, &bp->b_interlock);
-			if (error) {
-				splx(s);
+			if (catch)
+				error = cv_timedwait_sig(&bp->b_cv,
+				    &bp->b_interlock, slptimeo);
+			else
+				error = cv_timedwait(&bp->b_cv,
+				    &bp->b_interlock, slptimeo);
+			mutex_exit(&bp->b_interlock);
+			if (error)
 				return (error);
-			}
 			goto restart;
 		}
 		bp->b_flags |= B_BUSY | B_INVAL | B_VFLUSH;
@@ -757,13 +754,15 @@ restart:
 		mutex_enter(&bp->b_interlock);
 		if (bp->b_flags & B_BUSY) {
 			bp->b_flags |= B_WANTED;
-			error = mtsleep((void *)bp,
-				    slpflag | (PRIBIO + 1) | PNORELOCK,
-				    "vinvalbuf", slptimeo, &bp->b_interlock);
-			if (error) {
-				splx(s);
+			if (catch)
+				error = cv_timedwait_sig(&bp->b_cv,
+				    &bp->b_interlock, slptimeo);
+			else
+				error = cv_timedwait(&bp->b_cv,
+				    &bp->b_interlock, slptimeo);
+			mutex_exit(&bp->b_interlock);
+			if (error)
 				return (error);
-			}
 			goto restart;
 		}
 		/*
@@ -790,8 +789,6 @@ restart:
 		panic("vinvalbuf: flush failed, vp %p", vp);
 #endif
 
-	splx(s);
-
 	return (0);
 }
 
@@ -801,10 +798,10 @@ restart:
  * buffers from being queued.
  */
 int
-vtruncbuf(struct vnode *vp, daddr_t lbn, int slpflag, int slptimeo)
+vtruncbuf(struct vnode *vp, daddr_t lbn, bool catch, int slptimeo)
 {
 	struct buf *bp, *nbp;
-	int s, error;
+	int error;
 	voff_t off;
 
 	off = round_page((voff_t)lbn << vp->v_mount->mnt_fs_bshift);
@@ -814,8 +811,6 @@ vtruncbuf(struct vnode *vp, daddr_t lbn, int slpflag, int slptimeo)
 		return error;
 	}
 
-	s = splbio();
-
 restart:
 	for (bp = LIST_FIRST(&vp->v_cleanblkhd); bp; bp = nbp) {
 		nbp = LIST_NEXT(bp, b_vnbufs);
@@ -824,12 +819,15 @@ restart:
 		mutex_enter(&bp->b_interlock);
 		if (bp->b_flags & B_BUSY) {
 			bp->b_flags |= B_WANTED;
-			error = mtsleep(bp, slpflag | (PRIBIO + 1) | PNORELOCK,
-			    "vtruncbuf", slptimeo, &bp->b_interlock);
-			if (error) {
-				splx(s);
+			if (catch)
+				error = cv_timedwait_sig(&bp->b_cv,
+				    &bp->b_interlock, slptimeo);
+			else
+				error = cv_timedwait(&bp->b_cv,
+				    &bp->b_interlock, slptimeo);
+			mutex_exit(&bp->b_interlock);
+			if (error)
 				return (error);
-			}
 			goto restart;
 		}
 		bp->b_flags |= B_BUSY | B_INVAL | B_VFLUSH;
@@ -844,12 +842,15 @@ restart:
 		mutex_enter(&bp->b_interlock);
 		if (bp->b_flags & B_BUSY) {
 			bp->b_flags |= B_WANTED;
-			error = mtsleep(bp, slpflag | (PRIBIO + 1) | PNORELOCK,
-			    "vtruncbuf", slptimeo, &bp->b_interlock);
-			if (error) {
-				splx(s);
+			if (catch)
+				error = cv_timedwait_sig(&bp->b_cv,
+				    &bp->b_interlock, slptimeo);
+			else
+				error = cv_timedwait(&bp->b_cv,
+				    &bp->b_interlock, slptimeo);
+			mutex_exit(&bp->b_interlock);
+			if (error)
 				return (error);
-			}
 			goto restart;
 		}
 		bp->b_flags |= B_BUSY | B_INVAL | B_VFLUSH;
@@ -857,23 +858,24 @@ restart:
 		brelse(bp);
 	}
 
-	splx(s);
-
 	return (0);
 }
 
+/*
+ * Flush all dirty buffers from a vnode.
+ * Called with the underlying vnode locked, which should prevent new dirty
+ * buffers from being queued.
+ */
 void
 vflushbuf(struct vnode *vp, int sync)
 {
 	struct buf *bp, *nbp;
 	int flags = PGO_CLEANIT | PGO_ALLPAGES | (sync ? PGO_SYNCIO : 0);
-	int s;
 
 	mutex_enter(&vp->v_interlock);
 	(void) VOP_PUTPAGES(vp, 0, 0, flags);
 
 loop:
-	s = splbio();
 	for (bp = LIST_FIRST(&vp->v_dirtyblkhd); bp; bp = nbp) {
 		nbp = LIST_NEXT(bp, b_vnbufs);
 		mutex_enter(&bp->b_interlock);
@@ -885,7 +887,6 @@ loop:
 			panic("vflushbuf: not dirty, bp %p", bp);
 		bp->b_flags |= B_BUSY | B_VFLUSH;
 		mutex_exit(&bp->b_interlock);
-		splx(s);
 		/*
 		 * Wait for I/O associated with indirect blocks to complete,
 		 * since there is no way to quickly wait for them below.
@@ -896,18 +897,12 @@ loop:
 			(void) bwrite(bp);
 		goto loop;
 	}
-	if (sync == 0) {
-		splx(s);
+	if (sync == 0)
 		return;
-	}
 	mutex_enter(&global_v_numoutput_lock);
-	while (vp->v_numoutput) {
-		vp->v_flag |= VBWAIT;
-		mtsleep((void *)&vp->v_numoutput, PRIBIO + 1, "vflushbuf", 0,
-			&global_v_numoutput_lock);
-	}
+	while (vp->v_numoutput != 0)
+		cv_wait(&vp->v_outputcv, &global_v_numoutput_lock);
 	mutex_exit(&global_v_numoutput_lock);
-	splx(s);
 	if (!LIST_EMPTY(&vp->v_dirtyblkhd)) {
 		vprint("vflushbuf: dirty", vp);
 		goto loop;
@@ -1196,7 +1191,8 @@ vget(struct vnode *vp, int flags)
 			return EBUSY;
 		}
 		vp->v_flag |= VXWANT;
-		mtsleep(vp, PINOD|PNORELOCK, "vget", 0, &vp->v_interlock);
+		cv_wait(&vp->v_cv, &vp->v_interlock);
+		mutex_exit(&vp->v_interlock);
 		return (ENOENT);
 	}
 	if (vp->v_usecount == 0) {
@@ -1670,7 +1666,7 @@ vclean(struct vnode *vp, int flags, struct lwp *l)
 	if (vp->v_flag & VXWANT) {
 		vp->v_flag &= ~VXWANT;
 		mutex_exit(&vp->v_interlock);
-		wakeup((void *)vp);
+		cv_broadcast(&vp->v_cv);
 	} else
 		mutex_exit(&vp->v_interlock);
 }
@@ -1723,7 +1719,8 @@ vgonel(struct vnode *vp, struct lwp *l)
 
 	if (vp->v_flag & VXLOCK) {
 		vp->v_flag |= VXWANT;
-		mtsleep(vp, PINOD | PNORELOCK, "vgone", 0, &vp->v_interlock);
+		cv_wait(&vp->v_cv, &vp->v_interlock);
+		mutex_exit(&vp->v_interlock);
 		return;
 	}
 
@@ -1770,8 +1767,12 @@ vgonel(struct vnode *vp, struct lwp *l)
 			numvnodes--;
 		}
 		mutex_exit(&vnode_free_list_lock);
-		if (dofree)
+		if (dofree) {
+			mutex_destroy(&vp->v_interlock);
+			cv_destroy(&vp->v_cv);
+			cv_destroy(&vp->v_outputcv);
 			pool_put(&vnode_pool, vp);
+		}
 	}
 }
 

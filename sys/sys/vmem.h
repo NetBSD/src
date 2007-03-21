@@ -1,4 +1,4 @@
-/*	$NetBSD: vmem.h,v 1.5 2007/02/21 23:00:10 thorpej Exp $	*/
+/*	$NetBSD: vmem.h,v 1.5.4.1 2007/03/21 20:11:58 ad Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -46,7 +46,7 @@ typedef size_t vmem_size_t;
 vmem_t *vmem_create(const char *, vmem_addr_t, vmem_size_t, vmem_size_t,
     vmem_addr_t (*)(vmem_t *, vmem_size_t, vmem_size_t *, vm_flag_t),
     void (*)(vmem_t *, vmem_addr_t, vmem_size_t), vmem_t *, vmem_size_t,
-    vm_flag_t);
+    vm_flag_t, int);
 void vmem_destroy(vmem_t *);
 vmem_addr_t vmem_alloc(vmem_t *, vmem_size_t, vm_flag_t);
 void vmem_free(vmem_t *, vmem_addr_t, vmem_size_t);

@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.167.2.1 2007/03/13 17:51:19 ad Exp $	*/
+/*	$NetBSD: vnode.h,v 1.167.2.2 2007/03/21 20:11:58 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,6 +37,7 @@
 #include <sys/event.h>
 #include <sys/lock.h>
 #include <sys/queue.h>
+#include <sys/condvar.h>
 
 /* XXX: clean up includes later */
 #include <uvm/uvm_param.h>	/* XXX */
@@ -84,48 +85,56 @@ enum vtagtype	{
 LIST_HEAD(buflists, buf);
 
 /*
- * Reading or writing any of these items requires holding the appropriate lock.
- * v_freelist is locked by the global vnode_free_list lock.
- * v_mntvnodes is locked by the global mntvnodes lock.
- * v_flag, v_usecount, v_holdcount and v_writecount are
- *     locked by the v_interlock lock
+ * Reading or writing any of these items requires holding the appropriate
+ * lock.  Field markings and the corresponding locks:
+ *
+ *	:	stable, reference to the vnode is is required
+ *	?	undecided
+ *	f	vnode_free_list_lock
+ *	m	mntvnode_lock
+ *	n	namecache_lock
+ *	o	global_v_numoutput_lock
+ *	p	v_vnlock
+ *	v	v_interlock
  *
  * Each underlying filesystem allocates its own private area and hangs
  * it from v_data.
  */
 struct vnode {
-	struct uvm_object v_uobj;		/* the VM object */
+	struct uvm_object v_uobj;		/* v: the VM object */
+	kcondvar_t	v_cv;			/* v: synchronization */
+	voff_t		v_size;			/* v: size of file */
+	int		v_flag;			/* v: flags */
+	int		v_numoutput;		/* o: # of pending writes */
+	kcondvar_t	v_outputcv;		/* o: notifier on numoutput */
+	long		v_writecount;		/* v: ref count of writers */
+	long		v_holdcnt;		/* v: page & buffer refs */
+	struct mount	*v_mount;		/* p: ptr to vfs we are in */
+	int		(**v_op)(void *);	/* :: vnode operations vector */
+	TAILQ_ENTRY(vnode) v_freelist;		/* f: vnode freelist */
+	TAILQ_ENTRY(vnode) v_mntvnodes;		/* m: vnodes for mount point */
+	struct buflists	v_cleanblkhd;		/* v: clean blocklist head */
+	struct buflists	v_dirtyblkhd;		/* v: dirty blocklist head */
+	int		v_synclist_slot;	/* ?: synclist slot index */
+	TAILQ_ENTRY(vnode) v_synclist;		/* ?: vnodes with dirty bufs */
+	LIST_HEAD(, namecache) v_dnclist;	/* n: namecaches (children) */
+	LIST_HEAD(, namecache) v_nclist;	/* n: namecaches (parent) */
+	union {
+		struct mount	*vu_mountedhere;/* p: ptr to vfs (VDIR) */
+		struct socket	*vu_socket;	/* p: unix ipc (VSOCK) */
+		struct specinfo	*vu_specinfo;	/* p: device (VCHR, VBLK) */
+		struct fifoinfo	*vu_fifoinfo;	/* p: fifo (VFIFO) */
+		struct uvm_ractx *vu_ractx;	/* v: read-ahead ctx (VREG) */
+	} v_un;
+	enum vtype	v_type;			/* :: vnode type */
+	enum vtagtype	v_tag;			/* :: type of underlying data */
+	struct lock	v_lock;			/* p: lock for this vnode */
+	struct lock	*v_vnlock;		/* p: pointer to lock */
+	void 		*v_data;		/* :: private data for fs */
+	struct klist	v_klist;		/* v: notes attached to vnode */
+};
 #define	v_usecount	v_uobj.uo_refs
 #define	v_interlock	v_uobj.vmobjlock
-	voff_t		v_size;			/* size of file */
-	int		v_flag;			/* flags */
-	int		v_numoutput;		/* number of pending writes */
-	long		v_writecount;		/* reference count of writers */
-	long		v_holdcnt;		/* page & buffer references */
-	struct mount	*v_mount;		/* ptr to vfs we are in */
-	int		(**v_op)(void *);	/* vnode operations vector */
-	TAILQ_ENTRY(vnode) v_freelist;		/* vnode freelist */
-	TAILQ_ENTRY(vnode) v_mntvnodes;		/* vnodes for mount point */
-	struct buflists	v_cleanblkhd;		/* clean blocklist head */
-	struct buflists	v_dirtyblkhd;		/* dirty blocklist head */
-	int		v_synclist_slot;	/* synclist slot index */
-	TAILQ_ENTRY(vnode) v_synclist;		/* vnodes with dirty buffers */
-	LIST_HEAD(, namecache) v_dnclist;	/* namecaches for children */
-	LIST_HEAD(, namecache) v_nclist;	/* namecaches for our parent */
-	union {
-		struct mount	*vu_mountedhere;/* ptr to mounted vfs (VDIR) */
-		struct socket	*vu_socket;	/* unix ipc (VSOCK) */
-		struct specinfo	*vu_specinfo;	/* device (VCHR, VBLK) */
-		struct fifoinfo	*vu_fifoinfo;	/* fifo (VFIFO) */
-		struct uvm_ractx *vu_ractx;	/* read-ahead context (VREG) */
-	} v_un;
-	enum vtype	v_type;			/* vnode type */
-	enum vtagtype	v_tag;			/* type of underlying data */
-	struct lock	v_lock;			/* lock for this vnode */
-	struct lock	*v_vnlock;		/* pointer to lock */
-	void 		*v_data;		/* private data for fs */
-	struct klist	v_klist;		/* knotes attached to vnode */
-};
 #define	v_mountedhere	v_un.vu_mountedhere
 #define	v_socket	v_un.vu_socket
 #define	v_specinfo	v_un.vu_specinfo
@@ -160,7 +169,6 @@ struct vnode {
 #define	VLOCKSWORK	0x0080	/* FS supports locking discipline */
 #define	VXLOCK		0x0100	/* vnode is locked to change underlying type */
 #define	VXWANT		0x0200	/* process is waiting for vnode */
-#define	VBWAIT		0x0400	/* waiting for output to complete */
 #define	VALIASED	0x0800	/* vnode has an alias */
 #define	VDIROP		0x1000	/* LFS: vnode is involved in a directory op */
 #define	VLAYER		0x2000	/* vnode is on a layer filesystem */
@@ -539,12 +547,12 @@ void	vflushbuf(struct vnode *, int);
 int 	vget(struct vnode *, int);
 void 	vgone(struct vnode *);
 void	vgonel(struct vnode *, struct lwp *);
-int	vinvalbuf(struct vnode *, int, kauth_cred_t, struct lwp *, int, int);
+int	vinvalbuf(struct vnode *, int, kauth_cred_t, struct lwp *, bool, int);
 void	vprint(const char *, struct vnode *);
 void 	vput(struct vnode *);
 int	vrecycle(struct vnode *, kmutex_t *, struct lwp *);
 void 	vrele(struct vnode *);
-int	vtruncbuf(struct vnode *, daddr_t, int, int);
+int	vtruncbuf(struct vnode *, daddr_t, bool, int);
 void	vwakeup(struct buf *);
 
 /* see vnsubr(9) */

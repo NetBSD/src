@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.122.2.2 2007/03/13 17:51:58 ad Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.122.2.3 2007/03/21 20:12:00 ad Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.122.2.2 2007/03/13 17:51:58 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.122.2.3 2007/03/21 20:12:00 ad Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -257,7 +257,7 @@ uvm_swap_init(void)
 	 * failure, or no allocation).
 	 */
 	swapmap = vmem_create("swapmap", 1, INT_MAX - 1, 1, NULL, NULL, NULL, 0,
-	    VM_NOSLEEP);
+	    VM_NOSLEEP, IPL_NONE);
 	if (swapmap == 0)
 		panic("uvm_swap_init: extent_create failed");
 
@@ -1625,7 +1625,7 @@ uvm_swap_io(struct vm_page **pps, int startslot, int npages, int flags)
 	daddr_t startblk;
 	struct	buf *bp;
 	vaddr_t kva;
-	int	error, s, mapinflags;
+	int	error, mapinflags;
 	bool write, async;
 	UVMHIST_FUNC("uvm_swap_io"); UVMHIST_CALLED(pdhist);
 
@@ -1700,12 +1700,9 @@ uvm_swap_io(struct vm_page **pps, int startslot, int npages, int flags)
 	 * now we start the I/O, and if async, return.
 	 */
 
-	KERNEL_LOCK(1, curlwp);
 	VOP_STRATEGY(swapdev_vp, bp);
-	if (async) {
-		KERNEL_UNLOCK_ONE(curlwp);
+	if (async)
 		return 0;
-	}
 
 	/*
 	 * must be sync i/o.   wait for it to finish
@@ -1723,13 +1720,10 @@ uvm_swap_io(struct vm_page **pps, int startslot, int npages, int flags)
 	 * now dispose of the buf and we're done.
 	 */
 
-	s = splbio();
 	if (write)
 		vwakeup(bp);
 	putiobuf(bp);
-	splx(s);
 	UVMHIST_LOG(pdhist, "<- done (sync)  error=%d", error, 0, 0, 0);
 
-	KERNEL_UNLOCK_ONE(curlwp);
 	return (error);
 }

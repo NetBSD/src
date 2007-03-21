@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.95 2007/03/04 06:03:11 christos Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.95.2.1 2007/03/21 20:11:54 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.95 2007/03/04 06:03:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.95.2.1 2007/03/21 20:11:54 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -985,7 +985,8 @@ unp_internalize(struct mbuf *control, struct lwp *l)
 		fd = *fdp++;
 		if ((fp = fd_getfile(fdescp, fd)) == NULL)
 			return (EBADF);
-		simple_unlock(&fp->f_slock);
+		/* XXXSMP grab reference to file */
+		mutex_exit(&fp->f_lock);
 	}
 
 	/* Make sure we have room for the struct file pointers */
@@ -997,8 +998,10 @@ unp_internalize(struct mbuf *control, struct lwp *l)
 		newcm = malloc(
 		    CMSG_SPACE(nfds * sizeof(struct file *)),
 		    M_MBUF, M_WAITOK);
-		if (newcm == NULL)
+		if (newcm == NULL) {
+			/* XXXSMP drop references to files */
 			return (E2BIG);
+		}
 		memcpy(newcm, cm, sizeof(struct cmsghdr));
 		files = (struct file **)CMSG_DATA(newcm);
 	} else {
@@ -1016,7 +1019,7 @@ unp_internalize(struct mbuf *control, struct lwp *l)
 	rp = files + nfds;
 	for (i = 0; i < nfds; i++) {
 		fp = fdescp->fd_ofiles[*--fdp];
-		simple_lock(&fp->f_slock);
+		mutex_enter(&fp->f_lock);
 #ifdef DIAGNOSTIC
 		if (fp->f_iflags & FIF_WANTCLOSE)
 			panic("unp_internalize: file already closed");
@@ -1024,7 +1027,7 @@ unp_internalize(struct mbuf *control, struct lwp *l)
 		*--rp = fp;
 		fp->f_count++;
 		fp->f_msgcount++;
-		simple_unlock(&fp->f_slock);
+		mutex_exit(&fp->f_lock);
 		unp_rights++;
 	}
 
@@ -1248,18 +1251,18 @@ unp_gc(void)
 	for (nunref = 0, fp = LIST_FIRST(&filehead), fpp = extra_ref; fp != 0;
 	    fp = nextfp) {
 		nextfp = LIST_NEXT(fp, f_list);
-		simple_lock(&fp->f_slock);
+		mutex_enter(&fp->f_lock);
 		if (fp->f_count != 0 &&
 		    fp->f_count == fp->f_msgcount && !(fp->f_flag & FMARK)) {
 			*fpp++ = fp;
 			nunref++;
 			fp->f_count++;
 		}
-		simple_unlock(&fp->f_slock);
+		mutex_exit(&fp->f_lock);
 	}
 	for (i = nunref, fpp = extra_ref; --i >= 0; ++fpp) {
 		fp = *fpp;
-		simple_lock(&fp->f_slock);
+		mutex_enter(&fp->f_lock);
 		FILE_USE(fp);
 		if (fp->f_type == DTYPE_SOCKET)
 			sorflush((struct socket *)fp->f_data);
@@ -1267,7 +1270,7 @@ unp_gc(void)
 	}
 	for (i = nunref, fpp = extra_ref; --i >= 0; ++fpp) {
 		fp = *fpp;
-		simple_lock(&fp->f_slock);
+		mutex_enter(&fp->f_lock);
 		FILE_USE(fp);
 		(void) closef(fp, (struct lwp *)0);
 	}
@@ -1352,10 +1355,10 @@ unp_discard(struct file *fp)
 {
 	if (fp == NULL)
 		return;
-	simple_lock(&fp->f_slock);
+	mutex_enter(&fp->f_lock);
 	fp->f_usecount++;	/* i.e. FILE_USE(fp) sans locking */
 	fp->f_msgcount--;
-	simple_unlock(&fp->f_slock);
+	mutex_exit(&fp->f_lock);
 	unp_rights--;
 	(void) closef(fp, (struct lwp *)0);
 }

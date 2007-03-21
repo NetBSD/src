@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.154 2007/03/09 14:11:23 ad Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.154.2.1 2007/03/21 20:11:56 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.154 2007/03/09 14:11:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.154.2.1 2007/03/21 20:11:56 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -563,7 +563,7 @@ procfs_dir(pfstype t, struct lwp *caller, struct proc *target,
 	struct vnode *vp, *rvp = caller->l_proc->p_cwdi->cwdi_rdir;
 	char *bp;
 
-	LOCK_ASSERT(mutex_owned(&target->p_mutex));
+	KASSERT(mutex_owned(&target->p_mutex));
 
 	bp = bpp ? *bpp : NULL;
 
@@ -1379,7 +1379,7 @@ procfs_readdir(v)
 			/* check the descriptor exists */
 			if ((fp = fd_getfile(fdp, i - 2)) == NULL)
 				continue;
-			simple_unlock(&fp->f_slock);
+			mutex_exit(&fp->f_lock);
 
 			d.d_fileno = PROCFS_FILENO(pfs->pfs_pid, PFSfd, i - 2);
 			d.d_namlen = snprintf(d.d_name, sizeof(d.d_name),

@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vnops.c,v 1.96 2007/02/09 21:55:36 ad Exp $	*/
+/*	$NetBSD: fdesc_vnops.c,v 1.96.6.1 2007/03/21 20:11:55 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.96 2007/02/09 21:55:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.96.6.1 2007/03/21 20:11:55 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -457,8 +457,9 @@ fdesc_attr(fd, vap, cred, l)
 
 	switch (fp->f_type) {
 	case DTYPE_VNODE:
-		simple_unlock(&fp->f_slock);
+		FILE_USE(fp);
 		error = VOP_GETATTR((struct vnode *) fp->f_data, vap, cred, l);
+		FILE_UNUSE(fp, l);
 		if (error == 0 && vap->va_type == VDIR) {
 			/*
 			 * directories can cause loops in the namespace,
@@ -628,7 +629,7 @@ fdesc_setattr(v)
 	 *      On vnode's this will cause truncation and socket/pipes make
 	 *      no sense.
 	 */
-	simple_unlock(&fp->f_slock);
+	mutex_exit(&fp->f_lock);
 	return (0);
 }
 

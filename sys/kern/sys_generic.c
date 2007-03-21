@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.100 2007/03/04 06:03:09 christos Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.100.2.1 2007/03/21 20:11:52 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.100 2007/03/04 06:03:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.100.2.1 2007/03/21 20:11:52 ad Exp $");
 
 #include "opt_ktrace.h"
 
@@ -52,7 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.100 2007/03/04 06:03:09 christos E
 #include <sys/uio.h>
 #include <sys/kernel.h>
 #include <sys/stat.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/poll.h>
 #ifdef KTRACE
 #include <sys/ktrace.h>
@@ -92,7 +92,7 @@ sys_read(struct lwp *l, void *v, register_t *retval)
 		return (EBADF);
 
 	if ((fp->f_flag & FREAD) == 0) {
-		simple_unlock(&fp->f_slock);
+		mutex_exit(&fp->f_lock);
 		return (EBADF);
 	}
 
@@ -190,7 +190,7 @@ sys_readv(struct lwp *l, void *v, register_t *retval)
 		return (EBADF);
 
 	if ((fp->f_flag & FREAD) == 0) {
-		simple_unlock(&fp->f_slock);
+		mutex_exit(&fp->f_lock);
 		return (EBADF);
 	}
 
@@ -232,7 +232,7 @@ dofilereadv(struct lwp *l, int fd, struct file *fp, const struct iovec *iovp,
 			error = EINVAL;
 			goto out;
 		}
-		iov = malloc(iovlen, M_IOV, M_WAITOK);
+		iov = kmem_alloc(iovlen, KM_SLEEP);
 		needfree = iov;
 	} else if ((u_int)iovcnt > 0) {
 		iov = aiov;
@@ -268,7 +268,7 @@ dofilereadv(struct lwp *l, int fd, struct file *fp, const struct iovec *iovp,
 	 * if tracing, save a copy of iovec
 	 */
 	if (KTRPOINT(p, KTR_GENIO))  {
-		ktriov = malloc(iovlen, M_TEMP, M_WAITOK);
+		ktriov = kmem_alloc(iovlen, KM_SLEEP);
 		memcpy((void *)ktriov, (void *)auio.uio_iov, iovlen);
 	}
 #endif
@@ -283,13 +283,13 @@ dofilereadv(struct lwp *l, int fd, struct file *fp, const struct iovec *iovp,
 	if (ktriov != NULL) {
 		if (KTRPOINT(p, KTR_GENIO) && (error == 0))
 			ktrgenio(l, fd, UIO_READ, ktriov, cnt, error);
-		free(ktriov, M_TEMP);
+		kmem_free(ktriov, iovlen);
 	}
 #endif
 	*retval = cnt;
  done:
 	if (needfree)
-		free(needfree, M_IOV);
+		kmem_free(needfree, iovlen);
  out:
 	FILE_UNUSE(fp, l);
 	uvmspace_free(vm);
@@ -320,7 +320,7 @@ sys_write(struct lwp *l, void *v, register_t *retval)
 		return (EBADF);
 
 	if ((fp->f_flag & FWRITE) == 0) {
-		simple_unlock(&fp->f_slock);
+		mutex_exit(&fp->f_lock);
 		return (EBADF);
 	}
 
@@ -423,7 +423,7 @@ sys_writev(struct lwp *l, void *v, register_t *retval)
 		return (EBADF);
 
 	if ((fp->f_flag & FWRITE) == 0) {
-		simple_unlock(&fp->f_slock);
+		mutex_exit(&fp->f_lock);
 		return (EBADF);
 	}
 
@@ -464,7 +464,7 @@ dofilewritev(struct lwp *l, int fd, struct file *fp, const struct iovec *iovp,
 			error = EINVAL;
 			goto out;
 		}
-		iov = malloc(iovlen, M_IOV, M_WAITOK);
+		iov = kmem_alloc(iovlen, KM_SLEEP);
 		needfree = iov;
 	} else if ((u_int)iovcnt > 0) {
 		iov = aiov;
@@ -500,7 +500,7 @@ dofilewritev(struct lwp *l, int fd, struct file *fp, const struct iovec *iovp,
 	 * if tracing, save a copy of iovec
 	 */
 	if (KTRPOINT(p, KTR_GENIO))  {
-		ktriov = malloc(iovlen, M_TEMP, M_WAITOK);
+		ktriov = kmem_alloc(iovlen, KM_SLEEP);
 		memcpy((void *)ktriov, (void *)auio.uio_iov, iovlen);
 	}
 #endif
@@ -521,13 +521,13 @@ dofilewritev(struct lwp *l, int fd, struct file *fp, const struct iovec *iovp,
 	if (ktriov != NULL) {
 		if (KTRPOINT(p, KTR_GENIO) && (error == 0))
 			ktrgenio(l, fd, UIO_WRITE, ktriov, cnt, error);
-		free(ktriov, M_TEMP);
+		kmem_free(ktriov, iovlen);
 	}
 #endif
 	*retval = cnt;
  done:
 	if (needfree)
-		free(needfree, M_IOV);
+		kmem_free(needfree, iovlen);
  out:
 	FILE_UNUSE(fp, l);
 	uvmspace_free(vm);
@@ -592,7 +592,7 @@ sys_ioctl(struct lwp *l, void *v, register_t *retval)
 	}
 	memp = NULL;
 	if (size > sizeof(stkbuf)) {
-		memp = malloc((u_long)size, M_IOCTLOPS, M_WAITOK);
+		memp = kmem_alloc(size, KM_SLEEP);
 		data = memp;
 	} else
 		data = (void *)stkbuf;
@@ -601,7 +601,7 @@ sys_ioctl(struct lwp *l, void *v, register_t *retval)
 			error = copyin(SCARG(uap, data), data, size);
 			if (error) {
 				if (memp)
-					free(memp, M_IOCTLOPS);
+					kmem_free(memp, size);
 				goto out;
 			}
 #ifdef KTRACE
@@ -663,7 +663,7 @@ sys_ioctl(struct lwp *l, void *v, register_t *retval)
 		break;
 	}
 	if (memp)
-		free(memp, M_IOCTLOPS);
+		kmem_free(memp, size);
  out:
 	FILE_UNUSE(fp, l);
 	switch (error) {
@@ -786,6 +786,7 @@ selcommon(struct lwp *l, register_t *retval, int nd, fd_set *u_in,
 	size_t		ni;
 	sigset_t	oldmask;
 	struct timeval  sleeptv;
+	size_t		kmsz;
 
 	error = 0;
 	if (nd < 0)
@@ -795,10 +796,12 @@ selcommon(struct lwp *l, register_t *retval, int nd, fd_set *u_in,
 		nd = p->p_fd->fd_nfiles;
 	}
 	ni = howmany(nd, NFDBITS) * sizeof(fd_mask);
-	if (ni * 6 > sizeof(smallbits))
-		bits = malloc(ni * 6, M_TEMP, M_WAITOK);
-	else
+	if ((kmsz = ni * 6) > sizeof(smallbits))
+		bits = kmem_alloc(kmsz, KM_SLEEP);
+	else {
 		bits = smallbits;
+		kmsz = 0;
+	}
 
 #define	getbits(name, x)						\
 	if (u_ ## name) {						\
@@ -873,8 +876,8 @@ selcommon(struct lwp *l, register_t *retval, int nd, fd_set *u_in,
 #undef putbits
 	}
  out:
-	if (ni * 6 > sizeof(smallbits))
-		free(bits, M_TEMP);
+	if (kmsz != 0)
+		kmem_free(bits, kmsz);
 	return (error);
 }
 
@@ -993,7 +996,7 @@ pollcommon(struct lwp *l, register_t *retval,
 	}
 	ni = nfds * sizeof(struct pollfd);
 	if (ni > sizeof(smallbits))
-		bits = malloc(ni, M_TEMP, M_WAITOK);
+		bits = kmem_alloc(ni, KM_SLEEP);
 	else
 		bits = smallbits;
 
@@ -1054,8 +1057,8 @@ pollcommon(struct lwp *l, register_t *retval,
 			goto out;
 	}
  out:
-	if (ni > sizeof(smallbits))
-		free(bits, M_TEMP);
+	if (ni != 0)
+		kmem_free(bits, ni);
 	return (error);
 }
 

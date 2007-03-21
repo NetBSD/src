@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stream.c,v 1.62 2007/03/04 06:01:33 christos Exp $	 */
+/*	$NetBSD: svr4_stream.c,v 1.62.2.1 2007/03/21 20:11:49 ad Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_stream.c,v 1.62 2007/03/04 06:01:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_stream.c,v 1.62.2.1 2007/03/21 20:11:49 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -1474,20 +1474,18 @@ svr4_sys_putmsg(l, v, retval)
 	if ((fp = fd_getfile(fdp, SCARG(uap, fd))) == NULL)
 		return EBADF;
 
-	simple_unlock(&fp->f_slock);
+	FILE_USE(fp);
 
 	if (SCARG(uap, ctl) != NULL) {
 		if ((error = copyin(SCARG(uap, ctl), &ctl, sizeof(ctl))) != 0)
-			return error;
-	}
-	else
+			goto out;
+	} else
 		ctl.len = -1;
 
 	if (SCARG(uap, dat) != NULL) {
 	    	if ((error = copyin(SCARG(uap, dat), &dat, sizeof(dat))) != 0)
-			return error;
-	}
-	else
+			goto out;
+	} else
 		dat.len = -1;
 
 	/*
@@ -1495,17 +1493,19 @@ svr4_sys_putmsg(l, v, retval)
 	 */
 	if ((st = svr4_stream_get(fp)) == NULL) {
 		DPRINTF(("putmsg: bad file type\n"));
-		return EINVAL;
+		error = EINVAL;
+		goto out;
 	}
 
 	if (ctl.len > sizeof(sc)) {
 		DPRINTF(("putmsg: Bad control size %ld != %d\n",
 		    (unsigned long)sizeof(struct svr4_strmcmd), ctl.len));
-		return EINVAL;
+		error = EINVAL;
+		goto out;
 	}
 
 	if ((error = copyin(ctl.buf, &sc, ctl.len)) != 0)
-		return error;
+		goto out;
 
 	switch (st->s_family) {
 	case AF_INET:
@@ -1529,11 +1529,13 @@ svr4_sys_putmsg(l, v, retval)
 				SCARG(&wa, fd) = SCARG(uap, fd);
 				SCARG(&wa, buf) = dat.buf;
 				SCARG(&wa, nbyte) = dat.len;
-				return sys_write(l, &wa, retval);
+				error = sys_write(l, &wa, retval);
+				goto out;
 			}
 #endif
 	                DPRINTF(("putmsg: Invalid inet length %ld\n", sc.len));
-	                return EINVAL;
+			error = EINVAL;
+			goto out;
 		}
 		netaddr_to_sockaddr_in(&sain, &sc);
 		skp = &sain;
@@ -1546,7 +1548,8 @@ svr4_sys_putmsg(l, v, retval)
 			/* We are doing an accept; succeed */
 			DPRINTF(("putmsg: Do nothing\n"));
 			*retval = 0;
-			return 0;
+			error = 0;
+			goto out;
 		}
 		else {
 			/* Maybe we've been given a device/inode pair */
@@ -1565,14 +1568,15 @@ svr4_sys_putmsg(l, v, retval)
 	default:
 		DPRINTF(("putmsg: Unsupported address family %d\n",
 			 st->s_family));
-		return ENOSYS;
+		error = ENOSYS;
+		goto out;
 	}
 
 	sg = stackgap_init(p, 0);
 	sup = stackgap_alloc(p, &sg, sasize);
 
 	if ((error = copyout(skp, sup, sasize)) != 0)
-		return error;
+		goto out;
 
 	switch (st->s_cmd = sc.cmd) {
 	case SVR4_TI_CONNECT_REQUEST:	/* connect 	*/
@@ -1582,7 +1586,8 @@ svr4_sys_putmsg(l, v, retval)
 			SCARG(&co, s) = SCARG(uap, fd);
 			SCARG(&co, name) = (void *) sup;
 			SCARG(&co, namelen) = (int) sasize;
-			return sys_connect(l, &co, retval);
+			error = sys_connect(l, &co, retval);
+			goto out;
 		}
 
 	case SVR4_TI_SENDTO_REQUEST:	/* sendto 	*/
@@ -1602,13 +1607,18 @@ svr4_sys_putmsg(l, v, retval)
 				       SCARG(uap, flags), retval);
 
 			*retval = 0;
-			return error;
+			goto out;
 		}
 
 	default:
 		DPRINTF(("putmsg: Unimplemented command %lx\n", sc.cmd));
-		return ENOSYS;
+		error = ENOSYS;
+		goto out;
 	}
+
+ out:
+ 	FILE_UNUSE(fp, l);
+ 	return error;
 }
 
 
@@ -1648,11 +1658,11 @@ svr4_sys_getmsg(l, v, retval)
 	if ((fp = fd_getfile(fdp, SCARG(uap, fd))) == NULL)
 		return EBADF;
 
-	simple_unlock(&fp->f_slock);
+	FILE_USE(fp);
 
 	if (SCARG(uap, ctl) != NULL) {
 		if ((error = copyin(SCARG(uap, ctl), &ctl, sizeof(ctl))) != 0)
-			return error;
+			goto out;
 	}
 	else {
 		ctl.len = -1;
@@ -1661,7 +1671,7 @@ svr4_sys_getmsg(l, v, retval)
 
 	if (SCARG(uap, dat) != NULL) {
 	    	if ((error = copyin(SCARG(uap, dat), &dat, sizeof(dat))) != 0)
-			return error;
+			goto out;
 	}
 	else {
 		dat.len = -1;
@@ -1673,12 +1683,14 @@ svr4_sys_getmsg(l, v, retval)
 	 */
 	if ((st = svr4_stream_get(fp)) == NULL) {
 		DPRINTF(("getmsg: bad file type\n"));
-		return EINVAL;
+		error = EINVAL;
+		goto out;
 	}
 
 	if (ctl.maxlen == -1 || dat.maxlen == -1) {
 		DPRINTF(("getmsg: Cannot handle -1 maxlen (yet)\n"));
-		return ENOSYS;
+		error = ENOSYS;
+		goto out;
 	}
 
 	switch (st->s_family) {
@@ -1695,7 +1707,8 @@ svr4_sys_getmsg(l, v, retval)
 	default:
 		DPRINTF(("getmsg: Unsupported address family %d\n",
 			 st->s_family));
-		return ENOSYS;
+		error = ENOSYS;
+		goto out;
 	}
 
 	sg = stackgap_init(p, 0);
@@ -1704,7 +1717,7 @@ svr4_sys_getmsg(l, v, retval)
 
 	fl = sasize;
 	if ((error = copyout(&fl, flen, sizeof(fl))) != 0)
-		return error;
+		goto out;
 
 	switch (st->s_cmd) {
 	case SVR4_TI_CONNECT_REQUEST:
@@ -1735,11 +1748,11 @@ svr4_sys_getmsg(l, v, retval)
 
 		if ((error = sys_getpeername(l, &ga, retval)) != 0) {
 			DPRINTF(("getmsg: getpeername failed %d\n", error));
-			return error;
+			goto out;
 		}
 
 		if ((error = copyin(sup, skp, sasize)) != 0)
-			return error;
+			goto out;
 
 		sc.cmd = SVR4_TI_CONNECT_REPLY;
 		sc.pad[0] = 0x4;
@@ -1759,7 +1772,8 @@ svr4_sys_getmsg(l, v, retval)
 			break;
 
 		default:
-			return ENOSYS;
+			error = ENOSYS;
+			goto out;
 		}
 
 		ctl.len = 40;
@@ -1794,7 +1808,7 @@ svr4_sys_getmsg(l, v, retval)
 
 		if ((error = sys_accept(l, &aa, retval)) != 0) {
 			DPRINTF(("getmsg: accept failed %d\n", error));
-			return error;
+			goto out;
 		}
 
 		st->s_afd = *retval;
@@ -1802,7 +1816,7 @@ svr4_sys_getmsg(l, v, retval)
 		DPRINTF(("getmsg: Accept fd = %d\n", st->s_afd));
 
 		if ((error = copyin(sup, skp, sasize)) != 0)
-			return error;
+			goto out;
 
 		sc.cmd = SVR4_TI_ACCEPT_REPLY;
 		sc.offs = 0x18;
@@ -1825,7 +1839,8 @@ svr4_sys_getmsg(l, v, retval)
 			break;
 
 		default:
-			return ENOSYS;
+			error = ENOSYS;
+			goto out;
 		}
 
 		dat.len = -1;
@@ -1841,7 +1856,7 @@ svr4_sys_getmsg(l, v, retval)
 			ctl.len = sizeof(sc);
 
 		if ((error = copyin(ctl.buf, &sc, ctl.len)) != 0)
-			return error;
+			goto out;
 
 		switch (st->s_family) {
 		case AF_INET:
@@ -1853,7 +1868,7 @@ svr4_sys_getmsg(l, v, retval)
 			break;
 
 		default:
-			return ENOSYS;
+			goto out;
 		}
 
 		msg.msg_name = (void *) sup;
@@ -1870,11 +1885,11 @@ svr4_sys_getmsg(l, v, retval)
 
 		if (error) {
 			DPRINTF(("getmsg: recvit failed %d\n", error));
-			return error;
+			goto out;
 		}
 
 		if ((error = copyin(msg.msg_name, skp, sasize)) != 0)
-			return error;
+			goto out;
 
 		sc.cmd = SVR4_TI_RECVFROM_IND;
 
@@ -1890,7 +1905,8 @@ svr4_sys_getmsg(l, v, retval)
 			break;
 
 		default:
-			return ENOSYS;
+			error = ENOSYS;
+			goto out;
 		}
 
 		dat.len = *retval;
@@ -1919,7 +1935,7 @@ svr4_sys_getmsg(l, v, retval)
 			SCARG(&ra, buf) = dat.buf;
 			SCARG(&ra, nbyte) = dat.maxlen;
 			if ((error = sys_read(p, &ra, retval)) != 0)
-			        return error;
+			        goto out;
 			dat.len = *retval;
 			*retval = 0;
 			st->s_cmd = SVR4_TI_SENDTO_REQUEST;
@@ -1928,26 +1944,27 @@ svr4_sys_getmsg(l, v, retval)
 		}
 #endif
 		DPRINTF(("getmsg: Unknown state %x\n", st->s_cmd));
-		return EINVAL;
+		error = EINVAL;
+		goto out;
 	}
 
 	if (SCARG(uap, ctl)) {
 		if (ctl.len != -1)
 			if ((error = copyout(&sc, ctl.buf, ctl.len)) != 0)
-				return error;
+				goto out;
 
 		if ((error = copyout(&ctl, SCARG(uap, ctl), sizeof(ctl))) != 0)
-			return error;
+			goto out;
 	}
 
 	if (SCARG(uap, dat)) {
 		if ((error = copyout(&dat, SCARG(uap, dat), sizeof(dat))) != 0)
-			return error;
+			goto out;
 	}
 
 	if (SCARG(uap, flags)) { /* XXX: Need translation */
 		if ((error = copyout(&fl, SCARG(uap, flags), sizeof(fl))) != 0)
-			return error;
+			goto out;
 	}
 
 	*retval = 0;
@@ -1956,5 +1973,8 @@ svr4_sys_getmsg(l, v, retval)
 	show_msg("<getmsg", SCARG(uap, fd), SCARG(uap, ctl),
 		 SCARG(uap, dat), fl);
 #endif /* DEBUG_SVR4 */
+
+ out:
+ 	FILE_UNUSE(fp, l);
 	return error;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_uuid.c,v 1.9 2007/02/09 21:55:31 ad Exp $	*/
+/*	$NetBSD: kern_uuid.c,v 1.9.6.1 2007/03/21 20:11:51 ad Exp $	*/
 
 /*
  * Copyright (c) 2002 Marcel Moolenaar
@@ -29,12 +29,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_uuid.c,v 1.9 2007/02/09 21:55:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_uuid.c,v 1.9.6.1 2007/03/21 20:11:51 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/endian.h>
 #include <sys/kernel.h>
-#include <sys/lock.h>
+#include <sys/mutex.h>
 #include <sys/socket.h>
 #include <sys/systm.h>
 #include <sys/uuid.h>
@@ -82,7 +82,14 @@ CTASSERT(sizeof(struct uuid_private) == 16);
 static struct uuid_private uuid_last;
 
 /* "UUID generator mutex lock" */
-static struct simplelock uuid_mutex = SIMPLELOCK_INITIALIZER;
+static kmutex_t uuid_mutex;
+
+void
+uuid_init(void)
+{
+
+	mutex_init(&uuid_mutex, MUTEX_DEFAULT, IPL_NONE);
+}
 
 /*
  * Return the first MAC address we encounter or, if none was found,
@@ -153,7 +160,7 @@ uuid_generate(struct uuid_private *uuid, uint64_t *timep, int count)
 {
 	uint64_t xtime;
 
-	simple_lock(&uuid_mutex);
+	mutex_enter(&uuid_mutex);
 
 	uuid_node(uuid->node);
 	xtime = uuid_time();
@@ -171,7 +178,7 @@ uuid_generate(struct uuid_private *uuid, uint64_t *timep, int count)
 	uuid_last = *uuid;
 	uuid_last.time.ll = (xtime + count - 1) & ((1LL << 60) - 1LL);
 
-	simple_unlock(&uuid_mutex);
+	mutex_exit(&uuid_mutex);
 }
 
 int

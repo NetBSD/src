@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.299.2.2 2007/03/13 17:50:50 ad Exp $	*/
+/*	$NetBSD: init_main.c,v 1.299.2.3 2007/03/21 20:11:49 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.299.2.2 2007/03/13 17:50:50 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.299.2.3 2007/03/21 20:11:49 ad Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_kcont.h"
@@ -121,6 +121,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.299.2.2 2007/03/13 17:50:50 ad Exp $
 #include <sys/mbuf.h>
 #include <sys/sleepq.h>
 #include <sys/iostat.h>
+#include <sys/uuid.h>
 #ifdef FAST_IPSEC
 #include <netipsec/ipsec.h>
 #endif
@@ -357,6 +358,9 @@ main(void)
 	/* Initialize fstrans. */
 	fstrans_init();
 
+	/* Initialize the file descriptor system. */
+	filedesc_init();
+
 #ifdef __HAVE_TIMECOUNTER
 	inittimecounter();
 	ntp_init();
@@ -467,6 +471,9 @@ main(void)
 	/* Initialize ktrace. */
 	ktrinit();
 #endif
+
+	/* Initialize the UUID system calls. */
+	uuid_init();
 
 	/*
 	 * Create process 1 (init(8)).  We do this now, as Unix has
