@@ -334,6 +334,10 @@ void drm_attach(struct device *kdev, struct pci_attach_args *pa,
 		if(dev->pci_map_data[unit].maptype == PCI_MAPREG_TYPE_MEM)
 			dev->pci_map_data[unit].flags |= BUS_SPACE_MAP_LINEAR;
 	}
+	for(unit=0; unit<DRM_MAX_PCI_RESOURCE; unit++) {
+		dev->agp_map_data[unit].mapped = 0;
+		dev->agp_map_data[unit].maptype = PCI_MAPREG_TYPE_MEM;
+	}
 	dev->context_flag = 0;
 	dev->last_context = 0;
 	dev->vbl_queue = 0;
