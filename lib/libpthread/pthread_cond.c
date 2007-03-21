@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_cond.c,v 1.28 2007/03/20 23:49:58 ad Exp $	*/
+/*	$NetBSD: pthread_cond.c,v 1.29 2007/03/21 19:08:18 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_cond.c,v 1.28 2007/03/20 23:49:58 ad Exp $");
+__RCSID("$NetBSD: pthread_cond.c,v 1.29 2007/03/21 19:08:18 ad Exp $");
 
 #include <errno.h>
 #include <sys/time.h>
@@ -268,8 +268,8 @@ pthread_cond_signal(pthread_cond_t *cond)
 	} else {
 		pthread__unpark(self, &cond->ptc_lock,
 		    &cond->ptc_waiters, signaled);
-		PTHREADD_ADD(PTHREADD_COND_WOKEUP);
 	}
+	PTHREADD_ADD(PTHREADD_COND_WOKEUP);
 
 	return 0;
 }
