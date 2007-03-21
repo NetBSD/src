@@ -1,4 +1,4 @@
-/*	$NetBSD: pkill.c,v 1.20 2007/02/17 22:49:57 pavel Exp $	*/
+/*	$NetBSD: pkill.c,v 1.21 2007/03/21 20:05:18 erh Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pkill.c,v 1.20 2007/02/17 22:49:57 pavel Exp $");
+__RCSID("$NetBSD: pkill.c,v 1.21 2007/03/21 20:05:18 erh Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -189,8 +189,6 @@ main(int argc, char **argv)
 			cflags |= REG_ICASE;
 			break;
 		case 'l':
-			if (!pgrep)
-				usage();
 			longfmt = 1;
 			break;
 		case 'n':
@@ -419,7 +417,7 @@ usage(void)
 	if (pgrep)
 		ustr = "[-filnvx] [-d delim]";
 	else
-		ustr = "[-signal] [-finvx]";
+		ustr = "[-signal] [-filnvx]";
 
 	(void)fprintf(stderr,
 		"Usage: %s %s [-G gid] [-g pgrp] [-P ppid] [-s sid] [-t tty]\n"
@@ -432,6 +430,8 @@ usage(void)
 static int
 killact(const struct kinfo_proc2 *kp)
 {
+	if (longfmt)
+		grepact(kp);
 	if (kill(kp->p_pid, signum) == -1) {
 
 		/*
