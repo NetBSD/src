@@ -1,4 +1,4 @@
-/*	$NetBSD: getservbyname_r.c,v 1.5 2006/07/28 15:14:45 christos Exp $	*/
+/*	$NetBSD: getservbyname_r.c,v 1.6 2007/03/21 02:35:39 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)getservbyname.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: getservbyname_r.c,v 1.5 2006/07/28 15:14:45 christos Exp $");
+__RCSID("$NetBSD: getservbyname_r.c,v 1.6 2007/03/21 02:35:39 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -55,6 +55,9 @@ static struct servent *
 _servent_getbyname(struct servent_data *sd, struct servent *sp,
     const char *name, const char *proto)
 {
+	if (sd->db == NULL)
+		return NULL;
+
 	if (sd->flags & _SV_DB) {
 		char buf[BUFSIZ];
 		DBT key, data;
