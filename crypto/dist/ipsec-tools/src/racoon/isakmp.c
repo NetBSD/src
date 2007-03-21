@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp.c,v 1.20.6.4 2007/03/15 10:38:34 vanhu Exp $	*/
+/*	$NetBSD: isakmp.c,v 1.20.6.5 2007/03/21 14:30:08 vanhu Exp $	*/
 
 /* Id: isakmp.c,v 1.74 2006/05/07 21:32:59 manubsd Exp */
 
@@ -845,8 +845,7 @@ ph1_main(iph1, msg)
 	VPTRINIT(iph1->sendbuf);
 
 	/* turn off schedule */
-	if (iph1->scr)
-		SCHED_KILL(iph1->scr);
+	SCHED_KILL(iph1->scr);
 
 	/* send */
 	plog(LLV_DEBUG, LOCATION, NULL, "===\n");
@@ -1007,8 +1006,7 @@ quick_main(iph2, msg)
 	VPTRINIT(iph2->sendbuf);
 
 	/* turn off schedule */
-	if (iph2->scr)
-		SCHED_KILL(iph2->scr);
+	SCHED_KILL(iph2->scr);
 
 	/* send */
 	plog(LLV_DEBUG, LOCATION, NULL, "===\n");
@@ -3399,8 +3397,7 @@ purge_remote(iph1)
 		 "purged ISAKMP-SA spi=%s.\n",
 		 isakmp_pindex(&(iph1->index), iph1->msgid));
 
-	if (iph1->sce)
-		SCHED_KILL(iph1->sce);
+	SCHED_KILL(iph1->sce);
 
 	iph1->sce = sched_new(1, isakmp_ph1delete_stub, iph1);
 }

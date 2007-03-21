@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_inf.c,v 1.14.4.4 2007/02/20 13:00:29 vanhu Exp $	*/
+/*	$NetBSD: isakmp_inf.c,v 1.14.4.5 2007/03/21 14:30:08 vanhu Exp $	*/
 
 /* Id: isakmp_inf.c,v 1.44 2006/05/06 20:45:52 manubsd Exp */
 
@@ -1137,8 +1137,7 @@ purge_isakmp_spi(proto, spi, n)
 			s_ipsecdoi_proto(proto),
 			isakmp_pindex(&spi[i], 0));
 
-		if (iph1->sce)
-			SCHED_KILL(iph1->sce);
+		SCHED_KILL(iph1->sce);
 		iph1->status = PHASE1ST_EXPIRED;
 		iph1->sce = sched_new(1, isakmp_ph1delete_stub, iph1);
 	}
@@ -1578,8 +1577,7 @@ isakmp_info_recv_r_u_ack (iph1, ru, msgid)
 	/* Useless ??? */
 	iph1->dpd_lastack = time(NULL);
 
-	if (iph1->dpd_r_u != NULL)
-		SCHED_KILL(iph1->dpd_r_u);
+	SCHED_KILL(iph1->dpd_r_u);
 
 	isakmp_sched_r_u(iph1, 0);
 
