@@ -1,4 +1,4 @@
-/*	$NetBSD: iclockmod.c,v 1.2 2007/03/21 04:01:59 xtraeme Exp $ */
+/*	$NetBSD: iclockmod.c,v 1.3 2007/03/21 04:17:59 xtraeme Exp $ */
 /*      $OpenBSD: p4tcc.c,v 1.13 2006/12/20 17:50:40 gwk Exp $ */
 
 /*
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iclockmod.c,v 1.2 2007/03/21 04:01:59 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iclockmod.c,v 1.3 2007/03/21 04:17:59 xtraeme Exp $");
 
 #include "opt_intel_odcm.h"
 
@@ -162,7 +162,7 @@ clockmod_init_main(void)
 	if ((regs[3] & (CPUID_ACPI|CPUID_TM)) != (CPUID_ACPI|CPUID_TM))
 		return;
 
-	switch (regs[0] & 0xf) {
+	switch (CPUID2STEPPING(regs[0])) {
 	case 0x22:	/* errata O50 P44 and Z21 */
 	case 0x24:
 	case 0x25:
