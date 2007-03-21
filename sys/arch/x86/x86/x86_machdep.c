@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.9 2007/03/20 21:07:39 xtraeme Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.10 2007/03/21 00:16:52 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.9 2007/03/20 21:07:39 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.10 2007/03/21 00:16:52 xtraeme Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -134,5 +134,7 @@ x86_pause(void)
 void
 x86_init(void)
 {
+#ifndef XEN
 	msr_cpu_broadcast_initmtx();
+#endif
 }
