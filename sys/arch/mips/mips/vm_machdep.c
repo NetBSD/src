@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.113.2.1 2007/03/12 05:49:23 rmind Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.113.2.2 2007/03/21 21:21:43 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -80,7 +80,7 @@
 #include "opt_coredump.h"
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.113.2.1 2007/03/12 05:49:23 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.113.2.2 2007/03/21 21:21:43 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -212,8 +212,8 @@ cpu_swapin(struct lwp *l)
 
 	/*
 	 * Cache the PTEs for the user area in the machine dependent
-	 * part of the proc struct so cpu_switch() can quickly map in
-	 * the user struct and kernel stack.
+	 * part of the proc struct so cpu_switchto() can quickly map
+	 * in the user struct and kernel stack.
 	 */
 	x = (MIPS_HAS_R4K_MMU) ?
 	    (MIPS3_PG_G | MIPS3_PG_RO | MIPS3_PG_WIRED) :
@@ -236,24 +236,6 @@ cpu_lwp_free2(struct lwp *l)
 {
 
 	(void)l;
-}
-
-/*
- * cpu_exit is called as the last action during exit.
- *
- * We clean up a little and then call switch_exit() with the old proc as an
- * argument.  switch_exit() first switches to proc0's PCB and stack,
- * schedules the dead proc's vmspace and stack to be freed, then jumps
- * into the middle of cpu_switch(), as if it were switching from proc0.
- */
-void
-cpu_exit(struct lwp *l)
-{
-	void switch_exit(struct lwp *, void (*)(struct lwp *));
-
-	(void)splhigh();
-	switch_exit(l, lwp_exit2);
-	/* NOTREACHED */
 }
 
 #ifdef COREDUMP
