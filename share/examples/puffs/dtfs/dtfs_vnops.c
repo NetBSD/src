@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs_vnops.c,v 1.17 2007/03/20 18:30:30 pooka Exp $	*/
+/*	$NetBSD: dtfs_vnops.c,v 1.18 2007/03/21 19:56:49 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -112,9 +112,35 @@ dtfs_node_setattr(struct puffs_cc *pcc, void *opc,
 	const struct vattr *va, const struct puffs_cred *pcr, pid_t pid)
 {
 	struct puffs_node *pn = opc;
+	int rv;
 
-	/* check if we need to modify our internal size */
-	/* (must be called before setattr! XXX) */
+	/* check permissions */
+	if (va->va_flags != PUFFS_VNOVAL)
+		return EOPNOTSUPP;
+
+	if (va->va_uid != PUFFS_VNOVAL || va->va_gid != PUFFS_VNOVAL) {
+		rv = puffs_access_chown(pcr, pn->pn_va.va_uid, pn->pn_va.va_gid,
+		    va->va_uid, va->va_gid);
+		if (rv)
+			return rv;
+	}
+
+	if (va->va_mode != PUFFS_VNOVAL) {
+		rv = puffs_access_chmod(pcr, pn->pn_va.va_uid, pn->pn_va.va_gid,
+		    pn->pn_va.va_type, va->va_mode);
+		if (rv)
+			return rv;
+	}
+
+	if ((va->va_atime.tv_sec != PUFFS_VNOVAL
+	      && va->va_atime.tv_nsec != PUFFS_VNOVAL)
+	    || (va->va_mtime.tv_sec != PUFFS_VNOVAL
+	      && va->va_mtime.tv_nsec != PUFFS_VNOVAL)) {
+		rv = puffs_access_times(pcr, pn->pn_va.va_uid, pn->pn_va.va_gid,
+		    pn->pn_va.va_mode, va->va_vaflags & VA_UTIMES_NULL);
+		if (rv)
+			return rv;
+	}
 
 	if (va->va_size != PUFFS_VNOVAL) {
 		switch (pn->pn_va.va_type) {
