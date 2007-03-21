@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.135.2.1 2007/03/13 17:51:04 ad Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.135.2.2 2007/03/21 20:11:54 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.135.2.1 2007/03/13 17:51:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.135.2.2 2007/03/21 20:11:54 ad Exp $");
 
 #include "fs_union.h"
 #include "veriexec.h"
@@ -390,7 +390,9 @@ unionread:
 	auio.uio_offset = fp->f_offset;
 	error = VOP_READDIR(vp, &auio, fp->f_cred, &eofflag, cookies,
 		    ncookies);
+	mutex_enter(&fp->f_lock);
 	fp->f_offset = auio.uio_offset;
+	mutex_exit(&fp->f_lock);
 	VOP_UNLOCK(vp, 0);
 	if (error)
 		return (error);
@@ -413,7 +415,9 @@ unionread:
 		vp = vp->v_mount->mnt_vnodecovered;
 		VREF(vp);
 		fp->f_data = vp;
+		mutex_enter(&fp->f_lock);
 		fp->f_offset = 0;
+		mutex_exit(&fp->f_lock);
 		vrele(tvp);
 		goto unionread;
 	}
@@ -699,8 +703,8 @@ vn_lock(struct vnode *vp, int flags)
 				return EBUSY;
 			}
 			vp->v_flag |= VXWANT;
-			mtsleep(vp, PINOD | PNORELOCK,
-			    "vn_lock", 0, &vp->v_interlock);
+			cv_wait(&vp->v_cv, &vp->v_interlock);
+			mutex_exit(&vp->v_interlock);
 			error = ENOENT;
 		} else {
 			error = VOP_LOCK(vp,

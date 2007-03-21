@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.86.2.2 2007/03/13 17:51:20 ad Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.86.2.3 2007/03/21 20:11:58 ad Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.86.2.2 2007/03/13 17:51:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.86.2.3 2007/03/21 20:11:58 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -5688,7 +5688,7 @@ again:
 		    &bp->b_interlock);
 		ACQUIRE_LOCK_INTERLOCKED(&lk, s);
 	}
-	LOCK_ASSERT(mutex_owned(&bp->b_interlock));
+	KASSERT(mutex_owned(&bp->b_interlock));
 	if ((bp->b_flags & B_DELWRI) == 0) {
 		mutex_exit(&bp->b_interlock);
 		return (0);
@@ -5724,10 +5724,8 @@ drain_output(vp, islocked)
 	while (vp->v_numoutput) {
 		int s;
 
-		vp->v_flag |= VBWAIT;
 		s = FREE_LOCK_INTERLOCKED(&lk);
-		mtsleep((void *)&vp->v_numoutput, PRIBIO + 1, "drainvp", 0,
-			&global_v_numoutput_lock);
+		cv_wait(&vp->v_outputcv, &global_v_numoutput_lock);
 		ACQUIRE_LOCK_INTERLOCKED(&lk, s);
 	}
 	mutex_exit(&global_v_numoutput_lock);

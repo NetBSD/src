@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.198.2.1 2007/03/13 17:51:29 ad Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.198.2.2 2007/03/21 20:11:59 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.198.2.1 2007/03/13 17:51:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.198.2.2 2007/03/21 20:11:59 ad Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -304,9 +304,7 @@ lfs_vflush(struct vnode *vp)
 		/* Drain v_numoutput */
 		mutex_enter(&global_v_numoutput_lock);
 		while (vp->v_numoutput > 0) {
-			vp->v_flag |= VBWAIT;
-			mtsleep(&vp->v_numoutput, PRIBIO + 1, "lfs_vf4", 0,
-				&global_v_numoutput_lock);
+			cv_wait(&vp->v_outputcv, &global_v_numoutput_lock);
 		}
 		mutex_exit(&global_v_numoutput_lock);
 		KASSERT(vp->v_numoutput == 0);
@@ -356,9 +354,7 @@ lfs_vflush(struct vnode *vp)
 		s = splbio();
 		mutex_enter(&global_v_numoutput_lock);
 		while (vp->v_numoutput > 0) {
-			vp->v_flag |= VBWAIT;
-			mtsleep(&vp->v_numoutput, PRIBIO + 1, "lfs_vf3", 0,
-				&global_v_numoutput_lock);
+			cv_wait(&vp->v_outputcv, &global_v_numoutput_lock);
 		}
 		mutex_exit(&global_v_numoutput_lock);
 		splx(s);
@@ -473,9 +469,7 @@ lfs_vflush(struct vnode *vp)
 	s = splbio();
 	mutex_enter(&global_v_numoutput_lock);
 	while (vp->v_numoutput > 0) {
-		vp->v_flag |= VBWAIT;
-		mtsleep(&vp->v_numoutput, PRIBIO + 1, "lfs_vf2", 0,
-			&global_v_numoutput_lock);
+		cv_wait(&vp->v_outputcv, &global_v_numoutput_lock);
 	}
 	mutex_exit(&global_v_numoutput_lock);
 	splx(s);
@@ -716,7 +710,7 @@ lfs_segwrite(struct mount *mp, int flags)
 		}
 	}
 
-	LOCK_ASSERT(LFS_SEGLOCK_HELD(fs));
+	KASSERT(LFS_SEGLOCK_HELD(fs));
 
 	did_ckp = 0;
 	if (do_ckp || fs->lfs_doifile) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_vmem.c,v 1.27.2.2 2007/03/13 17:50:58 ad Exp $	*/
+/*	$NetBSD: subr_vmem.c,v 1.27.2.3 2007/03/21 20:11:52 ad Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.27.2.2 2007/03/13 17:50:58 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.27.2.3 2007/03/21 20:11:52 ad Exp $");
 
 #define	VMEM_DEBUG
 #if defined(_KERNEL)
@@ -452,7 +452,7 @@ qc_poolpage_free(struct pool *pool, void *addr)
 }
 
 static void
-qc_init(vmem_t *vm, size_t qcache_max)
+qc_init(vmem_t *vm, size_t qcache_max, int ipl)
 {
 	qcache_t *prevqc;
 	struct pool_allocator *pa;
@@ -481,7 +481,7 @@ qc_init(vmem_t *vm, size_t qcache_max)
 		    vm->vm_name, size);
 		pool_init(&qc->qc_pool, size, ORDER2SIZE(vm->vm_quantum_shift),
 		    0, PR_NOALIGN | PR_NOTOUCH /* XXX */, qc->qc_name, pa,
-		    IPL_NONE);
+		    ipl);
 		if (prevqc != NULL &&
 		    qc->qc_pool.pr_itemsperpage ==
 		    prevqc->qc_pool.pr_itemsperpage) {
@@ -716,7 +716,8 @@ vmem_create(const char *name, vmem_addr_t base, vmem_size_t size,
     vmem_size_t quantum,
     vmem_addr_t (*allocfn)(vmem_t *, vmem_size_t, vmem_size_t *, vm_flag_t),
     void (*freefn)(vmem_t *, vmem_addr_t, vmem_size_t),
-    vmem_t *source, vmem_size_t qcache_max, vm_flag_t flags)
+    vmem_t *source, vmem_size_t qcache_max, vm_flag_t flags,
+    int ipl)
 {
 	vmem_t *vm;
 	int i;
@@ -737,12 +738,7 @@ vmem_create(const char *name, vmem_addr_t base, vmem_size_t size,
 		return NULL;
 	}
 
-	if ((flags & VM_NOSLEEP) != 0) {
-		mutex_init(&vm->vm_lock, MUTEX_DRIVER, IPL_VM);
-	} else {
-		mutex_init(&vm->vm_lock, MUTEX_DRIVER, IPL_NONE);
-	}
-
+	mutex_init(&vm->vm_lock, MUTEX_DRIVER, ipl);
 	vm->vm_name = name;
 	vm->vm_quantum_mask = quantum - 1;
 	vm->vm_quantum_shift = calc_order(quantum);
@@ -752,7 +748,7 @@ vmem_create(const char *name, vmem_addr_t base, vmem_size_t size,
 	vm->vm_source = source;
 	vm->vm_nbusytag = 0;
 #if defined(QCACHE)
-	qc_init(vm, qcache_max);
+	qc_init(vm, qcache_max, ipl);
 #endif /* defined(QCACHE) */
 
 	CIRCLEQ_INIT(&vm->vm_seglist);

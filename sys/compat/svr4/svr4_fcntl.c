@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_fcntl.c,v 1.55 2007/03/04 06:01:32 christos Exp $	 */
+/*	$NetBSD: svr4_fcntl.c,v 1.55.2.1 2007/03/21 20:11:49 ad Exp $	 */
 
 /*-
  * Copyright (c) 1994, 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_fcntl.c,v 1.55 2007/03/04 06:01:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_fcntl.c,v 1.55.2.1 2007/03/21 20:11:49 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -269,8 +269,8 @@ fd_revoke(struct lwp *l, int fd, register_t *retval)
 
 	if ((fp = fd_getfile(fdp, fd)) == NULL)
 		return EBADF;
+	mutex_exit(&fp->f_lock);
 
-	simple_unlock(&fp->f_slock);
 	if (fp->f_type != DTYPE_VNODE)
 		return EINVAL;
 
@@ -321,7 +321,7 @@ fd_truncate(l, fd, flp, retval)
 	if ((fp = fd_getfile(fdp, fd)) == NULL)
 		return EBADF;
 
-	simple_unlock(&fp->f_slock);
+	mutex_exit(&fp->f_lock);
 	vp = (struct vnode *)fp->f_data;
 	if (fp->f_type != DTYPE_VNODE || vp->v_type == VFIFO)
 		return ESPIPE;
@@ -395,11 +395,13 @@ svr4_sys_open(l, v, retval)
 		struct file	*fp;
 
 		fp = fd_getfile(fdp, *retval);
-		simple_unlock(&fp->f_slock);
 
 		/* ignore any error, just give it a try */
-		if (fp != NULL && fp->f_type == DTYPE_VNODE)
+		if (fp != NULL && fp->f_type == DTYPE_VNODE) {
+			FILE_USE(fp);
 			(fp->f_ops->fo_ioctl) (fp, TIOCSCTTY, (void *) 0, l);
+			FILE_UNUSE(fp, l);
+		}
 	}
 	return 0;
 }

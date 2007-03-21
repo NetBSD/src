@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.119.2.1 2007/03/13 16:51:53 ad Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.119.2.2 2007/03/21 20:11:51 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.119.2.1 2007/03/13 16:51:53 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.119.2.2 2007/03/21 20:11:51 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h"
@@ -900,9 +900,9 @@ ktrace_common(struct lwp *curl, int ops, int facs, int pid, struct file *fp)
 				goto done;
 			}
 
-			simple_lock(&fp->f_slock);
+			mutex_enter(&fp->f_lock);
 			fp->f_count++;
-			simple_unlock(&fp->f_slock);
+			mutex_exit(&fp->f_lock);
 			ktd->ktd_fp = fp;
 
 			mutex_enter(&ktrace_mutex);
@@ -911,11 +911,11 @@ ktrace_common(struct lwp *curl, int ops, int facs, int pid, struct file *fp)
 				ktd = NULL;
 			} else
 				TAILQ_INSERT_TAIL(&ktdq, ktd, ktd_list);
+			if (ktd == NULL)
+				cv_wait(&lbolt, &ktrace_mutex);
 			mutex_exit(&ktrace_mutex);
-			if (ktd == NULL) {
-				tsleep(&lbolt, PWAIT, "ktrzzz", 0);
+			if (ktd == NULL)
 				goto done;
-			}
 		}
 		break;
 
@@ -1229,7 +1229,7 @@ next:
 	    auio.uio_iovcnt < sizeof(aiov) / sizeof(aiov[0]) - 1);
 
 again:
-	simple_lock(&fp->f_slock);
+	mutex_enter(&fp->f_lock);
 	FILE_USE(fp);
 	error = (*fp->f_ops->fo_write)(fp, &fp->f_offset, &auio,
 	    fp->f_cred, FOF_UPDATE_OFFSET);
@@ -1276,6 +1276,8 @@ ktrace_thread(void *arg)
 	struct ktrace_entry *kte;
 	int ktrerr, errcnt;
 
+	KERNEL_UNLOCK_ALL(curlwp, NULL);
+
 	mutex_enter(&ktrace_mutex);
 	for (;;) {
 		kte = TAILQ_FIRST(&ktd->ktd_queue);
@@ -1308,7 +1310,7 @@ ktrace_thread(void *arg)
 	TAILQ_REMOVE(&ktdq, ktd, ktd_list);
 	mutex_exit(&ktrace_mutex);
 
-	simple_lock(&fp->f_slock);
+	mutex_enter(&fp->f_lock);
 	FILE_USE(fp);
 
 	/*
@@ -1322,6 +1324,7 @@ ktrace_thread(void *arg)
 	callout_stop(&ktd->ktd_wakch);
 	kmem_free(ktd, sizeof(*ktd));
 
+	KERNEL_LOCK(1, curlwp);
 	kthread_exit(0);
 }
 

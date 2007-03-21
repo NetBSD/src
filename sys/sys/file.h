@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.56 2006/05/14 21:38:18 elad Exp $	*/
+/*	$NetBSD: file.h,v 1.56.18.1 2007/03/21 20:11:57 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -40,7 +40,8 @@
 #ifdef _KERNEL
 #include <sys/mallocvar.h>
 #include <sys/queue.h>
-#include <sys/lock.h>
+#include <sys/mutex.h>
+#include <sys/condvar.h>
 
 MALLOC_DECLARE(M_FILE);
 MALLOC_DECLARE(M_IOCTLOPS);
@@ -91,7 +92,8 @@ struct file {
 	} *f_ops;
 	off_t		f_offset;
 	void		*f_data;	/* descriptor data, e.g. vnode/socket */
-	struct simplelock f_slock;
+	kmutex_t	f_lock;		/* lock on structure */
+	kcondvar_t	f_cv;		/* used when closing */
 };
 
 #define	FIF_WANTCLOSE		0x01	/* a close is waiting for usecount */
@@ -124,15 +126,15 @@ do {									\
 do {									\
 	(fp)->f_usecount++;						\
 	FILE_USE_CHECK((fp), "f_usecount overflow");			\
-	simple_unlock(&(fp)->f_slock);					\
+	mutex_exit(&(fp)->f_lock);					\
 } while (/* CONSTCOND */ 0)
 
 #define	FILE_UNUSE_WLOCK(fp, l, havelock)				\
 do {									\
 	if (!(havelock))						\
-		simple_lock(&(fp)->f_slock);				\
+		mutex_enter(&(fp)->f_lock);				\
 	if ((fp)->f_iflags & FIF_WANTCLOSE) {				\
-		simple_unlock(&(fp)->f_slock);				\
+		mutex_exit(&(fp)->f_lock);				\
 		/* Will drop usecount */				\
 		(void) closef((fp), (l));				\
 		break;							\
@@ -140,7 +142,7 @@ do {									\
 		(fp)->f_usecount--;					\
 		FILE_USE_CHECK((fp), "f_usecount underflow");		\
 	}								\
-	simple_unlock(&(fp)->f_slock);					\
+	mutex_exit(&(fp)->f_lock);					\
 } while (/* CONSTCOND */ 0)
 #define	FILE_UNUSE(fp, l)		FILE_UNUSE_WLOCK(fp, l, 0)
 #define	FILE_UNUSE_HAVELOCK(fp, l)	FILE_UNUSE_WLOCK(fp, l, 1)

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.108.2.1 2007/03/13 17:51:56 ad Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.108.2.2 2007/03/21 20:12:00 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.108.2.1 2007/03/13 17:51:56 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.108.2.2 2007/03/21 20:12:00 ad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_pax.h"
@@ -382,7 +382,7 @@ sys_mmap(l, v, retval)
 		if ((fp = fd_getfile(fdp, fd)) == NULL)
 			return (EBADF);
 
-		simple_unlock(&fp->f_slock);
+		mutex_exit(&fp->f_lock);
 
 		if (fp->f_type != DTYPE_VNODE)
 			return (ENODEV);		/* only mmap vnodes! */

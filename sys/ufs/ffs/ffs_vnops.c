@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.86.4.1 2007/03/13 17:51:21 ad Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.86.4.2 2007/03/21 20:11:58 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.86.4.1 2007/03/13 17:51:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.86.4.2 2007/03/21 20:11:58 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -312,11 +312,8 @@ ffs_fsync(void *v)
 
 	if (ap->a_flags & FSYNC_WAIT) {
 		mutex_enter(&global_v_numoutput_lock);
-		while (vp->v_numoutput > 0) {
-			vp->v_flag |= VBWAIT;
-			mtsleep(&vp->v_numoutput, PRIBIO + 1, "fsync_range", 0,
-				&global_v_numoutput_lock);
-		}
+		while (vp->v_numoutput > 0)
+			cv_wait(&vp->v_outputcv, &global_v_numoutput_lock);
 		mutex_exit(&global_v_numoutput_lock);
 	}
 	splx(s);
@@ -426,9 +423,7 @@ loop:
 	if (ap->a_flags & FSYNC_WAIT) {
 		mutex_enter(&global_v_numoutput_lock);
 		while (vp->v_numoutput) {
-			vp->v_flag |= VBWAIT;
-			(void) mtsleep(&vp->v_numoutput, PRIBIO + 1,
-			    "ffsfsync", 0, &global_v_numoutput_lock);
+			cv_wait(&vp->v_outputcv, &global_v_numoutput_lock);
 		}
 		mutex_exit(&global_v_numoutput_lock);
 		splx(s);
