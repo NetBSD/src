@@ -93,6 +93,7 @@ int drm_irq_install(drm_device_t *dev)
 	int retcode;
 #ifdef __NetBSD__
 	pci_intr_handle_t ih;
+	const char *istr;
 #endif
 
 	if (dev->irq == 0 || dev->dev_private == NULL)
@@ -138,13 +139,14 @@ int drm_irq_install(drm_device_t *dev)
 		retcode = ENOENT;
 		goto err;
 	}
+	istr = pci_intr_string(&dev->pa.pa_pc, ih);
 	dev->irqh = pci_intr_establish(&dev->pa.pa_pc, ih, IPL_TTY,
 	    drm_irq_handler_wrap, dev);
 	if (!dev->irqh) {
 		retcode = ENOENT;
 		goto err;
 	}
-	printf("dri irq ok\n");
+	aprint_normal("%s: interrupting at %s\n", dev->device.dv_xname, istr);
 #endif
 
 				/* After installing handler */
