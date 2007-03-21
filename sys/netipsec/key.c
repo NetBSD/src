@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.42 2007/03/09 00:40:39 liamjfoy Exp $	*/
+/*	$NetBSD: key.c,v 1.43 2007/03/21 22:38:34 degroote Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.42 2007/03/09 00:40:39 liamjfoy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.43 2007/03/21 22:38:34 degroote Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -4835,7 +4835,7 @@ key_do_getnewspi(spirange, saidx)
 	}
 
 	if (spmin == spmax) {
-		if (key_checkspidup(saidx, spmin) != NULL) {
+		if (key_checkspidup(saidx, htonl(spmin)) != NULL) {
 			ipseclog((LOG_DEBUG, "key_do_getnewspi: SPI %u exists already.\n", spmin));
 			return 0;
 		}
@@ -4853,7 +4853,7 @@ key_do_getnewspi(spirange, saidx)
 			/* generate pseudo-random SPI value ranged. */
 			newspi = spmin + (key_random() % (spmax - spmin + 1));
 
-			if (key_checkspidup(saidx, newspi) == NULL)
+			if (key_checkspidup(saidx, htonl(newspi)) == NULL)
 				break;
 		}
 
