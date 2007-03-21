@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_power.c,v 1.17 2007/03/04 06:02:45 christos Exp $	*/
+/*	$NetBSD: sysmon_power.c,v 1.17.2.1 2007/03/21 20:10:19 ad Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.17 2007/03/04 06:02:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.17.2.1 2007/03/21 20:10:19 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/reboot.h>
@@ -89,7 +89,7 @@ static int
 sysmon_queue_power_event(power_event_t *pev)
 {
 
-	LOCK_ASSERT(simple_lock_held(&sysmon_power_event_queue_slock));
+	KASSERT(simple_lock_held(&sysmon_power_event_queue_slock));
 
 	if (sysmon_power_event_queue_count == SYSMON_MAX_POWER_EVENTS)
 		return (0);
@@ -112,7 +112,7 @@ static int
 sysmon_get_power_event(power_event_t *pev)
 {
 
-	LOCK_ASSERT(simple_lock_held(&sysmon_power_event_queue_slock));
+	KASSERT(simple_lock_held(&sysmon_power_event_queue_slock));
 
 	if (sysmon_power_event_queue_count == 0)
 		return (0);

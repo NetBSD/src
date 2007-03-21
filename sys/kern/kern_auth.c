@@ -1,4 +1,4 @@
-/* $NetBSD: kern_auth.c,v 1.46.4.1 2007/03/13 16:51:51 ad Exp $ */
+/* $NetBSD: kern_auth.c,v 1.46.4.2 2007/03/21 20:10:19 ad Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.46.4.1 2007/03/13 16:51:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.46.4.2 2007/03/21 20:10:19 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -839,11 +839,6 @@ kauth_authorize_action(kauth_scope_t scope, kauth_cred_t cred,
 {
 	kauth_listener_t listener;
 	int error, allow, fail;
-
-#if 0 /* defined(LOCKDEBUG) */
-	spinlock_switchcheck();
-	simple_lock_only_held(NULL, "kauth_authorize_action");
-#endif
 
 	KASSERT(cred != NULL);
 	KASSERT(action != 0);

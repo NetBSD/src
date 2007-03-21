@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_subr.c,v 1.67.4.2 2007/03/13 17:51:31 ad Exp $	*/
+/*	$NetBSD: lfs_subr.c,v 1.67.4.3 2007/03/21 20:10:23 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.67.4.2 2007/03/13 17:51:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.67.4.3 2007/03/21 20:10:23 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -459,7 +459,7 @@ lfs_segunlock(struct lfs *fs)
 	sp = fs->lfs_sp;
 
 	mutex_enter(&fs->lfs_interlock);
-	LOCK_ASSERT(LFS_SEGLOCK_HELD(fs));
+	KASSERT(LFS_SEGLOCK_HELD(fs));
 	if (fs->lfs_seglock == 1) {
 		if ((sp->seg_flags & (SEGM_PROT | SEGM_CLEAN)) == 0 &&
 		    LFS_STARVED_FOR_SEGS(fs) == 0)

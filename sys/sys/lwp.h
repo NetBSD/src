@@ -1,4 +1,4 @@
-/* 	$NetBSD: lwp.h,v 1.56 2007/03/02 15:57:06 skd Exp $	*/
+/* 	$NetBSD: lwp.h,v 1.56.2.1 2007/03/21 20:10:22 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -315,7 +315,7 @@ lwp_lock(struct lwp *l)
 static inline void
 lwp_unlock(struct lwp *l)
 {
-	LOCK_ASSERT(mutex_owned(l->l_mutex));
+	KASSERT(mutex_owned(l->l_mutex));
 
 	mutex_spin_exit(l->l_mutex);
 }
@@ -323,7 +323,7 @@ lwp_unlock(struct lwp *l)
 static inline void
 lwp_changepri(struct lwp *l, pri_t pri)
 {
-	LOCK_ASSERT(mutex_owned(l->l_mutex));
+	KASSERT(mutex_owned(l->l_mutex));
 
 	if (l->l_priority == pri)
 		return;
@@ -334,7 +334,7 @@ lwp_changepri(struct lwp *l, pri_t pri)
 static inline void
 lwp_lendpri(struct lwp *l, pri_t pri)
 {
-	LOCK_ASSERT(mutex_owned(l->l_mutex));
+	KASSERT(mutex_owned(l->l_mutex));
 
 	if (l->l_inheritedprio == pri)
 		return;
@@ -345,7 +345,7 @@ lwp_lendpri(struct lwp *l, pri_t pri)
 static inline void
 lwp_unsleep(struct lwp *l)
 {
-	LOCK_ASSERT(mutex_owned(l->l_mutex));
+	KASSERT(mutex_owned(l->l_mutex));
 
 	(*l->l_syncobj->sobj_unsleep)(l);
 }

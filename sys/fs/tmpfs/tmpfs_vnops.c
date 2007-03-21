@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.37 2007/02/22 06:37:00 thorpej Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.37.4.1 2007/03/21 20:10:19 ad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.37 2007/02/22 06:37:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.37.4.1 2007/03/21 20:10:19 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -1380,7 +1380,7 @@ tmpfs_getpages(void *v)
 	int npages = *count;
 
 	KASSERT(vp->v_type == VREG);
-	LOCK_ASSERT(simple_lock_held(&vp->v_interlock));
+	KASSERT(mutex_owned(&vp->v_interlock));
 
 	node = VP_TO_TMPFS_NODE(vp);
 	uobj = node->tn_spec.tn_reg.tn_aobj;
@@ -1389,7 +1389,7 @@ tmpfs_getpages(void *v)
 
 	if (vp->v_size <= offset + (centeridx << PAGE_SHIFT)) {
 		if ((flags & PGO_LOCKED) == 0)
-			simple_unlock(&vp->v_interlock);
+			mutex_exit(&vp->v_interlock);
 		return EINVAL;
 	}
 
@@ -1408,7 +1408,7 @@ tmpfs_getpages(void *v)
 			node->tn_status |= TMPFS_NODE_MODIFIED;
 	}
 
-	simple_unlock(&vp->v_interlock);
+	mutex_exit(&vp->v_interlock);
 
 	/*
 	 * Make sure that the array on which we will store the
@@ -1423,7 +1423,7 @@ tmpfs_getpages(void *v)
 	if (m != NULL)
 		for (i = 0; i < npages; i++)
 			m[i] = NULL;
-	simple_lock(&uobj->vmobjlock);
+	mutex_enter(&uobj->vmobjlock);
 	error = (*uobj->pgops->pgo_get)(uobj, offset, m, &npages, centeridx,
 	    access_type, advice, flags | PGO_ALLPAGES);
 #if defined(DEBUG)
@@ -1453,19 +1453,19 @@ tmpfs_putpages(void *v)
 	struct tmpfs_node *node;
 	struct uvm_object *uobj;
 
-	LOCK_ASSERT(simple_lock_held(&vp->v_interlock));
+	KASSERT(mutex_owned(&vp->v_interlock));
 
 	node = VP_TO_TMPFS_NODE(vp);
 
 	if (vp->v_type != VREG) {
-		simple_unlock(&vp->v_interlock);
+		mutex_exit(&vp->v_interlock);
 		return 0;
 	}
 
 	uobj = node->tn_spec.tn_reg.tn_aobj;
-	simple_unlock(&vp->v_interlock);
+	mutex_exit(&vp->v_interlock);
 
-	simple_lock(&uobj->vmobjlock);
+	mutex_enter(&uobj->vmobjlock);
 	error = (*uobj->pgops->pgo_put)(uobj, offlo, offhi, flags);
 
 	/* XXX mtime */

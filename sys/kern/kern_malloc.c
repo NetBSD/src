@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.108.2.1 2007/03/13 16:51:54 ad Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.108.2.2 2007/03/21 20:10:21 ad Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991, 1993
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.108.2.1 2007/03/13 16:51:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.108.2.2 2007/03/21 20:10:21 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -611,12 +611,7 @@ free(void *addr, struct malloc_type *ksp)
 			panic("free: duplicated free");
 		}
 	}
-#ifdef LOCKDEBUG
-	/*
-	 * Check if we're freeing a locked simple lock.
-	 */
-	simple_lock_freecheck(addr, (char *)addr + size);
-#endif
+
 	/*
 	 * Copy in known text to detect modification after freeing
 	 * and to make it look free. Also, save the type being freed
