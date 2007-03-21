@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.h,v 1.34 2007/03/20 18:28:08 pooka Exp $	*/
+/*	$NetBSD: puffs.h,v 1.35 2007/03/21 19:55:55 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -280,26 +280,6 @@ enum {
 
 
 /*
- * Operation credentials
- */
-
-/* Credential fetch */
-int	puffs_cred_getuid(const struct puffs_cred *pcr, uid_t *);
-int	puffs_cred_getgid(const struct puffs_cred *pcr, gid_t *);
-int	puffs_cred_getgroups(const struct puffs_cred *pcr, gid_t *, short *);
-
-/* Credential check */
-int	puffs_cred_isuid(const struct puffs_cred *pcr, uid_t);
-int	puffs_cred_hasgroup(const struct puffs_cred *pcr, gid_t);
-/* kernel internal NOCRED */
-int	puffs_cred_iskernel(const struct puffs_cred *pcr);
-/* kernel internal FSCRED */
-int	puffs_cred_isfs(const struct puffs_cred *pcr);
-/* root || NOCRED || FSCRED */
-int	puffs_cred_isjuggernaut(const struct puffs_cred *pcr);
-
-
-/*
  * protos
  */
 
@@ -454,8 +434,37 @@ int		puffs_vtype2dt(enum vtype);
 enum vtype	puffs_mode2vt(mode_t);
 void		puffs_stat2vattr(struct vattr *va, const struct stat *);
 mode_t		puffs_addvtype2mode(mode_t, enum vtype);
-int		puffs_access(enum vtype, mode_t, uid_t, gid_t, mode_t,
-			     const struct puffs_cred *);
+
+
+/*
+ * credentials & permissions
+ */
+
+/* Credential fetch */
+int	puffs_cred_getuid(const struct puffs_cred *pcr, uid_t *);
+int	puffs_cred_getgid(const struct puffs_cred *pcr, gid_t *);
+int	puffs_cred_getgroups(const struct puffs_cred *pcr, gid_t *, short *);
+
+/* Credential check */
+int	puffs_cred_isuid(const struct puffs_cred *pcr, uid_t);
+int	puffs_cred_hasgroup(const struct puffs_cred *pcr, gid_t);
+/* kernel internal NOCRED */
+int	puffs_cred_iskernel(const struct puffs_cred *pcr);
+/* kernel internal FSCRED */
+int	puffs_cred_isfs(const struct puffs_cred *pcr);
+/* root || NOCRED || FSCRED */
+int	puffs_cred_isjuggernaut(const struct puffs_cred *pcr);
+
+/* misc */
+int	puffs_access(enum vtype, mode_t, uid_t, gid_t, mode_t,
+		     const struct puffs_cred *);
+int	puffs_access_chown(const struct puffs_cred *, uid_t, gid_t,
+			   uid_t, gid_t);
+int	puffs_access_chmod(const struct puffs_cred *, uid_t, gid_t,
+			   enum vtype, mode_t);
+int	puffs_access_times(const struct puffs_cred *, uid_t, gid_t,
+			   mode_t, int);
+
 
 /*
  * Requests
