@@ -106,13 +106,17 @@ drm_pci_alloc(drm_device_t *dev, size_t size, size_t align, dma_addr_t maxaddr)
 		return NULL;
 	}
 #elif defined(__NetBSD__)
-	ret = bus_dmamem_alloc(dev->pa.pa_dmat, size, align, PAGE_SIZE,
+	ret = bus_dmamem_alloc(dev->pa.pa_dmat, size, align, size,
 	    &dmah->seg, 1, &nsegs, BUS_DMA_NOWAIT);
 	if (ret != 0) {
+		aprint_error("%s: bus_dmamem_alloc(%d, %d) returned %d\n",
+		    __func__, size, align, ret);
 		free(dmah, M_DRM);
 		return NULL;
 	}
 	if(nsegs != 1) {
+		aprint_error("%s: bus_dmamem_alloc(%d) returned %d segments\n",
+		    __func__, size, nsegs);
 		bus_dmamem_free(dev->pa.pa_dmat, &dmah->seg, nsegs);
 		free(dmah, M_DRM);
 		return NULL;
@@ -122,6 +126,8 @@ drm_pci_alloc(drm_device_t *dev, size_t size, size_t align, dma_addr_t maxaddr)
 	    BUS_DMA_NOWAIT);
 	if (ret != 0) {
 		bus_dmamem_free(dev->pa.pa_dmat, &dmah->seg, 1);
+		aprint_error("%s: bus_dmamem_map() failed %d\n", __func__,
+		    ret);
 		free(dmah, M_DRM);
 		return NULL;
 	}
