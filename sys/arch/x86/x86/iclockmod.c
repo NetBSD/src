@@ -1,4 +1,4 @@
-/*	$NetBSD: iclockmod.c,v 1.1 2007/03/20 21:22:03 xtraeme Exp $ */
+/*	$NetBSD: iclockmod.c,v 1.2 2007/03/21 04:01:59 xtraeme Exp $ */
 /*      $OpenBSD: p4tcc.c,v 1.13 2006/12/20 17:50:40 gwk Exp $ */
 
 /*
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iclockmod.c,v 1.1 2007/03/20 21:22:03 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iclockmod.c,v 1.2 2007/03/21 04:01:59 xtraeme Exp $");
 
 #include "opt_intel_odcm.h"
 
@@ -64,10 +64,6 @@ static struct msr_cpu_broadcast mcb;
 static int clockmod_level;
 static int clockmod_state_target;
 static int clockmod_state_current;
-
-/* external definitions from machine/cpu.h */
-int cpu_id;
-int cpu_feature;
 
 static struct {
 	int level;
@@ -156,14 +152,17 @@ static void
 clockmod_init_main(void)
 {
 	const struct sysctlnode *node, *odcmnode;
+	uint32_t regs[4];
 	size_t len, freq_len;
 	char *freq_names;
 	int i;
 
-	if ((cpu_feature & (CPUID_ACPI|CPUID_TM)) != (CPUID_ACPI|CPUID_TM))
+	CPUID(1, regs[0], regs[1], regs[2], regs[3]);
+
+	if ((regs[3] & (CPUID_ACPI|CPUID_TM)) != (CPUID_ACPI|CPUID_TM))
 		return;
 
-	switch (cpu_id & 0xf) {
+	switch (regs[0] & 0xf) {
 	case 0x22:	/* errata O50 P44 and Z21 */
 	case 0x24:
 	case 0x25:
