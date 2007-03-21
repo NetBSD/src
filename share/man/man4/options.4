@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.346 2007/03/21 00:56:31 xtraeme Exp $
+.\"	$NetBSD: options.4,v 1.347 2007/03/21 07:08:14 wiz Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -1582,7 +1582,8 @@ Increases the allowed size of the network interface packet queues.
 The default queue size is 50 packets, and you do not normally need
 to increase it.
 .It Cd options IPSELSRC
-Includes support for source-address selection policies.  See
+Includes support for source-address selection policies.
+See
 .Xr in_getifa 9 .
 .It Cd options MROUTING
 Includes support for IP multicast routers.
@@ -1851,7 +1852,8 @@ server services via user libraries and applications.
 .It Cd options BLUETOOTH
 Include support for the
 .Tn Bluetooth
-protocol stack. See
+protocol stack.
+See
 .Xr bluetooth 4
 for details.
 .It Cd options IPNOPRIVPORTS
@@ -2233,10 +2235,10 @@ knob, see
 .Xr sysctl 3 .
 If 0, PaX MPROTECT will be enabled only if explicitly set on programs
 using
-.Xr paxctl 1 .
+.Xr paxctl 8 .
 If 1, PaX MPROTECT will be enabled for all programs.
 Programs can be exempted using
-.Xr paxctl 1 .
+.Xr paxctl 8 .
 .Pp
 See
 .Xr security 8
@@ -2252,10 +2254,10 @@ knob, see
 .Xr sysctl 3 .
 If 0, PaX Segvguard will be enabled only if explicitly set on programs
 using
-.Xr paxctl 1 .
+.Xr paxctl 8 .
 If 1, PaX Segvguard will be enabled to all programs, and exemption can
 be done using
-.Xr paxctl 1 .
+.Xr paxctl 8 .
 .Pp
 See
 .Xr security 8
@@ -2356,8 +2358,8 @@ on a Shark.
 This enables the On Demand Clock Modulation by software
 on Intel
 .Tn CPUs
-supporting the Thermal Monitor feature (TM). You can
-select the duty cycle with
+supporting the Thermal Monitor feature (TM).
+You can select the duty cycle with
 .Xr sysctl 8 .
 .It Cd options POWERNOW_K8
 Include support for AMD Athlon 64 PowerNow! and Cool`n'Quiet
@@ -2425,8 +2427,8 @@ capable
 This enables the On Demand Clock Modulation by software
 on Intel
 .Tn CPUs
-supporting the Thermal Monitor feature (TM). You can
-select the duty cycle with
+supporting the Thermal Monitor feature (TM).
+You can select the duty cycle with
 .Xr sysctl 8 .
 .It Cd options POWERNOW_K7
 Include support for the AMD
@@ -2720,7 +2722,6 @@ bolded
 .Xr gettimeofday 2 ,
 .Xr i386_get_mtrr 2 ,
 .Xr i386_iopl 2 ,
-.Xr in_getifa 9 ,
 .Xr msgctl 2 ,
 .Xr msgget 2 ,
 .Xr msgrcv 2 ,
@@ -2771,7 +2772,8 @@ bolded
 .Xr ntpd 8 ,
 .Xr quotaon 8 ,
 .Xr rpc.rquotad 8 ,
-.Xr sysctl 8
+.Xr sysctl 8 ,
+.Xr in_getifa 9
 .Sh HISTORY
 The
 .Nm
