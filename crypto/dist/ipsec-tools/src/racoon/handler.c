@@ -1,4 +1,4 @@
-/*	$NetBSD: handler.c,v 1.10 2007/02/20 09:11:14 vanhu Exp $	*/
+/*	$NetBSD: handler.c,v 1.11 2007/03/21 14:29:22 vanhu Exp $	*/
 
 /* Id: handler.c,v 1.28 2006/05/26 12:17:29 manubsd Exp */
 
@@ -292,8 +292,7 @@ delph1(iph1)
 #endif
 
 #ifdef ENABLE_DPD
-	if (iph1->dpd_r_u != NULL)
-		SCHED_KILL(iph1->dpd_r_u);
+	SCHED_KILL(iph1->dpd_r_u);
 #endif
 
 	if (iph1->remote) {
