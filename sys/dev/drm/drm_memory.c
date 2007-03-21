@@ -120,6 +120,47 @@ void *drm_ioremap(drm_device_t *dev, drm_local_map_t *map)
 			return dev->pci_map_data[i].vaddr;
 		}
 	}
+	/* failed to find a valid mapping; all hope isn't lost though */
+	for(i = 0; i<DRM_MAX_PCI_RESOURCE; i++) {
+		if (dev->agp_map_data[i].mapped > 0 &&
+		    dev->agp_map_data[i].base == map->offset &&
+		    dev->agp_map_data[i].size >= map->size) {
+			map->bst = dev->pa.pa_memt;
+			map->cnt = &(dev->agp_map_data[i].mapped);
+			map->mapsize = dev->agp_map_data[i].size;
+			dev->agp_map_data[i].mapped++;
+			map->bsh = dev->agp_map_data[i].bsh;
+			return dev->agp_map_data[i].vaddr;
+		}
+		if (dev->agp_map_data[i].mapped == 0) {
+			int rv;
+
+			map->bst = dev->pa.pa_memt;
+			dev->agp_map_data[i].mapped++;
+			dev->agp_map_data[i].size = map->size;
+			dev->agp_map_data[i].flags = BUS_SPACE_MAP_LINEAR;
+			dev->agp_map_data[i].maptype = PCI_MAPREG_TYPE_MEM;
+			map->cnt = &(dev->agp_map_data[i].mapped);
+			map->mapsize = dev->agp_map_data[i].size;
+
+			rv = bus_space_map(map->bst, map->offset,
+				dev->agp_map_data[i].size,
+				dev->agp_map_data[i].flags, &map->bsh);
+			if (rv) {
+				dev->agp_map_data[i].mapped--;
+				DRM_DEBUG("ioremap: failed to map (%d)\n", rv);
+				return NULL;
+			}
+			dev->agp_map_data[i].bsh = map->bsh;
+			dev->agp_map_data[i].vaddr =
+			    bus_space_vaddr(map->bst, map->bsh);
+			DRM_DEBUG("ioremap agp mem found: %p\n",
+				dev->agp_map_data[i].vaddr);
+			return dev->agp_map_data[i].vaddr;
+		}
+	}
+
+	/* now we can give up... */
 	DRM_DEBUG("drm_ioremap failed: offset=%lx size=%lu\n",
 		  map->offset, map->size);
 	return NULL;
