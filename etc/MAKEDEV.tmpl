@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.84 2007/03/21 03:39:41 dyoung Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.85 2007/03/21 23:07:00 dyoung Exp $
 #
 # Copyright (c) 2003,2007 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1676,14 +1676,19 @@ puffs)
 midevend)
 %MI_DEVICES_END%
 local)
-	if [ -n "$count_nodes" ]; then
 	if [ -f "$0.local" ]; then
 		umask 0
-		sh "$0.local" $opts all
+		if [ -n "$count_nodes" ]; then
+			sh "$0.local" $opts -s all | \
+			while read l; do
+				count_nodes=$((count_nodes + 1))
+			done
+		else
+			sh "$0.local" $opts all
+		fi
 		umask 077
 	else
 		warn "missing $0.local"
-	fi
 	fi
 	;;
 
