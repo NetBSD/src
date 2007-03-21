@@ -1058,7 +1058,7 @@ int drm_mapbufs(DRM_IOCTL_ARGS)
 #elif defined(__NetBSD__) || defined(__OpenBSD__)
 	struct vnode *vn;
 	voff_t foff;
-	vsize_t size;
+	vsize_t size, rsize;
 	vaddr_t vaddr;
 #endif /* __NetBSD__ || __OpenBSD__ */
 
@@ -1110,9 +1110,11 @@ int drm_mapbufs(DRM_IOCTL_ARGS)
 	    VM_PROT_ALL, MAP_SHARED, SLIST_FIRST(&kdev->si_hlist), foff );
 #endif
 #elif defined(__NetBSD__) || defined(__OpenBSD__)
-	vaddr = round_page((vaddr_t)vms->vm_daddr + MAXDSIZ);
-	DRM_DEBUG("mmap %lx\n", vaddr);
-	retcode = uvm_mmap(&vms->vm_map, &vaddr, size,
+	vaddr = p->l_proc->p_emul->e_vm_default_addr(p->l_proc,
+	    (vaddr_t)vms->vm_daddr, size);
+	rsize = round_page(size);
+	DRM_DEBUG("mmap %lx/%ld\n", vaddr, rsize);
+	retcode = uvm_mmap(&vms->vm_map, &vaddr, rsize,
 	    UVM_PROT_READ | UVM_PROT_WRITE, UVM_PROT_ALL, MAP_SHARED,
 	    &vn->v_uobj, foff, p->l_proc->p_rlimit[RLIMIT_MEMLOCK].rlim_cur);
 #endif /* __NetBSD__ || __OpenBSD */
