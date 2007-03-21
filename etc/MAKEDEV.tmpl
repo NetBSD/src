@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.83 2007/03/11 16:08:11 apb Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.84 2007/03/21 03:39:41 dyoung Exp $
 #
 # Copyright (c) 2003,2007 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -358,7 +358,7 @@ setup()
 		# Options that should not be passed through to
 		# MAKEDEV.local are not added to $opts.
 		case ${ch} in
-		M)	
+		M)
 			# "-M" sets do_create_mfs;
 			# "-M -M" also sets do_redirect
 			do_redirect=$do_create_mfs
@@ -802,7 +802,7 @@ xbd*)
 
 dk*)
 	name=dk; unit=${i#dk}; blk=%dk_blk%; chr=%dk_chr%
-	minor=0 
+	minor=0
 	while [ $minor -le ${i#dk} ]
 	do
 		mkdev r$name$minor c $chr $minor 0640 $g_operator
@@ -810,7 +810,7 @@ dk*)
 		minor=$(($minor + 1))
 	done
 	;;
-	
+
 ttyCY*)
 	name=tyCY; chr=%cy_chr%; off=32
 	unit=${i#t${name}}
@@ -1821,10 +1821,10 @@ create_mfs_dev()
 	fs_size=$((8192 + 2 * 8192 + 4096 + ninode*(128+18) + 8192))
 	fs_size=$((fs_size/512))
 	[ "$fs_size" -lt 80 ] && fs_size=80
-	
+
 	dev_mountpoint=${PWD:-/dev}
 	mount_mfs -b 4096 -f 512 -s $fs_size -n $ninode -p 07555 -o union swap $dev_mountpoint
-      
+
 	cd $dev_mountpoint
 	if $do_redirect; then
 		# Redirect stdout and stderr to console
@@ -1833,7 +1833,7 @@ create_mfs_dev()
 		rm temp_console
 	fi
 	echo "Created mfs $dev_mountpoint ($fs_size blocks, $ninode inodes)"
-}       
+}
 
 #
 # MAIN: If MAKEDEV_AS_LIBRARY is set, then we are being used as a
