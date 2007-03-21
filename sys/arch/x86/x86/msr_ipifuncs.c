@@ -1,4 +1,4 @@
-/* $NetBSD: msr_ipifuncs.c,v 1.4 2007/03/21 18:20:59 xtraeme Exp $ */
+/* $NetBSD: msr_ipifuncs.c,v 1.5 2007/03/21 18:28:26 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msr_ipifuncs.c,v 1.4 2007/03/21 18:20:59 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msr_ipifuncs.c,v 1.5 2007/03/21 18:28:26 xtraeme Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -67,7 +67,7 @@ static volatile int msr_runcount;
 
 /*
  * This function will write the value of msr_setvalue in the MSR msr_type
- * and if a mask is provided, the value will be masked with msr_setmask,
+ * and if a mask is provided, the value will be masked with msr_setmask.
  */
 void
 msr_write_ipi(struct cpu_info *ci)
