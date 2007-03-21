@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.345 2007/03/12 14:35:22 liamjfoy Exp $
+.\"	$NetBSD: options.4,v 1.346 2007/03/21 00:56:31 xtraeme Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -30,7 +30,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd March 3, 2007
+.Dd March 21, 2007
 .Os
 .Dt OPTIONS 4
 .Sh NAME
@@ -2352,6 +2352,13 @@ on a Shark.
 .El
 .Ss amd64-specific Options
 .Bl -ohang
+.It Cd options INTEL_ONDEMAND_CLOCKMOD
+This enables the On Demand Clock Modulation by software
+on Intel
+.Tn CPUs
+supporting the Thermal Monitor feature (TM). You can
+select the duty cycle with
+.Xr sysctl 8 .
 .It Cd options POWERNOW_K8
 Include support for AMD Athlon 64 PowerNow! and Cool`n'Quiet
 Technology, used to change the cpu and voltage frequency
@@ -2414,6 +2421,13 @@ Allow any user to change the frequency of an
 .Tn Enhanced SpeedStep Technology
 capable
 .Tn CPU .
+.It Cd options INTEL_ONDEMAND_CLOCKMOD
+This enables the On Demand Clock Modulation by software
+on Intel
+.Tn CPUs
+supporting the Thermal Monitor feature (TM). You can
+select the duty cycle with
+.Xr sysctl 8 .
 .It Cd options POWERNOW_K7
 Include support for the AMD
 .Tn PowerNow! Technology
