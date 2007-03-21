@@ -1,4 +1,4 @@
-.\" $NetBSD: pthread_attr.3,v 1.4 2005/03/21 17:55:07 kleink Exp $
+.\" $NetBSD: pthread_attr.3,v 1.5 2007/03/21 18:53:32 ad Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -53,7 +53,7 @@
 .\" EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\" $FreeBSD: src/lib/libpthread/man/pthread_attr.3,v 1.11 2002/09/16 19:29:28 mini Exp $
-.Dd January 30, 2003
+.Dd March 21, 2007
 .Dt PTHREAD_ATTR 3
 .Os
 .Sh NAME
@@ -142,6 +142,22 @@ The
 .Fn pthread_attr_get*
 functions copy the value of the attribute that corresponds to each function name
 to the location pointed to by the second function parameter.
+.Pp
+The attribute parameters for the
+.Fn pthread_attr_setdetachstate
+and
+.Fn pthread_attr_getdetachstate
+are mutually exclusive and must be one of:
+.Bl -tag -width xxxxxxxx
+.It PTHREAD_CREATE_JOINABLE
+The threads must explicitely be waited for using the
+.Fn pthread_join
+function once they exit for their status to be received and their resources
+to be freed.  This is the default.
+.It PTHREAD_CREATE_DETACHED
+The thread's resources will automatically be freed once the thread exits,
+and the thread will not be joined.
+.El
 .Sh RETURN VALUES
 If successful, these functions return 0.
 Otherwise, an error number is returned to indicate the error.
@@ -223,7 +239,8 @@ is invalid.
 .\" .Fa contentionscope .
 .\" .El
 .Sh SEE ALSO
-.Xr pthread_create 3
+.Xr pthread_create 3 ,
+.Xr pthread_join 3
 .Sh STANDARDS
 .Fn pthread_attr_init ,
 .Fn pthread_attr_destroy ,
