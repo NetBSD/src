@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.106 2007/02/16 02:53:43 ad Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.106.6.1 2007/03/21 20:10:20 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.106 2007/02/16 02:53:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.106.6.1 2007/03/21 20:10:20 ad Exp $");
 
 #include "opt_ntp.h"
 #include "opt_multiprocessor.h"
@@ -1049,7 +1049,7 @@ void
 startprofclock(struct proc *p)
 {
 
-	LOCK_ASSERT(mutex_owned(&p->p_stmutex));
+	KASSERT(mutex_owned(&p->p_stmutex));
 
 	if ((p->p_stflag & PST_PROFIL) == 0) {
 		p->p_stflag |= PST_PROFIL;
@@ -1069,7 +1069,7 @@ void
 stopprofclock(struct proc *p)
 {
 
-	LOCK_ASSERT(mutex_owned(&p->p_stmutex));
+	KASSERT(mutex_owned(&p->p_stmutex));
 
 	if (p->p_stflag & PST_PROFIL) {
 		p->p_stflag &= ~PST_PROFIL;

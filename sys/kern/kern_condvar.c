@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_condvar.c,v 1.5 2007/02/27 15:07:28 yamt Exp $	*/
+/*	$NetBSD: kern_condvar.c,v 1.5.2.1 2007/03/21 20:10:20 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.5 2007/02/27 15:07:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.5.2.1 2007/03/21 20:10:20 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -130,7 +130,7 @@ cv_unsleep(struct lwp *l)
 	uintptr_t addr;
 
 	KASSERT(l->l_wchan != NULL);
-	LOCK_ASSERT(lwp_locked(l, l->l_sleepq->sq_mutex));
+	KASSERT(lwp_locked(l, l->l_sleepq->sq_mutex));
 
 	addr = (uintptr_t)l->l_wchan;
 	((kcondvar_t *)addr)->cv_waiters--;
@@ -172,7 +172,7 @@ cv_wait(kcondvar_t *cv, kmutex_t *mtx)
 	struct lwp *l = curlwp;
 	sleepq_t *sq;
 
-	LOCK_ASSERT(mutex_owned(mtx));
+	KASSERT(mutex_owned(mtx));
 
 	if (sleepq_dontsleep(l)) {
 		(void)sleepq_abort(mtx, 0);
@@ -200,7 +200,7 @@ cv_wait_sig(kcondvar_t *cv, kmutex_t *mtx)
 	sleepq_t *sq;
 	int error;
 
-	LOCK_ASSERT(mutex_owned(mtx));
+	KASSERT(mutex_owned(mtx));
 
 	if (sleepq_dontsleep(l))
 		return sleepq_abort(mtx, 0);
@@ -227,7 +227,7 @@ cv_timedwait(kcondvar_t *cv, kmutex_t *mtx, int timo)
 	sleepq_t *sq;
 	int error;
 
-	LOCK_ASSERT(mutex_owned(mtx));
+	KASSERT(mutex_owned(mtx));
 
 	if (sleepq_dontsleep(l))
 		return sleepq_abort(mtx, 0);
@@ -256,7 +256,7 @@ cv_timedwait_sig(kcondvar_t *cv, kmutex_t *mtx, int timo)
 	sleepq_t *sq;
 	int error;
 
-	LOCK_ASSERT(mutex_owned(mtx));
+	KASSERT(mutex_owned(mtx));
 
 	if (sleepq_dontsleep(l))
 		return sleepq_abort(mtx, 0);

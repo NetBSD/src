@@ -1,7 +1,7 @@
-/*	$NetBSD: uipc_sem.c,v 1.20 2007/02/09 21:55:32 ad Exp $	*/
+/*	$NetBSD: uipc_sem.c,v 1.20.6.1 2007/03/21 20:10:22 ad Exp $	*/
 
 /*-
- * Copyright (c) 2003 The NetBSD Foundation, Inc.
+ * Copyright (c) 2003, 2006, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_sem.c,v 1.20 2007/02/09 21:55:32 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_sem.c,v 1.20.6.1 2007/03/21 20:10:22 ad Exp $");
 
 #include "opt_posix.h"
 
@@ -149,7 +149,7 @@ static void
 ksem_free(struct ksem *ks)
 {
 
-	LOCK_ASSERT(mutex_owned(&ks->ks_interlock));
+	KASSERT(mutex_owned(&ks->ks_interlock));
 
 	/*
 	 * If the ksem is anonymous (or has been unlinked), then
@@ -175,7 +175,7 @@ static inline void
 ksem_addref(struct ksem *ks)
 {
 
-	LOCK_ASSERT(mutex_owned(&ks->ks_interlock));
+	KASSERT(mutex_owned(&ks->ks_interlock));
 	ks->ks_ref++;
 	KASSERT(ks->ks_ref != 0);	/* XXX KDASSERT */
 }
@@ -184,7 +184,7 @@ static inline void
 ksem_delref(struct ksem *ks)
 {
 
-	LOCK_ASSERT(mutex_owned(&ks->ks_interlock));
+	KASSERT(mutex_owned(&ks->ks_interlock));
 	KASSERT(ks->ks_ref != 0);	/* XXX KDASSERT */
 	if (--ks->ks_ref == 0) {
 		ksem_free(ks);
@@ -252,7 +252,7 @@ ksem_drop_proc(struct ksem_proc *kp, struct ksem *ks)
 {
 	struct ksem_ref *ksr;
 
-	LOCK_ASSERT(mutex_owned(&ks->ks_interlock));
+	KASSERT(mutex_owned(&ks->ks_interlock));
 	LIST_FOREACH(ksr, &kp->kp_ksems, ksr_list) {
 		if (ksr->ksr_ksem == ks) {
 			ksem_delref(ks);
@@ -271,7 +271,7 @@ ksem_perm(struct lwp *l, struct ksem *ks)
 {
 	kauth_cred_t uc;
 
-	LOCK_ASSERT(mutex_owned(&ks->ks_interlock));
+	KASSERT(mutex_owned(&ks->ks_interlock));
 	uc = l->l_cred;
 	if ((kauth_cred_geteuid(uc) == ks->ks_uid && (ks->ks_mode & S_IWUSR) != 0) ||
 	    (kauth_cred_getegid(uc) == ks->ks_gid && (ks->ks_mode & S_IWGRP) != 0) ||
@@ -286,7 +286,7 @@ ksem_lookup_byid(semid_t id)
 {
 	struct ksem *ks;
 
-	LOCK_ASSERT(mutex_owned(&ksem_mutex));
+	KASSERT(mutex_owned(&ksem_mutex));
 	LIST_FOREACH(ks, &ksem_hash[SEM_HASH(id)], ks_hash) {
 		if (ks->ks_id == id)
 			return ks;
@@ -299,7 +299,7 @@ ksem_lookup_byname(const char *name)
 {
 	struct ksem *ks;
 
-	LOCK_ASSERT(mutex_owned(&ksem_mutex));
+	KASSERT(mutex_owned(&ksem_mutex));
 	LIST_FOREACH(ks, &ksem_head, ks_entry) {
 		if (strcmp(ks->ks_name, name) == 0) {
 			mutex_enter(&ks->ks_interlock);
@@ -450,7 +450,7 @@ do_ksem_open(struct lwp *l, const char *semname, int oflag, mode_t mode,
 		 * Verify permissions.  If we can access it, add
 		 * this process's reference.
 		 */
-		LOCK_ASSERT(mutex_owned(&ks->ks_interlock));
+		KASSERT(mutex_owned(&ks->ks_interlock));
 		error = ksem_perm(l, ks);
 		if (error == 0)
 			ksem_addref(ks);
@@ -565,7 +565,7 @@ sys__ksem_unlink(struct lwp *l, void *v, register_t *retval)
 		return (ENOENT);
 	}
 
-	LOCK_ASSERT(mutex_owned(&ks->ks_interlock));
+	KASSERT(mutex_owned(&ks->ks_interlock));
 
 	LIST_REMOVE(ks, ks_entry);
 	cp = ks->ks_name;
@@ -605,7 +605,7 @@ sys__ksem_close(struct lwp *l, void *v, register_t *retval)
 		return (EINVAL);
 	}
 
-	LOCK_ASSERT(mutex_owned(&ks->ks_interlock));
+	KASSERT(mutex_owned(&ks->ks_interlock));
 	if (ks->ks_name == NULL) {
 		mutex_exit(&ks->ks_interlock);
 		rw_exit(&kp->kp_lock);
@@ -639,7 +639,7 @@ sys__ksem_post(struct lwp *l, void *v, register_t *retval)
 	if (ks == NULL)
 		return (EINVAL);
 
-	LOCK_ASSERT(mutex_owned(&ks->ks_interlock));
+	KASSERT(mutex_owned(&ks->ks_interlock));
 	if (ks->ks_value == SEM_VALUE_MAX) {
 		error = EOVERFLOW;
 		goto out;
@@ -670,7 +670,7 @@ ksem_wait(struct lwp *l, semid_t id, int tryflag)
 	if (ks == NULL)
 		return (EINVAL);
 
-	LOCK_ASSERT(mutex_owned(&ks->ks_interlock));
+	KASSERT(mutex_owned(&ks->ks_interlock));
 	ksem_addref(ks);
 	while (ks->ks_value == 0) {
 		ks->ks_waiters++;
@@ -730,7 +730,7 @@ sys__ksem_getvalue(struct lwp *l, void *v, register_t *retval)
 	if (ks == NULL)
 		return (EINVAL);
 
-	LOCK_ASSERT(mutex_owned(&ks->ks_interlock));
+	KASSERT(mutex_owned(&ks->ks_interlock));
 	val = ks->ks_value;
 	mutex_exit(&ks->ks_interlock);
 
@@ -759,7 +759,7 @@ sys__ksem_destroy(struct lwp *l, void *v, register_t *retval)
 		return (EINVAL);
 	}
 
-	LOCK_ASSERT(mutex_owned(&ks->ks_interlock));
+	KASSERT(mutex_owned(&ks->ks_interlock));
 
 	/*
 	 * XXX This misses named semaphores which have been unlink'd,

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_timeout.c,v 1.21 2007/02/22 04:38:02 matt Exp $	*/
+/*	$NetBSD: kern_timeout.c,v 1.21.4.1 2007/03/21 20:10:21 ad Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2006 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_timeout.c,v 1.21 2007/02/22 04:38:02 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_timeout.c,v 1.21.4.1 2007/03/21 20:10:21 ad Exp $");
 
 /*
  * Adapted from OpenBSD: kern_timeout.c,v 1.15 2002/12/08 04:21:07 art Exp,
@@ -194,7 +194,7 @@ callout_barrier(struct callout *c)
 #ifdef MULTIPROCESSOR
 	struct cpu_info *ci, *ci_cur;
 
-	LOCK_ASSERT(mutex_owned(&callout_mutex));
+	KASSERT(mutex_owned(&callout_mutex));
 
 	/*
 	 * The callout may have already been dispatched to run on the

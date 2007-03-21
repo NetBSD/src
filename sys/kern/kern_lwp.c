@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.61.2.2 2007/03/13 17:50:53 ad Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.61.2.3 2007/03/21 20:10:20 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -204,7 +204,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.61.2.2 2007/03/13 17:50:53 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.61.2.3 2007/03/21 20:10:20 ad Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -262,8 +262,8 @@ lwp_suspend(struct lwp *curl, struct lwp *t)
 {
 	int error;
 
-	LOCK_ASSERT(mutex_owned(&t->l_proc->p_smutex));
-	LOCK_ASSERT(lwp_locked(t, NULL));
+	KASSERT(mutex_owned(&t->l_proc->p_smutex));
+	KASSERT(lwp_locked(t, NULL));
 
 	KASSERT(curl != t || curl->l_stat == LSONPROC);
 
@@ -338,8 +338,8 @@ void
 lwp_continue(struct lwp *l)
 {
 
-	LOCK_ASSERT(mutex_owned(&l->l_proc->p_smutex));
-	LOCK_ASSERT(lwp_locked(l, NULL));
+	KASSERT(mutex_owned(&l->l_proc->p_smutex));
+	KASSERT(lwp_locked(l, NULL));
 
 	DPRINTF(("lwp_continue of %d.%d (%s), state %d, wchan %p\n",
 	    l->l_proc->p_pid, l->l_lid, l->l_proc->p_comm, l->l_stat,
@@ -378,7 +378,7 @@ lwp_wait1(struct lwp *l, lwpid_t lid, lwpid_t *departed, int flags)
 	DPRINTF(("lwp_wait1: %d.%d waiting for %d.\n",
 	    p->p_pid, l->l_lid, lid));
 
-	LOCK_ASSERT(mutex_owned(&p->p_smutex));
+	KASSERT(mutex_owned(&p->p_smutex));
 
 	/*
 	 * We try to check for deadlock:
@@ -812,7 +812,7 @@ proc_representative_lwp(struct proc *p, int *nrlwps, int locking)
 	int cnt;
 
 	if (locking) {
-		LOCK_ASSERT(mutex_owned(&p->p_smutex));
+		KASSERT(mutex_owned(&p->p_smutex));
 	}
 
 	/* Trivial case: only one LWP */
@@ -913,7 +913,7 @@ lwp_find(struct proc *p, int id)
 {
 	struct lwp *l;
 
-	LOCK_ASSERT(mutex_owned(&p->p_smutex));
+	KASSERT(mutex_owned(&p->p_smutex));
 
 	LIST_FOREACH(l, &p->p_lwps, l_sibling) {
 		if (l->l_lid == id)
@@ -1012,7 +1012,7 @@ void
 lwp_setlock(struct lwp *l, kmutex_t *new)
 {
 
-	LOCK_ASSERT(mutex_owned(l->l_mutex));
+	KASSERT(mutex_owned(l->l_mutex));
 
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	mb_write();
@@ -1031,7 +1031,7 @@ lwp_unlock_to(struct lwp *l, kmutex_t *new)
 {
 	kmutex_t *old;
 
-	LOCK_ASSERT(mutex_owned(l->l_mutex));
+	KASSERT(mutex_owned(l->l_mutex));
 
 	old = l->l_mutex;
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
@@ -1054,7 +1054,7 @@ lwp_relock(struct lwp *l, kmutex_t *new)
 	kmutex_t *old;
 #endif
 
-	LOCK_ASSERT(mutex_owned(l->l_mutex));
+	KASSERT(mutex_owned(l->l_mutex));
 
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	old = l->l_mutex;
@@ -1165,7 +1165,7 @@ lwp_userret(struct lwp *l)
 void
 lwp_need_userret(struct lwp *l)
 {
-	LOCK_ASSERT(lwp_locked(l, NULL));
+	KASSERT(lwp_locked(l, NULL));
 
 	/*
 	 * Since the tests in lwp_userret() are done unlocked, make sure
@@ -1184,7 +1184,7 @@ void
 lwp_addref(struct lwp *l)
 {
 
-	LOCK_ASSERT(mutex_owned(&l->l_proc->p_smutex));
+	KASSERT(mutex_owned(&l->l_proc->p_smutex));
 	KASSERT(l->l_stat != LSZOMB);
 	KASSERT(l->l_refcnt != 0);
 
@@ -1214,7 +1214,7 @@ lwp_drainrefs(struct lwp *l)
 {
 	struct proc *p = l->l_proc;
 
-	LOCK_ASSERT(mutex_owned(&p->p_smutex));
+	KASSERT(mutex_owned(&p->p_smutex));
 	KASSERT(l->l_refcnt != 0);
 
 	l->l_refcnt--;

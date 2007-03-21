@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.128.2.2 2007/03/13 17:50:58 ad Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.128.2.3 2007/03/21 20:10:22 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000, 2002, 2007 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.128.2.2 2007/03/13 17:50:58 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.128.2.3 2007/03/21 20:10:22 ad Exp $");
 
 #include "opt_pool.h"
 #include "opt_poollog.h"
@@ -1170,13 +1170,6 @@ pool_do_put(struct pool *pp, void *v, struct pool_pagelist *pq)
 		pr_printlog(pp, NULL, printf);
 		panic("pool_put: %s: page header missing", pp->pr_wchan);
 	}
-
-#ifdef LOCKDEBUG
-	/*
-	 * Check if we're freeing a locked simple lock.
-	 */
-	simple_lock_freecheck(pi, (char *)pi + pp->pr_size);
-#endif
 
 	/*
 	 * Return to item list.

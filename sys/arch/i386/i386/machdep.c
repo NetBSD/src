@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.601 2007/03/07 21:43:43 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.601.2.1 2007/03/21 20:10:18 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.601 2007/03/07 21:43:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.601.2.1 2007/03/21 20:10:18 ad Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -771,7 +771,7 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
 	struct trapframe *tf = l->l_md.md_regs;
 
-	LOCK_ASSERT(mutex_owned(&p->p_smutex));
+	KASSERT(mutex_owned(&p->p_smutex));
 
 	fp--;
 
@@ -828,7 +828,7 @@ void
 sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 {
 
-	LOCK_ASSERT(mutex_owned(&curproc->p_smutex));
+	KASSERT(mutex_owned(&curproc->p_smutex));
 
 #ifdef COMPAT_16
 	if (curproc->p_sigacts->sa_sigdesc[ksi->ksi_signo].sd_vers < 2)

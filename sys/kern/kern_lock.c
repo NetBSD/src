@@ -1,7 +1,7 @@
-/*	$NetBSD: kern_lock.c,v 1.110.2.1 2007/03/13 17:50:52 ad Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.110.2.2 2007/03/21 20:10:20 ad Exp $	*/
 
 /*-
- * Copyright (c) 1999, 2000, 2006 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2000, 2006, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.110.2.1 2007/03/13 17:50:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.110.2.2 2007/03/21 20:10:20 ad Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_ddb.h"
@@ -140,21 +140,6 @@ int kernel_lock_id;
 #else
 #define COUNT(lkp, p, cpu_id, x)
 #endif /* LOCKDEBUG || DIAGNOSTIC */ /* } */
-
-#ifdef DDB /* { */
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
-int simple_lock_debugger = 1;	/* more serious on MP */
-#else
-int simple_lock_debugger = 0;
-#endif
-#define	SLOCK_DEBUGGER()	if (simple_lock_debugger && db_onpanic) Debugger()
-#define	SLOCK_TRACE()							\
-	db_stack_trace_print((db_expr_t)__builtin_frame_address(0),	\
-	    true, 65535, "", lock_printf);
-#else
-#define	SLOCK_DEBUGGER()	/* nothing */
-#define	SLOCK_TRACE()		/* nothing */
-#endif /* } */
 
 #define	RETURN_ADDRESS		((uintptr_t)__builtin_return_address(0))
 
@@ -372,28 +357,6 @@ lockstatus(struct lock *lkp)
 	mutex_exit(__UNVOLATILE(&lkp->lk_interlock));
 	return (lock_type);
 }
-
-/*
- * Locks and IPLs (interrupt priority levels):
- *
- * Locks which may be taken from interrupt context must be handled
- * very carefully; you must spl to the highest IPL where the lock
- * is needed before acquiring the lock.
- *
- * In addition, the lock-debugging hooks themselves need to use locks!
- *
- * A raw __cpu_simple_lock may be used from interrupts are long as it
- * is acquired and held at a single IPL.
- *
- * A simple_lock (which is a __cpu_simple_lock wrapped with some
- * debugging hooks) may be used at or below spllock(), which is
- * typically at or just below splhigh() (i.e. blocks everything
- * but certain machine-dependent extremely high priority interrupts).
- *
- * Some platforms may have interrupts of higher priority than splsched(),
- * including hard serial interrupts, inter-processor interrupts, and
- * kernel debugger traps.
- */
 
 /*
  * XXX XXX kludge around another kludge..
@@ -793,366 +756,6 @@ lockmgr_printinfo(volatile struct lock *lkp)
 		printf(" with %d pending", lkp->lk_waitcount);
 }
 
-#if defined(LOCKDEBUG) /* { */
-_TAILQ_HEAD(, struct simplelock, volatile) simplelock_list =
-    TAILQ_HEAD_INITIALIZER(simplelock_list);
-
-#if defined(MULTIPROCESSOR) /* { */
-struct simplelock simplelock_list_slock = SIMPLELOCK_INITIALIZER;
-
-#define	SLOCK_LIST_LOCK()						\
-	__cpu_simple_lock(&simplelock_list_slock.lock_data)
-
-#define	SLOCK_LIST_UNLOCK()						\
-	__cpu_simple_unlock(&simplelock_list_slock.lock_data)
-
-#define	SLOCK_COUNT(x)							\
-	curcpu()->ci_simple_locks += (x)
-#else
-u_long simple_locks;
-
-#define	SLOCK_LIST_LOCK()	/* nothing */
-
-#define	SLOCK_LIST_UNLOCK()	/* nothing */
-
-#define	SLOCK_COUNT(x)		simple_locks += (x)
-#endif /* MULTIPROCESSOR */ /* } */
-
-#ifdef MULTIPROCESSOR
-#define SLOCK_MP()		lock_printf("on CPU %ld\n", 		\
-				    (u_long) cpu_number())
-#else
-#define SLOCK_MP()		/* nothing */
-#endif
-
-#define	SLOCK_WHERE(str, alp, id, l)					\
-do {									\
-	lock_printf("\n");						\
-	lock_printf(str);						\
-	lock_printf("lock: %p, currently at: %s:%d\n", (alp), (id), (l)); \
-	SLOCK_MP();							\
-	if ((alp)->lock_file != NULL)					\
-		lock_printf("last locked: %s:%d\n", (alp)->lock_file,	\
-		    (alp)->lock_line);					\
-	if ((alp)->unlock_file != NULL)					\
-		lock_printf("last unlocked: %s:%d\n", (alp)->unlock_file, \
-		    (alp)->unlock_line);				\
-	SLOCK_TRACE()							\
-	SLOCK_DEBUGGER();						\
-} while (/*CONSTCOND*/0)
-
-/*
- * Simple lock functions so that the debugger can see from whence
- * they are being called.
- */
-void
-simple_lock_init(volatile struct simplelock *alp)
-{
-
-#if defined(MULTIPROCESSOR) /* { */
-	__cpu_simple_lock_init(&alp->lock_data);
-#else
-	alp->lock_data = __SIMPLELOCK_UNLOCKED;
-#endif /* } */
-	alp->lock_file = NULL;
-	alp->lock_line = 0;
-	alp->unlock_file = NULL;
-	alp->unlock_line = 0;
-	alp->lock_holder = LK_NOCPU;
-}
-
-void
-_simple_lock(volatile struct simplelock *alp, const char *id, int l)
-{
-	cpuid_t cpu_num = cpu_number();
-	int s;
-
-	s = spllock();
-
-	/*
-	 * MULTIPROCESSOR case: This is `safe' since if it's not us, we
-	 * don't take any action, and just fall into the normal spin case.
-	 */
-	if (alp->lock_data == __SIMPLELOCK_LOCKED) {
-#if defined(MULTIPROCESSOR) /* { */
-		if (alp->lock_holder == cpu_num) {
-			SLOCK_WHERE("simple_lock: locking against myself\n",
-			    alp, id, l);
-			goto out;
-		}
-#else
-		SLOCK_WHERE("simple_lock: lock held\n", alp, id, l);
-		goto out;
-#endif /* MULTIPROCESSOR */ /* } */
-	}
-
-#if defined(MULTIPROCESSOR) /* { */
-	/* Acquire the lock before modifying any fields. */
-	splx(s);
-	__cpu_simple_lock(&alp->lock_data);
-	s = spllock();
-#else
-	alp->lock_data = __SIMPLELOCK_LOCKED;
-#endif /* } */
-
-	if (alp->lock_holder != LK_NOCPU) {
-		SLOCK_WHERE("simple_lock: uninitialized lock\n",
-		    alp, id, l);
-	}
-	alp->lock_file = id;
-	alp->lock_line = l;
-	alp->lock_holder = cpu_num;
-
-	SLOCK_LIST_LOCK();
-	TAILQ_INSERT_TAIL(&simplelock_list, alp, list);
-	SLOCK_LIST_UNLOCK();
-
-	SLOCK_COUNT(1);
-
- out:
-	splx(s);
-}
-
-int
-_simple_lock_held(volatile struct simplelock *alp)
-{
-#if defined(MULTIPROCESSOR) || defined(DIAGNOSTIC)
-	cpuid_t cpu_num = cpu_number();
-#endif
-	int s, locked = 0;
-
-	s = spllock();
-
-#if defined(MULTIPROCESSOR)
-	if (__cpu_simple_lock_try(&alp->lock_data) == 0)
-		locked = (alp->lock_holder == cpu_num);
-	else
-		__cpu_simple_unlock(&alp->lock_data);
-#else
-	if (alp->lock_data == __SIMPLELOCK_LOCKED) {
-		locked = 1;
-		KASSERT(alp->lock_holder == cpu_num);
-	}
-#endif
-
-	splx(s);
-
-	return (locked);
-}
-
-int
-_simple_lock_try(volatile struct simplelock *alp, const char *id, int l)
-{
-	cpuid_t cpu_num = cpu_number();
-	int s, rv = 0;
-
-	s = spllock();
-
-	/*
-	 * MULTIPROCESSOR case: This is `safe' since if it's not us, we
-	 * don't take any action.
-	 */
-#if defined(MULTIPROCESSOR) /* { */
-	if ((rv = __cpu_simple_lock_try(&alp->lock_data)) == 0) {
-		if (alp->lock_holder == cpu_num)
-			SLOCK_WHERE("simple_lock_try: locking against myself\n",
-			    alp, id, l);
-		goto out;
-	}
-#else
-	if (alp->lock_data == __SIMPLELOCK_LOCKED) {
-		SLOCK_WHERE("simple_lock_try: lock held\n", alp, id, l);
-		goto out;
-	}
-	alp->lock_data = __SIMPLELOCK_LOCKED;
-#endif /* MULTIPROCESSOR */ /* } */
-
-	/*
-	 * At this point, we have acquired the lock.
-	 */
-
-	rv = 1;
-
-	alp->lock_file = id;
-	alp->lock_line = l;
-	alp->lock_holder = cpu_num;
-
-	SLOCK_LIST_LOCK();
-	TAILQ_INSERT_TAIL(&simplelock_list, alp, list);
-	SLOCK_LIST_UNLOCK();
-
-	SLOCK_COUNT(1);
-
- out:
-	splx(s);
-	return (rv);
-}
-
-void
-_simple_unlock(volatile struct simplelock *alp, const char *id, int l)
-{
-	int s;
-
-	s = spllock();
-
-	/*
-	 * MULTIPROCESSOR case: This is `safe' because we think we hold
-	 * the lock, and if we don't, we don't take any action.
-	 */
-	if (alp->lock_data == __SIMPLELOCK_UNLOCKED) {
-		SLOCK_WHERE("simple_unlock: lock not held\n",
-		    alp, id, l);
-		goto out;
-	}
-
-	SLOCK_LIST_LOCK();
-	TAILQ_REMOVE(&simplelock_list, alp, list);
-	SLOCK_LIST_UNLOCK();
-
-	SLOCK_COUNT(-1);
-
-	alp->list.tqe_next = NULL;	/* sanity */
-	alp->list.tqe_prev = NULL;	/* sanity */
-
-	alp->unlock_file = id;
-	alp->unlock_line = l;
-
-#if defined(MULTIPROCESSOR) /* { */
-	alp->lock_holder = LK_NOCPU;
-	/* Now that we've modified all fields, release the lock. */
-	__cpu_simple_unlock(&alp->lock_data);
-#else
-	alp->lock_data = __SIMPLELOCK_UNLOCKED;
-	KASSERT(alp->lock_holder == cpu_number());
-	alp->lock_holder = LK_NOCPU;
-#endif /* } */
-
- out:
-	splx(s);
-}
-
-void
-simple_lock_dump(void)
-{
-	volatile struct simplelock *alp;
-	int s;
-
-	s = spllock();
-	SLOCK_LIST_LOCK();
-	lock_printf("all simple locks:\n");
-	TAILQ_FOREACH(alp, &simplelock_list, list) {
-		lock_printf("%p CPU %lu %s:%d\n", alp, alp->lock_holder,
-		    alp->lock_file, alp->lock_line);
-	}
-	SLOCK_LIST_UNLOCK();
-	splx(s);
-}
-
-void
-simple_lock_freecheck(void *start, void *end)
-{
-	volatile struct simplelock *alp;
-	int s;
-
-	s = spllock();
-	SLOCK_LIST_LOCK();
-	TAILQ_FOREACH(alp, &simplelock_list, list) {
-		if ((volatile void *)alp >= start &&
-		    (volatile void *)alp < end) {
-			lock_printf("freeing simple_lock %p CPU %lu %s:%d\n",
-			    alp, alp->lock_holder, alp->lock_file,
-			    alp->lock_line);
-			SLOCK_DEBUGGER();
-		}
-	}
-	SLOCK_LIST_UNLOCK();
-	splx(s);
-}
-
-/*
- * We must be holding exactly one lock: the sched_lock.
- */
-
-void
-simple_lock_switchcheck(void)
-{
-
-	simple_lock_only_held(NULL, "switching");
-}
-
-/*
- * Drop into the debugger if lp isn't the only lock held.
- * lp may be NULL.
- */
-void
-simple_lock_only_held(volatile struct simplelock *lp, const char *where)
-{
-	volatile struct simplelock *alp;
-	cpuid_t cpu_num = cpu_number();
-	int s;
-
-	if (lp) {
-		LOCK_ASSERT(simple_lock_held(lp));
-	}
-	s = spllock();
-	SLOCK_LIST_LOCK();
-	TAILQ_FOREACH(alp, &simplelock_list, list) {
-		if (alp == lp)
-			continue;
-		if (alp->lock_holder == cpu_num)
-			break;
-	}
-	SLOCK_LIST_UNLOCK();
-	splx(s);
-
-	if (alp != NULL) {
-		lock_printf("\n%s with held simple_lock %p "
-		    "CPU %lu %s:%d\n",
-		    where, alp, alp->lock_holder, alp->lock_file,
-		    alp->lock_line);
-		SLOCK_TRACE();
-		SLOCK_DEBUGGER();
-	}
-}
-
-/*
- * Set to 1 by simple_lock_assert_*().
- * Can be cleared from ddb to avoid a panic.
- */
-int slock_assert_will_panic;
-
-/*
- * If the lock isn't held, print a traceback, optionally drop into the
- *  debugger, then panic.
- * The panic can be avoided by clearing slock_assert_with_panic from the
- *  debugger.
- */
-void
-_simple_lock_assert_locked(volatile struct simplelock *alp,
-    const char *lockname, const char *id, int l)
-{
-	if (simple_lock_held(alp) == 0) {
-		slock_assert_will_panic = 1;
-		lock_printf("%s lock not held\n", lockname);
-		SLOCK_WHERE("lock not held", alp, id, l);
-		if (slock_assert_will_panic)
-			panic("%s: not locked", lockname);
-	}
-}
-
-void
-_simple_lock_assert_unlocked(volatile struct simplelock *alp,
-    const char *lockname, const char *id, int l)
-{
-	if (simple_lock_held(alp)) {
-		slock_assert_will_panic = 1;
-		lock_printf("%s lock held\n", lockname);
-		SLOCK_WHERE("lock held", alp, id, l);
-		if (slock_assert_will_panic)
-			panic("%s: locked", lockname);
-	}
-}
-
 void
 assert_sleepable(struct simplelock *interlock, const char *msg)
 {
@@ -1160,10 +763,7 @@ assert_sleepable(struct simplelock *interlock, const char *msg)
 	if (curlwp == NULL) {
 		panic("assert_sleepable: NULL curlwp");
 	}
-	simple_lock_only_held(interlock, msg);
 }
-
-#endif /* LOCKDEBUG */ /* } */
 
 #if defined(MULTIPROCESSOR)
 
