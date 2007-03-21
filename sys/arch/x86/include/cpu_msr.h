@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_msr.h,v 1.2 2007/03/21 06:36:42 xtraeme Exp $ */
+/* $NetBSD: cpu_msr.h,v 1.3 2007/03/21 21:56:52 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -40,8 +40,6 @@
 #define _X86_CPU_MSR_H
 
 #include <sys/param.h>
-#include <sys/mutex.h>
-#include <machine/intrdefs.h>
 #include <machine/cpu.h>
 
 #ifdef _KERNEL
