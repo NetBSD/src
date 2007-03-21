@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_workqueue.c,v 1.12 2007/02/27 15:07:29 yamt Exp $	*/
+/*	$NetBSD: subr_workqueue.c,v 1.12.2.1 2007/03/21 19:59:18 ad Exp $	*/
 
 /*-
  * Copyright (c)2002, 2005 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_workqueue.c,v 1.12 2007/02/27 15:07:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_workqueue.c,v 1.12.2.1 2007/03/21 19:59:18 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -231,8 +231,7 @@ workqueue_enqueue(struct workqueue *wq, struct work *wk)
 	struct workqueue_queue *q = &wq->wq_queue;
 
 	mutex_enter(&q->q_mutex);
-	if (SIMPLEQ_EMPTY(&q->q_queue))
-		cv_signal(&q->q_cv);
 	SIMPLEQ_INSERT_TAIL(&q->q_queue, wk, wk_entry);
+	cv_signal(&q->q_cv);
 	mutex_exit(&q->q_mutex);
 }
