@@ -1,3 +1,8 @@
+2007-03-21  Yvan Vanhullebus  <vanhu@netasq.com>
+	* src/racoon/schedule.h: checks if arg is NULL in SCHED_KILL.
+	* src/racoon/{handler.c|isakmp.c|isakmp_inf.c|pfkey.c}: NULL sched
+	  check is now done in SCHED_KILL.
+	
 2007-03-15  Yvan Vanhullebus  <vanhu@netasq.com>
 	* src/racoon/isakmp.c: Consider a negociation timeout when
 	  retry_counter is <=0 instead of < 0.

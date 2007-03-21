@@ -1,4 +1,4 @@
-/*	$NetBSD: schedule.h,v 1.4 2006/09/09 16:22:10 manu Exp $	*/
+/*	$NetBSD: schedule.h,v 1.4.6.1 2007/03/21 14:29:48 vanhu Exp $	*/
 
 /* Id: schedule.h,v 1.5 2006/05/03 21:53:42 vanhu Exp */
 
@@ -59,8 +59,10 @@ struct sched {
 /* cancel schedule */
 #define SCHED_KILL(s)                                                          \
 do {                                                                           \
-	sched_kill(s);                                                         \
-	s = NULL;                                                              \
+	if(s != NULL){	   														\
+		sched_kill(s);                                                         \
+		s = NULL;                                                              \
+	}\
 } while(0)
 
 /* must be called after it's called from scheduler. */
