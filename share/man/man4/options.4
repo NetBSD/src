@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.347 2007/03/21 07:08:14 wiz Exp $
+.\"	$NetBSD: options.4,v 1.348 2007/03/21 19:29:30 xtraeme Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -2360,7 +2360,10 @@ on Intel
 .Tn CPUs
 supporting the Thermal Monitor feature (TM).
 You can select the duty cycle with
-.Xr sysctl 8 .
+.Xr sysctl 8
+in the node
+.Em machdep.clockmod
+if supported.
 .It Cd options POWERNOW_K8
 Include support for AMD Athlon 64 PowerNow! and Cool`n'Quiet
 Technology, used to change the cpu and voltage frequency
@@ -2429,7 +2432,10 @@ on Intel
 .Tn CPUs
 supporting the Thermal Monitor feature (TM).
 You can select the duty cycle with
-.Xr sysctl 8 .
+.Xr sysctl 8
+in the node
+.Em machdep.clockmod
+if supported.
 .It Cd options POWERNOW_K7
 Include support for the AMD
 .Tn PowerNow! Technology
