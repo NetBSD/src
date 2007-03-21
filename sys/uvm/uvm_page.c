@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.119.4.1 2007/03/13 17:51:57 ad Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.119.4.2 2007/03/21 20:07:58 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.119.4.1 2007/03/13 17:51:57 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.119.4.2 2007/03/21 20:07:58 ad Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -1535,7 +1535,6 @@ uvm_pageidlezero(void)
 	int free_list, firstbucket;
 	static int nextbucket;
 
-	KERNEL_LOCK(1, NULL);
 	mutex_enter(&uvm_fpageqlock);
 	firstbucket = nextbucket;
 	do {
@@ -1557,7 +1556,6 @@ uvm_pageidlezero(void)
 				    pg, pageq);
 				uvmexp.free--;
 				mutex_exit(&uvm_fpageqlock);
-				KERNEL_UNLOCK_LAST(NULL);
 #ifdef PMAP_PAGEIDLEZERO
 				if (!PMAP_PAGEIDLEZERO(VM_PAGE_TO_PHYS(pg))) {
 
@@ -1568,7 +1566,6 @@ uvm_pageidlezero(void)
 					 * process now ready to run.
 					 */
 
-					KERNEL_LOCK(1, NULL);
 					mutex_enter(&uvm_fpageqlock);
 					TAILQ_INSERT_HEAD(&pgfl->pgfl_buckets[
 					    nextbucket].pgfl_queues[
@@ -1582,7 +1579,6 @@ uvm_pageidlezero(void)
 #endif /* PMAP_PAGEIDLEZERO */
 				pg->flags |= PG_ZERO;
 
-				KERNEL_LOCK(1, NULL);
 				mutex_enter(&uvm_fpageqlock);
 				TAILQ_INSERT_HEAD(&pgfl->pgfl_buckets[
 				    nextbucket].pgfl_queues[PGFL_ZEROS],
@@ -1595,7 +1591,6 @@ uvm_pageidlezero(void)
 	} while (nextbucket != firstbucket);
 quit:
 	mutex_exit(&uvm_fpageqlock);
-	KERNEL_UNLOCK_LAST(NULL);
 }
 
 /*
