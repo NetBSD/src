@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.92 2007/03/11 19:02:04 apb Exp $	*/
+/*	$NetBSD: init.c,v 1.93 2007/03/21 03:51:30 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n"
 #if 0
 static char sccsid[] = "@(#)init.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: init.c,v 1.92 2007/03/11 19:02:04 apb Exp $");
+__RCSID("$NetBSD: init.c,v 1.93 2007/03/21 03:51:30 dyoung Exp $");
 #endif
 #endif /* not lint */
 
@@ -495,11 +495,11 @@ getsecuritylevel(void)
 	len = sizeof curlevel;
 	if (sysctl(name, 2, &curlevel, &len, NULL, 0) == -1) {
 		emergency("cannot get kernel security level: %m");
-		return (-1);
+		return -1;
 	}
-	return (curlevel);
+	return curlevel;
 #else
-	return (-1);
+	return -1;
 #endif
 }
 
@@ -726,7 +726,7 @@ single_user(void)
 			continue;
 		(void)sigaction(SIGTSTP, &satstp, NULL);
 		(void)sigaction(SIGHUP, &sahup, NULL);
-		return (state_func_t) single_user;
+		return (state_func_t)single_user;
 	}
 
 	requested_transition = 0;
@@ -766,7 +766,7 @@ single_user(void)
 				status);
 			(void)sigaction(SIGTSTP, &satstp, NULL);
 			(void)sigaction(SIGHUP, &sahup, NULL);
-			return (state_func_t) single_user;
+			return (state_func_t)single_user;
 		}
 	}
 
@@ -774,9 +774,9 @@ single_user(void)
 	(void)sigaction(SIGTSTP, &satstp, NULL);
 	(void)sigaction(SIGHUP, &sahup, NULL);
 #ifndef LETS_GET_SMALL
-	return (state_func_t) runcom;
+	return (state_func_t)runcom;
 #else /* LETS_GET_SMALL */
-	return (state_func_t) single_user;
+	return (state_func_t)single_user;
 #endif /* LETS_GET_SMALL */
 }
 
@@ -872,7 +872,7 @@ runetcrc(int trychroot)
 	if (WEXITSTATUS(status))
 		return (state_func_t)single_user;
 
-	return (state_func_t) read_ttys;
+	return (state_func_t)read_ttys;
 }
 
 /*
@@ -885,8 +885,8 @@ runcom(void)
 
 	/* Run /etc/rc and choose next state depending on the result. */
 	next_step = runetcrc(0);
-	if (next_step != (state_func_t) read_ttys)
-		return (state_func_t) next_step;
+	if (next_step != (state_func_t)read_ttys)
+		return (state_func_t)next_step;
 
 #ifdef CHROOT
 	/*
@@ -896,8 +896,8 @@ runcom(void)
 	 */
 	if (shouldchroot()) {
 		next_step = runetcrc(1);
-		if (next_step != (state_func_t) read_ttys)
-			return (state_func_t) next_step;
+		if (next_step != (state_func_t)read_ttys)
+			return (state_func_t)next_step;
 
 		did_multiuser_chroot = 1;
 	} else {
@@ -917,7 +917,7 @@ runcom(void)
 #ifdef SUPPORT_UTMP
 	logwtmp("~", "reboot", "");
 #endif
-	return (state_func_t) read_ttys;
+	return (state_func_t)read_ttys;
 }
 
 /*
@@ -933,9 +933,9 @@ start_session_db(void)
 		emergency("session database close: %m");
 	if ((session_db = dbopen(NULL, O_RDWR, 0, DB_HASH, NULL)) == 0) {
 		emergency("session database open: %m");
-		return (1);
+		return 1;
 	}
-	return (0);
+	return 0;
 		
 }
 
@@ -1013,15 +1013,15 @@ construct_argv(char *command)
 	static const char separators[] = " \t";
 
 	if (argv == NULL)
-		return (NULL);
+		return NULL;
 
 	if ((argv[argc++] = strtok(command, separators)) == 0) {
 		free(argv);
-		return (NULL);
+		return NULL;
 	}
 	while ((argv[argc++] = strtok(NULL, separators)) != NULL)
 		continue;
-	return (argv);
+	return argv;
 }
 
 /*
@@ -1053,7 +1053,7 @@ new_session(session_t *sprev, int session_index, struct ttyent *typ)
 
 	if ((typ->ty_status & TTY_ON) == 0 || typ->ty_name == NULL ||
 	    typ->ty_getty == NULL)
-		return (NULL);
+		return NULL;
 
 	sp = malloc(sizeof (session_t));
 	if (sp == NULL)
@@ -1069,7 +1069,7 @@ new_session(session_t *sprev, int session_index, struct ttyent *typ)
 
 	if (setupargv(sp, typ) == 0) {
 		free_session(sp);
-		return (NULL);
+		return NULL;
 	}
 
 	sp->se_next = NULL;
@@ -1081,7 +1081,7 @@ new_session(session_t *sprev, int session_index, struct ttyent *typ)
 		sp->se_prev = sprev;
 	}
 
-	return (sp);
+	return sp;
 }
 
 /*
@@ -1097,13 +1097,13 @@ setupargv(session_t *sp, struct ttyent *typ)
 	}
 	(void)asprintf(&sp->se_getty, "%s %s", typ->ty_getty, typ->ty_name);
 	if (!sp->se_getty)
-		return (0);
+		return 0;
 	sp->se_getty_argv = construct_argv(sp->se_getty);
 	if (sp->se_getty_argv == NULL) {
 		warning("can't parse getty for port `%s'", sp->se_device);
 		free(sp->se_getty);
 		sp->se_getty = NULL;
-		return (0);
+		return 0;
 	}
 	if (typ->ty_window) {
 		if (sp->se_window)
@@ -1115,10 +1115,10 @@ setupargv(session_t *sp, struct ttyent *typ)
 			    sp->se_device);
 			free(sp->se_window);
 			sp->se_window = NULL;
-			return (0);
+			return 0;
 		}
 	}
-	return (1);
+	return 1;
 }
 
 /*
@@ -1733,7 +1733,7 @@ createsysctlnode()
 	(void)snprintf(node.sysctl_name, SYSCTL_NAMELEN, "init");
 	if (sysctl(&mib[0], 1, &node, &len, &node, len) == -1) {
 		warning("could not create init node: %m");
-		return (-1);
+		return -1;
 	}
 
 	/*
@@ -1753,10 +1753,10 @@ createsysctlnode()
 	(void)snprintf(node.sysctl_name, SYSCTL_NAMELEN, "root");
 	if (sysctl(&mib[0], 2, NULL, NULL, &node, len) == -1) {
 		warning("could not create init.root node: %m");
-		return (-1);
+		return -1;
 	}
 
-	return (0);
+	return 0;
 }
 
 int
@@ -1788,18 +1788,18 @@ shouldchroot()
 		}
 
 		/* We certainly won't chroot. */
-		return (0);
+		return 0;
 	}
 
 	if (rootdir[len] != '\0' || strlen(rootdir) != len - 1) {
 		warning("init.root is not a string");
-		return (0);
+		return 0;
 	}
 
 	if (strcmp(rootdir, "/") == 0)
-		return (0);
+		return 0;
 
-	return (1);
+	return 1;
 }
 
 #endif /* !LETS_GET_SMALL && CHROOT */
