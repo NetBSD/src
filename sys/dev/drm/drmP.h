@@ -848,6 +848,7 @@ struct drm_device {
 #elif defined(__NetBSD__) || defined(__OpenBSD__)
 	struct pci_attach_args  pa;
 	pci_map_data_t	  pci_map_data[DRM_MAX_PCI_RESOURCE];
+	pci_map_data_t	  agp_map_data[DRM_MAX_PCI_RESOURCE];
 	int		  unit;		/* drm unit number */
 #endif
 	void		  *irqh;	/* Handle from bus_setup_intr      */
