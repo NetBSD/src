@@ -1,4 +1,4 @@
-/* $NetBSD: msr_ipifuncs.c,v 1.3 2007/03/21 06:50:36 xtraeme Exp $ */
+/* $NetBSD: msr_ipifuncs.c,v 1.4 2007/03/21 18:20:59 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msr_ipifuncs.c,v 1.3 2007/03/21 06:50:36 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msr_ipifuncs.c,v 1.4 2007/03/21 18:20:59 xtraeme Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -58,14 +58,6 @@ __KERNEL_RCSID(0, "$NetBSD: msr_ipifuncs.c,v 1.3 2007/03/21 06:50:36 xtraeme Exp
 #include <machine/cpu.h>
 #include <machine/intrdefs.h>
 
-/* #define MSR_CPU_BROADCAST_DEBUG */
-
-#ifdef MSR_CPU_BROADCAST_DEBUG
-#define DPRINTF(x)	do { printf x; } while (/* CONSTCOND */ 0)
-#else
-#define DPRINTF(x)
-#endif
-
 static kmutex_t msr_mtx;
 static volatile uint64_t msr_setvalue;
 static volatile uint64_t msr_setmask;
@@ -76,8 +68,6 @@ static volatile int msr_runcount;
 /*
  * This function will write the value of msr_setvalue in the MSR msr_type
  * and if a mask is provided, the value will be masked with msr_setmask,
- * also will update ci->ci_msr_rvalue with the returned value of the MSR,
- * to avoid another run of msr_read_ipi in the main function.
  */
 void
 msr_write_ipi(struct cpu_info *ci)
@@ -95,9 +85,6 @@ msr_write_ipi(struct cpu_info *ci)
 	/* Write it now */
 	wrmsr(msr_type, msr);
 
-	/* Update our per-cpu variable with the current value of the MSR. */
-	ci->ci_msr_rvalue = rdmsr(msr_type);
-
 	/* This cpu has finished making all tasks, update the counter. */
 	__asm volatile ("lock; incl (%0)" :: "r" (&msr_runcount));
 }
@@ -109,17 +96,9 @@ msr_write_ipi(struct cpu_info *ci)
 void
 msr_cpu_broadcast(struct msr_cpu_broadcast *mcb)
 {
-	CPU_INFO_ITERATOR cii;
-	struct cpu_info *ci;
 
 	if (!mcb->msr_type)
 		panic("msr_type not defined");
-
-	DPRINTF(("%s: mcb->msr_value=%" PRIu64 " mcb->msr_type=%d "
-	    "mcb->msr_mask=%" PRIu64 "\n", __func__,
-	    mcb->msr_value, mcb->msr_type, mcb->msr_mask));
-
-	DPRINTF(("\n%s: ---- START ----\n", __func__));
 
 	/* We only want one CPU at a time sending these IPIs out. */
 	mutex_enter(&msr_mtx);
@@ -138,8 +117,6 @@ msr_cpu_broadcast(struct msr_cpu_broadcast *mcb)
 	 */
 	mb_memory();
 
-	DPRINTF(("%s: before write\n", __func__));
-
 	/* Run the IPI write handler in the CPUs. */
 	msr_write_ipi(curcpu());
 
@@ -148,26 +125,11 @@ msr_cpu_broadcast(struct msr_cpu_broadcast *mcb)
 		x86_broadcast_ipi(X86_IPI_WRITE_MSR);
 #endif
 
-	DPRINTF(("%s: after write\n", __func__));
-	DPRINTF(("%s: before pause\n", __func__));
-	DPRINTF(("%s: msr_runcount=%d ncpu=%d\n", __func__,
-	    msr_runcount, ncpu));
-
-	/* Spin until every CPU has run the handler. */
 	while (msr_runcount < ncpu)
 		x86_pause();
 
-	DPRINTF(("%s: after pause\n", __func__));
-
-	for (CPU_INFO_FOREACH(cii, ci)) {
-		DPRINTF(("%s: ci_msr_rvalue=0x%" PRIu64 "\n",
-		    ci->ci_dev->dv_xname, ci->ci_msr_rvalue));
-	}
-
 	/* We're done, so unlock. */
 	mutex_exit(&msr_mtx);
-
-	DPRINTF(("%s: ----- END -----\n\n", __func__));
 }
 
 /* 
