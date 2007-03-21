@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.279 2007/03/20 18:05:31 drochner Exp $
+#	$NetBSD: files.pci,v 1.280 2007/03/21 20:52:41 macallan Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -751,7 +751,8 @@ attach	joy at pci with joy_pci
 file	dev/pci/joy_pci.c		joy_pci
 
 # ATI Mach64 framebuffer console driver
-device	machfb: wsemuldisplaydev, rasops8, fb, vcons, videomode
+defflag	opt_machfb.h	MACHFB_DEBUG
+device	machfb: wsemuldisplaydev, rasops8, fb, vcons, videomode, edid, drm
 attach	machfb at pci
 file	dev/pci/machfb.c		machfb
 
@@ -767,11 +768,12 @@ file	dev/pci/unichromefb.c		unichromefb needs-flag
 
 # ATI Radeon framebuffer console driver
 # (Note: to enable the BIOS parser, add options RADEON_BIOS_INIT to the config)
-device	radeonfb: wsemuldisplaydev, videomode, rasops32, vcons, splash, iic, i2c_bitbang, ddc_read_edid, edid
+device	radeonfb: wsemuldisplaydev, videomode, rasops32, vcons, splash, iic, i2c_bitbang, ddc_read_edid, edid, drm
 attach	radeonfb at pci
 file	dev/pci/radeonfb.c	radeonfb
 file	dev/pci/radeonfb_i2c.c	radeonfb
 file	dev/pci/radeonfb_bios.c	radeonfb
+defflag opt_radeonfb.h	RADEONFB_DEBUG
 
 # Chips & Technologies 65550 framebuffer console driver
 device	chipsfb: wsemuldisplaydev, rasops8, vcons, videomode
