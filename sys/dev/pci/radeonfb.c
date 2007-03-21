@@ -1,4 +1,4 @@
-/* $NetBSD: radeonfb.c,v 1.13 2007/03/21 20:48:07 macallan Exp $ */
+/* $NetBSD: radeonfb.c,v 1.14 2007/03/21 20:54:30 macallan Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.13 2007/03/21 20:48:07 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.14 2007/03/21 20:54:30 macallan Exp $");
 
 #define RADEONFB_DEFAULT_DEPTH 32
 
@@ -96,6 +96,7 @@ __KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.13 2007/03/21 20:48:07 macallan Exp $
 #include <dev/pci/pcivar.h>
 #include <dev/pci/radeonfbreg.h>
 #include <dev/pci/radeonfbvar.h>
+#include "opt_radeonfb.h"
 
 static int radeonfb_match(struct device *, struct cfdata *, void *);
 static void radeonfb_attach(struct device *, struct device *, void *);
@@ -173,6 +174,8 @@ static void radeonfb_pickres(struct radeonfb_display *, uint16_t *,
     uint16_t *, int);
 static const struct videomode *radeonfb_port_mode(struct radeonfb_softc *, 
     struct radeonfb_port *, int, int);
+
+static int radeonfb_drm_print(void *, const char *);
 
 #ifdef	RADEON_DEBUG
 int	radeon_debug = 1;
@@ -875,6 +878,8 @@ radeonfb_attach(struct device *parent, struct device *dev, void *aux)
 				radeonfb_lvds_callout, dp);
 	}
 
+	config_found_ia(dev, "drm", aux, radeonfb_drm_print);
+
 	return;
 
 error:
@@ -886,6 +891,14 @@ error:
 
 	if (sc->sc_memsz)
 		bus_space_unmap(sc->sc_memt, sc->sc_memh, sc->sc_memsz);
+}
+
+static int
+radeonfb_drm_print(void *aux, const char *pnp)
+{
+	if (pnp)
+		aprint_normal("direct rendering for %s", pnp);
+	return (UNSUPP);
 }
 
 int
