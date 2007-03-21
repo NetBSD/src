@@ -1,6 +1,6 @@
-/*	$NetBSD: pfkey.c,v 1.18.4.1 2007/02/20 09:08:19 vanhu Exp $	*/
+/*	$NetBSD: pfkey.c,v 1.18.4.2 2007/03/21 14:30:08 vanhu Exp $	*/
 
-/* $Id: pfkey.c,v 1.18.4.1 2007/02/20 09:08:19 vanhu Exp $ */
+/* $Id: pfkey.c,v 1.18.4.2 2007/03/21 14:30:08 vanhu Exp $ */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -1281,8 +1281,7 @@ pk_recvupdate(mhp)
 	iph2->ph1->ph2cnt++;
 
 	/* turn off schedule */
-	if (iph2->scr)
-		SCHED_KILL(iph2->scr);
+	SCHED_KILL(iph2->scr);
 
 	/*
 	 * since we are going to reuse the phase2 handler, we need to
