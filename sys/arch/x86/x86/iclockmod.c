@@ -1,4 +1,4 @@
-/*	$NetBSD: iclockmod.c,v 1.3 2007/03/21 04:17:59 xtraeme Exp $ */
+/*	$NetBSD: iclockmod.c,v 1.4 2007/03/21 05:27:49 xtraeme Exp $ */
 /*      $OpenBSD: p4tcc.c,v 1.13 2006/12/20 17:50:40 gwk Exp $ */
 
 /*
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iclockmod.c,v 1.3 2007/03/21 04:17:59 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iclockmod.c,v 1.4 2007/03/21 05:27:49 xtraeme Exp $");
 
 #include "opt_intel_odcm.h"
 
@@ -91,10 +91,6 @@ clockmod_getstate(void)
 {
 	uint64_t msr;
 	int i, val = 0;
-
-	mcb.msr_type = MSR_THERM_CONTROL;
-	if (msr_cpu_broadcast(&mcb, MSR_CPU_BROADCAST_READ))
-		return state[0].level;
 
 	msr = rdmsr(MSR_THERM_CONTROL);
 	msr = (msr >> ODCM_REGOFFSET) & (ODCM_MAXSTATES - 1);
