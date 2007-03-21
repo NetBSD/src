@@ -29,7 +29,7 @@ copyright="\
  * SUCH DAMAGE.
  */
 "
-SCRIPT_ID='$NetBSD: vnode_if.sh,v 1.43 2006/11/30 21:06:29 pooka Exp $'
+SCRIPT_ID='$NetBSD: vnode_if.sh,v 1.43.8.1 2007/03/21 20:09:39 ad Exp $'
 
 # Script to produce VFS front-end sugar.
 #
@@ -249,16 +249,14 @@ __KERNEL_RCSID(0, \"\$NetBSD\$\");
 "
 
 echo '
-/*
- * If we have LKM support, always include the non-inline versions for
- * LKMs.  Otherwise, do it based on the option.
- */
-#include "opt_vnode_lockdebug.h"'
+#include "opt_vnode_lockdebug.h"
+#include "opt_multiprocessor.h"'
 echo '
 #include <sys/param.h>
 #include <sys/mount.h>
 #include <sys/buf.h>
 #include <sys/vnode.h>
+#include <sys/lock.h>
 
 const struct vnodeop_desc vop_default_desc = {
 	0,
@@ -345,7 +343,7 @@ function doit() {
 		if (i < (argc-1)) printf(",\n    ");
 	}
 	printf(")\n");
-	printf("{\n\tstruct %s_args a;\n", name);
+	printf("{\n\tint error;\n\tstruct %s_args a;\n", name);
 	printf("#ifdef VNODE_LOCKDEBUG\n");
 	for (i=0; i<argc; i++) {
 		if (lockstate[i] != -1)
@@ -365,8 +363,11 @@ function doit() {
 			printf("#endif\n");
 		}
 	}
-	printf("\treturn (VCALL(%s%s, VOFFSET(%s), &a));\n}\n",
+	printf("\tKERNEL_LOCK(1, curlwp);\n");
+	printf("\terror = (VCALL(%s%s, VOFFSET(%s), &a));\n",
 		argname[0], arg0special, name);
+	printf("\tKERNEL_UNLOCK_ONE(curlwp);\n");
+	printf("\treturn error;\n}\n");
 }
 BEGIN	{
 	printf("\n/* Special cases: */\n");
