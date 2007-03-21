@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.84 2007/02/22 06:34:45 thorpej Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.84.4.1 2007/03/21 20:16:32 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.84 2007/02/22 06:34:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.84.4.1 2007/03/21 20:16:32 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -282,7 +282,6 @@ namei(struct nameidata *ndp)
 	if (cnp->cn_flags & OPMASK)
 		panic("namei: flags contaminated with nameiops");
 #endif
-	cwdi = cnp->cn_lwp->l_proc->p_cwdi;
 
 	/*
 	 * Get a buffer for the name to be translated, and copy the
@@ -322,6 +321,8 @@ namei(struct nameidata *ndp)
 	/*
 	 * Get starting point for the translation.
 	 */
+	cwdi = cnp->cn_lwp->l_proc->p_cwdi;
+	rw_enter(&cwdi->cwdi_lock, RW_READER);
 	if ((ndp->ni_rootdir = cwdi->cwdi_rdir) == NULL)
 		ndp->ni_rootdir = rootvnode;
 	/*
@@ -334,6 +335,8 @@ namei(struct nameidata *ndp)
 		dp = cwdi->cwdi_cdir;
 		VREF(dp);
 	}
+	rw_exit(&cwdi->cwdi_lock);
+
 	vn_lock(dp, LK_EXCLUSIVE | LK_RETRY);
 	for (;;) {
 		if (!dp->v_mount) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.107.2.1 2007/03/13 16:51:54 ad Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.107.2.2 2007/03/21 20:16:31 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.107.2.1 2007/03/13 16:51:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.107.2.2 2007/03/21 20:16:31 ad Exp $");
 
 #include "opt_kstack.h"
 #include "opt_maxuprc.h"
@@ -383,11 +383,11 @@ proc0_init(void)
 	p->p_cwdi = &cwdi0;
 	cwdi0.cwdi_cmask = cmask;
 	cwdi0.cwdi_refcnt = 1;
-	simple_lock_init(&cwdi0.cwdi_slock);
+	rw_init(&cwdi0.cwdi_lock);
 
 	/* Create the limits structures. */
 	p->p_limit = &limit0;
-	simple_lock_init(&limit0.p_slock);
+	mutex_init(&limit0.p_lock, MUTEX_DEFAULT, IPL_NONE);
 	for (i = 0; i < sizeof(p->p_rlimit)/sizeof(p->p_rlimit[0]); i++)
 		limit0.pl_rlimit[i].rlim_cur =
 		    limit0.pl_rlimit[i].rlim_max = RLIM_INFINITY;
@@ -1331,10 +1331,10 @@ proc_crmod_enter(void)
 			limfree(lim);
 			lim = p->p_limit;
 		}
-		simple_lock(&lim->p_slock);
+		mutex_enter(&lim->p_lock);
 		cn = lim->pl_corename;
 		lim->pl_corename = defcorename;
-		simple_unlock(&lim->p_slock);
+		mutex_exit(&lim->p_lock);
 		if (cn != defcorename)
 			free(cn, M_TEMP);
 	}

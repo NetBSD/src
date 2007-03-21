@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.107.2.1 2007/03/13 17:51:14 ad Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.107.2.2 2007/03/21 20:16:32 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.107.2.1 2007/03/13 17:51:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.107.2.2 2007/03/21 20:16:32 ad Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -866,7 +866,7 @@ void
 nfsrv_slpderef(slp)
 	struct nfssvc_sock *slp;
 {
-	LOCK_ASSERT(!simple_lock_held(&nfsd_slock));
+	KASSERT(!simple_lock_held(&nfsd_slock));
 
 	if (--(slp->ns_sref) == 0 && (slp->ns_flag & SLP_VALID) == 0) {
 		struct file *fp;
@@ -881,7 +881,7 @@ nfsrv_slpderef(slp)
 			slp->ns_fp = NULL;
 			KASSERT(fp != NULL);
 			KASSERT(fp->f_data == slp->ns_so);
-			simple_lock(&fp->f_slock);
+			mutex_enter(&fp->f_lock);
 			FILE_USE(fp);
 			closef(fp, (struct lwp *)0);
 			slp->ns_so = NULL;

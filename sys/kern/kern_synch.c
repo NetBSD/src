@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.186.2.2 2007/03/13 17:50:57 ad Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.186.2.3 2007/03/21 20:16:32 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.186.2.2 2007/03/13 17:50:57 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.186.2.3 2007/03/21 20:16:32 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kstack.h"
@@ -105,7 +105,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.186.2.2 2007/03/13 17:50:57 ad Exp 
 
 #include <machine/cpu.h>
 
-int	lbolt;			/* once a second sleep address */
 int	rrticks;		/* number of hardclock ticks per roundrobin() */
 
 /*
@@ -412,7 +411,7 @@ schedcpu(void *arg)
 	}
 	mutex_exit(&proclist_mutex);
 	uvm_meter();
-	wakeup((void *)&lbolt);
+	cv_broadcast(&lbolt);
 	callout_schedule(&schedcpu_ch, hz);
 }
 
@@ -425,7 +424,7 @@ updatepri(struct lwp *l)
 	struct proc *p = l->l_proc;
 	fixpt_t loadfac;
 
-	LOCK_ASSERT(lwp_locked(l, NULL));
+	KASSERT(lwp_locked(l, NULL));
 	KASSERT(l->l_slptime > 1);
 
 	loadfac = loadfactor(averunnable.ldavg[0]);
@@ -483,10 +482,8 @@ ltsleep(wchan_t ident, pri_t priority, const char *wmesg, int timo,
 	sq = sleeptab_lookup(&sleeptab, ident);
 	sleepq_enter(sq, l);
 
-	if (interlock != NULL) {
-		LOCK_ASSERT(simple_lock_held(interlock));
+	if (interlock != NULL)
 		simple_unlock(interlock);
-	}
 
 	catch = priority & PCATCH;
 	sleepq_block(sq, priority & PRIMASK, ident, wmesg, timo, catch,
@@ -643,11 +640,8 @@ mi_switch(struct lwp *l, struct lwp *newl)
 	int retval, oldspl;
 	long s, u;
 
-	LOCK_ASSERT(lwp_locked(l, NULL));
+	KASSERT(lwp_locked(l, NULL));
 
-#ifdef LOCKDEBUG
-	simple_lock_switchcheck();
-#endif
 #ifdef KSTACK_CHECK_MAGIC
 	kstack_check_magic(l);
 #endif
@@ -860,7 +854,7 @@ setrunnable(struct lwp *l)
 		return;
 	}
 
-	LOCK_ASSERT(lwp_locked(l, &sched_mutex));
+	KASSERT(lwp_locked(l, &sched_mutex));
 
 	/*
 	 * If the LWP is still on the CPU, mark it as LSONPROC.  It may be
@@ -909,8 +903,8 @@ resetpriority(struct lwp *l)
 	pri_t newpriority;
 	struct proc *p = l->l_proc;
 
-	/* XXXSMP LOCK_ASSERT(mutex_owned(&p->p_stmutex)); */
-	LOCK_ASSERT(lwp_locked(l, NULL));
+	/* XXXSMP KASSERT(mutex_owned(&p->p_stmutex)); */
+	KASSERT(lwp_locked(l, NULL));
 
 	if ((l->l_flag & LW_SYSTEM) != 0)
 		return;
@@ -929,7 +923,7 @@ resetprocpriority(struct proc *p)
 {
 	struct lwp *l;
 
-	LOCK_ASSERT(mutex_owned(&p->p_stmutex));
+	KASSERT(mutex_owned(&p->p_stmutex));
 
 	LIST_FOREACH(l, &p->p_lwps, l_sibling) {
 		lwp_lock(l);
@@ -1049,7 +1043,7 @@ void
 scheduler_fork_hook(struct proc *parent, struct proc *child)
 {
 
-	LOCK_ASSERT(mutex_owned(&parent->p_smutex));
+	KASSERT(mutex_owned(&parent->p_smutex));
 
 	child->p_estcpu = child->p_estcpu_inherited = parent->p_estcpu;
 	child->p_forktime = schedcpu_ticks;
@@ -1138,7 +1132,7 @@ void
 sched_changepri(struct lwp *l, pri_t pri)
 {
 
-	LOCK_ASSERT(lwp_locked(l, &sched_mutex));
+	KASSERT(lwp_locked(l, &sched_mutex));
 
 	l->l_usrpri = pri;
 	if (l->l_priority < PUSER)
@@ -1159,7 +1153,7 @@ void
 sched_lendpri(struct lwp *l, pri_t pri)
 {
 
-	LOCK_ASSERT(lwp_locked(l, &sched_mutex));
+	KASSERT(lwp_locked(l, &sched_mutex));
 
 	if (l->l_stat != LSRUN || (l->l_flag & LW_INMEM) == 0) {
 		l->l_inheritedprio = pri;
@@ -1270,7 +1264,7 @@ setrunqueue(struct lwp *l)
 	struct lwp *prev;
 	const int whichq = lwp_eprio(l) / PPQ;
 
-	LOCK_ASSERT(lwp_locked(l, &sched_mutex));
+	KASSERT(lwp_locked(l, &sched_mutex));
 
 #ifdef RQDEBUG
 	checkrunqueue(whichq, NULL);
@@ -1303,7 +1297,7 @@ remrunqueue(struct lwp *l)
 	struct lwp *prev, *next;
 	const int whichq = lwp_eprio(l) / PPQ;
 
-	LOCK_ASSERT(lwp_locked(l, &sched_mutex));
+	KASSERT(lwp_locked(l, &sched_mutex));
 
 #ifdef RQDEBUG
 	checkrunqueue(whichq, l);
