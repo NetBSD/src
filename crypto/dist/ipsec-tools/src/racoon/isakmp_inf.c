@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_inf.c,v 1.18 2007/02/20 16:32:28 vanhu Exp $	*/
+/*	$NetBSD: isakmp_inf.c,v 1.19 2007/03/21 14:29:22 vanhu Exp $	*/
 
 /* Id: isakmp_inf.c,v 1.44 2006/05/06 20:45:52 manubsd Exp */
 
@@ -521,8 +521,7 @@ isakmp_info_recv_d(iph1, delete, msgid, encrypted)
 
 			EVT_PUSH(del_ph1->local, del_ph1->remote,
 					 EVTT_PEERPH1_NOPROP, NULL);
-			if (del_ph1->scr)
-				SCHED_KILL(del_ph1->scr);
+			SCHED_KILL(del_ph1->scr);
 
 			/*
 			 * Do not delete IPsec SAs when receiving an IKE delete notification.
@@ -1137,8 +1136,7 @@ purge_isakmp_spi(proto, spi, n)
 			s_ipsecdoi_proto(proto),
 			isakmp_pindex(&spi[i], 0));
 
-		if (iph1->sce)
-			SCHED_KILL(iph1->sce);
+		SCHED_KILL(iph1->sce);
 		iph1->status = PHASE1ST_EXPIRED;
 		iph1->sce = sched_new(1, isakmp_ph1delete_stub, iph1);
 	}
@@ -1578,8 +1576,7 @@ isakmp_info_recv_r_u_ack (iph1, ru, msgid)
 	/* Useless ??? */
 	iph1->dpd_lastack = time(NULL);
 
-	if (iph1->dpd_r_u != NULL)
-		SCHED_KILL(iph1->dpd_r_u);
+	SCHED_KILL(iph1->dpd_r_u);
 
 	isakmp_sched_r_u(iph1, 0);
 
