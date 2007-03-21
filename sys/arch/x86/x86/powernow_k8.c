@@ -1,4 +1,4 @@
-/*	$NetBSD: powernow_k8.c,v 1.15 2007/03/21 06:36:43 xtraeme Exp $ */
+/*	$NetBSD: powernow_k8.c,v 1.16 2007/03/21 22:52:14 xtraeme Exp $ */
 /*	$OpenBSD: powernow-k8.c,v 1.8 2006/06/16 05:58:50 gwk Exp $ */
 
 /*-
@@ -66,7 +66,7 @@
 /* AMD POWERNOW K8 driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powernow_k8.c,v 1.15 2007/03/21 06:36:43 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powernow_k8.c,v 1.16 2007/03/21 22:52:14 xtraeme Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -108,22 +108,23 @@ static struct sysctllog *sysctllog;
 		(status) = rdmsr(MSR_AMDK7_FIDVID_STATUS);	\
 	} while (PN8_STA_PENDING(status))
 
-struct powernow_cpu_state *k8pnow_current_state;
-unsigned int cur_freq;
-int powernow_node_target, powernow_node_current;
-char *freq_names;
-size_t freq_names_len;
+static struct powernow_cpu_state *k8pnow_current_state;
+static unsigned int cur_freq;
+static int powernow_node_target, powernow_node_current;
+static char *freq_names;
+static size_t freq_names_len;
 static struct powernow_cpu_state *cstate;
 
-int k8pnow_sysctl_helper(SYSCTLFN_PROTO);
-int k8pnow_decode_pst(struct powernow_cpu_state *, uint8_t *);
-int k8pnow_states(struct powernow_cpu_state *, uint32_t, unsigned int,
+static int k8pnow_sysctl_helper(SYSCTLFN_PROTO);
+static int k8pnow_decode_pst(struct powernow_cpu_state *, uint8_t *);
+static int k8pnow_states(struct powernow_cpu_state *, uint32_t, unsigned int,
     unsigned int);
-int k8_powernow_setperf(unsigned int);
+static int k8_powernow_setperf(unsigned int);
 static int k8_powernow_init_once(void);
 static void k8_powernow_init_main(void);
 
-int k8pnow_sysctl_helper(SYSCTLFN_ARGS)
+static int
+k8pnow_sysctl_helper(SYSCTLFN_ARGS)
 {
 	struct sysctlnode node;
 	int fq, oldfq, error;
@@ -154,7 +155,7 @@ int k8pnow_sysctl_helper(SYSCTLFN_ARGS)
 	return 0;
 }
 
-int
+static int
 k8_powernow_setperf(unsigned int freq)
 {
 	unsigned int i;
@@ -262,7 +263,7 @@ k8_powernow_setperf(unsigned int freq)
  * Given a set of pair of fid/vid, and number of performance states,
  * compute state_table via an insertion sort.
  */
-int
+static int
 k8pnow_decode_pst(struct powernow_cpu_state *ccstate, uint8_t *p)
 {
 	int i, j, n;
@@ -290,7 +291,7 @@ k8pnow_decode_pst(struct powernow_cpu_state *ccstate, uint8_t *p)
 	return 1;
 }
 
-int
+static int
 k8pnow_states(struct powernow_cpu_state *ccstate, uint32_t cpusig,
     unsigned int fid, unsigned int vid)
 {
