@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.22 2007/02/09 21:55:06 ad Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.22.2.1 2007/03/21 21:21:43 ad Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -2272,7 +2272,7 @@ END(MIPSX(pagezero))
 _C_LABEL(MIPSX(locoresw)):
 	.word _C_LABEL(MIPSX(cpu_switch_resume))
 	.word _C_LABEL(MIPSX(proc_trampoline))
-	.word _C_LABEL(mips_idle)
+	.word _C_LABEL(nullop)
 
 MIPSX(excpt_sw):
 	####

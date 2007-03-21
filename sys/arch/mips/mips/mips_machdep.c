@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.192.2.1 2007/03/12 05:49:22 rmind Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.192.2.2 2007/03/21 21:21:43 ad Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -119,7 +119,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.192.2.1 2007/03/12 05:49:22 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.192.2.2 2007/03/21 21:21:43 ad Exp $");
 
 #include "opt_cputype.h"
 
@@ -139,9 +139,12 @@ __KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.192.2.1 2007/03/12 05:49:22 rmind
 #include <sys/kcore.h>
 #include <sys/pool.h>
 #include <sys/ras.h>
-
+#include <sys/cpu.h>
 #include <sys/ucontext.h>
+
 #include <machine/kcore.h>
+#include <machine/cpu.h>
+
 #include <uvm/uvm_extern.h>
 
 #include <dev/cons.h>
@@ -153,7 +156,6 @@ __KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.192.2.1 2007/03/12 05:49:22 rmind
 #include <mips/locore.h>
 #include <mips/psl.h>
 #include <mips/pte.h>
-#include <machine/cpu.h>
 #include <mips/userret.h>
 
 #ifdef __HAVE_BOOTINFO_H
@@ -1761,4 +1763,26 @@ cpu_setmcontext(l, mcp, flags)
 	mutex_exit(&p->p_smutex);
 
 	return (0);
+}
+
+void
+cpu_need_resched(struct cpu_info *ci, int flags)
+{
+	bool immed = (flags & RESCHED_IMMED) != 0;
+
+	if (want_resched && !immed)
+		return;
+	want_resched = 1;
+
+	if (curlwp != curcpu()->ci_data.cpu_idlelwp)
+		aston(curlwp);
+}
+
+void
+cpu_idle(void)
+{
+	void (*mach_idle)(void) = (void (*)(void))CPU_IDLE;
+
+	while (!want_resched)
+		(*mach_idle)();
 }

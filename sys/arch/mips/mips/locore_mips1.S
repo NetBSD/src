@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips1.S,v 1.61 2007/02/09 21:55:06 ad Exp $	*/
+/*	$NetBSD: locore_mips1.S,v 1.61.2.1 2007/03/21 21:21:42 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1024,6 +1024,9 @@ END(mips1_wbflush)
  */
 LEAF(mips1_proc_trampoline)
 	addu	sp, sp, -CALLFRAME_SIZ
+	la	t0, _C_LABEL(_spllower)
+	jal	ra, t0
+	move	a0, zero
 	jal	ra, s0
 	move	a0, s1
 	.set	noat
@@ -1232,7 +1235,7 @@ LEAF(mips1_TBIA)
 _C_LABEL(mips1_locoresw):
 	.word _C_LABEL(mips1_cpu_switch_resume)
 	.word _C_LABEL(mips1_proc_trampoline)
-	.word _C_LABEL(mips_idle)
+	.word _C_LABEL(nullop)
 
 mips1_excpt_sw:
 	####
