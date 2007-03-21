@@ -1,4 +1,4 @@
-/* $NetBSD: msr_ipifuncs.c,v 1.2 2007/03/21 06:36:43 xtraeme Exp $ */
+/* $NetBSD: msr_ipifuncs.c,v 1.3 2007/03/21 06:50:36 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msr_ipifuncs.c,v 1.2 2007/03/21 06:36:43 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msr_ipifuncs.c,v 1.3 2007/03/21 06:50:36 xtraeme Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -58,7 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: msr_ipifuncs.c,v 1.2 2007/03/21 06:36:43 xtraeme Exp
 #include <machine/cpu.h>
 #include <machine/intrdefs.h>
 
-#define MSR_CPU_BROADCAST_DEBUG
+/* #define MSR_CPU_BROADCAST_DEBUG */
 
 #ifdef MSR_CPU_BROADCAST_DEBUG
 #define DPRINTF(x)	do { printf x; } while (/* CONSTCOND */ 0)
