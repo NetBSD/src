@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.207.2.1 2007/03/12 05:49:23 rmind Exp $	*/
+/*	$NetBSD: trap.c,v 1.207.2.2 2007/03/21 21:21:43 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.207.2.1 2007/03/12 05:49:23 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.207.2.2 2007/03/21 21:21:43 ad Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ktrace.h"
@@ -98,6 +98,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.207.2.1 2007/03/12 05:49:23 rmind Exp $")
 #include <sys/ktrace.h>
 #endif
 #include <sys/kauth.h>
+#include <sys/cpu.h>
 
 #include <mips/cache.h>
 #include <mips/locore.h>
@@ -743,7 +744,6 @@ extern char mips3_KernIntr[];
 extern char mips3_UserIntr[];
 extern char mips3_SystemCall[];
 int main(void *);	/* XXX */
-void mips_idle(void);	/* XXX */
 
 /*
  *  stack trace code, also useful to DDB one day
@@ -969,8 +969,8 @@ static struct { void *addr; const char *name;} names[] = {
 	Name(mips3_UserIntr),
 #endif	/* MIPS3 && !MIPS3_5900 */
 
-	Name(mips_idle),
-	Name(cpu_switch),
+	Name(cpu_idle),
+	Name(cpu_switchto),
 	{0, 0}
 };
 
