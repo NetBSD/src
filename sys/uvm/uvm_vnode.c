@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.81.2.1 2007/03/13 17:51:58 ad Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.81.2.2 2007/03/21 20:09:39 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.81.2.1 2007/03/13 17:51:58 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.81.2.2 2007/03/21 20:09:39 ad Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -270,11 +270,8 @@ uvn_put(struct uvm_object *uobj, voff_t offlo, voff_t offhi, int flags)
 	struct vnode *vp = (struct vnode *)uobj;
 	int error;
 
-	KERNEL_LOCK(1, curlwp);
 	KASSERT(mutex_owned(&vp->v_interlock));
 	error = VOP_PUTPAGES(vp, offlo, offhi, flags);
-	KASSERT(!mutex_owned(&vp->v_interlock));
-	KERNEL_UNLOCK_ONE(curlwp);
 
 	return error;
 }
@@ -312,10 +309,8 @@ uvn_get(struct uvm_object *uobj, voff_t offset,
 		mutex_enter(&vp->v_interlock);
 	}
 
-	KERNEL_LOCK(1, curlwp);
 	error = VOP_GETPAGES(vp, offset, pps, npagesp, centeridx,
 			     access_type, advice, flags);
-	KERNEL_UNLOCK_ONE(curlwp);
 
 	KASSERT(((flags & PGO_LOCKED) != 0 &&
 		     mutex_owned(&vp->v_interlock)) ||
