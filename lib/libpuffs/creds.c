@@ -1,4 +1,4 @@
-/*	$NetBSD: creds.c,v 1.8 2007/03/22 16:57:27 pooka Exp $	*/
+/*	$NetBSD: creds.c,v 1.9 2007/03/22 17:15:34 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: creds.c,v 1.8 2007/03/22 16:57:27 pooka Exp $");
+__RCSID("$NetBSD: creds.c,v 1.9 2007/03/22 17:15:34 pooka Exp $");
 #endif /* !lint */
 
 /*
@@ -223,10 +223,10 @@ puffs_access_chmod(uid_t owner, gid_t group, enum vtype type, mode_t mode,
 	const struct puffs_cred *pcr)
 {
 
-	if (!puffs_cred_isuid(pcr, owner) && !puffs_cred_isuid(pcr, 0))
+	if (!puffs_cred_isuid(pcr, owner) && !puffs_cred_isjuggernaut(pcr))
 		return EPERM;
 
-	if (!puffs_cred_isuid(pcr, 0)) {
+	if (!puffs_cred_isjuggernaut(pcr)) {
 		if (type != VDIR && (mode & S_ISTXT))
 			return EFTYPE;
 		if (!puffs_cred_hasgroup(pcr, group) && (mode & S_ISGID))
@@ -241,7 +241,7 @@ puffs_access_times(uid_t uid, gid_t gid, mode_t mode, int va_utimes_null,
 	const struct puffs_cred *pcr)
 {
 
-	if (!puffs_cred_isuid(pcr, uid) && !puffs_cred_isuid(pcr, 0)
+	if (!puffs_cred_isuid(pcr, uid) && !puffs_cred_isjuggernaut(pcr)
 	    && (va_utimes_null == 0
 	      || puffs_access(VNON, mode, uid, gid, PUFFS_VWRITE, pcr) != 0))
 		return EPERM;
