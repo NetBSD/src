@@ -1,4 +1,4 @@
-/*	$NetBSD: node.c,v 1.10 2007/03/13 18:00:34 pooka Exp $	*/
+/*	$NetBSD: node.c,v 1.11 2007/03/22 13:11:00 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: node.c,v 1.10 2007/03/13 18:00:34 pooka Exp $");
+__RCSID("$NetBSD: node.c,v 1.11 2007/03/22 13:11:00 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -52,6 +52,7 @@ psshfs_node_lookup(struct puffs_cc *pcc, void *opc, void **newnode,
 	struct psshfs_node *psn, *psn_dir = pn_dir->pn_data;
 	struct puffs_node *pn;
 	struct psshfs_dir *pd;
+	struct vattr va;
 	int rv;
 
 	if (PCNISDOTDOT(pcn)) {
@@ -65,19 +66,36 @@ psshfs_node_lookup(struct puffs_cc *pcc, void *opc, void **newnode,
 
 	rv = sftp_readdir(pcc, pctx, pn_dir);
 	if (rv) {
-		assert(rv != ENOENT);
-		return rv;
-	}
+		printf("got error from readdir: %d\n", rv);
+		if (rv != EPERM)
+			return rv;
 
-	pd = lookup(psn_dir->dir, psn_dir->dentnext, pcn->pcn_name);
-	if (!pd) {
-		return ENOENT;
-	}
+		/*
+		 * Can't read the directory.  We still might be
+		 * able to find the node with getattr in -r+x dirs
+		 */
+		rv = getpathattr(pcc, PCNPATH(pcn), &va);
+		if (rv)
+			return rv;
 
-	if (pd->entry)
-		pn = pd->entry;
-	else
-		pn = makenode(pu, pn_dir, pd, &pd->va);
+		/* guess */
+		if (va.va_type == VDIR)
+			va.va_nlink = 2;
+		else
+			va.va_nlink = 1;
+
+		pn = allocnode(pu, pn_dir, pcn->pcn_name, &va);
+	} else {
+		pd = lookup(psn_dir->dir, psn_dir->dentnext, pcn->pcn_name);
+		if (!pd) {
+			return ENOENT;
+		}
+
+		if (pd->entry)
+			pn = pd->entry;
+		else
+			pn = makenode(pu, pn_dir, pd, &pd->va);
+	}
 
 	psn = pn->pn_data;
 	psn->reclaimed = 0;
@@ -93,43 +111,16 @@ int
 psshfs_node_getattr(struct puffs_cc *pcc, void *opc, struct vattr *vap,
 	const struct puffs_cred *pcr, pid_t pid)
 {
-	PSSHFSAUTOVAR(pcc);
 	struct puffs_node *pn = opc;
-	struct psshfs_node *psn = pn->pn_data;
-	struct vattr va;
+	int rv;
 
-	rv = 0;
-
-	if ((time(NULL) - psn->attrread) >= PSSHFS_REFRESHIVAL) {
-		psbuf_req_str(pb, SSH_FXP_LSTAT, reqid, PNPATH(pn));
-		pssh_outbuf_enqueue(pctx, pb, pcc, reqid);
-		puffs_cc_yield(pcc);
-
-		rv = psbuf_expect_attrs(pb, &va);
-		if (rv)
-			goto out;
-
-#if 0
-		/*
-		 * check if the file was modified from below us
-		 *
-		 * XXX: what's the right place(s) to do this?
-		 * XXX2: resolution only per second, since sftp doesn't
-		 *       support nanoseconds
-		 */
-		if (psn->attrread)
-			if (pn->pn_va.va_mtime.tv_sec != va.va_mtime.tv_sec)
-				puffs_inval_pagecache_node(pu, opc);
-#endif
-
-		puffs_setvattr(&pn->pn_va, &va);
-		psn->attrread = time(NULL);
-	}
+	rv = getnodeattr(pcc, pn);
+	if (rv)
+		return rv;
 
 	memcpy(vap, &pn->pn_va, sizeof(struct vattr));
 
- out:
-	PSSHFSRETURN(rv);
+	return 0;
 }
 
 int
