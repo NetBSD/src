@@ -298,7 +298,7 @@ extern drm_device_t *drm_units[];
 	drm_device_t *dev = (device_lookup(&drm_cd,			\
 	    minor(kdev)))->dv_cfdata->cf_driver->cd_devs[minor(kdev)]
 #endif /* __OpenBSD__ */
-#define DRM_IOCTL_ARGS		dev_t kdev, u_long cmd, caddr_t data, \
+#define DRM_IOCTL_ARGS		dev_t kdev, u_long cmd, void *data, \
 				int flags, DRM_STRUCTCDEVPROC *p, DRMFILE filp
 
 #define CDEV_MAJOR		34
