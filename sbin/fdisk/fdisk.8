@@ -1,6 +1,6 @@
-.\"	$NetBSD: fdisk.8,v 1.53 2006/09/24 15:52:12 wiz Exp $
+.\"	$NetBSD: fdisk.8,v 1.53.2.1 2007/03/22 20:40:06 jdc Exp $
 .\"
-.Dd September 24, 2006
+.Dd March 10, 2007
 .Dt FDISK 8
 .Os
 .Sh NAME
@@ -41,12 +41,36 @@
 .Sh DESCRIPTION
 The
 .Nm
-program is used to divide space on a disk into partitions and set
-one active.
+program is used to display or update the
+.Em "master boot record"
+or
+.Em MBR
+in the first sector (sector 0)
+of a disk that uses the MBR style of partitioning.
+The following
+.Nx
+ports use this style of disk partitioning:
+amd64, arc, bebox, cobalt, hpcarm, hpcmips, hpcsh, i386, macppc,
+mvmeppc, netwinder, ofppc, playstation2, and prep.
+.Pp
+The MBR contains bootable code, a partition table,
+an indication of which partition is
+.Sq active ,
+and (optionally, depending on the boot code) a menu
+for selecting a partition to be booted.
 There can be at most 4 partitions defined in sector 0,
 one of which can be an extended
 partition which can be split into any number of sub-partitions.
 .Pp
+The boot code in the MBR is usually invoked by the BIOS or firmware,
+and the MBR passes control to the next stage boot code
+stored in the first sector of the partition to be booted
+(the
+.Em "partition boot record"
+or
+.Em PBR ) .
+.Pp
+After booting,
 .Nx
 does not use the partitioning done by
 .Nm ,
@@ -55,6 +79,12 @@ instead it uses a
 disklabel saved in sector 1 of the
 .Nx
 partition.
+See
+.Xr mbrlabel 8
+for a way of using information from the MBR
+to construct a
+.Nx
+disklabel.
 .Pp
 The standard MBR boot code will only boot the
 .Sq active
@@ -412,7 +442,8 @@ is output if this is the active partition.
 .Pp
 If the
 .Fl v
-flag is given two additional lines are output for each partition:
+flag is specified, the beginning and end of each partition is also
+displayed as follows:
 .in +4
 beg: cylinder
 .Em cylinder ,
@@ -441,14 +472,39 @@ these numbers are read from the bootblock, so are the values calculated
 by a previous run of
 .Nm .
 .El
+.Pp
+.Nm
+attempts to check whether each partition is bootable,
+by checking the magic number and some other characteristics
+of the first sector of each partition (the PBR).
+If the partition does not apear to be bootable,
+.Nm
+will print a line containing
+.Dq "PBR is not bootable"
+followed by an error message.
+If the partition is bootable, and if the
+.Fl v
+flag is specified,
+.Nm
+will print
+.Dq "PBR appears to be bootable" .
+If the
+.Fl v
+flag is specified more than once,
+.Nm
+will print the heading
+.Dq "Information from PBR:"
+followed by one or more lines of information gleaned from the PBR;
+this additional information may be incorrect or misleading,
+because different operating systems use different PBR formats.
+Note that, even if no errors are reported, an attempt to boot
+from the partition might fail.
+.Nx
+partitions may be made bootable using
+.Xr installboot 8 .
 .Sh NOTES
 This program is only available (and useful) on systems with PC-platform-style
 MBR partitioning.
-On
-.Nx
-this includes the following ports: amd64, arc, bebox, cobalt, hpcarm,
-hpcmips, hpcsh, i386, macppc, mvmeppc, netwinder, ofppc, playstation2,
-and prep.
 .Pp
 Traditionally the partition boundaries should be on cylinder boundaries
 using the BIOS geometry, all of the first track should be reserved
@@ -496,7 +552,9 @@ Default location of i386 bootselect for extended partitions
 .El
 .Sh SEE ALSO
 .Xr disktab 5 ,
+.Xr boot 8 ,
 .Xr disklabel 8 ,
+.Xr installboot 8 ,
 .Xr mbr 8 ,
 .Xr mbrlabel 8
 .Sh BUGS
