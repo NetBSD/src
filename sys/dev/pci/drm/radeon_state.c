@@ -179,6 +179,14 @@ static __inline__ int radeon_check_and_fixup_packets(drm_radeon_private_t *
 		}
 		break;
 
+	case R200_EMIT_VAP_CTL:{
+			RING_LOCALS;
+			BEGIN_RING(2);
+			OUT_RING_REG(RADEON_SE_TCL_STATE_FLUSH, 0);
+			ADVANCE_RING();
+		}
+		break;
+
 	case RADEON_EMIT_RB3D_COLORPITCH:
 	case RADEON_EMIT_RE_LINE_PATTERN:
 	case RADEON_EMIT_SE_LINE_WIDTH:
@@ -206,7 +214,6 @@ static __inline__ int radeon_check_and_fixup_packets(drm_radeon_private_t *
 	case R200_EMIT_TCL_LIGHT_MODEL_CTL_0:
 	case R200_EMIT_TFACTOR_0:
 	case R200_EMIT_VTX_FMT_0:
-	case R200_EMIT_VAP_CTL:
 	case R200_EMIT_MATRIX_SELECT_0:
 	case R200_EMIT_TEX_PROC_CTL_2:
 	case R200_EMIT_TCL_UCP_VERT_BLEND_CTL:
@@ -1266,9 +1273,9 @@ static void radeon_cp_dispatch_swap(drm_device_t * dev)
 
 		DRM_DEBUG("dispatch swap %d,%d-%d,%d\n", x, y, w, h);
 
-		BEGIN_RING(7);
+		BEGIN_RING(9);
 
-		OUT_RING(CP_PACKET3(RADEON_CNTL_BITBLT_MULTI, 5));
+		OUT_RING(CP_PACKET0(RADEON_DP_GUI_MASTER_CNTL, 0));
 		OUT_RING(RADEON_GMC_SRC_PITCH_OFFSET_CNTL |
 			 RADEON_GMC_DST_PITCH_OFFSET_CNTL |
 			 RADEON_GMC_BRUSH_NONE |
@@ -1280,6 +1287,7 @@ static void radeon_cp_dispatch_swap(drm_device_t * dev)
 
 		/* Make this work even if front & back are flipped:
 		 */
+		OUT_RING(CP_PACKET0(RADEON_SRC_PITCH_OFFSET, 1));
 		if (dev_priv->current_page == 0) {
 			OUT_RING(dev_priv->back_pitch_offset);
 			OUT_RING(dev_priv->front_pitch_offset);
@@ -1288,6 +1296,7 @@ static void radeon_cp_dispatch_swap(drm_device_t * dev)
 			OUT_RING(dev_priv->back_pitch_offset);
 		}
 
+		OUT_RING(CP_PACKET0(RADEON_SRC_X_Y, 2));
 		OUT_RING((x << 16) | y);
 		OUT_RING((x << 16) | y);
 		OUT_RING((w << 16) | h);
