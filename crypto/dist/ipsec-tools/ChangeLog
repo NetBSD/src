@@ -1,3 +1,7 @@
+2007-03-22  Yvan Vanhullebus  <vanhu@netasq.com>
+	* src/racoon/{ipsec_doi.c|cfparse.y}: fixed subnet check to
+	  generate IPV4_ADDRESS when needed in sockaddr2id().
+
 2007-03-21  Yvan Vanhullebus  <vanhu@netasq.com>
 	* src/racoon/schedule.h: checks if arg is NULL in SCHED_KILL.
 	* src/racoon/{handler.c|isakmp.c|isakmp_inf.c|pfkey.c}: NULL sched
