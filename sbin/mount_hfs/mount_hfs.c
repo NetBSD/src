@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_hfs.c,v 1.2 2007/03/06 11:28:47 dillo Exp $	*/
+/*	$NetBSD: mount_hfs.c,v 1.3 2007/03/22 13:31:05 dillo Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@ __COPYRIGHT("@(#) Copyright (c) 2005 Yevgeny Binder\n\
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: mount_hfs.c,v 1.2 2007/03/06 11:28:47 dillo Exp $");
+__RCSID("$NetBSD: mount_hfs.c,v 1.3 2007/03/22 13:31:05 dillo Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -84,7 +84,6 @@ __RCSID("$NetBSD: mount_hfs.c,v 1.2 2007/03/06 11:28:47 dillo Exp $");
 static const struct mntopt mopts[] = {
 	MOPT_STDOPTS,
 	MOPT_GETARGS,
-	{ "offset", 0, __MNT_UNUSED3, 0 },
 	MOPT_NULL,
 };
 
@@ -113,7 +112,6 @@ mount_hfs(argc, argv)
 	char *fs_name;
 
 	args.fspec = NULL;
-	args.offset = 0;
 	
 	mntflags = 0;
 	optind = optreset = 1;		/* Reset for parse of new argv. */
@@ -121,15 +119,8 @@ mount_hfs(argc, argv)
 		switch (ch) {
 		case 'o':
 			optparse = getmntopts(optarg, mopts, &mntflags, 0);
-
-			/*
-			 * 'offset' is passed in as the number of 512-byte blocks from the
-			 * start of the device to the start of the volume. args.offset
-			 * expects this as the number of bytes, so multiply by 512.
-			 */
-			if(mntflags & __MNT_UNUSED3)
-				args.offset = 512 * (uint64_t)getmntoptnum(optparse, "offset");
-		
+			if (optparse == NULL)
+				err(1, "getmntopts");
 			freemntopts(optparse);
 			break;
 		case '?':
