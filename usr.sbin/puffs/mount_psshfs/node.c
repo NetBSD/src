@@ -1,4 +1,4 @@
-/*	$NetBSD: node.c,v 1.11 2007/03/22 13:11:00 pooka Exp $	*/
+/*	$NetBSD: node.c,v 1.12 2007/03/22 13:43:58 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: node.c,v 1.11 2007/03/22 13:11:00 pooka Exp $");
+__RCSID("$NetBSD: node.c,v 1.12 2007/03/22 13:43:58 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -85,6 +85,8 @@ psshfs_node_lookup(struct puffs_cc *pcc, void *opc, void **newnode,
 			va.va_nlink = 1;
 
 		pn = allocnode(pu, pn_dir, pcn->pcn_name, &va);
+		psn = pn->pn_data;
+		psn->attrread = time(NULL);
 	} else {
 		pd = lookup(psn_dir->dir, psn_dir->dentnext, pcn->pcn_name);
 		if (!pd) {
@@ -95,9 +97,9 @@ psshfs_node_lookup(struct puffs_cc *pcc, void *opc, void **newnode,
 			pn = pd->entry;
 		else
 			pn = makenode(pu, pn_dir, pd, &pd->va);
+		psn = pn->pn_data;
 	}
 
-	psn = pn->pn_data;
 	psn->reclaimed = 0;
 
 	*newnode = pn;
