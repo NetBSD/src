@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs_vnops.c,v 1.18 2007/03/21 19:56:49 pooka Exp $	*/
+/*	$NetBSD: dtfs_vnops.c,v 1.19 2007/03/22 16:59:34 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -119,15 +119,15 @@ dtfs_node_setattr(struct puffs_cc *pcc, void *opc,
 		return EOPNOTSUPP;
 
 	if (va->va_uid != PUFFS_VNOVAL || va->va_gid != PUFFS_VNOVAL) {
-		rv = puffs_access_chown(pcr, pn->pn_va.va_uid, pn->pn_va.va_gid,
-		    va->va_uid, va->va_gid);
+		rv = puffs_access_chown(pn->pn_va.va_uid, pn->pn_va.va_gid,
+		    va->va_uid, va->va_gid, pcr);
 		if (rv)
 			return rv;
 	}
 
 	if (va->va_mode != PUFFS_VNOVAL) {
-		rv = puffs_access_chmod(pcr, pn->pn_va.va_uid, pn->pn_va.va_gid,
-		    pn->pn_va.va_type, va->va_mode);
+		rv = puffs_access_chmod(pn->pn_va.va_uid, pn->pn_va.va_gid,
+		    pn->pn_va.va_type, va->va_mode, pcr);
 		if (rv)
 			return rv;
 	}
@@ -136,8 +136,8 @@ dtfs_node_setattr(struct puffs_cc *pcc, void *opc,
 	      && va->va_atime.tv_nsec != PUFFS_VNOVAL)
 	    || (va->va_mtime.tv_sec != PUFFS_VNOVAL
 	      && va->va_mtime.tv_nsec != PUFFS_VNOVAL)) {
-		rv = puffs_access_times(pcr, pn->pn_va.va_uid, pn->pn_va.va_gid,
-		    pn->pn_va.va_mode, va->va_vaflags & VA_UTIMES_NULL);
+		rv = puffs_access_times(pn->pn_va.va_uid, pn->pn_va.va_gid,
+		    pn->pn_va.va_mode, va->va_vaflags & VA_UTIMES_NULL, pcr);
 		if (rv)
 			return rv;
 	}
