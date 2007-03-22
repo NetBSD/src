@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.54.2.1 2007/03/06 20:33:29 bouyer Exp $
+#	$NetBSD: Makefile,v 1.54.2.2 2007/03/22 20:25:56 jdc Exp $
 
 # The `all' target must appear before bsd.own.mk is pulled in.
 all:
@@ -104,9 +104,12 @@ checkflist-x11: .PHONY check_DESTDIR
 	${SETSCMD} ./checkflist -x ${CHECKFLIST_FLAGS}
 
 
+# Note that the .WAIT inside the ${MAKETARSETS:@...} loop is not
+# logically necessary, but many systems exhibit poor performance when
+# running multiple parallel disk-intensive processes.
 maketars: .PRECIOUS .PHONY check_DESTDIR check_RELEASEDIR \
 		sanitise_METALOG checkflist_if_DESTDIR .WAIT \
-		maketarsetup .WAIT ${MAKETARSETS:@.TARS.@do-${.TARS.}@}
+		maketarsetup .WAIT ${MAKETARSETS:@.TARS.@.WAIT do-${.TARS.}@}
 	@true
 
 maketarsetup: .EXEC
