@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.63 2007/03/20 21:22:03 xtraeme Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.64 2007/03/22 06:00:33 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.63 2007/03/20 21:22:03 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.64 2007/03/22 06:00:33 xtraeme Exp $");
 
 #include "opt_cputype.h"
 #include "opt_enhanced_speedstep.h"
@@ -1448,8 +1448,7 @@ identifycpu(struct cpu_info *ci)
 	buf = malloc(MAXPATHLEN, M_TEMP, M_WAITOK);
 	if (ci->ci_cpuid_level == -1) {
 #ifdef DIAGNOSTIC
-		if (cpu < 0 || cpu >=
-		    sizeof(i386_nocpuid_cpus) / sizeof(i386_nocpuid_cpus[0]))
+		if (cpu < 0 || cpu >= __arraycount(i386_nocpuid_cpus))
 			panic("unknown cpu type %d", cpu);
 #endif
 		name = i386_nocpuid_cpus[cpu].cpu_name;
@@ -1460,7 +1459,7 @@ identifycpu(struct cpu_info *ci)
 		ci->ci_info = i386_nocpuid_cpus[cpu].cpu_info;
 		modifier = "";
 	} else {
-		xmax = sizeof (i386_cpuid_cpus) / sizeof (i386_cpuid_cpus[0]);
+		xmax = __arraycount(i386_cpuid_cpus);
 		modif = (ci->ci_signature >> 12) & 0x3;
 		family = CPUID2FAMILY(ci->ci_signature);
 		if (family < CPU_MINFAMILY)
@@ -1514,8 +1513,7 @@ identifycpu(struct cpu_info *ci)
 				}
 				if (family == CPU_MAXFAMILY &&
 				    ci->ci_brand_id <
-				    (sizeof(i386_intel_brand) /
-				     sizeof(i386_intel_brand[0])) &&
+				    __arraycount(i386_intel_brand) &&
 				    i386_intel_brand[ci->ci_brand_id])
 					name =
 					     i386_intel_brand[ci->ci_brand_id];
