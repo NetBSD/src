@@ -1,4 +1,4 @@
-/*	$NetBSD: creds.c,v 1.5 2007/03/21 19:55:55 pooka Exp $	*/
+/*	$NetBSD: creds.c,v 1.6 2007/03/22 15:32:22 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: creds.c,v 1.5 2007/03/21 19:55:55 pooka Exp $");
+__RCSID("$NetBSD: creds.c,v 1.6 2007/03/22 15:32:22 pooka Exp $");
 #endif /* !lint */
 
 /*
@@ -42,8 +42,8 @@ __RCSID("$NetBSD: creds.c,v 1.5 2007/03/21 19:55:55 pooka Exp $");
 #include <sys/types.h>
 #include <sys/param.h>
 
-#include <puffs.h>
 #include <errno.h>
+#include <puffs.h>
 #include <string.h>
 
 #define UUCCRED(a) (a->pcr_type == PUFFCRED_TYPE_UUC)
@@ -53,8 +53,10 @@ int
 puffs_cred_getuid(const struct puffs_cred *pcr, uid_t *ruid)
 {
 
-	if (!UUCCRED(pcr))
-		return EINVAL;
+	if (!UUCCRED(pcr)) {
+		errno = EOPNOTSUPP;
+		return -1;
+	}
 	*ruid = pcr->pcr_uuc.cr_uid;
 
 	return 0;
@@ -64,8 +66,10 @@ int
 puffs_cred_getgid(const struct puffs_cred *pcr, gid_t *rgid)
 {
 
-	if (!UUCCRED(pcr))
-		return EINVAL;
+	if (!UUCCRED(pcr)) {
+		errno = EOPNOTSUPP;
+		return -1;
+	}
 	*rgid = pcr->pcr_uuc.cr_gid;
 
 	return 0;
@@ -76,8 +80,10 @@ puffs_cred_getgroups(const struct puffs_cred *pcr, gid_t *rgids, short *ngids)
 {
 	size_t ncopy;
 
-	if (!UUCCRED(pcr))
-		return EINVAL;
+	if (!UUCCRED(pcr)) {
+		errno = EOPNOTSUPP;
+		return -1;
+	}
 
 	ncopy = MIN(*ngids, NGROUPS);
 	(void)memcpy(rgids, pcr->pcr_uuc.cr_groups, ncopy);
@@ -108,6 +114,13 @@ puffs_cred_hasgroup(const struct puffs_cred *pcr, gid_t gid)
 			return 1;
 
 	return 0;
+}
+
+int
+puffs_cred_isregular(const struct puffs_cred *pcr)
+{
+
+	return UUCCRED(pcr);
 }
 
 int
