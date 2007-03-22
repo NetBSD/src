@@ -1,4 +1,4 @@
-/*	$NetBSD: psshfs.h,v 1.6 2007/02/27 13:28:39 pooka Exp $	*/
+/*	$NetBSD: psshfs.h,v 1.7 2007/03/22 13:11:00 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -209,5 +209,7 @@ struct puffs_node *allocnode(struct puffs_usermount *, struct puffs_node *,
 struct psshfs_dir *direnter(struct puffs_node *, const char *);
 void nukenode(struct puffs_node *, const char *, int);
 void doreclaim(struct puffs_node *);
+int getpathattr(struct puffs_cc *, const char *, struct vattr *);
+int getnodeattr(struct puffs_cc *, struct puffs_node *);
 
 #endif /* PSSHFS_H_ */
