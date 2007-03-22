@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.98 2007/03/10 18:44:18 bouyer Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.99 2007/03/22 20:42:46 jdc Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -1133,8 +1133,8 @@ share/man/man4/cardbus.4			1.30
 	Patch provided by Joerg Niendorf in PR misc/35514.
 	[tron, ticket #394]
 
-distrib/amd64/ramdisks/ramdisk/list             1.2
-sys/arch/amd64/conf/INSTALL                     1.64-1.65
+distrib/amd64/ramdisks/ramdisk/list		1.2
+sys/arch/amd64/conf/INSTALL			1.64-1.65
 
 	Add RAIDframe support to the NetBSD-amd64 installation floppies.
 	This fixes PR port-amd64/35532.
@@ -1826,10 +1826,10 @@ sys/kern/subr_kmem.c				1.14
 	kmem_backend_alloc: fix a null dereference.
 	[yamt, ticket #488]
 
-dist/bind/lib/dns/resolver.c                    patch
-dist/bind/lib/dns/validator.c                   patch
-dist/bind/lib/dns/include/dns/validator.h       patch   
-dist/bind/version                               patch
+dist/bind/lib/dns/resolver.c			patch
+dist/bind/lib/dns/validator.c			patch
+dist/bind/lib/dns/include/dns/validator.h	patch
+dist/bind/version				patch
 
 	Fix CVE-2007-0493 and CVE-2007-0494.
 	[adrianp, ticket #489]
@@ -2124,4 +2124,58 @@ sys/dev/pci/voodoofb.c				patch
 
 	Add missing include; should fix macppc build.
 	[macallan, ticket #503]
+
+sys/arch/i386/conf/GENERIC			1.816
+
+	Comment out 'fdc* at acpi?' (it's likely that systems not supporting
+	fdc0 at isa? don't have a fdc at all). Because of the 'fdc0 at isa?',
+	on systems supporting ACPI the floppy controller would attach as fdc1.
+	as fd(4) looks for its type in nvram using the floppy controller index,
+	it's looking for the wrong controller and the default density isn't set
+	(so /dev/fd0a doens't work).
+	Problem analyzed by John Nemeth, thanks !
+	[bouyer, ticket #501]
+
+distrib/shark/instkernel/instkernel/Makefile	1.15
+etc/etc.shark/Makefile.inc			1.8
+
+	Convert shark's installation kernel image (netbsd-INSTALL) to a.out
+	format so that it can be loaded by the machine's firmware.  Put the
+	resulting image inside the 'installation/instkernel' release
+	subdirectory, as the installation instructions explain.  
+	Fixes PR#35563.
+	[jmmv, ticket #509]
+
+src/sys/dev/usb/if_rum.c			1.8
+
+	print a size_t value with a size_t format. 
+	The cast is necessary in case someone redefines RT2573_TX_DESC_SIZE.
+	[mlelstv, ticket #510]
+
+sys/arch/i386/acpi/acpi_wakeup.c		1.33
+
+	In acpi_restorecpu, "pushl ret_addr" was wrong.
+	this decrease esp unsuitably.  this may crash the kernel while leaving
+	acpi_md_sleep().  (rely on the code generation options passed to cc)
+	[mlelstv, ticket #511]
+
+distrib/sets/Makefile				1.56
+
+	Serialise making the "sets" tarballs in the maketars target.
+	On many systems, making them in parallel causes very poor
+	system performance due to disk I/O.  (Requested by jmmv.)
+	[apb, ticket #512]
+
+sbin/fdisk/fdisk.c				1.103
+sbin/fdisk/fdisk.8				1.54-1.55
+
+	Try to check whether each partition is bootable.  If not,
+	always print an error message.  If bootable and -v flag was
+	specified, print a success message.  If -v flag was specified
+	more than once, also try to decode more information from
+	the PBR.  Input from dsl and bad.
+	Document the new checks for whether a PBR is bootable.
+	Also add more detail in the introduction, and a few
+	more references.
+	[apb, ticket #513]
 
