@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.h,v 1.37 2007/03/22 15:32:22 pooka Exp $	*/
+/*	$NetBSD: puffs.h,v 1.38 2007/03/22 16:57:27 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -456,12 +456,12 @@ int	puffs_cred_isjuggernaut(const struct puffs_cred *);
 /* misc */
 int	puffs_access(enum vtype, mode_t, uid_t, gid_t, mode_t,
 		     const struct puffs_cred *);
-int	puffs_access_chown(const struct puffs_cred *, uid_t, gid_t,
-			   uid_t, gid_t);
-int	puffs_access_chmod(const struct puffs_cred *, uid_t, gid_t,
-			   enum vtype, mode_t);
-int	puffs_access_times(const struct puffs_cred *, uid_t, gid_t,
-			   mode_t, int);
+int	puffs_access_chown(uid_t, gid_t, uid_t, gid_t,
+			   const struct puffs_cred *);
+int	puffs_access_chmod(uid_t, gid_t, enum vtype, mode_t,
+			   const struct puffs_cred *);
+int	puffs_access_times(uid_t, gid_t, mode_t, int,
+			   const struct puffs_cred *);
 
 
 /*
