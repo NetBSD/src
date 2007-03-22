@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.102 2006/11/25 16:10:32 dsl Exp $ */
+/*	$NetBSD: fdisk.c,v 1.102.2.1 2007/03/22 20:37:20 jdc Exp $ */
 
 /*
  * Mach Operating System
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.102 2006/11/25 16:10:32 dsl Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.102.2.1 2007/03/22 20:37:20 jdc Exp $");
 #endif /* not lint */
 
 #define MBRPTYPENAMES
@@ -68,6 +68,7 @@ __RCSID("$NetBSD: fdisk.c,v 1.102 2006/11/25 16:10:32 dsl Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <vis.h>
 
 #if HAVE_NBTOOL_CONFIG_H
 #include "../../include/disktab.h"
@@ -201,6 +202,9 @@ void	usage(void);
 void	print_s0(int);
 void	print_part(struct mbr_sector *, int, daddr_t);
 void	print_mbr_partition(struct mbr_sector *, int, daddr_t, daddr_t, int);
+void	print_pbr(daddr_t, int, uint8_t);
+int	is_all_zero(const char *, size_t);
+void	printvis(int, const char *, const char *, size_t);
 int	read_boot(const char *, void *, size_t, int);
 void	init_sector0(int);
 void	intuit_translated_geometry(void);
@@ -728,6 +732,9 @@ print_mbr_partition(struct mbr_sector *boot, int part,
 		    partp->mbrp_ehd, MBR_PSECT(partp->mbrp_esect));
 	}
 
+	if (! MBR_IS_EXTENDED(partp->mbrp_type))
+		print_pbr(start, indent + 8, partp->mbrp_type);
+
 	if (!MBR_IS_EXTENDED(partp->mbrp_type) ||
 	    (v_flag <= 2 && !ext.is_corrupt))
 		return;
@@ -752,6 +759,136 @@ print_mbr_partition(struct mbr_sector *boot, int part,
 
 	if (exoffset == 0)
 		dumped = 1;
+}
+
+/* Print a line with a label and a vis-encoded string */
+void
+printvis(int indent, const char *label, const char *buf, size_t size)
+{
+	char *visbuf;
+
+	if ((visbuf = malloc(size * 4 + 1)) == NULL)
+		err(1, "Malloc failed");
+	strsvisx(visbuf, buf, size, VIS_TAB|VIS_NL|VIS_OCTAL, "\"");
+	printf("%*s%s: \"%s\"\n",
+	    indent, "",
+	    label, visbuf);
+	free(visbuf);
+}
+
+/* Check whether a buffer contains all bytes zero */
+int
+is_all_zero(const char *p, size_t size)
+{
+
+	while (size-- > 0) {
+		if (*p++ != 0)
+			return 0;
+	}
+	return 1;
+}
+
+/*
+ * Report on the contents of a PBR sector.
+ *
+ * We first perform several sanity checks.  If vflag >= 2, we report all
+ * failing tests, but for smaller values of v_flag we stop after the
+ * first failing test.  Tests are ordered in an attempt to get the most
+ * useful error message from the first failing test.
+ *
+ * If v_flag >= 2, we also report some decoded values from the PBR.
+ * These results may be meaningless, if the PBR doesn't follow common
+ * conventions.
+ *
+ * Trying to decode anything more than the magic number in the last
+ * two bytes is a layering violation, but it can be very useful in
+ * diagnosing boot failures.
+ */
+void
+print_pbr(daddr_t sector, int indent, uint8_t part_type)
+{
+	struct mbr_sector pboot;
+	unsigned char *p, *endp;
+	unsigned char val;
+	int ok;
+	int errcount = 0;
+
+#define PBR_ERROR(...)							\
+	do {								\
+		++errcount;						\
+		printf("%*s%s: ", indent, "",				\
+		    (v_flag < 2 ? "PBR is not bootable" : "Not bootable")); \
+		printf(__VA_ARGS__);					\
+		if (v_flag < 2)						\
+			return;						\
+	} while (/*CONSTCOND*/ 0)
+
+	if (v_flag >= 2) {
+		printf("%*sInformation from PBR:\n",
+		    indent, "");
+		indent += 4;
+	}
+
+	if (read_disk(sector, &pboot) == -1) {
+		PBR_ERROR("Sector %"PRIdaddr" is unreadable (%s)\n",
+		    sector, strerror(errno));
+		return;
+	}
+
+	/* all bytes identical? */
+	p = (char *)&pboot;
+	endp = p + sizeof(pboot);
+	val = *p;
+	ok = 0;
+	for (; p < endp; p++) {
+		if (*p != val) {
+			ok = 1;
+			break;
+		}
+	}
+	if (! ok)
+		PBR_ERROR("All bytes are identical (0x%02x)\n", val);
+
+	if (pboot.mbr_magic != LE_MBR_MAGIC)
+		PBR_ERROR("Bad magic number (0x%04x)>\n",
+			le16toh(pboot.mbr_magic));
+
+#if 0
+	/* Some i386 OS might fail this test.  All non-i386 will fail. */
+	if (pboot.mbr_jmpboot[0] != 0xE9
+	    && pboot.mbr_jmpboot[0] != 0xEB) {
+		PBR_ERROR("Does not begin with i386 JMP instruction"
+			" (0x%02x 0x%02x0 0x%02x)\n",
+		    pboot.mbr_jmpboot[0], pboot.mbr_jmpboot[1],
+		    pboot.mbr_jmpboot[2]);
+	}
+#endif
+
+	if (v_flag > 0 && errcount == 0)
+		printf("%*sPBR appears to be bootable\n",
+		    indent, "");
+	if (v_flag < 2)
+		return;
+
+	if (! is_all_zero(pboot.mbr_oemname, sizeof(pboot.mbr_oemname))) {
+		printvis(indent, "OEM name", (char *)pboot.mbr_oemname,
+			sizeof(pboot.mbr_oemname));
+	}
+
+	if (pboot.mbr_dsn != 0)
+		printf("%*sDrive serial number: %"PRId32" (0x%08x)\n",
+		    indent, "",
+		    le32toh(pboot.mbr_dsn),
+		    le32toh(pboot.mbr_dsn));
+
+	if (pboot.mbr_bpb.bpb16.bsBootSig == 0x29)
+		printf("%*sBPB FAT16 boot signature found\n",
+		    indent, "");
+	if (pboot.mbr_bpb.bpb32.bsBootSig == 0x29)
+		printf("%*sBPB FAT32 boot signature found\n",
+		    indent, "");
+
+#undef PBR_ERROR
 }
 
 int
