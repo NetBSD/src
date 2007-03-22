@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.128.2.3 2007/03/21 20:10:22 ad Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.128.2.4 2007/03/22 12:30:29 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000, 2002, 2007 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.128.2.3 2007/03/21 20:10:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.128.2.4 2007/03/22 12:30:29 ad Exp $");
 
 #include "opt_pool.h"
 #include "opt_poollog.h"
@@ -771,15 +771,6 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 	cv_init(&pp->pr_cv, wchan);
 	pp->pr_ipl = ipl;
 
-	if (strcmp(wchan, "kmem-52") == 0) {
-		printf("kmem-52 initted, mutex @ %p\n", &pp->pr_lock);
-		printf("=> %x %x %x %x\n",
-		    ((uint32_t *)&pp->pr_lock)[0],
-		    ((uint32_t *)&pp->pr_lock)[1],
-		    ((uint32_t *)&pp->pr_lock)[2],
-		    ((uint32_t *)&pp->pr_lock)[3]);
-	}		    
-
 	/*
 	 * Initialize private page header pool and cache magazine pool if we
 	 * haven't done so yet.
@@ -1206,7 +1197,7 @@ pool_do_put(struct pool *pp, void *v, struct pool_pagelist *pq)
 		pp->pr_flags &= ~PR_WANTED;
 		if (ph->ph_nmissing == 0)
 			pp->pr_nidle++;
-		wakeup((void *)pp);
+		cv_broadcast(&pp->pr_cv);
 		return;
 	}
 
