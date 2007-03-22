@@ -352,6 +352,7 @@ void drm_attach(struct device *kdev, struct pci_attach_args *pa,
 	dev->agp_buffer_map = 0;
 	/* dev->unit - already done */
 
+	printf("\n");
 	DRM_INFO("%s (unit %d)\n", id_entry->name, dev->unit);
 	drm_load(dev);
 }
