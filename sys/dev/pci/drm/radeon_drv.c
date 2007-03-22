@@ -40,7 +40,7 @@ __FBSDID("$FreeBSD: src/sys/dev/drm/radeon_drv.c,v 1.14 2005/12/20 22:44:36 jhb 
 #include <dev/pci/drm/radeon_drv.h>
 #include <dev/pci/drm/drm_pciids.h>
 
-int radeon_no_wb = 1;
+int radeon_no_wb;
 
 /* drv_PCI_IDs comes from drm_pciids.h, generated from drm_pciids.txt. */
 static drm_pci_id_list_t radeon_pciidlist[] = {
