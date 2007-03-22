@@ -1,4 +1,4 @@
-/*	$NetBSD: cfparse.y,v 1.18.4.1 2007/02/02 13:43:20 vanhu Exp $	*/
+/*	$NetBSD: cfparse.y,v 1.18.4.2 2007/03/22 10:26:53 vanhu Exp $	*/
 
 /* Id: cfparse.y,v 1.66 2006/08/22 18:17:17 manubsd Exp */
 
@@ -1215,10 +1215,8 @@ sainfo_id
 					return -1;
 				}
 				$$ = ipsecdoi_sockaddr2id(saddr,
-					$3 == (sizeof(struct in_addr) << 3) &&
-						$1 == IDTYPE_ADDRESS
-					  ? ~0 : $3,
-					$5);
+										  $3 == ~0 ? (sizeof(struct in_addr) << 3): $3,
+										  $5);
 				break;
 #ifdef INET6
 			case AF_INET6:
@@ -1227,11 +1225,9 @@ sainfo_id
 					racoon_free(saddr);
 					return -1;
 				}
-				$$ = ipsecdoi_sockaddr2id(saddr,
-					$3 == (sizeof(struct in6_addr) << 3) &&
-						$1 == IDTYPE_ADDRESS
-					  ? ~0 : $3,
-					$5);
+				$$ = ipsecdoi_sockaddr2id(saddr, 
+										  $3 == ~0 ? (sizeof(struct in6_addr) << 3): $3,
+										  $5);
 				break;
 #endif
 			default:
