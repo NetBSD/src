@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.h,v 1.35 2007/03/21 19:55:55 pooka Exp $	*/
+/*	$NetBSD: puffs.h,v 1.36 2007/03/22 14:22:08 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -446,14 +446,14 @@ int	puffs_cred_getgid(const struct puffs_cred *pcr, gid_t *);
 int	puffs_cred_getgroups(const struct puffs_cred *pcr, gid_t *, short *);
 
 /* Credential check */
-int	puffs_cred_isuid(const struct puffs_cred *pcr, uid_t);
-int	puffs_cred_hasgroup(const struct puffs_cred *pcr, gid_t);
+int	puffs_cred_isuid(const struct puffs_cred *, uid_t);
+int	puffs_cred_hasgroup(const struct puffs_cred *, gid_t);
 /* kernel internal NOCRED */
-int	puffs_cred_iskernel(const struct puffs_cred *pcr);
+int	puffs_cred_iskernel(const struct puffs_cred *);
 /* kernel internal FSCRED */
-int	puffs_cred_isfs(const struct puffs_cred *pcr);
+int	puffs_cred_isfs(const struct puffs_cred *);
 /* root || NOCRED || FSCRED */
-int	puffs_cred_isjuggernaut(const struct puffs_cred *pcr);
+int	puffs_cred_isjuggernaut(const struct puffs_cred *);
 
 /* misc */
 int	puffs_access(enum vtype, mode_t, uid_t, gid_t, mode_t,
