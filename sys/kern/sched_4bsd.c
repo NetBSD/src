@@ -1,4 +1,4 @@
-/*	$NetBSD: sched_4bsd.c,v 1.1.2.14 2007/03/23 14:47:32 yamt Exp $	*/
+/*	$NetBSD: sched_4bsd.c,v 1.1.2.15 2007/03/23 15:13:38 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.1.2.14 2007/03/23 14:47:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.1.2.15 2007/03/23 15:13:38 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -117,18 +117,18 @@ struct prochd {
 	struct lwp *ph_rlink;
 };
 
-struct prochd sched_qs[RUNQUE_NQS];	/* run queues */
-volatile uint32_t sched_whichqs;	/* bitmap of non-empty queues */
+static struct prochd sched_qs[RUNQUE_NQS];	/* run queues */
+static volatile uint32_t sched_whichqs;	/* bitmap of non-empty queues */
 
-void schedcpu(void *);
-void updatepri(struct lwp *);
-void resetpriority(struct lwp *);
-void resetprocpriority(struct proc *);
+static void schedcpu(void *);
+static void updatepri(struct lwp *);
+static void resetpriority(struct lwp *);
+static void resetprocpriority(struct proc *);
 
 struct callout schedcpu_ch = CALLOUT_INITIALIZER_SETFUNC(schedcpu, NULL);
 static unsigned int schedcpu_ticks;
 
-int rrticks; /* number of hardclock ticks per sched_tick() */
+static int rrticks; /* number of hardclock ticks per sched_tick() */
 
 /*
  * Force switch among equal priority processes every 100ms.
@@ -297,7 +297,7 @@ fixpt_t	ccpu = 0.95122942450071400909 * FSCALE;		/* exp(-1/20) */
  *	burden.
  */
 /* ARGSUSED */
-void
+static void
 schedcpu(void *arg)
 {
 	fixpt_t loadfac = loadfactor(averunnable.ldavg[0]);
@@ -411,7 +411,7 @@ schedcpu(void *arg)
 /*
  * Recalculate the priority of a process after it has slept for a while.
  */
-void
+static void
 updatepri(struct lwp *l)
 {
 	struct proc *p = l->l_proc;
@@ -479,7 +479,7 @@ sched_nice(struct proc *chgp, int n)
  * Arrange to reschedule if the resulting priority is better
  * than that of the current process.
  */
-void
+static void
 resetpriority(struct lwp *l)
 {
 	unsigned int newpriority;
@@ -500,7 +500,7 @@ resetpriority(struct lwp *l)
 /*
  * Recompute priority for all LWPs in a process.
  */
-void
+static void
 resetprocpriority(struct proc *p)
 {
 	struct lwp *l;
