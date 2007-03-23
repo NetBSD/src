@@ -1,4 +1,4 @@
-/*	$NetBSD: sched_4bsd.c,v 1.1.2.16 2007/03/23 16:29:51 yamt Exp $	*/
+/*	$NetBSD: sched_4bsd.c,v 1.1.2.17 2007/03/23 17:00:15 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.1.2.16 2007/03/23 16:29:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.1.2.17 2007/03/23 17:00:15 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -493,6 +493,8 @@ runqueue_check(const runqueue_t *rq, int whichq, struct lwp *l)
 	if (die)
 		panic("runqueue_check: inconsistency found");
 }
+#else /* RQDEBUG */
+#define	runqueue_check(a, b, c)	/* nothing */
 #endif /* RQDEBUG */
 
 static void
@@ -513,15 +515,11 @@ runqueue_enqueue(runqueue_t *rq, struct lwp *l)
 
 	LOCK_ASSERT(lwp_locked(l, &sched_mutex));
 
-#ifdef RQDEBUG
 	runqueue_check(rq, whichq, NULL);
-#endif
 	rq->rq_bitmap |= RQMASK(whichq);
 	sq = &rq->rq_subqueues[whichq];
 	TAILQ_INSERT_TAIL(&sq->sq_queue, l, l_runq);
-#ifdef RQDEBUG
 	runqueue_check(rq, whichq, l);
-#endif
 }
 
 static void
@@ -532,17 +530,13 @@ runqueue_dequeue(runqueue_t *rq, struct lwp *l)
 
 	LOCK_ASSERT(lwp_locked(l, &sched_mutex));
 
-#ifdef RQDEBUG
 	runqueue_check(rq, whichq, l);
-#endif
 	KASSERT((rq->rq_bitmap & RQMASK(whichq)) != 0);
 	sq = &rq->rq_subqueues[whichq];
 	TAILQ_REMOVE(&sq->sq_queue, l, l_runq);
 	if (TAILQ_EMPTY(&sq->sq_queue))
 		rq->rq_bitmap &= ~RQMASK(whichq);
-#ifdef RQDEBUG
 	runqueue_check(rq, whichq, NULL);
-#endif
 }
 
 static struct lwp *
