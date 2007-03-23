@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.100.2.1 2007/03/21 20:11:52 ad Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.100.2.2 2007/03/23 18:49:09 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.100.2.1 2007/03/21 20:11:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.100.2.2 2007/03/23 18:49:09 ad Exp $");
 
 #include "opt_ktrace.h"
 
@@ -786,7 +786,6 @@ selcommon(struct lwp *l, register_t *retval, int nd, fd_set *u_in,
 	size_t		ni;
 	sigset_t	oldmask;
 	struct timeval  sleeptv;
-	size_t		kmsz;
 
 	error = 0;
 	if (nd < 0)
@@ -796,12 +795,10 @@ selcommon(struct lwp *l, register_t *retval, int nd, fd_set *u_in,
 		nd = p->p_fd->fd_nfiles;
 	}
 	ni = howmany(nd, NFDBITS) * sizeof(fd_mask);
-	if ((kmsz = ni * 6) > sizeof(smallbits))
-		bits = kmem_alloc(kmsz, KM_SLEEP);
-	else {
+	if (ni * 6 > sizeof(smallbits))
+		bits = kmem_alloc(ni * 6, KM_SLEEP);
+	else
 		bits = smallbits;
-		kmsz = 0;
-	}
 
 #define	getbits(name, x)						\
 	if (u_ ## name) {						\
@@ -876,8 +873,8 @@ selcommon(struct lwp *l, register_t *retval, int nd, fd_set *u_in,
 #undef putbits
 	}
  out:
-	if (kmsz != 0)
-		kmem_free(bits, kmsz);
+	if (bits != smallbits)
+		kmem_free(bits, ni * 6);
 	return (error);
 }
 
@@ -1057,7 +1054,7 @@ pollcommon(struct lwp *l, register_t *retval,
 			goto out;
 	}
  out:
-	if (ni != 0)
+	if (bits != smallbits)
 		kmem_free(bits, ni);
 	return (error);
 }
