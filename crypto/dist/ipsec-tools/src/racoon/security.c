@@ -153,6 +153,7 @@ get_security_context(sa, p)
 				return -1;
 			}
 			memcpy(&p->sec_ctx, d + 1, lorv);
+			p->sec_ctx.ctx_strlen = ntohs(p->sec_ctx.ctx_strlen);
 			return 0;
 		}
 	}
