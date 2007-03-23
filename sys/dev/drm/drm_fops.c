@@ -41,6 +41,7 @@ __FBSDID("$FreeBSD: src/sys/dev/drm/drm_fops.c,v 1.2 2005/11/28 23:13:52 anholt 
 
 drm_file_t *drm_find_file_by_proc(drm_device_t *dev, DRM_STRUCTPROC *p)
 {
+	int restart = 1;
 #if __FreeBSD_version >= 500021
 	uid_t uid = p->td_ucred->cr_svuid;
 	pid_t pid = p->td_proc->p_pid;
@@ -55,9 +56,25 @@ drm_file_t *drm_find_file_by_proc(drm_device_t *dev, DRM_STRUCTPROC *p)
 
 	DRM_SPINLOCK_ASSERT(&dev->dev_lock);
 
-	TAILQ_FOREACH(priv, &dev->files, link)
-		if (priv->pid == pid && priv->uid == uid)
-			return priv;
+	while (restart) {
+		restart = 0;
+		TAILQ_FOREACH(priv, &dev->files, link) {
+#ifdef __NetBSD__
+	/* if the process disappeared, free the resources 
+	 * NetBSD only calls drm_close once, so this frees
+	 * resources earlier.
+	 */
+			if (pfind(priv->pid) == NULL) {
+				drm_close_pid(dev, priv, priv->pid);
+				restart = 1;
+				break;
+			}
+			else
+#endif
+			if (priv->pid == pid && priv->uid == uid)
+				return priv;
+		}
+	}
 	return NULL;
 }
 

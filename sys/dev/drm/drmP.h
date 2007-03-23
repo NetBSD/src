@@ -907,6 +907,8 @@ dev_type_poll(drm_poll);
 dev_type_mmap(drm_mmap);
 #endif
 
+int drm_close_pid(drm_device_t *dev, drm_file_t *priv, pid_t pid);
+
 /* File operations helpers (drm_fops.c) */
 #ifdef __FreeBSD__
 extern int		drm_open_helper(struct cdev *kdev, int flags, int fmt, 
