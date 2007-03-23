@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_flow.c,v 1.4 2007/03/23 14:24:22 liamjfoy Exp $	*/
+/*	$NetBSD: ip6_flow.c,v 1.5 2007/03/23 17:35:02 macallan Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -233,7 +233,7 @@ ip6flow_fastforward(struct mbuf *m)
 	if ((m->m_flags & (M_BCAST|M_MCAST)) != 0)
 		return 0;
 
-	if (IP6_HDR_ALIGNED_P(mtod(m, caddr_t)) == 0) {
+	if (IP6_HDR_ALIGNED_P(mtod(m, void *)) == 0) {
 		if ((m = m_copyup(m, sizeof(struct ip6_hdr),
 				(max_linkhdr + 3) & ~3)) == NULL) {
 			return 0;
