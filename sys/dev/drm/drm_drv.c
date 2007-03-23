@@ -773,27 +773,10 @@ int drm_open(DRM_CDEV kdev, int flags, int fmt, DRM_STRUCTCDEVPROC *p)
 	return retcode;
 }
 
-int drm_close(DRM_CDEV kdev, int flags, int fmt, DRM_STRUCTCDEVPROC *p)
+int drm_close_pid(drm_device_t *dev, drm_file_t *priv, pid_t pid)
 {
-	drm_file_t *priv;
-	DRM_DEVICE;
 	int retcode = 0;
-	DRMFILE filp = (void *)(uintptr_t)(DRM_CURRENTPID);
-	
-	DRM_DEBUG( "open_count = %d\n", dev->open_count );
-
-	DRM_LOCK();
-
-#ifdef __FreeBSD__
-	priv = drm_find_file_by_proc(dev, p);
-#elif defined(__NetBSD__)
-	priv = drm_find_file_by_proc(dev, p->l_proc);
-#endif
-	if (!priv) {
-		DRM_UNLOCK();
-		DRM_ERROR("can't find authenticator\n");
-		return EINVAL;
-	}
+	DRMFILE filp = (void *)(uintptr_t)(pid);
 
 	if (dev->driver.preclose != NULL)
 		dev->driver.preclose(dev, filp);
@@ -862,6 +845,47 @@ int drm_close(DRM_CDEV kdev, int flags, int fmt, DRM_STRUCTCDEVPROC *p)
 	if (dev->driver.use_dma && !dev->driver.reclaim_buffers_locked)
 		drm_reclaim_buffers(dev, filp);
 
+	if (--priv->refs == 0) {
+		if (dev->driver.postclose != NULL)
+			dev->driver.postclose(dev, priv);
+		TAILQ_REMOVE(&dev->files, priv, link);
+		free(priv, M_DRM);
+	}
+
+	return retcode;
+}
+
+int drm_close(DRM_CDEV kdev, int flags, int fmt, DRM_STRUCTCDEVPROC *p)
+{
+	drm_file_t *priv;
+	DRM_DEVICE;
+	int retcode = 0;
+	
+	DRM_DEBUG( "open_count = %d\n", dev->open_count );
+
+	DRM_LOCK();
+
+#ifdef __FreeBSD__
+	priv = drm_find_file_by_proc(dev, p);
+#elif defined(__NetBSD__)
+	priv = drm_find_file_by_proc(dev, p->l_proc);
+#endif
+	if (!priv) {
+		DRM_UNLOCK();
+		DRM_ERROR("can't find authenticator\n");
+		return EINVAL;
+	}
+
+#ifdef __NetBSD__
+	/* On NetBSD, close will only be called once */
+	DRM_DEBUG("setting priv->refs %d to 1\n", (int)priv->refs);
+	priv->refs = 1;
+	DRM_DEBUG("setting open_count %d to 1\n", (int)dev->open_count);
+	dev->open_count = 1;
+#endif
+
+	retcode = drm_close_pid(dev, priv, DRM_CURRENTPID);
+
 #if defined (__FreeBSD__) && (__FreeBSD_version >= 500000)
 	funsetown(&dev->buf_sigio);
 #elif defined(__FreeBSD__)
@@ -870,30 +894,9 @@ int drm_close(DRM_CDEV kdev, int flags, int fmt, DRM_STRUCTCDEVPROC *p)
 	dev->buf_pgid = 0;
 #endif /* __NetBSD__  || __OpenBSD__ */
 
-#ifdef __NetBSD__
-	/* On NetBSD, close will only be called once */
-	DRM_DEBUG("setting priv->refs %d to 1\n", (int)priv->refs);
-	priv->refs = 1;
-#endif
-	if (--priv->refs == 0) {
-		if (dev->driver.postclose != NULL)
-			dev->driver.postclose(dev, priv);
-		TAILQ_REMOVE(&dev->files, priv, link);
-		free(priv, M_DRM);
-	}
-
-	/* ========================================================
-	 * End inline drm_release
-	 */
-
 	atomic_inc( &dev->counts[_DRM_STAT_CLOSES] );
 #ifdef __FreeBSD__
 	device_unbusy(dev->device);
-#endif
-#ifdef __NetBSD__
-	/* On NetBSD, close will only be called once */
-	DRM_DEBUG("setting open_count %d to 1\n", (int)dev->open_count);
-	dev->open_count = 1;
 #endif
 	if (--dev->open_count == 0) {
 		retcode = drm_lastclose(dev);
