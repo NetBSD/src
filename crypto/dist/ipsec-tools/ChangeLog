@@ -2,6 +2,9 @@
 	* src/racoon/{oakley.c|racoon.conf.5}: give more details about
 	  what is checked when using certificates to authenticate. Patch
 	  by Cyrus Rahman.
+	* src/racoon/handler.c: expire zombie handlers in getph2byid(), to
+	  avoid situations where we'll never negociate a phase2
+	  again. Would be better to find out why do we have such zombies !!
 
 2007-03-22  Yvan Vanhullebus  <vanhu@netasq.com>
 	* src/racoon/{ipsec_doi.c|cfparse.y}: fixed subnet check to

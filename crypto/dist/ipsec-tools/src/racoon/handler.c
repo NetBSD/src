@@ -1,4 +1,4 @@
-/*	$NetBSD: handler.c,v 1.9.6.2 2007/03/21 14:30:08 vanhu Exp $	*/
+/*	$NetBSD: handler.c,v 1.9.6.3 2007/03/23 15:36:58 vanhu Exp $	*/
 
 /* Id: handler.c,v 1.28 2006/05/26 12:17:29 manubsd Exp */
 
@@ -480,8 +480,21 @@ getph2byid(src, dst, spid)
 	LIST_FOREACH(p, &ph2tree, chain) {
 		if (spid == p->spid &&
 		    CMPSADDR(src, p->src) == 0 &&
-		    CMPSADDR(dst, p->dst) == 0)
-			return p;
+		    CMPSADDR(dst, p->dst) == 0){
+			/* Sanity check to detect zombie handlers
+			 * XXX Sould be done "somewhere" more interesting,
+			 * because we have lots of getph2byxxxx(), but this one
+			 * is called by pk_recvacquire(), so is the most important.
+			 */
+			if(p->status < PHASE2ST_ESTABLISHED &&
+			   p->retry_counter == 0
+			   && p->sce == NULL && p->scr == NULL){
+				plog(LLV_DEBUG, LOCATION, NULL,
+					 "Zombie ph2 found, expiring it\n");
+				isakmp_ph2expire(p);
+			}else
+				return p;
+		}
 	}
 
 	return NULL;
