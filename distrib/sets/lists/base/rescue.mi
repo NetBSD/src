@@ -1,4 +1,4 @@
-# $NetBSD: rescue.mi,v 1.21 2006/11/01 17:36:13 apb Exp $
+# $NetBSD: rescue.mi,v 1.22 2007/03/23 05:48:34 lukem Exp $
 ./rescue/[					base-rescue-root
 ./rescue/atactl					base-rescue-root
 ./rescue/badsect				base-rescue-root
@@ -28,9 +28,11 @@
 ./rescue/dump_lfs				base-rescue-root
 ./rescue/echo					base-rescue-root
 ./rescue/ed					base-rescue-root
+./rescue/egrep					base-rescue-root
 ./rescue/ex					base-rescue-root
 ./rescue/expr					base-rescue-root
 ./rescue/fdisk					base-rescue-root
+./rescue/fgrep					base-rescue-root
 ./rescue/fsck					base-rescue-root
 ./rescue/fsck_ext2fs				base-rescue-root
 ./rescue/fsck_ffs				base-rescue-root
@@ -39,6 +41,7 @@
 ./rescue/fsdb					base-rescue-root
 ./rescue/fsirand				base-rescue-root
 ./rescue/ftp					base-rescue-root
+./rescue/grep					base-rescue-root
 ./rescue/gunzip					base-rescue-root
 ./rescue/gzcat					base-rescue-root
 ./rescue/gzip					base-rescue-root
@@ -56,6 +59,7 @@
 ./rescue/ktruss					base-rescue-root
 ./rescue/ldd					base-rescue-root
 ./rescue/less					base-rescue-root
+./rescue/lfs_cleanerd				base-rescue-root
 ./rescue/lmcctl					base-rescue-root	obsolete
 ./rescue/lmcconfig				base-rescue-root
 ./rescue/ln					base-rescue-root
@@ -143,3 +147,6 @@
 ./rescue/wdogctl				base-rescue-root
 ./rescue/wsconsctl				base-rescue-root
 ./rescue/zcat					base-rescue-root
+./rescue/zegrep					base-rescue-root
+./rescue/zfgrep					base-rescue-root
+./rescue/zgrep					base-rescue-root
