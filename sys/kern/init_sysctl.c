@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.96.2.3 2007/03/12 05:58:32 rmind Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.96.2.4 2007/03/23 15:56:07 yamt Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.96.2.3 2007/03/12 05:58:32 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.96.2.4 2007/03/23 15:56:07 yamt Exp $");
 
 #include "opt_sysv.h"
 #include "opt_multiprocessor.h"
@@ -2820,8 +2820,8 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki)
 		l = proc_representative_lwp(p, &tmp, 1);
 		lwp_lock(l);
 		ki->p_nrlwps = tmp;
-		ki->p_forw = PTRTOUINT64(l->l_forw);
-		ki->p_back = PTRTOUINT64(l->l_back);
+		ki->p_forw = 0;
+		ki->p_back = 0;
 		ki->p_addr = PTRTOUINT64(l->l_addr);
 		ki->p_stat = l->l_stat;
 		ki->p_flag |= sysctl_map_flags(sysctl_lwpflagmap, l->l_flag);
@@ -2905,8 +2905,8 @@ static void
 fill_lwp(struct lwp *l, struct kinfo_lwp *kl)
 {
 
-	kl->l_forw = PTRTOUINT64(l->l_forw);
-	kl->l_back = PTRTOUINT64(l->l_back);
+	kl->l_forw = 0;
+	kl->l_back = 0;
 	kl->l_laddr = PTRTOUINT64(l);
 	kl->l_addr = PTRTOUINT64(l->l_addr);
 	kl->l_stat = l->l_stat;
