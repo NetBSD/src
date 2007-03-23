@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.281 2007/03/23 15:00:38 jmcneill Exp $
+#	$NetBSD: files.pci,v 1.282 2007/03/23 22:17:52 jmcneill Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -762,7 +762,7 @@ attach	voodoofb at pci
 file	dev/pci/voodoofb.c		voodoofb
 
 # VIA UniChrome framebuffer console driver
-device	unichromefb: wsemuldisplaydev, rasops16, rasops32, vcons
+device	unichromefb: wsemuldisplaydev, rasops16, rasops32, vcons, drm
 attach	unichromefb at pci
 file	dev/pci/unichromefb.c		unichromefb needs-flag
 
