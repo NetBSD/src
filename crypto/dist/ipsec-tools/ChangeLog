@@ -5,6 +5,9 @@
 	* src/racoon/handler.c: expire zombie handlers in getph2byid(), to
 	  avoid situations where we'll never negociate a phase2
 	  again. Would be better to find out why do we have such zombies !!
+	* src/racoon/{ipsec_doi.c|security.c}: fixed a segfault when using
+	  security labels between a 32bit and a 64bit host. Patch by
+	  Joy Latten.
 
 2007-03-22  Yvan Vanhullebus  <vanhu@netasq.com>
 	* src/racoon/{ipsec_doi.c|cfparse.y}: fixed subnet check to
