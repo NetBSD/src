@@ -269,7 +269,7 @@ enum {
 #if defined(__FreeBSD__)
 #define DRM_DEVICE							\
 	drm_device_t *dev = kdev->si_drv1
-#define DRM_IOCTL_ARGS		struct cdev *kdev, u_long cmd, caddr_t data, \
+#define DRM_IOCTL_ARGS		struct cdev *kdev, u_long cmd, char *data, \
 				int flags, DRM_STRUCTPROC *p, DRMFILE filp
 
 #define PAGE_ALIGN(addr) round_page(addr)
@@ -363,7 +363,7 @@ typedef u_int8_t u8;
 	*(volatile u_int32_t *)(((unsigned long)(map)->handle) + (offset)) = val
 
 #define DRM_VERIFYAREA_READ( uaddr, size )		\
-	(!useracc(__DECONST(caddr_t, uaddr), size, VM_PROT_READ))
+	(!useracc(__DECONST(char *, uaddr), size, VM_PROT_READ))
 
 #else /* __FreeBSD__ */
 
