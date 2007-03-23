@@ -1,4 +1,4 @@
-/*	$NetBSD: sched_4bsd.c,v 1.1.2.13 2007/03/20 11:26:51 yamt Exp $	*/
+/*	$NetBSD: sched_4bsd.c,v 1.1.2.14 2007/03/23 14:47:32 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.1.2.13 2007/03/20 11:26:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.1.2.14 2007/03/23 14:47:32 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -755,24 +755,29 @@ sched_nextlwp(struct lwp *l)
 #endif /* !defined(__HAVE_MD_RUNQUEUE) */
 
 /* Dummy */
-void sched_lwp_fork(struct lwp *l)
+void
+sched_lwp_fork(struct lwp *l)
 {
 
 }
 
-void sched_lwp_exit(struct lwp *l)
+void
+sched_lwp_exit(struct lwp *l)
 {
 
 }
 
-void sched_slept(struct lwp *l)
+void
+sched_slept(struct lwp *l)
 {
 
 }
 
 /* SysCtl */
 
-SYSCTL_SETUP(sysctl_sched_setup, "sysctl kern.sched subtree setup") {
+SYSCTL_SETUP(sysctl_sched_setup, "sysctl kern.sched subtree setup")
+{
+
 	sysctl_createv(clog, 0, NULL, NULL,
 		CTLFLAG_PERMANENT,
 		CTLTYPE_NODE, "kern", NULL,
