@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.21.2.1 2007/03/12 05:48:00 rmind Exp $	*/
+/*	$NetBSD: cpu.h,v 1.21.2.2 2007/03/23 21:45:18 skrll Exp $	*/
 
 /*	$OpenBSD: cpu.h,v 1.20 2001/01/29 00:01:58 mickey Exp $	*/
 
@@ -186,7 +186,6 @@ struct clockframe {
 #define	CLKF_USERMODE(framep)	((framep)->cf_flags & T_USER)
 
 #define	cpu_signotify(l)	(setsoftast())
-#define	cpu_need_resched(ci)	(want_resched = 1, setsoftast())
 #define	cpu_need_proftick(l)	((l)->l_pflag |= LP_OWEUPC, setsoftast())
 
 #include <sys/cpu_data.h>
@@ -247,8 +246,7 @@ int	spcopy(pa_space_t, const void *, pa_space_t, void *, size_t);
 int	spstrcpy(pa_space_t, const void *, pa_space_t, void *, size_t,
 		 size_t *);
 int	copy_on_fault(void);
-void	switch_trampoline(void);
-void	switch_exit(struct lwp *, void (*)(struct lwp *));
+void	lwp_trampoline(void);
 int	cpu_dumpsize(void);
 int	cpu_dump(void);
 #endif
