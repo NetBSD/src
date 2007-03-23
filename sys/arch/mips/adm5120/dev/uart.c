@@ -1,4 +1,4 @@
-/* $NetBSD: uart.c,v 1.1 2007/03/20 08:52:02 dyoung Exp $ */
+/* $NetBSD: uart.c,v 1.2 2007/03/23 20:05:47 dogcow Exp $ */
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uart.c,v 1.1 2007/03/20 08:52:02 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uart.c,v 1.2 2007/03/23 20:05:47 dogcow Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -307,7 +307,7 @@ uart_start(struct tty *tp)
 	if (tp->t_outq.c_cc <= tp->t_lowat) {
 		if (tp->t_state & TS_ASLEEP) {
 			tp->t_state &= ~TS_ASLEEP;
-			wakeup((caddr_t)&tp->t_outq);
+			wakeup((char *)&tp->t_outq);
 		}
 		selwakeup(&tp->t_wsel);
 	}
