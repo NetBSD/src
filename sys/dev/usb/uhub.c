@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.88 2007/03/19 14:02:56 drochner Exp $	*/
+/*	$NetBSD: uhub.c,v 1.89 2007/03/23 21:51:34 drochner Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.88 2007/03/19 14:02:56 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.89 2007/03/23 21:51:34 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -674,6 +674,15 @@ uhub_intr(usbd_xfer_handle xfer, usbd_private_handle addr,
 		sc->sc_explorepending = 1;
 		usb_needs_explore(sc->sc_hub);
 	}
+	/*
+	 * XXX workaround for broken implementation of the interrupt
+	 * pipe in EHCI root hub emulation which doesn't resend
+	 * status change notifications until handled: force a rescan
+	 * of the ports we touched in the last run
+	 */
+	if (status == USBD_NORMAL_COMPLETION && sc->sc_explorepending &&
+      !strcmp(sc->sc_dev.dv_parent->dv_parent->dv_cfdriver->cd_name, "ehci"))
+		usb_needs_explore(sc->sc_hub);
 }
 
 #if defined(__FreeBSD__)
