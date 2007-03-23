@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.114 2006/12/05 10:21:09 martin Exp $	*/
+/*	$NetBSD: net.c,v 1.115 2007/03/23 12:51:03 is Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -649,7 +649,7 @@ again:
 			/* pull hostname out of leases file */
 			dhcp_host[0] = 0;
 			get_dhcp_value(dhcp_host, sizeof(dhcp_host),
-			    "hostname");
+			    "host-name");
 			if (dhcp_host[0] != '\0') {
 				net_dhcpconf |= DHCPCONF_HOST;
 				strlcpy(net_host, dhcp_host, sizeof net_host);
