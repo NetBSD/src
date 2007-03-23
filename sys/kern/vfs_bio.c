@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.170.2.2 2007/03/13 17:51:00 ad Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.170.2.3 2007/03/23 18:51:10 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -82,7 +82,7 @@
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.170.2.2 2007/03/13 17:51:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.170.2.3 2007/03/23 18:51:10 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -982,10 +982,10 @@ already_queued:
 	mutex_exit(&bp->b_interlock);
 	mutex_exit(&bqueue_lock);
 	if (bp->b_bufsize <= 0) {
+		BUF_DESTROY(bp);
 #ifdef DEBUG
 		memset((char *)bp, 0, sizeof(*bp));
 #endif
-		BUF_DESTROY(bp);
 		pool_put(&bufpool, bp);
 	}
 
