@@ -1,4 +1,4 @@
-/*	$NetBSD: oakley.c,v 1.9 2006/10/02 18:54:46 manu Exp $	*/
+/*	$NetBSD: oakley.c,v 1.9.6.1 2007/03/23 09:57:00 vanhu Exp $	*/
 
 /* Id: oakley.c,v 1.32 2006/05/26 12:19:46 manubsd Exp */
 
@@ -1877,7 +1877,7 @@ oakley_check_certid(iph1)
 		vfree(name);
 		if (error != 0) {
 			plog(LLV_ERROR, LOCATION, NULL,
-				"ID mismatched with subjectAltName.\n");
+				"ID mismatched with ASN1 SubjectName.\n");
 			return ISAKMP_NTYPE_INVALID_ID_INFORMATION;
 		}
 		return 0;
