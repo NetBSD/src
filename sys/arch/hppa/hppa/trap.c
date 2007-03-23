@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.40.2.1 2007/03/12 05:48:18 rmind Exp $	*/
+/*	$NetBSD: trap.c,v 1.40.2.2 2007/03/23 21:45:18 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.40.2.1 2007/03/12 05:48:18 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.40.2.2 2007/03/23 21:45:18 skrll Exp $");
 
 /* #define INTRDEBUG */
 /* #define TRAPDEBUG */
@@ -903,7 +903,7 @@ do_onfault:
 
 #ifdef DEBUG
 	frame_sanity_check(0xdead02, type, frame, l);
-	if (frame->tf_flags & TFF_LAST && curlwp != NULL)
+	if (frame->tf_flags & TFF_LAST && (curlwp->l_flag & LW_IDLE) == 0)
 		frame_sanity_check(0xdead03, type, curlwp->l_md.md_regs,
 				   curlwp);
 #endif /* DEBUG */
