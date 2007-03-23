@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.28 2006/11/29 08:41:49 dogcow Exp $
+#	$NetBSD: list,v 1.29 2007/03/23 05:48:34 lukem Exp $
 
 SRCDIRS	bin
 
@@ -118,6 +118,7 @@ SRCDIRS	usr.bin
 
 PROG	bzip2		bunzip2 bzcat
 PROG	ftp
+PROG	grep		egrep fgrep zgrep zegrep zfgrep
 PROG	gzip		gunzip gzcat zcat 
 PROG	kdump
 PROG	ktrace
@@ -142,6 +143,11 @@ PROG	vnconfig
 SRCDIRS	games
 
 PROG	tetris
+
+SRCDIRS	libexec
+
+PROG	lfs_cleanerd
+
 
 LIBS	liboverride.o
 LIBS	-lbz2 -lcrypt -ledit -lipsec -lkvm -ll -lm -lrmt -lcurses -ltermcap -lutil -lz -levent -lprop
