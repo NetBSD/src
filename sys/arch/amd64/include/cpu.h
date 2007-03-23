@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.14.2.3 2007/03/17 17:42:24 rmind Exp $	*/
+/*	$NetBSD: cpu.h,v 1.14.2.4 2007/03/23 21:06:59 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -256,7 +256,6 @@ void	fillw __P((short, void *, size_t));
 
 struct pcb;
 void	savectx __P((struct pcb *));
-void	switch_exit __P((struct lwp *, void (*)(struct lwp *)));
 void	lwp_trampoline __P((void));
 void	child_trampoline __P((void));
 
