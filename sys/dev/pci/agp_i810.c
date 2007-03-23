@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_i810.c,v 1.38 2007/03/23 16:27:59 jmcneill Exp $	*/
+/*	$NetBSD: agp_i810.c,v 1.39 2007/03/23 16:39:07 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.38 2007/03/23 16:27:59 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.39 2007/03/23 16:39:07 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -218,11 +218,9 @@ agp_i810_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	if (isc->chiptype == CHIP_I915) {
-		pci_mapreg_info(isc->vga_pa.pa_pc, isc->vga_pa.pa_tag,
-				AGP_I915_MMADR, PCI_MAPREG_TYPE_MEM, NULL,
-				&mmadrsize, NULL);
 		error = pci_mapreg_map(&isc->vga_pa, AGP_I915_MMADR,
-		    PCI_MAPREG_TYPE_MEM, 0, &isc->bst, &isc->bsh, NULL, NULL);
+		    PCI_MAPREG_TYPE_MEM, 0, &isc->bst, &isc->bsh,
+		    NULL, &mmadrsize);
 		if (error != 0) {
 			aprint_error(": can't map mmadr registers\n");
 			agp_generic_detach(sc);
@@ -238,11 +236,9 @@ agp_i810_attach(struct device *parent, struct device *self, void *aux)
 			return error;
 		}
 	} else {
-		pci_mapreg_info(isc->vga_pa.pa_pc, isc->vga_pa.pa_tag,
-				AGP_I810_MMADR, PCI_MAPREG_TYPE_MEM, NULL,
-				&mmadrsize, NULL);
 		error = pci_mapreg_map(&isc->vga_pa, AGP_I810_MMADR,
-		    PCI_MAPREG_TYPE_MEM, 0, &isc->bst, &isc->bsh, NULL, NULL);
+		    PCI_MAPREG_TYPE_MEM, 0, &isc->bst, &isc->bsh,
+		    NULL, &mmadrsize);
 		if (error != 0) {
 			aprint_error(": can't map mmadr registers\n");
 			agp_generic_detach(sc);
