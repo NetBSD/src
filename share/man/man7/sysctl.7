@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.7,v 1.6 2007/03/12 14:37:28 liamjfoy Exp $
+.\"	$NetBSD: sysctl.7,v 1.7 2007/03/23 14:32:45 liamjfoy Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -1288,6 +1288,7 @@ The currently defined protocols and names are:
 .It ip6	defmcasthlim	integer	yes
 .It ip6	forwarding	integer	yes
 .It ip6	gifhlim	integer	yes
+.It ip6	hashsize	integer	yes
 .It ip6	hlim	integer	yes
 .It ip6	hdrnestlimit	integer	yes
 .It ip6	kame_version	string	no
@@ -1356,6 +1357,12 @@ tunnel interface.
 .It Li ip6.hdrnestlimit
 The number of IPv6 extension headers permitted on incoming IPv6 packets.
 If set to 0, the node will accept as many extension headers as possible.
+.It Li ip6.hashsize
+The size of IPv6 Fast Forward hash table.
+This value must be a power of 2 (64, 256...).
+A larger hash table size results in fewer collisions.
+Also see
+.Li ip6.maxflows .
 .It Li ip6.hlim
 The default hop limit value for an IPv6 unicast packet sourced by the node.
 This value applies to all the transport protocols on top of IPv6.
