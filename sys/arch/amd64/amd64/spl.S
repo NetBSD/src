@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.6 2007/02/09 21:55:01 ad Exp $	*/
+/*	$NetBSD: spl.S,v 1.6.2.1 2007/03/23 14:06:07 ad Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -107,6 +107,32 @@ _C_LABEL(splx):
 	ret
 #endif /* PROF || GPROF */
 #endif
+
+/*
+ * int splraise(int s);
+ */
+	.align	32
+
+ENTRY(splraise)
+	movl	CPUVAR(ILEVEL),%eax
+	cmpl	%edi,%eax
+	cmoval	%eax,%edi
+	movl	%edi,CPUVAR(ILEVEL)
+	ret
+
+/*
+ * void softintr(int sir);
+ *
+ * Software interrupt registration.
+ */
+	.align	32
+
+ENTRY(softintr)
+	movl	%edi,%ecx
+	movl	$1,%eax
+	shll	%cl,%eax
+	orl	%eax,CPUVAR(IPENDING)
+	ret
 
 /*
  * void spllower(int s);
