@@ -1,4 +1,4 @@
-# $NetBSD: genassym.cf,v 1.13.2.1 2007/03/20 12:07:11 yamt Exp $
+# $NetBSD: genassym.cf,v 1.13.2.2 2007/03/23 15:52:52 yamt Exp $
 
 #
 # Copyright (c) 1994, 1995 Gordon W. Ross
@@ -112,8 +112,6 @@ define	ALPHA_PTE_KR		ALPHA_PTE_KR
 define	ALPHA_PTE_KW		ALPHA_PTE_KW
 
 # Important offsets into the lwp and proc structs & associated constants
-define	L_FORW			offsetof(struct lwp, l_forw)
-define	L_BACK			offsetof(struct lwp, l_back)
 define	L_ADDR			offsetof(struct lwp, l_addr)
 define	L_STAT			offsetof(struct lwp, l_stat)
 define	L_CPU			offsetof(struct lwp, l_cpu)

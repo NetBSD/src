@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.39 2007/02/09 21:55:06 ad Exp $
+#	$NetBSD: genassym.cf,v 1.39.2.1 2007/03/23 15:52:53 yamt Exp $
 #
 # Copyright (c) 1997
 #  Jonathan Stone.  All rights reserved.
@@ -60,8 +60,6 @@ include <mips/locore.h>
 define	PAGE_SIZE		PAGE_SIZE
 
 # Important offsets into the lwp and proc structs & associated constants
-define	L_FORW			offsetof(struct lwp, l_forw)
-define	L_BACK			offsetof(struct lwp, l_back)
 define	L_ADDR			offsetof(struct lwp, l_addr)
 define	L_PRIORITY		offsetof(struct lwp, l_priority)
 define	L_WCHAN			offsetof(struct lwp, l_wchan)
