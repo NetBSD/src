@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.236.2.6 2007/03/12 06:00:53 rmind Exp $	*/
+/*	$NetBSD: proc.h,v 1.236.2.7 2007/03/23 20:16:55 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -452,7 +452,7 @@ do {									\
 #define	FORK_SYSTEM	0x80		/* Fork a kernel thread */
 
 /*
- * Allow machine-dependent code to override curproc in <machine/cpu.h> for
+ * Allow machine-dependent code to override curlwp in <machine/cpu.h> for
  * its own convenience.  Otherwise, we declare it as appropriate.
  */
 #if !defined(curlwp)
@@ -461,22 +461,10 @@ do {									\
 #else
 extern struct lwp	*curlwp;		/* Current running LWP */
 #endif /* MULTIPROCESSOR */
-#endif /* ! curproc */
+#endif /* ! curlwp */
 
 #define	CURCPU_IDLE_P()	(curlwp == curcpu()->ci_data.cpu_idlelwp)
-
-static struct proc *__curproc(void);
-
-static __inline struct proc *
-__curproc()
-{
-	struct lwp *l = curlwp;
-
-	if (l == NULL)
-		return NULL;
-	return l->l_proc;
-}
-#define	curproc	__curproc()
+#define	curproc		(curlwp->l_proc)
 
 extern struct proc	proc0;		/* Process slot for swapper */
 extern int		nprocs, maxproc; /* Current and max number of procs */
