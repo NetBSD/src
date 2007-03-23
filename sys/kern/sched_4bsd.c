@@ -1,4 +1,4 @@
-/*	$NetBSD: sched_4bsd.c,v 1.1.2.15 2007/03/23 15:13:38 yamt Exp $	*/
+/*	$NetBSD: sched_4bsd.c,v 1.1.2.16 2007/03/23 16:29:51 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.1.2.15 2007/03/23 15:13:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.1.2.16 2007/03/23 16:29:51 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -108,17 +108,17 @@ __KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.1.2.15 2007/03/23 15:13:38 yamt Exp
  * first non-empty queue.
  */
 
-
 #define	RUNQUE_NQS		32      /* number of runqueues */
 #define	PPQ	(128 / RUNQUE_NQS)	/* priorities per queue */
 
-struct prochd {
-	struct lwp *ph_link;
-	struct lwp *ph_rlink;
-};
-
-static struct prochd sched_qs[RUNQUE_NQS];	/* run queues */
-static volatile uint32_t sched_whichqs;	/* bitmap of non-empty queues */
+typedef struct subqueue {
+	TAILQ_HEAD(, lwp) sq_queue;
+} subqueue_t;
+typedef struct runqueue {
+	subqueue_t rq_subqueues[RUNQUE_NQS];	/* run queues */
+	uint32_t rq_bitmap;	/* bitmap of non-empty queues */
+} runqueue_t;
+static runqueue_t global_queue; 
 
 static void schedcpu(void *);
 static void updatepri(struct lwp *);
@@ -127,7 +127,6 @@ static void resetprocpriority(struct proc *);
 
 struct callout schedcpu_ch = CALLOUT_INITIALIZER_SETFUNC(schedcpu, NULL);
 static unsigned int schedcpu_ticks;
-
 static int rrticks; /* number of hardclock ticks per sched_tick() */
 
 /*
@@ -430,18 +429,183 @@ updatepri(struct lwp *l)
 }
 
 /*
+ * On some architectures, it's faster to use a MSB ordering for the priorites
+ * than the traditional LSB ordering.
+ */
+#ifdef __HAVE_BIGENDIAN_BITOPS
+#define	RQMASK(n) (0x80000000 >> (n))
+#else
+#define	RQMASK(n) (0x00000001 << (n))
+#endif
+
+/*
+ * The primitives that manipulate the run queues.  whichqs tells which
+ * of the 32 queues qs have processes in them.  sched_enqueue() puts processes
+ * into queues, sched_dequeue removes them from queues.  The running process is
+ * on no queue, other processes are on a queue related to p->p_priority,
+ * divided by 4 actually to shrink the 0-127 range of priorities into the 32
+ * available queues.
+ */
+#ifdef RQDEBUG
+static void
+runqueue_check(const runqueue_t *rq, int whichq, struct lwp *l)
+{
+	const subqueue_t * const sq = &rq->rq_subqueues[whichq];
+	const uint32_t bitmap = rq->rq_bitmap;
+	struct lwp *l2;
+	int found = 0;
+	int die = 0;
+	int empty = 1;
+
+	TAILQ_FOREACH(l2, &sq->sq_queue, l_runq) {
+		if (l2->l_stat != LSRUN) {
+			printf("runqueue_check[%d]: lwp %p state (%d) "
+			    " != LSRUN\n", whichq, l2, l2->l_stat);
+		}
+		if (l2 == l)
+			found = 1;
+		empty = 0;
+	}
+	if (empty && (bitmap & RQMASK(whichq)) != 0) {
+		printf("runqueue_check[%d]: bit set for empty run-queue %p\n",
+		    whichq, rq);
+		die = 1;
+	} else if (!empty && (bitmap & RQMASK(whichq)) == 0) {
+		printf("runqueue_check[%d]: bit clear for non-empty "
+		    "run-queue %p\n", whichq, rq);
+		die = 1;
+	}
+	if (l != NULL && (bitmap & RQMASK(whichq)) == 0) {
+		printf("runqueue_check[%d]: bit clear for active lwp %p\n",
+		    whichq, l);
+		die = 1;
+	}
+	if (l != NULL && empty) {
+		printf("runqueue_check[%d]: empty run-queue %p with "
+		    "active lwp %p\n", whichq, rq, l);
+		die = 1;
+	}
+	if (l != NULL && !found) {
+		printf("runqueue_check[%d]: lwp %p not in runqueue %p!",
+		    whichq, l, rq);
+		die = 1;
+	}
+	if (die)
+		panic("runqueue_check: inconsistency found");
+}
+#endif /* RQDEBUG */
+
+static void
+runqueue_init(runqueue_t *rq)
+{
+
+	int i;
+
+	for (i = 0; i < RUNQUE_NQS; i++)
+		TAILQ_INIT(&rq->rq_subqueues[i].sq_queue);
+}
+
+static void
+runqueue_enqueue(runqueue_t *rq, struct lwp *l)
+{
+	subqueue_t *sq;
+	const int whichq = lwp_eprio(l) / PPQ;
+
+	LOCK_ASSERT(lwp_locked(l, &sched_mutex));
+
+#ifdef RQDEBUG
+	runqueue_check(rq, whichq, NULL);
+#endif
+	rq->rq_bitmap |= RQMASK(whichq);
+	sq = &rq->rq_subqueues[whichq];
+	TAILQ_INSERT_TAIL(&sq->sq_queue, l, l_runq);
+#ifdef RQDEBUG
+	runqueue_check(rq, whichq, l);
+#endif
+}
+
+static void
+runqueue_dequeue(runqueue_t *rq, struct lwp *l)
+{
+	subqueue_t *sq;
+	const int whichq = lwp_eprio(l) / PPQ;
+
+	LOCK_ASSERT(lwp_locked(l, &sched_mutex));
+
+#ifdef RQDEBUG
+	runqueue_check(rq, whichq, l);
+#endif
+	KASSERT((rq->rq_bitmap & RQMASK(whichq)) != 0);
+	sq = &rq->rq_subqueues[whichq];
+	TAILQ_REMOVE(&sq->sq_queue, l, l_runq);
+	if (TAILQ_EMPTY(&sq->sq_queue))
+		rq->rq_bitmap &= ~RQMASK(whichq);
+#ifdef RQDEBUG
+	runqueue_check(rq, whichq, NULL);
+#endif
+}
+
+static struct lwp *
+runqueue_nextlwp(runqueue_t *rq)
+{
+	const uint32_t bitmap = rq->rq_bitmap;
+	int whichq;
+
+	LOCK_ASSERT(lwp_locked(l, &sched_mutex));
+
+	if (bitmap == 0) {
+		return NULL;
+	}
+#ifdef __HAVE_BIGENDIAN_BITOPS
+	/* XXX should introduce a fast "fls" function. */
+	for (whichq = 0; ; whichq++) {
+		if ((bitmap & RQMASK(whichq)) != 0) {
+			break;
+		}
+	}
+#else
+	whichq = ffs(bitmap) - 1;
+#endif
+	return TAILQ_FIRST(&rq->rq_subqueues[whichq].sq_queue);
+}
+
+#if defined(DDB)
+static void
+runqueue_print(const runqueue_t *rq, void (*pr)(const char *, ...))
+{
+	const uint32_t bitmap = rq->rq_bitmap;
+	struct lwp *l;
+	int i, first;
+
+	for (i = 0; i < RUNQUE_NQS; i++) {
+		const subqueue_t *sq;
+		first = 1;
+		sq = &rq->rq_subqueues[i];
+		TAILQ_FOREACH(l, &sq->sq_queue, l_runq) {
+			if (first) {
+				(*pr)("%c%d",
+				    (bitmap & RQMASK(i)) ? ' ' : '!', i);
+				first = 0;
+			}
+			(*pr)("\t%d.%d (%s) pri=%d usrpri=%d\n",
+			    l->l_proc->p_pid,
+			    l->l_lid, l->l_proc->p_comm,
+			    (int)l->l_priority, (int)l->l_usrpri);
+		}
+	}
+}
+#endif /* defined(DDB) */
+#undef RQMASK
+
+/*
  * Initialize the (doubly-linked) run queues
  * to be empty.
  */
 void
 sched_rqinit()
 {
-	int i;
 
-	for (i = 0; i < RUNQUE_NQS; i++)
-		sched_qs[i].ph_link = sched_qs[i].ph_rlink =
-		    (struct lwp *)&sched_qs[i];
-
+	runqueue_init(&global_queue);
 	mutex_init(&sched_mutex, MUTEX_SPIN, IPL_SCHED);
 }
 
@@ -456,6 +620,7 @@ sched_setup()
 void
 sched_setrunnable(struct lwp *l)
 {
+
  	if (l->l_slptime > 1)
  		updatepri(l);
 }
@@ -464,12 +629,13 @@ bool
 sched_curcpu_runnable_p(void)
 {
 
-	return sched_whichqs != 0;
+	return global_queue.rq_bitmap != 0;
 }
 
 void
 sched_nice(struct proc *chgp, int n)
 {
+
 	chgp->p_nice = n;
 	(void)resetprocpriority(chgp);
 }
@@ -582,116 +748,11 @@ sched_proc_exit(struct proc *parent, struct proc *child)
 	mutex_spin_exit(&parent->p_stmutex);
 }
 
-/*
- * On some architectures, it's faster to use a MSB ordering for the priorites
- * than the traditional LSB ordering.
- */
-#ifdef __HAVE_BIGENDIAN_BITOPS
-#define	RQMASK(n) (0x80000000 >> (n))
-#else
-#define	RQMASK(n) (0x00000001 << (n))
-#endif
-
-/*
- * Low-level routines to access the run queue.  Optimised assembler
- * routines can override these.
- */
-
-#ifndef __HAVE_MD_RUNQUEUE
-
-/*
- * The primitives that manipulate the run queues.  whichqs tells which
- * of the 32 queues qs have processes in them.  sched_enqueue() puts processes
- * into queues, sched_dequeue removes them from queues.  The running process is
- * on no queue, other processes are on a queue related to p->p_priority,
- * divided by 4 actually to shrink the 0-127 range of priorities into the 32
- * available queues.
- */
-#ifdef RQDEBUG
-static void
-checkrunqueue(int whichq, struct lwp *l)
-{
-	const struct prochd * const rq = &sched_qs[whichq];
-	struct lwp *l2;
-	int found = 0;
-	int die = 0;
-	int empty = 1;
-	for (l2 = rq->ph_link; l2 != (const void*) rq; l2 = l2->l_forw) {
-		if (l2->l_stat != LSRUN) {
-			printf("checkrunqueue[%d]: lwp %p state (%d) "
-			    " != LSRUN\n", whichq, l2, l2->l_stat);
-		}
-		if (l2->l_back->l_forw != l2) {
-			printf("checkrunqueue[%d]: lwp %p back-qptr (%p) "
-			    "corrupt %p\n", whichq, l2, l2->l_back,
-			    l2->l_back->l_forw);
-			die = 1;
-		}
-		if (l2->l_forw->l_back != l2) {
-			printf("checkrunqueue[%d]: lwp %p forw-qptr (%p) "
-			    "corrupt %p\n", whichq, l2, l2->l_forw,
-			    l2->l_forw->l_back);
-			die = 1;
-		}
-		if (l2 == l)
-			found = 1;
-		empty = 0;
-	}
-	if (empty && (sched_whichqs & RQMASK(whichq)) != 0) {
-		printf("checkrunqueue[%d]: bit set for empty run-queue %p\n",
-		    whichq, rq);
-		die = 1;
-	} else if (!empty && (sched_whichqs & RQMASK(whichq)) == 0) {
-		printf("checkrunqueue[%d]: bit clear for non-empty "
-		    "run-queue %p\n", whichq, rq);
-		die = 1;
-	}
-	if (l != NULL && (sched_whichqs & RQMASK(whichq)) == 0) {
-		printf("checkrunqueue[%d]: bit clear for active lwp %p\n",
-		    whichq, l);
-		die = 1;
-	}
-	if (l != NULL && empty) {
-		printf("checkrunqueue[%d]: empty run-queue %p with "
-		    "active lwp %p\n", whichq, rq, l);
-		die = 1;
-	}
-	if (l != NULL && !found) {
-		printf("checkrunqueue[%d]: lwp %p not in runqueue %p!",
-		    whichq, l, rq);
-		die = 1;
-	}
-	if (die)
-		panic("checkrunqueue: inconsistency found");
-}
-#endif /* RQDEBUG */
-
 void
 sched_enqueue(struct lwp *l, bool ctxswitch)
 {
-	struct prochd *rq;
-	struct lwp *prev;
-	const int whichq = lwp_eprio(l) / PPQ;
 
-	LOCK_ASSERT(lwp_locked(l, &sched_mutex));
-
-#ifdef RQDEBUG
-	checkrunqueue(whichq, NULL);
-#endif
-#ifdef DIAGNOSTIC
-	if (l->l_back != NULL || l->l_stat != LSRUN)
-		panic("sched_enqueue");
-#endif
-	sched_whichqs |= RQMASK(whichq);
-	rq = &sched_qs[whichq];
-	prev = rq->ph_rlink;
-	l->l_forw = (struct lwp *)rq;
-	rq->ph_rlink = l;
-	prev->l_forw = l;
-	l->l_back = prev;
-#ifdef RQDEBUG
-	checkrunqueue(whichq, l);
-#endif
+	runqueue_enqueue(&global_queue, l);
 }
 
 /*
@@ -703,56 +764,16 @@ sched_enqueue(struct lwp *l, bool ctxswitch)
 void
 sched_dequeue(struct lwp *l)
 {
-	struct lwp *prev, *next;
-	const int whichq = lwp_eprio(l) / PPQ;
 
-	LOCK_ASSERT(lwp_locked(l, &sched_mutex));
-
-#ifdef RQDEBUG
-	checkrunqueue(whichq, l);
-#endif
-
-#if defined(DIAGNOSTIC)
-	if (((sched_whichqs & RQMASK(whichq)) == 0) || l->l_back == NULL) {
-		/* Shouldn't happen - interrupts disabled. */
-		panic("sched_dequeue: bit %d not set", whichq);
-	}
-#endif
-	prev = l->l_back;
-	l->l_back = NULL;
-	next = l->l_forw;
-	prev->l_forw = next;
-	next->l_back = prev;
-	if (prev == next)
-		sched_whichqs &= ~RQMASK(whichq);
-#ifdef RQDEBUG
-	checkrunqueue(whichq, NULL);
-#endif
+	runqueue_dequeue(&global_queue, l);
 }
 
 struct lwp *
 sched_nextlwp(struct lwp *l)
 {
-	const struct prochd *rq;
-	int whichq;
-
-	if (sched_whichqs == 0) {
-		return NULL;
-	}
-#ifdef __HAVE_BIGENDIAN_BITOPS
-	for (whichq = 0; ; whichq++) {
-		if ((sched_whichqs & RQMASK(whichq)) != 0) {
-			break;
-		}
-	}
-#else
-	whichq = ffs(sched_whichqs) - 1;
-#endif
-	rq = &sched_qs[whichq];
-	return rq->ph_link;
+	
+	return runqueue_nextlwp(&global_queue);
 }
-
-#endif /* !defined(__HAVE_MD_RUNQUEUE) */
 
 /* Dummy */
 void
@@ -806,27 +827,7 @@ SYSCTL_SETUP(sysctl_sched_setup, "sysctl kern.sched subtree setup")
 void
 sched_print_runqueue(void (*pr)(const char *, ...))
 {
-	struct prochd *ph;
-	struct lwp *l;
-	int i, first;
 
-	for (i = 0; i < RUNQUE_NQS; i++)
-	{
-		first = 1;
-		ph = &sched_qs[i];
-		for (l = ph->ph_link; l != (void *)ph; l = l->l_forw) {
-			if (first) {
-				(*pr)("%c%d",
-				    (sched_whichqs & RQMASK(i))
-				    ? ' ' : '!', i);
-				first = 0;
-			}
-			(*pr)("\t%d.%d (%s) pri=%d usrpri=%d\n",
-			    l->l_proc->p_pid,
-			    l->l_lid, l->l_proc->p_comm,
-			    (int)l->l_priority, (int)l->l_usrpri);
-		}
-	}
+	runqueue_print(&global_queue, pr);
 }
 #endif /* defined(DDB) */
-#undef RQMASK
