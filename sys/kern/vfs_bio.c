@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.170.2.3 2007/03/23 18:51:10 ad Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.170.2.4 2007/03/23 19:27:07 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -82,7 +82,7 @@
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.170.2.3 2007/03/23 18:51:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.170.2.4 2007/03/23 19:27:07 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -169,6 +169,7 @@ struct bio_ops bioops;	/* I/O operation notification */
 struct bqueue {
 	TAILQ_HEAD(, buf) bq_queue;
 	uint64_t bq_bytes;
+	struct buf *bq_marker;
 } bufqueues[BQUEUES];
 kcondvar_t needbuffer_cv;
 
@@ -275,10 +276,14 @@ checkfreelist(struct buf *bp, struct bqueue *dp)
 {
 	struct buf *b;
 
+	if (!debug_verify_freelist)
+		return 1;
+
 	TAILQ_FOREACH(b, &dp->bq_queue, b_freelist) {
 		if (b == bp)
 			return 1;
 	}
+
 	return 0;
 }
 #endif
@@ -317,10 +322,15 @@ bremfree(struct buf *bp)
 
 	KASSERT(bqidx != -1);
 	dp = &bufqueues[bqidx];
-	KDASSERT(!debug_verify_freelist || checkfreelist(bp, dp));
+	KDASSERT(checkfreelist(bp, dp));
 	KASSERT(dp->bq_bytes >= bp->b_bufsize);
 	TAILQ_REMOVE(&dp->bq_queue, bp, b_freelist);
 	dp->bq_bytes -= bp->b_bufsize;
+
+	/* For the sysctl helper. */
+	if (bp == dp->bq_marker)
+		dp->bq_marker = NULL;
+
 #if defined(DIAGNOSTIC)
 	bp->b_freelistindex = -1;
 #endif /* defined(DIAGNOSTIC) */
@@ -479,7 +489,6 @@ buf_lotsfree(void)
  * Return estimate of bytes we think need to be
  * released to help resolve low memory conditions.
  *
- * => called at splbio.
  * => called with bqueue_lock held.
  */
 static int
@@ -843,7 +852,8 @@ bawrite(struct buf *bp)
 
 /*
  * Same as first half of bdwrite, mark buffer dirty, but do not release it.
- * Call at splbio() and with the buffer interlock locked.
+ * Call with the buffer interlock held.
+ *
  * Note: called only from biodone() through ffs softdep's bioops.io_complete()
  */
 void
@@ -912,16 +922,16 @@ brelse(struct buf *bp)
 		 */
 		CLR(bp->b_flags, B_VFLUSH);
 		if (!ISSET(bp->b_flags, B_ERROR|B_INVAL|B_LOCKED|B_AGE)) {
-			KDASSERT(!debug_verify_freelist || checkfreelist(bp, &bufqueues[BQ_LRU]));
+			KDASSERT(checkfreelist(bp, &bufqueues[BQ_LRU]));
 			goto already_queued;
 		} else {
 			bremfree(bp);
 		}
 	}
 
-  KDASSERT(!debug_verify_freelist || !checkfreelist(bp, &bufqueues[BQ_AGE]));
-  KDASSERT(!debug_verify_freelist || !checkfreelist(bp, &bufqueues[BQ_LRU]));
-  KDASSERT(!debug_verify_freelist || !checkfreelist(bp, &bufqueues[BQ_LOCKED]));
+	KDASSERT(checkfreelist(bp, &bufqueues[BQ_AGE]));
+	KDASSERT(checkfreelist(bp, &bufqueues[BQ_LRU]));
+	KDASSERT(checkfreelist(bp, &bufqueues[BQ_LOCKED]));
 
 	if ((bp->b_bufsize <= 0) || ISSET(bp->b_flags, B_INVAL)) {
 		/*
@@ -1191,7 +1201,7 @@ allocbuf(struct buf *bp, int size, int preserve)
  * Select something from a free list.
  * Preference is to AGE list, then LRU list.
  *
- * Called at splbio and with buffer queues locked.
+ * Called with the buffer queues locked.
  * Return buffer locked.
  */
 struct buf *
@@ -1313,7 +1323,7 @@ getnewbuf(int slpflag, int slptimeo, int from_bufq)
 
 /*
  * Attempt to free an aged buffer off the queues.
- * Called at splbio and with queue lock held.
+ * Called with queue lock held.
  * Returns the amount of buffer memory freed.
  */
 static int
@@ -1458,11 +1468,10 @@ int
 buf_syncwait(void)
 {
 	struct buf *bp;
-	int iter, nbusy, nbusy_prev = 0, dcount, s, ihash;
+	int iter, nbusy, nbusy_prev = 0, dcount, ihash;
 
 	dcount = 10000;
 	for (iter = 0; iter < 20;) {
-		s = splbio();
 		mutex_enter(&bqueue_lock);
 		nbusy = 0;
 		for (ihash = 0; ihash < bufhash+1; ihash++) {
@@ -1512,7 +1521,6 @@ buf_syncwait(void)
 fail:;
 #if defined(DEBUG) || defined(DEBUG_HALT_BUSY)
 		printf("giving up\nPrinting vnodes for busy buffers\n");
-		s = splbio();
 		for (ihash = 0; ihash < bufhash+1; ihash++) {
 		    LIST_FOREACH(bp, &bufhashtbl[ihash], b_hash) {
 			if ((bp->b_flags & (B_BUSY|B_INVAL|B_READ)) == B_BUSY)
@@ -1552,10 +1560,11 @@ sysctl_dobuf(SYSCTLFN_ARGS)
 {
 	struct buf *bp;
 	struct buf_sysctl bs;
+	struct bqueue *bq;
 	char *dp;
 	u_int i, op, arg;
 	size_t len, needed, elem_size, out_size;
-	int error, s, elem_count;
+	int error, elem_count, retries;
 
 	if (namelen == 1 && name[0] == CTL_QUERY)
 		return (sysctl_query(SYSCTLFN_CALL(rnode)));
@@ -1563,6 +1572,8 @@ sysctl_dobuf(SYSCTLFN_ARGS)
 	if (namelen != 4)
 		return (EINVAL);
 
+	retries = 100;
+ retry:
 	dp = oldp;
 	len = (oldp != NULL) ? *oldlenp : 0;
 	op = name[0];
@@ -1585,15 +1596,32 @@ sysctl_dobuf(SYSCTLFN_ARGS)
 
 	error = 0;
 	needed = 0;
-	s = splbio();
 	mutex_enter(&bqueue_lock);
 	for (i = 0; i < BQUEUES; i++) {
-		TAILQ_FOREACH(bp, &bufqueues[i].bq_queue, b_freelist) {
+		bq = &bufqueues[i];
+		TAILQ_FOREACH(bp, &bq->bq_queue, b_freelist) {
+			bq->bq_marker = bp;
 			if (len >= elem_size && elem_count > 0) {
 				sysctl_fillbuf(bp, &bs);
+				mutex_exit(&bqueue_lock);
 				error = copyout(&bs, dp, out_size);
+				mutex_enter(&bqueue_lock);
 				if (error)
-					goto cleanup;
+					break;
+				if (bq->bq_marker != bp) {
+					/*
+					 * This sysctl node is only for
+					 * statistics.  Retry; if the
+					 * queue keeps changing, then
+					 * bail out.
+					 */
+					if (retries-- == 0) {
+						error = EAGAIN;
+						break;
+					}
+					mutex_exit(&bqueue_lock);
+					goto retry;
+				}
 				dp += elem_size;
 				len -= elem_size;
 			}
@@ -1603,8 +1631,9 @@ sysctl_dobuf(SYSCTLFN_ARGS)
 					elem_count--;
 			}
 		}
+		if (error != 0)
+			break;
 	}
-cleanup:
 	mutex_exit(&bqueue_lock);
 
 	*oldlenp = needed;
@@ -1718,7 +1747,7 @@ SYSCTL_SETUP(sysctl_vm_buf_setup, "sysctl vm.buf* subtree setup")
 void
 vfs_bufstats(void)
 {
-	int s, i, j, count;
+	int i, j, count;
 	struct buf *bp;
 	struct bqueue *dp;
 	int counts[(MAXBSIZE / PAGE_SIZE) + 1];
@@ -1728,7 +1757,6 @@ vfs_bufstats(void)
 		count = 0;
 		for (j = 0; j <= MAXBSIZE/PAGE_SIZE; j++)
 			counts[j] = 0;
-		s = splbio();
 		TAILQ_FOREACH(bp, &dp->bq_queue, b_freelist) {
 			counts[bp->b_bufsize/PAGE_SIZE]++;
 			count++;
