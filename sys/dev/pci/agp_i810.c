@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_i810.c,v 1.37 2007/03/20 18:05:31 drochner Exp $	*/
+/*	$NetBSD: agp_i810.c,v 1.38 2007/03/23 16:27:59 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.37 2007/03/20 18:05:31 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.38 2007/03/23 16:27:59 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -238,6 +238,9 @@ agp_i810_attach(struct device *parent, struct device *self, void *aux)
 			return error;
 		}
 	} else {
+		pci_mapreg_info(isc->vga_pa.pa_pc, isc->vga_pa.pa_tag,
+				AGP_I810_MMADR, PCI_MAPREG_TYPE_MEM, NULL,
+				&mmadrsize, NULL);
 		error = pci_mapreg_map(&isc->vga_pa, AGP_I810_MMADR,
 		    PCI_MAPREG_TYPE_MEM, 0, &isc->bst, &isc->bsh, NULL, NULL);
 		if (error != 0) {
