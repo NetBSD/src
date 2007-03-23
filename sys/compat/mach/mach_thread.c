@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_thread.c,v 1.39.2.1 2007/03/09 15:16:23 rmind Exp $ */
+/*	$NetBSD: mach_thread.c,v 1.39.2.2 2007/03/23 13:46:03 ad Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_thread.c,v 1.39.2.1 2007/03/09 15:16:23 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_thread.c,v 1.39.2.2 2007/03/23 13:46:03 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -218,7 +218,7 @@ mach_thread_create_running(args)
 	lwp_lock(mctc.mctc_lwp);
 	mctc.mctc_lwp->l_private = 0;
 	mctc.mctc_lwp->l_stat = LSRUN;
-	setrunqueue(mctc.mctc_lwp);
+	sched_enqueue(mctc.mctc_lwp, false);
 	p->p_nrlwps++;
 	lwp_unlock(mctc.mctc_lwp);
 	mutex_exit(&p->p_smutex);
