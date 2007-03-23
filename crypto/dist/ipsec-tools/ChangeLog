@@ -1,3 +1,8 @@
+2007-03-23  Yvan Vanhullebus  <vanhu@netasq.com>
+	* src/racoon/{oakley.c|racoon.conf.5}: give more details about
+	  what is checked when using certificates to authenticate. Patch
+	  by Cyrus Rahman.
+
 2007-03-22  Yvan Vanhullebus  <vanhu@netasq.com>
 	* src/racoon/{ipsec_doi.c|cfparse.y}: fixed subnet check to
 	  generate IPV4_ADDRESS when needed in sockaddr2id().
