@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.104 2007/03/04 06:03:48 christos Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.105 2007/03/24 21:15:39 rmind Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.104 2007/03/04 06:03:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.105 2007/03/24 21:15:39 rmind Exp $");
 
 #include "opt_coredump.h"
 #include "opt_kgdb.h"
@@ -101,7 +101,7 @@ static int uvm_nuarea;
 static struct simplelock uvm_uareas_slock = SIMPLELOCK_INITIALIZER;
 #define	UAREA_NEXTFREE(uarea)	(*(vaddr_t *)(UAREA_TO_USER(uarea)))
 
-static void uvm_uarea_free(vaddr_t);
+void uvm_uarea_free(vaddr_t);
 
 /*
  * XXXCDC: do these really belong here?
@@ -312,7 +312,7 @@ uvm_uarea_alloc(vaddr_t *uaddrp)
  * uvm_uarea_free: free a u-area; never blocks
  */
 
-static inline void
+void
 uvm_uarea_free(vaddr_t uaddr)
 {
 	simple_lock(&uvm_uareas_slock);
