@@ -1,4 +1,4 @@
-/*	$NetBSD: print-pppoe.c,v 1.6 2004/09/28 12:27:02 he Exp $	*/
+/*	$NetBSD: print-pppoe.c,v 1.7 2007/03/24 23:20:12 joerg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -29,7 +29,7 @@
 static const char rcsid[] _U_ =
 "@(#) Header: /tcpdump/master/tcpdump/print-pppoe.c,v 1.24.2.4 2004/03/24 03:04:22 guy Exp (LBL)";
 #else
-__RCSID("$NetBSD: print-pppoe.c,v 1.6 2004/09/28 12:27:02 he Exp $");
+__RCSID("$NetBSD: print-pppoe.c,v 1.7 2007/03/24 23:20:12 joerg Exp $");
 #endif
 #endif
 
@@ -179,6 +179,10 @@ pppoe_print(register const u_char *bp, u_int length)
 				unsigned tag_str_len = 0;
 
 				/* TODO print UTF-8 decoded text */
+				if (p + tag_len >= pppoe_payload + length) {
+					printf("[tag longer than frame]");
+					return length;
+				}
 				for (v = p; v < p + tag_len && tag_str_len < MAXTAGPRINT-1; v++)
 					if (*v >= 32 && *v < 127) {
 						tag_str[tag_str_len++] = *v;
