@@ -1,4 +1,4 @@
-.\"	$NetBSD: vndcompress.1,v 1.5 2006/02/23 20:57:03 jld Exp $
+.\"	$NetBSD: vndcompress.1,v 1.6 2007/03/24 23:16:11 dillo Exp $
 .\"
 .\" Copyright (c) 2005 Florian Stoehr <netbsd@wolfnode.de>
 .\" All rights reserved.
@@ -180,8 +180,8 @@ To undo the steps, run:
 .Bd -literal -offset indent
 # umount /mnt
 # vnconfig -u vnd0
-# rm /tmp/include.img.cloop2
-# rm /tmp/include.img
+# rm /tmp/include.fs.cloop2
+# rm /tmp/include.fs
 .Ed
 .Sh SEE ALSO
 .Xr gzip 1 ,
