@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.15.2.1 2007/03/23 14:06:06 ad Exp $	*/
+/*	$NetBSD: spl.S,v 1.15.2.2 2007/03/24 18:02:42 ad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -148,6 +148,7 @@ ENTRY(i686_spllower)
 	cmpl	%edx,%ecx			/* new level is lower? */
 	pushl	%ebx
 	jae,pn	1f
+0:
 	movl	CPUVAR(IPENDING),%eax
 	testl	%eax,CPUVAR(IUNMASK)(,%ecx,4)	/* deferred interrupts? */
 	movl	%eax,%ebx
@@ -157,7 +158,7 @@ ENTRY(i686_spllower)
 	 */
 	jnz,pn	2f
 	cmpxchg8b CPUVAR(ISTATE)		/* swap in new ilevel */
-	jnz,pn	2f
+	jnz,pn	0b
 1:
 	popl	%ebx
 	ret
