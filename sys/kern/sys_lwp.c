@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_lwp.c,v 1.17 2007/03/21 18:26:00 ad Exp $	*/
+/*	$NetBSD: sys_lwp.c,v 1.18 2007/03/24 16:43:56 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.17 2007/03/21 18:26:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.18 2007/03/24 16:43:56 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,9 +106,14 @@ sys__lwp_create(struct lwp *l, void *v, register_t *retval)
 		return ENOMEM;
 	}
 
-	newlwp(l, p, uaddr, inmem,
+	error = newlwp(l, p, uaddr, inmem,
 	    SCARG(uap, flags) & LWP_DETACHED,
 	    NULL, 0, p->p_emul->e_startlwp, newuc, &l2);
+	if (error) {
+		uvm_uarea_free(uaddr);
+		pool_put(&lwp_uc_pool, newuc);
+		return error;
+	}
 
 	/*
 	 * Set the new LWP running, unless the caller has requested that
