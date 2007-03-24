@@ -1,4 +1,4 @@
-/* $NetBSD: vesafb.c,v 1.21 2007/03/24 00:07:17 reinoud Exp $ */
+/* $NetBSD: vesafb.c,v 1.22 2007/03/24 00:23:05 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2006 Jared D. McNeill <jmcneill@invisible.ca>
@@ -37,7 +37,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vesafb.c,v 1.21 2007/03/24 00:07:17 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vesafb.c,v 1.22 2007/03/24 00:23:05 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -233,6 +233,9 @@ vesafb_attach(struct device *parent, struct device *dev, void *aux)
 	}
 	if (sc->sc_scrollscreens == 0)
 		sc->sc_scrollscreens = 1;
+
+	/* XXX disable hardware scrolling for now; kvm86_call() can trap */
+	sc->sc_scrollscreens = 1;
 
 	sc->sc_screensize = mi->YResolution * mi->BytesPerScanLine;
 	sc->sc_fbsize = sc->sc_scrollscreens * sc->sc_screensize;
