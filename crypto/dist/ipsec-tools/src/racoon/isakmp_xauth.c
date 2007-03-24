@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_xauth.c,v 1.11 2006/09/28 20:30:14 manu Exp $	*/
+/*	$NetBSD: isakmp_xauth.c,v 1.12 2007/03/24 02:07:42 christos Exp $	*/
 
 /* Id: isakmp_xauth.c,v 1.38 2006/08/22 18:17:17 manubsd Exp */
 
@@ -670,8 +670,15 @@ xauth_login_pam(port, raddr, usr, pwd)
 		    "cannot allocate memory: %s\n", strerror(errno)); 
 		goto out;
 	}
-	
+
 	if ((error = pam_set_item(pam, PAM_RHOST, remote)) != 0) {
+		plog(LLV_ERROR, LOCATION, NULL, 
+		    "pam_set_item failed: %s\n", 
+		    pam_strerror(pam, error));
+		goto out;
+	}
+
+	if ((error = pam_set_item(pam, PAM_RUSER, usr)) != 0) {
 		plog(LLV_ERROR, LOCATION, NULL, 
 		    "pam_set_item failed: %s\n", 
 		    pam_strerror(pam, error));
