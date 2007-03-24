@@ -1,4 +1,4 @@
-/*	$NetBSD: powernow_k8.c,v 1.16 2007/03/21 22:52:14 xtraeme Exp $ */
+/*	$NetBSD: powernow_k8.c,v 1.17 2007/03/24 15:35:15 xtraeme Exp $ */
 /*	$OpenBSD: powernow-k8.c,v 1.8 2006/06/16 05:58:50 gwk Exp $ */
 
 /*-
@@ -66,7 +66,7 @@
 /* AMD POWERNOW K8 driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powernow_k8.c,v 1.16 2007/03/21 22:52:14 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powernow_k8.c,v 1.17 2007/03/24 15:35:15 xtraeme Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -85,15 +85,9 @@ __KERNEL_RCSID(0, "$NetBSD: powernow_k8.c,v 1.16 2007/03/21 22:52:14 xtraeme Exp
 #include <machine/cpufunc.h>
 #include <machine/bus.h>
 
-/* 
- * Overwrite our previous WRITE_FIDVID macro with the one used by
- * the msr_cpu_broadcast framework, which will work in UP and SMP.
- */
-#undef WRITE_FIDVID
-#define WRITE_FIDVID(fid, vid, ctrl)					\
-	mcb.msr_mask = ((ctrl) << 32);					\
-	mcb.msr_value = ((1ULL << 16) | ((vid) << 8) | (fid));		\
-	mcb.msr_type = MSR_AMDK7_FIDVID_CTL;				\
+#define WRITE_FIDVID(fid, vid, ctrl)		\
+	mcb.msr_value = (((ctrl) << 32) | (1ULL << 16) | ((vid) << 8) | (fid)); \
+	mcb.msr_type = MSR_AMDK7_FIDVID_CTL;	\
 	msr_cpu_broadcast(&mcb);
 
 #ifdef _LKM
