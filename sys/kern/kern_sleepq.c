@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sleepq.c,v 1.4.2.9 2007/03/24 00:43:07 rmind Exp $	*/
+/*	$NetBSD: kern_sleepq.c,v 1.4.2.10 2007/03/24 17:10:47 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.4.2.9 2007/03/24 00:43:07 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.4.2.10 2007/03/24 17:10:47 ad Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -87,7 +87,7 @@ sleeptab_init(sleeptab_t *st)
 		sleepq_init(sq, &st->st_queues[i].st_mutex);
 #else
 		sq = &st->st_queues[i];
-		sleepq_init(sq, ci->ci_schedstate.spc_mutex);
+		sleepq_init(sq, lwp0.l_mutex);
 #endif
 	}
 }
