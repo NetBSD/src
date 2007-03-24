@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.55.2.9 2007/03/24 14:56:01 yamt Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.55.2.10 2007/03/24 17:13:14 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -208,7 +208,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.55.2.9 2007/03/24 14:56:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.55.2.10 2007/03/24 17:13:14 ad Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -656,6 +656,25 @@ newlwp(struct lwp *l1, struct proc *p2, vaddr_t uaddr, bool inmem,
 }
 
 /*
+ * Called by MD code when a new LWP begins execution.  Must be called
+ * with the previous LWP locked (so at splsched), or if there is no
+ * previous LWP, at splsched.
+ */
+void
+lwp_startup(struct lwp *prev, struct lwp *new)
+{
+
+	curlwp = new;
+	if (prev != NULL) {
+		lwp_unlock(prev);
+	}
+	spl0();
+	pmap_activate(new);
+	LOCKDEBUG_BARRIER(NULL, 0);
+	KERNEL_LOCK(1, new);
+}
+
+/*
  * Quit the process.
  * this can only be used meaningfully if you're willing to switch away. 
  * Calling with l != curlwp would be weird.
@@ -789,11 +808,12 @@ lwp_exit_switchaway(struct lwp *l)
 	struct cpu_info *ci;
 	struct lwp *idlelwp;
 
-	uvmexp.swtch++; /* XXXSMP unlocked */
+	/* Unlocked, but is for statistics only. */
+	uvmexp.swtch++;
 
+	(void)splsched();
 	ci = curcpu();	
 	idlelwp = ci->ci_data.cpu_idlelwp;
-
 	idlelwp->l_stat = LSONPROC;
 	cpu_switchto(NULL, idlelwp);
 }

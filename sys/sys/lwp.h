@@ -1,4 +1,4 @@
-/* 	$NetBSD: lwp.h,v 1.48.2.10 2007/03/24 14:56:15 yamt Exp $	*/
+/* 	$NetBSD: lwp.h,v 1.48.2.11 2007/03/24 17:13:14 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -381,8 +381,6 @@ spc_unlock(struct cpu_info *ci, const bool heldmutex)
 }
 
 #endif	/* defined(MULTIPROCESSOR) || defined(LOCKDEBUG) */
-
-void sched_switch_unlock(struct lwp *, struct lwp *);
 
 #endif	/* _KERNEL */
 
