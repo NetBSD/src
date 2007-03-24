@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.165 2007/03/20 12:17:17 yamt Exp $
+#	$NetBSD: BRANCHES,v 1.166 2007/03/24 01:24:01 rmind Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -483,7 +483,18 @@ Base Tag:	yamt-idlelwp-base3
 Maintainer:	YAMAMOTO Takashi <yamt@NetBSD.org>
 Scope:		src/sys  (src/common is tagged but not branched)
 Notes:		
-		how to adapt a port?
+		Status of ports (minimal goals):
+		  alpha				[ Done ]
+		  i386				[ Done, tested ]
+		  amd64				[ Done ]
+		  mips				[ WIP ]
+		  sparc				[ Not yet ]
+		  sparc64			[ Not yet ]
+		  arm				[ Not yet ]
+		  macppc/powerpc	[ Not yet ]
+		  hppa				[ WIP ]
+
+		How to adapt a port?
 
 		- unify cpu_switch, cpu_exit, cpu_switchto into
 		  a single cpu_switchto.  see cpu_switchto.9.
