@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.831.2.3 2007/03/12 05:53:01 rmind Exp $
+#	$NetBSD: files,v 1.831.2.4 2007/03/24 11:36:01 yamt Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -1284,6 +1284,7 @@ file	kern/kern_auth.c
 file	kern/kern_clock.c
 file	kern/kern_condvar.c
 file	kern/kern_core.c
+file	kern/kern_cpu.c
 file	kern/kern_descrip.c
 file	kern/kern_event.c
 file	kern/kern_exec.c

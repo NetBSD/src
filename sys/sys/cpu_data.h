@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_data.h,v 1.7.2.1 2007/02/17 10:31:01 yamt Exp $	*/
+/*	$NetBSD: cpu_data.h,v 1.7.2.2 2007/03/24 11:36:02 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -90,6 +90,6 @@ struct cpu_data {
 #define	ci_spin_locks2		ci_data.cpu_spin_locks2
 #define	ci_lkdebug_recurse	ci_data.cpu_lkdebug_recurse
 
-void	mi_cpu_init(struct cpu_info *ci);
+int mi_cpu_attach(struct cpu_info *ci);
 
 #endif /* _SYS_CPU_DATA_H_ */

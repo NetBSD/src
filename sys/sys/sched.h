@@ -1,4 +1,4 @@
-/* $NetBSD: sched.h,v 1.30.2.11 2007/03/24 00:43:09 rmind Exp $ */
+/* $NetBSD: sched.h,v 1.30.2.12 2007/03/24 11:36:03 yamt Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2007 The NetBSD Foundation, Inc.
@@ -169,6 +169,7 @@ struct cpu_info;
 
 /* Scheduler initialization */
 void sched_rqinit(void);	/* Initialize runqueues */
+void sched_cpuattach(struct cpu_info *); /* Per-cpu initialisation */
 void sched_setup(void);		/* Setup scheduler, e.g. kick off timeout driven events */
 
 /* Main scheduler functions */

@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.294.2.4 2007/03/12 05:58:31 rmind Exp $	*/
+/*	$NetBSD: init_main.c,v 1.294.2.5 2007/03/24 11:36:02 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.294.2.4 2007/03/12 05:58:31 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.294.2.5 2007/03/24 11:36:02 yamt Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_kcont.h"
@@ -95,7 +95,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.294.2.4 2007/03/12 05:58:31 rmind Ex
 #include <sys/file.h>
 #include <sys/errno.h>
 #include <sys/callout.h>
-#include <sys/idle.h>
+#include <sys/cpu.h>
 #include <sys/kernel.h>
 #include <sys/kcont.h>
 #include <sys/kmem.h>
@@ -338,8 +338,8 @@ main(void)
 	turnstile_init();
 	sleeptab_init(&sleeptab);
 
-	/* Create an idle lwp for the primary cpu */
-	error = create_idle_lwp(curcpu());
+	/* MI initialization of the boot cpu */
+	error = mi_cpu_attach(curcpu());
 	KASSERT(error == 0);
 
 	/* Initialize the sysctl subsystem. */
