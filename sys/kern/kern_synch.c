@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.177.2.17 2007/03/21 22:04:18 ad Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.177.2.18 2007/03/24 00:43:08 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.177.2.17 2007/03/21 22:04:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.177.2.18 2007/03/24 00:43:08 rmind Exp $");
 
 #include "opt_kstack.h"
 #include "opt_lockdebug.h"
@@ -101,11 +101,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.177.2.17 2007/03/21 22:04:18 ad Exp
 #include <uvm/uvm_extern.h>
 
 int	lbolt;			/* once a second sleep address */
-
-/*
- * The global scheduler state.
- */
-kmutex_t	sched_mutex;		/* global sched state mutex */
 
 static void	sched_unsleep(struct lwp *);
 static void	sched_changepri(struct lwp *, pri_t);
@@ -291,7 +286,7 @@ yield(void)
 	KERNEL_UNLOCK_ALL(l, &l->l_biglocks);
 	lwp_lock(l);
 	if (l->l_stat == LSONPROC) {
-		KASSERT(lwp_locked(l, &sched_mutex));
+		KASSERT(lwp_locked(l, l->l_cpu->ci_schedstate.spc_mutex));
 		l->l_priority = l->l_usrpri;
 	}
 	l->l_nvcsw++;
@@ -311,7 +306,7 @@ preempt(void)
 	KERNEL_UNLOCK_ALL(l, &l->l_biglocks);
 	lwp_lock(l);
 	if (l->l_stat == LSONPROC) {
-		KASSERT(lwp_locked(l, &sched_mutex));
+		KASSERT(lwp_locked(l, l->l_cpu->ci_schedstate.spc_mutex));
 		l->l_priority = l->l_usrpri;
 	}
 	l->l_nivcsw++;
@@ -421,7 +416,7 @@ mi_switch(struct lwp *l)
 	 */
 	KASSERT(l->l_stat != LSRUN);
 	if (l->l_stat == LSONPROC) {
-		KASSERT(lwp_locked(l, &sched_mutex));
+		KASSERT(lwp_locked(l, l->l_cpu->ci_schedstate.spc_mutex));
 		l->l_stat = LSRUN;
 		if ((l->l_flag & LW_IDLE) == 0) {
 			sched_enqueue(l, true);
@@ -443,11 +438,11 @@ mi_switch(struct lwp *l)
 	oldspl = MUTEX_SPIN_OLDSPL(l->l_cpu);
 
 	/*
-	 * Acquire the sched_mutex if necessary.
+	 * Acquire the spc_mutex if necessary.
 	 */
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
-	if (l->l_mutex != &sched_mutex) {
-		mutex_enter(&sched_mutex);
+	if (l->l_mutex != spc->spc_mutex) {
+		mutex_enter(spc->spc_mutex);
 	}
 #endif
 	/*
@@ -461,14 +456,14 @@ mi_switch(struct lwp *l)
 		newl = l->l_cpu->ci_data.cpu_idlelwp;
 		KASSERT(newl != NULL);
 	}
-	KASSERT(lwp_locked(newl, &sched_mutex));
+	KASSERT(lwp_locked(newl, spc->spc_mutex));
 	newl->l_stat = LSONPROC;
 	newl->l_cpu = l->l_cpu;
 	newl->l_flag |= LW_RUNNING;
 
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
-	if (l->l_mutex != &sched_mutex) {
-		mutex_exit(&sched_mutex);
+	if (l->l_mutex != spc->spc_mutex) {
+		mutex_exit(spc->spc_mutex);
 	}
 #endif
 
@@ -567,7 +562,7 @@ setrunnable(struct lwp *l)
 		return;
 	}
 
-	LOCK_ASSERT(lwp_locked(l, &sched_mutex));
+	LOCK_ASSERT(lwp_locked(l, l->l_cpu->ci_schedstate.spc_mutex));
 
 	/*
 	 * If the LWP is still on the CPU, mark it as LSONPROC.  It may be
@@ -660,14 +655,12 @@ suspendsched(void)
 	 * Kick all CPUs to make them preempt any LWPs running in user mode. 
 	 * They'll trap into the kernel and suspend themselves in userret().
 	 */
-	sched_lock(0);
 #ifdef MULTIPROCESSOR
 	for (CPU_INFO_FOREACH(cii, ci))
 		cpu_need_resched(ci, 0);
 #else
 	cpu_need_resched(curcpu(), 0);
 #endif
-	sched_unlock(0);
 }
 
 /*
@@ -755,7 +748,7 @@ static void
 sched_changepri(struct lwp *l, pri_t pri)
 {
 
-	LOCK_ASSERT(lwp_locked(l, &sched_mutex));
+	LOCK_ASSERT(lwp_locked(l, l->l_cpu->ci_schedstate.spc_mutex));
 
 	l->l_usrpri = pri;
 	if (l->l_priority < PUSER)
@@ -776,7 +769,7 @@ static void
 sched_lendpri(struct lwp *l, pri_t pri)
 {
 
-	LOCK_ASSERT(lwp_locked(l, &sched_mutex));
+	LOCK_ASSERT(lwp_locked(l, l->l_cpu->ci_schedstate.spc_mutex));
 
 	if (l->l_stat != LSRUN || (l->l_flag & LW_INMEM) == 0) {
 		l->l_inheritedprio = pri;

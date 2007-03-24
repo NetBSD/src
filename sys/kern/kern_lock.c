@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.105.2.3 2007/03/12 05:58:34 rmind Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.105.2.4 2007/03/24 00:43:06 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2006 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.105.2.3 2007/03/12 05:58:34 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.105.2.4 2007/03/24 00:43:06 rmind Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_ddb.h"
@@ -1390,7 +1390,7 @@ simple_lock_freecheck(void *start, void *end)
 }
 
 /*
- * We must be holding exactly one lock: the sched_lock.
+ * We must be holding exactly one lock: the spc_lock.
  */
 
 void

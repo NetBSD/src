@@ -1,4 +1,4 @@
-/* 	$NetBSD: lwp.h,v 1.48.2.8 2007/03/23 16:54:03 yamt Exp $	*/
+/* 	$NetBSD: lwp.h,v 1.48.2.9 2007/03/24 00:43:09 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  * a:	proclist_mutex
  * l:	*l_mutex
  * p:	l_proc->p_smutex
- * s:	sched_mutex, which may or may not be referenced by l_mutex
+ * s:	spc_mutex, which may or may not be referenced by l_mutex
  * (:	unlocked, stable
  * !:	unlocked, may only be safely accessed by the LWP itself
  * ?:	undecided
@@ -154,7 +154,6 @@ struct	lwp {
 LIST_HEAD(lwplist, lwp);		/* a list of LWPs */
 
 #ifdef _KERNEL
-extern kmutex_t	sched_mutex;		/* Mutex on global run queue */
 extern kmutex_t alllwp_mutex;		/* Mutex on alllwp */
 extern struct lwplist alllwp;		/* List of all LWPs. */
 
@@ -344,41 +343,39 @@ int newlwp(struct lwp *, struct proc *, vaddr_t, bool, int,
     void *, size_t, void (*)(void *), void *, struct lwp **);
 
 /*
- * Once we have per-CPU run queues and a modular scheduler interface,
- * we should provide real stubs for the below that LKMs can use.
+ * We should provide real stubs for the below that LKMs can use.
  */
-extern kmutex_t	sched_mutex;
 
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 
 static inline void
-sched_lock(const int heldmutex)
+spc_lock(struct cpu_info *ci, const bool heldmutex)
 {
 	(void)heldmutex;
-	mutex_enter(&sched_mutex);
+	mutex_enter(ci->ci_schedstate.spc_mutex);
 }
 
 static inline void
-sched_unlock(const int heldmutex)
+spc_unlock(struct cpu_info *ci, const bool heldmutex)
 {
 	(void)heldmutex;
-	mutex_exit(&sched_mutex);
+	mutex_exit(ci->ci_schedstate.spc_mutex);
 }
 
 #else	/* defined(MULTIPROCESSOR) || defined(LOCKDEBUG) */
 
 static inline void
-sched_lock(const int heldmutex)
+spc_lock(struct cpu_info *ci, const bool heldmutex)
 {
-	if (!heldmutex)
-		mutex_enter(&sched_mutex);
+	if (heldmutex == false)
+		mutex_enter(ci->ci_schedstate.spc_mutex);
 }
 
 static inline void
-sched_unlock(int heldmutex)
+spc_unlock(struct cpu_info *ci, const bool heldmutex)
 {
-	if (!heldmutex)
-		mutex_exit(&sched_mutex);
+	if (heldmutex == false)
+		mutex_exit(ci->ci_schedstate.spc_mutex);
 }
 
 #endif	/* defined(MULTIPROCESSOR) || defined(LOCKDEBUG) */

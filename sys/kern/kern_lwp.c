@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.55.2.7 2007/03/12 05:58:35 rmind Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.55.2.8 2007/03/24 00:43:06 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -151,8 +151,12 @@
  *	a multiprocessor kernel, state transitions may cause the LWP's lock
  *	pointer to change.  On uniprocessor kernels, most scheduler and
  *	synchronisation objects such as sleep queues and LWPs are protected
- *	by only one mutex (sched_mutex).  In this case, LWPs' lock pointers
- *	will never change and will always reference sched_mutex.
+ *	by only one mutex (spc_mutex on single CPU).  In this case, LWPs' lock
+ *	pointers will never change and will always reference spc_mutex.
+ *	Please note that in a multiprocessor kernel each CPU has own spc_mutex.
+ *
+ *	Where spc_mutex is noted, it refers to l->l_cpu->ci_schedstate.spc_mutex
+
  *
  *	Manipulation of the general lock is not performed directly, but
  *	through calls to lwp_lock(), lwp_relock() and similar.
@@ -161,11 +165,11 @@
  *
  *	LSIDL, LSZOMB
  *
- *		Always covered by sched_mutex.
+ *		Always covered by spc_mutex.
  *
  *	LSONPROC, LSRUN:
  *
- *		Always covered by sched_mutex, which protects the run queues
+ *		Always covered by spc_mutex, which protects the run queues
  *		and other miscellaneous items.  If the scheduler is changed
  *		to use per-CPU run queues, this may become a per-CPU mutex.
  *
@@ -179,11 +183,11 @@
  *		If the LWP was previously sleeping (l_wchan != NULL), then
  *		l_mutex references the sleep queue mutex.  If the LWP was
  *		runnable or on the CPU when halted, or has been removed from
- *		the sleep queue since halted, then the mutex is sched_mutex.
+ *		the sleep queue since halted, then the mutex is spc_mutex.
  *
  *	The lock order is as follows:
  *
- *		sleepq_t::sq_mutex  |---> sched_mutex
+ *		sleepq_t::sq_mutex  |---> spc_mutex
  *		tschain_t::tc_mutex |
  *
  *	Each process has an scheduler state mutex (proc::p_smutex), and a
@@ -204,7 +208,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.55.2.7 2007/03/12 05:58:35 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.55.2.8 2007/03/24 00:43:06 rmind Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -521,7 +525,7 @@ newlwp(struct lwp *l1, struct proc *p2, vaddr_t uaddr, bool inmem,
 	l2->l_priority = l1->l_priority;
 	l2->l_usrpri = l1->l_usrpri;
 	l2->l_inheritedprio = MAXPRI;
-	l2->l_mutex = &sched_mutex;
+	l2->l_mutex = l1->l_cpu->ci_schedstate.spc_mutex;
 	l2->l_cpu = l1->l_cpu;
 	l2->l_flag = inmem ? LW_INMEM : 0;
 	lwp_initspecific(l2);
