@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.246 2007/03/12 18:18:36 ad Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.247 2007/03/24 00:27:58 liamjfoy Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.246 2007/03/12 18:18:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.247 2007/03/24 00:27:58 liamjfoy Exp $");
 
 #include "opt_inet.h"
 #include "opt_gateway.h"
@@ -2160,8 +2160,7 @@ sysctl_net_inet_ip_pmtudto(SYSCTLFN_ARGS)
 
 #ifdef GATEWAY
 /*
- * sysctl helper routine for net.inet.ip.maxflows.  apparently if
- * maxflows is even looked up, we "reap flows".
+ * sysctl helper routine for net.inet.ip.maxflows.
  */
 static int
 sysctl_net_inet_ip_maxflows(SYSCTLFN_ARGS)
@@ -2169,7 +2168,7 @@ sysctl_net_inet_ip_maxflows(SYSCTLFN_ARGS)
 	int s;
 
 	s = sysctl_lookup(SYSCTLFN_CALL(rnode));
-	if (s)
+	if (s || newp == NULL)
 		return (s);
 
 	s = splsoftnet();
