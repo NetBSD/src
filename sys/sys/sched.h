@@ -1,4 +1,4 @@
-/* $NetBSD: sched.h,v 1.30.2.10 2007/03/20 11:26:51 yamt Exp $ */
+/* $NetBSD: sched.h,v 1.30.2.11 2007/03/24 00:43:09 rmind Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2007 The NetBSD Foundation, Inc.
@@ -113,6 +113,7 @@ struct sched_param {
 
 #if defined(_KERNEL)
 
+#include <sys/mutex.h>
 #include <sys/time.h>
 
 /*
@@ -120,6 +121,7 @@ struct sched_param {
  */
 struct schedstate_percpu {
 	void *spc_sched_info;	/* Scheduler-specific structure */
+	kmutex_t *spc_mutex;	/* Mutex for locking the runqueue */
 	struct timeval spc_runtime;	/* time curproc started running */
 	volatile int spc_flags;	/* flags; see below */
 	u_int spc_schedticks;		/* ticks for schedclock() */
