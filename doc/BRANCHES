@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.166 2007/03/24 01:24:01 rmind Exp $
+#	$NetBSD: BRANCHES,v 1.167 2007/03/24 11:48:01 yamt Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -484,15 +484,16 @@ Maintainer:	YAMAMOTO Takashi <yamt@NetBSD.org>
 Scope:		src/sys  (src/common is tagged but not branched)
 Notes:		
 		Status of ports (minimal goals):
-		  alpha				[ Done ]
-		  i386				[ Done, tested ]
-		  amd64				[ Done ]
-		  mips				[ WIP ]
-		  sparc				[ Not yet ]
-		  sparc64			[ Not yet ]
-		  arm				[ Not yet ]
+		  alpha			[ Done,
+					  UP tested, MP not tested ]
+		  i386			[ Done, tested ]
+		  amd64			[ Done, tested ]
+		  mips			[ WIP ]
+		  sparc			[ Not yet ]
+		  sparc64		[ Not yet ]
+		  arm			[ Not yet ]
 		  macppc/powerpc	[ Not yet ]
-		  hppa				[ WIP ]
+		  hppa			[ WIP ]
 
 		How to adapt a port?
 
@@ -512,9 +513,10 @@ Notes:
 
 		- remove idle pcbs.
 
-		- (if MULTIPROCESSOR) allocate idle lwps for non-primary
-		  processors by calling create_idle_lwp.  tweak processor
-		  trampoline code.
+		- (if MULTIPROCESSOR) tweak processor trampoline code.
+
+		- (if MULTIPROCESSOR) call mi_cpu_attach when attaching
+		  secondary processors.
 
 		- (if schedhz!=0) call schedclock regardless of the value of
 		  curlwp.
