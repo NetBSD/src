@@ -1,0 +1,42 @@
+#	$NetBSD: files.adm5120,v 1.1.2.2 2007/03/24 14:54:39 yamt Exp $
+
+file	arch/evbmips/adm5120/autoconf.c
+file	arch/evbmips/adm5120/machdep.c
+
+file	arch/mips/mips/bus_dma.c
+file	arch/evbmips/evbmips/disksubr.c
+file	arch/evbmips/evbmips/interrupt.c
+
+file	arch/mips/mips/mips3_clock.c
+file	arch/mips/mips/mips3_clockintr.c
+file	arch/mips/mips/softintr.c
+
+# System bus
+device	mainbus { }: gpiobus
+attach	mainbus at root
+file	arch/evbmips/adm5120/mainbus.c		mainbus
+
+device	cpu
+attach	cpu at mainbus
+file	arch/evbmips/adm5120/cpu.c		cpu
+
+# Machine-independent SCSI drivers
+include "dev/scsipi/files.scsipi"
+
+# Machine-independent ATA drivers
+include "dev/ata/files.ata"
+
+# Machine-independent WS console drivers
+include "dev/wscons/files.wscons"
+
+# Machine-independent USB device support
+include "dev/usb/files.usb"
+
+# Machine-independent I2O drivers
+include "dev/i2o/files.i2o"
+
+# Machine-independent PCI drivers
+include "dev/pci/files.pci"
+
+# Memory Disk
+file	dev/md_root.c				memory_disk_hooks

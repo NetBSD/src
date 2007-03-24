@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.c,v 1.34.2.1 2007/02/27 16:53:00 yamt Exp $	*/
+/*	$NetBSD: exception.c,v 1.34.2.2 2007/03/24 14:54:58 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.34.2.1 2007/02/27 16:53:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.34.2.2 2007/03/24 14:54:58 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -436,8 +436,16 @@ void
 ast(struct lwp *l, struct trapframe *tf)
 {
 
-	if (KERNELMODE(tf->tf_ssr))
+	if (KERNELMODE(tf->tf_ssr)) {
+		extern char _lock_cas_ras_start[];
+		extern char _lock_cas_ras_end[];
+
+		if ((uintptr_t)tf->tf_spc > (uintptr_t)_lock_cas_ras_start
+		    && (uintptr_t)tf->tf_spc < (uintptr_t)_lock_cas_ras_end)
+			tf->tf_spc = (uintptr_t)_lock_cas_ras_start;
 		return;
+	}
+
 	KDASSERT(l != NULL);
 	KDASSERT(l->l_md.md_regs == tf);
 

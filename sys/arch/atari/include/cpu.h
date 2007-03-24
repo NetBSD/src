@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.50.2.1 2007/03/12 05:47:22 rmind Exp $	*/
+/*	$NetBSD: cpu.h,v 1.50.2.2 2007/03/24 14:54:35 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -164,9 +164,6 @@ struct clockframe {
 extern int	astpending;	/* need trap before returning to user mode */
 extern int	want_resched;	/* resched() was called */
 
-/* include support for software interrupts */
-#include <machine/mtpr.h>
-
 /*
  * The rest of this should probably be moved to ../atari/ataricpu.h,
  * although some of it could probably be put into generic 68k headers.
@@ -268,11 +265,11 @@ void	switch_lwp_exit __P((struct lwp *));
  * Prototypes from machdep.c:
  */
 typedef void (*si_farg)(void *, void *);	/* XXX */
+void	init_sicallback __P((void));		/* XXX */
 void	add_sicallback __P((si_farg, void *, void *));
 void	rem_sicallback __P((si_farg));
 void	dumpsys __P((void));
 vaddr_t reserve_dumppages __P((vaddr_t));
-void	softint __P((void));
 
 
 /*

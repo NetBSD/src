@@ -1,4 +1,4 @@
-/*	$NetBSD: if_upl.c,v 1.26.4.2 2007/03/12 05:57:30 rmind Exp $	*/
+/*	$NetBSD: if_upl.c,v 1.26.4.3 2007/03/24 14:55:48 yamt Exp $	*/
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_upl.c,v 1.26.4.2 2007/03/12 05:57:30 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_upl.c,v 1.26.4.3 2007/03/24 14:55:48 yamt Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -214,9 +214,6 @@ USB_MATCH(upl)
 {
 	USB_MATCH_START(upl, uaa);
 	struct upl_type			*t;
-
-	if (uaa->iface != NULL)
-		return (UMATCH_NONE);
 
 	for (t = sc_devs; t->upl_vid != 0; t++)
 		if (uaa->vendor == t->upl_vid && uaa->product == t->upl_did)

@@ -1,7 +1,7 @@
-/*	$NetBSD: linux32_syscall.c,v 1.8.2.2 2007/03/12 05:46:16 rmind Exp $ */
+/*	$NetBSD: linux32_syscall.c,v 1.8.2.3 2007/03/24 14:54:32 yamt Exp $ */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_syscall.c,v 1.8.2.2 2007/03/12 05:46:16 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_syscall.c,v 1.8.2.3 2007/03/24 14:54:32 yamt Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -106,7 +106,7 @@ linux32_syscall_plain(frame)
 			args[0] = frame->tf_rbx & 0xffffffff;
 			break;
 		default:
-			printf("linux syscall %d bogus argument size %ld",
+			printf("linux32 syscall %d bogus argument size %ld",
 			    code, argsize);
 			error = ENOSYS;
 			goto out;
@@ -219,7 +219,7 @@ linux32_syscall_fancy(frame)
 			args[0] = frame->tf_rbx & 0xffffffff;
 			break;
 		default:
-			printf("linux syscall %d bogus argument size %ld",
+			printf("linux32 syscall %d bogus argument size %ld",
 			    code, argsize);
 			error = ENOSYS;
 #if defined(KTRACE) || defined(SYSTRACE)

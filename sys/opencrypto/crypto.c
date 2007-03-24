@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.18 2007/01/12 12:00:27 daniel Exp $ */
+/*	$NetBSD: crypto.c,v 1.18.2.1 2007/03/24 14:56:15 yamt Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/crypto.c,v 1.4.2.5 2003/02/26 00:14:05 sam Exp $	*/
 /*	$OpenBSD: crypto.c,v 1.41 2002/07/17 23:52:38 art Exp $	*/
 
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.18 2007/01/12 12:00:27 daniel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.18.2.1 2007/03/24 14:56:15 yamt Exp $");
 
 /* XXX FIXME: should be defopt'ed */
 #define CRYPTO_TIMING			/* enable cryptop timing stuff */
@@ -927,9 +927,9 @@ crypto_getreq(int num)
 
 	if (crypto_pool_initialized == 0) {
 		pool_init(&cryptop_pool, sizeof(struct cryptop), 0, 0,
-		    0, "cryptop", NULL);
+		    0, "cryptop", NULL, IPL_NET);
 		pool_init(&cryptodesc_pool, sizeof(struct cryptodesc), 0, 0,
-		    0, "cryptodesc", NULL);
+		    0, "cryptodesc", NULL, IPL_NET);
 		crypto_pool_initialized = 1;
 	}
 

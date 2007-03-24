@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.99.4.1 2007/03/12 05:57:29 rmind Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.99.4.2 2007/03/24 14:55:47 yamt Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.99.4.1 2007/03/12 05:57:29 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.99.4.2 2007/03/24 14:55:47 yamt Exp $");
 
 #if defined(__NetBSD__)
 #include "opt_inet.h"
@@ -712,9 +712,6 @@ aue_reset(struct aue_softc *sc)
 USB_MATCH(aue)
 {
 	USB_MATCH_START(aue, uaa);
-
-	if (uaa->iface != NULL)
-		return (UMATCH_NONE);
 
 	return (aue_lookup(uaa->vendor, uaa->product) != NULL ?
 		UMATCH_VENDOR_PRODUCT : UMATCH_NONE);

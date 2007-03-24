@@ -1,4 +1,4 @@
-/* $NetBSD: radeonfb.c,v 1.11.2.1 2007/03/12 05:55:27 rmind Exp $ */
+/* $NetBSD: radeonfb.c,v 1.11.2.2 2007/03/24 14:55:33 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.11.2.1 2007/03/12 05:55:27 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.11.2.2 2007/03/24 14:55:33 yamt Exp $");
 
 #define RADEONFB_DEFAULT_DEPTH 32
 
@@ -96,6 +96,7 @@ __KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.11.2.1 2007/03/12 05:55:27 rmind Exp 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/radeonfbreg.h>
 #include <dev/pci/radeonfbvar.h>
+#include "opt_radeonfb.h"
 
 static int radeonfb_match(struct device *, struct cfdata *, void *);
 static void radeonfb_attach(struct device *, struct device *, void *);
@@ -174,8 +175,8 @@ static void radeonfb_pickres(struct radeonfb_display *, uint16_t *,
 static const struct videomode *radeonfb_port_mode(struct radeonfb_softc *, 
     struct radeonfb_port *, int, int);
 
+static int radeonfb_drm_print(void *, const char *);
 
-#define	RADEON_DEBUG
 #ifdef	RADEON_DEBUG
 int	radeon_debug = 1;
 #define	DPRINTF(x)	\
@@ -877,6 +878,8 @@ radeonfb_attach(struct device *parent, struct device *dev, void *aux)
 				radeonfb_lvds_callout, dp);
 	}
 
+	config_found_ia(dev, "drm", aux, radeonfb_drm_print);
+
 	return;
 
 error:
@@ -888,6 +891,14 @@ error:
 
 	if (sc->sc_memsz)
 		bus_space_unmap(sc->sc_memt, sc->sc_memh, sc->sc_memsz);
+}
+
+static int
+radeonfb_drm_print(void *aux, const char *pnp)
+{
+	if (pnp)
+		aprint_normal("direct rendering for %s", pnp);
+	return (UNSUPP);
 }
 
 int
@@ -1543,6 +1554,7 @@ nobios:
 		char	edid[128];
 		uint8_t	ddc;
 		struct edid_info *eip = &sc->sc_ports[i].rp_edid;
+		prop_data_t edid_data;
 
 		DPRINTF(("Port #%d:\n", i));
 		DPRINTF(("    conn = %d\n", sc->sc_ports[i].rp_conn_type));
@@ -1551,12 +1563,30 @@ nobios:
 		DPRINTF(("    tmds = %d\n", sc->sc_ports[i].rp_tmds_type));
 
 		sc->sc_ports[i].rp_edid_valid = 0;
-		ddc = sc->sc_ports[i].rp_ddc_type;
-		if (ddc != RADEON_DDC_NONE) {
-			if ((radeonfb_i2c_read_edid(sc, ddc, edid) == 0) &&
-			    (edid_parse(edid, eip) == 0)) {
+		/* first look for static EDID data */
+		if ((edid_data = prop_dictionary_get(device_properties(
+		    &sc->sc_dev), "EDID")) != NULL) {
+
+			aprint_normal("%s: using static EDID\n",
+			    sc->sc_dev.dv_xname);
+			memcpy(edid, prop_data_data_nocopy(edid_data), 128);
+			if (edid_parse(edid, eip) == 0) {
+
 				sc->sc_ports[i].rp_edid_valid = 1;
 				edid_print(eip);
+			}
+		}
+		/* if we didn't find any we'll try to talk to the monitor */
+		if (sc->sc_ports[i].rp_edid_valid != 1) {
+
+			ddc = sc->sc_ports[i].rp_ddc_type;
+			if (ddc != RADEON_DDC_NONE) {
+				if ((radeonfb_i2c_read_edid(sc, ddc, edid)
+				    == 0) && (edid_parse(edid, eip) == 0)) {
+
+					sc->sc_ports[i].rp_edid_valid = 1;
+					edid_print(eip);
+				}
 			}
 		}
 	}

@@ -1,4 +1,4 @@
-/* 	$NetBSD: lwp.h,v 1.48.2.9 2007/03/24 00:43:09 rmind Exp $	*/
+/* 	$NetBSD: lwp.h,v 1.48.2.10 2007/03/24 14:56:15 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -105,6 +105,8 @@ struct	lwp {
 	void		*l_ctxlink;	/* p: uc_link {get,set}context */
 	struct proc	*l_proc;	/* p: parent process */
 	LIST_ENTRY(lwp)	l_sibling;	/* p: entry on proc's list of LWPs */
+	lwpid_t		l_waiter;	/* p: first LWP waiting on us */
+	lwpid_t 	l_waitingfor;	/* p: specific LWP we are waiting on */
 	int		l_prflag;	/* p: process level flags */
 	u_int		l_refcnt;	/* p: reference count on this LWP */
 	lwpid_t		l_lid;		/* (: LWP identifier; local to proc */
@@ -256,7 +258,7 @@ void	lwp_update_creds(struct lwp *);
 struct lwp *lwp_find(struct proc *, int);
 void	lwp_userret(struct lwp *);
 void	lwp_need_userret(struct lwp *);
-void	lwp_free(struct lwp *, int, int);
+void	lwp_free(struct lwp *, bool, bool);
 void	lwp_sys_init(void);
 
 int	lwp_specific_key_create(specificdata_key_t *, specificdata_dtor_t);

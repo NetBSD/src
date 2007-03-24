@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.194 2006/11/11 18:47:10 jmmv Exp $
+# $NetBSD: GENERIC,v 1.194.4.1 2007/03/24 14:54:41 yamt Exp $
 #
 # GENERIC machine description file
 # 
@@ -24,7 +24,7 @@ include		"arch/hpcmips/conf/std.hpcmips.tx39"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.194 $"
+#ident 		"GENERIC-$Revision: 1.194.4.1 $"
 
 maxusers	16
 
@@ -549,7 +549,7 @@ cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
 # USB Hubs
 usb*	at ohci?
 uhub*	at usb?
-uhub*	at uhub? port ? configuration ? interface ?
+uhub*	at uhub? port ?
 
 # USB HID device
 uhidev*	at uhub? port ? configuration ? interface ?

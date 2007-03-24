@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_sem.c,v 1.2 2007/02/09 21:55:22 ad Exp $	*/
+/*	$NetBSD: netbsd32_sem.c,v 1.2.2.1 2007/03/24 14:55:15 yamt Exp $	*/
 
 /*
  *  Copyright (c) 2006 The NetBSD Foundation.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_sem.c,v 1.2 2007/02/09 21:55:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_sem.c,v 1.2.2.1 2007/03/24 14:55:15 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_posix.h"
@@ -65,7 +65,8 @@ netbsd32_ksem_copyout(const void *src, void *dst, size_t size)
 
 	KASSERT(size == sizeof(semid_t));
 
-	id32 = (netbsd32_semidp_t)(*idp & 0xffffffff);
+	/* Returning a kernel pointer to userspace sucks badly :-( */
+	id32 = (netbsd32_semid_t)*idp;
 	return copyout(&id32, outidp, sizeof(id32));
 }
 
@@ -78,7 +79,7 @@ netbsd32__ksem_init(struct lwp *l, void *v, register_t *retval)
 	} */ *uap = v;
 
 	return do_ksem_init(l, SCARG(uap, value),
-	    NETBSD32PTR64(SCARG(uap, idp)), netbsd32_ksem_copyout);
+	    SCARG_P32(uap, idp), netbsd32_ksem_copyout);
 }
 
 int
@@ -92,9 +93,9 @@ netbsd32__ksem_open(struct lwp *l, void *v, register_t *retval)
 		syscallarg(netbsd32_semidp_t) idp;
 	} */ *uap = v;
 
-	return do_ksem_open(l, NETBSD32PTR64(SCARG(uap, name)),
+	return do_ksem_open(l, SCARG_P32(uap, name),
 	    SCARG(uap, oflag), SCARG(uap, mode), SCARG(uap, value),
-	    NETBSD32PTR64(SCARG(uap, idp)), netbsd32_ksem_copyout);
+	    SCARG_P32(uap, idp), netbsd32_ksem_copyout);
 }
 
 int

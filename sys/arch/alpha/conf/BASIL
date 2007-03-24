@@ -1,4 +1,4 @@
-# $NetBSD: BASIL,v 1.47 2006/09/27 21:42:04 manu Exp $
+# $NetBSD: BASIL,v 1.47.4.1 2007/03/24 14:54:31 yamt Exp $
 #
 # basil.shagadelic.org -- thorpej's API UP1000
 
@@ -6,7 +6,7 @@ include	"arch/alpha/conf/std.alpha"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"BASIL-$Revision: 1.47 $"
+#ident 		"BASIL-$Revision: 1.47.4.1 $"
 
 maxusers 64
 
@@ -404,7 +404,7 @@ usb*	at ohci?
 
 # USB Hubs
 uhub*	at usb?
-uhub*	at uhub? port ? configuration ? interface ?
+uhub*	at uhub? port ?
 
 # USB HID device
 uhidev*	at uhub? port ? configuration ? interface ?

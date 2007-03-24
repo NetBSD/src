@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.867.2.1 2007/03/12 05:55:25 rmind Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.867.2.2 2007/03/24 14:55:32 yamt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.872 2007/03/10 21:08:16 christos Exp
+ *	NetBSD: pcidevs,v 1.873 2007/03/17 06:43:52 dyoung Exp
  */
 
 /*
@@ -3030,6 +3030,10 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_ADMTEK, PCI_PRODUCT_ADMTEK_AN985,
 	    "AN985 (Centaur-C) 10/100 Ethernet",
+	},
+	{
+	    PCI_VENDOR_ADMTEK, PCI_PRODUCT_ADMTEK_ADM5120,
+	    "Infineon ADM5120 PCI host bridge",
 	},
 	{
 	    PCI_VENDOR_ADMTEK, PCI_PRODUCT_ADMTEK_ADM8211,
@@ -12832,4 +12836,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2614;
+const int pci_nproducts = 2615;

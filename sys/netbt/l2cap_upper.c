@@ -1,4 +1,4 @@
-/*	$NetBSD: l2cap_upper.c,v 1.1.20.1 2007/03/12 05:59:34 rmind Exp $	*/
+/*	$NetBSD: l2cap_upper.c,v 1.1.20.2 2007/03/24 14:56:09 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: l2cap_upper.c,v 1.1.20.1 2007/03/12 05:59:34 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: l2cap_upper.c,v 1.1.20.2 2007/03/24 14:56:09 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -224,7 +224,8 @@ l2cap_disconnect(struct l2cap_channel *chan, int linger)
 {
 	int err = 0;
 
-	if (chan->lc_state & (L2CAP_CLOSED | L2CAP_WAIT_DISCONNECT))
+	if (chan->lc_state == L2CAP_CLOSED
+	    || chan->lc_state == L2CAP_WAIT_DISCONNECT)
 		return EINVAL;
 
 	chan->lc_flags |= L2CAP_SHUTDOWN;
@@ -425,15 +426,7 @@ l2cap_setopt(struct l2cap_channel *chan, int opt, void *addr)
 		break;
 
 	case SO_L2CAP_OQOS:	/* set Outgoing QoS flow spec */
-		// XXX
-		// memcpy(&chan->lc_oqos, addr, sizeof(l2cap_qos_t));
-		//break;
-
 	case SO_L2CAP_FLUSH:	/* set Outgoing Flush Timeout */
-		// XXX
-		// chan->lc_flush = *(uint16_t *)addr;
-		//break;
-
 	default:
 		err = ENOPROTOOPT;
 		break;

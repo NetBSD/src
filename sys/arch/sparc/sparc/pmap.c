@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.307.26.2 2007/03/12 05:50:44 rmind Exp $ */
+/*	$NetBSD: pmap.c,v 1.307.26.3 2007/03/24 14:55:00 yamt Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.307.26.2 2007/03/12 05:50:44 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.307.26.3 2007/03/24 14:55:00 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -4056,7 +4056,8 @@ pmap_init(void)
 	vm_num_phys = vm_last_phys - vm_first_phys;
 
 	/* Setup a pool for additional pvlist structures */
-	pool_init(&pv_pool, sizeof(struct pvlist), 0, 0, 0, "pvtable", NULL);
+	pool_init(&pv_pool, sizeof(struct pvlist), 0, 0, 0, "pvtable", NULL,
+	    IPL_NONE);
 
 	/*
 	 * Setup a pool for pmap structures.
@@ -4068,12 +4069,12 @@ pmap_init(void)
 	     sparc_ncpus * sizeof(int *) +	/* pm_reg_ptps */
 	     sparc_ncpus * sizeof(int);		/* pm_reg_ptps_pa */
 	pool_init(&pmap_pmap_pool, sz, 0, 0, 0, "pmappl",
-		  &pool_allocator_nointr);
+		  &pool_allocator_nointr, IPL_NONE);
 	pool_cache_init(&pmap_pmap_pool_cache, &pmap_pmap_pool,
 			pmap_pmap_pool_ctor, pmap_pmap_pool_dtor, NULL);
 
 	sz = NSEGRG * sizeof (struct segmap);
-	pool_init(&segmap_pool, sz, 0, 0, 0, "segmap", NULL);
+	pool_init(&segmap_pool, sz, 0, 0, 0, "segmap", NULL, IPL_NONE);
 
 #if defined(SUN4M) || defined(SUN4D)
 	if (CPU_HAS_SRMMU) {
@@ -4084,17 +4085,18 @@ pmap_init(void)
 		 */
 		sz = SRMMU_L1SIZE * sizeof(int);
 		pool_init(&L1_pool, sz, sz, 0, 0, "L1 pagetable",
-			  &pgt_page_allocator);
+			  &pgt_page_allocator, IPL_NONE);
 
 		sz = SRMMU_L2SIZE * sizeof(int);
 		pool_init(&L23_pool, sz, sz, 0, 0, "L2/L3 pagetable",
-			  &pgt_page_allocator);
+			  &pgt_page_allocator, IPL_NONE);
 	}
 #endif /* SUN4M || SUN4D */
 #if defined(SUN4) || defined(SUN4C)
 	if (CPU_HAS_SUNMMU) {
 		sz = NPTESG * sizeof(int);
-		pool_init(&pte_pool, sz, 0, 0, 0, "ptemap", NULL);
+		pool_init(&pte_pool, sz, 0, 0, 0, "ptemap", NULL,
+		    IPL_NONE);
 	}
 #endif /* SUN4 || SUN4C */
 }

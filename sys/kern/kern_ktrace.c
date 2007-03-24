@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.114.2.2 2007/03/12 05:58:34 rmind Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.114.2.3 2007/03/24 14:56:01 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.114.2.2 2007/03/12 05:58:34 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.114.2.3 2007/03/24 14:56:01 yamt Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h"
@@ -154,7 +154,7 @@ static TAILQ_HEAD(, ktr_desc) ktdq = TAILQ_HEAD_INITIALIZER(ktdq);
 
 MALLOC_DEFINE(M_KTRACE, "ktrace", "ktrace data buffer");
 POOL_INIT(kte_pool, sizeof(struct ktrace_entry), 0, 0, 0,
-    "ktepl", &pool_allocator_nointr);
+    "ktepl", &pool_allocator_nointr, IPL_NONE);
 
 static inline void
 ktd_wakeup(struct ktr_desc *ktd)

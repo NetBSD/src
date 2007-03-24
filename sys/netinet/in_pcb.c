@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.113.2.2 2007/03/12 05:59:36 rmind Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.113.2.3 2007/03/24 14:56:10 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.113.2.2 2007/03/12 05:59:36 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.113.2.3 2007/03/24 14:56:10 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -158,7 +158,8 @@ int	anonportmax = IPPORT_ANONMAX;
 int	lowportmin  = IPPORT_RESERVEDMIN;
 int	lowportmax  = IPPORT_RESERVEDMAX;
 
-POOL_INIT(inpcb_pool, sizeof(struct inpcb), 0, 0, 0, "inpcbpl", NULL);
+POOL_INIT(inpcb_pool, sizeof(struct inpcb), 0, 0, 0, "inpcbpl", NULL,
+    IPL_NET);
 
 void
 in_pcbinit(struct inpcbtable *table, int bindhashsize, int connecthashsize)

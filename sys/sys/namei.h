@@ -1,4 +1,4 @@
-/*	$NetBSD: namei.h,v 1.47 2006/12/24 08:54:55 elad Exp $	*/
+/*	$NetBSD: namei.h,v 1.47.2.1 2007/03/24 14:56:15 yamt Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1991, 1993
@@ -46,13 +46,9 @@ struct nameidata {
 	 */
 	const char *ni_dirp;		/* pathname pointer */
 	enum	uio_seg ni_segflg;	/* location of pathname */
-     /* u_long	ni_nameiop;		   namei operation */
-     /* u_long	ni_flags;		   flags to namei */
-     /* struct	proc *ni_proc;		   process requesting lookup */
 	/*
 	 * Arguments to lookup.
 	 */
-     /* kauth_cred_t ni_cred;		   credentials */
 	struct	vnode *ni_startdir;	/* starting directory */
 	struct	vnode *ni_rootdir;	/* logical root directory */
 	/*

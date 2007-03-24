@@ -1,4 +1,4 @@
-/*	$NetBSD: l2cap.h,v 1.2.4.1 2007/03/12 05:59:34 rmind Exp $	*/
+/*	$NetBSD: l2cap.h,v 1.2.4.2 2007/03/24 14:56:09 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -54,7 +54,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: l2cap.h,v 1.2.4.1 2007/03/12 05:59:34 rmind Exp $
+ * $Id: l2cap.h,v 1.2.4.2 2007/03/24 14:56:09 yamt Exp $
  * $FreeBSD: src/sys/netgraph/bluetooth/include/l2cap.h,v 1.4 2005/08/31 18:13:23 emax Exp $
  */
 
@@ -389,17 +389,17 @@ struct l2cap_channel {
 	LIST_ENTRY(l2cap_channel)lc_ncid;	/* next channel (ascending CID) */
 };
 
-/* l2cap_channel state bits */
-#define L2CAP_CLOSED		(1<<0)	/* closed */
-#define L2CAP_WAIT_CONNECT	(1<<1)	/* have received connect request */
-#define L2CAP_WAIT_CONNECT_RSP	(1<<2)	/* have sent connect request */
-#define L2CAP_WAIT_CONFIG_REQ	(1<<3)	/* waiting for config request */
-#define L2CAP_WAIT_CONFIG_RSP	(1<<4)	/* waiting for config response */
-#define L2CAP_OPEN		(1<<5)	/* user data transfer state */
-#define L2CAP_WAIT_DISCONNECT	(1<<6)	/* have sent disconnect request */
+/* l2cap_channel state */
+#define L2CAP_CLOSED		0	/* closed */
+#define L2CAP_WAIT_CONNECT_RSP	1	/* have sent connect request */
+#define L2CAP_WAIT_CONFIG	2	/* waiting for configuration */
+#define L2CAP_OPEN		3	/* user data transfer state */
+#define L2CAP_WAIT_DISCONNECT	4	/* have sent disconnect request */
 
 /* l2cap_channel flags */
 #define L2CAP_SHUTDOWN		(1<<0)	/* channel is closing */
+#define L2CAP_WAIT_CONFIG_REQ	(1<<1)	/* waiting for config request */
+#define L2CAP_WAIT_CONFIG_RSP	(1<<2)	/* waiting for config response */
 
 /*
  * L2CAP Request

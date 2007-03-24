@@ -1,4 +1,4 @@
-/*	$NetBSD: advfsops.c,v 1.33.2.1 2007/03/12 05:58:09 rmind Exp $	*/
+/*	$NetBSD: advfsops.c,v 1.33.2.2 2007/03/24 14:55:55 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.33.2.1 2007/03/12 05:58:09 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.33.2.2 2007/03/24 14:55:55 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -79,7 +79,7 @@ int adosfs_loadbitmap __P((struct adosfsmount *));
 struct simplelock adosfs_hashlock;
 
 POOL_INIT(adosfs_node_pool, sizeof(struct anode), 0, 0, 0, "adosndpl",
-    &pool_allocator_nointr);
+    &pool_allocator_nointr, IPL_NONE);
 
 MALLOC_DEFINE(M_ADOSFSMNT, "adosfs mount", "adosfs mount structures");
 MALLOC_DEFINE(M_ANODE, "adosfs anode", "adosfs anode structures and tables");
@@ -797,7 +797,7 @@ adosfs_init()
 	malloc_type_attach(M_ANODE);
 	malloc_type_attach(M_ADOSFSBITMAP);
 	pool_init(&adosfs_node_pool, sizeof(struct anode), 0, 0, 0, "adosndpl",
-	    &pool_allocator_nointr);
+	    &pool_allocator_nointr, IPL_NONE);
 #endif
 	simple_lock_init(&adosfs_hashlock);
 }

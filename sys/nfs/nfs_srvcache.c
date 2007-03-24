@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_srvcache.c,v 1.36.2.2 2007/03/12 06:00:36 rmind Exp $	*/
+/*	$NetBSD: nfs_srvcache.c,v 1.36.2.3 2007/03/24 14:56:15 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_srvcache.c,v 1.36.2.2 2007/03/12 06:00:36 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_srvcache.c,v 1.36.2.3 2007/03/24 14:56:15 yamt Exp $");
 
 #include "opt_iso.h"
 
@@ -166,7 +166,7 @@ nfsrv_initcache()
 	    M_WAITOK, &nfsrvhash);
 	TAILQ_INIT(&nfsrvlruhead);
 	pool_init(&nfs_reqcache_pool, sizeof(struct nfsrvcache), 0, 0, 0,
-	    "nfsreqcachepl", &pool_allocator_nointr);
+	    "nfsreqcachepl", &pool_allocator_nointr, IPL_NONE);
 	MOWNER_ATTACH(&nfsd_cache_mowner);
 }
 

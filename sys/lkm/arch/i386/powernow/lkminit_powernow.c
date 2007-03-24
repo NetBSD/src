@@ -1,4 +1,4 @@
-/*	$NetBSD: lkminit_powernow.c,v 1.8 2006/10/04 21:47:56 cube Exp $	*/
+/*	$NetBSD: lkminit_powernow.c,v 1.8.4.1 2007/03/24 14:56:08 yamt Exp $	*/
 
 /*
  * Derived from:
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_powernow.c,v 1.8 2006/10/04 21:47:56 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkminit_powernow.c,v 1.8.4.1 2007/03/24 14:56:08 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,7 +66,6 @@ static uint32_t pn_family = 0;
 static int
 powernow_mod_handle(struct lkm_table *lkmtp, int cmd)
 {
-	struct cpu_info *ci;
 	int err = 0;	/* default = success */
 
 	switch (cmd) {
@@ -77,10 +76,8 @@ powernow_mod_handle(struct lkm_table *lkmtp, int cmd)
 		if (lkmexists(lkmtp))
 			return EEXIST;
 	
-		ci = curcpu();
-
-		if (powernow_probe(ci)) {
-			pn_family = CPUID2FAMILY(ci->ci_signature);
+		if (powernow_probe(curcpu())) {
+			pn_family = CPUID2FAMILY(curcpu()->ci_signature);
 			if (pn_family == 6)
 				k7_powernow_init();
 			else if (pn_family == 15)

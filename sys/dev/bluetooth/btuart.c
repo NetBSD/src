@@ -1,4 +1,4 @@
-/*	$NetBSD: btuart.c,v 1.1.6.3 2007/03/12 05:53:09 rmind Exp $	*/
+/*	$NetBSD: btuart.c,v 1.1.6.4 2007/03/24 14:55:20 yamt Exp $	*/
 /*
  * Copyright (c) 2006, 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btuart.c,v 1.1.6.3 2007/03/12 05:53:09 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btuart.c,v 1.1.6.4 2007/03/24 14:55:20 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -548,7 +548,7 @@ init_csr(struct btuart_softc *sc)
 		/*
 		 * XXXX:
 		 * We will have to check the HCI_EVENT_VENDOR packet. For
-		 * instance, it might be a different HCI_EVENT_VENDOR packet. 
+		 * instance, it might be a different HCI_EVENT_VENDOR packet.
 		 */
 		if (error != 0) {
 			printf("%s: CSR set UART speed failed: Status 0x%02x\n",
@@ -845,7 +845,7 @@ init_stlc2500(struct btuart_softc *sc)
 	/*
 	 * XXXX:
 	 * We do not know the beginning point of this character string.
-	 * Because it doesn't know the event of this packet. 
+	 * Because it doesn't know the event of this packet.
 	 *
 	 * printf("%s: %s\n", sc->sc_dev.dv_xname, ???);
 	 */
@@ -1066,7 +1066,7 @@ bth4open(dev_t device __unused, struct tty *tp)
 	static char name[] = "btuart";
 
 	if ((error = kauth_authorize_device_tty(l->l_cred,
-	    KAUTH_DEVICE_TTY_OPEN, tp)) != 0)
+	    KAUTH_GENERIC_ISSUSER, tp)) != 0)
 		return error;
 
 	s = spltty();

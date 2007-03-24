@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.166.2.5 2007/03/12 05:58:33 rmind Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.166.2.6 2007/03/24 14:56:00 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.166.2.5 2007/03/12 05:58:33 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.166.2.6 2007/03/24 14:56:00 yamt Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -200,7 +200,7 @@ exit1(struct lwp *l, int rv)
 
 	p = l->l_proc;
 
-	LOCK_ASSERT(mutex_owned(&p->p_smutex));
+	KASSERT(mutex_owned(&p->p_smutex));
 
 	if (__predict_false(p == initproc))
 		panic("init died (signal %d, exit %d)",
@@ -913,25 +913,7 @@ proc_free(struct proc *p, struct rusage *caller_ru)
 	vp = p->p_textvp;
 	cred = p->p_cred;
 	ru = p->p_ru;
-
 	l = LIST_FIRST(&p->p_lwps);
-
-#ifdef MULTIPROCESSOR
-	/*
-	 * If the last remaining LWP is still on the CPU (unlikely), then
-	 * spin until it has switched away.  We need to release all locks
-	 * to avoid deadlock against interrupt handlers on the target CPU.
-	 */
-	if (l->l_cpu->ci_curlwp == l) {
-		int count;
-		mutex_exit(&proclist_lock);
-		KERNEL_UNLOCK_ALL(l, &count);
-		while (l->l_cpu->ci_curlwp == l)
-			SPINLOCK_BACKOFF_HOOK;
-		KERNEL_LOCK(count, l);
-		mutex_enter(&proclist_lock);
-	}
-#endif
 
 	mutex_destroy(&p->p_rasmutex);
 	mutex_destroy(&p->p_mutex);
@@ -975,7 +957,7 @@ proc_free(struct proc *p, struct rusage *caller_ru)
 	/*
 	 * Free the last LWP's resources.
 	 */
-	lwp_free(l, 0, 1);
+	lwp_free(l, false, true);
 
 	/*
 	 * Collect child u-areas.

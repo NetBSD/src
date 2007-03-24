@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.85.2.3 2007/03/12 05:59:15 rmind Exp $	*/
+/*	$NetBSD: route.c,v 1.85.2.4 2007/03/24 14:56:08 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.85.2.3 2007/03/12 05:59:15 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.85.2.4 2007/03/24 14:56:08 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,8 +128,10 @@ struct	radix_node_head *rt_tables[AF_MAX+1];
 int	rttrash;		/* routes not in table but not freed */
 struct	sockaddr wildcard;	/* zero valued cookie for wildcard searches */
 
-POOL_INIT(rtentry_pool, sizeof(struct rtentry), 0, 0, 0, "rtentpl", NULL);
-POOL_INIT(rttimer_pool, sizeof(struct rttimer), 0, 0, 0, "rttmrpl", NULL);
+POOL_INIT(rtentry_pool, sizeof(struct rtentry), 0, 0, 0, "rtentpl", NULL,
+    IPL_SOFTNET);
+POOL_INIT(rttimer_pool, sizeof(struct rttimer), 0, 0, 0, "rttmrpl", NULL,
+    IPL_SOFTNET);
 
 struct callout rt_timer_ch; /* callout for rt_timer_timer() */
 

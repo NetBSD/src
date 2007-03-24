@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.596.2.11 2007/03/12 05:48:22 rmind Exp $	*/
+/*	$NetBSD: machdep.c,v 1.596.2.12 2007/03/24 14:54:45 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.596.2.11 2007/03/12 05:48:22 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.596.2.12 2007/03/24 14:54:45 yamt Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -127,6 +127,8 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.596.2.11 2007/03/12 05:48:22 rmind Exp
 #include <uvm/uvm_page.h>
 
 #include <sys/sysctl.h>
+
+#include <x86/cpu_msr.h>
 
 #include <machine/cpu.h>
 #include <machine/cpufunc.h>
@@ -489,6 +491,8 @@ cpu_startup()
 
 	gdt_init();
 	i386_proc0_tss_ldt_init();
+
+	x86_init();
 }
 
 /*

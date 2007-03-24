@@ -1,4 +1,4 @@
-/* $NetBSD: vesabiosreg.h,v 1.5 2006/06/20 20:30:22 drochner Exp $ */
+/* $NetBSD: vesabiosreg.h,v 1.5.10.1 2007/03/24 14:54:43 yamt Exp $ */
 
 /*
  * Written by M. Drochner
@@ -29,13 +29,8 @@ struct modeinfoblock {
 	uint8_t DirectColorModeInfo;
 	/* Mandatory information for VBE 2.0 and above */
 	uint32_t PhysBasePtr;
-#ifdef VBE_2_0
-	uint32_t OffScreenMemOffset;
-	uint16_t OffScreenMemSize;
-	uint8_t Reserved2[206];
-#else
-	uint32_t Reserved2;
-	uint16_t Reserved3;
+	uint32_t OffScreenMemOffset;	/* reserved in VBE 3.0 and above */
+	uint16_t OffScreenMemSize;	/* reserved in VBE 3.0 and above */
 
 	/* Mandatory information for VBE 3.0 and above */
 	uint16_t LinBytesPerScanLine;
@@ -47,7 +42,6 @@ struct modeinfoblock {
 	uint8_t LinRsvdMaskSize, LinRsvdFieldPosition;
 	uint32_t MaxPixelClock;
 	uint8_t Reserved4[189];
-#endif
 } __attribute__ ((packed));
 
 struct paletteentry {

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.11 2005/12/11 12:16:54 christos Exp $	*/
+/*	$NetBSD: intr.c,v 1.11.26.1 2007/03/24 14:54:34 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.11 2005/12/11 12:16:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.11.26.1 2007/03/24 14:54:34 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -320,4 +320,27 @@ struct clockframe	frame;
 	    panic("intr_dispatch: too many stray interrupts");
 	else
 	    printf("intr_dispatch: stray level %d interrupt\n", vector);
+}
+
+static const int ipl2psl_table[] = {
+	[IPL_NONE]       = PSL_IPL0,
+	[IPL_SOFT]       = PSL_IPL1,
+	[IPL_SOFTCLOCK]  = PSL_IPL1,
+	[IPL_SOFTNET]    = PSL_IPL1,
+	[IPL_SOFTSERIAL] = PSL_IPL1,
+	[IPL_BIO]        = PSL_IPL3,
+	[IPL_NET]        = PSL_IPL3,
+	[IPL_TTY]        = PSL_IPL4,
+	/* IPL_LPT == IPL_TTY */
+	[IPL_VM]         = PSL_IPL4,
+	[IPL_SERIAL]     = PSL_IPL5,
+	[IPL_CLOCK]      = PSL_IPL6,
+	[IPL_HIGH]       = PSL_IPL7,
+};
+
+ipl_cookie_t
+makeiplcookie(ipl_t ipl)
+{
+
+	return (ipl_cookie_t){._psl = ipl2psl_table[ipl] | PSL_S};
 }

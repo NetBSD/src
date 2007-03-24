@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.150.2.2 2007/03/12 05:58:32 rmind Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.150.2.3 2007/03/24 14:56:00 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.150.2.2 2007/03/12 05:58:32 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.150.2.3 2007/03/24 14:56:00 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,11 +70,11 @@ __KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.150.2.2 2007/03/12 05:58:32 rmind
 struct filelist	filehead;	/* head of list of open files */
 int		nfiles;		/* actual number of open files */
 POOL_INIT(file_pool, sizeof(struct file), 0, 0, 0, "filepl",
-    &pool_allocator_nointr);
+    &pool_allocator_nointr, IPL_NONE);
 POOL_INIT(cwdi_pool, sizeof(struct cwdinfo), 0, 0, 0, "cwdipl",
-    &pool_allocator_nointr);
+    &pool_allocator_nointr, IPL_NONE);
 POOL_INIT(filedesc0_pool, sizeof(struct filedesc0), 0, 0, 0, "fdescpl",
-    &pool_allocator_nointr);
+    &pool_allocator_nointr, IPL_NONE);
 
 /* Global file list lock */
 static struct simplelock filelist_slock = SIMPLELOCK_INITIALIZER;
@@ -1766,8 +1766,7 @@ fdcloseexec(struct lwp *l)
  */
 #define CHECK_UPTO 3
 int
-fdcheckstd(l)
-	struct lwp *l;
+fdcheckstd(struct lwp *l)
 {
 	struct proc *p;
 	struct nameidata nd;

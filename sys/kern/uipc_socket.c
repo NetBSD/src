@@ -1,7 +1,7 @@
-/*	$NetBSD: uipc_socket.c,v 1.132.2.2 2007/03/12 05:58:45 rmind Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.132.2.3 2007/03/24 14:56:06 yamt Exp $	*/
 
 /*-
- * Copyright (c) 2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.132.2.2 2007/03/12 05:58:45 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.132.2.3 2007/03/24 14:56:06 yamt Exp $");
 
 #include "opt_sock_counters.h"
 #include "opt_sosend_loan.h"
@@ -92,10 +92,13 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.132.2.2 2007/03/12 05:58:45 rmind 
 #include <sys/event.h>
 #include <sys/poll.h>
 #include <sys/kauth.h>
+#include <sys/mutex.h>
+#include <sys/condvar.h>
 
 #include <uvm/uvm.h>
 
-POOL_INIT(socket_pool, sizeof(struct socket), 0, 0, 0, "sockpl", NULL);
+POOL_INIT(socket_pool, sizeof(struct socket), 0, 0, 0, "sockpl", NULL,
+    IPL_SOFTNET);
 
 MALLOC_DEFINE(M_SOOPTS, "soopts", "socket options");
 MALLOC_DEFINE(M_SONAME, "soname", "socket name");
@@ -135,7 +138,7 @@ int sock_loan_thresh = -1;
 int sock_loan_thresh = 4096;
 #endif
 
-static struct simplelock so_pendfree_slock = SIMPLELOCK_INITIALIZER;
+static kmutex_t so_pendfree_lock;
 static struct mbuf *so_pendfree;
 
 #ifndef SOMAXKVA
@@ -143,7 +146,7 @@ static struct mbuf *so_pendfree;
 #endif
 int somaxkva = SOMAXKVA;
 static int socurkva;
-static int sokvawaiters;
+static kcondvar_t socurkva_cv;
 
 #define	SOCK_LOAN_CHUNK		65536
 
@@ -153,11 +156,9 @@ static size_t sodopendfreel(void);
 static vsize_t
 sokvareserve(struct socket *so, vsize_t len)
 {
-	int s;
 	int error;
 
-	s = splvm();
-	simple_lock(&so_pendfree_slock);
+	mutex_enter(&so_pendfree_lock);
 	while (socurkva + len > somaxkva) {
 		size_t freed;
 
@@ -175,33 +176,25 @@ sokvareserve(struct socket *so, vsize_t len)
 			continue;
 
 		SOSEND_COUNTER_INCR(&sosend_kvalimit);
-		sokvawaiters++;
-		error = ltsleep(&socurkva, PVM | PCATCH, "sokva", 0,
-		    &so_pendfree_slock);
-		sokvawaiters--;
+		error = cv_wait_sig(&socurkva_cv, &so_pendfree_lock);
 		if (error) {
 			len = 0;
 			break;
 		}
 	}
 	socurkva += len;
-	simple_unlock(&so_pendfree_slock);
-	splx(s);
+	mutex_exit(&so_pendfree_lock);
 	return len;
 }
 
 static void
 sokvaunreserve(vsize_t len)
 {
-	int s;
 
-	s = splvm();
-	simple_lock(&so_pendfree_slock);
+	mutex_enter(&so_pendfree_lock);
 	socurkva -= len;
-	if (sokvawaiters)
-		wakeup(&socurkva);
-	simple_unlock(&so_pendfree_slock);
-	splx(s);
+	cv_broadcast(&socurkva_cv);
+	mutex_exit(&so_pendfree_lock);
 }
 
 /*
@@ -286,43 +279,35 @@ sodoloanfree(struct vm_page **pgs, void *buf, size_t size)
 static size_t
 sodopendfree()
 {
-	int s;
 	size_t rv;
 
-	s = splvm();
-	simple_lock(&so_pendfree_slock);
+	mutex_enter(&so_pendfree_lock);
 	rv = sodopendfreel();
-	simple_unlock(&so_pendfree_slock);
-	splx(s);
+	mutex_exit(&so_pendfree_lock);
 
 	return rv;
 }
 
 /*
  * sodopendfreel: free mbufs on "pendfree" list.
- * unlock and relock so_pendfree_slock when freeing mbufs.
+ * unlock and relock so_pendfree_lock when freeing mbufs.
  *
- * => called with so_pendfree_slock held.
- * => called at splvm.
+ * => called with so_pendfree_lock held.
  */
 
 static size_t
 sodopendfreel()
 {
+	struct mbuf *m, *next;
 	size_t rv = 0;
+	int s;
 
-	LOCK_ASSERT(simple_lock_held(&so_pendfree_slock));
+	KASSERT(mutex_owned(&so_pendfree_lock));
 
-	for (;;) {
-		struct mbuf *m;
-		struct mbuf *next;
-
+	while (so_pendfree != NULL) {
 		m = so_pendfree;
-		if (m == NULL)
-			break;
 		so_pendfree = NULL;
-		simple_unlock(&so_pendfree_slock);
-		/* XXX splx */
+		mutex_exit(&so_pendfree_lock);
 
 		for (; m != NULL; m = next) {
 			next = m->m_next;
@@ -331,11 +316,12 @@ sodopendfreel()
 			sodoloanfree((m->m_flags & M_EXT_PAGES) ?
 			    m->m_ext.ext_pgs : NULL, m->m_ext.ext_buf,
 			    m->m_ext.ext_size);
+			s = splvm();
 			pool_cache_put(&mbpool_cache, m);
+			splx(s);
 		}
 
-		/* XXX splvm */
-		simple_lock(&so_pendfree_slock);
+		mutex_enter(&so_pendfree_lock);
 	}
 
 	return (rv);
@@ -344,7 +330,6 @@ sodopendfreel()
 void
 soloanfree(struct mbuf *m, void *buf, size_t size, void *arg)
 {
-	int s;
 
 	if (m == NULL) {
 
@@ -363,14 +348,11 @@ soloanfree(struct mbuf *m, void *buf, size_t size, void *arg)
 	 * because we need to put kva back to kernel_map.
 	 */
 
-	s = splvm();
-	simple_lock(&so_pendfree_slock);
+	mutex_enter(&so_pendfree_lock);
 	m->m_next = so_pendfree;
 	so_pendfree = m;
-	if (sokvawaiters)
-		wakeup(&socurkva);
-	simple_unlock(&so_pendfree_slock);
-	splx(s);
+	cv_broadcast(&socurkva_cv);
+	mutex_exit(&so_pendfree_lock);
 }
 
 static long
@@ -448,6 +430,9 @@ sokva_reclaim_callback(struct callback_entry *ce, void *obj, void *arg)
 void
 soinit(void)
 {
+
+	mutex_init(&so_pendfree_lock, MUTEX_DRIVER, IPL_VM);
+	cv_init(&socurkva_cv, "sokva");
 
 	/* Set the initial adjusted socket buffer size. */
 	if (sb_max_set(sb_max))
@@ -1794,7 +1779,6 @@ sysctl_kern_somaxkva(SYSCTLFN_ARGS)
 {
 	int error, new_somaxkva;
 	struct sysctlnode node;
-	int s;
 
 	new_somaxkva = somaxkva;
 	node = *rnode;
@@ -1806,12 +1790,10 @@ sysctl_kern_somaxkva(SYSCTLFN_ARGS)
 	if (new_somaxkva < (16 * 1024 * 1024)) /* sanity */
 		return (EINVAL);
 
-	s = splvm();
-	simple_lock(&so_pendfree_slock);
+	mutex_enter(&so_pendfree_lock);
 	somaxkva = new_somaxkva;
-	wakeup(&socurkva);
-	simple_unlock(&so_pendfree_slock);
-	splx(s);
+	cv_broadcast(&socurkva_cv);
+	mutex_exit(&so_pendfree_lock);
 
 	return (error);
 }

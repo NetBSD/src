@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback.c,v 1.22 2006/11/14 22:14:56 bouyer Exp $      */
+/*      $NetBSD: xbdback.c,v 1.22.4.1 2007/03/24 14:55:07 yamt Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -279,13 +279,13 @@ xbdback_init()
 	SIMPLEQ_INIT(&xbdback_shmq);
 	xbdback_shmcb = 0;
 	pool_init(&xbdback_request_pool.p, sizeof(struct xbdback_request),
-	    0, 0, 0, "xbbrp", NULL);
+	    0, 0, 0, "xbbrp", NULL, IPL_BIO);
 	SIMPLEQ_INIT(&xbdback_request_pool.q);
 	pool_init(&xbdback_io_pool.p, sizeof(struct xbdback_io),
-	    0, 0, 0, "xbbip", NULL);
+	    0, 0, 0, "xbbip", NULL, IPL_BIO);
 	SIMPLEQ_INIT(&xbdback_io_pool.q);
 	pool_init(&xbdback_fragment_pool.p, sizeof(struct xbdback_fragment),
-	    0, 0, 0, "xbbfp", NULL);
+	    0, 0, 0, "xbbfp", NULL, IPL_BIO);
 	SIMPLEQ_INIT(&xbdback_fragment_pool.q);
 	/* we allocate enough to handle a whole ring at once */
 	if (pool_prime(&xbdback_request_pool.p, BLKIF_RING_SIZE) != 0)

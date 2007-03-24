@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.281.2.2 2007/03/12 05:58:46 rmind Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.281.2.3 2007/03/24 14:56:07 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.281.2.2 2007/03/12 05:58:46 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.281.2.3 2007/03/24 14:56:07 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -166,7 +166,7 @@ struct vnode *rootvnode;
 struct device *root_device;			/* root device */
 
 POOL_INIT(vnode_pool, sizeof(struct vnode), 0, 0, 0, "vnodepl",
-    &pool_allocator_nointr);
+    &pool_allocator_nointr, IPL_NONE);
 
 MALLOC_DEFINE(M_VNODE, "vnodes", "Dynamically allocated vnodes");
 

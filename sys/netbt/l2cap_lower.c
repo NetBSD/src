@@ -1,4 +1,4 @@
-/*	$NetBSD: l2cap_lower.c,v 1.1.20.1 2007/03/12 05:59:34 rmind Exp $	*/
+/*	$NetBSD: l2cap_lower.c,v 1.1.20.2 2007/03/24 14:56:09 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: l2cap_lower.c,v 1.1.20.1 2007/03/12 05:59:34 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: l2cap_lower.c,v 1.1.20.2 2007/03/24 14:56:09 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -120,7 +120,6 @@ l2cap_recv_frame(struct mbuf *m, struct hci_link *link)
 	DPRINTFN(5, "(%s) received packet (%d bytes)\n",
 		    link->hl_unit->hci_devname, hdr.length);
 
-	// wasnt this checked in hci_acl_recv() already?
 	if (hdr.length != m->m_pkthdr.len)
 		goto failed;
 
@@ -130,12 +129,13 @@ l2cap_recv_frame(struct mbuf *m, struct hci_link *link)
 	}
 
 	if (hdr.dcid == L2CAP_CLT_CID) {
-		m_freem(m);	// TODO
+		m_freem(m);	/* TODO */
 		return;
 	}
 
 	chan = l2cap_cid_lookup(hdr.dcid);
-	if (chan != NULL && chan->lc_link == link) {
+	if (chan != NULL && chan->lc_link == link
+	    && chan->lc_state == L2CAP_OPEN) {
 		(*chan->lc_proto->input)(chan->lc_upper, m);
 		return;
 	}

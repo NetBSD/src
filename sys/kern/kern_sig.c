@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.245.2.3 2007/03/12 05:58:37 rmind Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.245.2.4 2007/03/24 14:56:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.245.2.3 2007/03/12 05:58:37 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.245.2.4 2007/03/24 14:56:03 yamt Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_ptrace.h"
@@ -143,8 +143,9 @@ static	const char lognocoredump[] =
     "pid %d (%s), uid %d: exited on signal %d (core not dumped, err = %d)\n";
 
 POOL_INIT(siginfo_pool, sizeof(siginfo_t), 0, 0, 0, "siginfo",
-    &pool_allocator_nointr);
-POOL_INIT(ksiginfo_pool, sizeof(ksiginfo_t), 0, 0, 0, "ksiginfo", NULL);
+    &pool_allocator_nointr, IPL_NONE);
+POOL_INIT(ksiginfo_pool, sizeof(ksiginfo_t), 0, 0, 0, "ksiginfo",
+    NULL, IPL_SOFTCLOCK);
 
 /*
  * signal_init:
@@ -159,7 +160,8 @@ signal_init(void)
 
 	pool_init(&sigacts_pool, sizeof(struct sigacts), 0, 0, 0, "sigapl",
 	    sizeof(struct sigacts) > PAGE_SIZE ?
-	    &sigactspool_allocator : &pool_allocator_nointr);
+	    &sigactspool_allocator : &pool_allocator_nointr,
+	    IPL_NONE);
 
 	exechook_establish(ksiginfo_exechook, NULL);
 

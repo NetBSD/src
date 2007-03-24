@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_systrace.c,v 1.66.2.2 2007/03/12 05:58:38 rmind Exp $	*/
+/*	$NetBSD: kern_systrace.c,v 1.66.2.3 2007/03/24 14:56:03 yamt Exp $	*/
 
 /*
  * Copyright 2002, 2003 Niels Provos <provos@citi.umich.edu>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.66.2.2 2007/03/12 05:58:38 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.66.2.3 2007/03/24 14:56:03 yamt Exp $");
 
 #include "opt_systrace.h"
 
@@ -195,11 +195,11 @@ static const struct fileops systracefops = {
 
 #ifdef __NetBSD__
 POOL_INIT(systr_proc_pl, sizeof(struct str_process), 0, 0, 0, "strprocpl",
-    NULL);
+    NULL, IPL_NONE);
 POOL_INIT(systr_policy_pl, sizeof(struct str_policy), 0, 0, 0, "strpolpl",
-    NULL);
+    NULL, IPL_NONE);
 POOL_INIT(systr_msgcontainer_pl, sizeof(struct str_msgcontainer), 0, 0, 0,
-    "strmsgpl", NULL);
+    "strmsgpl", NULL, IPL_NONE);
 
 kmutex_t systrace_mutex;
 #else /* ! __NetBSD__ */

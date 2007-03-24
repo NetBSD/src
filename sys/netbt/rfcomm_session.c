@@ -1,4 +1,4 @@
-/*	$NetBSD: rfcomm_session.c,v 1.4.4.1 2007/03/12 05:59:34 rmind Exp $	*/
+/*	$NetBSD: rfcomm_session.c,v 1.4.4.2 2007/03/24 14:56:09 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rfcomm_session.c,v 1.4.4.1 2007/03/12 05:59:34 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rfcomm_session.c,v 1.4.4.2 2007/03/24 14:56:09 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -93,7 +93,7 @@ struct rfcomm_session_list
 	rfcomm_session_listen = LIST_HEAD_INITIALIZER(rfcomm_session_listen);
 
 POOL_INIT(rfcomm_credit_pool, sizeof(struct rfcomm_credit),
-		0, 0, 0, "rfcomm_credit", NULL);
+		0, 0, 0, "rfcomm_credit", NULL, IPL_SOFTNET);
 
 /*
  * RFCOMM System Parameters (see section 5.3)
@@ -323,7 +323,7 @@ rfcomm_session_timeout(void *arg)
 static void
 rfcomm_session_connecting(void *arg)
 {
-	//struct rfcomm_session *rs = arg;
+	/* struct rfcomm_session *rs = arg; */
 
 	DPRINTF("Connecting\n");
 }
@@ -1077,7 +1077,7 @@ rfcomm_session_recv_mcc_msc(struct rfcomm_session *rs, int cr, struct mbuf *m)
 	len += sizeof(msc.modem);
 
 	dlc->rd_rmodem = msc.modem;
-	// XXX how do we signal this upstream?
+	/* XXX how do we signal this upstream? */
 
 	if (RFCOMM_EA(msc.modem) == 0) {
 		if (m->m_pkthdr.len < sizeof(msc.brk))
@@ -1087,7 +1087,7 @@ rfcomm_session_recv_mcc_msc(struct rfcomm_session *rs, int cr, struct mbuf *m)
 		m_adj(m, sizeof(msc.brk));
 		len += sizeof(msc.brk);
 
-		// XXX how do we signal this upstream?
+		/* XXX how do we signal this upstream? */
 	}
 
 	rfcomm_session_send_mcc(rs, 0, RFCOMM_MCC_MSC, &msc, len);

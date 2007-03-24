@@ -1,4 +1,4 @@
-/*	$NetBSD: est.c,v 1.32 2007/01/20 20:24:13 xtraeme Exp $	*/
+/*	$NetBSD: est.c,v 1.32.2.1 2007/03/24 14:54:45 yamt Exp $	*/
 /*
  * Copyright (c) 2003 Michael Eriksson.
  * All rights reserved.
@@ -86,12 +86,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: est.c,v 1.32 2007/01/20 20:24:13 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: est.c,v 1.32.2.1 2007/03/24 14:54:45 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/sysctl.h>
+#include <sys/once.h>
+
+#include <x86/cpu_msr.h>
 
 #include <machine/cpu.h>
 #include <machine/specialreg.h>
@@ -840,14 +843,18 @@ static uint16_t         fake_table[3];      /* guessed est_cpu table */
 static struct fqlist    fake_fqlist;
 static int 		est_node_target, est_node_current;
 static const char 	est_desc[] = "Enhanced SpeedStep";
+static int		lvendor;
 /* bus_clock is assigned in identcpu.c */
 int bus_clock;
 
 static int est_sysctl_helper(SYSCTLFN_PROTO);
+static int est_init_once(void);
+static void est_init_main(int);
 
 static int
 est_sysctl_helper(SYSCTLFN_ARGS)
 {
+	struct msr_cpu_broadcast mcb;
 	struct sysctlnode	node;
 	int			fq, oldfq, error;
 
@@ -872,24 +879,41 @@ est_sysctl_helper(SYSCTLFN_ARGS)
 	/* support writing to ...frequency.target */
 	if (rnode->sysctl_num == est_node_target && fq != oldfq) {
 		int		i;
-		uint64_t	msr;
 
 		for (i = est_fqlist->n - 1; i > 0; i--)
 			if (MSR2MHZ(est_fqlist->table[i], bus_clock) >= fq)
 				break;
 		fq = MSR2MHZ(est_fqlist->table[i], bus_clock);
-		msr = rdmsr(MSR_PERF_CTL);
-		msr &= ~0xffffULL;
-		msr |= est_fqlist->table[i];
-		wrmsr(MSR_PERF_CTL, msr);
+		mcb.msr_type = MSR_PERF_CTL;
+		mcb.msr_mask = 0xffffULL;
+		mcb.msr_value = est_fqlist->table[i];
+		msr_cpu_broadcast(&mcb);
 	}
 
 	return 0;
 }
 
+static int
+est_init_once(void)
+{
+	est_init_main(lvendor);
+	return 0;
+}
 
 void
-est_init(struct cpu_info *ci, int vendor)
+est_init(int vendor)
+{
+	int error;
+	static ONCE_DECL(est_initialized);
+
+	error = RUN_ONCE(&est_initialized, est_init_once);
+	if (__predict_false(error != 0)) {
+		return;
+	}
+}
+
+static void
+est_init_main(int vendor)
 {
 	const struct fqlist	*fql;
 	const struct sysctlnode	*node, *estnode, *freqnode;
@@ -898,12 +922,16 @@ est_init(struct cpu_info *ci, int vendor)
 	int			i, rc;
 	int			mv;
 	size_t			len, freq_len;
-	char			*freq_names, *cpuname = ci->ci_dev->dv_xname;
+	char			*freq_names, *cpuname;
+       
+	cpuname	= curcpu()->ci_dev->dv_xname;
 
 	if (bus_clock == 0) {
 		aprint_debug("%s: unknown system bus clock\n", __func__);
 		return;
 	}
+
+	lvendor = vendor;
 
 	msr = rdmsr(MSR_PERF_STATUS);
 	idhi = (msr >> 32) & 0xffff;

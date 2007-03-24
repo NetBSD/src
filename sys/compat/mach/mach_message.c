@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_message.c,v 1.50 2007/02/09 21:55:21 ad Exp $ */
+/*	$NetBSD: mach_message.c,v 1.50.2.1 2007/03/24 14:55:12 yamt Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_message.c,v 1.50 2007/02/09 21:55:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_message.c,v 1.50.2.1 2007/03/24 14:55:12 yamt Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h" /* For COMPAT_MACH in <sys/ktrace.h> */
@@ -1166,7 +1166,7 @@ void
 mach_message_init(void)
 {
 	pool_init(&mach_message_pool, sizeof (struct mach_message),
-	    0, 0, 0, "mach_message_pool", NULL);
+	    0, 0, 0, "mach_message_pool", NULL, IPL_NONE);
 	return;
 }
 

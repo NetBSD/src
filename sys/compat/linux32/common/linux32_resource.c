@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_resource.c,v 1.3.2.1 2007/03/12 05:52:29 rmind Exp $ */
+/*	$NetBSD: linux32_resource.c,v 1.3.2.2 2007/03/24 14:55:10 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_resource.c,v 1.3.2.1 2007/03/12 05:52:29 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_resource.c,v 1.3.2.2 2007/03/24 14:55:10 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -101,7 +101,7 @@ linux32_sys_getrlimit(l, v, retval)
 
 	bsd_to_linux_rlimit(&orl, &rl);
 
-	return copyout(&orl, NETBSD32PTR64(SCARG(uap, rlp)), sizeof(orl));
+	return copyout(&orl, SCARG_P32(uap, rlp), sizeof(orl));
 }
 
 int
@@ -126,8 +126,7 @@ linux32_sys_setrlimit(l, v, retval)
 	if ((error = SCARG(&ap, which)) < 0)
 		return -error;
 
-	if ((error = copyin(NETBSD32PTR64(SCARG(uap, rlp)), 
-	    &orl, sizeof(orl))) != 0)
+	if ((error = copyin(SCARG_P32(uap, rlp), &orl, sizeof(orl))) != 0)
 		return error;
 
 	linux_to_bsd_rlimit(&rl, &orl);

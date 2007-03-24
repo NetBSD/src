@@ -1,4 +1,4 @@
-/*	$NetBSD: aica.c,v 1.12.14.1 2007/02/27 16:50:02 yamt Exp $	*/
+/*	$NetBSD: aica.c,v 1.12.14.2 2007/03/24 14:54:36 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003 SHIMIZU Ryo <ryo@misakimix.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aica.c,v 1.12.14.1 2007/02/27 16:50:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aica.c,v 1.12.14.2 2007/03/24 14:54:36 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -246,7 +246,8 @@ aica_attach(struct device *parent, struct device *self, void *aux)
 
 	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname,
 	    sysasic_intr_string(IPL_BIO));
-	sysasic_intr_establish(SYSASIC_EVENT_AICA, IPL_BIO, aica_intr, sc);
+	sysasic_intr_establish(SYSASIC_EVENT_AICA, IPL_BIO, SYSASIC_IRL9,
+	    aica_intr, sc);
 
 	audio_attach_mi(&aica_hw_if, sc, &sc->sc_dev);
 

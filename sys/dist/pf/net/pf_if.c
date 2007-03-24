@@ -1,4 +1,4 @@
-/*	$NetBSD: pf_if.c,v 1.10.26.1 2007/03/12 05:58:09 rmind Exp $	*/
+/*	$NetBSD: pf_if.c,v 1.10.26.2 2007/03/24 14:55:54 yamt Exp $	*/
 /*	$OpenBSD: pf_if.c,v 1.23 2004/12/22 17:17:55 dhartmei Exp $ */
 
 /*
@@ -121,8 +121,13 @@ pfi_initialize(void)
 		return;
 
 	TAILQ_INIT(&pfi_statehead);
+#ifdef __NetBSD__
+	pool_init(&pfi_addr_pl, sizeof(struct pfi_dynaddr), 0, 0, 0,
+	    "pfiaddrpl", &pool_allocator_nointr, IPL_NONE);
+#else
 	pool_init(&pfi_addr_pl, sizeof(struct pfi_dynaddr), 0, 0, 0,
 	    "pfiaddrpl", &pool_allocator_nointr);
+#endif
 	pfi_buffer_max = 64;
 	pfi_buffer = malloc(pfi_buffer_max * sizeof(*pfi_buffer),
 	    PFI_MTYPE, M_WAITOK);

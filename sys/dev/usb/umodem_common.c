@@ -1,4 +1,4 @@
-/*	$NetBSD: umodem_common.c,v 1.10.2.1 2007/03/12 05:57:32 rmind Exp $	*/
+/*	$NetBSD: umodem_common.c,v 1.10.2.2 2007/03/24 14:55:52 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umodem_common.c,v 1.10.2.1 2007/03/12 05:57:32 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umodem_common.c,v 1.10.2.2 2007/03/24 14:55:52 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,7 +110,7 @@ Static void	umodem_intr(usbd_xfer_handle, usbd_private_handle, usbd_status);
 
 int
 umodem_common_attach(device_ptr_t self, struct umodem_softc *sc,
-		     struct usb_attach_arg *uaa, struct ucom_attach_args *uca)
+		     struct usbif_attach_arg *uaa, struct ucom_attach_args *uca)
 {
 	usbd_device_handle dev = uaa->device;
 	usb_interface_descriptor_t *id;

@@ -1,4 +1,4 @@
-/*	$NetBSD: hfs.h,v 1.2.4.2 2007/03/12 06:14:52 rmind Exp $	*/
+/*	$NetBSD: hfs.h,v 1.2.4.3 2007/03/24 14:55:56 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -58,7 +58,6 @@ MALLOC_DECLARE(M_HFSMNT);	/* defined in hfs_vfsops.c */
 
 struct hfs_args {
 	char *fspec;		/* block special device to mount */
-	uint64_t offset; /*number of bytes to start of volume from start of device*/
 };
 
 struct hfsmount {
@@ -66,7 +65,6 @@ struct hfsmount {
 	dev_t hm_dev;				/* device mounted */
 	struct vnode *hm_devvp;		/* block device mounted vnode */
 	hfs_volume hm_vol;			/* essential volume information */
-	uint64_t offset;		/* number of device bloks to start of volume from start of device*/
 };
 
 struct hfsnode {
@@ -102,7 +100,6 @@ struct hfsnode {
 };
 
 typedef struct {
-	uint64_t offset; /* offset to start of volume from start of device */
 	struct vnode* devvp; /* vnode for device I/O */
 	size_t devblksz; /* device block size (NOT HFS+ allocation block size)*/
 } hfs_libcb_data; /* custom data used in hfs_volume.cbdata */
@@ -176,7 +173,7 @@ void hfs_libcb_error(const char*, const char*, int, va_list);
 void* hfs_libcb_malloc(size_t, hfs_callback_args*);
 void* hfs_libcb_realloc(void*, size_t, hfs_callback_args*);
 void hfs_libcb_free(void*, hfs_callback_args*);
-int hfs_libcb_opendev(hfs_volume*, const char*, uint64_t,hfs_callback_args*);
+int hfs_libcb_opendev(hfs_volume*, const char*, hfs_callback_args*);
 void hfs_libcb_closedev(hfs_volume*, hfs_callback_args*);
 int hfs_libcb_read(hfs_volume*, void*, uint64_t, uint64_t,
 	hfs_callback_args*);
@@ -189,8 +186,7 @@ uint64_t be64tohp(void**);
 /* hfs_vfsops.c */
 int hfs_mount (struct mount *, const char *, void *, struct nameidata *,
 	struct lwp *);
-int hfs_mountfs (struct vnode *, struct mount *, struct lwp *,
-	const char *, uint64_t);
+int hfs_mountfs (struct vnode *, struct mount *, struct lwp *, const char *);
 int hfs_start (struct mount *, int, struct lwp *);
 int hfs_unmount (struct mount *, int, struct lwp *);
 int hfs_root (struct mount *, struct vnode **);

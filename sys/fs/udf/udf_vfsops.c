@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vfsops.c,v 1.22 2007/01/29 01:52:43 hubertf Exp $ */
+/* $NetBSD: udf_vfsops.c,v 1.22.2.1 2007/03/24 14:55:59 yamt Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: udf_vfsops.c,v 1.22 2007/01/29 01:52:43 hubertf Exp $");
+__RCSID("$NetBSD: udf_vfsops.c,v 1.22.2.1 2007/03/24 14:55:59 yamt Exp $");
 #endif /* not lint */
 
 
@@ -167,7 +167,8 @@ udf_init(void)
 
 	/* init hashtables and pools */
 	size = sizeof(struct udf_node);
-	pool_init(&udf_node_pool, size, 0, 0, 0, "udf_node_pool", NULL);
+	pool_init(&udf_node_pool, size, 0, 0, 0, "udf_node_pool", NULL,
+	    IPL_NONE);
 }
 
 /* --------------------------------------------------------------------- */
@@ -557,7 +558,8 @@ udf_mountfs(struct vnode *devvp, struct mount *mp,
 	lb_size = udf_rw32(ump->logical_vol->lb_size);
 	ump->desc_pool = malloc(sizeof(struct pool), M_UDFMNT, M_WAITOK);
 	memset(ump->desc_pool, 0, sizeof(struct pool));
-	pool_init(ump->desc_pool, lb_size, 0, 0, 0, "udf_desc_pool", NULL);
+	pool_init(ump->desc_pool, lb_size, 0, 0, 0, "udf_desc_pool", NULL,
+	    IPL_NONE);
 
 	/* read vds support tables like VAT, sparable etc. */
 	if ((error = udf_read_vds_tables(ump, args))) {

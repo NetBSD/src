@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_dirhash.c,v 1.12.2.1 2007/03/12 06:01:10 rmind Exp $	*/
+/*	$NetBSD: ufs_dirhash.c,v 1.12.2.2 2007/03/24 14:56:17 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Ian Dowse.  All rights reserved.
@@ -75,7 +75,7 @@ static doff_t ufsdirhash_getprev(struct direct *dp, doff_t offset,
 static int ufsdirhash_recycle(int wanted);
 
 static POOL_INIT(ufsdirhash_pool, DH_NBLKOFF * sizeof(daddr_t), 0, 0, 0,
-    "ufsdirhash", &pool_allocator_nointr);
+    "ufsdirhash", &pool_allocator_nointr, IPL_NONE);
 
 #define DIRHASHLIST_LOCK()		do { } while (0)
 #define DIRHASHLIST_UNLOCK()		do { } while (0)
@@ -1053,7 +1053,7 @@ ufsdirhash_init()
 {
 #ifdef _LKM
 	pool_init(&ufsdirhash_pool, DH_NBLKOFF * sizeof(daddr_t), 0, 0, 0,
-	    "ufsdirhash", &pool_allocator_nointr);
+	    "ufsdirhash", &pool_allocator_nointr, IPL_NONE);
 #endif
 	TAILQ_INIT(&ufsdirhash_list);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.84.2.1 2007/02/27 16:55:25 yamt Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.84.2.2 2007/03/24 14:56:18 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.84.2.1 2007/02/27 16:55:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.84.2.2 2007/03/24 14:56:18 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -142,7 +142,7 @@ LIST_HEAD(uao_swhash, uao_swhash_elt);
  * NOTE: Pages for this pool must not come from a pageable kernel map!
  */
 POOL_INIT(uao_swhash_elt_pool, sizeof(struct uao_swhash_elt), 0, 0, 0,
-    "uaoeltpl", NULL);
+    "uaoeltpl", NULL, IPL_VM);
 
 /*
  * uvm_aobj: the actual anon-backed uvm_object
@@ -170,7 +170,7 @@ struct uvm_aobj {
  * uvm_aobj_pool: pool of uvm_aobj structures
  */
 POOL_INIT(uvm_aobj_pool, sizeof(struct uvm_aobj), 0, 0, 0, "aobjpl",
-    &pool_allocator_nointr);
+    &pool_allocator_nointr, IPL_NONE);
 
 MALLOC_DEFINE(M_UVMAOBJ, "UVM aobj", "UVM aobj and related structures");
 

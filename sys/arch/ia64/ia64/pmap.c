@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.4.6.2 2007/03/12 05:48:40 rmind Exp $ */
+/* $NetBSD: pmap.c,v 1.4.6.3 2007/03/24 14:54:47 yamt Exp $ */
 
 
 /*-
@@ -92,7 +92,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.4.6.2 2007/03/12 05:48:40 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.4.6.3 2007/03/24 14:54:47 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -646,9 +646,8 @@ pmap_bootstrap()
 	 * Initialize the pmap pools and list.
 	 */
 	pmap_ncpuids = pmap_ridmax;
-	pool_init(&pmap_pmap_pool,
-		  sizeof(struct pmap), 0, 0, 0, "pmappl",
-		  &pool_allocator_nointr); /* This may block. */
+	pool_init(&pmap_pmap_pool, sizeof(struct pmap), 0, 0, 0, "pmappl",
+	    &pool_allocator_nointr, IPL_NONE); /* This may block. */
 
 	/* XXX: Need to convert ia64_kptdir[][] to a pool. ????*/
 
@@ -656,11 +655,11 @@ pmap_bootstrap()
 	 * XXX: We should be using regular vm_alloced mem for regular, non-kernel ptesl
 	 */
 
-	pool_init(&pmap_ia64_lpte_pool, sizeof (struct ia64_lpte), sizeof(void *), 0, 0, "ptpl",
-		  NULL); 
+	pool_init(&pmap_ia64_lpte_pool, sizeof (struct ia64_lpte),
+	    sizeof(void *), 0, 0, "ptpl", NULL, IPL_NONE); 
 
-	pool_init(&pmap_pv_pool, sizeof (struct pv_entry), sizeof(void *), 0, 0, "pvpl",
-	    &pmap_pv_page_allocator);
+	pool_init(&pmap_pv_pool, sizeof (struct pv_entry), sizeof(void *),
+	    0, 0, "pvpl", &pmap_pv_page_allocator, IPL_NONE);
 
 	TAILQ_INIT(&pmap_all_pmaps);
 

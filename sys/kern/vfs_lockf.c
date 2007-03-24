@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lockf.c,v 1.57.2.1 2007/03/12 05:58:46 rmind Exp $	*/
+/*	$NetBSD: vfs_lockf.c,v 1.57.2.2 2007/03/24 14:56:07 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lockf.c,v 1.57.2.1 2007/03/12 05:58:46 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lockf.c,v 1.57.2.2 2007/03/24 14:56:07 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,7 +80,7 @@ struct lockf {
 #define MAXDEPTH 50
 
 static POOL_INIT(lockfpool, sizeof(struct lockf), 0, 0, 0, "lockfpl",
-    &pool_allocator_nointr);
+    &pool_allocator_nointr, IPL_NONE);
 
 /*
  * This variable controls the maximum number of processes that will

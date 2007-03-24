@@ -1,4 +1,4 @@
-/*	$NetBSD: uscanner.c,v 1.54.4.1 2007/03/12 05:57:34 rmind Exp $	*/
+/*	$NetBSD: uscanner.c,v 1.54.4.2 2007/03/24 14:55:53 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.54.4.1 2007/03/12 05:57:34 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.54.4.2 2007/03/24 14:55:53 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -308,9 +308,6 @@ USB_DECLARE_DRIVER(uscanner);
 USB_MATCH(uscanner)
 {
 	USB_MATCH_START(uscanner, uaa);
-
-	if (uaa->iface != NULL)
-		return UMATCH_NONE;
 
 	return (uscanner_lookup(uaa->vendor, uaa->product) != NULL ?
 		UMATCH_VENDOR_PRODUCT : UMATCH_NONE);

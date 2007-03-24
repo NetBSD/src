@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.c,v 1.77.2.1 2007/02/27 16:55:24 yamt Exp $	*/
+/*	$NetBSD: uvm_amap.c,v 1.77.2.2 2007/03/24 14:56:17 yamt Exp $	*/
 
 /*
  *
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.77.2.1 2007/02/27 16:55:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.77.2.2 2007/03/24 14:56:17 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -64,7 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.77.2.1 2007/02/27 16:55:24 yamt Exp $
  * we are ok).
  */
 POOL_INIT(uvm_amap_pool, sizeof(struct vm_amap), 0, 0, 0, "amappl",
-    &pool_allocator_nointr);
+    &pool_allocator_nointr, IPL_NONE);
 
 static struct simplelock amap_list_lock = SIMPLELOCK_INITIALIZER;
 static LIST_HEAD(, vm_amap) amap_list;

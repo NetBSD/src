@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.166.2.1 2007/03/12 05:52:27 rmind Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.166.2.2 2007/03/24 14:55:09 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.166.2.1 2007/03/12 05:52:27 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.166.2.2 2007/03/24 14:55:09 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ptrace.h"
@@ -177,10 +177,8 @@ const int linux_fstypes_cnt = sizeof(linux_fstypes) / sizeof(linux_fstypes[0]);
 # endif
 
 /* Local linux_misc.c functions: */
-# ifndef __amd64__
 static void bsd_to_linux_statfs __P((const struct statvfs *,
     struct linux_statfs *));
-# endif
 static void linux_to_bsd_mmap_args __P((struct sys_mmap_args *,
     const struct linux_sys_mmap_args *));
 static int linux_mmap __P((struct lwp *, struct linux_sys_mmap_args *,
@@ -312,7 +310,6 @@ linux_sys_brk(l, v, retval)
 	return 0;
 }
 
-# ifndef __amd64__
 /*
  * Convert NetBSD statvfs structure to Linux statfs structure.
  * Linux doesn't have f_flag, and we can't set f_frsize due
@@ -446,7 +443,6 @@ out:
 	STATVFSBUF_PUT(btmp);
 	return error;
 }
-# endif /* !__amd64__ */
 
 /*
  * uname(). Just copy the info from the various strings stored in the
@@ -466,11 +462,7 @@ linux_sys_uname(struct lwp *l, void *v, register_t *retval)
 	strncpy(luts.l_nodename, hostname, sizeof(luts.l_nodename));
 	strncpy(luts.l_release, linux_release, sizeof(luts.l_release));
 	strncpy(luts.l_version, linux_version, sizeof(luts.l_version));
-# ifdef LINUX_UNAME_ARCH
-	strncpy(luts.l_machine, LINUX_UNAME_ARCH, sizeof(luts.l_machine));
-# else
-	strncpy(luts.l_machine, machine, sizeof(luts.l_machine));
-# endif
+	strncpy(luts.l_machine, linux_machine, sizeof(luts.l_machine));
 	strncpy(luts.l_domainname, domainname, sizeof(luts.l_domainname));
 
 	return copyout(&luts, SCARG(uap, up), sizeof(luts));

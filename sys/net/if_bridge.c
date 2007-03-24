@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.47.2.2 2007/03/12 05:59:10 rmind Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.47.2.3 2007/03/24 14:56:08 yamt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.47.2.2 2007/03/12 05:59:10 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.47.2.3 2007/03/24 14:56:08 yamt Exp $");
 
 #include "opt_bridge_ipf.h"
 #include "opt_inet.h"
@@ -343,7 +343,7 @@ bridgeattach(int n)
 {
 
 	pool_init(&bridge_rtnode_pool, sizeof(struct bridge_rtnode),
-	    0, 0, 0, "brtpl", NULL);
+	    0, 0, 0, "brtpl", NULL, IPL_NET);
 
 	LIST_INIT(&bridge_list);
 	if_clone_attach(&bridge_cloner);

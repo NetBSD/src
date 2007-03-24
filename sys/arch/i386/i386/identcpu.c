@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.57.2.2 2007/03/12 05:48:22 rmind Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.57.2.3 2007/03/24 14:54:45 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,10 +37,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.57.2.2 2007/03/12 05:48:22 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.57.2.3 2007/03/24 14:54:45 yamt Exp $");
 
 #include "opt_cputype.h"
 #include "opt_enhanced_speedstep.h"
+#include "opt_intel_odcm.h"
 #include "opt_powernow_k7.h"
 #include "opt_powernow_k8.h"
 
@@ -54,8 +55,9 @@ __KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.57.2.2 2007/03/12 05:48:22 rmind Exp 
 #include <machine/pio.h>
 #include <machine/cpu.h>
 #include <x86/cacheinfo.h>
-#include <x86/include/cpuvar.h>
-#include <x86/include/powernow.h>
+#include <x86/cpuvar.h>
+#include <x86/cpu_msr.h>
+#include <x86/powernow.h>
 
 static const struct x86_cache_info
 intel_cpuid_cache_info[] = {
@@ -1446,8 +1448,7 @@ identifycpu(struct cpu_info *ci)
 	buf = malloc(MAXPATHLEN, M_TEMP, M_WAITOK);
 	if (ci->ci_cpuid_level == -1) {
 #ifdef DIAGNOSTIC
-		if (cpu < 0 || cpu >=
-		    sizeof(i386_nocpuid_cpus) / sizeof(i386_nocpuid_cpus[0]))
+		if (cpu < 0 || cpu >= __arraycount(i386_nocpuid_cpus))
 			panic("unknown cpu type %d", cpu);
 #endif
 		name = i386_nocpuid_cpus[cpu].cpu_name;
@@ -1458,7 +1459,7 @@ identifycpu(struct cpu_info *ci)
 		ci->ci_info = i386_nocpuid_cpus[cpu].cpu_info;
 		modifier = "";
 	} else {
-		xmax = sizeof (i386_cpuid_cpus) / sizeof (i386_cpuid_cpus[0]);
+		xmax = __arraycount(i386_cpuid_cpus);
 		modif = (ci->ci_signature >> 12) & 0x3;
 		family = CPUID2FAMILY(ci->ci_signature);
 		if (family < CPU_MINFAMILY)
@@ -1512,8 +1513,7 @@ identifycpu(struct cpu_info *ci)
 				}
 				if (family == CPU_MAXFAMILY &&
 				    ci->ci_brand_id <
-				    (sizeof(i386_intel_brand) /
-				     sizeof(i386_intel_brand[0])) &&
+				    __arraycount(i386_intel_brand) &&
 				    i386_intel_brand[ci->ci_brand_id])
 					name =
 					     i386_intel_brand[ci->ci_brand_id];
@@ -1769,7 +1769,7 @@ identifycpu(struct cpu_info *ci)
 #ifdef ENHANCED_SPEEDSTEP
 	if (cpu_feature2 & CPUID2_EST) {
 		if (rdmsr(MSR_MISC_ENABLE) & (1 << 16))
-			est_init(ci, CPUVENDOR_INTEL);
+			est_init(CPUVENDOR_INTEL);
 		else
 			aprint_normal("%s: Enhanced SpeedStep disabled by BIOS\n",
 			    cpuname);
@@ -1795,6 +1795,10 @@ identifycpu(struct cpu_info *ci)
 	}
 #endif /* POWERNOW_K7 || POWERNOW_K8 */
 
+#ifdef INTEL_ONDEMAND_CLOCKMOD
+	clockmod_init();
+#endif
 	x86_errata(ci, cpu_vendor);
 	x86_patch();
+
 }

@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.16.2.1 2007/03/12 05:52:15 rmind Exp $
+	$NetBSD: syscalls.master,v 1.16.2.2 2007/03/24 14:55:08 yamt Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -298,10 +298,10 @@
 #endif
 135	STD		{ int linux_sys_personality(int per); }
 136	UNIMPL		ustat
-137	STD		{ int linux_sys_statfs64(const char *path, \
-			    size_t sz, struct linux_statfs64 *sp); }
-138	STD		{ int linux_sys_fstatfs64(int fd, \
-			    size_t sz, struct linux_statfs64 *sp); }
+137	STD		{ int linux_sys_statfs(const char *path, \
+			    struct linux_statfs *sp); }
+138	STD		{ int linux_sys_fstatfs(int fd, \
+			    struct linux_statfs *sp); }
 139	UNIMPL		sysfs
 140	STD		{ int linux_sys_getpriority(int which, int who); }
 141	NOARGS		{ int sys_setpriority(int which, int who, int prio); }

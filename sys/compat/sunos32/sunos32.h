@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32.h,v 1.9 2005/12/11 12:20:23 christos Exp $	 */
+/*	$NetBSD: sunos32.h,v 1.9.26.1 2007/03/24 14:55:16 yamt Exp $	 */
 
 /*
  * Copyright (c) 2001 Matthew R. Green
@@ -47,10 +47,10 @@ typedef u_int32_t sunos32_time_tp;
 typedef u_int32_t sunos32_statfsp_t;
 
 /* ustat() */
-typedef u_int32_t sunos32_ustatp_t;
+typedef netbsd32_pointer_t sunos32_ustatp_t;
 
 /* uname() */
-typedef u_int32_t sunos32_utsnamep_t;
+typedef netbsd32_pointer_t sunos32_utsnamep_t;
 
 /*
  * general prototypes
@@ -68,7 +68,7 @@ __END_DECLS
 #define SUNOS32TO64(s32uap, uap, name) \
 	    SCARG(uap, name) = SCARG(s32uap, name)
 #define SUNOS32TOP(s32uap, uap, name, type) \
-	    SCARG(uap, name) = (type *)(u_long)(u_int)SCARG(s32uap, name)
+	    SCARG(uap, name) = SCARG_P32(s32uap, name)
 #define SUNOS32TOX(s32uap, uap, name, type) \
 	    SCARG(uap, name) = (type)SCARG(s32uap, name)
 #define SUNOS32TOX64(s32uap, uap, name, type) \

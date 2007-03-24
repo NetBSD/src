@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.2.8.1 2007/03/12 05:48:41 rmind Exp $
+# $NetBSD: GENERIC,v 1.2.8.2 2007/03/24 14:54:47 yamt Exp $
 #
 # GENERIC machine description file
 #
@@ -22,12 +22,12 @@ include		"arch/landisk/conf/std.landisk"
 
 options         INCLUDE_CONFIG_FILE     # embed config file in kernel binary
 
-#ident          "GENERIC-$Revision: 1.2.8.1 $"
+#ident          "GENERIC-$Revision: 1.2.8.2 $"
 
 maxusers	16		# estimated number of users
 
-makeoptions     COPTS="-O -m4-nofpu"
-options 	SYMTAB_SPACE=512000
+makeoptions	CPUFLAGS="-m4-nofpu"		# XXX: move to std.landisk?
+#makeoptions     COPTS="-Os -freorder-blocks"	# -O2 is too -falign-* zealous
 
 # CPU-related options.
 options 	PCLOCK=33333333			# 33.33MHz
@@ -281,7 +281,7 @@ usb*	at ohci?
 
 # USB Hubs
 uhub*	at usb?
-uhub*	at uhub? port ? configuration ? interface ?
+uhub*	at uhub? port ?
 
 # USB HID device
 uhidev*	at uhub? port ? configuration ? interface ?

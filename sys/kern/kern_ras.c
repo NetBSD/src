@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ras.c,v 1.16.2.1 2007/03/12 05:58:36 rmind Exp $	*/
+/*	$NetBSD: kern_ras.c,v 1.16.2.2 2007/03/24 14:56:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ras.c,v 1.16.2.1 2007/03/12 05:58:36 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ras.c,v 1.16.2.2 2007/03/24 14:56:03 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/lock.h>
@@ -52,7 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_ras.c,v 1.16.2.1 2007/03/12 05:58:36 rmind Exp 
 #include <uvm/uvm_extern.h>
 
 POOL_INIT(ras_pool, sizeof(struct ras), 0, 0, 0, "raspl",
-    &pool_allocator_nointr);
+    &pool_allocator_nointr, IPL_NONE);
 
 #define MAX_RAS_PER_PROC	16
 
@@ -182,7 +182,9 @@ ras_purgeall(struct proc *p)
                 DPRINTF(("RAS %p-%p, hits %d\n", rp->ras_startaddr,
                     rp->ras_endaddr, rp->ras_hits));
 		LIST_REMOVE(rp, ras_list);
+		mutex_exit(&p->p_rasmutex);
 		pool_put(&ras_pool, rp);
+		mutex_enter(&p->p_rasmutex);
 	}
 	mutex_exit(&p->p_rasmutex);
 
@@ -214,10 +216,13 @@ ras_install(struct proc *p, void *addr, size_t len)
 again:
 	mutex_enter(&p->p_rasmutex);
 	LIST_FOREACH(rp, &p->p_raslist, ras_list) {
-		if (++nras >= ras_per_proc ||
-		    (addr < rp->ras_endaddr && endaddr > rp->ras_startaddr)) {
+		if (++nras >= ras_per_proc) {
 			mutex_exit(&p->p_rasmutex);
 			return (EINVAL);
+		}
+		if (addr < rp->ras_endaddr && endaddr > rp->ras_startaddr) {
+			mutex_exit(&p->p_rasmutex);
+			return (EEXIST);
 		}
 	}
 	if (newrp == NULL) {

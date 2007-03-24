@@ -1,4 +1,4 @@
-/*	$NetBSD: pf_table.c,v 1.10.2.1 2007/03/12 05:58:09 rmind Exp $	*/
+/*	$NetBSD: pf_table.c,v 1.10.2.2 2007/03/24 14:55:55 yamt Exp $	*/
 /*	$OpenBSD: pf_table.c,v 1.62 2004/12/07 18:02:04 mcbride Exp $	*/
 
 /*
@@ -195,12 +195,21 @@ int			 pfr_ktable_cnt;
 void
 pfr_initialize(void)
 {
+#ifdef __NetBSD__
+	pool_init(&pfr_ktable_pl, sizeof(struct pfr_ktable), 0, 0, 0,
+	    "pfrktable", &pool_allocator_oldnointr, IPL_NONE);
+	pool_init(&pfr_kentry_pl, sizeof(struct pfr_kentry), 0, 0, 0,
+	    "pfrkentry", &pool_allocator_oldnointr, IPL_NONE);
+	pool_init(&pfr_kentry_pl2, sizeof(struct pfr_kentry), 0, 0, 0,
+	    "pfrkentry2", NULL, IPL_SOFTNET);
+#else
 	pool_init(&pfr_ktable_pl, sizeof(struct pfr_ktable), 0, 0, 0,
 	    "pfrktable", &pool_allocator_oldnointr);
 	pool_init(&pfr_kentry_pl, sizeof(struct pfr_kentry), 0, 0, 0,
 	    "pfrkentry", &pool_allocator_oldnointr);
 	pool_init(&pfr_kentry_pl2, sizeof(struct pfr_kentry), 0, 0, 0,
 	    "pfrkentry2", NULL);
+#endif
 
 	pfr_sin.sin_len = sizeof(pfr_sin);
 	pfr_sin.sin_family = AF_INET;

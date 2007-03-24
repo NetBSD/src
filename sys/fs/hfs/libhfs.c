@@ -1,11 +1,11 @@
-/*	$NetBSD: libhfs.c,v 1.3.4.2 2007/03/12 06:14:55 rmind Exp $	*/
+/*	$NetBSD: libhfs.c,v 1.3.4.3 2007/03/24 14:55:56 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Yevgeny Binder and Dieter Baron.
+ * by Yevgeny Binder, Dieter Baron, and Pelle Johansson.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -146,13 +146,13 @@ hfslib_init_cbargs(hfs_callback_args* ptr)
 int
 hfslib_open_volume(
 	const char* in_device,
-	uint64_t in_offset, /* given in BYTES, not BLOCKS */
 	int in_readonly,
 	hfs_volume* out_vol,
 	hfs_callback_args* cbargs)
 {
 	hfs_catalog_key_t		rootkey;
 	hfs_thread_record_t	rootthread;
+	hfs_hfs_master_directory_block_t mdb;
 	uint16_t	node_rec_sizes[1];
 	void*		node_recs[1];
 	void*		buffer;
@@ -166,20 +166,43 @@ hfslib_open_volume(
 		return 1;
 
 	out_vol->readonly = in_readonly;
-	
-	if(hfslib_openvoldevice(out_vol, in_device, in_offset, cbargs) != 0)
+	out_vol->offset = 0;
+
+	if(hfslib_openvoldevice(out_vol, in_device, cbargs) != 0)
 		HFS_LIBERR("could not open device");
 
 	/*
 	 *	Read the volume header.
 	 */
-	buffer = hfslib_malloc(sizeof(hfs_volume_header_t), cbargs);
+	buffer = hfslib_malloc(max(sizeof(hfs_volume_header_t),
+		sizeof(hfs_hfs_master_directory_block_t)), cbargs);
 	if(buffer==NULL)
 		HFS_LIBERR("could not allocate volume header");
-	
-	if(hfslib_readd(out_vol, buffer, sizeof(hfs_volume_header_t),
-		HFS_VOLUME_HEAD_RESERVE_SIZE, cbargs)!=0)
+	if(hfslib_readd(out_vol, buffer, max(sizeof(hfs_volume_header_t),
+			    sizeof(hfs_hfs_master_directory_block_t)),
+	       HFS_VOLUME_HEAD_RESERVE_SIZE, cbargs)!=0)
 		HFS_LIBERR("could not read volume header");
+
+	if (be16toh(*((uint16_t *)buffer)) == HFS_SIG_HFS) {
+		if (hfslib_read_master_directory_block(buffer, &mdb) == 0)
+			HFS_LIBERR("could not parse master directory block");
+		if (mdb.embedded_signature == HFS_SIG_HFSP)
+		{
+			/* XXX: is 512 always correct? */
+			out_vol->offset =
+			    mdb.first_block * 512
+			    + mdb.embedded_extent.start_block
+			    * (uint64_t)mdb.block_size;
+
+			if(hfslib_readd(out_vol, buffer,
+			       sizeof(hfs_volume_header_t),
+			       HFS_VOLUME_HEAD_RESERVE_SIZE, cbargs)!=0)
+				HFS_LIBERR("could not read volume header");
+		}
+		else
+			HFS_LIBERR("Plain HFS volumes not currently supported");
+	}
+
 	if(hfslib_read_volume_header(buffer, &(out_vol->vh))==0)
 		HFS_LIBERR("could not parse volume header");
 	
@@ -195,11 +218,6 @@ hfslib_open_volume(
 		
 		case HFS_SIG_HFSX:
 			out_vol->keycmp = NULL; /* will be set below */
-			break;
-			
-		case HFS_SIG_HFS:
-			HFS_LIBERR("HFS volumes and HFS+ volumes with HFS wrappers are"
-						"not currently supported");
 			break;
 			
 		default:
@@ -1260,6 +1278,84 @@ hfslib_read_volume_header(void* in_bytes, hfs_volume_header_t* out_header)
 }
 
 /*
+ *      hfsplib_read_master_directory_block()
+ *      
+ *      Reads in_bytes, formats the data appropriately, and places the result
+ *      in out_header, which is assumed to be previously allocated. Returns numb
+er
+ *      of bytes read, 0 if failed.
+ */
+
+size_t
+hfslib_read_master_directory_block(void* in_bytes,
+    hfs_hfs_master_directory_block_t* out_mdr)
+{
+        void*   ptr;
+        int     i;
+        
+        if(in_bytes==NULL || out_mdr==NULL)
+                return 0;
+        
+        ptr = in_bytes;
+        
+        out_mdr->signature = be16tohp(&ptr);
+
+        out_mdr->date_created = be32tohp(&ptr);
+        out_mdr->date_modified = be32tohp(&ptr);
+
+        out_mdr->attributes = be16tohp(&ptr);
+        out_mdr->root_file_count = be16tohp(&ptr);
+        out_mdr->volume_bitmap = be16tohp(&ptr);
+
+        out_mdr->next_alloc_block = be16tohp(&ptr);
+        out_mdr->total_blocks = be16tohp(&ptr);
+        out_mdr->block_size = be32tohp(&ptr);
+
+        out_mdr->clump_size = be32tohp(&ptr);
+        out_mdr->first_block = be16tohp(&ptr);
+        out_mdr->next_cnid = be32tohp(&ptr);
+        out_mdr->free_blocks = be16tohp(&ptr);
+
+        memcpy(out_mdr->volume_name, ptr, 28);
+        ptr = (char *)ptr + 28;
+
+        out_mdr->date_backedup = be32tohp(&ptr);
+        out_mdr->backup_seqnum = be16tohp(&ptr);
+
+        out_mdr->write_count = be32tohp(&ptr);
+
+        out_mdr->extents_clump_size = be32tohp(&ptr);
+        out_mdr->catalog_clump_size = be32tohp(&ptr);
+
+        out_mdr->root_folder_count = be16tohp(&ptr);
+        out_mdr->file_count = be32tohp(&ptr);
+        out_mdr->folder_count = be32tohp(&ptr);
+
+        for(i=0;i<8;i++)
+                out_mdr->finder_info[i] = be32tohp(&ptr);
+
+        out_mdr->embedded_signature = be16tohp(&ptr);
+        out_mdr->embedded_extent.start_block = be16tohp(&ptr);
+        out_mdr->embedded_extent.block_count = be16tohp(&ptr);
+        
+        out_mdr->extents_size = be32tohp(&ptr);
+        for (i = 0; i < 3; i++)
+        {
+                out_mdr->extents_extents[i].start_block = be16tohp(&ptr);
+                out_mdr->extents_extents[i].block_count = be16tohp(&ptr);
+        }
+
+        out_mdr->catalog_size = be32tohp(&ptr);
+        for (i = 0; i < 3; i++)
+        {
+                out_mdr->catalog_extents[i].start_block = be16tohp(&ptr);
+                out_mdr->catalog_extents[i].block_count = be16tohp(&ptr);
+        }
+
+        return ((uint8_t*)ptr - (uint8_t*)in_bytes);
+}
+
+/*
  *	hfslib_reada_node()
  *	
  *	Given the pointer to and size of a buffer containing the entire, raw
@@ -2213,11 +2309,10 @@ int
 hfslib_openvoldevice(
 	hfs_volume* in_vol,
 	const char* in_device,
-	uint64_t in_offset,
 	hfs_callback_args* cbargs)
 {
 	if(hfs_gcb.openvol!=NULL && in_device!=NULL)
-		return hfs_gcb.openvol(in_vol, in_device, in_offset, cbargs);
+		return hfs_gcb.openvol(in_vol, in_device, cbargs);
 
 	return 1;
 }

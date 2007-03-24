@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_disks.c,v 1.64 2006/11/16 01:33:23 christos Exp $	*/
+/*	$NetBSD: rf_disks.c,v 1.64.4.1 2007/03/24 14:55:45 yamt Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -67,7 +67,7 @@
  ***************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_disks.c,v 1.64 2006/11/16 01:33:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_disks.c,v 1.64.4.1 2007/03/24 14:55:45 yamt Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -664,7 +664,7 @@ static int rf_check_label_vitals(RF_Raid_t *raidPtr, int row, int column,
 		fatal_error = 1;
 	}
 	if (mod_counter != ci_label->mod_counter) {
-		printf("%s has a different modfication count: %d %d\n",
+		printf("%s has a different modification count: %d %d\n",
 		       dev_name, mod_counter, ci_label->mod_counter);
 	}
 

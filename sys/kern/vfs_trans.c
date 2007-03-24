@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_trans.c,v 1.5 2007/02/16 17:24:00 hannken Exp $	*/
+/*	$NetBSD: vfs_trans.c,v 1.5.2.1 2007/03/24 14:56:07 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.5 2007/02/16 17:24:00 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.5.2.1 2007/03/24 14:56:07 yamt Exp $");
 
 /*
  * File system transaction operations.
@@ -74,9 +74,10 @@ struct fstrans_mount_info {
 static specificdata_key_t lwp_data_key;
 static specificdata_key_t mount_data_key;
 static kmutex_t vfs_suspend_lock;	/* Serialize suspensions. */
+static kmutex_t fstrans_init_lock;
 
 POOL_INIT(fstrans_pl, sizeof(struct fstrans_lwp_info), 0, 0, 0,
-    "fstrans", NULL);
+    "fstrans", NULL, IPL_NONE);
 
 static void fstrans_lwp_dtor(void *);
 static void fstrans_mount_dtor(void *);
@@ -94,7 +95,9 @@ fstrans_init(void)
 	KASSERT(error == 0);
 	error = mount_specific_key_create(&mount_data_key, fstrans_mount_dtor);
 	KASSERT(error == 0);
+
 	mutex_init(&vfs_suspend_lock, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&fstrans_init_lock, MUTEX_DEFAULT, IPL_NONE);
 }
 
 /*
@@ -133,13 +136,12 @@ fstrans_mount_dtor(void *arg)
 static struct fstrans_mount_info *
 fstrans_mount_init(struct mount *mp)
 {
-	static struct lock lock = LOCK_INITIALIZER(PUSER, "ftminfo", 0, 0);
 	struct fstrans_mount_info *new;
 
-	lockmgr(&lock, LK_EXCLUSIVE, NULL);
+	mutex_enter(&fstrans_init_lock);
 
 	if ((new = mount_getspecific(mp, mount_data_key)) != NULL) {
-		lockmgr(&lock, LK_RELEASE, NULL);
+		mutex_exit(&fstrans_init_lock);
 		return new;
 	}
 
@@ -149,8 +151,7 @@ fstrans_mount_init(struct mount *mp)
 	lockinit(&new->fmi_shared_lock, PVFS, "suspfs", 0, 0);
 
 	mount_setspecific(mp, mount_data_key, new);
-
-	lockmgr(&lock, LK_RELEASE, NULL);
+	mutex_exit(&fstrans_init_lock);
 
 	return new;
 }

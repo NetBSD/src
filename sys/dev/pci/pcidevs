@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.868.2.1 2007/03/12 05:55:24 rmind Exp $
+$NetBSD: pcidevs,v 1.868.2.2 2007/03/24 14:55:32 yamt Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -829,6 +829,7 @@ product ADDTRON RHINEII	0x1320	Rhine II 10/100 Ethernet
 product ADMTEK AL981	0x0981	AL981 (Comet) 10/100 Ethernet
 product ADMTEK AN983	0x0985	AN983 (Centaur-P) 10/100 Ethernet
 product ADMTEK AN985	0x1985	AN985 (Centaur-C) 10/100 Ethernet
+product ADMTEK ADM5120	0x5120	Infineon ADM5120 PCI host bridge
 product ADMTEK ADM8211	0x8201	ADM8211 11Mbps 802.11b WLAN
 product ADMTEK ADM9511	0x9511	ADM9511 (Centaur-II) 10/100 Ethernet
 product ADMTEK ADM9513	0x9513	ADM9513 (Centaur-II) 10/100 Ethernet

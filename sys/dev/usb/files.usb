@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.73 2007/01/05 17:16:22 jmcneill Exp $
+#	$NetBSD: files.usb,v 1.73.2.1 2007/03/24 14:55:47 yamt Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -8,6 +8,8 @@ defflag	USBVERBOSE
 
 define	usbdevif { [port = -1], [configuration = -1], [interface = -1],
 		   [vendor = -1], [product = -1], [release = -1] }
+define	usbifif { [port = -1], [configuration = -1], [interface = -1],
+		  [vendor = -1], [product = -1], [release = -1] }
 
 device	usb: usbdevif
 attach	usb at usbus
@@ -19,7 +21,7 @@ file	dev/usb/usb_subr.c		usb
 file	dev/usb/usb_quirks.c		usb
 
 # Hub driver
-device	uhub: usbdevif
+device	uhub: usbdevif, usbifif
 attach	uhub at usbdevif
 file	dev/usb/uhub.c			usb
 
@@ -32,12 +34,12 @@ file	dev/usb/ezload.c		ezload
 
 # Audio devices
 device	uaudio: audiobus, auconv, mulaw, aurateconv
-attach	uaudio at usbdevif
+attach	uaudio at usbifif
 file	dev/usb/uaudio.c		uaudio
 
 # MIDI devices
 device	umidi: midibus
-attach	umidi at usbdevif
+attach	umidi at usbifif
 file	dev/usb/umidi.c			umidi
 file	dev/usb/umidi_quirks.c		umidi
 
@@ -64,7 +66,7 @@ file	dev/usb/hid.c			hid
 
 # HID root device for multiple report IDs
 device	uhidev: hid, uhidbus
-attach	uhidev at usbdevif
+attach	uhidev at usbifif
 file	dev/usb/uhidev.c		uhidev
 
 # Generic HID devices
@@ -96,13 +98,13 @@ file	dev/usb/ucycom.c		ucycom			needs-flag
 
 # Printers
 device	ulpt
-attach	ulpt at usbdevif
+attach	ulpt at usbifif
 file	dev/usb/ulpt.c			ulpt			needs-flag
 
 
 # Mass storage
 device	umass: scsi, atapi, ata_hl
-attach	umass at usbdevif
+attach	umass at usbifif
 file	dev/usb/umass.c			umass
 file	dev/usb/umass_isdata.c		umass & wd
 file	dev/usb/umass_quirks.c		umass
@@ -111,7 +113,7 @@ file	dev/usb/umass_scsipi.c		umass & (scsibus | atapibus)
 
 # IrDA bridges
 device	uirda: irbus
-attach	uirda at usbdevif
+attach	uirda at usbifif
 file	dev/usb/uirda.c			uirda
 
 # SigmaTel IrDA bridge
@@ -161,7 +163,7 @@ file	dev/usb/if_aue.c		aue
 
 # CDC Ethernet
 device  cdce: arp, ether, ifnet
-attach  cdce at usbdevif
+attach  cdce at usbifif
 file    dev/usb/if_cdce.c                cdce
 
 # CATC USB-EL1201A
@@ -200,7 +202,7 @@ file	dev/usb/if_udav.c		udav
 define	umodem_common
 file	dev/usb/umodem_common.c		umodem_common
 device	umodem: ucombus, umodem_common
-attach	umodem at usbdevif
+attach	umodem at usbifif
 file	dev/usb/umodem.c		umodem
 
 # FTDI serial driver
@@ -235,7 +237,7 @@ file    dev/usb/uipaq.c			uipaq
 
 # Kyocera AIR-EDGE PHONE
 device	ukyopon: ucombus, umodem_common
-attach	ukyopon at usbdevif
+attach	ukyopon at usbifif
 file	dev/usb/ukyopon.c		ukyopon
 
 

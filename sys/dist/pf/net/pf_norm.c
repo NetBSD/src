@@ -1,4 +1,4 @@
-/*	$NetBSD: pf_norm.c,v 1.15 2006/11/16 01:33:35 christos Exp $	*/
+/*	$NetBSD: pf_norm.c,v 1.15.4.1 2007/03/24 14:55:55 yamt Exp $	*/
 /*	$OpenBSD: pf_norm.c,v 1.97 2004/09/21 16:59:12 aaron Exp $ */
 
 /*
@@ -141,6 +141,18 @@ int			 pf_nfrents, pf_ncache;
 void
 pf_normalize_init(void)
 {
+#ifdef __NetBSD__
+	pool_init(&pf_frent_pl, sizeof(struct pf_frent), 0, 0, 0, "pffrent",
+	    NULL, IPL_SOFTNET);
+	pool_init(&pf_frag_pl, sizeof(struct pf_fragment), 0, 0, 0, "pffrag",
+	    NULL, IPL_SOFTNET);
+	pool_init(&pf_cache_pl, sizeof(struct pf_fragment), 0, 0, 0,
+	    "pffrcache", NULL, IPL_SOFTNET);
+	pool_init(&pf_cent_pl, sizeof(struct pf_frcache), 0, 0, 0, "pffrcent",
+	    NULL, IPL_SOFTNET);
+	pool_init(&pf_state_scrub_pl, sizeof(struct pf_state_scrub), 0, 0, 0,
+	    "pfstscr", NULL, IPL_SOFTNET);
+#else
 	pool_init(&pf_frent_pl, sizeof(struct pf_frent), 0, 0, 0, "pffrent",
 	    NULL);
 	pool_init(&pf_frag_pl, sizeof(struct pf_fragment), 0, 0, 0, "pffrag",
@@ -151,6 +163,7 @@ pf_normalize_init(void)
 	    NULL);
 	pool_init(&pf_state_scrub_pl, sizeof(struct pf_state_scrub), 0, 0, 0,
 	    "pfstscr", NULL);
+#endif
 
 	pool_sethiwat(&pf_frag_pl, PFFRAG_FRAG_HIWAT);
 	pool_sethardlimit(&pf_frent_pl, PFFRAG_FRENT_HIWAT, NULL, 0);

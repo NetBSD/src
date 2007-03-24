@@ -1,4 +1,4 @@
-#	$NetBSD: TWINTAIL,v 1.18 2006/12/18 15:31:30 nonaka Exp $
+#	$NetBSD: TWINTAIL,v 1.18.2.1 2007/03/24 14:54:37 yamt Exp $
 #
 #	TWINTAIL -- Genetec corp. G4255EB-X002 Evaluation Board Kernel
 #
@@ -204,7 +204,7 @@ opio0 	at obio?  intr 2
 
 # USB Hubs
 # uhub*  at usb?
-# uhub*  at uhub? port ? configuration ? interface ?
+# uhub*  at uhub? port ?
 
 # USB HID device
 # uhidev*	at uhub? port ? configuration ? interface ?

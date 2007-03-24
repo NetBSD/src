@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.63 2006/10/02 03:28:29 chs Exp $
+#	$NetBSD: INSTALL,v 1.63.4.1 2007/03/24 14:54:35 yamt Exp $
 #
 #	CATSINST -- CHALTECH CATS Install kernel
 #
@@ -298,7 +298,7 @@ ukphy*	at mii? phy ?			# generic unknown PHYs
 
 # USB Hubs
 #uhub*	at usb?
-#uhub*	at uhub? port ? configuration ? interface ?
+#uhub*	at uhub? port ?
 
 # USB HID device
 #uhidev*	at uhub? port ? configuration ? interface ?

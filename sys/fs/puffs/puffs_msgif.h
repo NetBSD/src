@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.h,v 1.19 2007/01/26 22:59:49 pooka Exp $	*/
+/*	$NetBSD: puffs_msgif.h,v 1.19.2.1 2007/03/24 14:55:57 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -47,6 +47,7 @@
 
 #define PUFFSOP_VFS	1
 #define PUFFSOP_VN	2
+#define PUFFSOP_CACHE	3
 #define PUFFSOPFLAG_FAF	0x10	/* fire-and-forget */
 
 #define PUFFSOP_OPCMASK		0x03
@@ -244,11 +245,13 @@ struct puffs_sizeop {
  * 2) page cache for one entire node
  */
 
-/* XXX: only namecache DIR and ALL are currently implemented */
+/* XXX: needs restructuring */
 struct puffs_flush {
 	void		*pf_cookie;
 
 	int		pf_op;
+	off_t		pf_start;
+	off_t		pf_end;
 };
 #define PUFFS_INVAL_NAMECACHE_NODE		0
 #define PUFFS_INVAL_NAMECACHE_DIR		1
@@ -319,9 +322,9 @@ struct puffs_kcn {
 #define PUFFSLOOKUP_RENAME	3	/* setup for file renaming */
 #define PUFFSLOOKUP_OPMASK	3	/* mask for operation */
 
-#define PUFFSLOOKUP_FOLLOW	0x04	/* follow final symlink */
-#define PUFFSLOOKUP_NOFOLLOW	0x08	/* don't follow final symlink */
-#define PUFFSLOOKUP_OPTIONS	0x0c
+#define PUFFSLOOKUP_FOLLOW	0x00004	/* follow final symlink */
+#define PUFFSLOOKUP_NOFOLLOW	0x00008	/* don't follow final symlink */
+#define PUFFSLOOKUP_ISLASTCN	0x08000 /* is last component of lookup */
 
 /*
  * Next come the individual requests.  They are all subclassed from
@@ -602,14 +605,32 @@ struct puffs_vnreq_mmap {
 	pid_t			pvnr_pid;		/* OUT	*/
 };
 
+
+/*
+ * For cache reports.  Everything is always out-out-out, no replies
+ */
+
+struct puffs_cacherun {
+	off_t			pcache_runstart;
+	off_t			pcache_runend;
+};
+
+/* cache info.  old used for write now */
+struct puffs_cacheinfo {
+	struct puffs_req	pcache_pr;
+
+	int			pcache_type;
+	size_t			pcache_nruns;		
+	struct puffs_cacherun	pcache_runs[0];
+};
+#define PCACHE_TYPE_READ	0
+#define PCACHE_TYPE_WRITE	1
+
 /* notyet */
 #if 0
 struct puffs_vnreq_kqfilter { };
 struct puffs_vnreq_islocked { };
-struct puffs_vnreq_lease { };
 #endif
-struct puffs_vnreq_getpages { };
-struct puffs_vnreq_putpages { };
 struct puffs_vnreq_getextattr { };
 struct puffs_vnreq_setextattr { };
 struct puffs_vnreq_listextattr { };
