@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.13 2007/03/05 23:56:44 ad Exp $	*/
+/*	$NetBSD: sem.c,v 1.14 2007/03/24 18:52:00 ad Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2006, 2007 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: sem.c,v 1.13 2007/03/05 23:56:44 ad Exp $");
+__RCSID("$NetBSD: sem.c,v 1.14 2007/03/24 18:52:00 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/ksem.h>
@@ -334,7 +334,7 @@ sem_wait(sem_t *sem)
 		self->pt_sleeponq = 1;
 		self->pt_sleepobj = queue,
 		(void)pthread__park(self, &(*sem)->usem_interlock,
-		    queue, NULL, 1);
+		    queue, NULL, 1, queue);
 	}
 	(*sem)->usem_count--;
 	pthread_spinunlock(self, &(*sem)->usem_interlock);

@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.40 2007/03/20 23:33:10 ad Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.41 2007/03/24 18:52:00 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007 The NetBSD Foundation, Inc.
@@ -118,12 +118,6 @@ struct	__pthread_st {
 	void*		pt_specific[PTHREAD_KEYS_MAX];
 };
 
-struct pthread_lock_ops {
-	void	(*plo_init)(__cpu_simple_lock_t *);
-	int	(*plo_try)(__cpu_simple_lock_t *);
-	void	(*plo_unlock)(__cpu_simple_lock_t *);
-};
-
 /* Thread states */
 #define PT_STATE_RUNNING	1
 #define PT_STATE_ZOMBIE		5
@@ -186,7 +180,7 @@ void	pthread__unpark(pthread_t self, pthread_spin_t *lock,
 int	pthread__park(pthread_t self, pthread_spin_t *lock,
 		      struct pthread_queue_t *threadq,
 		      const struct timespec *abs_timeout,
-		      int cancelpt);
+		      int cancelpt, const void *hint);
 
 int	pthread__stackalloc(pthread_t *t);
 void	pthread__initmain(pthread_t *t);
@@ -200,9 +194,9 @@ void	pthread_spinunlock(pthread_t thread, pthread_spin_t *lock);
 
 extern const struct pthread_lock_ops *pthread__lock_ops;
 
-#define	pthread__simple_lock_init(alp)	(*pthread__lock_ops->plo_init)(alp)
-#define	pthread__simple_lock_try(alp)	(*pthread__lock_ops->plo_try)(alp)
-#define	pthread__simple_unlock(alp)	(*pthread__lock_ops->plo_unlock)(alp)
+void	pthread__simple_lock_init(__cpu_simple_lock_t *);
+int	pthread__simple_lock_try(__cpu_simple_lock_t *);
+void	pthread__simple_unlock(__cpu_simple_lock_t *);
 
 #ifndef _getcontext_u
 int	_getcontext_u(ucontext_t *);
