@@ -37,9 +37,9 @@
 __FBSDID("$FreeBSD: src/sys/dev/drm/tdfx_drv.c,v 1.10 2005/12/20 22:44:36 jhb Exp $");
 */
 
-#include "tdfx_drv.h"
-#include "drmP.h"
-#include "drm_pciids.h"
+#include <dev/drm/drmP.h>
+#include <dev/pci/drm/drm_pciids.h>
+#include <dev/pci/drm/tdfx_drv.h>
 
 /* drv_PCI_IDs comes from drm_pciids.h, generated from drm_pciids.txt. */
 static drm_pci_id_list_t tdfx_pciidlist[] = {
