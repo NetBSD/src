@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.45.2.4 2007/03/13 01:55:47 rmind Exp $	*/
+/*	$NetBSD: locore.S,v 1.45.2.5 2007/03/24 18:30:36 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004 The NetBSD Foundation, Inc.
@@ -830,8 +830,9 @@ switch_restored:
 	movl	$0,CPUVAR(RESCHED)
 
 	/* Restore cr0 (including FPU state). */
-	cli
+	movl	$IPL_IPI,CPUVAR(ILEVEL)
 	movl	PCB_CR0(%ebx),%ecx
+	movl	%cr0,%edx
 #ifdef MULTIPROCESSOR
 	/*
 	 * If our floating point registers are on a different CPU,
@@ -839,14 +840,21 @@ switch_restored:
 	 */
 	movl	PCB_FPCPU(%ebx),%eax
 	cmpl	CPUVAR(SELF),%eax
-	jz	1f
-	orl	$CR0_TS,%ecx
-1:
+	movl	$0,%eax
+	setne	%al		/* CR0_TS is bit 0 */
+	orl	%eax,%ecx
 #endif
+	/* Reloading CR0 is very expensive - avoid if possible. */
+	cmpl	%edx,%ecx
+	je	2f
 	movl	%ecx,%cr0
-
-	/* Interrupts are okay again. */
-	sti
+2:
+	/*
+	 * Interrupts are okay again.  Any pending IPIs will be
+	 * deferred until cpu_switchto() returns, when the priority
+	 * level will be dropped.
+	 */
+	movl    $IPL_SCHED,CPUVAR(ILEVEL)
 
 	/*
 	 *  Check for restartable atomic sequences (RAS)
