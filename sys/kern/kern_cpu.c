@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_cpu.c,v 1.1.2.1 2007/03/24 11:36:02 yamt Exp $	*/
+/*	$NetBSD: kern_cpu.c,v 1.1.2.2 2007/03/24 12:07:23 yamt Exp $	*/
 
 /*-
  * Copyright (c)2007 YAMAMOTO Takashi,
@@ -28,9 +28,10 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.1.2.1 2007/03/24 11:36:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.1.2.2 2007/03/24 12:07:23 yamt Exp $");
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/idle.h>
 #include <sys/sched.h>
 
@@ -48,6 +49,8 @@ mi_cpu_attach(struct cpu_info *ci)
 		/* XXX revert sched_cpuattach */
 		return error;
 	}
+
+	ncpu++;
 
 	return 0;
 }
