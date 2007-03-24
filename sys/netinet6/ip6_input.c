@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.100 2007/03/24 00:27:58 liamjfoy Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.101 2007/03/24 00:42:14 liamjfoy Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.100 2007/03/24 00:27:58 liamjfoy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.101 2007/03/24 00:42:14 liamjfoy Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -1611,7 +1611,7 @@ ip6_delaux(m)
  * we could reduce this value, call ip6flow_reap();
  */
 static int
-sysctl_net_inet_ip6_maxflows(SYSCTLFN_ARGS)
+sysctl_net_inet6_ip6_maxflows(SYSCTLFN_ARGS)
 {  
         int s;
   
@@ -1944,7 +1944,7 @@ SYSCTL_SETUP(sysctl_net_inet6_ip6_setup, "sysctl net.inet6.ip6 subtree setup")
 			CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 			CTLTYPE_INT, "maxflows",
 			SYSCTL_DESCR("Number of flows for fast forwarding (IPv6)"),
-			sysctl_net_inet_ip6_maxflows, 0, &ip6_maxflows, 0,
+			sysctl_net_inet6_ip6_maxflows, 0, &ip6_maxflows, 0,
 			CTL_NET, PF_INET6, IPPROTO_IPV6,
 			CTL_CREATE, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
