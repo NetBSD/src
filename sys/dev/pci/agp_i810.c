@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_i810.c,v 1.39 2007/03/23 16:39:07 drochner Exp $	*/
+/*	$NetBSD: agp_i810.c,v 1.40 2007/03/24 23:02:24 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.39 2007/03/23 16:39:07 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.40 2007/03/24 23:02:24 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -410,11 +410,13 @@ agp_i810_attach(struct device *parent, struct device *self, void *aux)
 		printf("%s: WARNING: unable to establish PCI power hook\n",
 		    sc->as_dev.dv_xname);
 
+#if 0
 	/*      
 	 * another device (drm) may need access to this region
 	 * we do not need it anymore
 	 */     
 	bus_space_unmap(isc->bst, isc->bsh, mmadrsize);
+#endif
 
 	return 0;
 }
