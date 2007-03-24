@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.67 2007/03/14 23:33:42 ad Exp $	*/
+/*	$NetBSD: pthread.c,v 1.68 2007/03/24 18:51:59 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.67 2007/03/14 23:33:42 ad Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.68 2007/03/24 18:51:59 ad Exp $");
 
 #include <err.h>
 #include <errno.h>
@@ -964,7 +964,8 @@ pthread__errorfunc(const char *file, int line, const char *function,
 int
 pthread__park(pthread_t self, pthread_spin_t *lock,
 	      struct pthread_queue_t *queue,
-	      const struct timespec *abstime, int cancelpt)
+	      const struct timespec *abstime, int cancelpt,
+	      const void *hint)
 {
 	int rv;
 
@@ -978,7 +979,7 @@ pthread__park(pthread_t self, pthread_spin_t *lock,
 	rv = 0;
 	do {
 		pthread_spinunlock(self, lock);
-		if (_lwp_park(abstime, NULL, queue) != 0) {
+		if (_lwp_park(abstime, NULL, hint) != 0) {
 			switch (rv = errno) {
 			case EINTR:
 			case EALREADY:
