@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_machdep.c,v 1.25.2.1 2007/03/12 05:50:50 rmind Exp $	 */
+/*	$NetBSD: svr4_32_machdep.c,v 1.25.2.2 2007/03/24 14:55:02 yamt Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_machdep.c,v 1.25.2.1 2007/03/12 05:50:50 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_machdep.c,v 1.25.2.2 2007/03/24 14:55:02 yamt Exp $");
 
 #ifndef _LKM
 #include "opt_ddb.h"
@@ -338,7 +338,7 @@ svr4_32_getsiginfo(union svr4_32_siginfo *si, int sig, u_long code,
 {
 	si->si_signo = native_to_svr4_signo[sig];
 	si->si_errno = 0;
-	si->si_addr  = (netbsd32_caddr_t)(u_long)addr;
+	NETBSD32PTR32(si->si_addr, addr);
 	/*
 	 * we can do this direct map as they are the same as all sparc
 	 * architectures.
@@ -507,8 +507,8 @@ svr4_32_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 
 	/* Build stack frame for signal trampoline. */
 	frame.sf_signum = frame.sf_si.si_signo;
-	frame.sf_sip = (netbsd32_caddr_t)(u_long)&fp->sf_si;
-	frame.sf_ucp = (netbsd32_caddr_t)(u_long)&fp->sf_uc;
+	NETBSD32PTR32(frame.sf_sip, &fp->sf_si);
+	NETBSD32PTR32(frame.sf_ucp, &fp->sf_uc);
 	frame.sf_handler = catcher;
 
 	DPRINTF(("svr4_32_sendsig signum=%d si = %p uc = %p handler = %p\n",

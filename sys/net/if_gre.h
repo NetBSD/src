@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.h,v 1.20 2007/01/26 03:01:32 dyoung Exp $ */
+/*	$NetBSD: if_gre.h,v 1.20.2.1 2007/03/24 14:56:08 yamt Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -163,8 +163,7 @@ LIST_HEAD(gre_softc_head, gre_softc);
 extern struct gre_softc_head gre_softc_list;
 
 u_int16_t gre_in_cksum(u_short *, u_int);
-int gre_input3(struct gre_softc *, struct mbuf *, int, u_char,
-    const struct gre_h *);
+int gre_input3(struct gre_softc *, struct mbuf *, int, const struct gre_h *);
 #endif /* _KERNEL */
 
 #endif /* !_NET_IF_GRE_H_ */

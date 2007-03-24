@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.168.2.3 2007/03/23 20:16:55 ad Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.168.2.4 2007/03/24 14:56:06 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -82,7 +82,7 @@
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.168.2.3 2007/03/23 20:16:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.168.2.4 2007/03/24 14:56:06 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -182,7 +182,7 @@ struct simplelock bqueue_slock = SIMPLELOCK_INITIALIZER;
  * Buffer pool for I/O buffers.
  */
 static POOL_INIT(bufpool, sizeof(struct buf), 0, 0, 0, "bufpl",
-    &pool_allocator_nointr);
+    &pool_allocator_nointr, IPL_NONE);
 
 
 /* XXX - somewhat gross.. */
@@ -410,7 +410,7 @@ bufinit(void)
 		pa = (size <= PAGE_SIZE && use_std)
 			? &pool_allocator_nointr
 			: &bufmempool_allocator;
-		pool_init(pp, size, 0, 0, 0, name, pa);
+		pool_init(pp, size, 0, 0, 0, name, pa, IPL_NONE);
 		pool_setlowat(pp, 1);
 		pool_sethiwat(pp, 1);
 	}
@@ -1731,7 +1731,8 @@ vfs_bufstats(void)
 
 /* ------------------------------ */
 
-static POOL_INIT(bufiopool, sizeof(struct buf), 0, 0, 0, "biopl", NULL);
+static POOL_INIT(bufiopool, sizeof(struct buf), 0, 0, 0, "biopl", NULL,
+    IPL_BIO);
 
 static struct buf *
 getiobuf1(int prflags)

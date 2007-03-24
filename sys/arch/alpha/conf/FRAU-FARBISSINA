@@ -1,4 +1,4 @@
-# $NetBSD: FRAU-FARBISSINA,v 1.51 2006/09/27 21:42:04 manu Exp $
+# $NetBSD: FRAU-FARBISSINA,v 1.51.4.1 2007/03/24 14:54:31 yamt Exp $
 #
 # frau-farbissina.shagadelic.org -- thorpej's AlphaServer 1200 MP hacking
 # box
@@ -7,7 +7,7 @@ include	"arch/alpha/conf/std.alpha"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"FRAU-FARBISSINA-$Revision: 1.51 $"
+#ident 		"FRAU-FARBISSINA-$Revision: 1.51.4.1 $"
 
 maxusers 64
 
@@ -376,7 +376,7 @@ fd*	at	fdc? drive ?
 
 # USB Hubs
 #uhub*	at usb?
-#uhub*	at uhub? port ? configuration ? interface ?
+#uhub*	at uhub? port ?
 
 # USB HID device
 #uhidev*	at uhub? port ? configuration ? interface ?

@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_rq.c,v 1.27 2005/12/11 12:25:16 christos Exp $	*/
+/*	$NetBSD: smb_rq.c,v 1.27.26.1 2007/03/24 14:56:14 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_rq.c,v 1.27 2005/12/11 12:25:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_rq.c,v 1.27.26.1 2007/03/24 14:56:14 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,9 +59,9 @@ MODULE_DEPEND(netsmb, libmchain, 1, 1, 1);
 
 #ifdef __NetBSD__
 POOL_INIT(smbrq_pool, sizeof(struct smb_rq), 0, 0, 0, "smbrqpl",
-    &pool_allocator_nointr);
+    &pool_allocator_nointr, IPL_NONE);
 POOL_INIT(smbt2rq_pool, sizeof(struct smb_t2rq), 0, 0, 0, "smbt2pl",
-    &pool_allocator_nointr);
+    &pool_allocator_nointr, IPL_NONE);
 #endif
 
 static int  smb_rq_init(struct smb_rq *, struct smb_connobj *, u_char,
@@ -78,9 +78,9 @@ int
 smb_rqinit(void)
 {
 	pool_init(&smbrq_pool, sizeof(struct smb_rq), 0, 0, 0,
-		"smbrqpl", &pool_allocator_nointr);
+		"smbrqpl", &pool_allocator_nointr, IPL_NONE);
 	pool_init(&smbt2rq_pool, sizeof(struct smb_t2rq), 0, 0, 0,
-		"smbt2pl", &pool_allocator_nointr);
+		"smbt2pl", &pool_allocator_nointr, IPL_NONE);
 	return (0);
 }
 #endif

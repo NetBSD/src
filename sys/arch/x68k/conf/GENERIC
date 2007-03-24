@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.132 2006/11/11 18:47:12 jmmv Exp $
+# $NetBSD: GENERIC,v 1.132.4.1 2007/03/24 14:55:04 yamt Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/x68k/conf/std.x68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.132 $"
+#ident 		"GENERIC-$Revision: 1.132.4.1 $"
 
 maxusers	8
 
@@ -326,7 +326,7 @@ bmd*	at intio0 addr 0xecebf0		# Nereid
 
 # USB Hubs
 #uhub*	at usb?
-#uhub*	at uhub? port ? configuration ? interface ?
+#uhub*	at uhub? port ?
 
 # USB HID device
 #uhidev*	at uhub? port ? configuration ? interface ?

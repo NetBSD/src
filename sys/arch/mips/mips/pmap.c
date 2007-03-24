@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.169.2.2 2007/03/12 05:49:23 rmind Exp $	*/
+/*	$NetBSD: pmap.c,v 1.169.2.3 2007/03/24 14:54:54 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.169.2.2 2007/03/12 05:49:23 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.169.2.3 2007/03/24 14:54:54 yamt Exp $");
 
 /*
  *	Manages physical address maps.
@@ -357,9 +357,9 @@ pmap_bootstrap(void)
 	 * Initialize the pools.
 	 */
 	pool_init(&pmap_pmap_pool, sizeof(struct pmap), 0, 0, 0, "pmappl",
-	    &pool_allocator_nointr);
+	    &pool_allocator_nointr, IPL_NONE);
 	pool_init(&pmap_pv_pool, sizeof(struct pv_entry), 0, 0, 0, "pvpl",
-	    &pmap_pv_page_allocator);
+	    &pmap_pv_page_allocator, IPL_NONE);
 
 	/*
 	 * Initialize the kernel pmap.

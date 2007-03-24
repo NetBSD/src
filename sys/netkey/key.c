@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.151.2.2 2007/03/12 06:00:33 rmind Exp $	*/
+/*	$NetBSD: key.c,v 1.151.2.3 2007/03/24 14:56:13 yamt Exp $	*/
 /*	$KAME: key.c,v 1.310 2003/09/08 02:23:44 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.151.2.2 2007/03/12 06:00:33 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.151.2.3 2007/03/24 14:56:13 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -5225,7 +5225,7 @@ key_do_getnewspi(spirange, saidx)
 	}
 
 	if (xmin == xmax) {
-		if (key_checkspidup(saidx, xmin) != NULL) {
+		if (key_checkspidup(saidx, htonl(xmin)) != NULL) {
 			ipseclog((LOG_DEBUG, "key_do_getnewspi: SPI %u exists already.\n", xmin));
 			return 0;
 		}
@@ -5243,7 +5243,7 @@ key_do_getnewspi(spirange, saidx)
 			/* generate pseudo-random SPI value ranged. */
 			newspi = xmin + (key_random() % (xmax - xmin + 1));
 
-			if (key_checkspidup(saidx, newspi) == NULL)
+			if (key_checkspidup(saidx, htonl(newspi)) == NULL)
 				break;
 		}
 

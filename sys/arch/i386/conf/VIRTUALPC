@@ -1,4 +1,4 @@
-# $NetBSD: VIRTUALPC,v 1.51 2006/11/28 16:15:37 christos Exp $
+# $NetBSD: VIRTUALPC,v 1.51.4.1 2007/03/24 14:54:45 yamt Exp $
 #
 # VIRTUALPC machine description file --
 #
@@ -11,7 +11,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"VIRTUALPC-$Revision: 1.51 $"
+#ident 		"VIRTUALPC-$Revision: 1.51.4.1 $"
 
 maxusers	32		# estimated number of users
 
@@ -448,7 +448,7 @@ usb*	at ohci?
 
 # USB Hubs
 uhub*	at usb?
-uhub*	at uhub? port ? configuration ? interface ?
+uhub*	at uhub? port ?
 
 # USB HID device
 uhidev*	at uhub? port ? configuration ? interface ?

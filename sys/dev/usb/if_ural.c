@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ural.c,v 1.18.4.1 2007/03/12 05:57:30 rmind Exp $ */
+/*	$NetBSD: if_ural.c,v 1.18.4.2 2007/03/24 14:55:48 yamt Exp $ */
 /*	$FreeBSD: /repoman/r/ncvs/src/sys/dev/usb/if_ural.c,v 1.40 2006/06/02 23:14:40 sam Exp $	*/
 
 /*-
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ural.c,v 1.18.4.1 2007/03/12 05:57:30 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ural.c,v 1.18.4.2 2007/03/24 14:55:48 yamt Exp $");
 
 #include "bpfilter.h"
 
@@ -354,9 +354,6 @@ USB_DECLARE_DRIVER(ural);
 USB_MATCH(ural)
 {
 	USB_MATCH_START(ural, uaa);
-
-	if (uaa->iface != NULL)
-		return UMATCH_NONE;
 
 	return (usb_lookup(ural_devs, uaa->vendor, uaa->product) != NULL) ?
 	    UMATCH_VENDOR_PRODUCT : UMATCH_NONE;

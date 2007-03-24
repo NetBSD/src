@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.294.2.6 2007/03/24 12:07:23 yamt Exp $	*/
+/*	$NetBSD: init_main.c,v 1.294.2.7 2007/03/24 14:55:59 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.294.2.6 2007/03/24 12:07:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.294.2.7 2007/03/24 14:55:59 yamt Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_kcont.h"
@@ -146,9 +146,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.294.2.6 2007/03/24 12:07:23 yamt Exp
 #if NRND > 0
 #include <sys/rnd.h>
 #endif
-#ifndef PIPE_SOCKETPAIR
 #include <sys/pipe.h>
-#endif
 #ifdef LKM
 #include <sys/lkm.h>
 #endif
@@ -457,6 +455,11 @@ main(void)
 
 	/* Initialize system accouting. */
 	acct_init();
+
+#ifndef PIPE_SOCKETPAIR
+	/* Initialize pipes. */
+	pipe_init();
+#endif
 
 	/* Setup the scheduler */
 	sched_setup();

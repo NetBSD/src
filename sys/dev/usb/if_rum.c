@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_rum.c,v 1.40 2006/09/18 16:20:20 damien Exp $	*/
-/*	$NetBSD: if_rum.c,v 1.4.2.2 2007/03/12 05:57:29 rmind Exp $	*/
+/*	$NetBSD: if_rum.c,v 1.4.2.3 2007/03/24 14:55:48 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 Damien Bergamini <damien.bergamini@free.fr>
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rum.c,v 1.4.2.2 2007/03/12 05:57:29 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rum.c,v 1.4.2.3 2007/03/24 14:55:48 yamt Exp $");
 
 #include "bpfilter.h"
 
@@ -225,9 +225,6 @@ USB_DECLARE_DRIVER(rum);
 USB_MATCH(rum)
 {
 	USB_MATCH_START(rum, uaa);
-
-	if (uaa->iface != NULL)
-		return UMATCH_NONE;
 
 	return (usb_lookup(rum_devs, uaa->vendor, uaa->product) != NULL) ?
 	    UMATCH_VENDOR_PRODUCT : UMATCH_NONE;

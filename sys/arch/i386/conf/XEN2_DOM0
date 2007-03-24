@@ -1,4 +1,4 @@
-# $NetBSD: XEN2_DOM0,v 1.23 2007/01/20 18:48:17 xtraeme Exp $
+# $NetBSD: XEN2_DOM0,v 1.23.2.1 2007/03/24 14:54:45 yamt Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -483,7 +483,7 @@ usb*    at uhci?
 
 # USB Hubs
 uhub*   at usb?
-uhub*   at uhub? port ? configuration ? interface ?
+uhub*   at uhub? port ?
 
 # USB HID device
 uhidev* at uhub? port ? configuration ? interface ?
@@ -649,7 +649,7 @@ midi*	at midibus?
 # bt3c* at pcmcia? function ?             # 3Com 3CRWB6096-A
 
 # Bluetooth USB Controllers
-ubt* at uhub? port ? configuration ? interface ?
+ubt* at uhub? port ?
 
 # Bluetooth Device Hub
 #bthub* at bt3c?

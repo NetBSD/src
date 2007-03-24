@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.114.2.2 2007/03/12 05:58:38 rmind Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.114.2.3 2007/03/24 14:56:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.114.2.2 2007/03/12 05:58:38 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.114.2.3 2007/03/24 14:56:03 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/resourcevar.h>
@@ -93,9 +93,9 @@ __KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.114.2.2 2007/03/12 05:58:38 rmind Ex
 #include <machine/cpu.h>
 
 POOL_INIT(ptimer_pool, sizeof(struct ptimer), 0, 0, 0, "ptimerpl",
-    &pool_allocator_nointr);
+    &pool_allocator_nointr, IPL_NONE);
 POOL_INIT(ptimers_pool, sizeof(struct ptimers), 0, 0, 0, "ptimerspl",
-    &pool_allocator_nointr);
+    &pool_allocator_nointr, IPL_NONE);
 
 #ifdef __HAVE_TIMECOUNTER
 static int itimespecfix(struct timespec *);		/* XXX move itimerfix to timespecs */

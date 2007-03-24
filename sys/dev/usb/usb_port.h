@@ -1,5 +1,5 @@
 /*	$OpenBSD: usb_port.h,v 1.18 2000/09/06 22:42:10 rahnds Exp $ */
-/*	$NetBSD: usb_port.h,v 1.73.4.1 2007/03/12 05:57:33 rmind Exp $	*/
+/*	$NetBSD: usb_port.h,v 1.73.4.2 2007/03/24 14:55:53 yamt Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_port.h,v 1.21 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -161,6 +161,9 @@ int __CONCAT(dname,_match)(struct device *parent, \
 #define USB_MATCH_START(dname, uaa) \
 	struct usb_attach_arg *uaa = aux
 
+#define USB_IFMATCH_START(dname, uaa) \
+	struct usbif_attach_arg *uaa = aux
+
 #define USB_ATTACH(dname) \
 void __CONCAT(dname,_attach)(struct device *parent, \
     struct device *self, void *aux)
@@ -169,6 +172,11 @@ void __CONCAT(dname,_attach)(struct device *parent, \
 	struct __CONCAT(dname,_softc) *sc = \
 		(struct __CONCAT(dname,_softc) *)self; \
 	struct usb_attach_arg *uaa = aux
+
+#define USB_IFATTACH_START(dname, sc, uaa) \
+	struct __CONCAT(dname,_softc) *sc = \
+		(struct __CONCAT(dname,_softc) *)self; \
+	struct usbif_attach_arg *uaa = aux
 
 /* Returns from attach */
 #define USB_ATTACH_ERROR_RETURN	return
@@ -195,6 +203,10 @@ int __CONCAT(dname,_detach)(struct device *self, int flags)
 
 #define USB_DO_ATTACH(dev, bdev, parent, args, print, sub) \
 	(config_found_sm_loc(parent, "usbdevif", \
+			     NULL, args, print, sub))
+
+#define USB_DO_IFATTACH(dev, bdev, parent, args, print, sub) \
+	(config_found_sm_loc(parent, "usbifif", \
 			     NULL, args, print, sub))
 
 #elif defined(__OpenBSD__)

@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vfsops.c,v 1.32 2007/01/04 16:55:30 elad Exp $	*/
+/*	$NetBSD: ufs_vfsops.c,v 1.32.2.1 2007/03/24 14:56:17 yamt Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.32 2007/01/04 16:55:30 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.32.2.1 2007/03/24 14:56:17 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -67,7 +67,7 @@ __KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.32 2007/01/04 16:55:30 elad Exp $")
 static int ufs_initcount = 0;
 
 POOL_INIT(ufs_direct_pool, sizeof(struct direct), 0, 0, 0, "ufsdirpl",
-    &pool_allocator_nointr);
+    &pool_allocator_nointr, IPL_NONE);
 
 /*
  * Make a filesystem operational.
@@ -206,7 +206,7 @@ ufs_init(void)
 
 #ifdef _LKM
 	pool_init(&ufs_direct_pool, sizeof(struct direct), 0, 0, 0, "ufsdirpl",
-	    &pool_allocator_nointr);
+	    &pool_allocator_nointr, IPL_NONE);
 #endif
 
 	ufs_ihashinit();

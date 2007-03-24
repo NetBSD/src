@@ -1,4 +1,4 @@
-/*	$NetBSD: rlphy.c,v 1.12 2006/11/16 01:33:06 christos Exp $	*/
+/*	$NetBSD: rlphy.c,v 1.12.4.1 2007/03/24 14:55:30 yamt Exp $	*/
 /*	$OpenBSD: rlphy.c,v 1.20 2005/07/31 05:27:30 pvalchev Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rlphy.c,v 1.12 2006/11/16 01:33:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rlphy.c,v 1.12.4.1 2007/03/24 14:55:30 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,6 +56,11 @@ __KERNEL_RCSID(0, "$NetBSD: rlphy.c,v 1.12 2006/11/16 01:33:06 christos Exp $");
 #include <machine/bus.h>
 #include <dev/ic/rtl81x9reg.h>
 
+struct rlphy_softc {
+	struct mii_softc sc_mii;
+	int sc_rtl8201l;
+};
+
 int	rlphymatch(struct device *, struct cfdata *, void *);
 void	rlphyattach(struct device *, struct device *, void *);
 
@@ -65,8 +70,10 @@ CFATTACH_DECL(rlphy, sizeof(struct mii_softc),
 int	rlphy_service(struct mii_softc *, struct mii_data *, int);
 void	rlphy_status(struct mii_softc *);
 
+static void rlphy_reset(struct mii_softc *);
+
 const struct mii_phy_funcs rlphy_funcs = {
-	rlphy_service, rlphy_status, mii_phy_reset,
+	rlphy_service, rlphy_status, rlphy_reset,
 };
 
 static const struct mii_phydesc rlphys[] = {
@@ -104,11 +111,13 @@ rlphymatch(struct device *parent, struct cfdata *match, void *aux)
 void
 rlphyattach(struct device *parent, struct device *self, void *aux)
 {
-	struct mii_softc *sc = device_private(self);
+	struct rlphy_softc *rsc = device_private(self);
+	struct mii_softc *sc = &rsc->sc_mii;
 	struct mii_attach_args *ma = aux;
 	struct mii_data *mii = ma->mii_data;
 
 	if (MII_MODEL(ma->mii_id2) == MII_MODEL_yyREALTEK_RTL8201L) {
+		rsc->sc_rtl8201l = 1;
 		aprint_normal(": %s, rev. %d\n", MII_STR_yyREALTEK_RTL8201L,
 		    MII_REV(ma->mii_id2));
 	} else
@@ -239,6 +248,7 @@ rlphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 void
 rlphy_status(struct mii_softc *sc)
 {
+	struct rlphy_softc *rsc = (void *)sc;
 	struct mii_data *mii = sc->mii_pdata;
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 	int bmsr, bmcr, anlpar;
@@ -316,18 +326,31 @@ rlphy_status(struct mii_softc *sc)
 		 *   can test the 'SPEED10' bit of the MAC's media status
 		 *   register.
 		 */
-		if (device_is_a(device_parent(&sc->mii_dev), "rtk")) {
-			if (PHY_READ(sc, RTK_MEDIASTAT) & RTK_MEDIASTAT_SPEED10)
-				mii->mii_media_active |= IFM_10_T;
-			else
-				mii->mii_media_active |= IFM_100_TX;
-		} else {
+		if (rsc->sc_rtl8201l) {
 			if (PHY_READ(sc, 0x0019) & 0x01)
 				mii->mii_media_active |= IFM_100_TX;
 			else
 				mii->mii_media_active |= IFM_10_T;
+		} else {
+			if (PHY_READ(sc, RTK_MEDIASTAT) & RTK_MEDIASTAT_SPEED10)
+				mii->mii_media_active |= IFM_10_T;
+			else
+				mii->mii_media_active |= IFM_100_TX;
 		}
 
 	} else
 		mii->mii_media_active = ife->ifm_media;
+}
+
+static void
+rlphy_reset(struct mii_softc *sc)
+{
+
+	mii_phy_reset(sc);
+
+	/*
+	 * XXX RealTek PHY doesn't set the BMCR properly after
+	 * XXX reset, which breaks autonegotiation.
+	 */
+	PHY_WRITE(sc, MII_BMCR, BMCR_AUTOEN);
 }

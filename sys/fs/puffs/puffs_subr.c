@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_subr.c,v 1.20.2.2 2007/03/12 05:58:12 rmind Exp $	*/
+/*	$NetBSD: puffs_subr.c,v 1.20.2.3 2007/03/24 14:55:58 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_subr.c,v 1.20.2.2 2007/03/12 05:58:12 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_subr.c,v 1.20.2.3 2007/03/24 14:55:58 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -52,7 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: puffs_subr.c,v 1.20.2.2 2007/03/12 05:58:12 rmind Ex
 #include <miscfs/specfs/specdev.h>
 
 POOL_INIT(puffs_pnpool, sizeof(struct puffs_node), 0, 0, 0, "puffspnpl",
-    &pool_allocator_nointr);
+    &pool_allocator_nointr, IPL_NONE);
 
 #ifdef PUFFSDEBUG
 int puffsdebug;
@@ -418,35 +418,31 @@ puffs_gop_markupdate(struct vnode *vp, int flags)
 void
 puffs_updatenode(struct vnode *vp, int flags)
 {
+	struct puffs_node *pn;
 	struct timespec ts;
-	struct puffs_vnreq_setattr *setattr_arg;
 
 	if (flags == 0)
 		return;
 
-	setattr_arg = malloc(sizeof(struct puffs_vnreq_setattr), M_PUFFS,
-	    M_NOWAIT | M_ZERO);
-	if (setattr_arg == NULL)
-		return; /* 2bad */
-
+	pn = VPTOPP(vp);
 	nanotime(&ts);
 
-	VATTR_NULL(&setattr_arg->pvnr_va);
-	if (flags & PUFFS_UPDATEATIME)
-		setattr_arg->pvnr_va.va_atime = ts;
-	if (flags & PUFFS_UPDATECTIME)
-		setattr_arg->pvnr_va.va_ctime = ts;
-	if (flags & PUFFS_UPDATEMTIME)
-		setattr_arg->pvnr_va.va_mtime = ts;
-	if (flags & PUFFS_UPDATESIZE)
-		setattr_arg->pvnr_va.va_size = vp->v_size;
-
-	setattr_arg->pvnr_pid = 0;
-	puffs_credcvt(&setattr_arg->pvnr_cred, NOCRED);
-
-	/* setattr_arg ownership shifted to callee */
-	puffs_vntouser_faf(MPTOPUFFSMP(vp->v_mount), PUFFS_VN_SETATTR,
-	    setattr_arg, sizeof(struct puffs_vnreq_setattr), VPTOPNC(vp));
+	if (flags & PUFFS_UPDATEATIME) {
+		pn->pn_mc_atime = ts;
+		pn->pn_stat |= PNODE_METACACHE_ATIME;
+	}
+	if (flags & PUFFS_UPDATECTIME) {
+		pn->pn_mc_ctime = ts;
+		pn->pn_stat |= PNODE_METACACHE_CTIME;
+	}
+	if (flags & PUFFS_UPDATEMTIME) {
+		pn->pn_mc_mtime = ts;
+		pn->pn_stat |= PNODE_METACACHE_MTIME;
+	}
+	if (flags & PUFFS_UPDATESIZE) {
+		pn->pn_mc_size = vp->v_size;
+		pn->pn_stat |= PNODE_METACACHE_SIZE;
+	}
 }
 
 void
@@ -472,6 +468,7 @@ void
 puffs_userdead(struct puffs_mount *pmp)
 {
 	struct puffs_park *park;
+	struct buf *bp;
 
 	/*
 	 * Mark filesystem status as dying so that operations don't
@@ -484,7 +481,14 @@ puffs_userdead(struct puffs_mount *pmp)
 		if (park->park_preq)
 			park->park_preq->preq_rv = ENXIO;
 		TAILQ_REMOVE(&pmp->pmp_req_replywait, park, park_entries);
-		wakeup(park);
+		if (park->park_flags & PUFFS_PARKFLAG_ASYNCBIOREAD) {
+			bp = park->park_bp;
+			bp->b_error = ENXIO;
+			bp->b_flags |= B_ERROR;
+			biodone(bp);
+		} else {
+			wakeup(park);
+		}
 	}
 
 	/* wakeup waiters for completion of vfs/vnode requests */
@@ -492,7 +496,14 @@ puffs_userdead(struct puffs_mount *pmp)
 		if (park->park_preq)
 			park->park_preq->preq_rv = ENXIO;
 		TAILQ_REMOVE(&pmp->pmp_req_touser, park, park_entries);
-		wakeup(park);
+		if (park->park_flags & PUFFS_PARKFLAG_ASYNCBIOREAD) {
+			bp = park->park_bp;
+			bp->b_error = ENXIO;
+			bp->b_flags |= B_ERROR;
+			biodone(bp);
+		} else {
+			wakeup(park);
+		}
 	}
 }
 

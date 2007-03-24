@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.17.4.1 2007/03/12 05:57:29 rmind Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.17.4.2 2007/03/24 14:55:47 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.17.4.1 2007/03/12 05:57:29 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.17.4.2 2007/03/24 14:55:47 yamt Exp $");
 
 #if defined(__NetBSD__)
 #include "opt_inet.h"
@@ -426,10 +426,6 @@ axe_reset(struct axe_softc *sc)
 USB_MATCH(axe)
 {
 	USB_MATCH_START(axe, uaa);
-
-	if (!uaa->iface) {
-		return(UMATCH_NONE);
-	}
 
 	return (axe_lookup(uaa->vendor, uaa->product) != NULL ?
 		UMATCH_VENDOR_PRODUCT : UMATCH_NONE);

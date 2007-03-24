@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.c,v 1.60.2.1 2007/03/12 05:53:06 rmind Exp $	*/
+/*	$NetBSD: rnd.c,v 1.60.2.2 2007/03/24 14:55:19 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.60.2.1 2007/03/12 05:53:06 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.60.2.2 2007/03/24 14:55:19 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -129,7 +129,8 @@ volatile u_int32_t rnd_status;
 /*
  * Memory pool; accessed only at splvm().
  */
-POOL_INIT(rnd_mempool, sizeof(rnd_sample_t), 0, 0, 0, "rndsample", NULL);
+POOL_INIT(rnd_mempool, sizeof(rnd_sample_t), 0, 0, 0, "rndsample", NULL,
+    IPL_VM);
 
 /*
  * Our random pool.  This is defined here rather than using the general

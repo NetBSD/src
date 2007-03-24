@@ -1,4 +1,4 @@
-/*	$NetBSD: iop.c,v 1.10 2005/12/24 23:24:00 perry Exp $	*/
+/*	$NetBSD: iop.c,v 1.10.26.1 2007/03/24 14:54:48 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Allen Briggs.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.10 2005/12/24 23:24:00 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.10.26.1 2007/03/24 14:54:48 yamt Exp $");
 
 #include "opt_mac68k.h"
 
@@ -167,7 +167,7 @@ iop_init(int fullinit)
 	ioph = iop->iop;
 	printf("SCC IOP base: 0x%x\n", (unsigned) ioph);
 	pool_init(&iop->pool, sizeof(struct iop_msg), 0, 0, 0, "mac68k_iop1",
-		  NULL);
+	    NULL, IPL_NONE);
 	ioph->control_status = IOP_BYPASS;
 
 	iop = &mac68k_iops[ISM_IOP];
@@ -175,7 +175,7 @@ iop_init(int fullinit)
 	printf("ISM IOP base: 0x%x, alive %x\n", (unsigned) ioph, 
 	(unsigned) iop_alive(ioph));
 	pool_init(&iop->pool, sizeof(struct iop_msg), 0, 0, 0, "mac68k_iop2",
-		  NULL);
+	    NULL, IPL_NONE);
 	iop_write1(ioph, IOP_ADDR_ALIVE, 0);
 
 /*

@@ -1,10 +1,10 @@
-#	$NetBSD: MALTA,v 1.45 2006/09/27 21:42:05 manu Exp $
+#	$NetBSD: MALTA,v 1.45.4.1 2007/03/24 14:54:39 yamt Exp $
 
 include 	"arch/evbmips/conf/std.malta"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"MALTA-$Revision: 1.45 $"
+#ident 		"MALTA-$Revision: 1.45.4.1 $"
 
 maxusers	32
 
@@ -277,7 +277,7 @@ usb*		at ohci?
 
 # USB Hubs
 uhub*		at usb?
-uhub*		at uhub? port ? configuration ? interface ?
+uhub*		at uhub? port ?
 
 # ....
 

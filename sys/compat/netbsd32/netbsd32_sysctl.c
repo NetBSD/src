@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_sysctl.c,v 1.23 2007/02/09 21:55:22 ad Exp $	*/
+/*	$NetBSD: netbsd32_sysctl.c,v 1.23.2.1 2007/03/24 14:55:16 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_sysctl.c,v 1.23 2007/02/09 21:55:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_sysctl.c,v 1.23.2.1 2007/03/24 14:55:16 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -175,10 +175,10 @@ netbsd32___sysctl(l, v, retval)
 	/*
 	 * get and convert 32 bit size_t to native size_t
 	 */
-	namep = NETBSD32PTR64(SCARG(uap, name));
-	oldp = NETBSD32PTR64(SCARG(uap, old));
-	newp = NETBSD32PTR64(SCARG(uap, new));
-	oldlenp = NETBSD32PTR64(SCARG(uap, oldlenp));
+	namep = SCARG_P32(uap, name);
+	oldp = SCARG_P32(uap, old);
+	newp = SCARG_P32(uap, new);
+	oldlenp = SCARG_P32(uap, oldlenp);
 	oldlen = 0;
 	if (oldlenp != NULL) {
 		error = copyin(oldlenp, &netbsd32_oldlen,

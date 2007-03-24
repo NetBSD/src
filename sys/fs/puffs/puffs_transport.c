@@ -1,4 +1,4 @@
-/* $NetBSD: puffs_transport.c,v 1.8 2007/02/16 17:23:59 hannken Exp $ */
+/* $NetBSD: puffs_transport.c,v 1.8.2.1 2007/03/24 14:55:58 yamt Exp $ */
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_transport.c,v 1.8 2007/02/16 17:23:59 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_transport.c,v 1.8.2.1 2007/03/24 14:55:58 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -362,6 +362,19 @@ puffs_flush(struct puffs_mount *pmp, struct puffs_flush *pf)
 #endif
 	case PUFFS_INVAL_NAMECACHE_DIR:
 		cache_purge1(vp, NULL, PURGE_CHILDREN);
+		break;
+
+#if 0
+	case PUFFS_INVAL_PAGECACHE_NODE_RANGE:
+		simple_lock(&vp->v_uobj.vmobjlock);
+		/* XXX: validate args? */
+		rv = VOP_PUTPAGES(vp, pf->pf_start, pf->pf_end, PGO_FREE);
+		break;
+#endif
+
+	case PUFFS_INVAL_PAGECACHE_NODE:
+		simple_lock(&vp->v_uobj.vmobjlock);
+		rv = VOP_PUTPAGES(vp, 0, 0, PGO_FREE | PGO_ALLPAGES);
 		break;
 
 	default:

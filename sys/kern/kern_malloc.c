@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.106.2.2 2007/03/12 05:58:35 rmind Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.106.2.3 2007/03/24 14:56:02 yamt Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991, 1993
@@ -66,9 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.106.2.2 2007/03/12 05:58:35 rmind Exp $");
-
-#include "opt_lockdebug.h"
+__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.106.2.3 2007/03/24 14:56:02 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -76,6 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.106.2.2 2007/03/12 05:58:35 rmind 
 #include <sys/malloc.h>
 #include <sys/systm.h>
 #include <sys/debug.h>
+#include <sys/mutex.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -302,7 +301,7 @@ MALLOC_DEFINE(M_MRTABLE, "mrt", "multicast routing tables");
 MALLOC_DEFINE(M_BWMETER, "bwmeter", "multicast upcall bw meters");
 MALLOC_DEFINE(M_1394DATA, "1394data", "IEEE 1394 data buffers");
 
-struct simplelock malloc_slock = SIMPLELOCK_INITIALIZER;
+kmutex_t malloc_lock;
 
 /*
  * Allocate a block of memory
@@ -320,7 +319,6 @@ malloc(unsigned long size, struct malloc_type *ksp, int flags)
 	struct kmemusage *kup;
 	struct freelist *freep;
 	long indx, npg, allocsize;
-	int s;
 	char *va, *cp, *savedlist;
 #ifdef DIAGNOSTIC
 	uint32_t *end, *lp;
@@ -340,19 +338,17 @@ malloc(unsigned long size, struct malloc_type *ksp, int flags)
 #endif
 	indx = BUCKETINDX(size);
 	kbp = &kmembuckets[indx];
-	s = splvm();
-	simple_lock(&malloc_slock);
+	mutex_enter(&malloc_lock);
 #ifdef KMEMSTATS
 	while (ksp->ks_memuse >= ksp->ks_limit) {
 		if (flags & M_NOWAIT) {
-			simple_unlock(&malloc_slock);
-			splx(s);
+			mutex_exit(&malloc_lock);
 			return ((void *) NULL);
 		}
 		if (ksp->ks_limblocks < 65535)
 			ksp->ks_limblocks++;
-		ltsleep((void *)ksp, PSWP+2, ksp->ks_shortdesc, 0,
-			&malloc_slock);
+		mtsleep((void *)ksp, PSWP+2, ksp->ks_shortdesc, 0,
+			&malloc_lock);
 	}
 	ksp->ks_size |= 1 << indx;
 #endif
@@ -366,7 +362,7 @@ malloc(unsigned long size, struct malloc_type *ksp, int flags)
 		else
 			allocsize = 1 << indx;
 		npg = btoc(allocsize);
-		simple_unlock(&malloc_slock);
+		mutex_exit(&malloc_lock);
 		va = (void *) uvm_km_alloc(kmem_map,
 		    (vsize_t)ctob(npg), 0,
 		    ((flags & M_NOWAIT) ? UVM_KMF_NOWAIT : 0) |
@@ -383,10 +379,9 @@ malloc(unsigned long size, struct malloc_type *ksp, int flags)
 			 */
 			if ((flags & (M_NOWAIT|M_CANFAIL)) == 0)
 				panic("malloc: out of space in kmem_map");
-			splx(s);
 			return (NULL);
 		}
-		simple_lock(&malloc_slock);
+		mutex_enter(&malloc_lock);
 #ifdef KMEMSTATS
 		kbp->kb_total += kbp->kb_elmpercl;
 #endif
@@ -511,8 +506,7 @@ out:
 #ifdef MALLOCLOG
 	domlog(va, size, ksp, 1, file, line);
 #endif
-	simple_unlock(&malloc_slock);
-	splx(s);
+	mutex_exit(&malloc_lock);
 	if ((flags & M_ZERO) != 0)
 		memset(va, 0, size);
 	FREECHECK_OUT(&malloc_freecheck, (void *)va);
@@ -534,7 +528,6 @@ free(void *addr, struct malloc_type *ksp)
 	struct kmemusage *kup;
 	struct freelist *freep;
 	long size;
-	int s;
 #ifdef DIAGNOSTIC
 	void *cp;
 	int32_t *end, *lp;
@@ -562,8 +555,7 @@ free(void *addr, struct malloc_type *ksp)
 	kup = btokup(addr);
 	size = 1 << kup->ku_indx;
 	kbp = &kmembuckets[kup->ku_indx];
-	s = splvm();
-	simple_lock(&malloc_slock);
+	mutex_enter(&malloc_lock);
 #ifdef MALLOCLOG
 	domlog(addr, 0, ksp, 2, file, line);
 #endif
@@ -598,8 +590,7 @@ free(void *addr, struct malloc_type *ksp)
 		ksp->ks_inuse--;
 		kbp->kb_total -= 1;
 #endif
-		simple_unlock(&malloc_slock);
-		splx(s);
+		mutex_exit(&malloc_lock);
 		return;
 	}
 	freep = (struct freelist *)addr;
@@ -663,8 +654,7 @@ free(void *addr, struct malloc_type *ksp)
 		((struct freelist *)kbp->kb_last)->next = addr;
 	freep->next = NULL;
 	kbp->kb_last = addr;
-	simple_unlock(&malloc_slock);
-	splx(s);
+	mutex_exit(&malloc_lock);
 }
 
 /*
@@ -839,11 +829,9 @@ void
 malloc_type_setlimit(struct malloc_type *type, u_long limit)
 {
 #ifdef KMEMSTATS
-	int s;
-
-	s = splvm();
+	mutex_enter(&malloc_lock);
 	type->ks_limit = limit;
-	splx(s);
+	mutex_exit(&malloc_lock);
 #endif
 }
 
@@ -900,6 +888,8 @@ kmeminit(void)
 
 	if (sizeof(struct freelist) > (1 << MINBUCKET))
 		panic("minbucket too small/struct freelist too big");
+
+	mutex_init(&malloc_lock, MUTEX_DRIVER, IPL_VM);
 
 	/*
 	 * Compute the number of kmem_map pages, if we have not

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mbe_g2.c,v 1.5 2005/12/11 12:17:06 christos Exp $	*/
+/*	$NetBSD: if_mbe_g2.c,v 1.5.26.1 2007/03/24 14:54:36 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002 Christian Groessler
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mbe_g2.c,v 1.5 2005/12/11 12:17:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mbe_g2.c,v 1.5.26.1 2007/03/24 14:54:36 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -230,5 +230,6 @@ mbe_g2_attach(struct device *parent, struct device *self, void *aux)
 
 	mb86960_config(sc, NULL, 0, 0);
 
-	sysasic_intr_establish(SYSASIC_EVENT_8BIT, IPL_NET, mb86960_intr, sc);
+	sysasic_intr_establish(SYSASIC_EVENT_8BIT, IPL_NET, SYSASIC_IRL11,
+	    mb86960_intr, sc);
 }

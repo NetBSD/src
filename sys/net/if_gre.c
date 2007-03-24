@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.83.2.2 2007/03/12 05:59:11 rmind Exp $ */
+/*	$NetBSD: if_gre.c,v 1.83.2.3 2007/03/24 14:56:08 yamt Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.83.2.2 2007/03/12 05:59:11 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.83.2.3 2007/03/24 14:56:08 yamt Exp $");
 
 #include "opt_gre.h"
 #include "opt_inet.h"
@@ -299,7 +299,7 @@ gre_socreate1(struct gre_softc *sc, struct lwp *l, struct gre_soparm *sp,
 
 	so = *sop;
 
-	gre_upcall_add(so, (void *)sc);
+	gre_upcall_add(so, sc);
 	if ((m = gre_getsockmbuf(so)) == NULL) {
 		rc = ENOBUFS;
 		goto out;
@@ -406,7 +406,7 @@ gre_thread1(struct gre_softc *sc, struct lwp *l)
 
 			if (sc->sc_fp != NULL) {
 				so = (struct socket *)sc->sc_fp->f_data;
-				gre_upcall_add(so, (void *)sc);
+				gre_upcall_add(so, sc);
 				sp = sc->sc_soparm;
 				FILE_USE(sp.sp_fp);
 			} else if (gre_socreate1(sc, l, &sp, &so) != 0)
@@ -439,10 +439,9 @@ gre_thread1(struct gre_softc *sc, struct lwp *l)
 			}
 			gh = mtod(m, const struct gre_h *);
 
-			if (gre_input3(sc, m, 0, IPPROTO_GRE, gh) == 0) {
+			if (gre_input3(sc, m, 0, gh) == 0) {
 				GRE_DPRINTF(sc, "%s: dropping unsupported\n",
 				    __func__);
-				ifp->if_ierrors++;
 				m_freem(m);
 			}
 		}
@@ -502,7 +501,7 @@ gre_thread(void *arg)
 }
 
 int
-gre_input3(struct gre_softc *sc, struct mbuf *m, int hlen, u_char proto,
+gre_input3(struct gre_softc *sc, struct mbuf *m, int hlen,
     const struct gre_h *gh)
 {
 	u_int16_t flags;
@@ -515,56 +514,52 @@ gre_input3(struct gre_softc *sc, struct mbuf *m, int hlen, u_char proto,
 	sc->sc_if.if_ipackets++;
 	sc->sc_if.if_ibytes += m->m_pkthdr.len;
 
-	switch (proto) {
-	case IPPROTO_GRE:
-		hlen += sizeof(struct gre_h);
+	hlen += sizeof(struct gre_h);
 
-		/* process GRE flags as packet can be of variable len */
-		flags = ntohs(gh->flags);
+	/* process GRE flags as packet can be of variable len */
+	flags = ntohs(gh->flags);
 
-		/* Checksum & Offset are present */
-		if ((flags & GRE_CP) | (flags & GRE_RP))
-			hlen += 4;
-		/* We don't support routing fields (variable length) */
-		if (flags & GRE_RP)
-			return 0;
-		if (flags & GRE_KP)
-			hlen += 4;
-		if (flags & GRE_SP)
-			hlen += 4;
+	/* Checksum & Offset are present */
+	if ((flags & GRE_CP) | (flags & GRE_RP))
+		hlen += 4;
+	/* We don't support routing fields (variable length) */
+	if (flags & GRE_RP) {
+		sc->sc_if.if_ierrors++;
+		return 0;
+	}
+	if (flags & GRE_KP)
+		hlen += 4;
+	if (flags & GRE_SP)
+		hlen += 4;
 
-		switch (ntohs(gh->ptype)) { /* ethertypes */
-		case ETHERTYPE_IP: /* shouldn't need a schednetisr(), as */
-			ifq = &ipintrq;          /* we are in ip_input */
-			isr = NETISR_IP;
-			break;
+	switch (ntohs(gh->ptype)) { /* ethertypes */
+	case ETHERTYPE_IP: /* shouldn't need a schednetisr(), as */
+		ifq = &ipintrq;          /* we are in ip_input */
+		isr = NETISR_IP;
+		break;
 #ifdef NETATALK
-		case ETHERTYPE_ATALK:
-			ifq = &atintrq1;
-			isr = NETISR_ATALK;
+	case ETHERTYPE_ATALK:
+		ifq = &atintrq1;
+		isr = NETISR_ATALK;
 #if NBPFILTER > 0
-			af = AF_APPLETALK;
+		af = AF_APPLETALK;
 #endif
-			break;
+		break;
 #endif
 #ifdef INET6
-		case ETHERTYPE_IPV6:
-			GRE_DPRINTF(sc, "%s: IPv6 packet\n", __func__);
-			ifq = &ip6intrq;
-			isr = NETISR_IPV6;
+	case ETHERTYPE_IPV6:
+		GRE_DPRINTF(sc, "%s: IPv6 packet\n", __func__);
+		ifq = &ip6intrq;
+		isr = NETISR_IPV6;
 #if NBPFILTER > 0
-			af = AF_INET6;
+		af = AF_INET6;
 #endif
-			break;
-#endif
-		default:	   /* others not yet supported */
-			printf("%s: unhandled ethertype 0x%04x\n", __func__,
-			    ntohs(gh->ptype));
-			return 0;
-		}
 		break;
-	default:
-		/* others not yet supported */
+#endif
+	default:	   /* others not yet supported */
+		GRE_DPRINTF(sc, "%s: unhandled ethertype 0x%04x\n", __func__,
+		    ntohs(gh->ptype));
+		sc->sc_if.if_noproto++;
 		return 0;
 	}
 
@@ -604,7 +599,7 @@ static int
 gre_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 	   struct rtentry *rt)
 {
-	int error = 0, hlen;
+	int error = 0, hlen, msiz;
 	struct gre_softc *sc = ifp->if_softc;
 	struct greip *gi;
 	struct gre_h *gh;
@@ -632,56 +627,54 @@ gre_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 
 	switch (sc->sc_proto) {
 	case IPPROTO_MOBILE:
-		if (dst->sa_family == AF_INET) {
-			int msiz;
-
-			if (M_UNWRITABLE(m, sizeof(*ip)) &&
-			    (m = m_pullup(m, sizeof(*ip))) == NULL) {
-				error = ENOBUFS;
-				goto end;
-			}
-			ip = mtod(m, struct ip *);
-
-			memset(&mob_h, 0, MOB_H_SIZ_L);
-			mob_h.proto = (ip->ip_p) << 8;
-			mob_h.odst = ip->ip_dst.s_addr;
-			ip->ip_dst.s_addr = sc->g_dst.s_addr;
-
-			/*
-			 * If the packet comes from our host, we only change
-			 * the destination address in the IP header.
-			 * Else we also need to save and change the source
-			 */
-			if (in_hosteq(ip->ip_src, sc->g_src)) {
-				msiz = MOB_H_SIZ_S;
-			} else {
-				mob_h.proto |= MOB_H_SBIT;
-				mob_h.osrc = ip->ip_src.s_addr;
-				ip->ip_src.s_addr = sc->g_src.s_addr;
-				msiz = MOB_H_SIZ_L;
-			}
-			HTONS(mob_h.proto);
-			mob_h.hcrc = gre_in_cksum((u_int16_t *)&mob_h, msiz);
-
-			M_PREPEND(m, msiz, M_DONTWAIT);
-			if (m == NULL) {
-				error = ENOBUFS;
-				goto end;
-			}
-			/* XXX Assuming that ip does not dangle after
-			 * M_PREPEND.  In practice, that's true, but
-			 * that's in M_PREPEND's contract.
-			 */
-			memmove(mtod(m, void *), ip, sizeof(*ip));
-			ip = mtod(m, struct ip *);
-			memcpy((void *)(ip + 1), &mob_h, (unsigned)msiz);
-			ip->ip_len = htons(ntohs(ip->ip_len) + msiz);
-		} else {  /* AF_INET */
+		if (dst->sa_family != AF_INET) {
 			IF_DROP(&ifp->if_snd);
 			m_freem(m);
 			error = EINVAL;
 			goto end;
 		}
+
+		if (M_UNWRITABLE(m, sizeof(*ip)) &&
+		    (m = m_pullup(m, sizeof(*ip))) == NULL) {
+			error = ENOBUFS;
+			goto end;
+		}
+		ip = mtod(m, struct ip *);
+
+		memset(&mob_h, 0, MOB_H_SIZ_L);
+		mob_h.proto = (ip->ip_p) << 8;
+		mob_h.odst = ip->ip_dst.s_addr;
+		ip->ip_dst.s_addr = sc->g_dst.s_addr;
+
+		/*
+		 * If the packet comes from our host, we only change
+		 * the destination address in the IP header.
+		 * Else we also need to save and change the source
+		 */
+		if (in_hosteq(ip->ip_src, sc->g_src)) {
+			msiz = MOB_H_SIZ_S;
+		} else {
+			mob_h.proto |= MOB_H_SBIT;
+			mob_h.osrc = ip->ip_src.s_addr;
+			ip->ip_src.s_addr = sc->g_src.s_addr;
+			msiz = MOB_H_SIZ_L;
+		}
+		HTONS(mob_h.proto);
+		mob_h.hcrc = gre_in_cksum((u_int16_t *)&mob_h, msiz);
+
+		M_PREPEND(m, msiz, M_DONTWAIT);
+		if (m == NULL) {
+			error = ENOBUFS;
+			goto end;
+		}
+		/* XXX Assuming that ip does not dangle after
+		 * M_PREPEND.  In practice, that's true, but
+		 * that's not in M_PREPEND's contract.
+		 */
+		memmove(mtod(m, void *), ip, sizeof(*ip));
+		ip = mtod(m, struct ip *);
+		memcpy(ip + 1, &mob_h, (size_t)msiz);
+		ip->ip_len = htons(ntohs(ip->ip_len) + msiz);
 		break;
 	case IPPROTO_UDP:
 	case IPPROTO_GRE:
@@ -815,8 +808,7 @@ gre_kick(struct gre_softc *sc)
 	if (sc->sc_proto == IPPROTO_UDP && (ifp->if_flags & IFF_UP) == IFF_UP &&
 	    !sc->sc_thread) {
 		sc->sc_thread = 1;
-		rc = kthread_create1(gre_thread, (void *)sc, NULL,
-		    ifp->if_xname);
+		rc = kthread_create1(gre_thread, sc, NULL, ifp->if_xname);
 		if (rc != 0)
 			gre_stop(&sc->sc_thread);
 		return rc;
@@ -832,8 +824,7 @@ gre_getname(struct socket *so, int req, struct mbuf *nam, struct lwp *l)
 	int s, error;
 
 	s = splsoftnet();
-	error = (*so->so_proto->pr_usrreq)(so, req, (struct mbuf *)0,
-	    nam, (struct mbuf *)0, l);
+	error = (*so->so_proto->pr_usrreq)(so, req, NULL, nam, NULL, l);
 	splx(s);
 	return error;
 }
@@ -1162,20 +1153,14 @@ gre_compute_route(struct gre_softc *sc)
 	ro->ro_dst.sa_family = AF_INET;
 	ro->ro_dst.sa_len = sizeof(ro->ro_dst);
 
-#ifdef DIAGNOSTIC
-	printf("%s: searching for a route to %s", sc->sc_if.if_xname,
-	    inet_ntoa(satocsin(rtcache_getdst(ro))->sin_addr));
-#endif
-
 	rtcache_init(ro);
 
 	if (ro->ro_rt == NULL || ro->ro_rt->rt_ifp->if_softc == sc) {
-#ifdef DIAGNOSTIC
-		if (ro->ro_rt == NULL)
-			printf(" - no route found!\n");
-		else
-			printf(" - route loops back to ourself!\n");
-#endif
+		GRE_DPRINTF(sc, "%s: route to %s %s\n", sc->sc_if.if_xname,
+		    inet_ntoa(satocsin(rtcache_getdst(ro))->sin_addr),
+		    (ro->ro_rt == NULL)
+		        ?  "does not exist"
+			: "loops back to ourself");
 		rtcache_free(ro);
 		return EADDRNOTAVAIL;
 	}

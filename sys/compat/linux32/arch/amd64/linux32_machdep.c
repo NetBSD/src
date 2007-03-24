@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_machdep.c,v 1.5.2.2 2007/03/12 05:52:29 rmind Exp $ */
+/*	$NetBSD: linux32_machdep.c,v 1.5.2.3 2007/03/24 14:55:10 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -31,7 +31,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_machdep.c,v 1.5.2.2 2007/03/12 05:52:29 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_machdep.c,v 1.5.2.3 2007/03/24 14:55:10 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -135,7 +135,7 @@ linux32_old_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	fp--;
 
 	/* Build stack frame for signal trampoline. */
-	frame.sf_handler = (linux32_handler_t)(long)catcher;
+	NETBSD32PTR32(frame.sf_handler, catcher);
 	frame.sf_sig = native_to_linux32_signo[sig];
 
 	linux32_save_sigcontext(l, tf, mask, &frame.sf_sc);
@@ -202,10 +202,10 @@ linux32_rt_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	fp--;
 
 	/* Build stack frame for signal trampoline. */
-	frame.sf_handler = (linux32_handler_t)(long)catcher;
+	NETBSD32PTR32(frame.sf_handler, catcher);
 	frame.sf_sig = native_to_linux32_signo[sig];
-	frame.sf_sip = (linux32_siginfop_t)(long)&fp->sf_si;
-	frame.sf_ucp = (linux32_ucontextp_t)(long)&fp->sf_uc;
+	NETBSD32PTR32(frame.sf_sip, &fp->sf_si);
+	NETBSD32PTR32(frame.sf_ucp, &fp->sf_uc);
 
 	lsi = &frame.sf_si;
 	(void)memset(lsi, 0, sizeof(frame.sf_si));
@@ -218,7 +218,7 @@ linux32_rt_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	case LINUX32_SIGSEGV:
 	case LINUX32_SIGBUS:
 	case LINUX32_SIGTRAP:
-		lsi->lsi_addr = (netbsd32_voidp)(long)ksi->ksi_addr;
+		NETBSD32PTR32(lsi->lsi_addr, ksi->ksi_addr);
 		break;
 	case LINUX32_SIGCHLD:
 		lsi->lsi_uid = ksi->ksi_uid;
@@ -240,8 +240,8 @@ linux32_rt_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 		lsi->lsi_pid = ksi->ksi_pid;
 		if (lsi->lsi_signo == LINUX32_SIGALRM ||
 		    lsi->lsi_signo >= LINUX32_SIGRTMIN)
-			lsi->lsi_value.sival_ptr = 
-			     (netbsd32_voidp)(long)ksi->ksi_sigval.sival_ptr;
+			NETBSD32PTR32(lsi->lsi_value.sival_ptr,
+			     ksi->ksi_sigval.sival_ptr);
 		break;
 	}
 
@@ -352,7 +352,7 @@ linux32_save_ucontext(l, tf, mask, sas, uc)
 	struct linux32_ucontext *uc;
 {
 	uc->uc_flags = 0;
-	uc->uc_link = (linux32_ucontextp_t)(long)NULL;
+	NETBSD32PTR32(uc->uc_link, NULL);
 	native_to_linux32_sigaltstack(&uc->uc_stack, sas);
 	linux32_save_sigcontext(l, tf, mask, &uc->uc_mcontext);
 	native_to_linux32_sigset(&uc->uc_sigmask, mask);
@@ -387,7 +387,7 @@ linux32_save_sigcontext(l, tf, mask, sc)
 	sc->sc_err = tf->tf_err;
 	sc->sc_trapno = tf->tf_trapno;
 	/* sc->sc_cr2 = l->l_addr->u_pcb.pcb_cr2; */ /* XXX */
-	sc->sc_387 = (linux32_fpstatep_t)(long)NULL;
+	NETBSD32PTR32(sc->sc_387, NULL);
 
 	/* Save signal stack. */
 	/* Linux doesn't save the onstack flag in sigframe */
@@ -408,8 +408,7 @@ linux32_sys_sigreturn(l, v, retval)
 	struct linux32_sigcontext ctx;
 	int error;
 
-	if ((error = copyin(NETBSD32PTR64(SCARG(uap, scp)), 
-	    &ctx, sizeof(ctx))) != 0)
+	if ((error = copyin(SCARG_P32(uap, scp), &ctx, sizeof(ctx))) != 0)
 		return error;
 
 	return linux32_restore_sigcontext(l, &ctx, retval);
@@ -427,8 +426,7 @@ linux32_sys_rt_sigreturn(l, v, retval)
 	struct linux32_ucontext ctx;
 	int error;
 
-	if ((error = copyin(NETBSD32PTR64(SCARG(uap, ucp)), 
-	    &ctx, sizeof(ctx))) != 0)
+	if ((error = copyin(SCARG_P32(uap, ucp), &ctx, sizeof(ctx))) != 0)
 		return error;
 
 	return linux32_restore_sigcontext(l, &ctx.uc_mcontext, retval);
@@ -497,7 +495,7 @@ linux32_restore_sigcontext(l, scp, retval)
 
 	/* Restore signal stack. */
 	ss_gap = (ssize_t)
-	    ((char *)NETBSD32PTR64(scp->sc_esp_at_signal) 
+	    ((char *)NETBSD32IPTR64(scp->sc_esp_at_signal) 
 	     - (char *)sas->ss_sp);
 	if (ss_gap >= 0 && ss_gap < sas->ss_size)
 		sas->ss_flags |= SS_ONSTACK;

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.h,v 1.21 2006/03/14 22:05:05 cube Exp $	*/
+/*	$NetBSD: netbsd32_machdep.h,v 1.21.16.1 2007/03/24 14:55:01 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -35,12 +35,9 @@
 
 struct proc;
 
-typedef	uint32_t netbsd32_pointer_t;
-
-/*
- * Convert a pointer in the 32-bit world to a valid 64-bit pointer.
- */
-#define	NETBSD32PTR64(p32)	((void *)(u_long)(u_int)(p32))
+/* sparc64 uses an unsigned 32bit integer for 32bit pointers */
+#define NETBSD32_POINTER_TYPE uint32_t
+typedef struct { NETBSD32_POINTER_TYPE i32; } netbsd32_pointer_t;
 
 /* from <arch/sparc/include/signal.h> */
 typedef uint32_t netbsd32_sigcontextp_t;
