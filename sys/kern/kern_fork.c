@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.131.2.6 2007/03/24 14:56:01 yamt Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.131.2.7 2007/03/24 17:13:14 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001, 2004 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.131.2.6 2007/03/24 14:56:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.131.2.7 2007/03/24 17:13:14 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -556,14 +556,4 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	}
 
 	return (0);
-}
-
-void
-lwp_startup(struct lwp *prev, struct lwp *new)
-{
-
-	sched_switch_unlock(prev, new);
-	pmap_activate(new);
-
-	KERNEL_LOCK(1, new);
 }

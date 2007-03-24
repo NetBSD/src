@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.177.2.19 2007/03/24 16:50:26 rmind Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.177.2.20 2007/03/24 17:13:14 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.177.2.19 2007/03/24 16:50:26 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.177.2.20 2007/03/24 17:13:14 ad Exp $");
 
 #include "opt_kstack.h"
 #include "opt_lockdebug.h"
@@ -315,27 +315,6 @@ preempt(void)
 }
 
 /*
- * sched_switch_unlock: update 'curlwp' and release old lwp.
- */
-
-void
-sched_switch_unlock(struct lwp *old, struct lwp *new)
-{
-
-	KASSERT(old == NULL || old == curlwp);
-	KASSERT(new != NULL);
-
-	if (old != NULL) {
-		LOCKDEBUG_BARRIER(old->l_mutex, 1);
-		lwp_unlock(old);
-	} else {
-		LOCKDEBUG_BARRIER(NULL, 1);
-	}
-	curlwp = new;
-	spl0();
-}
-
-/*
  * Compute the amount of time during which the current lwp was running.
  *
  * - update l_rtime unless it's an idle lwp.
@@ -432,12 +411,6 @@ mi_switch(struct lwp *l)
 	LOCKDEBUG_BARRIER(l->l_mutex, 1);
 
 	/*
-	 * Switch to the new LWP if necessary.
-	 * When we run again, we'll return back here.
-	 */
-	oldspl = MUTEX_SPIN_OLDSPL(l->l_cpu);
-
-	/*
 	 * Acquire the spc_mutex if necessary.
 	 */
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
@@ -471,15 +444,32 @@ mi_switch(struct lwp *l)
 	if (l != newl) {
 		struct lwp *prevlwp;
 
+		/* Unlocked, but for statistics only. */
 		uvmexp.swtch++;
+
+		/* Save old VM context. */
 		pmap_deactivate(l);
+
+		/* Switch to the new LWP.. */
 		l->l_flag &= ~LW_RUNNING;
+		oldspl = MUTEX_SPIN_OLDSPL(l->l_cpu);
 		prevlwp = cpu_switchto(l, newl);
-		sched_switch_unlock(prevlwp, l);
+
+		/* .. we have switched. */
+		curlwp = l;
+		if (prevlwp != NULL) {
+			curcpu()->ci_mtx_oldspl = oldspl;
+			lwp_unlock(prevlwp);
+		} else {
+			splx(oldspl);
+		}
+
+		/* Restore VM context. */
 		pmap_activate(l);
 		retval = 1;
 	} else {
-		sched_switch_unlock(l, l);
+		/* Nothing to do - just unlock and return. */
+		lwp_unlock(l);
 		retval = 0;
 	}
 
@@ -502,9 +492,8 @@ mi_switch(struct lwp *l)
 	 */
 	SYSCALL_TIME_WAKEUP(l);
 	KDASSERT(l->l_cpu == curcpu());
+	LOCKDEBUG_BARRIER(NULL, 1);
 
-	(void)splsched();
-	splx(oldspl);
 	return retval;
 }
 
