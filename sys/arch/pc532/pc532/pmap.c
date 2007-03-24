@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.81.14.2 2007/03/12 05:49:47 rmind Exp $	*/
+/*	$NetBSD: pmap.c,v 1.81.14.3 2007/03/24 14:54:54 yamt Exp $	*/
 
 /*
  *
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.81.14.2 2007/03/12 05:49:47 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.81.14.3 2007/03/24 14:54:54 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -660,16 +660,16 @@ pmap_bootstrap(vaddr_t kva_start)
 	 */
 
 	pool_init(&pmap_pmap_pool, sizeof(struct pmap), 0, 0, 0, "pmappl",
-		  &pool_allocator_nointr);
+	    &pool_allocator_nointr, IPL_NONE);
 
 	/*
 	 * initialize the PDE pool and cache.
 	 */
 
 	pool_init(&pmap_pdp_pool, PAGE_SIZE, 0, 0, 0, "pdppl",
-		  &pool_allocator_nointr);
+	    &pool_allocator_nointr, IPL_NONE);
 	pool_cache_init(&pmap_pdp_cache, &pmap_pdp_pool,
-			pmap_pdp_ctor, NULL, NULL);
+	    pmap_pdp_ctor, NULL, NULL);
 
 	/*
 	 * we must call uvm_page_physload() after we are done playing with

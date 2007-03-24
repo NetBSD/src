@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.shark.inc,v 1.6.26.1 2007/03/12 05:50:24 rmind Exp $
+#	$NetBSD: Makefile.shark.inc,v 1.6.26.2 2007/03/24 14:54:59 yamt Exp $
 
 MACHINE_ARCH=		arm
 CPPFLAGS+=		-D${MACHINE}
@@ -20,4 +20,7 @@ SYSTEM_LD_TAIL_EXTRA+=; \
 	echo \
 	 "${OBJCOPY} -O a.out-arm-netbsd -R .ident -R .arm.atpcs -R .comment $@ $@.aout"; \
 	${OBJCOPY} -O a.out-arm-netbsd -R .ident -R .arm.atpcs -R .comment $@ $@.aout
+
+KERNIMAGES=	netbsd netbsd.aout
+
 .endif

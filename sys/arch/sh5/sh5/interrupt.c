@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.10 2005/12/24 20:07:32 perry Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.10.26.1 2007/03/24 14:54:59 yamt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.10 2005/12/24 20:07:32 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.10.26.1 2007/03/24 14:54:59 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/pool.h>
@@ -137,7 +137,7 @@ sh5_intr_init(void (*int_enable)(void *, u_int, int, int),
 	int i;
 
 	pool_init(&intrhand_pool, INTRHAND_SIZE, SH5_CACHELINE_SIZE,
-	    0, 0, NULL, NULL);
+	    0, 0, NULL, NULL, IPL_NONE);
 
 	intr_enable = int_enable;
 	intr_disable = int_disable;

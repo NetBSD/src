@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_msg.c,v 1.48 2007/02/09 21:55:31 ad Exp $	*/
+/*	$NetBSD: sysv_msg.c,v 1.48.2.1 2007/03/24 14:56:05 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_msg.c,v 1.48 2007/02/09 21:55:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_msg.c,v 1.48.2.1 2007/03/24 14:56:05 yamt Exp $");
 
 #define SYSVMSG
 
@@ -311,7 +311,7 @@ msgctl1(struct lwp *l, int msqid, int cmd, struct msqid_ds *msqbuf)
 	case IPC_STAT:
 		if ((error = ipcperm(cred, &msqptr->msg_perm, IPC_R))) {
 			MSG_PRINTF(("requester doesn't have read access\n"));
-			return (error);
+			break;
 		}
 		memcpy(msqbuf, msqptr, sizeof(struct msqid_ds));
 		break;

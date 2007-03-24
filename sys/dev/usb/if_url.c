@@ -1,4 +1,4 @@
-/*	$NetBSD: if_url.c,v 1.24.4.1 2007/03/12 05:57:30 rmind Exp $	*/
+/*	$NetBSD: if_url.c,v 1.24.4.2 2007/03/24 14:55:49 yamt Exp $	*/
 /*
  * Copyright (c) 2001, 2002
  *     Shingo WATANABE <nabe@nabechan.org>.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.24.4.1 2007/03/12 05:57:30 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.24.4.2 2007/03/24 14:55:49 yamt Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -169,9 +169,6 @@ static const struct url_type {
 USB_MATCH(url)
 {
 	USB_MATCH_START(url, uaa);
-
-	if (uaa->iface != NULL)
-		return (UMATCH_NONE);
 
 	return (url_lookup(uaa->vendor, uaa->product) != NULL ?
 		UMATCH_VENDOR_PRODUCT : UMATCH_NONE);

@@ -1,4 +1,4 @@
-#	$NetBSD: files.x86,v 1.23.2.2 2007/03/12 05:51:45 rmind Exp $
+#	$NetBSD: files.x86,v 1.23.2.3 2007/03/24 14:55:05 yamt Exp $
 
 # options for MP configuration through the MP spec
 defflag opt_mpbios.h MPBIOS MPVERBOSE MPDEBUG MPBIOS_SCANPCI
@@ -9,6 +9,9 @@ defflag                 MTRR
 # PCI fixup options
 defflag opt_pcifixup.h	PCI_ADDR_FIXUP PCI_BUS_FIXUP
 			PCI_INTR_FIXUP PCI_INTR_FIXUP_FORCE
+
+# Pentium 4+ Thermal Monitor ODCM (aka On Demand Clock Modulation)
+defflag opt_intel_odcm.h 	INTEL_ONDEMAND_CLOCKMOD
 
 # AMD Powernow/Cool`n'Quiet Technology
 defflag opt_powernow_k8.h	POWERNOW_K8
@@ -31,6 +34,7 @@ file	arch/x86/x86/i8259.c
 file	arch/x86/x86/intr.c
 file	arch/x86/x86/ipi.c		multiprocessor
 file	arch/x86/x86/lock_machdep.c	lockdebug
+file	arch/x86/x86/msr_ipifuncs.c
 file	arch/x86/x86/mtrr_i686.c	mtrr
 file 	arch/x86/x86/patch.c
 file	arch/x86/x86/softintr.c
@@ -62,6 +66,8 @@ file	arch/x86/pci/pciide_machdep.c	pciide_common
 # Powernow common functions
 file	arch/x86/x86/powernow_k8.c	powernow_k8
 file	arch/x86/x86/powernow_common.c	powernow_k8 | powernow_k7
+
+file	arch/x86/x86/iclockmod.c	intel_ondemand_clockmod
 
 #IPMI device
 device ipmi : sysmon_envsys, sysmon_wdog

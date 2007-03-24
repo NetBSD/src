@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.44.6.2 2007/03/12 05:50:16 rmind Exp $	*/
+/*	$NetBSD: pmap.c,v 1.44.6.3 2007/03/24 14:54:59 yamt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.44.6.2 2007/03/12 05:50:16 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.44.6.3 2007/03/24 14:54:59 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kernel_ipt.h"
@@ -1156,7 +1156,7 @@ pmap_bootstrap(vaddr_t avail, paddr_t kseg0base, struct mem_region *mr)
 	pmap_kernel()->pm_asidgen = 0;
 
 	pool_init(&pmap_upvo_pool, sizeof(struct pvo_entry),
-	    0, 0, 0, "pmap_upvopl", &pmap_pool_uallocator);
+	    0, 0, 0, "pmap_upvopl", &pmap_pool_uallocator, IPL_NONE);
 
 	pool_setlowat(&pmap_upvo_pool, 252);
 }
@@ -1238,10 +1238,10 @@ pmap_init(void)
 	s = splvm();
 
 	pool_init(&pmap_pool, sizeof(struct pmap),
-	    sizeof(void *), 0, 0, "pmap_pl", NULL);
+	    sizeof(void *), 0, 0, "pmap_pl", NULL, IPL_NONE);
 
 	pool_init(&pmap_mpvo_pool, sizeof(struct pvo_entry),
-	    0, 0, 0, "pmap_mpvopl", NULL);
+	    0, 0, 0, "pmap_mpvopl", NULL, IPL_NONE);
 
 	pool_setlowat(&pmap_mpvo_pool, 1008);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pf_osfp.c,v 1.5 2005/12/11 12:24:25 christos Exp $	*/
+/*	$NetBSD: pf_osfp.c,v 1.5.26.1 2007/03/24 14:55:55 yamt Exp $	*/
 /*	$OpenBSD: pf_osfp.c,v 1.10 2004/04/09 19:30:41 frantzen Exp $ */
 
 /*
@@ -237,10 +237,17 @@ pf_osfp_match(struct pf_osfp_enlist *list, pf_osfp_t os)
 void
 pf_osfp_initialize(void)
 {
+#ifdef __NetBSD__
+	pool_init(&pf_osfp_entry_pl, sizeof(struct pf_osfp_entry), 0, 0, 0,
+	    "pfosfpen", &pool_allocator_nointr, IPL_NONE);
+	pool_init(&pf_osfp_pl, sizeof(struct pf_os_fingerprint), 0, 0, 0,
+	    "pfosfp", &pool_allocator_nointr, IPL_NONE);
+#else
 	pool_init(&pf_osfp_entry_pl, sizeof(struct pf_osfp_entry), 0, 0, 0,
 	    "pfosfpen", &pool_allocator_nointr);
 	pool_init(&pf_osfp_pl, sizeof(struct pf_os_fingerprint), 0, 0, 0,
 	    "pfosfp", &pool_allocator_nointr);
+#endif
 	SLIST_INIT(&pf_osfp_list);
 }
 

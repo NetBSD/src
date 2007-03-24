@@ -1,4 +1,4 @@
-/*	$NetBSD: if_re_cardbus.c,v 1.12 2006/11/18 16:03:53 tsutsui Exp $	*/
+/*	$NetBSD: if_re_cardbus.c,v 1.12.4.1 2007/03/24 14:55:20 yamt Exp $	*/
 
 /*
  * Copyright (c) 2004 Jonathan Stone
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_re_cardbus.c,v 1.12 2006/11/18 16:03:53 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_re_cardbus.c,v 1.12.4.1 2007/03/24 14:55:20 yamt Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -230,7 +230,6 @@ re_cardbus_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	re_cardbus_setup(csc);
 
-	sc->rtk_type = t->rtk_basetype;
 	sc->sc_dmat = ca->ca_dmat;
 	re_attach(sc);
 

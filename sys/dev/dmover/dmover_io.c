@@ -1,4 +1,4 @@
-/*	$NetBSD: dmover_io.c,v 1.25 2007/01/13 18:42:45 cube Exp $	*/
+/*	$NetBSD: dmover_io.c,v 1.25.2.1 2007/03/24 14:55:20 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dmover_io.c,v 1.25 2007/01/13 18:42:45 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dmover_io.c,v 1.25.2.1 2007/03/24 14:55:20 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/queue.h>
@@ -138,9 +138,9 @@ dmoverioattach(int count)
 {
 
 	pool_init(&dmio_state_pool, sizeof(struct dmio_state),
-	    0, 0, 0, "dmiostate", NULL);
+	    0, 0, 0, "dmiostate", NULL, IPL_SOFTCLOCK);
 	pool_init(&dmio_usrreq_state_pool, sizeof(struct dmio_usrreq_state),
-	    0, 0, 0, "dmiourstate", NULL);
+	    0, 0, 0, "dmiourstate", NULL, IPL_SOFTCLOCK);
 }
 
 /*

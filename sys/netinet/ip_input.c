@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.242.2.2 2007/03/12 05:59:37 rmind Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.242.2.3 2007/03/24 14:56:10 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.242.2.2 2007/03/12 05:59:37 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.242.2.3 2007/03/24 14:56:10 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_gateway.h"
@@ -334,8 +334,10 @@ do {									\
 
 #define	IPQ_UNLOCK()		ipq_unlock()
 
-POOL_INIT(inmulti_pool, sizeof(struct in_multi), 0, 0, 0, "inmltpl", NULL);
-POOL_INIT(ipqent_pool, sizeof(struct ipqent), 0, 0, 0, "ipqepl", NULL);
+POOL_INIT(inmulti_pool, sizeof(struct in_multi), 0, 0, 0, "inmltpl", NULL,
+    IPL_SOFTNET);
+POOL_INIT(ipqent_pool, sizeof(struct ipqent), 0, 0, 0, "ipqepl", NULL,
+    IPL_VM);
 
 #ifdef INET_CSUM_COUNTERS
 #include <sys/device.h>
@@ -2158,8 +2160,7 @@ sysctl_net_inet_ip_pmtudto(SYSCTLFN_ARGS)
 
 #ifdef GATEWAY
 /*
- * sysctl helper routine for net.inet.ip.maxflows.  apparently if
- * maxflows is even looked up, we "reap flows".
+ * sysctl helper routine for net.inet.ip.maxflows.
  */
 static int
 sysctl_net_inet_ip_maxflows(SYSCTLFN_ARGS)
@@ -2167,7 +2168,7 @@ sysctl_net_inet_ip_maxflows(SYSCTLFN_ARGS)
 	int s;
 
 	s = sysctl_lookup(SYSCTLFN_CALL(rnode));
-	if (s)
+	if (s || newp == NULL)
 		return (s);
 
 	s = splsoftnet();

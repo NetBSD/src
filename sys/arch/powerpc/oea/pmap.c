@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.43.4.2 2007/03/12 05:50:07 rmind Exp $	*/
+/*	$NetBSD: pmap.c,v 1.43.4.3 2007/03/24 14:54:56 yamt Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.43.4.2 2007/03/12 05:50:07 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.43.4.3 2007/03/24 14:54:56 yamt Exp $");
 
 #include "opt_ppcarch.h"
 #include "opt_altivec.h"
@@ -1166,7 +1166,7 @@ pmap_init(void)
 
 	pool_init(&pmap_mpvo_pool, sizeof(struct pvo_entry),
 	    sizeof(struct pvo_entry), 0, 0, "pmap_mpvopl",
-	    &pmap_pool_mallocator);
+	    &pmap_pool_mallocator, IPL_NONE);
 
 	pool_setlowat(&pmap_mpvo_pool, 1008);
 
@@ -3464,12 +3464,13 @@ pmap_bootstrap(paddr_t kernelstart, paddr_t kernelend)
 
 	pool_init(&pmap_upvo_pool, sizeof(struct pvo_entry),
 	    sizeof(struct pvo_entry), 0, 0, "pmap_upvopl",
-	    &pmap_pool_uallocator);
+	    &pmap_pool_uallocator, IPL_NONE);
 
 	pool_setlowat(&pmap_upvo_pool, 252);
 
 	pool_init(&pmap_pool, sizeof(struct pmap),
-	    sizeof(void *), 0, 0, "pmap_pl", &pmap_pool_uallocator);
+	    sizeof(void *), 0, 0, "pmap_pl", &pmap_pool_uallocator,
+	    IPL_NONE);
 
 #if defined(PMAP_NEED_MAPKERNEL)
 	{

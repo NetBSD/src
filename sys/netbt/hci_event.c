@@ -1,4 +1,4 @@
-/*	$NetBSD: hci_event.c,v 1.2.6.1 2007/03/12 05:59:34 rmind Exp $	*/
+/*	$NetBSD: hci_event.c,v 1.2.6.2 2007/03/24 14:56:09 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hci_event.c,v 1.2.6.1 2007/03/12 05:59:34 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hci_event.c,v 1.2.6.2 2007/03/24 14:56:09 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -344,7 +344,7 @@ hci_event_num_compl_pkts(struct hci_unit *unit, struct mbuf *m)
 				hci_sco_complete(link, num);
 			}
 		} else {
-			// XXX need to issue Read_Buffer_Size or Reset?
+			/* XXX need to issue Read_Buffer_Size or Reset? */
 			printf("%s: unknown handle %d! "
 				"(losing track of %d packet buffer%s)\n",
 				unit->hci_devname, handle,
@@ -725,7 +725,7 @@ hci_cmd_read_local_features(struct hci_unit *unit, struct mbuf *m)
 	if (rp.features[4] & HCI_LMP_EV5_PKT)
 		unit->hci_sco_mask |= HCI_PKT_EV5;
 
-	// XXX what do 2MBPS/3MBPS/3SLOT eSCO mean?
+	/* XXX what do 2MBPS/3MBPS/3SLOT eSCO mean? */
 
 	s = splraiseipl(unit->hci_ipl);
 	unit->hci_flags &= ~BTF_INIT_FEATURES;

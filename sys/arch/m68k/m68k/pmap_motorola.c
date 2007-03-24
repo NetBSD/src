@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.c,v 1.22.2.2 2007/03/12 05:48:54 rmind Exp $        */
+/*	$NetBSD: pmap_motorola.c,v 1.22.2.3 2007/03/24 14:54:47 yamt Exp $        */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -124,7 +124,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.22.2.2 2007/03/12 05:48:54 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.22.2.3 2007/03/24 14:54:47 yamt Exp $");
 
 #include "opt_compat_hpux.h"
 
@@ -498,7 +498,7 @@ pmap_init(void)
 	 * Initialize the pmap pools.
 	 */
 	pool_init(&pmap_pmap_pool, sizeof(struct pmap), 0, 0, 0, "pmappl",
-	    &pool_allocator_nointr);
+	    &pool_allocator_nointr, IPL_NONE);
 
 	/*
 	 * Now that this is done, mark the pages shared with the

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.55.2.8 2007/03/24 00:43:06 rmind Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.55.2.9 2007/03/24 14:56:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -208,7 +208,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.55.2.8 2007/03/24 00:43:06 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.55.2.9 2007/03/24 14:56:01 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -232,9 +232,9 @@ __KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.55.2.8 2007/03/24 00:43:06 rmind Exp 
 struct lwplist	alllwp;
 
 POOL_INIT(lwp_pool, sizeof(struct lwp), MIN_LWP_ALIGNMENT, 0, 0, "lwppl",
-    &pool_allocator_nointr);
+    &pool_allocator_nointr, IPL_NONE);
 POOL_INIT(lwp_uc_pool, sizeof(ucontext_t), 0, 0, 0, "lwpucpl",
-    &pool_allocator_nointr);
+    &pool_allocator_nointr, IPL_NONE);
 
 static specificdata_domain_t lwp_specificdata_domain;
 
@@ -267,8 +267,8 @@ lwp_suspend(struct lwp *curl, struct lwp *t)
 {
 	int error;
 
-	LOCK_ASSERT(mutex_owned(&t->l_proc->p_smutex));
-	LOCK_ASSERT(lwp_locked(t, NULL));
+	KASSERT(mutex_owned(&t->l_proc->p_smutex));
+	KASSERT(lwp_locked(t, NULL));
 
 	KASSERT(curl != t || curl->l_stat == LSONPROC);
 
@@ -343,8 +343,8 @@ void
 lwp_continue(struct lwp *l)
 {
 
-	LOCK_ASSERT(mutex_owned(&l->l_proc->p_smutex));
-	LOCK_ASSERT(lwp_locked(l, NULL));
+	KASSERT(mutex_owned(&l->l_proc->p_smutex));
+	KASSERT(lwp_locked(l, NULL));
 
 	DPRINTF(("lwp_continue of %d.%d (%s), state %d, wchan %p\n",
 	    l->l_proc->p_pid, l->l_lid, l->l_proc->p_comm, l->l_stat,
@@ -379,30 +379,18 @@ lwp_wait1(struct lwp *l, lwpid_t lid, lwpid_t *departed, int flags)
 	struct proc *p = l->l_proc;
 	struct lwp *l2;
 	int nfound, error;
+	lwpid_t curlid;
+	bool exiting;
 
 	DPRINTF(("lwp_wait1: %d.%d waiting for %d.\n",
 	    p->p_pid, l->l_lid, lid));
 
-	LOCK_ASSERT(mutex_owned(&p->p_smutex));
-
-	/*
-	 * We try to check for deadlock:
-	 *
-	 * 1) If all other LWPs are waiting for exits or suspended.
-	 * 2) If we are trying to wait on ourself.
-	 *
-	 * XXX we'd like to check for a cycle of waiting LWPs (specific LID
-	 * waits, not any-LWP waits) and detect that sort of deadlock, but
-	 * we don't have a good place to store the lwp that is being waited
-	 * for. wchan is already filled with &p->p_nlwps, and putting the
-	 * lwp address in there for deadlock tracing would require exiting
-	 * LWPs to call wakeup on both their own address and &p->p_nlwps, to
-	 * get threads sleeping on any LWP exiting.
-	 */
-	if (lid == l->l_lid)
-		return EDEADLK;
+	KASSERT(mutex_owned(&p->p_smutex));
 
 	p->p_nlwpwait++;
+	l->l_waitingfor = lid;
+	curlid = l->l_lid;
+	exiting = ((flags & LWPWAIT_EXITCONTROL) != 0);
 
 	for (;;) {
 		/*
@@ -426,7 +414,7 @@ lwp_wait1(struct lwp *l, lwpid_t lid, lwpid_t *departed, int flags)
 		 */
 		while ((l2 = p->p_zomblwp) != NULL) {
 			p->p_zomblwp = NULL;
-			lwp_free(l2, 0, 0);	/* releases proc mutex */
+			lwp_free(l2, false, false);/* releases proc mutex */
 			mutex_enter(&p->p_smutex);
 		}
 
@@ -436,11 +424,44 @@ lwp_wait1(struct lwp *l, lwpid_t lid, lwpid_t *departed, int flags)
 		 * but don't drain them here.
 		 */
 		nfound = 0;
+		error = 0;
 		LIST_FOREACH(l2, &p->p_lwps, l_sibling) {
-			if (l2 == l || (lid != 0 && l2->l_lid != lid))
+			/*
+			 * If a specific wait and the target is waiting on
+			 * us, then avoid deadlock.  This also traps LWPs
+			 * that try to wait on themselves.
+			 *
+			 * Note that this does not handle more complicated
+			 * cycles, like: t1 -> t2 -> t3 -> t1.  The process
+			 * can still be killed so it is not a major problem.
+			 */
+			if (l2->l_lid == lid && l2->l_waitingfor == curlid) {
+				error = EDEADLK;
+				break;
+			}
+			if (l2 == l)
 				continue;
 			if ((l2->l_prflag & LPR_DETACHED) != 0) {
-				nfound += ((flags & LWPWAIT_EXITCONTROL) != 0);
+				nfound += exiting;
+				continue;
+			}
+			if (lid != 0) {
+				if (l2->l_lid != lid)
+					continue;
+				/*
+				 * Mark this LWP as the first waiter, if there
+				 * is no other.
+				 */
+				if (l2->l_waiter == 0)
+					l2->l_waiter = curlid;
+			} else if (l2->l_waiter != 0) {
+				/*
+				 * It already has a waiter - so don't
+				 * collect it.  If the waiter doesn't
+				 * grab it we'll get another chance
+				 * later.
+				 */
+				nfound++;
 				continue;
 			}
 			nfound++;
@@ -449,33 +470,83 @@ lwp_wait1(struct lwp *l, lwpid_t lid, lwpid_t *departed, int flags)
 			if (l2->l_stat != LSZOMB)
 				continue;
 
+			/*
+			 * We're no longer waiting.  Reset the "first waiter"
+			 * pointer on the target, in case it was us.
+			 */
+			l->l_waitingfor = 0;
+			l2->l_waiter = 0;
+			p->p_nlwpwait--;
 			if (departed)
 				*departed = l2->l_lid;
-			lwp_free(l2, 0, 0);
+
+			/* lwp_free() releases the proc lock. */
+			lwp_free(l2, false, false);
 			mutex_enter(&p->p_smutex);
-			p->p_nlwpwait--;
 			return 0;
 		}
 
+		if (error != 0)
+			break;
 		if (nfound == 0) {
 			error = ESRCH;
 			break;
 		}
-		if ((flags & LWPWAIT_EXITCONTROL) != 0) {
+
+		/*
+		 * The kernel is careful to ensure that it can not deadlock
+		 * when exiting - just keep waiting.
+		 */
+		if (exiting) {
 			KASSERT(p->p_nlwps > 1);
 			cv_wait(&p->p_lwpcv, &p->p_smutex);
 			continue;
 		}
+
+		/*
+		 * If all other LWPs are waiting for exits or suspends
+		 * and the supply of zombies and potential zombies is
+		 * exhausted, then we are about to deadlock.
+		 *
+		 * If the process is exiting (and this LWP is not the one
+		 * that is coordinating the exit) then bail out now.
+		 */
 		if ((p->p_sflag & PS_WEXIT) != 0 ||
-		    p->p_nrlwps <= p->p_nlwpwait + p->p_ndlwps) {
+		    p->p_nrlwps + p->p_nzlwps - p->p_ndlwps <= p->p_nlwpwait) {
 			error = EDEADLK;
 			break;
 		}
+
+		/*
+		 * Sit around and wait for something to happen.  We'll be 
+		 * awoken if any of the conditions examined change: if an
+		 * LWP exits, is collected, or is detached.
+		 */
 		if ((error = cv_wait_sig(&p->p_lwpcv, &p->p_smutex)) != 0)
 			break;
 	}
 
+	/*
+	 * We didn't find any LWPs to collect, we may have received a 
+	 * signal, or some other condition has caused us to bail out.
+	 *
+	 * If waiting on a specific LWP, clear the waiters marker: some
+	 * other LWP may want it.  Then, kick all the remaining waiters
+	 * so that they can re-check for zombies and for deadlock.
+	 */
+	if (lid != 0) {
+		LIST_FOREACH(l2, &p->p_lwps, l_sibling) {
+			if (l2->l_lid == lid) {
+				if (l2->l_waiter == curlid)
+					l2->l_waiter = 0;
+				break;
+			}
+		}
+	}
 	p->p_nlwpwait--;
+	l->l_waitingfor = 0;
+	cv_broadcast(&p->p_lwpcv);
+
 	return error;
 }
 
@@ -501,7 +572,7 @@ newlwp(struct lwp *l1, struct proc *p2, vaddr_t uaddr, bool inmem,
 		mutex_enter(&p2->p_smutex);
 		if ((isfree = p2->p_zomblwp) != NULL) {
 			p2->p_zomblwp = NULL;
-			lwp_free(isfree, 1, 0);	/* releases proc mutex */
+			lwp_free(isfree, true, false);/* releases proc mutex */
 		} else
 			mutex_exit(&p2->p_smutex);
 	}
@@ -660,7 +731,7 @@ lwp_exit(struct lwp *l)
 	if ((l->l_prflag & LPR_DETACHED) != 0) {
 		while ((l2 = p->p_zomblwp) != NULL) {
 			p->p_zomblwp = NULL;
-			lwp_free(l2, 0, 0);	/* releases proc mutex */
+			lwp_free(l2, false, false);/* releases proc mutex */
 			mutex_enter(&p->p_smutex);
 		}
 		p->p_zomblwp = l;
@@ -733,7 +804,7 @@ lwp_exit_switchaway(struct lwp *l)
  * XXXLWP limits.
  */
 void
-lwp_free(struct lwp *l, int recycle, int last)
+lwp_free(struct lwp *l, bool recycle, bool last)
 {
 	struct proc *p = l->l_proc;
 	ksiginfoq_t kq;
@@ -753,24 +824,30 @@ lwp_free(struct lwp *l, int recycle, int last)
 		p->p_nzlwps--;
 		if ((l->l_prflag & LPR_DETACHED) != 0)
 			p->p_ndlwps--;
+
+		/*
+		 * Have any LWPs sleeping in lwp_wait() recheck for
+		 * deadlock.
+		 */
+		cv_broadcast(&p->p_lwpcv);
 		mutex_exit(&p->p_smutex);
+	}
 
 #ifdef MULTIPROCESSOR
-		/*
-		 * In the unlikely event that the LWP is still on the CPU,
-		 * then spin until it has switched away.  We need to release
-		 * all locks to avoid deadlock against interrupt handlers on
-		 * the target CPU.
-		 */
-		if (l->l_cpu->ci_curlwp == l) {
-			int count;
-			KERNEL_UNLOCK_ALL(curlwp, &count);
-			while (l->l_cpu->ci_curlwp == l)
-				SPINLOCK_BACKOFF_HOOK;
-			KERNEL_LOCK(count, curlwp);
-		}
-#endif
+	/*
+	 * In the unlikely event that the LWP is still on the CPU,
+	 * then spin until it has switched away.  We need to release
+	 * all locks to avoid deadlock against interrupt handlers on
+	 * the target CPU.
+	 */
+	if (l->l_cpu->ci_curlwp == l) {
+		int count;
+		KERNEL_UNLOCK_ALL(curlwp, &count);
+		while (l->l_cpu->ci_curlwp == l)
+			SPINLOCK_BACKOFF_HOOK;
+		KERNEL_LOCK(count, curlwp);
 	}
+#endif
 
 	/*
 	 * Destroy the LWP's remaining signal information.
@@ -825,7 +902,7 @@ proc_representative_lwp(struct proc *p, int *nrlwps, int locking)
 	int cnt;
 
 	if (locking) {
-		LOCK_ASSERT(mutex_owned(&p->p_smutex));
+		KASSERT(mutex_owned(&p->p_smutex));
 	}
 
 	/* Trivial case: only one LWP */
@@ -929,7 +1006,7 @@ lwp_find(struct proc *p, int id)
 {
 	struct lwp *l;
 
-	LOCK_ASSERT(mutex_owned(&p->p_smutex));
+	KASSERT(mutex_owned(&p->p_smutex));
 
 	LIST_FOREACH(l, &p->p_lwps, l_sibling) {
 		if (l->l_lid == id)
@@ -1031,7 +1108,7 @@ void
 lwp_setlock(struct lwp *l, kmutex_t *new)
 {
 
-	LOCK_ASSERT(mutex_owned(l->l_mutex));
+	KASSERT(mutex_owned(l->l_mutex));
 
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	mb_write();
@@ -1050,7 +1127,7 @@ lwp_unlock_to(struct lwp *l, kmutex_t *new)
 {
 	kmutex_t *old;
 
-	LOCK_ASSERT(mutex_owned(l->l_mutex));
+	KASSERT(mutex_owned(l->l_mutex));
 
 	old = l->l_mutex;
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
@@ -1073,7 +1150,7 @@ lwp_relock(struct lwp *l, kmutex_t *new)
 	kmutex_t *old;
 #endif
 
-	LOCK_ASSERT(mutex_owned(l->l_mutex));
+	KASSERT(mutex_owned(l->l_mutex));
 
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	old = l->l_mutex;
@@ -1184,7 +1261,7 @@ lwp_userret(struct lwp *l)
 void
 lwp_need_userret(struct lwp *l)
 {
-	LOCK_ASSERT(lwp_locked(l, NULL));
+	KASSERT(lwp_locked(l, NULL));
 
 	/*
 	 * Since the tests in lwp_userret() are done unlocked, make sure
@@ -1203,7 +1280,7 @@ void
 lwp_addref(struct lwp *l)
 {
 
-	LOCK_ASSERT(mutex_owned(&l->l_proc->p_smutex));
+	KASSERT(mutex_owned(&l->l_proc->p_smutex));
 	KASSERT(l->l_stat != LSZOMB);
 	KASSERT(l->l_refcnt != 0);
 
@@ -1233,7 +1310,7 @@ lwp_drainrefs(struct lwp *l)
 {
 	struct proc *p = l->l_proc;
 
-	LOCK_ASSERT(mutex_owned(&p->p_smutex));
+	KASSERT(mutex_owned(&p->p_smutex));
 	KASSERT(l->l_refcnt != 0);
 
 	l->l_refcnt--;

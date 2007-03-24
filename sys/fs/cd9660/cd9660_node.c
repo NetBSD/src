@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_node.c,v 1.13.26.1 2007/02/27 16:54:11 yamt Exp $	*/
+/*	$NetBSD: cd9660_node.c,v 1.13.26.2 2007/03/24 14:55:55 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_node.c,v 1.13.26.1 2007/02/27 16:54:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_node.c,v 1.13.26.2 2007/03/24 14:55:55 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,7 +75,7 @@ u_long idvhash;
 extern int prtactive;	/* 1 => print out reclaim of active vnodes */
 
 POOL_INIT(cd9660_node_pool, sizeof(struct iso_node), 0, 0, 0, "cd9660nopl",
-    &pool_allocator_nointr);
+    &pool_allocator_nointr, IPL_NONE);
 
 static u_int cd9660_chars2ui(u_char *, int);
 
@@ -88,7 +88,7 @@ cd9660_init()
 #ifdef _LKM
 	malloc_type_attach(M_ISOFSMNT);
 	pool_init(&cd9660_node_pool, sizeof(struct iso_node), 0, 0, 0,
-	    "cd9660nopl", &pool_allocator_nointr);
+	    "cd9660nopl", &pool_allocator_nointr, IPL_NONE);
 #endif
 	isohashtbl = hashinit(desiredvnodes, HASH_LIST, M_ISOFSMNT, M_WAITOK,
 	    &isohash);

@@ -1,4 +1,4 @@
-/*	$NetBSD: uep.c,v 1.7.4.1 2007/03/12 05:57:31 rmind Exp $	*/
+/*	$NetBSD: uep.c,v 1.7.4.2 2007/03/24 14:55:50 yamt Exp $	*/
 
 /*
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uep.c,v 1.7.4.1 2007/03/12 05:57:31 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uep.c,v 1.7.4.2 2007/03/24 14:55:50 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,9 +110,6 @@ USB_DECLARE_DRIVER(uep);
 USB_MATCH(uep)
 {
 	USB_MATCH_START(uep, uaa);
-
-	if (uaa->iface == NULL)
-		return UMATCH_NONE;
 
 	if ((uaa->vendor == USB_VENDOR_EGALAX) && (
 		(uaa->product == USB_PRODUCT_EGALAX_TPANEL)

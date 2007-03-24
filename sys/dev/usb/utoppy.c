@@ -1,4 +1,4 @@
-/*	$NetBSD: utoppy.c,v 1.8.4.1 2007/03/12 05:57:35 rmind Exp $	*/
+/*	$NetBSD: utoppy.c,v 1.8.4.2 2007/03/24 14:55:54 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: utoppy.c,v 1.8.4.1 2007/03/12 05:57:35 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: utoppy.c,v 1.8.4.2 2007/03/24 14:55:54 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -196,9 +196,6 @@ USB_MATCH(utoppy)
 {
 	USB_MATCH_START(utoppy, uaa);
 
-	if (uaa->iface == NULL)
-		return (UMATCH_NONE);
-
 	if (uaa->vendor == USB_VENDOR_TOPFIELD &&
 	    uaa->product == USB_PRODUCT_TOPFIELD_TF5000PVR)
 		return (UMATCH_VENDOR_PRODUCT);
@@ -210,6 +207,7 @@ USB_ATTACH(utoppy)
 {
 	USB_ATTACH_START(utoppy, sc, uaa);
 	usbd_device_handle dev = uaa->device;
+	usbd_interface_handle iface;
 	usb_endpoint_descriptor_t *ed;
 	char *devinfop;
 	u_int8_t epcount;
@@ -224,8 +222,14 @@ USB_ATTACH(utoppy)
 	sc->sc_refcnt = 0;
 	sc->sc_udev = dev;
 
+	if (usbd_set_config_index(dev, 0, 1)
+	    || usbd_device2interface_handle(dev, 0, &iface)) {
+		printf("%s: Configuration failed\n", USBDEVNAME(sc->sc_dev));
+		USB_ATTACH_ERROR_RETURN;
+	}
+
 	epcount = 0;
-	(void) usbd_endpoint_count(uaa->iface, &epcount);
+	(void) usbd_endpoint_count(iface, &epcount);
 	if (epcount != UTOPPY_NUMENDPOINTS) {
 		printf("%s: Expected %d endpoints, got %d\n",
 		    USBDEVNAME(sc->sc_dev), UTOPPY_NUMENDPOINTS, epcount);
@@ -236,7 +240,7 @@ USB_ATTACH(utoppy)
 	sc->sc_out = -1;
 
 	for (i = 0; i < epcount; i++) {
-		ed = usbd_interface2endpoint_descriptor(uaa->iface, i);
+		ed = usbd_interface2endpoint_descriptor(iface, i);
 		if (ed == NULL) {
 			printf("%s: couldn't get ep %d\n",
 			    USBDEVNAME(sc->sc_dev), i);
@@ -259,7 +263,7 @@ USB_ATTACH(utoppy)
 		USB_ATTACH_ERROR_RETURN;
 	}
 
-	sc->sc_iface = uaa->iface;
+	sc->sc_iface = iface;
 	sc->sc_udev = dev;
 
 	sc->sc_out_xfer = usbd_alloc_xfer(sc->sc_udev);

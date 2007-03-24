@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs_vfsops.c,v 1.7.2.1 2007/02/27 16:54:14 yamt Exp $	*/
+/*	$NetBSD: sysvbfs_vfsops.c,v 1.7.2.2 2007/03/24 14:55:59 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vfsops.c,v 1.7.2.1 2007/02/27 16:54:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vfsops.c,v 1.7.2.2 2007/03/24 14:55:59 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -70,7 +70,7 @@ __KERNEL_RCSID(0, "$NetBSD: sysvbfs_vfsops.c,v 1.7.2.1 2007/02/27 16:54:14 yamt 
 MALLOC_DEFINE(M_SYSVBFS_VFS, "sysvbfs vfs", "sysvbfs vfs structures");
 
 POOL_INIT(sysvbfs_node_pool, sizeof(struct sysvbfs_node), 0, 0, 0,
-    "sysvbfs_node_pool", &pool_allocator_nointr);
+    "sysvbfs_node_pool", &pool_allocator_nointr, IPL_NONE);
 
 int sysvbfs_mountfs(struct vnode *, struct mount *, struct lwp *);
 

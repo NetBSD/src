@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.2.8.1 2007/02/27 16:53:30 yamt Exp $
+#	$NetBSD: GENERIC,v 1.2.8.2 2007/03/24 14:55:08 yamt Exp $
 #
 # GENERIC machine description file
 #
@@ -45,7 +45,7 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 # File systems
 file-system	FFS		# UFS
 #file-system	EXT2FS		# second extended file system (linux)
-#file-system	LFS		# log-structured file system
+file-system	LFS		# log-structured file system
 file-system	MFS		# memory file system
 file-system	NFS		# Network File System client
 #file-system	NTFS		# Windows/NT file system (experimental)
@@ -239,7 +239,7 @@ pxaudc0 at pxaip?	# USB Device Controller
 
 # USB Hubs
 #uhub* at usb?
-#uhub* at uhub? port ? configuration ? interface ?
+#uhub* at uhub? port ?
 
 # USB HID device
 #uhidev* at uhub? port ? configuration ? interface ?
@@ -315,3 +315,4 @@ pseudo-device	ksyms			# /dev/ksyms
 # wscons pseudo-devices
 pseudo-device	wsmux			# mouse & keyboard multiplexor
 pseudo-device	wsfont
+pseudo-device   bpfilter                # Berkeley packet filter#

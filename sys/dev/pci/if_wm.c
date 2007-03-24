@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.131.4.2 2007/03/12 05:55:23 rmind Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.131.4.3 2007/03/24 14:55:31 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.131.4.2 2007/03/12 05:55:23 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.131.4.3 2007/03/24 14:55:31 yamt Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -1162,9 +1162,9 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 	 * Get some information about the EEPROM.
 	 */
 	if (sc->sc_type == WM_T_80003)
- 		sc->sc_flags |= WM_F_EEPROM_EERDEEWR |  WM_F_SWFW_SYNC;
+		sc->sc_flags |= WM_F_EEPROM_EERDEEWR |  WM_F_SWFW_SYNC;
 	else if (sc->sc_type == WM_T_82573)
- 		sc->sc_flags |= WM_F_EEPROM_EERDEEWR;
+		sc->sc_flags |= WM_F_EEPROM_EERDEEWR;
 	else if (sc->sc_type > WM_T_82544)
 		sc->sc_flags |= WM_F_EEPROM_HANDSHAKE;
 
@@ -4585,7 +4585,8 @@ wm_put_swsm_semaphore(struct wm_softc *sc)
 }
 
 static int
-wm_get_swfw_semaphore(struct wm_softc *sc, uint16_t mask) {
+wm_get_swfw_semaphore(struct wm_softc *sc, uint16_t mask)
+{
 	uint32_t swfw_sync;
 	uint32_t swmask = mask << SWFW_SOFT_SHIFT;
 	uint32_t fwmask = mask << SWFW_FIRM_SHIFT;
@@ -4614,7 +4615,8 @@ wm_get_swfw_semaphore(struct wm_softc *sc, uint16_t mask) {
 }
 
 static void
-wm_put_swfw_semaphore(struct wm_softc *sc, uint16_t mask) {
+wm_put_swfw_semaphore(struct wm_softc *sc, uint16_t mask)
+{
 	uint32_t swfw_sync;
 
 	if (sc->sc_flags & WM_F_EEPROM_SEMAPHORE) {

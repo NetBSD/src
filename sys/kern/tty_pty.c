@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.98.2.1 2007/03/12 05:58:44 rmind Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.98.2.2 2007/03/24 14:56:05 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.98.2.1 2007/03/12 05:58:44 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.98.2.2 2007/03/24 14:56:05 yamt Exp $");
 
 #include "opt_compat_sunos.h"
 #include "opt_ptm.h"
@@ -76,7 +76,7 @@ struct	pt_softc {
 
 static struct pt_softc **pt_softc = NULL;	/* pty array */
 static int maxptys = DEFAULT_MAXPTYS;	/* maximum number of ptys (sysctable) */
-struct simplelock pt_softc_mutex = SIMPLELOCK_INITIALIZER;
+kmutex_t pt_softc_mutex;
 int npty = 0;			/* for pstat -t */
 
 #define	PF_PKT		0x08		/* packet mode */
@@ -139,11 +139,11 @@ pty_isfree(int minor, int lock)
 {
 	struct pt_softc *pt = pt_softc[minor];
 	if (lock)
-		simple_lock(&pt_softc_mutex);
+		mutex_enter(&pt_softc_mutex);
 	minor = pt == NULL || pt->pt_tty == NULL ||
 	    pt->pt_tty->t_oproc == NULL;
 	if (lock)
-		simple_unlock(&pt_softc_mutex);
+		mutex_exit(&pt_softc_mutex);
 	return minor;
 }
 
@@ -193,13 +193,13 @@ pty_check(int ptn)
 		 * content to newly allocated, larger space; we also
 		 * need to be safe against pty_maxptys().
 		 */
-		simple_lock(&pt_softc_mutex);
+		mutex_enter(&pt_softc_mutex);
 
 		if (newnpty >= maxptys) {
 			/* limit cut away beneath us... */
 			newnpty = maxptys;
 			if (ptn >= newnpty) {
-				simple_unlock(&pt_softc_mutex);
+				mutex_exit(&pt_softc_mutex);
 				free(newpt, M_DEVBUF);
 				goto limit_reached;
 			}
@@ -220,7 +220,7 @@ pty_check(int ptn)
 			oldpt = newpt;
 		}
 
-		simple_unlock(&pt_softc_mutex);
+		mutex_exit(&pt_softc_mutex);
 		free(oldpt, M_DEVBUF);
 	}
 
@@ -236,7 +236,7 @@ pty_check(int ptn)
 
 	 	pti->pt_tty = ttymalloc();
 
-		simple_lock(&pt_softc_mutex);
+		mutex_enter(&pt_softc_mutex);
 
 		/*
 		 * Check the entry again - it might have been
@@ -250,7 +250,7 @@ pty_check(int ptn)
 			free(pti, M_DEVBUF);
 		}
 
-		simple_unlock(&pt_softc_mutex);
+		mutex_exit(&pt_softc_mutex);
 	}
 
 	return (0);
@@ -271,7 +271,7 @@ pty_maxptys(newmax, set)
 	 * We have to grab the pt_softc lock, so that we would pick correct
 	 * value of npty (might be modified in pty_check()).
 	 */
-	simple_lock(&pt_softc_mutex);
+	mutex_enter(&pt_softc_mutex);
 
 	/*
 	 * The value cannot be set to value lower than the highest pty
@@ -282,7 +282,7 @@ pty_maxptys(newmax, set)
 	else
 		newmax = 0;
 
-	simple_unlock(&pt_softc_mutex);
+	mutex_exit(&pt_softc_mutex);
 
 	return newmax;
 }
@@ -294,6 +294,9 @@ void
 ptyattach(n)
 	int n;
 {
+
+	mutex_init(&pt_softc_mutex, MUTEX_DEFAULT, IPL_NONE);
+
 	/* maybe should allow 0 => none? */
 	if (n <= 1)
 		n = DEFAULT_NPTYS;

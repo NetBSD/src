@@ -1,4 +1,4 @@
-/*      $NetBSD: xen_shm_machdep.c,v 1.21 2007/01/20 22:01:06 bouyer Exp $      */
+/*      $NetBSD: xen_shm_machdep.c,v 1.21.2.1 2007/03/24 14:55:07 yamt Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -99,7 +99,7 @@ xen_shm_init()
 {
 	SIMPLEQ_INIT(&xen_shm_callbacks);
 	pool_init(&xen_shm_callback_pool, sizeof(struct xen_shm_callback_entry),
-	    0, 0, 0, "xshmc", NULL);
+	    0, 0, 0, "xshmc", NULL, IPL_VM);
 	/* ensure we'll always get items */
 	if (pool_prime(&xen_shm_callback_pool,
 	    PAGE_SIZE / sizeof(struct xen_shm_callback_entry)) != 0) {

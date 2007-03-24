@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cdce.c,v 1.12.4.1 2007/03/12 05:57:29 rmind Exp $ */
+/*	$NetBSD: if_cdce.c,v 1.12.4.2 2007/03/24 14:55:48 yamt Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.12.4.1 2007/03/12 05:57:29 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.12.4.2 2007/03/24 14:55:48 yamt Exp $");
 #include "bpfilter.h"
 
 #include <sys/param.h>
@@ -128,20 +128,12 @@ USB_DECLARE_DRIVER(cdce);
 
 USB_MATCH(cdce)
 {
-	USB_MATCH_START(cdce, uaa);
-	usb_interface_descriptor_t *id;
-
-	if (uaa->iface == NULL)
-		return (UMATCH_NONE);
-
-	id = usbd_get_interface_descriptor(uaa->iface);
-	if (id == NULL)
-		return (UMATCH_NONE);
+	USB_IFMATCH_START(cdce, uaa);
 
 	if (cdce_lookup(uaa->vendor, uaa->product) != NULL)
 		return (UMATCH_VENDOR_PRODUCT);
 
-	if (id->bInterfaceClass == UICLASS_CDC && id->bInterfaceSubClass ==
+	if (uaa->class == UICLASS_CDC && uaa->subclass ==
 	    UISUBCLASS_ETHERNET_NETWORKING_CONTROL_MODEL)
 		return (UMATCH_IFACECLASS_GENERIC);
 
@@ -150,7 +142,7 @@ USB_MATCH(cdce)
 
 USB_ATTACH(cdce)
 {
-	USB_ATTACH_START(cdce, sc, uaa);
+	USB_IFATTACH_START(cdce, sc, uaa);
 	char				 *devinfop;
 	int				 s;
 	struct ifnet			*ifp;

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.260.2.2 2007/03/12 05:59:38 rmind Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.260.2.3 2007/03/24 14:56:10 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -152,7 +152,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.260.2.2 2007/03/12 05:59:38 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.260.2.3 2007/03/24 14:56:10 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -393,7 +393,7 @@ struct mowner tcp_reass_mowner = MOWNER_INIT("tcp", "reass");
 #endif /* defined(MBUFTRACE) */
 
 static POOL_INIT(tcpipqent_pool, sizeof(struct ipqent), 0, 0, 0, "tcpipqepl",
-    NULL);
+    NULL, IPL_VM);
 
 struct ipqent *
 tcpipqent_alloc()
@@ -3221,7 +3221,8 @@ do {									\
 		pool_put(&syn_cache_pool, (sc));			\
 } while (/*CONSTCOND*/0)
 
-POOL_INIT(syn_cache_pool, sizeof(struct syn_cache), 0, 0, 0, "synpl", NULL);
+POOL_INIT(syn_cache_pool, sizeof(struct syn_cache), 0, 0, 0, "synpl", NULL,
+    IPL_SOFTNET);
 
 /*
  * We don't estimate RTT with SYNs, so each packet starts with the default

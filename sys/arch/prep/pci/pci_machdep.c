@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.28 2006/09/06 22:32:56 garbled Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.28.8.1 2007/03/24 14:54:57 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.28 2006/09/06 22:32:56 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.28.8.1 2007/03/24 14:54:57 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -136,14 +136,15 @@ prep_pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 	prop_dictionary_t dict, devsub;
 	prop_object_t pinsub;
 	prop_number_t pbus;
-	int busno, bus, pin, line, swiz, dev;
+	int busno, bus, pin, line, swiz, dev, origdev, i;
 	char key[20];
 
 	pin = pa->pa_intrpin;
 	line = pa->pa_intrline;
 	bus = busno = pa->pa_bus;
 	swiz = pa->pa_intrswiz;
-	dev = pa->pa_device;
+	origdev = dev = pa->pa_device;
+	i = 0;
 
 	pbi = SIMPLEQ_FIRST(&prep_pct->pc_pbi);
 	while (busno--)
@@ -151,7 +152,11 @@ prep_pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 	KASSERT(pbi != NULL);
 
 	dict = prop_dictionary_get(pbi->pbi_properties, "prep-pci-intrmap");
-	if (dict == NULL) {
+
+	if (dict != NULL)
+		i = prop_dictionary_count(dict);
+
+	if (dict == NULL || i == 0) {
 		/* We have a non-PReP bus.  now it gets hard */
 		pbus = prop_dictionary_get(pbi->pbi_properties,
 		    "prep-pcibus-parent");
@@ -168,8 +173,9 @@ prep_pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 			pbi = SIMPLEQ_NEXT(pbi, next);
 		KASSERT(pbi != NULL);
 
-		/* set the pin to the rawpin */
-		pin = pa->pa_rawintrpin;
+		/* swizzle the pin */
+		pin = ((pin + origdev - 1) & 3) + 1;
+
 		/* now we have the pbi, ask for dict again */
 		dict = prop_dictionary_get(pbi->pbi_properties,
 		    "prep-pci-intrmap");
@@ -312,6 +318,10 @@ prep_pci_conf_hook(pci_chipset_tag_t pct, int bus, int dev, int func,
 	if (PCI_VENDOR(id) == PCI_VENDOR_INTEL &&
 	    PCI_PRODUCT(id) == PCI_PRODUCT_INTEL_PCEB)
 		return 0;
+
+	if (PCI_VENDOR(id) == PCI_VENDOR_MOT &&
+	    PCI_PRODUCT(id) == PCI_PRODUCT_MOT_RAVEN)
+		return (PCI_CONF_ALL & ~PCI_CONF_MAP_MEM);
 
 	/* NOTE, all device specific stuff must be above this line */
 	/* don't do this on the primary host bridge */

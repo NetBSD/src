@@ -1,4 +1,4 @@
-/*	$NetBSD: slide.c,v 1.16 2007/02/09 21:55:27 ad Exp $	*/
+/*	$NetBSD: slide.c,v 1.16.2.1 2007/03/24 14:55:33 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: slide.c,v 1.16 2007/02/09 21:55:27 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: slide.c,v 1.16.2.1 2007/03/24 14:55:33 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -168,6 +168,10 @@ sl82c105_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	sc->sc_wdcdev.sc_atac.atac_nchannels = PCIIDE_NUM_CHANNELS;
 
 	idecr = pci_conf_read(sc->sc_pc, sc->sc_tag, SYMPH_IDECSR);
+#ifdef PCIIDE_SLIDE_SETIRQA
+        idecr |= IDECR_IDE_IRQA;
+        pci_conf_write(sc->sc_pc, sc->sc_tag, SYMPH_IDECSR, idecr);
+#endif
 
 	interface = PCI_INTERFACE(pa->pa_class);
 

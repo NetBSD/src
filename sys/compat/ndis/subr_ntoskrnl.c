@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sys/compat/ndis/subr_ntoskrnl.c,v 1.43.2.5 2005/03/31 04:24:36 wpaul Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: subr_ntoskrnl.c,v 1.7 2007/01/29 01:52:44 hubertf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_ntoskrnl.c,v 1.7.2.1 2007/03/24 14:55:13 yamt Exp $");
 #endif
 
 #ifdef __FreeBSD__
@@ -274,7 +274,8 @@ ntoskrnl_libinit()
 	mdl_zone = uma_zcreate("Windows MDL", MDL_ZONE_SIZE,
 	    NULL, NULL, NULL, NULL, UMA_ALIGN_PTR, 0);
 #else
-	pool_init(&mdl_pool, MDL_ZONE_SIZE, 0, 0, 0, "Windows MDL", NULL);
+	pool_init(&mdl_pool, MDL_ZONE_SIZE, 0, 0, 0, "winmdl", NULL,
+	    IPL_VM);
 #endif
 
 	return(0);

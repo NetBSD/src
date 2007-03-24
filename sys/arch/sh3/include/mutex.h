@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.3.2.2 2007/03/12 05:50:13 rmind Exp $	*/
+/*	$NetBSD: mutex.h,v 1.3.2.3 2007/03/24 14:54:58 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -68,8 +68,8 @@ struct kmutex {
 #define	mtx_ipl			u.s.mtxs_ipl
 #define	mtx_lock		u.s.mtxs_lock
 
-#undef	__HAVE_MUTEX_STUBS
 #define	__HAVE_SIMPLE_MUTEXES		1
+#define	__HAVE_MUTEX_STUBS		1
 
 /*
  * MUTEX_RECEIVE: no memory barrier required; we're synchronizing against

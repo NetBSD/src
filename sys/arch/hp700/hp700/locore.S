@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.16.2.2 2007/03/23 21:45:17 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.16.2.3 2007/03/24 14:54:41 yamt Exp $	*/
 
 /*	$OpenBSD: locore.S,v 1.46 2001/09/20 18:33:03 mickey Exp $	*/
 
@@ -681,7 +681,7 @@ $hp700_inew_descend:
 $hp700_inew_unused:
 	addib,>= -1, %arg2, $hp700_inew_loop
 	nop
-	b	$hp700_inew_done
+	b,n	$hp700_inew_done
 EXIT(hp700_intr_ipending_new)
 
 /*
