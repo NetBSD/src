@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_rwlock.c,v 1.17 2007/03/05 23:56:18 ad Exp $ */
+/*	$NetBSD: pthread_rwlock.c,v 1.18 2007/03/24 18:52:00 ad Exp $ */
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_rwlock.c,v 1.17 2007/03/05 23:56:18 ad Exp $");
+__RCSID("$NetBSD: pthread_rwlock.c,v 1.18 2007/03/24 18:52:00 ad Exp $");
 
 #include <errno.h>
 
@@ -118,7 +118,7 @@ pthread_rwlock_rdlock(pthread_rwlock_t *rwlock)
 		self->pt_sleeponq = 1;
 		self->pt_sleepobj = &rwlock->ptr_rblocked;
 		(void)pthread__park(self, &rwlock->ptr_interlock,
-		    &rwlock->ptr_rblocked, NULL, 0);
+		    &rwlock->ptr_rblocked, NULL, 0, &rwlock->ptr_rblocked);
 	}
 	
 	rwlock->ptr_nreaders++;
@@ -191,7 +191,7 @@ pthread_rwlock_wrlock(pthread_rwlock_t *rwlock)
 		self->pt_sleeponq = 1;
 		self->pt_sleepobj = &rwlock->ptr_wblocked;
 		(void)pthread__park(self, &rwlock->ptr_interlock,
-		    &rwlock->ptr_wblocked, NULL, 0);
+		    &rwlock->ptr_wblocked, NULL, 0, &rwlock->ptr_wblocked);
 	}
 
 	rwlock->ptr_writer = self;
@@ -272,7 +272,8 @@ pthread_rwlock_timedrdlock(pthread_rwlock_t *rwlock,
 		self->pt_sleeponq = 1;
 		self->pt_sleepobj = &rwlock->ptr_rblocked;
 		retval = pthread__park(self, &rwlock->ptr_interlock,
-		    &rwlock->ptr_rblocked, abs_timeout, 0);
+		    &rwlock->ptr_rblocked, abs_timeout, 0,
+		    &rwlock->ptr_rblocked);
 	}
 
 	/* One last chance to get the lock, in case it was released between
@@ -333,7 +334,8 @@ pthread_rwlock_timedwrlock(pthread_rwlock_t *rwlock,
 		self->pt_sleeponq = 1;
 		self->pt_sleepobj = &rwlock->ptr_wblocked;
 		retval = pthread__park(self, &rwlock->ptr_interlock,
-		    &rwlock->ptr_wblocked, abs_timeout, 0);
+		    &rwlock->ptr_wblocked, abs_timeout, 0,
+		    &rwlock->ptr_wblocked);
 	}
 
 	if ((rwlock->ptr_nreaders == 0) && (rwlock->ptr_writer == NULL)) {

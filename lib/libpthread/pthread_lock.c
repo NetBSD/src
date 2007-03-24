@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_lock.c,v 1.19 2007/03/05 23:30:17 ad Exp $	*/
+/*	$NetBSD: pthread_lock.c,v 1.20 2007/03/24 18:52:00 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_lock.c,v 1.19 2007/03/05 23:30:17 ad Exp $");
+__RCSID("$NetBSD: pthread_lock.c,v 1.20 2007/03/24 18:52:00 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/lock.h>
@@ -64,76 +64,49 @@ __RCSID("$NetBSD: pthread_lock.c,v 1.19 2007/03/05 23:30:17 ad Exp $");
 #endif
 
 extern int pthread__nspins;
+static int pthread__atomic;
 
 RAS_DECL(pthread__lock);
 
-static void
-pthread__ras_simple_lock_init(__cpu_simple_lock_t *alp)
+void
+pthread__simple_lock_init(__cpu_simple_lock_t *alp)
 {
+
+	if (pthread__atomic) {
+		__cpu_simple_lock_init(alp);
+		return;
+	}
 
 	*alp = __SIMPLELOCK_UNLOCKED;
 }
 
-static int
-pthread__ras_simple_lock_try(__cpu_simple_lock_t *alp)
+int
+pthread__simple_lock_try(__cpu_simple_lock_t *alp)
 {
 	__cpu_simple_lock_t old;
+
+	if (pthread__atomic)
+		return __cpu_simple_lock_try(alp);
 
 	RAS_START(pthread__lock);
 	old = *alp;
 	*alp = __SIMPLELOCK_LOCKED;
 	RAS_END(pthread__lock);
 
-	return (old == __SIMPLELOCK_UNLOCKED);
+	return old == __SIMPLELOCK_UNLOCKED;
 }
 
-static void
-pthread__ras_simple_unlock(__cpu_simple_lock_t *alp)
+inline void
+pthread__simple_unlock(__cpu_simple_lock_t *alp)
 {
+
+	if (pthread__atomic) {
+		__cpu_simple_unlock(alp);
+		return;
+	}
 
 	*alp = __SIMPLELOCK_UNLOCKED;
 }
-
-static const struct pthread_lock_ops pthread__lock_ops_ras = {
-	pthread__ras_simple_lock_init,
-	pthread__ras_simple_lock_try,
-	pthread__ras_simple_unlock,
-};
-
-static void
-pthread__atomic_simple_lock_init(__cpu_simple_lock_t *alp)
-{
-
-	__cpu_simple_lock_init(alp);
-}
-
-static int
-pthread__atomic_simple_lock_try(__cpu_simple_lock_t *alp)
-{
-
-	return (__cpu_simple_lock_try(alp));
-}
-
-static void
-pthread__atomic_simple_unlock(__cpu_simple_lock_t *alp)
-{
-
-	__cpu_simple_unlock(alp);
-}
-
-static const struct pthread_lock_ops pthread__lock_ops_atomic = {
-	pthread__atomic_simple_lock_init,
-	pthread__atomic_simple_lock_try,
-	pthread__atomic_simple_unlock,
-};
-
-/*
- * We default to pointing to the RAS primitives; we might need to use
- * locks early, but before main() starts.  This is safe, since no other
- * threads will be active for the process, so atomicity will not be
- * required.
- */
-const struct pthread_lock_ops *pthread__lock_ops = &pthread__lock_ops_ras;
 
 /*
  * Initialize the locking primitives.  On uniprocessors, we always
@@ -143,14 +116,17 @@ const struct pthread_lock_ops *pthread__lock_ops = &pthread__lock_ops_ras;
 void
 pthread__lockprim_init(int ncpu)
 {
- 
-	if (ncpu == 1 && rasctl(RAS_ADDR(pthread__lock),
-	    RAS_SIZE(pthread__lock), RAS_INSTALL) == 0) {
-		pthread__lock_ops = &pthread__lock_ops_ras;
+
+	if (ncpu != 1) {
+		pthread__atomic = 1;
 		return;
 	}
 
-	pthread__lock_ops = &pthread__lock_ops_atomic;
+	if (rasctl(RAS_ADDR(pthread__lock), RAS_SIZE(pthread__lock),
+	    RAS_INSTALL) != 0) {
+	    	pthread__atomic = 1;
+	    	return;
+	}
 }
 
 void

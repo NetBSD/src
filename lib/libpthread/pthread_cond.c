@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_cond.c,v 1.29 2007/03/21 19:08:18 ad Exp $	*/
+/*	$NetBSD: pthread_cond.c,v 1.30 2007/03/24 18:52:00 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_cond.c,v 1.29 2007/03/21 19:08:18 ad Exp $");
+__RCSID("$NetBSD: pthread_cond.c,v 1.30 2007/03/24 18:52:00 ad Exp $");
 
 #include <errno.h>
 #include <sys/time.h>
@@ -135,7 +135,7 @@ pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex)
 	self->pt_sleepobj = &cond->ptc_waiters;
 	pthread_mutex_unlock(mutex);
 	(void)pthread__park(self, &cond->ptc_lock, &cond->ptc_waiters,
-	    NULL, 1);
+	    NULL, 1, &mutex->ptm_blocked);
 	if (PTQ_EMPTY(&cond->ptc_waiters))
 		cond->ptc_mutex = NULL;
 	pthread_spinunlock(self, &cond->ptc_lock);
@@ -194,7 +194,7 @@ pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex,
 	self->pt_sleepobj = &cond->ptc_waiters;
 	pthread_mutex_unlock(mutex);
 	retval = pthread__park(self, &cond->ptc_lock, &cond->ptc_waiters,
-	    abstime, 1);
+	    abstime, 1, &mutex->ptm_blocked);
 	if (PTQ_EMPTY(&cond->ptc_waiters))
 		cond->ptc_mutex = NULL;
 	pthread_spinunlock(self, &cond->ptc_lock);
