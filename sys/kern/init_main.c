@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.294.2.5 2007/03/24 11:36:02 yamt Exp $	*/
+/*	$NetBSD: init_main.c,v 1.294.2.6 2007/03/24 12:07:23 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.294.2.5 2007/03/24 11:36:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.294.2.6 2007/03/24 12:07:23 yamt Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_kcont.h"
@@ -198,7 +198,7 @@ int	boothowto;
 int	cold = 1;			/* still working on startup */
 struct timeval boottime;	        /* time at system startup - will only follow settime deltas */
 time_t	rootfstime;			/* recorded root fs time, if known */
-int	ncpu =  1;			/* number of CPUs configured, assume 1 */
+int	ncpu = 0;			/* number of CPUs configured, assume 1 */
 
 volatile int start_init_exec;		/* semaphore for start_init() */
 
@@ -244,10 +244,6 @@ main(void)
 	extern struct pdevinit pdevinit[];
 #ifdef NVNODE_IMPLICIT
 	int usevnodes;
-#endif
-#ifdef MULTIPROCESSOR
-	CPU_INFO_ITERATOR cii;
-	struct cpu_info *ci;
 #endif
 
 	/*
@@ -597,12 +593,6 @@ main(void)
 #if defined(MULTIPROCESSOR)
 	/* Boot the secondary processors. */
 	cpu_boot_secondary_processors();
-
-	/* Count the number of running CPUs. */
-	for (CPU_INFO_FOREACH(cii, ci)) {
-		ncpu++;
-	}
-	ncpu--;
 #endif
 
 	/* Initialize exec structures */
