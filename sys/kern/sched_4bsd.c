@@ -1,4 +1,4 @@
-/*	$NetBSD: sched_4bsd.c,v 1.1.2.20 2007/03/24 11:36:02 yamt Exp $	*/
+/*	$NetBSD: sched_4bsd.c,v 1.1.2.21 2007/03/24 15:11:20 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.1.2.20 2007/03/24 11:36:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.1.2.21 2007/03/24 15:11:20 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -408,7 +408,7 @@ schedcpu(void *arg)
 	}
 	mutex_exit(&proclist_mutex);
 	uvm_meter();
-	wakeup((caddr_t)&lbolt);
+	wakeup(&lbolt);
 	callout_schedule(&schedcpu_ch, hz);
 }
 
