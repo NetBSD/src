@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.99 2007/03/23 14:24:22 liamjfoy Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.100 2007/03/24 00:27:58 liamjfoy Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.99 2007/03/23 14:24:22 liamjfoy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.100 2007/03/24 00:27:58 liamjfoy Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -1616,7 +1616,7 @@ sysctl_net_inet_ip6_maxflows(SYSCTLFN_ARGS)
         int s;
   
         s = sysctl_lookup(SYSCTLFN_CALL(rnode));
-        if (s)
+        if (s || newp == NULL)
                 return (s);
  
         s = splsoftnet();
