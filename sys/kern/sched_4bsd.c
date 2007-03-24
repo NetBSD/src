@@ -1,4 +1,4 @@
-/*	$NetBSD: sched_4bsd.c,v 1.1.2.18 2007/03/23 17:20:24 yamt Exp $	*/
+/*	$NetBSD: sched_4bsd.c,v 1.1.2.19 2007/03/24 00:43:08 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.1.2.18 2007/03/23 17:20:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.1.2.19 2007/03/24 00:43:08 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -127,7 +127,12 @@ static void resetprocpriority(struct proc *);
 
 struct callout schedcpu_ch = CALLOUT_INITIALIZER_SETFUNC(schedcpu, NULL);
 static unsigned int schedcpu_ticks;
-static int rrticks; /* number of hardclock ticks per sched_tick() */
+
+/* The global scheduler state */
+kmutex_t sched_mutex;
+
+/* Number of hardclock ticks per sched_tick() */
+int rrticks;
 
 /*
  * Force switch among equal priority processes every 100ms.
@@ -512,7 +517,7 @@ runqueue_enqueue(runqueue_t *rq, struct lwp *l)
 	subqueue_t *sq;
 	const int whichq = lwp_eprio(l) / PPQ;
 
-	LOCK_ASSERT(lwp_locked(l, &sched_mutex));
+	LOCK_ASSERT(lwp_locked(l, l->l_cpu->ci_schedstate.spc_mutex));
 
 	runqueue_check(rq, whichq, NULL);
 	rq->rq_bitmap |= RQMASK(whichq);
@@ -527,7 +532,7 @@ runqueue_dequeue(runqueue_t *rq, struct lwp *l)
 	subqueue_t *sq;
 	const int whichq = lwp_eprio(l) / PPQ;
 
-	LOCK_ASSERT(lwp_locked(l, &sched_mutex));
+	LOCK_ASSERT(lwp_locked(l, l->l_cpu->ci_schedstate.spc_mutex));
 
 	runqueue_check(rq, whichq, l);
 	KASSERT((rq->rq_bitmap & RQMASK(whichq)) != 0);
@@ -543,8 +548,6 @@ runqueue_nextlwp(runqueue_t *rq)
 {
 	const uint32_t bitmap = rq->rq_bitmap;
 	int whichq;
-
-	LOCK_ASSERT(lwp_locked(l, &sched_mutex));
 
 	if (bitmap == 0) {
 		return NULL;
@@ -597,9 +600,21 @@ runqueue_print(const runqueue_t *rq, void (*pr)(const char *, ...))
 void
 sched_rqinit()
 {
+#ifdef MULTIPROCESSOR
+	struct cpu_info *ci;
+	CPU_INFO_ITERATOR cii;
+#endif
 
 	runqueue_init(&global_queue);
 	mutex_init(&sched_mutex, MUTEX_SPIN, IPL_SCHED);
+#ifdef MULTIPROCESSOR
+	for (CPU_INFO_FOREACH(cii, ci))
+		ci->ci_schedstate.spc_mutex = &sched_mutex;
+#else
+	curcpu()->ci_schedstate.spc_mutex = &sched_mutex;
+#endif
+	/* Initialize the lock pointer for lwp0 */
+	lwp0.l_mutex = &sched_mutex;
 }
 
 void
