@@ -1,4 +1,4 @@
-/*	$NetBSD: sched_4bsd.c,v 1.1.2.21 2007/03/24 15:11:20 yamt Exp $	*/
+/*	$NetBSD: sched_4bsd.c,v 1.1.2.22 2007/03/24 16:50:26 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.1.2.21 2007/03/24 15:11:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.1.2.22 2007/03/24 16:50:26 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -774,9 +774,9 @@ sched_dequeue(struct lwp *l)
 }
 
 struct lwp *
-sched_nextlwp(struct lwp *l)
+sched_nextlwp()
 {
-	
+
 	return runqueue_nextlwp(&global_queue);
 }
 
