@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_mutex.c,v 1.27 2007/03/20 23:33:10 ad Exp $	*/
+/*	$NetBSD: pthread_mutex.c,v 1.28 2007/03/24 18:52:00 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_mutex.c,v 1.27 2007/03/20 23:33:10 ad Exp $");
+__RCSID("$NetBSD: pthread_mutex.c,v 1.28 2007/03/24 18:52:00 ad Exp $");
 
 #include <errno.h>
 #include <limits.h>
@@ -267,7 +267,7 @@ pthread_mutex_lock_slow(pthread_t self, pthread_mutex_t *mutex)
 			self->pt_sleeponq = 1;
 			self->pt_sleepobj = &mutex->ptm_blocked;
 			(void)pthread__park(self, &mutex->ptm_interlock,
-			    &mutex->ptm_blocked, NULL, 0);
+			    &mutex->ptm_blocked, NULL, 0, &mutex->ptm_blocked);
 			pthread_spinunlock(self, &mutex->ptm_interlock);
 		} else {
 			PTQ_REMOVE(&mutex->ptm_blocked, self, pt_sleep);
