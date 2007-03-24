@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_turnstile.c,v 1.3.2.3 2007/03/24 14:56:04 yamt Exp $	*/
+/*	$NetBSD: kern_turnstile.c,v 1.3.2.4 2007/03/24 17:10:48 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.3.2.3 2007/03/24 14:56:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.3.2.4 2007/03/24 17:10:48 ad Exp $");
 
 #include "opt_lockdebug.h"
 #include "opt_multiprocessor.h"
@@ -115,7 +115,7 @@ turnstile_init(void)
 		mutex_init(&tc->tc_mutexstore, MUTEX_SPIN, IPL_SCHED);
 		tc->tc_mutex = &tc->tc_mutexstore;
 #else
-		tc->tc_mutex = curcpu()->ci_schedstate.spc_mutex;
+		tc->tc_mutex = lwp0.l_mutex;
 #endif
 	}
 
