@@ -1,4 +1,4 @@
-/*	$NetBSD: sched_4bsd.c,v 1.1.2.19 2007/03/24 00:43:08 rmind Exp $	*/
+/*	$NetBSD: sched_4bsd.c,v 1.1.2.20 2007/03/24 11:36:02 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.1.2.19 2007/03/24 00:43:08 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.1.2.20 2007/03/24 11:36:02 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -600,21 +600,18 @@ runqueue_print(const runqueue_t *rq, void (*pr)(const char *, ...))
 void
 sched_rqinit()
 {
-#ifdef MULTIPROCESSOR
-	struct cpu_info *ci;
-	CPU_INFO_ITERATOR cii;
-#endif
 
 	runqueue_init(&global_queue);
 	mutex_init(&sched_mutex, MUTEX_SPIN, IPL_SCHED);
-#ifdef MULTIPROCESSOR
-	for (CPU_INFO_FOREACH(cii, ci))
-		ci->ci_schedstate.spc_mutex = &sched_mutex;
-#else
-	curcpu()->ci_schedstate.spc_mutex = &sched_mutex;
-#endif
 	/* Initialize the lock pointer for lwp0 */
 	lwp0.l_mutex = &sched_mutex;
+}
+
+void
+sched_cpuattach(struct cpu_info *ci)
+{
+
+	ci->ci_schedstate.spc_mutex = &sched_mutex;
 }
 
 void

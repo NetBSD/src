@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.13.2.2 2007/03/12 05:46:16 rmind Exp $ */
+/* $NetBSD: cpu.c,v 1.13.2.3 2007/03/24 11:36:01 yamt Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.13.2.2 2007/03/12 05:46:16 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.13.2.3 2007/03/24 11:36:01 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -87,7 +87,6 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.13.2.2 2007/03/12 05:46:16 rmind Exp $");
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
-#include <sys/idle.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -286,25 +285,21 @@ cpu_attach(parent, self, aux)
 
 	simple_lock_init(&ci->ci_slock);
 
-#if defined(MULTIPROCESSOR)
-	/*
-	 * primary cpu has its idle lwp already allocated by init_main.
-	 */
-
 	if (caa->cpu_role == CPU_ROLE_AP) {
+#if defined(MULTIPROCESSOR)
 		int error;
 
-		error = create_idle_lwp(ci);
+		error = mi_cpu_attach(ci);
 		if (error != 0) {
 			aprint_normal("\n");
-			aprint_error("%s: unable to allocate idle lwp\n",
-			    sc->sc_dev.dv_xname);
+			aprint_error("%s: mi_cpu_attach failed with %d\n",
+			    sc->sc_dev.dv_xname, error);
 			return;
 		}
+#endif
 	} else {
 		KASSERT(ci->ci_data.cpu_idlelwp != NULL);
 	}
-#endif
 
 	/* further PCB init done later. */
 

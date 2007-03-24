@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.73.26.1 2007/03/20 12:07:11 yamt Exp $ */
+/* $NetBSD: cpu.c,v 1.73.26.2 2007/03/24 11:36:00 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.73.26.1 2007/03/20 12:07:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.73.26.2 2007/03/24 11:36:00 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -74,7 +74,6 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.73.26.1 2007/03/20 12:07:11 yamt Exp $");
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/idle.h>
 #include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/user.h>
@@ -329,13 +328,10 @@ recognized:
 #if defined(MULTIPROCESSOR)
 		int error;
 
-		/*
-		 * Allocate idle lwp.
-		 */
-		error = create_idle_lwp(ci);
+		error = mi_cpu_attach(ci);
 		if (error != 0) {
-			aprint_error("%s: unable to allocate idle lwp\n",
-			    sc->sc_dev.dv_xname);
+			aprint_error("%s: mi_cpu_attach failed with %d\n",
+			    sc->sc_dev.dv_xname, error);
 			return;
 		}
 
