@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.29 2007/03/25 12:46:42 degroote Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.30 2007/03/25 22:06:33 degroote Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $	*/
 /*	$KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.29 2007/03/25 12:46:42 degroote Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.30 2007/03/25 22:06:33 degroote Exp $");
 
 /*
  * IPsec controller part.
@@ -169,7 +169,7 @@ SYSCTL_INT(_net_inet_ipsec, IPSECCTL_DEF_AH_TRANSLEV, ah_trans_deflev,
 SYSCTL_INT(_net_inet_ipsec, IPSECCTL_DEF_AH_NETLEV, ah_net_deflev,
 	CTLFLAG_RW, &ip4_ah_net_deflev,	0, "");
 SYSCTL_INT(_net_inet_ipsec, IPSECCTL_AH_CLEARTOS,
-	ah_cleartos, CTLFLAG_RW,	&ah_cleartos,	0, "");
+	ah_cleartos, CTLFLAG_RW,	&ip4_ah_cleartos,	0, "");
 SYSCTL_INT(_net_inet_ipsec, IPSECCTL_AH_OFFSETMASK,
 	ah_offsetmask, CTLFLAG_RW,	&ip4_ah_offsetmask,	0, "");
 SYSCTL_INT(_net_inet_ipsec, IPSECCTL_DFBIT,
