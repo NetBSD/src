@@ -1,4 +1,4 @@
-/*	$NetBSD: est.c,v 1.36 2007/03/25 02:27:16 xtraeme Exp $	*/
+/*	$NetBSD: est.c,v 1.37 2007/03/25 17:12:32 mlelstv Exp $	*/
 /*
  * Copyright (c) 2003 Michael Eriksson.
  * All rights reserved.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: est.c,v 1.36 2007/03/25 02:27:16 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: est.c,v 1.37 2007/03/25 17:12:32 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -753,6 +753,16 @@ static const uint16_t pm90_n770[] = {
 	ID16( 800,  988, BUS133),
 };
 
+/* Intel Pentium M processor 780 2.26 GHz */ 
+static const uint16_t pm90_n780[] = {
+	ID16(2267, 1388, BUS133),
+	ID16(1867, 1292, BUS133),
+	ID16(1600, 1212, BUS133),
+	ID16(1333, 1148, BUS133),
+	ID16(1067, 1068, BUS133), 
+	ID16( 800,  988, BUS133),
+}; 
+
 struct fqlist {
 	int vendor;
 	unsigned bus_clk;
@@ -829,7 +839,8 @@ static const struct fqlist est_cpus[] = {
 	ENTRY(INTEL, BUS100, pm90_n765b),
 	ENTRY(INTEL, BUS100, pm90_n765c),
 	ENTRY(INTEL, BUS100, pm90_n765e),
-	ENTRY(INTEL, BUS133, pm90_n770)
+	ENTRY(INTEL, BUS133, pm90_n770),
+	ENTRY(INTEL, BUS133, pm90_n780)
 };
 
 #define MSR2FREQINC(msr)	(((int) (msr) >> 8) & 0xff)
