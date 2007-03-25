@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.873 2007/03/17 06:44:31 dyoung Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.874 2007/03/25 06:42:20 isaki Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.873 2007/03/17 06:43:52 dyoung Exp
+ *	NetBSD: pcidevs,v 1.874 2007/03/25 06:41:30 isaki Exp
  */
 
 /*
@@ -1158,6 +1158,7 @@
 #define	PCI_PRODUCT_ATI_RADEON_RV200_QX	0x5158		/* Radeon 7500 QX */
 #define	PCI_PRODUCT_ATI_RADEON_RV100_QY	0x5159		/* Radeon 7000/VE QY */
 #define	PCI_PRODUCT_ATI_RADEON_RV100_QZ	0x515a		/* Radeon 7000/VE QZ */
+#define	PCI_PRODUCT_ATI_ES1000	0x515e		/* ES1000 */
 #define	PCI_PRODUCT_ATI_RADEON_9100_S	0x516d		/* Radeon 9100 Series Secondary */
 #define	PCI_PRODUCT_ATI_RAGEGLPCI	0x5245		/* Rage 128 GL PCI */
 #define	PCI_PRODUCT_ATI_RAGEGLAGP	0x5246		/* Rage 128 GL AGP 2x */
