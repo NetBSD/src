@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_flow.c,v 1.42 2007/03/12 18:18:35 ad Exp $	*/
+/*	$NetBSD: ip_flow.c,v 1.43 2007/03/25 20:12:20 liamjfoy Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.42 2007/03/12 18:18:35 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.43 2007/03/25 20:12:20 liamjfoy Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,9 +72,9 @@ POOL_INIT(ipflow_pool, sizeof(struct ipflow), 0, 0, 0, "ipflowpl", NULL,
 LIST_HEAD(ipflowhead, ipflow);
 
 #define	IPFLOW_TIMER		(5 * PR_SLOWHZ)
-#define	IPFLOW_HASHSIZE		(1 << IPFLOW_HASHBITS)
+#define	IPFLOW_DEFAULT_HASHSIZE	(1 << IPFLOW_HASHBITS)
 
-static struct ipflowhead ipflowtable[IPFLOW_HASHSIZE];
+static struct ipflowhead *ipflowtable = NULL;
 static struct ipflowhead ipflowlist;
 static int ipflow_inuse;
 
@@ -94,6 +94,7 @@ do { \
 #define	IPFLOW_MAX		256
 #endif
 int ip_maxflows = IPFLOW_MAX;
+int ip_hashsize = IPFLOW_DEFAULT_HASHSIZE;
 
 static unsigned
 ipflow_hash(struct in_addr dst,	struct in_addr src, unsigned tos)
@@ -102,7 +103,7 @@ ipflow_hash(struct in_addr dst,	struct in_addr src, unsigned tos)
 	int idx;
 	for (idx = 0; idx < 32; idx += IPFLOW_HASHBITS)
 		hash += (dst.s_addr >> (32 - idx)) + (src.s_addr >> idx);
-	return hash & (IPFLOW_HASHSIZE-1);
+	return hash & (ip_hashsize-1);
 }
 
 static struct ipflow *
@@ -122,14 +123,29 @@ ipflow_lookup(const struct ip *ip)
 	return ipf;
 }
 
-void
-ipflow_init(void)
+int
+ipflow_init(int table_size)
 {
+	struct ipflowhead *new_table;
 	int i;
 
+	new_table = (struct ipflowhead *)malloc(sizeof(struct ipflowhead) *
+	    table_size, M_RTABLE, M_NOWAIT);
+
+	if (new_table == NULL)
+		return 1;
+
+	if (ipflowtable != NULL)
+		free(ipflowtable, M_RTABLE);
+
+	ipflowtable = new_table;
+	ip_hashsize = table_size;
+
 	LIST_INIT(&ipflowlist);
-	for (i = 0; i < IPFLOW_HASHSIZE; i++)
+	for (i = 0; i < ip_hashsize; i++)
 		LIST_INIT(&ipflowtable[i]);
+
+	return 0;
 }
 
 int
@@ -428,16 +444,22 @@ ipflow_create(const struct route *ro, struct mbuf *m)
 	splx(s);
 }
 
-void
-ipflow_invalidate_all(void)
+int
+ipflow_invalidate_all(int new_size)
 {
 	struct ipflow *ipf, *next_ipf;
-	int s;
+	int s, error;
 
+	error = 0;
 	s = splnet();
 	for (ipf = LIST_FIRST(&ipflowlist); ipf != NULL; ipf = next_ipf) {
 		next_ipf = LIST_NEXT(ipf, ipf_list);
 		ipflow_free(ipf);
 	}
+
+	if (new_size)
+		error = ipflow_init(new_size);
 	splx(s);
+
+	return error;
 }
