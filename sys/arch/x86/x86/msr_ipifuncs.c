@@ -1,4 +1,4 @@
-/* $NetBSD: msr_ipifuncs.c,v 1.7 2007/03/25 02:41:53 xtraeme Exp $ */
+/* $NetBSD: msr_ipifuncs.c,v 1.8 2007/03/25 02:44:29 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msr_ipifuncs.c,v 1.7 2007/03/25 02:41:53 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msr_ipifuncs.c,v 1.8 2007/03/25 02:44:29 xtraeme Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -73,7 +73,7 @@ static volatile int msr_read;
 void
 msr_write_ipi(struct cpu_info *ci)
 {
-	uint64_t msr;
+	uint64_t msr = 0;
 
 	/* Read the MSR requested and apply the mask if defined. */
 	if (msr_read)
