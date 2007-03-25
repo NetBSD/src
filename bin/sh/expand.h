@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.h,v 1.16 2004/07/13 15:05:59 seb Exp $	*/
+/*	$NetBSD: expand.h,v 1.17 2007/03/25 06:29:27 apb Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -34,6 +34,8 @@
  *	@(#)expand.h	8.2 (Berkeley) 5/4/95
  */
 
+#include <inttypes.h>
+
 struct strlist {
 	struct strlist *next;
 	char *text;
@@ -66,7 +68,7 @@ int casematch(union node *, char *);
 int wordexpcmd(int, char **);
 
 /* From arith.y */
-int arith(const char *);
+intmax_t arith(const char *);
 int expcmd(int , char **);
 void arith_lex_reset(void);
 int yylex(void);
