@@ -1,4 +1,4 @@
-.\"	$NetBSD: drm.4,v 1.1 2007/03/25 09:11:56 wiz Exp $
+.\"	$NetBSD: drm.4,v 1.2 2007/03/25 23:19:24 jmcneill Exp $
 .\"
 .\" Copyright (c) 2007 Thomas Klausner
 .\" All rights reserved.
@@ -91,7 +91,7 @@ Mesa should be compiled for the netbsd-dri target, patch available at
 The device node must exist:
 .Bd -literal -offset indent
 mkdir -p /dev/dri
-mknod /dev/dri/card0 c 34 0
+mknod /dev/dri/card0 c 180 0
 chgrp wheel /dev/dri/card0
 chmod 0660 /dev/dri/card0
 .Ed
