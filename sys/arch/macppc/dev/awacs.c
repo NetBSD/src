@@ -1,4 +1,4 @@
-/*	$NetBSD: awacs.c,v 1.26 2007/02/28 04:21:51 thorpej Exp $	*/
+/*	$NetBSD: awacs.c,v 1.27 2007/03/25 13:45:58 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awacs.c,v 1.26 2007/02/28 04:21:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awacs.c,v 1.27 2007/03/25 13:45:58 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -103,6 +103,7 @@ struct awacs_softc {
 int awacs_match(struct device *, struct cfdata *, void *);
 void awacs_attach(struct device *, struct device *, void *);
 int awacs_intr(void *);
+int awacs_ctrl_intr(void *);
 
 void awacs_close(void *);
 int awacs_query_encoding(void *, struct audio_encoding *);
@@ -213,6 +214,9 @@ static const struct audio_format awacs_formats[AWACS_NFORMATS] = {
 #define AWACS_RATE_7350		0x00000700
 #define AWACS_RATE_MASK		0x00000700
 
+#define AWACS_PORTCHG_MASK	0x00001000
+#define AWACS_PORTCHG_INTEN	0x00004000
+
 /* codec control */
 #define AWACS_CODEC_ADDR0	0x00000000
 #define AWACS_CODEC_ADDR1	0x00001000
@@ -319,7 +323,7 @@ awacs_attach(struct device *parent, struct device *self, void *aux)
 		cirq_type = oirq_type = iirq_type = IST_LEVEL;
 	}
 
-	intr_establish(cirq, cirq_type, IPL_AUDIO, awacs_intr, sc);
+	intr_establish(cirq, cirq_type, IPL_AUDIO, awacs_ctrl_intr, sc);
 	intr_establish(oirq, oirq_type, IPL_AUDIO, awacs_intr, sc);
 	intr_establish(iirq, iirq_type, IPL_AUDIO, awacs_intr, sc);
 
@@ -346,9 +350,6 @@ awacs_attach(struct device *parent, struct device *self, void *aux)
 	if (sc->sc_screamer)
 		printf(" Screamer");
 
-
-	printf(": irq %d,%d,%d\n", cirq, oirq, iirq);
-
 	sc->spk_l = 0;
 	sc->spk_r = 0;
 	sc->hph_l = 0;
@@ -363,7 +364,7 @@ awacs_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	sc->sc_soundctl = AWACS_INPUT_SUBFRAME0 | AWACS_OUTPUT_SUBFRAME0 |
-		AWACS_RATE_44100;
+		AWACS_RATE_44100 | AWACS_PORTCHG_INTEN;
 	awacs_write_reg(sc, AWACS_SOUND_CTRL, sc->sc_soundctl);
 
 	sc->sc_codecctl0 = AWACS_CODEC_ADDR0 | AWACS_CODEC_EMSEL0;
@@ -411,6 +412,8 @@ awacs_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_codecctl0 &= ~AWACS_INPUT_MASK;
 	sc->sc_codecctl0 |= AWACS_INPUT_CD;
 	awacs_write_codec(sc, sc->sc_codecctl0);
+
+	printf(": irq %d,%d,%d\n", cirq, oirq, iirq);
 
 	/* Enable interrupts and looping mode. */
 	/* XXX ... */
@@ -531,6 +534,35 @@ awacs_intr(void *v)
 		}
 		cmd++;
 	}
+
+	return 1;
+}
+
+int
+awacs_ctrl_intr(void *v)
+{
+	struct awacs_softc *sc;
+	u_int ctrl;
+
+	sc = v;
+	ctrl = awacs_read_reg(sc, AWACS_SOUND_CTRL);
+	if (ctrl & AWACS_PORTCHG_MASK) {
+        	if (awacs_read_reg(sc, AWACS_CODEC_STATUS) & 0x8) {
+        	        sc->sc_output_mask = OUTPUT_HEADPHONES;
+        	        sc->sc_codecctl1 &= ~AWACS_MUTE_HEADPHONE;
+        	        sc->sc_codecctl1 |= AWACS_MUTE_SPEAKER;
+        	} else {
+        	        sc->sc_output_mask = OUTPUT_SPEAKER;
+        	        sc->sc_codecctl1 &= ~AWACS_MUTE_SPEAKER;
+        	        sc->sc_codecctl1 |= AWACS_MUTE_HEADPHONE;
+        	}
+		printf("%s: %s detected\n", sc->sc_dev.dv_xname,
+		    sc->sc_output_mask == OUTPUT_HEADPHONES
+		     ? "headphones" : "speaker");
+		awacs_write_codec(sc, sc->sc_codecctl1);
+	}
+
+	awacs_write_reg(sc, AWACS_SOUND_CTRL, ctrl);
 
 	return 1;
 }
