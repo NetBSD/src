@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.985 2007/03/25 09:11:55 wiz Exp $
+# $NetBSD: mi,v 1.986 2007/03/25 18:58:05 agc Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -795,6 +795,7 @@
 ./usr/share/man/cat4/dreamcast/mmem.0		man-sys-catman		.cat
 ./usr/share/man/cat4/dreamcast/mms.0		man-sys-catman		.cat
 ./usr/share/man/cat4/dreamcast/pvr.0		man-sys-catman		.cat
+./usr/share/man/cat4/drm.0			man-sys-catman		.cat
 ./usr/share/man/cat4/drum.0			man-sys-catman		.cat
 ./usr/share/man/cat4/dtide.0			man-sys-catman		.cat
 ./usr/share/man/cat4/dty.0			man-sys-catman		.cat
