@@ -1,4 +1,4 @@
-/*	$NetBSD: fdc.c,v 1.9 2007/03/09 21:02:30 jnemeth Exp $	*/
+/*	$NetBSD: fdc.c,v 1.10 2007/03/25 09:29:11 jnemeth Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -108,12 +108,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdc.c,v 1.9 2007/03/09 21:02:30 jnemeth Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdc.c,v 1.10 2007/03/25 09:29:11 jnemeth Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
 
 #include <sys/param.h>
+#include <sys/types.h>
 #include <sys/systm.h>
 #include <sys/callout.h>
 #include <sys/kernel.h>
@@ -1525,24 +1526,21 @@ fdc_c_hwintr(void *arg)
 		msr = bus_space_read_1(t, h, fdc->sc_reg_msr);
 
 		if ((msr & NE7_RQM) == 0)
-			/* That's all this round */
+			/* That's all this round. */
 			break;
 
 		if ((msr & NE7_NDM) == 0) {
+			/* Execution phase finished, get result. */
 			fdcresult(fdc);
 			fdc->sc_istatus = FDC_ISTATUS_DONE;
 			softintr_schedule(fdc->sc_sicookie);
-#ifdef FD_DEBUG
-			if (fdc_debug > 1)
-#ifdef SUN4
-				printf("fdc: overrun: tc = %d\n", fdc->sc_tc);
-#elif SUN4U
-				printf("fdc: overrun: msr = %x, tc = %d\n",
-				    msr, fdc->sc_tc);
-#endif
-#endif
 			break;
 		}
+
+		if (fdc->sc_tc == 0)
+			/* For some reason the controller wants to transfer
+			   more data then what we want to transfer. */
+			panic("fdc: overrun");
 
 		/* Another byte can be transferred */
 		if ((msr & NE7_DIO) != 0)
@@ -1554,10 +1552,7 @@ fdc_c_hwintr(void *arg)
 
 		fdc->sc_data++;
 		if (--fdc->sc_tc == 0) {
-			fdc->sc_istatus = FDC_ISTATUS_DONE;
 			FTC_FLIP;
-			fdcresult(fdc);
-			softintr_schedule(fdc->sc_sicookie);
 			break;
 		}
 	}
