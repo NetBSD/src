@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.422 2007/03/14 00:43:51 xtraeme Exp $
+#	$NetBSD: Makefile,v 1.423 2007/03/25 09:11:56 wiz Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/18/93
 
 MAN=	aac.4 ac97.4 acardide.4 aceride.4 acphy.4 adc.4 adt7467c.4 adv.4 \
@@ -15,7 +15,7 @@ MAN=	aac.4 ac97.4 acardide.4 aceride.4 acphy.4 adc.4 adt7467c.4 adv.4 \
 	clockctl.4 cltp.4 cmdide.4 cmpci.4 cms.4 cnw.4 \
 	com.4 crypto.4 cs80bus.4 cypide.4  geodeide.4 \
 	ddb.4 ddc.4 de.4 dge.4 dk.4 dmoverio.4 \
-	dmphy.4 dpt.4 dpti.4 drum.4 eap.4 ebus.4 edc.4 \
+	dmphy.4 dpt.4 dpti.4 drm.4 drum.4 eap.4 ebus.4 edc.4 \
 	elmc.4 emuxki.4 en.4 envsys.4 ep.4 esh.4 esis.4 \
 	esa.4 esiop.4 esl.4 esm.4 eso.4 etherip.4 exphy.4 fast_ipsec.4 fd.4 \
 	fpa.4 fms.4 fss.4 fxp.4 gem.4 gentbi.4 \
@@ -113,6 +113,17 @@ MAN+=	daic.4 isdntrc.4 isdntel.4 isdnbchan.4 ippp.4 irip.4 isdnctl.4 isdn.4 \
 
 # onewire bus and devices
 MAN+=	gpioow.4 onewire.4 owtemp.4
+
+# DRM devices
+MLINKS+=drm.4 i915drm.4
+MLINKS+=drm.4 mach64drm.4
+MLINKS+=drm.4 mgadrm.4
+MLINKS+=drm.4 r128drm.4
+MLINKS+=drm.4 radeondrm.4
+MLINKS+=drm.4 savagedrm.4
+MLINKS+=drm.4 sisdrm.4
+MLINKS+=drm.4 tdfxdrm.4
+MLINKS+=drm.4 viadrm.4
 
 MLINKS+=ata.4 atabus.4
 MLINKS+=audio.4 mixer.4
