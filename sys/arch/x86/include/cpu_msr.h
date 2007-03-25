@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_msr.h,v 1.3 2007/03/21 21:56:52 xtraeme Exp $ */
+/* $NetBSD: cpu_msr.h,v 1.4 2007/03/25 02:27:16 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -45,6 +45,7 @@
 #ifdef _KERNEL
 
 struct msr_cpu_broadcast {
+	int msr_read;
 	int msr_type;
 	uint64_t msr_value;
 	uint64_t msr_mask;
