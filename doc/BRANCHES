@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.168 2007/03/24 14:57:21 yamt Exp $
+#	$NetBSD: BRANCHES,v 1.169 2007/03/25 02:02:56 uwe Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -494,6 +494,7 @@ Notes:
 		  arm			[ Not yet ]
 		  macppc/powerpc	[ Not yet ]
 		  hppa			[ WIP ]
+		  sh3			[ Done, tested ]
 
 		How to adapt a port?
 
