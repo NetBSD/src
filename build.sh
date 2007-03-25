@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.163 2007/03/25 07:56:38 apb Exp $
+#	$NetBSD: build.sh,v 1.164 2007/03/25 12:36:01 apb Exp $
 #
 # Copyright (c) 2001-2005 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -809,7 +809,8 @@ sanitycheck()
 		if ${do_expertmode}; then
 			warning "PATH contains non-absolute components"
 		else
-			bomb "PATH must not contain non-absolute components"
+			bomb "PATH environment variable must not" \
+			     "contain non-absolute components"
 		fi
 		;;
 	esac
@@ -1016,7 +1017,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.163 2007/03/25 07:56:38 apb Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.164 2007/03/25 12:36:01 apb Exp $
 # with these arguments: ${_args}
 #
 EOF
