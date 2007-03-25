@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.85 2006/09/04 20:30:36 dsl Exp $
+.\"	$NetBSD: sh.1,v 1.86 2007/03/25 06:56:43 apb Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"	@(#)sh.1	8.6 (Berkeley) 5/4/95
 .\"
-.Dd September 4, 2006
+.Dd March 25, 2007
 .Os
 .Dt SH 1
 .Sh NAME
@@ -1064,6 +1064,19 @@ command substitution, and quote removal.
 .Pp
 Next, the shell treats this as an arithmetic expression and
 substitutes the value of the expression.
+.Pp
+Arithmetic expressions use a syntax similar to that
+of the C language, and are evaluated using the
+.Ql intmax_t
+data type (this is an extension to
+.Tn POSIX ,
+which requires only
+.Ql long
+arithmetic).
+Shell variables may be referenced by name inside an arithmetic
+expression, without needing a
+.Dq \&$
+sign.
 .Ss White Space Splitting (Field Splitting)
 After parameter expansion, command substitution, and
 arithmetic expansion the shell scans the results of
