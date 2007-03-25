@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: arith_lex.l,v 1.13 2005/03/21 22:37:09 dsl Exp $	*/
+/*	$NetBSD: arith_lex.l,v 1.14 2007/03/25 06:29:26 apb Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)arith_lex.l	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: arith_lex.l,v 1.13 2005/03/21 22:37:09 dsl Exp $");
+__RCSID("$NetBSD: arith_lex.l,v 1.14 2007/03/25 06:29:26 apb Exp $");
 #endif
 #endif /* not lint */
 
@@ -48,8 +48,8 @@ __RCSID("$NetBSD: arith_lex.l,v 1.13 2005/03/21 22:37:09 dsl Exp $");
 #include "expand.h"
 #include "var.h"
 
-extern int yylval;
-extern char *arith_buf, *arith_startbuf;
+extern intmax_t yylval;
+extern const char *arith_buf, *arith_startbuf;
 #undef YY_INPUT
 #define YY_INPUT(buf,result,max) \
 	result = (*buf = *arith_buf++) ? 1 : YY_NULL;
@@ -58,12 +58,12 @@ extern char *arith_buf, *arith_startbuf;
 
 %%
 [ \t\n]	{ ; }
-0x[0-9a-fA-F]+	{ yylval = strtol(yytext, 0, 0); return(ARITH_NUM); }
-0[0-7]*		{ yylval = strtol(yytext, 0, 0); return(ARITH_NUM); }
-[1-9][0-9]*	{ yylval = strtol(yytext, 0, 0); return(ARITH_NUM); }
+0x[0-9a-fA-F]+	{ yylval = strtoimax(yytext, 0, 0); return(ARITH_NUM); }
+0[0-7]*		{ yylval = strtoimax(yytext, 0, 0); return(ARITH_NUM); }
+[1-9][0-9]*	{ yylval = strtoimax(yytext, 0, 0); return(ARITH_NUM); }
 [A-Za-z_][A-Za-z_0-9]*	{ char *v = lookupvar(yytext);
 			if (v) {
-				yylval = strtol(v, &v, 0);
+				yylval = strtoimax(v, &v, 0);
 				if (*v == 0)
 					return ARITH_NUM;
 			}
