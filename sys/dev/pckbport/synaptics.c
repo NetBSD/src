@@ -1,4 +1,4 @@
-/*	$NetBSD: synaptics.c,v 1.14 2007/03/25 16:26:41 mlelstv Exp $	*/
+/*	$NetBSD: synaptics.c,v 1.15 2007/03/25 20:28:03 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 2005, Steve C. Woodford
@@ -733,7 +733,7 @@ pms_synaptics_passthrough(struct pms_softc *psc)
 		buttons = (psc->buttons & 0x1f) | ((psc->buttons >> 5) & 0x7);
 		s = spltty();
 		wsmouse_input(psc->sc_wsmousedev,
-			buttons, dx, dy, dz,
+			buttons, dx, dy, dz, 0,
 			WSMOUSE_INPUT_DELTA);
 		splx(s);
 	}
