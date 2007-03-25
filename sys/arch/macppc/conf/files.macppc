@@ -1,4 +1,4 @@
-#	$NetBSD: files.macppc,v 1.81 2007/03/25 23:21:45 macallan Exp $
+#	$NetBSD: files.macppc,v 1.82 2007/03/25 23:29:16 macallan Exp $
 #
 # macppc-specific configuration info
 
@@ -95,10 +95,9 @@ device ibmcpc: pcibus
 attach ibmcpc at mainbus
 file arch/macppc/pci/u3.c			ibmcpc
 
-device ofb: wsemuldisplaydev, rasops8, vcons, splash, drm
+device ofb: wsemuldisplaydev, rasops8, vcons, drm
 attach ofb at pci
 file arch/macppc/dev/ofb.c			ofb needs-flag
-defflag	opt_ofb.h	OFB_ENABLE_CACHE OFB_FAKE_VGA_FB
 
 # PCI-Host bridge chipsets
 device pchb: agpbus, agp_apple
@@ -171,7 +170,7 @@ attach smartbat at pmu_bus
 file arch/macppc/dev/smartbat.c			smartbat
 defflag opt_battery.h	SMARTBAT_DEBUG
 
-device adb {}: sysmon_envsys, sysmon_power, sysmon_taskq 
+device adb {} 
 attach adb at obio
 file arch/macppc/dev/adb.c			adb needs-flag
 file arch/macppc/dev/adb_direct.c		adb
