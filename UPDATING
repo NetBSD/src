@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.158 2007/03/10 00:10:15 dbj Exp $
+$NetBSD: UPDATING,v 1.159 2007/03/25 16:23:04 gdt Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -15,6 +15,15 @@ See also: BUILDING, build.sh, Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20070319:
+        src/lib/libc/Makefile revision 1.129 broke libc and ld.elf_so
+        on many platforms due to incorrect flags settings.  If you
+        updated and built after about 20070315, do "nbmake-$arch
+	cleandir" in src/lib/libc and src/libexec/ld.elf_so to force a
+	rebuild of object files that might have been built
+	incorrectly, and ensure that you have at least
+	src/lib/libc/Makefile 1.130.
 
 20070210: 
         src/sys/sys/{sa.h,savar.h} were removed.
