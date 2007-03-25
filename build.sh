@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.162 2007/02/19 14:20:11 briggs Exp $
+#	$NetBSD: build.sh,v 1.163 2007/03/25 07:56:38 apb Exp $
 #
 # Copyright (c) 2001-2005 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -67,6 +67,11 @@ ERRORMESSAGE
 statusmsg()
 {
 	${runcmd} echo "===> $@" | tee -a "${results}"
+}
+
+warning()
+{
+	statusmsg "Warning: $@"
 }
 
 # Find a program in the PATH
@@ -793,6 +798,23 @@ parseoptions()
 	export MAKEFLAGS MACHINE MACHINE_ARCH
 }
 
+sanitycheck()
+{
+	# If the PATH contains any non-absolute components (including,
+	# but not limited to, "." or ""), then complain.  This is fatal
+	# if expert mode is not in effect.
+	#
+	case ":${PATH}:/" in
+	*:[!/]*)
+		if ${do_expertmode}; then
+			warning "PATH contains non-absolute components"
+		else
+			bomb "PATH must not contain non-absolute components"
+		fi
+		;;
+	esac
+}
+
 rebuildmake()
 {
 	# Test make source file timestamps against installed ${toolprefix}make
@@ -994,7 +1016,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.162 2007/02/19 14:20:11 briggs Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.163 2007/03/25 07:56:38 apb Exp $
 # with these arguments: ${_args}
 #
 EOF
@@ -1141,6 +1163,8 @@ main()
 	initdefaults
 	_args=$@
 	parseoptions "$@"
+
+	sanitycheck
 
 	build_start=$(date)
 	statusmsg "${progname} command: $0 $@"
