@@ -1,4 +1,4 @@
-/*	$NetBSD: iclockmod.c,v 1.5 2007/03/21 06:36:43 xtraeme Exp $ */
+/*	$NetBSD: iclockmod.c,v 1.6 2007/03/25 02:27:16 xtraeme Exp $ */
 /*      $OpenBSD: p4tcc.c,v 1.13 2006/12/20 17:50:40 gwk Exp $ */
 
 /*
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iclockmod.c,v 1.5 2007/03/21 06:36:43 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iclockmod.c,v 1.6 2007/03/25 02:27:16 xtraeme Exp $");
 
 #include "opt_intel_odcm.h"
 
@@ -114,6 +114,7 @@ clockmod_setstate(int level)
 			break;
 	}
 
+	mcb.msr_read = true;
 	mcb.msr_type = MSR_THERM_CONTROL;
 	mcb.msr_mask = 0x1e;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: est.c,v 1.35 2007/03/21 06:36:43 xtraeme Exp $	*/
+/*	$NetBSD: est.c,v 1.36 2007/03/25 02:27:16 xtraeme Exp $	*/
 /*
  * Copyright (c) 2003 Michael Eriksson.
  * All rights reserved.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: est.c,v 1.35 2007/03/21 06:36:43 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: est.c,v 1.36 2007/03/25 02:27:16 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -884,6 +884,7 @@ est_sysctl_helper(SYSCTLFN_ARGS)
 			if (MSR2MHZ(est_fqlist->table[i], bus_clock) >= fq)
 				break;
 		fq = MSR2MHZ(est_fqlist->table[i], bus_clock);
+		mcb.msr_read = true;
 		mcb.msr_type = MSR_PERF_CTL;
 		mcb.msr_mask = 0xffffULL;
 		mcb.msr_value = est_fqlist->table[i];

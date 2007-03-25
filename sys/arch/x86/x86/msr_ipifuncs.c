@@ -1,4 +1,4 @@
-/* $NetBSD: msr_ipifuncs.c,v 1.5 2007/03/21 18:28:26 xtraeme Exp $ */
+/* $NetBSD: msr_ipifuncs.c,v 1.6 2007/03/25 02:27:16 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msr_ipifuncs.c,v 1.5 2007/03/21 18:28:26 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msr_ipifuncs.c,v 1.6 2007/03/25 02:27:16 xtraeme Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -63,6 +63,7 @@ static volatile uint64_t msr_setvalue;
 static volatile uint64_t msr_setmask;
 static volatile int msr_type;
 static volatile int msr_runcount;
+static volatile int msr_read;
 
 
 /*
@@ -75,12 +76,17 @@ msr_write_ipi(struct cpu_info *ci)
 	uint64_t msr;
 
 	/* Read the MSR requested and apply the mask if defined. */
-	msr = rdmsr(msr_type);
+	if (msr_read)
+		msr = rdmsr(msr_type);
+
 	if (msr_setmask)
 		msr &= ~msr_setmask;
 
 	/* Ok, assign value now.*/
-	msr |= msr_setvalue;
+	if (msr_read)
+		msr |= msr_setvalue;
+	else
+		msr = msr_setvalue;
 
 	/* Write it now */
 	wrmsr(msr_type, msr);
@@ -110,6 +116,7 @@ msr_cpu_broadcast(struct msr_cpu_broadcast *mcb)
 	msr_type = mcb->msr_type;
 	msr_setvalue = mcb->msr_value;
 	msr_setmask = mcb->msr_mask;
+	msr_read = msr->msr_read;
 
 	/* 
 	 * Issue a full memory barrier, to make sure the operations
