@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.77 2006/11/24 22:54:47 wiz Exp $	*/
+/*	$NetBSD: expand.c,v 1.78 2007/03/25 06:29:26 apb Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)expand.c	8.5 (Berkeley) 5/15/95";
 #else
-__RCSID("$NetBSD: expand.c,v 1.77 2006/11/24 22:54:47 wiz Exp $");
+__RCSID("$NetBSD: expand.c,v 1.78 2007/03/25 06:29:26 apb Exp $");
 #endif
 #endif /* not lint */
 
@@ -352,7 +352,8 @@ void
 expari(int flag)
 {
 	char *p, *start;
-	int result;
+	intmax_t result;
+	int adjustment;
 	int begoff;
 	int quotes = flag & (EXP_FULL | EXP_CASE);
 	int quoted;
@@ -369,10 +370,9 @@ expari(int flag)
 	 * have to rescan starting from the beginning since CTLESC
 	 * characters have to be processed left to right.
 	 */
-#if INT_MAX / 1000000000 >= 10 || INT_MIN / 1000000000 <= -10
-#error "integers with more than 10 digits are not supported"
-#endif
-	CHECKSTRSPACE(12 - 2, expdest);
+/* SPACE_NEEDED is enough for all digits, plus possible "-", plus 2 (why?) */
+#define SPACE_NEEDED ((sizeof(intmax_t) * CHAR_BIT + 2) / 3 + 1 + 2)
+	CHECKSTRSPACE(SPACE_NEEDED - 2, expdest);
 	USTPUTC('\0', expdest);
 	start = stackblock();
 	p = expdest - 1;
@@ -394,15 +394,15 @@ expari(int flag)
 	if (quotes)
 		rmescapes(p+2);
 	result = arith(p+2);
-	fmtstr(p, 12, "%d", result);
+	fmtstr(p, SPACE_NEEDED, "%"PRIdMAX, result);
 
 	while (*p++)
 		;
 
 	if (quoted == 0)
 		recordregion(begoff, p - 1 - start, 0);
-	result = expdest - p + 1;
-	STADJUST(-result, expdest);
+	adjustment = expdest - p + 1;
+	STADJUST(-adjustment, expdest);
 }
 
 
