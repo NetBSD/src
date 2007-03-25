@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_c.c,v 1.14.2.2 2007/03/24 14:54:58 yamt Exp $	*/
+/*	$NetBSD: locore_c.c,v 1.14.2.3 2007/03/25 01:59:02 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2002, 2007 The NetBSD Foundation, Inc.
@@ -111,10 +111,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locore_c.c,v 1.14.2.2 2007/03/24 14:54:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore_c.c,v 1.14.2.3 2007/03/25 01:59:02 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/cpu.h>
 #include <sys/user.h>
 #include <sys/sched.h>
 #include <sys/proc.h>
@@ -124,90 +125,35 @@ __KERNEL_RCSID(0, "$NetBSD: locore_c.c,v 1.14.2.2 2007/03/24 14:54:58 yamt Exp $
 #include <uvm/uvm_extern.h>
 
 #include <sh3/locore.h>
-#include <sh3/cpu.h>
 #include <sh3/pmap.h>
 #include <sh3/mmu_sh3.h>
 #include <sh3/mmu_sh4.h>
 
-void cpu_do_exit(struct lwp *) __attribute__((noreturn));
-
-struct lwp *cpu_switch_search(struct lwp *);
-struct lwp *cpu_switch_prepare(struct lwp *, struct lwp *);
-void idle(void);
+void cpu_switch_prepare(struct lwp *, struct lwp *);
 
 void (*__sh_switch_resume)(struct lwp *);
 int want_resched;
 
 
 /*
- * Switch away into oblivion.
+ * Called from cpu_switchto after olwp's state has been saved.
+ * Prepare context switch to nlwp.
  */
 void
-cpu_exit(struct lwp *l)
-{
-
-    (void)splsched();
-    sched_lock_idle();
-    cpu_do_exit(l);
-}
-
-
-/*
- * Prepare context switch from olwp to nlwp.
- * This code is shared by cpu_switch and cpu_switchto.
- */
-struct lwp *
 cpu_switch_prepare(struct lwp *olwp, struct lwp *nlwp)
 {
+	struct proc *p = nlwp->l_proc;
 
-	nlwp->l_stat = LSONPROC;
-	sched_unlock_idle();
+	curpcb = nlwp->l_md.md_pcb;
 
-	if (nlwp != olwp) {
-		struct proc *p = nlwp->l_proc;
+	/* Check for Restartable Atomic Sequences. */
+	if (!LIST_EMPTY(&p->p_raslist)) {
+		void *pc;
 
-		curpcb = nlwp->l_md.md_pcb;
-		pmap_activate(nlwp);
-
-		/* Check for Restartable Atomic Sequences. */
-		if (!LIST_EMPTY(&p->p_raslist)) {
-			void *pc;
-
-			pc = ras_lookup(p,
-				(void *)nlwp->l_md.md_regs->tf_spc);
-			if (pc != (void *) -1)
-				nlwp->l_md.md_regs->tf_spc = (int) pc;
-		}
+		pc = ras_lookup(p, (void *)nlwp->l_md.md_regs->tf_spc);
+		if (pc != (void *) -1)
+			nlwp->l_md.md_regs->tf_spc = (int) pc;
 	}
-
-	curlwp = nlwp;
-	return (nlwp);
-}
-
-
-/*
- * Find the highest priority lwp and prepare to switching to it.
- */
-struct lwp *
-cpu_switch_search(struct lwp *olwp)
-{
-	struct prochd *q;
-	struct lwp *l;
-
-	curlwp = NULL;
-
-	while (sched_whichqs == 0) {
-		sched_unlock_idle();
-		idle();
-		sched_lock_idle();
-	}
-
-	q = &sched_qs[ffs(sched_whichqs) - 1];
-	l = q->ph_link;
-	remrunqueue(l);
-	want_resched = 0;
-
-	return (cpu_switch_prepare(olwp, l));
 }
 
 
@@ -216,14 +162,10 @@ cpu_switch_search(struct lwp *olwp)
  * ready.  Separate function for profiling.
  */
 void
-idle(void)
+cpu_idle(void)
 {
 
-	spl0();
-	if (uvm.page_idle_zero)
-		uvm_pageidlezero();
 	__asm volatile("sleep");
-	splsched();
 }
 
 
