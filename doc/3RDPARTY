@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.516 2007/03/10 23:07:11 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.517 2007/03/25 09:55:04 wiz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -288,7 +288,7 @@ for GCC4:
 
 Package:	gdb
 Version:	5.3/6.4
-Current Vers:	6.4
+Current Vers:	6.6
 Maintainer:	FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/gdb/
 Home Page:	http://www.gnu.org/software/gdb/
@@ -669,7 +669,7 @@ and more.
 
 Package:	postfix
 Version:	2.3.7
-Current Vers:	2.3.7
+Current Vers:	2.3.8
 Maintainer:	Wietse Venema <wietse@porcupine.org>
 Archive Site:	ftp://postfix.cloud9.net/official/
 Home Page:	http://www.postfix.org/
