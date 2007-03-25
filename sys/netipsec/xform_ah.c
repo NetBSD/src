@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ah.c,v 1.16 2007/03/25 22:06:34 degroote Exp $	*/
+/*	$NetBSD: xform_ah.c,v 1.17 2007/03/25 22:11:18 degroote Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ah.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ah.c,v 1.63 2001/06/26 06:18:58 angelos Exp $ */
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.16 2007/03/25 22:06:34 degroote Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.17 2007/03/25 22:11:18 degroote Exp $");
 
 #include "opt_inet.h"
 #ifdef __FreeBSD__
@@ -294,6 +294,7 @@ ah_massage_headers(struct mbuf **m0, int proto, int skip, int alg, int out)
 			ip->ip_tos = 0;
 		ip->ip_ttl = 0;
 		ip->ip_sum = 0;
+		ip->ip_off = htons(ntohs(ip->ip_off) & ip4_ah_offsetmask);
 
 		/*
 		 * On FreeBSD, ip_off and ip_len assumed in host endian;
