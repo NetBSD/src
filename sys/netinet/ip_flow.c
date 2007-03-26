@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_flow.c,v 1.43 2007/03/25 20:12:20 liamjfoy Exp $	*/
+/*	$NetBSD: ip_flow.c,v 1.44 2007/03/26 00:29:15 liamjfoy Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.43 2007/03/25 20:12:20 liamjfoy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.44 2007/03/26 00:29:15 liamjfoy Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,6 +65,10 @@ __KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.43 2007/03/25 20:12:20 liamjfoy Exp $"
 #include <netinet/in_route.h>
 #include <netinet/in_var.h>
 #include <netinet/ip_var.h>
+
+/*
+ * Similar code is very well commented in netinet6/ip6_flow.c
+ */ 
 
 POOL_INIT(ipflow_pool, sizeof(struct ipflow), 0, 0, 0, "ipflowpl", NULL,
     IPL_NET);
