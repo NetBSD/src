@@ -1,4 +1,4 @@
-/* $NetBSD: aiboost.c,v 1.2 2007/03/18 22:36:11 xtraeme Exp $ */
+/* $NetBSD: aiboost.c,v 1.3 2007/03/26 04:22:28 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aiboost.c,v 1.2 2007/03/18 22:36:11 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aiboost.c,v 1.3 2007/03/26 04:22:28 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -214,7 +214,7 @@ aiboost_setup_sensors(struct aiboost_softc *sc)
 		sc->sc_info[j].units = ENVSYS_SFANRPM;
 		COPYDESCR(sc->sc_info[j].desc, sc->sc_aifan->elem[i].desc);
 		DPRINTF(("%s: info[%d].desc=%s elem[%d].desc=%s\n", __func__,
-		    j, sc->sc_info[j].desc, i, sc->sc_aivolt->elem[i].desc));
+		    j, sc->sc_info[j].desc, i, sc->sc_aifan->elem[i].desc));
 		    
 	}
 }
@@ -384,11 +384,10 @@ aiboost_getcomp(ACPI_HANDLE *h, const char *name, struct aiboost_comp **comp)
 			goto error;
 		}
 
-		DPRINTF(("%s: id=%d str=%s\n",
-		    __func__, c->elem[i - 1].id, str));
+		DPRINTF(("%s: id=%d str=%s\n", __func__, c->elem[i - 1].id,
+		    str));
 
-		(void)memcpy(&c->elem[i - 1].desc, str,
-		    sizeof(c->elem[i - 1].desc));
+		(void)memcpy(c->elem[i - 1].desc, str, length);
 
 		if (buf2.Pointer)
 			AcpiOsFree(buf2.Pointer);
