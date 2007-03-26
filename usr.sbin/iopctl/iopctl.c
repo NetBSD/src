@@ -1,4 +1,4 @@
-/*	$NetBSD: iopctl.c,v 1.13 2006/05/11 07:02:01 mrg Exp $	*/
+/*	$NetBSD: iopctl.c,v 1.14 2007/03/26 23:08:29 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #ifndef lint
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: iopctl.c,v 1.13 2006/05/11 07:02:01 mrg Exp $");
+__RCSID("$NetBSD: iopctl.c,v 1.14 2007/03/26 23:08:29 hubertf Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -55,7 +55,6 @@ __RCSID("$NetBSD: iopctl.c,v 1.13 2006/05/11 07:02:01 mrg Exp $");
 #include <string.h>
 #include <unistd.h>
 #include <util.h>
-#include <getopt.h>
 
 #include <dev/i2o/i2o.h>
 #include <dev/i2o/iopio.h>
