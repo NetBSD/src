@@ -1,4 +1,4 @@
-/*	$NetBSD: tunnel.c,v 1.8 2006/08/31 17:46:16 dyoung Exp $	*/
+/*	$NetBSD: tunnel.c,v 1.9 2007/03/26 05:02:44 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: tunnel.c,v 1.8 2006/08/31 17:46:16 dyoung Exp $");
+__RCSID("$NetBSD: tunnel.c,v 1.9 2007/03/26 05:02:44 dyoung Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -155,7 +155,7 @@ tunnel_status(void)
 	char srcserv[sizeof(",65535")];
 	char psrcaddr[NI_MAXHOST];
 	char pdstaddr[NI_MAXHOST];
-	const int niflag = NI_NUMERICHOST;
+	const int niflag = NI_NUMERICHOST|NI_NUMERICSERV;
 	struct if_laddrreq req;
 	const struct afswtch *lafp;
 
