@@ -485,8 +485,18 @@ BUILDING
                    INSTALLWORLDDIR is not the root directory if cross compil-
                    ing.
 
-                   Note: It is highly recommended that you upgrade your kernel
-                   and reboot before performing this operation.
+                   The INSTALLSETS environment variable may be set to a list
+                   of distribution sets to be installed.  By default, all sets
+                   except ``etc'' and ``xetc'' are installed (so most files in
+                   INSTALLWORLDDIR/etc will not be installed or modified).
+
+                   Note: Before performing this operation with
+                   INSTALLWORLDDIR=/, it is highly recommended that you
+                   upgrade your kernel and reboot.  After performing this
+                   operation, it is recommended that you use etcupdate(8) to
+                   update files in INSTALLWORLDDIR/etc and that you use
+                   postinstall(8) to check for inconsistencies (and possibly
+                   to fix them).
 
      sets          Create distribution sets from DESTDIR into
                    RELEASEDIR/MACHINE/binary/sets.  Should be run after ``make
@@ -555,7 +565,8 @@ BUILDING
      tools         Build and install the host tools from src/tools.
 
      install=idir  Install the contents of DESTDIR to idir, using ``make
-                   installworld''.
+                   installworld''.  Note that files that are part of the
+                   ``etc'' or ``xetc'' sets will not be installed.
 
      kernel=kconf  Build a new kernel.  The kconf argument is the name of a
                    configuration file suitable for use by config(1).  If kconf
@@ -747,7 +758,8 @@ OBSOLETE VARIABLES
                  TOOLCHAIN_MISSING=yes.
 
 SEE ALSO
-     make(1), hier(7), release(7), pkgsrc/sysutils/cdrtools
+     make(1), hier(7), release(7), etcupdate(8), postinstall(8),
+     pkgsrc/sysutils/cdrtools
 
 HISTORY
      The build.sh based build scheme was introduced for NetBSD 1.6 as
@@ -756,4 +768,4 @@ HISTORY
 BUGS
      A few platforms are not yet using this build system.
 
-NetBSD                          January 4, 2006                         NetBSD
+NetBSD                          March 27, 2007                          NetBSD
