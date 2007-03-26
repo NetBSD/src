@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_ptm.c,v 1.18 2007/03/12 21:33:07 ad Exp $	*/
+/*	$NetBSD: tty_ptm.c,v 1.19 2007/03/26 22:52:44 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_ptm.c,v 1.18 2007/03/12 21:33:07 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_ptm.c,v 1.19 2007/03/26 22:52:44 hubertf Exp $");
 
 #include "opt_ptm.h"
 
@@ -52,7 +52,6 @@ __KERNEL_RCSID(0, "$NetBSD: tty_ptm.c,v 1.18 2007/03/12 21:33:07 ad Exp $");
 #include <sys/vnode.h>
 #include <sys/namei.h>
 #include <sys/signalvar.h>
-#include <sys/uio.h>
 #include <sys/filedesc.h>
 #include <sys/conf.h>
 #include <sys/poll.h>
