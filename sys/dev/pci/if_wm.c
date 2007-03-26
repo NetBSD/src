@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.131.2.1 2007/03/26 21:06:56 jdc Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.131.2.2 2007/03/26 21:09:56 jdc Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.131.2.1 2007/03/26 21:06:56 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.131.2.2 2007/03/26 21:09:56 jdc Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -3837,11 +3837,23 @@ wm_tbi_mediachange(struct ifnet *ifp)
 	int i;
 
 	sc->sc_txcw = ife->ifm_data;
+	DPRINTF(WM_DEBUG_LINK,("%s: sc_txcw = 0x%x on entry\n",
+		    sc->sc_dev.dv_xname,sc->sc_txcw));
 	if (IFM_SUBTYPE(ife->ifm_media) == IFM_AUTO ||
 	    (sc->sc_mii.mii_media.ifm_media & IFM_FLOW) != 0)
 		sc->sc_txcw |= ANAR_X_PAUSE_SYM | ANAR_X_PAUSE_ASYM;
-	sc->sc_txcw |= TXCW_ANE;
+	if (IFM_SUBTYPE(ife->ifm_media) == IFM_AUTO) { 
+		sc->sc_txcw |= TXCW_ANE; 
+	} else {
+		/*If autonegotiation is turned off, force link up and turn on full duplex*/
+		sc->sc_txcw &= ~TXCW_ANE;
+		sc->sc_ctrl |= CTRL_SLU | CTRL_FD;
+		CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
+		delay(1000);
+	}
 
+	DPRINTF(WM_DEBUG_LINK,("%s: sc_txcw = 0x%x after autoneg check\n",
+		    sc->sc_dev.dv_xname,sc->sc_txcw));
 	CSR_WRITE(sc, WMREG_TXCW, sc->sc_txcw);
 	delay(10000);
 
@@ -3849,15 +3861,41 @@ wm_tbi_mediachange(struct ifnet *ifp)
 
 	sc->sc_tbi_anstate = 0;
 
-	if ((CSR_READ(sc, WMREG_CTRL) & CTRL_SWDPIN(1)) == 0) {
+	i = CSR_READ(sc, WMREG_CTRL) & CTRL_SWDPIN(1);
+	DPRINTF(WM_DEBUG_LINK,("%s: i = 0x%x\n", sc->sc_dev.dv_xname,i));
+
+	/* 
+	 * On 82544 chips and later, the CTRL_SWDPIN(1) bit will be set if the
+	 * optics detect a signal, 0 if they don't.
+	 */
+	if (((i != 0) && (sc->sc_type >= WM_T_82544)) || (i == 0)) {
 		/* Have signal; wait for the link to come up. */
+
+		if (IFM_SUBTYPE(ife->ifm_media) == IFM_AUTO) {
+			/*
+			 * Reset the link, and let autonegotiation do its thing
+			 */
+			sc->sc_ctrl |= CTRL_LRST;
+			CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
+			delay(1000);
+			sc->sc_ctrl &= ~CTRL_LRST;
+			CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
+			delay(1000);
+		}
+
 		for (i = 0; i < 50; i++) {
 			delay(10000);
 			if (CSR_READ(sc, WMREG_STATUS) & STATUS_LU)
 				break;
 		}
 
+		DPRINTF(WM_DEBUG_LINK,("%s: i = %d after waiting for link\n",
+			    sc->sc_dev.dv_xname,i));
+
 		status = CSR_READ(sc, WMREG_STATUS);
+		DPRINTF(WM_DEBUG_LINK,
+		    ("%s: status after final read = 0x%x, STATUS_LU = 0x%x\n",
+			sc->sc_dev.dv_xname,status, STATUS_LU));
 		if (status & STATUS_LU) {
 			/* Link is up. */
 			DPRINTF(WM_DEBUG_LINK,
