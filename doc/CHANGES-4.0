@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.99 2007/03/22 20:42:46 jdc Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.100 2007/03/26 21:46:16 jdc Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -2178,4 +2178,51 @@ sbin/fdisk/fdisk.8				1.54-1.55
 	Also add more detail in the introduction, and a few
 	more references.
 	[apb, ticket #513]
+
+sys/dev/mii/igphy.c				1.11
+sys/dev/mii/makphy.c				1.23
+sys/dev/pci/if_wm.c				1.133
+
+	Fix some negotiation problems on wm(4).
+
+	Will fix PR#30078, PR#30490, PR#30906, PR#33429, PR#35386.
+	[msaitoh, ticket #514]
+
+sys/dev/pci/if_wm.c				1.134
+
+	Fix media link issues with fiber-based card
+
+	Fixes PR#35797
+	[msaitoh, ticket #515]
+
+usr.bin/rfcomm_sppd/rfcomm_sppd.c		1.4-1,5
+
+	Only turn off input processing if it is on
+
+	Fix cut and paste error that meant you could only use "-s <num>" as
+	the last option on the commandline..
+	[plunky, ticket #517]
+
+sys/dev/mii/brgphy.c				1.32-1.33 via patch
+	
+	Fix the problem "ifconfig bge0 media auto" negotiates to 100Mbps
+	on 1000BaseT HUB.
+	[msaitoh, ticket #518]
+
+sys/dev/pci/if_sk.c				1.38
+
+	Apply if_msk.c rev. 1.4 to if_sk.c:
+	> Apply OpenBSD's rev. 1.33 to shut up "msk0: phy write timed out"
+	> Original commit message:
+	> > In msk_marv_miibus_writereg, wait for busy flag to clear instead of
+	> > continuing when busy flag set.
+	[msaitoh, ticket #519]
+
+sys/arch/alpha/pci/cia_dma.c			1.21
+
+	Contrary to the comment in cia_dma_get_tag(), there are machines
+	with cia that have over 1.0G.  Allow direct dma requests to fall
+	back to SGMAPs.  My PWS 500au with 1.5G of memory now works with
+	dma operations.
+	[mhitch, ticket #520]
 
