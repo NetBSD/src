@@ -1,4 +1,4 @@
-/*	$NetBSD: makphy.c,v 1.22 2006/11/16 21:24:07 christos Exp $	*/
+/*	$NetBSD: makphy.c,v 1.22.2.1 2007/03/26 21:05:34 jdc Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: makphy.c,v 1.22 2006/11/16 21:24:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: makphy.c,v 1.22.2.1 2007/03/26 21:05:34 jdc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,9 +97,10 @@ CFATTACH_DECL(makphy, sizeof(struct mii_softc),
 
 static int	makphy_service(struct mii_softc *, struct mii_data *, int);
 static void	makphy_status(struct mii_softc *);
+static void	makphy_reset(struct mii_softc *);
 
 static const struct mii_phy_funcs makphy_funcs = {
-	makphy_service, makphy_status, mii_phy_reset,
+	makphy_service, makphy_status, makphy_reset,
 };
 
 static const struct mii_phydesc makphys[] = {
@@ -164,6 +165,18 @@ makphyattach(struct device *parent, struct device *self, void *aux)
 	else
 		mii_phy_add_media(sc);
 	aprint_normal("\n");
+}
+
+static void
+makphy_reset(struct mii_softc *sc)
+{
+	uint16_t pscr;
+
+	/* Assert CRS on transmit */
+	pscr = PHY_READ(sc, MII_MAKPHY_PSCR);
+	PHY_WRITE(sc, MII_MAKPHY_PSCR, pscr | PSCR_CRS_ON_TX);
+
+	mii_phy_reset(sc);
 }
 
 static int
