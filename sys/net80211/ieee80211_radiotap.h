@@ -1,5 +1,5 @@
 /* $FreeBSD: src/sys/net80211/ieee80211_radiotap.h,v 1.5 2005/01/22 20:12:05 sam Exp $ */
-/* $NetBSD: ieee80211_radiotap.h,v 1.17 2007/03/26 04:32:14 dyoung Exp $ */
+/* $NetBSD: ieee80211_radiotap.h,v 1.18 2007/03/26 21:22:35 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2003, 2004 David Young.  All rights reserved.
@@ -239,7 +239,7 @@ enum ieee80211_radiotap_type {
 #define IEEE80211_RADIOTAP_F_RX_BADFCS 0x0001  /* Frame failed CRC check.
 						*
 						* Deprecated: use the flag
-						* IEEE80211_RADIOTAP_F_FCS in
+						* IEEE80211_RADIOTAP_F_BADFCS in
 						* the IEEE80211_RADIOTAP_FLAGS
 						* field, instead.
 						*/
