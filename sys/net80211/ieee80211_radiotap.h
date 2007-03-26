@@ -1,5 +1,5 @@
 /* $FreeBSD: src/sys/net80211/ieee80211_radiotap.h,v 1.5 2005/01/22 20:12:05 sam Exp $ */
-/* $NetBSD: ieee80211_radiotap.h,v 1.16 2007/01/06 05:51:15 dyoung Exp $ */
+/* $NetBSD: ieee80211_radiotap.h,v 1.17 2007/03/26 04:32:14 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2003, 2004 David Young.  All rights reserved.
@@ -163,6 +163,22 @@ struct ieee80211_radiotap_header {
  *
  *      Unitless indication of the Rx/Tx antenna for this packet.
  *      The first antenna is antenna 0.
+ *
+ * IEEE80211_RADIOTAP_RX_FLAGS          u_int16_t       bitmap
+ *
+ *     Properties of received frames. See flags defined below.
+ *
+ * IEEE80211_RADIOTAP_TX_FLAGS          u_int16_t       bitmap
+ *
+ *     Properties of transmitted frames. See flags defined below.
+ *
+ * IEEE80211_RADIOTAP_RTS_RETRIES       u_int8_t        data
+ *
+ *     Number of rts retries a transmitted frame used.
+ *
+ * IEEE80211_RADIOTAP_DATA_RETRIES      u_int8_t        data
+ *
+ *     Number of unicast retries a transmitted frame used.
  */
 enum ieee80211_radiotap_type {
 	IEEE80211_RADIOTAP_TSFT = 0,
@@ -179,6 +195,10 @@ enum ieee80211_radiotap_type {
 	IEEE80211_RADIOTAP_ANTENNA = 11,
 	IEEE80211_RADIOTAP_DB_ANTSIGNAL = 12,
 	IEEE80211_RADIOTAP_DB_ANTNOISE = 13,
+	IEEE80211_RADIOTAP_RX_FLAGS = 14,
+	IEEE80211_RADIOTAP_TX_FLAGS = 15,
+	IEEE80211_RADIOTAP_RTS_RETRIES = 16,
+	IEEE80211_RADIOTAP_DATA_RETRIES = 17,
 	IEEE80211_RADIOTAP_EXT = 31,
 };
 
@@ -214,5 +234,21 @@ enum ieee80211_radiotap_type {
 						 * (to 32-bit boundary)
 						 */
 #define	IEEE80211_RADIOTAP_F_BADFCS	0x40	/* does not pass FCS check */
+
+/* For IEEE80211_RADIOTAP_RX_FLAGS */
+#define IEEE80211_RADIOTAP_F_RX_BADFCS 0x0001  /* Frame failed CRC check.
+						*
+						* Deprecated: use the flag
+						* IEEE80211_RADIOTAP_F_FCS in
+						* the IEEE80211_RADIOTAP_FLAGS
+						* field, instead.
+						*/
+
+/* For IEEE80211_RADIOTAP_TX_FLAGS */
+#define IEEE80211_RADIOTAP_F_TX_FAIL   0x0001  /* failed due to excessive
+						* retries
+						*/
+#define IEEE80211_RADIOTAP_F_TX_CTS    0x0002  /* used cts 'protection' */
+#define IEEE80211_RADIOTAP_F_TX_RTS    0x0004  /* used rts/cts handshake */
 
 #endif /* !_NET80211_IEEE80211_RADIOTAP_H_ */

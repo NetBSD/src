@@ -1,8 +1,8 @@
-.\" $NetBSD: ieee80211_radiotap.9,v 1.10 2006/03/12 10:40:13 wiz Exp $
+.\" $NetBSD: ieee80211_radiotap.9,v 1.11 2007/03/26 04:32:14 dyoung Exp $
 .\"
 .\" Copyright (c) 2004	Bruce M. Simpson <bms@spc.org>,
-.\"			Darron Broad <darron@kewl.org>,
-.\"			David Young <dyoung@pobox.com>.
+.\"			Darron Broad <darron@kewl.org>.
+.\" Copyright (c) 2004, 2007	David Young <dyoung@pobox.com>.
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -201,6 +201,17 @@ arbitrary, fixed reference.
 This field contains a single unsigned 8-bit value, which indicates the
 RF noise power at the antenna, in decibels difference from an
 arbitrary, fixed reference.
+.It Dv IEEE80211_RADIOTAP_RX_FLAGS
+An unsigned 16-bit bitmap indicating properties of received frames.
+.It Dv IEEE80211_RADIOTAP_TX_FLAGS
+An unsigned 16-bit bitmap indicating properties of transmitted frames.
+.It Dv IEEE80211_RADIOTAP_RTS_RETRIES       u_int8_t        data
+Unsigned 8-bit value indicating how many times the NIC retransmitted
+the Request to Send (RTS) in an RTS/CTS handshake before receiving
+an 802.11 Clear to Send (CTS).
+.It Dv IEEE80211_RADIOTAP_DATA_RETRIES
+Unsigned 8-bit value indicating how many times the NIC retransmitted
+a unicast data packet before receiving an 802.11 Acknowledgement.
 .It Dv IEEE80211_RADIOTAP_EXT
 This bit is reserved for any future extensions to the
 .Vt radiotap
