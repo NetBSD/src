@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_termios.c,v 1.6 2007/03/19 10:16:46 njoly Exp $ */
+/*	$NetBSD: linux32_termios.c,v 1.7 2007/03/26 13:46:50 njoly Exp $ */
 
 /*-
  * Copyright (c) 1995-2006  The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_termios.c,v 1.6 2007/03/19 10:16:46 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_termios.c,v 1.7 2007/03/26 13:46:50 njoly Exp $");
 
 #include "opt_compat_linux32.h"
 
@@ -105,7 +105,7 @@ linux32_ioctl_termios(l, uap, retval)
 	com = SCARG(uap, com);
 	retval[0] = 0;
 
-	switch (com & 0xffff) {
+	switch (com) {
 	case LINUX32_TCGETS:
 		error = (*bsdioctl)(fp, TIOCGETA, (void *)&tmpbts, l);
 		if (error)
