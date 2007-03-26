@@ -1,4 +1,4 @@
-/*	$NetBSD: rfcomm_sppd.c,v 1.1.4.1 2007/03/04 14:46:21 bouyer Exp $	*/
+/*	$NetBSD: rfcomm_sppd.c,v 1.1.4.2 2007/03/26 21:14:24 jdc Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -62,7 +62,7 @@ __COPYRIGHT("@(#) Copyright (c) 2007 Iain Hibbert\n"
 	    "@(#) Copyright (c) 2006 Itronix, Inc.\n"
 	    "@(#) Copyright (c) 2003 Maksim Yevmenkin <m_evmenkin@yahoo.com>\n"
 	    "All rights reserved.\n");
-__RCSID("$NetBSD: rfcomm_sppd.c,v 1.1.4.1 2007/03/04 14:46:21 bouyer Exp $");
+__RCSID("$NetBSD: rfcomm_sppd.c,v 1.1.4.2 2007/03/26 21:14:24 jdc Exp $");
 
 #include <bluetooth.h>
 #include <ctype.h>
@@ -207,7 +207,7 @@ main(int argc, char *argv[])
 		rfcomm = open_server(&laddr, channel, service);
 
 	/*
-	 * now we are ready to go, so either detach or turn
+	 * now we are ready to go, so either detach or maybe turn
 	 * off some input processing, so that rfcomm_sppd can
 	 * be used directly with stdio
 	 */
@@ -219,10 +219,12 @@ main(int argc, char *argv[])
 		t.c_lflag &= ~(ECHO | ICANON);
 		t.c_iflag &= ~(ICRNL);
 
-		if (tcsetattr(tty_in, TCSANOW, &t) < 0)
-			err(EXIT_FAILURE, "tcsetattr");
+		if (memcmp(&tio, &t, sizeof(tio))) {
+			if (tcsetattr(tty_in, TCSANOW, &t) < 0)
+				err(EXIT_FAILURE, "tcsetattr");
 
-		atexit(reset_tio);
+			atexit(reset_tio);
+		}
 	} else {
 		if (daemon(0, 0) < 0)
 			err(EXIT_FAILURE, "daemon() failed");
@@ -319,7 +321,7 @@ open_client(bdaddr_t *laddr, bdaddr_t *raddr, const char *service)
 
 	for (s = services ; ; s++) {
 		if (s->name == NULL) {
-			channel = strtoul(optarg, &ep, 10);
+			channel = strtoul(service, &ep, 10);
 			if (*ep != '\0' || channel < 1 || channel > 30)
 				errx(EXIT_FAILURE, "Invalid service: %s", service);
 
