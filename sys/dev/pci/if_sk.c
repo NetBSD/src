@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sk.c,v 1.35 2006/11/16 01:33:09 christos Exp $	*/
+/*	$NetBSD: if_sk.c,v 1.35.2.1 2007/03/26 21:37:35 jdc Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -542,9 +542,12 @@ sk_marv_miibus_writereg(struct device *dev, int phy, int reg, int val)
 
 	for (i = 0; i < SK_TIMEOUT; i++) {
 		DELAY(1);
-		if (SK_YU_READ_2(sc_if, YUKON_SMICR) & YU_SMICR_BUSY)
+		if (!(SK_YU_READ_2(sc_if, YUKON_SMICR) & YU_SMICR_BUSY))
 			break;
 	}
+
+	if (i == SK_TIMEOUT)
+		printf("%s: phy write timed out\n", sc_if->sk_dev.dv_xname);
 }
 
 void
