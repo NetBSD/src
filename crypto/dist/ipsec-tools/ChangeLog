@@ -1,3 +1,8 @@
+2007-03-26  Yvan Vanhullebus  <vanhu@netasq.com>
+	* src/racoon/isakmp_inf.c: Store the DPD main scheduler in ph1
+	  handler, to be able to cancel it when removing the handler, and
+	  some minor cleanups in DPD code.
+
 2007-03-23  Yvan Vanhullebus  <vanhu@netasq.com>
 	* src/racoon/{oakley.c|racoon.conf.5}: give more details about
 	  what is checked when using certificates to authenticate. Patch
