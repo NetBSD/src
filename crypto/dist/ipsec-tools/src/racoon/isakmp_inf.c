@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_inf.c,v 1.14.4.5 2007/03/21 14:30:08 vanhu Exp $	*/
+/*	$NetBSD: isakmp_inf.c,v 1.14.4.6 2007/03/26 15:58:26 vanhu Exp $	*/
 
 /* Id: isakmp_inf.c,v 1.44 2006/05/06 20:45:52 manubsd Exp */
 
@@ -1590,7 +1590,7 @@ isakmp_info_recv_r_u_ack (iph1, ru, msgid)
 
 
 /*
- * send Delete payload (for ISAKMP SA) in Informational exchange.
+ * send DPD R-U-THERE payload in Informational exchange.
  */
 static void
 isakmp_info_send_r_u(arg)
@@ -1619,21 +1619,6 @@ isakmp_info_send_r_u(arg)
 	}
 
 	/* TODO: check recent activity to avoid useless sends... */
-
-	/* XXX: why do we have a NULL LIST_FIRST even when a Phase2 exists ??? */
-#if 0
-	if (LIST_FIRST(&iph1->ph2tree) == NULL){
-		/* XXX: No Ph2 => no need to test ph1 ?
-		 */
-		/* Reschedule the r_u_there....
-		   XXX: reschedule when a new ph2 ?
-		 */
-		isakmp_sched_r_u(iph1, 0);
-		plog(LLV_DEBUG, LOCATION, iph1->remote,
-			 "no phase2 handler, rescheduling send_r_u (%d).\n", iph1->rmconf->dpd_interval);
-		return 0;
-	}
-#endif
 
 	tlen = sizeof(*ru);
 	payload = vmalloc(tlen);
@@ -1698,10 +1683,10 @@ isakmp_sched_r_u(iph1, retry)
 
 	if(retry)
 		iph1->dpd_r_u = sched_new(iph1->rmconf->dpd_retry,
-					  isakmp_info_send_r_u, iph1);
+								  isakmp_info_send_r_u, iph1);
 	else
-		sched_new(iph1->rmconf->dpd_interval,
-			  isakmp_info_send_r_u, iph1);
+		iph1->dpd_r_u = sched_new(iph1->rmconf->dpd_interval,
+								  isakmp_info_send_r_u, iph1);
 
 	return 0;
 }
