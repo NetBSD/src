@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.21 2007/03/04 10:21:26 christos Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.22 2007/03/26 22:44:40 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -36,9 +36,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/param.h>
+#include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.21 2007/03/04 10:21:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.22 2007/03/26 22:44:40 hubertf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
