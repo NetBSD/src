@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.11.2.1 2007/03/12 05:51:48 rmind Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.11.2.2 2007/03/26 09:51:32 yamt Exp $	*/
 /*	NetBSD: sys_machdep.c,v 1.70 2003/10/27 14:11:47 junyoung Exp 	*/
 
 /*-
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.11.2.1 2007/03/12 05:51:48 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.11.2.2 2007/03/26 09:51:32 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_mtrr.h"
@@ -336,9 +336,7 @@ i386_set_ldt(l, args, retval)
 			pmap->pm_flags |= PMF_USER_LDT;
 		ldt_alloc(pmap, new_ldt, new_len);
 		pcb->pcb_ldt_sel = pmap->pm_ldt_sel;
-		if (pcb == curpcb)
-			lldt(pcb->pcb_ldt_sel);
-
+		lldt(pcb->pcb_ldt_sel);
 	}
 copy:
 	/* Now actually replace the descriptors. */
