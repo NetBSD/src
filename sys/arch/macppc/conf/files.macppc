@@ -1,4 +1,4 @@
-#	$NetBSD: files.macppc,v 1.82 2007/03/25 23:29:16 macallan Exp $
+#	$NetBSD: files.macppc,v 1.83 2007/03/26 16:56:09 dogcow Exp $
 #
 # macppc-specific configuration info
 
@@ -64,7 +64,7 @@ file arch/macppc/macppc/cpu.c
 
 # PCI bus support
 include "dev/pci/files.pci"
-
+include "dev/pci/files.agp"
 file arch/macppc/pci/pci_machdep.c		pci
 file arch/macppc/pci/agp_machdep.c		agp
 
