@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.131 2006/11/23 19:42:59 yamt Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.131.2.1 2007/03/26 21:06:56 jdc Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.131 2006/11/23 19:42:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.131.2.1 2007/03/26 21:06:56 jdc Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -3992,6 +3992,15 @@ wm_gmii_reset(struct wm_softc *sc)
 		CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
 		delay(20000);
 	} else {
+                /*
+                 * With 82543, we need to force speed and duplex on the MAC
+                 * equal to what the PHY speed and duplex configuration is.
+                 * In addition, we need to perform a hardware reset on the PHY
+                 * to take it out of reset.
+                 */
+                sc->sc_ctrl |= CTRL_FRCSPD | CTRL_FRCFDX;
+                CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
+
 		/* The PHY reset pin is active-low. */
 		reg = CSR_READ(sc, WMREG_CTRL_EXT);
 		reg &= ~((CTRL_EXT_SWDPIO_MASK << CTRL_EXT_SWDPIO_SHIFT) |
@@ -4002,7 +4011,7 @@ wm_gmii_reset(struct wm_softc *sc)
 		delay(10);
 
 		CSR_WRITE(sc, WMREG_CTRL_EXT, reg);
-		delay(10);
+		delay(10000);
 
 		CSR_WRITE(sc, WMREG_CTRL_EXT, reg | CTRL_EXT_SWDPIN(4));
 		delay(10);
@@ -4038,7 +4047,7 @@ wm_gmii_mediainit(struct wm_softc *sc)
 	 * XXXbouyer - I'm not sure this is right for the 80003,
 	 * the em driver only sets CTRL_SLU here - but it seems to work.
 	 */
-	sc->sc_ctrl |= CTRL_SLU | CTRL_ASDE;
+	sc->sc_ctrl |= CTRL_SLU;
 	CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
 
 	/* Initialize our media structures and probe the GMII. */
@@ -4100,8 +4109,9 @@ wm_gmii_mediachange(struct ifnet *ifp)
 	if (ifp->if_flags & IFF_UP) {
 		sc->sc_ctrl &= ~(CTRL_SPEED_MASK | CTRL_FD);
 		sc->sc_ctrl |= CTRL_SLU;
-		if (IFM_SUBTYPE(ife->ifm_media) == IFM_AUTO) {
-			sc->sc_ctrl |= CTRL_ASDE;
+		if ((IFM_SUBTYPE(ife->ifm_media) == IFM_AUTO)
+		    || (sc->sc_type > WM_T_82543)) {
+			sc->sc_ctrl &= ~(CTRL_FRCSPD | CTRL_FRCFDX);
 		} else {
 			sc->sc_ctrl &= ~CTRL_ASDE;
 			sc->sc_ctrl |= CTRL_FRCSPD | CTRL_FRCFDX;
@@ -4123,6 +4133,8 @@ wm_gmii_mediachange(struct ifnet *ifp)
 			}
 		}
 		CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
+		if (sc->sc_type <= WM_T_82543)
+			wm_gmii_reset(sc);
 		mii_mediachg(&sc->sc_mii);
 	}
 	return (0);
