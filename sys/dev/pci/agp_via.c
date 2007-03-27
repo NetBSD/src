@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_via.c,v 1.12 2007/03/27 00:34:16 jmcneill Exp $	*/
+/*	$NetBSD: agp_via.c,v 1.13 2007/03/27 20:57:46 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_via.c,v 1.12 2007/03/27 00:34:16 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_via.c,v 1.13 2007/03/27 20:57:46 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,11 +85,6 @@ static int via_v2_regs[] =
 static int via_v3_regs[] =
 	{ AGP3_VIA_GARTCTRL, AGP3_VIA_APSIZE, AGP3_VIA_ATTBASE };
 
-static pci_product_id_t via_v3_devices[] = {
-	0x0314,
-	0xffff,
-};
-
 int
 agp_via_attach(struct device *parent, struct device *self, void *aux)
 {
@@ -97,8 +92,7 @@ agp_via_attach(struct device *parent, struct device *self, void *aux)
 	struct agp_softc *sc = (void *)self;
 	struct agp_via_softc *asc;
 	struct agp_gatt *gatt;
-	pcireg_t agpsel;
-	int i;
+	pcireg_t agpsel, capval;
 
 	asc = malloc(sizeof *asc, M_AGP, M_NOWAIT|M_ZERO);
 	if (asc == NULL) {
@@ -108,22 +102,20 @@ agp_via_attach(struct device *parent, struct device *self, void *aux)
 	sc->as_chipc = asc;
 	sc->as_methods = &agp_via_methods;
 	pci_get_capability(pa->pa_pc, pa->pa_tag, PCI_CAP_AGP, &sc->as_capoff,
-	    NULL);
+	    &capval);
 
-	asc->regs = via_v2_regs;
-	for (i = 0; via_v3_devices[i] != 0xffff; i++) {
-		if (PCI_PRODUCT(pa->pa_id) == via_v3_devices[i]) {
-			agpsel = pci_conf_read(pa->pa_pc, pa->pa_tag,
-			    AGP_VIA_AGPSEL);
-			if ((agpsel & (1 << 1)) == 0) {
-				asc->regs = via_v3_regs;
-				printf(" (v3)");
-			} else {
-				asc->regs = via_v2_regs;
-				printf(" (v2 compat mode)");
-			}
-			break;
+	if (PCI_CAP_AGP_MAJOR(capval) >= 3) {
+		agpsel = pci_conf_read(pa->pa_pc, pa->pa_tag, AGP_VIA_AGPSEL);
+		if ((agpsel & (1 << 1)) == 0) {
+			asc->regs = via_v3_regs;
+			printf(" (v3)");
+		} else {
+			asc->regs = via_v2_regs;
+			printf(" (v2 compat mode)");
 		}
+	} else {
+		asc->regs = via_v2_regs;
+		printf(" (v2)");
 	}
 
 	if (agp_map_aperture(pa, sc, AGP_APBASE) != 0) {
