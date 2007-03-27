@@ -1,4 +1,4 @@
-/*	$NetBSD: opts.c,v 1.10 2006/02/05 16:28:56 christos Exp $	*/
+/*	$NetBSD: opts.c,v 1.11 2007/03/27 01:29:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -1222,8 +1222,9 @@ expand_op(char *opt, int sel_p)
 	    }
 
 	    if (BUFSPACE(ep, vlen+1)) {
-	      xstrlcpy(ep, vptr, vlen+1);
+	      memcpy(ep, vptr, vlen+1);
 	      ep += vlen;
+	      *ep = '\0';
 	    } else {
 	      plog(XLOG_ERROR, EXPAND_ERROR, opt);
 	      goto out;
