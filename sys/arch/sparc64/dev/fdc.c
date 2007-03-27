@@ -1,4 +1,4 @@
-/*	$NetBSD: fdc.c,v 1.11 2007/03/27 10:13:12 jnemeth Exp $	*/
+/*	$NetBSD: fdc.c,v 1.12 2007/03/27 10:17:48 jnemeth Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -108,7 +108,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdc.c,v 1.11 2007/03/27 10:13:12 jnemeth Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdc.c,v 1.12 2007/03/27 10:17:48 jnemeth Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -653,7 +653,7 @@ fdcattach_obio(struct device *parent, struct device *self, void *aux)
 		fdc->sc_handle);
 
 	if (strcmp(prom_getpropstring(sa->sa_node, "status"), "disabled") == 0) {
-		print(": no drives attached\n");
+		printf(": no drives attached\n");
 		return;
 	}
 
@@ -821,7 +821,7 @@ fdcattach(struct fdc_softc *fdc, int pri)
 
 #ifdef SUN4
 	fdciop = &fdc->sc_io;
-	if (bus_intr_establish2(fdc->sc_bustag, pri, 0
+	if (bus_intr_establish2(fdc->sc_bustag, pri, 0,
 				fdc_c_hwintr, fdc, fdchwintr) == NULL) {
 #elif SUN4U
 	if (bus_intr_establish(fdc->sc_bustag, pri, IPL_BIO,
