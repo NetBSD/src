@@ -1,4 +1,4 @@
-/*	$NetBSD: fdc.c,v 1.10 2007/03/25 09:29:11 jnemeth Exp $	*/
+/*	$NetBSD: fdc.c,v 1.11 2007/03/27 10:13:12 jnemeth Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -108,7 +108,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdc.c,v 1.10 2007/03/25 09:29:11 jnemeth Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdc.c,v 1.11 2007/03/27 10:13:12 jnemeth Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -159,16 +159,6 @@ __KERNEL_RCSID(0, "$NetBSD: fdc.c,v 1.10 2007/03/25 09:29:11 jnemeth Exp $");
 
 #define FDUNIT(dev)	(minor(dev) / 8)
 #define FDTYPE(dev)	(minor(dev) % 8)
-
-#ifdef SUN4U
-#define FTC_FLIP \
-	do { \
-		auxio_fd_control(AUXIO_LED_FTC); \
-		auxio_fd_control(0); \
-	} while (0)
-#else
-#define FTC_FLIP
-#endif
 
 /* (mis)use device use flag to identify format operation */
 #define B_FORMAT B_DEVPRIVATE
