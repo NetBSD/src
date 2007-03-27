@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.873 2007/03/25 06:42:21 isaki Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.874 2007/03/27 12:42:31 pooka Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.874 2007/03/25 06:41:30 isaki Exp
+ *	NetBSD: pcidevs,v 1.875 2007/03/27 12:41:39 pooka Exp
  */
 
 /*
@@ -9880,6 +9880,10 @@ static const struct pci_product pci_products[] = {
 	    "nForce MCP55 Serial ATA Controller",
 	},
 	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GF_GO_7600,
+	    "GeForce Go 7600",
+	},
+	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP61_ISA,
 	    "nForce MCP61 PCI-ISA Bridge",
 	},
@@ -12840,4 +12844,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2616;
+const int pci_nproducts = 2617;
