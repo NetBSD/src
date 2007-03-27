@@ -1,4 +1,4 @@
-.\"	$NetBSD: sbus.4,v 1.6 2002/03/12 16:19:27 uwe Exp $
+.\"	$NetBSD: sbus.4,v 1.7 2007/03/27 22:38:25 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd May 27, 2001
+.Dd March 28, 2007
 .Dt SBUS 4
 .Os
 .Sh NAME
@@ -113,7 +113,11 @@ framebuffer device.
 framebuffer device.
 .It cgsix
 framebuffer device.
+.It pnozz
+framebuffer device.
 .It tcx
+framebuffer device.
+.It zx
 framebuffer device.
 .El
 .Ss Audio devices
@@ -121,8 +125,29 @@ framebuffer device.
 .It audiocs
 CS4231 codec.
 .El
+.Ss Serial interfaces
+.Bl -tag -width xxxxxxxx -offset indent
+.It magma
+Magma Serial/Parallel combo device.
+.El
 .Sh SEE ALSO
-.Xr intro 4
+.Xr audiocs 4 ,
+.Xr be 4 ,
+.Xr bwtwo 4 ,
+.Xr cgsix 4 ,
+.Xr cgthree 4 ,
+.Xr en 4 ,
+.Xr esp 4 ,
+.Xr hme 4 ,
+.Xr intro 4 ,
+.Xr isp 4 ,
+.Xr le 4 ,
+.Xr magma 4 ,
+.Xr pnozz 4 ,
+.Xr qe 4 ,
+.Xr tcx 4 ,
+.Xr xbox 4 ,
+.Xr zx 4
 .Sh HISTORY
 The machine-independent
 .Nm SBus
