@@ -1,4 +1,4 @@
-.\"	$NetBSD: drm.4,v 1.2 2007/03/25 23:19:24 jmcneill Exp $
+.\"	$NetBSD: drm.4,v 1.3 2007/03/27 23:27:54 wiz Exp $
 .\"
 .\" Copyright (c) 2007 Thomas Klausner
 .\" All rights reserved.
@@ -23,7 +23,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd March 22, 2007
+.Dd March 28, 2007
 .Dt DRM 4
 .Os
 .Sh NAME
@@ -46,6 +46,8 @@ The
 .Tn Direct Rendering Manager
 is part of the
 .Tn Direct Rendering Infrastructure
+(see
+.Pa http://dri.freedesktop.org/ )
 for supporting video acceleration (3d acceleration, mostly).
 .Pp
 The
@@ -84,8 +86,11 @@ Details for these steps:
 .Bl -enum -offset indent
 .It
 X must be compiled with DRI support.
+On i386, this is usually the default.
 .It
-Mesa should be compiled for the netbsd-dri target, patch available at
+Mesa (see
+.Pa http://www.mesa3d.org/ )
+should be compiled for the netbsd-dri target, patch available at
 .Pa http://issc.uj.ac.za/~yorick/drm/mesa.patch
 .It
 The device node must exist:
@@ -114,25 +119,68 @@ Section "DRI"
 EndSection
 .Ed
 .El
+.Pp
+Debugging output can be enabled and disabled by setting the
+.Xr sysctl 8
+node
+.Ar hw.dri.debug .
+Additional information can be obtained from the
+.Xr sysctl 8
+nodes
+.Ar hw.dri ,
+.Ar hw.dri.card0 ,
+.Ar hw.dri.card1 ,
+etc.
 .Sh SEE ALSO
 .Xr X 7
-.\" .Sh HISTORY
-.\" The
-.\" .Nm
-.\" driver first appeared in
-.\" ??
-.\" and then it was ported to
-.\" .Nx 5.0 .
-.\" .Sh AUTHORS
-.\" .An -nosplit
-.\" The
-.\" .Nm
-.\" driver was written by
-.\" .An ??
-.\" and
-.\" .An Yorick Hardy
-.\" who adapted the code for
-.\" .Nx .
+.Sh HISTORY
+DRM was first available for Linux.
+Subsequently Eric Anholt ported the DRM kernel modules to
+.Fx .
+Erik Reid adapted the
+.Fx
+DRM kernel modules to
+.Nx .
+As DRM continued to develop the
+.Nx
+support was neglected.
+Tonnerre Lombard got the DRM modules working again, but DRM
+development once again left the
+.Nx
+support behind.
+Finally Yorick Hardy took the
+.Fx
+DRM source and managed to get it compiling and working again on
+.Nx ,
+thanks largely to the efforts of all those mentioned above.
+Subsequently Matthias Drochner improved the DRM file hierarchy for
+.Nx
+and committed the DRM kernel drivers.
+.Pp
+The
+.Nm
+driver appeared in
+.Nx 5.0 .
+.Sh AUTHORS
+.An -nosplit
+.An Eric Anholt ,
+.An Terry Barnaby ,
+.An Erdi Chen ,
+.An Michel Daenzer ,
+.An Leif Delgass ,
+.An Frank C. Earl ,
+.An Rickard E. Faith ,
+.An Jose Fonseca ,
+.An Nicolai Haehnle ,
+.An Jeff Hartmann ,
+.An Thomas Hellstrom ,
+.An Gareth Hughes ,
+.An Felix Kuehling ,
+.An Sung-Ching Lin ,
+.An Kevin E. Martin ,
+.An Jared D. McNeill ,
+.An Daryll Strauss ,
+.An Keith Whitwell
 .Sh CAVEATS
 Disable AIGLX if necessary
 .Pq Pa xorg.conf :
