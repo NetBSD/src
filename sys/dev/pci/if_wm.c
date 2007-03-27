@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.137 2007/03/27 01:56:41 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.138 2007/03/27 13:13:49 salo Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.137 2007/03/27 01:56:41 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.138 2007/03/27 13:13:49 salo Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -2787,7 +2787,7 @@ wm_reset(struct wm_softc *sc)
 	CSR_WRITE(sc, WMREG_PBA, sc->sc_pba);
 
 	/*
-	 * 82541 Eratta 29? & 82547 Eratta 28?
+	 * 82541 Errata 29? & 82547 Errata 28?
 	 * See also the description about PHY_RST bit in CTRL register
 	 * in 8254x_GBe_SDM.pdf.
 	 */
