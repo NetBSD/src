@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sched.c,v 1.37 2006/11/16 01:32:42 christos Exp $	*/
+/*	$NetBSD: linux_sched.c,v 1.37.2.1 2007/03/28 20:38:41 jdc Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.37 2006/11/16 01:32:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.37.2.1 2007/03/28 20:38:41 jdc Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -366,46 +366,53 @@ linux_sys_exit_group(l, v, retval)
 	struct linux_emuldata *led = p->p_emuldata;
 	struct linux_emuldata *e;
 
-#ifdef DEBUG_LINUX
-	printf("%s:%d, led->s->refs = %d\n", __func__, __LINE__, led->s->refs);
-#endif
-	/*
-	 * The calling thread is supposed to kill all threads
-	 * in the same thread group (i.e. all threads created
-	 * via clone(2) with CLONE_THREAD flag set).
-	 *
-	 * If there is only one thread, things are quite simple
-	 */
-	if (led->s->refs == 1)
-		return sys_exit(l, v, retval);
+	if (led->s->flags & LINUX_LES_USE_NPTL) {
 
 #ifdef DEBUG_LINUX
-	printf("%s:%d\n", __func__, __LINE__);
+		printf("%s:%d, led->s->refs = %d\n", __func__, __LINE__,
+		    led->s->refs);
 #endif
 
-	led->s->flags |= LINUX_LES_INEXITGROUP;
-	led->s->xstat = W_EXITCODE(SCARG(uap, error_code), 0);
-
-	/*
-	 * Kill all threads in the group. The emulation exit hook takes
-	 * care of hiding the zombies and reporting the exit code properly
-	 */
-      	LIST_FOREACH(e, &led->s->threads, threads) {
-		if (e->proc == p)
-			continue;
+		/*
+		 * The calling thread is supposed to kill all threads
+		 * in the same thread group (i.e. all threads created
+		 * via clone(2) with CLONE_THREAD flag set).
+		 *
+		 * If there is only one thread, things are quite simple
+		 */
+		if (led->s->refs == 1)
+			return sys_exit(l, v, retval);
 
 #ifdef DEBUG_LINUX
-		printf("%s: kill PID %d\n", __func__, e->proc->p_pid);
+		printf("%s:%d\n", __func__, __LINE__);
 #endif
-		psignal(e->proc, SIGKILL);
+
+		led->s->flags |= LINUX_LES_INEXITGROUP;
+		led->s->xstat = W_EXITCODE(SCARG(uap, error_code), 0);
+
+		/*
+		 * Kill all threads in the group. The emulation exit hook takes
+		 * care of hiding the zombies and reporting the exit code
+		 * properly.
+		 */
+      		LIST_FOREACH(e, &led->s->threads, threads) {
+			if (e->proc == p)
+				continue;
+
+#ifdef DEBUG_LINUX
+			printf("%s: kill PID %d\n", __func__, e->proc->p_pid);
+#endif
+			psignal(e->proc, SIGKILL);
+		}
+
+		/* Now, kill ourselves */
+		psignal(p, SIGKILL);
+		return 0;
+
 	}
-
-	/* Now, kill ourselves */
-	psignal(p, SIGKILL);
-	return 0;
-#else /* LINUX_NPTL */
-	return sys_exit(l, v, retval);
 #endif /* LINUX_NPTL */
+
+	return sys_exit(l, v, retval);
 }
 #endif /* !__m68k__ */
 
@@ -423,6 +430,8 @@ linux_sys_set_tid_address(l, v, retval)
 
 	led = (struct linux_emuldata *)l->l_proc->p_emuldata;
 	led->clear_tid = SCARG(uap, tid);
+
+	led->s->flags |= LINUX_LES_USE_NPTL;
 
 	*retval = l->l_proc->p_pid;
 
@@ -449,12 +458,14 @@ linux_sys_getpid(l, v, retval)
 	void *v;
 	register_t *retval;
 {
-	struct linux_emuldata *led;
+	struct linux_emuldata *led = l->l_proc->p_emuldata;
 
-	led = l->l_proc->p_emuldata;
-
-	/* The Linux kernel does it exactly that way */
-	*retval = led->s->group_pid;
+	if (led->s->flags & LINUX_LES_USE_NPTL) {
+		/* The Linux kernel does it exactly that way */
+		*retval = led->s->group_pid;
+	} else {
+		*retval = l->l_proc->p_pid;
+	}
 
 	return 0;
 }
@@ -471,23 +482,29 @@ linux_sys_getppid(l, v, retval)
 	struct proc *glp;
 	struct proc *pp;
 
-	/* Find the thread group leader's parent */
-	if ((glp = pfind(led->s->group_pid)) == NULL) {
-		/* Maybe panic... */
-		printf("linux_sys_getppid: missing group leader PID %d\n", 
-		    led->s->group_pid); 
-		return -1;
-	}
-	pp = glp->p_pptr;
+	if (led->s->flags & LINUX_LES_USE_NPTL) {
 
-	/* If this is a Linux process too, return thread group PID */
-	if (pp->p_emul == p->p_emul) {
-		struct linux_emuldata *pled;
+		/* Find the thread group leader's parent */
+		if ((glp = pfind(led->s->group_pid)) == NULL) {
+			/* Maybe panic... */
+			printf("linux_sys_getppid: missing group leader PID"
+			    " %d\n", led->s->group_pid); 
+			return -1;
+		}
+		pp = glp->p_pptr;
 
-		pled = pp->p_emuldata;
-		*retval = pled->s->group_pid;
+		/* If this is a Linux process too, return thread group PID */
+		if (pp->p_emul == p->p_emul) {
+			struct linux_emuldata *pled;
+
+			pled = pp->p_emuldata;
+			*retval = pled->s->group_pid;
+		} else {
+			*retval = pp->p_pid;
+		}
+
 	} else {
-		*retval = pp->p_pid;
+		*retval = p->p_pptr->p_pid;
 	}
 
 	return 0;
