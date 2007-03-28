@@ -1,4 +1,4 @@
-.\"	$NetBSD: ddb.4,v 1.102 2007/03/02 07:50:09 pooka Exp $
+.\"	$NetBSD: ddb.4,v 1.103 2007/03/28 14:45:35 uwe Exp $
 .\"
 .\" Copyright (c) 1997 - 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -63,7 +63,7 @@
 .\" any improvements or extensions that they make and grant Carnegie Mellon
 .\" the rights to redistribute these changes.
 .\"
-.Dd March 2, 2007
+.Dd March 28, 2007
 .Dt DDB 4
 .Os
 .Sh NAME
@@ -263,6 +263,10 @@ one more page.
 .It Ic q
 abort the current command, and return to the command input mode.
 .El
+.Pp
+You can set
+.Va lines
+variable to zero to disable this feature.
 .Pp
 If
 .Nm
@@ -1181,6 +1185,9 @@ The number of lines.
 This is used by the
 .Ic more
 feature.
+When this varibale is set to zero the
+.Ic more
+feature is disabled.
 .It Va maxoff
 Addresses are printed as
 .Li 'symbol'+offset
@@ -1190,6 +1197,13 @@ is greater than
 .Va maxoff .
 .It Va maxwidth
 The width of the displayed line.
+.Nm
+wraps the current line by printing new line when
+.Va maxwidth
+column is reached.
+When this varibale is set to zero
+.Nm
+doesn't perform any wrapping.
 .It Va onpanic
 If non-zero (the default),
 .Nm
