@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.sh3,v 1.23 2006/09/02 22:37:33 uwe Exp $
+#	$NetBSD: Makefile.sh3,v 1.24 2007/03/28 23:59:00 uwe Exp $
 
 # Makefile for NetBSD
 #
@@ -50,10 +50,6 @@ MD_SFILES=	${THISSH3}/${MACHINE}/locore.S
 
 locore.o: ${THISSH3}/${MACHINE}/locore.S assym.h
 	${NORMAL_S}
-
-# XXX compile ffs_inode.c always with -O0 to avoid egcs-1.1.2 bug.
-#ffs_inode.o: $S/ufs/ffs/ffs_inode.c
-#	${CC} ${CFLAGS} -O0 ${CPPFLAGS} ${PROF} -c $<
 
 ##
 ## (5) link settings
