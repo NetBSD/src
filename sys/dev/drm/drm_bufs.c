@@ -181,8 +181,10 @@ int drm_addmap(drm_device_t * dev, unsigned long offset, unsigned long size,
 			break;
 		/* FALLTHROUGH */
 	case _DRM_FRAME_BUFFER:
+#ifndef DRM_NO_MTRR
 		if (drm_mtrr_add(map->offset, map->size, DRM_MTRR_WC) == 0)
 			map->mtrr = 1;
+#endif
 		break;
 	case _DRM_SHM:
 		map->handle = malloc(map->size, M_DRM, M_NOWAIT);
@@ -321,6 +323,7 @@ void drm_rmmap(drm_device_t *dev, drm_local_map_t *map)
 			drm_ioremapfree(map);
 		/* FALLTHROUGH */
 	case _DRM_FRAME_BUFFER:
+#ifndef DRM_NO_MTRR
 		if (map->mtrr) {
 			int __unused retcode;
 			
@@ -328,6 +331,7 @@ void drm_rmmap(drm_device_t *dev, drm_local_map_t *map)
 			    DRM_MTRR_WC);
 			DRM_DEBUG("mtrr_del = %d\n", retcode);
 		}
+#endif
 		break;
 	case _DRM_SHM:
 		free(map->handle, M_DRM);
