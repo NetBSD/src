@@ -1,8 +1,8 @@
-# $NetBSD: files.drm,v 1.1 2007/03/20 18:05:31 drochner Exp $
+# $NetBSD: files.drm,v 1.2 2007/03/28 11:29:37 jmcneill Exp $
 
 # direct rendering modules
 define drmbase
-defflag        opt_drm.h       DRM_DEBUG
+defflag        opt_drm.h       DRM_DEBUG DRM_NO_AGP DRM_NO_MTRR
 file   dev/drm/drm_agpsupport.c    drmbase
 file   dev/drm/drm_auth.c          drmbase
 file   dev/drm/drm_bufs.c          drmbase
