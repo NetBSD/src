@@ -1,4 +1,4 @@
-/*	$NetBSD: _def_time.c,v 1.8 2005/06/12 05:21:27 lukem Exp $	*/
+/*	$NetBSD: _def_time.c,v 1.9 2007/03/28 19:05:53 manu Exp $	*/
 
 /*
  * Written by J.T. Conklin <jtc@NetBSD.org>.
@@ -7,13 +7,13 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: _def_time.c,v 1.8 2005/06/12 05:21:27 lukem Exp $");
+__RCSID("$NetBSD: _def_time.c,v 1.9 2007/03/28 19:05:53 manu Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/localedef.h>
 #include <locale.h>
 
-const _TimeLocale _DefaultTimeLocale = 
+_TimeLocale _DefaultTimeLocale = 
 {
 	{
 		"Sun","Mon","Tue","Wed","Thu","Fri","Sat",
@@ -39,4 +39,4 @@ const _TimeLocale _DefaultTimeLocale =
 	"%I:%M:%S %p"
 };
 
-const _TimeLocale *_CurrentTimeLocale = &_DefaultTimeLocale;
+_TimeLocale *_CurrentTimeLocale = &_DefaultTimeLocale;
