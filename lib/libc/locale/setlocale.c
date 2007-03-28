@@ -1,4 +1,4 @@
-/*	$NetBSD: setlocale.c,v 1.50 2006/02/16 19:19:49 tnozaki Exp $	*/
+/*	$NetBSD: setlocale.c,v 1.51 2007/03/28 19:05:53 manu Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)setlocale.c	8.1 (Berkeley) 7/4/93";
 #else
-__RCSID("$NetBSD: setlocale.c,v 1.50 2006/02/16 19:19:49 tnozaki Exp $");
+__RCSID("$NetBSD: setlocale.c,v 1.51 2007/03/28 19:05:53 manu Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -63,6 +63,7 @@ __RCSID("$NetBSD: setlocale.c,v 1.50 2006/02/16 19:19:49 tnozaki Exp $");
 #else
 #include "ctypeio.h"
 #endif
+#include "timeio.h"
 
 #ifdef CITRUS
 #include <citrus/citrus_namespace.h>
@@ -263,11 +264,16 @@ revert_to_default(category)
 		}
 #endif
 		break;
+	case LC_TIME:
+		if (_CurrentTimeLocale != &_DefaultTimeLocale) {
+			free((void *)_CurrentTimeLocale);
+			_CurrentTimeLocale = &_DefaultTimeLocale;
+		}
+		break;
 	case LC_MESSAGES:
 	case LC_COLLATE:
 	case LC_MONETARY:
 	case LC_NUMERIC:
-	case LC_TIME:
 		break;
 	}
 }
@@ -341,10 +347,13 @@ load_locale_sub(category, locname, isspecial)
 		}
 		break;
 
+	case LC_TIME:
+		if (!__loadtime(name))
+			return -1;
+		break;
 	case LC_COLLATE:
 	case LC_MONETARY:
 	case LC_NUMERIC:
-	case LC_TIME:
 		return -1;
 	}
 
