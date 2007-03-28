@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.14.2.5 2007/03/24 14:54:33 yamt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.14.2.6 2007/03/28 06:57:26 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -158,13 +158,8 @@ extern struct cpu_info *cpu_info_list;
 
 extern struct cpu_info *cpu_info[X86_MAXPROCS];
 
-<<<<<<< cpu.h
 void cpu_boot_secondary_processors(void);
 void cpu_init_idle_lwps(void);    
-=======
-void cpu_boot_secondary_processors(void);
-void cpu_init_idle_pcbs(void);    
->>>>>>> 1.21
 
 
 #else /* !MULTIPROCESSOR */
@@ -249,36 +244,22 @@ void	identifycpu(struct cpu_info *);
 void cpu_probe_features(struct cpu_info *);
 
 /* machdep.c */
-<<<<<<< cpu.h
-void	dumpconf __P((void));
-int	cpu_maxproc __P((void));
-void	cpu_reset __P((void));
-void	x86_64_proc0_tss_ldt_init __P((void));
-void	cpu_proc_fork __P((struct proc *, struct proc *));
-=======
 void	dumpconf(void);
 int	cpu_maxproc(void);
 void	cpu_reset(void);
 void	x86_64_proc0_tss_ldt_init(void);
 void	x86_64_init_pcb_tss_ldt(struct cpu_info *);
 void	cpu_proc_fork(struct proc *, struct proc *);
->>>>>>> 1.21
 
 struct region_descriptor;
 void	lgdt(struct region_descriptor *);
 void	fillw(short, void *, size_t);
 
 struct pcb;
-<<<<<<< cpu.h
-void	savectx __P((struct pcb *));
-void	lwp_trampoline __P((void));
-void	child_trampoline __P((void));
-=======
 void	savectx(struct pcb *);
 void	switch_exit(struct lwp *, void (*)(struct lwp *));
 void	proc_trampoline(void);
 void	child_trampoline(void);
->>>>>>> 1.21
 
 /* clock.c */
 void	initrtclock(u_long);
