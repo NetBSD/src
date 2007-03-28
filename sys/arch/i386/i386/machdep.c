@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.586.2.2 2007/02/07 12:53:10 tron Exp $	*/
+/*	$NetBSD: machdep.c,v 1.586.2.3 2007/03/28 20:25:36 jdc Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.586.2.2 2007/02/07 12:53:10 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.586.2.3 2007/03/28 20:25:36 jdc Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -182,6 +182,14 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.586.2.2 2007/02/07 12:53:10 tron Exp $
 #include "isadma.h"
 #include "npx.h"
 #include "ksyms.h"
+
+#include "cardbus.h"
+#if NCARDBUS > 0
+/* For rbus_min_start hint. */
+#include <machine/bus.h>
+#include <dev/cardbus/rbus.h>
+#include <machine/rbus_machdep.h>
+#endif
 
 #include "mca.h"
 #if NMCA > 0
@@ -441,6 +449,11 @@ cpu_startup()
 
 	format_bytes(pbuf, sizeof(pbuf), ptoa(physmem));
 	printf("total memory = %s\n", pbuf);
+
+#if NCARDBUS > 0
+	/* Tell RBUS how much RAM we have, so it can use heuristics. */
+	rbus_min_start_hint(ptoa(physmem));
+#endif
 
 	minaddr = 0;
 
