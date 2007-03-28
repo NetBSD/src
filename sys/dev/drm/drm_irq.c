@@ -139,8 +139,8 @@ int drm_irq_install(drm_device_t *dev)
 		retcode = ENOENT;
 		goto err;
 	}
-	istr = pci_intr_string(&dev->pa.pa_pc, ih);
-	dev->irqh = pci_intr_establish(&dev->pa.pa_pc, ih, IPL_TTY,
+	istr = pci_intr_string(dev->pa.pa_pc, ih);
+	dev->irqh = pci_intr_establish(dev->pa.pa_pc, ih, IPL_TTY,
 	    drm_irq_handler_wrap, dev);
 	if (!dev->irqh) {
 		retcode = ENOENT;
@@ -195,7 +195,7 @@ int drm_irq_uninstall(drm_device_t *dev)
 	bus_release_resource(dev->device, SYS_RES_IRQ, irqrid, dev->irqr);
 	DRM_LOCK();
 #elif defined(__NetBSD__) || defined(__OpenBSD__)
-	pci_intr_disestablish(&dev->pa.pa_pc, dev->irqh);
+	pci_intr_disestablish(dev->pa.pa_pc, dev->irqh);
 #endif
 	DRM_SPINUNINIT(dev->irq_lock);
 
