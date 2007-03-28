@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.64 2007/03/22 06:00:33 xtraeme Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.65 2007/03/28 03:55:19 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.64 2007/03/22 06:00:33 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.65 2007/03/28 03:55:19 simonb Exp $");
 
 #include "opt_cputype.h"
 #include "opt_enhanced_speedstep.h"
@@ -1358,7 +1358,6 @@ tmx86_get_longrun_status_all(void)
 	tmx86_get_longrun_status(&crusoe_frequency,
 	    &crusoe_voltage, &crusoe_percentage);
 }
-
 
 static void
 transmeta_cpu_info(struct cpu_info *ci)
