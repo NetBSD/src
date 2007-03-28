@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.100 2007/03/26 21:46:16 jdc Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.101 2007/03/28 20:48:30 jdc Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -2225,4 +2225,32 @@ sys/arch/alpha/pci/cia_dma.c			1.21
 	back to SGMAPs.  My PWS 500au with 1.5G of memory now works with
 	dma operations.
 	[mhitch, ticket #520]
+
+src/share/man/man4/cardbus.4			1.29 via patch
+src/sys/arch/i386/i386/machdep.c		1.593 via patch
+src/sys/arch/i386/i386/rbus_machdep.c		1.19-1.21 via patch
+src/sys/arch/i386/include/rbus_machdep.h	1.7 via patch
+
+	Set rbus_min_start based on available memory, rather than fixed at
+	1 GB.  This is important both for small and large machines.
+	Fixes PR#24567.
+	[gdt, ticket #521]
+
+sys/compat/linux/common/linux_emuldata.h	1.13
+sys/compat/linux/common/linux_sched.c		1.39
+
+	Add a new linux_emuldata_shared flag value LINUX_LES_USE_NPTL to allow
+	both NPTL and old linuxthreads behaviour depending on process needs.
+	Apply to exit_group(), getpid() and getppid() to share them between
+	compat linux32 (non NPTL) and compat linux (NPTL) on amd64.
+	[njoly, ticket #523]
+
+sys/netinet/ip_output.c				1.174 via patch
+
+	Unconditionally zero and free iproute. Before IPsec tunnel packets
+	e.g. from ICMP could end up in leaking the reference in iproute,
+	as ipsec4_output would overwrite the ro pointer in state.
+
+	Tested by Juraj Hercek and supposed to fix PR#35273 and PR#35318.
+	[joerg, ticket #524]
 
