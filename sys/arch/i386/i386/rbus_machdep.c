@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus_machdep.c,v 1.18 2005/12/11 12:17:41 christos Exp $	*/
+/*	$NetBSD: rbus_machdep.c,v 1.18.24.1 2007/03/28 20:27:09 jdc Exp $	*/
 
 /*
  * Copyright (c) 1999
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rbus_machdep.c,v 1.18 2005/12/11 12:17:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rbus_machdep.c,v 1.18.24.1 2007/03/28 20:27:09 jdc Exp $");
 
 #include "opt_pcibios.h"
 #include "opt_pcifixup.h"
@@ -65,8 +65,63 @@ __KERNEL_RCSID(0, "$NetBSD: rbus_machdep.c,v 1.18 2005/12/11 12:17:41 christos E
 
 #ifndef RBUS_MIN_START
 #define RBUS_MIN_START 0x40000000	/* 1GB */
+#else
+/*
+ * Note that kernel config forced RBUS_MIN_START.
+ */
+#define RBUS_MIN_START_FORCED
 #endif
 bus_addr_t rbus_min_start = RBUS_MIN_START;
+
+/*
+ * Dynamically set the start address for rbus.  This must be called
+ * before rbus is initialized.  The start address should be determined
+ * by the amount of installed memory.  Generally 1 GB has been found
+ * to be a good value, but it fails on some Thinkpads (e.g. 2645-4AU),
+ * for which 0.5 GB is a good value.  It also fails on (at least)
+ * Thinkpads with 2GB of RAM, for which 2 GB is a good value.
+ *
+ * Thus, a general strategy of setting rbus_min_start to the amount of
+ * memory seems in order.  However, the actually amount of memory is
+ * generally slightly more than the amount found, e.g. 1014MB vs 1024,
+ * or 2046 vs 2048.
+ */
+void
+rbus_min_start_hint(size_t ram)
+{
+#ifdef RBUS_MIN_START_FORCED
+	printf("rbus: rbus_min_start from config at 0x%0lx\n", rbus_min_start);
+
+#else
+        if (ram <= 192*1024*1024UL) {
+		/*
+		 * <= 192 MB, so try 0.5 GB.  This will work on
+		 * Thinkpad 600E (2645-4AU), which fails at 1GB, and
+		 * on some other older machines that may have trouble
+		 * with addresses needing more than 20 bits.
+		 */
+		rbus_min_start = 512 * 1024 * 1024UL;
+	}
+
+	if (ram >= 1024*1024*1024UL) {
+		/*
+		 * > 1GB, so try 2 GB.
+		 */
+		rbus_min_start =  2 * 1024 * 1024 * 1024UL;
+	}
+
+	/* XXX Not tested in > 2 GB case. */
+	if (ram > 2 * 1024*1024*1024UL) {
+		/*
+		 * > 2 GB, so try 3 GB.
+		 */
+		rbus_min_start =  3 * 1024 * 1024 * 1024UL;
+	}
+
+	printf("rbus: rbus_min_start set to 0x%0lx\n", rbus_min_start);
+#endif
+}
+
 
 /*
  * rbus_tag_t rbus_fakeparent_mem(struct pci_attach_args *pa)
