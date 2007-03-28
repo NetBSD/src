@@ -1,4 +1,4 @@
-.\"	$NetBSD: cardbus.4,v 1.28.2.1 2007/02/08 22:31:02 bouyer Exp $
+.\"	$NetBSD: cardbus.4,v 1.28.2.2 2007/03/28 20:24:32 jdc Exp $
 .\"
 .\" Copyright (c) 1999-2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd October 7, 2006
+.Dd January 6, 2007
 .Dt CARDBUS 4
 .Os
 .Sh NAME
@@ -174,10 +174,15 @@ and access the devices using the
 abstraction.
 When the mapping does not work, PCMCIA cards are typically ignored on
 insert, and Cardbus cards are recognized but nonfunctional.
-The location is machine-specific, and the default location does not
-work on all hardware.
-On i386, the following kernel configuration line, which maps Cardbus
-space at 512M rather than 1GB, has been found to make Cardbus support
+On i386, the kernel has a heuristic to choose a memory address for
+mapping, defaulting to 1 GB, but choosing 0.5 GB on machines with less
+than 192 MB RAM and 2 GB on machines with more than 1 GB of RAM.
+The intent is to use an address that is larger than available RAM, but
+low enough to work; some systems seem to have trouble with
+addresses requiring more than 20 address lines.
+On i386, the following kernel configuration line disables the
+heuristics and forces Cardbus
+memory space to be mapped at 512M; this value makes Cardbus support
 (including PCMCIA attachment under a cbb) work on some notebook
 models, including the IBM Thinkpad 600E (2645-4AU) and the Compaq
 ARMADA M700:
