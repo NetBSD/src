@@ -1,4 +1,4 @@
-/* $NetBSD: test.c,v 1.30 2006/09/24 13:24:08 hubertf Exp $ */
+/* $NetBSD: test.c,v 1.31 2007/03/28 01:47:25 christos Exp $ */
 
 /*
  * test(1); version 7-like  --  author Erik Baalbergen
@@ -12,7 +12,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: test.c,v 1.30 2006/09/24 13:24:08 hubertf Exp $");
+__RCSID("$NetBSD: test.c,v 1.31 2007/03/28 01:47:25 christos Exp $");
 #endif
 
 #include <sys/stat.h>
@@ -95,50 +95,60 @@ enum token_types {
 	PAREN
 };
 
-static struct t_op {
+struct t_op {
 	const char *op_text;
 	short op_num, op_type;
-} const ops [] = {
-	{"-r",	FILRD,	UNOP},
-	{"-w",	FILWR,	UNOP},
-	{"-x",	FILEX,	UNOP},
-	{"-e",	FILEXIST,UNOP},
-	{"-f",	FILREG,	UNOP},
-	{"-d",	FILDIR,	UNOP},
-	{"-c",	FILCDEV,UNOP},
-	{"-b",	FILBDEV,UNOP},
-	{"-p",	FILFIFO,UNOP},
-	{"-u",	FILSUID,UNOP},
-	{"-g",	FILSGID,UNOP},
-	{"-k",	FILSTCK,UNOP},
-	{"-s",	FILGZ,	UNOP},
-	{"-t",	FILTT,	UNOP},
-	{"-z",	STREZ,	UNOP},
-	{"-n",	STRNZ,	UNOP},
-	{"-h",	FILSYM,	UNOP},		/* for backwards compat */
-	{"-O",	FILUID,	UNOP},
-	{"-G",	FILGID,	UNOP},
-	{"-L",	FILSYM,	UNOP},
-	{"-S",	FILSOCK,UNOP},
-	{"=",	STREQ,	BINOP},
-	{"!=",	STRNE,	BINOP},
-	{"<",	STRLT,	BINOP},
-	{">",	STRGT,	BINOP},
-	{"-eq",	INTEQ,	BINOP},
-	{"-ne",	INTNE,	BINOP},
-	{"-ge",	INTGE,	BINOP},
-	{"-gt",	INTGT,	BINOP},
-	{"-le",	INTLE,	BINOP},
-	{"-lt",	INTLT,	BINOP},
-	{"-nt",	FILNT,	BINOP},
-	{"-ot",	FILOT,	BINOP},
-	{"-ef",	FILEQ,	BINOP},
+};
+
+static const struct t_op cop[] = {
 	{"!",	UNOT,	BUNOP},
-	{"-a",	BAND,	BBINOP},
-	{"-o",	BOR,	BBINOP},
 	{"(",	LPAREN,	PAREN},
 	{")",	RPAREN,	PAREN},
-	{0,	0,	0}
+	{"<",	STRLT,	BINOP},
+	{"=",	STREQ,	BINOP},
+	{">",	STRGT,	BINOP},
+};
+
+static const struct t_op cop2[] = {
+	{"!=",	STRNE,	BINOP},
+};
+
+static const struct t_op mop3[] = {
+	{"ef",	FILEQ,	BINOP},
+	{"eq",	INTEQ,	BINOP},
+	{"ge",	INTGE,	BINOP},
+	{"gt",	INTGT,	BINOP},
+	{"le",	INTLE,	BINOP},
+	{"lt",	INTLT,	BINOP},
+	{"ne",	INTNE,	BINOP},
+	{"nt",	FILNT,	BINOP},
+	{"ot",	FILOT,	BINOP},
+};
+
+static const struct t_op mop2[] = {
+	{"G",	FILGID,	UNOP},
+	{"L",	FILSYM,	UNOP},
+	{"O",	FILUID,	UNOP},
+	{"S",	FILSOCK,UNOP},
+	{"a",	BAND,	BBINOP},
+	{"b",	FILBDEV,UNOP},
+	{"c",	FILCDEV,UNOP},
+	{"d",	FILDIR,	UNOP},
+	{"e",	FILEXIST,UNOP},
+	{"f",	FILREG,	UNOP},
+	{"g",	FILSGID,UNOP},
+	{"h",	FILSYM,	UNOP},		/* for backwards compat */
+	{"k",	FILSTCK,UNOP},
+	{"n",	STRNZ,	UNOP},
+	{"o",	BOR,	BBINOP},
+	{"p",	FILFIFO,UNOP},
+	{"r",	FILRD,	UNOP},
+	{"s",	FILGZ,	UNOP},
+	{"t",	FILTT,	UNOP},
+	{"u",	FILSUID,UNOP},
+	{"w",	FILWR,	UNOP},
+	{"x",	FILEX,	UNOP},
+	{"z",	STREZ,	UNOP},
 };
 
 static char **t_wp;
@@ -390,26 +400,68 @@ filstat(char *nm, enum token mode)
 	}
 }
 
+#define VTOC(x)	(const unsigned char *)((const struct t_op *)x)->op_text
+
+static int
+compare1(const void *va, const void *vb)
+{
+	const unsigned char *a = va;
+	const unsigned char *b = VTOC(vb);
+
+	return a[0] - b[0];
+}
+
+static int
+compare2(const void *va, const void *vb)
+{
+	const unsigned char *a = va;
+	const unsigned char *b = VTOC(vb);
+	int z = a[0] - b[0];
+
+	return z ? z : (a[1] - b[1]);
+}
+
+static struct t_op const *
+findop(const char *s)
+{
+	if (s[0] == '-') {
+		if (s[1] == '\0')
+			return NULL;
+		if (s[2] == '\0')
+			return bsearch(s + 1, mop2, __arraycount(mop2),
+			    sizeof(*mop2), compare1);
+		else if (s[3] != '\0')
+			return NULL;
+		else
+			return bsearch(s + 1, mop3, __arraycount(mop3),
+			    sizeof(*mop3), compare2);
+	} else {
+		if (s[1] == '\0')
+			return bsearch(s, cop, __arraycount(cop), sizeof(*cop),
+			    compare1);
+		else if (strcmp(s, cop2[0].op_text) == 0)
+			return cop2;
+		else
+			return NULL;
+	}
+}
+
 static enum token
 t_lex(char *s)
 {
 	struct t_op const *op;
 
-	op = ops;
-
-	if (s == 0) {
+	if (s == NULL) {
 		t_wp_op = NULL;
 		return EOI;
 	}
-	while (op->op_text) {
-		if (strcmp(s, op->op_text) == 0) {
-			if ((op->op_type == UNOP && isoperand()) ||
-			    (op->op_num == LPAREN && *(t_wp+1) == 0))
-				break;
+
+	if ((op = findop(s)) != NULL) {
+		if (!((op->op_type == UNOP && isoperand()) ||
+		    (op->op_num == LPAREN && *(t_wp+1) == 0))) {
 			t_wp_op = op;
 			return op->op_num;
 		}
-		op++;
 	}
 	t_wp_op = NULL;
 	return OPERAND;
@@ -421,17 +473,12 @@ isoperand(void)
 	struct t_op const *op;
 	char *s, *t;
 
-	op = ops;
 	if ((s  = *(t_wp+1)) == 0)
 		return 1;
 	if ((t = *(t_wp+2)) == 0)
 		return 0;
-	while (op->op_text) {
-		if (strcmp(s, op->op_text) == 0)
-	    		return op->op_type == BINOP &&
-	    		    (t[0] != ')' || t[1] != '\0'); 
-		op++;
-	}
+	if ((op = findop(s)) != NULL)
+		return op->op_type == BINOP && (t[0] != ')' || t[1] != '\0'); 
 	return 0;
 }
 
