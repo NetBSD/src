@@ -36,11 +36,11 @@
 __FBSDID("$FreeBSD: src/sys/dev/drm/mga_drv.c,v 1.12 2006/05/17 06:36:28 anholt Exp $");
 */
 
-#include "drmP.h"
-#include "drm.h"
-#include "mga_drm.h"
-#include "mga_drv.h"
-#include "drm_pciids.h"
+#include <dev/drm/drmP.h>
+#include <dev/drm/drm.h>
+#include <dev/pci/drm/mga_drm.h>
+#include <dev/pci/drm/mga_drv.h>
+#include <dev/pci/drm/drm_pciids.h>
 
 /* drv_PCI_IDs comes from drm_pciids.h, generated from drm_pciids.txt. */
 static drm_pci_id_list_t mga_pciidlist[] = {
