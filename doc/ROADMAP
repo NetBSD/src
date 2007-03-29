@@ -1,4 +1,4 @@
-#	$NetBSD: ROADMAP,v 1.15 2007/03/11 21:05:57 rmind Exp $
+#	$NetBSD: ROADMAP,v 1.16 2007/03/29 03:40:21 yamt Exp $
 
 A high-level roadmap for NetBSD
 
@@ -268,9 +268,9 @@ ah. Internationalization
     printf with positional parameter support, time & currency
     support, etc.  NetBSD has a global user and developer base and
     our i18n support should reflect that.
-        (a) Support cond. printf fmt    tnozaki                         3.0
+        (a) Support cond. printf fmt
 		Responsible: tnozaki
-		ETA: 3.0
+		ETA: ?
         (b) Support LC_COLLATE
         (c) mklocale(1) -> localedef(1)
         (d) wchar_t in C++
