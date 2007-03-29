@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_subr.c,v 1.15 2003/08/07 16:33:34 agc Exp $	*/
+/*	$NetBSD: clnp_subr.c,v 1.15.6.1 2007/03/29 08:57:21 ghen Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clnp_subr.c,v 1.15 2003/08/07 16:33:34 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clnp_subr.c,v 1.15.6.1 2007/03/29 08:57:21 ghen Exp $");
 
 #include "opt_iso.h"
 
@@ -157,27 +157,27 @@ clnp_extract_addr(bufp, buflen, srcp, destp)
 	struct iso_addr *destp;	/* ptr to destination address
 						 * buffer */
 {
-	int             len;	/* argument to bcopy */
+	size_t             len;	/* argument to memcpy */
 
 	/*
 	 * check that we have enough data. Plus1 is for length octet
 	 */
-	if ((u_char) * bufp + 1 > buflen) {
-		return ((caddr_t) 0);
-	}
-	len = destp->isoa_len = (u_char) * bufp++;
-	(void) bcopy(bufp, (caddr_t) destp, len);
+	len = (u_char)*bufp++;
+	if (len > buflen)
+	    return NULL;
+	destp->isoa_len = len;
+	(void)memcpy(destp, bufp, len);
 	buflen -= len;
 	bufp += len;
 
 	/*
 	 * check that we have enough data. Plus1 is for length octet
 	 */
-	if ((u_char) * bufp + 1 > buflen) {
-		return ((caddr_t) 0);
-	}
-	len = srcp->isoa_len = (u_char) * bufp++;
-	(void) bcopy(bufp, (caddr_t) srcp, len);
+	len = (u_char)*bufp++;
+	if (len > buflen)
+	    return NULL;
+	srcp->isoa_len = len;
+	(void)memcpy(srcp, bufp, len);
 	bufp += len;
 
 	/*
@@ -186,7 +186,7 @@ clnp_extract_addr(bufp, buflen, srcp, destp)
 	if (iso_ck_addr(srcp) && iso_ck_addr(destp))
 		return bufp;
 	else
-		return (caddr_t) 0;
+		return NULL;
 }
 #endif				/* notdef */
 
@@ -426,11 +426,11 @@ clnp_insert_addr(bufp, srcp, dstp)
 	struct iso_addr *dstp;	/* ptr to dst addr */
 {
 	*bufp++ = dstp->isoa_len;
-	(void) bcopy((caddr_t) dstp, bufp, dstp->isoa_len);
+	(void)memcpy(bufp, dstp, dstp->isoa_len);
 	bufp += dstp->isoa_len;
 
 	*bufp++ = srcp->isoa_len;
-	(void) bcopy((caddr_t) srcp, bufp, srcp->isoa_len);
+	(void)memcpy(bufp, srcp, srcp->isoa_len);
 	bufp += srcp->isoa_len;
 
 	return bufp;
@@ -468,14 +468,16 @@ clnp_route(dst, ro, flags, first_hop, ifa)
 {
 	if (flags & SO_DONTROUTE) {
 		struct iso_ifaddr *ia;
+		size_t len = 1 + (unsigned)dst->isoa_len;
 
 		if (ro->ro_rt) {
 			RTFREE(ro->ro_rt);
 			ro->ro_rt = 0;
 		}
-		bzero((caddr_t) & ro->ro_dst, sizeof(ro->ro_dst));
-		bcopy((caddr_t) dst, (caddr_t) & ro->ro_dst.siso_addr,
-		      1 + (unsigned) dst->isoa_len);
+		if (sizeof(ro->ro_dst.siso_addr) < len)
+		    return EINVAL;
+		(void)memset(&ro->ro_dst, 0, sizeof(ro->ro_dst));
+		(void)memcpy(&ro->ro_dst.siso_addr, dst, len);
 		ro->ro_dst.siso_family = AF_ISO;
 		ro->ro_dst.siso_len = sizeof(ro->ro_dst);
 		ia = iso_localifa(&ro->ro_dst);
@@ -514,11 +516,15 @@ clnp_route(dst, ro, flags, first_hop, ifa)
 	}
 
 	if (ro->ro_rt == 0) {
+		size_t len = 1 + (unsigned)dst->isoa_len;
+
 		/* set up new route structure */
-		bzero((caddr_t) & ro->ro_dst, sizeof(ro->ro_dst));
+		if (sizeof(ro->ro_dst.siso_addr) < len)
+		    return EINVAL;
+		(void)memset(&ro->ro_dst, 0, sizeof(ro->ro_dst));
 		ro->ro_dst.siso_len = sizeof(ro->ro_dst);
 		ro->ro_dst.siso_family = AF_ISO;
-		Bcopy(dst, &ro->ro_dst.siso_addr, 1 + dst->isoa_len);
+		(void)memcpy(&ro->ro_dst.siso_addr, dst, len);
 		/* allocate new route */
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_ROUTE]) {
@@ -580,13 +586,19 @@ clnp_srcroute(options, oidx, ro, first_hop, ifa, final_dst)
 	if CLNPSRCRT_TERM
 		(oidx, options) {
 		dst.isoa_len = final_dst->isoa_len;
-		bcopy(final_dst->isoa_genaddr, dst.isoa_genaddr, dst.isoa_len);
+		if (sizeof(dst.isoa_genaddr) < (size_t)dst.isoa_len)
+		    return EINVAL;
+		(void)memcpy(dst.isoa_genaddr, final_dst->isoa_genaddr,
+		    (size_t)dst.isoa_len);
 	} else {
 		/*
 		 * setup dst based on src rt specified
 		 */
 		dst.isoa_len = CLNPSRCRT_CLEN(oidx, options);
-		bcopy(CLNPSRCRT_CADDR(oidx, options), dst.isoa_genaddr, dst.isoa_len);
+		if (sizeof(dst.isoa_genaddr) < (unsigned)dst.isoa_len)
+		    return EINVAL;
+		(void)memcpy(dst.isoa_genaddr, CLNPSRCRT_CADDR(oidx, options),
+		    (size_t)dst.isoa_len);
 	}
 
 	/*
