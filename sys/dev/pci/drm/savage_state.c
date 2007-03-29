@@ -27,9 +27,9 @@
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/savage_state.c,v 1.3 2006/04/09 20:45:45 anholt Exp $");
 */
-#include "drmP.h"
-#include "savage_drm.h"
-#include "savage_drv.h"
+#include <dev/drm/drmP.h>
+#include <dev/pci/drm/savage_drm.h>
+#include <dev/pci/drm/savage_drv.h>
 
 void savage_emit_clip_rect_s3d(drm_savage_private_t *dev_priv,
 			       const drm_clip_rect_t *pbox)
