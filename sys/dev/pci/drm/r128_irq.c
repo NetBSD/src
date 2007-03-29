@@ -36,10 +36,10 @@
 __FBSDID("$FreeBSD: src/sys/dev/drm/r128_irq.c,v 1.6 2005/11/28 23:13:53 anholt Exp $");
 */
 
-#include "drmP.h"
-#include "drm.h"
-#include "r128_drm.h"
-#include "r128_drv.h"
+#include <dev/drm/drmP.h>
+#include <dev/drm/drm.h>
+#include <dev/pci/drm/r128_drm.h>
+#include <dev/pci/drm/r128_drv.h>
 
 irqreturn_t r128_driver_irq_handler(DRM_IRQ_ARGS)
 {

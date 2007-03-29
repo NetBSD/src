@@ -36,11 +36,11 @@
 __FBSDID("$FreeBSD: src/sys/dev/drm/r128_drv.c,v 1.11 2005/12/20 22:44:36 jhb Exp $");
 */
 
-#include "drmP.h"
-#include "drm.h"
-#include "r128_drm.h"
-#include "r128_drv.h"
-#include "drm_pciids.h"
+#include <dev/drm/drmP.h>
+#include <dev/drm/drm.h>
+#include <dev/pci/drm/r128_drm.h>
+#include <dev/pci/drm/r128_drv.h>
+#include <dev/pci/drm/drm_pciids.h>
 
 /* drv_PCI_IDs comes from drm_pciids.h, generated from drm_pciids.txt. */
 static drm_pci_id_list_t r128_pciidlist[] = {

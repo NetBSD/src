@@ -40,10 +40,10 @@ __FBSDID("$FreeBSD: src/sys/dev/drm/sis_mm.c,v 1.9 2006/04/09 20:45:45 anholt Ex
 #include <linux/sisfb.h>
 #endif
 #endif
-#include "drmP.h"
-#include "sis_drm.h"
-#include "sis_drv.h"
-#include "sis_ds.h"
+#include <dev/drm/drmP.h>
+#include <dev/pci/drm/sis_drm.h>
+#include <dev/pci/drm/sis_drv.h>
+#include <dev/pci/drm/sis_ds.h>
 
 #define MAX_CONTEXT 100
 #define VIDEO_TYPE 0
