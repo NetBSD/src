@@ -1,4 +1,4 @@
-.\"	$NetBSD: condvar.9,v 1.8 2007/02/05 15:04:21 ad Exp $
+.\"	$NetBSD: condvar.9,v 1.9 2007/03/29 17:40:36 ad Exp $
 .\"
 .\" Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd February 4, 2007
+.Dd March 27, 2007
 .Dt CONDVAR 9
 .Os
 .Sh NAME
@@ -48,7 +48,6 @@
 .Nm cv_timedwait_sig ,
 .Nm cv_signal ,
 .Nm cv_broadcast ,
-.Nm cv_wakeup ,
 .Nm cv_has_waiters
 .Nd condition variables
 .Sh SYNOPSIS
@@ -69,9 +68,7 @@
 .Fn cv_signal "kcondvar_t *cv"
 .Ft void
 .Fn cv_broadcast "kcondvar_t *cv"
-.Ft void
-.Fn cv_wakeup "kcondvar_t *cv"
-.Ft int
+.Ft bool
 .Fn cv_has_waiters "kcondvar_t *cv"
 .Sh DESCRIPTION
 Condition variables (CVs) are used in the kernel to synchronize access
@@ -199,23 +196,22 @@ The mutex passed to the wait function
 .Po Fa mtx Pc
 must also be held when calling
 .Fn cv_broadcast .
-.It Fn cv_wakeup "cv"
-.Pp
-As per
-.Fn cv_broadcast ,
-but the interlock
-.Po Fa mtx Pc
-need not be held.
-Use of this method is discouraged it is more costly to execute than
-.Fn cv_broadcast
-or
-.Fn cv_signal .
 .It Fn cv_has_waiters "cv"
 .Pp
-Return non-zero if one or more LWPs are waiting on the specified condition
-variable.
+Return
+.Dv true
+if one or more LWPs are waiting on the specified condition variable.
+.Pp
 .Fn cv_has_waiters
-should only be used when making diagnostic assertions.
+cannot test reliably for interruptable waits.
+It should only be used to test for non-interruptable waits
+made using
+.Fn cv_wait .
+.Pp
+.Fn cv_has_waiters
+should only be used when making diagnostic assertions, and must
+be called while holding the interlocking mutex passed to
+.Fn cv_wait .
 .El
 .Sh EXAMPLES
 .Bd -literal
@@ -228,16 +224,16 @@ Consuming a resource:
 	mutex_enter(\*[Am]res-\*[Gt]mutex);
 
 	/*
-	 * Wait for the resource to become available, and take
-	 * ownership of it.
+	 * Wait for the resource to become available.
 	 */
 	while (res-\*[Gt]state == BUSY)
 		cv_wait(\*[Am]res-\*[Gt]condvar, \*[Am]res-\*[Gt]mutex);
-	res-\*[Gt]state = BUSY;
 
 	/*
-	 * It's now available to us.
+	 * It's now available to us.  Take ownership of the
+	 * resource, and consume it.
 	 */
+	res-\*[Gt]state = BUSY;
 	mutex_exit(\*[Am]res-\*[Gt]mutex);
 	consume(res);
 
@@ -280,6 +276,3 @@ describes the public interface.
 .Sh HISTORY
 The CV primitives first appeared in
 .Nx 5.0 .
-They are modelled after similar primitives implemented in
-Sun Solaris, and have been extended for
-.Nx .
