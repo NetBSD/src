@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.2,v 1.1.2.59 2007/03/10 18:54:57 bouyer Exp $
+#	$NetBSD: CHANGES-3.2,v 1.1.2.60 2007/03/29 09:08:54 ghen Exp $
 
 A complete list of changes from the NetBSD 3.1 release to the NetBSD 3.2
 release:
@@ -2988,4 +2988,14 @@ sys/dev/pci/if_re_pci.c				1.25-1.26
 	Add an entry to match hwrev RTK_HWREV_8100E_SPIN2 too.
 	Also check both I/O and memory space on unmap. Pointer out by yamt.
 	[tsutsui, ticket #1680]
+
+sys/netiso/clnp_subr.c				1.27 via patch
+
+	The clnp(4) functions now check the length of arguments passed and will
+	return an appropriate error if the value passed is to large.  This
+	prevents a local denial of service and privilege escalation attack.
+
+	Issue found by Christer Oberg and patch from christos.
+	(NetBSD-SA2007-004)
+	[adrianp, ticket #1733]
 
