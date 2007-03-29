@@ -110,13 +110,14 @@ static int drm_remove_magic(drm_device_t *dev, drm_magic_t magic)
 			if (prev) {
 				prev->next = pt->next;
 			}
+			pt->priv->magic = 0;
 			DRM_UNLOCK();
+			free(pt, M_DRM);
 			return 0;
 		}
 	}
 	DRM_UNLOCK();
 
-	free(pt, M_DRM);
 	return DRM_ERR(EINVAL);
 }
 
