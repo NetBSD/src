@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.2,v 1.1.2.102 2007/02/20 15:53:23 tron Exp $
+#	$NetBSD: CHANGES-2.2,v 1.1.2.103 2007/03/29 09:09:37 ghen Exp $
 
 A complete list of changes from the NetBSD 2.1 release to the NetBSD 2.2 
 release
@@ -1077,4 +1077,14 @@ sys/dev/scsipi/scsiconf.c			1.242 via patch
 
 	Fix problems with Seagate ST318203LSUN18G.
 	[bouyer, ticket #11051]
+
+sys/netiso/clnp_subr.c				1.27 via patch
+
+	The clnp(4) functions now check the length of arguments passed and will
+	return an appropriate error if the value passed is to large.  This
+	prevents a local denial of service and privilege escalation attack.
+
+	Issue found by Christer Oberg and patch from christos.
+	(NetBSD-SA2007-004)
+	[adrianp, ticket #11256]
 
