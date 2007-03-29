@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_condvar.c,v 1.5 2007/02/27 15:07:28 yamt Exp $	*/
+/*	$NetBSD: kern_condvar.c,v 1.5.6.1 2007/03/29 19:27:56 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.5 2007/02/27 15:07:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.5.6.1 2007/03/29 19:27:56 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -54,8 +54,8 @@ __KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.5 2007/02/27 15:07:28 yamt Exp $"
 #include <sys/condvar.h>
 #include <sys/sleepq.h>
 
-static void	cv_unsleep(struct lwp *);
-static void	cv_changepri(struct lwp *, pri_t);
+static void	cv_unsleep(lwp_t *);
+static void	cv_changepri(lwp_t *, pri_t);
 
 syncobj_t cv_syncobj = {
 	SOBJ_SLEEPQ_SORTED,
@@ -102,18 +102,40 @@ cv_destroy(kcondvar_t *cv)
  *	condition variable, and increment the number of waiters.
  */
 static inline sleepq_t *
-cv_enter(kcondvar_t *cv, kmutex_t *mtx, struct lwp *l)
+cv_enter(kcondvar_t *cv, kmutex_t *mtx, lwp_t *l)
 {
 	sleepq_t *sq;
 
 	KASSERT(cv->cv_wmesg != NULL);
 
+	l->l_cv_signalled = 0;
 	sq = sleeptab_lookup(&sleeptab, cv);
 	cv->cv_waiters++;
 	sleepq_enter(sq, l);
 	mutex_exit(mtx);
 
 	return sq;
+}
+
+/*
+ * cv_exit:
+ *
+ *	After resuming execution, check to see if we have been restarted
+ *	as a result of cv_signal().  If we have, but cannot take the
+ *	wakeup (because of eg a pending Unix signal or timeout) then try
+ *	to ensure that another LWP sees it.  This is necessary because
+ *	there may be multiple waiters, and at least one should take the
+ *	wakeup if possible.
+ */
+static inline int
+cv_exit(kcondvar_t *cv, kmutex_t *mtx, lwp_t *l, const int error)
+{
+
+	mutex_enter(mtx);
+	if (__predict_false(error != 0) && l->l_cv_signalled != 0)
+		cv_signal(cv);
+
+	return error;
 }
 
 /*
@@ -125,7 +147,7 @@ cv_enter(kcondvar_t *cv, kmutex_t *mtx, struct lwp *l)
  *	called with the LWP locked, and must return it unlocked.
  */
 static void
-cv_unsleep(struct lwp *l)
+cv_unsleep(lwp_t *l)
 {
 	uintptr_t addr;
 
@@ -144,7 +166,7 @@ cv_unsleep(struct lwp *l)
  *	Adjust the real (user) priority of an LWP blocked on a CV.
  */
 static void
-cv_changepri(struct lwp *l, pri_t pri)
+cv_changepri(lwp_t *l, pri_t pri)
 {
 	sleepq_t *sq = l->l_sleepq;
 	pri_t opri;
@@ -169,7 +191,7 @@ cv_changepri(struct lwp *l, pri_t pri)
 void
 cv_wait(kcondvar_t *cv, kmutex_t *mtx)
 {
-	struct lwp *l = curlwp;
+	lwp_t *l = curlwp;
 	sleepq_t *sq;
 
 	LOCK_ASSERT(mutex_owned(mtx));
@@ -182,7 +204,7 @@ cv_wait(kcondvar_t *cv, kmutex_t *mtx)
 	sq = cv_enter(cv, mtx, l);
 	sleepq_block(sq, sched_kpri(l), cv, cv->cv_wmesg, 0, 0, &cv_syncobj);
 	(void)sleepq_unblock(0, 0);
-	mutex_enter(mtx);
+	(void)cv_exit(cv, mtx, l, 0);
 }
 
 /*
@@ -196,7 +218,7 @@ cv_wait(kcondvar_t *cv, kmutex_t *mtx)
 int
 cv_wait_sig(kcondvar_t *cv, kmutex_t *mtx)
 {
-	struct lwp *l = curlwp;
+	lwp_t *l = curlwp;
 	sleepq_t *sq;
 	int error;
 
@@ -208,9 +230,7 @@ cv_wait_sig(kcondvar_t *cv, kmutex_t *mtx)
 	sq = cv_enter(cv, mtx, l);
 	sleepq_block(sq, sched_kpri(l), cv, cv->cv_wmesg, 0, 1, &cv_syncobj);
 	error = sleepq_unblock(0, 1);
-	mutex_enter(mtx);
-
-	return error;
+	return cv_exit(cv, mtx, l, error);
 }
 
 /*
@@ -223,7 +243,7 @@ cv_wait_sig(kcondvar_t *cv, kmutex_t *mtx)
 int
 cv_timedwait(kcondvar_t *cv, kmutex_t *mtx, int timo)
 {
-	struct lwp *l = curlwp;
+	lwp_t *l = curlwp;
 	sleepq_t *sq;
 	int error;
 
@@ -235,9 +255,7 @@ cv_timedwait(kcondvar_t *cv, kmutex_t *mtx, int timo)
 	sq = cv_enter(cv, mtx, l);
 	sleepq_block(sq, sched_kpri(l), cv, cv->cv_wmesg, timo, 0, &cv_syncobj);
 	error = sleepq_unblock(timo, 0);
-	mutex_enter(mtx);
-
- 	return error;
+	return cv_exit(cv, mtx, l, error);
 }
 
 /*
@@ -252,7 +270,7 @@ cv_timedwait(kcondvar_t *cv, kmutex_t *mtx, int timo)
 int
 cv_timedwait_sig(kcondvar_t *cv, kmutex_t *mtx, int timo)
 {
-	struct lwp *l = curlwp;
+	lwp_t *l = curlwp;
 	sleepq_t *sq;
 	int error;
 
@@ -264,9 +282,7 @@ cv_timedwait_sig(kcondvar_t *cv, kmutex_t *mtx, int timo)
 	sq = cv_enter(cv, mtx, l);
 	sleepq_block(sq, sched_kpri(l), cv, cv->cv_wmesg, timo, 1, &cv_syncobj);
 	error = sleepq_unblock(timo, 1);
-	mutex_enter(mtx);
-
- 	return error;
+	return cv_exit(cv, mtx, l, error);
 }
 
 /*
@@ -278,6 +294,7 @@ cv_timedwait_sig(kcondvar_t *cv, kmutex_t *mtx, int timo)
 void
 cv_signal(kcondvar_t *cv)
 {
+	lwp_t *l;
 	sleepq_t *sq;
 
 	if (cv->cv_waiters == 0)
@@ -292,7 +309,8 @@ cv_signal(kcondvar_t *cv)
 	sq = sleeptab_lookup(&sleeptab, cv);
 	if (cv->cv_waiters != 0) {
 		cv->cv_waiters--;
-		sleepq_wake(sq, cv, 1);
+		l = sleepq_wake(sq, cv, 1);
+		l->l_cv_signalled = 1;
 	} else
 		sleepq_unlock(sq);
 }
@@ -321,36 +339,15 @@ cv_broadcast(kcondvar_t *cv)
 }
 
 /*
- * cv_wakeup:
- *
- *	Wake all LWPs waiting on a condition variable.  The interlock
- *	need not be held, but it is the caller's responsibility to
- *	ensure correct synchronization.
- */
-void
-cv_wakeup(kcondvar_t *cv)
-{
-	sleepq_t *sq;
-	u_int cnt;
-
-	sq = sleeptab_lookup(&sleeptab, cv);
-	if ((cnt = cv->cv_waiters) != 0) {
-		cv->cv_waiters = 0;
-		sleepq_wake(sq, cv, cnt);
-	} else
-		sleepq_unlock(sq);
-}
-
-/*
  * cv_has_waiters:
  *
  *	For diagnostic assertions: return non-zero if a condition
  *	variable has waiters.
  */
-int
+bool
 cv_has_waiters(kcondvar_t *cv)
 {
 
 	/* No need to interlock here */
-	return (int)cv->cv_waiters;
+	return cv->cv_waiters != 0;
 }

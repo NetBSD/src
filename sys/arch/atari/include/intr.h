@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.14 2007/03/11 05:22:25 thorpej Exp $	*/
+/*	$NetBSD: intr.h,v 1.14.4.1 2007/03/29 19:27:25 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -37,16 +37,22 @@
 #define _ATARI_INTR_H_
 
 #define	IPL_NONE	0		    /* disable no interrupts	    */
-#define	IPL_BIO		(PSL_S|PSL_IPL3)    /* disable block I/O interrupts */
-#define	IPL_NET		(PSL_S|PSL_IPL3)    /* disable network interrupts   */
-#define	IPL_TTY		(PSL_S|PSL_IPL4)    /* disable terminal interrupts  */
+#define	IPL_SOFTCLOCK	1
+#define	IPL_SOFTNET	2
+#define	IPL_SOFTSERIAL	3
+#define	IPL_SOFT	4
+#define	IPL_BIO		5		    /* disable block I/O interrupts */
+#define	IPL_NET		6		    /* disable network interrupts   */
+#define	IPL_TTY		7		    /* disable terminal interrupts  */
 #define	IPL_LPT		IPL_TTY
-#define	IPL_VM		(PSL_S|PSL_IPL4)
-#define	IPL_CLOCK	(PSL_S|PSL_IPL6)    /* disable clock interrupts	    */
+#define	IPL_VM		8
+#define	IPL_SERIAL	9
+#define	IPL_CLOCK	10		    /* disable clock interrupts	    */
 #define	IPL_STATCLOCK	IPL_CLOCK
-#define	IPL_HIGH	(PSL_S|PSL_IPL7)    /* disable all interrupts	    */
+#define	IPL_HIGH	11		    /* disable all interrupts	    */
 #define	IPL_SCHED	IPL_HIGH
 #define	IPL_LOCK	IPL_HIGH
+#define	NIPL		12
 
 #define	IST_UNUSABLE	-1	/* interrupt cannot be used	*/
 #define	IST_NONE	0	/* none (dummy)			*/
@@ -63,13 +69,15 @@
 
 #define splnone()		spl0()
 
-#define splsoftclock()		splraise1()
-#define splsoftnet()		splraise1()
+#define splsoft()		splraise1()
+#define splsoftclock()		splsoft()
+#define splsoftnet()		splsoft()
+#define splsoftserial()		splsoft()
 
-#define splbio()		_splraise(PSL_S|PSL_IPL3)
-#define splnet()		_splraise(PSL_S|PSL_IPL3)
-#define spltty()		_splraise(PSL_S|PSL_IPL4)
-#define splvm()			_splraise(PSL_S|PSL_IPL4)
+#define splbio()		splraise3()
+#define splnet()		splraise3()
+#define spltty()		splraise4()
+#define splvm()			splraise4()
 
 #define spllpt()		spltty()
 
@@ -89,12 +97,7 @@ typedef struct {
 	uint16_t _psl;
 } ipl_cookie_t;
 
-static inline ipl_cookie_t
-makeiplcookie(ipl_t ipl)
-{
-
-	return (ipl_cookie_t){._psl = ipl};
-}
+ipl_cookie_t makeiplcookie(ipl_t);
 
 static inline int
 splraiseipl(ipl_cookie_t icookie)
@@ -102,6 +105,9 @@ splraiseipl(ipl_cookie_t icookie)
 
 	return _splraise(icookie._psl);
 }
+
+#include <m68k/softintr.h>
+
 #endif /* _KERNEL */
 
 #endif /* _ATARI_INTR_H_ */

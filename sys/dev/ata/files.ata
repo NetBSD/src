@@ -1,4 +1,4 @@
-#	$NetBSD: files.ata,v 1.14 2006/10/25 20:14:00 bouyer Exp $
+#	$NetBSD: files.ata,v 1.14.12.1 2007/03/29 19:27:44 reinoud Exp $
 #
 # Config file and device description for machine-independent devices
 # which attach to ATA busses.  Included by ports that need it.  Ports
@@ -20,6 +20,7 @@ defpseudo ataraid {[vendtype = -1], [unit = -1]}
 file	dev/ata/ata_raid.c		ataraid			needs-flag
 file	dev/ata/ata_raid_promise.c	ataraid
 file	dev/ata/ata_raid_adaptec.c	ataraid
+file	dev/ata/ata_raid_via.c		ataraid
 
 attach	ld at ataraid with ld_ataraid
 file	dev/ata/ld_ataraid.c		ld_ataraid

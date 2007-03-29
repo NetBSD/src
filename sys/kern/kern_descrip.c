@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.154 2007/03/12 18:18:32 ad Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.154.4.1 2007/03/29 19:27:56 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.154 2007/03/12 18:18:32 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.154.4.1 2007/03/29 19:27:56 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1766,8 +1766,7 @@ fdcloseexec(struct lwp *l)
  */
 #define CHECK_UPTO 3
 int
-fdcheckstd(l)
-	struct lwp *l;
+fdcheckstd(struct lwp *l)
 {
 	struct proc *p;
 	struct nameidata nd;

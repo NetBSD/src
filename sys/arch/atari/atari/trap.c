@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.87 2007/03/04 05:59:39 christos Exp $	*/
+/*	$NetBSD: trap.c,v 1.87.6.1 2007/03/29 19:27:24 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.87 2007/03/04 05:59:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.87.6.1 2007/03/29 19:27:24 reinoud Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -107,7 +107,6 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.87 2007/03/04 05:59:39 christos Exp $");
 #include <machine/trap.h>
 #include <machine/cpu.h>
 #include <machine/reg.h>
-#include <machine/mtpr.h>
 #include <machine/pte.h>
 #ifdef DDB
 #include <machine/db_machdep.h>
@@ -599,8 +598,9 @@ trap(type, code, v, frame)
 	 */
 	case T_SSIR:
 	case T_SSIR|T_USER:
-		if(ssir)
-			softint();
+
+		softintr_dispatch();
+
 		/*
 		 * If this was not an AST trap, we are all done.
 		 */

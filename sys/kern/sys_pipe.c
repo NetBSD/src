@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.82 2007/03/12 21:31:12 ad Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.82.2.1 2007/03/29 19:27:58 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.82 2007/03/12 21:31:12 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.82.2.1 2007/03/29 19:27:58 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,7 +106,6 @@ __KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.82 2007/03/12 21:31:12 ad Exp $");
 #include <sys/syscallargs.h>
 #include <uvm/uvm.h>
 #include <sys/sysctl.h>
-#include <sys/kernel.h>
 #include <sys/kauth.h>
 
 #include <sys/pipe.h>
@@ -1098,7 +1097,7 @@ pipe_ioctl(struct file *fp, u_long cmd, void *data, struct lwp *l)
 
 	case FIONWRITE:
 		/* Look at other side */
-		rw_enter(&pipe_peer_lock, RW_WRITER);
+		rw_enter(&pipe_peer_lock, RW_READER);
 		pipe = pipe->pipe_peer;
 		mutex_enter(&pipe->pipe_lock);
 #ifndef PIPE_NODIRECT
@@ -1113,7 +1112,7 @@ pipe_ioctl(struct file *fp, u_long cmd, void *data, struct lwp *l)
 
 	case FIONSPACE:
 		/* Look at other side */
-		rw_enter(&pipe_peer_lock, RW_WRITER);
+		rw_enter(&pipe_peer_lock, RW_READER);
 		pipe = pipe->pipe_peer;
 		mutex_enter(&pipe->pipe_lock);
 #ifndef PIPE_NODIRECT
@@ -1206,7 +1205,7 @@ pipe_stat(struct file *fp, struct stat *ub, struct lwp *l)
 {
 	struct pipe *pipe = (struct pipe *)fp->f_data;
 
-	rw_enter(&pipe_peer_lock, RW_WRITER);
+	rw_enter(&pipe_peer_lock, RW_READER);
 
 	memset((void *)ub, 0, sizeof(*ub));
 	ub->st_mode = S_IFIFO | S_IRUSR | S_IWUSR;
@@ -1277,7 +1276,7 @@ pipeclose(struct file *fp, struct pipe *pipe)
 		return;
 
  retry:
-	rw_enter(&pipe_peer_lock, RW_READER);
+	rw_enter(&pipe_peer_lock, RW_WRITER);
 	mutex_enter(&pipe->pipe_lock);
 
 	pipeselwakeup(pipe, pipe, POLL_HUP);
@@ -1338,7 +1337,7 @@ filt_pipedetach(struct knote *kn)
 {
 	struct pipe *pipe = (struct pipe *)kn->kn_fp->f_data;
 
-	rw_enter(&pipe_peer_lock, RW_WRITER);
+	rw_enter(&pipe_peer_lock, RW_READER);
 
 	switch(kn->kn_filter) {
 	case EVFILT_WRITE:
@@ -1375,26 +1374,30 @@ filt_piperead(struct knote *kn, long hint)
 	struct pipe *rpipe = (struct pipe *)kn->kn_fp->f_data;
 	struct pipe *wpipe;
 
-	rw_enter(&pipe_peer_lock, RW_WRITER);
-	wpipe = rpipe->pipe_peer;
-
-	if ((hint & NOTE_SUBMIT) == 0)
+	if ((hint & NOTE_SUBMIT) == 0) {
+		rw_enter(&pipe_peer_lock, RW_READER);
 		mutex_enter(&rpipe->pipe_lock);
+	}
+	wpipe = rpipe->pipe_peer;
 	kn->kn_data = rpipe->pipe_buffer.cnt;
+
 	if ((kn->kn_data == 0) && (rpipe->pipe_state & PIPE_DIRECTW))
 		kn->kn_data = rpipe->pipe_map.cnt;
 
 	if ((rpipe->pipe_state & PIPE_EOF) ||
 	    (wpipe == NULL) || (wpipe->pipe_state & PIPE_EOF)) {
 		kn->kn_flags |= EV_EOF;
-		if ((hint & NOTE_SUBMIT) == 0)
+		if ((hint & NOTE_SUBMIT) == 0) {
 			mutex_exit(&rpipe->pipe_lock);
-		rw_exit(&pipe_peer_lock);
+			rw_exit(&pipe_peer_lock);
+		}
 		return (1);
 	}
-	if ((hint & NOTE_SUBMIT) == 0)
+
+	if ((hint & NOTE_SUBMIT) == 0) {
 		mutex_exit(&rpipe->pipe_lock);
-	rw_exit(&pipe_peer_lock);
+		rw_exit(&pipe_peer_lock);
+	}
 	return (kn->kn_data > 0);
 }
 
@@ -1405,26 +1408,29 @@ filt_pipewrite(struct knote *kn, long hint)
 	struct pipe *rpipe = (struct pipe *)kn->kn_fp->f_data;
 	struct pipe *wpipe;
 
-	rw_enter(&pipe_peer_lock, RW_WRITER);
+	if ((hint & NOTE_SUBMIT) == 0) {
+		rw_enter(&pipe_peer_lock, RW_READER);
+		mutex_enter(&rpipe->pipe_lock);
+	}
 	wpipe = rpipe->pipe_peer;
 
-	if ((hint & NOTE_SUBMIT) == 0)
-		mutex_enter(&rpipe->pipe_lock);
 	if ((wpipe == NULL) || (wpipe->pipe_state & PIPE_EOF)) {
 		kn->kn_data = 0;
 		kn->kn_flags |= EV_EOF;
-		if ((hint & NOTE_SUBMIT) == 0)
+		if ((hint & NOTE_SUBMIT) == 0) {
 			mutex_exit(&rpipe->pipe_lock);
-		rw_exit(&pipe_peer_lock);
+			rw_exit(&pipe_peer_lock);
+		}
 		return (1);
 	}
 	kn->kn_data = wpipe->pipe_buffer.size - wpipe->pipe_buffer.cnt;
 	if (wpipe->pipe_state & PIPE_DIRECTW)
 		kn->kn_data = 0;
 
-	if ((hint & NOTE_SUBMIT) == 0)
+	if ((hint & NOTE_SUBMIT) == 0) {
 		mutex_exit(&rpipe->pipe_lock);
-	rw_exit(&pipe_peer_lock);
+		rw_exit(&pipe_peer_lock);
+	}
 	return (kn->kn_data >= PIPE_BUF);
 }
 
@@ -1439,7 +1445,7 @@ pipe_kqfilter(struct file *fp, struct knote *kn)
 {
 	struct pipe *pipe;
 
-	rw_enter(&pipe_peer_lock, RW_WRITER);
+	rw_enter(&pipe_peer_lock, RW_READER);
 	pipe = (struct pipe *)kn->kn_fp->f_data;
 
 	switch (kn->kn_filter) {

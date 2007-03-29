@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_lwp.c,v 1.14.2.1 2007/03/18 00:06:44 reinoud Exp $	*/
+/*	$NetBSD: sys_lwp.c,v 1.14.2.2 2007/03/29 19:27:58 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.14.2.1 2007/03/18 00:06:44 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.14.2.2 2007/03/29 19:27:58 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,7 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.14.2.1 2007/03/18 00:06:44 reinoud Exp
 #define	LWP_UNPARK_MAX		1024
 
 syncobj_t lwp_park_sobj = {
-	SOBJ_SLEEPQ_SORTED,
+	SOBJ_SLEEPQ_FIFO,
 	sleepq_unsleep,
 	sleepq_changepri,
 	sleepq_lendpri,
@@ -106,9 +106,14 @@ sys__lwp_create(struct lwp *l, void *v, register_t *retval)
 		return ENOMEM;
 	}
 
-	newlwp(l, p, uaddr, inmem,
+	error = newlwp(l, p, uaddr, inmem,
 	    SCARG(uap, flags) & LWP_DETACHED,
 	    NULL, 0, p->p_emul->e_startlwp, newuc, &l2);
+	if (error) {
+		uvm_uarea_free(uaddr);
+		pool_put(&lwp_uc_pool, newuc);
+		return error;
+	}
 
 	/*
 	 * Set the new LWP running, unless the caller has requested that
@@ -265,23 +270,19 @@ sys__lwp_wakeup(struct lwp *l, void *v, register_t *retval)
 	t->l_flag |= (LW_CANCELLED | LW_UNPARKED);
 
 	if (t->l_stat != LSSLEEP) {
+		lwp_unlock(t);
 		error = ENODEV;
-		goto bad;
-	}
-
-	if ((t->l_flag & LW_SINTR) == 0) {
+	} else if ((t->l_flag & LW_SINTR) == 0) {
+		lwp_unlock(t);
 		error = EBUSY;
-		goto bad;
+	} else {
+		/* Wake it up.  lwp_unsleep() will release the LWP lock. */
+		lwp_unsleep(t);
+		error = 0;
 	}
 
-	/* Wake it up.  setrunnable() will release the LWP lock. */
-	setrunnable(t);
 	mutex_exit(&p->p_smutex);
-	return 0;
 
- bad:
- 	lwp_unlock(t);
-	mutex_exit(&p->p_smutex);
 	return error;
 }
 
@@ -390,17 +391,22 @@ sys__lwp_detach(struct lwp *l, void *v, register_t *retval)
 			p->p_ndlwps++;
 			t->l_prflag |= LPR_DETACHED;
 			if (t->l_stat == LSZOMB) {
-				cv_broadcast(&p->p_lwpcv);
-				lwp_free(t, 0, 0); /* releases proc mutex */
+				/* Releases proc mutex. */
+				lwp_free(t, false, false);
 				return 0;
 			}
 			error = 0;
+
+			/*
+			 * Have any LWPs sleeping in lwp_wait() recheck
+			 * for deadlock.
+			 */
+			cv_broadcast(&p->p_lwpcv);
 		} else
 			error = EINVAL;
 	} else
 		error = ESRCH;
 
-	cv_broadcast(&p->p_lwpcv);
 	mutex_exit(&p->p_smutex);
 
 	return error;
@@ -544,7 +550,7 @@ sys__lwp_unpark(struct lwp *l, void *v, register_t *retval)
 	 */
 	if (t->l_syncobj == &lwp_park_sobj) {
 		/* Releases the LWP lock. */
-		setrunnable(t);
+		lwp_unsleep(t);
 	} else {
 		/*
 		 * Set the operation pending.  The next call to _lwp_park
@@ -652,7 +658,7 @@ sys__lwp_unpark_all(struct lwp *l, void *v, register_t *retval)
 		 */
 		if (t->l_syncobj == &lwp_park_sobj) {
 			/* Releases the LWP lock. */
-			setrunnable(t);
+			lwp_unsleep(t);
 		} else {
 			/*
 			 * Set the operation pending.  The next call to

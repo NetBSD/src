@@ -1,4 +1,4 @@
-/*	$NetBSD: hfs_subr.c,v 1.2 2007/03/06 11:28:48 dillo Exp $	*/
+/*	$NetBSD: hfs_subr.c,v 1.2.8.1 2007/03/29 19:27:54 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */                                     
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hfs_subr.c,v 1.2 2007/03/06 11:28:48 dillo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hfs_subr.c,v 1.2.8.1 2007/03/29 19:27:54 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -170,7 +170,6 @@ int
 hfs_libcb_opendev(
 	hfs_volume* vol,
 	const char* devname,
-	uint64_t voloffset,
 	hfs_callback_args* cbargs)
 {
 	hfs_libcb_data* cbdata = NULL;
@@ -193,7 +192,6 @@ hfs_libcb_opendev(
 	}
 	vol->cbdata = cbdata;
 	
-	cbdata->offset = voloffset;
 	cbdata->devvp = NULL;
 	
 	/* Open the device node. */
@@ -287,7 +285,7 @@ hfs_libcb_read(
 	 * copying that data into the outgoing buffer, start at the actual desired
 	 * offset and only copy the desired length.
 	 */
-	physoffset = offset + /* XXX Temporary */ cbdata->offset;
+	physoffset = offset + vol->offset;
 
 	return hfs_pread(cbdata->devvp, outbytes, cbdata->devblksz, physoffset,
 			length, cred);
