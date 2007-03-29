@@ -1,4 +1,4 @@
-#	$NetBSD: ROADMAP,v 1.16 2007/03/29 03:40:21 yamt Exp $
+#	$NetBSD: ROADMAP,v 1.17 2007/03/29 14:28:15 christos Exp $
 
 A high-level roadmap for NetBSD
 
@@ -268,9 +268,11 @@ ah. Internationalization
     printf with positional parameter support, time & currency
     support, etc.  NetBSD has a global user and developer base and
     our i18n support should reflect that.
-        (a) Support cond. printf fmt
-		Responsible: tnozaki
-		ETA: ?
+        (a) Support cond. printf fmt. 4.0 will have vfwprintf with
+	    positional parameter support; 5.0 will have vfprintf with
+	    positional parameter support.
+		Responsible: christos
+		ETA: 5.0
         (b) Support LC_COLLATE
         (c) mklocale(1) -> localedef(1)
         (d) wchar_t in C++
