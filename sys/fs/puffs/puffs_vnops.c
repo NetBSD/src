@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.54 2007/03/20 10:21:59 pooka Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.55 2007/03/29 16:04:26 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.54 2007/03/20 10:21:59 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.55 2007/03/29 16:04:26 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/fstrans.h>
@@ -843,10 +843,10 @@ puffs_reclaim(void *v)
 	 * puffs_root(), since there is only one of us.
 	 */
 	if (ap->a_vp->v_flag & VROOT) {
-		simple_lock(&pmp->pmp_lock);
+		mutex_enter(&pmp->pmp_lock);
 		KASSERT(pmp->pmp_root != NULL);
 		pmp->pmp_root = NULL;
-		simple_unlock(&pmp->pmp_lock);
+		mutex_exit(&pmp->pmp_lock);
 		goto out;
 	}
 
@@ -891,16 +891,16 @@ puffs_readdir(void *v)
 	if (!(ap->a_cookies == NULL && ap->a_ncookies == NULL))
 		return EOPNOTSUPP;
 
-	argsize = sizeof(struct puffs_vnreq_readdir);
+	argsize = sizeof(struct puffs_vnreq_readdir) + uio->uio_resid;
 	readdir_argp = malloc(argsize, M_PUFFS, M_ZERO | M_WAITOK);
 
 	puffs_credcvt(&readdir_argp->pvnr_cred, ap->a_cred);
 	readdir_argp->pvnr_offset = uio->uio_offset;
 	readdir_argp->pvnr_resid = uio->uio_resid;
 
-	error = puffs_vntouser_adjbuf(MPTOPUFFSMP(ap->a_vp->v_mount),
-	    PUFFS_VN_READDIR, (void **)&readdir_argp, &argsize,
-	    readdir_argp->pvnr_resid, VPTOPNC(ap->a_vp), ap->a_vp, NULL);
+	error = puffs_vntouser_delta(MPTOPUFFSMP(ap->a_vp->v_mount),
+	    PUFFS_VN_READDIR, readdir_argp, argsize,
+	    uio->uio_resid, VPTOPNC(ap->a_vp), ap->a_vp, NULL);
 	if (error)
 		goto out;
 
@@ -1399,7 +1399,8 @@ puffs_read(void *v)
 
 		tomove = PUFFS_TOMOVE(uio->uio_resid, pmp);
 		argsize = sizeof(struct puffs_vnreq_read);
-		read_argp = malloc(argsize, M_PUFFS, M_WAITOK | M_ZERO);
+		read_argp = malloc(argsize + tomove,
+		    M_PUFFS, M_WAITOK | M_ZERO);
 
 		error = 0;
 		while (uio->uio_resid > 0) {
@@ -1409,10 +1410,9 @@ puffs_read(void *v)
 			puffs_credcvt(&read_argp->pvnr_cred, ap->a_cred);
 
 			argsize = sizeof(struct puffs_vnreq_read);
-			error = puffs_vntouser_adjbuf(pmp, PUFFS_VN_READ,
-			    (void **)&read_argp, &argsize,
-			    read_argp->pvnr_resid, VPTOPNC(ap->a_vp),
-			    ap->a_vp, NULL);
+			error = puffs_vntouser_delta(pmp, PUFFS_VN_READ,
+			    read_argp, argsize, tomove,
+			    VPTOPNC(ap->a_vp), ap->a_vp, NULL);
 			if (error)
 				break;
 
@@ -1843,7 +1843,8 @@ puffs_strategy(void *v)
 		    bp->b_blkno << DEV_BSHIFT, bp, LOCKEDVP(vp), NULL);
 	} else if (bp->b_flags & B_READ) {
 		argsize = sizeof(struct puffs_vnreq_read);
-		read_argp = malloc(argsize, M_PUFFS, M_NOWAIT | M_ZERO);
+		read_argp = malloc(argsize + tomove,
+		    M_PUFFS, M_NOWAIT | M_ZERO);
 		if (read_argp == NULL) {
 			error = ENOMEM;
 			goto out;
@@ -1854,8 +1855,8 @@ puffs_strategy(void *v)
 		read_argp->pvnr_offset = bp->b_blkno << DEV_BSHIFT;
 		puffs_credcvt(&read_argp->pvnr_cred, FSCRED);
 
-		error = puffs_vntouser_adjbuf(pmp, PUFFS_VN_READ,
-		    (void **)&read_argp, &argsize, read_argp->pvnr_resid,
+		error = puffs_vntouser_delta(pmp, PUFFS_VN_READ,
+		    read_argp, argsize, tomove,
 		    VPTOPNC(vp), LOCKEDVP(vp), NULL);
 
 		if (error)
@@ -2016,7 +2017,8 @@ puffs_bmap(void *v)
 	if (ap->a_bnp)
 		*ap->a_bnp = ap->a_bn;
 	if (ap->a_runp)
-		*ap->a_runp = pmp->pmp_req_maxsize - PUFFS_REQSTRUCT_MAX;
+		*ap->a_runp
+		    = (PUFFS_TOMOVE(pmp->pmp_req_maxsize, pmp)>>DEV_BSHIFT) - 1;
 
 	return 0;
 }
@@ -2046,9 +2048,9 @@ puffs_getpages(void *v)
 	struct puffs_mount *pmp;
 	struct vnode *vp;
 	struct vm_page **pgs;
-	struct puffs_park *ppark = NULL;
 	struct puffs_cacheinfo *pcinfo = NULL;
 	struct puffs_cacherun *pcrun;
+	void *parkmem = NULL;
 	size_t runsizes;
 	int i, npages, si, streakon;
 	int error, locked, write;
@@ -2079,8 +2081,8 @@ puffs_getpages(void *v)
 			goto out;
 		}
 
-		ppark = malloc(sizeof(struct puffs_park), M_PUFFS, M_NOWAIT);
-		if (ppark == NULL) {
+		parkmem = puffs_parkmem_alloc(locked == 0);
+		if (parkmem == NULL) {
 			error = ENOMEM;
 			goto out;
 		}
@@ -2134,15 +2136,15 @@ puffs_getpages(void *v)
 
 	/* send results to userspace */
 	if (write)
-		puffs_cacheop(pmp, ppark, pcinfo,
+		puffs_cacheop(pmp, parkmem, pcinfo,
 		    sizeof(struct puffs_cacheinfo) + runsizes, VPTOPNC(vp));
 
  out:
 	if (error) {
 		if (pcinfo != NULL)
 			free(pcinfo, M_PUFFS);
-		if (ppark != NULL)
-			free(ppark, M_PUFFS);
+		if (parkmem != NULL)
+			puffs_parkmem_free(parkmem);
 	}
 
 	return error;
