@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.91 2007/03/29 08:27:01 dillo Exp $
+# $NetBSD: ALL,v 1.92 2007/03/29 08:44:23 dillo Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.91 $"
+#ident 		"ALL-$Revision: 1.92 $"
 
 maxusers	32		# estimated number of users
 
@@ -530,16 +530,6 @@ wsdisplay*	at vesafb? console ?
 # VIA Unichrome framebuffer console
 unichromefb*   at pci? dev ? function ?
 wsdisplay*     at unichromefb?
-
-# DRI driver
-i915drm*	at vga?		# Intel i915, i945 DRM driver
-mach64drm*	at vga?		# mach64 (3D Rage Pro, Rage) DRM driver
-mgadrm*		at vga?		# Matrox G[24]00, G[45]50 DRM driver
-r128drm*	at vga?		# ATI Rage 128 DRM driver
-radeondrm*	at vga?		# ATI Radeon DRM driver
-savagedrm*	at vga?		# S3 Savage DRM driver
-sisdrm*		at vga?		# SiS DRM driver
-tdfxdrm*	at vga?		# 3dfx (voodoo) DRM driver
 
 attimer0	at isa?
 pcppi0		at isa?
