@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.c,v 1.22 2007/03/29 16:04:26 pooka Exp $	*/
+/*	$NetBSD: puffs_msgif.c,v 1.23 2007/03/29 22:11:43 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.22 2007/03/29 16:04:26 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.23 2007/03/29 22:11:43 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/fstrans.h>
@@ -783,11 +783,6 @@ puffs_userdead(struct puffs_mount *pmp)
 
 	/* signal waiters on REQUEST TO file server queue */
 	TAILQ_FOREACH(park, &pmp->pmp_req_touser, park_entries) {
-		uint8_t opclass;
-
-		opclass = park->park_preq->preq_rv;
-		park->park_preq->preq_rv = ENXIO;
-
 		TAILQ_REMOVE(&pmp->pmp_req_touser, park, park_entries);
 
 		if (park->park_flags & PARKFLAG_ASYNCBIOREAD) {
@@ -797,20 +792,19 @@ puffs_userdead(struct puffs_mount *pmp)
 			biodone(bp);
 			free(park->park_preq, M_PUFFS);
 			pool_cache_put(&parkpc, park);
-		} else if (!PUFFSOP_WANTREPLY(opclass)) {
+		} else if (!PUFFSOP_WANTREPLY(park->park_preq->preq_rv)) {
 			free(park->park_preq, M_PUFFS);
 			pool_cache_put(&parkpc, park);
 		} else {
+			park->park_preq->preq_rv = ENXIO;
 			cv_signal(&park->park_cv);
 		}
 	}
 
 	/* signal waiters on RESPONSE FROM file server queue */
 	TAILQ_FOREACH(park, &pmp->pmp_req_replywait, park_entries) {
-		KASSERT(PUFFSOP_WANTREPLY(park->park_preq->preq_opclass));
-
-		park->park_preq->preq_rv = ENXIO;
 		TAILQ_REMOVE(&pmp->pmp_req_replywait, park, park_entries);
+		KASSERT(PUFFSOP_WANTREPLY(park->park_preq->preq_opclass));
 
 		if (park->park_flags & PARKFLAG_ASYNCBIOREAD) {
 			bp = park->park_bp;
@@ -820,6 +814,7 @@ puffs_userdead(struct puffs_mount *pmp)
 			free(park->park_preq, M_PUFFS);
 			pool_cache_put(&parkpc, park);
 		} else {
+			park->park_preq->preq_rv = ENXIO;
 			cv_signal(&park->park_cv);
 		}
 	}
