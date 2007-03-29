@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.119.6.1 2007/03/18 00:06:37 reinoud Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.119.6.2 2007/03/29 19:27:41 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.119.6.1 2007/03/18 00:06:37 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.119.6.2 2007/03/29 19:27:41 reinoud Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -397,7 +397,7 @@ netbsd32_break(l, v, retval)
 	} */ *uap = v;
 	struct sys_obreak_args ua;
 
-	SCARG(&ua, nsize) = (char *)NETBSD32PTR64(SCARG(uap, nsize));
+	SCARG(&ua, nsize) = SCARG_P32(uap, nsize);
 	NETBSD32TOP_UAP(nsize, char);
 	return (sys_obreak(l, &ua, retval));
 }
@@ -982,8 +982,7 @@ netbsd32_getgroups(l, v, retval)
 	/* Should convert gid_t to netbsd32_gid_t, but they're the same */
 	grbuf = malloc(ngrp * sizeof(*grbuf), M_TEMP, M_WAITOK);
 	kauth_cred_getgroups(pc, grbuf, ngrp);
-	error = copyout(grbuf, (void *)NETBSD32PTR64(SCARG(uap, gidset)),
-			ngrp * sizeof(*grbuf));
+	error = copyout(grbuf, SCARG_P32(uap, gidset), ngrp * sizeof(*grbuf));
 	free(grbuf, M_TEMP);
 	if (error)
 		return (error);
@@ -1500,12 +1499,12 @@ netbsd32___getfh30(l, v, retval)
 		return (error);
 	fh = NULL;
 	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE,
-	    (char *)NETBSD32PTR64(SCARG(uap, fname)), l);
+	    SCARG_P32(uap, fname), l);
 	error = namei(&nd);
 	if (error)
 		return (error);
 	vp = nd.ni_vp;
-	error = copyin(NETBSD32PTR64(SCARG(uap, fh_size)), &sz32,
+	error = copyin(SCARG_P32(uap, fh_size), &sz32,
 	    sizeof(netbsd32_size_t));
 	if (!error) {
 		fh = malloc(sz32, M_TEMP, M_WAITOK);
@@ -1517,12 +1516,12 @@ netbsd32___getfh30(l, v, retval)
 	}
 	vput(vp);
 	if (error == E2BIG)
-		copyout(&sz, NETBSD32PTR64(SCARG(uap, fh_size)), sizeof(size_t));
+		copyout(&sz, SCARG_P32(uap, fh_size), sizeof(size_t));
 	if (error == 0) {
-		error = copyout(&sz32, NETBSD32PTR64(SCARG(uap, fh_size)),
+		error = copyout(&sz32, SCARG_P32(uap, fh_size),
 		    sizeof(netbsd32_size_t));
 		if (!error)
-			error = copyout(fh, NETBSD32PTR64(SCARG(uap, fhp)), sz);
+			error = copyout(fh, SCARG_P32(uap, fhp), sz);
 	}
 	free(fh, M_TEMP);
 	return (error);
@@ -1726,7 +1725,7 @@ netbsd32_getrlimit(l, v, retval)
 	if ((u_int)which >= RLIM_NLIMITS)
 		return (EINVAL);
 	return (copyout(&l->l_proc->p_rlimit[which],
-	    (void *)NETBSD32PTR64(SCARG(uap, rlp)), sizeof(struct rlimit)));
+	    SCARG_P32(uap, rlp), sizeof(struct rlimit)));
 }
 
 int
@@ -1743,8 +1742,7 @@ netbsd32_setrlimit(l, v, retval)
 	struct rlimit alim;
 	int error;
 
-	error = copyin((void *)NETBSD32PTR64(SCARG(uap, rlp)), &alim,
-	    sizeof(struct rlimit));
+	error = copyin(SCARG_P32(uap, rlp), &alim, sizeof(struct rlimit));
 	if (error)
 		return (error);
 

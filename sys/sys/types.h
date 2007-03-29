@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.73 2007/02/27 15:07:28 yamt Exp $	*/
+/*	$NetBSD: types.h,v 1.73.6.1 2007/03/29 19:28:03 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993, 1994
@@ -141,9 +141,12 @@ typedef	__fsfilcnt_t	fsfilcnt_t;	/* fs file count */
 #define fsfilcnt_t	__fsfilcnt_t
 #endif
 
+#if !defined(_KERNEL) && !defined(_STANDALONE)
+/* We don't and shouldn't use caddr_t in the kernel anymore */
 #ifndef	caddr_t
 typedef	__caddr_t	caddr_t;	/* core address */
 #define	caddr_t		__caddr_t
+#endif
 #endif
 
 #ifdef __daddr_t

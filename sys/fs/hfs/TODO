@@ -1,5 +1,6 @@
 [dillo]
 
+- add . and .. to dir listing
 - check _lookup locking (deleted PDIRUNLOCK)
 - unicode decomposition
 - make type/creator accessible
@@ -8,10 +9,15 @@
 - use lookup cache
 - use pool for struct hfsnode
 - reduce use of malloc and memcpy
-- slim down libhfs (e.g. replace cbargs with void *)
+- slim down libhfs
+  - replace cbargs with void *
+  - remove openvol callback
+  - remove HFS_LIBERR
 - union/nfs support
 - KNF
 - update copyright of apmlabel
+
+- scan APM when synthesizing disklabel
 
 Last revision: 2005-08-31
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_socket.c,v 1.22.6.1 2007/03/18 00:06:37 reinoud Exp $	*/
+/*	$NetBSD: netbsd32_socket.c,v 1.22.6.2 2007/03/29 19:27:42 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_socket.c,v 1.22.6.1 2007/03/18 00:06:37 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_socket.c,v 1.22.6.2 2007/03/29 19:27:42 reinoud Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -74,8 +74,7 @@ netbsd32_recvmsg(l, v, retval)
 	struct iovec aiov[UIO_SMALLIOV], *uiov, *iov;
 	int error;
 
-	error = copyin((void *)NETBSD32PTR64(SCARG(uap, msg)), (void *)&msg,
-	    sizeof(msg));
+	error = copyin(SCARG_P32(uap, msg), &msg, sizeof(msg));
 		/* netbsd32_msghdr needs the iov pre-allocated */
 	if (error)
 		return (error);
@@ -97,8 +96,7 @@ netbsd32_recvmsg(l, v, retval)
 		goto done;
 	if ((error = recvit32(l, SCARG(uap, s), &msg, iov, (void *)0,
 	    retval)) == 0) {
-		error = copyout((void *)&msg,
-		    (void *)NETBSD32PTR64(SCARG(uap, msg)), sizeof(msg));
+		error = copyout(&msg, SCARG_P32(uap, msg), sizeof(msg));
 	}
 done:
 	if (iov != aiov)
@@ -256,8 +254,7 @@ netbsd32_sendmsg(l, v, retval)
 	struct iovec aiov[UIO_SMALLIOV], *iov;
 	int error;
 
-	error = copyin((void *)NETBSD32PTR64(SCARG(uap, msg)), (void *)&msg32,
-	    sizeof(msg32));
+	error = copyin(SCARG_P32(uap, msg), &msg32, sizeof(msg32));
 	if (error)
 		return (error);
 	netbsd32_to_msghdr(&msg32, &msg);
@@ -302,8 +299,8 @@ netbsd32_recvfrom(l, v, retval)
 	struct iovec aiov;
 	int error;
 
-	if (NETBSD32PTR64(SCARG(uap, fromlenaddr))) {
-		error = copyin(NETBSD32PTR64(SCARG(uap, fromlenaddr)),
+	if (SCARG_P32(uap, fromlenaddr)) {
+		error = copyin(SCARG_P32(uap, fromlenaddr),
 		    &msg.msg_namelen, sizeof(msg.msg_namelen));
 		if (error)
 			return (error);
@@ -312,12 +309,12 @@ netbsd32_recvfrom(l, v, retval)
 	msg.msg_name = SCARG(uap, from);
 	NETBSD32PTR32(msg.msg_iov, 0); /* ignored in recvit32(), uses iov */
 	msg.msg_iovlen = 1;
-	aiov.iov_base = NETBSD32PTR64(SCARG(uap, buf));
+	aiov.iov_base = SCARG_P32(uap, buf);
 	aiov.iov_len = (u_long)SCARG(uap, len);
 	NETBSD32PTR32(msg.msg_control, 0);
 	msg.msg_flags = SCARG(uap, flags);
 	return (recvit32(l, SCARG(uap, s), &msg, &aiov,
-	    (void *)NETBSD32PTR64(SCARG(uap, fromlenaddr)), retval));
+	    SCARG_P32(uap, fromlenaddr), retval));
 }
 
 int
@@ -337,12 +334,12 @@ netbsd32_sendto(l, v, retval)
 	struct msghdr msg;
 	struct iovec aiov;
 
-	msg.msg_name = (void *)NETBSD32PTR64(SCARG(uap, to)); /* XXX kills const */
+	msg.msg_name = SCARG_P32(uap, to); /* XXX kills const */
 	msg.msg_namelen = SCARG(uap, tolen);
 	msg.msg_iov = &aiov;
 	msg.msg_iovlen = 1;
 	msg.msg_control = 0;
-	aiov.iov_base = (char *)NETBSD32PTR64(SCARG(uap, buf));	/* XXX kills const */
+	aiov.iov_base = SCARG_P32(uap, buf);	/* XXX kills const */
 	aiov.iov_len = SCARG(uap, len);
 	return (sendit(l, SCARG(uap, s), &msg, SCARG(uap, flags), retval));
 }

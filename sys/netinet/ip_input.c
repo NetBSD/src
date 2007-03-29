@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.246 2007/03/12 18:18:36 ad Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.246.4.1 2007/03/29 19:28:00 reinoud Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.246 2007/03/12 18:18:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.246.4.1 2007/03/29 19:28:00 reinoud Exp $");
 
 #include "opt_inet.h"
 #include "opt_gateway.h"
@@ -429,7 +429,7 @@ ip_init(void)
 	    M_WAITOK, &in_multihash);
 	ip_mtudisc_timeout_q = rt_timer_queue_create(ip_mtudisc_timeout);
 #ifdef GATEWAY
-	ipflow_init();
+	ipflow_init(ip_hashsize);
 #endif
 
 #ifdef PFIL_HOOKS
@@ -2160,8 +2160,7 @@ sysctl_net_inet_ip_pmtudto(SYSCTLFN_ARGS)
 
 #ifdef GATEWAY
 /*
- * sysctl helper routine for net.inet.ip.maxflows.  apparently if
- * maxflows is even looked up, we "reap flows".
+ * sysctl helper routine for net.inet.ip.maxflows.
  */
 static int
 sysctl_net_inet_ip_maxflows(SYSCTLFN_ARGS)
@@ -2169,12 +2168,41 @@ sysctl_net_inet_ip_maxflows(SYSCTLFN_ARGS)
 	int s;
 
 	s = sysctl_lookup(SYSCTLFN_CALL(rnode));
-	if (s)
+	if (s || newp == NULL)
 		return (s);
 
 	s = splsoftnet();
 	ipflow_reap(0);
 	splx(s);
+
+	return (0);
+}
+
+static int
+sysctl_net_inet_ip_hashsize(SYSCTLFN_ARGS)
+{  
+	int error, tmp;
+	struct sysctlnode node;
+
+	node = *rnode;
+	tmp = ip_hashsize;
+	node.sysctl_data = &tmp;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		return (error);
+
+	if ((tmp & (tmp - 1)) == 0 && tmp != 0) {
+		/*
+		 * Can only fail due to malloc()
+		 */
+		if (ipflow_invalidate_all(tmp))
+			return ENOMEM;
+	} else {
+		/*
+		 * EINVAL if not a power of 2
+	         */
+		return EINVAL;
+	}	
 
 	return (0);
 }
@@ -2299,6 +2327,13 @@ SYSCTL_SETUP(sysctl_net_inet_ip_setup, "sysctl net.inet.ip subtree setup")
 		       sysctl_net_inet_ip_maxflows, 0, &ip_maxflows, 0,
 		       CTL_NET, PF_INET, IPPROTO_IP,
 		       IPCTL_MAXFLOWS, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+			CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+			CTLTYPE_INT, "hashsize",
+			SYSCTL_DESCR("Size of hash table for fast forwarding (IPv4)"),
+			sysctl_net_inet_ip_hashsize, 0, &ip_hashsize, 0,
+			CTL_NET, PF_INET, IPPROTO_IP,
+			CTL_CREATE, CTL_EOL);
 #endif /* GATEWAY */
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,

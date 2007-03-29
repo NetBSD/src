@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.872.4.1 2007/03/18 00:06:42 reinoud Exp $
+$NetBSD: pcidevs,v 1.872.4.2 2007/03/29 19:27:49 reinoud Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1151,6 +1151,7 @@ product ATI RADEON_RV200_QW	0x5157	Radeon 7500 QW
 product ATI RADEON_RV200_QX	0x5158	Radeon 7500 QX
 product ATI RADEON_RV100_QY	0x5159	Radeon 7000/VE QY
 product ATI RADEON_RV100_QZ	0x515a	Radeon 7000/VE QZ
+product ATI ES1000		0x515e	ES1000
 product ATI RADEON_9100_S	0x516d	Radeon 9100 Series Secondary
 product ATI RAGEGLPCI		0x5245	Rage 128 GL PCI
 product ATI RAGEGLAGP		0x5246	Rage 128 GL AGP 2x
@@ -2845,6 +2846,7 @@ product NVIDIA	MCP55_LAN2	0x0373	nForce MCP55 Gigabit Ethernet Controller
 product NVIDIA	MCP55_PCIE	0x0377	nForce MCP55 PCI-Express 16x Port
 product NVIDIA  MCP55_SATA      0x037e  nForce MCP55 Serial ATA Controller
 product NVIDIA  MCP55_SATA2     0x037f  nForce MCP55 Serial ATA Controller
+product NVIDIA	GF_GO_7600	0x0398	GeForce Go 7600
 product NVIDIA	MCP61_ISA	0x03e0  nForce MCP61 PCI-ISA Bridge
 product NVIDIA	MCP61_HDA	0x03e4	nForce MCP61 High Definition Audio Controller
 product NVIDIA	MCP61_LAN1	0x03e5	nForce MCP61 Gigabit Ethernet Controller

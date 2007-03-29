@@ -1,4 +1,4 @@
-/*	$NetBSD: snapper.c,v 1.16 2007/02/28 04:21:51 thorpej Exp $	*/
+/*	$NetBSD: snapper.c,v 1.16.6.1 2007/03/29 19:27:29 reinoud Exp $	*/
 /*	Id: snapper.c,v 1.11 2002/10/31 17:42:13 tsubai Exp	*/
 /*     Id: i2s.c,v 1.12 2005/01/15 14:32:35 tsubai Exp         */
 /*-
@@ -395,9 +395,9 @@ const uint8_t snapper_mixer_gain[178][3] = {
 #define SNAPPER_NFORMATS	2
 static const struct audio_format snapper_formats[SNAPPER_NFORMATS] = {
 	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_SLINEAR_BE, 16, 16,
-	 2, AUFMT_STEREO, 4, {32000, 44100, 48000}},
+	 2, AUFMT_STEREO, 3, {32000, 44100, 48000}},
 	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_SLINEAR_BE, 24, 24,
-	 2, AUFMT_STEREO, 4, {32000, 44100, 48000}},
+	 2, AUFMT_STEREO, 3, {32000, 44100, 48000}},
 };
 
 static u_char *amp_mute;
