@@ -1,7 +1,7 @@
-/*	$NetBSD: locore.S,v 1.45.2.5 2007/03/24 18:30:36 ad Exp $	*/
+/*	$NetBSD: locore.S,v 1.45.2.6 2007/03/29 19:00:24 ad Exp $	*/
 
 /*-
- * Copyright (c) 1998, 2000, 2004 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -70,15 +70,10 @@
  *	@(#)locore.s	7.3 (Berkeley) 5/13/91
  */
 
-#include "opt_compat_netbsd.h"
 #include "opt_compat_oldboot.h"
 #include "opt_cputype.h"
 #include "opt_ddb.h"
-#include "opt_ipkdb.h"
-#include "opt_lockdebug.h"
-#include "opt_multiprocessor.h"
 #include "opt_realmem.h"
-#include "opt_user_ldt.h"
 #include "opt_vm86.h"
 
 #include "npx.h"
@@ -94,43 +89,15 @@
 #include <machine/segments.h>
 #include <machine/specialreg.h>
 #include <machine/trap.h>
-
-#if NLAPIC > 0
 #include <machine/i82489reg.h>
-#endif
-
 #include <machine/multiboot.h>
-
-/* LINTSTUB: include <sys/types.h> */
-/* LINTSTUB: include <machine/cpu.h> */
-/* LINTSTUB: include <sys/systm.h> */
-
 #include <machine/asm.h>
+#include <machine/frameasm.h>
+#include <machine/i82489reg.h>
 
 /* XXX temporary kluge; these should not be here */
 /* Get definitions for IOM_BEGIN, IOM_END, and IOM_SIZE */
 #include <dev/isa/isareg.h>
-
-
-/* Disallow old names for REALBASEMEM */
-#ifdef BIOSBASEMEM
-#error BIOSBASEMEM option deprecated; use REALBASEMEM only if memory size reported by latest boot block is incorrect
-#endif
-
-/* Disallow old names for REALEXTMEM */
-#ifdef EXTMEM_SIZE
-#error EXTMEM_SIZE option deprecated; use REALEXTMEM only if memory size reported by latest boot block is incorrect
-#endif
-#ifdef BIOSEXTMEM
-#error BIOSEXTMEM option deprecated; use REALEXTMEM only if memory size reported by latest boot block is incorrect
-#endif
-
-#include <machine/frameasm.h>
-
-
-#ifdef MULTIPROCESSOR
-#include <machine/i82489reg.h>
-#endif
 
 /*
  * Initialization
@@ -142,9 +109,7 @@
 	.globl	_C_LABEL(atdevbase)
 	.globl	_C_LABEL(proc0uarea),_C_LABEL(PDPpaddr)
 	.globl	_C_LABEL(gdt)
-#ifdef I586_CPU
 	.globl	_C_LABEL(idt)
-#endif
 	.globl	_C_LABEL(lapic_tpr)
 
 #if NLAPIC > 0
@@ -170,9 +135,7 @@ _C_LABEL(lapic_tpr):
 	.long 0
 #endif
 
-
-_C_LABEL(cpu):		.long	0	# are we 386, 386sx, or 486,
-					#   or Pentium, or..
+_C_LABEL(cpu):		.long	0	# are we 80486, Pentium, or..
 _C_LABEL(atdevbase):	.long	0	# location of start of iomem in virtual
 _C_LABEL(proc0uarea):	.long	0
 _C_LABEL(PDPpaddr):	.long	0	# paddr of PDP, for libkvm
@@ -625,13 +588,13 @@ begin:
 
 /*
  * void lwp_trampoline(void);
+ *
  * This is a trampoline function pushed onto the stack of a newly created
  * process in order to do some additional setup.  The trampoline is entered by
  * cpu_switch()ing to the process, so we abuse the callee-saved registers used
  * by cpu_switch() to store the information about the stub to call.
  * NOTE: This function does not have a normal calling sequence!
  */
-/* LINTSTUB: Func: void lwp_trampoline(void) */
 NENTRY(lwp_trampoline)
 	pushl	%ebp
 	xorl	%ebp,%ebp
@@ -645,12 +608,12 @@ NENTRY(lwp_trampoline)
 	INTRFASTEXIT
 	/* NOTREACHED */
 
-/*****************************************************************************/
-#ifdef COMPAT_16
 /*
- * Signal trampoline; copied to top of user stack.
+ * sigcode()
+ *
+ * Signal trampoline; copied to top of user stack.  Used only for
+ * compatibility with old releases of NetBSD.
  */
-/* LINTSTUB: Var: char sigcode[1], esigcode[1]; */
 NENTRY(sigcode)
 	/*
 	 * Handler has returned here as if we called it.  The sigcontext
@@ -665,23 +628,16 @@ NENTRY(sigcode)
 	int	$0x80			# exit if sigreturn fails
 	.globl	_C_LABEL(esigcode)
 _C_LABEL(esigcode):
-#endif
-
-/*****************************************************************************/
-
-/*
- * The following is i386-specific nonsense.
- */
 
 /*
  * void lgdt(struct region_descriptor *rdp);
+ *
  * Load a new GDT pointer (and do any necessary cleanup).
  * XXX It's somewhat questionable whether reloading all the segment registers
  * is necessary, since the actual descriptor data is not changed except by
  * process creation and exit, both of which clean up via task switches.  OTOH,
  * this only happens at run time when the GDT is resized.
  */
-/* LINTSTUB: Func: void lgdt(struct region_descriptor *rdp) */
 NENTRY(lgdt)
 	/* Reload the descriptor table. */
 	movl	4(%esp),%eax
@@ -703,20 +659,22 @@ NENTRY(lgdt)
 	pushl	%eax
 	lret
 
+/*
+ * void x86_flush()
+ *
+ * Flush instruction pipelines by doing an intersegment (far) return.
+ */
 NENTRY(x86_flush)
-	/* Reload code selector by doing intersegment return. */
 	popl	%eax
 	pushl	$GSEL(GCODE_SEL, SEL_KPL)
 	pushl	%eax
 	lret
 
-/*****************************************************************************/
-
 /*
- * These functions are primarily used by DDB.
+ * int setjmp(label_t *)
+ *
+ * Used primarily by DDB.
  */
-
-/* LINTSTUB: Func: int setjmp (label_t *l) */
 ENTRY(setjmp)
 	movl	4(%esp),%eax
 	movl	%ebx,(%eax)		# save ebx
@@ -726,10 +684,14 @@ ENTRY(setjmp)
 	movl	%edi,16(%eax)		# save edi
 	movl	(%esp),%edx		# get rta
 	movl	%edx,20(%eax)		# save eip
-	xorl	%eax,%eax		# return (0);
+	xorl	%eax,%eax		# return 0
 	ret
 
-/* LINTSTUB: Func: void longjmp (label_t *l) */
+/*
+ * int longjmp(label_t *)
+ *
+ * Used primarily by DDB.
+ */
 ENTRY(longjmp)
 	movl	4(%esp),%eax
 	movl	(%eax),%ebx		# restore ebx
@@ -739,21 +701,8 @@ ENTRY(longjmp)
 	movl	16(%eax),%edi		# restore edi
 	movl	20(%eax),%edx		# get rta
 	movl	%edx,(%esp)		# put in return frame
-	xorl	%eax,%eax		# return (1);
-	incl	%eax
+	movl	$1,%eax			# return 1
 	ret
-
-/*****************************************************************************/
-
-	.globl	_C_LABEL(uvmexp),_C_LABEL(panic)
-
-#ifdef DIAGNOSTIC
-NENTRY(switch_error)
-	pushl	$1f
-	call	_C_LABEL(panic)
-	/* NOTREACHED */
-1:	.asciz	"cpu_switch"
-#endif /* DIAGNOSTIC */
 
 /*
  * struct lwp *cpu_switchto(struct lwp *oldlwp, struct newlwp)
@@ -761,8 +710,8 @@ NENTRY(switch_error)
  *	1. if (oldlwp != NULL), save its context.
  *	2. then, restore context of newlwp.
  *
- * Note that the stack frame layout is known to "struct switchframe"
- * in <machine/frame.h> and to the code in cpu_lwp_fork() which initializes
+ * Note that the stack frame layout is known to "struct switchframe" in
+ * <machine/frame.h> and to the code in cpu_lwp_fork() which initializes
  * it for a new lwp.
  */
 ENTRY(cpu_switchto)
@@ -772,68 +721,47 @@ ENTRY(cpu_switchto)
 
 	movl	16(%esp),%esi		# oldlwp
 	movl	20(%esp),%edi		# newlwp
-
 	testl	%esi,%esi
-	jz	switch_skipsave
+	jz	1f
 
-	/*
-	 * Save old context.
-	 */
-
+	/* Save old context. */
 	movl	L_ADDR(%esi),%eax
 	movl	%esp,PCB_ESP(%eax)
 	movl	%ebp,PCB_EBP(%eax)
 
-switch_skipsave:
-
-	/*
-	 * Switch to newlwp's stack.
-	 */
-
-	movl	L_ADDR(%edi),%ebx
+	/* Switch to newlwp's stack. */
+1:	movl	L_ADDR(%edi),%ebx
 	movl	PCB_EBP(%ebx),%ebp
 	movl	PCB_ESP(%ebx),%esp
 
-	/*
-	 * Restore the rest of newlwp's context.
-	 *
-	 * Registers:
-	 *   %ebx - new pcb
-	 *   %edi - new lwp
-	 */
-
-#if 0
-	/* Don't bother with the rest if switching to a system process. */
-	testl	$LK_SYSTEM,L_FLAG(%edi);
-	jnz	switch_restored
-#endif
-
-	/* Switch TSS. Reset "task busy" flag before loading. */
+	/* Switch TSS.  Reset "task busy" flag before loading. */
 	movl	%cr3,%eax
-	movl	%eax,PCB_CR3(%ebx) /* for TSS gates */
-
-#ifdef MULTIPROCESSOR
+	movl	%eax,PCB_CR3(%ebx)	# for TSS gates
 	movl	CPUVAR(GDT),%eax
-#else
-	/* Load TSS info. */
-	movl	_C_LABEL(gdt),%eax
-#endif
 	movl	L_MD_TSS_SEL(%edi),%edx
-
 	andl	$~0x0200,4(%eax,%edx, 1)
 	ltr	%dx
 
-#if 0
-switch_restored:
-#endif
+	movl	$0,CPUVAR(RESCHED)	# XXX should not be here
 
-	movl	$0,CPUVAR(RESCHED)
+	/* Don't bother with the rest if switching to a system process. */
+	testl	$LW_SYSTEM,L_FLAG(%edi)
+	jnz	3f
 
-	/* Restore cr0 (including FPU state). */
-	movl	$IPL_IPI,CPUVAR(ILEVEL)
+	/* Is this process using RAS (restartable atomic sequences)? */
+	movl	L_PROC(%edi),%eax
+	cmpl	$0,P_RASLIST(%eax)
+	jne	4f
+
+	/*
+	 * Restore cr0 (including FPU state).  Raise the IPL to IPL_IPI.
+	 * FPU IPIs can alter the LWP's saved cr0.  Dropping the priority
+	 * is deferred until mi_switch(), when cpu_switchto() returns.
+	 */
+2:	movl	$IPL_IPI,CPUVAR(ILEVEL)
 	movl	PCB_CR0(%ebx),%ecx
 	movl	%cr0,%edx
-#ifdef MULTIPROCESSOR
+
 	/*
 	 * If our floating point registers are on a different CPU,
 	 * set CR0_TS so we'll trap rather than reuse bogus state.
@@ -841,76 +769,59 @@ switch_restored:
 	movl	PCB_FPCPU(%ebx),%eax
 	cmpl	CPUVAR(SELF),%eax
 	movl	$0,%eax
-	setne	%al		/* CR0_TS is bit 0 */
+	setne	%al			# CR0_TS is bit 0
 	orl	%eax,%ecx
-#endif
+
 	/* Reloading CR0 is very expensive - avoid if possible. */
 	cmpl	%edx,%ecx
-	je	2f
+	je	3f
 	movl	%ecx,%cr0
-2:
-	/*
-	 * Interrupts are okay again.  Any pending IPIs will be
-	 * deferred until cpu_switchto() returns, when the priority
-	 * level will be dropped.
-	 */
-	movl    $IPL_SCHED,CPUVAR(ILEVEL)
 
-	/*
-	 *  Check for restartable atomic sequences (RAS)
-	 */
-
-	movl	L_PROC(%edi),%ebx
-	cmpl	$0,P_RASLIST(%ebx)
-	jne	check_ras
-
-switch_return:
-	movl	%esi,%eax	# return 'oldlwp'
+	/* Return to the new LWP, returning 'oldlwp' in %eax. */
+3:	movl	%esi,%eax
 	popl	%edi
 	popl	%esi
 	popl	%ebx
 	ret
 
-check_ras:
-	movl	L_MD_REGS(%edi),%ebx
-	pushl	TF_EIP(%ebx)
-	pushl	L_PROC(%edi)
+	/* Check for restartable atomic sequences (RAS). */
+4:	movl	L_MD_REGS(%edi),%ecx
+	pushl	TF_EIP(%ecx)
+	pushl	%eax
 	call	_C_LABEL(ras_lookup)
 	addl	$8,%esp
 	cmpl	$-1,%eax
-	je	switch_return
+	je	2b
 	movl	%eax,TF_EIP(%ebx)
-	jmp	switch_return
+	jmp	2b
 
 /*
  * void savectx(struct pcb *pcb);
+ *
  * Update pcb, saving current processor state.
  */
-/* LINTSTUB: Func: void savectx(struct pcb *pcb) */
 ENTRY(savectx)
 	movl	4(%esp),%edx		# edx = pcb
-
-	/* Save stack pointers. */
 	movl	%esp,PCB_ESP(%edx)
 	movl	%ebp,PCB_EBP(%edx)
-
 	ret
 
 /*
+ * osyscall()
+ *
  * Old call gate entry for syscall
  */
-/* LINTSTUB: Var: char Xosyscall[1]; */
 IDTVEC(osyscall)
-	/* Set eflags in trap frame. */
-	pushfl
+	pushfl			# set eflags in trap frame
 	popl	8(%esp)
 	pushl	$7		# size of instruction for restart
 	jmp	syscall1
 
 /*
+ * syscall()
+ *
  * Trap gate entry for syscall
  */
-/* LINTSTUB: Var: char Xsyscall[1]; */
 IDTVEC(syscall)
 	pushl	$2		# size of instruction for restart
 syscall1:
@@ -986,7 +897,9 @@ syscall1:
  * latch stuff in probintr() can be moved to npxprobe().
  */
 
-/* LINTSTUB: Func: void probeintr(void) */
+/*
+ * void probeintr(void)
+ */
 NENTRY(probeintr)
 	ss
 	incl	_C_LABEL(npx_intrs_while_probing)
@@ -999,14 +912,18 @@ NENTRY(probeintr)
 	popl	%eax
 	iret
 
-/* LINTSTUB: Func: void probetrap(void) */
+/*
+ * void probetrap(void)
+ */
 NENTRY(probetrap)
 	ss
 	incl	_C_LABEL(npx_traps_while_probing)
 	fnclex
 	iret
 
-/* LINTSTUB: Func: int npx586bug1(int a, int b) */
+/*
+ * int npx586bug1(int a, int b)
+ */
 NENTRY(npx586bug1)
 	fildl	4(%esp)		# x
 	fildl	8(%esp)		# y
