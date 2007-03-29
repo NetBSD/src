@@ -1,3 +1,7 @@
+---------------------------------------------
+
+	0.7.beta3 released
+
 2007-03-26  Yvan Vanhullebus  <vanhu@netasq.com>
 	* src/racoon/isakmp_inf.c: Store the DPD main scheduler in ph1
 	  handler, to be able to cancel it when removing the handler, and
