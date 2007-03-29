@@ -1,4 +1,4 @@
-/*	$NetBSD: hydra.c,v 1.22.10.1 2007/03/12 05:45:22 rmind Exp $	*/
+/*	$NetBSD: hydra.c,v 1.22.10.2 2007/03/29 10:52:28 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 Ben Harris
@@ -31,7 +31,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: hydra.c,v 1.22.10.1 2007/03/12 05:45:22 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hydra.c,v 1.22.10.2 2007/03/29 10:52:28 skrll Exp $");
 
 #include <sys/callout.h>
 #include <sys/device.h>
@@ -353,6 +353,7 @@ cpu_hydra_attach(struct device *parent, struct device *self, void *aux)
 	int slave = ha->ha_slave;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
+	int error;
 	int i;
 	struct hydraboot_vars *hb;
 
@@ -361,9 +362,12 @@ cpu_hydra_attach(struct device *parent, struct device *self, void *aux)
 	cpu->sc_cpuinfo.ci_dev = &cpu->sc_dev;
 	cpu->sc_cpuinfo.ci_cpuid = slave | HYDRA_ID_ISSLAVE;
 
-	if (cpu_alloc_idlepcb(&cpu->sc_cpuinfo) != 0) {
-		printf(": couldn't allocate idle PCB.\n");
-		return;
+	error = mi_cpu_attach(&cpu->sc_cpuinfo);
+	if (error != 0) {
+		aprint_normal("\n");
+		aprint_error("%s: mi_cpu_attach failed with %d\n",
+			    sc->sc_dev.dv_xname, error);
+			return;
 	}
 
 	/* Copy hatch code to boot page, and set up arguments */

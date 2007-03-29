@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.46.26.2 2007/03/12 05:47:01 rmind Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.46.26.3 2007/03/29 10:52:26 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.46.26.2 2007/03/12 05:47:01 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.46.26.3 2007/03/29 10:52:26 skrll Exp $");
 
 #include "opt_md.h"
 #include "opt_pmap_debug.h"
@@ -60,6 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.46.26.2 2007/03/12 05:47:01 rmin
 #include <sys/device.h>
 #include <uvm/uvm_extern.h>
 #include <sys/sysctl.h>
+#include <sys/cpu.h>
 
 #include <dev/cons.h>
 
@@ -419,4 +420,17 @@ parse_mi_bootargs(args)
 	    || get_bootconf_option(args, "-v", BOOTOPT_TYPE_BOOLEAN, &integer))
 		if (integer)
 			boothowto |= AB_VERBOSE;
+}
+
+void
+cpu_need_resched(struct cpu_info *ci, int flags)
+{
+	bool immed = (flags & RESCHED_IMMED) != 0;
+
+	if (want_resched && !immed)
+		return;
+
+	want_resched = 1;
+	if (curlwp != ci->ci_data.cpu_idlelwp)
+		setsoftast();
 }

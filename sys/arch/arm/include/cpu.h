@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.41.2.1 2007/02/27 16:49:35 yamt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.41.2.2 2007/03/29 10:52:27 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -67,7 +67,7 @@
 	{ "booted_kernel", CTLTYPE_STRING }, \
 	{ "console_device", CTLTYPE_STRUCT }, \
 	{ "powersave", CTLTYPE_INT }, \
-}    
+}
 
 #ifdef _KERNEL
 
@@ -251,7 +251,6 @@ extern int astpending;
  * or after the current trap/syscall if in system mode.
  */
 extern int want_resched;	/* resched() was called */
-#define	cpu_need_resched(ci)	(want_resched = 1, setsoftast())
 
 /*
  * Give a profiling tick to the current process when the user profiling
@@ -266,8 +265,7 @@ extern int want_resched;	/* resched() was called */
  */
 
 struct device;
-void	cpu_attach	__P((struct device *));
-int	cpu_alloc_idlepcb	__P((struct cpu_info *));
+void	cpu_attach(struct device *);
 #endif
 
 
@@ -278,24 +276,24 @@ int	cpu_alloc_idlepcb	__P((struct cpu_info *));
 struct lwp;
 
 /* locore.S */
-void atomic_set_bit	__P((u_int *address, u_int setmask));
-void atomic_clear_bit	__P((u_int *address, u_int clearmask));
+void atomic_set_bit(u_int *, u_int);
+void atomic_clear_bit(u_int *, u_int);
 
 /* cpuswitch.S */
 struct pcb;
-void	savectx		__P((struct pcb *pcb));
+void	savectx(struct pcb *);
 
 /* ast.c */
-void userret		__P((register struct lwp *p));
+void userret(register struct lwp *);
 
 /* machdep.h */
-void bootsync		__P((void));
+void bootsync(void);
 
 /* fault.c */
-int badaddr_read	__P((void *, size_t, void *));
+int badaddr_read(void *, size_t, void *);
 
 /* syscall.c */
-void swi_handler	__P((trapframe_t *));
+void swi_handler(trapframe_t *);
 
 #endif	/* !_LOCORE */
 
