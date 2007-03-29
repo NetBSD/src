@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_condvar.c,v 1.6 2007/03/29 17:34:39 ad Exp $	*/
+/*	$NetBSD: kern_condvar.c,v 1.7 2007/03/29 17:39:34 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.6 2007/03/29 17:34:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.7 2007/03/29 17:39:34 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -344,10 +344,10 @@ cv_broadcast(kcondvar_t *cv)
  *	For diagnostic assertions: return non-zero if a condition
  *	variable has waiters.
  */
-int
+bool
 cv_has_waiters(kcondvar_t *cv)
 {
 
 	/* No need to interlock here */
-	return (int)cv->cv_waiters;
+	return cv->cv_waiters != 0;
 }
