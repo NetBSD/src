@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vfsops.c,v 1.31 2007/03/29 16:04:26 pooka Exp $	*/
+/*	$NetBSD: puffs_vfsops.c,v 1.32 2007/03/29 16:30:07 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.31 2007/03/29 16:04:26 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.32 2007/03/29 16:30:07 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -52,7 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.31 2007/03/29 16:04:26 pooka Exp 
 
 VFS_PROTOS(puffs);
 
-MALLOC_DEFINE(M_PUFFS, "puffs", "pass-to-userspace file system structures");
+MALLOC_JUSTDEFINE(M_PUFFS, "puffs", "Pass-to-Userspace Framework File System");
 
 #ifndef PUFFS_PNODEBUCKETS
 #define PUFFS_PNODEBUCKETS 256
@@ -600,9 +600,7 @@ void
 puffs_init()
 {
 
-#ifdef _LKM
 	malloc_type_attach(M_PUFFS);
-#endif
 
 	pool_init(&puffs_pnpool, sizeof(struct puffs_node), 0, 0, 0,
 	    "puffpnpl", &pool_allocator_nointr, IPL_NONE);
@@ -618,9 +616,7 @@ puffs_done()
 	puffs_transport_destroy();
 	pool_destroy(&puffs_pnpool);
 
-#ifdef _LKM
 	malloc_type_detach(M_PUFFS);
-#endif
 }
 
 int
