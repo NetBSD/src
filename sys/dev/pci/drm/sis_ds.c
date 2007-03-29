@@ -33,9 +33,9 @@
 __FBSDID("$FreeBSD: src/sys/dev/drm/sis_ds.c,v 1.5 2006/04/09 20:45:45 anholt Exp $");
 */
 
-#include "drmP.h"
-#include "drm.h"
-#include "sis_ds.h"
+#include <dev/drm/drmP.h>
+#include <dev/drm/drm.h>
+#include <dev/pci/drm/sis_ds.h>
 
 /* Set Data Structure, not check repeated value
  * temporarily used
