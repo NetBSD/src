@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1.1,v 1.1.2.33 2007/03/10 11:54:20 bouyer Exp $
+#	$NetBSD: CHANGES-3.1.1,v 1.1.2.34 2007/03/29 09:09:07 ghen Exp $
 
 A complete list of changes from the NetBSD 3.1 release to the NetBSD 3.1.1
 release:
@@ -216,4 +216,14 @@ sys/dev/audio.c					1.221
 	return information about playing buffer, not recording bufer,
 	for AUDIO_WSEEK. Fix PR#35171.
 	[kent, ticket #1678]
+
+sys/netiso/clnp_subr.c				1.27 via patch
+
+	The clnp(4) functions now check the length of arguments passed and will
+	return an appropriate error if the value passed is to large.  This
+	prevents a local denial of service and privilege escalation attack.
+
+	Issue found by Christer Oberg and patch from christos.
+	(NetBSD-SA2007-004)
+	[adrianp, ticket #1733]
 
