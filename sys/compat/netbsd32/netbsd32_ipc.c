@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ipc.c,v 1.10 2007/02/09 21:55:22 ad Exp $	*/
+/*	$NetBSD: netbsd32_ipc.c,v 1.10.10.1 2007/03/29 19:27:41 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ipc.c,v 1.10 2007/02/09 21:55:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ipc.c,v 1.10.10.1 2007/03/29 19:27:41 reinoud Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -90,8 +90,7 @@ netbsd32___semctl14(l, v, retval)
 	}
 
 	if (pass_arg) {
-		error = copyin(NETBSD32PTR64(SCARG(uap, arg)), &karg32,
-		    sizeof(karg32));
+		error = copyin(SCARG_P32(uap, arg), &karg32, sizeof(karg32));
 		if (error)
 			return error;
 		if (pass_arg == &karg) {
@@ -199,8 +198,7 @@ netbsd32___msgctl13(l, v, retval)
 
 	cmd = SCARG(uap, cmd);
 	if (cmd == IPC_SET) {
-		error = copyin(NETBSD32PTR64(SCARG(uap, buf)), &ds32,
-		    sizeof(ds32));
+		error = copyin(SCARG_P32(uap, buf), &ds32, sizeof(ds32));
 		if (error)
 			return error;
 		netbsd32_to_msqid_ds(&ds32, &ds);
@@ -211,8 +209,7 @@ netbsd32___msgctl13(l, v, retval)
 
 	if (error == 0 && cmd == IPC_STAT) {
 		netbsd32_from_msqid_ds(&ds, &ds32);
-		error = copyout(&ds32, NETBSD32PTR64(SCARG(uap, buf)),
-		    sizeof(ds32));
+		error = copyout(&ds32, SCARG_P32(uap, buf), sizeof(ds32));
 	}
 
 	return error;
@@ -264,7 +261,7 @@ netbsd32_msgsnd(l, v, retval)
 	} */ *uap = v;
 
 	return msgsnd1(l, SCARG(uap, msqid),
-	    NETBSD32PTR64(SCARG(uap, msgp)), SCARG(uap, msgsz),
+	    SCARG_P32(uap, msgp), SCARG(uap, msgsz),
 	    SCARG(uap, msgflg), sizeof(netbsd32_long),
 	    netbsd32_msgsnd_fetch_type);
 }
@@ -296,7 +293,7 @@ netbsd32_msgrcv(l, v, retval)
 	} */ *uap = v;
 
 	return msgrcv1(l, SCARG(uap, msqid),
-	    NETBSD32PTR64(SCARG(uap, msgp)), SCARG(uap, msgsz),
+	    SCARG_P32(uap, msgp), SCARG(uap, msgsz),
 	    SCARG(uap, msgtyp), SCARG(uap, msgflg), sizeof(netbsd32_long),
 	    netbsd32_msgrcv_put_type, retval);
 }
@@ -340,8 +337,7 @@ netbsd32___shmctl13(l, v, retval)
 
 	cmd = SCARG(uap, cmd);
 	if (cmd == IPC_SET) {
-		error = copyin(NETBSD32PTR64(SCARG(uap, buf)), &ds32,
-		    sizeof(ds32));
+		error = copyin(SCARG_P32(uap, buf), &ds32, sizeof(ds32));
 		if (error)
 			return error;
 		netbsd32_to_shmid_ds(&ds32, &ds);
@@ -352,8 +348,7 @@ netbsd32___shmctl13(l, v, retval)
 
 	if (error == 0 && cmd == IPC_STAT) {
 		netbsd32_from_shmid_ds(&ds, &ds32);
-		error = copyout(&ds32, NETBSD32PTR64(SCARG(uap, buf)),
-		    sizeof(ds32));
+		error = copyout(&ds32, SCARG_P32(uap, buf), sizeof(ds32));
 	}
 
 	return error;

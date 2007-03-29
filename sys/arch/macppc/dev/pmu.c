@@ -1,4 +1,4 @@
-/*	$NetBSD: pmu.c,v 1.3 2007/02/15 01:44:54 macallan Exp $ */
+/*	$NetBSD: pmu.c,v 1.3.12.1 2007/03/29 19:27:29 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2006 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmu.c,v 1.3 2007/02/15 01:44:54 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmu.c,v 1.3.12.1 2007/03/29 19:27:29 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -330,24 +330,34 @@ pmu_attach(struct device *parent, struct device *dev, void *aux)
 			todr_attach(&sc->sc_todr);
 			goto next;
 		}
-		if (strncmp(name, "battery", 8) == 0) {
-			int nbat = 1, i, pmnode;
-			uint32_t regs[16];
+		if (strncmp(name, "battery", 8) == 0)
+			goto next;
 
-			if (of_compatible(root_node, has_legacy_battery) 
-			    != -1) {
+		printf("%s: %s not configured\n", sc->sc_dev.dv_xname, name);
+next:
+		node = OF_peer(node);
+	}
 
-				pmu_attach_legacy_battery(sc);
-				goto next;
-			}
+	if (OF_finddevice("/bandit/ohare") != -1) {
+		printf("%s: enabling ohare backlight control\n",
+		    device_xname(dev));
+		sc->sc_flags |= PMU_HAS_BACKLIGHT_CONTROL;
+	}
 
-			if (of_compatible(root_node, has_two_smart_batteries) 
-			    != -1) {
+	/* attach batteries */
+	{
+		int nbat = 1, i, pmnode;
+		uint32_t regs[16];
 
-				pmu_attach_smart_battery(sc, 0);
-				pmu_attach_smart_battery(sc, 1);
-				goto next;
-			}
+		if (of_compatible(root_node, has_legacy_battery) != -1) {
+
+			pmu_attach_legacy_battery(sc);
+		} else if (of_compatible(root_node, has_two_smart_batteries)
+		    != -1) {
+
+			pmu_attach_smart_battery(sc, 0);
+			pmu_attach_smart_battery(sc, 1);
+		} else {
 
 			/* check how many batteries we have */
 			pmnode = getnodebyname(ca->ca_node, "power-mgt");
@@ -359,15 +369,6 @@ pmu_attach(struct device *parent, struct device *dev, void *aux)
 			for (i = 0; i < nbat; i++)
 				pmu_attach_smart_battery(sc, i);
 		}
-		printf("%s: %s not configured\n", sc->sc_dev.dv_xname, name);
-next:
-		node = OF_peer(node);
-	}
-
-	if (OF_finddevice("/bandit/ohare") != -1) {
-		printf("%s: enabling ohare backlight control\n",
-		    device_xname(dev));
-		sc->sc_flags |= PMU_HAS_BACKLIGHT_CONTROL;
 	}
 
 #if notyet
@@ -996,4 +997,10 @@ pmu_attach_legacy_battery(struct pmu_softc *sc)
 static void
 pmu_attach_smart_battery(struct pmu_softc *sc, int num)
 {
+	struct battery_attach_args baa;
+
+	baa.baa_type = BATTERY_TYPE_SMART;
+	baa.baa_pmu_ops = &sc->sc_pmu_ops;
+	baa.baa_num = num;
+	config_found_ia(&sc->sc_dev, "pmu_bus", &baa, pmu_print);
 }

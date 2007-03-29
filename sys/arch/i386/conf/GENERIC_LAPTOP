@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_LAPTOP,v 1.227 2007/03/14 12:27:23 drochner Exp $
+#	$NetBSD: GENERIC_LAPTOP,v 1.227.2.1 2007/03/29 19:27:27 reinoud Exp $
 #	From: NetBSD: GENERIC,v 1.414 2001/07/30 19:59:05 ad Exp
 #
 #	GENERIC_LAPTOP -- GENERIC with cardbus and some USB devices enabled
@@ -8,7 +8,7 @@ include "arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.227 $"
+#ident 		"GENERIC-$Revision: 1.227.2.1 $"
 
 maxusers	32		# estimated number of users
 
@@ -35,6 +35,9 @@ options 	POWERNOW_K7
 
 # AMD PowerNow! and Cool`n'Quiet technology
 options 	POWERNOW_K8
+
+# Intel(R) On Demand Clock Modulation (aka ODCM)
+# options       INTEL_ONDEMAND_CLOCKMOD
 
 options 	MTRR		# memory-type range register syscall support
 #options 	PERFCTRS	# performance-monitoring counters support

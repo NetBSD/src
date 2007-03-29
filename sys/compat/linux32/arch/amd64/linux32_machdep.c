@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_machdep.c,v 1.8.6.1 2007/03/18 00:06:35 reinoud Exp $ */
+/*	$NetBSD: linux32_machdep.c,v 1.8.6.2 2007/03/29 19:27:38 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -31,7 +31,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_machdep.c,v 1.8.6.1 2007/03/18 00:06:35 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_machdep.c,v 1.8.6.2 2007/03/29 19:27:38 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -408,8 +408,7 @@ linux32_sys_sigreturn(l, v, retval)
 	struct linux32_sigcontext ctx;
 	int error;
 
-	if ((error = copyin(NETBSD32PTR64(SCARG(uap, scp)), 
-	    &ctx, sizeof(ctx))) != 0)
+	if ((error = copyin(SCARG_P32(uap, scp), &ctx, sizeof(ctx))) != 0)
 		return error;
 
 	return linux32_restore_sigcontext(l, &ctx, retval);
@@ -427,8 +426,7 @@ linux32_sys_rt_sigreturn(l, v, retval)
 	struct linux32_ucontext ctx;
 	int error;
 
-	if ((error = copyin(NETBSD32PTR64(SCARG(uap, ucp)), 
-	    &ctx, sizeof(ctx))) != 0)
+	if ((error = copyin(SCARG_P32(uap, ucp), &ctx, sizeof(ctx))) != 0)
 		return error;
 
 	return linux32_restore_sigcontext(l, &ctx.uc_mcontext, retval);

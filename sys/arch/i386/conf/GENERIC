@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.819 2007/03/14 12:27:22 drochner Exp $
+# $NetBSD: GENERIC,v 1.819.2.1 2007/03/29 19:27:26 reinoud Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.819 $"
+#ident 		"GENERIC-$Revision: 1.819.2.1 $"
 
 maxusers	32		# estimated number of users
 
@@ -54,6 +54,9 @@ options 	POWERNOW_K8
 
 # VIA PadLock
 #options	VIA_PADLOCK
+
+# Intel(R) On Demand Clock Modulation (aka ODCM)
+# options 	INTEL_ONDEMAND_CLOCKMOD
 
 options 	MTRR		# memory-type range register syscall support
 # doesn't work with MP just yet..
@@ -343,6 +346,7 @@ acpi0 		at mainbus0
 #options 	ACPICA_PEDANTIC		# force strict conformance to the Spec.
 
 # ACPI devices
+apm*		at acpi?		# ACPI apm emulation
 acpiacad* 	at acpi?		# ACPI AC Adapter
 acpibat* 	at acpi?		# ACPI Battery
 acpibut* 	at acpi?		# ACPI Button
@@ -560,7 +564,7 @@ pcmcom* at pcmcia? function ?		# PCMCIA multi-port serial cards
 com*	at pcmcom? slave ?		# ...and the slave devices
 
 # CardBus serial interfaces
-#com*	at cardbus? function ?	# Modems and serial cards
+com*	at cardbus? function ?	# Modems and serial cards
 
 # ISA serial interfaces
 #options 	COM_HAYESP		# adds Hayes ESP serial board support
@@ -698,9 +702,9 @@ wds0	at isa? port 0x350 irq 15 drq 6	# WD7000 and TMC-7000 controllers
 wds1	at isa? port 0x358 irq 11 drq 5
 
 # CardBus SCSI cards
-#adv*	at cardbus? function ?	# AdvanSys 1200[A,B], 9xx[U,UA] SCSI
-#ahc*	at cardbus? function ?	# Adaptec ADP-1480
-#njs*	at cardbus? function ?	# Workbit NinjaSCSI-32
+adv*	at cardbus? function ?	# AdvanSys 1200[A,B], 9xx[U,UA] SCSI
+ahc*	at cardbus? function ?	# Adaptec ADP-1480
+njs*	at cardbus? function ?	# Workbit NinjaSCSI-32
 
 # MCA SCSI cards
 aha*	at mca? slot ?			# Adaptec AHA-1640
@@ -953,14 +957,14 @@ we0	at isa? port 0x280 iomem 0xd0000 irq 9	# WD/SMC Ethernet
 we1	at isa? port 0x300 iomem 0xcc000 irq 10
 
 # CardBus network cards
-#ath*	at cardbus? function ?	# Atheros 5210/5211/5212 802.11
-#atw*	at cardbus? function ?	# ADMtek ADM8211 (802.11)
-#ex*	at cardbus? function ?	# 3Com 3C575TX
-#fxp*	at cardbus? function ?	# Intel i8255x
-#rtk*	at cardbus? function ?	# Realtek 8129/8139
-#ral*	at cardbus? function ?	# Ralink Technology
-#rtw*	at cardbus? function ?	# Realtek 8180L (802.11)
-#tlp*	at cardbus? function ?	# DECchip 21143
+ath*	at cardbus? function ?	# Atheros 5210/5211/5212 802.11
+atw*	at cardbus? function ?	# ADMtek ADM8211 (802.11)
+ex*	at cardbus? function ?	# 3Com 3C575TX
+fxp*	at cardbus? function ?	# Intel i8255x
+rtk*	at cardbus? function ?	# Realtek 8129/8139
+ral*	at cardbus? function ?	# Ralink Technology
+rtw*	at cardbus? function ?	# Realtek 8180L (802.11)
+tlp*	at cardbus? function ?	# DECchip 21143
 
 # MCA network cards
 elmc*	at mca? slot ?			# 3Com EtherLink/MC (3c523)
@@ -1011,9 +1015,9 @@ ohci*	at pci?	dev ? function ?	# Open Host Controller
 uhci*	at pci?	dev ? function ?	# Universal Host Controller (Intel)
 
 # CardBus USB controllers
-#ehci*	at cardbus? function ?	# Enhanced Host Controller
-#ohci*	at cardbus? function ?	# Open Host Controller
-#uhci*	at cardbus? function ?	# Universal Host Controller (Intel)
+ehci*	at cardbus? function ?	# Enhanced Host Controller
+ohci*	at cardbus? function ?	# Open Host Controller
+uhci*	at cardbus? function ?	# Universal Host Controller (Intel)
 
 # ISA USB controllers
 #slhci0	at isa? port 0x300 irq 5	# ScanLogic SL811HS
@@ -1155,7 +1159,7 @@ irframe* at oboe?
 fwohci*	at pci? dev ? function ?	# IEEE1394 Open Host Controller
 
 # CardBus IEEE1394 controllers
-#fwohci*	at cardbus? function ?	# IEEE1394 Open Host Controller
+fwohci*	at cardbus? function ?	# IEEE1394 Open Host Controller
 
 ieee1394if* at fwohci?
 fwip*	at ieee1394if?			# IP over IEEE1394

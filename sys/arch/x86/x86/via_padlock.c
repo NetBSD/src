@@ -1,5 +1,5 @@
 /*	$OpenBSD: via.c,v 1.8 2006/11/17 07:47:56 tom Exp $	*/
-/*	$NetBSD	*/
+/*	$NetBSD: via_padlock.c,v 1.3.4.1 2007/03/29 19:27:36 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2003 Jason Wright
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: via_padlock.c,v 1.3 2007/03/11 18:37:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: via_padlock.c,v 1.3.4.1 2007/03/29 19:27:36 reinoud Exp $");
 
 #include "opt_viapadlock.h"
 

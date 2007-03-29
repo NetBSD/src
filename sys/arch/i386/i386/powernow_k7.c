@@ -1,4 +1,4 @@
-/*	$NetBSD: powernow_k7.c,v 1.24 2007/03/07 21:43:46 thorpej Exp $ */
+/*	$NetBSD: powernow_k7.c,v 1.24.6.1 2007/03/29 19:27:28 reinoud Exp $ */
 /*	$OpenBSD: powernow-k7.c,v 1.24 2006/06/16 05:58:50 gwk Exp $ */
 
 /*-
@@ -66,7 +66,7 @@
 /* AMD POWERNOW K7 driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powernow_k7.c,v 1.24 2007/03/07 21:43:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powernow_k7.c,v 1.24.6.1 2007/03/29 19:27:28 reinoud Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -123,10 +123,11 @@ static size_t freq_names_len;
 static uint8_t k7pnow_flag;
 
 static bool pnow_cpu_check(uint32_t, uint32_t);
-int k7_powernow_setperf(unsigned int);
-int k7pnow_sysctl_helper(SYSCTLFN_PROTO);
-int k7pnow_decode_pst(struct powernow_cpu_state *, uint8_t *, int);
-int k7pnow_states(struct powernow_cpu_state *, uint32_t, unsigned int, unsigned int);
+static int k7_powernow_setperf(unsigned int);
+static int k7pnow_sysctl_helper(SYSCTLFN_PROTO);
+static int k7pnow_decode_pst(struct powernow_cpu_state *, uint8_t *, int);
+static int k7pnow_states(struct powernow_cpu_state *, uint32_t,
+			 unsigned int, unsigned int);
 
 static bool
 pnow_cpu_check(uint32_t real_cpusig, uint32_t pst_cpusig)
@@ -145,7 +146,7 @@ pnow_cpu_check(uint32_t real_cpusig, uint32_t pst_cpusig)
 	return false;
 }
 
-int
+static int
 k7pnow_sysctl_helper(SYSCTLFN_ARGS)
 {
 	struct sysctlnode node;
@@ -177,7 +178,7 @@ k7pnow_sysctl_helper(SYSCTLFN_ARGS)
 	return 0;
 }
 
-int
+static int
 k7_powernow_setperf(unsigned int freq)
 {
 	unsigned int i;
@@ -246,7 +247,7 @@ k7_powernow_setperf(unsigned int freq)
  * Given a set of pair of fid/vid, and number of performance states,
  * compute state_table via an insertion sort.
  */
-int
+static int
 k7pnow_decode_pst(struct powernow_cpu_state *cstate, uint8_t *p, int npst)
 {
 	int i, j, n;
@@ -279,7 +280,7 @@ k7pnow_decode_pst(struct powernow_cpu_state *cstate, uint8_t *p, int npst)
 	return 1;
 }
 
-int
+static int
 k7pnow_states(struct powernow_cpu_state *cstate, uint32_t cpusig,
     unsigned int fid, unsigned int vid)
 {

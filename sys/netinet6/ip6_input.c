@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.98 2007/03/07 22:20:04 liamjfoy Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.98.6.1 2007/03/29 19:28:00 reinoud Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.98 2007/03/07 22:20:04 liamjfoy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.98.6.1 2007/03/29 19:28:00 reinoud Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -183,7 +183,7 @@ ip6_init()
 
 	ip6_init2((void *)0);
 #ifdef GATEWAY
-	ip6flow_init();
+	ip6flow_init(ip6_hashsize);
 #endif
 
 #ifdef PFIL_HOOKS
@@ -1611,12 +1611,12 @@ ip6_delaux(m)
  * we could reduce this value, call ip6flow_reap();
  */
 static int
-sysctl_net_inet_ip6_maxflows(SYSCTLFN_ARGS)
+sysctl_net_inet6_ip6_maxflows(SYSCTLFN_ARGS)
 {  
         int s;
   
         s = sysctl_lookup(SYSCTLFN_CALL(rnode));
-        if (s)
+        if (s || newp == NULL)
                 return (s);
  
         s = splsoftnet();
@@ -1624,6 +1624,35 @@ sysctl_net_inet_ip6_maxflows(SYSCTLFN_ARGS)
         splx(s);
  
         return (0);
+}
+
+static int
+sysctl_net_inet6_ip6_hashsize(SYSCTLFN_ARGS)
+{  
+	int error, tmp;
+	struct sysctlnode node;
+
+	node = *rnode;
+	tmp = ip6_hashsize;
+	node.sysctl_data = &tmp;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		return (error);
+
+	if ((tmp & (tmp - 1)) == 0 && tmp != 0) {
+		/*
+		 * Can only fail due to malloc()
+		 */
+		if (ip6flow_invalidate_all(tmp))
+			return ENOMEM;
+	} else {
+		/*
+		 * EINVAL if not a power of 2
+	         */
+		return EINVAL;
+	}	
+
+	return (0);
 }
 #endif /* GATEWAY */
 
@@ -1915,7 +1944,14 @@ SYSCTL_SETUP(sysctl_net_inet6_ip6_setup, "sysctl net.inet6.ip6 subtree setup")
 			CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 			CTLTYPE_INT, "maxflows",
 			SYSCTL_DESCR("Number of flows for fast forwarding (IPv6)"),
-			sysctl_net_inet_ip6_maxflows, 0, &ip6_maxflows, 0,
+			sysctl_net_inet6_ip6_maxflows, 0, &ip6_maxflows, 0,
+			CTL_NET, PF_INET6, IPPROTO_IPV6,
+			CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+			CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+			CTLTYPE_INT, "hashsize",
+			SYSCTL_DESCR("Size of hash table for fast forwarding (IPv6)"),
+			sysctl_net_inet6_ip6_hashsize, 0, &ip6_hashsize, 0,
 			CTL_NET, PF_INET6, IPPROTO_IPV6,
 			CTL_CREATE, CTL_EOL);
 #endif

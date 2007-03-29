@@ -1,8 +1,7 @@
-/*	$NetBSD: installboot.c,v 1.3 2002/04/19 16:43:38 heinz Exp $	*/
+/*	$NetBSD: installboot.c,v 1.3.72.1 2007/03/29 19:27:23 reinoud Exp $	*/
 
 #include <err.h>
 #include <fcntl.h>
-#include <getopt.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

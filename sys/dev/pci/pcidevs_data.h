@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.871.4.1 2007/03/18 00:06:43 reinoud Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.871.4.2 2007/03/29 19:27:51 reinoud Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.873 2007/03/17 06:43:52 dyoung Exp
+ *	NetBSD: pcidevs,v 1.875 2007/03/27 12:41:39 pooka Exp
  */
 
 /*
@@ -4198,6 +4198,10 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV100_QZ,
 	    "Radeon 7000/VE QZ",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_ES1000,
+	    "ES1000",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_9100_S,
@@ -9876,6 +9880,10 @@ static const struct pci_product pci_products[] = {
 	    "nForce MCP55 Serial ATA Controller",
 	},
 	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GF_GO_7600,
+	    "GeForce Go 7600",
+	},
+	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP61_ISA,
 	    "nForce MCP61 PCI-ISA Bridge",
 	},
@@ -12836,4 +12844,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2615;
+const int pci_nproducts = 2617;

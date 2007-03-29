@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_stat.c,v 1.5.4.1 2007/03/18 00:06:35 reinoud Exp $ */
+/*	$NetBSD: linux32_stat.c,v 1.5.4.2 2007/03/29 19:27:38 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_stat.c,v 1.5.4.1 2007/03/18 00:06:35 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_stat.c,v 1.5.4.2 2007/03/29 19:27:38 reinoud Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -124,7 +124,7 @@ linux32_sys_stat64(l, v, retval)
 	struct stat st;
 	struct linux32_stat64 st32;
 	struct linux32_stat64 *st32p;
-	const char *path = NETBSD32PTR64(SCARG(uap, path));
+	const char *path = SCARG_P32(uap, path);
 	
 	CHECK_ALT_EXIST(l, &sg, path);
 
@@ -134,7 +134,7 @@ linux32_sys_stat64(l, v, retval)
 
 	linux32_from_stat(&st, &st32);
 
-	st32p = NETBSD32PTR64(SCARG(uap, sp));
+	st32p = SCARG_P32(uap, sp);
 
 	return copyout(&st32, st32p, sizeof(*st32p));
 }
@@ -154,7 +154,7 @@ linux32_sys_lstat64(l, v, retval)
 	struct stat st;
 	struct linux32_stat64 st32;
 	struct linux32_stat64 *st32p;
-	const char *path = NETBSD32PTR64(SCARG(uap, path));
+	const char *path = SCARG_P32(uap, path);
 	
 	CHECK_ALT_EXIST(l, &sg, path);
 		
@@ -164,7 +164,7 @@ linux32_sys_lstat64(l, v, retval)
 
 	linux32_from_stat(&st, &st32);
 
-	st32p = NETBSD32PTR64(SCARG(uap, sp));
+	st32p = SCARG_P32(uap, sp);
 
 	return copyout(&st32, st32p, sizeof(*st32p));
 }
@@ -190,7 +190,7 @@ linux32_sys_fstat64(l, v, retval)
 
 	linux32_from_stat(&st, &st32);
 
-	st32p = NETBSD32PTR64(SCARG(uap, sp));
+	st32p = SCARG_P32(uap, sp);
 
 	return copyout(&st32, st32p, sizeof(*st32p));
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_stat.c,v 1.16.4.1 2007/03/18 00:06:35 reinoud Exp $ */
+/*	$NetBSD: irix_stat.c,v 1.16.4.2 2007/03/29 19:27:36 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_stat.c,v 1.16.4.1 2007/03/18 00:06:35 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_stat.c,v 1.16.4.2 2007/03/29 19:27:36 reinoud Exp $");
 
 #include <sys/errno.h>
 #include <sys/types.h>
@@ -130,9 +130,9 @@ bsd_to_irix_stat64(bsp, isp)
 }
 
 static int
-convert_irix_stat(struct stat *st, void *buf, int version)
+convert_irix_stat(struct stat *st, void *buf, int stat_version)
 {
-	switch (version) {
+	switch (stat_version) {
 	case IRIX__STAT_VER: {
 		struct irix_stat ist;
 
@@ -148,7 +148,7 @@ convert_irix_stat(struct stat *st, void *buf, int version)
 	case IRIX__R3_STAT_VER:
 	default:
 		printf("Warning: unimplemented irix_sys_?stat() version %d\n",
-		    version);
+		    stat_version);
 		return EINVAL;
 	}
 }

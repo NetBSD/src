@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_termios.h,v 1.1 2006/02/15 09:31:17 manu Exp $ */
+/*	$NetBSD: linux32_termios.h,v 1.1.36.1 2007/03/29 19:27:38 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -80,7 +80,9 @@ typedef netbsd32_long linux32_tcflag_t;
 #define LINUX32_TIOCGETD	_LINUX32_IO('T', 36)
 #define LINUX32_TCSBRKP		_LINUX32_IO('T', 37)
 #define LINUX32_TIOCTTYGSTRUCT	_LINUX32_IO('T', 38)
-#define LINUX32_TIOCGPTN	_LINUX32_IO('T', 48)
+
+#define LINUX32_TIOCGPTN	_LINUX32_IOR('T', 48, unsigned int)
+#define LINUX32_TIOCSPTLCK	_LINUX32_IOW('T', 49, int)
 
 #define LINUX32_FIONCLEX	_LINUX32_IO('T', 80)
 #define LINUX32_FIOCLEX		_LINUX32_IO('T', 81)

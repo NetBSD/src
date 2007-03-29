@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_sem.c,v 1.2.10.1 2007/03/18 00:06:37 reinoud Exp $	*/
+/*	$NetBSD: netbsd32_sem.c,v 1.2.10.2 2007/03/29 19:27:42 reinoud Exp $	*/
 
 /*
  *  Copyright (c) 2006 The NetBSD Foundation.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_sem.c,v 1.2.10.1 2007/03/18 00:06:37 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_sem.c,v 1.2.10.2 2007/03/29 19:27:42 reinoud Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_posix.h"
@@ -79,7 +79,7 @@ netbsd32__ksem_init(struct lwp *l, void *v, register_t *retval)
 	} */ *uap = v;
 
 	return do_ksem_init(l, SCARG(uap, value),
-	    NETBSD32PTR64(SCARG(uap, idp)), netbsd32_ksem_copyout);
+	    SCARG_P32(uap, idp), netbsd32_ksem_copyout);
 }
 
 int
@@ -93,9 +93,9 @@ netbsd32__ksem_open(struct lwp *l, void *v, register_t *retval)
 		syscallarg(netbsd32_semidp_t) idp;
 	} */ *uap = v;
 
-	return do_ksem_open(l, NETBSD32PTR64(SCARG(uap, name)),
+	return do_ksem_open(l, SCARG_P32(uap, name),
 	    SCARG(uap, oflag), SCARG(uap, mode), SCARG(uap, value),
-	    NETBSD32PTR64(SCARG(uap, idp)), netbsd32_ksem_copyout);
+	    SCARG_P32(uap, idp), netbsd32_ksem_copyout);
 }
 
 int

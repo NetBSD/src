@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.30 2007/02/21 22:59:51 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.30.8.1 2007/03/29 19:27:31 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  * NetBSD/sh3 pmap:
  *	pmap.pm_ptp[512] ... 512 slot of page table page
  *	page table page contains 1024 PTEs. (PAGE_SIZE / sizeof(pt_entry_t))
- *	  | PTP 11bit | PTOFSET 10bit | PGOFSET 12bit |
+ *	va -> [ PTP 10bit | PTOFSET 10bit | PGOFSET 12bit ]
  */
 
 #ifndef _SH3_PMAP_H_

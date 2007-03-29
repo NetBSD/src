@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.96 2006/09/01 19:11:56 matt Exp $	*/
+/*	$NetBSD: locore.s,v 1.96.16.1 2007/03/29 19:27:24 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990 The Regents of the University of California.
@@ -758,7 +758,7 @@ ENTRY_NOPROFILE(lev1intr)
 	movl	_C_LABEL(stio_addr),%a0 |  get KVA of ST-IO area
 	moveb	#0, %a0@(SCU_SOFTINT)	|  Turn off software interrupt
 	addql	#1,_C_LABEL(intrcnt)+16	|  add another software interrupt
-	jbsr	_C_LABEL(softint)	|  handle software interrupts
+	jbsr	_C_LABEL(softintr_dispatch) |  XXX handle software interrupts
 	moveml	%sp@+,%d0-%d1/%a0-%a1
 	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
 	jra	_ASM_LABEL(rei)
@@ -803,7 +803,6 @@ ENTRY_NOPROFILE(lev7intr)
  * point for coprocessor mid-instruction frames (type 9), but we also test
  * for bus error frames (type 10 and 11).
  */
-	BSS(ssir,1)
 ASENTRY_NOPROFILE(rei)
 #ifdef DEBUG
 	tstl	_C_LABEL(panicstr)	|  have we paniced?

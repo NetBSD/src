@@ -1,4 +1,4 @@
-/*	$NetBSD: exception_vector.S,v 1.21.2.1 2007/03/18 00:06:33 reinoud Exp $	*/
+/*	$NetBSD: exception_vector.S,v 1.21.2.2 2007/03/29 19:27:31 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 #define _ALIGN_TEXT	.align 5
 #include <sh3/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: exception_vector.S,v 1.21.2.1 2007/03/18 00:06:33 reinoud Exp $")
+__KERNEL_RCSID(0, "$NetBSD: exception_vector.S,v 1.21.2.2 2007/03/29 19:27:31 reinoud Exp $")
 
 
 /*
@@ -157,10 +157,11 @@ NENTRY(sh3_vector_tlbmiss)
 
 	!! if kernel stack is in P3, handle it here fast
 #if !defined(P1_STACK)
+	cmp/pz	r6
+	bt	6f		! user space address, proceed to handler
+
 	mov.l	.L3_VPN_MASK, r0
 	and	r6, r0		! vpn
-	tst	r0, r0
-	bt	6f		! punt if vpn is 0
 
 	mov.l	.L3_curupte, r1
 	mov.l	@r1, r1		! upte = &l->l_md.md_upte[0]

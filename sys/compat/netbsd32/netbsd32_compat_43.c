@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_43.c,v 1.37.6.1 2007/03/18 00:06:36 reinoud Exp $	*/
+/*	$NetBSD: netbsd32_compat_43.c,v 1.37.6.2 2007/03/29 19:27:40 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_43.c,v 1.37.6.1 2007/03/18 00:06:36 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_43.c,v 1.37.6.2 2007/03/29 19:27:40 reinoud Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_43.h"
@@ -164,8 +164,7 @@ compat_43_netbsd32_stat43(l, v, retval)
 	if (error)
 		return error;
 	netbsd32_from_stat43(&sb43, &sb32);
-	error = copyout(&sb32, (char *)NETBSD32PTR64(SCARG(uap, ub)),
-	    sizeof(sb32));
+	error = copyout(&sb32, SCARG_P32(uap, ub), sizeof(sb32));
 	if (error)
 		return error;
 
@@ -198,8 +197,7 @@ compat_43_netbsd32_lstat43(l, v, retval)
 	if (error)
 		return error;
 	netbsd32_from_stat43(&sb43, &sb32);
-	error = copyout(&sb32, (char *)NETBSD32PTR64(SCARG(uap, ub)),
-	    sizeof(sb32));
+	error = copyout(&sb32, SCARG_P32(uap, ub), sizeof(sb32));
 	if (error)
 		return error;
 
@@ -231,8 +229,7 @@ compat_43_netbsd32_fstat43(l, v, retval)
 	if (error)
 		return error;
 	netbsd32_from_stat43(&sb43, &sb32);
-	error = copyout(&sb32, (char *)NETBSD32PTR64(SCARG(uap, sb)),
-	    sizeof(sb32));
+	error = copyout(&sb32, SCARG_P32(uap, sb), sizeof(sb32));
 	if (error)
 		return error;
 
@@ -333,7 +330,7 @@ compat_43_netbsd32_ogethostname(l, v, retval)
 	name[1] = KERN_HOSTNAME;
 	sz = SCARG(uap, len);
 	return (old_sysctl(&name[0], 2,
-	    (char *)NETBSD32PTR64(SCARG(uap, hostname)), &sz, 0, 0, l));
+	    SCARG_P32(uap, hostname), &sz, 0, 0, l));
 }
 
 int
@@ -350,8 +347,8 @@ compat_43_netbsd32_osethostname(l, v, retval)
 
 	name[0] = CTL_KERN;
 	name[1] = KERN_HOSTNAME;
-	return (old_sysctl(&name[0], 2, 0, 0, (char *)NETBSD32PTR64(SCARG(uap,
-	    hostname)), SCARG(uap, len), l));
+	return old_sysctl(&name[0], 2, 0, 0, (char *)SCARG_P32(uap,
+	    hostname), SCARG(uap, len), l);
 }
 
 int
@@ -551,8 +548,7 @@ compat_43_netbsd32_orecvmsg(l, v, retval)
 	 *		- copyout converted iov32
 	 *	- copyout converted msghdr32
 	 */
-	error = copyin((void *)NETBSD32PTR64(SCARG(uap, msg)), &omh32,
-	    sizeof(omh32));
+	error = copyin(SCARG_P32(uap, msg), &omh32, sizeof(omh32));
 	if (error)
 		return (error);
 
@@ -602,8 +598,7 @@ compat_43_netbsd32_orecvmsg(l, v, retval)
 	NETBSD32PTR32(omh32.msg_accrights, omh.msg_accrights);
 	omh32.msg_accrightslen = omh.msg_accrightslen;
 
-	error = copyout(&omh32, (char *)NETBSD32PTR64(SCARG(uap, msg)),
-	    sizeof(omh32));
+	error = copyout(&omh32, SCARG_P32(uap, msg), sizeof(omh32));
 	if (error)
 		return error;
 
@@ -649,8 +644,7 @@ compat_43_netbsd32_osendmsg(l, v, retval)
 	 *		- copyout converted iov32
 	 *	- copyout converted msghdr32
 	 */
-	error = copyin((void *)NETBSD32PTR64(SCARG(uap, msg)), &omh32,
-	    sizeof(omh32));
+	error = copyin(SCARG_P32(uap, msg), &omh32, sizeof(omh32));
 	if (error)
 		return (error);
 
@@ -699,7 +693,7 @@ compat_43_netbsd32_osendmsg(l, v, retval)
 	NETBSD32PTR32(omh32.msg_accrights, omh.msg_accrights);
 	omh32.msg_accrightslen = omh.msg_accrightslen;
 
-	error = copyout(&omh32, NETBSD32PTR64(SCARG(uap, msg)), sizeof(omh32));
+	error = copyout(&omh32, SCARG_P32(uap, msg), sizeof(omh32));
 	if (error)
 		return error;
 
@@ -789,14 +783,13 @@ compat_43_netbsd32_osigvec(l, v, retval)
 	int rv, error;
 
 	NETBSD32TO64_UAP(signum);
-	if (NETBSD32PTR64(SCARG(uap, osv)))
+	if (SCARG_P32(uap, osv))
 		SCARG(&ua, osv) = stackgap_alloc(p, &sg, sizeof(sv));
 	else
 		SCARG(&ua, osv) = NULL;
-	if (NETBSD32PTR64(SCARG(uap, nsv))) {
+	if (SCARG_P32(uap, nsv)) {
 		SCARG(&ua, nsv) = stackgap_alloc(p, &sg, sizeof(sv));
-		error = copyin((void *)NETBSD32PTR64(SCARG(uap, nsv)), &sv32,
-		    sizeof(sv32));
+		error = copyin(SCARG_P32(uap, nsv), &sv32, sizeof(sv32));
 		if (error)
 			return (error);
 		sv.sv_handler = (void *)NETBSD32PTR64(sv32.sv_handler);
@@ -811,15 +804,14 @@ compat_43_netbsd32_osigvec(l, v, retval)
 	if (rv)
 		return (rv);
 
-	if (NETBSD32PTR64(SCARG(uap, osv))) {
+	if (SCARG_P32(uap, osv)) {
 		error = copyin(SCARG(&ua, osv), &sv, sizeof(sv));
 		if (error)
 			return (error);
 		NETBSD32PTR32(sv32.sv_handler, sv.sv_handler);
 		sv32.sv_mask = sv.sv_mask;
 		sv32.sv_flags = sv.sv_flags;
-		error = copyout(&sv32, NETBSD32PTR64(SCARG(uap, osv)),
-		    sizeof(sv32));
+		error = copyout(&sv32, SCARG_P32(uap, osv), sizeof(sv32));
 		if (error)
 			return (error);
 	}
@@ -874,14 +866,13 @@ compat_43_netbsd32_osigstack(l, v, retval)
 	void *sg = stackgap_init(p, 0);
 	int error, rv;
 
-	if (NETBSD32PTR64(SCARG(uap, oss)))
+	if (SCARG_P32(uap, oss))
 		SCARG(&ua, oss) = stackgap_alloc(p, &sg, sizeof(ss));
 	else
 		SCARG(&ua, oss) = NULL;
-	if (NETBSD32PTR64(SCARG(uap, nss))) {
+	if (SCARG_P32(uap, nss)) {
 		SCARG(&ua, nss) = stackgap_alloc(p, &sg, sizeof(ss));
-		error = copyin(NETBSD32PTR64(SCARG(uap, nss)), &ss32,
-		    sizeof(ss32));
+		error = copyin(SCARG_P32(uap, nss), &ss32, sizeof(ss32));
 		if (error)
 			return (error);
 		ss.ss_sp = NETBSD32PTR64(ss32.ss_sp);
@@ -896,14 +887,13 @@ compat_43_netbsd32_osigstack(l, v, retval)
 	if (rv)
 		return (rv);
 
-	if (NETBSD32PTR64(SCARG(uap, oss))) {
+	if (SCARG_P32(uap, oss)) {
 		error = copyin(SCARG(&ua, oss), &ss, sizeof(ss));
 		if (error)
 			return (error);
 		NETBSD32PTR32(ss32.ss_sp, ss.ss_sp);
 		ss32.ss_onstack = ss.ss_onstack;
-		error = copyout(&ss32, (void *)NETBSD32PTR64(SCARG(uap, oss)),
-		    sizeof(ss32));
+		error = copyout(&ss32, SCARG_P32(uap, oss), sizeof(ss32));
 		if (error)
 			return (error);
 	}
