@@ -27,9 +27,9 @@
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/savage_bci.c,v 1.3 2006/04/09 20:45:45 anholt Exp $");
 */
-#include "drmP.h"
-#include "savage_drm.h"
-#include "savage_drv.h"
+#include <dev/drm/drmP.h>
+#include <dev/pci/drm/savage_drm.h>
+#include <dev/pci/drm/savage_drv.h>
 
 /* Need a long timeout for shadow status updates can take a while
  * and so can waiting for events when the queue is full. */
