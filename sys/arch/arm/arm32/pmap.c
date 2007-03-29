@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.158.2.3 2007/03/24 14:54:33 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.158.2.4 2007/03/29 10:52:27 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -212,7 +212,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.158.2.3 2007/03/24 14:54:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.158.2.4 2007/03/29 10:52:27 skrll Exp $");
 
 #ifdef PMAP_DEBUG
 
@@ -3365,7 +3365,7 @@ pmap_pageidlezero(paddr_t phys)
 
 	for (i = 0, ptr = (int *)cdstp;
 			i < (PAGE_SIZE / sizeof(int)); i++) {
-		if (sched_whichqs != 0) {
+		if (sched_curcpu_runnable_p()) {
 			/*
 			 * A process has become ready.  Abort now,
 			 * so we don't keep it waiting while we
