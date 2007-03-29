@@ -1,4 +1,4 @@
-/*	$NetBSD: pnode.c,v 1.3 2007/01/15 00:39:02 pooka Exp $	*/
+/*	$NetBSD: pnode.c,v 1.4 2007/03/29 12:54:54 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006 Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: pnode.c,v 1.3 2007/01/15 00:39:02 pooka Exp $");
+__RCSID("$NetBSD: pnode.c,v 1.4 2007/03/29 12:54:54 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -70,10 +70,6 @@ void
 puffs_pn_put(struct puffs_node *pn)
 {
 	struct puffs_usermount *pu = pn->pn_mnt;
-
-	/* XXX: why's this here? */
-	if (pn == NULL)
-		return;
 
 	pu->pu_pathfree(pu, &pn->pn_po);
 	LIST_REMOVE(pn, pn_entries);
