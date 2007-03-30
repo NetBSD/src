@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_sys.h,v 1.28 2007/03/29 16:04:26 pooka Exp $	*/
+/*	$NetBSD: puffs_sys.h,v 1.29 2007/03/30 17:48:59 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -179,6 +179,8 @@ struct puffs_node {
 	LIST_ENTRY(puffs_node) pn_hashent;
 };
 
+typedef void (*parkdone_fn)(struct puffs_req *, void *);
+
 void	puffs_transport_init(void);
 void	puffs_transport_destroy(void);
 
@@ -191,16 +193,14 @@ int	puffs_start2(struct puffs_mount *, struct puffs_startreq *);
 
 int	puffs_vfstouser(struct puffs_mount *, int, void *, size_t);
 void	puffs_suspendtouser(struct puffs_mount *, int);
-int	puffs_vntouser(struct puffs_mount *, int, void *, size_t, void *,
-		       struct vnode *, struct vnode *);
+int	puffs_vntouser(struct puffs_mount *, int, void *, size_t, size_t,
+		       void *, struct vnode *, struct vnode *);
 void	puffs_vntouser_faf(struct puffs_mount *, int, void *, size_t, void *);
-void	puffs_vntouser_bioread_async(struct puffs_mount *, void *,
-				     size_t, off_t, struct buf *,
-				     struct vnode *, struct vnode *);
-int	puffs_vntouser_req(struct puffs_mount *, int, void *, size_t,
+int	puffs_vntouser_req(struct puffs_mount *, int, void *, size_t, size_t,
 			   void *, uint64_t, struct vnode *, struct vnode *);
-int	puffs_vntouser_delta(struct puffs_mount *, int, void *, size_t,
-		              size_t, void *, struct vnode *, struct vnode *);
+void	puffs_vntouser_call(struct puffs_mount *, int, void *, size_t, size_t,
+			    void *, parkdone_fn, void *,
+			    struct vnode *, struct vnode *);
 void	puffs_vntouser_faf(struct puffs_mount *, int, void *, size_t, void *);
 void	puffs_cacheop(struct puffs_mount *, struct puffs_park *,
 		      struct puffs_cacheinfo *, size_t, void *);
@@ -215,6 +215,8 @@ struct vnode *puffs_pnode2vnode(struct puffs_mount *, void *, int);
 void	puffs_makecn(struct puffs_kcn *, const struct componentname *);
 void	puffs_credcvt(struct puffs_cred *, kauth_cred_t);
 pid_t	puffs_lwp2pid(struct lwp *);
+
+void	puffs_parkdone_asyncbioread(struct puffs_req *, void *);
 
 void	puffs_updatenode(struct vnode *, int);
 #define PUFFS_UPDATEATIME	0x01
