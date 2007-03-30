@@ -1,4 +1,4 @@
-/*	$NetBSD: rfcomm_upper.c,v 1.3 2007/03/06 19:04:31 plunky Exp $	*/
+/*	$NetBSD: rfcomm_upper.c,v 1.4 2007/03/30 20:47:03 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rfcomm_upper.c,v 1.3 2007/03/06 19:04:31 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rfcomm_upper.c,v 1.4 2007/03/30 20:47:03 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -65,9 +65,9 @@ rfcomm_attach(struct rfcomm_dlc **handle,
 {
 	struct rfcomm_dlc *dlc;
 
-	KASSERT(handle);
-	KASSERT(proto);
-	KASSERT(upper);
+	KASSERT(handle != NULL);
+	KASSERT(proto != NULL);
+	KASSERT(upper != NULL);
 
 	dlc = malloc(sizeof(struct rfcomm_dlc), M_BLUETOOTH, M_NOWAIT | M_ZERO);
 	if (dlc == NULL)
