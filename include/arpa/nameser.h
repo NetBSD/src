@@ -1,3 +1,5 @@
+/*	$NetBSD: nameser.h,v 1.1.1.6 2007/03/30 19:48:21 ghen Exp $	*/
+
 /*
  * Copyright (c) 1983, 1989, 1993
  *    The Regents of the University of California.  All rights reserved.
@@ -49,7 +51,7 @@
  */
 
 /*
- *	$Id: nameser.h,v 1.1.1.5 2007/01/27 19:49:27 christos Exp $
+ *	Id: nameser.h,v 1.7.18.1 2005/04/27 05:00:50 sra Exp
  */
 
 #ifndef _ARPA_NAMESER_H_
