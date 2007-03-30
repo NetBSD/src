@@ -29,7 +29,6 @@ extern bool vax_mode_dependent_address_p (rtx);
 #ifdef RTX_CODE
 extern bool adjacent_operands_p(rtx, rtx, enum machine_mode);
 extern const char *rev_cond_name (rtx);
-extern void split_quadword_operands (rtx, rtx *, rtx *, int);
 extern void print_operand_address (FILE *, rtx);
 extern void print_operand (FILE *, rtx, int);
 extern void vax_notice_update_cc (rtx, rtx);
