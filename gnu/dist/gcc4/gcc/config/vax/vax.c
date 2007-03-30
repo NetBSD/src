@@ -168,8 +168,8 @@ vax_init_libfuncs (void)
 
 /* This is like nonimmediate_operand with a restriction on the type of MEM.  */
 
-void
-split_quadword_operands (rtx insn, rtx * operands, rtx * low,
+static void
+split_quadword_operands (enum rtx_code code, rtx * operands, rtx * low,
 			 int n ATTRIBUTE_UNUSED)
 {
   int i;
@@ -185,7 +185,7 @@ split_quadword_operands (rtx insn, rtx * operands, rtx * low,
 	{
 	  rtx addr = XEXP (operands[i], 0);
 	  operands[i] = low[i] = gen_rtx_MEM (SImode, addr);
-	  if (which_alternative == 0 && i == 0)
+	  if (code != SET && which_alternative == 0 && i == 0)
 	    {
 	      addr = XEXP (operands[i], 0);
 	      operands[i+1] = low[i+1] = gen_rtx_MEM (SImode, addr);
@@ -610,7 +610,7 @@ vax_rtx_costs (rtx x, int code, int outer_code, int *total)
 	}
       if (outer_code == AND)
 	{
-          *total = ((unsigned HOST_WIDE_INT) ~INTVAL (x) <= 077) ? 1 : 2;
+	  *total = ((unsigned HOST_WIDE_INT) ~INTVAL (x) <= 077) ? 1 : 2;
 	  return true;
 	}
       if ((unsigned HOST_WIDE_INT) INTVAL (x) <= 077
@@ -634,7 +634,7 @@ vax_rtx_costs (rtx x, int code, int outer_code, int *total)
       if (GET_MODE_CLASS (GET_MODE (x)) == MODE_FLOAT)
 	*total = vax_float_literal (x) ? 5 : 8;
       else
-        *total = ((CONST_DOUBLE_HIGH (x) == 0
+	*total = ((CONST_DOUBLE_HIGH (x) == 0
 		   && (unsigned HOST_WIDE_INT) CONST_DOUBLE_LOW (x) < 64)
 		  || (outer_code == PLUS
 		      && CONST_DOUBLE_HIGH (x) == -1
@@ -782,7 +782,7 @@ vax_rtx_costs (rtx x, int code, int outer_code, int *total)
       else
 	*total = 3;		/* 4 on VAX 2 */
       x = XEXP (x, 0);
-      if (GET_CODE (x) != REG && GET_CODE (x) != POST_INC)
+      if (!REG_P (x) && GET_CODE (x) != POST_INC)
 	*total += vax_address_cost_1 (x);
       return true;
 
@@ -846,7 +846,7 @@ vax_rtx_costs (rtx x, int code, int outer_code, int *total)
 	  break;
 	case MEM:
 	  *total += 1;		/* 2 on VAX 2 */
-	  if (GET_CODE (XEXP (op, 0)) != REG)
+	  if (!REG_P (XEXP (op, 0)))
 	    *total += vax_address_cost_1 (XEXP (op, 0));
 	  break;
 	case REG:
@@ -869,10 +869,10 @@ vax_rtx_costs (rtx x, int code, int outer_code, int *total)
 
 static void
 vax_output_mi_thunk (FILE * file,
-                     tree thunk ATTRIBUTE_UNUSED,
-                     HOST_WIDE_INT delta,
-                     HOST_WIDE_INT vcall_offset ATTRIBUTE_UNUSED,
-                     tree function)
+		     tree thunk ATTRIBUTE_UNUSED,
+		     HOST_WIDE_INT delta,
+		     HOST_WIDE_INT vcall_offset ATTRIBUTE_UNUSED,
+		     tree function)
 {
   fprintf (file, "\t.word 0x0ffc\n\taddl2 $" HOST_WIDE_INT_PRINT_DEC, delta);
   asm_fprintf (file, ",4(%Rap)\n");
@@ -1048,7 +1048,7 @@ vax_output_int_move (rtx insn ATTRIBUTE_UNUSED, rtx *operands,
 	  hi[0] = operands[0];
 	  hi[1] = operands[1];
 
-	  split_quadword_operands(insn, hi, lo, 2);
+	  split_quadword_operands(SET, hi, lo, 2);
 
 	  pattern_lo = vax_output_int_move (NULL, lo, SImode);
 	  pattern_hi = vax_output_int_move (NULL, hi, SImode);
@@ -1084,14 +1084,20 @@ vax_output_int_move (rtx insn ATTRIBUTE_UNUSED, rtx *operands,
       return "movq %1,%0";
 
     case SImode:
-      if (GET_CODE (operands[1]) == SYMBOL_REF || GET_CODE (operands[1]) == CONST)
+      if (symbolic_operand (operands[1], SImode))
 	{
 	  if (push_operand (operands[0], SImode))
 	    return "pushab %a1";
 	  return "movab %a1,%0";
 	}
+
       if (operands[1] == const0_rtx)
-	return "clrl %0";
+	{
+	  if (push_operand (operands[1], SImode))
+	    return "pushl %1";
+	  return "clrl %0";
+	}
+
       if (CONST_INT_P (operands[1])
 	  && (unsigned) INTVAL (operands[1]) >= 64)
 	{
@@ -1171,7 +1177,7 @@ vax_output_int_add (rtx insn ATTRIBUTE_UNUSED, rtx *operands,
 	if (TARGET_QMATH && 0)
 	  debug_rtx (insn);
 
-	split_quadword_operands (insn, operands, low, 3);
+	split_quadword_operands (PLUS, operands, low, 3);
 
 	if (TARGET_QMATH)
 	  {
@@ -1242,11 +1248,17 @@ vax_output_int_add (rtx insn ATTRIBUTE_UNUSED, rtx *operands,
 	      && ((INTVAL (operands[2]) < 32767 && INTVAL (operands[2]) > -32768)
 		   || REGNO (operands[1]) > 11))
 	    return "movab %c2(%1),%0";
+	  if (REG_P (operands[0]) && symbolic_operand (operands[2], SImode))
+	    return "movab %a2[%0],%0";
 	  return "addl2 %2,%0";
 	}
 
       if (rtx_equal_p (operands[0], operands[2]))
-	return "addl2 %1,%0";
+	{
+	  if (REG_P (operands[0]) && symbolic_operand (operands[1], SImode))
+	    return "movab %a1[%0],%0";
+	  return "addl2 %1,%0";
+	}
 
       if (CONST_INT_P (operands[2])
 	  && INTVAL (operands[2]) < 32767
@@ -1270,6 +1282,30 @@ vax_output_int_add (rtx insn ATTRIBUTE_UNUSED, rtx *operands,
       if (REG_P (operands[1]) && REG_P (operands[2]))
 	return "movab (%1)[%2],%0";
       */
+
+      if (REG_P (operands[1]) && symbolic_operand (operands[2], SImode))
+	{
+	  if (push_operand (operands[0], SImode))
+	    return "pushab %a2[%1]";
+	  return "movab %a2[%1],%0";
+	}
+
+      if (REG_P (operands[2]) && symbolic_operand (operands[1], SImode))
+	{
+	  if (push_operand (operands[0], SImode))
+	    return "pushab %a1[%2]";
+	  return "movab %a1[%2],%0";
+	}
+
+      if (flag_pic && REG_P (operands[0])
+	  && symbolic_operand (operands[2], SImode))
+	return "movab %a2,%0;addl2 %1,%0";
+
+      if (flag_pic
+	  && (symbolic_operand (operands[1], SImode)
+	      || symbolic_operand (operands[1], SImode)))
+	debug_rtx (insn);
+
       return "addl3 %1,%2,%0";
 
     case HImode:
@@ -1329,7 +1365,7 @@ vax_output_int_subtract (rtx insn, rtx *operands, enum machine_mode mode)
 	if (TARGET_QMATH && 0)
 	  debug_rtx (insn);
 
-	split_quadword_operands(insn, operands, low, 3);
+	split_quadword_operands(MINUS, operands, low, 3);
 
 	if (TARGET_QMATH)
 	  {
@@ -1398,7 +1434,7 @@ vax_output_conditional_branch (enum rtx_code code)
       case GEU: return "jgequ %l0";
       case LEU: return "jlequ %l0";
       default:
-        gcc_unreachable ();
+	gcc_unreachable ();
     }
 }
 
@@ -1589,12 +1625,12 @@ legitimate_address_p (enum machine_mode mode, rtx x, bool strict)
 
   if (indirectable_constant_address_p (xfoo0)
       && (BASE_REGISTER_P (xfoo1, strict)
-          || reg_plus_index_p (xfoo1, mode, strict)))
+	  || reg_plus_index_p (xfoo1, mode, strict)))
     return true;
 
   if (indirectable_constant_address_p (xfoo1)
       && (BASE_REGISTER_P (xfoo0, strict)
-          || reg_plus_index_p (xfoo0, mode, strict)))
+	  || reg_plus_index_p (xfoo0, mode, strict)))
     return true;
 
   return false;
