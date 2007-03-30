@@ -1,4 +1,4 @@
-/*	$NetBSD: sdpquery.c,v 1.2 2006/07/26 10:54:49 tron Exp $	*/
+/*	$NetBSD: sdpquery.c,v 1.3 2007/03/30 21:25:00 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -34,7 +34,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2006 Itronix, Inc.\n"
 	    "All rights reserved.\n");
-__RCSID("$NetBSD: sdpquery.c,v 1.2 2006/07/26 10:54:49 tron Exp $");
+__RCSID("$NetBSD: sdpquery.c,v 1.3 2007/03/30 21:25:00 plunky Exp $");
 
 #include <assert.h>
 #include <bluetooth.h>
@@ -59,7 +59,7 @@ static struct command {
 } commands[] = {
 	{ "Browse",	do_sdp_browse,	"[UUID]"	},
 	{ "Search",	do_sdp_search,	"<service>"	},
-	{ NULL }
+	{ NULL,		NULL,		NULL		}
 };
 
 int
