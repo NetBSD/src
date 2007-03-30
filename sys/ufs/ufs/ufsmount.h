@@ -1,4 +1,4 @@
-/*	$NetBSD: ufsmount.h,v 1.28 2007/03/04 06:03:48 christos Exp $	*/
+/*	$NetBSD: ufsmount.h,v 1.28.4.1 2007/03/30 00:11:01 mjf Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -65,6 +65,7 @@ struct nameidata;
 struct timeval;
 struct uio;
 struct vnode;
+struct ufs_trans;
 
 /* This structure describes the UFS specific mount structure data. */
 struct ufsmount {
@@ -103,6 +104,7 @@ struct ufsmount {
 	u_int64_t um_maxfilesize;
 
 	const struct ufs_ops *um_ops;
+	intptr_t um_journalcookie;		/* journal cookie */
 };
 
 struct ufs_ops {
