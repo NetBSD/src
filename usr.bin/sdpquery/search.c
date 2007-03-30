@@ -1,4 +1,4 @@
-/*	$NetBSD: search.c,v 1.3 2007/02/17 09:19:06 plunky Exp $	*/
+/*	$NetBSD: search.c,v 1.4 2007/03/30 21:25:00 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -55,12 +55,12 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: search.c,v 1.3 2007/02/17 09:19:06 plunky Exp $
+ * $Id: search.c,v 1.4 2007/03/30 21:25:00 plunky Exp $
  * $FreeBSD: src/usr.sbin/bluetooth/sdpcontrol/search.c,v 1.4 2005/05/27 19:11:33 emax Exp $
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: search.c,v 1.3 2007/02/17 09:19:06 plunky Exp $");
+__RCSID("$NetBSD: search.c,v 1.4 2007/03/30 21:25:00 plunky Exp $");
 
 #include <netinet/in.h>
 #include <bluetooth.h>
@@ -557,7 +557,8 @@ struct service {
 	  "Personal Area Networking User"		},
 	{ "SP",		SDP_SERVICE_CLASS_SERIAL_PORT,
 	  "Serial Port"			},
-	{ NULL }
+	{ NULL,		0,
+	  NULL				}
 };
 
 /* Perform SDP search command */
