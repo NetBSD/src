@@ -1,3 +1,5 @@
+/*	$NetBSD: netdb.h,v 1.1.1.6 2007/03/30 19:48:20 ghen Exp $	*/
+
 /*
  * ++Copyright++ 1980, 1983, 1988, 1993
  * -
@@ -86,7 +88,7 @@
 
 /*
  *      @(#)netdb.h	8.1 (Berkeley) 6/2/93
- *	$Id: netdb.h,v 1.1.1.5 2007/01/27 19:49:26 christos Exp $
+ *	Id: netdb.h,v 1.15.18.6 2006/10/02 01:23:09 marka Exp
  */
 
 #ifndef _NETDB_H_
