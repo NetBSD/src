@@ -21,6 +21,9 @@
 ;; Special case of a symbolic operand that's used as a 
 ;; operand.
 
+(define_predicate "symbolic_operand"
+  (match_code "const,symbol_ref,label_ref"))
+
 (define_predicate "indirect_memory_operand"
    (match_code "mem")
 {
