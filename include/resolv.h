@@ -1,3 +1,5 @@
+/*	$NetBSD: resolv.h,v 1.1.1.7 2007/03/30 19:48:21 ghen Exp $	*/
+
 /*
  * Copyright (c) 1983, 1987, 1989
  *    The Regents of the University of California.  All rights reserved.
@@ -50,7 +52,7 @@
 
 /*%
  *	@(#)resolv.h	8.1 (Berkeley) 6/2/93
- *	$Id: resolv.h,v 1.1.1.6 2007/01/27 19:49:26 christos Exp $
+ *	Id: resolv.h,v 1.19.18.3 2005/08/25 04:43:51 marka Exp
  */
 
 #ifndef _RESOLV_H_
