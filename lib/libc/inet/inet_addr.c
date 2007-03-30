@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_addr.c,v 1.1.1.2 2007/01/27 21:45:35 christos Exp $	*/
+/*	$NetBSD: inet_addr.c,v 1.1.1.3 2007/03/30 20:16:19 ghen Exp $	*/
 
 /*
  * Copyright (c) 1983, 1990, 1993

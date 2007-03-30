@@ -1,4 +1,4 @@
-/*	$NetBSD: list.h,v 1.1.1.2 2007/01/27 21:45:35 christos Exp $	*/
+/*	$NetBSD: list.h,v 1.1.1.3 2007/03/30 20:16:19 ghen Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")

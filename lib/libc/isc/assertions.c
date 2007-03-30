@@ -1,4 +1,4 @@
-/*	$NetBSD: assertions.c,v 1.1.1.2 2007/01/27 21:45:36 christos Exp $	*/
+/*	$NetBSD: assertions.c,v 1.1.1.3 2007/03/30 20:16:19 ghen Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -80,7 +80,6 @@ assertion_type_to_text(assertion_type type) {
  * Private.
  */
 
-/* coverity[+kill] */
 static void
 default_assertion_failed(const char *file, int line, assertion_type type,
 			 const char *cond, int print_errno)

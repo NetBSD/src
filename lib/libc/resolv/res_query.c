@@ -1,4 +1,4 @@
-/*	$NetBSD: res_query.c,v 1.1.1.2 2007/01/27 21:45:39 christos Exp $	*/
+/*	$NetBSD: res_query.c,v 1.1.1.3 2007/03/30 20:16:22 ghen Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
