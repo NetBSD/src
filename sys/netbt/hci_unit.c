@@ -1,4 +1,4 @@
-/*	$NetBSD: hci_unit.c,v 1.3 2006/09/10 15:45:56 plunky Exp $	*/
+/*	$NetBSD: hci_unit.c,v 1.4 2007/03/30 20:47:03 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hci_unit.c,v 1.3 2006/09/10 15:45:56 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hci_unit.c,v 1.4 2007/03/30 20:47:03 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -66,13 +66,13 @@ void
 hci_attach(struct hci_unit *unit)
 {
 
-	KASSERT(unit->hci_softc);
-	KASSERT(unit->hci_devname);
-	KASSERT(unit->hci_enable);
-	KASSERT(unit->hci_disable);
-	KASSERT(unit->hci_start_cmd);
-	KASSERT(unit->hci_start_acl);
-	KASSERT(unit->hci_start_sco);
+	KASSERT(unit->hci_softc != NULL);
+	KASSERT(unit->hci_devname != NULL);
+	KASSERT(unit->hci_enable != NULL);
+	KASSERT(unit->hci_disable != NULL);
+	KASSERT(unit->hci_start_cmd != NULL);
+	KASSERT(unit->hci_start_acl != NULL);
+	KASSERT(unit->hci_start_sco != NULL);
 
 	MBUFQ_INIT(&unit->hci_eventq);
 	MBUFQ_INIT(&unit->hci_aclrxq);
@@ -252,7 +252,7 @@ hci_send_cmd(struct hci_unit *unit, uint16_t opcode, void *buf, uint8_t len)
 	struct mbuf *m;
 	hci_cmd_hdr_t *p;
 
-	KASSERT(unit);
+	KASSERT(unit != NULL);
 
 	m = m_gethdr(M_DONTWAIT, MT_DATA);
 	if (m == NULL)
@@ -265,7 +265,7 @@ hci_send_cmd(struct hci_unit *unit, uint16_t opcode, void *buf, uint8_t len)
 	m->m_pkthdr.len = m->m_len = sizeof(hci_cmd_hdr_t);
 
 	if (len) {
-		KASSERT(buf);
+		KASSERT(buf != NULL);
 
 		m_copyback(m, sizeof(hci_cmd_hdr_t), len, buf);
 		if (m->m_pkthdr.len != (sizeof(hci_cmd_hdr_t) + len)) {
