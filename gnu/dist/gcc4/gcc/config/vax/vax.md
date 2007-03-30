@@ -53,6 +53,9 @@
 ;; Some output patterns want integer immediates with a prefix...
 (define_mode_attr  iprefx [(QI "B") (HI "H") (SI "N")])
 
+;;
+(include "predicates.md")
+
 ;; We don't want to allow a constant operand for test insns because
 ;; (set (cc0) (const_int foo)) has no mode information.  Such insns will
 ;; be folded while optimizing anyway.
@@ -317,49 +320,27 @@
   ""
   "* return vax_output_int_add (insn, operands, <MODE>mode);")
 
+(define_expand "adddi3"
+  [(set (match_operand:DI 0 "nonimmediate_operand" "=g")
+	(plus:DI (match_operand:DI 1 "general_operand" "g")
+		 (match_operand:DI 2 "general_operand" "g")))]
+  "!reload_in_progress"
+  "vax_expand_addsub_di_operands (operands, PLUS); DONE;")
+
+(define_insn "adcdi3"
+  [(set (match_operand:DI 0 "nonimmediate_addsub_di_operand" "=Rr")
+	(plus:DI (match_operand:DI 1 "general_addsub_di_operand" "%0")
+		 (match_operand:DI 2 "general_addsub_di_operand" "nRr")))]
+  "TARGET_QMATH"
+  "* return vax_output_int_add (insn, operands, DImode);")
+
 ;; The add-with-carry (adwc) instruction only accepts two operands.
-(define_insn "adddi3"
+(define_insn "adddi3_old"
   [(set (match_operand:DI 0 "nonimmediate_operand" "=ro>,ro>")
 	(plus:DI (match_operand:DI 1 "general_operand" "%0,ro>")
-		 (match_operand:DI 2 "general_operand" "Fro,F")))]
-  ""
-  "*
-{
-  rtx low[3];
-  const char *pattern;
-  int carry = 1;
-
-  split_quadword_operands (operands, low, 3);
-  /* Add low parts.  */
-  if (rtx_equal_p (operands[0], operands[1]))
-    {
-      if (low[2] == const0_rtx)
-	/* Should examine operand, punt if not POST_INC.  */
-	pattern = \"tstl %0\", carry = 0;
-      else if (low[2] == const1_rtx)
-        pattern = \"incl %0\";
-      else
-        pattern = \"addl2 %2,%0\";
-    }
-  else
-    {
-      if (low[2] == const0_rtx)
-	pattern = \"movl %1,%0\", carry = 0;
-      else
-	pattern = \"addl3 %2,%1,%0\";
-    }
-  if (pattern)
-    output_asm_insn (pattern, low);
-  if (!carry)
-    /* If CARRY is 0, we don't have any carry value to worry about.  */
-    return get_insn_template (CODE_FOR_addsi3, insn);
-  /* %0 = C + %1 + %2 */
-  if (!rtx_equal_p (operands[0], operands[1]))
-    output_asm_insn ((operands[1] == const0_rtx
-		      ? \"clrl %0\"
-		      : \"movl %1,%0\"), operands);
-  return \"adwc %2,%0\";
-}")
+		 (match_operand:DI 2 "general_operand" "Fsro,Fs")))]
+  "!TARGET_QMATH"
+  "* return vax_output_int_add (insn, operands, DImode);")
 
 ;;- All kinds of subtract instructions.
 
@@ -381,49 +362,27 @@
    sub<VAXint:isfx>2 %2,%0
    sub<VAXint:isfx>3 %2,%1,%0")
 
+(define_expand "subdi3"
+  [(set (match_operand:DI 0 "nonimmediate_operand" "=g")
+	(minus:DI (match_operand:DI 1 "general_operand" "g")
+		  (match_operand:DI 2 "general_operand" "g")))]
+  "!reload_in_progress"
+  "vax_expand_addsub_di_operands (operands, MINUS); DONE;")
+
+(define_insn "sbcdi3"
+  [(set (match_operand:DI 0 "nonimmediate_addsub_di_operand" "=Rr,=Rr")
+	(minus:DI (match_operand:DI 1 "general_addsub_di_operand" "0,I")
+		  (match_operand:DI 2 "general_addsub_di_operand" "nRr,=Rr")))]
+  "TARGET_QMATH"
+  "* return vax_output_int_subtract (insn, operands, DImode);")
+
 ;; The subtract-with-carry (sbwc) instruction only takes two operands.
-(define_insn "subdi3"
+(define_insn "subdi3_old"
   [(set (match_operand:DI 0 "nonimmediate_operand" "=or>,or>")
 	(minus:DI (match_operand:DI 1 "general_operand" "0,or>")
-		  (match_operand:DI 2 "general_operand" "For,F")))]
-  ""
-  "*
-{
-  rtx low[3];
-  const char *pattern;
-  int carry = 1;
-
-  split_quadword_operands (operands, low, 3);
-  /* Subtract low parts.  */
-  if (rtx_equal_p (operands[0], operands[1]))
-    {
-      if (low[2] == const0_rtx)
-	pattern = 0, carry = 0;
-      else if (low[2] == constm1_rtx)
-	pattern = \"decl %0\";
-      else
-	pattern = \"subl2 %2,%0\";
-    }
-  else
-    {
-      if (low[2] == constm1_rtx)
-	pattern = \"decl %0\";
-      else if (low[2] == const0_rtx)
-	pattern = get_insn_template (CODE_FOR_movsi, insn), carry = 0;
-      else
-	pattern = \"subl3 %2,%1,%0\";
-    }
-  if (pattern)
-    output_asm_insn (pattern, low);
-  if (carry)
-    {
-      if (!rtx_equal_p (operands[0], operands[1]))
-	return \"movl %1,%0\;sbwc %2,%0\";
-      return \"sbwc %2,%0\";
-      /* %0 = %2 - %1 - C */
-    }
-  return get_insn_template (CODE_FOR_subsi3, insn);
-}")
+		  (match_operand:DI 2 "general_operand" "Fsor,Fs")))]
+  "!TARGET_QMATH"
+  "* return vax_output_int_subtract (insn, operands, DImode);")
 
 ;;- Multiply instructions.
 
