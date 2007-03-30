@@ -1,4 +1,4 @@
-/*	$NetBSD: inet.h,v 1.22 2007/01/27 21:25:23 christos Exp $	*/
+/*	$NetBSD: inet.h,v 1.23 2007/03/30 19:57:18 ghen Exp $	*/
 
 /*
  * ++Copyright++ 1983, 1993
