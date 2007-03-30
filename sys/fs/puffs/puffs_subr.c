@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_subr.c,v 1.26 2007/03/29 16:04:26 pooka Exp $	*/
+/*	$NetBSD: puffs_subr.c,v 1.27 2007/03/30 17:48:58 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_subr.c,v 1.26 2007/03/29 16:04:26 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_subr.c,v 1.27 2007/03/30 17:48:58 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -454,4 +454,25 @@ puffs_updatevpsize(struct vnode *vp)
 
 	if (va.va_size != VNOVAL)
 		vp->v_size = va.va_size;
+}
+
+void
+puffs_parkdone_asyncbioread(struct puffs_req *preq, void *arg)
+{
+	struct puffs_vnreq_read *read_argp = (void *)preq;
+	struct buf *bp = arg;
+	size_t moved;
+
+	bp->b_error = preq->preq_rv;
+	if (bp->b_error == 0) {
+		moved = bp->b_bcount - read_argp->pvnr_resid;
+		bp->b_resid = read_argp->pvnr_resid;
+
+		memcpy(bp->b_data, read_argp->pvnr_data, moved);
+	} else {
+		bp->b_flags |= B_ERROR;
+	}
+
+	biodone(bp);
+	free(preq, M_PUFFS);
 }
