@@ -1,4 +1,4 @@
-/* $NetBSD: puffs_transport.c,v 1.10 2007/03/29 16:04:26 pooka Exp $ */
+/* $NetBSD: puffs_transport.c,v 1.11 2007/03/30 18:25:02 pooka Exp $ */
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_transport.c,v 1.10 2007/03/29 16:04:26 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_transport.c,v 1.11 2007/03/30 18:25:02 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -246,10 +246,6 @@ puffs_fop_close(struct file *fp, struct lwp *l)
 	 */
 	if (pmp->pmp_unmounting) {
 		cv_wait(&pmp->pmp_unmounting_cv, &pmp->pmp_lock);
-#if 0
-		ltsleep(&pmp->pmp_unmounting, PNORELOCK | PVFS, "puffsum",
-		    0, &pmp->pmp_lock);
-#endif
 		mutex_exit(&pmp->pmp_lock);
 		DPRINTF(("puffs_fop_close: unmount was in progress for pmp %p, "
 		    "restart\n", pmp));
@@ -269,10 +265,6 @@ puffs_fop_close(struct file *fp, struct lwp *l)
 	 */
 	if (pmp->pmp_suspend) {
 		cv_wait(&pmp->pmp_suspend_cv, &pmp->pmp_lock);
-#if 0
-		ltsleep(&pmp->pmp_suspend, PNORELOCK | PVFS, "puffsusum",
-		    0, &pmp->pmp_lock);
-#endif
 		mutex_exit(&pmp->pmp_lock);
 		DPRINTF(("puffs_fop_close: suspend was in progress for pmp %p, "
 		    "restart\n", pmp));
