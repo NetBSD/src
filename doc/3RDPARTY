@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.517 2007/03/25 09:55:04 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.518 2007/03/30 21:36:11 ghen Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -76,7 +76,7 @@ Notes:
 bc includes dc, both of which are in the NetBSD tree.
 
 Package:	bind/named
-Version:	libc/includes: 9.4.0-rc2, bind: 9.4.0-rc2
+Version:	libc/includes: 9.4.0, bind: 9.4.0
 Current Vers:	9.4.0
 Maintainer:	Paul Vixie <vixie@vix.com>
 Archive Site:	ftp://ftp.isc.org/isc/bind9/
@@ -96,8 +96,8 @@ Todo[2]: A few files in libc/net were imported in the ISC branch but now
 	    gethnamaddr.c getnetent.c getnetnamadr.c sethostent.c
 	 Others like getaddrinfo.c could be merged with isc, but it seems
 	 that ours is from a more recent version of KAME?
-Todo[3]: net/base64.c is be imported from bind but should be moved from
-	 net to isc/base64.c.
+Todo[3]: net/base64.c is imported from bind but should be moved from net
+	 to isc/base64.c.
 Todo[4]: Re-entrant functions of net/*
 
 Package:	binutils
