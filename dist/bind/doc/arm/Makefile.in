@@ -1,4 +1,4 @@
-# Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2001, 2002  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and distribute this software for any
@@ -13,7 +13,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: Makefile.in,v 1.12.18.5 2006/12/27 22:44:49 marka Exp
+# Id: Makefile.in,v 1.12.18.7 2007/02/07 23:57:58 marka Exp
 
 srcdir =	@srcdir@
 VPATH =		@srcdir@
@@ -53,15 +53,15 @@ Bv9ARM.tex: Bv9ARM-book.xml releaseinfo.xml
 
 Bv9ARM.dvi: Bv9ARM.tex releaseinfo.xml
 	rm -f Bv9ARM-book.aux Bv9ARM-book.dvi Bv9ARM-book.log
-	${LATEX} '\batchmode\input Bv9ARM.tex' || rm -f $@
-	${LATEX} '\batchmode\input Bv9ARM.tex' || rm -f $@
-	${LATEX} '\batchmode\input Bv9ARM.tex' || rm -f $@
+	${LATEX} '\batchmode\input Bv9ARM.tex' || (rm -f $@ ; exit 1)
+	${LATEX} '\batchmode\input Bv9ARM.tex' || (rm -f $@ ; exit 1)
+	${LATEX} '\batchmode\input Bv9ARM.tex' || (rm -f $@ ; exit 1)
 
 Bv9ARM.pdf: Bv9ARM.tex releaseinfo.xml
 	rm -f Bv9ARM-book.aux Bv9ARM-book.pdf Bv9ARM-book.log
-	${PDFLATEX} '\batchmode\input Bv9ARM.tex' || rm -f $@
-	${PDFLATEX} '\batchmode\input Bv9ARM.tex' || rm -f $@
-	${PDFLATEX} '\batchmode\input Bv9ARM.tex' || rm -f $@
+	${PDFLATEX} '\batchmode\input Bv9ARM.tex' || (rm -f $@ ; exit 1)
+	${PDFLATEX} '\batchmode\input Bv9ARM.tex' || (rm -f $@ ; exit 1)
+	${PDFLATEX} '\batchmode\input Bv9ARM.tex' || (rm -f $@ ; exit 1)
 
 releaseinfo.xml:
 	echo >$@ '<releaseinfo>BIND Version ${VERSION}</releaseinfo>'
