@@ -1,7 +1,7 @@
-/*	$NetBSD: dispatch.c,v 1.1.1.5 2007/01/27 21:06:42 christos Exp $	*/
+/*	$NetBSD: dispatch.c,v 1.1.1.6 2007/03/30 19:21:18 ghen Exp $	*/
 
 /*
- * Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: dispatch.c,v 1.116.18.11 2006/07/19 00:44:40 marka Exp */
+/* Id: dispatch.c,v 1.116.18.13 2007/02/07 23:57:58 marka Exp */
 
 /*! \file */
 
@@ -1246,6 +1246,7 @@ dns_dispatchmgr_setudp(dns_dispatchmgr_t *mgr,
 
 	if (isc_mempool_create(mgr->mctx, buffersize,
 			       &mgr->bpool) != ISC_R_SUCCESS) {
+		UNLOCK(&mgr->buffer_lock);
 		return (ISC_R_NOMEMORY);
 	}
 
