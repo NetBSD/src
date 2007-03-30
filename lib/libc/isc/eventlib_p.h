@@ -1,4 +1,4 @@
-/*	$NetBSD: eventlib_p.h,v 1.1.1.2 2007/01/27 21:45:37 christos Exp $	*/
+/*	$NetBSD: eventlib_p.h,v 1.1.1.3 2007/03/30 20:16:20 ghen Exp $	*/
 
 /*
  * Copyright (c) 2005 by Internet Systems Consortium, Inc. ("ISC")
