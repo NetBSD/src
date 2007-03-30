@@ -44,7 +44,8 @@
 ;; Integer modes supported on VAX, with a mapping from machine mode
 ;; to mnemonic suffix.  DImode is always a special case.
 (define_mode_macro VAXint [QI HI SI])
-(define_mode_attr  isfx [(QI "b") (HI "w") (SI "l")])
+(define_mode_macro VAXintQHSD [QI HI SI DI])
+(define_mode_attr  isfx [(QI "b") (HI "w") (SI "l") (DI "q")])
 
 ;; Similar for float modes supported on VAX.
 (define_mode_macro VAXfp [SF DF])
@@ -1384,77 +1385,29 @@
 ;; It does not work to use constraints to distinguish pushes from moves,
 ;; because < matches any autodecrement, not just a push.
 
-(define_insn ""
-  [(set (match_operand:SI 0 "nonimmediate_operand" "=g")
-	(match_operand:QI 1 "address_operand" "p"))]
+(define_insn "pushaddr<mode>"
+  [(set (match_operand:SI 0 "push_operand" "=g")
+	(match_operand:VAXintQHSD 1 "address_operand" "p"))]
   ""
-  "*
-{
-  if (push_operand (operands[0], SImode))
-    return \"pushab %a1\";
-  else
-    return \"movab %a1,%0\";
-}")
+  "pusha<VAXintQHSD:isfx> %a1")
 
-(define_insn ""
+(define_insn "movaddr<mode>"
   [(set (match_operand:SI 0 "nonimmediate_operand" "=g")
-	(match_operand:HI 1 "address_operand" "p"))]
+	(match_operand:VAXintQHSD 1 "address_operand" "p"))]
   ""
-  "*
-{
-  if (push_operand (operands[0], SImode))
-    return \"pushaw %a1\";
-  else
-    return \"movaw %a1,%0\";
-}")
+  "mova<VAXintQHSD:isfx> %a1,%0")
 
-(define_insn ""
-  [(set (match_operand:SI 0 "nonimmediate_operand" "=g")
-	(match_operand:SI 1 "address_operand" "p"))]
+(define_insn "pushaddr<mode>"
+  [(set (match_operand:SI 0 "push_operand" "=g")
+	(match_operand:VAXfp 1 "address_operand" "p"))]
   ""
-  "*
-{
-  if (push_operand (operands[0], SImode))
-    return \"pushal %a1\";
-  else
-    return \"moval %a1,%0\";
-}")
+  "pusha<VAXfp:fsfx> %a1")
 
-(define_insn ""
+(define_insn "movaddr<mode>"
   [(set (match_operand:SI 0 "nonimmediate_operand" "=g")
-	(match_operand:DI 1 "address_operand" "p"))]
+	(match_operand:VAXfp 1 "address_operand" "p"))]
   ""
-  "*
-{
-  if (push_operand (operands[0], SImode))
-    return \"pushaq %a1\";
-  else
-    return \"movaq %a1,%0\";
-}")
-
-(define_insn ""
-  [(set (match_operand:SI 0 "nonimmediate_operand" "=g")
-	(match_operand:SF 1 "address_operand" "p"))]
-  ""
-  "*
-{
-  if (push_operand (operands[0], SImode))
-    return \"pushaf %a1\";
-  else
-    return \"movaf %a1,%0\";
-}")
-
-(define_insn ""
-  [(set (match_operand:SI 0 "nonimmediate_operand" "=g")
-	(match_operand:DF 1 "address_operand" "p"))]
-  ""
-  "*
-{
-  if (push_operand (operands[0], SImode))
-    return \"pushad %a1\";
-  else
-    return \"movad %a1,%0\";
-}")
+  "mova<VAXfp:fsfx> %a1,%0")
 
 ;; These used to be peepholes, but it is more straightforward to do them
 ;; as single insns.  However, we must force the output to be a register
