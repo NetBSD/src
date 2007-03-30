@@ -1,9 +1,0 @@
-$NetBSD: README,v 1.1 2006/09/15 15:49:29 elad Exp $
-
-These files can be used by developers interested in writing security models
-for NetBSD from scratch.
-
-They address both developing security models for in-tree integration or
-distribution as LKMs.
-
-Placed in the public domain.

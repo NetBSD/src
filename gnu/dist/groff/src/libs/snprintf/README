@@ -1,8 +1,0 @@
-The file snprintf.c is not part of groff but is used by groff; it has been
-written by Mark Martinec <mark.martinec@ijs.si>.
-
-Please look into snprintf.c for the copyright message.
-
-The complete snprintf package together with documentation is available from
-
-  http://www.ijs.si/software/snprintf/
