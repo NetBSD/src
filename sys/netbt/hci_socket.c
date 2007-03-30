@@ -1,4 +1,4 @@
-/*	$NetBSD: hci_socket.c,v 1.8 2007/03/21 06:22:07 plunky Exp $	*/
+/*	$NetBSD: hci_socket.c,v 1.9 2007/03/30 20:47:02 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hci_socket.c,v 1.8 2007/03/21 06:22:07 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hci_socket.c,v 1.9 2007/03/30 20:47:02 plunky Exp $");
 
 #include "opt_bluetooth.h"
 #ifdef BLUETOOTH_DEBUG
@@ -247,8 +247,8 @@ hci_send(struct hci_pcb *pcb, struct mbuf *m, bdaddr_t *addr)
 	hci_cmd_hdr_t hdr;
 	int err;
 
-	KASSERT(m);
-	KASSERT(addr);
+	KASSERT(m != NULL);
+	KASSERT(addr != NULL);
 
 	/* wants at least a header to start with */
 	if (m->m_pkthdr.len < sizeof(hdr)) {
@@ -407,7 +407,7 @@ hci_usrreq(struct socket *up, int req, struct mbuf *m,
 		return 0;
 
 	case PRU_BIND:
-		KASSERT(nam);
+		KASSERT(nam != NULL);
 		sa = mtod(nam, struct sockaddr_bt *);
 
 		if (sa->bt_len != sizeof(struct sockaddr_bt))
@@ -426,7 +426,7 @@ hci_usrreq(struct socket *up, int req, struct mbuf *m,
 		return 0;
 
 	case PRU_CONNECT:
-		KASSERT(nam);
+		KASSERT(nam != NULL);
 		sa = mtod(nam, struct sockaddr_bt *);
 
 		if (sa->bt_len != sizeof(struct sockaddr_bt))
@@ -443,7 +443,7 @@ hci_usrreq(struct socket *up, int req, struct mbuf *m,
 		return 0;
 
 	case PRU_PEERADDR:
-		KASSERT(nam);
+		KASSERT(nam != NULL);
 		sa = mtod(nam, struct sockaddr_bt *);
 
 		memset(sa, 0, sizeof(struct sockaddr_bt));
@@ -454,7 +454,7 @@ hci_usrreq(struct socket *up, int req, struct mbuf *m,
 		return 0;
 
 	case PRU_SOCKADDR:
-		KASSERT(nam);
+		KASSERT(nam != NULL);
 		sa = mtod(nam, struct sockaddr_bt *);
 
 		memset(sa, 0, sizeof(struct sockaddr_bt));

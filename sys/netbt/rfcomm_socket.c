@@ -1,4 +1,4 @@
-/*	$NetBSD: rfcomm_socket.c,v 1.4 2007/03/05 19:11:54 plunky Exp $	*/
+/*	$NetBSD: rfcomm_socket.c,v 1.5 2007/03/30 20:47:03 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rfcomm_socket.c,v 1.4 2007/03/05 19:11:54 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rfcomm_socket.c,v 1.5 2007/03/30 20:47:03 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/domain.h>
@@ -152,7 +152,7 @@ rfcomm_usrreq(struct socket *up, int req, struct mbuf *m,
 		return rfcomm_detach((struct rfcomm_dlc **)&up->so_pcb);
 
 	case PRU_BIND:
-		KASSERT(nam);
+		KASSERT(nam != NULL);
 		sa = mtod(nam, struct sockaddr_bt *);
 
 		if (sa->bt_len != sizeof(struct sockaddr_bt))
@@ -164,7 +164,7 @@ rfcomm_usrreq(struct socket *up, int req, struct mbuf *m,
 		return rfcomm_bind(pcb, sa);
 
 	case PRU_CONNECT:
-		KASSERT(nam);
+		KASSERT(nam != NULL);
 		sa = mtod(nam, struct sockaddr_bt *);
 
 		if (sa->bt_len != sizeof(struct sockaddr_bt))
@@ -177,13 +177,13 @@ rfcomm_usrreq(struct socket *up, int req, struct mbuf *m,
 		return rfcomm_connect(pcb, sa);
 
 	case PRU_PEERADDR:
-		KASSERT(nam);
+		KASSERT(nam != NULL);
 		sa = mtod(nam, struct sockaddr_bt *);
 		nam->m_len = sizeof(struct sockaddr_bt);
 		return rfcomm_peeraddr(pcb, sa);
 
 	case PRU_SOCKADDR:
-		KASSERT(nam);
+		KASSERT(nam != NULL);
 		sa = mtod(nam, struct sockaddr_bt *);
 		nam->m_len = sizeof(struct sockaddr_bt);
 		return rfcomm_sockaddr(pcb, sa);
@@ -193,7 +193,7 @@ rfcomm_usrreq(struct socket *up, int req, struct mbuf *m,
 		break;
 
 	case PRU_SEND:
-		KASSERT(m);
+		KASSERT(m != NULL);
 
 		if (ctl)	/* no use for that */
 			m_freem(ctl);
@@ -219,7 +219,7 @@ rfcomm_usrreq(struct socket *up, int req, struct mbuf *m,
 		return rfcomm_listen(pcb);
 
 	case PRU_ACCEPT:
-		KASSERT(nam);
+		KASSERT(nam != NULL);
 		sa = mtod(nam, struct sockaddr_bt *);
 		nam->m_len = sizeof(struct sockaddr_bt);
 		return rfcomm_peeraddr(pcb, sa);
@@ -302,7 +302,7 @@ rfcomm_connecting(void *arg)
 {
 	/* struct socket *so = arg; */
 
-	KASSERT(arg);
+	KASSERT(arg != NULL);
 	DPRINTF("Connecting\n");
 }
 
@@ -311,7 +311,7 @@ rfcomm_connected(void *arg)
 {
 	struct socket *so = arg;
 
-	KASSERT(so);
+	KASSERT(so != NULL);
 	DPRINTF("Connected\n");
 	soisconnected(so);
 }
@@ -321,7 +321,7 @@ rfcomm_disconnected(void *arg, int err)
 {
 	struct socket *so = arg;
 
-	KASSERT(so);
+	KASSERT(so != NULL);
 	DPRINTF("Disconnected\n");
 
 	so->so_error = err;
@@ -366,7 +366,7 @@ rfcomm_input(void *arg, struct mbuf *m)
 {
 	struct socket *so = arg;
 
-	KASSERT(so);
+	KASSERT(so != NULL);
 
 	if (m->m_pkthdr.len > sbspace(&so->so_rcv)) {
 		printf("%s: %d bytes dropped (socket buffer full)\n",

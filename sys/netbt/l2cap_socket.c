@@ -1,4 +1,4 @@
-/*	$NetBSD: l2cap_socket.c,v 1.4 2007/03/05 19:11:54 plunky Exp $	*/
+/*	$NetBSD: l2cap_socket.c,v 1.5 2007/03/30 20:47:03 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: l2cap_socket.c,v 1.4 2007/03/05 19:11:54 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: l2cap_socket.c,v 1.5 2007/03/30 20:47:03 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/domain.h>
@@ -145,7 +145,7 @@ l2cap_usrreq(struct socket *up, int req, struct mbuf *m,
 		return l2cap_detach((struct l2cap_channel **)&up->so_pcb);
 
 	case PRU_BIND:
-		KASSERT(nam);
+		KASSERT(nam != NULL);
 		sa = mtod(nam, struct sockaddr_bt *);
 
 		if (sa->bt_len != sizeof(struct sockaddr_bt))
@@ -157,7 +157,7 @@ l2cap_usrreq(struct socket *up, int req, struct mbuf *m,
 		return l2cap_bind(pcb, sa);
 
 	case PRU_CONNECT:
-		KASSERT(nam);
+		KASSERT(nam != NULL);
 		sa = mtod(nam, struct sockaddr_bt *);
 
 		if (sa->bt_len != sizeof(struct sockaddr_bt))
@@ -170,13 +170,13 @@ l2cap_usrreq(struct socket *up, int req, struct mbuf *m,
 		return l2cap_connect(pcb, sa);
 
 	case PRU_PEERADDR:
-		KASSERT(nam);
+		KASSERT(nam != NULL);
 		sa = mtod(nam, struct sockaddr_bt *);
 		nam->m_len = sizeof(struct sockaddr_bt);
 		return l2cap_peeraddr(pcb, sa);
 
 	case PRU_SOCKADDR:
-		KASSERT(nam);
+		KASSERT(nam != NULL);
 		sa = mtod(nam, struct sockaddr_bt *);
 		nam->m_len = sizeof(struct sockaddr_bt);
 		return l2cap_sockaddr(pcb, sa);
@@ -186,7 +186,7 @@ l2cap_usrreq(struct socket *up, int req, struct mbuf *m,
 		break;
 
 	case PRU_SEND:
-		KASSERT(m);
+		KASSERT(m != NULL);
 		if (m->m_pkthdr.len == 0)
 			break;
 
@@ -218,7 +218,7 @@ l2cap_usrreq(struct socket *up, int req, struct mbuf *m,
 		return l2cap_listen(pcb);
 
 	case PRU_ACCEPT:
-		KASSERT(nam);
+		KASSERT(nam != NULL);
 		sa = mtod(nam, struct sockaddr_bt *);
 		nam->m_len = sizeof(struct sockaddr_bt);
 		return l2cap_peeraddr(pcb, sa);

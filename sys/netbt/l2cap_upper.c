@@ -1,4 +1,4 @@
-/*	$NetBSD: l2cap_upper.c,v 1.4 2007/03/15 19:47:51 plunky Exp $	*/
+/*	$NetBSD: l2cap_upper.c,v 1.5 2007/03/30 20:47:03 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: l2cap_upper.c,v 1.4 2007/03/15 19:47:51 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: l2cap_upper.c,v 1.5 2007/03/30 20:47:03 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -63,9 +63,9 @@ l2cap_attach(struct l2cap_channel **handle,
 {
 	struct l2cap_channel *chan;
 
-	KASSERT(handle);
-	KASSERT(proto);
-	KASSERT(upper);
+	KASSERT(handle != NULL);
+	KASSERT(proto != NULL);
+	KASSERT(upper != NULL);
 
 	chan = malloc(sizeof(struct l2cap_channel), M_BLUETOOTH,
 			M_NOWAIT | M_ZERO);
