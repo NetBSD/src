@@ -1,7 +1,7 @@
-/*	$NetBSD: sdlz.c,v 1.1.1.1 2007/01/27 21:07:12 christos Exp $	*/
+/*	$NetBSD: sdlz.c,v 1.1.1.2 2007/03/30 19:21:43 ghen Exp $	*/
 
 /*
- * Portions Copyright (C) 2005, 2006  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2005-2007  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -52,7 +52,7 @@
  * USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: sdlz.c,v 1.2.2.7 2006/12/07 23:57:58 marka Exp */
+/* Id: sdlz.c,v 1.2.2.9 2007/02/14 23:45:43 marka Exp */
 
 /*! \file */
 
@@ -786,8 +786,10 @@ find(dns_db_t *db, dns_name_t *name, dns_dbversion_t *version,
 	dns_fixedname_init(&fname);
 	xname = dns_fixedname_name(&fname);
 
-	if (rdataset == NULL)
+	if (rdataset == NULL) {
+		dns_rdataset_init(&xrdataset);
 		rdataset = &xrdataset;
+	}
 
 	result = DNS_R_NXDOMAIN;
 

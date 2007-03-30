@@ -1,4 +1,4 @@
-/*	$NetBSD: dlz_mysql_driver.c,v 1.1.1.1 2007/01/27 21:05:12 christos Exp $	*/
+/*	$NetBSD: dlz_mysql_driver.c,v 1.1.1.2 2007/03/30 19:17:13 ghen Exp $	*/
 
 /*
  * Copyright (C) 2002 Stichting NLnet, Netherlands, stichting@nlnet.nl.
@@ -650,7 +650,7 @@ mysql_allnodes(const char *zone, void *driverarg, void *dbdata,
 		}
 		if (fields == 4) {
 			/* tell Bind about it. */
-			result = dns_sdlz_putnamedrr(allnodes, safeGet(row[0]),
+			result = dns_sdlz_putnamedrr(allnodes, safeGet(row[2]),
 						     safeGet(row[1]), ttl,
 						     safeGet(row[3]));
 		} else {

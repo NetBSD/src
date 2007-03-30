@@ -18,7 +18,7 @@ AC_DIVERT_PUSH(1)dnl
 esyscmd([sed "s/^/# /" COPYRIGHT])dnl
 AC_DIVERT_POP()dnl
 
-AC_REVISION($Revision: 1.1.1.5 $)
+AC_REVISION($Revision: 1.1.1.6 $)
 
 AC_INIT(lib/dns/name.c)
 AC_PREREQ(2.59)
@@ -1934,7 +1934,7 @@ main() {
 	powerpc-*)
 		arch=powerpc
 	;;
-	mips-*)
+	mips-*|mipsel-*|mips64-*|mips64el-*)
 		arch=mips
 	;;
 	ia64-*)
@@ -1959,6 +1959,21 @@ if test "$have_atomic" = "yes"; then
 		if test $arch = "x86_64"; then
 			# We can share the same code for gcc with x86_32
 			arch=x86_32
+		fi
+		if test $arch = "powerpc"; then
+			#
+			# The MacOS (and maybe others) uses "r0" for register
+			# zero. Under linux/ibm it is "0" for register 0.
+			# Probe to see if we have a MacOS style assembler.
+			#
+			AC_MSG_CHECKING([Checking for MacOS style assembler syntax])
+			AC_TRY_COMPILE(, [
+			__asm__ volatile ("li r0, 0x0\n"::);
+			], [
+			AC_MSG_RESULT(yes)
+			compiler="mac"
+			ISC_PLATFORM_USEMACASM="#define ISC_PLATFORM_USEMACASM 1"
+			], [AC_MSG_RESULT(no)])
 		fi
 	else
 		case "$host" in
@@ -1985,6 +2000,8 @@ if test "$have_atomic" = "yes"; then
 		ISC_PLATFORM_USEOSFASM="#define ISC_PLATFORM_USEOSFASM 1"
 		;;
 	aix)
+		;;
+	mac)
 		;;
 	*)
 		# See if the generic __asm function works.  If not,
@@ -2020,6 +2037,7 @@ AC_SUBST(ISC_PLATFORM_HAVEATOMICSTORE)
 AC_SUBST(ISC_PLATFORM_USEGCCASM)
 AC_SUBST(ISC_PLATFORM_USEOSFASM)
 AC_SUBST(ISC_PLATFORM_USESTDASM)
+AC_SUBST(ISC_PLATFORM_USEMACASM)
 
 ISC_ARCH_DIR=$arch
 AC_SUBST(ISC_ARCH_DIR)
