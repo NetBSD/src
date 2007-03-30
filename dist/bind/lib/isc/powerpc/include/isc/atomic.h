@@ -1,7 +1,7 @@
-/*	$NetBSD: atomic.h,v 1.1.1.1 2007/01/27 21:07:51 christos Exp $	*/
+/*	$NetBSD: atomic.h,v 1.1.1.2 2007/03/30 19:22:22 ghen Exp $	*/
 
 /*
- * Copyright (C) 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: atomic.h,v 1.1.6.3 2005/09/01 03:39:13 marka Exp */
+/* Id: atomic.h,v 1.1.6.5 2007/02/13 00:04:50 marka Exp */
 
 #ifndef ISC_ATOMIC_H
 #define ISC_ATOMIC_H 1
@@ -69,18 +69,27 @@ isc_atomic_cmpxchg(atomic_p p, int old, int new) {
         return (orig);
 }
 
-#elif ISC_PLATFORM_USEGCCASM
+#elif defined(ISC_PLATFORM_USEGCCASM) || defined(ISC_PLATFORM_USEMACASM)
 static inline isc_int32_t
 isc_atomic_xadd(isc_int32_t *p, isc_int32_t val) {
 	isc_int32_t orig;
 
 	__asm__ volatile (
+#ifdef ISC_PLATFORM_USEMACASM
 		"1:"
 		"lwarx r6, 0, %1\n"
 	    	"mr %0, r6\n"
 		"add r6, r6, %2\n"
 		"stwcx. r6, 0, %1\n"
 		"bne- 1b"
+#else
+		"1:"
+		"lwarx 6, 0, %1\n"
+	    	"mr %0, 6\n"
+		"add 6, 6, %2\n"
+		"stwcx. 6, 0, %1\n"
+		"bne- 1b"
+#endif
 		: "=&r"(orig)
 		: "r"(p), "r"(val)
 		: "r6", "memory"
@@ -92,11 +101,19 @@ isc_atomic_xadd(isc_int32_t *p, isc_int32_t val) {
 static inline void
 isc_atomic_store(void *p, isc_int32_t val) {
 	__asm__ volatile (
+#ifdef ISC_PLATFORM_USEMACASM
 		"1:"
 		"lwarx r6, 0, %0\n"
 		"lwz r6, %1\n"
 		"stwcx. r6, 0, %0\n"
 		"bne- 1b"
+#else
+		"1:"
+		"lwarx 6, 0, %0\n"
+		"lwz 6, %1\n"
+		"stwcx. 6, 0, %0\n"
+		"bne- 1b"
+#endif
 		:
 		: "r"(p), "m"(val)
 		: "r6", "memory"
@@ -108,6 +125,7 @@ isc_atomic_cmpxchg(isc_int32_t *p, isc_int32_t cmpval, isc_int32_t val) {
 	isc_int32_t orig;
 
 	__asm__ volatile (
+#ifdef ISC_PLATFORM_USEMACASM
 		"1:"
 		"lwarx r6, 0, %1\n"
 		"mr %0,r6\n"
@@ -117,6 +135,17 @@ isc_atomic_cmpxchg(isc_int32_t *p, isc_int32_t cmpval, isc_int32_t val) {
 		"stwcx. r6, 0, %1\n"
 		"bne- 1b\n"
 		"2:"
+#else
+		"1:"
+		"lwarx 6, 0, %1\n"
+		"mr %0,6\n"
+		"cmpw 6, %2\n"
+		"bne 2f\n"
+		"mr 6, %3\n"
+		"stwcx. 6, 0, %1\n"
+		"bne- 1b\n"
+		"2:"
+#endif
 		: "=&r" (orig)
 		: "r"(p), "r"(cmpval), "r"(val)
 		: "r6", "memory"

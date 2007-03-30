@@ -1,4 +1,4 @@
-/*	$NetBSD: resolver.c,v 1.1.1.5 2007/01/27 21:07:10 christos Exp $	*/
+/*	$NetBSD: resolver.c,v 1.1.1.6 2007/03/30 19:21:41 ghen Exp $	*/
 
 /*
  * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: resolver.c,v 1.284.18.56 2007/01/08 02:41:59 marka Exp */
+/* Id: resolver.c,v 1.284.18.57 2007/02/14 23:41:01 marka Exp */
 
 /*! \file */
 
@@ -6553,6 +6553,7 @@ dns_resolver_createfetch2(dns_resolver_t *res, dns_name_t *name,
 	isc_boolean_t new_fctx = ISC_FALSE;
 	isc_event_t *event;
 	unsigned int count = 0;
+	unsigned int spillat;
 
 	UNUSED(forwarders);
 
@@ -6581,6 +6582,9 @@ dns_resolver_createfetch2(dns_resolver_t *res, dns_name_t *name,
 
 	bucketnum = dns_name_fullhash(name, ISC_FALSE) % res->nbuckets;
 
+	LOCK(&res->lock);
+	spillat = res->spillat;
+	UNLOCK(&res->lock);
 	LOCK(&res->buckets[bucketnum].lock);
 
 	if (res->buckets[bucketnum].exiting) {
@@ -6614,12 +6618,8 @@ dns_resolver_createfetch2(dns_resolver_t *res, dns_name_t *name,
 		}
 	}
 	if (count >= res->spillatmin && res->spillatmin != 0) {
-		if (!fctx->spilled) {
-			LOCK(&fctx->res->lock);
-			if (count >= res->spillat)
-				fctx->spilled = ISC_TRUE;
-			UNLOCK(&fctx->res->lock);
-		}
+		if (count >= spillat)
+			fctx->spilled = ISC_TRUE;
 		if (fctx->spilled) {
 			result = DNS_R_DROP;
 			goto unlock;
