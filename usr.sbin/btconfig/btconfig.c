@@ -1,4 +1,4 @@
-/* $NetBSD: btconfig.c,v 1.4 2007/01/16 17:32:04 hubertf Exp $ */
+/* $NetBSD: btconfig.c,v 1.5 2007/03/30 21:23:18 plunky Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -34,7 +34,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2006 Itronix, Inc.\n"
 	    "All rights reserved.\n");
-__RCSID("$NetBSD: btconfig.c,v 1.4 2007/01/16 17:32:04 hubertf Exp $");
+__RCSID("$NetBSD: btconfig.c,v 1.5 2007/03/30 21:23:18 plunky Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -186,7 +186,7 @@ struct parameter {
 	{ "voice",	P_HEX,	&opt_voice,	&voice	},
 	{ "pto",	P_NUM,	&opt_pto,	&pto	},
 	{ "scomtu",	P_NUM,	&opt_scomtu,	&scomtu	},
-	{ NULL }
+	{ NULL,		0,	NULL,		NULL	}
 };
 
 int
@@ -274,13 +274,13 @@ main(int ac, char *av[])
 
 			case P_HEX:
 				if (--ac < 1) badarg(p->name);
-				*(uint32_t *)(p->val) = strtol(*++av, NULL, 16);
+				*(uint32_t *)(p->val) = strtoul(*++av, NULL, 16);
 				*(p->opt) = 1;
 				break;
 
 			case P_NUM:
 				if (--ac < 1) badarg(p->name);
-				*(uint32_t *)(p->val) = strtol(*++av, NULL, 10);
+				*(uint32_t *)(p->val) = strtoul(*++av, NULL, 10);
 				*(p->opt) = 1;
 				break;
 			}
@@ -579,7 +579,7 @@ config_unit(void)
 	}
 
 	if (opt_scomtu) {
-		if (scomtu < 0 || scomtu > 0xff) {
+		if (scomtu > 0xff) {
 			warnx("Invalid SCO mtu %d", scomtu);
 		} else {
 			btr.btr_sco_mtu = scomtu;
