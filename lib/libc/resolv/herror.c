@@ -1,4 +1,4 @@
-/*	$NetBSD: herror.c,v 1.5 2007/01/27 22:26:44 christos Exp $	*/
+/*	$NetBSD: herror.c,v 1.6 2007/03/30 20:23:04 ghen Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -55,7 +55,7 @@
 #ifdef notdef
 static const char rcsid[] = "Id: herror.c,v 1.3.18.1 2005/04/27 05:01:09 sra Exp";
 #else
-__RCSID("$NetBSD: herror.c,v 1.5 2007/01/27 22:26:44 christos Exp $");
+__RCSID("$NetBSD: herror.c,v 1.6 2007/03/30 20:23:04 ghen Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 

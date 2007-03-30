@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_cidr_ntop.c,v 1.4 2007/01/27 22:26:43 christos Exp $	*/
+/*	$NetBSD: inet_cidr_ntop.c,v 1.5 2007/03/30 20:23:03 ghen Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -22,7 +22,7 @@
 #if 0
 static const char rcsid[] = "Id: inet_cidr_ntop.c,v 1.4.18.3 2006/10/11 02:32:47 marka Exp";
 #else
-__RCSID("$NetBSD: inet_cidr_ntop.c,v 1.4 2007/01/27 22:26:43 christos Exp $");
+__RCSID("$NetBSD: inet_cidr_ntop.c,v 1.5 2007/03/30 20:23:03 ghen Exp $");
 #endif
 #endif
 

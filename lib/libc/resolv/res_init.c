@@ -1,4 +1,4 @@
-/*	$NetBSD: res_init.c,v 1.12 2007/02/09 22:29:40 christos Exp $	*/
+/*	$NetBSD: res_init.c,v 1.13 2007/03/30 20:23:04 ghen Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993
@@ -76,7 +76,7 @@
 static const char sccsid[] = "@(#)res_init.c	8.1 (Berkeley) 6/7/93";
 static const char rcsid[] = "Id: res_init.c,v 1.16.18.5 2006/08/30 23:23:13 marka Exp";
 #else
-__RCSID("$NetBSD: res_init.c,v 1.12 2007/02/09 22:29:40 christos Exp $");
+__RCSID("$NetBSD: res_init.c,v 1.13 2007/03/30 20:23:04 ghen Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 

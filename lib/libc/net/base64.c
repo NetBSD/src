@@ -1,4 +1,4 @@
-/*	$NetBSD: base64.c,v 1.9 2007/01/27 22:26:44 christos Exp $	*/
+/*	$NetBSD: base64.c,v 1.10 2007/03/30 20:23:04 ghen Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -47,7 +47,7 @@
 #if 0
 static const char rcsid[] = "Id: base64.c,v 1.3.18.1 2005/04/27 05:01:05 sra Exp";
 #else
-__RCSID("$NetBSD: base64.c,v 1.9 2007/01/27 22:26:44 christos Exp $");
+__RCSID("$NetBSD: base64.c,v 1.10 2007/03/30 20:23:04 ghen Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
