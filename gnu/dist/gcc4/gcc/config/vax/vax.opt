@@ -46,3 +46,7 @@ Generate code for UNIX assembler
 mvaxc-alignment
 Target RejectNegative Mask(VAXC_ALIGNMENT)
 Use VAXC structure conventions
+
+mqmath
+Target Mask(QMATH)
+Use new adddi3/subdi3 patterns

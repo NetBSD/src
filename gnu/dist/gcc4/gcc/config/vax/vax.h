@@ -289,13 +289,19 @@ enum reg_class { NO_REGS, ALL_REGS, LIM_REG_CLASSES };
 
 /* Optional extra constraints for this machine.
 
-   For the VAX, `Q' means that OP is a MEM that does not have a mode-dependent
-   address.  */
+   For the VAX,
+     `Q' means that OP is a MEM that does not have a mode-dependent address.
+     'R' means that OP is a MEM that that is not indexed nor indirect.  */
 
 #define EXTRA_CONSTRAINT(OP, C)						\
-  ((C) == 'Q'								\
-   ? GET_CODE (OP) == MEM && ! mode_dependent_address_p (XEXP (OP, 0))	\
+  (  (C) == 'Q'	? MEM_P (OP)						\
+		  && ! mode_dependent_address_p (XEXP (OP, 0))		\
+  :  (C) == 'R' ? (MEM_P (OP)						\
+		   && memory_operand (OP, GET_MODE (OP))		\
+		   && !illegal_addsub_di_memory_operand (OP, GET_MODE (OP))) \
    : 0)
+
+#define EXTRA_MEMORY_CONSTRAINT(C, STR)		((C) == 'R')
 
 /* Given an rtx X being reloaded into a reg required to be
    in class CLASS, return the class of reg to actually use.
@@ -869,46 +875,8 @@ VAX operand formatting codes:
 #define PRINT_OPERAND_PUNCT_VALID_P(CODE)				\
   ((CODE) == '#' || (CODE) == '|')
 
-#define PRINT_OPERAND(FILE, X, CODE)					\
-{ if (CODE == '#') fputc (ASM_DOUBLE_CHAR, FILE);			\
-  else if (CODE == '|')							\
-    fputs (REGISTER_PREFIX, FILE);					\
-  else if (CODE == 'C')							\
-    fputs (rev_cond_name (X), FILE);					\
-  else if (CODE == 'D' && GET_CODE (X) == CONST_INT && INTVAL (X) < 0)	\
-    fprintf (FILE, "$" NEG_HWI_PRINT_HEX16, INTVAL (X));		\
-  else if (CODE == 'P' && GET_CODE (X) == CONST_INT)			\
-    fprintf (FILE, "$" HOST_WIDE_INT_PRINT_DEC, INTVAL (X) + 1);	\
-  else if (CODE == 'N' && GET_CODE (X) == CONST_INT)			\
-    fprintf (FILE, "$" HOST_WIDE_INT_PRINT_DEC, ~ INTVAL (X));		\
-  /* rotl instruction cannot deal with negative arguments.  */		\
-  else if (CODE == 'R' && GET_CODE (X) == CONST_INT)			\
-    fprintf (FILE, "$" HOST_WIDE_INT_PRINT_DEC, 32 - INTVAL (X));	\
-  else if (CODE == 'H' && GET_CODE (X) == CONST_INT)			\
-    fprintf (FILE, "$%d", (int) (0xffff & ~ INTVAL (X)));		\
-  else if (CODE == 'h' && GET_CODE (X) == CONST_INT)			\
-    fprintf (FILE, "$%d", (short) - INTVAL (x));			\
-  else if (CODE == 'B' && GET_CODE (X) == CONST_INT)			\
-    fprintf (FILE, "$%d", (int) (0xff & ~ INTVAL (X)));			\
-  else if (CODE == 'b' && GET_CODE (X) == CONST_INT)			\
-    fprintf (FILE, "$%d", (int) (0xff & - INTVAL (X)));			\
-  else if (CODE == 'M' && GET_CODE (X) == CONST_INT)			\
-    fprintf (FILE, "$%d", ~((1 << INTVAL (x)) - 1));			\
-  else if (GET_CODE (X) == REG)						\
-    fprintf (FILE, "%s", reg_names[REGNO (X)]);				\
-  else if (GET_CODE (X) == MEM)						\
-    output_address (XEXP (X, 0));					\
-  else if (GET_CODE (X) == CONST_DOUBLE && GET_MODE (X) == SFmode)	\
-    { char dstr[30];							\
-      real_to_decimal (dstr, CONST_DOUBLE_REAL_VALUE (X),		\
-		       sizeof (dstr), 0, 1);				\
-      fprintf (FILE, "$0f%s", dstr); }					\
-  else if (GET_CODE (X) == CONST_DOUBLE && GET_MODE (X) == DFmode)	\
-    { char dstr[30];							\
-      real_to_decimal (dstr, CONST_DOUBLE_REAL_VALUE (X),		\
-		       sizeof (dstr), 0, 1);				\
-      fprintf (FILE, "$0%c%s", ASM_DOUBLE_CHAR, dstr); }		\
-  else { putc ('$', FILE); output_addr_const (FILE, X); }}
+#define PRINT_OPERAND(FILE, X, CODE)  \
+  print_operand (FILE, X, CODE)
 
 /* Print a memory operand whose address is X, on file FILE.
    This uses a function in output-vax.c.  */

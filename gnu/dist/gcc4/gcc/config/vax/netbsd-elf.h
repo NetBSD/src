@@ -56,5 +56,4 @@ Boston, MA 02110-1301, USA.  */
 
 /* We use gas, not the UNIX assembler.  */
 #undef TARGET_DEFAULT
-#define TARGET_DEFAULT 0
-
+#define TARGET_DEFAULT MASK_QMATH
