@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.187 2007/03/12 18:18:28 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.188 2007/03/30 21:14:13 martin Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.187 2007/03/12 18:18:28 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.188 2007/03/30 21:14:13 martin Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -1436,7 +1436,7 @@ pmap_activate_pmap(struct pmap *pmap)
 	if (pmap->pm_ctx == 0) {
 		(void) ctx_alloc(pmap);
 	}
-	stxa(CTX_SECONDARY, ASI_DMMU, pmap->pm_ctx);
+	dmmu_set_secondary_context(pmap->pm_ctx);
 }
 
 /*
@@ -1846,9 +1846,10 @@ pmap_remove_all(pm)
 	if (pm == pmap_kernel()) {
 		return;
 	}
-	stxa(CTX_SECONDARY, ASI_DMMU, 0);
+	write_user_windows();
 	pm->pm_refs = 0;
 	ctx_free(pm);
+	REMOVE_STAT(flushes);
 	blast_dcache();
 }
 
