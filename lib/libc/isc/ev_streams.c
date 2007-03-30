@@ -1,4 +1,4 @@
-/*	$NetBSD: ev_streams.c,v 1.3 2007/01/27 22:26:43 christos Exp $	*/
+/*	$NetBSD: ev_streams.c,v 1.4 2007/03/30 20:23:03 ghen Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -26,7 +26,7 @@
 #ifdef notdef
 static const char rcsid[] = "Id: ev_streams.c,v 1.4.18.1 2005/04/27 05:01:06 sra Exp";
 #else
-__RCSID("$NetBSD: ev_streams.c,v 1.3 2007/01/27 22:26:43 christos Exp $");
+__RCSID("$NetBSD: ev_streams.c,v 1.4 2007/03/30 20:23:03 ghen Exp $");
 #endif
 #endif
 

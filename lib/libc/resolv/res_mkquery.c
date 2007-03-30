@@ -1,4 +1,4 @@
-/*	$NetBSD: res_mkquery.c,v 1.7 2007/01/27 22:26:44 christos Exp $	*/
+/*	$NetBSD: res_mkquery.c,v 1.8 2007/03/30 20:23:04 ghen Exp $	*/
 
 /*
  * Copyright (c) 1985, 1993
@@ -76,7 +76,7 @@
 static const char sccsid[] = "@(#)res_mkquery.c	8.1 (Berkeley) 6/4/93";
 static const char rcsid[] = "Id: res_mkquery.c,v 1.5.18.1 2005/04/27 05:01:11 sra Exp";
 #else
-__RCSID("$NetBSD: res_mkquery.c,v 1.7 2007/01/27 22:26:44 christos Exp $");
+__RCSID("$NetBSD: res_mkquery.c,v 1.8 2007/03/30 20:23:04 ghen Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
