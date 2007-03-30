@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_extern.h,v 1.55 2007/01/19 14:49:12 hannken Exp $	*/
+/*	$NetBSD: ffs_extern.h,v 1.55.8.1 2007/03/30 00:16:28 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -65,6 +65,8 @@ struct uio;
 struct vnode;
 struct mbuf;
 struct cg;
+struct ufs_trans;
+struct gen_journal;
 
 #if defined(_KERNEL)
 
@@ -106,6 +108,9 @@ int	ffs_balloc(struct vnode *, off_t, int, kauth_cred_t, int,
 int	ffs_update(struct vnode *, const struct timespec *,
     const struct timespec *, int);
 int	ffs_truncate(struct vnode *, off_t, int, kauth_cred_t, struct lwp *);
+
+/* ffs_journal.c */
+int	ffs_commit(struct ufs_trans *, struct gen_journal *);
 
 /* ffs_vfsops.c */
 void	ffs_init(void);
