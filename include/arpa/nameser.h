@@ -1,4 +1,4 @@
-/*	$NetBSD: nameser.h,v 1.21 2007/01/27 22:33:03 christos Exp $	*/
+/*	$NetBSD: nameser.h,v 1.22 2007/03/30 19:57:18 ghen Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993
