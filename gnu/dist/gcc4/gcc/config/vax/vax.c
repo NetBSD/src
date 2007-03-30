@@ -169,27 +169,31 @@ vax_init_libfuncs (void)
 /* This is like nonimmediate_operand with a restriction on the type of MEM.  */
 
 static void
-split_quadword_operands (enum rtx_code code, rtx * operands, rtx * low,
-			 int n ATTRIBUTE_UNUSED)
+split_quadword_operands (rtx insn, rtx * operands, rtx * low, int n)
 {
   int i;
-  /* Split operands.  */
 
-  low[0] = low[1] = low[2] = 0;
-  for (i = 0; i < 3; i++)
+  for (i = 0; i < n; i++)
+    low[i] = 0;
+
+  for (i = 0; i < n; i++)
     {
-      if (low[i])
-	/* it's already been figured out */;
-      else if (MEM_P (operands[i])
-	       && (GET_CODE (XEXP (operands[i], 0)) == POST_INC))
+      if (MEM_P (operands[i])
+	  && (GET_CODE (XEXP (operands[i], 0)) == PRE_DEC
+	      || GET_CODE (XEXP (operands[i], 0)) == POST_INC))
 	{
 	  rtx addr = XEXP (operands[i], 0);
 	  operands[i] = low[i] = gen_rtx_MEM (SImode, addr);
-	  if (code != SET && which_alternative == 0 && i == 0)
-	    {
-	      addr = XEXP (operands[i], 0);
-	      operands[i+1] = low[i+1] = gen_rtx_MEM (SImode, addr);
-	    }
+	}
+      else if (optimize_size && MEM_P (operands[i])
+	       && REG_P (XEXP (operands[i], 0))
+	       && find_regno_note (insn, REG_DEAD,
+				   REGNO (XEXP (operands[i], 0))))
+	{
+	  low[i] = gen_rtx_MEM (SImode,
+				gen_rtx_POST_INC (Pmode,
+						  XEXP (operands[i], 0)));
+	  operands[i] = gen_rtx_MEM (SImode, XEXP (operands[i], 0));
 	}
       else
 	{
@@ -840,7 +844,7 @@ vax_rtx_costs (rtx x, int code, int outer_code, int *total)
 	  else
 	    {
 	      if (CONST_DOUBLE_HIGH (op) != 0
-		  || (unsigned)CONST_DOUBLE_LOW (op) > 63)
+		  || (unsigned HOST_WIDE_INT)CONST_DOUBLE_LOW (op) > 63)
 		*total += 2;
 	    }
 	  break;
@@ -1048,7 +1052,7 @@ vax_output_int_move (rtx insn ATTRIBUTE_UNUSED, rtx *operands,
 	  hi[0] = operands[0];
 	  hi[1] = operands[1];
 
-	  split_quadword_operands(SET, hi, lo, 2);
+	  split_quadword_operands(insn, hi, lo, 2);
 
 	  pattern_lo = vax_output_int_move (NULL, lo, SImode);
 	  pattern_hi = vax_output_int_move (NULL, hi, SImode);
@@ -1099,16 +1103,26 @@ vax_output_int_move (rtx insn ATTRIBUTE_UNUSED, rtx *operands,
 	}
 
       if (CONST_INT_P (operands[1])
-	  && (unsigned) INTVAL (operands[1]) >= 64)
+	  && (unsigned HOST_WIDE_INT) INTVAL (operands[1]) >= 64)
 	{
-	  int i = INTVAL (operands[1]);
-	  if ((unsigned)(~i) < 64)
+	  HOST_WIDE_INT i = INTVAL (operands[1]);
+	  int n;
+	  if ((unsigned HOST_WIDE_INT)(~i) < 64)
 	    return "mcoml %N1,%0";
-	  if ((unsigned)i < 0x100)
+	  if ((unsigned HOST_WIDE_INT)i < 0x10000)
+	  if ((unsigned HOST_WIDE_INT)i < 0x100)
 	    return "movzbl %1,%0";
 	  if (i >= -0x80 && i < 0)
 	    return "cvtbl %1,%0";
-	  if ((unsigned)i < 0x10000)
+	  if (optimize_size
+	      && (n = exact_log2 (i & (-i))) != -1
+	      && ((unsigned HOST_WIDE_INT)i >> n) < 64)
+	    {
+	      operands[1] = GEN_INT ((unsigned HOST_WIDE_INT)i >> n);
+	      operands[2] = GEN_INT (n);
+	      return "ashl %2,%1,%0";
+	    }
+	  if ((unsigned HOST_WIDE_INT)i < 0x10000)
 	    return "movzwl %1,%0";
 	  if (i >= -0x8000 && i < 0)
 	    return "cvtwl %1,%0";
@@ -1120,25 +1134,27 @@ vax_output_int_move (rtx insn ATTRIBUTE_UNUSED, rtx *operands,
     case HImode:
       if (CONST_INT_P (operands[1]))
 	{
-	  int i = INTVAL (operands[1]);
+	  HOST_WIDE_INT i = INTVAL (operands[1]);
 	  if (i == 0)
 	    return "clrw %0";
-	  else if ((unsigned int)i < 64)
+	  else if ((unsigned HOST_WIDE_INT)i < 64)
 	    return "movw %1,%0";
-	  else if ((unsigned int)~i < 64)
+	  else if ((unsigned HOST_WIDE_INT)~i < 64)
 	    return "mcomw %H1,%0";
-	  else if ((unsigned int)i < 256)
+	  else if ((unsigned HOST_WIDE_INT)i < 256)
 	    return "movzbw %1,%0";
+	  else if (i >= -0x80 && i < 0)
+	    return "cvtbw %1,%0";
 	}
       return "movw %1,%0";
 
     case QImode:
       if (CONST_INT_P (operands[1]))
 	{
-	  int i = INTVAL (operands[1]);
+	  HOST_WIDE_INT i = INTVAL (operands[1]);
 	  if (i == 0)
 	    return "clrb %0";
-	  else if ((unsigned int)~i < 64)
+	  else if ((unsigned HOST_WIDE_INT)~i < 64)
 	    return "mcomb %B1,%0";
 	}
       return "movb %1,%0";
@@ -1177,7 +1193,7 @@ vax_output_int_add (rtx insn ATTRIBUTE_UNUSED, rtx *operands,
 	if (TARGET_QMATH && 0)
 	  debug_rtx (insn);
 
-	split_quadword_operands (PLUS, operands, low, 3);
+	split_quadword_operands (insn, operands, low, 3);
 
 	if (TARGET_QMATH)
 	  {
@@ -1240,10 +1256,10 @@ vax_output_int_add (rtx insn ATTRIBUTE_UNUSED, rtx *operands,
 	  if (operands[2] == constm1_rtx)
 	    return "decl %0";
 	  if (CONST_INT_P (operands[2])
-	      && (unsigned) (- INTVAL (operands[2])) < 64)
+	      && (unsigned HOST_WIDE_INT) (- INTVAL (operands[2])) < 64)
 	    return "subl2 $%n2,%0";
 	  if (CONST_INT_P (operands[2])
-	      && (unsigned) INTVAL (operands[2]) >= 64
+	      && (unsigned HOST_WIDE_INT) INTVAL (operands[2]) >= 64
 	      && REG_P (operands[1])
 	      && ((INTVAL (operands[2]) < 32767 && INTVAL (operands[2]) > -32768)
 		   || REGNO (operands[1]) > 11))
@@ -1268,11 +1284,11 @@ vax_output_int_add (rtx insn ATTRIBUTE_UNUSED, rtx *operands,
 	return "pushab %c2(%1)";
 
       if (CONST_INT_P (operands[2])
-	  && (unsigned) (- INTVAL (operands[2])) < 64)
+	  && (unsigned HOST_WIDE_INT) (- INTVAL (operands[2])) < 64)
 	return "subl3 $%n2,%1,%0";
 
       if (CONST_INT_P (operands[2])
-	  && (unsigned) INTVAL (operands[2]) >= 64
+	  && (unsigned HOST_WIDE_INT) INTVAL (operands[2]) >= 64
 	  && REG_P (operands[1])
 	  && ((INTVAL (operands[2]) < 32767 && INTVAL (operands[2]) > -32768)
 	       || REGNO (operands[1]) > 11))
@@ -1316,14 +1332,14 @@ vax_output_int_add (rtx insn ATTRIBUTE_UNUSED, rtx *operands,
 	  if (operands[2] == constm1_rtx)
 	    return "decw %0";
 	  if (CONST_INT_P (operands[2])
-	      && (unsigned) (- INTVAL (operands[2])) < 64)
+	      && (unsigned HOST_WIDE_INT) (- INTVAL (operands[2])) < 64)
 	    return "subw2 $%n2,%0";
 	  return "addw2 %2,%0";
 	}
       if (rtx_equal_p (operands[0], operands[2]))
 	return "addw2 %1,%0";
       if (CONST_INT_P (operands[2])
-	  && (unsigned) (- INTVAL (operands[2])) < 64)
+	  && (unsigned HOST_WIDE_INT) (- INTVAL (operands[2])) < 64)
 	return "subw3 $%n2,%1,%0";
       return "addw3 %1,%2,%0";
 
@@ -1335,14 +1351,14 @@ vax_output_int_add (rtx insn ATTRIBUTE_UNUSED, rtx *operands,
 	  if (operands[2] == constm1_rtx)
 	    return "decb %0";
 	  if (CONST_INT_P (operands[2])
-	      && (unsigned) (- INTVAL (operands[2])) < 64)
+	      && (unsigned HOST_WIDE_INT) (- INTVAL (operands[2])) < 64)
 	    return "subb2 $%n2,%0";
 	  return "addb2 %2,%0";
 	}
       if (rtx_equal_p (operands[0], operands[2]))
 	return "addb2 %1,%0";
       if (CONST_INT_P (operands[2])
-	  && (unsigned) (- INTVAL (operands[2])) < 64)
+	  && (unsigned HOST_WIDE_INT) (- INTVAL (operands[2])) < 64)
 	return "subb3 $%n2,%1,%0";
       return "addb3 %1,%2,%0";
 
@@ -1365,7 +1381,7 @@ vax_output_int_subtract (rtx insn, rtx *operands, enum machine_mode mode)
 	if (TARGET_QMATH && 0)
 	  debug_rtx (insn);
 
-	split_quadword_operands(MINUS, operands, low, 3);
+	split_quadword_operands (insn, operands, low, 3);
 
 	if (TARGET_QMATH)
 	  {
