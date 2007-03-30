@@ -120,12 +120,10 @@
 ;;  "movh %1,%0")
 
 (define_insn "movdi"
-  [(set (match_operand:DI 0 "nonimmediate_operand" "=g,g")
-	(match_operand:DI 1 "general_operand" "I,g"))]
+  [(set (match_operand:DI 0 "nonimmediate_operand" "=g")
+	(match_operand:DI 1 "general_operand" "g"))]
   ""
-  "@
-   clrq %0
-   movq %D1,%0")
+  "* return vax_output_int_move (insn, operands, DImode);")
 
 ;; The VAX move instructions have space-time tradeoffs.  On a MicroVAX
 ;; register-register mov instructions take 3 bytes and 2 CPU cycles.  clrl
@@ -614,10 +612,10 @@
       int i = INTVAL (operands[2]);
       if (i == 1)
 	return \"addl3 %1,%1,%0\";
-      if (i == 2)
+      if (i == 2 && !optimize_size)
 	return \"moval 0[%1],%0\";
-      if (i == 3)
-	return \"movad 0[%1],%0\";
+      if (i == 3 && !optimize_size)
+	return \"movaq 0[%1],%0\";
     }
   return \"ashl %2,%1,%0\";
 }")
