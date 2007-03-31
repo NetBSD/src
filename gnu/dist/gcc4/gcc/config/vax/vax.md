@@ -1549,3 +1549,5 @@
   [(unspec_volatile [(const_int 0)] VUNSPEC_SYNC_ISTREAM)]
   ""
   "movpsl -(%|sp)\;pushal 1(%|pc)\;rei")
+
+(include "builtins.md")
