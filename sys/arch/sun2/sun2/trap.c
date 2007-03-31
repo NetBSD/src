@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.27 2006/07/23 22:06:07 ad Exp $	*/
+/*	$NetBSD: trap.c,v 1.27.8.1 2007/03/31 15:42:11 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.27 2006/07/23 22:06:07 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.27.8.1 2007/03/31 15:42:11 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -264,7 +264,7 @@ trap(int type, u_int code, u_int v, struct trapframe tf)
 	p = l->l_proc;
 
 #ifdef	DIAGNOSTIC
-	if (p->p_addr == NULL)
+	if (l->l_addr == NULL)
 		panic("trap: no pcb");
 #endif
 
