@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.105 2007/03/31 16:45:25 bouyer Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.106 2007/03/31 20:53:22 jdc Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -2412,4 +2412,10 @@ sys/arch/sparc64/include/ctlreg.h		1.44
 
 	Cleanup last by using a "n"umeric address space identifier.
 	[hannken, ticket #548]
+
+sys/arch/xen/i386/xen_shm_machdep.c		1.21
+	Xen3 linux guests seems to loan a lot of pages for some disk transfers,
+	and eventually run out of XENSHM_NPAGES for a single transfers.
+	Bump XENSHM_NPAGES by 10 for xen3 to avoid deadlocks in such case.
+	[bouyer, ticket #546]
 
