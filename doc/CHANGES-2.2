@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.2,v 1.1.2.103 2007/03/29 09:09:37 ghen Exp $
+#	$NetBSD: CHANGES-2.2,v 1.1.2.104 2007/03/31 12:48:01 bouyer Exp $
 
 A complete list of changes from the NetBSD 2.1 release to the NetBSD 2.2 
 release
@@ -1087,4 +1087,16 @@ sys/netiso/clnp_subr.c				1.27 via patch
 	Issue found by Christer Oberg and patch from christos.
 	(NetBSD-SA2007-004)
 	[adrianp, ticket #11256]
+
+sys/net/if_gif.c				1.58
+
+	fix memory leak when resetting the source address and destination
+	address.
+	[msaitoh, ticket #11137]
+
+distrib/utils/sysinst/net.c			1.115
+
+	Fix typo, which prevented DHCP network configuration from discovering
+	the machine name.
+	[is, ticket #11225]
 
