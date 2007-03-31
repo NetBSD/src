@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.c,v 1.44 2003/10/28 20:13:23 mycroft Exp $	*/
+/*	$NetBSD: if_gif.c,v 1.44.2.1 2007/03/31 12:40:41 bouyer Exp $	*/
 /*	$KAME: if_gif.c,v 1.76 2001/08/20 02:01:02 kjc Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.44 2003/10/28 20:13:23 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.44.2.1 2007/03/31 12:40:41 bouyer Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -825,6 +825,13 @@ gif_set_tunnel(ifp, src, dst)
 
 		/* XXX both end must be valid? (I mean, not 0.0.0.0) */
 	}
+
+#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
+	if (sc->gif_si) {
+		softintr_disestablish(sc->gif_si);
+		sc->gif_si = NULL;
+	}
+#endif
 
 	/* XXX we can detach from both, but be polite just in case */
 	if (sc->gif_psrc)
