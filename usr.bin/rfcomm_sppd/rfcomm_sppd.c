@@ -1,4 +1,4 @@
-/*	$NetBSD: rfcomm_sppd.c,v 1.5 2007/03/08 19:13:14 plunky Exp $	*/
+/*	$NetBSD: rfcomm_sppd.c,v 1.6 2007/03/31 07:14:44 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -62,7 +62,7 @@ __COPYRIGHT("@(#) Copyright (c) 2007 Iain Hibbert\n"
 	    "@(#) Copyright (c) 2006 Itronix, Inc.\n"
 	    "@(#) Copyright (c) 2003 Maksim Yevmenkin <m_evmenkin@yahoo.com>\n"
 	    "All rights reserved.\n");
-__RCSID("$NetBSD: rfcomm_sppd.c,v 1.5 2007/03/08 19:13:14 plunky Exp $");
+__RCSID("$NetBSD: rfcomm_sppd.c,v 1.6 2007/03/31 07:14:44 plunky Exp $");
 
 #include <bluetooth.h>
 #include <ctype.h>
@@ -115,7 +115,10 @@ struct service {
 	  SDP_SERVICE_CLASS_SERIAL_PORT,
 	  sizeof(struct sdp_sp_profile)
 	},
-	{ NULL }
+	{ NULL,		NULL,
+	  0,
+	  0
+	}
 };
 
 int
@@ -124,7 +127,8 @@ main(int argc, char *argv[])
 	struct termios		t;
 	bdaddr_t		laddr, raddr;
 	fd_set			rdset;
-	char			*ep, *service, *tty;
+	const char		*service;
+	char			*ep, *tty;
 	int			n, rfcomm, tty_in, tty_out;
 	uint8_t			channel;
 
