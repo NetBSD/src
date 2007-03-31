@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.493 2007/02/19 18:31:21 chs Exp $
+#	$NetBSD: bsd.own.mk,v 1.494 2007/03/31 05:58:30 matt Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -473,11 +473,8 @@ MKGDB=		no
 # so don't build the _pic version.  Unless we are using GCC3 which
 # doesn't support PIC yet.
 #
-.if ${MACHINE_ARCH} == "vax" && ${HAVE_GCC} >= 3
-NOPIC=		# defined
-.endif
-.if ${MACHINE_ARCH} == "vax" && ${OBJECT_FMT} == "ELF"
-MKPICLIB:=	no
+.if ${MACHINE_ARCH} == "vax"
+MKPICLIB=	no
 .endif
 
 #
@@ -490,6 +487,7 @@ SHLIB_VERSION_FILE?= ${.CURDIR}/shlib_version
 #
 # GNU sources and packages sometimes see architecture names differently.
 #
+GNU_ARCH.coldfire=m68k
 GNU_ARCH.m68000=m68010
 GNU_ARCH.sh3eb=sh
 GNU_ARCH.sh3el=shle
@@ -507,8 +505,7 @@ MACHINE_GNU_ARCH=${GNU_ARCH.${MACHINE_ARCH}:U${MACHINE_ARCH}}
      ${MACHINE_GNU_ARCH} == "armeb" || \
      ${MACHINE_ARCH} == "ns32k" || \
      ${MACHINE_ARCH} == "i386" || \
-     ${MACHINE_ARCH} == "m68k" || \
-     ${MACHINE_ARCH} == "m68000" || \
+     ${MACHINE_CPU} == "m68k" || \
      ${MACHINE_GNU_ARCH} == "sh" || \
      ${MACHINE_GNU_ARCH} == "shle" || \
      ${MACHINE_ARCH} == "sparc" || \
