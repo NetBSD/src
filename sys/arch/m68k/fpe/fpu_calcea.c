@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_calcea.c,v 1.16 2004/02/13 11:36:14 wiz Exp $	*/
+/*	$NetBSD: fpu_calcea.c,v 1.16.14.1 2007/03/31 14:11:23 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_calcea.c,v 1.16 2004/02/13 11:36:14 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_calcea.c,v 1.16.14.1 2007/03/31 14:11:23 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/signal.h>
@@ -371,7 +371,9 @@ fpu_load_ea(frame, insn, ea, dst)
 	    ea->ea_moffs += step;
 	}
 	/* That's it, folks */
-    } else if (ea->ea_flags & EA_DIRECT) {
+    } else
+#endif
+    if (ea->ea_flags & EA_DIRECT) {
 	if (len > 4) {
 #ifdef DEBUG
 	    printf("load_ea: operand doesn't fit CPU reg\n");
@@ -396,9 +398,7 @@ fpu_load_ea(frame, insn, ea, dst)
 	printf("load_ea: src %p\n", src);
 #endif
 	memcpy(dst, src, len);
-    } else
-#endif
-    if (ea->ea_flags & EA_IMMED) {
+    } else if (ea->ea_flags & EA_IMMED) {
 #ifdef DEBUG_FPE
 	printf("load_ea: immed %08x%08x%08x size %d\n",
 	       ea->ea_immed[0], ea->ea_immed[1], ea->ea_immed[2], len);
