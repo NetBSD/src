@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mkioctls,v 1.31 2006/11/30 01:59:45 elad Exp $
+#	$NetBSD: mkioctls,v 1.31.2.1 2007/03/31 16:10:01 bouyer Exp $
 #
 # Copyright (c) 1994
 #	The Regents of the University of California.  All rights reserved.
@@ -109,6 +109,8 @@ BEGIN {
 	keep["MBPPIOCSPARAM"] = 1; # Same as PARIOCSPARAM
 	keep["MBPPIOCGPARAM"] = 1; # Same as PARIOCGPARAM
 	keep["CLOCKCTL_ADJTIME"] = 1; # Same as TCTRL_MODEM_PWR
+	keep["OFIOCNEXTPROP"] = 1; # Same as PNVIOCGETNUMGE
+	keep["OFIOCGET"] = 1; # Same as PNVIOCGET
 
 	i = 1;
 	altqt[i++] = "RED";
