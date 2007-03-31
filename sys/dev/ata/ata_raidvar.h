@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_raidvar.h,v 1.4 2005/12/11 12:21:14 christos Exp $	*/
+/*	$NetBSD: ata_raidvar.h,v 1.4.24.1 2007/03/31 16:38:04 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -50,7 +50,8 @@
  */
 #define	ATA_RAID_TYPE_PROMISE	0
 #define	ATA_RAID_TYPE_ADAPTEC	1
-#define	ATA_RAID_TYPE_MAX	1
+#define	ATA_RAID_TYPE_VIA	2
+#define	ATA_RAID_TYPE_MAX	2
 
 /*
  * Max # of disks supported by a single array.  This is limited by
@@ -101,6 +102,7 @@ struct ataraid_array_info {
 #define	AAI_L_SPAN		0x01
 #define	AAI_L_RAID0		0x02
 #define	AAI_L_RAID1		0x04
+#define	AAI_L_RAID5		0x08
 
 /* aai_status */
 #define	AAI_S_READY		0x01
@@ -124,5 +126,8 @@ int	ata_raid_read_config_promise(struct wd_softc *);
 
 /* Adaptec HostRAID support */
 int	ata_raid_read_config_adaptec(struct wd_softc *);
+
+/* VIA V-RAID support */
+int	ata_raid_read_config_via(struct wd_softc *);
 
 #endif /* _DEV_ATA_ATA_RAIDVAR_H_ */
