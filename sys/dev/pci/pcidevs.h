@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.702.2.40 2007/03/03 23:32:11 bouyer Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.702.2.41 2007/03/31 15:26:32 bouyer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.701.2.42 2007/03/03 23:30:25 bouyer Exp
+ *	NetBSD: pcidevs,v 1.701.2.43 2007/03/31 15:25:36 bouyer Exp
  */
 
 /*
@@ -1740,11 +1740,13 @@
 #define	PCI_PRODUCT_INTEL_82545EM_FIBER	0x1011		/* i82545EM 1000baseX Ethernet */
 #define	PCI_PRODUCT_INTEL_82546EB_FIBER	0x1012		/* i82546EB 1000baseX Ethernet */
 #define	PCI_PRODUCT_INTEL_82541EI	0x1013		/* i82541EI Gigabit Ethernet */
+#define	PCI_PRODUCT_INTEL_82541ER_LOM	0x1014		/* i82541ER (LOM) Gigabit Ethernet */
 #define	PCI_PRODUCT_INTEL_82540EM_LOM	0x1015		/* i82540EM (LOM) Gigabit Ethernet */
 #define	PCI_PRODUCT_INTEL_82540EP_LOM	0x1016		/* i82540EP (LOM) Gigabit Ethernet */
 #define	PCI_PRODUCT_INTEL_82540EP	0x1017		/* i82540EP Gigabit Ethernet */
 #define	PCI_PRODUCT_INTEL_82541EI_MOBILE	0x1018		/* i82541EI Mobile Gigabit Ethernet */
 #define	PCI_PRODUCT_INTEL_82547EI	0x1019		/* i82547EI Gigabit Ethernet */
+#define	PCI_PRODUCT_INTEL_82547EI_MOBILE	0x101a		/* i82547EI Mobile GigE */
 #define	PCI_PRODUCT_INTEL_82546EB_QUAD	0x101d		/* i82546EB 1000baseT Ethernet */
 #define	PCI_PRODUCT_INTEL_82540EP_LP	0x101e		/* i82540EP Gigabit Ethernet */
 #define	PCI_PRODUCT_INTEL_82545GM_COPPER	0x1026		/* i82545GM 1000baseT Ethernet */
@@ -1770,6 +1772,9 @@
 #define	PCI_PRODUCT_INTEL_PRO_100_VM_6	0x1050		/* PRO/100 VM Network Controller with 82562ET/EZ PHY */
 #define	PCI_PRODUCT_INTEL_82801EB_LAN	0x1051		/* 82801EB/ER 10/100 Ethernet */
 #define	PCI_PRODUCT_INTEL_PRO_100_M	0x1059		/* PRO/100 M Network Controller */
+#define	PCI_PRODUCT_INTEL_82571EB_COPPER	0x105e		/* i82571EB 1000baseT Ethernet */
+#define	PCI_PRODUCT_INTEL_82571EB_FIBER	0x105f		/* i82571EB 1000baseX Ethernet */
+#define	PCI_PRODUCT_INTEL_82571EB_SERDES	0x1060		/* i82571EB Gigabit Ethernet (SERDES) */
 #define	PCI_PRODUCT_INTEL_82801FB_LAN	0x1064		/* 82801FB 10/100 Ethernet */
 #define	PCI_PRODUCT_INTEL_PRO_100_VE_5	0x1068		/* PRO/100 VE (LOM) Network Controller */
 #define	PCI_PRODUCT_INTEL_82547GI	0x1075		/* i82547GI Gigabit Ethernet */
@@ -1780,7 +1785,23 @@
 #define	PCI_PRODUCT_INTEL_82546GB_FIBER	0x107a		/* i82546GB 1000baseX Ethernet */
 #define	PCI_PRODUCT_INTEL_82546GB_SERDES	0x107b		/* i82546GB Gigabit Ethernet (SERDES) */
 #define	PCI_PRODUCT_INTEL_82541PI	0x107c		/* i82541PI Gigabit Ethernet */
+#define	PCI_PRODUCT_INTEL_82572EI_COPPER	0x107d		/* i82572EI 1000baseT Ethernet */
+#define	PCI_PRODUCT_INTEL_82572EI_FIBER	0x107e		/* i82572EI 1000baseX Ethernet */
+#define	PCI_PRODUCT_INTEL_82572EI_SERDES	0x107f		/* i82572EI Gigabit Ethernet (SERDES) */
+#define	PCI_PRODUCT_INTEL_82546GB_PCIE	0x108a		/* PRO/1000MT (82546GB) */
+#define	PCI_PRODUCT_INTEL_82573E	0x108b		/* i82573E Gigabit Ethernet */
+#define	PCI_PRODUCT_INTEL_82573E_IAMT	0x108c		/* i82573E Gigabit Ethernet */
 #define	PCI_PRODUCT_INTEL_PRO_100_VE_6	0x1092		/* PRO/100 VE Network Controller */
+#define	PCI_PRODUCT_INTEL_80K3LAN_CPR_DPT	0x1096		/* i80003 dual 1000baseT Ethernet */
+#define	PCI_PRODUCT_INTEL_80K3LAN_FIB_DPT	0x1097		/* i80003 dual 1000baseX Ethernet */
+#define	PCI_PRODUCT_INTEL_80K3LAN_SDS_DPT	0x1098		/* i80003 dual Gigabit Ethernet (SERDES) */
+#define	PCI_PRODUCT_INTEL_82546GB_QUAD_COPPER	0x1099		/* i82546GB quad-port Gigabit Ethernet */
+#define	PCI_PRODUCT_INTEL_82573L	0x109a		/* i82573L Gigabit Ethernet */
+#define	PCI_PRODUCT_INTEL_82571EB_QUAD_COPPER	0x10a4		/* i82571EB quad-1000baseT Ethernet */
+#define	PCI_PRODUCT_INTEL_82546GB_QUAD_COPPER_KSP3	0x10b5		/* i82546GB quad-port Gigabit Ethernet (KSP3) */
+#define	PCI_PRODUCT_INTEL_82572EI	0x10b9		/* i82572EI 1000baseT Ethernet */
+#define	PCI_PRODUCT_INTEL_80K3LAN_CPR_SPT	0x10ba		/* i80003 1000baseT Ethernet */
+#define	PCI_PRODUCT_INTEL_80K3LAN_SDS_SPT	0x10bb		/* i80003 Gigabit Ethernet (SERDES) */
 #define	PCI_PRODUCT_INTEL_82815_DC100_HUB	0x1100		/* 82815 Hub */
 #define	PCI_PRODUCT_INTEL_82815_DC100_AGP	0x1101		/* 82815 AGP */
 #define	PCI_PRODUCT_INTEL_82815_DC100_GRAPH	0x1102		/* 82815 Graphics */
