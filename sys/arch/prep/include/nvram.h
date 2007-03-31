@@ -1,4 +1,4 @@
-/* $NetBSD: nvram.h,v 1.2.12.1 2007/03/04 14:17:10 bouyer Exp $ */
+/* $NetBSD: nvram.h,v 1.2.12.2 2007/03/31 15:59:25 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -200,6 +200,9 @@ struct pnviocdesc {
 	char	*pnv_buf;	/* option value result */
 	int	pnv_num;	/* number of something */
 };
+
+#define DEV_NVRAM	0
+#define DEV_RESIDUAL	1
 
 #if defined(_KERNEL)
 struct prep_mk48txx_softc {
