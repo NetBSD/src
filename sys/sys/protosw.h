@@ -1,4 +1,4 @@
-/*	$NetBSD: protosw.h,v 1.41 2007/03/04 06:03:41 christos Exp $	*/
+/*	$NetBSD: protosw.h,v 1.42 2007/03/31 18:17:13 plunky Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -159,7 +159,7 @@ struct protosw {
 #define	PRU_NREQ		23
 
 #ifdef PRUREQUESTS
-const char * const prurequests[] = {
+static const char * const prurequests[] = {
 	"ATTACH",	"DETACH",	"BIND",		"LISTEN",
 	"CONNECT",	"ACCEPT",	"DISCONNECT",	"SHUTDOWN",
 	"RCVD",		"SEND",		"ABORT",	"CONTROL",
@@ -202,7 +202,7 @@ const char * const prurequests[] = {
 	((cmd) >= PRC_REDIRECT_NET && (cmd) <= PRC_REDIRECT_TOSHOST)
 
 #ifdef PRCREQUESTS
-const char * const prcrequests[] = {
+static const char * const prcrequests[] = {
 	"IFDOWN", "ROUTEDEAD", "#2", "DEC-BIT-QUENCH2",
 	"QUENCH", "MSGSIZE", "HOSTDEAD", "#7",
 	"NET-UNREACH", "HOST-UNREACH", "PROTO-UNREACH", "PORT-UNREACH",
@@ -231,15 +231,12 @@ const char * const prcrequests[] = {
 #define	PRCO_NCMDS	2
 
 #ifdef PRCOREQUESTS
-const char * const prcorequests[] = {
+static const char * const prcorequests[] = {
 	"GETOPT", "SETOPT",
 };
 #endif
 
 #ifdef _KERNEL
-extern const char * const prurequests[];
-extern const char * const prcrequests[];
-extern const char * const prcorequests[];
 /*
  * Monotonically increasing time values for slow and fast timers.
  */
