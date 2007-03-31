@@ -1,13 +1,13 @@
-#	$NetBSD: CHANGES-2.1.1,v 1.1.2.65 2007/03/29 09:10:05 ghen Exp $
+#	$NetBSD: CHANGES-2.1.1,v 1.1.2.66 2007/03/31 12:59:56 bouyer Exp $
 
 A complete list of changes from the NetBSD 2.1 release to the NetBSD 2.1.1
 release
 
 File						Revision(s)
 ----						--------
-sys/sys/param.h                                 patch
-share/tmac/doc-common                           patch
-gnu/usr.bin/groff/tmac/mdoc.local               patch
+sys/sys/param.h				 patch
+share/tmac/doc-common			   patch
+gnu/usr.bin/groff/tmac/mdoc.local	       patch
 
 	Welcome to 2.1.0_STABLE
 
@@ -178,7 +178,7 @@ xsrc/xfree/xc/programs/xdm/config/Imakefile	1.6
 	Fix the old native XFree86 release build broken by the pullup 978.
 	PR#32214
 
-        [tron, ticket #10185]
+	[tron, ticket #10185]
 
 distrib/notes/mac68k/prep			1.14
 
@@ -485,9 +485,9 @@ sys/kern/sys_process.c				1.111 via patch
 sys/arch/acorn26/acorn26/except.c		1.17
 
 	Correctly calculate fault addresses for instructions like:
-        	ldr     rX, [rY, rZ, ror #16]
+		ldr     rX, [rY, rZ, ror #16]
 	and even:
-        	ldr     rX, [rY, rZ, rrx]
+		ldr     rX, [rY, rZ, rrx]
 	Why anyone would want such an instruction is beyond me,
 	but it's nice not to panic if they do.  Also this makes
 	regress/sys/arch/arm/abort-fixup pass.
@@ -584,4 +584,11 @@ sys/netiso/clnp_subr.c				1.27 via patch
 	Issue found by Christer Oberg and patch from christos.
 	(NetBSD-SA2007-004)
 	[adrianp, ticket #11256]
+
+share/zoneinfo/asia				patch
+share/zoneinfo/northamerica			patch
+share/zoneinfo/southamerica			patch
+
+	Update to tzdata2005o
+	[kleink, ticket #10183]
 
