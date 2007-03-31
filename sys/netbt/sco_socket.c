@@ -1,4 +1,4 @@
-/*	$NetBSD: sco_socket.c,v 1.7 2007/03/30 20:47:03 plunky Exp $	*/
+/*	$NetBSD: sco_socket.c,v 1.8 2007/03/31 18:17:13 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -30,7 +30,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sco_socket.c,v 1.7 2007/03/30 20:47:03 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sco_socket.c,v 1.8 2007/03/31 18:17:13 plunky Exp $");
+
+/* load symbolic names */
+#ifdef BLUETOOTH_DEBUG
+#define PRUREQUESTS
+#define PRCOREQUESTS
+#endif
 
 #include <sys/param.h>
 #include <sys/domain.h>
