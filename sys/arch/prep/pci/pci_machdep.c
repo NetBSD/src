@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.28 2006/09/06 22:32:56 garbled Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.28.6.1 2007/03/31 15:43:37 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.28 2006/09/06 22:32:56 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.28.6.1 2007/03/31 15:43:37 bouyer Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -312,6 +312,10 @@ prep_pci_conf_hook(pci_chipset_tag_t pct, int bus, int dev, int func,
 	if (PCI_VENDOR(id) == PCI_VENDOR_INTEL &&
 	    PCI_PRODUCT(id) == PCI_PRODUCT_INTEL_PCEB)
 		return 0;
+
+	if (PCI_VENDOR(id) == PCI_VENDOR_MOT &&
+	    PCI_PRODUCT(id) == PCI_PRODUCT_MOT_RAVEN)
+		return (PCI_CONF_ALL & ~PCI_CONF_MAP_MEM);
 
 	/* NOTE, all device specific stuff must be above this line */
 	/* don't do this on the primary host bridge */
