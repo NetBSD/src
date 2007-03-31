@@ -75,8 +75,8 @@
 
 (define_insn "cmp<mode>"
   [(set (cc0)
-	(compare (match_operand:VAXint 0 "nonimmediate_operand" "g")
-		 (match_operand:VAXint 1 "general_operand" "g")))]
+	(compare (match_operand:VAXint 0 "nonimmediate_operand" "nrmT")
+		 (match_operand:VAXint 1 "general_operand" "nrmT")))]
   ""
   "cmp<VAXint:isfx> %0,%1")
 
@@ -91,8 +91,8 @@
 
 (define_insn "*bit<mode>"
   [(set (cc0)
-	(and:VAXint (match_operand:VAXint 0 "general_operand" "g")
-		   (match_operand:VAXint 1 "general_operand" "g")))]
+	(and:VAXint (match_operand:VAXint 0 "general_operand" "nrmT")
+		   (match_operand:VAXint 1 "general_operand" "nrmT")))]
   ""
   "bit<VAXint:isfx> %0,%1")
 
@@ -220,13 +220,13 @@
 
 (define_insn "truncsiqi2"
   [(set (match_operand:QI 0 "nonimmediate_operand" "=g")
-	(truncate:QI (match_operand:SI 1 "nonimmediate_operand" "g")))]
+	(truncate:QI (match_operand:SI 1 "nonimmediate_operand" "nrmT")))]
   ""
   "cvtlb %1,%0")
 
 (define_insn "truncsihi2"
   [(set (match_operand:HI 0 "nonimmediate_operand" "=g")
-	(truncate:HI (match_operand:SI 1 "nonimmediate_operand" "g")))]
+	(truncate:HI (match_operand:SI 1 "nonimmediate_operand" "nrmT")))]
   ""
   "cvtlw %1,%0")
 
@@ -314,8 +314,8 @@
 
 (define_insn "add<mode>3"
   [(set (match_operand:VAXint 0 "nonimmediate_operand" "=g")
-	(plus:VAXint (match_operand:VAXint 1 "general_operand" "g")
-		    (match_operand:VAXint 2 "general_operand" "g")))]
+	(plus:VAXint (match_operand:VAXint 1 "general_operand" "nrmT")
+		    (match_operand:VAXint 2 "general_operand" "nrmT")))]
   ""
   "* return vax_output_int_add (insn, operands, <MODE>mode);")
 
@@ -354,8 +354,8 @@
 
 (define_insn "sub<mode>3"
   [(set (match_operand:VAXint 0 "nonimmediate_operand" "=g,g")
-	(minus:VAXint (match_operand:VAXint 1 "general_operand" "0,g")
-		     (match_operand:VAXint 2 "general_operand" "g,g")))]
+	(minus:VAXint (match_operand:VAXint 1 "general_operand" "0,nrmT")
+		     (match_operand:VAXint 2 "general_operand" "nrmT,nrmT")))]
   ""
   "@
    sub<VAXint:isfx>2 %2,%0
@@ -397,8 +397,8 @@
 
 (define_insn "mul<mode>3"
   [(set (match_operand:VAXint 0 "nonimmediate_operand" "=g,g,g")
-	(mult:VAXint (match_operand:VAXint 1 "general_operand" "0,g,g")
-		    (match_operand:VAXint 2 "general_operand" "g,0,g")))]
+	(mult:VAXint (match_operand:VAXint 1 "general_operand" "0,nrmT,nrmT")
+		    (match_operand:VAXint 2 "general_operand" "nrmT,0,nrmT")))]
   ""
   "@
    mul<VAXint:isfx>2 %2,%0
@@ -408,9 +408,9 @@
 (define_insn "mulsidi3"
   [(set (match_operand:DI 0 "nonimmediate_operand" "=g")
 	(mult:DI (sign_extend:DI
-		  (match_operand:SI 1 "nonimmediate_operand" "g"))
+		  (match_operand:SI 1 "nonimmediate_operand" "nrmT"))
 		 (sign_extend:DI
-		  (match_operand:SI 2 "nonimmediate_operand" "g"))))]
+		  (match_operand:SI 2 "nonimmediate_operand" "nrmT"))))]
   ""
   "emul %1,%2,$0,%0")
 
@@ -418,9 +418,9 @@
   [(set (match_operand:DI 0 "nonimmediate_operand" "=g")
 	(plus:DI
 	 (mult:DI (sign_extend:DI
-		   (match_operand:SI 1 "nonimmediate_operand" "g"))
+		   (match_operand:SI 1 "nonimmediate_operand" "nrmT"))
 		  (sign_extend:DI
-		   (match_operand:SI 2 "nonimmediate_operand" "g")))
+		   (match_operand:SI 2 "nonimmediate_operand" "nrmT")))
 	 (sign_extend:DI (match_operand:SI 3 "nonimmediate_operand" "g"))))]
   ""
   "emul %1,%2,%3,%0")
@@ -430,9 +430,9 @@
   [(set (match_operand:DI 0 "nonimmediate_operand" "=g")
 	(plus:DI
 	 (mult:DI (sign_extend:DI
-		   (match_operand:SI 1 "nonimmediate_operand" "g"))
+		   (match_operand:SI 1 "nonimmediate_operand" "nrmT"))
 		  (sign_extend:DI
-		   (match_operand:SI 2 "nonimmediate_operand" "g")))
+		   (match_operand:SI 2 "nonimmediate_operand" "nrmT")))
 	 (match_operand:DI 3 "immediate_operand" "F")))]
   "GET_CODE (operands[3]) == CONST_DOUBLE
     && CONST_DOUBLE_HIGH (operands[3]) == (CONST_DOUBLE_LOW (operands[3]) >> 31)"
@@ -456,8 +456,8 @@
 
 (define_insn "div<mode>3"
   [(set (match_operand:VAXint 0 "nonimmediate_operand" "=g,g")
-	(div:VAXint (match_operand:VAXint 1 "general_operand" "0,g")
-		   (match_operand:VAXint 2 "general_operand" "g,g")))]
+	(div:VAXint (match_operand:VAXint 1 "general_operand" "0,nrmT")
+		   (match_operand:VAXint 2 "general_operand" "nrmT,nrmT")))]
   ""
   "@
    div<VAXint:isfx>2 %2,%0
@@ -501,8 +501,8 @@
 
 (define_insn "*and<mode>"
   [(set (match_operand:VAXint 0 "nonimmediate_operand" "=g,g")
-	(and:VAXint (not:VAXint (match_operand:VAXint 1 "general_operand" "g,g"))
-		    (match_operand:VAXint 2 "general_operand" "0,g")))]
+	(and:VAXint (not:VAXint (match_operand:VAXint 1 "general_operand" "nrmT,nrmT"))
+		    (match_operand:VAXint 2 "general_operand" "0,nrmT")))]
   ""
   "@
    bic<VAXint:isfx>2 %1,%0
@@ -515,7 +515,7 @@
 
 (define_insn "*and<mode>_const_int"
   [(set (match_operand:VAXint 0 "nonimmediate_operand" "=g,g")
-	(and:VAXint (match_operand:VAXint 1 "general_operand" "0,g")
+	(and:VAXint (match_operand:VAXint 1 "general_operand" "0,nrmT")
 		   (match_operand:VAXint 2 "const_int_operand" "n,n")))]
   ""
   "@
@@ -527,8 +527,8 @@
 
 (define_insn "ior<mode>3"
   [(set (match_operand:VAXint 0 "nonimmediate_operand" "=g,g,g")
-	(ior:VAXint (match_operand:VAXint 1 "general_operand" "0,g,g")
-		   (match_operand:VAXint 2 "general_operand" "g,0,g")))]
+	(ior:VAXint (match_operand:VAXint 1 "general_operand" "0,nrmT,nrmT")
+		   (match_operand:VAXint 2 "general_operand" "nrmT,0,nrmT")))]
   ""
   "@
    bis<VAXint:isfx>2 %2,%0
@@ -539,8 +539,8 @@
 
 (define_insn "xor<mode>3"
   [(set (match_operand:VAXint 0 "nonimmediate_operand" "=g,g,g")
-	(xor:VAXint (match_operand:VAXint 1 "general_operand" "0,g,g")
-		   (match_operand:VAXint 2 "general_operand" "g,0,g")))]
+	(xor:VAXint (match_operand:VAXint 1 "general_operand" "0,nrmT,nrmT")
+		   (match_operand:VAXint 2 "general_operand" "nrmT,0,nrmT")))]
   ""
   "@
    xor<VAXint:isfx>2 %2,%0
@@ -556,13 +556,13 @@
 
 (define_insn "neg<mode>2"
   [(set (match_operand:VAXint 0 "nonimmediate_operand" "=g")
-	(neg:VAXint (match_operand:VAXint 1 "general_operand" "g")))]
+	(neg:VAXint (match_operand:VAXint 1 "general_operand" "nrmT")))]
   ""
   "mneg<VAXint:isfx> %1,%0")
 
 (define_insn "one_cmpl<mode>2"
   [(set (match_operand:VAXint 0 "nonimmediate_operand" "=g")
-	(not:VAXint (match_operand:VAXint 1 "general_operand" "g")))]
+	(not:VAXint (match_operand:VAXint 1 "general_operand" "nrmT")))]
   ""
   "mcom<VAXint:isfx> %1,%0")
 
@@ -585,21 +585,21 @@
 
 (define_insn ""
   [(set (match_operand:SI 0 "nonimmediate_operand" "=g")
-	(ashiftrt:SI (match_operand:SI 1 "general_operand" "g")
+	(ashiftrt:SI (match_operand:SI 1 "general_operand" "nrmT")
 		     (match_operand:QI 2 "const_int_operand" "n")))]
   ""
   "ashl $%n2,%1,%0")
 
 (define_insn ""
   [(set (match_operand:SI 0 "nonimmediate_operand" "=g")
-	(ashiftrt:SI (match_operand:SI 1 "general_operand" "g")
+	(ashiftrt:SI (match_operand:SI 1 "general_operand" "nrmT")
 		     (neg:QI (match_operand:QI 2 "general_operand" "g"))))]
   ""
   "ashl %2,%1,%0")
 
 (define_insn "ashlsi3"
   [(set (match_operand:SI 0 "nonimmediate_operand" "=g")
-	(ashift:SI (match_operand:SI 1 "general_operand" "g")
+	(ashift:SI (match_operand:SI 1 "general_operand" "nrmT")
 		   (match_operand:QI 2 "general_operand" "g")))]
   ""
   "*
@@ -654,7 +654,7 @@
   [(set (match_dup 3)
 	(minus:QI (const_int 32)
 		  (match_dup 4)))
-   (set (match_operand:SI 0 "general_operand" "=g")
+   (set (match_operand:SI 0 "nonimmediate_operand" "=g")
 	(zero_extract:SI (match_operand:SI 1 "register_operand" "r")
 			 (match_dup 3)
 			 (match_operand:SI 2 "register_operand" "g")))]
@@ -679,21 +679,21 @@
 
 (define_insn "rotlsi3"
   [(set (match_operand:SI 0 "nonimmediate_operand" "=g")
-	(rotate:SI (match_operand:SI 1 "general_operand" "g")
+	(rotate:SI (match_operand:SI 1 "general_operand" "nrmT")
 		   (match_operand:QI 2 "general_operand" "g")))]
   ""
   "rotl %2,%1,%0")
 
 (define_insn ""
   [(set (match_operand:SI 0 "nonimmediate_operand" "=g")
-	(rotatert:SI (match_operand:SI 1 "general_operand" "g")
+	(rotatert:SI (match_operand:SI 1 "general_operand" "nrmT")
 		     (match_operand:QI 2 "const_int_operand" "n")))]
   ""
   "rotl %R2,%1,%0")
 
 (define_insn ""
   [(set (match_operand:SI 0 "nonimmediate_operand" "=g")
-	(rotatert:SI (match_operand:SI 1 "general_operand" "g")
+	(rotatert:SI (match_operand:SI 1 "general_operand" "nrmT")
 		     (neg:QI (match_operand:QI 2 "general_operand" "g"))))]
   ""
   "rotl %2,%1,%0")
@@ -801,8 +801,8 @@
 	(compare
 	 (sign_extract:SI (match_operand:SI 0 "register_operand" "r")
 			  (match_operand:QI 1 "general_operand" "g")
-			  (match_operand:SI 2 "general_operand" "g"))
-	 (match_operand:SI 3 "general_operand" "g")))]
+			  (match_operand:SI 2 "general_operand" "nrmT"))
+	 (match_operand:SI 3 "general_operand" "nrmT")))]
   ""
   "cmpv %2,%1,%0,%3")
 
@@ -811,8 +811,8 @@
 	(compare
 	 (zero_extract:SI (match_operand:SI 0 "register_operand" "r")
 			  (match_operand:QI 1 "general_operand" "g")
-			  (match_operand:SI 2 "general_operand" "g"))
-	 (match_operand:SI 3 "general_operand" "g")))]
+			  (match_operand:SI 2 "general_operand" "nrmT"))
+	 (match_operand:SI 3 "general_operand" "nrmT")))]
   ""
   "cmpzv %2,%1,%0,%3")
 
@@ -825,7 +825,7 @@
   [(set (match_operand:SI 0 "nonimmediate_operand" "=g")
 	(sign_extract:SI (match_operand:SI 1 "register_operand" "ro")
 			 (match_operand:QI 2 "general_operand" "g")
-			 (match_operand:SI 3 "general_operand" "g")))]
+			 (match_operand:SI 3 "general_operand" "nrmT")))]
   ""
   "*
 {
@@ -842,7 +842,7 @@
   [(set (match_operand:SI 0 "nonimmediate_operand" "=g")
 	(zero_extract:SI (match_operand:SI 1 "register_operand" "ro")
 			 (match_operand:QI 2 "general_operand" "g")
-			 (match_operand:SI 3 "general_operand" "g")))]
+			 (match_operand:SI 3 "general_operand" "nrmT")))]
   ""
   "*
 {
@@ -869,8 +869,8 @@
 	(compare
 	 (sign_extract:SI (match_operand:QI 0 "memory_operand" "m")
 			  (match_operand:QI 1 "general_operand" "g")
-			  (match_operand:SI 2 "general_operand" "g"))
-	 (match_operand:SI 3 "general_operand" "g")))]
+			  (match_operand:SI 2 "general_operand" "nrmT"))
+	 (match_operand:SI 3 "general_operand" "nrmT")))]
   ""
   "cmpv %2,%1,%0,%3")
 
@@ -879,8 +879,8 @@
 	(compare
 	 (zero_extract:SI (match_operand:QI 0 "nonimmediate_operand" "rm")
 			  (match_operand:QI 1 "general_operand" "g")
-			  (match_operand:SI 2 "general_operand" "g"))
-	 (match_operand:SI 3 "general_operand" "g")))]
+			  (match_operand:SI 2 "general_operand" "nrmT"))
+	 (match_operand:SI 3 "general_operand" "nrmT")))]
   ""
   "cmpzv %2,%1,%0,%3")
 
@@ -888,7 +888,7 @@
   [(set (match_operand:SI 0 "nonimmediate_operand" "=g")
 	(sign_extract:SI (match_operand:QI 1 "memory_operand" "m")
 			 (match_operand:QI 2 "general_operand" "g")
-			 (match_operand:SI 3 "general_operand" "g")))]
+			 (match_operand:SI 3 "general_operand" "nrmT")))]
   ""
   "*
 {
@@ -917,7 +917,7 @@
   [(set (match_operand:SI 0 "nonimmediate_operand" "=g")
 	(zero_extract:SI (match_operand:QI 1 "memory_operand" "m")
 			 (match_operand:QI 2 "general_operand" "g")
-			 (match_operand:SI 3 "general_operand" "g")))]
+			 (match_operand:SI 3 "general_operand" "nrmT")))]
   ""
   "*
 {
@@ -946,16 +946,16 @@
 (define_insn ""
   [(set (zero_extract:SI (match_operand:QI 0 "memory_operand" "+g")
 			 (match_operand:QI 1 "general_operand" "g")
-			 (match_operand:SI 2 "general_operand" "g"))
-	(match_operand:SI 3 "general_operand" "g"))]
+			 (match_operand:SI 2 "general_operand" "nrmT"))
+	(match_operand:SI 3 "general_operand" "nrmT"))]
   ""
   "insv %3,%2,%1,%0")
 
 (define_insn ""
   [(set (zero_extract:SI (match_operand:SI 0 "register_operand" "+r")
 			 (match_operand:QI 1 "general_operand" "g")
-			 (match_operand:SI 2 "general_operand" "g"))
-	(match_operand:SI 3 "general_operand" "g"))]
+			 (match_operand:SI 2 "general_operand" "nrmT"))
+	(match_operand:SI 3 "general_operand" "nrmT"))]
   ""
   "insv %3,%2,%1,%0")
 
@@ -999,7 +999,7 @@
 	(if_then_else
 	 (ne (zero_extract:SI (match_operand:QI 0 "memory_operand" "Q,g")
 			      (const_int 1)
-			      (match_operand:SI 1 "general_operand" "I,g"))
+			      (match_operand:SI 1 "general_operand" "I,nrmT"))
 	     (const_int 0))
 	 (label_ref (match_operand 2 "" ""))
 	 (pc)))]
@@ -1013,7 +1013,7 @@
 	(if_then_else
 	 (eq (zero_extract:SI (match_operand:QI 0 "memory_operand" "Q,g")
 			      (const_int 1)
-			      (match_operand:SI 1 "general_operand" "I,g"))
+			      (match_operand:SI 1 "general_operand" "I,nrmT"))
 	     (const_int 0))
 	 (label_ref (match_operand 2 "" ""))
 	 (pc)))]
@@ -1027,7 +1027,7 @@
 	(if_then_else
 	 (ne (zero_extract:SI (match_operand:SI 0 "register_operand" "r,r")
 			      (const_int 1)
-			      (match_operand:SI 1 "general_operand" "I,g"))
+			      (match_operand:SI 1 "general_operand" "I,nrmT"))
 	     (const_int 0))
 	 (label_ref (match_operand 2 "" ""))
 	 (pc)))]
@@ -1041,7 +1041,7 @@
 	(if_then_else
 	 (eq (zero_extract:SI (match_operand:SI 0 "register_operand" "r,r")
 			      (const_int 1)
-			      (match_operand:SI 1 "general_operand" "I,g"))
+			      (match_operand:SI 1 "general_operand" "I,nrmT"))
 	     (const_int 0))
 	 (label_ref (match_operand 2 "" ""))
 	 (pc)))]
@@ -1090,7 +1090,7 @@
 	(if_then_else
 	 (lt (plus:SI (match_operand:SI 0 "nonimmediate_operand" "+g")
 		      (const_int 1))
-	     (match_operand:SI 1 "general_operand" "g"))
+	     (match_operand:SI 1 "general_operand" "nrmT"))
 	 (label_ref (match_operand 2 "" ""))
 	 (pc)))
    (set (match_dup 0)
@@ -1103,7 +1103,7 @@
   [(set (pc)
 	(if_then_else
 	 (lt (match_operand:SI 0 "nonimmediate_operand" "+g")
-	     (match_operand:SI 1 "general_operand" "g"))
+	     (match_operand:SI 1 "general_operand" "nrmT"))
 	 (label_ref (match_operand 2 "" ""))
 	 (pc)))
    (set (match_dup 0)
@@ -1117,7 +1117,7 @@
 	(if_then_else
 	 (le (plus:SI (match_operand:SI 0 "nonimmediate_operand" "+g")
 		      (const_int 1))
-	     (match_operand:SI 1 "general_operand" "g"))
+	     (match_operand:SI 1 "general_operand" "nrmT"))
 	 (label_ref (match_operand 2 "" ""))
 	 (pc)))
    (set (match_dup 0)
@@ -1130,7 +1130,7 @@
   [(set (pc)
 	(if_then_else
 	 (le (match_operand:SI 0 "nonimmediate_operand" "+g")
-	     (match_operand:SI 1 "general_operand" "g"))
+	     (match_operand:SI 1 "general_operand" "nrmT"))
 	 (label_ref (match_operand 2 "" ""))
 	 (pc)))
    (set (match_dup 0)
@@ -1368,7 +1368,7 @@
   [(match_operand:SI 1 "const_int_operand" "n")
    (set (pc)
 	(plus:SI (sign_extend:SI
-		  (mem:HI (plus:SI (mult:SI (match_operand:SI 0 "general_operand" "g")
+		  (mem:HI (plus:SI (mult:SI (match_operand:SI 0 "general_operand" "nrmT")
 					    (const_int 2))
 			  (pc))))
 		 (label_ref:SI (match_operand 2 "" ""))))]
@@ -1422,7 +1422,7 @@
 
 (define_insn ""
   [(set (match_operand:SI 0 "nonimmediate_operand" "=ro")
-	(and:SI (ashiftrt:SI (match_operand:SI 1 "general_operand" "g")
+	(and:SI (ashiftrt:SI (match_operand:SI 1 "general_operand" "nrmT")
 			     (match_operand:QI 2 "const_int_operand" "n"))
 		(match_operand:SI 3 "const_int_operand" "n")))]
   "(INTVAL (operands[3]) & ~((1 << (32 - INTVAL (operands[2]))) - 1)) == 0"
@@ -1444,7 +1444,7 @@
 
 (define_insn ""
   [(set (match_operand:SI 0 "nonimmediate_operand" "=ro")
-	(and:SI (ashift:SI (match_operand:SI 1 "general_operand" "g")
+	(and:SI (ashift:SI (match_operand:SI 1 "general_operand" "nrmT")
 			   (match_operand:QI 2 "const_int_operand" "n"))
 		(match_operand:SI 3 "const_int_operand" "n")))]
   ""
