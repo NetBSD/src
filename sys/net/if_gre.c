@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.76 2006/11/16 22:58:00 dyoung Exp $ */
+/*	$NetBSD: if_gre.c,v 1.76.2.1 2007/03/31 15:58:04 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.76 2006/11/16 22:58:00 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.76.2.1 2007/03/31 15:58:04 bouyer Exp $");
 
 #include "opt_gre.h"
 #include "opt_inet.h"
@@ -208,15 +208,21 @@ gre_clone_create(struct if_clone *ifc, int unit)
 static int
 gre_clone_destroy(struct ifnet *ifp)
 {
+	int s;
 	struct gre_softc *sc = ifp->if_softc;
 
 	LIST_REMOVE(sc, sc_list);
 #if NBPFILTER > 0
 	bpfdetach(ifp);
 #endif
-	if_detach(ifp);
+	s = splnet();
+	ifp->if_flags &= ~IFF_UP;
 	gre_wakeup(sc);
+	splx(s);
 	gre_join(&sc->sc_thread);
+	s = splnet();
+	if_detach(ifp);
+	splx(s);
 	if (sc->sc_fp != NULL) {
 		closef(sc->sc_fp, curlwp);
 		sc->sc_fp = NULL;
