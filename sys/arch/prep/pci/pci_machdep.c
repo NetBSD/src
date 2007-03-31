@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.28.6.1 2007/03/31 15:43:37 bouyer Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.28.6.2 2007/03/31 15:45:40 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.28.6.1 2007/03/31 15:43:37 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.28.6.2 2007/03/31 15:45:40 bouyer Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -136,7 +136,7 @@ prep_pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 	prop_dictionary_t dict, devsub;
 	prop_object_t pinsub;
 	prop_number_t pbus;
-	int busno, bus, pin, line, swiz, dev;
+	int busno, bus, pin, line, swiz, dev, i;
 	char key[20];
 
 	pin = pa->pa_intrpin;
@@ -144,6 +144,7 @@ prep_pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 	bus = busno = pa->pa_bus;
 	swiz = pa->pa_intrswiz;
 	dev = pa->pa_device;
+	i = 0;
 
 	pbi = SIMPLEQ_FIRST(&prep_pct->pc_pbi);
 	while (busno--)
@@ -151,7 +152,10 @@ prep_pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 	KASSERT(pbi != NULL);
 
 	dict = prop_dictionary_get(pbi->pbi_properties, "prep-pci-intrmap");
-	if (dict == NULL) {
+	if (dict != NULL)
+		i = prop_dictionary_count(dict);
+
+	if (dict == NULL || i == 0) {
 		/* We have a non-PReP bus.  now it gets hard */
 		pbus = prop_dictionary_get(pbi->pbi_properties,
 		    "prep-pcibus-parent");
