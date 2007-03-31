@@ -1,4 +1,4 @@
-/*	$NetBSD: l2cap_socket.c,v 1.5 2007/03/30 20:47:03 plunky Exp $	*/
+/*	$NetBSD: l2cap_socket.c,v 1.6 2007/03/31 18:17:13 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: l2cap_socket.c,v 1.5 2007/03/30 20:47:03 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: l2cap_socket.c,v 1.6 2007/03/31 18:17:13 plunky Exp $");
+
+/* load symbolic names */
+#ifdef BLUETOOTH_DEBUG
+#define PRUREQUESTS
+#define PRCOREQUESTS
+#endif
 
 #include <sys/param.h>
 #include <sys/domain.h>
