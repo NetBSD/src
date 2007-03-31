@@ -1,4 +1,4 @@
-/*	$NetBSD: ctlreg.h,v 1.43 2007/03/30 21:14:13 martin Exp $ */
+/*	$NetBSD: ctlreg.h,v 1.44 2007/03/31 13:04:21 hannken Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -959,11 +959,10 @@ static __inline void
 dmmu_set_secondary_context(uint ctx)
 {
 	__asm volatile(
-		"wr %2,%%g0,%%asi;	"
-		"stxa %0,[%1]%%asi;	"
+		"stxa %0,[%1]%2;	"
 		"membar #Sync		"
 		: : "r" (ctx),
-		"r" (CTX_SECONDARY), "r" (ASI_DMMU)
+		"r" (CTX_SECONDARY), "n" (ASI_DMMU)
 		: "memory");
 }
 
