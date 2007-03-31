@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.13 2007/03/13 17:54:07 ragge Exp $
+#	$NetBSD: Makefile.inc,v 1.14 2007/03/31 06:03:13 matt Exp $
 
 RELOC=0x3f0000
 .PATH:	${.CURDIR}/../../vax ${.CURDIR}/../common
@@ -11,7 +11,8 @@ CPPFLAGS+=-I${.CURDIR}/../../include
 CPPFLAGS+=-DRELOC=${RELOC}
 
 WARNS?=	1
-CFLAGS+=-ffreestanding
+CFLAGS+=-ffreestanding -fno-pic
+AFLAGS+=-fno-pic
 
 MKMAN=no
 
