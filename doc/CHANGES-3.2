@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.2,v 1.1.2.62 2007/03/31 14:38:50 bouyer Exp $
+#	$NetBSD: CHANGES-3.2,v 1.1.2.63 2007/03/31 15:27:16 bouyer Exp $
 
 A complete list of changes from the NetBSD 3.1 release to the NetBSD 3.2
 release:
@@ -2948,10 +2948,10 @@ sys/dev/pci/pcidevs_data.h			regen
 	- fix possible panic on dreamcast
 	[tsutsui, ticket #1673]
 
-dist/bind/lib/dns/resolver.c                    patch
-dist/bind/lib/dns/validator.c                   patch
+dist/bind/lib/dns/resolver.c		    patch
+dist/bind/lib/dns/validator.c		   patch
 dist/bind/lib/dns/include/dns/validator.h       patch   
-dist/bind/version                               patch
+dist/bind/version			       patch
 
 	Fix CVE-2007-0493 and CVE-2007-0494.
 	[adrianp, ticket #1675]
@@ -3069,4 +3069,27 @@ share/zoneinfo/zone.tab			patch
 
 	update to tzdata2007a.
 	[abp, ticket #1682]
+
+sys/dev/pci/if_wm.c				1.104-1.105, 1.116-1.121,
+						1.127,1.133-1.134 via patch
+sys/dev/pci/if_wmreg.h				1.17-1.20
+sys/dev/pci/pcidevs				patch
+sys/dev/mii/igphy.c				1.11
+sys/dev/mii/makphy.c				1.20, 1.23
+sys/dev/mii/ikphy.c				patch
+sys/dev/mii/ikphyreg.h				patch
+sys/dev/mii/miidevs				1.68
+sys/dev/mii/files.mii				1.39
+sys/arch/i386/conf/GENERIC			1.788-1.789 via patch
+sys/arch/i386/conf/GENERIC.MPACPI		patch
+sys/arch/i386/conf/GENERIC_LAPTOP		1.209 via patch
+sys/arch/i386/conf/INSTALL			1.291 via patch
+sys/arch/i386/conf/INSTALL_LAPTOP		1.104 via patch
+sys/arch/i386/conf/XEN2_DOM0			1.13 via patch
+share/man/man4/wm.4				1.14-1.16
+	Add support for many cards (include PCI-express based chips).
+	Many bug fixes about auto negotiations (PR#30078, PR#30490,
+	PR#30906, PR#33429 and PR#35386).
+	Fix media link issues with fiber-based card (PR#35797).
+	[msaitoh, ticket #1681]
 
