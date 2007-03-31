@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.103 2007/03/31 15:46:26 bouyer Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.104 2007/03/31 16:17:14 bouyer Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -2308,4 +2308,53 @@ sys/arch/prep/pci/pci_machdep.c			1.30
 	later device function.  With this, my fxp card works in any slot on
 	my 7043-140.
 	[garbled, ticket #529]
+
+sys/net/if_gre.c				1.77
+
+	In gre_clone_destroy,
+	1 use splnet() to synchronize gre clone destruction with interrupts,
+	  and
+	2 wait to call if_detach() until after joining the gre kernel
+	  thread.
+	[dyoung, ticket #530]
+
+sys/arch/prep/include/nvram.h			1.4
+sys/arch/prep/pnpbus/nvram_pnpbus.c		1.8
+
+	Add a read entry point to this driver.  There are two minor devices
+	associated with this, 0, the nvram device, and now 1, the residual
+	device.  The devices allow the user to directly read the contents of the
+	kernel copy of the nvram, and the residual data respectively.  There is
+	no provision for write.
+	[garbled, ticket #531]
+
+etc/etc.prep/MAKEDEV.conf			1.6
+
+	Create /dev/residual on prep
+	[garbled, ticket #532]
+
+usr.bin/kdump/mkioctls				1.32
+
+	Add two more ioctl values which are the same.
+	[garbled, ticket #536]
+
+sys/miscfs/procfs/procfs_vnops.c		1.148, 1.150-1.151 via patch
+
+	Fixes a panic when doing stat */exe
+	[pooka, ticket #537]
+
+sys/arch/prep/pci/pci_machdep.c			1.31
+
+	When we have a non-PReP pci bridge, we need to perform a single swizzle
+	on the pin, to get us the right pin on the underlying PReP bridge to
+	wire the interrupt to.  Tested with a 4-port fxp card on a 7043-140.
+	Thanks to simon for helping me get the math right.
+	[garbled, ticket #538]
+
+usr.sbin/makefs/cd9660/cd9660_conversion.c	1.4
+
+	PR/36006: Takahiro Kambe: makefs(8) create cd9660 file system with
+	wrong time stamp because localtime(3) and gmtime(3) share the same
+	buffer. Fixed by using the _r functions.
+	[taca, ticket #539]
 
