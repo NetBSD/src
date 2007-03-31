@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.100.2.6 2006/11/11 21:59:44 bouyer Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.100.2.7 2007/03/31 15:25:36 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.100.2.6 2006/11/11 21:59:44 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.100.2.7 2007/03/31 15:25:36 bouyer Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -92,6 +92,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.100.2.6 2006/11/11 21:59:44 bouyer Exp $
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
 #include <dev/mii/mii_bitbang.h>
+#include <dev/mii/ikphyreg.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
@@ -104,7 +105,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.100.2.6 2006/11/11 21:59:44 bouyer Exp $
 #define	WM_DEBUG_TX		0x02
 #define	WM_DEBUG_RX		0x04
 #define	WM_DEBUG_GMII		0x08
-int	wm_debug = WM_DEBUG_TX|WM_DEBUG_RX|WM_DEBUG_LINK;
+int	wm_debug = WM_DEBUG_TX|WM_DEBUG_RX|WM_DEBUG_LINK|WM_DEBUG_GMII;
 
 #define	DPRINTF(x, y)	if (wm_debug & (x)) printf y
 #else
@@ -152,7 +153,7 @@ int	wm_debug = WM_DEBUG_TX|WM_DEBUG_RX|WM_DEBUG_LINK;
 
 /*
  * Control structures are DMA'd to the i82542 chip.  We allocate them in
- * a single clump that maps to a single DMA segment to make serveral things
+ * a single clump that maps to a single DMA segment to make several things
  * easier.
  */
 struct wm_control_data_82544 {
@@ -213,6 +214,10 @@ typedef enum {
 	WM_T_82541_2,			/* i82541 2.0+ */
 	WM_T_82547,			/* i82547 */
 	WM_T_82547_2,			/* i82547 2.0+ */
+	WM_T_82571,			/* i82571 */
+	WM_T_82572,			/* i82572 */
+	WM_T_82573,			/* i82573 */
+	WM_T_80003,			/* i80003 */
 } wm_chip_type;
 
 /*
@@ -353,13 +358,18 @@ do {									\
 } while (/*CONSTCOND*/0)
 
 /* sc_flags */
-#define	WM_F_HAS_MII		0x01	/* has MII */
-#define	WM_F_EEPROM_HANDSHAKE	0x02	/* requires EEPROM handshake */
-#define	WM_F_EEPROM_SPI		0x04	/* EEPROM is SPI */
-#define	WM_F_IOH_VALID		0x10	/* I/O handle is valid */
-#define	WM_F_BUS64		0x20	/* bus is 64-bit */
-#define	WM_F_PCIX		0x40	/* bus is PCI-X */
-#define	WM_F_CSA		0x80	/* bus is CSA */
+#define	WM_F_HAS_MII		0x0001	/* has MII */
+#define	WM_F_EEPROM_HANDSHAKE	0x0002	/* requires EEPROM handshake */
+#define	WM_F_EEPROM_SEMAPHORE	0x0004	/* EEPROM with semaphore */
+#define	WM_F_EEPROM_EERDEEWR	0x0008	/* EEPROM access via EERD/EEWR */
+#define	WM_F_EEPROM_SPI		0x0010	/* EEPROM is SPI */
+#define	WM_F_EEPROM_FLASH	0x0020	/* EEPROM is FLASH */
+#define	WM_F_IOH_VALID		0x0080	/* I/O handle is valid */
+#define	WM_F_BUS64		0x0100	/* bus is 64-bit */
+#define	WM_F_PCIX		0x0200	/* bus is PCI-X */
+#define	WM_F_CSA		0x0400	/* bus is CSA */
+#define	WM_F_PCIE		0x0800	/* bus is PCI-Express */
+#define WM_F_SWFW_SYNC		0x1000  /* Software-Firmware synchronisation */
 
 #ifdef WM_EVENT_COUNTERS
 #define	WM_EVCNT_INCR(ev)	(ev)->ev_count++
@@ -462,6 +472,7 @@ static void	wm_reset(struct wm_softc *);
 static void	wm_rxdrain(struct wm_softc *);
 static int	wm_add_rxbuf(struct wm_softc *, int);
 static int	wm_read_eeprom(struct wm_softc *, int, int, u_int16_t *);
+static int	wm_read_eeprom_eerd(struct wm_softc *, int, int, u_int16_t *);
 static void	wm_tick(void *);
 
 static void	wm_set_filter(struct wm_softc *);
@@ -486,14 +497,26 @@ static void	wm_gmii_i82543_writereg(struct device *, int, int, int);
 static int	wm_gmii_i82544_readreg(struct device *, int, int);
 static void	wm_gmii_i82544_writereg(struct device *, int, int, int);
 
+static int	wm_gmii_i80003_readreg(struct device *, int, int);
+static void	wm_gmii_i80003_writereg(struct device *, int, int, int);
+
 static void	wm_gmii_statchg(struct device *);
 
 static void	wm_gmii_mediainit(struct wm_softc *);
 static int	wm_gmii_mediachange(struct ifnet *);
 static void	wm_gmii_mediastatus(struct ifnet *, struct ifmediareq *);
 
+static int	wm_kmrn_i80003_readreg(struct wm_softc *, int);
+static void	wm_kmrn_i80003_writereg(struct wm_softc *, int, int);
+
 static int	wm_match(struct device *, struct cfdata *, void *);
 static void	wm_attach(struct device *, struct device *, void *);
+static int	wm_is_onboard_nvm_eeprom(struct wm_softc *);
+static int	wm_get_swsm_semaphore(struct wm_softc *);
+static void	wm_put_swsm_semaphore(struct wm_softc *);
+static int	wm_poll_eerd_eewr_done(struct wm_softc *, int);
+static int	wm_get_swfw_semaphore(struct wm_softc *, uint16_t);
+static void	wm_put_swfw_semaphore(struct wm_softc *, uint16_t);
 
 CFATTACH_DECL(wm, sizeof(struct wm_softc),
     wm_match, wm_attach, NULL, NULL);
@@ -604,8 +627,24 @@ static const struct wm_product {
 	  "Intel i82546GB Gigabit Ethernet (SERDES)",
 	  WM_T_82546_3,		WMP_F_SERDES },
 #endif
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82546GB_QUAD_COPPER,
+	  "i82546GB quad-port Gigabit Ethernet",
+	  WM_T_82546_3,		WMP_F_1000T },
+
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82546GB_QUAD_COPPER_KSP3,
+	  "i82546GB quad-port Gigabit Ethernet (KSP3)",
+	  WM_T_82546_3,		WMP_F_1000T },
+
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82546GB_PCIE,
+	  "Intel PRO/1000MT (82546GB)",
+	  WM_T_82546_3,		WMP_F_1000T },
+
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82541EI,
 	  "Intel i82541EI 1000BASE-T Ethernet",
+	  WM_T_82541,		WMP_F_1000T },
+
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82541ER_LOM,
+	  "Intel i82541ER (LOM) 1000BASE-T Ethernet",
 	  WM_T_82541,		WMP_F_1000T },
 
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82541EI_MOBILE,
@@ -632,9 +671,81 @@ static const struct wm_product {
 	  "Intel i82547EI 1000BASE-T Ethernet",
 	  WM_T_82547,		WMP_F_1000T },
 
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82547EI_MOBILE,
+	  "Intel i82547EI Moblie 1000BASE-T Ethernet",
+	  WM_T_82547,		WMP_F_1000T },
+
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82547GI,
 	  "Intel i82547GI 1000BASE-T Ethernet",
 	  WM_T_82547_2,		WMP_F_1000T },
+
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82571EB_COPPER,
+	  "Intel PRO/1000 PT (82571EB)",
+	  WM_T_82571,		WMP_F_1000T },
+
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82571EB_FIBER,
+	  "Intel PRO/1000 PF (82571EB)",
+	  WM_T_82571,		WMP_F_1000X },
+#if 0
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82571EB_SERDES,
+	  "Intel PRO/1000 PB (82571EB)",
+	  WM_T_82571,		WMP_F_SERDES },
+#endif
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82571EB_QUAD_COPPER,
+	  "Intel PRO/1000 QT (82571EB)",
+	  WM_T_82571,		WMP_F_1000T },
+
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82572EI_COPPER,
+	  "Intel i82572EI 1000baseT Ethernet",
+	  WM_T_82572,		WMP_F_1000T },
+
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82572EI_FIBER,
+	  "Intel i82572EI 1000baseX Ethernet",
+	  WM_T_82572,		WMP_F_1000X },
+#if 0
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82572EI_SERDES,
+	  "Intel i82572EI Gigabit Ethernet (SERDES)",
+	  WM_T_82572,		WMP_F_SERDES },
+#endif
+
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82572EI,
+	  "Intel i82572EI 1000baseT Ethernet",
+	  WM_T_82572,		WMP_F_1000T },
+
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82573E,
+	  "Intel i82573E",
+	  WM_T_82573,		WMP_F_1000T },
+
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82573E_IAMT,
+	  "Intel i82573E IAMT",
+	  WM_T_82573,		WMP_F_1000T },
+
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82573L,
+	  "Intel i82573L Gigabit Ethernet",
+	  WM_T_82573,		WMP_F_1000T },
+
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_80K3LAN_CPR_DPT,
+	  "i80003 dual 1000baseT Ethernet",
+	  WM_T_80003,		WMP_F_1000T },
+
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_80K3LAN_FIB_DPT,
+	  "i80003 dual 1000baseX Ethernet",
+	  WM_T_80003,		WMP_F_1000T },
+#if 0
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_80K3LAN_SDS_DPT,
+	  "Intel i80003ES2 dual Gigabit Ethernet (SERDES)",
+	  WM_T_80003,		WMP_F_SERDES },
+#endif
+
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_80K3LAN_CPR_SPT,
+	  "Intel i80003 1000baseT Ethernet",
+	  WM_T_80003,		WMP_F_1000T },
+#if 0
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_80K3LAN_SDS_SPT,
+	  "Intel i80003 Gigabit Ethernet (SERDES)",
+	  WM_T_80003,		WMP_F_SERDES },
+#endif
+
 	{ 0,			0,
 	  NULL,
 	  0,			0 },
@@ -879,6 +990,9 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 			aprint_verbose("%s: using 82547 Tx FIFO stall "
 				       "work-around\n", sc->sc_dev.dv_xname);
 		}
+	} else if (sc->sc_type >= WM_T_82571) {
+		sc->sc_flags |= WM_F_PCIE | WM_F_EEPROM_SEMAPHORE;
+		aprint_verbose("%s: PCI-Express bus\n", sc->sc_dev.dv_xname);
 	} else {
 		reg = CSR_READ(sc, WMREG_STATUS);
 		if (reg & STATUS_BUS64)
@@ -1034,6 +1148,10 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_rxsoft[i].rxs_mbuf = NULL;
 	}
 
+	/* clear interesting stat counters */
+	CSR_READ(sc, WMREG_COLC);
+	CSR_READ(sc, WMREG_RXERRC);
+
 	/*
 	 * Reset the chip to a known state.
 	 */
@@ -1042,8 +1160,13 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Get some information about the EEPROM.
 	 */
-	if (sc->sc_type >= WM_T_82540)
+	if (sc->sc_type == WM_T_80003)
+ 		sc->sc_flags |= WM_F_EEPROM_EERDEEWR |  WM_F_SWFW_SYNC;
+	else if (sc->sc_type == WM_T_82573)
+ 		sc->sc_flags |= WM_F_EEPROM_EERDEEWR;
+	else if (sc->sc_type > WM_T_82544)
 		sc->sc_flags |= WM_F_EEPROM_HANDSHAKE;
+
 	if (sc->sc_type <= WM_T_82544)
 		sc->sc_ee_addrbits = 6;
 	else if (sc->sc_type <= WM_T_82546_3) {
@@ -1059,19 +1182,26 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 			sc->sc_ee_addrbits = (reg & EECD_EE_ABITS) ? 16 : 8;
 		} else
 			sc->sc_ee_addrbits = (reg & EECD_EE_ABITS) ? 8 : 6;
+	} else if ((sc->sc_type == WM_T_82573) &&
+	    (wm_is_onboard_nvm_eeprom(sc) == 0)) {
+		sc->sc_flags |= WM_F_EEPROM_FLASH;
 	} else {
 		/* Assume everything else is SPI. */
 		reg = CSR_READ(sc, WMREG_EECD);
 		sc->sc_flags |= WM_F_EEPROM_SPI;
 		sc->sc_ee_addrbits = (reg & EECD_EE_ABITS) ? 16 : 8;
 	}
-	if (sc->sc_flags & WM_F_EEPROM_SPI)
-		eetype = "SPI";
-	else
-		eetype = "MicroWire";
-	aprint_verbose("%s: %u word (%d address bits) %s EEPROM\n",
-	    sc->sc_dev.dv_xname, 1U << sc->sc_ee_addrbits,
-	    sc->sc_ee_addrbits, eetype);
+	if (sc->sc_flags & WM_F_EEPROM_FLASH)
+		aprint_verbose("%s: FLASH\n", sc->sc_dev.dv_xname);
+	else {
+		if (sc->sc_flags & WM_F_EEPROM_SPI)
+			eetype = "SPI";
+		else
+			eetype = "MicroWire";
+		aprint_verbose("%s: %u word (%d address bits) %s EEPROM\n",
+		    sc->sc_dev.dv_xname, 1U << sc->sc_ee_addrbits,
+		    sc->sc_ee_addrbits, eetype);
+	}
 
 	/*
 	 * Read the Ethernet address from the EEPROM.
@@ -1091,9 +1221,10 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 
 	/*
 	 * Toggle the LSB of the MAC address on the second port
-	 * of the i82546.
+	 * of the dual port controller.
 	 */
-	if (sc->sc_type == WM_T_82546 || sc->sc_type == WM_T_82546_3) {
+	if (sc->sc_type == WM_T_82546 || sc->sc_type == WM_T_82546_3
+	    || sc->sc_type ==  WM_T_82571 || sc->sc_type == WM_T_80003) {
 		if ((CSR_READ(sc, WMREG_STATUS) >> STATUS_FUNCID_SHIFT) & 1)
 			enaddr[5] ^= 1;
 	}
@@ -1203,7 +1334,8 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 	IFQ_SET_MAXLEN(&ifp->if_snd, max(WM_IFQUEUELEN, IFQ_MAXLEN));
 	IFQ_SET_READY(&ifp->if_snd);
 
-	sc->sc_ethercom.ec_capabilities |= ETHERCAP_JUMBO_MTU;
+	if (sc->sc_type != WM_T_82573)
+		sc->sc_ethercom.ec_capabilities |= ETHERCAP_JUMBO_MTU;
 
 	/*
 	 * If we're a i82543 or greater, we can support VLANs.
@@ -1725,7 +1857,7 @@ wm_start(struct ifnet *ifp)
 			 * layer that there are no more slots left.
 			 */
 			DPRINTF(WM_DEBUG_TX,
-			    ("%s: TX: need %d (%) descriptors, have %d\n",
+			    ("%s: TX: need %d (%d) descriptors, have %d\n",
 			    sc->sc_dev.dv_xname, dmamap->dm_nsegs, segs_needed,
 			    sc->sc_txfree - 1));
 			ifp->if_flags |= IFF_OACTIVE;
@@ -1831,10 +1963,10 @@ wm_start(struct ifnet *ifp)
 				lasttx = nexttx;
 
 				DPRINTF(WM_DEBUG_TX,
-				    ("%s: TX: desc %d: low 0x%08x, "
+				    ("%s: TX: desc %d: low 0x%08lx, "
 				     "len 0x%04x\n",
 				    sc->sc_dev.dv_xname, nexttx,
-				    curaddr & 0xffffffffU, curlen, curlen));
+				    curaddr & 0xffffffffUL, (unsigned)curlen));
 			}
 		}
 
@@ -2008,7 +2140,6 @@ wm_intr(void *arg)
 		icr = CSR_READ(sc, WMREG_ICR);
 		if ((icr & sc->sc_icr) == 0)
 			break;
-
 #if 0 /*NRND > 0*/
 		if (RND_ENABLED(&sc->rnd_source))
 			rnd_add_uint32(&sc->rnd_source, icr);
@@ -2429,6 +2560,7 @@ static void
 wm_tick(void *arg)
 {
 	struct wm_softc *sc = arg;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	int s;
 
 	s = splnet();
@@ -2440,6 +2572,10 @@ wm_tick(void *arg)
 		WM_EVCNT_ADD(&sc->sc_ev_tx_xoff, CSR_READ(sc, WMREG_XOFFTXC));
 		WM_EVCNT_ADD(&sc->sc_ev_rx_macctl, CSR_READ(sc, WMREG_FCRUC));
 	}
+
+	ifp->if_collisions += CSR_READ(sc, WMREG_COLC);
+	ifp->if_ierrors += CSR_READ(sc, WMREG_RXERRC);
+
 
 	if (sc->sc_flags & WM_F_HAS_MII)
 		mii_tick(&sc->sc_mii);
@@ -2466,10 +2602,9 @@ wm_reset(struct wm_softc *sc)
 	 * The Packet Buffer Allocation register must be written
 	 * before the chip is reset.
 	 */
-	if (sc->sc_type < WM_T_82547) {
-		sc->sc_pba = sc->sc_ethercom.ec_if.if_mtu > 8192 ?
-		    PBA_40K : PBA_48K;
-	} else {
+	switch (sc->sc_type) {
+	case WM_T_82547:
+	case WM_T_82547_2:
 		sc->sc_pba = sc->sc_ethercom.ec_if.if_mtu > 8192 ?
 		    PBA_22K : PBA_30K;
 		sc->sc_txfifo_head = 0;
@@ -2477,6 +2612,19 @@ wm_reset(struct wm_softc *sc)
 		sc->sc_txfifo_size =
 		    (PBA_40K - sc->sc_pba) << PBA_BYTE_SHIFT;
 		sc->sc_txfifo_stall = 0;
+		break;
+	case WM_T_82571:
+	case WM_T_82572:		
+	case WM_T_80003:		
+		sc->sc_pba = PBA_32K;
+		break;
+	case WM_T_82573:
+		sc->sc_pba = PBA_12K;
+		break;
+	default:
+		sc->sc_pba = sc->sc_ethercom.ec_if.if_mtu > 8192 ?
+		    PBA_40K : PBA_48K;
+		break;
 	}
 	CSR_WRITE(sc, WMREG_PBA, sc->sc_pba);
 
@@ -2526,6 +2674,18 @@ wm_reset(struct wm_softc *sc)
 	if (CSR_READ(sc, WMREG_CTRL) & CTRL_RST)
 		log(LOG_ERR, "%s: reset failed to complete\n",
 		    sc->sc_dev.dv_xname);
+
+	if (sc->sc_type == WM_T_80003) {
+		/* wait for eeprom to reload */
+		for (i = 1000; i > 0; i--) {
+			if (CSR_READ(sc, WMREG_EECD) & EECD_EE_AUTORD)
+				break;
+		}
+		if (i == 0) {
+			log(LOG_ERR, "%s: auto read from eeprom failed to "
+			    "complete\n", sc->sc_dev.dv_xname);
+		}
+	}
 }
 
 /*
@@ -2563,6 +2723,10 @@ wm_init(struct ifnet *ifp)
 
 	/* Cancel any pending I/O. */
 	wm_stop(ifp, 0);
+
+	/* update statistics before reset */
+	ifp->if_collisions += CSR_READ(sc, WMREG_COLC);
+	ifp->if_ierrors += CSR_READ(sc, WMREG_RXERRC);
 
 	/* Reset the chip to a known state. */
 	wm_reset(sc);
@@ -2689,6 +2853,30 @@ wm_init(struct ifnet *ifp)
 
 	/* Write the control registers. */
 	CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
+	if (sc->sc_type >= WM_T_80003 && (sc->sc_flags & WM_F_HAS_MII)) {
+		int val;
+		val = CSR_READ(sc, WMREG_CTRL_EXT);
+		val &= ~CTRL_EXT_LINK_MODE_MASK;
+		CSR_WRITE(sc, WMREG_CTRL_EXT, val);
+
+		/* Bypass RX and TX FIFO's */
+		wm_kmrn_i80003_writereg(sc, KUMCTRLSTA_OFFSET_FIFO_CTRL,
+		    KUMCTRLSTA_FIFO_CTRL_RX_BYPASS | 
+		    KUMCTRLSTA_FIFO_CTRL_TX_BYPASS);
+		
+		wm_kmrn_i80003_writereg(sc, KUMCTRLSTA_OFFSET_INB_CTRL,
+		    KUMCTRLSTA_INB_CTRL_DIS_PADDING |
+		    KUMCTRLSTA_INB_CTRL_LINK_TMOUT_DFLT);
+		/*
+		 * Set the mac to wait the maximum time between each
+		 * iteration and increase the max iterations when
+		 * polling the phy; this fixes erroneous timeouts at 10Mbps.
+		 */
+		wm_kmrn_i80003_writereg(sc, KUMCTRLSTA_OFFSET_TIMEOUTS, 0xFFFF);
+		val = wm_kmrn_i80003_readreg(sc, KUMCTRLSTA_OFFSET_INB_PARAM);
+		val |= 0x3F;
+		wm_kmrn_i80003_writereg(sc, KUMCTRLSTA_OFFSET_INB_PARAM, val);
+	}
 #if 0
 	CSR_WRITE(sc, WMREG_CTRL_EXT, sc->sc_ctrl_ext);
 #endif
@@ -2741,6 +2929,10 @@ wm_init(struct ifnet *ifp)
 	 */
 	sc->sc_tctl = TCTL_EN | TCTL_PSP | TCTL_CT(TX_COLLISION_THRESHOLD) |
 	    TCTL_COLD(TX_COLLISION_DISTANCE_FDX);
+	if (sc->sc_type >= WM_T_82571)
+		sc->sc_tctl |= TCTL_MULR;
+	if (sc->sc_type >= WM_T_80003)
+		sc->sc_tctl |= TCTL_RTLC;
 	CSR_WRITE(sc, WMREG_TCTL, sc->sc_tctl);
 
 	/* Set the media. */
@@ -2755,13 +2947,17 @@ wm_init(struct ifnet *ifp)
 	 * CRC, so we don't enable that feature.
 	 */
 	sc->sc_mchash_type = 0;
-	sc->sc_rctl = RCTL_EN | RCTL_LBM_NONE | RCTL_RDMTS_1_2 | RCTL_LPE |
-	    RCTL_DPF | RCTL_MO(sc->sc_mchash_type);
+	sc->sc_rctl = RCTL_EN | RCTL_LBM_NONE | RCTL_RDMTS_1_2 | RCTL_DPF
+	    | RCTL_MO(sc->sc_mchash_type);
 
-	if(MCLBYTES == 2048) {
+	/* 82573 doesn't support jumbo frame */
+	if (sc->sc_type != WM_T_82573)
+		sc->sc_rctl |= RCTL_LPE;
+
+	if (MCLBYTES == 2048) {
 		sc->sc_rctl |= RCTL_2k;
 	} else {
-		if(sc->sc_type >= WM_T_82543) {
+		if (sc->sc_type >= WM_T_82543) {
 			switch(MCLBYTES) {
 			case 4096:
 				sc->sc_rctl |= RCTL_BSEX | RCTL_BSEX_4k;
@@ -2883,6 +3079,21 @@ wm_acquire_eeprom(struct wm_softc *sc)
 {
 	uint32_t reg;
 	int x;
+	int ret = 0;
+
+	/* always success */
+	if ((sc->sc_flags & WM_F_EEPROM_FLASH) != 0)
+		return 0;
+
+	if (sc->sc_flags & WM_F_SWFW_SYNC) {
+		/* this will also do wm_get_swsm_semaphore() if needed */
+		ret = wm_get_swfw_semaphore(sc, SWFW_EEP_SM);
+	} else if (sc->sc_flags & WM_F_EEPROM_SEMAPHORE) {
+		ret = wm_get_swsm_semaphore(sc);
+	}
+
+	if (ret)
+		return 1;
 
 	if (sc->sc_flags & WM_F_EEPROM_HANDSHAKE)  {
 		reg = CSR_READ(sc, WMREG_EECD);
@@ -2892,7 +3103,7 @@ wm_acquire_eeprom(struct wm_softc *sc)
 		CSR_WRITE(sc, WMREG_EECD, reg);
 
 		/* ..and wait for it to be granted. */
-		for (x = 0; x < 100; x++) {
+		for (x = 0; x < 1000; x++) {
 			reg = CSR_READ(sc, WMREG_EECD);
 			if (reg & EECD_EE_GNT)
 				break;
@@ -2903,6 +3114,10 @@ wm_acquire_eeprom(struct wm_softc *sc)
 			    sc->sc_dev.dv_xname);
 			reg &= ~EECD_EE_REQ;
 			CSR_WRITE(sc, WMREG_EECD, reg);
+			if (sc->sc_flags & WM_F_SWFW_SYNC)
+				wm_put_swfw_semaphore(sc, SWFW_EEP_SM);
+			else if (sc->sc_flags & WM_F_EEPROM_SEMAPHORE)
+				wm_put_swsm_semaphore(sc);
 			return (1);
 		}
 	}
@@ -2920,11 +3135,20 @@ wm_release_eeprom(struct wm_softc *sc)
 {
 	uint32_t reg;
 
+	/* always success */
+	if ((sc->sc_flags & WM_F_EEPROM_FLASH) != 0)
+		return;
+
 	if (sc->sc_flags & WM_F_EEPROM_HANDSHAKE) {
 		reg = CSR_READ(sc, WMREG_EECD);
 		reg &= ~EECD_EE_REQ;
 		CSR_WRITE(sc, WMREG_EECD, reg);
 	}
+
+	if (sc->sc_flags & WM_F_SWFW_SYNC)
+		wm_put_swfw_semaphore(sc, SWFW_EEP_SM);
+	else if (sc->sc_flags & WM_F_EEPROM_SEMAPHORE)
+		wm_put_swsm_semaphore(sc);
 }
 
 /*
@@ -3103,13 +3327,56 @@ wm_read_eeprom(struct wm_softc *sc, int word, int wordcnt, uint16_t *data)
 	if (wm_acquire_eeprom(sc))
 		return (1);
 
-	if (sc->sc_flags & WM_F_EEPROM_SPI)
+	if (sc->sc_flags & WM_F_EEPROM_EERDEEWR)
+		rv = wm_read_eeprom_eerd(sc, word, wordcnt, data);
+	else if (sc->sc_flags & WM_F_EEPROM_SPI)
 		rv = wm_read_eeprom_spi(sc, word, wordcnt, data);
 	else
 		rv = wm_read_eeprom_uwire(sc, word, wordcnt, data);
 
 	wm_release_eeprom(sc);
 	return (rv);
+}
+
+static int
+wm_read_eeprom_eerd(struct wm_softc *sc, int offset, int wordcnt,
+    uint16_t *data)
+{
+	int i, eerd = 0;
+	int error = 0;
+
+	for (i = 0; i < wordcnt; i++) {
+		eerd = ((offset + i) << EERD_ADDR_SHIFT) | EERD_START;
+
+		CSR_WRITE(sc, WMREG_EERD, eerd);
+		error = wm_poll_eerd_eewr_done(sc, WMREG_EERD);
+		if (error != 0)
+			break;
+
+		data[i] = (CSR_READ(sc, WMREG_EERD) >> EERD_DATA_SHIFT);
+	}
+
+	return error;
+}
+
+static int
+wm_poll_eerd_eewr_done(struct wm_softc *sc, int rw)
+{
+	uint32_t attempts = 100000;
+	uint32_t i, reg = 0;
+	int32_t done = -1;
+
+	for (i = 0; i < attempts; i++) {
+		reg = CSR_READ(sc, rw);
+
+		if (reg & EERD_DONE) {
+			done = 0;
+			break;
+		}
+		delay(5);
+	}
+
+	return done;
 }
 
 /*
@@ -3384,11 +3651,23 @@ wm_tbi_mediachange(struct ifnet *ifp)
 	int i;
 
 	sc->sc_txcw = ife->ifm_data;
+	DPRINTF(WM_DEBUG_LINK,("%s: sc_txcw = 0x%x on entry\n",
+		    sc->sc_dev.dv_xname,sc->sc_txcw));
 	if (IFM_SUBTYPE(ife->ifm_media) == IFM_AUTO ||
 	    (sc->sc_mii.mii_media.ifm_media & IFM_FLOW) != 0)
 		sc->sc_txcw |= ANAR_X_PAUSE_SYM | ANAR_X_PAUSE_ASYM;
-	sc->sc_txcw |= TXCW_ANE;
+	if (IFM_SUBTYPE(ife->ifm_media) == IFM_AUTO) { 
+		sc->sc_txcw |= TXCW_ANE; 
+	} else {
+		/*If autonegotiation is turned off, force link up and turn on full duplex*/
+		sc->sc_txcw &= ~TXCW_ANE;
+		sc->sc_ctrl |= CTRL_SLU | CTRL_FD;
+		CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
+		delay(1000);
+	}
 
+	DPRINTF(WM_DEBUG_LINK,("%s: sc_txcw = 0x%x after autoneg check\n",
+		    sc->sc_dev.dv_xname,sc->sc_txcw));
 	CSR_WRITE(sc, WMREG_TXCW, sc->sc_txcw);
 	delay(10000);
 
@@ -3396,15 +3675,41 @@ wm_tbi_mediachange(struct ifnet *ifp)
 
 	sc->sc_tbi_anstate = 0;
 
-	if ((CSR_READ(sc, WMREG_CTRL) & CTRL_SWDPIN(1)) == 0) {
+	i = CSR_READ(sc, WMREG_CTRL) & CTRL_SWDPIN(1);
+	DPRINTF(WM_DEBUG_LINK,("%s: i = 0x%x\n", sc->sc_dev.dv_xname,i));
+
+	/* 
+	 * On 82544 chips and later, the CTRL_SWDPIN(1) bit will be set if the
+	 * optics detect a signal, 0 if they don't.
+	 */
+	if (((i != 0) && (sc->sc_type >= WM_T_82544)) || (i == 0)) {
 		/* Have signal; wait for the link to come up. */
+
+		if (IFM_SUBTYPE(ife->ifm_media) == IFM_AUTO) {
+			/*
+			 * Reset the link, and let autonegotiation do its thing
+			 */
+			sc->sc_ctrl |= CTRL_LRST;
+			CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
+			delay(1000);
+			sc->sc_ctrl &= ~CTRL_LRST;
+			CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
+			delay(1000);
+		}
+
 		for (i = 0; i < 50; i++) {
 			delay(10000);
 			if (CSR_READ(sc, WMREG_STATUS) & STATUS_LU)
 				break;
 		}
 
+		DPRINTF(WM_DEBUG_LINK,("%s: i = %d after waiting for link\n",
+			    sc->sc_dev.dv_xname,i));
+
 		status = CSR_READ(sc, WMREG_STATUS);
+		DPRINTF(WM_DEBUG_LINK,
+		    ("%s: status after final read = 0x%x, STATUS_LU = 0x%x\n",
+			sc->sc_dev.dv_xname,status, STATUS_LU));
 		if (status & STATUS_LU) {
 			/* Link is up. */
 			DPRINTF(WM_DEBUG_LINK,
@@ -3524,7 +3829,14 @@ static void
 wm_gmii_reset(struct wm_softc *sc)
 {
 	uint32_t reg;
+	int func = 0; /* XXX gcc */
 
+	if (sc->sc_type >= WM_T_80003) {
+		func = (CSR_READ(sc, WMREG_STATUS) >> STATUS_FUNCID_SHIFT) & 1;
+		if (wm_get_swfw_semaphore(sc,
+		    func ? SWFW_PHY1_SM : SWFW_PHY0_SM))
+			return;
+	}
 	if (sc->sc_type >= WM_T_82544) {
 		CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl | CTRL_PHY_RESET);
 		delay(20000);
@@ -3532,6 +3844,15 @@ wm_gmii_reset(struct wm_softc *sc)
 		CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
 		delay(20000);
 	} else {
+                /*
+                 * With 82543, we need to force speed and duplex on the MAC
+                 * equal to what the PHY speed and duplex configuration is.
+                 * In addition, we need to perform a hardware reset on the PHY
+                 * to take it out of reset.
+                 */
+                sc->sc_ctrl |= CTRL_FRCSPD | CTRL_FRCFDX;
+                CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
+
 		/* The PHY reset pin is active-low. */
 		reg = CSR_READ(sc, WMREG_CTRL_EXT);
 		reg &= ~((CTRL_EXT_SWDPIO_MASK << CTRL_EXT_SWDPIO_SHIFT) |
@@ -3542,7 +3863,7 @@ wm_gmii_reset(struct wm_softc *sc)
 		delay(10);
 
 		CSR_WRITE(sc, WMREG_CTRL_EXT, reg);
-		delay(10);
+		delay(10000);
 
 		CSR_WRITE(sc, WMREG_CTRL_EXT, reg | CTRL_EXT_SWDPIN(4));
 		delay(10);
@@ -3550,6 +3871,8 @@ wm_gmii_reset(struct wm_softc *sc)
 		sc->sc_ctrl_ext = reg | CTRL_EXT_SWDPIN(4);
 #endif
 	}
+	if (sc->sc_type >= WM_T_80003)
+		wm_put_swfw_semaphore(sc, func ? SWFW_PHY1_SM : SWFW_PHY0_SM);
 }
 
 /*
@@ -3565,19 +3888,27 @@ wm_gmii_mediainit(struct wm_softc *sc)
 	/* We have MII. */
 	sc->sc_flags |= WM_F_HAS_MII;
 
-	sc->sc_tipg = TIPG_1000T_DFLT;
+	if (sc->sc_type >= WM_T_80003)
+		sc->sc_tipg =  TIPG_1000T_80003_DFLT;
+	else
+		sc->sc_tipg = TIPG_1000T_DFLT;
 
 	/*
 	 * Let the chip set speed/duplex on its own based on
 	 * signals from the PHY.
+	 * XXXbouyer - I'm not sure this is right for the 80003,
+	 * the em driver only sets CTRL_SLU here - but it seems to work.
 	 */
-	sc->sc_ctrl |= CTRL_SLU | CTRL_ASDE;
+	sc->sc_ctrl |= CTRL_SLU;
 	CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
 
 	/* Initialize our media structures and probe the GMII. */
 	sc->sc_mii.mii_ifp = ifp;
 
-	if (sc->sc_type >= WM_T_82544) {
+	if (sc->sc_type >= WM_T_80003) {
+		sc->sc_mii.mii_readreg = wm_gmii_i80003_readreg;
+		sc->sc_mii.mii_writereg = wm_gmii_i80003_writereg;
+	} else if (sc->sc_type >= WM_T_82544) {
 		sc->sc_mii.mii_readreg = wm_gmii_i82544_readreg;
 		sc->sc_mii.mii_writereg = wm_gmii_i82544_writereg;
 	} else {
@@ -3625,9 +3956,39 @@ static int
 wm_gmii_mediachange(struct ifnet *ifp)
 {
 	struct wm_softc *sc = ifp->if_softc;
+	struct ifmedia_entry *ife = sc->sc_mii.mii_media.ifm_cur;
 
-	if (ifp->if_flags & IFF_UP)
+	if (ifp->if_flags & IFF_UP) {
+		sc->sc_ctrl &= ~(CTRL_SPEED_MASK | CTRL_FD);
+		sc->sc_ctrl |= CTRL_SLU;
+		if ((IFM_SUBTYPE(ife->ifm_media) == IFM_AUTO)
+		    || (sc->sc_type > WM_T_82543)) {
+			sc->sc_ctrl &= ~(CTRL_FRCSPD | CTRL_FRCFDX);
+		} else {
+			sc->sc_ctrl &= ~CTRL_ASDE;
+			sc->sc_ctrl |= CTRL_FRCSPD | CTRL_FRCFDX;
+			if (ife->ifm_media & IFM_FDX)
+				sc->sc_ctrl |= CTRL_FD;
+			switch(IFM_SUBTYPE(ife->ifm_media)) {
+			case IFM_10_T:
+				sc->sc_ctrl |= CTRL_SPEED_10;
+				break;
+			case IFM_100_TX:
+				sc->sc_ctrl |= CTRL_SPEED_100;
+				break;
+			case IFM_1000_T:
+				sc->sc_ctrl |= CTRL_SPEED_1000;
+				break;
+			default:
+				panic("wm_gmii_mediachange: bad media 0x%x",
+				    ife->ifm_media);
+			}
+		}
+		CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
+		if (sc->sc_type <= WM_T_82543)
+			wm_gmii_reset(sc);
 		mii_mediachg(&sc->sc_mii);
+	}
 	return (0);
 }
 
@@ -3750,7 +4111,7 @@ wm_gmii_i82544_readreg(struct device *self, int phy, int reg)
 	CSR_WRITE(sc, WMREG_MDIC, MDIC_OP_READ | MDIC_PHYADD(phy) |
 	    MDIC_REGADD(reg));
 
-	for (i = 0; i < 100; i++) {
+	for (i = 0; i < 320; i++) {
 		mdic = CSR_READ(sc, WMREG_MDIC);
 		if (mdic & MDIC_READY)
 			break;
@@ -3791,7 +4152,7 @@ wm_gmii_i82544_writereg(struct device *self, int phy, int reg, int val)
 	CSR_WRITE(sc, WMREG_MDIC, MDIC_OP_WRITE | MDIC_PHYADD(phy) |
 	    MDIC_REGADD(reg) | MDIC_DATA(val));
 
-	for (i = 0; i < 100; i++) {
+	for (i = 0; i < 320; i++) {
 		mdic = CSR_READ(sc, WMREG_MDIC);
 		if (mdic & MDIC_READY)
 			break;
@@ -3804,6 +4165,70 @@ wm_gmii_i82544_writereg(struct device *self, int phy, int reg, int val)
 	else if (mdic & MDIC_E)
 		log(LOG_WARNING, "%s: MDIC write error: phy %d reg %d\n",
 		    sc->sc_dev.dv_xname, phy, reg);
+}
+
+/*
+ * wm_gmii_i80003_readreg:	[mii interface function]
+ *
+ *	Read a PHY register on the kumeran
+ * This could be handled by the PHY layer if we didn't have to lock the
+ * ressource ...
+ */
+static int
+wm_gmii_i80003_readreg(struct device *self, int phy, int reg)
+{
+	struct wm_softc *sc = (void *) self;
+	int func = ((CSR_READ(sc, WMREG_STATUS) >> STATUS_FUNCID_SHIFT) & 1);
+	int rv;
+
+	if (phy != 1) /* only one PHY on kumeran bus */
+		return 0;
+
+	if (wm_get_swfw_semaphore(sc, func ? SWFW_PHY1_SM : SWFW_PHY0_SM))
+		return 0;
+
+	if ((reg & GG82563_MAX_REG_ADDRESS) < GG82563_MIN_ALT_REG) {
+		wm_gmii_i82544_writereg(self, phy, GG82563_PHY_PAGE_SELECT,
+		    reg >> GG82563_PAGE_SHIFT);
+	} else {
+		wm_gmii_i82544_writereg(self, phy, GG82563_PHY_PAGE_SELECT_ALT,
+		    reg >> GG82563_PAGE_SHIFT);
+	}
+
+	rv = wm_gmii_i82544_readreg(self, phy, reg & GG82563_MAX_REG_ADDRESS);
+	wm_put_swfw_semaphore(sc, func ? SWFW_PHY1_SM : SWFW_PHY0_SM);
+	return (rv);
+}
+
+/*
+ * wm_gmii_i80003_writereg:	[mii interface function]
+ *
+ *	Write a PHY register on the kumeran.
+ * This could be handled by the PHY layer if we didn't have to lock the
+ * ressource ...
+ */
+static void
+wm_gmii_i80003_writereg(struct device *self, int phy, int reg, int val)
+{
+	struct wm_softc *sc = (void *) self;
+	int func = ((CSR_READ(sc, WMREG_STATUS) >> STATUS_FUNCID_SHIFT) & 1);
+
+	if (phy != 1) /* only one PHY on kumeran bus */
+		return;
+
+	if (wm_get_swfw_semaphore(sc, func ? SWFW_PHY1_SM : SWFW_PHY0_SM))
+		return;
+
+	if ((reg & GG82563_MAX_REG_ADDRESS) < GG82563_MIN_ALT_REG) {
+		wm_gmii_i82544_writereg(self, phy, GG82563_PHY_PAGE_SELECT,
+		    reg >> GG82563_PAGE_SHIFT);
+	} else {
+		wm_gmii_i82544_writereg(self, phy, GG82563_PHY_PAGE_SELECT_ALT,
+		    reg >> GG82563_PAGE_SHIFT);
+	}
+
+	wm_gmii_i82544_writereg(self, phy, reg & GG82563_MAX_REG_ADDRESS, val);
+	wm_put_swfw_semaphore(sc, func ? SWFW_PHY1_SM : SWFW_PHY0_SM);
 }
 
 /*
@@ -3853,4 +4278,166 @@ wm_gmii_statchg(struct device *self)
 	CSR_WRITE(sc, WMREG_TCTL, sc->sc_tctl);
 	CSR_WRITE(sc, (sc->sc_type < WM_T_82543) ? WMREG_OLD_FCRTL
 						 : WMREG_FCRTL, sc->sc_fcrtl);
+	if (sc->sc_type >= WM_T_80003) {
+		switch(IFM_SUBTYPE(sc->sc_mii.mii_media_active)) {
+		case IFM_1000_T:
+			wm_kmrn_i80003_writereg(sc, KUMCTRLSTA_OFFSET_HD_CTRL,
+			    KUMCTRLSTA_HD_CTRL_1000_DEFAULT);
+			sc->sc_tipg =  TIPG_1000T_80003_DFLT;
+			break;
+		default:
+			wm_kmrn_i80003_writereg(sc, KUMCTRLSTA_OFFSET_HD_CTRL,
+			    KUMCTRLSTA_HD_CTRL_10_100_DEFAULT);
+			sc->sc_tipg =  TIPG_10_100_80003_DFLT;
+			break;
+		}
+		CSR_WRITE(sc, WMREG_TIPG, sc->sc_tipg);
+	}
+}
+
+/*
+ * wm_kmrn_i80003_readreg:
+ *
+ *	Read a kumeran register
+ */
+static int
+wm_kmrn_i80003_readreg(struct wm_softc *sc, int reg)
+{
+	int func = ((CSR_READ(sc, WMREG_STATUS) >> STATUS_FUNCID_SHIFT) & 1);
+	int rv;
+
+	if (wm_get_swfw_semaphore(sc, func ? SWFW_PHY1_SM : SWFW_PHY0_SM))
+		return 0;
+
+	CSR_WRITE(sc, WMREG_KUMCTRLSTA,
+	    ((reg << KUMCTRLSTA_OFFSET_SHIFT) & KUMCTRLSTA_OFFSET) |
+	    KUMCTRLSTA_REN);
+	delay(2);
+
+	rv = CSR_READ(sc, WMREG_KUMCTRLSTA) & KUMCTRLSTA_MASK;
+	wm_put_swfw_semaphore(sc, func ? SWFW_PHY1_SM : SWFW_PHY0_SM);
+	return (rv);
+}
+
+/*
+ * wm_kmrn_i80003_writereg:
+ *
+ *	Write a kumeran register
+ */
+static void
+wm_kmrn_i80003_writereg(struct wm_softc *sc, int reg, int val)
+{
+	int func = ((CSR_READ(sc, WMREG_STATUS) >> STATUS_FUNCID_SHIFT) & 1);
+
+	if (wm_get_swfw_semaphore(sc, func ? SWFW_PHY1_SM : SWFW_PHY0_SM))
+		return;
+
+	CSR_WRITE(sc, WMREG_KUMCTRLSTA,
+	    ((reg << KUMCTRLSTA_OFFSET_SHIFT) & KUMCTRLSTA_OFFSET) |
+	    (val & KUMCTRLSTA_MASK));
+	wm_put_swfw_semaphore(sc, func ? SWFW_PHY1_SM : SWFW_PHY0_SM);
+}
+
+static int
+wm_is_onboard_nvm_eeprom(struct wm_softc *sc)
+{
+	uint32_t eecd = 0;
+
+	if (sc->sc_type == WM_T_82573) {
+		eecd = CSR_READ(sc, WMREG_EECD);
+
+		/* Isolate bits 15 & 16 */
+		eecd = ((eecd >> 15) & 0x03);
+
+		/* If both bits are set, device is Flash type */
+		if (eecd == 0x03) {
+			return 0;
+		}
+	}
+	return 1;
+}
+
+static int
+wm_get_swsm_semaphore(struct wm_softc *sc)
+{
+	int32_t timeout;
+	uint32_t swsm;
+
+	/* Get the FW semaphore. */
+	timeout = 1000 + 1; /* XXX */
+	while (timeout) {
+		swsm = CSR_READ(sc, WMREG_SWSM);
+		swsm |= SWSM_SWESMBI;
+		CSR_WRITE(sc, WMREG_SWSM, swsm);
+		/* if we managed to set the bit we got the semaphore. */
+		swsm = CSR_READ(sc, WMREG_SWSM);
+		if (swsm & SWSM_SWESMBI)
+			break;
+
+		delay(50);
+		timeout--;
+	}
+
+	if (timeout == 0) {
+		aprint_error("%s: could not acquire EEPROM GNT\n",
+		    sc->sc_dev.dv_xname);
+		/* Release semaphores */
+		wm_put_swsm_semaphore(sc);
+		return 1;
+	}
+	return 0;
+}
+
+static void
+wm_put_swsm_semaphore(struct wm_softc *sc)
+{
+	uint32_t swsm;
+
+	swsm = CSR_READ(sc, WMREG_SWSM);
+	swsm &= ~(SWSM_SWESMBI);
+	CSR_WRITE(sc, WMREG_SWSM, swsm);
+}
+
+static int
+wm_get_swfw_semaphore(struct wm_softc *sc, uint16_t mask) {
+	uint32_t swfw_sync;
+	uint32_t swmask = mask << SWFW_SOFT_SHIFT;
+	uint32_t fwmask = mask << SWFW_FIRM_SHIFT;
+	int timeout = 200;
+
+	for(timeout = 0; timeout < 200; timeout++) {
+		if (sc->sc_flags & WM_F_EEPROM_SEMAPHORE) {
+			if (wm_get_swsm_semaphore(sc))
+				return 1;
+		}
+		swfw_sync = CSR_READ(sc, WMREG_SW_FW_SYNC);
+		if ((swfw_sync & (swmask | fwmask)) == 0) {
+			swfw_sync |= swmask;
+			CSR_WRITE(sc, WMREG_SW_FW_SYNC, swfw_sync);
+			if (sc->sc_flags & WM_F_EEPROM_SEMAPHORE)
+				wm_put_swsm_semaphore(sc);
+			return 0;
+		}
+		if (sc->sc_flags & WM_F_EEPROM_SEMAPHORE)
+			wm_put_swsm_semaphore(sc);
+		delay(5000);
+	}
+	printf("%s: failed to get swfw semaphore mask 0x%x swfw 0x%x\n",
+	    sc->sc_dev.dv_xname, mask, swfw_sync);
+	return 1;
+}
+
+static void
+wm_put_swfw_semaphore(struct wm_softc *sc, uint16_t mask) {
+	uint32_t swfw_sync;
+
+	if (sc->sc_flags & WM_F_EEPROM_SEMAPHORE) {
+		while (wm_get_swsm_semaphore(sc) != 0)
+			continue;
+	}
+	swfw_sync = CSR_READ(sc, WMREG_SW_FW_SYNC);
+	swfw_sync &= ~(mask << SWFW_SOFT_SHIFT);
+	CSR_WRITE(sc, WMREG_SW_FW_SYNC, swfw_sync);
+	if (sc->sc_flags & WM_F_EEPROM_SEMAPHORE)
+		wm_put_swsm_semaphore(sc);
 }
