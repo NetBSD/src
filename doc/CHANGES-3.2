@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.2,v 1.1.2.60 2007/03/29 09:08:54 ghen Exp $
+#	$NetBSD: CHANGES-3.2,v 1.1.2.61 2007/03/31 14:25:55 bouyer Exp $
 
 A complete list of changes from the NetBSD 3.1 release to the NetBSD 3.2
 release:
@@ -2998,4 +2998,50 @@ sys/netiso/clnp_subr.c				1.27 via patch
 	Issue found by Christer Oberg and patch from christos.
 	(NetBSD-SA2007-004)
 	[adrianp, ticket #1733]
+
+sys/net/if_gif.c				1.58
+
+	fix memory leak when resetting the source address and destination
+	address.
+	[msaitoh, ticket #1684]
+
+sys/arch/macppc/dev/if_bm.c			1.29
+
+	Fix for PR 33667. Note that putting bmac_mediachange where thorpej
+	suggested doesn't fix this issue. Not a perfect fix, but much better
+	than leaving it as it was. Tested on several iMacs and a
+	blue & white G3.
+	[sborrill, ticket #1685]
+
+sys/arch/alpha/pci/cia_dma.c			1.21
+
+	Contrary to the comment in cia_dma_get_tag(), there are machines with
+	cia that have over 1.0G.  Allow direct dma requests to fall back to
+	SGMAPs. my PWS 500au with 1.5G of memory now works with dma operations.
+	[mhitch, ticket #1686]
+
+bin/sh/histedit.c				1.38
+
+	Make the -s flag of fc work correctly. Ensure that only one command  
+	is specified and ensure that we break out of the loop after executing
+	it. With the previous code, because the re-executed command was added
+	to the history, it would think that it still had to execute it,
+	leading to  an infinite loop.
+	[mjf, ticket #1689]
+
+sys/arch/m68k/fpe/fpu_calcea.c			1.18
+sys/arch/m68k/fpe/fpu_emulate.c			1.27
+sys/arch/m68k/fpe/fpu_fstore.c			1.10
+
+	Make these compile with options DEBUG_FPE.
+	Don't disable EA_DIRECT in fpu_load_ea(), which seems disabled
+	accidentally in rev 1.11 about six years ago, otherwise
+	fmovel %dN,%fpN instructions cause unexpected memory access.
+	[tsutsui, ticket #1703]
+
+distrib/utils/sysinst/net.c			1.115
+
+	Fix typo, which prevented DHCP network configuration from discovering
+	the machine name.
+	[is, ticket #1721]
 
