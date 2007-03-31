@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_raid.c,v 1.20 2006/11/16 01:32:47 christos Exp $	*/
+/*	$NetBSD: ata_raid.c,v 1.20.2.1 2007/03/31 16:38:04 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_raid.c,v 1.20 2006/11/16 01:32:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_raid.c,v 1.20.2.1 2007/03/31 16:38:04 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -113,6 +113,7 @@ ata_raid_type_name(u_int type)
 	static const char *ata_raid_type_names[] = {
 		"Promise",
 		"Adaptec",
+		"VIA V-RAID",
 	};
 
 	if (type < sizeof(ata_raid_type_names) / sizeof(ata_raid_type_names[0]))
@@ -239,6 +240,8 @@ ata_raid_check_component(struct device *self)
 	if (ata_raid_read_config_adaptec(sc) == 0)
 		return;
 	if (ata_raid_read_config_promise(sc) == 0)
+		return;
+	if (ata_raid_read_config_via(sc) == 0)
 		return;
 }
 
