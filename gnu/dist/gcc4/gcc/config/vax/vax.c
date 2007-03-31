@@ -375,7 +375,7 @@ print_operand_address (FILE * file, rtx addr)
 		}
 	  
 #ifdef NO_EXTERNAL_INDIRECT_ADDRESS
-	      if (GET_CODE (offset) == CONST
+	      if (flag_pic > 1 && GET_CODE (offset) == CONST
 		  && GET_CODE (XEXP (XEXP (offset, 0), 0)) == SYMBOL_REF
 		  && !SYMBOL_REF_LOCAL_P (XEXP (XEXP (offset, 0), 0)))
 		{
@@ -461,7 +461,7 @@ print_operand (FILE *file, rtx x, int code)
     }
   else
     {
-      if (flag_pic && symbolic_operand (x, SImode))
+      if (flag_pic > 1 && symbolic_operand (x, SImode))
 	{
 	  debug_rtx (x);
 	  output_operand_lossage ("symbol used as immediate operand");
@@ -1218,8 +1218,7 @@ vax_output_int_move (rtx insn ATTRIBUTE_UNUSED, rtx *operands,
    which are not modified very often.  */
 
 const char *
-vax_output_int_add (rtx insn ATTRIBUTE_UNUSED, rtx *operands,
-		    enum machine_mode mode)
+vax_output_int_add (rtx insn, rtx *operands, enum machine_mode mode)
 {
   switch (mode)
     {
@@ -1237,6 +1236,11 @@ vax_output_int_add (rtx insn ATTRIBUTE_UNUSED, rtx *operands,
 	if (TARGET_QMATH)
 	  {
 	    gcc_assert (rtx_equal_p (operands[0], operands[1]));
+#ifdef NO_EXTERNAL_INDIRECT_ADDRESSS
+            gcc_assert (!flag_pic || !external_memory_operand (low[2], SImode));
+            gcc_assert (!flag_pic || !external_memory_operand (low[0], SImode));
+#endif
+
 
 	    /* No reason to add a 0 to the low part and thus no carry, so just
 	       emit the appropriate add/sub instruction.  */
@@ -1498,9 +1502,18 @@ vax_output_conditional_branch (enum rtx_code code)
 bool
 legitimate_constant_address_p (rtx x)
 {
-  return (GET_CODE (x) == LABEL_REF || GET_CODE (x) == SYMBOL_REF
-	  || CONST_INT_P (x) || GET_CODE (x) == CONST
-	  || GET_CODE (x) == HIGH);
+  if (GET_CODE (x) == LABEL_REF || GET_CODE (x) == SYMBOL_REF
+	  || CONST_INT_P (x) || GET_CODE (x) == HIGH)
+    return true;
+  if (GET_CODE (x) != CONST)
+    return false;
+#ifdef NO_EXTERNAL_INDIRECT_ADDRESS
+  if (flag_pic
+      && GET_CODE (XEXP (XEXP (x, 0), 0)) == SYMBOL_REF
+      && !SYMBOL_REF_LOCAL_P (XEXP (XEXP (x, 0), 0)))
+    return false;
+#endif
+   return true;
 }
 
 /* Nonzero if the constant value X is a legitimate general operand.
@@ -1530,22 +1543,23 @@ legitimate_constant_p (rtx x ATTRIBUTE_UNUSED)
    are no SYMBOL_REFs for external symbols present.  */
 
 static bool
-indirectable_constant_address_p (rtx x)
+indirectable_constant_address_p (rtx x, bool indirect)
 {
-  if (!CONSTANT_ADDRESS_P (x))
-    return false;
-  if (GET_CODE (x) == CONST && GET_CODE (XEXP ((x), 0)) == PLUS)
-    x = XEXP (XEXP (x, 0), 0);
-  if (GET_CODE (x) == SYMBOL_REF && !SYMBOL_REF_LOCAL_P (x))
-    return false;
+  if (GET_CODE (x) == SYMBOL_REF)
+    return !flag_pic || SYMBOL_REF_LOCAL_P (x) || !indirect;
 
-  return true;
+  if (GET_CODE (x) == CONST)
+    return !flag_pic
+	   || GET_CODE (XEXP (XEXP (x, 0), 0)) != SYMBOL_REF
+	   || SYMBOL_REF_LOCAL_P (XEXP (XEXP (x, 0), 0));
+
+  return CONSTANT_ADDRESS_P (x);
 }
 
 #else /* not NO_EXTERNAL_INDIRECT_ADDRESS */
 
 static bool
-indirectable_constant_address_p (rtx x)
+indirectable_constant_address_p (rtx x, bool indirect ATTRIBUTE_UNUSED)
 {
   return CONSTANT_ADDRESS_P (x);
 }
@@ -1556,16 +1570,16 @@ indirectable_constant_address_p (rtx x)
    could be in a sharable image library, so we disallow those.  */
 
 static bool
-indirectable_address_p(rtx x, bool strict)
+indirectable_address_p(rtx x, bool strict, bool indirect)
 {
-  if (indirectable_constant_address_p (x)
+  if (indirectable_constant_address_p (x, indirect)
       || BASE_REGISTER_P (x, strict))
     return true;
   if (GET_CODE (x) != PLUS
       || !BASE_REGISTER_P (XEXP (x, 0), strict)
       || (flag_pic && !CONST_INT_P (XEXP (x, 1))))
     return false;
-  return indirectable_constant_address_p (XEXP (x, 1));
+  return indirectable_constant_address_p (XEXP (x, 1), indirect);
 }
 
 /* Return 1 if x is a valid address not using indexing.
@@ -1579,15 +1593,15 @@ nonindexed_address_p (rtx x, bool strict)
       extern rtx *reg_equiv_mem;
       if (! reload_in_progress
 	  || reg_equiv_mem[REGNO (x)] == 0
-	  || indirectable_address_p (reg_equiv_mem[REGNO (x)], strict))
+	  || indirectable_address_p (reg_equiv_mem[REGNO (x)], strict, false))
 	return true;
     }
-  if (indirectable_constant_address_p (x))
+  if (indirectable_constant_address_p (x, false))
     return true;
-  if (indirectable_address_p (x, strict))
+  if (indirectable_address_p (x, strict, false))
     return true;
   xfoo0 = XEXP (x, 0);
-  if (MEM_P (x) && indirectable_address_p (xfoo0, strict))
+  if (MEM_P (x) && indirectable_address_p (xfoo0, strict, true))
     return true;
   if ((GET_CODE (x) == PRE_DEC || GET_CODE (x) == POST_INC)
       && BASE_REGISTER_P (xfoo0, strict))
@@ -1647,6 +1661,19 @@ reg_plus_index_p (rtx x, enum machine_mode mode, bool strict)
   return false;
 }
 
+/* Return true if xfoo0 and xfoo1 constitute a valid indexed address.  */
+static bool
+indexable_address_p (rtx xfoo0, rtx xfoo1, enum machine_mode mode, bool strict)
+{
+  if (!CONSTANT_ADDRESS_P (xfoo0))
+    return false;
+  if (BASE_REGISTER_P (xfoo1, strict))
+    return !flag_pic || mode == QImode;
+  if (flag_pic && symbolic_operand (xfoo0, SImode))
+    return false;
+  return reg_plus_index_p (xfoo1, mode, strict);
+}
+
 /* legitimate_address_p returns 1 if it recognizes an RTL expression "x"
    that is a valid memory address for an instruction.
    The MODE argument is the machine mode for the MEM expression
@@ -1677,14 +1704,8 @@ legitimate_address_p (enum machine_mode mode, rtx x, bool strict)
 
   /* Handle offset(reg)[index] with offset added outermost */
 
-  if (indirectable_constant_address_p (xfoo0)
-      && (BASE_REGISTER_P (xfoo1, strict)
-	  || reg_plus_index_p (xfoo1, mode, strict)))
-    return true;
-
-  if (indirectable_constant_address_p (xfoo1)
-      && (BASE_REGISTER_P (xfoo0, strict)
-	  || reg_plus_index_p (xfoo0, mode, strict)))
+  if (indexable_address_p (xfoo0, xfoo1, mode, strict)
+      || indexable_address_p (xfoo1, xfoo0, mode, strict))
     return true;
 
   return false;
@@ -1725,8 +1746,8 @@ fixup_mathdi_operand (rtx x, enum machine_mode mode)
       rtx addr = XEXP (x, 0);
       rtx temp = gen_reg_rtx (Pmode);
       rtx offset = 0;
-#if 0
-      if (GET_CODE (addr) == CONST && CHECK_PICADDR)
+#ifdef NO_EXTERNAL_INDIRECT_ADDRESS
+      if (GET_CODE (addr) == CONST && flag_pic)
 	{
 	  offset = XEXP (XEXP (addr, 0), 1);
 	  addr = XEXP (XEXP (addr, 0), 0);

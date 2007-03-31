@@ -31,10 +31,16 @@ Boston, MA 02110-1301, USA.  */
 #undef CPP_SPEC
 #define CPP_SPEC NETBSD_CPP_SPEC
 
+#undef CC1_SPEC
+#define CC1_SPEC NETBSD_CC1_AND_CC1PLUS_SPEC VAX_CC1_AND_CC1PLUS_SPEC
+
+#undef CC1PLUS_SPEC
+#define CC1PLUS_SPEC NETBSD_CC1_AND_CC1PLUS_SPEC VAX_CC1_AND_CC1PLUS_SPEC
+
 #define NETBSD_ENTRY_POINT "__start"
 
 #undef LINK_SPEC
-#if 1
+#if 0
 /* FIXME: We must link all executables statically until PIC support
    is added to the compiler.  */
 #define LINK_SPEC \

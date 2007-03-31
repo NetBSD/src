@@ -83,10 +83,19 @@ Boston, MA 02110-1301, USA.  */
     }							\
   while (0)
 
+/* Don't allow *foo which foo is non-local */
+#define NO_EXTERNAL_INDIRECT_ADDRESS
+
+#undef VAX_CC1_AND_CC1PLUS_SPEC
+#define VAX_CC1_AND_CC1PLUS_SPEC \
+  "%{!fno-pic: \
+     %{!fpic: \
+       %{!fPIC:-fPIC}}}"
+
 /* VAX ELF is always gas; override the generic VAX ASM_SPEC.  */
 
 #undef ASM_SPEC
-#define ASM_SPEC ""
+#define ASM_SPEC "%{!fno-pic: %{!mno-asm-pic:-k}}"
 
 /*  We want PCREL dwarf output.  */
 #define ASM_PREFERRED_EH_DATA_FORMAT(CODE,GLOBAL)	\
