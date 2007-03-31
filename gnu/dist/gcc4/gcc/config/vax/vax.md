@@ -44,6 +44,7 @@
 ;; Integer modes supported on VAX, with a mapping from machine mode
 ;; to mnemonic suffix.  DImode is always a special case.
 (define_mode_macro VAXint [QI HI SI])
+(define_mode_macro VAXintQH [QI HI])
 (define_mode_macro VAXintQHSD [QI HI SI DI])
 (define_mode_attr  isfx [(QI "b") (HI "w") (SI "l") (DI "q")])
 
@@ -142,9 +143,45 @@
 ;;  Loads of constants between 64 and 128 used to be done with
 ;; "addl3 $63,#,dst" but this is slower than movzbl and takes as much space.
 
+(define_expand "movsi"
+  [(set (match_operand:SI 0 "nonimmediate_operand" "")
+        (match_operand:SI 1 "general_operand" ""))]
+  ""
+  "
+{
+#ifdef NO_EXTERNAL_INDIRECT_ADDRESS
+  if (flag_pic
+      && GET_CODE (operands[1]) == CONST
+      && GET_CODE (XEXP (XEXP (operands[1], 0), 0)) == SYMBOL_REF
+      && !SYMBOL_REF_LOCAL_P (XEXP (XEXP (operands[1], 0), 0)))
+    {
+      rtx symbol_ref = XEXP (XEXP (operands[1], 0), 0);
+      rtx const_int = XEXP (XEXP (operands[1], 0), 1);
+      rtx temp = reload_in_progress ? operands[0] : gen_reg_rtx (Pmode);
+#if 0
+      if (reload_in_progress)
+	debug_rtx (temp);
+      emit_insn (gen_movgblsym (temp, symbol_ref));
+#endif
+      emit_move_insn (temp, symbol_ref);
+      emit_move_insn (operands[0], gen_rtx_PLUS (SImode, temp, const_int));
+#if 0
+      debug_rtx (operands[1]);
+#endif
+      DONE;
+    }
+#endif
+}")
+
+(define_insn "movsi_2"
+  [(set (match_operand:SI 0 "nonimmediate_operand" "=g")
+        (match_operand:SI 1 "nonsymbolic_operand" "nrmT"))]
+  ""
+  "* return vax_output_int_move (insn, operands, SImode);")
+
 (define_insn "mov<mode>"
-  [(set (match_operand:VAXint 0 "nonimmediate_operand" "=g")
-        (match_operand:VAXint 1 "general_operand" "g"))]
+  [(set (match_operand:VAXintQH 0 "nonimmediate_operand" "=g")
+        (match_operand:VAXintQH 1 "general_operand" "g"))]
   ""
   "* return vax_output_int_move (insn, operands, <MODE>mode);")
 
@@ -311,6 +348,34 @@
    add<VAXfp:fsfx>2 %2,%0
    add<VAXfp:fsfx>2 %1,%0
    add<VAXfp:fsfx>3 %1,%2,%0")
+
+(define_insn "pushlclsymreg"
+  [(set (match_operand:SI 0 "push_operand" "=g")
+	(plus:SI (match_operand:SI 1 "register_operand" "%r")
+		 (match_operand:SI 2 "local_symbolic_operand" "i")))]
+  "flag_pic"
+  "pushab %a2[%1]")
+
+(define_insn "pushextsymreg"
+  [(set (match_operand:SI 0 "push_operand" "=g")
+	(plus:SI (match_operand:SI 1 "register_operand" "%r")
+		 (match_operand:SI 2 "external_symbolic_operand" "i")))]
+  "flag_pic"
+  "pushab %a2[%1]")
+
+(define_insn "movlclsymreg"
+  [(set (match_operand:SI 0 "nonimmediate_operand" "=g")
+	(plus:SI (match_operand:SI 1 "register_operand" "%r")
+		 (match_operand:SI 2 "local_symbolic_operand" "i")))]
+  "flag_pic"
+  "movab %a2[%1],%0")
+
+(define_insn "movextsymreg"
+  [(set (match_operand:SI 0 "nonimmediate_operand" "=g")
+	(plus:SI (match_operand:SI 1 "register_operand" "%r")
+		 (match_operand:SI 2 "external_symbolic_operand" "i")))]
+  "flag_pic"
+  "movab %a2[%1],%0")
 
 (define_insn "add<mode>3"
   [(set (match_operand:VAXint 0 "nonimmediate_operand" "=g")
@@ -1374,6 +1439,30 @@
 		 (label_ref:SI (match_operand 2 "" ""))))]
   ""
   "casel %0,$0,%1")
+
+(define_insn "pushextsym"
+  [(set (match_operand:SI 0 "push_operand" "=g")
+	(match_operand:SI 1 "external_symbolic_operand" "i"))]
+  ""
+  "pushab %a1")
+
+(define_insn "movextsym"
+  [(set (match_operand:SI 0 "nonimmediate_operand" "=g")
+	(match_operand:SI 1 "external_symbolic_operand" "i"))]
+  ""
+  "movab %a1,%0")
+
+(define_insn "pushlclsym"
+  [(set (match_operand:SI 0 "push_operand" "=g")
+	(match_operand:SI 1 "local_symbolic_operand" "i"))]
+  ""
+  "pushab %a1")
+
+(define_insn "movlclsym"
+  [(set (match_operand:SI 0 "nonimmediate_operand" "=g")
+	(match_operand:SI 1 "local_symbolic_operand" "i"))]
+  ""
+  "movab %a1,%0")
 
 ;;- load or push effective address
 ;; These come after the move and add/sub patterns
