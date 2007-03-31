@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_conversion.c,v 1.3 2005/12/24 20:56:41 perry Exp $	*/
+/*	$NetBSD: cd9660_conversion.c,v 1.3.4.1 2007/03/31 16:16:22 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: cd9660_conversion.c,v 1.3 2005/12/24 20:56:41 perry Exp $");
+__RCSID("$NetBSD: cd9660_conversion.c,v 1.3.4.1 2007/03/31 16:16:22 bouyer Exp $");
 #endif  /* !__lint */
 
 
@@ -150,40 +150,39 @@ cd9660_pad_string_spaces(char *str, int len)
 static char
 cd9660_compute_gm_offset(time_t tim)
 {
-	struct tm* t;
-	struct tm* gm;
+	struct tm t, gm;
 
-	t = localtime(&tim);
-	gm = gmtime(&tim);
-	gm->tm_year -= t->tm_year;
-	gm->tm_yday -= t->tm_yday;
-	gm->tm_hour -= t->tm_hour;
-	gm->tm_min  -= t->tm_min;
-	if (gm->tm_year < 0)
-		gm->tm_yday = -1;
-	else if (gm->tm_year > 0)
-		gm->tm_yday = 1;
+	(void)localtime_r(&tim, &t);
+	(void)gmtime_r(&tim, &gm);
+	gm.tm_year -= t.tm_year;
+	gm.tm_yday -= t.tm_yday;
+	gm.tm_hour -= t.tm_hour;
+	gm.tm_min  -= t.tm_min;
+	if (gm.tm_year < 0)
+		gm.tm_yday = -1;
+	else if (gm.tm_year > 0)
+		gm.tm_yday = 1;
 
-	return (char)(-(gm->tm_min + 60* (24 * gm->tm_yday + gm->tm_hour)) / 15);
+	return (char)(-(gm.tm_min + 60* (24 * gm.tm_yday + gm.tm_hour)) / 15);
 }
 
 /* Long dates: 17 characters */
 void
 cd9660_time_8426(unsigned char *buf, time_t tim)
 {
-	struct tm *t;
+	struct tm t;
 	char temp[18];
 
-	t = localtime(&tim);
-	sprintf(temp,"%04i%02i%02i%02i%02i%02i%02i",
-		1900+(int)t->tm_year,
-		(int)t->tm_mon+1,
-		(int)t->tm_mday,
-		(int)t->tm_hour,
-		(int)t->tm_min,
-		(int)t->tm_sec,
+	(void)localtime_r(&tim, &t);
+	(void)snprintf(temp, sizeof(temp), "%04i%02i%02i%02i%02i%02i%02i",
+		1900+(int)t.tm_year,
+		(int)t.tm_mon+1,
+		(int)t.tm_mday,
+		(int)t.tm_hour,
+		(int)t.tm_min,
+		(int)t.tm_sec,
 		0);
-	memcpy(buf, temp, 16);
+	(void)memcpy(buf, temp, 16);
 	buf[16] = cd9660_compute_gm_offset(tim);
 }
 
@@ -191,14 +190,14 @@ cd9660_time_8426(unsigned char *buf, time_t tim)
 void
 cd9660_time_915(unsigned char *buf, time_t tim)
 {
-	struct tm *t;
-	t = localtime(&tim);
+	struct tm t;
 
-	buf[0] = t->tm_year;
-	buf[1] = t->tm_mon+1;
-	buf[2] = t->tm_mday;
-	buf[3] = t->tm_hour;
-	buf[4] = t->tm_min;
-	buf[5] = t->tm_sec;
+	(void)localtime_r(&tim, &t);
+	buf[0] = t.tm_year;
+	buf[1] = t.tm_mon+1;
+	buf[2] = t.tm_mday;
+	buf[3] = t.tm_hour;
+	buf[4] = t.tm_min;
+	buf[5] = t.tm_sec;
 	buf[6] = cd9660_compute_gm_offset(tim);
 }
