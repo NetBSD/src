@@ -206,6 +206,7 @@ split_quadword_operands (rtx insn, rtx * operands, rtx * low, int n)
 void
 print_operand_address (FILE * file, rtx addr)
 {
+  rtx orig = addr;
   rtx reg1, breg, ireg;
   rtx offset;
 
@@ -350,7 +351,11 @@ print_operand_address (FILE * file, rtx addr)
       /* If REG1 is nonzero, figure out if it is a base or index register.  */
       if (reg1)
 	{
-	  if (breg != 0 || (offset && MEM_P (offset)))
+	  if (breg
+	      || (flag_pic && GET_CODE (addr) == SYMBOL_REF)
+	      || (offset
+		  && (MEM_P (offset)
+		      || (flag_pic && symbolic_operand (offset, SImode)))))
 	    {
 	      gcc_assert (!ireg);
 	      ireg = reg1;
@@ -360,7 +365,36 @@ print_operand_address (FILE * file, rtx addr)
 	}
 
       if (offset != 0)
-	output_address (offset);
+	{
+	  if (flag_pic && symbolic_operand (offset, SImode))
+	    {
+	      if (breg && ireg)
+		{
+		  debug_rtx (orig);
+		  output_operand_lossage ("symbol used with both base and indexed registers");
+		}
+	  
+#ifdef NO_EXTERNAL_INDIRECT_ADDRESS
+	      if (GET_CODE (offset) == CONST
+		  && GET_CODE (XEXP (XEXP (offset, 0), 0)) == SYMBOL_REF
+		  && !SYMBOL_REF_LOCAL_P (XEXP (XEXP (offset, 0), 0)))
+		{
+		  debug_rtx (orig);
+		  output_operand_lossage ("symbol with offset used in PIC mode"); 
+		}
+#endif
+
+	      /* symbol(reg) isn't PIC, but symbol[reg] is.  */
+	      if (breg)
+		{
+		  ireg = breg;
+		  breg = 0;
+		}
+
+	    }
+
+	  output_address (offset);
+	}
 
       if (breg != 0)
 	fprintf (file, "(%s)", reg_names[REGNO (breg)]);
@@ -427,6 +461,11 @@ print_operand (FILE *file, rtx x, int code)
     }
   else
     {
+      if (flag_pic && symbolic_operand (x, SImode))
+	{
+	  debug_rtx (x);
+	  output_operand_lossage ("symbol used as immediate operand");
+	}
       putc ('$', file);
       output_addr_const (file, x);
     }
@@ -1519,15 +1558,14 @@ indirectable_constant_address_p (rtx x)
 static bool
 indirectable_address_p(rtx x, bool strict)
 {
-  if (indirectable_constant_address_p (x))
+  if (indirectable_constant_address_p (x)
+      || BASE_REGISTER_P (x, strict))
     return true;
-  if (BASE_REGISTER_P (x, strict))
-    return true;
-  if (GET_CODE (x) == PLUS
-      && BASE_REGISTER_P (XEXP (x, 0), strict)
-      && indirectable_constant_address_p (XEXP (x, 1)))
-    return true;
-  return false;
+  if (GET_CODE (x) != PLUS
+      || !BASE_REGISTER_P (XEXP (x, 0), strict)
+      || (flag_pic && !CONST_INT_P (XEXP (x, 1))))
+    return false;
+  return indirectable_constant_address_p (XEXP (x, 1));
 }
 
 /* Return 1 if x is a valid address not using indexing.
