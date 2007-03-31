@@ -1,4 +1,4 @@
-$NetBSD: miidevs,v 1.58.2.5 2007/03/03 23:30:25 bouyer Exp $
+$NetBSD: miidevs,v 1.58.2.6 2007/03/31 15:25:35 bouyer Exp $
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -168,6 +168,7 @@ model yyINTEL I82562EH		0x0017 i82562EH HomePNA interface
 model yyINTEL I82562EM		0x0032 i82562EM 10/100 media interface
 model yyINTEL I82562ET		0x0033 i82562ET 10/100 media interface
 model yyINTEL I82553		0x0035 i82553 10/100 media interface
+model xxMARVELL I82563		0x000a i82563 10/100/1000 media interface
 
 model yyINTEL IGP01E1000	0x0038 Intel IGP01E1000 Gigabit PHY
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmreg.h,v 1.14.4.1 2005/08/28 09:49:37 tron Exp $	*/
+/*	$NetBSD: if_wmreg.h,v 1.14.4.2 2007/03/31 15:25:36 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -185,6 +185,10 @@ struct livengood_tcpip_ctxdesc {
 #define	CTRL_SPEED_MASK	CTRL_SPEED(3)
 #define	CTRL_FRCSPD	(1U << 11)	/* force speed (Livengood) */
 #define	CTRL_FRCFDX	(1U << 12)	/* force full-duplex (Livengood) */
+#define CTRL_D_UD_EN	(1U << 13)	/* Dock/Undock enable */
+#define CTRL_D_UD_POL	(1U << 14)	/* Defined polarity of Dock/Undock indication in SDP[0] */
+#define CTRL_F_PHY_R 	(1U << 15)	/* Reset both PHY ports, through PHYRST_N pin */
+#define CTRL_EXT_LINK_EN (1U << 16)	/* enable link status from external LINK_0 and LINK_1 pins */
 #define	CTRL_SWDPINS_SHIFT	18
 #define	CTRL_SWDPINS_MASK	0x0f
 #define	CTRL_SWDPIN(x)		(1U << (CTRL_SWDPINS_SHIFT + (x)))
@@ -236,6 +240,7 @@ struct livengood_tcpip_ctxdesc {
 #define	EECD_EE_PRES	(1U << 8)	/* EEPROM present */
 #define	EECD_EE_SIZE	(1U << 9)	/* EEPROM size
 					   (0 = 64 word, 1 = 256 word) */
+#define	EECD_EE_AUTORD	(1U << 9)	/* auto read done */
 #define	EECD_EE_ABITS	(1U << 10)	/* EEPROM address bits
 					   (based on type) */
 #define	EECD_EE_TYPE	(1U << 13)	/* EEPROM type
@@ -299,6 +304,12 @@ struct livengood_tcpip_ctxdesc {
 #define	EEPROM_SWDPIN_SWDPIN_SHIFT 0
 #define	EEPROM_SWDPIN_SWDPIO_SHIFT 8
 
+#define	WMREG_EERD	0x0014	/* EEPROM read */
+#define	EERD_DONE	0x02    /* done bit */
+#define	EERD_START	0x01	/* First bit for telling part to start operation */
+#define	EERD_ADDR_SHIFT	2	/* Shift to the address bits */
+#define	EERD_DATA_SHIFT	16	/* Offset to data in EEPROM read/write registers */
+
 #define	WMREG_CTRL_EXT	0x0018	/* Extended Device Control Register */
 #define	CTRL_EXT_GPI_EN(x)	(1U << (x)) /* gpin interrupt enable */
 #define	CTRL_EXT_SWDPINS_SHIFT	4
@@ -313,6 +324,12 @@ struct livengood_tcpip_ctxdesc {
 #define	CTRL_EXT_SPD_BYPS	(1U << 15) /* speed select bypass */
 #define	CTRL_EXT_IPS1		(1U << 16) /* invert power state bit 1 */
 #define	CTRL_EXT_RO_DIS		(1U << 17) /* relaxed ordering disabled */
+#define	CTRL_EXT_LINK_MODE_MASK	0x00C00000
+#define	CTRL_EXT_LINK_MODE_GMII	0x00000000
+#define	CTRL_EXT_LINK_MODE_TBI	0x00C00000
+#define	CTRL_EXT_LINK_MODE_KMRN	0x00000000
+#define	CTRL_EXT_LINK_MODE_SERDES 0x00C00000
+
 
 #define	WMREG_MDIC	0x0020	/* MDI Control Register */
 #define	MDIC_DATA(x)	((x) & 0xffff)
@@ -362,6 +379,7 @@ struct livengood_tcpip_ctxdesc {
 #define	ICR_MDAC	(1U << 9)	/* MDIO access complete */
 #define	ICR_RXCFG	(1U << 10)	/* Receiving /C/ */
 #define	ICR_GPI(x)	(1U << (x))	/* general purpose interrupts */
+#define	ICR_INT		(1U << 31)	/* device generated an interrupt */
 
 #define WMREG_ITR	0x00c4	/* Interrupt Throttling Register */
 #define ITR_IVAL_MASK	0xffff		/* Interval mask */
@@ -480,10 +498,17 @@ struct livengood_tcpip_ctxdesc {
 #define	TCTL_SWXOFF	(1U << 22)	/* software XOFF */
 #define	TCTL_RTLC	(1U << 24)	/* retransmit on late collision */
 #define	TCTL_NRTU	(1U << 25)	/* no retransmit on underrun */
+#define	TCTL_MULR	(1U << 28)	/* multiple request */
 
 #define	TX_COLLISION_THRESHOLD		15
-#define	TX_COLLISION_DISTANCE_HDX	64
-#define	TX_COLLISION_DISTANCE_FDX	512
+#define	TX_COLLISION_DISTANCE_HDX	512
+#define	TX_COLLISION_DISTANCE_FDX	64
+
+#define	WMREG_TCTL_EXT	0x0404	/* Transmit Control Register */
+#define	TCTL_EXT_BST_MASK	0x000003FF /* Backoff Slot Time */
+#define	TCTL_EXT_GCEX_MASK	0x000FFC00 /* Gigabit Carry Extend Padding */
+
+#define	DEFAULT_80003ES2LAN_TCTL_EXT_GCEX 0x00010000
 
 #define	WMREG_TQSA_LO	0x0408
 
@@ -497,8 +522,14 @@ struct livengood_tcpip_ctxdesc {
 #define	TIPG_WM_DFLT	(TIPG_IPGT(0x0a) | TIPG_IPGR1(0x02) | TIPG_IPGR2(0x0a))
 #define	TIPG_LG_DFLT	(TIPG_IPGT(0x06) | TIPG_IPGR1(0x08) | TIPG_IPGR2(0x06))
 #define	TIPG_1000T_DFLT	(TIPG_IPGT(0x08) | TIPG_IPGR1(0x08) | TIPG_IPGR2(0x06))
+#define	TIPG_1000T_80003_DFLT \
+    (TIPG_IPGT(0x08) | TIPG_IPGR1(0x02) | TIPG_IPGR2(0x07))
+#define	TIPG_10_100_80003_DFLT \
+    (TIPG_IPGT(0x09) | TIPG_IPGR1(0x02) | TIPG_IPGR2(0x07))
 
 #define	WMREG_TQC	0x0418
+
+#define	WMREG_EEWR	0x102c	/* EEPROM write */
 
 #define	WMREG_RDFH	0x2410	/* Receive Data FIFO Head */
 
@@ -553,10 +584,12 @@ struct livengood_tcpip_ctxdesc {
 #define	WMREG_PBA	0x1000	/* Packet Buffer Allocation */
 #define	PBA_BYTE_SHIFT	10		/* KB -> bytes */
 #define	PBA_ADDR_SHIFT	7		/* KB -> quadwords */
+#define	PBA_12K		0x000c
 #define	PBA_16K		0x0010		/* 16K, default Tx allocation */
 #define	PBA_22K		0x0016
 #define	PBA_24K		0x0018
 #define	PBA_30K		0x001e
+#define	PBA_32K		0x0020
 #define	PBA_40K		0x0028
 #define	PBA_48K		0x0030		/* 48K, default Rx allocation */
 
@@ -573,8 +606,56 @@ struct livengood_tcpip_ctxdesc {
 #define	RXCSUM_IPOFL	(1U << 8)	/* IP checksum offload */
 #define	RXCSUM_TUOFL	(1U << 9)	/* TCP/UDP checksum offload */
 
+#define	WMREG_RXERRC	0x400C	/* receive error Count - R/clr */
+#define	WMREG_COLC	0x4028	/* collision Count - R/clr */
 #define	WMREG_XONRXC	0x4048	/* XON Rx Count - R/clr */
 #define	WMREG_XONTXC	0x404c	/* XON Tx Count - R/clr */
 #define	WMREG_XOFFRXC	0x4050	/* XOFF Rx Count - R/clr */
 #define	WMREG_XOFFTXC	0x4054	/* XOFF Tx Count - R/clr */
 #define	WMREG_FCRUC	0x4058	/* Flow Control Rx Unsupported Count - R/clr */
+
+#define	WMREG_KUMCTRLSTA 0x0034	/* MAC-PHY interface - RW */
+#define	KUMCTRLSTA_MASK			0x0000FFFF
+#define	KUMCTRLSTA_OFFSET		0x001F0000
+#define	KUMCTRLSTA_OFFSET_SHIFT		16
+#define	KUMCTRLSTA_REN			0x00200000
+
+#define	KUMCTRLSTA_OFFSET_FIFO_CTRL	0x00000000
+#define	KUMCTRLSTA_OFFSET_CTRL		0x00000001
+#define	KUMCTRLSTA_OFFSET_INB_CTRL	0x00000002
+#define	KUMCTRLSTA_OFFSET_DIAG		0x00000003
+#define	KUMCTRLSTA_OFFSET_TIMEOUTS	0x00000004
+#define	KUMCTRLSTA_OFFSET_INB_PARAM	0x00000009
+#define	KUMCTRLSTA_OFFSET_HD_CTRL	0x00000010
+#define	KUMCTRLSTA_OFFSET_M2P_SERDES	0x0000001E
+#define	KUMCTRLSTA_OFFSET_M2P_MODES	0x0000001F
+
+/* FIFO Control */
+#define	KUMCTRLSTA_FIFO_CTRL_RX_BYPASS	0x00000008
+#define	KUMCTRLSTA_FIFO_CTRL_TX_BYPASS	0x00000800
+
+/* In-Band Control */
+#define	KUMCTRLSTA_INB_CTRL_LINK_TMOUT_DFLT 0x00000500
+#define	KUMCTRLSTA_INB_CTRL_DIS_PADDING	0x00000010
+
+/* Half-Duplex Control */
+#define	KUMCTRLSTA_HD_CTRL_10_100_DEFAULT 0x00000004
+#define	KUMCTRLSTA_HD_CTRL_1000_DEFAULT	0x00000000
+
+#define	WMREG_MDPHYA	0x003C	/* PHY address - RW */
+
+#define	WMREG_MANC2H	0x5860	/* Managment Control To Host - RW */
+
+#define	WMREG_SWSM	0x5b50	/* SW Semaphore */
+#define	SWSM_SMBI	0x00000001	/* Driver Semaphore bit */
+#define	SWSM_SWESMBI	0x00000002	/* FW Semaphore bit */
+#define	SWSM_WMNG	0x00000004	/* Wake MNG Clock */
+#define	SWSM_DRV_LOAD	0x00000008	/* Driver Loaded Bit */
+
+#define	WMREG_SW_FW_SYNC 0x5b5c	/* software-firmware semaphore */
+#define	SWFW_EEP_SM		0x0001 /* eeprom access */
+#define	SWFW_PHY0_SM		0x0002 /* first ctrl phy access */
+#define	SWFW_PHY1_SM		0x0004 /* second ctrl phy access */
+#define	SWFW_MAC_CSR_SM		0x0008
+#define	SWFW_SOFT_SHIFT		0	/* software semaphores */
+#define	SWFW_FIRM_SHIFT		16	/* firmware semaphores */

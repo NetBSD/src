@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_LAPTOP,v 1.83.2.5 2007/03/03 23:30:22 bouyer Exp $
+#	$NetBSD: INSTALL_LAPTOP,v 1.83.2.6 2007/03/31 15:25:34 bouyer Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -472,6 +472,7 @@ brgphy*	at mii? phy ?			# Broadcom BCM5400-family PHYs
 exphy*	at mii? phy ?			# 3Com internal PHYs
 icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS189x
 igphy*	at mii? phy ?			# Intel IGP01E1000
+ikphy*	at mii? phy ?			# Intel 82563 PHYs
 inphy*	at mii? phy ?			# Intel 82555 PHYs
 iophy*	at mii? phy ?			# Intel 82553 PHYs
 lxtphy*	at mii? phy ?			# Level One LXT-970 PHYs

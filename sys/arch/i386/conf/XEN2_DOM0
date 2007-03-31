@@ -1,4 +1,4 @@
-# $NetBSD: XEN2_DOM0,v 1.1.2.10 2007/03/03 23:30:23 bouyer Exp $
+# $NetBSD: XEN2_DOM0,v 1.1.2.11 2007/03/31 15:25:34 bouyer Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -316,6 +316,7 @@ glxtphy* at mii? phy ?			# Level One LXT-1000 PHYs
 gphyter* at mii? phy ?			# NS83861 Gig-E PHY
 icsphy* at mii? phy ?			# Integrated Circuit Systems ICS189x
 igphy*	at mii? phy ?			# Intel IGP01E1000
+ikphy*	at mii? phy ?			# Intel 82563 PHYs
 inphy*	at mii? phy ?			# Intel 82555 PHYs
 iophy*	at mii? phy ?			# Intel 82553 PHYs
 lxtphy* at mii? phy ?			# Level One LXT-970 PHYs

@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_LAPTOP,v 1.135.2.9 2007/03/03 23:30:21 bouyer Exp $
+#	$NetBSD: GENERIC_LAPTOP,v 1.135.2.10 2007/03/31 15:25:34 bouyer Exp $
 #	From: NetBSD: GENERIC,v 1.414 2001/07/30 19:59:05 ad Exp
 #
 #	GENERIC_LAPTOP -- GENERIC with cardbus and some USB devices enabled
@@ -8,7 +8,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.135.2.9 $"
+#ident 		"GENERIC-$Revision: 1.135.2.10 $"
 
 maxusers	32		# estimated number of users
 
@@ -605,6 +605,7 @@ dmphy*	at mii? phy ?			# Davicom DM9101 PHYs
 exphy*	at mii? phy ?			# 3Com internal PHYs
 icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS189x
 igphy*	at mii? phy ?			# Intel IGP01E1000
+ikphy*	at mii? phy ?			# Intel 82563 PHYs
 inphy*	at mii? phy ?			# Intel 82555 PHYs
 iophy*	at mii? phy ?			# Intel 82553 PHYs
 lxtphy*	at mii? phy ?			# Level One LXT-970 PHYs
