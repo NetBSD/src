@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.140.2.4 2007/02/17 23:27:50 tron Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.140.2.5 2007/03/31 16:13:18 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1993, 1995
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.140.2.4 2007/02/17 23:27:50 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.140.2.5 2007/03/31 16:13:18 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -933,10 +933,14 @@ procfs_lookup(v)
 
 		for (i = 0; i < nproc_root_targets; i++) {
 			pt = &proc_root_targets[i];
+			/*
+			 * check for node match.  proc is always NULL here,
+			 * so call pt_valid with constant NULL lwp.
+			 */
 			if (cnp->cn_namelen == pt->pt_namlen &&
 			    memcmp(pt->pt_name, pname, cnp->cn_namelen) == 0 &&
 			    (pt->pt_valid == NULL ||
-			     (*pt->pt_valid)(cnp->cn_lwp, dvp->v_mount)))
+			     (*pt->pt_valid)(NULL, dvp->v_mount)))
 				break;
 		}
 
@@ -977,8 +981,9 @@ procfs_lookup(v)
 		for (pt = proc_targets, i = 0; i < nproc_targets; pt++, i++) {
 			if (cnp->cn_namelen == pt->pt_namlen &&
 			    memcmp(pt->pt_name, pname, cnp->cn_namelen) == 0 &&
-			    (pt->pt_valid == NULL ||
-			     (*pt->pt_valid)(cnp->cn_lwp, dvp->v_mount)))
+			    (pt->pt_valid == NULL || (p != NULL &&
+			      (*pt->pt_valid)(proc_representative_lwp(p),
+					      dvp->v_mount))))
 				goto found;
 		}
 		break;
