@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.661.2.18 2007/03/03 23:30:21 bouyer Exp $
+# $NetBSD: GENERIC,v 1.661.2.19 2007/03/31 15:25:33 bouyer Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.661.2.18 $"
+#ident 		"GENERIC-$Revision: 1.661.2.19 $"
 
 maxusers	32		# estimated number of users
 
@@ -914,6 +914,7 @@ glxtphy* at mii? phy ?			# Level One LXT-1000 PHYs
 gphyter* at mii? phy ?			# NS83861 Gig-E PHY
 icsphy* at mii? phy ?			# Integrated Circuit Systems ICS189x
 igphy*	at mii? phy ?			# Intel IGP01E1000
+ikphy*	at mii? phy ?			# Intel 82563 PHYs
 inphy*	at mii? phy ?			# Intel 82555 PHYs
 iophy*	at mii? phy ?			# Intel 82553 PHYs
 lxtphy* at mii? phy ?			# Level One LXT-970 PHYs
