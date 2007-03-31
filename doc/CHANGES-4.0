@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.104 2007/03/31 16:17:14 bouyer Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.105 2007/03/31 16:45:25 bouyer Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -2357,4 +2357,59 @@ usr.sbin/makefs/cd9660/cd9660_conversion.c	1.4
 	wrong time stamp because localtime(3) and gmtime(3) share the same
 	buffer. Fixed by using the _r functions.
 	[taca, ticket #539]
+
+distrib/utils/sysinst/net.c			1.115
+
+	Fix typo, which prevented DHCP network configuration from discovering
+	the machine name.
+	[is, ticket #540]
+
+sys/dev/pci/viaide.c				1.41 via patch
+
+	The VT8237A SATA Controller uses chip_map_7, not 0, tested and
+	confirmed working on my machine.  Also when a via controller is set
+	to RAID mode, it sets the pci_subclass to raid.  Notice this and set
+	ATAC_CAP_RAID.
+	[garbled, ticket #541]
+
+sys/dev/ata/ata_raid.c				1.22 via patch
+sys/dev/ata/ata_raid_via.c			1.1
+sys/dev/ata/ata_raidreg.h			1.4 via patch
+sys/dev/ata/ata_raidvar.h			1.5 via patch
+sys/dev/ata/files.ata				1.15 via patch
+
+	Add support for VIA V-TECH ata raid.  Tested on 4.0 with RAID0, RAID1
+	and SPAN over a pair of sata drives on a VT8237A SATA Controller.
+	[garbled, ticket #542]
+
+sys/compat/linux32/Makefile.inc			1.2
+
+	Fix generated file names from makesyscalls.sh (s/linux/linux32/).
+	From Edgar Fuﬂ in PR/35956.
+	[njoly, ticket #543]
+
+sys/compat/linux32/arch/amd64/syscalls.master	1.11
+
+	Add support for a few syscalls:
+	setfsuid16/getfsuid16
+	setfsuid/getfsuid
+	sched_yield
+	ok by manu
+	[njoly, ticket #544]
+
+sys/arch/sparc64/include/ctlreg.h		1.43
+sys/arch/sparc64/sparc64/pmap.c			1.188
+
+	When invalidating a context, make sure to flush user windows upfront.
+	Do not set the DMMU secondary context to 0 (that would be kernel), and
+	add a few required membars after switching the secondary dmmu context.
+
+	This avoids SIRs caused by double kernel_data_faults, caused by spills
+	of obsolete user windows after the context for that user pmap is gone.
+	[martin, ticket #547]
+
+sys/arch/sparc64/include/ctlreg.h		1.44
+
+	Cleanup last by using a "n"umeric address space identifier.
+	[hannken, ticket #548]
 
