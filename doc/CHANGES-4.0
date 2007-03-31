@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.102 2007/03/29 09:08:33 ghen Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.103 2007/03/31 15:46:26 bouyer Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -2263,4 +2263,49 @@ sys/netiso/clnp_subr.c				1.27 via patch
 	Issue found by Christer Oberg and patch from christos.
 	(NetBSD-SA2007-004)
 	[adrianp, ticket #545]
+
+etc/rc.d/mixerctl				1.10
+
+	Ignore comment (starting with #) lines in mixerctl.conf
+	[abs, ticket #525]
+
+sys/arch/m68k/fpe/fpu_calcea.c			1.18
+sys/arch/m68k/fpe/fpu_emulate.c			1.27
+sys/arch/m68k/fpe/fpu_fstore.c			1.10
+
+	Make these compile with options DEBUG_FPE.
+	Don't disable EA_DIRECT in fpu_load_ea(), which seems disabled
+	accidentally in rev 1.11 about six years ago, otherwise
+	fmovel %dN,%fpN instructions cause unexpected memory access.
+	[tsutsui, ticket #526]
+
+sys/arch/sun2/include/param.h			1.9
+sys/arch/sun2/sun2/machdep.c			1.49
+sys/arch/sun2/sun2/trap.c			1.30
+
+	Pass proper args to ksyms_init().
+	Fix compile with options DIAGNOSTIC.
+	Bump MAXBSIZE to 0x4000 because 16KB could be used by default
+	on newfs(8) in these days and we'll get "buf mem pool index 5" panic
+	in sys/kern/vfs_bio.c.
+	[tsutsui, ticket #527]
+
+sys/arch/prep/pci/pci_machdep.c			1.29
+sys/arch/prep/pnpbus/wdc_pnpbus.c		1.6
+
+	Special case the MTX604 and other RAVEN based machines to not attach
+	wdc@pnpbus.
+	The motorola RAVEN is both a pchb and an MPIC.  Block out the pci
+	configuration of it's mem area to keep the PIC available.
+	[garbled, ticket #528]
+
+sys/arch/prep/pci/pci_machdep.c			1.30
+
+	Add a second check to the prep-pci-intrmap test, to make sure the
+	dictionary actually contains entries.  It is apparently possible to
+	get a non-null, but empty dictionary back.  This seems to happen if
+	you inject a ppb-card on pci0 when you also have a prep pci1 at a
+	later device function.  With this, my fxp card works in any slot on
+	my 7043-140.
+	[garbled, ticket #529]
 
