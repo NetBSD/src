@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1018 2007/03/22 17:41:30 pooka Exp $
+#	$NetBSD: mi,v 1.1019 2007/04/01 18:52:28 tnozaki Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -2023,6 +2023,7 @@
 ./usr/lib/crt0.o				comp-c-lib
 ./usr/lib/gcrt0.o				comp-c-lib
 ./usr/lib/i18n/libBIG5.a			comp-i18n-lib
+./usr/lib/i18n/libDECHanyu.a			comp-i18n-lib
 ./usr/lib/i18n/libEUC.a				comp-i18n-lib
 ./usr/lib/i18n/libEUCTW.a			comp-i18n-lib
 ./usr/lib/i18n/libGBK2K.a			comp-i18n-lib

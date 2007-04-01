@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.337 2007/03/14 15:49:25 tnozaki Exp $
+#	$NetBSD: NetBSD.dist,v 1.338 2007/04/01 18:52:28 tnozaki Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -509,6 +509,7 @@
 ./usr/share/i18n/esdb/AST
 ./usr/share/i18n/esdb/BIG5
 ./usr/share/i18n/esdb/CP
+./usr/share/i18n/esdb/DEC
 ./usr/share/i18n/esdb/EBCDIC
 ./usr/share/i18n/esdb/EUC
 ./usr/share/i18n/esdb/GB
