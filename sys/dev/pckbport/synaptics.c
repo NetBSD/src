@@ -1,4 +1,4 @@
-/*	$NetBSD: synaptics.c,v 1.13 2006/11/16 01:33:20 christos Exp $	*/
+/*	$NetBSD: synaptics.c,v 1.13.2.1 2007/04/01 16:05:13 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2005, Steve C. Woodford
@@ -43,7 +43,6 @@
  *	- Support the serial protocol (we only support PS/2 for now)
  *	- Support auto-repeat for up/down button Z-axis emulation.
  *	- Maybe add some more gestures (can we use Palm support somehow?)
- *	- Support pass-through mode (whatever that is; my docs are too old).
  */
 
 #include "opt_pms.h"
@@ -208,7 +207,7 @@ pms_synaptics_probe_init(void *vsc)
 		aprint_normal("%s: synaptics_probe: Capabilities 0x%04x.\n",
 		    psc->sc_dev.dv_xname, sc->caps);
 #endif
-		if (sc->caps & SYNAPTICS_CAP_PASSTHROUGH) /*XXX: Not supported*/
+		if (sc->caps & SYNAPTICS_CAP_PASSTHROUGH)
 			sc->flags |= SYN_FLAG_HAS_PASSTHROUGH;
 
 		if (sc->caps & SYNAPTICS_CAP_PALMDETECT)
@@ -644,12 +643,107 @@ pms_synaptics_send_command(pckbport_tag_t tag, pckbport_slot_t slot,
 #define PMS_MBUTMASK 0x04
 
 static void
+pms_synaptics_parse(struct pms_softc *psc)
+{
+	struct synaptics_softc *sc = &psc->u.synaptics;
+	struct synaptics_packet sp;
+
+	/* Absolute X/Y coordinates of finger */
+	sp.sp_x = psc->packet[4] + ((psc->packet[1] & 0x0f) << 8) +
+	   ((psc->packet[3] & 0x10) << 8);
+	sp.sp_y = psc->packet[5] + ((psc->packet[1] & 0xf0) << 4) +
+	   ((psc->packet[3] & 0x20) << 7);
+
+	/* Pressure */
+	sp.sp_z = psc->packet[2];
+
+	/* Width of finger */
+	sp.sp_w = ((psc->packet[0] & 0x30) >> 2) +
+	   ((psc->packet[0] & 0x04) >> 1) +
+	   ((psc->packet[3] & 0x04) >> 2);
+
+	/* Left/Right button handling. */
+	sp.sp_left = psc->packet[0] & PMS_LBUTMASK;
+	sp.sp_right = psc->packet[0] & PMS_RBUTMASK;
+
+	/* Up/Down buttons. */
+	if (sc->flags & SYN_FLAG_HAS_BUTTONS_4_5) {
+		/* Old up/down buttons. */
+		sp.sp_up = sp.sp_left ^
+		    (psc->packet[3] & PMS_LBUTMASK);
+		sp.sp_down = sp.sp_right ^
+		    (psc->packet[3] & PMS_RBUTMASK);
+	} else
+	if (sc->flags & SYN_FLAG_HAS_UP_DOWN_BUTTONS &&
+	   ((psc->packet[0] & PMS_RBUTMASK) ^
+	   (psc->packet[3] & PMS_RBUTMASK))) {
+		/* New up/down button. */
+		sp.sp_up = psc->packet[4] & SYN_1BUTMASK;
+		sp.sp_down = psc->packet[5] & SYN_2BUTMASK;
+	} else {
+		sp.sp_up = 0;
+		sp.sp_down = 0;
+	}
+
+	/* Middle button. */
+	if (sc->flags & SYN_FLAG_HAS_MIDDLE_BUTTON) {
+		/* Old style Middle Button. */
+		sp.sp_middle = (psc->packet[0] & PMS_LBUTMASK) ^
+		    (psc->packet[3] & PMS_LBUTMASK);
+	} else
+	if (synaptics_up_down_emul == 1) {
+		/* Do middle button emulation using up/down buttons */
+		sp.sp_middle = sp.sp_up | sp.sp_down;
+		sp.sp_up = sp.sp_down = 0;
+	} else
+		sp.sp_middle = 0;
+
+	pms_synaptics_process_packet(psc, &sp);
+}
+
+static void
+pms_synaptics_passthrough(struct pms_softc *psc)
+{
+	int dx, dy, dz;
+	int buttons, changed;
+	int s;
+
+	buttons = ((psc->packet[1] & PMS_LBUTMASK) ? 0x20 : 0) |
+		((psc->packet[1] & PMS_MBUTMASK) ? 0x40 : 0) |
+		((psc->packet[1] & PMS_RBUTMASK) ? 0x80 : 0);
+
+	dx = psc->packet[4];
+	if (dx >= 128)
+		dx -= 256;
+	if (dx == -128)
+		dx = -127;
+
+	dy = psc->packet[5];
+	if (dy >= 128)
+		dy -= 256;
+	if (dy == -128)
+		dy = -127;
+
+	dz = 0;
+
+	changed = buttons ^ (psc->buttons & 0xe0);
+	psc->buttons ^= changed;
+
+	if (dx || dy || dz || changed) {
+		buttons = (psc->buttons & 0x1f) | ((psc->buttons >> 5) & 0x7);
+		s = spltty();
+		wsmouse_input(psc->sc_wsmousedev,
+			buttons, dx, dy, dz, 0,
+			WSMOUSE_INPUT_DELTA);
+		splx(s);
+	}
+}
+
+static void
 pms_synaptics_input(void *vsc, int data)
 {
 	struct pms_softc *psc = vsc;
-	struct synaptics_softc *sc = &psc->u.synaptics;
 	struct timeval diff;
-	struct synaptics_packet sp;
 
 	if (!psc->sc_enabled) {
 		/* Interrupts are not expected.	 Discard the byte. */
@@ -704,60 +798,13 @@ pms_synaptics_input(void *vsc, int data)
 		 */
 		psc->inputstate = 0;
 
-		/* Absolute X/Y coordinates of finger */
-		sp.sp_x = psc->packet[4] + ((psc->packet[1] & 0x0f) << 8) +
-		    ((psc->packet[3] & 0x10) << 8);
-		sp.sp_y = psc->packet[5] + ((psc->packet[1] & 0xf0) << 4) +
-		    ((psc->packet[3] & 0x20) << 7);
-
-		/* Pressure */
-		sp.sp_z = psc->packet[2];
-
-		/* Width of finger */
-		sp.sp_w = ((psc->packet[0] & 0x30) >> 2) +
-		    ((psc->packet[0] & 0x04) >> 1) +
-		    ((psc->packet[3] & 0x04) >> 2);
-
-		/* Left/Right button handling. */
-		sp.sp_left = psc->packet[0] & PMS_LBUTMASK;
-		sp.sp_right = psc->packet[0] & PMS_RBUTMASK;
-
-		/* Up/Down buttons. */
-		if (sc->flags & SYN_FLAG_HAS_BUTTONS_4_5) {
-			/* Old up/down buttons. */
-			sp.sp_up = sp.sp_left ^
-			    (psc->packet[3] & PMS_LBUTMASK);
-			sp.sp_down = sp.sp_right ^
-			    (psc->packet[3] & PMS_RBUTMASK);
-		} else
-		if (sc->flags & SYN_FLAG_HAS_UP_DOWN_BUTTONS &&
-		    ((psc->packet[0] & PMS_RBUTMASK) ^
-		    (psc->packet[3] & PMS_RBUTMASK))) {
-			/* New up/down button. */
-			sp.sp_up = psc->packet[4] & SYN_1BUTMASK;
-			sp.sp_down = psc->packet[5] & SYN_2BUTMASK;
+		if ((psc->packet[0] & 0xfc) == 0x84 &&
+		    (psc->packet[3] & 0xcc) == 0xc4) {
+			/* PS/2 passthrough */
+			pms_synaptics_passthrough(psc);
 		} else {
-			sp.sp_up = 0;
-			sp.sp_down = 0;
+			pms_synaptics_parse(psc);
 		}
-
-		/* Middle button. */
-		if (sc->flags & SYN_FLAG_HAS_MIDDLE_BUTTON) {
-			/* Old style Middle Button. */
-			sp.sp_middle = (psc->packet[0] & PMS_LBUTMASK) ^
-			    (psc->packet[3] & PMS_LBUTMASK);
-		} else
-		if (synaptics_up_down_emul == 1) {
-			/* Do middle button emulation using up/down buttons */
-			sp.sp_middle = sp.sp_up | sp.sp_down;
-			sp.sp_up = sp.sp_down = 0;
-		} else
-			sp.sp_middle = 0;
-
-		/*
-		 * Go process the new packet
-		 */
-		pms_synaptics_process_packet(psc, &sp);
 	}
 }
 
@@ -1202,8 +1249,8 @@ pms_synaptics_process_packet(struct pms_softc *psc, struct synaptics_packet *sp)
 	    (sp->sp_right ? 0x4 : 0) |
 	    (sp->sp_up ? 0x8 : 0) |
 	    (sp->sp_down ? 0x10 : 0);
-	changed = buttons ^ psc->buttons;
-	psc->buttons = buttons;
+	changed = buttons ^ (psc->buttons & 0x1f);
+	psc->buttons ^= changed;
 
 	sc->prev_fingers = fingers;
 	sc->total_packets++;
@@ -1226,6 +1273,7 @@ pms_synaptics_process_packet(struct pms_softc *psc, struct synaptics_packet *sp)
 	 * Pass the final results up to wsmouse_input() if necessary.
 	 */
 	if (dx || dy || dz || changed) {
+		buttons = (psc->buttons & 0x1f) | ((psc->buttons >> 5) & 0x7);
 		s = spltty();
 		wsmouse_input(psc->sc_wsmousedev,
 				buttons,
