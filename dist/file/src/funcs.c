@@ -1,4 +1,4 @@
-/*	$NetBSD: funcs.c,v 1.6 2006/10/31 21:16:23 pooka Exp $	*/
+/*	$NetBSD: funcs.c,v 1.6.2.1 2007/04/01 15:53:16 bouyer Exp $	*/
 
 /*
  * Copyright (c) Christos Zoulas 2003.
@@ -28,6 +28,7 @@
  */
 #include "file.h"
 #include "magic.h"
+#include <assert.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
@@ -43,7 +44,7 @@
 #if 0
 FILE_RCSID("@(#)Id: funcs.c,v 1.22 2006/10/31 19:37:17 christos Exp")
 #else
-__RCSID("$NetBSD: funcs.c,v 1.6 2006/10/31 21:16:23 pooka Exp $");
+__RCSID("$NetBSD: funcs.c,v 1.6.2.1 2007/04/01 15:53:16 bouyer Exp $");
 #endif
 #endif	/* lint */
 
@@ -58,28 +59,32 @@ protected int
 file_printf(struct magic_set *ms, const char *fmt, ...)
 {
 	va_list ap;
-	size_t len;
+	size_t len, size;
 	char *buf;
 
 	va_start(ap, fmt);
 
-	if ((len = vsnprintf(ms->o.ptr, ms->o.len, fmt, ap)) >= ms->o.len) {
+	if ((len = vsnprintf(ms->o.ptr, ms->o.left, fmt, ap)) >= ms->o.left) {
+		long diff;      /* XXX: really ptrdiff_t */
+
 		va_end(ap);
-		if ((buf = realloc(ms->o.buf, len + 1024)) == NULL) {
+		size = (ms->o.size - ms->o.left) + len + 1024;
+		if ((buf = realloc(ms->o.buf, size)) == NULL) {
 			file_oomem(ms);
 			return -1;
 		}
-		ms->o.ptr = buf + (ms->o.ptr - ms->o.buf);
+		diff = ms->o.ptr - ms->o.buf;
+		ms->o.ptr = buf + diff;
 		ms->o.buf = buf;
-		ms->o.len = ms->o.size - (ms->o.ptr - ms->o.buf);
-		ms->o.size = len + 1024;
+		ms->o.left = size - diff;
+		ms->o.size = size;
 
 		va_start(ap, fmt);
-		len = vsnprintf(ms->o.ptr, ms->o.len, fmt, ap);
+		len = vsnprintf(ms->o.ptr, ms->o.left, fmt, ap);
 	}
-	ms->o.ptr += len;
-	ms->o.len -= len;
 	va_end(ap);
+	ms->o.ptr += len;
+	ms->o.left -= len;
 	return 0;
 }
 
@@ -178,8 +183,8 @@ file_reset(struct magic_set *ms)
 protected const char *
 file_getbuffer(struct magic_set *ms)
 {
-	char *nbuf, *op, *np;
-	size_t nsize;
+	char *pbuf, *op, *np;
+	size_t psize, len;
 
 	if (ms->haderr)
 		return NULL;
@@ -187,14 +192,17 @@ file_getbuffer(struct magic_set *ms)
 	if (ms->flags & MAGIC_RAW)
 		return ms->o.buf;
 
-	nsize = ms->o.len * 4 + 1;
-	if (ms->o.psize < nsize) {
-		if ((nbuf = realloc(ms->o.pbuf, nsize)) == NULL) {
+	len = ms->o.size - ms->o.left;
+	/* * 4 is for octal representation, + 1 is for NUL */
+	psize = len * 4 + 1;
+	assert(psize > len);
+	if (ms->o.psize < psize) {
+		if ((pbuf = realloc(ms->o.pbuf, psize)) == NULL) {
 			file_oomem(ms);
 			return NULL;
 		}
-		ms->o.psize = nsize;
-		ms->o.pbuf = nbuf;
+		ms->o.psize = psize;
+		ms->o.pbuf = pbuf;
 	}
 
 #if defined(HAVE_WCHAR_H) && defined(HAVE_MBRTOWC) && defined(HAVE_WCWIDTH)
