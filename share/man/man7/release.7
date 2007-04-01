@@ -1,4 +1,4 @@
-.\"	$NetBSD: release.7,v 1.21 2006/06/17 04:58:15 reed Exp $
+.\"	$NetBSD: release.7,v 1.22 2007/04/01 14:13:55 apb Exp $
 .\"
 .\" Copyright (c) 1997, 2000, 2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 9, 2005
+.Dd April 1, 2007
 .Dt RELEASE 7
 .Os
 .Sh NAME
@@ -134,7 +134,8 @@ include the leading
 All compression of release files is to be performed with the command:
 .Sy gzip -9 .
 .Pp
-The root of the release hierarchy is
+The root of the release hierarchy may be the root directory of a
+CD-ROM, but in all other cases it should be
 .Sm off
 .Xo
 .Sy .../NetBSD-
@@ -143,12 +144,21 @@ The root of the release hierarchy is
 .Xc
 .Sm on
 .Pp
-.Sy SOURCE_DATE
-is a file containing the date, in UTC, of the source code from which the
+The root of the release hierarchy should contain the following
+files and subdirectories:
+.Pp
+.Bl -tag -width "\*[Lt]machine\*[Gt]"
+.
+.It Sy SOURCE_DATE
+A file containing the date, in UTC, of the source code from which the
 release or snapshot was built, in the default format produced by the
 command:
 .Sy date -u .
-.Pp
+.
+.It Sy shared/
+Files shared by one or more platforms.
+.Bl -tag -width "\*[Lt]machine_arch\*[Gt]"
+.It Em \*[Lt]machine_arch\*[Gt] Ns Pa /
 Files which may be shared by all systems of the same
 .Em \*[Lt]machine_arch\*[Gt]
 will be located in
@@ -163,20 +173,22 @@ will be located in
 .Sm on
 with symbolic links pointing to these files from the
 .Em \*[Lt]machine\*[Gt]
-subdirectory.  Files which are completely machine-independent will be
+subdirectory.
+.It Sy ALL/
+Files which are completely machine-independent will be
 located in
 .Sy .../NetBSD- Ns Em \*[Lt]rel\*[Gt] Ns Sy /shared/ALL/
 with symbolic links pointing to these files from the
 .Em \*[Lt]machine\*[Gt]
 subdirectory.
-.Pp
-Sources should be put into
+.El
+.
+.It Sy source/
+Source codes of the operating system and patches for it
+should be put into
 .Sy .../NetBSD- Ns Em \*[Lt]rel\*[Gt] Ns Sy /source/
 using the following layout:
 .Pp
-.Bl -tag -width "source/"
-.It Sy source/
-Source codes of the operating system and patches for it.
 .Bl -tag -width "patches/"
 .It Sy patches/
 This directory contains various patch files appropriate for
@@ -235,8 +247,8 @@ Source code of the X Window System used on all NetBSD architectures.
 Includes X clients and servers.
 .El
 .El
-.El
-.Pp
+.
+.It Em \*[Lt]machine\*[Gt] Ns Pa /
 The binary releases in
 .Sm off
 .Xo
@@ -424,6 +436,7 @@ tape images, for those platforms that provide them
 .It Sy README
 .It Sy SYSVSUM
 .It Sy tapeimage-hp9144.gz
+.El
 .El
 .El
 .El
