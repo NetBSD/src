@@ -1,4 +1,4 @@
-/* $NetBSD: fgetwc.c,v 1.7 2007/04/01 17:49:10 tnozaki Exp $ */
+/* $NetBSD: fgetwc.c,v 1.8 2007/04/01 18:35:53 tnozaki Exp $ */
 
 /*-
  * Copyright (c)2001 Citrus Project,
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: fgetwc.c,v 1.7 2007/04/01 17:49:10 tnozaki Exp $");
+__RCSID("$NetBSD: fgetwc.c,v 1.8 2007/04/01 18:35:53 tnozaki Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -73,11 +73,14 @@ restart:
 		goto restart;
 	}
 	if (wc == L'\0') {
-		while (fp->_r-- > 0 && fp->_p++ != '\0');
-	} else {
-		fp->_p += nr;
-		fp->_r -= nr;
+		while (*fp->_p != '\0') {
+			++fp->_p;
+			--fp->_r;
+		}
+		nr = 1;
 	}
+	fp->_p += nr;
+	fp->_r -= nr;
 
 	return wc;
 }
