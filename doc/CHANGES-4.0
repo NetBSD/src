@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.107 2007/04/01 15:54:43 bouyer Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.108 2007/04/01 16:16:47 bouyer Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -2426,4 +2426,38 @@ dist/file/src/magic.c				patch
 	Fix an integer underflow in file_printf which can lead to an
 	exploitable heap overflow.
 	[adrianp, ticket #553]
+
+usr.bin/at/at.1					1.22
+usr.bin/at/parsetime.c				1.15
+
+	allow time to be specified as 'now' instead of 'now + 0 minutes'
+	and avoid a rounding error for this case.
+	[mlelstv, ticket #549]
+
+sys/dev/pckbport/synaptics.c			1.14, 1.15
+
+	Handle events from passthrough devices like the Thinkpad
+	'Navistick'.
+	add missing W coordinate
+	[mlelstv, ticket #550]
+
+sys/arch/i386/i386/est.c			1.37
+
+	Add values for Pentium M 780 (2.26GHz).
+	[mlelstv, ticket #551]
+
+sys/dev/pci/if_ste.c				1.26
+
+	Make watchdog poll interrupts before re-initializing the chip.
+	Fixes kern/34834.
+	[mlelstv, ticket #552]
+
+sys/kern/kern_exit.c    patch
+sys/kern/kern_lwp.c     patch
+sys/kern/kern_proc.c    patch
+sys/sys/proc.h          patch
+
+	Add a new SDYING process state. In exit1() release structures before
+	curlwp is  NULL. It should fix the problem described in PR 34892.
+	[chs in ticket #554]
 
