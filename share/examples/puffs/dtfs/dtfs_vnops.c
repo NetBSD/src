@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs_vnops.c,v 1.19 2007/03/22 16:59:34 pooka Exp $	*/
+/*	$NetBSD: dtfs_vnops.c,v 1.20 2007/04/01 10:55:38 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -379,6 +379,9 @@ dtfs_node_mknod(struct puffs_cc *pcc, void *opc, void **newnode,
 	return 0;
 }
 
+#define BLOCKOFF(a,b) ((a) & ((b)-1))
+#define BLOCKLEFT(a,b) ((b) - BLOCKOFF(a,b))
+
 /*
  * Read operation, used both for VOP_READ and VOP_GETPAGES
  */
@@ -388,7 +391,9 @@ dtfs_node_read(struct puffs_cc *pcc, void *opc, uint8_t *buf,
 {
 	struct puffs_node *pn = opc;
 	struct dtfs_file *df = DTFS_CTOF(opc);
-	quad_t xfer;
+	quad_t xfer, origxfer;
+	uint8_t *src, *dest;
+	size_t copylen;
 
 	if (pn->pn_va.va_type != VREG)
 		return EISDIR;
@@ -397,8 +402,18 @@ dtfs_node_read(struct puffs_cc *pcc, void *opc, uint8_t *buf,
 	if (xfer < 0)
 		return EINVAL;
 
-	memcpy(buf, df->df_data + offset, xfer);
-	*resid -= xfer;
+	dest = buf;
+	origxfer = xfer;
+	while (xfer > 0) {
+		copylen = MIN(xfer, BLOCKLEFT(offset, DTFS_BLOCKSIZE));
+		src = df->df_blocks[BLOCKNUM(offset, DTFS_BLOCKSHIFT)]
+		    + BLOCKOFF(offset, DTFS_BLOCKSIZE);
+		memcpy(dest, src, copylen);
+		offset += copylen;
+		dest += copylen;
+		xfer -= copylen;
+	}
+	*resid -= origxfer;
 
 	dtfs_updatetimes(pn, 1, 0, 0);
 
@@ -414,6 +429,8 @@ dtfs_node_write(struct puffs_cc *pcc, void *opc, uint8_t *buf,
 {
 	struct puffs_node *pn = opc;
 	struct dtfs_file *df = DTFS_CTOF(opc);
+	uint8_t *src, *dest;
+	size_t copylen;
 
 	if (pn->pn_va.va_type != VREG)
 		return EISDIR;
@@ -423,8 +440,19 @@ dtfs_node_write(struct puffs_cc *pcc, void *opc, uint8_t *buf,
 
 	if (*resid + offset > pn->pn_va.va_size)
 		dtfs_setsize(pn, *resid + offset);
-	memcpy(df->df_data + offset, buf, *resid);
-	*resid = 0;
+
+	src = buf;
+	while (*resid > 0) {
+		int i;
+		copylen = MIN(*resid, BLOCKLEFT(offset, DTFS_BLOCKSIZE));
+		i = BLOCKNUM(offset, DTFS_BLOCKSHIFT);
+		dest = df->df_blocks[i]
+		    + BLOCKOFF(offset, DTFS_BLOCKSIZE);
+		memcpy(dest, src, copylen);
+		offset += copylen;
+		dest += copylen;
+		*resid -= copylen;
+	}
 
 	dtfs_updatetimes(pn, 0, 1, 1);
 
