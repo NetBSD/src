@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.106 2007/03/31 20:53:22 jdc Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.107 2007/04/01 15:54:43 bouyer Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -2418,4 +2418,12 @@ sys/arch/xen/i386/xen_shm_machdep.c		1.21
 	and eventually run out of XENSHM_NPAGES for a single transfers.
 	Bump XENSHM_NPAGES by 10 for xen3 to avoid deadlocks in such case.
 	[bouyer, ticket #546]
+
+dist/file/src/file.h				patch
+dist/file/src/funcs.c				patch
+dist/file/src/magic.c				patch
+
+	Fix an integer underflow in file_printf which can lead to an
+	exploitable heap overflow.
+	[adrianp, ticket #553]
 
