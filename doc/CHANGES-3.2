@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.2,v 1.1.2.63 2007/03/31 15:27:16 bouyer Exp $
+#	$NetBSD: CHANGES-3.2,v 1.1.2.64 2007/04/01 15:48:22 bouyer Exp $
 
 A complete list of changes from the NetBSD 3.1 release to the NetBSD 3.2
 release:
@@ -3087,9 +3087,18 @@ sys/arch/i386/conf/INSTALL			1.291 via patch
 sys/arch/i386/conf/INSTALL_LAPTOP		1.104 via patch
 sys/arch/i386/conf/XEN2_DOM0			1.13 via patch
 share/man/man4/wm.4				1.14-1.16
+
 	Add support for many cards (include PCI-express based chips).
 	Many bug fixes about auto negotiations (PR#30078, PR#30490,
 	PR#30906, PR#33429 and PR#35386).
 	Fix media link issues with fiber-based card (PR#35797).
 	[msaitoh, ticket #1681]
+
+dist/file/src/file.h	patch
+dist/file/src/funcs.c	patch
+dist/file/src/magic.c	patch
+
+	Fix an integer underflow in file_printf which can lead to an
+	exploitable heap overflow.
+	[adrianp, ticket #1743]
 
