@@ -1,4 +1,4 @@
-/*	$NetBSD: magic.c,v 1.15 2006/10/31 21:16:23 pooka Exp $	*/
+/*	$NetBSD: magic.c,v 1.15.2.1 2007/04/01 15:53:17 bouyer Exp $	*/
 
 /*
  * Copyright (c) Christos Zoulas 2003.
@@ -68,7 +68,7 @@
 #if 0
 FILE_RCSID("@(#)Id: magic.c,v 1.35 2006/10/31 19:37:17 christos Exp")
 #else
-__RCSID("$NetBSD: magic.c,v 1.15 2006/10/31 21:16:23 pooka Exp $");
+__RCSID("$NetBSD: magic.c,v 1.15.2.1 2007/04/01 15:53:17 bouyer Exp $");
 #endif
 #endif	/* lint */
 
@@ -100,7 +100,7 @@ magic_open(int flags)
 		goto free1;
 	}
 
-	ms->o.ptr = ms->o.buf = malloc(ms->o.size = 1024);
+	ms->o.ptr = ms->o.buf = malloc(ms->o.left = ms->o.size = 1024);
 	if (ms->o.buf == NULL)
 		goto free1;
 
@@ -112,7 +112,6 @@ magic_open(int flags)
 	if (ms->c.off == NULL)
 		goto free3;
 	
-	ms->o.len = 0;
 	ms->haderr = 0;
 	ms->error = -1;
 	ms->mlist = NULL;
