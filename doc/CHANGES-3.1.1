@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1.1,v 1.1.2.35 2007/03/31 14:38:06 bouyer Exp $
+#	$NetBSD: CHANGES-3.1.1,v 1.1.2.36 2007/04/01 15:50:23 bouyer Exp $
 
 A complete list of changes from the NetBSD 3.1 release to the NetBSD 3.1.1
 release:
@@ -251,4 +251,12 @@ share/zoneinfo/zone.tab			patch
 
 	update to tzdata2007a.
 	[abp, ticket #1682]
+
+dist/file/src/file.h	patch
+dist/file/src/funcs.c	patch
+dist/file/src/magic.c	patch
+
+	Fix an integer underflow in file_printf which can lead to an
+	exploitable heap overflow.
+	[adrianp, ticket #1743]
 
