@@ -1,4 +1,4 @@
-/*	$NetBSD: parsetime.c,v 1.14 2006/01/03 00:15:45 garbled Exp $	*/
+/*	$NetBSD: parsetime.c,v 1.14.6.1 2007/04/01 16:01:58 bouyer Exp $	*/
 
 /* 
  * parsetime.c - parse time for at(1)
@@ -141,7 +141,7 @@ static int sc_tokplur;	/* scanner - is token plural? */
 #if 0
 static char rcsid[] = "$OpenBSD: parsetime.c,v 1.4 1997/03/01 23:40:10 millert Exp $";
 #else
-__RCSID("$NetBSD: parsetime.c,v 1.14 2006/01/03 00:15:45 garbled Exp $");
+__RCSID("$NetBSD: parsetime.c,v 1.14.6.1 2007/04/01 16:01:58 bouyer Exp $");
 #endif
 #endif
 
@@ -579,15 +579,14 @@ parsetime(int argc, char **argv)
 	 */
 	time_t nowtimer, runtimer;
 	struct tm nowtime, runtime;
-	int hr = 0;
-	/* this MUST be initialized to zero for midnight/noon/teatime */
+	int hr = 0; /* this MUST be initialized to zero for
+	               midnight/noon/teatime */
+	int fulltime = 0;
 
 	nowtimer = time(NULL);
 	nowtime = *localtime(&nowtimer);
 
 	runtime = nowtime;
-	runtime.tm_sec = 0;
-	runtime.tm_isdst = 0;
 
 	if (argc <= optind)
 		usage();
@@ -595,8 +594,21 @@ parsetime(int argc, char **argv)
 	init_scanner(argc - optind, argv + optind);
 
 	switch (token()) {
-	case NOW:	/* now is optional prefix for PLUS tree */
-		expect(PLUS);
+	case NOW:
+		/* now is optional prefix for PLUS tree
+		   in this case the PLUS tree is optional. */
+		switch (token()) {
+		case PLUS:
+			plus(&runtime);
+			break;
+		case EOF:
+			break;
+		default:
+			plonk(sc_tokid);
+			break;
+		}
+		fulltime = 1;
+		break;
 	case PLUS:
 		plus(&runtime);
 		break;
@@ -632,6 +644,11 @@ parsetime(int argc, char **argv)
 		break;
 	} /* ugly case statement */
 	expect(EOF);
+
+	if (!fulltime) {
+		runtime.tm_sec = 0;
+		runtime.tm_isdst = 0;
+	}
 
 	/*
 	 * adjust for daylight savings time
