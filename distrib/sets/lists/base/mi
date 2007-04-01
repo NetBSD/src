@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.697 2007/03/14 15:49:25 tnozaki Exp $
+# $NetBSD: mi,v 1.698 2007/04/01 18:52:28 tnozaki Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -1890,21 +1890,25 @@
 ./usr/share/i18n/csmapper/MISC			base-sysutil-share
 ./usr/share/i18n/csmapper/MISC/ATARIST%UCS.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/MISC/Big5%UCS.mps	base-obsolete		obsolete
+./usr/share/i18n/csmapper/MISC/DECMCS%UCS.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/MISC/HP-ROMAN8%UCS.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/MISC/KOI8-R%UCS.mps	base-obsolete		obsolete
 ./usr/share/i18n/csmapper/MISC/KOI8-U%UCS.mps	base-obsolete		obsolete
 ./usr/share/i18n/csmapper/MISC/MULELAO-1%UCS.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/MISC/NEXTSTEP%UCS.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/MISC/PTCP154%UCS.mps	base-obsolete		obsolete
+./usr/share/i18n/csmapper/MISC/RISCOS-LATIN1%UCS.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/MISC/TDS565%UCS.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/MISC/UCS%ATARIST.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/MISC/UCS%Big5.mps	base-obsolete		obsolete
+./usr/share/i18n/csmapper/MISC/UCS%DECMCS.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/MISC/UCS%HP-ROMAN8.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/MISC/UCS%KOI8-R.mps	base-obsolete		obsolete
 ./usr/share/i18n/csmapper/MISC/UCS%KOI8-U.mps	base-obsolete		obsolete
 ./usr/share/i18n/csmapper/MISC/UCS%MULELAO-1.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/MISC/UCS%NEXTSTEP.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/MISC/UCS%PTCP154.mps	base-obsolete		obsolete
+./usr/share/i18n/csmapper/MISC/UCS%RISCOS-LATIN1.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/MISC/UCS%TDS565.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/TCVN			base-sysutil-share
 ./usr/share/i18n/csmapper/TCVN/TCVN5712-1%UCS.mps	base-sysutil-share	nls
@@ -2020,6 +2024,9 @@
 ./usr/share/i18n/esdb/CP/CP943C.esdb		base-sysutil-share	nls
 ./usr/share/i18n/esdb/CP/CP949.esdb		base-sysutil-share	nls
 ./usr/share/i18n/esdb/CP/CP950.esdb		base-sysutil-share	nls
+./usr/share/i18n/esdb/DEC			base-sysutil-share
+./usr/share/i18n/esdb/DEC/DECHanyu.esdb		base-sysutil-share	nls
+./usr/share/i18n/esdb/DEC/DECMCS.esdb		base-sysutil-share	nls
 ./usr/share/i18n/esdb/EBCDIC			base-sysutil-share
 ./usr/share/i18n/esdb/EBCDIC/EBCDIC-AT-DE-A.esdb	base-sysutil-share	nls
 ./usr/share/i18n/esdb/EBCDIC/EBCDIC-AT-DE.esdb	base-sysutil-share	nls
@@ -2132,6 +2139,7 @@
 ./usr/share/i18n/esdb/MISC/MULELAO-1.esdb	base-sysutil-share	nls
 ./usr/share/i18n/esdb/MISC/NEXTSTEP.esdb	base-sysutil-share	nls
 ./usr/share/i18n/esdb/MISC/PTCP154.esdb		base-obsolete		obsolete
+./usr/share/i18n/esdb/MISC/RISCOS-LATIN1.esdb	base-sysutil-share	nls
 ./usr/share/i18n/esdb/MISC/Shift_JIS.esdb	base-sysutil-share	nls
 ./usr/share/i18n/esdb/MISC/Shift_JIS-2004.esdb	base-sysutil-share	nls
 ./usr/share/i18n/esdb/MISC/TDS565.esdb		base-sysutil-share	nls
