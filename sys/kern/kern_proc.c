@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.99 2006/10/21 17:01:56 pooka Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.99.2.1 2007/04/01 16:16:20 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.99 2006/10/21 17:01:56 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.99.2.1 2007/04/01 16:16:20 bouyer Exp $");
 
 #include "opt_kstack.h"
 #include "opt_maxuprc.h"
@@ -490,8 +490,8 @@ p_find(pid_t pid, uint flags)
 	p = pid_table[pid & pid_tbl_mask].pt_proc;
 	/* Only allow live processes to be found by pid. */
 	if (P_VALID(p) && p->p_pid == pid &&
-	    ((stat = p->p_stat) == SACTIVE || stat == SSTOP
-		    || (stat == SZOMB && (flags & PFIND_ZOMBIE)))) {
+	    ((stat = p->p_stat) == SACTIVE || stat == SSTOP ||
+	     ((flags & PFIND_ZOMBIE) && (stat == SDYING || stat == SZOMB)))) {
 		if (flags & PFIND_UNLOCK_OK)
 			 proclist_unlock_read();
 		return p;

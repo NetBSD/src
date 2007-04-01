@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.49 2006/11/03 19:46:03 ad Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.49.2.1 2007/04/01 16:16:20 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.49 2006/11/03 19:46:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.49.2.1 2007/04/01 16:16:20 bouyer Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -725,6 +725,7 @@ proc_representative_lwp(struct proc *p)
 		/* Doesn't really matter... */
 		return (LIST_FIRST(&p->p_lwps));
 #ifdef DIAGNOSTIC
+	case SDYING:
 	case SIDL:
 		/* We have more than one LWP and we're in SIDL?
 		 * How'd that happen?
