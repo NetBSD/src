@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.13 2006/10/31 21:50:54 pooka Exp $	*/
+/*	$NetBSD: file.h,v 1.13.2.1 2007/04/01 15:53:16 bouyer Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -282,7 +282,7 @@ struct magic_set {
 	/* Accumulation buffer */
 	char *buf;
 	char *ptr;
-	size_t len;
+	size_t left;
 	size_t size;
 	/* Printable buffer */
 	char *pbuf;
