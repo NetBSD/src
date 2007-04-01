@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.162 2006/11/01 10:17:58 yamt Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.162.2.1 2007/04/01 16:16:20 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.162 2006/11/01 10:17:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.162.2.1 2007/04/01 16:16:20 bouyer Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -188,9 +188,6 @@ exit1(struct lwp *l, int rv)
 {
 	struct proc	*p, *q, *nq;
 	int		s, sa;
-	struct plimit	*plim;
-	struct pstats	*pstats;
-	struct sigacts	*ps;
 	ksiginfo_t	ksi;
 	int		do_psignal = 0;
 
@@ -243,6 +240,7 @@ exit1(struct lwp *l, int rv)
 	sigfillset(&p->p_sigctx.ps_sigignore);
 	sigemptyset(&p->p_sigctx.ps_siglist);
 	p->p_sigctx.ps_sigcheck = 0;
+	p->p_stat = SDYING;
 	timers_free(p, TIMERS_ALL);
 
 	if (sa || (p->p_nlwps > 1)) {
@@ -343,13 +341,6 @@ exit1(struct lwp *l, int rv)
 		(*p->p_emul->e_proc_exit)(p);
 
 	/*
-	 * Finalize the last LWP's specificdata, as well as the
-	 * specificdata for the proc itself.
-	 */
-	lwp_finispecific(l);
-	proc_finispecific(p);
-
-	/*
 	 * Free the VM resources we're still holding on to.
 	 * We must do this from a valid thread because doing
 	 * so may block. This frees vmspace, which we don't
@@ -358,6 +349,18 @@ exit1(struct lwp *l, int rv)
 	 * anymore.
 	 */
 	uvm_proc_exit(p);
+
+	/* Release substructures.  These might need to sleep. */
+	kauth_cred_free(l->l_cred);
+	sigactsfree(p->p_sigacts);
+	p->p_sigacts = NULL;
+
+	/*
+	 * Finalize the last LWP's specificdata, as well as the
+	 * specificdata for the proc itself.
+	 */
+	lwp_finispecific(l);
+	proc_finispecific(p);
 
 	/*
 	 * Give machine-dependent code a chance to free any
@@ -506,15 +509,6 @@ exit1(struct lwp *l, int rv)
 	 */
 	curlwp = NULL;
 
-	/* Delay release until after dropping the proclist lock */
-	plim = p->p_limit;
-	pstats = p->p_stats;
-	ps = p->p_sigacts;
-
-	p->p_limit = NULL;
-	p->p_stats = NULL;
-	p->p_sigacts = NULL;
-
 	/* Reload parent pointer, since p may have been reparented above */
 	q = p->p_pptr;
 
@@ -535,14 +529,6 @@ exit1(struct lwp *l, int rv)
 
 	/* Wake up the parent so it can get exit status. */
 	wakeup(q);
-
-	/* Release substructures */
-	sigactsfree(ps);
-	limfree(plim);
-	pstatsfree(pstats);
-
-	/* Release cached credentials. */
-	kauth_cred_free(l->l_cred);
 
 #ifdef DEBUG
 	/* Nothing should use the process link anymore */
@@ -880,6 +866,10 @@ proc_free(struct proc *p)
 	/* Release any SA state. */
 	if (p->p_sa)
 		sa_release(p);
+
+	/* Release remaining substructures. */
+	limfree(p->p_limit);
+	pstatsfree(p->p_stats);
 
 	/* Free proc structure and let pid be reallocated */
 	proc_free_mem(p);
