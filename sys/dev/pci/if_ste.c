@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ste.c,v 1.25 2006/11/16 01:33:09 christos Exp $	*/
+/*	$NetBSD: if_ste.c,v 1.25.2.1 2007/04/01 16:08:04 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ste.c,v 1.25 2006/11/16 01:33:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ste.c,v 1.25.2.1 2007/04/01 16:08:04 bouyer Exp $");
 
 #include "bpfilter.h"
 
@@ -784,6 +784,8 @@ ste_watchdog(struct ifnet *ifp)
 	printf("%s: device timeout\n", sc->sc_dev.dv_xname);
 	ifp->if_oerrors++;
 
+	ste_txintr(sc);
+	ste_rxintr(sc);
 	(void) ste_init(ifp);
 
 	/* Try to get more packets going. */
