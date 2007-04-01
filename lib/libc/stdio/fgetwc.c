@@ -1,4 +1,4 @@
-/* $NetBSD: fgetwc.c,v 1.5 2006/07/03 17:06:36 tnozaki Exp $ */
+/* $NetBSD: fgetwc.c,v 1.6 2007/04/01 17:11:40 tnozaki Exp $ */
 
 /*-
  * Copyright (c)2001 Citrus Project,
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: fgetwc.c,v 1.5 2006/07/03 17:06:36 tnozaki Exp $");
+__RCSID("$NetBSD: fgetwc.c,v 1.6 2007/04/01 17:11:40 tnozaki Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -44,46 +44,36 @@ wint_t
 __fgetwc_unlock(FILE *fp)
 {
 	struct wchar_io_data *wcio;
-	mbstate_t *st;
 	wchar_t wc;
-	size_t size;
+	size_t nr;
 
 	_DIAGASSERT(fp != NULL);
 
 	_SET_ORIENTATION(fp, 1);
 	wcio = WCIO_GET(fp);
-	if (wcio == 0) {
-		errno = ENOMEM;
-		return WEOF;
-	}
+	_DIAGASSERT(wcio != NULL);
 
 	/* if there're ungetwc'ed wchars, use them */
-	if (wcio->wcio_ungetwc_inbuf) {
-		wc = wcio->wcio_ungetwc_buf[--wcio->wcio_ungetwc_inbuf];
+	if (wcio->wcio_ungetwc_inbuf)
+		return wcio->wcio_ungetwc_buf[--wcio->wcio_ungetwc_inbuf];
 
-		return wc;
+	if (fp->_r <= 0) {
+restart:
+		if (__srefill(fp) != 0)
+			return WEOF;
 	}
-
-	st = &wcio->wcio_mbstate_in;
-
-	do {
-		char c;
-		int ch = __sgetc(fp);
-
-		if (ch == EOF) {
-			return WEOF;
-		}
-
-		c = ch;
-		size = mbrtowc(&wc, &c, 1, st);
-		if (size == (size_t)-1) {
-			errno = EILSEQ;
-			fp->_flags |= __SERR;
-			return WEOF;
-		}
-	} while (size == (size_t)-2);
-
-	_DIAGASSERT(size == 1);
+	nr = mbrtowc(&wc, (const char *)fp->_p,
+	    (size_t)fp->_r, &wcio->wcio_mbstate_in);
+	if (nr == (size_t)-1) {
+		fp->_flags |= __SERR;
+		return WEOF;
+	} else if (nr == (size_t)-2) {
+		fp->_p += fp->_r;
+		fp->_r = 0;
+		goto restart;
+	}
+	fp->_p += nr;
+	fp->_r -= nr;
 
 	return wc;
 }
