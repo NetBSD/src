@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs_subr.c,v 1.12 2007/03/20 18:30:30 pooka Exp $	*/
+/*	$NetBSD: dtfs_subr.c,v 1.13 2007/04/01 10:55:38 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -203,6 +203,7 @@ dtfs_freenode(struct puffs_node *pn)
 {
 	struct dtfs_file *df = DTFS_PTOF(pn);
 	struct dtfs_mount *dtm;
+	int i;
 
 	assert(pn->pn_va.va_nlink == 0);
 	dtm = pn->pn_mnt->pu_privdata;
@@ -211,7 +212,8 @@ dtfs_freenode(struct puffs_node *pn)
 	case VREG:
 		assert(dtm->dtm_fsizes >= pn->pn_va.va_size);
 		dtm->dtm_fsizes -= pn->pn_va.va_size;
-		free(df->df_data);
+		for (i = 0; i < BLOCKNUM(df->df_datalen, DTFS_BLOCKSHIFT); i++)
+			free(df->df_blocks[i]);
 		break;
 	case VLNK:
 		free(df->df_linktarget);
@@ -236,31 +238,32 @@ dtfs_setsize(struct puffs_node *pn, off_t newsize)
 {
 	struct dtfs_file *df = DTFS_PTOF(pn);
 	struct dtfs_mount *dtm;
-	size_t allocsize;
+	size_t newblocks;
 	int needalloc, shrinks;
+	int i;
 
-	needalloc = newsize > df->df_datalen;
+	needalloc = newsize > ROUNDUP(df->df_datalen, DTFS_BLOCKSIZE);
 	shrinks = newsize < pn->pn_va.va_size;
 
-	/*
-	 * quickhack: realloc in 1MB chunks if we're over 1MB in size
-	 */
-	if (pn->pn_va.va_size > 1024*1024 && !shrinks) {
-		allocsize = newsize + 1024*1024;
-	} else {
-		allocsize = newsize;
-	}
-
 	if (needalloc || shrinks) {
-		df->df_data = erealloc(df->df_data, allocsize);
+		newblocks = BLOCKNUM(newsize, DTFS_BLOCKSHIFT) + 1;
+
+		if (shrinks)
+			for (i = newblocks; i < df->df_numblocks; i++)
+				free(df->df_blocks[i]);
+
+		df->df_blocks = erealloc(df->df_blocks,
+		    newblocks * sizeof(uint8_t *));
 		/*
 		 * if extended, set storage to zero
 		 * to match correct behaviour
 		 */ 
 		if (!shrinks)
-			memset(df->df_data+df->df_datalen, 0,
-			    allocsize-df->df_datalen);
-		df->df_datalen = allocsize;
+			for (i = df->df_numblocks; i < newblocks; i++)
+				df->df_blocks[i] = emalloc(DTFS_BLOCKSIZE);
+
+		df->df_datalen = newsize;
+		df->df_numblocks = newblocks;
 	}
 
 	dtm = pn->pn_mnt->pu_privdata;
@@ -271,7 +274,7 @@ dtfs_setsize(struct puffs_node *pn, off_t newsize)
 	}
 
 	pn->pn_va.va_size = newsize;
-	pn->pn_va.va_bytes = df->df_datalen;
+	pn->pn_va.va_bytes = BLOCKNUM(newsize,DTFS_BLOCKSHIFT)>>DTFS_BLOCKSHIFT;
 }
 
 /* add & bump link count */
