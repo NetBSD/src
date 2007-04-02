@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.101 2007/03/04 06:02:51 christos Exp $ */
+/* $NetBSD: wskbd.c,v 1.102 2007/04/02 10:01:31 mishka Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.101 2007/03/04 06:02:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.102 2007/04/02 10:01:31 mishka Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1396,14 +1396,20 @@ update_leds(struct wskbd_internal *id)
 static inline void
 update_modifier(struct wskbd_internal *id, u_int type, int toggle, int mask)
 {
-	if (toggle) {
-		if (type == WSCONS_EVENT_KEY_DOWN)
-			id->t_modifiers ^= mask;
-	} else {
+	switch (toggle) {
+	case 0:	/* down - on, up - off */
 		if (type == WSCONS_EVENT_KEY_DOWN)
 			id->t_modifiers |= mask;
 		else
 			id->t_modifiers &= ~mask;
+		break;
+	case 1: /* down - invert */
+		if (type == WSCONS_EVENT_KEY_DOWN)
+			id->t_modifiers ^= mask;
+		break;
+	case 2: /* either down or up - invert */
+		id->t_modifiers ^= mask;
+		break;
 	}
 }
 
@@ -1458,6 +1464,7 @@ internal_command(struct wskbd_softc *sc, u_int *type, keysym_t ksym,
 				return (0);
 			}
 		}
+		break;
 
 	case KS_Cmd_ScrollSlowUp:
 	case KS_Cmd_ScrollSlowDown:
@@ -1477,7 +1484,19 @@ internal_command(struct wskbd_softc *sc, u_int *type, keysym_t ksym,
 				return (0);
 			}
 		}
+		break;
 #endif
+
+	case KS_Cmd_ModeToggle:
+		if (*type == WSCONS_EVENT_KEY_DOWN) {
+		    if (MOD_ONESET(sc->id, MOD_COMMAND1 | MOD_COMMAND2)) {
+			update_modifier(sc->id, *type, 1, MOD_MODESHIFT);
+			return (1);
+		    } else {
+			return (0);
+		    }
+		}
+		break;
 
 	case KS_Cmd:
 		update_modifier(sc->id, *type, 0, MOD_COMMAND);
@@ -1636,7 +1655,11 @@ wskbd_translate(struct wskbd_internal *id, u_int type, int value)
 		break;
 
 	case KS_Mode_switch:
-		update_modifier(id, type, 0, MOD_MODESHIFT);
+		update_modifier(id, type, 2, MOD_MODESHIFT);
+		break;
+
+	case KS_Mode_toggle:
+		update_modifier(id, type, 1, MOD_MODESHIFT);
 		break;
 
 	case KS_Num_Lock:
@@ -1665,7 +1688,7 @@ wskbd_translate(struct wskbd_internal *id, u_int type, int value)
 	else
 		group = & kp->group1[0];
 
-	if ((id->t_modifiers & MOD_NUMLOCK) != 0 &&
+	if (MOD_ONESET(id, MOD_NUMLOCK) &&
 	    KS_GROUP(group[1]) == KS_GROUP_Keypad) {
 		if (MOD_ONESET(id, MOD_ANYSHIFT))
 			ksym = group[0];
@@ -1674,10 +1697,16 @@ wskbd_translate(struct wskbd_internal *id, u_int type, int value)
 	} else if (! MOD_ONESET(id, MOD_ANYSHIFT | MOD_CAPSLOCK)) {
 		ksym = group[0];
 	} else if (MOD_ONESET(id, MOD_CAPSLOCK)) {
-		if (! MOD_ONESET(id, MOD_SHIFT_L | MOD_SHIFT_R))
-			ksym = group[0];
-		else
+		if (MOD_ONESET(id, MOD_SHIFT_L | MOD_SHIFT_R))
 			ksym = group[1];
+		else
+			ksym = group[0];
+
+		/*
+		 * XXX: the following translation may (and in fact, is)
+		 * not work well for some localized layouts. IMHO the
+		 * convertion should be done on layout basis.  -- <mishka>
+		 */
 		if (ksym >= KS_a && ksym <= KS_z)
 			ksym += KS_A - KS_a;
 		else if (ksym >= KS_agrave && ksym <= KS_thorn &&
