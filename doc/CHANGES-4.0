@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.108 2007/04/01 16:16:47 bouyer Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.109 2007/04/02 17:44:24 bouyer Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -2388,7 +2388,11 @@ sys/compat/linux32/Makefile.inc			1.2
 	From Edgar Fuﬂ in PR/35956.
 	[njoly, ticket #543]
 
-sys/compat/linux32/arch/amd64/syscalls.master	1.11
+sys/compat/linux32/arch/amd64/syscalls.master		1.11
+sys/compat/linux32/arch/amd64/linux32_syscall.h		regen
+sys/compat/linux32/arch/amd64/linux32_syscallargs.h	regen
+sys/compat/linux32/arch/amd64/linux32_syscalls.c	regen
+sys/compat/linux32/arch/amd64/linux32_sysent.c		regen
 
 	Add support for a few syscalls:
 	setfsuid16/getfsuid16
