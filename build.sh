@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.164 2007/03/25 12:36:01 apb Exp $
+#	$NetBSD: build.sh,v 1.165 2007/04/02 10:57:36 apb Exp $
 #
 # Copyright (c) 2001-2005 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -159,7 +159,10 @@ initdefaults()
 	[ -f share/mk/bsd.own.mk ] ||
 	    bomb "src/share/mk is missing; please re-fetch the source tree"
 
+	# Find information about the build platform.
+	#
 	uname_s=$(uname -s 2>/dev/null)
+	uname_r=$(uname -r 2>/dev/null)
 	uname_m=$(uname -m 2>/dev/null)
 
 	# If $PWD is a valid name of the current directory, POSIX mandates
@@ -233,6 +236,10 @@ initdefaults()
 	# Set source directories
 	#
 	setmakeenv NETBSDSRCDIR "${TOP}"
+
+	# Find the version of NetBSD
+	#
+	DISTRIBVER="$(${HOST_SH} ${TOP}/sys/conf/osrelease.sh)"
 
 	# Set various environment variables to known defaults,
 	# to minimize (cross-)build problems observed "in the field".
@@ -908,9 +915,6 @@ validatemakeparams()
 		${runcmd} cd "${TOP}"
 	fi
 
-	statusmsg "MACHINE:          ${MACHINE}"
-	statusmsg "MACHINE_ARCH:     ${MACHINE_ARCH}"
-
 	# Find TOOLDIR, DESTDIR, and RELEASEDIR.
 	#
 	TOOLDIR=$(getmakevar TOOLDIR)
@@ -1017,7 +1021,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.164 2007/03/25 12:36:01 apb Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.165 2007/04/02 10:57:36 apb Exp $
 # with these arguments: ${_args}
 #
 EOF
@@ -1170,7 +1174,10 @@ main()
 	build_start=$(date)
 	statusmsg "${progname} command: $0 $@"
 	statusmsg "${progname} started: ${build_start}"
-
+	statusmsg "NetBSD version:   ${DISTRIBVER}"
+	statusmsg "MACHINE:          ${MACHINE}"
+	statusmsg "MACHINE_ARCH:     ${MACHINE_ARCH}"
+	statusmsg "Build platform:   ${uname_s} ${uname_r} ${uname_m}"
 	statusmsg "HOST_SH:          ${HOST_SH}"
 
 	rebuildmake
