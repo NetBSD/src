@@ -300,8 +300,6 @@ enum reg_class { NO_REGS, ALL_REGS, LIM_REG_CLASSES };
 		   && memory_operand (OP, GET_MODE (OP))		\
 		   && !illegal_addsub_di_memory_operand (OP, GET_MODE (OP))) \
    : (C) == 'T' ? (symbolic_operand (OP, GET_MODE (OP)) && !flag_pic)	\
-   : (C) == 'U' ? (local_symbolic_operand (OP, GET_MODE (OP)))		\
-   : (C) == 'V' ? (GET_CODE (OP) == SYMBOL_REF)				\
    : 0)
 
 #define EXTRA_MEMORY_CONSTRAINT(C, STR)		((C) == 'R')
