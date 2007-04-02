@@ -25,7 +25,7 @@
   "
 {
   rtx label = gen_label_rtx ();
-  emit_insn (gen_ffssi2_internal (operands[0], operands[1]));
+  emit_insn (gen_ffssi2_internal (operands[0], operands[1], operands[0]));
   emit_jump_insn (gen_bne (label));
   emit_insn (gen_negsi2 (operands[0], const1_rtx));
   emit_label (label);
@@ -34,8 +34,8 @@
 }")
 
 (define_insn "ffssi2_internal"
-  [(set (match_operand:SI 0 "nonimmediate_operand" "=rQ")
-        (ffs:SI (match_operand:SI 1 "general_operand" "nrm")))
-   (set (cc0) (match_dup 0))]
+  [(set (match_operand:SI 0 "nonimmediate_operand" "=g")
+        (ffs:SI (match_operand:SI 1 "general_operand" "nrQ")))
+   (set (cc0) (match_operand:SI 2 "nonimmediate_operand" "0"))]
   ""
   "ffs $0,$32,%1,%0")
