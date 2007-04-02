@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.165 2007/04/02 10:57:36 apb Exp $
+#	$NetBSD: build.sh,v 1.166 2007/04/02 11:00:10 apb Exp $
 #
 # Copyright (c) 2001-2005 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1021,7 +1021,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.165 2007/04/02 10:57:36 apb Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.166 2007/04/02 11:00:10 apb Exp $
 # with these arguments: ${_args}
 #
 EOF
@@ -1237,7 +1237,6 @@ main()
 		esac
 	done
 
-	statusmsg "${progname} started: ${build_start}"
 	statusmsg "${progname} ended:   $(date)"
 	if [ -s "${results}" ]; then
 		echo "===> Summary of results:"
