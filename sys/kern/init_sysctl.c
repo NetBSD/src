@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.96.2.4 2007/03/23 15:56:07 yamt Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.96.2.5 2007/04/02 00:28:08 rmind Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.96.2.4 2007/03/23 15:56:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.96.2.5 2007/04/02 00:28:08 rmind Exp $");
 
 #include "opt_sysv.h"
 #include "opt_multiprocessor.h"
@@ -193,7 +193,6 @@ static int sysctl_kern_hostid(SYSCTLFN_PROTO);
 static int sysctl_setlen(SYSCTLFN_PROTO);
 static int sysctl_kern_clockrate(SYSCTLFN_PROTO);
 static int sysctl_kern_file(SYSCTLFN_PROTO);
-static int sysctl_kern_autonice(SYSCTLFN_PROTO);
 static int sysctl_msgbuf(SYSCTLFN_PROTO);
 static int sysctl_kern_defcorename(SYSCTLFN_PROTO);
 static int sysctl_kern_cptime(SYSCTLFN_PROTO);
@@ -328,6 +327,7 @@ SYSCTL_SETUP(sysctl_root_setup, "sysctl base setup")
 SYSCTL_SETUP(sysctl_kern_setup, "sysctl kern subtree setup")
 {
 	extern int kern_logsigexit;	/* defined in kern/kern_sig.c */
+	extern fixpt_t ccpu;		/* defined in kern/kern_synch.c */
 	extern int dumponpanic;		/* defined in kern/subr_prf.c */
 	const struct sysctlnode *rnode;
 
@@ -494,20 +494,6 @@ SYSCTL_SETUP(sysctl_kern_setup, "sysctl kern subtree setup")
 		       CTL_KERN, KERN_TIMEX, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "autonicetime",
-		       SYSCTL_DESCR("CPU clock seconds before non-root "
-				    "process priority is lowered"),
-		       sysctl_kern_autonice, 0, &autonicetime, 0,
-		       CTL_KERN, KERN_AUTONICETIME, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "autoniceval",
-		       SYSCTL_DESCR("Automatic reniced non-root process "
-				    "priority"),
-		       sysctl_kern_autonice, 0, &autoniceval, 0,
-		       CTL_KERN, KERN_AUTONICEVAL, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "rtc_offset",
 		       SYSCTL_DESCR("Offset of real time clock from UTC in "
 				    "minutes"),
@@ -641,6 +627,12 @@ SYSCTL_SETUP(sysctl_kern_setup, "sysctl kern subtree setup")
 		       SYSCTL_DESCR("Kernel fixed-point scale factor"),
 		       NULL, FSCALE, NULL, 0,
 		       CTL_KERN, KERN_FSCALE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_INT, "ccpu",
+		       SYSCTL_DESCR("Scheduler exponential decay value"),
+		       NULL, 0, &ccpu, 0,
+		       CTL_KERN, KERN_CCPU, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRUCT, "cp_time",
@@ -1330,40 +1322,6 @@ sysctl_kern_file(SYSCTLFN_ARGS)
 		where += sizeof(struct file);
 	}
 	*oldlenp = where - start;
-	return (0);
-}
-
-/*
- * sysctl helper routine for kern.autonicetime and kern.autoniceval.
- * asserts that the assigned value is in the correct range.
- */
-static int
-sysctl_kern_autonice(SYSCTLFN_ARGS)
-{
-	int error, t = 0;
-	struct sysctlnode node;
-
-	node = *rnode;
-	t = *(int*)node.sysctl_data;
-	node.sysctl_data = &t;
-	error = sysctl_lookup(SYSCTLFN_CALL(&node));
-	if (error || newp == NULL)
-		return (error);
-
-	switch (node.sysctl_num) {
-	case KERN_AUTONICETIME:
-		if (t >= 0)
-			autonicetime = t;
-		break;
-	case KERN_AUTONICEVAL:
-		if (t < PRIO_MIN)
-			t = PRIO_MIN;
-		else if (t > PRIO_MAX)
-			t = PRIO_MAX;
-		autoniceval = t;
-		break;
-	}
-
 	return (0);
 }
 

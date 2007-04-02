@@ -1,4 +1,4 @@
-/*	$NetBSD: sched_4bsd.c,v 1.1.2.22 2007/03/24 16:50:26 rmind Exp $	*/
+/*	$NetBSD: sched_4bsd.c,v 1.1.2.23 2007/04/02 00:28:09 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.1.2.22 2007/03/24 16:50:26 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.1.2.23 2007/04/02 00:28:09 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -120,13 +120,11 @@ typedef struct runqueue {
 } runqueue_t;
 static runqueue_t global_queue; 
 
-static void schedcpu(void *);
 static void updatepri(struct lwp *);
 static void resetpriority(struct lwp *);
 static void resetprocpriority(struct proc *);
 
-struct callout schedcpu_ch = CALLOUT_INITIALIZER_SETFUNC(schedcpu, NULL);
-static unsigned int schedcpu_ticks;
+extern unsigned int sched_pstats_ticks; /* defined in kern_synch.c */
 
 /* The global scheduler state */
 kmutex_t sched_mutex;
@@ -275,141 +273,34 @@ decay_cpu_batch(fixpt_t loadfac, fixpt_t estcpu, unsigned int n)
 	return estcpu;
 }
 
-/* decay 95% of `p_pctcpu' in 60 seconds; see CCPU_SHIFT before changing */
-fixpt_t	ccpu = 0.95122942450071400909 * FSCALE;		/* exp(-1/20) */
-
 /*
- * If `ccpu' is not equal to `exp(-1/20)' and you still want to use the
- * faster/more-accurate formula, you'll have to estimate CCPU_SHIFT below
- * and possibly adjust FSHIFT in "param.h" so that (FSHIFT >= CCPU_SHIFT).
+ * sched_pstats_hook:
  *
- * To estimate CCPU_SHIFT for exp(-1/20), the following formula was used:
- *	1 - exp(-1/20) ~= 0.0487 ~= 0.0488 == 1 (fixed pt, *11* bits).
- *
- * If you dont want to bother with the faster/more-accurate formula, you
- * can set CCPU_SHIFT to (FSHIFT + 1) which will use a slower/less-accurate
- * (more general) method of calculating the %age of CPU used by a process.
+ * Periodically called from sched_pstats(); used to recalculate priorities.
  */
-#define	CCPU_SHIFT	11
-
-/*
- * schedcpu:
- *
- *	Recompute process priorities, every hz ticks.
- *
- *	XXXSMP This needs to be reorganised in order to reduce the locking
- *	burden.
- */
-/* ARGSUSED */
-static void
-schedcpu(void *arg)
+inline void
+sched_pstats_hook(struct proc *p, int minslp)
 {
-	fixpt_t loadfac = loadfactor(averunnable.ldavg[0]);
-	struct rlimit *rlim;
 	struct lwp *l;
-	struct proc *p;
-	int minslp, clkhz, sig;
-	long runtm;
+	fixpt_t loadfac = loadfactor(averunnable.ldavg[0]);
 
-	schedcpu_ticks++;
-
-	mutex_enter(&proclist_mutex);
-	PROCLIST_FOREACH(p, &allproc) {
-		/*
-		 * Increment time in/out of memory and sleep time (if
-		 * sleeping).  We ignore overflow; with 16-bit int's
-		 * (remember them?) overflow takes 45 days.
-		 */
-		minslp = 2;
-		mutex_enter(&p->p_smutex);
-		runtm = p->p_rtime.tv_sec;
+	/*
+	 * If the process has slept the entire second,
+	 * stop recalculating its priority until it wakes up.
+	 */
+	if (minslp <= 1) {
+		p->p_estcpu = decay_cpu(loadfac, p->p_estcpu);
+		
 		LIST_FOREACH(l, &p->p_lwps, l_sibling) {
 			if ((l->l_flag & LW_IDLE) != 0)
 				continue;
 			lwp_lock(l);
-			runtm += l->l_rtime.tv_sec;
-			l->l_swtime++;
-			if (l->l_stat == LSSLEEP || l->l_stat == LSSTOP ||
-			    l->l_stat == LSSUSPENDED) {
-				l->l_slptime++;
-				minslp = min(minslp, l->l_slptime);
-			} else
-				minslp = 0;
+			if (l->l_slptime <= 1 &&
+			    l->l_priority >= PUSER)
+				resetpriority(l);
 			lwp_unlock(l);
 		}
-		p->p_pctcpu = (p->p_pctcpu * ccpu) >> FSHIFT;
-
-		/*
-		 * Check if the process exceeds its CPU resource allocation.
-		 * If over max, kill it.
-		 */
-		rlim = &p->p_rlimit[RLIMIT_CPU];
-		sig = 0;
-		if (runtm >= rlim->rlim_cur) {
-			if (runtm >= rlim->rlim_max)
-				sig = SIGKILL;
-			else {
-				sig = SIGXCPU;
-				if (rlim->rlim_cur < rlim->rlim_max)
-					rlim->rlim_cur += 5;
-			}
-		}
-
-		/* 
-		 * If the process has run for more than autonicetime, reduce
-		 * priority to give others a chance.
-		 */
-		if (autonicetime && runtm > autonicetime && p->p_nice == NZERO
-		    && kauth_cred_geteuid(p->p_cred)) {
-			mutex_spin_enter(&p->p_stmutex);
-			p->p_nice = autoniceval + NZERO;
-			resetprocpriority(p);
-			mutex_spin_exit(&p->p_stmutex);
-		}
-
-		/*
-		 * If the process has slept the entire second,
-		 * stop recalculating its priority until it wakes up.
-		 */
-		if (minslp <= 1) {
-			/*
-			 * p_pctcpu is only for ps.
-			 */
-			mutex_spin_enter(&p->p_stmutex);
-			clkhz = stathz != 0 ? stathz : hz;
-#if	(FSHIFT >= CCPU_SHIFT)
-			p->p_pctcpu += (clkhz == 100)?
-			    ((fixpt_t) p->p_cpticks) << (FSHIFT - CCPU_SHIFT):
-			    100 * (((fixpt_t) p->p_cpticks)
-			    << (FSHIFT - CCPU_SHIFT)) / clkhz;
-#else
-			p->p_pctcpu += ((FSCALE - ccpu) *
-			    (p->p_cpticks * FSCALE / clkhz)) >> FSHIFT;
-#endif
-			p->p_cpticks = 0;
-			p->p_estcpu = decay_cpu(loadfac, p->p_estcpu);
-
-			LIST_FOREACH(l, &p->p_lwps, l_sibling) {
-				if ((l->l_flag & LW_IDLE) != 0)
-					continue;
-				lwp_lock(l);
-				if (l->l_slptime <= 1 &&
-				    l->l_priority >= PUSER)
-					resetpriority(l);
-				lwp_unlock(l);
-			}
-			mutex_spin_exit(&p->p_stmutex);
-		}
-
-		mutex_exit(&p->p_smutex);
-		if (sig) {
-			psignal(p, sig);
-		}
 	}
-	mutex_exit(&proclist_mutex);
-	uvm_meter();
-	wakeup(&lbolt);
-	callout_schedule(&schedcpu_ch, hz);
 }
 
 /*
@@ -426,7 +317,7 @@ updatepri(struct lwp *l)
 
 	loadfac = loadfactor(averunnable.ldavg[0]);
 
-	l->l_slptime--; /* the first time was done in schedcpu */
+	l->l_slptime--; /* the first time was done in sched_pstats */
 	/* XXX NJWLWP */
 	/* XXXSMP occasionally unlocked, should be per-LWP */
 	p->p_estcpu = decay_cpu_batch(loadfac, p->p_estcpu, l->l_slptime);
@@ -619,7 +510,7 @@ sched_setup()
 {
 
 	rrticks = hz / 10;
-	schedcpu(NULL);
+	sched_pstats(NULL);
 }
 
 void
@@ -728,7 +619,7 @@ sched_proc_fork(struct proc *parent, struct proc *child)
 	LOCK_ASSERT(mutex_owned(&parent->p_smutex));
 
 	child->p_estcpu = child->p_estcpu_inherited = parent->p_estcpu;
-	child->p_forktime = schedcpu_ticks;
+	child->p_forktime = sched_pstats_ticks;
 }
 
 /*
@@ -746,7 +637,7 @@ sched_proc_exit(struct proc *parent, struct proc *child)
 
 	mutex_spin_enter(&parent->p_stmutex);
 	estcpu = decay_cpu_batch(loadfac, child->p_estcpu_inherited,
-	    schedcpu_ticks - child->p_forktime);
+	    sched_pstats_ticks - child->p_forktime);
 	if (child->p_estcpu > estcpu)
 		parent->p_estcpu =
 		    ESTCPULIM(parent->p_estcpu + child->p_estcpu - estcpu);
@@ -803,7 +694,6 @@ sched_slept(struct lwp *l)
 
 SYSCTL_SETUP(sysctl_sched_setup, "sysctl kern.sched subtree setup")
 {
-
 	sysctl_createv(clog, 0, NULL, NULL,
 		CTLFLAG_PERMANENT,
 		CTLTYPE_NODE, "kern", NULL,
@@ -819,12 +709,6 @@ SYSCTL_SETUP(sysctl_sched_setup, "sysctl kern.sched subtree setup")
 		CTLFLAG_PERMANENT,
 		CTLTYPE_STRING, "name", NULL,
 		NULL, 0, __UNCONST("4.4BSD"), 0,
-		CTL_KERN, KERN_SCHED, CTL_CREATE, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		CTLFLAG_PERMANENT,
-		CTLTYPE_INT, "ccpu",
-		SYSCTL_DESCR("Scheduler exponential decay value"),
-		NULL, 0, &ccpu, 0,
 		CTL_KERN, KERN_SCHED, CTL_CREATE, CTL_EOL);
 }
 
