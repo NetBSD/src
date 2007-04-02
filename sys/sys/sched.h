@@ -1,4 +1,4 @@
-/* $NetBSD: sched.h,v 1.30.2.13 2007/03/24 16:50:26 rmind Exp $ */
+/* $NetBSD: sched.h,v 1.30.2.14 2007/04/02 00:28:09 rmind Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2007 The NetBSD Foundation, Inc.
@@ -193,10 +193,12 @@ void sched_lwp_exit(struct lwp *);
 void sched_slept(struct lwp *);
 void sched_setrunnable(struct lwp *);	/* Scheduler-specific actions for setrunnable() */
 void sched_print_runqueue(void (*pr)(const char *, ...));	/* Print runqueues in DDB */
+inline void sched_pstats_hook(struct proc *, int);
 
 /* Functions common to all scheduler implementations */
 void sched_wakeup(volatile const void *);
 pri_t sched_kpri(struct lwp *);
+void sched_pstats(void *arg);
 
 inline void resched_cpu(struct lwp *); /* Arrange reschedule */
 void setrunnable(struct lwp *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: param.c,v 1.51 2007/01/20 20:00:13 ad Exp $	*/
+/*	$NetBSD: param.c,v 1.51.2.1 2007/04/02 00:28:08 rmind Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1989 Regents of the University of California.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: param.c,v 1.51 2007/01/20 20:00:13 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: param.c,v 1.51.2.1 2007/04/02 00:28:08 rmind Exp $");
 
 #include "opt_hz.h"
 #include "opt_rtc_offset.h"
@@ -186,22 +186,6 @@ struct	msginfo msginfo = {
 	MSGSEG		/* number of message segments */
 };
 #endif
-
-/*
- * These control when and to what priority a process gets after a certain
- * amount of CPU time expires.  AUTONICETIME is in seconds.
- * AUTONICEVAL is NOT offset by NZERO, i.e. it's between PRIO_MIN and PRIO_MAX.
- */
-#ifndef AUTONICETIME
-#define AUTONICETIME 0		/* disabled */
-#endif
-
-#ifndef AUTONICEVAL
-#define AUTONICEVAL 4		/* default + 4 */
-#endif
-
-int autonicetime = AUTONICETIME;
-int autoniceval = AUTONICEVAL;
 
 /*
  * Actual network mbuf sizes (read-only), for netstat.

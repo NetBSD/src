@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.177.2.20 2007/03/24 17:13:14 ad Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.177.2.21 2007/04/02 00:28:08 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.177.2.20 2007/03/24 17:13:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.177.2.21 2007/04/02 00:28:08 rmind Exp $");
 
 #include "opt_kstack.h"
 #include "opt_lockdebug.h"
@@ -99,6 +99,9 @@ __KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.177.2.20 2007/03/24 17:13:14 ad Exp
 #include <sys/lockdebug.h>
 
 #include <uvm/uvm_extern.h>
+
+struct callout sched_pstats_ch = CALLOUT_INITIALIZER_SETFUNC(sched_pstats, NULL);
+unsigned int sched_pstats_ticks;
 
 int	lbolt;			/* once a second sleep address */
 
@@ -776,4 +779,117 @@ syncobj_noowner(wchan_t wchan)
 {
 
 	return NULL;
+}
+
+
+/* decay 95% of `p_pctcpu' in 60 seconds; see CCPU_SHIFT before changing */
+fixpt_t	ccpu = 0.95122942450071400909 * FSCALE;		/* exp(-1/20) */
+
+/*
+ * If `ccpu' is not equal to `exp(-1/20)' and you still want to use the
+ * faster/more-accurate formula, you'll have to estimate CCPU_SHIFT below
+ * and possibly adjust FSHIFT in "param.h" so that (FSHIFT >= CCPU_SHIFT).
+ *
+ * To estimate CCPU_SHIFT for exp(-1/20), the following formula was used:
+ *	1 - exp(-1/20) ~= 0.0487 ~= 0.0488 == 1 (fixed pt, *11* bits).
+ *
+ * If you dont want to bother with the faster/more-accurate formula, you
+ * can set CCPU_SHIFT to (FSHIFT + 1) which will use a slower/less-accurate
+ * (more general) method of calculating the %age of CPU used by a process.
+ */
+#define	CCPU_SHIFT	(FSHIFT + 1)
+
+/*
+ * sched_pstats:
+ *
+ * Update process statistics and check CPU resource allocation.
+ * Call scheduler-specific hook to eventually adjust process/LWP
+ * priorities.
+ *
+ *	XXXSMP This needs to be reorganised in order to reduce the locking
+ *	burden.
+ */
+/* ARGSUSED */
+void
+sched_pstats(void *arg)
+{
+	struct rlimit *rlim;
+	struct lwp *l;
+	struct proc *p;
+	int minslp, sig, clkhz;
+	long runtm;
+
+	sched_pstats_ticks++;
+
+	mutex_enter(&proclist_mutex);
+	PROCLIST_FOREACH(p, &allproc) {
+		/*
+		 * Increment time in/out of memory and sleep time (if
+		 * sleeping).  We ignore overflow; with 16-bit int's
+		 * (remember them?) overflow takes 45 days.
+		 */
+		minslp = 2;
+		mutex_enter(&p->p_smutex);
+		runtm = p->p_rtime.tv_sec;
+		LIST_FOREACH(l, &p->p_lwps, l_sibling) {
+			if ((l->l_flag & LW_IDLE) != 0)
+				continue;
+			lwp_lock(l);
+			runtm += l->l_rtime.tv_sec;
+			l->l_swtime++;
+			if (l->l_stat == LSSLEEP || l->l_stat == LSSTOP ||
+			    l->l_stat == LSSUSPENDED) {
+				l->l_slptime++;
+				minslp = min(minslp, l->l_slptime);
+			} else
+				minslp = 0;
+			lwp_unlock(l);
+		}
+
+		/*
+		 * Check if the process exceeds its CPU resource allocation.
+		 * If over max, kill it.
+		 */
+		rlim = &p->p_rlimit[RLIMIT_CPU];
+		sig = 0;
+		if (runtm >= rlim->rlim_cur) {
+			if (runtm >= rlim->rlim_max)
+				sig = SIGKILL;
+			else {
+				sig = SIGXCPU;
+				if (rlim->rlim_cur < rlim->rlim_max)
+					rlim->rlim_cur += 5;
+			}
+		}
+
+		mutex_spin_enter(&p->p_stmutex);
+		if (minslp < 1) {
+			/*
+			 * p_pctcpu is only for ps.
+			 */
+			p->p_pctcpu = (p->p_pctcpu * ccpu) >> FSHIFT;
+			clkhz = stathz != 0 ? stathz : hz;
+#if	(FSHIFT >= CCPU_SHIFT)
+			p->p_pctcpu += (clkhz == 100)?
+			((fixpt_t) p->p_cpticks) << (FSHIFT - CCPU_SHIFT):
+				100 * (((fixpt_t) p->p_cpticks)
+				       << (FSHIFT - CCPU_SHIFT)) / clkhz;
+#else
+			p->p_pctcpu += ((FSCALE - ccpu) *
+					(p->p_cpticks * FSCALE / clkhz)) >> FSHIFT;
+#endif
+			p->p_cpticks = 0;
+		}
+
+		sched_pstats_hook(p, minslp);
+		mutex_spin_exit(&p->p_stmutex);
+		mutex_exit(&p->p_smutex);
+		if (sig) {
+			psignal(p, sig);
+		}
+	}
+	mutex_exit(&proclist_mutex);
+	uvm_meter();
+	wakeup(&lbolt);
+	callout_schedule(&sched_pstats_ch, hz);
 }
