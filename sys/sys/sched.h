@@ -1,4 +1,4 @@
-/* $NetBSD: sched.h,v 1.30.2.14 2007/04/02 00:28:09 rmind Exp $ */
+/* $NetBSD: sched.h,v 1.30.2.15 2007/04/02 23:45:27 rmind Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2007 The NetBSD Foundation, Inc.
@@ -177,7 +177,7 @@ void sched_tick(struct cpu_info *); /* Maybe resched after spc_ticks hardclock()
 void sched_schedclock(struct lwp *); /* Called from schedclock(), e.g. to handle priority adjustment */
 
 /* Runqueue-related functions */
-inline bool sched_curcpu_runnable_p(void); /* Indicate runnable processes on current CPU */
+bool sched_curcpu_runnable_p(void); /* Indicate runnable processes on current CPU */
 struct lwp *sched_nextlwp(void);	/* Select LWP to run on the CPU next */
 void sched_enqueue(struct lwp *, bool);	/* Place a process on its runqueue */
 void sched_dequeue(struct lwp *);	/* Remove a process from its runqueue */
