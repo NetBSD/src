@@ -1148,7 +1148,6 @@ vax_output_int_move (rtx insn ATTRIBUTE_UNUSED, rtx *operands,
 	  int n;
 	  if ((unsigned HOST_WIDE_INT)(~i) < 64)
 	    return "mcoml %N1,%0";
-	  if ((unsigned HOST_WIDE_INT)i < 0x10000)
 	  if ((unsigned HOST_WIDE_INT)i < 0x100)
 	    return "movzbl %1,%0";
 	  if (i >= -0x80 && i < 0)
