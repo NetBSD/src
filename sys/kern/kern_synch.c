@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.177.2.21 2007/04/02 00:28:08 rmind Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.177.2.22 2007/04/03 15:21:20 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.177.2.21 2007/04/02 00:28:08 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.177.2.22 2007/04/03 15:21:20 matt Exp $");
 
 #include "opt_kstack.h"
 #include "opt_lockdebug.h"
@@ -458,7 +458,10 @@ mi_switch(struct lwp *l)
 		oldspl = MUTEX_SPIN_OLDSPL(l->l_cpu);
 		prevlwp = cpu_switchto(l, newl);
 
-		/* .. we have switched. */
+		/*
+		 * .. we have switched away and are now back so we must
+		 * be the new curlwp.  prevlwp is who we replaced.
+		 */
 		curlwp = l;
 		if (prevlwp != NULL) {
 			curcpu()->ci_mtx_oldspl = oldspl;
