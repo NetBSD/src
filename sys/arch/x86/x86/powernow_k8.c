@@ -1,4 +1,4 @@
-/*	$NetBSD: powernow_k8.c,v 1.17 2007/03/24 15:35:15 xtraeme Exp $ */
+/*	$NetBSD: powernow_k8.c,v 1.18 2007/04/03 07:56:08 xtraeme Exp $ */
 /*	$OpenBSD: powernow-k8.c,v 1.8 2006/06/16 05:58:50 gwk Exp $ */
 
 /*-
@@ -66,7 +66,7 @@
 /* AMD POWERNOW K8 driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powernow_k8.c,v 1.17 2007/03/24 15:35:15 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powernow_k8.c,v 1.18 2007/04/03 07:56:08 xtraeme Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -86,6 +86,7 @@ __KERNEL_RCSID(0, "$NetBSD: powernow_k8.c,v 1.17 2007/03/24 15:35:15 xtraeme Exp
 #include <machine/bus.h>
 
 #define WRITE_FIDVID(fid, vid, ctrl)		\
+	mcb.msr_read = false;			\
 	mcb.msr_value = (((ctrl) << 32) | (1ULL << 16) | ((vid) << 8) | (fid)); \
 	mcb.msr_type = MSR_AMDK7_FIDVID_CTL;	\
 	msr_cpu_broadcast(&mcb);
