@@ -1,4 +1,4 @@
-/*	$NetBSD: snapper.c,v 1.17 2007/03/25 23:38:22 macallan Exp $	*/
+/*	$NetBSD: snapper.c,v 1.18 2007/04/03 03:26:52 jmcneill Exp $	*/
 /*	Id: snapper.c,v 1.11 2002/10/31 17:42:13 tsubai Exp	*/
 /*     Id: i2s.c,v 1.12 2005/01/15 14:32:35 tsubai Exp         */
 /*-
@@ -549,6 +549,9 @@ snapper_match(struct device *parent, struct cfdata *match, void *aux)
 
 	if (strcmp(compat, "snapper") == 0)
 		return 1;
+
+	if (strcmp(compat, "AOAKeylargo") == 0)
+		return 1;
 		
 	if (OF_getprop(soundchip,"platform-tas-codec-ref",
 	    &soundcodec, sizeof soundcodec) == sizeof soundcodec)
@@ -629,12 +632,14 @@ snapper_defer(struct device *dev)
 			sc->sc_deqaddr=deq->sc_address;
 		}
 
-	if (sc->sc_i2c == NULL) {
+	if (sc->sc_i2c == NULL)
 		printf("%s: unable to find i2c\n", sc->sc_dev.dv_xname);
-		return;
-	}
 
-	/* XXX If i2c was failed to attach, what should we do? */
+	/* XXX: A missing codec is not fatal; this just means that we
+	 *      don't have access to the mixer. In this case, we should
+	 *      really hide all mixer controls, but for now, we'll leave
+	 *      them visible. They just don't do anything.
+	 */
 
 	audio_attach_mi(&snapper_hw_if, sc, &sc->sc_dev);
 
@@ -1568,6 +1573,9 @@ tas3004_write(struct snapper_softc *sc, u_int reg, const void *data)
 {
 	int size;
 	static char regblock[sizeof(struct tas3004_reg)+1];
+
+	if (sc->sc_i2c == NULL)
+		return 0;
 		
 	KASSERT(reg < sizeof tas3004_regsize);
 	size = tas3004_regsize[reg];
