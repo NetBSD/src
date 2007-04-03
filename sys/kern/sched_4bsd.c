@@ -1,4 +1,4 @@
-/*	$NetBSD: sched_4bsd.c,v 1.1.2.23 2007/04/02 00:28:09 rmind Exp $	*/
+/*	$NetBSD: sched_4bsd.c,v 1.1.2.24 2007/04/03 15:23:26 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.1.2.23 2007/04/02 00:28:09 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.1.2.24 2007/04/03 15:23:26 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -328,11 +328,7 @@ updatepri(struct lwp *l)
  * On some architectures, it's faster to use a MSB ordering for the priorites
  * than the traditional LSB ordering.
  */
-#ifdef __HAVE_BIGENDIAN_BITOPS
-#define	RQMASK(n) (0x80000000 >> (n))
-#else
 #define	RQMASK(n) (0x00000001 << (n))
-#endif
 
 /*
  * The primitives that manipulate the run queues.  whichqs tells which
@@ -443,16 +439,7 @@ runqueue_nextlwp(runqueue_t *rq)
 	if (bitmap == 0) {
 		return NULL;
 	}
-#ifdef __HAVE_BIGENDIAN_BITOPS
-	/* XXX should introduce a fast "fls" function. */
-	for (whichq = 0; ; whichq++) {
-		if ((bitmap & RQMASK(whichq)) != 0) {
-			break;
-		}
-	}
-#else
 	whichq = ffs(bitmap) - 1;
-#endif
 	return TAILQ_FIRST(&rq->rq_subqueues[whichq].sq_queue);
 }
 
