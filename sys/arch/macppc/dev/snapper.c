@@ -1,4 +1,4 @@
-/*	$NetBSD: snapper.c,v 1.18 2007/04/03 03:26:52 jmcneill Exp $	*/
+/*	$NetBSD: snapper.c,v 1.19 2007/04/03 13:11:21 jmcneill Exp $	*/
 /*	Id: snapper.c,v 1.11 2002/10/31 17:42:13 tsubai Exp	*/
 /*     Id: i2s.c,v 1.12 2005/01/15 14:32:35 tsubai Exp         */
 /*-
@@ -36,6 +36,7 @@
 #include <sys/audioio.h>
 #include <sys/device.h>
 #include <sys/systm.h>
+#include <sys/malloc.h>
 
 #include <dev/auconv.h>
 #include <dev/audio_if.h>
@@ -79,6 +80,7 @@ struct snapper_softc {
 
 	int sc_rate;                    /* current sampling rate */
 	int sc_bitspersample;
+	int sc_swvol;
 
 	u_int sc_vol_l;
 	u_int sc_vol_r;
@@ -129,6 +131,80 @@ void snapper_mute_headphone(struct snapper_softc *, int);
 int snapper_cint(void *);
 int tas3004_init(struct snapper_softc *);
 void snapper_init(struct snapper_softc *, int);
+
+struct snapper_codecvar {
+	stream_filter_t	base;
+};
+
+static stream_filter_t *snapper_factory
+	(int (*)(stream_fetcher_t *, audio_stream_t *, int));
+static void snapper_dtor(stream_filter_t *);
+
+
+/* XXX We can't access the hw device softc from our audio
+ *     filter -- lame...
+ */
+static u_int snapper_vol_l = 128, snapper_vol_r = 128;
+
+/* XXX why doesn't auconv define this? */
+#define DEFINE_FILTER(name)	\
+static int \
+name##_fetch_to(stream_fetcher_t *, audio_stream_t *, int); \
+stream_filter_t * name(struct audio_softc *, \
+    const audio_params_t *, const audio_params_t *); \
+stream_filter_t * \
+name(struct audio_softc *sc, const audio_params_t *from, \
+     const audio_params_t *to) \
+{ \
+	return snapper_factory(name##_fetch_to); \
+} \
+static int \
+name##_fetch_to(stream_fetcher_t *self, audio_stream_t *dst, int max_used)
+
+DEFINE_FILTER(snapper_volume)
+{
+	stream_filter_t *this;
+	int16_t j, k;
+	int16_t *wp;
+	int m, err;
+
+	this = (stream_filter_t *)self;
+	max_used = (max_used + 1) & ~1;
+	if ((err = this->prev->fetch_to(this->prev, this->src, max_used)))
+		return err;
+	m = (dst->end - dst->start) & ~1;
+	m = min(m, max_used);
+	FILTER_LOOP_PROLOGUE(this->src, 2, dst, 2, m) {
+		j = (s[0] << 8 | s[1]) - 512;
+		k = (s[0] << 8 | s[1]);
+		if (j > k)
+			j = SHRT_MIN;
+		wp = (uint16_t *)d;
+		*wp = ((j * snapper_vol_l) / 255) + 512;
+	} FILTER_LOOP_EPILOGUE(this->src, dst);
+
+	return 0;
+}
+
+static stream_filter_t *
+snapper_factory(int (*fetch_to)(stream_fetcher_t *, audio_stream_t *, int))
+{
+	struct snapper_codecvar *this;
+
+	this = malloc(sizeof(*this), M_DEVBUF, M_WAITOK | M_ZERO);
+	this->base.base.fetch_to = fetch_to;
+	this->base.dtor = snapper_dtor;
+	this->base.set_fetcher = stream_filter_set_fetcher;
+	this->base.set_inputbuffer = stream_filter_set_inputbuffer;
+	return &this->base;
+}
+
+static void
+snapper_dtor(stream_filter_t *this)
+{
+	if (this != NULL)
+		free(this, M_DEVBUF);
+}
 
 struct cfattach snapper_ca = {
 	"snapper", {}, sizeof(struct snapper_softc),
@@ -632,8 +708,12 @@ snapper_defer(struct device *dev)
 			sc->sc_deqaddr=deq->sc_address;
 		}
 
-	if (sc->sc_i2c == NULL)
-		printf("%s: unable to find i2c\n", sc->sc_dev.dv_xname);
+	if (sc->sc_i2c == NULL) {
+		aprint_verbose("%s: unable to find i2c\n",
+		    sc->sc_dev.dv_xname);
+		sc->sc_swvol = 1;
+	} else
+		sc->sc_swvol = 0;
 
 	/* XXX: A missing codec is not fatal; this just means that we
 	 *      don't have access to the mixer. In this case, we should
@@ -800,6 +880,8 @@ snapper_set_params(void *h, int setmode, int usemode,
 		}
 		if (fil->req_size > 0)
 			p = &fil->filters[0].param;
+		if (sc->sc_swvol && mode == AUMODE_PLAY)
+			fil->append(fil, snapper_volume, p);
 	}
 
 	/* Set the speed. p points HW encoding. */
@@ -961,8 +1043,13 @@ snapper_get_port(void *h, mixer_ctrl_t *mc)
 		return 0;
 
 	case SNAPPER_VOL_OUTPUT:
-		mc->un.value.level[AUDIO_MIXER_LEVEL_LEFT] = sc->sc_vol_l;
-		mc->un.value.level[AUDIO_MIXER_LEVEL_RIGHT] = sc->sc_vol_r;
+		if (sc->sc_swvol) {
+			mc->un.value.level[AUDIO_MIXER_LEVEL_LEFT] = snapper_vol_l;
+			mc->un.value.level[AUDIO_MIXER_LEVEL_RIGHT] = snapper_vol_r;
+		} else {
+			mc->un.value.level[AUDIO_MIXER_LEVEL_LEFT] = sc->sc_vol_l;
+			mc->un.value.level[AUDIO_MIXER_LEVEL_RIGHT] = sc->sc_vol_r;
+		}
 		return 0;
 
 	case SNAPPER_INPUT_SELECT:
@@ -1248,7 +1335,13 @@ snapper_set_volume(struct snapper_softc *sc, int left, int right)
 {
 	u_char regs[6];
 	int l, r;
-	
+
+	if (sc->sc_swvol) {
+		snapper_vol_l = left;
+		snapper_vol_r = right;
+		return;
+	}
+
 	/*
 	 * for some insane reason the gain table for master volume and the
 	 * mixer channels is almost identical - just shifted by 4 bits
