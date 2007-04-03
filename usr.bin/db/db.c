@@ -1,7 +1,7 @@
-/*	$NetBSD: db.c,v 1.14 2005/06/20 02:53:38 lukem Exp $	*/
+/*	$NetBSD: db.c,v 1.15 2007/04/03 04:52:32 lukem Exp $	*/
 
 /*-
- * Copyright (c) 2002-2005 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002-2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #ifdef __RCSID
-__RCSID("$NetBSD: db.c,v 1.14 2005/06/20 02:53:38 lukem Exp $");
+__RCSID("$NetBSD: db.c,v 1.15 2007/04/03 04:52:32 lukem Exp $");
 #endif /* __RCSID */
 #endif /* not lint */
 
@@ -164,7 +164,7 @@ main(int argc, char *argv[])
 		case 'f':
 			infile = optarg;
 			break;
-			
+
 		case 'i':
 			flags |= F_IGNORECASE;
 			break;
@@ -380,7 +380,7 @@ db_print(DBT *key, DBT *val)
 		} else {
 			len = (int)MINUSNUL(val->size);
 			data = (char *)val->data;
-		}	
+		}
 		printf("%.*s", len, data);
 	}
 	printf("\n");
@@ -408,15 +408,14 @@ db_makekey(DBT *key, char *keystr, int downcase, int decode)
 	memset(key, 0, sizeof(*key));
 	if (decode) {
 		if ((klen = decode_data(keystr, &ks)) == -1)
-			errx(1, "Invalid escape sequence in `%s'",
-		  	  keystr);
+			errx(1, "Invalid escape sequence in `%s'", keystr);
 	} else {
 		klen = strlen(keystr);
 		ks = keystr;
 	}
 	key->data = ks;
 	key->size = klen + (flags & F_NO_NUL ? 0 : 1);
-	if (downcase && flags & F_IGNORECASE) {
+	if (downcase && (flags & F_IGNORECASE)) {
 		for (p = ks; *p; p++)
 			if (isupper((int)*p))
 				*p = tolower((int)*p);
@@ -440,8 +439,7 @@ db_del(char *keystr)
 			printf("Deleted key `%s'\n", keystr);
 		break;
 	case 1:
-		warnx("Key `%s' does not exist", keystr);
-		r = 1;
+		warnx("Unknown key `%s'", keystr);
 		break;
 	}
 	if (flags & F_DECODE_KEY)
@@ -453,26 +451,49 @@ int
 db_get(char *keystr)
 {
 	DBT	key, val;
-	int	r = 0;
+	char	*wantkey;
+	int	r, found;
+	u_int	seqflags;
 
 	db_makekey(&key, keystr, 1, (flags & F_DECODE_KEY ? 1 : 0));
-	switch (db->get(db, &key, &val, 0)) {
+	wantkey = strdup(key.data);
+	if (wantkey == NULL)
+		err(1, "Cannot allocate key buffer");
+
+	found = 0;
+	seqflags = R_CURSOR;
+	while ((r = db->seq(db, &key, &val, seqflags)) == 0) {
+		if (strcmp((char *)key.data, wantkey) != 0) {
+			r = 1;
+			break;
+		}
+		seqflags = R_NEXT;
+		found++;
+		db_print(&key, &val);
+		if (! (flags & F_DUPLICATES))
+			break;
+	}
+
+	switch (r) {
 	case -1:
 		warn("Error reading key `%s'", keystr);
 		r = 1;
 		break;
 	case 0:
-		db_print(&key, &val);
 		break;
 	case 1:
+		if (found) {
+			r = 0;
+			break;
+		}
 		if (! (flags & F_QUIET)) {
 			warnx("Unknown key `%s'", keystr);
-			r = 1;
 		}
 		break;
 	}
 	if (flags & F_DECODE_KEY)
 		free(key.data);
+	free(wantkey);
 	return (r);
 }
 
@@ -497,7 +518,6 @@ db_put(char *keystr, char *valstr)
 	case 1:
 		if (! (flags & F_QUIET))
 			warnx("Key `%s' already exists", keystr);
-		r = 1;
 		break;
 	}
 	if (flags & F_DECODE_KEY)
