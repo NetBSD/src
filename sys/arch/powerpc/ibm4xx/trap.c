@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.39.2.1 2007/03/12 05:49:52 rmind Exp $	*/
+/*	$NetBSD: trap.c,v 1.39.2.2 2007/04/03 15:20:09 matt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.39.2.1 2007/03/12 05:49:52 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.39.2.2 2007/04/03 15:20:09 matt Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -278,7 +278,7 @@ trap(struct trapframe *frame)
 			ADDUPROF(l);
 		}
 		/* Check whether we are being preempted. */
-		if (curcpu()->ci_want_resched)
+		if (curcpu()->ci_need_resched)
 			preempt();
 		break;
 

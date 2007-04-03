@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.68.2.1 2007/03/12 05:50:09 rmind Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.68.2.2 2007/04/03 15:20:10 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.68.2.1 2007/03/12 05:50:09 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.68.2.2 2007/04/03 15:20:10 matt Exp $");
 
 #include "opt_altivec.h"
 #include "opt_multiprocessor.h"
@@ -64,9 +64,9 @@ void vunmaprange(vaddr_t, vsize_t);
  * Finish a fork operation, with execution context l2 nearly set up.
  * Copy and update the pcb and trap frame, making the child ready to run.
  *
- * Rig the child's kernel stack so that it will start out in
- * fork_trampoline() and call child_return() with l2 as an
- * argument. This causes the newly-created child process to go
+ * Rig the child's kernel stack so that it will have a switch frame which
+ * returns to cpu_lwp_bootstrap() which will call child_return() with l2
+ * as its argument.  This causes the newly-created child process to go
  * directly to user level with an apparent return value of 0 from
  * fork(), while the parent process returns normally.
  *
@@ -86,7 +86,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	struct callframe *cf;
 	struct switchframe *sf;
 	char *stktop1, *stktop2;
-	void fork_trampoline(void);
+	void cpu_lwp_bootstrap(void);
 	struct pcb *pcb = &l2->l_addr->u_pcb;
 
 #ifdef DIAGNOSTIC
@@ -138,7 +138,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	 */
 	cf = (struct callframe *)stktop2;
 	cf->sp = (register_t)(stktop2 + CALLFRAMELEN);
-	cf->lr = (register_t)fork_trampoline;
+	cf->lr = (register_t)cpu_lwp_bootstrap;
 
 	/*
 	 * Below the trap frame, there is another call frame:
@@ -165,41 +165,6 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 }
 
 void
-cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
-{
-	extern void fork_trampoline(void);
-	struct pcb *pcb = &l->l_addr->u_pcb;
-	struct trapframe *tf;
-	struct callframe *cf;
-	struct switchframe *sf;
-
-	tf = trapframe(l);
-	cf = (struct callframe *) ((uintptr_t)tf & ~(CALLFRAMELEN-1));
-	cf->lr = (register_t) fork_trampoline;
-	cf--;
-	cf->sp = (register_t) (cf+1);
-	cf->r31 = (register_t) func;
-	cf->r30 = (register_t) arg;
-	sf = (struct switchframe *) ((uintptr_t) cf - SFRAMELEN);
-	memset((void *)sf, 0, sizeof *sf);		/* just in case */
-	sf->sp = (register_t) cf;
-#if defined (PPC_OEA) || defined (PPC_OEA64_BRIDGE)
-	sf->user_sr = pmap_kernel()->pm_sr[USER_SR]; /* again, just in case */
-#endif
-	pcb->pcb_sp = (register_t)sf;
-	pcb->pcb_kmapsr = 0;
-	pcb->pcb_umapsr = 0;
-#ifdef PPC_HAVE_FPU
-	pcb->pcb_flags = PSL_FE_DFLT;
-#endif
-}
-
-void
-cpu_swapin(struct lwp *l)
-{
-}
-
-void
 cpu_lwp_free(struct lwp *l, int proc)
 {
 #if defined(PPC_HAVE_FPU) || defined(ALTIVEC)
@@ -215,31 +180,6 @@ cpu_lwp_free(struct lwp *l, int proc)
 		save_vec_lwp(l, ALTIVEC_DISCARD);
 #endif
 
-}
-
-void
-cpu_lwp_free2(struct lwp *l)
-{
-
-	(void)l;
-}
-
-/*
- * cpu_exit is called as the last action during exit.
- *
- * We clean up a little and then call switchexit() with the old proc
- * as an argument.  switchexit() switches to the idle context, schedules
- * the old vmspace and stack to be freed, then selects a new process to
- * run.
- */
-void
-cpu_exit(struct lwp *l)
-{
-	/* This is in locore_subr.S */
-	void switch_exit(struct lwp *, void (*)(struct lwp *));
-
-	splsched();
-	switch_exit(l, lwp_exit2);
 }
 
 #ifdef COREDUMP

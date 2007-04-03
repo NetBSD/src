@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_subr.c,v 1.14.10.1 2007/02/27 16:52:52 yamt Exp $	*/
+/*	$NetBSD: pmap_subr.c,v 1.14.10.2 2007/04/03 15:20:10 matt Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_subr.c,v 1.14.10.1 2007/02/27 16:52:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_subr.c,v 1.14.10.2 2007/04/03 15:20:10 matt Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_altivec.h"
@@ -311,12 +311,13 @@ pmap_pageidlezero(paddr_t pa)
 	register_t msr;
 	register_t *dp = (register_t *) pa;
 	bool rv = true;
+	struct cpu_info *ci = curcpu();
 	int i;
 
 #if defined(PPC_OEA) || defined (PPC_OEA64_BRIDGE)
 	if (pa < SEGMENT_LENGTH) {
 		for (i = 0; i < PAGE_SIZE / sizeof(dp[0]); i++) {
-			if (sched_whichqs != 0)
+			if (ci->ci_need_resched != 0)
 				return false;
 			*dp++ = 0;
 		}
@@ -337,7 +338,7 @@ pmap_pageidlezero(paddr_t pa)
 	 * Zero the page until a process becomes runnable.
 	 */
 	for (i = 0; i < PAGE_SIZE / sizeof(dp[0]); i++) {
-		if (sched_whichqs != 0) {
+		if (ci->ci_need_resched != 0) {
 			rv = false;
 			break;
 		}
