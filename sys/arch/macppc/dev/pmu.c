@@ -1,4 +1,4 @@
-/*	$NetBSD: pmu.c,v 1.4 2007/03/25 23:26:26 macallan Exp $ */
+/*	$NetBSD: pmu.c,v 1.5 2007/04/03 03:09:25 macallan Exp $ */
 
 /*-
  * Copyright (c) 2006 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmu.c,v 1.4 2007/03/25 23:26:26 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmu.c,v 1.5 2007/04/03 03:09:25 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,16 +116,14 @@ static void pmu_eject_card(struct pmu_softc *, int);
 static void pmu_update_brightness(struct pmu_softc *);
 
 /*
- * send a message to Cuda.
+ * send a message to the PMU.
  */
-/* cookie, flags, length, data */
-static int pmu_send(void *, int, int, uint8_t *, uint8_t *);
+static int pmu_send(void *, int, int, uint8_t *, int, uint8_t *);
 static void pmu_adb_poll(void *);
 static int pmu_todr_set(todr_chip_handle_t, volatile struct timeval *);
 static int pmu_todr_get(todr_chip_handle_t, volatile struct timeval *);
 
 static int pmu_adb_handler(void *, int, uint8_t *);
-static void pmu_final(struct device *);
 
 static struct pmu_softc *pmu0 = NULL;
 
@@ -253,11 +251,13 @@ pmu_attach(struct device *parent, struct device *dev, void *aux)
 #if notyet
 	struct i2cbus_attach_args iba;
 #endif
+	uint32_t regs[16];
 	int irq = ca->ca_intr[0];
 	int node, extint_node, root_node;
+	int nbat = 1, i, pmnode;
 	uint8_t cmd[2] = {2, 0};
-	uint8_t resp[8];
-	char name[32];
+	uint8_t resp[16];
+	char name[256];
 
 	extint_node = getnodebyname(OF_parent(ca->ca_node), "extint-gpio1");
 	if (extint_node)
@@ -293,20 +293,26 @@ pmu_attach(struct device *parent, struct device *dev, void *aux)
 	if (pmu0 == NULL)
 		pmu0 = sc;
 
-	pmu_send(sc, PMU_SYSTEM_READY, 1, cmd, resp);
+	pmu_send(sc, PMU_SYSTEM_READY, 1, cmd, 16, resp);
 
 	/* check what kind of PMU we're talking to */
-	if (pmu_send(sc, PMU_GET_VERSION, 0, cmd, resp) > 1)
+	if (pmu_send(sc, PMU_GET_VERSION, 0, cmd, 16, resp) > 1)
 		printf(" rev. %d", resp[1]);
 	printf("\n");
 
-	config_interrupts(dev, pmu_final);
+	node = OF_child(sc->sc_node);
 
-	node = OF_child(ca->ca_node);
 	while (node != 0) {
 
-		if (OF_getprop(node, "name", name, 32) == 0)
-			continue;
+		if (OF_getprop(node, "name", name, 256) == 0)
+			goto next;
+
+		if (strncmp(name, "pmu-i2c", 8) == 0) {
+
+			printf("%s: initializing IIC bus\n",
+			    sc->sc_dev.dv_xname);
+			goto next;
+		}
 		if (strncmp(name, "adb", 4) == 0) {
 
 			printf("%s: initializing ADB\n", sc->sc_dev.dv_xname);
@@ -345,31 +351,26 @@ next:
 	}
 
 	/* attach batteries */
-	{
-		int nbat = 1, i, pmnode;
-		uint32_t regs[16];
+	if (of_compatible(root_node, has_legacy_battery) != -1) {
 
-		if (of_compatible(root_node, has_legacy_battery) != -1) {
+		pmu_attach_legacy_battery(sc);
+	} else if (of_compatible(root_node, has_two_smart_batteries) != -1) {
 
-			pmu_attach_legacy_battery(sc);
-		} else if (of_compatible(root_node, has_two_smart_batteries)
-		    != -1) {
+		pmu_attach_smart_battery(sc, 0);
+		pmu_attach_smart_battery(sc, 1);
+	} else {
 
-			pmu_attach_smart_battery(sc, 0);
-			pmu_attach_smart_battery(sc, 1);
-		} else {
-
-			/* check how many batteries we have */
-			pmnode = getnodebyname(ca->ca_node, "power-mgt");
-			if (pmnode == -1)
-				goto next;
-			if (OF_getprop(pmnode, "prim-info", regs, sizeof(regs)) < 24)
-				goto next;
-			nbat = regs[6] >> 16;
-			for (i = 0; i < nbat; i++)
-				pmu_attach_smart_battery(sc, i);
-		}
+		/* check how many batteries we have */
+		pmnode = getnodebyname(ca->ca_node, "power-mgt");
+		if (pmnode == -1)
+			goto bat_done;
+		if (OF_getprop(pmnode, "prim-info", regs, sizeof(regs)) < 24)
+			goto bat_done;
+		nbat = regs[6] >> 16;
+		for (i = 0; i < nbat; i++)
+			pmu_attach_smart_battery(sc, i);
 	}
+bat_done:
 
 #if notyet
 	iba.iba_tag = &sc->sc_i2c;
@@ -396,17 +397,9 @@ pmu_init(struct pmu_softc *sc)
 	    PMU_INT_PCEJECT | PMU_INT_SNDBRT | PMU_INT_ADB/* | PMU_INT_TICK*/;
 	pmu_imask |= PMU_INT_BATTERY;
 	pmu_imask |= PMU_INT_ENVIRONMENT;
-	pmu_send(sc, PMU_SET_IMASK, 1, &pmu_imask, resp);
+	pmu_send(sc, PMU_SET_IMASK, 1, &pmu_imask, 16, resp);
 
 	pmu_write_reg(sc, vIER, 0x90);	/* enable VIA interrupts */
-}
-
-static void
-pmu_final(struct device *dev)
-{
-	//struct pmu_softc *sc = (struct pmu_softc *)dev;
-
-//	pmu_write_reg(sc, vIER, 0x90);	/* enable VIA interrupts */
 }
 
 static inline void
@@ -457,7 +450,8 @@ pmu_read_byte(struct pmu_softc *sc, uint8_t *data)
 }
 
 static int
-pmu_send(void *cookie, int cmd, int length, uint8_t *in_msg, uint8_t *out_msg)
+pmu_send(void *cookie, int cmd, int length, uint8_t *in_msg, int rlen,
+    uint8_t *out_msg)
 {
 	struct pmu_softc *sc = cookie;
 	int i, rcv_len = -1, s;
@@ -503,7 +497,7 @@ pmu_send(void *cookie, int cmd, int length, uint8_t *in_msg, uint8_t *out_msg)
 		pmu_read_byte(sc, &out_len);
 		rcv_len = out_len + 1;
 	}
-	for (i = 1; i < rcv_len; i++)
+	for (i = 1; i < min(rcv_len, rlen); i++)
 		pmu_read_byte(sc, &out_msg[i]);
 
 done:
@@ -583,7 +577,7 @@ pmu_intr(void *arg)
 	DPRINTF(":");
 
 	pmu_write_reg(sc, vIFR, 0x90);	/* Clear 'em */
-	len = pmu_send(sc, PMU_INT_ACK, 0, NULL, resp);
+	len = pmu_send(sc, PMU_INT_ACK, 0, NULL, 16, resp);
 	if ((len < 1) || (resp[1] == 0))
 		goto done;
 #ifdef PMU_DEBUG
@@ -673,7 +667,7 @@ pmu_todr_get(todr_chip_handle_t tch, volatile struct timeval *tvp)
 	uint8_t resp[16];
 
 	DPRINTF("pmu_todr_get\n");
-	pmu_send(sc, PMU_READ_RTC, 0, NULL, resp);
+	pmu_send(sc, PMU_READ_RTC, 0, NULL, 16, resp);
 
 	memcpy(&sec, &resp[1], 4);
 	tvp->tv_sec = sec - DIFF19041970;
@@ -690,7 +684,7 @@ pmu_todr_set(todr_chip_handle_t tch, volatile struct timeval *tvp)
 	uint8_t resp[16];
 
 	sec = tvp->tv_sec + DIFF19041970;
-	if (pmu_send(sc, PMU_SET_RTC, 4, (uint8_t *)&sec, resp) >= 0)
+	if (pmu_send(sc, PMU_SET_RTC, 4, (uint8_t *)&sec, 16, resp) >= 0)
 		return 0;
 	return -1;		
 }
@@ -705,7 +699,7 @@ pmu_poweroff()
 	if (pmu0 == NULL)
 		return;
 	sc = pmu0;
-	if (pmu_send(sc, PMU_POWER_OFF, 4, cmd, resp) >= 0)
+	if (pmu_send(sc, PMU_POWER_OFF, 4, cmd, 16, resp) >= 0)
 		while (1);
 }
 
@@ -718,7 +712,7 @@ pmu_restart()
 	if (pmu0 == NULL)
 		return;
 	sc = pmu0;
-	if (pmu_send(sc, PMU_RESET_CPU, 0, NULL, resp) >= 0)
+	if (pmu_send(sc, PMU_RESET_CPU, 0, NULL, 16, resp) >= 0)
 		while (1);
 }
 
@@ -734,9 +728,9 @@ pmu_autopoll(void *cookie, int flag)
 		return;
 
 	if (flag) {
-		pmu_send(sc, PMU_ADB_CMD, 4, cmd, resp);
+		pmu_send(sc, PMU_ADB_CMD, 4, cmd, 16, resp);
 	} else {
-		pmu_send(sc, PMU_ADB_POLL_OFF, 0, NULL, resp);
+		pmu_send(sc, PMU_ADB_POLL_OFF, 0, NULL, 16, resp);
 	}
 	sc->sc_autopoll = flag & 0xffff;
 }
@@ -757,7 +751,7 @@ pmu_adb_handler(void *cookie, int len, uint8_t *data)
 		if ((data[1] & 0x0c) == 0x08) {
 			uint8_t cmd[] = {0, 0x86, (sc->sc_autopoll >> 8) & 0xff,
 			    sc->sc_autopoll & 0xff};
-			pmu_send(sc, PMU_ADB_CMD, 4, cmd, resp);
+			pmu_send(sc, PMU_ADB_CMD, 4, cmd, 16, resp);
 		}
 		return 0;
 	}
@@ -777,7 +771,7 @@ pmu_adb_send(void *cookie, int poll, int command, int len, uint8_t *data)
 	packet[2] = len;
 	for (i = 0; i < len; i++)
 		packet[i + 3] = data[i];
-	replen = pmu_send(sc, PMU_ADB_CMD, len + 3, packet, resp);
+	replen = pmu_send(sc, PMU_ADB_CMD, len + 3, packet, 16, resp);
 
 	return 0;
 }
@@ -883,7 +877,7 @@ pmu_eject_card(struct pmu_softc *sc, int socket)
 	s = splhigh();
 	sc->sc_pending_eject &= ~socket;
 	splx(s);
-	pmu_send(sc, PMU_EJECT_PCMCIA, 1, buf, res);
+	pmu_send(sc, PMU_EJECT_PCMCIA, 1, buf, 4, res);
 }
 
 static void
@@ -907,7 +901,7 @@ pmu_update_brightness(struct pmu_softc *sc)
 		
 		/* turn backlight off completely */
 		cmd[0] = PMU_POW_OFF | PMU_POW_BACKLIGHT;
-		pmu_send(sc, PMU_POWER_CTRL, 1, cmd, resp);
+		pmu_send(sc, PMU_POWER_CTRL, 1, cmd, 16, resp);
 		sc->sc_brightness = sc->sc_brightness_wanted;
 		
 		/* don't bother with brightness */
@@ -917,7 +911,7 @@ pmu_update_brightness(struct pmu_softc *sc)
 	/* turn backlight on if needed */
 	if (sc->sc_brightness == 0) {
 		cmd[0] = PMU_POW_ON | PMU_POW_BACKLIGHT;
-		pmu_send(sc, PMU_POWER_CTRL, 1, cmd, resp);
+		pmu_send(sc, PMU_POWER_CTRL, 1, cmd, 16, resp);
 	}
 
 	DPRINTF("pmu_update_brightness: %d -> %d\n", sc->sc_brightness,
@@ -929,7 +923,7 @@ pmu_update_brightness(struct pmu_softc *sc)
 	if (val > 0x78)
 		val = 0x78;
 	cmd[0] = val;
-	pmu_send(sc, PMU_SET_BRIGHTNESS, 1, cmd, resp);
+	pmu_send(sc, PMU_SET_BRIGHTNESS, 1, cmd, 16, resp);
 
 	sc->sc_brightness = sc->sc_brightness_wanted;
 }
