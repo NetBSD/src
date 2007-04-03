@@ -1,11 +1,11 @@
-#	$NetBSD: RB153,v 1.1 2007/03/20 09:22:01 dyoung Exp $
-#	$Id: RB153,v 1.1 2007/03/20 09:22:01 dyoung Exp $
+#	$NetBSD: RB153,v 1.2 2007/04/03 18:05:57 dyoung Exp $
+#	$Id: RB153,v 1.2 2007/04/03 18:05:57 dyoung Exp $
 #
 # Example kernel config for the RouterBOARD 153.
 
 include 	"arch/evbmips/conf/std.adm5120"
 
-#ident 		"GENERIC-$Revision: 1.1 $"
+#ident 		"GENERIC-$Revision: 1.2 $"
 
 maxusers	32
 
@@ -15,7 +15,7 @@ options 	SOFTFLOAT	# emulate FPU insn
 options 	CONSPEED=115200	# YAMON default
 #options 	HZ=512		# for profiling
 #options	ADM5120_YAMON	# if our bootloader is YAMON
-options 	MEMSIZE="(32*1024*1024)"
+#options 	MEMSIZE="(32*1024*1024)"
 
 #options 	LOCKDEBUG
 options 	SOSEND_LOAN
