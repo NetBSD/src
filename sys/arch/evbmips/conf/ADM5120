@@ -1,11 +1,11 @@
-#	$NetBSD: ADM5120,v 1.1 2007/03/20 08:52:00 dyoung Exp $
+#	$NetBSD: ADM5120,v 1.2 2007/04/03 18:06:31 dyoung Exp $
 #
 # Kernel config for the Alchemy Semiconductor (AMD) PB1000, PB1500,
 # DBAu1000 and DBAu1500 evaluation boards.
 
 include 	"arch/evbmips/conf/std.adm5120"
 
-#ident 		"GENERIC-$Revision: 1.1 $"
+#ident 		"GENERIC-$Revision: 1.2 $"
 
 maxusers	32
 
@@ -141,7 +141,9 @@ pseudo-device	rnd				# /dev/random & kernel generator
 pseudo-device	ksyms
 
 obio*		at mainbus?
+gpio*		at mainbus?
+extio*		at mainbus?
 uart*		at obio? addr ?
 admsw*		at obio? addr ?
-admflash*	at obio? addr ?
-options 	VND_COMPRESSION
+#admflash*	at obio? addr ?
+#options 	VND_COMPRESSION
