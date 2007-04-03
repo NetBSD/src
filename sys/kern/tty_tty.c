@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_tty.c,v 1.34 2007/03/09 14:11:27 ad Exp $	*/
+/*	$NetBSD: tty_tty.c,v 1.35 2007/04/03 16:11:31 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993, 1995
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_tty.c,v 1.34 2007/03/09 14:11:27 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_tty.c,v 1.35 2007/04/03 16:11:31 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,19 +99,13 @@ static int
 cttywrite(dev_t dev, struct uio *uio, int flag)
 {
 	struct vnode *ttyvp = cttyvp(curproc);
-	struct mount *mp;
 	int error;
 
 	if (ttyvp == NULL)
 		return (EIO);
-	mp = NULL;
-	if (ttyvp->v_type != VCHR &&
-	    (error = vn_start_write(ttyvp, &mp, V_WAIT | V_PCATCH)) != 0)
-		return (error);
 	vn_lock(ttyvp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_WRITE(ttyvp, uio, flag, NOCRED);
 	VOP_UNLOCK(ttyvp, 0);
-	vn_finished_write(mp, 0);
 	return (error);
 }
 
