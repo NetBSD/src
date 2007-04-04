@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.276.2.10 2005/10/15 16:47:40 riz Exp $
+#	$NetBSD: NetBSD.dist,v 1.276.2.11 2007/04/04 21:25:13 bouyer Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -1062,7 +1062,6 @@
 ./usr/share/zoneinfo/Mexico
 ./usr/share/zoneinfo/Mideast
 ./usr/share/zoneinfo/Pacific
-./usr/share/zoneinfo/SystemV
 ./usr/share/zoneinfo/US
 ./var
 ./var/account
