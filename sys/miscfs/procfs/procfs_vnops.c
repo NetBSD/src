@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.154 2007/03/09 14:11:23 ad Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.155 2007/04/04 01:27:32 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.154 2007/03/09 14:11:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.155 2007/04/04 01:27:32 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1555,13 +1555,13 @@ procfs_readlink(v)
 
 		if ((error = procfs_proc_lock(pfs->pfs_pid, &pown, ESRCH)) != 0)
 			return error;
+
 		mutex_enter(&pown->p_mutex);
 		fp = fd_getfile(pown->p_fd, pfs->pfs_fd);
 		mutex_exit(&pown->p_mutex);
-		if (error != 0) {
-			procfs_proc_unlock(pown);
-			return (EBADF);
-		}
+		if (fp == NULL)
+			return EBADF;
+
 		FILE_USE(fp);
 		switch (fp->f_type) {
 		case DTYPE_VNODE:
