@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.2,v 1.1.2.65 2007/04/04 21:32:34 bouyer Exp $
+#	$NetBSD: CHANGES-3.2,v 1.1.2.66 2007/04/04 22:23:06 ghen Exp $
 
 A complete list of changes from the NetBSD 3.1 release to the NetBSD 3.2
 release:
@@ -3102,4 +3102,22 @@ dist/file/src/magic.c	patch
 	Fix an integer underflow in file_printf which can lead to an
 	exploitable heap overflow.
 	[adrianp, ticket #1743]
+
+xsrc/xfree/xc/lib/X11/ImUtil.c			1.2
+xsrc/xfree/xc/lib/font/bitmap/bdfread.c		1.2
+xsrc/xfree/xc/lib/font/fontfile/fontdir.c	1.2
+xsrc/xfree/xc/programs/Xserver/Xext/xcmisc.c	1.2
+
+	Fix a possible memory corruption due to integer overflow in
+	ProcXCMiscGetXIDList() (CVE-2007-1003).
+
+	Fix a possible memory corruption due to integer overflow, caused by
+	lack of validation of bdf font files (CVE 2007-1351).
+
+	Fix a possible memory corruption due to integer overflow, caused by
+	lack of validation of fonts.dir files (CVE 2007-1352).
+
+	Fix a possible memory corruption due to incomplete input validation in
+	XInitImage() (CVE 2007-1667).
+	[drochner, ticket #1752]
 
