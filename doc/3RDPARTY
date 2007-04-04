@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.518 2007/03/30 21:36:11 ghen Exp $
+#	$NetBSD: 3RDPARTY,v 1.519 2007/04/04 19:07:06 kleink Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -845,8 +845,8 @@ License:	BSD (4-clause)
 Notes:
 
 Package:	tz
-Version:	tzcode2004a / tzdata2007a
-Current Vers:	tzcode2007b / tzdata2007b
+Version:	tzcode2004a / tzdata2007e
+Current Vers:	tzcode2007e / tzdata2007e
 Maintainer:	Arthur David Olson <ado@elsie.nci.nih.gov>
 Archive Site:	ftp://elsie.nci.nih.gov/pub/
 Home Page:
