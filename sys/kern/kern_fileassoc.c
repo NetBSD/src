@@ -1,4 +1,4 @@
-/* $NetBSD: kern_fileassoc.c,v 1.26 2007/04/03 22:29:23 rmind Exp $ */
+/* $NetBSD: kern_fileassoc.c,v 1.27 2007/04/04 11:01:10 rmind Exp $ */
 
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fileassoc.c,v 1.26 2007/04/03 22:29:23 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fileassoc.c,v 1.27 2007/04/04 11:01:10 rmind Exp $");
 
 #include "opt_fileassoc.h"
 
@@ -534,7 +534,7 @@ fileassoc_file_delete(struct vnode *vp)
 	file_free(mhe);
 
 	tbl = fileassoc_table_lookup(vp->v_mount);
-	if (tlb == NULL)
+	if (tbl == NULL)
 		return (ENOENT);
 	--(tbl->hash_used); /* XXX gc? */
 
