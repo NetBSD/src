@@ -1,4 +1,4 @@
-/*	$NetBSD: snapper.c,v 1.19 2007/04/03 13:11:21 jmcneill Exp $	*/
+/*	$NetBSD: snapper.c,v 1.20 2007/04/04 02:14:57 jmcneill Exp $	*/
 /*	Id: snapper.c,v 1.11 2002/10/31 17:42:13 tsubai Exp	*/
 /*     Id: i2s.c,v 1.12 2005/01/15 14:32:35 tsubai Exp         */
 /*-
@@ -164,7 +164,7 @@ name##_fetch_to(stream_fetcher_t *self, audio_stream_t *dst, int max_used)
 DEFINE_FILTER(snapper_volume)
 {
 	stream_filter_t *this;
-	int16_t j, k;
+	int16_t j;
 	int16_t *wp;
 	int m, err;
 
@@ -175,12 +175,9 @@ DEFINE_FILTER(snapper_volume)
 	m = (dst->end - dst->start) & ~1;
 	m = min(m, max_used);
 	FILTER_LOOP_PROLOGUE(this->src, 2, dst, 2, m) {
-		j = (s[0] << 8 | s[1]) - 512;
-		k = (s[0] << 8 | s[1]);
-		if (j > k)
-			j = SHRT_MIN;
-		wp = (uint16_t *)d;
-		*wp = ((j * snapper_vol_l) / 255) + 512;
+		j = (s[0] << 8 | s[1]);
+		wp = (int16_t *)d;
+		*wp = ((j * snapper_vol_l) / 255);
 	} FILTER_LOOP_EPILOGUE(this->src, dst);
 
 	return 0;
@@ -628,6 +625,9 @@ snapper_match(struct device *parent, struct cfdata *match, void *aux)
 
 	if (strcmp(compat, "AOAKeylargo") == 0)
 		return 1;
+
+	if (strcmp(compat, "AOAK2") == 0)
+		return 1;
 		
 	if (OF_getprop(soundchip,"platform-tas-codec-ref",
 	    &soundcodec, sizeof soundcodec) == sizeof soundcodec)
@@ -708,18 +708,15 @@ snapper_defer(struct device *dev)
 			sc->sc_deqaddr=deq->sc_address;
 		}
 
+	/* If we don't find a codec, it's not the end of the world;
+	 * we can control the volume in software in this case.
+	 */
 	if (sc->sc_i2c == NULL) {
-		aprint_verbose("%s: unable to find i2c\n",
+		aprint_verbose("%s: software codec\n",
 		    sc->sc_dev.dv_xname);
 		sc->sc_swvol = 1;
 	} else
 		sc->sc_swvol = 0;
-
-	/* XXX: A missing codec is not fatal; this just means that we
-	 *      don't have access to the mixer. In this case, we should
-	 *      really hide all mixer controls, but for now, we'll leave
-	 *      them visible. They just don't do anything.
-	 */
 
 	audio_attach_mi(&snapper_hw_if, sc, &sc->sc_dev);
 
@@ -878,10 +875,10 @@ snapper_set_params(void *h, int setmode, int usemode,
 			DPRINTF("snapper_set_params: auconv_set_converter failed\n");
 			return EINVAL;
 		}
+		if (sc->sc_swvol)
+			fil->append(fil, snapper_volume, p);
 		if (fil->req_size > 0)
 			p = &fil->filters[0].param;
-		if (sc->sc_swvol && mode == AUMODE_PLAY)
-			fil->append(fil, snapper_volume, p);
 	}
 
 	/* Set the speed. p points HW encoding. */
