@@ -1,4 +1,4 @@
-/*	$NetBSD: iclockmod.c,v 1.6 2007/03/25 02:27:16 xtraeme Exp $ */
+/*	$NetBSD: iclockmod.c,v 1.7 2007/04/04 01:50:15 rmind Exp $ */
 /*      $OpenBSD: p4tcc.c,v 1.13 2006/12/20 17:50:40 gwk Exp $ */
 
 /*
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iclockmod.c,v 1.6 2007/03/25 02:27:16 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iclockmod.c,v 1.7 2007/04/04 01:50:15 rmind Exp $");
 
 #include "opt_intel_odcm.h"
 
@@ -260,7 +260,7 @@ clockmod_sysctl_helper(SYSCTLFN_ARGS)
 		return error;
 
 	/* invalid level? */
-	if (lvl < 0 || lvl > 7)
+	if (lvl < 0 || lvl >= __arraycount(state))
 		return EINVAL;
 
 	if (rnode->sysctl_num == clockmod_state_target && lvl != oldlvl) {
