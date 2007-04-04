@@ -1,4 +1,4 @@
-/*	$NetBSD: wsksymdef.h,v 1.57 2007/04/02 10:01:31 mishka Exp $ */
+/*	$NetBSD: wsksymdef.h,v 1.58 2007/04/04 14:50:21 mishka Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -377,7 +377,6 @@
 #define KS_Henkan_Mode		0xf114	/* Start/Stop Conversion */
 #define KS_Henkan		0xf115	/* Alias for Henkan_Mode */
 #define KS_Muhenkan		0xf116	/* Cancel Conversion */
-#define KS_Mode_toggle		0xf117
 
 /*
  * Group 2 (keypad) character in low byte
@@ -525,7 +524,6 @@
 #define KS_Cmd_ScrollFastDown	0xf42d
 #define KS_Cmd_ScrollSlowUp	0xf42e
 #define KS_Cmd_ScrollSlowDown	0xf42f
-#define KS_Cmd_ModeToggle	0xf430
 
 /*
  * Group 5 (internal)
