@@ -587,8 +587,12 @@ static int drm_do_addbufs_pci(drm_device_t *dev, drm_buf_desc_t *request)
 
 	if (entry->buflist == NULL || entry->seglist == NULL || 
 	    temp_pagelist == NULL) {
-		free(entry->buflist, M_DRM);
-		free(entry->seglist, M_DRM);
+		if (temp_pagelist)
+			free(temp_pagelist, M_DRM);
+		if (entry->seglist)
+			free(entry->seglist, M_DRM);
+		if (entry->buflist)
+			free(entry->buflist, M_DRM);
 		return DRM_ERR(ENOMEM);
 	}
 	
