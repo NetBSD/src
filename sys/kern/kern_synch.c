@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.177.2.22 2007/04/03 15:21:20 matt Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.177.2.23 2007/04/04 22:28:17 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.177.2.22 2007/04/03 15:21:20 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.177.2.23 2007/04/04 22:28:17 ad Exp $");
 
 #include "opt_kstack.h"
 #include "opt_lockdebug.h"
@@ -418,9 +418,10 @@ mi_switch(struct lwp *l)
 	 */
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	if (l->l_mutex != spc->spc_mutex) {
-		mutex_enter(spc->spc_mutex);
+		mutex_spin_enter(spc->spc_mutex);
 	}
 #endif
+
 	/*
 	 * Let sched_nextlwp() select the LWP to run the CPU next. 
 	 * If no LWP is runnable, switch to the idle LWP.
@@ -436,10 +437,11 @@ mi_switch(struct lwp *l)
 	newl->l_stat = LSONPROC;
 	newl->l_cpu = l->l_cpu;
 	newl->l_flag |= LW_RUNNING;
+	cpu_did_resched();
 
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	if (l->l_mutex != spc->spc_mutex) {
-		mutex_exit(spc->spc_mutex);
+		mutex_spin_exit(spc->spc_mutex);
 	}
 #endif
 
