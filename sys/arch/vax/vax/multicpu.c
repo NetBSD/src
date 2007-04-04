@@ -1,4 +1,4 @@
-/*	$NetBSD: multicpu.c,v 1.19.2.2 2007/03/12 05:51:19 rmind Exp $	*/
+/*	$NetBSD: multicpu.c,v 1.19.2.3 2007/04/04 06:49:05 matt Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: multicpu.c,v 1.19.2.2 2007/03/12 05:51:19 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: multicpu.c,v 1.19.2.3 2007/04/04 06:49:05 matt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -157,9 +157,7 @@ slaverun()
 	printf("%s: running\n", ci->ci_dev->dv_xname);
 	while (sta != device_unit(ci->ci_dev))
 		;
-	splsched();
-	sched_lock_idle();
-	cpu_switch(NULL,NULL);
+	mi_cpu_attach(ci);
 }
 
 /*

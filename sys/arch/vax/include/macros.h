@@ -1,4 +1,4 @@
-/*	$NetBSD: macros.h,v 1.37.10.1 2007/03/12 05:51:13 rmind Exp $	*/
+/*	$NetBSD: macros.h,v 1.37.10.2 2007/04/04 06:49:06 matt Exp $	*/
 
 /*
  * Copyright (c) 1994, 1998, 2000 Ludd, University of Lule}, Sweden.
@@ -337,21 +337,21 @@ bbcci(int bitnr, long *addr)
 	return ret;
 }
 
-#define setrunqueue(p)	\
-	__asm volatile("movl %0,%%r0;jsb Setrq" :: "g"(p):"r0","r1","r2")
-
-#define remrunqueue(p)	\
-	__asm volatile("movl %0,%%r0;jsb Remrq" :: "g"(p):"r0","r1","r2")
-
-#define cpu_switch(p, newp) ({ 						\
-	register int ret;						\
-	__asm volatile("movpsl -(%%sp);jsb Swtch; movl %%r0,%0"	\
-	    : "=g"(ret) ::"r0","r1","r2","r3","r4","r5");		\
-	ret; })
-
-#define	cpu_switchto(p, newp)						\
-	__asm volatile("movpsl -(%%sp); movl %0,%%r2; jsb Swtchto"	\
-	    :: "g" (newp) : "r0", "r1", "r2", "r3", "r4", "r5")
+static inline struct lwp *
+cpu_switchto(struct lwp *oldlwp, struct lwp *newlwp)
+{
+	struct lwp *prevlwp;
+	__asm volatile(
+		"movl %1,%%r0;"
+		"movl %2,%%r1;"
+		"movpsl -(%%sp);"
+		"jsb Swtchto;"
+		"movl %%r0,%0"
+	    : "=g"(prevlwp)
+	    : "g" (oldlwp), "g" (newlwp)
+	    : "r0", "r1");
+	return prevlwp;
+}
 
 /*
  * Interlock instructions. Used both in multiprocessor environments to
