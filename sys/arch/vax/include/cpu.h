@@ -1,4 +1,4 @@
-/*      $NetBSD: cpu.h,v 1.75.2.1 2007/03/12 05:51:13 rmind Exp $      */
+/*      $NetBSD: cpu.h,v 1.75.2.2 2007/04/04 06:49:06 matt Exp $      */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden
@@ -138,7 +138,7 @@ struct cpu_info {
 	/*
 	 * Private members.
 	 */
-	int ci_want_resched;		/* Should change process */
+	int ci_need_resched;		/* Should change process */
 	struct device *ci_dev;		/* device struct for this cpu */
 	long ci_exit;			/* Page to use while exiting */
 #if defined(MULTIPROCESSOR)
@@ -172,14 +172,15 @@ struct cpu_mp_softc {
 #define	curcpu()		((struct cpu_info *)mfpr(PR_SSP))
 #define	curlwp			(curcpu()->ci_curlwp)
 #define	cpu_number()		(curcpu()->ci_cpuid)
-#define	cpu_need_resched(ci)			\
+#define	cpu_need_resched(ci, flags)		\
 	do {					\
-		(ci)->ci_want_resched = 1;	\
+		(ci)->ci_need_resched = 1;	\
 		mtpr(AST_OK,PR_ASTLVL);		\
 	} while (/*CONSTCOND*/ 0)
 #define	cpu_proc_fork(x, y)	do { } while (/*CONSCOND*/0)
 #define	cpu_lwp_free(l, f)	do { } while (/*CONSCOND*/0)
 #define	cpu_lwp_free2(l)	do { } while (/*CONSCOND*/0)
+#define	cpu_idle()		do { } while (/*CONSCOND*/0)
 #if defined(MULTIPROCESSOR)
 #define	CPU_IS_PRIMARY(ci)	((ci)->ci_flags & CI_MASTERCPU)
 
