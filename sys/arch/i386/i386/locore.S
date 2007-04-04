@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.45.2.7 2007/04/04 13:04:09 ad Exp $	*/
+/*	$NetBSD: locore.S,v 1.45.2.8 2007/04/04 22:33:28 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -742,7 +742,8 @@ ENTRY(cpu_switchto)
 	andl	$~0x0200,4(%eax,%edx, 1)
 	ltr	%dx
 
-	movl	$0,CPUVAR(RESCHED)	# XXX should not be here
+	/* Set curlwp. */
+	movl	%edi,CPUVAR(CURLWP)
 
 	/* Don't bother with the rest if switching to a system process. */
 	testl	$LW_SYSTEM,L_FLAG(%edi)
