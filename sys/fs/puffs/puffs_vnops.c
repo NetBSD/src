@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.56 2007/03/30 17:48:59 pooka Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.57 2007/04/04 16:13:52 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.56 2007/03/30 17:48:59 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.57 2007/04/04 16:13:52 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/fstrans.h>
@@ -2101,7 +2101,7 @@ puffs_getpages(void *v)
 			goto out;
 		}
 
-		parkmem = puffs_parkmem_alloc(locked == 0);
+		parkmem = puffs_park_alloc(locked == 0);
 		if (parkmem == NULL) {
 			error = ENOMEM;
 			goto out;
@@ -2164,7 +2164,7 @@ puffs_getpages(void *v)
 		if (pcinfo != NULL)
 			free(pcinfo, M_PUFFS);
 		if (parkmem != NULL)
-			puffs_parkmem_free(parkmem);
+			puffs_park_release(parkmem, 1);
 	}
 
 	return error;

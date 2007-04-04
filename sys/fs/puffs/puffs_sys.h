@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_sys.h,v 1.29 2007/03/30 17:48:59 pooka Exp $	*/
+/*	$NetBSD: puffs_sys.h,v 1.30 2007/04/04 16:13:51 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -186,8 +186,8 @@ void	puffs_transport_destroy(void);
 
 void	puffs_msgif_init(void);
 void	puffs_msgif_destroy(void);
-void 	*puffs_parkmem_alloc(int);
-void	puffs_parkmem_free(void *);
+void 	*puffs_park_alloc(int);
+void	puffs_park_release(void *, int);
 
 int	puffs_start2(struct puffs_mount *, struct puffs_startreq *);
 
