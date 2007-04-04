@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.40.2.2 2007/03/23 21:45:18 skrll Exp $	*/
+/*	$NetBSD: trap.c,v 1.40.2.3 2007/04/04 17:28:27 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.40.2.2 2007/03/23 21:45:18 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.40.2.3 2007/04/04 17:28:27 skrll Exp $");
 
 /* #define INTRDEBUG */
 /* #define TRAPDEBUG */
@@ -414,7 +414,6 @@ frame_sanity_check(int where, int type, struct trapframe *tf, struct lwp *l)
 	extern register_t kpsw;
 	extern vaddr_t hpt_base;
 	extern vsize_t hpt_mask;
-	vsize_t uspace_size;
 #define SANITY(e)					\
 do {							\
 	if (sanity_frame == NULL && !(e)) {		\
@@ -440,14 +439,21 @@ do {							\
 			SANITY(tf->tf_iioq_head < (u_int) &etext);
 			SANITY(tf->tf_iioq_tail >= (u_int) &kernel_text);
 			SANITY(tf->tf_iioq_tail < (u_int) &etext);
+			if ((type & ~T_USER) != T_INTERRUPT) {
+				vaddr_t minsp, maxsp;
+
 #ifdef HPPA_REDZONE
-			uspace_size = HPPA_REDZONE;
+				maxsp = (u_int)(l->l_addr) +
+				    HPPA_REDZONE;
 #else
-			uspace_size = USPACE;
+				maxsp = (u_int)(l->l_addr) +
+				    USPACE;
 #endif
-			SANITY(l == NULL ||
-				((tf->tf_sp >= (u_int)(l->l_addr) + PAGE_SIZE &&
-				  tf->tf_sp < (u_int)(l->l_addr) + uspace_size)));
+				minsp = (u_int)(l->l_addr) + PAGE_SIZE;
+
+				SANITY(l == NULL ||
+				    (tf->tf_sp >= minsp && tf->tf_sp < maxsp));
+			}
 		}
 	} else {
 		SANITY(USERMODE(tf->tf_iioq_head));

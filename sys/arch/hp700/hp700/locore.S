@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.16.2.3 2007/03/24 14:54:41 yamt Exp $	*/
+/*	$NetBSD: locore.S,v 1.16.2.4 2007/04/04 17:28:26 skrll Exp $	*/
 
 /*	$OpenBSD: locore.S,v 1.46 2001/09/20 18:33:03 mickey Exp $	*/
 
@@ -85,7 +85,7 @@
 /* Some aliases for the macros in assym.h. */
 #define	TRAPFRAME_SIZEOF	trapframe_SIZEOF
 
-#define	ccr		cr10
+#define	ccr	cr10
 #define	rctr	cr0
 #define	vtop	cr25
 #define	hptmask cr24
@@ -294,12 +294,7 @@ $qisnowon:
 	 * call C routine hppa_init() to initialize VM
 	 */
 	.import hppa_init, code
-	ldil	L%hppa_init, %r1
-	ldo	R%hppa_init(%r1), %r1
-	.call
-	blr	%r0, %rp
-	bv,n	(%r1)
-	nop
+	CALL(hppa_init, %r1)
 
 	/*
 	 * go to virtual mode...
@@ -360,13 +355,7 @@ $noddb:
 #endif
 
 	.import main,code
-	ldil	L%main, %r1
-	ldo	R%main(%r1), %r1
-$callmain:
-	.call
-	blr	%r0, %rp
-	bv,n	(%r1)
-	nop
+	CALL(main, %r1)
 
 	/* should never return... */
 	bv	(%rp)
@@ -712,13 +701,13 @@ EXIT(cpu_die)
 
 /*
  * struct lwp *
- * cpu_switchto(struct lwp *cur, struct lwp *new)
+ * cpu_switchto(struct lwp *curl, struct lwp *newl)
  */
 	.align	32
 ENTRY(cpu_switchto,128)
 	/* start stack calling convention */
 	stw	%rp, HPPA_FRAME_CRP(%sp)
-	copy	%r3, %r1
+	copy	%r3, %r1 
 	copy	%sp, %r3
 	stwm	%r1, HPPA_FRAME_SIZE+16*4(%sp)
 					/* Frame marker and callee saves */
@@ -749,8 +738,8 @@ switch_diag:
 	comb,=,n %arg0, %arg1, kstack_ok
 
 	/*
-	 * cpu_lwp_fork and cpu_setfunc set the initial stack to
-	 * a page above l_addr. Check that this is the case.
+	 * cpu_lwp_fork sets the initial stack to a page above l_addr.
+	 * Check that this is the case for curl.
 	 */
 	ldw	L_ADDR(%arg1), %arg2
 	ldw	U_PCB+PCB_KSP(%arg2), %t1	/* t1 for switch_error */
@@ -767,31 +756,19 @@ switch_diag:
 kstack_ok:
 #endif
 
-	/*
-	 * Disable interrupts while we're doing the real
-	 * switch.  Is this just being paranoid?
-	 */
-	mfctl	%eiem, %t4
-	mtctl	%r0, %eiem
-
-	/* Skip context switch if same LWP. */
-	comb,=,n %arg0, %arg1, switch_return
-
 	/* If old LWP exited, don't bother. */
 	comb,=,n %r0, %arg0, switch_exited
 
 	/*
-	 * save old proc context
+	 * save old LWP context
 	 *
-	 * arg0: old proc
-	 * arg1; new proc
+	 * arg0: old LWP (curl)
+	 * arg1: new LWP (newl)
 	 */
 
-	ldw	L_MD(%arg1), %t1	/* TF XXX likely remove*/
-	ldw	L_ADDR(%arg0), %t3	/* oldl pcb */
+	ldw	L_ADDR(%arg0), %t3	/* curl pcb */
 	stw	%sp, U_PCB+PCB_KSP(%t3)
-	fdc	%r0(%t3)		/* flush oldl pcb */
-	fdc	%r0(%t1)		/* XXX likely remove */
+	fdc	%r0(%t3)		/* flush curl pcb */
 
 	/*
 	 * Save the callee-save registers. We don't need to do 
@@ -814,10 +791,10 @@ kstack_ok:
 	stw	%r18, 15*4(%r3)
 
 	/*
-	 * restore new proc context
+	 * restore new LWP context
 	 *
-	 * arg0: new proc
-	 * arg1: new proc
+	 * arg0: old LWP (curl)
+	 * arg1: new LWP (newl)
 	 */
 switch_exited:
 	ldw	L_MD(%arg1), %t1		/* M_TF??? */
@@ -832,12 +809,6 @@ switch_exited:
 	mtctl	%t2, %cr30			/* pmap_activate? */
 
 	ldo	-(HPPA_FRAME_SIZE+16*4)(%sp), %r3
-
-	/* in case we're in trampoline */
-	stw	%arg0, HPPA_FRAME_ARG(0)(%r3)
-	stw	%arg1, HPPA_FRAME_ARG(1)(%r3)
-	ldw	HPPA_FRAME_ARG(2)(%r3), %arg2
-	ldw	HPPA_FRAME_ARG(3)(%r3), %arg3
 
 	ldw	 1*4(%r3), %r4
 	ldw	 2*4(%r3), %r5
@@ -857,23 +828,24 @@ switch_exited:
 
 	/*
 	 * Check for restartable atomic sequences (RAS)
-	 * We save and restore %arg3 (containing %eiem value)
-	 * and %arg0, %t3 (in case we're doing a trampoline).
 	 */
-
+switch_trampoline:
 	ldw	L_PROC(%arg1), %t1
 	ldw	P_RASLIST(%t1), %t1
 	comb,=,n %r0, %t1, noras
 
 	/*
-	 * save some caller-saves we want to preserve. abuse CLUP.
+	 * Save some caller-saves we want to preserve.
+	 *
+	 * We save curl (%arg0) and newl (%arg1) for the benefit of
+	 * lwp_trampoline() for when it calls lwp_startup().
+	 *
+	 * curl (%arg0) is saved as it's the return value, and
+	 * eiem (%t4) is saved to restore interrupts.
 	 */
-	/* save old and new lwp for the benefit of lwp_startup */
-	stw	%arg0, HPPA_FRAME_ARG(0)(%r3)		/* oldl */
+	stw	%arg0, HPPA_FRAME_ARG(0)(%r3)		/* curl */
 	stw	%arg1, HPPA_FRAME_ARG(1)(%r3)		/* newl */
-	stw	%arg2, HPPA_FRAME_ARG(2)(%r3)		/* trampoline func */
-	stw	%arg3, HPPA_FRAME_ARG(3)(%r3)		/* trampoline arg */
-	stw	%t4, HPPA_FRAME_CLUP(%r3)		/* eiem */
+	stw	%t4, HPPA_FRAME_ARG(2)(%r3)		/* eiem */
 
 	copy	%arg1, %arg0
 
@@ -881,9 +853,7 @@ switch_exited:
 	CALL(hppa_ras, %r1)
 
 	/* restore caller-saves */
-	ldw	HPPA_FRAME_CLUP(%r3), %t4
-	ldw	HPPA_FRAME_ARG(3)(%r3), %arg3
-	ldw	HPPA_FRAME_ARG(2)(%r3), %arg2
+	ldw	HPPA_FRAME_ARG(2)(%r3), %t4
 	ldw	HPPA_FRAME_ARG(1)(%r3), %arg1
 	ldw	HPPA_FRAME_ARG(0)(%r3), %arg0
 
@@ -909,7 +879,7 @@ ALTENTRY(hppa_fpu_nop1)
 	mfctl	%cr30, %t2
 	ldw	R%fpu_cur_uspace(%t1), %t1
 	depi	0, 25, 2, %r1		; disables the FPU
-	comb,<>,n %t1, %t2, 0		; nullify if procs different
+	comb,<>,n %t1, %t2, 0		; nullify if LWPs different
 	depi	3, 25, 2, %r1		; enables the FPU
 	mtctl	%r1, %ccr
 
@@ -917,40 +887,30 @@ switch_return:
 	copy	%arg0, %ret0
 
 	ldw	HPPA_FRAME_CRP(%r3), %rp
-	ldwm	-(HPPA_FRAME_SIZE+16*4)(%sp), %r3
 	bv	0(%rp)
-	mtctl	%t4, %eiem
+	ldwm	-(HPPA_FRAME_SIZE+16*4)(%sp), %r3
 EXIT(cpu_switchto)
 
 /*
  * This is the first code run in a new LWP after
  * cpu_switchto() has switched to it for the first time.
  *
- * This happens courtesy of the setup in cpu_lwp_fork(),
- * which also makes sure that cpu_switchto can call us with
- * the arguments oldl, newl, the first kernel function to call,
- * and its argument.
+ * This happens courtesy of the setup in cpu_lwp_fork() which
+ * arranges for cpu_switchto() to call us with a frame containing
+ * the first kernel function to call, and its argument.
+ *
+ * cpu_switchto() also makes sure that %arg0 and %arg are (still)
+ * curl and newl respectively.
  */
 ENTRY(lwp_trampoline,HPPA_FRAME_SIZE)
 	/* no return point */
 	stw	%r0, HPPA_FRAME_CRP(%sp)
 
-	/* save %arg0, %t3 */
-	stw	%arg0, HPPA_FRAME_ARG(0)(%sp)		/* oldl */
-	stw	%arg1, HPPA_FRAME_ARG(1)(%sp)		/* newl */
-	stw	%arg2, HPPA_FRAME_ARG(2)(%sp)		/* trampoline func */
-	stw	%arg3, HPPA_FRAME_ARG(3)(%sp)		/* trampoline arg */
-
+	/* %arg0, %arg1 are still valid from cpu_switchto */
 	.import	lwp_startup, code
 	CALL(lwp_startup, %r1)
 
-	/* Set in trapframe? */
-	/* new children start at spl0 */
-	.call
-	bl	spllower, %rp
-	copy	%r0, %arg0
-
-	/* restore trampoline func (%t3) and arg (%arg0) */
+	/* get trampoline func (%t3) and arg (%arg0) */
 	ldw	HPPA_FRAME_ARG(3)(%sp), %arg0
 	ldw	HPPA_FRAME_ARG(2)(%sp), %t3
 
