@@ -1,6 +1,7 @@
 2007-04-04  Yvan Vanhullebus  <vanhu@netasq.com>
 	* src/racoon/oakley.c: dumps peer's ID and peer's certificate
 	  subject /subjectaltname if they don't match.
+	* src/racoon/ipsec_doi.c: checks proto_id in ipsecdoi_chkcmpids().
 
 ---------------------------------------------
 

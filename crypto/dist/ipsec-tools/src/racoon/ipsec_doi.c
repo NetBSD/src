@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_doi.c,v 1.23.4.5 2007/03/23 15:43:53 vanhu Exp $	*/
+/*	$NetBSD: ipsec_doi.c,v 1.23.4.6 2007/04/04 13:10:13 vanhu Exp $	*/
 
 /* Id: ipsec_doi.c,v 1.55 2006/08/17 09:20:41 vanhu Exp */
 
@@ -3476,6 +3476,14 @@ ipsecdoi_chkcmpids( idt, ids, exact )
 			"check and compare ids : id type mismatch %s != %s\n",
 			s_ipsecdoi_ident(id_bs->type),
 			s_ipsecdoi_ident(id_bt->type));
+
+		return 1;
+	}
+
+	if(id_bs->proto_id != id_bt->proto_id){
+		plog(LLV_DEBUG, LOCATION, NULL,
+			"check and compare ids : proto_id mismatch %d != %d\n",
+			id_bs->proto_id, id_bt->proto_id);
 
 		return 1;
 	}
