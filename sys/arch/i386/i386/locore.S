@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.45.2.6 2007/03/29 19:00:24 ad Exp $	*/
+/*	$NetBSD: locore.S,v 1.45.2.7 2007/04/04 13:04:09 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -746,12 +746,12 @@ ENTRY(cpu_switchto)
 
 	/* Don't bother with the rest if switching to a system process. */
 	testl	$LW_SYSTEM,L_FLAG(%edi)
-	jnz	3f
+	jnz	4f
 
 	/* Is this process using RAS (restartable atomic sequences)? */
 	movl	L_PROC(%edi),%eax
 	cmpl	$0,P_RASLIST(%eax)
-	jne	4f
+	jne	5f
 
 	/*
 	 * Restore cr0 (including FPU state).  Raise the IPL to IPL_IPI.
@@ -768,24 +768,23 @@ ENTRY(cpu_switchto)
 	 */
 	movl	PCB_FPCPU(%ebx),%eax
 	cmpl	CPUVAR(SELF),%eax
-	movl	$0,%eax
-	setne	%al			# CR0_TS is bit 0
-	orl	%eax,%ecx
+	je	3f
+	orl	$CR0_TS,%ecx
 
 	/* Reloading CR0 is very expensive - avoid if possible. */
-	cmpl	%edx,%ecx
-	je	3f
+3:	cmpl	%edx,%ecx
+	je	4f
 	movl	%ecx,%cr0
 
 	/* Return to the new LWP, returning 'oldlwp' in %eax. */
-3:	movl	%esi,%eax
+4:	movl	%esi,%eax
 	popl	%edi
 	popl	%esi
 	popl	%ebx
 	ret
 
 	/* Check for restartable atomic sequences (RAS). */
-4:	movl	L_MD_REGS(%edi),%ecx
+5:	movl	L_MD_REGS(%edi),%ecx
 	pushl	TF_EIP(%ecx)
 	pushl	%eax
 	call	_C_LABEL(ras_lookup)
