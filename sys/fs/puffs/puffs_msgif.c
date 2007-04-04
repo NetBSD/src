@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.c,v 1.26 2007/04/04 16:13:51 pooka Exp $	*/
+/*	$NetBSD: puffs_msgif.c,v 1.27 2007/04/04 20:22:47 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.26 2007/04/04 16:13:51 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.27 2007/04/04 20:22:47 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/fstrans.h>
@@ -636,7 +636,6 @@ puffs_getop(struct puffs_mount *pmp, struct puffs_reqh_get *phg, int nonblock)
 		TAILQ_REMOVE(&pmp->pmp_req_touser, park, park_entries);
 		KASSERT(park->park_flags & PARKFLAG_ONQUEUE1);
 		park->park_flags &= ~PARKFLAG_ONQUEUE1;
-		mutex_exit(&pmp->pmp_lock);
 
 		if (phg->phg_buflen < preq->preq_buflen) {
 			if (!donesome)
@@ -644,6 +643,7 @@ puffs_getop(struct puffs_mount *pmp, struct puffs_reqh_get *phg, int nonblock)
 			puffs_park_release(park, 0);
 			goto out;
 		}
+		mutex_exit(&pmp->pmp_lock);
 
 		DPRINTF(("puffsgetop: get op %" PRIu64 " (%d.), from %p "
 		    "len %zu (buflen %zu), target %p\n", preq->preq_id,
@@ -665,7 +665,6 @@ puffs_getop(struct puffs_mount *pmp, struct puffs_reqh_get *phg, int nonblock)
 				     park_entries);
 				 park->park_flags |= PARKFLAG_ONQUEUE1;
 			}
-			mutex_exit(&pmp->pmp_lock);
 
 			if (donesome)
 				error = 0;
