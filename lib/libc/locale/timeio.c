@@ -1,4 +1,4 @@
-/*	$NetBSD: timeio.c,v 1.1 2007/03/28 19:05:53 manu Exp $	*/
+/*	$NetBSD: timeio.c,v 1.2 2007/04/04 21:54:45 christos Exp $	*/
 
 
 /*
@@ -55,17 +55,15 @@ __loadtime(name)
 
 	if ((fp = fopen(name, "r")) == NULL)
 		return 0;
-	if (fstat(fileno(fp), &st) != 0) {
-		fclose(fp);
-		return 0;
+	if (fstat(fileno(fp), &st) != 0)
+		goto closeit;
+	if ((tl = malloc(sizeof(*tl) + (unsigned)st.st_size)) == NULL)
+		goto closeit;
+	if (fread(tl + 1, (unsigned)st.st_size, 1, fp) != 1) {
+		free(tl);
+		goto closeit;
 	}
-	if ((tl = malloc(sizeof(*tl) + (unsigned)st.st_size)) == NULL) {
-		(void) fclose(fp);
-		return 0;
-	}
-	if (fread(tl + 1, (unsigned)st.st_size, 1, fp) != 1)
-		goto bad;
-	(void) fclose(fp);
+	(void)fclose(fp);
 	/* LINTED pointer cast */
 	p = (unsigned char *)&tl[1];
 	pend = p + (unsigned)st.st_size;
@@ -76,8 +74,10 @@ __loadtime(name)
 		*ab = p;
 		while (p != pend && *p != '\n')
 			p++;
-		if (p == pend)
-			goto bad;
+		if (p == pend) {
+			free(tl);
+			return 0;
+		}
 		*p++ = '\0';
 	}
 	if (_CurrentTimeLocale != &_DefaultTimeLocale)
@@ -85,9 +85,8 @@ __loadtime(name)
 		free((void *)_CurrentTimeLocale);
 	_CurrentTimeLocale = tl;
 	return 1;
-bad:
-	free(tl);
-	(void) fclose(fp);
+closeit:
+	(void)fclose(fp);
 	return 0;
 }
 
