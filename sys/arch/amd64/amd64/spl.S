@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.6.2.1 2007/03/23 14:06:07 ad Exp $	*/
+/*	$NetBSD: spl.S,v 1.6.2.2 2007/04/04 14:13:32 ad Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -177,6 +177,7 @@ ENTRY(amd64_spllower)
 	cmpl	%edx,%edi			/* new level is lower? */
 	pushq	%rbx
 	jae,pn	1f
+0:
 	movl	CPUVAR(IPENDING),%eax
 	movl	%edi,%ecx
 	testl	%eax,CPUVAR(IUNMASK)(,%rcx,4)/* deferred interrupts? */
@@ -187,7 +188,7 @@ ENTRY(amd64_spllower)
 	 */
 	jnz,pn	2f
 	cmpxchg8b CPUVAR(ISTATE)		/* swap in new ilevel */
-	jnz,pn	2f
+	jnz,pn	0b
 1:
 	popq	%rbx
 	ret
