@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.169.2.3 2007/03/21 20:11:51 ad Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.169.2.4 2007/04/05 21:44:47 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.169.2.3 2007/03/21 20:11:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.169.2.4 2007/04/05 21:44:47 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -315,6 +315,14 @@ exit1(struct lwp *l, int rv)
 	 * anymore.
 	 */
 	uvm_proc_exit(p);
+
+	/*
+	 * While we can still block, and mark the LWP as unswappable to
+	 * prevent conflicts with the with the swapper.  We also shouldn't
+	 * be swapped out, because we are about to exit and will release
+	 * memory.
+	 */
+	uvm_lwp_hold(l);
 
 	/*
 	 * Stop profiling.
