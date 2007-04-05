@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.2,v 1.1.2.106 2007/04/04 21:42:52 bouyer Exp $
+#	$NetBSD: CHANGES-2.2,v 1.1.2.107 2007/04/05 21:06:05 bouyer Exp $
 
 A complete list of changes from the NetBSD 2.1 release to the NetBSD 2.2 
 release
@@ -1125,4 +1125,34 @@ etc/mtree/NetBSD.dist			1.295
 
 	Update to tzdata2007a
 	[apb, ticket #11134]
+
+etc/Makefile					1.342 via patch
+etc/etc.sgimips/Makefile.inc			1.15 via patch
+
+	Handle mkisofs from recent cdrtool for el-torito boot image.
+	Sync sgimips's Makefile (cosmetic only).
+	[bad, ticket #11284]
+
+xsrc/xfree/xc/extras/freetype2/src/bdf/bdflib.c	1.3
+xsrc/xfree/xc/lib/X11/ImUtil.c			1.2
+xsrc/xfree/xc/lib/font/bitmap/bdfread.c		1.2
+xsrc/xfree/xc/lib/font/fontfile/fontdir.c	1.2
+xsrc/xfree/xc/programs/Xserver/Xext/xcmisc.c	1.2
+
+	fix a possible memory corruption due to integer overflow in
+	ProcXCMiscGetXIDList() (CVE-2007-1003)
+	fix a possible memory corruption due to integer overflow, caused by
+	lack of validation of bdf font files (CVE 2007-1351)
+	fix a possible memory corruption due to integer overflow, caused by
+	lack of validation of fonts.dir files (CVE 2007-1352)
+	fix a possible memory corruption due to incomplete input validation in
+	XInitImage() (CVE 2007-1667)
+	pull in a patch from freetype CVS (CVE-2007-1351):
+	  src/bdf/bdflib.c (setsbit, sbitset): Handle values >= 128
+	  gracefully.
+	  (_bdf_set_default_spacing): Increase `name' buffer size to 256 and
+	  issue an error for longer names.
+	  (_bdf_parse_glyphs): Limit allowed number of glyphs in font to the
+	  number of code points in Unicode.
+	[drochner, ticket #11285]
 
