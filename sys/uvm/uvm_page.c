@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.119.4.4 2007/04/05 21:28:11 ad Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.119.4.5 2007/04/05 21:32:53 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.119.4.4 2007/04/05 21:28:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.119.4.5 2007/04/05 21:32:53 ad Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -1716,11 +1716,10 @@ void
 uvm_pagedequeue(struct vm_page *pg)
 {
 
-#if defined(LOCKDEBUG)
 	if (uvmpdpol_pageisqueued_p(pg)) {
 		KASSERT(mutex_owned(&uvm_pageqlock));
 	}
-#endif /* defined(LOCKDEBUG) */
+
 	uvmpdpol_pagedequeue(pg);
 }
 

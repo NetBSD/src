@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.h,v 1.56.4.1 2007/03/13 17:51:56 ad Exp $	*/
+/*	$NetBSD: uvm_map.h,v 1.56.4.2 2007/04/05 21:32:53 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -112,6 +112,9 @@
 
 #include <sys/tree.h>
 #include <sys/pool.h>
+#include <sys/rwlock.h>
+#include <sys/mutex.h>
+#include <sys/condvar.h>
 
 #include <uvm/uvm_anon.h>
 
@@ -196,17 +199,6 @@ struct vm_map_entry {
  *					map is write-locked.  may be tested
  *					without asserting `flags_lock'.
  *
- *		VM_MAP_BUSY		r/w; may only be set when map is
- *					write-locked, may only be cleared by
- *					thread which set it, map read-locked
- *					or write-locked.  must be tested
- *					while `flags_lock' is asserted.
- *
- *		VM_MAP_WANTLOCK		r/w; may only be set when the map
- *					is busy, and thread is attempting
- *					to write-lock.  must be tested
- *					while `flags_lock' is asserted.
- *
  *		VM_MAP_DYING		r/o; set when a vmspace is being
  *					destroyed to indicate that updates
  *					to the pmap can be skipped.
@@ -218,18 +210,20 @@ struct vm_map_entry {
  */
 struct vm_map {
 	struct pmap *		pmap;		/* Physical map */
-	struct lock		lock;		/* Lock for map data */
+	krwlock_t		lock;		/* Non-intrsafe lock */
+	struct lwp *		busy;		/* LWP holding map busy */
+	kmutex_t		mutex;		/* INTRSAFE lock */
+	kmutex_t		misc_lock;	/* Lock for ref_count, cv */
+	kmutex_t		hint_lock;	/* lock for hint storage */
+	kcondvar_t		cv;		/* For signalling */
+	int			flags;		/* flags */
 	RB_HEAD(uvm_tree, vm_map_entry) rbhead;	/* Tree for entries */
 	struct vm_map_entry	header;		/* List of entries */
 	int			nentries;	/* Number of entries */
 	vsize_t			size;		/* virtual size */
 	int			ref_count;	/* Reference count */
-	kmutex_t		ref_lock;	/* Lock for ref_count field */
 	struct vm_map_entry *	hint;		/* hint for quick lookups */
-	kmutex_t		hint_lock;	/* lock for hint storage */
 	struct vm_map_entry *	first_free;	/* First free space hint */
-	int			flags;		/* flags */
-	kmutex_t		flags_lock;	/* Lock for flags field */
 	unsigned int		timestamp;	/* Version number */
 };
 
@@ -258,8 +252,6 @@ struct vm_map_kernel {
 #define	VM_MAP_PAGEABLE		0x01		/* ro: entries are pageable */
 #define	VM_MAP_INTRSAFE		0x02		/* ro: interrupt safe map */
 #define	VM_MAP_WIREFUTURE	0x04		/* rw: wire future mappings */
-#define	VM_MAP_BUSY		0x08		/* rw: map is busy */
-#define	VM_MAP_WANTLOCK		0x10		/* rw: want to write-lock */
 #define	VM_MAP_DYING		0x20		/* rw: map is being destroyed */
 #define	VM_MAP_TOPDOWN		0x40		/* ro: arrange map top-down */
 #define	VM_MAP_VACACHE		0x80		/* ro: use kva cache */
@@ -286,15 +278,6 @@ struct uvm_map_args {
 
 	uvm_flag_t uma_flags;
 };
-#endif /* _KERNEL */
-
-#ifdef _KERNEL
-#define	vm_map_modflags(map, set, clear)				\
-do {									\
-	mutex_enter(&(map)->flags_lock);				\
-	(map)->flags = ((map)->flags | (set)) & ~(clear);		\
-	mutex_exit(&(map)->flags_lock);					\
-} while (/*CONSTCOND*/ 0)
 #endif /* _KERNEL */
 
 /*
@@ -366,154 +349,69 @@ int		uvm_mapent_trymerge(struct vm_map *,
 		    struct vm_map_entry *, int);
 #define	UVM_MERGE_COPYING	1
 
-#endif /* _KERNEL */
+bool		vm_map_starved_p(struct vm_map *);
 
 /*
- * VM map locking operations:
- *
- *	These operations perform locking on the data portion of the
- *	map.
- *
- *	vm_map_lock_try: try to lock a map, failing if it is already locked.
- *
- *	vm_map_lock: acquire an exclusive (write) lock on a map.
- *
- *	vm_map_lock_read: acquire a shared (read) lock on a map.
- *
- *	vm_map_unlock: release an exclusive lock on a map.
- *
- *	vm_map_unlock_read: release a shared lock on a map.
- *
- *	vm_map_downgrade: downgrade an exclusive lock to a shared lock.
- *
- *	vm_map_upgrade: upgrade a shared lock to an exclusive lock.
- *
- *	vm_map_busy: mark a map as busy.
- *
- *	vm_map_unbusy: clear busy status on a map.
- *
- * Note that "intrsafe" maps use only exclusive, spin locks.  We simply
- * use the sleep lock's interlock for this.
+ * VM map locking operations.
  */
 
-#ifdef _KERNEL
-/* XXX: clean up later */
-#include <sys/time.h>
-#include <sys/proc.h>	/* for tsleep(), wakeup() */
-#include <sys/systm.h>	/* for panic() */
+bool		vm_map_lock_try(struct vm_map *);
+void		vm_map_lock(struct vm_map *);
+void		vm_map_unlock(struct vm_map *);
+void		vm_map_upgrade(struct vm_map *);
+void		vm_map_unbusy(struct vm_map *);
 
-static __inline bool		vm_map_lock_try(struct vm_map *);
-static __inline void		vm_map_lock(struct vm_map *);
-extern const char vmmapbsy[];
+/*
+ * vm_map_lock_read: acquire a shared (read) lock on a map.
+ */
 
-static __inline bool
-vm_map_lock_try(struct vm_map *map)
+static inline void
+vm_map_lock_read(struct vm_map *map)
 {
-	bool rv;
 
-	if (map->flags & VM_MAP_INTRSAFE)
-		rv = mutex_tryenter(&map->lock.lk_interlock);
-	else {
-		mutex_enter(&map->flags_lock);
-		if (map->flags & VM_MAP_BUSY) {
-			mutex_exit(&map->flags_lock);
-			return (false);
-		}
-		rv = (lockmgr(&map->lock, LK_EXCLUSIVE|LK_NOWAIT|LK_INTERLOCK,
-		    &map->flags_lock) == 0);
-	}
+	KASSERT((map->flags & VM_MAP_INTRSAFE) == 0);
 
-	if (rv)
-		map->timestamp++;
-
-	return (rv);
+	rw_enter(&map->lock, RW_READER);
 }
 
-static __inline void
-vm_map_lock(struct vm_map *map)
+/*
+ * vm_map_unlock_read: release a shared lock on a map.
+ */
+ 
+static inline void
+vm_map_unlock_read(struct vm_map *map)
 {
-	int error;
 
-	if (map->flags & VM_MAP_INTRSAFE) {
-		mutex_enter(&map->lock.lk_interlock);
-		return;
-	}
+	KASSERT((map->flags & VM_MAP_INTRSAFE) == 0);
 
- try_again:
-	mutex_enter(&map->flags_lock);
-	while (map->flags & VM_MAP_BUSY) {
-		map->flags |= VM_MAP_WANTLOCK;
-		mtsleep(&map->flags, PVM, vmmapbsy, 0, &map->flags_lock);
-	}
+	rw_exit(&map->lock);
+}
+/*
+ * vm_map_downgrade: downgrade an exclusive lock to a shared lock.
+ */
 
-	error = lockmgr(&map->lock, LK_EXCLUSIVE|LK_SLEEPFAIL|LK_INTERLOCK,
-	    &map->flags_lock);
+static inline void
+vm_map_downgrade(struct vm_map *map)
+{
 
-	if (error) {
-		KASSERT(error == ENOLCK);
-		goto try_again;
-	}
-
-	(map)->timestamp++;
+	rw_downgrade(&map->lock);
 }
 
-#ifdef DIAGNOSTIC
-#define	vm_map_lock_read(map)						\
-do {									\
-	if ((map)->flags & VM_MAP_INTRSAFE)				\
-		panic("vm_map_lock_read: intrsafe Map");		\
-	(void) lockmgr(&(map)->lock, LK_SHARED, NULL);			\
-} while (/*CONSTCOND*/ 0)
-#else
-#define	vm_map_lock_read(map)						\
-	(void) lockmgr(&(map)->lock, LK_SHARED, NULL)
-#endif
+/*
+ * vm_map_busy: mark a map as busy.
+ *
+ * => the caller must hold the map write locked
+ */
 
-#define	vm_map_unlock(map)						\
-do {									\
-	if ((map)->flags & VM_MAP_INTRSAFE)				\
-		mutex_exit(&(map)->lock.lk_interlock);			\
-	else								\
-		(void) lockmgr(&(map)->lock, LK_RELEASE, NULL);		\
-} while (/*CONSTCOND*/ 0)
+static inline void
+vm_map_busy(struct vm_map *map)
+{
 
-#define	vm_map_unlock_read(map)						\
-	(void) lockmgr(&(map)->lock, LK_RELEASE, NULL)
+	KASSERT(rw_write_held(&map->lock));
+	KASSERT(map->busy == NULL);
 
-#define	vm_map_downgrade(map)						\
-	(void) lockmgr(&(map)->lock, LK_DOWNGRADE, NULL)
-
-#ifdef DIAGNOSTIC
-#define	vm_map_upgrade(map)						\
-do {									\
-	if (lockmgr(&(map)->lock, LK_UPGRADE, NULL) != 0)		\
-		panic("vm_map_upgrade: failed to upgrade lock");	\
-} while (/*CONSTCOND*/ 0)
-#else
-#define	vm_map_upgrade(map)						\
-	(void) lockmgr(&(map)->lock, LK_UPGRADE, NULL)
-#endif
-
-#define	vm_map_busy(map)						\
-do {									\
-	mutex_enter(&(map)->flags_lock);				\
-	(map)->flags |= VM_MAP_BUSY;					\
-	mutex_exit(&(map)->flags_lock);					\
-} while (/*CONSTCOND*/ 0)
-
-#define	vm_map_unbusy(map)						\
-do {									\
-	int oflags;							\
-									\
-	mutex_enter(&(map)->flags_lock);				\
-	oflags = (map)->flags;						\
-	(map)->flags &= ~(VM_MAP_BUSY|VM_MAP_WANTLOCK);			\
-	mutex_exit(&(map)->flags_lock);				\
-	if (oflags & VM_MAP_WANTLOCK)					\
-		wakeup(&(map)->flags);					\
-} while (/*CONSTCOND*/ 0)
-
-bool vm_map_starved_p(struct vm_map *);
+	map->busy = curlwp;
+}
 
 #endif /* _KERNEL */
 

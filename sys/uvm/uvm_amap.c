@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.c,v 1.79.4.2 2007/03/13 17:51:53 ad Exp $	*/
+/*	$NetBSD: uvm_amap.c,v 1.79.4.3 2007/04/05 21:32:51 ad Exp $	*/
 
 /*
  *
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.79.4.2 2007/03/13 17:51:53 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.79.4.3 2007/04/05 21:32:51 ad Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -219,6 +219,7 @@ fail3:
 fail2:
 	kmem_free(amap->am_slots, totalslots * sizeof(int));
 fail1:
+	mutex_destroy(&amap->am_l);
 	pool_put(&uvm_amap_pool, amap);
 
 	/*
@@ -1295,7 +1296,7 @@ amap_swap_off(int startslot, int endslot)
 	memset(&marker_next, 0, sizeof(marker_next));
 #endif /* defined(DIAGNOSTIC) */
 
-	PHOLD(l);
+	uvm_lwp_hold(l);
 	mutex_enter(&amap_list_lock);
 	for (am = LIST_FIRST(&amap_list); am != NULL && !rv; am = am_next) {
 		int i;
@@ -1373,7 +1374,7 @@ next:
 		LIST_REMOVE(&marker_next, am_list);
 	}
 	mutex_exit(&amap_list_lock);
-	PRELE(l);
+	uvm_lwp_rele(l);
 
 	return rv;
 }

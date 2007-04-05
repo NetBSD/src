@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.56.4.1 2007/03/13 17:51:54 ad Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.56.4.2 2007/04/05 21:32:52 ad Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.56.4.1 2007/03/13 17:51:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.56.4.2 2007/04/05 21:32:52 ad Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_ubc.h"
@@ -43,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.56.4.1 2007/03/13 17:51:54 ad Exp $");
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
+#include <sys/proc.h>
 
 #include <uvm/uvm.h>
 
@@ -299,7 +300,7 @@ again:
 	    0);
 
 	if (error == EAGAIN) {
-		tsleep(&lbolt, PVM, "ubc_fault", 0);
+		kpause("ubc_fault", false, 0, NULL);
 		goto again;
 	}
 	if (error) {
@@ -458,7 +459,7 @@ again:
 		umap = TAILQ_FIRST(UBC_QUEUE(offset));
 		if (umap == NULL) {
 			mutex_exit(&ubc_object.uobj.vmobjlock);
-			tsleep(&lbolt, PVM, "ubc_alloc", 0);
+			kpause("ubc_alloc", false, 0, NULL);
 			goto again;
 		}
 
