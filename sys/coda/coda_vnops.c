@@ -6,7 +6,7 @@ mkdir
 rmdir
 symlink
 */
-/*	$NetBSD: coda_vnops.c,v 1.52 2007/03/04 06:01:12 christos Exp $	*/
+/*	$NetBSD: coda_vnops.c,v 1.53 2007/04/05 12:48:51 gdt Exp $	*/
 
 /*
  *
@@ -54,7 +54,7 @@ symlink
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.52 2007/03/04 06:01:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.53 2007/04/05 12:48:51 gdt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -885,22 +885,20 @@ coda_lookup(void *v)
 {
 /* true args */
     struct vop_lookup_args *ap = v;
+    /* (locked) vnode of dir in which to do lookup */
     struct vnode *dvp = ap->a_dvp;
     struct cnode *dcp = VTOC(dvp);
+    /* output variable for result */
     struct vnode **vpp = ap->a_vpp;
-    /*
-     * It looks as though ap->a_cnp->ni_cnd->cn_nameptr holds the rest
-     * of the string to xlate, and that we must try to get at least
-     * ap->a_cnp->ni_cnd->cn_namelen of those characters to macth.  I
-     * could be wrong.
-     */
-    struct componentname  *cnp = ap->a_cnp;
+    /* name to lookup */
+    struct componentname *cnp = ap->a_cnp;
     kauth_cred_t cred = cnp->cn_cred;
     struct lwp *l = cnp->cn_lwp;
 /* locals */
     struct cnode *cp;
     const char *nm = cnp->cn_nameptr;
     int len = cnp->cn_namelen;
+    int flags = cnp->cn_flags;
     CodaFid VFid;
     int	vtype;
     int error = 0;
@@ -910,6 +908,17 @@ coda_lookup(void *v)
     CODADEBUG(CODA_LOOKUP, myprintf(("lookup: %s in %s\n",
 				   nm, coda_f2s(&dcp->c_fid))););
 
+    /*
+     * XXX componentname flags in MODMASK are not handled at all
+     */
+
+    /*
+     * The overall strategy is to switch on the lookup type and get a
+     * result vnode that is vref'd but not locked.  Then, the code at
+     * exit: switches on ., .., and regular lookups and does the right
+     * locking.
+     */
+
     /* Check for lookup of control object. */
     if (IS_CTL_NAME(dvp, nm, len)) {
 	*vpp = coda_ctlvp;
@@ -918,6 +927,7 @@ coda_lookup(void *v)
 	goto exit;
     }
 
+    /* Avoid trying to hand venus an unreasonably long name. */
     if (len+1 > CODA_MAXNAMLEN) {
 	MARK_INT_FAIL(CODA_LOOKUP_STATS);
 	CODADEBUG(CODA_LOOKUP, myprintf(("name too long: lookup, %s (%s)\n",
@@ -926,8 +936,12 @@ coda_lookup(void *v)
 	error = EINVAL;
 	goto exit;
     }
-    /* First try to look the file up in the cfs name cache */
-    /* lock the parent vnode? */
+
+    /*
+     * Try to resolve the lookup in the minicache.  If that fails, ask
+     * venus to do the lookup.  XXX The interaction between vnode
+     * locking and any locking that coda does is not clear.
+     */
     cp = coda_nc_lookup(dcp, nm, len, cred);
     if (cp) {
 	*vpp = CTOV(cp);
@@ -935,8 +949,7 @@ coda_lookup(void *v)
 	CODADEBUG(CODA_LOOKUP,
 		 myprintf(("lookup result %d vpp %p\n",error,*vpp));)
     } else {
-
-	/* The name wasn't cached, so we need to contact Venus */
+	/* The name wasn't cached, so ask Venus. */
 	error = venus_lookup(vtomi(dvp), &dcp->c_fid, nm, len, cred, l, &VFid, &vtype);
 
 	if (error) {
@@ -952,9 +965,13 @@ coda_lookup(void *v)
 
 	    cp = make_coda_node(&VFid, dvp->v_mount, vtype);
 	    *vpp = CTOV(cp);
+	    /* vpp is now vrefed. */
 
-	    /* enter the new vnode in the Name Cache only if the top bit isn't set */
-	    /* And don't enter a new vnode for an invalid one! */
+	    /*
+	     * Unless this vnode is marked CODA_NOCACHE, enter it into
+	     * the coda name cache to avoid a future venus round-trip.
+	     * XXX Interaction with componentname NOCACHE is unclear.
+	     */
 	    if (!(vtype & CODA_NOCACHE))
 		coda_nc_enter(VTOC(dvp), nm, len, cred, VTOC(*vpp));
 	}
@@ -963,12 +980,9 @@ coda_lookup(void *v)
  exit:
     /*
      * If we are creating, and this was the last name to be looked up,
-     * and the error was ENOENT, then there really shouldn't be an
-     * error and we can make the leaf NULL and return success.  Since
-     * this is supposed to work under Mach as well as NetBSD, we're
-     * leaving this fn wrapped.  We also must tell lookup/namei that
-     * we need to save the last component of the name.  (Create will
-     * have to free the name buffer later...lucky us...)
+     * and the error was ENOENT, then make the leaf NULL and return
+     * success.
+     * XXX Check against new lookup rules.
      */
     if (((cnp->cn_nameiop == CREATE) || (cnp->cn_nameiop == RENAME))
 	&& (cnp->cn_flags & ISLASTCN)
@@ -982,12 +996,8 @@ coda_lookup(void *v)
     /*
      * If we are removing, and we are at the last element, and we
      * found it, then we need to keep the name around so that the
-     * removal will go ahead as planned.  Unfortunately, this will
-     * probably also lock the to-be-removed vnode, which may or may
-     * not be a good idea.  I'll have to look at the bits of
-     * coda_remove to make sure.  We'll only save the name if we did in
-     * fact find the name, otherwise coda_remove won't have a chance
-     * to free the pathname.
+     * removal will go ahead as planned.
+     * XXX Check against new lookup rules.
      */
     if ((cnp->cn_nameiop == DELETE)
 	&& (cnp->cn_flags & ISLASTCN)
@@ -997,17 +1007,29 @@ coda_lookup(void *v)
     }
 
     /*
-     * If the lookup went well, we need to lock the child.
+     * If the lookup succeeded, we must generally lock the returned
+     * vnode.  This could be a ., .., or normal lookup.  See
+     * vnodeops(9) for the details.
+     */
+    /*
+     * XXX LK_RETRY is likely incorrect.  Handle vn_lock failure
+     * somehow, and remove LK_RETRY.
      */
     if (!error || (error == EJUSTRETURN)) {
-	/* The parent is locked, and may be the same as the child */
+	/* Lookup has a value and it isn't "."? */
 	if (*ap->a_vpp && (*ap->a_vpp != dvp)) {
-	    /* Different, go ahead and lock it. */
-	    vn_lock(*ap->a_vpp, LK_EXCLUSIVE|LK_RETRY);
+	    if (flags & ISDOTDOT)
+		/* ..: unlock parent */
+		VOP_UNLOCK(dvp, 0);
+	    /* all but .: lock child */
+	    vn_lock(*ap->a_vpp, LK_EXCLUSIVE | LK_RETRY);
+	    if (flags & ISDOTDOT)
+		/* ..: relock parent */
+	        vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY);
 	}
+	/* else .: leave dvp locked */
     } else {
-	/* If the lookup failed, we need to ensure that the leaf is NULL */
-	/* Don't change any locking? */
+	/* The lookup failed, so return NULL.  Leave dvp locked. */
 	*ap->a_vpp = NULL;
     }
     return(error);
