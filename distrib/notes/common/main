@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.278.2.36 2006/10/28 12:07:57 ghen Exp $
+.\"	$NetBSD: main,v 1.278.2.36.2.1 2007/04/05 00:35:59 ghen Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -430,222 +430,135 @@ possible, it's likely that
 wouldn't exist.
 .
 .if \n[FOR_RELEASE] \{\
-
-.Ss Changes Between The NetBSD 3.0 and 3.1 Releases
+.Ss Changes Between The NetBSD 3.1 release and 3.1.1 update
+.Pp    
+The 
+.Nx
+3.1.1
+update    
+is the first security/critical update of the
+.Nx
+3.1
+release branch. This represents a selected subset of fixes deemed 
+critical in nature for stability or security reasons.
 .Pp
-The
-.Nx 3.1
-release
-is the first functional update release of the
-.Nx 3
-release branch.
-This provides numerous functional enhancements, including support for many new
-devices, hundreds of bug fixes, patches and updates to kernel subsystems, and
-many enhancements to the user environment.
-In addition, all of the security fixes and critical bug fixes from the
-.Nx 3.0.1
-update are included as well.
-The result of these improvements is a stable operating system fit for
-production use that rivals most commercially available systems.
+These fixes will also appear in future releases (NetBSD 3.2 etc),
+together with other less-critical fixes and feature enhancements.
 .Pp
-It is impossible to completely summarize all the changes that have gone in over
-the over nine months since the release of
-.Nx 3.0.
-Some highlights include:
+Specific updates are as follows:
 .
 .Ss2 Supported devices
 .
 .(bullet
-.Xr brgphy 4 :
-added support for BCM5714 and BCM5780 PHY's.
+.Xr wd 4 :
+fix broken Seagate drive ST3160811A.
+.bullet)
+.
+.Ss2 Kernel
+.
+.(bullet
+Don't accept a compressed
+.Xr vnd 4
+image with block size 0 to avoid a kernel panic.
 .It
-Added
-.Xr iteide 4 :
-driver for ITE 8212 IDE controller.
-.It
-Added support for the Pentium M 710, 730, 740, 750, 760 and 770 CPU's.
-.It
-Added support for nForce430 ATA133 and SATA controllers.
-.It
-.Xr pdcsata 4 :
-Added support for Promise PDC2057x, PDC20771, PDC20775, PDC40518 and PDC40718 SATA Controllers.
-.It
-.Xr ums 4 :
-Added support for Apple's "Mighty Mouse", and USB mice with more than 7 buttons
-.It
-.Xr agp 4 :
-Added support for Intel i915 chipset integrated graphics.
-.It
-.Xr pchb 4 :
-Added support for Intel i925X, i945G/P and i955X hardware RNG's.
-.It
-Added 
-.Xr ciss 4 :
-driver for the Command Interface SCSI-3 Support implemented by recent HP/Compaq
-Smart Array RAID controllers.
-.It
-Added
-.Xr nfe 4 :
-driver for NVIDIA nForce MCP Ethernet.
-.It
-Added
-.Xr svwsata 4 :
-driver for Serverworks K2, Frodo4, Frodo8 and HT-1000 SATA controllers.
-.It
-.Xr sk 4 :
-added support for the DLink DGE-530T and DGE-560T Gigabit Ethernet adapters.
-.It
-.Xr bge 4 :
-added support for BCM5714, BCM5715, BCM5780/HT-2000 and BCM5752 chip variants.
-.It
-.Xr wi 4 :
-added support for Siemens SS1021 WLAN.
-.It
-Added
-.Xr twa 4 :
-driver for the 3ware Apache RAID controllers.
-.It
-.Xr viaide 4 :
-added support for nForce3 250 SATA controllers.
-.It
-.Xr hptide 4 :
-added support for HPT368 IDE controller.
+Fix a panic caused by a NULL dereference.
 .bullet)
 .
 .Ss2 Networking
 .
 .(bullet
-Enabled SSL support in BIND.
+Fix get-lease-hostnames option in
+.Xr dhcpd.conf 5
+to make
+.Xr dhcpd 8
+use the DNS hostname as the DHCP hostname given to the client.
 .It
-A second
-.Xr dhclient 8
-instance now exists gracefully instead of leaving the system in a broken state.
-.It
-Removed the date from the
-.Xr dhclient 8
-generated
-.Xr resolv.conf 5
-file, since changes to this file are tracked by /etc/security.
-.It
-Changed the default
-.Xr sshd_config 8
-to enable SSH version 2 only.
-.It
-Don't accept TCP connections to broadcast addresses.
+Fix TCP window scaling in
+.Xr ipfilter 4 .
 .bullet)
 .
 .Ss2 File system
 .
 .(bullet
-The stability of the LFS file system has been vastly improved.
+Prevent a kernel panic when creating snapshots on filesystems which use quota's.
 .It
-Added 
-.Xr scan_ffs 4
-from OpenBSD (modified to also support FFSv2 and LFS), a utility to recover
-lost disklabels.
-.It
-Write performance of large files to msdos filesystems has been improved.
-.It
-We now drop into single-user mode when /etc/rc.d/fsck is interrupted by ^C at
-boot-time.
-.bullet)
-.
-.Ss2 Libraries
-.
-.(bullet
-Password aging works again.
+Fix a coredump in
+.Xr dump 8
+when using -X (filesystem internal snapshots).
 .bullet)
 .
 .Ss2 Security
 .
 .(bullet
-Fixed a denial of service vulnerability in sendmail when handling malformed
-multipart MIME messages (SA2006-017).
+Fix a buffer overflow in
+.Xr glob 3 ,
+which affected
+.Xr ftpd 8
+and possibly other programs (SA2006-027).
 .It
-Fixed a buffer overflow in the in-kernel PPP code share by ISDN PPP interfaces
-.Xr ippp 4
-and
-.Xr pppoe 4
-(SA2006-019).
+X11: fix an integer overflow in the Render and DBE extensions (SA2007-002).
 .It
-X11: fixed an integer overflow in FreeType (SA2006-020).
+BIND: fix multiple Denial of Service vulnerabilities (SA2007-003).
 .It
-Fixed a potential DoS attack with
-.Xr sendmail 8 
-(SA2006-017).
+Fix a buffer overflow in
+.Xr iso 4
+which could potentially lead to a local root compromise (SA2007-004).
 .It
-Fixed a DoS vulnerability in BIND (SA2006-022).
+Fix an integer underflow in file_printf which could lead to an exploitable heap
+overflow.
 .It
-Fixed a RSA signature forgery in
-.Xr openssl 1 
-(SA2006-023).
-.It
-X11: fixed a vulnerability in Adobe Type 1 font handling (SA2006-021).
-.It
-Fixed a number of DoS vulnerabilities in
-.Xr openssl 1 
-(SA in preparation, CVE entries: 2006-2937, 2940, 3738 and 4343).
-.It
-Fixed a number of DoS vulnerabilities in
-.Xr sshd 8 
-(SA in preparation, CVE entries: 2006-4924 and 5051).
+X11: fix a number of possible memory corruptions due to integer overflows (CVE
+2007-1003, 1351, 1352, 1667).
 .bullet)
 .
 .Ss2 Miscellaneous
 .
 .(bullet
-Various RAIDframe bugfixes.
+Fix some problems with
+.Xr etcupdate 8
+for upgrading.
 .It
-Updated Postfix to 2.2.11.
+Update time zoneinfo to tzdata2007a.
 .It
-Updated BIND to 9.3.2.
-.It
-Added
-.Xr ex 1
-to /rescue.
-.It
-Fixed some special case expansions in
-.Xr sh 1 .
-.It
-Fixed cross-building from GCC 4.x hosts.
-.It
-Many, many more additions, improvements and bug fixes.
+Set /etc/postfix/post-install mode 555 (executable) instead of 444.
 .bullet)
 .
 .Ss2 alpha specific
 .
 .(bullet
-Support booting from FFSv2 filesystems.
-.bullet)
-.
-.Ss2 amd64 specific
-.
-.(bullet
-Make sure that the system reboots after a panic instead of halting.
+Fix alignment problems causing regular panics on NetBSD/alpha and NetBSD/sparc.
 .bullet)
 .
 .Ss2 mac68k specific
 .
 .(bullet
-sysinst now newfs'es and mounts the target filesystem(s).
+Avoid a kernel panic before reboot.
 .bullet)
 .
 .Ss2 sparc specific
 .
 .(bullet
-Disabled threading in
-.Xr named 8
-on sparc and sparc64 to avoid a crash.
+Fix alignment problems causing regular panics on NetBSD/alpha and NetBSD/sparc.
 .bullet)
 .
 .Ss2 xen specific
 .
 .(bullet
-Added Xen-3 domU support.
+Prevent xennet from occasionally becoming unable to receive packets for several
+minutes when under certain types of load.
 .It
-Renamed XEN kernel config files to be more consistent: XEN2_DOM0, XEN2_DOMU,
-XEN3_DOMU, INSTALL_XEN2_DOMU and INSTALL_XEN3_DOMU.
+Don't try to handle xbd interrupts if the device is not yet connected, to fix a
+Xen3 xbd panic at boot when more than one xbd device is configured.
+.It
+Fix Xen console hangs.
+.It
+Fix occasional panics in NetBSD domU's caused by a race condition.
+.It
+Avoid block I/O stalls in Xen 3 guests on SMP systems.
 .bullet)
+.
+.so whatis -----------------------------------------------
+.\} \" \n[FOR_RELEASE]
 .
 .Ss "The Future of NetBSD"
 .Pp
