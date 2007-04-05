@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1.1,v 1.1.2.38 2007/04/04 22:23:58 ghen Exp $
+#	$NetBSD: CHANGES-3.1.1,v 1.1.2.39 2007/04/05 00:34:57 ghen Exp $
 
 A complete list of changes from the NetBSD 3.1 release to the NetBSD 3.1.1
 release:
@@ -43,18 +43,18 @@ sbin/dump/snapshot.h				1.3 via patch
 sbin/dump/tape.c				1.47 via patch
 
 	When using a snapshot take the snapshot raw device on further open.
-	Fixes PR #34923  dump(8) only dumps a corefile with -X (snapshots)
+	Fixes PR #34923: dump(8) only dumps a corefile with -X (snapshots).
 	[hannken, ticket #1573]
 
 sys/kern/sys_process.c				1.112
 
-	check for negative length in PT_COREDUMP (from Neil)
+	Check for negative length in PT_COREDUMP (from Neil).
 	[christos, ticket #1574]
 
 sys/arch/xen/xen/if_xennet_xenbus.c		1.14
 
 	Prevent xennet (Xen 3) from occasionally becoming unable to receive
-	packets for several minutes when under certain types of load
+	packets for several minutes when under certain types of load.
 	[jld, ticket #1581]
 
 usr.sbin/postinstall/postinstall		1.30
@@ -63,8 +63,8 @@ usr.sbin/postinstall/postinstall		1.30
 	[lukem, ticket #1585]
 
 sys/dev/pci/bktr/bktr_core.c			patch
-	fix bug introduced by missing braces around a if() block in
-	ticket #1511
+	Fix bug introduced by missing braces around a if() block in
+	ticket #1511.
 	[aymeric, ticket #1587]
 
 sys/net/if_pppoe.c				1.61
@@ -153,8 +153,8 @@ sys/arch/mac68k/mac68k/locore.s			1.146
 xsrc/xfree/xc/programs/Xserver/dbe/dbe.c		1.2
 xsrc/xfree/xc/programs/Xserver/render/render.c	1.3
 
-	fix integer overflow in dbe and render extensions
-	(CVE-2006-6101, CVE-2006-6102 and CVE-2006-6103), from xfree86 CVS
+	Fix integer overflow in DBE and Render extensions
+	(CVE-2006-6101, CVE-2006-6102 and CVE-2006-6103), from xfree86 CVS.
 	[drochner, ticket #1631]
 
 usr.sbin/etcupdate/etcupdate			1.29 - 1.30
@@ -213,7 +213,7 @@ dist/bind/version                               patch
 
 sys/dev/audio.c					1.221
 
-	return information about playing buffer, not recording bufer,
+	Return information about playing buffer, not recording bufer,
 	for AUDIO_WSEEK. Fix PR#35171.
 	[kent, ticket #1678]
 
@@ -250,7 +250,7 @@ share/zoneinfo/yearistype.sh		patch
 share/zoneinfo/zone.tab			patch
 etc/mtree/NetBSD.dist			1.295
 
-	update to tzdata2007a.
+	Update to tzdata2007a.
 	[abp, ticket #1682]
 
 dist/file/src/file.h	patch
