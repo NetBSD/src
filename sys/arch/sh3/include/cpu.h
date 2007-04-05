@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.43.2.1 2007/03/25 01:59:02 uwe Exp $	*/
+/*	$NetBSD: cpu.h,v 1.43.2.2 2007/04/05 20:33:15 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -106,6 +106,15 @@ do {									\
 	if (curlwp != ci->ci_data.cpu_idlelwp)				\
 		aston(curlwp);						\
 } while (/*CONSTCOND*/0)
+
+/*
+ * MI code calls this with proper locking.
+ */
+#define	cpu_did_resched()						\
+do {									\
+	want_resched = 0;						\
+} while (0)
+
 
 /*
  * Give a profiling tick to the current process when the user profiling
