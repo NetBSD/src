@@ -1,14 +1,14 @@
-#	$NetBSD: GENERIC_LAPTOP,v 1.228 2007/03/20 21:29:28 xtraeme Exp $
+#	$NetBSD: GENERIC_LAPTOP,v 1.229 2007/04/05 19:19:49 reed Exp $
 #	From: NetBSD: GENERIC,v 1.414 2001/07/30 19:59:05 ad Exp
 #
 #	GENERIC_LAPTOP -- GENERIC with cardbus and some USB devices enabled
 #
 
-include "arch/i386/conf/std.i386"
+include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.228 $"
+#ident 		"GENERIC-$Revision: 1.229 $"
 
 maxusers	32		# estimated number of users
 
@@ -37,7 +37,7 @@ options 	POWERNOW_K7
 options 	POWERNOW_K8
 
 # Intel(R) On Demand Clock Modulation (aka ODCM)
-# options       INTEL_ONDEMAND_CLOCKMOD
+# options 	INTEL_ONDEMAND_CLOCKMOD
 
 options 	MTRR		# memory-type range register syscall support
 #options 	PERFCTRS	# performance-monitoring counters support
@@ -121,7 +121,9 @@ options 	COMPAT_IBCS2	# binary compatibility with SCO and ISC
 options 	COMPAT_LINUX	# binary compatibility with Linux
 options 	COMPAT_FREEBSD	# binary compatibility with FreeBSD
 #options 	COMPAT_MACH	# binary compatibility with Mach binaries
+#options 	COMPAT_DARWIN	# binary compatibility with Darwin binaries
 #options 	EXEC_MACHO	# exec MACH-O binaries
+#options 	COMPAT_NDIS	# NDIS network driver
 #options 	COMPAT_PECOFF	# kernel support to run Win32 apps
 options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
@@ -147,7 +149,7 @@ file-system	SMBFS		# experimental - CIFS; also needs nsmb (below)
 file-system	PTYFS		# /dev/ptm support
 file-system	TMPFS		# Efficient memory file-system
 #file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
-#file-system	HFS		# expreimental - Apple HFS+ (read-only)
+#file-system	HFS		# experimental - Apple HFS+ (read-only)
 
 # File system options
 options 	QUOTA		# UFS quotas
@@ -232,7 +234,7 @@ options 	WSDISPLAY_COMPAT_USL		# VT handling
 options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 # see dev/pckbport/wskbdmap_mfii.c for implemented layouts
 #options 	PCKBD_LAYOUT="(KB_DE | KB_NODEAD)" # for pckbd driver
-#options 	UKBD_LAYOUT="(KB_DE | KB_NODEAD)"  # for ukbd driver 
+#options 	UKBD_LAYOUT="(KB_DE | KB_NODEAD)"  # for ukbd driver
 # allocate a number of virtual screens at autoconfiguration time
 #options 	WSDISPLAY_DEFAULTSCREENS=4
 # use a large software cursor that doesn't blink
@@ -432,18 +434,18 @@ wskbd*		at pckbd? console ?
 wsmouse*	at pms? mux 0
 
 # VESA framebuffer console
-#options        KVM86                   # required for vesabios
-#vesabios*      at vesabiosbus?
-#vesafb*        at vesabios?
-#options        VESAFB_WIDTH=640
-#options        VESAFB_HEIGHT=480
-#options        VESAFB_DEPTH=8
-#options        VESAFB_PM               # power management support
-#wsdisplay*     at vesafb? console ?
+#options 	KVM86			# required for vesabios
+#vesabios*	at vesabiosbus?
+#vesafb* 	at vesabios?
+#options 	VESAFB_WIDTH=640
+#options 	VESAFB_HEIGHT=480
+#options 	VESAFB_DEPTH=8
+#options 	VESAFB_PM		# power management support
+#wsdisplay*	at vesafb? console ?
 
 # VIA Unichrome framebuffer console
-#unichromefb*   at pci? dev ? function ?
-#wsdisplay*     at unichromefb?
+#unichromefb* 	at pci? dev ? function ?
+#wsdisplay* 	at unichromefb?
 
 attimer0	at isa?
 pcppi0		at isa?
@@ -500,18 +502,18 @@ lpt2	at isa? port 0x3bc
 
 # Hardware monitors
 
+# Intel PIIX4 power management controllers
+piixpm* at pci? dev ? function ?	# PIIX4 compatible PM controller
+iic*	at piixpm?			# SMBus on PIIX4
+
+# iTE IT87xxF and compatible hardware monitors
+#it0	at isa? port 0x290		# other ports: 0xc00, 0xd00
+
 # LM7[89] and compatible hardware monitors
 #lm0	at isa?	port 0x290		# other common: 0x280, 0x310
 
 # VIA VT82C686A/VT8231 Hardware Monitor and Power Management Timer
 #viaenv*	at pci? dev ? function ?
-
-# Intel PIIX4 power management controllers
-piixpm*	at pci? dev ? function ?	# PIIX4 compatible PM controller
-iic*	at piixpm?			# SMBus on PIIX4
-
-# iTE IT87xxF and compatible hardware monitors
-#it0    at isa? port 0x290              # other ports: 0xc00, 0xd00.
 
 # SCSI Controllers and Devices
 
@@ -521,8 +523,8 @@ esp*	at pcmcia? function ?		# Qlogic ESP406/FAS408 SCSI
 spc*	at pcmcia? function ?		# Fujitsu MB87030/MB89352 SCSI
 
 # CardBus SCSI cards
-ahc*	at cardbus? function ?	# Adaptec ADP-1480
 adv*	at cardbus? function ?	# AdvanSys 1200[A,B], 9xx[U,UA] SCSI
+ahc*	at cardbus? function ?	# Adaptec ADP-1480
 njs*	at cardbus? function ?	# Workbit NinjaSCSI-32
 
 # SCSI bus support
@@ -792,7 +794,7 @@ uyap* at uhub? port ?
 # USB Generic driver
 ugen*	at uhub? port ?
 # On ugen bulk endpoints, perform read-ahead and write-behind.
-options	UGEN_BULK_RA_WB
+options UGEN_BULK_RA_WB
 
 # USB generic serial port (e.g., data over cellular)
 ugensa*	at uhub? port ?
