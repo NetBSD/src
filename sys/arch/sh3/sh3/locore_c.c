@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_c.c,v 1.14.2.3 2007/03/25 01:59:02 uwe Exp $	*/
+/*	$NetBSD: locore_c.c,v 1.14.2.4 2007/04/05 20:13:44 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2002, 2007 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locore_c.c,v 1.14.2.3 2007/03/25 01:59:02 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore_c.c,v 1.14.2.4 2007/04/05 20:13:44 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -144,6 +144,7 @@ cpu_switch_prepare(struct lwp *olwp, struct lwp *nlwp)
 {
 	struct proc *p = nlwp->l_proc;
 
+	curlwp = nlwp;
 	curpcb = nlwp->l_md.md_pcb;
 
 	/* Check for Restartable Atomic Sequences. */
