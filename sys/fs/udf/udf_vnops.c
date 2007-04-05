@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vnops.c,v 1.9 2007/01/04 04:15:43 reinoud Exp $ */
+/* $NetBSD: udf_vnops.c,v 1.9.6.1 2007/04/05 21:57:49 ad Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: udf_vnops.c,v 1.9 2007/01/04 04:15:43 reinoud Exp $");
+__RCSID("$NetBSD: udf_vnops.c,v 1.9.6.1 2007/04/05 21:57:49 ad Exp $");
 #endif /* not lint */
 
 
@@ -841,11 +841,11 @@ udf_close(void *v)
 	DPRINTF(CALL, ("udf_close called\n"));
 	udf_node = udf_node;	/* shut up gcc */
 
-	simple_lock(&vp->v_interlock);
+	mutex_enter(&vp->v_interlock);
 		if (vp->v_usecount > 1) {
 			/* TODO update times */
 		}
-	simple_unlock(&vp->v_interlock);
+	mutex_exit(&vp->v_interlock);
 
 	return 0;
 }

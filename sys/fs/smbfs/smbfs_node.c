@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_node.c,v 1.30 2006/11/02 17:34:21 jmmv Exp $	*/
+/*	$NetBSD: smbfs_node.c,v 1.30.8.1 2007/04/05 21:57:48 ad Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_node.c,v 1.30 2006/11/02 17:34:21 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_node.c,v 1.30.8.1 2007/04/05 21:57:48 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -135,7 +135,7 @@ loop:
 		    || memcmp(name, np->n_name, nmlen) != 0)
 			continue;
 		vp = SMBTOV(np);
-		simple_lock(&(vp)->v_interlock);
+		mutex_enter(&(vp)->v_interlock);
 		smbfs_hash_unlock(smp);
 		if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK) != 0)
 			goto retry;

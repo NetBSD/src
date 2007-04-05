@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.62 2007/03/04 05:59:57 christos Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.62.2.1 2007/04/05 21:57:42 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.62 2007/03/04 05:59:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.62.2.1 2007/04/05 21:57:42 ad Exp $");
 
 #include "opt_vm86.h"
 #include "opt_ptrace.h"
@@ -532,7 +532,7 @@ process_machdep_doxmmregs(curl, l, uio)
 	if (kl > uio->uio_resid)
 		kl = uio->uio_resid;
 
-	PHOLD(l);
+	uvm_lwp_hold(l);
 
 	if (kl < 0)
 		error = EINVAL;
@@ -547,7 +547,7 @@ process_machdep_doxmmregs(curl, l, uio)
 			error = process_machdep_write_xmmregs(l, &r);
 	}
 
-	PRELE(l);
+	uvm_lwp_rele(l);
 
 	uio->uio_offset = 0;
 	return (error);

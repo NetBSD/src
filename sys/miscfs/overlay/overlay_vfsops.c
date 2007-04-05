@@ -1,4 +1,4 @@
-/*	$NetBSD: overlay_vfsops.c,v 1.37 2007/01/19 14:49:11 hannken Exp $	*/
+/*	$NetBSD: overlay_vfsops.c,v 1.37.6.1 2007/04/05 21:57:51 ad Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 National Aeronautics & Space Administration
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: overlay_vfsops.c,v 1.37 2007/01/19 14:49:11 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: overlay_vfsops.c,v 1.37.6.1 2007/04/05 21:57:51 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -162,7 +162,7 @@ ov_mount(struct mount *mp, const char *path, void *data,
 	nmp->ovm_bypass = layer_bypass;
 	nmp->ovm_alloc = layer_node_alloc;	/* the default alloc is fine */
 	nmp->ovm_vnodeop_p = overlay_vnodeop_p;
-	simple_lock_init(&nmp->ovm_hashlock);
+	mutex_init(&nmp->ovm_hashlock, MUTEX_DEFAULT, IPL_NONE);
 	nmp->ovm_node_hashtbl = hashinit(NOVERLAYNODECACHE, HASH_LIST, M_CACHE,
 	    M_WAITOK, &nmp->ovm_node_hash);
 
@@ -245,6 +245,7 @@ ov_unmount(struct mount *mp, int mntflags, struct lwp *l)
 	/*
 	 * Finally, throw away the overlay_mount structure
 	 */
+	mutex_destroy(&((struct overlay_mount *)mp->mnt_data)->ovm_hashlock);
 	free(mp->mnt_data, M_UFSMNT);	/* XXX */
 	mp->mnt_data = 0;
 	return 0;

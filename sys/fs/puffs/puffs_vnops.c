@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.52 2007/02/20 19:45:37 pooka Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.52.4.1 2007/04/05 21:57:48 ad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.52 2007/02/20 19:45:37 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.52.4.1 2007/04/05 21:57:48 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/fstrans.h>
@@ -41,6 +41,8 @@ __KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.52 2007/02/20 19:45:37 pooka Exp $
 #include <sys/mount.h>
 #include <sys/namei.h>
 #include <sys/vnode.h>
+#include <sys/proc.h>
+
 #include <uvm/uvm.h>
 
 #include <fs/puffs/puffs_msgif.h>
@@ -963,7 +965,7 @@ puffs_fsync(void *v)
 	/*
 	 * flush pages to avoid being overly dirty
 	 */
-	simple_lock(&vp->v_interlock);
+	mutex_enter(&vp->v_interlock);
 	error = VOP_PUTPAGES(vp, trunc_page(ap->a_offlo),
 	    round_page(ap->a_offhi), pflags);
 	if (error)
@@ -987,10 +989,10 @@ puffs_fsync(void *v)
 	 * vnode to be reclaimed from the freelist for this fs.
 	 */
 	if (dofaf == 0) {
-		simple_lock(&vp->v_interlock);
+		mutex_enter(&vp->v_interlock);
 		if (vp->v_flag & VXLOCK)
 			dofaf = 1;
-		simple_unlock(&vp->v_interlock);
+		mutex_exit(&vp->v_interlock);
 	}
 
 	if (dofaf == 0) {
@@ -1479,7 +1481,7 @@ puffs_write(void *v)
 			 * that gives userland too much say in the kernel.
 			 */
 			if (oldoff >> 16 != uio->uio_offset >> 16) {
-				simple_lock(&vp->v_interlock);
+				mutex_enter(&vp->v_interlock);
 				error = VOP_PUTPAGES(vp, oldoff & ~0xffff,
 				    uio->uio_offset & ~0xffff,
 				    PGO_CLEANIT | PGO_SYNCIO);
@@ -1489,7 +1491,7 @@ puffs_write(void *v)
 		}
 
 		if (error == 0 && ap->a_ioflag & IO_SYNC) {
-			simple_lock(&vp->v_interlock);
+			mutex_enter(&vp->v_interlock);
 			error = VOP_PUTPAGES(vp, trunc_page(origoff),
 			    round_page(uio->uio_offset),
 			    PGO_CLEANIT | PGO_SYNCIO);
@@ -1773,12 +1775,12 @@ puffs_strategy(void *v)
 	 * XXgoddamnX: B_WRITE is a "pseudo flag"
 	 */
 	if ((bp->b_flags & B_READ) == 0) {
-		simple_lock(&vp->v_interlock);
+		mutex_enter(&vp->v_interlock);
 		if (vp->v_flag & VXLOCK)
 			dowritefaf = 1;
 		if (pn->pn_stat & PNODE_SUSPEND)
 			dowritefaf = 1;
-		simple_unlock(&vp->v_interlock);
+		mutex_exit(&vp->v_interlock);
 	}
 
 	if (bp->b_flags & B_ASYNC)
@@ -1979,7 +1981,7 @@ puffs_lock(void *v)
 	 */
 	if (fstrans_is_owner(mp) && fstrans_getstate(mp) == FSTRANS_SUSPENDING){
 		if (ap->a_flags & LK_INTERLOCK)
-			simple_unlock(&vp->v_interlock);
+			mutex_exit(&vp->v_interlock);
 		return 0;
 	}
 
@@ -2003,7 +2005,7 @@ puffs_unlock(void *v)
 	/* XXX: see puffs_lock() */
 	if (fstrans_is_owner(mp) && fstrans_getstate(mp) == FSTRANS_SUSPENDING){
 		if (ap->a_flags & LK_INTERLOCK)
-			simple_unlock(&vp->v_interlock);
+			mutex_exit(&vp->v_interlock);
 		return 0;
 	}
 

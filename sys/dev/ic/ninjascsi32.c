@@ -1,4 +1,4 @@
-/*	$NetBSD: ninjascsi32.c,v 1.10 2007/03/04 06:01:59 christos Exp $	*/
+/*	$NetBSD: ninjascsi32.c,v 1.10.2.1 2007/04/05 21:57:45 ad Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2006 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ninjascsi32.c,v 1.10 2007/03/04 06:01:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ninjascsi32.c,v 1.10.2.1 2007/04/05 21:57:45 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: ninjascsi32.c,v 1.10 2007/03/04 06:01:59 christos Ex
 #include <sys/kernel.h>
 #include <sys/buf.h>
 #include <sys/scsiio.h>
+#include <sys/proc.h>
 
 #include <machine/bus.h>
 #include <machine/intr.h>

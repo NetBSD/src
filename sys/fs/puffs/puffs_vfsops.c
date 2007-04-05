@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vfsops.c,v 1.28.6.2 2007/03/13 17:50:48 ad Exp $	*/
+/*	$NetBSD: puffs_vfsops.c,v 1.28.6.3 2007/04/05 21:57:48 ad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.28.6.2 2007/03/13 17:50:48 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.28.6.3 2007/04/05 21:57:48 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.28.6.2 2007/03/13 17:50:48 ad Exp
 #include <sys/dirent.h>
 #include <sys/kauth.h>
 #include <sys/fstrans.h>
+#include <sys/proc.h>
 
 #include <lib/libkern/libkern.h>
 
@@ -335,7 +336,7 @@ puffs_root(struct mount *mp, struct vnode **vpp)
 	simple_lock(&pmp->pmp_lock);
 	vp = pmp->pmp_root;
 	if (vp) {
-		simple_lock(&vp->v_interlock);
+		mutex_enter(&vp->v_interlock);
 		simple_unlock(&pmp->pmp_lock);
 		pn = VPTOPP(vp);
 		if (vget(vp, LK_EXCLUSIVE | LK_RETRY | LK_INTERLOCK))

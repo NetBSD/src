@@ -1,4 +1,4 @@
-/*	$NetBSD: hfs_nhash.c,v 1.2 2007/03/06 11:28:47 dillo Exp $	*/
+/*	$NetBSD: hfs_nhash.c,v 1.2.2.1 2007/04/05 21:57:47 ad Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@ loop:
 	LIST_FOREACH(hp, hpp, h_hash) {
 		if (cnid == hp->h_rec.cnid && dev == hp->h_dev) {
 			vp = HTOV(hp);
-			simple_lock(&vp->v_interlock);
+			mutex_enter(&vp->v_interlock);
 			simple_unlock(&hfs_nhash_slock);
 			if (vget(vp, flags | LK_INTERLOCK))
 				goto loop;

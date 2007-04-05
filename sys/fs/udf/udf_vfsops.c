@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vfsops.c,v 1.22.6.1 2007/03/13 16:51:37 ad Exp $ */
+/* $NetBSD: udf_vfsops.c,v 1.22.6.2 2007/04/05 21:57:49 ad Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: udf_vfsops.c,v 1.22.6.1 2007/03/13 16:51:37 ad Exp $");
+__RCSID("$NetBSD: udf_vfsops.c,v 1.22.6.2 2007/04/05 21:57:49 ad Exp $");
 #endif /* not lint */
 
 
@@ -249,6 +249,8 @@ free_udf_mountinfo(struct mount *mp)
 		MPFREE(ump->vat_table,        M_UDFVOLD);
 		MPFREE(ump->sparing_table,    M_UDFVOLD);
 
+		mutex_destroy(&ump->ihash_lock);
+		mutex_destroy(&ump->get_node_lock);
 		free(ump, M_UDFMNT);
 	}
 }
@@ -489,6 +491,10 @@ udf_mountfs(struct vnode *devvp, struct mount *mp,
 	uint32_t sector_size, lb_size, bshift;
 	int    num_anchors, error, lst;
 
+	/* init locks */
+	mutex_init(&ump->ihash_lock, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&ump->get_node_lock, MUTEX_DEFAULT, IPL_NONE);
+
 	/* flush out any old buffers remaining from a previous use. */
 	if ((error = vinvalbuf(devvp, V_SAVE, l->l_cred, l, 0, 0)))
 		return error;
@@ -497,9 +503,6 @@ udf_mountfs(struct vnode *devvp, struct mount *mp,
 	ump = malloc(sizeof(struct udf_mount), M_UDFMNT, M_WAITOK);
 	memset(ump, 0, sizeof(struct udf_mount));
 
-	/* init locks */
-	simple_lock_init(&ump->ihash_slock);
-	lockinit(&ump->get_node_lock, PINOD, "udf_getnode", 0, 0);
 
 	/* init `ino_t' to udf_node hash table */
 	for (lst = 0; lst < UDF_INODE_HASHSIZE; lst++) {
@@ -625,9 +628,9 @@ udf_root(struct mount *mp, struct vnode **vpp)
 		return error;
 
 	vp = root_dir->vnode;
-	simple_lock(&vp->v_interlock);
+	mutex_enter(&vp->v_interlock);
 		root_dir->vnode->v_flag |= VROOT;
-	simple_unlock(&vp->v_interlock);
+	mutex_exit(&vp->v_interlock);
 
 	*vpp = vp;
 	return 0;

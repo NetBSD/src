@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.34 2007/02/22 06:37:00 thorpej Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.34.4.1 2007/04/05 21:57:48 ad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.34 2007/02/22 06:37:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.34.4.1 2007/04/05 21:57:48 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -56,6 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.34 2007/02/22 06:37:00 thorpej Exp 
 #include <sys/swap.h>
 #include <sys/vnode.h>
 #include <sys/kauth.h>
+#include <sys/proc.h>
 
 #include <uvm/uvm.h>
 
@@ -924,9 +925,9 @@ tmpfs_reg_resize(struct vnode *vp, off_t newsize)
 			
 			uobj = node->tn_spec.tn_reg.tn_aobj;
 
-			simple_lock(&uobj->vmobjlock);
+			mutex_enter(&uobj->vmobjlock);
 			uao_dropswap_range(uobj, newpages, oldpages);
-			simple_unlock(&uobj->vmobjlock);
+			mutex_exit(&uobj->vmobjlock);
 		}
 
 		/*

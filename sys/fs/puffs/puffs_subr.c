@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_subr.c,v 1.22.2.2 2007/03/13 17:50:48 ad Exp $	*/
+/*	$NetBSD: puffs_subr.c,v 1.22.2.3 2007/04/05 21:57:48 ad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_subr.c,v 1.22.2.2 2007/03/13 17:50:48 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_subr.c,v 1.22.2.3 2007/04/05 21:57:48 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: puffs_subr.c,v 1.22.2.2 2007/03/13 17:50:48 ad Exp $
 #include <sys/vnode.h>
 #include <sys/kauth.h>
 #include <sys/namei.h>
+#include <sys/proc.h>
 
 #include <fs/puffs/puffs_msgif.h>
 #include <fs/puffs/puffs_sys.h>
@@ -338,7 +339,7 @@ puffs_pnode2vnode(struct puffs_mount *pmp, void *cookie, int lock)
 	}
 	vp = pnode->pn_vp;
 
-	simple_lock(&vp->v_interlock);
+	mutex_enter(&vp->v_interlock);
 	simple_unlock(&pmp->pmp_lock);
 
 	if (vget(vp, vgetflags))

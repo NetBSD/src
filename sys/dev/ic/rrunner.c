@@ -1,4 +1,4 @@
-/*	$NetBSD: rrunner.c,v 1.61 2007/03/04 06:02:00 christos Exp $	*/
+/*	$NetBSD: rrunner.c,v 1.61.2.1 2007/04/05 21:57:45 ad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rrunner.c,v 1.61 2007/03/04 06:02:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rrunner.c,v 1.61.2.1 2007/04/05 21:57:45 ad Exp $");
 
 #include "opt_inet.h"
 
@@ -1037,7 +1037,7 @@ esh_fpread(dev_t dev, struct uio *uio, int ioflag)
 		}
 	}
 
-	PHOLD(l);	/* Lock process info into memory */
+	uvm_lwp_hold(l);	/* Lock process info into memory */
 
 	/* Lock down the pages */
 	for (i = 0; i < uio->uio_iovcnt; i++) {
@@ -1141,7 +1141,7 @@ esh_fpread(dev_t dev, struct uio *uio, int ioflag)
 		uvm_vsunlock(p->p_vmspace, iovp->iov_base, iovp->iov_len);
 	}
 
-	PRELE(l);	/* Release process info */
+	uvm_lwp_rele(l);	/* Release process info */
 	esh_free_dmainfo(sc, di);
 
 fpread_done:
@@ -1195,7 +1195,7 @@ esh_fpwrite(dev_t dev, struct uio *uio, int ioflag)
 		}
 	}
 
-	PHOLD(l);	/* Lock process info into memory */
+	uvm_lwp_hold(l);	/* Lock process info into memory */
 
 	/* Lock down the pages */
 	for (i = 0; i < uio->uio_iovcnt; i++) {
@@ -1295,7 +1295,7 @@ esh_fpwrite(dev_t dev, struct uio *uio, int ioflag)
 		uvm_vsunlock(p->p_vmspace, iovp->iov_base, iovp->iov_len);
 	}
 
-	PRELE(l);	/* Release process info */
+	uvm_lwp_rele(l);	/* Release process info */
 	esh_free_dmainfo(sc, di);
 
 fpwrite_done:

@@ -1,4 +1,4 @@
-/*	$NetBSD: verified_exec.c,v 1.59 2007/03/04 06:01:43 christos Exp $	*/
+/*	$NetBSD: verified_exec.c,v 1.59.2.1 2007/04/05 21:57:43 ad Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -30,9 +30,9 @@
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__KERNEL_RCSID(0, "$NetBSD: verified_exec.c,v 1.59 2007/03/04 06:01:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: verified_exec.c,v 1.59.2.1 2007/04/05 21:57:43 ad Exp $");
 #else
-__RCSID("$Id: verified_exec.c,v 1.59 2007/03/04 06:01:43 christos Exp $\n$NetBSD: verified_exec.c,v 1.59 2007/03/04 06:01:43 christos Exp $");
+__RCSID("$Id: verified_exec.c,v 1.59.2.1 2007/04/05 21:57:43 ad Exp $\n$NetBSD: verified_exec.c,v 1.59.2.1 2007/04/05 21:57:43 ad Exp $");
 #endif
 
 #include <sys/param.h>
@@ -44,6 +44,7 @@ __RCSID("$Id: verified_exec.c,v 1.59 2007/03/04 06:01:43 christos Exp $\n$NetBSD
 #include <sys/verified_exec.h>
 #include <sys/kauth.h>
 #include <sys/syslog.h>
+#include <sys/proc.h>
 
 #ifdef __FreeBSD__
 #include <sys/kernel.h>
