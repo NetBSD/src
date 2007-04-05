@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_flow.c,v 1.44 2007/03/26 00:29:15 liamjfoy Exp $	*/
+/*	$NetBSD: ip_flow.c,v 1.45 2007/04/05 18:11:47 liamjfoy Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.44 2007/03/26 00:29:15 liamjfoy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.45 2007/04/05 18:11:47 liamjfoy Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,23 +100,27 @@ do { \
 int ip_maxflows = IPFLOW_MAX;
 int ip_hashsize = IPFLOW_DEFAULT_HASHSIZE;
 
-static unsigned
-ipflow_hash(struct in_addr dst,	struct in_addr src, unsigned tos)
+static size_t 
+ipflow_hash(struct ip *ip)
 {
-	unsigned hash = tos;
-	int idx;
-	for (idx = 0; idx < 32; idx += IPFLOW_HASHBITS)
-		hash += (dst.s_addr >> (32 - idx)) + (src.s_addr >> idx);
+	size_t hash = ip->ip_tos;
+	size_t idx;
+
+	for (idx = 0; idx < 32; idx += IPFLOW_HASHBITS) {
+		hash += (ip->ip_dst.s_addr >> (32 - idx)) +
+		    (ip->ip_src.s_addr >> idx);
+	}
+
 	return hash & (ip_hashsize-1);
 }
 
 static struct ipflow *
-ipflow_lookup(const struct ip *ip)
+ipflow_lookup(struct ip *ip)
 {
-	unsigned hash;
+	size_t hash;
 	struct ipflow *ipf;
 
-	hash = ipflow_hash(ip->ip_dst, ip->ip_src, ip->ip_tos);
+	hash = ipflow_hash(ip);
 
 	LIST_FOREACH(ipf, &ipflowtable[hash], ipf_hash) {
 		if (ip->ip_dst.s_addr == ipf->ipf_dst.s_addr
@@ -131,7 +135,7 @@ int
 ipflow_init(int table_size)
 {
 	struct ipflowhead *new_table;
-	int i;
+	size_t i;
 
 	new_table = (struct ipflowhead *)malloc(sizeof(struct ipflowhead) *
 	    table_size, M_RTABLE, M_NOWAIT);
@@ -392,9 +396,9 @@ ipflow_slowtimo(void)
 void
 ipflow_create(const struct route *ro, struct mbuf *m)
 {
-	const struct ip *const ip = mtod(m, struct ip *);
+	struct ip *const ip = mtod(m, struct ip *);
 	struct ipflow *ipf;
-	unsigned hash;
+	size_t hash;
 	int s;
 
 	/*
@@ -442,7 +446,7 @@ ipflow_create(const struct route *ro, struct mbuf *m)
 	/*
 	 * Insert into the approriate bucket of the flow table.
 	 */
-	hash = ipflow_hash(ip->ip_dst, ip->ip_src, ip->ip_tos);
+	hash = ipflow_hash(ip);
 	s = splnet();
 	IPFLOW_INSERT(&ipflowtable[hash], ipf);
 	splx(s);
