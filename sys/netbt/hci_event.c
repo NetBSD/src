@@ -1,4 +1,4 @@
-/*	$NetBSD: hci_event.c,v 1.4 2007/03/15 19:47:50 plunky Exp $	*/
+/*	$NetBSD: hci_event.c,v 1.5 2007/04/05 19:22:18 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hci_event.c,v 1.4 2007/03/15 19:47:50 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hci_event.c,v 1.5 2007/04/05 19:22:18 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -57,7 +57,7 @@ static void hci_cmd_read_local_features(struct hci_unit *, struct mbuf *);
 static void hci_cmd_reset(struct hci_unit *, struct mbuf *);
 
 #ifdef BLUETOOTH_DEBUG
-int bluetooth_debug = BLUETOOTH_DEBUG;
+int bluetooth_debug;
 
 static const char *hci_eventnames[] = {
 /* 0x00 */ "NULL",
