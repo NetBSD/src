@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.166 2007/04/02 11:00:10 apb Exp $
+#	$NetBSD: build.sh,v 1.167 2007/04/05 10:02:10 dsl Exp $
 #
 # Copyright (c) 2001-2005 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -811,8 +811,8 @@ sanitycheck()
 	# but not limited to, "." or ""), then complain.  This is fatal
 	# if expert mode is not in effect.
 	#
-	case ":${PATH}:/" in
-	*:[!/]*)
+	case ":${PATH}" in
+	*:[!/]?*)
 		if ${do_expertmode}; then
 			warning "PATH contains non-absolute components"
 		else
@@ -1021,7 +1021,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.166 2007/04/02 11:00:10 apb Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.167 2007/04/05 10:02:10 dsl Exp $
 # with these arguments: ${_args}
 #
 EOF
