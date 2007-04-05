@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.128 2007/03/04 06:03:48 christos Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.128.2.1 2007/04/05 21:32:52 ad Exp $	*/
 
 /*
  *
@@ -584,7 +584,8 @@ bool			uvm_uarea_alloc(vaddr_t *);
 void			uvm_uarea_drain(bool);
 int			uvm_vslock(struct vmspace *, void *, size_t, vm_prot_t);
 void			uvm_vsunlock(struct vmspace *, void *, size_t);
-
+void			uvm_lwp_hold(struct lwp *);
+void			uvm_lwp_rele(struct lwp *);
 
 /* uvm_init.c */
 void			uvm_init(void);

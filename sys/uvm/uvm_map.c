@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.235.2.3 2007/03/21 20:11:59 ad Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.235.2.4 2007/04/05 21:32:52 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.235.2.3 2007/03/21 20:11:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.235.2.4 2007/04/05 21:32:52 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -510,6 +510,123 @@ static struct vm_map *uvm_kmapent_map(struct vm_map_entry *);
 #endif
 
 /*
+ * vm_map_lock: acquire an exclusive (write) lock on a map.
+ *
+ * => Note that "intrsafe" maps use only exclusive, spin locks.
+ *
+ * => The locking protocol provides for guaranteed upgrade from shared ->
+ *    exclusive by whichever thread currently has the map marked busy.
+ *    See "LOCKING PROTOCOL NOTES" in uvm_map.h.  This is horrible; among
+ *    other problems, it defeats any fairness guarantees provided by RW
+ *    locks.
+ */
+
+void
+vm_map_lock(struct vm_map *map)
+{
+
+	if ((map->flags & VM_MAP_INTRSAFE) != 0) {
+		mutex_enter(&map->mutex);
+		return;
+	}
+
+	for (;;) {
+		rw_enter(&map->lock, RW_WRITER);
+		if (map->busy == NULL)
+			break;
+		KASSERT(map->busy != curlwp);
+		mutex_enter(&map->misc_lock);
+		rw_exit(&map->lock);
+		cv_wait(&map->cv, &map->misc_lock);
+		mutex_exit(&map->misc_lock);
+	}
+
+	map->timestamp++;
+}
+
+/*
+ * vm_map_lock_try: try to lock a map, failing if it is already locked.
+ */
+
+bool
+vm_map_lock_try(struct vm_map *map)
+{
+
+	if ((map->flags & VM_MAP_INTRSAFE) != 0)
+		return mutex_tryenter(&map->mutex);
+	if (!rw_tryenter(&map->lock, RW_WRITER))
+		return false;
+	if (map->busy != NULL) {
+		rw_exit(&map->lock);
+		return false;
+	}
+
+	map->timestamp++;
+	return true;
+}
+
+/*
+ * vm_map_unlock: release an exclusive lock on a map.
+ */
+
+void
+vm_map_unlock(struct vm_map *map)
+{
+
+	if ((map->flags & VM_MAP_INTRSAFE) != 0)
+		mutex_exit(&map->mutex);
+	else {
+		KASSERT(rw_write_held(&map->lock));
+		rw_exit(&map->lock);
+	}
+}
+
+/*
+ * vm_map_upgrade: upgrade a shared lock to an exclusive lock.
+ *
+ * => the caller must hold the map busy
+ */
+
+void
+vm_map_upgrade(struct vm_map *map)
+{
+
+	KASSERT(rw_read_held(&map->lock));
+	KASSERT(map->busy == curlwp);
+
+	if (rw_tryupgrade(&map->lock))
+		return;
+
+	rw_exit(&map->lock);
+	rw_enter(&map->lock, RW_WRITER);
+}
+
+/*
+ * vm_map_unbusy: mark the map as unbusy, and wake any waiters that
+ *     want an exclusive lock.
+ */
+
+void
+vm_map_unbusy(struct vm_map *map)
+{
+
+	KASSERT(rw_lock_held(&map->lock));
+	KASSERT(map->busy == curlwp);
+
+	/*
+	 * Safe to clear 'busy' and 'waiters' with only a read lock held:
+	 *
+	 * o they can only be set with a write lock held
+	 * o writers are blocked out with a read or write hold
+	 * o at any time, only one thread owns the set of values
+	 */
+	map->busy = NULL;
+	mutex_enter(&map->misc_lock);
+	cv_broadcast(&map->cv);
+	mutex_exit(&map->misc_lock);
+}
+
+/*
  * uvm_mapent_alloc: allocate a map entry
  */
 
@@ -743,8 +860,6 @@ uvm_map_init(void)
 
 	/*
 	 * initialize the global lock for kernel map entry.
-	 *
-	 * XXX is it worth to have per-map lock instead?
 	 */
 
 	mutex_init(&uvm_kentry_lock, MUTEX_DRIVER, IPL_VM);
@@ -1000,32 +1115,30 @@ retry:
 		timestamp = map->timestamp;
 		UVMHIST_LOG(maphist,"waiting va timestamp=0x%x",
 			    timestamp,0,0,0);
-		mutex_enter(&map->flags_lock);
 		map->flags |= VM_MAP_WANTVA;
-		mutex_exit(&map->flags_lock);
 		vm_map_unlock(map);
 
 		/*
 		 * try to reclaim kva and wait until someone does unmap.
-		 * XXX fragile locking
+		 * fragile locking here, so we awaken every second to
+		 * recheck the condition.
 		 */
 
 		vm_map_drain(map, flags);
 
-		mutex_enter(&map->flags_lock);
+		mutex_enter(&map->misc_lock);
 		while ((map->flags & VM_MAP_WANTVA) != 0 &&
 		   map->timestamp == timestamp) {
 			if ((flags & UVM_FLAG_WAITVA) == 0) {
-				mutex_exit(&map->flags_lock);
+				mutex_exit(&map->misc_lock);
 				UVMHIST_LOG(maphist,
 				    "<- uvm_map_findspace failed!", 0,0,0,0);
 				return ENOMEM;
 			} else {
-				mtsleep(&map->header, PVM, "vmmapva", 0,
-				    &map->flags_lock);
+				cv_timedwait(&map->cv, &map->misc_lock, hz);
 			}
 		}
-		mutex_exit(&map->flags_lock);
+		mutex_exit(&map->misc_lock);
 		goto retry;
 	}
 
@@ -2142,12 +2255,12 @@ uvm_unmap_remove(struct vm_map *map, vaddr_t start, vaddr_t end,
 	*entry_list = first_entry;
 	UVMHIST_LOG(maphist,"<- done!", 0, 0, 0, 0);
 
-	mutex_enter(&map->flags_lock);
 	if (map->flags & VM_MAP_WANTVA) {
+		mutex_enter(&map->misc_lock);
 		map->flags &= ~VM_MAP_WANTVA;
-		wakeup(&map->header);
+		cv_broadcast(&map->cv);
+		mutex_exit(&map->misc_lock);
 	}
-	mutex_exit(&map->flags_lock);
 }
 
 /*
@@ -3315,7 +3428,7 @@ uvm_map_pageable_all(struct vm_map *map, int flags, vsize_t limit)
 			if (VM_MAPENT_ISWIRED(entry))
 				uvm_map_entry_unwire(map, entry);
 		}
-		vm_map_modflags(map, 0, VM_MAP_WIREFUTURE);
+		map->flags &= ~VM_MAP_WIREFUTURE;
 		vm_map_unlock(map);
 		UVMHIST_LOG(maphist,"<- done (OK UNWIRE)",0,0,0,0);
 		return 0;
@@ -3327,7 +3440,7 @@ uvm_map_pageable_all(struct vm_map *map, int flags, vsize_t limit)
 		 * must wire all future mappings; remember this.
 		 */
 
-		vm_map_modflags(map, VM_MAP_WIREFUTURE, 0);
+		map->flags |= VM_MAP_WIREFUTURE;
 	}
 
 	if ((flags & MCL_CURRENT) == 0) {
@@ -3846,7 +3959,7 @@ uvmspace_exec(struct lwp *l, vaddr_t start, vaddr_t end)
 		 * when a process execs another program image.
 		 */
 
-		vm_map_modflags(map, 0, VM_MAP_WIREFUTURE);
+		map->flags &= ~VM_MAP_WIREFUTURE;
 
 		/*
 		 * now unmap the old program
@@ -3896,10 +4009,10 @@ uvmspace_addref(struct vmspace *vm)
 
 	KASSERT((map->flags & VM_MAP_DYING) == 0);
 
-	mutex_enter(&map->ref_lock);
+	mutex_enter(&map->misc_lock);
 	KASSERT(vm->vm_refcnt > 0);
 	vm->vm_refcnt++;
-	mutex_exit(&map->ref_lock);
+	mutex_exit(&map->misc_lock);
 }
 
 /*
@@ -3916,9 +4029,9 @@ uvmspace_free(struct vmspace *vm)
 	UVMHIST_FUNC("uvmspace_free"); UVMHIST_CALLED(maphist);
 
 	UVMHIST_LOG(maphist,"(vm=0x%x) ref=%d", vm, vm->vm_refcnt,0,0);
-	mutex_enter(&map->ref_lock);
+	mutex_enter(&map->misc_lock);
 	n = --vm->vm_refcnt;
-	mutex_exit(&map->ref_lock);
+	mutex_exit(&map->misc_lock);
 	if (n > 0)
 		return;
 
@@ -4830,6 +4943,7 @@ uvm_map_create(pmap_t pmap, vaddr_t vmin, vaddr_t vmax, int flags)
 void
 uvm_map_setup(struct vm_map *map, vaddr_t vmin, vaddr_t vmax, int flags)
 {
+	int ipl;
 
 	RB_INIT(&map->rbhead);
 	map->header.next = map->header.prev = &map->header;
@@ -4842,23 +4956,24 @@ uvm_map_setup(struct vm_map *map, vaddr_t vmin, vaddr_t vmax, int flags)
 	map->first_free = &map->header;
 	map->hint = &map->header;
 	map->timestamp = 0;
-
-	mutex_init(&map->ref_lock, MUTEX_DEFAULT, IPL_NONE);
+	map->busy = NULL;
 
 	if ((flags & VM_MAP_INTRSAFE) != 0) {
-		mutex_init(&map->lock.lk_interlock, MUTEX_DRIVER, IPL_VM);
-		mutex_init(&map->flags_lock, MUTEX_DRIVER, IPL_VM);
-		mutex_init(&map->hint_lock, MUTEX_DRIVER, IPL_VM);
+		ipl = IPL_VM;
 	} else {
-		lockinit(&map->lock, PVM, "vmmaplk", 0, 0);
-
-		/*
-		 * The hint lock can get acquired with the pagequeue
-		 * lock held, so must be at IPL_VM.
-		 */
-		mutex_init(&map->flags_lock, MUTEX_DEFAULT, IPL_NONE);
-		mutex_init(&map->hint_lock, MUTEX_DRIVER, IPL_VM);
+		rw_init(&map->lock);
+		ipl = IPL_NONE;
 	}
+
+	cv_init(&map->cv, "vm_map");
+	mutex_init(&map->misc_lock, MUTEX_DRIVER, ipl);
+	mutex_init(&map->mutex, MUTEX_DRIVER, ipl);
+
+	/*
+	 * The hint lock can get acquired with the pagequeue
+	 * lock held, so must be at IPL_VM.
+	 */
+	mutex_init(&map->hint_lock, MUTEX_DRIVER, IPL_VM);
 }
 
 
@@ -4903,15 +5018,15 @@ uvm_unmap1(struct vm_map *map, vaddr_t start, vaddr_t end, int flags)
 /*
  * uvm_map_reference: add reference to a map
  *
- * => map need not be locked (we use ref_lock).
+ * => map need not be locked (we use misc_lock).
  */
 
 void
 uvm_map_reference(struct vm_map *map)
 {
-	mutex_enter(&map->ref_lock);
+	mutex_enter(&map->misc_lock);
 	map->ref_count++;
-	mutex_exit(&map->ref_lock);
+	mutex_exit(&map->misc_lock);
 }
 
 struct vm_map_kernel *

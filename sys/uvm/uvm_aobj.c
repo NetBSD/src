@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.87.4.2 2007/03/13 17:51:54 ad Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.87.4.3 2007/04/05 21:32:51 ad Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.87.4.2 2007/03/13 17:51:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.87.4.3 2007/04/05 21:32:51 ad Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -730,6 +730,8 @@ uao_put(struct uvm_object *uobj, voff_t start, voff_t stop, int flags)
 	voff_t curoff;
 	UVMHIST_FUNC("uao_put"); UVMHIST_CALLED(maphist);
 
+	KASSERT(mutex_owned(&uobj->vmobjlock));
+
 	curoff = 0;
 	if (flags & PGO_ALLPAGES) {
 		start = 0;
@@ -785,7 +787,7 @@ uao_put(struct uvm_object *uobj, voff_t start, voff_t stop, int flags)
 	if (by_list) {
 		TAILQ_INSERT_TAIL(&uobj->memq, &endmp, listq);
 		nextpg = TAILQ_FIRST(&uobj->memq);
-		PHOLD(curlwp);
+		uvm_lwp_hold(curlwp);
 	} else {
 		curoff = start;
 		nextpg = NULL;	/* Quell compiler warning */
@@ -882,7 +884,7 @@ uao_put(struct uvm_object *uobj, voff_t start, voff_t stop, int flags)
 	mutex_exit(&uvm_pageqlock);
 	if (by_list) {
 		TAILQ_REMOVE(&uobj->memq, &endmp, listq);
-		PRELE(curlwp);
+		uvm_lwp_rele(curlwp);
 	}
 	mutex_exit(&uobj->vmobjlock);
 	return 0;
