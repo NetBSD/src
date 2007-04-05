@@ -1,4 +1,4 @@
-/* $NetBSD: sched.h,v 1.30.2.15 2007/04/02 23:45:27 rmind Exp $ */
+/* $NetBSD: sched.h,v 1.30.2.16 2007/04/05 14:17:01 yamt Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2007 The NetBSD Foundation, Inc.
@@ -196,7 +196,6 @@ void sched_print_runqueue(void (*pr)(const char *, ...));	/* Print runqueues in 
 inline void sched_pstats_hook(struct proc *, int);
 
 /* Functions common to all scheduler implementations */
-void sched_wakeup(volatile const void *);
 pri_t sched_kpri(struct lwp *);
 void sched_pstats(void *arg);
 
