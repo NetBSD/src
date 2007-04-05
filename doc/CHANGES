@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.819 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.820 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -16,6 +16,7 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	shark: add support for XFree86 with wsfb. [macallan 20061220]
 	postfix(1): Updated to 2.3.5. [rpaulo 20061220]
 	nfs: Remove NQNFS support from kernel. [yamt 20061227]
+	mount_psshfs(8): add puffs sshfs [pooka 20061229]
   	zaurus: add support for Sharp C3x00 PDA. [ober 20070105]
 	i386: add support for Microsoft Xbox. [jmcneill 20070105]
 	ntp: Import ntp 4.2.4 (20061228). Tracking of network interface address
