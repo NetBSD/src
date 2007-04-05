@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.135.2.1 2007/03/13 16:50:00 ad Exp $	*/
+/*	$NetBSD: cpu.h,v 1.135.2.2 2007/04/05 21:53:36 ad Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -97,6 +97,7 @@ struct cpu_info {
 	volatile uint32_t	ci_tlb_ipi_mask;
 
 	struct pmap *ci_pmap;		/* current pmap */
+	struct pv_entry *ci_freepve;	/* cached pv entry */
 	int ci_want_pmapload;		/* pmap_load() is needed */
 	int ci_tlbstate;		/* one of TLBSTATE_ states. see below */
 #define	TLBSTATE_VALID	0	/* all user tlbs are valid */

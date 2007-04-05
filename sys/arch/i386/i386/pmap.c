@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.202.2.2 2007/03/13 17:50:23 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.202.2.3 2007/04/05 21:53:36 ad Exp $	*/
 
 /*
  *
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.202.2.2 2007/03/13 17:50:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.202.2.3 2007/04/05 21:53:36 ad Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"
@@ -503,7 +503,7 @@ pmap_is_active(pmap, cpu_id)
 }
 
 
-inline static void
+static void
 pmap_apte_flush(struct pmap *pmap)
 {
 #if defined(MULTIPROCESSOR)
@@ -545,7 +545,7 @@ pmap_apte_flush(struct pmap *pmap)
  * => must be undone with pmap_unmap_ptes before returning
  */
 
-inline static pt_entry_t *
+static pt_entry_t *
 pmap_map_ptes(pmap, pmap2)
 	struct pmap *pmap;
 	struct pmap **pmap2;
@@ -555,6 +555,7 @@ pmap_map_ptes(pmap, pmap2)
 	struct cpu_info *ci;
 	struct lwp *l;
 	bool iscurrent;
+	uint64_t ncsw;
 
 	/* the kernel's pmap is always accessible */
 	if (pmap == pmap_kernel()) {
@@ -565,6 +566,7 @@ pmap_map_ptes(pmap, pmap2)
  retry:
 	crit_enter();
 	l = curlwp;
+	ncsw = l->l_ncsw;
  	ourpmap = NULL;
 	ci = curcpu();
 	if (ci->ci_want_pmapload &&
@@ -605,12 +607,9 @@ pmap_map_ptes(pmap, pmap2)
  out:
  	/*
  	 * might have blocked, need to retry?
- 	 * XXXAD this is certianly not right.
  	 */
-	if (ci != curcpu() || iscurrent != pmap_is_curpmap(pmap) ||
-	    (ci->ci_want_pmapload &&
-	    vm_map_pmap(&l->l_proc->p_vmspace->vm_map) == pmap)) {
-	    	crit_exit();
+	if (l->l_ncsw != ncsw) {
+		crit_exit();
 	    	if (ourpmap != NULL)
 			mutex_exit(&ourpmap->pm_obj.vmobjlock);
 		mutex_exit(&pmap->pm_obj.vmobjlock);
@@ -624,7 +623,7 @@ pmap_map_ptes(pmap, pmap2)
  * pmap_unmap_ptes: unlock the PTE mapping of "pmap"
  */
 
-inline static void
+static void
 pmap_unmap_ptes(pmap, pmap2)
 	struct pmap *pmap;
 	struct pmap *pmap2;
@@ -1007,10 +1006,19 @@ pmap_bootstrap(kva_start)
 
 	/*
 	 * init the static-global locks and global lists.
+	 *
+	 * => pvalloc_lock must be a spin lock.  since the pmap module
+	 *      is entered with and without the kernel lock held, for
+	 *      now it must be at IPL_VM in order to prevent deadlock.
+	 *	note that it is NEVER taken from interrupt context.
+	 *
+	 * => pventry::pvh_lock (initialized elsewhere) must also be
+	 *      a spin lock, again at IPL_VM to prevent deadlock, and
+	 *	again is never taken from interrupt context.
 	 */
 
 	rw_init(&pmap_main_lock);
-	mutex_init(&pvalloc_lock, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&pvalloc_lock, MUTEX_SPIN, IPL_VM);
 	mutex_init(&pmaps_lock, MUTEX_DEFAULT, IPL_NONE);
 	LIST_INIT(&pmaps);
 	TAILQ_INIT(&pv_freepages);
@@ -1095,7 +1103,7 @@ pmap_init()
  */
 
 /*
- * pmap_alloc_pv: inline function to allocate a pv_entry structure
+ * pmap_alloc_pv: function to allocate a pv_entry structure
  * => we lock pvalloc_lock
  * => if we fail, we call out to pmap_alloc_pvpage
  * => 3 modes:
@@ -1107,7 +1115,7 @@ pmap_init()
  * "try" is for optional functions like pmap_copy().
  */
 
-inline static struct pv_entry *
+static struct pv_entry *
 pmap_alloc_pv(pmap, mode)
 	struct pmap *pmap;
 	int mode;
@@ -1115,7 +1123,7 @@ pmap_alloc_pv(pmap, mode)
 	struct pv_page *pvpage;
 	struct pv_entry *pv;
 
-	mutex_enter(&pvalloc_lock);
+	mutex_spin_enter(&pvalloc_lock);
 
 	pvpage = TAILQ_FIRST(&pv_freepages);
 	if (pvpage != NULL) {
@@ -1144,7 +1152,7 @@ pmap_alloc_pv(pmap, mode)
 		else
 			(void) pmap_alloc_pvpage(pmap, ALLOCPV_NONEED);
 	}
-	mutex_exit(&pvalloc_lock);
+	mutex_spin_exit(&pvalloc_lock);
 	return(pv);
 }
 
@@ -1165,7 +1173,6 @@ pmap_alloc_pvpage(struct pmap *pmap, int mode)
 {
 	struct pv_page *pvpage;
 	struct pv_entry *pv;
-	int s;
 
 	/*
 	 * if we need_entry and we've got unused pv_pages, allocate from there
@@ -1192,10 +1199,11 @@ pmap_alloc_pvpage(struct pmap *pmap, int mode)
 	 * pmap is already locked!  (...but entering the mapping is safe...)
 	 */
 
-	s = splvm();   /* must protect kmem_map with splvm! */
+	mutex_spin_exit(&pvalloc_lock);
 	pvpage = (struct pv_page *)uvm_km_alloc(kmem_map, PAGE_SIZE, 0,
 	    UVM_KMF_TRYLOCK|UVM_KMF_NOWAIT|UVM_KMF_WIRED);
-	splx(s);
+	mutex_spin_enter(&pvalloc_lock);
+
 	if (pvpage == NULL)
 		return NULL;
 
@@ -1243,7 +1251,7 @@ pmap_add_pvpage(pvp, need_entry)
  * => we must be holding pvalloc_lock
  */
 
-inline static void
+static void
 pmap_free_pv_doit(pv)
 	struct pv_entry *pv;
 {
@@ -1278,12 +1286,12 @@ pmap_free_pv_doit(pv)
  * => we gain the pvalloc_lock
  */
 
-inline static void
+static void
 pmap_free_pv(pmap, pv)
 	struct pmap *pmap;
 	struct pv_entry *pv;
 {
-	mutex_enter(&pvalloc_lock);
+	mutex_spin_enter(&pvalloc_lock);
 	pmap_free_pv_doit(pv);
 
 	/*
@@ -1294,7 +1302,7 @@ pmap_free_pv(pmap, pv)
 	    pmap != pmap_kernel())
 		pmap_free_pvpage();
 
-	mutex_exit(&pvalloc_lock);
+	mutex_spin_exit(&pvalloc_lock);
 }
 
 /*
@@ -1303,14 +1311,14 @@ pmap_free_pv(pmap, pv)
  * => we gain the pvalloc_lock
  */
 
-inline static void
+static void
 pmap_free_pvs(pmap, pvs)
 	struct pmap *pmap;
 	struct pv_entry *pvs;
 {
 	struct pv_entry *nextpv;
 
-	mutex_enter(&pvalloc_lock);
+	mutex_spin_enter(&pvalloc_lock);
 
 	for ( /* null */ ; pvs != NULL ; pvs = nextpv) {
 		nextpv = SPLAY_RIGHT(pvs, pv_node);
@@ -1325,7 +1333,7 @@ pmap_free_pvs(pmap, pvs)
 	    pmap != pmap_kernel())
 		pmap_free_pvpage();
 
-	mutex_exit(&pvalloc_lock);
+	mutex_spin_exit(&pvalloc_lock);
 }
 
 
@@ -1339,18 +1347,17 @@ pmap_free_pvs(pmap, pvs)
 static void
 pmap_free_pvpage()
 {
-	int s;
 	struct pv_page *pvp;
 
 	pvp = TAILQ_FIRST(&pv_unusedpgs);
 	/* remove pvp from pv_unusedpgs */
 	TAILQ_REMOVE(&pv_unusedpgs, pvp, pvinfo.pvpi_list);
 
-	s = splvm();
-	uvm_km_free(kmem_map, (vaddr_t)pvp, PAGE_SIZE, UVM_KMF_WIRED);
-	splx(s);
-
 	pv_nfpvents -= PVE_PER_PVPAGE;  /* update free count */
+
+	mutex_spin_exit(&pvalloc_lock);
+	uvm_km_free(kmem_map, (vaddr_t)pvp, PAGE_SIZE, UVM_KMF_WIRED);
+	mutex_spin_enter(&pvalloc_lock);
 }
 
 /*
@@ -1358,21 +1365,21 @@ pmap_free_pvpage()
  *                 Observe locking order when locking both pvhs
  */
 
-inline static void
+static void
 pmap_lock_pvhs(struct pv_head *pvh1, struct pv_head *pvh2)
 {
 
 	if (pvh2 == NULL) {
-		mutex_enter(&pvh1->pvh_lock);
+		mutex_spin_enter(&pvh1->pvh_lock);
 		return;
 	}
 
 	if (pvh1 < pvh2) {
-		mutex_enter(&pvh1->pvh_lock);
-		mutex_enter(&pvh2->pvh_lock);
+		mutex_spin_enter(&pvh1->pvh_lock);
+		mutex_spin_enter(&pvh2->pvh_lock);
 	} else {
-		mutex_enter(&pvh2->pvh_lock);
-		mutex_enter(&pvh1->pvh_lock);
+		mutex_spin_enter(&pvh2->pvh_lock);
+		mutex_spin_enter(&pvh1->pvh_lock);
 	}
 }
 
@@ -1395,7 +1402,7 @@ pmap_lock_pvhs(struct pv_head *pvh1, struct pv_head *pvh2)
  * => caller should adjust ptp's wire_count before calling
  */
 
-inline static void
+static void
 pmap_enter_pv(pvh, pve, pmap, va, ptp)
 	struct pv_head *pvh;
 	struct pv_entry *pve;	/* preallocated pve for us to use */
@@ -1419,7 +1426,7 @@ pmap_enter_pv(pvh, pve, pmap, va, ptp)
  * => we return the removed pve
  */
 
-inline static struct pv_entry *
+static struct pv_entry *
 pmap_remove_pv(pvh, pmap, va)
 	struct pv_head *pvh;
 	struct pmap *pmap;
@@ -1449,7 +1456,7 @@ pmap_remove_pv(pvh, pmap, va)
  *	will ever leak onto the active/inactive queues)
  */
 
-inline static struct vm_page *
+static struct vm_page *
 pmap_alloc_ptp(pmap, pde_index)
 	struct pmap *pmap;
 	int pde_index;
@@ -1683,6 +1690,7 @@ pmap_destroy(pmap)
 	}
 #endif
 
+	mutex_destroy(&pmap->pm_obj.vmobjlock);
 	pool_put(&pmap_pmap_pool, pmap);
 }
 
@@ -1881,6 +1889,7 @@ pmap_load()
 	struct pmap *oldpmap;
 	struct lwp *l;
 	struct pcb *pcb;
+	uint64_t ncsw;
 	int s;
 
 	crit_enter();
@@ -1927,8 +1936,9 @@ pmap_load()
 	 * retry.
 	 */
 
+	ncsw = l->l_ncsw;
 	pmap_reference(pmap);
-	if (curcpu() != ci || ci->ci_pmap != oldpmap) {
+	if (l->l_ncsw != ncsw) {
 		pmap_destroy(pmap);
 		goto retry;
 	}
@@ -1972,7 +1982,7 @@ pmap_load()
 	 */
 
 	pmap_destroy(oldpmap);
-	if (curcpu() != ci || ci->ci_want_pmapload) {
+	if (l->l_ncsw != ncsw) {
 		goto retry;
 	}
 
@@ -2348,10 +2358,10 @@ pmap_remove_ptes(pmap, ptp, ptpva, startva, endva, cpumaskp, flags)
 		mdpg = &pg->mdpage;
 
 		/* sync R/M bits */
-		mutex_enter(&mdpg->mp_pvhead.pvh_lock);
+		mutex_spin_enter(&mdpg->mp_pvhead.pvh_lock);
 		mdpg->mp_attrs |= (opte & (PG_U|PG_M));
 		pve = pmap_remove_pv(&mdpg->mp_pvhead, pmap, startva);
-		mutex_exit(&mdpg->mp_pvhead.pvh_lock);
+		mutex_spin_exit(&mdpg->mp_pvhead.pvh_lock);
 
 		if (pve) {
 			SPLAY_RIGHT(pve, pv_node) = pv_tofree;
@@ -2436,10 +2446,10 @@ pmap_remove_pte(pmap, ptp, pte, va, cpumaskp, flags)
 	mdpg = &pg->mdpage;
 
 	/* sync R/M bits */
-	mutex_enter(&mdpg->mp_pvhead.pvh_lock);
+	mutex_spin_enter(&mdpg->mp_pvhead.pvh_lock);
 	mdpg->mp_attrs |= (opte & (PG_U|PG_M));
 	pve = pmap_remove_pv(&mdpg->mp_pvhead, pmap, va);
-	mutex_exit(&mdpg->mp_pvhead.pvh_lock);
+	mutex_spin_exit(&mdpg->mp_pvhead.pvh_lock);
 
 	if (pve)
 		pmap_free_pv(pmap, pve);
@@ -2476,16 +2486,13 @@ pmap_do_remove(pmap, sva, eva, flags)
 	bool result;
 	paddr_t ptppa;
 	vaddr_t blkendva;
-	struct vm_page *ptp;
+	struct vm_page *ptp, *empty_ptps = NULL;
 	int32_t cpumask = 0;
-	TAILQ_HEAD(, vm_page) empty_ptps;
 	struct pmap *pmap2;
 
 	/*
 	 * we lock in the pmap => pv_head direction
 	 */
-
-	TAILQ_INIT(&empty_ptps);
 
 	rw_enter(&pmap_main_lock, RW_READER);
 
@@ -2559,22 +2566,11 @@ pmap_do_remove(pmap, sva, eva, flags)
 					    TAILQ_FIRST(&pmap->pm_obj.memq);
 				ptp->wire_count = 0;
 				ptp->flags |= PG_ZERO;
-				uvm_pagerealloc(ptp, NULL, 0);
-				TAILQ_INSERT_TAIL(&empty_ptps, ptp, listq);
+				ptp->mdpage.mp_link = empty_ptps;
+				empty_ptps = ptp;
 			}
 		}
-		pmap_tlb_shootnow(cpumask);
-		pmap_unmap_ptes(pmap, pmap2);		/* unlock pmap */
-		rw_exit(&pmap_main_lock);
-		/* Now we can free unused ptps */
-		TAILQ_FOREACH(ptp, &empty_ptps, listq)
-			uvm_pagefree(ptp);
-		return;
-	}
-
-	cpumask = 0;
-
-	for (/* null */ ; sva < eva ; sva = blkendva) {
+	} else for (/* null */ ; sva < eva ; sva = blkendva) {
 
 		/* determine range of block */
 		blkendva = x86_round_pdr(sva+1);
@@ -2654,18 +2650,21 @@ pmap_do_remove(pmap, sva, eva, flags)
 				pmap->pm_ptphint = pmap->pm_obj.memq.tqh_first;
 			ptp->wire_count = 0;
 			ptp->flags |= PG_ZERO;
-			/* Postpone free to shootdown */
-			uvm_pagerealloc(ptp, NULL, 0);
-			TAILQ_INSERT_TAIL(&empty_ptps, ptp, listq);
+			ptp->mdpage.mp_link = empty_ptps;
+			empty_ptps = ptp;
 		}
 	}
 
+	for (ptp = empty_ptps; ptp != NULL; ptp = ptp->mdpage.mp_link)
+		uvm_pagerealloc(ptp, NULL, 0);
 	pmap_tlb_shootnow(cpumask);
-	pmap_unmap_ptes(pmap, pmap2);
+	pmap_unmap_ptes(pmap, pmap2);		/* unlock pmap */
 	rw_exit(&pmap_main_lock);
 	/* Now we can free unused ptps */
-	TAILQ_FOREACH(ptp, &empty_ptps, listq)
+	for (ptp = empty_ptps; ptp != NULL; ptp = empty_ptps) {
+		empty_ptps = ptp->mdpage.mp_link;
 		uvm_pagefree(ptp);
+	}
 }
 
 /*
@@ -2704,9 +2703,6 @@ pmap_page_remove(pg)
 
 	/* set pv_head => pmap locking */
 	rw_enter(&pmap_main_lock, RW_WRITER);
-
-	/* XXX: needed if we hold head->map lock? */
-	mutex_enter(&pvh->pvh_lock);
 
 	for (pve = SPLAY_MIN(pvtree, &pvh->pvh_root); pve != NULL; pve = npve) {
 		npve = SPLAY_NEXT(pvtree, &pvh->pvh_root, pve);
@@ -2783,13 +2779,18 @@ pmap_page_remove(pg)
 				    listq);
 			}
 		}
+		
+		/*
+		 * the pte pointer is now invalid: uvm_pagerealloc()
+		 * may have blocked.  that's ok, since we only need
+		 * to unlock the pmaps.
+		 */
 		pmap_unmap_ptes(pve->pv_pmap, pmap2);	/* unlocks pmap */
 		SPLAY_REMOVE(pvtree, &pvh->pvh_root, pve); /* remove it */
 		SPLAY_RIGHT(pve, pv_node) = killlist;	/* mark it for death */
 		killlist = pve;
 	}
 	pmap_free_pvs(NULL, killlist);
-	mutex_exit(&pvh->pvh_lock);
 	rw_exit(&pmap_main_lock);
 	pmap_tlb_shootnow(cpumask);
 
@@ -2850,8 +2851,6 @@ pmap_test_attrs(pg, testbits)
 
 	/* nope, gonna have to do it the hard way */
 	rw_enter(&pmap_main_lock, RW_WRITER);
-	/* XXX: needed if we hold head->map lock? */
-	mutex_enter(&pvh->pvh_lock);
 
 	for (pve = SPLAY_MIN(pvtree, &pvh->pvh_root);
 	     pve != NULL && (*myattrs & testbits) == 0;
@@ -2867,7 +2866,6 @@ pmap_test_attrs(pg, testbits)
 	 * we have found the bits we are testing for.
 	 */
 
-	mutex_exit(&pvh->pvh_lock);
 	rw_exit(&pmap_main_lock);
 	return((*myattrs & testbits) != 0);
 }
@@ -2904,8 +2902,6 @@ pmap_clear_attrs(pg, clearbits)
 
 	rw_enter(&pmap_main_lock, RW_WRITER);
 	pvh = &mdpg->mp_pvhead;
-	/* XXX: needed if we hold head->map lock? */
-	mutex_enter(&pvh->pvh_lock);
 
 	myattrs = &mdpg->mp_attrs;
 	result = *myattrs & clearbits;
@@ -2962,7 +2958,6 @@ no_tlb_shootdown:
 		pmap_unmap_ptes(pve->pv_pmap, pmap2);	/* unlocks pmap */
 	}
 
-	mutex_exit(&pvh->pvh_lock);
 	rw_exit(&pmap_main_lock);
 
 	pmap_tlb_shootnow(cpumask);
@@ -3157,10 +3152,11 @@ pmap_enter(pmap, va, pa, prot, flags)
 	struct vm_page *ptp, *pg;
 	struct vm_page_md *mdpg;
 	struct pv_head *old_pvh, *new_pvh;
-	struct pv_entry *pve = NULL; /* XXX gcc */
+	struct pv_entry *pve = NULL, *freepve; /* XXX gcc */
 	int error;
 	bool wired = (flags & PMAP_WIRED) != 0;
 	struct pmap *pmap2;
+	struct cpu_info *ci;
 
 	KASSERT(pmap_initialized);
 
@@ -3193,6 +3189,21 @@ pmap_enter(pmap, va, pa, prot, flags)
 		npte |= PG_U;
 		if (flags & VM_PROT_WRITE)
 			npte |= PG_M;
+	}
+
+	/* get a cached pve.  we must disable preemption for this. */
+	crit_enter();
+	ci = curcpu();
+	if (ci->ci_freepve != NULL) {
+		freepve = ci->ci_freepve;
+		ci->ci_freepve = NULL;
+	} else
+		freepve = pmap_alloc_pv(pmap, ALLOCPV_NEED);
+	if (freepve == NULL) {
+		if (!(flags & PMAP_CANFAIL))
+			panic("pmap_enter: no pv entries available");
+		crit_exit();
+		return ENOMEM;
 	}
 
 	/* get lock */
@@ -3254,9 +3265,9 @@ pmap_enter(pmap, va, pa, prot, flags)
 #endif
 			mdpg = &pg->mdpage;
 			old_pvh = &mdpg->mp_pvhead;
-			mutex_enter(&old_pvh->pvh_lock);
+			mutex_spin_enter(&old_pvh->pvh_lock);
 			mdpg->mp_attrs |= opte;
-			mutex_exit(&old_pvh->pvh_lock);
+			mutex_spin_exit(&old_pvh->pvh_lock);
 		}
 		goto shootdown_now;
 	}
@@ -3269,14 +3280,8 @@ pmap_enter(pmap, va, pa, prot, flags)
 		new_pvh = &mdpg->mp_pvhead;
 		if ((opte & (PG_PVLIST | PG_V)) != (PG_PVLIST | PG_V)) {
 			/* We can not steal a pve - allocate one */
-			pve = pmap_alloc_pv(pmap, ALLOCPV_NEED);
-			if (pve == NULL) {
-				if (!(flags & PMAP_CANFAIL))
-					panic("pmap_enter: "
-					    "no pv entries available");
-				error = ENOMEM;
-				goto out;
-  			}
+			pve = freepve;
+			freepve = NULL;
   		}
 	} else {
 		new_pvh = NULL;
@@ -3321,13 +3326,13 @@ pmap_enter(pmap, va, pa, prot, flags)
 			KASSERT(pve != 0);
 			mdpg->mp_attrs |= opte;
 
-			if (new_pvh) {
+			if (new_pvh != NULL) {
 				pmap_enter_pv(new_pvh, pve, pmap, va, ptp);
-				mutex_exit(&new_pvh->pvh_lock);
-			} else
+				mutex_spin_exit(&new_pvh->pvh_lock);
+			}
+			mutex_spin_exit(&old_pvh->pvh_lock);
+			if (new_pvh == NULL)
 				pmap_free_pv(pmap, pve);
-			mutex_exit(&old_pvh->pvh_lock);
-
 			goto shootdown_test;
 		}
 	} else {	/* opte not valid */
@@ -3339,9 +3344,9 @@ pmap_enter(pmap, va, pa, prot, flags)
 	}
 
 	if (new_pvh) {
-		mutex_enter(&new_pvh->pvh_lock);
+		mutex_spin_enter(&new_pvh->pvh_lock);
 		pmap_enter_pv(new_pvh, pve, pmap, va, ptp);
-		mutex_exit(&new_pvh->pvh_lock);
+		mutex_spin_exit(&new_pvh->pvh_lock);
 	}
 
 	opte = x86_atomic_testset_ul(ptep, npte);   /* zap! */
@@ -3371,6 +3376,16 @@ out:
 	pmap_unmap_ptes(pmap, pmap2);
 	rw_exit(&pmap_main_lock);
 
+	/* put back the cached PVE. */
+	if (freepve != NULL) {
+		ci = curcpu();
+		if (ci->ci_freepve == NULL)
+			ci->ci_freepve = freepve;
+		else
+			pmap_free_pv(pmap, freepve);
+	}
+	crit_exit();
+
 	return error;
 }
 
@@ -3399,7 +3414,7 @@ pmap_growkernel(maxkvaddr)
 	 * whoops!   we need to add kernel PTPs
 	 */
 
-	s = splhigh();	/* to be safe */
+	s = splvm();	/* to be safe */
 	mutex_enter(&kpm->pm_obj.vmobjlock);
 
 	for (/*null*/ ; nkpde < needed_kpde ; nkpde++) {

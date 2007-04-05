@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.61.8.1 2007/03/13 17:50:25 ad Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.61.8.2 2007/04/05 21:53:37 ad Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -137,7 +137,7 @@
 #define	__HAVE_VM_PAGE_MD
 #define	VM_MDPAGE_INIT(pg)							\
 	memset(&(pg)->mdpage, 0, sizeof((pg)->mdpage));				\
-	mutex_init(&(pg)->mdpage.mp_pvhead.pvh_lock, MUTEX_NODEBUG, IPL_NONE);	\
+	mutex_init(&(pg)->mdpage.mp_pvhead.pvh_lock, MUTEX_NODEBUG, IPL_VM);	\
 	SPLAY_INIT(&(pg)->mdpage.mp_pvhead.pvh_root);
 
 struct pv_entry;
@@ -150,6 +150,7 @@ struct pv_head {
 
 struct vm_page_md {
 	struct pv_head mp_pvhead;
+	struct vm_page *mp_link;
 	int mp_attrs;	/* only 2 bits (PG_U and PG_M) are actually used. */
 };
 
