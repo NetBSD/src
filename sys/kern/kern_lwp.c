@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.61.2.3 2007/03/21 20:10:20 ad Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.61.2.4 2007/04/05 21:38:36 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -204,7 +204,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.61.2.3 2007/03/21 20:10:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.61.2.4 2007/04/05 21:38:36 ad Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -535,6 +535,7 @@ newlwp(struct lwp *l1, struct proc *p2, vaddr_t uaddr, bool inmem,
 
 	lwp_update_creds(l2);
 	callout_init(&l2->l_tsleep_ch);
+	mutex_init(&l2->l_swaplock, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&l2->l_sigcv, "sigwait");
 	l2->l_syncobj = &sched_syncobj;
 
@@ -568,9 +569,11 @@ newlwp(struct lwp *l1, struct proc *p2, vaddr_t uaddr, bool inmem,
 
 	mutex_exit(&p2->p_smutex);
 
+	mutex_enter(&proclist_lock);
 	mutex_enter(&proclist_mutex);
 	LIST_INSERT_HEAD(&alllwp, l2, l_list);
 	mutex_exit(&proclist_mutex);
+	mutex_exit(&proclist_lock);
 
 	SYSCALL_TIME_LWP_INIT(l2);
 
@@ -635,11 +638,19 @@ lwp_exit(struct lwp *l)
 	kauth_cred_free(l->l_cred);
 
 	/*
+	 * While we can still block, mark the LWP as unswappable to
+	 * prevent conflicts with the with the swapper.
+	 */
+	uvm_lwp_hold(l);
+
+	/*
 	 * Remove the LWP from the global list.
 	 */
+	mutex_enter(&proclist_lock);
 	mutex_enter(&proclist_mutex);
 	LIST_REMOVE(l, l_list);
 	mutex_exit(&proclist_mutex);
+	mutex_exit(&proclist_lock);
 
 	/*
 	 * Get rid of all references to the LWP that others (e.g. procfs)
@@ -771,6 +782,7 @@ lwp_free(struct lwp *l, int recycle, int last)
 	sigclear(&l->l_sigpend, NULL, &kq);
 	ksiginfo_queue_drain(&kq);
 	cv_destroy(&l->l_sigcv);
+	mutex_destroy(&l->l_swaplock);
 
 	/*
 	 * Free the LWP's turnstile and the LWP structure itself unless the

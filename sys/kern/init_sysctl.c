@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.98.2.1 2007/03/13 16:51:50 ad Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.98.2.2 2007/04/05 21:38:35 ad Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.98.2.1 2007/03/13 16:51:50 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.98.2.2 2007/04/05 21:38:35 ad Exp $");
 
 #include "opt_sysv.h"
 #include "opt_multiprocessor.h"
@@ -2886,7 +2886,7 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki)
 		ki->p_uru_nvcsw = 0;
 		ki->p_uru_nivcsw = 0;
 		LIST_FOREACH(l2, &p->p_lwps, l_sibling) {
-			ki->p_uru_nvcsw += l->l_nvcsw;
+			ki->p_uru_nvcsw += (l->l_ncsw - l->l_nivcsw);
 			ki->p_uru_nivcsw += l->l_nivcsw;
 		}
 

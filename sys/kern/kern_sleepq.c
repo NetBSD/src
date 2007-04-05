@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sleepq.c,v 1.7 2007/02/27 15:07:29 yamt Exp $	*/
+/*	$NetBSD: kern_sleepq.c,v 1.7.2.1 2007/04/05 21:38:37 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.7 2007/02/27 15:07:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.7.2.1 2007/04/05 21:38:37 ad Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -228,7 +228,6 @@ sleepq_enqueue(sleepq_t *sq, pri_t pri, wchan_t wchan, const char *wmesg,
 	l->l_priority = pri;
 	l->l_stat = LSSLEEP;
 	l->l_sleeperr = 0;
-	l->l_nvcsw++;
 
 	sq->sq_waiters++;
 	sleepq_insert(sq, l, sobj);

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.107.2.2 2007/03/21 20:16:31 ad Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.107.2.3 2007/04/05 21:38:36 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.107.2.2 2007/03/21 20:16:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.107.2.3 2007/04/05 21:38:36 ad Exp $");
 
 #include "opt_kstack.h"
 #include "opt_maxuprc.h"
@@ -317,6 +317,7 @@ proc0_init(void)
 	mutex_init(&p->p_stmutex, MUTEX_SPIN, IPL_STATCLOCK);
 	mutex_init(&p->p_rasmutex, MUTEX_SPIN, IPL_SCHED);
 	mutex_init(&p->p_mutex, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&l->l_swaplock, MUTEX_DEFAULT, IPL_NONE);
 
 	cv_init(&p->p_refcv, "drainref");
 	cv_init(&p->p_waitcv, "wait");
@@ -1263,7 +1264,7 @@ proclist_foreach_call(struct proclist *list,
 	int ret = 0;
 
 	marker.p_flag = PK_MARKER;
-	PHOLD(l);
+	uvm_lwp_hold(l);
 	mutex_enter(&proclist_lock);
 	for (p = LIST_FIRST(list); ret == 0 && p != NULL;) {
 		if (p->p_flag & PK_MARKER) {
@@ -1277,7 +1278,7 @@ proclist_foreach_call(struct proclist *list,
 		LIST_REMOVE(&marker, p_list);
 	}
 	mutex_exit(&proclist_lock);
-	PRELE(l);
+	uvm_lwp_rele(l);
 
 	return ret;
 }
