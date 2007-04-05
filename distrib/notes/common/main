@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.278.2.28.2.5 2006/10/28 12:08:20 ghen Exp $
+.\"	$NetBSD: main,v 1.278.2.28.2.6 2007/04/05 00:35:28 ghen Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -430,6 +430,119 @@ possible, it's likely that
 wouldn't exist.
 .
 .if \n[FOR_RELEASE] \{\
+.Ss Changes Between The NetBSD 3.0.2 and 3.0.3 updates
+.Pp    
+The 
+.Nx
+3.0.3
+update    
+is the third security/critical update of the
+.Nx
+3.0
+release branch. This represents a selected subset of fixes deemed 
+critical in nature for stability or security reasons.
+.Pp
+These fixes will also appear in future releases (NetBSD 3.2 etc),
+together with other less-critical fixes and feature enhancements.
+.Pp
+Specific updates are as follows:
+.
+.Ss2 Supported devices
+.
+.(bullet
+.Xr wd 4 :
+fix broken Seagate drives ST3160021A and ST3160811A.
+.bullet)
+.
+.Ss2 Kernel
+.
+.(bullet
+Don't accept a compressed
+.Xr vnd 4
+image with block size 0 to avoid a kernel panic.
+.It
+Fix a panic caused by a NULL dereference.
+.bullet)
+.
+.Ss2 Networking
+.
+.(bullet
+Fix get-lease-hostnames option in
+.Xr dhcpd.conf 5
+to make
+.Xr dhcpd 8
+use the DNS hostname as the DHCP hostname given to the client.
+.It
+Fix TCP window scaling in
+.Xr ipfilter 4 .
+.It
+Update BIND to version 9.3.2.
+.bullet)
+.
+.Ss2 File system
+.
+.(bullet
+Prevent a kernel panic when creating snapshots on filesystems which use quota's.
+.It
+Fix a coredump in
+.Xr dump 8
+when using -X (filesystem internal snapshots).
+.bullet)
+.
+.Ss2 Security
+.
+.(bullet
+Fix a buffer overflow in
+.Xr glob 3 ,
+which affected
+.Xr ftpd 8
+and possibly other programs (SA2006-027).
+.It
+X11: fix an integer overflow in the Render and DBE extensions (SA2007-002).
+.It
+BIND: fix multiple Denial of Service vulnerabilities (SA2007-003).
+.It
+Fix a buffer overflow in
+.Xr iso 4
+which could potentially lead to a local root compromise (SA2007-004).
+.It
+Fix an integer underflow in file_printf which could lead to an exploitable heap
+overflow.
+.It
+X11: fix a number of possible memory corruptions due to integer overflows (CVE
+2007-1003, 1351, 1352, 1667).
+.bullet)
+.
+.Ss2 Miscellaneous
+.
+.(bullet
+Fix some problems with
+.Xr etcupdate 8
+for upgrading.
+.It
+Update time zoneinfo to tzdata2007a.
+.It
+Set /etc/postfix/post-install mode 555 (executable) instead of 444.
+.bullet)
+.
+.Ss2 alpha specific
+.
+.(bullet
+Fix alignment problems causing regular panics on NetBSD/alpha and NetBSD/sparc.
+.bullet)
+.
+.Ss2 mac68k specific
+.
+.(bullet
+Avoid a kernel panic before reboot.
+.bullet)
+.
+.Ss2 sparc specific
+.
+.(bullet
+Fix alignment problems causing regular panics on NetBSD/alpha and NetBSD/sparc.
+.bullet)
+.
 .Ss Changes Between The NetBSD 3.0.1 and 3.0.2 updates
 .Pp    
 The 
