@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.136.2.2 2007/03/21 20:16:31 ad Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.136.2.3 2007/04/05 21:38:35 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001, 2004 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.136.2.2 2007/03/21 20:16:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.136.2.3 2007/04/05 21:38:35 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -424,8 +424,7 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	 * This begins the section where we must prevent the parent
 	 * from being swapped.
 	 */
-	PHOLD(l1);
-
+	uvm_lwp_hold(l1);
 	uvm_proc_fork(p1, p2, (flags & FORK_SHAREVM) ? true : false);
 
 	/*
@@ -468,7 +467,7 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	/*
 	 * Now can be swapped.
 	 */
-	PRELE(l1);
+	uvm_lwp_rele(l1);
 
 	/*
 	 * Notify any interested parties about the new process.

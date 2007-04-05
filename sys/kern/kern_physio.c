@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_physio.c,v 1.80.2.1 2007/03/13 17:50:55 ad Exp $	*/
+/*	$NetBSD: kern_physio.c,v 1.80.2.2 2007/04/05 21:38:36 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_physio.c,v 1.80.2.1 2007/03/13 17:50:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_physio.c,v 1.80.2.2 2007/04/05 21:38:36 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -314,7 +314,7 @@ physio(void (*strategy)(struct buf *), struct buf *obp, dev_t dev, int flags,
 	mbp->b_running = 0;
 	mbp->b_endoffset = -1;
 
-	PHOLD(l);
+	uvm_lwp_hold(l);
 
 	for (i = 0; i < uio->uio_iovcnt; i++) {
 		bool sync = true;
@@ -471,7 +471,7 @@ done_locked:
 		}
 		mutex_exit(&obp->b_interlock);
 	}
-	PRELE(l);
+	uvm_lwp_rele(l);
 
 	DPRINTF(("%s: done: off=%" PRIu64 ", resid=%zu\n",
 	    __func__, uio->uio_offset, uio->uio_resid));

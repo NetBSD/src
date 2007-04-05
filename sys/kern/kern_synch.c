@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.186.2.3 2007/03/21 20:16:32 ad Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.186.2.4 2007/04/05 21:38:37 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.186.2.3 2007/03/21 20:16:32 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.186.2.4 2007/04/05 21:38:37 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kstack.h"
@@ -601,7 +601,7 @@ yield(void)
 		KASSERT(lwp_locked(l, &sched_mutex));
 		l->l_priority = l->l_usrpri;
 	}
-	l->l_nvcsw++;
+	l->l_ncsw++;
 	mi_switch(l, NULL);
 	KERNEL_LOCK(l->l_biglocks, l);
 }
@@ -706,6 +706,7 @@ mi_switch(struct lwp *l, struct lwp *newl)
 		setrunqueue(l);
 	}
 	uvmexp.swtch++;
+	l->l_ncsw++;
 
 	/*
 	 * Process is about to yield the CPU; clear the appropriate

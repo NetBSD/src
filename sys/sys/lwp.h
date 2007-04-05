@@ -1,4 +1,4 @@
-/* 	$NetBSD: lwp.h,v 1.56.2.1 2007/03/21 20:10:22 ad Exp $	*/
+/* 	$NetBSD: lwp.h,v 1.56.2.2 2007/04/05 21:38:37 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -86,8 +86,9 @@ struct	lwp {
 	pri_t		l_usrpri;	/* l: user-priority */
 	pri_t		l_inheritedprio;/* l: inherited priority */
 	SLIST_HEAD(, turnstile) l_pi_lenders; /* l: ts lending us priority */
-	long		l_nvcsw;	/* l: voluntary context switches */
-	long		l_nivcsw;	/* l: involuntary context switches */
+	uint64_t	l_ncsw;		/* l: total context switches */
+	uint64_t	l_nivcsw;	/* l: involuntary context switches */
+	kmutex_t	l_swaplock;	/* l: lock to prevent swapping */
 
 	/* Synchronisation */
 	struct turnstile *l_ts;		/* l: current turnstile */
@@ -213,13 +214,6 @@ extern struct lwp lwp0;			/* LWP for proc0 */
 #define	LSSUSPENDED	8	/* Not running, not signalable. */
 
 #ifdef _KERNEL
-#define	PHOLD(l)							\
-do {									\
-	if ((l)->l_holdcnt++ == 0 && ((l)->l_flag & LW_INMEM) == 0)	\
-		uvm_swapin(l);						\
-} while (/* CONSTCOND */ 0)
-#define	PRELE(l)	(--(l)->l_holdcnt)
-
 #define	LWP_CACHE_CREDS(l, p)						\
 do {									\
 	if ((l)->l_cred != (p)->p_cred)					\
