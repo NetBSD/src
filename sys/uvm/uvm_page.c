@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.119.4.3 2007/04/05 18:15:50 ad Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.119.4.4 2007/04/05 21:28:11 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.119.4.3 2007/04/05 18:15:50 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.119.4.4 2007/04/05 21:28:11 ad Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -1294,6 +1294,13 @@ uvm_pagefree(struct vm_page *pg)
 	struct pglist *pgfl;
 	bool iszero;
 
+#ifdef DEBUG
+	if (pg->uobject == (void *)0xdeadbeef &&
+	    pg->uanon == (void *)0xdeadbeef) {
+		panic("uvm_pagefree: freeing free page %p", pg);
+	}
+#endif /* DEBUG */
+
 	KASSERT((pg->flags & PG_PAGEOUT) == 0);
 	KASSERT(mutex_owned(&uvm_pageqlock) ||
 		!uvmpdpol_pageisqueued_p(pg));
@@ -1301,13 +1308,6 @@ uvm_pagefree(struct vm_page *pg)
 		mutex_owned(&pg->uobject->vmobjlock));
 	KASSERT(pg->uobject != NULL || pg->uanon == NULL ||
 		mutex_owned(&pg->uanon->an_lock));
-
-#ifdef DEBUG
-	if (pg->uobject == (void *)0xdeadbeef &&
-	    pg->uanon == (void *)0xdeadbeef) {
-		panic("uvm_pagefree: freeing free page %p", pg);
-	}
-#endif /* DEBUG */
 
 	/*
 	 * if the page is loaned, resolve the loan instead of freeing.
