@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.81 2007/03/04 05:59:58 christos Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.81.2.1 2007/04/05 21:53:36 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.81 2007/03/04 05:59:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.81.2.1 2007/04/05 21:53:36 ad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_mtrr.h"
@@ -139,7 +139,7 @@ i386_get_ldt(l, args, retval)
 	if (cp == NULL)
 		return ENOMEM;
 
-	simple_lock(&pmap->pm_lock);
+	mutex_enter(&pmap->pm_lock);
 
 	if (pmap->pm_flags & PMF_USER_LDT) {
 		nldt = pmap->pm_ldt_len;
@@ -150,7 +150,7 @@ i386_get_ldt(l, args, retval)
 	}
 
 	if (ua.start > nldt) {
-		simple_unlock(&pmap->pm_lock);
+		mutex_exit(&pmap->pm_lock);
 		free(cp, M_TEMP);
 		return (EINVAL);
 	}
@@ -166,7 +166,7 @@ i386_get_ldt(l, args, retval)
 #endif
 
 	memcpy(cp, lp, num * sizeof(union descriptor));
-	simple_unlock(&pmap->pm_lock);
+	mutex_exit(&pmap->pm_lock);
 
 	error = copyout(cp, ua.desc, num * sizeof(union descriptor));
 	if (error == 0)
@@ -280,7 +280,7 @@ i386_set_ldt(l, args, retval)
 	}
 
 	/* allocate user ldt */
-	simple_lock(&pmap->pm_lock);
+	mutex_enter(&pmap->pm_lock);
 	if (pmap->pm_ldt == 0 || (ua.start + ua.num) > pmap->pm_ldt_len) {
 		if (pmap->pm_flags & PMF_USER_LDT)
 			ldt_len = pmap->pm_ldt_len;
@@ -290,10 +290,10 @@ i386_set_ldt(l, args, retval)
 			ldt_len *= 2;
 		new_len = ldt_len * sizeof(union descriptor);
 
-		simple_unlock(&pmap->pm_lock);
+		mutex_exit(&pmap->pm_lock);
 		new_ldt = (union descriptor *)uvm_km_alloc(kernel_map,
 		    new_len, 0, UVM_KMF_WIRED);
-		simple_lock(&pmap->pm_lock);
+		mutex_enter(&pmap->pm_lock);
 
 		if (pmap->pm_ldt != NULL && ldt_len <= pmap->pm_ldt_len) {
 			/*
@@ -343,7 +343,7 @@ copy:
 	for (i = 0, n = ua.start; i < ua.num; i++, n++)
 		pmap->pm_ldt[n] = descv[i];
 
-	simple_unlock(&pmap->pm_lock);
+	mutex_exit(&pmap->pm_lock);
 
 	*retval = ua.start;
 
