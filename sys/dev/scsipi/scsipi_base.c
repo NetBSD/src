@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.143.6.1 2007/03/13 16:50:31 ad Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.143.6.2 2007/04/05 21:57:47 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.143.6.1 2007/03/13 16:50:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.143.6.2 2007/04/05 21:57:47 ad Exp $");
 
 #include "opt_scsi.h"
 
@@ -1874,7 +1874,7 @@ scsipi_execute_xs(struct scsipi_xfer *xs)
 		 * process must NOT be swapped out, as the device will
 		 * be accessing the stack.
 		 */
-		PHOLD(curlwp);
+		uvm_lwp_hold(curlwp);
 	}
 
 	xs->xs_status &= ~XS_STS_DONE;
@@ -2021,7 +2021,7 @@ scsipi_execute_xs(struct scsipi_xfer *xs)
 	 */
  free_xs:
 	if (xs->xs_control & XS_CTL_DATA_ONSTACK)
-		PRELE(curlwp);
+		uvm_lwp_rele(curlwp);
 
 	s = splbio();
 	scsipi_put_xs(xs);

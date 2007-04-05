@@ -1,4 +1,4 @@
-/*	$NetBSD: null_vfsops.c,v 1.62 2007/01/19 14:49:11 hannken Exp $	*/
+/*	$NetBSD: null_vfsops.c,v 1.62.6.1 2007/04/05 21:57:51 ad Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: null_vfsops.c,v 1.62 2007/01/19 14:49:11 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: null_vfsops.c,v 1.62.6.1 2007/04/05 21:57:51 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -171,7 +171,7 @@ nullfs_mount(mp, path, data, ndp, l)
 	nmp->nullm_bypass = layer_bypass;
 	nmp->nullm_alloc = layer_node_alloc;	/* the default alloc is fine */
 	nmp->nullm_vnodeop_p = null_vnodeop_p;
-	simple_lock_init(&nmp->nullm_hashlock);
+	mutex_init(&nmp->nullm_hashlock, MUTEX_DEFAULT, IPL_NONE);
 	nmp->nullm_node_hashtbl = hashinit(desiredvnodes, HASH_LIST, M_CACHE,
 	    M_WAITOK, &nmp->nullm_node_hash);
 
@@ -259,6 +259,7 @@ nullfs_unmount(struct mount *mp, int mntflags, struct lwp *l)
 	 * Finally, throw away the null_mount structure
 	 */
 	hashdone(nmp->nullm_node_hashtbl, M_CACHE);
+	mutex_destroy(&nmp->nullm_hashlock);
 	free(mp->mnt_data, M_UFSMNT);	/* XXX */
 	mp->mnt_data = NULL;
 	return (0);

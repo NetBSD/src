@@ -6,7 +6,7 @@ mkdir
 rmdir
 symlink
 */
-/*	$NetBSD: coda_vnops.c,v 1.52 2007/03/04 06:01:12 christos Exp $	*/
+/*	$NetBSD: coda_vnops.c,v 1.52.2.1 2007/04/05 21:57:43 ad Exp $	*/
 
 /*
  *
@@ -54,7 +54,7 @@ symlink
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.52 2007/03/04 06:01:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.52.2.1 2007/04/05 21:57:43 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1978,7 +1978,7 @@ coda_putpages(void *v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 
-	simple_unlock(&vp->v_interlock);
+	mutex_exit(&vp->v_interlock);
 
 	/* Check for control object. */
 	if (IS_CTL_VP(vp)) {

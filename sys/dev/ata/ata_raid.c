@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_raid.c,v 1.21 2007/03/09 15:41:02 drochner Exp $	*/
+/*	$NetBSD: ata_raid.c,v 1.21.2.1 2007/04/05 21:57:44 ad Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_raid.c,v 1.21 2007/03/09 15:41:02 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_raid.c,v 1.21.2.1 2007/04/05 21:57:44 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: ata_raid.c,v 1.21 2007/03/09 15:41:02 drochner Exp $
 #include <sys/fcntl.h>
 #include <sys/malloc.h>
 #include <sys/vnode.h>
+#include <sys/proc.h>
 
 #include <miscfs/specfs/specdev.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.150.2.2 2007/03/21 20:11:55 ad Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.150.2.3 2007/04/05 21:57:50 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.150.2.2 2007/03/21 20:11:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.150.2.3 2007/04/05 21:57:50 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1144,7 +1144,7 @@ genfs_putpages(void *v)
 		endmp.flags = PG_BUSY;
 		pg = TAILQ_FIRST(&uobj->memq);
 		TAILQ_INSERT_TAIL(&uobj->memq, &endmp, listq);
-		PHOLD(l);
+		uvm_lwp_hold(l);
 	} else {
 		pg = uvm_pagelookup(uobj, off);
 	}
@@ -1407,7 +1407,7 @@ genfs_putpages(void *v)
 	}
 	if (by_list) {
 		TAILQ_REMOVE(&uobj->memq, &endmp, listq);
-		PRELE(l);
+		uvm_lwp_rele(l);
 	}
 
 	if (modified && (vp->v_flag & VWRITEMAPDIRTY) != 0 &&

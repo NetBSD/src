@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_trans.c,v 1.5.8.1 2007/03/13 16:52:00 ad Exp $	*/
+/*	$NetBSD: vfs_trans.c,v 1.5.8.2 2007/04/05 21:57:50 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.5.8.1 2007/03/13 16:52:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.5.8.2 2007/04/05 21:57:50 ad Exp $");
 
 /*
  * File system transaction operations.
@@ -56,6 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.5.8.1 2007/03/13 16:52:00 ad Exp $")
 #include <sys/vnode.h>
 #define _FSTRANS_API_PRIVATE
 #include <sys/fstrans.h>
+#include <sys/proc.h>
 
 #include <miscfs/syncfs/syncfs.h>
 

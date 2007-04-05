@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_srvcache.c,v 1.38.2.1 2007/03/13 16:52:04 ad Exp $	*/
+/*	$NetBSD: nfs_srvcache.c,v 1.38.2.2 2007/04/05 21:57:52 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_srvcache.c,v 1.38.2.1 2007/03/13 16:52:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_srvcache.c,v 1.38.2.2 2007/04/05 21:57:52 ad Exp $");
 
 #include "opt_iso.h"
 
@@ -179,7 +179,7 @@ nfsrv_lookupcache(nd)
 {
 	struct nfsrvcache *rp;
 
-	LOCK_ASSERT(simple_lock_held(&nfsrv_reqcache_lock));
+	KASSERT(simple_lock_held(&nfsrv_reqcache_lock));
 
 loop:
 	LIST_FOREACH(rp, NFSRCHASH(nd->nd_retxid), rc_hash) {
@@ -208,7 +208,7 @@ nfsrv_unlockcache(rp)
 	struct nfsrvcache *rp;
 {
 
-	LOCK_ASSERT(simple_lock_held(&nfsrv_reqcache_lock));
+	KASSERT(simple_lock_held(&nfsrv_reqcache_lock));
 
 	rp->rc_flag &= ~RC_LOCKED;
 	if (rp->rc_flag & RC_WANTED) {

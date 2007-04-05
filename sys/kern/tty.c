@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.193.2.3 2007/03/23 18:01:25 ad Exp $	*/
+/*	$NetBSD: tty.c,v 1.193.2.4 2007/04/05 21:57:50 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.193.2.3 2007/03/23 18:01:25 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.193.2.4 2007/04/05 21:57:50 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2070,7 +2070,7 @@ void
 ttyrub(int c, struct tty *tp)
 {
 	u_char	*cp;
-	int	savecol, tabc, s;
+	int	savecol, tabc;
 
 	if (!ISSET(tp->t_lflag, ECHO) || ISSET(tp->t_lflag, EXTPROC))
 		return;
@@ -2113,7 +2113,6 @@ ttyrub(int c, struct tty *tp)
 					ttyecho(tabc, tp);
 				CLR(tp->t_lflag, FLUSHO);
 				CLR(tp->t_state, TS_CNTTB);
-				splx(s);
 
 				/* savecol will now be length of the tab. */
 				savecol -= tp->t_column;

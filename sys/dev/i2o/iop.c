@@ -1,4 +1,4 @@
-/*	$NetBSD: iop.c,v 1.64 2007/03/04 06:01:47 christos Exp $	*/
+/*	$NetBSD: iop.c,v 1.64.2.1 2007/04/05 21:57:44 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.64 2007/03/04 06:01:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.64.2.1 2007/04/05 21:57:44 ad Exp $");
 
 #include "opt_i2o.h"
 #include "iop.h"
@@ -651,9 +651,9 @@ iop_reconf_thread(void *cookie)
 		DPRINTF(("%s: async reconfig: requested 0x%08x\n",
 		    sc->sc_dv.dv_xname, chgind));
 
-		PHOLD(l);
+		uvm_lwp_hold(l);
 		rv = iop_lct_get0(sc, &lct, sizeof(lct), chgind);
-		PRELE(l);
+		uvm_lwp_rele(l);
 
 		DPRINTF(("%s: async reconfig: notified (0x%08x, %d)\n",
 		    sc->sc_dv.dv_xname, le32toh(lct.changeindicator), rv));
@@ -1121,9 +1121,9 @@ iop_hrt_get(struct iop_softc *sc)
 	struct i2o_hrt hrthdr, *hrt;
 	int size, rv;
 
-	PHOLD(curlwp);
+	uvm_lwp_hold(curlwp);
 	rv = iop_hrt_get0(sc, &hrthdr, sizeof(hrthdr));
-	PRELE(curlwp);
+	uvm_lwp_rele(curlwp);
 	if (rv != 0)
 		return (rv);
 
@@ -1297,7 +1297,7 @@ iop_field_get_all(struct iop_softc *sc, int tid, int group, void *buf,
 	pgop->oat.group = htole16(group);
 
 	if (ii == NULL)
-		PHOLD(curlwp);
+		uvm_lwp_hold(curlwp);
 
 	memset(buf, 0, size);
 	iop_msg_map(sc, im, mb, pgop, sizeof(*pgop), 1, NULL);
@@ -1305,7 +1305,7 @@ iop_field_get_all(struct iop_softc *sc, int tid, int group, void *buf,
 	rv = iop_msg_post(sc, im, mb, (ii == NULL ? 30000 : 0));
 
 	if (ii == NULL)
-		PRELE(curlwp);
+		uvm_lwp_rele(curlwp);
 
 	/* Detect errors; let partial transfers to count as success. */
 	if (ii == NULL && rv == 0) {
@@ -1405,7 +1405,7 @@ iop_table_clear(struct iop_softc *sc, int tid, int group)
 	pgop.oat.group = htole16(group);
 	pgop.oat.fields[0] = htole16(0);
 
-	PHOLD(curlwp);
+	uvm_lwp_hold(curlwp);
 	iop_msg_map(sc, im, mb, &pgop, sizeof(pgop), 1, NULL);
 	rv = iop_msg_post(sc, im, mb, 30000);
 	if (rv != 0)
@@ -1413,7 +1413,7 @@ iop_table_clear(struct iop_softc *sc, int tid, int group)
 		    sc->sc_dv.dv_xname, tid, group);
 
 	iop_msg_unmap(sc, im);
-	PRELE(curlwp);
+	uvm_lwp_rele(curlwp);
 	iop_msg_free(sc, im);
 	return (rv);
 }
@@ -1544,14 +1544,14 @@ iop_systab_set(struct iop_softc *sc)
 		}
 	}
 
-	PHOLD(curlwp);
+	uvm_lwp_hold(curlwp);
 	iop_msg_map(sc, im, mb, iop_systab, iop_systab_size, 1, NULL);
 	iop_msg_map(sc, im, mb, mema, sizeof(mema), 1, NULL);
 	iop_msg_map(sc, im, mb, ioa, sizeof(ioa), 1, NULL);
 	rv = iop_msg_post(sc, im, mb, 5000);
 	iop_msg_unmap(sc, im);
 	iop_msg_free(sc, im);
-	PRELE(curlwp);
+	uvm_lwp_rele(curlwp);
 	return (rv);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ptrace.c,v 1.15 2007/03/04 06:01:22 christos Exp $ */
+/*	$NetBSD: linux_ptrace.c,v 1.15.2.1 2007/04/05 21:57:43 ad Exp $ */
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_ptrace.c,v 1.15 2007/03/04 06:01:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_ptrace.c,v 1.15.2.1 2007/04/05 21:57:43 ad Exp $");
 
 #include "opt_ptrace.h"
 
@@ -266,7 +266,7 @@ linux_sys_ptrace_arch(l, v, retval)	/* XXX Check me! (From NetBSD/i386) */
 		if (error)
 			goto out;
 
-		PHOLD(lt);	/* need full process info */
+		uvm_lwp_hold(lt);	/* need full process info */
 		error = 0;
 		if ((addr < LUSR_OFF(lusr_startgdb)) ||
 		    (addr > LUSR_OFF(lu_comm_end)))
@@ -309,7 +309,7 @@ linux_sys_ptrace_arch(l, v, retval)	/* XXX Check me! (From NetBSD/i386) */
 			error = 1;
 		}
 
-		PRELE(lt);
+		uvm_lwp_rele(lt);
 
 		if (error)
 			goto out;
@@ -329,7 +329,7 @@ linux_sys_ptrace_arch(l, v, retval)	/* XXX Check me! (From NetBSD/i386) */
 		if (error)
 			goto out;
 
-		PHOLD(lt);       /* need full process info */
+		uvm_lwp_hold(lt);       /* need full process info */
 		error = 0;
 		if ((addr < LUSR_OFF(lusr_startgdb)) ||
 		    (addr > LUSR_OFF(lu_comm_end)))
@@ -371,7 +371,7 @@ linux_sys_ptrace_arch(l, v, retval)	/* XXX Check me! (From NetBSD/i386) */
 			error = 1;
 		}
 
-		PRELE(lt);
+		uvm_lwp_rele(lt);
 
 		error = process_write_regs(lt,regs);
 		if (error)

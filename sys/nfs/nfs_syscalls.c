@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.107.2.2 2007/03/21 20:16:32 ad Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.107.2.3 2007/04/05 21:57:52 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.107.2.2 2007/03/21 20:16:32 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.107.2.3 2007/04/05 21:57:52 ad Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -502,6 +502,7 @@ nfssvc_nfsd(nsd, argp, l)
 	cacherep = RC_DOIT;
 	writes_todo = 0;
 #endif
+	uvm_lwp_hold(l);
 	s = splsoftnet();
 	if (nfsd == (struct nfsd *)0) {
 		nsd->nsd_nfsd = nfsd = (struct nfsd *)
@@ -513,7 +514,6 @@ nfssvc_nfsd(nsd, argp, l)
 		nfs_numnfsd++;
 		simple_unlock(&nfsd_slock);
 	}
-	PHOLD(l);
 	/*
 	 * Loop getting rpc requests until SIGKILL.
 	 */
@@ -619,7 +619,7 @@ nfssvc_nfsd(nsd, argp, l)
 				    !copyout(nfsd->nfsd_verfstr,
 				    nsd->nsd_verfstr, nfsd->nfsd_verflen) &&
 				    !copyout(nsd, argp, sizeof (*nsd))) {
-					PRELE(l);
+					uvm_lwp_rele(l);
 					return (ENEEDAUTH);
 				}
 				cacherep = RC_DROPIT;
@@ -782,7 +782,6 @@ nfssvc_nfsd(nsd, argp, l)
 		}
 	}
 done:
-	PRELE(l);
 	simple_lock(&nfsd_slock);
 	TAILQ_REMOVE(&nfsd_head, nfsd, nfsd_chain);
 	simple_unlock(&nfsd_slock);
@@ -791,6 +790,7 @@ done:
 	nsd->nsd_nfsd = (struct nfsd *)0;
 	if (--nfs_numnfsd == 0)
 		nfsrv_init(true);	/* Reinitialize everything */
+	uvm_lwp_rele(l);
 	return (error);
 }
 
@@ -1023,7 +1023,7 @@ nfssvc_iod(l)
 		return (EBUSY);
 	myiod->nid_proc = p;
 	nfs_numasync++;
-	PHOLD(l);
+	uvm_lwp_hold(l);
 	/*
 	 * Just loop around doing our stuff until SIGKILL
 	 */
@@ -1075,7 +1075,7 @@ nfssvc_iod(l)
 		mutex_exit(&nmp->nm_lock);
 	}
 quit:
-	PRELE(l);
+	uvm_lwp_rele(l);
 	if (nmp)
 		nmp->nm_bufqiods--;
 	myiod->nid_want = NULL;
