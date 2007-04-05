@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.110.2.2 2007/03/21 20:10:20 ad Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.110.2.3 2007/04/05 22:14:04 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.110.2.2 2007/03/21 20:10:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.110.2.3 2007/04/05 22:14:04 ad Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_ddb.h"
@@ -756,14 +756,17 @@ lockmgr_printinfo(volatile struct lock *lkp)
 		printf(" with %d pending", lkp->lk_waitcount);
 }
 
+#if defined(LOCKDEBUG)
 void
 assert_sleepable(struct simplelock *interlock, const char *msg)
 {
 
+	LOCKDEBUG_BARRIER(NULL, 1);
 	if (curlwp == NULL) {
 		panic("assert_sleepable: NULL curlwp");
 	}
 }
+#endif
 
 #if defined(MULTIPROCESSOR)
 
