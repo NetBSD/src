@@ -1,4 +1,4 @@
-/* $NetBSD: puffs_transport.c,v 1.11 2007/03/30 18:25:02 pooka Exp $ */
+/* $NetBSD: puffs_transport.c,v 1.12 2007/04/06 16:37:02 pooka Exp $ */
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_transport.c,v 1.11 2007/03/30 18:25:02 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_transport.c,v 1.12 2007/04/06 16:37:02 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -44,6 +44,8 @@ __KERNEL_RCSID(0, "$NetBSD: puffs_transport.c,v 1.11 2007/03/30 18:25:02 pooka E
 #include <sys/namei.h>
 #include <sys/poll.h>
 #include <sys/socketvar.h>
+
+#include <uvm/uvm_param.h>
 
 #include <fs/puffs/puffs_sys.h>
 
@@ -340,6 +342,7 @@ static int
 puffs_flush(struct puffs_mount *pmp, struct puffs_flush *pf)
 {
 	struct vnode *vp;
+	voff_t offlo, offhi;
 	int rv;
 
 	/* XXX: slurry */
@@ -377,18 +380,36 @@ puffs_flush(struct puffs_mount *pmp, struct puffs_flush *pf)
 
 #endif
 	case PUFFS_INVAL_NAMECACHE_DIR:
+		if (vp->v_type != VDIR) {
+			rv = EINVAL;
+			break;
+		}
 		cache_purge1(vp, NULL, PURGE_CHILDREN);
 		break;
 
-#if 0
 	case PUFFS_INVAL_PAGECACHE_NODE_RANGE:
+		if (pf->pf_end > vp->v_size || vp->v_type != VREG) {
+			rv = EINVAL;
+			break;
+		}
+
+		offlo = trunc_page(pf->pf_start);
+		offhi = round_page(pf->pf_end);
+		if (offhi != 0 && offlo >= offhi) {
+			rv = EINVAL;
+			break;
+		}
+
 		simple_lock(&vp->v_uobj.vmobjlock);
-		/* XXX: validate args? */
-		rv = VOP_PUTPAGES(vp, pf->pf_start, pf->pf_end, PGO_FREE);
+		rv = VOP_PUTPAGES(vp, offlo, offhi, PGO_FREE);
 		break;
-#endif
 
 	case PUFFS_INVAL_PAGECACHE_NODE:
+		if (vp->v_type != VREG) {
+			rv = EINVAL;
+			break;
+		}
+
 		simple_lock(&vp->v_uobj.vmobjlock);
 		rv = VOP_PUTPAGES(vp, 0, 0, PGO_FREE | PGO_ALLPAGES);
 		break;
