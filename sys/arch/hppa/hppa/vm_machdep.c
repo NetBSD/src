@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.21.2.5 2007/04/04 17:28:27 skrll Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.21.2.6 2007/04/06 07:29:19 skrll Exp $	*/
 
 /*	$OpenBSD: vm_machdep.c,v 1.25 2001/09/19 20:50:56 mickey Exp $	*/
 
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.21.2.5 2007/04/04 17:28:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.21.2.6 2007/04/06 07:29:19 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -201,42 +201,6 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	sp += HPPA_FRAME_SIZE + 16*4;
 	pcbp->pcb_ksp = sp;
 	fdcache(HPPA_SID_KERNEL, (vaddr_t)l2->l_addr, sp - (vaddr_t)l2->l_addr);
-}
-
-void
-cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
-{
-	struct pcb *pcbp = &l->l_addr->u_pcb;
-	struct trapframe *tf;
-	register_t sp, osp;
-
-	sp = (register_t)pcbp + PAGE_SIZE;
-	l->l_md.md_regs = tf = (struct trapframe *)sp;
-	sp += sizeof(struct trapframe);
-
-	cpu_swapin(l);
-
-	/*
-	 * Build stack frames for the cpu_switchto & co.
-	 */
-	osp = sp;
-
-	/* lwp_trampoline's frame */
-	sp += HPPA_FRAME_SIZE;
-
-	*(register_t *)(sp + HPPA_FRAME_PSP) = osp;
-	*(register_t *)(sp + HPPA_FRAME_CRP) = (register_t)lwp_trampoline;
-
-	*HPPA_FRAME_CARG(2, sp) = KERNMODE(func);
-	*HPPA_FRAME_CARG(3, sp) = (register_t)arg;
-
-	/*
-	 * cpu_switchto's frame
-	 * 	stack usage is std frame + callee-save registers
-	 */
-	sp += HPPA_FRAME_SIZE + 16*4;
-	pcbp->pcb_ksp = sp;
-	fdcache(HPPA_SID_KERNEL, (vaddr_t)l->l_addr, sp - (vaddr_t)l->l_addr);
 }
 
 void
