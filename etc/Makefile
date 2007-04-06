@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.337.2.1 2007/03/09 06:59:41 riz Exp $
+#	$NetBSD: Makefile,v 1.337.2.2 2007/04/06 18:47:19 bouyer Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -436,7 +436,7 @@ iso-image-setup: .PHONY check_RELEASEDIR
 	echo "${extra}=${RELEASEDIR}/${extra}" >> ${CDROM.pathlist}
 .endif
 .endfor
-	echo "${MACHINE}=${RELEASEDIR}/${RELEASEMACHINEDIR}" >> ${CDROM.pathlist}
+	echo "${MACHINE}/=${RELEASEDIR}/${RELEASEMACHINEDIR}/" >> ${CDROM.pathlist}
 	mkdir -p ${CDROM.dir}
 	mkdir -p ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/cdrom
 
