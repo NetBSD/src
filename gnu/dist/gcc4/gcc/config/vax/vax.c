@@ -1226,6 +1226,7 @@ vax_output_int_add (rtx insn, rtx *operands, enum machine_mode mode)
 	rtx low[3];
 	const char *pattern;
 	int carry = 1;
+	bool sub;
 
 	if (TARGET_QMATH && 0)
 	  debug_rtx (insn);
@@ -1240,21 +1241,37 @@ vax_output_int_add (rtx insn, rtx *operands, enum machine_mode mode)
             gcc_assert (!flag_pic || !external_memory_operand (low[0], SImode));
 #endif
 
-
 	    /* No reason to add a 0 to the low part and thus no carry, so just
 	       emit the appropriate add/sub instruction.  */
 	    if (low[2] == const0_rtx)
 	      return vax_output_int_add (NULL, operands, SImode);
 
-	    /* Select the add pattern for the low part using the SImode 
-	       add instruction selector.  No need to duplicate that work.  */
-	    output_asm_insn (vax_output_int_add (NULL, low, SImode), low);
+	    /* Are we doing addition or subtraction?  */
+	    sub = CONST_INT_P (operands[2]) && INTVAL (operands[2]) < 0;
+
+	    /* We can't use vax_output_int_add since some the patterns don't
+	       modify the carry bit.  */
+	    if (sub)
+	      {
+		if (low[2] == constm1_rtx)
+		  pattern = "decl %0";
+		else
+		  pattern = "subl2 $%n2,%0";
+	      }
+	    else
+	      {
+	        if (low[2] == const1_rtx)
+		  pattern = "incl %0";
+		else
+	          pattern = "addl2 %2,%0";
+	      }
+	    output_asm_insn (pattern, low);
 
 	    /* In 2's complement, -n = ~n + 1.  Since we are dealing with
 	       two 32bit parts, we complement each and then add one to
 	       low part.  We know that the low part can't overflow since
 	       it's value can never be 0.  */
-	    if (CONST_INT_P (operands[2]) && INTVAL (operands[2]) < 0)
+	    if (sub)
 		return "sbwc %N2,%0";
 	    return "adwc %2,%0";
 	  }
