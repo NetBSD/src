@@ -1,4 +1,4 @@
-/*	$NetBSD: uhid.c,v 1.72 2006/11/16 01:33:26 christos Exp $	*/
+/*	$NetBSD: uhid.c,v 1.72.2.1 2007/04/06 18:43:52 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -42,7 +42,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.72 2006/11/16 01:33:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.72.2.1 2007/04/06 18:43:52 bouyer Exp $");
+
+#include "opt_compat_netbsd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -535,9 +537,15 @@ uhid_do_ioctl(struct uhid_softc *sc, u_long cmd, caddr_t addr,
 
 	case USB_GET_DEVICEINFO:
 		usbd_fill_deviceinfo(sc->sc_hdev.sc_parent->sc_udev,
-				     (struct usb_device_info *)addr, 1);
+			             (struct usb_device_info *)addr, 1);
 		break;
+#ifdef COMPAT_30
+	case USB_GET_DEVICEINFO_OLD:
+		usbd_fill_deviceinfo_old(sc->sc_hdev.sc_parent->sc_udev,
+					 (struct usb_device_info_old *)addr, 1);
 
+		break;
+#endif
         case USB_GET_STRING_DESC:
 	    {
                 struct usb_string_desc *si = (struct usb_string_desc *)addr;

@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.138 2006/11/16 01:33:27 christos Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.138.2.1 2007/04/06 18:43:51 bouyer Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -39,8 +39,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.138 2006/11/16 01:33:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.138.2.1 2007/04/06 18:43:51 bouyer Exp $");
 
+#include "opt_compat_netbsd.h"
 #include "opt_usbverbose.h"
 
 #include <sys/param.h>
@@ -83,8 +84,9 @@ extern int usbdebug;
 Static usbd_status usbd_set_config(usbd_device_handle, int);
 Static void usbd_devinfo(usbd_device_handle, int, char *, size_t);
 Static void usbd_devinfo_vp(usbd_device_handle dev,
-			    char v[USB_MAX_ENCODED_STRING_LEN],
-			    char p[USB_MAX_ENCODED_STRING_LEN], int usedev);
+			    char *v,
+			    char *p, int usedev,
+			    int useencoded );
 Static int usbd_getnewaddr(usbd_bus_handle bus);
 #if defined(__NetBSD__)
 Static int usbd_print(void *, const char *);
@@ -208,8 +210,8 @@ usbd_trim_spaces(char *p)
 }
 
 Static void
-usbd_devinfo_vp(usbd_device_handle dev, char v[USB_MAX_ENCODED_STRING_LEN],
-		char p[USB_MAX_ENCODED_STRING_LEN], int usedev)
+usbd_devinfo_vp(usbd_device_handle dev, char *v,
+		char *p, int usedev, int useencoded)
 {
 	usb_device_descriptor_t *udd = &dev->ddesc;
 #ifdef USBVERBOSE
@@ -221,10 +223,10 @@ usbd_devinfo_vp(usbd_device_handle dev, char v[USB_MAX_ENCODED_STRING_LEN],
 		return;
 
 	if (usedev) {
-		if (usbd_get_string(dev, udd->iManufacturer, v) ==
+		if (usbd_get_string0(dev, udd->iManufacturer, v, useencoded) ==
 		    USBD_NORMAL_COMPLETION)
 			usbd_trim_spaces(v);
-		if (usbd_get_string(dev, udd->iProduct, p) ==
+		if (usbd_get_string0(dev, udd->iProduct, p, useencoded) ==
 		    USBD_NORMAL_COMPLETION)
 			usbd_trim_spaces(p);
 	}
@@ -273,7 +275,7 @@ usbd_devinfo(usbd_device_handle dev, int showclass, char *cp, size_t l)
 
 	ep = cp + l;
 
-	usbd_devinfo_vp(dev, vendor, product, 1);
+	usbd_devinfo_vp(dev, vendor, product, 1, 1);
 	cp += snprintf(cp, ep - cp, "%s %s", vendor, product);
 	if (showclass)
 		cp += snprintf(cp, ep - cp, ", class %d/%d",
@@ -1255,7 +1257,7 @@ usbd_fill_deviceinfo(usbd_device_handle dev, struct usb_device_info *di,
 	di->udi_bus = USBDEVUNIT(dev->bus->bdev);
 	di->udi_addr = dev->address;
 	di->udi_cookie = dev->cookie;
-	usbd_devinfo_vp(dev, di->udi_vendor, di->udi_product, usedev);
+	usbd_devinfo_vp(dev, di->udi_vendor, di->udi_product, usedev, 1);
 	usbd_printBCD(di->udi_release, sizeof(di->udi_release),
 	    UGETW(dev->ddesc.bcdDevice));
 	di->udi_serial[0] = 0;
@@ -1310,6 +1312,71 @@ usbd_fill_deviceinfo(usbd_device_handle dev, struct usb_device_info *di,
 	} else
 		di->udi_nports = 0;
 }
+
+#ifdef COMPAT_30
+void
+usbd_fill_deviceinfo_old(usbd_device_handle dev, struct usb_device_info_old *di,
+                         int usedev)
+{
+	struct usbd_port *p;
+	int i, err, s;
+
+	di->udi_bus = USBDEVUNIT(dev->bus->bdev);
+	di->udi_addr = dev->address;
+	di->udi_cookie = dev->cookie;
+	usbd_devinfo_vp(dev, di->udi_vendor, di->udi_product, usedev, 0);
+	usbd_printBCD(di->udi_release, sizeof(di->udi_release),
+	    UGETW(dev->ddesc.bcdDevice));
+	di->udi_vendorNo = UGETW(dev->ddesc.idVendor);
+	di->udi_productNo = UGETW(dev->ddesc.idProduct);
+	di->udi_releaseNo = UGETW(dev->ddesc.bcdDevice);
+	di->udi_class = dev->ddesc.bDeviceClass;
+	di->udi_subclass = dev->ddesc.bDeviceSubClass;
+	di->udi_protocol = dev->ddesc.bDeviceProtocol;
+	di->udi_config = dev->config;
+	di->udi_power = dev->self_powered ? 0 : dev->power;
+	di->udi_speed = dev->speed;
+
+	if (dev->subdevs != NULL) {
+		for (i = 0; dev->subdevs[i] &&
+			     i < USB_MAX_DEVNAMES; i++) {
+			strncpy(di->udi_devnames[i], USBDEVPTRNAME(dev->subdevs[i]),
+				USB_MAX_DEVNAMELEN);
+			di->udi_devnames[i][USB_MAX_DEVNAMELEN-1] = '\0';
+		}
+	} else {
+		i = 0;
+	}
+	for (/*i is set */; i < USB_MAX_DEVNAMES; i++)
+		di->udi_devnames[i][0] = 0;		 /* empty */
+
+	if (dev->hub) {
+		for (i = 0;
+		     i < sizeof(di->udi_ports) / sizeof(di->udi_ports[0]) &&
+			     i < dev->hub->hubdesc.bNbrPorts;
+		     i++) {
+			p = &dev->hub->ports[i];
+			if (p->device)
+				err = p->device->address;
+			else {
+				s = UGETW(p->status.wPortStatus);
+				if (s & UPS_PORT_ENABLED)
+					err = USB_PORT_ENABLED;
+				else if (s & UPS_SUSPEND)
+					err = USB_PORT_SUSPENDED;
+				else if (s & UPS_PORT_POWER)
+					err = USB_PORT_POWERED;
+				else
+					err = USB_PORT_DISABLED;
+			}
+			di->udi_ports[i] = err;
+		}
+		di->udi_nports = dev->hub->hubdesc.bNbrPorts;
+	} else
+		di->udi_nports = 0;
+}
+#endif
+
 
 void
 usb_free_device(usbd_device_handle dev)

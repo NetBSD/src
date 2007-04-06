@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.h,v 1.70 2006/10/31 20:43:32 joerg Exp $	*/
+/*	$NetBSD: usbdi.h,v 1.70.2.1 2007/04/06 18:43:51 bouyer Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.h,v 1.18 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -150,6 +150,10 @@ usbd_status usbd_set_interface(usbd_interface_handle, int);
 int usbd_get_no_alts(usb_config_descriptor_t *, int);
 usbd_status  usbd_get_interface(usbd_interface_handle, u_int8_t *);
 void usbd_fill_deviceinfo(usbd_device_handle, struct usb_device_info *, int);
+#ifdef COMPAT_30
+void usbd_fill_deviceinfo_old(usbd_device_handle, struct usb_device_info_old *,
+    int);
+#endif
 int usbd_get_interface_altindex(usbd_interface_handle);
 
 usb_interface_descriptor_t *usbd_find_idesc(usb_config_descriptor_t *,
@@ -177,6 +181,7 @@ usbd_status usbd_reload_device_desc(usbd_device_handle);
 int usbd_ratecheck(struct timeval *);
 
 usbd_status usbd_get_string(usbd_device_handle, int, char *);
+usbd_status usbd_get_string0(usbd_device_handle, int, char *, int);
 
 /* An iterator for descriptors. */
 typedef struct {
