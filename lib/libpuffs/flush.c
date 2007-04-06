@@ -1,4 +1,4 @@
-/*	$NetBSD: flush.c,v 1.6 2007/04/06 17:06:39 pooka Exp $	*/
+/*	$NetBSD: flush.c,v 1.7 2007/04/06 17:49:11 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: flush.c,v 1.6 2007/04/06 17:06:39 pooka Exp $");
+__RCSID("$NetBSD: flush.c,v 1.7 2007/04/06 17:49:11 pooka Exp $");
 #endif /* !lint */
 
 /*
@@ -96,6 +96,33 @@ puffs_inval_pagecache_node_range(struct puffs_usermount *pu, void *cookie,
 	struct puffs_flush pf;
 
 	pf.pf_op = PUFFS_INVAL_PAGECACHE_NODE_RANGE;
+	pf.pf_cookie = cookie;
+	pf.pf_start = start;
+	pf.pf_end = end;
+
+	return ioctl(pu->pu_fd, PUFFSFLUSHOP, &pf);
+}
+
+int
+puffs_flush_pagecache_node(struct puffs_usermount *pu, void *cookie)
+{
+	struct puffs_flush pf;
+
+	pf.pf_op = PUFFS_FLUSH_PAGECACHE_NODE_RANGE;
+	pf.pf_cookie = cookie;
+	pf.pf_start = 0;
+	pf.pf_end = 0;
+
+	return ioctl(pu->pu_fd, PUFFSFLUSHOP, &pf);
+}
+
+int
+puffs_flush_pagecache_node_range(struct puffs_usermount *pu, void *cookie,
+	off_t start, off_t end)
+{
+	struct puffs_flush pf;
+
+	pf.pf_op = PUFFS_FLUSH_PAGECACHE_NODE_RANGE;
 	pf.pf_cookie = cookie;
 	pf.pf_start = start;
 	pf.pf_end = end;
