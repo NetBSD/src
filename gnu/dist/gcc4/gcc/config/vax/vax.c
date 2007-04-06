@@ -1430,8 +1430,11 @@ vax_output_int_subtract (rtx insn, rtx *operands, enum machine_mode mode)
 	    gcc_assert (!CONSTANT_P (operands[2]) && !CONSTANT_P (low[2]));
 	    if (operands[1] == const0_rtx && low[1] == const0_rtx)
 	      {
+		/* Negation is tricky.  It's basically complement and increment.
+		   Negate hi, then lo, and subtract the carry back.  */
+		output_asm_insn ("mnegl %2,%0", operands);
 		output_asm_insn ("mnegl %2,%0", low);
-		return "mnegl %2,%0";
+		return "sbwc $0,%0";
 	      }
 	    gcc_assert (rtx_equal_p (operands[0], operands[1]));
 	    gcc_assert (rtx_equal_p (low[0], low[1]));
