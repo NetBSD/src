@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.111 2007/04/06 18:54:28 bouyer Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.112 2007/04/06 19:04:20 bouyer Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -2521,4 +2521,11 @@ doc/CHANGES					patch
 
 	evbarm: note gumstix support.
 	[kiyohara, ticket #559]
+
+sbin/mount_procfs/mount_procfs.8        1.28-1.33	
+
+	sync file list with reality
+	add a description for fd/# (with reference to fd(4))
+	proc/#/exe is now exposed for all mounts, move it away from linux-only
+	[pooka, ticket #535]
 
