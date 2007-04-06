@@ -1,4 +1,4 @@
-/*	$NetBSD: rfcomm_upper.c,v 1.4 2007/03/30 20:47:03 plunky Exp $	*/
+/*	$NetBSD: rfcomm_upper.c,v 1.5 2007/04/06 17:09:00 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rfcomm_upper.c,v 1.4 2007/03/30 20:47:03 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rfcomm_upper.c,v 1.5 2007/04/06 17:09:00 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -419,16 +419,15 @@ rfcomm_setopt(struct rfcomm_dlc *dlc, int opt, void *addr)
 	int err = 0;
 	uint16_t mtu;
 
-	if (dlc->rd_state != RFCOMM_DLC_CLOSED)
-		return EBUSY;
-
 	switch (opt) {
 	case SO_RFCOMM_MTU:
 		mtu = *(uint16_t *)addr;
 		if (mtu < RFCOMM_MTU_MIN || mtu > RFCOMM_MTU_MAX)
 			err = EINVAL;
-		else
+		else if (dlc->rd_state == RFCOMM_DLC_CLOSED)
 			dlc->rd_mtu = mtu;
+		else
+			err = EBUSY;
 
 		break;
 
