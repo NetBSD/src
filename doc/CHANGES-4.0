@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.110 2007/04/05 21:28:27 bouyer Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.111 2007/04/06 18:54:28 bouyer Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -2476,4 +2476,49 @@ xsrc/xfree/xc/extras/freetype2/src/bdf/bdflib.c	1.3
 	  (_bdf_parse_glyphs): Limit allowed number of glyphs in font to the
 	  number of code points in Unicode.
 	[drochner, ticket #558]
+
+xsrc/xfree/xc/lib/X11/ImUtil.c				1.2
+xsrc/xfree/xc/lib/font/bitmap/bdfread.c			1.2
+xsrc/xfree/xc/lib/font/fontfile/fontdir.c		1.2
+xsrc/xfree/xc/programs/Xserver/Xext/xcmisc.c		1.2
+xsrc/xorg/lib/X11/src/ImUtil.c				1.2
+xsrc/xorg/lib/Xfont/src/bitmap/bdfread.c		1.2
+xsrc/xorg/lib/Xfont/src/fontfile/fontdir.c		1.2
+xsrc/xorg/xserver/xorg/Xext/xcmisc.c			1.2
+
+	fix a possible memory corruption due to integer overflow in
+	ProcXCMiscGetXIDList() (CVE-2007-1003)
+	fix a possible memory corruption due to integer overflow, caused by
+	lack of validation of bdf font files (CVE 2007-1351)
+
+	fix a possible memory corruption due to integer overflow, caused by
+	lack of validation of fonts.dir files (CVE 2007-1352)
+	fix a possible memory corruption due to incomplete input validation
+	in XInitImage() (CVE 2007-1667)
+	[drochner, ticket #555]
+
+sys/dev/usb/ugen.c				1.89
+sys/dev/usb/uhid.c				1.73
+sys/dev/usb/usb.c				1.92,1.93
+sys/dev/usb/usb.h				1.75
+sys/dev/usb/usb_subr.c				1.139, 1.140
+sys/dev/usb/usbdi.c				1.115, 1.116
+sys/dev/usb/usbdi.h				1.71, 1.72
+
+	Restore compatibility of USB_DEVICEINFO ioctl and reads from /dev/usb
+	with NetBSD 3.x. The code is conditionally compiled depending on
+	COMPAT_30.
+	[pavel, ticket #556]
+
+etc/Makefile					1.342
+etc/etc.sgimips/Makefile.inc			1.15
+
+	Handle mkisofs from recent cdrtool for el-torito boot image.
+	Sync sgimips's Makefile (cosmetic only).
+	[bad, ticket #557]
+
+doc/CHANGES					patch
+
+	evbarm: note gumstix support.
+	[kiyohara, ticket #559]
 
