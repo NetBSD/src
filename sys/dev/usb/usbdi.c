@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.114.2.1 2007/02/21 13:26:41 tron Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.114.2.2 2007/04/06 18:43:51 bouyer Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -39,7 +39,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.114.2.1 2007/02/21 13:26:41 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.114.2.2 2007/04/06 18:43:51 bouyer Exp $");
+
+#include "opt_compat_netbsd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1179,6 +1181,12 @@ usb_desc_iter_next(usbd_desc_iter_t *iter)
 usbd_status
 usbd_get_string(usbd_device_handle dev, int si, char *buf)
 {
+	return usbd_get_string0(dev, si, buf, 1);
+}
+
+usbd_status
+usbd_get_string0(usbd_device_handle dev, int si, char *buf, int unicode)
+{
 	int swap = dev->quirks->uq_flags & UQ_SWAP_UNICODE;
 	usb_string_descriptor_t us;
 	char *s;
@@ -1209,23 +1217,37 @@ usbd_get_string(usbd_device_handle dev, int si, char *buf)
 		return (err);
 	s = buf;
 	n = size / 2 - 1;
-	for (i = 0; i < n; i++) {
-		c = UGETW(us.bString[i]);
-		if (swap)
-			c = (c >> 8) | (c << 8);
-		/* Encode (16-bit) Unicode as UTF8. */
-		if (c < 0x0080) {
-			*s++ = c;
-		} else if (c < 0x0800) {
-			*s++ = 0xc0 | (c >> 6);
-			*s++ = 0x80 | (c & 0x3f);
-		} else {
-			*s++ = 0xe0 | (c >> 12);
-			*s++ = 0x80 | ((c >> 6) & 0x3f);
-			*s++ = 0x80 | (c & 0x3f);
+	if (unicode) {
+		for (i = 0; i < n; i++) {
+			c = UGETW(us.bString[i]);
+			if (swap)
+				c = (c >> 8) | (c << 8);
+			if (c < 0x0080) {
+				*s++ = c;
+			} else if (c < 0x0800) {
+				*s++ = 0xc0 | (c >> 6);
+				*s++ = 0x80 | (c & 0x3f);
+			} else {
+				*s++ = 0xe0 | (c >> 12);
+				*s++ = 0x80 | ((c >> 6) & 0x3f);
+				*s++ = 0x80 | (c & 0x3f);
+			}
 		}
+		*s++ = 0;
 	}
-	*s++ = 0;
+#ifdef COMPAT_30
+	else {
+		int j;
+		for (i = j = 0; i < n && j < USB_MAX_STRING_LEN - 1; i++) {
+			c = UGETW(us.bString[i]);
+			if (swap)
+				c = (c >> 8) | (c << 8);
+			/* Encode (16-bit) Unicode as UTF8. */
+			s[j++] = (c < 0x80) ? c : '?';
+		}
+		s[j] = 0;
+	}
+#endif
 	return (USBD_NORMAL_COMPLETION);
 }
 

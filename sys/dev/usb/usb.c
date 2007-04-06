@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.91 2006/11/16 01:33:27 christos Exp $	*/
+/*	$NetBSD: usb.c,v 1.91.2.1 2007/04/06 18:43:51 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -44,7 +44,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.91 2006/11/16 01:33:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.91.2.1 2007/04/06 18:43:51 bouyer Exp $");
+
+#include "opt_compat_netbsd.h"
 
 #include "ohci.h"
 #include "uhci.h"
@@ -147,6 +149,10 @@ Static void usb_free_event(struct usb_event *);
 Static void usb_add_event(int, struct usb_event *);
 
 Static int usb_get_next_event(struct usb_event *);
+
+#ifdef COMPAT_30
+Static void usb_copy_old_devinfo(struct usb_device_info_old *, const struct usb_device_info *);
+#endif
 
 Static const char *usbrev_str[] = USBREV_STR;
 
@@ -429,14 +435,30 @@ usbopen(dev_t dev, int flag, int mode, struct lwp *l)
 int
 usbread(dev_t dev, struct uio *uio, int flag)
 {
-	struct usb_event *ue = usb_alloc_event();
-	int s, error, n;
+	struct usb_event *ue;
+#ifdef COMPAT_30
+	struct usb_event_old *ueo = NULL;	/* XXXGCC */
+#endif
+	int s, error, n, useold;
 
 	if (minor(dev) != USB_DEV_MINOR)
 		return (ENXIO);
 
-	if (uio->uio_resid != sizeof(struct usb_event))
+	useold = 0;
+	switch (uio->uio_resid) {
+#ifdef COMPAT_30
+	case sizeof(struct usb_event_old):
+		ueo = malloc(sizeof(struct usb_event_old), M_USBDEV,
+			     M_WAITOK|M_ZERO);
+		useold = 1;
+		/* FALLTHRU */
+#endif
+	case sizeof(struct usb_event):
+		ue = usb_alloc_event();
+		break;
+	default:
 		return (EINVAL);
+	}
 
 	error = 0;
 	s = splusb();
@@ -453,9 +475,44 @@ usbread(dev_t dev, struct uio *uio, int flag)
 			break;
 	}
 	splx(s);
-	if (!error)
-		error = uiomove((void *)ue, uio->uio_resid, uio);
+	if (!error) {
+#ifdef COMPAT_30
+		if (useold) { /* copy fields to old struct */
+			ueo->ue_type = ue->ue_type;
+			memcpy(&ueo->ue_time, &ue->ue_time,
+			      sizeof(struct timespec));
+			switch (ue->ue_type) {
+				case USB_EVENT_DEVICE_ATTACH:
+				case USB_EVENT_DEVICE_DETACH:
+					usb_copy_old_devinfo(&ueo->u.ue_device, &ue->u.ue_device);
+					break;
+
+				case USB_EVENT_CTRLR_ATTACH:
+				case USB_EVENT_CTRLR_DETACH:
+					ueo->u.ue_ctrlr.ue_bus=ue->u.ue_ctrlr.ue_bus;
+					break;
+
+				case USB_EVENT_DRIVER_ATTACH:
+				case USB_EVENT_DRIVER_DETACH:
+					ueo->u.ue_driver.ue_cookie=ue->u.ue_driver.ue_cookie;
+					memcpy(ueo->u.ue_driver.ue_devname,
+					       ue->u.ue_driver.ue_devname,  
+					       sizeof(ue->u.ue_driver.ue_devname));
+					break;
+				default:
+					;
+			}
+
+			error = uiomove((void *)ueo, uio->uio_resid, uio);
+		} else
+#endif
+			error = uiomove((void *)ue, uio->uio_resid, uio);
+	}
 	usb_free_event(ue);
+#ifdef COMPAT_30
+	if (useold)
+		free(ueo, M_USBDEV);
+#endif
 
 	return (error);
 }
@@ -577,18 +634,33 @@ usbioctl(dev_t devt, u_long cmd, caddr_t data, int flag, struct lwp *l)
 
 	case USB_DEVICEINFO:
 	{
+		usbd_device_handle dev;
 		struct usb_device_info *di = (void *)data;
 		int addr = di->udi_addr;
-		usbd_device_handle dev;
 
 		if (addr < 1 || addr >= USB_MAX_DEVICES)
-			return (EINVAL);
-		dev = sc->sc_bus->devices[addr];
-		if (dev == NULL)
-			return (ENXIO);
+			return EINVAL;
+		if ((dev = sc->sc_bus->devices[addr]) == NULL)
+			return ENXIO;
 		usbd_fill_deviceinfo(dev, di, 1);
 		break;
 	}
+
+#ifdef COMPAT_30
+	case USB_DEVICEINFO_OLD:
+	{
+		usbd_device_handle dev;
+		struct usb_device_info_old *di = (void *)data;
+		int addr = di->udi_addr;
+
+		if (addr < 1 || addr >= USB_MAX_DEVICES)
+			return EINVAL;
+		if ((dev = sc->sc_bus->devices[addr]) == NULL)
+			return ENXIO;
+		usbd_fill_deviceinfo_old(dev, di, 1);
+		break;
+	}
+#endif
 
 	case USB_DEVICESTATS:
 		*(struct usb_device_stats *)data = sc->sc_bus->stats;
@@ -882,3 +954,62 @@ usb_detach(device_ptr_t self, int flags)
 
 	return (0);
 }
+
+#ifdef COMPAT_30
+Static void
+usb_copy_old_devinfo(struct usb_device_info_old *uo,
+		     const struct usb_device_info *ue)
+{
+	const unsigned char *p;
+	unsigned char *q;
+	int i, n;
+
+	uo->udi_bus = ue->udi_bus;
+	uo->udi_addr = ue->udi_addr;       
+	uo->udi_cookie = ue->udi_cookie;
+	for (i = 0, p = (const unsigned char *)ue->udi_product,
+	     q = (unsigned char *)uo->udi_product;
+	     *p && i < USB_MAX_STRING_LEN - 1; p++) {
+		if (*p < 0x80)
+			q[i++] = *p;
+		else {
+			q[i++] = '?';
+			if ((*p & 0xe0) == 0xe0)
+				p++;
+			p++;
+		}
+	}
+	q[i] = 0;
+
+	for (i = 0, p = ue->udi_vendor, q = uo->udi_vendor;
+	     *p && i < USB_MAX_STRING_LEN - 1; p++) {
+		if (* p < 0x80)
+			q[i++] = *p;
+		else {
+			q[i++] = '?';
+			p++;
+			if ((*p & 0xe0) == 0xe0)
+				p++;
+		}
+	}
+	q[i] = 0;
+
+	memcpy(uo->udi_release, ue->udi_release, sizeof(uo->udi_release));
+
+	uo->udi_productNo = ue->udi_productNo;
+	uo->udi_vendorNo = ue->udi_vendorNo;
+	uo->udi_releaseNo = ue->udi_releaseNo;
+	uo->udi_class = ue->udi_class;
+	uo->udi_subclass = ue->udi_subclass;
+	uo->udi_protocol = ue->udi_protocol;
+	uo->udi_config = ue->udi_config;
+	uo->udi_speed = ue->udi_speed;
+	uo->udi_power = ue->udi_power;    
+	uo->udi_nports = ue->udi_nports;
+
+	for (n=0; n<USB_MAX_DEVNAMES; n++)
+		memcpy(uo->udi_devnames[n],
+		       ue->udi_devnames[n], USB_MAX_DEVNAMELEN);
+	memcpy(uo->udi_ports, ue->udi_ports, sizeof(uo->udi_ports));
+}
+#endif

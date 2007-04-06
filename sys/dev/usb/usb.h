@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.h,v 1.74 2006/07/24 14:24:50 gdt Exp $	*/
+/*	$NetBSD: usb.h,v 1.74.8.1 2007/04/06 18:43:51 bouyer Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb.h,v 1.14 1999/11/17 22:33:46 n_hibma Exp $	*/
 
 /*
@@ -621,6 +621,28 @@ struct usb_device_info {
 #define USB_PORT_DISABLED 0xfc
 };
 
+/* <=3.0 had this layout of the structure */
+struct usb_device_info_old {
+        u_int8_t        udi_bus;
+        u_int8_t        udi_addr;       /* device address */
+        usb_event_cookie_t udi_cookie;
+        char            udi_product[USB_MAX_STRING_LEN];
+        char            udi_vendor[USB_MAX_STRING_LEN];
+        char            udi_release[8];
+        u_int16_t       udi_productNo;
+        u_int16_t       udi_vendorNo;
+        u_int16_t       udi_releaseNo;
+        u_int8_t        udi_class;
+        u_int8_t        udi_subclass;
+        u_int8_t        udi_protocol;
+        u_int8_t        udi_config;
+        u_int8_t        udi_speed;
+        int             udi_power;      /* power consumption in mA, 0 if selfpowered */
+        int             udi_nports;
+        char            udi_devnames[USB_MAX_DEVNAMES][USB_MAX_DEVNAMELEN];
+        u_int8_t        udi_ports[16];/* hub only: addresses of devices on ports */
+};
+
 struct usb_ctl_report {
 	int	ucr_report;
 	u_char	ucr_data[1024];	/* filled data size will vary */
@@ -659,11 +681,29 @@ struct usb_event {
 	} u;
 };
 
+/* old <=3.0 compat event */
+struct usb_event_old {
+	int                     ue_type;
+	struct timespec         ue_time;
+	union {
+		struct {
+			int                     ue_bus;
+		} ue_ctrlr;
+		struct usb_device_info_old          ue_device;
+		struct {
+			usb_event_cookie_t      ue_cookie;
+			char                    ue_devname[16];
+		} ue_driver;
+	} u;
+};
+
+
 /* USB controller */
 #define USB_REQUEST		_IOWR('U', 1, struct usb_ctl_request)
 #define USB_SETDEBUG		_IOW ('U', 2, int)
 #define USB_DISCOVER		_IO  ('U', 3)
 #define USB_DEVICEINFO		_IOWR('U', 4, struct usb_device_info)
+#define USB_DEVICEINFO_OLD	_IOWR('U', 4, struct usb_device_info_old)
 #define USB_DEVICESTATS		_IOR ('U', 5, struct usb_device_stats)
 
 /* Generic HID device */
@@ -687,6 +727,7 @@ struct usb_event {
 #define USB_GET_STRING_DESC	_IOWR('U', 110, struct usb_string_desc)
 #define USB_DO_REQUEST		_IOWR('U', 111, struct usb_ctl_request)
 #define USB_GET_DEVICEINFO	_IOR ('U', 112, struct usb_device_info)
+#define USB_GET_DEVICEINFO_OLD	_IOR ('U', 112, struct usb_device_info_old)
 #define USB_SET_SHORT_XFER	_IOW ('U', 113, int)
 #define USB_SET_TIMEOUT		_IOW ('U', 114, int)
 #define USB_SET_BULK_RA		_IOW ('U', 115, int)
