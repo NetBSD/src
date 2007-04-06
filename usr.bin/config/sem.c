@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.27 2007/01/13 23:47:36 christos Exp $	*/
+/*	$NetBSD: sem.c,v 1.28 2007/04/06 19:21:09 cube Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1096,7 +1096,8 @@ deldevi(const char *name, const char *at)
 		return;
 	} else if (at != NULL)
 		for (i = firsti; i != NULL; i = i->i_alias)
-			if (strcmp(at, i->i_at) == 0) {
+			if (i->i_active != DEVI_BROKEN &&
+			    strcmp(at, i->i_at) == 0) {
 				remove_devi(i);
 				return;
 			}
@@ -1114,6 +1115,11 @@ remove_devi(struct devi *i)
 	if (f == NULL)
 		panic("remove_devi(): instance %s disappeared from devitab",
 		    i->i_name);
+
+	if (i->i_active == DEVI_BROKEN) {
+		cfgerror("not removing broken instance `%s'", i->i_name);
+		return;
+	}
 
 	/*
 	 * We have the device instance, i.
