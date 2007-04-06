@@ -1,4 +1,4 @@
-/* $NetBSD: puffs_transport.c,v 1.13 2007/04/06 17:05:35 pooka Exp $ */
+/* $NetBSD: puffs_transport.c,v 1.14 2007/04/06 17:48:44 pooka Exp $ */
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_transport.c,v 1.13 2007/04/06 17:05:35 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_transport.c,v 1.14 2007/04/06 17:48:44 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -343,7 +343,7 @@ puffs_flush(struct puffs_mount *pmp, struct puffs_flush *pf)
 {
 	struct vnode *vp;
 	voff_t offlo, offhi;
-	int rv;
+	int rv, flags = 0;
 
 	/* XXX: slurry */
 	if (pf->pf_op == PUFFS_INVAL_NAMECACHE_ALL) {
@@ -388,6 +388,12 @@ puffs_flush(struct puffs_mount *pmp, struct puffs_flush *pf)
 		break;
 
 	case PUFFS_INVAL_PAGECACHE_NODE_RANGE:
+		flags = PGO_FREE;
+		/*FALLTHROUGH*/
+	case PUFFS_FLUSH_PAGECACHE_NODE_RANGE:
+		if (flags == 0)
+			flags = PGO_CLEANIT;
+
 		if (pf->pf_end > vp->v_size || vp->v_type != VREG) {
 			rv = EINVAL;
 			break;
@@ -401,7 +407,7 @@ puffs_flush(struct puffs_mount *pmp, struct puffs_flush *pf)
 		}
 
 		simple_lock(&vp->v_uobj.vmobjlock);
-		rv = VOP_PUTPAGES(vp, offlo, offhi, PGO_FREE);
+		rv = VOP_PUTPAGES(vp, offlo, offhi, flags);
 		break;
 
 	default:
