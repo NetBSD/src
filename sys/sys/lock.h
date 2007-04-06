@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.69.2.2 2007/03/13 17:51:18 ad Exp $	*/
+/*	$NetBSD: lock.h,v 1.69.2.3 2007/04/06 12:27:21 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -256,10 +256,10 @@ void	lockmgr_printinfo(volatile struct lock *);
 #define	SPINLOCK_BACKOFF_HOOK		nullop(NULL)
 #endif
 #ifndef	SPINLOCK_BACKOFF_MIN
-#define	SPINLOCK_BACKOFF_MIN	8
+#define	SPINLOCK_BACKOFF_MIN	4
 #endif
 #ifndef	SPINLOCK_BACKOFF_MAX
-#define	SPINLOCK_BACKOFF_MAX	512
+#define	SPINLOCK_BACKOFF_MAX	128
 #endif
 
 #define	SPINLOCK_BACKOFF(count)					\
