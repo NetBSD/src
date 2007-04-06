@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: pf,v 1.6 2005/08/23 12:12:56 peter Exp $
+# $NetBSD: pf,v 1.7 2007/04/06 14:20:18 apb Exp $
 #
 
 # PROVIDE: pf
@@ -23,13 +23,7 @@ pf_prestart()
 	if [ ! -f ${pf_rules} ]; then
 		warn "${pf_rules} not readable; pf start aborted."
 
-		# If booting directly to multiuser, send SIGTERM to
-		# the parent (/etc/rc) to abort the boot
-		if [ "$autoboot" = yes ]; then
-			echo "ERROR: ABORTING BOOT (sending SIGTERM to parent)!"
-			kill -TERM $$
-			exit 1
-		fi
+		stop_boot
 		return 1
 	fi
 	return 0

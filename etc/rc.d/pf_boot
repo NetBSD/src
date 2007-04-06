@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: pf_boot,v 1.1 2005/08/23 12:12:56 peter Exp $
+# $NetBSD: pf_boot,v 1.2 2007/04/06 14:20:19 apb Exp $
 #
 
 # PROVIDE: pf_boot
@@ -26,8 +26,7 @@ pf_boot_start()
 		/sbin/pfctl -q -f /etc/defaults/pf.boot.conf
 	else
 		warn "can't load initial pf rules; pf start aborted."
-		echo "ERROR: ABORTING BOOT (sending SIGTERM to parent)!"
-		kill -TERM $$
+		stop_boot
 		exit 1
 	fi
 
