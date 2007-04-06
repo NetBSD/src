@@ -1,4 +1,4 @@
-/*	$NetBSD: l2cap_upper.c,v 1.5 2007/03/30 20:47:03 plunky Exp $	*/
+/*	$NetBSD: l2cap_upper.c,v 1.6 2007/04/06 17:09:00 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: l2cap_upper.c,v 1.5 2007/03/30 20:47:03 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: l2cap_upper.c,v 1.6 2007/04/06 17:09:00 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -404,25 +404,18 @@ int
 l2cap_setopt(struct l2cap_channel *chan, int opt, void *addr)
 {
 	int err = 0;
-	uint16_t tmp;
-
-	/*
-	 * currently we dont allow changing any options when channel
-	 * is other than closed. We could allow this (not sure why?)
-	 * but would have to instigate a configure request.
-	 */
-	if (chan->lc_state != L2CAP_CLOSED)
-		return EBUSY;
+	uint16_t mtu;
 
 	switch (opt) {
 	case SO_L2CAP_IMTU:	/* set Incoming MTU */
-		tmp = *(uint16_t *)addr;
-		if (tmp < L2CAP_MTU_MINIMUM) {
+		mtu = *(uint16_t *)addr;
+		if (mtu < L2CAP_MTU_MINIMUM)
 			err = EINVAL;
-			break;
-		}
+		else if (chan->lc_state == L2CAP_CLOSED)
+			chan->lc_imtu = mtu;
+		else
+			err = EBUSY;
 
-		chan->lc_imtu = tmp;
 		break;
 
 	case SO_L2CAP_OQOS:	/* set Outgoing QoS flow spec */
