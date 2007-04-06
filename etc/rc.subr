@@ -1,4 +1,4 @@
-# $NetBSD: rc.subr,v 1.68 2007/01/27 14:30:26 hubertf Exp $
+# $NetBSD: rc.subr,v 1.69 2007/04/06 14:20:08 apb Exp $
 #
 # Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -39,6 +39,7 @@
 #
 
 : ${rcvar_manpage:='rc.conf(5)'}
+: ${RC_PID:=$$} ; export RC_PID
 
 #
 #	functions
@@ -81,6 +82,20 @@ reverse_list()
 		_revlist="$_revfile $_revlist"
 	done
 	echo $_revlist
+}
+
+#
+# If booting directly to multiuser, send SIGTERM to
+# the parent (/etc/rc) to abort the boot.
+# Otherwise just exit.
+#
+stop_boot()
+{
+	if [ "$autoboot" = yes ]; then
+		echo "ERROR: ABORTING BOOT (sending SIGTERM to parent)!"
+		kill -TERM ${RC_PID}
+	fi
+	exit 1
 }
 
 #

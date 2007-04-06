@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: ipfilter,v 1.14 2004/12/23 03:31:54 lukem Exp $
+# $NetBSD: ipfilter,v 1.15 2007/04/06 14:20:17 apb Exp $
 #
 
 # PROVIDE: ipfilter
@@ -27,14 +27,7 @@ ipfilter_prestart()
 	if [ ! -f /etc/ipf.conf ] && [ ! -f /etc/ipf6.conf ]; then
 		warn "/etc/ipf*.conf not readable; ipfilter start aborted."
 
-			# If booting directly to multiuser, send SIGTERM to
-			# the parent (/etc/rc) to abort the boot
-			#
-		if [ "$autoboot" = yes ]; then
-			echo "ERROR: ABORTING BOOT (sending SIGTERM to parent)!"
-			kill -TERM $$
-			exit 1
-		fi
+		stop_boot
 		return 1
 	fi
 	return 0

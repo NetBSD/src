@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: ipsec,v 1.8 2004/08/13 18:08:03 mycroft Exp $
+# $NetBSD: ipsec,v 1.9 2007/04/06 14:20:17 apb Exp $
 #
 
 # PROVIDE: ipsec
@@ -24,15 +24,8 @@ ipsec_prestart()
 {
 	if [ ! -f /etc/ipsec.conf ]; then
 		warn "/etc/ipsec.conf not readable; ipsec start aborted."
-			#
-			# If booting directly to multiuser, send SIGTERM to
-			# the parent (/etc/rc) to abort the boot
-			#
-		if [ "$autoboot" = yes ]; then
-			echo "ERROR: ABORTING BOOT (sending SIGTERM to parent)!"
-			kill -TERM $$
-			exit 1
-		fi
+
+		stop_boot
 		return 1
 	fi
 	return 0
