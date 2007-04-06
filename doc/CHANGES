@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.764.2.5 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.764.2.6 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -510,6 +510,7 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 	vge(4): Make this driver work on big endian machines
 		(at least on macppc). [tsutsui 20061014]
 	gpt(8): Added from FreeBSD [christos 20061015]
+	evbarm: Add support for the gumstix. [kiyohara 20061016]
 	tcp(4): Added RFC 3465 Appropriate Byte Counting (ABC) [yamt 20061019]
 	wm(4): Added support for the Intel 80003 gigabit ethernet controller.
 		[bouyer 20061021]
