@@ -1,12 +1,4 @@
-/*
-coda_create/vn_open
-remove/unlink
-link
-mkdir
-rmdir
-symlink
-*/
-/*	$NetBSD: coda_vnops.c,v 1.53 2007/04/05 12:48:51 gdt Exp $	*/
+/*	$NetBSD: coda_vnops.c,v 1.54 2007/04/06 22:28:12 gdt Exp $	*/
 
 /*
  *
@@ -54,7 +46,7 @@ symlink
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.53 2007/04/05 12:48:51 gdt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.54 2007/04/06 22:28:12 gdt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,15 +95,6 @@ int coda_printf_delay = 0;  /* in microseconds */
 int coda_vnop_print_entry = 0;
 static int coda_lockdebug = 0;
 
-/* Definition of the vfs operation vector */
-
-/*
- * Some NetBSD details:
- *
- *   coda_start is called at the end of the mount syscall.
- *   coda_init is called at boot time.
- */
-
 #define ENTRY if(coda_vnop_print_entry) myprintf(("Entered %s\n",__func__))
 
 /* Definition of the vnode operation vector */
@@ -130,8 +113,16 @@ const struct vnodeopv_entry_desc coda_vnodeop_entries[] = {
     { &vop_write_desc, coda_write },		/* write */
     { &vop_fcntl_desc, genfs_fcntl },		/* fcntl */
     { &vop_ioctl_desc, coda_ioctl },		/* ioctl */
-/* 1.3    { &vop_select_desc, coda_select },	select */
+#if 0
+    /*
+     * mmap seems to lead to a panic within uvm, so omit it.
+     * sys/uvm/uvm_fault.c:1078: KASSERT(curpg->uobject == uobj);
+     * gdt believes that this might be due to having to page in a page
+     * from the container file and a possible mismatch between the
+     * coda vnode and underlying container vnode.
+     */
     { &vop_mmap_desc, genfs_mmap },		/* mmap */
+#endif
     { &vop_fsync_desc, coda_fsync },		/* fsync */
     { &vop_remove_desc, coda_remove },		/* remove */
     { &vop_link_desc, coda_link },		/* link */
@@ -166,17 +157,18 @@ const struct vnodeopv_desc coda_vnodeop_opv_desc =
 
 /* Definitions of NetBSD vnodeop interfaces */
 
-/* A generic panic: we were called with something we didn't define yet */
+/*
+ * A generic error routine.  Return EIO without looking at arguments.
+ */
 int
 coda_vop_error(void *anon) {
     struct vnodeop_desc **desc = (struct vnodeop_desc **)anon;
 
-    myprintf(("coda_vop_error: Vnode operation %s called, but not defined.\n",
-	      (*desc)->vdesc_name));
-    /*
-    panic("coda_nbsd_vop_error");
-    return 0;
-    */
+    if (codadebug) {
+	myprintf(("coda_vop_error: Vnode operation %s called (error).\n",
+		  (*desc)->vdesc_name));
+    }
+
     return EIO;
 }
 
@@ -336,6 +328,7 @@ coda_close(void *v)
 	}
 	return ENODEV;
     } else {
+	/* XXX VOP_CLOSE does not require a lock. */
 	vn_lock(cp->c_ovp, LK_EXCLUSIVE | LK_RETRY);
 	VOP_CLOSE(cp->c_ovp, flag, cred, l); /* Do errors matter here? */
 	vput(cp->c_ovp);
@@ -348,6 +341,8 @@ coda_close(void *v)
 	--cp->c_owrite;
 
     error = venus_close(vtomi(vp), &cp->c_fid, flag, cred, l);
+
+    /* Release the reference obtained in coda_open() */
     vrele(CTOV(cp));
 
     CODADEBUG(CODA_CLOSE, myprintf(("close: result %d\n",error)); )
@@ -899,6 +894,7 @@ coda_lookup(void *v)
     const char *nm = cnp->cn_nameptr;
     int len = cnp->cn_namelen;
     int flags = cnp->cn_flags;
+    int isdot;
     CodaFid VFid;
     int	vtype;
     int error = 0;
@@ -936,6 +932,13 @@ coda_lookup(void *v)
 	error = EINVAL;
 	goto exit;
     }
+
+    /*
+     * XXX check for DOT lookups, and short circuit all the caches,
+     * just doing an extra vref.  (venus guarantees that lookup of
+     * . returns self.)
+     */
+    isdot = (len == 1 && nm[0] == '.');
 
     /*
      * Try to resolve the lookup in the minicache.  If that fails, ask
@@ -1074,6 +1077,10 @@ coda_create(void *v)
 
     if (!error) {
 
+        /*
+	 * XXX Violation of venus/kernel invariants is a difficult case,
+	 * but venus should not be able to cause a panic.
+	 */
 	/* If this is an exclusive create, panic if the file already exists. */
 	/* Venus should have detected the file and reported EEXIST. */
 
@@ -1084,6 +1091,7 @@ coda_create(void *v)
 	cp = make_coda_node(&VFid, dvp->v_mount, attr.va_type);
 	*vpp = CTOV(cp);
 
+	/* XXX vnodeops doesn't say this argument can be changed. */
 	/* Update va to reflect the new attributes. */
 	(*va) = attr;
 
@@ -1093,7 +1101,7 @@ coda_create(void *v)
 	    VTOC(*vpp)->c_flags |= C_VATTR;
 	}
 
-	/* Invalidate the parent's attr cache, the modification time has changed */
+	/* Invalidate parent's attr cache (modification time has changed). */
 	VTOC(dvp)->c_flags &= ~C_VATTR;
 
 	/* enter the new vnode in the Name Cache */
@@ -1107,34 +1115,25 @@ coda_create(void *v)
 	CODADEBUG(CODA_CREATE, myprintf(("create error %d\n", error));)
     }
 
-    /* Locking strategy. */
     /*
-     * In NetBSD, all creates must explicitly vput their dvp's.  We'll
-     * go ahead and use the LOCKLEAF flag of the cnp argument.
-     * However, I'm pretty sure that create must return the leaf
-     * locked; so there is a DIAGNOSTIC check to ensure that this is
-     * true.
+     * vnodeops(9) says that we must unlock the parent and lock the child.
+     * XXX Should we lock the child first?
      */
     vput(dvp);
     if (!error) {
-	if (cnp->cn_flags & LOCKLEAF) {
-	    if ((error = vn_lock(*ap->a_vpp, LK_EXCLUSIVE))) {
-		printf("coda_create: ");
-		panic("unlocked parent but couldn't lock child");
-	    }
-	}
-#ifdef OLD_DIAGNOSTIC
-	else {
+	if ((cnp->cn_flags & LOCKLEAF) == 0) {
+	    /* This should not happen; flags are for lookup only. */
 	    printf("coda_create: LOCKLEAF not set!\n");
 	}
-#endif
+
+	if ((error = vn_lock(*ap->a_vpp, LK_EXCLUSIVE))) {
+	    /* XXX Perhaps avoid this panic. */
+	    panic("coda_create: couldn't lock child");
+	}
     }
-    /* Have to free the previously saved name */
-    /*
-     * This condition is stolen from ufs_makeinode.  I have no idea
-     * why it's here, but what the hey...
-     */
-    if ((cnp->cn_flags & SAVESTART) == 0) {
+
+    /* Per vnodeops(9), free name except on success and SAVESTART. */
+    if (error || (cnp->cn_flags & SAVESTART) == 0) {
 	PNBUF_PUT(cnp->cn_pnbuf);
     }
     return(error);
@@ -1147,6 +1146,7 @@ coda_remove(void *v)
     struct vop_remove_args *ap = v;
     struct vnode *dvp = ap->a_dvp;
     struct cnode *cp = VTOC(dvp);
+    struct vnode *vp = ap->a_vp;
     struct componentname  *cnp = ap->a_cnp;
     kauth_cred_t cred = cnp->cn_cred;
     struct lwp *l = cnp->cn_lwp;
@@ -1196,20 +1196,22 @@ coda_remove(void *v)
     CODADEBUG(CODA_REMOVE, myprintf(("in remove result %d\n",error)); )
 
     /*
-     * Regardless of what happens, we have to unconditionally drop
-     * locks/refs on parent and child.  (I hope).  This is based on
-     * what ufs_remove seems to be doing.
+     * Unlock parent and child (avoiding double if ".")
+     * XXX Why is vrele (and the vrele half of vput) correct?
      */
-    if (dvp == ap->a_vp) {
-	vrele(ap->a_vp);
+    if (dvp == vp) {
+	vrele(vp);
     } else {
-	vput(ap->a_vp);
+	vput(vp);
     }
     vput(dvp);
 
+#if 0
+    /* vnodeops(9) doesn't say to free pnbuf for VOP_REMOVE */
     if ((cnp->cn_flags & SAVESTART) == 0) {
 	PNBUF_PUT(cnp->cn_pnbuf);
     }
+#endif
     return(error);
 }
 
@@ -1284,10 +1286,12 @@ exit:
     }
     vput(tdvp);
 
+#if 0
     /* Drop the name buffer if we don't need to SAVESTART */
     if ((cnp->cn_flags & SAVESTART) == 0) {
 	PNBUF_PUT(cnp->cn_pnbuf);
     }
+#endif
     return(error);
 }
 
@@ -1465,14 +1469,10 @@ coda_mkdir(void *v)
 	}
     }
 
-    /* Have to free the previously saved name */
-    /*
-     * ufs_mkdir doesn't check for SAVESTART before freeing the
-     * pathname buffer, but ufs_create does.  For the moment, I'll
-     * follow their lead, but this seems like it is probably
-     * incorrect.
-     */
-    PNBUF_PUT(cnp->cn_pnbuf);
+    /* Per vnodeops(9), free name except on success and SAVESTART. */
+    if (error || (cnp->cn_flags & SAVESTART) == 0) {
+	PNBUF_PUT(cnp->cn_pnbuf);
+    }
     return(error);
 }
 
@@ -1532,9 +1532,11 @@ coda_rmdir(void *v)
     }
     vput(dvp);
 
+#if 0
     if ((cnp->cn_flags & SAVESTART) == 0) {
 	PNBUF_PUT(cnp->cn_pnbuf);
     }
+#endif
     return(error);
 }
 
@@ -1543,8 +1545,9 @@ coda_symlink(void *v)
 {
 /* true args */
     struct vop_symlink_args *ap = v;
-    struct vnode *tdvp = ap->a_dvp;
-    struct cnode *tdcp = VTOC(tdvp);
+    struct vnode *dvp = ap->a_dvp;
+    struct cnode *dcp = VTOC(dvp);
+    /* a_vpp is used in place below */
     struct componentname *cnp = ap->a_cnp;
     struct vattr *tva = ap->a_vap;
     char *path = ap->a_target;
@@ -1553,17 +1556,10 @@ coda_symlink(void *v)
 /* locals */
     int error;
     u_long saved_cn_flags;
-    /*
-     * XXX I'm assuming the following things about coda_symlink's
-     * arguments:
-     *       t(foo) is the new name/parent/etc being created.
-     *       lname is the contents of the new symlink.
-     */
     const char *nm = cnp->cn_nameptr;
     int len = cnp->cn_namelen;
     int plen = strlen(path);
 
-    /* XXX What about the vpp argument?  Do we need it? */
     /*
      * Here's the strategy for the moment: perform the symlink, then
      * do a lookup to grab the resulting vnode.  I know this requires
@@ -1577,14 +1573,16 @@ coda_symlink(void *v)
     MARK_ENTRY(CODA_SYMLINK_STATS);
 
     /* Check for symlink of control object. */
-    if (IS_CTL_NAME(tdvp, nm, len)) {
+    if (IS_CTL_NAME(dvp, nm, len)) {
 	MARK_INT_FAIL(CODA_SYMLINK_STATS);
-	return(EACCES);
+	error = EACCES; 
+	goto exit;
     }
 
     if (plen+1 > CODA_MAXPATHLEN) {
 	MARK_INT_FAIL(CODA_SYMLINK_STATS);
-	return(EINVAL);
+	error = EINVAL;
+	goto exit;
     }
 
     if (len+1 > CODA_MAXNAMLEN) {
@@ -1593,10 +1591,10 @@ coda_symlink(void *v)
 	goto exit;
     }
 
-    error = venus_symlink(vtomi(tdvp), &tdcp->c_fid, path, plen, nm, len, tva, cred, l);
+    error = venus_symlink(vtomi(dvp), &dcp->c_fid, path, plen, nm, len, tva, cred, l);
 
-    /* Invalidate the parent's attr cache, the modification time has changed */
-    tdcp->c_flags &= ~C_VATTR;
+    /* Invalidate the parent's attr cache (modification time has changed). */
+    dcp->c_flags &= ~C_VATTR;
 
     if (!error) {
 	/*
@@ -1614,14 +1612,20 @@ coda_symlink(void *v)
 	saved_cn_flags = cnp->cn_flags;
 	cnp->cn_flags &= ~(MODMASK | OPMASK);
 	cnp->cn_flags |= LOOKUP;
-	error = VOP_LOOKUP(tdvp, ap->a_vpp, cnp);
+	error = VOP_LOOKUP(dvp, ap->a_vpp, cnp);
 	cnp->cn_flags = saved_cn_flags;
 	/* Either an error occurs, or ap->a_vpp is locked. */
     }
-    /* unlock and deference parent */
-    vput(tdvp);
 
  exit:
+    /* unlock and deference parent */
+    vput(dvp);
+
+    /* Per vnodeops(9), free name except on success and SAVESTART. */
+    if (error || (cnp->cn_flags & SAVESTART) == 0) {
+	PNBUF_PUT(cnp->cn_pnbuf);
+    }
+
     CODADEBUG(CODA_SYMLINK, myprintf(("in symlink result %d\n",error)); )
     return(error);
 }
