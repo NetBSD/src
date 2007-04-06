@@ -1,4 +1,4 @@
-/*	$NetBSD: flush.c,v 1.4 2007/03/20 11:28:35 pooka Exp $	*/
+/*	$NetBSD: flush.c,v 1.5 2007/04/06 16:38:03 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: flush.c,v 1.4 2007/03/20 11:28:35 pooka Exp $");
+__RCSID("$NetBSD: flush.c,v 1.5 2007/04/06 16:38:03 pooka Exp $");
 #endif /* !lint */
 
 /*
@@ -83,6 +83,20 @@ puffs_inval_pagecache_node(struct puffs_usermount *pu, void *cookie)
 
 	pf.pf_op = PUFFS_INVAL_PAGECACHE_NODE;
 	pf.pf_cookie = cookie;
+
+	return ioctl(pu->pu_fd, PUFFSFLUSHOP, &pf);
+}
+
+int
+puffs_inval_pagecache_node_range(struct puffs_usermount *pu, void *cookie,
+	off_t start, off_t end)
+{
+	struct puffs_flush pf;
+
+	pf.pf_op = PUFFS_INVAL_PAGECACHE_NODE_RANGE;
+	pf.pf_cookie = cookie;
+	pf.pf_start = start;
+	pf.pf_end = end;
 
 	return ioctl(pu->pu_fd, PUFFSFLUSHOP, &pf);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.h,v 1.38 2007/03/22 16:57:27 pooka Exp $	*/
+/*	$NetBSD: puffs.h,v 1.39 2007/04/06 16:38:03 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -513,6 +513,8 @@ int	puffs_inval_namecache_dir(struct puffs_usermount *, void *);
 int	puffs_inval_namecache_all(struct puffs_usermount *);
 
 int	puffs_inval_pagecache_node(struct puffs_usermount *, void *);
+int	puffs_inval_pagecache_node_range(struct puffs_usermount *, void *,
+					 off_t, off_t);
 
 /*
  * Path constructicons
