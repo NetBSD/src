@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: fixsb,v 1.12 2004/12/30 09:32:13 dsainty Exp $
+# $NetBSD: fixsb,v 1.13 2007/04/06 14:20:17 apb Exp $
 #
 
 # PROVIDE: fixsb
@@ -125,16 +125,6 @@ parse_fstab()
 			esac
 		done
 	done
-}
-
-stop_boot()
-{
-	# Terminate the process (which may include the parent /etc/rc)
-	# if booting directly to multiuser mode.
-	if [ "$autoboot" = "yes" ]; then
-		kill -TERM $$
-	fi
-	exit 1
 }
 
 do_fsck()
