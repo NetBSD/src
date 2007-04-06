@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.21.2.2 2007/03/23 21:45:18 skrll Exp $	*/
+/*	$NetBSD: cpu.h,v 1.21.2.3 2007/04/06 07:31:18 skrll Exp $	*/
 
 /*	$OpenBSD: cpu.h,v 1.20 2001/01/29 00:01:58 mickey Exp $	*/
 
@@ -187,6 +187,7 @@ struct clockframe {
 
 #define	cpu_signotify(l)	(setsoftast())
 #define	cpu_need_proftick(l)	((l)->l_pflag |= LP_OWEUPC, setsoftast())
+#define	cpu_did_resched()	do { want_resched = 0; } while(0)
 
 #include <sys/cpu_data.h>
 struct cpu_info {
