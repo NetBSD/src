@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.7 2007/03/12 02:22:43 matt Exp $	*/
+/*	$NetBSD: mutex.h,v 1.8 2007/04/06 17:48:06 matt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -82,6 +82,10 @@
  * an interlocking step.
  */
 
+#ifndef LOCKDEBUG
+#define	MUTEX_COUNT_BIAS		1
+#endif
+
 #ifndef __MUTEX_PRIVATE
 
 struct kmutex {
@@ -110,10 +114,6 @@ struct kmutex {
 
 #define	__HAVE_MUTEX_STUBS		1
 #define	__HAVE_SPIN_MUTEX_STUBS		1
-
-#ifndef LOCKDEBUG
-#define	MUTEX_COUNT_BIAS		1
-#endif
 
 static inline uintptr_t
 MUTEX_OWNER(uintptr_t owner)
