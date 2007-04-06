@@ -436,7 +436,7 @@
 (define_insn "sbcdi3"
   [(set (match_operand:DI 0 "nonimmediate_addsub_di_operand" "=Rr,=Rr")
 	(minus:DI (match_operand:DI 1 "general_addsub_di_operand" "0,I")
-		  (match_operand:DI 2 "general_addsub_di_operand" "nRr,=Rr")))]
+		  (match_operand:DI 2 "general_addsub_di_operand" "nRr,Rr")))]
   "TARGET_QMATH"
   "* return vax_output_int_subtract (insn, operands, DImode);")
 
@@ -678,9 +678,17 @@
       if (i == 1)
 	return \"addl3 %1,%1,%0\";
       if (i == 2 && !optimize_size)
-	return \"moval 0[%1],%0\";
+	{
+	  if (push_operand (operands[0], SImode))
+	    return \"pushal 0[%1]\";
+	  return \"moval 0[%1],%0\";
+	}
       if (i == 3 && !optimize_size)
-	return \"movaq 0[%1],%0\";
+	{
+	  if (push_operand (operands[0], SImode))
+	    return \"pushaq 0[%1]\";
+	  return \"movaq 0[%1],%0\";
+	}
     }
   return \"ashl %2,%1,%0\";
 }")
