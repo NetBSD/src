@@ -3863,7 +3863,10 @@ followed by the file name, then the contents of
 It is neither callable nor parsed.
 .
 .It Li .Lk
-To be written.
+link (for conversion to HTML).
+.Pp
+.Dl Usage: .Lk Ao href Ac Bo anchor-text Bc
+.Pp
 .
 .It Li .Me
 Exact usage unknown.
@@ -3875,7 +3878,10 @@ source file describes it as a macro for
 Its default width is 6n.
 .
 .It Li .Mt
-To be written.
+mailto (for conversion to HTML).
+.Pp
+.Dl Usage: .Mt Ao email_address Ac
+.Pp
 .
 .It Li .Ot
 Exact usage unknown.
