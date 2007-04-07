@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.6 2007/04/07 08:37:49 skrll Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.7 2007/04/07 08:38:28 skrll Exp $	*/
 
 /*	$OpenBSD: db_machdep.h,v 1.5 2001/02/16 19:20:13 mickey Exp $	*/
 
@@ -100,9 +100,10 @@ static __inline int inst_load(u_int ins) {
 	       (ins & 0xfc001fc0) != 0x0c0011c0;
 }
 static __inline int inst_store(u_int ins) {
-	return (ins & 0xf0000000) == 0x60000000 ||
-	       (ins & 0xf4000200) == 0x24000200 ||
-	       (ins & 0xfc000200) == 0x0c000200;
+	return (ins & 0xf0000000) == 0x60000000 ||	/* st */
+	       (ins & 0xf4000200) == 0x24000200 ||	/* fst/cst */
+	       (ins & 0xfc000200) == 0x0c000200 ||	/* stby */
+	       (ins & 0xfc0003c0) == 0xc0001c0;		/* ldcw */
 }
 static __inline int inst_return(u_int ins) {
 	return (ins & 0xfc00e000) == 0xe800c000 ||
