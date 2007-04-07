@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.16.2.5 2007/04/07 17:34:52 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.16.2.6 2007/04/07 17:36:42 skrll Exp $	*/
 
 /*	$OpenBSD: locore.S,v 1.46 2001/09/20 18:33:03 mickey Exp $	*/
 
@@ -803,6 +803,9 @@ switch_exited:
 	ldw	TF_CR9(%t1), %t3		/* pmap_activate? */
 	mtctl	%t3, %pidr2			/* pmap_activate? */
 	mtctl	%t2, %cr30			/* pmap_activate? */
+
+	ldil	L%curlwp, %t1
+	stw	%arg1, R%curlwp(%t1)
 
 	ldo	-(HPPA_FRAME_SIZE+16*4)(%sp), %r3
 
