@@ -1,4 +1,4 @@
-/*      $NetBSD: cpu.h,v 1.75.2.2 2007/04/04 06:49:06 matt Exp $      */
+/*      $NetBSD: cpu.h,v 1.75.2.3 2007/04/07 17:24:34 matt Exp $      */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden
@@ -140,7 +140,6 @@ struct cpu_info {
 	 */
 	int ci_need_resched;		/* Should change process */
 	struct device *ci_dev;		/* device struct for this cpu */
-	long ci_exit;			/* Page to use while exiting */
 #if defined(MULTIPROCESSOR)
 	struct pcb *ci_pcb;		/* Idle PCB for this CPU */
 	vaddr_t ci_istack;		/* Interrupt stack location */
@@ -177,6 +176,7 @@ struct cpu_mp_softc {
 		(ci)->ci_need_resched = 1;	\
 		mtpr(AST_OK,PR_ASTLVL);		\
 	} while (/*CONSTCOND*/ 0)
+#define cpu_did_resched()	((void)(curcpu()->ci_need_resched = 0))
 #define	cpu_proc_fork(x, y)	do { } while (/*CONSCOND*/0)
 #define	cpu_lwp_free(l, f)	do { } while (/*CONSCOND*/0)
 #define	cpu_lwp_free2(l)	do { } while (/*CONSCOND*/0)
