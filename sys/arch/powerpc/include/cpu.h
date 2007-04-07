@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.54.2.2 2007/04/03 15:20:09 matt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.54.2.3 2007/04/07 17:53:39 matt Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -313,7 +313,8 @@ void unmapiodev(vaddr_t, vsize_t);
 #define	DELAY(n)		delay(n)
 
 #define	cpu_need_resched(ci, v)	(ci->ci_need_resched = ci->ci_astpending = 1)
-#define	cpu_need_proftick(p)	((l)->l_pflag |= LP_OWEUPC, curcpu()->ci_astpending = 1)
+#define	cpu_did_resched()	((void)(curcpu()->ci_need_resched = 0))
+#define	cpu_need_proftick(l)	((l)->l_pflag |= LP_OWEUPC, curcpu()->ci_astpending = 1)
 #define	cpu_signotify(l)	(curcpu()->ci_astpending = 1)	/* XXXSMP */
 
 #if defined(PPC_OEA) || defined(PPC_OEA64) || defined (PPC_OEA64_BRIDGE)
