@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.166 2007/03/12 18:18:30 ad Exp $	*/
+/*	$NetBSD: vnd.c,v 1.167 2007/04/07 15:07:26 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -137,7 +137,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.166 2007/03/12 18:18:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.167 2007/04/07 15:07:26 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -727,20 +727,15 @@ handle_with_strategy(struct vnd_softc *vnd, const struct buf *obp,
 	int bsize, error, flags, skipped;
 	size_t resid, sz;
 	off_t bn, offset;
-	struct mount *mp;
 
 	flags = obp->b_flags;
 
-	mp = NULL;
 	if (!(flags & B_READ)) {
 		int s;
 		
 		s = splbio();
 		V_INCR_NUMOUTPUT(bp->b_vp);
 		splx(s);
-
-		vn_start_write(vnd->sc_vp, &mp, V_WAIT);
-		KASSERT(mp != NULL);
 	}
 
 	/* convert to a byte offset within the file. */
@@ -818,11 +813,6 @@ handle_with_strategy(struct vnd_softc *vnd, const struct buf *obp,
 		bn += sz;
 	}
 	nestiobuf_done(bp, skipped, error);
-
-	if (!(flags & B_READ)) {
-		KASSERT(mp != NULL);
-		vn_finished_write(mp, 0);
-	}
 }
 
 static void
