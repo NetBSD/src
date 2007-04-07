@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.31.2.3 2007/04/04 06:49:05 matt Exp $
+#	$NetBSD: genassym.cf,v 1.31.2.4 2007/04/07 17:24:34 matt Exp $
 #
 # Copyright (c) 1997 Ludd, University of Lule}, Sweden.
 # All rights reserved.
@@ -79,7 +79,6 @@ define	UVME_INTRS	offsetof(struct uvmexp, intrs)
 define	UVME_SOFTS	offsetof(struct uvmexp, softs)
 
 define	CI_CURLWP	offsetof(struct cpu_info, ci_curlwp)
-define	CI_EXIT		offsetof(struct cpu_info, ci_exit)
 define	CI_MTX_COUNT	offsetof(struct cpu_info, ci_mtx_count)
 define	CI_MTX_OLDSPL	offsetof(struct cpu_info, ci_mtx_oldspl)
 
