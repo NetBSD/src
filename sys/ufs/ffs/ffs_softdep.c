@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.87 2007/03/12 18:18:37 ad Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.88 2007/04/07 14:21:52 hannken Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.87 2007/03/12 18:18:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.88 2007/04/07 14:21:52 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -781,9 +781,7 @@ softdep_process_worklist(matchmnt)
 			mp = WK_DIRREM(wk)->dm_mnt;
 			if (mp == matchmnt)
 				matchcnt += 1;
-			vn_start_write(NULL, &mp, V_WAIT|V_LOWER);
 			handle_workitem_remove(WK_DIRREM(wk));
-			vn_finished_write(mp, V_LOWER);
 			break;
 
 		case D_FREEBLKS:
@@ -791,9 +789,7 @@ softdep_process_worklist(matchmnt)
 			mp = WK_FREEBLKS(wk)->fb_ump->um_mountp;
 			if (mp == matchmnt)
 				matchcnt += 1;
-			vn_start_write(NULL, &mp, V_WAIT|V_LOWER);
 			handle_workitem_freeblocks(WK_FREEBLKS(wk));
-			vn_finished_write(mp, V_LOWER);
 			break;
 
 		case D_FREEFRAG:
@@ -801,9 +797,7 @@ softdep_process_worklist(matchmnt)
 			mp = WK_FREEFRAG(wk)->ff_mnt;
 			if (mp == matchmnt)
 				matchcnt += 1;
-			vn_start_write(NULL, &mp, V_WAIT|V_LOWER);
 			handle_workitem_freefrag(WK_FREEFRAG(wk));
-			vn_finished_write(mp, V_LOWER);
 			break;
 
 		case D_FREEFILE:
@@ -811,9 +805,7 @@ softdep_process_worklist(matchmnt)
 			mp = WK_FREEFILE(wk)->fx_mnt;
 			if (mp == matchmnt)
 				matchcnt += 1;
-			vn_start_write(NULL, &mp, V_WAIT|V_LOWER);
 			handle_workitem_freefile(WK_FREEFILE(wk));
-			vn_finished_write(mp, V_LOWER);
 			break;
 
 		default:
@@ -5480,19 +5472,15 @@ clear_remove(l)
 				continue;
 			mp = pagedep->pd_mnt;
 			ino = pagedep->pd_ino;
-			if (vn_start_write(NULL, &mp, V_NOWAIT) != 0)
-				continue;
 			FREE_LOCK(&lk);
 			if ((error = VFS_VGET(mp, ino, &vp)) != 0) {
 				softdep_error("clear_remove: vget", error);
-				vn_finished_write(mp, 0);
 				return;
 			}
 			if ((error = VOP_FSYNC(vp, l->l_cred, 0, 0, 0, l)))
 				softdep_error("clear_remove: fsync", error);
 			drain_output(vp, 0);
 			vput(vp);
-			vn_finished_write(mp, 0);
 			return;
 		}
 	}
@@ -5553,12 +5541,9 @@ clear_inodedeps(l)
 	for (ino = firstino; ino <= lastino; ino++) {
 		if (inodedep_lookup(fs, ino, 0, &inodedep) == 0)
 			continue;
-		if (vn_start_write(NULL, &mp, V_NOWAIT) != 0)
-			continue;
 		FREE_LOCK(&lk);
 		if ((error = VFS_VGET(mp, ino, &vp)) != 0) {
 			softdep_error("clear_inodedeps: vget", error);
-			vn_finished_write(mp, 0);
 			return;
 		}
 		if (ino == lastino) {
@@ -5571,7 +5556,6 @@ clear_inodedeps(l)
 			drain_output(vp, 0);
 		}
 		vput(vp);
-		vn_finished_write(mp, 0);
 		ACQUIRE_LOCK(&lk);
 	}
 	FREE_LOCK(&lk);
