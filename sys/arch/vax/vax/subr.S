@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.S,v 1.14.2.2 2007/04/04 06:49:05 matt Exp $	   */
+/*	$NetBSD: subr.S,v 1.14.2.3 2007/04/07 17:48:03 matt Exp $	   */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -326,9 +326,11 @@ JSBENTRY(Swtchto)
 
 	/* We can know use any register because ldpctx will overwrite them */
 	/* New LWP already in %r1 */
+	mfpr	$PR_SSP,%r4		# Get curcpu
+	movl	%r1,CI_CURLWP(%r4)	# update ci_curlwp
 	movl	L_ADDR(%r1),%r3		# Get pointer to new pcb.
 	movl	%r0,PCB_R0(%r3)		# move r0 into new pcb (return value)
-	mfpr	$PR_SSP,SSP(%r3)	# Put curcpu into new PCB
+	movl	%r4,SSP(%r3)		# Put curcpu into new PCB
 	addl3	%r3,$IFTRAP,%r4		# Save for copy* functions.
 	mtpr	%r4,$PR_ESP		# Use ESP as CPU-specific pointer
 	movl	%r4,ESP(%r3)		# Must save in PCB also.
