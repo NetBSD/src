@@ -1,4 +1,4 @@
-/*	$NetBSD: session.c,v 1.1 2006/06/19 15:44:36 gdamore Exp $	*/
+/*	$NetBSD: session.c,v 1.2 2007/04/07 21:08:46 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -57,12 +57,12 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: session.c,v 1.1 2006/06/19 15:44:36 gdamore Exp $
+ * $Id: session.c,v 1.2 2007/04/07 21:08:46 plunky Exp $
  * $FreeBSD: src/lib/libsdp/session.c,v 1.3 2004/01/09 22:44:28 emax Exp $
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: session.c,v 1.1 2006/06/19 15:44:36 gdamore Exp $");
+__RCSID("$NetBSD: session.c,v 1.2 2007/04/07 21:08:46 plunky Exp $");
 
 #include <sys/types.h>
 #include <sys/un.h>
@@ -80,6 +80,7 @@ sdp_open(bdaddr_t const *l, bdaddr_t const *r)
 {
 	sdp_session_p		ss = NULL;
 	struct sockaddr_bt	sa;
+	struct linger		li;
 	socklen_t		size;
 
 	if ((ss = calloc(1, sizeof(*ss))) == NULL)
@@ -92,6 +93,14 @@ sdp_open(bdaddr_t const *l, bdaddr_t const *r)
 
 	ss->s = socket(PF_BLUETOOTH, SOCK_SEQPACKET, BTPROTO_L2CAP);
 	if (ss->s < 0) {
+		ss->error = errno;
+		goto fail;
+	}
+
+	memset(&li, 0, sizeof(li));
+	li.l_onoff = 1;
+	li.l_linger = 5;
+	if (setsockopt(ss->s, SOL_SOCKET, SO_LINGER, &li, sizeof(li)) < 0) {
 		ss->error = errno;
 		goto fail;
 	}
