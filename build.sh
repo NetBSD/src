@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.167 2007/04/05 10:02:10 dsl Exp $
+#	$NetBSD: build.sh,v 1.168 2007/04/07 14:49:40 apb Exp $
 #
 # Copyright (c) 2001-2005 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -74,21 +74,24 @@ warning()
 	statusmsg "Warning: $@"
 }
 
-# Find a program in the PATH
+# Find a program in the PATH, and print the result.  If not found,
+# print a default.  If $2 is defined (even if it is an empty string),
+# then that is the default; otherwise, $1 is used as the default.
 find_in_PATH()
 {
 	local prog="$1"
+	local result="${2-"$1"}"
 	local oldIFS="${IFS}"
 	local dir
 	IFS=":"
 	for dir in ${PATH}; do
 		if [ -x "${dir}/${prog}" ]; then
-			prog="${dir}/${prog}"
+			result="${dir}/${prog}"
 			break
 		fi
 	done
 	IFS="${oldIFS}"
-	echo "${prog}"
+	echo "${result}"
 }
 
 # Try to find a working POSIX shell, and set HOST_SH to refer to it.
@@ -159,11 +162,14 @@ initdefaults()
 	[ -f share/mk/bsd.own.mk ] ||
 	    bomb "src/share/mk is missing; please re-fetch the source tree"
 
-	# Find information about the build platform.
+	# Find information about the build platform.  Note that "uname -p"
+	# is not part of POSIX, but NetBSD's uname -p prints MACHINE_ARCH,
+	# while uname -m prints MACHINE.
 	#
 	uname_s=$(uname -s 2>/dev/null)
 	uname_r=$(uname -r 2>/dev/null)
 	uname_m=$(uname -m 2>/dev/null)
+	uname_p=$(uname -p 2>/dev/null || uname -m 2>/dev/null)
 
 	# If $PWD is a valid name of the current directory, POSIX mandates
 	# that pwd return it by default which causes problems in the
@@ -431,15 +437,21 @@ validatearch()
 	    bomb "MACHINE_ARCH '${MACHINE_ARCH}' does not support MACHINE '${MACHINE}'"
 }
 
-raw_getmakevar()
+nobomb_getmakevar()
 {
-	[ -x "${make}" ] || bomb "raw_getmakevar $1: ${make} is not executable"
-	"${make}" -m ${TOP}/share/mk -s -B -f- _x_ <<EOF || bomb "raw_getmakevar $1: ${make} failed"
+	[ -x "${make}" ] || return 1
+	"${make}" -m ${TOP}/share/mk -s -B -f- _x_ <<EOF || return 1
 _x_:
 	echo \${$1}
 .include <bsd.prog.mk>
 .include <bsd.kernobj.mk>
 EOF
+}
+
+raw_getmakevar()
+{
+	[ -x "${make}" ] || bomb "raw_getmakevar $1: ${make} is not executable"
+	nobomb_getmakevar "$1" || bomb "raw_getmakevar $1: ${make} failed"
 }
 
 getmakevar()
@@ -823,17 +835,70 @@ sanitycheck()
 	esac
 }
 
+# Try to set a value for TOOLDIR.  This is difficult because of a cyclic
+# dependency: TOOLDIR may be affected by settings in /etc/mk.conf, so
+# we would like to use getmakevar to get the value of TOOLDIR, but we
+# can't use getmakevar before we have an up to date version of nbmake;
+# we might already have an up to date version of nbmake in TOOLDIR, but
+# we don't yet know where TOOLDIR is.
+#
+# In principle, we could break the cycle by building a copy of nbmake
+# in a temporary directory.  However, people who use the default value
+# of TOOLDIR do not like to have nbmake rebuilt every time they run
+# build.sh.
+#
+# We try to please everybody as follows:
+#
+# * If TOOLDIR was set in the environment or on the command line, use
+#   that value.
+# * Otherwise try to guess what TOOLDIR would be if not overridden by
+#   /etc/mk.conf, and check whether the resulting directory contains
+#   a copy of ${toolprefix}make (this should work for everybody who
+#   doesn't override TOOLDIR via /etc/mk.conf);
+# * Failing that, search for ${toolprefix}make, nbmake, bmake, or make,
+#   in the PATH (this might accidentally find a non-NetBSD version of
+#   make, which will lead to failure in the next step);
+# * If a copy of make was found above, try to use it with
+#   nobomb_getmakevar to find the correct value for TOOLDIR;
+# * If all else fails, leave TOOLDIR unset.  Our caller is expected to
+#   be able to cope with this.
+#
+try_set_TOOLDIR()
+{
+	[ -n "${TOOLDIR}" ] && return
+
+	# Set guess_TOOLDIR, in the same way that <bsd.own.mk> would set
+	# TOOLDIR if /etc/mk.conf sisn't interfere.
+	local topobjdir="${TOP}"
+	[ -n "${makeobjdir}" ] && topobjdir="${topobjdir}/${makeobjdir}"
+	local host_ostype="${uname_s}-$(
+		echo "${uname_r}" | sed -e 's/([^)]*)//g' -e 's/ /_/g'
+		)$(
+		echo "${uname_p}" | sed -e 's/([^)]*)//g' -e 's/ /_/g'
+		)"
+	local guess_TOOLDIR="${topobjdir}/tooldir.${host_ostype}"
+
+	# Look for a suitable ${toolprefix}make, nbmake, bmake, or make.
+	guess_make="${guess_TOOLDIR}/bin/${toolprefix}make"
+	[ -x "${guess_make}" ] || guess_make=""
+	: ${guess_make:=$(find_in_PATH ${toolprefix}make '')}
+	: ${guess_make:=$(find_in_PATH nbmake '')}
+	: ${guess_make:=$(find_in_PATH bmake '')}
+	: ${guess_make:=$(find_in_PATH make '')}
+
+	# Use ${guess_make} with nobomb_getmakevar
+	if [ -x "${guess_make}" ]; then
+		TOOLDIR=$(make="${guess_make}" nobomb_getmakevar TOOLDIR)
+		[ -n "${TOOLDIR}" ] || unset TOOLDIR
+	fi
+}
+
 rebuildmake()
 {
 	# Test make source file timestamps against installed ${toolprefix}make
-	# binary, if TOOLDIR is pre-set.
+	# binary, if TOOLDIR is pre-set or if try_set_TOOLDIR can set it.
 	#
-	# Note that we do NOT try to grovel "mk.conf" here to find out if
-	# TOOLDIR is set there, because it can contain make variable
-	# expansions and other stuff only parseable *after* we have a working
-	# ${toolprefix}make.  So this logic can only work if the user has
-	# pre-set TOOLDIR in the environment or used the -T option to build.sh.
-	#
+	try_set_TOOLDIR
 	make="${TOOLDIR-nonexistent}/bin/${toolprefix}make"
 	if [ -x "${make}" ]; then
 		for f in usr.bin/make/*.[ch] usr.bin/make/lst.lib/*.[ch]; do
@@ -1021,7 +1086,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.167 2007/04/05 10:02:10 dsl Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.168 2007/04/07 14:49:40 apb Exp $
 # with these arguments: ${_args}
 #
 EOF
