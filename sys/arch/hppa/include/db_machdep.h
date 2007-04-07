@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.5 2006/04/01 15:44:59 cherry Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.6 2007/04/07 08:37:49 skrll Exp $	*/
 
 /*	$OpenBSD: db_machdep.h,v 1.5 2001/02/16 19:20:13 mickey Exp $	*/
 
@@ -115,7 +115,7 @@ static __inline int inst_trap_return(u_int ins)	{
 #define db_clear_single_step(r)	((r)->tf_ipsw &= ~PSW_R)
 #define db_set_single_step(r)	((r)->tf_ipsw |= PSW_R)
 
-int db_valid_breakpoint __P((db_addr_t));
-int kdb_trap __P((int, int, db_regs_t *));
+int db_valid_breakpoint(db_addr_t);
+int kdb_trap(int, int, db_regs_t *);
 
 #endif /* _HPPA_DB_MACHDEP_H_ */
