@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.16.2.4 2007/04/04 17:28:26 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.16.2.5 2007/04/07 17:34:52 skrll Exp $	*/
 
 /*	$OpenBSD: locore.S,v 1.46 2001/09/20 18:33:03 mickey Exp $	*/
 
@@ -151,8 +151,6 @@
 	.export	pdc_stack, data
 pdc_stack:
 	.block	4*NBPG
-exit_stack:
-	.block	2*NBPG
 kernelmapped:			/* set when kernel is mapped */
 	.block	4
 /*
@@ -160,8 +158,6 @@ kernelmapped:			/* set when kernel is mapped */
         .export pdc_stack, data
 pdc_stack:
         .comm   4*(1 << 12)
-exit_stack:
-        .comm   2*(1 << 12)
 kernelmapped:
         .comm   4
 */
