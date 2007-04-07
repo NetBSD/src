@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.30.2.1 2007/04/03 15:20:10 matt Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.30.2.2 2007/04/07 17:50:38 matt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -203,6 +203,7 @@ switchto_restore:
 	 */
 
 	GET_CPUINFO(%r7)
+	stptr	%r31,CI_CURLWP(%r7)
 	ldptr	%r4,L_ADDR(%r31)	/* put PCB addr in r4 */
 	stptr	%r4,CI_CURPCB(%r7)	/* using a new pcb */
 	ldptr	%r3,PCB_PM(%r4)
