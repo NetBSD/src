@@ -1,4 +1,4 @@
-/*	$NetBSD: sync_vnops.c,v 1.16 2006/11/16 01:33:38 christos Exp $	*/
+/*	$NetBSD: sync_vnops.c,v 1.17 2007/04/07 15:08:12 hannken Exp $	*/
 
 /*
  * Copyright 1997 Marshall Kirk McKusick. All Rights Reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sync_vnops.c,v 1.16 2006/11/16 01:33:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sync_vnops.c,v 1.17 2007/04/07 15:08:12 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -155,16 +155,11 @@ sync_fsync(v)
 	 */
 	simple_lock(&mountlist_slock);
 	if (vfs_busy(mp, LK_NOWAIT, &mountlist_slock) == 0) {
-		if (vn_start_write(NULL, &mp, V_NOWAIT) != 0) {
-			vfs_unbusy(mp);
-			return (0);
-		}
 		asyncflag = mp->mnt_flag & MNT_ASYNC;
 		mp->mnt_flag &= ~MNT_ASYNC;
 		VFS_SYNC(mp, MNT_LAZY, ap->a_cred, ap->a_l);
 		if (asyncflag)
 			mp->mnt_flag |= MNT_ASYNC;
-		vn_finished_write(mp, 0);
 		vfs_unbusy(mp);
 	} else
 		simple_unlock(&mountlist_slock);
