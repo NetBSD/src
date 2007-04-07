@@ -1,4 +1,4 @@
-/*	$NetBSD: sync_subr.c,v 1.28 2007/02/09 21:55:36 ad Exp $	*/
+/*	$NetBSD: sync_subr.c,v 1.29 2007/04/07 15:08:12 hannken Exp $	*/
 
 /*
  * Copyright 1997 Marshall Kirk McKusick. All Rights Reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sync_subr.c,v 1.28 2007/02/09 21:55:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sync_subr.c,v 1.29 2007/04/07 15:08:12 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -167,7 +167,6 @@ sched_sync(void *v)
 {
 	struct synclist *slp;
 	struct vnode *vp;
-	struct mount *mp;
 	long starttime;
 	int s;
 
@@ -190,14 +189,10 @@ sched_sync(void *v)
 		mutex_enter(&syncer_mutex);
 
 		while ((vp = TAILQ_FIRST(slp)) != NULL) {
-			if (vn_start_write(vp, &mp, V_NOWAIT) == 0) {
-				if (vn_lock(vp, LK_EXCLUSIVE | LK_NOWAIT)
-				    == 0) {
-					(void) VOP_FSYNC(vp, curlwp->l_cred,
-					    FSYNC_LAZY, 0, 0, curlwp);
-					VOP_UNLOCK(vp, 0);
-				}
-				vn_finished_write(mp, 0);
+			if (vn_lock(vp, LK_EXCLUSIVE | LK_NOWAIT) == 0) {
+				(void) VOP_FSYNC(vp, curlwp->l_cred,
+				    FSYNC_LAZY, 0, 0, curlwp);
+				VOP_UNLOCK(vp, 0);
 			}
 			s = splbio();
 			if (TAILQ_FIRST(slp) == vp) {
