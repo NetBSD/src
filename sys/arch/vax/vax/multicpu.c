@@ -1,4 +1,4 @@
-/*	$NetBSD: multicpu.c,v 1.19.2.3 2007/04/04 06:49:05 matt Exp $	*/
+/*	$NetBSD: multicpu.c,v 1.19.2.4 2007/04/07 17:24:34 matt Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: multicpu.c,v 1.19.2.3 2007/04/04 06:49:05 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: multicpu.c,v 1.19.2.4 2007/04/07 17:24:34 matt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -91,22 +91,8 @@ cpu_slavesetup(struct device *dev)
 	struct cpu_mp_softc *sc = (struct cpu_mp_softc *)dev;
 	struct cpuq *cq;
 	struct cpu_info *ci;
-	struct pglist mlist;
 	struct vm_page *pg;
-	struct pcb *pcb;
-	vaddr_t istackbase, scratch;
-	int error;
-
-	/* Get an UAREA */
-	error = uvm_pglistalloc(USPACE, avail_start, avail_end, 0, 0,
-	    &mlist, 1, 1);
-	if (error)
-		panic("cpu_slavesetup: error %d", error);
-	pcb = (struct pcb *)(VM_PAGE_TO_PHYS(TAILQ_FIRST(&mlist)) | KERNBASE);
-
-	/* Copy our own idle PCB */
-	memcpy(pcb, (void *)proc0paddr, sizeof(struct user));
-	kvtopte((u_int)pcb + REDZONEADDR)->pg_v = 0;
+	vaddr_t istackbase;
 
 	/* Allocate an interrupt stack */
 	pg = uvm_pagealloc(NULL, 0, NULL, 0);
@@ -115,16 +101,9 @@ cpu_slavesetup(struct device *dev)
 	istackbase = VM_PAGE_TO_PHYS(pg) | KERNBASE;
 	kvtopte(istackbase)->pg_v = 0; /* istack safety belt */
 
-	/* Get scratch pages for different use, see pmap.c for comment */
-	pg = uvm_pagealloc(NULL, 0, NULL, 0);
-	if (pg == NULL)
-		panic("cpu_slavesetup3");
-	scratch = VM_PAGE_TO_PHYS(pg) | KERNBASE;
-
 	/* Populate the PCB and the cpu_info struct */
 	ci = &sc->sc_ci;
 	ci->ci_dev = dev;
-	ci->ci_exit = scratch;
 #ifdef MUTEX_COUNT_BIAS
 	ci->ci_mtx_count = MUTEX_COUNT_BIAS;
 #endif
