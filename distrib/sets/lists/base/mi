@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.470.2.2.2.3.2.2 2007/03/31 13:49:47 bouyer Exp $
+# $NetBSD: mi,v 1.470.2.2.2.3.2.3 2007/04/08 22:26:38 bouyer Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -2919,7 +2919,9 @@
 ./usr/share/zoneinfo/America/Indiana/Indianapolis	base-sys-share		share
 ./usr/share/zoneinfo/America/Indiana/Knox	base-sys-share		share
 ./usr/share/zoneinfo/America/Indiana/Marengo	base-sys-share		share
+./usr/share/zoneinfo/America/Indiana/Petersburg	base-sys-share		share
 ./usr/share/zoneinfo/America/Indiana/Vevay	base-sys-share		share
+./usr/share/zoneinfo/America/Indiana/Vincennes	base-sys-share		share
 ./usr/share/zoneinfo/America/Indianapolis	base-sys-share		share
 ./usr/share/zoneinfo/America/Inuvik		base-sys-share		share
 ./usr/share/zoneinfo/America/Iqaluit		base-sys-share		share
@@ -2944,6 +2946,7 @@
 ./usr/share/zoneinfo/America/Merida		base-sys-share		share
 ./usr/share/zoneinfo/America/Mexico_City	base-sys-share		share
 ./usr/share/zoneinfo/America/Miquelon		base-sys-share		share
+./usr/share/zoneinfo/America/Moncton		base-sys-share		share
 ./usr/share/zoneinfo/America/Monterrey		base-sys-share		share
 ./usr/share/zoneinfo/America/Montevideo		base-sys-share		share
 ./usr/share/zoneinfo/America/Montreal		base-sys-share		share
