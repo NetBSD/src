@@ -169,7 +169,8 @@ vax_init_libfuncs (void)
 /* This is like nonimmediate_operand with a restriction on the type of MEM.  */
 
 static void
-split_quadword_operands (rtx insn, rtx * operands, rtx * low, int n)
+split_quadword_operands (rtx insn, enum rtx_code code, rtx * operands,
+			 rtx * low, int n)
 {
   int i;
 
@@ -187,8 +188,7 @@ split_quadword_operands (rtx insn, rtx * operands, rtx * low, int n)
 	}
       else if (optimize_size && MEM_P (operands[i])
 	       && REG_P (XEXP (operands[i], 0))
-	       && (GET_CODE (XEXP (insn, 1)) != MINUS
-		   || XEXP (XEXP(insn, 1), 0) != const0_rtx)
+	       && (code != MINUS || operands[1] != const0_rtx)
 	       && find_regno_note (insn, REG_DEAD,
 				   REGNO (XEXP (operands[i], 0))))
 	{
@@ -1093,7 +1093,7 @@ vax_output_int_move (rtx insn ATTRIBUTE_UNUSED, rtx *operands,
 	  hi[0] = operands[0];
 	  hi[1] = operands[1];
 
-	  split_quadword_operands(insn, hi, lo, 2);
+	  split_quadword_operands(insn, SET, hi, lo, 2);
 
 	  pattern_lo = vax_output_int_move (NULL, lo, SImode);
 	  pattern_hi = vax_output_int_move (NULL, hi, SImode);
@@ -1233,7 +1233,7 @@ vax_output_int_add (rtx insn, rtx *operands, enum machine_mode mode)
 	if (TARGET_QMATH && 0)
 	  debug_rtx (insn);
 
-	split_quadword_operands (insn, operands, low, 3);
+	split_quadword_operands (insn, PLUS, operands, low, 3);
 
 	if (TARGET_QMATH)
 	  {
@@ -1442,7 +1442,7 @@ vax_output_int_subtract (rtx insn, rtx *operands, enum machine_mode mode)
 	if (TARGET_QMATH && 0)
 	  debug_rtx (insn);
 
-	split_quadword_operands (insn, operands, low, 3);
+	split_quadword_operands (insn, MINUS, operands, low, 3);
 
 	if (TARGET_QMATH)
 	  {
@@ -1451,8 +1451,10 @@ vax_output_int_subtract (rtx insn, rtx *operands, enum machine_mode mode)
 	      {
 		/* Negation is tricky.  It's basically complement and increment.
 		   Negate hi, then lo, and subtract the carry back.  */
-		gcc_assert (!MEM_P (low[0])
-			    || GET_CODE (XEXP (low[0], 0)) != POST_INC);
+		if ((MEM_P (low[0]) && GET_CODE (XEXP (low[0], 0)) == POST_INC)
+		    || (MEM_P (operands[0])
+			&& GET_CODE (XEXP (operands[0], 0)) == POST_INC))
+		  fatal_insn ("illegal operand detected", insn);
 		output_asm_insn ("mnegl %2,%0", operands);
 		output_asm_insn ("mnegl %2,%0", low);
 		return "sbwc $0,%0";
