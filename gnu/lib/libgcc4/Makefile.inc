@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.5 2006/11/09 04:06:51 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.6 2007/04/08 09:56:08 scw Exp $
 
 .if exists(${.CURDIR}/arch/${MACHINE_ARCH}.mk) && ${MKGCC} != "no"
 .include "${.CURDIR}/arch/${MACHINE_ARCH}.mk"
@@ -69,9 +69,7 @@ CLEANFILES+=	fpgnulib.c xfgnulib.c
 
 .if ${MACHINE_ARCH} == "powerpc" || \
     ${MACHINE_ARCH} == "sh3el" || \
-    ${MACHINE_ARCH} == "sh3eb" || \
-    ${MACHINE_ARCH} == "sh5el" || \
-    ${MACHINE_ARCH} == "sh5eb"
+    ${MACHINE_ARCH} == "sh3eb"
 _TRADITIONAL_CPP=
 COMPILE.S=	${CC} ${AFLAGS} ${CPPFLAGS} -c
 .endif
