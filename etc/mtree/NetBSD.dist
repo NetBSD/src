@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.338 2007/04/01 18:52:28 tnozaki Exp $
+#	$NetBSD: NetBSD.dist,v 1.339 2007/04/08 09:35:26 scw Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -762,7 +762,6 @@
 ./usr/share/man/cat8/evbmips
 ./usr/share/man/cat8/evbppc
 ./usr/share/man/cat8/evbsh3
-./usr/share/man/cat8/evbsh5
 ./usr/share/man/cat8/hp300
 ./usr/share/man/cat8/hp700
 ./usr/share/man/cat8/hpcarm
@@ -870,7 +869,6 @@
 ./usr/share/man/man8/evbmips
 ./usr/share/man/man8/evbppc
 ./usr/share/man/man8/evbsh3
-./usr/share/man/man8/evbsh5
 ./usr/share/man/man8/hp300
 ./usr/share/man/man8/hp700
 ./usr/share/man/man8/hpcarm
@@ -978,7 +976,6 @@
 ./usr/share/man/html8/evbmips
 ./usr/share/man/html8/evbppc
 ./usr/share/man/html8/evbsh3
-./usr/share/man/html8/evbsh5
 ./usr/share/man/html8/hp300
 ./usr/share/man/html8/hp700
 ./usr/share/man/html8/hpcarm

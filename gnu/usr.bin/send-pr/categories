@@ -23,7 +23,6 @@ port-evbarm
 port-evbmips
 port-evbppc
 port-evbsh3
-port-evbsh5
 port-hp300
 port-hp700
 port-hpcarm
@@ -58,7 +57,6 @@ port-sandpoint
 port-sbmips
 port-sgimips
 port-sh3
-port-sh5
 port-shark
 port-sparc
 port-sparc64
