@@ -1,4 +1,4 @@
-/*	$NetBSD: macros.h,v 1.39 2007/03/31 06:02:08 matt Exp $	*/
+/*	$NetBSD: macros.h,v 1.40 2007/04/08 03:11:31 matt Exp $	*/
 
 /*
  * Copyright (c) 1994, 1998, 2000 Ludd, University of Lule}, Sweden.
@@ -38,6 +38,7 @@
 void	__blkset(void *, int, size_t);
 void	__blkcpy(const void *, void *, size_t);
 
+#if !__GNUC_PREREQ__(4, 1)
 /* Here general macros are supposed to be stored */
 
 static __inline int __attribute__((__unused__))
@@ -55,6 +56,7 @@ vax_ffs(int reg)
 	return	val;
 }
 #define ffs vax_ffs
+#endif
 
 static __inline void __attribute__((__unused__))
 vax_remque(void *p)
