@@ -187,6 +187,8 @@ split_quadword_operands (rtx insn, rtx * operands, rtx * low, int n)
 	}
       else if (optimize_size && MEM_P (operands[i])
 	       && REG_P (XEXP (operands[i], 0))
+	       && (GET_CODE (XEXP (insn, 1)) != MINUS
+		   || XEXP (XEXP(insn, 1), 0) != const0_rtx)
 	       && find_regno_note (insn, REG_DEAD,
 				   REGNO (XEXP (operands[i], 0))))
 	{
@@ -1060,8 +1062,8 @@ vax_output_int_move (rtx insn ATTRIBUTE_UNUSED, rtx *operands,
 	      /*  If n is 0, then ashq is not the best way to emit this.  */
 	      if (n > 0)
 		{
-		  operands[2] = GEN_INT (lval);
-		  operands[1] = GEN_INT (n);
+		  operands[1] = GEN_INT (lval);
+		  operands[2] = GEN_INT (n);
 		  return "ashq %2,%1,%0";
 		}
 #if HOST_BITS_PER_WIDE_INT == 32
@@ -1072,8 +1074,8 @@ vax_output_int_move (rtx insn ATTRIBUTE_UNUSED, rtx *operands,
 		   && (n = exact_log2 (hval & (- hval)) - 1) != -1
 		   && (hval >> n) < 64)
 	    {
-	      operands[2] = GEN_INT (hval >> n);
-	      operands[1] = GEN_INT (n + 32);
+	      operands[1] = GEN_INT (hval >> n);
+	      operands[2] = GEN_INT (n + 32);
 	      return "ashq %2,%1,%0";
 #endif
 	    }
@@ -1447,13 +1449,13 @@ vax_output_int_subtract (rtx insn, rtx *operands, enum machine_mode mode)
 	    gcc_assert (!CONSTANT_P (operands[2]) && !CONSTANT_P (low[2]));
 	    if (operands[1] == const0_rtx && low[1] == const0_rtx)
 	      {
-		gcc_assert (!MEM_P (operands[0])
-			    || GET_CODE (XEXP (operands[0], 0)) != POST_INC);
 		/* Negation is tricky.  It's basically complement and increment.
 		   Negate hi, then lo, and subtract the carry back.  */
+		gcc_assert (!MEM_P (low[0])
+			    || GET_CODE (XEXP (low[0], 0)) != POST_INC);
+		output_asm_insn ("mnegl %2,%0", operands);
 		output_asm_insn ("mnegl %2,%0", low);
-		output_asm_insn ("clrl %0", operands);
-		return "sbwc %2,%0";
+		return "sbwc $0,%0";
 	      }
 	    gcc_assert (rtx_equal_p (operands[0], operands[1]));
 	    gcc_assert (rtx_equal_p (low[0], low[1]));
