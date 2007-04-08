@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0.4,v 1.1.2.67 2007/04/05 21:05:30 bouyer Exp $
+#	$NetBSD: CHANGES-2.0.4,v 1.1.2.68 2007/04/08 22:28:05 bouyer Exp $
 
 A complete list of changes from the NetBSD 2.0.3 update to the NetBSD 2.0.4
 update.
@@ -569,4 +569,12 @@ xsrc/xfree/xc/programs/Xserver/Xext/xcmisc.c	1.2
 	  (_bdf_parse_glyphs): Limit allowed number of glyphs in font to the
 	  number of code points in Unicode.
 	[drochner, ticket #11285]
+
+dist/file/src/file.h    patch
+dist/file/src/funcs.c   patch
+dist/file/src/magic.c   patch
+
+        Fix an integer underflow in file_printf which can lead to an
+	exploitable heap overflow.
+	[adrianp, ticket #11288]
 
