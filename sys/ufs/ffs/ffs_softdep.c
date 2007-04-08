@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.88 2007/04/07 14:21:52 hannken Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.89 2007/04/08 11:20:50 hannken Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.88 2007/04/07 14:21:52 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.89 2007/04/08 11:20:50 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -198,7 +198,7 @@ void softdep_pageiodone1(struct buf *);
 #endif
 void softdep_pageiodone(struct buf *);
 void softdep_flush_vnode(struct vnode *, daddr_t);
-static void softdep_trackbufs(struct vnode *, int, bool);
+static void softdep_trackbufs(int, bool);
 
 #define	PCBP_BITMAP(off, size) \
 	(((1 << howmany((size), PAGE_SIZE)) - 1) << ((off) >> PAGE_SHIFT))
@@ -1893,7 +1893,7 @@ setup_allocindir_phase2(bp, ip, aip)
 		if (newindirdep) {
 			if (indirdep->ir_savebp != NULL) {
 				brelse(newindirdep->ir_savebp);
-				softdep_trackbufs(ip->i_devvp, -1, false);
+				softdep_trackbufs(-1, false);
 			}
 			WORKITEM_FREE(newindirdep, D_INDIRDEP);
 		}
@@ -1910,7 +1910,7 @@ setup_allocindir_phase2(bp, ip, aip)
 			VOP_BMAP(bp->b_vp, bp->b_lblkno, NULL, &bp->b_blkno,
 				 NULL);
 		}
-		softdep_trackbufs(ip->i_devvp, 1, true);
+		softdep_trackbufs(1, true);
 		newindirdep->ir_savebp =
 		    getblk(ip->i_devvp, bp->b_blkno, bp->b_bcount, 0, 0);
 		newindirdep->ir_savebp->b_flags |= B_ASYNC;
@@ -2546,7 +2546,7 @@ indir_trunc(freeblks, dbn, level, lbn, countp)
 		FREE_LOCK(&lk);
 	} else {
 		FREE_LOCK(&lk);
-		softdep_trackbufs(devvp, 1, false);
+		softdep_trackbufs(1, false);
 		error = bread(devvp, dbn, (int)fs->fs_bsize, NOCRED, &bp);
 		if (error)
 			return (error);
@@ -2583,7 +2583,7 @@ indir_trunc(freeblks, dbn, level, lbn, countp)
 	}
 	bp->b_flags |= B_INVAL | B_NOCACHE;
 	brelse(bp);
-	softdep_trackbufs(devvp, -1, false);
+	softdep_trackbufs(-1, false);
 	return (allerror);
 }
 
@@ -3422,7 +3422,7 @@ softdep_disk_io_initiation(bp)
 			if (LIST_FIRST(&indirdep->ir_deplisthd) == NULL) {
 				indirdep->ir_savebp->b_flags |= B_INVAL | B_NOCACHE;
 				brelse(indirdep->ir_savebp);
-				softdep_trackbufs(NULL, -1, false);
+				softdep_trackbufs(-1, false);
 
 				/* inline expand WORKLIST_REMOVE(wk); */
 				wk->wk_state &= ~ONWORKLIST;
@@ -5842,9 +5842,8 @@ softdep_lookupvp(fs, ino)
 }
 
 static void
-softdep_trackbufs(struct vnode *devvp, int delta, bool throttle)
+softdep_trackbufs(int delta, bool throttle)
 {
-	struct lwp *l = curlwp;
 
 	if (delta < 0) {
 		if (softdep_lockedbufs < nbuf >> 2) {
@@ -5855,18 +5854,9 @@ softdep_trackbufs(struct vnode *devvp, int delta, bool throttle)
 		return;
 	}
 
-	KASSERT(devvp != NULL);
-	/*
-	 * Kernel threads never get blocked.
-	 * User processes check for file system suspension every 10 msecs.
-	 */
 	while (throttle && softdep_lockedbufs >= nbuf >> 2) {
 		speedup_syncer();
-		if (l && (l->l_flag & LW_SYSTEM))
-			break;
-		tsleep(&softdep_lockedbufs, PRIBIO, "softdbufs", mstohz(10));
-		if ((devvp->v_specmountpoint->mnt_iflag & IMNT_SUSPEND) != 0)
-			break;
+		tsleep(&softdep_lockedbufs, PRIBIO, "softdbufs", 0);
 	}
 	softdep_lockedbufs += delta;
 }
