@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.16.2.7 2007/04/08 09:15:20 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.16.2.8 2007/04/08 09:16:28 skrll Exp $	*/
 
 /*	$OpenBSD: locore.S,v 1.46 2001/09/20 18:33:03 mickey Exp $	*/
 
@@ -828,7 +828,6 @@ switch_exited:
 	/*
 	 * Check for restartable atomic sequences (RAS)
 	 */
-switch_trampoline:
 	ldw	L_PROC(%arg1), %t1
 	ldw	P_RASLIST(%t1), %t1
 	comb,=,n %r0, %t1, noras
