@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.136 2007/04/03 16:11:31 hannken Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.137 2007/04/08 11:20:44 hannken Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.136 2007/04/03 16:11:31 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.137 2007/04/08 11:20:44 hannken Exp $");
 
 #include "fs_union.h"
 #include "veriexec.h"
@@ -869,46 +869,6 @@ vn_extattr_rm(struct vnode *vp, int ioflg, int attrnamespace,
 	}
 
 	return (error);
-}
-
-/*
- * OBSOLETE -- this function will be removed in the near future!
- *
- * Preparing to start a filesystem write operation. If the operation is
- * permitted, then we bump the count of operations in progress and
- * proceed. If a suspend request is in progress, we wait until the
- * suspension is over, and then proceed.
- * V_PCATCH    adds PCATCH to the tsleep flags.
- * V_WAIT      waits until suspension is over. Otherwise returns EWOULDBLOCK.
- * V_SLEEPONLY wait, but do not bump the operations count.
- * V_LOWER     this is a lower level operation. No further vnodes should be
- *             locked. Otherwise it is a upper level operation. No vnodes
- *             should be locked.
- */
-int
-vn_start_write(struct vnode *vp, struct mount **mpp, int flags)
-{
-
-	/*
-	 * If a vnode is provided, get and return the mount point that
-	 * to which it will write.
-	 */
-	if (vp != NULL) {
-		*mpp = vp->v_mount;
-	}
-	return 0;
-}
-
-/*
- * OBSOLETE -- this function will be removed in the near future!
- *
- * Filesystem write operation has completed. If we are suspending and this
- * operation is the last one, notify the suspender that the suspension is
- * now in effect.
- */
-void
-vn_finished_write(struct mount *mp, int flags)
-{
 }
 
 void

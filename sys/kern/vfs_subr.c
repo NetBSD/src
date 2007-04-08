@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.285 2007/04/03 16:11:31 hannken Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.286 2007/04/08 11:20:43 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.285 2007/04/03 16:11:31 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.286 2007/04/08 11:20:43 hannken Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -364,7 +364,6 @@ vfs_rootmountalloc(const char *fstypename, const char *devname,
 	mp->mnt_op = vfsp;
 	mp->mnt_flag = MNT_RDONLY;
 	mp->mnt_vnodecovered = NULLVP;
-	mp->mnt_leaf = mp;
 	vfsp->vfs_refcount++;
 	strncpy(mp->mnt_stat.f_fstypename, vfsp->vfs_name, MFSNAMELEN);
 	mp->mnt_stat.f_mntonname[0] = '/';
@@ -2704,8 +2703,6 @@ vfs_mount_print(struct mount *mp, int full, void (*pr)(const char *, ...))
 	if (mp->mnt_unmounter) {
 		(*pr)("unmounter pid = %d ",mp->mnt_unmounter->l_proc);
 	}
-	(*pr)("wcnt = %d, writeopcountupper = %d, writeopcountupper = %d\n",
-		mp->mnt_wcnt,mp->mnt_writeopcountupper,mp->mnt_writeopcountlower);
 
 	(*pr)("statvfs cache:\n");
 	(*pr)("\tbsize = %lu\n",mp->mnt_stat.f_bsize);
