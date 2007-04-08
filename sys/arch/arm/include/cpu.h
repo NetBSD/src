@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.41.2.2 2007/03/29 10:52:27 skrll Exp $	*/
+/*	$NetBSD: cpu.h,v 1.41.2.3 2007/04/08 08:17:52 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -259,6 +259,11 @@ extern int want_resched;	/* resched() was called */
  */
 #define	cpu_need_proftick(l)	((l)->l_pflag |= LP_OWEUPC, setsoftast())
 
+/*
+ * reset want_resched, it's been processed.
+ */
+#define	cpu_did_resched()	do { want_resched = 0; } while(0)
+
 #ifndef acorn26
 /*
  * cpu device glue (belongs in cpuvar.h)
@@ -267,7 +272,6 @@ extern int want_resched;	/* resched() was called */
 struct device;
 void	cpu_attach(struct device *);
 #endif
-
 
 /*
  * Random cruft
