@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.16.2.6 2007/04/07 17:36:42 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.16.2.7 2007/04/08 09:15:20 skrll Exp $	*/
 
 /*	$OpenBSD: locore.S,v 1.46 2001/09/20 18:33:03 mickey Exp $	*/
 
@@ -839,12 +839,10 @@ switch_trampoline:
 	 * We save curl (%arg0) and newl (%arg1) for the benefit of
 	 * lwp_trampoline() for when it calls lwp_startup().
 	 *
-	 * curl (%arg0) is saved as it's the return value, and
-	 * eiem (%t4) is saved to restore interrupts.
+	 * curl (%arg0) is saved as it's the return value
 	 */
 	stw	%arg0, HPPA_FRAME_ARG(0)(%r3)		/* curl */
 	stw	%arg1, HPPA_FRAME_ARG(1)(%r3)		/* newl */
-	stw	%t4, HPPA_FRAME_ARG(2)(%r3)		/* eiem */
 
 	copy	%arg1, %arg0
 
