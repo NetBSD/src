@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.45.2.2 2007/03/29 10:52:27 skrll Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.45.2.3 2007/04/08 08:17:52 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -131,9 +131,16 @@
 #ifdef MULTIPROCESSOR
 .Lcpu_info_store:
 	.word	_C_LABEL(cpu_info_store)
+.Lcurlwp:
+	/* FIXME: This is bogus in the general case. */
+	.word	_C_LABEL(cpu_info_store) + CI_CURLWP
+
 .Lcurpcb:
 	.word	_C_LABEL(cpu_info_store) + CI_CURPCB
 #else
+.Lcurlwp:
+	.word	_C_LABEL(curlwp)
+
 .Lcurpcb:
 	.word	_C_LABEL(curpcb)
 #endif
@@ -182,6 +189,10 @@ ENTRY(cpu_switchto)
 #else
 	/* l->l_cpu initialized in fork1() for single-processor */
 #endif
+
+	/* We have a new curlwp now so make a note it */
+	ldr	r7, .Lcurlwp
+	str	r6, [r7]
 
 	/* Hook in a new pcb */
 	ldr	r7, .Lcurpcb
