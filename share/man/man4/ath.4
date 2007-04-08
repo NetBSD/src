@@ -1,4 +1,4 @@
-.\"     $NetBSD: ath.4,v 1.18 2006/12/30 23:51:18 gdt Exp $
+.\"     $NetBSD: ath.4,v 1.19 2007/04/08 02:29:39 erh Exp $
 .\"
 .\" Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
 .\" All rights reserved.
@@ -112,6 +112,11 @@ They operate in BSS mode.
 They allow for easier roaming and bridge all ethernet traffic such
 that machines connected via an access point appear to be on the local
 ethernet segment.
+.Pp
+The mode of operation is chosen by specifing the appropriate mediaopt
+value to ifconfig.  The
+.Fl m
+flag to ifconfig will list the available options.
 .Pp
 For more information on configuring this device, see
 .Xr ifconfig 8 .
