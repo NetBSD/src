@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2007/01/27 21:36:13 christos Exp $
+#	$NetBSD: Makefile,v 1.5 2007/04/08 09:36:35 scw Exp $
 
 LIB=dns
 
@@ -11,12 +11,6 @@ DIST=	${IDIST}/lib/dns
 
 .PATH.c:	${DIST}/unix ${DIST}/sec/dst ${DIST}
 CPPFLAGS+=-I${.CURDIR}/../include/dns -I${DIST}
-
-# XXX
-.if ${MACHINE_CPU} == "sh5"
-COPTS.rbtdb.c=		-O1
-COPTS.rbtdb64.c=	-O1
-.endif
 
 .if ${HAVE_GCC} == 4
 .for f in lookup byaddr request sdb validator

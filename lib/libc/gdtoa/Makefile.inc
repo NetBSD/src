@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.5 2007/02/02 23:06:34 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.6 2007/04/08 09:35:47 scw Exp $
 
 # gdtoa sources
 .PATH: ${.CURDIR}/gdtoa
@@ -43,9 +43,4 @@ SRCS+=	_strtof.c _strtold.c
 # XXX no hexadecimal floating-point string conversion for VAX FP yet
 .if ${MACHINE_ARCH} != "vax"
 SRCS+=	strtord.c
-.endif
-
-# XXX Workaround for gcc-3.3.3 optimsation bug on sh5
-.if ${MACHINE_CPU} == "sh5"
-COPTS.strtod.c=	-O1
 .endif
