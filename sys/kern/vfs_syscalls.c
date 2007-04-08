@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.307 2007/04/01 10:15:01 hannken Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.308 2007/04/08 11:20:43 hannken Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.307 2007/04/01 10:15:01 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.308 2007/04/08 11:20:43 hannken Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -342,7 +342,6 @@ mount_domount(struct lwp *l, struct vnode *vp, const char *fstype,
 	mp->mnt_vnodecovered = vp;
 	mp->mnt_stat.f_owner = kauth_cred_geteuid(l->l_cred);
 	mp->mnt_unmounter = NULL;
-	mp->mnt_leaf = mp;
 	mount_initspecific(mp);
 
 	/*

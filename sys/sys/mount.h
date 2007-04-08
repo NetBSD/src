@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.155 2007/03/10 16:50:01 dsl Exp $	*/
+/*	$NetBSD: mount.h,v 1.156 2007/04/08 11:20:48 hannken Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -109,11 +109,7 @@ struct mount {
 	void		*mnt_data;		/* private data */
 	int		mnt_wcnt;		/* count of vfs_busy waiters */
 	struct lwp	*mnt_unmounter;		/* who is unmounting */
-	int		mnt_writeopcountupper;	/* upper writeops in progress */
-	int		mnt_writeopcountlower;	/* lower writeops in progress */
-	struct simplelock mnt_slock;		/* mutex for wcnt and
-						   writeops counters */
-	struct mount	*mnt_leaf;		/* leaf fs we mounted on */
+	struct simplelock mnt_slock;		/* mutex for wcnt */
 	specificdata_reference
 			mnt_specdataref;	/* subsystem specific data */
 };
