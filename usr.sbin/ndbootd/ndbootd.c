@@ -1,4 +1,4 @@
-/*	$NetBSD: ndbootd.c,v 1.11 2006/05/25 01:18:59 christos Exp $	*/
+/*	$NetBSD: ndbootd.c,v 1.12 2007/04/08 09:43:51 scw Exp $	*/
 
 /* ndbootd.c - the Sun Network Disk (nd) daemon: */
 
@@ -81,7 +81,7 @@
 #if 0
 static const char _ndbootd_c_rcsid[] = "<<Id: ndbootd.c,v 1.9 2001/06/13 21:19:11 fredette Exp >>";
 #else
-__RCSID("$NetBSD: ndbootd.c,v 1.11 2006/05/25 01:18:59 christos Exp $");
+__RCSID("$NetBSD: ndbootd.c,v 1.12 2007/04/08 09:43:51 scw Exp $");
 #endif
 
 /* includes: */
@@ -197,8 +197,7 @@ _ndbootd_ip_cksum(struct ip * ip_packet)
 	/* finish the checksum: */
 	checksum = (checksum >> 16) + (checksum & 0xffff);
 	checksum += (checksum >> 16);
-	checksum = ~checksum;
-	ip_packet->ip_sum = checksum;
+	ip_packet->ip_sum = (~checksum);
 }
 /* this finds a network interface: */
 static struct ndbootd_interface *
