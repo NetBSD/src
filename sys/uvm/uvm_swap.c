@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.122.2.3 2007/03/21 20:12:00 ad Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.122.2.4 2007/04/08 21:44:02 ad Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.122.2.3 2007/03/21 20:12:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.122.2.4 2007/04/08 21:44:02 ad Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -259,7 +259,7 @@ uvm_swap_init(void)
 	swapmap = vmem_create("swapmap", 1, INT_MAX - 1, 1, NULL, NULL, NULL, 0,
 	    VM_NOSLEEP, IPL_NONE);
 	if (swapmap == 0)
-		panic("uvm_swap_init: extent_create failed");
+		panic("uvm_swap_init: vmem_create failed");
 
 	/*
 	 * done!
