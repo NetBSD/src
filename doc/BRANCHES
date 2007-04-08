@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.171 2007/04/02 10:18:52 rmind Exp $
+#	$NetBSD: BRANCHES,v 1.172 2007/04/08 03:53:40 matt Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -493,9 +493,10 @@ Notes:
 		  sparc64		[ WIP ]
 		  arm			[ Done.
 					  SA1 tested. ]
-		  macppc/powerpc	[ WIP ]
+		  macppc/powerpc	[ Done, OEA tested ]
 		  hppa			[ WIP ]
 		  sh3			[ Done, tested ]
+		  vax			[ Done, UP tested, MP untested ]
 
 		How to adapt a port?
 
