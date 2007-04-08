@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_wdc.c,v 1.85 2006/09/30 15:56:18 itohy Exp $	*/
+/*	$NetBSD: ata_wdc.c,v 1.86 2007/04/08 06:59:43 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.
@@ -66,11 +66,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.85 2006/09/30 15:56:18 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.86 2007/04/08 06:59:43 dyoung Exp $");
 
-#ifndef ATADEBUG
-#define ATADEBUG
-#endif /* ATADEBUG */
+#include "opt_ata.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -793,12 +791,11 @@ wdc_ata_bio_kill_xfer(struct ata_channel *chp, struct ata_xfer *xfer,
 static void
 wdc_ata_bio_done(struct ata_channel *chp, struct ata_xfer *xfer)
 {
-	struct atac_softc *atac = chp->ch_atac;
 	struct ata_bio *ata_bio = xfer->c_cmd;
 	int drive = xfer->c_drive;
 
 	ATADEBUG_PRINT(("wdc_ata_bio_done %s:%d:%d: flags 0x%x\n",
-	    atac->atac_dev.dv_xname, chp->ch_channel, xfer->c_drive,
+	    chp->ch_atac->atac_dev.dv_xname, chp->ch_channel, xfer->c_drive,
 	    (u_int)xfer->c_flags),
 	    DEBUG_XFERS);
 
