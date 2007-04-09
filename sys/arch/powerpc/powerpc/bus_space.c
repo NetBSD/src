@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.10 2007/03/04 06:00:37 christos Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.11 2007/04/09 17:39:31 garbled Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.10 2007/03/04 06:00:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.11 2007/04/09 17:39:31 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -567,8 +567,8 @@ memio_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size, int flags,
 		 * Same as above, but via the MPC601's I/O segments
 		 */
 		register_t sr = iosrtable[pa >> ADDR_SR_SHFT];
-		if (SR601_VALID_P(sr) && SR601_PA_MATCH_P(sr, pa) &&
-		    SR601_PA_MATCH_P(sr, pa + size - 1)) {
+		if (SR601_VALID_P(sr) && ((pa >> ADDR_SR_SHFT) ==
+		    ((pa + size - 1) >> ADDR_SR_SHFT))) {
 			*bshp = pa;
 			return (0);
 		}
