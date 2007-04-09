@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vnops.c,v 1.55 2007/04/08 00:21:59 gdt Exp $	*/
+/*	$NetBSD: coda_vnops.c,v 1.56 2007/04/09 21:38:18 gdt Exp $	*/
 
 /*
  *
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.55 2007/04/08 00:21:59 gdt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.56 2007/04/09 21:38:18 gdt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2014,14 +2014,15 @@ coda_putpages(void *v)
 	struct vnode *vp = ap->a_vp;
 
 	/*
-	 * XXX This is totally inadequate and if called will cause problems.
-	 */
-	printf("coda_putpages %p UNHANDLED!!!\n", vp);
-
-	/*
 	 * v_uobj.vmobjlock is held by caller, and we must release it,
 	 * per vnodeops(9).  But vnode_if.src doesn't say this.
 	 */
+	/*
+	 * Previously the vnode interlock was unlocked; this is
+	 * shadowed by the v_uobj lock.  Keep the old code until this
+	 * is all straightened out.
+	 */
+	simple_unlock(&vp->v_interlock);
 
 	/* Check for control object. */
 	if (IS_CTL_VP(vp)) {
