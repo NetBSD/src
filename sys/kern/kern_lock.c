@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.110.2.3 2007/04/05 22:14:04 ad Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.110.2.4 2007/04/09 21:27:57 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.110.2.3 2007/04/05 22:14:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.110.2.4 2007/04/09 21:27:57 ad Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_ddb.h"
@@ -761,7 +761,7 @@ void
 assert_sleepable(struct simplelock *interlock, const char *msg)
 {
 
-	LOCKDEBUG_BARRIER(NULL, 1);
+	LOCKDEBUG_BARRIER(&kernel_lock, 1);
 	if (curlwp == NULL) {
 		panic("assert_sleepable: NULL curlwp");
 	}
