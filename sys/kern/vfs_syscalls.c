@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.308 2007/04/08 11:20:43 hannken Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.309 2007/04/09 21:11:03 pooka Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.308 2007/04/08 11:20:43 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.309 2007/04/09 21:11:03 pooka Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -155,9 +155,8 @@ mount_update(struct lwp *l, struct vnode *vp, const char *path, int flags,
 	mp = vp->v_mount;
 	saved_flags = mp->mnt_flag;
 
-	/* We can't operate on VROOT here. */
+	/* We can operate only on VROOT nodes. */
 	if ((vp->v_flag & VROOT) == 0) {
-		vput(vp);
 		error = EINVAL;
 		goto out;
 	}
