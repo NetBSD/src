@@ -1755,9 +1755,13 @@ vax_mode_dependent_address_p (rtx x)
   xfoo0 = XEXP (x, 0);
   xfoo1 = XEXP (x, 1);
 
-  if (CONSTANT_ADDRESS_P (xfoo0) && REG_P (xfoo1))
+  if (CONST_INT_P (xfoo0) && REG_P (xfoo1))
     return false;
-  if (CONSTANT_ADDRESS_P (xfoo1) && REG_P (xfoo0))
+  if (CONST_INT_P (xfoo1) && REG_P (xfoo0))
+    return false;
+  if (!flag_pic && CONSTANT_ADDRESS_P (xfoo0) && REG_P (xfoo1))
+    return false;
+  if (!flag_pic && CONSTANT_ADDRESS_P (xfoo1) && REG_P (xfoo0))
     return false;
 
   return true;
