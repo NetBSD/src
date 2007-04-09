@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bnx.c,v 1.4 2007/04/09 14:23:03 bouyer Exp $	*/
+/*	$NetBSD: if_bnx.c,v 1.5 2007/04/09 19:34:50 bouyer Exp $	*/
 /*	$OpenBSD: if_bnx.c,v 1.43 2007/01/30 03:21:10 krw Exp $	*/
 
 /*-
@@ -35,7 +35,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/dev/bce/if_bce.c,v 1.3 2006/04/13 14:12:26 ru Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.4 2007/04/09 14:23:03 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.5 2007/04/09 19:34:50 bouyer Exp $");
 
 /*
  * The following controllers are supported by this driver:
@@ -671,8 +671,6 @@ bnx_attach(struct device *parent, struct device *self, void *aux)
 	    IFCAP_CSUM_IPv4_Tx | IFCAP_CSUM_IPv4_Rx |
 	    IFCAP_CSUM_TCPv4_Tx | IFCAP_CSUM_TCPv4_Rx |
 	    IFCAP_CSUM_UDPv4_Tx | IFCAP_CSUM_UDPv4_Rx;
-
-	sc->mbuf_alloc_size = BNX_MAX_MRU;
 
 	/* Hookup IRQ last. */
 	sc->bnx_intrhand = pci_intr_establish(pc, ih, IPL_NET, bnx_intr, sc);
@@ -3066,6 +3064,7 @@ bnx_get_buf(struct bnx_softc *sc, struct mbuf *m, u_int16_t *prod,
 	u_int16_t debug_chain_prod =	*chain_prod;
 #endif
 	u_int16_t first_chain_prod;
+	u_int16_t min_free_bd;
 
 	DBPRINT(sc, (BNX_VERBOSE_RESET | BNX_VERBOSE_RECV), "Entering %s()\n", 
 	    __FUNCTION__);
@@ -3079,135 +3078,150 @@ bnx_get_buf(struct bnx_softc *sc, struct mbuf *m, u_int16_t *prod,
 	    "0x%04X, prod_bseq = 0x%08X\n", __FUNCTION__, *prod, *chain_prod,
 	    *prod_bseq);
 
-	if (m == NULL) {
-		DBRUNIF(DB_RANDOMTRUE(bnx_debug_mbuf_allocation_failure),
-		    BNX_PRINTF(sc, "Simulating mbuf allocation failure.\n");
+	/* try to get in as many mbufs as possible */
+	if (sc->mbuf_alloc_size == MCLBYTES)
+		min_free_bd = (MCLBYTES + PAGE_SIZE - 1) / PAGE_SIZE;
+	else
+		min_free_bd = (BNX_MAX_MRU + PAGE_SIZE - 1) / PAGE_SIZE;
+	while (sc->free_rx_bd >= min_free_bd) {
+		if (m == NULL) {
+			DBRUNIF(DB_RANDOMTRUE(bnx_debug_mbuf_allocation_failure),
+			    BNX_PRINTF(sc, "Simulating mbuf allocation failure.\n");
 
-			sc->mbuf_alloc_failed++;
-			rc = ENOBUFS;
-			goto bnx_get_buf_exit);
+				sc->mbuf_alloc_failed++;
+				rc = ENOBUFS;
+				goto bnx_get_buf_exit);
 
-		/* This is a new mbuf allocation. */
-		MGETHDR(m_new, M_DONTWAIT, MT_DATA);
-		if (m_new == NULL) {
-			DBPRINT(sc, BNX_WARN,
-			    "%s(%d): RX mbuf header allocation failed!\n", 
-			    __FILE__, __LINE__);
+			/* This is a new mbuf allocation. */
+			MGETHDR(m_new, M_DONTWAIT, MT_DATA);
+			if (m_new == NULL) {
+				DBPRINT(sc, BNX_WARN,
+				    "%s(%d): RX mbuf header allocation failed!\n", 
+				    __FILE__, __LINE__);
 
-			DBRUNIF(1, sc->mbuf_alloc_failed++);
+				DBRUNIF(1, sc->mbuf_alloc_failed++);
 
-			rc = ENOBUFS;
-			goto bnx_get_buf_exit;
+				rc = ENOBUFS;
+				goto bnx_get_buf_exit;
+			}
+
+			DBRUNIF(1, sc->rx_mbuf_alloc++);
+			if (sc->mbuf_alloc_size == MCLBYTES)
+				MCLGET(m_new, M_DONTWAIT);
+			else
+				MEXTMALLOC(m_new, sc->mbuf_alloc_size,
+				    M_DONTWAIT);
+			if (!(m_new->m_flags & M_EXT)) {
+				DBPRINT(sc, BNX_WARN,
+				    "%s(%d): RX mbuf chain allocation failed!\n", 
+				    __FILE__, __LINE__);
+				
+				m_freem(m_new);
+
+				DBRUNIF(1, sc->rx_mbuf_alloc--);
+				DBRUNIF(1, sc->mbuf_alloc_failed++);
+
+				rc = ENOBUFS;
+				goto bnx_get_buf_exit;
+			}
+				
+		} else {
+			m_new = m;
+			m = NULL;
+			m_new->m_data = m_new->m_ext.ext_buf;
 		}
+		m_new->m_len = m_new->m_pkthdr.len = sc->mbuf_alloc_size;
 
-		DBRUNIF(1, sc->rx_mbuf_alloc++);
-		MEXTMALLOC(m_new, sc->mbuf_alloc_size, M_DONTWAIT);
-		if (!(m_new->m_flags & M_EXT)) {
-			DBPRINT(sc, BNX_WARN,
-			    "%s(%d): RX mbuf chain allocation failed!\n", 
+		/* Map the mbuf cluster into device memory. */
+		map = sc->rx_mbuf_map[*chain_prod];
+		first_chain_prod = *chain_prod;
+		if (bus_dmamap_load_mbuf(sc->bnx_dmatag, map, m_new, BUS_DMA_NOWAIT)) {
+			BNX_PRINTF(sc, "%s(%d): Error mapping mbuf into RX chain!\n",
 			    __FILE__, __LINE__);
-			
+
 			m_freem(m_new);
 
 			DBRUNIF(1, sc->rx_mbuf_alloc--);
-			DBRUNIF(1, sc->mbuf_alloc_failed++);
 
 			rc = ENOBUFS;
 			goto bnx_get_buf_exit;
 		}
-			
-		m_new->m_len = m_new->m_pkthdr.len = sc->mbuf_alloc_size;
-	} else {
-		m_new = m;
-		m_new->m_len = m_new->m_pkthdr.len = sc->mbuf_alloc_size;
-		m_new->m_data = m_new->m_ext.ext_buf;
-	}
+		bus_dmamap_sync(sc->bnx_dmatag, map, 0, map->dm_mapsize,
+		    BUS_DMASYNC_PREREAD);
 
-	/* Map the mbuf cluster into device memory. */
-	map = sc->rx_mbuf_map[*chain_prod];
-	first_chain_prod = *chain_prod;
-	if (bus_dmamap_load_mbuf(sc->bnx_dmatag, map, m_new, BUS_DMA_NOWAIT)) {
-		BNX_PRINTF(sc, "%s(%d): Error mapping mbuf into RX chain!\n",
-		    __FILE__, __LINE__);
+		/* Watch for overflow. */
+		DBRUNIF((sc->free_rx_bd > USABLE_RX_BD),
+		    aprint_error("%s: Too many free rx_bd (0x%04X > 0x%04X)!\n", 
+		    sc->bnx_dev.dv_xname,
+		    sc->free_rx_bd, (u_int16_t) USABLE_RX_BD));
 
-		m_freem(m_new);
+		DBRUNIF((sc->free_rx_bd < sc->rx_low_watermark), 
+		    sc->rx_low_watermark = sc->free_rx_bd);
 
-		DBRUNIF(1, sc->rx_mbuf_alloc--);
+		/*
+		 * Setup the rx_bd for the first segment
+		 */
+		rxbd = &sc->rx_bd_chain[RX_PAGE(*chain_prod)][RX_IDX(*chain_prod)];
 
-		rc = ENOBUFS;
-		goto bnx_get_buf_exit;
-	}
-	bus_dmamap_sync(sc->bnx_dmatag, map, 0, map->dm_mapsize,
-	    BUS_DMASYNC_PREREAD);
-
-	/* Watch for overflow. */
-	DBRUNIF((sc->free_rx_bd > USABLE_RX_BD),
-	    aprint_error("%s: Too many free rx_bd (0x%04X > 0x%04X)!\n", 
-	    sc->bnx_dev.dv_xname,
-	    sc->free_rx_bd, (u_int16_t) USABLE_RX_BD));
-
-	DBRUNIF((sc->free_rx_bd < sc->rx_low_watermark), 
-	    sc->rx_low_watermark = sc->free_rx_bd);
-
-	/* Setup the rx_bd for the first segment. */
-	rxbd = &sc->rx_bd_chain[RX_PAGE(*chain_prod)][RX_IDX(*chain_prod)];
-
-	addr = (u_int32_t)(map->dm_segs[0].ds_addr);
-	rxbd->rx_bd_haddr_lo = htole32(addr);
-	addr = (u_int32_t)((u_int64_t)map->dm_segs[0].ds_addr >> 32);
-	rxbd->rx_bd_haddr_hi = htole32(addr);
-	rxbd->rx_bd_len = htole32(map->dm_segs[0].ds_len);
-	rxbd->rx_bd_flags = htole32(RX_BD_FLAGS_START);
-	*prod_bseq += map->dm_segs[0].ds_len;
-	bus_dmamap_sync(sc->bnx_dmatag,
-	    sc->rx_bd_chain_map[RX_PAGE(*chain_prod)],
-	    sizeof(struct rx_bd) * RX_IDX(*chain_prod), sizeof(struct rx_bd),
-	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
-
-	for (i = 1; i < map->dm_nsegs; i++) {
-		*prod = NEXT_RX_BD(*prod);
-		*chain_prod = RX_CHAIN_IDX(*prod); 
-
-		rxbd =
-		    &sc->rx_bd_chain[RX_PAGE(*chain_prod)][RX_IDX(*chain_prod)];
-
-		addr = (u_int32_t)(map->dm_segs[i].ds_addr);
+		addr = (u_int32_t)(map->dm_segs[0].ds_addr);
 		rxbd->rx_bd_haddr_lo = htole32(addr);
-		addr = (u_int32_t)((u_int64_t)map->dm_segs[i].ds_addr >> 32);
+		addr = (u_int32_t)((u_int64_t)map->dm_segs[0].ds_addr >> 32);
 		rxbd->rx_bd_haddr_hi = htole32(addr);
-		rxbd->rx_bd_len = htole32(map->dm_segs[i].ds_len);
-		rxbd->rx_bd_flags = 0;
-		*prod_bseq += map->dm_segs[i].ds_len;
+		rxbd->rx_bd_len = htole32(map->dm_segs[0].ds_len);
+		rxbd->rx_bd_flags = htole32(RX_BD_FLAGS_START);
+		*prod_bseq += map->dm_segs[0].ds_len;
+		bus_dmamap_sync(sc->bnx_dmatag,
+		    sc->rx_bd_chain_map[RX_PAGE(*chain_prod)],
+		    sizeof(struct rx_bd) * RX_IDX(*chain_prod), sizeof(struct rx_bd),
+		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+
+		for (i = 1; i < map->dm_nsegs; i++) {
+			*prod = NEXT_RX_BD(*prod);
+			*chain_prod = RX_CHAIN_IDX(*prod); 
+
+			rxbd =
+			    &sc->rx_bd_chain[RX_PAGE(*chain_prod)][RX_IDX(*chain_prod)];
+
+			addr = (u_int32_t)(map->dm_segs[i].ds_addr);
+			rxbd->rx_bd_haddr_lo = htole32(addr);
+			addr = (u_int32_t)((u_int64_t)map->dm_segs[i].ds_addr >> 32);
+			rxbd->rx_bd_haddr_hi = htole32(addr);
+			rxbd->rx_bd_len = htole32(map->dm_segs[i].ds_len);
+			rxbd->rx_bd_flags = 0;
+			*prod_bseq += map->dm_segs[i].ds_len;
+			bus_dmamap_sync(sc->bnx_dmatag,
+			    sc->rx_bd_chain_map[RX_PAGE(*chain_prod)],
+			    sizeof(struct rx_bd) * RX_IDX(*chain_prod),
+			    sizeof(struct rx_bd), BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+		}
+
+		rxbd->rx_bd_flags |= htole32(RX_BD_FLAGS_END);
 		bus_dmamap_sync(sc->bnx_dmatag,
 		    sc->rx_bd_chain_map[RX_PAGE(*chain_prod)],
 		    sizeof(struct rx_bd) * RX_IDX(*chain_prod),
 		    sizeof(struct rx_bd), BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+
+		/*
+		 * Save the mbuf, ajust the map pointer (swap map for first and
+		 * last rx_bd entry to that rx_mbuf_ptr and rx_mbuf_map matches)
+		 * and update counter.
+		 */
+		sc->rx_mbuf_ptr[*chain_prod] = m_new;
+		sc->rx_mbuf_map[first_chain_prod] = sc->rx_mbuf_map[*chain_prod];
+		sc->rx_mbuf_map[*chain_prod] = map;
+		sc->free_rx_bd -= map->dm_nsegs;
+
+		DBRUN(BNX_VERBOSE_RECV, bnx_dump_rx_mbuf_chain(sc, debug_chain_prod, 
+		    map->dm_nsegs));
+		*prod = NEXT_RX_BD(*prod);
+		*chain_prod = RX_CHAIN_IDX(*prod); 
 	}
 
-	rxbd->rx_bd_flags |= htole32(RX_BD_FLAGS_END);
-	bus_dmamap_sync(sc->bnx_dmatag,
-	    sc->rx_bd_chain_map[RX_PAGE(*chain_prod)],
-	    sizeof(struct rx_bd) * RX_IDX(*chain_prod),
-	    sizeof(struct rx_bd), BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
-
-	/*
-	 * Save the mbuf, ajust the map pointer (swap map for first and
-	 * last rx_bd entry to that rx_mbuf_ptr and rx_mbuf_map matches)
-	 * and update counter.
-	 */
-	sc->rx_mbuf_ptr[*chain_prod] = m_new;
-	sc->rx_mbuf_map[first_chain_prod] = sc->rx_mbuf_map[*chain_prod];
-	sc->rx_mbuf_map[*chain_prod] = map;
-	sc->free_rx_bd -= map->dm_nsegs;
-
-	DBRUN(BNX_VERBOSE_RECV, bnx_dump_rx_mbuf_chain(sc, debug_chain_prod, 
-	    map->dm_nsegs));
-
+bnx_get_buf_exit:
 	DBPRINT(sc, BNX_VERBOSE_RECV, "%s(exit): prod = 0x%04X, chain_prod "
 	    "= 0x%04X, prod_bseq = 0x%08X\n", __FUNCTION__, *prod,
 	    *chain_prod, *prod_bseq);
 
-bnx_get_buf_exit:
 	DBPRINT(sc, (BNX_VERBOSE_RESET | BNX_VERBOSE_RECV), "Exiting %s()\n", 
 	    __FUNCTION__);
 
@@ -3390,16 +3404,10 @@ bnx_init_rx_chain(struct bnx_softc *sc)
 
 	/* Allocate mbuf clusters for the rx_bd chain. */
 	prod = prod_bseq = 0;
-	while (prod < BNX_RX_SLACK_SPACE) {
-		chain_prod = RX_CHAIN_IDX(prod);
-		if (bnx_get_buf(sc, NULL, &prod, &chain_prod, &prod_bseq)) {
-			BNX_PRINTF(sc,
-			    "Error filling RX chain: rx_bd[0x%04X]!\n",
-			    chain_prod);
-			rc = ENOBUFS;
-			break;
-		}
-		prod = NEXT_RX_BD(prod);
+	chain_prod = RX_CHAIN_IDX(prod);
+	if (bnx_get_buf(sc, NULL, &prod, &chain_prod, &prod_bseq)) {
+		BNX_PRINTF(sc,
+		    "Error filling RX chain: rx_bd[0x%04X]!\n", chain_prod);
 	}
 
 	/* Save the RX chain producer index. */
@@ -3636,12 +3644,14 @@ bnx_rx_intr(struct bnx_softc *sc)
 
 		/* The mbuf is stored with the last rx_bd entry of a packet. */
 		if (sc->rx_mbuf_ptr[sw_chain_cons] != NULL) {
+#ifdef DIAGNOSTIC
 			/* Validate that this is the last rx_bd. */
-			DBRUNIF((!(rxbd->rx_bd_flags & RX_BD_FLAGS_END)),
-			    aprint_error("%s: Unexpected mbuf found in "
+			if ((rxbd->rx_bd_flags & RX_BD_FLAGS_END) == 0) {
+			    printf("%s: Unexpected mbuf found in "
 			        "rx_bd[0x%04X]!\n", sc->bnx_dev.dv_xname,
 			        sw_chain_cons);
-				bnx_breakpoint(sc));
+			}
+#endif
 
 			/* DRC - ToDo: If the received packet is small, say less
 			 *             than 128 bytes, allocate a new mbuf here,
@@ -3650,6 +3660,19 @@ bnx_rx_intr(struct bnx_softc *sc)
 			 */
 
 			/* Unmap the mbuf from DMA space. */
+#ifdef DIAGNOSTIC
+			if (sc->rx_mbuf_map[sw_chain_cons]->dm_mapsize == 0) {
+				printf("invalid map sw_cons 0x%x "
+				"sw_prod 0x%x "
+				"sw_chain_cons 0x%x "
+				"sw_chain_prod 0x%x "
+				"hw_cons 0x%x "
+				"TOTAL_RX_BD_PER_PAGE 0x%lx "
+				"TOTAL_RX_BD 0x%lx\n",
+				sw_cons, sw_prod, sw_chain_cons, sw_chain_prod,
+				hw_cons, TOTAL_RX_BD_PER_PAGE, TOTAL_RX_BD);
+			}
+#endif
 			bus_dmamap_sync(sc->bnx_dmatag,
 			    sc->rx_mbuf_map[sw_chain_cons], 0,
 			    sc->rx_mbuf_map[sw_chain_cons]->dm_mapsize,
@@ -3711,7 +3734,7 @@ bnx_rx_intr(struct bnx_softc *sc)
 					panic("%s: Can't reuse RX mbuf!\n",
 					    sc->bnx_dev.dv_xname);
 				}
-				goto bnx_rx_int_next_rx;
+				continue;
 			}
 
 			/* 
@@ -3734,7 +3757,7 @@ bnx_rx_intr(struct bnx_softc *sc)
 					panic("%s: Double mbuf allocation "
 					    "failure!", sc->bnx_dev.dv_xname);
 				}
-				goto bnx_rx_int_next_rx;
+				continue;
 			}
 
 			/* Skip over the l2_fhdr when passing the data up
@@ -3810,7 +3833,7 @@ bnx_rx_intr(struct bnx_softc *sc)
 
 				if (m->m_pkthdr.len < ETHER_HDR_LEN) {
 					m_freem(m);
-					goto bnx_rx_int_next_rx;
+					continue;
 				}
 				m_copydata(m, 0, ETHER_HDR_LEN, (void *)&vh);
 				vh.evl_proto = vh.evl_encap_proto;
@@ -3818,7 +3841,7 @@ bnx_rx_intr(struct bnx_softc *sc)
 				vh.evl_encap_proto = htons(ETHERTYPE_VLAN);
 				m_adj(m, ETHER_HDR_LEN);
 				if ((m = m_prepend(m, sizeof(vh), M_DONTWAIT)) == NULL)
-					goto bnx_rx_int_next_rx;
+					continue;
 				m->m_pkthdr.len += sizeof(vh);
 				if (m->m_len < sizeof(vh) &&
 				    (m = m_pullup(m, sizeof(vh))) == NULL)
@@ -3827,7 +3850,7 @@ bnx_rx_intr(struct bnx_softc *sc)
 #else
 				VLAN_INPUT_TAG(ifp, m,
 				    l2fhdr->l2_fhdr_vlan_tag >> 16,
-				    goto bnx_rx_int_next_rx);
+				    continue);
 #endif
 			}
 
@@ -3844,12 +3867,9 @@ bnx_rx_intr(struct bnx_softc *sc)
 			ifp->if_ipackets++;
 			DBPRINT(sc, BNX_VERBOSE_RECV,
 			    "%s(): Passing received frame up.\n", __FUNCTION__);
-			//ether_input_mbuf(ifp, m);
 			(*ifp->if_input)(ifp, m);
 			DBRUNIF(1, sc->rx_mbuf_alloc--);
 
-bnx_rx_int_next_rx:
-			sw_prod = NEXT_RX_BD(sw_prod);
 		}
 
 		sw_cons = NEXT_RX_BD(sw_cons);
@@ -4074,7 +4094,14 @@ bnx_init(struct ifnet *ifp)
 	}
 
 	/* Calculate and program the Ethernet MRU size. */
-	ether_mtu = BNX_MAX_JUMBO_ETHER_MTU_VLAN;
+	if (ifp->if_mtu <= ETHERMTU) {
+		ether_mtu = BNX_MAX_STD_ETHER_MTU_VLAN;
+		sc->mbuf_alloc_size = MCLBYTES;
+	} else {
+		ether_mtu = BNX_MAX_JUMBO_ETHER_MTU_VLAN;
+		sc->mbuf_alloc_size = BNX_MAX_MRU;
+	}
+
 
 	DBPRINT(sc, BNX_INFO, "%s(): setting MRU = %d\n",
 	    __FUNCTION__, ether_mtu);
@@ -4850,6 +4877,8 @@ bnx_tick(void *xsc)
 	struct ifnet		*ifp = &sc->ethercom.ec_if;
 	struct mii_data		*mii = NULL;
 	u_int32_t		msg;
+	u_int16_t		prod, chain_prod;
+	u_int32_t		prod_bseq;
 	int s = splnet();
 
 	/* Tell the firmware that the driver is still running. */
@@ -4885,6 +4914,13 @@ bnx_tick(void *xsc)
 	}
 
 bnx_tick_exit:
+	/* try to get more RX buffers, just in case */
+	prod = sc->rx_prod;
+	prod_bseq = sc->rx_prod_bseq;
+	chain_prod = RX_CHAIN_IDX(prod);
+	bnx_get_buf(sc, NULL, &prod, &chain_prod, &prod_bseq);
+	sc->rx_prod = prod;
+	sc->rx_prod_bseq = prod_bseq;
 	splx(s);
 	return;
 }
