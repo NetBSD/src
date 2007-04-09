@@ -1,4 +1,4 @@
-/*	$NetBSD: node.c,v 1.13 2007/04/09 20:52:32 pooka Exp $	*/
+/*	$NetBSD: node.c,v 1.14 2007/04/09 20:59:08 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: node.c,v 1.13 2007/04/09 20:52:32 pooka Exp $");
+__RCSID("$NetBSD: node.c,v 1.14 2007/04/09 20:59:08 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -521,7 +521,7 @@ psshfs_node_symlink(struct puffs_cc *pcc, void *opc, void **newnode,
 	}
 
 	pn_new = allocnode(pu, pn, pcn->pcn_name, va);
-	if (!pn) {
+	if (!pn_new) {
 		rv = ENOMEM;
 		goto out;
 	}
