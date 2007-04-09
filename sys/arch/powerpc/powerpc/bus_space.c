@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.11 2007/04/09 17:39:31 garbled Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.12 2007/04/09 17:43:40 garbled Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.11 2007/04/09 17:39:31 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.12 2007/04/09 17:43:40 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -629,8 +629,8 @@ memio_unmap(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size)
 		}
 	} else {
 		register_t sr = iosrtable[va >> ADDR_SR_SHFT];
-		if (SR601_VALID_P(sr) && SR601_PA_MATCH_P(sr, va) &&
-		    SR601_PA_MATCH_P(sr, va + size - 1)) {
+		if (SR601_VALID_P(sr) && ((pa >> ADDR_SR_SHFT) ==
+		    ((pa + size - 1) >> ADDR_SR_SHFT))) {
 			pa = va;
 			va = 0;
 		} else {
