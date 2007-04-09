@@ -1,4 +1,4 @@
-.\"	$NetBSD: release.7,v 1.22 2007/04/01 14:13:55 apb Exp $
+.\"	$NetBSD: release.7,v 1.23 2007/04/09 08:19:54 apb Exp $
 .\"
 .\" Copyright (c) 1997, 2000, 2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd April 1, 2007
+.Dd April 9, 2007
 .Dt RELEASE 7
 .Os
 .Sh NAME
@@ -155,8 +155,44 @@ release or snapshot was built, in the default format produced by the
 command:
 .Sy date -u .
 .
+.It Sy iso/
+CDROM images in ISO 9660 format, usually created with
+.Dq ./build.sh ... iso-image ...
+after a
+.Dq ./build.sh -x ... release sourcesets ...
+in
+.Pa src .
+.Pp
+Images in this directory, unlike images in the
+.Sm off
+.Xo
+.Sy .../NetBSD-
+.Em \*[Lt]rel\*[Gt]
+.Sy /
+.Em \*[Lt]machine\*[Gt]
+.Sy /installation/cdrom/
+.Xc
+.Sm on
+directory, should contain file systems that
+have an internal layout that corresponds to
+a complete release for one or more machine types.
+These images are usually bootable.
+.Bl -tag -width "\*[Lt]machine_arch\*[Gt]cd.iso"
+.It Sy BSDSUM
+.It Sy CKSUM
+.It Sy MD5
+.It Sy README
+.It Sy SYSVSUM
+.Sm off
+.It Xo
+.Em \*[Lt]machine_arch\*[Gt]
+.Sy cd.iso
+.Xc
+.Sm on
+.El
+.
 .It Sy shared/
-Files shared by one or more platforms.
+Files shared by two or more machine types.
 .Bl -tag -width "\*[Lt]machine_arch\*[Gt]"
 .It Em \*[Lt]machine_arch\*[Gt] Ns Pa /
 Files which may be shared by all systems of the same
@@ -353,14 +389,16 @@ platforms may have differently named kernels.
 installation helper items
 .Bl -tag -width "diskimage/"
 .It Sy cdrom/
-CDROM images in ISO 9660 format, usually created with
-.Dq make iso-image
-in
-.Pa src/etc
-after a
-.Dq ./build.sh -x ... release sourcesets ...
+CDROM images in ISO 9660 format, usually created as part of
+.Dq build.sh ... release ...
 in
 .Pa src .
+.Pp
+Images in this directory will typically be bootable,
+and will contain one or more of a kernel, installation tools,
+and rescue tools.
+They will not contain installation sets, source sets, or
+other components of a complete release.
 .Bl -tag -width "netbsd-ARCH.iso"
 .It Sy BSDSUM
 .It Sy CKSUM
