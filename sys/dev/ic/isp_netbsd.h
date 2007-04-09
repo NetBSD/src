@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.h,v 1.58 2007/03/04 06:01:57 christos Exp $ */
+/* $NetBSD: isp_netbsd.h,v 1.58.2.1 2007/04/09 22:09:57 ad Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -123,7 +123,7 @@ struct isposinfo {
 #define	discovered	un._discovered
 	} un;
 	u_int32_t		threadwork;
-	struct proc *		thread;
+	struct lwp *		thread;
 };
 #define	isp_dmatag		isp_osinfo.dmatag
 #define	isp_rqdmap		isp_osinfo.rqdmap

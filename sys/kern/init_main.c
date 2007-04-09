@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.299.2.3 2007/03/21 20:11:49 ad Exp $	*/
+/*	$NetBSD: init_main.c,v 1.299.2.4 2007/04/09 22:10:02 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.299.2.3 2007/03/21 20:11:49 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.299.2.4 2007/04/09 22:10:02 ad Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_kcont.h"
@@ -587,11 +587,11 @@ main(void)
 
 	/* Create the pageout daemon kernel thread. */
 	uvm_swap_init();
-	if (kthread_create1(uvm_pageout, NULL, NULL, "pagedaemon"))
+	if (kthread_create1(PVM, false, uvm_pageout, NULL, NULL, "pgdaemon"))
 		panic("fork pagedaemon");
 
 	/* Create the filesystem syncer kernel thread. */
-	if (kthread_create1(sched_sync, NULL, NULL, "ioflush"))
+	if (kthread_create1(PINOD, false, sched_sync, NULL, NULL, "ioflush"))
 		panic("fork syncer");
 
 	/* Create the aiodone daemon kernel thread. */

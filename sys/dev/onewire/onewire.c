@@ -1,4 +1,4 @@
-/* $NetBSD: onewire.c,v 1.4 2006/11/16 01:33:08 christos Exp $ */
+/* $NetBSD: onewire.c,v 1.4.8.1 2007/04/09 22:09:59 ad Exp $ */
 /*	$OpenBSD: onewire.c,v 1.1 2006/03/04 16:27:03 grange Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: onewire.c,v 1.4 2006/11/16 01:33:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: onewire.c,v 1.4.8.1 2007/04/09 22:09:59 ad Exp $");
 
 /*
  * 1-Wire bus driver.
@@ -53,7 +53,7 @@ struct onewire_softc {
 
 	struct onewire_bus *		sc_bus;
 	struct lock			sc_lock;
-	struct proc *			sc_thread;
+	struct lwp *			sc_thread;
 	TAILQ_HEAD(, onewire_device)	sc_devs;
 
 	int				sc_dying;
@@ -323,8 +323,8 @@ onewire_createthread(void *arg)
 {
 	struct onewire_softc *sc = arg;
 
-	if (kthread_create1(onewire_thread, sc, &sc->sc_thread,
-	    "%s", sc->sc_dev.dv_xname) != 0)
+	if (kthread_create1(PRI_NONE, false, onewire_thread, sc,
+	    &sc->sc_thread, "%s", sc->sc_dev.dv_xname) != 0)
 		printf("%s: can't create kernel thread\n",
 		    sc->sc_dev.dv_xname);
 }

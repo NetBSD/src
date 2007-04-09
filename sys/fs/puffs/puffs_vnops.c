@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.52.4.1 2007/04/05 21:57:48 ad Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.52.4.2 2007/04/09 22:10:01 ad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.52.4.1 2007/04/05 21:57:48 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.52.4.2 2007/04/09 22:10:01 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/fstrans.h>
@@ -1789,7 +1789,7 @@ puffs_strategy(void *v)
 #ifdef DIAGNOSTIC
 	if (dowritefaf)
 		KASSERT((bp->b_flags & B_READ) == 0);
-	if (curproc == uvm.pagedaemon_proc)
+	if (curlwp == uvm.pagedaemon_lwp)
 		KASSERT(dowritefaf);
 #endif
 

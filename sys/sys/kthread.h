@@ -1,4 +1,4 @@
-/*	$NetBSD: kthread.h,v 1.4 2000/07/14 07:15:06 thorpej Exp $	*/
+/*	$NetBSD: kthread.h,v 1.4.82.1 2007/04/09 22:10:06 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -45,11 +45,11 @@
  */
 
 #ifdef _KERNEL
-#include <sys/proc.h>	/* struct proc, tsleep(), wakeup() */
+#include <sys/proc.h>
 
-int	kthread_create1(void (*)(void *), void *, struct proc **,
-	    const char *, ...)
-	    __attribute__((__format__(__printf__,4,5)));
+int	kthread_create1(pri_t, bool, void (*)(void *), void *,
+			struct lwp **, const char *, ...)
+	    __attribute__((__format__(__printf__,6,7)));
 void	kthread_create(void (*)(void *), void *);
 void	kthread_run_deferred_queue(void);
 void	kthread_exit(int) __attribute__((__noreturn__));

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.119.2.2 2007/03/21 20:11:51 ad Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.119.2.3 2007/04/09 22:10:02 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.119.2.2 2007/03/21 20:11:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.119.2.3 2007/04/09 22:10:02 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h"
@@ -59,12 +59,10 @@ __KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.119.2.2 2007/03/21 20:11:51 ad Exp
 #ifdef KTRACE
 
 /*
- * XXX:
+ * TODO:
  *	- need better error reporting?
  *	- userland utility to sort ktrace.out by timestamp.
  *	- keep minimum information in ktrace_entry when rest of alloc failed.
- *	- enlarge ktrace_entry so that small entry won't require additional
- *	  alloc?
  *	- per trace control of configurable parameters.
  */
 
@@ -99,7 +97,7 @@ struct ktr_desc {
 	int ktd_intrwakdl;		/* ditto, but when interactive */
 
 	struct file *ktd_fp;		/* trace output file */
-	struct proc *ktd_proc;		/* our kernel thread */
+	struct lwp *ktd_lwp;		/* our kernel thread */
 	TAILQ_HEAD(, ktrace_entry) ktd_queue;
 	struct callout ktd_wakch;	/* delayed wakeup */
 	kcondvar_t ktd_sync_cv;
@@ -371,11 +369,9 @@ void
 ktefree(struct ktrace_entry *kte)
 {
 
-	KERNEL_LOCK(1, curlwp);			/* XXXSMP */
 	if (kte->kte_buf != kte->kte_space)
 		kmem_free(kte->kte_buf, kte->kte_bufsz);
 	pool_put(&kte_pool, kte);
-	KERNEL_UNLOCK_ONE(curlwp);		/* XXXSMP */
 }
 
 /*
@@ -459,18 +455,15 @@ ktealloc(struct ktrace_entry **ktep, void **bufp, struct lwp *l, int type,
 	if (ktrenter(l))
 		return EAGAIN;
 
-	KERNEL_LOCK(1, l);			/* XXXSMP */
 	kte = pool_get(&kte_pool, PR_WAITOK);
 	if (sz > sizeof(kte->kte_space)) {
 		if ((buf = kmem_alloc(sz, KM_SLEEP)) == NULL) {
 			pool_put(&kte_pool, kte);
-			KERNEL_UNLOCK_ONE(l);	/* XXXSMP */
 			ktrexit(l);
 			return ENOMEM;
 		}
 	} else
 		buf = kte->kte_space;
-	KERNEL_UNLOCK_ONE(l);			/* XXXSMP */
 
 	kte->kte_bufsz = sz;
 	kte->kte_buf = buf;
@@ -893,8 +886,8 @@ ktrace_common(struct lwp *curl, int ops, int facs, int pid, struct file *fp)
 			if (fp->f_type == DTYPE_PIPE)
 				ktd->ktd_flags |= KTDF_INTERACTIVE;
 
-			error = kthread_create1(ktrace_thread, ktd,
-			    &ktd->ktd_proc, "ktr %p", ktd);
+			error = kthread_create1(PRI_NONE, true, ktrace_thread,
+			    ktd, &ktd->ktd_lwp, "ktrace");
 			if (error != 0) {
 				kmem_free(ktd, sizeof(*ktd));
 				goto done;
@@ -1276,8 +1269,6 @@ ktrace_thread(void *arg)
 	struct ktrace_entry *kte;
 	int ktrerr, errcnt;
 
-	KERNEL_UNLOCK_ALL(curlwp, NULL);
-
 	mutex_enter(&ktrace_mutex);
 	for (;;) {
 		kte = TAILQ_FIRST(&ktd->ktd_queue);
@@ -1324,7 +1315,6 @@ ktrace_thread(void *arg)
 	callout_stop(&ktd->ktd_wakch);
 	kmem_free(ktd, sizeof(*ktd));
 
-	KERNEL_LOCK(1, curlwp);
 	kthread_exit(0);
 }
 

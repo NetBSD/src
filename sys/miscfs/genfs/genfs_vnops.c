@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.150.2.3 2007/04/05 21:57:50 ad Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.150.2.4 2007/04/09 22:10:04 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.150.2.3 2007/04/05 21:57:50 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.150.2.4 2007/04/09 22:10:04 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1051,7 +1051,7 @@ genfs_putpages(void *v)
 	struct vm_page *pgs[maxpages], *pg, *nextpg, *tpg, curmp, endmp;
 	bool wasclean, by_list, needs_clean, yld;
 	bool async = (flags & PGO_SYNCIO) == 0;
-	bool pagedaemon = curproc == uvm.pagedaemon_proc;
+	bool pagedaemon = curlwp == uvm.pagedaemon_lwp;
 	struct lwp *l = curlwp ? curlwp : &lwp0;
 	struct genfs_node *gp = VTOG(vp);
 	int dirtygen;
@@ -1529,7 +1529,7 @@ genfs_do_io(struct vnode *vp, off_t off, vaddr_t kva, size_t len, int flags,
 	mbp->b_flags = B_BUSY | brw | B_AGE | (async ? (B_CALL | B_ASYNC) : 0);
 	mbp->b_iodone = iodone;
 	mbp->b_vp = vp;
-	if (curproc == uvm.pagedaemon_proc)
+	if (curlwp == uvm.pagedaemon_lwp)
 		BIO_SETPRIO(mbp, BPRIO_TIMELIMITED);
 	else if (async)
 		BIO_SETPRIO(mbp, BPRIO_TIMENONCRITICAL);

@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_kq.c,v 1.14 2007/02/09 21:55:30 ad Exp $	*/
+/*	$NetBSD: smbfs_kq.c,v 1.14.6.1 2007/04/09 22:10:02 ad Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_kq.c,v 1.14 2007/02/09 21:55:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_kq.c,v 1.14.6.1 2007/04/09 22:10:02 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,7 +94,7 @@ struct kevq {
 	struct smb_rq		*rq;	/* request structure */
 };
 
-static struct proc *smbkqp;		/* the kevent handler */
+static struct lwp *smbkql;		/* the kevent handler */
 static struct smb_cred smbkq_scred;
 
 static struct simplelock smbkq_lock = SIMPLELOCK_INITIALIZER;
@@ -197,7 +197,7 @@ smbfs_kqpoll(void *arg)
 
 		/* Exit if there are no more kevents to watch for */
 		if (kevs == 0) {
-			smbkqp = NULL;
+			smbkql = NULL;
 			break;
 		}
 
@@ -206,7 +206,7 @@ smbfs_kqpoll(void *arg)
 
 		/* wait a while before checking for changes again */
 		if (SLIST_EMPTY(&kdnlist)) {
-			error = ltsleep(smbkqp, PSOCK, "smbkqidl",
+			error = ltsleep(smbkql, PSOCK, "smbkqidl",
 				needwake ? (SMBFS_ATTRTIMO * hz / 2) : 0,
 				&smbkq_lock);
 		}
@@ -274,7 +274,7 @@ smbfskq_dirnotify(void *arg)
 	}
 
 	SLIST_INSERT_HEAD(&kdnlist, ke, k_link);
-	wakeup(smbkqp);
+	wakeup(smbkql);
 }
 
 static void
@@ -437,10 +437,10 @@ smbfs_kqfilter(void *v)
 	(void) VOP_GETATTR(vp, &attr, l->l_cred, l);
 
 	/* ensure the handler is running */
-	if (!smbkqp) {
-		error = kthread_create1(smbfs_kqpoll, NULL, &smbkqp,
-				"smbkq");
-		smb_makescred(&smbkq_scred, LIST_FIRST(&smbkqp->p_lwps), smbkqp->p_cred);
+	if (!smbkql) {
+		error = kthread_create1(PRI_NONE, false, smbfs_kqpoll, NULL,
+		    &smbkql, "smbkq");
+		smb_makescred(&smbkq_scred, smbkql, smbkql->l_cred);
 		if (error) {
 			kevs--;
 			return (error);
@@ -496,7 +496,7 @@ smbfs_kqfilter(void *v)
 		SLIST_INSERT_HEAD(&kevlist, ke, kev_link);
 
 		/* kick the handler */
-		wakeup(smbkqp);
+		wakeup(smbkql);
 	}
 
 	/* XXXLUKEM lock the struct? */

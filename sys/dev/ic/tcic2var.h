@@ -1,4 +1,4 @@
-/*	$NetBSD: tcic2var.h,v 1.9 2006/09/03 06:42:44 christos Exp $	*/
+/*	$NetBSD: tcic2var.h,v 1.9.12.1 2007/04/09 22:09:58 ad Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christoph Badura.  All rights reserved.
@@ -78,7 +78,7 @@ struct tcic_handle {
 	struct device *pcmcia;
 
 	int shutdown;
-	struct proc *event_thread;
+	struct lwp *event_thread;
 	SIMPLEQ_HEAD(, tcic_event) events;
 };
 

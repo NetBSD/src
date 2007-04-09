@@ -1,4 +1,4 @@
-/*	$NetBSD: mly.c,v 1.34 2007/03/04 06:02:24 christos Exp $	*/
+/*	$NetBSD: mly.c,v 1.34.2.1 2007/04/09 22:09:59 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mly.c,v 1.34 2007/03/04 06:02:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mly.c,v 1.34.2.1 2007/04/09 22:09:59 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1263,8 +1263,8 @@ mly_thread_create(void *cookie)
 
 	mly = cookie;
 
-	rv = kthread_create1(mly_thread, mly, &mly->mly_thread, "%s",
-	    mly->mly_dv.dv_xname);
+	rv = kthread_create1(PRI_NONE, false, mly_thread, mly,
+	    &mly->mly_thread, "%s", mly->mly_dv.dv_xname);
  	if (rv != 0)
 		printf("%s: unable to create thread (%d)\n",
 		    mly->mly_dv.dv_xname, rv);

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_kq.c,v 1.13 2006/11/09 09:53:57 yamt Exp $	*/
+/*	$NetBSD: nfs_kq.c,v 1.13.8.1 2007/04/09 22:10:05 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_kq.c,v 1.13 2006/11/09 09:53:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_kq.c,v 1.13.8.1 2007/04/09 22:10:05 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,7 +73,7 @@ struct kevq {
 SLIST_HEAD(kevqlist, kevq);
 
 static struct lock nfskevq_lock;
-static struct proc *pnfskq;
+static struct lwp *nfskq_thread;
 static struct kevqlist kevlist = SLIST_HEAD_INITIALIZER(kevlist);
 
 void
@@ -158,14 +158,14 @@ nfs_kqpoll(void *arg)
 
 		if (SLIST_EMPTY(&kevlist)) {
 			/* Nothing more to watch, exit */
-			pnfskq = NULL;
+			nfskq_thread = NULL;
 			lockmgr(&nfskevq_lock, LK_RELEASE, NULL);
 			kthread_exit(0);
 		}
 		lockmgr(&nfskevq_lock, LK_RELEASE, NULL);
 
 		/* wait a while before checking for changes again */
-		tsleep(pnfskq, PSOCK, "nfskqpw",
+		tsleep(nfskq_thread, PSOCK, "nfskqpw",
 			NFS_MINATTRTIMO * hz / 2);
 
 	}
@@ -286,9 +286,9 @@ nfs_kqfilter(void *v)
 	lockmgr(&nfskevq_lock, LK_EXCLUSIVE, NULL);
 
 	/* ensure the poller is running */
-	if (!pnfskq) {
-		error = kthread_create1(nfs_kqpoll, NULL, &pnfskq,
-				"nfskqpoll");
+	if (!nfskq_thread) {
+		error = kthread_create1(PRI_NONE, false, nfs_kqpoll,
+		    NULL, &nfskq_thread, "nfskqpoll");
 		if (error)
 			goto out;
 	}
@@ -315,7 +315,7 @@ nfs_kqfilter(void *v)
 	}
 
 	/* kick the poller */
-	wakeup(pnfskq);
+	wakeup(nfskq_thread);
 
 	/* XXXLUKEM lock the struct? */
 	SLIST_INSERT_HEAD(&vp->v_klist, kn, kn_selnext);

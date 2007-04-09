@@ -1,4 +1,4 @@
-/*	$NetBSD: cardslotvar.h,v 1.10 2005/12/11 12:21:15 christos Exp $	*/
+/*	$NetBSD: cardslotvar.h,v 1.10.30.1 2007/04/09 22:09:55 ad Exp $	*/
 
 /*
  * Copyright (c) 1999
@@ -76,7 +76,7 @@ struct cardslot_softc {
 	struct cardbus_softc *sc_cb_softc;
 	struct pcmcia_softc *sc_16_softc;
 
-	struct proc *sc_event_thread;
+	struct lwp *sc_event_thread;
 	int sc_th_enable;	/* true if the thread is enabled */
 
 	/* An event queue for the thread which processes slot state events. */

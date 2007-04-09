@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.107.2.3 2007/04/05 21:38:36 ad Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.107.2.4 2007/04/09 22:10:03 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.107.2.3 2007/04/05 21:38:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.107.2.4 2007/04/09 22:10:03 ad Exp $");
 
 #include "opt_kstack.h"
 #include "opt_maxuprc.h"
@@ -357,7 +357,7 @@ proc0_init(void)
 #ifdef __HAVE_SYSCALL_INTERN
 	(*p->p_emul->e_syscall_intern)(p);
 #endif
-	strncpy(p->p_comm, "swapper", MAXCOMLEN);
+	strncpy(p->p_comm, "system", MAXCOMLEN);
 
 	l->l_mutex = &sched_mutex;
 	l->l_flag = LW_INMEM | LW_SYSTEM;

@@ -1,4 +1,4 @@
-/*	$NetBSD: fssvar.h,v 1.15 2007/03/04 06:01:42 christos Exp $	*/
+/*	$NetBSD: fssvar.h,v 1.15.2.1 2007/04/09 22:09:54 ad Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -162,7 +162,7 @@ struct fss_softc {
 	off_t		sc_bs_size;	/* Its size in bytes */
 	int		sc_bs_bshift;	/* Shift of backing store block */
 	u_int32_t	sc_bs_bmask;	/* Mask of backing store block */
-	struct proc	*sc_bs_proc;	/* Our kernel thread */
+	struct lwp	*sc_bs_lwp;	/* Our kernel thread */
 	int		sc_clshift;	/* Shift of cluster size */
 	u_int32_t	sc_clmask;	/* Mask of cluster size */
 	u_int32_t	sc_clcount;	/* # clusters in file system */

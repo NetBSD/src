@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.32.2.1 2007/04/05 21:57:43 ad Exp $	*/
+/*	$NetBSD: fss.c,v 1.32.2.2 2007/04/09 22:09:54 ad Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.32.2.1 2007/04/05 21:57:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.32.2.2 2007/04/09 22:09:54 ad Exp $");
 
 #include "fss.h"
 
@@ -244,7 +244,7 @@ fss_strategy(struct buf *bp)
 
 	bp->b_rawblkno = bp->b_blkno;
 	BUFQ_PUT(sc->sc_bufq, bp);
-	wakeup(&sc->sc_bs_proc);
+	wakeup(&sc->sc_bs_lwp);
 
 	FSS_UNLOCK(sc, s);
 }
@@ -416,8 +416,8 @@ fss_softc_alloc(struct fss_softc *sc)
 	if (sc->sc_indir_data == NULL)
 		return(ENOMEM);
 
-	if ((error = kthread_create1(fss_bs_thread, sc, &sc->sc_bs_proc,
-	    "fssbs%d", sc->sc_unit)) != 0)
+	if ((error = kthread_create1(PINOD, false, fss_bs_thread, sc,
+	    &sc->sc_bs_lwp, "fssbs%d", sc->sc_unit)) != 0)
 		return error;
 
 	sc->sc_flags |= FSS_BS_THREAD;
@@ -435,9 +435,9 @@ fss_softc_free(struct fss_softc *sc)
 	if ((sc->sc_flags & FSS_BS_THREAD) != 0) {
 		FSS_LOCK(sc, s);
 		sc->sc_flags &= ~FSS_BS_THREAD;
-		wakeup(&sc->sc_bs_proc);
-		while (sc->sc_bs_proc != NULL)
-			ltsleep(&sc->sc_bs_proc, PRIBIO, "fssthread", 0,
+		wakeup(&sc->sc_bs_lwp);
+		while (sc->sc_bs_lwp != NULL)
+			ltsleep(&sc->sc_bs_lwp, PRIBIO, "fssthread", 0,
 			    &sc->sc_slock);
 		FSS_UNLOCK(sc, s);
 	}
@@ -933,7 +933,7 @@ restart:
 	setbit(sc->sc_copied, scp->fc_cluster);
 	FSS_UNLOCK(sc, s);
 
-	wakeup(&sc->sc_bs_proc);
+	wakeup(&sc->sc_bs_lwp);
 }
 
 /*
@@ -953,7 +953,7 @@ fss_bs_io(struct fss_softc *sc, fss_io_type rw,
 
 	error = vn_rdwr((rw == FSS_READ ? UIO_READ : UIO_WRITE), sc->sc_bs_vp,
 	    data, len, off, UIO_SYSSPACE, IO_UNIT|IO_NODELOCKED,
-	    sc->sc_bs_proc->p_cred, NULL, NULL);
+	    sc->sc_bs_lwp->l_cred, NULL, NULL);
 	if (error == 0) {
 		mutex_enter(&sc->sc_bs_vp->v_interlock);
 		error = VOP_PUTPAGES(sc->sc_bs_vp, trunc_page(off),
@@ -1030,12 +1030,12 @@ fss_bs_thread(void *arg)
 
 	for (;;) {
 		if (nfreed == 0 && nio == 0)
-			ltsleep(&sc->sc_bs_proc, PVM-1, "fssbs", 0,
+			ltsleep(&sc->sc_bs_lwp, PVM-1, "fssbs", 0,
 			    &sc->sc_slock);
 
 		if ((sc->sc_flags & FSS_BS_THREAD) == 0) {
-			sc->sc_bs_proc = NULL;
-			wakeup(&sc->sc_bs_proc);
+			sc->sc_bs_lwp = NULL;
+			wakeup(&sc->sc_bs_lwp);
 
 			FSS_UNLOCK(sc, s);
 

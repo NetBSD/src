@@ -1,4 +1,4 @@
-/*	$NetBSD: mlx.c,v 1.51 2007/03/04 06:01:58 christos Exp $	*/
+/*	$NetBSD: mlx.c,v 1.51.2.1 2007/04/09 22:09:57 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mlx.c,v 1.51 2007/03/04 06:01:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mlx.c,v 1.51.2.1 2007/04/09 22:09:57 ad Exp $");
 
 #include "ld.h"
 
@@ -146,7 +146,7 @@ const struct cdevsw mlx_cdevsw = {
 };
 
 extern struct	cfdriver mlx_cd;
-static struct	proc *mlx_periodic_proc;
+static struct	lwp *mlx_periodic_lwp;
 static void	*mlx_sdh;
 
 static struct {
@@ -956,8 +956,8 @@ mlx_periodic_create(void *cookie)
 {
 	int rv;
 
-	rv = kthread_create1(mlx_periodic_thread, NULL, &mlx_periodic_proc,
-	    "mlxtask");
+	rv = kthread_create1(PRI_NONE, false, mlx_periodic_thread, NULL,
+	    &mlx_periodic_lwp, "mlxtask");
 	if (rv == 0)
 		return;
 

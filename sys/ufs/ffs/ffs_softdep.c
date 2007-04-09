@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.86.2.3 2007/03/21 20:11:58 ad Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.86.2.4 2007/04/09 22:10:06 ad Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.86.2.3 2007/03/21 20:11:58 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.86.2.4 2007/04/09 22:10:06 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -517,7 +517,7 @@ inodedep_allocdino(struct inodedep *inodedep, const struct buf *origbp,
 
 	KASSERT(inodedep->id_savedino1 == NULL);
 
-	if (curproc != uvm.pagedaemon_proc)
+	if (curlwp != uvm.pagedaemon_lwp)
 		return malloc(size, M_INODEDEP, M_WAITOK);
 
 	vp = malloc(size, M_INODEDEP, M_NOWAIT);

@@ -1,4 +1,4 @@
-/*	$NetBSD: mlyvar.h,v 1.3 2006/02/16 20:17:19 perry Exp $	*/
+/*	$NetBSD: mlyvar.h,v 1.3.24.1 2007/04/09 22:10:00 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -214,7 +214,7 @@ struct mly_softc {
 	u_int			mly_event_change;
 	u_int			mly_event_counter;
 	u_int			mly_event_waiting;
-	struct proc		*mly_thread;
+	struct lwp		*mly_thread;
 
 	/* SCSI mid-layer connection. */
 	struct scsipi_adapter	mly_adapt;

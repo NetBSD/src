@@ -1,4 +1,4 @@
-/*	$NetBSD: firewire.c,v 1.12 2007/03/04 06:02:05 christos Exp $	*/
+/*	$NetBSD: firewire.c,v 1.12.2.1 2007/04/09 22:09:58 ad Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -1472,13 +1472,12 @@ static void
 fw_kthread_create0(void *arg)
 {
 	struct firewire_comm *fc = (struct firewire_comm *)arg;
-	fw_thread *p;
 
 	config_pending_incr();
 
 	/* create thread */
 	if (THREAD_CREATE(fw_bus_probe_thread,
-	    (void *)fc, &p, "fw%d_probe", device_get_unit(fc->bdev))) {
+	    (void *)fc, NULL, "fw%d_probe", device_get_unit(fc->bdev))) {
 
 		device_printf(fc->bdev, "unable to create thread");
 		panic("fw_kthread_create");

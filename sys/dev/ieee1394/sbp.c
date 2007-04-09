@@ -1,4 +1,4 @@
-/*	$NetBSD: sbp.c,v 1.15 2007/03/04 06:02:07 christos Exp $	*/
+/*	$NetBSD: sbp.c,v 1.15.2.1 2007/04/09 22:09:58 ad Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -420,7 +420,7 @@ struct sbp_softc {
 	struct scsipi_adapter sc_adapter; 
 	struct scsipi_channel sc_channel;
 	struct device *sc_bus;
-	struct proc *proc;
+	struct lwp *lwp;
 #endif
 	struct sbp_target target;
 	struct fw_bind fwb;
@@ -1199,8 +1199,8 @@ fw_kthread_create0(void *arg)
 	struct sbp_softc *sbp = (struct sbp_softc *)arg;
 
 	/* create thread */
-	if (kthread_create1(sbp_scsipi_scan_target,
-	    &sbp->target, &sbp->proc, "sbp%d_attach",
+	if (kthread_create1(PRI_NONE, false, sbp_scsipi_scan_target,
+	    &sbp->target, &sbp->lwp, "sbp%d_attach",
 	    device_unit(sbp->fd.dev))) {
 
 		device_printf(sbp->fd.dev, "unable to create thread");
@@ -1244,7 +1244,7 @@ sbp_scsipi_scan_target(void *arg)
 		}
 	} while (yet > 0);
 
-	sbp->proc = NULL;
+	sbp->lwp = NULL;
 	kthread_exit(0);
 }
 

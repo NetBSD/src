@@ -1,4 +1,4 @@
-/* $NetBSD: ipmivar.h,v 1.2 2007/02/15 15:40:50 ad Exp $ */
+/* $NetBSD: ipmivar.h,v 1.2.6.1 2007/04/09 22:09:53 ad Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave
@@ -89,7 +89,7 @@ struct ipmi_softc {
 
 	int			sc_btseq;
 
-	struct proc		*sc_kthread;
+	struct lwp		*sc_kthread;
 
 	struct callout		sc_callout;
 	int			sc_max_retries;

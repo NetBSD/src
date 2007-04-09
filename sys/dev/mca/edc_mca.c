@@ -1,4 +1,4 @@
-/*	$NetBSD: edc_mca.c,v 1.35 2006/11/16 01:33:05 christos Exp $	*/
+/*	$NetBSD: edc_mca.c,v 1.35.8.1 2007/04/09 22:09:58 ad Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: edc_mca.c,v 1.35 2006/11/16 01:33:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: edc_mca.c,v 1.35.8.1 2007/04/09 22:09:58 ad Exp $");
 
 #include "rnd.h"
 
@@ -807,11 +807,10 @@ edc_spawn_worker(void *arg)
 {
 	struct edc_mca_softc *sc = (struct edc_mca_softc *) arg;
 	int error;
-	struct proc *wrk;
 
 	/* Now, everything is ready, start a kthread */
-	if ((error = kthread_create1(edcworker, sc, &wrk,
-			"%s", sc->sc_dev.dv_xname))) {
+	if ((error = kthread_create1(PRI_NONE, false, edcworker, sc, NULL,
+	    "%s", sc->sc_dev.dv_xname))) {
 		printf("%s: cannot spawn worker thread: errno=%d\n",
 			sc->sc_dev.dv_xname, error);
 		panic("edc_spawn_worker");
