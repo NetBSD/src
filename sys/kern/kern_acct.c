@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_acct.c,v 1.73 2007/03/09 14:11:24 ad Exp $	*/
+/*	$NetBSD: kern_acct.c,v 1.73.2.1 2007/04/09 22:10:02 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_acct.c,v 1.73 2007/03/09 14:11:24 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_acct.c,v 1.73.2.1 2007/04/09 22:10:02 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -122,7 +122,7 @@ static struct vnode *acct_vp;		/* Accounting vnode pointer. */
 static kauth_cred_t acct_cred;		/* Credential of accounting file
 					   owner (i.e root).  Used when
  					   accounting file i/o.  */
-static struct proc *acct_dkwatcher;	/* Free disk space checker. */
+static struct lwp *acct_dkwatcher;	/* Free disk space checker. */
 
 /*
  * Values associated with enabling and disabling accounting
@@ -356,8 +356,8 @@ sys_acct(struct lwp *l, void *v, register_t *retval)
 	}
 
 	if (acct_dkwatcher == NULL) {
-		error = kthread_create1(acctwatch, NULL, &acct_dkwatcher,
-		    "acctwatch");
+		error = kthread_create1(PRI_NONE, false, acctwatch, NULL,
+		    &acct_dkwatcher, "acctwatch");
 		if (error != 0)
 			acct_stop();
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.201.2.2 2007/03/21 20:11:59 ad Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.201.2.3 2007/04/09 22:10:07 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.201.2.2 2007/03/21 20:11:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.201.2.3 2007/04/09 22:10:07 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1710,7 +1710,7 @@ check_dirty(struct lfs *fs, struct vnode *vp,
 	int dirty;	/* number of dirty pages in a block */
 	int tdirty;
 	int pages_per_block = fs->lfs_bsize >> PAGE_SHIFT;
-	int pagedaemon = (curproc == uvm.pagedaemon_proc);
+	int pagedaemon = (curlwp == uvm.pagedaemon_lwp);
 
 	ASSERT_MAYBE_SEGLOCK(fs);
   top:
@@ -1915,7 +1915,7 @@ lfs_putpages(void *v)
 	ip = VTOI(vp);
 	fs = ip->i_lfs;
 	sync = (ap->a_flags & PGO_SYNCIO) != 0;
-	pagedaemon = (curproc == uvm.pagedaemon_proc);
+	pagedaemon = (curlwp == uvm.pagedaemon_lwp);
 
 	/* Putpages does nothing for metadata. */
 	if (vp == fs->lfs_ivnode || vp->v_type != VREG) {

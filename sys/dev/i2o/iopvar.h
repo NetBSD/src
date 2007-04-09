@@ -1,4 +1,4 @@
-/*	$NetBSD: iopvar.h,v 1.18 2007/03/04 06:01:48 christos Exp $	*/
+/*	$NetBSD: iopvar.h,v 1.18.2.1 2007/04/09 22:09:56 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2007 The NetBSD Foundation, Inc.
@@ -139,7 +139,7 @@ struct iop_softc {
 	u_int32_t	sc_chgind;	/* Configuration change indicator */
 	kmutex_t	sc_conflock;	/* Configuration lock */
 	kcondvar_t	sc_confcv;	/* Configuration CV */
-	struct proc	*sc_reconf_proc;/* Auto reconfiguration process */
+	struct lwp	*sc_reconf_thread;/* Auto reconfiguration process */
 	LIST_HEAD(, iop_initiator) sc_iilist;/* Initiator list */
 	int		sc_nii;		/* Total number of initiators */
 	int		sc_nuii;	/* Number of utility initiators */

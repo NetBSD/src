@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_taskq.c,v 1.7 2006/11/16 01:33:26 christos Exp $	*/
+/*	$NetBSD: sysmon_taskq.c,v 1.7.8.1 2007/04/09 22:10:01 ad Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_taskq.c,v 1.7 2006/11/16 01:33:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_taskq.c,v 1.7.8.1 2007/04/09 22:10:01 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -78,7 +78,7 @@ do {									\
 
 static int sysmon_task_queue_cleanup_sem;
 
-static struct proc *sysmon_task_queue_proc;
+static struct lwp *sysmon_task_queue_lwp;
 
 static void sysmon_task_queue_create_thread(void *);
 static void sysmon_task_queue_thread(void *);
@@ -141,8 +141,8 @@ sysmon_task_queue_create_thread(void *arg)
 {
 	int error;
 
-	error = kthread_create1(sysmon_task_queue_thread, NULL,
-	    &sysmon_task_queue_proc, "sysmon");
+	error = kthread_create1(PRI_NONE, false, sysmon_task_queue_thread,
+	    NULL, &sysmon_task_queue_lwp, "sysmon");
 	if (error) {
 		printf("Unable to create sysmon task queue thread, "
 		    "error = %d\n", error);
@@ -204,7 +204,7 @@ sysmon_task_queue_sched(u_int pri, void (*func)(void *), void *arg)
 	struct sysmon_task *st, *lst;
 	int s;
 
-	if (sysmon_task_queue_proc == NULL)
+	if (sysmon_task_queue_lwp == NULL)
 		printf("WARNING: Callback scheduled before sysmon task queue "
 		    "thread present.\n");
 

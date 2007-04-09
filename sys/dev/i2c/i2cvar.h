@@ -1,4 +1,4 @@
-/*	$NetBSD: i2cvar.h,v 1.5 2007/02/05 23:31:37 jmcneill Exp $	*/
+/*	$NetBSD: i2cvar.h,v 1.5.6.1 2007/04/09 22:09:56 ad Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -99,7 +99,7 @@ typedef struct i2c_controller {
 	LIST_HEAD(, ic_intr_list) ic_proc_list;
 	volatile int	ic_running;
 	volatile int	ic_pending;
-	struct proc *ic_intr_thread;
+	struct lwp *ic_intr_thread;
 	const char *ic_devname;
 } *i2c_tag_t;
 

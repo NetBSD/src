@@ -1,4 +1,4 @@
-/*	$NetBSD: iop.c,v 1.64.2.1 2007/04/05 21:57:44 ad Exp $	*/
+/*	$NetBSD: iop.c,v 1.64.2.2 2007/04/09 22:09:56 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.64.2.1 2007/04/05 21:57:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.64.2.2 2007/04/09 22:09:56 ad Exp $");
 
 #include "opt_i2o.h"
 #include "iop.h"
@@ -619,8 +619,8 @@ iop_create_reconf_thread(void *cookie)
 	sc = cookie;
 	sc->sc_flags |= IOP_ONLINE;
 
-	rv = kthread_create1(iop_reconf_thread, sc, &sc->sc_reconf_proc,
- 	    "%s", sc->sc_dv.dv_xname);
+	rv = kthread_create1(PRI_NONE, false, iop_reconf_thread, sc,
+	    &sc->sc_reconf_thread, "%s", sc->sc_dv.dv_xname);
  	if (rv != 0) {
 		printf("%s: unable to create reconfiguration thread (%d)",
  		    sc->sc_dv.dv_xname, rv);

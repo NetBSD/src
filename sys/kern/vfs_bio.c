@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.170.2.4 2007/03/23 19:27:07 ad Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.170.2.5 2007/04/09 22:10:04 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -82,7 +82,7 @@
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.170.2.4 2007/03/23 19:27:07 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.170.2.5 2007/04/09 22:10:04 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1048,7 +1048,7 @@ start:
 		mutex_enter(&bp->b_interlock);
 		if (ISSET(bp->b_flags, B_BUSY)) {
 			mutex_exit(&bqueue_lock);
-			if (curproc == uvm.pagedaemon_proc) {
+			if (curlwp == uvm.pagedaemon_lwp) {
 				mutex_exit(&bp->b_interlock);
 				return NULL;
 			}
@@ -1243,7 +1243,7 @@ getnewbuf(int slpflag, int slptimeo, int from_bufq)
 		/*
 		 * XXX: !from_bufq should be removed.
 		 */
-		if (!from_bufq || curproc != uvm.pagedaemon_proc) {
+		if (!from_bufq || curlwp != uvm.pagedaemon_lwp) {
 			/* wait for a free buffer of any kind */
 			if ((slpflag & PCATCH) != 0)
 				(void)cv_timedwait_sig(&needbuffer_cv,

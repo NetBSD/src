@@ -1,4 +1,4 @@
-/*	$NetBSD: cardslot.c,v 1.34 2007/02/04 23:39:02 dyoung Exp $	*/
+/*	$NetBSD: cardslot.c,v 1.34.6.1 2007/04/09 22:09:55 ad Exp $	*/
 
 /*
  * Copyright (c) 1999 and 2000
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardslot.c,v 1.34 2007/02/04 23:39:02 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardslot.c,v 1.34.6.1 2007/04/09 22:09:55 ad Exp $");
 
 #include "opt_cardslot.h"
 
@@ -218,8 +218,8 @@ create_slot_manager(void *arg)
 
 	sc->sc_th_enable = 1;
 
-	if (kthread_create1(cardslot_event_thread, sc, &sc->sc_event_thread,
-	    "%s", sc->sc_dev.dv_xname)) {
+	if (kthread_create1(PRI_NONE, false, cardslot_event_thread, sc,
+	    &sc->sc_event_thread, "%s", sc->sc_dev.dv_xname)) {
 		printf("%s: unable to create event thread for slot %d\n",
 		    sc->sc_dev.dv_xname, sc->sc_slot);
 		panic("create_slot_manager");

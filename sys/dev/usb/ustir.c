@@ -1,4 +1,4 @@
-/*	$NetBSD: ustir.c,v 1.18.2.1 2007/03/13 16:51:10 ad Exp $	*/
+/*	$NetBSD: ustir.c,v 1.18.2.2 2007/04/09 22:10:01 ad Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ustir.c,v 1.18.2.1 2007/03/13 16:51:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ustir.c,v 1.18.2.2 2007/04/09 22:10:01 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -176,7 +176,7 @@ struct ustir_softc {
 	u_int			sc_rd_expectdataticks;
 	u_char			sc_rd_err;
 	struct framestate	sc_framestate;
-	struct proc		*sc_thread;
+	struct lwp		*sc_thread;
 	struct selinfo		sc_rd_sel;
 
 	u_int8_t		*sc_wr_buf;
@@ -923,8 +923,8 @@ ustir_open(void *h, int flag, int mode,
 	deframe_init(&sc->sc_framestate, &framedef_sir, sc->sc_ur_buf,
 		     IRDA_MAX_FRAME_SIZE);
 
-	error = kthread_create1(ustir_thread, sc, &sc->sc_thread, "%s",
-				sc->sc_dev.dv_xname);
+	error = kthread_create1(PRI_NONE, false, ustir_thread, sc,
+	    &sc->sc_thread, "%s", sc->sc_dev.dv_xname);
 	if (error)
 		goto bad5;
 	/* Increment reference for thread */

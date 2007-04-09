@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.109 2007/03/04 06:02:43 christos Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.109.2.1 2007/04/09 22:10:00 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -283,7 +283,7 @@ struct scsipi_channel {
 
 	int	chan_defquirks;		/* default device's quirks */
 
-	struct proc *chan_thread;	/* completion thread */
+	struct lwp *chan_thread;	/* completion thread */
 	int	chan_tflags;		/* flags for the completion thread */
 
 	int	chan_qfreeze;		/* freeze count for queue */

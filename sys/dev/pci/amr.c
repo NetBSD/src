@@ -1,4 +1,4 @@
-/*	$NetBSD: amr.c,v 1.44 2007/03/04 06:02:16 christos Exp $	*/
+/*	$NetBSD: amr.c,v 1.44.2.1 2007/04/09 22:09:59 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.44 2007/03/04 06:02:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.44.2.1 2007/04/09 22:09:59 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -829,8 +829,8 @@ amr_thread_create(void *cookie)
 		return;
 	}
 
-	rv = kthread_create1(amr_thread, amr, &amr->amr_thread, "%s",
-	    amr->amr_dv.dv_xname);
+	rv = kthread_create1(PRI_NONE, false, amr_thread, amr,
+	    &amr->amr_thread, "%s", amr->amr_dv.dv_xname);
  	if (rv != 0)
 		aprint_error("%s: unable to create thread (%d)",
  		    amr->amr_dv.dv_xname, rv);

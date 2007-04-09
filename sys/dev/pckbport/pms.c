@@ -1,4 +1,4 @@
-/* $NetBSD: pms.c,v 1.17 2007/03/04 06:02:27 christos Exp $ */
+/* $NetBSD: pms.c,v 1.17.2.1 2007/04/09 22:10:00 ad Exp $ */
 
 /*-
  * Copyright (c) 2004 Kentaro Kurahone.
@@ -28,7 +28,7 @@
 #include "opt_pms.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pms.c,v 1.17 2007/03/04 06:02:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pms.c,v 1.17.2.1 2007/04/09 22:10:00 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -413,8 +413,8 @@ pms_spawn_reset_thread(void *arg)
 {
 	struct pms_softc *sc = arg;
 
-	kthread_create1(pms_reset_thread, sc, &sc->sc_event_thread,
-	    sc->sc_dev.dv_xname);
+	kthread_create1(PRI_NONE, false, pms_reset_thread, sc,
+	    &sc->sc_event_thread, sc->sc_dev.dv_xname);
 }
 
 static void

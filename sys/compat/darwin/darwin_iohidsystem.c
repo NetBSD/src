@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_iohidsystem.c,v 1.38 2007/03/04 06:01:14 christos Exp $ */
+/*	$NetBSD: darwin_iohidsystem.c,v 1.38.2.1 2007/04/09 22:09:53 ad Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_iohidsystem.c,v 1.38 2007/03/04 06:01:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_iohidsystem.c,v 1.38.2.1 2007/04/09 22:09:53 ad Exp $");
 
 #include "opt_ktrace.h"
 
@@ -196,8 +196,6 @@ darwin_iohidsystem_connect_method_scalari_scalaro(args)
 
 		/* If it has not been used yet, initialize it */
 		if (darwin_iohidsystem_shmem == NULL) {
-			struct proc *dita_p;
-
 			darwin_iohidsystem_shmem = uao_create(memsize, 0);
 
 			error = uvm_map(kernel_map, &kvaddr, memsize,
@@ -227,10 +225,10 @@ darwin_iohidsystem_connect_method_scalari_scalaro(args)
 			dita->dita_shmem = kvaddr;
 			dita->dita_done = 0;
 
-			kthread_create1(darwin_iohidsystem_thread,
-			    (void *)dita, &dita_p, "iohidsystem");
-
-			dita->dita_l = LIST_FIRST(&dita_p->p_lwps);
+			kthread_create1(PRI_NONE, false,
+			    darwin_iohidsystem_thread,
+			    (void *)dita, &dita->dita_l,
+			    "iohidsystem");
 
 			/*
 			 * Make sure the thread got the informations

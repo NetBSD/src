@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.84.4.1 2007/03/13 17:51:57 ad Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.84.4.2 2007/04/09 22:10:09 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.84.4.1 2007/03/13 17:51:57 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.84.4.2 2007/04/09 22:10:09 ad Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -126,7 +126,7 @@ uvm_wait(const char *wmsg)
 	 * check for page daemon going to sleep (waiting for itself)
 	 */
 
-	if (curproc == uvm.pagedaemon_proc && uvmexp.paging == 0) {
+	if (curlwp == uvm.pagedaemon_lwp && uvmexp.paging == 0) {
 		/*
 		 * now we have a problem: the pagedaemon wants to go to
 		 * sleep until it frees more memory.   but how can it
@@ -228,7 +228,7 @@ uvm_pageout(void *arg)
 	 * ensure correct priority and set paging parameters...
 	 */
 
-	uvm.pagedaemon_proc = curproc;
+	uvm.pagedaemon_lwp = curlwp;
 	mutex_enter(&uvm_pageqlock);
 	npages = uvmexp.npages;
 	uvmpd_tune();

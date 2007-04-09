@@ -1,4 +1,4 @@
-/* 	$NetBSD: lwp.h,v 1.56.2.2 2007/04/05 21:38:37 ad Exp $	*/
+/* 	$NetBSD: lwp.h,v 1.56.2.3 2007/04/09 22:10:06 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -109,6 +109,7 @@ struct	lwp {
 	int		l_prflag;	/* p: process level flags */
 	u_int		l_refcnt;	/* p: reference count on this LWP */
 	lwpid_t		l_lid;		/* (: LWP identifier; local to proc */
+	char		l_name[MAXCOMLEN];/* (: name, optional */
 
 	/* Signals */
 	int		l_sigrestore;	/* p: need to restore old sig mask */
@@ -184,6 +185,7 @@ extern struct lwp lwp0;			/* LWP for proc0 */
 #define	LP_KTRCSWUSER	0x00000004 /* ktrace context switch marker */
 #define	LP_UFSCOW	0x00000008 /* UFS: doing copy on write */
 #define	LP_OWEUPC	0x00000010 /* Owe user profiling tick */
+#define	LP_MPSAFE	0x00000020 /* Starts life without kernel_lock */
 
 /* The third set is kept in l_prflag. */
 #define	LPR_DETACHED	0x00800000 /* Won't be waited for. */

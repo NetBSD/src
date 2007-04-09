@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.61.2.4 2007/04/05 21:38:36 ad Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.61.2.5 2007/04/09 22:10:03 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -49,10 +49,6 @@
  *	private address space, global execution state (stopped, active,
  *	zombie, ...), signal disposition and so on.  On a multiprocessor
  *	machine, multiple LWPs be executing in kernel simultaneously.
- *
- *	Note that LWPs differ from kernel threads (kthreads) in that kernel
- *	threads are distinct processes (system processes) with no user space
- *	component, which themselves may contain one or more LWPs.
  *
  * Execution states
  *
@@ -204,7 +200,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.61.2.4 2007/04/05 21:38:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.61.2.5 2007/04/09 22:10:03 ad Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"

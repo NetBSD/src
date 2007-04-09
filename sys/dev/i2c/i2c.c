@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.c,v 1.13 2007/02/06 12:39:15 jmcneill Exp $	*/
+/*	$NetBSD: i2c.c,v 1.13.6.1 2007/04/09 22:09:56 ad Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -162,8 +162,8 @@ iic_smbus_intr_thread(void *aux)
 
 	ic = (i2c_tag_t)aux;
 
-	rv = kthread_create1(iic_smbus_intr_thread1, ic, &ic->ic_intr_thread,
-	    "%s", ic->ic_devname);
+	rv = kthread_create1(PRI_NONE, false, iic_smbus_intr_thread1, ic,
+	    &ic->ic_intr_thread, "%s", ic->ic_devname);
 	if (rv)
 		printf("%s: unable to create intr thread\n", ic->ic_devname);
 }

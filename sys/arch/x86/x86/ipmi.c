@@ -1,4 +1,4 @@
-/*	$NetBSD: ipmi.c,v 1.5 2007/02/15 15:40:50 ad Exp $ */
+/*	$NetBSD: ipmi.c,v 1.5.6.1 2007/04/09 22:09:53 ad Exp $ */
 /*
  * Copyright (c) 2006 Manuel Bouyer.
  *
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.5 2007/02/15 15:40:50 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.5.6.1 2007/04/09 22:09:53 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1652,8 +1652,8 @@ ipmi_create_thread(void *arg)
 {
 	struct ipmi_softc *sc = arg;
 
-	if (kthread_create1(ipmi_poll_thread, sc, &sc->sc_kthread,
-	    DEVNAME(sc)) != 0) {
+	if (kthread_create1(PRI_NONE, false, ipmi_poll_thread, sc,
+	    &sc->sc_kthread, DEVNAME(sc)) != 0) {
 		printf("%s: unable to create polling thread, ipmi disabled\n",
 		    DEVNAME(sc));
 		return;

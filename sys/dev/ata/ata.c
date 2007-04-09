@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.86.2.1 2007/03/13 16:50:22 ad Exp $	*/
+/*	$NetBSD: ata.c,v 1.86.2.2 2007/04/09 22:09:54 ad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.86.2.1 2007/03/13 16:50:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.86.2.2 2007/04/09 22:09:54 ad Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -379,8 +379,8 @@ atabus_create_thread(void *arg)
 	struct ata_channel *chp = sc->sc_chan;
 	int error;
 
-	if ((error = kthread_create1(atabus_thread, sc, &chp->ch_thread,
-				     "%s", sc->sc_dev.dv_xname)) != 0)
+	if ((error = kthread_create1(PRI_NONE, false, atabus_thread, sc,
+	    &chp->ch_thread, "%s", sc->sc_dev.dv_xname)) != 0)
 		aprint_error("%s: unable to create kernel thread: error %d\n",
 		    sc->sc_dev.dv_xname, error);
 }
