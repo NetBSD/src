@@ -1,4 +1,4 @@
-.\"	$NetBSD: mutex.9,v 1.8 2007/03/10 00:04:11 matt Exp $
+.\"	$NetBSD: mutex.9,v 1.9 2007/04/09 13:37:57 ad Exp $
 .\"
 .\" Copyright (c) 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd February 2, 2007
+.Dd April 9, 2007
 .Dt MUTEX 9
 .Os
 .Sh NAME
@@ -67,54 +67,19 @@
 Mutexes are used in the kernel to implement mutual exclusion among LWPs
 (lightweight processes) and interrupt handlers.
 .Pp
-Two core types of mutex are currently provided, and are manipulated using the
-same interface:
-.Bl -tag -width cdoscdosrunrun
-.It Dv MUTEX_ADAPTIVE
-Adaptive mutexes provide mutual exclusion between LWPs.
-.Pp
-When initializing an adaptive mutex,
-.Dv IPL_NONE
-must be specified as the
-.Ar ipl
-argument.
-Adaptive mutexes can not be acquired from an interrupt handler.
-.Pp
-An LWP may either sleep or busy-wait when attempting to acquire
-an adaptive mutex that is already held.
-.It Dv MUTEX_SPIN
-Spin mutexes provide mutual exclusion between LWPs, and between LWPs
-and interrupt handlers.
-.Pp
-When initializing a spin mutex, the
-.Ar ipl
-argument is used to pass an system interrupt priority level (SPL)
-that will block all interrupt handlers that may try to acquire the mutex.
-.Pp
-LWPs that own spin mutexes may not sleep, and therefore must not
-try to acquire adaptive mutexes or other sleep locks.
-.Pp
-A processor will always busy-wait when attempting to acquire
-a spin mutex that is already held.
-.El
-.Pp
-Kernel code, in particular device drivers, should not directly request
-spin or adaptive mutexes unless necessary.
-The following types should be requested:
-.Bl -tag -width cdoscdosrunrun
-.It Dv MUTEX_DEFAULT
-General mutex type.
-May sleep.
-.It Dv MUTEX_DRIVER
-Device driver mutex.
-May or may not sleep.
-.El
-.Pp
 The
 .Vt kmutex_t
 type provides storage for the mutex object.
 This should be treated as an opaque object and not examined directly by
 consumers.
+.Pp
+Mutexes replace the
+.Xr spl 9
+system traditionally used to provide synchronization between interrupt
+handlers and LWPs, and in combination with reader / writer locks replace
+the
+.Xr lockmgr 9
+facility.
 .Sh OPTIONS
 .Bl -tag -width abcd
 .It Cd "options DIAGNOSTIC"
@@ -135,10 +100,80 @@ on mutex operations.
 .Pp
 Dynamically initialize a mutex for use.
 No other operations can be performed on a mutex until it has been initialized.
+.Fn mutex_init
+may block in order to allocate memory.
+.Pp
+The
+.Fa type
+argument specifies the kind of mutex to be initialized, controlling the
+behaviour of the mutex.
+Once initialized, all types of mutex are manipulated using the same interface.
+Valid types are as follows:
+.Bl -tag -width cdoscdosrunru
+.It Dv MUTEX_DEFAULT
+Requests an adaptive mutex.
+Adaptive mutexes provide mutual exclusion between LWPs.
+.Pp
+When initializing an adaptive mutex,
+.Dv IPL_NONE
+must be specified as the
+.Fa ipl
+argument.
+Adaptive mutexes should not be acquired from an interrupt handler.
+.Pp
+An LWP may either sleep or busy-wait when attempting to acquire
+an adaptive mutex that is already held.
+.It Dv MUTEX_SPIN
+Requests a spin mutex.
+Spin mutexes provide mutual exclusion between LWPs, and between LWPs
+and interrupt handlers.
+.Pp
+When initializing a spin mutex, the
+.Fa ipl
+argument is used to pass an system interrupt priority level (SPL)
+that will block all interrupt handlers that may try to acquire the mutex.
+.Pp
+LWPs that own spin mutexes may not sleep, and therefore must not
+try to acquire adaptive mutexes or other sleep locks.
+.Pp
+A processor will always busy-wait when attempting to acquire
+a spin mutex that is already held.
+.El
+.Pp
+In general, device drivers should not directly request spin or adaptive
+mutexes.
+For device drivers a third type of mutex is provided:
+.Bl -tag -width cdoscdosrunru
+.It Dv MUTEX_DRIVER
+Requests a device driver mutex.
+.Pp
+The
+.Fa ipl
+argument is used to determine whether a spin or adaptive mutex is
+returned, depending on how interrupt handling is implemented by
+the machine architecture.
+.Pp
+If 
+.Dv IPL_NONE
+is specified,
+.Fn mutex_init
+is guaranteed to return an adaptive mutex that can be used to
+provide mutual exclusion for device driver code that does not
+run from an interrupt handler.
+Other levels return mutexes that can be used to synchronize
+with interrupt handlers.
+For example, to request a mutex for synchronizing with network
+interrupt handlers, specify
+.Dv IPL_NET .
+Beyond this, device drivers should not make assumptions about
+the type of mutex returned.
+.El
 .It Fn mutex_destroy "mtx"
 .Pp
 Release resources used by a mutex.
 The mutex may not be used after it has been destroyed.
+.Fn mutex_destroy
+may block in order to free memory.
 .It Fn mutex_enter "mtx"
 .Pp
 Acquire a mutex.
@@ -148,6 +183,12 @@ mutex is acquired.
 Mutexes and other types of locks must always be acquired in a
 consistent order with respect to each other.
 Otherwise, the potential for system deadlock exists.
+.Pp
+Adaptive mutexes and other types of lock that can sleep may
+not be acquired once a spin mutex is held by the caller.
+Note that device driver mutexes at a level other than
+.Dv IPL_NONE
+can be spin mutexes.
 .It Fn mutex_exit "mtx"
 .Pp
 Release a mutex.
@@ -158,6 +199,31 @@ Mutexes may be released out of order as needed.
 Try to acquire a mutex, but do not block if the mutex is already held.
 Returns non-zero if the mutex was acquired, or zero if the mutex was
 already held.
+.Pp
+.Fn mutex_tryenter
+can be used as an optimization when acquiring locks in the the wrong order.
+For example, in a setting where the convention is that
+.Dv first_lock
+must be acquired before
+.Dv second_lock ,
+the following can be used to optimistically lock in reverse order:
+.Bd -literal
+	/* We hold second_lock, but not first_lock. */
+	KASSERT(mutex_owned(\*[Am]second_lock));
+
+	if (!mutex_tryenter(\*[Am]first_lock)) {
+		/* Failed to get it - lock in the correct order. */
+		mutex_exit(\*[Am]second_lock);
+		mutex_enter(\*[Am]first_lock);
+		mutex_enter(\*[Am]second_lock);
+
+		/*
+		 * We may need to recheck any conditions the code
+		 * path depends on, as we released second_lock
+		 * briefly.
+		 */
+	}
+.Ed
 .It Fn mutex_owned "mtx"
 .Pp
 For adaptive mutexes, return non-zero if the current LWP holds the mutex.
@@ -165,14 +231,15 @@ For spin mutexes, return non-zero if the mutex is held, potentially by the
 current processor.
 Otherwise, return zero.
 .Pp
-For spin mutexes,
 .Fn mutex_owned
-may unconditionally return non-zero when the kernel is not built with the
-.Dv DIAGNOSTIC
-option, and is therefore suitable only for diagnostic checks that verify
-that a lock is held.
-.Fn mutex_owned
-must not be used to make locking decisions at run time.
+is provided for making diagnostic checks to verify that a lock is held.
+For example:
+.Bd -literal
+	KASSERT(mutex_owned(\*[Am]driver_lock));
+.Ed
+.Pp
+It should not be used to make locking decisions at run time, or to 
+verify that a lock is unheld.
 .El
 .Sh CODE REFERENCES
 This section describes places within the
@@ -204,6 +271,3 @@ code must provide to support mutexes.
 .Sh HISTORY
 The mutex primitives first appeared in
 .Nx 5.0 .
-They are modelled after the mutual exclusion primitives implemented in
-Sun Solaris, and have been extended for
-.Nx .
