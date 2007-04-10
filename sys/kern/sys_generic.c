@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.100.2.3 2007/04/10 00:22:12 ad Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.100.2.4 2007/04/10 12:06:06 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.100.2.3 2007/04/10 00:22:12 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.100.2.4 2007/04/10 12:06:06 ad Exp $");
 
 #include "opt_ktrace.h"
 
@@ -784,7 +784,7 @@ sys_select(struct lwp *l, void *v, register_t *retval)
 
 int
 selcommon(struct lwp *l, register_t *retval, int nd, fd_set *u_in,
-	fd_set *u_ou, fd_set *u_ex, struct timeval *tv, sigset_t *mask)
+	  fd_set *u_ou, fd_set *u_ex, struct timeval *tv, sigset_t *mask)
 {
 	char		smallbits[howmany(FD_SETSIZE, NFDBITS) *
 			    sizeof(fd_mask) * 6];
@@ -871,20 +871,12 @@ selcommon(struct lwp *l, register_t *retval, int nd, fd_set *u_in,
 		error = EINTR;
 	if (error == EWOULDBLOCK)
 		error = 0;
-	if (error == 0) {
-
-#define	putbits(name, x)						\
-		if (u_ ## name) {					\
-			error = copyout(bits + ni * x, u_ ## name, ni); \
-			if (error)					\
-				goto out;				\
-		}
-		putbits(in, 3);
-		putbits(ou, 4);
-		putbits(ex, 5);
-#undef putbits
-	}
- out:
+	if (error == 0 && u_in != NULL)
+		error = copyout(bits + ni * 3, u_in, ni);
+	if (error == 0 && u_ou != NULL)
+		error = copyout(bits + ni * 4, u_ou, ni);
+	if (error == 0 && u_ex != NULL)
+		error = copyout(bits + ni * 5, u_ex, ni);
 	if (bits != smallbits)
 		kmem_free(bits, ni * 6);
 	return (error);
@@ -1062,12 +1054,8 @@ pollcommon(struct lwp *l, register_t *retval,
 		error = EINTR;
 	if (error == EWOULDBLOCK)
 		error = 0;
-	if (error == 0) {
+	if (error == 0)
 		error = copyout(bits, u_fds, ni);
-		if (error)
-			goto out;
-	}
- out:
 	if (bits != smallbits)
 		kmem_free(bits, ni);
 	return (error);
