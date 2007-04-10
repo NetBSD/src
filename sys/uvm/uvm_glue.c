@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.104.2.5 2007/04/10 13:26:56 ad Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.104.2.6 2007/04/10 15:41:42 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.104.2.5 2007/04/10 13:26:56 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.104.2.6 2007/04/10 15:41:42 ad Exp $");
 
 #include "opt_coredump.h"
 #include "opt_kgdb.h"
@@ -583,11 +583,14 @@ uvm_scheduler(void)
 
 /*
  * swappable: is LWP "l" swappable?
+ *
+ * XXXAD curlwp check should be LW_RUNNING
  */
 
 #define	swappable(l)							\
 	(((l)->l_flag & (LW_INMEM | LW_SYSTEM)) == LW_INMEM &&		\
-	 (l)->l_holdcnt == 0 &&	(l)->l_cpu->ci_curlwp != (l))
+	 (l)->l_holdcnt == 0 &&	(l)->l_cpu->ci_curlwp != (l) &&		\
+	 (l)->l_syncobj != &rw_syncobj && (l)->l_syncobj != &mutex_syncobj)
 
 /*
  * swapout_threads: find threads that can be swapped and unwire their
