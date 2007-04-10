@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.79.2.1 2007/03/13 16:51:57 ad Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.79.2.2 2007/04/10 01:55:31 ad Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.79.2.1 2007/03/13 16:51:57 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.79.2.2 2007/04/10 01:55:31 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -811,6 +811,8 @@ retry:
 	else if (mutex_tryenter(&wpipe->pipe_lock) == 0) {
 		/* Deal with race for peer */
 		mutex_exit(&rpipe->pipe_lock);
+		/* XXX Might be about to deadlock w/kernel_lock. */
+		yield();
 		goto retry;
 	} else if ((wpipe->pipe_state & PIPE_EOF) != 0) {
 		mutex_exit(&wpipe->pipe_lock);
@@ -1158,6 +1160,8 @@ retry:
 	if (wpipe != NULL && mutex_tryenter(&wpipe->pipe_lock) == 0) {
 		/* Deal with race for peer */
 		mutex_exit(&rpipe->pipe_lock);
+		/* XXX Might be about to deadlock w/kernel_lock. */
+		yield();
 		goto retry;
 	}
 
@@ -1296,6 +1300,8 @@ pipeclose(struct file *fp, struct pipe *pipe)
 		}
 		if (!rw_tryenter(&pipe_peer_lock, RW_READER)) {
 			mutex_exit(&pipe->pipe_lock);
+			/* XXX Might be about to deadlock w/kernel_lock. */
+			yield();
 			goto retry;
 		}
 	}
@@ -1308,6 +1314,8 @@ pipeclose(struct file *fp, struct pipe *pipe)
 		if (mutex_tryenter(&ppipe->pipe_lock) == 0) {
 			mutex_exit(&pipe->pipe_lock);
 			rw_exit(&pipe_peer_lock);
+			/* XXX Might be about to deadlock w/kernel_lock. */
+			yield();
 			goto retry;
 		}
 		pipeselwakeup(ppipe, ppipe, POLL_HUP);
