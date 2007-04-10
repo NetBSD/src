@@ -1,4 +1,4 @@
-#	$NetBSD: files.prep,v 1.56 2006/06/23 03:08:41 garbled Exp $
+#	$NetBSD: files.prep,v 1.57 2007/04/10 02:52:25 macallan Exp $
 #
 # prep-specific configuration info
 #
@@ -67,6 +67,7 @@ file	arch/prep/prep/cpu.c		cpu
 include "dev/wscons/files.wscons"
 include "dev/wsfont/files.wsfont"
 include "dev/rasops/files.rasops"
+include "dev/wsfb/files.wsfb"
 
 #
 # PCI-only drivers

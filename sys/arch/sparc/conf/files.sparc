@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc,v 1.138 2007/03/18 17:29:56 jdc Exp $
+#	$NetBSD: files.sparc,v 1.139 2007/04/10 02:57:14 macallan Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
 # sparc-specific configuration info
@@ -21,6 +21,13 @@ attach mainbus at root
 
 device msiiep {}
 attach msiiep at mainbus
+
+#
+# Raster Console / WS Console
+#
+include "dev/wscons/files.wscons"	# includes rcons as well
+include "dev/wsfont/files.wsfont"	# both rcons and wscons need it
+include "dev/wsfb/files.wsfb"
 
 include "dev/i2o/files.i2o"
 include "dev/pci/files.pci"
@@ -308,13 +315,6 @@ file	arch/sparc/sparc/vm_machdep.c
 file	arch/sparc/sparc/db_interface.c	ddb | kgdb
 file	arch/sparc/sparc/db_trace.c	ddb
 file	arch/sparc/sparc/db_disasm.c	ddb
-
-
-#
-# Raster Console / WS Console
-#
-include "dev/wscons/files.wscons"	# includes rcons as well
-include "dev/wsfont/files.wsfont"	# both rcons and wscons need it
 
 include "dev/pckbport/files.pckbport"
 
