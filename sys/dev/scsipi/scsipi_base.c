@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.143.6.3 2007/04/09 22:10:00 ad Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.143.6.4 2007/04/10 12:07:11 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.143.6.3 2007/04/09 22:10:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.143.6.4 2007/04/10 12:07:11 ad Exp $");
 
 #include "opt_scsi.h"
 
@@ -119,6 +119,7 @@ scsipi_init(void)
 int
 scsipi_channel_init(struct scsipi_channel *chan)
 {
+	struct scsipi_adapter *adapt = chan->chan_adapter;
 	int i;
 
 	/* Initialize shared data. */
@@ -134,7 +135,14 @@ scsipi_channel_init(struct scsipi_channel *chan)
 	/*
 	 * Create the asynchronous completion thread.
 	 */
-	kthread_create(scsipi_create_completion_thread, chan);
+	if (kthread_create(PRI_NONE, false, scsipi_completion_thread, chan,
+	    &chan->chan_thread, "%s", chan->chan_name)) {
+		printf("%s: unable to create completion thread for "
+		    "channel %d\n", adapt->adapt_dev->dv_xname,
+		    chan->chan_channel);
+		panic("scsipi_channel_init");
+	}
+
 	return (0);
 }
 
@@ -2121,27 +2129,6 @@ scsipi_completion_thread(void *arg)
 
 	kthread_exit(0);
 }
-
-/*
- * scsipi_create_completion_thread:
- *
- *	Callback to actually create the completion thread.
- */
-void
-scsipi_create_completion_thread(void *arg)
-{
-	struct scsipi_channel *chan = arg;
-	struct scsipi_adapter *adapt = chan->chan_adapter;
-
-	if (kthread_create1(PRI_NONE, false, scsipi_completion_thread, chan,
-	    &chan->chan_thread, "%s", chan->chan_name)) {
-		printf("%s: unable to create completion thread for "
-		    "channel %d\n", adapt->adapt_dev->dv_xname,
-		    chan->chan_channel);
-		panic("scsipi_create_completion_thread");
-	}
-}
-
 /*
  * scsipi_thread_call_callback:
  *

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.107.2.4 2007/04/09 22:10:05 ad Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.107.2.5 2007/04/10 12:07:14 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.107.2.4 2007/04/09 22:10:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.107.2.5 2007/04/10 12:07:14 ad Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -1121,7 +1121,7 @@ nfs_getset_niothreads(set)
 		start = nfs_niothreads - have;
 
 		while (start > 0) {
-			kthread_create1(PRI_NONE, false, start_nfsio, NULL,
+			kthread_create(PRI_NONE, false, start_nfsio, NULL,
 			    NULL, "nfsio");
 			start--;
 		}

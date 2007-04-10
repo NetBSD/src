@@ -1,5 +1,5 @@
 /*	$OpenBSD: usb_port.h,v 1.18 2000/09/06 22:42:10 rahnds Exp $ */
-/*	$NetBSD: usb_port.h,v 1.74.2.1 2007/03/13 16:51:05 ad Exp $	*/
+/*	$NetBSD: usb_port.h,v 1.74.2.2 2007/04/10 12:07:12 ad Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_port.h,v 1.21 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -128,8 +128,8 @@ typedef struct callout usb_callout_t;
 
 #define usb_lockmgr lockmgr
 
-#define usb_kthread_create1	kthread_create1
-#define usb_kthread_create	kthread_create
+#define usb_kthread_create1		kthread_create
+#define usb_kthread_create(f, a)	((f)(a))
 
 typedef struct malloc_type *usb_malloc_type;
 

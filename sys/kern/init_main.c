@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.299.2.5 2007/04/10 00:22:11 ad Exp $	*/
+/*	$NetBSD: init_main.c,v 1.299.2.6 2007/04/10 12:07:12 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.299.2.5 2007/04/10 00:22:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.299.2.6 2007/04/10 12:07:12 ad Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_kcont.h"
@@ -491,12 +491,6 @@ main(void)
 		panic("fork init");
 
 	/*
-	 * Create any kernel threads who's creation was deferred because
-	 * initproc had not yet been created.
-	 */
-	kthread_run_deferred_queue();
-
-	/*
 	 * Now that device driver threads have been created, wait for
 	 * them to finish any deferred autoconfiguration.  Note we don't
 	 * need to lock this semaphore, since we haven't booted any
@@ -590,11 +584,11 @@ main(void)
 
 	/* Create the pageout daemon kernel thread. */
 	uvm_swap_init();
-	if (kthread_create1(PVM, false, uvm_pageout, NULL, NULL, "pgdaemon"))
+	if (kthread_create(PVM, true, uvm_pageout, NULL, NULL, "pgdaemon"))
 		panic("fork pagedaemon");
 
 	/* Create the filesystem syncer kernel thread. */
-	if (kthread_create1(PINOD, false, sched_sync, NULL, NULL, "ioflush"))
+	if (kthread_create(PINOD, false, sched_sync, NULL, NULL, "ioflush"))
 		panic("fork syncer");
 
 	/* Create the aiodone daemon kernel thread. */

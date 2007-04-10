@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365.c,v 1.98.2.1 2007/04/09 22:09:57 ad Exp $	*/
+/*	$NetBSD: i82365.c,v 1.98.2.2 2007/04/10 12:07:09 ad Exp $	*/
 
 /*
  * Copyright (c) 2004 Charles M. Hannum.  All rights reserved.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82365.c,v 1.98.2.1 2007/04/09 22:09:57 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82365.c,v 1.98.2.2 2007/04/10 12:07:09 ad Exp $");
 
 #define	PCICDEBUG
 
@@ -100,7 +100,6 @@ void	pcic_deactivate_card(struct pcic_handle *);
 void	pcic_chip_do_mem_map(struct pcic_handle *, int);
 void	pcic_chip_do_io_map(struct pcic_handle *, int);
 
-void	pcic_create_event_thread(void *);
 void	pcic_event_thread(void *);
 
 void	pcic_queue_event(struct pcic_handle *, int);
@@ -398,6 +397,7 @@ pcic_attach_socket(h)
 	struct pcmciabus_attach_args paa;
 	struct pcic_softc *sc = (struct pcic_softc *)h->ph_parent;
 	int locs[PCMCIABUSCF_NLOCS];
+	char cs[4];
 
 	/* initialize the rest of the handle */
 
@@ -432,7 +432,14 @@ pcic_attach_socket(h)
 		panic("pcic_attach_socket: event thread");
 #endif
 	config_pending_incr();
-	kthread_create(pcic_create_event_thread, h);
+	snprintf(cs, sizeof(cs), "%d,%d", h->chip, h->socket);
+
+	if (kthread_create(PRI_NONE, false, pcic_event_thread, h,
+	    &h->event_thread, "%s,%s", h->ph_parent->dv_xname, cs)) {
+		printf("%s: unable to create event thread for sock 0x%02x\n",
+		    h->ph_parent->dv_xname, h->sock);
+		panic("pcic_attach_socket");
+	}
 }
 
 /*
@@ -513,23 +520,6 @@ pcic_attach_socket_finish(h)
 		h->laststate = PCIC_LASTSTATE_PRESENT;
 	} else {
 		h->laststate = PCIC_LASTSTATE_EMPTY;
-	}
-}
-
-void
-pcic_create_event_thread(arg)
-	void *arg;
-{
-	struct pcic_handle *h = arg;
-	char cs[4];
-
-	snprintf(cs, sizeof(cs), "%d,%d", h->chip, h->socket);
-
-	if (kthread_create1(PRI_NONE, false, pcic_event_thread, h,
-	    &h->event_thread, "%s,%s", h->ph_parent->dv_xname, cs)) {
-		printf("%s: unable to create event thread for sock 0x%02x\n",
-		    h->ph_parent->dv_xname, h->sock);
-		panic("pcic_create_event_thread");
 	}
 }
 

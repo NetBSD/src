@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_acct.c,v 1.73.2.1 2007/04/09 22:10:02 ad Exp $	*/
+/*	$NetBSD: kern_acct.c,v 1.73.2.2 2007/04/10 12:07:13 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_acct.c,v 1.73.2.1 2007/04/09 22:10:02 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_acct.c,v 1.73.2.2 2007/04/10 12:07:13 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -356,7 +356,7 @@ sys_acct(struct lwp *l, void *v, register_t *retval)
 	}
 
 	if (acct_dkwatcher == NULL) {
-		error = kthread_create1(PRI_NONE, false, acctwatch, NULL,
+		error = kthread_create(PRI_NONE, false, acctwatch, NULL,
 		    &acct_dkwatcher, "acctwatch");
 		if (error != 0)
 			acct_stop();

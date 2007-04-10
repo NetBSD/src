@@ -1,4 +1,4 @@
-/*	$NetBSD: ustir.c,v 1.18.2.2 2007/04/09 22:10:01 ad Exp $	*/
+/*	$NetBSD: ustir.c,v 1.18.2.3 2007/04/10 12:07:12 ad Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ustir.c,v 1.18.2.2 2007/04/09 22:10:01 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ustir.c,v 1.18.2.3 2007/04/10 12:07:12 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -923,12 +923,15 @@ ustir_open(void *h, int flag, int mode,
 	deframe_init(&sc->sc_framestate, &framedef_sir, sc->sc_ur_buf,
 		     IRDA_MAX_FRAME_SIZE);
 
-	error = kthread_create1(PRI_NONE, false, ustir_thread, sc,
-	    &sc->sc_thread, "%s", sc->sc_dev.dv_xname);
-	if (error)
-		goto bad5;
 	/* Increment reference for thread */
 	sc->sc_refcnt++;
+
+	error = kthread_create(PRI_NONE, false, ustir_thread, sc,
+	    &sc->sc_thread, "%s", sc->sc_dev.dv_xname);
+	if (error) {
+		sc->sc_refcnt--;
+		goto bad5;
+	}
 
 	return 0;
 

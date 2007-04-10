@@ -1,4 +1,4 @@
-/* $NetBSD: ipmivar.h,v 1.2.6.1 2007/04/09 22:09:53 ad Exp $ */
+/* $NetBSD: ipmivar.h,v 1.2.6.2 2007/04/10 12:07:07 ad Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave
@@ -154,7 +154,6 @@ struct ipmi_get_watchdog {
 	u_int16_t		wdog_countdown;
 } __packed;
 
-void	ipmi_create_thread(void *);
 void	ipmi_poll_thread(void *);
 
 int	kcs_probe(struct ipmi_softc *);

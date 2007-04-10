@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.c,v 1.73.2.1 2007/04/09 22:09:57 ad Exp $ */
+/* $NetBSD: isp_netbsd.c,v 1.73.2.2 2007/04/10 12:07:09 ad Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_netbsd.c,v 1.73.2.1 2007/04/09 22:09:57 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_netbsd.c,v 1.73.2.2 2007/04/10 12:07:09 ad Exp $");
 
 #include <dev/ic/isp_netbsd.h>
 #include <sys/scsiio.h>
@@ -93,7 +93,6 @@ ispioctl(struct scsipi_channel *, u_long, void *, int, struct proc *);
 
 static void isp_polled_cmd(struct ispsoftc *, XS_T *);
 static void isp_dog(void *);
-static void isp_create_fc_worker(void *);
 static void isp_fc_worker(void *);
 
 /*
@@ -136,11 +135,6 @@ isp_attach(struct ispsoftc *isp)
 		isp->isp_osinfo._chan.chan_ntargets = MAX_FC_TARG;
 		isp->isp_osinfo._chan.chan_id = MAX_FC_TARG;
 		isp->isp_osinfo.threadwork = 1;
-		/*
-		 * Note that isp_create_fc_worker won't get called
-		 * until much much later (after proc0 is created).
-		 */
-		kthread_create(isp_create_fc_worker, isp);
 #ifdef	ISP_FW_CRASH_DUMP
 		if (IS_2200(isp)) {
 			FCPARAM(isp)->isp_dump_data =
@@ -206,6 +200,13 @@ isp_config_interrupts(struct device *self)
 	 */
 	if (IS_FC(isp)) {
 		isp->isp_osinfo.no_mbox_ints = 0;
+
+		if (kthread_create(PRI_NONE, false, isp_fc_worker, isp,
+		    &isp->isp_osinfo.thread, "%s:fc_thrd", isp->isp_name)) {
+			isp_prt(isp, ISP_LOGERR,
+			    "unable to create FC worker thread");
+			panic("isp_config_interrupts");
+		}
 	}
 }
 
@@ -755,22 +756,6 @@ isp_dog(void *arg)
 		isp_prt(isp, ISP_LOGDEBUG0, "watchdog with no command");
 	}
 	ISP_IUNLOCK(isp);
-}
-
-/*
- * Fibre Channel state cleanup thread
- */
-static void
-isp_create_fc_worker(void *arg)
-{
-	struct ispsoftc *isp = arg;
-
-	if (kthread_create1(PRI_NONE, false, isp_fc_worker, isp,
-	    &isp->isp_osinfo.thread, "%s:fc_thrd", isp->isp_name)) {
-		isp_prt(isp, ISP_LOGERR, "unable to create FC worker thread");
-		panic("isp_create_fc_worker");
-	}
-
 }
 
 static void
