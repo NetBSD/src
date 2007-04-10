@@ -1,4 +1,4 @@
-#	$NetBSD: files.cobalt,v 1.28 2006/09/10 06:41:09 tsutsui Exp $
+#	$NetBSD: files.cobalt,v 1.29 2007/04/10 02:29:42 macallan Exp $
 
 maxpartitions 16
 
@@ -49,6 +49,9 @@ file dev/cons.c
 file dev/cninit.c
 
 include "dev/i2o/files.i2o"
+
+# generic fb driver
+include "dev/wsfb/files.wsfb"
 
 include "dev/pci/files.pci"
 file arch/cobalt/pci/pci_machdep.c	pci
