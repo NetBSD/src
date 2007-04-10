@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.299.2.4 2007/04/09 22:10:02 ad Exp $	*/
+/*	$NetBSD: init_main.c,v 1.299.2.5 2007/04/10 00:22:11 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.299.2.4 2007/04/09 22:10:02 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.299.2.5 2007/04/10 00:22:11 ad Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_kcont.h"
@@ -360,6 +360,9 @@ main(void)
 
 	/* Initialize the file descriptor system. */
 	filedesc_init();
+
+	/* Initialize the select()/poll() system calls. */
+	selsysinit();
 
 #ifdef __HAVE_TIMECOUNTER
 	inittimecounter();

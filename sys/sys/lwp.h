@@ -1,4 +1,4 @@
-/* 	$NetBSD: lwp.h,v 1.56.2.3 2007/04/09 22:10:06 ad Exp $	*/
+/* 	$NetBSD: lwp.h,v 1.56.2.4 2007/04/10 00:22:12 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -61,6 +61,7 @@
  * l:	*l_mutex
  * p:	l_proc->p_smutex
  * s:	sched_mutex, which may or may not be referenced by l_mutex
+ * S:	select_lock
  * (:	unlocked, stable
  * !:	unlocked, may only be safely accessed by the LWP itself
  * ?:	undecided
@@ -101,7 +102,7 @@ struct	lwp {
 	u_int		l_slptime;	/* l: time since last blocked */
 	struct callout	l_tsleep_ch;	/* !: callout for tsleep */
 
-	/* Process level and global state */
+	/* Process level and global state, misc. */
 	LIST_ENTRY(lwp)	l_list;		/* a: entry on list of all LWPs */
 	void		*l_ctxlink;	/* p: uc_link {get,set}context */
 	struct proc	*l_proc;	/* p: parent process */
@@ -110,6 +111,8 @@ struct	lwp {
 	u_int		l_refcnt;	/* p: reference count on this LWP */
 	lwpid_t		l_lid;		/* (: LWP identifier; local to proc */
 	char		l_name[MAXCOMLEN];/* (: name, optional */
+	int		l_selflag;	/* S: select() flags */
+	TAILQ_HEAD(,selinfo) l_selwait;	/* S: descriptors waited on */
 
 	/* Signals */
 	int		l_sigrestore;	/* p: need to restore old sig mask */
