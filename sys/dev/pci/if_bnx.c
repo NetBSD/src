@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bnx.c,v 1.5 2007/04/09 19:34:50 bouyer Exp $	*/
+/*	$NetBSD: if_bnx.c,v 1.6 2007/04/10 12:18:26 bouyer Exp $	*/
 /*	$OpenBSD: if_bnx.c,v 1.43 2007/01/30 03:21:10 krw Exp $	*/
 
 /*-
@@ -35,7 +35,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/dev/bce/if_bce.c,v 1.3 2006/04/13 14:12:26 ru Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.5 2007/04/09 19:34:50 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.6 2007/04/10 12:18:26 bouyer Exp $");
 
 /*
  * The following controllers are supported by this driver:
@@ -3667,10 +3667,11 @@ bnx_rx_intr(struct bnx_softc *sc)
 				"sw_chain_cons 0x%x "
 				"sw_chain_prod 0x%x "
 				"hw_cons 0x%x "
-				"TOTAL_RX_BD_PER_PAGE 0x%lx "
-				"TOTAL_RX_BD 0x%lx\n",
+				"TOTAL_RX_BD_PER_PAGE 0x%x "
+				"TOTAL_RX_BD 0x%x\n",
 				sw_cons, sw_prod, sw_chain_cons, sw_chain_prod,
-				hw_cons, TOTAL_RX_BD_PER_PAGE, TOTAL_RX_BD);
+				hw_cons,
+				(int)TOTAL_RX_BD_PER_PAGE, (int)TOTAL_RX_BD);
 			}
 #endif
 			bus_dmamap_sync(sc->bnx_dmatag,
