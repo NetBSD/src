@@ -1,4 +1,4 @@
-# $NetBSD: files.alpha,v 1.171 2007/02/09 21:55:01 ad Exp $
+# $NetBSD: files.alpha,v 1.172 2007/04/10 02:21:35 macallan Exp $
 #
 # alpha-specific configuration info
 
@@ -85,6 +85,7 @@ include "dev/wsfont/files.wsfont"
 # "Workstation Console" glue.
 #
 include "dev/wscons/files.wscons"
+include "dev/wsfb/files.wsfb"
 
 
 #

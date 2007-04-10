@@ -1,4 +1,4 @@
-#	$NetBSD: files.amd64,v 1.35 2007/03/20 21:30:27 xtraeme Exp $
+#	$NetBSD: files.amd64,v 1.36 2007/04/10 02:23:02 macallan Exp $
 #
 # new style config file for amd64 architecture
 #
@@ -96,6 +96,8 @@ file	arch/amd64/amd64/mainbus.c		mainbus
 device cpu
 attach cpu at cpubus
 file	arch/amd64/amd64/cpu.c		cpu
+
+include "dev/wsfb/files.wsfb"
 
 #
 # PCI-only drivers
