@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.100.2.2 2007/03/23 18:49:09 ad Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.100.2.3 2007/04/10 00:22:12 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -36,8 +36,12 @@
  *	@(#)sys_generic.c	8.9 (Berkeley) 2/14/95
  */
 
+/*
+ * System calls relating to files.
+ */
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.100.2.2 2007/03/23 18:49:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.100.2.3 2007/04/10 00:22:12 ad Exp $");
 
 #include "opt_ktrace.h"
 
@@ -66,6 +70,10 @@ __KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.100.2.2 2007/03/23 18:49:09 ad Exp
 int selscan(struct lwp *, fd_mask *, fd_mask *, int, register_t *);
 int pollscan(struct lwp *, struct pollfd *, int, register_t *);
 
+static void selclear(void);
+
+kmutex_t select_lock;
+kcondvar_t select_cv;
 
 /*
  * Read system call.
@@ -782,7 +790,7 @@ selcommon(struct lwp *l, register_t *retval, int nd, fd_set *u_in,
 			    sizeof(fd_mask) * 6];
 	struct proc	* const p = l->l_proc;
 	char 		*bits;
-	int		s, ncoll, error, timo;
+	int		ncoll, error, timo;
 	size_t		ni;
 	sigset_t	oldmask;
 	struct timeval  sleeptv;
@@ -827,32 +835,36 @@ selcommon(struct lwp *l, register_t *retval, int nd, fd_set *u_in,
 	} else
 		oldmask = l->l_sigmask;	/* XXXgcc */
 
- retry:
-	ncoll = nselcoll;
-	l->l_flag |= LW_SELECT;
-	error = selscan(l, (fd_mask *)(bits + ni * 0),
-			   (fd_mask *)(bits + ni * 3), nd, retval);
-	if (error || *retval)
-		goto donemask;
-	if (tv && (timo = gettimeleft(tv, &sleeptv)) <= 0)
-		goto donemask;
-	s = splsched();
-	if ((l->l_flag & LW_SELECT) == 0 || nselcoll != ncoll) {
-		splx(s);
-		goto retry;
+	mutex_enter(&select_lock);
+	for (;;) {
+	 	l->l_selflag = 1;
+		ncoll = nselcoll;
+ 		mutex_exit(&select_lock);
+
+		error = selscan(l, (fd_mask *)(bits + ni * 0),
+		    (fd_mask *)(bits + ni * 3), nd, retval);
+
+		mutex_enter(&select_lock);
+		if (error || *retval)
+			break;
+		if (tv && (timo = gettimeleft(tv, &sleeptv)) <= 0)
+			break;
+		if (l->l_selflag == 0 || ncoll != nselcoll)
+			continue;
+		l->l_selflag = 0;
+		error = cv_timedwait_sig(&select_cv, &select_lock, timo);
+		if (error != 0)
+			break;
 	}
-	l->l_flag &= ~LW_SELECT;
-	error = tsleep((void *)&selwait, PSOCK | PCATCH, "select", timo);
-	splx(s);
-	if (error == 0)
-		goto retry;
- donemask:
+	selclear();
+	mutex_exit(&select_lock);
+
 	if (mask) {
 		mutex_enter(&p->p_smutex);
 		l->l_sigmask = oldmask;
 		mutex_exit(&p->p_smutex);
 	}
-	l->l_flag &= ~LW_SELECT;
+
  done:
 	/* select is not restarted after signals... */
 	if (error == ERESTART)
@@ -983,7 +995,7 @@ pollcommon(struct lwp *l, register_t *retval,
 	struct proc	* const p = l->l_proc;
 	void *		bits;
 	sigset_t	oldmask;
-	int		s, ncoll, error, timo;
+	int		ncoll, error, timo;
 	size_t		ni;
 	struct timeval	sleeptv;
 
@@ -1016,32 +1028,34 @@ pollcommon(struct lwp *l, register_t *retval,
 	} else
 		oldmask = l->l_sigmask;	/* XXXgcc */
 
- retry:
-	ncoll = nselcoll;
-	l->l_flag |= LW_SELECT;
-	error = pollscan(l, (struct pollfd *)bits, nfds, retval);
-	if (error || *retval)
-		goto donemask;
-	if (tv && (timo = gettimeleft(tv, &sleeptv)) <= 0)
-		goto donemask;
-	s = splsched();
-	if ((l->l_flag & LW_SELECT) == 0 || nselcoll != ncoll) {
-		splx(s);
-		goto retry;
+	mutex_enter(&select_lock);
+	for (;;) {
+		ncoll = nselcoll;
+		l->l_selflag = 1;
+		mutex_exit(&select_lock);
+
+		error = pollscan(l, (struct pollfd *)bits, nfds, retval);
+
+		mutex_enter(&select_lock);
+		if (error || *retval)
+			break;
+		if (tv && (timo = gettimeleft(tv, &sleeptv)) <= 0)
+			break;
+		if (l->l_selflag == 0 || nselcoll != ncoll)
+			continue;
+		l->l_selflag = 0;
+		error = cv_timedwait_sig(&select_cv, &select_lock, timo);
+		if (error != 0)
+			break;
 	}
-	l->l_flag &= ~LW_SELECT;
-	error = tsleep((void *)&selwait, PSOCK | PCATCH, "poll", timo);
-	splx(s);
-	if (error == 0)
-		goto retry;
- donemask:
+	selclear();
+	mutex_exit(&select_lock);
+
 	if (mask) {
 		mutex_enter(&p->p_smutex);
 		l->l_sigmask = oldmask;
 		mutex_exit(&p->p_smutex);
 	}
-
-	l->l_flag &= ~LW_SELECT;
  done:
 	/* poll is not restarted after signals... */
 	if (error == ERESTART)
@@ -1107,79 +1121,89 @@ seltrue(dev_t dev, int events, struct lwp *l)
 void
 selrecord(struct lwp *selector, struct selinfo *sip)
 {
-	struct lwp	*l;
-	struct proc	*p;
-	pid_t		mypid;
 
-	mypid = selector->l_proc->p_pid;
-	if (sip->sel_pid == mypid)
-		return;
-
-	mutex_enter(&proclist_mutex);
-	if (sip->sel_pid && (p = p_find(sip->sel_pid, PFIND_LOCKED))) {
-		mutex_enter(&p->p_smutex);
-		LIST_FOREACH(l, &p->p_lwps, l_sibling) {
-			lwp_lock(l);
-			if (l->l_wchan == (void *)&selwait &&
-			    l->l_stat == LSSLEEP) {
-				sip->sel_collision = 1;
-				lwp_unlock(l);
-				break;
-			}
-			lwp_unlock(l);
-		}
-		mutex_exit(&p->p_smutex);
+	mutex_enter(&select_lock);
+	if (sip->sel_lwp == NULL) {
+		/* First waiter. */
+		sip->sel_lwp = selector;
+		TAILQ_INSERT_TAIL(&selector->l_selwait, sip, sel_chain);
+	} else if (sip->sel_lwp != selector) {
+		/* More than 2 waiters. */
+		sip->sel_collision = true;
 	}
-	mutex_exit(&proclist_mutex);
-
-	if (!sip->sel_collision)
-		sip->sel_pid = mypid;
+	mutex_exit(&select_lock);
 }
 
 /*
  * Do a wakeup when a selectable event occurs.
  */
 void
-selwakeup(sip)
-	struct selinfo *sip;
+selwakeup(struct selinfo *sip)
 {
 	struct lwp *l;
-	struct proc *p;
 
-	if (sip->sel_pid == 0)
-		return;
+	mutex_enter(&select_lock);
 	if (sip->sel_collision) {
-		sip->sel_pid = 0;
+		/* Multiple waiters - just notify everybody. */
 		nselcoll++;
-		sip->sel_collision = 0;
-		wakeup((void *)&selwait);
-		return;
-	}
-
-	/*
-	 * We must use the proclist_mutex as we can be called from an
-	 * interrupt context.
-	 */
-	mutex_enter(&proclist_mutex);
-	p = p_find(sip->sel_pid, PFIND_LOCKED);
-	sip->sel_pid = 0;
-	if (p == NULL) {
-		mutex_exit(&proclist_mutex);
-		return;
-	}
-
-	mutex_enter(&p->p_smutex);
-	LIST_FOREACH(l, &p->p_lwps, l_sibling) {
-		lwp_lock(l);
-		if (l->l_wchan == (wchan_t)&selwait && l->l_stat == LSSLEEP) {
-			/* setrunnable() will release the lock. */
-			setrunnable(l);
+		sip->sel_collision = false;
+		cv_broadcast(&select_cv);
+	} else if (sip->sel_lwp != NULL) {
+		/* Only one LWP waiting. */
+		l = sip->sel_lwp;
+		if (l->l_selflag != 0) {
+			/* Not yet asleep - make it go around again. */
+			l->l_selflag = 0;
 		} else {
-			if (l->l_flag & LW_SELECT)
-				l->l_flag &= ~LW_SELECT;
-			lwp_unlock(l);
+			/*
+			 * If it's sleeping, wake it up.  If not, it's already
+			 * awake but hasn't had a chance to remove itself from
+			 * the selector yet.
+			 */
+			lwp_lock(l);
+			if (l->l_wchan == &select_cv) {
+				/* lwp_unsleep() releases the LWP lock. */
+				lwp_unsleep(l);
+			} else
+				lwp_unlock(l);
 		}
 	}
-	mutex_exit(&p->p_smutex);
-	mutex_exit(&proclist_mutex);
+	mutex_exit(&select_lock);
+}
+
+void
+selnotify(struct selinfo *sip, long knhint)
+{
+
+	selwakeup(sip);
+	KNOTE(&sip->sel_klist, knhint);
+}
+
+/*
+ * Remove an LWP from all objects that it is waiting for.
+ */
+static void
+selclear(void)
+{
+	struct selinfo *sip;
+	struct lwp *l = curlwp;
+
+	KASSERT(mutex_owned(&select_lock));
+
+	TAILQ_FOREACH(sip, &l->l_selwait, sel_chain) {
+		KASSERT(sip->sel_lwp == l);
+		sip->sel_lwp = NULL;
+	}
+	TAILQ_INIT(&l->l_selwait);
+}
+
+/*
+ * Initialize the select/poll system calls.
+ */
+void
+selsysinit(void)
+{
+
+	mutex_init(&select_lock, MUTEX_DRIVER, IPL_VM);
+	cv_init(&select_cv, "select");
 }

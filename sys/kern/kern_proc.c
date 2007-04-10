@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.107.2.4 2007/04/09 22:10:03 ad Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.107.2.5 2007/04/10 00:22:11 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.107.2.4 2007/04/09 22:10:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.107.2.5 2007/04/10 00:22:11 ad Exp $");
 
 #include "opt_kstack.h"
 #include "opt_maxuprc.h"
@@ -370,6 +370,7 @@ proc0_init(void)
 	l->l_usrpri = PRIBIO;
 	l->l_inheritedprio = MAXPRI;
 	SLIST_INIT(&l->l_pi_lenders);
+	TAILQ_INIT(&l->l_selwait);
 
 	callout_init(&l->l_tsleep_ch);
 	cv_init(&l->l_sigcv, "sigwait");
