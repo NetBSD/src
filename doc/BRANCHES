@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.172 2007/04/08 03:53:40 matt Exp $
+#	$NetBSD: BRANCHES,v 1.173 2007/04/10 15:36:02 ad Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -473,8 +473,7 @@ Description:	idle lwp, and some changes depending on it.
 		   (cf. gmcgarry_ctxsw)
 		2. implement idle lwp.
 		3. clean up related MD/MI interfaces.
-		4. implement interrupt LWPs.
-		5. make scheduler(s) modular.
+		4. make scheduler(s) modular.
 
 Status:		Active
 Start Date:	Fri Feb 17 2007
