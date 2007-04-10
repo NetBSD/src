@@ -1,4 +1,4 @@
-# $NetBSD: files.wsfb,v 1.1 2007/04/07 03:41:26 macallan Exp $
+# $NetBSD: files.wsfb,v 1.2 2007/04/10 02:16:48 macallan Exp $
 
 #
 # wsdisplay framebuffer drivers
@@ -13,10 +13,6 @@ device genfb: wsemuldisplaydev, rasops8, vcons, drm
 file	dev/wsfb/genfb.c	genfb
 defflag opt_genfb.h GENFB_DEBUG
 
-# a PCI frontend for genfb
-attach genfb at pci with pci_genfb
-file	dev/wsfb/pci_genfb.c	genfb
-
 # an SBus frontend for genfb
-#attach genfb at sbus with sbus_genfb
-#file	dev/wsfb/sbus_genfb.c	genfb
+#attach genfb at sbus with genfb_sbus
+#file	dev/wsfb/genfb_sbus.c	genfb
