@@ -1,4 +1,4 @@
-/*	$NetBSD: mlx.c,v 1.51.2.1 2007/04/09 22:09:57 ad Exp $	*/
+/*	$NetBSD: mlx.c,v 1.51.2.2 2007/04/10 12:07:09 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mlx.c,v 1.51.2.1 2007/04/09 22:09:57 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mlx.c,v 1.51.2.2 2007/04/10 12:07:09 ad Exp $");
 
 #include "ld.h"
 
@@ -125,7 +125,6 @@ static int	mlx_fw_message(struct mlx_softc *, int, int, int);
 static void	mlx_pause_action(struct mlx_softc *);
 static void	mlx_pause_done(struct mlx_ccb *);
 static void	mlx_periodic(struct mlx_softc *);
-static void	mlx_periodic_create(void *);
 static void	mlx_periodic_enquiry(struct mlx_ccb *);
 static void	mlx_periodic_eventlog_poll(struct mlx_softc *);
 static void	mlx_periodic_eventlog_respond(struct mlx_ccb *);
@@ -491,6 +490,11 @@ mlx_init(struct mlx_softc *mlx, const char *intrstr)
 	}
 #endif
 
+	/* Attach child devices and enable interrupts. */
+	mlx_configure(mlx, 0);
+	(*mlx->mlx_intaction)(mlx, 1);
+	mlx->mlx_flags |= MLXF_INITOK;
+
 	if (mlx_sdh == NULL) {
 		/*
 		 * Set our `shutdownhook' before we start any device
@@ -498,15 +502,12 @@ mlx_init(struct mlx_softc *mlx, const char *intrstr)
 		 */
 		mlx_sdh = shutdownhook_establish(mlx_shutdown, NULL);
 
-		/* Arrange to create a status monitoring thread. */
-		kthread_create(mlx_periodic_create, NULL);
+		/* Create a status monitoring thread. */
+		rv = kthread_create(PRI_NONE, false, mlx_periodic_thread,
+		    NULL, &mlx_periodic_lwp, "mlxtask");
+		if (rv != 0)
+			printf("mlx_init: unable to create thread (%d)\n", rv);
 	}
-
-	/* Finally, attach child devices and enable interrupts. */
-	mlx_configure(mlx, 0);
-	(*mlx->mlx_intaction)(mlx, 1);
-
-	mlx->mlx_flags |= MLXF_INITOK;
 }
 
 /*
@@ -945,23 +946,6 @@ mlxioctl(dev_t dev, u_long cmd, void *data, int flag,
 	}
 
 	return (ENOTTY);	/* XXX shut up gcc */
-}
-
-/*
- * Fire off commands to periodically check the status of connected drives.
- * Check for commands that have timed out.
- */
-static void
-mlx_periodic_create(void *cookie)
-{
-	int rv;
-
-	rv = kthread_create1(PRI_NONE, false, mlx_periodic_thread, NULL,
-	    &mlx_periodic_lwp, "mlxtask");
-	if (rv == 0)
-		return;
-
-	printf("mlx_periodic_create: unable to create thread (%d)\n", rv);
 }
 
 static void

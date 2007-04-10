@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.32.2.2 2007/04/09 22:09:54 ad Exp $	*/
+/*	$NetBSD: fss.c,v 1.32.2.3 2007/04/10 12:07:08 ad Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.32.2.2 2007/04/09 22:09:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.32.2.3 2007/04/10 12:07:08 ad Exp $");
 
 #include "fss.h"
 
@@ -416,7 +416,7 @@ fss_softc_alloc(struct fss_softc *sc)
 	if (sc->sc_indir_data == NULL)
 		return(ENOMEM);
 
-	if ((error = kthread_create1(PINOD, false, fss_bs_thread, sc,
+	if ((error = kthread_create(PINOD, false, fss_bs_thread, sc,
 	    &sc->sc_bs_lwp, "fssbs%d", sc->sc_unit)) != 0)
 		return error;
 

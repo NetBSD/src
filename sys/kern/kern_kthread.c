@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_kthread.c,v 1.16.6.1 2007/04/09 22:10:02 ad Exp $	*/
+/*	$NetBSD: kern_kthread.c,v 1.16.6.2 2007/04/10 12:07:13 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2007 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_kthread.c,v 1.16.6.1 2007/04/09 22:10:02 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_kthread.c,v 1.16.6.2 2007/04/10 12:07:13 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,15 +58,12 @@ __KERNEL_RCSID(0, "$NetBSD: kern_kthread.c,v 1.16.6.1 2007/04/09 22:10:02 ad Exp
  */
 #include <machine/stdarg.h>
 
-bool	kthread_create_now;
-
 /*
  * Fork a kernel thread.  Any process can request this to be done.
- * The VM space and limits, etc. will be shared with proc0.
  */
 int
-kthread_create1(pri_t pri, bool mpsafe, void (*func)(void *), void *arg,
-		struct lwp **lp, const char *fmt, ...)
+kthread_create(pri_t pri, bool mpsafe, void (*func)(void *), void *arg,
+	       struct lwp **lp, const char *fmt, ...)
 {
 	struct lwp *l;
 	vaddr_t uaddr;
@@ -77,7 +74,8 @@ kthread_create1(pri_t pri, bool mpsafe, void (*func)(void *), void *arg,
 	inmem = uvm_uarea_alloc(&uaddr);
 	if (uaddr == 0)
 		return ENOMEM;
-	error = newlwp(&lwp0, &proc0, uaddr, inmem, 0, NULL, 0, func, arg, &l);
+	error = newlwp(&lwp0, &proc0, uaddr, inmem, LWP_DETACHED, NULL, 0,
+	    func, arg, &l);
 	if (error) {
 		/* XXX uvm_uarea_free(uaddr); */
 		return error;
@@ -128,61 +126,13 @@ kthread_exit(int ecode)
 		printf("WARNING: kthread `%s' (%d) exits with status %d\n",
 		    l->l_name, l->l_lid, ecode);
 
-	/* Acquire the sched state mutex.  exit1() will release it. */
+	/* And exit.. */
 	lwp_exit(l);
 
 	/*
 	 * XXX Fool the compiler.  Making exit1() __noreturn__ is a can
 	 * XXX of worms right now.
 	 */
-	for (;;);
-}
-
-struct kthread_q {
-	SIMPLEQ_ENTRY(kthread_q) kq_q;
-	void (*kq_func)(void *);
-	void *kq_arg;
-};
-
-SIMPLEQ_HEAD(, kthread_q) kthread_q = SIMPLEQ_HEAD_INITIALIZER(kthread_q);
-
-/*
- * Defer the creation of a kernel thread.  Once the standard kernel threads
- * and processes have been created, this queue will be run to callback to
- * the caller to create threads for e.g. file systems and device drivers.
- */
-void
-kthread_create(void (*func)(void *), void *arg)
-{
-	struct kthread_q *kq;
-
-	if (kthread_create_now) {
-		(*func)(arg);
-		return;
-	}
-
-	kq = malloc(sizeof(*kq), M_TEMP, M_NOWAIT);
-	if (kq == NULL)
-		panic("unable to allocate kthread_q");
-	memset(kq, 0, sizeof(*kq));
-
-	kq->kq_func = func;
-	kq->kq_arg = arg;
-
-	SIMPLEQ_INSERT_TAIL(&kthread_q, kq, kq_q);
-}
-
-void
-kthread_run_deferred_queue(void)
-{
-	struct kthread_q *kq;
-
-	/* No longer need to defer kthread creation. */
-	kthread_create_now = true;
-
-	while ((kq = SIMPLEQ_FIRST(&kthread_q)) != NULL) {
-		SIMPLEQ_REMOVE_HEAD(&kthread_q, kq_q);
-		(*kq->kq_func)(kq->kq_arg);
-		free(kq, M_TEMP);
-	}
+	for (;;)
+		;
 }

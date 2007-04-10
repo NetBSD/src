@@ -1,4 +1,4 @@
-/*	$NetBSD: iop.c,v 1.64.2.2 2007/04/09 22:09:56 ad Exp $	*/
+/*	$NetBSD: iop.c,v 1.64.2.3 2007/04/10 12:07:09 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.64.2.2 2007/04/09 22:09:56 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.64.2.3 2007/04/10 12:07:09 ad Exp $");
 
 #include "opt_i2o.h"
 #include "iop.h"
@@ -231,7 +231,6 @@ static int	iop_print(void *, const char *);
 static void	iop_shutdown(void *);
 
 static void	iop_adjqparam(struct iop_softc *, int);
-static void	iop_create_reconf_thread(void *);
 static int	iop_handle_reply(struct iop_softc *, u_int32_t);
 static int	iop_hrt_get(struct iop_softc *);
 static int	iop_hrt_get0(struct iop_softc *, struct i2o_hrt *, int);
@@ -602,30 +601,16 @@ iop_config_interrupts(struct device *self)
 		printf("%s: configure failed (%d)\n", sc->sc_dv.dv_xname, rv);
 	mutex_exit(&sc->sc_conflock);
 
-	if (rv == 0)
-		kthread_create(iop_create_reconf_thread, sc);
-}
-
-/*
- * Create the reconfiguration thread.  Called after the standard kernel
- * threads have been created.
- */
-static void
-iop_create_reconf_thread(void *cookie)
-{
-	struct iop_softc *sc;
-	int rv;
-
-	sc = cookie;
-	sc->sc_flags |= IOP_ONLINE;
-
-	rv = kthread_create1(PRI_NONE, false, iop_reconf_thread, sc,
-	    &sc->sc_reconf_thread, "%s", sc->sc_dv.dv_xname);
- 	if (rv != 0) {
-		printf("%s: unable to create reconfiguration thread (%d)",
- 		    sc->sc_dv.dv_xname, rv);
- 		return;
- 	}
+	if (rv == 0) {
+		rv = kthread_create(PRI_NONE, false, iop_reconf_thread, sc,
+		    &sc->sc_reconf_thread, "%s", sc->sc_dv.dv_xname);
+ 		if (rv != 0) {
+			printf("%s: unable to create reconfiguration thread (%d)",
+ 			    sc->sc_dv.dv_xname, rv);
+ 			return;
+ 		}
+		sc->sc_flags |= IOP_ONLINE;
+	}
 }
 
 /*

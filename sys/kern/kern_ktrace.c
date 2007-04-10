@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.119.2.3 2007/04/09 22:10:02 ad Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.119.2.4 2007/04/10 12:07:13 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.119.2.3 2007/04/09 22:10:02 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.119.2.4 2007/04/10 12:07:13 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h"
@@ -886,7 +886,7 @@ ktrace_common(struct lwp *curl, int ops, int facs, int pid, struct file *fp)
 			if (fp->f_type == DTYPE_PIPE)
 				ktd->ktd_flags |= KTDF_INTERACTIVE;
 
-			error = kthread_create1(PRI_NONE, true, ktrace_thread,
+			error = kthread_create(PRI_NONE, true, ktrace_thread,
 			    ktd, &ktd->ktd_lwp, "ktrace");
 			if (error != 0) {
 				kmem_free(ktd, sizeof(*ktd));

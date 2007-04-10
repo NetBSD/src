@@ -1,4 +1,4 @@
-/*	$NetBSD: fw_port.h,v 1.21.2.1 2007/04/09 22:09:58 ad Exp $	*/
+/*	$NetBSD: fw_port.h,v 1.21.2.2 2007/04/10 12:07:10 ad Exp $	*/
 /*
  * Copyright (c) 2004 KIYOHARA Takashi
  * All rights reserved.
@@ -567,10 +567,9 @@ typedef struct proc fw_thread;
 #define FW_LOCK
 #define FW_UNLOCK
 #define THREAD_CREATE(f, sc, p, name, arg) \
-     kthread_create1(PRI_NONE, false, f, (void *)sc, p, name, arg)
+     kthread_create(PRI_NONE, false, f, (void *)sc, p, name, arg)
 #define THREAD_EXIT(x)  kthread_exit(x)
-#define fw_kthread_create(func, arg) \
-				kthread_create((func), (arg))
+#define fw_kthread_create(func, arg)	(*(func))(arg)
 
 struct fwbus_attach_args {
 	const char *name;
@@ -950,7 +949,7 @@ struct fwbus_attach_args {
 #define SBP_BUS_THAW(b)		scsipi_channel_thaw(&(b)->sc_channel, 1)
 #define SBP_DEVICE_PREATTACH()	\
 	if (!sbp->lwp)		\
-		fw_kthread_create(fw_kthread_create0, sbp)
+		fw_kthread_create0(sbp)
 
 /*
  * fwip macro for NetBSD

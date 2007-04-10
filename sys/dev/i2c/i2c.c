@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.c,v 1.13.6.1 2007/04/09 22:09:56 ad Exp $	*/
+/*	$NetBSD: i2c.c,v 1.13.6.2 2007/04/10 12:07:08 ad Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -56,7 +56,6 @@ struct iic_softc {
 };
 
 static void	iic_smbus_intr_thread(void *);
-static void	iic_smbus_intr_thread1(void *);
 
 int
 iicbus_print(void *aux, const char *pnp)
@@ -110,17 +109,24 @@ iic_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct iic_softc *sc = device_private(self);
 	struct i2cbus_attach_args *iba = aux;
+	i2c_tag_t ic;
+	int rv;
 
 	aprint_naive(": I2C bus\n");
 	aprint_normal(": I2C bus\n");
 
 	sc->sc_tag = iba->iba_tag;
 	sc->sc_type = iba->iba_type;
-	sc->sc_tag->ic_devname = self->dv_xname;
+	ic = sc->sc_tag;
+	ic->ic_devname = self->dv_xname;
 
 	LIST_INIT(&(sc->sc_tag->ic_list));
 	LIST_INIT(&(sc->sc_tag->ic_proc_list));
-	kthread_create(iic_smbus_intr_thread, sc->sc_tag);
+
+	rv = kthread_create(PRI_NONE, false, iic_smbus_intr_thread,
+	    ic, &ic->ic_intr_thread, "%s", ic->ic_devname);
+	if (rv)
+		printf("%s: unable to create intr thread\n", ic->ic_devname);
 
 	/*
 	 * Attach all i2c devices described in the kernel
@@ -130,7 +136,7 @@ iic_attach(struct device *parent, struct device *self, void *aux)
 }
 
 static void
-iic_smbus_intr_thread1(void *aux)
+iic_smbus_intr_thread(void *aux)
 {
 	i2c_tag_t ic;
 	struct ic_intr_list *il;
@@ -152,20 +158,6 @@ iic_smbus_intr_thread1(void *aux)
 	}
 
 	kthread_exit(0);
-}
-
-static void
-iic_smbus_intr_thread(void *aux)
-{
-	i2c_tag_t ic;
-	int rv;
-
-	ic = (i2c_tag_t)aux;
-
-	rv = kthread_create1(PRI_NONE, false, iic_smbus_intr_thread1, ic,
-	    &ic->ic_intr_thread, "%s", ic->ic_devname);
-	if (rv)
-		printf("%s: unable to create intr thread\n", ic->ic_devname);
 }
 
 void *

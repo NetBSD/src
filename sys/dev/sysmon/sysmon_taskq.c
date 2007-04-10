@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_taskq.c,v 1.7.8.1 2007/04/09 22:10:01 ad Exp $	*/
+/*	$NetBSD: sysmon_taskq.c,v 1.7.8.2 2007/04/10 12:07:12 ad Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_taskq.c,v 1.7.8.1 2007/04/09 22:10:01 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_taskq.c,v 1.7.8.2 2007/04/10 12:07:12 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -80,7 +80,6 @@ static int sysmon_task_queue_cleanup_sem;
 
 static struct lwp *sysmon_task_queue_lwp;
 
-static void sysmon_task_queue_create_thread(void *);
 static void sysmon_task_queue_thread(void *);
 
 static struct simplelock sysmon_task_queue_initialized_slock =
@@ -95,6 +94,7 @@ static int sysmon_task_queue_initialized;
 void
 sysmon_task_queue_init(void)
 {
+	int error;
 
 	simple_lock(&sysmon_task_queue_initialized_slock);
 	if (sysmon_task_queue_initialized) {
@@ -105,7 +105,13 @@ sysmon_task_queue_init(void)
 	sysmon_task_queue_initialized = 1;
 	simple_unlock(&sysmon_task_queue_initialized_slock);
 
-	kthread_create(sysmon_task_queue_create_thread, NULL);
+	error = kthread_create(PRI_NONE, false, sysmon_task_queue_thread,
+	    NULL, &sysmon_task_queue_lwp, "sysmon");
+	if (error) {
+		printf("Unable to create sysmon task queue thread, "
+		    "error = %d\n", error);
+		panic("sysmon_task_queue_init");
+	}
 }
 
 /*
@@ -129,25 +135,6 @@ sysmon_task_queue_fini(void)
 	}
 
 	SYSMON_TASK_QUEUE_UNLOCK(s);
-}
-
-/*
- * sysmon_task_queue_create_thread:
- *
- *	Create the sysmon task queue execution thread.
- */
-static void
-sysmon_task_queue_create_thread(void *arg)
-{
-	int error;
-
-	error = kthread_create1(PRI_NONE, false, sysmon_task_queue_thread,
-	    NULL, &sysmon_task_queue_lwp, "sysmon");
-	if (error) {
-		printf("Unable to create sysmon task queue thread, "
-		    "error = %d\n", error);
-		panic("sysmon_task_queue_create_thread");
-	}
 }
 
 /*

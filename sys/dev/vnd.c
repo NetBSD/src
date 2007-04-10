@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.165.2.2 2007/04/09 22:09:54 ad Exp $	*/
+/*	$NetBSD: vnd.c,v 1.165.2.3 2007/04/10 12:07:08 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -137,7 +137,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.165.2.2 2007/04/09 22:09:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.165.2.3 2007/04/10 12:07:08 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -1187,7 +1187,7 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		vnd->sc_flags |= VNF_INITED;
 
 		/* create the kernel thread, wait for it to be up */
-		error = kthread_create1(PRIBIO, false, vndthread, vnd,
+		error = kthread_create(PRIBIO, false, vndthread, vnd,
 		    &vnd->sc_kthread, vnd->sc_dev.dv_xname);
 		if (error)
 			goto close_and_exit;
