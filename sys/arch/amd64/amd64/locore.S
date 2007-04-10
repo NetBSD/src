@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.19.2.2 2007/03/03 15:42:48 yamt Exp $	*/
+/*	$NetBSD: locore.S,v 1.19.2.3 2007/04/10 23:07:31 ad Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -41,7 +41,7 @@
 
 
 /*-
- * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2000, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -112,9 +112,6 @@
 
 #include "opt_ddb.h"
 #include "opt_ddbparam.h"
-#include "opt_user_ldt.h"
-#include "opt_multiprocessor.h"
-#include "opt_lockdebug.h"
 #include "opt_realmem.h"
 
 #include "opt_compat_netbsd.h"
@@ -637,6 +634,7 @@ longmode_hi:
 
 /*
  * void lgdt(struct region_descriptor *rdp);
+ *
  * Change the global descriptor table.
  */
 NENTRY(lgdt)
@@ -657,12 +655,22 @@ NENTRY(lgdt)
 	pushq	%rax
 	lretq
 
+/*
+ * void x86_flush()
+ *
+ * Flush instruction pipelines by doing an intersegment (far) return.
+ */
 NENTRY(x86_flush)
 	popq	%rax
 	pushq	$GSEL(GCODE_SEL, SEL_KPL)
 	pushq	%rax
 	lretq
 
+/*
+ * int setjmp(label_t *)
+ *
+ * Used primarily by DDB.
+ */
 ENTRY(setjmp)
 	/*
 	 * Only save registers that must be preserved across function
@@ -682,6 +690,11 @@ ENTRY(setjmp)
 	xorl	%eax,%eax
 	ret
 
+/*
+ * int longjmp(label_t *)
+ *
+ * Used primarily by DDB.
+ */
 ENTRY(longjmp)
 	movq	%rdi,%rax
 	movq	(%rax),%rbx
@@ -693,50 +706,19 @@ ENTRY(longjmp)
 	movq	48(%rax),%r15
 	movq	56(%rax),%rdx
 	movq	%rdx,(%rsp)
-	xorl	%eax,%eax
-	incl	%eax
+	movl	$1,%eax
 	ret
-
-/*****************************************************************************/
-
-/*
- * The following primitives manipulate the run queues.
- * _whichqs tells which of the 32 queues _qs
- * have processes in them.  Setrq puts processes into queues, Remrq
- * removes them from queues.  The running process is on no queue,
- * other processes are on a queue related to p->p_pri, divided by 4
- * actually to shrink the 0-127 range of priorities into the 32 available
- * queues.
- */
-	.globl	_C_LABEL(sched_whichqs),_C_LABEL(sched_qs)
-	.globl	_C_LABEL(uvmexp),_C_LABEL(panic)
-
-#if NAPM > 0
-	.globl _C_LABEL(apm_cpu_idle),_C_LABEL(apm_cpu_busy)
-#endif
-
-#ifdef DIAGNOSTIC
-NENTRY(switch_error1)
-	movabsq	$1f,%rdi
-	call	_C_LABEL(panic)
-	/* NOTREACHED */
-1:	.asciz	"cpu_switch 1"
-NENTRY(switch_error2)
-	movabsq	$1f,%rdi
-	call	_C_LABEL(panic)
-	/* NOTREACHED */
-1:	.asciz	"cpu_switch 2"
-NENTRY(switch_error3)
-	movabsq	$1f,%rdi
-	call	_C_LABEL(panic)
-	/* NOTREACHED */
-1:	.asciz	"cpu_switch 3"
-#endif /* DIAGNOSTIC */
 
 /*
  * struct lwp *cpu_switchto(struct lwp *, struct lwp *)
+ *
+ *	1. if (oldlwp != NULL), save its context.
+ *	2. then, restore context of newlwp.
+ *
+ * Note that the stack frame layout is known to "struct switchframe" in
+ * <machine/frame.h> and to the code in cpu_lwp_fork() which initializes
+ * it for a new lwp.
  */
-
 ENTRY(cpu_switchto)
 	pushq	%rbx
 	pushq	%r12
@@ -748,87 +730,61 @@ ENTRY(cpu_switchto)
 	movq	%rsi,%r12	# newlwp
 
 	testq	%r13,%r13
-	jz	switch_skipsave
+	jz	1f
 
-	/*
-	 * Save old context.
-	 */
-
+	/* Save old context. */
 	movq	L_ADDR(%r13),%rax
 	movq	%rsp,PCB_RSP(%rax)
 	movq	%rbp,PCB_RBP(%rax)
 
-switch_skipsave:
-
-	/*
-	 * Switch to newlwp's stack.
-	 */
-
-	movq	L_ADDR(%r12),%r14
+	/* Switch to newlwp's stack. */
+1:	movq	L_ADDR(%r12),%r14
 	movq	PCB_RSP(%r14),%rsp
 	movq	PCB_RBP(%r14),%rbp
 
-        /*
-	 * Restore the rest of newlwp's context.
-	 *
-	 * Registers:
-	 *   %r14 - new pcb
-	 *   %r12 - new lwp
-	 */
-
-#if 0
-	/* Don't bother with the rest if switching to a system process. */
-	testl	$LK_SYSTEM,L_FLAG(%r12)
-	jnz	switch_restored
-#endif
-
-	/* Load TSS info. */
-#ifdef MULTIPROCESSOR
+	/* Switch TSS. Reset "task busy" flag before loading. */
 	movq    CPUVAR(GDT),%rax
-#else   
-	movq	_C_LABEL(gdtstore)(%rip),%rax
-#endif
 	movl	L_MD_TSS_SEL(%r12),%edx
-
-	/* Switch TSS. Reset "task busy" flag before */
 	andl	$~0x0200,4(%rax,%rdx, 1)
 	ltr	%dx
 
-#if 0
-switch_restored:
-#endif
-	/* Restore cr0 (including FPU state). */
-	cli
-	movl	PCB_CR0(%r14),%ecx
-#ifdef MULTIPROCESSOR
-	movq	PCB_FPCPU(%r14),%r8
-	cmpq	CPUVAR(SELF),%r8
-	jz	1f
-	orl	$CR0_TS,%ecx
-1:
-#endif
-	movq	%rcx,%cr0
+	/* Set curlwp. */
+	movq	%r12,CPUVAR(CURLWP)
 
-	/* Interrupts are okay again. */
-	sti
+	/* Don't bother with the rest if switching to a system process. */
+	testl	$LW_SYSTEM,L_FLAG(%r12)
+	jnz	4f
 
-/*
- *  Check for restartable atomic sequences (RAS)
- */
-	movq	CPUVAR(CURLWP),%r12
+	/* Is this process using RAS (restartable atomic sequences)? */
 	movq	L_PROC(%r12),%rdi
 	cmpq	$0,P_RASLIST(%rdi)
-	je	1f
-	movq	L_MD_REGS(%r12),%rbx
-	movq	TF_RIP(%rbx),%rsi
-	call	_C_LABEL(ras_lookup)
-	cmpq	$-1,%rax
-	je	1f
-	movq	%rax,TF_RIP(%rbx)
-1:
+	jne	5f
 
-switch_return:
-	movq	%r13,%rax 	# return 'oldlwp'
+	/*
+	 * Restore cr0 (including FPU state).  Raise the IPL to IPL_IPI.
+	 * FPU IPIs can alter the LWP's saved cr0.  Dropping the priority
+	 * is deferred until mi_switch(), when cpu_switchto() returns.
+	 */
+2:	movl	$IPL_IPI,CPUVAR(ILEVEL)
+	movq	PCB_CR0(%r14),%rcx
+	movq	%cr0,%rdx
+
+	/*
+	 * If our floating point registers are on a different CPU,
+	 * set CR0_TS so we'll trap rather than reuse bogus state.
+	 */
+	movq	PCB_FPCPU(%r14),%rax
+	cmpq	CPUVAR(SELF),%rax
+	je	3f
+	orq	$CR0_TS,%rcx
+
+	/* Reloading CR0 is very expensive - avoid if possible. */
+3:	cmpq	%rdx,%rcx
+	je	4f
+	movq	%rcx,%cr0
+
+	/* Return to the new LWP, returning 'oldlwp' in %rax. */
+4:	movq	%r13,%rax
 	popq	%r15
 	popq	%r14
 	popq	%r13
@@ -836,22 +792,32 @@ switch_return:
 	popq	%rbx
 	ret
 
+	/* Check for restartable atomic sequences (RAS). */
+5:	movq	L_MD_REGS(%r12),%rbx
+	movq	TF_RIP(%rbx),%rsi
+	call	_C_LABEL(ras_lookup)
+	cmpq	$-1,%rax
+	je	2b
+	movq	%rax,TF_RIP(%rbx)
+	jmp	2b
 
 /*
- * savectx(struct pcb *pcb);
+ * void savectx(struct pcb *pcb);
+ *
  * Update pcb, saving current processor state.
  */
 ENTRY(savectx)
 	/* Save stack pointers. */
 	movq	%rsp,PCB_RSP(%rdi)
 	movq	%rbp,PCB_RBP(%rdi)
-
 	ret
 
 IDTVEC(syscall32)
 	sysret		/* go away please */
 
 /*
+ * syscall()
+ *
  * syscall insn entry. This currently isn't much faster, but
  * it can be made faster in the future.
  */
@@ -947,7 +913,13 @@ syscall_return:
 4:	.asciz	"WARNING: SPL NOT LOWERED ON SYSCALL %d %d EXIT %x %x\n"
 #endif
 
-
+/*
+ * void lwp_trampoline(void);
+ *
+ * This is a trampoline function pushed run by newly created LWPs
+ * in order to do additional setup in their context.  32-bit
+ * binaries begin life here.
+ */
 NENTRY(lwp_trampoline)
 	movq	%rbp,%rsi
 	movq	%rax,%rdi
@@ -958,6 +930,11 @@ NENTRY(lwp_trampoline)
 	INTRFASTEXIT
 	/* NOTREACHED */
 
+/*
+ * void child_trampoline(void);
+ *
+ * As per lwp_trampoline(), but 64-bit binaries start here.
+ */
 NENTRY(child_trampoline)
 	movq	%rbp,%rsi
 	movq	%rax,%rdi
@@ -967,12 +944,11 @@ NENTRY(child_trampoline)
 	call	*%r12
 	jmp	syscall_return
 
-#if defined(COMPAT_16) || defined(COMPAT_IBCS2) || defined(COMPAT_NETBSD32)
-
 	.globl  _C_LABEL(osyscall_return)
 
-#if defined(COMPAT_10) || defined(COMPAT_IBCS2)
 /*
+ * oosyscall()
+ *
  * Old call gate entry for syscall. only needed if we're
  * going to support running old NetBSD or ibcs2 binaries, etc,
  * on NetBSD/amd64.
@@ -984,9 +960,9 @@ IDTVEC(oosyscall)
 	pushq	$7		# size of instruction for restart
 	jmp	osyscall1
 
-#endif
-
 /*
+ * osyscall()
+ *
  * Trap gate entry for int $80 syscall, also used by sigreturn.
  */
 IDTVEC(osyscall)
@@ -1012,8 +988,6 @@ _C_LABEL(osyscall_return):
 	movq	%rsp,%rdi
 	call	_C_LABEL(trap)
 	jmp	2b
-
-#endif
 
 iret_return:
 #ifndef DIAGNOSTIC
