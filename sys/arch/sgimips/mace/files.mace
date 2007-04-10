@@ -1,4 +1,4 @@
-#	$NetBSD: files.mace,v 1.4 2005/12/11 12:18:54 christos Exp $
+#	$NetBSD: files.mace,v 1.5 2007/04/10 23:44:10 jmcneill Exp $
 
 device mace {[offset = -1], [intr = -1], [intrmask = 0] }
 attach mace at mainbus
@@ -12,6 +12,10 @@ file arch/sgimips/mace/lpt_mace.c	lpt_mace
 
 attach pckbc at mace with pckbc_mace
 file arch/sgimips/mace/pckbc_mace.c	pckbc_mace
+
+device macekbc: pckbport
+attach macekbc at mace
+file arch/sgimips/mace/macekbc.c	macekbc
 
 device mcclock
 attach mcclock at mace with mcclock_mace
