@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_kthread.c,v 1.16.6.2 2007/04/10 12:07:13 ad Exp $	*/
+/*	$NetBSD: kern_kthread.c,v 1.16.6.3 2007/04/10 18:34:46 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2007 The NetBSD Foundation, Inc.
@@ -38,16 +38,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_kthread.c,v 1.16.6.2 2007/04/10 12:07:13 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_kthread.c,v 1.16.6.3 2007/04/10 18:34:46 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/kthread.h>
 #include <sys/proc.h>
-#include <sys/wait.h>
-#include <sys/malloc.h>
-#include <sys/queue.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -63,9 +60,9 @@ __KERNEL_RCSID(0, "$NetBSD: kern_kthread.c,v 1.16.6.2 2007/04/10 12:07:13 ad Exp
  */
 int
 kthread_create(pri_t pri, bool mpsafe, void (*func)(void *), void *arg,
-	       struct lwp **lp, const char *fmt, ...)
+	       lwp_t **lp, const char *fmt, ...)
 {
-	struct lwp *l;
+	lwp_t *l;
 	vaddr_t uaddr;
 	bool inmem;
 	int error;
@@ -77,7 +74,7 @@ kthread_create(pri_t pri, bool mpsafe, void (*func)(void *), void *arg,
 	error = newlwp(&lwp0, &proc0, uaddr, inmem, LWP_DETACHED, NULL, 0,
 	    func, arg, &l);
 	if (error) {
-		/* XXX uvm_uarea_free(uaddr); */
+		uvm_uarea_free(uaddr);
 		return error;
 	}
 
@@ -119,7 +116,7 @@ kthread_create(pri_t pri, bool mpsafe, void (*func)(void *), void *arg,
 void
 kthread_exit(int ecode)
 {
-	struct lwp *l = curlwp;
+	lwp_t *l = curlwp;
 
 	/* We can't do much with the exit code, so just report it. */
 	if (ecode != 0)
