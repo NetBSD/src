@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs.h,v 1.11 2007/04/01 10:55:38 pooka Exp $	*/
+/*	$NetBSD: dtfs.h,v 1.12 2007/04/10 12:29:29 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -84,10 +84,6 @@ struct dtfs_dirent {
 	char *dfd_name;
 
 	LIST_ENTRY(dtfs_dirent) dfd_entries;
-};
-
-struct dtfs_fs {
-	size_t dtfs_size;
 };
 
 struct puffs_node *	dtfs_genfile(struct puffs_node *,
