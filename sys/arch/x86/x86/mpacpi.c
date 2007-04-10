@@ -1,4 +1,4 @@
-/*	$NetBSD: mpacpi.c,v 1.47 2007/04/08 21:35:21 bouyer Exp $	*/
+/*	$NetBSD: mpacpi.c,v 1.48 2007/04/10 12:15:27 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.47 2007/04/08 21:35:21 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.48 2007/04/10 12:15:27 bouyer Exp $");
 
 #include "acpi.h"
 #include "opt_acpi.h"
@@ -494,8 +494,8 @@ mpacpi_derive_bus(ACPI_HANDLE handle, struct acpi_softc *acpi)
 				return -1;
 			dev->handle = current;
 			TAILQ_INSERT_HEAD(&dev_list, dev, list);
-		}
-		AcpiOsFree(buf.Pointer);
+		} else
+			AcpiOsFree(buf.Pointer);
 
 		rv = AcpiGetParent(current, &parent);
 		if (ACPI_FAILURE(rv))
