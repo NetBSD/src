@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.168.2.2 2007/04/06 12:31:13 ad Exp $
+	$NetBSD: syscalls.master,v 1.168.2.3 2007/04/10 00:23:02 ad Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -68,17 +68,17 @@
 3	STD MPSAFE	{ ssize_t sys_read(int fd, void *buf, size_t nbyte); }
 4	STD MPSAFE	{ ssize_t sys_write(int fd, const void *buf, \
 			    size_t nbyte); }
-5	STD		{ int sys_open(const char *path, \
+5	STD MPSAFE	{ int sys_open(const char *path, \
 			    int flags, ... mode_t mode); }
-6	STD		{ int sys_close(int fd); }
+6	STD MPSAFE	{ int sys_close(int fd); }
 7	STD MPSAFE	{ int sys_wait4(int pid, int *status, int options, \
 			    struct rusage *rusage); }
 8	COMPAT_43	{ int sys_creat(const char *path, mode_t mode); } ocreat
 9	STD MPSAFE	{ int sys_link(const char *path, const char *link); }
 10	STD 		{ int sys_unlink(const char *path); }
 11	OBSOL		execv
-12	STD		{ int sys_chdir(const char *path); }
-13	STD		{ int sys_fchdir(int fd); }
+12	STD MPSAFE	{ int sys_chdir(const char *path); }
+13	STD MPSAFE	{ int sys_fchdir(int fd); }
 14	STD		{ int sys_mknod(const char *path, mode_t mode, \
 			    dev_t dev); }
 15	STD MPSAFE	{ int sys_chmod(const char *path, mode_t mode); }
@@ -213,7 +213,7 @@
 90	STD		{ int sys_dup2(int from, int to); }
 91	UNIMPL		getdopt
 92	STD		{ int sys_fcntl(int fd, int cmd, ... void *arg); }
-93	STD		{ int sys_select(int nd, fd_set *in, fd_set *ou, \
+93	STD MPSAFE	{ int sys_select(int nd, fd_set *in, fd_set *ou, \
 			    fd_set *ex, struct timeval *tv); }
 94	UNIMPL		setdopt
 95	STD MPSAFE	{ int sys_fsync(int fd); }
@@ -421,7 +421,7 @@
 			    const struct timeval *tptr); }
 207	STD MPSAFE	{ pid_t sys_getpgid(pid_t pid); }
 208	STD		{ int sys_reboot(int opt, char *bootstr); }
-209	STD		{ int sys_poll(struct pollfd *fds, u_int nfds, \
+209	STD MPSAFE	{ int sys_poll(struct pollfd *fds, u_int nfds, \
 			    int timeout); }
 ;
 ; Syscalls 210-219 are reserved for dynamically loaded syscalls
@@ -743,10 +743,10 @@
 			    int attrnamespace, void *data, size_t nbytes); }
 372	STD		{ ssize_t sys_extattr_list_link(const char *path, \
 			    int attrnamespace, void *data, size_t nbytes); }
-373	STD		{ int sys_pselect(int nd, fd_set *in, fd_set *ou, \
+373	STD MPSAFE	{ int sys_pselect(int nd, fd_set *in, fd_set *ou, \
 			    fd_set *ex, const struct timespec *ts, \
 			    const sigset_t *mask); }
-374	STD		{ int sys_pollts(struct pollfd *fds, u_int nfds, \
+374	STD MPSAFE	{ int sys_pollts(struct pollfd *fds, u_int nfds, \
 			    const struct timespec *ts, const sigset_t *mask); }
 375	STD		{ int sys_setxattr(const char *path, \
 			    const char *name, void *value, size_t size, \
