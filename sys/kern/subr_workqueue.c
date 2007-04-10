@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_workqueue.c,v 1.12.2.1 2007/03/21 19:59:18 ad Exp $	*/
+/*	$NetBSD: subr_workqueue.c,v 1.12.2.2 2007/04/10 00:06:44 ad Exp $	*/
 
 /*-
  * Copyright (c)2002, 2005 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_workqueue.c,v 1.12.2.1 2007/03/21 19:59:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_workqueue.c,v 1.12.2.2 2007/04/10 00:06:44 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,7 +44,7 @@ struct workqueue_queue {
 	kmutex_t q_mutex;
 	kcondvar_t q_cv;
 	struct workqhead q_queue;
-	struct proc *q_worker;
+	struct lwp *q_worker;
 };
 
 struct workqueue {
@@ -139,8 +139,8 @@ workqueue_initqueue(struct workqueue *wq, int ipl)
 	mutex_init(&q->q_mutex, MUTEX_SPIN, ipl);
 	cv_init(&q->q_cv, wq->wq_name);
 	SIMPLEQ_INIT(&q->q_queue);
-	error = kthread_create1(workqueue_worker, wq, &q->q_worker,
-	    wq->wq_name);
+	error = kthread_create1(wq->wq_prio, false, workqueue_worker, wq,
+	    &q->q_worker, wq->wq_name);
 
 	return error;
 }
@@ -160,7 +160,7 @@ workqueue_exit(struct work *wk, void *arg)
 	 * only competition at this point is workqueue_finiqueue.
 	 */
 
-	KASSERT(q->q_worker == curproc);
+	KASSERT(q->q_worker == curlwp);
 	mutex_enter(&q->q_mutex);
 	q->q_worker = NULL;
 	cv_signal(&q->q_cv);
