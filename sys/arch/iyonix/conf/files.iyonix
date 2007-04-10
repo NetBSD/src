@@ -1,4 +1,4 @@
-#	$NetBSD: files.iyonix,v 1.2 2005/12/11 12:17:51 christos Exp $
+#	$NetBSD: files.iyonix,v 1.3 2007/04/10 02:43:39 macallan Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -13,6 +13,7 @@ defflag			IRQSTATS
 include "dev/wscons/files.wscons"
 include "dev/rasops/files.rasops"
 include "dev/wsfont/files.wsfont"
+include "dev/wsfb/files.wsfb"
 
 #
 # Machine-independent ATA drivers
