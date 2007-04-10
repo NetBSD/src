@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.136.2.3 2007/04/05 21:38:35 ad Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.136.2.4 2007/04/10 11:21:16 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001, 2004 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.136.2.3 2007/04/05 21:38:35 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.136.2.4 2007/04/10 11:21:16 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -569,6 +569,7 @@ proc_trampoline_mp(void)
 
 	l = curlwp;
 
-	KERNEL_LOCK(1, l);
+	if ((l->l_pflag & LP_MPSAFE) == 0)
+		KERNEL_LOCK(1, l);
 }
 #endif
