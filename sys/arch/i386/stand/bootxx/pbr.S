@@ -1,4 +1,4 @@
-/*	$NetBSD: pbr.S,v 1.14 2006/11/24 22:54:47 wiz Exp $	*/
+/*	$NetBSD: pbr.S,v 1.15 2007/04/10 16:50:25 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2003,2004 The NetBSD Foundation, Inc.
@@ -119,7 +119,7 @@ ENTRY(start)
 	 */
 	jmp	start0
 	nop
-	.ascii	"NetBSD20"		/* oemname (8 bytes) */
+	.ascii	"NetBSD40"		/* oemname (8 bytes) */
 
 	. = start + MBR_BPB_OFFSET	/* move to start of BPB */
 					/* (ensures oemname doesn't overflow) */
