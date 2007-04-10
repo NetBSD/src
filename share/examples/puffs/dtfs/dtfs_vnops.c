@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs_vnops.c,v 1.20 2007/04/01 10:55:38 pooka Exp $	*/
+/*	$NetBSD: dtfs_vnops.c,v 1.21 2007/04/10 13:32:02 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -65,8 +65,7 @@ dtfs_node_lookup(struct puffs_cc *pcc, void *opc, void **newnode,
 		*newnode = dfd->dfd_node;
 		*newtype = dfd->dfd_node->pn_va.va_type;
 		*newsize = dfd->dfd_node->pn_va.va_size;
-		if (*newtype == VBLK || *newtype == VCHR)
-			*newrdev = DTFS_PTOF(dfd->dfd_node)->df_rdev;
+		*newrdev = dfd->dfd_node->pn_va.va_rdev;
 		return 0;
 	}
 
@@ -97,12 +96,9 @@ int
 dtfs_node_getattr(struct puffs_cc *pcc, void *opc,
 	struct vattr *va, const struct puffs_cred *pcr, pid_t pid)
 {
-	struct dtfs_file *df = DTFS_CTOF(opc);
 	struct puffs_node *pn = opc;
 
 	memcpy(va, &pn->pn_va, sizeof(struct vattr));
-	if (pn->pn_va.va_type == VBLK || pn->pn_va.va_type == VCHR)
-		va->va_rdev = df->df_rdev;
 
 	return 0;
 }
@@ -373,7 +369,6 @@ dtfs_node_mknod(struct puffs_cc *pcc, void *opc, void **newnode,
 	puffs_setvattr(&pn_new->pn_va, va);
 
 	df = DTFS_PTOF(pn_new);
-	df->df_rdev = va->va_rdev;
 	*newnode = pn_new;
 
 	return 0;
