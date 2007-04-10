@@ -1,4 +1,4 @@
-/*	$NetBSD: sleepq.h,v 1.5.2.1 2007/04/10 13:26:20 ad Exp $	*/
+/*	$NetBSD: sleepq.h,v 1.5.2.2 2007/04/10 18:34:04 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -87,15 +87,14 @@ typedef struct sleeptab {
 
 void	sleepq_init(sleepq_t *, kmutex_t *);
 int	sleepq_remove(sleepq_t *, lwp_t *);
-void	sleepq_block(sleepq_t *, pri_t, wchan_t, const char *, int, bool,
-		     syncobj_t *);
+void	sleepq_enqueue(sleepq_t *, pri_t, wchan_t, const char *, syncobj_t *);
 void	sleepq_unsleep(lwp_t *);
 void	sleepq_timeout(void *);
 lwp_t	*sleepq_wake(sleepq_t *, wchan_t, u_int);
 int	sleepq_abort(kmutex_t *, int);
 void	sleepq_changepri(lwp_t *, pri_t);
 void	sleepq_lendpri(lwp_t *, pri_t);
-int	sleepq_unblock(int, bool);
+int	sleepq_block(int, bool);
 void	sleepq_insert(sleepq_t *, lwp_t *, syncobj_t *);
 
 void	sleepq_enqueue(sleepq_t *, pri_t, wchan_t, const char *, syncobj_t *);
@@ -148,9 +147,6 @@ sleepq_enter(sleepq_t *sq, lwp_t *l)
 	 * Acquire the per-LWP mutex and lend it ours (the sleep queue
 	 * lock).  Once that's done we're interlocked, and so can release
 	 * the kernel lock.
-	 *
-	 * XXXSMP we need to do the lock-swap here because some broken
-	 * code (selwakeup()?) uses setrunnable() to synchronise.
 	 */
 	lwp_lock(l);
 	lwp_unlock_to(l, sq->sq_mutex);
@@ -233,13 +229,6 @@ void	turnstile_exit(wchan_t);
 void	turnstile_block(turnstile_t *, int, wchan_t, syncobj_t *);
 void	turnstile_wakeup(turnstile_t *, int, int, lwp_t *);
 void	turnstile_print(volatile void *, void (*)(const char *, ...));
-
-static inline void
-turnstile_unblock(void)
-{
-	(void)sleepq_unblock(0, 0);
-}
-
 void	turnstile_unsleep(lwp_t *);
 void	turnstile_changepri(lwp_t *, pri_t);
 

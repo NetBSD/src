@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_turnstile.c,v 1.6.2.2 2007/04/10 13:26:39 ad Exp $	*/
+/*	$NetBSD: kern_turnstile.c,v 1.6.2.3 2007/04/10 18:34:05 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.6.2.2 2007/04/10 13:26:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.6.2.3 2007/04/10 18:34:05 ad Exp $");
 
 #include "opt_lockdebug.h"
 #include "opt_multiprocessor.h"
@@ -81,8 +81,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.6.2.2 2007/04/10 13:26:39 ad Ex
 #include <sys/proc.h> 
 #include <sys/sleepq.h>
 #include <sys/systm.h>
-
-#include <uvm/uvm_extern.h>
 
 #define	TS_HASH_SIZE	64
 #define	TS_HASH_MASK	(TS_HASH_SIZE - 1)
@@ -148,7 +146,7 @@ turnstile_ctor(void *arg, void *obj, int flags)
  *
  *	Remove an LWP from a turnstile sleep queue and wake it.
  */
-static inline int
+static inline void
 turnstile_remove(turnstile_t *ts, struct lwp *l, sleepq_t *sq)
 {
 	turnstile_t *nts;
@@ -173,7 +171,12 @@ turnstile_remove(turnstile_t *ts, struct lwp *l, sleepq_t *sq)
 		LIST_REMOVE(ts, ts_chain);
 	}
 
-	return sleepq_remove(sq, l);
+	/*
+	 * Note that LWPs blocked on a turnstile cannot be swapped
+	 * out.  This is necessary to avoid deadlock, and because
+	 * the wait times will be short.
+	 */
+	(void)sleepq_remove(sq, l);
 }
 
 /*
@@ -274,8 +277,8 @@ turnstile_block(turnstile_t *ts, int q, wchan_t obj, syncobj_t *sobj)
 	sq = &ts->ts_sleepq[q];
 	sleepq_enter(sq, l);
 	LOCKDEBUG_BARRIER(tc->tc_mutex, 1);
+	sleepq_enqueue(sq, sched_kpri(l), obj, "tstile", sobj);
 	prio = lwp_eprio(l);
-	sleepq_enqueue(sq, prio, obj, "tstile", sobj);
 
 	/*
 	 * lend our priority to lwps on the blocking chain.
@@ -335,7 +338,7 @@ turnstile_block(turnstile_t *ts, int q, wchan_t obj, syncobj_t *sobj)
 	}
 	LOCKDEBUG_BARRIER(cur->l_mutex, 1);
 
-	sleepq_switch(0, 0);
+	(void)sleepq_block(0, false);
 }
 
 /*
@@ -350,11 +353,9 @@ turnstile_wakeup(turnstile_t *ts, int q, int count, struct lwp *nl)
 	sleepq_t *sq;
 	tschain_t *tc;
 	struct lwp *l;
-	int swapin;
 
 	tc = &turnstile_tab[TS_HASH(ts->ts_obj)];
 	sq = &ts->ts_sleepq[q];
-	swapin = 0;
 
 	KASSERT(q == TS_READER_Q || q == TS_WRITER_Q);
 	KASSERT(count > 0 && count <= TS_WAITERS(ts, q));
@@ -421,22 +422,15 @@ turnstile_wakeup(turnstile_t *ts, int q, int count, struct lwp *nl)
 		if (l == NULL)
 			panic("turnstile_wakeup: nl not on sleepq");
 #endif
-		swapin |= turnstile_remove(ts, nl, sq);
+		turnstile_remove(ts, nl, sq);
 	} else {
 		while (count-- > 0) {
 			l = TAILQ_FIRST(&sq->sq_queue);
 			KASSERT(l != NULL);
-			swapin |= turnstile_remove(ts, l, sq);
+			turnstile_remove(ts, l, sq);
 		}
 	}
 	mutex_spin_exit(tc->tc_mutex);
-
-	/*
-	 * If there are newly awakend threads that need to be swapped in,
-	 * then kick the swapper into action.
-	 */
-	if (swapin)
-		uvm_kick_scheduler();
 }
 
 /*

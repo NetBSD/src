@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_lwp.c,v 1.12.2.2 2007/04/10 13:26:40 ad Exp $	*/
+/*	$NetBSD: sys_lwp.c,v 1.12.2.3 2007/04/10 18:34:05 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.12.2.2 2007/04/10 13:26:40 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.12.2.3 2007/04/10 18:34:05 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -473,15 +473,9 @@ sys__lwp_park(struct lwp *l, void *v, register_t *retval)
 	lwp_unlock_to(l, sq->sq_mutex);
 #endif
 
-	/*
-	 * For now we ignore the ucontext argument.  In the future, we may
-	 * put our stack up to be recycled.  If it's binned, a trampoline
-	 * function could call sleepq_unblock() on our behalf.
-	 */
 	KERNEL_UNLOCK_ALL(l, &l->l_biglocks); /* XXX for compat32 */
-	sleepq_block(sq, sched_kpri(l), wchan, "parked", timo, 1,
-	    &lwp_park_sobj);
-	error = sleepq_unblock(timo, 1);
+	sleepq_enqueue(sq, sched_kpri(l), wchan, "parked", &lwp_park_sobj);
+	error = sleepq_block(timo, true);
 	switch (error) {
 	case EWOULDBLOCK:
 		error = ETIMEDOUT;
