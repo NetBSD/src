@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.47.2.4 2007/03/24 14:54:32 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.47.2.5 2007/04/10 23:07:31 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.47.2.4 2007/03/24 14:54:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.47.2.5 2007/04/10 23:07:31 ad Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_ddb.h"
@@ -1508,6 +1508,8 @@ init_x86_64(paddr_t first_avail)
         /* Make sure maxproc is sane */ 
         if (maxproc > cpu_maxproc())
                 maxproc = cpu_maxproc();
+
+	curlwp = &lwp0;
 }
 
 void
