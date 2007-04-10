@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb.c,v 1.1 2007/04/07 03:41:26 macallan Exp $ */
+/*	$NetBSD: genfb.c,v 1.2 2007/04/10 00:14:42 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.1 2007/04/07 03:41:26 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.2 2007/04/10 00:14:42 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,7 +41,6 @@ __KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.1 2007/04/07 03:41:26 macallan Exp $");
 #include <sys/ioctl.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
-#include <sys/kauth.h>
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplayvar.h>
@@ -75,13 +74,40 @@ struct wsdisplay_accessops genfb_accessops = {
 	NULL,	/* scroll */
 };
 
-int genfb_attach(struct genfb_softc *sc, struct genfb_ops *ops)
+void
+genfb_init(struct genfb_softc *sc)
+{
+	prop_dictionary_t dict;
+	uint32_t fboffset;
+
+	dict = device_properties(&sc->sc_dev);
+#ifdef GENFB_DEBUG
+	printf(prop_dictionary_externalize(dict));
+#endif
+	if (!prop_dictionary_get_uint32(dict, "width", &sc->sc_width))
+		panic("no width property");
+	if (!prop_dictionary_get_uint32(dict, "height", &sc->sc_height))
+		panic("no height property");
+	if (!prop_dictionary_get_uint32(dict, "depth", &sc->sc_depth))
+		panic("no depth property");
+
+	/* XXX should be a 64bit value */
+	if (!prop_dictionary_get_uint32(dict, "address", &fboffset))
+		panic("no address property");
+	sc->sc_fboffset = fboffset;
+
+	if (!prop_dictionary_get_uint32(dict, "linebytes", &sc->sc_stride))
+		sc->sc_stride = (sc->sc_width * sc->sc_depth) >> 3;
+	sc->sc_fbsize = sc->sc_width * sc->sc_stride;
+}
+
+int
+genfb_attach(struct genfb_softc *sc, struct genfb_ops *ops)
 {
 	struct wsemuldisplaydev_attach_args aa;
 	prop_dictionary_t dict;
 	struct rasops_info *ri;
 	long defattr;
-	uint32_t fbaddr;
 	int console, i, j;
  
 	sc->sc_defaultscreen_descr = (struct wsscreen_descr){
@@ -97,24 +123,6 @@ int genfb_attach(struct genfb_softc *sc, struct genfb_ops *ops)
 	sc->sc_mode = WSDISPLAYIO_MODE_EMUL;
 
 	dict = device_properties(&sc->sc_dev);
-#ifdef GENFB_DEBUG
-	printf(prop_dictionary_externalize(dict));
-#endif
-	if (!prop_dictionary_get_uint32(dict, "width", &sc->sc_width))
-		panic("no width property");
-	if (!prop_dictionary_get_uint32(dict, "height", &sc->sc_height))
-		panic("no height property");
-	if (!prop_dictionary_get_uint32(dict, "depth", &sc->sc_depth))
-		panic("no depth property");
-	/* XXX */
-	if (!prop_dictionary_get_uint32(dict, "address", &fbaddr))
-		panic("no address property");
-	sc->sc_fbaddr = fbaddr;
-
-	sc->sc_fbsize = sc->sc_width * sc->sc_stride;
-
-	if (!prop_dictionary_get_uint32(dict, "linebytes", &sc->sc_stride))
-		sc->sc_stride = (sc->sc_width * sc->sc_depth) >> 3;
 
 	prop_dictionary_get_bool(dict, "is_console", &console);
 
@@ -211,35 +219,6 @@ genfb_mmap(void *v, void *vs, off_t offset, int prot)
 {
 	struct vcons_data *vd = v;
 	struct genfb_softc *sc = vd->cookie;
-	struct lwp *me;
-
-	/* 'regular' framebuffer mmap()ing */
-	if (offset < sc->sc_fbsize) {
-		/* XXX */
-		return sc->sc_fbaddr + offset;
-	}
-
-	/*
-	 * restrict all other mappings to processes with superuser privileges
-	 * or the kernel itself
-	 */
-	me = curlwp;
-	if (me != NULL) {
-		if (kauth_authorize_generic(me->l_cred, KAUTH_GENERIC_ISSUSER,
-		    NULL) != 0) {
-			aprint_normal("%s: mmap() rejected.\n",
-			    sc->sc_dev.dv_xname);
-			return -1;
-		}
-	}
-
-#ifdef WSFB_FAKE_VGA_FB
-	if ((offset >= 0xa0000) && (offset < 0xbffff)) {
-
-		/* XXX */
-		return sc->sc_fbaddr - 0xa0000 + offset;
-	}
-#endif
 
 	if (sc->sc_ops.genfb_mmap)
 		return sc->sc_ops.genfb_mmap(sc, vs, offset, prot);
