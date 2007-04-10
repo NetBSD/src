@@ -1,4 +1,4 @@
-/*	$NetBSD: workqueue.h,v 1.4 2007/02/27 15:07:28 yamt Exp $	*/
+/*	$NetBSD: workqueue.h,v 1.4.2.1 2007/04/10 11:37:02 ad Exp $	*/
 
 /*-
  * Copyright (c)2002, 2005 YAMAMOTO Takashi,
@@ -44,6 +44,8 @@ struct work {
 };
 
 struct workqueue;
+
+#define	WQ_MPSAFE	0x01
 
 int workqueue_create(struct workqueue **, const char *,
     void (*)(struct work *, void *), void *, pri_t, int, int);
