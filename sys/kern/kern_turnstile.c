@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_turnstile.c,v 1.7 2007/03/12 18:18:34 ad Exp $	*/
+/*	$NetBSD: kern_turnstile.c,v 1.8 2007/04/10 13:11:08 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.7 2007/03/12 18:18:34 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.8 2007/04/10 13:11:08 ad Exp $");
 
 #include "opt_lockdebug.h"
 #include "opt_multiprocessor.h"
@@ -373,7 +373,10 @@ turnstile_wakeup(turnstile_t *ts, int q, int count, struct lwp *nl)
 
 		ts->ts_inheritor = NULL;
 		l = curlwp;
-		sleepq_lwp_lock(l);
+
+		if (l->l_mutex == &sched_mutex) {
+			sleepq_lwp_lock(l);
+		}
 
 		/*
 		 * the following loop does two things.
@@ -403,7 +406,10 @@ turnstile_wakeup(turnstile_t *ts, int q, int count, struct lwp *nl)
 		}
 
 		lwp_lendpri(l, prio);
-		sleepq_lwp_unlock(l);
+
+		if (l->l_mutex == &sched_mutex) {
+			sleepq_lwp_unlock(l);
+		}
 	}
 
 	if (nl != NULL) {
