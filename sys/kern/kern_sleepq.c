@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sleepq.c,v 1.7.2.1 2007/04/05 21:38:37 ad Exp $	*/
+/*	$NetBSD: kern_sleepq.c,v 1.7.2.2 2007/04/10 11:41:11 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.7.2.1 2007/04/05 21:38:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.7.2.2 2007/04/10 11:41:11 ad Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -333,12 +333,10 @@ sleepq_unblock(int timo, int catch)
 		if ((l->l_flag & (LW_CANCELLED | LW_WEXIT | LW_WCORE)) != 0)
 			error = EINTR;
 		else if ((l->l_flag & LW_PENDSIG) != 0) {
-			KERNEL_LOCK(1, l);	/* XXXSMP pool_put() */
 			mutex_enter(&p->p_smutex);
 			if ((sig = issignal(l)) != 0)
 				error = sleepq_sigtoerror(l, sig);
 			mutex_exit(&p->p_smutex);
-			KERNEL_UNLOCK_LAST(l);
 		}
 		if (error == EPASSTHROUGH) {
 			/* Raced */
