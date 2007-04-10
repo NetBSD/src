@@ -1,4 +1,4 @@
-/*	$NetBSD: agpreg.h,v 1.10 2006/01/16 22:59:36 christos Exp $	*/
+/*	$NetBSD: agpreg.h,v 1.10.28.1 2007/04/10 13:24:24 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -78,11 +78,19 @@
 #define AGP_INTEL_ATTBASE	0xb8
 
 /*
- * Config offsets for VIA AGP chipsets.
+ * Config offsets for VIA AGP 2.x chipsets.
  */
 #define AGP_VIA_GARTCTRL	0x80
 #define AGP_VIA_APSIZE		0x84
 #define AGP_VIA_ATTBASE		0x88
+
+/*
+ * Config offsets for VIA AGP 3.0 chipsets.
+ */
+#define AGP3_VIA_GARTCTRL	0x90
+#define AGP3_VIA_APSIZE		0x94
+#define AGP3_VIA_ATTBASE	0x98
+#define AGP_VIA_AGPSEL		0xfd
 
 /*
  * Config offsets for SiS AGP chipsets.

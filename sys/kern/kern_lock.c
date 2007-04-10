@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.110.2.4 2007/04/09 21:27:57 ad Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.110.2.5 2007/04/10 13:26:39 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.110.2.4 2007/04/09 21:27:57 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.110.2.5 2007/04/10 13:26:39 ad Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_ddb.h"
@@ -126,9 +126,10 @@ int	lock_debug_syslog = 0;	/* defaults to printf, but can be patched */
 #if !defined(__HAVE_SPLBIGLOCK)
 #define	splbiglock	splclock
 #endif
-__cpu_simple_lock_t kernel_lock;
 int kernel_lock_id;
 #endif
+
+__cpu_simple_lock_t kernel_lock;
 
 /*
  * Locking primitives implementation.

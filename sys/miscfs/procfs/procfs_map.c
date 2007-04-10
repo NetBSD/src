@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_map.c,v 1.30 2007/02/18 20:03:44 ad Exp $	*/
+/*	$NetBSD: procfs_map.c,v 1.30.4.1 2007/04/10 13:26:44 ad Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_map.c,v 1.30 2007/02/18 20:03:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_map.c,v 1.30.4.1 2007/04/10 13:26:44 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,7 +90,7 @@ __KERNEL_RCSID(0, "$NetBSD: procfs_map.c,v 1.30 2007/02/18 20:03:44 ad Exp $");
 
 #include <uvm/uvm.h>
 
-#define MEBUFFERSIZE 256
+#define BUFFERSIZE (64 * 1024)
 
 extern int getcwd_common(struct vnode *, struct vnode *,
 			      char **, char *, int, int, struct lwp *);
@@ -112,55 +112,47 @@ int
 procfs_domap(struct lwp *curl, struct proc *p, struct pfsnode *pfs,
 	     struct uio *uio, int linuxmode)
 {
-	size_t len;
-	int error, retries;
+	int error;
 	struct vmspace *vm;
 	struct vm_map *map;
 	struct vm_map_entry *entry;
-	char mebuffer[MEBUFFERSIZE];
+	char *buffer;
 	char *path;
 	struct vnode *vp;
 	struct vattr va;
 	dev_t dev;
 	long fileid;
-	unsigned timestamp;
-	struct uio savuio;
+	size_t pos;
 
 	if (uio->uio_rw != UIO_READ)
-		return (EOPNOTSUPP);
+		return EOPNOTSUPP;
 
-	if (uio->uio_offset != 0)
-		return (0);
+	if (uio->uio_offset != 0) {
+		/*
+		 * we return 0 here, so that the second read returns EOF
+		 * we don't support reading from an offset because the
+		 * map could have changed between the two reads.
+		 */
+		return 0;
+	}
 
 	error = 0;
-	path = NULL;
 
-	if (linuxmode != 0) {
-		path = (char *)malloc(MAXPATHLEN * 4, M_TEMP, M_WAITOK);
-		if (path == NULL)
-			return ENOMEM;
-	}
+	buffer = malloc(BUFFERSIZE, M_TEMP, M_WAITOK);
+	if (linuxmode != 0)
+		path = malloc(MAXPATHLEN * 4, M_TEMP, M_WAITOK);
+	else
+		path = NULL;
 
-	if ((error = proc_vmspace_getref(p, &vm)) != 0) {
-		if (path != NULL)
-			free(path, M_TEMP);
-		return (error);
-	}
+	if ((error = proc_vmspace_getref(p, &vm)) != 0)
+		goto out;
 
 	map = &vm->vm_map;
-	memcpy(&savuio, uio, sizeof(savuio));
-	retries = 0;
 	vm_map_lock_read(map);
 
- restart:
-	for (entry = map->header.next;
-		((uio->uio_resid > 0) && (entry != &map->header));
-		entry = entry->next) {
-
-		if (retries > 250) {
-			error = EWOULDBLOCK;
-			break;
-		}
+	pos = 0;
+	for (entry = map->header.next; entry != &map->header;
+	    entry = entry->next) {
 
 		if (UVM_ET_ISSUBMAP(entry))
 			continue;
@@ -181,7 +173,7 @@ procfs_domap(struct lwp *curl, struct proc *p, struct pfsnode *pfs,
 					    MAXPATHLEN * 4, curl, p);
 				}
 			}
-			snprintf(mebuffer, sizeof(mebuffer),
+			pos += snprintf(buffer + pos, BUFFERSIZE - pos,
 			    "%0*lx-%0*lx %c%c%c%c %0*lx %02x:%02x %ld     %s\n",
 			    (int)sizeof(void *) * 2,(unsigned long)entry->start,
 			    (int)sizeof(void *) * 2,(unsigned long)entry->end,
@@ -193,7 +185,7 @@ procfs_domap(struct lwp *curl, struct proc *p, struct pfsnode *pfs,
 			    (unsigned long)entry->offset,
 			    major(dev), minor(dev), fileid, path);
 		} else {
-			snprintf(mebuffer, sizeof(mebuffer),
+			pos += snprintf(buffer + pos, BUFFERSIZE - pos,
 			    "0x%lx 0x%lx %c%c%c %c%c%c %s %s %d %d %d\n",
 			    entry->start, entry->end,
 			    (entry->protection & VM_PROT_READ) ? 'r' : '-',
@@ -209,39 +201,17 @@ procfs_domap(struct lwp *curl, struct proc *p, struct pfsnode *pfs,
 			    entry->inheritance, entry->wired_count,
 			    entry->advice);
 		}
-
-		len = strlen(mebuffer);
-		if (len > uio->uio_resid) {
-			error = EFBIG;
-			break;
-		}
-
-		timestamp = map->timestamp;
-		vm_map_unlock_read(map);
-		error = uiomove(mebuffer, len, uio);
-		vm_map_lock_read(map);
-		if (error)
-			break;
-
-		if (timestamp != map->timestamp) {
-			/*
-			 * The map may have changed, so restart.  We
-			 * make an ugly assumption about uiomove()
-			 * and the vm_map timestamp: it will never
-			 * fall back to copyout_vmspace() because
-			 * we are copying out to curproc.
-			 */
-			KASSERT(uio->uio_vmspace == curproc->p_vmspace);
-			retries++;
-			memcpy(uio, &savuio, sizeof(*uio));
-			goto restart;
-		}
 	}
 
 	vm_map_unlock_read(map);
 	uvmspace_free(vm);
+
+	error = uiomove(buffer, pos, uio);
+out:
 	if (path != NULL)
 		free(path, M_TEMP);
+	if (buffer != NULL)
+		free(buffer, M_TEMP);
 
 	return error;
 }

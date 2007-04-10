@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.54 2007/03/07 22:43:32 he Exp $	*/
+/*	$NetBSD: machdep.c,v 1.54.2.1 2007/04/10 13:23:10 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,7 +76,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.54 2007/03/07 22:43:32 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.54.2.1 2007/04/10 13:23:10 ad Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -235,15 +235,15 @@ mach_init(argc, argv, envp, bim, bip)
 	char   *bip;
 {
 	u_long first, last;
-	void *kernend, *v;
+	char *kernend, *v;
 	char *cp;
 	int i, howto;
 	extern char edata[], end[];
 	const char *bi_msg;
 #if NKSYMS || defined(DDB) || defined(LKM)
 	int nsym = 0;
-	void *ssym = 0;
-	void *esym = 0;
+	char *ssym = 0;
+	char *esym = 0;
 	struct btinfo_symtab *bi_syms;
 #endif
 
@@ -332,7 +332,7 @@ mach_init(argc, argv, envp, bim, bip)
 #if NKSYMS || defined(DDB) || defined(LKM)
 	/* init symbols if present */
 	if (esym)
-		ksyms_init((char *)esym - (char *)ssym, ssym, esym);
+		ksyms_init(esym - ssym, ssym, esym);
 #endif
 #ifdef DDB
 	if (boothowto & RB_KDB)
@@ -376,7 +376,7 @@ mach_init(argc, argv, envp, bim, bip)
 	 */
 	v = (void *)uvm_pageboot_alloc(USPACE); 
 	lwp0.l_addr = proc0paddr = (struct user *)v;
-	lwp0.l_md.md_regs = (struct frame *)((char *)v + USPACE) - 1;
+	lwp0.l_md.md_regs = (struct frame *)(v + USPACE) - 1;
 	curpcb = &lwp0.l_addr->u_pcb;
 	curpcb->pcb_context[11] = MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
 

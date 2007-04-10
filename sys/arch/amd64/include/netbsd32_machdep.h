@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.h,v 1.11 2007/02/09 21:55:01 ad Exp $	*/
+/*	$NetBSD: netbsd32_machdep.h,v 1.11.6.1 2007/04/10 13:22:51 ad Exp $	*/
 
 #ifndef _MACHINE_NETBSD32_H_
 #define _MACHINE_NETBSD32_H_
@@ -7,8 +7,8 @@
 #include <compat/sys/ucontext.h>
 #include <compat/sys/siginfo.h>
 
-typedef	u_int32_t netbsd32_pointer_t;
-#define	NETBSD32PTR64(p32)	((void *)(u_long)(u_int)(p32))
+#define NETBSD32_POINTER_TYPE uint32_t
+typedef	struct { NETBSD32_POINTER_TYPE i32; } netbsd32_pointer_t;
 
 typedef netbsd32_pointer_t netbsd32_sigcontextp_t;
 

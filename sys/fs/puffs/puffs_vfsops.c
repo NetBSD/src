@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vfsops.c,v 1.28.6.3 2007/04/05 21:57:48 ad Exp $	*/
+/*	$NetBSD: puffs_vfsops.c,v 1.28.6.4 2007/04/10 13:26:36 ad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.28.6.3 2007/04/05 21:57:48 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.28.6.4 2007/04/10 13:26:36 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -53,7 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.28.6.3 2007/04/05 21:57:48 ad Exp
 
 VFS_PROTOS(puffs);
 
-MALLOC_DEFINE(M_PUFFS, "puffs", "pass-to-userspace file system structures");
+MALLOC_JUSTDEFINE(M_PUFFS, "puffs", "Pass-to-Userspace Framework File System");
 
 #ifndef PUFFS_PNODEBUCKETS
 #define PUFFS_PNODEBUCKETS 256
@@ -162,7 +162,11 @@ puffs_mount(struct mount *mp, const char *path, void *data,
 		goto out;
 	}
 
-	simple_lock_init(&pmp->pmp_lock);
+	mutex_init(&pmp->pmp_lock, MUTEX_DEFAULT, IPL_NONE);
+	cv_init(&pmp->pmp_req_waiter_cv, "puffsget");
+	cv_init(&pmp->pmp_req_waitersink_cv, "puffsink");
+	cv_init(&pmp->pmp_unmounting_cv, "puffsum");
+	cv_init(&pmp->pmp_suspend_cv, "pufsusum");
 	TAILQ_INIT(&pmp->pmp_req_touser);
 	TAILQ_INIT(&pmp->pmp_req_replywait);
 	TAILQ_INIT(&pmp->pmp_req_sizepark);
@@ -193,7 +197,7 @@ puffs_start2(struct puffs_mount *pmp, struct puffs_startreq *sreq)
 
 	mp = PMPTOMP(pmp);
 
-	simple_lock(&pmp->pmp_lock);
+	mutex_enter(&pmp->pmp_lock);
 
 	/*
 	 * if someone has issued a VFS_ROOT() already, fill in the
@@ -208,7 +212,7 @@ puffs_start2(struct puffs_mount *pmp, struct puffs_startreq *sreq)
 	/* We're good to fly */
 	pmp->pmp_rootcookie = sreq->psr_cookie;
 	pmp->pmp_status = PUFFSTAT_RUNNING;
-	simple_unlock(&pmp->pmp_lock);
+	mutex_exit(&pmp->pmp_lock);
 
 	/* do the VFS_STATVFS() we missed out on in sys_mount() */
 	copy_statvfs_info(&sreq->psr_sb, mp);
@@ -265,10 +269,10 @@ puffs_unmount(struct mount *mp, int mntflags, struct lwp *l)
 	 * If we are not DYING, we should ask userspace's opinion
 	 * about the situation
 	 */
-	simple_lock(&pmp->pmp_lock);
+	mutex_enter(&pmp->pmp_lock);
 	if (pmp->pmp_status != PUFFSTAT_DYING) {
 		pmp->pmp_unmounting = 1;
-		simple_unlock(&pmp->pmp_lock);
+		mutex_exit(&pmp->pmp_lock);
 
 		unmount_arg.pvfsr_flags = mntflags;
 		unmount_arg.pvfsr_pid = puffs_lwp2pid(l);
@@ -277,9 +281,9 @@ puffs_unmount(struct mount *mp, int mntflags, struct lwp *l)
 		     &unmount_arg, sizeof(unmount_arg));
 		DPRINTF(("puffs_unmount: error %d force %d\n", error, force));
 
-		simple_lock(&pmp->pmp_lock);
+		mutex_enter(&pmp->pmp_lock);
 		pmp->pmp_unmounting = 0;
-		wakeup(&pmp->pmp_unmounting);
+		cv_broadcast(&pmp->pmp_unmounting_cv);
 	}
 
 	/*
@@ -299,17 +303,22 @@ puffs_unmount(struct mount *mp, int mntflags, struct lwp *l)
 		 * and therefore will protected by the biglock after
 		 * exiting userspace.  But ... it's an imperfect world.
 		 */
-		while (pmp->pmp_req_touser_waiters != 0)
-			ltsleep(&pmp->pmp_req_touser_waiters, PVFS,
-			    "puffsink", 0, &pmp->pmp_lock);
-		simple_unlock(&pmp->pmp_lock);
+		while (pmp->pmp_req_waiters != 0)
+			cv_wait(&pmp->pmp_req_waitersink_cv, &pmp->pmp_lock);
+		mutex_exit(&pmp->pmp_lock);
 
 		/* free resources now that we hopefully have no waiters left */
+		cv_destroy(&pmp->pmp_req_waiter_cv);
+		cv_destroy(&pmp->pmp_req_waitersink_cv);
+		cv_destroy(&pmp->pmp_unmounting_cv);
+		cv_destroy(&pmp->pmp_suspend_cv);
+		mutex_destroy(&pmp->pmp_lock);
+
 		free(pmp->pmp_pnodehash, M_PUFFS);
 		FREE(pmp, M_PUFFS);
 		error = 0;
 	} else {
-		simple_unlock(&pmp->pmp_lock);
+		mutex_exit(&pmp->pmp_lock);
 	}
 
  out:
@@ -333,18 +342,18 @@ puffs_root(struct mount *mp, struct vnode **vpp)
 	 * pmp_lock must be held if vref()'ing or vrele()'ing the
 	 * root vnode.  the latter is controlled by puffs_inactive().
 	 */
-	simple_lock(&pmp->pmp_lock);
+	mutex_enter(&pmp->pmp_lock);
 	vp = pmp->pmp_root;
 	if (vp) {
 		mutex_enter(&vp->v_interlock);
-		simple_unlock(&pmp->pmp_lock);
+		mutex_exit(&pmp->pmp_lock);
 		pn = VPTOPP(vp);
 		if (vget(vp, LK_EXCLUSIVE | LK_RETRY | LK_INTERLOCK))
 			goto grabnew;
 		*vpp = vp;
 		return 0;
 	} else
-		simple_unlock(&pmp->pmp_lock);
+		mutex_exit(&pmp->pmp_lock);
 
 	/* XXX: this is wrong, so FIXME */
  grabnew:
@@ -356,14 +365,14 @@ puffs_root(struct mount *mp, struct vnode **vpp)
 	if (puffs_getvnode(mp, pmp->pmp_rootcookie, VDIR, 0, 0, &vp))
 		panic("sloppy programming");
 
-	simple_lock(&pmp->pmp_lock);
+	mutex_enter(&pmp->pmp_lock);
 	/*
 	 * check if by mysterious force someone else created a root
 	 * vnode while we were executing.
 	 */
 	if (pmp->pmp_root) {
 		vref(pmp->pmp_root);
-		simple_unlock(&pmp->pmp_lock);
+		mutex_exit(&pmp->pmp_lock);
 		puffs_putvnode(vp);
 		vn_lock(pmp->pmp_root, LK_EXCLUSIVE | LK_RETRY);
 		*vpp = pmp->pmp_root;
@@ -373,7 +382,7 @@ puffs_root(struct mount *mp, struct vnode **vpp)
 	/* store cache */
 	vp->v_flag = VROOT;
 	pmp->pmp_root = vp;
-	simple_unlock(&pmp->pmp_lock);
+	mutex_exit(&pmp->pmp_lock);
 
 	vn_lock(pmp->pmp_root, LK_EXCLUSIVE | LK_RETRY);
 
@@ -434,11 +443,12 @@ puffs_statvfs(struct mount *mp, struct statvfs *sbp, struct lwp *l)
 }
 
 static int
-pageflush(struct mount *mp, int waitfor, int suspending)
+pageflush(struct mount *mp, kauth_cred_t cred,
+	int waitfor, int suspending, struct lwp *l)
 {
 	struct puffs_node *pn;
 	struct vnode *vp, *nvp;
-	int error, rv, ppflags;
+	int error, rv;
 
 	KASSERT(((waitfor == MNT_WAIT) && suspending) == 0);
 	KASSERT((suspending == 0)
@@ -446,9 +456,6 @@ pageflush(struct mount *mp, int waitfor, int suspending)
 	      && fstrans_getstate(mp) == FSTRANS_SUSPENDING));
 
 	error = 0;
-	ppflags = PGO_CLEANIT | PGO_ALLPAGES;
-	if (waitfor == MNT_WAIT)
-		ppflags |= PGO_SYNCIO;
 
 	/*
 	 * Sync all cached data from regular vnodes (which are not
@@ -521,10 +528,12 @@ pageflush(struct mount *mp, int waitfor, int suspending)
 		 * storage.
 		 * TODO: Maybe also hint the user server of this twist?
 		 */
-		mutex_enter(&vp->v_interlock);
-		if (suspending || waitfor == MNT_LAZY)
+		if (suspending || waitfor == MNT_LAZY) {
+			mutex_enter(&vp->v_interlock);
 			pn->pn_stat |= PNODE_SUSPEND;
-		rv = VOP_PUTPAGES(vp, 0, 0, ppflags);
+			mutex_exit(&vp->v_interlock);
+		}
+		rv = VOP_FSYNC(vp, cred, waitfor, 0, 0, l);
 		if (suspending || waitfor == MNT_LAZY) {
 			mutex_enter(&vp->v_interlock);
 			pn->pn_stat &= ~PNODE_SUSPEND;
@@ -548,7 +557,7 @@ puffs_sync(struct mount *mp, int waitfor, struct kauth_cred *cred,
 
 	PUFFS_VFSREQ(sync);
 
-	error = pageflush(mp, waitfor, 0);
+	error = pageflush(mp, cred, waitfor, 0, l);
 
 	/* sync fs */
 	sync_arg.pvfsr_waitfor = waitfor;
@@ -592,25 +601,23 @@ void
 puffs_init()
 {
 
-#ifdef _LKM
 	malloc_type_attach(M_PUFFS);
-	pool_init(&puffs_pnpool, sizeof(struct puffs_node), 0, 0, 0,
-	    "puffspnpl", &pool_allocator_nointr, IPL_NONE);
-#endif
 
-	return;
+	pool_init(&puffs_pnpool, sizeof(struct puffs_node), 0, 0, 0,
+	    "puffpnpl", &pool_allocator_nointr, IPL_NONE);
+	puffs_transport_init();
+	puffs_msgif_init();
 }
 
 void
 puffs_done()
 {
 
-#ifdef _LKM
+	puffs_msgif_destroy();
+	puffs_transport_destroy();
 	pool_destroy(&puffs_pnpool);
-	malloc_type_detach(M_PUFFS);
-#endif
 
-	return;
+	malloc_type_detach(M_PUFFS);
 }
 
 int
@@ -634,7 +641,7 @@ puffs_suspendctl(struct mount *mp, int cmd)
 			break;
 		puffs_suspendtouser(pmp, PUFFS_SUSPEND_START);
 
-		error = pageflush(mp, 0, 1);
+		error = pageflush(mp, FSCRED, 0, 1, curlwp);
 		if (error == 0)
 			error = fstrans_setstate(mp, FSTRANS_SUSPENDED);
 

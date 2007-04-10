@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.60 2007/03/04 07:54:07 christos Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.60.2.1 2007/04/10 13:26:26 ad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -59,7 +59,6 @@ typedef u_int32_t netbsd32_clock_t;
 typedef u_int32_t netbsd32_size_t;
 typedef int32_t netbsd32_ssize_t;
 typedef int32_t netbsd32_clockid_t;
-typedef u_int32_t netbsd32_caddr_t;
 typedef int32_t netbsd32_key_t;
 typedef int32_t netbsd32_intptr_t;
 typedef u_int32_t netbsd32_uintptr_t;
@@ -90,6 +89,35 @@ typedef u_int32_t netbsd32_uintptr_t;
  */
 #include <machine/netbsd32_machdep.h>
 
+/* netbsd32_machdep.h will have (typically) defined:
+#define NETBSD32_POINTER_TYPE uint32_t
+typedef	struct { NETBSD32_POINTER_TYPE i32; } netbsd32_pointer_t;
+*/
+
+/*
+ * Conversion functions for the rest of the compat32 code:
+ *
+ * NETBSD32PTR64()	Convert user-supplied 32bit pointer to 'void *'
+ * NETBSD32PTR32()	Assign a 'void *' to a 32bit pointer variable
+ * NETBSD32PTR32PLUS()	Add an integer to a 32bit pointer
+ *
+ * Under rare circumstances the following get used:
+ *
+ * NETBSD32PTR32I()	Convert 'void *' to the 32bit pointer base type.
+ * NETBSD32IPTR64()	Convert 32bit pointer base type to 'void *'
+ */
+#define	NETBSD32PTR64(p32)		NETBSD32IPTR64((p32).i32)
+#define	NETBSD32PTR32(p32, p64)		((p32).i32 = NETBSD32PTR32I(p64))
+#define	NETBSD32PTR32PLUS(p32, incr)	((p32).i32 += incr)
+
+static __inline NETBSD32_POINTER_TYPE
+NETBSD32PTR32I(const void *p64) { return (uintptr_t)p64; }
+static __inline void *
+NETBSD32IPTR64(NETBSD32_POINTER_TYPE p32) { return (void *)(intptr_t)p32; }
+
+/* Nothing should be using the raw type, so kill it */
+#undef NETBSD32_POINTER_TYPE
+
 /*
  * all pointers are netbsd32_pointer_t (defined in <machine/netbsd32_machdep.h>)
  */
@@ -108,6 +136,7 @@ typedef netbsd32_pointer_t netbsd32_gid_tp;
 typedef netbsd32_pointer_t netbsd32_fsid_tp_t;
 typedef netbsd32_pointer_t netbsd32_lwpidp;
 typedef netbsd32_pointer_t netbsd32_ucontextp;
+typedef netbsd32_pointer_t netbsd32_caddr_t;
 
 /*
  * now, the compatibility structures and their fake pointer types.
@@ -250,7 +279,7 @@ struct netbsd32_msg {
 	short	msg_spot;	/* location of start of msg in buffer */
 };
 
-typedef u_int32_t netbsd32_msqid_dsp_t;
+typedef netbsd32_pointer_t netbsd32_msqid_dsp_t;
 typedef u_int32_t netbsd32_msgqnum_t;
 typedef netbsd32_size_t netbsd32_msglen_t;
 
@@ -293,7 +322,7 @@ struct netbsd32_msqid_ds14 {
 /* from <sys/sem.h> */
 typedef netbsd32_pointer_t netbsd32_semp_t;
 
-typedef u_int32_t netbsd32_semid_dsp_t;
+typedef netbsd32_pointer_t netbsd32_semid_dsp_t;
 struct netbsd32_semid_ds {
 	struct netbsd32_ipc_perm	sem_perm;/* operation permission struct */
 	unsigned short	sem_nsems;	/* number of sems in set */
@@ -336,7 +365,7 @@ struct netbsd32_sembuf {
 };
 
 /* from <sys/shm.h> */
-typedef u_int32_t netbsd32_shmid_dsp_t;
+typedef netbsd32_pointer_t netbsd32_shmid_dsp_t;
 struct netbsd32_shmid_ds {
 	struct netbsd32_ipc_perm	shm_perm; /* operation permission structure */
 	size_t		shm_segsz;	/* size of segment in bytes */
@@ -645,7 +674,7 @@ int	netbsd32_kevent(struct lwp *, void *, register_t *);
 #define NETBSD32TO64(s32uap, uap, name) \
 	    SCARG(uap, name) = SCARG(s32uap, name)
 #define NETBSD32TOP(s32uap, uap, name, type) \
-	    SCARG(uap, name) = (type *)(uintptr_t)NETBSD32PTR64(SCARG(s32uap, name))
+	    SCARG(uap, name) = SCARG_P32(s32uap, name)
 #define NETBSD32TOX(s32uap, uap, name, type) \
 	    SCARG(uap, name) = (type)SCARG(s32uap, name)
 #define NETBSD32TOX64(s32uap, uap, name, type) \
@@ -656,6 +685,8 @@ int	netbsd32_kevent(struct lwp *, void *, register_t *);
 #define	NETBSD32TOP_UAP(name, type)	NETBSD32TOP(uap, &ua, name, type);
 #define	NETBSD32TOX_UAP(name, type)	NETBSD32TOX(uap, &ua, name, type);
 #define	NETBSD32TOX64_UAP(name, type)	NETBSD32TOX64(uap, &ua, name, type);
+
+#define	SCARG_P32(uap, name) NETBSD32PTR64(SCARG(uap, name))
 
 int	coredump_netbsd32(struct lwp *, void *);
 

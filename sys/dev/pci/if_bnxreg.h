@@ -1,5 +1,5 @@
-/*	$NetBSD: if_bnxreg.h,v 1.1 2006/12/17 23:02:06 bouyer Exp $	*/
-/*	$OpenBSD: if_bnxreg.h,v 1.11 2006/08/21 03:22:09 brad Exp $	*/
+/*	$NetBSD: if_bnxreg.h,v 1.1.16.1 2007/04/10 13:24:25 ad Exp $	*/
+/*	$OpenBSD: if_bnxreg.h,v 1.17 2006/11/20 21:26:27 brad Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -698,7 +698,8 @@ struct tx_bd {
 	u_int32_t tx_bd_haddr_hi;
 	u_int32_t tx_bd_haddr_lo;
 	u_int32_t tx_bd_mss_nbytes;
-	u_int32_t tx_bd_vlan_tag_flags;
+	u_int16_t tx_bd_flags;
+	u_int16_t tx_bd_vlan_tag;
 		#define TX_BD_FLAGS_CONN_FAULT		(1<<0)
 		#define TX_BD_FLAGS_TCP_UDP_CKSUM	(1<<1)
 		#define TX_BD_FLAGS_IP_CKSUM		(1<<2)
@@ -4587,23 +4588,6 @@ struct fw_info {
 #define BNX_STATS_BLK_SZ		sizeof(struct statistics_block)
 #define BNX_TX_CHAIN_PAGE_SZ	BCM_PAGE_SIZE
 #define BNX_RX_CHAIN_PAGE_SZ	BCM_PAGE_SIZE
-/*
- * Mbuf pointers. We need these to keep track of the virtual addresses
- * of our mbuf chains since we can only convert from physical to virtual,
- * not the other way around.
- */
-
-struct bnx_dmamap_arg {
-	struct bnx_softc	*sc;				/* Pointer back to device context */
-	bus_addr_t			busaddr;		/* Physical address of mapped memory */
-	u_int32_t					tx_flags;		/* Flags for frame transmit */
-	u_int16_t					prod;
-	u_int16_t					chain_prod;
-	int					maxsegs;		/* Max segments supported for this mapped memory */
-	u_int32_t					prod_bseq;
-	struct tx_bd		*tx_chain[TX_PAGES];
-};
-
 
 struct bnx_softc
 {

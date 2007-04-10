@@ -1,4 +1,4 @@
-#	$NetBSD: EV64260,v 1.33 2006/09/27 21:42:05 manu Exp $
+#	$NetBSD: EV64260,v 1.33.8.1 2007/04/10 13:22:57 ad Exp $
 #
 #	MVP -- Motorola's Multiprocessing Verification Platform
 #
@@ -198,7 +198,7 @@ pci*		at ppb? bus ?
 #usb*	at ohci?
 #usb*	at uhci?
 #uhub*	at usb?
-#uhub*	at uhub? port ? configuration ? interface ?
+#uhub*	at uhub? port ?
 # Prolific PL2301/PL2302 host-to-host adapter
 #upl*	at uhub? port ?
 

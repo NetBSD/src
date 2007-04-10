@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_vmem.c,v 1.27.2.3 2007/03/21 20:11:52 ad Exp $	*/
+/*	$NetBSD: subr_vmem.c,v 1.27.2.4 2007/04/10 13:26:40 ad Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.27.2.3 2007/03/21 20:11:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.27.2.4 2007/04/10 13:26:40 ad Exp $");
 
 #define	VMEM_DEBUG
 #if defined(_KERNEL)
@@ -1146,8 +1146,6 @@ vmem_dump(const vmem_t *vm)
 }
 
 #if !defined(_KERNEL)
-
-#include <stdlib.h>
 
 int
 main()

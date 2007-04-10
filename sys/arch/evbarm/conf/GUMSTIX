@@ -1,4 +1,4 @@
-#	$NetBSD: GUMSTIX,v 1.10 2007/03/01 14:58:54 kiyohara Exp $
+#	$NetBSD: GUMSTIX,v 1.10.2.1 2007/04/10 13:22:55 ad Exp $
 #
 #	GUMSTIX -- Gumstix, Inc. gumstix platforms kernel
 #
@@ -241,7 +241,7 @@ sqphy*	at mii? phy ?			# Seeq 80220/80221/80223 PHYs
 
 # USB Hubs
 #uhub*	at usb?
-#uhub*	at uhub? port ? configuration ? interface ?
+#uhub*	at uhub? port ?
 
 # USB HID device
 #uhidev*	at uhub? port ? configuration ? interface ?
@@ -358,7 +358,7 @@ sqphy*	at mii? phy ?			# Seeq 80220/80221/80223 PHYs
 #bt3c*	at pcmcia? function ?		# 3Com 3CRWB6096-A
 
 # Bluetooth USB Controllers
-#ubt*	at uhub? port ? configuration ? interface ?
+#ubt*	at uhub? port ?
 
 # Bluetooth Device Hub
 #bthub*	at bt3c?

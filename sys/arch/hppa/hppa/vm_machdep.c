@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.23 2007/03/04 05:59:56 christos Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.23.2.1 2007/04/10 13:22:59 ad Exp $	*/
 
 /*	$OpenBSD: vm_machdep.c,v 1.25 2001/09/19 20:50:56 mickey Exp $	*/
 
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.23 2007/03/04 05:59:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.23.2.1 2007/04/10 13:22:59 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -210,7 +210,9 @@ cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 	cpu_swapin(l);
 
 	osp = sp;
-	sp += HPPA_FRAME_SIZE + 16*4; /* std frame + calee-save registers */
+
+	/* std frame + callee-save registers */
+	sp += HPPA_FRAME_SIZE + 16*4;
 	*HPPA_FRAME_CARG(1, sp) = KERNMODE(func);
 	*HPPA_FRAME_CARG(2, sp) = (register_t)arg;
 	*(register_t*)(sp + HPPA_FRAME_PSP) = osp;

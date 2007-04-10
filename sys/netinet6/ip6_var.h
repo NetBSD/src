@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_var.h,v 1.39 2007/03/07 22:20:04 liamjfoy Exp $	*/
+/*	$NetBSD: ip6_var.h,v 1.39.2.1 2007/04/10 13:26:51 ad Exp $	*/
 /*	$KAME: ip6_var.h,v 1.33 2000/06/11 14:59:20 jinmei Exp $	*/
 
 /*
@@ -302,6 +302,7 @@ extern int	ip6_use_defzone; /* whether to use the default scope zone
 
 #ifdef GATEWAY
 extern int      ip6_maxflows;           /* maximum amount of flows for ip6ff */
+extern int	ip6_hashsize;		/* size of hash table */
 #endif
 
 struct in6pcb;
@@ -356,11 +357,11 @@ int	frag6_input(struct mbuf **, int *, int);
 void	frag6_slowtimo(void);
 void	frag6_drain(void);
 
-void    ip6flow_init(void);
+int	ip6flow_init(int);
 struct  ip6flow *ip6flow_reap(int);
 void    ip6flow_create(const struct route_in6 *, struct mbuf *);
 void    ip6flow_slowtimo(void);
-void    ip6flow_invalidate_all(void);
+int	ip6flow_invalidate_all(int);
 
 void	rip6_init(void);
 int	rip6_input(struct mbuf **, int *, int);

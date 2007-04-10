@@ -1,4 +1,4 @@
-/*	$NetBSD: mpacpi.c,v 1.46 2007/03/05 16:51:03 drochner Exp $	*/
+/*	$NetBSD: mpacpi.c,v 1.46.2.1 2007/04/10 13:22:46 ad Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.46 2007/03/05 16:51:03 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.46.2.1 2007/04/10 13:22:46 ad Exp $");
 
 #include "acpi.h"
 #include "opt_acpi.h"
@@ -79,6 +79,8 @@ __KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.46 2007/03/05 16:51:03 drochner Exp $")
 #include "lapic.h"
 
 #include "locators.h"
+
+#define ACPI_STA_OK (ACPI_STA_DEV_PRESENT|ACPI_STA_DEV_ENABLED|ACPI_STA_DEV_OK)
 
 /* XXX room for PCI-to-PCI bus */
 #define BUS_BUFFER (16)
@@ -475,11 +477,25 @@ mpacpi_derive_bus(ACPI_HANDLE handle, struct acpi_softc *acpi)
 
 	/* first, search parent root bus */
 	for (current = handle;; current = parent) {
-		dev = malloc(sizeof(struct ac_dev), M_TEMP, M_WAITOK|M_ZERO);
-		if (dev == NULL)
+		buf.Pointer = NULL;
+		buf.Length = ACPI_ALLOCATE_BUFFER;
+		rv = AcpiGetObjectInfo(current, &buf);
+		if (ACPI_FAILURE(rv))
 			return -1;
-		dev->handle = current;
-		TAILQ_INSERT_HEAD(&dev_list, dev, list);
+
+		devinfo = buf.Pointer;
+		/* add this device to the list only if it's active */
+		if ((devinfo->Valid & ACPI_VALID_STA) == 0 ||
+		    (devinfo->CurrentStatus & ACPI_STA_OK) == ACPI_STA_OK) {
+			AcpiOsFree(buf.Pointer);
+			dev = malloc(sizeof(struct ac_dev), M_TEMP,
+			    M_WAITOK|M_ZERO);
+			if (dev == NULL)
+				return -1;
+			dev->handle = current;
+			TAILQ_INSERT_HEAD(&dev_list, dev, list);
+		} else
+			AcpiOsFree(buf.Pointer);
 
 		rv = AcpiGetParent(current, &parent);
 		if (ACPI_FAILURE(rv))
@@ -492,6 +508,7 @@ mpacpi_derive_bus(ACPI_HANDLE handle, struct acpi_softc *acpi)
 			return -1;
 
 		devinfo = buf.Pointer;
+
 		if (acpi_match_hid(devinfo, pciroot_hid)) {
 			rv = acpi_eval_integer(parent, METHOD_NAME__BBN, &val);
 			AcpiOsFree(buf.Pointer);
@@ -569,8 +586,6 @@ mpacpi_pcibus_cb(ACPI_HANDLE handle, UINT32 level, void *p,
 		return AE_OK;
 
 	devinfo = buf.Pointer;
-
-#define ACPI_STA_OK (ACPI_STA_DEV_PRESENT|ACPI_STA_DEV_ENABLED|ACPI_STA_DEV_OK)
 
 	/* if this device is not active, ignore it */
 	if ((devinfo->Valid & ACPI_VALID_STA) &&

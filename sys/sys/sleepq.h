@@ -1,4 +1,4 @@
-/*	$NetBSD: sleepq.h,v 1.5 2007/02/27 15:07:28 yamt Exp $	*/
+/*	$NetBSD: sleepq.h,v 1.5.2.1 2007/04/10 13:26:20 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -58,8 +58,6 @@
 #define	SLEEPTAB_HASH_MASK	(SLEEPTAB_HASH_SIZE - 1)
 #define	SLEEPTAB_HASH(wchan)	(((uintptr_t)(wchan) >> 8) & SLEEPTAB_HASH_MASK)
 
-struct lwp;
-
 typedef struct sleepq {
 	TAILQ_HEAD(, lwp)	sq_queue;	/* queue of waiters */
 	kmutex_t		*sq_mutex;	/* mutex on struct & queue */
@@ -88,20 +86,20 @@ typedef struct sleeptab {
 #endif	/* defined(MULTIPROCESSOR) || defined(LOCKDEBUG) */
 
 void	sleepq_init(sleepq_t *, kmutex_t *);
-int	sleepq_remove(sleepq_t *, struct lwp *);
-void	sleepq_block(sleepq_t *, pri_t, wchan_t, const char *, int, int,
+int	sleepq_remove(sleepq_t *, lwp_t *);
+void	sleepq_block(sleepq_t *, pri_t, wchan_t, const char *, int, bool,
 		     syncobj_t *);
-void	sleepq_unsleep(struct lwp *);
+void	sleepq_unsleep(lwp_t *);
 void	sleepq_timeout(void *);
-void	sleepq_wake(sleepq_t *, wchan_t, u_int);
+lwp_t	*sleepq_wake(sleepq_t *, wchan_t, u_int);
 int	sleepq_abort(kmutex_t *, int);
-void	sleepq_changepri(struct lwp *, pri_t);
-void	sleepq_lendpri(struct lwp *, pri_t);
-int	sleepq_unblock(int, int);
-void	sleepq_insert(sleepq_t *, struct lwp *, syncobj_t *);
+void	sleepq_changepri(lwp_t *, pri_t);
+void	sleepq_lendpri(lwp_t *, pri_t);
+int	sleepq_unblock(int, bool);
+void	sleepq_insert(sleepq_t *, lwp_t *, syncobj_t *);
 
 void	sleepq_enqueue(sleepq_t *, pri_t, wchan_t, const char *, syncobj_t *);
-void	sleepq_switch(int, int);
+void	sleepq_switch(int, bool);
 
 void	sleeptab_init(sleeptab_t *);
 
@@ -112,8 +110,8 @@ extern sleeptab_t	sleeptab;
  *
  * XXX This only exists because panic() is broken.
  */
-static inline int
-sleepq_dontsleep(struct lwp *l)
+static inline bool
+sleepq_dontsleep(lwp_t *l)
 {
 	extern int cold;
 
@@ -143,7 +141,7 @@ sleeptab_lookup(sleeptab_t *st, wchan_t wchan)
  * safely released.
  */
 static inline void
-sleepq_enter(sleepq_t *sq, struct lwp *l)
+sleepq_enter(sleepq_t *sq, lwp_t *l)
 {
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	/*
@@ -197,7 +195,7 @@ typedef struct turnstile {
 
 	/* priority inheritance */
 	pri_t			ts_eprio;
-	struct lwp		*ts_inheritor;
+	lwp_t			*ts_inheritor;
 	SLIST_ENTRY(turnstile)	ts_pichain;
 } turnstile_t;
 
@@ -233,7 +231,7 @@ void	turnstile_init(void);
 turnstile_t	*turnstile_lookup(wchan_t);
 void	turnstile_exit(wchan_t);
 void	turnstile_block(turnstile_t *, int, wchan_t, syncobj_t *);
-void	turnstile_wakeup(turnstile_t *, int, int, struct lwp *);
+void	turnstile_wakeup(turnstile_t *, int, int, lwp_t *);
 void	turnstile_print(volatile void *, void (*)(const char *, ...));
 
 static inline void
@@ -242,8 +240,8 @@ turnstile_unblock(void)
 	(void)sleepq_unblock(0, 0);
 }
 
-void	turnstile_unsleep(struct lwp *);
-void	turnstile_changepri(struct lwp *, pri_t);
+void	turnstile_unsleep(lwp_t *);
+void	turnstile_changepri(lwp_t *, pri_t);
 
 extern struct pool_cache turnstile_cache;
 extern struct turnstile turnstile0;

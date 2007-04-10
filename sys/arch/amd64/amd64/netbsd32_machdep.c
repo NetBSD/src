@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.37 2007/03/04 14:36:12 yamt Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.37.2.1 2007/04/10 13:22:50 ad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.37 2007/03/04 14:36:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.37.2.1 2007/04/10 13:22:50 ad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_coredump.h"
@@ -376,8 +376,8 @@ compat_16_netbsd32___sigreturn14(struct lwp *l, void *v, register_t *retval)
 	 * It is unsafe to keep track of it ourselves, in the event that a
 	 * program jumps out of a signal handler.
 	 */
-	scp = (struct netbsd32_sigcontext *)(uintptr_t)SCARG(uap, sigcntxp);
-	if (copyin((void *)scp, &context, sizeof(*scp)) != 0)
+	scp = NETBSD32PTR64(SCARG(uap, sigcntxp));
+	if (copyin(scp, &context, sizeof(*scp)) != 0)
 		return (EFAULT);
 
 	/* Restore register context. */
@@ -594,17 +594,15 @@ netbsd32_sysarch(l, v, retval)
 	switch (SCARG(uap, op)) {
 		case X86_64_IOPL:
 			error = x86_64_iopl(l,
-			    (void *)(uintptr_t)SCARG(uap, parms), retval);
+			    NETBSD32PTR64(SCARG(uap, parms)), retval);
 			break;
 		case X86_64_GET_MTRR:
 			error = x86_64_get_mtrr32(l,
-			    (void *)(uintptr_t)SCARG(uap, parms),
-			    retval);
+			    NETBSD32PTR64(SCARG(uap, parms)), retval);
 			break;
 		case X86_64_SET_MTRR:
 			error = x86_64_set_mtrr32(l,
-			    (void *)(uintptr_t)SCARG(uap, parms),
-			    retval);
+			    NETBSD32PTR64(SCARG(uap, parms)), retval);
 			break;
 		default:
 			error = EINVAL;

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.601.2.2 2007/04/10 12:11:18 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.601.2.3 2007/04/10 13:23:05 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.601.2.2 2007/04/10 12:11:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.601.2.3 2007/04/10 13:23:05 ad Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -130,6 +130,8 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.601.2.2 2007/04/10 12:11:18 ad Exp $")
 #include <uvm/uvm_page.h>
 
 #include <sys/sysctl.h>
+
+#include <x86/cpu_msr.h>
 
 #include <machine/cpu.h>
 #include <machine/cpufunc.h>
@@ -488,6 +490,8 @@ cpu_startup()
 
 	/* Safe for i/o port / memory space allocation to use malloc now. */
 	x86_bus_space_mallocok();
+
+	x86_init();
 }
 
 /*

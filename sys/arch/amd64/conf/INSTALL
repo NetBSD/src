@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.66 2007/03/06 21:47:46 bouyer Exp $
+# $NetBSD: INSTALL,v 1.66.2.1 2007/04/10 13:22:50 ad Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include	"arch/amd64/conf/std.amd64"
 
-#ident 		"INSTALL-$Revision: 1.66 $"
+#ident 		"INSTALL-$Revision: 1.66.2.1 $"
 
 maxusers	32		# estimated number of users
 
@@ -528,7 +528,7 @@ usb*	at uhci?
 
 # USB Hubs
 uhub*	at usb?
-uhub*	at uhub? port ? configuration ? interface ?
+uhub*	at uhub? port ?
 
 # USB HID device
 uhidev*	at uhub? port ? configuration ? interface ?

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_20.c,v 1.9.2.1 2007/03/13 17:50:27 ad Exp $	*/
+/*	$NetBSD: netbsd32_compat_20.c,v 1.9.2.2 2007/04/10 13:26:27 ad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_20.c,v 1.9.2.1 2007/03/13 17:50:27 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_20.c,v 1.9.2.2 2007/04/10 13:26:27 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -164,8 +164,7 @@ compat_20_netbsd32_statfs(l, v, retval)
 	int error;
 	struct nameidata nd;
 
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE,
-	    (char *)NETBSD32PTR64(SCARG(uap, path)), l);
+	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG_P32(uap, path), l);
 	if ((error = namei(&nd)) != 0)
 		return (error);
 	mp = nd.ni_vp->v_mount;
@@ -175,8 +174,7 @@ compat_20_netbsd32_statfs(l, v, retval)
 		return (error);
 	sp->f_flag = mp->mnt_flag & MNT_VISFLAGMASK;
 	compat_20_netbsd32_from_statvfs(sp, &s32);
-	return (copyout(&s32, (void *)NETBSD32PTR64(SCARG(uap, buf)),
-	    sizeof(s32)));
+	return copyout(&s32, SCARG_P32(uap, buf), sizeof(s32));
 }
 
 int
@@ -205,8 +203,7 @@ compat_20_netbsd32_fstatfs(l, v, retval)
 		goto out;
 	sp->f_flag = mp->mnt_flag & MNT_VISFLAGMASK;
 	compat_20_netbsd32_from_statvfs(sp, &s32);
-	error = copyout(&s32, (void *)NETBSD32PTR64(SCARG(uap, buf)),
-	    sizeof(s32));
+	error = copyout(&s32, SCARG_P32(uap, buf), sizeof(s32));
  out:
 	FILE_UNUSE(fp, l);
 	return (error);

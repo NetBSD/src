@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.c,v 1.30 2007/03/04 07:54:08 christos Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.c,v 1.30.2.1 2007/04/10 13:26:28 ad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -33,7 +33,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.30 2007/03/04 07:54:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.30.2.1 2007/04/10 13:26:28 ad Exp $");
+
+#if defined(_KERNEL_OPT)
+#include "opt_ktrace.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,6 +55,9 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.30 2007/03/04 07:54:08 christos
 #include <sys/ttycom.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
+#ifdef KTRACE
+#include <sys/ktrace.h>
+#endif
 
 #ifdef __sparc__
 #include <dev/sun/fbio.h>
@@ -231,8 +238,8 @@ netbsd32_from_partinfo(p, s32p, cmd)
 	u_long cmd;
 {
 
-	s32p->disklab = (netbsd32_disklabel_tp_t)(u_long)p->disklab;
-	s32p->part = s32p->part;
+	NETBSD32PTR32(s32p->disklab, p->disklab);
+	NETBSD32PTR32(s32p->part, p->part);
 }
 
 #if 0
@@ -268,7 +275,7 @@ netbsd32_from_ifreq(p, s32p, cmd)
 	 */
 	*s32p->ifr_name = *p->ifr_name;
 	if (cmd == SIOCGIFDATA || cmd == SIOCZIFDATA)
-		s32p->ifr_data = (netbsd32_caddr_t)(u_long)s32p->ifr_data;
+		NETBSD32PTR32(s32p->ifr_data, p->ifr_data);
 }
 
 static inline void
@@ -280,7 +287,7 @@ netbsd32_from_ifconf(p, s32p, cmd)
 
 	s32p->ifc_len = p->ifc_len;
 	/* ifc_buf & ifc_req are the same size so this works */
-	s32p->ifc_buf = (netbsd32_caddr_t)(u_long)p->ifc_buf;
+	NETBSD32PTR32(s32p->ifc_buf, p->ifc_buf);
 }
 
 static inline void
@@ -425,16 +432,23 @@ printf("netbsd32_ioctl(%d, %x, %x): %s group %c base %d len %d\n",
 		data32 = (void *)stkbuf32;
 	if (com&IOC_IN) {
 		if (size32) {
-			error = copyin((void *)NETBSD32PTR64(SCARG(uap, data)),
-			    data32, size32);
+			error = copyin(SCARG_P32(uap, data), data32, size32);
 			if (error) {
 				if (memp32)
 					free(memp32, M_IOCTLOPS);
 				goto out;
 			}
+#ifdef KTRACE
+			if (KTRPOINT(p, KTR_GENIO)) {
+				struct iovec iov;
+				iov.iov_base = SCARG_P32(uap, data);
+				iov.iov_len = size32;
+				ktrgenio(l, SCARG(uap, fd), UIO_WRITE, &iov,
+				    size32, 0);
+			}
+#endif
 		} else
-			*(void **)data32 =
-			    (void *)NETBSD32PTR64(SCARG(uap, data));
+			*(void **)data32 = SCARG_P32(uap, data);
 	} else if ((com&IOC_OUT) && size32)
 		/*
 		 * Zero the buffer so the user always
@@ -442,7 +456,7 @@ printf("netbsd32_ioctl(%d, %x, %x): %s group %c base %d len %d\n",
 		 */
 		memset(data32, 0, size32);
 	else if (com&IOC_VOID)
-		*(void **)data32 = (void *)NETBSD32PTR64(SCARG(uap, data));
+		*(void **)data32 = SCARG_P32(uap, data);
 
 	/*
 	 * convert various structures, pointers, and other objects that
@@ -571,9 +585,18 @@ printf("netbsd32_ioctl(%d, %x, %x): %s group %c base %d len %d\n",
 	 * Copy any data to user, size was
 	 * already set and checked above.
 	 */
-	if (error == 0 && (com&IOC_OUT) && size32)
-		error = copyout(data32,
-		    (void *)NETBSD32PTR64(SCARG(uap, data)), size32);
+	if (error == 0 && (com&IOC_OUT) && size32) {
+		error = copyout(data32, SCARG_P32(uap, data), size32);
+#ifdef KTRACE
+		if (KTRPOINT(p, KTR_GENIO)) {
+			struct iovec iov;
+			iov.iov_base = SCARG_P32(uap, data);
+			iov.iov_len = size32;
+			ktrgenio(l, SCARG(uap, fd), UIO_READ, &iov,
+			    size32, error);
+		}
+#endif
+	}
 
 	/* if we malloced data, free it here */
 	if (memp32)

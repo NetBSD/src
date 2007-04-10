@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.277 2007/01/25 00:11:58 macallan Exp $
+#	$NetBSD: files.pci,v 1.277.6.1 2007/04/10 13:24:24 ad Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -14,6 +14,7 @@ defparam opt_bktr.h	BKTR_OVERRIDE_CARD BKTR_OVERRIDE_TUNER BKTR_OVERRIDE_DBX
 
 defflag	opt_pciide.h	PCIIDE_CMD064x_DISABLE PCIIDE_AMD756_ENABLEDMA
 			PCIIDE_CMD0646U_ENABLEUDMA PCIIDE_I31244_DISABLEDMA
+			PCIIDE_SLIDE_SETIRQA
 
 device	pci {[dev = -1], [function = -1]}
 attach	pci at pcibus
@@ -750,7 +751,8 @@ attach	joy at pci with joy_pci
 file	dev/pci/joy_pci.c		joy_pci
 
 # ATI Mach64 framebuffer console driver
-device	machfb: wsemuldisplaydev, rasops8, fb, vcons, videomode
+defflag	opt_machfb.h	MACHFB_DEBUG
+device	machfb: wsemuldisplaydev, rasops8, fb, vcons, videomode, edid, drm
 attach	machfb at pci
 file	dev/pci/machfb.c		machfb
 
@@ -760,17 +762,18 @@ attach	voodoofb at pci
 file	dev/pci/voodoofb.c		voodoofb
 
 # VIA UniChrome framebuffer console driver
-device	unichromefb: wsemuldisplaydev, rasops16, rasops32, vcons
+device	unichromefb: wsemuldisplaydev, rasops16, rasops32, vcons, drm
 attach	unichromefb at pci
 file	dev/pci/unichromefb.c		unichromefb needs-flag
 
 # ATI Radeon framebuffer console driver
 # (Note: to enable the BIOS parser, add options RADEON_BIOS_INIT to the config)
-device	radeonfb: wsemuldisplaydev, videomode, rasops32, vcons, splash, iic, i2c_bitbang, ddc_read_edid, edid
+device	radeonfb: wsemuldisplaydev, videomode, rasops32, vcons, splash, iic, i2c_bitbang, ddc_read_edid, edid, drm
 attach	radeonfb at pci
 file	dev/pci/radeonfb.c	radeonfb
 file	dev/pci/radeonfb_i2c.c	radeonfb
 file	dev/pci/radeonfb_bios.c	radeonfb
+defflag opt_radeonfb.h	RADEONFB_DEBUG
 
 # Chips & Technologies 65550 framebuffer console driver
 device	chipsfb: wsemuldisplaydev, rasops8, vcons, videomode
@@ -861,3 +864,12 @@ attach	mskc at pci
 device	msk: ether, ifnet, arp, mii
 attach	msk at mskc
 file	dev/pci/if_msk.c		mskc | msk
+
+#
+# Direct Rendering Manager
+#
+include "dev/pci/drm/files.pcidrm"
+
+# generic framebuffer console driver, PCI frontend
+attach genfb at pci with genfb_pci
+file	dev/pci/genfb_pci.c	genfb

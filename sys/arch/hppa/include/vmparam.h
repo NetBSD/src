@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.8 2006/10/14 09:07:01 skrll Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.8.8.1 2007/04/10 13:23:00 ad Exp $	*/
 
 /*	$OpenBSD: vmparam.h,v 1.17 2001/09/22 18:00:09 miod Exp $	*/
 
@@ -41,7 +41,7 @@
 #define	PAGE_MASK	(PAGE_SIZE - 1)
 
 /*
- * USRSTACK is the top (end) of the user stack.
+ * USRSTACK is the bottom (start) of the user stack.
  */
 #define	USRSTACK	0x70000000		/* Start of user stack */
 #define	SYSCALLGATE	0xC0000000		/* syscall gateway page */

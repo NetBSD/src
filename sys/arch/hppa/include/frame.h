@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.3 2005/12/11 12:17:37 christos Exp $	*/
+/*	$NetBSD: frame.h,v 1.3.30.1 2007/04/10 13:22:59 ad Exp $	*/
 
 /*	$OpenBSD: frame.h,v 1.11 1999/11/25 18:28:06 mickey Exp $	*/
 
@@ -73,7 +73,7 @@
  *	one is saved while we are in the physical mode (beginning of the trap),
  *	and should be kept as small as possible, since all the interrupts will
  *	be lost during this phase, also it must be 64-bytes aligned, per
- *	pa-risc stack conventions, and it's dependancies in the code (;
+ *	pa-risc stack conventions, and it's dependencies in the code (;
  *	the other part is filled out when we are already in the virtual mode,
  *	are able to catch interrupts (they are kept pending) and perform
  *	other trap activities (like tlb misses).

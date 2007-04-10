@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_inode.c,v 1.64.6.1 2007/03/13 17:51:52 ad Exp $	*/
+/*	$NetBSD: ufs_inode.c,v 1.64.6.2 2007/04/10 13:26:55 ad Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.64.6.1 2007/03/13 17:51:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.64.6.2 2007/04/10 13:26:55 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -81,7 +81,7 @@ ufs_inactive(void *v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct inode *ip = VTOI(vp);
-	struct mount *mp, *transmp;
+	struct mount *transmp;
 	struct lwp *l = ap->a_l;
 	mode_t mode;
 	int error = 0;
@@ -101,7 +101,6 @@ ufs_inactive(void *v)
 		softdep_releasefile(ip);
 
 	if (ip->i_nlink <= 0 && (vp->v_mount->mnt_flag & MNT_RDONLY) == 0) {
-		vn_start_write(vp, &mp, V_WAIT | V_LOWER);
 #ifdef QUOTA
 		if (!getinoquota(ip))
 			(void)chkiq(ip, -1, NOCRED, 0);
@@ -129,13 +128,10 @@ ufs_inactive(void *v)
 		if (DOINGSOFTDEP(vp))
 			softdep_change_linkcnt(ip);
 		UFS_VFREE(vp, ip->i_number, mode);
-		vn_finished_write(mp, V_LOWER);
 	}
 
 	if (ip->i_flag & (IN_CHANGE | IN_UPDATE | IN_MODIFIED)) {
-		vn_start_write(vp, &mp, V_WAIT | V_LOWER);
 		UFS_UPDATE(vp, NULL, NULL, 0);
-		vn_finished_write(mp, V_LOWER);
 	}
 out:
 	VOP_UNLOCK(vp, 0);
@@ -157,14 +153,11 @@ int
 ufs_reclaim(struct vnode *vp, struct lwp *l)
 {
 	struct inode *ip = VTOI(vp);
-	struct mount *mp;
 
 	if (prtactive && vp->v_usecount != 0)
 		vprint("ufs_reclaim: pushing active", vp);
 
-	vn_start_write(vp, &mp, V_WAIT | V_LOWER);
 	UFS_UPDATE(vp, NULL, NULL, UPDATE_CLOSE);
-	vn_finished_write(mp, V_LOWER);
 
 	/*
 	 * Remove the inode from its hash chain.

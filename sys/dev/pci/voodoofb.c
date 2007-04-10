@@ -1,4 +1,4 @@
-/*	$NetBSD: voodoofb.c,v 1.8 2007/03/04 06:02:26 christos Exp $	*/
+/*	$NetBSD: voodoofb.c,v 1.8.2.1 2007/04/10 13:24:29 ad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Michael Lorenz
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: voodoofb.c,v 1.8 2007/03/04 06:02:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: voodoofb.c,v 1.8.2.1 2007/04/10 13:24:29 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,6 +48,9 @@ __KERNEL_RCSID(0, "$NetBSD: voodoofb.c,v 1.8 2007/03/04 06:02:26 christos Exp $"
 #if defined(macppc) || defined (sparc64) || defined(ofppc)
 #define HAVE_OPENFIRMWARE
 #endif
+
+/* XXX should be configurable */
+#define VOODOOFB_VIDEOMODE 15
 
 #ifdef HAVE_OPENFIRMWARE
 #include <dev/ofw/openfirm.h>
@@ -74,6 +77,7 @@ struct voodoofb_softc {
 	struct device sc_dev;
 	pci_chipset_tag_t sc_pc;
 	pcitag_t sc_pcitag;
+	struct pci_attach_args sc_pa;
 
 	bus_space_tag_t sc_memt;
 	bus_space_tag_t sc_iot;
@@ -121,6 +125,10 @@ extern const u_char rasops_cmap[768];
 static int	voodoofb_match(struct device *, struct cfdata *, void *);
 static void	voodoofb_attach(struct device *, struct device *, void *);
 
+static int	voodoofb_drm_print(void *, const char *);
+static int	voodoofb_drm_unmap(struct voodoofb_softc *);
+static int	voodoofb_drm_map(struct voodoofb_softc *);
+
 CFATTACH_DECL(voodoofb, sizeof(struct voodoofb_softc), voodoofb_match, 
     voodoofb_attach, NULL, NULL);
 
@@ -162,7 +170,9 @@ static void	voodoofb_showpal(struct voodoofb_softc *);
 
 static void	voodoofb_wait_idle(struct voodoofb_softc *);
 
+#ifdef VOODOOFB_ENABLE_INTR
 static int	voodoofb_intr(void *);
+#endif
 
 static void	voodoofb_set_videomode(struct voodoofb_softc *,
 			    const struct videomode *);
@@ -303,9 +313,11 @@ voodoofb_attach(struct device *parent, struct device *self, void *aux)
 	char devinfo[256];
 	struct wsemuldisplaydev_attach_args aa;
 	struct rasops_info *ri;
+#ifdef VOODOOFB_ENABLE_INTR
 	pci_intr_handle_t ih;
-	ulong defattr;
 	const char *intrstr;
+#endif
+	ulong defattr;
 	int console, width, height, i, j;
 #ifdef HAVE_OPENFIRMWARE
 	int linebytes, depth, node;
@@ -324,6 +336,7 @@ voodoofb_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_memt = pa->pa_memt;
 	sc->sc_iot = pa->pa_iot;
+	sc->sc_pa = *pa;
 
 	/* the framebuffer */
 	if (pci_mapreg_map(pa, 0x14, PCI_MAPREG_TYPE_MEM,
@@ -375,7 +388,7 @@ voodoofb_attach(struct device *parent, struct device *self, void *aux)
 #endif
 
 	/* XXX this should at least be configurable via kernel config */
-	voodoofb_set_videomode(sc, &videomode_list[16]);
+	voodoofb_set_videomode(sc, &videomode_list[VOODOOFB_VIDEOMODE]);
 
 	vcons_init(&sc->vd, sc, &voodoofb_defaultscreen, &voodoofb_accessops);
 	sc->vd.init_screen = voodoofb_init_screen;
@@ -416,6 +429,7 @@ voodoofb_attach(struct device *parent, struct device *self, void *aux)
 		j += 3;
 	}
 
+#ifdef VOODOOFB_ENABLE_INTR
 	/* Interrupt. We don't use it for anything yet */
 	if (pci_intr_map(pa, &ih)) {
 		printf("%s: failed to map interrupt\n", sc->sc_dev.dv_xname);
@@ -434,6 +448,7 @@ voodoofb_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
+#endif
 
 	rasops_unpack_attr(defattr, &fg, &bg, &ul);
 	sc->sc_bg = ri->ri_devcmap[bg];
@@ -445,6 +460,61 @@ voodoofb_attach(struct device *parent, struct device *self, void *aux)
 	aa.accesscookie = &sc->vd;
 
 	config_found(self, &aa, wsemuldisplaydevprint);
+	config_found_ia(self, "drm", aux, voodoofb_drm_print);
+}
+
+static int
+voodoofb_drm_print(void *opaque, const char *pnp)
+{
+	if (pnp)
+		aprint_normal("direct rendering for %s", pnp);
+
+	return UNSUPP;
+}
+
+static int
+voodoofb_drm_unmap(struct voodoofb_softc *sc)
+{
+	printf("%s: releasing bus resources\n", sc->sc_dev.dv_xname);
+
+	bus_space_unmap(sc->sc_ioregt, sc->sc_ioregh, sc->sc_ioregsize);
+	bus_space_unmap(sc->sc_regt, sc->sc_reg, sc->sc_regsize);
+	bus_space_unmap(sc->sc_fbt, sc->sc_fbh, sc->sc_fbsize);
+
+	return 0;
+}
+
+static int
+voodoofb_drm_map(struct voodoofb_softc *sc)
+{
+	if (pci_mapreg_map(&sc->sc_pa, 0x14, PCI_MAPREG_TYPE_MEM,
+	    BUS_SPACE_MAP_CACHEABLE | BUS_SPACE_MAP_PREFETCHABLE | 
+	    BUS_SPACE_MAP_LINEAR, 
+	    &sc->sc_fbt, &sc->sc_fbh, &sc->sc_fb, &sc->sc_fbsize)) {
+		printf("%s: failed to map the frame buffer.\n", 
+		    sc->sc_dev.dv_xname);
+	}
+
+	/* memory-mapped registers */
+	if (pci_mapreg_map(&sc->sc_pa, 0x10, PCI_MAPREG_TYPE_MEM, 0,
+	    &sc->sc_regt, &sc->sc_regh, &sc->sc_regs, &sc->sc_regsize)) {
+		printf("%s: failed to map memory-mapped registers.\n", 
+		    sc->sc_dev.dv_xname);
+	}
+
+	/* IO-mapped registers */
+	if (pci_mapreg_map(&sc->sc_pa, 0x18, PCI_MAPREG_TYPE_IO, 0,
+	    &sc->sc_ioregt, &sc->sc_ioregh, &sc->sc_ioreg,
+	    &sc->sc_ioregsize)) {
+		printf("%s: failed to map IO-mapped registers.\n", 
+		    sc->sc_dev.dv_xname);
+	}
+
+	voodoofb_init(sc);
+	/* XXX this should at least be configurable via kernel config */
+	voodoofb_set_videomode(sc, &videomode_list[VOODOOFB_VIDEOMODE]);
+
+	return 0;
 }
 
 static int
@@ -899,6 +969,7 @@ voodoofb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 					sc->sc_mode = new_mode;
 					if(new_mode == WSDISPLAYIO_MODE_EMUL)
 					{
+						voodoofb_drm_map(sc);
 						int i;
 						
 						/* restore the palette */
@@ -910,7 +981,8 @@ voodoofb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 							   sc->sc_cmap_blue[i]);
 						}
 						vcons_redraw_screen(ms);
-					}
+					} else
+						voodoofb_drm_unmap(sc);
 				}
 			}
 			return 0;
@@ -1007,6 +1079,7 @@ voodoofb_load_font(void *v, void *cookie, struct wsdisplay_font *data)
 }
 #endif
 
+#ifdef VOODOOFB_ENABLE_INTR
 static int
 voodoofb_intr(void *arg)
 {
@@ -1015,6 +1088,7 @@ voodoofb_intr(void *arg)
 	voodoo3_write32(sc, V3_STATUS, 0);	/* clear interrupts */
 	return 1;
 }
+#endif
 
 /* video mode stuff */
 

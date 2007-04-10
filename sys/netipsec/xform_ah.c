@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ah.c,v 1.15 2007/03/04 21:17:55 degroote Exp $	*/
+/*	$NetBSD: xform_ah.c,v 1.15.2.1 2007/04/10 13:26:53 ad Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ah.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ah.c,v 1.63 2001/06/26 06:18:58 angelos Exp $ */
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.15 2007/03/04 21:17:55 degroote Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.15.2.1 2007/04/10 13:26:53 ad Exp $");
 
 #include "opt_inet.h"
 #ifdef __FreeBSD__
@@ -98,7 +98,7 @@ __KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.15 2007/03/04 21:17:55 degroote Exp $
 	((sav->flags & SADB_X_EXT_OLD) ? 16 : (sav)->tdb_authalgxform->authsize)
 
 int	ah_enable = 1;			/* control flow of packets with AH */
-int	ah_cleartos = 1;		/* clear ip_tos when doing AH calc */
+int	ip4_ah_cleartos = 1;		/* clear ip_tos when doing AH calc */
 struct	ahstat ahstat;
 
 #ifdef __FreeBSD__
@@ -106,7 +106,7 @@ SYSCTL_DECL(_net_inet_ah);
 SYSCTL_INT(_net_inet_ah, OID_AUTO,
 	ah_enable,	CTLFLAG_RW,	&ah_enable,	0, "");
 SYSCTL_INT(_net_inet_ah, OID_AUTO,
-	ah_cleartos,	CTLFLAG_RW,	&ah_cleartos,	0, "");
+	ah_cleartos,	CTLFLAG_RW,	&ip4_ah_cleartos,	0, "");
 SYSCTL_STRUCT(_net_inet_ah, IPSECCTL_STATS,
 	stats,		CTLFLAG_RD,	&ahstat,	ahstat, "");
 
@@ -290,10 +290,11 @@ ah_massage_headers(struct mbuf **m0, int proto, int skip, int alg, int out)
 
 		/* Fix the IP header */
 		ip = mtod(m, struct ip *);
-		if (ah_cleartos)
+		if (ip4_ah_cleartos)
 			ip->ip_tos = 0;
 		ip->ip_ttl = 0;
 		ip->ip_sum = 0;
+		ip->ip_off = htons(ntohs(ip->ip_off) & ip4_ah_offsetmask);
 
 		/*
 		 * On FreeBSD, ip_off and ip_len assumed in host endian;

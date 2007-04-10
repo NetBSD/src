@@ -1,4 +1,4 @@
-/*	$NetBSD: macros.h,v 1.38 2007/03/04 06:00:57 christos Exp $	*/
+/*	$NetBSD: macros.h,v 1.38.2.1 2007/04/10 13:23:20 ad Exp $	*/
 
 /*
  * Copyright (c) 1994, 1998, 2000 Ludd, University of Lule}, Sweden.
@@ -38,6 +38,7 @@
 void	__blkset(void *, int, size_t);
 void	__blkcpy(const void *, void *, size_t);
 
+#if !__GNUC_PREREQ__(4, 1)
 /* Here general macros are supposed to be stored */
 
 static __inline int __attribute__((__unused__))
@@ -55,6 +56,7 @@ vax_ffs(int reg)
 	return	val;
 }
 #define ffs vax_ffs
+#endif
 
 static __inline void __attribute__((__unused__))
 vax_remque(void *p)
@@ -98,7 +100,7 @@ vax_memmove(void *to, const void *from, size_t len)
 	if (len > 65535) {
 		__blkcpy(from, to, len);
 	} else {
-		__asm volatile ("movc3 %1,%2,%0"
+		__asm __volatile ("movc3 %1,%2,%0"
 			: "=m" (*(char *)to)
 			: "g" (len), "mo" (*(const char *)from)
 			:"r0","r1","r2","r3","r4","r5","memory","cc");
@@ -114,7 +116,7 @@ vax_memset(void *block, int c, size_t len)
 	if (len > 65535) {
 		__blkset(block, c, len);
 	} else {
-		__asm volatile ("movc5 $0,(%%sp),%2,%1,%0"
+		__asm __volatile ("movc5 $0,(%%sp),%2,%1,%0"
 			: "=m" (*(char *)block)
 			:  "g" (len), "g" (c)
 			:"r0","r1","r2","r3","r4","r5","memory","cc");

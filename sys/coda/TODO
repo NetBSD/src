@@ -1,37 +1,19 @@
-$NetBSD: TODO,v 1.3 2006/04/04 13:20:39 gdt Exp $
+$NetBSD: TODO,v 1.3.18.1 2007/04/10 13:26:20 ad Exp $
 
-1. coda_lookup locking
+1. getcwd
 
-coda_lookup does not follow the ISDOTDOT locking rules described in
-sys/kern/vnode_if.src.
+getcwd does not work.
 
-2. getcwd
+2. VOP_GETPAGES/PUTPAGES
 
-getcwd does not work.  (Fixing coda_lookup may fix this.)
+Check behavior vs. specifications.
+Resolve uvm_fault layering issue (see PR 28372).
 
-3. LK_RETRY removal
+3. check vnops correctness
 
-Remove the use of LK_RETRY in coda_lookup, and check remaining uses
-for correctness.
+Check all vnops against their specifications.
 
-4. coda_close cleanup
+4. LK_RETRY removal
 
-Understand, comment, and clean up '#ifdef hmm' in coda_close.
-
-
-From 1998 (likely no longer correct):
-
-Near term:
-	check cfs_vnodeops.c: re vrele/VOP_LOCK -> vget
-		cfs_create, remove, link mkdir, rmdir, symlink
-
-	cfs_vfsops.c: use vfsp vs 0
-		cp = makecfsnode(&ctlfid, vfsp, VCHR);
-
-Medium term:
-	Add missing VFS methods.
-	Do performance profile.
-	Tune hash algorithm used in cfs_namecache.
-
-Eventually:
-	Use standard queue macros.
+Remove the use of LK_RETRY in most or all vn_lock calls.
+(Defer this until other filesystems do not call LK_RETRY.)

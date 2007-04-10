@@ -1,11 +1,11 @@
-/*	$NetBSD: libhfs.h,v 1.2 2007/03/06 11:28:48 dillo Exp $	*/
+/*	$NetBSD: libhfs.h,v 1.2.2.1 2007/04/10 13:26:35 ad Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Yevgeny Binder and Dieter Baron.
+ * by Yevgeny Binder, Dieter Baron, and Pelle Johansson.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -439,6 +439,49 @@ typedef struct
 	uint32_t	journal_header_size;
 } hfs_journal_header_t;
 
+/* plain HFS structures needed for hfs wrapper support */
+
+typedef struct
+{
+        uint16_t        start_block;
+        uint16_t        block_count;
+} hfs_hfs_extent_descriptor_t;
+
+typedef hfs_hfs_extent_descriptor_t hfs_hfs_extent_record_t[3];
+
+typedef struct
+{
+        uint16_t        signature;
+        uint32_t        date_created;
+        uint32_t        date_modified;
+        uint16_t        attributes;
+        uint16_t        root_file_count;
+        uint16_t        volume_bitmap;
+        uint16_t        next_alloc_block;
+        uint16_t        total_blocks;
+        uint32_t        block_size;
+        uint32_t        clump_size;
+        uint16_t        first_block;
+        hfs_cnid_t      next_cnid;
+        uint16_t        free_blocks;
+        unsigned char   volume_name[28];
+        uint32_t        date_backedup;
+        uint16_t        backup_seqnum;
+        uint32_t        write_count;
+        uint32_t        extents_clump_size;
+        uint32_t        catalog_clump_size;
+        uint16_t        root_folder_count;
+        uint32_t        file_count;
+        uint32_t        folder_count;
+        uint32_t        finder_info[8];
+        uint16_t        embedded_signature;
+        hfs_hfs_extent_descriptor_t embedded_extent;
+        uint32_t        extents_size;
+        hfs_hfs_extent_record_t extents_extents;
+        uint32_t        catalog_size;
+        hfs_hfs_extent_record_t catalog_extents;
+} hfs_hfs_master_directory_block_t;
+
 #if 0
 #pragma mark -
 #pragma mark Custom Types
@@ -462,6 +505,7 @@ typedef struct
 	hfs_journal_info_t		jib;	/* journal info block */
 	hfs_journal_header_t	jh;		/* journal header */
 
+	uint64_t offset;	/* offset, in bytes, of HFS+ volume */
 	int		readonly;	/* 0 if mounted r/w, 1 if mounted r/o */
 	void*	cbdata;		/* application-specific data; allocated, defined and
 						 * used (if desired) by the program, usually within
@@ -528,9 +572,9 @@ typedef struct
 	/* freemem(in_ptr, cbargs) */
 	void (*freemem) (void*, hfs_callback_args*);
 	
-	/* openvol(in_volume, in_devicepath, in_offset, cbargs)
+	/* openvol(in_volume, in_devicepath, cbargs)
 	 * returns 0 on success */
-	int (*openvol) (hfs_volume*, const char*, uint64_t, hfs_callback_args*);
+	int (*openvol) (hfs_volume*, const char*, hfs_callback_args*);
 	
 	/* closevol(in_volume, cbargs) */
 	void (*closevol) (hfs_volume*, hfs_callback_args*);
@@ -559,7 +603,7 @@ void hfslib_init(hfs_callbacks*);
 void hfslib_done(void);
 void hfslib_init_cbargs(hfs_callback_args*);
 
-int hfslib_open_volume(const char*, uint64_t, int, hfs_volume*,
+int hfslib_open_volume(const char*, int, hfs_volume*,
 	hfs_callback_args*);
 void hfslib_close_volume(hfs_volume*, hfs_callback_args*);
 
@@ -583,6 +627,8 @@ int hfslib_get_hardlink(hfs_volume *, uint32_t,
 			 hfs_catalog_keyed_record_t *, hfs_callback_args *);
 
 size_t hfslib_read_volume_header(void*, hfs_volume_header_t*);
+size_t hfslib_read_master_directory_block(void*,
+	hfs_hfs_master_directory_block_t*);
 size_t hfslib_reada_node(void*, hfs_node_descriptor_t*, void***, uint16_t**,
 	hfs_btree_file_type, hfs_volume*, hfs_callback_args*);
 size_t hfslib_reada_node_offsets(void*, uint16_t*);
@@ -624,7 +670,7 @@ void hfslib_error(const char*, const char*, int, ...) __attribute__ ((format (pr
 void* hfslib_malloc(size_t, hfs_callback_args*);
 void* hfslib_realloc(void*, size_t, hfs_callback_args*);
 void hfslib_free(void*, hfs_callback_args*);
-int hfslib_openvoldevice(hfs_volume*, const char*, uint64_t,hfs_callback_args*);
+int hfslib_openvoldevice(hfs_volume*, const char*, hfs_callback_args*);
 void hfslib_closevoldevice(hfs_volume*, hfs_callback_args*);
 int hfslib_readd(hfs_volume*, void*, uint64_t, uint64_t, hfs_callback_args*);
 

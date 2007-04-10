@@ -1,4 +1,4 @@
-/* $NetBSD: unichromefb.c,v 1.6 2007/03/04 06:02:26 christos Exp $ */
+/* $NetBSD: unichromefb.c,v 1.6.2.1 2007/04/10 13:24:28 ad Exp $ */
 
 /*-
  * Copyright (c) 2006 Jared D. McNeill <jmcneill@invisible.ca>
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: unichromefb.c,v 1.6 2007/03/04 06:02:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: unichromefb.c,v 1.6.2.1 2007/04/10 13:24:28 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,12 +103,18 @@ struct unichromefb_softc {
 	void *			sc_fbbase;
 	unsigned int		sc_fbaddr;
 	unsigned int		sc_fbsize;
+	bus_addr_t		sc_mmiobase;
+	bus_size_t		sc_mmiosize;
 
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
 
 	bus_space_tag_t		sc_memt;
 	bus_space_handle_t	sc_memh;
+	bus_space_handle_t	sc_apmemt;
+	bus_space_handle_t	sc_apmemh;
+
+	struct pci_attach_args	sc_pa;
 
 	int			sc_width;
 	int			sc_height;
@@ -122,6 +128,10 @@ struct unichromefb_softc {
 
 static int unichromefb_match(struct device *, struct cfdata *, void *);
 static void unichromefb_attach(struct device *, struct device *, void *);
+
+static int unichromefb_drm_print(void *, const char *);
+static int unichromefb_drm_unmap(struct unichromefb_softc *);
+static int unichromefb_drm_map(struct unichromefb_softc *);
 
 struct wsscreen_descr unichromefb_stdscreen = {
 	"fb",
@@ -251,10 +261,7 @@ unichromefb_attach(struct device *parent, struct device *self, void *opaque)
 	struct pci_attach_args *pa;
 	struct rasops_info *ri;
 	struct wsemuldisplaydev_attach_args aa;
-	bus_space_handle_t ap_memh;
 	uint8_t val;
-	bus_addr_t mmiobase;
-	bus_size_t mmiosize;
 	long defattr;
 
 	sc = (struct unichromefb_softc *)self;
@@ -268,6 +275,7 @@ unichromefb_attach(struct device *parent, struct device *self, void *opaque)
 	sc->sc_wsmode = WSDISPLAYIO_MODE_EMUL;
 
 	sc->sc_iot = pa->pa_iot;
+	sc->sc_pa = *pa;
 
 #if NVGA > 0
 	/* XXX vga_cnattach claims the I/O registers that we need;
@@ -281,23 +289,24 @@ unichromefb_attach(struct device *parent, struct device *self, void *opaque)
 		return;
 	}
 
-	sc->sc_memt = pa->pa_memt;
+	sc->sc_apmemt = pa->pa_memt;
 	val = uni_rd(sc, VIASR, SR30);
 	sc->sc_fbaddr = val << 24;
 	val = uni_rd(sc, VIASR, SR39);
 	sc->sc_fbsize = val * (4*1024*1024);
 	if (sc->sc_fbsize < 16*1024*1024 || sc->sc_fbsize > 64*1024*1024)
 		sc->sc_fbsize = 16*1024*1024;
-	if (bus_space_map(sc->sc_memt, sc->sc_fbaddr, sc->sc_fbsize,
-	    BUS_SPACE_MAP_LINEAR, &ap_memh)) {
+	if (bus_space_map(sc->sc_apmemt, sc->sc_fbaddr, sc->sc_fbsize,
+	    BUS_SPACE_MAP_LINEAR, &sc->sc_apmemh)) {
 		aprint_error(": failed to map aperture at 0x%08x/0x%x\n",
 		    sc->sc_fbaddr, sc->sc_fbsize);
 		return;
 	}
-	sc->sc_fbbase = (void *)bus_space_vaddr(sc->sc_memt, ap_memh);
+	sc->sc_fbbase = (void *)bus_space_vaddr(sc->sc_apmemt, sc->sc_apmemh);
 
 	if (pci_mapreg_map(pa, 0x14, PCI_MAPREG_TYPE_MEM, 0,
-	    &sc->sc_memt, &sc->sc_memh, &mmiobase, &mmiosize)) {
+	    &sc->sc_memt, &sc->sc_memh, &sc->sc_mmiobase,
+	    &sc->sc_mmiosize)) {
 		sc->sc_accel = 0;
 		aprint_error(": failed to map MMIO registers\n");
 	} else {
@@ -309,8 +318,9 @@ unichromefb_attach(struct device *parent, struct device *self, void *opaque)
 
 	if (sc->sc_accel)
 		aprint_normal("%s: MMIO @0x%08x/0x%x\n",
-		    sc->sc_dev.dv_xname, (uint32_t)mmiobase,
-		    (uint32_t)mmiosize);
+		    sc->sc_dev.dv_xname,
+		    (uint32_t)sc->sc_mmiobase,
+		    (uint32_t)sc->sc_mmiosize);
 
 	ri = &unichromefb_console_screen.scr_ri;
 	memset(ri, 0, sizeof(struct rasops_info));
@@ -348,7 +358,70 @@ unichromefb_attach(struct device *parent, struct device *self, void *opaque)
 
 	config_found(self, &aa, wsemuldisplaydevprint);
 
+	config_found_ia(self, "drm", opaque, unichromefb_drm_print);
+
 	return;
+}
+
+static int
+unichromefb_drm_print(void *opaque, const char *pnp)
+{
+	if (pnp)
+		aprint_normal("direct rendering for %s", pnp);
+
+	return UNSUPP;
+}
+
+static int
+unichromefb_drm_unmap(struct unichromefb_softc *sc)
+{
+	printf("%s: releasing bus resources\n", sc->sc_dev.dv_xname);
+
+	bus_space_unmap(sc->sc_apmemt, sc->sc_apmemh, sc->sc_fbsize);
+	bus_space_unmap(sc->sc_memt, sc->sc_memh, sc->sc_mmiosize);
+	bus_space_unmap(sc->sc_iot, sc->sc_ioh, 0x20);
+
+	return 0;
+}
+
+static int
+unichromefb_drm_map(struct unichromefb_softc *sc)
+{
+	int rv;
+
+	rv = bus_space_map(sc->sc_iot, VIA_REGBASE, 0x20, 0,
+	    &sc->sc_ioh);
+	if (rv) {
+		printf("%s: failed to map I/O registers\n",
+		    sc->sc_dev.dv_xname);
+		return rv;
+	}
+	rv = bus_space_map(sc->sc_apmemt, sc->sc_fbaddr, sc->sc_fbsize,
+	    BUS_SPACE_MAP_LINEAR, &sc->sc_apmemh);
+	if (rv) {
+		printf("%s: failed to map aperture at 0x%08x/0x%x\n",
+		    sc->sc_dev.dv_xname, sc->sc_fbaddr, sc->sc_fbsize);
+		return rv;
+	}
+	sc->sc_fbbase = (void *)bus_space_vaddr(sc->sc_apmemt, sc->sc_apmemh);
+	rv = pci_mapreg_map(&sc->sc_pa, 0x14, PCI_MAPREG_TYPE_MEM, 0,
+	    &sc->sc_memt, &sc->sc_memh, &sc->sc_mmiobase,
+	    &sc->sc_mmiosize);
+	if (rv) {
+		printf("%s: failed to map MMIO registers\n",
+		    sc->sc_dev.dv_xname);
+		sc->sc_accel = 0;
+	}
+
+	uni_setmode(sc, UNICHROMEFB_MODE, sc->sc_depth);
+	uni_init_dac(sc, IGA1);
+	if (sc->sc_accel) {
+		uni_init_accel(sc);
+	}
+
+	printf("%s: re-acquired bus resources\n", sc->sc_dev.dv_xname);
+
+	return 0;
 }
 
 static int
@@ -392,8 +465,15 @@ unichromefb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 			int new_mode = *(int *)data;
 			if (new_mode != sc->sc_wsmode) {
 				sc->sc_wsmode = new_mode;
-				if (new_mode == WSDISPLAYIO_MODE_EMUL)
+				switch (new_mode) {
+				case WSDISPLAYIO_MODE_EMUL:
+					unichromefb_drm_map(sc);
 					vcons_redraw_screen(vd->active);
+					break;
+				default:
+					unichromefb_drm_unmap(sc);
+					break;
+				}
 			}
 		}
 		return 0;

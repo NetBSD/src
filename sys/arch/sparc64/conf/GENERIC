@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.82 2007/03/01 14:57:38 kiyohara Exp $
+# $NetBSD: GENERIC,v 1.82.2.1 2007/04/10 13:23:17 ad Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.82 $"
+#ident 		"GENERIC-$Revision: 1.82.2.1 $"
 
 maxusers	64
 
@@ -543,7 +543,7 @@ usb*	at uhci?
 
 # USB Hubs
 uhub*	at usb?
-uhub*	at uhub? port ? configuration ? interface ?
+uhub*	at uhub? port ?
 
 # USB HID device
 uhidev*	at uhub? port ? configuration ? interface ?
@@ -783,7 +783,7 @@ pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 #bt3c* at pcmcia? function ?		# 3Com 3CRWB6096-A
 
 ## Bluetooth USB Controllers
-ubt* at uhub? port ? configuration ? interface ?
+ubt* at uhub? port ?
 
 ## Bluetooth Device Hub
 #bthub* at bt3c?

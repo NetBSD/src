@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.8 2006/08/27 08:42:50 skrll Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.8.12.1 2007/04/10 13:22:59 ad Exp $	*/
 
 /*	$OpenBSD: cpufunc.h,v 1.17 2000/05/15 17:22:40 mickey Exp $	*/
 
@@ -95,8 +95,9 @@ static __inline register_t ldsid(vaddr_t p) {
 /* Move to system mask. Old value of system mask is returned. */
 static __inline register_t mtsm(register_t mask) {
 	register_t ret;
-	__asm volatile("ssm 0,%0\n\t"
-			 "mtsm %1": "=&r" (ret) : "r" (mask));
+	__asm volatile(
+	    "ssm 0,%0\n\t"
+	    "mtsm %1": "=&r" (ret) : "r" (mask));
 	return ret;
 }
 
@@ -182,12 +183,12 @@ pdtlbe(pa_space_t sp, vaddr_t va)
 }
 
 #ifdef _KERNEL
-void ficache __P((pa_space_t sp, vaddr_t va, vsize_t size));
-void fdcache __P((pa_space_t sp, vaddr_t va, vsize_t size));
-void pdcache __P((pa_space_t sp, vaddr_t va, vsize_t size));
-void fcacheall __P((void));
-void ptlball __P((void));
-hppa_hpa_t cpu_gethpa __P((int n));
+void ficache(pa_space_t sp, vaddr_t va, vsize_t size);
+void fdcache(pa_space_t sp, vaddr_t va, vsize_t size);
+void pdcache(pa_space_t sp, vaddr_t va, vsize_t size);
+void fcacheall(void);
+void ptlball(void);
+hppa_hpa_t cpu_gethpa(int);
 
 #define PCXL2_ACCEL_IO_START		0xf4000000
 #define PCXL2_ACCEL_IO_END		(0xfc000000 - 1)

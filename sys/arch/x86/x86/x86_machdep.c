@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.8.2.1 2007/03/13 17:50:25 ad Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.8.2.2 2007/04/10 13:22:47 ad Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.8.2.1 2007/03/13 17:50:25 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.8.2.2 2007/04/10 13:22:47 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -46,6 +46,8 @@ __KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.8.2.1 2007/03/13 17:50:25 ad Exp $
 #include <sys/errno.h>
 #include <sys/kauth.h>
 #include <sys/mutex.h>
+
+#include <x86/cpu_msr.h>
 
 #include <machine/bootinfo.h>
 #include <machine/vmparam.h>
@@ -125,4 +127,15 @@ void
 x86_pause(void)
 {
 	__asm volatile("pause");
+}
+
+/*
+ * This function is to initialize the mutex used by x86/msr_ipifuncs.c.
+ */
+void
+x86_init(void)
+{
+#ifndef XEN
+	msr_cpu_broadcast_initmtx();
+#endif
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.h,v 1.19 2007/01/26 22:59:49 pooka Exp $	*/
+/*	$NetBSD: puffs_msgif.h,v 1.19.6.1 2007/04/10 13:26:35 ad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -47,6 +47,7 @@
 
 #define PUFFSOP_VFS	1
 #define PUFFSOP_VN	2
+#define PUFFSOP_CACHE	3
 #define PUFFSOPFLAG_FAF	0x10	/* fire-and-forget */
 
 #define PUFFSOP_OPCMASK		0x03
@@ -85,7 +86,7 @@ enum {
 #define PUFFS_VN_MAX PUFFS_VN_SETEXTATTR
 
 #define PUFFSDEVELVERS	0x80000000
-#define PUFFSVERSION	3
+#define PUFFSVERSION	4
 #define PUFFSNAMESIZE	32
 struct puffs_args {
 	unsigned int	pa_vers;
@@ -244,19 +245,19 @@ struct puffs_sizeop {
  * 2) page cache for one entire node
  */
 
-/* XXX: only namecache DIR and ALL are currently implemented */
+/* XXX: needs restructuring */
 struct puffs_flush {
 	void		*pf_cookie;
 
 	int		pf_op;
+	off_t		pf_start;
+	off_t		pf_end;
 };
 #define PUFFS_INVAL_NAMECACHE_NODE		0
 #define PUFFS_INVAL_NAMECACHE_DIR		1
 #define PUFFS_INVAL_NAMECACHE_ALL		2
 #define PUFFS_INVAL_PAGECACHE_NODE_RANGE	3
-#define PUFFS_INVAL_PAGECACHE_NODE		4
-#define PUFFS_FLUSH_PAGECACHE_NODE_RANGE	5
-#define PUFFS_FLUSH_PAGECACHE_NODE		6
+#define PUFFS_FLUSH_PAGECACHE_NODE_RANGE	4
 
 
 /*
@@ -290,10 +291,10 @@ struct puffs_cred {
 #define PUFFCRED_CRED_FSCRED	2
 
 /*
- * 4x MAXPHYS is the max size the system will attempt to copy,
+ * 2*MAXPHYS is the max size the system will attempt to copy,
  * else treated as garbage
  */
-#define PUFFS_REQ_MAXSIZE	4*MAXPHYS
+#define PUFFS_REQ_MAXSIZE	2*MAXPHYS
 #define PUFFS_REQSTRUCT_MAX	4096 /* XXX: approxkludge */
 
 #define PUFFS_TOMOVE(a,b) (MIN((a), b->pmp_req_maxsize - PUFFS_REQSTRUCT_MAX))
@@ -319,9 +320,9 @@ struct puffs_kcn {
 #define PUFFSLOOKUP_RENAME	3	/* setup for file renaming */
 #define PUFFSLOOKUP_OPMASK	3	/* mask for operation */
 
-#define PUFFSLOOKUP_FOLLOW	0x04	/* follow final symlink */
-#define PUFFSLOOKUP_NOFOLLOW	0x08	/* don't follow final symlink */
-#define PUFFSLOOKUP_OPTIONS	0x0c
+#define PUFFSLOOKUP_FOLLOW	0x00004	/* follow final symlink */
+#define PUFFSLOOKUP_NOFOLLOW	0x00008	/* don't follow final symlink */
+#define PUFFSLOOKUP_ISLASTCN	0x08000 /* is last component of lookup */
 
 /*
  * Next come the individual requests.  They are all subclassed from
@@ -602,14 +603,32 @@ struct puffs_vnreq_mmap {
 	pid_t			pvnr_pid;		/* OUT	*/
 };
 
+
+/*
+ * For cache reports.  Everything is always out-out-out, no replies
+ */
+
+struct puffs_cacherun {
+	off_t			pcache_runstart;
+	off_t			pcache_runend;
+};
+
+/* cache info.  old used for write now */
+struct puffs_cacheinfo {
+	struct puffs_req	pcache_pr;
+
+	int			pcache_type;
+	size_t			pcache_nruns;		
+	struct puffs_cacherun	pcache_runs[0];
+};
+#define PCACHE_TYPE_READ	0
+#define PCACHE_TYPE_WRITE	1
+
 /* notyet */
 #if 0
 struct puffs_vnreq_kqfilter { };
 struct puffs_vnreq_islocked { };
-struct puffs_vnreq_lease { };
 #endif
-struct puffs_vnreq_getpages { };
-struct puffs_vnreq_putpages { };
 struct puffs_vnreq_getextattr { };
 struct puffs_vnreq_setextattr { };
 struct puffs_vnreq_listextattr { };

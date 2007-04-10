@@ -1,4 +1,4 @@
-/*	$NetBSD: intrdefs.h,v 1.5 2005/11/03 13:06:06 yamt Exp $	*/
+/*	$NetBSD: intrdefs.h,v 1.5.32.1 2007/04/10 13:22:45 ad Exp $	*/
 
 #ifndef _X86_INTRDEFS_H_
 #define _X86_INTRDEFS_H_
@@ -81,12 +81,14 @@
 #define X86_IPI_TLB			0x00000010
 #define X86_IPI_MTRR			0x00000020
 #define X86_IPI_GDT			0x00000040
+#define X86_IPI_WRITE_MSR		0x00000080
 
-#define X86_NIPI		7
+#define X86_NIPI		8
 
 #define X86_IPI_NAMES { "halt IPI", "timeset IPI", "FPU flush IPI", \
 			 "FPU synch IPI", "TLB shootdown IPI", \
-			 "MTRR update IPI", "GDT update IPI" }
+			 "MTRR update IPI", "GDT update IPI", \
+			 "MSR write IPI" }
 
 #define IREENT_MAGIC	0x18041969
 

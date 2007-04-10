@@ -1,4 +1,4 @@
-#	$NetBSD: IOPENER,v 1.78 2006/11/11 18:47:10 jmmv Exp $
+#	$NetBSD: IOPENER,v 1.78.8.1 2007/04/10 13:23:03 ad Exp $
 #
 #	IOPENER -- GENERIC-like kernel for the Netpliance i-opener
 #	from: GENERIC,v 1.358 2000/07/05 04:07:25 sommerfeld Exp
@@ -8,7 +8,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"IOPENER-$Revision: 1.78 $"
+#ident 		"IOPENER-$Revision: 1.78.8.1 $"
 
 maxusers	32		# estimated number of users
 
@@ -332,7 +332,7 @@ usb*	at uhci?
 
 # USB Hubs
 uhub*	at usb?
-uhub*	at uhub? port ? configuration ? interface ?
+uhub*	at uhub? port ?
 
 # USB HID device
 uhidev*	at uhub? port ? configuration ? interface ?

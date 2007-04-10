@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.28 2007/03/04 21:17:54 degroote Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.28.2.1 2007/04/10 13:26:52 ad Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $	*/
 /*	$KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.28 2007/03/04 21:17:54 degroote Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.28.2.1 2007/04/10 13:26:52 ad Exp $");
 
 /*
  * IPsec controller part.
@@ -169,7 +169,7 @@ SYSCTL_INT(_net_inet_ipsec, IPSECCTL_DEF_AH_TRANSLEV, ah_trans_deflev,
 SYSCTL_INT(_net_inet_ipsec, IPSECCTL_DEF_AH_NETLEV, ah_net_deflev,
 	CTLFLAG_RW, &ip4_ah_net_deflev,	0, "");
 SYSCTL_INT(_net_inet_ipsec, IPSECCTL_AH_CLEARTOS,
-	ah_cleartos, CTLFLAG_RW,	&ah_cleartos,	0, "");
+	ah_cleartos, CTLFLAG_RW,	&ip4_ah_cleartos,	0, "");
 SYSCTL_INT(_net_inet_ipsec, IPSECCTL_AH_OFFSETMASK,
 	ah_offsetmask, CTLFLAG_RW,	&ip4_ah_offsetmask,	0, "");
 SYSCTL_INT(_net_inet_ipsec, IPSECCTL_DFBIT,
@@ -291,13 +291,16 @@ ipsec_checkpcbcache(struct mbuf *m, struct inpcbpolicy *pcbsp, int dir)
 			return NULL;
 		if (ipsec_setspidx(m, &spidx, 1) != 0)
 			return NULL;
-		if (bcmp(&pcbsp->sp_cache[dir].cacheidx, &spidx,
-			 sizeof(spidx))) {
-			if (!key_cmpspidx_withmask(&pcbsp->sp_cache[dir].cachesp->spidx,
-				&spidx))
-				return NULL;
-			pcbsp->sp_cache[dir].cacheidx = spidx;
-		}
+
+		/*
+		 * We have to make an exact match here since the cached rule
+		 * might have lower priority than a rule that would otherwise
+		 * have matched the packet. 
+		 */
+
+		if (bcmp(&pcbsp->sp_cache[dir].cacheidx, &spidx, sizeof(spidx))) 
+			return NULL;
+		
 	} else {
 		/*
 		 * The pcb is connected, and the L4 code is sure that:

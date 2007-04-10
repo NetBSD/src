@@ -1,4 +1,4 @@
-/*	$NetBSD: vga_pci.c,v 1.31 2007/03/04 06:02:26 christos Exp $	*/
+/*	$NetBSD: vga_pci.c,v 1.31.2.1 2007/04/10 13:24:29 ad Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga_pci.c,v 1.31 2007/03/04 06:02:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga_pci.c,v 1.31.2.1 2007/04/10 13:24:29 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -214,6 +214,8 @@ vga_pci_attach(struct device *parent, struct device *self, void *aux)
 
 	vga_common_attach(sc, pa->pa_iot, pa->pa_memt, WSDISPLAY_TYPE_PCIVGA,
 			  vga_pci_lookup_quirks(pa), &vga_pci_funcs);
+
+	config_found_ia(self, "drm", aux, vga_drm_print);
 }
 
 int
@@ -224,6 +226,15 @@ vga_pci_cnattach(bus_space_tag_t iot, bus_space_tag_t memt,
 
 	return (vga_cnattach(iot, memt, WSDISPLAY_TYPE_PCIVGA, 0));
 }
+
+int
+vga_drm_print(void *aux, const char *pnp)
+{
+	if (pnp)
+		aprint_normal("direct rendering for %s", pnp);
+	return (UNSUPP);
+}
+
 
 static int
 vga_pci_ioctl(void *v, u_long cmd, void *data, int flag, struct lwp *l)

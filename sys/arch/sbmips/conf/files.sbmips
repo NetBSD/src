@@ -1,4 +1,4 @@
-# $NetBSD: files.sbmips,v 1.11 2005/11/11 23:45:56 simonb Exp $
+# $NetBSD: files.sbmips,v 1.11.32.1 2007/04/10 13:23:13 ad Exp $
 
 maxpartitions 8
 
@@ -39,7 +39,7 @@ include "dev/wsfont/files.wsfont"
 
 # "Workstation Console" glue.
 include "dev/wscons/files.wscons"
-
+include "dev/wsfb/files.wsfb"
 
 # ISA Bus support
 include "dev/pci/files.pci"	# XXX some ISA devs are 'at pci' too.

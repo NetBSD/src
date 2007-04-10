@@ -1,4 +1,4 @@
-/* $NetBSD: puffs_transport.c,v 1.8.6.3 2007/04/10 12:07:12 ad Exp $ */
+/* $NetBSD: puffs_transport.c,v 1.8.6.4 2007/04/10 13:26:36 ad Exp $ */
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_transport.c,v 1.8.6.3 2007/04/10 12:07:12 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_transport.c,v 1.8.6.4 2007/04/10 13:26:36 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -44,6 +44,8 @@ __KERNEL_RCSID(0, "$NetBSD: puffs_transport.c,v 1.8.6.3 2007/04/10 12:07:12 ad E
 #include <sys/namei.h>
 #include <sys/poll.h>
 #include <sys/socketvar.h>
+
+#include <uvm/uvm_param.h>
 
 #include <fs/puffs/puffs_sys.h>
 
@@ -69,11 +71,29 @@ struct puffs_instance {
 static TAILQ_HEAD(, puffs_instance) puffs_ilist
     = TAILQ_HEAD_INITIALIZER(puffs_ilist);
 
-/* protects both the list and the contents of the list elements */
-static struct simplelock pi_lock = SIMPLELOCK_INITIALIZER;
-
 static int get_pi_idx(struct puffs_instance *);
 
+
+/*
+ * public init / deinit
+ */
+
+/* protects both the list and the contents of the list elements */
+static kmutex_t pi_mtx;
+
+void
+puffs_transport_init()
+{
+
+	mutex_init(&pi_mtx, MUTEX_DEFAULT, IPL_NONE);
+}
+
+void
+puffs_transport_destroy()
+{
+
+	mutex_destroy(&pi_mtx);
+}
 
 /*
  * fd routines, for cloner
@@ -136,12 +156,12 @@ puffs_fop_poll(struct file *fp, int events, struct lwp *l)
 		return revents;
 
 	/* check queue */
-	simple_lock(&pmp->pmp_lock);
+	mutex_enter(&pmp->pmp_lock);
 	if (!TAILQ_EMPTY(&pmp->pmp_req_touser))
 		revents |= PUFFPOLL_EVSET;
 	else
 		selrecord(l, pmp->pmp_sel);
-	simple_unlock(&pmp->pmp_lock);
+	mutex_exit(&pmp->pmp_lock);
 
 	return revents;
 }
@@ -162,7 +182,7 @@ puffs_fop_close(struct file *fp, struct lwp *l)
 	DPRINTF(("puffs_fop_close: device closed, force filesystem unmount\n"));
 
  restart:
-	simple_lock(&pi_lock);
+	mutex_enter(&pi_mtx);
 	pmp = FPTOPMP(fp);
 	/*
 	 * First check if the fs was never mounted.  In that case
@@ -172,7 +192,7 @@ puffs_fop_close(struct file *fp, struct lwp *l)
 	if (pmp == PMP_EMBRYO) {
 		pi = FPTOPI(fp);
 		TAILQ_REMOVE(&puffs_ilist, pi, pi_entries);
-		simple_unlock(&pi_lock);
+		mutex_exit(&pi_mtx);
 		FREE(pi, M_PUFFS);
 
 		DPRINTF(("puffs_fop_close: pmp associated with fp %p was "
@@ -189,7 +209,7 @@ puffs_fop_close(struct file *fp, struct lwp *l)
 	if (pmp == PMP_DEAD) {
 		/* would be nice, but don't have a reference to it ... */
 		/* KASSERT(pmp_status == PUFFSTAT_DYING); */
-		simple_unlock(&pi_lock);
+		mutex_exit(&pi_mtx);
 
 		DPRINTF(("puffs_fop_close: pmp associated with fp %p was "
 		    "dead\n", fp));
@@ -201,8 +221,8 @@ puffs_fop_close(struct file *fp, struct lwp *l)
 	 * So we have a reference.  Proceed to unwrap the file system.
 	 */
 	mp = PMPTOMP(pmp);
-	simple_unlock(&pi_lock);
-	simple_lock(&pmp->pmp_lock);
+	mutex_exit(&pi_mtx);
+	mutex_enter(&pmp->pmp_lock);
 
 	/*
 	 * Free the waiting callers before proceeding any further.
@@ -227,13 +247,12 @@ puffs_fop_close(struct file *fp, struct lwp *l)
 	 * restart and exit from there.
 	 */
 	if (pmp->pmp_unmounting) {
-		ltsleep(&pmp->pmp_unmounting, PNORELOCK | PVFS, "puffsum",
-		    0, &pmp->pmp_lock);
+		cv_wait(&pmp->pmp_unmounting_cv, &pmp->pmp_lock);
+		mutex_exit(&pmp->pmp_lock);
 		DPRINTF(("puffs_fop_close: unmount was in progress for pmp %p, "
 		    "restart\n", pmp));
 		goto restart;
 	}
-	simple_unlock(&pmp->pmp_lock);
 
 	/*
 	 * Check that suspend isn't running.  Issues here:
@@ -246,15 +265,14 @@ puffs_fop_close(struct file *fp, struct lwp *l)
 	 *   however, it is way way way way less likely a problem.
 	 *   perhaps vfs_busy() in vfs_suspend() would help?
 	 */
-	simple_lock(&pmp->pmp_lock);
 	if (pmp->pmp_suspend) {
-		ltsleep(&pmp->pmp_suspend, PNORELOCK | PVFS, "puffsusum",
-		    0, &pmp->pmp_lock);
+		cv_wait(&pmp->pmp_suspend_cv, &pmp->pmp_lock);
+		mutex_exit(&pmp->pmp_lock);
 		DPRINTF(("puffs_fop_close: suspend was in progress for pmp %p, "
 		    "restart\n", pmp));
 		goto restart;
 	}
-	simple_unlock(&pmp->pmp_lock);
+	mutex_exit(&pmp->pmp_lock);
 
 	/*
 	 * Detach from VFS.  First do necessary XXX-dance (from
@@ -324,7 +342,8 @@ static int
 puffs_flush(struct puffs_mount *pmp, struct puffs_flush *pf)
 {
 	struct vnode *vp;
-	int rv;
+	voff_t offlo, offhi;
+	int rv, flags = 0;
 
 	/* XXX: slurry */
 	if (pf->pf_op == PUFFS_INVAL_NAMECACHE_ALL) {
@@ -361,7 +380,34 @@ puffs_flush(struct puffs_mount *pmp, struct puffs_flush *pf)
 
 #endif
 	case PUFFS_INVAL_NAMECACHE_DIR:
+		if (vp->v_type != VDIR) {
+			rv = EINVAL;
+			break;
+		}
 		cache_purge1(vp, NULL, PURGE_CHILDREN);
+		break;
+
+	case PUFFS_INVAL_PAGECACHE_NODE_RANGE:
+		flags = PGO_FREE;
+		/*FALLTHROUGH*/
+	case PUFFS_FLUSH_PAGECACHE_NODE_RANGE:
+		if (flags == 0)
+			flags = PGO_CLEANIT;
+
+		if (pf->pf_end > vp->v_size || vp->v_type != VREG) {
+			rv = EINVAL;
+			break;
+		}
+
+		offlo = trunc_page(pf->pf_start);
+		offhi = round_page(pf->pf_end);
+		if (offhi != 0 && offlo >= offhi) {
+			rv = EINVAL;
+			break;
+		}
+
+		mutex_enter(&vp->v_uobj.vmobjlock);
+		rv = VOP_PUTPAGES(vp, offlo, offhi, flags);
 		break;
 
 	default:
@@ -396,11 +442,11 @@ dosuspendresume(void *arg)
 	if (rv == 0)
 		vfs_resume(PMPTOMP(pmp));
 
-	simple_lock(&pmp->pmp_lock);
+	mutex_enter(&pmp->pmp_lock);
 	KASSERT(pmp->pmp_suspend);
 	pmp->pmp_suspend = 0;
-	wakeup(&pmp->pmp_suspend);
-	simple_unlock(&pmp->pmp_lock);
+	cv_broadcast(&pmp->pmp_suspend_cv);
+	mutex_exit(&pmp->pmp_lock);
 
  out:
 	kthread_exit(0);
@@ -442,12 +488,12 @@ puffs_fop_ioctl(struct file *fp, u_long cmd, void *data, struct lwp *l)
 
 	case PUFFSSUSPENDOP:
 		rv = 0;
-		simple_lock(&pmp->pmp_lock);
+		mutex_enter(&pmp->pmp_lock);
 		if (pmp->pmp_suspend || pmp->pmp_status != PUFFSTAT_RUNNING)
 			rv = EBUSY;
 		else
 			pmp->pmp_suspend = 1;
-		simple_unlock(&pmp->pmp_lock);
+		mutex_exit(&pmp->pmp_lock);
 		if (rv)
 			break;
 		rv = kthread_create(PRI_NONE, false, dosuspendresume, 
@@ -474,9 +520,9 @@ filt_puffsdetach(struct knote *kn)
 {
 	struct puffs_instance *pi = kn->kn_hook;
 
-	simple_lock(&pi_lock);
+	mutex_enter(&pi_mtx);
 	SLIST_REMOVE(&pi->pi_sel.sel_klist, kn, knote, kn_selnext);
-	simple_unlock(&pi_lock);
+	mutex_exit(&pi_mtx);
 }
 
 static int
@@ -487,17 +533,17 @@ filt_puffsioctl(struct knote *kn, long hint)
 	int error;
 
 	error = 0;
-	simple_lock(&pi_lock);
+	mutex_enter(&pi_mtx);
 	pmp = pi->pi_pmp;
 	if (pmp == PMP_EMBRYO || pmp == PMP_DEAD)
 		error = 1;
-	simple_unlock(&pi_lock);
+	mutex_exit(&pi_mtx);
 	if (error)
 		return 0;
 
-	simple_lock(&pmp->pmp_lock);
-	kn->kn_data = pmp->pmp_req_touser_waiters;
-	simple_unlock(&pmp->pmp_lock);
+	mutex_enter(&pmp->pmp_lock);
+	kn->kn_data = pmp->pmp_req_waiters;
+	mutex_exit(&pmp->pmp_lock);
 
 	return kn->kn_data != 0;
 }
@@ -518,9 +564,9 @@ puffs_fop_kqfilter(struct file *fp, struct knote *kn)
 	kn->kn_fop = &puffsioctl_filtops;
 	kn->kn_hook = pi;
 
-	simple_lock(&pi_lock);
+	mutex_enter(&pi_mtx);
 	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
-	simple_unlock(&pi_lock);
+	mutex_exit(&pi_mtx);
 
 	return 0;
 }
@@ -560,10 +606,10 @@ puffscdopen(dev_t dev, int flags, int fmt, struct lwp *l)
 	MALLOC(pi, struct puffs_instance *, sizeof(struct puffs_instance),
 	    M_PUFFS, M_WAITOK | M_ZERO);
 
-	simple_lock(&pi_lock);
+	mutex_enter(&pi_mtx);
 	idx = get_pi_idx(pi);
 	if (idx == PUFFS_CLONER) {
-		simple_unlock(&pi_lock);
+		mutex_exit(&pi_mtx);
 		FREE(pi, M_PUFFS);
 		FILE_UNUSE(fp, l);
 		ffree(fp);
@@ -572,7 +618,7 @@ puffscdopen(dev_t dev, int flags, int fmt, struct lwp *l)
 
 	pi->pi_pid = l->l_proc->p_pid;
 	pi->pi_idx = idx;
-	simple_unlock(&pi_lock);
+	mutex_exit(&pi_mtx);
 
 	DPRINTF(("puffscdopen: registered embryonic pmp for pid: %d\n",
 	    pi->pi_pid));
@@ -604,7 +650,7 @@ puffs_setpmp(pid_t pid, int fd, struct puffs_mount *pmp)
 	struct puffs_instance *pi;
 	int rv = 1;
 
-	simple_lock(&pi_lock);
+	mutex_enter(&pi_mtx);
 	TAILQ_FOREACH(pi, &puffs_ilist, pi_entries) {
 		if (pi->pi_pid == pid && pi->pi_pmp == PMP_EMBRYO) {
 			pi->pi_pmp = pmp;
@@ -614,7 +660,7 @@ puffs_setpmp(pid_t pid, int fd, struct puffs_mount *pmp)
 			break;
 		    }
 	}
-	simple_unlock(&pi_lock);
+	mutex_exit(&pi_mtx);
 
 	return rv;
 }
@@ -627,7 +673,7 @@ puffs_nukebypmp(struct puffs_mount *pmp)
 {
 	struct puffs_instance *pi;
 
-	simple_lock(&pi_lock);
+	mutex_enter(&pi_mtx);
 	TAILQ_FOREACH(pi, &puffs_ilist, pi_entries) {
 		if (pi->pi_pmp == pmp) {
 			TAILQ_REMOVE(&puffs_ilist, pi, pi_entries);
@@ -642,7 +688,7 @@ puffs_nukebypmp(struct puffs_mount *pmp)
 		panic("puffs_nukebypmp: invalid puffs_mount\n");
 #endif /* DIAGNOSTIC */
 
-	simple_unlock(&pi_lock);
+	mutex_exit(&pi_mtx);
 
 	DPRINTF(("puffs_nukebypmp: nuked %p\n", pi));
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_ifattach.c,v 1.69 2007/02/22 08:52:57 dyoung Exp $	*/
+/*	$NetBSD: in6_ifattach.c,v 1.69.4.1 2007/04/10 13:26:51 ad Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.69 2007/02/22 08:52:57 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.69.4.1 2007/04/10 13:26:51 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -572,7 +572,7 @@ in6_ifattach_linklocal(ifp, altifp)
 
 	/*
 	 * Now call in6_update_ifa() to do a bunch of procedures to configure
-	 * a link-local address. We can set NULL to the 3rd argument, because
+	 * a link-local address. We can set the 3rd argument to NULL, because
 	 * we know there's no other link-local address on the interface
 	 * and therefore we are adding one (instead of updating one).
 	 */
@@ -835,12 +835,9 @@ in6_ifattach(ifp, altifp)
 	 */
 	if (ip6_auto_linklocal) {
 		ia = in6ifa_ifpforlinklocal(ifp, 0);
-		if (ia == NULL) {
-			if (in6_ifattach_linklocal(ifp, altifp) == 0) {
-				/* linklocal address assigned */
-			} else {
-				/* failed to assign linklocal address. bark? */
-			}
+		if (ia == NULL && in6_ifattach_linklocal(ifp, altifp) != 0) {
+			printf("%s: cannot assign link-local address\n",
+			    ifp->if_xname);
 		}
 	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vfsops.c,v 1.32 2007/03/04 21:18:08 jnemeth Exp $	*/
+/*	$NetBSD: filecore_vfsops.c,v 1.32.2.1 2007/04/10 13:26:34 ad Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.32 2007/03/04 21:18:08 jnemeth Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.32.2.1 2007/04/10 13:26:34 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -400,10 +400,6 @@ out:
 	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 	(void)VOP_CLOSE(devvp, ronly ? FREAD : FREAD|FWRITE, NOCRED, l);
 	VOP_UNLOCK(devvp, 0);
-	if (fcmp) {
-		free(fcmp, M_FILECOREMNT);
-		mp->mnt_data = NULL;
-	}
 	return error;
 }
 

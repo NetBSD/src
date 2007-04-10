@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_30.c,v 1.17.2.1 2007/03/13 16:50:19 ad Exp $	*/
+/*	$NetBSD: netbsd32_compat_30.c,v 1.17.2.2 2007/04/10 13:26:27 ad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_30.c,v 1.17.2.1 2007/03/13 16:50:19 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_30.c,v 1.17.2.2 2007/04/10 13:26:27 ad Exp $");
 
 #include "opt_nfsserver.h"
 
@@ -91,7 +91,7 @@ compat_30_netbsd32_getdents(l, v, retval)
 	error = vn_readdir(fp, buf, UIO_SYSSPACE, count, &done, l, 0, 0);
 	if (error == 0) {
 		*retval = netbsd32_to_dirent12(buf, done);
-		error = copyout(buf, NETBSD32PTR64(SCARG(uap, buf)), *retval);
+		error = copyout(buf, SCARG_P32(uap, buf), *retval);
 	}
 	free(buf, M_TEMP);
  out:
@@ -116,7 +116,7 @@ compat_30_netbsd32___stat13(l, v, retval)
 	const char *path;
 	struct proc *p = l->l_proc;
 
-	path = (char *)NETBSD32PTR64(SCARG(uap, path));
+	path = SCARG_P32(uap, path);
 	sg = stackgap_init(p, 0);
 	CHECK_ALT_EXIST(l, &sg, path);
 
@@ -124,8 +124,7 @@ compat_30_netbsd32___stat13(l, v, retval)
 	if (error)
 		return (error);
 	netbsd32_from___stat13(&sb, &sb32);
-	error = copyout(&sb32, (void *)NETBSD32PTR64(SCARG(uap, ub)),
-	    sizeof(sb32));
+	error = copyout(&sb32, SCARG_P32(uap, ub), sizeof(sb32));
 	return (error);
 }
 
@@ -156,8 +155,7 @@ compat_30_netbsd32___fstat13(l, v, retval)
 
 	if (error == 0) {
 		netbsd32_from___stat13(&ub, &sb32);
-		error = copyout(&sb32, (void *)NETBSD32PTR64(SCARG(uap, sb)),
-		    sizeof(sb32));
+		error = copyout(&sb32, SCARG_P32(uap, sb), sizeof(sb32));
 	}
 	return (error);
 }
@@ -179,7 +177,7 @@ compat_30_netbsd32___lstat13(l, v, retval)
 	const char *path;
 	struct proc *p = l->l_proc;
 
-	path = (char *)NETBSD32PTR64(SCARG(uap, path));
+	path = SCARG_P32(uap, path);
 	sg = stackgap_init(p, 0);
 	CHECK_ALT_EXIST(l, &sg, path);
 
@@ -187,8 +185,7 @@ compat_30_netbsd32___lstat13(l, v, retval)
 	if (error)
 		return (error);
 	netbsd32_from___stat13(&sb, &sb32);
-	error = copyout(&sb32, (void *)NETBSD32PTR64(SCARG(uap, ub)),
-	    sizeof(sb32));
+	error = copyout(&sb32, SCARG_P32(uap, ub), sizeof(sb32));
 	return (error);
 }
 
@@ -200,7 +197,7 @@ compat_30_netbsd32_fhstat(l, v, retval)
 {
 	struct compat_30_netbsd32_fhstat_args /* {
 		syscallarg(const netbsd32_fhandlep_t) fhp;
-		syscallarg(netbsd32_stat13p_t) sb);
+		syscallarg(netbsd32_stat13p_t) sb;
 	} */ *uap = v;
 	struct stat sb;
 	struct netbsd32_stat13 sb32;
@@ -216,8 +213,7 @@ compat_30_netbsd32_fhstat(l, v, retval)
 	    KAUTH_SYSTEM_FILEHANDLE, 0, NULL, NULL, NULL)))
 		return (error);
 
-	if ((error = copyin(NETBSD32PTR64(SCARG(uap, fhp)), &fh,
-	    sizeof(fh))) != 0)
+	if ((error = copyin(SCARG_P32(uap, fhp), &fh, sizeof(fh))) != 0)
 		return (error);
 
 	if ((mp = vfs_getvfs(&fh.fh_fsid)) == NULL)
@@ -231,7 +227,7 @@ compat_30_netbsd32_fhstat(l, v, retval)
 	if (error)
 		return (error);
 	netbsd32_from___stat13(&sb, &sb32);
-	error = copyout(&sb32, NETBSD32PTR64(SCARG(uap, sb)), sizeof(sb));
+	error = copyout(&sb32, SCARG_P32(uap, sb), sizeof(sb));
 	return (error);
 }
 
@@ -259,7 +255,7 @@ compat_30_netbsd32_fhstatvfs1(l, v, retval)
 	    KAUTH_SYSTEM_FILEHANDLE, 0, NULL, NULL, NULL)) != 0)
 		return error;
 
-	if ((error = vfs_copyinfh_alloc(NETBSD32PTR64(SCARG(uap, fhp)), 
+	if ((error = vfs_copyinfh_alloc(SCARG_P32(uap, fhp), 
 	    FHANDLE_SIZE_COMPAT, &fh)) != 0)
 		goto bad;
 	if ((error = vfs_fhtovp(fh, &vp)) != 0)
@@ -275,7 +271,7 @@ compat_30_netbsd32_fhstatvfs1(l, v, retval)
 	s32 = (struct netbsd32_statvfs *)
 	    malloc(sizeof(struct netbsd32_statvfs), M_TEMP, M_WAITOK);
 	netbsd32_from_statvfs(sbuf, s32);
-	error = copyout(s32, (void *)NETBSD32PTR64(SCARG(uap, buf)),
+	error = copyout(s32, SCARG_P32(uap, buf),
 	    sizeof(struct netbsd32_statvfs));
 	free(s32, M_TEMP);
 
@@ -346,7 +342,7 @@ int compat_30_netbsd32_sys___fhstat30(l, v, retval)
 	    0, NULL, NULL, NULL)))
 		return error;
 
-	if ((error = vfs_copyinfh_alloc(NETBSD32PTR64(SCARG(uap, fhp)),
+	if ((error = vfs_copyinfh_alloc(SCARG_P32(uap, fhp),
 	    FHANDLE_SIZE_COMPAT, &fh)) != 0)
 		goto bad;
 
@@ -358,7 +354,7 @@ int compat_30_netbsd32_sys___fhstat30(l, v, retval)
 	if (error)
 		goto bad;
 	netbsd32_from___stat30(&sb, &sb32);
-	error = copyout(&sb32, NETBSD32PTR64(SCARG(uap, sb)), sizeof(sb));
+	error = copyout(&sb32, SCARG_P32(uap, sb), sizeof(sb));
 bad:
 	vfs_copyinfh_free(fh);
 	return error;

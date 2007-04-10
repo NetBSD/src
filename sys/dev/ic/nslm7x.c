@@ -1,4 +1,4 @@
-/*	$NetBSD: nslm7x.c,v 1.29.6.1 2007/03/13 16:50:23 ad Exp $ */
+/*	$NetBSD: nslm7x.c,v 1.29.6.2 2007/04/10 13:24:31 ad Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nslm7x.c,v 1.29.6.1 2007/03/13 16:50:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nslm7x.c,v 1.29.6.2 2007/04/10 13:24:31 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -125,51 +125,237 @@ static struct lm_chip lm_chips[] = {
 	{ def_match } /* Must be last */
 };
 
+/* LM78/78J/79/81 */
 static struct lm_sensor lm78_sensors[] = {
 	/* Voltage */
-	{ "VCore A", ENVSYS_SVOLTS_DC, 0, 0x20, lm_refresh_volt, RFACT_NONE },
-	{ "VCore B", ENVSYS_SVOLTS_DC, 0, 0x21, lm_refresh_volt, RFACT_NONE },
-	{ "+3.3V", ENVSYS_SVOLTS_DC, 0, 0x22, lm_refresh_volt, RFACT_NONE },
-	{ "+5V", ENVSYS_SVOLTS_DC, 0, 0x23, lm_refresh_volt, RFACT(68, 100) },
-	{ "+12V", ENVSYS_SVOLTS_DC, 0, 0x24, lm_refresh_volt, RFACT(30, 10) },
-	{ "-12V", ENVSYS_SVOLTS_DC, 0, 0x25, lm_refresh_volt, NRFACT(240, 60) },
-	{ "-5V", ENVSYS_SVOLTS_DC, 0, 0x26, lm_refresh_volt, NRFACT(100, 60) },
+	{
+		.desc = "VCore A",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 0,
+		.reg = 0x20,
+		.refresh = lm_refresh_volt,
+		.rfact = RFACT_NONE
+	},
+	{
+		.desc = "VCore B",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 0,
+		.reg = 0x21,
+		.refresh = lm_refresh_volt,
+		.rfact = RFACT_NONE
+	},
+	{
+		.desc = "+3.3V",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 0,
+		.reg = 0x22,
+		.refresh = lm_refresh_volt,
+		.rfact = RFACT_NONE
+	},
+	{
+		.desc = "+5V",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 0,
+		.reg = 0x23,
+		.refresh = lm_refresh_volt,
+		.rfact = RFACT(68, 100)
+	},
+	{
+		.desc = "+12V",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 0,
+		.reg = 0x24,
+		.refresh = lm_refresh_volt,
+		.rfact = RFACT(30, 10)
+	},
+	{
+		.desc = "-12V",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 0,
+		.reg = 0x25,
+		.refresh = lm_refresh_volt,
+		.rfact = NRFACT(240, 60)
+	},
+	{
+		.desc = "-5V",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 0,
+		.reg = 0x26,
+		.refresh = lm_refresh_volt,
+		.rfact = NRFACT(100, 60)
+	},
         
 	/* Temperature */
-	{ "Temp0", ENVSYS_STEMP, 0, 0x27, lm_refresh_temp, 0 },
+	{
+		.desc = "Temp0",
+		.type = ENVSYS_STEMP,
+		.bank = 0,
+		.reg = 0x27,
+		.refresh = lm_refresh_temp,
+		.rfact = 0
+	},
 
 	/* Fans */
-	{ "Fan0", ENVSYS_SFANRPM, 0, 0x28, lm_refresh_fanrpm, 0 },
-	{ "Fan1", ENVSYS_SFANRPM, 0, 0x29, lm_refresh_fanrpm, 0 },
-	{ "Fan2", ENVSYS_SFANRPM, 0, 0x2a, lm_refresh_fanrpm, 0 },
+	{
+		.desc = "Fan0",
+		.type = ENVSYS_SFANRPM,
+		.bank = 0,
+		.reg = 0x28,
+		.refresh = lm_refresh_fanrpm,
+		.rfact = 0
+	},
+	{
+		.desc = "Fan1",
+		.type = ENVSYS_SFANRPM,
+		.bank = 0,
+		.reg = 0x29,
+		.refresh = lm_refresh_fanrpm,
+		.rfact = 0
+	},
+	{
+		.desc = "Fan2",
+		.type = ENVSYS_SFANRPM,
+		.bank = 0,
+		.reg = 0x2a,
+		.refresh = lm_refresh_fanrpm,
+		.rfact = 0
+	},
 
 	{ .desc = NULL }
 };
 
+/* W83627HF */
 static struct lm_sensor w83627hf_sensors[] = {
 	/* Voltage */
-	{ "VCore A", ENVSYS_SVOLTS_DC, 0, 0x20, lm_refresh_volt, RFACT_NONE },
-	{ "VCore B", ENVSYS_SVOLTS_DC, 0, 0x21, lm_refresh_volt, RFACT_NONE },
-	{ "+3.3V", ENVSYS_SVOLTS_DC, 0, 0x22, lm_refresh_volt, RFACT_NONE },
-	{ "+5V", ENVSYS_SVOLTS_DC, 0, 0x23, lm_refresh_volt, RFACT(34, 50) },
-	{ "+12V", ENVSYS_SVOLTS_DC, 0, 0x24, lm_refresh_volt, RFACT(28, 10) },
-	{ "-12V", ENVSYS_SVOLTS_DC, 0, 0x25, wb_refresh_nvolt, RFACT(232, 56) },
-	{ "-5V", ENVSYS_SVOLTS_DC, 0, 0x26, wb_refresh_nvolt, RFACT(120, 56) },
-	{ "5VSB", ENVSYS_SVOLTS_DC, 5, 0x50, lm_refresh_volt, RFACT(17, 33) },
-	{ "VBAT", ENVSYS_SVOLTS_DC, 5, 0x51, lm_refresh_volt, RFACT_NONE },
+	{
+		.desc = "VCore A",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 0,
+		.reg = 0x20,
+		.refresh = lm_refresh_volt,
+		.rfact = RFACT_NONE
+	},
+	{
+		.desc = "VCore B",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 0,
+		.reg = 0x21,
+		.refresh = lm_refresh_volt,
+		.rfact = RFACT_NONE
+	},
+	{
+		.desc = "+3.3V",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 0,
+		.reg = 0x22,
+		.refresh = lm_refresh_volt,
+		.rfact = RFACT_NONE
+	},
+	{
+		.desc = "+5V",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 0,
+		.reg = 0x23,
+		.refresh = lm_refresh_volt,
+		.rfact = RFACT(34, 50)
+	},
+	{
+		.desc = "+12V",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 0,
+		.reg = 0x24,
+		.refresh = lm_refresh_volt,
+		.rfact = RFACT(28, 10)
+	},
+	{
+		.desc = "-12V",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 0,
+		.reg = 0x25,
+		.refresh = wb_refresh_nvolt,
+		.rfact = RFACT(232, 56)
+	},
+	{
+		.desc = "-5V",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 0,
+		.reg = 0x26,
+		.refresh = wb_refresh_nvolt,
+		.rfact = RFACT(120, 56)
+	},
+	{
+		.desc = "5VSB",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 5,
+		.reg = 0x50,
+		.refresh = lm_refresh_volt,
+		.rfact = RFACT(17, 33)
+	},
+	{
+		.desc = "VBAT",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 5,
+		.reg = 0x51,
+		.refresh = lm_refresh_volt,
+		.rfact = RFACT_NONE
+	},
 
 	/* Temperature */
-	{ "Temp0", ENVSYS_STEMP, 0, 0x27, lm_refresh_temp, 0 },
-	{ "Temp1", ENVSYS_STEMP, 1, 0x50, wb_refresh_temp, 0 },
-	{ "Temp2", ENVSYS_STEMP, 2, 0x50, wb_refresh_temp, 0 },
+	{
+		.desc = "Temp0",
+		.type = ENVSYS_STEMP,
+		.bank = 0,
+		.reg = 0x27,
+		.refresh = lm_refresh_temp,
+		.rfact = 0
+	},
+	{
+		.desc = "Temp1",
+		.type = ENVSYS_STEMP,
+		.bank = 1,
+		.reg = 0x50,
+		.refresh = wb_refresh_temp,
+		.rfact = 0
+	},
+	{
+		.desc = "Temp2",
+		.type = ENVSYS_STEMP,
+		.bank = 2,
+		.reg = 0x50,
+		.refresh = wb_refresh_temp,
+		.rfact = 0
+	},
 
 	/* Fans */
-	{ "Fan0", ENVSYS_SFANRPM, 0, 0x28, wb_refresh_fanrpm, 0 },
-	{ "Fan1", ENVSYS_SFANRPM, 0, 0x29, wb_refresh_fanrpm, 0 },
-	{ "Fan2", ENVSYS_SFANRPM, 0, 0x2a, wb_refresh_fanrpm, 0 },
+	{
+		.desc = "Fan0",
+		.type = ENVSYS_SFANRPM,
+		.bank = 0,
+		.reg = 0x28,
+		.refresh = wb_refresh_fanrpm,
+		.rfact = 0
+	},
+	{
+		.desc = "Fan1",
+		.type = ENVSYS_SFANRPM,
+		.bank = 0,
+		.reg = 0x29,
+		.refresh = wb_refresh_fanrpm,
+		.rfact = 0
+	},
+	{
+		.desc = "Fan2",
+		.type = ENVSYS_SFANRPM,
+		.bank = 0,
+		.reg = 0x2a,
+		.refresh = wb_refresh_fanrpm,
+		.rfact = 0
+	},
 
 	{ .desc = NULL }
 };
+
+/* W8627EHF */
 
 /*
  * The W83627EHF can measure voltages up to 2.048 V instead of the
@@ -180,104 +366,501 @@ static struct lm_sensor w83627hf_sensors[] = {
  */
 static struct lm_sensor w83627ehf_sensors[] = {
 	/* Voltage */
-	{ "VCore", ENVSYS_SVOLTS_DC, 0, 0x20, lm_refresh_volt, RFACT_NONE / 2},
-	{ "+12V", ENVSYS_SVOLTS_DC, 0, 0x21, lm_refresh_volt, RFACT(56, 10) / 2 },
-	{ "+3.3V", ENVSYS_SVOLTS_DC, 0, 0x22, lm_refresh_volt, RFACT(34, 34) / 2 },
-	{ "+3.3V", ENVSYS_SVOLTS_DC, 0, 0x23, lm_refresh_volt, RFACT(34, 24) / 2 },
-	{ "-12V", ENVSYS_SVOLTS_DC, 0, 0x24, wb_w83627ehf_refresh_nvolt, 0 },
-	{ "Unknown", ENVSYS_SVOLTS_DC, 0, 0x25, lm_refresh_volt, RFACT_NONE / 2 },
-	{ "Unknown", ENVSYS_SVOLTS_DC, 0, 0x26, lm_refresh_volt, RFACT_NONE / 2 },
-	{ "3.3VSB", ENVSYS_SVOLTS_DC, 5, 0x50, lm_refresh_volt, RFACT(34, 34) / 2 },
-	{ "VBAT", ENVSYS_SVOLTS_DC, 5, 0x51, lm_refresh_volt, RFACT_NONE / 2 },
-	{ "Unknown", ENVSYS_SVOLTS_DC, 5, 0x52, lm_refresh_volt, RFACT_NONE / 2 },
+	{
+		.desc = "VCore",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 0,
+		.reg = 0x20,
+		.refresh = lm_refresh_volt,
+		.rfact = RFACT_NONE / 2
+	},
+	{
+		.desc = "+12V",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 0,
+		.reg = 0x21,
+		.refresh = lm_refresh_volt,
+		.rfact = RFACT(56, 10) / 2
+	},
+	{
+		.desc = "+3.3V",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 0,
+		.reg = 0x22,
+		.refresh = lm_refresh_volt,
+		.rfact = RFACT(34, 34) / 2
+	},
+	{
+		.desc = "+3.3V",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 0,
+		.reg = 0x23,
+		.refresh = lm_refresh_volt,
+		.rfact = RFACT(34, 24) / 2
+	},
+	{
+		.desc = "-12V",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 0,
+		.reg = 0x24,
+		.refresh = wb_w83627ehf_refresh_nvolt,
+		.rfact = 0
+	},
+	{
+		.desc = "Unknown",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 0,
+		.reg = 0x25,
+		.refresh = lm_refresh_volt,
+		.rfact = RFACT_NONE / 2
+	},
+	{
+		.desc = "Unknown",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 0,
+		.reg = 0x26,
+		.refresh = lm_refresh_volt,
+		.rfact = RFACT_NONE / 2
+	},
+	{
+		.desc = "3.3VSB",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 5,
+		.reg = 0x50,
+		.refresh = lm_refresh_volt,
+		.rfact = RFACT(34, 34) / 2
+	},
+	{
+		.desc = "VBAT",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 5,
+		.reg = 0x51,
+		.refresh = lm_refresh_volt,
+		.rfact = RFACT_NONE / 2
+	},
+	{
+		.desc = "Unknown",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 5,
+		.reg = 0x52,
+		.refresh = lm_refresh_volt,
+		.rfact = RFACT_NONE / 2
+	},
 
 	/* Temperature */
-	{ "Temp0", ENVSYS_STEMP, 0, 0x27, lm_refresh_temp, 0 },
-	{ "Temp1", ENVSYS_STEMP, 1, 0x50, wb_refresh_temp, 0 },
-	{ "Temp2", ENVSYS_STEMP, 2, 0x50, wb_refresh_temp, 0 },
+	{
+		.desc = "Temp0",
+		.type = ENVSYS_STEMP,
+		.bank = 0,
+		.reg = 0x27,
+		.refresh = lm_refresh_temp,
+		.rfact = 0
+	},
+	{
+		.desc = "Temp1",
+		.type = ENVSYS_STEMP,
+		.bank = 1,
+		.reg = 0x50,
+		.refresh = wb_refresh_temp,
+		.rfact = 0
+	},
+	{
+		.desc = "Temp2",
+		.type = ENVSYS_STEMP,
+		.bank = 2,
+		.reg = 0x50,
+		.refresh = wb_refresh_temp,
+		.rfact = 0
+	},
 
 	/* Fans */
-	{ "Fan0", ENVSYS_SFANRPM, 0, 0x28, wb_refresh_fanrpm, 0 },
-	{ "Fan1", ENVSYS_SFANRPM, 0, 0x29, wb_refresh_fanrpm, 0 },
-	{ "Fan2", ENVSYS_SFANRPM, 0, 0x2a, wb_refresh_fanrpm, 0 },
+	{
+		.desc = "Fan0",
+		.type = ENVSYS_SFANRPM,
+		.bank = 0,
+		.reg = 0x28,
+		.refresh = wb_refresh_fanrpm,
+		.rfact = 0
+	},
+	{
+		.desc = "Fan1",
+		.type = ENVSYS_SFANRPM,
+		.bank = 0,
+		.reg = 0x29,
+		.refresh = wb_refresh_fanrpm,
+		.rfact = 0
+	},
+	{
+		.desc = "Fan2",
+		.type = ENVSYS_SFANRPM,
+		.bank = 0,
+		.reg = 0x2a,
+		.refresh = wb_refresh_fanrpm,
+		.rfact = 0
+	},
 
 	{ .desc = NULL }
 };
 
+/*  W83627DHG */
 static struct lm_sensor w83627dhg_sensors[] = {
 	/* Voltage */
-	{ "VCore", ENVSYS_SVOLTS_DC, 0, 0x20, lm_refresh_volt, RFACT_NONE/2 },
-	{ "+12V", ENVSYS_SVOLTS_DC, 0, 0x21, lm_refresh_volt, RFACT(56,10)/2 },
-	{ "+3.3V", ENVSYS_SVOLTS_DC, 0, 0x22, lm_refresh_volt, RFACT_NONE },
-	{ "AVCC", ENVSYS_SVOLTS_DC, 0, 0x23, lm_refresh_volt, RFACT_NONE },
-	{ "+5V", ENVSYS_SVOLTS_DC, 0, 0x25, lm_refresh_volt, RFACT(32, 56) },
+	{
+		.desc = "VCore",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 0,
+		.reg = 0x20,
+		.refresh = lm_refresh_volt,
+		.rfact = RFACT_NONE / 2
+	},
+	{
+		.desc = "+12V",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 0,
+		.reg = 0x21,
+		.refresh = lm_refresh_volt,
+		.rfact = RFACT(56, 10) / 2
+	},
+	{
+		.desc = "+3.3V",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 0,
+		.reg = 0x22,
+		.refresh = lm_refresh_volt,
+		.rfact = RFACT_NONE
+	},
+	{
+		.desc = "AVCC",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 0,
+		.reg = 0x23,
+		.refresh = lm_refresh_volt,
+		.rfact = RFACT_NONE
+	},
+	{
+		.desc = "+5V",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 0,
+		.reg = 0x25,
+		.refresh = lm_refresh_volt,
+		.rfact = RFACT(32, 56)
+	},
 	/* 
 	 * I'm not sure about which one is -12V or -5V.
 	 */
 #if 0
-	{ "-12V", ENVSYS_SVOLTS_DC, 0, 0x24, wb_refresh_nvolt, RFACT(232, 60) },
-	{ "-5V", ENVSYS_SVOLTS_DC, 0, 0x26, wb_w83627ehf_refresh_nvolt },
+	{
+		.desc = "-12V",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 0,
+		.reg = 0x24,
+		.refresh = wb_refresh_nvolt,
+		.rfact = RFACT(232, 60)
+	},
+	{
+		.desc = "-5V",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 0,
+		.reg = 0x26,
+		.refresh = wb_w83627ehf_refresh_nvolt
+		.rfact = 0
+	},
 #endif
-	{ "+3.3VSB", ENVSYS_SVOLTS_DC, 5, 0x50, lm_refresh_volt, RFACT_NONE },
-	{ "VBAT", ENVSYS_SVOLTS_DC, 5, 0x51, lm_refresh_volt, RFACT_NONE },
+	{
+		.desc = "+3.3VSB",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 5,
+		.reg = 0x50,
+		.refresh = lm_refresh_volt,
+		.rfact = RFACT_NONE
+	},
+	{
+		.desc = "VBAT",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 5,
+		.reg = 0x51,
+		.refresh = lm_refresh_volt,
+		.rfact = RFACT_NONE
+	},
 
 	/* Temperature */
-	{ "System Temp", ENVSYS_STEMP, 0, 0x27, lm_refresh_temp, 0 },
-	{ "CPU Temp", ENVSYS_STEMP, 1, 0x50, wb_refresh_temp, 0 },
-	{ "Aux Temp", ENVSYS_STEMP, 2, 0x50, wb_refresh_temp, 0 },
+	{
+		.desc = "System Temp",
+		.type = ENVSYS_STEMP,
+		.bank = 0,
+		.reg = 0x27,
+		.refresh = lm_refresh_temp,
+		.rfact = 0
+	},
+	{
+		.desc = "CPU Temp",
+		.type = ENVSYS_STEMP,
+		.bank = 1,
+		.reg = 0x50,
+		.refresh = wb_refresh_temp,
+		.rfact = 0
+	},
+	{
+		.desc = "Aux Temp",
+		.type = ENVSYS_STEMP,
+		.bank = 2,
+		.reg = 0x50,
+		.refresh = wb_refresh_temp,
+		.rfact = 0
+	},
 
 	/* Fans */
-	{ "System Fan", ENVSYS_SFANRPM, 0, 0x28, wb_refresh_fanrpm, 0 },
-	{ "CPU Fan", ENVSYS_SFANRPM, 0, 0x29, wb_refresh_fanrpm, 0 },
-	{ "Aux Fan", ENVSYS_SFANRPM, 0, 0x2a, wb_refresh_fanrpm, 0 },
+	{
+		.desc = "System Fan",
+		.type = ENVSYS_SFANRPM,
+		.bank = 0,
+		.reg = 0x28,
+		.refresh = wb_refresh_fanrpm,
+		.rfact = 0
+	},
+	{
+		.desc = "CPU Fan",
+		.type = ENVSYS_SFANRPM,
+		.bank = 0,
+		.reg = 0x29,
+		.refresh = wb_refresh_fanrpm,
+		.rfact = 0
+	},
+	{
+		.desc = "Aux Fan",
+		.type = ENVSYS_SFANRPM,
+		.bank = 0,
+		.reg = 0x2a,
+		.refresh = wb_refresh_fanrpm,
+		.rfact = 0
+	},
 
 	{ .desc = NULL }
 };
 
+/* W83637HF */
 static struct lm_sensor w83637hf_sensors[] = {
 	/* Voltage */
-	{ "VCore", ENVSYS_SVOLTS_DC, 0, 0x20, wb_w83637hf_refresh_vcore, 0 },
-	{ "+12V", ENVSYS_SVOLTS_DC, 0, 0x21, lm_refresh_volt, RFACT(28, 10) },
-	{ "+3.3V", ENVSYS_SVOLTS_DC, 0, 0x22, lm_refresh_volt, RFACT_NONE },
-	{ "+5V", ENVSYS_SVOLTS_DC, 0, 0x23, lm_refresh_volt, RFACT(34, 51) },
-	{ "-12V", ENVSYS_SVOLTS_DC, 0, 0x24, wb_refresh_nvolt, RFACT(232, 56) },
-	{ "5VSB", ENVSYS_SVOLTS_DC, 5, 0x50, lm_refresh_volt, RFACT(34, 51) },
-	{ "VBAT", ENVSYS_SVOLTS_DC, 5, 0x51, lm_refresh_volt, RFACT_NONE },
+	{
+		.desc = "VCore",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 0,
+		.reg = 0x20,
+		.refresh = wb_w83637hf_refresh_vcore,
+		.rfact = 0
+	},
+	{
+		.desc = "+12V",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 0,
+		.reg = 0x21,
+		.refresh = lm_refresh_volt,
+		.rfact = RFACT(28, 10)
+	},
+	{
+		.desc = "+3.3V",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 0,
+		.reg = 0x22,
+		.refresh = lm_refresh_volt,
+		.rfact = RFACT_NONE
+	},
+	{
+		.desc = "+5V",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 0,
+		.reg = 0x23,
+		.refresh = lm_refresh_volt,
+		.rfact = RFACT(34, 51)
+	},
+	{
+		.desc = "-12V",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 0,
+		.reg = 0x24,
+		.refresh = wb_refresh_nvolt,
+		.rfact = RFACT(232, 56)
+	},
+	{
+		.desc = "5VSB",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 5,
+		.reg = 0x50,
+		.refresh = lm_refresh_volt,
+		.rfact = RFACT(34, 51)
+	},
+	{
+		.desc = "VBAT",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 5,
+		.reg = 0x51,
+		.refresh = lm_refresh_volt,
+		.rfact = RFACT_NONE
+	},
 
 	/* Temperature */
-	{ "Temp0", ENVSYS_STEMP, 0, 0x27, lm_refresh_temp, 0 },
-	{ "Temp1", ENVSYS_STEMP, 1, 0x50, wb_refresh_temp, 0 },
-	{ "Temp2", ENVSYS_STEMP, 2, 0x50, wb_refresh_temp, 0 },
+	{
+		.desc = "Temp0",
+		.type = ENVSYS_STEMP,
+		.bank = 0,
+		.reg = 0x27,
+		.refresh = lm_refresh_temp,
+		.rfact = 0
+	},
+	{
+		.desc = "Temp1",
+		.type = ENVSYS_STEMP,
+		.bank = 1,
+		.reg = 0x50,
+		.refresh = wb_refresh_temp,
+		.rfact = 0
+	},
+	{
+		.desc = "Temp2",
+		.type = ENVSYS_STEMP,
+		.bank = 2,
+		.reg = 0x50,
+		.refresh = wb_refresh_temp,
+		.rfact = 0
+	},
 
 	/* Fans */
-	{ "Fan0", ENVSYS_SFANRPM, 0, 0x28, wb_refresh_fanrpm, 0 },
-	{ "Fan1", ENVSYS_SFANRPM, 0, 0x29, wb_refresh_fanrpm, 0 },
-	{ "Fan2", ENVSYS_SFANRPM, 0, 0x2a, wb_refresh_fanrpm, 0 },
+	{
+		.desc = "Fan0",
+		.type = ENVSYS_SFANRPM,
+		.bank = 0,
+		.reg = 0x28,
+		.refresh = wb_refresh_fanrpm,
+		.rfact = 0
+	},
+	{
+		.desc = "Fan1",
+		.type = ENVSYS_SFANRPM,
+		.bank = 0,
+		.reg = 0x29,
+		.refresh = wb_refresh_fanrpm,
+		.rfact = 0
+	},
+	{
+		.desc = "Fan2",
+		.type = ENVSYS_SFANRPM,
+		.bank = 0,
+		.reg = 0x2a,
+		.refresh = wb_refresh_fanrpm,
+		.rfact = 0
+	},
 
 	{ .desc = NULL }
 };
 
+/* W83697HF */
 static struct lm_sensor w83697hf_sensors[] = {
 	/* Voltage */
-	{ "VCore", ENVSYS_SVOLTS_DC, 0, 0x20, lm_refresh_volt, RFACT_NONE },
-	{ "+3.3V", ENVSYS_SVOLTS_DC, 0, 0x22, lm_refresh_volt, RFACT_NONE },
-	{ "+5V", ENVSYS_SVOLTS_DC, 0, 0x23, lm_refresh_volt, RFACT(34, 50) },
-	{ "+12V", ENVSYS_SVOLTS_DC, 0, 0x24, lm_refresh_volt, RFACT(28, 10) },
-	{ "-12V", ENVSYS_SVOLTS_DC, 0, 0x25, wb_refresh_nvolt, RFACT(232, 56) },
-	{ "-5V", ENVSYS_SVOLTS_DC, 0, 0x26, wb_refresh_nvolt, RFACT(120, 56) },
-	{ "5VSB", ENVSYS_SVOLTS_DC, 5, 0x50, lm_refresh_volt, RFACT(17, 33) },
-	{ "VBAT", ENVSYS_SVOLTS_DC, 5, 0x51, lm_refresh_volt, RFACT_NONE },
+	{
+		.desc = "VCore",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 0,
+		.reg = 0x20,
+		.refresh = lm_refresh_volt,
+		.rfact = RFACT_NONE
+	},
+	{
+		.desc = "+3.3V",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 0,
+		.reg = 0x22,
+		.refresh = lm_refresh_volt,
+		.rfact = RFACT_NONE
+	},
+	{
+		.desc = "+5V",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 0,
+		.reg = 0x23,
+		.refresh = lm_refresh_volt,
+		.rfact = RFACT(34, 50)
+	},
+	{
+		.desc = "+12V",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 0,
+		.reg = 0x24,
+		.refresh = lm_refresh_volt,
+		.rfact = RFACT(28, 10)
+	},
+	{
+		.desc = "-12V",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 0,
+		.reg = 0x25,
+		.refresh = wb_refresh_nvolt,
+		.rfact = RFACT(232, 56)
+	},
+	{
+		.desc = "-5V",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 0,
+		.reg = 0x26,
+		.refresh = wb_refresh_nvolt,
+		.rfact = RFACT(120, 56)
+	},
+	{
+		.desc = "5VSB",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 5,
+		.reg = 0x50,
+		.refresh = lm_refresh_volt,
+		.rfact = RFACT(17, 33)
+	},
+	{
+		.desc = "VBAT",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 5,
+		.reg = 0x51,
+		.refresh = lm_refresh_volt,
+		.rfact = RFACT_NONE
+	},
 
 	/* Temperature */
-	{ "Temp0", ENVSYS_STEMP, 0, 0x27, lm_refresh_temp, 0 },
-	{ "Temp1", ENVSYS_STEMP, 1, 0x50, wb_refresh_temp, 0 },
+	{
+		.desc = "Temp0",
+		.type = ENVSYS_STEMP,
+		.bank = 0,
+		.reg = 0x27,
+		.refresh = lm_refresh_temp,
+		.rfact = 0
+	},
+	{
+		.desc = "Temp1",
+		.type = ENVSYS_STEMP,
+		.bank = 1,
+		.reg = 0x50,
+		.refresh = wb_refresh_temp,
+		.rfact = 0
+	},
 
 	/* Fans */
-	{ "Fan0", ENVSYS_SFANRPM, 0, 0x28, wb_refresh_fanrpm, 0 },
-	{ "Fan1", ENVSYS_SFANRPM, 0, 0x29, wb_refresh_fanrpm, 0 },
+	{
+		.desc = "Fan0",
+		.type = ENVSYS_SFANRPM,
+		.bank = 0,
+		.reg = 0x28,
+		.refresh = wb_refresh_fanrpm,
+		.rfact = 0
+	},
+	{
+		.desc = "Fan1",
+		.type = ENVSYS_SFANRPM,
+		.bank = 0,
+		.reg = 0x29,
+		.refresh = wb_refresh_fanrpm,
+		.rfact = 0
+	},
 
 	{ .desc = NULL }
 };
+
+/* W83781D */
 
 /*
  * The datasheet doesn't mention the (internal) resistors used for the
@@ -286,149 +869,777 @@ static struct lm_sensor w83697hf_sensors[] = {
  */
 static struct lm_sensor w83781d_sensors[] = {
 	/* Voltage */
-	{ "VCore A", ENVSYS_SVOLTS_DC, 0, 0x20, lm_refresh_volt, RFACT_NONE },
-	{ "VCore B", ENVSYS_SVOLTS_DC, 0, 0x21, lm_refresh_volt, RFACT_NONE },
-	{ "+3.3V", ENVSYS_SVOLTS_DC, 0, 0x22, lm_refresh_volt, RFACT_NONE },
-	{ "+5V", ENVSYS_SVOLTS_DC, 0, 0x23, lm_refresh_volt, RFACT(34, 50) },
-	{ "+12V", ENVSYS_SVOLTS_DC, 0, 0x24, lm_refresh_volt, RFACT(28, 10) },
-	{ "-12V", ENVSYS_SVOLTS_DC, 0, 0x25, lm_refresh_volt, NRFACT(2100, 604) },
-	{ "-5V", ENVSYS_SVOLTS_DC, 0, 0x26, lm_refresh_volt, NRFACT(909, 604) },
+	{
+		.desc = "VCore A",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 0,
+		.reg = 0x20,
+		.refresh = lm_refresh_volt,
+		.rfact = RFACT_NONE
+	},
+	{
+		.desc = "VCore B",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 0,
+		.reg = 0x21,
+		.refresh = lm_refresh_volt,
+		.rfact = RFACT_NONE
+	},
+	{
+		.desc = "+3.3V",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 0,
+		.reg = 0x22,
+		.refresh = lm_refresh_volt,
+		.rfact = RFACT_NONE
+	},
+	{
+		.desc = "+5V",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 0,
+		.reg = 0x23,
+		.refresh = lm_refresh_volt,
+		.rfact = RFACT(34, 50)
+	},
+	{
+		.desc = "+12V",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 0,
+		.reg = 0x24,
+		.refresh = lm_refresh_volt,
+		.rfact = RFACT(28, 10)
+	},
+	{
+		.desc = "-12V",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 0,
+		.reg = 0x25,
+		.refresh = lm_refresh_volt,
+		.rfact = NRFACT(2100, 604)
+	},
+	{
+		.desc = "-5V",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 0,
+		.reg = 0x26,
+		.refresh = lm_refresh_volt,
+		.rfact = NRFACT(909, 604)
+	},
 
 	/* Temperature */
-	{ "Temp0", ENVSYS_STEMP, 0, 0x27, lm_refresh_temp, 0 },
-	{ "Temp1", ENVSYS_STEMP, 1, 0x50, wb_refresh_temp, 0 },
-	{ "Temp2", ENVSYS_STEMP, 2, 0x50, wb_refresh_temp, 0 },
+	{
+		.desc = "Temp0",
+		.type = ENVSYS_STEMP,
+		.bank = 0,
+		.reg = 0x27,
+		.refresh = lm_refresh_temp,
+		.rfact = 0
+	},
+	{
+		.desc = "Temp1",
+		.type = ENVSYS_STEMP,
+		.bank = 1,
+		.reg = 0x50,
+		.refresh = wb_refresh_temp,
+		.rfact = 0
+	},
+	{
+		.desc = "Temp2",
+		.type = ENVSYS_STEMP,
+		.bank = 2,
+		.reg = 0x50,
+		.refresh = wb_refresh_temp,
+		.rfact = 0
+	},
 
 	/* Fans */
-	{ "Fan0", ENVSYS_SFANRPM, 0, 0x28, lm_refresh_fanrpm, 0 },
-	{ "Fan1", ENVSYS_SFANRPM, 0, 0x29, lm_refresh_fanrpm, 0 },
-	{ "Fan2", ENVSYS_SFANRPM, 0, 0x2a, lm_refresh_fanrpm, 0 },
+	{
+		.desc = "Fan0",
+		.type = ENVSYS_SFANRPM,
+		.bank = 0,
+		.reg = 0x28,
+		.refresh = lm_refresh_fanrpm,
+		.rfact = 0
+	},
+	{
+		.desc = "Fan1",
+		.type = ENVSYS_SFANRPM,
+		.bank = 0,
+		.reg = 0x29,
+		.refresh = lm_refresh_fanrpm,
+		.rfact = 0
+	},
+	{
+		.desc = "Fan2",
+		.type = ENVSYS_SFANRPM,
+		.bank = 0,
+		.reg = 0x2a,
+		.refresh = lm_refresh_fanrpm,
+		.rfact = 0
+	},
 
 	{ .desc = NULL }
 };
 
+/* W83782D */
 static struct lm_sensor w83782d_sensors[] = {
 	/* Voltage */
-	{ "VCore", ENVSYS_SVOLTS_DC, 0, 0x20, lm_refresh_volt, RFACT_NONE },
-	{ "VINR0", ENVSYS_SVOLTS_DC, 0, 0x21, lm_refresh_volt, RFACT_NONE },
-	{ "+3.3V", ENVSYS_SVOLTS_DC, 0, 0x22, lm_refresh_volt, RFACT_NONE },
-	{ "+5V", ENVSYS_SVOLTS_DC, 0, 0x23, lm_refresh_volt, RFACT(34, 50) },
-	{ "+12V", ENVSYS_SVOLTS_DC, 0, 0x24, lm_refresh_volt, RFACT(28, 10) },
-	{ "-12V", ENVSYS_SVOLTS_DC, 0, 0x25, wb_refresh_nvolt, RFACT(232, 56) },
-	{ "-5V", ENVSYS_SVOLTS_DC, 0, 0x26, wb_refresh_nvolt, RFACT(120, 56) },
-	{ "5VSB", ENVSYS_SVOLTS_DC, 5, 0x50, lm_refresh_volt, RFACT(17, 33) },
-	{ "VBAT", ENVSYS_SVOLTS_DC, 5, 0x51, lm_refresh_volt, RFACT_NONE },
+	{
+		.desc = "VCore",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 0,
+		.reg = 0x20,
+		.refresh = lm_refresh_volt,
+		.rfact = RFACT_NONE
+	},
+	{
+		.desc = "VINR0",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 0,
+		.reg = 0x21,
+		.refresh = lm_refresh_volt,
+		.rfact = RFACT_NONE
+	},
+	{
+		.desc = "+3.3V",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 0,
+		.reg = 0x22,
+		.refresh = lm_refresh_volt,
+		.rfact = RFACT_NONE
+	},
+	{
+		.desc = "+5V",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 0,
+		.reg = 0x23,
+		.refresh = lm_refresh_volt,
+		.rfact = RFACT(34, 50)
+	},
+	{
+		.desc = "+12V",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 0,
+		.reg = 0x24,
+		.refresh = lm_refresh_volt,
+		.rfact = RFACT(28, 10)
+	},
+	{
+		.desc = "-12V",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 0,
+		.reg = 0x25,
+		.refresh = wb_refresh_nvolt,
+		.rfact = RFACT(232, 56)
+	},
+	{
+		.desc = "-5V",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 0,
+		.reg = 0x26,
+		.refresh = wb_refresh_nvolt,
+		.rfact = RFACT(120, 56)
+	},
+	{
+		.desc = "5VSB",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 5,
+		.reg = 0x50,
+		.refresh = lm_refresh_volt,
+		.rfact = RFACT(17, 33)
+	},
+	{
+		.desc = "VBAT",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 5,
+		.reg = 0x51,
+		.refresh = lm_refresh_volt,
+		.rfact = RFACT_NONE
+	},
 
 	/* Temperature */
-	{ "Temp0", ENVSYS_STEMP, 0, 0x27, lm_refresh_temp, 0 },
-	{ "Temp1", ENVSYS_STEMP, 1, 0x50, wb_refresh_temp, 0 },
-	{ "Temp2", ENVSYS_STEMP, 2, 0x50, wb_refresh_temp, 0 },
+	{
+		.desc = "Temp0",
+		.type = ENVSYS_STEMP,
+		.bank = 0,
+		.reg = 0x27,
+		.refresh = lm_refresh_temp,
+		.rfact = 0
+	},
+	{
+		.desc = "Temp1",
+		.type = ENVSYS_STEMP,
+		.bank = 1,
+		.reg = 0x50,
+		.refresh = wb_refresh_temp,
+		.rfact = 0
+	},
+	{
+		.desc = "Temp2",
+		.type = ENVSYS_STEMP,
+		.bank = 2,
+		.reg = 0x50,
+		.refresh = wb_refresh_temp,
+		.rfact = 0
+	},
 
 	/* Fans */
-	{ "Fan0", ENVSYS_SFANRPM, 0, 0x28, wb_refresh_fanrpm, 0 },
-	{ "Fan1", ENVSYS_SFANRPM, 0, 0x29, wb_refresh_fanrpm, 0 },
-	{ "Fan2", ENVSYS_SFANRPM, 0, 0x2a, wb_refresh_fanrpm, 0 },
+	{
+		.desc = "Fan0",
+		.type = ENVSYS_SFANRPM,
+		.bank = 0,
+		.reg = 0x28,
+		.refresh = wb_refresh_fanrpm,
+		.rfact = 0
+	},
+	{
+		.desc = "Fan1",
+		.type = ENVSYS_SFANRPM,
+		.bank = 0,
+		.reg = 0x29,
+		.refresh = wb_refresh_fanrpm,
+		.rfact = 0
+	},
+	{
+		.desc = "Fan2",
+		.type = ENVSYS_SFANRPM,
+		.bank = 0,
+		.reg = 0x2a,
+		.refresh = wb_refresh_fanrpm,
+		.rfact = 0
+	},
 
 	{ .desc = NULL }
 };
 
+/* W83783S */
 static struct lm_sensor w83783s_sensors[] = {
 	/* Voltage */
-	{ "VCore", ENVSYS_SVOLTS_DC, 0, 0x20, lm_refresh_volt, RFACT_NONE },
-	{ "+3.3V", ENVSYS_SVOLTS_DC, 0, 0x22, lm_refresh_volt, RFACT_NONE },
-	{ "+5V", ENVSYS_SVOLTS_DC, 0, 0x23, lm_refresh_volt, RFACT(34, 50) },
-	{ "+12V", ENVSYS_SVOLTS_DC, 0, 0x24, lm_refresh_volt, RFACT(28, 10) },
-	{ "-12V", ENVSYS_SVOLTS_DC, 0, 0x25, wb_refresh_nvolt, RFACT(232, 56) },
-	{ "-5V", ENVSYS_SVOLTS_DC, 0, 0x26, wb_refresh_nvolt, RFACT(120, 56) },
+	{
+		.desc = "VCore",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 0,
+		.reg = 0x20,
+		.refresh = lm_refresh_volt,
+		.rfact = RFACT_NONE
+	},
+	{
+		.desc = "+3.3V",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 0,
+		.reg = 0x22,
+		.refresh = lm_refresh_volt,
+		.rfact = RFACT_NONE
+	},
+	{
+		.desc = "+5V",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 0,
+		.reg = 0x23,
+		.refresh = lm_refresh_volt,
+		.rfact = RFACT(34, 50)
+	},
+	{
+		.desc = "+12V",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 0,
+		.reg = 0x24,
+		.refresh = lm_refresh_volt,
+		.rfact = RFACT(28, 10)
+	},
+	{
+		.desc = "-12V",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 0,
+		.reg = 0x25,
+		.refresh = wb_refresh_nvolt,
+		.rfact = RFACT(232, 56)
+	},
+	{
+		.desc = "-5V",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 0,
+		.reg = 0x26,
+		.refresh = wb_refresh_nvolt,
+		.rfact = RFACT(120, 56)
+	},
 
 	/* Temperature */
-	{ "Temp0", ENVSYS_STEMP, 0, 0x27, lm_refresh_temp, 0 },
-	{ "Temp1", ENVSYS_STEMP, 1, 0x50, wb_refresh_temp, 0 },
+	{
+		.desc = "Temp0",
+		.type = ENVSYS_STEMP,
+		.bank = 0,
+		.reg = 0x27,
+		.refresh = lm_refresh_temp,
+		.rfact = 0
+	},
+	{
+		.desc = "Temp1",
+		.type = ENVSYS_STEMP,
+		.bank = 1,
+		.reg = 0x50,
+		.refresh = wb_refresh_temp,
+		.rfact = 0
+	},
 
 	/* Fans */
-	{ "Fan0", ENVSYS_SFANRPM, 0, 0x28, wb_refresh_fanrpm, 0 },
-	{ "Fan1", ENVSYS_SFANRPM, 0, 0x29, wb_refresh_fanrpm, 0 },
-	{ "Fan2", ENVSYS_SFANRPM, 0, 0x2a, wb_refresh_fanrpm, 0 },
+	{
+		.desc = "Fan0",
+		.type = ENVSYS_SFANRPM,
+		.bank = 0,
+		.reg = 0x28,
+		.refresh = wb_refresh_fanrpm,
+		.rfact = 0
+	},
+	{
+		.desc = "Fan1",
+		.type = ENVSYS_SFANRPM,
+		.bank = 0,
+		.reg = 0x29,
+		.refresh = wb_refresh_fanrpm,
+		.rfact = 0
+	},
+	{
+		.desc = "Fan2",
+		.type = ENVSYS_SFANRPM,
+		.bank = 0,
+		.reg = 0x2a,
+		.refresh = wb_refresh_fanrpm,
+		.rfact = 0
+	},
 
 	{ .desc = NULL }
 };
 
+/* W83791D */
 static struct lm_sensor w83791d_sensors[] = {
 	/* Voltage */
-	{ "VCore", ENVSYS_SVOLTS_DC, 0, 0x20, lm_refresh_volt, 10000 },
-	{ "VINR0", ENVSYS_SVOLTS_DC, 0, 0x21, lm_refresh_volt, 10000 },
-	{ "+3.3V", ENVSYS_SVOLTS_DC, 0, 0x22, lm_refresh_volt, 10000 },
-	{ "+5V", ENVSYS_SVOLTS_DC, 0, 0x23, lm_refresh_volt, RFACT(34, 50) },
-	{ "+12V", ENVSYS_SVOLTS_DC, 0, 0x24, lm_refresh_volt, RFACT(28, 10) },
-	{ "-12V", ENVSYS_SVOLTS_DC, 0, 0x25, wb_refresh_nvolt, RFACT(232, 56) },
-	{ "-5V", ENVSYS_SVOLTS_DC, 0, 0x26, wb_refresh_nvolt, RFACT(120, 56) },
-	{ "5VSB", ENVSYS_SVOLTS_DC, 0, 0xb0, lm_refresh_volt, RFACT(17, 33) },
-	{ "VBAT", ENVSYS_SVOLTS_DC, 0, 0xb1, lm_refresh_volt, RFACT_NONE },
-	{ "VINR1", ENVSYS_SVOLTS_DC, 0, 0xb2, lm_refresh_volt, RFACT_NONE },
+	{
+		.desc = "VCore",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 0,
+		.reg = 0x20,
+		.refresh = lm_refresh_volt,
+		.rfact = 10000
+	},
+	{
+		.desc = "VINR0",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 0,
+		.reg = 0x21,
+		.refresh = lm_refresh_volt,
+		.rfact = 10000
+	},
+	{
+		.desc = "+3.3V",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 0,
+		.reg = 0x22,
+		.refresh = lm_refresh_volt,
+		.rfact = 10000
+	},
+	{
+		.desc = "+5V",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 0,
+		.reg = 0x23,
+		.refresh = lm_refresh_volt,
+		.rfact = RFACT(34, 50)
+	},
+	{
+		.desc = "+12V",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 0,
+		.reg = 0x24,
+		.refresh = lm_refresh_volt,
+		.rfact = RFACT(28, 10)
+	},
+	{
+		.desc = "-12V",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 0,
+		.reg = 0x25,
+		.refresh = wb_refresh_nvolt,
+		.rfact = RFACT(232, 56)
+	},
+	{
+		.desc = "-5V",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 0,
+		.reg = 0x26,
+		.refresh = wb_refresh_nvolt,
+		.rfact = RFACT(120, 56)
+	},
+	{
+		.desc = "5VSB",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 0,
+		.reg = 0xb0,
+		.refresh = lm_refresh_volt,
+		.rfact = RFACT(17, 33)
+	},
+	{
+		.desc = "VBAT",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 0,
+		.reg = 0xb1,
+		.refresh = lm_refresh_volt,
+		.rfact = RFACT_NONE
+	},
+	{
+		.desc = "VINR1",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 0,
+		.reg = 0xb2,
+		.refresh = lm_refresh_volt,
+		.rfact = RFACT_NONE
+	},
 
 	/* Temperature */
-	{ "Temp0", ENVSYS_STEMP, 0, 0x27, lm_refresh_temp, 0 },
-	{ "Temp1", ENVSYS_STEMP, 0, 0xc0, wb_refresh_temp, 0 },
-	{ "Temp2", ENVSYS_STEMP, 0, 0xc8, wb_refresh_temp, 0 },
+	{
+		.desc = "Temp0",
+		.type = ENVSYS_STEMP,
+		.bank = 0,
+		.reg = 0x27,
+		.refresh = lm_refresh_temp,
+		.rfact = 0
+	},
+	{
+		.desc = "Temp1",
+		.type = ENVSYS_STEMP,
+		.bank = 0,
+		.reg = 0xc0,
+		.refresh = wb_refresh_temp,
+		.rfact = 0
+	},
+	{
+		.desc = "Temp2",
+		.type = ENVSYS_STEMP,
+		.bank = 0,
+		.reg = 0xc8,
+		.refresh = wb_refresh_temp,
+		.rfact = 0
+	},
 
 	/* Fans */
-	{ "Fan0", ENVSYS_SFANRPM, 0, 0x28, wb_refresh_fanrpm, 0 },
-	{ "Fan1", ENVSYS_SFANRPM, 0, 0x29, wb_refresh_fanrpm, 0 },
-	{ "Fan2", ENVSYS_SFANRPM, 0, 0x2a, wb_refresh_fanrpm, 0 },
-	{ "Fan3", ENVSYS_SFANRPM, 0, 0xba, wb_refresh_fanrpm, 0 },
-	{ "Fan4", ENVSYS_SFANRPM, 0, 0xbb, wb_refresh_fanrpm, 0 },
+	{
+		.desc = "Fan0",
+		.type = ENVSYS_SFANRPM,
+		.bank = 0,
+		.reg = 0x28,
+		.refresh = wb_refresh_fanrpm,
+		.rfact = 0
+	},
+	{
+		.desc = "Fan1",
+		.type = ENVSYS_SFANRPM,
+		.bank = 0,
+		.reg = 0x29,
+		.refresh = wb_refresh_fanrpm,
+		.rfact = 0
+	},
+	{
+		.desc = "Fan2",
+		.type = ENVSYS_SFANRPM,
+		.bank = 0,
+		.reg = 0x2a,
+		.refresh = wb_refresh_fanrpm,
+		.rfact = 0
+	},
+	{
+		.desc = "Fan3",
+		.type = ENVSYS_SFANRPM,
+		.bank = 0,
+		.reg = 0xba,
+		.refresh = wb_refresh_fanrpm,
+		.rfact = 0
+	},
+	{
+		.desc = "Fan4",
+		.type = ENVSYS_SFANRPM,
+		.bank = 0,
+		.reg = 0xbb,
+		.refresh = wb_refresh_fanrpm,
+		.rfact = 0
+	},
 
         { .desc = NULL }
 };
 
+/* W83792D */
 static struct lm_sensor w83792d_sensors[] = {
 	/* Voltage */
-	{ "VCore A", ENVSYS_SVOLTS_DC, 0, 0x20, lm_refresh_volt, RFACT_NONE },
-	{ "VCore B", ENVSYS_SVOLTS_DC, 0, 0x21, lm_refresh_volt, RFACT_NONE },
-	{ "+3.3V", ENVSYS_SVOLTS_DC, 0, 0x22, lm_refresh_volt, RFACT_NONE },
-	{ "-5V", ENVSYS_SVOLTS_DC, 0, 0x23, wb_refresh_nvolt, RFACT(120, 56) },
-	{ "+12V", ENVSYS_SVOLTS_DC, 0, 0x24, lm_refresh_volt, RFACT(28, 10) },
-	{ "-12V", ENVSYS_SVOLTS_DC, 0, 0x25, wb_refresh_nvolt, RFACT(232, 56) },
-	{ "+5V", ENVSYS_SVOLTS_DC, 0, 0x26, lm_refresh_volt, RFACT(34, 50) },
-	{ "5VSB", ENVSYS_SVOLTS_DC, 0, 0xb0, lm_refresh_volt, RFACT(17, 33) },
-	{ "VBAT", ENVSYS_SVOLTS_DC, 0, 0xb1, lm_refresh_volt, RFACT_NONE },
+	{
+		.desc = "VCore A",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 0,
+		.reg = 0x20,
+		.refresh = lm_refresh_volt,
+		.rfact = RFACT_NONE
+	},
+	{
+		.desc = "VCore B",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 0,
+		.reg = 0x21,
+		.refresh = lm_refresh_volt,
+		.rfact = RFACT_NONE
+	},
+	{
+		.desc = "+3.3V",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 0,
+		.reg = 0x22,
+		.refresh = lm_refresh_volt,
+		.rfact = RFACT_NONE
+	},
+	{
+		.desc = "-5V",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 0,
+		.reg = 0x23,
+		.refresh = wb_refresh_nvolt,
+		.rfact = RFACT(120, 56)
+	},
+	{
+		.desc = "+12V",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 0,
+		.reg = 0x24,
+		.refresh = lm_refresh_volt,
+		.rfact = RFACT(28, 10)
+	},
+	{
+		.desc = "-12V",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 0,
+		.reg = 0x25,
+		.refresh = wb_refresh_nvolt,
+		.rfact = RFACT(232, 56)
+	},
+	{
+		.desc = "+5V",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 0,
+		.reg = 0x26,
+		.refresh = lm_refresh_volt,
+		.rfact = RFACT(34, 50)
+	},
+	{
+		.desc = "5VSB",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 0,
+		.reg = 0xb0,
+		.refresh = lm_refresh_volt,
+		.rfact = RFACT(17, 33)
+	},
+	{
+		.desc = "VBAT",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 0,
+		.reg = 0xb1,
+		.refresh = lm_refresh_volt,
+		.rfact = RFACT_NONE
+	},
 
 	/* Temperature */
-	{ "Temp0", ENVSYS_STEMP, 0, 0x27, lm_refresh_temp, 0 },
-	{ "Temp1", ENVSYS_STEMP, 0, 0xc0, wb_refresh_temp, 0 },
-	{ "Temp2", ENVSYS_STEMP, 0, 0xc8, wb_refresh_temp, 0 },
+	{
+		.desc = "Temp0",
+		.type = ENVSYS_STEMP,
+		.bank = 0,
+		.reg = 0x27,
+		.refresh = lm_refresh_temp,
+		.rfact = 0
+	},
+	{
+		.desc = "Temp1",
+		.type = ENVSYS_STEMP,
+		.bank = 0,
+		.reg = 0xc0,
+		.refresh = wb_refresh_temp,
+		.rfact = 0
+	},
+	{
+		.desc = "Temp2",
+		.type = ENVSYS_STEMP,
+		.bank = 0,
+		.reg = 0xc8,
+		.refresh = wb_refresh_temp,
+		.rfact = 0
+	},
 
 	/* Fans */
-	{ "Fan0", ENVSYS_SFANRPM, 0, 0x28, wb_w83792d_refresh_fanrpm, 0 },
-	{ "Fan1", ENVSYS_SFANRPM, 0, 0x29, wb_w83792d_refresh_fanrpm, 0 },
-	{ "Fan2", ENVSYS_SFANRPM, 0, 0x2a, wb_w83792d_refresh_fanrpm, 0 },
-	{ "Fan3", ENVSYS_SFANRPM, 0, 0xb8, wb_w83792d_refresh_fanrpm, 0 },
-	{ "Fan4", ENVSYS_SFANRPM, 0, 0xb9, wb_w83792d_refresh_fanrpm, 0 },
-	{ "Fan5", ENVSYS_SFANRPM, 0, 0xba, wb_w83792d_refresh_fanrpm, 0 },
-	{ "Fan6", ENVSYS_SFANRPM, 0, 0xbe, wb_w83792d_refresh_fanrpm, 0 },
+	{
+		.desc = "Fan0",
+		.type = ENVSYS_SFANRPM,
+		.bank = 0,
+		.reg = 0x28,
+		.refresh = wb_w83792d_refresh_fanrpm,
+		.rfact = 0
+	},
+	{
+		.desc = "Fan1",
+		.type = ENVSYS_SFANRPM,
+		.bank = 0,
+		.reg = 0x29,
+		.refresh = wb_w83792d_refresh_fanrpm,
+		.rfact = 0
+	},
+	{
+		.desc = "Fan2",
+		.type = ENVSYS_SFANRPM,
+		.bank = 0,
+		.reg = 0x2a,
+		.refresh = wb_w83792d_refresh_fanrpm,
+		.rfact = 0
+	},
+	{
+		.desc = "Fan3",
+		.type = ENVSYS_SFANRPM,
+		.bank = 0,
+		.reg = 0xb8,
+		.refresh = wb_w83792d_refresh_fanrpm,
+		.rfact = 0
+	},
+	{
+		.desc = "Fan4",
+		.type = ENVSYS_SFANRPM,
+		.bank = 0,
+		.reg = 0xb9,
+		.refresh = wb_w83792d_refresh_fanrpm,
+		.rfact = 0
+	},
+	{
+		.desc = "Fan5",
+		.type = ENVSYS_SFANRPM,
+		.bank = 0,
+		.reg = 0xba,
+		.refresh = wb_w83792d_refresh_fanrpm,
+		.rfact = 0
+	},
+	{
+		.desc = "Fan6",
+		.type = ENVSYS_SFANRPM,
+		.bank = 0,
+		.reg = 0xbe,
+		.refresh = wb_w83792d_refresh_fanrpm,
+		.rfact = 0
+	},
 
 	{ .desc = NULL }
 };
 
+/* AS99127F */
 static struct lm_sensor as99127f_sensors[] = {
 	/* Voltage */
-	{ "VCore A", ENVSYS_SVOLTS_DC, 0, 0x20, lm_refresh_volt, RFACT_NONE },
-	{ "VCore B", ENVSYS_SVOLTS_DC, 0, 0x21, lm_refresh_volt, RFACT_NONE },
-	{ "+3.3V", ENVSYS_SVOLTS_DC, 0, 0x22, lm_refresh_volt, RFACT_NONE },
-	{ "+5V", ENVSYS_SVOLTS_DC, 0, 0x23, lm_refresh_volt, RFACT(34, 50) },
-	{ "+12V", ENVSYS_SVOLTS_DC, 0, 0x24, lm_refresh_volt, RFACT(28, 10) },
-	{ "-12V", ENVSYS_SVOLTS_DC, 0, 0x25, wb_refresh_nvolt, RFACT(232, 56) },
-	{ "-5V", ENVSYS_SVOLTS_DC, 0, 0x26, wb_refresh_nvolt, RFACT(120, 56) },
+	{
+		.desc = "VCore A",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 0,
+		.reg = 0x20,
+		.refresh = lm_refresh_volt,
+		.rfact = RFACT_NONE
+	},
+	{
+		.desc = "VCore B",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 0,
+		.reg = 0x21,
+		.refresh = lm_refresh_volt,
+		.rfact = RFACT_NONE
+	},
+	{
+		.desc = "+3.3V",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 0,
+		.reg = 0x22,
+		.refresh = lm_refresh_volt,
+		.rfact = RFACT_NONE
+	},
+	{
+		.desc = "+5V",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 0,
+		.reg = 0x23,
+		.refresh = lm_refresh_volt,
+		.rfact = RFACT(34, 50)
+	},
+	{
+		.desc = "+12V",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 0,
+		.reg = 0x24,
+		.refresh = lm_refresh_volt,
+		.rfact = RFACT(28, 10)
+	},
+	{
+		.desc = "-12V",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 0,
+		.reg = 0x25,
+		.refresh = wb_refresh_nvolt,
+		.rfact = RFACT(232, 56)
+	},
+	{
+		.desc = "-5V",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 0,
+		.reg = 0x26,
+		.refresh = wb_refresh_nvolt,
+		.rfact = RFACT(120, 56)
+	},
 
 	/* Temperature */
-	{ "Temp0", ENVSYS_STEMP, 0, 0x27, lm_refresh_temp, 0 },
-	{ "Temp1", ENVSYS_STEMP, 1, 0x50, as_refresh_temp, 0 },
-	{ "Temp2", ENVSYS_STEMP, 2, 0x50, as_refresh_temp, 0 },
+	{
+		.desc = "Temp0",
+		.type = ENVSYS_STEMP,
+		.bank = 0,
+		.reg = 0x27,
+		.refresh = lm_refresh_temp,
+		.rfact = 0
+	},
+	{
+		.desc = "Temp1",
+		.type = ENVSYS_STEMP,
+		.bank = 1,
+		.reg = 0x50,
+		.refresh = as_refresh_temp,
+		.rfact = 0
+	},
+	{
+		.desc = "Temp2",
+		.type = ENVSYS_STEMP,
+		.bank = 2,
+		.reg = 0x50,
+		.refresh = as_refresh_temp,
+		.rfact = 0
+	},
 
 	/* Fans */
-	{ "Fan0", ENVSYS_SFANRPM, 0, 0x28, lm_refresh_fanrpm, 0 },
-	{ "Fan1", ENVSYS_SFANRPM, 0, 0x29, lm_refresh_fanrpm, 0 },
-	{ "Fan2", ENVSYS_SFANRPM, 0, 0x2a, lm_refresh_fanrpm, 0 },
+	{
+		.desc = "Fan0",
+		.type = ENVSYS_SFANRPM,
+		.bank = 0,
+		.reg = 0x28,
+		.refresh = lm_refresh_fanrpm,
+		.rfact = 0
+	},
+	{
+		.desc = "Fan1",
+		.type = ENVSYS_SFANRPM,
+		.bank = 0,
+		.reg = 0x29,
+		.refresh = lm_refresh_fanrpm,
+		.rfact = 0
+	},
+	{
+		.desc = "Fan2",
+		.type = ENVSYS_SFANRPM,
+		.bank = 0,
+		.reg = 0x2a,
+		.refresh = lm_refresh_fanrpm,
+		.rfact = 0
+	},
 
 	{ .desc = NULL }
 };

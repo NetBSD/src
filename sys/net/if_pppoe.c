@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.77 2007/03/04 06:03:16 christos Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.77.2.1 2007/04/10 13:26:47 ad Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.77 2007/03/04 06:03:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.77.2.1 2007/04/10 13:26:47 ad Exp $");
 
 #include "pppoe.h"
 #include "bpfilter.h"
@@ -512,7 +512,7 @@ pppoe_dispatch_disc_pkt(struct mbuf *m, int off)
 				break;
 			}
 #ifdef PPPOE_SERVER
-			hunique = mtod(n, void *) + noff;
+			hunique = mtod(n, u_int8_t *) + noff;
 			hunique_len = len;
 #endif
 			sc = pppoe_find_softc_by_hunique(mtod(n, char *) + noff,

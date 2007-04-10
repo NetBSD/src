@@ -1,4 +1,4 @@
-/*	$NetBSD: btuart.c,v 1.3.2.1 2007/03/13 16:50:22 ad Exp $	*/
+/*	$NetBSD: btuart.c,v 1.3.2.2 2007/04/10 13:24:30 ad Exp $	*/
 /*
  * Copyright (c) 2006, 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btuart.c,v 1.3.2.1 2007/03/13 16:50:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btuart.c,v 1.3.2.2 2007/04/10 13:24:30 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -548,7 +548,7 @@ init_csr(struct btuart_softc *sc)
 		/*
 		 * XXXX:
 		 * We will have to check the HCI_EVENT_VENDOR packet. For
-		 * instance, it might be a different HCI_EVENT_VENDOR packet. 
+		 * instance, it might be a different HCI_EVENT_VENDOR packet.
 		 */
 		if (error != 0) {
 			printf("%s: CSR set UART speed failed: Status 0x%02x\n",
@@ -845,7 +845,7 @@ init_stlc2500(struct btuart_softc *sc)
 	/*
 	 * XXXX:
 	 * We do not know the beginning point of this character string.
-	 * Because it doesn't know the event of this packet. 
+	 * Because it doesn't know the event of this packet.
 	 *
 	 * printf("%s: %s\n", sc->sc_dev.dv_xname, ???);
 	 */

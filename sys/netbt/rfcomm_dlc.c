@@ -1,4 +1,4 @@
-/*	$NetBSD: rfcomm_dlc.c,v 1.1 2006/06/19 15:44:45 gdamore Exp $	*/
+/*	$NetBSD: rfcomm_dlc.c,v 1.1.24.1 2007/04/10 13:26:48 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rfcomm_dlc.c,v 1.1 2006/06/19 15:44:45 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rfcomm_dlc.c,v 1.1.24.1 2007/04/10 13:26:48 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -111,11 +111,11 @@ rfcomm_dlc_newconn(struct rfcomm_session *rs, int dlci)
 
 	dlc = best ? best : any;
 
-	// XXX
-	// Note that if this fails, we could have missed a chance to open
-	// a connection - really need to rewrite the strategy for storing
-	// listening DLC's so all can be checked in turn..
-	//
+	/* XXX
+	 * Note that if this fails, we could have missed a chance to open
+	 * a connection - really need to rewrite the strategy for storing
+	 * listening DLC's so all can be checked in turn..
+	 */
 	if (dlc != NULL)
 		dlc = (*dlc->rd_proto->newconn)(dlc->rd_upper, &laddr, &raddr);
 

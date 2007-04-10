@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_exec_aout.c,v 1.8 2005/12/11 12:20:23 christos Exp $	*/
+/*	$NetBSD: sunos32_exec_aout.c,v 1.8.30.1 2007/04/10 13:26:31 ad Exp $	*/
 
 /*
  * Copyright (c) 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos32_exec_aout.c,v 1.8 2005/12/11 12:20:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos32_exec_aout.c,v 1.8.30.1 2007/04/10 13:26:31 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_execfmt.h"
@@ -44,12 +44,11 @@ __KERNEL_RCSID(0, "$NetBSD: sunos32_exec_aout.c,v 1.8 2005/12/11 12:20:23 christ
 #include <sys/file.h>
 #include <sys/exec.h>
 
+#include <compat/netbsd32/netbsd32.h>
+#include <compat/netbsd32/netbsd32_exec.h>
 #include <compat/sunos32/sunos32.h>
 #include <compat/sunos32/sunos32_exec.h>
 #include <compat/sunos/sunos_exec.h>
-
-#include <compat/netbsd32/netbsd32.h>
-#include <compat/netbsd32/netbsd32_exec.h>
 
 int
 exec_sunos32_aout_makecmds(l, epp)

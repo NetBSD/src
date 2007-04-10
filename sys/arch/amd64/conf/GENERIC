@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.134.2.1 2007/03/13 16:49:54 ad Exp $
+# $NetBSD: GENERIC,v 1.134.2.2 2007/04/10 13:22:50 ad Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.134.2.1 $"
+#ident 		"GENERIC-$Revision: 1.134.2.2 $"
 
 maxusers	32		# estimated number of users
 
@@ -72,6 +72,9 @@ options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 # AMD PowerNow! and Cool`n'Quiet technology
 options 	POWERNOW_K8
+
+# Intel(R) On Demand Clock Modulation (aka ODCM)
+# options       INTEL_ONDEMAND_CLOCKMOD
 
 # Enable experimental buffer queue strategy for better responsiveness under 
 # high disk I/O load. Use it with caution - it's not proven to be stable yet.
@@ -649,7 +652,7 @@ usb*	at uhci?
 
 # USB Hubs
 uhub*	at usb?
-uhub*	at uhub? port ? configuration ? interface ?
+uhub*	at uhub? port ?
 
 # USB HID device
 uhidev*	at uhub? port ? configuration ? interface ?
@@ -841,7 +844,7 @@ radio* at bktr?
 #bt3c* at pcmcia? function ?		# 3Com 3CRWB6096-A
 
 # Bluetooth USB Controllers
-ubt* at uhub? port ? configuration ? interface ?
+ubt* at uhub? port ?
 
 # Bluetooth Device Hub
 #bthub* at bt3c?

@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_LAPTOP,v 1.114 2007/01/24 19:46:26 tls Exp $
+#	$NetBSD: INSTALL_LAPTOP,v 1.114.6.1 2007/04/10 13:23:02 ad Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -507,7 +507,7 @@ usb*	at ohci?
 
 # USB Hubs
 uhub*	at usb?
-uhub*	at uhub? port ? configuration ? interface ?
+uhub*	at uhub? port ?
 
 # USB HID device
 uhidev*	at uhub? port ? configuration ? interface ?

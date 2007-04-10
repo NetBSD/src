@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.26.30.1 2007/03/13 16:50:00 ad Exp $	*/
+/*	$NetBSD: frame.h,v 1.26.30.2 2007/04/10 13:23:07 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -267,8 +267,9 @@ extern char	_lock_cas_ras_end;
 
 #define LOCK_CAS_CHECK(cfp)						\
 do {									\
-	if ((cfp)->cf_pc < (u_long)&_lock_cas_ras_end &&		\
-	    (cfp)->cf_pc > (u_long)&_lock_cas_ras_start) {		\
+	if (! CLKF_USERMODE(cfp) &&					\
+	    (CLKF_PC(cfp) < (u_long)&_lock_cas_ras_end &&		\
+	     CLKF_PC(cfp) > (u_long)&_lock_cas_ras_start)) {		\
 	    	(cfp)->cf_pc = (u_long)&_lock_cas_ras_start;		\
 	}								\
 } while (/*CONSTCOND*/0)

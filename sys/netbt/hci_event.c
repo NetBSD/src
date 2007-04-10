@@ -1,4 +1,4 @@
-/*	$NetBSD: hci_event.c,v 1.3 2007/03/04 06:03:19 christos Exp $	*/
+/*	$NetBSD: hci_event.c,v 1.3.2.1 2007/04/10 13:26:48 ad Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hci_event.c,v 1.3 2007/03/04 06:03:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hci_event.c,v 1.3.2.1 2007/04/10 13:26:48 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -57,7 +57,7 @@ static void hci_cmd_read_local_features(struct hci_unit *, struct mbuf *);
 static void hci_cmd_reset(struct hci_unit *, struct mbuf *);
 
 #ifdef BLUETOOTH_DEBUG
-int bluetooth_debug = BLUETOOTH_DEBUG;
+int bluetooth_debug;
 
 static const char *hci_eventnames[] = {
 /* 0x00 */ "NULL",
@@ -344,7 +344,7 @@ hci_event_num_compl_pkts(struct hci_unit *unit, struct mbuf *m)
 				hci_sco_complete(link, num);
 			}
 		} else {
-			// XXX need to issue Read_Buffer_Size or Reset?
+			/* XXX need to issue Read_Buffer_Size or Reset? */
 			printf("%s: unknown handle %d! "
 				"(losing track of %d packet buffer%s)\n",
 				unit->hci_devname, handle,
@@ -725,7 +725,7 @@ hci_cmd_read_local_features(struct hci_unit *unit, struct mbuf *m)
 	if (rp.features[4] & HCI_LMP_EV5_PKT)
 		unit->hci_sco_mask |= HCI_PKT_EV5;
 
-	// XXX what do 2MBPS/3MBPS/3SLOT eSCO mean?
+	/* XXX what do 2MBPS/3MBPS/3SLOT eSCO mean? */
 
 	s = splraiseipl(unit->hci_ipl);
 	unit->hci_flags &= ~BTF_INIT_FEATURES;

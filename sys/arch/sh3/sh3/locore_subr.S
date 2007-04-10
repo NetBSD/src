@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.30.8.1 2007/03/13 16:50:04 ad Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.30.8.2 2007/04/10 13:23:16 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 #include <sh3/mmu_sh3.h>
 #include <sh3/mmu_sh4.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore_subr.S,v 1.30.8.1 2007/03/13 16:50:04 ad Exp $")
+__KERNEL_RCSID(0, "$NetBSD: locore_subr.S,v 1.30.8.2 2007/04/10 13:23:16 ad Exp $")
 
 
 /*
@@ -89,8 +89,7 @@ __KERNEL_RCSID(0, "$NetBSD: locore_subr.S,v 1.30.8.1 2007/03/13 16:50:04 ad Exp 
  */
 ENTRY(cpu_switch)
 	/* Save current lwp's context to switchframe */
-	mov.l	.L_PCB,	r0
-	mov.l	@(r0, r4), r1		/* l->l_md.md_pcb */
+	mov.l	@(L_MD_PCB, r4), r1	/* l->l_md.md_pcb */
 	SAVEPCB(r1)
 
 .L_find_and_switch:
@@ -106,8 +105,7 @@ ENTRY(cpu_switch)
 
 .L_doswitch:
 	/* Restore new lwp's context from switchframe */
-	mov.l	.L_PCB,	r0
-	mov.l	@(r0, r4), r1		/* l->l_md.md_pcb */
+	mov.l	@(L_MD_PCB, r4), r1	/* l->l_md.md_pcb */
 	/* no additional offset to l->l_md.md_pcb->pcb_sf */
 
 	/* Setup kernel stack first */
@@ -138,8 +136,7 @@ ENTRY(cpu_switch)
 
 	/* Finish restoring new lwp's context from switchframe */
 	/* NOTE: r2 has return value! */
-2:	mov.l	.L_PCB,	r0
-	mov.l	@(r0, r4), r1		/* l->l_md.md_pcb */
+2:	mov.l	@(L_MD_PCB, r4), r1	/* l->l_md.md_pcb */
 	/* no additional offset to l->l_md.md_pcb->pcb_sf */
 	add	#4,	r1		/* r15 already restored */
 	mov.l	@r1+,	r14
@@ -157,8 +154,8 @@ ENTRY(cpu_switch)
 	/* r2 has the return value; stuff it into r0 now. */
 	rts
 	 mov	r2, r0
+
 	.align	2
-.L_PCB:			.long	(L_MD_PCB)
 .L_cpu_switch_search:	.long	_C_LABEL(cpu_switch_search)
 FUNC_SYMBOL(switch_resume)
 
@@ -170,8 +167,7 @@ FUNC_SYMBOL(switch_resume)
  */
 ENTRY(cpu_switchto)
 	/* Save current lwp's context to switchframe. */
-	mov.l	.L_PCBp, r0
-	mov.l	@(r0, r4), r1		/* l->l_md.md_pcb */
+	mov.l	@(L_MD_PCB, r4), r1	/* l->l_md.md_pcb */
 	SAVEPCB(r1)
 
 	/*
@@ -196,7 +192,6 @@ ENTRY(cpu_switchto)
 	 mov	r0, r4
 
 	.align	2
-.L_PCBp:		.long	(L_MD_PCB)
 .L_curlwp:		.long	_C_LABEL(curlwp)
 .L_cpu_switch_prepare:	.long	_C_LABEL(cpu_switch_prepare)
 
@@ -248,13 +243,12 @@ ENTRY(cpu_do_exit)
  *	hard reset. (never can access kernel stack).
  */
 NENTRY(sh3_switch_resume)
-	mov.l	.L_UPTE, r0
 	mov.l	.L_curupte, r1
-	add	r4,	r0	/* l->l_md.md_upte */
+	add	#L_MD_UPTE, r4		/* l->l_md.md_upte */
 	rts
-	 mov.l	r0,	@r1
+	 mov.l	r4, @r1
+
 	.align	2
-.L_UPTE:		.long	L_MD_UPTE
 .L_curupte:		.long	_C_LABEL(curupte)
 	SET_ENTRY_SIZE(sh3_switch_resume)
 #endif /* SH3 */
@@ -267,8 +261,7 @@ NENTRY(sh3_switch_resume)
  *	TLB multiple hit.
  */
 NENTRY(sh4_switch_resume)
-	mov.l	.L_UPTE__sh4, r0
-	add	r0,	r4	/* l->l_md.md_upte */
+	add	#L_MD_UPTE, r4	/* l->l_md.md_upte */
 	mov	#UPAGES,r3
 	mov	#1,	r2
 	mov.l	@r4,	r0	/* if (l->l_md.md_upte[0].addr == 0) return; */
@@ -321,7 +314,7 @@ NENTRY(sh4_switch_resume)
 2:	rts			/* mova target must be 4byte alignment */
 	 nop
 	.align	2
-.L_UPTE__sh4:		.long	L_MD_UPTE
+
 .L_4_PTEH:		.long	SH4_PTEH
 .L_4_UTLB_AA_A:		.long	(SH4_UTLB_AA | SH4_UTLB_A)
 .L_4_ITLB_AA:		.long	SH4_ITLB_AA
@@ -458,9 +451,16 @@ NENTRY(_cpu_spin)
 
 
 /*
- * proc_trapmpoline:
- *	Call the service funciton with one argument specified by the r12 and r11
- *	respectively. setted by cpu_fork().
+ * proc_trampoline:
+ *	cpu_lwp_fork() and cpu_setfunc() arrange for proc_trampoline()
+ *	to run when that process gets chosen in cpu_switch().  The
+ *	switch frame will contain a function pointer in r12, and an
+ *	argument to pass to it in r11 (we abuse the callee-saved
+ *	registers).
+ *
+ *	The trampoline calls the function that is indended to do some
+ *	additional setup.  When the function returns, the trampoline
+ *	returns to the user mode.
  */
 NENTRY(proc_trampoline)
 	jsr	@r12
