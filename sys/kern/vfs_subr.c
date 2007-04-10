@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.283.2.3 2007/03/21 20:11:54 ad Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.283.2.4 2007/04/10 13:26:42 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.283.2.3 2007/03/21 20:11:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.283.2.4 2007/04/10 13:26:42 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -237,7 +237,6 @@ struct vnode *
 getcleanvnode(struct lwp *l)
 {
 	struct vnode *vp;
-	struct mount *mp;
 	struct freelst *listhd;
 
 	KASSERT(mutex_owned(&vnode_free_list_lock));
@@ -253,10 +252,8 @@ try_nextlist:
 		 */
 		if ((vp->v_flag & VXLOCK) == 0 &&
 		    ((vp->v_flag & VLAYER) == 0 || VOP_ISLOCKED(vp) == 0)) {
-			if (vn_start_write(vp, &mp, V_NOWAIT) == 0)
 				break;
 		}
-		mp = NULL;
 		mutex_exit(&vp->v_interlock);
 	}
 
@@ -280,7 +277,6 @@ try_nextlist:
 		vgonel(vp, l);
 	else
 		mutex_exit(&vp->v_interlock);
-	vn_finished_write(mp, 0);
 #ifdef DIAGNOSTIC
 	if (vp->v_data || vp->v_uobj.uo_npages ||
 	    TAILQ_FIRST(&vp->v_uobj.memq))
@@ -378,7 +374,6 @@ vfs_rootmountalloc(const char *fstypename, const char *devname,
 	mp->mnt_op = vfsp;
 	mp->mnt_flag = MNT_RDONLY;
 	mp->mnt_vnodecovered = NULLVP;
-	mp->mnt_leaf = mp;
 	vfsp->vfs_refcount++;
 	strncpy(mp->mnt_stat.f_fstypename, vfsp->vfs_name, MFSNAMELEN);
 	mp->mnt_stat.f_mntonname[0] = '/';
@@ -1495,7 +1490,6 @@ loop:
 static void
 vclean(struct vnode *vp, int flags, struct lwp *l)
 {
-	struct mount *mp;
 	int active;
 
 	KASSERT(mutex_owned(&vp->v_interlock));
@@ -1548,9 +1542,7 @@ vclean(struct vnode *vp, int flags, struct lwp *l)
 		int error;
 		struct vnode *vq, *vx;
 
-		vn_start_write(vp, &mp, V_WAIT | V_LOWER);
 		error = vinvalbuf(vp, V_SAVE, NOCRED, l, 0, 0);
-		vn_finished_write(mp, V_LOWER);
 		if (error)
 			error = vinvalbuf(vp, 0, NOCRED, l, 0, 0);
 		KASSERT(error == 0);
@@ -2717,8 +2709,6 @@ vfs_mount_print(struct mount *mp, int full, void (*pr)(const char *, ...))
 	if (mp->mnt_unmounter) {
 		(*pr)("unmounter pid = %d ",mp->mnt_unmounter->l_proc);
 	}
-	(*pr)("wcnt = %d, writeopcountupper = %d, writeopcountupper = %d\n",
-		mp->mnt_wcnt,mp->mnt_writeopcountupper,mp->mnt_writeopcountlower);
 
 	(*pr)("statvfs cache:\n");
 	(*pr)("\tbsize = %lu\n",mp->mnt_stat.f_bsize);

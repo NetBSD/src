@@ -1,4 +1,4 @@
-/* $NetBSD: vesabios.c,v 1.23 2007/02/20 00:09:57 xtraeme Exp $ */
+/* $NetBSD: vesabios.c,v 1.23.4.1 2007/04/10 13:23:00 ad Exp $ */
 
 /*
  * Copyright (c) 2002, 2004
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vesabios.c,v 1.23 2007/02/20 00:09:57 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vesabios.c,v 1.23.4.1 2007/04/10 13:23:00 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -186,6 +186,8 @@ vesabios_attach(struct device *parent, struct device *dev,
 	aprint_normal(": version %d.%d",
 	    vi->VbeVersion >> 8, vi->VbeVersion & 0xff);
 
+	vbaa.vbaa_vbeversion = vi->VbeVersion;
+
 	res = kvm86_bios_read(FAR2FLATPTR(vi->OemVendorNamePtr),
 			      name, sizeof(name));
 	if (res > 0) {
@@ -259,6 +261,12 @@ vesabios_attach(struct device *parent, struct device *dev,
 			if (mi->ModeAttributes & 0x80) {
 				/* flat buffer */
 				rastermodes[nrastermodes++] = modes[i];
+#ifdef VESABIOSVERBOSE
+				aprint_verbose("%s: memory window "
+				    "granularity %d Kb, window size %d Kb\n",
+				    dev->dv_xname,
+				    mi->WinGranularity/1024, mi->WinSize/1024);
+#endif
 			}
 		} else {
 			/* text */

@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmuvar.h,v 1.2 2007/02/15 01:44:54 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmuvar.h,v 1.2.8.1 2007/04/10 13:22:44 ad Exp $");
 
 #ifndef PMUVAR_H
 #define PMUVAR_H
@@ -141,7 +141,7 @@ enum {
 
 struct pmu_ops {
 	void *cookie;
-	int (*do_command)(void *, int, int, uint8_t *, uint8_t *);
+	int (*do_command)(void *, int, int, uint8_t *, int, uint8_t *);
 };
 
 void pmu_poweroff(void);

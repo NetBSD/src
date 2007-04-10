@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.80 2007/03/05 21:05:00 dogcow Exp $	*/
+/*	$NetBSD: machdep.c,v 1.80.2.1 2007/04/10 13:22:55 ad Exp $	*/
 
 /*
  * Copyright (c) 2006 Izumi Tsutsui.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.80 2007/03/05 21:05:00 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.80.2.1 2007/04/10 13:22:55 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -152,7 +152,7 @@ static u_int read_board_id(void);
  */
 int	safepri = MIPS1_PSL_LOWIPL;
 
-extern void *esym;
+extern char *esym;
 extern struct user *proc0paddr;
 
 
@@ -163,13 +163,13 @@ extern struct user *proc0paddr;
 void
 mach_init(unsigned int memsize, u_int bim, char *bip)
 {
-	void *kernend, *v;
+	char *kernend, *v;
 	u_long first, last;
 	extern char edata[], end[];
 	const char *bi_msg;
 #if NKSYMS || defined(DDB) || defined(LKM)
 	int nsym = 0;
-	void *ssym = 0;
+	char *ssym = 0;
 	struct btinfo_symtab *bi_syms;
 #endif
 
@@ -181,7 +181,7 @@ mach_init(unsigned int memsize, u_int bim, char *bip)
 	    ((Elf_Ehdr *)end)->e_ident[EI_CLASS] == ELFCLASS) {
 		esym = end;
 		esym += ((Elf_Ehdr *)end)->e_entry;
-		kernend = (void *)mips_round_page(esym);
+		kernend = (char *)mips_round_page(esym);
 		memset(edata, 0, end - edata);
 	} else
 #endif
@@ -309,7 +309,7 @@ mach_init(unsigned int memsize, u_int bim, char *bip)
 	/*
 	 * Allocate space for proc0's USPACE.
 	 */
-	v = (void *)uvm_pageboot_alloc(USPACE);
+	v = (char *)uvm_pageboot_alloc(USPACE);
 	lwp0.l_addr = proc0paddr = (struct user *)v;
 	lwp0.l_md.md_regs = (struct frame *)(v + USPACE) - 1;
 	curpcb = &lwp0.l_addr->u_pcb;

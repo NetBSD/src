@@ -1,4 +1,4 @@
-/*	$NetBSD: dbri.c,v 1.9.2.1 2007/03/13 16:50:29 ad Exp $	*/
+/*	$NetBSD: dbri.c,v 1.9.2.2 2007/04/10 13:24:33 ad Exp $	*/
 
 /*
  * Copyright (C) 1997 Rudolf Koenig (rfkoenig@immd4.informatik.uni-erlangen.de)
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbri.c,v 1.9.2.1 2007/03/13 16:50:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbri.c,v 1.9.2.2 2007/04/10 13:24:33 ad Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -144,6 +144,7 @@ static int	dbri_set_params(void *, int, int, struct audio_params *,
     struct audio_params *,stream_filter_list_t *, stream_filter_list_t *);
 static int	dbri_round_blocksize(void *, int, int, const audio_params_t *);
 static int	dbri_halt_output(void *);
+static int	dbri_halt_input(void *);
 static int	dbri_getdev(void *, struct audio_device *);
 static int	dbri_set_port(void *, mixer_ctrl_t *);
 static int	dbri_get_port(void *, mixer_ctrl_t *);
@@ -157,6 +158,8 @@ static void	setup_ring(struct dbri_softc *, int, int, int, int,
     void (*)(void *), void *);
 
 static int	dbri_trigger_output(void *, void *, void *, int,
+    void (*)(void *), void *, const struct audio_params *);
+static int	dbri_trigger_input(void *, void *, void *, int,
     void (*)(void *), void *, const struct audio_params *);
 
 static void	*dbri_malloc(void *, int, size_t, struct malloc_type *, int);
@@ -188,7 +191,7 @@ struct audio_hw_if dbri_hw_if = {
 	NULL,	/* start_output */
 	NULL,	/* start_input */
 	dbri_halt_output,
-	NULL,	/* halt_input */
+	dbri_halt_input,
 	NULL,	/* speaker_ctl */
 	dbri_getdev,
 	NULL,	/* setfd */
@@ -201,7 +204,7 @@ struct audio_hw_if dbri_hw_if = {
 	dbri_mappage,
 	dbri_get_props,
 	dbri_trigger_output,
-	NULL	/* trigger_input */
+	dbri_trigger_input
 };
 
 CFATTACH_DECL(dbri, sizeof(struct dbri_softc),
@@ -226,18 +229,18 @@ static const struct audio_format dbri_formats[DBRI_NFORMATS] = {
 };
 
 enum {
-	DBRI_MONITOR_CLASS,
+	DBRI_OUTPUT_CLASS,
 	DBRI_VOL_OUTPUT,
 	DBRI_ENABLE_MONO,
 	DBRI_ENABLE_HEADPHONE,
-	DBRI_ENABLE_LINE
-/*
+	DBRI_ENABLE_LINE,
+	DBRI_MONITOR_CLASS,
+	DBRI_VOL_MONITOR,
 	DBRI_INPUT_CLASS,
-	DBRI_RECORD_CLASS,
 	DBRI_INPUT_GAIN,
 	DBRI_INPUT_SELECT,
+	DBRI_RECORD_CLASS,
 	DBRI_ENUM_LAST
-*/
 };
 
 /*
@@ -277,7 +280,7 @@ dbri_attach_sbus(struct device *parent, struct device *self, void *aux)
 	sc->sc_powerstate = PWR_RESUME;
 
 	pwr = prom_getpropint(sa->sa_node,"pwr-on-auxio",0);
-	printf(": rev %s\n", ver);
+	aprint_normal(": rev %s\n", ver);
 
 	if (pwr) {
 		/*
@@ -361,7 +364,9 @@ dbri_attach_sbus(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_locked = 0;
 	sc->sc_desc_used = 0;
-
+	sc->sc_open = 0;
+	sc->sc_playing = 0;
+	sc->sc_pmgrstate = PWR_RESUME;
 	config_interrupts(self, &dbri_config_interrupts);
 
 	return;
@@ -386,7 +391,7 @@ dbri_set_power(struct dbri_softc *sc, int state)
 		*AUXIO4M_REG |= (AUXIO4M_MMX);
 		splx(s);
 		delay(10000);
-		DPRINTF("done (%02x})\n", *AUXIO4M_REG);
+		DPRINTF("done (%02x)\n", *AUXIO4M_REG);
 	} else {
 		DPRINTF("%s: powering down\n", sc->sc_dev.dv_xname);
 		s = splhigh();
@@ -668,8 +673,8 @@ dbri_process_interrupt(struct dbri_softc *sc, int32_t i)
 			val = reverse_bytes(val, sc->sc_pipe[channel].length);
 		if (sc->sc_pipe[channel].prec)
 			*(sc->sc_pipe[channel].prec) = val;
+#ifndef DBRI_SPIN
 		DPRINTF("%s: wakeup %p\n", sc->sc_dev.dv_xname, sc);
-#if 0
 		wakeup(sc);
 #endif
 		break;
@@ -685,7 +690,8 @@ dbri_process_interrupt(struct dbri_softc *sc, int32_t i)
 
 		DPRINTF("dbri_intr: BRDY\n");
 		if (rd < 0 || rd >= DBRI_NUM_DESCRIPTORS) {
-			printf("%s: invalid rd on pipe\n", sc->sc_dev.dv_xname);
+			aprint_error("%s: invalid rd on pipe\n",
+			    sc->sc_dev.dv_xname);
 			break;
 		}
 
@@ -800,8 +806,6 @@ mmcodec_init(struct dbri_softc *sc)
 
 	mmcodec_init_data(sc);
 
-	sc->sc_open = 0;
-
 	return (0);
 }
 
@@ -876,8 +880,15 @@ mmcodec_default(struct dbri_softc *sc)
 	 */
 	mm->d.bdata[0] = sc->sc_latt = 0x20 | CS4215_HE | CS4215_LE;
 	mm->d.bdata[1] = sc->sc_ratt = 0x20 | CS4215_SE;
-	mm->d.bdata[2] = CS4215_LG(0x08) | CS4215_IS | CS4215_PIO0 | CS4215_PIO1;
-	mm->d.bdata[3] = CS4215_RG(0x08) | CS4215_MA(0x0f);
+	sc->sc_linp = 128;
+	sc->sc_rinp = 128;
+	sc->sc_monitor = 0;
+	sc->sc_input = 1;	/* line */
+	mm->d.bdata[2] = (CS4215_LG((sc->sc_linp >> 4)) & 0x0f) |
+	    ((sc->sc_input == 2) ? CS4215_IS : 0) | CS4215_PIO0 | CS4215_PIO1;
+	mm->d.bdata[3] = (CS4215_RG((sc->sc_rinp >> 4) & 0x0f)) |
+	    CS4215_MA(15 - ((sc->sc_monitor >> 4) & 0x0f));
+	
 
 	/*
 	 * control time slots 1-4
@@ -903,25 +914,23 @@ mmcodec_setgain(struct dbri_softc *sc, int mute)
 		sc->sc_mm.d.bdata[0] = sc->sc_latt | 63;
 		sc->sc_mm.d.bdata[1] = sc->sc_ratt | 63;
 	} else {
-		/*
-		 * We should be setting the proper output here.. for now,
-		 * use the speaker. Possible outputs:
-		 *  Headphones:
-		 *   data[0] |= CS4215_HE;
-		 *  Line out:
-		 *   data[0] |= CS4215_LE;
-		 *  Speaker:
-		 *   data[1] |= CS4215_SE;
-		 */
+
 		sc->sc_mm.d.bdata[0] = sc->sc_latt;
 		sc->sc_mm.d.bdata[1] = sc->sc_ratt;
 	}
+
+	/* input stuff */
+	sc->sc_mm.d.bdata[2] = CS4215_LG((sc->sc_linp >> 4) & 0x0f) |
+	    ((sc->sc_input == 2) ? CS4215_IS : 0) | CS4215_PIO0 | CS4215_PIO1;
+	sc->sc_mm.d.bdata[3] = (CS4215_RG((sc->sc_rinp >> 4)) & 0x0f) |
+	    (CS4215_MA(15 - ((sc->sc_monitor >> 4) & 0x0f)));
 
 	if (sc->sc_powerstate == 0)
 		return;
 	pipe_transmit_fixed(sc, 20, sc->sc_mm.d.ldata);
 
-	/* give the chip some time to execure the command */
+	DPRINTF("mmcodec_setgain: %08x\n", sc->sc_mm.d.ldata);
+	/* give the chip some time to execute the command */
 	delay(250);
 
 	return;
@@ -934,7 +943,7 @@ mmcodec_setcontrol(struct dbri_softc *sc)
 	bus_space_handle_t ioh = sc->sc_ioh;
 	u_int32_t val;
 	u_int32_t tmp;
-#if 1
+#if DBRI_SPIN
 	int i;
 #endif
 
@@ -981,7 +990,7 @@ mmcodec_setcontrol(struct dbri_softc *sc)
 	tmp |= DBRI_CHI_ACTIVATE;
 	bus_space_write_4(iot, ioh, DBRI_REG0, tmp);
 
-#if 1
+#if DBRI_SPIN
 	i = 1024;
 	while (((sc->sc_mm.status & 0xe4) != 0x20) && --i) {
 		delay(125);
@@ -1602,8 +1611,8 @@ dbri_halt_output(void *hdl)
 {
 	struct dbri_softc *sc = hdl;
 
+	sc->sc_playing = 0;
 	pipe_reset(sc, 4);
-
 	return (0);
 }
 
@@ -1646,6 +1655,21 @@ dbri_set_port(void *hdl, mixer_ctrl_t *mc)
 		} else
 			latt &= ~CS4215_LE;
 		break;
+	    case DBRI_VOL_MONITOR:
+		if (mc->un.value.level[AUDIO_MIXER_LEVEL_LEFT] == 
+		    sc->sc_monitor)
+			return 0;
+		sc->sc_monitor = mc->un.value.level[AUDIO_MIXER_LEVEL_LEFT];
+		break;
+	    case DBRI_INPUT_GAIN:
+		sc->sc_linp = mc->un.value.level[AUDIO_MIXER_LEVEL_LEFT];
+		sc->sc_rinp = mc->un.value.level[AUDIO_MIXER_LEVEL_RIGHT];
+		break;
+	    case DBRI_INPUT_SELECT:
+	    	if (mc->un.mask == sc->sc_input)
+	    		return 0;
+	    	sc->sc_input =  mc->un.mask;
+	    	break;
 	}
 
 	sc->sc_latt = latt;
@@ -1677,6 +1701,16 @@ dbri_get_port(void *hdl, mixer_ctrl_t *mc)
 	    case DBRI_ENABLE_LINE:	/* line out */
 	    	mc->un.ord = (sc->sc_latt & CS4215_LE) ? 1 : 0;
 		return 0;
+	    case DBRI_VOL_MONITOR:
+		mc->un.value.level[AUDIO_MIXER_LEVEL_LEFT] = sc->sc_monitor;
+		return 0;
+	    case DBRI_INPUT_GAIN:
+		mc->un.value.level[AUDIO_MIXER_LEVEL_LEFT] = sc->sc_linp;
+		mc->un.value.level[AUDIO_MIXER_LEVEL_RIGHT] = sc->sc_rinp;
+		return 0;
+	    case DBRI_INPUT_SELECT:
+	    	mc->un.mask = sc->sc_input;
+	    	return 0;
 	}
 	return (EINVAL);
 }
@@ -1692,16 +1726,44 @@ dbri_query_devinfo(void *hdl, mixer_devinfo_t *di)
 		di->type = AUDIO_MIXER_CLASS;
 		di->next = di->prev = AUDIO_MIXER_LAST;
 		return 0;
+	case DBRI_OUTPUT_CLASS:
+		di->mixer_class = DBRI_OUTPUT_CLASS;
+		strcpy(di->label.name, AudioCoutputs);
+		di->type = AUDIO_MIXER_CLASS;
+		di->next = di->prev = AUDIO_MIXER_LAST;
+		return 0;
+	case DBRI_INPUT_CLASS:
+		di->mixer_class = DBRI_INPUT_CLASS;
+		strcpy(di->label.name, AudioCinputs);
+		di->type = AUDIO_MIXER_CLASS;
+		di->next = di->prev = AUDIO_MIXER_LAST;
+		return 0;
 	case DBRI_VOL_OUTPUT:	/* master volume */
-		di->mixer_class = DBRI_MONITOR_CLASS;
+		di->mixer_class = DBRI_OUTPUT_CLASS;
 		di->next = di->prev = AUDIO_MIXER_LAST;
 		strcpy(di->label.name, AudioNmaster);
 		di->type = AUDIO_MIXER_VALUE;
 		di->un.v.num_channels = 2;
 		strcpy(di->un.v.units.name, AudioNvolume);
 		return (0);
-	case DBRI_ENABLE_MONO:	/* built-in speaker */
+	case DBRI_INPUT_GAIN:	/* input gain */
+		di->mixer_class = DBRI_INPUT_CLASS;
+		di->next = di->prev = AUDIO_MIXER_LAST;
+		strcpy(di->label.name, AudioNrecord);
+		di->type = AUDIO_MIXER_VALUE;
+		di->un.v.num_channels = 2;
+		strcpy(di->un.v.units.name, AudioNvolume);
+		return (0);
+	case DBRI_VOL_MONITOR:	/* monitor volume */
 		di->mixer_class = DBRI_MONITOR_CLASS;
+		di->next = di->prev = AUDIO_MIXER_LAST;
+		strcpy(di->label.name, AudioNmonitor);
+		di->type = AUDIO_MIXER_VALUE;
+		di->un.v.num_channels = 1;
+		strcpy(di->un.v.units.name, AudioNvolume);
+		return (0);
+	case DBRI_ENABLE_MONO:	/* built-in speaker */
+		di->mixer_class = DBRI_OUTPUT_CLASS;
 		di->next = di->prev = AUDIO_MIXER_LAST;
 		strcpy(di->label.name, AudioNmono);
 		di->type = AUDIO_MIXER_ENUM;
@@ -1712,7 +1774,7 @@ dbri_query_devinfo(void *hdl, mixer_devinfo_t *di)
 		di->un.e.member[1].ord = 1;
 		return (0);
 	case DBRI_ENABLE_HEADPHONE:	/* headphones output */
-		di->mixer_class = DBRI_MONITOR_CLASS;
+		di->mixer_class = DBRI_OUTPUT_CLASS;
 		di->next = di->prev = AUDIO_MIXER_LAST;
 		strcpy(di->label.name, AudioNheadphone);
 		di->type = AUDIO_MIXER_ENUM;
@@ -1723,7 +1785,7 @@ dbri_query_devinfo(void *hdl, mixer_devinfo_t *di)
 		di->un.e.member[1].ord = 1;
 		return (0);
 	case DBRI_ENABLE_LINE:	/* line out */
-		di->mixer_class = DBRI_MONITOR_CLASS;
+		di->mixer_class = DBRI_OUTPUT_CLASS;
 		di->next = di->prev = AUDIO_MIXER_LAST;
 		strcpy(di->label.name, AudioNline);
 		di->type = AUDIO_MIXER_ENUM;
@@ -1733,6 +1795,17 @@ dbri_query_devinfo(void *hdl, mixer_devinfo_t *di)
 		strcpy(di->un.e.member[1].label.name, AudioNon);
 		di->un.e.member[1].ord = 1;
 		return (0);
+	case DBRI_INPUT_SELECT:
+		di->mixer_class = DBRI_INPUT_CLASS;
+		strcpy(di->label.name, AudioNsource);
+		di->type = AUDIO_MIXER_SET;
+		di->prev = di->next = AUDIO_MIXER_LAST;
+		di->un.s.num_mem = 2;
+		strcpy(di->un.s.member[0].label.name, AudioNline);
+		di->un.s.member[0].mask = 1 << 0;
+		strcpy(di->un.s.member[1].label.name, AudioNmicrophone);
+		di->un.s.member[1].mask = 1 << 1;
+		return 0;
 	}
 
 	return (ENXIO);
@@ -1781,10 +1854,51 @@ dbri_trigger_output(void *hdl, void *start, void *end, int blksize,
 
 	if (current < sc->sc_desc_used) {
 		setup_ring(sc, 4, current, num, blksize, intr, intrarg);
+		sc->sc_playing = 1;
 		return 0;
 	}
 	return EINVAL;
 }
+
+static int
+dbri_halt_input(void *cookie)
+{
+	return 0;
+}
+
+static int
+dbri_trigger_input(void *hdl, void *start, void *end, int blksize,
+		    void (*intr)(void *), void *intrarg,
+		    const struct audio_params *param)
+{
+#if notyet
+	struct dbri_softc *sc = hdl;
+	unsigned long count, current, num;
+
+	count = (unsigned long)(((char *)end - (char *)start));
+	num = count / blksize;
+
+	DPRINTF("trigger_input(%lx %lx) : %d %ld %ld\n",
+	    (unsigned long)intr,
+	    (unsigned long)intrarg, blksize, count, num);
+
+	sc->sc_params = *param;
+
+	mmcodec_setcontrol(sc);
+	mmcodec_init_data(sc);
+	current = 0;
+	while ((current < sc->sc_desc_used) &&
+	    (sc->sc_desc[current].buf != start))
+	    	current++;
+
+	if (current < sc->sc_desc_used) {
+		setup_ring(sc, 4, current, num, blksize, intr, intrarg);
+		return 0;
+	}
+#endif
+	return EINVAL;
+}
+
 
 static u_int32_t
 reverse_bytes(u_int32_t b, int len)
@@ -1885,6 +1999,7 @@ dbri_open(void *cookie, int flags)
 	struct dbri_softc *sc = cookie;
 
 	dbri_bring_up(sc);
+	sc->sc_open = 1;
 	return 0;
 }
 
@@ -1893,6 +2008,7 @@ dbri_close(void *cookie)
 {
 	struct dbri_softc *sc = cookie;
 
+	sc->sc_open = 0;
 	dbri_set_power(sc, 0);
 }
 
@@ -1901,16 +2017,40 @@ dbri_powerhook(int why, void *cookie)
 {
 	struct dbri_softc *sc = cookie;
 
+	if (why == sc->sc_pmgrstate)
+		return;
+
 	switch(why)
 	{
 		case PWR_SUSPEND:
-		case PWR_STANDBY:
 			dbri_set_power(sc, 0);
 			break;
 		case PWR_RESUME:
-			dbri_bring_up(sc);
+			DPRINTF("resume: %d\n", sc->sc_open);
+			sc->sc_pmgrstate = PWR_RESUME;
+			if (sc->sc_open == 1) {
+				dbri_bring_up(sc);
+				if (sc->sc_playing) {
+					volatile u_int32_t *cmd;
+					int s;
+
+					s = splaudio();
+					cmd = dbri_command_lock(sc);
+					*(cmd++) = DBRI_CMD(DBRI_COMMAND_SDP,
+					    0, sc->sc_pipe[4].sdp |
+					    DBRI_SDP_VALID_POINTER |
+					    DBRI_SDP_EVERY | DBRI_SDP_CLEAR);
+					*(cmd++) = sc->sc_dmabase +
+					    dbri_dma_off(desc, 0);
+					dbri_command_send(sc, cmd);
+					splx(s);
+				}
+			}
 			break;
+		default:
+			return;
 	}
+	sc->sc_pmgrstate = why;
 }
 
 #endif /* NAUDIO > 0 */

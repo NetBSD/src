@@ -147,7 +147,7 @@ ohci*	at pci? dev ? function ?	# USB Open Host Controller
 
 usb*	at ohci?					# USB bus support
 uhub*	at usb?						# USB Hubs
-uhub*	at uhub? port ? configuration ? interface ?
+uhub*	at uhub? port ?
 uhidev*	at uhub? port ? configuration ? interface ?	# USB HID device
 uhid*	at uhidev? reportid ?				# USB Generic HID
 ukbd*	at uhidev? reportid ?				# USB Keyboards

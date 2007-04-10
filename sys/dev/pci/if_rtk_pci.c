@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rtk_pci.c,v 1.31 2007/02/25 04:19:32 tsutsui Exp $	*/
+/*	$NetBSD: if_rtk_pci.c,v 1.31.4.1 2007/04/10 13:24:26 ad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtk_pci.c,v 1.31 2007/02/25 04:19:32 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtk_pci.c,v 1.31.4.1 2007/04/10 13:24:26 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -248,7 +248,8 @@ rtk_pci_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	sc->rtk_type = t->rtk_basetype;
+	if (t->rtk_basetype == RTK_8129)
+		sc->sc_quirk |= RTKQ_8129;
 
 	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
 

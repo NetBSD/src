@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.169.2.4 2007/04/05 21:44:47 ad Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.169.2.5 2007/04/10 13:26:38 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.169.2.4 2007/04/05 21:44:47 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.169.2.5 2007/04/10 13:26:38 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -343,7 +343,7 @@ exit1(struct lwp *l, int rv)
 	mutex_enter(&p->p_smutex);
 	if (p->p_sflag & PS_PPWAIT) {
 		p->p_sflag &= ~PS_PPWAIT;
-		cv_wakeup(&p->p_pptr->p_waitcv); /* XXXSMP */
+		cv_signal(&p->p_pptr->p_waitcv);
 	}
 	mutex_exit(&p->p_smutex);
 
@@ -515,7 +515,7 @@ exit1(struct lwp *l, int rv)
 		 * continue.
 		 */
 		if (LIST_FIRST(&q->p_children) == NULL)
-			cv_wakeup(&q->p_waitcv);	/* XXXSMP */
+			cv_signal(&q->p_waitcv);
 	}
 	mutex_exit(&q->p_mutex);
 
@@ -538,7 +538,7 @@ exit1(struct lwp *l, int rv)
 	ruadd(p->p_ru, &p->p_stats->p_cru);
 
 	if (wakeinit)
-		cv_wakeup(&initproc->p_waitcv);	/* XXXSMP */
+		cv_signal(&initproc->p_waitcv);
 
 	/*
 	 * Remaining lwp resources will be freed in lwp_exit2() once we've
@@ -565,6 +565,7 @@ exit1(struct lwp *l, int rv)
 	/*
 	 * Signal the parent to collect us, and drop the proclist lock.
 	 */
+	cv_signal(&p->p_pptr->p_waitcv);
 	mutex_exit(&proclist_lock);
 
 	/* Verify that we hold no locks other than the kernel lock. */
@@ -605,7 +606,6 @@ exit1(struct lwp *l, int rv)
 	 * cpu_switch(), finishing our execution (pun intended).
 	 */
 	uvmexp.swtch++;	/* XXXSMP unlocked */
-	cv_wakeup(&p->p_pptr->p_waitcv);	/* XXXSMP */
 	cpu_exit(l);
 }
 
@@ -888,7 +888,7 @@ proc_free(struct proc *p, struct rusage *caller_ru)
 				kpsignal(parent, &ksi, NULL);
 				mutex_exit(&proclist_mutex);
 			}
-			cv_wakeup(&parent->p_waitcv);	/* XXXSMP */
+			cv_signal(&parent->p_waitcv);
 			mutex_exit(&proclist_lock);
 			return;
 		}
@@ -925,23 +925,6 @@ proc_free(struct proc *p, struct rusage *caller_ru)
 	ru = p->p_ru;
 
 	l = LIST_FIRST(&p->p_lwps);
-
-#ifdef MULTIPROCESSOR
-	/*
-	 * If the last remaining LWP is still on the CPU (unlikely), then
-	 * spin until it has switched away.  We need to release all locks
-	 * to avoid deadlock against interrupt handlers on the target CPU.
-	 */
-	if (l->l_cpu->ci_curlwp == l) {
-		int count;
-		mutex_exit(&proclist_lock);
-		KERNEL_UNLOCK_ALL(l, &count);
-		while (l->l_cpu->ci_curlwp == l)
-			SPINLOCK_BACKOFF_HOOK;
-		KERNEL_LOCK(count, l);
-		mutex_enter(&proclist_lock);
-	}
-#endif
 
 	mutex_destroy(&p->p_rasmutex);
 	mutex_destroy(&p->p_mutex);
@@ -985,7 +968,7 @@ proc_free(struct proc *p, struct rusage *caller_ru)
 	/*
 	 * Free the last LWP's resources.
 	 */
-	lwp_free(l, 0, 1);
+	lwp_free(l, false, true);
 
 	/*
 	 * Collect child u-areas.

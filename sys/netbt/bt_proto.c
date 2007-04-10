@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_proto.c,v 1.6 2006/12/09 05:33:07 dyoung Exp $	*/
+/*	$NetBSD: bt_proto.c,v 1.6.6.1 2007/04/10 13:26:47 ad Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bt_proto.c,v 1.6 2006/12/09 05:33:07 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bt_proto.c,v 1.6.6.1 2007/04/10 13:26:47 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/domain.h>
@@ -51,50 +51,38 @@ __KERNEL_RCSID(0, "$NetBSD: bt_proto.c,v 1.6 2006/12/09 05:33:07 dyoung Exp $");
 DOMAIN_DEFINE(btdomain);	/* forward declare and add to link set */
 
 const struct protosw btsw[] = {
-    {	/* raw HCI commands */
-	SOCK_RAW,	&btdomain,
-	BTPROTO_HCI,	PR_ADDR | PR_ATOMIC,
-	NULL,		NULL,		NULL,		hci_ctloutput,
-	hci_usrreq,	NULL,		NULL,		NULL,
-	NULL,
-    },
-    {	/* HCI SCO data (audio) */
-	SOCK_SEQPACKET,	&btdomain,
-	BTPROTO_SCO,	PR_CONNREQUIRED | PR_ATOMIC | PR_LISTEN,
-	NULL,		NULL,		NULL,		sco_ctloutput,
-	sco_usrreq,	NULL,		NULL,		NULL,
-	NULL,
-    },
-    {	/* L2CAP Connection Oriented */
-	SOCK_SEQPACKET,	&btdomain,
-	BTPROTO_L2CAP,	PR_CONNREQUIRED | PR_ATOMIC | PR_LISTEN,
-	NULL,		NULL,		NULL,		l2cap_ctloutput,
-	l2cap_usrreq,	NULL,		NULL,		NULL,
-	NULL,
-    },
-#if 0
-    {	/* L2CAP Ping Requests */
-	SOCK_RAW,	&btdomain,
-	BTPROTO_L2CAP,	PR_ADDR | PR_ATOMIC,
-	NULL,		NULL,		NULL,		NULL,
-	NULL,		NULL,		NULL,		NULL,
-	NULL,
-    },
-    {	/* L2CAP Connectionless */
-	SOCK_DGRAM,	&btdomain,
-	BTPROTO_L2CAP,	PR_ADDR | PR_ATOMIC,
-	NULL,		NULL,		NULL,		NULL,
-	NULL,		NULL,		NULL,		NULL,
-	NULL,
-    },
-#endif
-    {	/* RFCOMM */
-	SOCK_STREAM,	&btdomain,
-	BTPROTO_RFCOMM,	PR_CONNREQUIRED | PR_LISTEN | PR_WANTRCVD,
-	NULL,		NULL,		NULL,		rfcomm_ctloutput,
-	rfcomm_usrreq,	NULL,		NULL,		NULL,
-	NULL,
-    }
+	{ /* raw HCI commands */
+		.pr_type = SOCK_RAW,
+		.pr_domain = &btdomain,
+		.pr_protocol = BTPROTO_HCI,
+		.pr_flags = (PR_ADDR | PR_ATOMIC),
+		.pr_ctloutput = hci_ctloutput,
+		.pr_usrreq = hci_usrreq,
+	},
+	{ /* HCI SCO data (audio) */
+		.pr_type = SOCK_SEQPACKET,
+		.pr_domain = &btdomain,
+		.pr_protocol = BTPROTO_SCO,
+		.pr_flags = (PR_CONNREQUIRED | PR_ATOMIC | PR_LISTEN),
+		.pr_ctloutput = sco_ctloutput,
+		.pr_usrreq = sco_usrreq,
+	},
+	{ /* L2CAP Connection Oriented */
+		.pr_type = SOCK_SEQPACKET,
+		.pr_domain = &btdomain,
+		.pr_protocol = BTPROTO_L2CAP,
+		.pr_flags = (PR_CONNREQUIRED | PR_ATOMIC | PR_LISTEN),
+		.pr_ctloutput = l2cap_ctloutput,
+		.pr_usrreq = l2cap_usrreq,
+	},
+	{ /* RFCOMM */
+		.pr_type = SOCK_STREAM,
+		.pr_domain = &btdomain,
+		.pr_protocol = BTPROTO_RFCOMM,
+		.pr_flags = (PR_CONNREQUIRED | PR_LISTEN | PR_WANTRCVD),
+		.pr_ctloutput = rfcomm_ctloutput,
+		.pr_usrreq = rfcomm_usrreq,
+	},
 };
 
 struct domain btdomain = {

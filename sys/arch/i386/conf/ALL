@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.85.2.1 2007/03/13 16:49:58 ad Exp $
+# $NetBSD: ALL,v 1.85.2.2 2007/04/10 13:23:01 ad Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.85.2.1 $"
+#ident 		"ALL-$Revision: 1.85.2.2 $"
 
 maxusers	32		# estimated number of users
 
@@ -43,6 +43,9 @@ options 	POWERNOW_K7
 
 # AMD PowerNow! and Cool`n'Quiet technology
 options 	POWERNOW_K8
+
+# Intel(R) On Demand Clock Modulation (aka ODCM)
+options       INTEL_ONDEMAND_CLOCKMOD
 
 options 	MTRR		# memory-type range register syscall support
 # doesn't work with MP just yet..
@@ -281,7 +284,7 @@ options 	VGA_CONSOLE_ATI_BROKEN_FONTSEL
 # console scrolling support.
 options 	WSDISPLAY_SCROLLSUPPORT
 # enable VGA raster mode capable of displaying multilingual text on console
-options 	VGA_RASTERCONSOLE
+#options 	VGA_RASTERCONSOLE
 # enable splash screen support; requires hw driver support
 #options 	SPLASHSCREEN
 #options 	SPLASHSCREEN_PROGRESS
@@ -523,6 +526,20 @@ options 	VESAFB_HEIGHT=480
 options 	VESAFB_DEPTH=8
 options 	VESAFB_PM		# power management support
 wsdisplay*	at vesafb? console ?
+
+# VIA Unichrome framebuffer console
+unichromefb*   at pci? dev ? function ?
+wsdisplay*     at unichromefb?
+
+# DRI driver
+i915drm*	at vga?		# Intel i915, i945 DRM driver
+mach64drm*	at vga?		# mach64 (3D Rage Pro, Rage) DRM driver
+mgadrm*		at vga?		# Matrox G[24]00, G[45]50 DRM driver
+r128drm*	at vga?		# ATI Rage 128 DRM driver
+radeondrm*	at vga?		# ATI Radeon DRM driver
+savagedrm*	at vga?		# S3 Savage DRM driver
+sisdrm*		at vga?		# SiS DRM driver
+tdfxdrm*	at vga?		# 3dfx (voodoo) DRM driver
 
 attimer0	at isa?
 pcppi0		at isa?
@@ -1011,7 +1028,7 @@ usb*	at slhci?
 
 # USB Hubs
 uhub*	at usb?
-uhub*	at uhub? port ? configuration ? interface ?
+uhub*	at uhub? port ?
 
 # USB HID device
 uhidev*	at uhub? port ? configuration ? interface ?
@@ -1260,7 +1277,7 @@ radio* at bktr?
 bt3c* at pcmcia? function ?		# 3Com 3CRWB6096-A
 
 # Bluetooth USB Controllers
-ubt* at uhub? port ? configuration ? interface ?
+ubt* at uhub? port ?
 
 # Bluetooth Device Hub
 bthub* at bt3c?

@@ -1,4 +1,4 @@
-/*	$NetBSD: uhidev.c,v 1.33.6.1 2007/03/13 16:50:52 ad Exp $	*/
+/*	$NetBSD: uhidev.c,v 1.33.6.2 2007/04/10 13:24:34 ad Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.33.6.1 2007/03/13 16:50:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.33.6.2 2007/04/10 13:24:34 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,8 +82,6 @@ Static void uhidev_intr(usbd_xfer_handle, usbd_private_handle, usbd_status);
 
 Static int uhidev_maxrepid(void *, int);
 Static int uhidevprint(void *, const char *);
-Static int uhidevsubmatch(struct device *, struct cfdata *,
-			  const int *, void *);
 
 USB_DECLARE_DRIVER(uhidev);
 
@@ -288,7 +286,7 @@ nomem:
 
 			dev = (struct uhidev *)config_found_sm_loc(self,
 				"uhidbus", locs, &uha,
-				uhidevprint, uhidevsubmatch);
+				uhidevprint, config_stdsubmatch);
 			sc->sc_subdevs[repid] = dev;
 			if (dev != NULL) {
 				dev->sc_in_rep_size = repsizes[repid];
@@ -341,17 +339,6 @@ uhidevprint(void *aux, const char *pnp)
 	if (uha->reportid != 0)
 		aprint_normal(" reportid %d", uha->reportid);
 	return (UNCONF);
-}
-
-int
-uhidevsubmatch(struct device *parent, struct cfdata *cf,
-	       const int *locs, void *aux)
-{
-	if (cf->cf_loc[UHIDBUSCF_REPORTID] != UHIDBUSCF_REPORTID_DEFAULT &&
-	    cf->cf_loc[UHIDBUSCF_REPORTID] != locs[UHIDBUSCF_REPORTID])
-		return (0);
-
-	return (config_match(parent, cf, aux));
 }
 
 int

@@ -1,0 +1,18 @@
+# $NetBSD: files.wsfb,v 1.2.2.2 2007/04/10 13:24:53 ad Exp $
+
+#
+# wsdisplay framebuffer drivers
+#
+
+# some generic flags that drivers may or may not honour
+defflag opt_wsfb.h WSFB_FAKE_VGA_FB	# allow mmap(0xa0000)
+defflag opt_wsfb.h WSFB_ALLOW_OTHERS	# allow to mmap() foreign ranges
+
+# a generic framebuffer console
+device genfb: wsemuldisplaydev, rasops8, vcons, drm
+file	dev/wsfb/genfb.c	genfb
+defflag opt_genfb.h GENFB_DEBUG
+
+# an SBus frontend for genfb
+#attach genfb at sbus with genfb_sbus
+#file	dev/wsfb/genfb_sbus.c	genfb

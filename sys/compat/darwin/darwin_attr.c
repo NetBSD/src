@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_attr.c,v 1.14.2.1 2007/03/13 16:50:17 ad Exp $ */
+/*	$NetBSD: darwin_attr.c,v 1.14.2.2 2007/04/10 13:26:21 ad Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_attr.c,v 1.14.2.1 2007/03/13 16:50:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_attr.c,v 1.14.2.2 2007/04/10 13:26:21 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -127,7 +127,6 @@ darwin_sys_getattrlist(l, v, retval)
 	struct nameidata nd;
 	struct vnode *vp;
 	kauth_cred_t cred;
-	const char *path;
 	void *sg = stackgap_init(p, 0);
 	int fl;
 
@@ -156,12 +155,12 @@ darwin_sys_getattrlist(l, v, retval)
 	fl = CHECK_ALT_FL_EXISTS;
 	if (follow == NOFOLLOW)
 		fl |= CHECK_ALT_FL_SYMLINK;
-	(void)emul_find(l, &sg, p->p_emul->e_path, SCARG(uap, path), &path, fl);
+	(void)emul_find(l, &sg, p->p_emul->e_path, SCARG(uap, path), &SCARG(uap, path), fl);
 
 	/*
 	 * Get the informations for path: file related info
 	 */
-	error = do_sys_stat(l, path, follow, &st);
+	error = do_sys_stat(l, SCARG(uap, path), follow, &st);
 	if (error != 0)
 		return error;
 
@@ -169,7 +168,7 @@ darwin_sys_getattrlist(l, v, retval)
 	 * filesystem related info
 	 */
 	uf = stackgap_alloc(p, &sg, sizeof(f));
-	SCARG(&cup2, path) = path;
+	SCARG(&cup2, path) = SCARG(uap, path);
 	SCARG(&cup2, buf) = uf;
 	if ((error = compat_20_sys_statfs(l, &cup2, retval)) != 0)
 	 	return error;
@@ -191,7 +190,7 @@ darwin_sys_getattrlist(l, v, retval)
 	kauth_cred_seteuid(cred, kauth_cred_getuid(l->l_cred));
 	kauth_cred_setegid(cred, kauth_cred_getgid(l->l_cred));
 
-	NDINIT(&nd, LOOKUP, follow | LOCKLEAF, UIO_USERSPACE, path, l);
+	NDINIT(&nd, LOOKUP, follow | LOCKLEAF, UIO_USERSPACE, SCARG(uap, path), l);
 	if ((error = namei(&nd)) != 0)
 		goto out2;
 

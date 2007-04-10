@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_ioctl.c,v 1.5 2007/03/04 06:01:25 christos Exp $ */
+/*	$NetBSD: linux32_ioctl.c,v 1.5.2.1 2007/04/10 13:26:25 ad Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_ioctl.c,v 1.5 2007/03/04 06:01:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_ioctl.c,v 1.5.2.1 2007/04/10 13:26:25 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -74,7 +74,7 @@ linux32_sys_ioctl(l, v, retval)
 
 #ifdef DEBUG_LINUX
 	printf("linux32_sys_ioctl(%d, 0x%x/\'%c\', %p)\n", SCARG(uap, fd),
-	    SCARG(uap, com), (char)group, NETBSD32PTR64(SCARG(uap, data)));
+	    SCARG(uap, com), (char)group, SCARG_P32(uap, data));
 #endif
 
 	switch(group) {
@@ -86,7 +86,7 @@ linux32_sys_ioctl(l, v, retval)
 
 		SCARG(&cup, fd) = SCARG(uap, fd);
 		SCARG(&cup, com) = (u_long)SCARG(uap, com);
-		SCARG(&cup, data) = (void *)(u_long)SCARG(uap, data);
+		SCARG(&cup, data) = SCARG_P32(uap, data);
 		error = linux_ioctl_socket(l, &cup, retval);
 		break;
 	}

@@ -1,8 +1,10 @@
-/* $NetBSD: vesafb.c,v 1.20 2007/03/04 05:59:56 christos Exp $ */
+/* $NetBSD: vesafb.c,v 1.20.2.1 2007/04/10 13:23:00 ad Exp $ */
 
 /*-
  * Copyright (c) 2006 Jared D. McNeill <jmcneill@invisible.ca>
  * All rights reserved.
+ *
+ * Hardware scrolling added in 2007 by Reinoud Zandijk <reinoud@NetBSD.org>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -35,7 +37,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vesafb.c,v 1.20 2007/03/04 05:59:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vesafb.c,v 1.20.2.1 2007/04/10 13:23:00 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,7 +77,7 @@ struct wsscreen_descr vesafb_stdscreen = {
 static int	vesafb_ioctl(void *, void *, u_long, void *, int,
 		    struct lwp *);
 static paddr_t	vesafb_mmap(void *, void *, off_t, int);
-
+static void	vesafb_show_screen_cb(struct vcons_screen *);
 static void	vesafb_init_screen(void *, struct vcons_screen *,
 					int, long *);
 
@@ -218,10 +220,35 @@ vesafb_attach(struct device *parent, struct device *dev, void *aux)
 	vcons_init(&sc->sc_vd, sc, &vesafb_stdscreen,
 	    &vesafb_accessops);
 	sc->sc_vd.init_screen = vesafb_init_screen;
+	sc->sc_vd.show_screen_cb = vesafb_show_screen_cb;
 
 	aprint_normal("%s: fb %dx%dx%d @0x%x\n", sc->sc_dev.dv_xname,
 	       mi->XResolution, mi->YResolution,
 	       mi->BitsPerPixel, mi->PhysBasePtr);
+
+	if (vaa->vbaa_vbeversion >= 0x300) {
+		sc->sc_scrollscreens = mi->LinNumberOfImagePages;
+	} else {
+		sc->sc_scrollscreens = mi->NumberOfImagePages;
+	}
+	if (sc->sc_scrollscreens == 0)
+		sc->sc_scrollscreens = 1;
+
+	/* XXX disable hardware scrolling for now; kvm86_call() can trap */
+	sc->sc_scrollscreens = 1;
+
+	sc->sc_screensize = mi->YResolution * mi->BytesPerScanLine;
+	sc->sc_fbsize = sc->sc_scrollscreens * sc->sc_screensize;
+
+	aprint_normal("%s: %d Kb memory reported, %d screens possible\n",
+	       sc->sc_dev.dv_xname,
+	       sc->sc_fbsize / 1024,
+	       sc->sc_scrollscreens);
+
+	if (sc->sc_scrollscreens == 1)
+		aprint_normal("%s: one screen, so hardware scrolling not "
+			"possible\n", sc->sc_dev.dv_xname);
+
 	if (sc->sc_pm) {
 		aprint_normal("%s: VBE/PM %d.%d", sc->sc_dev.dv_xname,
 		    (sc->sc_pmver >> 4), sc->sc_pmver & 0xf);
@@ -237,24 +264,34 @@ vesafb_attach(struct device *parent, struct device *dev, void *aux)
 	}
 
 	res = _x86_memio_map(X86_BUS_SPACE_MEM, mi->PhysBasePtr,
-			      mi->YResolution * mi->BytesPerScanLine,
+			      sc->sc_fbsize,		/* was sc_screensize */
 			      BUS_SPACE_MAP_LINEAR, &h);
 	if (res) {
 		aprint_error("%s: framebuffer mapping failed\n",
 		    sc->sc_dev.dv_xname);
 		goto out;
 	}
-	sc->sc_bits = bus_space_vaddr(X86_BUS_SPACE_MEM, h);
+	sc->sc_fbstart = bus_space_vaddr(X86_BUS_SPACE_MEM, h);
+	sc->sc_bits = sc->sc_fbstart;
 
 #ifdef VESAFB_SHADOW_FB
-	sc->sc_shadowbits = malloc(mi->YResolution * mi->BytesPerScanLine,
+	sc->sc_shadowbits = malloc(sc->sc_screensize,
 				   M_VESAFB, M_NOWAIT);
 	if (sc->sc_shadowbits == NULL) {
 		aprint_error("%s: unable to allocate %d bytes for shadowfb\n",
-		    sc->sc_dev.dv_xname, mi->YResolution*mi->BytesPerScanLine);
+		    sc->sc_dev.dv_xname, sc->sc_screensize);
 		/* Not fatal; we'll just have to continue without shadowfb */
 	}
 #endif
+
+	/* initialise our display wide settings */
+#ifdef VESAFB_SHADOW_FB
+	sc->sc_displ_bits   = sc->sc_shadowbits;
+	sc->sc_displ_hwbits = sc->sc_bits;
+#else
+	sc->sc_displ_bits   = sc->sc_bits;
+	sc->sc_displ_hwbits = NULL;
+#endif /* !VESAFB_SHADOW_FB */
 
 	vesafb_init(sc);
 
@@ -422,6 +459,119 @@ vesafb_mmap(void *v, void *vs, off_t offset, int prot)
 	return -1;
 }
 
+/* called back by vcons on screen change; needed for VT display sharing */
+static void
+vesafb_show_screen_cb(struct vcons_screen *scr)
+{
+	struct vesafb_softc *sc;
+	struct rasops_info *ri;
+
+	sc = (struct vesafb_softc *) scr->scr_cookie;
+	ri = &scr->scr_ri;
+
+	/* protect against roque values) */
+	if ((sc == NULL) || (ri == NULL))
+		return;
+
+	/* set our rasops info to match the display's global state (VTs!) */
+	ri->ri_bits   = sc->sc_displ_bits;
+	ri->ri_hwbits = sc->sc_displ_hwbits;
+}
+
+static void
+vv_copyrows(void *id, int srcrow, int dstrow, int nrows)
+{
+	static int working = 1;
+	struct trapframe tf;
+	struct rasops_info *ri = id;
+	struct vcons_screen *scr = (struct vcons_screen *) ri->ri_hw;
+	struct vesafb_softc *sc  = (struct vesafb_softc *) scr->scr_cookie;
+	uint32_t displ_offset;
+	uint8_t *src, *dst, *hwbits, *cur_hwbits, *hiwater, *lowater;
+	int fontheight, offset, linesz, size, height;
+	int scrollup, scrolldown, res;
+
+	/* set our rasops info to match the display's global state (VTs!) */
+	ri->ri_bits   = sc->sc_displ_bits;
+	ri->ri_hwbits = sc->sc_displ_hwbits;
+
+	/* fontheight = ri->ri_font->fontheight; */
+	fontheight = 16;
+
+	/* All movements are done in multiples of character heights */
+	height = fontheight * nrows;
+	size   = height * ri->ri_stride;
+	linesz = fontheight * ri->ri_stride;
+	offset = (srcrow - dstrow) * linesz;
+
+	/* check if we are full screen scrolling */
+	scrollup   = (srcrow + nrows >= ri->ri_rows);
+	scrolldown = (dstrow + nrows >= ri->ri_rows);
+
+	if (working && (scrollup || scrolldown))  {
+		lowater = sc->sc_fbstart;
+		hiwater = lowater + sc->sc_fbsize - sc->sc_screensize;
+#ifdef VESAFB_SHADOW_FB
+		hwbits = ri->ri_hwbits;
+#else
+		hwbits = ri->ri_bits;
+#endif
+		cur_hwbits = hwbits;
+		hwbits += offset;
+		if (hwbits > hiwater) {
+			/* offset is positive */
+			memmove(lowater, ri->ri_bits + offset,
+				sc->sc_screensize - offset);
+			hwbits = lowater;
+		}
+		if (hwbits < lowater) {
+			/* offset is negative */
+			memmove(hiwater - offset,
+				ri->ri_bits,
+				sc->sc_screensize + offset);
+			hwbits = hiwater;
+		}
+		/* program VESA frame buffer start */
+		displ_offset = (hwbits - sc->sc_fbstart);
+		memset(&tf, 0, sizeof(struct trapframe));
+		tf.tf_eax = 0x4f07; /* function code */
+		tf.tf_ebx = 0x00;   /* set display immediately */
+		tf.tf_ecx = 0;					/* hpixels */
+		tf.tf_edx = displ_offset / ri->ri_stride;	/* lineno  */
+		tf.tf_vm86_es = 0;
+
+		res = kvm86_bioscall(0x10, &tf);
+		if (res || (tf.tf_eax & 0xff) != 0x4f) {
+			working = 0;
+			aprint_error("%s: vbecall: res=%d, ax=%x\n",
+			    sc->sc_dev.dv_xname, res, tf.tf_eax);
+			hwbits = cur_hwbits;
+			goto out;
+		}
+#ifdef VESAFB_SHADOW_FB
+		ri->ri_hwbits = hwbits;
+		src = ri->ri_bits + srcrow * fontheight * ri->ri_stride;
+		dst = ri->ri_bits + dstrow * fontheight * ri->ri_stride;
+		memmove(dst, src, size);
+#else
+		ri->ri_bits = hwbits;
+#endif
+
+#if 0
+		/* wipe out remains of the screen if nessisary */
+		if (ri->ri_emuheight != ri->ri_height)
+			vv_eraserows(id, ri->ri_rows, 1, 0);
+#endif
+		/* remember display's global state (VTs!) */
+		sc->sc_displ_bits   = ri->ri_bits;
+		sc->sc_displ_hwbits = ri->ri_hwbits;
+		return;
+	}
+out:
+	/* just deligate to the origional routine */
+	sc->sc_orig_copyrows(id, srcrow, dstrow, nrows);
+}
+
 static void
 vesafb_init_screen(void *c, struct vcons_screen *scr, int existing,
     long *defattr)
@@ -437,13 +587,13 @@ vesafb_init_screen(void *c, struct vcons_screen *scr, int existing,
 	ri->ri_depth = mi->BitsPerPixel;
 	ri->ri_width = mi->XResolution;
 	ri->ri_height = mi->YResolution;
+	ri->ri_emuheight = ri->ri_height;	/* XXX always ? */
 	ri->ri_stride = mi->BytesPerScanLine;
-#ifdef VESAFB_SHADOW_FB
-	ri->ri_bits = sc->sc_shadowbits;
-	ri->ri_hwbits = sc->sc_bits;
-#else
-	ri->ri_bits = sc->sc_bits;
-#endif /* !VESAFB_SHADOW_FB */
+
+	/* set our rasops info to match the display's global state (VTs!) */
+	ri->ri_bits   = sc->sc_displ_bits;
+	ri->ri_hwbits = sc->sc_displ_hwbits;
+
 	ri->ri_caps = WSSCREEN_WSCOLORS;
 	ri->ri_rnum = mi->RedMaskSize;
 	ri->ri_gnum = mi->GreenMaskSize;
@@ -453,6 +603,12 @@ vesafb_init_screen(void *c, struct vcons_screen *scr, int existing,
 	ri->ri_bpos = mi->BlueFieldPosition;
 
 	rasops_init(ri, mi->YResolution / 16, mi->XResolution / 8);
+
+	if (sc->sc_scrollscreens > 1) {
+		/* override copyrows but remember old one for delegation */
+		sc->sc_orig_copyrows = ri->ri_ops.copyrows;
+		ri->ri_ops.copyrows  = vv_copyrows;
+	}
 
 #ifdef VESA_DISABLE_TEXT
 	if (scr == &vesafb_console_screen)

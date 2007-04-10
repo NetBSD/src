@@ -1,4 +1,4 @@
-#	$NetBSD: SMDK2410,v 1.30 2006/08/26 20:26:44 christos Exp $
+#	$NetBSD: SMDK2410,v 1.30.12.1 2007/04/10 13:22:55 ad Exp $
 #
 #	SMDK2410 -- Samsung's S3C2410 evaluation board.
 #
@@ -233,7 +233,7 @@ usb*	at ohci0
 
 # USB Hubs
 uhub*	at usb?
-uhub*	at uhub? port ? configuration ? interface ?
+uhub*	at uhub? port ?
 
 # USB HID device
 uhidev*	at uhub? port ? configuration ? interface ?

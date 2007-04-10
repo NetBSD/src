@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_types.h,v 1.2 2005/12/11 12:20:14 christos Exp $ */
+/*	$NetBSD: linux_types.h,v 1.2.30.1 2007/04/10 13:26:22 ad Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -46,6 +46,7 @@ typedef unsigned long linux_dev_t;
 typedef unsigned long linux_ino_t;
 typedef int linux_timer_t;
 
+#define LINUX_STAT64_HAS_NSEC	1
 struct linux_stat64 {
 	linux_dev_t	lst_dev;
 	linux_ino_t	lst_ino;

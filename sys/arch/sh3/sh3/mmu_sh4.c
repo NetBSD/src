@@ -1,4 +1,4 @@
-/*	$NetBSD: mmu_sh4.c,v 1.11 2006/03/04 01:13:35 uwe Exp $	*/
+/*	$NetBSD: mmu_sh4.c,v 1.11.24.1 2007/04/10 13:23:16 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mmu_sh4.c,v 1.11 2006/03/04 01:13:35 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mmu_sh4.c,v 1.11.24.1 2007/04/10 13:23:16 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,7 +48,10 @@ __KERNEL_RCSID(0, "$NetBSD: mmu_sh4.c,v 1.11 2006/03/04 01:13:35 uwe Exp $");
 
 #define	SH4_MMU_HAZARD	__asm volatile("nop;nop;nop;nop;nop;nop;nop;nop;")
 
-static inline void __sh4_itlb_invalidate_all(void);
+/* Must be inlined because we "call" it while running on P2 */
+static inline void __sh4_itlb_invalidate_all(void)
+    __attribute__((always_inline));
+
 
 static inline void
 __sh4_itlb_invalidate_all()

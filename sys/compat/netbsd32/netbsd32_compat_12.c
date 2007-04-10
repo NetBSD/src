@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_12.c,v 1.23 2007/03/04 07:54:07 christos Exp $	*/
+/*	$NetBSD: netbsd32_compat_12.c,v 1.23.2.1 2007/04/10 13:26:26 ad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_12.c,v 1.23 2007/03/04 07:54:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_12.c,v 1.23.2.1 2007/04/10 13:26:26 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -109,7 +109,7 @@ compat_12_netbsd32_msync(l, v, retval)
 	} */ *uap = v;
 	struct sys___msync13_args ua;
 
-	NETBSD32TOX64_UAP(addr, void *);
+	NETBSD32TOP_UAP(addr, void *);
 	NETBSD32TOX_UAP(len, size_t);
 	SCARG(&ua, flags) = MS_SYNC | MS_INVALIDATE;
 	return (sys___msync13(l, &ua, retval));
@@ -127,7 +127,7 @@ compat_12_netbsd32_oswapon(l, v, retval)
 	struct sys_swapctl_args ua;
 
 	SCARG(&ua, cmd) = SWAP_ON;
-	SCARG(&ua, arg) = (void *)NETBSD32PTR64(SCARG(uap, name));
+	SCARG(&ua, arg) = SCARG_P32(uap, name);
 	SCARG(&ua, misc) = 0;	/* priority */
 	return (sys_swapctl(l, &ua, retval));
 }
@@ -159,7 +159,7 @@ compat_12_netbsd32_stat12(l, v, retval)
 	if (rv)
 		return (rv);
 
-	sp32 = (struct netbsd32_stat12 *)NETBSD32PTR64(SCARG(uap, ub));
+	sp32 = SCARG_P32(uap, ub);
 	netbsd32_stat12_to_netbsd32(sp12, &sb32);
 
 	return (copyout(&sb32, sp32, sizeof sb32));
@@ -187,7 +187,7 @@ compat_12_netbsd32_fstat12(l, v, retval)
 	if (rv)
 		return (rv);
 
-	sp32 = (struct netbsd32_stat12 *)NETBSD32PTR64(SCARG(uap, sb));
+	sp32 = SCARG_P32(uap, sb);
 	netbsd32_stat12_to_netbsd32(sp12, &sb32);
 
 	return (copyout(&sb32, sp32, sizeof sb32));
@@ -220,7 +220,7 @@ compat_12_netbsd32_lstat12(l, v, retval)
 	if (rv)
 		return (rv);
 
-	sp32 = (struct netbsd32_stat12 *)NETBSD32PTR64(SCARG(uap, ub));
+	sp32 = SCARG_P32(uap, ub);
 	netbsd32_stat12_to_netbsd32(sp12, &sb32);
 
 	return (copyout(&sb32, sp32, sizeof sb32));

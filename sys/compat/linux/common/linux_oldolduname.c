@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_oldolduname.c,v 1.61 2007/02/09 21:55:19 ad Exp $	*/
+/*	$NetBSD: linux_oldolduname.c,v 1.61.6.1 2007/04/10 13:26:23 ad Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_oldolduname.c,v 1.61 2007/02/09 21:55:19 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_oldolduname.c,v 1.61.6.1 2007/04/10 13:26:23 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,7 +69,7 @@ linux_sys_oldolduname(struct lwp *l, void *v,
 	strncpy(luts.l_nodename, hostname, sizeof(luts.l_nodename));
 	strncpy(luts.l_release, linux_release, sizeof(luts.l_release));
 	strncpy(luts.l_version, linux_version, sizeof(luts.l_version));
-	strncpy(luts.l_machine, machine, sizeof(luts.l_machine));
+	strncpy(luts.l_machine, linux_machine, sizeof(luts.l_machine));
 
 	return copyout(&luts, SCARG(uap, up), sizeof(luts));
 }

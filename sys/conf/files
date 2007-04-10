@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.834 2007/03/08 14:26:27 njoly Exp $
+#	$NetBSD: files,v 1.834.2.1 2007/04/10 13:26:33 ad Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -861,6 +861,8 @@ define	ata_udma
 define	ata_piobm
 device	wdc: ata, wdc_common
 
+defflag	opt_ata.h	ATADEBUG
+
 device	atabus: atapi,ata_hl
 attach	atabus at ata
 # The strange expression is to dump ata_* definitions to ata_dma.h.
@@ -961,6 +963,10 @@ file	dev/ic/acpipmtimer.c	acpipmtimer
 device 	hpet
 file 	dev/ic/hpet.c		hpet			needs-flag
 
+# DRM - Direct Rendering Infrastructure: dev/drm
+define drm {}
+include	dev/drm/files.drm
+
 # Definitions for wscons
 # device attributes: display, display with emulator, keyboard, and mouse
 #
@@ -988,7 +994,7 @@ defparam opt_vga.h		VGA_CONSOLE_SCREENTYPE
 defflag opt_vga.h 		VGA_CONSOLE_ATI_BROKEN_FONTSEL
 defflag opt_vga.h		VGA_RASTERCONSOLE
 defflag opt_vga.h		VGA_RESET
-device	vga: wsemuldisplaydev, pcdisplayops
+device	vga: wsemuldisplaydev, pcdisplayops, drm
 file	dev/ic/vga.c		vga & !vga_rasterconsole	needs-flag
 file	dev/ic/vga_raster.c	vga_rasterconsole		needs-flag
 file	dev/ic/vga_subr.c	vga | vga_rasterconsole

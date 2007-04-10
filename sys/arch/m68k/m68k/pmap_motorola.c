@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.c,v 1.27.2.1 2007/03/13 16:50:00 ad Exp $        */
+/*	$NetBSD: pmap_motorola.c,v 1.27.2.2 2007/04/10 13:23:07 ad Exp $        */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -124,7 +124,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.27.2.1 2007/03/13 16:50:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.27.2.2 2007/04/10 13:23:07 ad Exp $");
 
 #include "opt_compat_hpux.h"
 
@@ -1026,7 +1026,7 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 /*
  * pmap_protect:		[ INTERFACE ]
  *
- *	Set the physical protectoin on the specified range of this map
+ *	Set the physical protection on the specified range of this map
  *	as requested.
  */
 void

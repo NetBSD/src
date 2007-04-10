@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_raidreg.h,v 1.3 2005/12/11 12:21:14 christos Exp $	*/
+/*	$NetBSD: ata_raidreg.h,v 1.3.30.1 2007/04/10 13:24:22 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000,2001,2002 Søren Schmidt <sos@FreeBSD.org>
@@ -168,6 +168,38 @@ struct adaptec_raid_conf {
 	uint32_t	magic_4;
 #define ADP_MAGIC_4		0x0950f89f
 	uint32_t	dummy_9[62];
+} __attribute__((__packed__));
+
+/* VIA Tech V-RAID Metadata */
+/* Derrived from FreeBSD ata-raid.h 1.46 */
+#define VIA_LBA(wd) ((wd)->sc_capacity - 1)
+
+struct via_raid_conf {
+	uint16_t	magic;
+#define VIA_MAGIC		0xaa55
+	uint8_t		dummy_0;
+	uint8_t		type;
+#define VIA_T_MASK		0x7e
+#define VIA_T_BOOTABLE		0x01
+#define VIA_T_RAID0		0x04
+#define VIA_T_RAID1		0x0c
+#define VIA_T_RAID01		0x4c
+#define VIA_T_RAID5		0x2c
+#define VIA_T_SPAN		0x44
+#define VIA_T_UNKNOWN		0x80
+	uint8_t		disk_index;
+#define VIA_D_MASK		0x0f
+#define VIA_D_DEGRADED		0x10
+#define VIA_D_HIGH_IDX		0x20
+	uint8_t		stripe_layout;
+#define VIA_L_DISKS		0x07
+#define VIA_L_MASK		0xf0
+#define VIA_L_SHIFT		4
+	uint64_t		disk_sectors;
+	uint32_t		disk_id;
+	uint32_t		disks[8];
+	uint8_t			checksum;
+	uint8_t			pad_0[461];
 } __attribute__((__packed__));
 
 #endif /* _DEV_PCI_PCIIDE_PROMISE_RAID_H_ */

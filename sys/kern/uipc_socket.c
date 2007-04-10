@@ -1,7 +1,7 @@
-/*	$NetBSD: uipc_socket.c,v 1.134.2.1 2007/03/13 16:51:58 ad Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.134.2.2 2007/04/10 13:26:42 ad Exp $	*/
 
 /*-
- * Copyright (c) 2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.134.2.1 2007/03/13 16:51:58 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.134.2.2 2007/04/10 13:26:42 ad Exp $");
 
 #include "opt_sock_counters.h"
 #include "opt_sosend_loan.h"
@@ -298,17 +298,14 @@ sodopendfree()
 static size_t
 sodopendfreel()
 {
+	struct mbuf *m, *next;
 	size_t rv = 0;
+	int s;
 
 	KASSERT(mutex_owned(&so_pendfree_lock));
 
-	for (;;) {
-		struct mbuf *m;
-		struct mbuf *next;
-
+	while (so_pendfree != NULL) {
 		m = so_pendfree;
-		if (m == NULL)
-			break;
 		so_pendfree = NULL;
 		mutex_exit(&so_pendfree_lock);
 
@@ -319,7 +316,9 @@ sodopendfreel()
 			sodoloanfree((m->m_flags & M_EXT_PAGES) ?
 			    m->m_ext.ext_pgs : NULL, m->m_ext.ext_buf,
 			    m->m_ext.ext_size);
+			s = splvm();
 			pool_cache_put(&mbpool_cache, m);
+			splx(s);
 		}
 
 		mutex_enter(&so_pendfree_lock);
@@ -496,11 +495,7 @@ socreate(int dom, struct socket **aso, int type, int proto, struct lwp *l)
 	so->so_snd.sb_mowner = &prp->pr_domain->dom_mowner;
 	so->so_mowner = &prp->pr_domain->dom_mowner;
 #endif
-	if (l != NULL) {
-		uid = kauth_cred_geteuid(l->l_cred);
-	} else {
-		uid = 0;
-	}
+	uid = kauth_cred_geteuid(l->l_cred);
 	so->so_uidinfo = uid_find(uid);
 	error = (*prp->pr_usrreq)(so, PRU_ATTACH, (struct mbuf *)0,
 	    (struct mbuf *)(long)proto, (struct mbuf *)0, l);

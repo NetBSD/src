@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_map.c,v 1.18 2006/11/16 01:33:09 christos Exp $	*/
+/*	$NetBSD: pci_map.c,v 1.18.8.1 2007/04/10 13:24:26 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_map.c,v 1.18 2006/11/16 01:33:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_map.c,v 1.18.8.1 2007/04/10 13:24:26 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,7 +91,7 @@ pci_io_find(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t type,
 	}
 
 	if (PCI_MAPREG_IO_SIZE(mask) == 0) {
-		printf("pci_io_find: void region\n");
+		aprint_debug("pci_io_find: void region\n");
 		return (1);
 	}
 
@@ -178,7 +178,7 @@ pci_mem_find(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t type,
 
 	if ((is64bit && PCI_MAPREG_MEM64_SIZE(wmask) == 0) ||
 	    (!is64bit && PCI_MAPREG_MEM_SIZE(mask) == 0)) {
-		printf("pci_mem_find: void region\n");
+		aprint_debug("pci_mem_find: void region\n");
 		return (1);
 	}
 

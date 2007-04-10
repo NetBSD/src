@@ -1,4 +1,4 @@
-$NetBSD: README,v 1.41 2006/12/17 16:11:56 peter Exp $
+$NetBSD: README,v 1.41.6.1 2007/04/10 13:22:47 ad Exp $
 
 acorn26:	Acorn ARM2- and ARM3-based machines (arm, 20000509)
 acorn32:	Acorn computers Ltd. ARM 6/7/SA based machines (arm, 20011118)
@@ -18,7 +18,6 @@ evbarm:		ARM-based eval boards (arm, 20010905)
 evbmips:	MIPS-based eval boards (mips, 20020307)
 evbppc:		PowerPC-based eval boards (powerpc, 20021209)
 evbsh3:		Hitachi SuperH(TM) sh3 and sh4 eval boards (sh3, 20010206)
-evbsh5:		Hitachi SuperH(TM) sh5 eval boards (sh5, 20020705)
 ews4800mips:	NEC's MIPS based EWS4800 workstations (ews4800mips, 20051229)
 hp300:		Hewlett Packard 300- and 400-series machines (m68k, 19930512)
 hp700:		Hewlett Packard 700-series machines (hppa, 20020606)
@@ -69,7 +68,6 @@ m68k:		Motorola 680x0 CPU based platform files
 mips:		MIPS CPU based platform files
 powerpc:	PowerPC CPU based platform files
 sh3:		Hitachi SuperH(TM) sh3 and sh4 CPU based platform files
-sh5:		Hitachi SuperH(TM) sh5 CPU based platform files
 sparc:		Sun Microsystems SPARC(TM) CPU based platform files
 x86:		Intel x86 based platform files.
 

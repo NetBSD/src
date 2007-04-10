@@ -1,4 +1,4 @@
-#	$NetBSD: TS7200,v 1.29 2006/08/26 20:26:44 christos Exp $
+#	$NetBSD: TS7200,v 1.29.12.1 2007/04/10 13:22:55 ad Exp $
 #
 #	GENERIC -- Generic kernel
 #
@@ -268,7 +268,7 @@ usb*	at ohci?
 
 # USB Hubs
 uhub*	at usb?
-uhub*	at uhub? port ? configuration ? interface ?
+uhub*	at uhub? port ?
 
 # USB HID device
 uhidev*	at uhub? port ? configuration ? interface ?

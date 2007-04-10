@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.125 2007/03/04 06:03:25 christos Exp $	*/
+/*	$NetBSD: in6.c,v 1.125.2.1 2007/04/10 13:26:50 ad Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.125 2007/03/04 06:03:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.125.2.1 2007/04/10 13:26:50 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_pfil_hooks.h"
@@ -227,7 +227,7 @@ in6_ifaddloop(struct ifaddr *ifa)
 	if (rt == NULL || (rt->rt_flags & RTF_HOST) == 0 ||
 	    (rt->rt_ifp->if_flags & IFF_LOOPBACK) == 0)
 		in6_ifloop_request(RTM_ADD, ifa);
-	if (rt)
+	if (rt != NULL)
 		rt->rt_refcnt--;
 }
 
@@ -2115,8 +2115,7 @@ in6_ifawithifp(ifp, dst)
  * perform DAD when interface becomes IFF_UP.
  */
 void
-in6_if_up(ifp)
-	struct ifnet *ifp;
+in6_if_up(struct ifnet *ifp)
 {
 	struct ifaddr *ifa;
 	struct in6_ifaddr *ia;

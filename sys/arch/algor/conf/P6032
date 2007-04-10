@@ -1,4 +1,4 @@
-#	$NetBSD: P6032,v 1.43 2006/09/27 21:42:04 manu Exp $
+#	$NetBSD: P6032,v 1.43.8.1 2007/04/10 13:22:48 ad Exp $
 #
 # Algorithmics P-6032 kernel.
 #
@@ -7,7 +7,7 @@ include	"arch/algor/conf/std.algor"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"P6032-$Revision: 1.43 $"
+#ident 		"P6032-$Revision: 1.43.8.1 $"
 
 maxusers 32
 
@@ -316,7 +316,7 @@ fd*	at	fdc? drive ?
 
 # USB Hubs
 #uhub*	at usb?
-#uhub*	at uhub? port ? configuration ? interface ?
+#uhub*	at uhub? port ?
 
 # USB HID device
 #uhidev*	at uhub? port ? configuration ? interface ?

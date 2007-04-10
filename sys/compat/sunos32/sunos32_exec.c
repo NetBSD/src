@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_exec.c,v 1.27 2007/02/19 15:10:03 cube Exp $	 */
+/*	$NetBSD: sunos32_exec.c,v 1.27.4.1 2007/04/10 13:26:31 ad Exp $	 */
 
 /*
  * Copyright (c) 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos32_exec.c,v 1.27 2007/02/19 15:10:03 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos32_exec.c,v 1.27.4.1 2007/04/10 13:26:31 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
@@ -41,6 +41,8 @@ __KERNEL_RCSID(0, "$NetBSD: sunos32_exec.c,v 1.27 2007/02/19 15:10:03 cube Exp $
 
 #include <uvm/uvm_extern.h>
 
+#include <compat/netbsd32/netbsd32.h>
+#include <compat/netbsd32/netbsd32_syscallargs.h>
 #include <compat/sunos32/sunos32.h>
 #include <compat/sunos32/sunos32_syscall.h>
 #include <compat/sunos32/sunos32_exec.h>

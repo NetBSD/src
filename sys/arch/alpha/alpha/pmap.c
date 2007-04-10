@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.220.2.1 2007/03/13 16:49:53 ad Exp $ */
+/* $NetBSD: pmap.c,v 1.220.2.2 2007/04/10 13:22:48 ad Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -145,7 +145,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.220.2.1 2007/03/13 16:49:53 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.220.2.2 2007/04/10 13:22:48 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -993,7 +993,8 @@ pmap_bootstrap(paddr_t ptaddr, u_int maxasn, u_long ncpuids)
 	 * Initialize the TLB shootdown queues.
 	 */
 	pool_init(&pmap_tlb_shootdown_job_pool,
-	    sizeof(struct pmap_tlb_shootdown_job), 0, 0, 0, "pmaptlbpl", NULL);
+	    sizeof(struct pmap_tlb_shootdown_job), 0, 0, 0, "pmaptlbpl", NULL,
+	    IPL_VM);
 	for (i = 0; i < ALPHA_MAXPROCS; i++) {
 		TAILQ_INIT(&pmap_tlb_shootdown_q[i].pq_head);
 		simple_lock_init(&pmap_tlb_shootdown_q[i].pq_slock);

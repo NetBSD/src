@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_netbsd.c,v 1.24 2007/03/04 21:17:55 degroote Exp $	*/
+/*	$NetBSD: ipsec_netbsd.c,v 1.24.2.1 2007/04/10 13:26:52 ad Exp $	*/
 /*	$KAME: esp_input.c,v 1.60 2001/09/04 08:43:19 itojun Exp $	*/
 /*	$KAME: ah_input.c,v 1.64 2001/09/04 08:43:19 itojun Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_netbsd.c,v 1.24 2007/03/04 21:17:55 degroote Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_netbsd.c,v 1.24.2.1 2007/04/10 13:26:52 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -528,7 +528,7 @@ SYSCTL_SETUP(sysctl_net_inet_fast_ipsec_setup, "sysctl net.inet.ipsec subtree se
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "cleartos", NULL,
-		       NULL, 0, &/*ip4_*/ah_cleartos, 0,
+		       NULL, 0, &ip4_ah_cleartos, 0,
 		       CTL_NET, PF_INET, IPPROTO_AH,
 		       IPSECCTL_AH_CLEARTOS, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
@@ -610,7 +610,7 @@ SYSCTL_SETUP(sysctl_net_inet_fast_ipsec_setup, "sysctl net.inet.ipsec subtree se
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "ah_cleartos", NULL,
-		       NULL, 0, &/*ip4_*/ah_cleartos, 0,
+		       NULL, 0, &ip4_ah_cleartos, 0,
 		       CTL_NET, PF_INET, ipproto_ipsec,
 		       IPSECCTL_AH_CLEARTOS, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,

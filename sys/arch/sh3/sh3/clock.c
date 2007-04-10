@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.37 2006/10/19 00:25:18 uwe Exp $	*/
+/*	$NetBSD: clock.c,v 1.37.8.1 2007/04/10 13:23:15 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.37 2006/10/19 00:25:18 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.37.8.1 2007/04/10 13:23:15 ad Exp $");
 
 #include "opt_pclock.h"
 #include "opt_hz.h"
@@ -147,7 +147,7 @@ sh_clock_init(int flags)
 		sh_clock.tmuclk = SH_RTC_CLOCK;
 
 		/* Make sure RTC oscillator is enabled */
-		_reg_write_1(SH_(RCR2), SH_RCR2_ENABLE | SH_RCR2_START);
+		_reg_bset_1(SH_(RCR2), SH_RCR2_ENABLE);
 	}
 
 	s = _cpu_exception_suspend();

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.254 2007/03/06 11:28:47 dillo Exp $
+# $NetBSD: GENERIC,v 1.254.2.1 2007/04/10 13:23:08 ad Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.254 $"
+#ident 		"GENERIC-$Revision: 1.254.2.1 $"
 
 maxusers	32
 
@@ -458,7 +458,7 @@ ehci*	at cardbus? function ?	# USB Enhanced Host Controller
 usb*	at ohci?					# USB bus support
 usb*	at ehci?					# USB bus support
 uhub*	at usb?						# USB Hubs
-uhub*	at uhub? port ? configuration ? interface ?
+uhub*	at uhub? port ?
 
 uhidev*	at uhub? port ? configuration ? interface ?	# USB HID device
 

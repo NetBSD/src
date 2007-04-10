@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_flow.c,v 1.2.2.1 2007/03/13 16:52:03 ad Exp $	*/
+/*	$NetBSD: ip6_flow.c,v 1.2.2.2 2007/04/10 13:26:51 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -93,9 +93,9 @@ LIST_HEAD(ip6flowhead, ip6flow);
  * use our own (possibly for future expansion).
  */
 #define	IP6FLOW_TIMER		(5 * PR_SLOWHZ)
-#define	IP6FLOW_HASHSIZE	(1 << IP6FLOW_HASHBITS)
+#define	IP6FLOW_DEFAULT_HASHSIZE	(1 << IP6FLOW_HASHBITS) 
 
-static struct ip6flowhead ip6flowtable[IP6FLOW_HASHSIZE];
+static struct ip6flowhead *ip6flowtable = NULL;
 static struct ip6flowhead ip6flowlist;
 static int ip6flow_inuse;
 
@@ -122,6 +122,7 @@ do { \
 #endif
 
 int ip6_maxflows = IP6FLOW_DEFAULT;
+int ip6_hashsize = IP6FLOW_DEFAULT_HASHSIZE;
 
 /*
  * Calculate hash table position.
@@ -131,7 +132,7 @@ ip6flow_hash(struct ip6_hdr *ip6)
 {
 	size_t hash;
 	uint32_t dst_sum, src_sum;
-	int idx;
+	size_t idx;
 
 	src_sum = ip6->ip6_src.s6_addr32[0] + ip6->ip6_src.s6_addr32[1]
 	    + ip6->ip6_src.s6_addr32[2] + ip6->ip6_src.s6_addr32[3];
@@ -143,7 +144,7 @@ ip6flow_hash(struct ip6_hdr *ip6)
 	for (idx = 0; idx < 32; idx += IP6FLOW_HASHBITS)
 		hash += (dst_sum >> (32 - idx)) + (src_sum >> idx);
 
-	return hash & (IP6FLOW_HASHSIZE-1);
+	return hash & (ip6_hashsize-1);
 }
 
 /*
@@ -170,16 +171,34 @@ ip6flow_lookup(struct ip6_hdr *ip6)
 }
 
 /*
- * Initalise lists.
+ * Allocate memory and initialise lists. This function is called
+ * from ip6_init and called there after to resize the hash table.
+ * If a newly sized table cannot be malloc'ed we just continue
+ * to use the old one.
  */
-void
-ip6flow_init(void)
+int
+ip6flow_init(int table_size)
 {
+	struct ip6flowhead *new_table;
 	size_t i;
 
+	new_table = (struct ip6flowhead *)malloc(sizeof(struct ip6flowhead) *
+	    table_size, M_RTABLE, M_NOWAIT);
+
+	if (new_table == NULL)
+		return 1;
+
+	if (ip6flowtable != NULL)
+		free(ip6flowtable, M_RTABLE);
+
+	ip6flowtable = new_table;
+	ip6_hashsize = table_size;
+
 	LIST_INIT(&ip6flowlist);
-	for (i = 0; i < IP6FLOW_HASHSIZE; i++)
+	for (i = 0; i < ip6_hashsize; i++)
 		LIST_INIT(&ip6flowtable[i]);
+
+	return 0;
 }
 
 /*
@@ -214,7 +233,7 @@ ip6flow_fastforward(struct mbuf *m)
 	if ((m->m_flags & (M_BCAST|M_MCAST)) != 0)
 		return 0;
 
-	if (IP6_HDR_ALIGNED_P(mtod(m, caddr_t)) == 0) {
+	if (IP6_HDR_ALIGNED_P(mtod(m, void *)) == 0) {
 		if ((m = m_copyup(m, sizeof(struct ip6_hdr),
 				(max_linkhdr + 3) & ~3)) == NULL) {
 			return 0;
@@ -483,18 +502,25 @@ ip6flow_create(const struct route_in6 *ro, struct mbuf *m)
 }
 
 /*
- * Invalidate/remove all flows.
+ * Invalidate/remove all flows - if new_size is positive we
+ * resize the hash table.
  */
-void
-ip6flow_invalidate_all(void)
+int
+ip6flow_invalidate_all(int new_size)
 {
 	struct ip6flow *ip6f, *next_ip6f;
-	int s;
+	int s, error;
 
+	error = 0;
 	s = splnet();
 	for (ip6f = LIST_FIRST(&ip6flowlist); ip6f != NULL; ip6f = next_ip6f) {
 		next_ip6f = LIST_NEXT(ip6f, ip6f_list);
 		ip6flow_free(ip6f);
 	}
+
+	if (new_size) 
+		error = ip6flow_init(new_size);
 	splx(s);
+
+	return error;
 }

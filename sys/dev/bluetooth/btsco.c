@@ -1,4 +1,4 @@
-/*	$NetBSD: btsco.c,v 1.12 2007/03/04 06:01:45 christos Exp $	*/
+/*	$NetBSD: btsco.c,v 1.12.2.1 2007/04/10 13:24:30 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btsco.c,v 1.12 2007/03/04 06:01:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btsco.c,v 1.12.2.1 2007/04/10 13:24:30 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -747,7 +747,7 @@ btsco_round_blocksize(void *hdl, int bs, int mode,
 		if (bs == 0)
 			bs = sc->sc_mtu;
 	}
-	
+
 	DPRINTF("%s mode=0x%x, bs=%d, sc_mtu=%d\n",
 			device_xname((struct device *)sc), mode, bs, sc->sc_mtu);
 

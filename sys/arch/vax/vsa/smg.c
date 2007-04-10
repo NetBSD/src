@@ -1,4 +1,4 @@
-/*	$NetBSD: smg.c,v 1.43 2007/03/04 19:21:56 christos Exp $ */
+/*	$NetBSD: smg.c,v 1.43.2.1 2007/04/10 13:23:21 ad Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smg.c,v 1.43 2007/03/04 19:21:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smg.c,v 1.43.2.1 2007/04/10 13:23:21 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -569,9 +569,9 @@ smg_show_screen(void *v, void *cookie, int waitok,
 				if (ss->ss_attr[row][col] & WSATTR_REVERSE)
 					s ^= 255;
 				SM_ADDR(row, col, line) = s;
+				if (ss->ss_attr[row][col] & WSATTR_UNDERLINE)
+					SM_ADDR(row, col, line) = 255;
 			}
-			if (ss->ss_attr[row][col] & WSATTR_UNDERLINE)
-				SM_ADDR(row, col, line) = 255;
 		}
 	cursor = &sm_addr[(ss->ss_cury * SM_CHEIGHT * SM_COLS) + ss->ss_curx +
 	    ((SM_CHEIGHT - 1) * SM_COLS)];

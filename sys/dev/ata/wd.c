@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.337.2.1 2007/03/13 17:50:27 ad Exp $ */
+/*	$NetBSD: wd.c,v 1.337.2.2 2007/04/10 13:24:23 ad Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,11 +66,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.337.2.1 2007/03/13 17:50:27 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.337.2.2 2007/04/10 13:24:23 ad Exp $");
 
-#ifndef ATADEBUG
-#define ATADEBUG
-#endif /* ATADEBUG */
+#include "opt_ata.h"
 
 #include "rnd.h"
 

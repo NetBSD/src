@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.871.2.1 2007/03/13 16:50:27 ad Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.871.2.2 2007/04/10 13:24:27 ad Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.872 2007/03/10 21:08:16 christos Exp
+ *	NetBSD: pcidevs,v 1.875 2007/03/27 12:41:39 pooka Exp
  */
 
 /*
@@ -836,6 +836,7 @@
 #define	PCI_PRODUCT_ADMTEK_AL981	0x0981		/* AL981 (Comet) 10/100 Ethernet */
 #define	PCI_PRODUCT_ADMTEK_AN983	0x0985		/* AN983 (Centaur-P) 10/100 Ethernet */
 #define	PCI_PRODUCT_ADMTEK_AN985	0x1985		/* AN985 (Centaur-C) 10/100 Ethernet */
+#define	PCI_PRODUCT_ADMTEK_ADM5120	0x5120		/* Infineon ADM5120 PCI host bridge */
 #define	PCI_PRODUCT_ADMTEK_ADM8211	0x8201		/* ADM8211 11Mbps 802.11b WLAN */
 #define	PCI_PRODUCT_ADMTEK_ADM9511	0x9511		/* ADM9511 (Centaur-II) 10/100 Ethernet */
 #define	PCI_PRODUCT_ADMTEK_ADM9513	0x9513		/* ADM9513 (Centaur-II) 10/100 Ethernet */
@@ -1157,6 +1158,7 @@
 #define	PCI_PRODUCT_ATI_RADEON_RV200_QX	0x5158		/* Radeon 7500 QX */
 #define	PCI_PRODUCT_ATI_RADEON_RV100_QY	0x5159		/* Radeon 7000/VE QY */
 #define	PCI_PRODUCT_ATI_RADEON_RV100_QZ	0x515a		/* Radeon 7000/VE QZ */
+#define	PCI_PRODUCT_ATI_ES1000	0x515e		/* ES1000 */
 #define	PCI_PRODUCT_ATI_RADEON_9100_S	0x516d		/* Radeon 9100 Series Secondary */
 #define	PCI_PRODUCT_ATI_RAGEGLPCI	0x5245		/* Rage 128 GL PCI */
 #define	PCI_PRODUCT_ATI_RAGEGLAGP	0x5246		/* Rage 128 GL AGP 2x */
@@ -2851,6 +2853,7 @@
 #define	PCI_PRODUCT_NVIDIA_MCP55_PCIE	0x0377		/* nForce MCP55 PCI-Express 16x Port */
 #define	PCI_PRODUCT_NVIDIA_MCP55_SATA	0x037e		/* nForce MCP55 Serial ATA Controller */
 #define	PCI_PRODUCT_NVIDIA_MCP55_SATA2	0x037f		/* nForce MCP55 Serial ATA Controller */
+#define	PCI_PRODUCT_NVIDIA_GF_GO_7600	0x0398		/* GeForce Go 7600 */
 #define	PCI_PRODUCT_NVIDIA_MCP61_ISA	0x03e0		/* nForce MCP61 PCI-ISA Bridge */
 #define	PCI_PRODUCT_NVIDIA_MCP61_HDA	0x03e4		/* nForce MCP61 High Definition Audio Controller */
 #define	PCI_PRODUCT_NVIDIA_MCP61_LAN1	0x03e5		/* nForce MCP61 Gigabit Ethernet Controller */

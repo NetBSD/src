@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.32 2007/03/04 06:03:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.32.2.1 2007/04/10 13:26:38 ad Exp $");
 
 #ifdef _KERNEL
 #include "opt_ddb.h"
@@ -134,6 +134,23 @@ static int treex = 1;
 #define	P_BIT(key, bit) ((key[bit >> 3] >> (bit & 7)) & 1)
 #define	STRING(idx) (kernel_symtab.sd_symstart[idx].st_name + \
 			kernel_symtab.sd_strstart)
+
+static int
+ksyms_verify(void *symstart, void *strstart)
+{
+#if defined(DIAGNOSTIC) || defined(DEBUG)
+	if (symstart == NULL)
+		printf("ksyms: Symbol table not found\n");
+	if (strstart == NULL)
+		printf("ksyms: String table not found\n");
+	if (symstart == NULL || strstart == NULL)
+		printf("ksyms: Perhaps the kernel is stripped?\n");
+#endif
+	if (symstart == NULL || strstart == NULL)
+		return 0;
+	KASSERT(symstart <= strstart);
+	return 1;
+}
 
 /*
  * Walk down the tree until a terminal node is found.
@@ -447,7 +464,8 @@ addsymtab_elf(const char *name, Elf_Ehdr *ehdr, struct symtab *tab)
 		break;
 	}
 
-	KASSERT(symstart != NULL && strstart != NULL);
+	if (!ksyms_verify(symstart, strstart))
+		return;
 
 	addsymtab(name, symstart, symsize, strstart, strsize, tab, start);
 }
@@ -528,9 +546,8 @@ ksyms_init_explicit(void *ehdr, void *symstart, size_t symsize,
     void *strstart, size_t strsize)
 {
 
-	KASSERT(symstart != NULL);
-	KASSERT(strstart != NULL);
-	KASSERT(symstart <= strstart);
+	if (!ksyms_verify(symstart, strstart))
+		return;
 
 #if NKSYMS
 	ksyms_hdr_init(ehdr);

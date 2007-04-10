@@ -1,4 +1,4 @@
-/*	$NetBSD: rfcomm_session.c,v 1.5.2.1 2007/03/13 16:52:01 ad Exp $	*/
+/*	$NetBSD: rfcomm_session.c,v 1.5.2.2 2007/04/10 13:26:49 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rfcomm_session.c,v 1.5.2.1 2007/03/13 16:52:01 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rfcomm_session.c,v 1.5.2.2 2007/04/10 13:26:49 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -105,7 +105,7 @@ int rfcomm_mcc_timeout = 20;	/* seconds */
 /*
  * Reversed CRC table as per TS 07.10 Annex B.3.5
  */
-static uint8_t crctable[256] = {	/* reversed, 8-bit, poly=0x07 */
+static const uint8_t crctable[256] = {	/* reversed, 8-bit, poly=0x07 */
 	0x00, 0x91, 0xe3, 0x72, 0x07, 0x96, 0xe4, 0x75,
 	0x0e, 0x9f, 0xed, 0x7c, 0x09, 0x98, 0xea, 0x7b,
 	0x1c, 0x8d, 0xff, 0x6e, 0x1b, 0x8a, 0xf8, 0x69,
@@ -323,7 +323,7 @@ rfcomm_session_timeout(void *arg)
 static void
 rfcomm_session_connecting(void *arg)
 {
-	//struct rfcomm_session *rs = arg;
+	/* struct rfcomm_session *rs = arg; */
 
 	DPRINTF("Connecting\n");
 }
@@ -1077,7 +1077,7 @@ rfcomm_session_recv_mcc_msc(struct rfcomm_session *rs, int cr, struct mbuf *m)
 	len += sizeof(msc.modem);
 
 	dlc->rd_rmodem = msc.modem;
-	// XXX how do we signal this upstream?
+	/* XXX how do we signal this upstream? */
 
 	if (RFCOMM_EA(msc.modem) == 0) {
 		if (m->m_pkthdr.len < sizeof(msc.brk))
@@ -1087,7 +1087,7 @@ rfcomm_session_recv_mcc_msc(struct rfcomm_session *rs, int cr, struct mbuf *m)
 		m_adj(m, sizeof(msc.brk));
 		len += sizeof(msc.brk);
 
-		// XXX how do we signal this upstream?
+		/* XXX how do we signal this upstream? */
 	}
 
 	rfcomm_session_send_mcc(rs, 0, RFCOMM_MCC_MSC, &msc, len);

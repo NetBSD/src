@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.143.4.1 2007/03/13 16:51:05 ad Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.143.4.2 2007/04/10 13:24:34 ad Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.143.4.1 2007/03/13 16:51:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.143.4.2 2007/04/10 13:24:34 ad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_usbverbose.h"
@@ -174,9 +174,18 @@ usbd_get_string_desc(usbd_device_handle dev, int sindex, int langid,
 	req.bRequest = UR_GET_DESCRIPTOR;
 	USETW2(req.wValue, UDESC_STRING, sindex);
 	USETW(req.wIndex, langid);
-	USETW(req.wLength, sizeof(usb_string_descriptor_t));
+	USETW(req.wLength, 2);	/* only size byte first */
 	err = usbd_do_request_flags(dev, &req, sdesc, USBD_SHORT_XFER_OK,
 		&actlen, USBD_DEFAULT_TIMEOUT);
+	if (err)
+		return (err);
+
+	if (actlen < 2)
+		return (USBD_SHORT_XFER);
+
+	USETW(req.wLength, sdesc->bLength);	/* the whole string */
+ 	err = usbd_do_request_flags(dev, &req, sdesc, USBD_SHORT_XFER_OK,
+ 		&actlen, USBD_DEFAULT_TIMEOUT);
 	if (err)
 		return (err);
 
@@ -567,6 +576,13 @@ usbd_set_config_index(usbd_device_handle dev, int index, int msg)
 	int i, ifcidx, nifc, len, selfpowered, power;
 
 	DPRINTFN(5,("usbd_set_config_index: dev=%p index=%d\n", dev, index));
+
+	if (index >= dev->ddesc.bNumConfigurations &&
+	    index != USB_UNCONFIG_NO) {
+		/* panic? */
+		printf("usbd_set_config_index: illegal index\n");
+		return (USBD_INVAL);
+	}
 
 	/* XXX check that all interfaces are idle */
 	if (dev->config != USB_UNCONFIG_NO) {

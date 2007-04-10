@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.305 2007/02/25 13:36:37 tsutsui Exp $
+#	$NetBSD: INSTALL,v 1.305.4.1 2007/04/10 13:23:02 ad Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -653,7 +653,7 @@ usb*	at ohci?
 
 # USB Hubs
 uhub*	at usb?
-uhub*	at uhub? port ? configuration ? interface ?
+uhub*	at uhub? port ?
 
 # USB HID device
 uhidev*	at uhub? port ? configuration ? interface ?

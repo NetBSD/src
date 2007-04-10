@@ -1,4 +1,4 @@
-/* $NetBSD: kern_kcont.c,v 1.13.30.1 2007/03/13 16:51:53 ad Exp $ */
+/* $NetBSD: kern_kcont.c,v 1.13.30.2 2007/04/10 13:26:38 ad Exp $ */
 
 /*
  * Copyright 2003 Jonathan Stone.
@@ -37,7 +37,7 @@
 /*
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_kcont.c,v 1.13.30.1 2007/03/13 16:51:53 ad Exp $ ");
+__KERNEL_RCSID(0, "$NetBSD: kern_kcont.c,v 1.13.30.2 2007/04/10 13:26:38 ad Exp $ ");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -351,7 +351,7 @@ kcont_worker(void *arg)
 static void
 kcont_create_worker(void *arg)
 {
-	if (kthread_create1(kcont_worker, NULL, NULL, "kcont"))
+	if (kthread_create(kcont_worker, NULL, NULL, "kcont"))
 		panic("fork kcont");
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_time.c,v 1.8 2007/03/04 06:01:25 christos Exp $ */
+/*	$NetBSD: linux32_time.c,v 1.8.2.1 2007/04/10 13:26:25 ad Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_time.c,v 1.8 2007/03/04 06:01:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_time.c,v 1.8.2.1 2007/04/10 13:26:25 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -85,19 +85,17 @@ linux32_sys_gettimeofday(l, v, retval)
 	struct netbsd32_timeval tv32;
 	int error;
 
-	if (NETBSD32PTR64(SCARG(uap, tp)) != NULL) {
+	if (SCARG_P32(uap, tp) != NULL) {
 		microtime(&tv);
 		netbsd32_from_timeval(&tv, &tv32);
-		if ((error = copyout(&tv32, 
-		    (void *)NETBSD32PTR64(SCARG(uap, tp)), 
+		if ((error = copyout(&tv32, SCARG_P32(uap, tp), 
 		    sizeof(tv32))) != 0)
 			return error;
 	}
 
 	/* timezone size does not change */
-	if (NETBSD32PTR64(SCARG(uap, tzp)) != NULL) {
-		if ((error = copyout(&linux_sys_tz,
-		    (void *)NETBSD32PTR64(SCARG(uap, tzp)), 
+	if (SCARG_P32(uap, tzp) != NULL) {
+		if ((error = copyout(&linux_sys_tz, SCARG_P32(uap, tzp), 
 		    sizeof(linux_sys_tz))) != 0)
 			return error;
 	}
@@ -140,8 +138,8 @@ linux32_sys_time(l, v, retval)
 
         tt = (linux32_time_t)atv.tv_sec;
 
-        if (SCARG(uap, t) && (error = copyout(&tt, 
-	    NETBSD32PTR64(SCARG(uap, t)), sizeof(tt))))
+        if (SCARG_P32(uap, t) && (error = copyout(&tt, 
+	    SCARG_P32(uap, t), sizeof(tt))))
                 return error;
 
         retval[0] = tt;
@@ -181,7 +179,7 @@ linux32_sys_times(l, v, retval)
 	ltms32.ltms32_cstime = (linux32_clock_t)ltms.ltms_cstime;
 
 	if ((error = copyout(&ltms32, 
-	    NETBSD32PTR64(SCARG(uap, tms)), sizeof(ltms32))) != 0)
+	    SCARG_P32(uap, tms), sizeof(ltms32))) != 0)
 		return error;
 
 	return 0;
@@ -205,9 +203,8 @@ linux32_sys_stime(l, v, retval)
 	    NULL)) != 0)
 		return error;
 
-	if ((error = copyin(&tt32, 
-	    NETBSD32PTR64(SCARG(uap, t)), 
-	    sizeof tt32)) != 0)
+	if ((error = copyin(&tt32, SCARG_P32(uap, t), sizeof tt32)) != 0)
+		return error;
 
 	ts.tv_sec = (long)tt32;
 	ts.tv_nsec = 0;
@@ -236,9 +233,8 @@ linux32_sys_utime(l, v, retval)
         CHECK_ALT_EXIST(l, &sg, SCARG(&ua, path));
 
 
-        if (NETBSD32PTR64(SCARG(uap, times)) != NULL) {
-                if ((error = copyin(NETBSD32PTR64(SCARG(uap, times)), 
-		    &lut, sizeof lut)))
+        if (SCARG_P32(uap, times) != NULL) {
+                if ((error = copyin(SCARG_P32(uap, times), &lut, sizeof lut)))
                         return error;
 
                 tv[0].tv_sec = (long)lut.l_actime;

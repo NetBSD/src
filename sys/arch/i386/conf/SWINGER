@@ -1,4 +1,4 @@
-#	$NetBSD: SWINGER,v 1.88 2006/11/28 16:15:37 christos Exp $
+#	$NetBSD: SWINGER,v 1.88.8.1 2007/04/10 13:23:03 ad Exp $
 #	from NetBSD: GENERIC,v 1.325 2000/04/14 14:53:32 augustss Exp
 #
 #	SWINGER -- thorpej's Abit BP6+dual Celeron
@@ -8,7 +8,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"SWINGER-$Revision: 1.88 $"
+#ident 		"SWINGER-$Revision: 1.88.8.1 $"
 
 maxusers	64		# estimated number of users
 
@@ -601,7 +601,7 @@ usb*	at ohci?
 
 # USB Hubs
 uhub*	at usb?
-uhub*	at uhub? port ? configuration ? interface ?
+uhub*	at uhub? port ?
 
 # USB HID device
 uhidev*	at uhub? port ? configuration ? interface ?

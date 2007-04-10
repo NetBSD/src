@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kmem.c,v 1.14.2.1 2007/03/21 20:11:51 ad Exp $	*/
+/*	$NetBSD: subr_kmem.c,v 1.14.2.2 2007/04/10 13:26:40 ad Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.14.2.1 2007/03/21 20:11:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.14.2.2 2007/04/10 13:26:40 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/callback.h>
@@ -159,8 +159,6 @@ kmem_roundup_size(size_t size)
 }
 
 /* ---- uvm glue */
-
-#include <uvm/uvm_extern.h>
 
 static vmem_addr_t
 kmem_backend_alloc(vmem_t *dummy, vmem_size_t size, vmem_size_t *resultsize,
