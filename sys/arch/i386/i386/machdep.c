@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.601.2.1 2007/03/21 20:10:18 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.601.2.2 2007/04/10 12:11:18 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.601.2.1 2007/03/21 20:10:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.601.2.2 2007/04/10 12:11:18 ad Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -1267,7 +1267,7 @@ setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 union	descriptor *gdt, *ldt;
 struct gate_descriptor *idt;
 char idt_allocmap[NIDT];
-struct simplelock idt_lock = SIMPLELOCK_INITIALIZER;
+kmutex_t idt_lock;
 #ifdef I586_CPU
 union	descriptor *pentium_idt;
 #endif
@@ -2020,6 +2020,7 @@ init386(paddr_t first_avail)
 	setregion(&region, gdt, NGDT * sizeof(gdt[0]) - 1);
 	lgdt(&region);
 
+	mutex_init(&idt_lock, MUTEX_DEFAULT, IPL_NONE);
 	cpu_init_idt();
 
 #if NKSYMS || defined(DDB) || defined(LKM)
@@ -2490,7 +2491,6 @@ cpu_need_proftick(struct lwp *l)
 
 /*
  * Allocate an IDT vector slot within the given range.
- * XXX needs locking to avoid MP allocation races.
  */
 
 int
@@ -2498,15 +2498,18 @@ idt_vec_alloc(int low, int high)
 {
 	int vec;
 
-	simple_lock(&idt_lock);
+	if (!cold)
+		mutex_enter(&idt_lock);
 	for (vec = low; vec <= high; vec++) {
 		if (idt_allocmap[vec] == 0) {
 			idt_allocmap[vec] = 1;
-			simple_unlock(&idt_lock);
+			if (!cold)
+				mutex_exit(&idt_lock);
 			return vec;
 		}
 	}
-	simple_unlock(&idt_lock);
+	if (!cold)
+		mutex_exit(&idt_lock);
 	return 0;
 }
 
@@ -2524,10 +2527,10 @@ idt_vec_set(int vec, void (*function)(void))
 void
 idt_vec_free(int vec)
 {
-	simple_lock(&idt_lock);
+	mutex_enter(&idt_lock);
 	unsetgate(&idt[vec]);
 	idt_allocmap[vec] = 0;
-	simple_unlock(&idt_lock);
+	mutex_exit(&idt_lock);
 }
 
 /*
