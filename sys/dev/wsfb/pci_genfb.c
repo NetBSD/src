@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_genfb.c,v 1.1 2007/04/07 03:41:26 macallan Exp $ */
+/*	$NetBSD: pci_genfb.c,v 1.2 2007/04/10 00:14:42 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_genfb.c,v 1.1 2007/04/07 03:41:26 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_genfb.c,v 1.2 2007/04/10 00:14:42 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,6 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci_genfb.c,v 1.1 2007/04/07 03:41:26 macallan Exp $
 #include <sys/ioctl.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
+#include <sys/kauth.h>
 
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/pcireg.h>
@@ -65,6 +66,7 @@ struct pci_genfb_softc {
 	pcitag_t sc_pcitag;
 	bus_space_tag_t sc_memt;
 	bus_space_tag_t sc_iot;
+	bus_space_handle_t sc_memh;
 	struct range sc_ranges[8];
 	int sc_ranges_used;
 };
@@ -104,12 +106,20 @@ pci_genfb_attach(struct device *parent, struct device *self, void *aux)
 
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
 	printf(": %s\n", devinfo);
-	printf(prop_dictionary_externalize(device_properties(self)));
 
 	sc->sc_memt = pa->pa_memt;
 	sc->sc_iot = pa->pa_iot;	
 	sc->sc_pc = pa->pa_pc;
 	sc->sc_pcitag = pa->pa_tag;
+
+	genfb_init(&sc->sc_gen);
+
+	if (bus_space_map(sc->sc_memt, sc->sc_gen.sc_fboffset,
+	    sc->sc_gen.sc_fbsize, BUS_SPACE_MAP_LINEAR, &sc->sc_memh) != 0) {
+
+		panic("%s: unable to map the framebuffer\n", self->dv_xname);
+	}
+	sc->sc_gen.sc_fbaddr = bus_space_vaddr(sc->sc_memt, sc->sc_memh);
 
 	/* mmap()able bus ranges */
 	idx = 0;
@@ -162,8 +172,46 @@ pci_genfb_mmap(void *v, void *vs, off_t offset, int prot)
 {
 	struct pci_genfb_softc *sc = v;
 	struct range *r;
+	struct lwp *me;
 	int i;
 
+	/* regular fb mapping at 0 */
+	if ((offset >= 0) && (offset < sc->sc_gen.sc_fbsize)) {
+
+		return bus_space_mmap(sc->sc_memt, sc->sc_gen.sc_fboffset,
+		   offset, prot, BUS_SPACE_MAP_LINEAR);
+	}
+
+	/*
+	 * restrict all other mappings to processes with superuser privileges
+	 * or the kernel itself
+	 */
+	me = curlwp;
+	if (me != NULL) {
+		if (kauth_authorize_generic(me->l_cred, KAUTH_GENERIC_ISSUSER,
+		    NULL) != 0) {
+			aprint_normal("%s: mmap() rejected.\n",
+			    sc->sc_gen.sc_dev.dv_xname);
+			return -1;
+		}
+	}
+
+#ifdef WSFB_FAKE_VGA_FB
+	if ((offset >= 0xa0000) && (offset < 0xbffff)) {
+
+		return bus_space_mmap(sc->sc_memt, sc->sc_gen.sc_fboffset,
+		   offset - 0xa0000, prot, BUS_SPACE_MAP_LINEAR);
+	}
+#endif
+
+	/*
+	 * XXX this should be generalized, let's just
+	 * #define PCI_IOAREA_PADDR
+	 * #define PCI_IOAREA_OFFSET
+	 * #define PCI_IOAREA_SIZE
+	 * somewhere in a MD header and compile this code only if all are
+	 * present
+	 */
 #ifdef macppc
 	/* allow to map our IO space */
 	if ((offset >= 0xf2000000) && (offset < 0xf2800000)) {
