@@ -1,4 +1,4 @@
-#	$NetBSD: files.malta,v 1.13 2006/09/08 23:39:27 gdamore Exp $
+#	$NetBSD: files.malta,v 1.14 2007/04/10 02:33:02 macallan Exp $
 
 file	arch/evbmips/malta/malta_bus_io.c
 file	arch/evbmips/malta/malta_bus_mem.c
@@ -39,6 +39,7 @@ include "dev/ata/files.ata"
 # Machine-independent WS console drivers
 include "dev/wsfont/files.wsfont"
 include "dev/wscons/files.wscons"
+include "dev/wsfb/files.wsfb"
 
 # Machine-independent PC-style keyboard controller drivers
 include "dev/pckbport/files.pckbport"

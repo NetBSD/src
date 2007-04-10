@@ -1,4 +1,4 @@
-#	$NetBSD: files.hp700,v 1.15 2005/12/11 12:17:24 christos Exp $
+#	$NetBSD: files.hp700,v 1.16 2007/04/10 02:36:18 macallan Exp $
 #
 #	$OpenBSD: files.hp700,v 1.31 2001/06/26 02:41:25 mickey Exp $
 #
@@ -18,6 +18,7 @@ defflag				POWER_SWITCH
 #
 include "dev/wscons/files.wscons"
 include "dev/wsfont/files.wsfont"
+include "dev/wsfb/files.wsfb"
 
 include "dev/pckbport/files.pckbport"
 
