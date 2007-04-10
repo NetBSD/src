@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_genfb.c,v 1.2 2007/04/10 00:14:42 macallan Exp $ */
+/*	$NetBSD: genfb_pci.c,v 1.1 2007/04/10 02:16:48 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_genfb.c,v 1.2 2007/04/10 00:14:42 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb_pci.c,v 1.1 2007/04/10 02:16:48 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,7 +77,7 @@ static int	pci_genfb_ioctl(void *, void *, u_long, void *, int,
 		    struct lwp *);
 static paddr_t	pci_genfb_mmap(void *, void *, off_t, int);
 
-CFATTACH_DECL(pci_genfb, sizeof(struct pci_genfb_softc),
+CFATTACH_DECL(genfb_pci, sizeof(struct pci_genfb_softc),
     pci_genfb_match, pci_genfb_attach, NULL, NULL);
 
 static int
