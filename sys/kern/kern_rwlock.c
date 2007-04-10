@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rwlock.c,v 1.6.2.2 2007/04/10 13:26:39 ad Exp $	*/
+/*	$NetBSD: kern_rwlock.c,v 1.6.2.3 2007/04/10 18:34:04 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.6.2.2 2007/04/10 13:26:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.6.2.3 2007/04/10 18:34:04 ad Exp $");
 
 #define	__RWLOCK_PRIVATE
 
@@ -311,7 +311,6 @@ rw_vector_enter(krwlock_t *rw, const krw_t op)
 		    LB_RWLOCK | (op == RW_WRITER ? LB_SLEEP1 : LB_SLEEP2),
 		    1, slptime);
 
-		turnstile_unblock();
 		break;
 	}
 

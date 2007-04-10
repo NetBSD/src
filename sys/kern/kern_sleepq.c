@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sleepq.c,v 1.7.2.3 2007/04/10 13:26:39 ad Exp $	*/
+/*	$NetBSD: kern_sleepq.c,v 1.7.2.4 2007/04/10 18:34:04 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.7.2.3 2007/04/10 13:26:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.7.2.4 2007/04/10 18:34:04 ad Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -210,9 +210,16 @@ sleepq_insert(sleepq_t *sq, lwp_t *l, syncobj_t *sobj)
 	TAILQ_INSERT_TAIL(&sq->sq_queue, l, l_sleepchain);
 }
 
+/*
+ * sleepq_enqueue:
+ *
+ *	Enter an LWP into the sleep queue and prepare for sleep.  The sleep
+ *	queue must already be locked, and any interlock (such as the kernel
+ *	lock) must have be released (see sleeptab_lookup(), sleepq_enter()).
+ */
 void
 sleepq_enqueue(sleepq_t *sq, pri_t pri, wchan_t wchan, const char *wmesg,
-    syncobj_t *sobj)
+	       syncobj_t *sobj)
 {
 	lwp_t *l = curlwp;
 
@@ -233,9 +240,18 @@ sleepq_enqueue(sleepq_t *sq, pri_t pri, wchan_t wchan, const char *wmesg,
 	sleepq_insert(sq, l, sobj);
 }
 
-void
-sleepq_switch(int timo, bool catch)
+/*
+ * sleepq_block:
+ *
+ *	After any intermediate step such as releasing an interlock, switch.
+ * 	sleepq_block() may return early under exceptional conditions, for
+ * 	example if the LWP's containing process is exiting.
+ */
+int
+sleepq_block(int timo, bool catch)
 {
+	int error = 0, expired, sig;
+	struct proc *p;
 	lwp_t *l = curlwp;
 
 #ifdef KTRACE
@@ -250,17 +266,17 @@ sleepq_switch(int timo, bool catch)
 	if (catch) {
 		l->l_flag |= LW_SINTR;
 		if ((l->l_flag & LW_PENDSIG) != 0 && sigispending(l, 0)) {
-			l->l_sleeperr = EPASSTHROUGH;
 			/* lwp_unsleep() will release the lock */
 			lwp_unsleep(l);
-			return;
+			error = EINTR;
+			goto catchit;
 		}
 		if ((l->l_flag & (LW_CANCELLED|LW_WEXIT|LW_WCORE)) != 0) {
 			l->l_flag &= ~LW_CANCELLED;
-			l->l_sleeperr = EINTR;
 			/* lwp_unsleep() will release the lock */
 			lwp_unsleep(l);
-			return;
+			error = EINTR;
+			goto catchit;
 		}
 	}
 
@@ -273,49 +289,6 @@ sleepq_switch(int timo, bool catch)
 	/*
 	 * When we reach this point, the LWP and sleep queue are unlocked.
 	 */
-	KASSERT(l->l_wchan == NULL && l->l_sleepq == NULL);
-}
-
-/*
- * sleepq_block:
- *
- *	Enter an LWP into the sleep queue and prepare for sleep.  The sleep
- *	queue must already be locked, and any interlock (such as the kernel
- *	lock) must have be released (see sleeptab_lookup(), sleepq_enter()).
- *
- * 	sleepq_block() may return early under exceptional conditions, for
- * 	example if the LWP's containing process is exiting.
- */
-void
-sleepq_block(sleepq_t *sq, pri_t pri, wchan_t wchan, const char *wmesg,
-	     int timo, bool catch, syncobj_t *sobj)
-{
-
-	sleepq_enqueue(sq, pri, wchan, wmesg, sobj);
-	sleepq_switch(timo, catch);
-}
-
-/*
- * sleepq_unblock:
- *
- *	After any intermediate step such as updating statistics, re-acquire
- *	the kernel lock and record the switch for ktrace.  Note that we are
- *	no longer on the sleep queue at this point.
- *
- *	This is split out from sleepq_block() in expectation that at some
- *	point in the future, LWPs may awake on different kernel stacks than
- *	those they went asleep on.
- */
-int
-sleepq_unblock(int timo, bool catch)
-{
-	int error, expired, sig;
-	struct proc *p;
-	lwp_t *l;
-
-	l = curlwp;
-	error = l->l_sleeperr;
-
 	if (timo) {
 		/*
 		 * Even if the callout appears to have fired, we need to
@@ -323,12 +296,12 @@ sleepq_unblock(int timo, bool catch)
 		 */
 		expired = callout_expired(&l->l_tsleep_ch);
 		callout_stop(&l->l_tsleep_ch);
-		if (expired && error == 0)
+		if (expired)
 			error = EWOULDBLOCK;
 	}
 
-	if (catch && (error == 0 || error == EPASSTHROUGH)) {
-		l->l_sleeperr = 0;
+	if (catch && error == 0) {
+  catchit:
 		p = l->l_proc;
 		if ((l->l_flag & (LW_CANCELLED | LW_WEXIT | LW_WCORE)) != 0)
 			error = EINTR;
@@ -337,10 +310,6 @@ sleepq_unblock(int timo, bool catch)
 			if ((sig = issignal(l)) != 0)
 				error = sleepq_sigtoerror(l, sig);
 			mutex_exit(&p->p_smutex);
-		}
-		if (error == EPASSTHROUGH) {
-			/* Raced */
-			error = EINTR;
 		}
 	}
 

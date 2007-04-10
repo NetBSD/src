@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.186.2.4 2007/04/05 21:38:37 ad Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.186.2.5 2007/04/10 18:34:05 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.186.2.4 2007/04/05 21:38:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.186.2.5 2007/04/10 18:34:05 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kstack.h"
@@ -470,7 +470,7 @@ ltsleep(wchan_t ident, pri_t priority, const char *wmesg, int timo,
 {
 	struct lwp *l = curlwp;
 	sleepq_t *sq;
-	int error, catch;
+	int error;
 
 	if (sleepq_dontsleep(l)) {
 		(void)sleepq_abort(NULL, 0);
@@ -481,14 +481,10 @@ ltsleep(wchan_t ident, pri_t priority, const char *wmesg, int timo,
 
 	sq = sleeptab_lookup(&sleeptab, ident);
 	sleepq_enter(sq, l);
-
+	sleepq_enqueue(sq, priority & PRIMASK, ident, wmesg, &sleep_syncobj);
 	if (interlock != NULL)
 		simple_unlock(interlock);
-
-	catch = priority & PCATCH;
-	sleepq_block(sq, priority & PRIMASK, ident, wmesg, timo, catch,
-	    &sleep_syncobj);
-	error = sleepq_unblock(timo, catch);
+	error = sleepq_block(timo, priority & PCATCH);
 
 	if (interlock != NULL && (priority & PNORELOCK) == 0)
 		simple_lock(interlock);
@@ -502,7 +498,7 @@ mtsleep(wchan_t ident, pri_t priority, const char *wmesg, int timo,
 {
 	struct lwp *l = curlwp;
 	sleepq_t *sq;
-	int error, catch;
+	int error;
 
 	if (sleepq_dontsleep(l)) {
 		(void)sleepq_abort(mtx, (priority & PNORELOCK) != 0);
@@ -511,12 +507,9 @@ mtsleep(wchan_t ident, pri_t priority, const char *wmesg, int timo,
 
 	sq = sleeptab_lookup(&sleeptab, ident);
 	sleepq_enter(sq, l);
+	sleepq_enqueue(sq, priority & PRIMASK, ident, wmesg, &sleep_syncobj);
 	mutex_exit(mtx);
-
-	catch = priority & PCATCH;
-	sleepq_block(sq, priority & PRIMASK, ident, wmesg, timo, catch,
-	    &sleep_syncobj);
-	error = sleepq_unblock(timo, catch);
+	error = sleepq_block(timo, priority & PCATCH);
 
 	if ((priority & PNORELOCK) == 0)
 		mutex_enter(mtx);
@@ -541,8 +534,8 @@ kpause(const char *wmesg, bool intr, int timo, kmutex_t *mtx)
 		mutex_exit(mtx);
 	sq = sleeptab_lookup(&sleeptab, l);
 	sleepq_enter(sq, l);
-	sleepq_block(sq, sched_kpri(l), l, wmesg, timo, intr, &sleep_syncobj);
-	error = sleepq_unblock(timo, intr);
+	sleepq_enqueue(sq, sched_kpri(l), l, wmesg, &sleep_syncobj);
+	error = sleepq_block(timo, intr);
 	if (mtx != NULL)
 		mutex_enter(mtx);
 
