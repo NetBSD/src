@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.h,v 1.40 2007/04/06 17:49:11 pooka Exp $	*/
+/*	$NetBSD: puffs.h,v 1.41 2007/04/11 21:04:52 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -145,6 +145,10 @@ struct puffs_ops {
 	    struct statvfs *, pid_t);
 	int (*puffs_fs_sync)(struct puffs_cc *, int,
 	    const struct puffs_cred *, pid_t);
+	int (*puffs_fs_fhtonode)(struct puffs_cc *, void *, size_t,
+	    void **, enum vtype *, voff_t *, dev_t *);
+	int (*puffs_fs_nodetofh)(struct puffs_cc *, void *cookie,
+	    void *, size_t *);
 	void (*puffs_fs_suspend)(struct puffs_cc *, int);
 
 	int (*puffs_node_lookup)(struct puffs_cc *,
@@ -187,8 +191,8 @@ struct puffs_ops {
 	    void *, void **, const struct puffs_cn *, const struct vattr *,
 	    const char *);
 	int (*puffs_node_readdir)(struct puffs_cc *,
-	    void *, struct dirent *, const struct puffs_cred *,
-	    off_t *, size_t *);
+	    void *, struct dirent *, off_t *, size_t *,
+	    const struct puffs_cred *, int *, off_t *, size_t *);
 	int (*puffs_node_readlink)(struct puffs_cc *,
 	    void *, const struct puffs_cred *, char *, size_t *);
 	int (*puffs_node_reclaim)(struct puffs_cc *,
@@ -291,6 +295,10 @@ enum {
 	    struct statvfs *, pid_t);					\
 	int fsname##_fs_sync(struct puffs_cc *, int,			\
 	    const struct puffs_cred *cred, pid_t);			\
+	int fsname##_fs_fhtonode(struct puffs_cc *, void *, size_t,	\
+	    void **, enum vtype *, voff_t *, dev_t *);			\
+	int fsname##_fs_nodetofh(struct puffs_cc *, void *cookie,	\
+	    void *, size_t *);						\
 	void fsname##_fs_suspend(struct puffs_cc *, int);		\
 									\
 	int fsname##_node_lookup(struct puffs_cc *,			\
@@ -338,8 +346,8 @@ enum {
 	    void *, void **, const struct puffs_cn *,			\
 	    const struct vattr *, const char *);			\
 	int fsname##_node_readdir(struct puffs_cc *,			\
-	    void *, struct dirent *, const struct puffs_cred *,		\
-	    off_t *, size_t *);						\
+	    void *, struct dirent *, off_t *, size_t *,			\
+	    const struct puffs_cred *, int *, off_t *, size_t *);	\
 	int fsname##_node_readlink(struct puffs_cc *,			\
 	    void *, const struct puffs_cred *, char *, size_t *);	\
 	int fsname##_node_reclaim(struct puffs_cc *,			\
@@ -374,7 +382,7 @@ enum {
 #define PUFFSOP_SETFSNOP(ops, opname)					\
     (ops)->puffs_fs_##opname = puffs_fsnop_##opname
 
-#define PUFFS_DEVEL_LIBVERSION 10
+#define PUFFS_DEVEL_LIBVERSION 11
 #define puffs_mount(a,b,c,d,e,f,g) \
     _puffs_mount(PUFFS_DEVEL_LIBVERSION,a,b,c,d,e,f,g)
 
