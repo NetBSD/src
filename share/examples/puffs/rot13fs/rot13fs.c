@@ -1,4 +1,4 @@
-/*	$NetBSD: rot13fs.c,v 1.2 2007/02/15 12:54:24 pooka Exp $	*/
+/*	$NetBSD: rot13fs.c,v 1.3 2007/04/11 21:10:49 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -185,7 +185,8 @@ main(int argc, char *argv[])
 
 int
 rot13_node_readdir(struct puffs_cc *pcc, void *opc, struct dirent *dent,
-	const struct puffs_cred *pcr, off_t *readoff, size_t *reslen)
+	off_t *readoff, size_t *reslen, const struct puffs_cred *pcr,
+	int *eofflag, off_t *cookies, size_t *ncookies)
 {
 	struct dirent *dp;
 	size_t rl;
@@ -194,7 +195,8 @@ rot13_node_readdir(struct puffs_cc *pcc, void *opc, struct dirent *dent,
 	dp = dent;
 	rl = *reslen;
 
-	rv = puffs_null_node_readdir(pcc, opc, dent, pcr, readoff, reslen);
+	rv = puffs_null_node_readdir(pcc, opc, dent, readoff, reslen, pcr,
+	    eofflag, cookies, ncookies);
 	if (rv)
 		return rv;
 
