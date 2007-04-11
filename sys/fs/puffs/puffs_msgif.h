@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.h,v 1.23 2007/04/06 17:05:34 pooka Exp $	*/
+/*	$NetBSD: puffs_msgif.h,v 1.24 2007/04/11 21:03:05 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -86,7 +86,7 @@ enum {
 #define PUFFS_VN_MAX PUFFS_VN_SETEXTATTR
 
 #define PUFFSDEVELVERS	0x80000000
-#define PUFFSVERSION	4
+#define PUFFSVERSION	5
 #define PUFFSNAMESIZE	32
 struct puffs_args {
 	unsigned int	pa_vers;
@@ -99,7 +99,8 @@ struct puffs_args {
 #define PUFFS_KFLAG_ALLOWCTL	0x01	/* ioctl/fcntl commands allowed */
 #define PUFFS_KFLAG_NOCACHE	0x02	/* flush page cache immediately	*/
 #define PUFFS_KFLAG_ALLOPS	0x04	/* ignore pa_vnopmask, send all */
-#define PUFFS_KFLAG_MASK	0x07
+#define PUFFS_KFLAG_CANEXPORT	0x08	/* file system can be exported  */
+#define PUFFS_KFLAG_MASK	0x0f
 
 /*
  * This is the device minor number for the cloning device.  Make it
@@ -324,6 +325,10 @@ struct puffs_kcn {
 #define PUFFSLOOKUP_NOFOLLOW	0x00008	/* don't follow final symlink */
 #define PUFFSLOOKUP_ISLASTCN	0x08000 /* is last component of lookup */
 
+
+/* XXX */
+#define PUFFS_FHSIZE	48
+
 /*
  * Next come the individual requests.  They are all subclassed from
  * puffs_req and contain request-specific fields in addition.  Note
@@ -365,6 +370,29 @@ struct puffs_vfsreq_sync {
 	struct puffs_cred	pvfsr_cred;
 	pid_t			pvfsr_pid;
 	int			pvfsr_waitfor;
+};
+
+struct puffs_vfsreq_fhtonode {
+	struct puffs_req	pvfsr_pr;
+
+	void			*pvfsr_fhcookie;	/* IN	*/
+	enum vtype		pvfsr_vtype;		/* IN	*/
+	voff_t			pvfsr_size;		/* IN	*/
+	dev_t			pvfsr_rdev;		/* IN	*/
+
+	size_t			pvfsr_dsize;		/* OUT */
+	uint8_t			pvfsr_data[PUFFS_FHSIZE]/* OUT, XXX */
+				    __aligned(ALIGNBYTES+1);
+};
+
+struct puffs_vfsreq_nodetofh {
+	struct puffs_req	pvfsr_pr;
+
+	void			*pvfsr_fhcookie;	/* OUT	*/
+
+	size_t			pvfsr_dsize;		/* OUT/IN  */
+	uint8_t			pvfsr_data[PUFFS_FHSIZE]/* IN, XXX */
+				    __aligned(ALIGNBYTES+1);
 };
 
 struct puffs_vfsreq_suspend {
@@ -548,8 +576,12 @@ struct puffs_vnreq_readdir {
 	struct puffs_cred	pvnr_cred;		/* OUT	  */
 	off_t			pvnr_offset;		/* IN/OUT */
 	size_t			pvnr_resid;		/* IN/OUT */
+	size_t			pvnr_ncookies;		/* IN/OUT */
+	int			pvnr_eofflag;		/* IN     */
 
-	struct dirent		pvnr_dent[0];		/* IN  	   */
+	size_t			pvnr_dentoff;		/* OUT    */
+	uint8_t			pvnr_data[0]		/* IN  	  */
+				    __aligned(ALIGNBYTES+1);
 };
 
 struct puffs_vnreq_readlink {

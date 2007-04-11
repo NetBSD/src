@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vfsops.c,v 1.32 2007/03/29 16:30:07 pooka Exp $	*/
+/*	$NetBSD: puffs_vfsops.c,v 1.33 2007/04/11 21:03:05 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.32 2007/03/29 16:30:07 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.33 2007/04/11 21:03:05 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -390,13 +390,6 @@ puffs_root(struct mount *mp, struct vnode **vpp)
 }
 
 int
-puffs_quotactl(struct mount *mp, int cmd, uid_t uid, void *arg, struct lwp *l)
-{
-
-	return EOPNOTSUPP;
-}
-
-int
 puffs_statvfs(struct mount *mp, struct statvfs *sbp, struct lwp *l)
 {
 	struct puffs_vfsreq_statvfs *statvfs_arg; /* too big for stack */
@@ -572,29 +565,75 @@ puffs_sync(struct mount *mp, int waitfor, struct kauth_cred *cred,
 }
 
 int
-puffs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
-{
-
-	return EOPNOTSUPP;
-}
-
-#if 0
-/*ARGSUSED*/
-int
 puffs_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
 {
+	struct puffs_mount *pmp = MPTOPUFFSMP(mp);
+	struct vnode *vp;
+	int error;
 
-	return EOPNOTSUPP;
+	PUFFS_VFSREQ(fhtonode);
+
+	if ((pmp->pmp_flags & PUFFS_KFLAG_CANEXPORT) == 0)
+		return EOPNOTSUPP;
+
+	if (fhp->fid_len < PUFFS_FHSIZE + 4)
+		return EINVAL;
+
+	fhtonode_arg.pvfsr_dsize = PUFFS_FHSIZE;
+	memcpy(fhtonode_arg.pvfsr_data, fhp->fid_data, PUFFS_FHSIZE);
+
+	error = puffs_vfstouser(pmp, PUFFS_VFS_FHTOVP,
+	    &fhtonode_arg, sizeof(fhtonode_arg));
+	if (error)
+		return error;
+
+	vp = puffs_pnode2vnode(pmp, fhtonode_arg.pvfsr_fhcookie, 1);
+	DPRINTF(("puffs_fhtovp: got cookie %p, existing vnode %p\n",
+	    fhtonode_arg.pvfsr_fhcookie, vp));
+	if (!vp) {
+		error = puffs_getvnode(mp, fhtonode_arg.pvfsr_fhcookie,
+		    fhtonode_arg.pvfsr_vtype, fhtonode_arg.pvfsr_size,
+		    fhtonode_arg.pvfsr_rdev, &vp);
+		if (error)
+			return error;
+		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+	}
+
+	*vpp = vp;
+	return 0;
 }
 
-/*ARGSUSED*/
 int
-puffs_vptofh(struct vnode *vp, struct fid *fhp)
+puffs_vptofh(struct vnode *vp, struct fid *fhp, size_t *fh_size)
 {
+	struct puffs_mount *pmp = MPTOPUFFSMP(vp->v_mount);
+	int error;
 
-	return EOPNOTSUPP;
+	PUFFS_VFSREQ(nodetofh);
+
+	if ((pmp->pmp_flags & PUFFS_KFLAG_CANEXPORT) == 0)
+		return EOPNOTSUPP;
+
+	if (*fh_size < PUFFS_FHSIZE + 4) {
+		*fh_size = PUFFS_FHSIZE + 4;
+		return E2BIG;
+	}
+	*fh_size = PUFFS_FHSIZE + 4;
+
+	nodetofh_arg.pvfsr_fhcookie = VPTOPNC(vp);
+	nodetofh_arg.pvfsr_dsize = PUFFS_FHSIZE;
+
+	error = puffs_vfstouser(pmp, PUFFS_VFS_VPTOFH,
+	    &nodetofh_arg, sizeof(nodetofh_arg));
+	if (error)
+		return error;
+
+	fhp->fid_len = PUFFS_FHSIZE + 4;
+	memcpy(fhp->fid_data,
+	    nodetofh_arg.pvfsr_data, PUFFS_FHSIZE);
+
+	return 0;
 }
-#endif
 
 void
 puffs_init()
@@ -684,12 +723,12 @@ struct vfsops puffs_vfsops = {
 	puffs_start,		/* start	*/
 	puffs_unmount,		/* unmount	*/
 	puffs_root,		/* root		*/
-	puffs_quotactl,		/* quotactl	*/
+	(void *)eopnotsupp,	/* quotactl	*/
 	puffs_statvfs,		/* statvfs	*/
 	puffs_sync,		/* sync		*/
-	puffs_vget,		/* vget		*/
-	(void *)eopnotsupp,	/* fhtovp	*/
-	(void *)eopnotsupp,	/* vptofh	*/
+	(void *)eopnotsupp,	/* vget		*/
+	puffs_fhtovp,		/* fhtovp	*/
+	puffs_vptofh,		/* vptofh	*/
 	puffs_init,		/* init		*/
 	NULL,			/* reinit	*/
 	puffs_done,		/* done		*/
