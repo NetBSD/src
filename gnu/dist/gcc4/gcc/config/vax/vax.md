@@ -994,8 +994,8 @@
   ""
   "*
 {
-  if (GET_CODE (operands[0]) != REG || GET_CODE (operands[2]) != CONST_INT
-      || GET_CODE (operands[3]) != CONST_INT
+  if (!REG_P (operands[0]) || !CONST_INT_P (operands[2])
+      || !CONST_INT_P (operands[3])
       || INTVAL (operands[2]) + INTVAL (operands[3]) > 32
       || side_effects_p (operands[1])
       || (GET_CODE (operands[1]) == MEM
@@ -1005,6 +1005,28 @@
     return \"rotl %R3,%1,%0\;movzbl %0,%0\";
   if (INTVAL (operands[2]) == 16)
     return \"rotl %R3,%1,%0\;movzwl %0,%0\";
+  if (MEM_P (operands[1])
+      && GET_CODE (XEXP (operands[1], 0)) == PLUS
+      && REG_P (XEXP (XEXP (operands[1], 0), 0))
+      && CONST_INT_P (XEXP (XEXP (operands[1], 0), 1))
+      && CONST_INT_P (operands[2])
+      && CONST_INT_P (operands[3]))
+    {
+      HOST_WIDE_INT o = INTVAL (XEXP (XEXP (operands[1], 0), 1));
+      HOST_WIDE_INT l = INTVAL (operands[2]);
+      HOST_WIDE_INT v = INTVAL (operands[3]);
+      if ((o & 3) && (o & 3) * 8 + v + l <= 32)
+	{
+	  rtx tmp;
+	  tmp = XEXP (XEXP (operands[1], 0), 0);
+	  if (o & ~3)
+	    tmp = gen_rtx_PLUS (SImode, tmp, GEN_INT (o & ~3));
+	  operands[1] = gen_rtx_MEM (QImode, tmp);
+	  operands[3] = GEN_INT (v + (o & 3) * 8);
+	}
+      if (optimize_size)
+	return \"extzv %3,%2,%1,%0\";
+    }
   return \"rotl %R3,%1,%0\;bicl2 %M2,%0\";
 }")
 
@@ -1022,7 +1044,30 @@
 			 (match_operand:SI 2 "general_operand" "nrmT"))
 	(match_operand:SI 3 "general_operand" "nrmT"))]
   ""
-  "insv %3,%2,%1,%0")
+  "*
+{
+  if (MEM_P (operands[0])
+      && GET_CODE (XEXP (operands[0], 0)) == PLUS
+      && REG_P (XEXP (XEXP (operands[0], 0), 0))
+      && CONST_INT_P (XEXP (XEXP (operands[0], 0), 1))
+      && CONST_INT_P (operands[1])
+      && CONST_INT_P (operands[2]))
+    {
+      HOST_WIDE_INT o = INTVAL (XEXP (XEXP (operands[0], 0), 1));
+      HOST_WIDE_INT v = INTVAL (operands[2]);
+      HOST_WIDE_INT l = INTVAL (operands[1]);
+      if ((o & 3) && (o & 3) * 8 + v + l <= 32)
+	{
+	  rtx tmp;
+	  tmp = XEXP (XEXP (operands[0], 0), 0);
+	  if (o & ~3)
+	    tmp = gen_rtx_PLUS (SImode, tmp, GEN_INT (o & ~3));
+	  operands[0] = gen_rtx_MEM (QImode, tmp);
+	  operands[2] = GEN_INT (v + (o & 3) * 8);
+	}
+    }
+  return \"insv %3,%2,%1,%0\";
+}")
 
 (define_insn ""
   [(set (zero_extract:SI (match_operand:SI 0 "register_operand" "+r")
