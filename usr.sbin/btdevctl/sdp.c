@@ -1,4 +1,4 @@
-/*	$NetBSD: sdp.c,v 1.1 2006/09/10 15:45:56 plunky Exp $	*/
+/*	$NetBSD: sdp.c,v 1.2 2007/04/11 20:01:01 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: sdp.c,v 1.1 2006/09/10 15:45:56 plunky Exp $");
+__RCSID("$NetBSD: sdp.c,v 1.2 2007/04/11 20:01:01 plunky Exp $");
 
 #include <sys/types.h>
 
@@ -268,22 +268,32 @@ config_hid(prop_dictionary_t dict)
 	if (obj == NULL || !prop_dictionary_set(dict, BTDEVtype, obj))
 		return errno;
 
+	prop_object_release(obj);
+
 	obj = prop_number_create_integer(control_psm);
 	if (obj == NULL || !prop_dictionary_set(dict, BTHIDEVcontrolpsm, obj))
 		return errno;
+
+	prop_object_release(obj);
 
 	obj = prop_number_create_integer(interrupt_psm);
 	if (obj == NULL || !prop_dictionary_set(dict, BTHIDEVinterruptpsm, obj))
 		return errno;
 
+	prop_object_release(obj);
+
 	obj = prop_data_create_data(hid_descriptor, hid_length);
 	if (obj == NULL || !prop_dictionary_set(dict, BTHIDEVdescriptor, obj))
 		return errno;
+
+	prop_object_release(obj);
 
 	if (!reconnect_initiate) {
 		obj = prop_bool_create(TRUE);
 		if (obj == NULL || !prop_dictionary_set(dict, BTHIDEVreconnect, obj))
 			return errno;
+
+		prop_object_release(obj);
 	}
 
 	return 0;
@@ -319,9 +329,13 @@ config_hset(prop_dictionary_t dict)
 	if (obj == NULL || !prop_dictionary_set(dict, BTDEVtype, obj))
 		return errno;
 
+	prop_object_release(obj);
+
 	obj = prop_number_create_integer(channel);
 	if (obj == NULL || !prop_dictionary_set(dict, BTSCOchannel, obj))
 		return errno;
+
+	prop_object_release(obj);
 
 	return 0;
 }
@@ -356,13 +370,19 @@ config_hf(prop_dictionary_t dict)
 	if (obj == NULL || !prop_dictionary_set(dict, BTDEVtype, obj))
 		return errno;
 
+	prop_object_release(obj);
+
 	obj = prop_bool_create(TRUE);
 	if (obj == NULL || !prop_dictionary_set(dict, BTSCOlisten, obj))
 		return errno;
 
+	prop_object_release(obj);
+
 	obj = prop_number_create_integer(channel);
 	if (obj == NULL || !prop_dictionary_set(dict, BTSCOchannel, obj))
 		return errno;
+
+	prop_object_release(obj);
 
 	return 0;
 }
