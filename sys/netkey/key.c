@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.154 2007/03/21 22:38:34 degroote Exp $	*/
+/*	$NetBSD: key.c,v 1.155 2007/04/11 21:33:40 degroote Exp $	*/
 /*	$KAME: key.c,v 1.310 2003/09/08 02:23:44 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.154 2007/03/21 22:38:34 degroote Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.155 2007/04/11 21:33:40 degroote Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -2179,7 +2179,8 @@ key_spdget(so, m, mhp)
 		return key_senderror(so, m, ENOENT);
 	}
 
-	n = key_setdumpsp(sp, SADB_X_SPDGET, 0, mhp->msg->sadb_msg_pid);
+	n = key_setdumpsp(sp, SADB_X_SPDGET, mhp->msg->sadb_msg_seq, 
+                                         mhp->msg->sadb_msg_pid);
 	key_freesp(sp);	/* ref gained by key_getspbyid */
 	if (n != NULL) {
 		m_freem(m);
