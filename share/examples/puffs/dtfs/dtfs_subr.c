@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs_subr.c,v 1.13 2007/04/01 10:55:38 pooka Exp $	*/
+/*	$NetBSD: dtfs_subr.c,v 1.14 2007/04/11 21:07:54 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -64,7 +64,7 @@ dtfs_baseattrs(struct vattr *vap, enum vtype type, ino_t id)
 	vap->va_fileid = id;
 	vap->va_size = 0;
 	vap->va_blocksize = getpagesize();
-	vap->va_gen = 1;
+	vap->va_gen = random();
 	vap->va_flags = 0;
 	vap->va_rdev = PUFFS_VNOVAL;
 	vap->va_bytes = 0;

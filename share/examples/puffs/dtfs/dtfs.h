@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs.h,v 1.13 2007/04/10 13:32:02 pooka Exp $	*/
+/*	$NetBSD: dtfs.h,v 1.14 2007/04/11 21:07:54 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -44,6 +44,7 @@ int	dtfs_domount(struct puffs_usermount *);
 #define ROUNDUP(a,b) ((a) & ((b)-1))
 #define BLOCKNUM(a,b) (((a) & ~((1<<(b))-1)) >> (b))
 
+struct dtfs_fid;
 struct dtfs_mount {
 	ino_t		dtm_nextfileid;	/* running number for file id	*/
 
@@ -81,6 +82,15 @@ struct dtfs_dirent {
 
 	LIST_ENTRY(dtfs_dirent) dfd_entries;
 };
+
+struct dtfs_fid {
+	struct puffs_node	*dfid_addr;
+
+	/* best^Wsome-effort extra sanity check */
+	ino_t			dfid_fileid;
+	u_long			dfid_gen;
+};
+#define DTFS_FIDSIZE (sizeof(struct dtfs_fid))
 
 struct puffs_node *	dtfs_genfile(struct puffs_node *,
 				     const struct puffs_cn *, enum vtype);

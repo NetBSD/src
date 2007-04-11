@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs.c,v 1.16 2007/03/20 18:30:30 pooka Exp $	*/
+/*	$NetBSD: dtfs.c,v 1.17 2007/04/11 21:07:54 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -112,6 +112,7 @@ main(int argc, char *argv[])
 	}
 	if (pflags & PUFFS_FLAG_OPDUMP)
 		lflags |= PUFFSLOOP_NODAEMON;
+	pflags |= PUFFS_KFLAG_CANEXPORT;
 	argc -= optind;
 	argv += optind;
 
@@ -123,6 +124,8 @@ main(int argc, char *argv[])
 	PUFFSOP_SET(pops, dtfs, fs, statvfs);
 	PUFFSOP_SETFSNOP(pops, unmount);
 	PUFFSOP_SETFSNOP(pops, sync);
+	PUFFSOP_SET(pops, dtfs, fs, fhtonode);
+	PUFFSOP_SET(pops, dtfs, fs, nodetofh);
 	PUFFSOP_SET(pops, dtfs, fs, suspend);
 
 	PUFFSOP_SET(pops, dtfs, node, lookup);
@@ -143,6 +146,8 @@ main(int argc, char *argv[])
 	PUFFSOP_SET(pops, dtfs, node, mknod);
 	PUFFSOP_SET(pops, dtfs, node, inactive);
 	PUFFSOP_SET(pops, dtfs, node, reclaim);
+
+	srandom(time(NULL)); /* for random generation numbers */
 
 	if ((pu = puffs_mount(pops, argv[0], mntflags, FSNAME, &dtm, pflags, 0))
 	    == NULL)
