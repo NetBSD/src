@@ -1,7 +1,7 @@
-/*	$NetBSD: ftp.c,v 1.143 2006/12/13 18:04:08 christos Exp $	*/
+/*	$NetBSD: ftp.c,v 1.144 2007/04/11 05:03:25 lukem Exp $	*/
 
 /*-
- * Copyright (c) 1996-2005 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996-2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -99,7 +99,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.143 2006/12/13 18:04:08 christos Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.144 2007/04/11 05:03:25 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -455,7 +455,7 @@ getreply(int expecteof)
 						midx = 1;
 					else
 						midx = 2;
-   					(void)fprintf(ttyout,
+					(void)fprintf(ttyout,
 			    "421 Service not available, %s.\n", m421[midx]);
 					(void)fflush(ttyout);
 				}
@@ -1267,6 +1267,7 @@ initconn(void)
 	unsigned int af, hal, pal;
 	socklen_t len;
 	char *pasvcmd = NULL;
+	int overbose;
 
 #ifdef INET6
 #ifndef NO_DEBUG
@@ -1295,7 +1296,14 @@ initconn(void)
 		case AF_INET:
 			if (epsv4 && !epsv4bad) {
 				pasvcmd = "EPSV";
+				overbose = verbose;
+				if (ftp_debug == 0)
+					verbose = -1;
 				result = command("EPSV");
+				verbose = overbose;
+				if (verbose &&
+				    (result == COMPLETE || !connected))
+					fprintf(ttyout, "%s\n", reply_string);
 				if (!connected)
 					return (1);
 				/*
@@ -1324,7 +1332,13 @@ initconn(void)
 #ifdef INET6
 		case AF_INET6:
 			pasvcmd = "EPSV";
+			overbose = verbose;
+			if (ftp_debug == 0)
+				verbose = -1;
 			result = command("EPSV");
+			verbose = overbose;
+			if (verbose && (result == COMPLETE || !connected))
+				fprintf(ttyout, "%s\n", reply_string);
 			if (!connected)
 				return (1);
 			/* this code is to be friendly with broken BSDI ftpd */
@@ -1596,8 +1610,15 @@ initconn(void)
 			    sizeof(sname), NI_NUMERICHOST | NI_NUMERICSERV)) {
 				result = ERROR;
 			} else {
+				overbose = verbose;
+				if (ftp_debug == 0)
+					verbose = -1;
 				result = command("EPRT |%d|%s|%s|", af, hname,
 				    sname);
+				verbose = overbose;
+				if (verbose &&
+				    (result == COMPLETE || !connected))
+					fprintf(ttyout, "%s\n", reply_string);
 				if (!connected)
 					return (1);
 				if (result != COMPLETE) {
