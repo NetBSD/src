@@ -1,7 +1,7 @@
-/*	$NetBSD: cmds.c,v 1.118 2006/01/31 20:05:35 christos Exp $	*/
+/*	$NetBSD: cmds.c,v 1.119 2007/04/11 00:52:38 lukem Exp $	*/
 
 /*-
- * Copyright (c) 1996-2005 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996-2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -103,7 +103,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: cmds.c,v 1.118 2006/01/31 20:05:35 christos Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.119 2007/04/11 00:52:38 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -1468,6 +1468,7 @@ void
 user(int argc, char *argv[])
 {
 	char *password;
+	char emptypass[] = "";
 	int n, aflag = 0;
 
 	if (argc == 0)
@@ -1485,6 +1486,8 @@ user(int argc, char *argv[])
 	if (n == CONTINUE) {
 		if (argc < 3) {
 			password = getpass("Password: ");
+			if (password == NULL)
+				password = emptypass;
 		} else {
 			password = argv[2];
 		}
@@ -1495,6 +1498,8 @@ user(int argc, char *argv[])
 		aflag++;
 		if (argc < 4) {
 			password = getpass("Account: ");
+			if (password == NULL)
+				password = emptypass;
 		} else {
 			password = argv[3];
 		}
@@ -1782,6 +1787,7 @@ void
 account(int argc, char *argv[])
 {
 	char *ap;
+	char emptypass[] = "";
 
 	if (argc == 0 || argc > 2) {
 		UPRINTF("usage: %s [password]\n", argv[0]);
@@ -1790,9 +1796,13 @@ account(int argc, char *argv[])
 	}
 	else if (argc == 2)
 		ap = argv[1];
-	else
+	else {
 		ap = getpass("Account:");
+		if (ap == NULL)
+			ap = emptypass;
+	}
 	(void)command("ACCT %s", ap);
+	memset(ap, 0, strlen(ap));
 }
 
 sigjmp_buf abortprox;
