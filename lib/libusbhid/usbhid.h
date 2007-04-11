@@ -1,4 +1,4 @@
-/*	$NetBSD: usbhid.h,v 1.4 2007/03/23 21:37:45 drochner Exp $	*/
+/*	$NetBSD: usbhid.h,v 1.5 2007/04/11 20:56:20 plunky Exp $	*/
 
 /*
  * Copyright (c) 1999 Lennart Augustsson <augustss@NetBSD.org>
@@ -80,7 +80,7 @@ __BEGIN_DECLS
 
 /* Obtaining a report descriptor, descr.c: */
 report_desc_t hid_get_report_desc(int file);
-report_desc_t hid_use_report_desc(unsigned char *data, unsigned int size);
+report_desc_t hid_use_report_desc(const uint8_t *data, unsigned int size);
 void hid_dispose_report_desc(report_desc_t);
 
 /* Parsing of a HID report descriptor, parse.c: */
