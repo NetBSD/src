@@ -1,4 +1,4 @@
-$NetBSD: mcadevs,v 1.20 2005/12/11 12:22:18 christos Exp $
+$NetBSD: mcadevs,v 1.21 2007/04/11 18:11:15 garbled Exp $
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -54,6 +54,7 @@ $NetBSD: mcadevs,v 1.20 2005/12/11 12:22:18 christos Exp $
  * [10] IBM PS/2 MicroChannel POSID - ADF files
  *	http://members.aol.com/mcapage1/adflist1.htm
  * [11] http://www.geocities.com/SiliconValley/Lab/6370/adapters.html
+ * [12] IBM RS6000 Website http://www.ibm.com
  */
 
 /*
@@ -343,7 +344,10 @@ product 0x8EFC "IBM Fast SCSI-2 Adapter"				[2]
 product 0x8EFD "IBM 7568 SCSI Adapter w/cache"				[2]
 product 0x8EFE "IBM SCSI Adapter"					[3]
 product 0x8EFF "IBM SCSI Adapter w/cache"				[3]
+product 0x8F62 "IBM 10/100 Mbps Ethernet MC Adapter"			[12]
+product 0x8F98 "IBM 10 Mbps Integrated Ethernet (Rainbow)"		[12]
 product 0x8FA0 "IBM LANStreamer MC 32 Adapter"				[6]
+product 0x8FBA "IBM NCR 53C720 Integrated SCSI Controller"
 product 0x8FC8 "IBM Token Ring 16/4 Busmaster Server Adapter/A"		[6]
 product 0x8FD6 "IBM Audiovation Adapter"				PS/2 FAQ
 product 0x8FD8 "IBM XGA/XGA-2 Display Adapter"				[2]
@@ -356,6 +360,7 @@ product 0xDEFF IBM_MPCOM "IBM Multi-Protocol Communications Adapter"	[3]
 product 0xDF7F "IBM 3363 Optical Disk Adapter"				[5]
 product 0xDF9F IBM_ESDIC_IG "IBM Integ. ESDI Fixed Disk & Controller"	[3]
 product 0xDFBF "IBM 6157 Streaming Tape Adapter"			[5]
+product 0xDFE5 "IBM Ultimedia Audio Adapter"
 product 0xDFFA "IBM 5.25in Diskette Adapter/A"				[5]
 product 0xDFFD "IBM ST506 Fixed Disk Adapter"				[6]
 product 0xE000 "IBM Token Ring Adapter/A"				[7]
@@ -383,6 +388,7 @@ product 0xEFF5 "UB NIC-PS/2 Ethernet Adapter"				[1]
 product 0xEFF6 "IBM PagePrinter Adapter/2"				[5]
 product 0xEFFD "IBM VGA Adapter"					[5]
 product 0xF04F "IBM 3117 Scanner Adapter/A"				[5]
+product 0xF6FE "IBM Standard I/O Planar"
 product 0xF7F7 IBMRAM1 "IBM 2-8Mb 80286 Memory Expansion"		[5]
 product 0xF7FE IBMRAM2 "IBM Expanded Memory"				[5]
 product 0xFAFF IBMRAM3 "IBM 32-bit Memory Expansion"			[7]
