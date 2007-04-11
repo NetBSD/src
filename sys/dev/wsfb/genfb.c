@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb.c,v 1.2 2007/04/10 00:14:42 macallan Exp $ */
+/*	$NetBSD: genfb.c,v 1.3 2007/04/11 04:47:09 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.2 2007/04/10 00:14:42 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.3 2007/04/11 04:47:09 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,9 +69,12 @@ extern const u_char rasops_cmap[768];
 struct wsdisplay_accessops genfb_accessops = {
 	genfb_ioctl,
 	genfb_mmap,
-	NULL,	/* load_font */
-	NULL,	/* polls */
-	NULL,	/* scroll */
+	NULL,	/* alloc_screen */
+	NULL,	/* free_screen */
+	NULL,	/* show_screen */
+	NULL, 	/* load_font */
+	NULL,	/* pollc */
+	NULL	/* scroll */
 };
 
 void
@@ -116,6 +119,7 @@ genfb_attach(struct genfb_softc *sc, struct genfb_ops *ops)
 		NULL,
 		8, 16,
 		WSSCREEN_WSCOLORS | WSSCREEN_HILIT,
+		NULL
 	};
 	sc->sc_screens[0] = &sc->sc_defaultscreen_descr;
 	sc->sc_screenlist = (struct wsscreen_list){1, sc->sc_screens};
@@ -193,6 +197,10 @@ genfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 		case WSDISPLAYIO_PUTCMAP:
 			return genfb_putcmap(sc,
 			    (struct wsdisplay_cmap *)data);
+
+		case WSDISPLAYIO_LINEBYTES:
+			*(u_int *)data = sc->sc_stride;
+			return 0;
 
 		case WSDISPLAYIO_SMODE:
 			{
