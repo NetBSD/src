@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.821 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.822 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -76,3 +76,5 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	libc: add support for LC_TIME [manu 20070328]
 	bind: import 9.4.0 [ghen 20070330]
 	sh5, evbsh5: Port deleted [scw 20070408]
+	genfb: generic framebuffer console driver with PCI and SBus
+		frontends [macallan 20070411]
