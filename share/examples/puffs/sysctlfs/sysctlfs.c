@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctlfs.c,v 1.15 2007/02/16 16:39:56 pooka Exp $	*/
+/*	$NetBSD: sysctlfs.c,v 1.16 2007/04/11 21:08:52 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -57,8 +57,13 @@ struct sfsnode {
 #define SFSPATH_DOTDOT 0
 #define SFSPATH_NORMAL 1
 
-#define N_HIERARCHY 16
+#define N_HIERARCHY 10
 typedef int SfsName[N_HIERARCHY];
+
+struct sfsfid {
+	int len;
+	SfsName path;
+};
 
 struct sfsnode rn;
 SfsName sname_root;
@@ -139,6 +144,69 @@ sysctlfs_pathfree(struct puffs_usermount *pu, struct puffs_pathobj *po)
 	free(po->po_path);
 }
 
+static struct puffs_node *
+getnode(struct puffs_usermount *pu, struct puffs_pathobj *po, int nodetype)
+{
+	struct sysctlnode sn[SFS_NODEPERDIR];
+	struct sysctlnode qnode;
+	struct puffs_node *pn;
+	struct sfsnode *sfs;
+	SfsName myname, *sname;
+	size_t sl;
+	int i;
+
+	/*
+	 * Check if we need to create a new in-memory node or if we
+	 * already have one for this path.  Shortcut for the rootnode.
+	 * Also, memcmp against zero-length would be quite true always.
+	 */
+	if (po->po_len == 0)
+		pn = pu->pu_pn_root;
+	else
+		pn = puffs_pn_nodewalk(pu, puffs_path_walkcmp, po);
+
+	if (pn == NULL) {
+		/*
+		 * don't know nodetype?  query...
+		 *
+		 * XXX1: nothing really guarantees 0 is an invalid nodetype
+		 * XXX2: is there really no easier way of doing this?  we
+		 *       know the whole mib path
+		 */
+		if (!nodetype) {
+			sname = po->po_path;
+			memcpy(myname, po->po_path, po->po_len * sizeof(int));
+
+			memset(&qnode, 0, sizeof(qnode));
+			qnode.sysctl_flags = SYSCTL_VERSION;
+			myname[po->po_len-1] = CTL_QUERY;
+
+			sl = sizeof(sn);
+			if (sysctl(myname, po->po_len, sn, &sl,
+			    &qnode, sizeof(qnode)) == -1)
+				abort();
+			
+			for (i = 0; i < sl / sizeof(struct sysctlnode); i++) {
+				 if (sn[i].sysctl_num==(*sname)[po->po_len-1]) {
+					nodetype = sn[i].sysctl_flags;
+					break;
+				}
+			}
+			if (!nodetype)
+				return NULL;
+		}
+
+		sfs = emalloc(sizeof(struct sfsnode));	
+		sfs->sysctl_flags = nodetype;
+		sfs->myid = nextid++;
+
+		pn = puffs_pn_new(pu, sfs);
+		assert(pn);
+	}
+
+	return pn;
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -169,7 +237,8 @@ main(int argc, char *argv[])
 	}
 	argv += optind;
 	argc -= optind;
-	pflags |= PUFFS_FLAG_BUILDPATH | PUFFS_KFLAG_NOCACHE;
+	pflags |= PUFFS_FLAG_BUILDPATH | PUFFS_KFLAG_NOCACHE
+	    | PUFFS_KFLAG_CANEXPORT;
 
 	if (pflags & PUFFS_FLAG_OPDUMP)
 		lflags |= PUFFSLOOP_NODAEMON;
@@ -182,6 +251,8 @@ main(int argc, char *argv[])
 	PUFFSOP_SETFSNOP(pops, unmount);
 	PUFFSOP_SETFSNOP(pops, sync);
 	PUFFSOP_SETFSNOP(pops, statvfs);
+	PUFFSOP_SET(pops, sysctlfs, fs, nodetofh);
+	PUFFSOP_SET(pops, sysctlfs, fs, fhtonode);
 
 	PUFFSOP_SET(pops, sysctlfs, node, lookup);
 	PUFFSOP_SET(pops, sysctlfs, node, getattr);
@@ -231,6 +302,52 @@ sysctlfs_domount(struct puffs_usermount *pu)
 	puffs_zerostatvfs(&sb);
 	if (puffs_start(pu, pu->pu_pn_root, &sb) == -1)
 		return errno;
+
+	return 0;
+}
+
+int
+sysctlfs_fs_fhtonode(struct puffs_cc *pcc, void *fid, size_t fidsize,
+	void **fcookie, enum vtype *ftype, voff_t *fsize, dev_t *fdev)
+{
+	struct puffs_pathobj po;
+	struct puffs_node *pn;
+	struct sfsnode *sfs;
+	struct sfsfid *sfid;
+
+	/* XXX: fidsize */
+
+	sfid = fid;
+
+	po.po_len = sfid->len;
+	po.po_path = &sfid->path;
+
+	pn = getnode(puffs_cc_getusermount(pcc), &po, 0);
+	if (pn == NULL)
+		return EINVAL;
+	sfs = pn->pn_data;
+
+	*fcookie = pn;
+	if (ISADIR(sfs))
+		*ftype = VDIR;
+	else
+		*ftype = VREG;
+
+	return 0;
+}
+
+int
+sysctlfs_fs_nodetofh(struct puffs_cc *pcc, void *cookie,
+	void *fid, size_t *fidsize)
+{
+	struct puffs_node *pn = cookie;
+	struct sfsfid *sfid;
+
+	/* XXX: fidsize */
+
+	sfid = fid;
+	sfid->len = PNPLEN(pn);
+	memcpy(&sfid->path, PNPATH(pn), sfid->len * sizeof(int));
 
 	return 0;
 }
@@ -322,13 +439,12 @@ sysctlfs_node_lookup(struct puffs_cc *pcc, void *opc, void **newnode,
 	struct puffs_cn *p2cn = __UNCONST(pcn); /* XXX: fix the interface */
 	struct sysctlnode sn[SFS_NODEPERDIR];
 	struct sysctlnode qnode;
-	struct puffs_pathobj po;
 	struct puffs_node *pn_dir = opc;
 	struct puffs_node *pn_new;
 	struct sfsnode *sfs_dir = pn_dir->pn_data, *sfs_new;
 	SfsName *sname = PCNPATH(pcn);
 	size_t sl;
-	int i;
+	int i, nodetype;
 
 	assert(ISADIR(sfs_dir));
 
@@ -354,35 +470,12 @@ sysctlfs_node_lookup(struct puffs_cc *pcc, void *opc, void **newnode,
 
 		(*sname)[PCNPLEN(pcn)] = sn[i].sysctl_num;
 		p2cn->pcn_po_full.po_len++;
-	}
+		nodetype = sn[i].sysctl_flags;
+	} else
+		nodetype = CTLTYPE_NODE;
 
-	/*
-	 * Check if we need to create a new in-memory node or if we
-	 * already have one for this path.  Shortcut for the rootnode.
-	 * Also, memcmp against zero-length would be quite true always.
-	 */
-	if (PCNPLEN(pcn) == 0) {
-		pn_new = pu->pu_pn_root;
-	} else {
-		po.po_path = sname;
-		po.po_len = PCNPLEN(pcn);
-		pn_new = puffs_pn_nodewalk(puffs_cc_getusermount(pcc),
-		    puffs_path_walkcmp, &po);
-	}
-
-	if (pn_new != NULL) {
-		sfs_new = pn_new->pn_data;
-	} else {
-		sfs_new = emalloc(sizeof(struct sfsnode));	
-		if (PCNISDOTDOT(pcn))
-			sfs_new->sysctl_flags = CTLTYPE_NODE;
-		else
-			sfs_new->sysctl_flags = sn[i].sysctl_flags;
-		sfs_new->myid = nextid++;
-
-		pn_new = puffs_pn_new(puffs_cc_getusermount(pcc), sfs_new);
-		assert(pn_new != NULL);
-	}
+	pn_new = getnode(pu, &p2cn->pcn_po_full, nodetype);
+	sfs_new = pn_new->pn_data;
 
 	*newnode = pn_new;
 	if (ISADIR(sfs_new))
@@ -433,9 +526,9 @@ sysctlfs_node_setattr(struct puffs_cc *pcc, void *opc,
 }
 
 int
-sysctlfs_node_readdir(struct puffs_cc *pcc, void *opc,
-	struct dirent *dent, const struct puffs_cred *pcr,
-	off_t *readoff, size_t *reslen)
+sysctlfs_node_readdir(struct puffs_cc *pcc, void *opc, struct dirent *dent,
+	off_t *readoff, size_t *reslen, const struct puffs_cred *pcr,
+	int *eofflag, off_t *cookies, size_t *ncookies)
 {
 	struct puffs_usermount *pu = puffs_cc_getusermount(pcc);
 	struct sysctlnode sn[SFS_NODEPERDIR];
@@ -450,9 +543,16 @@ sysctlfs_node_readdir(struct puffs_cc *pcc, void *opc,
 	ino_t id;
 	int i;
 
+	if (cookies)
+		*ncookies = 0;
+
  again:
 	if (*readoff == DENT_DOT || *readoff == DENT_DOTDOT) {
 		puffs_gendotdent(&dent, sfs_dir->myid, *readoff, reslen);
+		if (cookies) {
+			*(cookies++) = *readoff;
+			(*ncookies)++;
+		}
 		(*readoff)++;
 		goto again;
 	}
@@ -494,8 +594,14 @@ sysctlfs_node_readdir(struct puffs_cc *pcc, void *opc,
 		if (!puffs_nextdent(&dent, sn[i].sysctl_name, id,
 		    puffs_vtype2dt(vt), reslen))
 			return 0;
+
+		if (cookies) {
+			*(cookies++) = *readoff;
+			(*ncookies)++;
+		}
 	}
 
+	*eofflag = 1;
 	return 0;
 }
 
