@@ -1,7 +1,7 @@
-/*	$NetBSD: fetch.c,v 1.173 2006/12/13 18:04:08 christos Exp $	*/
+/*	$NetBSD: fetch.c,v 1.174 2007/04/11 00:52:38 lukem Exp $	*/
 
 /*-
- * Copyright (c) 1997-2006 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997-2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.173 2006/12/13 18:04:08 christos Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.174 2007/04/11 00:52:38 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -199,8 +199,13 @@ auth_url(const char *challenge, char **response, const char *guser,
 	}
 	if (gpass != NULL)
 		pass = (char *)gpass;
-	else
+	else {
 		pass = getpass("Password: ");
+		if (pass == NULL) {
+			warnx("Can't read password");
+			goto cleanup_auth_url;
+		}
+	}
 
 	clen = strlen(user) + strlen(pass) + 2;	/* user + ":" + pass + "\0" */
 	clear = (char *)ftp_malloc(clen);

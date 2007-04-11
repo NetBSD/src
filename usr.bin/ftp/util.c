@@ -1,7 +1,7 @@
-/*	$NetBSD: util.c,v 1.135 2006/05/23 23:59:48 jnemeth Exp $	*/
+/*	$NetBSD: util.c,v 1.136 2007/04/11 00:52:38 lukem Exp $	*/
 
 /*-
- * Copyright (c) 1997-2005 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997-2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -71,7 +71,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.135 2006/05/23 23:59:48 jnemeth Exp $");
+__RCSID("$NetBSD: util.c,v 1.136 2007/04/11 00:52:38 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -379,6 +379,7 @@ ftp_login(const char *host, const char *luser, const char *lpass)
 {
 	char tmp[80];
 	char *user, *pass, *acct, *p;
+	char emptypass[] = "";
 	const char *errormsg;
 	int n, aflag, rval, nlen;
 
@@ -443,6 +444,8 @@ ftp_login(const char *host, const char *luser, const char *lpass)
 	if (n == CONTINUE) {
 		if (pass == NULL) {
 			p = getpass("Password: ");
+			if (p == NULL)
+				p = emptypass;
 			pass = ftp_strdup(p);
 			memset(p, 0, strlen(p));
 		}
@@ -453,6 +456,8 @@ ftp_login(const char *host, const char *luser, const char *lpass)
 		aflag++;
 		if (acct == NULL) {
 			p = getpass("Account: ");
+			if (p == NULL)
+				p = emptypass;
 			acct = ftp_strdup(p);
 			memset(p, 0, strlen(p));
 		}
