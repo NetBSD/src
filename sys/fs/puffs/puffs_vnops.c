@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.57 2007/04/04 16:13:52 pooka Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.58 2007/04/11 21:03:05 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.57 2007/04/04 16:13:52 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.58 2007/04/11 21:03:05 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/fstrans.h>
@@ -872,6 +872,7 @@ puffs_reclaim(void *v)
 	return 0;
 }
 
+#define CSIZE sizeof(*ap->a_cookies)
 int
 puffs_readdir(void *v)
 {
@@ -884,51 +885,82 @@ puffs_readdir(void *v)
 		off_t **a_cookies;
 		int *a_ncookies;
 	} */ *ap = v;
+	struct puffs_mount *pmp = MPTOPUFFSMP(ap->a_vp->v_mount);
 	struct puffs_vnreq_readdir *readdir_argp;
-	size_t argsize;
+	size_t argsize, cookiemem, cookiesmax;
 	struct uio *uio = ap->a_uio;
 	size_t howmuch;
 	int error;
 
-	/* worry about these later */
-	if (!(ap->a_cookies == NULL && ap->a_ncookies == NULL))
-		return EOPNOTSUPP;
+	if (ap->a_cookies) {
+		KASSERT(ap->a_ncookies != NULL);
+		if ((pmp->pmp_flags & PUFFS_KFLAG_CANEXPORT) == 0)
+			return EOPNOTSUPP;
+		cookiesmax = uio->uio_resid/_DIRENT_MINSIZE((struct dirent *)0);
+		cookiemem = ALIGN(cookiesmax*CSIZE); /* play safe */
+	} else {
+		cookiesmax = 0;
+		cookiemem = 0;
+	}
 
-	argsize = sizeof(struct puffs_vnreq_readdir) + uio->uio_resid;
+	argsize = sizeof(struct puffs_vnreq_readdir)
+	    + uio->uio_resid + cookiemem;
 	readdir_argp = malloc(argsize, M_PUFFS, M_ZERO | M_WAITOK);
 
 	puffs_credcvt(&readdir_argp->pvnr_cred, ap->a_cred);
 	readdir_argp->pvnr_offset = uio->uio_offset;
 	readdir_argp->pvnr_resid = uio->uio_resid;
+	readdir_argp->pvnr_ncookies = cookiesmax;
+	readdir_argp->pvnr_eofflag = 0;
+	readdir_argp->pvnr_dentoff = cookiemem;
 
 	error = puffs_vntouser(MPTOPUFFSMP(ap->a_vp->v_mount),
 	    PUFFS_VN_READDIR, readdir_argp, argsize,
-	    uio->uio_resid, VPTOPNC(ap->a_vp), ap->a_vp, NULL);
+	    uio->uio_resid + cookiemem, VPTOPNC(ap->a_vp), ap->a_vp, NULL);
 	if (error)
 		goto out;
 
 	/* userspace is cheating? */
-	if (readdir_argp->pvnr_resid > uio->uio_resid) {
+	if (readdir_argp->pvnr_resid > uio->uio_resid
+	    || readdir_argp->pvnr_ncookies > cookiesmax) {
 		error = EINVAL;
 		goto out;
 	}
 
+	/* check eof */
+	if (readdir_argp->pvnr_eofflag)
+		*ap->a_eofflag = 1;
+
 	/* bouncy-wouncy with the directory data */
 	howmuch = uio->uio_resid - readdir_argp->pvnr_resid;
-	/* XXX: we could let userlandia tell its opinion first time 'round */
+
+	/* force eof if no data was returned (getcwd() needs this) */
 	if (howmuch == 0) {
 		*ap->a_eofflag = 1;
 		goto out;
 	}
-	error = uiomove(readdir_argp->pvnr_dent, howmuch, uio);
+
+	error = uiomove(readdir_argp->pvnr_data + cookiemem, howmuch, uio);
 	if (error)
 		goto out;
+
+	/* provide cookies to caller if so desired */
+	if (ap->a_cookies) {
+		*ap->a_cookies = malloc(readdir_argp->pvnr_ncookies*CSIZE,
+		    M_TEMP, M_WAITOK);
+		*ap->a_ncookies = readdir_argp->pvnr_ncookies;
+		memcpy(*ap->a_cookies, readdir_argp->pvnr_data,
+		    *ap->a_ncookies*CSIZE);
+	}
+
+	/* next readdir starts here */
 	uio->uio_offset = readdir_argp->pvnr_offset;
 
  out:
 	free(readdir_argp, M_PUFFS);
 	return error;
 }
+#undef CSIZE
 
 int
 puffs_poll(void *v)
