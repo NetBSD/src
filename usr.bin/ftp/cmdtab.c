@@ -1,4 +1,4 @@
-/*	$NetBSD: cmdtab.c,v 1.46 2006/01/31 20:05:36 christos Exp $	*/
+/*	$NetBSD: cmdtab.c,v 1.47 2007/04/11 04:40:19 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-2005 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
 #if 0
 static char sccsid[] = "@(#)cmdtab.c	8.4 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: cmdtab.c,v 1.46 2006/01/31 20:05:36 christos Exp $");
+__RCSID("$NetBSD: cmdtab.c,v 1.47 2007/04/11 04:40:19 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -206,7 +206,7 @@ struct cmd cmdtab[] = {
 	{ "chmod",	H(chmodhelp),	0, 1, 1, CMPL(nr)	do_chmod },
 	{ "close",	H(disconhelp),	0, 1, 1, CMPL0		disconnect },
 	{ "cr",		H(crhelp),	0, 0, 0, CMPL0		setcr },
-	{ "ftp_debug",	H(debughelp),	0, 0, 0, CMPL0		setdebug },
+	{ "debug",	H(debughelp),	0, 0, 0, CMPL0		setdebug },
 	{ "delete",	H(deletehelp),	0, 1, 1, CMPL(r)	delete },
 	{ "dir",	H(lshelp),	1, 1, 1, CMPL(rl)	ls },
 	{ "disconnect",	H(disconhelp),	0, 1, 1, CMPL0		disconnect },
