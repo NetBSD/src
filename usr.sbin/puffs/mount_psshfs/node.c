@@ -1,4 +1,4 @@
-/*	$NetBSD: node.c,v 1.14 2007/04/09 20:59:08 pooka Exp $	*/
+/*	$NetBSD: node.c,v 1.15 2007/04/11 21:21:50 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: node.c,v 1.14 2007/04/09 20:59:08 pooka Exp $");
+__RCSID("$NetBSD: node.c,v 1.15 2007/04/11 21:21:50 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -212,7 +212,8 @@ psshfs_node_create(struct puffs_cc *pcc, void *opc, void **newnode,
 
 int
 psshfs_node_readdir(struct puffs_cc *pcc, void *opc, struct dirent *dent,
-	const struct puffs_cred *pcr, off_t *readoff, size_t *reslen)
+	off_t *readoff, size_t *reslen, const struct puffs_cred *pcr,
+	int *eofflag, off_t *cookies, size_t *ncookies)
 {
 	struct puffs_usermount *pu = puffs_cc_getusermount(pcc);
 	struct psshfs_ctx *pctx = pu->pu_privdata;
