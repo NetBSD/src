@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.c,v 1.33 2007/03/20 10:22:23 pooka Exp $	*/
+/*	$NetBSD: puffs.c,v 1.34 2007/04/11 21:04:51 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: puffs.c,v 1.33 2007/03/20 10:22:23 pooka Exp $");
+__RCSID("$NetBSD: puffs.c,v 1.34 2007/04/11 21:04:51 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -459,6 +459,7 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 				pu->pu_state = PUFFS_STATE_RUNNING;
 			break;
 		}
+
 		case PUFFS_VFS_STATVFS:
 		{
 			struct puffs_vfsreq_statvfs *auxt = auxbuf;
@@ -467,6 +468,7 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 			    &auxt->pvfsr_sb, auxt->pvfsr_pid);
 			break;
 		}
+
 		case PUFFS_VFS_SYNC:
 		{
 			struct puffs_vfsreq_sync *auxt = auxbuf;
@@ -476,6 +478,30 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 			    auxt->pvfsr_pid);
 			break;
 		}
+
+		case PUFFS_VFS_FHTOVP:
+		{
+			struct puffs_vfsreq_fhtonode *auxt = auxbuf;
+
+			error = pops->puffs_fs_fhtonode(pcc, auxt->pvfsr_data,
+			    auxt->pvfsr_dsize, &auxt->pvfsr_fhcookie,
+			    &auxt->pvfsr_vtype, &auxt->pvfsr_size,
+			    &auxt->pvfsr_rdev);
+
+			break;
+		}
+
+		case PUFFS_VFS_VPTOFH:
+		{
+			struct puffs_vfsreq_nodetofh *auxt = auxbuf;
+
+			error = pops->puffs_fs_nodetofh(pcc,
+			    auxt->pvfsr_fhcookie, auxt->pvfsr_data,
+			    &auxt->pvfsr_dsize);
+
+			break;
+		}
+
 		case PUFFS_VFS_SUSPEND:
 		{
 			struct puffs_vfsreq_suspend *auxt = auxbuf;
@@ -911,6 +937,8 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 		case PUFFS_VN_READDIR:
 		{
 			struct puffs_vnreq_readdir *auxt = auxbuf;
+			struct dirent *dent;
+			off_t *cookies;
 			size_t res;
 
 			if (pops->puffs_node_readdir == NULL) {
@@ -918,15 +946,25 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 				break;
 			}
 
+			if (auxt->pvnr_ncookies) {
+				/* LINTED: pvnr_data is __aligned() */
+				cookies = (off_t *)auxt->pvnr_data;
+			} else {
+				cookies = NULL;
+			}
+			/* LINTED: dentoff is aligned in the kernel */
+			dent = (struct dirent *)
+			    (auxt->pvnr_data + auxt->pvnr_dentoff);
+
 			res = auxt->pvnr_resid;
 			error = pops->puffs_node_readdir(pcc,
-			    preq->preq_cookie, auxt->pvnr_dent,
-			    &auxt->pvnr_cred, &auxt->pvnr_offset,
-			    &auxt->pvnr_resid);
+			    preq->preq_cookie, dent, &auxt->pvnr_offset,
+			    &auxt->pvnr_resid, &auxt->pvnr_cred,
+			    &auxt->pvnr_eofflag, cookies, &auxt->pvnr_ncookies);
 
 			/* need to move a bit more */
 			preq->preq_buflen = sizeof(struct puffs_vnreq_readdir) 
-			    + (res - auxt->pvnr_resid);
+			    + auxt->pvnr_dentoff + (res - auxt->pvnr_resid);
 			break;
 		}
 
