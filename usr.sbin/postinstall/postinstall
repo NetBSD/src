@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.39 2007/03/26 18:09:42 apb Exp $
+# $NetBSD: postinstall,v 1.40 2007/04/11 07:16:28 kiyohara Exp $
 #
 # Copyright (c) 2002-2006 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -572,7 +572,7 @@ do_bluetooth()
 
 	populate_dir ${op} true \
 		${SRC_DIR}/etc/bluetooth ${DEST_DIR}/etc/bluetooth 644 \
-		hosts protocols btdevctl.conf
+		hosts protocols btdevctl.conf btuartd.conf
 	failed=$(( ${failed} + $? ))
 
 	move_file ${op} ${DEST_DIR}/var/db/btdev.xml \
