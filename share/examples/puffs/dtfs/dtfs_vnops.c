@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs_vnops.c,v 1.21 2007/04/10 13:32:02 pooka Exp $	*/
+/*	$NetBSD: dtfs_vnops.c,v 1.22 2007/04/11 21:07:54 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -226,29 +226,39 @@ dtfs_node_rmdir(struct puffs_cc *pcc, void *opc, void *targ,
 
 int
 dtfs_node_readdir(struct puffs_cc *pcc, void *opc,
-	struct dirent *dent, const struct puffs_cred *pcr, off_t *readoff,
-	size_t *reslen)
+	struct dirent *dent, off_t *readoff, size_t *reslen,
+	const struct puffs_cred *pcr,
+	int *eofflag, off_t *cookies, size_t *ncookies)
 {
 	struct puffs_node *pn = opc;
 	struct puffs_node *pn_nth;
 	struct dtfs_dirent *dfd_nth;
+	size_t maxcookies = *ncookies;
 
 	if (pn->pn_va.va_type != VDIR)
 		return ENOTDIR;
 	
 	dtfs_updatetimes(pn, 1, 0, 0);
 
+	*ncookies = 0;
  again:
 	if (*readoff == DENT_DOT || *readoff == DENT_DOTDOT) {
 		puffs_gendotdent(&dent, pn->pn_va.va_fileid, *readoff, reslen);
+		if (cookies) {
+			*(cookies++) = *readoff;
+			(*ncookies)++;
+			assert(*ncookies <= maxcookies);
+		}
 		(*readoff)++;
 		goto again;
 	}
 
 	for (;;) {
 		dfd_nth = dtfs_dirgetnth(pn->pn_data, DENT_ADJ(*readoff));
-		if (!dfd_nth)
+		if (!dfd_nth) {
+			*eofflag = 1;
 			return 0;
+		}
 		pn_nth = dfd_nth->dfd_node;
 
 		if (!puffs_nextdent(&dent, dfd_nth->dfd_name,
@@ -256,6 +266,11 @@ dtfs_node_readdir(struct puffs_cc *pcc, void *opc,
 		    puffs_vtype2dt(pn_nth->pn_va.va_type),
 		    reslen))
 			return 0;
+		if (cookies) {
+			*(cookies++) = *readoff;
+			(*ncookies)++;
+			assert(*ncookies <= maxcookies);
+		}
 		(*readoff)++;
 	}
 }
