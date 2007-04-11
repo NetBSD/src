@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs_vfsops.c,v 1.11 2007/01/26 23:02:05 pooka Exp $	*/
+/*	$NetBSD: dtfs_vfsops.c,v 1.12 2007/04/11 21:07:54 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -141,6 +141,59 @@ dtfs_fs_statvfs(struct puffs_cc *pcc, struct statvfs *sbp, pid_t pid)
 	return 0;
 }
 #undef ROUND 
+
+static void *
+addrcmp(struct puffs_usermount *pu, struct puffs_node *pn, void *arg)
+{
+
+	if (pn == arg)
+		return pn;
+
+	return NULL;
+}
+
+int
+dtfs_fs_fhtonode(struct puffs_cc *pcc, void *fid, size_t fidsize,
+	void **fcookie, enum vtype *ftype, voff_t *fsize, dev_t *fdev)
+{
+	struct puffs_usermount *pu = puffs_cc_getusermount(pcc);
+	struct dtfs_fid *dfid;
+	struct puffs_node *pn;
+
+	dfid = fid;
+
+	pn = puffs_pn_nodewalk(pu, addrcmp, dfid->dfid_addr);
+	if (pn == NULL)
+		return EINVAL;
+
+	if (pn->pn_va.va_fileid != dfid->dfid_fileid
+	    || pn->pn_va.va_gen != dfid->dfid_gen)
+		return EINVAL;
+	
+	*fcookie = pn;
+	*ftype = pn->pn_va.va_type;
+	*fsize = pn->pn_va.va_size;
+	*fdev = pn->pn_va.va_rdev;
+
+	return 0;
+}
+
+int
+dtfs_fs_nodetofh(struct puffs_cc *pcc, void *cookie,
+	void *fid, size_t *fidsize)
+{
+	struct puffs_node *pn = cookie;
+	struct dtfs_fid *dfid;
+
+	memset(fid, 0xff, PUFFS_FHSIZE);
+	dfid = fid;
+
+	dfid->dfid_addr = pn;
+	dfid->dfid_fileid = pn->pn_va.va_fileid;
+	dfid->dfid_gen = pn->pn_va.va_gen;
+
+	return 0;
+}
 
 void
 dtfs_fs_suspend(struct puffs_cc *pcc, int status)
