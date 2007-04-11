@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.c,v 1.28 2007/04/04 21:02:30 pooka Exp $	*/
+/*	$NetBSD: puffs_msgif.c,v 1.29 2007/04/11 09:43:19 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.28 2007/04/04 21:02:30 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.29 2007/04/11 09:43:19 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/fstrans.h>
@@ -173,13 +173,12 @@ parkqdump(struct puffs_wq *q, int dumpall)
 	struct puffs_park *park;
 	int total = 0;
 
-	DPRINTF(("puffs waitqueue at %p, BEGIN\n", q));
 	TAILQ_FOREACH(park, q, park_entries) {
 		if (dumpall)
 			parkdump(park);
 		total++;
 	}
-	DPRINTF(("puffs waitqueue at %p, END.  %d total\n", q, total));
+	DPRINTF(("puffs waitqueue at %p dumped, %d total\n", q, total));
 
 }
 #endif /* PUFFSDEBUG */
