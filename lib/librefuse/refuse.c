@@ -1,4 +1,4 @@
-/*	$NetBSD: refuse.c,v 1.44 2007/03/16 08:17:36 pooka Exp $	*/
+/*	$NetBSD: refuse.c,v 1.45 2007/04/11 21:10:51 pooka Exp $	*/
 
 /*
  * Copyright © 2007 Alistair Crooks.  All rights reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: refuse.c,v 1.44 2007/03/16 08:17:36 pooka Exp $");
+__RCSID("$NetBSD: refuse.c,v 1.45 2007/04/11 21:10:51 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -844,9 +844,9 @@ puffs_fuse_node_write(struct puffs_cc *pcc, void *opc, uint8_t *buf,
 
 /* ARGSUSED3 */
 static int
-puffs_fuse_node_readdir(struct puffs_cc *pcc, void *opc,
-	struct dirent *dent, const struct puffs_cred *pcr, off_t *readoff,
-	size_t *reslen)
+puffs_fuse_node_readdir(struct puffs_cc *pcc, void *opc, struct dirent *dent,
+	off_t *readoff, size_t *reslen, const struct puffs_cred *pcr,
+	int *eofflag, off_t *cookies, size_t *ncookies)
 {
 	struct puffs_usermount	*pu = puffs_cc_getusermount(pcc);
 	struct puffs_node	*pn = opc;
