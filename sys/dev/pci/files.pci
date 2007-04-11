@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.284 2007/04/10 02:16:47 macallan Exp $
+#	$NetBSD: files.pci,v 1.285 2007/04/11 04:48:31 macallan Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -872,4 +872,4 @@ include "dev/pci/drm/files.pcidrm"
 
 # generic framebuffer console driver, PCI frontend
 attach genfb at pci with genfb_pci
-file	dev/pci/genfb_pci.c	genfb
+file	dev/pci/genfb_pci.c	genfb_pci
