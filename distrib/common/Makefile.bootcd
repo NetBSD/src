@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.bootcd,v 1.8 2007/03/06 21:38:29 bouyer Exp $
+#	$NetBSD: Makefile.bootcd,v 1.9 2007/04/11 16:21:40 christos Exp $
 #
 # Makefile snipped to create a CD/DVD ISO
 #
@@ -14,6 +14,7 @@
 # Optional variables:
 #	CDRELEASE	Set to 'true' to include $RELEASEDIR/$MACHINE on the CD
 #	CDRELEASE_NOISOS Excludes installation/cdrom directory if set
+#	CDSOURCE	Set to 'true' to include $RELEASEDIR/source on the CD
 #	BOOT		Defaults to $DESTDIR/usr/mdec/boot
 #	BOOTXX_CD9660	Defaults to $DESTDIR/usr/mdec/bootxx_cd9660
 #	CDBOOTOPTIONS	Options for installboot, eg -o console=com0,speed=9600
@@ -30,6 +31,7 @@
 BOOT?=		${DESTDIR}/usr/mdec/boot
 BOOTXX_CD9660?=	${DESTDIR}/usr/mdec/bootxx_cd9660
 CDRELEASE?=	false
+CDSOURCE?=	false
 .if ${CDRELEASE} == false
 CDROMS_RELEASEDIR?=	${MACHINE}/installation/cdrom
 .else
@@ -101,19 +103,32 @@ prepare:
 #
 copy-releasedir:
 	${RM} -f ${RELEASEDIR}/${CDROMS_RELEASEDIR}/${CDBASE}.iso
-	if ${CDRELEASE} ; then 						\
+	if ${CDRELEASE}; then 						\
 		if [ ! -d ${RELEASEDIR}/${MACHINE} ]; then 		\
-			echo "No releasedir ${RELEASEDIR}/${MACHINE}, aborting" ; \
-			exit 1 ; 					\
-		fi ; 							\
-		${MKDIR} cdrom/${MACHINE} ; 				\
-		release_destdir=`pwd`/cdrom/${MACHINE} ; 		\
-		cd ${RELEASEDIR}/${MACHINE} ; 				\
-		echo Copying `pwd` to $$release_destdir ... ; 		\
+			echo "Missing ${RELEASEDIR}/${MACHINE}, aborting"; \
+			exit 1; 					\
+		fi; 							\
+		${MKDIR} cdrom/${MACHINE}; 				\
+		release_destdir=$$(pwd)/cdrom/${MACHINE}; 		\
+		cd ${RELEASEDIR}/${MACHINE}; 				\
+		echo Copying $$(pwd) to $$release_destdir ...; 		\
 		${TOOL_PAX} 						\
 			-rw -pe -v 					\
 			${CDRELEASE_EXCLUDE}				\
-			. $$release_destdir ; 				\
+			. $$release_destdir; 				\
+	fi
+	if ${CDSOURCE}; then 						\
+		if [ ! -d ${RELEASEDIR}/source ]; then	 		\
+			echo "Missing ${RELEASEDIR}/source, aborting"; 	\
+			exit 1; 					\
+		fi; 							\
+		${MKDIR} cdrom/source; 					\
+		release_destdir=$$(pwd)/cdrom/source;	 		\
+		cd ${RELEASEDIR}/source; 				\
+		echo Copying $$(pwd) to $$release_destdir ...;		\
+		${TOOL_PAX} 						\
+			-rw -pe -v 					\
+			. $$release_destdir; 				\
 	fi
 
 image:
