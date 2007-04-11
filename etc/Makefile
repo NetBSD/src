@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.342 2007/03/16 21:12:17 bad Exp $
+#	$NetBSD: Makefile,v 1.343 2007/04/11 20:46:09 bouyer Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -414,7 +414,7 @@ release snapshot: .PHONY .MAKE check_DESTDIR check_RELEASEDIR snap_md_post
 #	Note: At least mkisofs 2.0 should be used.
 #
 CDROM_NAME_ADD?=
-CDROM.image=${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/cdrom/netbsd-${MACHINE}${CDROM_NAME_ADD}.iso
+CDROM.image?=${RELEASEDIR}/iso/${MACHINE}cd.iso
 CDROM.dir=	${.OBJDIR}/cdrom.dir
 CDROM.pathlist=	${.OBJDIR}/cdrom.pathlist
 
@@ -422,7 +422,7 @@ iso-image:
 
 .if ${MKISOFS} != true
 do-iso-image: .PHONY check_DESTDIR check_RELEASEDIR iso-image-md-post
-	${MAKESUMS} -t ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/cdrom '*.iso'
+	${MAKESUMS} -t ${RELEASEDIR}/iso/ '*.iso'
 	@echo "iso-image created as: ${CDROM.image}"
 .else
 do-iso-image:
