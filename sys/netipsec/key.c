@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.44 2007/04/09 21:07:03 degroote Exp $	*/
+/*	$NetBSD: key.c,v 1.45 2007/04/11 21:19:35 degroote Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.44 2007/04/09 21:07:03 degroote Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.45 2007/04/11 21:19:35 degroote Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -2154,7 +2154,7 @@ key_spddelete2(so, m, mhp)
 	/* Is there SP in SPD ? */
 	if ((sp = key_getspbyid(id)) == NULL) {
 		ipseclog((LOG_DEBUG, "key_spddelete2: no SP found id:%u.\n", id));
-		key_senderror(so, m, EINVAL);
+		return key_senderror(so, m, EINVAL);
 	}
 
 	key_sp_dead(sp);
