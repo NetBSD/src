@@ -1,4 +1,4 @@
-/*	$NetBSD: db.c,v 1.1 2006/09/10 15:45:56 plunky Exp $	*/
+/*	$NetBSD: db.c,v 1.2 2007/04/11 19:59:02 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: db.c,v 1.1 2006/09/10 15:45:56 plunky Exp $");
+__RCSID("$NetBSD: db.c,v 1.2 2007/04/11 19:59:02 plunky Exp $");
 
 #include <bluetooth.h>
 #include <err.h>
@@ -169,7 +169,7 @@ db_update0(void)
 	prop_object_iterator_t iter;
 	prop_object_t obj;
 	bdaddr_t laddr, raddr;
-	char *service;
+	const char *service;
 
 	db_flush = FALSE;	/* no write on set */
 	old = db;
