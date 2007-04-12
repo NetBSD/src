@@ -1,10 +1,10 @@
-/*	$NetBSD: mcadevs_data.h,v 1.23 2007/04/11 18:11:34 garbled Exp $	*/
+/*	$NetBSD: mcadevs_data.h,v 1.24 2007/04/12 18:00:17 garbled Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: mcadevs,v 1.20 2005/12/11 12:22:18 christos Exp
+ *	NetBSD: mcadevs,v 1.22 2007/04/12 18:00:05 garbled Exp
  */
 
 /*-
@@ -376,7 +376,7 @@ const struct mca_knowndev mca_knowndevs[] = {
     { 0xEFF6,	"IBM PagePrinter Adapter/2" },
     { 0xEFFD,	"IBM VGA Adapter" },
     { 0xF04F,	"IBM 3117 Scanner Adapter/A" },
-    { 0xF6FE,	"IBM Standard I/O Planar" },
+    { 0xF6FE,	"IBM Standard I/O Planar (Rainbow)" },
     { 0xF7F7,	"IBM 2-8Mb 80286 Memory Expansion" },
     { 0xF7FE,	"IBM Expanded Memory" },
     { 0xFAFF,	"IBM 32-bit Memory Expansion" },
