@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.175 2007/04/12 05:07:58 thorpej Exp $
+#	$NetBSD: BRANCHES,v 1.176 2007/04/12 15:51:58 thorpej Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -570,7 +570,24 @@ Base tag:	thorpej-atomic-base
 Maintainer:	Jason Thorpe <thorpej@netbsd.org>
 Scope:		src/common
 		src/sys
-Notes:		
+Notes:		Base atomic primitives need to be implemented for
+		all of the supported architectures:
+
+		alpha
+		arm
+		hppa
+		i386
+		ia64
+		m68k
+		mips
+		ns32k
+		powerpc
+		powerpc64
+		sh3
+		sparc
+		sparc64
+		vax
+		x86_64
 
 ########################################################################
 # Individual developers' branches (Terminated):
