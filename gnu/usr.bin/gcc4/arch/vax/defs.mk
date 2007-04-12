@@ -47,6 +47,6 @@ G_CXX_OBJS=cp-lang.o stub-objc.o call.o decl.o expr.o pt.o typeck2.o class.o dec
 G_CXX_C_OBJS=attribs.o c-common.o c-format.o c-pragma.o c-semantics.o c-lex.o c-dump.o  c-pretty-print.o c-opts.o c-pch.o c-incpath.o cppdefault.o c-ppoutput.o c-cppbuiltin.o prefix.o c-gimplify.o tree-inline.o
 G_F77_OBJS=
 G_libcpp_a_OBJS=charset.o directives.o errors.o expr.o files.o identifiers.o init.o lex.o line-map.o macro.o mkdeps.o pch.o symtab.o traditional.o
-G_ENABLE_SHARED=no
+G_ENABLE_SHARED=yes
 G_SHLIB_LINK= -shared
 G_SHLIB_MULTILIB=.
