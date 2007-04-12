@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.c,v 1.57 2006/04/21 15:00:49 skrll Exp $	*/
+/*	$NetBSD: inode.c,v 1.58 2007/04/12 05:19:18 chs Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)inode.c	8.8 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: inode.c,v 1.57 2006/04/21 15:00:49 skrll Exp $");
+__RCSID("$NetBSD: inode.c,v 1.58 2007/04/12 05:19:18 chs Exp $");
 #endif
 #endif /* not lint */
 
@@ -477,7 +477,7 @@ cacheino(union dinode *dp, ino_t inumber)
 {
 	struct inoinfo *inp;
 	struct inoinfo **inpp, **ninpsort;
-	unsigned int blks;
+	unsigned int blks, extra;
 	int i;
 	int64_t size;
 
@@ -485,9 +485,11 @@ cacheino(union dinode *dp, ino_t inumber)
 	blks = howmany(size, sblock->fs_bsize);
 	if (blks > NDADDR)
 		blks = NDADDR + NIADDR;
-
-	inp = (struct inoinfo *) malloc(sizeof(*inp) + (blks - 1)
-					    * sizeof (int64_t));
+	if (blks > 0)
+		extra = (blks - 1) * sizeof (int64_t);
+	else
+		extra = 0;
+	inp = malloc(sizeof(*inp) + extra);
 	if (inp == NULL)
 		return;
 	inpp = &inphead[inumber % dirhash];
