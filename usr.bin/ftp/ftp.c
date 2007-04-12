@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.144 2007/04/11 05:03:25 lukem Exp $	*/
+/*	$NetBSD: ftp.c,v 1.145 2007/04/12 04:18:23 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-2007 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.144 2007/04/11 05:03:25 lukem Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.145 2007/04/12 04:18:23 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -505,7 +505,7 @@ getreply(int expecteof)
 		if (verbose > 0 || ((verbose > -1 && n == '5') &&
 		    (n < '5' || !retry_connect))) {
 			(void)putc(c, ttyout);
-			(void)fflush (ttyout);
+			(void)fflush(ttyout);
 		}
 		if (cp[-1] == '\r')
 			cp[-1] = '\0';
