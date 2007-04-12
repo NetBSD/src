@@ -1,4 +1,4 @@
-/*	$NetBSD: quotacheck.c,v 1.37 2005/08/19 02:09:50 christos Exp $	*/
+/*	$NetBSD: quotacheck.c,v 1.37.4.1 2007/04/12 19:17:44 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)quotacheck.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: quotacheck.c,v 1.37 2005/08/19 02:09:50 christos Exp $");
+__RCSID("$NetBSD: quotacheck.c,v 1.37.4.1 2007/04/12 19:17:44 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -360,19 +360,9 @@ chkquota(type, fsname, mntpt, v, pid)
 	sync();
 	dev_bsize = 1;
 
-	cgp = malloc(sblock.fs_cgsize);
-	if (cgp == NULL) {
-		warn("%s: can't allocate %d bytes of cg space", fsname,
-		    sblock.fs_cgsize);
-		if (pid != NULL)
-			exit(1);
-		return 1;
-	}
-
 	for (i = 0; ; i++) {
 		if (sblock_try[i] == -1) {
 			warnx("%s: superblock not found", fsname);
-			free(cgp);
 			if (pid != NULL)
 				exit(1);
 			return 1;
@@ -411,10 +401,20 @@ chkquota(type, fsname, mntpt, v, pid)
 		break;
 	}
 
+	cgp = malloc(sblock.fs_cgsize);
+	if (cgp == NULL) {
+		warn("%s: can't allocate %d bytes of cg space", fsname,
+		    sblock.fs_cgsize);
+		if (pid != NULL)
+			exit(1);
+		return 1;
+	}
+
 	dev_bsize = sblock.fs_fsize / fsbtodb(&sblock, 1);
 	maxino = sblock.fs_ncg * sblock.fs_ipg;
-	for (ino = 0, cg = 0; cg < sblock.fs_ncg; cg++) {
-		setinodebuf(cg * sblock.fs_ipg);
+	for (cg = 0; cg < sblock.fs_ncg; cg++) {
+		ino = cg * sblock.fs_ipg;
+		setinodebuf(ino);
 #ifdef HAVE_UFSv2
 		if (sblock.fs_magic == FS_UFS2_MAGIC) {
 			bread(fsbtodb(&sblock, cgtod(&sblock, cg)), (char *)cgp,
