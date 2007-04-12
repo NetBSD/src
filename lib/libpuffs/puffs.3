@@ -1,4 +1,4 @@
-.\"	$NetBSD: puffs.3,v 1.16 2007/03/22 17:38:09 pooka Exp $
+.\"	$NetBSD: puffs.3,v 1.17 2007/04/12 21:45:29 pooka Exp $
 .\"
 .\" Copyright (c) 2006, 2007 Antti Kantee.  All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd March 20, 2007
+.Dd April 12, 2007
 .Dt PUFFS 3
 .Os
 .Sh NAME
@@ -53,6 +53,14 @@
 .Fn puffs_getstate "struct puffs_usermount *pu"
 .Ft int
 .Fn puffs_setstacksize "struct puffs_usermount *pu" "size_t stacksize"
+.Ft void
+.Fn puffs_setroot "struct puffs_usermount *pu" "struct puffs_node *node"
+.Ft struct puffs_node *
+.Fn puffs_getroot "struct puffs_usermount *pu"
+.Ft void *
+.Fn puffs_getspecific "struct puffs_usermount *pu"
+.Ft size_t
+.Fn puffs_getmaxreqlen "struct puffs_usermount *pu"
 .Ft int
 .Fn puffs_fs_unmount "struct puffs_cc *pcc" "int flags" "pid_t pid"
 .Ft int
@@ -284,24 +292,22 @@ is used to pass
 .Dv PUFFSLOOP_NODAEMON ,
 .Fn puffs_mainloop
 will also detach from the terminal.
-.Pp
-.Fn puffs_getselectable
-can be used to query a handle to do I/O multiplexing with:
+.Bl -tag -width xxxx
+.It Fn puffs_getselectable "pu"
+Returns a handle to do I/O multiplexing with:
 .Xr select 2 ,
 .Xr poll 2 ,
 and
 .Xr kqueue 2
 are all examples of acceptable operations.
-.Pp
-The library can be set in blocking or non-blocking mode using
-.Fn puffs_setblockingmode .
+.It Fn puffs_setblockingmode "pu" "mode"
+Sets the library to blocking or non-blocking.
 Acceptable values for the argument are
 .Dv PUFFSDEV_BLOCK
 and
 .Dv PUFFSDEV_NONBLOCK .
-.Pp
-The state of the file system can be queried with
-.Fn puffs_getstate .
+.It Fn puffs_getstate "pu"
+Returns the state of the file system.
 It is maintained by the framework and is mostly useful for the framework
 itself.
 Possible values are
@@ -310,12 +316,31 @@ Possible values are
 .Dv PUFFS_STATE_UNMOUNTING
 and
 .Dv PUFFS_STATE_UNMOUNTED .
-.Pp
-The stack size for handling requests can be set with
-.Fn puffs_setstacksize .
+.It Fn puffs_setstacksize "stacksize"
+Sets the stack size used when running callbacks.
 The default is one megabyte of stack space per request.
 See
 .Xr puffs_cc 3 .
+.It Fn puffs_setroot "pu" "node"
+Sets the root node of mount
+.Fa pu
+to
+.Fa "node" .
+Setting the root node is currently required only if the path
+framework is used, see
+.Xr puffs_path 3 .
+.It Fn puffs_getroot "pu"
+Returns the root node set earlier.
+.It Fn puffs_getspecific "pu"
+Returns the
+.Fa private
+argument of
+.Fn puffs_mount .
+.It Fn puffs_getmaxreqlen "pu"
+Returns the maximum request length the kernel will need for a single
+request.
+This information can be used to allocate the request buffer.
+.El
 .Pp
 After the correct setup for the library has been established and the
 backend has been initialized, the file system is made operational
