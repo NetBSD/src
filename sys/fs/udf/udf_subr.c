@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.23.2.3 2007/01/21 16:39:59 bouyer Exp $ */
+/* $NetBSD: udf_subr.c,v 1.23.2.4 2007/04/12 19:37:36 bouyer Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: udf_subr.c,v 1.23.2.3 2007/01/21 16:39:59 bouyer Exp $");
+__RCSID("$NetBSD: udf_subr.c,v 1.23.2.4 2007/04/12 19:37:36 bouyer Exp $");
 #endif /* not lint */
 
 
@@ -725,7 +725,8 @@ udf_read_anchors(struct udf_mount *ump, struct udf_args *args)
 static int
 udf_process_vds_descriptor(struct udf_mount *ump, union dscrptr *dscr)
 {
-	uint16_t partnr;
+	struct part_desc *part;
+	uint16_t phys_part, raw_phys_part;
 
 	DPRINTF(VOLUMES, ("\tprocessing VDS descr %d\n",
 	    udf_rw16(dscr->tag.id)));
@@ -750,14 +751,25 @@ udf_process_vds_descriptor(struct udf_mount *ump, union dscrptr *dscr)
 			break;
 		}
 
-		/* check partnr boundaries */
-		partnr = udf_rw16(dscr->pd.part_num);
-		if (partnr >= UDF_PARTITIONS) {
+		/*
+		 * BUGALERT: some rogue implementations use random physical
+		 * partion numbers to break other implementations so lookup
+		 * the number.
+		 */
+		raw_phys_part = udf_rw16(dscr->pd.part_num);
+		for (phys_part = 0; phys_part < UDF_PARTITIONS; phys_part++) {
+			part = ump->partitions[phys_part];
+			if (part == NULL)
+				break;
+			if (udf_rw16(part->part_num) == raw_phys_part)
+				break;
+		}
+		if (phys_part == UDF_PARTITIONS) {
 			free(dscr, M_UDFVOLD);
 			return EINVAL;
 		}
 
-		UDF_UPDATE_DSCR(ump->partitions[partnr], &dscr->pd);
+		UDF_UPDATE_DSCR(ump->partitions[phys_part], &dscr->pd);
 		break;
 	case TAGID_VOL :		/* volume space extender; rare	*/
 		DPRINTF(VOLUMES, ("VDS extender ignored\n"));
@@ -952,12 +964,13 @@ udf_process_vds(struct udf_mount *ump, struct udf_args *args)
 	union udf_pmap *mapping;
 	struct logvol_int_desc *lvint;
 	struct udf_logvol_info *lvinfo;
+	struct part_desc *part;
 	uint32_t n_pm, mt_l;
 	uint8_t *pmap_pos;
 	char *domain_name, *map_name;
 	const char *check_name;
 	int pmap_stype, pmap_size;
-	int pmap_type, log_part, phys_part;
+	int pmap_type, log_part, phys_part, raw_phys_part;
 	int n_phys, n_virt, n_spar, n_meta;
 	int len, error;
 
@@ -1030,14 +1043,14 @@ udf_process_vds(struct udf_mount *ump, struct udf_args *args)
 		switch (pmap_stype) {
 		case 1:	/* physical mapping */
 			/* volseq    = udf_rw16(mapping->pm1.vol_seq_num); */
-			phys_part = udf_rw16(mapping->pm1.part_num);
+			raw_phys_part = udf_rw16(mapping->pm1.part_num);
 			pmap_type = UDF_VTOP_TYPE_PHYS;
 			n_phys++;
 			break;
 		case 2: /* virtual/sparable/meta mapping */
 			map_name  = mapping->pm2.part_id.id;
 			/* volseq  = udf_rw16(mapping->pm2.vol_seq_num); */
-			phys_part = udf_rw16(mapping->pm2.part_num);
+			raw_phys_part = udf_rw16(mapping->pm2.part_num);
 			pmap_type = UDF_VTOP_TYPE_UNKNOWN;
 			len = UDF_REGID_ID_SIZE;
 
@@ -1064,8 +1077,24 @@ udf_process_vds(struct udf_mount *ump, struct udf_args *args)
 			return EINVAL;
 		}
 
-		DPRINTF(VOLUMES, ("\t%d -> %d type %d\n", log_part, phys_part,
-		    pmap_type));
+		/*
+		 * BUGALERT: some rogue implementations use random physical
+		 * partion numbers to break other implementations so lookup
+		 * the number.
+		 */
+		for (phys_part = 0; phys_part < UDF_PARTITIONS; phys_part++) {
+			part = ump->partitions[phys_part];
+			if (part == NULL)
+				continue;
+			if (udf_rw16(part->part_num) == raw_phys_part)
+				break;
+		}
+
+		DPRINTF(VOLUMES, ("\t%d -> %d(%d) type %d\n", log_part,
+		    raw_phys_part, phys_part, pmap_type));
+	
+		if (phys_part == UDF_PARTITIONS)
+			return EINVAL;
 		if (pmap_type == UDF_VTOP_TYPE_UNKNOWN)
 			return EINVAL;
 
