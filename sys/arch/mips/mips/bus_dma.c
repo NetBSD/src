@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.19 2007/04/12 22:48:38 matt Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.20 2007/04/12 23:07:50 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.19 2007/04/12 22:48:38 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.20 2007/04/12 23:07:50 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -745,8 +745,7 @@ _bus_dmamem_mmap(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 		}
 
 		pa = (paddr_t)segs[i].ds_addr + off;
-		if (flags & BUS_DMA_COHERENT)
-			pa = (paddr_t)MIPS_PHYS_TO_KSEG1(pa);
+
 		return mips_btop(pa);
 	}
 
