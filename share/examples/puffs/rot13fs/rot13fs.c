@@ -1,4 +1,4 @@
-/*	$NetBSD: rot13fs.c,v 1.3 2007/04/11 21:10:49 pooka Exp $	*/
+/*	$NetBSD: rot13fs.c,v 1.4 2007/04/12 15:09:02 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -82,6 +82,7 @@ main(int argc, char *argv[])
 	struct puffs_usermount *pu;
 	struct puffs_ops *pops;
 	struct puffs_pathobj *po_root;
+	struct puffs_node *pn_root;
 	struct statvfs svfsb;
 	struct stat sb;
 	mntoptparse_t mp;
@@ -150,9 +151,10 @@ main(int argc, char *argv[])
 	if (statvfs(argv[0], &svfsb) == -1)
 		err(1, "statvfs %s", argv[0]);
 
-	pu->pu_pn_root = puffs_pn_new(pu, NULL);
-	if (pu->pu_pn_root == NULL)
+	pn_root = puffs_pn_new(pu, NULL);
+	if (pn_root == NULL)
 		err(1, "puffs_pn_new");
+	puffs_setroot(pu, pn_root);
 
 	po_root = puffs_getrootpathobj(pu);
 	if (po_root == NULL)
@@ -164,7 +166,7 @@ main(int argc, char *argv[])
 
 	if (stat(argv[0], &sb) == -1)
 		err(1, "stat %s", argv[0]);
-	puffs_stat2vattr(&pu->pu_pn_root->pn_va, &sb);
+	puffs_stat2vattr(&pn_root->pn_va, &sb);
 
 	/* initialize rot13 tables */
 	for (i = 0; i < 256; i++)
@@ -174,7 +176,7 @@ main(int argc, char *argv[])
 	for (i = 0; i < 26; i++)
 		tbl[i + 'A'] = 'A' + ((i + 13) % 26);
 
-	if (puffs_start(pu, pu->pu_pn_root, &svfsb) == -1)
+	if (puffs_start(pu, pn_root, &svfsb) == -1)
 		err(1, "puffs_start");
 
 	if (puffs_mainloop(pu, lflags) == -1)

@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs_subr.c,v 1.14 2007/04/11 21:07:54 pooka Exp $	*/
+/*	$NetBSD: dtfs_subr.c,v 1.15 2007/04/12 15:09:01 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -104,7 +104,7 @@ dtfs_genfile(struct puffs_node *dir, const struct puffs_cn *pcn,
 	} else
 		dff = dtfs_newfile();
 
-	dtm = dir->pn_mnt->pu_privdata;
+	dtm = puffs_pn_getmntspecific(dir);
 	newpn = puffs_pn_new(dir->pn_mnt, dff);
 	if (newpn == NULL)
 		errx(1, "getnewpnode");
@@ -189,7 +189,7 @@ dtfs_nukenode(struct puffs_node *nukeme, struct puffs_node *pn_parent,
 	dfd = dtfs_dirgetbyname(DTFS_PTOF(pn_parent), fname);
 	assert(dfd);
 
-	dtm = nukeme->pn_mnt->pu_privdata;
+	dtm = puffs_pn_getmntspecific(nukeme);
 	dtm->dtm_nfiles--;
 	assert(dtm->dtm_nfiles >= 1);
 
@@ -206,7 +206,7 @@ dtfs_freenode(struct puffs_node *pn)
 	int i;
 
 	assert(pn->pn_va.va_nlink == 0);
-	dtm = pn->pn_mnt->pu_privdata;
+	dtm = puffs_pn_getmntspecific(pn);
 
 	switch (pn->pn_va.va_type) {
 	case VREG:
@@ -266,7 +266,7 @@ dtfs_setsize(struct puffs_node *pn, off_t newsize)
 		df->df_numblocks = newblocks;
 	}
 
-	dtm = pn->pn_mnt->pu_privdata;
+	dtm = puffs_pn_getmntspecific(pn);
 	if (!shrinks) {
 		dtm->dtm_fsizes += newsize - pn->pn_va.va_size;
 	} else {
@@ -290,7 +290,7 @@ dtfs_adddent(struct puffs_node *pn_dir, struct dtfs_dirent *dent)
 	LIST_INSERT_HEAD(&dir->df_dirents, dent, dfd_entries);
 	pn_file->pn_va.va_nlink++;
 
-	dtm = pn_file->pn_mnt->pu_privdata;
+	dtm = puffs_pn_getmntspecific(pn_file);
 	dtm->dtm_nfiles++;
 
 	dent->dfd_parent = pn_dir;

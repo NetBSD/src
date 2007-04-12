@@ -1,4 +1,4 @@
-/*	$NetBSD: node.c,v 1.15 2007/04/11 21:21:50 pooka Exp $	*/
+/*	$NetBSD: node.c,v 1.16 2007/04/12 15:09:02 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: node.c,v 1.15 2007/04/11 21:21:50 pooka Exp $");
+__RCSID("$NetBSD: node.c,v 1.16 2007/04/12 15:09:02 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -47,7 +47,7 @@ psshfs_node_lookup(struct puffs_cc *pcc, void *opc, void **newnode,
 	const struct puffs_cn *pcn)
 {
         struct puffs_usermount *pu = puffs_cc_getusermount(pcc);
-	struct psshfs_ctx *pctx = pu->pu_privdata;
+	struct psshfs_ctx *pctx = puffs_getspecific(pu);
 	struct puffs_node *pn_dir = opc;
 	struct psshfs_node *psn, *psn_dir = pn_dir->pn_data;
 	struct puffs_node *pn;
@@ -216,7 +216,7 @@ psshfs_node_readdir(struct puffs_cc *pcc, void *opc, struct dirent *dent,
 	int *eofflag, off_t *cookies, size_t *ncookies)
 {
 	struct puffs_usermount *pu = puffs_cc_getusermount(pcc);
-	struct psshfs_ctx *pctx = pu->pu_privdata;
+	struct psshfs_ctx *pctx = puffs_getspecific(pu);
 	struct puffs_node *pn = opc;
 	struct psshfs_node *psn = pn->pn_data;
 	struct psshfs_dir *pd;
@@ -620,11 +620,12 @@ int
 psshfs_node_reclaim(struct puffs_cc *pcc, void *opc, pid_t pid)
 {
 	struct puffs_usermount *pu = puffs_cc_getusermount(pcc);
-	struct puffs_node *pn = opc, *pn_next;
+	struct puffs_node *pn = opc, *pn_next, *pn_root;
 	struct psshfs_node *psn = pn->pn_data;
 
 	psn->reclaimed = 1;
-	for (; pn != pu->pu_pn_root; pn = pn_next) {
+	pn_root = puffs_getroot(pu);
+	for (; pn != pn_root; pn = pn_next) {
 		psn = pn->pn_data;
 		if (psn->reclaimed == 0 || psn->childcount != 0)
 			break;

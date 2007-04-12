@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3 2007/02/28 16:23:00 xtraeme Exp $
+# $NetBSD: Makefile,v 1.4 2007/04/12 15:09:01 pooka Exp $
 
 LIB=		refuse
 LIBDPLIBS=	puffs	${.CURDIR}/../libpuffs
@@ -14,5 +14,6 @@ MAN=		refuse.3
 WARNS=		4
 INCS=           fuse.h fuse_opt.h
 INCSDIR=        /usr/include
+#DBG=		-g -O0
 
 .include <bsd.lib.mk>

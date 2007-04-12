@@ -1,4 +1,4 @@
-/*	$NetBSD: null.c,v 1.12 2007/04/11 21:04:51 pooka Exp $	*/
+/*	$NetBSD: null.c,v 1.13 2007/04/12 15:09:01 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: null.c,v 1.12 2007/04/11 21:04:51 pooka Exp $");
+__RCSID("$NetBSD: null.c,v 1.13 2007/04/12 15:09:01 pooka Exp $");
 #endif /* !lint */
 
 /*
@@ -142,7 +142,7 @@ puffs_null_fs_statvfs(struct puffs_cc *pcc, struct statvfs *svfsb, pid_t pid)
 {
 	struct puffs_usermount *pu = puffs_cc_getusermount(pcc);
 
-	if (statvfs(PNPATH(pu->pu_pn_root), svfsb) == -1)
+	if (statvfs(PNPATH(puffs_getroot(pu)), svfsb) == -1)
 		return errno;
 
 	return 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs_vfsops.c,v 1.12 2007/04/11 21:07:54 pooka Exp $	*/
+/*	$NetBSD: dtfs_vfsops.c,v 1.13 2007/04/12 15:09:01 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -50,7 +50,7 @@ dtfs_domount(struct puffs_usermount *pu)
 	struct vattr *va;
 
 	/* create mount-local thingie */
-	dtm = pu->pu_privdata;
+	dtm = puffs_getspecific(pu);
 	dtm->dtm_nextfileid = 2;
 	dtm->dtm_nfiles = 1;
 	dtm->dtm_fsizes = 0;
@@ -70,7 +70,7 @@ dtfs_domount(struct puffs_usermount *pu)
 	/* not adddented, so compensate */
 	va->va_nlink = 2;
 
-	pu->pu_pn_root = pn;
+	puffs_setroot(pu, pn);
 
 	/* XXX: should call dtfs_fs_statvfs */
 	puffs_zerostatvfs(&sb);
@@ -114,7 +114,7 @@ dtfs_fs_statvfs(struct puffs_cc *pcc, struct statvfs *sbp, pid_t pid)
 	int pgsize;
 
 	pu = puffs_cc_getusermount(pcc);
-	dtm = pu->pu_privdata;
+	dtm = puffs_getspecific(pu);
 	pgsize = getpagesize();
 	memset(sbp, 0, sizeof(struct statvfs));
 

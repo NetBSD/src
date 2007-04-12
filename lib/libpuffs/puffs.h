@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.h,v 1.41 2007/04/11 21:04:52 pooka Exp $	*/
+/*	$NetBSD: puffs.h,v 1.42 2007/04/12 15:09:01 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -235,31 +235,6 @@ typedef void (*pu_pathfree_fn)(struct puffs_usermount *,
 typedef int (*pu_namemod_fn)(struct puffs_usermount *,
 			     struct puffs_pathobj *, struct puffs_cn *);
 
-struct puffs_usermount {
-	struct puffs_ops	pu_ops;
-
-	int			pu_fd;
-	uint32_t		pu_flags;
-	size_t			pu_maxreqlen;
-	size_t			pu_cc_stacksize;
-
-	int			pu_state;
-
-	struct puffs_node	*pu_pn_root;
-
-	LIST_HEAD(, puffs_node)	pu_pnodelst;
-
-	struct puffs_node	*(*pu_cmap)(void *);
-
-	pu_pathbuild_fn		pu_pathbuild;
-	pu_pathtransform_fn	pu_pathtransform;
-	pu_pathcmp_fn		pu_pathcmp;
-	pu_pathfree_fn		pu_pathfree;
-	pu_namemod_fn		pu_namemod;
-
-	void	*pu_privdata;
-};
-
 enum {
 	PUFFS_STATE_MOUNTING,	PUFFS_STATE_RUNNING,
 	PUFFS_STATE_UNMOUNTING,	PUFFS_STATE_UNMOUNTED
@@ -382,7 +357,7 @@ enum {
 #define PUFFSOP_SETFSNOP(ops, opname)					\
     (ops)->puffs_fs_##opname = puffs_fsnop_##opname
 
-#define PUFFS_DEVEL_LIBVERSION 11
+#define PUFFS_DEVEL_LIBVERSION 12
 #define puffs_mount(a,b,c,d,e,f,g) \
     _puffs_mount(PUFFS_DEVEL_LIBVERSION,a,b,c,d,e,f,g)
 
@@ -408,10 +383,18 @@ int	puffs_setblockingmode(struct puffs_usermount *, int);
 int	puffs_getstate(struct puffs_usermount *);
 void	puffs_setstacksize(struct puffs_usermount *, size_t);
 
+void			puffs_setroot(struct puffs_usermount *,
+				      struct puffs_node *);
+struct puffs_node 	*puffs_getroot(struct puffs_usermount *);
+void			*puffs_getspecific(struct puffs_usermount *);
+size_t			puffs_getmaxreqlen(struct puffs_usermount *);
+
 struct puffs_pathobj	*puffs_getrootpathobj(struct puffs_usermount *);
 
 struct puffs_node	*puffs_pn_new(struct puffs_usermount *, void *);
 void			puffs_pn_put(struct puffs_node *);
+
+void			*puffs_pn_getmntspecific(struct puffs_node *);
 
 typedef		void *	(*puffs_nodewalk_fn)(struct puffs_usermount *,
 					     struct puffs_node *, void *);

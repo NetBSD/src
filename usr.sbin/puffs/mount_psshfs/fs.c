@@ -1,4 +1,4 @@
-/*	$NetBSD: fs.c,v 1.3 2007/01/15 00:42:21 pooka Exp $	*/
+/*	$NetBSD: fs.c,v 1.4 2007/04/12 15:09:02 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fs.c,v 1.3 2007/01/15 00:42:21 pooka Exp $");
+__RCSID("$NetBSD: fs.c,v 1.4 2007/04/12 15:09:02 pooka Exp $");
 #endif /* !lint */
 
 #include <err.h>
@@ -47,9 +47,10 @@ int
 psshfs_domount(struct puffs_usermount *pu)
 {
 	struct statvfs sb;
-	struct psshfs_ctx *pctx = pu->pu_privdata;
+	struct psshfs_ctx *pctx = puffs_getspecific(pu);
 	struct psshfs_node *root = &pctx->psn_root;
 	struct puffs_pathobj *po_root;
+	struct puffs_node *pn_root;
 	struct vattr va;
 	struct vattr *rva;
 	struct psbuf *pb;
@@ -125,7 +126,10 @@ psshfs_domount(struct puffs_usermount *pu)
 	pctx->nextino = 2;
 
 	memset(root, 0, sizeof(struct psshfs_node));
-	pu->pu_pn_root = puffs_pn_new(pu, root);
+	pn_root = puffs_pn_new(pu, root);
+	if (pn_root == NULL)
+		return errno;
+	puffs_setroot(pu, pn_root);
 
 	po_root = puffs_getrootpathobj(pu);
 	if (po_root == NULL)
@@ -133,13 +137,13 @@ psshfs_domount(struct puffs_usermount *pu)
 	po_root->po_path = rootpath;
 	po_root->po_len = strlen(rootpath);
 
-	rva = &pu->pu_pn_root->pn_va;
+	rva = &pn_root->pn_va;
 	puffs_setvattr(rva, &va);
 	rva->va_fileid = pctx->nextino++;
 	rva->va_nlink = 0156; /* XXX */
 
 	puffs_zerostatvfs(&sb);
-	if (puffs_start(pu, pu->pu_pn_root, &sb) != 0)
+	if (puffs_start(pu, pn_root, &sb) != 0)
 		return errno;
 
 	return 0;
@@ -149,7 +153,7 @@ int
 psshfs_fs_unmount(struct puffs_cc *pcc, int flags, pid_t pid)
 {
 	struct puffs_usermount *pu = puffs_cc_getusermount(pcc);
-	struct psshfs_ctx *pctx = pu->pu_privdata;
+	struct psshfs_ctx *pctx = puffs_getspecific(pu);
 
 	kill(pctx->sshpid, SIGTERM);
 	close(pctx->sshfd);
