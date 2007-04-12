@@ -1,4 +1,4 @@
-/*	$NetBSD: filedesc.h,v 1.37.2.1 2007/03/21 20:11:57 ad Exp $	*/
+/*	$NetBSD: filedesc.h,v 1.37.2.2 2007/04/12 23:12:56 ad Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -79,7 +79,7 @@ struct filedesc {
 					 * hash table for attached
 					 * non-fd knotes
 					 */
-	kmutex_t	fd_lock;	/* mutex. Note on locking order:
+	krwlock_t	fd_lock;	/* lock. Note on locking order:
 					 * acquire this lock first when
 					 * also locking an associated
 					 * `struct file' lock.
@@ -163,6 +163,9 @@ int	getsock(struct filedesc *, int, struct file **);
 
 struct stat;
 int	do_sys_fstat(struct lwp *, int, struct stat *);
+
+extern kmutex_t filelist_lock;
+
 #endif /* _KERNEL */
 
 #endif /* !_SYS_FILEDESC_H_ */
