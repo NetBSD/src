@@ -1,4 +1,4 @@
-/*	$NetBSD: refuse.c,v 1.45 2007/04/11 21:10:51 pooka Exp $	*/
+/*	$NetBSD: refuse.c,v 1.46 2007/04/12 15:09:01 pooka Exp $	*/
 
 /*
  * Copyright © 2007 Alistair Crooks.  All rights reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: refuse.c,v 1.45 2007/04/11 21:10:51 pooka Exp $");
+__RCSID("$NetBSD: refuse.c,v 1.46 2007/04/12 15:09:01 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -334,7 +334,7 @@ fuse_newnode(struct puffs_usermount *pu, const char *path,
 	struct puffs_node	*pn;
 	struct refusenode	*rn;
 
-	fuse = (struct fuse *)pu->pu_privdata;
+	fuse = puffs_getspecific(pu);
 
 	/* fix up nodes */
 	pn = newrn(pu);
@@ -376,7 +376,7 @@ puffs_fuse_node_lookup(struct puffs_cc *pcc, void *opc, void **newnode,
 	const char		*path = PCNPATH(pcn);
 	int			ret;
 
-	fuse = (struct fuse *)pu->pu_privdata;
+	fuse = puffs_getspecific(pu);
 	ret = fuse->op.getattr(path, &st);
 
 	if (ret != 0) {
@@ -412,7 +412,7 @@ puffs_fuse_node_getattr(struct puffs_cc *pcc, void *opc, struct vattr *va,
 	struct fuse		*fuse;
 	const char		*path = PNPATH(pn);
 
-	fuse = (struct fuse *)pu->pu_privdata;
+	fuse = puffs_getspecific(pu);
 	return fuse_getattr(fuse, pn, path, va);
 }
 
@@ -428,7 +428,7 @@ puffs_fuse_node_readlink(struct puffs_cc *pcc, void *opc,
 	const char		*path = PNPATH(pn), *p;
 	int			ret;
 
-	fuse = (struct fuse *)pu->pu_privdata;
+	fuse = puffs_getspecific(pu);
 	if (fuse->op.readlink == NULL) {
 		return ENOSYS;
 	}
@@ -459,7 +459,7 @@ puffs_fuse_node_mknod(struct puffs_cc *pcc, void *opc, void **newnode,
 	const char		*path = PCNPATH(pcn);
 	int			ret;
 
-	fuse = (struct fuse *)pu->pu_privdata;
+	fuse = puffs_getspecific(pu);
 	if (fuse->op.mknod == NULL) {
 		return ENOSYS;
 	}
@@ -487,7 +487,7 @@ puffs_fuse_node_mkdir(struct puffs_cc *pcc, void *opc, void **newnode,
 	const char		*path = PCNPATH(pcn);
 	int			ret;
 
-	fuse = (struct fuse *)pu->pu_privdata;
+	fuse = puffs_getspecific(pu);
 	if (fuse->op.mkdir == NULL) {
 		return ENOSYS;
 	}
@@ -521,7 +521,7 @@ puffs_fuse_node_create(struct puffs_cc *pcc, void *opc, void **newnode,
 	const char		*path = PCNPATH(pcn);
 	int			ret, created;
 
-	fuse = (struct fuse *)pu->pu_privdata;
+	fuse = puffs_getspecific(pu);
 
 	created = 0;
 	if (fuse->op.create) {
@@ -569,7 +569,7 @@ puffs_fuse_node_remove(struct puffs_cc *pcc, void *opc, void *targ,
 	const char		*path = PNPATH(pn_targ);
 	int			ret;
 
-	fuse = (struct fuse *)pu->pu_privdata;
+	fuse = puffs_getspecific(pu);
 	if (fuse->op.unlink == NULL) {
 		return ENOSYS;
 	}
@@ -592,7 +592,7 @@ puffs_fuse_node_rmdir(struct puffs_cc *pcc, void *opc, void *targ,
 	const char		*path = PNPATH(pn_targ);
 	int			ret;
 
-	fuse = (struct fuse *)pu->pu_privdata;
+	fuse = puffs_getspecific(pu);
 	if (fuse->op.rmdir == NULL) {
 		return ENOSYS;
 	}
@@ -615,7 +615,7 @@ puffs_fuse_node_symlink(struct puffs_cc *pcc, void *opc, void **newnode,
 	const char		*path = PCNPATH(pcn_src);
 	int			ret;
 
-	fuse = (struct fuse *)pu->pu_privdata;
+	fuse = puffs_getspecific(pu);
 	if (fuse->op.symlink == NULL) {
 		return ENOSYS;
 	}
@@ -643,7 +643,7 @@ puffs_fuse_node_rename(struct puffs_cc *pcc, void *opc, void *src,
 	const char		*path_dest = PCNPATH(pcn_targ);
 	int			ret;
 
-	fuse = (struct fuse *)pu->pu_privdata;
+	fuse = puffs_getspecific(pu);
 	if (fuse->op.rename == NULL) {
 		return ENOSYS;
 	}
@@ -667,7 +667,7 @@ puffs_fuse_node_link(struct puffs_cc *pcc, void *opc, void *targ,
 	struct fuse		*fuse;
 	int			ret;
 
-	fuse = (struct fuse *)pu->pu_privdata;
+	fuse = puffs_getspecific(pu);
 	if (fuse->op.link == NULL) {
 		return ENOSYS;
 	}
@@ -693,7 +693,7 @@ puffs_fuse_node_setattr(struct puffs_cc *pcc, void *opc,
 	struct fuse		*fuse;
 	const char		*path = PNPATH(pn);
 
-	fuse = (struct fuse *)pu->pu_privdata;
+	fuse = puffs_getspecific(pu);
 
 	return fuse_setattr(fuse, pn, path, va);
 }
@@ -710,7 +710,7 @@ puffs_fuse_node_open(struct puffs_cc *pcc, void *opc, int mode,
 	struct fuse		*fuse;
 	const char		*path = PNPATH(pn);
 
-	fuse = (struct fuse *)pu->pu_privdata;
+	fuse = puffs_getspecific(pu);
 
 	/* if open, don't open again, lest risk nuking file private info */
 	if (rn->flags & RN_OPEN) {
@@ -748,7 +748,7 @@ puffs_fuse_node_close(struct puffs_cc *pcc, void *opc, int fflag,
 	const char		*path = PNPATH(pn);
 	int			ret;
 
-	fuse = (struct fuse *)pu->pu_privdata;
+	fuse = puffs_getspecific(pu);
 	fi = &rn->file_info;
 	ret = 0;
 
@@ -782,7 +782,7 @@ puffs_fuse_node_read(struct puffs_cc *pcc, void *opc, uint8_t *buf,
 	size_t			maxread;
 	int			ret;
 
-	fuse = (struct fuse *)pu->pu_privdata;
+	fuse = puffs_getspecific(pu);
 	if (fuse->op.read == NULL) {
 		return ENOSYS;
 	}
@@ -820,7 +820,7 @@ puffs_fuse_node_write(struct puffs_cc *pcc, void *opc, uint8_t *buf,
 	const char		*path = PNPATH(pn);
 	int			ret;
 
-	fuse = (struct fuse *)pu->pu_privdata;
+	fuse = puffs_getspecific(pu);
 	if (fuse->op.write == NULL) {
 		return ENOSYS;
 	}
@@ -857,7 +857,7 @@ puffs_fuse_node_readdir(struct puffs_cc *pcc, void *opc, struct dirent *dent,
 	const char		*path = PNPATH(pn);
 	int			ret;
 
-	fuse = (struct fuse *)pu->pu_privdata;
+	fuse = puffs_getspecific(pu);
 	if (fuse->op.readdir == NULL && fuse->op.getdir == NULL) {
 		return ENOSYS;
 	}
@@ -921,7 +921,7 @@ puffs_fuse_fs_unmount(struct puffs_cc *pcc, int flags, pid_t pid)
         struct puffs_usermount	*pu = puffs_cc_getusermount(pcc);
 	struct fuse		*fuse;
 
-	fuse = (struct fuse *)pu->pu_privdata;
+	fuse = puffs_getspecific(pu);
 	if (fuse->op.destroy == NULL) {
 		return 0;
 	}
@@ -945,13 +945,13 @@ puffs_fuse_fs_statvfs(struct puffs_cc *pcc, struct statvfs *svfsb, pid_t pid)
 	struct fuse		*fuse;
 	int			ret;
 
-	fuse = (struct fuse *)pu->pu_privdata;
+	fuse = puffs_getspecific(pu);
 	if (fuse->op.statfs == NULL) {
-		if ((ret = statvfs(PNPATH(pu->pu_pn_root), svfsb)) == -1) {
+		if ((ret = statvfs(PNPATH(puffs_getroot(pu)), svfsb)) == -1) {
 			return errno;
 		}
 	} else {
-		ret = (*fuse->op.statfs)(PNPATH(pu->pu_pn_root), svfsb);
+		ret = fuse->op.statfs(PNPATH(puffs_getroot(pu)), svfsb);
 	}
 
         return ret;
@@ -1026,6 +1026,7 @@ fuse_new(struct fuse_chan *fc, struct fuse_args *args,
 {
 	struct puffs_usermount	*pu;
 	struct puffs_pathobj	*po_root;
+	struct puffs_node	*pn_root;
 	struct puffs_ops	*pops;
 	struct refusenode	*rn_root;
 	struct statvfs		svfsb;
@@ -1073,7 +1074,7 @@ fuse_new(struct fuse_chan *fc, struct fuse_args *args,
         PUFFSOP_SET(pops, puffs_fuse, node, reclaim);
 
 	pu = puffs_mount(pops, fc->dir, MNT_NODEV | MNT_NOSUID,
-			 "refuse", NULL,
+			 "refuse", fuse,
 			 PUFFS_FLAG_BUILDPATH
 			   | PUFFS_FLAG_OPDUMP
 			   | PUFFS_KFLAG_NOCACHE,
@@ -1082,10 +1083,10 @@ fuse_new(struct fuse_chan *fc, struct fuse_args *args,
 		err(EXIT_FAILURE, "puffs_mount");
 	}
 	fc->pu = pu;
-	pu->pu_privdata = fuse;
 
-	pu->pu_pn_root = newrn(pu);
-	rn_root = pu->pu_pn_root->pn_data;
+	pn_root = newrn(pu);
+	puffs_setroot(pu, pn_root);
+	rn_root = pn_root->pn_data;
 	rn_root->flags |= RN_ROOT;
 
 	po_root = puffs_getrootpathobj(pu);
@@ -1093,19 +1094,19 @@ fuse_new(struct fuse_chan *fc, struct fuse_args *args,
 	po_root->po_len = 1;
 
 	/* sane defaults */
-	puffs_vattr_null(&pu->pu_pn_root->pn_va);
-	pu->pu_pn_root->pn_va.va_type = VDIR;
-	pu->pu_pn_root->pn_va.va_mode = 0755;
+	puffs_vattr_null(&pn_root->pn_va);
+	pn_root->pn_va.va_type = VDIR;
+	pn_root->pn_va.va_mode = 0755;
 	if (fuse->op.getattr)
 		if (fuse->op.getattr(po_root->po_path, &st) == 0)
-			puffs_stat2vattr(&pu->pu_pn_root->pn_va, &st);
-	assert(pu->pu_pn_root->pn_va.va_type == VDIR);
+			puffs_stat2vattr(&pn_root->pn_va, &st);
+	assert(pn_root->pn_va.va_type == VDIR);
 
 	if (fuse->op.init)
 		fcon.private_data = fuse->op.init(NULL); /* XXX */
 
 	puffs_zerostatvfs(&svfsb);
-	if (puffs_start(pu, pu->pu_pn_root, &svfsb) == -1) {
+	if (puffs_start(pu, pn_root, &svfsb) == -1) {
 		err(EXIT_FAILURE, "puffs_start");
 	}
 

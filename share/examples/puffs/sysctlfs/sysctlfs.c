@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctlfs.c,v 1.16 2007/04/11 21:08:52 pooka Exp $	*/
+/*	$NetBSD: sysctlfs.c,v 1.17 2007/04/12 15:09:02 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -161,7 +161,7 @@ getnode(struct puffs_usermount *pu, struct puffs_pathobj *po, int nodetype)
 	 * Also, memcmp against zero-length would be quite true always.
 	 */
 	if (po->po_len == 0)
-		pn = pu->pu_pn_root;
+		pn = puffs_getroot(pu);
 	else
 		pn = puffs_pn_nodewalk(pu, puffs_path_walkcmp, po);
 
@@ -283,6 +283,7 @@ static int
 sysctlfs_domount(struct puffs_usermount *pu)
 {
 	struct puffs_pathobj *po_root;
+	struct puffs_node *pn_root;
 	struct timeval tv_now;
 	struct statvfs sb;
 
@@ -292,15 +293,16 @@ sysctlfs_domount(struct puffs_usermount *pu)
 	gettimeofday(&tv_now, NULL);
 	TIMEVAL_TO_TIMESPEC(&tv_now, &fstime);
 
-	pu->pu_pn_root = puffs_pn_new(pu, &rn);
-	assert(pu->pu_pn_root != NULL);
+	pn_root = puffs_pn_new(pu, &rn);
+	assert(pn_root != NULL);
+	puffs_setroot(pu, pn_root);
 
 	po_root = puffs_getrootpathobj(pu);
 	po_root->po_path = &sname_root;
 	po_root->po_len = 0;
 
 	puffs_zerostatvfs(&sb);
-	if (puffs_start(pu, pu->pu_pn_root, &sb) == -1)
+	if (puffs_start(pu, pn_root, &sb) == -1)
 		return errno;
 
 	return 0;

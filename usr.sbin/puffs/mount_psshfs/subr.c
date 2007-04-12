@@ -1,4 +1,4 @@
-/*      $NetBSD: subr.c,v 1.12 2007/03/22 13:11:00 pooka Exp $        */
+/*      $NetBSD: subr.c,v 1.13 2007/04/12 15:09:02 pooka Exp $        */
         
 /*      
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
         
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: subr.c,v 1.12 2007/03/22 13:11:00 pooka Exp $");
+__RCSID("$NetBSD: subr.c,v 1.13 2007/04/12 15:09:02 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -368,7 +368,7 @@ struct puffs_node *
 allocnode(struct puffs_usermount *pu, struct puffs_node *parent,
 	const char *entryname, const struct vattr *vap)
 {
-	struct psshfs_ctx *pctx = pu->pu_privdata;
+	struct psshfs_ctx *pctx = puffs_getspecific(pu);
 	struct psshfs_dir *pd;
 	struct puffs_node *pn;
 
