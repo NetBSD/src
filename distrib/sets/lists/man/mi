@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.988 2007/04/08 09:35:25 scw Exp $
+# $NetBSD: mi,v 1.989 2007/04/12 18:19:53 macallan Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -751,6 +751,7 @@
 ./usr/share/man/cat4/cfb.0			man-sys-catman		.cat
 ./usr/share/man/cat4/cgd.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ch.0			man-sys-catman		.cat
+./usr/share/man/cat4/chipsfb.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ciphy.0			man-sys-catman		.cat
 ./usr/share/man/cat4/cir.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ciss.0			man-sys-catman		.cat
@@ -849,6 +850,7 @@
 ./usr/share/man/cat4/fwohci.0			man-sys-catman		.cat
 ./usr/share/man/cat4/fxp.0			man-sys-catman		.cat
 ./usr/share/man/cat4/gem.0			man-sys-catman		.cat
+./usr/share/man/cat4/genfb.0			man-sys-catman		.cat
 ./usr/share/man/cat4/gentbi.0			man-sys-catman		.cat
 ./usr/share/man/cat4/geodeide.0			man-sys-catman		.cat
 ./usr/share/man/cat4/gif.0			man-sys-catman		.cat
@@ -3185,6 +3187,7 @@
 ./usr/share/man/man4/cfb.4			man-sys-man		.man
 ./usr/share/man/man4/cgd.4			man-sys-man		.man
 ./usr/share/man/man4/ch.4			man-sys-man		.man
+./usr/share/man/man4/chipsfb.4			man-sys-man		.man
 ./usr/share/man/man4/ciphy.4			man-sys-man		.man
 ./usr/share/man/man4/cir.4			man-sys-man		.man
 ./usr/share/man/man4/ciss.4			man-sys-man		.man
@@ -3283,6 +3286,7 @@
 ./usr/share/man/man4/fwohci.4			man-sys-man		.man
 ./usr/share/man/man4/fxp.4			man-sys-man		.man
 ./usr/share/man/man4/gem.4			man-sys-man		.man
+./usr/share/man/man4/genfb.4			man-sys-man		.man
 ./usr/share/man/man4/gentbi.4			man-sys-man		.man
 ./usr/share/man/man4/geodeide.4			man-sys-man		.man
 ./usr/share/man/man4/gif.4			man-sys-man		.man
