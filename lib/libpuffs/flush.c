@@ -1,4 +1,4 @@
-/*	$NetBSD: flush.c,v 1.7 2007/04/06 17:49:11 pooka Exp $	*/
+/*	$NetBSD: flush.c,v 1.8 2007/04/12 15:09:00 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: flush.c,v 1.7 2007/04/06 17:49:11 pooka Exp $");
+__RCSID("$NetBSD: flush.c,v 1.8 2007/04/12 15:09:00 pooka Exp $");
 #endif /* !lint */
 
 /*
@@ -43,6 +43,8 @@ __RCSID("$NetBSD: flush.c,v 1.7 2007/04/06 17:49:11 pooka Exp $");
 #include <errno.h>
 #include <puffs.h>
 #include <stdio.h>
+
+#include "puffs_priv.h"
 
 #if 0
 int

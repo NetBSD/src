@@ -1,4 +1,4 @@
-/*	$NetBSD: psshfs.h,v 1.7 2007/03/22 13:11:00 pooka Exp $	*/
+/*	$NetBSD: psshfs.h,v 1.8 2007/04/12 15:09:02 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -57,7 +57,7 @@ PUFFSOP_PROTOS(psshfs);
 #define NEXTREQ(pctx) ((pctx->nextreq)++)
 #define PSSHFSAUTOVAR(pcc)						\
 	struct puffs_usermount *pu = puffs_cc_getusermount(pcc);	\
-	struct psshfs_ctx *pctx = pu->pu_privdata;			\
+	struct psshfs_ctx *pctx = puffs_getspecific(pu);		\
 	uint32_t reqid = NEXTREQ(pctx);					\
 	struct psbuf *pb = psbuf_make(PSB_OUT);				\
 	int rv = 0

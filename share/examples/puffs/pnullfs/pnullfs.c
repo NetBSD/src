@@ -1,4 +1,4 @@
-/*	$NetBSD: pnullfs.c,v 1.5 2007/02/15 12:54:52 pooka Exp $	*/
+/*	$NetBSD: pnullfs.c,v 1.6 2007/04/12 15:09:01 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -56,6 +56,7 @@ main(int argc, char *argv[])
 	struct puffs_usermount *pu;
 	struct puffs_ops *pops;
 	struct puffs_pathobj *po_root;
+	struct puffs_node *pn_root;
 	struct statvfs svfsb;
 	struct stat sb;
 	mntoptparse_t mp;
@@ -122,9 +123,10 @@ main(int argc, char *argv[])
 	if (statvfs(argv[0], &svfsb) == -1)
 		err(1, "statvfs %s", argv[0]);
 
-	pu->pu_pn_root = puffs_pn_new(pu, NULL);
-	if (pu->pu_pn_root == NULL)
+	pn_root = puffs_pn_new(pu, NULL);
+	if (pn_root == NULL)
 		err(1, "puffs_pn_new");
+	puffs_setroot(pu, pn_root);
 
 	po_root = puffs_getrootpathobj(pu);
 	if (po_root == NULL)
@@ -133,9 +135,9 @@ main(int argc, char *argv[])
 	po_root->po_len = strlen(argv[0]);
 	if (stat(argv[0], &sb) == -1)
 		err(1, "stat %s", argv[0]);
-	puffs_stat2vattr(&pu->pu_pn_root->pn_va, &sb);
+	puffs_stat2vattr(&pn_root->pn_va, &sb);
 
-	if (puffs_start(pu, pu->pu_pn_root, &svfsb) == -1)
+	if (puffs_start(pu, pn_root, &svfsb) == -1)
 		err(1, "puffs_start");
 
 	if (puffs_mainloop(pu, lflags) == -1)
