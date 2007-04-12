@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.159 2007/03/25 16:23:04 gdt Exp $
+$NetBSD: UPDATING,v 1.160 2007/04/12 13:17:56 jmcneill Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -15,6 +15,11 @@ See also: BUILDING, build.sh, Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20070412:
+	The pckbc driver on sgimips IP32 has been removed. Use macekbc
+	instead. See the GENERIC32_IP3x kernel configuration for an
+	example.
 
 20070319:
         src/lib/libc/Makefile revision 1.129 broke libc and ld.elf_so
