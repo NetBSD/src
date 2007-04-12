@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.S,v 1.15 2007/02/19 13:23:11 skrll Exp $	*/
+/*	$NetBSD: trap.S,v 1.16 2007/04/12 10:07:36 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -503,7 +503,6 @@ $syscall_return_copy_loop:
 	 */
 	rsm	RESET_PSW, %r0
 	nop ! nop ! nop ! nop ! nop ! nop ! nop ! nop	/* XXX really? */
-$syscall_return_phys:
 
 	ldil	L%$trap_tmp_save, %t3
 	ldo     R%$trap_tmp_save(%t3), %t3
