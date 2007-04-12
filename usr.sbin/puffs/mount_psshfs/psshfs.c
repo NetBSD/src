@@ -1,4 +1,4 @@
-/*	$NetBSD: psshfs.c,v 1.10 2007/04/12 15:09:02 pooka Exp $	*/
+/*	$NetBSD: psshfs.c,v 1.11 2007/04/12 20:42:46 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: psshfs.c,v 1.10 2007/04/12 15:09:02 pooka Exp $");
+__RCSID("$NetBSD: psshfs.c,v 1.11 2007/04/12 20:42:46 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -109,8 +109,11 @@ main(int argc, char *argv[])
 
 	mntflags = pflags = 0;
 	detach = 1;
-	while ((ch = getopt(argc, argv, "o:s")) != -1) {
+	while ((ch = getopt(argc, argv, "eo:s")) != -1) {
 		switch (ch) {
+		case 'e':
+			pflags |= PUFFS_KFLAG_CANEXPORT;
+			break;
 		case 'o':
 			mp = getmntopts(optarg, puffsmopts, &mntflags, &pflags);
 			if (mp == NULL)
@@ -144,6 +147,8 @@ main(int argc, char *argv[])
 	PUFFSOP_SET(pops, psshfs, fs, unmount);
 	PUFFSOP_SETFSNOP(pops, sync); /* XXX */
 	PUFFSOP_SETFSNOP(pops, statvfs);
+	PUFFSOP_SET(pops, psshfs, fs, nodetofh);
+	PUFFSOP_SET(pops, psshfs, fs, fhtonode);
 
 	PUFFSOP_SET(pops, psshfs, node, lookup);
 	PUFFSOP_SET(pops, psshfs, node, create);
@@ -163,6 +168,7 @@ main(int argc, char *argv[])
 	memset(&pctx, 0, sizeof(pctx));
 	TAILQ_INIT(&pctx.outbufq);
 	TAILQ_INIT(&pctx.req_queue);
+	pctx.mounttime = time(NULL);
 
 	userhost = argv[0];
 	hostpath = strchr(userhost, ':');

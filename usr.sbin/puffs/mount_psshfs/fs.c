@@ -1,4 +1,4 @@
-/*	$NetBSD: fs.c,v 1.4 2007/04/12 15:09:02 pooka Exp $	*/
+/*	$NetBSD: fs.c,v 1.5 2007/04/12 20:42:46 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -30,10 +30,11 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fs.c,v 1.4 2007/04/12 15:09:02 pooka Exp $");
+__RCSID("$NetBSD: fs.c,v 1.5 2007/04/12 20:42:46 pooka Exp $");
 #endif /* !lint */
 
 #include <err.h>
+#include <errno.h>
 #include <puffs.h>
 #include <signal.h>
 #include <stdio.h>
@@ -157,5 +158,59 @@ psshfs_fs_unmount(struct puffs_cc *pcc, int flags, pid_t pid)
 
 	kill(pctx->sshpid, SIGTERM);
 	close(pctx->sshfd);
+	return 0;
+}
+
+int
+psshfs_fs_nodetofh(struct puffs_cc *pcc, void *cookie,
+	void *fid, size_t *fidsize)
+{
+	struct puffs_usermount *pu = puffs_cc_getusermount(pcc);
+	struct psshfs_ctx *pctx = puffs_getspecific(pu);
+	struct puffs_node *pn = cookie;
+	struct psshfs_node *psn = pn->pn_data;
+	struct psshfs_fid *pf = fid;
+
+	pf->mounttime = pctx->mounttime;
+	pf->node = pn;
+
+	psn->hasfh = 1;
+
+	return 0;
+}
+
+int
+psshfs_fs_fhtonode(struct puffs_cc *pcc, void *fid, size_t fidsize,
+	void **fcookie, enum vtype *ftype, voff_t *fsize, dev_t *fdev)
+{
+	struct puffs_usermount *pu = puffs_cc_getusermount(pcc);
+	struct psshfs_ctx *pctx = puffs_getspecific(pu);
+	struct psshfs_fid *pf = fid;
+	struct puffs_node *pn = pf->node;
+	struct psshfs_node *psn;
+	int rv;
+
+	if (pf->mounttime != pctx->mounttime)
+		return EINVAL;
+	if (pn == 0)
+		return EINVAL;
+	psn = pn->pn_data;
+	if (psn->hasfh == 0)
+		return EINVAL;
+
+	/* update node attributes */
+	rv = getnodeattr(pcc, pn);
+	if (rv) {
+		psn->hasfh = 0;
+		if (psn->reclaimed == 2)
+			psshfs_node_reclaim(pcc, pn, 0);
+
+		return EINVAL;
+	}
+
+	*fcookie = pn;
+	*ftype = pn->pn_va.va_type;
+	*fsize = pn->pn_va.va_size;
+
 	return 0;
 }
