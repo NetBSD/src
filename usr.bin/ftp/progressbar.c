@@ -1,7 +1,7 @@
-/*	$NetBSD: progressbar.c,v 1.13 2006/05/01 23:02:03 christos Exp $	*/
+/*	$NetBSD: progressbar.c,v 1.14 2007/04/12 06:13:02 lukem Exp $	*/
 
 /*-
- * Copyright (c) 1997-2005 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997-2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: progressbar.c,v 1.13 2006/05/01 23:02:03 christos Exp $");
+__RCSID("$NetBSD: progressbar.c,v 1.14 2007/04/12 06:13:02 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -91,10 +91,23 @@ updateprogressmeter(int dummy)
 }
 
 /*
- * List of order of magnitude prefixes.
- * The last is `P', as 2^64 = 16384 Petabytes
+ * List of order of magnitude suffixes, per IEC 60027-2.
  */
-static const char prefixes[] = " KMGTP";
+static const char const *suffixes[] = {
+	"",	/* 2^0  (byte) */
+	"KiB",	/* 2^10 Kibibyte */
+	"MiB",	/* 2^20 Mebibyte */
+	"GiB",	/* 2^30 Gibibyte */
+	"TiB",	/* 2^40 Tebibyte */
+	"PiB",	/* 2^50 Pebibyte */
+	"EiB",	/* 2^60 Exbibyte */
+#if 0
+		/* The following are not necessary for signed 64-bit off_t */
+	"ZiB",	/* 2^70 Zebibyte */
+	"YiB",	/* 2^80 Yobibyte */
+#endif
+};
+#define NSUFFIXES	(sizeof(suffixes) / sizeof(suffixes[0]))
 
 /*
  * Display a transfer progress bar if progress is non-zero.
@@ -135,7 +148,7 @@ progressmeter(int flag)
 	size_t		len;
 	char		buf[256];	/* workspace for progress bar */
 #ifndef NO_PROGRESS
-#define	BAROVERHEAD	43		/* non `*' portion of progress bar */
+#define	BAROVERHEAD	45		/* non `*' portion of progress bar */
 					/*
 					 * stars should contain at least
 					 * sizeof(buf) - BAROVERHEAD entries
@@ -224,14 +237,13 @@ progressmeter(int flag)
 	}
 
 	abbrevsize = cursize;
-	for (i = 0; abbrevsize >= 100000 && i < sizeof(prefixes); i++)
+	for (i = 0; abbrevsize >= 100000 && i < NSUFFIXES; i++)
 		abbrevsize >>= 10;
-	if (i == sizeof(prefixes))
+	if (i == NSUFFIXES)
 		i--;
-	len += snprintf(buf + len, BUFLEFT, " " LLFP("5") " %c%c ",
+	len += snprintf(buf + len, BUFLEFT, " " LLFP("5") " %-3s ",
 	    (LLT)abbrevsize,
-	    prefixes[i],
-	    i == 0 ? ' ' : 'B');
+	    suffixes[i]);
 
 	timersub(&now, &start, &td);
 	elapsed = td.tv_sec + (td.tv_usec / 1000000.0);
@@ -242,13 +254,13 @@ progressmeter(int flag)
 		if (elapsed > 0.0)
 			bytespersec /= elapsed;
 	}
-	for (i = 1; bytespersec >= 1024000 && i < sizeof(prefixes); i++)
+	for (i = 1; bytespersec >= 1024000 && i < NSUFFIXES; i++)
 		bytespersec >>= 10;
 	len += snprintf(buf + len, BUFLEFT,
-	    " " LLFP("3") ".%02d %cB/s ",
+	    " " LLFP("3") ".%02d %.2sB/s ",
 	    (LLT)(bytespersec / 1024),
 	    (int)((bytespersec % 1024) * 100 / 1024),
-	    prefixes[i]);
+	    suffixes[i]);
 
 	if (filesize > 0) {
 		if (bytes <= 0 || elapsed <= 0.0 || cursize > filesize) {
@@ -334,14 +346,14 @@ ptransfer(int siginfo)
 	len += snprintf(buf + len, BUFLEFT,
 	    "%02d:%02d ", remaining / 60, remaining % 60);
 
-	for (i = 1; bytespersec >= 1024000 && i < sizeof(prefixes); i++)
+	for (i = 1; bytespersec >= 1024000 && i < NSUFFIXES; i++)
 		bytespersec >>= 10;
-	if (i == sizeof(prefixes))
+	if (i == NSUFFIXES)
 		i--;
-	len += snprintf(buf + len, BUFLEFT, "(" LLF ".%02d %cB/s)",
+	len += snprintf(buf + len, BUFLEFT, "(" LLF ".%02d %.2sB/s)",
 	    (LLT)(bytespersec / 1024),
 	    (int)((bytespersec % 1024) * 100 / 1024),
-	    prefixes[i]);
+	    suffixes[i]);
 
 	if (siginfo && bytes > 0 && elapsed > 0.0 && filesize >= 0
 	    && bytes + restart_point <= filesize) {
