@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_cond.c,v 1.30 2007/03/24 18:52:00 ad Exp $	*/
+/*	$NetBSD: pthread_cond.c,v 1.31 2007/04/12 21:36:06 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_cond.c,v 1.30 2007/03/24 18:52:00 ad Exp $");
+__RCSID("$NetBSD: pthread_cond.c,v 1.31 2007/04/12 21:36:06 ad Exp $");
 
 #include <errno.h>
 #include <sys/time.h>
@@ -131,6 +131,7 @@ pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex)
 #endif
 	}
 	PTQ_INSERT_HEAD(&cond->ptc_waiters, self, pt_sleep);
+	self->pt_signalled = 0;
 	self->pt_sleeponq = 1;
 	self->pt_sleepobj = &cond->ptc_waiters;
 	pthread_mutex_unlock(mutex);
@@ -141,8 +142,11 @@ pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex)
 	pthread_spinunlock(self, &cond->ptc_lock);
 	pthread_mutex_lock(mutex);
 
-	if (__predict_false(self->pt_cancel))
+	if (__predict_false(self->pt_cancel)) {
+		if (self->pt_signalled)
+			pthread_cond_signal(cond);
 		pthread_exit(PTHREAD_CANCELED);
+	}
 
 	SDPRINTF(("(cond wait %p) Woke up on %p, mutex %p\n",
 	    self, cond, mutex));
@@ -190,6 +194,7 @@ pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex,
 #endif
 	}
 	PTQ_INSERT_HEAD(&cond->ptc_waiters, self, pt_sleep);
+	self->pt_signalled = 0;
 	self->pt_sleeponq = 1;
 	self->pt_sleepobj = &cond->ptc_waiters;
 	pthread_mutex_unlock(mutex);
@@ -204,8 +209,12 @@ pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex,
 	SDPRINTF(("(cond timed wait %p) %s\n",
 	    self, (retval == ETIMEDOUT) ? "(timed out)" : ""));
 	pthread_mutex_lock(mutex);
-	if (__predict_false(self->pt_cancel))
-		pthread_exit(PTHREAD_CANCELED);
+	if (__predict_false(self->pt_cancel | retval)) {
+		if (self->pt_signalled)
+			pthread_cond_signal(cond);
+		if (self->pt_cancel)
+			pthread_exit(PTHREAD_CANCELED);
+	}
 
 	return retval;
 }
@@ -245,12 +254,20 @@ pthread_cond_signal(pthread_cond_t *cond)
 	}
 
 	/*
-	 * Pull the thread off the queue.
+	 * Pull the thread off the queue, and set pt_signalled.
+	 *
+	 * After resuming execution, the thread must check to see if it
+	 * has been restarted as a result of pthread_cond_signal().  If it
+	 * has, but cannot take the wakeup (because of eg a pending Unix
+	 * signal or timeout) then try to ensure that another thread sees
+	 * it.  This is necessary because there may be multiple waiters,
+	 * and at least one should take the wakeup if possible.
 	 */
 	PTQ_REMOVE(&cond->ptc_waiters, signaled, pt_sleep);
 	mutex = cond->ptc_mutex;
 	if (PTQ_EMPTY(&cond->ptc_waiters))
 		cond->ptc_mutex = NULL;
+	signaled->pt_signalled = 1;
 
 	/*
 	 * For all valid uses of pthread_cond_signal(), the caller will
