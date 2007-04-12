@@ -1,4 +1,4 @@
-/*	$NetBSD: node.c,v 1.16 2007/04/12 15:09:02 pooka Exp $	*/
+/*	$NetBSD: node.c,v 1.17 2007/04/12 20:42:46 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: node.c,v 1.16 2007/04/12 15:09:02 pooka Exp $");
+__RCSID("$NetBSD: node.c,v 1.17 2007/04/12 20:42:46 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -222,6 +222,7 @@ psshfs_node_readdir(struct puffs_cc *pcc, void *opc, struct dirent *dent,
 	struct psshfs_dir *pd;
 	int i, rv;
 
+	*ncookies = 0;
 	rv = sftp_readdir(pcc, pctx, pn);
 	if (rv)
 		return rv;
@@ -233,7 +234,13 @@ psshfs_node_readdir(struct puffs_cc *pcc, void *opc, struct dirent *dent,
 		if (!puffs_nextdent(&dent, pd->entryname,
 		    pd->va.va_fileid, puffs_vtype2dt(pd->va.va_type), reslen))
 			break;
+		if (cookies) {
+			*(cookies++) = (off_t)i;
+			(*ncookies)++;
+		}
 	}
+	if (i == psn->dentnext)
+		*eofflag = 1;
 
 	*readoff = i;
 	return 0;
@@ -622,6 +629,15 @@ psshfs_node_reclaim(struct puffs_cc *pcc, void *opc, pid_t pid)
 	struct puffs_usermount *pu = puffs_cc_getusermount(pcc);
 	struct puffs_node *pn = opc, *pn_next, *pn_root;
 	struct psshfs_node *psn = pn->pn_data;
+
+	/*
+	 * don't reclaim if we have file handle issued, otherwise
+	 * we can't do fhtonode
+	 */
+	if (psn->hasfh) {
+		psn->reclaimed = 2;
+		return 0;
+	}
 
 	psn->reclaimed = 1;
 	pn_root = puffs_getroot(pu);
