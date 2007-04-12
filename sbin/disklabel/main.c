@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.15 2007/02/08 21:36:58 drochner Exp $	*/
+/*	$NetBSD: main.c,v 1.16 2007/04/12 18:41:23 matt Exp $	*/
 
 /*
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 static char sccsid[] = "@(#)disklabel.c	8.4 (Berkeley) 5/4/95";
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 #else
-__RCSID("$NetBSD: main.c,v 1.15 2007/02/08 21:36:58 drochner Exp $");
+__RCSID("$NetBSD: main.c,v 1.16 2007/04/12 18:41:23 matt Exp $");
 #endif
 #endif	/* not lint */
 
@@ -258,7 +258,7 @@ main(int argc, char *argv[])
 #endif
 
 	error = 0;
-	while ((ch = getopt(argc, argv, "ABCDFINRWb:ef:ilmrs:tvw")) != -1) {
+	while ((ch = getopt(argc, argv, "ACDFINRWb:ef:ilmrs:tvw")) != -1) {
 		old_op = op;
 		switch (ch) {
 		case 'A':	/* Action all labels */
