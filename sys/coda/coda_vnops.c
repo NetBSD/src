@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vnops.c,v 1.56 2007/04/09 21:38:18 gdt Exp $	*/
+/*	$NetBSD: coda_vnops.c,v 1.57 2007/04/12 23:34:50 gdt Exp $	*/
 
 /*
  *
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.56 2007/04/09 21:38:18 gdt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.57 2007/04/12 23:34:50 gdt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1964,6 +1964,16 @@ make_coda_node(CodaFid *fid, struct mount *vfsp, short type)
     return cp;
 }
 
+/*
+ * coda_getpages may be called on a vnode which has not been opened,
+ * e.g. to fault in pages to execute a program.  In that case, we must
+ * open the file to get the container.  The vnode may or may not be
+ * locked, and we must leave it in the same state.
+ * XXX The protocol apparently requires v_uobj.vmobjlock to be
+ * held by caller, but this isn't documented.
+ * XXX Most code uses v_interlock instead, which is really the same
+ * variable.
+ */
 int
 coda_getpages(void *v)
 {
@@ -1981,27 +1991,106 @@ coda_getpages(void *v)
 	struct cnode *cp = VTOC(vp);
 	struct lwp *l = curlwp;
 	kauth_cred_t cred = l->l_cred;
-	int error;
+	int error, cerror;
+	int waslocked;	       /* 1 if vnode lock was held on entry */
+	int didopen = 0;	/* 1 if we opened container file */
+
+	/* XXX Semantics unclear, but see layer_vnops.c. */
+	if (ap->a_flags & PGO_LOCKED) {
+		return EBUSY;
+	}
 
 	/* Check for control object. */
 	if (IS_CTL_VP(vp)) {
+		printf("coda_getpages: control object %p\n", vp);
+		simple_unlock(&vp->v_interlock);
 		return(EINVAL);
 	}
 
-	/*
-	 * XXX VOP_OPEN, _CLOSE require a locked vnode, and getpages
-	 * doesn't guarantee that.
-	 */ 
-	error = VOP_OPEN(vp, FREAD, cred, l);
-	if (error) {
-		return error;
+	waslocked = VOP_ISLOCKED(vp);
+
+	/* Open to get container file if not already present. */
+	if (cp->c_ovp == NULL) {
+		/*
+		 * VOP_OPEN requires a locked vnode.  We must avoid
+		 * locking the vnode if it is already locked, and
+		 * leave it in the same state on exit.
+		 */
+		if (waslocked == 0) {
+			cerror = vn_lock(vp, LK_EXCLUSIVE);
+			if (cerror) {
+				printf("coda_getpages: can't lock vnode %p\n",
+				       vp);
+				simple_unlock(&vp->v_interlock);
+				return cerror;
+			}
+#if 0
+			printf("coda_getpages: locked vnode %p\n", vp);
+#endif
+		}
+
+		/*
+		 * Open file (causes upcall to venus).
+		 * XXX Perhaps we should not fully open the file, but
+		 * simply obtain a container file.
+		 */
+		/* XXX Is it ok to do this while holding the simplelock? */
+		cerror = VOP_OPEN(vp, FREAD, cred, l);
+
+		if (cerror) {
+			printf("coda_getpages: cannot open vnode %p => %d\n",
+			       vp, cerror);
+			if (waslocked == 0)
+				VOP_UNLOCK(vp, 0);
+			simple_unlock(&vp->v_interlock);
+			return cerror;
+		}
+
+#if 0
+		printf("coda_getpages: opened vnode %p\n", vp);
+#endif
+		didopen = 1;
 	}
+	KASSERT(cp->c_ovp != NULL);
+
+	/* Like LAYERVPTOLOWERVP, but coda doesn't use the layer struct. */
 	ap->a_vp = cp->c_ovp;
-	error = VOCALL(ap->a_vp->v_op, VOFFSET(vop_getpages), ap);
-	(void) VOP_CLOSE(vp, FREAD, cred, l);
+
+	/* Move the lock to the container vnode. */
+	/* XXX Locking order is unclear; what are we protecting? */
+	simple_lock(&ap->a_vp->v_interlock);
+	simple_unlock(&vp->v_interlock);
+
+	/* Call getpages on container file. */
+	error = VCALL(ap->a_vp, VOFFSET(vop_getpages), ap);
+
+	/* If we opened the vnode, we must close it. */
+	if (didopen) {
+		/*
+		 * VOP_CLOSE requires a locked vnode, but we are still
+		 * holding the lock.
+		 */
+		cerror = VOP_CLOSE(vp, FREAD, cred, l);
+		if (cerror != 0)
+			/* XXX How should we handle this? */
+			printf("coda_getpages: closed vnode %p -> %d\n",
+			       vp, cerror);
+
+		/* If vnode was not locked on entry, unlock it to match. */
+		if (waslocked == 0)
+			VOP_UNLOCK(vp, 0);
+	}
+
 	return error;
 }
 
+/*
+ * The protocol requires v_uobj.vmobjlock to be held by the caller, as
+ * documented in vnodeops(9).
+ * XXX vnode_if.src doesn't say this.
+ * XXX Most code uses v_interlock instead, which is really the same
+ * variable.
+ */
 int
 coda_putpages(void *v)
 {
@@ -2012,28 +2101,36 @@ coda_putpages(void *v)
 		int a_flags;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
-
-	/*
-	 * v_uobj.vmobjlock is held by caller, and we must release it,
-	 * per vnodeops(9).  But vnode_if.src doesn't say this.
-	 */
-	/*
-	 * Previously the vnode interlock was unlocked; this is
-	 * shadowed by the v_uobj lock.  Keep the old code until this
-	 * is all straightened out.
-	 */
-	simple_unlock(&vp->v_interlock);
+	struct cnode *cp = VTOC(vp);
+	int error;
 
 	/* Check for control object. */
 	if (IS_CTL_VP(vp)) {
+		printf("coda_putpages: control object %p\n", vp);
+		simple_unlock(&vp->v_interlock);
 		return(EINVAL);
 	}
 
 	/*
-	 * XXX
-	 * we'd like to do something useful here for msync(),
-	 * but that turns out to be hard.
+	 * If container object is not present, then there are no pages
+	 * to put; just return without error.  This happens all the
+	 * time, apparently during discard of a closed vnode (which
+	 * trivially can't have dirty pages).
 	 */
+	if (cp->c_ovp == NULL) {
+		simple_unlock(&vp->v_interlock);
+		return 0;
+	}
 
-	return 0;
+	/* Like LAYERVPTOLOWERVP, but coda doesn't use the layer struct. */
+	ap->a_vp = cp->c_ovp;
+
+	/* Move the lock to the container vnode. */
+	simple_lock(&ap->a_vp->v_interlock);
+	simple_unlock(&vp->v_interlock);
+
+	/* Call putpages on container file. */
+	error = VCALL(ap->a_vp, VOFFSET(vop_putpages), ap);
+
+	return error;
 }
