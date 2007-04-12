@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.139 2006/10/02 02:59:38 chs Exp $	   */
+/*	$NetBSD: pmap.c,v 1.139.2.1 2007/04/12 19:46:12 bouyer Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999, 2003 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.139 2006/10/02 02:59:38 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.139.2.1 2007/04/12 19:46:12 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_cputype.h"
@@ -1430,19 +1430,20 @@ pmap_clear_reference_long(struct pv_entry *pv)
 	if (pv->pv_pmap != NULL) {
 		pte = vaddrtopte(pv);
 		if (pte->pg_w == 0) {
-			pte[0].pg_v = pte[1].pg_v = pte[2].pg_v = 
-			pte[3].pg_v = pte[4].pg_v = pte[5].pg_v =
-			pte[6].pg_v = pte[7].pg_v = 0;
+			pte[0].pg_v = 0; pte[1].pg_v = 0;
+			pte[2].pg_v = 0; pte[3].pg_v = 0;
+			pte[4].pg_v = 0; pte[5].pg_v = 0;
+			pte[6].pg_v = 0; pte[7].pg_v = 0;
 		}
 	}
 
 	while ((pv = pv->pv_next)) {
 		pte = vaddrtopte(pv);
 		if (pte[0].pg_w == 0) {
-			pte[0].pg_v = pte[1].pg_v =
-			    pte[2].pg_v = pte[3].pg_v = 
-			    pte[4].pg_v = pte[5].pg_v = 
-			    pte[6].pg_v = pte[7].pg_v = 0;
+			pte[0].pg_v = 0; pte[1].pg_v = 0;
+			pte[2].pg_v = 0; pte[3].pg_v = 0;
+			pte[4].pg_v = 0; pte[5].pg_v = 0;
+			pte[6].pg_v = 0; pte[7].pg_v = 0;
 		}
 	}
 	PVTABLE_UNLOCK;
@@ -1591,14 +1592,15 @@ pmap_page_protect_long(struct pv_entry *pv, vm_prot_t prot)
 		splx(s);
 	} else { /* read-only */
 		do {
+			int pr;
 			pt = vaddrtopte(pv);
 			if (pt == 0)
 				continue;
-			pt[0].pg_prot = pt[1].pg_prot = 
-			    pt[2].pg_prot = pt[3].pg_prot = 
-			    pt[4].pg_prot = pt[5].pg_prot = 
-			    pt[6].pg_prot = pt[7].pg_prot = 
-			    ((vaddr_t)pt < ptemapstart ? PROT_KR : PROT_RO);
+			pr = ((vaddr_t)pt < ptemapstart ? PROT_KR : PROT_RO);
+			pt[0].pg_prot = pr; pt[1].pg_prot = pr;
+			pt[2].pg_prot = pr; pt[3].pg_prot = pr;
+			pt[4].pg_prot = pr; pt[5].pg_prot = pr;
+			pt[6].pg_prot = pr; pt[7].pg_prot = pr;
 		} while ((pv = pv->pv_next));
 	}
 	PVTABLE_UNLOCK;
