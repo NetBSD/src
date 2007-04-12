@@ -1,4 +1,4 @@
-/*	$NetBSD: psshfs.h,v 1.8 2007/04/12 15:09:02 pooka Exp $	*/
+/*	$NetBSD: psshfs.h,v 1.9 2007/04/12 20:42:46 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -75,6 +75,11 @@ struct psshfs_dir {
 	time_t attrread;
 };
 
+struct psshfs_fid {
+	time_t mounttime;
+	struct puffs_node *node;
+};
+
 struct psshfs_node {
 	struct puffs_node *parent;
 
@@ -84,6 +89,7 @@ struct psshfs_node {
 	time_t dentread;
 	int childcount;
 	int reclaimed;
+	int hasfh;
 
 	time_t attrread;
 };
@@ -149,6 +155,9 @@ struct psshfs_ctx {
 
 	struct psshfs_node psn_root;
 	ino_t nextino;
+
+	int canexport;
+	time_t mounttime;
 
 	TAILQ_HEAD(, psbuf) outbufq;
 	TAILQ_HEAD(, psbuf) req_queue;
