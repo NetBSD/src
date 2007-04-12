@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.59 $>
+LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.60 $>
 
 
 Changes from 386bsd 0.1 + patchkit 0.2.2 to NetBSD 0.8:
@@ -8569,11 +8569,21 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 		support, threading and sorting of messages, improved message
 		selection, and redirection of command output; from Anon Ymous.
 		[christos 20061201]
+	shark: add support for igsfb at ofbus. [macallan 20061207]
 	re(4): Fix hardware VLAN tagging support. [tsutsui 20061216]
+	mfi(4): driver for LSI Logic & Dell MegaRAID SAS RAID controller.
+		Ported from OpenBSD, tested on i386 and amd64.
+		[bouyer 20061217]
+	bnx(4): driver for Broadcom NetXtreme II 10/100/1000 Ethernet
+		device. Ported from OpenBSD by cube@, with some bus_dma
+		fixes by me. [bouyer 20071217]
+	shark: add support for XFree86 with wsfb. [macallan 20061220]
 	nfe(4): Enable hardware checksum support. [tsutsui 20070109]
 	iwi(4): Update to use the single file firmware format. The new
 		firmware is available in pkgsrc/sysutils/iwi-firmware3.
 		[skrll 20061229]
+	ug(4): driver for the Abit uGuru hardware system monitor,
+		contributed by Mihai Chelaru. [xtraeme 20070106]
 	i386, amd64: remove option COMPAT_386BSD_MBRPART from default
 		kernels.  NetBSD has not used partition ID 0x165 for many,
 		many years, and the presence of this option in INSTALL
@@ -8582,3 +8592,4 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 		Those with very, very old NetBSD installations may find
 		that they must update their fdisk partition tables to use
 		partition ID 0x169 for their NetBSD partitions. [tls 20070124]
+	ataraid(4): Add support for Via V-RAID. [garbled 20070326]
