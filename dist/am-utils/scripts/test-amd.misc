@@ -1,5 +1,0 @@
-# map sample for /etc/amd.misc
-
-a	type:=link;fs:=/usr
-
-b	type:=link;fs:=/usr/local

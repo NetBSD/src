@@ -1,3 +1,0 @@
-# $NetBSD: shl.elf,v 1.53 2004/09/03 11:26:22 he Exp $
-./usr/lib/crtbeginS.o				comp-c-lib
-./usr/lib/crtendS.o				comp-c-lib
