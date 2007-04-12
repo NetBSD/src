@@ -1,4 +1,4 @@
-/*	$NetBSD: fs.c,v 1.5 2007/04/12 20:42:46 pooka Exp $	*/
+/*	$NetBSD: fs.c,v 1.6 2007/04/12 21:08:49 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fs.c,v 1.5 2007/04/12 20:42:46 pooka Exp $");
+__RCSID("$NetBSD: fs.c,v 1.6 2007/04/12 21:08:49 pooka Exp $");
 #endif /* !lint */
 
 #include <err.h>
@@ -200,13 +200,8 @@ psshfs_fs_fhtonode(struct puffs_cc *pcc, void *fid, size_t fidsize,
 
 	/* update node attributes */
 	rv = getnodeattr(pcc, pn);
-	if (rv) {
-		psn->hasfh = 0;
-		if (psn->reclaimed == 2)
-			psshfs_node_reclaim(pcc, pn, 0);
-
+	if (rv)
 		return EINVAL;
-	}
 
 	*fcookie = pn;
 	*ftype = pn->pn_va.va_type;
