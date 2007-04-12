@@ -1,4 +1,4 @@
-/*	$NetBSD: node.c,v 1.17 2007/04/12 20:42:46 pooka Exp $	*/
+/*	$NetBSD: node.c,v 1.18 2007/04/12 21:08:49 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: node.c,v 1.17 2007/04/12 20:42:46 pooka Exp $");
+__RCSID("$NetBSD: node.c,v 1.18 2007/04/12 21:08:49 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -634,10 +634,8 @@ psshfs_node_reclaim(struct puffs_cc *pcc, void *opc, pid_t pid)
 	 * don't reclaim if we have file handle issued, otherwise
 	 * we can't do fhtonode
 	 */
-	if (psn->hasfh) {
-		psn->reclaimed = 2;
+	if (psn->hasfh)
 		return 0;
-	}
 
 	psn->reclaimed = 1;
 	pn_root = puffs_getroot(pu);
