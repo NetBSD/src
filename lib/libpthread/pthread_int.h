@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.41 2007/03/24 18:52:00 ad Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.42 2007/04/12 21:36:06 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007 The NetBSD Foundation, Inc.
@@ -85,6 +85,7 @@ struct	__pthread_st {
 	void	*pt_mutexhint;	/* Last mutex held. */
 	int	pt_sleeponq;	/* on a sleep queue */
 	int	pt_errno;	/* Thread-specific errno. */
+	int	pt_signalled;	/* Received pthread_cond_signal() */
 
 	/* Entry on the list of all threads */
 	PTQ_ENTRY(__pthread_st)	pt_allq;
