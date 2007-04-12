@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.764.2.6 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.764.2.7 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -591,9 +591,19 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 		offload support. [yamt 20061124]
 	ahcisata(4): Added driver for AHCI 1.0 and 1.1 compliant SATA
 		controllers. [bouyer 20061130]
+	shark: add support for igsfb at ofbus. [macallan 20061207]
+	mfi(4): driver for LSI Logic & Dell MegaRAID SAS RAID controller.
+		Ported from OpenBSD, tested on i386 and amd64.
+		[bouyer 20061217]
+	bnx(4): driver for Broadcom NetXtreme II 10/100/1000 Ethernet
+		device. Ported from OpenBSD by cube@, with some bus_dma
+		fixes by me. [bouyer 20071217]
+	shark: add support for XFree86 with wsfb. [macallan 20061220]
 	iwi(4): Update to use the single file firmware format. The new
 		firmware is available in pkgsrc/sysutils/iwi-firmware3.
 		[skrll 20061229]
+	ug(4): driver for the Abit uGuru hardware system monitor,
+		contributed by Mihai Chelaru. [xtraeme 20070106]
 	i386, amd64: remove option COMPAT_386BSD_MBRPART from default
 		kernels.  NetBSD has not used partition ID 0x165 for many,
 		many years, and the presence of this option in INSTALL
@@ -608,3 +618,4 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 	i386, amd64: switch bootable iso images to native boot format, and add
 		different bootable kenrels on the iso images. Enable ACPI
 		in default INSTALL and GENERIC kernels. [bouyer 20070306]
+       ataraid(4): Add support for Via V-RAID. [garbled 20070326]
