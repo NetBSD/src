@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.95.2.2 2007/04/10 13:26:42 ad Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.95.2.3 2007/04/12 23:14:20 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.95.2.2 2007/04/10 13:26:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.95.2.3 2007/04/12 23:14:20 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,6 +121,7 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.95.2.2 2007/04/10 13:26:42 ad Exp 
 #include <sys/stat.h>
 #include <sys/mbuf.h>
 #include <sys/kauth.h>
+#include <sys/kmem.h>
 
 /*
  * Unix communications domain.
@@ -855,6 +856,7 @@ unp_externalize(struct mbuf *rights, struct lwp *l)
 	rp = (struct file **)CMSG_DATA(cm);
 
 	fdp = malloc(nfds * sizeof(int), M_TEMP, M_WAITOK);
+	rw_enter(&p->p_cwdi->cwdi_lock, RW_READER);
 
 	/* Make sure the recipient should be able to see the descriptors.. */
 	if (p->p_cwdi->cwdi_rdir != NULL) {
@@ -925,7 +927,9 @@ unp_externalize(struct mbuf *rights, struct lwp *l)
 		 * fdalloc() works properly.. We finalize it all
 		 * in the loop below.
 		 */
+		rw_enter(&p->p_fd->fd_lock, RW_WRITER);
 		p->p_fd->fd_ofiles[fdp[i]] = fp;
+		rw_exit(&p->p_fd->fd_lock);
 	}
 
 	/*
@@ -947,6 +951,7 @@ unp_externalize(struct mbuf *rights, struct lwp *l)
 	cm->cmsg_len = CMSG_LEN(nfds * sizeof(int));
 	rights->m_len = CMSG_SPACE(nfds * sizeof(int));
  out:
+	rw_exit(&p->p_cwdi->cwdi_lock);
 	free(fdp, M_TEMP);
 	return (error);
 }
@@ -1005,6 +1010,7 @@ unp_internalize(struct mbuf *control, struct lwp *l)
 	 * reverse order so that if pointers are bigger than ints, the
 	 * int won't get until we're done.
 	 */
+	rw_enter(&fdescp->fd_lock, RW_READER);
 	fdp = (int *)CMSG_DATA(cm) + nfds;
 	rp = files + nfds;
 	for (i = 0; i < nfds; i++) {
@@ -1020,6 +1026,7 @@ unp_internalize(struct mbuf *control, struct lwp *l)
 		mutex_exit(&fp->f_lock);
 		unp_rights++;
 	}
+	rw_exit(&fdescp->fd_lock);
 
 	if (newcm) {
 		if (control->m_flags & M_EXT)
@@ -1130,6 +1137,8 @@ unp_gc(void)
 	unp_gcing = 1;
 	unp_defer = 0;
 
+	mutex_enter(&filelist_lock);
+
 	/* Clear mark bits */
 	LIST_FOREACH(fp, &filehead, f_list)
 		fp->f_flag &= ~(FMARK|FDEFER);
@@ -1141,7 +1150,8 @@ unp_gc(void)
 	 */
 	do {
 		LIST_FOREACH(fp, &filehead, f_list) {
-			if (fp->f_flag & FDEFER) {
+		    	mutex_enter(&fp->f_lock);
+		    	if (fp->f_flag & FDEFER) {
 				fp->f_flag &= ~FDEFER;
 				unp_defer--;
 #ifdef DIAGNOSTIC
@@ -1149,21 +1159,22 @@ unp_gc(void)
 					panic("unp_gc: deferred unreferenced socket");
 #endif
 			} else {
-				if (fp->f_count == 0)
+				if (fp->f_count == 0 ||
+				    (fp->f_flag & FMARK) ||
+				    fp->f_count == fp->f_msgcount) {
+				    	mutex_exit(&fp->f_lock);
 					continue;
-				if (fp->f_flag & FMARK)
-					continue;
-				if (fp->f_count == fp->f_msgcount)
-					continue;
+				}
 			}
 			fp->f_flag |= FMARK;
 
 			if (fp->f_type != DTYPE_SOCKET ||
-			    (so = (struct socket *)fp->f_data) == 0)
+			    (so = (struct socket *)fp->f_data) == 0 ||
+			    so->so_proto->pr_domain != &unixdomain ||
+			    (so->so_proto->pr_flags&PR_RIGHTS) == 0) {
+			    	mutex_exit(&fp->f_lock);
 				continue;
-			if (so->so_proto->pr_domain != &unixdomain ||
-			    (so->so_proto->pr_flags&PR_RIGHTS) == 0)
-				continue;
+			}
 #ifdef notdef
 			if (so->so_rcv.sb_flags & SB_LOCK) {
 				/*
@@ -1180,6 +1191,8 @@ unp_gc(void)
 				goto restart;
 			}
 #endif
+		    	mutex_exit(&fp->f_lock);
+
 			unp_scan(so->so_rcv.sb_mb, unp_mark, 0);
 			/*
 			 * mark descriptors referenced from sockets queued on the accept queue as well.
@@ -1192,9 +1205,11 @@ unp_gc(void)
 					unp_scan(so1->so_rcv.sb_mb, unp_mark, 0);
 				}
 			}
-
 		}
 	} while (unp_defer);
+
+	mutex_exit(&filelist_lock);
+
 	/*
 	 * Sweep pass.  Find unmarked descriptors, and free them.
 	 *
@@ -1237,7 +1252,9 @@ unp_gc(void)
 	 *
 	 * 91/09/19, bsy@cs.cmu.edu
 	 */
-	extra_ref = malloc(nfiles * sizeof(struct file *), M_FILE, M_WAITOK);
+	extra_ref = kmem_alloc(nfiles * sizeof(struct file *), KM_SLEEP);
+
+	mutex_enter(&filelist_lock);
 	for (nunref = 0, fp = LIST_FIRST(&filehead), fpp = extra_ref; fp != 0;
 	    fp = nextfp) {
 		nextfp = LIST_NEXT(fp, f_list);
@@ -1250,6 +1267,8 @@ unp_gc(void)
 		}
 		mutex_exit(&fp->f_lock);
 	}
+	mutex_exit(&filelist_lock);
+
 	for (i = nunref, fpp = extra_ref; --i >= 0; ++fpp) {
 		fp = *fpp;
 		mutex_enter(&fp->f_lock);
@@ -1264,7 +1283,7 @@ unp_gc(void)
 		FILE_USE(fp);
 		(void) closef(fp, (struct lwp *)0);
 	}
-	free((void *)extra_ref, M_FILE);
+	kmem_free(extra_ref, nfiles * sizeof(struct file *));
 	unp_gcing = 0;
 }
 
@@ -1313,15 +1332,16 @@ unp_scan(struct mbuf *m0, void (*op)(struct file *), int discard)
 void
 unp_mark(struct file *fp)
 {
+
 	if (fp == NULL)
 		return;
 
-	if (fp->f_flag & FMARK)
-		return;
-
 	/* If we're already deferred, don't screw up the defer count */
-	if (fp->f_flag & FDEFER)
+	mutex_enter(&fp->f_lock);
+	if (fp->f_flag & (FMARK | FDEFER)) {
+		mutex_exit(&fp->f_lock);
 		return;
+	}
 
 	/*
 	 * Minimize the number of deferrals...  Sockets are the only
@@ -1337,6 +1357,7 @@ unp_mark(struct file *fp)
 	} else {
 		fp->f_flag |= FMARK;
 	}
+	mutex_exit(&fp->f_lock);
 	return;
 }
 
