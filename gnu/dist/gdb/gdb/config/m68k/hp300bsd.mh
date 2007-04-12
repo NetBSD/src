@@ -1,6 +1,0 @@
-# OBSOLETE # Host: Hewlett-Packard 9000 series 300, running BSD
-# OBSOLETE 
-# OBSOLETE XM_FILE= xm-hp300bsd.h
-# OBSOLETE 
-# OBSOLETE NAT_FILE= nm-hp300bsd.h
-# OBSOLETE NATDEPFILES= infptrace.o inftarg.o fork-child.o corelow.o core-aout.o

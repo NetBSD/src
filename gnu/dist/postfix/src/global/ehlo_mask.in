@@ -1,3 +1,0 @@
-starttls, 8bitmime, verp, etrn, etrn
-foobar, auth, pipelining, size, vrfy
-xclient, xforward
