@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.136 2007/04/11 00:52:38 lukem Exp $	*/
+/*	$NetBSD: util.c,v 1.137 2007/04/12 04:18:22 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-2007 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.136 2007/04/11 00:52:38 lukem Exp $");
+__RCSID("$NetBSD: util.c,v 1.137 2007/04/12 04:18:22 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -772,7 +772,7 @@ remotemodtime(const char *file, int noisy)
 				goto bad_parse_time;
 			else
 				goto cleanup_parse_time;
-		} else 
+		} else
 			DPRINTF("parsed date as: %s", ctime(&rtime));
 	} else {
 		if (r == ERROR && code == 500 && features[FEAT_MDTM] == -1)
@@ -850,7 +850,7 @@ fileindir(const char *file, const char *dir)
 	char	realdir[PATH_MAX+1];
 	size_t	dirlen;
 
-		 			/* determine parent directory of file */
+					/* determine parent directory of file */
 	(void)strlcpy(parentdirbuf, file, sizeof(parentdirbuf));
 	parentdir = dirname(parentdirbuf);
 	if (strcmp(parentdir, ".") == 0)
