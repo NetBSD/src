@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.14 2005/11/12 22:57:46 spz Exp $
+# $NetBSD: md.sparc64,v 1.15 2007/04/12 06:41:36 macallan Exp $
 ./usr/X11R6/bin/X
 ./usr/X11R6/bin/XFree86
 ./usr/X11R6/bin/Xsun
@@ -82,6 +82,7 @@
 ./usr/X11R6/lib/modules/drivers/sunleo_drv.o
 ./usr/X11R6/lib/modules/drivers/suntcx_drv.o
 ./usr/X11R6/lib/modules/drivers/vga_drv.o	xserver-obsolete	obsolete
+./usr/X11R6/lib/modules/drivers/wsfb_drv.o
 ./usr/X11R6/lib/modules/extensions/libGLcore.a
 ./usr/X11R6/lib/modules/extensions/libdbe.a
 ./usr/X11R6/lib/modules/extensions/libextmod.a
@@ -183,6 +184,7 @@
 ./usr/X11R6/man/cat4/vga.0			xserver-obsolete	obsolete
 ./usr/X11R6/man/cat4/void.0			-unknown-		.cat
 ./usr/X11R6/man/cat4/wacom.0			-unknown-		.cat
+./usr/X11R6/man/cat4/wsfb.0			-unknown-		.cat
 ./usr/X11R6/man/cat5/XF86Config.0		-unknown-		.cat
 ./usr/X11R6/man/man1/XFree86.1			-unknown-		.man
 ./usr/X11R6/man/man1/Xsun.1			-unknown-		.man
@@ -226,4 +228,5 @@
 ./usr/X11R6/man/man4/vga.4			xserver-obsolete	obsolete
 ./usr/X11R6/man/man4/void.4			-unknown-		.man
 ./usr/X11R6/man/man4/wacom.4			-unknown-		.man
+./usr/X11R6/man/man4/wsfb.4			-unknown-		.man
 ./usr/X11R6/man/man5/XF86Config.5		-unknown-		.man
