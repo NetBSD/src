@@ -1,4 +1,4 @@
-/* $NetBSD: crmfb.c,v 1.1 2007/04/12 13:10:20 jmcneill Exp $ */
+/* $NetBSD: crmfb.c,v 1.2 2007/04/12 22:30:48 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crmfb.c,v 1.1 2007/04/12 13:10:20 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crmfb.c,v 1.2 2007/04/12 22:30:48 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,6 +49,9 @@ __KERNEL_RCSID(0, "$NetBSD: crmfb.c,v 1.1 2007/04/12 13:10:20 jmcneill Exp $");
 #include <machine/bus.h>
 #include <machine/machtype.h>
 #include <machine/vmparam.h>
+
+#include <dev/arcbios/arcbios.h>
+#include <dev/arcbios/arcbiosvar.h>
 
 #include <dev/wscons/wsdisplayvar.h>
 #include <dev/wscons/wsconsio.h>
@@ -94,7 +97,6 @@ struct wsdisplay_accessops crmfb_accessops = {
 /* Memory to allocate to SGI-CRM -- remember, this is stolen from
  * host memory!
  */
-#define CRMFB_SIZE	(4 * 1024 * 1024)
 #define CRMFB_TILESIZE	(512*128)
 
 #define CRMFB_DOTCLOCK		0x00000004
@@ -204,6 +206,7 @@ crmfb_attach(struct device *parent, struct device *self, void *opaque)
 	uint16_t *p;
 	unsigned long v;
 	long defattr;
+	const char *consdev;
 	int rv, i;
 
 	sc = (struct crmfb_softc *)self;
@@ -243,13 +246,8 @@ crmfb_attach(struct device *parent, struct device *self, void *opaque)
 	    sc->sc_dev.dv_xname, sc->sc_width, sc->sc_height, sc->sc_depth);
 #endif
 
-#if 0
-	/* XXX revisit later */
 	sc->sc_fbsize = sc->sc_width * sc->sc_height * sc->sc_depth / 8;
-	sc->sc_fbsize = (sc->sc_fbsize / CRMFB_TILESIZE) + CRMFB_TILESIZE;
-#else
-	sc->sc_fbsize = CRMFB_SIZE;
-#endif
+	sc->sc_fbsize = (sc->sc_fbsize / CRMFB_TILESIZE) * CRMFB_TILESIZE;
 
 	sc->sc_dmai.size = 128 * sizeof(uint16_t);
 	rv = bus_dmamem_alloc(sc->sc_dmat, sc->sc_dmai.size, 65536, 0,
@@ -368,8 +366,6 @@ crmfb_attach(struct device *parent, struct device *self, void *opaque)
 	/* setup tile pointer, but don't turn on DMA yet! */
 	h = DMAADDR(sc->sc_dmai);
 	d = (h >> 9) << CRMFB_FRM_CONTROL_TILEPTR_SHIFT;
-	//d &= ~(0 << CRMFB_FRM_CONTROL_DMAEN_SHIFT);
-	//d &= ~(0 << CRMFB_FRM_CONTROL_LINEAR_SHIFT);
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, CRMFB_FRM_CONTROL, d);
 
 	/* init framebuffer width and pixel size */
@@ -421,9 +417,12 @@ crmfb_attach(struct device *parent, struct device *self, void *opaque)
 		sc->sc_cmap_blue[i] = rasops_cmap[(i * 3) + 0];
 	}
 
-	wsdisplay_cnattach(&crmfb_defaultscreen, ri, 0, 0, defattr);
-
-	aa.console = 1;
+	consdev = ARCBIOS->GetEnvironmentVariable("ConsoleOut");
+	if (consdev != NULL && strcmp(consdev, "video()") == 0) {
+		wsdisplay_cnattach(&crmfb_defaultscreen, ri, 0, 0, defattr);
+		aa.console = 1;
+	} else
+		aa.console = 0;
 	aa.scrdata = &crmfb_screenlist;
 	aa.accessops = &crmfb_accessops;
 	aa.accesscookie = &sc->sc_vd;
