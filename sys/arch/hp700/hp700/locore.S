@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.16.2.8 2007/04/08 09:16:28 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.16.2.9 2007/04/12 09:58:40 skrll Exp $	*/
 
 /*	$OpenBSD: locore.S,v 1.46 2001/09/20 18:33:03 mickey Exp $	*/
 
@@ -849,7 +849,6 @@ switch_exited:
 	CALL(hppa_ras, %r1)
 
 	/* restore caller-saves */
-	ldw	HPPA_FRAME_ARG(2)(%r3), %t4
 	ldw	HPPA_FRAME_ARG(1)(%r3), %arg1
 	ldw	HPPA_FRAME_ARG(0)(%r3), %arg0
 
