@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.174 2007/04/12 05:03:33 thorpej Exp $
+#	$NetBSD: BRANCHES,v 1.175 2007/04/12 05:07:58 thorpej Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -560,6 +560,17 @@ Scope:		src/sys and src/common
 Notes:		Used as expiriment sandbox and if successful hopefully one day
 		to be intergrated.
 
+Branch:		thorpej-atomic
+Description:	Implementation of an atomic memory operations API modeled
+		after the one in Solaris 10.
+Status:		Active
+Start Date:	Apr 11 2007
+End Date:
+Base tag:	thorpej-atomic-base
+Maintainer:	Jason Thorpe <thorpej@netbsd.org>
+Scope:		src/common
+		src/sys
+Notes:		
 
 ########################################################################
 # Individual developers' branches (Terminated):
