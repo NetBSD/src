@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.112 2007/04/06 19:04:20 bouyer Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.113 2007/04/12 19:40:23 bouyer Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -2528,4 +2528,63 @@ sbin/mount_procfs/mount_procfs.8        1.28-1.33
 	add a description for fd/# (with reference to fd(4))
 	proc/#/exe is now exposed for all mounts, move it away from linux-only
 	[pooka, ticket #535]
+
+doc/CHANGES				patch
+	Sync list of changes since 3.0 with reality.
+	[xtraeme, ticket #366]
+
+distrib/utils/sysinst/arch/amd64/md.h		1.20
+
+	Add "wd", "sd" and "raid:no_mbr" disks in DISK_NAMES (and xbd:no_mbr,
+	but it's ignored as there's no support for Xen yet).
+	From Edgar Fu in PR port-amd64/36116.
+	[xtraeme, ticket #560]
+
+gnu/dist/gcc4/gcc/builtins.c			1.7
+
+	2006-08-24  Richard Guenther  <rguenther@suse.de>
+		* builtins.c (fold_builtin_classify): Fix typo.
+	Fixes PR#34784 "ps/top/systat die on -current vax w/ Illegal
+	instruction"
+	[mhitch, ticket #561]
+
+usr.sbin/quotacheck/quotacheck.c		1.38
+
+	From Edgar: fix ino computation; allocate space for the superblock
+	after  we know how big it is.
+	[jdc, ticket #562]
+
+sys/fs/smbfs/smbfs_vfsops.c			1.64
+
+	In sync, skip vnodes which have a null v_data pointer.  This is a
+	workaround for the problem analyzed more deeply in kern/30831.  In
+	short, code going through the entire mountpoint vnode list may hit
+	half-reclaimed vnodes.
+	[pooka, ticket #563]
+
+sys/compat/linux32/common/linux32_unistd.c	1.8
+
+	Fix select() behaviour with NULL timeout, to blocks indefinitely
+	instead of returning immediately.
+	Reported by Edgar Fuﬂ on port-amd64@.
+	[njoly, ticket #564]
+
+sys/fs/udf/udf_subr.c				1.33
+
+	Some rogue implementations use random physical partion numbers just to
+	break other implementations so lookup the physical number instead of
+	indexing it. Choosing random numbers here is legal according to the
+	specs, but not a logical choice and most likely done as a wierd kind
+	of copy protection.
+	Rogue implementation found to use this
+		*Microsoft CDIMAGE UDF
+	[reinoud, ticket #567]
+
+sbin/fsck_ffs/inode.c				1.58
+
+	apply revision 1.31 yet again:
+	"make sure that we don't try to allocate negative memory when
+	blks == 0." or on amd64, "make sure that we don't allocate 32 GB
+	when blks == 0."
+	[chs, ticket #568]
 
