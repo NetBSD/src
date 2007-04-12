@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.113 2007/04/12 19:40:23 bouyer Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.114 2007/04/12 19:46:40 bouyer Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -2587,4 +2587,10 @@ sbin/fsck_ffs/inode.c				1.58
 	blks == 0." or on amd64, "make sure that we don't allocate 32 GB
 	when blks == 0."
 	[chs, ticket #568]
+
+sys/arch/vax/vax/pmap.c				1.149
+
+	Workaround a gcc 4.1 issue.  don't use s.m = s2.m = s3.m = ...
+	assign them individually.
+	[mhitch, ticket #569]
 
