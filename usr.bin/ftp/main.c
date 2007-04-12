@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.102 2006/12/13 18:04:08 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.103 2007/04/12 04:25:00 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-2005 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.102 2006/12/13 18:04:08 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.103 2007/04/12 04:25:00 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -640,8 +640,8 @@ cmdscanner(void)
 				p = rprompt();
 				if (*p)
 					fprintf(ttyout, "%s ", p);
-				(void)fflush(ttyout);
 			}
+			(void)fflush(ttyout);
 			num = getline(stdin, line, sizeof(line), NULL);
 			switch (num) {
 			case -1:	/* EOF */
