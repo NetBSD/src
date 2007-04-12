@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.173 2007/04/10 15:36:02 ad Exp $
+#	$NetBSD: BRANCHES,v 1.174 2007/04/12 05:03:33 thorpej Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -401,21 +401,6 @@ Scope:		x11
 Notes:		Requires parts of xsrc/xfree (HEAD)
 		xsrc/local, xsrc/xfree/xc/programs/Xserver/hw/netbsd
 		Requires xorg (XORG-6_8_1)
-
-Branch:		thorpej-devvp
-Description:	replace dev_t with struct vnode * in devsw entry points
-Status:		Active
-Start Date:	Sep 6 2001
-End Date:
-Base Tag:	thorpej-devvp-base
-Maintainer:	Jason Thorpe <thorpej@NetBSD.org>
-Scope:		syssrc
-Notes:		Kernels built from this branch are not expected
-		to function correctly at this time.
-
-		Ports known to compile on this branch:
-			alpha
-			i386
 
 Branch:		vmlocking
 Description:	Make memory allocators and trap handling MP safe
@@ -849,6 +834,21 @@ Maintainer:	Konrad Schroder <perseant@NetBSD.org>
 Scope:		basesrc/{sbin/*lfs,libexec/lfs_cleanerd,usr.sbin/dumplfs}, syssrc/sys/ufs
 Notes:		This branch should be short-lived, I expect to merge as soon
 		as the data structures required for unremove are in and tested.
+
+Branch:		thorpej-devvp
+Description:	replace dev_t with struct vnode * in devsw entry points
+Status:		Terminated
+Start Date:	Sep 6 2001
+End Date:	???
+Base Tag:	thorpej-devvp-base
+Maintainer:	Jason Thorpe <thorpej@NetBSD.org>
+Scope:		syssrc
+Notes:		Kernels built from this branch are not expected
+		to function correctly at this time.
+
+		Ports known to compile on this branch:
+			alpha
+			i386
 
 Branch:		peter-altq
 Description:	New ALTQ framework:
