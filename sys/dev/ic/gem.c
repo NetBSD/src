@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.55 2007/04/12 05:56:01 dyoung Exp $ */
+/*	$NetBSD: gem.c,v 1.56 2007/04/12 06:14:40 dyoung Exp $ */
 
 /*
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.55 2007/04/12 05:56:01 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.56 2007/04/12 06:14:40 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -1473,6 +1473,7 @@ gem_rint(sc)
 		rxstat = GEM_DMA_READ(sc, sc->sc_rxdescs[i].gd_flags);
 
 		if (rxstat & GEM_RD_OWN) {
+			GEM_CDRXSYNC(sc, i, BUS_DMASYNC_PREREAD);
 			/*
 			 * We have processed all of the receive buffers.
 			 */
