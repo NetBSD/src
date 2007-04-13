@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.h,v 1.42 2007/04/12 15:09:01 pooka Exp $	*/
+/*	$NetBSD: puffs.h,v 1.43 2007/04/13 13:35:46 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -236,8 +236,9 @@ typedef int (*pu_namemod_fn)(struct puffs_usermount *,
 			     struct puffs_pathobj *, struct puffs_cn *);
 
 enum {
-	PUFFS_STATE_MOUNTING,	PUFFS_STATE_RUNNING,
-	PUFFS_STATE_UNMOUNTING,	PUFFS_STATE_UNMOUNTED
+	PUFFS_STATE_BEFOREMOUNT,
+	PUFFS_STATE_MOUNTING,		PUFFS_STATE_RUNNING,
+	PUFFS_STATE_UNMOUNTING,		PUFFS_STATE_UNMOUNTED
 };
 
 #define PUFFS_FLAG_KERN(a)	((a) & 0x0000ffff)
@@ -357,9 +358,11 @@ enum {
 #define PUFFSOP_SETFSNOP(ops, opname)					\
     (ops)->puffs_fs_##opname = puffs_fsnop_##opname
 
-#define PUFFS_DEVEL_LIBVERSION 12
-#define puffs_mount(a,b,c,d,e,f,g) \
-    _puffs_mount(PUFFS_DEVEL_LIBVERSION,a,b,c,d,e,f,g)
+#define PUFFS_DEVEL_LIBVERSION 13
+#define puffs_mount(a,b,c,d,e,f) \
+    _puffs_mount(PUFFS_DEVEL_LIBVERSION,a,b,c,d,e,f)
+#define puffs_init(a,b,c,d) \
+    _puffs_init(PUFFS_DEVEL_LIBVERSION,a,b,c,d)
 
 
 #define PNPATH(pnode)	((pnode)->pn_po.po_path)
@@ -372,7 +375,10 @@ enum {
 __BEGIN_DECLS
 
 struct puffs_usermount *_puffs_mount(int, struct puffs_ops *, const char *, int,
-				    const char *, void *, uint32_t, size_t);
+				    const char *, void *, uint32_t);
+struct puffs_usermount *_puffs_init(int, struct puffs_ops *pops, const char *,
+				    void *, uint32_t);
+int		puffs_domount(struct puffs_usermount *, const char *, int);
 int		puffs_start(struct puffs_usermount *, void *, struct statvfs *);
 int		puffs_exit(struct puffs_usermount *, int);
 int		puffs_mainloop(struct puffs_usermount *, int);

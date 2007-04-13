@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.c,v 1.35 2007/04/12 15:09:01 pooka Exp $	*/
+/*	$NetBSD: puffs.c,v 1.36 2007/04/13 13:35:46 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: puffs.c,v 1.35 2007/04/12 15:09:01 pooka Exp $");
+__RCSID("$NetBSD: puffs.c,v 1.36 2007/04/13 13:35:46 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -110,7 +110,7 @@ int
 puffs_getselectable(struct puffs_usermount *pu)
 {
 
-	return pu->pu_fd;
+	return pu->pu_kargs.pa_fd;
 }
 
 int
@@ -119,7 +119,7 @@ puffs_setblockingmode(struct puffs_usermount *pu, int mode)
 	int x;
 
 	x = mode;
-	return ioctl(pu->pu_fd, FIONBIO, &x);
+	return ioctl(pu->pu_kargs.pa_fd, FIONBIO, &x);
 }
 
 int
@@ -175,7 +175,7 @@ size_t
 puffs_getmaxreqlen(struct puffs_usermount *pu)
 {
 
-	return pu->pu_maxreqlen;
+	return pu->pu_kargs.pa_maxreqlen;
 }
 
 void
@@ -213,15 +213,31 @@ puffs_set_namemod(struct puffs_usermount *pu, pu_namemod_fn fn)
 	pu->pu_namemod = fn;
 }
 
-enum {PUFFCALL_ANSWER, PUFFCALL_IGNORE, PUFFCALL_AGAIN};
+int
+puffs_domount(struct puffs_usermount *pu, const char *dir, int mntflags)
+{
+
+#if 1
+	/* XXXkludgehere */
+	/* kauth doesn't provide this service any longer */
+	if (geteuid() != 0)
+		mntflags |= MNT_NOSUID | MNT_NODEV;
+#endif
+
+	if (mount(MOUNT_PUFFS, dir, mntflags, &pu->pu_kargs) == -1)
+		return -1;
+	pu->pu_state = PUFFS_STATE_MOUNTING;
+
+	return 0;
+}
 
 struct puffs_usermount *
-_puffs_mount(int develv, struct puffs_ops *pops, const char *dir, int mntflags,
-	const char *puffsname, void *priv, uint32_t pflags, size_t maxreqlen)
+_puffs_init(int develv, struct puffs_ops *pops, const char *puffsname,
+	void *priv, uint32_t pflags)
 {
-	struct puffs_args pargs;
 	struct puffs_usermount *pu;
-	int fd = 0;
+	struct puffs_kargs *pargs;
+	int fd;
 
 	if (develv != PUFFS_DEVEL_LIBVERSION) {
 		warnx("puffs_mount: mounting with lib version %d, need %d",
@@ -237,21 +253,22 @@ _puffs_mount(int develv, struct puffs_ops *pops, const char *dir, int mntflags,
 		warnx("puffs_mount: device fd %d (<= 2), sure this is "
 		    "what you want?", fd);
 
-	pargs.pa_vers = PUFFSDEVELVERS | PUFFSVERSION;
-	pargs.pa_flags = PUFFS_FLAG_KERN(pflags);
-	pargs.pa_fd = fd;
-	pargs.pa_maxreqlen = maxreqlen;
-	fillvnopmask(pops, pargs.pa_vnopmask);
-	(void)strlcpy(pargs.pa_name, puffsname, sizeof(pargs.pa_name));
-
 	pu = malloc(sizeof(struct puffs_usermount));
-	if (!pu)
-		return NULL;
+	if (pu == NULL)
+		goto failfree;
+
+	pargs = &pu->pu_kargs;
+	memset(pargs, 0, sizeof(struct puffs_kargs));
+	pargs->pa_vers = PUFFSDEVELVERS | PUFFSVERSION;
+	pargs->pa_flags = PUFFS_FLAG_KERN(pflags);
+	pargs->pa_fd = fd;
+	fillvnopmask(pops, pargs->pa_vnopmask);
+	(void)strlcpy(pargs->pa_name, puffsname, sizeof(pargs->pa_name));
 
 	pu->pu_flags = pflags;
 	pu->pu_ops = *pops;
 	free(pops); /* XXX */
-	pu->pu_fd = fd;
+
 	pu->pu_privdata = priv;
 	pu->pu_cc_stacksize = PUFFS_CC_STACKSIZE_DEFAULT;
 	LIST_INIT(&pu->pu_pnodelst);
@@ -265,27 +282,36 @@ _puffs_mount(int develv, struct puffs_ops *pops, const char *dir, int mntflags,
 	pu->pu_pathtransform = NULL;
 	pu->pu_namemod = NULL;
 
-	pu->pu_state = PUFFS_STATE_MOUNTING;
-
-#if 1
-	/* XXXkludgehere */
-	/* kauth doesn't provide this service any longer */
-	if (geteuid() != 0)
-		mntflags |= MNT_NOSUID | MNT_NODEV;
-#endif
-
-	if (mount(MOUNT_PUFFS, dir, mntflags, &pargs) == -1)
-		goto failfree;
-	pu->pu_maxreqlen = pargs.pa_maxreqlen;
+	pu->pu_state = PUFFS_STATE_BEFOREMOUNT;
 
 	return pu;
 
  failfree:
 	/* can't unmount() from here for obvious reasons */
-	if (fd)
-		close(fd);
+	close(fd);
 	free(pu);
 	return NULL;
+}
+
+struct puffs_usermount *
+_puffs_mount(int develv, struct puffs_ops *pops, const char *dir, int mntflags,
+	const char *puffsname, void *priv, uint32_t pflags)
+{
+	struct puffs_usermount *pu;
+	int sverrno;
+
+	pu = _puffs_init(develv, pops, puffsname, priv, pflags);
+	if (pu == NULL)
+		return NULL;
+
+	if (puffs_domount(pu, dir, mntflags) == -1) {
+		sverrno = errno;
+		puffs_exit(pu, 1);
+		errno = sverrno;
+		return NULL;
+	}
+
+	return pu;
 }
 
 int
@@ -298,7 +324,7 @@ puffs_start(struct puffs_usermount *pu, void *rootcookie, struct statvfs *sbp)
 	sreq.psr_sb = *sbp;
 
 	/* tell kernel we're flying */
-	if (ioctl(pu->pu_fd, PUFFSSTARTOP, &sreq) == -1)
+	if (ioctl(pu->pu_kargs.pa_fd, PUFFSSTARTOP, &sreq) == -1)
 		return -1;
 
 	pu->pu_state = PUFFS_STATE_RUNNING;
@@ -310,7 +336,7 @@ puffs_start(struct puffs_usermount *pu, void *rootcookie, struct statvfs *sbp)
  * XXX: there's currently no clean way to request unmount from
  * within the user server, so be very brutal about it.
  */
-/*ARGSUSED*/
+/*ARGSUSED1*/
 int
 puffs_exit(struct puffs_usermount *pu, int force)
 {
@@ -318,8 +344,8 @@ puffs_exit(struct puffs_usermount *pu, int force)
 
 	force = 1; /* currently */
 
-	if (pu->pu_fd)
-		close(pu->pu_fd);
+	if (pu->pu_kargs.pa_fd)
+		close(pu->pu_kargs.pa_fd);
 
 	pn = LIST_FIRST(&pu->pu_pnodelst);
 	while (pn) {
@@ -340,7 +366,7 @@ puffs_mainloop(struct puffs_usermount *pu, int flags)
 	int rv;
 
 	rv = -1;
-	pgr = puffs_req_makeget(pu, pu->pu_maxreqlen, 0);
+	pgr = puffs_req_makeget(pu, puffs_getmaxreqlen(pu), 0);
 	if (pgr == NULL)
 		return -1;
 
@@ -416,6 +442,8 @@ puffs_dopreq(struct puffs_usermount *pu, struct puffs_req *preq,
 
 	return rv;
 }
+
+enum {PUFFCALL_ANSWER, PUFFCALL_IGNORE, PUFFCALL_AGAIN};
 
 int
 puffs_docc(struct puffs_cc *pcc, struct puffs_putreq *ppr)
@@ -1127,7 +1155,7 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 			pop.pso_reqid = preq->preq_id;
 
 			/* let the kernel do it's intermediate duty */
-			error = ioctl(pu->pu_fd, PUFFSSIZEOP, &pop);
+			error = ioctl(pu->pu_kargs.pa_fd, PUFFSSIZEOP, &pop);
 			/*
 			 * XXX: I don't actually know what the correct
 			 * thing to do in case of an error is, so I'll
@@ -1145,7 +1173,7 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 			pop.pso_reqid = preq->preq_id;
 
 			/* let the kernel do it's intermediate duty */
-			error = ioctl(pu->pu_fd, PUFFSSIZEOP, &pop);
+			error = ioctl(pu->pu_kargs.pa_fd, PUFFSSIZEOP, &pop);
 			/*
 			 * XXX: I don't actually know what the correct
 			 * thing to do in case of an error is, so I'll

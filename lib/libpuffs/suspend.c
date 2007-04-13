@@ -1,4 +1,4 @@
-/*	$NetBSD: suspend.c,v 1.2 2007/04/12 15:09:01 pooka Exp $	*/
+/*	$NetBSD: suspend.c,v 1.3 2007/04/13 13:35:46 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: suspend.c,v 1.2 2007/04/12 15:09:01 pooka Exp $");
+__RCSID("$NetBSD: suspend.c,v 1.3 2007/04/13 13:35:46 pooka Exp $");
 #endif /* !lint */
 
 /*
@@ -49,5 +49,5 @@ int
 puffs_fs_suspend(struct puffs_usermount *pu)
 {
 
-	return ioctl(pu->pu_fd, PUFFSSUSPENDOP);
+	return ioctl(pu->pu_kargs.pa_fd, PUFFSSUSPENDOP);
 }

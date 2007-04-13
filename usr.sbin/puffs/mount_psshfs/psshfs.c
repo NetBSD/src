@@ -1,4 +1,4 @@
-/*	$NetBSD: psshfs.c,v 1.11 2007/04/12 20:42:46 pooka Exp $	*/
+/*	$NetBSD: psshfs.c,v 1.12 2007/04/13 13:35:47 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: psshfs.c,v 1.11 2007/04/12 20:42:46 pooka Exp $");
+__RCSID("$NetBSD: psshfs.c,v 1.12 2007/04/13 13:35:47 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -189,7 +189,7 @@ main(int argc, char *argv[])
 	sshargs[7] = 0;
 
 	if ((pu = puffs_mount(pops, argv[1], mntflags, "psshfs", &pctx,
-	    PUFFS_FLAG_BUILDPATH | pflags, 0))==NULL)
+	    PUFFS_FLAG_BUILDPATH | pflags)) == NULL)
 		err(1, "puffs_mount");
 
 	pssh_connect(&pctx, sshargs);
