@@ -1,4 +1,4 @@
-.\" $NetBSD: pathname.9,v 1.1 2007/01/16 13:21:14 elad Exp $
+.\" $NetBSD: pathname.9,v 1.2 2007/04/13 18:19:36 plunky Exp $
 .\"
 .\" Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -33,6 +33,12 @@
 .Nd pathname management interface
 .Sh SYNOPSIS
 .In sys/namei.h
+.Ft pathname_t
+.Fn pathname_get "const char *dirp" "enum uio_segflg seg"
+.Ft char *
+.Fn pathname_path "pathname_t pn"
+.Ft void
+.Fn pathname_put "pathname_t pn"
 .Sh DESCRIPTION
 The
 .Nm
@@ -57,13 +63,10 @@ argument as returned from a previous call to
 .Ar pn ,
 and returns a pointer to the pathname buffer.
 This pointer is safe to use in the kernel.
-.It Ft void pathname_put "pathname_t pn"
+.It Ft void Fn pathname_put "pathname_t pn"
 Frees all memory associated with
 .Ar pn .
-.Fn kmem_zalloc
-is the equivalent of
-.Fn kmem_alloc ,
-except that it initializes the memory to zero.
+.El
 .Sh SEE ALSO
 .Xr namei 9
 .Sh AUTHORS
