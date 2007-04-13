@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE. 
 .\" 
 .\" $Heimdal: gss_acquire_cred.3,v 1.8.2.1 2003/04/28 13:41:42 lha Exp $
-.\" $NetBSD: gss_acquire_cred.3,v 1.1.1.1 2003/05/15 20:28:46 lha Exp $
+.\" $NetBSD: gss_acquire_cred.3,v 1.2 2007/04/13 18:22:08 plunky Exp $
 .\" 
 .Dd April  2, 2003
 .Dt GSS_ACQUIRE_CRED 3
@@ -282,7 +282,7 @@ GSS-API library (libgssapi, -lgssapi)
 .Fa "OM_uint32 * minor_status"
 .Fa "gss_name_t * input_name"
 .Fc
-.Ft
+.Ft OM_uint32
 .Fo gss_release_oid_set
 .Fa "OM_uint32 * minor_status"
 .Fa "gss_OID_set * set"
@@ -346,7 +346,7 @@ GSS-API library (libgssapi, -lgssapi)
 .Fa "const gss_buffer_t token_buffer"
 .Fa "gss_qop_t * qop_state"
 .Fc
-.Ft
+.Ft OM_uint32
 .Fo gss_wrap
 .Fa "OM_uint32 * minor_status"
 .Fa "const gss_ctx_id_t context_handle"
