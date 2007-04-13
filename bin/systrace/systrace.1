@@ -1,4 +1,4 @@
-.\"	$NetBSD: systrace.1,v 1.35 2006/12/23 09:43:47 wiz Exp $
+.\"	$NetBSD: systrace.1,v 1.36 2007/04/13 00:40:11 plunky Exp $
 .\"	$OpenBSD: systrace.1,v 1.27 2002/08/05 23:27:53 provos Exp $
 .\"
 .\" Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -117,14 +117,14 @@ knows about.
 The
 .Dq dirname
 in the policy may contain a
-.Sq \*
+.Sq \&*
 to match any possible pathname.
 The wildcard is removed from the policy database the first time that a
 filename matches.
 .It Fl g Ar gui
 Specifies an alternative location for the notification user interface.
 .It Fl i
-Inherits the policy \- child processes inherit policy of the parent binary.
+Inherits the policy \&- child processes inherit policy of the parent binary.
 .It Fl p Ar pid
 Specifies the pid of a process that
 .Nm
