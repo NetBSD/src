@@ -1,4 +1,4 @@
-/* $NetBSD: mavb.c,v 1.1 2007/04/13 03:37:41 jmcneill Exp $ */
+/* $NetBSD: mavb.c,v 1.2 2007/04/13 03:42:39 jmcneill Exp $ */
 /* $OpenBSD: mavb.c,v 1.6 2005/04/15 13:05:14 mickey Exp $ */
 
 /*
@@ -132,7 +132,6 @@ struct mavb_softc {
 	u_long sc_play_rate;
 	u_int sc_play_format;
 
-	//struct timeout sc_volume_button_to;
 	struct callout sc_volume_button_ch;
 };
 
@@ -976,8 +975,6 @@ mavb_button_repeat(void *hdl)
 		callout_reset(&sc->sc_volume_button_ch,
 		    (hz * MAVB_VOLUME_BUTTON_REPEAT_DELN) / 1000,
 		    mavb_button_repeat, sc);
-		//timeout_add(&sc->sc_volume_button_to,
-		//    (hz * MAVB_VOLUME_BUTTON_REPEAT_DELN) / 1000);
 	} else {
 		/* Enable volume button interrupts again.  */
 		intmask = bus_space_read_8(sc->sc_st, sc->sc_isash,
@@ -1007,8 +1004,6 @@ mavb_intr(void *arg)
 		callout_reset(&sc->sc_volume_button_ch,
 		    (hz * MAVB_VOLUME_BUTTON_REPEAT_DEL1) / 1000,
 		    mavb_button_repeat, sc);
-		//timeout_add(&sc->sc_volume_button_to,
-		//    (hz * MAVB_VOLUME_BUTTON_REPEAT_DEL1) / 1000);
 	}
 
 	if (stat & MACE_ISA_INT_AUDIO_DMA2)
@@ -1144,7 +1139,6 @@ mavb_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_play_rate = 48000;
 	sc->sc_play_format = AD1843_PCM8;
 
-	//timeout_set(&sc->sc_volume_button_to, mavb_button_repeat, sc);
 	callout_init(&sc->sc_volume_button_ch);
 
 	audio_attach_mi(&mavb_sa_hw_if, sc, &sc->sc_dev);
