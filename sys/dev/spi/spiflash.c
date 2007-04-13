@@ -1,4 +1,4 @@
-/* $NetBSD: spiflash.c,v 1.3 2007/03/04 06:02:44 christos Exp $ */
+/* $NetBSD: spiflash.c,v 1.3.2.1 2007/04/13 20:56:21 ad Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spiflash.c,v 1.3 2007/03/04 06:02:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spiflash.c,v 1.3.2.1 2007/04/13 20:56:21 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -149,7 +149,7 @@ const struct bdevsw spiflash_bdevsw = {
 	.d_ioctl = spiflash_ioctl,
 	.d_dump = nodump,
 	.d_psize = nosize,
-	.d_type = D_DISK,
+	.d_flag = D_DISK,
 };
 
 const struct cdevsw spiflash_cdevsw = {
@@ -163,7 +163,7 @@ const struct cdevsw spiflash_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
-	.d_type = D_DISK,
+	.d_flag = D_DISK,
 };
 
 static struct dkdriver spiflash_dkdriver = { spiflash_strategy, NULL };

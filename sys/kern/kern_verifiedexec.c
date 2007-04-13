@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_verifiedexec.c,v 1.97.4.1 2007/04/10 13:26:40 ad Exp $	*/
+/*	$NetBSD: kern_verifiedexec.c,v 1.97.4.2 2007/04/13 20:56:18 ad Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.97.4.1 2007/04/10 13:26:40 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.97.4.2 2007/04/13 20:56:18 ad Exp $");
 
 #include "opt_veriexec.h"
 
@@ -913,7 +913,8 @@ veriexec_raw_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
 				if (blkdev != NODEV) {
 					vfinddev(blkdev, VBLK, &bvp);
 					if (bvp != NULL)
-						d_type = cdev->d_type;
+						d_type = cdev->d_flag &
+						    D_TYPEMASK;
 				}
 			}
 
@@ -924,7 +925,7 @@ veriexec_raw_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
 
 			bdev = bdevsw_lookup(dev);
 			if (bdev != NULL)
-				d_type = bdev->d_type;
+				d_type = bdev->d_flag & D_TYPEMASK;
 
 			bvp = vp;
 

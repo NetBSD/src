@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.170.2.5 2007/04/09 22:10:04 ad Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.170.2.6 2007/04/13 20:56:18 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -82,7 +82,7 @@
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.170.2.5 2007/04/09 22:10:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.170.2.6 2007/04/13 20:56:18 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -807,7 +807,7 @@ bdwrite(struct buf *bp)
 
 	/* If this is a tape block, write the block now. */
 	bdev = bdevsw_lookup(bp->b_dev);
-	if (bdev != NULL && bdev->d_type == D_TAPE) {
+	if (bdev != NULL && (bdev->d_flag & D_TYPEMASK) == D_TAPE) {
 		bawrite(bp);
 		return;
 	}

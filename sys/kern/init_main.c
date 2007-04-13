@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.299.2.6 2007/04/10 12:07:12 ad Exp $	*/
+/*	$NetBSD: init_main.c,v 1.299.2.7 2007/04/13 20:56:17 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.299.2.6 2007/04/10 12:07:12 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.299.2.7 2007/04/13 20:56:17 ad Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_kcont.h"
@@ -368,6 +368,9 @@ main(void)
 	inittimecounter();
 	ntp_init();
 #endif /* __HAVE_TIMECOUNTER */
+
+	/* Initialize the device switch tables. */
+	devsw_init();
 
 	/* Configure the system hardware.  This will enable interrupts. */
 	configure();

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.81.2.3 2007/04/13 15:49:51 ad Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.81.2.4 2007/04/13 20:56:19 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.81.2.3 2007/04/13 15:49:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.81.2.4 2007/04/13 20:56:19 ad Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -149,8 +149,7 @@ uvn_attach(void *arg, vm_prot_t accessprot)
 	 * if we're mapping a BLK device, make sure it is a disk.
 	 */
 	if (vp->v_type == VBLK) {
-		bdev = bdevsw_lookup(vp->v_rdev);
-		if (bdev == NULL || bdev->d_type != D_DISK) {
+		if (bdev_type(vp->v_rdev) != D_DISK) {
 			mutex_exit(&uobj->vmobjlock);
 			UVMHIST_LOG(maphist,"<- done (VBLK not D_DISK!)",
 				    0,0,0,0);

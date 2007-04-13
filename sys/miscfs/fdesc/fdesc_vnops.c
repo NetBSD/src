@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vnops.c,v 1.96.6.1 2007/03/21 20:11:55 ad Exp $	*/
+/*	$NetBSD: fdesc_vnops.c,v 1.96.6.2 2007/04/13 20:56:20 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.96.6.1 2007/03/21 20:11:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.96.6.2 2007/04/13 20:56:20 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -429,7 +429,7 @@ fdesc_open(v)
 		return EDUPFD;
 
 	case Fctty:
-		return ((*ctty_cdevsw.d_open)(devctty, ap->a_mode, 0, ap->a_l));
+		return cdev_open(devctty, ap->a_mode, 0, ap->a_l);
 	case Froot:
 	case Fdevfd:
 	case Flink:
@@ -838,7 +838,7 @@ fdesc_read(v)
 	switch (VTOFDESC(vp)->fd_type) {
 	case Fctty:
 		VOP_UNLOCK(vp, 0);
-		error = (*ctty_cdevsw.d_read)(devctty, ap->a_uio, ap->a_ioflag);
+		error = cdev_read(devctty, ap->a_uio, ap->a_ioflag);
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 		break;
 
@@ -866,8 +866,7 @@ fdesc_write(v)
 	switch (VTOFDESC(vp)->fd_type) {
 	case Fctty:
 		VOP_UNLOCK(vp, 0);
-		error = (*ctty_cdevsw.d_write)(devctty, ap->a_uio,
-					       ap->a_ioflag);
+		error = cdev_write(devctty, ap->a_uio, ap->a_ioflag);
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 		break;
 
@@ -895,9 +894,8 @@ fdesc_ioctl(v)
 
 	switch (VTOFDESC(ap->a_vp)->fd_type) {
 	case Fctty:
-		error = (*ctty_cdevsw.d_ioctl)(devctty, ap->a_command,
-					       ap->a_data, ap->a_fflag,
-					       ap->a_l);
+		error = cdev_ioctl(devctty, ap->a_command, ap->a_data,
+		    ap->a_fflag, ap->a_l);
 		break;
 
 	default:
@@ -921,7 +919,7 @@ fdesc_poll(v)
 
 	switch (VTOFDESC(ap->a_vp)->fd_type) {
 	case Fctty:
-		revents = (*ctty_cdevsw.d_poll)(devctty, ap->a_events, ap->a_l);
+		revents = cdev_poll(devctty, ap->a_events, ap->a_l);
 		break;
 
 	default:
@@ -947,7 +945,7 @@ fdesc_kqfilter(v)
 
 	switch (VTOFDESC(ap->a_vp)->fd_type) {
 	case Fctty:
-		error = (*ctty_cdevsw.d_kqfilter)(devctty, ap->a_kn);
+		error = cdev_kqfilter(devctty, ap->a_kn);
 		break;
 
 	case Fdesc:

@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.32.2.3 2007/04/10 12:07:08 ad Exp $	*/
+/*	$NetBSD: fss.c,v 1.32.2.4 2007/04/13 20:56:20 ad Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.32.2.3 2007/04/10 12:07:08 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.32.2.4 2007/04/13 20:56:20 ad Exp $");
 
 #include "fss.h"
 
@@ -911,7 +911,7 @@ restart:
 		bp->b_private = scp;
 		bp->b_iodone = fss_cluster_iodone;
 
-		DEV_STRATEGY(bp);
+		bdev_strategy(bp);
 
 		FSS_LOCK(sc, s);
 		scp->fc_xfercount++;
@@ -1164,7 +1164,7 @@ fss_bs_thread(void *arg)
 		nbp->b_dev = sc->sc_bdev;
 		nbp->b_vp = NULLVP;
 
-		DEV_STRATEGY(nbp);
+		bdev_strategy(nbp);
 
 		if (biowait(nbp) != 0) {
 			bp->b_resid = bp->b_bcount;
