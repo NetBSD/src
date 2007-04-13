@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs.c,v 1.17 2007/04/11 21:07:54 pooka Exp $	*/
+/*	$NetBSD: dtfs.c,v 1.18 2007/04/13 13:35:46 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -149,7 +149,7 @@ main(int argc, char *argv[])
 
 	srandom(time(NULL)); /* for random generation numbers */
 
-	if ((pu = puffs_mount(pops, argv[0], mntflags, FSNAME, &dtm, pflags, 0))
+	if ((pu = puffs_mount(pops, argv[0], mntflags, FSNAME, &dtm, pflags))
 	    == NULL)
 		err(1, "mount");
 
