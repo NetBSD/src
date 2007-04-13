@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_sys.h,v 1.30 2007/04/04 16:13:51 pooka Exp $	*/
+/*	$NetBSD: puffs_sys.h,v 1.31 2007/04/13 13:31:11 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -116,7 +116,7 @@ LIST_HEAD(puffs_node_hashlist, puffs_node);
 struct puffs_mount {
 	kmutex_t	 		pmp_lock;
 
-	struct puffs_args		pmp_args;
+	struct puffs_kargs		pmp_args;
 #define pmp_flags pmp_args.pa_flags
 #define pmp_vnopmask pmp_args.pa_vnopmask
 

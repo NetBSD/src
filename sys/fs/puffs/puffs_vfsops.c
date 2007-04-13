@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vfsops.c,v 1.33 2007/04/11 21:03:05 pooka Exp $	*/
+/*	$NetBSD: puffs_vfsops.c,v 1.34 2007/04/13 13:31:11 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.33 2007/04/11 21:03:05 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.34 2007/04/13 13:31:11 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -67,13 +67,13 @@ puffs_mount(struct mount *mp, const char *path, void *data,
 	    struct nameidata *ndp, struct lwp *l)
 {
 	struct puffs_mount *pmp = NULL;
-	struct puffs_args *args;
+	struct puffs_kargs *args;
 	char namebuf[PUFFSNAMESIZE+sizeof(PUFFS_NAMEPREFIX)+1]; /* spooky */
 	int error = 0, i;
 
 	if (mp->mnt_flag & MNT_GETARGS) {
 		pmp = MPTOPUFFSMP(mp);
-		return copyout(&pmp->pmp_args, data, sizeof(struct puffs_args));
+		return copyout(&pmp->pmp_args,data,sizeof(struct puffs_kargs));
 	}
 
 	/* update is not supported currently */
@@ -86,10 +86,10 @@ puffs_mount(struct mount *mp, const char *path, void *data,
 	if (!data)
 		return EINVAL;
 
-	MALLOC(args, struct puffs_args *, sizeof(struct puffs_args),
+	MALLOC(args, struct puffs_kargs *, sizeof(struct puffs_kargs),
 	    M_PUFFS, M_WAITOK);
 
-	error = copyin(data, args, sizeof(struct puffs_args));
+	error = copyin(data, args, sizeof(struct puffs_kargs));
 	if (error)
 		goto out;
 
@@ -114,7 +114,7 @@ puffs_mount(struct mount *mp, const char *path, void *data,
 		args->pa_maxreqlen = PUFFS_REQSTRUCT_MAX;
 	(void)strlcpy(args->pa_name, namebuf, sizeof(args->pa_name));
 
-	error = copyout(args, data, sizeof(struct puffs_args)); 
+	error = copyout(args, data, sizeof(struct puffs_kargs)); 
 	if (error)
 		goto out;
 
