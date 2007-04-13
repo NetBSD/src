@@ -1,4 +1,4 @@
-/* $NetBSD: crmfb.c,v 1.2 2007/04/12 22:30:48 jmcneill Exp $ */
+/* $NetBSD: crmfb.c,v 1.3 2007/04/13 12:21:00 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crmfb.c,v 1.2 2007/04/12 22:30:48 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crmfb.c,v 1.3 2007/04/13 12:21:00 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,6 +58,8 @@ __KERNEL_RCSID(0, "$NetBSD: crmfb.c,v 1.2 2007/04/12 22:30:48 jmcneill Exp $");
 #include <dev/wsfont/wsfont.h>
 #include <dev/rasops/rasops.h>
 #include <dev/wscons/wsdisplay_vconsvar.h>
+
+#define CRMFB_SHADOWFB
 
 struct wsscreen_descr crmfb_defaultscreen = {
 	"default",
@@ -174,6 +176,7 @@ struct crmfb_softc {
 	int			sc_height;
 	int			sc_depth;
 	uint32_t		sc_fbsize;
+	uint8_t			*sc_shadowfb;
 
 	int			sc_wsmode;
 	u_char			sc_cmap_red[256];
@@ -301,6 +304,14 @@ crmfb_attach(struct device *parent, struct device *self, void *opaque)
 
 	printf("%s: allocated %d byte fb @ %p (%p)\n", sc->sc_dev.dv_xname,
 	    sc->sc_fbsize, KERNADDR(sc->sc_dmai), KERNADDR(sc->sc_dma));
+
+#ifdef CRMFB_SHADOWFB
+	/* setup shadow framebuffer */
+	sc->sc_shadowfb = malloc(sc->sc_fbsize, M_DEVBUF, M_NOWAIT | M_ZERO);
+	if (sc->sc_shadowfb == NULL)
+		aprint_error("%s: WARNING: couldn't allocate shadow fb\n",
+		    sc->sc_dev.dv_xname);
+#endif
 
 	ri = &crmfb_console_screen.scr_ri;
 	memset(ri, 0, sizeof(struct rasops_info));
@@ -509,7 +520,7 @@ crmfb_mmap(void *v, void *vs, off_t offset, int prot)
 	if (offset >= 0 && offset < sc->sc_fbsize) {
 		pa = bus_dmamem_mmap(sc->sc_dmat, sc->sc_dma.segs,
 		    sc->sc_dma.nsegs, offset, prot,
-		    BUS_DMA_WAITOK | BUS_DMA_NOCACHE);
+		    BUS_DMA_WAITOK | BUS_DMA_COHERENT);
 		return pa;
 	}
 
@@ -547,7 +558,12 @@ crmfb_init_screen(void *c, struct vcons_screen *scr, int existing,
 		break;
 	}
 
-	ri->ri_bits = KERNADDR(sc->sc_dma);
+	if (sc->sc_shadowfb == NULL)
+		ri->ri_bits = KERNADDR(sc->sc_dma);
+	else {
+		ri->ri_bits = sc->sc_shadowfb;
+		ri->ri_hwbits = KERNADDR(sc->sc_dma);
+	}
 
 	if (existing)
 		ri->ri_flg |= RI_CLEAR;
