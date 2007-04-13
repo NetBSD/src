@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lockf.c,v 1.58.2.2 2007/03/13 17:51:01 ad Exp $	*/
+/*	$NetBSD: vfs_lockf.c,v 1.58.2.3 2007/04/13 15:41:07 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lockf.c,v 1.58.2.2 2007/03/13 17:51:01 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lockf.c,v 1.58.2.3 2007/04/13 15:41:07 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,6 +74,7 @@ struct lockf {
 	struct  locklist lf_blkhd; /* List of requests blocked on this lock */
 	TAILQ_ENTRY(lockf) lf_block;/* A request waiting for a lock */
 	uid_t	lf_uid;		 /* User ID responsible */
+	kcondvar_t lf_cv;	 /* Signalling */
 };
 
 /* Maximum length of sleep chains to traverse to try and detect deadlock. */
@@ -203,6 +204,7 @@ lf_alloc(uid_t uid, int allowfail)
 	UIUNLOCK(uip, s);
 	lock = pool_get(&lockfpool, PR_WAITOK);
 	lock->lf_uid = uid;
+	cv_init(&lock->lf_cv, "lockf");
 	return lock;
 }
 
@@ -216,6 +218,7 @@ lf_free(struct lockf *lock)
 	UILOCK(uip, s);
 	uip->ui_lockcnt--;
 	UIUNLOCK(uip, s);
+	cv_destroy(&lock->lf_cv);
 	pool_put(&lockfpool, lock);
 }
 
@@ -391,7 +394,7 @@ lf_wakelock(struct lockf *listhead)
 		if (lockf_debug & 2)
 			lf_print("lf_wakelock: awakening", wakelock);
 #endif
-		wakeup(wakelock);
+		cv_broadcast(&wakelock->lf_cv);
 	}
 }
 
@@ -502,7 +505,7 @@ lf_setlock(struct lockf *lock, struct lockf **sparelock,
 	struct lockf **head = lock->lf_head;
 	struct lockf **prev, *overlap, *ltmp;
 	static char lockstr[] = "lockf";
-	int ovcase, priority, needtolink, error;
+	int ovcase, needtolink, error;
 
 #ifdef LOCKF_DEBUG
 	if (lockf_debug & 1)
@@ -510,12 +513,12 @@ lf_setlock(struct lockf *lock, struct lockf **sparelock,
 #endif /* LOCKF_DEBUG */
 
 	/*
-	 * Set the priority
+	 * XXX Here we used to set the sleep priority so that writers
+	 * took priority.  That's of dubious use, and is not possible
+	 * with condition variables.  Need to find a better way to ensure
+	 * fairness.
 	 */
-	priority = PLOCK;
-	if (lock->lf_type == F_WRLCK)
-		priority += 4;
-	priority |= PCATCH;
+        
 	/*
 	 * Scan lock list for this file looking for locks that would block us.
 	 */
@@ -612,7 +615,7 @@ lf_setlock(struct lockf *lock, struct lockf **sparelock,
 			lf_printlist("lf_setlock", block);
 		}
 #endif /* LOCKF_DEBUG */
-		error = mtsleep(lock, priority, lockstr, 0, interlock);
+		error = cv_wait_sig(&lock->lf_cv, interlock);
 
 		/*
 		 * We may have been awakened by a signal (in
