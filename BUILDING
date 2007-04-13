@@ -517,12 +517,30 @@ BUILDING
                    described by release(7).  This requires that RELEASEDIR be
                    set (see above).
 
-     iso-image     Create a CD-ROM image in
-                   RELEASEDIR/MACHINE/installation/cdrom.  RELEASEDIR must
-                   already have been populated by ``make release'' or equiva-
-                   lent.  This requires the mkisofs(1) utility, which is not
-                   part of NetBSD, but which can be installed from
-                   pkgsrc/sysutils/cdrtools.
+     iso-image     Create a NetBSD installation CD-ROM image in the
+                   RELEASEDIR/iso directory.  The CD-ROM file system will have
+                   a layout as described in release(7).
+
+                   For most machine types, the CD-ROM will be bootable, and
+                   will automatically run the sysinst(8) menu-based installa-
+                   tion program, which can be used to install or upgrade a
+                   NetBSD system.  Bootable CD-ROMs also contain tools that
+                   may be useful in repairing a damaged NetBSD installation.
+
+                   Before ``make iso-image'' is attempted, RELEASEDIR must be
+                   populated by ``make release'' or equivalent.
+
+                   Note that other, smaller, CD-ROM images may be created in
+                   the RELEASEDIR/MACHINE/installation/cdrom directory by
+                   ``make release''.  These smaller images usually contain the
+                   same tools as the larger images in RELEASEDIR/iso, but do
+                   not contain additional content such as the distribution
+                   sets.
+
+                   Note that the mac68k port still uses an older method of
+                   creating CD-ROM images.  This requires the mkisofs(1) util-
+                   ity, which is not part of NetBSD, but which can be
+                   installed from pkgsrc/sysutils/cdrtools.
 
      regression-tests
                    Can only be run after building the regression tests in the
@@ -758,7 +776,7 @@ OBSOLETE VARIABLES
                  TOOLCHAIN_MISSING=yes.
 
 SEE ALSO
-     make(1), hier(7), release(7), etcupdate(8), postinstall(8),
+     make(1), hier(7), release(7), etcupdate(8), postinstall(8), sysinst(8),
      pkgsrc/sysutils/cdrtools
 
 HISTORY
@@ -768,4 +786,4 @@ HISTORY
 BUGS
      A few platforms are not yet using this build system.
 
-NetBSD                          March 27, 2007                          NetBSD
+NetBSD                          April 13, 2007                          NetBSD
