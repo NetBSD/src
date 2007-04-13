@@ -64,7 +64,7 @@
 
 (define_insn "tst<mode>"
   [(set (cc0)
-	(match_operand:VAXint 0 "nonimmediate_operand" "g"))]
+	(match_operand:VAXint 0 "nonimmediate_operand" "nrmT"))]
   ""
   "tst<VAXint:isfx> %0")
 
