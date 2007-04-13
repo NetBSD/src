@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_inf.c,v 1.1.1.3.2.7 2005/11/21 21:12:30 tron Exp $	*/
+/*	$NetBSD: isakmp_inf.c,v 1.1.1.3.2.7.4.1 2007/04/13 09:23:27 ghen Exp $	*/
 
 /* Id: isakmp_inf.c,v 1.14.4.9 2005/08/02 15:09:26 vanhu Exp */
 
@@ -269,12 +269,12 @@ isakmp_info_recv(iph1, msg0)
 
 	switch (np) {
 	case ISAKMP_NPTYPE_N:
-		if (isakmp_info_recv_n(iph1, msg) < 0)
-			goto end;
+		if ( encrypted )
+			isakmp_info_recv_n(iph1, msg);
 		break;
 	case ISAKMP_NPTYPE_D:
-		if (isakmp_info_recv_d(iph1, msg) < 0)
-			goto end;
+		if ( encrypted )
+			isakmp_info_recv_d(iph1, msg);
 		break;
 	case ISAKMP_NPTYPE_NONCE:
 		/* XXX to be 6.4.2 ike-01.txt */
