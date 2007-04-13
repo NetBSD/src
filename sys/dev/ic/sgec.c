@@ -1,4 +1,4 @@
-/*      $NetBSD: sgec.c,v 1.28 2007/03/04 06:02:01 christos Exp $ */
+/*      $NetBSD: sgec.c,v 1.29 2007/04/13 04:16:45 matt Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sgec.c,v 1.28 2007/03/04 06:02:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sgec.c,v 1.29 2007/04/13 04:16:45 matt Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -148,7 +148,7 @@ sgec_attach(sc)
 	 */
 	for (i = 0; i < TXDESCS; i++) {
 		if ((error = bus_dmamap_create(sc->sc_dmat, MCLBYTES,
-		    1, MCLBYTES, 0, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW,
+		    TXDESCS - 1, MCLBYTES, 0, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW,
 		    &sc->sc_xmtmap[i]))) {
 			printf(": unable to create tx DMA map %d, error = %d\n",
 			    i, error);
@@ -276,8 +276,9 @@ zeinit(sc)
 	 * Release and init transmit descriptors.
 	 */
 	for (i = 0; i < TXDESCS; i++) {
-		if (sc->sc_txmbuf[i]) {
+		if (sc->sc_xmtmap[i]->dm_nsegs > 0)
 			bus_dmamap_unload(sc->sc_dmat, sc->sc_xmtmap[i]);
+		if (sc->sc_txmbuf[i]) {
 			m_freem(sc->sc_txmbuf[i]);
 			sc->sc_txmbuf[i] = 0;
 		}
@@ -316,10 +317,11 @@ zestart(ifp)
 	struct ze_softc *sc = ifp->if_softc;
 	struct ze_cdata *zc = sc->sc_zedata;
 	paddr_t	buffer;
-	struct mbuf *m, *m0;
-	int idx, len, i, totlen, error;
+	struct mbuf *m;
+	int nexttx, len, i, totlen, error;
 	int old_inq = sc->sc_inq;
 	short orword;
+	bus_dmamap_t map;
 
 	while (sc->sc_inq < (TXDESCS - 1)) {
 
@@ -327,7 +329,7 @@ zestart(ifp)
 			ze_setup(sc);
 			continue;
 		}
-		idx = sc->sc_nexttx;
+		nexttx = sc->sc_nexttx;
 		IFQ_POLL(&sc->sc_if.if_snd, m);
 		if (m == 0)
 			goto out;
@@ -336,52 +338,54 @@ zestart(ifp)
 		 * Always do DMA directly from mbufs, therefore the transmit
 		 * ring is really big.
 		 */
-		for (m0 = m, i = 0; m0; m0 = m0->m_next)
-			if (m0->m_len)
-				i++;
-		if (i >= TXDESCS)
+		map = sc->sc_xmtmap[nexttx];
+		error = bus_dmamap_load_mbuf(sc->sc_dmat, map, m,
+		    BUS_DMA_WRITE);
+		if (error) {
+			printf("zestart: load_mbuf failed: %d", error);
+			goto out;
+		}
+
+		if (map->dm_nsegs >= TXDESCS)
 			panic("zestart"); /* XXX */
 
-		if ((i + sc->sc_inq) >= (TXDESCS - 1)) {
+		if ((map->dm_nsegs + sc->sc_inq) >= (TXDESCS - 1)) {
+			bus_dmamap_unload(sc->sc_dmat, map);
 			ifp->if_flags |= IFF_OACTIVE;
 			goto out;
 		}
 
-#if NBPFILTER > 0
-		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m);
-#endif
 		/*
 		 * m now points to a mbuf chain that can be loaded.
 		 * Loop around and set it.
 		 */
 		totlen = 0;
-		for (m0 = m; m0; m0 = m0->m_next) {
-			error = bus_dmamap_load(sc->sc_dmat, sc->sc_xmtmap[idx],
-			    mtod(m0, void *), m0->m_len, 0, BUS_DMA_WRITE);
-			buffer = sc->sc_xmtmap[idx]->dm_segs[0].ds_addr;
-			len = m0->m_len;
+		orword = ZE_TDES1_FS;
+		for (i = 0; i < map->dm_nsegs; i++) {
+			buffer = map->dm_segs[i].ds_addr;
+			len = map->dm_segs[i].ds_len;
+
 			if (len == 0)
 				continue;
 
 			totlen += len;
 			/* Word alignment calc */
-			orword = 0;
-			if (totlen == len)
-				orword = ZE_TDES1_FS;
 			if (totlen == m->m_pkthdr.len) {
-				orword |= ZE_TDES1_LS;
-				sc->sc_txmbuf[idx] = m;
+				orword |= ZE_TDES1_LS | ZE_TDES1_IC;
+				sc->sc_txmbuf[nexttx] = m;
 			}
-			zc->zc_xmit[idx].ze_bufsize = len;
-			zc->zc_xmit[idx].ze_bufaddr = (char *)buffer;
-			zc->zc_xmit[idx].ze_tdes1 = orword | ZE_TDES1_IC;
-			zc->zc_xmit[idx].ze_tdr = ZE_TDR_OW;
+			zc->zc_xmit[nexttx].ze_bufsize = len;
+			zc->zc_xmit[nexttx].ze_bufaddr = (char *)buffer;
+			zc->zc_xmit[nexttx].ze_tdes1 = orword;
+			zc->zc_xmit[nexttx].ze_tdr = ZE_TDR_OW;
 
-			if (++idx == TXDESCS)
-				idx = 0;
-			sc->sc_inq++;
+			if (++nexttx == TXDESCS)
+				nexttx = 0;
+			orword = 0;
 		}
+
+		sc->sc_inq += map->dm_nsegs;
+
 		IFQ_DEQUEUE(&ifp->if_snd, m);
 #ifdef DIAGNOSTIC
 		if (totlen != m->m_pkthdr.len)
@@ -393,7 +397,7 @@ zestart(ifp)
 		 */
 		if ((ZE_RCSR(ZE_CSR5) & ZE_NICSR5_TS) != ZE_NICSR5_TS_RUN)
 			ZE_WCSR(ZE_CSR1, -1);
-		sc->sc_nexttx = idx;
+		sc->sc_nexttx = nexttx;
 	}
 	if (sc->sc_inq == (TXDESCS - 1))
 		ifp->if_flags |= IFF_OACTIVE;
@@ -443,27 +447,44 @@ sgec_intr(sc)
 	}
 
 	if (csr & ZE_NICSR5_TI) {
-		while ((zc->zc_xmit[sc->sc_lastack].ze_tdr & ZE_TDR_OW) == 0) {
-			int idx = sc->sc_lastack;
+		int lastack = sc->sc_lastack;
+		while ((zc->zc_xmit[lastack].ze_tdr & ZE_TDR_OW) == 0) {
+			bus_dmamap_t map;
+			int nlastack;
 
-			if (sc->sc_lastack == sc->sc_nexttx)
+			if (lastack == sc->sc_nexttx)
 				break;
-			sc->sc_inq--;
-			if (++sc->sc_lastack == TXDESCS)
-				sc->sc_lastack = 0;
 
-			if ((zc->zc_xmit[idx].ze_tdes1 & ZE_TDES1_DT) ==
-			    ZE_TDES1_DT_SETUP)
+			if ((zc->zc_xmit[lastack].ze_tdes1 & ZE_TDES1_DT) ==
+			    ZE_TDES1_DT_SETUP) {
+				if (++lastack == TXDESCS)
+					lastack = 0;
+				sc->sc_inq--;
 				continue;
-			/* XXX collect statistics */
-			if (zc->zc_xmit[idx].ze_tdes1 & ZE_TDES1_LS)
-				ifp->if_opackets++;
-			bus_dmamap_unload(sc->sc_dmat, sc->sc_xmtmap[idx]);
-			if (sc->sc_txmbuf[idx]) {
-				m_freem(sc->sc_txmbuf[idx]);
-				sc->sc_txmbuf[idx] = 0;
 			}
+
+			KASSERT(zc->zc_xmit[lastack].ze_tdes1 & ZE_TDES1_FS);
+			map = sc->sc_xmtmap[lastack];
+			KASSERT(map->dm_nsegs > 0);
+			nlastack = (lastack + map->dm_nsegs - 1) % TXDESCS;
+			if (zc->zc_xmit[nlastack].ze_tdr & ZE_TDR_OW)
+				break;
+			lastack = nlastack;
+			sc->sc_inq -= map->dm_nsegs;
+			KASSERT(zc->zc_xmit[lastack].ze_tdes1 & ZE_TDES1_LS);
+			ifp->if_opackets++;
+			bus_dmamap_unload(sc->sc_dmat, map);
+			KASSERT(sc->sc_txmbuf[lastack]);
+#if NBPFILTER > 0
+			if (ifp->if_bpf)
+				bpf_mtap(ifp->if_bpf, sc->sc_txmbuf[lastack]);
+#endif
+			m_freem(sc->sc_txmbuf[lastack]);
+			sc->sc_txmbuf[lastack] = 0;
+			if (++lastack == TXDESCS)
+				lastack = 0;
 		}
+		sc->sc_lastack = lastack;
 		if (sc->sc_inq == 0)
 			ifp->if_timer = 0;
 		ifp->if_flags &= ~IFF_OACTIVE;
