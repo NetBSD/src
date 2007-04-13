@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vfsops.c,v 1.34 2007/04/13 13:31:11 pooka Exp $	*/
+/*	$NetBSD: puffs_vfsops.c,v 1.35 2007/04/13 15:25:35 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.34 2007/04/13 13:31:11 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.35 2007/04/13 15:25:35 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -58,9 +58,10 @@ MALLOC_JUSTDEFINE(M_PUFFS, "puffs", "Pass-to-Userspace Framework File System");
 #define PUFFS_PNODEBUCKETS 256
 #endif
 #ifndef PUFFS_MAXPNODEBUCKETS
-#define PUFFS_MAXPNODEBUCKETS 65536
+#define PUFFS_MAXPNODEBUCKETS 8192
 #endif
-int puffs_pnodebuckets = PUFFS_PNODEBUCKETS;
+int puffs_pnodebuckets_default = PUFFS_PNODEBUCKETS;
+int puffs_maxpnodebuckets = PUFFS_MAXPNODEBUCKETS;
 
 int
 puffs_mount(struct mount *mp, const char *path, void *data,
@@ -140,11 +141,20 @@ puffs_mount(struct mount *mp, const char *path, void *data,
 	pmp->pmp_args = *args;
 
 	/* puffs_node hash buckets */
-	pmp->pmp_npnodehash = puffs_pnodebuckets;
+	if (args->pa_nhashbuckets)
+		pmp->pmp_npnodehash = args->pa_nhashbuckets;
+	else
+		pmp->pmp_npnodehash = puffs_pnodebuckets_default;
+
 	if (pmp->pmp_npnodehash < 1)
 		pmp->pmp_npnodehash = 1;
-	if (pmp->pmp_npnodehash > PUFFS_MAXPNODEBUCKETS)
+	if (pmp->pmp_npnodehash > PUFFS_MAXPNODEBUCKETS) {
 		pmp->pmp_npnodehash = PUFFS_MAXPNODEBUCKETS;
+		printf("puffs_mount: using %d hash buckets. "
+		    "adjust puffs_maxpnodebuckets for more\n",
+		    pmp->pmp_npnodehash);
+	}
+		   
 	pmp->pmp_pnodehash = malloc
 	    (sizeof(struct puffs_pnode_hashlist *) * pmp->pmp_npnodehash,
 	    M_PUFFS, M_WAITOK);
