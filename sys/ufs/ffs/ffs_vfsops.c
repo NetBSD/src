@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.196.6.3 2007/04/10 13:26:54 ad Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.196.6.4 2007/04/13 15:47:04 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.196.6.3 2007/04/10 13:26:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.196.6.4 2007/04/13 15:47:04 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -600,11 +600,13 @@ ffs_reload(struct mount *mp, kauth_cred_t cred, struct lwp *l)
 			mp->mnt_iflag &= ~IMNT_DTYPE;
 	}
 	ffs_oldfscompat_read(fs, ump, sblockloc);
+	mutex_enter(&ump->um_lock);
 	ump->um_maxfilesize = fs->fs_maxfilesize;
 	if (fs->fs_pendingblocks != 0 || fs->fs_pendinginodes != 0) {
 		fs->fs_pendingblocks = 0;
 		fs->fs_pendinginodes = 0;
 	}
+	mutex_exit(&ump->um_lock);
 
 	ffs_statvfs(mp, &mp->mnt_stat, l);
 	/*
@@ -822,6 +824,7 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 
 	ump = malloc(sizeof *ump, M_UFSMNT, M_WAITOK);
 	memset(ump, 0, sizeof *ump);
+	mutex_init(&ump->um_lock, MUTEX_DEFAULT, IPL_NONE);
 	TAILQ_INIT(&ump->um_snapshots);
 	ump->um_fs = fs;
 	ump->um_ops = &ffs_ufsops;
@@ -1021,6 +1024,7 @@ out:
 	if (ump) {
 		if (ump->um_oldfscompat)
 			free(ump->um_oldfscompat, M_UFSMNT);
+		mutex_destroy(&ump->um_lock);
 		free(ump, M_UFSMNT);
 		mp->mnt_data = NULL;
 	}
@@ -1207,6 +1211,7 @@ ffs_unmount(struct mount *mp, int mntflags, struct lwp *l)
 	free(fs, M_UFSMNT);
 	if (ump->um_oldfscompat != NULL)
 		free(ump->um_oldfscompat, M_UFSMNT);
+	mutex_destroy(&ump->um_lock);
 	free(ump, M_UFSMNT);
 	mp->mnt_data = NULL;
 	mp->mnt_flag &= ~MNT_LOCAL;
