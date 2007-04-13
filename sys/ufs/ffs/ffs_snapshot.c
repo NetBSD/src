@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.43.2.2 2007/03/21 20:11:58 ad Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.43.2.3 2007/04/13 20:56:19 ad Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.43.2.2 2007/03/21 20:11:58 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.43.2.3 2007/04/13 20:56:19 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -2004,7 +2004,7 @@ readfsblk(struct vnode *vp, void *data, ufs2_daddr_t lbn)
 	nbp->b_dev = ip->i_devvp->v_rdev;
 	nbp->b_vp = NULLVP;
 
-	DEV_STRATEGY(nbp);
+	bdev_strategy(nbp);
 
 	error = biowait(nbp);
 

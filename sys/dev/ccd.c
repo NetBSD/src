@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.118.2.1 2007/03/13 16:50:21 ad Exp $	*/
+/*	$NetBSD: ccd.c,v 1.118.2.2 2007/04/13 20:56:20 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2007 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.118.2.1 2007/03/13 16:50:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.118.2.2 2007/04/13 20:56:20 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -766,7 +766,7 @@ ccdstart(struct ccd_softc *cs)
 			SIMPLEQ_REMOVE_HEAD(&cbufq, cb_q);
 			if ((cbp->cb_buf.b_flags & B_READ) == 0)
 				cbp->cb_buf.b_vp->v_numoutput++;
-			DEV_STRATEGY(&cbp->cb_buf);
+			bdev_strategy(&cbp->cb_buf);
 		}
 	}
 }

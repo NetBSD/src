@@ -1,4 +1,4 @@
-/*	$NetBSD: sunkbd.c,v 1.24 2006/03/30 16:12:10 thorpej Exp $	*/
+/*	$NetBSD: sunkbd.c,v 1.24.18.1 2007/04/13 20:56:21 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunkbd.c,v 1.24 2006/03/30 16:12:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunkbd.c,v 1.24.18.1 2007/04/13 20:56:21 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -220,15 +220,10 @@ sunkbdiopen(dev, flags)
 	struct tty *tp = (struct tty *)k->k_priv;
 	struct lwp *l = curlwp ? curlwp : &lwp0;
 	struct termios t;
-	const struct cdevsw *cdev;
 	int error;
 
-	cdev = cdevsw_lookup(tp->t_dev);
-	if (cdev == NULL)
-		return (ENXIO);
-
 	/* Open the lower device */
-	if ((error = (*cdev->d_open)(tp->t_dev, O_NONBLOCK|flags,
+	if ((error = cdev_open(tp->t_dev, O_NONBLOCK|flags,
 				     0/* ignored? */, l)) != 0)
 		return (error);
 
