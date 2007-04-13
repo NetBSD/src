@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0.3,v 1.1.2.34 2007/04/05 21:18:26 bouyer Exp $
+#	$NetBSD: CHANGES-3.0.3,v 1.1.2.35 2007/04/13 09:24:01 ghen Exp $
 
 A complete list of changes from the NetBSD 3.0.2 release to the NetBSD 3.0.3
 release:
@@ -1607,8 +1607,8 @@ dist/file/src/file.h	patch
 dist/file/src/funcs.c	patch
 dist/file/src/magic.c	patch
 
-	Fix an integer underflow in file_printf which can lead to an
-	exploitable heap overflow.
+	Fix an integer underflow in file(1) which can lead to an exploitable
+	heap overflow.
 	[adrianp, ticket #1743]
 
 xsrc/xfree/xc/lib/X11/ImUtil.c			1.2
@@ -1639,4 +1639,10 @@ xfree/xc/extras/freetype2/src/bdf/bdflib.c	1.3
 	  (_bdf_parse_glyphs): Limit allowed number of glyphs in font to the
 	  number of code points in Unicode.
 	[drochner, ticket #1754]
+
+crypto/dist/ipsec-tools/src/racoon/isakmp_inf.c	via patch
+
+	Fix a denial of service vulnerability (CVE-2007-1841) which could allow
+	an attacker to disrupt a connection between IPSec peers.
+	[adrianp, ticket #1763]
 
