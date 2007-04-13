@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC32_IP3x,v 1.61 2007/04/12 13:14:53 jmcneill Exp $
+#	$NetBSD: GENERIC32_IP3x,v 1.62 2007/04/13 03:40:22 jmcneill Exp $
 #
 # GENERIC32_IP3x machine description file
 # 
@@ -28,7 +28,7 @@ makeoptions	TEXTADDR="0x80069000"	# entry point
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC32_IP3x-$Revision: 1.61 $"
+#ident		"GENERIC32_IP3x-$Revision: 1.62 $"
 
 maxusers	32
 
@@ -195,6 +195,7 @@ options 	WS_DEFAULT_BG=WSCOL_BLACK
 
 # MACE devices
 mec0 		at mace0 offset 0x280000 intr 3
+mavb0		at mace0 offset 0x300000 intr 6
 macekbc0	at mace0 offset 0x320000 intr 5
 lpt0 		at mace0 offset 0x380000 intr 4 intrmask 0x000f0000
 com0 		at mace0 offset 0x390000 intr 4 intrmask 0x03f00000
