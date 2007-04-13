@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.h,v 1.1.2.1 2007/04/12 15:15:59 thorpej Exp $	*/
+/*	$NetBSD: atomic.h,v 1.1.2.2 2007/04/13 04:09:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -128,7 +128,7 @@ uint8_t		atomic_cas_8(volatile uint8_t *, uint8_t, uint8_t);
 unsigned char	atomic_cas_uchar(volatile unsigned char *, unsigned char,
 				 unsigned char);
 uint16_t	atomic_cas_16(volatile uint16_t *, uint16_t, uint16_t);
-unsigned short	atomic_cas_ushort(volatile unsinged short *, unsigned short,
+unsigned short	atomic_cas_ushort(volatile unsigned short *, unsigned short,
 				  unsigned short);
 uint32_t	atomic_cas_32(volatile uint32_t *, uint32_t, uint32_t);
 unsigned int	atomic_cas_uint(volatile unsigned int *, unsigned int,
