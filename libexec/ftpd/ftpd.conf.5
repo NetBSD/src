@@ -1,6 +1,6 @@
-.\"	$NetBSD: ftpd.conf.5,v 1.32 2005/09/11 23:31:46 wiz Exp $
+.\"	$NetBSD: ftpd.conf.5,v 1.33 2007/04/13 01:36:10 lukem Exp $
 .\"
-.\" Copyright (c) 1997-2001, 2005 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1997-2001, 2005, 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd August 24, 2005
+.Dd April 13, 2007
 .Dt FTPD.CONF 5
 .Os
 .Sh NAME
@@ -411,8 +411,6 @@ will use
 .Xr read 2
 instead.
 The default is zero.
-An optional suffix may be provided as per
-.Sy rateget .
 This option affects only binary transfers.
 If
 .Ar class
@@ -528,23 +526,6 @@ is
 or
 .Ar rate
 is not specified, disable this.
-.Pp
-An optional suffix may be provided, which changes the interpretation of
-.Ar rate
-as follows:
-.Bl -tag -width 3n -offset indent -compact
-.It b
-Causes no modification.
-(Default; optional)
-.It k
-Kilo; multiply the argument by 1024
-.It m
-Mega; multiply the argument by 1048576
-.It g
-Giga; multiply the argument by 1073741824
-.It t
-Tera; multiply the argument by 1099511627776
-.El
 .It Sy rateput Ar class Op Ar rate
 Set the maximum put
 .Pq Sy STOR
@@ -552,9 +533,10 @@ transfer rate throttle for
 .Ar class
 to
 .Ar rate
-bytes per second,
-which is parsed as per
-.Sy rateget Ar rate .
+bytes per second.
+If
+.Ar rate
+is 0, the throttle is disabled.
 If
 .Ar class
 is
@@ -567,8 +549,6 @@ Set the size of the read buffer to
 .Xr read 2
 a file.
 The default is the file system block size.
-An optional suffix may be provided as per
-.Sy rateget .
 This option affects only binary transfers.
 If
 .Ar class
@@ -579,8 +559,6 @@ or
 is not specified, use the default.
 .It Sy recvbufsize Ar class Op Ar size
 Set the size of the socket receive buffer.
-An optional suffix may be provided as per
-.Sy rateget .
 The default is zero and the system default value will be used.
 This option affects only passive transfers.
 If
@@ -605,8 +583,6 @@ and only comprise of characters from the set
 .Dq [-+,._A-Za-z0-9] .
 .It Sy sendbufsize Ar class Op Ar size
 Set the size of the socket send buffer.
-An optional suffix may be provided as per
-.Sy rateget .
 The default is zero and the system default value will be used.
 This option affects only binary transfers.
 If
@@ -618,8 +594,6 @@ or
 is not specified, use the default.
 .It Sy sendlowat Ar class Op Ar size
 Set the low water mark of socket send buffer.
-An optional suffix may be provided as per
-.Sy rateget .
 The default is zero and system default value will be used.
 This option affects only for binary transfer.
 If
@@ -701,8 +675,6 @@ The default is zero, which means all the data available as a result of
 or
 .Xr read 2
 will be written at a time.
-An optional suffix may be provided as per
-.Sy rateget .
 This option affects only binary transfers.
 If
 .Ar class
@@ -712,6 +684,30 @@ or
 .Ar size
 is not specified, use the default.
 .El
+.Ss Numeric argument suffix parsing
+Where command arguments are numeric, a decimal number is expected.
+Two or more numbers may be separated by an
+.Dq x
+to indicate a product.
+Each number may have one of the following optional suffixes:
+.Bl -tag -width 3n -offset indent -compact
+.It b
+Block; multiply by 512
+.It k
+Kibi; multiply by 1024 (1 KiB)
+.It m
+Mebi; multiply by 1048576 (1 MiB)
+.It g
+Gibi; multiply by 1073741824 (1 GiB)
+.It t
+Tebi; multiply by 1099511627776 (1 TiB)
+.It w
+Word; multiply by the number of bytes in an integer
+.El
+.Pp
+See
+.Xr strsuftoll 3
+for more information.
 .Sh DEFAULTS
 The following defaults are used:
 .Pp
