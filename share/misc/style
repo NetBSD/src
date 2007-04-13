@@ -1,4 +1,4 @@
-/* $NetBSD: style,v 1.38 2006/11/02 22:44:41 christos Exp $ */
+/* $NetBSD: style,v 1.39 2007/04/13 13:23:58 darcy Exp $ */
 
 /*
  * The revision control tag appears first, with a blank line after it.
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2000\n\
 	The NetBSD Foundation, inc. All rights reserved.\n");
-__RCSID("$NetBSD: style,v 1.38 2006/11/02 22:44:41 christos Exp $");
+__RCSID("$NetBSD: style,v 1.39 2007/04/13 13:23:58 darcy Exp $");
 
 /*
  * VERY important single-line comments look like this.
@@ -61,6 +61,16 @@ __RCSID("$NetBSD: style,v 1.38 2006/11/02 22:44:41 christos Exp $");
 #endif /* !_SYS_SOCKET_H_ */
 /*
  * END OF EXAMPLE HEADER FILE.
+ */
+
+/*
+ * If a header file requires structures, defines, typedefs, etc. from
+ * another header file it should include that header file and not depend
+ * on the including file for that header including both.  If there are
+ * exceptions to this for specific headers it should be clearly documented
+ * in the headers and, if appropriate, the documentation.  Nothing in this
+ * rule should suggest relaxation of the multiple inclusion rule and the
+ * application programmer should be free to include both regardless.
  */
 
 /*
