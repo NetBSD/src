@@ -1,4 +1,4 @@
-#	$NetBSD: files.mace,v 1.7 2007/04/13 03:37:41 jmcneill Exp $
+#	$NetBSD: files.mace,v 1.8 2007/04/13 03:39:44 jmcneill Exp $
 
 device mace {[offset = -1], [intr = -1], [intrmask = 0] }
 attach mace at mainbus
@@ -21,10 +21,6 @@ file arch/sgimips/mace/mcclock_mace.c	mcclock_mace
 device mec: arp, ether, ifnet, mii
 attach mec at mace
 file arch/sgimips/mace/if_mec.c		mec
-
-device macau: audiobus, ad1848, auconv
-attach macau at mace with macau
-file arch/sgimips/mace/macau_mace.c	macau
 
 device mavb: audiobus, auconv, mulaw, aurateconv
 attach mavb at mace
