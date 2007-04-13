@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_op_cas_impl.h,v 1.1.2.1 2007/04/13 04:28:19 thorpej Exp $	*/
+/*	$NetBSD: atomic_op_cas_impl.h,v 1.1.2.2 2007/04/13 05:43:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -39,6 +39,8 @@
 #if !defined(_ATOMIC_OP_CAS_IMPL_H_)
 #define	_ATOMIC_OP_CAS_IMPL_H_
 
+#include <machine/endian.h>
+
 /*
  * This relies heavily on constant-folding by the compier in order to be
  * efficient.
@@ -47,6 +49,13 @@
 	(sizeof(sw) == 1 ? (uint32_t)0xff				\
 			 : sizeof(sw) == 2 ? (uint32_t)0xffff		\
 			 		   : /* sizeof(sw) == 4 */ 0xffffffff)
+
+#if BYTE_ORDER == BIG_ENDIAN
+#define	SHIFT_FOR_SUBWORD(a, sw)					\
+	((((uintptr_t)(a) & 3) ^ (sizeof(uint32_t) - sizeof(sw))) * 8)
+#else
+#define	SHIFT_FOR_SUBWORD(a, sw)	(((uintptr_t)(a) & 3) * 8)
+#endif
 
 #define	OP_READ_BARRIER		/* XXX */
 
@@ -58,7 +67,7 @@
 
 #define	OP_EXTRACT(addr)						\
 	wordp = (volatile uint32_t *)((uintptr_t)(addr) & ~(uintptr_t)3);\
-	shift = ((uintptr_t)addr - (uintptr_t)addr) * 8;		\
+	shift = SHIFT_FOR_SUBWORD((addr), subword);			\
 	OP_READ_BARRIER;						\
 	old_word = *wordp;						\
 	subword = (old_word >> shift) & MASK_FOR_SUBWORD(subword)
