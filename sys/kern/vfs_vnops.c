@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.135.2.3 2007/04/10 13:26:43 ad Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.135.2.4 2007/04/13 15:49:49 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.135.2.3 2007/04/10 13:26:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.135.2.4 2007/04/13 15:49:49 ad Exp $");
 
 #include "fs_union.h"
 #include "veriexec.h"
@@ -211,8 +211,11 @@ vn_open(struct nameidata *ndp, int fmode, int cmode)
 		error = EIO;
 		goto bad;
 	}
-	if (fmode & FWRITE)
+	if (fmode & FWRITE) {
+		mutex_enter(&vp->v_interlock);
 		vp->v_writecount++;
+		mutex_exit(&vp->v_interlock);
+	}
 
 bad:
 	if (error)
@@ -247,7 +250,11 @@ vn_writechk(struct vnode *vp)
 void
 vn_markexec(struct vnode *vp)
 {
+
+	KASSERT(mutex_owned(&vp->v_interlock));
+
 	if ((vp->v_flag & VEXECMAP) == 0) {
+		/* XXXSMP should be atomic */
 		uvmexp.filepages -= vp->v_uobj.uo_npages;
 		uvmexp.execpages += vp->v_uobj.uo_npages;
 	}
@@ -262,12 +269,15 @@ int
 vn_marktext(struct vnode *vp)
 {
 
+	mutex_enter(&vp->v_interlock);
 	if (vp->v_writecount != 0) {
 		KASSERT((vp->v_flag & VTEXT) == 0);
+		mutex_exit(&vp->v_interlock);
 		return (ETXTBSY);
 	}
 	vp->v_flag |= VTEXT;
 	vn_markexec(vp);
+	mutex_exit(&vp->v_interlock);
 	return (0);
 }
 
@@ -281,9 +291,10 @@ vn_close(struct vnode *vp, int flags, kauth_cred_t cred, struct lwp *l)
 {
 	int error;
 
+	mutex_enter(&vp->v_interlock);
 	if (flags & FWRITE)
 		vp->v_writecount--;
-	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY | LK_INTERLOCK);
 	error = VOP_CLOSE(vp, flags, cred, l);
 	vput(vp);
 	return (error);
@@ -391,8 +402,8 @@ unionread:
 		struct vnode *tvp = vp;
 		vp = vp->v_mount->mnt_vnodecovered;
 		VREF(vp);
-		fp->f_data = vp;
 		mutex_enter(&fp->f_lock);
+		fp->f_data = vp;
 		fp->f_offset = 0;
 		mutex_exit(&fp->f_lock);
 		vrele(tvp);
@@ -414,6 +425,7 @@ vn_read(struct file *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
 	struct lwp *l = curlwp;
 
 	VOP_LEASE(vp, l, cred, LEASE_READ);
+	mutex_enter(&fp->f_lock);
 	ioflag = IO_ADV_ENCODE(fp->f_advice);
 	if (fp->f_flag & FNONBLOCK)
 		ioflag |= IO_NDELAY;
@@ -423,6 +435,7 @@ vn_read(struct file *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
 		ioflag |= IO_ALTSEMANTICS;
 	if (fp->f_flag & FDIRECT)
 		ioflag |= IO_DIRECT;
+	mutex_exit(&fp->f_lock);
 	vn_lock(vp, LK_SHARED | LK_RETRY);
 	uio->uio_offset = *offset;
 	count = uio->uio_resid;
@@ -444,6 +457,7 @@ vn_write(struct file *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
 	int count, error, ioflag = IO_UNIT;
 	struct lwp *l = curlwp;
 
+	mutex_enter(&fp->f_lock);
 	if (vp->v_type == VREG && (fp->f_flag & O_APPEND))
 		ioflag |= IO_APPEND;
 	if (fp->f_flag & FNONBLOCK)
@@ -457,6 +471,7 @@ vn_write(struct file *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
 		ioflag |= IO_ALTSEMANTICS;
 	if (fp->f_flag & FDIRECT)
 		ioflag |= IO_DIRECT;
+	mutex_exit(&fp->f_lock);
 	VOP_LEASE(vp, l, cred, LEASE_WRITE);
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	uio->uio_offset = *offset;
@@ -673,8 +688,7 @@ vn_lock(struct vnode *vp, int flags)
 				mutex_exit(&vp->v_interlock);
 				return EBUSY;
 			}
-			vp->v_flag |= VXWANT;
-			cv_wait(&vp->v_cv, &vp->v_interlock);
+			vwait(vp, VXLOCK);
 			mutex_exit(&vp->v_interlock);
 			error = ENOENT;
 		} else {
@@ -706,9 +720,13 @@ u_int
 vn_setrecurse(struct vnode *vp)
 {
 	struct lock *lkp = &vp->v_lock;
-	u_int retval = lkp->lk_flags & LK_CANRECURSE;
+	u_int retval;
 
+	mutex_enter(&lkp->lk_interlock);
+	retval = lkp->lk_flags & LK_CANRECURSE;
 	lkp->lk_flags |= LK_CANRECURSE;
+	mutex_exit(&lkp->lk_interlock);
+
 	return retval;
 }
 
@@ -720,8 +738,10 @@ vn_restorerecurse(struct vnode *vp, u_int flags)
 {
 	struct lock *lkp = &vp->v_lock;
 
+	mutex_enter(&lkp->lk_interlock);
 	lkp->lk_flags &= ~LK_CANRECURSE;
 	lkp->lk_flags |= flags;
+	mutex_exit(&lkp->lk_interlock);
 }
 
 int

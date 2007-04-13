@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.98.2.1 2007/03/13 17:51:10 ad Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.98.2.2 2007/04/13 15:49:50 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.98.2.1 2007/03/13 17:51:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.98.2.2 2007/04/13 15:49:50 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -719,18 +719,25 @@ spec_close(v)
 		 * guarantee that the vrele() will do the final close on the
 		 * actual tty device.
 		 */
+		mutex_enter(&proclist_lock);
 		if (count == 2 && ap->a_l &&
 		    vp == (sess = ap->a_l->l_proc->p_session)->s_ttyvp) {
 			sess->s_ttyvp = NULL;
 			if (sess->s_ttyp->t_session != NULL) {
 				sess->s_ttyp->t_pgrp = NULL;
 				sess->s_ttyp->t_session = NULL;
+				mutex_exit(&proclist_lock);
 				SESSRELE(sess);
-			} else if (sess->s_ttyp->t_pgrp != NULL)
-				panic("spec_close: spurious pgrp ref");
+			} else {
+				if (sess->s_ttyp->t_pgrp != NULL)
+					panic("spec_close: spurious pgrp ref");
+				mutex_exit(&proclist_lock);
+			}
 			vrele(vp);
 			count--;
-		}
+		} else
+			mutex_exit(&proclist_lock);
+
 		/*
 		 * If the vnode is locked, then we are in the midst
 		 * of forcably closing the device, otherwise we only

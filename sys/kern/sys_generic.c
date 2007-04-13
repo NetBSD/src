@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.100.2.4 2007/04/10 12:06:06 ad Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.100.2.5 2007/04/13 15:49:48 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.100.2.4 2007/04/10 12:06:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.100.2.5 2007/04/13 15:49:48 ad Exp $");
 
 #include "opt_ktrace.h"
 
@@ -581,11 +581,15 @@ sys_ioctl(struct lwp *l, void *v, register_t *retval)
 
 	switch (com = SCARG(uap, com)) {
 	case FIONCLEX:
+		rw_enter(&fdp->fd_lock, RW_WRITER);
 		fdp->fd_ofileflags[SCARG(uap, fd)] &= ~UF_EXCLOSE;
+		rw_exit(&fdp->fd_lock);
 		goto out;
 
 	case FIOCLEX:
+		rw_enter(&fdp->fd_lock, RW_WRITER);
 		fdp->fd_ofileflags[SCARG(uap, fd)] |= UF_EXCLOSE;
+		rw_exit(&fdp->fd_lock);
 		goto out;
 	}
 
@@ -635,18 +639,22 @@ sys_ioctl(struct lwp *l, void *v, register_t *retval)
 	switch (com) {
 
 	case FIONBIO:
+		mutex_enter(&fp->f_lock);
 		if (*(int *)data != 0)
 			fp->f_flag |= FNONBLOCK;
 		else
 			fp->f_flag &= ~FNONBLOCK;
+		mutex_exit(&fp->f_lock);
 		error = (*fp->f_ops->fo_ioctl)(fp, FIONBIO, data, l);
 		break;
 
 	case FIOASYNC:
+		mutex_enter(&fp->f_lock);
 		if (*(int *)data != 0)
 			fp->f_flag |= FASYNC;
 		else
 			fp->f_flag &= ~FASYNC;
+		mutex_exit(&fp->f_lock);
 		error = (*fp->f_ops->fo_ioctl)(fp, FIOASYNC, data, l);
 		break;
 

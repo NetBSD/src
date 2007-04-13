@@ -1,4 +1,4 @@
-/*	$NetBSD: dead_vnops.c,v 1.43.6.1 2007/03/13 17:51:04 ad Exp $	*/
+/*	$NetBSD: dead_vnops.c,v 1.43.6.2 2007/04/13 15:49:50 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dead_vnops.c,v 1.43.6.1 2007/03/13 17:51:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dead_vnops.c,v 1.43.6.2 2007/04/13 15:49:50 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -311,8 +311,7 @@ chkvnlock(vp)
 	int locked = 0;
 
 	while (vp->v_flag & VXLOCK) {
-		vp->v_flag |= VXWANT;
-		(void) tsleep(vp, PINOD, "deadchk", 0);
+		vwait(vp, VXLOCK);
 		locked = 1;
 	}
 	return (locked);

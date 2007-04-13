@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.167.2.3 2007/04/10 13:26:20 ad Exp $	*/
+/*	$NetBSD: vnode.h,v 1.167.2.4 2007/04/13 15:49:50 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -89,7 +89,7 @@ LIST_HEAD(buflists, buf);
  * lock.  Field markings and the corresponding locks:
  *
  *	:	stable, reference to the vnode is is required
- *	?	undecided
+ *	?	undocumented
  *	f	vnode_free_list_lock
  *	m	mntvnode_lock
  *	n	namecache_lock
@@ -103,6 +103,7 @@ LIST_HEAD(buflists, buf);
 struct vnode {
 	struct uvm_object v_uobj;		/* v: the VM object */
 	kcondvar_t	v_cv;			/* v: synchronization */
+	int		v_waitcnt;		/* v: # waiters for VXLOCK */
 	voff_t		v_size;			/* v: size of file */
 	int		v_flag;			/* v: flags */
 	int		v_numoutput;		/* o: # of pending writes */
@@ -168,7 +169,6 @@ struct vnode {
 #define	VWRITEMAPDIRTY	0x0040	/* might have dirty pages due to VWRITEMAP */
 #define	VLOCKSWORK	0x0080	/* FS supports locking discipline */
 #define	VXLOCK		0x0100	/* vnode is locked to change underlying type */
-#define	VXWANT		0x0200	/* process is waiting for vnode */
 #define	VALIASED	0x0800	/* vnode has an alias */
 #define	VDIROP		0x1000	/* LFS: vnode is involved in a directory op */
 #define	VLAYER		0x2000	/* vnode is on a layer filesystem */
@@ -178,7 +178,7 @@ struct vnode {
 
 #define	VNODE_FLAGBITS \
     "\20\1ROOT\2TEXT\3SYSTEM\4ISTTY\5EXECMAP\6WRITEMAP\7WRITEMAPDIRTY" \
-    "\10LOCKSWORK\11XLOCK\12XWANT\13BWAIT\14ALIASED" \
+    "\10LOCKSWORK\11XLOCK\13BWAIT\14ALIASED" \
     "\15DIROP\16LAYER\17ONWORKLIST\20FREEING\21MAPPED"
 
 #define	VSIZENOTSET	((voff_t)-1)
@@ -542,6 +542,8 @@ int	vrecycle(struct vnode *, kmutex_t *, struct lwp *);
 void 	vrele(struct vnode *);
 int	vtruncbuf(struct vnode *, daddr_t, bool, int);
 void	vwakeup(struct buf *);
+void	vwait(struct vnode *, int);
+void	vunwait(struct vnode *, int);
 
 /* see vnsubr(9) */
 int	vn_bwrite(void *);

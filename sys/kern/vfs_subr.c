@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.283.2.4 2007/04/10 13:26:42 ad Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.283.2.5 2007/04/13 15:49:49 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.283.2.4 2007/04/10 13:26:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.283.2.5 2007/04/13 15:49:49 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -1159,6 +1159,48 @@ loop:
 }
 
 /*
+ * Wait for a vnode (typically with VXLOCK set) to be cleaned or
+ * recycled.
+ */
+void
+vwait(struct vnode *vp, int flags)
+{
+
+	KASSERT(mutex_owned(&vp->v_interlock));
+
+	vp->v_waitcnt++;
+	while ((vp->v_flag & flags) != 0)
+		cv_wait(&vp->v_cv, &vp->v_interlock);
+
+	/*
+	 * Notify the locker (in vunwait()) what we are about
+	 * to exit the interlock.
+	 */
+	if (--vp->v_waitcnt == 0)
+		cv_broadcast(&vp->v_cv);
+}
+
+/*
+ * Wake all waiters in vwait, and wait for them to continue.
+ */
+void
+vunwait(struct vnode *vp, int flags)
+{
+
+	KASSERT(mutex_owned(&vp->v_interlock));
+
+	/*
+	 * Clear the condition (typically VXLOCK) and notify
+	 * any waiters in vwait().
+	 */
+	vp->v_flag &= ~flags;
+	while (vp->v_waitcnt != 0) {
+		cv_broadcast(&vp->v_cv);
+		cv_wait(&vp->v_cv, &vp->v_interlock);
+	}
+}
+
+/*
  * Grab a particular vnode from the free list, increment its
  * reference count and lock it. If the vnode lock bit is set the
  * vnode is being eliminated in vgone. In that case, we can not
@@ -1185,8 +1227,7 @@ vget(struct vnode *vp, int flags)
 			mutex_exit(&vp->v_interlock);
 			return EBUSY;
 		}
-		vp->v_flag |= VXWANT;
-		cv_wait(&vp->v_cv, &vp->v_interlock);
+		vwait(vp, VXLOCK | VFREEING);
 		mutex_exit(&vp->v_interlock);
 		return (ENOENT);
 	}
@@ -1648,19 +1689,15 @@ vclean(struct vnode *vp, int flags, struct lwp *l)
 	cache_purge(vp);
 
 	/*
-	 * Done with purge, notify sleepers of the grim news.
+	 * Done with purge, notify sleepers of the grim news, and wait
+	 * for them to drain.
 	 */
 	vp->v_op = dead_vnodeop_p;
 	vp->v_tag = VT_NON;
 	mutex_enter(&vp->v_interlock);
 	VN_KNOTE(vp, NOTE_REVOKE);	/* FreeBSD has this in vn_pollgone() */
-	vp->v_flag &= ~(VXLOCK|VLOCKSWORK);
-	if (vp->v_flag & VXWANT) {
-		vp->v_flag &= ~VXWANT;
-		mutex_exit(&vp->v_interlock);
-		cv_broadcast(&vp->v_cv);
-	} else
-		mutex_exit(&vp->v_interlock);
+	vunwait(vp, VXLOCK|VLOCKSWORK);
+	mutex_exit(&vp->v_interlock);
 }
 
 /*
@@ -1710,8 +1747,7 @@ vgonel(struct vnode *vp, struct lwp *l)
 	 */
 
 	if (vp->v_flag & VXLOCK) {
-		vp->v_flag |= VXWANT;
-		cv_wait(&vp->v_cv, &vp->v_interlock);
+		vwait(vp, VXLOCK);
 		mutex_exit(&vp->v_interlock);
 		return;
 	}
@@ -2491,8 +2527,10 @@ set_statvfs_info(const char *onp, int ukon, const char *fromp, int ukfrom,
 
 			bp = path + MAXPATHLEN;
 			*--bp = '\0';
+			rw_enter(&cwdi->cwdi_lock, RW_READER);
 			error = getcwd_common(cwdi->cwdi_rdir, rootvnode, &bp,
 			    path, MAXPATHLEN / 2, 0, l);
+			rw_exit(&cwdi->cwdi_lock);
 			if (error) {
 				free(path, M_TEMP);
 				return error;

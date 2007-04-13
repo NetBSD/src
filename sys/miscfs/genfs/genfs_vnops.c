@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.150.2.4 2007/04/09 22:10:04 ad Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.150.2.5 2007/04/13 15:49:50 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.150.2.4 2007/04/09 22:10:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.150.2.5 2007/04/13 15:49:50 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -247,9 +247,8 @@ genfs_revoke(void *v)
 		 * wait until it is done and return.
 		 */
 		if (vp->v_flag & VXLOCK) {
-			vp->v_flag |= VXWANT;
-			mtsleep(vp, PINOD|PNORELOCK, "vop_revokeall", 0,
-				&vp->v_interlock);
+			vwait(vp, VXLOCK);
+			mutex_exit(&vp->v_interlock);
 			return (0);
 		}
 		/*
