@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.81.2.2 2007/03/21 20:09:39 ad Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.81.2.3 2007/04/13 15:49:51 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.81.2.2 2007/03/21 20:09:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.81.2.3 2007/04/13 15:49:51 ad Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -139,12 +139,9 @@ uvn_attach(void *arg, vm_prot_t accessprot)
 	 */
 
 	mutex_enter(&uobj->vmobjlock);
-	while (vp->v_flag & VXLOCK) {
-		vp->v_flag |= VXWANT;
+	if (vp->v_flag & VXLOCK) {
 		UVMHIST_LOG(maphist, "  SLEEPING on blocked vn",0,0,0,0);
-		UVM_UNLOCK_AND_WAIT(uobj, &uobj->vmobjlock, false,
-		    "uvn_attach", 0);
-		mutex_enter(&uobj->vmobjlock);
+		vwait(vp, VXLOCK);
 		UVMHIST_LOG(maphist,"  WOKE UP",0,0,0,0);
 	}
 
@@ -201,11 +198,7 @@ uvn_attach(void *arg, vm_prot_t accessprot)
 
 	/* relock object */
 	mutex_enter(&uobj->vmobjlock);
-
-	if (vp->v_flag & VXWANT) {
-		wakeup(vp);
-	}
-	vp->v_flag &= ~(VXLOCK|VXWANT);
+	vunwait(vp, VXLOCK);
 
 	if (result != 0) {
 		mutex_exit(&uobj->vmobjlock);

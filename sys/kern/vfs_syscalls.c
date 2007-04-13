@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.306.2.3 2007/04/10 13:26:42 ad Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.306.2.4 2007/04/13 15:49:48 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.306.2.3 2007/04/10 13:26:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.306.2.4 2007/04/13 15:49:48 ad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -793,8 +793,10 @@ done:
 
 		bp = path + MAXPATHLEN;
 		*--bp = '\0';
+		rw_enter(&cwdi->cwdi_lock, RW_READER);
 		error = getcwd_common(cwdi->cwdi_rdir, rootvnode, &bp, path,
 		    MAXPATHLEN / 2, 0, l);
+		rw_exit(&cwdi->cwdi_lock);
 		if (error) {
 			PNBUF_PUT(path);
 			return error;
@@ -1220,8 +1222,10 @@ sys_open(struct lwp *l, void *v, register_t *retval)
 	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path), l);
 	l->l_dupfd = -indx - 1;			/* XXX check for fdopen */
 	if ((error = vn_open(&nd, flags, cmode)) != 0) {
+		rw_enter(&fdp->fd_lock, RW_WRITER);
 		FILE_UNUSE(fp, l);
 		fdp->fd_ofiles[indx] = NULL;
+		rw_exit(&fdp->fd_lock);
 		ffree(fp);
 		if ((error == EDUPFD || error == EMOVEFD) &&
 		    l->l_dupfd >= 0 &&			/* XXX from fdopen */
