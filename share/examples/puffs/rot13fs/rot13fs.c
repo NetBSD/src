@@ -1,4 +1,4 @@
-/*	$NetBSD: rot13fs.c,v 1.4 2007/04/12 15:09:02 pooka Exp $	*/
+/*	$NetBSD: rot13fs.c,v 1.5 2007/04/13 13:35:46 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -145,7 +145,7 @@ main(int argc, char *argv[])
 	PUFFSOP_SET(pops, puffs_null, node, reclaim);
 
 	if ((pu = puffs_mount(pops, argv[1], mntflags, "rot13", NULL,
-	    pflags, 0)) == NULL)
+	    pflags)) == NULL)
 		err(1, "mount");
 
 	if (statvfs(argv[0], &svfsb) == -1)

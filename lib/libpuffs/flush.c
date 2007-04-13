@@ -1,4 +1,4 @@
-/*	$NetBSD: flush.c,v 1.8 2007/04/12 15:09:00 pooka Exp $	*/
+/*	$NetBSD: flush.c,v 1.9 2007/04/13 13:35:46 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: flush.c,v 1.8 2007/04/12 15:09:00 pooka Exp $");
+__RCSID("$NetBSD: flush.c,v 1.9 2007/04/13 13:35:46 pooka Exp $");
 #endif /* !lint */
 
 /*
@@ -64,7 +64,7 @@ puffs_inval_namecache_dir(struct puffs_usermount *pu, void *cookie)
 	pf.pf_op = PUFFS_INVAL_NAMECACHE_DIR;
 	pf.pf_cookie = cookie;
 
-	return ioctl(pu->pu_fd, PUFFSFLUSHOP, &pf);
+	return ioctl(pu->pu_kargs.pa_fd, PUFFSFLUSHOP, &pf);
 }
 
 int
@@ -75,7 +75,7 @@ puffs_inval_namecache_all(struct puffs_usermount *pu)
 	pf.pf_op = PUFFS_INVAL_NAMECACHE_ALL;
 	pf.pf_cookie = NULL;
 
-	return ioctl(pu->pu_fd, PUFFSFLUSHOP, &pf);
+	return ioctl(pu->pu_kargs.pa_fd, PUFFSFLUSHOP, &pf);
 }
 
 int
@@ -88,7 +88,7 @@ puffs_inval_pagecache_node(struct puffs_usermount *pu, void *cookie)
 	pf.pf_start = 0;
 	pf.pf_end = 0;
 
-	return ioctl(pu->pu_fd, PUFFSFLUSHOP, &pf);
+	return ioctl(pu->pu_kargs.pa_fd, PUFFSFLUSHOP, &pf);
 }
 
 int
@@ -102,7 +102,7 @@ puffs_inval_pagecache_node_range(struct puffs_usermount *pu, void *cookie,
 	pf.pf_start = start;
 	pf.pf_end = end;
 
-	return ioctl(pu->pu_fd, PUFFSFLUSHOP, &pf);
+	return ioctl(pu->pu_kargs.pa_fd, PUFFSFLUSHOP, &pf);
 }
 
 int
@@ -115,7 +115,7 @@ puffs_flush_pagecache_node(struct puffs_usermount *pu, void *cookie)
 	pf.pf_start = 0;
 	pf.pf_end = 0;
 
-	return ioctl(pu->pu_fd, PUFFSFLUSHOP, &pf);
+	return ioctl(pu->pu_kargs.pa_fd, PUFFSFLUSHOP, &pf);
 }
 
 int
@@ -129,5 +129,5 @@ puffs_flush_pagecache_node_range(struct puffs_usermount *pu, void *cookie,
 	pf.pf_start = start;
 	pf.pf_end = end;
 
-	return ioctl(pu->pu_fd, PUFFSFLUSHOP, &pf);
+	return ioctl(pu->pu_kargs.pa_fd, PUFFSFLUSHOP, &pf);
 }
