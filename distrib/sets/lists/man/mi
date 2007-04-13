@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.989 2007/04/12 18:19:53 macallan Exp $
+# $NetBSD: mi,v 1.990 2007/04/13 03:49:13 jmcneill Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -1270,6 +1270,7 @@
 ./usr/share/man/cat4/sgimips/intro.0		man-sys-catman		.cat
 ./usr/share/man/cat4/sgimips/light.0		man-sys-catman		.cat
 ./usr/share/man/cat4/sgimips/mace.0		man-sys-catman		.cat
+./usr/share/man/cat4/sgimips/mavb.0		man-sys-catman		.cat
 ./usr/share/man/cat4/sgimips/mec.0		man-sys-catman		.cat
 ./usr/share/man/cat4/sgimips/newport.0		man-sys-catman		.cat
 ./usr/share/man/cat4/sgimips/pic.0		man-sys-catman		.cat
@@ -3706,6 +3707,7 @@
 ./usr/share/man/man4/sgimips/intro.4		man-sys-man		.man
 ./usr/share/man/man4/sgimips/light.4		man-sys-man		.man
 ./usr/share/man/man4/sgimips/mace.4		man-sys-man		.man
+./usr/share/man/man4/sgimips/mavb.4		man-sys-man		.man
 ./usr/share/man/man4/sgimips/mec.4		man-sys-man		.man
 ./usr/share/man/man4/sgimips/newport.4		man-sys-man		.man
 ./usr/share/man/man4/sgimips/pic.4		man-sys-man		.man
