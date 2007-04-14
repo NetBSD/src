@@ -1,4 +1,4 @@
-/*	$NetBSD: mace.c,v 1.9 2007/03/04 06:00:40 christos Exp $	*/
+/*	$NetBSD: mace.c,v 1.10 2007/04/14 19:36:46 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2003 Christopher Sekiya
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mace.c,v 1.9 2007/03/04 06:00:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mace.c,v 1.10 2007/04/14 19:36:46 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -189,13 +189,15 @@ mace_attach(struct device *parent, struct device *self, void *aux)
 	    bus_space_read_8(sc->iot, sc->ioh, MACE_ISA_INT_MASK));
 
 	/*
-	 * Turn on all ISA interrupts.  These are actually masked and
+	 * Turn on most ISA interrupts.  These are actually masked and
 	 * registered via the CRIME, as the MACE ISA interrupt mask is
 	 * really whacky and nigh on impossible to map to a sane autoconfig
-	 * scheme.
+	 * scheme.  We do, however, turn off the count/compare timer
+	 * interrupts as they are unused and conflict with the PS/2
+	 * keyboard and mouse interrupts.
 	 */
 
-	bus_space_write_8(sc->iot, sc->ioh, MACE_ISA_INT_MASK, 0xffffffff);
+	bus_space_write_8(sc->iot, sc->ioh, MACE_ISA_INT_MASK, 0xffff1fff);
 	bus_space_write_8(sc->iot, sc->ioh, MACE_ISA_INT_STATUS, 0);
 
 	/* set up LED for solid green or blink, if that's your fancy */
