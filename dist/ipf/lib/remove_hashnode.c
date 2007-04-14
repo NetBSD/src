@@ -1,11 +1,11 @@
-/*	$NetBSD: remove_hashnode.c,v 1.1.1.1 2004/03/28 08:56:19 martti Exp $	*/
+/*	$NetBSD: remove_hashnode.c,v 1.1.1.2 2007/04/14 20:17:31 martin Exp $	*/
 
 /*
- * Copyright (C) 2002 by Darren Reed.
+ * Copyright (C) 2003 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: remove_hashnode.c,v 1.1 2003/04/13 06:40:14 darrenr Exp
+ * Id: remove_hashnode.c,v 1.1.4.1 2006/06/16 17:21:16 darrenr Exp
  */
 
 #include <fcntl.h>
