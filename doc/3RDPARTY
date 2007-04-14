@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.520 2007/04/06 15:48:13 xtraeme Exp $
+#	$NetBSD: 3RDPARTY,v 1.521 2007/04/14 20:59:31 martin Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -389,7 +389,7 @@ License:	BSD (3-clause)
 Notes:
 
 Package:	ipf
-Version:	4.1.13
+Version:	4.1.19
 Current Vers:	4.1.19
 Maintainer:	Darren Reed
 Archive Site:	http://coombs.anu.edu.au/~avalon/
