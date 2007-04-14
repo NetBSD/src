@@ -1,4 +1,12 @@
-/*	$NetBSD: getportproto.c,v 1.5 2005/02/19 21:30:25 martti Exp $	*/
+/*	$NetBSD: getportproto.c,v 1.6 2007/04/14 20:34:24 martin Exp $	*/
+
+/*
+ * Copyright (C) 2002-2005 by Darren Reed.
+ * 
+ * See the IPFILTER.LICENCE file for details on licencing.  
+ *   
+ * Id: getportproto.c,v 1.2.4.4 2006/06/16 17:21:00 darrenr Exp 
+ */     
 
 #include <ctype.h>
 #include "ipf.h"
