@@ -1,7 +1,7 @@
-/*	$NetBSD: printaps.c,v 1.1.1.1 2004/03/28 08:56:20 martti Exp $	*/
+/*	$NetBSD: printaps.c,v 1.1.1.2 2007/04/14 20:17:31 martin Exp $	*/
 
 /*
- * Copyright (C) 1993-2001 by Darren Reed.
+ * Copyright (C) 2002-2004 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
@@ -13,7 +13,7 @@
 
 
 #if !defined(lint)
-static const char rcsid[] = "@(#)Id: printaps.c,v 1.4 2004/01/08 13:34:32 darrenr Exp";
+static const char rcsid[] = "@(#)Id: printaps.c,v 1.4.2.1 2006/06/16 17:21:10 darrenr Exp";
 #endif
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ml_ipl.c,v 1.1.1.4 2004/03/28 08:55:47 martti Exp $	*/
+/*	$NetBSD: ml_ipl.c,v 1.1.1.5 2007/04/14 20:17:24 martin Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -31,7 +31,7 @@
 #define	IPL_NAME	"/dev/ipl"
 #endif
 
-extern	int	iplattach(), iplopen(), iplclose(), iplioctl(), iplread();
+extern	int	ipfattach(), iplopen(), iplclose(), iplioctl(), iplread();
 extern	int	nulldev(), iplidentify(), errno;
 
 struct	cdevsw	ipldevsw =
@@ -46,7 +46,7 @@ struct	dev_ops	ipl_ops =
 {
 	1,
 	iplidentify,
-	iplattach,
+	ipfattach,
 	iplopen,
 	iplclose,
 	iplread,
@@ -140,7 +140,7 @@ static unload(vdp, vdi)
 	int	i;
 
 	(void) vn_remove(IPL_NAME, UIO_SYSSPACE, FILE);
-	return ipldetach();
+	return ipfdetach();
 }
 
 
@@ -160,5 +160,5 @@ struct	vdioctl_load	*vdi;
 	error = vn_create(IPL_NAME, UIO_SYSSPACE, &vattr, EXCL, 0, &vp);
 	if (error == 0)
 		VN_RELE(vp);
-	return iplattach(0);
+	return ipfattach(0);
 }

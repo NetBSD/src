@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_netbsd.c,v 1.1.1.5 2006/04/04 16:10:39 martti Exp $	*/
+/*	$NetBSD: ip_fil_netbsd.c,v 1.1.1.6 2007/04/14 20:17:35 martin Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -7,7 +7,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_fil_netbsd.c,v 2.55.2.38 2006/03/25 13:03:02 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_fil_netbsd.c,v 2.55.2.47 2007/02/08 19:59:52 darrenr Exp";
 #endif
 
 #if defined(KERNEL) || defined(_KERNEL)
@@ -18,7 +18,11 @@ static const char rcsid[] = "@(#)Id: ip_fil_netbsd.c,v 2.55.2.38 2006/03/25 13:0
 #endif
 #include <sys/param.h>
 #if (NetBSD >= 199905) && !defined(IPFILTER_LKM) && defined(_KERNEL)
-# include "opt_ipfilter_log.h"
+# if (__NetBSD_Version__ < 399001400)
+#  include "opt_ipfilter_log.h"
+# else
+#  include "opt_ipfilter.h"
+# endif
 # include "opt_pfil_hooks.h"
 # include "opt_ipsec.h"
 #endif
@@ -278,14 +282,14 @@ ipfilterattach(count)
 int count;
 {
 # if 0
-	if (iplattach() != 0)
+	if (ipfattach() != 0)
 		printf("IP Filter failed to attach\n");
 # endif
 }
 #endif
 
 
-int iplattach()
+int ipfattach()
 {
 	int s;
 #if defined(NETBSD_PF) && (__NetBSD_Version__ >= 104200000)
@@ -415,7 +419,7 @@ pfil_error:
  * Disable the filter by removing the hooks from the IP input/output
  * stream.
  */
-int ipldetach()
+int ipfdetach()
 {
 	int s;
 #if defined(NETBSD_PF) && (__NetBSD_Version__ >= 104200000)
@@ -500,8 +504,10 @@ int iplioctl(dev, cmd, data, mode
 , p)
 # if  (__NetBSD_Version__ >= 399001400)
 struct lwp *p;
+#  define	p_uid	l_proc->p_cred->p_ruid
 # else
 struct proc *p;
+#  define	p_uid	p_cred->p_ruid
 # endif
 #else
 )
@@ -511,9 +517,8 @@ u_long cmd;
 caddr_t data;
 int mode;
 {
-	int s;
-	int error = 0, unit = 0, tmp;
-	friostat_t fio;
+	int error = 0, unit = 0;
+	SPL_INT(s);
 
 	if ((securelevel >= 2) && (mode & FWRITE))
 		return EPERM;
@@ -533,148 +538,12 @@ int mode;
 
 	SPL_NET(s);
 
-	error = fr_ioctlswitch(unit, data, cmd, mode);
+	error = fr_ioctlswitch(unit, data, cmd, mode, p->p_uid, p);
 	if (error != -1) {
 		SPL_X(s);
 		return error;
 	}
-	error = 0;
 
-	switch (cmd)
-	{
-	case FIONREAD :
-#ifdef IPFILTER_LOG
-		BCOPYOUT(&iplused[IPL_LOGIPF], (caddr_t)data,
-			 sizeof(iplused[IPL_LOGIPF]));
-#endif
-		break;
-	case SIOCFRENB :
-		if (!(mode & FWRITE))
-			error = EPERM;
-		else {
-			BCOPYIN(data, &tmp, sizeof(tmp));
-			if (tmp) {
-				if (fr_running > 0)
-					error = 0;
-				else
-					error = iplattach();
-				if (error == 0)
-					fr_running = 1;
-				else
-					(void) ipldetach();
-			} else {
-				error = ipldetach();
-				if (error == 0)
-					fr_running = -1;
-			}
-		}
-		break;
-	case SIOCIPFSET :
-		if (!(mode & FWRITE)) {
-			error = EPERM;
-			break;
-		}
-	case SIOCIPFGETNEXT :
-	case SIOCIPFGET :
-		error = fr_ipftune(cmd, data);
-		break;
-	case SIOCSETFF :
-		if (!(mode & FWRITE))
-			error = EPERM;
-		else
-			BCOPYIN(data, &fr_flags, sizeof(fr_flags));
-		break;
-	case SIOCGETFF :
-		BCOPYOUT(&fr_flags, data, sizeof(fr_flags));
-		break;
-	case SIOCFUNCL :
-		error = fr_resolvefunc(data);
-		break;
-	case SIOCINAFR :
-	case SIOCRMAFR :
-	case SIOCADAFR :
-	case SIOCZRLST :
-		if (!(mode & FWRITE))
-			error = EPERM;
-		else
-			error = frrequest(unit, cmd, data, fr_active, 1);
-		break;
-	case SIOCINIFR :
-	case SIOCRMIFR :
-	case SIOCADIFR :
-		if (!(mode & FWRITE))
-			error = EPERM;
-		else
-			error = frrequest(unit, cmd, data, 1 - fr_active, 1);
-		break;
-	case SIOCSWAPA :
-		if (!(mode & FWRITE))
-			error = EPERM;
-		else {
-			bzero((char *)frcache, sizeof(frcache[0]) * 2);
-			*(u_int *)data = fr_active;
-			fr_active = 1 - fr_active;
-		}
-		break;
-	case SIOCGETFS :
-		fr_getstat(&fio);
-		error = fr_outobj(data, &fio, IPFOBJ_IPFSTAT);
-		break;
-	case SIOCFRZST :
-		if (!(mode & FWRITE))
-			error = EPERM;
-		else
-			error = fr_zerostats(data);
-		break;
-	case SIOCIPFFL :
-		if (!(mode & FWRITE))
-			error = EPERM;
-		else {
-			BCOPYIN(data, &tmp, sizeof(tmp));
-			tmp = frflush(unit, 4, tmp);
-			BCOPYOUT(&tmp, data, sizeof(tmp));
-		}
-		break;
-#ifdef USE_INET6
-	case SIOCIPFL6 :
-		if (!(mode & FWRITE))
-			error = EPERM;
-		else {
-			BCOPYIN(data, &tmp, sizeof(tmp));
-			tmp = frflush(unit, 6, tmp);
-			BCOPYOUT(&tmp, data, sizeof(tmp));
-		}
-		break;
-#endif
-	case SIOCSTLCK :
-		BCOPYIN(data, &tmp, sizeof(tmp));
-		fr_state_lock = tmp;
-		fr_nat_lock = tmp;
-		fr_frag_lock = tmp;
-		fr_auth_lock = tmp;
-		break;
-#ifdef IPFILTER_LOG
-	case SIOCIPFFB :
-		if (!(mode & FWRITE))
-			error = EPERM;
-		else
-			*(int *)data = ipflog_clear(unit);
-		break;
-#endif /* IPFILTER_LOG */
-	case SIOCGFRST :
-		error = fr_outobj(data, fr_fragstats(), IPFOBJ_FRAGSTAT);
-		break;
-	case SIOCFRSYN :
-		if (!(mode & FWRITE))
-			error = EPERM;
-		else {
-			frsync(NULL);
-		}
-		break;
-	default :
-		error = EINVAL;
-		break;
-	}
 	SPL_X(s);
 	return error;
 }
@@ -787,6 +656,9 @@ dev_t dev;
 register struct uio *uio;
 {
 
+	if (fr_running < 1)
+		return EIO;
+
 # ifdef	IPFILTER_SYNC
 	if (GET_MINOR(dev) == IPL_LOGSYNC)
 		return ipfsync_read(uio);
@@ -815,6 +687,9 @@ int iplwrite(dev, uio)
 dev_t dev;
 register struct uio *uio;
 {
+
+	if (fr_running < 1)
+		return EIO;
 
 #ifdef	IPFILTER_SYNC
 	if (GET_MINOR(dev) == IPL_LOGSYNC)
@@ -1261,9 +1136,11 @@ frdest_t *fdp;
 	/*
 	 * For input packets which are being "fastrouted", they won't
 	 * go back through output filtering and miss their chance to get
-	 * NAT'd and counted.
+	 * NAT'd and counted.  Duplicated packets aren't considered to be
+	 * part of the normal packet stream, so do not NAT them or pass
+	 * them through stateful checking, etc.
 	 */
-	if (fin->fin_out == 0) {
+	if ((fdp != &fr->fr_dif) && (fin->fin_out == 0)) {
 		sifp = fin->fin_ifp;
 		fin->fin_ifp = ifp;
 		fin->fin_out = 1;
@@ -1280,6 +1157,7 @@ frdest_t *fdp;
 		case 0 :
 			break;
 		case 1 :
+			fr_natderef((nat_t **)&fin->fin_nat);
 			ip->ip_sum = 0;
 			break;
 		case -1 :
@@ -1470,10 +1348,6 @@ frdest_t *fdp;
 	else
 		ifp = fin->fin_ifp;
 
-	if ((fr != NULL) && (fin->fin_rev != 0)) {
-		if ((ifp != NULL) && (fdp == &fr->fr_tif))
-			return 0;
-	}
 	if (fdp != NULL) {
 		if (IP6_NOTZERO(&fdp->fd_ip6))
 			dst6->sin6_addr = fdp->fd_ip6.in6;
@@ -1497,18 +1371,27 @@ frdest_t *fdp;
 
 	{
 #if (__NetBSD_Version__ >= 106010000)
+# if (__NetBSD_Version__ >= 399001400)
+		struct in6_ifextra *ife;
+# else
 		struct in6_addr finaldst = fin->fin_dst6;
 		int frag;
+# endif
 #endif
 		if (ro->ro_rt->rt_flags & RTF_GATEWAY)
 			dst6 = (struct sockaddr_in6 *)ro->ro_rt->rt_gateway;
 		ro->ro_rt->rt_use++;
 
+		/* Determine path MTU. */
 #if (__NetBSD_Version__ <= 106009999)
 		mtu = nd_ifinfo[ifp->if_index].linkmtu;
 #else
-		/* Determine path MTU. */
+# if (__NetBSD_Version__ >= 399001400)
+		ife = (struct in6_ifextra *)(ifp)->if_afdata[AF_INET6];
+		mtu = ife->nd_ifinfo[ifp->if_index].linkmtu;
+# else
 		error = ip6_getpmtu(ro, ro, ifp, &finaldst, &mtu, &frag);
+# endif
 #endif
 		if ((error == 0) && (m0->m_pkthdr.len <= mtu)) {
 			*mpp = NULL;
@@ -1952,4 +1835,31 @@ struct proc *p;
 	if ((revents == 0) && ((events & (POLLIN|POLLRDNORM)) != 0))
 		selrecord(p, &ipfselwait[xmin]);
 	return revents;
+}
+
+
+int ipf_inject(fin, m)
+fr_info_t *fin;
+mb_t *m;
+{
+	int error;
+
+	if (fin->fin_out == 0) {
+		struct ifqueue *ifq;
+
+		ifq = &ipintrq;
+
+		if (IF_QFULL(ifq)) {
+			IF_DROP(ifq);
+			FREE_MB_T(m);
+			error = ENOBUFS;
+		} else {
+			IF_ENQUEUE(ifq, m);
+			error = 0;
+		}
+	} else {
+		error = ip_output(m, NULL, NULL, IP_FORWARDING, NULL);
+	}
+
+	return error;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux.c,v 1.1.1.3 2006/04/04 16:08:46 martti Exp $	*/
+/*	$NetBSD: linux.c,v 1.1.1.4 2007/04/14 20:17:24 martin Exp $	*/
 
 
 #include "ipf-linux.h"
@@ -253,7 +253,7 @@ static int ipfilter_init(void)
 	}
 #endif
 
-	i = iplattach();
+	i = ipfattach();
 
 #ifdef	CONFIG_PROC_FS
 	if (i == 0) {
@@ -309,7 +309,7 @@ static int ipfilter_fini(void)
 		return EBUSY;
 
 	if (fr_running >= 0) {
-		result = ipldetach();
+		result = ipfdetach();
 		if (result != 0) {
 			if (result > 0)
 				result = -result;

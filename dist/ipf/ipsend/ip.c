@@ -1,4 +1,4 @@
-/*	$NetBSD: ip.c,v 1.1.1.6 2005/02/08 06:53:13 martti Exp $	*/
+/*	$NetBSD: ip.c,v 1.1.1.7 2007/04/14 20:17:30 martin Exp $	*/
 
 /*
  * ip.c (C) 1995-1998 Darren Reed
@@ -7,12 +7,15 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "%W% %G% (C)1995";
-static const char rcsid[] = "@(#)Id: ip.c,v 2.8.2.1 2004/10/19 12:31:48 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip.c,v 2.8.2.2 2007/02/17 12:41:51 darrenr Exp";
 #endif
 #include <sys/param.h>
 #include <sys/types.h>
 #include <netinet/in_systm.h>
 #include <sys/socket.h>
+#ifdef __osf__
+# include "radix_ipf_local.h"
+#endif
 #include <net/if.h>
 #include <netinet/in.h>
 #include <netinet/ip.h>

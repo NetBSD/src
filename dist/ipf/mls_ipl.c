@@ -1,4 +1,4 @@
-/*	$NetBSD: mls_ipl.c,v 1.1.1.6 2005/02/08 06:53:03 martti Exp $	*/
+/*	$NetBSD: mls_ipl.c,v 1.1.1.7 2007/04/14 20:17:25 martin Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -42,10 +42,10 @@
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)mls_ipl.c	2.6 10/15/95 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: mls_ipl.c,v 2.7.2.2 2004/11/04 19:24:54 darrenr Exp";
+static const char rcsid[] = "@(#)Id: mls_ipl.c,v 2.7.2.3 2006/07/14 06:12:22 darrenr Exp";
 #endif
 
-extern	int	ipldetach __P((void));
+extern	int	ipfdetach __P((void));
 #ifndef	IPFILTER_LOG
 #define	iplread	nulldev
 #endif
@@ -74,7 +74,7 @@ struct	dev_ops	ipl_ops =
 {
 	1,
 	iplidentify,
-	iplattach,
+	ipfattach,
 	iplopen,
 	iplclose,
 	iplread,
@@ -179,7 +179,7 @@ static	int	unload()
 	if (fr_refcnt != 0)
 		err = EBUSY;
 	else if (fr_running >= 0)
-		err = ipldetach();
+		err = ipfdetach();
 	if (err)
 		return err;
 
@@ -198,7 +198,7 @@ static	int	ipl_attach()
 	int error = 0, fmode = S_IFCHR|0600, i;
 	char *name;
 
-	error = iplattach();
+	error = ipfattach();
 	if (error)
 		return error;
 

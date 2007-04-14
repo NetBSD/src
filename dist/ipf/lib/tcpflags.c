@@ -1,11 +1,11 @@
-/*	$NetBSD: tcpflags.c,v 1.1.1.1 2004/03/28 08:56:21 martti Exp $	*/
+/*	$NetBSD: tcpflags.c,v 1.1.1.2 2007/04/14 20:17:31 martin Exp $	*/
 
 /*
- * Copyright (C) 1993-2001 by Darren Reed.
+ * Copyright (C) 2001-2002 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: tcpflags.c,v 1.3 2002/11/02 07:18:01 darrenr Exp
+ * Id: tcpflags.c,v 1.3.4.1 2006/06/16 17:21:17 darrenr Exp
  */
 
 #include "ipf.h"

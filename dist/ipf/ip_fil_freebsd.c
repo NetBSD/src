@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_freebsd.c,v 1.1.1.5 2006/04/04 16:08:28 martti Exp $	*/
+/*	$NetBSD: ip_fil_freebsd.c,v 1.1.1.6 2007/04/14 20:17:22 martin Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -7,7 +7,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_fil_freebsd.c,v 2.53.2.32 2006/03/25 13:03:01 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_fil_freebsd.c,v 2.53.2.41 2007/02/08 19:59:52 darrenr Exp";
 #endif
 
 #if defined(KERNEL) || defined(_KERNEL)
@@ -62,6 +62,9 @@ static const char rcsid[] = "@(#)Id: ip_fil_freebsd.c,v 2.53.2.32 2006/03/25 13:
 #include <net/if.h>
 #if __FreeBSD_version >= 300000
 # include <net/if_var.h>
+# if __FreeBSD_version >= 504000
+#  include <net/netisr.h>
+# endif
 # if !defined(IPFILTER_LKM)
 #  include "opt_ipfilter.h"
 # endif
@@ -126,7 +129,7 @@ static	int	fr_send_ip __P((fr_info_t *, mb_t *, mb_t **));
 # ifdef USE_MUTEXES
 ipfmutex_t	ipl_mutex, ipf_authmx, ipf_rw, ipf_stinsert;
 ipfmutex_t	ipf_nat_new, ipf_natio, ipf_timeoutlock;
-ipfrwlock_t	ipf_mutex, ipf_global, ipf_ipidfrag, ipf_frcache;
+ipfrwlock_t	ipf_mutex, ipf_global, ipf_ipidfrag, ipf_frcache, ipf_tokens;
 ipfrwlock_t	ipf_frag, ipf_state, ipf_nat, ipf_natfrag, ipf_auth;
 # endif
 int		ipf_locks_done = 0;
@@ -193,7 +196,7 @@ char *s;
 #endif /* IPFILTER_LKM */
 
 
-int iplattach()
+int ipfattach()
 {
 #ifdef USE_SPL
 	int s;
@@ -220,6 +223,7 @@ int iplattach()
 	RWLOCK_INIT(&ipf_mutex, "ipf filter rwlock");
 	RWLOCK_INIT(&ipf_frcache, "ipf cache rwlock");
 	RWLOCK_INIT(&ipf_ipidfrag, "ipf IP NAT-Frag rwlock");
+	RWLOCK_INIT(&ipf_tokens, "ipf token rwlock");
 	ipf_locks_done = 1;
 
 	if (fr_initialise() < 0) {
@@ -326,7 +330,7 @@ pfil_error:
  * Disable the filter by removing the hooks from the IP input/output
  * stream.
  */
-int ipldetach()
+int ipfdetach()
 {
 #ifdef USE_SPL
 	int s;
@@ -423,6 +427,7 @@ int ipldetach()
 		RW_DESTROY(&ipf_mutex);
 		RW_DESTROY(&ipf_frcache);
 		RW_DESTROY(&ipf_ipidfrag);
+		RW_DESTROY(&ipf_tokens);
 		RW_DESTROY(&ipf_global);
 		ipf_locks_done = 0;
 	}
@@ -441,8 +446,14 @@ int iplioctl(dev, cmd, data, mode
 , p)
 #  if (__FreeBSD_version >= 500024)
 struct thread *p;
+#   if (__FreeBSD_version >= 504000)
+#    define	p_uid	td_ucred->cr_ruid
+#   else
+#    define	p_uid	t_proc->p_cred->p_ruid
+#   endif
 #  else
 struct proc *p;
+#   define	p_uid	p_cred->p_ruid
 #  endif /* __FreeBSD_version >= 500024 */
 # else
 )
@@ -456,11 +467,8 @@ ioctlcmd_t cmd;
 caddr_t data;
 int mode;
 {
-#ifdef USE_SPL
-	int s;
-#endif
-	int error = 0, unit = 0, tmp;
-	friostat_t fio;
+	int error = 0, unit = 0;
+	SPL_INT(s);
 
 #if (BSD >= 199306) && defined(_KERNEL)
 	if ((securelevel >= 3) && (mode & FWRITE))
@@ -483,148 +491,11 @@ int mode;
 	SPL_NET(s);
 	READ_ENTER(&ipf_global);
 
-	error = fr_ioctlswitch(unit, data, cmd, mode);
+	error = fr_ioctlswitch(unit, data, cmd, mode, p->p_uid, p);
 	if (error != -1) {
 		RWLOCK_EXIT(&ipf_global);
 		SPL_X(s);
 		return error;
-	}
-	error = 0;
-
-	switch (cmd)
-	{
-	case FIONREAD :
-#ifdef IPFILTER_LOG
-		BCOPYOUT(&iplused[IPL_LOGIPF], (caddr_t)data,
-			 sizeof(iplused[IPL_LOGIPF]));
-#endif
-		break;
-	case SIOCFRENB :
-		if (!(mode & FWRITE))
-			error = EPERM;
-		else {
-			BCOPYIN(data, &tmp, sizeof(tmp));
-			if (tmp) {
-				if (fr_running > 0)
-					error = 0;
-				else
-					error = iplattach();
-				if (error == 0)
-					fr_running = 1;
-				else
-					(void) ipldetach();
-			} else {
-				error = ipldetach();
-				if (error == 0)
-					fr_running = -1;
-			}
-		}
-		break;
-	case SIOCIPFSET :
-		if (!(mode & FWRITE)) {
-			error = EPERM;
-			break;
-		}
-	case SIOCIPFGETNEXT :
-	case SIOCIPFGET :
-		error = fr_ipftune(cmd, data);
-		break;
-	case SIOCSETFF :
-		if (!(mode & FWRITE))
-			error = EPERM;
-		else
-			BCOPYIN(data, &fr_flags, sizeof(fr_flags));
-		break;
-	case SIOCGETFF :
-		BCOPYOUT(&fr_flags, data, sizeof(fr_flags));
-		break;
-	case SIOCFUNCL :
-		error = fr_resolvefunc(data);
-		break;
-	case SIOCINAFR :
-	case SIOCRMAFR :
-	case SIOCADAFR :
-	case SIOCZRLST :
-		if (!(mode & FWRITE))
-			error = EPERM;
-		else
-			error = frrequest(unit, cmd, data, fr_active, 1);
-		break;
-	case SIOCINIFR :
-	case SIOCRMIFR :
-	case SIOCADIFR :
-		if (!(mode & FWRITE))
-			error = EPERM;
-		else
-			error = frrequest(unit, cmd, data, 1 - fr_active, 1);
-		break;
-	case SIOCSWAPA :
-		if (!(mode & FWRITE))
-			error = EPERM;
-		else {
-			bzero((char *)frcache, sizeof(frcache[0]) * 2);
-			*(u_int *)data = fr_active;
-			fr_active = 1 - fr_active;
-		}
-		break;
-	case SIOCGETFS :
-		fr_getstat(&fio);
-		error = fr_outobj(data, &fio, IPFOBJ_IPFSTAT);
-		break;
-	case SIOCFRZST :
-		if (!(mode & FWRITE))
-			error = EPERM;
-		else
-			error = fr_zerostats(data);
-		break;
-	case SIOCIPFFL :
-		if (!(mode & FWRITE))
-			error = EPERM;
-		else {
-			BCOPYIN(data, &tmp, sizeof(tmp));
-			tmp = frflush(unit, 4, tmp);
-			BCOPYOUT(&tmp, data, sizeof(tmp));
-		}
-		break;
-#ifdef USE_INET6
-	case SIOCIPFL6 :
-		if (!(mode & FWRITE))
-			error = EPERM;
-		else {
-			BCOPYIN(data, &tmp, sizeof(tmp));
-			tmp = frflush(unit, 6, tmp);
-			BCOPYOUT(&tmp, data, sizeof(tmp));
-		}
-		break;
-#endif
-	case SIOCSTLCK :
-		BCOPYIN(data, &tmp, sizeof(tmp));
-		fr_state_lock = tmp;
-		fr_nat_lock = tmp;
-		fr_frag_lock = tmp;
-		fr_auth_lock = tmp;
-		break;
-#ifdef IPFILTER_LOG
-	case SIOCIPFFB :
-		if (!(mode & FWRITE))
-			error = EPERM;
-		else
-			*(int *)data = ipflog_clear(unit);
-		break;
-#endif /* IPFILTER_LOG */
-	case SIOCGFRST :
-		error = fr_outobj(data, fr_fragstats(), IPFOBJ_FRAGSTAT);
-		break;
-	case SIOCFRSYN :
-		if (!(mode & FWRITE))
-			error = EPERM;
-		else {
-			frsync(NULL);
-		}
-		break;
-	default :
-		error = EINVAL;
-		break;
 	}
 
 	RWLOCK_EXIT(&ipf_global);
@@ -754,6 +625,9 @@ register struct uio *uio;
 {
 	u_int	xmin = GET_MINOR(dev);
 
+	if (fr_running < 1)
+		return EIO;
+
 	if (xmin < 0)
 		return ENXIO;
 
@@ -789,6 +663,9 @@ dev_t dev;
 #endif
 register struct uio *uio;
 {
+
+	if (fr_running < 1)
+		return EIO;
 
 #ifdef	IPFILTER_SYNC
 	if (GET_MINOR(dev) == IPL_LOGSYNC)
@@ -1147,7 +1024,7 @@ void
 # endif
 iplinit()
 {
-	if (iplattach() != 0)
+	if (ipfattach() != 0)
 		printf("IP Filter failed to attach\n");
 	ip_init();
 }
@@ -1258,9 +1135,11 @@ frdest_t *fdp;
 	/*
 	 * For input packets which are being "fastrouted", they won't
 	 * go back through output filtering and miss their chance to get
-	 * NAT'd and counted.
+	 * NAT'd and counted.  Duplicated packets aren't considered to be
+	 * part of the normal packet stream, so do not NAT them or pass
+	 * them through stateful checking, etc.
 	 */
-	if (fin->fin_out == 0) {
+	if ((fdp != &fr->fr_dif) && (fin->fin_out == 0)) {
 		sifp = fin->fin_ifp;
 		fin->fin_ifp = ifp;
 		fin->fin_out = 1;
@@ -1277,6 +1156,7 @@ frdest_t *fdp;
 		case 0 :
 			break;
 		case 1 :
+			fr_natderef((nat_t **)&fin->fin_nat);
 			ip->ip_sum = 0;
 			break;
 		case -1 :
@@ -1735,4 +1615,38 @@ int len;
 	if (len == fin->fin_plen)
 		fin->fin_flx |= FI_COALESCE;
 	return ip;
+}
+
+
+int ipf_inject(fin, m)
+fr_info_t *fin;
+mb_t *m;
+{
+	int error = 0;
+
+	if (fin->fin_out == 0) {
+#if (__FreeBSD_version >= 501000)
+		netisr_dispatch(NETISR_IP, m);
+#else
+		struct ifqueue *ifq;
+
+		ifq = &ipintrq;
+
+		if (IF_QFULL(ifq)) {
+			IF_DROP(ifq);
+			FREE_MB_T(m);
+			error = ENOBUFS;
+		} else {
+			IF_ENQUEUE(ifq, m);
+		}
+#endif
+	} else {
+#if (__FreeBSD_version >= 470102)
+		error = ip_output(m, NULL, NULL, IP_FORWARDING, NULL, NULL);
+#else
+		error = ip_output(m, NULL, NULL, IP_FORWARDING, NULL);
+#endif
+	}
+
+	return error;
 }

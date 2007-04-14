@@ -29,13 +29,13 @@ gunzip -c sys.tar.gz | tar xpf -
 2. Unpack IPFilter and apply the patches to the kernel source 
 
 cd ~
-gunzip -c ip_fil4.1.9.tar.gz | tar xpf -
+gunzip -c ip_fil4next.tar.gz | tar xpf -
 cd /usr/src
-patch < ~/ip_fil4.1.9/OpenBSD-3/3.0-sys-diffs
+patch < ~/ip_fil4.1.14/OpenBSD-3/3.0-sys-diffs
 
 3. Add IPFilter to the source code tree:
 
-cd ~/ip_fil4.1.9
+cd ~/ip_fil4next
 BSD/kupgrade
 
 4. Build a new OpenBSD kernel
@@ -49,7 +49,7 @@ cp bsd /bsd
 
 5. Build and install IPFilter
 
-cd ip_fil4.1.9
+cd ip_fil4next
 make openbsd
 make install-bsd
 OpenBSD-3/makedevs-3.0
@@ -57,7 +57,7 @@ OpenBSD-3/makedevs-3.0
 6. Patch rc scripts in /etc
 
 cd /etc
-patch < ~/ip_fil4.1.9/OpenBSD-3/3.0-rc-diffs
+patch < ~/ip_fil4.1.14/OpenBSD-3/3.0-rc-diffs
 
 7. Reboot
 

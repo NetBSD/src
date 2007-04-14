@@ -1,5 +1,10 @@
-/*	$NetBSD: lexer.h,v 1.1.1.2 2004/07/23 05:34:52 martti Exp $	*/
+/*	$NetBSD: lexer.h,v 1.1.1.3 2007/04/14 20:17:34 martin Exp $	*/
 
+/*
+ * Copyright (C) 2002-2004 by Darren Reed.
+ *
+ * See the IPFILTER.LICENCE file for details on licencing.
+ */
 
 typedef	struct	wordtab	{
 	char	*w_word;

@@ -339,8 +339,8 @@ ippool_l.c ippool_l.h: $(TOOL)/lexer.c $(TOP)/ip_pool.h
 	(cd $(TOOL); make "DEST=../$(HERE)" ../$(HERE)/$@)
 
 radix_ipf_local.h: $(TOP)/radix_ipf.h Makefile
-	sed -e 's/radix_node/ipf_radix_node/g' \
-	    -e 's/radix_mask/ipf_radix_mask/g' \
+	sed -e 's/^\([^#].*\)\([ 	]\)radix_node/\1\2ipf_radix_node/g' \
+	    -e 's/^\([^#].*\)\([ 	]\)radix_mask/\1\2ipf_radix_mask/g' \
 	    $(TOP)/radix_ipf.h > $@
 
 .y.c:
@@ -359,7 +359,8 @@ clean:
 	${RM} -f ipnat_y.c ipnat_y.h ipnat_l.c ipnat_l.h
 	${RM} -f ipmon_y.c ipmon_y.h ipmon_l.c ipmon_l.h
 	${RM} -f ipscan ipscan_y.c ipscan_y.h ipscan_l.c y.tab.? lex.yy.c ipfs
-	${RM} -f ipsyncm ipsyncs ip_rules.c ip_rules.h sysconfigtab
+	${RM} -f ipsyncm ipsyncs ip_rules.c ip_rules.h
+	-if  [ -h sysconfigtab ] ; then /bin/rm -f sysconfigtab; fi
 
 	${MAKE} -f Makefile.ipsend ${MFLAGS} clean
 	-(for i in *; do \
@@ -393,4 +394,5 @@ install:
 	done
 	(cd $(TOP)/man; make INSTALL=../bsdinstall MANDIR=$(MANDIR) install; cd $(TOP))
 	sync
+	-sysconfigdb -d ipfilter
 	sysconfigdb -f /usr/sys/io/ipfilter/sysconfigtab -a ipfilter

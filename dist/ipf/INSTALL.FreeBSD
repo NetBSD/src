@@ -1,5 +1,5 @@
 
-This file is for use with FreeBSD 4.x and 5.x only.
+Thi file is for use with FreeBSD 4.x and 5.x only.
 
 To build a kernel for use with the loadable kernel module, follow these
 steps:

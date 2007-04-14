@@ -1,5 +1,10 @@
-/*	$NetBSD: ipscan_y.y,v 1.1.1.2 2005/02/08 06:53:24 martti Exp $	*/
+/*	$NetBSD: ipscan_y.y,v 1.1.1.3 2007/04/14 20:17:34 martin Exp $	*/
 
+/*
+ * Copyright (C) 2001-2004 by Darren Reed.
+ *
+ * See the IPFILTER.LICENCE file for details on licencing.
+ */
 %{
 #include <sys/types.h>
 #include <sys/ioctl.h>
@@ -94,6 +99,7 @@ assign:	YY_STR assigning YY_STR
 						  resetlexer();
 						  free($1);
 						  free($3);
+						  yyvarnext = 0;
 						}
 	;
 

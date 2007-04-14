@@ -1,4 +1,4 @@
-/*	$NetBSD: mlf_ipl.c,v 1.1.1.9 2005/02/08 06:53:02 martti Exp $	*/
+/*	$NetBSD: mlf_ipl.c,v 1.1.1.10 2007/04/14 20:17:24 martin Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -298,7 +298,7 @@ int cmd;
 {
 	int error = 0;
 
-	error = ipldetach();
+	error = ipfdetach();
 	if (!error)
 		error = if_ipl_remove();
 	return error;
@@ -314,7 +314,7 @@ int cmd;
 	int error = 0, fmode = S_IFCHR|0600, i;
 	char *name;
 
-	error = iplattach();
+	error = ipfattach();
 	if (error)
 		return error;
 	(void) if_ipl_remove();

@@ -1,4 +1,4 @@
-/*	$NetBSD: solaris.c,v 1.1.1.14 2006/04/04 16:08:49 martti Exp $	*/
+/*	$NetBSD: solaris.c,v 1.1.1.15 2007/04/14 20:17:25 martin Exp $	*/
 
 /*
  * Copyright (C) 1993-2001, 2003 by Darren Reed.
@@ -6,7 +6,7 @@
  * See the IPFILTER.LICENCE file for details on licencing.
  */
 /* #pragma ident   "@(#)solaris.c	1.12 6/5/96 (C) 1995 Darren Reed"*/
-#pragma ident "@(#)Id: solaris.c,v 2.73.2.10 2006/03/19 15:02:30 darrenr Exp"
+#pragma ident "@(#)Id: solaris.c,v 2.73.2.12 2006/10/26 02:55:41 darrenr Exp"
 
 #include <sys/systm.h>
 #include <sys/types.h>
@@ -301,7 +301,7 @@ ddi_attach_cmd_t cmd;
 		 * Lock people out while we set things up.
 		 */
 		WRITE_ENTER(&ipf_global);
-		if ((fr_running != 0) || (iplattach() == -1)) {
+		if ((fr_running != 0) || (ipfattach() == -1)) {
 			RWLOCK_EXIT(&ipf_global);
 			goto attach_failed;
 		}
@@ -367,7 +367,7 @@ ddi_detach_cmd_t cmd;
 		 * this lock others should just fall out of the loop.
 		 */
 		WRITE_ENTER(&ipf_global);
-		if (fr_running <= 0) {
+		if (fr_running == -2) {
 			RWLOCK_EXIT(&ipf_global);
 			return DDI_FAILURE;
 		}
@@ -407,7 +407,7 @@ ddi_detach_cmd_t cmd;
 		}
 
 		WRITE_ENTER(&ipf_global);
-		if (!ipldetach()) {
+		if (!ipfdetach()) {
 			RWLOCK_EXIT(&ipf_global);
 			RW_DESTROY(&ipf_mutex);
 			RW_DESTROY(&ipf_frcache);

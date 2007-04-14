@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_h323_pxy.c,v 1.1.1.5 2006/04/04 16:08:35 martti Exp $	*/
+/*	$NetBSD: ip_h323_pxy.c,v 1.1.1.6 2007/04/14 20:17:22 martin Exp $	*/
 
 /*
  * Copyright 2001, QNX Software Systems Ltd. All Rights Reserved
@@ -137,7 +137,7 @@ ap_session_t *aps;
 			 * called with ipf_nat locked.
 			 */
 			if (fr_nat_ioctl((caddr_t)ipn, SIOCRMNAT, NAT_SYSSPACE|
-				         NAT_LOCKHELD|FWRITE) == -1) {
+				         NAT_LOCKHELD|FWRITE, 0, NULL) == -1) {
 				/*EMPTY*/;
 				/* log the error */
 			}
@@ -201,7 +201,7 @@ nat_t *nat;
 		 */
 		RWLOCK_EXIT(&ipf_nat);
 		if (fr_nat_ioctl((caddr_t)ipn, SIOCADNAT,
-				 NAT_SYSSPACE|FWRITE) == -1) {
+				 NAT_SYSSPACE|FWRITE, 0, NULL) == -1) {
 			READ_ENTER(&ipf_nat);
 			return -1;
 		}
@@ -269,6 +269,8 @@ nat_t *nat;
 			udp.uh_sport = port;
 			
 			bcopy((caddr_t)fin, (caddr_t)&fi, sizeof(fi));
+			fi.fin_state = NULL;
+			fi.fin_nat = NULL;
 			fi.fin_fi.fi_p = IPPROTO_UDP;
 			fi.fin_data[0] = port;
 			fi.fin_data[1] = 0;

@@ -297,7 +297,7 @@ diff -d -c -r /tmp/sys/arch/mvmeppc/mvmeppc/conf.c sys/arch/mvmeppc/mvmeppc/conf
 --- sys/arch/mvmeppc/mvmeppc/conf.c	Sat Nov  2 12:10:36 2002
 ***************
 *** 114,119 ****
---- 114.1.6 ----
+--- 114,125 ----
    
   #include "ksyms.h"
   
@@ -367,7 +367,7 @@ diff -d -c -r /tmp/sys/arch/sparc64/sparc64/conf.c sys/arch/sparc64/sparc64/conf
 --- sys/arch/sparc64/sparc64/conf.c	Sat Nov  2 12:10:36 2002
 ***************
 *** 114,119 ****
---- 114.1.6 ----
+--- 114,125 ----
   #include "ucom.h"
   #include "uscanner.h"
   
@@ -577,7 +577,7 @@ diff -d -c -r /tmp/sys/net/if_bridge.c sys/net/if_bridge.c
       struct ether_header *, struct mbuf *m);
   #endif
 ***************
-*** 1144.1.60 ****
+*** 1144,1150 ****
   		m_freem(m);
   		return;
   	}

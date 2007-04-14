@@ -1,7 +1,7 @@
-/*	$NetBSD: ipf.c,v 1.1.1.4 2006/04/04 16:10:08 martti Exp $	*/
+/*	$NetBSD: ipf.c,v 1.1.1.5 2007/04/14 20:17:33 martin Exp $	*/
 
 /*
- * Copyright (C) 1993-2001 by Darren Reed.
+ * Copyright (C) 2001-2006 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  */
@@ -21,7 +21,7 @@
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)ipf.c	1.23 6/5/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ipf.c,v 1.35.2.4 2006/03/17 11:48:08 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ipf.c,v 1.35.2.6 2006/08/26 11:21:13 darrenr Exp";
 #endif
 
 #if !defined(__SVR4) && defined(__GNUC__)
@@ -453,15 +453,21 @@ void ipf_frsync()
 
 void zerostats()
 {
+	ipfobj_t	obj;
 	friostat_t	fio;
-	friostat_t	*fiop = &fio;
+
+	obj.ipfo_rev = IPFILTER_VERSION;
+	obj.ipfo_type = IPFOBJ_IPFSTAT;
+	obj.ipfo_size = sizeof(fio);
+	obj.ipfo_ptr = &fio;
+	obj.ipfo_offset = 0;
 
 	if (opendevice(ipfname, 1) != -2) {
-		if (ioctl(fd, SIOCFRZST, &fiop) == -1) {
+		if (ioctl(fd, SIOCFRZST, &obj) == -1) {
 			perror("ioctl(SIOCFRZST)");
 			exit(-1);
 		}
-		showstats(fiop);
+		showstats(&fio);
 	}
 
 }

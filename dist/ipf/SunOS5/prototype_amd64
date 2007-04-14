@@ -1,6 +1,6 @@
 i pkginfo
 i copyright=../copyright
-default 0755 root root
+!default 0755 root root
 d none /usr ? ? ?
 d none /usr/kernel ? ? ?
 d none /usr/kernel/drv ? ? ?

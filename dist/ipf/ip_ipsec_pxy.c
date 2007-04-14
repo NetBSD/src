@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_ipsec_pxy.c,v 1.1.1.6 2006/04/04 16:08:35 martti Exp $	*/
+/*	$NetBSD: ip_ipsec_pxy.c,v 1.1.1.7 2007/04/14 20:17:22 martin Exp $	*/
 
 /*
  * Copyright (C) 2001-2003 by Darren Reed
@@ -8,7 +8,7 @@
  * Simple ISAKMP transparent proxy for in-kernel use.  For use with the NAT
  * code.
  *
- * Id: ip_ipsec_pxy.c,v 2.20.2.7 2005/08/20 13:48:22 darrenr Exp
+ * Id: ip_ipsec_pxy.c,v 2.20.2.8 2006/07/14 06:12:14 darrenr Exp
  *
  */
 #define	IPF_IPSEC_PROXY
@@ -179,7 +179,7 @@ nat_t *nat;
 		ipsec->ipsc_state = fr_addstate(&fi, &ipsec->ipsc_state,
 						SI_WILDP);
 		if (fi.fin_state != NULL)
-			fr_statederef(&fi, (ipstate_t **)&fi.fin_state);
+			fr_statederef((ipstate_t **)&fi.fin_state);
 	}
 	ip->ip_p = p & 0xff;
 	return 0;
@@ -258,7 +258,7 @@ nat_t *nat;
 							&ipsec->ipsc_state,
 							SI_WILDP);
 			if (fi.fin_state != NULL)
-				fr_statederef(&fi, (ipstate_t **)&fi.fin_state);
+				fr_statederef((ipstate_t **)&fi.fin_state);
 		}
 		ip->ip_p = p;
 	}

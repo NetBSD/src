@@ -514,6 +514,9 @@ install:
 			$(INSTALL) -cs -g wheel -m 755 -o root $$p $$def; \
 		fi \
 	done
+	if [ -d /etc/rc.d ] ; then \
+		$(INSTALL) -c -g wheel -m 755 -o root ../ipfadm-rcd $(SBINDEST)/ipfadm; \
+	fi
 	(cd $(TOP)/man; make INSTALL=$(INSTALL) MANDIR=$(MANDIR) install; cd $(TOP))
 
 coverage:

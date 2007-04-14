@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_solaris.c,v 1.1.1.5 2006/04/04 16:08:33 martti Exp $	*/
+/*	$NetBSD: ip_fil_solaris.c,v 1.1.1.6 2007/04/14 20:17:22 martin Exp $	*/
 
 /*
  * Copyright (C) 1993-2001, 2003 by Darren Reed.
@@ -7,7 +7,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "%W% %G% (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_fil_solaris.c,v 2.62.2.23 2006/03/29 11:19:56 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_fil_solaris.c,v 2.62.2.33 2007/02/21 07:20:26 darrenr Exp";
 #endif
 
 #include <sys/types.h>
@@ -18,7 +18,11 @@ static const char rcsid[] = "@(#)Id: ip_fil_solaris.c,v 2.62.2.23 2006/03/29 11:
 #include <sys/ioctl.h>
 #include <sys/filio.h>
 #include <sys/systm.h>
-#include <sys/cred.h>
+#if SOLARIS2 >= 10
+# include <sys/cred_impl.h>
+#else
+# include <sys/cred.h>
+#endif
 #include <sys/ddi.h>
 #include <sys/sunddi.h>
 #include <sys/ksynch.h>
@@ -60,10 +64,11 @@ extern	int	fr_flags, fr_active;
 
 
 static	int	fr_send_ip __P((fr_info_t *fin, mblk_t *m, mblk_t **mp));
+static	void	ipf_fixl4sum __P((fr_info_t *));
 
 ipfmutex_t	ipl_mutex, ipf_authmx, ipf_rw, ipf_stinsert;
 ipfmutex_t	ipf_nat_new, ipf_natio, ipf_timeoutlock;
-ipfrwlock_t	ipf_mutex, ipf_global, ipf_ipidfrag, ipf_frcache;
+ipfrwlock_t	ipf_mutex, ipf_global, ipf_ipidfrag, ipf_frcache, ipf_tokens;
 ipfrwlock_t	ipf_frag, ipf_state, ipf_nat, ipf_natfrag, ipf_auth;
 kcondvar_t	iplwait, ipfauthwait;
 #if SOLARIS2 >= 7
@@ -86,17 +91,17 @@ int		ipf_locks_done = 0;
 
 
 /* ------------------------------------------------------------------------ */
-/* Function:    ipldetach                                                   */
+/* Function:    ipfdetach                                                   */
 /* Returns:     int - 0 == success, else error.                             */
 /* Parameters:  Nil                                                         */
 /*                                                                          */
 /* This function is responsible for undoing anything that might have been   */
-/* done in a call to iplattach().  It must be able to clean up from a call  */
-/* to iplattach() that did not succeed.  Why might that happen?  Someone    */
+/* done in a call to ipfattach().  It must be able to clean up from a call  */
+/* to ipfattach() that did not succeed.  Why might that happen?  Someone    */
 /* configures a table to be so large that we cannot allocate enough memory  */
 /* for it.                                                                  */
 /* ------------------------------------------------------------------------ */
-int ipldetach()
+int ipfdetach()
 {
 
 	ASSERT(rw_read_locked(&ipf_global.ipf_lk) == 0);
@@ -111,7 +116,7 @@ int ipldetach()
 	}
 
 #ifdef	IPFDEBUG
-	cmn_err(CE_CONT, "ipldetach()\n");
+	cmn_err(CE_CONT, "ipfdetach()\n");
 #endif
 
 	fr_deinitialise();
@@ -122,6 +127,7 @@ int ipldetach()
 	if (ipf_locks_done == 1) {
 		MUTEX_DESTROY(&ipf_timeoutlock);
 		MUTEX_DESTROY(&ipf_rw);
+		RW_DESTROY(&ipf_tokens);
 		RW_DESTROY(&ipf_ipidfrag);
 		ipf_locks_done = 0;
 	}
@@ -129,12 +135,12 @@ int ipldetach()
 }
 
 
-int iplattach __P((void))
+int ipfattach __P((void))
 {
 	int i;
 
 #ifdef	IPFDEBUG
-	cmn_err(CE_CONT, "iplattach()\n");
+	cmn_err(CE_CONT, "ipfattach()\n");
 #endif
 
 	ASSERT(rw_read_locked(&ipf_global.ipf_lk) == 0);
@@ -143,6 +149,7 @@ int iplattach __P((void))
 	MUTEX_INIT(&ipf_rw, "ipf rw mutex");
 	MUTEX_INIT(&ipf_timeoutlock, "ipf timeout lock mutex");
 	RWLOCK_INIT(&ipf_ipidfrag, "ipf IP NAT-Frag rwlock");
+	RWLOCK_INIT(&ipf_tokens, "ipf token rwlock");
 	ipf_locks_done = 1;
 
 	if (fr_initialise() < 0)
@@ -215,10 +222,8 @@ int mode;
 cred_t *cp;
 int *rp;
 {
-	int error = 0, tmp;
-	friostat_t fio;
+	int error = 0;
 	minor_t unit;
-	u_int enable;
 
 #ifdef	IPFDEBUG
 	cmn_err(CE_CONT, "iplioctl(%x,%x,%x,%d,%x,%d)\n",
@@ -239,201 +244,13 @@ int *rp;
 
 	READ_ENTER(&ipf_global);
 
-	error = fr_ioctlswitch(unit, (caddr_t)data, cmd, mode);
+	error = fr_ioctlswitch(unit, (caddr_t)data, cmd, mode,
+			       cp->cr_uid, curproc);
 	if (error != -1) {
 		RWLOCK_EXIT(&ipf_global);
 		return error;
 	}
-	error = 0;
 
-	switch (cmd)
-	{
-	case SIOCFRENB :
-		if (!(mode & FWRITE))
-			error = EPERM;
-		else {
-			error = COPYIN((caddr_t)data, (caddr_t)&enable,
-				       sizeof(enable));
-			if (error != 0) {
-				error = EFAULT;
-				break;
-			}
-
-			RWLOCK_EXIT(&ipf_global);
-			WRITE_ENTER(&ipf_global);
-			if (enable) {
-				if (fr_running > 0)
-					error = 0;
-				else
-					error = iplattach();
-				if (error == 0)
-					fr_running = 1;
-				else
-					(void) ipldetach();
-			} else {
-				error = ipldetach();
-				if (error == 0)
-					fr_running = -1;
-			}
-		}
-		break;
-	case SIOCIPFSET :
-		if (!(mode & FWRITE)) {
-			error = EPERM;
-			break;
-		}
-		/* FALLTHRU */
-	case SIOCIPFGETNEXT :
-	case SIOCIPFGET :
-		error = fr_ipftune(cmd, (void *)data);
-		break;
-	case SIOCSETFF :
-		if (!(mode & FWRITE))
-			error = EPERM;
-		else {
-			error = COPYIN((caddr_t)data, (caddr_t)&fr_flags,
-			       sizeof(fr_flags));
-			if (error != 0)
-				error = EFAULT;
-		}
-		break;
-	case SIOCGETFF :
-		error = COPYOUT((caddr_t)&fr_flags, (caddr_t)data,
-			       sizeof(fr_flags));
-		if (error != 0)
-			error = EFAULT;
-		break;
-	case SIOCFUNCL :
-		error = fr_resolvefunc((void *)data);
-		break;
-	case SIOCINAFR :
-	case SIOCRMAFR :
-	case SIOCADAFR :
-	case SIOCZRLST :
-		if (!(mode & FWRITE))
-			error = EPERM;
-		else
-			error = frrequest(unit, cmd, (caddr_t)data,
-					  fr_active, 1);
-		break;
-	case SIOCINIFR :
-	case SIOCRMIFR :
-	case SIOCADIFR :
-		if (!(mode & FWRITE))
-			error = EPERM;
-		else
-			error = frrequest(unit, cmd, (caddr_t)data,
-					  1 - fr_active, 1);
-		break;
-	case SIOCSWAPA :
-		if (!(mode & FWRITE))
-			error = EPERM;
-		else {
-			WRITE_ENTER(&ipf_mutex);
-			bzero((char *)frcache, sizeof(frcache[0]) * 2);
-			error = COPYOUT((caddr_t)&fr_active, (caddr_t)data,
-				       sizeof(fr_active));
-			if (error != 0)
-				error = EFAULT;
-			else
-				fr_active = 1 - fr_active;
-			RWLOCK_EXIT(&ipf_mutex);
-		}
-		break;
-	case SIOCGETFS :
-		fr_getstat(&fio);
-		error = fr_outobj((void *)data, &fio, IPFOBJ_IPFSTAT);
-		break;
-	case SIOCFRZST :
-		if (!(mode & FWRITE))
-			error = EPERM;
-		else
-			error = fr_zerostats((caddr_t)data);
-		break;
-	case	SIOCIPFFL :
-		if (!(mode & FWRITE))
-			error = EPERM;
-		else {
-			error = COPYIN((caddr_t)data, (caddr_t)&tmp,
-				       sizeof(tmp));
-			if (!error) {
-				tmp = frflush(unit, 4, tmp);
-				error = COPYOUT((caddr_t)&tmp, (caddr_t)data,
-					       sizeof(tmp));
-				if (error != 0)
-					error = EFAULT;
-			} else
-				error = EFAULT;
-		}
-		break;
-#ifdef USE_INET6
-	case	SIOCIPFL6 :
-		if (!(mode & FWRITE))
-			error = EPERM;
-		else {
-			error = COPYIN((caddr_t)data, (caddr_t)&tmp,
-				       sizeof(tmp));
-			if (!error) {
-				tmp = frflush(unit, 6, tmp);
-				error = COPYOUT((caddr_t)&tmp, (caddr_t)data,
-					       sizeof(tmp));
-				if (error != 0)
-					error = EFAULT;
-			} else
-				error = EFAULT;
-		}
-		break;
-#endif
-	case SIOCSTLCK :
-		error = COPYIN((caddr_t)data, (caddr_t)&tmp, sizeof(tmp));
-		if (error == 0) {
-			fr_state_lock = tmp;
-			fr_nat_lock = tmp;
-			fr_frag_lock = tmp;
-			fr_auth_lock = tmp;
-		} else
-			error = EFAULT;
-	break;
-#ifdef	IPFILTER_LOG
-	case	SIOCIPFFB :
-		if (!(mode & FWRITE))
-			error = EPERM;
-		else {
-			tmp = ipflog_clear(unit);
-			error = COPYOUT((caddr_t)&tmp, (caddr_t)data,
-				       sizeof(tmp));
-			if (error)
-				error = EFAULT;
-		}
-		break;
-#endif /* IPFILTER_LOG */
-	case SIOCFRSYN :
-		if (!(mode & FWRITE))
-			error = EPERM;
-		else {
-			RWLOCK_EXIT(&ipf_global);
-			WRITE_ENTER(&ipf_global);
-			error = ipfsync();
-		}
-		break;
-	case SIOCGFRST :
-		error = fr_outobj((void *)data, fr_fragstats(),
-				  IPFOBJ_FRAGSTAT);
-		break;
-	case FIONREAD :
-#ifdef	IPFILTER_LOG
-		tmp = (int)iplused[IPL_LOGIPF];
-
-		error = COPYOUT((caddr_t)&tmp, (caddr_t)data, sizeof(tmp));
-		if (error != 0)
-			error = EFAULT;
-#endif
-		break;
-	default :
-		cmn_err(CE_NOTE, "Unknown: cmd %#x data %p", cmd, (void *)data);
-		error = EINVAL;
-		break;
-	}
 	RWLOCK_EXIT(&ipf_global);
 	return error;
 }
@@ -514,6 +331,10 @@ cred_t *cp;
 # ifdef	IPFDEBUG
 	cmn_err(CE_CONT, "iplread(%x,%x,%x)\n", dev, uio, cp);
 # endif
+
+	if (fr_running < 1)
+		return EIO;
+
 # ifdef	IPFILTER_SYNC
 	if (getminor(dev) == IPL_LOGSYNC)
 		return ipfsync_read(uio);
@@ -538,6 +359,10 @@ cred_t *cp;
 #ifdef	IPFDEBUG
 	cmn_err(CE_CONT, "iplwrite(%x,%x,%x)\n", dev, uio, cp);
 #endif
+
+	if (fr_running < 1)
+		return EIO;
+
 #ifdef	IPFILTER_SYNC
 	if (getminor(dev) == IPL_LOGSYNC)
 		return ipfsync_write(uio);
@@ -817,7 +642,7 @@ int dst;
 		ip->ip_p = IPPROTO_ICMP;
 		ip->ip_id = fin->fin_ip->ip_id;
 		ip->ip_tos = fin->fin_ip->ip_tos;
-		ip->ip_len = htons((u_short)sz);
+		ip->ip_len = (u_short)sz;
 		if (dst == 0) {
 			if (fr_ifpaddr(4, FRI_NORMAL, qpi->qpi_real,
 				       &dst4, NULL) == -1) {
@@ -1112,8 +937,9 @@ frdest_t *fdp;
 	qpktinfo_t *qpi;
 	frentry_t *fr;
 	frdest_t fd;
-	qif_t *qif;
+	qif_t *ifp;
 	void *dstp;
+	void *sifp;
 	ip_t *ip;
 #ifndef	sparc
 	u_short __iplen, __ipoff;
@@ -1169,30 +995,38 @@ frdest_t *fdp;
 		dstp = &dst6;
 	}
 #endif
-	qif = fdp->fd_ifp;
-	if (qif == NULL)
-		qif = qif_illrouteto(fin->fin_v, dstp);
+	ifp = fdp->fd_ifp;
+	if (ifp == NULL)
+		ifp = qif_illrouteto(fin->fin_v, dstp);
 
-	if (qif == NULL || qif == (void *)-1)
+	if (ifp == NULL || ifp == (void *)-1)
 		goto bad_fastroute;
 
-	if (fin->fin_out == 0) {
-		void *saveqif;
-		u_32_t pass;
-
-		saveqif = fin->fin_ifp;
-		fin->fin_ifp = qif;
+	/*
+	 * For input packets which are being "fastrouted", they won't
+	 * go back through output filtering and miss their chance to get
+	 * NAT'd and counted.  Duplicated packets aren't considered to be
+	 * part of the normal packet stream, so do not NAT them or pass
+	 * them through stateful checking, etc.
+	 */
+	if ((fdp != &fr->fr_dif) && (fin->fin_out == 0)) {
+		sifp = fin->fin_ifp;
+		fin->fin_ifp = ifp;
 		fin->fin_out = 1;
-		fr_acctpkt(fin, &pass);
+		(void) fr_acctpkt(fin, NULL);
 		fin->fin_fr = NULL;
-		if (!fr || !(fr->fr_flags & FR_RETMASK))
+		if (!fr || !(fr->fr_flags & FR_RETMASK)) {
+			u_32_t pass;
+
 			(void) fr_checkstate(fin, &pass);
+		}
 
 		switch (fr_checknatout(fin, NULL))
 		{
 		case 0 :
 			break;
 		case 1 :
+			fr_natderef((nat_t **)&fin->fin_nat);
 			ip->ip_sum = 0;
 			break;
 		case -1 :
@@ -1201,8 +1035,29 @@ frdest_t *fdp;
 		}
 
 		fin->fin_out = 0;
-		fin->fin_ifp = saveqif;
+		fin->fin_ifp = sifp;
+	} else if (fin->fin_out == 1) {
+#if SOLARIS2 >= 6
+		/*
+		 * We're taking a packet from an interface and putting it on
+		 * another interface.  There's no guarantee that the other
+		 * interface will have the same capabilities, so disable
+		 * any flags that are set and do things manually for both
+		 * IP and TCP/UDP
+		 */
+		if (mb->b_datap->db_struioflag) {
+			mb->b_datap->db_struioflag = 0;
+
+			if (fin->fin_v == 4) {
+				ip->ip_sum = 0;
+				ip->ip_sum = ipf_cksum((u_short *)ip,
+						       sizeof(*ip));
+			}
+			ipf_fixl4sum(fin);
+		}
+#endif
 	}
+
 #ifndef sparc
 	if (fin->fin_v == 4) {
 		__iplen = (u_short)ip->ip_len,
@@ -1212,7 +1067,7 @@ frdest_t *fdp;
 		ip->ip_off = htons(__ipoff);
 	}
 #endif
-	if (pfil_sendbuf(qif, mb, ip, dstp) == 0) {
+	if (pfil_sendbuf(ifp, mb, ip, dstp) == 0) {
 		ATOMIC_INCL(fr_frouteok[0]);
 	} else {
 		ATOMIC_INCL(fr_frouteok[1]);
@@ -1299,7 +1154,7 @@ int len;
 }
 
 
-int ipf_inject(fr_info_t *fin)
+int ipf_inject(fr_info_t *fin, mb_t *m)
 {
 	qifpkt_t *qp;
 
@@ -1318,4 +1173,36 @@ int ipf_inject(fr_info_t *fin)
 	strncpy(qp->qp_ifname, fin->fin_ifname, LIFNAMSIZ);
 	qif_addinject(qp);
 	return 0;
+}
+
+
+static void ipf_fixl4sum(fin)
+fr_info_t *fin;
+{
+	u_short *csump;
+	udphdr_t *udp;
+
+	csump = NULL;
+
+	switch (fin->fin_p)
+	{
+	case IPPROTO_TCP :
+		csump = &((tcphdr_t *)fin->fin_dp)->th_sum;
+		break;
+
+	case IPPROTO_UDP :
+		udp = fin->fin_dp;
+		if (udp->uh_sum != 0)
+			csump = &udp->uh_sum;
+		break;
+
+	default :
+		break;
+	}
+
+	if (csump != NULL) {
+		*csump = 0;
+		*csump = fr_cksum(fin->fin_m, fin->fin_ip, fin->fin_p,
+				  fin->fin_dp, fin->fin_plen);
+	}
 }

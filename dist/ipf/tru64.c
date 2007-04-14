@@ -1,4 +1,4 @@
-/*	$NetBSD: tru64.c,v 1.1.1.4 2006/04/04 16:08:49 martti Exp $	*/
+/*	$NetBSD: tru64.c,v 1.1.1.5 2007/04/14 20:17:25 martin Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -6,7 +6,7 @@
  * See the IPFILTER.LICENCE file for details on licencing.
  */
 #if !defined(lint)
-static const char rcsid[] = "@(#)Id: tru64.c,v 2.11.2.5 2005/08/20 13:48:26 darrenr Exp";
+static const char rcsid[] = "@(#)Id: tru64.c,v 2.11.2.6 2006/07/14 06:12:23 darrenr Exp";
 #endif
 #include <sys/types.h>
 #include <sys/conf.h>
@@ -640,12 +640,12 @@ ipfilter_attach(void)
 	RWLOCK_INIT(&ipf_frcache, 1);
 	ipftru64_inited = 1;
 
-	status = iplattach();
+	status = ipfattach();
 #ifdef	IPFDEBUG
-	printf("iplattach() = %d\n", status);
+	printf("ipfattach() = %d\n", status);
 #endif
 	if (status != ESUCCESS) {
-		(void) ipldetach();
+		(void) ipfdetach();
 		return status;
 	}
 
@@ -790,9 +790,9 @@ ipfilter_detach(void)
 	}
 
 	if ((status == ESUCCESS) && (ipfilter_registered > 0)) {
-		status = ipldetach();
+		status = ipfdetach();
 #ifdef	IPFDEBUG
-		printf("ipldetach() = %d\n", status);
+		printf("ipfdetach() = %d\n", status);
 #endif
 		ipfilter_registered = 0;
 	}

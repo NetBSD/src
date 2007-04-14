@@ -1,11 +1,11 @@
-/*	$NetBSD: ip_raudio_pxy.c,v 1.1.1.10 2005/02/19 21:26:07 martti Exp $	*/
+/*	$NetBSD: ip_raudio_pxy.c,v 1.1.1.11 2007/04/14 20:17:23 martin Exp $	*/
 
 /*
  * Copyright (C) 1998-2003 by Darren Reed
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: ip_raudio_pxy.c,v 1.40.2.3 2005/02/04 10:22:55 darrenr Exp
+ * Id: ip_raudio_pxy.c,v 1.40.2.4 2006/07/14 06:12:17 darrenr Exp
  */
 
 #define	IPF_RAUDIO_PROXY
@@ -306,7 +306,7 @@ nat_t *nat;
 
 			(void) fr_addstate(&fi, NULL, (sp ? 0 : SI_W_SPORT));
 			if (fi.fin_state != NULL)
-				fr_statederef(&fi, (ipstate_t **)&fi.fin_state);
+				fr_statederef((ipstate_t **)&fi.fin_state);
 		}
 	}
 
@@ -326,7 +326,7 @@ nat_t *nat;
 
 			(void) fr_addstate(&fi, NULL, SI_W_DPORT);
 			if (fi.fin_state != NULL)
-				fr_statederef(&fi, (ipstate_t **)&fi.fin_state);
+				fr_statederef((ipstate_t **)&fi.fin_state);
 		}
 	}
 

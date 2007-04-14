@@ -1,11 +1,11 @@
-/*	$NetBSD: ip_proxy.h,v 1.1.1.9 2006/04/04 16:08:42 martti Exp $	*/
+/*	$NetBSD: ip_proxy.h,v 1.1.1.10 2007/04/14 20:17:23 martin Exp $	*/
 
 /*
  * Copyright (C) 1997-2001 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: ip_proxy.h,v 2.31.2.3 2005/06/18 02:41:33 darrenr Exp
+ * Id: ip_proxy.h,v 2.31.2.4 2006/07/14 06:12:17 darrenr Exp
  */
 
 #ifndef	__IP_PROXY_H__
@@ -455,6 +455,6 @@ extern	void	aps_free __P((ap_session_t *));
 extern	int	appr_check __P((fr_info_t *, struct nat *));
 extern	aproxy_t	*appr_lookup __P((u_int, char *));
 extern	int	appr_new __P((fr_info_t *, struct nat *));
-extern	int	appr_ioctl __P((caddr_t, ioctlcmd_t, int));
+extern	int	appr_ioctl __P((caddr_t, ioctlcmd_t, int, void *));
 
 #endif /* __IP_PROXY_H__ */

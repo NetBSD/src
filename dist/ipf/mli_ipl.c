@@ -1,4 +1,4 @@
-/*	$NetBSD: mli_ipl.c,v 1.1.1.8 2006/04/04 16:08:47 martti Exp $	*/
+/*	$NetBSD: mli_ipl.c,v 1.1.1.9 2007/04/14 20:17:25 martin Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -59,7 +59,7 @@ char	*ipfiltermversion = M_VERSION;
 ipfmutex_t	ipl_mutex, ipfi_mutex, ipf_rw, ipf_stinsert, ipf_authmx;
 ipfmutex_t	ipf_nat_new, ipf_natio, ipf_timeoutlock;
 ipfrwlock_t	ipf_frag, ipf_state, ipf_nat, ipf_natfrag, ipf_auth;
-ipfrwlock_t	ipf_global, ipf_mutex, ipf_ipidfrag, ipf_frcache;
+ipfrwlock_t	ipf_global, ipf_mutex, ipf_ipidfrag, ipf_frcache, ipf_tokens;
 
 int     (*fr_checkp) __P((struct ip *, int, void *, int, mb_t **));
 
@@ -573,6 +573,7 @@ iplunload(void)
 	LOCK_DEALLOC(ipf_auth.l);
 	LOCK_DEALLOC(ipf_natfrag.l);
 	LOCK_DEALLOC(ipf_ipidfrag.l);
+	LOCK_DEALLOC(ipf_tokens.l);
 	LOCK_DEALLOC(ipf_stinsert.l);
 	LOCK_DEALLOC(ipf_nat_new.l);
 	LOCK_DEALLOC(ipf_natio.l);
@@ -591,6 +592,7 @@ iplunload(void)
 	MUTEX_DESTROY(&ipf_timeoutlock);
 	RW_DESTROY(&ipf_mutex);
 	RW_DESTROY(&ipf_frcache);
+	RW_DESTROY(&ipf_tokens);
 	RWLOCK_EXIT(&ipf_global);
 	delay(hz);
 	RW_DESTROY(&ipf_global);
@@ -623,6 +625,7 @@ ipf_timeoutlock.l = LOCK_ALLOC((uchar_t)-1, IPF_LOCK_PL, (lkinfo_t *)-1, KM_NOSL
 	ipf_stinsert.l = LOCK_ALLOC((uchar_t)-1, IPF_LOCK_PL, (lkinfo_t *)-1, KM_NOSLEEP);
 	ipf_natfrag.l = LOCK_ALLOC((uchar_t)-1, IPF_LOCK_PL, (lkinfo_t *)-1, KM_NOSLEEP);
 	ipf_ipidfrag.l = LOCK_ALLOC((uchar_t)-1, IPF_LOCK_PL, (lkinfo_t *)-1, KM_NOSLEEP);
+	ipf_tokens.l = LOCK_ALLOC((uchar_t)-1, IPF_LOCK_PL, (lkinfo_t *)-1, KM_NOSLEEP);
 	ipf_auth.l = LOCK_ALLOC((uchar_t)-1, IPF_LOCK_PL, (lkinfo_t *)-1, KM_NOSLEEP);
 	ipf_rw.l = LOCK_ALLOC((uchar_t)-1, IPF_LOCK_PL, (lkinfo_t *)-1, KM_NOSLEEP);
 	ipl_mutex.l = LOCK_ALLOC((uchar_t)-1, IPF_LOCK_PL, (lkinfo_t *)-1, KM_NOSLEEP);
@@ -630,7 +633,7 @@ ipf_timeoutlock.l = LOCK_ALLOC((uchar_t)-1, IPF_LOCK_PL, (lkinfo_t *)-1, KM_NOSL
 	if (!ipfi_mutex.l || !ipf_mutex.l || !ipf_timeoutlock.l ||
 	    !ipf_frag.l || !ipf_state.l || !ipf_nat.l || !ipf_natfrag.l ||
 	    !ipf_auth.l || !ipf_rw.l || !ipf_ipidfrag.l || !ipl_mutex.l ||
-	    !ipf_stinsert.l || !ipf_authmx.l || !ipf_frcache.l)
+	    !ipf_stinsert.l || !ipf_authmx.l || !ipf_frcache.l || !ipf_tokens.l)
 		panic("IP Filter: LOCK_ALLOC failed");
 #else
 	MUTEX_INIT(&ipf_rw, "ipf rw mutex");

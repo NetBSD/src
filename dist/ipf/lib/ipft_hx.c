@@ -1,13 +1,13 @@
-/*	$NetBSD: ipft_hx.c,v 1.1.1.3 2006/04/04 16:09:32 martti Exp $	*/
+/*	$NetBSD: ipft_hx.c,v 1.1.1.4 2007/04/14 20:17:31 martin Exp $	*/
 
 /*
- * Copyright (C) 1995-2001 by Darren Reed.
+ * Copyright (C) 2000-2005 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)ipft_hx.c	1.1 3/9/96 (C) 1996 Darren Reed";
-static const char rcsid[] = "@(#)Id: ipft_hx.c,v 1.11.4.3 2005/12/04 10:07:21 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ipft_hx.c,v 1.11.4.4 2006/06/16 17:21:03 darrenr Exp";
 #endif
 
 #include <ctype.h>

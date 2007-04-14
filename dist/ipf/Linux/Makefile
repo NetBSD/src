@@ -81,7 +81,7 @@ IPPOOL=$(OBJ)/ippool_y.o $(OBJ)/ippool_l.o $(OBJ)/kmem.o $(OBJ)/ippool.o
 IPTRAFCON=$(OBJ)/iptrafcon.o
 FILS=$(OBJ)/ipfstat.o
 #
-CCARGS=-I. -I$(CPUDIR) $(DEBUG) $(CFLAGS) -D_BSD_SOURCE=1 $(LOOKUP) $(IPFLOG)
+CCARGS=-I. -I$(CPUDIR) $(DEBUG) $(CFLAGS) $(LOOKUP) $(IPFLOG) -DLINUX=$(LINUX)
 EXTRA=-DIPFILTER_LOG -DIPFILTER_LOOKUP
 
 include $(TOP)/lib/Makefile
@@ -210,7 +210,7 @@ $(OBJ)/ippool_l.h: $(TOOL)/lexer.h
 $(OBJ)/ippool.o: $(TOOL)/ippool.c $(TOP)/ip_fil.h $(TOP)/ipf.h $(TOP)/ip_pool.h
 	$(CC) $(CCARGS) -c $(TOOL)/ippool.c -o $@
 
-$(OBJ)/ippool: $(IPPOOL)
+$(OBJ)/ippool: $(IPPOOL) $(OBJ)/libipf.a
 	$(CC) $(CCARGS) $(IPPOOL) -o $@ $(LIBS) -lelf $(LEXLIB)
 
 $(OBJ)/ipnat_y.o: $(OBJ)/ipnat_y.c $(TOP)/ip_fil.h $(TOP)/ipf.h \

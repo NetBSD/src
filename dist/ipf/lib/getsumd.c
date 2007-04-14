@@ -1,4 +1,12 @@
-/*	$NetBSD: getsumd.c,v 1.1.1.1 2004/03/28 08:56:18 martti Exp $	*/
+/*	$NetBSD: getsumd.c,v 1.1.1.2 2007/04/14 20:17:31 martin Exp $	*/
+
+/*
+ * Copyright (C) 2002 by Darren Reed.
+ * 
+ * See the IPFILTER.LICENCE file for details on licencing.  
+ *   
+ * Id: getsumd.c,v 1.2.4.1 2006/06/16 17:21:01 darrenr Exp 
+ */     
 
 #include "ipf.h"
 
