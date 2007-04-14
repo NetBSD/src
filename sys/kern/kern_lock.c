@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.111 2007/03/30 11:05:59 ad Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.112 2007/04/14 06:59:25 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2006 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.111 2007/03/30 11:05:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.112 2007/04/14 06:59:25 perseant Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_ddb.h"
@@ -884,10 +884,11 @@ lockmgr(volatile struct lock *lkp, u_int flags,
 					    "exclusive lock holder %lu "
 					    "unlocking", cpu_num, lkp->lk_cpu);
 				} else {
-					lockpanic(lkp, "lockmgr: pid %d, not "
-					    "exclusive lock holder %d "
-					    "unlocking", pid,
-					    lkp->lk_lockholder);
+					lockpanic(lkp, "lockmgr: pid %d.%d, not "
+					    "exclusive lock holder %d.%d "
+					    "unlocking", pid, lid,
+					    lkp->lk_lockholder,
+					    lkp->lk_locklwp);
 				}
 			}
 			if (lkp->lk_exclusivecount == lkp->lk_recurselevel)
