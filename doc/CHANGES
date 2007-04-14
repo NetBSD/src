@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.825 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.826 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -77,3 +77,4 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		onboard display adapter crmfb(4) [jmcneill 20070412]
 	sgimips: import mavb(4) audio device driver for SGI O2 from
 		OpenBSD [jmcneill 20070412]
+	sparc64: add support for hardware monitoring on E450 [tnn 20070414]
