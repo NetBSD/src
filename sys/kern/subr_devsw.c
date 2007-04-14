@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_devsw.c,v 1.10.8.1 2007/04/13 20:56:18 ad Exp $	*/
+/*	$NetBSD: subr_devsw.c,v 1.10.8.2 2007/04/14 11:40:21 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2007 The NetBSD Foundation, Inc.
@@ -52,12 +52,12 @@
  *
  * Allocation
  *
- *	When the system initially, only the statically allocated
- *	indexes (bdevsw0, cdevsw0) are used.  If these overflow due
- *	to allocation, we allocate a fixed block of memory to hold
- *	the new, expanded index.  This "fork" of the table is only
- *	ever performed once in order to guarantee that other threads
- *	may safely access the device tables:
+ *	When the system initially boots only the statically allocated
+ *	indexes (bdevsw0, cdevsw0) are used.  If these overflow due to
+ *	allocation, we allocate a fixed block of memory to hold the new,
+ *	expanded index.  This "fork" of the table is only ever performed
+ *	once in order to guarantee that other threads may safely access
+ *	the device tables:
  *
  *	o Once a thread has a "reference" to the table via an earlier
  *	  open() call, we know that the entry in the table must exist
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.10.8.1 2007/04/13 20:56:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.10.8.2 2007/04/14 11:40:21 ad Exp $");
 
 #include "opt_multiprocessor.h"
 
