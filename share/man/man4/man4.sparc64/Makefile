@@ -1,8 +1,8 @@
-# $NetBSD: Makefile,v 1.2 2004/03/31 08:04:38 mrg Exp $
+# $NetBSD: Makefile,v 1.3 2007/04/14 19:33:27 tnn Exp $
 
 MANSUBDIR=/sparc64
 
-MAN=	intro.4 sab.4
+MAN=	envctrl.4 intro.4 sab.4
 
 MLINKS+=	sab.4 sabtty.4
 
