@@ -1,4 +1,4 @@
-/*	$NetBSD: btpin.c,v 1.2 2006/09/26 19:18:19 plunky Exp $	*/
+/*	$NetBSD: btpin.c,v 1.3 2007/04/14 09:28:39 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -34,7 +34,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2006 Itronix, Inc\n"
 	    "All rights reserved.\n");
-__RCSID("$NetBSD: btpin.c,v 1.2 2006/09/26 19:18:19 plunky Exp $");
+__RCSID("$NetBSD: btpin.c,v 1.3 2007/04/14 09:28:39 plunky Exp $");
 
 #include <sys/types.h>
 #include <sys/un.h>
@@ -150,7 +150,7 @@ usage(void)
 {
 
 	fprintf(stderr,
-		"usage: %s [-d device] [-s socket] [-p pin | -r [-l len]] -a addr\n"
+		"usage: %s [-d device] [-s socket] {-p pin | -r [-l len]} -a addr\n"
 		"", getprogname());
 
 	exit(EXIT_FAILURE);
