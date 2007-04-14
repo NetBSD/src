@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.109 2007/04/10 02:59:27 macallan Exp $
+#	$NetBSD: files.sparc64,v 1.110 2007/04/14 19:33:28 tnn Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -66,6 +66,10 @@ attach timer at mainbus, sbus
 device power
 attach power at sbus, ebus
 file	arch/sparc64/dev/power.c		power
+
+device envctrl: sysmon_envsys, pcf8584
+attach envctrl at ebus
+file	arch/sparc64/dev/envctrl.c	envctrl
 
 device cpu
 attach cpu at mainbus
