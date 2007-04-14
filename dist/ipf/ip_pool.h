@@ -1,11 +1,11 @@
-/*	$NetBSD: ip_pool.h,v 1.1.1.2 2006/04/04 16:08:41 martti Exp $	*/
+/*	$NetBSD: ip_pool.h,v 1.1.1.3 2007/04/14 20:17:23 martin Exp $	*/
 
 /*
  * Copyright (C) 1993-2001, 2003 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: ip_pool.h,v 2.26.2.3 2005/06/12 07:18:27 darrenr Exp
+ * Id: ip_pool.h,v 2.26.2.5 2007/01/14 14:06:12 darrenr Exp
  */
 
 #ifndef	__IP_POOL_H__
@@ -37,8 +37,9 @@ typedef	struct ip_pool_node {
 	addrfamily_t		ipn_addr;
 	addrfamily_t		ipn_mask;
 	int			ipn_info;
-	char			ipn_name[FR_GROUPLEN];
-	u_long			ipn_hits;
+	int			ipn_ref;
+char			ipn_name[FR_GROUPLEN];
+u_long			ipn_hits;
 	struct ip_pool_node	*ipn_next, **ipn_pnext;
 } ip_pool_node_t;
 
@@ -55,7 +56,8 @@ typedef	struct ip_pool_s {
 	char		ipo_name[FR_GROUPLEN];
 } ip_pool_t;
 
-#define	IPOOL_ANON	0x80000000
+#define	IPOOL_DELETE	0x01
+#define	IPOOL_ANON	0x02
 
 
 typedef	struct	ip_pool_stat	{
@@ -75,13 +77,16 @@ extern	void	ip_pool_fini __P((void));
 extern	int	ip_pool_create __P((iplookupop_t *));
 extern	int	ip_pool_insert __P((ip_pool_t *, i6addr_t *, i6addr_t *, int));
 extern	int	ip_pool_remove __P((ip_pool_t *, ip_pool_node_t *));
-extern	int	ip_pool_destroy __P((iplookupop_t *));
+extern	int	ip_pool_destroy __P((int, char *));
 extern	void	ip_pool_free __P((ip_pool_t *));
 extern	void	ip_pool_deref __P((ip_pool_t *));
+extern	void	ip_pool_node_deref __P((ip_pool_node_t *));
 extern	void	*ip_pool_find __P((int, char *));
 extern	ip_pool_node_t *ip_pool_findeq __P((ip_pool_t *,
 					  addrfamily_t *, addrfamily_t *));
 extern	int	ip_pool_flush __P((iplookupflush_t *));
 extern	int	ip_pool_statistics __P((iplookupop_t *));
+extern	int	ip_pool_getnext __P((ipftoken_t *, ipflookupiter_t *));
+extern	void	ip_pool_iterderef __P((u_int, int, void *));
 
 #endif /* __IP_POOL_H__ */

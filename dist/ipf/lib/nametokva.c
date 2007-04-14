@@ -1,4 +1,12 @@
-/*	$NetBSD: nametokva.c,v 1.1.1.1 2004/03/28 08:56:19 martti Exp $	*/
+/*	$NetBSD: nametokva.c,v 1.1.1.2 2007/04/14 20:17:31 martin Exp $	*/
+
+/*
+ * Copyright (C) 2002 by Darren Reed.
+ * 
+ * See the IPFILTER.LICENCE file for details on licencing.  
+ *   
+ * Id: nametokva.c,v 1.1.4.1 2006/06/16 17:21:07 darrenr Exp 
+ */     
 
 #include "ipf.h"
 

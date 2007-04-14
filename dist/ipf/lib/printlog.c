@@ -1,11 +1,11 @@
-/*	$NetBSD: printlog.c,v 1.1.1.2 2006/04/04 16:09:37 martti Exp $	*/
+/*	$NetBSD: printlog.c,v 1.1.1.3 2007/04/14 20:17:31 martin Exp $	*/
 
 /*
- * Copyright (C) 1993-2001 by Darren Reed.
+ * Copyright (C) 2000-2005 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: printlog.c,v 1.6.4.2 2005/12/18 14:49:06 darrenr Exp
+ * Id: printlog.c,v 1.6.4.3 2006/06/16 17:21:12 darrenr Exp
  */
 
 #include "ipf.h"

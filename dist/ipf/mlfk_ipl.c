@@ -1,4 +1,4 @@
-/*	$NetBSD: mlfk_ipl.c,v 1.1.1.8 2006/04/04 16:08:47 martti Exp $	*/
+/*	$NetBSD: mlfk_ipl.c,v 1.1.1.9 2007/04/14 20:17:24 martin Exp $	*/
 
 /*
  * Copyright (C) 2000 by Darren Reed.
@@ -31,8 +31,6 @@
 #include <netinet/ip_auth.h>
 #include <netinet/ip_frag.h>
 #include <netinet/ip_sync.h>
-
-extern	struct	selinfo	ipfselwait[IPL_LOGSIZE];
 
 #if __FreeBSD_version >= 502116
 static struct cdev *ipf_devs[IPL_LOGSIZE];
@@ -175,7 +173,7 @@ ipf_modload()
 	char *defpass, *c, *str;
 	int i, j, error;
 
-	error = iplattach();
+	error = ipfattach();
 	if (error)
 		return error;
 
@@ -227,7 +225,7 @@ ipf_modunload()
 		return EBUSY;
 
 	if (fr_running >= 0) {
-		error = ipldetach();
+		error = ipfdetach();
 		if (error != 0)
 			return error;
 	} else

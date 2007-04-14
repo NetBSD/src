@@ -1,11 +1,11 @@
-/*	$NetBSD: printhostmask.c,v 1.1.1.1 2004/03/28 08:56:20 martti Exp $	*/
+/*	$NetBSD: printhostmask.c,v 1.1.1.2 2007/04/14 20:17:31 martin Exp $	*/
 
 /*
- * Copyright (C) 1993-2001 by Darren Reed.
+ * Copyright (C) 2000-2005 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: printhostmask.c,v 1.8 2002/04/11 15:01:19 darrenr Exp
+ * Id: printhostmask.c,v 1.8.4.1 2006/06/16 17:21:12 darrenr Exp
  */
 
 #include "ipf.h"

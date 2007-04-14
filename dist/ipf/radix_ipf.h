@@ -1,4 +1,4 @@
-/*	$NetBSD: radix_ipf.h,v 1.1.1.2 2006/04/04 16:08:49 martti Exp $	*/
+/*	$NetBSD: radix_ipf.h,v 1.1.1.3 2007/04/14 20:17:25 martin Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1993
@@ -42,7 +42,7 @@
 # endif
 #endif
 
-#if defined(__sgi)
+#if defined(__sgi) || defined(__osf__)
 # define	radix_mask	ipf_radix_mask
 # define	radix_node	ipf_radix_node
 # define	radix_node_head	ipf_radix_node_head
