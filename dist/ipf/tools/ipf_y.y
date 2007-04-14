@@ -1,3 +1,10 @@
+/*	$NetBSD: ipf_y.y,v 1.21 2007/04/14 20:34:34 martin Exp $	*/
+
+/*
+ * Copyright (C) 2001-2006 by Darren Reed.
+ *
+ * See the IPFILTER.LICENCE file for details on licencing.
+ */
 %{
 #include "ipf.h"
 #include <sys/ioctl.h>
@@ -169,7 +176,7 @@ file:	line
 	| file assign
 	;
 
-line:	xx rule		{ while ((fr = frtop) != NULL) {
+line:	rule		{ while ((fr = frtop) != NULL) {
 				frtop = fr->fr_next;
 				fr->fr_next = NULL;
 				(*ipfaddfunc)(ipffd, ipfioctl[IPL_LOGIPF], fr);
@@ -188,6 +195,7 @@ assign:	YY_STR assigning YY_STR ';'	{ set_variable($1, $3);
 					  resetlexer();
 					  free($1);
 					  free($3);
+					  yyvarnext = 0;
 					}
 	;
 
@@ -211,8 +219,8 @@ outrule:
 	;
 
 rulehead:
-	collection action
-	| insert collection action
+	xx collection action
+	| xx insert collection action
 	;
 
 markin:	IPFY_IN				{ fr->fr_flags |= FR_INQUE; }
@@ -835,20 +843,32 @@ dstportlist:
 	;
 
 addr:	pool '/' YY_NUMBER		{ pooled = 1;
-					  yyexpectaddr = 0;
 					  $$.a.iplookuptype = IPLT_POOL;
+					  $$.a.iplookupsubtype = 0;
 					  $$.a.iplookupnum = $3; }
-	| pool '=' '(' poollist ')'	{ pooled = 1;
-					  yyexpectaddr = 0;
+	| pool '/' YY_STR		{ pooled = 1;
 					  $$.a.iplookuptype = IPLT_POOL;
+					  $$.a.iplookupsubtype = 1;
+					  strncpy($$.a.iplookupname, $3,
+						  sizeof($$.a.iplookupname));
+					}
+	| pool '=' '(' poollist ')'	{ pooled = 1;
+					  $$.a.iplookuptype = IPLT_POOL;
+					  $$.a.iplookupsubtype = 0;
 					  $$.a.iplookupnum = makepool($4); }
 	| hash '/' YY_NUMBER		{ hashed = 1;
-					  yyexpectaddr = 0;
 					  $$.a.iplookuptype = IPLT_HASH;
+					  $$.a.iplookupsubtype = 0;
 					  $$.a.iplookupnum = $3; }
-	| hash '=' '(' addrlist ')'	{ hashed = 1;
-					  yyexpectaddr = 0;
+	| hash '/' YY_STR		{ pooled = 1;
 					  $$.a.iplookuptype = IPLT_HASH;
+					  $$.a.iplookupsubtype = 1;
+					  strncpy($$.a.iplookupname, $3,
+						  sizeof($$.a.iplookupname));
+					}
+	| hash '=' '(' addrlist ')'	{ hashed = 1;
+					  $$.a.iplookuptype = IPLT_HASH;
+					  $$.a.iplookupsubtype = 0;
 					  $$.a.iplookupnum = makehash($4); }
 	| ipaddr			{ bcopy(&$1, &$$, sizeof($$));
 					  yyexpectaddr = 0; }
@@ -1373,8 +1393,8 @@ servicename:
 	YY_STR				{ $$ = $1; }
 	;
 
-interfacename:	YY_STR				{ $$ = $1; }
-	| YY_STR ':' YY_NUMBER
+interfacename:	name				{ $$ = $1; }
+	| name ':' YY_NUMBER
 		{ $$ = $1;
 		  fprintf(stderr, "%d: Logical interface %s:%d unsupported, "
 			  "use the physical interface %s instead.\n",
@@ -1383,6 +1403,7 @@ interfacename:	YY_STR				{ $$ = $1; }
 	;
 
 name:	YY_STR				{ $$ = $1; }
+	| '-'				{ $$ = strdup("-"); }
 	;
 
 ipv4_16:

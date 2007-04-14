@@ -1,20 +1,32 @@
 #!/bin/sh
 #
-# $NetBSD: natipftest,v 1.4 2006/04/04 16:17:19 martti Exp $
+# $NetBSD: natipftest,v 1.5 2007/04/14 20:34:40 martin Exp $
 #
 TESTDIR=$1
 shift
 
 mode=$1
+name=$2
+input=$3
+output=$4
 shift
-if [ $3 = hex ] ; then
-	format="-xF $2"
+if [ $output = hex ] ; then
+	format="-xF $input"
 else
-	format="-F $2"
+	format="-F $input"
 fi
-if [ "$4" != "" ] ; then
-	format="-T $4 $format"
-fi
+shift
+shift
+shift
+while [ $# -ge 1 ] ; do
+	l=`echo $1 | cut -c1`
+	if [ "$l" = "-" ] ; then
+		format="$format $1"
+	else
+		format="-T $1 $format"
+	fi
+	shift
+done
 mkdir -p results
 if [ -f /usr/ucb/touch ] ; then
 	TOUCH=/usr/ucb/touch
@@ -30,35 +42,35 @@ fi
 
 case $mode in
 single)
-	echo "$1...";
-	/bin/cp /dev/null results/$1
+	echo "$name...";
+	/bin/cp /dev/null results/$name
 	( while read rule; do
-		echo "$rule" | ipftest -R $format -b -r ${TESTDIR}/regress/$1.ipf -N - -i ${TESTDIR}/input/$1 >> \
-			results/$1;
+		echo "$rule" | ipftest -R $format -b -r ${TESTDIR}/regress/$name.ipf -N - -i ${TESTDIR}/input/$name >> \
+			results/$name;
 		if [ $? -ne 0 ] ; then
 			exit 1;
 		fi
-		echo "-------------------------------" >> results/$1
-	done ) < ${TESTDIR}/regress/$1.nat
-	cmp ${TESTDIR}/expected/$1 results/$1
+		echo "-------------------------------" >> results/$name
+	done ) < ${TESTDIR}/regress/$name.nat
+	cmp ${TESTDIR}/expected/$name results/$name
 	status=$?
 	if [ $status = 0 ] ; then
-		$TOUCH $1
+		$TOUCH $name
 	fi
 	;;
 multi)
-	echo "$1...";
-	/bin/cp /dev/null results/$1
-	ipftest -R $format -b -r ${TESTDIR}/regress/$1.ipf -N ${TESTDIR}/regress/$1.nat \
-		-i ${TESTDIR}/input/$1 >> results/$1;
+	echo "$name...";
+	/bin/cp /dev/null results/$name
+	ipftest -R $format -b -r ${TESTDIR}/regress/$name.ipf -N ${TESTDIR}/regress/$name.nat \
+		-i ${TESTDIR}/input/$name >> results/$name;
 	if [ $? -ne 0 ] ; then
 		exit 2;
 	fi
-	echo "-------------------------------" >> results/$1
-	cmp ${TESTDIR}/expected/$1 results/$1
+	echo "-------------------------------" >> results/$name
+	cmp ${TESTDIR}/expected/$name results/$name
 	status=$?
 	if [ $status = 0 ] ; then
-		$TOUCH $1
+		$TOUCH $name
 	fi
 	;;
 esac
