@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.119 2007/02/22 06:05:01 thorpej Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.120 2007/04/14 07:01:33 perseant Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.119 2007/02/22 06:05:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.120 2007/04/14 07:01:33 perseant Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -1499,6 +1499,7 @@ uvm_page_own(struct vm_page *pg, const char *tag)
 			panic("uvm_page_own");
 		}
 		pg->owner = (curproc) ? curproc->p_pid :  (pid_t) -1;
+		pg->lowner = (curlwp) ? curlwp->l_lid :  (lwpid_t) -1;
 		pg->owner_tag = tag;
 		return;
 	}
