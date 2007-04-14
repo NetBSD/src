@@ -1,11 +1,11 @@
-/*	$NetBSD: optname.c,v 1.1.1.1 2004/03/28 08:56:19 martti Exp $	*/
+/*	$NetBSD: optname.c,v 1.1.1.2 2007/04/14 20:17:31 martin Exp $	*/
 
 /*
- * Copyright (C) 1993-2001 by Darren Reed.
+ * Copyright (C) 2000-2001 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: optname.c,v 1.3 2001/06/09 17:09:24 darrenr Exp
+ * Id: optname.c,v 1.3.4.1 2006/06/16 17:21:07 darrenr Exp
  */
 
 #include "ipf.h"

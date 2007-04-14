@@ -1,11 +1,11 @@
-/*	$NetBSD: load_pool.c,v 1.1.1.3 2006/04/04 16:09:34 martti Exp $	*/
+/*	$NetBSD: load_pool.c,v 1.1.1.4 2007/04/14 20:17:31 martin Exp $	*/
 
 /*
- * Copyright (C) 2002 by Darren Reed.
+ * Copyright (C) 2002-2005 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: load_pool.c,v 1.14.2.3 2005/11/13 15:41:13 darrenr Exp
+ * Id: load_pool.c,v 1.14.2.4 2006/06/16 17:21:06 darrenr Exp
  */
 
 #include <fcntl.h>

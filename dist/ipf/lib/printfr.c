@@ -1,11 +1,11 @@
-/*	$NetBSD: printfr.c,v 1.1.1.5 2006/04/04 16:09:37 martti Exp $	*/
+/*	$NetBSD: printfr.c,v 1.1.1.6 2007/04/14 20:17:31 martin Exp $	*/
 
 /*
- * Copyright (C) 1993-2001 by Darren Reed.
+ * Copyright (C) 2000-2006 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: printfr.c,v 1.43.2.16 2006/03/29 11:19:59 darrenr Exp
+ * Id: printfr.c,v 1.43.2.17 2006/06/16 17:21:10 darrenr Exp
  */
 
 #include "ipf.h"
