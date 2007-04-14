@@ -1,4 +1,4 @@
-/* $NetBSD: macekbc.c,v 1.1 2007/04/10 23:44:10 jmcneill Exp $ */
+/* $NetBSD: macekbc.c,v 1.2 2007/04/14 15:11:39 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: macekbc.c,v 1.1 2007/04/10 23:44:10 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: macekbc.c,v 1.2 2007/04/14 15:11:39 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -49,6 +49,8 @@ __KERNEL_RCSID(0, "$NetBSD: macekbc.c,v 1.1 2007/04/10 23:44:10 jmcneill Exp $")
 
 #include <sgimips/mace/macevar.h>
 
+#include <dev/arcbios/arcbios.h>
+#include <dev/arcbios/arcbiosvar.h>
 #include <dev/pckbport/pckbportvar.h>
 
 #define	MACEKBC_TX	0x00
@@ -78,6 +80,7 @@ struct macekbc_internal {
 
 	bus_space_tag_t		t_iot;
 	bus_space_handle_t	t_ioh[PCKBPORT_NSLOTS];
+	int			t_present[PCKBPORT_NSLOTS];
 
 	void			*t_rxih;
 };
@@ -110,6 +113,13 @@ static struct pckbport_accessops macekbc_ops = {
 static int
 macekbc_match(struct device *parent, struct cfdata *match, void *aux)
 {
+	const char *consdev;
+
+	/* XXX don't bother attaching if we're using a serial console */
+	consdev = ARCBIOS->GetEnvironmentVariable("ConsoleIn");
+	if (consdev == NULL || strcmp(consdev, "keyboard()") != 0)
+		return 0;
+
 	return 1;
 }
 
@@ -119,6 +129,7 @@ macekbc_attach(struct device *parent, struct device *self, void *aux)
 	struct mace_attach_args *maa;
 	struct macekbc_softc *sc;
 	struct macekbc_internal *t;
+	int slot;
 
 	maa = aux;
 	sc = device_private(self);
@@ -127,7 +138,13 @@ macekbc_attach(struct device *parent, struct device *self, void *aux)
 	aprint_naive("\n");
 
 	t = malloc(sizeof(struct macekbc_internal), M_DEVBUF, M_NOWAIT|M_ZERO);
+	if (t == NULL) {
+		aprint_error("%s: not enough memory\n", device_xname(self));
+		return;
+	}
 	t->t_iot = maa->maa_st;
+	for (slot = 0; slot < PCKBPORT_NSLOTS; slot++)
+		t->t_present[slot] = 0;
 	if (bus_space_subregion(t->t_iot, maa->maa_sh, maa->maa_offset,
 	    0, &t->t_ioh[PCKBPORT_KBD_SLOT]) != 0) {
 		aprint_error("%s: couldn't map kbd registers\n",
@@ -154,8 +171,10 @@ macekbc_attach(struct device *parent, struct device *self, void *aux)
 	macekbc_reset(t, PCKBPORT_AUX_SLOT);
 
 	t->t_pt = pckbport_attach(t, &macekbc_ops);
-	pckbport_attach_slot(&sc->sc_dev, t->t_pt, PCKBPORT_KBD_SLOT);
-	pckbport_attach_slot(&sc->sc_dev, t->t_pt, PCKBPORT_AUX_SLOT);
+	if (pckbport_attach_slot(&sc->sc_dev, t->t_pt, PCKBPORT_KBD_SLOT))
+		t->t_present[PCKBPORT_KBD_SLOT] = 1;
+	if (pckbport_attach_slot(&sc->sc_dev, t->t_pt, PCKBPORT_AUX_SLOT))
+		t->t_present[PCKBPORT_AUX_SLOT] = 1;
 
 	return;
 }
@@ -175,6 +194,9 @@ macekbc_intr(void *opaque)
 	rv = 0;
 
 	for (slot = 0; slot < PCKBPORT_NSLOTS; slot++) {
+		if (t->t_present[slot] == 0)
+			continue;
+
 		ioh = t->t_ioh[slot];
 		stat = bus_space_read_8(iot, ioh, MACEKBC_STAT);
 		if (stat & MACEKBC_STAT_RXFULL) {
@@ -222,7 +244,7 @@ macekbc_wait(struct macekbc_internal *t, pckbport_slot_t slot,
 	iot = t->t_iot;
 	ioh = t->t_ioh[slot];
 	val = (set ? mask : 0);
-	timeout = 10000;
+	timeout = 1000;
 
 	while (timeout-- > 0) {
 		tmp = bus_space_read_8(iot, ioh, MACEKBC_STAT);
