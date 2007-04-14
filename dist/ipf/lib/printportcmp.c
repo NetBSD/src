@@ -1,11 +1,11 @@
-/*	$NetBSD: printportcmp.c,v 1.1.1.1 2004/03/28 08:56:20 martti Exp $	*/
+/*	$NetBSD: printportcmp.c,v 1.1.1.2 2007/04/14 20:17:31 martin Exp $	*/
 
 /*
- * Copyright (C) 1993-2001 by Darren Reed.
+ * Copyright (C) 2000-2003 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: printportcmp.c,v 1.7 2003/02/16 02:31:05 darrenr Exp
+ * Id: printportcmp.c,v 1.7.4.1 2006/06/16 17:21:14 darrenr Exp
  */
 
 #include "ipf.h"
