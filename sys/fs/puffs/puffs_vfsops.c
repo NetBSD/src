@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vfsops.c,v 1.36 2007/04/14 16:13:18 xtraeme Exp $	*/
+/*	$NetBSD: puffs_vfsops.c,v 1.37 2007/04/14 16:52:22 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.36 2007/04/14 16:13:18 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.37 2007/04/14 16:52:22 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -150,7 +150,7 @@ puffs_mount(struct mount *mp, const char *path, void *data,
 		pmp->pmp_npnodehash = 1;
 	if (pmp->pmp_npnodehash > PUFFS_MAXPNODEBUCKETS) {
 		pmp->pmp_npnodehash = PUFFS_MAXPNODEBUCKETS;
-		printf("puffs_mount: using %zd hash buckets. "
+		printf("puffs_mount: using %zu hash buckets. "
 		    "adjust puffs_maxpnodebuckets for more\n",
 		    pmp->pmp_npnodehash);
 	}
