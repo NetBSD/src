@@ -1446,7 +1446,6 @@ vax_output_int_subtract (rtx insn, rtx *operands, enum machine_mode mode)
 
 	if (TARGET_QMATH)
 	  {
-	    gcc_assert (!CONSTANT_P (operands[2]) && !CONSTANT_P (low[2]));
 	    if (operands[1] == const0_rtx && low[1] == const0_rtx)
 	      {
 		/* Negation is tricky.  It's basically complement and increment.
@@ -1461,7 +1460,10 @@ vax_output_int_subtract (rtx insn, rtx *operands, enum machine_mode mode)
 	      }
 	    gcc_assert (rtx_equal_p (operands[0], operands[1]));
 	    gcc_assert (rtx_equal_p (low[0], low[1]));
-	    output_asm_insn ("subl2 %2,%0", low);
+	    if (low[2] == const1_rtx)
+	      output_asm_insn ("decl %0", low);
+	    else
+	      output_asm_insn ("subl2 %2,%0", low);
 	    return "sbwc %2,%0";
 	  }
 
