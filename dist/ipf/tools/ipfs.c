@@ -1,7 +1,7 @@
-/*	$NetBSD: ipfs.c,v 1.7 2006/04/04 16:17:19 martti Exp $	*/
+/*	$NetBSD: ipfs.c,v 1.8 2007/04/14 20:34:34 martin Exp $	*/
 
 /*
- * Copyright (C) 1999-2001, 2003 by Darren Reed.
+ * Copyright (C) 2001-2006 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  */

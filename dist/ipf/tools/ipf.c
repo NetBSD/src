@@ -1,7 +1,7 @@
-/*	$NetBSD: ipf.c,v 1.2 2006/04/18 12:40:49 darrenr Exp $	*/
+/*	$NetBSD: ipf.c,v 1.3 2007/04/14 20:34:34 martin Exp $	*/
 
 /*
- * Copyright (C) 1993-2001 by Darren Reed.
+ * Copyright (C) 2001-2006 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  */
@@ -21,7 +21,7 @@
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)ipf.c	1.23 6/5/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ipf.c,v 1.35.2.4 2006/03/17 11:48:08 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ipf.c,v 1.35.2.6 2006/08/26 11:21:13 darrenr Exp";
 #endif
 
 #if !defined(__SVR4) && defined(__GNUC__)

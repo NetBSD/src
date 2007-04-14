@@ -1,5 +1,10 @@
-/*	$NetBSD: ipnat_y.y,v 1.14 2006/04/04 16:17:19 martti Exp $	*/
+/*	$NetBSD: ipnat_y.y,v 1.15 2007/04/14 20:34:35 martin Exp $	*/
 
+/*
+ * Copyright (C) 2001-2006 by Darren Reed.
+ *
+ * See the IPFILTER.LICENCE file for details on licencing.
+ */
 %{
 #ifdef  __FreeBSD__
 # ifndef __FreeBSD_cc_version
@@ -117,6 +122,7 @@ assign:	YY_STR assigning YY_STR ';'	{ set_variable($1, $3);
 					  resetlexer();
 					  free($1);
 					  free($3);
+					  yyvarnext = 0;
 					}
 	;
 
@@ -348,11 +354,11 @@ portspec:
 	;
 
 dport:	| port portspec			{ nat->in_pmin = htons($2);
-						  nat->in_pmax = htons($2); }
+					  nat->in_pmax = htons($2); }
 	| port portspec '-' portspec	{ nat->in_pmin = htons($2);
-						  nat->in_pmax = htons($4); }
+					  nat->in_pmax = htons($4); }
 	| port portspec ':' portspec	{ nat->in_pmin = htons($2);
-						  nat->in_pmax = htons($4); }
+					  nat->in_pmax = htons($4); }
 	;
 
 nport:	port portspec			{ nat->in_pnext = htons($2); }
