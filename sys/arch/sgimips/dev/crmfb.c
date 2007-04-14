@@ -1,4 +1,4 @@
-/* $NetBSD: crmfb.c,v 1.3 2007/04/13 12:21:00 jmcneill Exp $ */
+/* $NetBSD: crmfb.c,v 1.4 2007/04/14 10:59:18 martin Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crmfb.c,v 1.3 2007/04/13 12:21:00 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crmfb.c,v 1.4 2007/04/14 10:59:18 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -238,6 +238,13 @@ crmfb_attach(struct device *parent, struct device *self, void *opaque)
 		sc->sc_depth = 16;
 	else
 		sc->sc_depth = 32;
+
+	if (sc->sc_width == 0 || sc->sc_height == 0) {
+		printf("%s: device unusable if not setup by firmware\n",
+		    sc->sc_dev.dv_xname);
+		bus_space_unmap(sc->sc_iot, sc->sc_ioh, 0 /* XXX */);
+		return;
+	}
 
 	printf("%s: initial resolution %dx%d %d bpp\n",
 	    sc->sc_dev.dv_xname, sc->sc_width, sc->sc_height, sc->sc_depth);
