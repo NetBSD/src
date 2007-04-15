@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.83.2.3 2007/03/24 14:56:08 yamt Exp $ */
+/*	$NetBSD: if_gre.c,v 1.83.2.4 2007/04/15 16:03:57 yamt Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.83.2.3 2007/03/24 14:56:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.83.2.4 2007/04/15 16:03:57 yamt Exp $");
 
 #include "opt_gre.h"
 #include "opt_inet.h"
@@ -221,8 +221,8 @@ gre_clone_destroy(struct ifnet *ifp)
 	splx(s);
 	gre_join(&sc->sc_thread);
 	s = splnet();
-	rtcache_free(&sc->route);
 	if_detach(ifp);
+	rtcache_free(&sc->route);
 	splx(s);
 	if (sc->sc_fp != NULL) {
 		closef(sc->sc_fp, curlwp);
@@ -782,11 +782,14 @@ gre_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 		rtcache_init(&sc->route);
 	else
 		rtcache_check(&sc->route);
-	if (sc->route.ro_rt == NULL)
+	if (sc->route.ro_rt == NULL) {
+		m_freem(m);
 		goto end;
-	if (sc->route.ro_rt->rt_ifp->if_softc == sc)
+	}
+	if (sc->route.ro_rt->rt_ifp->if_softc == sc) {
 		rtcache_free(&sc->route);
-	else
+		m_freem(m);
+	} else
 		error = ip_output(m, NULL, &sc->route, 0,
 		    (struct ip_moptions *)NULL, (struct socket *)NULL);
   end:

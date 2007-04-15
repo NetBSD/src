@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.h,v 1.19.2.1 2007/03/24 14:55:57 yamt Exp $	*/
+/*	$NetBSD: puffs_msgif.h,v 1.19.2.2 2007/04/15 16:03:46 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -86,20 +86,25 @@ enum {
 #define PUFFS_VN_MAX PUFFS_VN_SETEXTATTR
 
 #define PUFFSDEVELVERS	0x80000000
-#define PUFFSVERSION	3
+#define PUFFSVERSION	7
 #define PUFFSNAMESIZE	32
-struct puffs_args {
+struct puffs_kargs {
 	unsigned int	pa_vers;
 	int		pa_fd;
 	uint32_t	pa_flags;
+
 	size_t		pa_maxreqlen;
+	size_t		pa_fhsize;
+	int		pa_nhashbuckets;
+
 	char		pa_name[PUFFSNAMESIZE+1];   /* name for puffs type */
 	uint8_t		pa_vnopmask[PUFFS_VN_MAX];
 };
 #define PUFFS_KFLAG_ALLOWCTL	0x01	/* ioctl/fcntl commands allowed */
 #define PUFFS_KFLAG_NOCACHE	0x02	/* flush page cache immediately	*/
 #define PUFFS_KFLAG_ALLOPS	0x04	/* ignore pa_vnopmask, send all */
-#define PUFFS_KFLAG_MASK	0x07
+#define PUFFS_KFLAG_CANEXPORT	0x08	/* file system can be exported  */
+#define PUFFS_KFLAG_MASK	0x0f
 
 /*
  * This is the device minor number for the cloning device.  Make it
@@ -257,9 +262,7 @@ struct puffs_flush {
 #define PUFFS_INVAL_NAMECACHE_DIR		1
 #define PUFFS_INVAL_NAMECACHE_ALL		2
 #define PUFFS_INVAL_PAGECACHE_NODE_RANGE	3
-#define PUFFS_INVAL_PAGECACHE_NODE		4
-#define PUFFS_FLUSH_PAGECACHE_NODE_RANGE	5
-#define PUFFS_FLUSH_PAGECACHE_NODE		6
+#define PUFFS_FLUSH_PAGECACHE_NODE_RANGE	4
 
 
 /*
@@ -293,10 +296,10 @@ struct puffs_cred {
 #define PUFFCRED_CRED_FSCRED	2
 
 /*
- * 4x MAXPHYS is the max size the system will attempt to copy,
+ * 2*MAXPHYS is the max size the system will attempt to copy,
  * else treated as garbage
  */
-#define PUFFS_REQ_MAXSIZE	4*MAXPHYS
+#define PUFFS_REQ_MAXSIZE	2*MAXPHYS
 #define PUFFS_REQSTRUCT_MAX	4096 /* XXX: approxkludge */
 
 #define PUFFS_TOMOVE(a,b) (MIN((a), b->pmp_req_maxsize - PUFFS_REQSTRUCT_MAX))
@@ -325,6 +328,10 @@ struct puffs_kcn {
 #define PUFFSLOOKUP_FOLLOW	0x00004	/* follow final symlink */
 #define PUFFSLOOKUP_NOFOLLOW	0x00008	/* don't follow final symlink */
 #define PUFFSLOOKUP_ISLASTCN	0x08000 /* is last component of lookup */
+
+
+/* XXX */
+#define PUFFS_FHSIZE	48
 
 /*
  * Next come the individual requests.  They are all subclassed from
@@ -367,6 +374,29 @@ struct puffs_vfsreq_sync {
 	struct puffs_cred	pvfsr_cred;
 	pid_t			pvfsr_pid;
 	int			pvfsr_waitfor;
+};
+
+struct puffs_vfsreq_fhtonode {
+	struct puffs_req	pvfsr_pr;
+
+	void			*pvfsr_fhcookie;	/* IN	*/
+	enum vtype		pvfsr_vtype;		/* IN	*/
+	voff_t			pvfsr_size;		/* IN	*/
+	dev_t			pvfsr_rdev;		/* IN	*/
+
+	size_t			pvfsr_dsize;		/* OUT */
+	uint8_t			pvfsr_data[PUFFS_FHSIZE]/* OUT, XXX */
+				    __aligned(ALIGNBYTES+1);
+};
+
+struct puffs_vfsreq_nodetofh {
+	struct puffs_req	pvfsr_pr;
+
+	void			*pvfsr_fhcookie;	/* OUT	*/
+
+	size_t			pvfsr_dsize;		/* OUT/IN  */
+	uint8_t			pvfsr_data[PUFFS_FHSIZE]/* IN, XXX */
+				    __aligned(ALIGNBYTES+1);
 };
 
 struct puffs_vfsreq_suspend {
@@ -550,8 +580,12 @@ struct puffs_vnreq_readdir {
 	struct puffs_cred	pvnr_cred;		/* OUT	  */
 	off_t			pvnr_offset;		/* IN/OUT */
 	size_t			pvnr_resid;		/* IN/OUT */
+	size_t			pvnr_ncookies;		/* IN/OUT */
+	int			pvnr_eofflag;		/* IN     */
 
-	struct dirent		pvnr_dent[0];		/* IN  	   */
+	size_t			pvnr_dentoff;		/* OUT    */
+	uint8_t			pvnr_data[0]		/* IN  	  */
+				    __aligned(ALIGNBYTES+1);
 };
 
 struct puffs_vnreq_readlink {

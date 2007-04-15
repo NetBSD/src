@@ -1,4 +1,4 @@
-/*	$NetBSD: rfcomm_session.c,v 1.4.4.2 2007/03/24 14:56:09 yamt Exp $	*/
+/*	$NetBSD: rfcomm_session.c,v 1.4.4.3 2007/04/15 16:03:59 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rfcomm_session.c,v 1.4.4.2 2007/03/24 14:56:09 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rfcomm_session.c,v 1.4.4.3 2007/04/15 16:03:59 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -105,7 +105,7 @@ int rfcomm_mcc_timeout = 20;	/* seconds */
 /*
  * Reversed CRC table as per TS 07.10 Annex B.3.5
  */
-static uint8_t crctable[256] = {	/* reversed, 8-bit, poly=0x07 */
+static const uint8_t crctable[256] = {	/* reversed, 8-bit, poly=0x07 */
 	0x00, 0x91, 0xe3, 0x72, 0x07, 0x96, 0xe4, 0x75,
 	0x0e, 0x9f, 0xed, 0x7c, 0x09, 0x98, 0xea, 0x7b,
 	0x1c, 0x8d, 0xff, 0x6e, 0x1b, 0x8a, 0xf8, 0x69,

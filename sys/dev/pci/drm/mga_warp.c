@@ -33,11 +33,11 @@
 __FBSDID("$FreeBSD: src/sys/dev/drm/mga_warp.c,v 1.8 2005/11/28 23:13:53 anholt Exp $");
 */
 
-#include "drmP.h"
-#include "drm.h"
-#include "mga_drm.h"
-#include "mga_drv.h"
-#include "mga_ucode.h"
+#include <dev/drm/drmP.h>
+#include <dev/drm/drm.h>
+#include <dev/pci/drm/mga_drm.h>
+#include <dev/pci/drm/mga_drv.h>
+#include <dev/pci/drm/mga_ucode.h>
 
 #define MGA_WARP_CODE_ALIGN		256	/* in bytes */
 

@@ -1,4 +1,4 @@
-#	$NetBSD: files.netwinder,v 1.35 2006/09/15 16:28:41 gdamore Exp $
+#	$NetBSD: files.netwinder,v 1.35.6.1 2007/04/15 16:02:52 yamt Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -27,6 +27,7 @@ include "dev/isa/files.isa"
 include "dev/wscons/files.wscons"
 include "dev/rasops/files.rasops"
 include "dev/wsfont/files.wsfont"
+include "dev/wsfb/files.wsfb"
 
 # Include arm32 footbridge
 include "arch/arm/conf/files.footbridge"

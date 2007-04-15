@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.301.2.4 2007/03/12 05:48:20 rmind Exp $
+#	$NetBSD: files.i386,v 1.301.2.5 2007/04/15 16:02:47 yamt Exp $
 #
 # new style config file for i386 architecture
 #
@@ -158,6 +158,7 @@ file	arch/i386/i386/mainbus.c	mainbus
 # XXX MUST BE INCLUDED BEFORE files.isa, as long as files.isa attaches
 # XXX devices to 'pci'.
 #
+include "dev/wsfb/files.wsfb"
 
 include	"dev/pci/files.pci"
 include "dev/pci/files.agp"

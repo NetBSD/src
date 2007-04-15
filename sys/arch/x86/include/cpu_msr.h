@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_msr.h,v 1.3.2.2 2007/03/24 14:55:05 yamt Exp $ */
+/* $NetBSD: cpu_msr.h,v 1.3.2.3 2007/04/15 16:03:10 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -45,6 +45,7 @@
 #ifdef _KERNEL
 
 struct msr_cpu_broadcast {
+	int msr_read;
 	int msr_type;
 	uint64_t msr_value;
 	uint64_t msr_mask;

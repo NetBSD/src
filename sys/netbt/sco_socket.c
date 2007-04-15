@@ -1,4 +1,4 @@
-/*	$NetBSD: sco_socket.c,v 1.5.4.1 2007/03/12 05:59:35 rmind Exp $	*/
+/*	$NetBSD: sco_socket.c,v 1.5.4.2 2007/04/15 16:03:59 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -30,7 +30,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sco_socket.c,v 1.5.4.1 2007/03/12 05:59:35 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sco_socket.c,v 1.5.4.2 2007/04/15 16:03:59 yamt Exp $");
+
+/* load symbolic names */
+#ifdef BLUETOOTH_DEBUG
+#define PRUREQUESTS
+#define PRCOREQUESTS
+#endif
 
 #include <sys/param.h>
 #include <sys/domain.h>
@@ -135,7 +141,7 @@ sco_usrreq(struct socket *up, int req, struct mbuf *m,
 		return sco_detach((struct sco_pcb **)&up->so_pcb);
 
 	case PRU_BIND:
-		KASSERT(nam);
+		KASSERT(nam != NULL);
 		sa = mtod(nam, struct sockaddr_bt *);
 
 		if (sa->bt_len != sizeof(struct sockaddr_bt))
@@ -147,7 +153,7 @@ sco_usrreq(struct socket *up, int req, struct mbuf *m,
 		return sco_bind(pcb, sa);
 
 	case PRU_CONNECT:
-		KASSERT(nam);
+		KASSERT(nam != NULL);
 		sa = mtod(nam, struct sockaddr_bt *);
 
 		if (sa->bt_len != sizeof(struct sockaddr_bt))
@@ -160,13 +166,13 @@ sco_usrreq(struct socket *up, int req, struct mbuf *m,
 		return sco_connect(pcb, sa);
 
 	case PRU_PEERADDR:
-		KASSERT(nam);
+		KASSERT(nam != NULL);
 		sa = mtod(nam, struct sockaddr_bt *);
 		nam->m_len = sizeof(struct sockaddr_bt);
 		return sco_peeraddr(pcb, sa);
 
 	case PRU_SOCKADDR:
-		KASSERT(nam);
+		KASSERT(nam != NULL);
 		sa = mtod(nam, struct sockaddr_bt *);
 		nam->m_len = sizeof(struct sockaddr_bt);
 		return sco_sockaddr(pcb, sa);
@@ -176,7 +182,7 @@ sco_usrreq(struct socket *up, int req, struct mbuf *m,
 		break;
 
 	case PRU_SEND:
-		KASSERT(m);
+		KASSERT(m != NULL);
 		if (m->m_pkthdr.len == 0)
 			break;
 
@@ -208,7 +214,7 @@ sco_usrreq(struct socket *up, int req, struct mbuf *m,
 		return sco_listen(pcb);
 
 	case PRU_ACCEPT:
-		KASSERT(nam);
+		KASSERT(nam != NULL);
 		sa = mtod(nam, struct sockaddr_bt *);
 		nam->m_len = sizeof(struct sockaddr_bt);
 		return sco_peeraddr(pcb, sa);

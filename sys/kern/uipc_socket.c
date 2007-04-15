@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.132.2.3 2007/03/24 14:56:06 yamt Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.132.2.4 2007/04/15 16:03:52 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.132.2.3 2007/03/24 14:56:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.132.2.4 2007/04/15 16:03:52 yamt Exp $");
 
 #include "opt_sock_counters.h"
 #include "opt_sosend_loan.h"
@@ -495,11 +495,7 @@ socreate(int dom, struct socket **aso, int type, int proto, struct lwp *l)
 	so->so_snd.sb_mowner = &prp->pr_domain->dom_mowner;
 	so->so_mowner = &prp->pr_domain->dom_mowner;
 #endif
-	if (l != NULL) {
-		uid = kauth_cred_geteuid(l->l_cred);
-	} else {
-		uid = 0;
-	}
+	uid = kauth_cred_geteuid(l->l_cred);
 	so->so_uidinfo = uid_find(uid);
 	error = (*prp->pr_usrreq)(so, PRU_ATTACH, (struct mbuf *)0,
 	    (struct mbuf *)(long)proto, (struct mbuf *)0, l);
@@ -640,9 +636,15 @@ soclose(struct socket *so)
 int
 soabort(struct socket *so)
 {
+	int error;
 
-	return (*so->so_proto->pr_usrreq)(so, PRU_ABORT, (struct mbuf *)0,
+	KASSERT(so->so_head == NULL);
+	error = (*so->so_proto->pr_usrreq)(so, PRU_ABORT, (struct mbuf *)0,
 	    (struct mbuf *)0, (struct mbuf *)0, (struct lwp *)0);
+	if (error) {
+		sofree(so);
+	}
+	return error;
 }
 
 int

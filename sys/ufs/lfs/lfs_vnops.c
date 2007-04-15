@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.198.2.2 2007/03/12 06:01:09 rmind Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.198.2.3 2007/04/15 16:04:08 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.198.2.2 2007/03/12 06:01:09 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.198.2.3 2007/04/15 16:04:08 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1840,11 +1840,11 @@ check_dirty(struct lfs *fs, struct vnode *vp,
  *     but the expanded range is dirty.
  *
  * (2) It needs to explicitly send blocks to be written when it is done.
- *     VOP_PUTPAGES is not ever called with the seglock held, so
- *     we simply take the seglock and let lfs_segunlock wait for us.
- *     XXX Actually we can be called with the seglock held, if we have
- *     XXX to flush a vnode while lfs_markv is in operation.  As of this
- *     XXX writing we panic in this case.
+ *     If VOP_PUTPAGES is called without the seglock held, we simply take
+ *     the seglock and let lfs_segunlock wait for us.
+ *     XXX There might be a bad situation if we have to flush a vnode while
+ *     XXX lfs_markv is in operation.  As of this writing we panic in this
+ *     XXX case.
  *
  * Assumptions:
  *

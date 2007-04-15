@@ -1,5 +1,5 @@
 #
-#	$NetBSD: files.atari,v 1.108.26.1 2007/03/24 14:54:35 yamt Exp $
+#	$NetBSD: files.atari,v 1.108.26.2 2007/04/15 16:02:37 yamt Exp $
 
 maxpartitions 16
 
@@ -137,6 +137,9 @@ file	arch/atari/dev/ms.c		mouse needs-count
 
 # Machine-independent I2O drivers
 include "dev/i2o/files.i2o"
+
+# generic fb driver
+include "dev/wsfb/files.wsfb"
 
 #
 # PCI-devices

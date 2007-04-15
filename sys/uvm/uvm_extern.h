@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.125.2.2 2007/03/12 06:01:11 rmind Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.125.2.3 2007/04/15 16:04:09 yamt Exp $	*/
 
 /*
  *
@@ -581,6 +581,7 @@ __dead void		uvm_scheduler(void) __attribute__((noreturn));
 void			uvm_kick_scheduler(void);
 void			uvm_swapin(struct lwp *);
 bool			uvm_uarea_alloc(vaddr_t *);
+void			uvm_uarea_free(vaddr_t uaddr);
 void			uvm_uarea_drain(bool);
 int			uvm_vslock(struct vmspace *, void *, size_t, vm_prot_t);
 void			uvm_vsunlock(struct vmspace *, void *, size_t);

@@ -120,7 +120,9 @@ int drm_agp_info(drm_device_t * dev, drm_agp_info_t *info)
 		return EINVAL;
 
 	kern                   = &dev->agp->info;
+#ifndef DRM_NO_AGP
 	agp_get_info(dev->agp->agpdev, kern);
+#endif
 	info->agp_version_major = 1;
 	info->agp_version_minor = 0;
 	info->mode              = kern->ai_mode;
@@ -157,6 +159,7 @@ int drm_agp_acquire_ioctl(DRM_IOCTL_ARGS)
 
 int drm_agp_acquire(drm_device_t *dev)
 {
+#ifndef DRM_NO_AGP
 	int retcode;
 
 	if (!dev->agp || dev->agp->acquired)
@@ -167,6 +170,7 @@ int drm_agp_acquire(drm_device_t *dev)
 		return retcode;
 
 	dev->agp->acquired = 1;
+#endif
 	return 0;
 }
 
@@ -179,16 +183,19 @@ int drm_agp_release_ioctl(DRM_IOCTL_ARGS)
 
 int drm_agp_release(drm_device_t * dev)
 {
+#ifndef DRM_NO_AGP
 	if (!dev->agp || !dev->agp->acquired)
 		return EINVAL;
 	agp_release(dev->agp->agpdev);
 	dev->agp->acquired = 0;
+#endif
 	return 0;
 }
 
 int drm_agp_enable(drm_device_t *dev, drm_agp_mode_t mode)
 {
 
+#ifndef DRM_NO_AGP
 	if (!dev->agp || !dev->agp->acquired)
 		return EINVAL;
 	
@@ -196,6 +203,7 @@ int drm_agp_enable(drm_device_t *dev, drm_agp_mode_t mode)
 	agp_enable(dev->agp->agpdev, mode.mode);
 	dev->agp->base    = dev->agp->info.ai_aperture_base;
 	dev->agp->enabled = 1;
+#endif
 	return 0;
 }
 
@@ -211,6 +219,7 @@ int drm_agp_enable_ioctl(DRM_IOCTL_ARGS)
 
 int drm_agp_alloc(drm_device_t *dev, drm_agp_buffer_t *request)
 {
+#ifndef DRM_NO_AGP
 	drm_agp_mem_t    *entry;
 	void	         *handle;
 	unsigned long    pages;
@@ -248,6 +257,7 @@ int drm_agp_alloc(drm_device_t *dev, drm_agp_buffer_t *request)
 
 	request->handle   = (unsigned long) entry->handle;
         request->physical = info.ami_physical;
+#endif
 
 	return 0;
 }
@@ -419,7 +429,9 @@ drm_agp_head_t *drm_agp_init(void)
 		if (head == NULL)
 			return NULL;
 		head->agpdev = agpdev;
+#ifndef DRM_NO_AGP
 		agp_get_info(agpdev, &head->info);
+#endif
 		head->memory = NULL;
 		DRM_INFO("AGP at 0x%08lx %dMB\n",
 			 (long)head->info.ai_aperture_base,
@@ -453,6 +465,7 @@ int drm_agp_free_memory(void *handle)
 
 int drm_agp_bind_memory(void *handle, off_t start)
 {
+#ifndef DRM_NO_AGP
 	device_t agpdev;
 
 	agpdev = DRM_AGP_FIND_DEVICE();
@@ -460,10 +473,14 @@ int drm_agp_bind_memory(void *handle, off_t start)
 		return EINVAL;
 
 	return agp_bind_memory(agpdev, handle, start * PAGE_SIZE);
+#else
+	return 0;
+#endif
 }
 
 int drm_agp_unbind_memory(void *handle)
 {
+#ifndef DRM_NO_AGP
 	device_t agpdev;
 
 	agpdev = DRM_AGP_FIND_DEVICE();
@@ -471,4 +488,7 @@ int drm_agp_unbind_memory(void *handle)
 		return EINVAL;
 
 	return agp_unbind_memory(agpdev, handle);
+#else
+	return 0;
+#endif
 }

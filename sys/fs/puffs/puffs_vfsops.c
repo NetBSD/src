@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vfsops.c,v 1.28.2.1 2007/03/24 14:55:58 yamt Exp $	*/
+/*	$NetBSD: puffs_vfsops.c,v 1.28.2.2 2007/04/15 16:03:47 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.28.2.1 2007/03/24 14:55:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.28.2.2 2007/04/15 16:03:47 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -52,28 +52,29 @@ __KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.28.2.1 2007/03/24 14:55:58 yamt E
 
 VFS_PROTOS(puffs);
 
-MALLOC_DEFINE(M_PUFFS, "puffs", "pass-to-userspace file system structures");
+MALLOC_JUSTDEFINE(M_PUFFS, "puffs", "Pass-to-Userspace Framework File System");
 
 #ifndef PUFFS_PNODEBUCKETS
 #define PUFFS_PNODEBUCKETS 256
 #endif
 #ifndef PUFFS_MAXPNODEBUCKETS
-#define PUFFS_MAXPNODEBUCKETS 65536
+#define PUFFS_MAXPNODEBUCKETS 8192
 #endif
-int puffs_pnodebuckets = PUFFS_PNODEBUCKETS;
+int puffs_pnodebuckets_default = PUFFS_PNODEBUCKETS;
+int puffs_maxpnodebuckets = PUFFS_MAXPNODEBUCKETS;
 
 int
 puffs_mount(struct mount *mp, const char *path, void *data,
 	    struct nameidata *ndp, struct lwp *l)
 {
 	struct puffs_mount *pmp = NULL;
-	struct puffs_args *args;
+	struct puffs_kargs *args;
 	char namebuf[PUFFSNAMESIZE+sizeof(PUFFS_NAMEPREFIX)+1]; /* spooky */
 	int error = 0, i;
 
 	if (mp->mnt_flag & MNT_GETARGS) {
 		pmp = MPTOPUFFSMP(mp);
-		return copyout(&pmp->pmp_args, data, sizeof(struct puffs_args));
+		return copyout(&pmp->pmp_args,data,sizeof(struct puffs_kargs));
 	}
 
 	/* update is not supported currently */
@@ -86,10 +87,10 @@ puffs_mount(struct mount *mp, const char *path, void *data,
 	if (!data)
 		return EINVAL;
 
-	MALLOC(args, struct puffs_args *, sizeof(struct puffs_args),
+	MALLOC(args, struct puffs_kargs *, sizeof(struct puffs_kargs),
 	    M_PUFFS, M_WAITOK);
 
-	error = copyin(data, args, sizeof(struct puffs_args));
+	error = copyin(data, args, sizeof(struct puffs_kargs));
 	if (error)
 		goto out;
 
@@ -114,7 +115,7 @@ puffs_mount(struct mount *mp, const char *path, void *data,
 		args->pa_maxreqlen = PUFFS_REQSTRUCT_MAX;
 	(void)strlcpy(args->pa_name, namebuf, sizeof(args->pa_name));
 
-	error = copyout(args, data, sizeof(struct puffs_args)); 
+	error = copyout(args, data, sizeof(struct puffs_kargs)); 
 	if (error)
 		goto out;
 
@@ -140,11 +141,20 @@ puffs_mount(struct mount *mp, const char *path, void *data,
 	pmp->pmp_args = *args;
 
 	/* puffs_node hash buckets */
-	pmp->pmp_npnodehash = puffs_pnodebuckets;
+	if (args->pa_nhashbuckets)
+		pmp->pmp_npnodehash = args->pa_nhashbuckets;
+	else
+		pmp->pmp_npnodehash = puffs_pnodebuckets_default;
+
 	if (pmp->pmp_npnodehash < 1)
 		pmp->pmp_npnodehash = 1;
-	if (pmp->pmp_npnodehash > PUFFS_MAXPNODEBUCKETS)
+	if (pmp->pmp_npnodehash > PUFFS_MAXPNODEBUCKETS) {
 		pmp->pmp_npnodehash = PUFFS_MAXPNODEBUCKETS;
+		printf("puffs_mount: using %zu hash buckets. "
+		    "adjust puffs_maxpnodebuckets for more\n",
+		    pmp->pmp_npnodehash);
+	}
+		   
 	pmp->pmp_pnodehash = malloc
 	    (sizeof(struct puffs_pnode_hashlist *) * pmp->pmp_npnodehash,
 	    M_PUFFS, M_WAITOK);
@@ -161,7 +171,11 @@ puffs_mount(struct mount *mp, const char *path, void *data,
 		goto out;
 	}
 
-	simple_lock_init(&pmp->pmp_lock);
+	mutex_init(&pmp->pmp_lock, MUTEX_DEFAULT, IPL_NONE);
+	cv_init(&pmp->pmp_req_waiter_cv, "puffsget");
+	cv_init(&pmp->pmp_req_waitersink_cv, "puffsink");
+	cv_init(&pmp->pmp_unmounting_cv, "puffsum");
+	cv_init(&pmp->pmp_suspend_cv, "pufsusum");
 	TAILQ_INIT(&pmp->pmp_req_touser);
 	TAILQ_INIT(&pmp->pmp_req_replywait);
 	TAILQ_INIT(&pmp->pmp_req_sizepark);
@@ -192,7 +206,7 @@ puffs_start2(struct puffs_mount *pmp, struct puffs_startreq *sreq)
 
 	mp = PMPTOMP(pmp);
 
-	simple_lock(&pmp->pmp_lock);
+	mutex_enter(&pmp->pmp_lock);
 
 	/*
 	 * if someone has issued a VFS_ROOT() already, fill in the
@@ -207,7 +221,7 @@ puffs_start2(struct puffs_mount *pmp, struct puffs_startreq *sreq)
 	/* We're good to fly */
 	pmp->pmp_rootcookie = sreq->psr_cookie;
 	pmp->pmp_status = PUFFSTAT_RUNNING;
-	simple_unlock(&pmp->pmp_lock);
+	mutex_exit(&pmp->pmp_lock);
 
 	/* do the VFS_STATVFS() we missed out on in sys_mount() */
 	copy_statvfs_info(&sreq->psr_sb, mp);
@@ -264,10 +278,10 @@ puffs_unmount(struct mount *mp, int mntflags, struct lwp *l)
 	 * If we are not DYING, we should ask userspace's opinion
 	 * about the situation
 	 */
-	simple_lock(&pmp->pmp_lock);
+	mutex_enter(&pmp->pmp_lock);
 	if (pmp->pmp_status != PUFFSTAT_DYING) {
 		pmp->pmp_unmounting = 1;
-		simple_unlock(&pmp->pmp_lock);
+		mutex_exit(&pmp->pmp_lock);
 
 		unmount_arg.pvfsr_flags = mntflags;
 		unmount_arg.pvfsr_pid = puffs_lwp2pid(l);
@@ -276,9 +290,9 @@ puffs_unmount(struct mount *mp, int mntflags, struct lwp *l)
 		     &unmount_arg, sizeof(unmount_arg));
 		DPRINTF(("puffs_unmount: error %d force %d\n", error, force));
 
-		simple_lock(&pmp->pmp_lock);
+		mutex_enter(&pmp->pmp_lock);
 		pmp->pmp_unmounting = 0;
-		wakeup(&pmp->pmp_unmounting);
+		cv_broadcast(&pmp->pmp_unmounting_cv);
 	}
 
 	/*
@@ -298,17 +312,22 @@ puffs_unmount(struct mount *mp, int mntflags, struct lwp *l)
 		 * and therefore will protected by the biglock after
 		 * exiting userspace.  But ... it's an imperfect world.
 		 */
-		while (pmp->pmp_req_touser_waiters != 0)
-			ltsleep(&pmp->pmp_req_touser_waiters, PVFS,
-			    "puffsink", 0, &pmp->pmp_lock);
-		simple_unlock(&pmp->pmp_lock);
+		while (pmp->pmp_req_waiters != 0)
+			cv_wait(&pmp->pmp_req_waitersink_cv, &pmp->pmp_lock);
+		mutex_exit(&pmp->pmp_lock);
 
 		/* free resources now that we hopefully have no waiters left */
+		cv_destroy(&pmp->pmp_req_waiter_cv);
+		cv_destroy(&pmp->pmp_req_waitersink_cv);
+		cv_destroy(&pmp->pmp_unmounting_cv);
+		cv_destroy(&pmp->pmp_suspend_cv);
+		mutex_destroy(&pmp->pmp_lock);
+
 		free(pmp->pmp_pnodehash, M_PUFFS);
 		FREE(pmp, M_PUFFS);
 		error = 0;
 	} else {
-		simple_unlock(&pmp->pmp_lock);
+		mutex_exit(&pmp->pmp_lock);
 	}
 
  out:
@@ -332,18 +351,18 @@ puffs_root(struct mount *mp, struct vnode **vpp)
 	 * pmp_lock must be held if vref()'ing or vrele()'ing the
 	 * root vnode.  the latter is controlled by puffs_inactive().
 	 */
-	simple_lock(&pmp->pmp_lock);
+	mutex_enter(&pmp->pmp_lock);
 	vp = pmp->pmp_root;
 	if (vp) {
 		simple_lock(&vp->v_interlock);
-		simple_unlock(&pmp->pmp_lock);
+		mutex_exit(&pmp->pmp_lock);
 		pn = VPTOPP(vp);
 		if (vget(vp, LK_EXCLUSIVE | LK_RETRY | LK_INTERLOCK))
 			goto grabnew;
 		*vpp = vp;
 		return 0;
 	} else
-		simple_unlock(&pmp->pmp_lock);
+		mutex_exit(&pmp->pmp_lock);
 
 	/* XXX: this is wrong, so FIXME */
  grabnew:
@@ -355,14 +374,14 @@ puffs_root(struct mount *mp, struct vnode **vpp)
 	if (puffs_getvnode(mp, pmp->pmp_rootcookie, VDIR, 0, 0, &vp))
 		panic("sloppy programming");
 
-	simple_lock(&pmp->pmp_lock);
+	mutex_enter(&pmp->pmp_lock);
 	/*
 	 * check if by mysterious force someone else created a root
 	 * vnode while we were executing.
 	 */
 	if (pmp->pmp_root) {
 		vref(pmp->pmp_root);
-		simple_unlock(&pmp->pmp_lock);
+		mutex_exit(&pmp->pmp_lock);
 		puffs_putvnode(vp);
 		vn_lock(pmp->pmp_root, LK_EXCLUSIVE | LK_RETRY);
 		*vpp = pmp->pmp_root;
@@ -372,19 +391,12 @@ puffs_root(struct mount *mp, struct vnode **vpp)
 	/* store cache */
 	vp->v_flag = VROOT;
 	pmp->pmp_root = vp;
-	simple_unlock(&pmp->pmp_lock);
+	mutex_exit(&pmp->pmp_lock);
 
 	vn_lock(pmp->pmp_root, LK_EXCLUSIVE | LK_RETRY);
 
 	*vpp = vp;
 	return 0;
-}
-
-int
-puffs_quotactl(struct mount *mp, int cmd, uid_t uid, void *arg, struct lwp *l)
-{
-
-	return EOPNOTSUPP;
 }
 
 int
@@ -563,53 +575,97 @@ puffs_sync(struct mount *mp, int waitfor, struct kauth_cred *cred,
 }
 
 int
-puffs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
-{
-
-	return EOPNOTSUPP;
-}
-
-#if 0
-/*ARGSUSED*/
-int
 puffs_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
 {
+	struct puffs_mount *pmp = MPTOPUFFSMP(mp);
+	struct vnode *vp;
+	int error;
 
-	return EOPNOTSUPP;
+	PUFFS_VFSREQ(fhtonode);
+
+	if ((pmp->pmp_flags & PUFFS_KFLAG_CANEXPORT) == 0)
+		return EOPNOTSUPP;
+
+	if (fhp->fid_len < PUFFS_FHSIZE + 4)
+		return EINVAL;
+
+	fhtonode_arg.pvfsr_dsize = PUFFS_FHSIZE;
+	memcpy(fhtonode_arg.pvfsr_data, fhp->fid_data, PUFFS_FHSIZE);
+
+	error = puffs_vfstouser(pmp, PUFFS_VFS_FHTOVP,
+	    &fhtonode_arg, sizeof(fhtonode_arg));
+	if (error)
+		return error;
+
+	vp = puffs_pnode2vnode(pmp, fhtonode_arg.pvfsr_fhcookie, 1);
+	DPRINTF(("puffs_fhtovp: got cookie %p, existing vnode %p\n",
+	    fhtonode_arg.pvfsr_fhcookie, vp));
+	if (!vp) {
+		error = puffs_getvnode(mp, fhtonode_arg.pvfsr_fhcookie,
+		    fhtonode_arg.pvfsr_vtype, fhtonode_arg.pvfsr_size,
+		    fhtonode_arg.pvfsr_rdev, &vp);
+		if (error)
+			return error;
+		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+	}
+
+	*vpp = vp;
+	return 0;
 }
 
-/*ARGSUSED*/
 int
-puffs_vptofh(struct vnode *vp, struct fid *fhp)
+puffs_vptofh(struct vnode *vp, struct fid *fhp, size_t *fh_size)
 {
+	struct puffs_mount *pmp = MPTOPUFFSMP(vp->v_mount);
+	int error;
 
-	return EOPNOTSUPP;
+	PUFFS_VFSREQ(nodetofh);
+
+	if ((pmp->pmp_flags & PUFFS_KFLAG_CANEXPORT) == 0)
+		return EOPNOTSUPP;
+
+	if (*fh_size < PUFFS_FHSIZE + 4) {
+		*fh_size = PUFFS_FHSIZE + 4;
+		return E2BIG;
+	}
+	*fh_size = PUFFS_FHSIZE + 4;
+
+	nodetofh_arg.pvfsr_fhcookie = VPTOPNC(vp);
+	nodetofh_arg.pvfsr_dsize = PUFFS_FHSIZE;
+
+	error = puffs_vfstouser(pmp, PUFFS_VFS_VPTOFH,
+	    &nodetofh_arg, sizeof(nodetofh_arg));
+	if (error)
+		return error;
+
+	fhp->fid_len = PUFFS_FHSIZE + 4;
+	memcpy(fhp->fid_data,
+	    nodetofh_arg.pvfsr_data, PUFFS_FHSIZE);
+
+	return 0;
 }
-#endif
 
 void
 puffs_init()
 {
 
-#ifdef _LKM
 	malloc_type_attach(M_PUFFS);
-	pool_init(&puffs_pnpool, sizeof(struct puffs_node), 0, 0, 0,
-	    "puffspnpl", &pool_allocator_nointr, IPL_NONE);
-#endif
 
-	return;
+	pool_init(&puffs_pnpool, sizeof(struct puffs_node), 0, 0, 0,
+	    "puffpnpl", &pool_allocator_nointr, IPL_NONE);
+	puffs_transport_init();
+	puffs_msgif_init();
 }
 
 void
 puffs_done()
 {
 
-#ifdef _LKM
+	puffs_msgif_destroy();
+	puffs_transport_destroy();
 	pool_destroy(&puffs_pnpool);
-	malloc_type_detach(M_PUFFS);
-#endif
 
-	return;
+	malloc_type_detach(M_PUFFS);
 }
 
 int
@@ -677,12 +733,12 @@ struct vfsops puffs_vfsops = {
 	puffs_start,		/* start	*/
 	puffs_unmount,		/* unmount	*/
 	puffs_root,		/* root		*/
-	puffs_quotactl,		/* quotactl	*/
+	(void *)eopnotsupp,	/* quotactl	*/
 	puffs_statvfs,		/* statvfs	*/
 	puffs_sync,		/* sync		*/
-	puffs_vget,		/* vget		*/
-	(void *)eopnotsupp,	/* fhtovp	*/
-	(void *)eopnotsupp,	/* vptofh	*/
+	(void *)eopnotsupp,	/* vget		*/
+	puffs_fhtovp,		/* fhtovp	*/
+	puffs_vptofh,		/* vptofh	*/
 	puffs_init,		/* init		*/
 	NULL,			/* reinit	*/
 	puffs_done,		/* done		*/

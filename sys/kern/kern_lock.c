@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.105.2.4 2007/03/24 00:43:06 rmind Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.105.2.5 2007/04/15 16:03:49 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2006 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.105.2.4 2007/03/24 00:43:06 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.105.2.5 2007/04/15 16:03:49 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_ddb.h"
@@ -126,9 +126,10 @@ int	lock_debug_syslog = 0;	/* defaults to printf, but can be patched */
 #if !defined(__HAVE_SPLBIGLOCK)
 #define	splbiglock	splclock
 #endif
-__cpu_simple_lock_t kernel_lock;
 int kernel_lock_id;
 #endif
+
+__cpu_simple_lock_t kernel_lock;
 
 /*
  * Locking primitives implementation.
@@ -883,10 +884,11 @@ lockmgr(volatile struct lock *lkp, u_int flags,
 					    "exclusive lock holder %lu "
 					    "unlocking", cpu_num, lkp->lk_cpu);
 				} else {
-					lockpanic(lkp, "lockmgr: pid %d, not "
-					    "exclusive lock holder %d "
-					    "unlocking", pid,
-					    lkp->lk_lockholder);
+					lockpanic(lkp, "lockmgr: pid %d.%d, not "
+					    "exclusive lock holder %d.%d "
+					    "unlocking", pid, lid,
+					    lkp->lk_lockholder,
+					    lkp->lk_locklwp);
 				}
 			}
 			if (lkp->lk_exclusivecount == lkp->lk_recurselevel)

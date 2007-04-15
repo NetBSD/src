@@ -8,6 +8,7 @@ Things to be done:
 * grtwo needs cursor and hardware color fill support
 * ip12 needs ROM-based bootloader
 * hpc devices need real probe routines
+* port newport driver to x.org
 
 (rumble)
 * light cursor support

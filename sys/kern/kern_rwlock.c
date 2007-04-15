@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rwlock.c,v 1.3.2.2 2007/03/12 05:58:37 rmind Exp $	*/
+/*	$NetBSD: kern_rwlock.c,v 1.3.2.3 2007/04/15 16:03:50 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.3.2.2 2007/03/12 05:58:37 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.3.2.3 2007/04/15 16:03:50 yamt Exp $");
 
 #define	__RWLOCK_PRIVATE
 
@@ -144,8 +144,8 @@ __strong_alias(rw_enter,rw_vector_enter);
 __strong_alias(rw_exit,rw_vector_exit);
 #endif
 
-void	rw_dump(volatile void *);
-static struct lwp *rw_owner(wchan_t);
+static void	rw_dump(volatile void *);
+static lwp_t	*rw_owner(wchan_t);
 
 lockops_t rwlock_lockops = {
 	"Reader / writer lock",
@@ -215,7 +215,7 @@ rw_vector_enter(krwlock_t *rw, const krw_t op)
 	uintptr_t owner, incr, need_wait, set_wait, curthread;
 	turnstile_t *ts;
 	int queue;
-	struct lwp *l;
+	lwp_t *l;
 	LOCKSTAT_TIMER(slptime);
 	LOCKSTAT_FLAG(lsflag);
 
@@ -228,11 +228,7 @@ rw_vector_enter(krwlock_t *rw, const krw_t op)
 #ifdef LOCKDEBUG
 	if (panicstr == NULL) {
 		simple_lock_only_held(NULL, "rw_enter");
-#ifdef MULTIPROCESSOR
 		LOCKDEBUG_BARRIER(&kernel_lock, 1);
-#else
-		LOCKDEBUG_BARRIER(NULL, 1);
-#endif
 	}
 #endif
 
@@ -340,7 +336,7 @@ rw_vector_exit(krwlock_t *rw)
 	uintptr_t curthread, owner, decr, new;
 	turnstile_t *ts;
 	int rcnt, wcnt;
-	struct lwp *l;
+	lwp_t *l;
 
 	curthread = (uintptr_t)curlwp;
 	RW_ASSERT(rw, curthread != 0);
@@ -430,7 +426,7 @@ rw_vector_exit(krwlock_t *rw)
 			}
 
 			/* Wake the writer. */
-			turnstile_wakeup(ts, TS_WRITER_Q, wcnt, l);
+			turnstile_wakeup(ts, TS_WRITER_Q, 1, l);
 		} else {
 			RW_DASSERT(rw, rcnt != 0);
 
@@ -497,6 +493,7 @@ rw_tryenter(krwlock_t *rw, const krw_t op)
 	RW_LOCKED(rw, op);
 	RW_DASSERT(rw, (op != RW_READER && RW_OWNER(rw) == curthread) ||
 	    (op == RW_READER && RW_COUNT(rw) != 0));
+
 	return 1;
 }
 
@@ -686,7 +683,7 @@ rw_lock_held(krwlock_t *rw)
  *	Return the current owner of an RW lock, but only if it is write
  *	held.  Used for priority inheritance.
  */
-static struct lwp *
+static lwp_t *
 rw_owner(wchan_t obj)
 {
 	krwlock_t *rw = (void *)(uintptr_t)obj; /* discard qualifiers */

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_types.h,v 1.2 2006/09/13 19:55:49 manu Exp $ */
+/*	$NetBSD: linux32_types.h,v 1.2.6.1 2007/04/15 16:03:15 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -40,7 +40,7 @@ typedef int32_t linux32_clock_t;
 typedef int32_t linux32_time_t;
 typedef int32_t linux32_off_t;
 
-#define LINUX_STAT64_HAS_NSEC   1
+#define LINUX32_STAT64_HAS_NSEC   1
 struct linux32_stat64 {
 	unsigned long long lst_dev;
 	unsigned char __pad0[4];
@@ -57,7 +57,6 @@ struct linux32_stat64 {
 	long long   lst_size;
 	unsigned int lst_blksize;
 	long long lst_blocks;  /* Number 512-byte blocks allocated. */
-/* #define LINUX32_STAT64_HAS_NSEC 1 */
 	unsigned lst_atime;
 	unsigned lst_atime_nsec;
 	unsigned lst_mtime;

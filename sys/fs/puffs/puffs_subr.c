@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_subr.c,v 1.20.2.3 2007/03/24 14:55:58 yamt Exp $	*/
+/*	$NetBSD: puffs_subr.c,v 1.20.2.4 2007/04/15 16:03:46 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_subr.c,v 1.20.2.3 2007/03/24 14:55:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_subr.c,v 1.20.2.4 2007/04/15 16:03:46 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -51,8 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: puffs_subr.c,v 1.20.2.3 2007/03/24 14:55:58 yamt Exp
 #include <miscfs/genfs/genfs_node.h>
 #include <miscfs/specfs/specdev.h>
 
-POOL_INIT(puffs_pnpool, sizeof(struct puffs_node), 0, 0, 0, "puffspnpl",
-    &pool_allocator_nointr, IPL_NONE);
+struct pool puffs_pnpool;
 
 #ifdef PUFFSDEBUG
 int puffsdebug;
@@ -223,14 +222,14 @@ puffs_newnode(struct mount *mp, struct vnode *dvp, struct vnode **vpp,
 	 * XXX: technically this error check should punish the fs,
 	 * not the caller.
 	 */
-	simple_lock(&pmp->pmp_lock);
+	mutex_enter(&pmp->pmp_lock);
 	if (cookie == pmp->pmp_rootcookie
 	    || puffs_cookie2pnode(pmp, cookie) != NULL) {
-		simple_unlock(&pmp->pmp_lock);
+		mutex_exit(&pmp->pmp_lock);
 		error = EEXIST;
 		return error;
 	}
-	simple_unlock(&pmp->pmp_lock);
+	mutex_exit(&pmp->pmp_lock);
 
 	error = puffs_getvnode(dvp->v_mount, cookie, type, 0, rdev, &vp);
 	if (error)
@@ -329,17 +328,17 @@ puffs_pnode2vnode(struct puffs_mount *pmp, void *cookie, int lock)
 	if (lock)
 		vgetflags |= LK_EXCLUSIVE | LK_RETRY;
 
-	simple_lock(&pmp->pmp_lock);
+	mutex_enter(&pmp->pmp_lock);
 	pnode = puffs_cookie2pnode(pmp, cookie);
 
 	if (pnode == NULL) {
-		simple_unlock(&pmp->pmp_lock);
+		mutex_exit(&pmp->pmp_lock);
 		return NULL;
 	}
 	vp = pnode->pn_vp;
 
 	simple_lock(&vp->v_interlock);
-	simple_unlock(&pmp->pmp_lock);
+	mutex_exit(&pmp->pmp_lock);
 
 	if (vget(vp, vgetflags))
 		return NULL;
@@ -457,79 +456,23 @@ puffs_updatevpsize(struct vnode *vp)
 		vp->v_size = va.va_size;
 }
 
-/*
- * We're dead, kaput, RIP, slightly more than merely pining for the
- * fjords, belly-up, fallen, lifeless, finished, expired, gone to meet
- * our maker, ceased to be, etcetc.  YASD.  It's a dead FS!
- *
- * Caller must hold puffs spinlock.
- */
 void
-puffs_userdead(struct puffs_mount *pmp)
+puffs_parkdone_asyncbioread(struct puffs_req *preq, void *arg)
 {
-	struct puffs_park *park;
-	struct buf *bp;
+	struct puffs_vnreq_read *read_argp = (void *)preq;
+	struct buf *bp = arg;
+	size_t moved;
 
-	/*
-	 * Mark filesystem status as dying so that operations don't
-	 * attempt to march to userspace any longer.
-	 */
-	pmp->pmp_status = PUFFSTAT_DYING;
+	bp->b_error = preq->preq_rv;
+	if (bp->b_error == 0) {
+		moved = bp->b_bcount - read_argp->pvnr_resid;
+		bp->b_resid = read_argp->pvnr_resid;
 
-	/* and wakeup processes waiting for a reply from userspace */
-	TAILQ_FOREACH(park, &pmp->pmp_req_replywait, park_entries) {
-		if (park->park_preq)
-			park->park_preq->preq_rv = ENXIO;
-		TAILQ_REMOVE(&pmp->pmp_req_replywait, park, park_entries);
-		if (park->park_flags & PUFFS_PARKFLAG_ASYNCBIOREAD) {
-			bp = park->park_bp;
-			bp->b_error = ENXIO;
-			bp->b_flags |= B_ERROR;
-			biodone(bp);
-		} else {
-			wakeup(park);
-		}
+		memcpy(bp->b_data, read_argp->pvnr_data, moved);
+	} else {
+		bp->b_flags |= B_ERROR;
 	}
 
-	/* wakeup waiters for completion of vfs/vnode requests */
-	TAILQ_FOREACH(park, &pmp->pmp_req_touser, park_entries) {
-		if (park->park_preq)
-			park->park_preq->preq_rv = ENXIO;
-		TAILQ_REMOVE(&pmp->pmp_req_touser, park, park_entries);
-		if (park->park_flags & PUFFS_PARKFLAG_ASYNCBIOREAD) {
-			bp = park->park_bp;
-			bp->b_error = ENXIO;
-			bp->b_flags |= B_ERROR;
-			biodone(bp);
-		} else {
-			wakeup(park);
-		}
-	}
-}
-
-/*
- * Converts a non-FAF op to a FAF.  This simply involves making copies
- * of the park and request structures and tagging the request as a FAF.
- * It is safe to block here, since the original op is not a FAF.
- */
-struct puffs_park *
-puffs_reqtofaf(struct puffs_park *ppark)
-{
-	struct puffs_park *newpark;
-	struct puffs_req *newpreq;
-
-	KASSERT((ppark->park_preq->preq_opclass & PUFFSOPFLAG_FAF) == 0);
-
-	MALLOC(newpark, struct puffs_park *, sizeof(struct puffs_park),
-	    M_PUFFS, M_ZERO | M_WAITOK);
-	MALLOC(newpreq, struct puffs_req *, sizeof(struct puffs_req),
-	    M_PUFFS, M_ZERO | M_WAITOK);
-
-	memcpy(newpark, ppark, sizeof(struct puffs_park));
-	memcpy(newpreq, ppark->park_preq, sizeof(struct puffs_req));
-
-	newpark->park_preq = newpreq;
-	newpark->park_preq->preq_opclass |= PUFFSOPFLAG_FAF;
-
-	return newpark;
+	biodone(bp);
+	free(preq, M_PUFFS);
 }

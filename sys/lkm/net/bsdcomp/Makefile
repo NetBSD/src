@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2005/12/11 12:24:49 christos Exp $
+#	$NetBSD: Makefile,v 1.4.26.1 2007/04/15 16:03:55 yamt Exp $
 
 .include "../Makefile.inc"
 
@@ -8,9 +8,5 @@ CPPFLAGS+=-DDO_BSD_COMPRESS=1
 MKMAN=	no
 KMOD=	bsdcomp
 SRCS=	lkminit_bsdcomp.c bsd-comp.c
-
-.if ${MACHINE_CPU} == "sh5"
-COPTS.bsd-comp.c=	-O1
-.endif
 
 .include <bsd.kmod.mk>

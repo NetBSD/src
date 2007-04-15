@@ -1,4 +1,4 @@
-/*	$NetBSD: fdc.c,v 1.2.2.1 2007/03/12 05:50:45 rmind Exp $	*/
+/*	$NetBSD: fdc.c,v 1.2.2.2 2007/04/15 16:03:08 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -108,12 +108,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdc.c,v 1.2.2.1 2007/03/12 05:50:45 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdc.c,v 1.2.2.2 2007/04/15 16:03:08 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
 
 #include <sys/param.h>
+#include <sys/types.h>
 #include <sys/systm.h>
 #include <sys/callout.h>
 #include <sys/kernel.h>
@@ -158,16 +159,6 @@ __KERNEL_RCSID(0, "$NetBSD: fdc.c,v 1.2.2.1 2007/03/12 05:50:45 rmind Exp $");
 
 #define FDUNIT(dev)	(minor(dev) / 8)
 #define FDTYPE(dev)	(minor(dev) % 8)
-
-#ifdef SUN4U
-#define FTC_FLIP \
-	do { \
-		auxio_fd_control(AUXIO_LED_FTC); \
-		auxio_fd_control(0); \
-	} while (0)
-#else
-#define FTC_FLIP
-#endif
 
 /* (mis)use device use flag to identify format operation */
 #define B_FORMAT B_DEVPRIVATE
@@ -662,7 +653,7 @@ fdcattach_obio(struct device *parent, struct device *self, void *aux)
 		fdc->sc_handle);
 
 	if (strcmp(prom_getpropstring(sa->sa_node, "status"), "disabled") == 0) {
-		print(": no drives attached\n");
+		printf(": no drives attached\n");
 		return;
 	}
 
@@ -830,7 +821,7 @@ fdcattach(struct fdc_softc *fdc, int pri)
 
 #ifdef SUN4
 	fdciop = &fdc->sc_io;
-	if (bus_intr_establish2(fdc->sc_bustag, pri, 0
+	if (bus_intr_establish2(fdc->sc_bustag, pri, 0,
 				fdc_c_hwintr, fdc, fdchwintr) == NULL) {
 #elif SUN4U
 	if (bus_intr_establish(fdc->sc_bustag, pri, IPL_BIO,
@@ -1525,24 +1516,21 @@ fdc_c_hwintr(void *arg)
 		msr = bus_space_read_1(t, h, fdc->sc_reg_msr);
 
 		if ((msr & NE7_RQM) == 0)
-			/* That's all this round */
+			/* That's all this round. */
 			break;
 
 		if ((msr & NE7_NDM) == 0) {
+			/* Execution phase finished, get result. */
 			fdcresult(fdc);
 			fdc->sc_istatus = FDC_ISTATUS_DONE;
 			softintr_schedule(fdc->sc_sicookie);
-#ifdef FD_DEBUG
-			if (fdc_debug > 1)
-#ifdef SUN4
-				printf("fdc: overrun: tc = %d\n", fdc->sc_tc);
-#elif SUN4U
-				printf("fdc: overrun: msr = %x, tc = %d\n",
-				    msr, fdc->sc_tc);
-#endif
-#endif
 			break;
 		}
+
+		if (fdc->sc_tc == 0)
+			/* For some reason the controller wants to transfer
+			   more data then what we want to transfer. */
+			panic("fdc: overrun");
 
 		/* Another byte can be transferred */
 		if ((msr & NE7_DIO) != 0)
@@ -1554,10 +1542,7 @@ fdc_c_hwintr(void *arg)
 
 		fdc->sc_data++;
 		if (--fdc->sc_tc == 0) {
-			fdc->sc_istatus = FDC_ISTATUS_DONE;
 			FTC_FLIP;
-			fdcresult(fdc);
-			softintr_schedule(fdc->sc_sicookie);
 			break;
 		}
 	}

@@ -1,10 +1,10 @@
-/*	$NetBSD: mcadevs_data.h,v 1.22 2005/12/11 12:22:18 christos Exp $	*/
+/*	$NetBSD: mcadevs_data.h,v 1.22.26.1 2007/04/15 16:03:23 yamt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: mcadevs,v 1.19 2005/04/03 11:17:49 jdolecek Exp 
+ *	NetBSD: mcadevs,v 1.22 2007/04/12 18:00:05 garbled Exp
  */
 
 /*-
@@ -332,7 +332,10 @@ const struct mca_knowndev mca_knowndevs[] = {
     { 0x8EFD,	"IBM 7568 SCSI Adapter w/cache" },
     { 0x8EFE,	"IBM SCSI Adapter" },
     { 0x8EFF,	"IBM SCSI Adapter w/cache" },
+    { 0x8F62,	"IBM 10/100 Mbps Ethernet MC Adapter" },
+    { 0x8F98,	"IBM 10 Mbps Integrated Ethernet (Rainbow)" },
     { 0x8FA0,	"IBM LANStreamer MC 32 Adapter" },
+    { 0x8FBA,	"IBM NCR 53C720 Integrated SCSI Controller" },
     { 0x8FC8,	"IBM Token Ring 16/4 Busmaster Server Adapter/A" },
     { 0x8FD6,	"IBM Audiovation Adapter" },
     { 0x8FD8,	"IBM XGA/XGA-2 Display Adapter" },
@@ -345,6 +348,7 @@ const struct mca_knowndev mca_knowndevs[] = {
     { 0xDF7F,	"IBM 3363 Optical Disk Adapter" },
     { 0xDF9F,	"IBM Integ. ESDI Fixed Disk & Controller" },
     { 0xDFBF,	"IBM 6157 Streaming Tape Adapter" },
+    { 0xDFE5,	"IBM Ultimedia Audio Adapter" },
     { 0xDFFA,	"IBM 5.25in Diskette Adapter/A" },
     { 0xDFFD,	"IBM ST506 Fixed Disk Adapter" },
     { 0xE000,	"IBM Token Ring Adapter/A" },
@@ -372,6 +376,7 @@ const struct mca_knowndev mca_knowndevs[] = {
     { 0xEFF6,	"IBM PagePrinter Adapter/2" },
     { 0xEFFD,	"IBM VGA Adapter" },
     { 0xF04F,	"IBM 3117 Scanner Adapter/A" },
+    { 0xF6FE,	"IBM Standard I/O Planar (Rainbow)" },
     { 0xF7F7,	"IBM 2-8Mb 80286 Memory Expansion" },
     { 0xF7FE,	"IBM Expanded Memory" },
     { 0xFAFF,	"IBM 32-bit Memory Expansion" },

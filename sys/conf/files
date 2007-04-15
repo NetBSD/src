@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.831.2.5 2007/03/24 14:55:18 yamt Exp $
+#	$NetBSD: files,v 1.831.2.6 2007/04/15 16:03:17 yamt Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -956,6 +956,10 @@ define	tea5757
 file	dev/ic/tea5757.c		tea5757
 define	lm700x
 file	dev/ic/lm700x.c			lm700x
+
+# Philips PCF8584 i2c controller
+define	pcf8584
+file	dev/ic/pcf8584.c		pcf8584
 
 # ACPI power management timer (hardware access, independent of ACPI)
 #

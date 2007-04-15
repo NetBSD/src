@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.h,v 1.46.26.1 2007/03/12 06:01:10 rmind Exp $	*/
+/*	$NetBSD: inode.h,v 1.46.26.2 2007/04/15 16:04:08 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -269,7 +269,7 @@ struct indir {
 /* Determine if soft dependencies are being done */
 #define	DOINGSOFTDEP(vp)	((vp)->v_mount->mnt_flag & MNT_SOFTDEP)
 
-/* This overlays the fid structure (see mount.h). */
+/* This overlays the fid structure (see fstypes.h). */
 struct ufid {
 	u_int16_t ufid_len;	/* Length of structure. */
 	u_int16_t ufid_pad;	/* Force 32-bit alignment. */

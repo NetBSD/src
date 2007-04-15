@@ -606,11 +606,13 @@ static int drm_load(drm_device_t *dev)
 			retcode = DRM_ERR(ENOMEM);
 			goto error;
 		}
+#ifndef DRM_NO_MTRR
 		if (dev->agp != NULL) {
 			if (drm_mtrr_add(dev->agp->info.ai_aperture_base,
 			    dev->agp->info.ai_aperture_size, DRM_MTRR_WC) == 0)
 				dev->agp->mtrr = 1;
 		}
+#endif
 	}
 
 	retcode = drm_ctxbitmap_init(dev);
@@ -658,6 +660,7 @@ static void drm_unload(drm_device_t *dev)
 
 	drm_ctxbitmap_cleanup(dev);
 
+#if !defined(DRM_NO_MTRR) && !defined(DRM_NO_AGP)
 	if (dev->agp && dev->agp->mtrr) {
 		int __unused retcode;
 
@@ -665,6 +668,7 @@ static void drm_unload(drm_device_t *dev)
 		    dev->agp->info.ai_aperture_size, DRM_MTRR_WC);
 		DRM_DEBUG("mtrr_del = %d", retcode);
 	}
+#endif
 
 	DRM_LOCK();
 	drm_lastclose(dev);

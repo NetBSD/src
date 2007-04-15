@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_proxy.c,v 1.11.8.1 2007/03/12 05:57:56 rmind Exp $	*/
+/*	$NetBSD: ip_proxy.c,v 1.11.8.2 2007/04/15 16:03:40 yamt Exp $	*/
 
 /*
  * Copyright (C) 1997-2003 by Darren Reed.
@@ -105,7 +105,7 @@ struct file;
 /* END OF INCLUDES */
 
 #if !defined(lint)
-static const char rcsid[] = "@(#)Id: ip_proxy.c,v 2.62.2.16 2006/03/29 11:19:56 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_proxy.c,v 2.62.2.18 2006/07/14 06:12:17 darrenr Exp";
 #endif
 
 #ifdef INET
@@ -195,7 +195,7 @@ aproxy_t *ap;
 			return -1;
 		}
 
-	for (a = ap_proxylist; a->apr_p; a = a->apr_next)
+	for (a = ap_proxylist; (a != NULL); a = a->apr_next)
 		if ((a->apr_p == ap->apr_p) &&
 		    !strncmp(a->apr_label, ap->apr_label,
 			     sizeof(ap->apr_label))) {
@@ -292,10 +292,15 @@ ipnat_t *nat;
 }
 
 
-int appr_ioctl(data, cmd, mode)
+int appr_ioctl(data, cmd, mode, ctx)
+#if __NetBSD_Version__ >= 499001000
 void *data;
+#else
+caddr_t data;
+#endif
 ioctlcmd_t cmd;
 int mode;
+void *ctx;
 {
 	ap_ctl_t ctl;
 	void *ptr;

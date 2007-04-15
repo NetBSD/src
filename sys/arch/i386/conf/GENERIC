@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.808.2.6 2007/03/24 14:54:43 yamt Exp $
+# $NetBSD: GENERIC,v 1.808.2.7 2007/04/15 16:02:46 yamt Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.808.2.6 $"
+#ident 		"GENERIC-$Revision: 1.808.2.7 $"
 
 maxusers	32		# estimated number of users
 
@@ -961,8 +961,8 @@ ath*	at cardbus? function ?	# Atheros 5210/5211/5212 802.11
 atw*	at cardbus? function ?	# ADMtek ADM8211 (802.11)
 ex*	at cardbus? function ?	# 3Com 3C575TX
 fxp*	at cardbus? function ?	# Intel i8255x
+ral*	at cardbus? function ?	# Ralink Technology RT25x0 802.11a/b/g
 rtk*	at cardbus? function ?	# Realtek 8129/8139
-ral*	at cardbus? function ?	# Ralink Technology
 rtw*	at cardbus? function ?	# Realtek 8180L (802.11)
 tlp*	at cardbus? function ?	# DECchip 21143
 
@@ -1015,9 +1015,9 @@ ohci*	at pci?	dev ? function ?	# Open Host Controller
 uhci*	at pci?	dev ? function ?	# Universal Host Controller (Intel)
 
 # CardBus USB controllers
-ehci*	at cardbus? function ?	# Enhanced Host Controller
-ohci*	at cardbus? function ?	# Open Host Controller
-uhci*	at cardbus? function ?	# Universal Host Controller (Intel)
+ehci*	at cardbus? function ?		# Enhanced Host Controller
+ohci*	at cardbus? function ?		# Open Host Controller
+uhci*	at cardbus? function ?		# Universal Host Controller (Intel)
 
 # ISA USB controllers
 #slhci0	at isa? port 0x300 irq 5	# ScanLogic SL811HS

@@ -1,4 +1,4 @@
-/*	$NetBSD: dkwedge_bsdlabel.c,v 1.9.4.1 2007/03/12 05:53:10 rmind Exp $	*/
+/*	$NetBSD: dkwedge_bsdlabel.c,v 1.9.4.2 2007/04/15 16:03:19 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dkwedge_bsdlabel.c,v 1.9.4.1 2007/03/12 05:53:10 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dkwedge_bsdlabel.c,v 1.9.4.2 2007/04/15 16:03:19 yamt Exp $");
 
 #include <sys/param.h>
 #ifdef _KERNEL
@@ -128,7 +128,7 @@ static const struct disklabel_location {
 	{ 1,	0 },	/* amd64, arc, arm, bebox, cobalt, evbppc, hp700,
 			   hpcarm, hpcmips, i386, ibmnws, mipsco, mvmeppc,
 			   ofppc, playstation2, pmppc, prep, sandpoint,
-			   sbmips, sgimips, sh3, sh5 */
+			   sbmips, sgimips, sh3 */
 	/* XXX atari is weird */
 	{ 2,	0 },	/* cesfic, hp300 */
 

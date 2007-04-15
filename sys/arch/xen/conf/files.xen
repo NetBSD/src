@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.55.2.3 2007/03/26 09:51:30 yamt Exp $
+#	$NetBSD: files.xen,v 1.55.2.4 2007/04/15 16:03:12 yamt Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -186,6 +186,7 @@ file	arch/xen/xen/xbd.c		xbd_hypervisor needs-flag
 
 include	"dev/wscons/files.wscons"
 include	"dev/wsfont/files.wsfont"
+include "dev/wsfb/files.wsfb"
 
 include	"dev/pckbport/files.pckbport"
 

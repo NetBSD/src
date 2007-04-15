@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_fcntl.c,v 1.16.2.2 2007/03/24 14:55:17 yamt Exp $	 */
+/*	$NetBSD: svr4_32_fcntl.c,v 1.16.2.3 2007/04/15 16:03:16 yamt Exp $	 */
 
 /*-
  * Copyright (c) 1994, 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_fcntl.c,v 1.16.2.2 2007/03/24 14:55:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_fcntl.c,v 1.16.2.3 2007/04/15 16:03:16 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -266,7 +266,6 @@ fd_revoke(l, fd, retval)
 	struct filedesc *fdp = l->l_proc->p_fd;
 	struct file *fp;
 	struct vnode *vp;
-	struct mount *mp;
 	struct vattr vattr;
 	int error;
 
@@ -291,11 +290,8 @@ fd_revoke(l, fd, retval)
 	    KAUTH_GENERIC_ISSUSER, NULL)) != 0)
 		goto out;
 
-	if ((error = vn_start_write(vp, &mp, V_WAIT | V_PCATCH)) != 0)
-		goto out;
 	if (vp->v_usecount > 1 || (vp->v_flag & VALIASED))
 		VOP_REVOKE(vp, REVOKEALL);
-	vn_finished_write(mp, 0);
 out:
 	vrele(vp);
 	return error;

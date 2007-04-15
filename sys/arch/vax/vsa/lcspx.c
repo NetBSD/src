@@ -1,4 +1,4 @@
-/*	$NetBSD: lcspx.c,v 1.5.14.1 2007/03/12 05:51:35 rmind Exp $ */
+/*	$NetBSD: lcspx.c,v 1.5.14.2 2007/04/15 16:03:10 yamt Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lcspx.c,v 1.5.14.1 2007/03/12 05:51:35 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lcspx.c,v 1.5.14.2 2007/04/15 16:03:10 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -452,9 +452,9 @@ lcspx_show_screen(void *v, void *cookie, int waitok,
 				if (ss->ss_attr[row][col] & WSATTR_REVERSE)
 					s ^= 255;
 				SPX_ADDR(row, col, line, 0) = s;
+				if (ss->ss_attr[row][col] & WSATTR_UNDERLINE)
+					SPX_ADDR(row, col, line, 0) = 255;
 			}
-			if (ss->ss_attr[row][col] & WSATTR_UNDERLINE)
-				SPX_ADDR(row, col, line, 0) = 255;
 		}
 	cursor = &lcspxaddr[(ss->ss_cury * SPX_CHEIGHT * SPX_COLS) + ss->ss_curx +
 	    ((SPX_CHEIGHT - 1) * SPX_COLS)];

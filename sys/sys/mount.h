@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.152.2.1 2007/03/12 06:00:53 rmind Exp $	*/
+/*	$NetBSD: mount.h,v 1.152.2.2 2007/04/15 16:04:05 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -109,11 +109,7 @@ struct mount {
 	void		*mnt_data;		/* private data */
 	int		mnt_wcnt;		/* count of vfs_busy waiters */
 	struct lwp	*mnt_unmounter;		/* who is unmounting */
-	int		mnt_writeopcountupper;	/* upper writeops in progress */
-	int		mnt_writeopcountlower;	/* lower writeops in progress */
-	struct simplelock mnt_slock;		/* mutex for wcnt and
-						   writeops counters */
-	struct mount	*mnt_leaf;		/* leaf fs we mounted on */
+	struct simplelock mnt_slock;		/* mutex for wcnt */
 	specificdata_reference
 			mnt_specdataref;	/* subsystem specific data */
 };
@@ -202,7 +198,7 @@ int	fsname##_sync(struct mount *, int, struct kauth_cred *,		\
 		struct lwp *);						\
 int	fsname##_vget(struct mount *, ino_t, struct vnode **);		\
 int	fsname##_fhtovp(struct mount *, struct fid *, struct vnode **);	\
-int	fsname##_vptofh(struct vnode *, struct fid *);			\
+int	fsname##_vptofh(struct vnode *, struct fid *, size_t *);	\
 void	fsname##_init(void);						\
 void	fsname##_reinit(void);						\
 void	fsname##_done(void);						\

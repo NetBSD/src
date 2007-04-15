@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.81.2.2 2007/03/24 14:55:01 yamt Exp $
+# $NetBSD: GENERIC,v 1.81.2.3 2007/04/15 16:03:07 yamt Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.81.2.2 $"
+#ident 		"GENERIC-$Revision: 1.81.2.3 $"
 
 maxusers	64
 
@@ -861,6 +861,7 @@ options 	FONT_GALLANT12x22		# PROM font look-alike
 #### Other device configuration
 
 psm*		at ebus?		# Ultrabook IIi microcontroller
+envctrl*	at ebus?		# Ultra E450 environmental monitoring
 
 ### Other pseudo-devices
 

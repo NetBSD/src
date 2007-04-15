@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_flow.c,v 1.2.4.3 2007/03/24 14:56:12 yamt Exp $	*/
+/*	$NetBSD: ip6_flow.c,v 1.2.4.4 2007/04/15 16:04:00 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -132,7 +132,7 @@ ip6flow_hash(struct ip6_hdr *ip6)
 {
 	size_t hash;
 	uint32_t dst_sum, src_sum;
-	int idx;
+	size_t idx;
 
 	src_sum = ip6->ip6_src.s6_addr32[0] + ip6->ip6_src.s6_addr32[1]
 	    + ip6->ip6_src.s6_addr32[2] + ip6->ip6_src.s6_addr32[3];

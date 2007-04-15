@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_pptp_pxy.c,v 1.6 2006/04/04 16:17:19 martti Exp $	*/
+/*	$NetBSD: ip_pptp_pxy.c,v 1.6.14.1 2007/04/15 16:03:40 yamt Exp $	*/
 
 /*
  * Copyright (C) 2002-2003 by Darren Reed
@@ -6,7 +6,7 @@
  * Simple PPTP transparent proxy for in-kernel use.  For use with the NAT
  * code.
  *
- * Id: ip_pptp_pxy.c,v 2.10.2.13 2006/03/17 10:40:05 darrenr Exp
+ * Id: ip_pptp_pxy.c,v 2.10.2.15 2006/10/31 12:11:23 darrenr Exp
  *
  */
 #define	IPF_PPTP_PROXY
@@ -80,6 +80,9 @@ void ippr_pptp_fini()
 
 /*
  * Setup for a new PPTP proxy.
+ *
+ * NOTE: The printf's are broken up with %s in them to prevent them being
+ * optimised into puts statements on FreeBSD (this doesn't exist in the kernel)
  */
 int ippr_pptp_new(fin, aps, nat)
 fr_info_t *fin;
@@ -222,7 +225,7 @@ pptp_pxy_t *pptp;
 		pptp->pptp_state = fr_addstate(&fi, &pptp->pptp_state,
 					       0);
 		if (fi.fin_state != NULL)
-			fr_statederef(&fi, (ipstate_t **)&fi.fin_state);
+			fr_statederef((ipstate_t **)&fi.fin_state);
 	}
 	ip->ip_p = p;
 	return;

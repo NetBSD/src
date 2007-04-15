@@ -1,4 +1,4 @@
-/*	$NetBSD: battery.c,v 1.1 2007/02/15 01:48:40 macallan Exp $ */
+/*	$NetBSD: battery.c,v 1.1.2.1 2007/04/15 16:02:50 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: battery.c,v 1.1 2007/02/15 01:48:40 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: battery.c,v 1.1.2.1 2007/04/15 16:02:50 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -146,7 +146,7 @@ battery_update(struct battery_softc *sc, int out)
 	uint8_t buf[16];
 
 	len = sc->sc_pmu_ops->do_command(sc->sc_pmu_ops->cookie,
-	    PMU_BATTERY_STATE, 0, NULL, buf);
+	    PMU_BATTERY_STATE, 0, NULL, 16, buf);
 	if (len != 9)
 		return -1;	
 

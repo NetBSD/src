@@ -1,4 +1,4 @@
-/*	$NetBSD: ofb.c,v 1.54.2.1 2007/03/12 05:49:06 rmind Exp $	*/
+/*	$NetBSD: ofb.c,v 1.54.2.2 2007/04/15 16:02:50 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofb.c,v 1.54.2.1 2007/03/12 05:49:06 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofb.c,v 1.54.2.2 2007/04/15 16:02:50 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -117,6 +117,7 @@ static void	ofb_putpalreg(struct ofb_softc *, int, uint8_t, uint8_t,
 static int	ofb_getcmap(struct ofb_softc *, struct wsdisplay_cmap *);
 static int	ofb_putcmap(struct ofb_softc *, struct wsdisplay_cmap *);
 static void	ofb_init_cmap(struct ofb_softc *);
+static int	ofb_drm_print(void *, const char *);
 
 extern const u_char rasops_cmap[768];
 
@@ -214,6 +215,16 @@ ofbattach(struct device *parent, struct device *self, void *aux)
 	a.accesscookie = &sc->vd;
 
 	config_found(self, &a, wsemuldisplaydevprint);
+
+	config_found_ia(self, "drm", aux, ofb_drm_print);
+}
+
+static int
+ofb_drm_print(void *aux, const char *pnp)
+{
+	if (pnp)
+		aprint_normal("direct rendering for %s", pnp);
+	return (UNSUPP);
 }
 
 static void

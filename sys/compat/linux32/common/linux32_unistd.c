@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_unistd.c,v 1.5.2.2 2007/03/24 14:55:11 yamt Exp $ */
+/*	$NetBSD: linux32_unistd.c,v 1.5.2.3 2007/04/15 16:03:16 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_unistd.c,v 1.5.2.2 2007/03/24 14:55:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_unistd.c,v 1.5.2.3 2007/04/15 16:03:16 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -203,7 +203,7 @@ linux32_select1(l, retval, nfds, readfds, writefds, exceptfds, timeout)
         fd_set *readfds, *writefds, *exceptfds;
         struct timeval *timeout;
 {   
-	struct timeval tv0, tv1, utv, otv;
+	struct timeval tv0, tv1, utv, otv, *tv = NULL;
 	struct netbsd32_timeval utv32;
 	int error;
 
@@ -235,12 +235,11 @@ linux32_select1(l, retval, nfds, readfds, writefds, exceptfds, timeout)
 				timerclear(&utv);
 		}
 		microtime(&tv0);
-	} else {
-		timerclear(&utv);
+		tv = &utv;
 	}
 
 	error = selcommon(l, retval, nfds, 
-	    readfds, writefds, exceptfds, &utv, NULL);
+	    readfds, writefds, exceptfds, tv, NULL);
 
 	if (error) {
 		/*

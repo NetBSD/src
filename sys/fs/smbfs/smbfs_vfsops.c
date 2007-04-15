@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vfsops.c,v 1.62.2.1 2007/03/24 14:55:59 yamt Exp $	*/
+/*	$NetBSD: smbfs_vfsops.c,v 1.62.2.2 2007/04/15 16:03:47 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.62.2.1 2007/03/24 14:55:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.62.2.2 2007/04/15 16:03:47 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_quota.h"
@@ -456,7 +456,13 @@ loop:
 			goto loop;
 		simple_lock(&vp->v_interlock);
 		nvp = TAILQ_NEXT(vp, v_mntvnodes);
+
 		np = VTOSMB(vp);
+		if (np == NULL) {
+			simple_unlock(&vp->v_interlock);
+			continue;
+		}
+			
 		if ((vp->v_type == VNON || (np->n_flag & NMODIFIED) == 0) &&
 		    LIST_EMPTY(&vp->v_dirtyblkhd) &&
 		     vp->v_uobj.uo_npages == 0) {
