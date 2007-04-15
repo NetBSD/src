@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vnops.c,v 1.59 2007/04/15 12:59:04 gdt Exp $	*/
+/*	$NetBSD: coda_vnops.c,v 1.60 2007/04/15 14:10:28 gdt Exp $	*/
 
 /*
  *
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.59 2007/04/15 12:59:04 gdt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.60 2007/04/15 14:10:28 gdt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -245,7 +245,7 @@ coda_open(void *v)
     if (error)
 	return (error);
     if (!error) {
-	CODADEBUG( CODA_OPEN,myprintf(("open: dev %d inode %llu result %d\n",
+	CODADEBUG(CODA_OPEN, myprintf(("open: dev %d inode %llu result %d\n",
 				  dev, (unsigned long long)inode, error)); )
     }
 
@@ -256,12 +256,6 @@ coda_open(void *v)
     error = coda_grab_vnode(dev, inode, &container_vp);
     if (error)
 	return (error);
-
-    /*
-     * Keep a reference to the coda vnode until the close comes in.
-     * XXX This does not make sense.  Try without.
-     */
-    vref(vp);
 
     /* Save the vnode pointer for the container file. */
     if (cp->c_ovp == NULL) {
@@ -282,12 +276,16 @@ coda_open(void *v)
 	cp->c_flags &= ~C_VATTR;
     }
 
-    /* Save the <device, inode> pair for the cache file to speed
-       up subsequent page_read's. */
+    /* 
+     * Save the <device, inode> pair for the container file to speed
+     * up subsequent reads while closed (mmap, program execution).
+     * This is perhaps safe because venus will invalidate the node
+     * before changing the container file mapping.
+     */
     cp->c_device = dev;
     cp->c_inode = inode;
 
-    /* Open the cache file. */
+    /* Open the container file. */
     error = VOP_OPEN(container_vp, flag, cred, l);
     /* 
      * Drop the lock on the container, after we have done VOP_OPEN
@@ -360,9 +358,6 @@ coda_close(void *v)
 	cp->c_ovp = NULL;
 
     error = venus_close(vtomi(vp), &cp->c_fid, flag, cred, l);
-
-    /* Release reference to coda vnode taken during open. */
-    vrele(CTOV(cp));
 
     CODADEBUG(CODA_CLOSE, myprintf(("close: result %d\n",error)); )
     return(error);
@@ -825,19 +820,19 @@ coda_fsync(void *v)
     return(error);
 }
 
+/*
+ * vp is locked on entry, and we must unlock it.
+ * XXX This routine is suspect and probably needs rewriting.
+ */
 int
 coda_inactive(void *v)
 {
-    /* XXX - at the moment, inactive doesn't look at cred, and doesn't
-       have a proc pointer.  Oops. */
 /* true args */
     struct vop_inactive_args *ap = v;
     struct vnode *vp = ap->a_vp;
     struct cnode *cp = VTOC(vp);
     kauth_cred_t cred __attribute__((unused)) = NULL;
-    struct lwp *l __attribute__((unused)) = curlwp;
-/* upcall decl */
-/* locals */
+    struct lwp *l __attribute__((unused)) = ap->a_l;
 
     /* We don't need to send inactive to venus - DCS */
     MARK_ENTRY(CODA_INACTIVE_STATS);
@@ -868,22 +863,21 @@ coda_inactive(void *v)
     }
 
     if (IS_UNMOUNTING(cp)) {
-#ifdef	DEBUG
-	printf("coda_inactive: IS_UNMOUNTING use %d: vp %p, cp %p\n", vp->v_usecount, vp, cp);
+	/* XXX Do we need to VOP_CLOSE container vnodes? */
+	if (vp->v_usecount > 0)
+	    printf("coda_inactive: IS_UNMOUNTING %p usecount %d\n",
+		   vp, vp->v_usecount);
 	if (cp->c_ovp != NULL)
-	    printf("coda_inactive: cp->ovp != NULL use %d: vp %p, cp %p\n",
-	    	   vp->v_usecount, vp, cp);
-#endif
-	lockmgr(&vp->v_lock, LK_RELEASE, &vp->v_interlock);
+	    printf("coda_inactive: %p ovp != NULL\n", vp);
+	VOP_UNLOCK(vp, 0);
     } else {
-#ifdef OLD_DIAGNOSTIC
-	if (CTOV(cp)->v_usecount) {
-	    panic("coda_inactive: nonzero reference count");
+        /* Sanity checks that perhaps should be panic. */
+	if (vp->v_usecount) {
+	    printf("coda_inactive: %p usecount %d\n", vp, vp->v_usecount);
 	}
 	if (cp->c_ovp != NULL) {
-	    panic("coda_inactive:  cp->ovp != NULL");
+	    printf("coda_inactive: %p ovp != NULL\n", vp);
 	}
-#endif
 	VOP_UNLOCK(vp, 0);
 	vgone(vp);
     }
@@ -893,11 +887,8 @@ coda_inactive(void *v)
 }
 
 /*
- * Remote file system operations having to do with directory manipulation.
- */
-
-/*
- * It appears that in NetBSD, lookup is supposed to return the vnode locked
+ * Coda does not use the normal namecache, but a private version.
+ * Consider how to use the standard facility instead.
  */
 int
 coda_lookup(void *v)
@@ -958,7 +949,7 @@ coda_lookup(void *v)
     }
 
     /*
-     * XXX check for DOT lookups, and short circuit all the caches,
+     * XXX Check for DOT lookups, and short circuit all the caches,
      * just doing an extra vref.  (venus guarantees that lookup of
      * . returns self.)
      */
