@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.107 2007/03/04 06:03:11 christos Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.108 2007/04/15 05:25:02 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.107 2007/03/04 06:03:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.108 2007/04/15 05:25:02 yamt Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_pipe.h"
@@ -249,7 +249,7 @@ sys_accept(struct lwp *l, void *v, register_t *retval)
 	/* if an error occurred, free the file descriptor */
 	if (error) {
 		fdremove(fdp, fd);
-		ffree(fp);
+		closef(fp, l);
 	} else {
 		FILE_SET_MATURE(fp);
 	}
