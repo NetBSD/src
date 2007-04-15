@@ -1,4 +1,4 @@
-/* $NetBSD: crmfb.c,v 1.4 2007/04/14 10:59:18 martin Exp $ */
+/* $NetBSD: crmfb.c,v 1.5 2007/04/15 20:37:24 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crmfb.c,v 1.4 2007/04/14 10:59:18 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crmfb.c,v 1.5 2007/04/15 20:37:24 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -509,6 +509,9 @@ crmfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, struct lwp *l)
 				vcons_redraw_screen(vd->active);
 		}
 		return 0;
+	case WSDISPLAYIO_SVIDEO:
+	case WSDISPLAYIO_GVIDEO:
+		return ENODEV;	/* not supported yet */
 	}
 
 	return EPASSTHROUGH;
