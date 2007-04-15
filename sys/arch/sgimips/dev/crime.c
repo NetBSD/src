@@ -1,4 +1,4 @@
-/*	$NetBSD: crime.c,v 1.22 2005/12/10 07:00:40 tsutsui Exp $	*/
+/*	$NetBSD: crime.c,v 1.23 2007/04/15 04:42:55 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2004 Christopher SEKIYA
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crime.c,v 1.22 2005/12/10 07:00:40 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crime.c,v 1.23 2007/04/15 04:42:55 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -58,6 +58,8 @@ __KERNEL_RCSID(0, "$NetBSD: crime.c,v 1.22 2005/12/10 07:00:40 tsutsui Exp $");
 #include <sgimips/mace/macevar.h>
 
 #include "locators.h"
+
+#define CRIME_DISABLE_WATCHDOG
 
 static int	crime_match(struct device *, struct cfdata *, void *);
 static void	crime_attach(struct device *, struct device *, void *);
@@ -278,10 +280,14 @@ crime_bus_reset(void)
 void
 crime_watchdog_reset(void)
 {
+#ifdef CRIME_WATCHDOG_DISABLE
+	bus_space_write_8(crm_iot, crm_ioh, CRIME_WATCHDOG, 0);
+#else
 	/* enable watchdog timer, clear it */
 	bus_space_write_8(crm_iot, crm_ioh,
 		CRIME_CONTROL, CRIME_CONTROL_DOG_ENABLE);
 	bus_space_write_8(crm_iot, crm_ioh, CRIME_WATCHDOG, 0);
+#endif
 }
 
 void
