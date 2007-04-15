@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.138 2007/04/03 23:44:53 rmind Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.139 2007/04/15 05:25:48 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.138 2007/04/03 23:44:53 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.139 2007/04/15 05:25:48 yamt Exp $");
 
 #include "opt_sock_counters.h"
 #include "opt_sosend_loan.h"
@@ -636,9 +636,15 @@ soclose(struct socket *so)
 int
 soabort(struct socket *so)
 {
+	int error;
 
-	return (*so->so_proto->pr_usrreq)(so, PRU_ABORT, (struct mbuf *)0,
+	KASSERT(so->so_head == NULL);
+	error = (*so->so_proto->pr_usrreq)(so, PRU_ABORT, (struct mbuf *)0,
 	    (struct mbuf *)0, (struct mbuf *)0, (struct lwp *)0);
+	if (error) {
+		sofree(so);
+	}
+	return error;
 }
 
 int
