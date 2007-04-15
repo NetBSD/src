@@ -1,0 +1,15 @@
+.\"	$NetBSD: prep,v 1.1 2007/04/15 17:09:52 uwe Exp $
+.
+Landisk NAS appliances come preinstalled with Linux on the internal
+hard disk or, in case of USL-5P that has no dedicated storage, Compact
+Flash card.
+.Nx
+installation will erase Linux, so if you want to be able to return to
+using Linux, it's a good idea to make a backup of the Linux
+installation first.
+.Pp
+As SH\~IPL+g firmware doesn't provide a way to boot off of an external
+media or over network you will have to disassemble the machine to take
+the hard drive out and attach it to some other computer to transfer
+installation kernel or to perform an off-line installation directly on
+another machine.
