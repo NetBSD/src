@@ -1,0 +1,18 @@
+.\"	$NetBSD: whatis,v 1.1 2007/04/15 17:09:52 uwe Exp $
+.
+.Nx*M
+brings the
+.Nx
+operating system to Hitachi SH-4 based machines that use SH\~IPL+g
+firmware.
+The port was introduced in
+.Nx 4.0 .
+.Pp
+The port name
+.Dq \*M
+comes from the name for some of the hardware that
+.Nx*M
+runs on: SH-4 based 
+.Tn LANDISK
+network-attached storage appliances from
+.Tn I-O\ DATA .
