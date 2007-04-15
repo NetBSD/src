@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.7.52.4 2007/04/04 22:28:17 ad Exp $	*/
+/*	$NetBSD: cpu.h,v 1.7.52.5 2007/04/15 16:59:42 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007 YAMAMOTO Takashi,
@@ -51,6 +51,6 @@ do {						\
 /* flags for cpu_need_resched */
 #define	RESCHED_IMMED	1
 
-struct lwp *cpu_switchto(struct lwp *, struct lwp *);
+lwp_t *cpu_switchto(lwp_t *, lwp_t *);
 
 #endif	/* !_SYS_CPU_H_ */
