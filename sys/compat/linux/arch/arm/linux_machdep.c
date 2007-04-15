@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.19.2.1 2007/03/12 05:52:15 rmind Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.19.2.2 2007/04/15 16:03:13 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -36,9 +36,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/param.h>
+#include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.19.2.1 2007/03/12 05:52:15 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.19.2.2 2007/04/15 16:03:13 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

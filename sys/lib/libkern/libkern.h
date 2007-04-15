@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.67.4.1 2007/02/27 16:54:36 yamt Exp $	*/
+/*	$NetBSD: libkern.h,v 1.67.4.2 2007/04/15 16:03:54 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -281,7 +281,7 @@ char	*strstr __P((const char *, const char *));
  * ffs is an instruction on vax.
  */
 int	 ffs __P((int));
-#if __GNUC_PREREQ__(2, 95) && !defined(__vax__)
+#if __GNUC_PREREQ__(2, 95) && (!defined(__vax__) || __GNUC_PREREQ__(4,1))
 #define	ffs(x)		__builtin_ffs(x)
 #endif
 

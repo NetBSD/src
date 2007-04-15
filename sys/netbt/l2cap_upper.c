@@ -1,4 +1,4 @@
-/*	$NetBSD: l2cap_upper.c,v 1.1.20.2 2007/03/24 14:56:09 yamt Exp $	*/
+/*	$NetBSD: l2cap_upper.c,v 1.1.20.3 2007/04/15 16:03:59 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: l2cap_upper.c,v 1.1.20.2 2007/03/24 14:56:09 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: l2cap_upper.c,v 1.1.20.3 2007/04/15 16:03:59 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -63,9 +63,9 @@ l2cap_attach(struct l2cap_channel **handle,
 {
 	struct l2cap_channel *chan;
 
-	KASSERT(handle);
-	KASSERT(proto);
-	KASSERT(upper);
+	KASSERT(handle != NULL);
+	KASSERT(proto != NULL);
+	KASSERT(upper != NULL);
 
 	chan = malloc(sizeof(struct l2cap_channel), M_BLUETOOTH,
 			M_NOWAIT | M_ZERO);
@@ -404,25 +404,18 @@ int
 l2cap_setopt(struct l2cap_channel *chan, int opt, void *addr)
 {
 	int err = 0;
-	uint16_t tmp;
-
-	/*
-	 * currently we dont allow changing any options when channel
-	 * is other than closed. We could allow this (not sure why?)
-	 * but would have to instigate a configure request.
-	 */
-	if (chan->lc_state != L2CAP_CLOSED)
-		return EBUSY;
+	uint16_t mtu;
 
 	switch (opt) {
 	case SO_L2CAP_IMTU:	/* set Incoming MTU */
-		tmp = *(uint16_t *)addr;
-		if (tmp < L2CAP_MTU_MINIMUM) {
+		mtu = *(uint16_t *)addr;
+		if (mtu < L2CAP_MTU_MINIMUM)
 			err = EINVAL;
-			break;
-		}
+		else if (chan->lc_state == L2CAP_CLOSED)
+			chan->lc_imtu = mtu;
+		else
+			err = EBUSY;
 
-		chan->lc_imtu = tmp;
 		break;
 
 	case SO_L2CAP_OQOS:	/* set Outgoing QoS flow spec */

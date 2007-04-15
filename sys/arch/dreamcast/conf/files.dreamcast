@@ -1,4 +1,4 @@
-#	$NetBSD: files.dreamcast,v 1.28 2006/09/05 11:09:36 uwe Exp $
+#	$NetBSD: files.dreamcast,v 1.28.8.1 2007/04/15 16:02:39 yamt Exp $
 
 # maxpartitions must be first item in files.${MACHINE}
 maxpartitions 16
@@ -8,6 +8,7 @@ maxusers 2 16 64
 include "dev/wscons/files.wscons"
 include "dev/rasops/files.rasops"
 include "dev/wsfont/files.wsfont"
+include "dev/wsfb/files.wsfb"
 
 include "dev/i2o/files.i2o"
 include "dev/pci/files.pci"

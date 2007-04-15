@@ -1,4 +1,4 @@
-// $NetBSD: modelines,v 1.3.2.1 2007/03/12 05:57:48 rmind Exp $
+// $NetBSD: modelines,v 1.3.2.2 2007/04/15 16:03:32 yamt Exp $
 //
 // This file was imported from XFree86, and is made of the contents of both
 // the vesamodes and extramodes files.  As a result these should correspond
@@ -105,6 +105,9 @@ ModeLine "1600x1200" 202.5 1600 1664 1856 2160   1200 1201 1204 1250 +hsync +vsy
 
 # 1600x1200 @ 85Hz (VESA) hsync: 106.3kHz
 ModeLine "1600x1200" 229.5 1600 1664 1856 2160   1200 1201 1204 1250 +hsync +vsync
+
+# 1680x1050 @ 60.00Hz (GTF) hsync: 65.22 kHz; pclk: 147.14 MHz
+ModeLine "1680x1050" 147.14 1680 1784 1968 2256  1050 1051 1054 1087 +hsync +vsync
 
 # 1792x1344 @ 60Hz (VESA) hsync: 83.6kHz
 ModeLine "1792x1344" 204.8 1792 1920 2120 2448   1344 1345 1348 1394 -hsync +vsync

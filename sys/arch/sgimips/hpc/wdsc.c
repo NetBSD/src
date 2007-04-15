@@ -1,4 +1,4 @@
-/*	$NetBSD: wdsc.c,v 1.18.2.2 2007/03/12 05:50:12 rmind Exp $	*/
+/*	$NetBSD: wdsc.c,v 1.18.2.3 2007/04/15 16:02:54 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wayne Knowles
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdsc.c,v 1.18.2.2 2007/03/12 05:50:12 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdsc.c,v 1.18.2.3 2007/04/15 16:02:54 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -176,13 +176,7 @@ wdsc_attach(struct device *pdp, struct device *dp, void *auxp)
 	sc->sc_adapter.adapt_minphys = minphys;
 
 	sc->sc_id = 0;					/* Host ID = 0 */
-
-	/* IP12 runs at 20mhz, all others at 10. XXX - GIO SCSI cards? */
-	if (mach_type == MACH_SGI_IP12)
-		sc->sc_clkfreq = 200;
-	else
-		sc->sc_clkfreq = 100;
-
+	sc->sc_clkfreq = 200;				/* 20MHz */
 	sc->sc_dmamode = SBIC_CTL_DMA;
 
 	evcnt_attach_dynamic(&wsc->sc_intrcnt, EVCNT_TYPE_INTR, NULL,

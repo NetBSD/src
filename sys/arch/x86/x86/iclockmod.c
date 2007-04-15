@@ -1,4 +1,4 @@
-/*	$NetBSD: iclockmod.c,v 1.5.2.2 2007/03/24 14:55:06 yamt Exp $ */
+/*	$NetBSD: iclockmod.c,v 1.5.2.3 2007/04/15 16:03:11 yamt Exp $ */
 /*      $OpenBSD: p4tcc.c,v 1.13 2006/12/20 17:50:40 gwk Exp $ */
 
 /*
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iclockmod.c,v 1.5.2.2 2007/03/24 14:55:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iclockmod.c,v 1.5.2.3 2007/04/15 16:03:11 yamt Exp $");
 
 #include "opt_intel_odcm.h"
 
@@ -114,6 +114,7 @@ clockmod_setstate(int level)
 			break;
 	}
 
+	mcb.msr_read = true;
 	mcb.msr_type = MSR_THERM_CONTROL;
 	mcb.msr_mask = 0x1e;
 
@@ -259,7 +260,7 @@ clockmod_sysctl_helper(SYSCTLFN_ARGS)
 		return error;
 
 	/* invalid level? */
-	if (lvl < 0 || lvl > 7)
+	if (lvl < 0 || lvl >= __arraycount(state))
 		return EINVAL;
 
 	if (rnode->sysctl_num == clockmod_state_target && lvl != oldlvl) {

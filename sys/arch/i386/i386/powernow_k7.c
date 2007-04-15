@@ -1,4 +1,4 @@
-/*	$NetBSD: powernow_k7.c,v 1.22.2.3 2007/03/24 14:54:46 yamt Exp $ */
+/*	$NetBSD: powernow_k7.c,v 1.22.2.4 2007/04/15 16:02:47 yamt Exp $ */
 /*	$OpenBSD: powernow-k7.c,v 1.24 2006/06/16 05:58:50 gwk Exp $ */
 
 /*-
@@ -66,7 +66,7 @@
 /* AMD POWERNOW K7 driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powernow_k7.c,v 1.22.2.3 2007/03/24 14:54:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powernow_k7.c,v 1.22.2.4 2007/04/15 16:02:47 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -363,6 +363,8 @@ k7_powernow_init(void)
 	freq_names_len = 0;
 	cpuname = ci->ci_dev->dv_xname;
 
+	k7pnow_current_state = NULL;
+
 	cstate = malloc(sizeof(struct powernow_cpu_state), M_DEVBUF, M_NOWAIT);
 	if (!cstate) {
 		DPRINTF(("%s: cstate failed to malloc!\n", __func__));
@@ -491,5 +493,7 @@ k7_powernow_destroy(void)
 
 	if (freq_names)
 		free(freq_names, M_SYSCTLDATA);	
+	if (k7pnow_current_state)
+		free(k7pnow_current_state, M_DEVBUF);
 #endif
 }

@@ -1,4 +1,4 @@
-#	$NetBSD: files.ev64260,v 1.8 2005/12/11 12:17:11 christos Exp $
+#	$NetBSD: files.ev64260,v 1.8.26.1 2007/04/15 16:02:40 yamt Exp $
 #
 # Marvell (Galileo) "EV64260" evaluation board's specific configuration info
 #
@@ -56,6 +56,9 @@ file	arch/evbppc/ev64260/com_obio.c		com_obio
 # wdc port
 attach	wdc at obio with wdc_obio
 file	arch/evbppc/ev64260/wdc_obio.c		wdc_obio
+
+# generic fb driver
+include "dev/wsfb/files.wsfb"
 
 #
 # PCI-only drivers

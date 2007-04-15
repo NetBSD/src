@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.131.4.3 2007/03/24 14:55:31 yamt Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.131.4.4 2007/04/15 16:03:25 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.131.4.3 2007/03/24 14:55:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.131.4.4 2007/04/15 16:03:25 yamt Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -2785,6 +2785,17 @@ wm_reset(struct wm_softc *sc)
 		break;
 	}
 	CSR_WRITE(sc, WMREG_PBA, sc->sc_pba);
+
+	/*
+	 * 82541 Errata 29? & 82547 Errata 28?
+	 * See also the description about PHY_RST bit in CTRL register
+	 * in 8254x_GBe_SDM.pdf.
+	 */
+	if ((sc->sc_type == WM_T_82541) || (sc->sc_type == WM_T_82547)) {
+		CSR_WRITE(sc, WMREG_CTRL,
+		    CSR_READ(sc, WMREG_CTRL) | CTRL_PHY_RESET);
+		delay(5000);
+	}
 
 	switch (sc->sc_type) {
 	case WM_T_82544:

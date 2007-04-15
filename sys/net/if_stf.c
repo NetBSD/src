@@ -1,5 +1,5 @@
-/*	$NetBSD: if_stf.c,v 1.56.2.2 2007/03/12 05:59:14 rmind Exp $	*/
-/*	$KAME: if_stf.c,v 1.62 2001/06/07 22:32:16 itojun Exp $	*/
+/*	$NetBSD: if_stf.c,v 1.56.2.3 2007/04/15 16:03:58 yamt Exp $	*/
+/*	$KAME: if_stf.c,v 1.62 2001/06/07 22:32:16 itojun Exp $ */
 
 /*
  * Copyright (C) 2000 WIDE Project.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.56.2.2 2007/03/12 05:59:14 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.56.2.3 2007/04/15 16:03:58 yamt Exp $");
 
 #include "opt_inet.h"
 
@@ -723,7 +723,7 @@ stf_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	case SIOCSIFMTU:
 		if ((error = kauth_authorize_generic(l->l_cred,
-		    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
+		    KAUTH_GENERIC_ISSUSER, NULL)) != 0)
 			break;
 		ifr = (struct ifreq *)data;
 		mtu = ifr->ifr_mtu;

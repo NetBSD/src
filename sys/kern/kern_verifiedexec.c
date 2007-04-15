@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_verifiedexec.c,v 1.95.2.1 2007/02/27 16:54:26 yamt Exp $	*/
+/*	$NetBSD: kern_verifiedexec.c,v 1.95.2.2 2007/04/15 16:03:50 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.95.2.1 2007/02/27 16:54:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.95.2.2 2007/04/15 16:03:50 yamt Exp $");
 
 #include "opt_veriexec.h"
 
@@ -105,6 +105,7 @@ static const struct sysctlnode *veriexec_count_node;
 
 static fileassoc_t veriexec_hook;
 static specificdata_key_t veriexec_mountspecific_key;
+static ONCE_DECL(veriexec_mountspecific_init_control);
 
 static LIST_HEAD(, veriexec_fpops) veriexec_fpops_list;
 
@@ -113,6 +114,7 @@ static int veriexec_raw_cb(kauth_cred_t, kauth_action_t, void *,
 static int sysctl_kern_veriexec(SYSCTLFN_PROTO);
 static struct veriexec_fpops *veriexec_fpops_lookup(const char *);
 static void veriexec_clear(void *);
+static int veriexec_mountspecific_init(void);
 
 static unsigned int veriexec_tablecount = 0;
 
@@ -145,6 +147,12 @@ sysctl_kern_veriexec(SYSCTLFN_ARGS)
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
 	if (error || newp == NULL) {
 		return (error);
+	}
+
+	error = RUN_ONCE(&veriexec_mountspecific_init_control,
+	    veriexec_mountspecific_init);
+	if (error) {
+		return error;
 	}
 
 	if (raise_only && (newval < *var))
@@ -1095,9 +1103,9 @@ veriexec_table_add(struct lwp *l, prop_dictionary_t dict)
 	struct nameidata nid;
 	u_char buf[16];
 	int error;
-	static ONCE_DECL(control);
 
-	error = RUN_ONCE(&control, veriexec_mountspecific_init);
+	error = RUN_ONCE(&veriexec_mountspecific_init_control,
+	    veriexec_mountspecific_init);
 	if (error) {
 		return error;
 	}
@@ -1191,6 +1199,9 @@ veriexec_unmountchk(struct mount *mp)
 
 	switch (veriexec_strict) {
 	case VERIEXEC_LEARNING:
+		error = 0;
+		break;
+
 	case VERIEXEC_IDS:
 		if (veriexec_table_lookup(mp) != NULL) {
 			log(LOG_INFO, "Veriexec: IDS mode, allowing unmount "

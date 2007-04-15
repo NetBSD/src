@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sleepq.c,v 1.4.2.10 2007/03/24 17:10:47 ad Exp $	*/
+/*	$NetBSD: kern_sleepq.c,v 1.4.2.11 2007/04/15 16:03:50 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.4.2.10 2007/03/24 17:10:47 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.4.2.11 2007/04/15 16:03:50 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -64,7 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.4.2.10 2007/03/24 17:10:47 ad Exp 
 
 #include <uvm/uvm_extern.h>
 
-int	sleepq_sigtoerror(struct lwp *, int);
+int	sleepq_sigtoerror(lwp_t *, int);
 
 /* General purpose sleep table, used by ltsleep() and condition variables. */
 sleeptab_t	sleeptab;
@@ -114,7 +114,7 @@ sleepq_init(sleepq_t *sq, kmutex_t *mtx)
  *	to bring the LWP into memory.
  */
 int
-sleepq_remove(sleepq_t *sq, struct lwp *l)
+sleepq_remove(sleepq_t *sq, lwp_t *l)
 {
 	struct cpu_info *ci;
 
@@ -186,9 +186,9 @@ sleepq_remove(sleepq_t *sq, struct lwp *l)
  *	Insert an LWP into the sleep queue, optionally sorting by priority.
  */
 inline void
-sleepq_insert(sleepq_t *sq, struct lwp *l, syncobj_t *sobj)
+sleepq_insert(sleepq_t *sq, lwp_t *l, syncobj_t *sobj)
 {
-	struct lwp *l2;
+	lwp_t *l2;
 	const int pri = lwp_eprio(l);
 
 	if ((sobj->sobj_flag & SOBJ_SLEEPQ_SORTED) != 0) {
@@ -207,7 +207,7 @@ void
 sleepq_enqueue(sleepq_t *sq, pri_t pri, wchan_t wchan, const char *wmesg,
     syncobj_t *sobj)
 {
-	struct lwp *l = curlwp;
+	lwp_t *l = curlwp;
 
 	KASSERT(mutex_owned(sq->sq_mutex));
 	KASSERT(l->l_stat == LSONPROC);
@@ -228,9 +228,9 @@ sleepq_enqueue(sleepq_t *sq, pri_t pri, wchan_t wchan, const char *wmesg,
 }
 
 void
-sleepq_switch(int timo, int catch)
+sleepq_switch(int timo, bool catch)
 {
-	struct lwp *l = curlwp;
+	lwp_t *l = curlwp;
 
 #ifdef KTRACE
 	if (KTRPOINT(l->l_proc, KTR_CSW))
@@ -282,7 +282,7 @@ sleepq_switch(int timo, int catch)
  */
 void
 sleepq_block(sleepq_t *sq, pri_t pri, wchan_t wchan, const char *wmesg,
-	     int timo, int catch, syncobj_t *sobj)
+	     int timo, bool catch, syncobj_t *sobj)
 {
 
 	sleepq_enqueue(sq, pri, wchan, wmesg, sobj);
@@ -301,11 +301,11 @@ sleepq_block(sleepq_t *sq, pri_t pri, wchan_t wchan, const char *wmesg,
  *	those they went asleep on.
  */
 int
-sleepq_unblock(int timo, int catch)
+sleepq_unblock(int timo, bool catch)
 {
 	int error, expired, sig;
 	struct proc *p;
-	struct lwp *l;
+	lwp_t *l;
 
 	l = curlwp;
 	error = l->l_sleeperr;
@@ -354,10 +354,10 @@ sleepq_unblock(int timo, int catch)
  *
  *	Wake zero or more LWPs blocked on a single wait channel.
  */
-void
+lwp_t *
 sleepq_wake(sleepq_t *sq, wchan_t wchan, u_int expected)
 {
-	struct lwp *l, *next;
+	lwp_t *l, *next;
 	int swapin = 0;
 
 	KASSERT(mutex_owned(sq->sq_mutex));
@@ -380,6 +380,8 @@ sleepq_wake(sleepq_t *sq, wchan_t wchan, u_int expected)
 	 */
 	if (swapin)
 		uvm_kick_scheduler();
+
+	return l;
 }
 
 /*
@@ -390,7 +392,7 @@ sleepq_wake(sleepq_t *sq, wchan_t wchan, u_int expected)
  *	always release it.
  */
 void
-sleepq_unsleep(struct lwp *l)
+sleepq_unsleep(lwp_t *l)
 {
 	sleepq_t *sq = l->l_sleepq;
 	int swapin;
@@ -415,7 +417,7 @@ sleepq_unsleep(struct lwp *l)
 void
 sleepq_timeout(void *arg)
 {
-	struct lwp *l = arg;
+	lwp_t *l = arg;
 
 	/*
 	 * Lock the LWP.  Assuming it's still on the sleep queue, its
@@ -438,7 +440,7 @@ sleepq_timeout(void *arg)
  *	Given a signal number, interpret and return an error code.
  */
 int
-sleepq_sigtoerror(struct lwp *l, int sig)
+sleepq_sigtoerror(lwp_t *l, int sig)
 {
 	struct proc *p = l->l_proc;
 	int error;
@@ -487,7 +489,7 @@ sleepq_abort(kmutex_t *mtx, int unlock)
  *	assumed to have been fixed at the time of insertion into the queue.
  */
 void
-sleepq_changepri(struct lwp *l, pri_t pri)
+sleepq_changepri(lwp_t *l, pri_t pri)
 {
 
 	KASSERT(lwp_locked(l, l->l_sleepq->sq_mutex));
@@ -495,7 +497,7 @@ sleepq_changepri(struct lwp *l, pri_t pri)
 }
 
 void
-sleepq_lendpri(struct lwp *l, pri_t pri)
+sleepq_lendpri(lwp_t *l, pri_t pri)
 {
 	sleepq_t *sq = l->l_sleepq;
 	pri_t opri;

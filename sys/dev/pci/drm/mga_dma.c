@@ -40,11 +40,11 @@ __FBSDID("$FreeBSD: src/sys/dev/drm/mga_dma.c,v 1.13 2005/11/28 23:13:53 anholt 
  * \author Gareth Hughes <gareth@valinux.com>
  */
 
-#include "drmP.h"
-#include "drm.h"
-#include "drm_sarea.h"
-#include "mga_drm.h"
-#include "mga_drv.h"
+#include <dev/drm/drmP.h>
+#include <dev/drm/drm.h>
+#include <dev/drm/drm_sarea.h>
+#include <dev/pci/drm/mga_drm.h>
+#include <dev/pci/drm/mga_drv.h>
 
 #define MGA_DEFAULT_USEC_TIMEOUT	10000
 #define MGA_FREELIST_DEBUG		0

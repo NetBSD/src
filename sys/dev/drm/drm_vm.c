@@ -73,7 +73,11 @@ paddr_t drm_mmap(dev_t kdev, off_t offset, int prot)
 			DRM_SPINUNLOCK(&dev->dma_lock);
 			return 0;
 #else
+#ifdef macppc
+			return pphys;
+#else
 			return atop(pphys);
+#endif
 #endif
 		} else {
 			DRM_SPINUNLOCK(&dev->dma_lock);
@@ -134,7 +138,11 @@ paddr_t drm_mmap(dev_t kdev, off_t offset, int prot)
 	*paddr = phys;
 	return 0;
 #else
+#ifdef macppc
+	return phys;
+#else
 	return atop(phys);
+#endif
 #endif
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota.c,v 1.43.2.1 2007/03/12 06:01:11 rmind Exp $	*/
+/*	$NetBSD: ufs_quota.c,v 1.43.2.2 2007/04/15 16:04:09 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.43.2.1 2007/03/12 06:01:11 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.43.2.2 2007/04/15 16:04:09 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -845,7 +845,6 @@ int
 dqsync(struct vnode *vp, struct dquot *dq)
 {
 	struct vnode *dqvp;
-	struct mount *mp;
 	struct iovec aiov;
 	struct uio auio;
 	int error;
@@ -856,7 +855,6 @@ dqsync(struct vnode *vp, struct dquot *dq)
 		return (0);
 	if ((dqvp = dq->dq_ump->um_quotas[dq->dq_type]) == NULLVP)
 		panic("dqsync: file");
-	vn_start_write(dqvp, &mp, V_WAIT | V_LOWER);
 	if (vp != dqvp)
 		vn_lock(dqvp, LK_EXCLUSIVE | LK_RETRY);
 	while (dq->dq_flags & DQ_LOCK) {
@@ -865,7 +863,6 @@ dqsync(struct vnode *vp, struct dquot *dq)
 		if ((dq->dq_flags & DQ_MOD) == 0) {
 			if (vp != dqvp)
 				VOP_UNLOCK(dqvp, 0);
-			vn_finished_write(mp, V_LOWER);
 			return (0);
 		}
 	}
@@ -886,7 +883,6 @@ dqsync(struct vnode *vp, struct dquot *dq)
 	dq->dq_flags &= ~(DQ_MOD|DQ_LOCK|DQ_WANT);
 	if (vp != dqvp)
 		VOP_UNLOCK(dqvp, 0);
-	vn_finished_write(mp, V_LOWER);
 	return (error);
 }
 
