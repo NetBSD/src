@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2007/04/12 06:41:36 macallan Exp $
+#	$NetBSD: Makefile,v 1.18 2007/04/15 03:56:45 macallan Exp $
 
 SUBDIR=	ati atimisc chips fbdev glint imstt mga nv r128 radeon \
 	s3 s3virge savage sis tdfx trident wsfb
@@ -21,7 +21,7 @@ SUBDIR=	dummy fbdev vesa vga wsfb
 .endif
 
 .if ${MACHINE} == "sgimips"
-SUBDIR=	newport
+SUBDIR=	newport wsfb
 .endif
 
 .if ${MACHINE} == "sparc64"
