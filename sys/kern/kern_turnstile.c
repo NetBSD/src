@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_turnstile.c,v 1.3.2.5 2007/04/15 16:03:50 yamt Exp $	*/
+/*	$NetBSD: kern_turnstile.c,v 1.3.2.6 2007/04/15 16:38:49 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.3.2.5 2007/04/15 16:03:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.3.2.6 2007/04/15 16:38:49 yamt Exp $");
 
 #include "opt_lockdebug.h"
 #include "opt_multiprocessor.h"
@@ -370,11 +370,13 @@ turnstile_wakeup(turnstile_t *ts, int q, int count, struct lwp *nl)
 		turnstile_t *next;
 		turnstile_t *prev = NULL;
 		pri_t prio;
+		bool dolock;
 
 		ts->ts_inheritor = NULL;
 		l = curlwp;
 
-		if (l->l_mutex == &sched_mutex) {
+		dolock = l->l_mutex == l->l_cpu->ci_schedstate.spc_mutex;
+		if (dolock) {
 			sleepq_lwp_lock(l);
 		}
 
@@ -407,7 +409,7 @@ turnstile_wakeup(turnstile_t *ts, int q, int count, struct lwp *nl)
 
 		lwp_lendpri(l, prio);
 
-		if (l->l_mutex == &sched_mutex) {
+		if (dolock) {
 			sleepq_lwp_unlock(l);
 		}
 	}
