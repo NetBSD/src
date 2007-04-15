@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.c,v 1.22 2007/04/14 20:34:37 martin Exp $	*/
+/*	$NetBSD: ip_nat.c,v 1.23 2007/04/15 10:42:41 martin Exp $	*/
 
 /*
  * Copyright (C) 1995-2003 by Darren Reed.
@@ -1176,7 +1176,11 @@ int getlock;
 /* structure is copied back to the user.                                    */
 /* ------------------------------------------------------------------------ */
 static int fr_natgetsz(data)
+#if __NetBSD_Version__ >= 499001000
 void *data;
+#else
+caddr_t data;
+#endif
 {
 	ap_session_t *aps;
 	nat_t *nat, *n;
@@ -1235,7 +1239,11 @@ void *data;
 /* proxy is also copied, as to is the NAT rule which was responsible for it */
 /* ------------------------------------------------------------------------ */
 static int fr_natgetent(data)
+#if __NetBSD_Version__ >= 499001000
 void *data;
+#else
+caddr_t data;
+#endif
 {
 	int error, outsize;
 	ap_session_t *aps;
@@ -1347,7 +1355,11 @@ finished:
 /* firewall rule data structures, if pointers to them indicate so.          */
 /* ------------------------------------------------------------------------ */
 static int fr_natputent(data, getlock)
+#if __NetBSD_Version__ >= 499001000
 void *data;
+#else
+caddr_t data;
+#endif
 int getlock;
 {
 	nat_save_t *ipn, *ipnn;

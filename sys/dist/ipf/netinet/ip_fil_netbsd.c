@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_netbsd.c,v 1.32 2007/04/14 20:34:36 martin Exp $	*/
+/*	$NetBSD: ip_fil_netbsd.c,v 1.33 2007/04/15 10:42:40 martin Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -516,7 +516,11 @@ struct proc *p;
 #endif
 dev_t dev;
 u_long cmd;
+#if __NetBSD_Version__ >= 499001000
 void *data;
+#else
+caddr_t data;
+#endif
 int mode;
 {
 	int error = 0, unit = 0;
@@ -1117,7 +1121,11 @@ frdest_t *fdp;
 		dst->sin_addr = fdp->fd_ip;
 
 	dst->sin_len = sizeof(*dst);
+#if __NetBSD_Version__ >= 499001100
 	rtcache_init(ro);
+#else
+	rtalloc(ro);
+#endif
 
 	if ((ifp == NULL) && (ro->ro_rt != NULL))
 		ifp = ro->ro_rt->rt_ifp;
@@ -1302,7 +1310,13 @@ done:
 	else
 		fr_frouteok[1]++;
 
+#if __NetBSD_Version__ >= 499001100
 	rtcache_free(ro);
+#else
+	if (ro->ro_rt) {
+		RTFREE(ro->ro_rt);
+	}
+#endif
 	*mpp = NULL;
 	return error;
 bad:
@@ -1360,7 +1374,11 @@ frdest_t *fdp;
 			dst6->sin6_addr = fdp->fd_ip6.in6;
 	}
 
+#if __NetBSD_Version__ >= 499001100
 	rtcache_init((struct route *)ro);
+#else
+	rtalloc((struct route *)ro);
+#endif
 
 	if ((ifp == NULL) && (ro->ro_rt != NULL))
 		ifp = ro->ro_rt->rt_ifp;
@@ -1408,7 +1426,11 @@ frdest_t *fdp;
 		}
 	}
 bad:
+#if __NetBSD_Version__ >= 499001100
 	rtcache_free((struct route *)ro);
+#else
+	RTFREE(((struct route *)ro)->ro_rt);
+#endif
 	return error;
 }
 #endif
@@ -1426,11 +1448,19 @@ fr_info_t *fin;
 	dst->sin_len = sizeof(*dst);
 	dst->sin_family = AF_INET;
 	dst->sin_addr = fin->fin_src;
+#if __NetBSD_Version__ >= 499001100
 	rtcache_init(&iproute);
+#else
+	rtalloc(&iproute);
+#endif
 	if (iproute.ro_rt == NULL)
 		return 0;
 	rc = (fin->fin_ifp == iproute.ro_rt->rt_ifp);
+#if __NetBSD_Version__ >= 499001100
 	rtcache_free(&iproute);
+#else
+	RTFREE(iproute.ro_rt);
+#endif
 	return rc;
 }
 
