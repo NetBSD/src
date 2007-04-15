@@ -1,4 +1,4 @@
-# $NetBSD: md.sgimips,v 1.11 2005/03/28 13:48:04 lukem Exp $
+# $NetBSD: md.sgimips,v 1.12 2007/04/15 03:56:44 macallan Exp $
 ./usr/X11R6/bin/X
 ./usr/X11R6/bin/XFree86
 ./usr/X11R6/bin/Xprt
@@ -193,6 +193,7 @@
 ./usr/X11R6/lib/modules/drivers/libnewport_drv.so.0
 ./usr/X11R6/lib/modules/drivers/libnewport_drv.so.0.0
 ./usr/X11R6/lib/modules/drivers/libnewport_drv_pic.a
+./usr/X11R6/lib/modules/drivers/wsfb_drv.o
 ./usr/X11R6/lib/modules/extensions/libGLcore.so
 ./usr/X11R6/lib/modules/extensions/libGLcore.so.0
 ./usr/X11R6/lib/modules/extensions/libGLcore.so.0.0
@@ -359,6 +360,7 @@
 ./usr/X11R6/man/cat4/mouse.0			-unknown-		.cat
 ./usr/X11R6/man/cat4/newport.0			-unknown-		.cat
 ./usr/X11R6/man/cat4/void.0			-unknown-		.cat
+./usr/X11R6/man/cat4/wsfb.0			-unknown-		.cat
 ./usr/X11R6/man/cat5/XF86Config.0		-unknown-		.cat
 ./usr/X11R6/man/man1/XFree86.1			-unknown-		.man
 ./usr/X11R6/man/man1/dga.1			-unknown-		.man
@@ -374,4 +376,5 @@
 ./usr/X11R6/man/man4/mouse.4			-unknown-		.man
 ./usr/X11R6/man/man4/newport.4			-unknown-		.man
 ./usr/X11R6/man/man4/void.4			-unknown-		.man
+./usr/X11R6/man/cat4/wsfb.4			-unknown-		.cat
 ./usr/X11R6/man/man5/XF86Config.5		-unknown-		.man
