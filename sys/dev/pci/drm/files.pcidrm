@@ -1,0 +1,67 @@
+#	$NetBSD: files.pcidrm,v 1.1.6.2 2007/04/15 16:03:29 yamt Exp $
+
+device	i915drm: drmbase
+attach	i915drm at drm
+file	dev/pci/drm/i915_drv.c		i915drm
+file	dev/pci/drm/i915_dma.c		i915drm
+file	dev/pci/drm/i915_irq.c		i915drm
+file	dev/pci/drm/i915_mem.c		i915drm
+
+device	mach64drm: drmbase
+attach	mach64drm at drm
+file	dev/pci/drm/mach64_dma.c	mach64drm
+file	dev/pci/drm/mach64_drv.c	mach64drm
+file	dev/pci/drm/mach64_irq.c	mach64drm
+file	dev/pci/drm/mach64_state.c	mach64drm
+
+device	mgadrm: drmbase
+attach	mgadrm at drm
+file	dev/pci/drm/mga_dma.c		mgadrm
+file	dev/pci/drm/mga_drv.c		mgadrm
+file	dev/pci/drm/mga_irq.c		mgadrm
+file	dev/pci/drm/mga_state.c		mgadrm
+file	dev/pci/drm/mga_warp.c		mgadrm
+
+device	r128drm: drmbase
+attach	r128drm at drm
+file	dev/pci/drm/ati_pcigart.c	r128drm | radeondrm
+file	dev/pci/drm/r128_cce.c		r128drm
+file	dev/pci/drm/r128_drv.c		r128drm
+file	dev/pci/drm/r128_irq.c		r128drm
+file	dev/pci/drm/r128_state.c	r128drm
+
+device	radeondrm: drmbase
+attach	radeondrm at drm
+file	dev/pci/drm/r300_cmdbuf.c	radeondrm
+file	dev/pci/drm/radeon_cp.c		radeondrm
+file	dev/pci/drm/radeon_drv.c	radeondrm
+file	dev/pci/drm/radeon_irq.c	radeondrm
+file	dev/pci/drm/radeon_mem.c	radeondrm
+file	dev/pci/drm/radeon_state.c	radeondrm
+
+device	savagedrm: drmbase
+attach	savagedrm at drm
+file	dev/pci/drm/savage_bci.c	savagedrm
+file	dev/pci/drm/savage_drv.c	savagedrm
+file	dev/pci/drm/savage_state.c	savagedrm
+
+device	sisdrm: drmbase
+attach	sisdrm at drm
+file	dev/pci/drm/sis_drv.c		sisdrm
+file	dev/pci/drm/sis_ds.c		sisdrm
+file	dev/pci/drm/sis_mm.c		sisdrm
+
+device	tdfxdrm: drmbase
+attach	tdfxdrm at drm
+file	dev/pci/drm/tdfx_drv.c		tdfxdrm
+
+device	viadrm: drmbase
+attach	viadrm at drm
+file	dev/pci/drm/via_drv.c		viadrm
+file	dev/pci/drm/via_dma.c		viadrm
+file	dev/pci/drm/via_ds.c		viadrm
+file	dev/pci/drm/via_irq.c		viadrm
+file	dev/pci/drm/via_map.c		viadrm
+file	dev/pci/drm/via_mm.c		viadrm
+file	dev/pci/drm/via_verifier.c	viadrm
+file	dev/pci/drm/via_video.c		viadrm

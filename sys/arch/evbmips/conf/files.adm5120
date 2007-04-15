@@ -1,4 +1,4 @@
-#	$NetBSD: files.adm5120,v 1.1.2.2 2007/03/24 14:54:39 yamt Exp $
+#	$NetBSD: files.adm5120,v 1.1.2.3 2007/04/15 16:02:39 yamt Exp $
 
 file	arch/evbmips/adm5120/autoconf.c
 file	arch/evbmips/adm5120/machdep.c
@@ -28,6 +28,7 @@ include "dev/ata/files.ata"
 
 # Machine-independent WS console drivers
 include "dev/wscons/files.wscons"
+include "dev/wsfb/files.wsfb"
 
 # Machine-independent USB device support
 include "dev/usb/files.usb"

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_exec.h,v 1.23.20.1 2007/03/24 14:55:14 yamt Exp $	*/
+/*	$NetBSD: netbsd32_exec.h,v 1.23.20.2 2007/04/15 16:03:16 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -118,7 +118,7 @@ netbsd32_copyargs(l, pack, arginfo, stackp, argp)
 	/* remember location of envp for later */
 	arginfo->ps_envstr = (char **)(u_long)cpp;
 
-	for (; --argc >= 0; sp += len, NETBSD32PTR32PLUS(dp, len)) {
+	for (; --envc >= 0; sp += len, NETBSD32PTR32PLUS(dp, len)) {
 		if ((error = copyout(&dp, cpp++, sizeof(dp))) != 0 ||
 		    (error = copyoutstr(sp, NETBSD32PTR64(dp),
 					ARG_MAX, &len)) != 0)

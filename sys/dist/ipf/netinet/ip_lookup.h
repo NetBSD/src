@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_lookup.h,v 1.3.14.1 2007/03/12 05:57:55 rmind Exp $	*/
+/*	$NetBSD: ip_lookup.h,v 1.3.14.2 2007/04/15 16:03:39 yamt Exp $	*/
 
 
 #ifndef __IP_LOOKUP_H__
@@ -35,6 +35,9 @@ typedef	struct	iplookupop	{
 	void	*iplo_struct;
 } iplookupop_t;
 
+#define	LOOKUP_ANON	0x80000000
+
+
 typedef	struct	iplookupflush	{
 	int	iplf_type;	/* IPLT_* */
 	int	iplf_unit;	/* IPL_LOG* */
@@ -57,9 +60,43 @@ typedef	struct	iplookuplink	{
 
 #define	IPLT_ANON	0x80000000
 
+
+typedef	union	{
+	struct	iplookupiterkey {
+		char	ilik_ival;
+		u_char	ilik_type;	/* IPLT_* */
+		u_char	ilik_otype;
+		char	ilik_unit;	/* IPL_LOG* */
+	} ilik_unstr;
+	u_32_t	ilik_key;
+} iplookupiterkey_t;
+
+typedef	struct	ipflookupiter	{
+	int			ili_nitems;
+	iplookupiterkey_t	ili_lkey;
+	char			ili_name[FR_GROUPLEN];
+	void			*ili_data;
+} ipflookupiter_t;
+
+#define	ili_key		ili_lkey.ilik_key
+#define	ili_ival	ili_lkey.ilik_unstr.ilik_ival
+#define	ili_unit	ili_lkey.ilik_unstr.ilik_unit
+#define	ili_type	ili_lkey.ilik_unstr.ilik_type
+#define	ili_otype	ili_lkey.ilik_unstr.ilik_otype
+
+#define	IPFLOOKUPITER_LIST	0
+#define	IPFLOOKUPITER_NODE	1
+
+
 extern int ip_lookup_init __P((void));
-extern int ip_lookup_ioctl __P((void *, ioctlcmd_t, int));
+#if __NetBSD_Version__ >= 499001000
+extern int ip_lookup_ioctl __P((void*, ioctlcmd_t, int, int, void *));
+#else
+extern int ip_lookup_ioctl __P((caddr_t, ioctlcmd_t, int, int, void *));
+#endif
 extern void ip_lookup_unload __P((void));
 extern void ip_lookup_deref __P((int, void *));
+extern int ip_lookup_iterate __P((void *, int, void *));
+extern void ip_lookup_iterderef __P((u_32_t, void *));
 
 #endif /* __IP_LOOKUP_H__ */

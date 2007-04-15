@@ -1,4 +1,4 @@
-/*	$NetBSD: dmacreg.h,v 1.2 2005/12/11 12:18:58 christos Exp $ */
+/*	$NetBSD: dmacreg.h,v 1.2.26.1 2007/04/15 16:02:55 yamt Exp $ */
 
 /*
  * Copyright (c) 2004 Valeriy E. Ushakov
@@ -29,6 +29,9 @@
 
 #ifndef _SH3_DMACREG_H_
 #define _SH3_DMACREG_H_
+
+#include <sh3/devreg.h>
+
 
 #define SH3_DMAC_SAR0		0xa4000020 /* Source Address */
 #define SH3_DMAC_DAR0		0xa4000024 /* Destination Address */

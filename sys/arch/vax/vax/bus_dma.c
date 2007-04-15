@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.26.20.1 2007/03/12 05:51:15 rmind Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.26.20.2 2007/04/15 16:03:09 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.26.20.1 2007/03/12 05:51:15 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.26.20.2 2007/04/15 16:03:09 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -165,7 +165,7 @@ _bus_dmamap_load(t, map, buf, buflen, p, flags)
 	struct proc *p;
 	int flags;
 {
-	vaddr_t lastaddr;
+	vaddr_t lastaddr = 0;
 	int seg, error;
 	struct vmspace *vm;
 
@@ -213,7 +213,7 @@ _bus_dmamap_load_mbuf(t, map, m0, flags)
 	struct mbuf *m0;
 	int flags;
 {
-	vaddr_t lastaddr;
+	vaddr_t lastaddr = 0;
 	int seg, error, first;
 	struct mbuf *m;
 
@@ -267,7 +267,7 @@ _bus_dmamap_load_uio(t, map, uio, flags)
 	struct uio *uio;
 	int flags;
 {
-	vaddr_t lastaddr;
+	vaddr_t lastaddr = 0;
 	int seg, i, error, first;
 	bus_size_t minlen, resid;
 	struct iovec *iov;

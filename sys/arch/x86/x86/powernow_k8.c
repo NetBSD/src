@@ -1,4 +1,4 @@
-/*	$NetBSD: powernow_k8.c,v 1.7.12.1 2007/03/24 14:55:06 yamt Exp $ */
+/*	$NetBSD: powernow_k8.c,v 1.7.12.2 2007/04/15 16:03:12 yamt Exp $ */
 /*	$OpenBSD: powernow-k8.c,v 1.8 2006/06/16 05:58:50 gwk Exp $ */
 
 /*-
@@ -66,7 +66,7 @@
 /* AMD POWERNOW K8 driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powernow_k8.c,v 1.7.12.1 2007/03/24 14:55:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powernow_k8.c,v 1.7.12.2 2007/04/15 16:03:12 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -85,15 +85,10 @@ __KERNEL_RCSID(0, "$NetBSD: powernow_k8.c,v 1.7.12.1 2007/03/24 14:55:06 yamt Ex
 #include <machine/cpufunc.h>
 #include <machine/bus.h>
 
-/* 
- * Overwrite our previous WRITE_FIDVID macro with the one used by
- * the msr_cpu_broadcast framework, which will work in UP and SMP.
- */
-#undef WRITE_FIDVID
-#define WRITE_FIDVID(fid, vid, ctrl)					\
-	mcb.msr_mask = ((ctrl) << 32);					\
-	mcb.msr_value = ((1ULL << 16) | ((vid) << 8) | (fid));		\
-	mcb.msr_type = MSR_AMDK7_FIDVID_CTL;				\
+#define WRITE_FIDVID(fid, vid, ctrl)		\
+	mcb.msr_read = false;			\
+	mcb.msr_value = (((ctrl) << 32) | (1ULL << 16) | ((vid) << 8) | (fid)); \
+	mcb.msr_type = MSR_AMDK7_FIDVID_CTL;	\
 	msr_cpu_broadcast(&mcb);
 
 #ifdef _LKM
@@ -113,7 +108,6 @@ static unsigned int cur_freq;
 static int powernow_node_target, powernow_node_current;
 static char *freq_names;
 static size_t freq_names_len;
-static struct powernow_cpu_state *cstate;
 
 static int k8pnow_sysctl_helper(SYSCTLFN_PROTO);
 static int k8pnow_decode_pst(struct powernow_cpu_state *, uint8_t *);
@@ -163,7 +157,7 @@ k8_powernow_setperf(unsigned int freq)
 	uint32_t val;
 	int cfid, cvid, fid = 0, vid = 0;
 	int rvo;
-	struct powernow_cpu_state *ccstate;
+	struct powernow_cpu_state *cstate;
 	struct msr_cpu_broadcast mcb;
 
 	/*
@@ -176,14 +170,14 @@ k8_powernow_setperf(unsigned int freq)
 	cfid = PN8_STA_CFID(status);
 	cvid = PN8_STA_CVID(status);
 
-	ccstate = k8pnow_current_state;
+	cstate = k8pnow_current_state;
 
-	DPRINTF(("%s: cstate->n_states=%d\n", __func__, ccstate->n_states));
-	for (i = 0; i < ccstate->n_states; i++) {
-		if (ccstate->state_table[i].freq >= freq) {
+	DPRINTF(("%s: cstate->n_states=%d\n", __func__, cstate->n_states));
+	for (i = 0; i < cstate->n_states; i++) {
+		if (cstate->state_table[i].freq >= freq) {
 			DPRINTF(("%s: freq=%d\n", __func__, freq));
-			fid = ccstate->state_table[i].fid;
-			vid = ccstate->state_table[i].vid;
+			fid = cstate->state_table[i].fid;
+			vid = cstate->state_table[i].vid;
 			DPRINTF(("%s: fid=%d vid=%d\n", __func__, fid, vid));
 			break;
 		}
@@ -198,7 +192,7 @@ k8_powernow_setperf(unsigned int freq)
 	 * going up.
 	 */
 	while (cvid > vid) {
-		val = cvid - (1 << ccstate->mvs);
+		val = cvid - (1 << cstate->mvs);
 		WRITE_FIDVID(cfid, (val > 0) ? val : 0, 1ULL);
 		READ_PENDING_WAIT(status);
 		cvid = PN8_STA_CVID(status);
@@ -206,7 +200,7 @@ k8_powernow_setperf(unsigned int freq)
 	}
 
 	/* ... then raise to voltage + RVO (if required) */
-	for (rvo = ccstate->rvo; rvo > 0 && cvid > 0; --rvo) {
+	for (rvo = cstate->rvo; rvo > 0 && cvid > 0; --rvo) {
 		/* XXX It's not clear from spec if we have to do that
 		 * in 0.25 step or in MVS.  Therefore do it as it's done
 		 * under Linux */
@@ -231,7 +225,7 @@ k8_powernow_setperf(unsigned int freq)
 					val = FID_TO_VCO_FID(cfid) + 2;
 			} else
 				val = cfid - 2;
-			WRITE_FIDVID(val, cvid, (uint64_t)ccstate->pll * 1000 / 5);
+			WRITE_FIDVID(val, cvid, (uint64_t)cstate->pll * 1000 / 5);
 			READ_PENDING_WAIT(status);
 			cfid = PN8_STA_CFID(status);
 			COUNT_OFF_IRT(cstate->irt);
@@ -239,7 +233,7 @@ k8_powernow_setperf(unsigned int freq)
 			vco_cfid = FID_TO_VCO_FID(cfid);
 		}
 
-		WRITE_FIDVID(fid, cvid, (uint64_t) ccstate->pll * 1000 / 5);
+		WRITE_FIDVID(fid, cvid, (uint64_t) cstate->pll * 1000 / 5);
 		READ_PENDING_WAIT(status);
 		cfid = PN8_STA_CFID(status);
 		COUNT_OFF_IRT(cstate->irt);
@@ -254,7 +248,7 @@ k8_powernow_setperf(unsigned int freq)
 	}
 
 	if (cfid == fid || cvid == vid)
-		freq = ccstate->state_table[i].freq;
+		freq = cstate->state_table[i].freq;
 
 	return 0;
 }
@@ -264,11 +258,12 @@ k8_powernow_setperf(unsigned int freq)
  * compute state_table via an insertion sort.
  */
 static int
-k8pnow_decode_pst(struct powernow_cpu_state *ccstate, uint8_t *p)
+k8pnow_decode_pst(struct powernow_cpu_state *cstate, uint8_t *p)
 {
 	int i, j, n;
 	struct powernow_state state;
-	for (n = 0, i = 0; i < ccstate->n_states; i++) {
+
+	for (n = 0, i = 0; i < cstate->n_states; i++) {
 		state.fid = *p++;
 		state.vid = *p++;
 	
@@ -278,13 +273,13 @@ k8pnow_decode_pst(struct powernow_cpu_state *ccstate, uint8_t *p)
 		 */
 		state.freq = 800 + state.fid * 100;
 		j = n;
-		while (j > 0 && ccstate->state_table[j - 1].freq > state.freq) {
-			memcpy(&ccstate->state_table[j],
-			    &ccstate->state_table[j - 1],
+		while (j > 0 && cstate->state_table[j - 1].freq > state.freq) {
+			memcpy(&cstate->state_table[j],
+			    &cstate->state_table[j - 1],
 			    sizeof(struct powernow_state));
 			--j;
 		}
-		memcpy(&ccstate->state_table[j], &state,
+		memcpy(&cstate->state_table[j], &state,
 		    sizeof(struct powernow_state));
 		n++;
 	}
@@ -292,7 +287,7 @@ k8pnow_decode_pst(struct powernow_cpu_state *ccstate, uint8_t *p)
 }
 
 static int
-k8pnow_states(struct powernow_cpu_state *ccstate, uint32_t cpusig,
+k8pnow_states(struct powernow_cpu_state *cstate, uint32_t cpusig,
     unsigned int fid, unsigned int vid)
 {
 	struct powernow_psb_s *psb;
@@ -323,13 +318,13 @@ k8pnow_states(struct powernow_cpu_state *ccstate, uint32_t cpusig,
 			for(i = 0; i < psb->n_pst; ++i) {
 				pst = (struct powernow_pst_s *) p;
 
-				ccstate->pll = pst->pll;
-				ccstate->n_states = pst->n_states;
+				cstate->pll = pst->pll;
+				cstate->n_states = pst->n_states;
 				if (cpusig == pst->signature &&
 				    pst->fid == fid && pst->vid == vid) {
 					DPRINTF(("%s: cpusig = signature\n",
 					    __func__));
-					return (k8pnow_decode_pst(ccstate,
+					return (k8pnow_decode_pst(cstate,
 					    p+= sizeof(struct powernow_pst_s)));
 				}
 				p += sizeof(struct powernow_pst_s) +
@@ -368,12 +363,15 @@ k8_powernow_init_main(void)
 	uint64_t status;
 	uint32_t maxfid, maxvid, i;
 	const struct sysctlnode *freqnode, *node, *pnownode;
+	struct powernow_cpu_state *cstate;
 	char *cpuname;
 	const char *techname;
 	size_t len;
 
 	freq_names_len = 0;
 	cpuname = curcpu()->ci_dev->dv_xname;
+
+	k8pnow_current_state = NULL;
 
 	cstate = malloc(sizeof(struct powernow_cpu_state), M_DEVBUF, M_NOWAIT);
 	if (!cstate) {
@@ -497,8 +495,8 @@ k8_powernow_destroy(void)
 #ifdef _LKM
 	sysctl_teardown(SYSCTLLOG);
 
-	if (cstate)
-		free(cstate, M_DEVBUF);
+	if (k8pnow_current_state)
+		free(k8pnow_current_state, M_DEVBUF);
 	if (freq_names)
 		free(freq_names, M_SYSCTLDATA);
 #endif

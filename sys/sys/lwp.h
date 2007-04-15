@@ -1,4 +1,4 @@
-/* 	$NetBSD: lwp.h,v 1.48.2.11 2007/03/24 17:13:14 ad Exp $	*/
+/* 	$NetBSD: lwp.h,v 1.48.2.12 2007/04/15 16:04:04 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -58,6 +58,7 @@
  * Lightweight process.  Field markings and the corresponding locks: 
  *
  * a:	proclist_mutex
+ * c:	condition variable interlock, passed to cv_wait()
  * l:	*l_mutex
  * p:	l_proc->p_smutex
  * s:	spc_mutex, which may or may not be referenced by l_mutex
@@ -68,7 +69,7 @@
  * Fields are clustered together by usage (to increase the likelyhood
  * of cache hits) and by size (to reduce dead space in the structure).
  */
-struct	lwp {
+typedef struct lwp {
 	/* Scheduling and overall state */
 	TAILQ_ENTRY(lwp) l_runq;	/* s: run queue */
 	void		*l_sched_info;	/* s: Scheduler-specific structure */
@@ -133,7 +134,8 @@ struct	lwp {
 	void		*l_private;	/* !: svr4-style lwp-private data */
 	struct kauth_cred *l_cred;	/* !: cached credentials */
 	void		*l_emuldata;	/* !: kernel lwp-private data */
-	u_short		l_acflag;	/* !: accounting flags */
+	u_int8_t	l_cv_signalled;	/* c: restarted by cv_signal() */
+	u_int8_t	l_unused;	/* !: currently unused */
 	u_short		l_shlocks;	/* !: lockdebug: shared locks held */
 	u_short		l_exlocks;	/* !: lockdebug: excl. locks held */
 	u_short		l_locks;	/* !: lockmgr count of held locks */
@@ -143,7 +145,7 @@ struct	lwp {
 	/* These are only used by 'options SYSCALL_TIMES' */
 	uint32_t        l_syscall_time; /* !: time epoch for current syscall */
 	uint64_t        *l_syscall_counter; /* !: counter for current process */
-};
+} lwp_t;
 
 #if !defined(USER_TO_UAREA)
 #if !defined(UAREA_USER_OFFSET)
@@ -161,7 +163,7 @@ extern struct lwplist alllwp;		/* List of all LWPs. */
 
 extern struct pool lwp_uc_pool;		/* memory pool for LWP startup args */
 
-extern struct lwp lwp0;			/* LWP for proc0 */
+extern lwp_t lwp0;			/* LWP for proc0 */
 #endif
 
 /* These flags are kept in l_flag. */
@@ -229,45 +231,45 @@ do {									\
 		lwp_update_creds(l);					\
 } while (/* CONSTCOND */ 0)
 
-void	lwp_startup(struct lwp *, struct lwp *);
+void	lwp_startup(lwp_t *, lwp_t *);
 
-int	lwp_locked(struct lwp *, kmutex_t *);
-void	lwp_setlock(struct lwp *, kmutex_t *);
-void	lwp_unlock_to(struct lwp *, kmutex_t *);
-void	lwp_lock_retry(struct lwp *, kmutex_t *);
-void	lwp_relock(struct lwp *, kmutex_t *);
-int	lwp_trylock(struct lwp *);
-void	lwp_addref(struct lwp *);
-void	lwp_delref(struct lwp *);
-void	lwp_drainrefs(struct lwp *);
+int	lwp_locked(lwp_t *, kmutex_t *);
+void	lwp_setlock(lwp_t *, kmutex_t *);
+void	lwp_unlock_to(lwp_t *, kmutex_t *);
+void	lwp_lock_retry(lwp_t *, kmutex_t *);
+void	lwp_relock(lwp_t *, kmutex_t *);
+int	lwp_trylock(lwp_t *);
+void	lwp_addref(lwp_t *);
+void	lwp_delref(lwp_t *);
+void	lwp_drainrefs(lwp_t *);
 
 /* Flags for _lwp_wait1 */
 #define LWPWAIT_EXITCONTROL	0x00000001
 void	lwpinit(void);
-int 	lwp_wait1(struct lwp *, lwpid_t, lwpid_t *, int);
-void	lwp_continue(struct lwp *);
-void	cpu_setfunc(struct lwp *, void (*)(void *), void *);
+int 	lwp_wait1(lwp_t *, lwpid_t, lwpid_t *, int);
+void	lwp_continue(lwp_t *);
+void	cpu_setfunc(lwp_t *, void (*)(void *), void *);
 void	startlwp(void *);
-void	upcallret(struct lwp *);
-void	lwp_exit(struct lwp *);
-void	lwp_exit_switchaway(struct lwp *);
-struct lwp *proc_representative_lwp(struct proc *, int *, int);
-int	lwp_suspend(struct lwp *, struct lwp *);
-int	lwp_create1(struct lwp *, const void *, size_t, u_long, lwpid_t *);
-void	lwp_update_creds(struct lwp *);
-struct lwp *lwp_find(struct proc *, int);
-void	lwp_userret(struct lwp *);
-void	lwp_need_userret(struct lwp *);
-void	lwp_free(struct lwp *, bool, bool);
+void	upcallret(lwp_t *);
+void	lwp_exit(lwp_t *);
+void	lwp_exit_switchaway(lwp_t *);
+lwp_t *proc_representative_lwp(struct proc *, int *, int);
+int	lwp_suspend(lwp_t *, lwp_t *);
+int	lwp_create1(lwp_t *, const void *, size_t, u_long, lwpid_t *);
+void	lwp_update_creds(lwp_t *);
+lwp_t *lwp_find(struct proc *, int);
+void	lwp_userret(lwp_t *);
+void	lwp_need_userret(lwp_t *);
+void	lwp_free(lwp_t *, bool, bool);
 void	lwp_sys_init(void);
 
 int	lwp_specific_key_create(specificdata_key_t *, specificdata_dtor_t);
 void	lwp_specific_key_delete(specificdata_key_t);
-void 	lwp_initspecific(struct lwp *);
-void 	lwp_finispecific(struct lwp *);
-void *	lwp_getspecific(specificdata_key_t);
+void 	lwp_initspecific(lwp_t *);
+void 	lwp_finispecific(lwp_t *);
+void	*lwp_getspecific(specificdata_key_t);
 #if defined(_LWP_API_PRIVATE)
-void *	_lwp_getspecific_by_lwp(struct lwp *, specificdata_key_t);
+void	*_lwp_getspecific_by_lwp(lwp_t *, specificdata_key_t);
 #endif
 void	lwp_setspecific(specificdata_key_t, void *);
 
@@ -275,7 +277,7 @@ void	lwp_setspecific(specificdata_key_t, void *);
  * Lock an LWP. XXXLKM
  */
 static inline void
-lwp_lock(struct lwp *l)
+lwp_lock(lwp_t *l)
 {
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	kmutex_t *old;
@@ -297,7 +299,7 @@ lwp_lock(struct lwp *l)
  * Unlock an LWP. XXXLKM
  */
 static inline void
-lwp_unlock(struct lwp *l)
+lwp_unlock(lwp_t *l)
 {
 	LOCK_ASSERT(mutex_owned(l->l_mutex));
 
@@ -305,7 +307,7 @@ lwp_unlock(struct lwp *l)
 }
 
 static inline void
-lwp_changepri(struct lwp *l, pri_t pri)
+lwp_changepri(lwp_t *l, pri_t pri)
 {
 	LOCK_ASSERT(mutex_owned(l->l_mutex));
 
@@ -316,7 +318,7 @@ lwp_changepri(struct lwp *l, pri_t pri)
 }
 
 static inline void
-lwp_lendpri(struct lwp *l, pri_t pri)
+lwp_lendpri(lwp_t *l, pri_t pri)
 {
 	LOCK_ASSERT(mutex_owned(l->l_mutex));
 
@@ -327,7 +329,7 @@ lwp_lendpri(struct lwp *l, pri_t pri)
 }
 
 static inline void
-lwp_unsleep(struct lwp *l)
+lwp_unsleep(lwp_t *l)
 {
 	LOCK_ASSERT(mutex_owned(l->l_mutex));
 
@@ -335,14 +337,14 @@ lwp_unsleep(struct lwp *l)
 }
 
 static inline int
-lwp_eprio(struct lwp *l)
+lwp_eprio(lwp_t *l)
 {
 
 	return MIN(l->l_inheritedprio, l->l_priority);
 }
 
-int newlwp(struct lwp *, struct proc *, vaddr_t, bool, int,
-    void *, size_t, void (*)(void *), void *, struct lwp **);
+int newlwp(lwp_t *, struct proc *, vaddr_t, bool, int,
+    void *, size_t, void (*)(void *), void *, lwp_t **);
 
 /*
  * We should provide real stubs for the below that LKMs can use.
@@ -354,14 +356,14 @@ static inline void
 spc_lock(struct cpu_info *ci, const bool heldmutex)
 {
 	(void)heldmutex;
-	mutex_enter(ci->ci_schedstate.spc_mutex);
+	mutex_spin_enter(ci->ci_schedstate.spc_mutex);
 }
 
 static inline void
 spc_unlock(struct cpu_info *ci, const bool heldmutex)
 {
 	(void)heldmutex;
-	mutex_exit(ci->ci_schedstate.spc_mutex);
+	mutex_spin_exit(ci->ci_schedstate.spc_mutex);
 }
 
 #else	/* defined(MULTIPROCESSOR) || defined(LOCKDEBUG) */
@@ -369,15 +371,15 @@ spc_unlock(struct cpu_info *ci, const bool heldmutex)
 static inline void
 spc_lock(struct cpu_info *ci, const bool heldmutex)
 {
-	if (heldmutex == false)
-		mutex_enter(ci->ci_schedstate.spc_mutex);
+	if (!heldmutex)
+		mutex_spin_enter(ci->ci_schedstate.spc_mutex);
 }
 
 static inline void
 spc_unlock(struct cpu_info *ci, const bool heldmutex)
 {
-	if (heldmutex == false)
-		mutex_exit(ci->ci_schedstate.spc_mutex);
+	if (!heldmutex)
+		mutex_spin_exit(ci->ci_schedstate.spc_mutex);
 }
 
 #endif	/* defined(MULTIPROCESSOR) || defined(LOCKDEBUG) */

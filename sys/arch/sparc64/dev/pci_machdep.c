@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.53 2006/10/21 23:49:29 mrg Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.53.4.1 2007/04/15 16:03:08 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.53 2006/10/21 23:49:29 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.53.4.1 2007/04/15 16:03:08 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -423,13 +423,17 @@ pci_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t data)
 		PCITAG_OFFSET(tag) + reg, data);
 }
 
+/*
+ * XXX: This code assumes we're on a psycho host bridge.
+ */
 static int
 pci_find_ino(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
 	struct psycho_pbm *pp = pa->pa_pc->cookie;
 	struct psycho_softc *sc = pp->pp_sc;
+	u_int bus;
 	u_int dev;
-	u_int ino;
+	u_int pin;
 
 	DPRINTF(SPDB_INTMAP, ("pci_find_ino: pa_tag: node %x, %d:%d:%d\n",
 			      PCITAG_NODE(pa->pa_tag), (int)PCITAG_BUS(pa->pa_tag),
@@ -444,32 +448,27 @@ pci_find_ino(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 			      (int)PCITAG_DEV(pa->pa_intrtag),
 			      (int)PCITAG_FUN(pa->pa_intrtag)));
 
-	ino = *ihp;
+	bus = (pp->pp_id == PSYCHO_PBM_B);
+	/*
+	 * If we are on a ppb, use the devno on the underlying bus when forming
+	 * the ivec.
+	 */
+	if (pa->pa_intrswiz != 0 && PCITAG_NODE(pa->pa_intrtag) != 0) 
+		dev = PCITAG_DEV(pa->pa_intrtag);
+	else
+		dev = pa->pa_device;
+	dev--;
 
-	if ((ino & ~INTMAP_PCIINT) == 0) {
+	if (sc->sc_mode == PSYCHO_MODE_PSYCHO &&
+	    pp->pp_id == PSYCHO_PBM_B)
+		dev--;
 
-		if (pa->pa_intrswiz != 0 && PCITAG_NODE(pa->pa_intrtag) != 0) 
-			dev = PCITAG_DEV(pa->pa_intrtag);
-		else
-			dev = pa->pa_device;
+	pin = pa->pa_intrpin - 1;
+	DPRINTF(SPDB_INTMAP, ("pci_find_ino: mode %d, pbm %d, dev %d, pin %d\n",
+	    sc->sc_mode, pp->pp_id, dev, pin));
 
-		if (sc->sc_mode == PSYCHO_MODE_PSYCHO &&
-		    pp->pp_id == PSYCHO_PBM_B)
-			dev -= 2;
-		else
-			dev--;
-
-		DPRINTF(SPDB_INTMAP, ("pci_find_ino: mode %d, pbm %d, dev %d, ino %d\n",
-		       sc->sc_mode, pp->pp_id, dev, ino));
-
-		ino = (pa->pa_intrpin - 1) & INTMAP_PCIINT;
-
-		ino |= sc->sc_ign;
-		ino |= ((pp->pp_id == PSYCHO_PBM_B) ? INTMAP_PCIBUS : 0);
-		ino |= (dev << 2) & INTMAP_PCISLOT;
-
-		*ihp = ino;
-	}
+	*ihp = sc->sc_ign | ((bus << 4) & INTMAP_PCIBUS) |
+	    ((dev << 2) & INTMAP_PCISLOT) | (pin & INTMAP_PCIINT);
 
 	return (0);
 }

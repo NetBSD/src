@@ -1,4 +1,4 @@
-/*	$NetBSD: mca_machdep.h,v 1.10.26.1 2007/03/12 05:48:36 rmind Exp $	*/
+/*	$NetBSD: mca_machdep.h,v 1.10.26.2 2007/04/15 16:02:48 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -98,5 +98,7 @@ void	mca_disk_unbusy(void);
 
 #define MCA_ADAP_SET		0x08	/* Adapter setup mode */
 #define MCA_ADAP_CHR		0x80	/* Adapter channel reset */
+
+#define MCA_MAX_SLOTS		8	/* max number of slots per bus */
 
 #endif /* _I386_MCA_MACHDEP_H_ */

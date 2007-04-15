@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.h,v 1.46.6.1 2007/02/27 16:55:28 yamt Exp $	*/
+/*	$NetBSD: uvm_page.h,v 1.46.6.2 2007/04/15 16:04:09 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -141,6 +141,7 @@ struct vm_page {
 #if defined(UVM_PAGE_TRKOWN)
 	/* debugging fields to track page ownership */
 	pid_t			owner;		/* proc that set PG_BUSY */
+	lwpid_t			lowner;		/* lwp that set PG_BUSY */
 	const char		*owner_tag;	/* why it was set busy */
 #endif
 };

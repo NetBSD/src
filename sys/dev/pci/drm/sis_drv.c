@@ -31,10 +31,10 @@
 __FBSDID("$FreeBSD: src/sys/dev/drm/sis_drv.c,v 1.7 2005/12/20 22:44:36 jhb Exp $");
 */
 
-#include "drmP.h"
-#include "sis_drm.h"
-#include "sis_drv.h"
-#include "drm_pciids.h"
+#include <dev/drm/drmP.h>
+#include <dev/pci/drm/sis_drm.h>
+#include <dev/pci/drm/sis_drv.h>
+#include <dev/pci/drm/drm_pciids.h>
 
 /* drv_PCI_IDs comes from drm_pciids.h, generated from drm_pciids.txt. */
 static drm_pci_id_list_t sis_pciidlist[] = {

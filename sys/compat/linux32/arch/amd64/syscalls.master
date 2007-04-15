@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.11 2007/02/16 20:49:06 njoly Exp $
+	$NetBSD: syscalls.master,v 1.11.2.1 2007/04/15 16:03:15 yamt Exp $
 
 ; NetBSD i386 COMPAT_LINUX32 system call name/number "master" file.
 ; (See syscalls.conf to see what it is processed into.)
@@ -190,7 +190,8 @@
 96	STD	{ int linux32_sys_getpriority(int which, int who); }
 97	STD	{ int linux32_sys_setpriority(int which, int who, int prio); }
 98	UNIMPL	profil
-99	UNIMPL	statfs
+99	STD	{ int linux32_sys_statfs(const netbsd32_charp path, \
+		    linux32_statfsp sp); }
 100	UNIMPL	fstatfs
 101	UNIMPL	ioperm
 102	STD	{ int linux32_sys_socketcall(int what, netbsd32_voidp args); }

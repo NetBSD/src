@@ -44,6 +44,14 @@ __FBSDID("$FreeBSD: src/sys/dev/drm/drmP.h,v 1.18 2006/11/06 13:41:53 rwatson Ex
 typedef struct drm_device drm_device_t;
 typedef struct drm_file drm_file_t;
 
+#if defined(__FreeBSD__) || defined(__NetBSD__)
+#include <opt_drm.h>
+#ifdef DRM_DEBUG
+#undef DRM_DEBUG
+#define DRM_DEBUG_DEFAULT_ON 1
+#endif /* DRM_DEBUG */
+#endif
+
 #include <sys/param.h>
 #include <sys/queue.h>
 #include <sys/malloc.h>
@@ -77,7 +85,9 @@ typedef struct drm_file drm_file_t;
 #endif
 #include <machine/param.h>
 #include <machine/bus.h>
+#if !defined(DRM_NO_MTRR)
 #include <machine/sysarch.h>
+#endif
 #include <sys/endian.h>
 #include <sys/mman.h>
 #if defined(__FreeBSD__)
@@ -95,7 +105,9 @@ typedef struct drm_file drm_file_t;
 #include <sys/select.h>
 #endif /* __FreeBSD_version < 500000 */
 #elif defined(__NetBSD__)
+#ifndef DRM_NO_MTRR
 #include <machine/mtrr.h>
+#endif
 #include <sys/vnode.h>
 #include <sys/select.h>
 #include <sys/device.h>
@@ -304,7 +316,11 @@ extern drm_device_t *drm_units[];
 #define CDEV_MAJOR		34
 #define PAGE_ALIGN(addr)	(((addr) + PAGE_SIZE - 1) & PAGE_MASK)
 /* DRM_SUSER returns true if the user is superuser */
+#ifdef DRM_NO_AGP
+#define DRM_AGP_FIND_DEVICE()	0
+#else
 #define DRM_AGP_FIND_DEVICE()	agp_find_device(0)
+#endif
 #define DRM_MTRR_WC		MTRR_TYPE_WC
 #define jiffies			hardclock_ticks
 
@@ -486,8 +502,8 @@ for ( ret = 0 ; !ret && !(condition) ; ) {			\
 }
 #endif
 
-#define DRM_ERROR(fmt, arg...) \
-	printf("error: [" DRM_NAME ":pid%d:%s] *ERROR* " fmt,		\
+#define DRM_ERROR(fmt, arg...)					\
+	printf("error: [" DRM_NAME ":pid%d:%s] *ERROR* " fmt,	\
 	    DRM_CURRENTPID, __func__ , ## arg);
 
 #define DRM_INFO(fmt, arg...) printf("info: [" DRM_NAME "] " fmt , ## arg)

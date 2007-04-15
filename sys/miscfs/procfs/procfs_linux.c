@@ -1,4 +1,4 @@
-/*      $NetBSD: procfs_linux.c,v 1.32.2.1 2007/03/12 05:59:08 rmind Exp $      */
+/*      $NetBSD: procfs_linux.c,v 1.32.2.2 2007/04/15 16:03:56 yamt Exp $      */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.32.2.1 2007/03/12 05:59:08 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.32.2.2 2007/04/15 16:03:56 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -216,6 +216,13 @@ procfs_do_pid_stat(struct lwp *curl, struct lwp *l,
 	else
 #endif
 		sstack = (unsigned long) USRSTACK;
+
+	/*
+	 * jdk 1.6 compares low <= addr && addr < high
+	 * if we put addr == high, then the test fails
+	 * so eat one page.
+	 */
+	sstack -= PAGE_SIZE;
 
 	vm_map_unlock_read(map);
 	uvmspace_free(vm);

@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix_sbus.c,v 1.19.14.1 2007/03/12 05:57:06 rmind Exp $ */
+/*	$NetBSD: cgsix_sbus.c,v 1.19.14.2 2007/04/15 16:03:31 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgsix_sbus.c,v 1.19.14.1 2007/03/12 05:57:06 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgsix_sbus.c,v 1.19.14.2 2007/04/15 16:03:31 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,7 +94,7 @@ cgsixmatch(parent, cf, aux)
 {
 	struct sbus_attach_args *sa = aux;
 
-	return (strcmp(cf->cf_name, sa->sa_name) == 0);
+	return (strcmp(cf->cf_name, sa->sa_name) == 0) ? 100 : 0;
 }
 
 
@@ -187,7 +187,10 @@ cgsixattach(parent, self, aux)
 
 	isconsole = fb_is_console(node);
 
-	/* we need the address of the framebuffer, no matter if we're console or not. */
+	/*
+	 * we need the address of the framebuffer, no matter if we're console or
+	 * not.
+	 */
 	sc->sc_ramsize = prom_getpropint(node, "fbmapped", 1024 * 1024);
 	if (sbus_bus_map(sa->sa_bustag,
 			sa->sa_slot,

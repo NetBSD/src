@@ -1,4 +1,4 @@
-/* $NetBSD: if_plip.c,v 1.11.14.1 2007/03/12 05:56:47 rmind Exp $ */
+/* $NetBSD: if_plip.c,v 1.11.14.2 2007/04/15 16:03:31 yamt Exp $ */
 
 /*-
  * Copyright (c) 1997 Poul-Henning Kamp
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_plip.c,v 1.11.14.1 2007/03/12 05:56:47 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_plip.c,v 1.11.14.2 2007/04/15 16:03:31 yamt Exp $");
 
 /*
  * Parallel port TCP/IP interfaces added.  I looked at the driver from
@@ -196,7 +196,7 @@ CFATTACH_DECL(plip, sizeof(struct lp_softc), lp_probe, lp_attach, lp_detach,
 static void lpinittables(void);
 static void lpfreetables(void);
 static int lpioctl(struct ifnet *, u_long, void *);
-static int lpoutput(struct ifnet *, struct mbuf *, struct sockaddr *,
+static int lpoutput(struct ifnet *, struct mbuf *, const struct sockaddr *,
 	struct rtentry *);
 static void lpstart(struct ifnet *);
 static void lp_intr(void *);
@@ -706,7 +706,7 @@ lpoutbyte(u_char byte, int spin, struct device * ppbus)
 
 /* Queue a packet for delivery */
 static int
-lpoutput(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
+lpoutput(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 	struct rtentry *rt)
 {
 	struct device * dev = ifp->if_softc;

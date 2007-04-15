@@ -1,4 +1,4 @@
-/*	$NetBSD: tctrlvar.h,v 1.5.18.1 2007/03/12 05:50:29 rmind Exp $ */
+/*	$NetBSD: tctrlvar.h,v 1.5.18.2 2007/04/15 16:03:07 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -52,7 +52,6 @@ struct envsys_sensor {
 
 extern void tadpole_powerdown(void);
 extern void tadpole_set_video(int);
-extern int  tadpole_request(struct tctrl_req *, int);
 extern void tadpole_set_lcd(int, unsigned short);
 extern void tadpole_register_callback(void (*)(void *, int), void *);
 

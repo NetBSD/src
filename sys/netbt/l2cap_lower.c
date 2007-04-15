@@ -1,4 +1,4 @@
-/*	$NetBSD: l2cap_lower.c,v 1.1.20.2 2007/03/24 14:56:09 yamt Exp $	*/
+/*	$NetBSD: l2cap_lower.c,v 1.1.20.3 2007/04/15 16:03:58 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: l2cap_lower.c,v 1.1.20.2 2007/03/24 14:56:09 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: l2cap_lower.c,v 1.1.20.3 2007/04/15 16:03:58 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -192,8 +192,8 @@ l2cap_start(struct l2cap_channel *chan)
 
 	MBUFQ_DEQUEUE(&chan->lc_txq, m);
 
-	KASSERT(chan->lc_link);
-	KASSERT(m);
+	KASSERT(chan->lc_link != NULL);
+	KASSERT(m != NULL);
 
 	DPRINTFN(5, "CID #%d sending packet (%d bytes)\n",
 		chan->lc_lcid, m->m_pkthdr.len);

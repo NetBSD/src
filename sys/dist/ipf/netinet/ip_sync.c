@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_sync.c,v 1.5.14.1 2007/03/12 05:57:58 rmind Exp $	*/
+/*	$NetBSD: ip_sync.c,v 1.5.14.2 2007/04/15 16:03:43 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995-1998 by Darren Reed.
@@ -98,7 +98,7 @@ struct file;
 /* END OF INCLUDES */
 
 #if !defined(lint)
-static const char rcsid[] = "@(#)Id: ip_sync.c,v 2.40.2.7 2006/03/19 14:59:39 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_sync.c,v 2.40.2.8 2006/07/14 06:12:20 darrenr Exp";
 #endif
 
 #define	SYNC_STATETABSZ	256
@@ -997,10 +997,15 @@ synclist_t *sl;
 /* This function currently does not handle any ioctls and so just returns   */
 /* EINVAL on all occasions.                                                 */
 /* ------------------------------------------------------------------------ */
-int fr_sync_ioctl(data, cmd, mode)
+int fr_sync_ioctl(data, cmd, mode, uid, ctx)
+#if __NetBSD_Version__ >= 499001000
 void *data;
+#else
+caddr_t data;
+#endif
 ioctlcmd_t cmd;
-int mode;
+int mode, uid;
+void *ctx;
 {
 	return EINVAL;
 }

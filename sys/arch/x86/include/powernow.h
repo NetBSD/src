@@ -1,4 +1,4 @@
-/*	$NetBSD: powernow.h,v 1.6.6.1 2007/03/24 14:55:05 yamt Exp $	*/
+/*	$NetBSD: powernow.h,v 1.6.6.2 2007/04/15 16:03:11 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004 Martin Végiard.
@@ -131,11 +131,6 @@
 #define ACPI_PN8_CTRL_TO_PLL(x)		(((x) >> 20) & 0x7f)
 #define ACPI_PN8_CTRL_TO_RVO(x)		(((x) >> 28) & 0x03)
 #define ACPI_PN8_CTRL_TO_IRT(x)		(((x) >> 30) & 0x03)
-
-
-#define WRITE_FIDVID(fid, vid, ctrl)	\
-	wrmsr(MSR_AMDK7_FIDVID_CTL,	\
-		(((ctrl) << 32) | (1ULL << 16) | ((vid) << 8) | (fid)))
 
 #define POWERNOW_MAX_STATES		16
 

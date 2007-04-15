@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_red.c,v 1.24.4.1 2007/03/12 05:45:04 rmind Exp $	*/
+/*	$NetBSD: altq_red.c,v 1.24.4.2 2007/04/15 16:02:36 yamt Exp $	*/
 /*	$KAME: altq_red.c,v 1.20 2005/04/13 03:44:25 suz Exp $	*/
 
 /*
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_red.c,v 1.24.4.1 2007/03/12 05:45:04 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_red.c,v 1.24.4.2 2007/04/15 16:02:36 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -82,7 +82,6 @@ __KERNEL_RCSID(0, "$NetBSD: altq_red.c,v 1.24.4.1 2007/03/12 05:45:04 rmind Exp 
 #include <sys/sockio.h>
 #include <sys/proc.h>
 #include <sys/kernel.h>
-#include <sys/kauth.h>
 #ifdef ALTQ_FLOWVALVE
 #include <sys/queue.h>
 #include <sys/time.h>
