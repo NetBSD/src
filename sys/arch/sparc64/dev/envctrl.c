@@ -1,4 +1,4 @@
-/*	$NetBSD: envctrl.c,v 1.1 2007/04/14 19:33:28 tnn Exp $ */
+/*	$NetBSD: envctrl.c,v 1.2 2007/04/15 12:38:09 tnn Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: envctrl.c,v 1.1 2007/04/14 19:33:28 tnn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: envctrl.c,v 1.2 2007/04/15 12:38:09 tnn Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -113,19 +113,9 @@ static void envctrl_update_sensors(struct envctrl_softc *);
 static void envctrl_interpolate_ob_table(int *, uint8_t *);
 
 static const struct envsys_range envctrl_ranges[] = {
-	{0, 0, ENVSYS_STEMP},
-	{0, 0, ENVSYS_STEMP},
-	{0, 0, ENVSYS_STEMP},
-	{0, 0, ENVSYS_STEMP},
-	{0, 0, ENVSYS_STEMP},
-	{0, 0, ENVSYS_STEMP},
-	{0, 0, ENVSYS_STEMP},
-	{0, 0, ENVSYS_STEMP},
-	{0, 0, ENVSYS_SVOLTS_DC},
-	{0, 0, ENVSYS_SVOLTS_DC},
-	{0, 0, ENVSYS_INTEGER},
-	{0, 0, ENVSYS_INTEGER},
-	{0, 0, 0}
+	{  0,  7,	ENVSYS_STEMP},
+	{  8,  9,	ENVSYS_SVOLTS_DC},
+	{ 10, 11,	ENVSYS_INTEGER}, 
 };
 
 static int
