@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_inc_64_add.c,v 1.1.2.1 2007/04/13 16:59:31 thorpej Exp $	*/
+/*	$NetBSD: atomic_inc_64_add.c,v 1.1.2.2 2007/04/16 03:19:58 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -36,6 +36,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "atomic_op_namespace.h"
+
 #include <sys/atomic.h>
 
 void
@@ -45,7 +47,8 @@ atomic_inc_64(volatile uint64 *addr)
 	atomic_add_64(addr, 1);
 }
 
+atomic_op_alias(atomic_inc_64,_atomic_inc_64)
 #if defined(_LP64)
-__strong_alias(atomic_inc_ulong,atomic_inc_64)
-__strong_alias(atomic_inc_ptr,atomic_inc_64)
+atomic_op_alias(atomic_inc_ulong,_atomic_inc_64)
+atomic_op_alias(atomic_inc_ptr,_atomic_inc_64)
 #endif /* _LP64 */
