@@ -1,4 +1,4 @@
-.\"	$NetBSD: BUILDING.mdoc,v 1.46 2006/10/08 17:54:30 apb Exp $
+.\"	$NetBSD: BUILDING.mdoc,v 1.46.2.1 2007/04/16 19:46:55 bouyer Exp $
 .\"
 .\" Copyright (c) 2001-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -40,7 +40,7 @@
 .\" Toolchain prefix for commands
 .ds toolprefix nb
 .
-.Dd January 4, 2006
+.Dd March 27, 2007
 .Dt BUILDING 8
 .Os NetBSD
 .
@@ -888,10 +888,30 @@ Ensures that
 .Sy INSTALLWORLDDIR
 is not the root directory if cross compiling.
 .Pp
+The
+.Sy INSTALLSETS
+environment variable may be set to a list of
+distribution sets to be installed.
+By default, all sets except
+.Dq etc
+and
+.Dq xetc
+are installed (so most files in
+.Sy INSTALLWORLDDIR Ns Pa /etc
+will not be installed or modified).
+.Pp
 .Em Note :
-It is highly recommended that you upgrade your kernel and reboot
-before performing this operation.
-.
+Before performing this operation with
+.Sy INSTALLWORLDDIR Ns = Ns Pa / ,
+it is highly recommended that you upgrade your kernel and reboot.
+After performing this operation,
+it is recommended that you use
+.Xr etcupdate 8
+to update files in
+.Sy INSTALLWORLDDIR Ns Pa /etc
+and that you use
+.Xr postinstall 8
+to check for inconsistencies (and possibly to fix them).
 .It Sy sets
 Create distribution sets from
 .Sy DESTDIR
@@ -1038,6 +1058,11 @@ to
 .Ar idir ,
 using
 .Dq make installworld .
+Note that files that are part of the
+.Dq etc
+or
+.Dq xetc
+sets will not be installed.
 .
 .It Sy kernel Ns = Ns Ar kconf
 Build a new kernel.
@@ -1445,6 +1470,8 @@ To disable, use
 .Xr make 1 ,
 .Xr hier 7 ,
 .Xr release 7 ,
+.Xr etcupdate 8 ,
+.Xr postinstall 8 ,
 .Pa pkgsrc/sysutils/cdrtools
 .
 .Sh HISTORY
