@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vfsops.c,v 1.38 2007/04/16 13:03:26 pooka Exp $	*/
+/*	$NetBSD: puffs_vfsops.c,v 1.39 2007/04/16 13:24:35 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.38 2007/04/16 13:03:26 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.39 2007/04/16 13:24:35 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -620,8 +620,13 @@ puffs_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
 	if (pmp->pmp_args.pa_fhsize == 0)
 		return EOPNOTSUPP;
 
-	if (pmp->pmp_args.pa_fhsize < PUFFS_FROMFHSIZE(fhp->fid_len))
-		return EINVAL;
+	if (pmp->pmp_args.pa_fhflags & PUFFS_FHFLAG_DYNAMIC) {
+		if (pmp->pmp_args.pa_fhsize < PUFFS_FROMFHSIZE(fhp->fid_len))
+			return EINVAL;
+	} else {
+		if (pmp->pmp_args.pa_fhsize != PUFFS_FROMFHSIZE(fhp->fid_len))
+			return EINVAL;
+	}
 
 	argsize = sizeof(struct puffs_vfsreq_fhtonode)
 	    + PUFFS_FROMFHSIZE(fhp->fid_len);
