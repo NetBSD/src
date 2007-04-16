@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs.c,v 1.18 2007/04/13 13:35:46 pooka Exp $	*/
+/*	$NetBSD: dtfs.c,v 1.19 2007/04/16 13:06:39 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -54,6 +54,7 @@
 #endif
 
 static struct puffs_usermount *pu;
+int dynamicfh;
 
 static void usage(void);
 
@@ -87,14 +88,22 @@ main(int argc, char *argv[])
 	mntoptparse_t mp;
 	int pflags, lflags, mntflags;
 	int ch;
+	int khashbuckets;
 
 	setprogname(argv[0]);
 
 	pflags = lflags = mntflags = 0;
-	while ((ch = getopt(argc, argv, "bo:s")) != -1) {
+	khashbuckets = 256;
+	while ((ch = getopt(argc, argv, "bc:do:s")) != -1) {
 		switch (ch) {
 		case 'b': /* build paths, for debugging the feature */
 			pflags |= PUFFS_FLAG_BUILDPATH;
+			break;
+		case 'c':
+			khashbuckets = atoi(optarg);
+			break;
+		case 'd':
+			dynamicfh = 1;
 			break;
 		case 'o':
 			mp = getmntopts(optarg, puffsmopts, &mntflags, &pflags);
@@ -112,7 +121,6 @@ main(int argc, char *argv[])
 	}
 	if (pflags & PUFFS_FLAG_OPDUMP)
 		lflags |= PUFFSLOOP_NODAEMON;
-	pflags |= PUFFS_KFLAG_CANEXPORT;
 	argc -= optind;
 	argv += optind;
 
@@ -149,8 +157,16 @@ main(int argc, char *argv[])
 
 	srandom(time(NULL)); /* for random generation numbers */
 
-	if ((pu = puffs_mount(pops, argv[0], mntflags, FSNAME, &dtm, pflags))
-	    == NULL)
+	pu = puffs_init(pops, FSNAME, &dtm, pflags);
+	if (pu == NULL)
+		err(1, "init");
+
+	puffs_setfhsize(pu, sizeof(struct dtfs_fid),
+	    PUFFS_FHFLAG_NFSV2 | PUFFS_FHFLAG_NFSV3
+	    | (dynamicfh ? PUFFS_FHFLAG_DYNAMIC : 0));
+	puffs_setncookiehash(pu, khashbuckets);
+
+	if (puffs_domount(pu, argv[0], mntflags) == -1)
 		err(1, "mount");
 
 	if (signal(SIGUSR1, dosuspend) == SIG_ERR)

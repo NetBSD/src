@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctlfs.c,v 1.18 2007/04/13 13:35:47 pooka Exp $	*/
+/*	$NetBSD: sysctlfs.c,v 1.19 2007/04/16 13:06:39 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -237,8 +237,7 @@ main(int argc, char *argv[])
 	}
 	argv += optind;
 	argc -= optind;
-	pflags |= PUFFS_FLAG_BUILDPATH | PUFFS_KFLAG_NOCACHE
-	    | PUFFS_KFLAG_CANEXPORT;
+	pflags |= PUFFS_FLAG_BUILDPATH | PUFFS_KFLAG_NOCACHE;
 
 	if (pflags & PUFFS_FLAG_OPDUMP)
 		lflags |= PUFFSLOOP_NODAEMON;
@@ -262,14 +261,19 @@ main(int argc, char *argv[])
 	PUFFSOP_SET(pops, sysctlfs, node, write);
 	PUFFSOP_SET(pops, puffs_genfs, node, reclaim);
 
-	if ((pu = puffs_mount(pops, argv[0], mntflags, "sysctlfs", NULL,
-	    pflags)) == NULL)
-		err(1, "mount");
+	pu = puffs_init(pops, argv[0], NULL, pflags);
+	if (pu == NULL)
+		err(1, "puffs_init");
 
 	puffs_set_pathbuild(pu, sysctlfs_pathbuild);
 	puffs_set_pathtransform(pu, sysctlfs_pathtransform);
 	puffs_set_pathcmp(pu, sysctlfs_pathcmp);
 	puffs_set_pathfree(pu, sysctlfs_pathfree);
+
+	puffs_setfhsize(pu, sizeof(struct sfsfid), PUFFS_FHFLAG_NFSV3);
+
+	if (puffs_domount(pu, argv[0], mntflags) == -1)
+		err(1, "puffs_domount");
 
 	if (sysctlfs_domount(pu) != 0)
 		errx(1, "domount");
@@ -317,7 +321,8 @@ sysctlfs_fs_fhtonode(struct puffs_cc *pcc, void *fid, size_t fidsize,
 	struct sfsnode *sfs;
 	struct sfsfid *sfid;
 
-	/* XXX: fidsize */
+	if (fidsize != sizeof(struct sfsfid))
+		return EINVAL;
 
 	sfid = fid;
 
@@ -345,7 +350,7 @@ sysctlfs_fs_nodetofh(struct puffs_cc *pcc, void *cookie,
 	struct puffs_node *pn = cookie;
 	struct sfsfid *sfid;
 
-	/* XXX: fidsize */
+	assert(*fidsize >= sizeof(struct sfsfid));
 
 	sfid = fid;
 	sfid->len = PNPLEN(pn);

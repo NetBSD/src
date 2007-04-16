@@ -1,4 +1,4 @@
-/*	$NetBSD: psshfs.c,v 1.12 2007/04/13 13:35:47 pooka Exp $	*/
+/*	$NetBSD: psshfs.c,v 1.13 2007/04/16 13:06:39 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: psshfs.c,v 1.12 2007/04/13 13:35:47 pooka Exp $");
+__RCSID("$NetBSD: psshfs.c,v 1.13 2007/04/16 13:06:39 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -100,19 +100,19 @@ main(int argc, char *argv[])
 	char *userhost;
 	char *hostpath;
 	int mntflags, pflags, ch;
-	int detach;
+	int detach, exportfs;
 
 	setprogname(argv[0]);
 
 	if (argc < 3)
 		usage();
 
-	mntflags = pflags = 0;
+	mntflags = pflags = exportfs = 0;
 	detach = 1;
 	while ((ch = getopt(argc, argv, "eo:s")) != -1) {
 		switch (ch) {
 		case 'e':
-			pflags |= PUFFS_KFLAG_CANEXPORT;
+			exportfs = 1;
 			break;
 		case 'o':
 			mp = getmntopts(optarg, puffsmopts, &mntflags, &pflags);
@@ -188,16 +188,23 @@ main(int argc, char *argv[])
 	sshargs[6] = "sftp";
 	sshargs[7] = 0;
 
-	if ((pu = puffs_mount(pops, argv[1], mntflags, "psshfs", &pctx,
-	    PUFFS_FLAG_BUILDPATH | pflags)) == NULL)
-		err(1, "puffs_mount");
+	pu = puffs_init(pops, "ppshfs", &pctx, PUFFS_FLAG_BUILDPATH | pflags);
+	if (pu == NULL)
+		err(1, "puffs_init");
 
 	pssh_connect(&pctx, sshargs);
 
 	if (puffs_setblockingmode(pu, PUFFSDEV_NONBLOCK) == -1)
 		err(1, "setblockingmode");
+	if (exportfs)
+		puffs_setfhsize(pu, sizeof(struct psshfs_fid),
+		    PUFFS_FHFLAG_NFSV2 | PUFFS_FHFLAG_NFSV3);
+
+	if (puffs_domount(pu, argv[1], mntflags) == -1)
+		err(1, "puffs_domount");
+
 	if (psshfs_domount(pu) != 0)
-		errx(1, "domount");
+		errx(1, "psshfs_domount");
 
 	if (detach)
 		daemon(1, 0);
