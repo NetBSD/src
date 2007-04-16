@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: etcupdate,v 1.29.2.2 2007/02/19 19:52:50 riz Exp $
+# $NetBSD: etcupdate,v 1.29.2.3 2007/04/16 19:44:50 bouyer Exp $
 #
 # Copyright (c) 2001 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -66,6 +66,7 @@ BINARYDIRMODE=false	# true for "-s extracted_dir"
 BINARYDIR=		# directory name for BINARYDIRMODE
 BINARYTGZMODE=false	# true for "-s etc.tgz"
 TGZLIST=		# colon-separated list for BINARYTGZMODE
+SRC_ARG=		# argument for "-s"
 AUTOMATIC=false
 LOCALSKIP=false
 MACHINE="${MACHINE:=`uname -m`}"
@@ -90,10 +91,11 @@ Options:
 
   -p pager     Which pager to use              (default: /usr/bin/more)
   -s {srcdir|tgzfile|tempdir}                  (default: /usr/src)
-               Location of the source files used to populate the
-               target directory.  This may be any of the following:
+               Location of the source files.  This may be any of the
+               following:
                * A directory that contains a NetBSD source tree;
-               * A distribution set file such as "etc.tgz" or "xetc.tgz";
+               * A distribution set file such as "etc.tgz" or
+                 "xetc.tgz", or a colon-separated list of such files;
                * A temporary directory in which one or both of "etc.tgz"
                  and "xetc.tgz" have been extracted.
   -t temproot  Where to store temporary files  (default: /tmp/temproot)
@@ -406,6 +408,7 @@ EOF
 		BINARYMODE=true
 		BINARYDIRMODE=true
 		BINARYDIR="${arg}"
+		SRC_ARG="${BINARYDIR}"
 		;;
 	-h)
 		usage
@@ -425,18 +428,21 @@ EOF
 		# -s extracted_dir
 		arg="${2}"
 		shift 2
-		if [ -f "${arg}" ]; then
-			# arg refers to a *.tgz file.
+		if [ -f "${arg%%:*}" ]; then
+			# arg refers to a *.tgz file, or a colon-separated
+			# list.
 			# This may happen twice, for both etc.tgz and
 			# xetc.tgz, so we build up a colon-separated
 			# list in TGZLIST.
 			BINARYMODE=true
 			BINARYTGZMODE=true
 			TGZLIST="${TGZLIST}${TGZLIST:+:}${arg}"
+			SRC_ARG="${TGZLIST}"
 		elif [ -d "${arg}" ] && [ -f "${arg}/etc/Makefile" ]; then
 			# arg refers to a source directory
 			SOURCEMODE=true
 			SRCDIR="${arg}"
+			SRC_ARG="${SRCDIR}"
 		elif [ -d "${arg}" ] && [ -f "${arg}/../etc/Makefile" ]; then
 			# backward compatibility: allow arg to refer to
 			# etc subdirectory within source dir.
@@ -447,6 +453,7 @@ EOF
 EOF
 			SOURCEMODE=true
 			SRCDIR="${arg}/.."
+			SRC_ARG="${SRCDIR}"
 		elif [ -d "${arg}" ] && [ -d "${ARG}/etc" ] \
 			&& ! [ -f "${arg}/etc/Makefile" ]
 		then
@@ -455,7 +462,9 @@ EOF
 			BINARYMODE=true
 			BINARYDIRMODE=true
 			BINARYDIR="${arg}"
+			SRC_ARG="${BINARYDIR}"
 		else
+			echo "*** Cannot understand -s ${arg}"
 			usage
 		fi
 		;;
@@ -490,8 +499,7 @@ if ${BINARYDIRMODE} && ${BINARYTGZMODE}; then
 	usage
 fi
 if ${BINARYDIRMODE}; then
-	SRCDIR="${BINARYDIR}"
-	TEMPROOT="${BINARYDIR}"
+	SRCDIR="${TEMPROOT}"
 fi
 if ${BINARYTGZMODE}; then
 	SRCDIR="${TEMPROOT}"
@@ -500,6 +508,7 @@ if ! ${SOURCEMODE} && ! ${BINARYMODE}; then
 	# default if no "-s" option was specified
 	SOURCEMODE=true
 	SRCDIR=/usr/src
+	SRC_ARG="${SRCDIR}"
 fi
 if [ -z "${SRCDIR}" -o -z "${TEMPROOT}" ]; then
 	echo "*** ERROR: One of the following variables is undefined"
@@ -509,7 +518,7 @@ if [ -z "${SRCDIR}" -o -z "${TEMPROOT}" ]; then
 	echo ""
 	exit 1
 fi
-if ! ${BINARYDIRMODE} && [ -r "${TEMPROOT}" ]; then
+if [ -r "${TEMPROOT}" ]; then
 	echo ""
 	echo "*** WARNING: ${TEMPROOT} already exists"
 	echo ""
@@ -522,16 +531,14 @@ if ! ${BINARYDIRMODE} && [ -r "${TEMPROOT}" ]; then
 fi
 
 if ! ${CONTINUE}; then
-	# Are we using the sources or binaries?
-	if ! ${BINARYDIRMODE}; then
-		# Create the temporary root directory
-		echo "*** Creating ${TEMPROOT}"
-		mkdir -p "${TEMPROOT}"
-		if [ ! -d "${TEMPROOT}" ]; then
-			echo "*** ERROR: Unable to create ${TEMPROOT}"
-			exit 1
-		fi
+	# Create the temporary root directory
+	echo "*** Creating ${TEMPROOT}"
+	mkdir -p "${TEMPROOT}"
+	if [ ! -d "${TEMPROOT}" ]; then
+		echo "*** ERROR: Unable to create ${TEMPROOT}"
+		exit 1
 	fi
+	# Are we using the sources or binaries?
 	if ${BINARYTGZMODE}; then
 		# Populate ${TEMPROOT} from ${TGZLIST}
 		oldIFS="${IFS}"
@@ -546,14 +553,19 @@ if ! ${CONTINUE}; then
 			[ $? -ne 0 ] && exit 1
 		done
 		IFS="${oldIFS}"
-	elif ! ${BINARYMODE}; then
-		# Populate ${TEMPROOT} from ${SRCDIR}
+	elif ${BINARYDIRMODE}; then
+		# Populate ${TEMPROOT} from ${SRCDIR} by copying
+		echo "*** Populating ${TEMPROOT} from ${BINARYDIR} (copying)"
+		cp -RPp "${BINARYDIR}"/* "${TEMPROOT}"/
+		[ $? -ne 0 ] && exit 1
+	elif ${SOURCEMODE}; then
+		# Populate ${TEMPROOT} from ${SRCDIR} by running make
 		if [ ! -f "${SRCDIR}/etc/Makefile" ]; then
 			echo "*** ERROR: Unable to find ${SRCDIR}/etc/Makefile"
 			exit 1
 		fi
 		set_makeenv
-		echo "*** Populating ${TEMPROOT} from ${SRCDIR}"
+		echo "*** Populating ${TEMPROOT} from ${SRCDIR} (make distribution)"
 		cd ${SRCDIR}/etc
 		if ! ${VERBOSE}; then
 			eval ${MAKE_ENV} make distribution > /dev/null
@@ -620,7 +632,7 @@ else
 fi
 
 # Clean up after "make distribution"
-if ! ${BINARYMODE}; then
+if ${SOURCEMODE}; then
 	echo "*** Cleaning up in ${SRCDIR}/etc"
 	set_makeenv
 	cd ${SRCDIR}/etc
@@ -678,9 +690,8 @@ if ${NEED_NEWALIASES}; then
 		echo ""
 	fi
 fi
-if [ -x /usr/sbin/postinstall ] && ! ${BINARYMODE}; then
-	# XXX we should also run postinstall in binary mode
+if [ -x /usr/sbin/postinstall ]; then
 	echo "*** Running /usr/sbin/postinstall"
-	/usr/sbin/postinstall -s "${SRCDIR}" check
+	/usr/sbin/postinstall -s "${SRC_ARG}" check
 fi
 echo "*** All done"
