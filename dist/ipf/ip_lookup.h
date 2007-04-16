@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_lookup.h,v 1.1.1.3 2007/04/14 20:17:23 martin Exp $	*/
+/*	$NetBSD: ip_lookup.h,v 1.2 2007/04/16 02:36:24 dogcow Exp $	*/
 
 
 #ifndef __IP_LOOKUP_H__
@@ -66,7 +66,7 @@ typedef	union	{
 		char	ilik_ival;
 		u_char	ilik_type;	/* IPLT_* */
 		u_char	ilik_otype;
-		char	ilik_unit;	/* IPL_LOG* */
+		u_char	ilik_unit;	/* IPL_LOG* */
 	} ilik_unstr;
 	u_32_t	ilik_key;
 } iplookupiterkey_t;
