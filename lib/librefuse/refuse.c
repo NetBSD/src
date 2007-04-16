@@ -1,4 +1,4 @@
-/*	$NetBSD: refuse.c,v 1.47 2007/04/13 13:35:46 pooka Exp $	*/
+/*	$NetBSD: refuse.c,v 1.48 2007/04/16 09:55:51 agc Exp $	*/
 
 /*
  * Copyright © 2007 Alistair Crooks.  All rights reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: refuse.c,v 1.47 2007/04/13 13:35:46 pooka Exp $");
+__RCSID("$NetBSD: refuse.c,v 1.48 2007/04/16 09:55:51 agc Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -960,6 +960,33 @@ puffs_fuse_fs_statvfs(struct puffs_cc *pcc, struct statvfs *svfsb, pid_t pid)
 
 /* End of puffs_fuse operations */
 
+static struct fuse_args *
+deep_copy_args(int argc, char **argv)
+{
+	struct fuse_args	*ap;
+	int			 i;
+
+	NEW(struct fuse_args, ap, "deep_copy_args", return NULL);
+	/* deep copy args structure into channel args */
+	ap->allocated = ((argc / 10) + 1) * 10;
+	NEWARRAY(char *, ap->argv, ap->allocated, "fuse_mount", return NULL);
+	for (i = 0 ; i < argc ; i++) {
+		ap->argv[i] = strdup(argv[i]);
+	}
+	return ap;
+}
+
+static void
+free_args(struct fuse_args *ap)
+{
+	int	i;
+
+	for (i = 0 ; i < ap->argc ; i++) {
+		free(ap->argv[i]);
+	}
+	free(ap);
+}
+
 /* ARGSUSED3 */
 int
 fuse_main_real(int argc, char **argv, const struct fuse_operations *ops,
@@ -967,6 +994,7 @@ fuse_main_real(int argc, char **argv, const struct fuse_operations *ops,
 {
 	struct fuse		*fuse;
 	struct fuse_chan	*fc;
+	struct fuse_args	*args;
 	char			 name[64];
 	char			*slash;
 	int			 ret;
@@ -990,12 +1018,17 @@ fuse_main_real(int argc, char **argv, const struct fuse_operations *ops,
 	}
 	(void) snprintf(name, sizeof(name), "refuse:%s", slash);
 
-	/* XXX: stuff name into fuse_args */
+	/* stuff name into fuse_args */
+	args = deep_copy_args(argc, argv);
+	FREE(args->argv[0]);
+	args->argv[0] = strdup(name);
 
-	fc = fuse_mount(argv[argc - 1], NULL);
-	fuse = fuse_new(fc, NULL, ops, size, userdata);
+	fc = fuse_mount(argv[argc - 1], args);
+	fuse = fuse_new(fc, args, ops, size, userdata);
 
 	ret = fuse_loop(fuse);
+
+	free_args(args);
 
 	return ret;
 }
@@ -1009,12 +1042,18 @@ fuse_main_real(int argc, char **argv, const struct fuse_operations *ops,
 struct fuse_chan *
 fuse_mount(const char *dir, struct fuse_args *args)
 {
- 	struct fuse_chan *fc;
+ 	struct fuse_chan	*fc;
 
  	NEW(struct fuse_chan, fc, "fuse_mount", exit(EXIT_FAILURE));
 
  	fc->dir = strdup(dir);
- 	fc->args = args; /* XXXX: do we need to deep copy? */
+
+	/*
+	 * we need to deep copy the args struct - some fuse file
+	 * systems "clean up" the argument vector for "security
+	 * reasons"
+	 */
+	fc->args = deep_copy_args(args->argc, args->argv);
   
 	return fc;
 }
@@ -1074,7 +1113,7 @@ fuse_new(struct fuse_chan *fc, struct fuse_args *args,
         PUFFSOP_SET(pops, puffs_fuse, node, reclaim);
 
 	pu = puffs_mount(pops, fc->dir, MNT_NODEV | MNT_NOSUID,
-			 "refuse", fuse,
+			 args->argv[0], fuse,
 			 PUFFS_FLAG_BUILDPATH
 			   | PUFFS_FLAG_OPDUMP
 			   | PUFFS_KFLAG_NOCACHE);
