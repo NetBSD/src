@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_kbd.c,v 1.7 2007/04/16 00:22:55 macallan Exp $	*/
+/*	$NetBSD: adb_kbd.c,v 1.8 2007/04/16 02:12:11 macallan Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb_kbd.c,v 1.7 2007/04/16 00:22:55 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb_kbd.c,v 1.8 2007/04/16 02:12:11 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -60,6 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: adb_kbd.c,v 1.7 2007/04/16 00:22:55 macallan Exp $")
 #include <dev/adb/adbvar.h>
 #include <dev/adb/adb_keymap.h>
 
+#include "opt_wsdisplay_compat.h"
 #include "adbdebug.h"
 
 struct adbkbd_softc {
@@ -101,7 +102,7 @@ static int	adbkbd_wait(struct adbkbd_softc *, int);
 CFATTACH_DECL(adbkbd, sizeof(struct adbkbd_softc),
     adbkbd_match, adbkbd_attach, NULL, NULL);
 
-extern struct cfdriver akbd_cd;
+extern struct cfdriver adbkbd_cd;
 
 static int adbkbd_enable(void *, int);
 static int adbkbd_ioctl(void *, u_long, void *, int, struct lwp *);
@@ -424,16 +425,11 @@ adbkbd_key(struct adbkbd_softc *sc, uint8_t k)
 	if (sc->sc_rawkbd) {
 		char cbuf[2];
 		int s;
-		int j = 0;
-		int c = keyboard[ADBK_KEYVAL(k)][3]
 
-		if (k & 0x80)
-			cbuf[j++] = 0xe0;
-
-		cbuf[j++] = (c & 0x7f) | (ADBK_PRESS(k)? 0 : 0x80);
+		cbuf[0] = k;
 
 		s = spltty();
-		wskbd_rawinput(sc->sc_wskbddev, cbuf, j);
+		wskbd_rawinput(sc->sc_wskbddev, cbuf, 1);
 		splx(s);
 	} else {
 #endif
