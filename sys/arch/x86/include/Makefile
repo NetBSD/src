@@ -1,4 +1,4 @@
-# 	$NetBSD: Makefile,v 1.9 2007/02/09 21:55:14 ad Exp $
+# 	$NetBSD: Makefile,v 1.10 2007/04/16 19:16:37 ad Exp $
 
 INCSDIR=/usr/include/x86
 
@@ -16,6 +16,7 @@ INCS=	aout_machdep.h \
 	psl.h \
 	rwlock.h \
 	specialreg.h \
+	sysarch.h \
 	trap.h
 
 .include <bsd.kinc.mk>
