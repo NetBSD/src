@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_kbd.c,v 1.6 2007/04/16 00:16:43 macallan Exp $	*/
+/*	$NetBSD: adb_kbd.c,v 1.7 2007/04/16 00:22:55 macallan Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb_kbd.c,v 1.6 2007/04/16 00:16:43 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb_kbd.c,v 1.7 2007/04/16 00:22:55 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -191,7 +191,7 @@ adbkbd_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_trans[2] = 111;	/* F12 */
 	sc->sc_power = 0x7f;
 
-	printf(" addr %d ", sc->sc_adbdev->current_addr);
+	printf(" addr %d: ", sc->sc_adbdev->current_addr);
 
 	switch (sc->sc_adbdev->handler_id) {
 	case ADB_STDKBD:
