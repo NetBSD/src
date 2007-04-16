@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sleepq.c,v 1.4.2.11 2007/04/15 16:03:50 yamt Exp $	*/
+/*	$NetBSD: kern_sleepq.c,v 1.4.2.12 2007/04/16 23:31:20 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,10 +42,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.4.2.11 2007/04/15 16:03:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.4.2.12 2007/04/16 23:31:20 ad Exp $");
 
-#include "opt_multiprocessor.h"
-#include "opt_lockdebug.h"
 #include "opt_ktrace.h"
 
 #include <sys/param.h>
@@ -81,14 +79,9 @@ sleeptab_init(sleeptab_t *st)
 	int i;
 
 	for (i = 0; i < SLEEPTAB_HASH_SIZE; i++) {
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 		sq = &st->st_queues[i].st_queue;
 		mutex_init(&st->st_queues[i].st_mutex, MUTEX_SPIN, IPL_SCHED);
 		sleepq_init(sq, &st->st_queues[i].st_mutex);
-#else
-		sq = &st->st_queues[i];
-		sleepq_init(sq, lwp0.l_mutex);
-#endif
 	}
 }
 
@@ -163,7 +156,7 @@ sleepq_remove(sleepq_t *sq, lwp_t *l)
 	 * Set it running.  We'll try to get the last CPU that ran
 	 * this LWP to pick it up again.
 	 */
-	spc_lock(ci, true);
+	spc_lock(ci);
 	lwp_setlock(l, ci->ci_schedstate.spc_mutex);
 	sched_setrunnable(l);
 	l->l_stat = LSRUN;
@@ -172,11 +165,11 @@ sleepq_remove(sleepq_t *sq, lwp_t *l)
 		sched_enqueue(l, false);
 		if (lwp_eprio(l) < ci->ci_schedstate.spc_curpriority)
 			cpu_need_resched(ci, 0);
-		spc_unlock(ci, true);
+		spc_unlock(ci);
 		return 0;
 	}
 
-	spc_unlock(ci, true);
+	spc_unlock(ci);
 	return 1;
 }
 

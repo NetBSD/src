@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_idle.c,v 1.1.2.5 2007/03/24 00:43:05 rmind Exp $	*/
+/*	$NetBSD: kern_idle.c,v 1.1.2.6 2007/04/16 23:31:20 ad Exp $	*/
 
 /*-
  * Copyright (c)2002, 2006, 2007 YAMAMOTO Takashi,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: kern_idle.c,v 1.1.2.5 2007/03/24 00:43:05 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_idle.c,v 1.1.2.6 2007/04/16 23:31:20 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -102,7 +102,7 @@ create_idle_lwp(struct cpu_info *ci)
 	}
 	PHOLD(l);
 	l->l_stat = LSRUN;
-	l->l_flag |= LW_IDLE;
+	l->l_flag |= (LW_IDLE | LW_BOUND);
 	l->l_cpu = ci;
 	ci->ci_data.cpu_idlelwp = l;
 	return error;
