@@ -1,4 +1,4 @@
-#	$NetBSD: files.x86,v 1.28 2007/03/20 21:22:03 xtraeme Exp $
+#	$NetBSD: files.x86,v 1.29 2007/04/16 19:12:19 ad Exp $
 
 # options for MP configuration through the MP spec
 defflag opt_mpbios.h MPBIOS MPVERBOSE MPDEBUG MPBIOS_SCANPCI
@@ -20,6 +20,9 @@ defflag opt_powernow_k8.h	POWERNOW_K8
 defflag	opt_viapadlock.h	VIA_PADLOCK:	opencrypto
 file	arch/x86/x86/via_padlock.c	via_padlock
 
+# To be able to test for NetBSD/xen in shared files
+defflag	opt_xen.h		DO_NOT_DEFINE
+
 define  cpubus { [apid = -1] }
 define  ioapicbus { [apid = -1] }
 define  ipmibus {}
@@ -38,6 +41,7 @@ file	arch/x86/x86/msr_ipifuncs.c
 file	arch/x86/x86/mtrr_i686.c	mtrr
 file 	arch/x86/x86/patch.c
 file	arch/x86/x86/softintr.c
+file	arch/x86/x86/sys_machdep.c
 file	arch/x86/x86/x86_autoconf.c
 file	arch/x86/x86/x86_machdep.c
 
