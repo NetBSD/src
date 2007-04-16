@@ -1,4 +1,4 @@
-#	$NetBSD: files.amd64,v 1.36 2007/04/10 02:23:02 macallan Exp $
+#	$NetBSD: files.amd64,v 1.37 2007/04/16 19:12:17 ad Exp $
 #
 # new style config file for amd64 architecture
 #
@@ -48,7 +48,6 @@ file	netns/ns_cksum.c			ns
 file	arch/amd64/amd64/pmap.c
 file	arch/amd64/amd64/process_machdep.c
 file	arch/amd64/amd64/procfs_machdep.c	procfs
-file	arch/amd64/amd64/sys_machdep.c
 file	arch/amd64/amd64/syscall.c
 file	arch/amd64/amd64/trap.c
 file	arch/amd64/amd64/vm_machdep.c
