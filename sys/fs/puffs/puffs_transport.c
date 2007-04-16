@@ -1,4 +1,4 @@
-/* $NetBSD: puffs_transport.c,v 1.15 2007/04/16 14:09:00 pooka Exp $ */
+/* $NetBSD: puffs_transport.c,v 1.16 2007/04/16 14:09:53 pooka Exp $ */
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_transport.c,v 1.15 2007/04/16 14:09:00 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_transport.c,v 1.16 2007/04/16 14:09:53 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -459,7 +459,7 @@ puffs_fop_ioctl(struct file *fp, u_long cmd, void *data, struct lwp *l)
 	int rv;
 
 	/*
-	 * already done in sys_ioctl().  skip sanity checks to enabled
+	 * work already done in sys_ioctl().  skip sanity checks to enable
 	 * setting non-blocking fd without yet having mounted the fs
 	 */
 	if (cmd == FIONBIO)
