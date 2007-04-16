@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: arith.y,v 1.17 2003/09/17 17:33:36 jmmv Exp $	*/
+/*	$NetBSD: arith.y,v 1.17.16.1 2007/04/16 19:33:51 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)arith.y	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: arith.y,v 1.17 2003/09/17 17:33:36 jmmv Exp $");
+__RCSID("$NetBSD: arith.y,v 1.17.16.1 2007/04/16 19:33:51 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -49,6 +49,10 @@ __RCSID("$NetBSD: arith.y,v 1.17 2003/09/17 17:33:36 jmmv Exp $");
 #include "output.h"
 #include "memalloc.h"
 
+typedef intmax_t YYSTYPE;
+#define YYSTYPE YYSTYPE
+
+intmax_t arith_result;
 const char *arith_buf, *arith_startbuf;
 
 void yyerror(const char *);
@@ -74,7 +78,12 @@ int error(char *);
 %%
 
 exp:	expr {
-			return ($1);
+			/*
+			 * yyparse() returns int, so we have to save
+			 * the desired result elsewhere.
+			 */
+			arith_result = $1;
+			return 0;
 		}
 	;
 
@@ -113,16 +122,17 @@ expr:	ARITH_LPAREN expr ARITH_RPAREN { $$ = $2; }
 	| ARITH_NUM
 	;
 %%
-int
+intmax_t
 arith(s)
 	const char *s;
 {
-	long result;
+	intmax_t result;
 
 	arith_buf = arith_startbuf = s;
 
 	INTOFF;
-	result = yyparse();
+	(void) yyparse();
+	result = arith_result;
 	arith_lex_reset();	/* reprime lex */
 	INTON;
 
@@ -141,7 +151,7 @@ expcmd(argc, argv)
 	const char *p;
 	char *concat;
 	char **ap;
-	long i;
+	intmax_t i;
 
 	if (argc > 1) {
 		p = argv[1];
@@ -164,9 +174,10 @@ expcmd(argc, argv)
 	} else
 		p = "";
 
-	i = arith(p);
+	(void)arith(p);
+	i = arith_result;
 
-	out1fmt("%ld\n", i);
+	out1fmt("%"PRIdMAX"\n", i);
 	return (! i);
 }
 
@@ -176,7 +187,7 @@ expcmd(argc, argv)
 main(argc, argv)
 	char *argv[];
 {
-	printf("%d\n", exp(argv[1]));
+	printf("%"PRIdMAX"\n", exp(argv[1]));
 }
 error(s)
 	char *s;

@@ -1,5 +1,5 @@
 #! /bin/sh
-# $NetBSD: expand.sh,v 1.3 2006/11/17 22:25:46 dsl Exp $
+# $NetBSD: expand.sh,v 1.3.2.1 2007/04/16 19:33:51 bouyer Exp $
 #
 
 #
@@ -36,3 +36,11 @@ assert_equals "3" "0" `n_arg "$@"`
 line='#define bindir "/usr/bin" /* comment */'
 stripped='#define bindir "/usr/bin" '
 assert_equals "3" "$stripped" "${line%%/\**}"
+
+#
+# POSIX requires shell arithmetic to use signed long or a wider type.
+# We use intmax_t, so at least 64 bits should be available.
+#
+assert_equals "4" "3" "$((1 + 2))"
+assert_equals "5" "2147483647" "$((0x7fffffff))"
+assert_equals "6" "9223372036854775807" "$(((1 << 63) - 1))"
