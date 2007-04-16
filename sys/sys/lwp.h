@@ -1,4 +1,4 @@
-/* 	$NetBSD: lwp.h,v 1.48.2.13 2007/04/15 16:59:21 yamt Exp $	*/
+/* 	$NetBSD: lwp.h,v 1.48.2.14 2007/04/16 23:31:19 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -181,6 +181,7 @@ extern lwp_t lwp0;			/* LWP for proc0 */
 #define	LW_WREBOOT	0x08000000 /* System is rebooting, please suspend */
 #define	LW_UNPARKED	0x10000000 /* Unpark op pending */
 #define	LW_RUNNING	0x20000000 /* Active on a CPU (except if LSZOMB) */
+#define	LW_BOUND	0x80000000 /* Bound to a CPU */
 
 /* The second set of flags is kept in l_pflag. */
 #define	LP_KTRACTIVE	0x00000001 /* Executing ktrace operation */
@@ -301,15 +302,13 @@ lwp_lock(lwp_t *l)
 static inline void
 lwp_unlock(lwp_t *l)
 {
-	LOCK_ASSERT(mutex_owned(l->l_mutex));
-
 	mutex_spin_exit(l->l_mutex);
 }
 
 static inline void
 lwp_changepri(lwp_t *l, pri_t pri)
 {
-	LOCK_ASSERT(mutex_owned(l->l_mutex));
+	KASSERT(mutex_owned(l->l_mutex));
 
 	if (l->l_priority == pri)
 		return;
@@ -320,7 +319,7 @@ lwp_changepri(lwp_t *l, pri_t pri)
 static inline void
 lwp_lendpri(lwp_t *l, pri_t pri)
 {
-	LOCK_ASSERT(mutex_owned(l->l_mutex));
+	KASSERT(mutex_owned(l->l_mutex));
 
 	if (l->l_inheritedprio == pri)
 		return;
@@ -331,7 +330,7 @@ lwp_lendpri(lwp_t *l, pri_t pri)
 static inline void
 lwp_unsleep(lwp_t *l)
 {
-	LOCK_ASSERT(mutex_owned(l->l_mutex));
+	KASSERT(mutex_owned(l->l_mutex));
 
 	(*l->l_syncobj->sobj_unsleep)(l);
 }
@@ -350,41 +349,19 @@ int newlwp(lwp_t *, struct proc *, vaddr_t, bool, int,
  * We should provide real stubs for the below that LKMs can use.
  */
 
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
-
 static inline void
-spc_lock(struct cpu_info *ci, const bool heldmutex)
+spc_lock(struct cpu_info *ci)
 {
-	(void)heldmutex;
 	mutex_spin_enter(ci->ci_schedstate.spc_mutex);
 }
 
 static inline void
-spc_unlock(struct cpu_info *ci, const bool heldmutex)
+spc_unlock(struct cpu_info *ci)
 {
-	(void)heldmutex;
 	mutex_spin_exit(ci->ci_schedstate.spc_mutex);
 }
 
-#else	/* defined(MULTIPROCESSOR) || defined(LOCKDEBUG) */
-
-static inline void
-spc_lock(struct cpu_info *ci, const bool heldmutex)
-{
-	if (!heldmutex)
-		mutex_spin_enter(ci->ci_schedstate.spc_mutex);
-}
-
-static inline void
-spc_unlock(struct cpu_info *ci, const bool heldmutex)
-{
-	if (!heldmutex)
-		mutex_spin_exit(ci->ci_schedstate.spc_mutex);
-}
-
-#endif	/* defined(MULTIPROCESSOR) || defined(LOCKDEBUG) */
-
-#endif	/* _KERNEL */
+#endif /* _KERNEL */
 
 /* Flags for _lwp_create(), as per Solaris. */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_lwp.c,v 1.3.2.7 2007/04/15 16:03:51 yamt Exp $	*/
+/*	$NetBSD: sys_lwp.c,v 1.3.2.8 2007/04/16 23:31:21 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.3.2.7 2007/04/15 16:03:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.3.2.8 2007/04/16 23:31:21 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -462,16 +462,14 @@ sys__lwp_park(struct lwp *l, void *v, register_t *retval)
 	 * Before going the full route and blocking, check to see if an
 	 * unpark op is pending.
 	 */
-	sleepq_lwp_lock(l);
+	lwp_lock(l);
 	if ((l->l_flag & (LW_CANCELLED | LW_UNPARKED)) != 0) {
 		l->l_flag &= ~(LW_CANCELLED | LW_UNPARKED);
-		sleepq_lwp_unlock(l);
+		lwp_unlock(l);
 		sleepq_unlock(sq);
 		return EALREADY;
 	}
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	lwp_unlock_to(l, sq->sq_mutex);
-#endif
 
 	/*
 	 * For now we ignore the ucontext argument.  In the future, we may

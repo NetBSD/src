@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.177.2.23 2007/04/04 22:28:17 ad Exp $	*/
+
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.177.2.23 2007/04/04 22:28:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.177.2.24 2007/04/16 23:31:20 ad Exp $");
 
 #include "opt_kstack.h"
 #include "opt_lockdebug.h"
@@ -270,7 +270,7 @@ wakeup_one(wchan_t ident)
 
 	if (cold)
 		return;
-	
+
 	sq = sleeptab_lookup(&sleeptab, ident);
 	sleepq_wake(sq, ident, 1);
 }
@@ -293,7 +293,7 @@ yield(void)
 		l->l_priority = l->l_usrpri;
 	}
 	l->l_nvcsw++;
-	mi_switch(l);
+	(void)mi_switch(l);
 	KERNEL_LOCK(l->l_biglocks, l);
 }
 
@@ -416,11 +416,9 @@ mi_switch(struct lwp *l)
 	/*
 	 * Acquire the spc_mutex if necessary.
 	 */
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	if (l->l_mutex != spc->spc_mutex) {
 		mutex_spin_enter(spc->spc_mutex);
 	}
-#endif
 
 	/*
 	 * Let sched_nextlwp() select the LWP to run the CPU next. 
@@ -439,11 +437,9 @@ mi_switch(struct lwp *l)
 	newl->l_flag |= LW_RUNNING;
 	cpu_did_resched();
 
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	if (l->l_mutex != spc->spc_mutex) {
 		mutex_spin_exit(spc->spc_mutex);
 	}
-#endif
 
 	updatertime(l, spc);
 	if (l != newl) {
