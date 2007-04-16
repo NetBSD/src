@@ -1,4 +1,4 @@
-.\"	$NetBSD: BUILDING.mdoc,v 1.46.2.1 2007/04/16 19:46:55 bouyer Exp $
+.\"	$NetBSD: BUILDING.mdoc,v 1.46.2.2 2007/04/16 19:52:26 bouyer Exp $
 .\"
 .\" Copyright (c) 2001-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -40,7 +40,7 @@
 .\" Toolchain prefix for commands
 .ds toolprefix nb
 .
-.Dd March 27, 2007
+.Dd April 13, 2007
 .Dt BUILDING 8
 .Os NetBSD
 .
@@ -952,11 +952,41 @@ This requires that
 be set (see above).
 .
 .It iso-image
-Create a CD-ROM image in
-.Sy RELEASEDIR/MACHINE Ns Pa /installation/cdrom .
-RELEASEDIR must already have been populated by
+Create a
+.Nx
+installation CD-ROM image in the
+.Sy RELEASEDIR Ns Pa /iso
+directory.
+The CD-ROM file system will have a layout as described in
+.Xr release 7 .
+.Pp
+For most machine types, the CD-ROM will be bootable, and will automatically
+run the
+.Xr sysinst 8
+menu-based installation program, which can be used to install or upgrade a
+.Nx
+system.
+Bootable CD-ROMs also contain tools that may be useful in
+repairing a damaged
+.Nx
+installation.
+.Pp
+Before
+.Dq make iso-image
+is attempted, RELEASEDIR must be populated by
 .Dq make release
 or equivalent.
+.Pp
+Note that other, smaller, CD-ROM images may be created in the
+.Sy RELEASEDIR/MACHINE Ns Pa /installation/cdrom
+directory by
+.Dq "make release" .
+These smaller images usually contain the same tools as the larger images in
+.Sy RELEASEDIR Ns Pa /iso ,
+but do not contain additional content such as the distribution sets.
+.Pp
+Note that the mac68k port still uses an older method of creating
+CD-ROM images.
 This requires the
 .Xr mkisofs 1
 utility, which is not part of
@@ -1472,6 +1502,7 @@ To disable, use
 .Xr release 7 ,
 .Xr etcupdate 8 ,
 .Xr postinstall 8 ,
+.Xr sysinst 8 ,
 .Pa pkgsrc/sysutils/cdrtools
 .
 .Sh HISTORY
