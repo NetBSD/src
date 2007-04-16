@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctlfs.c,v 1.19 2007/04/16 13:06:39 pooka Exp $	*/
+/*	$NetBSD: sysctlfs.c,v 1.20 2007/04/16 13:25:10 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -321,9 +321,6 @@ sysctlfs_fs_fhtonode(struct puffs_cc *pcc, void *fid, size_t fidsize,
 	struct sfsnode *sfs;
 	struct sfsfid *sfid;
 
-	if (fidsize != sizeof(struct sfsfid))
-		return EINVAL;
-
 	sfid = fid;
 
 	po.po_len = sfid->len;
@@ -349,8 +346,6 @@ sysctlfs_fs_nodetofh(struct puffs_cc *pcc, void *cookie,
 {
 	struct puffs_node *pn = cookie;
 	struct sfsfid *sfid;
-
-	assert(*fidsize >= sizeof(struct sfsfid));
 
 	sfid = fid;
 	sfid->len = PNPLEN(pn);
