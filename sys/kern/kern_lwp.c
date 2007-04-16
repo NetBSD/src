@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.55.2.10 2007/03/24 17:13:14 ad Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.55.2.11 2007/04/16 23:31:20 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -208,7 +208,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.55.2.10 2007/03/24 17:13:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.55.2.11 2007/04/16 23:31:20 ad Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -862,6 +862,7 @@ lwp_free(struct lwp *l, bool recycle, bool last)
 	 */
 	if (l->l_cpu->ci_curlwp == l) {
 		int count;
+		(void)count; /* XXXgcc */
 		KERNEL_UNLOCK_ALL(curlwp, &count);
 		while (l->l_cpu->ci_curlwp == l)
 			SPINLOCK_BACKOFF_HOOK;
@@ -1080,14 +1081,9 @@ lwp_locked(struct lwp *l, kmutex_t *mtx)
 {
 	kmutex_t *cur = l->l_mutex;
 
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	return mutex_owned(cur) && (mtx == cur || mtx == NULL);
-#else
-	return mutex_owned(cur);
-#endif
 }
 
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 /*
  * Lock an LWP.
  */
@@ -1119,7 +1115,6 @@ lwp_lock_retry(struct lwp *l, kmutex_t *old)
 	} while (__predict_false(l->l_mutex != old));
 #endif
 }
-#endif
 
 /*
  * Lend a new mutex to an LWP.  The old mutex must be held.
@@ -1130,12 +1125,8 @@ lwp_setlock(struct lwp *l, kmutex_t *new)
 
 	KASSERT(mutex_owned(l->l_mutex));
 
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	mb_write();
 	l->l_mutex = new;
-#else
-	(void)new;
-#endif
 }
 
 /*
@@ -1150,12 +1141,8 @@ lwp_unlock_to(struct lwp *l, kmutex_t *new)
 	KASSERT(mutex_owned(l->l_mutex));
 
 	old = l->l_mutex;
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	mb_write();
 	l->l_mutex = new;
-#else
-	(void)new;
-#endif
 	mutex_spin_exit(old);
 }
 
@@ -1166,28 +1153,21 @@ lwp_unlock_to(struct lwp *l, kmutex_t *new)
 void
 lwp_relock(struct lwp *l, kmutex_t *new)
 {
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	kmutex_t *old;
-#endif
 
 	KASSERT(mutex_owned(l->l_mutex));
 
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	old = l->l_mutex;
 	if (old != new) {
 		mutex_spin_enter(new);
 		l->l_mutex = new;
 		mutex_spin_exit(old);
 	}
-#else
-	(void)new;
-#endif
 }
 
 int
 lwp_trylock(struct lwp *l)
 {
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	kmutex_t *old;
 
 	for (;;) {
@@ -1197,9 +1177,6 @@ lwp_trylock(struct lwp *l)
 			return 1;
 		mutex_spin_exit(old);
 	}
-#else
-	return mutex_tryenter(l->l_mutex);
-#endif
 }
 
 /*
