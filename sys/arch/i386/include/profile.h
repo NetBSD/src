@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.h,v 1.27 2007/04/16 03:49:52 christos Exp $	*/
+/*	$NetBSD: profile.h,v 1.28 2007/04/16 15:02:25 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -56,11 +56,11 @@ void									\
 mcount(void)								\
 {									\
 	int selfpc, frompcindex;					\
-	int eax;							\
-	int ecx;							\
+	int eax, ecx, edx;						\
 									\
 	__asm volatile("movl %%eax,%0" : "=g" (eax));			\
 	__asm volatile("movl %%ecx,%0" : "=g" (ecx));			\
+	__asm volatile("movl %%edx,%0" : "=g" (edx));			\
 	/*								\
 	 * find the return address for mcount,				\
 	 * and the return address for mcount's caller.			\
@@ -75,6 +75,7 @@ mcount(void)								\
 	    : "=r" (frompcindex));					\
 	_mcount((u_long)frompcindex, (u_long)selfpc);			\
 									\
+	__asm volatile("movl %0,%%edx" : : "g" (edx));			\
 	__asm volatile("movl %0,%%ecx" : : "g" (ecx));			\
 	__asm volatile("movl %0,%%eax" : : "g" (eax));			\
 }
