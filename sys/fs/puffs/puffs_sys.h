@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_sys.h,v 1.31 2007/04/13 13:31:11 pooka Exp $	*/
+/*	$NetBSD: puffs_sys.h,v 1.32 2007/04/16 13:03:26 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -104,6 +104,10 @@ extern int puffsdebug; /* puffs_subr.c */
 #define FPTOPMP(fp) (((struct puffs_instance *)fp->f_data)->pi_pmp)
 #define FPTOPI(fp) ((struct puffs_instance *)fp->f_data)
 
+/* we don't pass the kernel overlay to userspace */
+#define PUFFS_TOFHSIZE(s) ((s)==0 ? (s) : (s)+4)
+#define PUFFS_FROMFHSIZE(s) ((s)==0 ? (s) : (s)-4)
+
 #define EXISTSOP(pmp, op) \
  (((pmp)->pmp_flags&PUFFS_KFLAG_ALLOPS) || ((pmp)->pmp_vnopmask[PUFFS_VN_##op]))
 
@@ -131,7 +135,7 @@ struct puffs_mount {
 	TAILQ_HEAD(, puffs_sizepark)	pmp_req_sizepark;
 
 	struct puffs_node_hashlist	*pmp_pnodehash;
-	size_t				pmp_npnodehash;
+	int				pmp_npnodehash;
 
 	struct mount			*pmp_mp;
 	struct vnode			*pmp_root;
