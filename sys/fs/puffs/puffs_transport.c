@@ -1,4 +1,4 @@
-/* $NetBSD: puffs_transport.c,v 1.14 2007/04/06 17:48:44 pooka Exp $ */
+/* $NetBSD: puffs_transport.c,v 1.15 2007/04/16 14:09:00 pooka Exp $ */
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_transport.c,v 1.14 2007/04/06 17:48:44 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_transport.c,v 1.15 2007/04/16 14:09:00 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -458,6 +458,13 @@ puffs_fop_ioctl(struct file *fp, u_long cmd, void *data, struct lwp *l)
 	struct puffs_mount *pmp = FPTOPMP(fp);
 	int rv;
 
+	/*
+	 * already done in sys_ioctl().  skip sanity checks to enabled
+	 * setting non-blocking fd without yet having mounted the fs
+	 */
+	if (cmd == FIONBIO)
+		return 0;
+
 	if (pmp == PMP_EMBRYO || pmp == PMP_DEAD) {
 		printf("puffs_fop_ioctl: puffs %p, not mounted\n", pmp);
 		return ENOENT;
@@ -497,11 +504,6 @@ puffs_fop_ioctl(struct file *fp, u_long cmd, void *data, struct lwp *l)
 		if (rv)
 			break;
 		rv = kthread_create1(dosuspendresume, pmp, NULL, "puffsusp");
-		break;
-
-	/* already done in sys_ioctl() */
-	case FIONBIO:
-		rv = 0;
 		break;
 
 	default:
