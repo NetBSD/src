@@ -1,4 +1,4 @@
-.\"	$NetBSD: postinstall.8,v 1.5 2006/08/18 12:02:55 hubertf Exp $
+.\"	$NetBSD: postinstall.8,v 1.5.2.1 2007/04/16 19:44:50 bouyer Exp $
 .\"
 .\" Copyright (c) 2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd August 11, 2006
+.Dd March 25, 2007
 .Dt POSTINSTALL 8
 .Os
 .Sh NAME
@@ -42,10 +42,10 @@
 .Nd check and fix installation after system upgrades
 .Sh SYNOPSIS
 .Nm postinstall
-.Fl a Ar arch
-.Fl d Ar destdir
-.Fl m Ar machine
-.Fl s Ar srcdir
+.Op Fl a Ar arch
+.Op Fl d Ar destdir
+.Op Fl m Ar machine
+.Op Fl s Brq Ar srcdir | Ar tgzdir | Ar tgzfile
 .Ar operation
 .Op Ar item Op ...
 .Sh DESCRIPTION
@@ -74,20 +74,50 @@ Defaults to
 .It Fl m Ar machine
 MACHINE.
 Defaults to machine of the host operating system.
+.It Fl s Brq Ar srcdir | Ar tgzdir | Ar tgzfile
+The location of the reference files, or the
+.Nx
+source files used to create the reference files.
+This may be specified in one of three ways:
+.Bl -tag -width XXsXtgzfileXX
 .It Fl s Ar srcdir
-Source directory to compare from.
-This may be
-.Pa src/etc ,
-an extracted copy of
-.Dq Pa etc.tgz ,
-or the file
-.Pa etc.tgz .
-In the latter case,
-.Pa etc.tgz
-is extracted into a temporary directory to be used
-as the source directory.
-Defaults to
+The top level directory of the
+.Nx
+source tree.
+By default this is
 .Pa /usr/src .
+.It Fl s Ar tgzdir
+A directory in which reference files have been
+extracted from one or more of the
+.Dq Pa etc.tgz
+or
+.Dq Pa xetc.tgz
+files from a binary distribution of
+.Nx .
+.It Fl s Ar tgzfile
+The location of one or more set files
+(or
+.Dq "tgz files" )
+from a binary distribution of
+.Nx .
+Each set file is a compressed archive containing reference files.
+More than one set file may be specified, either by
+using a single
+.Fl s
+option with a colon-separated list of
+.Ar tgzfile
+names, or by using multiple
+.Fl s
+options; this is likely to be useful to specify the locations of both the
+.Pa etc.tgz
+and
+.Pa xetc.tgz
+set files.
+Note that file names may not contain embedded colon
+.Pq Ql \&:
+characters, because that would conflict with the use of the colon
+character to delimit multiple file names with a single argument.
+.El
 .El
 .Pp
 The
