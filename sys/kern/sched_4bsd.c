@@ -1,4 +1,4 @@
-/*	$NetBSD: sched_4bsd.c,v 1.1.2.24 2007/04/03 15:23:26 matt Exp $	*/
+/*	$NetBSD: sched_4bsd.c,v 1.1.2.25 2007/04/16 23:51:35 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.1.2.24 2007/04/03 15:23:26 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.1.2.25 2007/04/16 23:51:35 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -95,6 +95,7 @@ __KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.1.2.24 2007/04/03 15:23:26 matt Exp
 #include <sys/sysctl.h>
 #include <sys/kauth.h>
 #include <sys/lockdebug.h>
+#include <sys/kmem.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -488,8 +489,12 @@ sched_rqinit()
 void
 sched_cpuattach(struct cpu_info *ci)
 {
+	runqueue_t *rq;
 
 	ci->ci_schedstate.spc_mutex = &sched_mutex;
+	rq = kmem_zalloc(sizeof(*rq), KM_NOSLEEP);
+	runqueue_init(rq);
+	ci->ci_schedstate.spc_sched_info = rq;
 }
 
 void
@@ -635,7 +640,10 @@ void
 sched_enqueue(struct lwp *l, bool ctxswitch)
 {
 
-	runqueue_enqueue(&global_queue, l);
+	if ((l->l_flag & LW_BOUND) != 0)
+		runqueue_enqueue(l->l_cpu->ci_schedstate.spc_sched_info, l);
+	else
+		runqueue_enqueue(&global_queue, l);
 }
 
 /*
@@ -648,14 +656,29 @@ void
 sched_dequeue(struct lwp *l)
 {
 
-	runqueue_dequeue(&global_queue, l);
+	if ((l->l_flag & LW_BOUND) != 0)
+		runqueue_dequeue(l->l_cpu->ci_schedstate.spc_sched_info, l);
+	else
+		runqueue_dequeue(&global_queue, l);
 }
 
 struct lwp *
-sched_nextlwp()
+sched_nextlwp(void)
 {
+	lwp_t *l1, *l2;
 
-	return runqueue_nextlwp(&global_queue);
+	/* For now, just pick the highest priority LWP. */
+	l1 = runqueue_nextlwp(curcpu()->ci_schedstate.spc_sched_info);
+	l2 = runqueue_nextlwp(&global_queue);
+
+	if (l1 == NULL)
+		return l2;
+	if (l2 == NULL)
+		return l1;
+	if (lwp_eprio(l2) < lwp_eprio(l1))
+		return l2;
+	else
+		return l1;
 }
 
 /* Dummy */
