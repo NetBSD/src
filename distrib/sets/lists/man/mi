@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.955.2.6 2007/03/06 20:43:47 bouyer Exp $
+# $NetBSD: mi,v 1.955.2.7 2007/04/16 19:52:25 bouyer Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -2346,6 +2346,7 @@
 ./usr/share/man/cat8/sync.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/sysconfd.0			man-obsolete		obsolete
 ./usr/share/man/cat8/sysctl.0			man-sysutil-catman	.cat
+./usr/share/man/cat8/sysinst.0			man-sysutil-man		.cat
 ./usr/share/man/cat8/syslogd.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/talkd.0			man-netutil-catman	.cat
 ./usr/share/man/cat8/tbrconfig.0		man-router-catman	.cat
@@ -4750,6 +4751,7 @@
 ./usr/share/man/man8/sync.8			man-sysutil-man		.man
 ./usr/share/man/man8/sysconfd.8			man-obsolete		obsolete
 ./usr/share/man/man8/sysctl.8			man-sysutil-man		.man
+./usr/share/man/man8/sysinst.8			man-sysutil-man		.man
 ./usr/share/man/man8/syslogd.8			man-sysutil-man		.man
 ./usr/share/man/man8/talkd.8			man-netutil-man		.man
 ./usr/share/man/man8/tbrconfig.8		man-router-man		.man
