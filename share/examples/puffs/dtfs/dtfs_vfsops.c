@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs_vfsops.c,v 1.14 2007/04/16 13:06:39 pooka Exp $	*/
+/*	$NetBSD: dtfs_vfsops.c,v 1.15 2007/04/16 13:25:09 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -161,9 +161,7 @@ dtfs_fs_fhtonode(struct puffs_cc *pcc, void *fid, size_t fidsize,
 	struct dtfs_fid *dfid;
 	struct puffs_node *pn;
 
-	if (fidsize < sizeof(struct dtfs_fid))
-		return EINVAL;
-
+	assert(fidsize == sizeof(struct dtfs_fid));
 	dfid = fid;
 
 	pn = puffs_pn_nodewalk(pu, addrcmp, dfid->dfid_addr);
@@ -197,8 +195,8 @@ dtfs_fs_nodetofh(struct puffs_cc *pcc, void *cookie,
 			*fidsize = sizeof(struct dtfs_fid);
 			return E2BIG;
 		}
+		*fidsize = sizeof(struct dtfs_fid);
 	}
-	*fidsize = sizeof(struct dtfs_fid);
 
 	dfid = fid;
 
