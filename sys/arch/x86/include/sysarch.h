@@ -1,4 +1,4 @@
-/*	$NetBSD: sysarch.h,v 1.1 2007/04/16 19:12:19 ad Exp $	*/
+/*	$NetBSD: sysarch.h,v 1.2 2007/04/16 19:25:04 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -39,9 +39,6 @@
 #ifndef _X86_SYSARCH_H_
 #define _X86_SYSARCH_H_
 
-#ifdef _KERNEL
-#define	_X86_SYSARCH_L(x)	x86_##x
-#define	_X86_SYSARCH_U(x)	X86_##x
 #define X86_GET_LDT		0
 #define X86_SET_LDT		1
 #define	X86_IOPL		2
@@ -54,6 +51,10 @@
 #define X86_GET_MTRR		11
 #define X86_SET_MTRR		12
 #define	X86_VM86		13
+
+#ifdef _KERNEL
+#define	_X86_SYSARCH_L(x)	x86_##x
+#define	_X86_SYSARCH_U(x)	X86_##x
 #elif defined(i386)
 #define	_X86_SYSARCH_L(x)	i386_##x
 #define	_X86_SYSARCH_U(x)	I386_##x
