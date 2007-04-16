@@ -1,4 +1,4 @@
-.\"	$NetBSD: etcupdate.8,v 1.12 2006/08/11 20:28:22 hubertf Exp $
+.\"	$NetBSD: etcupdate.8,v 1.12.2.1 2007/04/16 19:44:50 bouyer Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd February 18, 2006
+.Dd March 25, 2007
 .Dt ETCUPDATE 8
 .Os
 .Sh NAME
@@ -45,7 +45,7 @@
 .Nm
 .Op Fl ahlv
 .Op Fl p Ar pager
-.Op Fl s Brq Ar srcdir | Ar tgzfile | Ar tempdir
+.Op Fl s Brq Ar srcdir | Ar tgzdir | Ar tgzfile
 .Op Fl t Ar temproot
 .Op Fl w Ar width
 .Sh DESCRIPTION
@@ -77,6 +77,11 @@ corresponding tasks like remaking device nodes or rebuilding a database
 from the
 .Xr aliases 5
 file.
+Finally,
+.Nm
+runs
+.Xr postinstall 8
+to check the results.
 .Pp
 .Nm
 needs a clean set of new configuration files to compare the
@@ -101,11 +106,15 @@ installing the files to a so-called
 and
 .Fl t Ar temproot
 options later in this manual page.)
+Although this is the default mode, it is not recommended
+(see the
+.Dq BUGS
+section).
 .Pp
-Instead of using sources, the user can also extract one or more binary
-distribution sets in a special location and use those as the reference
-files (see usage of the
-.Fl s Ar tempdir
+Instead of using sources, it is recommended that the user should extract
+one or more binary distribution sets in a special location and use those
+as the reference files (see usage of the
+.Fl s Ar tgzdir
 option later in this manual page),
 or specify one or more binary distribution sets directly
 (see usage of the
@@ -145,22 +154,27 @@ but it can be changed either with this option
 or by defining the
 .Ev PAGER
 variable.
-.It Fl s Brq Ar srcdir | Ar tgzfile | Ar tempdir
+.It Fl s Brq Ar srcdir | Ar tgzdir | Ar tgzfile
 The location of the reference files, or the
 .Nx
 source files used to create the reference files.
 This may be specified in one of three ways:
-.Bl -tag -width XXsXtempdirXX
+.Bl -tag -width XXsXtgzfileXX
 .It Fl s Ar srcdir
-The location of the
+The top level directory of the
 .Nx
-source files used to create the reference files.
+source tree.
 By default this is
 .Pa /usr/src
 but it can be changed either with this option
 or the
 .Ev SRCDIR
 variable.
+The reference files will be created by running
+.Dq "make distribution"
+in the
+.Ar srcdir Ns Pa /etc
+directory.
 Note that
 .Ar srcdir
 should refer to the top of the source directory tree;
@@ -171,53 +185,63 @@ expected
 to refer to the
 .Pa etc
 subdirectory within the source tree.
-.It Fl s Ar tgzfile
-The location of a set file from a binary distribution of
+.It Fl s Ar tgzdir
+A directory in which reference files have been
+extracted from one or more of the
+.Dq Pa etc.tgz
+or
+.Dq Pa xetc.tgz
+files from a binary distribution of
 .Nx .
-The set file is a compressed archive containing reference files.
-This option may be specified twice, to specify the locations of
-both the
+The reference files from the specified directory will be copied to the
+.Pa temproot
+directory.
+.It Fl s Ar tgzfile
+The location of one or more set files
+(or
+.Dq "tgz files" )
+from a binary distribution of
+.Nx .
+Each set file is a compressed archive containing reference files.
+More than one set file may be specified, either by
+using a single
+.Fl s
+option with a colon-separated list of
+.Ar tgzfile
+names, or by using multiple
+.Fl s
+options; this is likely to be useful to specify the locations of both the
 .Pa etc.tgz
 and
 .Pa xetc.tgz
-sets.
+set files.
+Note that file names may not contain embedded colon
+.Pq Ql \&:
+characters, because that would conflict with the use of the colon
+character to delimit multiple file names with a single argument.
 The files from the specified sets will be extracted to the
 .Pa temproot
 directory.
-.It Fl s Ar tempdir
-Location of reference files extracted from a binary distribution of
-.Nx .
-Note that reference files in
-.Pa tempdir
-will be altered and removed by
-.Nm
-when using the
-.Fl s Ar tempdir
-option (as the
-.Pa tempdir
-directory is treated like
-.Pa temproot ) .
 .El
 .It Fl t Ar temproot
 Specifies the location of the
 .Pa temproot
 directory.
-The temporary reference files created from
-the source directory specified by
+This directory will be used for a temporary copy of
+the reference files created by running
+.Dq "make distribution"
+in the source directory specified by
 .Fl s Ar srcdir ,
-or the temporary reference files extracted from
-the binary tgz sets specified by
+or a temporary copy of the reference files extracted from
+the binary sets specified by
 .Fl s Ar tgzfile ,
-will be stored there.
+or a temporary copy of the reference files from the directory specified by
+.Fl s Ar tempdir .
 By default this is
 .Pa /tmp/temproot
 but can be changed either with this option or the
 .Ev TEMPROOT
 environment variable.
-It is an error to specify
-.Fl t Ar temproot
-in conjunction with
-.Fl s Ar tempdir .
 .It Fl v
 Makes
 .Nm
@@ -341,7 +365,7 @@ the
 option was added, the
 .Fl b Ar tempdir
 option was converted to
-.Fl s Ar tempdir ,
+.Fl s Ar tgzdir ,
 and the
 .Fl s Ar srcdir
 option was changed to refer to the top of the
@@ -370,7 +394,28 @@ as this is more reliable and the only way if the version numbers are the
 same even though the files are different.
 .\" when exactly are the version the same even though the file changes?
 .\" .Pp
-.\" .Sh BUGS
+.Sh BUGS
+If a source directory is specified via the
+.Dq Fl s Ar srcdir
+option (or if the
+.Pa /usr/src
+directory is used by default), then
+.Nm
+will run
+.Dq "make distribution"
+in the
+.Pa etc
+subdirectory of the source directory, but it will not use the same
+options or environment variables that would be used during a full build
+of the operating system.
+For this reason, use of the
+.Dq Fl s Ar srcdir
+option is not recommended, and use of the
+.Dq Fl s Ar tgzdir
+or
+.Dq Fl s Ar tgzfile
+options is recommended.
+.\" .Pp
 .\" Because of the use of
 .\" .Xr cmp 1
 .\" to compare files, rather than CVS versions, files that are locally changed
