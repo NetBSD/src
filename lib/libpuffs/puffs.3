@@ -1,4 +1,4 @@
-.\"	$NetBSD: puffs.3,v 1.17 2007/04/12 21:45:29 pooka Exp $
+.\"	$NetBSD: puffs.3,v 1.18 2007/04/16 16:37:02 pooka Exp $
 .\"
 .\" Copyright (c) 2006, 2007 Antti Kantee.  All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd April 12, 2007
+.Dd April 16, 2007
 .Dt PUFFS 3
 .Os
 .Sh NAME
@@ -34,10 +34,17 @@
 .Sh SYNOPSIS
 .In puffs.h
 .Ft struct puffs_usermount *
+.Fo puffs_init
+.Fa "struct puffs_ops *pops" "const char *puffsname" "void *private"
+.Fa "uint32_t flags"
+.Fc
+.Ft int
+.Fn puffs_domount "struct puffs_usermount *pu" "const char *dir" "int mntflags"
+.Ft struct puffs_usermount *
 .Fo puffs_mount
 .Fa "struct puffs_ops *pops" "const char *dir" "int mntflags"
 .Fa "const char *puffsname" "void *private"
-.Fa "uint32_t pflags" "size_t maxreqlen"
+.Fa "uint32_t pflags"
 .Fc
 .Ft int
 .Fo puffs_start
@@ -59,8 +66,14 @@
 .Fn puffs_getroot "struct puffs_usermount *pu"
 .Ft void *
 .Fn puffs_getspecific "struct puffs_usermount *pu"
+.Ft void
+.Fn puffs_setmaxreqlen "struct puffs_usermount *pu" "size_t maxreqlen"
 .Ft size_t
 .Fn puffs_getmaxreqlen "struct puffs_usermount *pu"
+.Ft void
+.Fn puffs_setfhsize "struct puffs_usermount *pu" "size_t fhsize" "int flags"
+.Ft void
+.Fn puffs_setncookiehash "struct puffs_usermount *pu" "int nhashes"
 .Ft int
 .Fn puffs_fs_unmount "struct puffs_cc *pcc" "int flags" "pid_t pid"
 .Ft int
@@ -198,8 +211,19 @@ all requests by using the callbacks.
 Alternatively, control can be kept with the caller and operations
 handled manually.
 .Ss Library operation
-The file system is mounted using
+Operations on the library always require a poiter to the opaque context
+identifier,
+.Va struct puffs_usermount .
+There are two ways of acquiring this context:
+.Fn puffs_init
+and
 .Fn puffs_mount .
+They are equivalent except in the sense that the latter also proceeds
+to mount the file system.
+The former can be used when special parameters need to be set and
+only then proceed with mounting by calling
+.Fn puffs_domount .
+.Pp
 The callbacks are passed as the fields in the structure
 .Fa pops .
 They can be initialized using the macro
@@ -227,6 +251,11 @@ is the flagset given to
 and
 .Fa puffsname
 is the name of the file system implementation.
+The parameter
+.Fa private
+is stored within the context structure and can be retrieved by
+calling
+.Fn puffs_getspecific .
 Flags for
 .Nm
 can be given via
@@ -265,33 +294,9 @@ each operation before executing it.
 It is useful for debugging purposes.
 .El
 .Pp
-Finally, the maximum operation buffer length is requested by
-.Fa maxreqlen .
-The field
-.Va pu_maxreqlen
-from the returned mount structure is the kernel sanity-checked value and
-should always be consulted after the mount call returns.
-Supplying 0 as this parameter will make the kernel choose the longest
-possible buffer length.
-In case of success,
-.Fn puffs_fs_mount
-returns the address of the user mount instance.
-Otherwise,
-.Dv NULL
-is returned and errno is set to specify the error.
-.Pp
-To handle all requests automatically until the file system is
-unmounted,
-.Fn puffs_mainloop
-should be used.
-It returns 0 if the file system was succesfully unmounted or \-1 if it
-was killed in action.
-Unless
-.Fa flags
-is used to pass
-.Dv PUFFSLOOP_NODAEMON ,
-.Fn puffs_mainloop
-will also detach from the terminal.
+The following functions can be used to query or modify the global
+state of the file system.
+Note, that all calls are not available at all times.
 .Bl -tag -width xxxx
 .It Fn puffs_getselectable "pu"
 Returns a handle to do I/O multiplexing with:
@@ -301,7 +306,7 @@ and
 .Xr kqueue 2
 are all examples of acceptable operations.
 .It Fn puffs_setblockingmode "pu" "mode"
-Sets the library to blocking or non-blocking.
+Sets the library to blocking or non-blocking mode.
 Acceptable values for the argument are
 .Dv PUFFSDEV_BLOCK
 and
@@ -329,6 +334,10 @@ to
 Setting the root node is currently required only if the path
 framework is used, see
 .Xr puffs_path 3 .
+.Pp
+This, if desired, should be done before the file system is activated
+with
+.Fn puffs_start .
 .It Fn puffs_getroot "pu"
 Returns the root node set earlier.
 .It Fn puffs_getspecific "pu"
@@ -336,18 +345,100 @@ Returns the
 .Fa private
 argument of
 .Fn puffs_mount .
+.It Fn puffs_setmaxreqlen "pu" "maxreqlen"
+In case the file system desires a maximum buffer length different from
+the default, the amount
+.Fa maxreqlen
+will be requested from the kernel when the file system is mounted.
+.Pp
+It is legal to call this function only between
+.Fn puffs_init
+and
+.Fn puffs_domount .
 .It Fn puffs_getmaxreqlen "pu"
 Returns the maximum request length the kernel will need for a single
 request.
-This information can be used to allocate the request buffer.
+This information can be used to allocate the request buffer and
+.B must
+be passed as the parameter to
+.Fn puffs_req_makeget .
+.It Fn puffs_setfhsize "pu" "fhsize" "flags"
+Sets the desired file handle size.
+This must be called if the file system wishes to support nfs exporting
+file systems of the
+.Fn fh*
+family of function calls.
+.Pp
+In case all nodes in the file system produce the same length file handle,
+it must be supplied as
+.Fa fhsize .
+In this case, the file system may ignore the length parameters in the
+file handle callback routines, as the kernel will always pass the
+correct length buffer.
+However, if the file handle size varies according to file, the argument
+.Fa fhsize
+defines the maximum size of a file handle for the file system.
+In this case the file system must take care of the handle lengths by
+itself in the file handle callbacks.
+Also, the flag
+.Dv PUFFS_FHFLAG_DYNAMIC
+must be provided in the argument
+.Fa flags .
+.Pp
+In case the file system wants to sanity check its file handle lengths
+for the limits of NFS, it can supply
+.Dv PUFFS_FHFLAG_NFSV2
+and
+.Dv PUFFS_FHFLAG_NFSV3
+in the
+.Fa flags
+parameter.
+It is especially important to note that these are not directly the
+limits specified by the protocols, as the kernel uses some bytes from
+the buffer space.
+In case the file handles are too large, mount will return an error.
+.Pp
+It is legal to call this function only between
+.Fn puffs_init
+and
+.Fn puffs_domount .
+.It Fn puffs_setncookiehash "pu" "ncookiehash"
+The parameter
+.Fa ncookiehash
+controls the amount of hash buckets the kernel has for reverse lookups
+from cookie to vnode.
+Technically the default is enough, but a memory/time tradeoff can be
+made by increasing this for file systems which know they will have
+very many active files.
+.Pp
+It is legal to call this function only between
+.Fn puffs_init
+and
+.Fn puffs_domount .
 .El
 .Pp
 After the correct setup for the library has been established and the
-backend has been initialized, the file system is made operational
+backend has been initialized (and the file system has been mounted if
+.Fn puffs_init
+was used to acquire the usermount context!), the file system is made
+operational
 by calling
 .Fn puffs_start .
 Immediately after the return of this function the file system must
 be ready to process requests.
+.Pp
+To handle all requests automatically until the file system is
+unmounted,
+.Fn puffs_mainloop
+should be used.
+It returns 0 if the file system was succesfully unmounted or \-1 if it
+was killed in action.
+Unless
+.Fa flags
+is used to pass
+.Dv PUFFSLOOP_NODAEMON ,
+.Fn puffs_mainloop
+will also detach from the terminal.
 .Ss Cookies
 Every file (regular file, directory, device node, ...) instance is
 attached to the kernel using a cookie.
