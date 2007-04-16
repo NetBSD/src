@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.23 2007/02/09 22:22:32 ad Exp $
+# $NetBSD: md.amd64,v 1.24 2007/04/16 19:16:36 ad Exp $
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
 ./usr/include/amd64/aout_machdep.h		comp-c-include
@@ -149,6 +149,7 @@
 ./usr/include/x86/psl.h				comp-c-include
 ./usr/include/x86/rwlock.h			comp-c-include
 ./usr/include/x86/specialreg.h			comp-c-include
+./usr/include/x86/sysarch.h			comp-c-include
 ./usr/include/x86/trap.h			comp-c-include
 ./usr/include/xmmintrin.h			comp-c-include		gcccmds
 ./usr/lib/libx86_64.a				comp-c-lib
