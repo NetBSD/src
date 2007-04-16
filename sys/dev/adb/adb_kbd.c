@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_kbd.c,v 1.5 2007/03/04 06:01:44 christos Exp $	*/
+/*	$NetBSD: adb_kbd.c,v 1.6 2007/04/16 00:16:43 macallan Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb_kbd.c,v 1.5 2007/03/04 06:01:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb_kbd.c,v 1.6 2007/04/16 00:16:43 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -83,6 +83,7 @@ struct adbkbd_softc {
 	uint8_t sc_buffer[16];
 	uint8_t sc_pollbuf[16];
 	uint8_t sc_us;
+	uint8_t sc_power;
 };	
 
 /*
@@ -188,6 +189,7 @@ adbkbd_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_capslock = 0;
 	sc->sc_trans[1] = 103;	/* F11 */
 	sc->sc_trans[2] = 111;	/* F12 */
+	sc->sc_power = 0x7f;
 
 	printf(" addr %d ", sc->sc_adbdev->current_addr);
 
@@ -230,9 +232,11 @@ adbkbd_attach(struct device *parent, struct device *self, void *aux)
 		break;
 	case ADB_PBKBD:
 		printf("PowerBook keyboard\n");
+		sc->sc_power = 0x7e;
 		break;
 	case ADB_PBISOKBD:
 		printf("PowerBook keyboard (ISO layout)\n");
+		sc->sc_power = 0x7e;
 		break;
 	case ADB_ADJKPD:
 		printf("adjustable keypad\n");
@@ -248,15 +252,18 @@ adbkbd_attach(struct device *parent, struct device *self, void *aux)
 		break;
 	case ADB_PBEXTISOKBD:
 		printf("PowerBook extended keyboard (ISO layout)\n");
+		sc->sc_power = 0x7e;
 		break;
 	case ADB_PBEXTJAPKBD:
 		printf("PowerBook extended keyboard (Japanese layout)\n");
+		sc->sc_power = 0x7e;
 		break;
 	case ADB_JPKBDII:
 		printf("keyboard II (Japanese layout)\n");
 		break;
 	case ADB_PBEXTKBD:
 		printf("PowerBook extended keyboard\n");
+		sc->sc_power = 0x7e;
 		break;
 	case ADB_DESIGNKBD:
 		printf("extended keyboard\n");
@@ -264,12 +271,15 @@ adbkbd_attach(struct device *parent, struct device *self, void *aux)
 		break;
 	case ADB_PBJPKBD:
 		printf("PowerBook keyboard (Japanese layout)\n");
+		sc->sc_power = 0x7e;
 		break;
 	case ADB_PBG3KBD:
 		printf("PowerBook G3 keyboard\n");
+		sc->sc_power = 0x7e;
 		break;
 	case ADB_PBG3JPKBD:
 		printf("PowerBook G3 keyboard (Japanese layout)\n");
+		sc->sc_power = 0x7e;
 		break;
 	case ADB_IBOOKKBD:
 		printf("iBook keyboard\n");
@@ -363,12 +373,16 @@ adbkbd_keys(struct adbkbd_softc *sc, uint8_t k1, uint8_t k2)
 
 	DPRINTF("[%02x %02x]", k1, k2);
 
-	if (((k1 == k2) && (k1 == 0x7f)) || (k1 == 0x7e)) {
+	if (((k1 == k2) && (k1 == 0x7f)) || (k1 == sc->sc_power)) {
 
 		/* power button, report to sysmon */
+#if 1
 		sysmon_pswitch_event(&sc->sc_sm_pbutton, 
 		    ADBK_PRESS(k1) ? PSWITCH_EVENT_PRESSED :
 		    PSWITCH_EVENT_RELEASED);
+#else
+		printf("[%02x %02x]", k1, k2);	
+#endif
 	} else {
 
 		adbkbd_key(sc, k1);
