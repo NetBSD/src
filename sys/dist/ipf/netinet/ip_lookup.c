@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_lookup.c,v 1.9 2007/04/14 20:34:37 martin Exp $	*/
+/*	$NetBSD: ip_lookup.c,v 1.10 2007/04/16 02:40:25 dogcow Exp $	*/
 
 /*
  * Copyright (C) 2002-2003 by Darren Reed.
@@ -581,7 +581,7 @@ void *ctx;
 	if (err != 0)
 		return err;
 
-	if (iter.ili_unit < 0 || iter.ili_unit > IPL_LOGMAX)
+	if (iter.ili_unit > IPL_LOGMAX)
 		return EINVAL;
 
 	if (iter.ili_ival != IPFGENITER_LOOKUP)
