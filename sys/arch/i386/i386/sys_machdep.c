@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.81 2007/03/04 05:59:58 christos Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.82 2007/04/16 17:24:19 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.81 2007/03/04 05:59:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.82 2007/04/16 17:24:19 ad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_mtrr.h"
@@ -182,14 +182,14 @@ i386_set_ldt(l, args, retval)
 	void *args;
 	register_t *retval;
 {
-	int error, i, n;
+	int error, i, n, sel, free_sel;
 	struct proc *p = l->l_proc;
 	struct pcb *pcb = &l->l_addr->u_pcb;
 	pmap_t pmap = p->p_vmspace->vm_map.pmap;
 	struct i386_set_ldt_args ua;
 	union descriptor *descv;
-	size_t old_len, new_len, ldt_len;
-	union descriptor *old_ldt, *new_ldt;
+	size_t old_len, new_len, ldt_len, free_len;
+	union descriptor *old_ldt, *new_ldt, *free_ldt;
 
 	error = kauth_authorize_machdep(l->l_cred, KAUTH_MACHDEP_LDT_SET,
 	    NULL, NULL, NULL, NULL);
@@ -280,6 +280,11 @@ i386_set_ldt(l, args, retval)
 	}
 
 	/* allocate user ldt */
+	free_sel = -1;
+	new_ldt = NULL;
+	new_len = 0;
+	free_ldt = NULL;
+	free_len = 0;
 	simple_lock(&pmap->pm_lock);
 	if (pmap->pm_ldt == 0 || (ua.start + ua.num) > pmap->pm_ldt_len) {
 		if (pmap->pm_flags & PMF_USER_LDT)
@@ -293,6 +298,8 @@ i386_set_ldt(l, args, retval)
 		simple_unlock(&pmap->pm_lock);
 		new_ldt = (union descriptor *)uvm_km_alloc(kernel_map,
 		    new_len, 0, UVM_KMF_WIRED);
+		memset(new_ldt, 0, new_len);
+		sel = ldt_alloc(new_ldt, new_len);
 		simple_lock(&pmap->pm_lock);
 
 		if (pmap->pm_ldt != NULL && ldt_len <= pmap->pm_ldt_len) {
@@ -304,12 +311,12 @@ i386_set_ldt(l, args, retval)
 			 * hey.. not our problem if user applications
 			 * have race conditions like that.
 			 */
-			uvm_km_free(kernel_map, (vaddr_t)new_ldt, new_len,
-			    UVM_KMF_WIRED);
 			goto copy;
 		}
 
 		old_ldt = pmap->pm_ldt;
+		free_ldt = old_ldt;
+		free_len = pmap->pm_ldt_len * sizeof(union descriptor);
 
 		if (old_ldt != NULL) {
 			old_len = pmap->pm_ldt_len * sizeof(union descriptor);
@@ -321,22 +328,20 @@ i386_set_ldt(l, args, retval)
 		memcpy(new_ldt, old_ldt, old_len);
 		memset((char *)new_ldt + old_len, 0, new_len - old_len);
 
-		if (old_ldt != ldt)
-			uvm_km_free(kernel_map, (vaddr_t)old_ldt, old_len,
-			    UVM_KMF_WIRED);
-
 		pmap->pm_ldt = new_ldt;
 		pmap->pm_ldt_len = ldt_len;
 
 		if (pmap->pm_flags & PMF_USER_LDT)
-			ldt_free(pmap);
-		else
+			free_sel = pmap->pm_ldt_sel;
+		else {
 			pmap->pm_flags |= PMF_USER_LDT;
-		ldt_alloc(pmap, new_ldt, new_len);
+			free_sel = -1;
+		}
+		pmap->pm_ldt_sel = sel;
 		pcb->pcb_ldt_sel = pmap->pm_ldt_sel;
 		if (pcb == curpcb)
 			lldt(pcb->pcb_ldt_sel);
-
+		new_ldt = NULL;
 	}
 copy:
 	/* Now actually replace the descriptors. */
@@ -344,9 +349,16 @@ copy:
 		pmap->pm_ldt[n] = descv[i];
 
 	simple_unlock(&pmap->pm_lock);
-
 	*retval = ua.start;
 
+	if (new_ldt != NULL)
+		uvm_km_free(kernel_map, (vaddr_t)new_ldt, new_len,
+		    UVM_KMF_WIRED);
+	if (free_sel != -1)
+		ldt_free(free_sel);
+	if (free_ldt != NULL)
+		uvm_km_free(kernel_map, (vaddr_t)free_ldt, free_len,
+		    UVM_KMF_WIRED);
 out:
 	free(descv, M_TEMP);
 	return (error);
