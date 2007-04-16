@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_add_16_nv_cas.c,v 1.1.2.1 2007/04/13 04:32:48 thorpej Exp $	*/
+/*	$NetBSD: atomic_add_16_nv_cas.c,v 1.1.2.2 2007/04/16 03:19:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -36,6 +36,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "atomic_op_namespace.h"
+
 #include <sys/atomic.h>
 #include "atomic_op_cas_impl.h"
 
@@ -49,4 +51,5 @@ atomic_add_16_nv(volatile uint16_t *addr, int16_t val)
 	return (OP_NEW_VALUE);
 }
 
-__strong_alias(atomic_add_short_nv,atomic_add_16_nv)
+atomic_op_alias(atomic_add_16_nv,_atomic_add_16_nv)
+atomic_op_alias(atomic_add_short_nv,_atomic_add_16_nv)

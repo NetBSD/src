@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_add_8_cas.c,v 1.1.2.1 2007/04/13 04:32:50 thorpej Exp $	*/
+/*	$NetBSD: atomic_add_8_cas.c,v 1.1.2.2 2007/04/16 03:19:54 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -36,6 +36,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "atomic_op_namespace.h"
+
 #include <sys/atomic.h>
 #include "atomic_op_cas_impl.h"
 
@@ -47,4 +49,5 @@ atomic_add_8(volatile uint8_t *addr, int8_t val)
 	OP_DO(addr, +, val);
 }
 
-__strong_alias(atomic_add_char,atomic_add_8)
+atomic_op_alias(atomic_add_8,_atomic_add_8)
+atomic_op_alias(atomic_add_char,_atomic_add_8)

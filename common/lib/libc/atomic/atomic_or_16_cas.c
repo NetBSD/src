@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_or_16_cas.c,v 1.1.2.1 2007/04/13 06:09:40 thorpej Exp $	*/
+/*	$NetBSD: atomic_or_16_cas.c,v 1.1.2.2 2007/04/16 03:19:59 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -36,6 +36,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "atomic_op_namespace.h"
+
 #include <sys/atomic.h>
 #include "atomic_op_cas_impl.h"
 
@@ -47,4 +49,5 @@ atomic_or_16(volatile uint16_t *addr, uint16_t val)
 	OP_DO(addr, |, val);
 }
 
-__strong_alias(atomic_or_ushort,atomic_or_16)
+atomic_op_alias(atomic_or_16,_atomic_or_16)
+atomic_op_alias(atomic_or_ushort,_atomic_or_16)

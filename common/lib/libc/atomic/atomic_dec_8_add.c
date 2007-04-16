@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_dec_8_add.c,v 1.1.2.1 2007/04/13 16:59:29 thorpej Exp $	*/
+/*	$NetBSD: atomic_dec_8_add.c,v 1.1.2.2 2007/04/16 03:19:57 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -36,6 +36,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "atomic_op_namespace.h"
+
 #include <sys/atomic.h>
 
 void
@@ -45,4 +47,5 @@ atomic_dec_8(volatile uint8_t *addr)
 	atomic_add_8(addr, -1);
 }
 
-__strong_alias(atomic_dec_uchar,atomic_dec_8)
+atomic_op_alias(atomic_dec_8,_atomic_dec_8)
+atomic_op_alias(atomic_dec_uchar,_atomic_dec_8)

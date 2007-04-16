@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_and_64_nv_cas.c,v 1.1.2.1 2007/04/13 06:05:10 thorpej Exp $	*/
+/*	$NetBSD: atomic_and_64_nv_cas.c,v 1.1.2.2 2007/04/16 03:19:55 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -36,6 +36,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "atomic_op_namespace.h"
+
 #include <sys/atomic.h>
 #include "atomic_op_cas_impl.h"
 
@@ -54,6 +56,7 @@ atomic_and_64_nv(volatile uint64_t *addr, uint64_t val)
 	return (new);
 }
 
+atomic_op_alias(atomic_and_64_nv,_atomic_and_64_nv)
 #if defined(_LP64)
-__strong_alias(atomic_and_ulong_nv,atomic_and_64_nv)
+atomic_op_alias(atomic_and_ulong_nv,_atomic_and_64_nv)
 #endif /* _LP64 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_swap_32_cas.c,v 1.1.2.1 2007/04/13 17:46:19 thorpej Exp $	*/
+/*	$NetBSD: atomic_swap_32_cas.c,v 1.1.2.2 2007/04/16 03:20:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -36,6 +36,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "atomic_op_namespace.h"
+
 #include <sys/atomic.h>
 #include "atomic_op_cas_impl.h"
 
@@ -52,8 +54,9 @@ atomic_swap_32(volatile uint32_t *addr, uint32_t new)
 	return (old);
 }
 
-__strong_alias(atomic_swap_uint,atomic_swap_32)
+atomic_op_alias(atomic_swap_32,_atomic_swap_32)
+atomic_op_alias(atomic_swap_uint,_atomic_swap_32)
 #if !defined(_LP64)
-__strong_alias(atomic_swap_ulong,atomic_swap_32)
-__strong_alias(atomic_swap_ptr,atomic_swap_32)
+atomic_op_alias(atomic_swap_ulong,_atomic_swap_32)
+atomic_op_alias(atomic_swap_ptr,_atomic_swap_32)
 #endif /* _LP64 */
