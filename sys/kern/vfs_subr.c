@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.276 2006/11/17 17:05:18 hannken Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.276.2.1 2007/04/16 20:01:12 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.276 2006/11/17 17:05:18 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.276.2.1 2007/04/16 20:01:12 bouyer Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -708,7 +708,7 @@ vinvalbuf(struct vnode *vp, int flags, kauth_cred_t cred, struct lwp *l,
 	struct buf *bp, *nbp;
 	int s, error;
 	int flushflags = PGO_ALLPAGES | PGO_FREE | PGO_SYNCIO |
-		(flags & V_SAVE ? PGO_CLEANIT : 0);
+		(flags & V_SAVE ? PGO_CLEANIT | PGO_RECLAIM : 0);
 
 	/* XXXUBC this doesn't look at flags or slp* */
 	simple_lock(&vp->v_interlock);
