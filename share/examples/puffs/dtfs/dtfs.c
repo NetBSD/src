@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs.c,v 1.19 2007/04/16 13:06:39 pooka Exp $	*/
+/*	$NetBSD: dtfs.c,v 1.20 2007/04/16 13:52:38 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -62,8 +62,8 @@ static void
 usage()
 {
 
-	errx(1, "usage: %s [-bs] [-o mntopt] [-o puffsopt] mountpath",
-	    getprogname());
+	errx(1, "usage: %s [-bsd] [-c hashbuckets] [-o mntopt] [-o puffsopt] "
+	    "mountpath", getprogname());
 }
 
 /*
