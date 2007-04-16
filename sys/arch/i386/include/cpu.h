@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.139 2007/03/21 18:20:59 xtraeme Exp $	*/
+/*	$NetBSD: cpu.h,v 1.140 2007/04/16 19:12:18 ad Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -401,8 +401,8 @@ int	math_emulate(struct trapframe *, ksiginfo_t *);
 
 #ifdef USER_LDT
 /* sys_machdep.h */
-int	i386_get_ldt(struct lwp *, void *, register_t *);
-int	i386_set_ldt(struct lwp *, void *, register_t *);
+int	x86_get_ldt(struct lwp *, void *, register_t *);
+int	x86_set_ldt(struct lwp *, void *, register_t *);
 #endif
 
 /* isa_machdep.c */
