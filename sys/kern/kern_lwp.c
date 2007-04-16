@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.55.2.11 2007/04/16 23:31:20 ad Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.55.2.12 2007/04/16 23:45:53 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -154,9 +154,7 @@
  *	by only one mutex (spc_mutex on single CPU).  In this case, LWPs' lock
  *	pointers will never change and will always reference spc_mutex.
  *	Please note that in a multiprocessor kernel each CPU has own spc_mutex.
- *
- *	Where spc_mutex is noted, it refers to l->l_cpu->ci_schedstate.spc_mutex
-
+ *	(spc_mutex here refers to l->l_cpu->ci_schedstate.spc_mutex).
  *
  *	Manipulation of the general lock is not performed directly, but
  *	through calls to lwp_lock(), lwp_relock() and similar.
@@ -208,7 +206,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.55.2.11 2007/04/16 23:31:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.55.2.12 2007/04/16 23:45:53 ad Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -812,6 +810,7 @@ lwp_exit_switchaway(struct lwp *l)
 	uvmexp.swtch++;
 
 	(void)splsched();
+	l->l_flag &= ~LW_RUNNING;
 	ci = curcpu();	
 	idlelwp = ci->ci_data.cpu_idlelwp;
 	idlelwp->l_stat = LSONPROC;
@@ -860,11 +859,12 @@ lwp_free(struct lwp *l, bool recycle, bool last)
 	 * all locks to avoid deadlock against interrupt handlers on
 	 * the target CPU.
 	 */
-	if (l->l_cpu->ci_curlwp == l) {
+	if ((l->l_flag & LW_RUNNING) != 0 || l->l_cpu->ci_curlwp == l) {
 		int count;
 		(void)count; /* XXXgcc */
 		KERNEL_UNLOCK_ALL(curlwp, &count);
-		while (l->l_cpu->ci_curlwp == l)
+		while ((l->l_flag & LW_RUNNING) != 0 ||
+		    l->l_cpu->ci_curlwp == l)
 			SPINLOCK_BACKOFF_HOOK;
 		KERNEL_LOCK(count, curlwp);
 	}
