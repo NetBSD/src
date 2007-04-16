@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.58 2007/04/11 21:03:05 pooka Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.59 2007/04/16 13:03:26 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.58 2007/04/11 21:03:05 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.59 2007/04/16 13:03:26 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/fstrans.h>
@@ -894,7 +894,7 @@ puffs_readdir(void *v)
 
 	if (ap->a_cookies) {
 		KASSERT(ap->a_ncookies != NULL);
-		if ((pmp->pmp_flags & PUFFS_KFLAG_CANEXPORT) == 0)
+		if (pmp->pmp_args.pa_fhsize == 0)
 			return EOPNOTSUPP;
 		cookiesmax = uio->uio_resid/_DIRENT_MINSIZE((struct dirent *)0);
 		cookiemem = ALIGN(cookiesmax*CSIZE); /* play safe */

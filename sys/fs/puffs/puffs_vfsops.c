@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vfsops.c,v 1.37 2007/04/14 16:52:22 xtraeme Exp $	*/
+/*	$NetBSD: puffs_vfsops.c,v 1.38 2007/04/16 13:03:26 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.37 2007/04/14 16:52:22 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.38 2007/04/16 13:03:26 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -49,6 +49,8 @@ __KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.37 2007/04/14 16:52:22 xtraeme Ex
 
 #include <fs/puffs/puffs_msgif.h>
 #include <fs/puffs/puffs_sys.h>
+
+#include <nfs/nfsproto.h> /* for fh sizes */
 
 VFS_PROTOS(puffs);
 
@@ -104,6 +106,38 @@ puffs_mount(struct mount *mp, const char *path, void *data,
 	/* nuke spy bits */
 	args->pa_flags &= PUFFS_KFLAG_MASK;
 
+	/* sanitize file handle length */
+	if (PUFFS_TOFHSIZE(args->pa_fhsize) > FHANDLE_SIZE_MAX) {
+		printf("puffs_mount: handle size %zu too large\n",
+		    args->pa_fhsize);
+		error = EINVAL;
+		goto out;
+	}
+	/* sanity check file handle max sizes */
+	if (args->pa_fhsize && args->pa_fhflags & PUFFS_FHFLAG_PROTOMASK) {
+		size_t kfhsize = PUFFS_TOFHSIZE(args->pa_fhsize);
+
+		if (args->pa_fhflags & PUFFS_FHFLAG_NFSV2) {
+			if (NFSX_FHTOOBIG_P(kfhsize, 0)) {
+				printf("puffs_mount: fhsize larger than "
+				    "NFSv2 max %d\n",
+				    PUFFS_FROMFHSIZE(NFSX_V2FH));
+				error = EINVAL;
+				goto out;
+			}
+		}
+
+		if (args->pa_fhflags & PUFFS_FHFLAG_NFSV3) {
+			if (NFSX_FHTOOBIG_P(kfhsize, 1)) {
+				printf("puffs_mount: fhsize larger than "
+				    "NFSv3 max %d\n",
+				    PUFFS_FROMFHSIZE(NFSX_V3FHMAX));
+				error = EINVAL;
+				goto out;
+			}
+		}
+	}
+
 	/* build real name */
 	(void)strlcpy(namebuf, PUFFS_NAMEPREFIX, sizeof(namebuf));
 	(void)strlcat(namebuf, args->pa_name, sizeof(namebuf));
@@ -150,11 +184,11 @@ puffs_mount(struct mount *mp, const char *path, void *data,
 		pmp->pmp_npnodehash = 1;
 	if (pmp->pmp_npnodehash > PUFFS_MAXPNODEBUCKETS) {
 		pmp->pmp_npnodehash = PUFFS_MAXPNODEBUCKETS;
-		printf("puffs_mount: using %zu hash buckets. "
+		printf("puffs_mount: using %d hash buckets. "
 		    "adjust puffs_maxpnodebuckets for more\n",
 		    pmp->pmp_npnodehash);
 	}
-		   
+
 	pmp->pmp_pnodehash = malloc
 	    (sizeof(struct puffs_pnode_hashlist *) * pmp->pmp_npnodehash,
 	    M_PUFFS, M_WAITOK);
@@ -578,71 +612,103 @@ int
 puffs_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
 {
 	struct puffs_mount *pmp = MPTOPUFFSMP(mp);
+	struct puffs_vfsreq_fhtonode *fhtonode_argp;
 	struct vnode *vp;
+	size_t argsize;
 	int error;
 
-	PUFFS_VFSREQ(fhtonode);
-
-	if ((pmp->pmp_flags & PUFFS_KFLAG_CANEXPORT) == 0)
+	if (pmp->pmp_args.pa_fhsize == 0)
 		return EOPNOTSUPP;
 
-	if (fhp->fid_len < PUFFS_FHSIZE + 4)
+	if (pmp->pmp_args.pa_fhsize < PUFFS_FROMFHSIZE(fhp->fid_len))
 		return EINVAL;
 
-	fhtonode_arg.pvfsr_dsize = PUFFS_FHSIZE;
-	memcpy(fhtonode_arg.pvfsr_data, fhp->fid_data, PUFFS_FHSIZE);
+	argsize = sizeof(struct puffs_vfsreq_fhtonode)
+	    + PUFFS_FROMFHSIZE(fhp->fid_len);
+	fhtonode_argp = malloc(argsize, M_PUFFS, M_ZERO | M_WAITOK);
+	fhtonode_argp->pvfsr_dsize = PUFFS_FROMFHSIZE(fhp->fid_len);
+	memcpy(fhtonode_argp->pvfsr_data, fhp->fid_data,
+	    PUFFS_FROMFHSIZE(fhp->fid_len));
 
-	error = puffs_vfstouser(pmp, PUFFS_VFS_FHTOVP,
-	    &fhtonode_arg, sizeof(fhtonode_arg));
+	error = puffs_vfstouser(pmp, PUFFS_VFS_FHTOVP, fhtonode_argp, argsize);
 	if (error)
-		return error;
+		goto out;
 
-	vp = puffs_pnode2vnode(pmp, fhtonode_arg.pvfsr_fhcookie, 1);
+	vp = puffs_pnode2vnode(pmp, fhtonode_argp->pvfsr_fhcookie, 1);
 	DPRINTF(("puffs_fhtovp: got cookie %p, existing vnode %p\n",
-	    fhtonode_arg.pvfsr_fhcookie, vp));
+	    fhtonode_argp->pvfsr_fhcookie, vp));
 	if (!vp) {
-		error = puffs_getvnode(mp, fhtonode_arg.pvfsr_fhcookie,
-		    fhtonode_arg.pvfsr_vtype, fhtonode_arg.pvfsr_size,
-		    fhtonode_arg.pvfsr_rdev, &vp);
+		error = puffs_getvnode(mp, fhtonode_argp->pvfsr_fhcookie,
+		    fhtonode_argp->pvfsr_vtype, fhtonode_argp->pvfsr_size,
+		    fhtonode_argp->pvfsr_rdev, &vp);
 		if (error)
-			return error;
+			goto out;
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	}
 
 	*vpp = vp;
-	return 0;
+ out:
+	free(fhtonode_argp, M_PUFFS);
+	return error;
 }
 
 int
 puffs_vptofh(struct vnode *vp, struct fid *fhp, size_t *fh_size)
 {
 	struct puffs_mount *pmp = MPTOPUFFSMP(vp->v_mount);
+	struct puffs_vfsreq_nodetofh *nodetofh_argp;
+	size_t argsize;
 	int error;
 
-	PUFFS_VFSREQ(nodetofh);
-
-	if ((pmp->pmp_flags & PUFFS_KFLAG_CANEXPORT) == 0)
+	if (pmp->pmp_args.pa_fhsize == 0)
 		return EOPNOTSUPP;
 
-	if (*fh_size < PUFFS_FHSIZE + 4) {
-		*fh_size = PUFFS_FHSIZE + 4;
+	/* if file handles are static length, we can return immediately */
+	if (((pmp->pmp_args.pa_fhflags & PUFFS_FHFLAG_DYNAMIC) == 0)
+	    && (PUFFS_FROMFHSIZE(*fh_size) < pmp->pmp_args.pa_fhsize)) {
+		*fh_size = PUFFS_TOFHSIZE(pmp->pmp_args.pa_fhsize);
 		return E2BIG;
 	}
-	*fh_size = PUFFS_FHSIZE + 4;
 
-	nodetofh_arg.pvfsr_fhcookie = VPTOPNC(vp);
-	nodetofh_arg.pvfsr_dsize = PUFFS_FHSIZE;
+	argsize = sizeof(struct puffs_vfsreq_nodetofh)
+	    + PUFFS_FROMFHSIZE(*fh_size);
+	nodetofh_argp = malloc(argsize, M_PUFFS, M_ZERO | M_WAITOK);
+	nodetofh_argp->pvfsr_fhcookie = VPTOPNC(vp);
+	nodetofh_argp->pvfsr_dsize = PUFFS_FROMFHSIZE(*fh_size);
 
-	error = puffs_vfstouser(pmp, PUFFS_VFS_VPTOFH,
-	    &nodetofh_arg, sizeof(nodetofh_arg));
-	if (error)
-		return error;
+	error = puffs_vfstouser(pmp, PUFFS_VFS_VPTOFH, nodetofh_argp, argsize);
+	if (error) {
+		if (error == E2BIG)
+			*fh_size = PUFFS_TOFHSIZE(nodetofh_argp->pvfsr_dsize);
+		goto out;
+	}
 
-	fhp->fid_len = PUFFS_FHSIZE + 4;
-	memcpy(fhp->fid_data,
-	    nodetofh_arg.pvfsr_data, PUFFS_FHSIZE);
+	if (PUFFS_TOFHSIZE(nodetofh_argp->pvfsr_dsize) > FHANDLE_SIZE_MAX) {
+		/* XXX: wrong direction */
+		error = EINVAL;
+		goto out;
+	}
 
-	return 0;
+	if (*fh_size < PUFFS_TOFHSIZE(nodetofh_argp->pvfsr_dsize)) {
+		*fh_size = PUFFS_TOFHSIZE(nodetofh_argp->pvfsr_dsize);
+		error = E2BIG;
+		goto out;
+	}
+	if (pmp->pmp_args.pa_fhflags & PUFFS_FHFLAG_DYNAMIC) {
+		*fh_size = PUFFS_TOFHSIZE(nodetofh_argp->pvfsr_dsize);
+	} else {
+		*fh_size = PUFFS_TOFHSIZE(pmp->pmp_args.pa_fhsize);
+	}
+
+	if (fhp) {
+		fhp->fid_len = *fh_size;
+		memcpy(fhp->fid_data,
+		    nodetofh_argp->pvfsr_data, nodetofh_argp->pvfsr_dsize);
+	}
+
+ out:
+	free(nodetofh_argp, M_PUFFS);
+	return error;
 }
 
 void
