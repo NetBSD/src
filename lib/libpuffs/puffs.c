@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.c,v 1.36 2007/04/13 13:35:46 pooka Exp $	*/
+/*	$NetBSD: puffs.c,v 1.37 2007/04/16 08:28:55 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: puffs.c,v 1.36 2007/04/13 13:35:46 pooka Exp $");
+__RCSID("$NetBSD: puffs.c,v 1.37 2007/04/16 08:28:55 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -176,6 +176,37 @@ puffs_getmaxreqlen(struct puffs_usermount *pu)
 {
 
 	return pu->pu_kargs.pa_maxreqlen;
+}
+
+void
+puffs_setmaxreqlen(struct puffs_usermount *pu, size_t reqlen)
+{
+
+	if (pu->pu_state != PUFFS_STATE_BEFOREMOUNT)
+		warnx("puffs_setmaxreqlen: call has effect only "
+		    "before mount\n");
+
+	pu->pu_kargs.pa_maxreqlen = reqlen;
+}
+
+void
+puffs_setfhsize(struct puffs_usermount *pu, size_t fhsize)
+{
+
+	if (pu->pu_state != PUFFS_STATE_BEFOREMOUNT)
+		warnx("puffs_setfhsize: call has effect only before mount\n");
+
+	pu->pu_kargs.pa_fhsize = fhsize;
+}
+
+void
+puffs_setncookiehash(struct puffs_usermount *pu, int nhash)
+{
+
+	if (pu->pu_state != PUFFS_STATE_BEFOREMOUNT)
+		warnx("puffs_setfhsize: call has effect only before mount\n");
+
+	pu->pu_kargs.pa_nhashbuckets = nhash;
 }
 
 void
