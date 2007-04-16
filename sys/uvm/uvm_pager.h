@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.h,v 1.34 2006/02/22 22:28:18 drochner Exp $	*/
+/*	$NetBSD: uvm_pager.h,v 1.34.18.1 2007/04/16 20:01:15 bouyer Exp $	*/
 
 /*
  *
@@ -162,6 +162,7 @@ struct uvm_pagerops {
 #define PGO_PASTEOF	0x400	/* allow allocation of pages past EOF */
 #define PGO_NOBLOCKALLOC 0x800	/* backing block allocation is not needed */
 #define PGO_NOTIMESTAMP 0x1000	/* don't mark object accessed/modified */
+#define PGO_RECLAIM	0x2000	/* object is being reclaimed */
 
 /* page we are not interested in getting */
 #define PGO_DONTCARE ((struct vm_page *) -1L)	/* [get only] */
