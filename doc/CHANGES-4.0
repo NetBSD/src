@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.114 2007/04/12 19:46:40 bouyer Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.115 2007/04/16 20:04:19 bouyer Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -2593,4 +2593,78 @@ sys/arch/vax/vax/pmap.c				1.149
 	Workaround a gcc 4.1 issue.  don't use s.m = s2.m = s3.m = ...
 	assign them individually.
 	[mhitch, ticket #569]
+
+bin/sh/arith.y					1.18
+bin/sh/arith_lex.l				1.14
+bin/sh/expand.c					1.78
+bin/sh/expand.h					1.17
+bin/sh/sh.1					1.86
+regress/bin/sh/expand.sh			1.4
+
+	Make /bin/sh use intmax_t (instead of int) for arithmetic in $((...)).
+	[apb, ticket #570]
+
+usr.sbin/etcupdate/etcupdate			1.34
+usr.sbin/etcupdate/etcupdate.8			1.13
+usr.sbin/postinstall/postinstall		1.39
+usr.sbin/postinstall/postinstall.8		1.6
+
+	Allow both etcupdate and postinstall to accept multiple
+	.tgz files (e.g. etc.tgz and xetc.tgz).  Make etcupdate
+	invoke postinstall.
+	[apb, ticket #571]
+
+BUILDING					1.61
+doc/BUILDING.mdoc				1.48
+
+	Improve documentation for "make installworld".
+	[apb, ticket #572]
+
+BUILDING					1.62
+distrib/sets/lists/man/mi			1.987
+doc/BUILDING.mdoc				1.49
+share/man/man7/release.7			1.22
+share/man/man8/Makefile				1.89
+share/man/man8/sysinst.8			1.1
+
+	Improve documentation for "make iso-image" and release(7),
+	and add a rudimentary man page for sysinst(8).
+	[apb, ticket #573]
+
+build.sh					1.165 - 1.166
+
+	build.sh: report both the version of NetBSD being built
+	and the build platform.
+	[apb, ticket #574]
+
+distrib/notes/Makefile				1.37
+distrib/notes/landisk/Makefile			1.1
+distrib/notes/landisk/hardware			1.1
+distrib/notes/landisk/install			1.1
+distrib/notes/landisk/legal			1.1
+distrib/notes/landisk/prep			1.1
+distrib/notes/landisk/upgrade			1.1
+distrib/notes/landisk/whatis			1.1
+distrib/notes/landisk/xfer			1.1
+
+	Rudimentary documentation for NetBSD/landisk.
+	[uwe, ticket #576]
+
+sys/fs/union/union_vnops.c			1.20
+sys/kern/vfs_subr.c				1.287
+sys/miscfs/genfs/layer_vnops.c			1.30
+sys/uvm/uvm_pager.h				1.35
+
+	define a pager flag PGO_RECLAIM, similar to FSYNC_RECLAIM, and use it
+	to skip unnecessary flushing when layered file system vnodes are
+	recycled. this also prevents a deadlock with the dodgy LFS putpages
+	routine. fixes the non-LFS part of PR 36150.
+	[chs, ticket #577]
+
+sys/dev/pci/if_bge.c				1.128
+
+	Add support for Broadcom BCM5753 and Broadcom BCM5753M Gigabit Ethernet.
+	Patch supplied by Mustafa Dogan in PR kern/36139, confirmed to work
+	by Tonnerre Lombard on #NetBSD IRC channel.
+	[tron, ticket #578]
 
