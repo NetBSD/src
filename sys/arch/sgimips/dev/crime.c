@@ -1,4 +1,4 @@
-/*	$NetBSD: crime.c,v 1.23 2007/04/15 04:42:55 jmcneill Exp $	*/
+/*	$NetBSD: crime.c,v 1.24 2007/04/16 23:31:04 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2004 Christopher SEKIYA
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crime.c,v 1.23 2007/04/15 04:42:55 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crime.c,v 1.24 2007/04/16 23:31:04 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -241,10 +241,10 @@ crime_intr(u_int32_t status, u_int32_t cause, u_int32_t pc, u_int32_t ipending)
 		}
 	}
 
-	crime_ipending &= 0xff00;
+	crime_ipending &= ~0xffff;
 
 	if (crime_ipending)
-		for (i = 0; i < CRIME_NINTR; i++) {
+		for (i = 16; i < CRIME_NINTR; i++) {
 			if ((crime_ipending & (1 << i)) && crime[i].func != NULL)
 				(*crime[i].func)(crime[i].arg);
 		}
