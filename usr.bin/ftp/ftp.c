@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.145 2007/04/12 04:18:23 lukem Exp $	*/
+/*	$NetBSD: ftp.c,v 1.146 2007/04/16 00:43:43 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-2007 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.145 2007/04/12 04:18:23 lukem Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.146 2007/04/16 00:43:43 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -1518,8 +1518,8 @@ initconn(void)
 		} else
 			goto bad;
 
-		while (ftp_connect(data, (struct sockaddr *)&data_addr.si_su,
-			    data_addr.su_len) < 0) {
+		if (ftp_connect(data, (struct sockaddr *)&data_addr.si_su,
+		    data_addr.su_len) < 0) {
 			if (activefallback) {
 				(void)close(data);
 				data = -1;
