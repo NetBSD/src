@@ -1,4 +1,4 @@
-# $NetBSD: md.sgimips,v 1.13 2007/04/16 10:56:55 sekiya Exp $
+# $NetBSD: md.sgimips,v 1.14 2007/04/16 22:34:58 sekiya Exp $
 ./usr/X11R6/bin/X
 ./usr/X11R6/bin/XFree86
 ./usr/X11R6/bin/Xprt
@@ -196,7 +196,7 @@
 ./usr/X11R6/lib/modules/drivers/libwsfb_drv.so
 ./usr/X11R6/lib/modules/drivers/libwsfb_drv.so.0
 ./usr/X11R6/lib/modules/drivers/libwsfb_drv.so.0.0
-./usr/X11R6/lib/modules/drivers/libwsfb_drv.so_pic.a
+./usr/X11R6/lib/modules/drivers/libwsfb_drv_pic.a
 ./usr/X11R6/lib/modules/extensions/libGLcore.so
 ./usr/X11R6/lib/modules/extensions/libGLcore.so.0
 ./usr/X11R6/lib/modules/extensions/libGLcore.so.0.0
@@ -379,5 +379,5 @@
 ./usr/X11R6/man/man4/mouse.4			-unknown-		.man
 ./usr/X11R6/man/man4/newport.4			-unknown-		.man
 ./usr/X11R6/man/man4/void.4			-unknown-		.man
-./usr/X11R6/man/cat4/wsfb.4			-unknown-		.cat
+./usr/X11R6/man/man4/wsfb.4			-unknown-		.cat
 ./usr/X11R6/man/man5/XF86Config.5		-unknown-		.man
