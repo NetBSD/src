@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.204 2007/04/16 17:24:19 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.205 2007/04/16 19:12:18 ad Exp $	*/
 
 /*
  *
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.204 2007/04/16 17:24:19 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.205 2007/04/16 19:12:18 ad Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"
@@ -1770,11 +1770,12 @@ pmap_ldt_cleanup(l)
 	pmap_t pmap = l->l_proc->p_vmspace->vm_map.pmap;
 	union descriptor *old_ldt = NULL;
 	size_t len = 0;
+	int sel = -1;
 
 	simple_lock(&pmap->pm_obj.vmobjlock);
 
 	if (pmap->pm_flags & PMF_USER_LDT) {
-		ldt_free(pmap->pm_ldt_sel);
+		sel = pmap->pm_ldt_sel;
 		pmap->pm_ldt_sel = GSEL(GLDT_SEL, SEL_KPL);
 		pcb->pcb_ldt_sel = pmap->pm_ldt_sel;
 		if (pcb == curpcb)
@@ -1788,6 +1789,8 @@ pmap_ldt_cleanup(l)
 
 	simple_unlock(&pmap->pm_obj.vmobjlock);
 
+	if (sel != -1)
+		ldt_free(sel);
 	if (old_ldt != NULL)
 		uvm_km_free(kernel_map, (vaddr_t)old_ldt, len, UVM_KMF_WIRED);
 }
