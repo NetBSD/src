@@ -1,4 +1,4 @@
-.\"     $NetBSD: vfsops.9,v 1.29 2007/03/07 00:41:18 dogcow Exp $
+.\"     $NetBSD: vfsops.9,v 1.30 2007/04/16 14:47:19 pooka Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 21, 2007
+.Dd April 16, 2007
 .Dt VFSOPS 9
 .Os
 .Sh NAME
@@ -78,7 +78,7 @@
 .Ft int
 .Fn VFS_FHTOVP "struct mount *mp" "struct fid *fhp" "struct vnode **vpp"
 .Ft int
-.Fn VFS_VPTOFH "struct vnode *vp" "struct fid *fhp"
+.Fn VFS_VPTOFH "struct vnode *vp" "struct fid *fhp" "size_t *fh_size"
 .Ft int
 .Fn VFS_SNAPSHOT "struct mount *mp" "struct vnode *vp" "struct timespec *ts"
 .Ft int
@@ -307,27 +307,24 @@ server to implement the READDIRPLUS nfs call.
 If the file system does not support this function, it should return
 .Er EOPNOTSUPP .
 .It Fn VFS_FHTOVP "mp" "fhp" "vpp"
-Get the vnode for the NFS file specified by the file handle
+Get the vnode for the file handle
 .Fa fhp
 in the file system specified by the mount structure
 .Fa mp .
 The locked vnode is returned in
 .Fa vpp .
 .Pp
-A call to
+When exporting, the call to
 .Fn VFS_FHTOVP
-should generally be followed by a call to
-.Fn nfs_check_export
-to check if the file is accessable to the client.
+should follow a call to
+.Fn netexport_check ,
+which checks if the file is accessable to the client.
 .Pp
-If this function's pointer is set to
-.Dv NULL ,
-the underlying file system will not be NFS exportable.
-If it is defined, though,
-.Fn VFS_VPTOFH
-must be defined too.
-.It Fn VFS_VPTOFH "vp" "fhp"
-Get a unique NFS file handle for the file specified by the vnode
+If file handles are not supported by the file system, this function
+must return
+.Er EOPNOTSUPP .
+.It Fn VFS_VPTOFH "vp" "fhp" "fh_size"
+Get a file handle for the vnode specified by
 .Fa vp .
 The file handle is returned in
 .Fa fhp .
@@ -337,12 +334,29 @@ It should contain enough information to uniquely identify a file within
 the file system as well as noticing when a file has been removed and
 the file system resources have been recycled for a new file.
 .Pp
-If this function's pointer is set to
-.Dv NULL ,
-the underlying file system will not be NFS exportable.
-If it is defined, though,
-.Fn VFS_FHTOVP
-must be defined too.
+The parameter
+.Fa fh_size
+points to the container size for the file handle.
+This parameter should be updated to the size of the finished file handle.
+Note that it is legal to call this function with
+.Fa fhp
+set to
+.Dv NULL
+in case
+.Fa fh_size
+is zero.
+In case
+.Fa fh_size
+indicates a storage space too small, the storage space required for
+the file handle corresponding to
+.Fa vp
+should be filled in and
+.Er E2BIG
+should be returned.
+.Pp
+If file handles are not supported by the file system, this function
+must return
+.Er EOPNOTSUPP .
 .It Fn VFS_SNAPSHOT "mp" "vp" "ts"
 Take a snapshot of the file system specified by the mount structure
 .Fa mp
