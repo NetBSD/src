@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_kbd.c,v 1.8 2007/04/16 02:12:11 macallan Exp $	*/
+/*	$NetBSD: adb_kbd.c,v 1.9 2007/04/16 23:33:10 macallan Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb_kbd.c,v 1.8 2007/04/16 02:12:11 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb_kbd.c,v 1.9 2007/04/16 23:33:10 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -84,7 +84,7 @@ struct adbkbd_softc {
 	uint8_t sc_buffer[16];
 	uint8_t sc_pollbuf[16];
 	uint8_t sc_us;
-	uint8_t sc_power;
+	uint8_t sc_power, sc_pe;
 };	
 
 /*
@@ -108,6 +108,7 @@ static int adbkbd_enable(void *, int);
 static int adbkbd_ioctl(void *, u_long, void *, int, struct lwp *);
 static void adbkbd_set_leds(void *, int);
 static void adbkbd_handler(void *, int, uint8_t *);
+static void adbkbd_powerbutton(void *);
 
 struct wskbd_accessops adbkbd_accessops = {
 	adbkbd_enable,
@@ -377,19 +378,24 @@ adbkbd_keys(struct adbkbd_softc *sc, uint8_t k1, uint8_t k2)
 	if (((k1 == k2) && (k1 == 0x7f)) || (k1 == sc->sc_power)) {
 
 		/* power button, report to sysmon */
-#if 1
-		sysmon_pswitch_event(&sc->sc_sm_pbutton, 
-		    ADBK_PRESS(k1) ? PSWITCH_EVENT_PRESSED :
-		    PSWITCH_EVENT_RELEASED);
-#else
-		printf("[%02x %02x]", k1, k2);	
-#endif
+		sc->sc_pe = k1;
+		sysmon_task_queue_sched(0, adbkbd_powerbutton, sc);
 	} else {
 
 		adbkbd_key(sc, k1);
 		if (k2 != 0xff)
 			adbkbd_key(sc, k2);
 	}
+}
+
+static void
+adbkbd_powerbutton(void *cookie)
+{
+	struct adbkbd_softc *sc = cookie;
+
+	sysmon_pswitch_event(&sc->sc_sm_pbutton, 
+	    ADBK_PRESS(sc->sc_pe) ? PSWITCH_EVENT_PRESSED :
+	    PSWITCH_EVENT_RELEASED);
 }
 
 static inline void
