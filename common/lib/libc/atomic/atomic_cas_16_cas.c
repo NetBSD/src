@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_cas_16_cas.c,v 1.1.2.2 2007/04/16 03:19:56 thorpej Exp $	*/
+/*	$NetBSD: atomic_cas_16_cas.c,v 1.1.2.3 2007/04/17 16:04:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -61,5 +61,7 @@ atomic_cas_16(volatile uint16_t *addr, uint16_t old, uint16_t new)
 	return (rv);
 }
 
+#undef atomic_cas_16
 atomic_op_alias(atomic_cas_16,_atomic_cas_16)
+#undef atomic_cas_ushort
 atomic_op_alias(atomic_cas_ushort,_atomic_cas_16)

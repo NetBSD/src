@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_or_8_nv_cas.c,v 1.1.2.2 2007/04/16 03:20:00 thorpej Exp $	*/
+/*	$NetBSD: atomic_or_8_nv_cas.c,v 1.1.2.3 2007/04/17 16:05:14 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -51,5 +51,7 @@ atomic_or_8_nv(volatile uint8_t *addr, uint8_t val)
 	return (OP_NEW_VALUE);
 }
 
+#undef atomic_or_8_nv
 atomic_op_alias(atomic_or_8_nv,_atomic_or_8_nv)
+#undef atomic_or_uchar_nv
 atomic_op_alias(atomic_or_uchar_nv,_atomic_or_8_nv)

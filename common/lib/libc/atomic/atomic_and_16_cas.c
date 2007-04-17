@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_and_16_cas.c,v 1.1.2.2 2007/04/16 03:19:54 thorpej Exp $	*/
+/*	$NetBSD: atomic_and_16_cas.c,v 1.1.2.3 2007/04/17 16:03:17 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -49,5 +49,7 @@ atomic_and_16(volatile uint16_t *addr, uint16_t val)
 	OP_DO(addr, &, val);
 }
 
+#undef atomic_and_16
 atomic_op_alias(atomic_and_16,_atomic_and_16)
+#undef atomic_and_ushort
 atomic_op_alias(atomic_and_ushort,_atomic_and_16)
