@@ -87,6 +87,10 @@ virtdir_add(virtdir_t *tp, const char *name, size_t size, uint8_t type, char *tg
 		(void) stat(".", &st);
 		virtdir_init(tp, &st, &st, &st);
 	}
+	if (virtdir_find(tp, name, size) != NULL) {
+		/* attempt to add a duplicate directory entry */
+		return 0;
+	}
 	ALLOC(virt_dirent_t, tp->v, tp->size, tp->c, 10, 10, "virtdir_add",
 			return 0);
 	tp->v[tp->c].namelen = size;
@@ -104,7 +108,7 @@ virtdir_add(virtdir_t *tp, const char *name, size_t size, uint8_t type, char *tg
 	return 1;
 }
 
-/* add an entry to the tree */
+/* delete an entry from the tree */
 int
 virtdir_del(virtdir_t *tp, const char *name, size_t size)
 {
