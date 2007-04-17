@@ -1,4 +1,4 @@
-/*	$NetBSD: patch.c,v 1.2 2007/02/09 21:55:14 ad Exp $	*/
+/*	$NetBSD: patch.c,v 1.2.14.1 2007/04/17 06:23:07 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -41,11 +41,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: patch.c,v 1.2 2007/02/09 21:55:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: patch.c,v 1.2.14.1 2007/04/17 06:23:07 thorpej Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
-#ifdef i386
+#if !defined(__x86_64__)
 #include "opt_cputype.h"
 #endif
 
@@ -58,6 +58,30 @@ __KERNEL_RCSID(0, "$NetBSD: patch.c,v 1.2 2007/02/09 21:55:14 ad Exp $");
 
 #include <x86/cpuvar.h>
 #include <x86/cputypes.h>
+
+#if !defined(__x86_64__)
+void	_atomic_cas_32(volatile uint32_t *, uint32_t, uint32_t);
+void	_atomic_cas_32_end(volatile uint32_t *, uint32_t, uint32_t);
+void	_atomic_cas_32_486(volatile uint32_t *, uint32_t, uint32_t);
+void	_atomic_cas_32_486_end(volatile uint32_t *, uint32_t, uint32_t);
+
+void	_membar_producer(void);
+void	_membar_producer_end(void);
+void	_membar_producer_sse2(void);
+void	_membar_producer_sse2_end(void);
+
+void	_membar_consumer(void);
+void	_membar_consumer_end(void);
+void	_membar_consumer_sse2(void);
+void	_membar_consumer_sse2_end(void);
+
+void	_membar_sync(void);
+void	_membar_sync_end(void);
+void	_membar_sync_486(void);
+void	_membar_sync_486_end(void);
+void	_membar_sync_sse2(void);
+void	_membar_sync_sse2_end(void);
+#endif /* ! __x86_64__ */
 
 void	spllower(int);
 void	spllower_end(void);
@@ -146,6 +170,58 @@ x86_patch(void)
 	/* Disable write protection in supervisor mode. */
 	cr0 = rcr0();
 	lcr0(cr0 & ~CR0_WP);
+
+#if !defined(__x86_64__)
+#if defined(I486_CPU) || defined(I586_CPU) || defined(I686_CPU)
+	/*
+	 * 486-and-up patches.
+	 */
+	if (cpu_class >= CPUCLASS_486) {
+		patchfunc(_atomic_cas_32_486, _atomic_cas_32_486_end,
+			  _atomic_cas_32, _atomic_cas_32_end,
+			  NULL);
+	}
+#endif /* I486_CPU || I586_CPU || I686_CPU */
+#endif /* ! __x86_64__ */
+
+#if defined(MULTIPROCESSOR)
+	/*
+	 * Multiprocessor patches.
+	 * XXX Should be a run-time check.
+	 */
+	if (1) {
+#if defined(__x86_64__)
+#else
+#if defined(I686_CPU)
+		if (cpu_feature & CPUID_SSE2) {
+			patchfunc(_membar_producer_sse2,
+						_membar_producer_sse2_end,
+				  _membar_producer, _membar_producer_end,
+				  NULL);
+			patchfunc(_membar_consumer_sse2,
+						_membar_consumer_sse2_end,
+				  _membar_consumer, _membar_consumer_end,
+				  NULL);
+			patchfunc(_membar_sync_sse2,
+						_membar_sync_sse2_end,
+				  _membar_sync, _membar_sync_end,
+				  NULL);
+		} else
+#endif /* I686_CPU */
+		{
+			patchfunc(_membar_sync_486, _membar_sync_486_end,
+				  _membar_producer, _membar_producer_end,
+				  NULL);
+			patchfunc(_membar_sync_486, _membar_sync_486_end,
+				  _membar_consumer, _membar_consumer_end,
+				  NULL);
+			patchfunc(_membar_sync_486, _membar_sync_486_end,
+				  _membar_sync, _membar_sync_end,
+				  NULL);
+		}
+#endif /* __x86_64__ */
+	}
+#endif /* MULTIPROCESSOR */
 
 	/*
 	 * i686 patches.
