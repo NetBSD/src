@@ -1,4 +1,4 @@
-.\"	$NetBSD: puffs_ops.3,v 1.1 2007/04/16 19:16:02 pooka Exp $
+.\"	$NetBSD: puffs_ops.3,v 1.2 2007/04/17 10:14:27 pooka Exp $
 .\"
 .\" Copyright (c) 2007 Antti Kantee.  All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd April 16, 2007
+.Dd April 17, 2007
 .Dt PUFFS_OPS 3
 .Os
 .Sh NAME
@@ -51,61 +51,9 @@
 .Fa "const struct puffs_cn *pcn"
 .Fc
 .Ft int
-.Fo puffs_node_getattr
-.Fa "struct puffs_cc *pcc" "void *opc" "struct vattr *va"
-.Fa "const struct puffs_cred *pcr" "pid_t pid"
-.Fc
-.Ft int
-.Fo puffs_node_setattr
-.Fa "struct puffs_cc *pcc" "void *opc" "const struct vattr *va"
-.Fa "const struct puffs_cred *pcr" "pid_t pid"
-.Fc
-.Ft int
 .Fo puffs_node_create
 .Fa "struct puffs_cc *pcc" "void *opc" "void **newnode"
 .Fa "const struct puffs_cn *pcn" "const struct vattr *va"
-.Fc
-.Ft int
-.Fo puffs_node_remove
-.Fa "struct puffs_cc *pcc" "void *opc" "void *targ"
-.Fa "const struct puffs_cn *pcn"
-.Fc
-.Ft int
-.Fo puffs_node_mkdir
-.Fa "struct puffs_cc *pcc" "void *opc" "void **newnode"
-.Fa "const struct puffs_cn *pcn" "const struct vattr *va"
-.Fc
-.Ft int
-.Fo puffs_node_rmdir
-.Fa "struct puffs_cc *pcc" "void *opc" "void *targ"
-.Fa "const struct puffs_cn *pcn"
-.Fc
-.Ft int
-.Fo puffs_node_readdir
-.Fa "struct puffs_cc *pcc" "void *opc" "struct dirent *dent"
-.Fa "const struct puffs_cred *pcr" "off_t *readoff" "size_t *reslen"
-.Fc
-.Ft int
-.Fo puffs_node_rename
-.Fa "struct puffs_cc *pcc" "void *opc" "void *src"
-.Fa "const struct puffs_cn *pcn_src" "void *targ_dir" "void *targ"
-.Fa "const struct puffs_cn *pcn_targ"
-.Fc
-.Ft int
-.Fo puffs_node_link
-.Fa "struct puffs_cc *pcc" "void *opc" "void *targ"
-.Fa "const struct puffs_cn *pcn"
-.Fc
-.Ft int
-.Fo puffs_node_symlink
-.Fa "struct puffs_cc *pcc" "void *opc" "void **newnode"
-.Fa "const struct puffs_cn *pcn_src" "const struct vattr *va"
-.Fa "const char *link_target"
-.Fc
-.Ft int
-.Fo puffs_node_readlink
-.Fa "struct puffs_cc *pcc" "void *opc" "const struct puffs_cred *pcr"
-.Fa "char *link" "size_t *linklen"
 .Fc
 .Ft int
 .Fo puffs_node_mknod
@@ -114,7 +62,7 @@
 .Fc
 .Ft int
 .Fo puffs_node_open
-.Fa "struct puffs_cc *pcc" "void *opc" "int flags"
+.Fa "struct puffs_cc *pcc" "void *opc" "int mode"
 .Fa "const struct puffs_cred *pcr" "pid_t pid"
 .Fc
 .Ft int
@@ -128,6 +76,77 @@
 .Fa "const struct puffs_cred *pcr" "pid_t pid"
 .Fc
 .Ft int
+.Fo puffs_node_getattr
+.Fa "struct puffs_cc *pcc" "void *opc" "struct vattr *va"
+.Fa "const struct puffs_cred *pcr" "pid_t pid"
+.Fc
+.Ft int
+.Fo puffs_node_setattr
+.Fa "struct puffs_cc *pcc" "void *opc" "const struct vattr *va"
+.Fa "const struct puffs_cred *pcr" "pid_t pid"
+.Fc
+.\".Ft int
+.\".Fo puffs_node_poll
+.\".Fa "struct puffs_cc *pcc" "void *opc" "more args"
+.\".Fc
+.Ft int
+.Fo puffs_node_mmap
+.Fa "struct puffs_cc *pcc" "void *opc" "int flags"
+.Fa "const struct puffs_cred *pcr" "pid_t pid"
+.Fc
+.Ft int
+.Fo puffs_node_fsync
+.Fa "struct puffs_cc *pcc" "void *opc" "int flags" "off_t offlo"
+.Fa "off_t offhi" "pid_t pid"
+.Fc
+.\".Ft int
+.\".Fo puffs_node_seek
+.\".Fa "struct puffs_cc *pcc" "void *opc" "off_t oldoff" "off_t "newoff"
+.\".Fa "pid_t pid"
+.\".Fc
+.Ft int
+.Fo puffs_node_remove
+.Fa "struct puffs_cc *pcc" "void *opc" "void *targ"
+.Fa "const struct puffs_cn *pcn"
+.Fc
+.Ft int
+.Fo puffs_node_link
+.Fa "struct puffs_cc *pcc" "void *opc" "void *targ"
+.Fa "const struct puffs_cn *pcn"
+.Fc
+.Ft int
+.Fo puffs_node_rename
+.Fa "struct puffs_cc *pcc" "void *opc" "void *src"
+.Fa "const struct puffs_cn *pcn_src" "void *targ_dir" "void *targ"
+.Fa "const struct puffs_cn *pcn_targ"
+.Fc
+.Ft int
+.Fo puffs_node_mkdir
+.Fa "struct puffs_cc *pcc" "void *opc" "void **newnode"
+.Fa "const struct puffs_cn *pcn" "const struct vattr *va"
+.Fc
+.Ft int
+.Fo puffs_node_rmdir
+.Fa "struct puffs_cc *pcc" "void *opc" "void *targ"
+.Fa "const struct puffs_cn *pcn"
+.Fc
+.Ft int
+.Fo puffs_node_symlink
+.Fa "struct puffs_cc *pcc" "void *opc" "void **newnode"
+.Fa "const struct puffs_cn *pcn_src" "const struct vattr *va"
+.Fa "const char *link_target"
+.Fc
+.Ft int
+.Fo puffs_node_readdir
+.Fa "struct puffs_cc *pcc" "void *opc" "struct dirent *dent"
+.Fa "const struct puffs_cred *pcr" "off_t *readoff" "size_t *reslen"
+.Fc
+.Ft int
+.Fo puffs_node_readlink
+.Fa "struct puffs_cc *pcc" "void *opc" "const struct puffs_cred *pcr"
+.Fa "char *link" "size_t *linklen"
+.Fc
+.Ft int
 .Fo puffs_node_read
 .Fa "struct puffs_cc *pcc" "void *opc" "uint8_t *buf"
 .Fa "off_t offset" "size_t *resid" "const struct puffs_cred *pcr" "int ioflag"
@@ -137,6 +156,8 @@
 .Fa "struct puffs_cc *pcc" "void *opc" "uint8_t *buf"
 .Fa "off_t offset" "size_t *resid" "const struct puffs_cred *pcr" "int ioflag"
 .Fc
+.Ft int
+.Fn puffs_node_print "struct puffs_cc *pcc" "void *opc"
 .Ft int
 .Fn puffs_node_reclaim "struct puffs_cc *pcc" "void *opc" "pid_t pid"
 .Ft int
@@ -295,6 +316,54 @@ or
 Failure in these cases can be signalled by returning another appropriate
 error code, for example
 .Er EACCESS .
+.It Fn puffs_node_create "pcc" "opc" "newnode" "pcn" "va"
+.It Fn puffs_node_mkdir "pcc" "opc" "newnode" "pcn" "va"
+.It Fn puffs_node_mknod "pcc" "opc" "newnode" "pcn" "va"
+A file node is created in the directory denoted by the cookie
+.Fa opc
+by any of the above callbacks.
+The name of the new file can be found from
+.Fa pcn
+and the attributes are specified by
+.Fa va
+and the cookie for the newly created node should be returned in
+.Fa newnode .
+The only difference between these three is that they create a regular
+file, directory and device special file, respectively.
+.Pp
+In case of mknod, the device identifier can be found in
+.Fa va-\*[Gt]va_rdev .
+.It Fn puffs_node_open "pcc" "opc" "mode" "pcr" "pid"
+Open the node denoted by the cookie
+.Fa opc .
+The parameter
+.Fa mode
+specifies the flags that
+.Xr open 2
+was called with, e.g.
+.Dv O_APPEND
+and
+.Dv O_NONBLOCK .
+.It Fn puffs_node_close "pcc" "opc" "flags" "pcr" "pid"
+Close a node.
+The parameter
+.Fa flags
+parameter describes the flags that the file was opened with.
+.It Fn puffs_node_access "pcc" "opc" "mode" "pcr" "pid"
+Check if the credentials of
+.Fa pcr
+have the right to perform the operation specified by
+.Fa mode
+onto the node
+.Fa opc .
+The argument
+.Fa mode
+can specify read, write or execute by
+.Dv PUFFS_VREAD ,
+.Dv PUFFS_VWRITE
+and
+.Dv PUFFS_VEXEC ,
+respectively.
 .It Fn puffs_node_getattr "pcc" "opc" "va" "pcr" "pid"
 The attributes of the node specified by
 .Fa opc
@@ -310,29 +379,98 @@ Only fields of
 which contain a value different from
 .Dv PUFFS_VNOVAL
 (typecast to the field's type!) contain a valid value.
-.El
-.Pp
-A file node is created in the directory specified by the cookie when
-.Fn puffs_node_create
-is called.
-The attributes are specified by
-.Fa va
-and the cookie for the newly created node should be returned in
-.Fa newnode .
-Similarly,
-.Fn puffs_node_mkdir
-creates a directory.
-.Pp
-.Fn puffs_node_remove
-removes the file
+.It Fn puffs_node_mmap "pcc" "opc" "flags" "pcr" "pid"
+Called when a regular file is being memory mapped by
+.Xr mmap 2 .
+.Fa flags
+is currently always 0.
+.It Fn puffs_node_fsync "pcc" "opc" "flags" "offlo" "offhi" "pid"
+Sychronize a node's contents onto stable storage.
+This is necessary only if the file server caches some information
+before committing it.
+The parameter
+.Fa flags
+specifies the minimum level of sychronization required (XXX: they are
+not yet available).
+The parameters
+.Fa offlo
+and
+.Fa offhi
+specify the data offsets requiring to be synced.
+A high offset of 0 means sync from
+.Fa offlo
+to the end of the file.
+.It Fn puffs_node_remove "pcc" "opc" "targ" "pcn"
+.It Fn puffs_node_rmdir "pcc" "opc" "targ" "pcn"
+Remove the node
 .Fa targ
-from the directory indicated by the cookie.
-Similarly,
-.Fn puffs_node_rmdir
-removes a directory.
-The name of the directory entry to remove is described by
+from the directory indicated by
+.Fa opc .
+The directory entry name to be removed is provided by
 .Fa pcn .
+The rmdir operation removes only directories, while the remove
+operation removes all other types except directories.
 .Pp
+It is paramount to note that the file system may not remove the
+node data structures at this point, only the directory entry and prevent
+lookups from finding the node again.
+This is to retain the
+.Ux
+open file semantics.
+The data may be removed only when
+.Fn puffs_node_reclaim
+is called for the node, as this assures there are no further users.
+.It Fn puffs_node_link "pcc" "opc" "targ" "pcn"
+Create a hard link for the node
+.Fa targ
+into the directory
+.Fa opc .
+The argument
+.Fa pcn
+provides the directory entry name for the new link.
+.It Fn puffs_node_rename "pcc" "src_dir" "src" "pcn_src" "targ_dir" "targ" "pcn_targ"
+Rename the node
+.Fa src
+with the name specified by
+.Fa pcn_src
+from the directory
+.Fa src_dir .
+The target directory and target name are given by
+.Fa targ_dir
+and
+.Fa pcn_targ ,
+respectively.
+.B If
+the target node already exists, it is specified by 
+.Fa targ
+and must be replaced atomically.
+Otherwise
+.Fa targ
+is gives as
+.Dv NULL .
+.Pp
+It is legal to replace a directory node by another directory node with
+the means of rename if the target directory is empty, otherwise
+.Er ENOTEMPTY
+should be returned.
+All other types can replace all other types.
+In case a rename between incompatible types is attempted, the errors
+.Er ENOTDIR
+or
+.Er EISDIR
+should be returned, depending on the target type.
+.It Fn puffs_node_symlink "pcc" "opc" "newnode" "pcn_src" "va" "link_target"
+Create a symbolic link into the directory
+.Fa opc
+with the name in
+.Fa pcn_src
+and the initial attributes in
+.Fa va .
+The link's target is
+.Fa link_target
+and the created node cookie should be returned in
+.Fa newnode .
+.It Fn puffs_node_readdir "pcc" "opc" "dent" "pcr" "readoff" "reslen"
 To read directory entries,
 .Fn puffs_node_readdir
 is called.
@@ -354,59 +492,20 @@ It is most performant to return the maximal amount of directory
 entries each call.
 In case the directory was exhausted, the parameters should not be
 modified to signal end-of-directory.
-.Pp
-A node rename is done by calling
-.Fn puffs_node_rename .
-If the destination file cookie is non-null, it must be removed
-and the new entry overwritten atomically.
-The directory entry names to be used are described by the
-struct puffs_cn's (cf. create and remove).
-.Pp
-A hard link is created by
-.Fn puffs_node_link .
-In practice this means adding a directory entry described by
-.Fa pcn
-to the cookied directory and the entry pointing to the target node.
-.Pp
-A symbolic link in turn is created by
-.Fn puffs_node_symlink .
-It is similar to creating a regular file, except that
-.Fa link_target
-specifies the target of the link which should be set for the link.
-.Pp
-To read the target of a symbolic link,
-.Fa puffs_node_readlink
-is called.
-The path in the link target should be copied to
-.Fa link
-and the length without the terminating nul set in
-.Fa linklen .
-.Pp
-A device node is created using
-.Fn puffs_node_mknod .
-The only difference to creating a normal file is that the attribute
-struct contains the device identifier in
-.Fa va-\*[Gt]va_rdev .
-.Pp
-Files are opened with a call to
-.Fn puffs_node_open .
-Most of the time this can be left unimplemented, unless special
-resource allocation is required.
-.Pp
-.Fn puffs_node_close
-releases all the resources allocated by
-.Fn puffs_node_open .
-.Pp
-To check if access of type
-.Va mode
-to a file is allowed,
-.Fn puffs_node_access
-is called.
-This controls file access, not e.g.
-.Fn puffs_node_open .
-.Pp
-.Fn puffs_node_read
-reads the contents of a file.
+.It Fn puffs_node_readlink "pcc" "opc" "pcr" "link" "linklen"
+Read the target of a symbolic link
+.Fa opc .
+The result is placed in the buffer pointed to by
+.Fa link .
+This buffer's length is given in
+.Fa linklen
+and it must be updated to reflect the real link length.
+A terminating nul character should not be put into the buffer and
+.Em "must not"
+be included in the link length.
+.It Fn puffs_node_read "pcc" "opc" "buf" "offset" "resid" "pcr" "ioflag"
+Read the contents of a file
+.Fa opc .
 It will gather the data from
 .Fa offset
 in the file and read the number
@@ -420,11 +519,13 @@ The parameter
 .Fa resid
 should be set to indicate the amount of request NOT completed.
 In the normal case this should be 0.
-.Pp
+.It Fn puffs_node_write "pcc" "opc" "buf" "offset" "resid" "pcr" "ioflag"
 .Fn puffs_node_write
-writes data to a file at
+Write data to a file
+.Fa opc
+at
 .Fa offset
-extending the file if necessary.
+and extend the file if necessary.
 The number of octets written is indicated by
 .Fa resid ;
 everything must be written or an error will be generated.
@@ -432,16 +533,19 @@ The parameter must be set to indicate the amount of data NOT written.
 In case the flag
 .Dv PUFFS_IO_APPEND
 is specified, the data should be appended to the end of the file.
-.Pp
-.Fn puffs_node_reclaim
-signals that the cookie will no longer be referenced without a further
-call to
-.Fn puffs_node_lookup .
-This information can be used to free resources and specifically release
-a file for which no directory entries remain.
-.Pp
-.Fn puffs_node_inactive
-signals that the kernel has released its last reference to the node.
+.It Fn puffs_node_print "pcc" "opc"
+Print information about node.  This is used only for kernel-initiated
+diagnostic purposes.
+.It Fn puffs_node_reclaim "pcc" "opc" "pid"
+The kernel will no longer reference the cookie and resources associated
+with it may be freed.
+In case the file
+.Fa opc
+has a link count of zero, it may be safely removed now.
+.It Fn puffs_node_inactive "pcc" "opc" "pid" "refcount"
+The node
+.Fa opc
+has lost its last reference in the kernel.
 However, the cookie must still remain valid until
 .Fn puffs_node_reclaim
 is called.
@@ -449,6 +553,7 @@ The file system should return its internal reference count on the file
 (usually number of links to the file) in
 .Fa refcount .
 If this is zero, the kernel will call reclaim immediately.
+.El
 .Sh SEE ALSO
 .Xr puffs 3 ,
 .Xr vfsops 9 ,
