@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.2 2007/02/09 21:55:04 ad Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.2.14.1 2007/04/17 06:50:14 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -319,45 +319,6 @@ NENTRY(mutex_spin_exit)
 #endif	/* !__XEN__ */
 
 #endif	/* !LOCKDEBUG */
-
-/*
- * int _lock_cas(uintptr_t *val, uintptr_t old, uintptr_t new);
- *
- * Perform an atomic compare-and-set operation.
- */
-	ALIGN64
-
-STUB(_lock_cas, _80386_lock_cas)		/* 32 bytes */
-	movl	8(%esp), %eax
-	movl	12(%esp), %ecx
-	LOCK
-	cmpxchgl %ecx, (%edx)
-	movl	$0, %eax
-	setz	%al
-	ret
-
-#ifdef I386_CPU
-/*
- * Since we can't do compare-and-exchange atomically with an 80386, we must
- * disable interrupts in order to support preemption.  On the i386 this is
- * cheap to do.  For other architectures a restartable sequence is usually
- * a better option.
- */
-_80386_lock_cas:
-	movl	8(%esp), %eax
-	movl	12(%esp), %ecx
-	cli
-	cmpl	%eax, (%edx)
-	jne	1f
-	movl	%ecx, (%edx)
-	movb	$1, %al
-	sti
-	ret
-
-1:	sti
-	xorl	%eax, %eax
-	ret
-#endif	/* I386_CPU */
 
 /*
  * Memory barrier operations, may be patched at runtime.
