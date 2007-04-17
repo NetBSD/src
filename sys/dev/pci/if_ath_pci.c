@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ath_pci.c,v 1.20 2007/04/17 21:48:07 dyoung Exp $	*/
+/*	$NetBSD: if_ath_pci.c,v 1.21 2007/04/17 21:50:31 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath_pci.c,v 1.11 2005/01/18 18:08:16 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: if_ath_pci.c,v 1.20 2007/04/17 21:48:07 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ath_pci.c,v 1.21 2007/04/17 21:50:31 dyoung Exp $");
 #endif
 
 /*
@@ -53,19 +53,13 @@ __KERNEL_RCSID(0, "$NetBSD: if_ath_pci.c,v 1.20 2007/04/17 21:48:07 dyoung Exp $
 #include <sys/mbuf.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
-#include <sys/lock.h>
 #include <sys/socket.h>
-#include <sys/sockio.h>
 #include <sys/errno.h>
 #include <sys/device.h>
-
-#include <machine/bus.h>
 
 #include <net/if.h>
 #include <net/if_media.h>
 #include <net/if_ether.h>
-#include <net/if_llc.h>
-#include <net/if_arp.h>
 
 #include <net80211/ieee80211_netbsd.h>
 #include <net80211/ieee80211_var.h>
@@ -82,8 +76,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_ath_pci.c,v 1.20 2007/04/17 21:48:07 dyoung Exp $
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcidevs.h>
 
-#include <sys/device.h>
-
 /*
  * PCI glue.
  */
@@ -91,8 +83,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_ath_pci.c,v 1.20 2007/04/17 21:48:07 dyoung Exp $
 struct ath_pci_softc {
 	struct ath_softc	sc_sc;
 	pci_chipset_tag_t	sc_pc;
-        pcitag_t 		sc_pcitag; 
-        struct pci_conf_state 	sc_pciconf;
+	pcitag_t		sc_pcitag; 
+	struct pci_conf_state	sc_pciconf;
 	void			*sc_ih;		/* interrupt handler */
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
@@ -101,7 +93,7 @@ struct ath_pci_softc {
 
 #define	BS_BAR	0x10
 #define	PCIR_RETRY_TIMEOUT_REG		0x40
-#define	PCIR_RETRY_TIMEOUT_MASK		0x0000ff00
+#define	PCIR_RETRY_TIMEOUT_MASK		__BITS(15,8)
 
 static void ath_pci_attach(struct device *, struct device *, void *);
 static int ath_pci_detach(struct device *, int);
@@ -117,9 +109,10 @@ CFATTACH_DECL(ath_pci,
     ath_pci_detach,
     NULL);
 
+static int ath_pci_setup(struct pci_attach_args *);
+
 static int
-ath_pci_match(struct device *parent, struct cfdata *match,
-    void *aux)
+ath_pci_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	const char* devname;
 	struct pci_attach_args *pa = aux;
