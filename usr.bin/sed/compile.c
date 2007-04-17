@@ -1,4 +1,4 @@
-/*	$NetBSD: compile.c,v 1.34 2006/06/18 05:16:41 gdamore Exp $	*/
+/*	$NetBSD: compile.c,v 1.35 2007/04/17 20:30:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -76,7 +76,7 @@
 #if 0
 static char sccsid[] = "@(#)compile.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: compile.c,v 1.34 2006/06/18 05:16:41 gdamore Exp $");
+__RCSID("$NetBSD: compile.c,v 1.35 2007/04/17 20:30:29 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -94,6 +94,10 @@ __RCSID("$NetBSD: compile.c,v 1.34 2006/06/18 05:16:41 gdamore Exp $");
 
 #include "defs.h"
 #include "extern.h"
+
+#ifndef _POSIX2_LINE_MAX
+#define _POSIX2_LINE_MAX (2 * BUFSIZ)
+#endif
 
 #define LHSZ	128
 #define	LHMASK	(LHSZ - 1)
