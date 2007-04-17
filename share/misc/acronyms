@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.165 2007/04/17 21:20:48 mrg Exp $
+$NetBSD: acronyms,v 1.166 2007/04/17 21:21:50 mrg Exp $
 
 AFAIC	as far as I'm concerned
 AFAICR	as far as I can recall
@@ -117,6 +117,7 @@ ITYM	I think you mean
 IWBNI	it would be nice if
 IYSS	if you say so
 J/K	just kidding
+JFW	just fucking works
 JHD	just hit ``delete''
 JIC	just in case
 JK	just kidding
