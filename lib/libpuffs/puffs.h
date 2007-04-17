@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.h,v 1.45 2007/04/16 13:04:50 pooka Exp $	*/
+/*	$NetBSD: puffs.h,v 1.46 2007/04/17 11:42:14 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -371,6 +371,12 @@ enum {
 #define PCNPLEN(pcnode)	((pcnode)->pcn_po_full.po_len)
 #define PCNISDOTDOT(pcnode) \
 	((pcnode)->pcn_namelen == 2 && strcmp((pcnode)->pcn_name, "..") == 0)
+
+#define PUFFS_STORE_DCOOKIE(cp, ncp, off)				\
+if (cp)	{								\
+	*((cp)++) = off;						\
+	(*(ncp))++;							\
+}
 
 __BEGIN_DECLS
 
