@@ -1,4 +1,4 @@
-.\"	$NetBSD: puffs_ops.3,v 1.2 2007/04/17 10:14:27 pooka Exp $
+.\"	$NetBSD: puffs_ops.3,v 1.3 2007/04/17 13:11:05 pooka Exp $
 .\"
 .\" Copyright (c) 2007 Antti Kantee.  All rights reserved.
 .\"
@@ -42,6 +42,17 @@
 .Fa "struct puffs_cc *pcc" "int waitfor" "const struct puffs_cred *pcr"
 .Fa "pid_t pid"
 .Fc
+.Ft int
+.Fo puffs_fs_fhtonode 
+.Fa "struct puffs_cc *pcc" "void *fid" "size_t fidsize"
+.Fa "void **fcookie" "enum vtype *ftype" "voff_t *fsize" "dev_t *fdev"
+.Fc
+.Ft int
+.Fo puffs_fs_nodetofh
+.Fa "struct puffs_cc *pcc" "void *cookie" "void *fid" "size_t *fidsize"
+.Fc
+.Ft void
+.Fn puffs_fs_suspend "struct puffs_cc *pcc" "int status"
 .Ft int
 .Fn puffs_fs_unmount "struct puffs_cc *pcc" "int flags" "pid_t pid"
 .Ft int
@@ -139,7 +150,8 @@
 .Ft int
 .Fo puffs_node_readdir
 .Fa "struct puffs_cc *pcc" "void *opc" "struct dirent *dent"
-.Fa "const struct puffs_cred *pcr" "off_t *readoff" "size_t *reslen"
+.Fa "off_t readoff" "size_t *reslen" "const struct puffs_cred *pcr"
+.Fa "int *eofflag" "off_t *cookies" "size_t *ncookies"
 .Fc
 .Ft int
 .Fo puffs_node_readlink
@@ -236,6 +248,49 @@ and will usually be either file system or kernel credentials, but might
 also be user credentials.
 However, most of the time it is advisable to sync regardless of the
 credentials of the caller.
+.It Fn puffs_fs_fhtonode "pcc" "fid" "fidsize" "fcookie" "ftype" "fsize" "fdev"
+Translates a file handle
+.Fa fid
+to a node.
+The parameter
+.Fa fidsize
+indicates how large the file handle is.
+In case the file system's handles are static length, this parameter can
+be ignored as the kernel guarantees all file handles passed to the file
+server are of correct length.
+For dynamic length handles the field should be examined and
+.Er EINVAL
+returned in case the file handle length is not correct.
+.Pp
+This function provides essentially the same information to the kernel as
+.Fn puffs_node_lookup .
+The information is necessary for creating a new vnode corresponding to
+the file handle.
+.It Fn puffs_fs_nodetofh "pcc" "cookie" "fid" "fidsize"
+Create a file handle from the node described by
+.Fa cookie .
+The file handle should contain enough information to reliably identify
+the node even after reboots and the pathname/inode being replaced by
+another file.
+If this is not possible, it is up to the author of the file system to
+act responsibly and decide if the file system can support file handles
+at all.
+.Pp
+For file systems which want dynamic length file handles, this function
+must check if the file handle space indicated by
+.Fa fidsize
+is large enough to accommodate the file handle for the node.
+If not, it must fill in the correct size and return
+.Er E2BIG .
+In either case, the handle length should be supplied to the kernel in
+.Fa fidsize .
+File systems with static length handles can ignore the size parameter as
+the kernel always supplies the correct size buffer.
+.It Fn puffs_fs_suspend "pcc" "status"
+Called when file system suspension reaches various phases.
+See
+.Xr puffs_suspend 3
+for more information.
 .It Fn puffs_fs_unmount "pcc" "flags" "pid"
 Unmount the file system.
 The kernel has assumedly flushed all cached data when this callback
@@ -470,11 +525,13 @@ The link's target is
 .Fa link_target
 and the created node cookie should be returned in
 .Fa newnode .
-.It Fn puffs_node_readdir "pcc" "opc" "dent" "pcr" "readoff" "reslen"
+.It Fn puffs_node_readdir "pcc" "opc" "dent" "readoff" "reslen" "pcr" "eofflag" "cookies" "ncookies"
 To read directory entries,
 .Fn puffs_node_readdir
 is called.
-It should store directories as struct dirents in the space pointed to by
+It should store directories as
+.Va struct dirent
+in the space pointed to by
 .Fa dent .
 The amount of space available is given by
 .Fa reslen
@@ -484,14 +541,48 @@ in the buffer.
 The argument
 .Fa offset
 is used to specify the offset to the directory.
-Its intepretation is up to the file systme and it should be set to
+Its intepretation is up to the file system and it should be set to
 signal the continuation point when there is no more room for the next
 entry in
 .Fa dent .
 It is most performant to return the maximal amount of directory
 entries each call.
-In case the directory was exhausted, the parameters should not be
-modified to signal end-of-directory.
+It is easiest to generate directory entries by using
+.Fn puffs_nextdent ,
+which also automatically advances the necessary pointers.
+.Pp
+In case end-of-directory is reached,
+.Fa eofflag
+should be set to one.
+Note that even a new call to readdir may start where
+.Fa readoff
+points to end-of-directory.
+.Pp
+If the file system supports file handles, the arguments
+.Fa cookies
+and
+.Fa ncookies
+must be filled out.
+.Fa cookies
+is a vector for offsets corresponding to the read offsets.
+One cookie should be filled out for each directory entry.
+.Fa ncookies
+is the number of slots for cookies in the cookie vector upon entry to
+the function and must be set to the amount of cookies stored in the
+vector (i.e. amount of directory entries read) upon exit.
+There is always enough space in the cookie vector for the maximal number
+of entries that will fit into the directory entry buffer.
+For filling out the vector, the helper function
+.Fn PUFFS_STORE_DCOOKIE cookies ncookies offset
+can be used.
+This properly checks against
+.Fa cookies
+being
+.Dv NULL .
+Note that
+.Fa ncookies
+must be initialized to zero before the first call to
+.Fn PUFFS_STORE_DCOOKIE .
 .It Fn puffs_node_readlink "pcc" "opc" "pcr" "link" "linklen"
 Read the target of a symbolic link
 .Fa opc .
