@@ -1,4 +1,4 @@
-/*	$NetBSD: membar_ops.S,v 1.1.2.2 2007/04/17 07:06:41 thorpej Exp $	*/
+/*	$NetBSD: membar_ops.S,v 1.1.2.3 2007/04/17 16:06:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
 
 /*
  * We start out with no-op versions that do nothing.  We hot-patch when
- * we detect a MP system with the appropriate flavor.
+ * we detect a MP system.
  */
 NENTRY(_membar_producer)
 	ret
