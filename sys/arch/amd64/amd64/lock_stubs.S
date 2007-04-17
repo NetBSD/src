@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.2 2007/02/09 21:55:01 ad Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.2.14.1 2007/04/17 16:22:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -258,21 +258,6 @@ NENTRY(rw_exit)					/* 0x0100, 64 bytes */
 3:	jmp	_C_LABEL(rw_vector_exit)
 
 #endif	/* LOCKDEBUG */
-
-/*
- * int _lock_cas(uintptr_t *val, uintptr_t old, uintptr_t new);
- *
- * Perform an atomic compare-and-set operation.
- */
-	.align	32
-
-NENTRY(_lock_cas)				/* 0x0140, 19 bytes */
-	movq	%rsi, %rax
-	LOCK
-	cmpxchgq %rdx, (%rdi)
-	movq	$0, %rax
-	setz	%al				/* = 1 if success */
-	ret
 
 /*
  * Memory barrier operations.
