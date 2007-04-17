@@ -1,4 +1,4 @@
-/*	$NetBSD: node.c,v 1.18 2007/04/12 21:08:49 pooka Exp $	*/
+/*	$NetBSD: node.c,v 1.19 2007/04/17 11:43:32 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: node.c,v 1.18 2007/04/12 21:08:49 pooka Exp $");
+__RCSID("$NetBSD: node.c,v 1.19 2007/04/17 11:43:32 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -234,10 +234,7 @@ psshfs_node_readdir(struct puffs_cc *pcc, void *opc, struct dirent *dent,
 		if (!puffs_nextdent(&dent, pd->entryname,
 		    pd->va.va_fileid, puffs_vtype2dt(pd->va.va_type), reslen))
 			break;
-		if (cookies) {
-			*(cookies++) = (off_t)i;
-			(*ncookies)++;
-		}
+		PUFFS_STORE_DCOOKIE(cookies, ncookies, (off_t)i);
 	}
 	if (i == psn->dentnext)
 		*eofflag = 1;

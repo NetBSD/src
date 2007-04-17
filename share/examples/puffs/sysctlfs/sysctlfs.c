@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctlfs.c,v 1.20 2007/04/16 13:25:10 pooka Exp $	*/
+/*	$NetBSD: sysctlfs.c,v 1.21 2007/04/17 11:43:32 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -545,16 +545,12 @@ sysctlfs_node_readdir(struct puffs_cc *pcc, void *opc, struct dirent *dent,
 	ino_t id;
 	int i;
 
-	if (cookies)
-		*ncookies = 0;
+	*ncookies = 0;
 
  again:
 	if (*readoff == DENT_DOT || *readoff == DENT_DOTDOT) {
 		puffs_gendotdent(&dent, sfs_dir->myid, *readoff, reslen);
-		if (cookies) {
-			*(cookies++) = *readoff;
-			(*ncookies)++;
-		}
+		PUFFS_STORE_DCOOKIE(cookies, ncookies, *readoff);
 		(*readoff)++;
 		goto again;
 	}
@@ -596,11 +592,7 @@ sysctlfs_node_readdir(struct puffs_cc *pcc, void *opc, struct dirent *dent,
 		if (!puffs_nextdent(&dent, sn[i].sysctl_name, id,
 		    puffs_vtype2dt(vt), reslen))
 			return 0;
-
-		if (cookies) {
-			*(cookies++) = *readoff;
-			(*ncookies)++;
-		}
+		PUFFS_STORE_DCOOKIE(cookies, ncookies, *readoff);
 	}
 
 	*eofflag = 1;

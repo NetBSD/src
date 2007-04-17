@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs_vnops.c,v 1.22 2007/04/11 21:07:54 pooka Exp $	*/
+/*	$NetBSD: dtfs_vnops.c,v 1.23 2007/04/17 11:43:32 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -244,11 +244,7 @@ dtfs_node_readdir(struct puffs_cc *pcc, void *opc,
  again:
 	if (*readoff == DENT_DOT || *readoff == DENT_DOTDOT) {
 		puffs_gendotdent(&dent, pn->pn_va.va_fileid, *readoff, reslen);
-		if (cookies) {
-			*(cookies++) = *readoff;
-			(*ncookies)++;
-			assert(*ncookies <= maxcookies);
-		}
+		PUFFS_STORE_DCOOKIE(cookies, ncookies, *readoff);
 		(*readoff)++;
 		goto again;
 	}
@@ -257,7 +253,7 @@ dtfs_node_readdir(struct puffs_cc *pcc, void *opc,
 		dfd_nth = dtfs_dirgetnth(pn->pn_data, DENT_ADJ(*readoff));
 		if (!dfd_nth) {
 			*eofflag = 1;
-			return 0;
+			break;
 		}
 		pn_nth = dfd_nth->dfd_node;
 
@@ -265,14 +261,14 @@ dtfs_node_readdir(struct puffs_cc *pcc, void *opc,
 		    pn_nth->pn_va.va_fileid,
 		    puffs_vtype2dt(pn_nth->pn_va.va_type),
 		    reslen))
-			return 0;
-		if (cookies) {
-			*(cookies++) = *readoff;
-			(*ncookies)++;
-			assert(*ncookies <= maxcookies);
-		}
+			break;
+
+		PUFFS_STORE_DCOOKIE(cookies, ncookies, *readoff);
 		(*readoff)++;
 	}
+
+	assert(maxcookies <= *ncookies);
+	return 0;
 }
 
 int
