@@ -1,4 +1,4 @@
-/* 	$NetBSD: refuse_opt.c,v 1.7 2007/04/17 00:23:23 xtraeme Exp $	*/
+/* 	$NetBSD: refuse_opt.c,v 1.8 2007/04/17 00:25:21 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -72,7 +72,6 @@ static int fuse_opt_popt(struct fuse_opt_option *, const struct fuse_opt *);
  * We implement the next ones:
  *
  * int	fuse_opt_add_arg(struct fuse_args *, const char *);
- * int	fuse_opt_add_opt(char **, const char *);
  * void	fuse_opt_free_args(struct fuse_args *);
  * int	fuse_opt_insert_arg(struct fuse_args *, const char *);
  * int	fuse_opt_match(const struct fuse_opt *, const char *);
