@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.103 2007/04/12 04:25:00 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.104 2007/04/17 05:52:03 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-2005 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.103 2007/04/12 04:25:00 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.104 2007/04/17 05:52:03 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -142,7 +142,7 @@ main(int volatile argc, char **volatile argv)
 {
 	int ch, rval;
 	struct passwd *pw;
-	char *cp, *ep, *anonuser, *anonpass, *upload_path;
+	char *cp, *ep, *anonuser, *anonpass, *upload_path, *src_addr;
 	int dumbterm, s, isupload;
 	size_t len;
 	socklen_t slen;
@@ -189,6 +189,7 @@ main(int volatile argc, char **volatile argv)
 	epsv4 = 0;
 #endif
 	epsv4bad = 0;
+	src_addr = NULL;
 	upload_path = NULL;
 	isupload = 0;
 	reply_callback = NULL;
@@ -207,15 +208,15 @@ main(int volatile argc, char **volatile argv)
 	 */
 	s = socket(AF_INET, SOCK_STREAM, 0);
 	if (s == -1)
-		err(1, "can't create socket");
+		err(1, "Can't create socket to determine default socket sizes");
 	slen = sizeof(rcvbuf_size);
 	if (getsockopt(s, SOL_SOCKET, SO_RCVBUF,
 	    (void *)&rcvbuf_size, &slen) == -1)
-		err(1, "unable to get default rcvbuf size");
+		err(1, "Unable to get default rcvbuf size");
 	slen = sizeof(sndbuf_size);
 	if (getsockopt(s, SOL_SOCKET, SO_SNDBUF,
 	    (void *)&sndbuf_size, &slen) == -1)
-		err(1, "unable to get default sndbuf size");
+		err(1, "Unable to get default sndbuf size");
 	(void)close(s);
 					/* sanity check returned buffer sizes */
 	if (rcvbuf_size <= 0)
@@ -246,7 +247,7 @@ main(int volatile argc, char **volatile argv)
 			passivemode = 1;
 			activefallback = 1;
 		} else
-			warnx("unknown $FTPMODE '%s'; using defaults", cp);
+			warnx("Unknown $FTPMODE `%s'; using defaults", cp);
 	}
 
 	if (strcmp(getprogname(), "pftp") == 0) {
@@ -287,7 +288,7 @@ main(int volatile argc, char **volatile argv)
 		}
 	}
 
-	while ((ch = getopt(argc, argv, "46AadefginN:o:pP:q:r:RtT:u:vV")) != -1) {
+	while ((ch = getopt(argc, argv, "46AadefginN:o:pP:q:r:Rs:tT:u:vV")) != -1) {
 		switch (ch) {
 		case '4':
 			family = AF_INET;
@@ -362,17 +363,21 @@ main(int volatile argc, char **volatile argv)
 		case 'q':
 			quit_time = strtol(optarg, &ep, 10);
 			if (quit_time < 1 || *ep != '\0')
-				errx(1, "bad quit value: %s", optarg);
+				errx(1, "Bad quit value: %s", optarg);
 			break;
 
 		case 'r':
 			retry_connect = strtol(optarg, &ep, 10);
 			if (retry_connect < 1 || *ep != '\0')
-				errx(1, "bad retry value: %s", optarg);
+				errx(1, "Bad retry value: %s", optarg);
 			break;
 
 		case 'R':
 			restartautofetch = 1;
+			break;
+
+		case 's':
+			src_addr = optarg;
 			break;
 
 		case 't':
@@ -391,7 +396,8 @@ main(int volatile argc, char **volatile argv)
 
 			while ((cp = strsep(&oac, ",")) != NULL) {
 				if (*cp == '\0') {
-					warnx("bad throttle value: %s", optarg);
+					warnx("Bad throttle value `%s'",
+					    optarg);
 					usage();
 					/* NOTREACHED */
 				}
@@ -435,6 +441,22 @@ main(int volatile argc, char **volatile argv)
 	proxy = 0;	/* proxy not active */
 	crflag = 1;	/* strip c.r. on ascii gets */
 	sendport = -1;	/* not using ports */
+
+	if (src_addr != NULL) {
+		struct addrinfo hints;
+		int error;
+
+		memset(&hints, 0, sizeof(hints));
+		hints.ai_family = family;
+		hints.ai_socktype = SOCK_STREAM;
+		hints.ai_flags = AI_PASSIVE;
+		error = getaddrinfo(src_addr, NULL, &hints, &bindai);
+		if (error) {
+		    	errx(1, "Can't lookup `%s': %s", src_addr,
+			    (error == EAI_SYSTEM) ? strerror(errno)
+						  : gai_strerror(error));
+		}
+	}
 
 	/*
 	 * Cache the user name and home directory.
@@ -590,7 +612,7 @@ prompt(void)
 
 		o = getoption("prompt");
 		if (o == NULL)
-			errx(1, "no such option `prompt'");
+			errx(1, "prompt: no such option `prompt'");
 		prompt = &(o->value);
 	}
 	formatbuf(buf, sizeof(buf), *prompt ? *prompt : DEFAULTPROMPT);
@@ -611,7 +633,7 @@ rprompt(void)
 
 		o = getoption("rprompt");
 		if (o == NULL)
-			errx(1, "no such option `rprompt'");
+			errx(1, "rprompt: no such option `rprompt'");
 		rprompt = &(o->value);
 	}
 	formatbuf(buf, sizeof(buf), *rprompt ? *rprompt : DEFAULTRPROMPT);
@@ -1011,11 +1033,11 @@ getoptionvalue(const char *name)
 	struct option *c;
 
 	if (name == NULL)
-		errx(1, "getoptionvalue() invoked with NULL name");
+		errx(1, "getoptionvalue: invoked with NULL name");
 	c = getoption(name);
 	if (c != NULL)
 		return (c->value);
-	errx(1, "getoptionvalue() invoked with unknown option `%s'", name);
+	errx(1, "getoptionvalue: invoked with unknown option `%s'", name);
 	/* NOTREACHED */
 }
 
@@ -1041,8 +1063,9 @@ usage(void)
 
 	(void)fprintf(stderr,
 "usage: %s [-46AadefginpRtvV] [-N netrc] [-o outfile] [-P port] [-q quittime]\n"
-"           [-r retry] [-T dir,max[,inc][[user@]host [port]]] [host:path[/]]\n"
-"           [file:///file] [ftp://[user[:pass]@]host[:port]/path[/]]\n"
+"           [-r retry] [-s srcaddr] [-T dir,max[,inc]]\n"
+"           [[user@]host [port]] [host:path[/]] [file:///file]\n"
+"           [ftp://[user[:pass]@]host[:port]/path[/]]\n"
 "           [http://[user[:pass]@]host[:port]/path] [...]\n"
 "       %s -u URL file [...]\n", progname, progname);
 	exit(1);
