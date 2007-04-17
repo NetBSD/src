@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_cas_32.S,v 1.1.2.2 2007/04/17 03:59:12 thorpej Exp $	*/
+/*	$NetBSD: atomic_cas_32.S,v 1.1.2.3 2007/04/17 04:16:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@ ATOMIC_OP_ALIAS(atomic_cas_ulong,_atomic_cas_32)
 ATOMIC_OP_ALIAS(atomic_cas_ptr,_atomic_cas_32)
 
 #if defined(I486_CPU) || defined(I586_CPU) || defined(I686_CPU)
-NENTRY(atomic_cas_32_486)
+NENTRY(_atomic_cas_32_486)
 	movl	4(%esp), %edx
 	movl	8(%esp), %eax
 	movl	12(%esp), %ecx
@@ -80,7 +80,7 @@ NENTRY(atomic_cas_32_486)
 	cmpxchgl %ecx, (%edx)
 	/* %eax now contains the old value */
 	ret
-END(atomic_cas_32_486_end, 8)
+END(_atomic_cas_32_486_end, 8)
 #endif /* I486_CPU || I586_CPU || I686_CPU */
 
 #else /* _KERNEL */
