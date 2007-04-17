@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.119 2007/04/11 00:52:38 lukem Exp $	*/
+/*	$NetBSD: cmds.c,v 1.120 2007/04/17 05:52:03 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-2007 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: cmds.c,v 1.119 2007/04/11 00:52:38 lukem Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.120 2007/04/17 05:52:03 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -270,8 +270,7 @@ changetype(int newtype, int show)
 		if (newtype == p->t_type)
 			break;
 	if (p->t_name == 0) {
-		warnx("internal error: unknown type %d.", newtype);
-		return;
+		errx(1, "changetype: unknown type %d", newtype);
 	}
 	if (newtype == TYPE_L && bytename[0] != '\0')
 		comret = command("TYPE %s %s", p->t_mode, bytename);
@@ -517,7 +516,7 @@ mput(int argc, char *argv[])
 		memset(&gl, 0, sizeof(gl));
 		flags = GLOB_BRACE|GLOB_NOCHECK|GLOB_TILDE;
 		if (glob(argv[i], flags, NULL, &gl) || gl.gl_pathc == 0) {
-			warnx("%s: not found", argv[i]);
+			warnx("Glob pattern `%s' not found", argv[i]);
 			globfree(&gl);
 			continue;
 		}
@@ -607,7 +606,7 @@ getit(int argc, char *argv[], int restartit, const char *mode)
 		ret = stat(locfile, &stbuf);
 		if (restartit == 1) {
 			if (ret < 0) {
-				warn("local: %s", locfile);
+				warn("Can't stat `%s'", locfile);
 				goto freegetit;
 			}
 			restart_point = stbuf.st_size;
@@ -721,7 +720,7 @@ mget(int argc, char *argv[])
 			if (stat(tp, &stbuf) == 0)
 				restart_point = stbuf.st_size;
 			else
-				warn("stat %s", tp);
+				warn("Can't stat `%s'", tp);
 		}
 		recvrequest("RETR", tp, cp, restart_point ? "r+" : "w",
 		    tp != cp || !interactive, 1);
@@ -755,7 +754,7 @@ fget(int argc, char *argv[])
 
 	fp = fopen(argv[1], "r");
 	if (fp == NULL) {
-		fprintf(ttyout, "Cannot open source file %s\n", argv[1]);
+		fprintf(ttyout, "Can't open source file %s\n", argv[1]);
 		code = -1;
 		return;
 	}
@@ -1171,7 +1170,7 @@ lcd(int argc, char *argv[])
 	if ((locdir = globulize(argv[1])) == NULL)
 		return;
 	if (chdir(locdir) == -1)
-		warn("lcd %s", locdir);
+		warn("Can't chdir `%s'", locdir);
 	else {
 		updatelocalcwd();
 		if (localcwd[0]) {
@@ -1446,7 +1445,7 @@ shell(int argc, char *argv[])
 		else {
 			execl(shell, shellnam, (char *)0);
 		}
-		warn("%s", shell);
+		warn("Can't execute `%s'", shell);
 		code = -1;
 		exit(1);
 	}
@@ -1455,7 +1454,7 @@ shell(int argc, char *argv[])
 			;
 	(void)xsignal(SIGINT, oldintr);
 	if (pid == -1) {
-		warn("Try again later");
+		warn("Can't fork a subshell; try again later");
 		code = -1;
 	} else
 		code = 0;
