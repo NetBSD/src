@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.203 2007/04/17 01:16:47 perseant Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.204 2007/04/17 06:49:40 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.203 2007/04/17 01:16:47 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.204 2007/04/17 06:49:40 perseant Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1710,13 +1710,19 @@ lfs_getpages(void *v)
 	return genfs_getpages(v);
 }
 
+/*
+ * Wait for a page to become unbusy, possibly printing diagnostic messages
+ * as well.
+ *
+ * Called with vp->v_interlock held; return with it held.
+ */
 static void
 wait_for_page(struct vnode *vp, struct vm_page *pg, const char *label)
 {
 	if ((pg->flags & PG_BUSY) == 0)
 		return;		/* Nothing to wait for! */
 
-#if defined(UVM_PAGE_TRKOWN)
+#if defined(DEBUG) && defined(UVM_PAGE_TRKOWN)
 	static struct vm_page *lastpg;
 
 	if (label != NULL && pg != lastpg) {
@@ -1745,6 +1751,8 @@ wait_for_page(struct vnode *vp, struct vm_page *pg, const char *label)
  * process of being written (either gathered or actually on its way to
  * disk).  We don't need to give up the segment lock, but we might need
  * to call lfs_writeseg() to expedite the page's journey to disk.
+ *
+ * Called with vp->v_interlock held; return with it held.
  */
 /* #define BUSYWAIT */
 static void
@@ -1760,6 +1768,7 @@ write_and_wait(struct lfs *fs, struct vnode *vp, struct vm_page *pg,
 		return;
 
 	while (pg->flags & PG_BUSY) {
+		simple_unlock(&vp->v_interlock);
 		if (sp->cbpp - sp->bpp > 1) {
 			/* Write gathered pages */
 			lfs_updatemeta(sp);
@@ -1773,8 +1782,9 @@ write_and_wait(struct lfs *fs, struct vnode *vp, struct vm_page *pg,
 			lfs_acquire_finfo(fs, ip->i_number,
 					  ip->i_gen);
 		}
-		wait_for_page(vp, pg, label);
 		++count;
+		simple_lock(&vp->v_interlock);
+		wait_for_page(vp, pg, label);
 	}
 	if (label != NULL && count > 1)
 		printf("lfs_putpages[%d]: %s: %sn = %d\n", curproc->p_pid,
@@ -2155,8 +2165,8 @@ lfs_putpages(void *v)
 			return r;
 
 		/* One of the pages was busy.  Start over. */
-		wait_for_page(vp, busypg, "dirtyclean");
 		simple_lock(&vp->v_interlock);
+		wait_for_page(vp, busypg, "dirtyclean");
 #ifdef DEBUG
 		++debug_n_dirtyclean;
 #endif
@@ -2278,12 +2288,12 @@ lfs_putpages(void *v)
 			simple_unlock(&vp->v_interlock);
 			sp->vp = NULL;
 
+			simple_lock(&vp->v_interlock);
 			write_and_wait(fs, vp, busypg, seglocked, NULL);
 			if (!seglocked) {
 				lfs_release_finfo(fs);
 				lfs_segunlock(fs);
 			}
-			simple_lock(&vp->v_interlock);
 			goto get_seglock;
 		}
 	
@@ -2297,9 +2307,8 @@ lfs_putpages(void *v)
 			      ip->i_number, fs->lfs_offset,
 			      dtosn(fs, fs->lfs_offset)));
 
+			simple_lock(&vp->v_interlock);
 			write_and_wait(fs, vp, busypg, seglocked, "again");
-			if (error != EAGAIN) /* XXX - test on multiproc */
-				simple_lock(&vp->v_interlock);
 		}
 #ifdef DEBUG
 		++debug_n_again;
