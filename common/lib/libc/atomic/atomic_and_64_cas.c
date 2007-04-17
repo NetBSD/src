@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_and_64_cas.c,v 1.1.2.2 2007/04/16 03:19:55 thorpej Exp $	*/
+/*	$NetBSD: atomic_and_64_cas.c,v 1.1.2.3 2007/04/17 16:03:58 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -54,7 +54,9 @@ atomic_and_64(volatile uint64_t *addr, uint64_t val)
 	} while (atomic_cas_64(addr, old, new) != old);
 }
 
+#undef atomic_and_64
 atomic_op_alias(atomic_and_64,_atomic_and_64)
 #if defined(_LP64)
+#undef atomic_and_ulong
 atomic_op_alias(atomic_and_ulong,_atomic_and_64)
 #endif /* _LP64 */
