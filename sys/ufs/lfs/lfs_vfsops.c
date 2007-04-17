@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.233 2007/03/13 02:11:28 ad Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.234 2007/04/17 01:16:46 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.233 2007/03/13 02:11:28 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.234 2007/04/17 01:16:46 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -201,6 +201,7 @@ lfs_writerd(void *arg)
 {
 	struct mount *mp, *nmp;
 	struct lfs *fs;
+	int fsflags;
 	int loopcount;
 
 	lfs_writer_daemon = curproc->p_pid;
@@ -225,10 +226,15 @@ lfs_writerd(void *arg)
 				    MFSNAMELEN) == 0) {
 				fs = VFSTOUFS(mp)->um_lfs;
 				simple_lock(&fs->lfs_interlock);
+				fsflags = 0;
+				if ((fs->lfs_dirvcount > LFS_MAX_FSDIROP(fs) ||
+				     lfs_dirvcount > LFS_MAX_DIROP) &&
+				    fs->lfs_dirops == 0)
+					fsflags |= SEGM_W_DIROPS;
 				if (fs->lfs_pdflush) {
 					DLOG((DLOG_FLUSH, "lfs_writerd: pdflush set\n"));
 					fs->lfs_pdflush = 0;
-					lfs_flush_fs(fs, 0);
+					lfs_flush_fs(fs, fsflags);
 					simple_unlock(&fs->lfs_interlock);
 				} else if (!TAILQ_EMPTY(&fs->lfs_pchainhd)) {
 					DLOG((DLOG_FLUSH, "lfs_writerd: pchain non-empty\n"));
@@ -904,8 +910,8 @@ lfs_unmount(struct mount *mp, int mntflags, struct lwp *l)
 	fs = ump->um_lfs;
 
 	/* Two checkpoints */
-	lfs_segwrite(mp, SEGM_CKP | SEGM_SYNC);
-	lfs_segwrite(mp, SEGM_CKP | SEGM_SYNC);
+	lfs_segwrite(mp, SEGM_CKP | SEGM_SYNC | SEGM_W_DIROPS);
+	lfs_segwrite(mp, SEGM_CKP | SEGM_SYNC | SEGM_W_DIROPS);
 
 	/* wake up the cleaner so it can die */
 	lfs_wakeup_cleaner(fs);
@@ -1336,7 +1342,7 @@ SYSCTL_SETUP(sysctl_vfs_lfs_setup, "sysctl vfs.lfs subtree setup")
 {
 	int i;
 	extern int lfs_writeindir, lfs_dostats, lfs_clean_vnhead,
-		   lfs_fs_pagetrip;
+		   lfs_fs_pagetrip, lfs_ignore_lazy_sync;
 #ifdef DEBUG
 	extern int lfs_debug_log_subsys[DLOG_MAX];
 	struct shortlong dlog_names[DLOG_MAX] = { /* Must match lfs.h ! */
@@ -1418,6 +1424,12 @@ SYSCTL_SETUP(sysctl_vfs_lfs_setup, "sysctl vfs.lfs subtree setup")
 				    " a flush"),
 		       NULL, 0, &lfs_fs_pagetrip, 0,
 		       CTL_VFS, 5, LFS_FS_PAGETRIP, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "ignore_lazy_sync",
+		       SYSCTL_DESCR("Lazy Sync is ignored entirely"),
+		       NULL, 0, &lfs_ignore_lazy_sync, 0,
+		       CTL_VFS, 5, LFS_IGNORE_LAZY_SYNC, CTL_EOL);
 #ifdef LFS_KERNEL_RFW
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
@@ -1579,6 +1591,7 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages,
 	pg = pgs[0];
 	startoffset = pg->offset;
 	KASSERT(eof >= 0);
+
 	if (startoffset >= eof) {
 		goto tryagain;
 	} else
@@ -1588,7 +1601,7 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages,
 	KASSERT(bytes != 0);
 
 	/* Swap PG_DELWRI for PG_PAGEOUT */
-	for (i = 0; i < npages; i++)
+	for (i = 0; i < npages; i++) {
 		if (pgs[i]->flags & PG_DELWRI) {
 			KASSERT(!(pgs[i]->flags & PG_PAGEOUT));
 			pgs[i]->flags &= ~PG_DELWRI;
@@ -1598,6 +1611,7 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages,
 			uvm_pageunwire(pgs[i]);
 			uvm_unlock_pageq();
 		}
+	}
 
 	/*
 	 * Check to make sure we're starting on a block boundary.
@@ -1816,6 +1830,7 @@ lfs_vinit(struct mount *mp, struct vnode **vpp)
 	struct vnode *vp = *vpp;
 	struct inode *ip = VTOI(vp);
 	struct ufsmount *ump = VFSTOUFS(mp);
+	struct lfs *fs = ump->um_lfs;
 	int i;
 
 	ip->i_mode = ip->i_ffs1_mode;
@@ -1838,7 +1853,6 @@ lfs_vinit(struct mount *mp, struct vnode **vpp)
 
 	memset(ip->i_lfs_fragsize, 0, NDADDR * sizeof(*ip->i_lfs_fragsize));
 	if (vp->v_type != VLNK || ip->i_size >= ip->i_ump->um_maxsymlinklen) {
-		struct lfs *fs = ump->um_lfs;
 #ifdef DEBUG
 		for (i = (ip->i_size + fs->lfs_bsize - 1) >> fs->lfs_bshift;
 		    i < NDADDR; i++) {
