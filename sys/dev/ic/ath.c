@@ -1,4 +1,4 @@
-/*	$NetBSD: ath.c,v 1.82 2007/03/04 06:01:49 christos Exp $	*/
+/*	$NetBSD: ath.c,v 1.83 2007/04/17 22:01:43 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.104 2005/09/16 10:09:23 ru Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.82 2007/03/04 06:01:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.83 2007/04/17 22:01:43 dyoung Exp $");
 #endif
 
 /*
@@ -194,6 +194,7 @@ static int	ath_getchannels(struct ath_softc *, u_int cc,
 			HAL_BOOL outdoor, HAL_BOOL xchanmode);
 static void	ath_led_event(struct ath_softc *, int);
 static void	ath_update_txpow(struct ath_softc *);
+static void	ath_freetx(struct mbuf *);
 
 static int	ath_rate_setup(struct ath_softc *, u_int mode);
 static void	ath_setcurmode(struct ath_softc *, enum ieee80211_phymode);
@@ -1405,6 +1406,7 @@ ath_start(struct ifnet *ifp)
 				DPRINTF(sc, ATH_DEBUG_ANY,
 				    "%s: out of txfrag buffers\n", __func__);
 				ic->ic_stats.is_tx_nobuf++;     /* XXX */
+				ath_freetx(m);
 				goto bad;
 			}
 		} else {
@@ -4123,12 +4125,13 @@ ath_tx_proc_q0(void *arg, int npending)
 	struct ath_softc *sc = arg;
 	struct ifnet *ifp = &sc->sc_if;
 
-	if (txqactive(sc->sc_ah, 0) && ath_tx_processq(sc, &sc->sc_txq[0]))
+	if (txqactive(sc->sc_ah, 0) && ath_tx_processq(sc, &sc->sc_txq[0]) > 0){
 		sc->sc_lastrx = ath_hal_gettsf64(sc->sc_ah);
+		ifp->if_flags &= ~IFF_OACTIVE;
+		sc->sc_tx_timer = 0;
+	}
 	if (txqactive(sc->sc_ah, sc->sc_cabq->axq_qnum))
 		ath_tx_processq(sc, sc->sc_cabq);
-	ifp->if_flags &= ~IFF_OACTIVE;
-	sc->sc_tx_timer = 0;
 
 	if (sc->sc_softled)
 		ath_led_event(sc, ATH_LED_TX);
@@ -4161,12 +4164,12 @@ ath_tx_proc_q0123(void *arg, int npending)
 		nacked += ath_tx_processq(sc, &sc->sc_txq[3]);
 	if (txqactive(sc->sc_ah, sc->sc_cabq->axq_qnum))
 		ath_tx_processq(sc, sc->sc_cabq);
-	if (nacked)
+	if (nacked) {
 		sc->sc_lastrx = ath_hal_gettsf64(sc->sc_ah);
+		ifp->if_flags &= ~IFF_OACTIVE;
+		sc->sc_tx_timer = 0;
+	}
 	ath_tx_processq(sc, sc->sc_cabq);
-
-	ifp->if_flags &= ~IFF_OACTIVE;
-	sc->sc_tx_timer = 0;
 
 	if (sc->sc_softled)
 		ath_led_event(sc, ATH_LED_TX);
@@ -4191,11 +4194,12 @@ ath_tx_proc(void *arg, int npending)
 	for (i = 0; i < HAL_NUM_TX_QUEUES; i++)
 		if (ATH_TXQ_SETUP(sc, i) && txqactive(sc->sc_ah, i))
 			nacked += ath_tx_processq(sc, &sc->sc_txq[i]);
-	if (nacked)
+	if (nacked) {
 		sc->sc_lastrx = ath_hal_gettsf64(sc->sc_ah);
 
-	ifp->if_flags &= ~IFF_OACTIVE;
-	sc->sc_tx_timer = 0;
+		ifp->if_flags &= ~IFF_OACTIVE;
+		sc->sc_tx_timer = 0;
+	}
 
 	if (sc->sc_softled)
 		ath_led_event(sc, ATH_LED_TX);
