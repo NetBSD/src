@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rwlock.c,v 1.7 2007/03/30 11:06:58 ad Exp $	*/
+/*	$NetBSD: kern_rwlock.c,v 1.7.2.1 2007/04/17 06:47:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.7 2007/03/30 11:06:58 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.7.2.1 2007/04/17 06:47:31 thorpej Exp $");
 
 #define	__RWLOCK_PRIVATE
 
@@ -58,6 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.7 2007/03/30 11:06:58 ad Exp $");
 #include <sys/sleepq.h>
 #include <sys/systm.h>
 #include <sys/lockdebug.h>
+#include <sys/atomic.h>
 
 #include <dev/lockstat.h>
 
@@ -116,6 +117,11 @@ do {									\
  * For platforms that use 'simple' RW locks.
  */
 #ifdef __HAVE_SIMPLE_RW_LOCKS
+#ifndef RW_CAS
+#define	RW_CAS(p, o, n)							\
+	(atomic_cas_ptr((volatile void *)(p), (void *)(o),		\
+			(void *)(n)) == (void *)(o))
+#endif
 #define	RW_ACQUIRE(rw, old, new)	RW_CAS(&(rw)->rw_owner, old, new)
 #define	RW_RELEASE(rw, old, new)	RW_CAS(&(rw)->rw_owner, old, new)
 #define	RW_SETID(rw, id)		((rw)->rw_id = id)
