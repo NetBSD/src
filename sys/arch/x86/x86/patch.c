@@ -1,4 +1,4 @@
-/*	$NetBSD: patch.c,v 1.2.14.1 2007/04/17 06:23:07 thorpej Exp $	*/
+/*	$NetBSD: patch.c,v 1.2.14.2 2007/04/17 16:17:14 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: patch.c,v 1.2.14.1 2007/04/17 06:23:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: patch.c,v 1.2.14.2 2007/04/17 16:17:14 thorpej Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -81,6 +81,21 @@ void	_membar_sync_486(void);
 void	_membar_sync_486_end(void);
 void	_membar_sync_sse2(void);
 void	_membar_sync_sse2_end(void);
+#else /* __x86_64__ */
+void	_membar_producer(void);
+void	_membar_producer_end(void);
+void	_membar_producer_mp(void);
+void	_membar_producer_mp_end(void);
+
+void	_membar_consumer(void);
+void	_membar_consumer_end(void);
+void	_membar_consumer_mp(void);
+void	_membar_consumer_mp_end(void);
+
+void	_membar_sync(void);
+void	_membar_sync_end(void);
+void	_membar_sync_mp(void);
+void	_membar_sync_mp_end(void);
 #endif /* ! __x86_64__ */
 
 void	spllower(int);
@@ -191,6 +206,15 @@ x86_patch(void)
 	 */
 	if (1) {
 #if defined(__x86_64__)
+		patchfunc(_membar_producer_mp, _membar_producer_mp_end,
+			  _membar_producer, _membar_producer_end,
+			  NULL);
+		patchfunc(_membar_consumer_mp, _membar_consumer_mp_end,
+			  _membar_consumer, _membar_consumer_end,
+			  NULL);
+		patchfunc(_membar_sync_mp, _membar_sync_mp_end,
+			  _membar_sync, _membar_sync_end,
+			  NULL);
 #else
 #if defined(I686_CPU)
 		if (cpu_feature & CPUID_SSE2) {
