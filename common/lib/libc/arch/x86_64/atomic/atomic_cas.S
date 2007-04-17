@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_cas.S,v 1.1.2.1 2007/04/17 04:28:21 thorpej Exp $	*/
+/*	$NetBSD: atomic_cas.S,v 1.1.2.2 2007/04/17 13:28:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@ ATOMIC_OP_ALIAS(atomic_cas_32,_atomic_cas_32)
 ATOMIC_OP_ALIAS(atomic_cas_uint,_atomic_cas_32)
 
 NENTRY(_atomic_cas_64)
-	movl	%rsi, %rax
+	movq	%rsi, %rax
 	LOCK
 	cmpxchgq %rdx, (%rdi)
 	/* %rax now contains the old value */
