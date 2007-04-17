@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_LAPTOP,v 1.230 2007/04/17 14:06:52 tron Exp $
+#	$NetBSD: GENERIC_LAPTOP,v 1.231 2007/04/17 14:17:28 tron Exp $
 #	From: NetBSD: GENERIC,v 1.414 2001/07/30 19:59:05 ad Exp
 #
 #	GENERIC_LAPTOP -- GENERIC with cardbus and some USB devices enabled
@@ -8,7 +8,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.230 $"
+#ident 		"GENERIC-$Revision: 1.231 $"
 
 maxusers	32		# estimated number of users
 
@@ -808,14 +808,14 @@ irframe* at oboe?
 
 
 # PCI IEEE1394 controllers
-fwohci*	at pci? dev ? function ?	# IEEE1394 Open Host Controller
+#fwohci*	at pci? dev ? function ?	# IEEE1394 Open Host Controller
 
 # CardBus IEEE1394 controllers
-fwohci*	at cardbus? function ?	# IEEE1394 Open Host Controller
+#fwohci*	at cardbus? function ?	# IEEE1394 Open Host Controller
 
-ieee1394if* at fwohci?
-fwip*	at ieee1394if?			# IP over IEEE1394
-sbp*	at ieee1394if? euihi ? euilo ?	# SCSI over IEEE1394
+#ieee1394if* at fwohci?
+#fwip*	at ieee1394if?			# IP over IEEE1394
+#sbp*	at ieee1394if? euihi ? euilo ?	# SCSI over IEEE1394
 
 
 # Audio Devices
