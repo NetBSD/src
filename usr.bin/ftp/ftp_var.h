@@ -1,7 +1,7 @@
-/*	$NetBSD: ftp_var.h,v 1.73 2006/01/31 20:05:36 christos Exp $	*/
+/*	$NetBSD: ftp_var.h,v 1.74 2007/04/17 05:52:03 lukem Exp $	*/
 
 /*-
- * Copyright (c) 1996-2005 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996-2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -210,7 +210,7 @@ GLOBAL	int	sendport;	/* use PORT/LPRT cmd for each data connection */
 GLOBAL	int	connected;	/* 1 = connected to server, -1 = logged in */
 GLOBAL	int	interactive;	/* interactively prompt on m* cmds */
 GLOBAL	int	confirmrest;	/* confirm rest of current m* cmd */
-GLOBAL	int	ftp_debug;		/* debugging level */
+GLOBAL	int	ftp_debug;	/* debugging level */
 GLOBAL	int	bell;		/* ring bell on cmd completion */
 GLOBAL	int	doglob;		/* glob local file names */
 GLOBAL	int	autologin;	/* establish user account on connection */
@@ -279,6 +279,7 @@ GLOBAL	sa_family_t family;	/* address family to use for connections */
 GLOBAL	char	*ftpport;	/* port number to use for FTP connections */
 GLOBAL	char	*httpport;	/* port number to use for HTTP connections */
 GLOBAL	char	*gateport;	/* port number to use for gateftp connections */
+GLOBAL	struct addrinfo *bindai; /* local address to bind as */
 
 GLOBAL	char   *outfile;	/* filename to output URLs to */
 GLOBAL	int	restartautofetch; /* restart auto-fetch */

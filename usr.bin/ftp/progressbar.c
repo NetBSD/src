@@ -1,4 +1,4 @@
-/*	$NetBSD: progressbar.c,v 1.14 2007/04/12 06:13:02 lukem Exp $	*/
+/*	$NetBSD: progressbar.c,v 1.15 2007/04/17 05:52:03 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-2007 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: progressbar.c,v 1.14 2007/04/12 06:13:02 lukem Exp $");
+__RCSID("$NetBSD: progressbar.c,v 1.15 2007/04/17 05:52:03 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -471,7 +471,7 @@ xsignal(int sig, sigfunc func)
 		 * This is unpleasant, but I don't know what would be better.
 		 * Right now, this "can't happen"
 		 */
-		errx(1, "xsignal_restart called with signal %d", sig);
+		errx(1, "xsignal_restart: called with signal %d", sig);
 	}
 
 	return(xsignal_restart(sig, func, restartable));

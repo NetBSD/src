@@ -1,4 +1,4 @@
-/*	$NetBSD: ruserpass.c,v 1.32 2007/04/12 01:28:13 lukem Exp $	*/
+/*	$NetBSD: ruserpass.c,v 1.33 2007/04/17 05:52:04 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)ruserpass.c	8.4 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: ruserpass.c,v 1.32 2007/04/12 01:28:13 lukem Exp $");
+__RCSID("$NetBSD: ruserpass.c,v 1.33 2007/04/17 05:52:04 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -93,7 +93,7 @@ ruserpass(const char *host, char **aname, char **apass, char **aacct)
 	cfile = fopen(netrc, "r");
 	if (cfile == NULL) {
 		if (errno != ENOENT)
-			warn("%s", netrc);
+			warn("Can't read `%s'", netrc);
 		return (0);
 	}
 	if (gethostname(myname, sizeof(myname)) < 0)
@@ -155,8 +155,8 @@ ruserpass(const char *host, char **aname, char **apass, char **aacct)
 			if ((*aname == NULL || strcmp(*aname, "anonymous")) &&
 			    fstat(fileno(cfile), &stb) >= 0 &&
 			    (stb.st_mode & 077) != 0) {
-	warnx("Error: .netrc file is readable by others.");
-	warnx("Remove password or make file unreadable by others.");
+	warnx("Error: .netrc file is readable by others");
+	warnx("Remove password or make file unreadable by others");
 				goto bad;
 			}
 			if ((t = token()) == -1)
@@ -167,8 +167,8 @@ ruserpass(const char *host, char **aname, char **apass, char **aacct)
 		case ACCOUNT:
 			if (fstat(fileno(cfile), &stb) >= 0
 			    && (stb.st_mode & 077) != 0) {
-	warnx("Error: .netrc file is readable by others.");
-	warnx("Remove account or make file unreadable by others.");
+	warnx("Error: .netrc file is readable by others");
+	warnx("Remove account or make file unreadable by others");
 				goto bad;
 			}
 			if ((t = token()) == -1)
@@ -253,7 +253,7 @@ ruserpass(const char *host, char **aname, char **apass, char **aacct)
 			}
 			break;
 		default:
-			warnx("Unknown .netrc keyword %s", tokval);
+			warnx("Unknown .netrc keyword `%s'", tokval);
 			break;
 		}
 		goto done;

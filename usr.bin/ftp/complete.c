@@ -1,4 +1,4 @@
-/*	$NetBSD: complete.c,v 1.41 2006/01/31 20:01:23 christos Exp $	*/
+/*	$NetBSD: complete.c,v 1.42 2007/04/17 05:52:03 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-2000,2005 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: complete.c,v 1.41 2006/01/31 20:01:23 christos Exp $");
+__RCSID("$NetBSD: complete.c,v 1.42 2007/04/17 05:52:03 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -426,7 +426,8 @@ complete(EditLine *el, int ch)
 			}
 			return (complete_remote(word, dolist));
 		default:
-			errx(1, "unknown complete type `%c'", cmpltype);
+			errx(1, "complete: unknown complete type `%c'",
+			    cmpltype);
 			return (CC_ERROR);
 	}
 	/* NOTREACHED */
