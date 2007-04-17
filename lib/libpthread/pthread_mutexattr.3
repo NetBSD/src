@@ -1,4 +1,4 @@
-.\" $NetBSD: pthread_mutexattr.3,v 1.6 2005/06/17 18:26:53 wiz Exp $
+.\" $NetBSD: pthread_mutexattr.3,v 1.7 2007/04/17 21:11:47 heinz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -118,7 +118,7 @@ The default mutex type for
 is
 .Dv PTHREAD_MUTEX_DEFAULT .
 .Pp
-.Dv PTHREAD_MUXEX_NORMAL
+.Dv PTHREAD_MUTEX_NORMAL
 mutexes do not check for usage errors.
 .Dv PTHREAD_MUTEX_NORMAL
 mutexes will deadlock if reentered, and result in undefined behavior if a
