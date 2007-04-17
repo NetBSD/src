@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.137 2007/04/12 04:18:22 lukem Exp $	*/
+/*	$NetBSD: util.c,v 1.138 2007/04/17 05:52:04 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-2007 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.137 2007/04/12 04:18:22 lukem Exp $");
+__RCSID("$NetBSD: util.c,v 1.138 2007/04/17 05:52:04 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -137,7 +137,7 @@ setpeer(int argc, char *argv[])
 
 	if (gatemode) {
 		if (gateserver == NULL || *gateserver == '\0')
-			errx(1, "gateserver not defined (shouldn't happen)");
+			errx(1, "main: gateserver not defined");
 		host = hookup(gateserver, port);
 	} else
 		host = hookup(argv[1], port);
@@ -462,7 +462,7 @@ ftp_login(const char *host, const char *luser, const char *lpass)
 			memset(p, 0, strlen(p));
 		}
 		if (acct[0] == '\0') {
-			warnx("Login failed.");
+			warnx("Login failed");
 			goto cleanup_ftp_login;
 		}
 		n = command("ACCT %s", acct);
@@ -470,7 +470,7 @@ ftp_login(const char *host, const char *luser, const char *lpass)
 	}
 	if ((n != COMPLETE) ||
 	    (!aflag && acct != NULL && command("ACCT %s", acct) != COMPLETE)) {
-		warnx("Login failed.");
+		warnx("Login failed");
 		goto cleanup_ftp_login;
 	}
 	rval = 1;
@@ -577,7 +577,7 @@ remglob(char *argv[], int doswitch, const char **errbuf)
 			(void)strlcat(temp, "/", sizeof(temp));
 		(void)strlcat(temp, TMPFILE, sizeof(temp));
 		if ((fd = mkstemp(temp)) < 0) {
-			warn("unable to create temporary file %s", temp);
+			warn("Unable to create temporary file `%s'", temp);
 			return (NULL);
 		}
 		close(fd);
@@ -604,12 +604,10 @@ remglob(char *argv[], int doswitch, const char **errbuf)
 		(void)unlink(temp);
 		if (ftemp == NULL) {
 			if (errbuf == NULL)
-				fputs(
-				    "can't find list of remote files, oops.\n",
-				    ttyout);
+				warnx("Can't find list of remote files");
 			else
 				*errbuf =
-				    "can't find list of remote files, oops.";
+				    "Can't find list of remote files";
 			return (NULL);
 		}
 	}
@@ -643,7 +641,7 @@ globulize(const char *pattern)
 	flags = GLOB_BRACE|GLOB_NOCHECK|GLOB_TILDE;
 	memset(&gl, 0, sizeof(gl));
 	if (glob(pattern, flags, NULL, &gl) || gl.gl_pathc == 0) {
-		warnx("%s: not found", pattern);
+		warnx("Glob pattern `%s' not found", pattern);
 		globfree(&gl);
 		return (NULL);
 	}
@@ -1057,11 +1055,11 @@ setupsockbufsize(int sock)
 
 	if (setsockopt(sock, SOL_SOCKET, SO_SNDBUF,
 	    (void *)&sndbuf_size, sizeof(sndbuf_size)) == -1)
-		warn("unable to set sndbuf size %d", sndbuf_size);
+		warn("Unable to set sndbuf size %d", sndbuf_size);
 
 	if (setsockopt(sock, SOL_SOCKET, SO_RCVBUF,
 	    (void *)&rcvbuf_size, sizeof(rcvbuf_size)) == -1)
-		warn("unable to set rcvbuf size %d", rcvbuf_size);
+		warn("Unable to set rcvbuf size %d", rcvbuf_size);
 }
 
 /*
@@ -1315,14 +1313,15 @@ getline(FILE *stream, char *buf, size_t buflen, const char **errormsg)
 	return len;
 }
 
-
 /*
- * Internal version of connect(2); sets socket buffer sizes first and
+ * Internal version of connect(2); sets socket buffer sizes,
+ * binds to a specific local address (if set), and
  * supports a connection timeout using a non-blocking connect(2) with
  * a poll(2).
  * Socket fcntl flags are temporarily updated to include O_NONBLOCK;
  * these will not be reverted on connection failure.
- * Returns -1 upon failure (with errno set to the problem), or 0 on success.
+ * Returns 0 on success, or -1 upon failure (with an appropriate
+ * error message displayed.)
  */
 int
 ftp_connect(int sock, const struct sockaddr *name, socklen_t namelen)
@@ -1331,13 +1330,48 @@ ftp_connect(int sock, const struct sockaddr *name, socklen_t namelen)
 	socklen_t	slen;
 	struct timeval	endtime, now, td;
 	struct pollfd	pfd[1];
+	char		hname[NI_MAXHOST];
 
 	setupsockbufsize(sock);
+	if (getnameinfo(name, namelen,
+	    hname, sizeof(hname), NULL, 0, NI_NUMERICHOST) != 0)
+		strlcpy(hname, "?", sizeof(hname));
 
-	if ((flags = fcntl(sock, F_GETFL, 0)) == -1)
-		return -1;			/* get current socket flags  */
-	if (fcntl(sock, F_SETFL, flags | O_NONBLOCK) == -1)
-		return -1;			/* set non-blocking connect */
+	if (bindai != NULL) {			/* bind to specific addr */
+		struct addrinfo *ai;
+
+		for (ai = bindai; ai != NULL; ai = ai->ai_next) {
+			if (ai->ai_family == name->sa_family)
+				break;
+		}
+		if (ai == NULL)
+			ai = bindai;
+		if (bind(sock, ai->ai_addr, ai->ai_addrlen) == -1) {
+			char	bname[NI_MAXHOST];
+			int	saveerr;
+
+			saveerr = errno;
+			if (getnameinfo(ai->ai_addr, ai->ai_addrlen,
+			    bname, sizeof(bname), NULL, 0, NI_NUMERICHOST) != 0)
+				strlcpy(bname, "?", sizeof(bname));
+			errno = saveerr;
+			warn("Can't bind to `%s'", bname);
+			return -1;
+		}
+	}
+
+						/* save current socket flags */
+	if ((flags = fcntl(sock, F_GETFL, 0)) == -1) {
+		warn("Can't %s socket flags for connect to `%s'",
+		    "save", hname);
+		return -1;
+	}
+						/* set non-blocking connect */
+	if (fcntl(sock, F_SETFL, flags | O_NONBLOCK) == -1) {
+		warn("Can't set socket non-blocking for connect to `%s'",
+		    hname);
+		return -1;
+	}
 
 	/* NOTE: we now must restore socket flags on successful exit */
 
@@ -1351,8 +1385,11 @@ ftp_connect(int sock, const struct sockaddr *name, socklen_t namelen)
 
 	rv = connect(sock, name, namelen);	/* inititate the connection */
 	if (rv == -1) {				/* connection error */
-		if (errno != EINPROGRESS)	/* error isn't "please wait" */
+		if (errno != EINPROGRESS) {	/* error isn't "please wait" */
+ connecterror:
+			warn("Can't connect to `%s'", hname);
 			return -1;
+		}
 
 						/* connect EINPROGRESS; wait */
 		do {
@@ -1372,28 +1409,33 @@ ftp_connect(int sock, const struct sockaddr *name, socklen_t namelen)
 
 		if (rv == 0) {			/* poll (connect) timed out */
 			errno = ETIMEDOUT;
-			return -1;
+			goto connecterror;
 		}
 
 		if (rv == -1) {			/* poll error */
-			return -1;
+			goto connecterror;
 		} else if (pfd[0].revents & (POLLIN|POLLOUT)) {
 			slen = sizeof(error);	/* OK, or pending error */
 			if (getsockopt(sock, SOL_SOCKET, SO_ERROR,
-			    &error, &slen) == -1)
-				return -1;	/* Solaris pending error */
-			if (error != 0) {
+			    &error, &slen) == -1) {
+						/* Solaris pending error */
+				goto connecterror;
+			} else if (error != 0) {
 				errno = error;	/* BSD pending error */
-				return -1;
+				goto connecterror;
 			}
 		} else {
 			errno = EBADF;		/* this shouldn't happen ... */
-			return -1;
+			goto connecterror;
 		}
 	}
 
-	if (fcntl(sock, F_SETFL, flags) == -1)	/* restore socket flags */
+	if (fcntl(sock, F_SETFL, flags) == -1) {
+						/* restore socket flags */
+		warn("Can't %s socket flags for connect to `%s'",
+		    "restore", hname);
 		return -1;
+	}
 	return 0;
 }
 
@@ -1466,7 +1508,7 @@ ftp_strdup(const char *str)
 	char *s;
 
 	if (str == NULL)
-		errx(1, "ftp_strdup() called with NULL argument");
+		errx(1, "ftp_strdup: called with NULL argument");
 	s = strdup(str);
 	if (s == NULL)
 		err(1, "Unable to allocate memory for string copy");
