@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_mutex.c,v 1.13 2007/03/12 22:34:08 ad Exp $	*/
+/*	$NetBSD: kern_mutex.c,v 1.13.4.1 2007/04/17 06:47:30 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
 #define	__MUTEX_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.13 2007/03/12 22:34:08 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.13.4.1 2007/04/17 06:47:30 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -59,6 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.13 2007/03/12 22:34:08 ad Exp $");
 #include <sys/systm.h>
 #include <sys/lockdebug.h>
 #include <sys/kernel.h>
+#include <sys/atomic.h>
 
 #include <dev/lockstat.h>
 
@@ -151,6 +152,12 @@ do {									\
  */
 
 #ifdef __HAVE_SIMPLE_MUTEXES
+
+#ifndef MUTEX_CAS
+#define	MUTEX_CAS(p, o, n)						\
+	(atomic_cas_ptr((volatile void *)(p), (void *)(o),		\
+			(void *)(n)) == (void *)(o))
+#endif
 
 #define	MUTEX_OWNER(owner)						\
 	(owner & MUTEX_THREAD)
