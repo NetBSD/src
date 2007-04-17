@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_inc_8_nv_add.c,v 1.1.2.2 2007/04/16 03:19:58 thorpej Exp $	*/
+/*	$NetBSD: atomic_inc_8_nv_add.c,v 1.1.2.3 2007/04/17 16:05:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -47,5 +47,7 @@ atomic_inc_8_nv(volatile uint8_t *addr)
 	return (atomic_add_8_nv(addr, 1));
 }
 
+#undef atomic_inc_8_nv
 atomic_op_alias(atomic_inc_8_nv,_atomic_inc_8_nv)
+#undef atomic_inc_uchar_nv
 atomic_op_alias(atomic_inc_uchar_nv,_atomic_inc_8_nv)

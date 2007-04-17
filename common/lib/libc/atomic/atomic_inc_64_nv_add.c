@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_inc_64_nv_add.c,v 1.1.2.2 2007/04/16 03:19:58 thorpej Exp $	*/
+/*	$NetBSD: atomic_inc_64_nv_add.c,v 1.1.2.3 2007/04/17 16:05:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -47,8 +47,11 @@ atomic_inc_64_nv(volatile uint64_t *addr)
 	return (atomic_add_64_nv(addr, 1));
 }
 
+#undef atomic_inc_64_nv
 atomic_op_alias(atomic_inc_64_nv,_atomic_inc_64_nv)
 #if defined(_LP64)
+#undef atomic_inc_ulong_nv
 atomic_op_alias(atomic_inc_ulong_nv,_atomic_inc_64_nv)
+#undef atomic_inc_ptr_nv
 atomic_op_alias(atomic_inc_ptr_nv,_atomic_inc_64_nv)
 #endif /* _LP64 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_and_32_nv_cas.c,v 1.1.2.2 2007/04/16 03:19:55 thorpej Exp $	*/
+/*	$NetBSD: atomic_and_32_nv_cas.c,v 1.1.2.3 2007/04/17 16:03:58 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -56,8 +56,11 @@ atomic_and_32_nv(volatile uint32_t *addr, uint32_t val)
 	return (new);
 }
 
+#undef atomic_and_32_nv
 atomic_op_alias(atomic_and_32_nv,_atomic_and_32_nv)
+#undef atomic_and_uint_nv
 atomic_op_alias(atomic_and_uint_nv,_atomic_and_32_nv)
 #if !defined(_LP64)
+#undef atomic_and_ulong_nv
 atomic_op_alias(atomic_and_ulong_nv,_atomic_and_32_nv)
 #endif /* _LP64 */
