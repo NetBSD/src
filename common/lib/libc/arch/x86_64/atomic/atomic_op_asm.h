@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_op_asm.h,v 1.1.2.1 2007/04/17 04:28:23 thorpej Exp $	*/
+/*	$NetBSD: atomic_op_asm.h,v 1.1.2.2 2007/04/17 07:04:57 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -44,7 +44,6 @@
 #if defined(_KERNEL)
 
 #include "opt_multiprocessor.h"
-#include "opt_cputype.h"
 
 /*
  * If we're configured for multiprocessor, add a "lock" prefix.

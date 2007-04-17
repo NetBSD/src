@@ -1,4 +1,4 @@
-/*	$NetBSD: membar_ops.S,v 1.1.2.1 2007/04/17 04:28:30 thorpej Exp $	*/
+/*	$NetBSD: membar_ops.S,v 1.1.2.2 2007/04/17 07:06:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,6 @@
 #if defined(_KERNEL)
 
 #include "opt_multiprocessor.h"
-#include "opt_cputype.h"
 
 #define	END(name,a)	.align a; LABEL(name)
 
