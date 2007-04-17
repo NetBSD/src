@@ -1,4 +1,4 @@
-/* 	$NetBSD: refuse_opt.c,v 1.5 2007/04/16 09:55:51 agc Exp $	*/
+/* 	$NetBSD: refuse_opt.c,v 1.6 2007/04/17 00:20:52 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -110,7 +110,8 @@ fuse_opt_add_arg(struct fuse_args *args, const char *arg)
 		(void) free(ap);
 	} else if (args->allocated == args->argc) {
 		args->allocated += 10;
-		RENEW(char *, args->argv, args->allocated, "fuse_opt_add_arg", return 1);
+		RENEW(char *, args->argv, args->allocated,
+		    "fuse_opt_add_arg", return 1);
 	}
 	DPRINTF(("%s: arguments passed: [arg:%s]\n", __func__, arg));
 	args->argv[args->argc++] = strdup(arg);
@@ -138,7 +139,8 @@ fuse_opt_insert_arg(struct fuse_args *args, int pos, const char *arg)
 
 	DPRINTF(("%s: arguments passed: [pos=%d] [arg=%s]\n",
 	    __func__, pos, arg));
-	ALLOC(char *, args->argv, args->allocated, args->argc, 10, 10, "fuse_opt_insert_org", return 1);
+	ALLOC(char *, args->argv, args->allocated, args->argc, 10, 10,
+	    "fuse_opt_insert_org", return 1);
 	for (i = args->argc++ ; i > pos ; --i) {
 		args->argv[i] = args->argv[i - 1];
 	}
