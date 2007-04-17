@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.204 2007/04/17 06:49:40 perseant Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.205 2007/04/17 20:30:29 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.204 2007/04/17 06:49:40 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.205 2007/04/17 20:30:29 perseant Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -322,14 +322,17 @@ lfs_fsync(void *v)
 	}
 
 	wait = (ap->a_flags & FSYNC_WAIT);
-	simple_lock(&vp->v_interlock);
 	do {
+		simple_lock(&vp->v_interlock);
 		error = VOP_PUTPAGES(vp, trunc_page(ap->a_offlo),
 				     round_page(ap->a_offhi),
 				     PGO_CLEANIT | (wait ? PGO_SYNCIO : 0));
-		if (error == EAGAIN)
+		if (error == EAGAIN) {
+			simple_lock(&fs->lfs_interlock);
 			ltsleep(&fs->lfs_avail, PCATCH | PUSER, "lfs_fsync",
 				hz / 100 + 1, &fs->lfs_interlock);
+			simple_unlock(&fs->lfs_interlock);
+		}
 	} while (error == EAGAIN);
 	if (error)
 		return error;
