@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.28 2007/02/09 21:55:01 ad Exp $
+#	$NetBSD: Makefile,v 1.28.12.1 2007/04/18 04:16:37 thorpej Exp $
 
 INCSDIR= /usr/include/alpha
 
-INCS=	alpha_cpu.h ansi.h aout_machdep.h asm.h atomic.h autoconf.h \
+INCS=	alpha_cpu.h ansi.h aout_machdep.h asm.h autoconf.h \
 	bswap.h bus.h bwx.h \
 	cdefs.h cfbreg.h cpu.h cpuconf.h \
 	disklabel.h \
