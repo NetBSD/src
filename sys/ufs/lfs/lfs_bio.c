@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.99 2007/04/17 01:16:46 perseant Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.100 2007/04/18 00:50:06 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.99 2007/04/17 01:16:46 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.100 2007/04/18 00:50:06 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -509,8 +509,8 @@ lfs_bwrite_ext(struct buf *bp, int flags)
 }
 
 /*
- * Called and return with the lfs_interlock held, but the lfs_subsys_lock
- * not held.
+ * Called and return with the lfs_interlock held, but no other simple_locks
+ * held.
  */
 void
 lfs_flush_fs(struct lfs *fs, int flags)
