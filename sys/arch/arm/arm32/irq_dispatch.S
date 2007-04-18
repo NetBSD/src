@@ -1,4 +1,4 @@
-/*	$NetBSD: irq_dispatch.S,v 1.8 2007/03/09 19:21:58 thorpej Exp $	*/
+/*	$NetBSD: irq_dispatch.S,v 1.8.8.1 2007/04/18 07:34:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited
@@ -94,7 +94,7 @@
 .Lcurrent_intr_depth:
 	.word	_C_LABEL(current_intr_depth)
 
-LOCK_CAS_CHECK_LOCALS
+ATOMIC_CAS_32_CHECK_LOCALS
 
 AST_ALIGNMENT_FAULT_LOCALS
 
@@ -127,7 +127,7 @@ ASENTRY_NP(irq_entry)
 	 */
 	str	r6, [r5]
 
-	LOCK_CAS_CHECK
+	ATOMIC_CAS_32_CHECK
 
 	DO_AST_AND_RESTORE_ALIGNMENT_FAULTS
 	PULLFRAMEFROMSVCANDEXIT

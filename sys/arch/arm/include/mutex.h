@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.7 2007/03/09 19:21:58 thorpej Exp $	*/
+/*	$NetBSD: mutex.h,v 1.7.8.1 2007/04/18 07:34:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -99,10 +99,6 @@ struct kmutex {
  * MUTEX_GIVE: no memory barrier required; same reason.
  */
 #define	MUTEX_GIVE(mtx)			/* nothing */
-
-bool	_lock_cas(volatile uintptr_t *, uintptr_t, uintptr_t);
-
-#define	MUTEX_CAS(p, o, n)		_lock_cas((p), (o), (n))
 
 #endif	/* __MUTEX_PRIVATE */
 

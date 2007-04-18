@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.15 2007/03/09 19:21:58 thorpej Exp $	*/
+/*	$NetBSD: frame.h,v 1.15.8.1 2007/04/18 07:34:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -111,7 +111,6 @@ void validate_trapframe __P((trapframe_t *, int));
 #include "opt_compat_netbsd.h"
 #include "opt_execfmt.h"
 #include "opt_multiprocessor.h"
-#include "opt_arm_debug.h"
 
 /*
  * AST_ALIGNMENT_FAULT_LOCALS and ENABLE_ALIGNMENT_FAULTS
@@ -268,53 +267,24 @@ void validate_trapframe __P((trapframe_t *, int));
 2:
 #endif /* EXEC_AOUT */
 
-#ifdef ARM_LOCK_CAS_DEBUG
-#define	LOCK_CAS_DEBUG_LOCALS						 \
-.L_lock_cas_restart:							;\
-	.word	_C_LABEL(_lock_cas_restart)
+#define	ATOMIC_CAS_32_CHECK_LOCALS					 \
+.L_atomic_cas_32_ras_start:						;\
+	.word	_C_LABEL(_atomic_cas_32_ras_start)			;\
+.L_atomic_cas_32_ras_end:						;\
+	.word	_C_LABEL(_atomic_cas_32_ras_end)			;\
 
-#if defined(__ARMEB__)
-#define	LOCK_CAS_DEBUG_COUNT_RESTART					 \
-	ble	99f							;\
-	ldr	r0, .L_lock_cas_restart					;\
-	ldmia	r0, {r1-r2}		/* load ev_count */		;\
-	adds	r2, r2, #1		/* 64-bit incr (lo) */		;\
-	adc	r1, r1, #0		/* 64-bit incr (hi) */		;\
-	stmia	r0, {r1-r2}		/* store ev_count */
-#else /* __ARMEB__ */
-#define	LOCK_CAS_DEBUG_COUNT_RESTART					 \
-	ble	99f							;\
-	ldr	r0, .L_lock_cas_restart					;\
-	ldmia	r0, {r1-r2}		/* load ev_count */		;\
-	adds	r1, r1, #1		/* 64-bit incr (lo) */		;\
-	adc	r2, r2, #0		/* 64-bit incr (hi) */		;\
-	stmia	r0, {r1-r2}		/* store ev_count */
-#endif /* __ARMEB__ */
-#else /* ARM_LOCK_CAS_DEBUG */
-#define	LOCK_CAS_DEBUG_LOCALS		/* nothing */
-#define	LOCK_CAS_DEBUG_COUNT_RESTART	/* nothing */
-#endif /* ARM_LOCK_CAS_DEBUG */
-
-#define	LOCK_CAS_CHECK_LOCALS						 \
-.L_lock_cas:								;\
-	.word	_C_LABEL(_lock_cas)					;\
-.L_lock_cas_end:							;\
-	.word	_C_LABEL(_lock_cas_end)					;\
-LOCK_CAS_DEBUG_LOCALS
-
-#define	LOCK_CAS_CHECK							 \
+#define	ATOMIC_CAS_32_CHECK						 \
 	ldr	r0, [sp]		/* get saved PSR */		;\
 	and	r0, r0, #(PSR_MODE)	/* check for SVC32 mode */	;\
 	teq	r0, #(PSR_SVC32_MODE)					;\
 	bne	99f			/* nope, get out now */		;\
 	ldr	r0, [sp, #(IF_PC)]					;\
-	ldr	r1, .L_lock_cas_end					;\
+	ldr	r1, .L_atomic_cas_32_ras_end				;\
 	cmp	r0, r1							;\
 	bge	99f							;\
-	ldr	r1, .L_lock_cas						;\
+	ldr	r1, .L_atomic_cas_32_ras_start				;\
 	cmp	r0, r1							;\
 	strgt	r1, [sp, #(IF_PC)]					;\
-	LOCK_CAS_DEBUG_COUNT_RESTART					;\
 99:
 
 /*
