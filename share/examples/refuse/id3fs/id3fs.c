@@ -167,9 +167,6 @@ build_id3_tree(DB *db, virtdir_t *tp)
 	(void) stat(".", &dir);
 	(void) memcpy(&f, &dir, sizeof(f));
 	f.st_mode = S_IFREG | 0644;
-	virtdir_add(tp, "/artists", strlen("/artists"), 'd', NULL);
-	virtdir_add(tp, "/genre", strlen("/genre"), 'd', NULL);
-	virtdir_add(tp, "/year", strlen("/year"), 'd', NULL);
 	(void) memset(&k, 0x0, sizeof(k));
 	(void) memset(&v, 0x0, sizeof(v));
 	for (flag = R_FIRST ; (*db->seq)(db, &k, &v, flag) == 0 ; flag = R_NEXT) {
@@ -188,11 +185,6 @@ build_id3_tree(DB *db, virtdir_t *tp)
 			continue;
 		}
 		val = (char *) v.data;
-		/* add the name as a directory */
-		(void) snprintf(name, sizeof(name), "%s/%s", d, val);
-		if (!virtdir_find(tp, name, strlen(name))) {
-			virtdir_add(tp, name, strlen(name), 'd', NULL);
-		}
 		if ((slash = strrchr(key, '/')) == NULL) {
 			slash = key;
 		}
