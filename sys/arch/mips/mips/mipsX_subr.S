@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.22.2.2 2007/04/18 20:27:54 ad Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.22.2.3 2007/04/18 21:00:48 ad Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -1282,7 +1282,7 @@ NESTED_NOPROFILE(MIPSX(UserIntr), CALLFRAME_SIZ, ra)
 /*
  * We have pending asynchronous traps; save remaining user state in u_pcb.
  */
-	REG_S	s0, FRAME_S0(k1)
+	REG_S	s0, FRAME_S0(a1)
 	REG_S	s1, FRAME_S1(a1)
 	REG_S	s2, FRAME_S2(a1)
 	REG_S	s3, FRAME_S3(a1)
