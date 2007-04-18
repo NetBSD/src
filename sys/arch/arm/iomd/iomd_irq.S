@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd_irq.S,v 1.6 2007/03/09 19:21:58 thorpej Exp $	*/
+/*	$NetBSD: iomd_irq.S,v 1.6.8.1 2007/04/18 07:34:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -96,7 +96,7 @@ Lcurrent_intr_depth:
 Lspl_masks:
 	.word	_C_LABEL(spl_masks)
 
-LOCK_CAS_CHECK_LOCALS
+ATOMIC_CAS_32_CHECK_LOCALS
 
 AST_ALIGNMENT_FAULT_LOCALS
 
@@ -339,7 +339,7 @@ exitirq:
 	sub	r1, r1, #1
 	str	r1, [r0]
 
-	LOCK_CAS_CHECK
+	ATOMIC_CAS_32_CHECK
 
 	DO_AST_AND_RESTORE_ALIGNMENT_FAULTS
 	PULLFRAMEFROMSVCANDEXIT

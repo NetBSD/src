@@ -1,4 +1,4 @@
-/*	$NetBSD: rwlock.h,v 1.2 2007/03/09 20:08:26 thorpej Exp $	*/
+/*	$NetBSD: rwlock.h,v 1.2.8.1 2007/04/18 07:34:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006 The NetBSD Foundation, Inc.
@@ -50,10 +50,6 @@ struct krwlock {
 
 #define	RW_RECEIVE(rw)			/* nothing */
 #define	RW_GIVE(rw)			/* nothing */
-
-bool	_lock_cas(volatile uintptr_t *, uintptr_t, uintptr_t);
-
-#define	RW_CAS(p, o, n)			_lock_cas((p), (o), (n))
 
 #endif	/* __RWLOCK_PRIVATE */
 
