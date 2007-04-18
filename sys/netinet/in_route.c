@@ -1,4 +1,4 @@
-/*	$NetBSD: in_route.c,v 1.4 2007/02/17 22:34:11 dyoung Exp $	*/
+/*	$NetBSD: in_route.c,v 1.5 2007/04/18 23:22:26 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2006 David Young.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_route.c,v 1.4 2007/02/17 22:34:11 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_route.c,v 1.5 2007/04/18 23:22:26 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_in_route.h"
@@ -64,7 +64,7 @@ LIST_HEAD(in_rtlist, route) in_rtcache_head =
     LIST_HEAD_INITIALIZER(in_rtcache_head);
 
 #ifdef IN_RTFLUSH_DEBUG
-#define	in_rtcache_debug() _in_rtcache_debug
+#define	in_rtcache_debug() __predict_false(_in_rtcache_debug)
 #else /* IN_RTFLUSH_DEBUG */
 #define	in_rtcache_debug() 0
 #endif /* IN_RTFLUSH_DEBUG */
@@ -119,7 +119,7 @@ in_rtflush(struct route *ro)
 	LIST_REMOVE(ro, ro_rtcache_next);
 
 	if (in_rtcache_debug()) {
-		printf("%s: freeing %s\n", __func__,
+		printf("%s: flushing %s\n", __func__,
 		    inet_ntoa((satocsin(rtcache_getdst(ro)))->sin_addr));
 	}
 }
