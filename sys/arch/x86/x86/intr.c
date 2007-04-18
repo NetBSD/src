@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.28 2007/02/21 22:59:55 thorpej Exp $	*/
+/*	$NetBSD: intr.c,v 1.28.10.1 2007/04/18 04:45:13 thorpej Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -104,7 +104,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.28 2007/02/21 22:59:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.28.10.1 2007/04/18 04:45:13 thorpej Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_acpi.h"
@@ -117,10 +117,10 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.28 2007/02/21 22:59:55 thorpej Exp $");
 #include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/errno.h>
+#include <sys/atomic.h>
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/atomic.h>
 #include <machine/i8259.h>
 #include <machine/cpu.h>
 #include <machine/pio.h>
@@ -720,7 +720,7 @@ intr_disestablish(struct intrhand *ih)
 
 	simple_lock(&ci->ci_slock);
 	pic->pic_hwmask(pic, ih->ih_pin);	
-	x86_atomic_clearbits_l(&ci->ci_ipending, (1 << ih->ih_slot));
+	atomic_and_32(&ci->ci_ipending, ~(1 << ih->ih_slot));
 
 	/*
 	 * Remove the handler from the chain.

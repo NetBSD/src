@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.10 2007/02/21 22:59:37 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.10.10.1 2007/04/18 04:45:12 thorpej Exp $	*/
 
 /*
  *
@@ -79,6 +79,7 @@
 #include "opt_largepages.h"
 #endif
 
+#include <sys/atomic.h>
 #include <machine/cpufunc.h>
 #include <machine/pte.h>
 #include <machine/segments.h>
@@ -568,8 +569,8 @@ kvtopte(vaddr_t va)
 	return (PTE_BASE + pl1_i(va));
 }
 
-#define pmap_pte_set(p, n)		x86_atomic_testset_u64(p, n)
-#define pmap_pte_clearbits(p, b)	x86_atomic_clearbits_u64(p, b)
+#define pmap_pte_set(p, n)		atomic_swap_64(p, n)
+#define pmap_pte_clearbits(p, b)	atomic_and_64(p, ~((uint64_t)(b)))
 #define pmap_cpu_has_pg_n()		(1)
 #define pmap_cpu_has_invlpg		(1)
 
