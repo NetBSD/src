@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.14 2007/02/10 16:19:39 ad Exp $	*/
+/*	$NetBSD: lock.h,v 1.14.12.1 2007/04/18 04:45:13 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@ extern void __cpu_simple_unlock(__cpu_simple_lock_t *);
 
 #else
 
-#include <machine/atomic.h>
+#include <sys/atomic.h>
 
 static __inline void __cpu_simple_lock_init(__cpu_simple_lock_t *)
 	__attribute__((__unused__));
@@ -81,7 +81,7 @@ static __inline void
 __cpu_simple_lock(__cpu_simple_lock_t *lockp)
 {
 
-	while (x86_atomic_testset_b(lockp, __SIMPLELOCK_LOCKED)
+	while (atomic_swap_8(lockp, __SIMPLELOCK_LOCKED)
 	    != __SIMPLELOCK_UNLOCKED) {
 		do {
 			x86_pause();
@@ -93,7 +93,7 @@ __cpu_simple_lock(__cpu_simple_lock_t *lockp)
 static __inline int
 __cpu_simple_lock_try(__cpu_simple_lock_t *lockp)
 {
-	int r = (x86_atomic_testset_b(lockp, __SIMPLELOCK_LOCKED)
+	int r = (atomic_swap_8(lockp, __SIMPLELOCK_LOCKED)
 	    == __SIMPLELOCK_UNLOCKED);
 
 	__insn_barrier();

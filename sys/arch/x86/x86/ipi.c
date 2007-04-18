@@ -1,4 +1,4 @@
-/*	$NetBSD: ipi.c,v 1.7 2005/12/11 12:19:47 christos Exp $	*/
+/*	$NetBSD: ipi.c,v 1.7.36.1 2007/04/18 04:45:13 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -39,14 +39,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipi.c,v 1.7 2005/12/11 12:19:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipi.c,v 1.7.36.1 2007/04/18 04:45:13 thorpej Exp $");
 
 #include <sys/param.h> 
 #include <sys/device.h>
 #include <sys/systm.h>
+#include <sys/atomic.h>
  
 #include <machine/intr.h>
-#include <machine/atomic.h>
 #include <machine/cpuvar.h>
 #include <machine/i82093var.h>
 #include <machine/i82489reg.h>
@@ -57,7 +57,7 @@ x86_send_ipi(struct cpu_info *ci, int ipimask)
 {
 	int ret;
 
-	x86_atomic_setbits_l(&ci->ci_ipis, ipimask);
+	atomic_or_32(&ci->ci_ipis, ipimask);
 
 	/* Don't send IPI to CPU which isn't (yet) running. */
 	if (!(ci->ci_flags & CPUF_RUNNING))
@@ -86,7 +86,7 @@ x86_broadcast_ipi (int ipimask)
 			continue;
 		if ((ci->ci_flags & CPUF_RUNNING) == 0)
 			continue;
-		x86_atomic_setbits_l(&ci->ci_ipis, ipimask);
+		atomic_or_32(&ci->ci_ipis, ipimask);
 		count++;
 	}
 	if (!count)
@@ -119,7 +119,7 @@ x86_ipi_handler(void)
 	u_int32_t pending;
 	int bit;
 
-	pending = x86_atomic_testset_ul(&ci->ci_ipis, 0);
+	pending = atomic_swap_32(&ci->ci_ipis, 0);
 
 	KDASSERT((pending >> X86_NIPI) == 0);
 	while ((bit = ffs(pending)) != 0) {

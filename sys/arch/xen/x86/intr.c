@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.13 2007/01/29 01:52:46 hubertf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.13.12.1 2007/04/18 04:45:15 thorpej Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_xen.h"
@@ -121,7 +121,6 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.13 2007/01/29 01:52:46 hubertf Exp $");
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/atomic.h>
 #include <machine/i8259.h>
 #include <machine/cpu.h>
 #include <machine/pio.h>

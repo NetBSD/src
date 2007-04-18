@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.51 2007/03/07 21:43:43 thorpej Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.51.8.1 2007/04/18 04:45:12 thorpej Exp $	*/
 
 /*
  * Mach Operating System
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.51 2007/03/07 21:43:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.51.8.1 2007/04/18 04:45:12 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -42,6 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.51 2007/03/07 21:43:43 thorpej Ex
 #include <sys/proc.h>
 #include <sys/reboot.h>
 #include <sys/systm.h>
+#include <sys/atomic.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -53,7 +54,6 @@ __KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.51 2007/03/07 21:43:43 thorpej Ex
 #include <machine/i82093var.h>
 #include <machine/i82489reg.h>
 #include <machine/i82489var.h>
-#include <machine/atomic.h>
 
 #include <ddb/db_sym.h>
 #include <ddb/db_command.h>
@@ -143,7 +143,7 @@ db_resume_others(void)
 		if (ci == NULL)
 			continue;
 		if (ci->ci_flags & CPUF_PAUSE)
-			x86_atomic_clearbits_l(&ci->ci_flags, CPUF_PAUSE);
+			atomic_and_32(&ci->ci_flags, ~CPUF_PAUSE);
 	}
 
 }
@@ -329,7 +329,7 @@ ddb_suspend(struct trapframe *frame)
 
 	ci->ci_ddb_regs = &regs;
 
-	x86_atomic_setbits_l(&ci->ci_flags, CPUF_PAUSE);
+	atomic_or_32(&ci->ci_flags, CPUF_PAUSE);
 
 	while (ci->ci_flags & CPUF_PAUSE)
 		;

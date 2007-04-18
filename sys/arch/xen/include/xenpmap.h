@@ -1,4 +1,4 @@
-/*	$NetBSD: xenpmap.h,v 1.15 2006/10/17 18:53:04 bouyer Exp $	*/
+/*	$NetBSD: xenpmap.h,v 1.15.14.1 2007/04/18 04:45:14 thorpej Exp $	*/
 
 /*
  *
@@ -35,6 +35,8 @@
 #ifndef _XEN_XENPMAP_H_
 #define _XEN_XENPMAP_H_
 
+#include <sys/atomic.h>
+
 #define	INVALID_P2M_ENTRY	(~0UL)
 
 void xpq_queue_machphys_update(paddr_t, paddr_t);
@@ -67,17 +69,17 @@ extern paddr_t *xpmap_phys_to_machine_mapping;
 #define PTE_CLEAR(_ptp,_maptp)					\
 	*(_maptp) = 0
 #define PTE_ATOMIC_SET(_ptp,_maptp,_npte,_opte)			\
-	(_opte) = x86_atomic_testset_ul((_maptp), (_npte))
+	(_opte) = atomic_swap_32((_maptp), (_npte))
 #define PTE_ATOMIC_CLEAR(_ptp,_maptp,_opte)			\
-	(_opte) = x86_atomic_testset_ul((_maptp), 0)
+	(_opte) = atomic_swap_32((_maptp), 0)
 #define PDE_CLEARBITS(_pdp,_mapdp,_bits)			\
 	*(_mapdp) &= ~(_bits)
 #define PTE_ATOMIC_CLEARBITS(_ptp,_maptp,_bits)			\
-	x86_atomic_clearbits_l((_maptp), (_bits))
+	atomic_and_32((_maptp), ~(_bits))
 #define PTE_SETBITS(_ptp,_maptp,_bits)				\
 	*(_maptp) |= (_bits)
 #define PTE_ATOMIC_SETBITS(_ptp,_maptp,_bits)			\
-	x86_atomic_setbits_l((_maptp), (_bits))
+	atomic_or_32((_maptp), (_bits))
 #else
 paddr_t *xpmap_phys_to_machine_mapping;
 

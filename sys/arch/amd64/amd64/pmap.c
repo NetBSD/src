@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.33 2007/03/12 18:18:23 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.33.6.1 2007/04/18 04:45:11 thorpej Exp $	*/
 
 /*
  *
@@ -108,7 +108,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.33 2007/03/12 18:18:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.33.6.1 2007/04/18 04:45:11 thorpej Exp $");
 
 #ifndef __x86_64__
 #include "opt_cputype.h"
@@ -125,10 +125,10 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.33 2007/03/12 18:18:23 ad Exp $");
 #include <sys/pool.h>
 #include <sys/user.h>
 #include <sys/kernel.h>
+#include <sys/atomic.h>
 
 #include <uvm/uvm.h>
 
-#include <machine/atomic.h>
 #include <machine/cpu.h>
 #include <machine/specialreg.h>
 #include <machine/gdt.h>
@@ -2034,7 +2034,7 @@ pmap_activate(l)
 		/*
 		 * mark the pmap in use by this processor.
 		 */
-		x86_atomic_setbits_ul(&pmap->pm_cpus, (1U << cpu_number()));
+		 atomic_or_32(&pmap->pm_cpus, (1U << cpu_number()));
 	}
 	if (pcb->pcb_flags & PCB_GS64)
 		wrmsr(MSR_KERNELGSBASE, pcb->pcb_gs);
@@ -2055,7 +2055,7 @@ pmap_deactivate(l)
 	/*
 	 * mark the pmap no longer in use by this processor. 
 	 */
-	x86_atomic_clearbits_ul(&pmap->pm_cpus, (1U << cpu_number()));
+	atomic_and_32(&pmap->pm_cpus, ~(1U << cpu_number()));
 
 }
 
@@ -3484,8 +3484,8 @@ pmap_tlb_shootnow(int32_t cpumask)
 			continue;
 		if (cpumask & (1U << ci->ci_cpuid))
 			if (x86_send_ipi(ci, X86_IPI_TLB) != 0)
-			     x86_atomic_clearbits_ul(&self->ci_tlb_ipi_mask,
-				    (1U << ci->ci_cpuid));
+			     atomic_and_32(&self->ci_tlb_ipi_mask,
+				    ~(1U << ci->ci_cpuid));
 	}
 
 	while (self->ci_tlb_ipi_mask != 0)
@@ -3669,8 +3669,7 @@ pmap_do_tlb_shootdown(struct cpu_info *self)
 
 #ifdef MULTIPROCESSOR
 	for (CPU_INFO_FOREACH(cii, ci))
-		x86_atomic_clearbits_ul(&ci->ci_tlb_ipi_mask,
-		    (1U << cpu_num));
+		atomic_and_32(&ci->ci_tlb_ipi_mask, ~(1U << cpu_num));
 	__cpu_simple_unlock(&pq->pq_slock);
 #endif
 

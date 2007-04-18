@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.203 2007/03/12 18:18:25 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.203.6.1 2007/04/18 04:45:12 thorpej Exp $	*/
 
 /*
  *
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.203 2007/03/12 18:18:25 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.203.6.1 2007/04/18 04:45:12 thorpej Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"
@@ -76,10 +76,10 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.203 2007/03/12 18:18:25 ad Exp $");
 #include <sys/pool.h>
 #include <sys/user.h>
 #include <sys/kernel.h>
+#include <sys/atomic.h>
 
 #include <uvm/uvm.h>
 
-#include <machine/atomic.h>
 #include <machine/cpu.h>
 #include <machine/specialreg.h>
 #include <machine/gdt.h>
@@ -734,7 +734,7 @@ pmap_kenter_pa(va, pa, prot)
 	npte = pa | ((prot & VM_PROT_WRITE) ? PG_RW : PG_RO) |
 	     PG_V | pmap_pg_g;
 
-	opte = x86_atomic_testset_ul(pte, npte); /* zap! */
+	opte = atomic_swap_32(pte, npte); /* zap! */
 #ifdef LARGEPAGES
 	/* XXX For now... */
 	if (opte & PG_PS)
@@ -778,7 +778,7 @@ pmap_kremove(va, len)
 			pte = vtopte(va);
 		else
 			pte = kvtopte(va);
-		opte = x86_atomic_testset_ul(pte, 0); /* zap! */
+		opte = atomic_swap_32(pte, 0); /* zap! */
 #ifdef LARGEPAGES
 		/* XXX For now... */
 		if (opte & PG_PS)
@@ -1839,7 +1839,7 @@ pmap_reactivate(struct pmap *pmap)
 	s = splvm();
 #endif /* defined(MULTIPROCESSOR) */
 	oldcpus = pmap->pm_cpus;
-	x86_atomic_setbits_l(&pmap->pm_cpus, cpumask);
+	atomic_or_32(&pmap->pm_cpus, cpumask);
 	if (oldcpus & cpumask) {
 		KASSERT(ci->ci_tlbstate == TLBSTATE_LAZY);
 		/* got it */
@@ -1905,7 +1905,7 @@ pmap_load()
 	 * actually switch pmap.
 	 */
 
-	x86_atomic_clearbits_l(&oldpmap->pm_cpus, cpumask);
+	atomic_and_32(&oldpmap->pm_cpus, ~cpumask);
 
 	KASSERT(oldpmap->pm_pdirpa == rcr3());
 	KASSERT((pmap->pm_cpus & cpumask) == 0);
@@ -1923,7 +1923,7 @@ pmap_load()
 #else /* defined(MULTIPROCESSOR) */
 	s = splvm();
 #endif /* defined(MULTIPROCESSOR) */
-	x86_atomic_setbits_l(&pmap->pm_cpus, cpumask);
+	atomic_or_32(&pmap->pm_cpus, cpumask);
 	ci->ci_pmap = pmap;
 	ci->ci_tlbstate = TLBSTATE_VALID;
 	splx(s);
@@ -2263,7 +2263,7 @@ pmap_remove_ptes(pmap, ptp, ptpva, startva, endva, cpumaskp, flags)
 		}
 
 		/* atomically save the old PTE and zap! it */
-		opte = x86_atomic_testset_ul(pte, 0);
+		opte = atomic_swap_32(pte, 0);
 		pmap_exec_account(pmap, startva, opte, 0);
 
 		if (opte & PG_W)
@@ -2352,7 +2352,7 @@ pmap_remove_pte(pmap, ptp, pte, va, cpumaskp, flags)
 	}
 
 	/* atomically save the old PTE and zap! it */
-	opte = x86_atomic_testset_ul(pte, 0);
+	opte = atomic_swap_32(pte, 0);
 	pmap_exec_account(pmap, va, opte, 0);
 
 	if (opte & PG_W)
@@ -2491,7 +2491,7 @@ pmap_do_remove(pmap, sva, eva, flags)
 
 			if (result && ptp && ptp->wire_count <= 1) {
 				/* zap! */
-				opte = x86_atomic_testset_ul(
+				opte = atomic_swap_32(
 				    &pmap->pm_pdir[pdei(sva)], 0);
 #if defined(MULTIPROCESSOR)
 				/*
@@ -2589,8 +2589,7 @@ pmap_do_remove(pmap, sva, eva, flags)
 		/* if PTP is no longer being used, free it! */
 		if (ptp && ptp->wire_count <= 1) {
 			/* zap! */
-			opte = x86_atomic_testset_ul(
-			    &pmap->pm_pdir[pdei(sva)], 0);
+			opte = atomic_swap_32(&pmap->pm_pdir[pdei(sva)], 0);
 #if defined(MULTIPROCESSOR)
 			/*
 			 * XXXthorpej Redundant shootdown can happen here
@@ -2692,7 +2691,7 @@ pmap_page_remove(pg)
 #endif
 
 		/* atomically save the old PTE and zap! it */
-		opte = x86_atomic_testset_ul(&ptes[x86_btop(pve->pv_va)], 0);
+		opte = atomic_swap_32(&ptes[x86_btop(pve->pv_va)], 0);
 
 		if (opte & PG_W)
 			pve->pv_pmap->pm_stats.wired_count--;
@@ -2719,7 +2718,7 @@ pmap_page_remove(pg)
 					    pve->pv_va, opte, &cpumask);
 
 				/* zap! */
-				opte = x86_atomic_testset_ul(
+				opte = atomic_swap_32(
 				    &pve->pv_pmap->pm_pdir[pdei(pve->pv_va)],
 				    0);
 				pmap_tlb_shootdown(curpmap,
@@ -2895,7 +2894,7 @@ pmap_clear_attrs(pg, clearbits)
 				 */
 
 				/* First zap the RW bit! */
-				x86_atomic_clearbits_l(ptep, PG_RW); 
+				atomic_and_32(ptep, ~PG_RW); 
 				opte = *ptep;
 
 				/*
@@ -2911,8 +2910,7 @@ pmap_clear_attrs(pg, clearbits)
 			 */
 
 			/* zap! */
-			opte = x86_atomic_testset_ul(ptep,
-			    (opte & ~(PG_U | PG_M)));
+			opte = atomic_swap_32(ptep, (opte & ~(PG_U | PG_M)));
 
 			result |= (opte & clearbits);
 			*myattrs |= (opte & ~(clearbits));
@@ -3006,7 +3004,7 @@ pmap_write_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva,
 
 		for (/*null */; spte < epte ; spte++) {
 			if ((*spte & (PG_RW|PG_V)) == (PG_RW|PG_V)) {
-				x86_atomic_clearbits_l(spte, PG_RW); /* zap! */
+				atomic_and_32(spte, ~PG_RW); /* zap! */
 				if (*spte & PG_M)
 					pmap_tlb_shootdown(pmap,
 					    x86_ptob(spte - ptes),
@@ -3048,7 +3046,7 @@ pmap_unwire(pmap, va)
 			panic("pmap_unwire: invalid (unmapped) va 0x%lx", va);
 #endif
 		if ((ptes[x86_btop(va)] & PG_W) != 0) {
-		  x86_atomic_clearbits_l(&ptes[x86_btop(va)], PG_W);
+		  atomic_and_32(&ptes[x86_btop(va)], ~PG_W);
 			pmap->pm_stats.wired_count--;
 		}
 #ifdef DIAGNOSTIC
@@ -3197,7 +3195,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 		npte |= (opte & PG_PVLIST);
 
 		/* zap! */
-		opte = x86_atomic_testset_ul(ptep, npte);
+		opte = atomic_swap_32(ptep, npte);
 
 		/*
 		 * if this is on the PVLIST, sync R/M bit
@@ -3274,7 +3272,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 			pmap_lock_pvhs(old_pvh, new_pvh);
 
 			/* zap! */
-			opte = x86_atomic_testset_ul(ptep, npte);
+			opte = atomic_swap_32(ptep, npte);
 
 			pve = pmap_remove_pv(old_pvh, pmap, va);
 			KASSERT(pve != 0);
@@ -3303,7 +3301,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 		simple_unlock(&new_pvh->pvh_lock);
 	}
 
-	opte = x86_atomic_testset_ul(ptep, npte);   /* zap! */
+	opte = atomic_swap_32(ptep, npte);   /* zap! */
 
 shootdown_test:
 	/* Update page attributes if needed */
@@ -3516,8 +3514,8 @@ pmap_tlb_shootnow(int32_t cpumask)
 			continue;
 		if (cpumask & (1U << ci->ci_cpuid))
 			if (x86_send_ipi(ci, X86_IPI_TLB) != 0)
-				x86_atomic_clearbits_l(&self->ci_tlb_ipi_mask,
-				    (1U << ci->ci_cpuid));
+				atomic_and_32(&self->ci_tlb_ipi_mask,
+				    ~(1U << ci->ci_cpuid));
 	}
 
 	while (self->ci_tlb_ipi_mask != 0) {
@@ -3670,8 +3668,7 @@ pmap_do_tlb_shootdown_checktlbstate(struct cpu_info *ci)
 		 * mark the pmap no longer in use by this processor.
 		 */
 
-		x86_atomic_clearbits_l(&ci->ci_pmap->pm_cpus,
-		    1U << ci->ci_cpuid);
+		atomic_and_32(&ci->ci_pmap->pm_cpus, ~(1U << ci->ci_cpuid));
 		ci->ci_tlbstate = TLBSTATE_STALE;
 	}
 
@@ -3745,8 +3742,7 @@ pmap_do_tlb_shootdown(struct cpu_info *self)
 
 #ifdef MULTIPROCESSOR
 	for (CPU_INFO_FOREACH(cii, ci))
-		x86_atomic_clearbits_l(&ci->ci_tlb_ipi_mask,
-		    (1U << cpu_id));
+		atomic_and_32(&ci->ci_tlb_ipi_mask, ~(1U << cpu_id));
 #endif /* MULTIPROCESSOR */
 	__cpu_simple_unlock(&pq->pq_slock);
 
