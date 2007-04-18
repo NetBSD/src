@@ -1,4 +1,4 @@
-.\"	$NetBSD: cpu_switchto.9,v 1.4 2007/03/20 11:11:51 yamt Exp $
+.\"	$NetBSD: cpu_switchto.9,v 1.5 2007/04/18 12:19:45 yamt Exp $
 .\"
 .\" Copyright (c)2007 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\" ------------------------------------------------------------
-.Dd March 20, 2007
+.Dd April 18, 2007
 .Dt CPU_SWITCHTO 9
 .Os
 .\" ------------------------------------------------------------
@@ -50,16 +50,20 @@ and restores the context of the LWP specified by
 doesn't switch address spaces.
 .Pp
 .Fn cpu_switchto
-doesn't modify or use
+sets
 .Dv curlwp
-or
-.Dv curproc .
+to
+.Fa newlwp .
 .Pp
 .Fn cpu_switchto
-is called with spin mutexes held.
-However, implementations of
+should be called at
+.Dv IPL_SCHED .
+When
 .Fn cpu_switchto
-should not rely on it.
+returns, the caller should lower the priority level as soon as possible.
+.Pp
+.Fn cpu_switchto
+might be called with spin mutexes held.
 .Pp
 It takes the following arguments.
 .Bl -tag -width oldlwp
