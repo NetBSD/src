@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.39.2.1 2007/03/23 15:52:53 yamt Exp $
+#	$NetBSD: genassym.cf,v 1.39.2.2 2007/04/18 20:27:53 ad Exp $
 #
 # Copyright (c) 1997
 #  Jonathan Stone.  All rights reserved.
@@ -67,8 +67,7 @@ define	L_STAT			offsetof(struct lwp, l_stat)
 define	L_PROC			offsetof(struct lwp, l_proc)
 
 # Process status constants
-define	LSONPROC		LSONPROC
-
+define	L_CPU			offsetof(struct lwp, l_cpu)
 define	L_MD_REGS		offsetof(struct lwp, l_md.md_regs)
 define	L_MD_UPTE_0		offsetof(struct lwp, l_md.md_upte[0])
 define	L_MD_UPTE_1		offsetof(struct lwp, l_md.md_upte[1])
@@ -264,3 +263,6 @@ define	SF_REG_S8	offsetof(label_t, val[9])
 define	MTX_OWNER	offsetof(struct kmutex, mtx_owner)
 define	MTX_LOCK	offsetof(struct kmutex, mtx_lock)
 define	MTX_IPL		offsetof(struct kmutex, mtx_ipl)
+
+define	CPU_INFO_CURLWP		offsetof(struct cpu_info, ci_curlwp)
+define	CPU_INFO_FPCURLWP	offsetof(struct cpu_info, ci_fpcurlwp)

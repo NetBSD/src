@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.22.26.1 2007/03/12 05:47:39 rmind Exp $	*/
+/*	$NetBSD: machdep.c,v 1.22.26.2 2007/04/18 20:27:51 ad Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.22.26.1 2007/03/12 05:47:39 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.22.26.2 2007/04/18 20:27:51 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -323,8 +323,8 @@ mach_init(int argc, char **argv, yamon_env_var *envp, u_long memsize)
 	v = (void *)uvm_pageboot_alloc(USPACE); 
 	lwp0.l_addr = proc0paddr = (struct user *)v;
 	lwp0.l_md.md_regs = (struct frame *)((char *)v + USPACE) - 1;
-	curpcb = &lwp0.l_addr->u_pcb;
-	curpcb->pcb_context[11] = MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
+	proc0paddr->u_pcb.pcb_context[11] =
+	    MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
 
 	/*
 	 * Initialize debuggers, and break into them, if appropriate.
