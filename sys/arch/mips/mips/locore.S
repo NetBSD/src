@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.164.2.2 2007/03/21 21:21:42 ad Exp $	*/
+/*	$NetBSD: locore.S,v 1.164.2.3 2007/04/18 20:27:53 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -158,6 +158,7 @@ NESTED(cpu_switchto, CALLFRAME_SIZ, ra)
  * Save old context, unless the LWP is exiting.
  */
 	beq	a0, zero, 1f
+	nop
 	lw	a2, L_ADDR(a0)			# a2 = l->l_addr
 	mfc0	t0, MIPS_COP_0_STATUS
 	REG_PROLOGUE
@@ -180,7 +181,7 @@ NESTED(cpu_switchto, CALLFRAME_SIZ, ra)
 	REG_EPILOGUE
 1:
 	move	s6, a0				# s6 = old lwp
-	move	s7, a1				# s7 = new lwp
+	move	MIPS_CURLWP, a1			# s7 = new lwp
 	subu	sp, sp, CALLFRAME_SIZ
 	sw	ra, CALLFRAME_RA(sp)
 	.mask	0x80000000, -4
@@ -188,13 +189,14 @@ NESTED(cpu_switchto, CALLFRAME_SIZ, ra)
  * Switch to new context.
  */
 	lw	t2, _C_LABEL(mips_locoresw) + MIPSX_CPU_SWITCH_RESUME
-	move	a0, s7
+	move	a0, MIPS_CURLWP
 	jal	ra, t2
 	nop
+	sw	MIPS_CURLWP, CPUVAR(CURLWP)
 
 	/* Check for restartable atomic sequences (RAS) */
-	lw	t1, L_PROC(s7)
-	lw	a0, L_ADDR(s7)
+	lw	t1, L_PROC(MIPS_CURLWP)
+	lw	a0, L_ADDR(MIPS_CURLWP)
 	lw	v1, P_RASLIST(t1)
 	addu	t0, a0, USPACE - FRAME_SIZ
 	beq	v1, zero, 1f
@@ -202,25 +204,22 @@ NESTED(cpu_switchto, CALLFRAME_SIZ, ra)
 	move	a0, t1
 	jal	_C_LABEL(ras_lookup)
 	lw	a1, FRAME_EPC(t0)
-	lw	a0, L_ADDR(s7)
+	lw	a0, L_ADDR(MIPS_CURLWP)
 	li	v1, -1
 	beq	v1, v0, 1f
 	addu	t0, a0, USPACE - FRAME_SIZ
 	sw	v0, FRAME_EPC(t0)
 1:
 	/* New context is now active */
-	lw	a0, L_ADDR(s7)
-	sw	zero, _C_LABEL(want_resched)	# we've context switched
-	sw	a0, _C_LABEL(curpcb)
-
 #ifdef IPL_ICU_MASK
 	# restore ICU state
+	lw	a0, L_ADDR(MIPS_CURLWP)
 	lw	t0, U_PCB_PPL(a0)
 	sw	t0, _C_LABEL(md_imask)
 	jal	_C_LABEL(md_imask_update)
 	nop
-	lw	a0, L_ADDR(s7)			# restore pcb_context pointer.
 #endif /* IPL_ICU_MASK */
+	lw	a0, L_ADDR(MIPS_CURLWP)
 	move	v0, s6				# Save return value
 	REG_PROLOGUE
 	REG_L	t0, U_PCB_CONTEXT+SF_REG_SR(a0)
@@ -569,7 +568,7 @@ XNESTED(MachFPTrap)
 	nop
 
 /*
- * Send a floating point exception signal to the current process.
+ * Send a floating point exception signal to the current LWP.
  */
 	li	t0, 0xFFFFFF00
 	and	a1, a1, t0
@@ -579,15 +578,14 @@ XNESTED(MachFPTrap)
 	REG_EPILOGUE
 
 	move	a1, a0				# code = instruction
-	lw	a0, _C_LABEL(curlwp)		# get current process
 	jal	_C_LABEL(mips_fpuillinst)
-	nop
+	move	a0, MIPS_CURLWP			# get current LWP
 
 	b	FPReturn
 	nop
 
 /*
- * Send a FPE signal to the current process if it tripped the any of
+ * Send a FPE signal to the current LWP if it tripped the any of
  * the VZOUI bits.
  */
 3:
@@ -599,9 +597,8 @@ XNESTED(MachFPTrap)
 	ctc1	a0, MIPS_FPU_CSR
 
 	move	a1, t0				# FPU status
-	lw	a0, _C_LABEL(curlwp)		# get current process
 	jal	_C_LABEL(mips_fpuexcept)
-	nop
+	move	a0, MIPS_CURLWP			# get current LWP
 
 	b	FPReturn
 	nop

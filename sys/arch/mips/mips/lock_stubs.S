@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.2.2.1 2007/02/27 16:52:06 yamt Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.2.2.2 2007/04/18 20:27:53 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -137,10 +137,9 @@ END(_lock_cas4)
  */
 LEAF(mutex_enter)
 	LL	t0, MTX_OWNER(a0)
-	LDPTR	t1, _C_LABEL(curlwp)
 1:
 	bne	t0, zero, 2f
-	 addu	t2, zero, t1
+	 addu	t2, zero, MIPS_CURLWP
 	SC	t2, MTX_OWNER(a0)
 	beq	t2, zero, 1b
 	 LL	t0, MTX_OWNER(a0)
@@ -156,10 +155,9 @@ END(mutex_enter)
  */
 LEAF(mutex_exit)
 	LL	t0, MTX_OWNER(a0)
-	LDPTR	t1, _C_LABEL(curlwp)
 	BDSYNC
 1:
-	bne	t0, t1, 2f
+	bne	t0, MIPS_CURLWP, 2f
 	 addu	t2, zero, zero
 	SC	t2, MTX_OWNER(a0)
 	beq	t2, zero, 1b
@@ -175,13 +173,12 @@ END(mutex_exit)
  * void	mutex_spin_enter(kmutex_t *mtx);
  */
 LEAF(mutex_spin_enter)
-	lui	t2, %hi(_C_LABEL(cpu_info_store))	/* XXXSMP */
-	ori	t2, t2, %lo(_C_LABEL(cpu_info_store))	/* XXXSMP */
-	lw	t6, CPU_INFO_MTX_COUNT(t2)
+	lui	t2, L_CPU(MIPS_CURLWP)
 	li	t7, -1
+	lw	t6, CPU_INFO_MTX_COUNT(t2)
+	lw	t1, MTX_IPL(a0)
 	addu	t6, t6, t7
 	sw	t6, CPU_INFO_MTX_COUNT(t2)
-	lw	t1, MTX_IPL(a0)
 	mfc0	v0, MIPS_COP_0_STATUS
 	and	t1, t1, MIPS_INT_MASK
 	nor	t1, zero, t1
@@ -285,14 +282,14 @@ END(_lock_cas)
  */
 	nop
 	nop
+	nop
 LEAF_NOPROFILE(mutex_enter)
-	lui	t2, %hi(_C_LABEL(curlwp))
 	LDPTR	t0, (a0)	/* <- critical section start */
 _mutex_enter_start:
-	LDPTR	t1, (%lo(_C_LABEL(curlwp)))(t2)
+	nop
 	bne	t0, zero, 1f
 	 nop			
-	STPTR	t1, (a0)	/* <- critical section end */
+	STPTR	MIPS_CURLWP, (a0)/* <- critical section end */
 	j	ra
 	 nop
 1:	j	_C_LABEL(mutex_vector_enter)
@@ -303,13 +300,13 @@ END(mutex_enter)
  * int mutex_exit(kmutex_t *mtx);
  */
 	nop
+	nop
+	nop
 LEAF_NOPROFILE(mutex_exit)
-	lui	t2, %hi(_C_LABEL(curlwp))
-	LDPTR	t1, (%lo(_C_LABEL(curlwp)))(t2)
 	LDPTR	t0, (a0)	/* <- critical section start */
 _mutex_exit_start:
 	 nop
-	bne	t0, t1, 1f
+	bne	t0, MIPS_CURLWP, 1f
 	 nop			
 	STPTR	zero, (a0)	/* <- critical section end */
 	j	ra
@@ -324,13 +321,12 @@ END(mutex_exit)
  * void	mutex_spin_enter(kmutex_t *mtx);
  */
 LEAF(mutex_spin_enter)
-	lui	t2, %hi(_C_LABEL(cpu_info_store))	/* XXXSMP */
-	ori	t2, t2, %lo(_C_LABEL(cpu_info_store))	/* XXXSMP */
-	lw	t6, CPU_INFO_MTX_COUNT(t2)
+	lw	t2, L_CPU(MIPS_CURLWP)
 	li	t7, -1
+	lw	t6, CPU_INFO_MTX_COUNT(t2)
+	lw	t1, MTX_IPL(a0)
 	addu	t6, t6, t7
 	sw	t6, CPU_INFO_MTX_COUNT(t2)
-	lw	t1, MTX_IPL(a0)
 	mfc0	v0, MIPS_COP_0_STATUS
 	and	t1, t1, MIPS_INT_MASK
 	nor	t1, zero, t1
@@ -413,26 +409,24 @@ END(_lock_ras)
 LEAF(mutex_spin_exit)
 #if defined(DIAGNOSTIC)
 	lw	t0, MTX_LOCK(a0)
-	lui	t1, %hi(_C_LABEL(cpu_info_store))	/* XXXSMP */
-	beq	t0, zero, 2f
-	 ori	t1, t1, %lo(_C_LABEL(cpu_info_store))	/* XXXSMP */
 	SYNC
+	beq	t0, zero, 2f
+	 lw	t1, L_CPU(MIPS_CURLWP)
 	sw	zero, MTX_LOCK(a0)
 #elif defined(MULTIPROCESSOR)
 	SYNC
+	lw	t1, L_CPU(MIPS_CURLWP)
 	sw      zero, MTX_LOCK(a0)
-	lui	t1, %hi(_C_LABEL(cpu_info_store))	/* XXXSMP */
-	ori	t1, t1, %lo(_C_LABEL(cpu_info_store))	/* XXXSMP */
 #else
-	lui	t1, %hi(_C_LABEL(cpu_info_store))
-	ori	t1, t1, %lo(_C_LABEL(cpu_info_store))
+	lw	t1, L_CPU(MIPS_CURLWP)
+	nop
 #endif
 	lw	t0, CPU_INFO_MTX_COUNT(t1)
+	lw	a0, CPU_INFO_MTX_OLDSPL(t1)
 	addiu	t0, t0, 1
 	sw	t0, CPU_INFO_MTX_COUNT(t1)
 	bne	t0, zero, 1f
-	 lw	a0, CPU_INFO_MTX_OLDSPL(t1)
-	mfc0	v0, MIPS_COP_0_STATUS
+	 mfc0	v0, MIPS_COP_0_STATUS
 	and	a0, a0, (MIPS_INT_MASK | MIPS_SR_INT_IE)
 	li	v1, ~(MIPS_INT_MASK | MIPS_SR_INT_IE)
 	and	v1, v1, v0

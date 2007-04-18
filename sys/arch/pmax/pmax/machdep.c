@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.215.2.2 2007/03/12 05:49:51 rmind Exp $	*/
+/*	$NetBSD: machdep.c,v 1.215.2.3 2007/04/18 20:27:55 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.215.2.2 2007/03/12 05:49:51 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.215.2.3 2007/04/18 20:27:55 ad Exp $");
 
 #include "fs_mfs.h"
 #include "opt_ddb.h"
@@ -345,8 +345,8 @@ mach_init(argc, argv, code, cv, bim, bip)
 	lwp0.l_addr = proc0paddr = (struct user *)kernend;
 	lwp0.l_md.md_regs = (struct frame *)(kernend + USPACE) - 1;
 	memset(lwp0.l_addr, 0, USPACE);
-	curpcb = &lwp0.l_addr->u_pcb;
-	curpcb->pcb_context[11] = MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
+	proc0paddr->u_pcb.pcb_context[11] =
+	    MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
 
 	kernend += USPACE;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.80.2.2 2007/03/21 21:21:41 ad Exp $	*/
+/*	$NetBSD: cpu.h,v 1.80.2.3 2007/04/18 20:27:52 ad Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -58,6 +58,9 @@ struct cpu_info {
 	u_long ci_divisor_delay;	/* for delay/DELAY */
 	u_long ci_divisor_recip;	/* scaled reciprocal of previous;
 					   see below */
+	struct lwp *ci_curlwp;		/* currently running lwp */
+	struct lwp *ci_fpcurlwp;	/* the current FPU owner */
+	int ci_want_resched;		/* user preemption pending */
 	int ci_mtx_count;		/* negative count of held mutexes */
 	int ci_mtx_oldspl;		/* saved SPL value */
 };
@@ -146,11 +149,22 @@ do {									\
 #define	CPU_ARCH_MIPS32	(1 << 5)
 #define	CPU_ARCH_MIPS64	(1 << 6)
 
-#ifndef _LOCORE
-extern struct cpu_info cpu_info_store;
+/* Note: must be kept in sync with -ffixed-?? Makefile.mips. */
+#define MIPS_CURLWP             $23
+#define MIPS_CURLWP_QUOTED      "$23"
+#define MIPS_CURLWP_CARD	23
+#define	MIPS_CURLWP_FRAME(x)	FRAME_S7(x)
 
-#define	curcpu()	(&cpu_info_store)
-#define	cpu_number()	(0)
+#ifndef _LOCORE
+
+extern struct cpu_info cpu_info_store;
+register struct lwp *mips_curlwp asm(MIPS_CURLWP_QUOTED);
+
+#define	curlwp			mips_curlwp
+#define	curcpu()		(curlwp->l_cpu)
+#define	curpcb			((struct pcb *)curlwp->l_addr)
+#define	fpcurlwp		(curcpu()->ci_fpcurlwp)
+#define	cpu_number()		(0)
 #define	cpu_proc_fork(p1, p2)
 
 /* XXX simonb
@@ -347,16 +361,12 @@ do {									\
 
 #define aston(l)		((l)->l_md.md_astpending = 1)
 
-extern int want_resched;		/* resched() was called */
-
 /*
  * Misc prototypes and variable declarations.
  */
 struct lwp;
 struct user;
 
-extern struct lwp *fpcurlwp;	/* the current FPU owner */
-extern struct pcb *curpcb;	/* the current running pcb */
 extern struct segtab *segbase;	/* current segtab base */
 
 /* trap.c */

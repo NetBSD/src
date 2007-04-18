@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mips,v 1.44 2006/08/27 21:44:15 matt Exp $
+#	$NetBSD: Makefile.mips,v 1.44.8.1 2007/04/18 20:27:52 ad Exp $
 
 # Makefile for NetBSD
 #
@@ -41,10 +41,12 @@ GENASSYM_CONF=	${MIPS}/mips/genassym.cf
 ##
 ## (2) compile settings
 ##
+## Note: -ffixed-?? must be kept in sync with cpu.h.
+##
 CPPFLAGS+=	-D${MACHINE}
 DEFGP?=		-G 0
 GP?=		${DEFGP}
-CFLAGS+=	${GP} -mno-abicalls -msoft-float
+CFLAGS+=	${GP} -mno-abicalls -msoft-float -ffixed-23
 .if ${MACHINE_ARCH} == "mips64eb" || ${MACHINE_ARCH} == "mips64el"
 CFLAGS+=	-msym32
 .endif

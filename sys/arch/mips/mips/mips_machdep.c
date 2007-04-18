@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.192.2.2 2007/03/21 21:21:43 ad Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.192.2.3 2007/04/18 20:27:54 ad Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -119,7 +119,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.192.2.2 2007/03/21 21:21:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.192.2.3 2007/04/18 20:27:54 ad Exp $");
 
 #include "opt_cputype.h"
 
@@ -210,8 +210,6 @@ int mips3_pg_cached;
 u_int mips3_pg_shift;
 
 struct	user *proc0paddr;
-struct	lwp  *fpcurlwp;
-struct	pcb  *curpcb;
 struct	segtab *segbase;
 
 void *	msgbufaddr;
@@ -956,6 +954,11 @@ mips_vector_init(void)
 	    !(mips_cpu_flags & CPU_MIPS_NO_WAIT))
 		CPU_IDLE = (long *)mips_wait_idle;
 #endif /* (MIPS3 && !MIPS3_5900) || MIPS32 || MIPS64 */
+
+	/* Set-up curlwp/curcpu. */
+	lwp0.l_cpu = &cpu_info_store;
+	cpu_info_store.ci_curlwp = &lwp0;
+	curlwp = &lwp0;
 }
 
 void
@@ -1770,11 +1773,11 @@ cpu_need_resched(struct cpu_info *ci, int flags)
 {
 	bool immed = (flags & RESCHED_IMMED) != 0;
 
-	if (want_resched && !immed)
+	if (ci->ci_want_resched && !immed)
 		return;
-	want_resched = 1;
+	ci->ci_want_resched = 1;
 
-	if (curlwp != curcpu()->ci_data.cpu_idlelwp)
+	if (curlwp != ci->ci_data.cpu_idlelwp)
 		aston(curlwp);
 }
 
@@ -1783,6 +1786,6 @@ cpu_idle(void)
 {
 	void (*mach_idle)(void) = (void (*)(void))CPU_IDLE;
 
-	while (!want_resched)
+	while (!curcpu()->ci_want_resched)
 		(*mach_idle)();
 }
