@@ -1,4 +1,4 @@
-/*	$NetBSD: arm_machdep.c,v 1.14 2007/03/09 19:21:57 thorpej Exp $	*/
+/*	$NetBSD: arm_machdep.c,v 1.14.8.1 2007/04/18 07:34:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -73,11 +73,10 @@
 
 #include "opt_compat_netbsd.h"
 #include "opt_execfmt.h"
-#include "opt_arm_debug.h"
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.14 2007/03/09 19:21:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.14.8.1 2007/04/18 07:34:42 thorpej Exp $");
 
 #include <sys/exec.h>
 #include <sys/proc.h>
@@ -103,24 +102,6 @@ __KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.14 2007/03/09 19:21:57 thorpej Exp
  * relocated vectors.
  */
 vaddr_t	vector_page;
-
-#if defined(ARM_LOCK_CAS_DEBUG)
-/*
- * Event counters for tracking activity of the RAS-based _lock_cas()
- * routine.
- */
-struct evcnt _lock_cas_restart =
-    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "_lock_cas", "restart");
-EVCNT_ATTACH_STATIC(_lock_cas_restart);
-
-struct evcnt _lock_cas_success =
-    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "_lock_cas", "success");
-EVCNT_ATTACH_STATIC(_lock_cas_success);
-
-struct evcnt _lock_cas_fail =
-    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "_lock_cas", "fail");
-EVCNT_ATTACH_STATIC(_lock_cas_fail);
-#endif /* ARM_LOCK_CAS_DEBUG */
 
 /*
  * Clear registers on exec
