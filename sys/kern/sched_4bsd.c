@@ -1,4 +1,4 @@
-/*	$NetBSD: sched_4bsd.c,v 1.1.2.25 2007/04/16 23:51:35 ad Exp $	*/
+/*	$NetBSD: sched_4bsd.c,v 1.1.2.26 2007/04/18 12:35:42 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.1.2.25 2007/04/16 23:51:35 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.1.2.26 2007/04/18 12:35:42 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -516,8 +516,9 @@ sched_setrunnable(struct lwp *l)
 bool
 sched_curcpu_runnable_p(void)
 {
+	runqueue_t *rq = curcpu()->ci_schedstate.spc_sched_info;
 
-	return global_queue.rq_bitmap != 0;
+	return (global_queue.rq_bitmap | rq->rq_bitmap) != 0;
 }
 
 void
