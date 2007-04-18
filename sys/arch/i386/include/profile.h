@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.h,v 1.26 2007/02/09 21:55:05 ad Exp $	*/
+/*	$NetBSD: profile.h,v 1.26.12.1 2007/04/18 04:45:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -36,7 +36,7 @@
 #endif
 
 #include <machine/cpufunc.h>
-#include <machine/atomic.h>
+#include <sys/atomic.h>
 
 #define	_MCOUNT_DECL static __inline void _mcount
 
@@ -78,7 +78,7 @@ __cpu_simple_lock_t __mcount_lock;
 static inline void
 MCOUNT_ENTER_MP(void)
 {
-	while (x86_atomic_testset_b(&__mcount_lock, __SIMPLELOCK_LOCKED)
+	while (atomic_swap_8(&__mcount_lock, __SIMPLELOCK_LOCKED)
 	    != __SIMPLELOCK_UNLOCKED) {
 		while (__mcount_lock == __SIMPLELOCK_LOCKED)
 			;
