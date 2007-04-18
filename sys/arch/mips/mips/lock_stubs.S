@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.2.2.2 2007/04/18 20:27:53 ad Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.2.2.3 2007/04/18 20:57:06 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -173,7 +173,7 @@ END(mutex_exit)
  * void	mutex_spin_enter(kmutex_t *mtx);
  */
 LEAF(mutex_spin_enter)
-	lui	t2, L_CPU(MIPS_CURLWP)
+	lw	t2, L_CPU(MIPS_CURLWP)
 	li	t7, -1
 	lw	t6, CPU_INFO_MTX_COUNT(t2)
 	lw	t1, MTX_IPL(a0)
