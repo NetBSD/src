@@ -1,4 +1,4 @@
-/* $NetBSD: ipifuncs.c,v 1.34 2007/02/09 21:55:01 ad Exp $ */
+/* $NetBSD: ipifuncs.c,v 1.34.12.1 2007/04/18 04:16:36 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.34 2007/02/09 21:55:01 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.34.12.1 2007/04/18 04:16:36 thorpej Exp $");
 
 /*
  * Interprocessor interrupt handlers.
@@ -50,10 +50,10 @@ __KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.34 2007/02/09 21:55:01 ad Exp $");
 #include <sys/proc.h>
 #include <sys/systm.h>
 #include <sys/reboot.h>
+#include <sys/atomic.h>
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/atomic.h>
 #include <machine/alpha_cpu.h>
 #include <machine/alpha.h>
 #include <machine/cpu.h>
@@ -138,7 +138,7 @@ alpha_ipi_process(struct cpu_info *ci, struct trapframe *framep)
 	}
 #endif
 
-	pending_ipis = atomic_loadlatch_ulong(&ci->ci_ipis, 0);
+	pending_ipis = atomic_swap_ulong(&ci->ci_ipis, 0);
 
 	/*
 	 * For various reasons, it is possible to have spurious calls
@@ -173,7 +173,7 @@ alpha_send_ipi(u_long cpu_id, u_long ipimask)
 		panic("alpha_send_ipi: CPU %ld not running", cpu_id);
 #endif
 
-	atomic_setbits_ulong(&cpu_info[cpu_id]->ci_ipis, ipimask);
+	atomic_or_ulong(&cpu_info[cpu_id]->ci_ipis, ipimask);
 	alpha_pal_wripir(cpu_id);
 }
 
@@ -304,14 +304,14 @@ alpha_ipi_pause(struct cpu_info *ci, struct trapframe *framep)
 	/* Point debuggers at our trapframe for register state. */
 	ci->ci_db_regs = framep;
 
-	atomic_setbits_ulong(&ci->ci_flags, CPUF_PAUSED);
+	atomic_or_ulong(&ci->ci_flags, CPUF_PAUSED);
 
 	/* Spin with interrupts disabled until we're resumed. */
 	do {
 		alpha_mb();
 	} while (cpus_paused & cpumask);
 
-	atomic_clearbits_ulong(&ci->ci_flags, CPUF_PAUSED);
+	atomic_and_ulong(&ci->ci_flags, ~CPUF_PAUSED);
 
 	ci->ci_db_regs = NULL;
 

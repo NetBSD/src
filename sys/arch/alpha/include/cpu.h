@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.67 2007/02/16 02:53:44 ad Exp $ */
+/* $NetBSD: cpu.h,v 1.67.12.1 2007/04/18 04:16:37 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -171,11 +171,11 @@ struct cpu_info {
 #endif
 };
 
-#define	CPUF_PRIMARY	0x01		/* CPU is primary CPU */
-#define	CPUF_PRESENT	0x02		/* CPU is present */
-#define	CPUF_RUNNING	0x04		/* CPU is running */
-#define	CPUF_PAUSED	0x08		/* CPU is paused */
-#define	CPUF_FPUSAVE	0x10		/* CPU is currently in fpusave_cpu() */
+#define	CPUF_PRIMARY	0x01UL		/* CPU is primary CPU */
+#define	CPUF_PRESENT	0x02UL		/* CPU is present */
+#define	CPUF_RUNNING	0x04UL		/* CPU is running */
+#define	CPUF_PAUSED	0x08UL		/* CPU is paused */
+#define	CPUF_FPUSAVE	0x10UL		/* CPU is currently in fpusave_cpu() */
 
 extern	struct cpu_info cpu_info_primary;
 extern	struct cpu_info *cpu_info_list;

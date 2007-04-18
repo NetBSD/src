@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.73 2005/12/24 20:06:46 perry Exp $ */
+/* $NetBSD: cpu.c,v 1.73.36.1 2007/04/18 04:16:36 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.73 2005/12/24 20:06:46 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.73.36.1 2007/04/18 04:16:36 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -77,10 +77,10 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.73 2005/12/24 20:06:46 perry Exp $");
 #include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/user.h>
+#include <sys/atomic.h>
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/atomic.h>
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
 #include <machine/cpuvar.h>
@@ -366,8 +366,8 @@ recognized:
 		cpu_announce_extensions(ci);
 #if defined(MULTIPROCESSOR)
 		ci->ci_flags |= CPUF_PRIMARY|CPUF_RUNNING;
-		atomic_setbits_ulong(&cpus_booted, (1UL << ma->ma_slot));
-		atomic_setbits_ulong(&cpus_running, (1UL << ma->ma_slot));
+		atomic_or_ulong(&cpus_booted, (1UL << ma->ma_slot));
+		atomic_or_ulong(&cpus_running, (1UL << ma->ma_slot));
 #endif /* MULTIPROCESSOR */
 	} else {
 #if defined(MULTIPROCESSOR)
@@ -445,8 +445,8 @@ cpu_boot_secondary_processors(void)
 		 */
 		ci->ci_next = cpu_info_list->ci_next;
 		cpu_info_list->ci_next = ci;
-		atomic_setbits_ulong(&ci->ci_flags, CPUF_RUNNING);
-		atomic_setbits_ulong(&cpus_running, (1U << i));
+		atomic_or_ulong(&ci->ci_flags, CPUF_RUNNING);
+		atomic_or_ulong(&cpus_running, (1U << i));
 	}
 }
 
@@ -528,10 +528,10 @@ cpu_pause_resume(u_long cpu_id, int pause)
 	u_long cpu_mask = (1UL << cpu_id);
 
 	if (pause) {
-		atomic_setbits_ulong(&cpus_paused, cpu_mask);
+		atomic_or_ulong(&cpus_paused, cpu_mask);
 		alpha_send_ipi(cpu_id, ALPHA_IPI_PAUSE);
 	} else
-		atomic_clearbits_ulong(&cpus_paused, cpu_mask);
+		atomic_and_ulong(&cpus_paused, ~cpu_mask);
 }
 
 void
@@ -559,8 +559,8 @@ cpu_halt(void)
 	pcsp->pcs_flags &= ~(PCS_RC | PCS_HALT_REQ);
 	pcsp->pcs_flags |= PCS_HALT_STAY_HALTED;
 
-	atomic_clearbits_ulong(&cpus_running, (1UL << cpu_id));
-	atomic_clearbits_ulong(&cpus_booted, (1U << cpu_id));
+	atomic_and_ulong(&cpus_running, ~(1UL << cpu_id));
+	atomic_and_ulong(&cpus_booted, ~(1U << cpu_id));
 
 	alpha_pal_halt();
 	/* NOTREACHED */
@@ -573,7 +573,7 @@ cpu_hatch(struct cpu_info *ci)
 	u_long cpumask = (1UL << cpu_id);
 
 	/* Mark the kernel pmap active on this processor. */
-	atomic_setbits_ulong(&pmap_kernel()->pm_cpus, cpumask);
+	atomic_or_ulong(&pmap_kernel()->pm_cpus, cpumask);
 
 	/* Initialize trap vectors for this processor. */
 	trap_init();
@@ -581,7 +581,7 @@ cpu_hatch(struct cpu_info *ci)
 	/* Yahoo!  We're running kernel code!  Announce it! */
 	cpu_announce_extensions(ci);
 
-	atomic_setbits_ulong(&cpus_booted, cpumask);
+	atomic_or_ulong(&cpus_booted, cpumask);
 
 	/*
 	 * Spin here until we're told we can start.
@@ -627,7 +627,7 @@ cpu_iccb_send(long cpu_id, const char *msg)
 	 */
 	strcpy(pcsp->pcs_iccb.iccb_rxbuf, msg);
 	pcsp->pcs_iccb.iccb_rxlen = strlen(msg);
-	atomic_setbits_ulong(&hwrpb->rpb_rxrdy, cpumask);
+	atomic_or_64(&hwrpb->rpb_rxrdy, cpumask);
 
 	/* Wait for the message to be received. */
 	for (timeout = 10000; timeout != 0; timeout--) {

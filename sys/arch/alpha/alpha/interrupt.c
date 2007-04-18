@@ -1,4 +1,4 @@
-/* $NetBSD: interrupt.c,v 1.72 2007/02/09 21:55:01 ad Exp $ */
+/* $NetBSD: interrupt.c,v 1.72.12.1 2007/04/18 04:16:36 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.72 2007/02/09 21:55:01 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.72.12.1 2007/04/18 04:16:36 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,6 +82,7 @@ __KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.72 2007/02/09 21:55:01 ad Exp $");
 #include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/time.h>
+#include <sys/atomic.h>
 
 #include <machine/cpuvar.h>
 
@@ -90,7 +91,6 @@ __KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.72 2007/02/09 21:55:01 ad Exp $");
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/atomic.h>
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
 #include <machine/reg.h>
@@ -214,7 +214,7 @@ interrupt(unsigned long a0, unsigned long a1, unsigned long a2,
 	switch (a0) {
 	case ALPHA_INTR_XPROC:	/* interprocessor interrupt */
 #if defined(MULTIPROCESSOR)
-		atomic_add_ulong(&ci->ci_intrdepth, 1);
+		atomic_inc_ulong(&ci->ci_intrdepth);
 
 		alpha_ipi_process(ci, framep);
 
@@ -226,7 +226,7 @@ interrupt(unsigned long a0, unsigned long a1, unsigned long a2,
 		    hwrpb->rpb_txrdy != 0)
 			cpu_iccb_receive();
 
-		atomic_sub_ulong(&ci->ci_intrdepth, 1);
+		atomic_dec_ulong(&ci->ci_intrdepth);
 #else
 		printf("WARNING: received interprocessor interrupt!\n");
 #endif /* MULTIPROCESSOR */
@@ -277,14 +277,14 @@ interrupt(unsigned long a0, unsigned long a1, unsigned long a2,
 		break;
 
 	case ALPHA_INTR_ERROR:	/* Machine Check or Correctable Error */
-		atomic_add_ulong(&ci->ci_intrdepth, 1);
+		atomic_inc_ulong(&ci->ci_intrdepth);
 		a0 = alpha_pal_rdmces();
 		if (platform.mcheck_handler != NULL &&
 		    (void *)framep->tf_regs[FRAME_PC] != XentArith)
 			(*platform.mcheck_handler)(a0, framep, a1, a2);
 		else
 			machine_check(a0, framep, a1, a2);
-		atomic_sub_ulong(&ci->ci_intrdepth, 1);
+		atomic_dec_ulong(&ci->ci_intrdepth);
 		break;
 
 	case ALPHA_INTR_DEVICE:	/* I/O device interrupt */
@@ -293,8 +293,8 @@ interrupt(unsigned long a0, unsigned long a1, unsigned long a2,
 
 		KDASSERT(a1 >= SCB_IOVECBASE && a1 < SCB_SIZE);
 
-		atomic_add_ulong(&sc->sc_evcnt_device.ev_count, 1);
-		atomic_add_ulong(&ci->ci_intrdepth, 1);
+		atomic_inc_64(&sc->sc_evcnt_device.ev_count);
+		atomic_inc_ulong(&ci->ci_intrdepth);
 
 		KERNEL_LOCK(1, NULL);
 
@@ -305,7 +305,7 @@ interrupt(unsigned long a0, unsigned long a1, unsigned long a2,
 
 		KERNEL_UNLOCK_ONE(NULL);
 
-		atomic_sub_ulong(&ci->ci_intrdepth, 1);
+		atomic_dec_ulong(&ci->ci_intrdepth);
 		break;
 	    }
 
@@ -579,7 +579,7 @@ softintr_dispatch()
 		panic("softintr_dispatch: after kernel lock at ipl %ld", n);
 #endif
 
-	while ((n = atomic_loadlatch_ulong(&ssir, 0)) != 0) {
+	while ((n = atomic_swap_ulong(&ssir, 0)) != 0) {
 		for (i = 0; i < SI_NQUEUES; i++) {
 			if ((n & (1 << i)) == 0)
 				continue;

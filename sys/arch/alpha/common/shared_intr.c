@@ -1,4 +1,4 @@
-/* $NetBSD: shared_intr.c,v 1.18 2005/12/11 12:16:16 christos Exp $ */
+/* $NetBSD: shared_intr.c,v 1.18.36.1 2007/04/18 04:16:37 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: shared_intr.c,v 1.18 2005/12/11 12:16:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: shared_intr.c,v 1.18.36.1 2007/04/18 04:16:37 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -102,7 +102,7 @@ alpha_shared_intr_dispatch(struct alpha_shared_intr *intr, unsigned int num)
 	struct alpha_shared_intrhand *ih;
 	int rv, handled;
 
-	atomic_add_ulong(&intr[num].intr_evcnt.ev_count, 1);
+	atomic_inc_64(&intr[num].intr_evcnt.ev_count);
 
 	ih = intr[num].intr_q.tqh_first;
 	handled = 0;
