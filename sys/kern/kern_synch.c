@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.177.2.24 2007/04/16 23:31:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.177.2.25 2007/04/18 10:14:55 yamt Exp $");
 
 #include "opt_kstack.h"
 #include "opt_lockdebug.h"
@@ -864,11 +864,11 @@ sched_pstats(void *arg)
 		}
 
 		mutex_spin_enter(&p->p_stmutex);
+		p->p_pctcpu = (p->p_pctcpu * ccpu) >> FSHIFT;
 		if (minslp < 1) {
 			/*
 			 * p_pctcpu is only for ps.
 			 */
-			p->p_pctcpu = (p->p_pctcpu * ccpu) >> FSHIFT;
 			clkhz = stathz != 0 ? stathz : hz;
 #if	(FSHIFT >= CCPU_SHIFT)
 			p->p_pctcpu += (clkhz == 100)?
