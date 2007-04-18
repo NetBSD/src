@@ -1,4 +1,4 @@
-/*      $NetBSD: psbuf.c,v 1.3 2007/02/27 13:28:39 pooka Exp $        */
+/*      $NetBSD: psbuf.c,v 1.4 2007/04/18 15:35:02 pooka Exp $        */
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: psbuf.c,v 1.3 2007/02/27 13:28:39 pooka Exp $");
+__RCSID("$NetBSD: psbuf.c,v 1.4 2007/04/18 15:35:02 pooka Exp $");
 #endif /* !lint */
 
 /*
@@ -85,7 +85,7 @@ psbuf_read(struct psshfs_ctx *pctx, struct psbuf *pb)
 
 	if (pb->state == PSBUF_GETLEN) {
 		memcpy(&pb->len, pb->buf, 4);
-		pb->len = htonl(pb->len);
+		pb->len = ntohl(pb->len);
 		pb->remain = pb->len;
 		pb->offset = 0;
 
