@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.113 2007/03/04 05:59:10 christos Exp $ */
+/* $NetBSD: trap.c,v 1.113.8.1 2007/04/18 04:16:37 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.113 2007/03/04 05:59:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.113.8.1 2007/04/18 04:16:37 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -647,10 +647,10 @@ alpha_enable_fp(struct lwp *l, int check)
 	 * a trap to use it again" event.
 	 */
 	if ((l->l_md.md_flags & MDP_FPUSED) == 0) {
-		atomic_add_ulong(&fpevent_use.ev_count, 1);
+		atomic_inc_64(&fpevent_use.ev_count);
 		l->l_md.md_flags |= MDP_FPUSED;
 	} else
-		atomic_add_ulong(&fpevent_reuse.ev_count, 1);
+		atomic_inc_64(&fpevent_reuse.ev_count);
 
 	alpha_pal_wrfen(1);
 	restorefpstate(&l->l_addr->u_pcb.pcb_fp);

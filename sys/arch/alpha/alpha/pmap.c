@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.222 2007/03/14 21:39:39 he Exp $ */
+/* $NetBSD: pmap.c,v 1.222.4.1 2007/04/18 04:16:36 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -145,7 +145,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.222 2007/03/14 21:39:39 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.222.4.1 2007/04/18 04:16:36 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -154,13 +154,13 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.222 2007/03/14 21:39:39 he Exp $");
 #include <sys/pool.h>
 #include <sys/user.h>
 #include <sys/buf.h>
+#include <sys/atomic.h>
 #ifdef SYSVSHM
 #include <sys/shm.h>
 #endif
 
 #include <uvm/uvm.h>
 
-#include <machine/atomic.h>
 #include <machine/cpu.h>
 #if defined(_PMAP_MAY_USE_PROM_CONSOLE) || defined(MULTIPROCESSOR)
 #include <machine/rpb.h>
@@ -790,8 +790,8 @@ do {									\
  *
  *	Increment or decrement a pmap statistic.
  */
-#define	PMAP_STAT_INCR(s, v)	atomic_add_ulong((unsigned long *)(&(s)), (v))
-#define	PMAP_STAT_DECR(s, v)	atomic_sub_ulong((unsigned long *)(&(s)), (v))
+#define	PMAP_STAT_INCR(s, v)	atomic_add_long((unsigned long *)(&(s)), (v))
+#define	PMAP_STAT_DECR(s, v)	atomic_add_long((unsigned long *)(&(s)), -(v))
 
 /*
  * pmap_bootstrap:
@@ -1013,8 +1013,7 @@ pmap_bootstrap(paddr_t ptaddr, u_int maxasn, u_long ncpuids)
 	/*
 	 * Mark the kernel pmap `active' on this processor.
 	 */
-	atomic_setbits_ulong(&pmap_kernel()->pm_cpus,
-	    (1UL << cpu_number()));
+	atomic_or_ulong(&pmap_kernel()->pm_cpus, (1UL << cpu_number()));
 }
 
 #ifdef _PMAP_MAY_USE_PROM_CONSOLE
@@ -2281,7 +2280,7 @@ pmap_activate(struct lwp *l)
 #endif
 
 	/* Mark the pmap in use by this processor. */
-	atomic_setbits_ulong(&pmap->pm_cpus, (1UL << cpu_id));
+	atomic_or_ulong(&pmap->pm_cpus, (1UL << cpu_id));
 
 	/* Allocate an ASN. */
 	pmap_asn_alloc(pmap, cpu_id);
@@ -2316,7 +2315,7 @@ pmap_deactivate(struct lwp *l)
 	/*
 	 * Mark the pmap no longer in use by this processor.
 	 */
-	atomic_clearbits_ulong(&pmap->pm_cpus, (1UL << cpu_number()));
+	atomic_and_ulong(&pmap->pm_cpus, ~(1UL << cpu_number()));
 }
 
 #if defined(MULTIPROCESSOR)
@@ -3765,7 +3764,7 @@ pmap_asn_alloc(pmap_t pmap, long cpu_id)
 	 * Have a new ASN, so there's no need to sync the I-stream
 	 * on the way back out to userspace.
 	 */
-	atomic_clearbits_ulong(&pmap->pm_needisync, (1UL << cpu_id));
+	atomic_and_ulong(&pmap->pm_needisync, ~(1UL << cpu_id));
 }
 
 #if defined(MULTIPROCESSOR)

@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.59 2007/02/16 02:53:44 ad Exp $ */
+/* $NetBSD: intr.h,v 1.59.12.1 2007/04/18 04:16:38 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -70,8 +70,8 @@
 #include <sys/device.h>
 #include <sys/lock.h>
 #include <sys/queue.h>
+#include <sys/atomic.h>
 
-#include <machine/atomic.h>
 #include <machine/cpu.h>
 
 /*
@@ -242,7 +242,7 @@ struct alpha_shared_intr {
 	((asi)[num].intr_maxstrays != 0 &&				\
 	 (asi)[num].intr_nstrays == (asi)[num].intr_maxstrays)
 
-#define	setsoft(x)	atomic_setbits_ulong(&ssir, 1 << (x))
+#define	setsoft(x)	atomic_or_ulong(&ssir, 1 << (x))
 
 struct alpha_soft_intrhand {
 	TAILQ_ENTRY(alpha_soft_intrhand)

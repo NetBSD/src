@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.68 2007/02/21 22:59:37 thorpej Exp $ */
+/* $NetBSD: pmap.h,v 1.68.10.1 2007/04/18 04:16:38 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -359,8 +359,7 @@ do {									\
 	u_long cpu_mask = (1UL << cpu_number());			\
 									\
 	if ((pmap)->pm_needisync & cpu_mask) {				\
-		atomic_clearbits_ulong(&(pmap)->pm_needisync,		\
-		    cpu_mask);						\
+		atomic_and_ulong(&(pmap)->pm_needisync,	cpu_mask);	\
 		alpha_pal_imb();					\
 	}								\
 } while (0)
