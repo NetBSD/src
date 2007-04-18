@@ -1,4 +1,4 @@
-/*	$NetBSD: fs.c,v 1.6 2007/04/12 21:08:49 pooka Exp $	*/
+/*	$NetBSD: fs.c,v 1.7 2007/04/18 15:53:20 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fs.c,v 1.6 2007/04/12 21:08:49 pooka Exp $");
+__RCSID("$NetBSD: fs.c,v 1.7 2007/04/18 15:53:20 pooka Exp $");
 #endif /* !lint */
 
 #include <err.h>
@@ -67,8 +67,7 @@ psshfs_domount(struct puffs_usermount *pu)
 		if (rv == -1)
 			err(1, "write handshake");
 
-	psbuf_destroy(pb);
-	pb = psbuf_make(PSB_IN);
+	psbuf_recycle(pb, PSB_IN);
 
 	while ((rv = psbuf_read(pctx, pb)) != 1)
 		if (rv == -1)
