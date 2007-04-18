@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.120 2007/04/17 05:52:03 lukem Exp $	*/
+/*	$NetBSD: cmds.c,v 1.121 2007/04/18 01:39:04 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-2007 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: cmds.c,v 1.120 2007/04/17 05:52:03 lukem Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.121 2007/04/18 01:39:04 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -131,7 +131,7 @@ __RCSID("$NetBSD: cmds.c,v 1.120 2007/04/17 05:52:03 lukem Exp $");
 #include "ftp_var.h"
 #include "version.h"
 
-struct	types {
+static struct types {
 	char	*t_name;
 	char	*t_mode;
 	int	t_type;
@@ -145,30 +145,43 @@ struct	types {
 	{ NULL }
 };
 
-sigjmp_buf	 jabort;
-const char	*mname;
+static sigjmp_buf	 jabort;
 
 static int	confirm(const char *, const char *);
+static void	mintr(int);
+static void	mabort(const char *);
 
 static const char *doprocess(char *, size_t, const char *, int, int, int);
 static const char *domap(char *, size_t, const char *);
 static const char *docase(char *, size_t, const char *);
 static const char *dotrans(char *, size_t, const char *);
 
+/*
+ * Confirm if "cmd" is to be performed upon "file".
+ * If "file" is NULL, generate a "Continue with" prompt instead.
+ */
 static int
 confirm(const char *cmd, const char *file)
 {
 	const char *errormsg;
 	char line[BUFSIZ];
+	const char *promptleft, *promptright;
 
 	if (!interactive || confirmrest)
 		return (1);
+	if (file == NULL) {
+		promptleft = "Continue with";
+		promptright = cmd;
+	} else {
+		promptleft = cmd;
+		promptright = file;
+	}
 	while (1) {
-		fprintf(ttyout, "%s %s [anpqy?]? ", cmd, file);
+		fprintf(ttyout, "%s %s [anpqy?]? ", promptleft, promptright);
 		(void)fflush(ttyout);
 		if (getline(stdin, line, sizeof(line), &errormsg) < 0) {
 			mflag = 0;
-			fprintf(ttyout, "%s; %s aborted\n", errormsg, mname);
+			fprintf(ttyout, "%s; %s aborted\n", errormsg, cmd);
 			return (0);
 		}
 		switch (tolower((unsigned char)*line)) {
@@ -183,7 +196,7 @@ confirm(const char *cmd, const char *file)
 				break;
 			case 'q':
 				mflag = 0;
-				fprintf(ttyout, "%s aborted.\n", mname);
+				fprintf(ttyout, "%s aborted.\n", cmd);
 				/* FALLTHROUGH */
 			case 'n':
 				return (0);
@@ -458,11 +471,10 @@ mput(int argc, char *argv[])
 		code = -1;
 		return;
 	}
-	mname = argv[0];
 	mflag = 1;
 	oldintr = xsignal(SIGINT, mintr);
 	if (sigsetjmp(jabort, 1))
-		mabort();
+		mabort(argv[0]);
 	if (proxy) {
 		char *cp;
 
@@ -480,7 +492,7 @@ mput(int argc, char *argv[])
 				if (!mflag && fromatty) {
 					ointer = interactive;
 					interactive = 1;
-					if (confirm("Continue with", "mput")) {
+					if (confirm(argv[0], NULL)) {
 						mflag++;
 					}
 					interactive = ointer;
@@ -504,7 +516,7 @@ mput(int argc, char *argv[])
 				if (!mflag && fromatty) {
 					ointer = interactive;
 					interactive = 1;
-					if (confirm("Continue with", "mput")) {
+					if (confirm(argv[0], NULL)) {
 						mflag++;
 					}
 					interactive = ointer;
@@ -532,7 +544,7 @@ mput(int argc, char *argv[])
 				if (!mflag && fromatty) {
 					ointer = interactive;
 					interactive = 1;
-					if (confirm("Continue with", "mput")) {
+					if (confirm(argv[0], NULL)) {
 						mflag++;
 					}
 					interactive = ointer;
@@ -634,7 +646,7 @@ getit(int argc, char *argv[], int restartit, const char *mode)
 }
 
 /* ARGSUSED */
-void
+static void
 mintr(int signo)
 {
 
@@ -644,8 +656,8 @@ mintr(int signo)
 	siglongjmp(jabort, 1);
 }
 
-void
-mabort(void)
+static void
+mabort(const char *cmd)
 {
 	int ointer, oconf;
 
@@ -654,7 +666,7 @@ mabort(void)
 		oconf = confirmrest;
 		interactive = 1;
 		confirmrest = 0;
-		if (confirm("Continue with", mname)) {
+		if (confirm(cmd, NULL)) {
 			interactive = ointer;
 			confirmrest = oconf;
 			return;
@@ -683,7 +695,6 @@ mget(int argc, char *argv[])
 		code = -1;
 		return;
 	}
-	mname = argv[0];
 	mflag = 1;
 	restart_point = 0;
 	restartit = 0;
@@ -697,7 +708,7 @@ mget(int argc, char *argv[])
 	}
 	oldintr = xsignal(SIGINT, mintr);
 	if (sigsetjmp(jabort, 1))
-		mabort();
+		mabort(argv[0]);
 	while ((cp = remglob(argv, proxy, NULL)) != NULL) {
 		char buf[MAXPATHLEN];
 		if (*cp == '\0' || !connected) {
@@ -728,7 +739,7 @@ mget(int argc, char *argv[])
 		if (!mflag && fromatty) {
 			ointer = interactive;
 			interactive = 1;
-			if (confirm("Continue with", "mget"))
+			if (confirm(argv[0], NULL))
 				mflag++;
 			interactive = ointer;
 		}
@@ -1216,11 +1227,10 @@ mdelete(int argc, char *argv[])
 		code = -1;
 		return;
 	}
-	mname = argv[0];
 	mflag = 1;
 	oldintr = xsignal(SIGINT, mintr);
 	if (sigsetjmp(jabort, 1))
-		mabort();
+		mabort(argv[0]);
 	while ((cp = remglob(argv, 0, NULL)) != NULL) {
 		if (*cp == '\0') {
 			mflag = 0;
@@ -1232,7 +1242,7 @@ mdelete(int argc, char *argv[])
 			if (!mflag && fromatty) {
 				ointer = interactive;
 				interactive = 1;
-				if (confirm("Continue with", "mdelete")) {
+				if (confirm(argv[0], NULL)) {
 					mflag++;
 				}
 				interactive = ointer;
@@ -1336,7 +1346,6 @@ ls(int argc, char *argv[])
 		(void)strlcpy(locfile + 1, p, len - 1);
 		freelocfile = 1;
 	} else if ((strcmp(locfile, "-") != 0) && *locfile != '|') {
-		mname = argv[0];
 		if ((locfile = globulize(locfile)) == NULL ||
 		    !confirm("output to local-file:", locfile)) {
 			code = -1;
@@ -1373,7 +1382,6 @@ mls(int argc, char *argv[])
 	}
 	odest = dest = argv[argc - 1];
 	argv[argc - 1] = NULL;
-	mname = argv[0];
 	if (strcmp(dest, "-") && *dest != '|')
 		if (((dest = globulize(dest)) == NULL) ||
 		    !confirm("output to local-file:", dest)) {
@@ -1384,7 +1392,7 @@ mls(int argc, char *argv[])
 	mflag = 1;
 	oldintr = xsignal(SIGINT, mintr);
 	if (sigsetjmp(jabort, 1))
-		mabort();
+		mabort(argv[0]);
 	for (i = 1; mflag && i < argc-1 && connected; i++) {
 		mode = (i == 1) ? "w" : "a";
 		recvrequest(dolist ? "LIST" : "NLST", dest, argv[i], mode,
@@ -1392,7 +1400,7 @@ mls(int argc, char *argv[])
 		if (!mflag && fromatty) {
 			ointer = interactive;
 			interactive = 1;
-			if (confirm("Continue with", argv[0])) {
+			if (confirm(argv[0], NULL)) {
 				mflag++;
 			}
 			interactive = ointer;
