@@ -241,8 +241,8 @@
 ;; that anything generated as this insn will be recognized as one
 ;; and that it won't successfully combine with anything.
 (define_insn "movmemhi1"
-  [(set (match_operand:BLK 0 "memory_operand" "=m")
-	(match_operand:BLK 1 "memory_operand" "m"))
+  [(set (match_operand:BLK 0 "memory_operand" "=o")
+	(match_operand:BLK 1 "memory_operand" "o"))
    (use (match_operand:HI 2 "general_operand" "g"))
    (clobber (reg:SI 0))
    (clobber (reg:SI 1))
@@ -965,12 +965,12 @@
   ""
   "*
 {
-  if (GET_CODE (operands[0]) != REG || GET_CODE (operands[2]) != CONST_INT
-      || GET_CODE (operands[3]) != CONST_INT
+  if (!REG_P (operands[0]) || !CONST_INT_P (operands[2])
+      || !CONST_INT_P (operands[3])
       || (INTVAL (operands[2]) != 8 && INTVAL (operands[2]) != 16)
       || INTVAL (operands[2]) + INTVAL (operands[3]) > 32
       || side_effects_p (operands[1])
-      || (GET_CODE (operands[1]) == MEM
+      || (MEM_P (operands[1])
 	  && mode_dependent_address_p (XEXP (operands[1], 0))))
     return \"extv %3,%2,%1,%0\";
   if (INTVAL (operands[2]) == 8)
@@ -998,7 +998,7 @@
       || !CONST_INT_P (operands[3])
       || INTVAL (operands[2]) + INTVAL (operands[3]) > 32
       || side_effects_p (operands[1])
-      || (GET_CODE (operands[1]) == MEM
+      || (MEM_P (operands[1])
 	  && mode_dependent_address_p (XEXP (operands[1], 0))))
     return \"extzv %3,%2,%1,%0\";
   if (INTVAL (operands[2]) == 8)
