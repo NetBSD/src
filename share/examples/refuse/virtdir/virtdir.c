@@ -61,6 +61,24 @@ strnsave(const char *s, int n)
 	return cp;
 }
 
+/* ensure intermediate directories exist */
+static void
+mkdirs(virtdir_t *tp, const char *path, size_t size)
+{
+	virt_dirent_t	*ep;
+	char		 name[MAXPATHLEN];
+	char		*slash;
+
+	(void) strlcpy(name, path, sizeof(name));
+	for (slash = name + 1 ; (slash = strchr(slash + 1, '/')) != NULL ; ) {
+		*slash = 0x0;
+		if ((ep = virtdir_find(tp, name, strlen(name))) == NULL) {
+			virtdir_add(tp, name, strlen(name), 'd', NULL);
+		}
+		*slash = '/';
+	}
+}
+
 /* initialise the tree */
 int
 virtdir_init(virtdir_t *tp, struct stat *d, struct stat *f, struct stat *l)
@@ -105,6 +123,7 @@ virtdir_add(virtdir_t *tp, const char *name, size_t size, uint8_t type, char *tg
 	}
 	tp->c += 1;
 	qsort(tp->v, tp->c, sizeof(tp->v[0]), compare);
+	mkdirs(tp, name, size);
 	return 1;
 }
 
@@ -165,6 +184,7 @@ readvirtdir(VIRTDIR *dirp)
 				&dirp->tp->v[dirp->i].name[dirp->dirnamelen + 1];
 		if (strncmp(dirp->tp->v[dirp->i].name, dirp->dirname,
 				dirp->dirnamelen) == 0 &&
+		    *from != 0x0 &&
 		    strchr(from, '/') == NULL) {
 			return &dirp->tp->v[dirp->i++];
 		}
