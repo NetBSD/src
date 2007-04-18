@@ -1,4 +1,4 @@
-/*	$NetBSD: envctrlreg.h,v 1.1 2007/04/14 19:33:29 tnn Exp $ */
+/*	$NetBSD: envctrlreg.h,v 1.2 2007/04/18 14:49:44 tnn Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -35,6 +35,10 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#define	ENVCTRL_SHELF0_ADDR	0x20	/* PCF8574, LEDs at disk shelves */
+#define	ENVCTRL_SHELF1_ADDR	0x21	
+#define	ENVCTRL_SHELF2_ADDR	0x22
 
 #define	ENVCTRL_FANVOLTAGE_ADDR	0x27	/* TDA8444 */
 #define	ENVCTRL_FANVOLTAGE_MAX	0x3F
