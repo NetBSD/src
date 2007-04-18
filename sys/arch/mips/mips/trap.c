@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.207.2.2 2007/03/21 21:21:43 ad Exp $	*/
+/*	$NetBSD: trap.c,v 1.207.2.3 2007/04/18 20:27:54 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.207.2.2 2007/03/21 21:21:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.207.2.3 2007/04/18 20:27:54 ad Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ktrace.h"
@@ -124,8 +124,6 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.207.2.2 2007/03/21 21:21:43 ad Exp $");
 #ifdef KGDB
 #include <sys/kgdb.h>
 #endif
-
-int want_resched;
 
 const char *trap_type[] = {
 	"external interrupt",
@@ -622,7 +620,7 @@ ast(unsigned pc)	/* pc is program counter where to continue */
 
 		userret(l);
 
-		if (want_resched) {
+		if (curcpu()->ci_want_resched) {
 			/*
 			 * We are being preempted.
 			 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.90.14.2 2007/03/12 05:48:04 rmind Exp $	*/
+/*	$NetBSD: machdep.c,v 1.90.14.3 2007/04/18 20:27:51 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura, All rights reserved.
@@ -108,7 +108,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.90.14.2 2007/03/12 05:48:04 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.90.14.3 2007/04/18 20:27:51 ad Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -459,8 +459,8 @@ mach_init(int argc, char *argv[], struct bootinfo *bi)
 	lwp0.l_md.md_regs =
 	    (struct frame *)((char *)kernend + UPAGES * PAGE_SIZE) - 1;
 	memset(kernend, 0, UPAGES * PAGE_SIZE);
-	curpcb = &lwp0.l_addr->u_pcb;
-	curpcb->pcb_context[11] = MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
+	proc0paddr->u_pcb.pcb_context[11] =
+	    MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
 
 	kernend = (char *)kernend + UPAGES * PAGE_SIZE;
 

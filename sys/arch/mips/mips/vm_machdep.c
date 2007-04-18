@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.113.2.2 2007/03/21 21:21:43 ad Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.113.2.3 2007/04/18 20:27:55 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -80,7 +80,7 @@
 #include "opt_coredump.h"
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.113.2.2 2007/03/21 21:21:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.113.2.3 2007/04/18 20:27:55 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,7 +108,7 @@ paddr_t kvtophys(vaddr_t);	/* XXX */
  * Copy and update the pcb and trap frame, making the child ready to run.
  *
  * Rig the child's kernel stack so that it will start out in
- * proc_trampoline() and call child_return() with p2 as an
+ * lwp_trampoline() and call child_return() with p2 as an
  * argument. This causes the newly-created child process to go
  * directly to user level with an apparent return value of 0 from
  * fork(), while the parent process returns normally.
@@ -167,8 +167,9 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	pcb = &l2->l_addr->u_pcb;
 	pcb->pcb_context[0] = (intptr_t)func;		/* S0 */
 	pcb->pcb_context[1] = (intptr_t)arg;		/* S1 */
+	pcb->pcb_context[MIPS_CURLWP_CARD - 16] = (intptr_t)l2;/* S? */
 	pcb->pcb_context[8] = (intptr_t)f;		/* SP */
-	pcb->pcb_context[10] = (intptr_t)proc_trampoline;	/* RA */
+	pcb->pcb_context[10] = (intptr_t)lwp_trampoline;/* RA */
 	pcb->pcb_context[11] |= PSL_LOWIPL;		/* SR */
 #ifdef IPL_ICU_MASK
 	pcb->pcb_ppl = 0;	/* machine dependent interrupt mask */
@@ -177,7 +178,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 
 /*
  * Set the given LWP to start at the given function via the
- * proc_trampoline.
+ * lwp_trampoline.
  */
 void
 cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
@@ -191,8 +192,9 @@ cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 	pcb = &l->l_addr->u_pcb;
 	pcb->pcb_context[0] = (intptr_t)func;			/* S0 */
 	pcb->pcb_context[1] = (intptr_t)arg;			/* S1 */
+	pcb->pcb_context[MIPS_CURLWP_CARD - 16] = (intptr_t)l;	/* S? */
 	pcb->pcb_context[8] = (intptr_t)f;			/* SP */
-	pcb->pcb_context[10] = (intptr_t)proc_trampoline;	/* RA */
+	pcb->pcb_context[10] = (intptr_t)lwp_trampoline;	/* RA */
 	pcb->pcb_context[11] |= PSL_LOWIPL;			/* SR */
 #ifdef IPL_ICU_MASK
 	pcb->pcb_ppl = 0;	/* machine depenedend interrupt mask */
