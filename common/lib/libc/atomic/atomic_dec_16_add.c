@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_dec_16_add.c,v 1.1.2.3 2007/04/17 16:04:01 thorpej Exp $	*/
+/*	$NetBSD: atomic_dec_16_add.c,v 1.1.2.4 2007/04/18 04:21:59 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 #include <sys/atomic.h>
 
 void
-atomic_dec_16(volatile uint16 *addr)
+atomic_dec_16(volatile uint16_t *addr)
 {
 
 	atomic_add_16(addr, -1);
