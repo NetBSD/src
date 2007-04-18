@@ -1,4 +1,4 @@
-
+/*	$NetBSD: kern_synch.c,v 1.177.2.26 2007/04/18 12:36:03 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.177.2.25 2007/04/18 10:14:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.177.2.26 2007/04/18 12:36:03 ad Exp $");
 
 #include "opt_kstack.h"
 #include "opt_lockdebug.h"
