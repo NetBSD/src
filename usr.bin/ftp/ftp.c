@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.147 2007/04/17 05:52:03 lukem Exp $	*/
+/*	$NetBSD: ftp.c,v 1.148 2007/04/18 01:50:45 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-2007 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.147 2007/04/17 05:52:03 lukem Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.148 2007/04/18 01:50:45 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -1275,7 +1275,7 @@ initconn(void)
 					verbose = -1;
 				result = command("EPSV");
 				verbose = overbose;
-				if (verbose &&
+				if (verbose > 0 &&
 				    (result == COMPLETE || !connected))
 					fprintf(ttyout, "%s\n", reply_string);
 				if (!connected)
@@ -1311,7 +1311,8 @@ initconn(void)
 				verbose = -1;
 			result = command("EPSV");
 			verbose = overbose;
-			if (verbose && (result == COMPLETE || !connected))
+			if (verbose > 0 &&
+			    (result == COMPLETE || !connected))
 				fprintf(ttyout, "%s\n", reply_string);
 			if (!connected)
 				return (1);
@@ -1589,7 +1590,7 @@ initconn(void)
 				result = command("EPRT |%d|%s|%s|", af, hname,
 				    sname);
 				verbose = overbose;
-				if (verbose &&
+				if (verbose > 0 &&
 				    (result == COMPLETE || !connected))
 					fprintf(ttyout, "%s\n", reply_string);
 				if (!connected)
