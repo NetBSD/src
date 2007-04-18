@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.178 2007/04/17 20:07:04 skrll Exp $
+#	$NetBSD: BRANCHES,v 1.179 2007/04/18 05:58:54 thorpej Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -573,10 +573,10 @@ Scope:		src/common
 Notes:		Base atomic primitives need to be implemented for
 		all of the supported architectures:
 
-		alpha
+		alpha		DONE
 		arm
 		hppa
-		i386
+		i386		DONE
 		ia64
 		m68k
 		mips
@@ -587,7 +587,38 @@ Notes:		Base atomic primitives need to be implemented for
 		sparc
 		sparc64
 		vax
-		x86_64
+		x86_64		DONE
+
+		Tested:
+
+		alpha		NO
+		arm		NO
+		hppa		NO
+		i386		NO
+		ia64		NO
+		m68k		NO
+		mips		NO
+		ns32k		NO
+		powerpc		NO
+		powerpc64	NO
+		sh3		NO
+		sparc		NO
+		sparc64		NO
+		vax		NO
+		x86_64		NO
+
+		TODO:
+
+		all		- Need to replace mb_*() with membar_*().
+		
+		alpha		- Need to write alpha_patch() for the
+				  membar routines.
+
+		i386		- Need to change when x86_patch() is called
+				  so we can test ncpus.
+
+		x86_64		- Need to change when x86_patch() is called
+				  so we can test ncpus.
 
 ########################################################################
 # Individual developers' branches (Terminated):
