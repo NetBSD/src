@@ -1,7 +1,7 @@
-/*	$NetBSD: extern.h,v 1.70 2006/01/31 20:01:23 christos Exp $	*/
+/*	$NetBSD: extern.h,v 1.71 2007/04/18 01:39:04 lukem Exp $	*/
 
 /*-
- * Copyright (c) 1996-2005 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996-2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -160,13 +160,11 @@ void	lostpeer(int);
 void	lpage(int, char **);
 void	lpwd(int, char **);
 void	ls(int, char **);
-void	mabort(void);
 void	macdef(int, char **);
 void	makeargv(void);
 void	makedir(int, char **);
 void	mdelete(int, char **);
 void	mget(int, char **);
-void	mintr(int);
 void	mls(int, char **);
 void	mlst(int, char **);
 void	modtime(int, char **);
