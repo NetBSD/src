@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_inc_32_add.c,v 1.1.2.3 2007/04/17 16:05:11 thorpej Exp $	*/
+/*	$NetBSD: atomic_inc_32_add.c,v 1.1.2.4 2007/04/18 06:50:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 #include <sys/atomic.h>
 
 void
-atomic_inc_32(volatile uint32 *addr)
+atomic_inc_32(volatile uint32_t *addr)
 {
 
 	atomic_add_32(addr, 1);
