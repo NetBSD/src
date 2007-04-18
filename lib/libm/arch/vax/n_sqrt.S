@@ -1,4 +1,4 @@
-/*	$NetBSD: n_sqrt.S,v 1.7 2004/05/13 20:35:40 mhitch Exp $	*/
+/*	$NetBSD: n_sqrt.S,v 1.8 2007/04/18 04:46:13 matt Exp $	*/
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -54,15 +54,16 @@ ENTRY(sqrt, 0x003c)		# save %r5,%r4,%r3,%r2
 
 dsqrt2:	bicw3	$0x807f,%r0,%r2	# check exponent of input
 	jeql	noexp		# biased exponent is zero -> 0.0 or reserved
-	bsbb	__libm_dsqrt_r5_lcl+2
+	bsbb	__libm_dsqrt_r5_lcl
 noexp:	ret
 
 /* **************************** internal procedure */
 
-__libm_dsqrt_r5_lcl:
+	.hidden __libm_dsqrt_r5
 ALTENTRY(__libm_dsqrt_r5)
-	nop
-	nop
+	halt
+	halt
+__libm_dsqrt_r5_lcl:
 				/* ENTRY POINT FOR cdabs and cdsqrt	*/
 				/* returns double square root scaled by	*/
 				/* 2^%r6	*/
