@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.s,v 1.2 2007/02/09 21:55:01 ad Exp $	*/
+/*	$NetBSD: lock_stubs.s,v 1.2.12.1 2007/04/18 06:48:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: lock_stubs.s,v 1.2 2007/02/09 21:55:01 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lock_stubs.s,v 1.2.12.1 2007/04/18 06:48:29 thorpej Exp $");
 
 #include "assym.h"
 
@@ -50,27 +50,6 @@ __KERNEL_RCSID(0, "$NetBSD: lock_stubs.s,v 1.2 2007/02/09 21:55:01 ad Exp $");
 #else
 #define	MB		/* nothing */
 #endif
-
-/*
- * int	_lock_cas(uintptr_t *ptr, uintptr_t old, uintptr_t new)
- */
-LEAF(_lock_cas, 3)
-1:
-	mov	a2, v0
-	ldq_l	t1, 0(a0)
-	cmpeq	t1, a1, t1
-	beq	t1, 2f
-	stq_c	v0, 0(a0)
-	beq	v0, 3f
-	MB	
-	RET
-2:
-	mov	zero, v0
-	MB
-	RET
-3:
-	br	1b
-END(_lock_cas)
 
 #if !defined(LOCKDEBUG)
 
