@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_condvar.c,v 1.3.2.2 2007/04/15 16:03:48 yamt Exp $	*/
+/*	$NetBSD: kern_condvar.c,v 1.3.2.3 2007/04/19 04:19:43 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.3.2.2 2007/04/15 16:03:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.3.2.3 2007/04/19 04:19:43 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -112,6 +112,7 @@ cv_enter(kcondvar_t *cv, kmutex_t *mtx, lwp_t *l)
 	sq = sleeptab_lookup(&sleeptab, cv);
 	cv->cv_waiters++;
 	sleepq_enter(sq, l);
+	sleepq_enqueue(sq, sched_kpri(l), cv, cv->cv_wmesg, &cv_syncobj);
 	mutex_exit(mtx);
 
 	return sq;
@@ -152,7 +153,7 @@ cv_unsleep(lwp_t *l)
 	uintptr_t addr;
 
 	KASSERT(l->l_wchan != NULL);
-	LOCK_ASSERT(lwp_locked(l, l->l_sleepq->sq_mutex));
+	KASSERT(lwp_locked(l, l->l_sleepq->sq_mutex));
 
 	addr = (uintptr_t)l->l_wchan;
 	((kcondvar_t *)addr)->cv_waiters--;
@@ -194,7 +195,7 @@ cv_wait(kcondvar_t *cv, kmutex_t *mtx)
 	lwp_t *l = curlwp;
 	sleepq_t *sq;
 
-	LOCK_ASSERT(mutex_owned(mtx));
+	KASSERT(mutex_owned(mtx));
 
 	if (sleepq_dontsleep(l)) {
 		(void)sleepq_abort(mtx, 0);
@@ -202,8 +203,7 @@ cv_wait(kcondvar_t *cv, kmutex_t *mtx)
 	}
 
 	sq = cv_enter(cv, mtx, l);
-	sleepq_block(sq, sched_kpri(l), cv, cv->cv_wmesg, 0, 0, &cv_syncobj);
-	(void)sleepq_unblock(0, 0);
+	(void)sleepq_block(0, false);
 	(void)cv_exit(cv, mtx, l, 0);
 }
 
@@ -222,14 +222,13 @@ cv_wait_sig(kcondvar_t *cv, kmutex_t *mtx)
 	sleepq_t *sq;
 	int error;
 
-	LOCK_ASSERT(mutex_owned(mtx));
+	KASSERT(mutex_owned(mtx));
 
 	if (sleepq_dontsleep(l))
 		return sleepq_abort(mtx, 0);
 
 	sq = cv_enter(cv, mtx, l);
-	sleepq_block(sq, sched_kpri(l), cv, cv->cv_wmesg, 0, 1, &cv_syncobj);
-	error = sleepq_unblock(0, 1);
+	error = sleepq_block(0, true);
 	return cv_exit(cv, mtx, l, error);
 }
 
@@ -247,14 +246,13 @@ cv_timedwait(kcondvar_t *cv, kmutex_t *mtx, int timo)
 	sleepq_t *sq;
 	int error;
 
-	LOCK_ASSERT(mutex_owned(mtx));
+	KASSERT(mutex_owned(mtx));
 
 	if (sleepq_dontsleep(l))
 		return sleepq_abort(mtx, 0);
 
 	sq = cv_enter(cv, mtx, l);
-	sleepq_block(sq, sched_kpri(l), cv, cv->cv_wmesg, timo, 0, &cv_syncobj);
-	error = sleepq_unblock(timo, 0);
+	error = sleepq_block(timo, false);
 	return cv_exit(cv, mtx, l, error);
 }
 
@@ -274,14 +272,13 @@ cv_timedwait_sig(kcondvar_t *cv, kmutex_t *mtx, int timo)
 	sleepq_t *sq;
 	int error;
 
-	LOCK_ASSERT(mutex_owned(mtx));
+	KASSERT(mutex_owned(mtx));
 
 	if (sleepq_dontsleep(l))
 		return sleepq_abort(mtx, 0);
 
 	sq = cv_enter(cv, mtx, l);
-	sleepq_block(sq, sched_kpri(l), cv, cv->cv_wmesg, timo, 1, &cv_syncobj);
-	error = sleepq_unblock(timo, 1);
+	error = sleepq_block(timo, true);
 	return cv_exit(cv, mtx, l, error);
 }
 
