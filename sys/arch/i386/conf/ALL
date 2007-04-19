@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.93 2007/03/29 13:11:14 dillo Exp $
+# $NetBSD: ALL,v 1.94 2007/04/19 14:34:35 xtraeme Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.93 $"
+#ident 		"ALL-$Revision: 1.94 $"
 
 maxusers	32		# estimated number of users
 
@@ -623,6 +623,9 @@ lm0	at isa?	port 0x290		# other common: 0x280, 0x310
 # PC87366 hardware monitor
 nsclpcsio*	at isa?
 gpio*		at nsclpcsio?
+
+# Abit uGuru Hardware system monitor
+ug0    at isa? port 0xe0
 
 # VIA VT82C686A/VT8231 Hardware Monitor and Power Management Timer
 viaenv* 	at pci? dev ? function ?
