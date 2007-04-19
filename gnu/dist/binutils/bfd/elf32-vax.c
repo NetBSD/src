@@ -627,8 +627,9 @@ elf_vax_check_relocs (abfd, info, sec, relocs)
       switch (ELF32_R_TYPE (rel->r_info))
 	{
 	case R_VAX_GOT32:
-	  if (h != NULL
-	      && strcmp (h->root.root.string, "_GLOBAL_OFFSET_TABLE_") == 0)
+	  BFD_ASSERT (h != NULL);
+	  if (h->forced_local
+	      || h == elf_hash_table (info)->hgot)
 	    break;
 
 	  /* This symbol requires a global offset table entry.  */
@@ -701,8 +702,9 @@ elf_vax_check_relocs (abfd, info, sec, relocs)
 
 	  /* If this is a local symbol, we resolve it directly without
 	     creating a procedure linkage table entry.  */
-	  if (h == NULL)
-	    continue;
+	  BFD_ASSERT(h != NULL);
+	  if (h->forced_local)
+	    break;
 
 	  h->needs_plt = 1;
 	  if (h->plt.refcount == -1)
@@ -730,7 +732,7 @@ elf_vax_check_relocs (abfd, info, sec, relocs)
 		&& (!info->symbolic
 		    || !h->def_regular)))
 	    {
-	      if (h != NULL && (sec->flags & SEC_CODE) != 0)
+	      if (h != NULL && !h->forced_local)
 		{
 		  /* Make sure a plt entry is created for this symbol if
 		     it turns out to be a function defined by a dynamic
@@ -742,6 +744,8 @@ elf_vax_check_relocs (abfd, info, sec, relocs)
 		}
 	      break;
 	    }
+	  if (h != NULL && h->forced_local)
+	    break;
 	  /* Fall through.  */
 	case R_VAX_8:
 	case R_VAX_16:
@@ -1410,7 +1414,8 @@ elf_vax_instantiate_got_entries (h, infoptr)
   srelgot = bfd_get_section_by_name (dynobj, ".rela.got");
 
   if (!elf_hash_table (info)->dynamic_sections_created
-      || (info->shared && info->symbolic))
+      || (info->shared && info->symbolic)
+      || h->forced_local)
     {
       h->got.refcount = 0;
       h->got.offset = (bfd_vma) -1;
@@ -1528,8 +1533,7 @@ elf_vax_relocate_section (output_bfd, info, input_bfd, input_section,
 		   && h->plt.offset != (bfd_vma) -1
 		   && elf_hash_table (info)->dynamic_sections_created)
 		  || (r_type == R_VAX_GOT32
-		      && strcmp (h->root.root.string,
-				 "_GLOBAL_OFFSET_TABLE_") != 0
+		      && h->got.offset != (bfd_vma) -1
 		      && elf_hash_table (info)->dynamic_sections_created
 		      && (! info->shared
 			  || (! info->symbolic && h->dynindx != -1)
@@ -1547,10 +1551,7 @@ elf_vax_relocate_section (output_bfd, info, input_bfd, input_section,
 			      && h->def_dynamic))
 		      && (r_type == R_VAX_8
 			  || r_type == R_VAX_16
-			  || r_type == R_VAX_32
-			  || r_type == R_VAX_PC8
-			  || r_type == R_VAX_PC16
-			  || r_type == R_VAX_PC32))))
+			  || r_type == R_VAX_32))))
 	    /* In these cases, we don't need the relocation
 	       value.  We check specially because in some
 	       obscure cases sec->output_section will be NULL.  */
@@ -1678,7 +1679,7 @@ elf_vax_relocate_section (output_bfd, info, input_bfd, input_section,
 	case R_VAX_PC8:
 	case R_VAX_PC16:
 	case R_VAX_PC32:
-	  if (h == NULL)
+	  if (h == NULL || h->forced_local)
 	    break;
 	  /* Fall through.  */
 	case R_VAX_8:
