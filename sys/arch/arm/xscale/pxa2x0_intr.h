@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_intr.h,v 1.10 2007/02/28 23:26:10 bjh21 Exp $ */
+/*	$NetBSD: pxa2x0_intr.h,v 1.10.8.1 2007/04/19 01:04:21 thorpej Exp $ */
 
 /* Derived from i80321_intr.h */
 
@@ -44,10 +44,11 @@
 
 #ifndef _LOCORE
 
+#include <sys/atomic.h>
+
 #include <arm/cpu.h>
 #include <arm/armreg.h>
 #include <arm/cpufunc.h>
-#include <machine/atomic.h>
 #include <machine/intr.h>
 #include <arm/softintr.h>
 
@@ -125,7 +126,7 @@ static inline void
 pxa2x0_setsoftintr(int si)
 {
 
-	atomic_set_bit((u_int *)__UNVOLATILE(&softint_pending),
+	atomic_or_uint((u_int *)__UNVOLATILE(&softint_pending),
 	    SI_TO_IRQBIT(si));
 
 	/* Process unmasked pending soft interrupts. */

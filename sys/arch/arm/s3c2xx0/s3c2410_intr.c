@@ -1,4 +1,4 @@
-/* $NetBSD: s3c2410_intr.c,v 1.6 2005/12/24 20:06:52 perry Exp $ */
+/* $NetBSD: s3c2410_intr.c,v 1.6.36.1 2007/04/19 01:04:20 thorpej Exp $ */
 
 /*
  * Copyright (c) 2003  Genetec corporation.  All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c2410_intr.c,v 1.6 2005/12/24 20:06:52 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c2410_intr.c,v 1.6.36.1 2007/04/19 01:04:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -310,15 +310,15 @@ s3c2410_intr_init(struct s3c24x0_softc *sc)
 void
 s3c2410_mask_subinterrupts(int bits)
 {
-	atomic_set_bit((uint32_t *)__UNVOLATILE(&icreg(INTCTL_INTSUBMSK)),
+	atomic_or_32((uint32_t *)__UNVOLATILE(&icreg(INTCTL_INTSUBMSK)),
 		bits);
 }
 
 void
 s3c2410_unmask_subinterrupts(int bits)
 {
-	atomic_clear_bit((uint32_t *)__UNVOLATILE(&icreg(INTCTL_INTSUBMSK)),
-		bits);
+	atomic_and_uint((uint32_t *)__UNVOLATILE(&icreg(INTCTL_INTSUBMSK)),
+		~bits);
 }
 
 /*

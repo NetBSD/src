@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.11 2006/12/21 15:55:23 yamt Exp $	*/
+/*	$NetBSD: intr.c,v 1.11.12.1 2007/04/19 01:04:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.11 2006/12/21 15:55:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.11.12.1 2007/04/19 01:04:21 thorpej Exp $");
 
 #include "opt_irqstats.h"
 
@@ -44,10 +44,10 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.11 2006/12/21 15:55:23 yamt Exp $");
 #include <sys/systm.h>
 #include <sys/syslog.h>
 #include <sys/malloc.h>
+#include <sys/atomic.h>
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/atomic.h>
 #include <machine/intr.h>
 #include <machine/cpu.h>
 
@@ -89,19 +89,19 @@ void dosoftints(void);
 void
 setsoftintr(u_int intrmask)
 {
-	atomic_set_bit(&soft_interrupts, intrmask);
+	atomic_or_uint(&soft_interrupts, intrmask);
 }
 
 void
 clearsoftintr(u_int intrmask)
 {
-	atomic_clear_bit(&soft_interrupts, intrmask);
+	atomic_and_uint(&soft_interrupts, ~intrmask);
 }
 
 void
 setsoftnet(void)
 {
-	atomic_set_bit(&soft_interrupts, SOFTIRQ_BIT(SOFTIRQ_NET));
+	atomic_or_uint(&soft_interrupts, SOFTIRQ_BIT(SOFTIRQ_NET));
 }
 
 int astpending;
@@ -132,7 +132,7 @@ dosoftints(void)
 
 #define DONETISR(bit, fn) do {					\
 		if (netisr & (1 << bit)) {			\
-			atomic_clear_bit(&netisr, (1 << bit));	\
+			atomic_and_uint(&netisr, ~(1 << bit));	\
 			fn();					\
 		}						\
 } while (0)

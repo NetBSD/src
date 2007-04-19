@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.21 2007/03/09 06:45:19 thorpej Exp $	*/
+/*	$NetBSD: intr.c,v 1.21.8.1 2007/04/19 01:04:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.21 2007/03/09 06:45:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.21.8.1 2007/04/19 01:04:20 thorpej Exp $");
 
 #include "opt_irqstats.h"
 
@@ -45,10 +45,10 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.21 2007/03/09 06:45:19 thorpej Exp $");
 #include <sys/syslog.h>
 #include <sys/malloc.h>
 #include <sys/conf.h>
+#include <sys/atomic.h>
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/atomic.h>
 #include <machine/intr.h>
 #include <machine/cpu.h>
 
@@ -74,13 +74,13 @@ static u_int spl_smasks[_SPL_LEVELS];
 static inline void
 clearsoftintr(u_int intrmask)
 {
-	atomic_clear_bit(&soft_interrupts, intrmask);
+	atomic_and_uint(&soft_interrupts, ~intrmask);
 }
 
 void
 _setsoftintr(int si)
 {
-	atomic_set_bit(&soft_interrupts, SI_SOFTMASK(si));
+	atomic_or_uint(&soft_interrupts, SI_SOFTMASK(si));
 }
 
 /* Handle software interrupts */

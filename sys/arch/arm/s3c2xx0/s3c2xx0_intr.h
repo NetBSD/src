@@ -1,4 +1,4 @@
-/*	$NetBSD: s3c2xx0_intr.h,v 1.10 2005/12/24 20:06:52 perry Exp $ */
+/*	$NetBSD: s3c2xx0_intr.h,v 1.10.36.1 2007/04/19 01:04:21 thorpej Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited
@@ -72,10 +72,11 @@
 #ifndef _S3C2XX0_INTR_H_
 #define _S3C2XX0_INTR_H_
 
+#include <sys/atomic.h>
+
 #include <arm/cpu.h>
 #include <arm/armreg.h>
 #include <arm/cpufunc.h>
-#include <machine/atomic.h>
 #include <machine/intr.h>
 #include <arm/softintr.h>
 
@@ -167,7 +168,7 @@ static inline void
 s3c2xx0_setsoftintr(int si)
 {
 
-	atomic_set_bit( (u_int *)__UNVOLATILE(&softint_pending),
+	atomic_or_uint( (u_int *)__UNVOLATILE(&softint_pending),
 		SI_TO_IRQBIT(si) );
 
 	/* Process unmasked pending soft interrupts. */

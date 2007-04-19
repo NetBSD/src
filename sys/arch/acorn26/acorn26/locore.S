@@ -1,4 +1,4 @@
-/* $NetBSD: locore.S,v 1.11 2007/02/28 23:47:09 bjh21 Exp $ */
+/* $NetBSD: locore.S,v 1.11.8.1 2007/04/19 01:04:13 thorpej Exp $ */
 /*
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -312,31 +312,6 @@ Lirq_to_ast:
 	bl	_C_LABEL(ast)
 	b	pull_trapframe
 
-#ifdef ATOMIC_SET_BIT_NONINLINE_REQUIRED
-/* LINTSTUB: Func: void atomic_set_bit(u_int *address, u_int setmask) */
-ENTRY(atomic_set_bit)
-	/* disable interrupts */
-	/* Note that this is evil and only works due to prefetching */
-	mov	r2, r15
-	orrs	r15, r2, #(R15_IRQ_DISABLE | R15_FIQ_DISABLE)
-	ldr	r2, [r0]
-	orr	r2, r2, r1
-	str	r2, [r0]
-	/* restore interrupt state and return */
-	movs	pc, lr
-/* LINTSTUB: Func: void atomic_clear_bit(u_int *address, u_int clearmask) */
-ENTRY(atomic_clear_bit)
-	/* disable interrupts */
-	/* Note that this is evil and only works due to prefetching */
-	mov	r2, r15
-	orrs	r15, r2, #(R15_IRQ_DISABLE | R15_FIQ_DISABLE)
-	ldr	r2, [r0]
-	bic	r2, r2, r1
-	str	r2, [r0]
-	/* restore interrupt state and return */
-	movs	pc, lr
-
-#endif /* ATOMIC_SET_BIT_NONINLINE_REQUIRED */
 /* XXX: Return type should be register_t */
 /* LINTSTUB: Func: int set_r13_irq(register_t r13_irq) */
 ENTRY(set_r13_irq)
@@ -444,4 +419,4 @@ ENTRY(cpu_Debugger)
 	ldmfd	r13!, {pc}
 #endif
 
-RCSID("$NetBSD: locore.S,v 1.11 2007/02/28 23:47:09 bjh21 Exp $")
+RCSID("$NetBSD: locore.S,v 1.11.8.1 2007/04/19 01:04:13 thorpej Exp $")

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.42 2007/02/18 07:25:35 matt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.42.10.1 2007/04/19 01:04:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -276,10 +276,6 @@ int	cpu_alloc_idlepcb	__P((struct cpu_info *));
  */
 
 struct lwp;
-
-/* locore.S */
-void atomic_set_bit	__P((u_int *address, u_int setmask));
-void atomic_clear_bit	__P((u_int *address, u_int clearmask));
 
 /* cpuswitch.S */
 struct pcb;
