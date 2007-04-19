@@ -1,4 +1,4 @@
-/*	$NetBSD: node.c,v 1.19 2007/04/17 11:43:32 pooka Exp $	*/
+/*	$NetBSD: node.c,v 1.20 2007/04/19 20:31:09 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: node.c,v 1.19 2007/04/17 11:43:32 pooka Exp $");
+__RCSID("$NetBSD: node.c,v 1.20 2007/04/19 20:31:09 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -170,6 +170,7 @@ psshfs_node_create(struct puffs_cc *pcc, void *opc, void **newnode,
 	const struct puffs_cn *pcn, const struct vattr *va)
 {
 	PSSHFSAUTOVAR(pcc);
+	struct puffs_usermount *pu = puffs_cc_getusermount(pcc);
 	struct puffs_node *pn = opc;
 	struct puffs_node *pn_new;
 	char *fhand = NULL;
@@ -215,8 +216,7 @@ psshfs_node_readdir(struct puffs_cc *pcc, void *opc, struct dirent *dent,
 	off_t *readoff, size_t *reslen, const struct puffs_cred *pcr,
 	int *eofflag, off_t *cookies, size_t *ncookies)
 {
-	struct puffs_usermount *pu = puffs_cc_getusermount(pcc);
-	struct psshfs_ctx *pctx = puffs_getspecific(pu);
+	struct psshfs_ctx *pctx = puffs_cc_getspecific(pcc);
 	struct puffs_node *pn = opc;
 	struct psshfs_node *psn = pn->pn_data;
 	struct psshfs_dir *pd;
@@ -466,6 +466,7 @@ psshfs_node_mkdir(struct puffs_cc *pcc, void *opc, void **newnode,
 	const struct puffs_cn *pcn, const struct vattr *va)
 {
 	PSSHFSAUTOVAR(pcc);
+	struct puffs_usermount *pu = puffs_cc_getusermount(pcc);
 	struct puffs_node *pn = opc;
 	struct puffs_node *pn_new;
 
@@ -517,6 +518,7 @@ psshfs_node_symlink(struct puffs_cc *pcc, void *opc, void **newnode,
 	const char *link_target)
 {
 	PSSHFSAUTOVAR(pcc);
+	struct puffs_usermount *pu = puffs_cc_getusermount(pcc);
 	struct puffs_node *pn = opc;
 	struct puffs_node *pn_new;
 
