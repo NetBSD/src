@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.107 2007/03/04 06:03:37 christos Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.108 2007/04/19 11:05:14 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.107 2007/03/04 06:03:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.108 2007/04/19 11:05:14 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -1126,7 +1126,9 @@ nfs_getset_niothreads(set)
 
 		for (i = 0; (start < 0) && (i < NFS_MAXASYNCDAEMON); i++)
 			if (nfs_asyncdaemon[i].nid_proc != NULL) {
+				mutex_enter(&proclist_mutex);
 				psignal(nfs_asyncdaemon[i].nid_proc, SIGKILL);
+				mutex_exit(&proclist_mutex);
 				start++;
 			}
 	} else {

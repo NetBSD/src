@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.76 2007/02/22 06:10:49 thorpej Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.77 2007/04/19 11:05:14 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.76 2007/02/22 06:10:49 thorpej Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.77 2007/04/19 11:05:14 yamt Exp $");
 
 #ifdef LFS_READWRITE
 #define	BLKSIZE(a, b, c)	blksize(a, b, c)
@@ -274,7 +274,9 @@ WRITE(void *v)
 	if (vp->v_type == VREG && l &&
 	    uio->uio_offset + uio->uio_resid >
 	    l->l_proc->p_rlimit[RLIMIT_FSIZE].rlim_cur) {
+		mutex_enter(&proclist_mutex);
 		psignal(l->l_proc, SIGXFSZ);
+		mutex_exit(&proclist_mutex);
 		return (EFBIG);
 	}
 	if (uio->uio_resid == 0)
