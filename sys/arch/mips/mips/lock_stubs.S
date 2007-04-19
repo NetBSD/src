@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.2.2.3 2007/04/18 20:57:06 ad Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.2.2.4 2007/04/19 02:03:23 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -222,16 +222,13 @@ END(mutex_spin_enter)
  * Lock stubs for MIPS1 and a couple of oddball MIPS3 CPUs.  These are
  * implemented using restartable sequences, since LL/SC are not available.
  *
- * The order of the generated code is particularly important here..  Some
- * assmptions:
- *
- * o We won't reference more than one memory location in KSEG2 during
- *   a critical section, so that there's reduced chance of the TLB miss
- *   handler us bouncing back around for a second go.
+ * The order of the generated code is particularly important here.  Some
+ * assumptions:
  *
  * o All of the critical sections are 20 bytes in size, and the entry
  *   to each critical section is aligned on a 16 byte boundary (see
- *   top of _lock_ras() for why).
+ *   top of _lock_ras() for why).  The entry is defined here as the
+ *   point after where a restart occurs if we trap within the section.
  *
  * o The entire code block is aligned on a 128 byte boundary, and is
  *   128 bytes in size.  This is to allow us to do an pessimistic check
@@ -382,21 +379,22 @@ END(mutex_spin_enter)
 LEAF_NOPROFILE(_lock_ras)
 	li	t1, -16
 	and	t2, k1, t1
-	lui	t0, %hi(_lock_cas_start)
-	ori	t0, t0, %lo(_lock_cas_start)
+	la	t0, _lock_cas_start
 	beq	t2, t0, 1f
-#ifndef LOCKDEBUG
-	 addiu	t0, _mutex_enter_start - _lock_cas_start
-	beq	t2, t0, 1f
-	 addiu	t0, _mutex_exit_start - _mutex_enter_start
-	beq	t2, t0, 1f
-#endif	/* !LOCKDEBUG */
 	 nop
+#ifndef LOCKDEBUG
+	addiu	t0, _mutex_enter_start - _lock_cas_start
+	beq	t2, t0, 1f
+	 nop
+	addiu	t0, _mutex_exit_start - _mutex_enter_start
+	beq	t2, t0, 1f
+	 nop
+#endif	/* !LOCKDEBUG */
 	j	ra
+	 nop
 1:
-	 li	t1, -4
 	j	ra
-	 addu	k1, t0, t1
+	 addiu	k1, t0, -4
 END(_lock_ras)
 
 #endif	/* MIPS_HAS_LLSC == 0 */
