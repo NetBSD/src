@@ -1,4 +1,4 @@
-/*	$NetBSD: nslm7x.c,v 1.34 2007/04/19 20:18:39 xtraeme Exp $ */
+/*	$NetBSD: nslm7x.c,v 1.35 2007/04/19 20:24:47 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nslm7x.c,v 1.34 2007/04/19 20:18:39 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nslm7x.c,v 1.35 2007/04/19 20:24:47 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1931,7 +1931,7 @@ lm_refresh_temp(struct lm_softc *sc, int n)
 	 * sensor is between -55 degC and +125 degC.
 	 */
 	sdata = (*sc->lm_readreg)(sc, sc->lm_sensors[n].reg);
-	DPRINTF(("%s: temp[%d] 0x%x\n", __func__, n, data));
+	DPRINTF(("%s: temp[%d] 0x%x\n", __func__, n, sdata));
 	if (sdata > 0x7d && sdata < 0xc9) {
 		INVALIDATE_SENSOR(n);
 	} else {
