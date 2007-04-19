@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.151 2007/03/04 06:03:36 christos Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.152 2007/04/19 11:05:14 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.151 2007/03/04 06:03:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.152 2007/04/19 11:05:14 yamt Exp $");
 
 #include "opt_nfs.h"
 #include "opt_ddb.h"
@@ -511,7 +511,9 @@ nfs_write(v)
 	 */
 	if (l && l->l_proc && uio->uio_offset + uio->uio_resid >
 	      l->l_proc->p_rlimit[RLIMIT_FSIZE].rlim_cur) {
+		mutex_enter(&proclist_mutex);
 		psignal(l->l_proc, SIGXFSZ);
+		mutex_exit(&proclist_mutex);
 		return (EFBIG);
 	}
 
