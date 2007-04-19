@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.179 2007/04/18 05:58:54 thorpej Exp $
+#	$NetBSD: BRANCHES,v 1.180 2007/04/19 01:06:40 thorpej Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -574,7 +574,7 @@ Notes:		Base atomic primitives need to be implemented for
 		all of the supported architectures:
 
 		alpha		DONE
-		arm
+		arm		DONE
 		hppa
 		i386		DONE
 		ia64
@@ -610,10 +610,13 @@ Notes:		Base atomic primitives need to be implemented for
 		TODO:
 
 		all		- Need to replace mb_*() with membar_*().
-		
-		alpha		- Need to write alpha_patch() for the
-				  membar routines.
 
+		arm		- Consider using a RAS technique like
+				  MIPS uses for _lock_cas() and the mutex
+				  stubs.  Possibly do more than one atomic
+				  op as a RAS.  Possibly implement mutex
+				  stubs using the technique.
+		
 		i386		- Need to change when x86_patch() is called
 				  so we can test ncpus.
 
