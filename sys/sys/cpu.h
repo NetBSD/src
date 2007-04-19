@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.7.52.5 2007/04/15 16:59:42 yamt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.7.52.6 2007/04/19 01:44:43 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 YAMAMOTO Takashi,
@@ -30,6 +30,8 @@
 #define _SYS_CPU_H_
 
 #include <machine/cpu.h>
+
+#include <sys/lwp.h>
 
 struct cpu_info;
 
