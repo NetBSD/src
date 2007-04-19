@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_turnstile.c,v 1.3.2.7 2007/04/16 23:31:21 ad Exp $	*/
+/*	$NetBSD: kern_turnstile.c,v 1.3.2.8 2007/04/19 04:19:44 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.3.2.7 2007/04/16 23:31:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.3.2.8 2007/04/19 04:19:44 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/lock.h>
@@ -138,7 +138,7 @@ turnstile_ctor(void *arg, void *obj, int flags)
  *
  *	Remove an LWP from a turnstile sleep queue and wake it.
  */
-static inline int
+static inline void
 turnstile_remove(turnstile_t *ts, struct lwp *l, sleepq_t *sq)
 {
 	turnstile_t *nts;
@@ -163,7 +163,7 @@ turnstile_remove(turnstile_t *ts, struct lwp *l, sleepq_t *sq)
 		LIST_REMOVE(ts, ts_chain);
 	}
 
-	return sleepq_remove(sq, l);
+	(void)sleepq_remove(sq, l);
 }
 
 /*
@@ -264,6 +264,7 @@ turnstile_block(turnstile_t *ts, int q, wchan_t obj, syncobj_t *sobj)
 	sq = &ts->ts_sleepq[q];
 	sleepq_enter(sq, l);
 	LOCKDEBUG_BARRIER(&tc->tc_mutex, 1);
+	l->l_priority = sched_kpri(l);
 	prio = lwp_eprio(l);
 	sleepq_enqueue(sq, prio, obj, "tstile", sobj);
 
@@ -325,7 +326,7 @@ turnstile_block(turnstile_t *ts, int q, wchan_t obj, syncobj_t *sobj)
 	}
 	LOCKDEBUG_BARRIER(cur->l_mutex, 1);
 
-	sleepq_switch(0, 0);
+	sleepq_block(0, false);
 }
 
 /*
@@ -340,11 +341,9 @@ turnstile_wakeup(turnstile_t *ts, int q, int count, struct lwp *nl)
 	sleepq_t *sq;
 	tschain_t *tc;
 	struct lwp *l;
-	int swapin;
 
 	tc = &turnstile_tab[TS_HASH(ts->ts_obj)];
 	sq = &ts->ts_sleepq[q];
-	swapin = 0;
 
 	KASSERT(q == TS_READER_Q || q == TS_WRITER_Q);
 	KASSERT(count > 0 && count <= TS_WAITERS(ts, q));
@@ -413,22 +412,15 @@ turnstile_wakeup(turnstile_t *ts, int q, int count, struct lwp *nl)
 		if (l == NULL)
 			panic("turnstile_wakeup: nl not on sleepq");
 #endif
-		swapin |= turnstile_remove(ts, nl, sq);
+		turnstile_remove(ts, nl, sq);
 	} else {
 		while (count-- > 0) {
 			l = TAILQ_FIRST(&sq->sq_queue);
 			KASSERT(l != NULL);
-			swapin |= turnstile_remove(ts, l, sq);
+			turnstile_remove(ts, l, sq);
 		}
 	}
 	mutex_spin_exit(&tc->tc_mutex);
-
-	/*
-	 * If there are newly awakend threads that need to be swapped in,
-	 * then kick the swapper into action.
-	 */
-	if (swapin)
-		uvm_kick_scheduler();
 }
 
 /*
