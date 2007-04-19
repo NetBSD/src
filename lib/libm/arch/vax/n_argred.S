@@ -1,4 +1,4 @@
-/*	$NetBSD: n_argred.S,v 1.8 2003/08/07 16:44:44 agc Exp $	*/
+/*	$NetBSD: n_argred.S,v 1.9 2007/04/19 00:37:20 matt Exp $	*/
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -43,6 +43,7 @@
  * S. McDonald, April 4,  1985
  */
 
+	.hidden	__libm_argred
 ENTRY(__libm_argred, 0)
 /*
  *  Compare the argument with the largest possible that can
@@ -67,6 +68,7 @@ small_arg:
  *          %r4  contains a  0 or 1  corresponding to a  sin or cos  entry.
  */
 
+	.hidden	__libm_sincos
 ENTRY(__libm_sincos, 0)
 /*
  *  Compensate for a cosine entry by adding one to the quadrant number.
