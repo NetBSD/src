@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.192.2.3 2007/04/18 20:27:54 ad Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.192.2.4 2007/04/19 02:55:29 ad Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -119,7 +119,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.192.2.3 2007/04/18 20:27:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.192.2.4 2007/04/19 02:55:29 ad Exp $");
 
 #include "opt_cputype.h"
 
@@ -954,11 +954,6 @@ mips_vector_init(void)
 	    !(mips_cpu_flags & CPU_MIPS_NO_WAIT))
 		CPU_IDLE = (long *)mips_wait_idle;
 #endif /* (MIPS3 && !MIPS3_5900) || MIPS32 || MIPS64 */
-
-	/* Set-up curlwp/curcpu. */
-	lwp0.l_cpu = &cpu_info_store;
-	cpu_info_store.ci_curlwp = &lwp0;
-	curlwp = &lwp0;
 }
 
 void
