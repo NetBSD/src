@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips1.S,v 1.61.2.2 2007/04/18 20:27:53 ad Exp $	*/
+/*	$NetBSD: locore_mips1.S,v 1.61.2.3 2007/04/19 02:52:08 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -250,8 +250,7 @@ NESTED_NOPROFILE(mips1_KernGenException, KERNFRAME_SIZ, ra)
  * Check for kernel restartable atomic sequences.
  */
 	lw	k1, TF_BASE+TF_REG_EPC(sp)	# restore exception PC
-	lui	t0, %hi(_C_LABEL(_lock_ras_start))
-	ori	t0, zero, %lo(_C_LABEL(_lock_ras_start))
+	la	t0, _C_LABEL(_lock_ras_start)
 	li	t1, -MIPS_LOCK_RAS_SIZE
 	and	t1, t1, k1
 	bne	t1, t0, 1f
@@ -551,8 +550,7 @@ NESTED_NOPROFILE(mips1_KernIntr, KERNFRAME_SIZ, ra)
  * Check for kernel restartable atomic sequences.
  */
 	lw	k1, TF_BASE+TF_REG_EPC(sp)	# restore exception PC
-	lui	t0, %hi(_C_LABEL(_lock_ras_start))
-	ori	t0, zero, %lo(_C_LABEL(_lock_ras_start))
+	la	t0, _C_LABEL(_lock_ras_start)
 	li	t1, -MIPS_LOCK_RAS_SIZE
 	and	t1, t1, k1
 	bne	t1, t0, 1f
