@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.192.2.4 2007/04/19 02:55:29 ad Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.192.2.5 2007/04/19 03:21:12 ad Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -119,7 +119,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.192.2.4 2007/04/19 02:55:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.192.2.5 2007/04/19 03:21:12 ad Exp $");
 
 #include "opt_cputype.h"
 
@@ -778,6 +778,14 @@ void
 mips_vector_init(void)
 {
 	const struct pridtab *ct;
+
+	/*
+	 * XXX Set-up curlwp/curcpu again.  They may have been clobbered
+	 * beween verylocore and here.
+	 */
+	lwp0.l_cpu = &cpu_info_store;
+	cpu_info_store.ci_curlwp = &lwp0;
+	curlwp = &lwp0;
 
 	mycpu = NULL;
 	for (ct = cputab; ct->cpu_name != NULL; ct++) {
