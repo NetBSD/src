@@ -1,4 +1,4 @@
-/*	$NetBSD: crime.c,v 1.22.26.1 2007/04/15 16:02:53 yamt Exp $	*/
+/*	$NetBSD: crime.c,v 1.22.26.2 2007/04/19 01:43:41 ad Exp $	*/
 
 /*
  * Copyright (c) 2004 Christopher SEKIYA
@@ -38,14 +38,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crime.c,v 1.22.26.1 2007/04/15 16:02:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crime.c,v 1.22.26.2 2007/04/19 01:43:41 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
+#include <sys/cpu.h>
 
-#include <machine/cpu.h>
 #include <machine/locore.h>
 #include <machine/autoconf.h>
 #include <machine/bus.h>
