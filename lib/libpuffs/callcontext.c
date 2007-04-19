@@ -1,4 +1,4 @@
-/*	$NetBSD: callcontext.c,v 1.3 2007/02/17 23:00:16 pooka Exp $	*/
+/*	$NetBSD: callcontext.c,v 1.4 2007/04/19 14:45:03 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006 Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: callcontext.c,v 1.3 2007/02/17 23:00:16 pooka Exp $");
+__RCSID("$NetBSD: callcontext.c,v 1.4 2007/04/19 14:45:03 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -71,6 +71,13 @@ puffs_cc_getusermount(struct puffs_cc *pcc)
 {
 
 	return pcc->pcc_pu;
+}
+
+void *
+puffs_cc_getspecific(struct puffs_cc *pcc)
+{
+
+	return puffs_getspecific(pcc->pcc_pu);
 }
 
 struct puffs_cc *
