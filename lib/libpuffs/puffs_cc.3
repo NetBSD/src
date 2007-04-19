@@ -1,4 +1,4 @@
-.\"	$NetBSD: puffs_cc.3,v 1.4 2007/04/19 14:45:03 pooka Exp $
+.\"	$NetBSD: puffs_cc.3,v 1.5 2007/04/19 21:03:00 pooka Exp $
 .\"
 .\" Copyright (c) 2007 Antti Kantee.  All rights reserved.
 .\"
@@ -59,25 +59,43 @@ automatically passed an opaque cookie,
 .Va pcc ,
 to be used as a continuation handle.
 .Pp
-File systems using continuations should define their own even loop
+File systems using continuations should define their own event loop
 instead of using
 .Fn puffs_mainloop .
 .Pp
-Calling
-.Fn puffs_cc_yield
-will suspend and save the current execution context and return control
+.Bl -tag -width xxxx
+.It Fn puffs_cc_getusermount "pcc"
+Returns a pointer to the file system structure
+.Va struct puffs_usermount
+the context is associated with.
+.It Fn puffs_cc_getspecific "pcc"
+Returns a pointer to file system private data.
+This is shorthand for
+calling
+.Fn puffs_getspecific
+with the result from
+.Fn puffs_cc_getusermount .
+.It Fn puffs_cc_yield "pcc"
+Suspend and save the current execution context and return control
 to the previous point.
-Likewise, calling
-.Fn puffs_cc_continue
-will suspend current execution and return control to where it was before
-before calling
-.Fn puffs_cc_yield .
-Typically users will want to call
+In practice, from the file system author perspective, control returns
+back to where either
+.Fn puffs_req_handle
+or
 .Fn puffs_docc
-instead of
-.Fn puffs_cc_continue ,
-since the former also properly handles the results of the call in case
-it finishes without yielding again.
+was called.
+.It Fn puffs_cc_continue pcc
+Will suspend current execution and return control to where it was
+before before calling
+.Fn puffs_cc_yield .
+This is rarely called directly.
+.It Fn puffs_docc "pcc" "ppr"
+Continues request suspended with
+.Fn puffs_cc_yield .
+If the request completes without yielding again, the result can be
+found from
+.Fa ppr .
+.El
 .Pp
 Before calling
 .Fn puffs_cc_yield
