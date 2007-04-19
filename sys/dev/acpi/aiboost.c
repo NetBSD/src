@@ -1,4 +1,4 @@
-/* $NetBSD: aiboost.c,v 1.4 2007/03/26 07:27:36 xtraeme Exp $ */
+/* $NetBSD: aiboost.c,v 1.5 2007/04/19 14:51:47 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines
@@ -28,16 +28,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aiboost.c,v 1.4 2007/03/26 07:27:36 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aiboost.c,v 1.5 2007/04/19 14:51:47 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/errno.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/mutex.h>
-
-#include <machine/bus.h>
 
 #include <dev/acpi/acpica.h>
 #include <dev/acpi/acpireg.h>
@@ -129,15 +126,12 @@ aiboost_acpi_attach(struct device *parent, struct device *self, void *aux)
 	aprint_normal("%s: ASUS AI Boost Hardware monitor\n",
 	    sc->sc_dev.dv_xname);
 
-	/* Get Handle components for the temp package */
 	if (ACPI_FAILURE(aiboost_getcomp(handl, "TSIF", &sc->sc_aitemp)))
 		return;
 
-	/* Get Handle components for the voltage package  */
 	if (ACPI_FAILURE(aiboost_getcomp(handl, "VSIF", &sc->sc_aivolt)))
 		return;
 
-	/* Get Handle components for the fan package */
 	if (ACPI_FAILURE(aiboost_getcomp(handl, "FSIF", &sc->sc_aifan)))
 		return;
 
@@ -358,7 +352,7 @@ aiboost_getcomp(ACPI_HANDLE *h, const char *name, struct aiboost_comp **comp)
 		subobj = buf2.Pointer;
 		myobj = &subobj->Package.Elements[0];
 
-		/* Get id */
+		/* Get UID */
 		if (myobj == NULL || myobj->Type != ACPI_TYPE_INTEGER)
 			goto error;
 
@@ -384,8 +378,8 @@ aiboost_getcomp(ACPI_HANDLE *h, const char *name, struct aiboost_comp **comp)
 			goto error;
 		}
 
-		DPRINTF(("%s: id=%d str=%s\n", __func__, c->elem[i - 1].id,
-		    str));
+		DPRINTF(("%s: id=%d str=%s\n", __func__,
+		    c->elem[i - 1].id, str));
 
 		(void)memcpy(c->elem[i - 1].desc, str, length);
 
