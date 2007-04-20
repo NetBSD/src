@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.c,v 1.38 2007/04/16 13:04:49 pooka Exp $	*/
+/*	$NetBSD: puffs.c,v 1.39 2007/04/20 08:28:53 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: puffs.c,v 1.38 2007/04/16 13:04:49 pooka Exp $");
+__RCSID("$NetBSD: puffs.c,v 1.39 2007/04/20 08:28:53 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -1026,7 +1026,7 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 			struct puffs_vnreq_readdir *auxt = auxbuf;
 			struct dirent *dent;
 			off_t *cookies;
-			size_t res;
+			size_t res, origcookies;
 
 			if (pops->puffs_node_readdir == NULL) {
 				error = 0;
@@ -1036,8 +1036,10 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 			if (auxt->pvnr_ncookies) {
 				/* LINTED: pvnr_data is __aligned() */
 				cookies = (off_t *)auxt->pvnr_data;
+				origcookies = auxt->pvnr_ncookies;
 			} else {
 				cookies = NULL;
+				origcookies = 0;
 			}
 			/* LINTED: dentoff is aligned in the kernel */
 			dent = (struct dirent *)
@@ -1048,6 +1050,9 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 			    preq->preq_cookie, dent, &auxt->pvnr_offset,
 			    &auxt->pvnr_resid, &auxt->pvnr_cred,
 			    &auxt->pvnr_eofflag, cookies, &auxt->pvnr_ncookies);
+
+			/* much easier to track non-working NFS */
+			assert(auxt->pvnr_ncookies <= origcookies);
 
 			/* need to move a bit more */
 			preq->preq_buflen = sizeof(struct puffs_vnreq_readdir) 
