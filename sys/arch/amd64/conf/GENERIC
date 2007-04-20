@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.120.2.4 2007/01/28 20:05:41 tron Exp $
+# $NetBSD: GENERIC,v 1.120.2.5 2007/04/20 20:44:35 pavel Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.120.2.4 $"
+#ident 		"GENERIC-$Revision: 1.120.2.5 $"
 
 maxusers	32		# estimated number of users
 
@@ -230,8 +230,9 @@ config		netbsd	root on ? type ?
 
 mainbus0 at root
 
-#acpi0 		at mainbus0
-#options 	ACPI_SCANPCI		# find PCI roots using ACPI
+# ACPI will be used if present. If not it will fall back to MPBIOS
+acpi0 		at mainbus0
+options 	ACPI_SCANPCI		# find PCI roots using ACPI
 options 	MPBIOS			# configure CPUs and APICs using MPBIOS 
 options 	MPBIOS_SCANPCI		# MPBIOS configures PCI roots
 #options 	PCI_INTR_FIXUP		# PCI interrupt routing via ACPI
