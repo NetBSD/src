@@ -1,4 +1,4 @@
-/* $NetBSD: defs.h,v 1.3 2006/04/24 13:36:23 dillo Exp $ */
+/* $NetBSD: defs.h,v 1.4 2007/04/20 14:22:26 joerg Exp $ */
 
 /*
  * Copyright (c) 1999-2000 Alistair G. Crooks.  All rights reserved.
@@ -102,18 +102,17 @@
  * a leading "%".
  */
 #ifdef NEED_PRI_MACRO
-#  ifdef PRIu64
-#    undef PRIu64
-#  endif
 #  if SIZEOF_INT == 8
-#    define PRIu64 "u"
+#    define MY_PRIu64 "u"
 #  elif SIZEOF_LONG == 8
-#    define PRIu64 "lu"
+#    define MY_PRIu64 "lu"
 #  elif SIZEOF_LONG_LONG == 8
-#    define PRIu64 "llu"
+#    define MY_PRIu64 "llu"
 #  else
 #    error "unable to find a suitable PRIu64"
 #  endif
+#else
+#  define MY_PRIu64 PRIu64
 #endif
 
 #endif /* !DEFS_H_ */
