@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.59 2007/04/16 13:03:26 pooka Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.60 2007/04/20 11:36:25 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.59 2007/04/16 13:03:26 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.60 2007/04/20 11:36:25 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/fstrans.h>
@@ -872,7 +872,7 @@ puffs_reclaim(void *v)
 	return 0;
 }
 
-#define CSIZE sizeof(*ap->a_cookies)
+#define CSIZE sizeof(**ap->a_cookies)
 int
 puffs_readdir(void *v)
 {
