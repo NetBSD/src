@@ -1,4 +1,4 @@
-#	$NetBSD: files.gumstix,v 1.4 2007/04/20 13:00:08 kiyohara Exp $
+#	$NetBSD: files.gumstix,v 1.5 2007/04/20 13:22:21 kiyohara Exp $
 #
 # Genetec corp. G4255EB evaluation board configuration info
 #
@@ -11,6 +11,8 @@ include "arch/arm/xscale/files.pxa2x0"
 include "dev/bluetooth/files.bluetooth"
 
 include	"dev/pcmcia/files.pcmcia"
+
+#include "dev/sdmmc/files.sdmmc"
 
 # gumstix devices
 device	gxio {[addr = -1], [gpirq = -1]}
