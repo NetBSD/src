@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.117 2007/04/20 21:09:49 bouyer Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.118 2007/04/20 21:58:19 bouyer Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -2670,7 +2670,8 @@ sys/dev/pci/if_bge.c				1.128
 
 sys/arch/i386/include/profile.h			1.27 - 1.28
 
-	save and restore %eax, %ecx, otherwise profiling does not work properly.
+	save and restore %eax, %ecx, %edx, otherwise profiling does not work
+	properly.
 	[christos, ticket #579]
 
 sys/dev/ic/i82596.c				1.16
