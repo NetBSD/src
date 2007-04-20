@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.h,v 1.5 2005/11/23 16:14:57 manu Exp $ */
+/*	$NetBSD: linux_machdep.h,v 1.5.24.1 2007/04/20 20:14:12 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -33,6 +33,8 @@
 
 #ifndef _AMD64_LINUX_MACHDEP_H
 #define _AMD64_LINUX_MACHDEP_H
+
+#define LINUX_STATFS_64BIT	/* Needed for full 64bit struct statfs */
 
 #include <compat/linux/common/linux_types.h>
 #include <compat/linux/common/linux_signal.h>

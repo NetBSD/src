@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_types.h,v 1.24 2006/11/16 01:32:42 christos Exp $	*/
+/*	$NetBSD: linux_types.h,v 1.24.2.1 2007/04/20 20:14:12 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -106,11 +106,38 @@ struct linux___sysctl {
 #include <compat/linux/common/linux_siginfo.h>
 
 /*
- * From Linux include/asm-generic/statfs.h
- * This is _almost_ generic - Linux/sparc64 uses different (fully 64bit)
- * struct statfs. However, we don't support Linux/sparc64 ATM.
+ * Generic statfs structure from Linux include/asm-generic/statfs.h
+ * Linux/x86_64 uses different (fully 64bit) struct statfs.
  */
-#ifndef __sparc64__
+#ifdef LINUX_STATFS_64BIT
+struct linux_statfs {
+	long		l_ftype;
+	long		l_fbsize;
+	long		l_fblocks;
+	long		l_fbfree;
+	long		l_fbavail;
+	long		l_ffiles;
+	long		l_fffree;
+	linux_fsid_t	l_ffsid;
+	long		l_fnamelen;
+	long		l_ffrsize;
+	long		l_fspare[5];
+};
+
+struct linux_statfs64 {
+	long		l_ftype;
+	long		l_fbsize;
+	long		l_fblocks;
+	long		l_fbfree;
+	long		l_fbavail;
+	long		l_ffiles;
+	long		l_fffree;
+	linux_fsid_t	l_ffsid;
+	long		l_fnamelen;
+	long		l_ffrsize;
+	long		l_fspare[5];
+};
+#else /* !LINUX_STATFS_64BIT */
 struct linux_statfs {
 	u_int32_t	l_ftype;
 	u_int32_t	l_fbsize;
@@ -138,6 +165,6 @@ struct linux_statfs64 {
 	u_int32_t	l_ffrsize;
 	u_int32_t	l_fspare[5];
 };
-#endif /* !__sparc64__ */
+#endif /* !LINUX_STATFS_64BIT */
 
 #endif /* !_LINUX_TYPES_H */
