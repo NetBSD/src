@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.116 2007/04/20 20:39:04 bouyer Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.117 2007/04/20 21:09:49 bouyer Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -2753,4 +2753,16 @@ sys/arch/sh3/sh3/mmu_sh4.c			1.12
 	would just hang immediately on boot. Makes sh4 kernel compiled with -Os
 	actually work.
 	[uwe, ticket #586]
+
+share/man/man4/lm.4				1.19 - 1.20
+sys/dev/ic/nslm7x.c				1.30 - 1.33 via patch
+sys/dev/ic/nslm7xvar.h				1.19
+sys/dev/isa/lm_isa.c				1.16 via patch
+
+	sync lm(4) with OpenBSD.
+	Supported chips added with the new code include:
+	* Winbond: W83627EHF, W83627DHG, W83637HF, W83783S, W83791D, W83791SD,
+		   W83792D.
+	* Asus AS9912F.
+	[xtraeme, ticket #584]
 
