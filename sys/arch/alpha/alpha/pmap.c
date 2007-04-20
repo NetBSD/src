@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.215.14.4 2007/03/24 14:54:31 yamt Exp $ */
+/* $NetBSD: pmap.c,v 1.215.14.5 2007/04/20 13:41:48 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -145,7 +145,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.215.14.4 2007/03/24 14:54:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.215.14.5 2007/04/20 13:41:48 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -350,7 +350,7 @@ static struct pmap_asn_info pmap_asn_info[ALPHA_MAXPROCS];
  *	* pm_slock (per-pmap) - This lock protects all of the members
  *	  of the pmap structure itself.  This lock will be asserted
  *	  in pmap_activate() and pmap_deactivate() from a critical
- *	  section of cpu_switch(), and must never sleep.  Note that
+ *	  section of mi_switch(), and must never sleep.  Note that
  *	  in the case of the kernel pmap, interrupts which cause
  *	  memory allocation *must* be blocked while this lock is
  *	  asserted.
@@ -529,8 +529,7 @@ static int	pmap_physpage_delref(void *);
  * This causes pmaps to use an extra page of memory if no mappings
  * are entered in them, but in practice this is probably not going
  * to be a problem, and it allows us to avoid locking pmaps in
- * pmap_activate(), which in turn allows us to avoid a deadlock with
- * sched_lock via cpu_switch().
+ * pmap_activate().
  */
 #define	PMAP_NO_LAZY_LEV1MAP
 

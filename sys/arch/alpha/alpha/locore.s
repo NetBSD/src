@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.109.2.3 2007/04/20 13:20:08 yamt Exp $ */
+/* $NetBSD: locore.s,v 1.109.2.4 2007/04/20 13:41:48 yamt Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.109.2.3 2007/04/20 13:20:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.109.2.4 2007/04/20 13:41:48 yamt Exp $");
 
 #include "assym.h"
 
@@ -629,8 +629,8 @@ LEAF(restorefpstate, 1)
  * savectx: save process context, i.e. callee-saved registers
  *
  * Note that savectx() only works for processes other than curlwp,
- * since cpu_switch will copy over the info saved here.  (It _can_
- * sanely be used for curlwp iff cpu_switch won't be called again, e.g.
+ * since cpu_switchto will copy over the info saved here.  (It _can_
+ * sanely be used for curlwp iff cpu_switchto won't be called again, e.g.
  * if called from boot().)
  *
  * Arguments:
