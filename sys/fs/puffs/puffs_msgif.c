@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.c,v 1.29 2007/04/11 09:43:19 pooka Exp $	*/
+/*	$NetBSD: puffs_msgif.c,v 1.30 2007/04/20 21:35:31 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.29 2007/04/11 09:43:19 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.30 2007/04/20 21:35:31 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/fstrans.h>
@@ -868,7 +868,6 @@ puffs_userdead(struct puffs_mount *pmp)
 		park->park_preq->preq_rv = ENXIO;
 		if (park->park_flags & PARKFLAG_CALL) {
 			park->park_done(park->park_preq, park->park_donearg);
-			mutex_enter(&park->park_mtx);
 			puffs_park_release(park, 1);
 		} else {
 			cv_signal(&park->park_cv);
