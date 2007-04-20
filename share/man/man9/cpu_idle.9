@@ -1,4 +1,4 @@
-.\"	$NetBSD: cpu_idle.9,v 1.8 2007/02/23 15:59:17 yamt Exp $
+.\"	$NetBSD: cpu_idle.9,v 1.9 2007/04/20 13:45:43 yamt Exp $
 .\"
 .\" Copyright (c)2007 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\" ------------------------------------------------------------
-.Dd February 17, 2007
+.Dd April 20, 2007
 .Dt CPU_IDLE 9
 .Os
 .\" ------------------------------------------------------------
@@ -53,7 +53,7 @@ has been called for the processor after
 the last call of
 .Fn cpu_idle
 or
-.Fn cpu_switchto
+.Fn cpu_did_resched
 on the processor.
 .Fn cpu_idle
 returns as soon as possible when
