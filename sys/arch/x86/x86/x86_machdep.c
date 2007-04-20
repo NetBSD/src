@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.4.2.1 2007/01/06 13:18:16 bouyer Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.4.2.2 2007/04/20 20:31:27 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.4.2.1 2007/01/06 13:18:16 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.4.2.2 2007/04/20 20:31:27 bouyer Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -45,6 +45,8 @@ __KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.4.2.1 2007/01/06 13:18:16 bouyer E
 #include <sys/kcore.h>
 #include <sys/errno.h>
 #include <sys/kauth.h>
+
+#include <x86/cpu_msr.h>
 
 #include <machine/bootinfo.h>
 #include <machine/vmparam.h>
@@ -115,3 +117,13 @@ check_pa_acc(paddr_t pa, vm_prot_t prot)
 
 	return EPERM;
 }
+
+/*     
+ * This function is to initialize the mutex used by x86/msr_ipifuncs.c.
+ */
+void
+x86_init(void) 
+{
+	msr_cpu_broadcast_initmtx(); 
+}
+

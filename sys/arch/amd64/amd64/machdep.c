@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.44.2.2 2007/02/10 14:48:53 tron Exp $	*/
+/*	$NetBSD: machdep.c,v 1.44.2.3 2007/04/20 20:31:25 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.44.2.2 2007/02/10 14:48:53 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.44.2.3 2007/04/20 20:31:25 bouyer Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_ddb.h"
@@ -135,6 +135,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.44.2.2 2007/02/10 14:48:53 tron Exp $"
 #include <machine/fpu.h>
 #include <machine/mtrr.h>
 #include <machine/mpbiosvar.h>
+#include <x86/cpu_msr.h>
 #include <x86/x86/tsc.h>
 
 #include <dev/isa/isareg.h>
@@ -1553,6 +1554,8 @@ init_x86_64(paddr_t first_avail)
 	softintr_init();
 	splraise(IPL_IPI);
 	enable_intr();
+
+	x86_init();
 
         /* Make sure maxproc is sane */ 
         if (maxproc > cpu_maxproc())
