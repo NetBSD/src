@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs_vnops.c,v 1.23 2007/04/17 11:43:32 pooka Exp $	*/
+/*	$NetBSD: dtfs_vnops.c,v 1.24 2007/04/20 08:29:28 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -233,7 +233,6 @@ dtfs_node_readdir(struct puffs_cc *pcc, void *opc,
 	struct puffs_node *pn = opc;
 	struct puffs_node *pn_nth;
 	struct dtfs_dirent *dfd_nth;
-	size_t maxcookies = *ncookies;
 
 	if (pn->pn_va.va_type != VDIR)
 		return ENOTDIR;
@@ -267,7 +266,6 @@ dtfs_node_readdir(struct puffs_cc *pcc, void *opc,
 		(*readoff)++;
 	}
 
-	assert(maxcookies <= *ncookies);
 	return 0;
 }
 
