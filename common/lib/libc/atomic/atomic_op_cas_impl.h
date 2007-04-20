@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_op_cas_impl.h,v 1.1.2.2 2007/04/13 05:43:04 thorpej Exp $	*/
+/*	$NetBSD: atomic_op_cas_impl.h,v 1.1.2.3 2007/04/20 00:47:34 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 #define	SHIFT_FOR_SUBWORD(a, sw)	(((uintptr_t)(a) & 3) * 8)
 #endif
 
-#define	OP_READ_BARRIER		/* XXX */
+#define	OP_READ_BARRIER		membar_enter()
 
 #define	OP_LOCALS(type)							\
 	volatile uint32_t *wordp;					\
