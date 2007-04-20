@@ -37,6 +37,7 @@ extern const char * vax_output_int_move (rtx, rtx *, enum machine_mode);
 extern const char * vax_output_int_add (rtx, rtx *, enum machine_mode);
 extern const char * vax_output_int_subtract (rtx, rtx *, enum machine_mode);
 extern const char * vax_output_conditional_branch (enum rtx_code);
+extern const char * vax_output_movmemsi (rtx, rtx *);
 #endif /* RTX_CODE */
 
 #ifdef REAL_VALUE_TYPE
