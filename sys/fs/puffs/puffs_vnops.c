@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.60 2007/04/20 11:36:25 pooka Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.61 2007/04/20 11:56:35 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.60 2007/04/20 11:36:25 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.61 2007/04/20 11:56:35 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/fstrans.h>
@@ -887,7 +887,7 @@ puffs_readdir(void *v)
 	} */ *ap = v;
 	struct puffs_mount *pmp = MPTOPUFFSMP(ap->a_vp->v_mount);
 	struct puffs_vnreq_readdir *readdir_argp;
-	size_t argsize, cookiemem, cookiesmax;
+	size_t argsize, tomove, cookiemem, cookiesmax;
 	struct uio *uio = ap->a_uio;
 	size_t howmuch;
 	int error;
@@ -903,9 +903,9 @@ puffs_readdir(void *v)
 		cookiemem = 0;
 	}
 
-	argsize = sizeof(struct puffs_vnreq_readdir)
-	    + uio->uio_resid + cookiemem;
-	readdir_argp = malloc(argsize, M_PUFFS, M_ZERO | M_WAITOK);
+	argsize = sizeof(struct puffs_vnreq_readdir);
+	tomove = uio->uio_resid + cookiemem;
+	readdir_argp = malloc(argsize + tomove, M_PUFFS, M_ZERO | M_WAITOK);
 
 	puffs_credcvt(&readdir_argp->pvnr_cred, ap->a_cred);
 	readdir_argp->pvnr_offset = uio->uio_offset;
@@ -915,8 +915,8 @@ puffs_readdir(void *v)
 	readdir_argp->pvnr_dentoff = cookiemem;
 
 	error = puffs_vntouser(MPTOPUFFSMP(ap->a_vp->v_mount),
-	    PUFFS_VN_READDIR, readdir_argp, argsize,
-	    uio->uio_resid + cookiemem, VPTOPNC(ap->a_vp), ap->a_vp, NULL);
+	    PUFFS_VN_READDIR, readdir_argp, argsize, tomove,
+	    VPTOPNC(ap->a_vp), ap->a_vp, NULL);
 	if (error)
 		goto out;
 
