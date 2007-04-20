@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.118 2007/04/20 21:58:19 bouyer Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.119 2007/04/20 22:05:47 pavel Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -2766,4 +2766,15 @@ sys/dev/isa/lm_isa.c				1.16 via patch
 		   W83792D.
 	* Asus AS9912F.
 	[xtraeme, ticket #584]
+
+sys/dev/pci/if_bnx.c				1.4
+sys/dev/pci/if_bnx.c				1.5
+sys/dev/pci/if_bnx.c				1.6
+sys/dev/pci/if_bnxreg.h				1.2
+
+	Import fixes from OpenBSD, including some performances enhancements
+	Rework the way RX descriptors are filled, to avoid overwriting active
+	descriptors leading to memory corruption, or panics on bus_dma with
+	DIAGNOSTIC kernels.
+	[bouyer, ticket #566]
 
