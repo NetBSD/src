@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_sh4.c,v 1.16 2006/09/24 00:43:44 tsutsui Exp $	*/
+/*	$NetBSD: cache_sh4.c,v 1.16.2.1 2007/04/20 20:38:15 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache_sh4.c,v 1.16 2006/09/24 00:43:44 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache_sh4.c,v 1.16.2.1 2007/04/20 20:38:15 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,15 +64,16 @@ void sh4_emode_icache_sync_range_index(vaddr_t, vsize_t);
 void sh4_emode_dcache_wbinv_all(void);
 void sh4_emode_dcache_wbinv_range_index(vaddr_t, vsize_t);
 
-/* must be inlined. */
+/* Must be inlined because we "call" them while running on P2 */
 static inline void cache_sh4_op_line_32(vaddr_t, vaddr_t, uint32_t,
-    uint32_t);
+    uint32_t) __attribute__((always_inline));
 static inline void cache_sh4_op_8lines_32(vaddr_t, vaddr_t, uint32_t,
-    uint32_t);
+    uint32_t) __attribute__((always_inline));
 static inline void cache_sh4_emode_op_line_32(vaddr_t, vaddr_t,
-    uint32_t, uint32_t, uint32_t);
+    uint32_t, uint32_t, uint32_t) __attribute__((always_inline));
 static inline void cache_sh4_emode_op_8lines_32(vaddr_t, vaddr_t,
-    uint32_t, uint32_t, uint32_t);
+    uint32_t, uint32_t, uint32_t) __attribute__((always_inline));
+
 
 void
 sh4_cache_config(void)
