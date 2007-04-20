@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.51.2.3 2007/02/10 16:29:03 bouyer Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.51.2.4 2007/04/20 20:31:25 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.51.2.3 2007/02/10 16:29:03 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.51.2.4 2007/04/20 20:31:25 bouyer Exp $");
 
 #include "opt_cputype.h"
 #include "opt_enhanced_speedstep.h"
@@ -1750,7 +1750,7 @@ identifycpu(struct cpu_info *ci)
 #ifdef ENHANCED_SPEEDSTEP
 	if (cpu_feature2 & CPUID2_EST) {
 		if (rdmsr(MSR_MISC_ENABLE) & (1 << 16))
-			est_init(ci, CPUVENDOR_INTEL);
+			est_init(CPUVENDOR_INTEL);
 		else
 			aprint_normal("%s: Enhanced SpeedStep disabled by BIOS\n",
 			    cpuname);

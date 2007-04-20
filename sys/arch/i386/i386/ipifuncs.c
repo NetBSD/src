@@ -1,4 +1,4 @@
-/*	$NetBSD: ipifuncs.c,v 1.13 2006/06/07 22:37:58 kardel Exp $ */
+/*	$NetBSD: ipifuncs.c,v 1.13.10.1 2007/04/20 20:31:25 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.13 2006/06/07 22:37:58 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.13.10.1 2007/04/20 20:31:25 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mtrr.h"
@@ -56,6 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.13 2006/06/07 22:37:58 kardel Exp $")
 
 #include <uvm/uvm_extern.h>
 
+#include <x86/cpu_msr.h>
 #include <machine/intr.h>
 #include <machine/atomic.h>
 #include <machine/cpuvar.h>
@@ -96,6 +97,7 @@ void (*ipifunc[X86_NIPI])(struct cpu_info *) =
 	pmap_do_tlb_shootdown,
 	i386_reload_mtrr,
 	gdt_reload_cpu,
+	msr_write_ipi
 };
 
 void
@@ -106,7 +108,6 @@ i386_ipi_halt(struct cpu_info *ci)
 	ci->ci_flags &= ~CPUF_RUNNING;
 	simple_unlock(&ci->ci_slock);
 
-	printf("%s: shutting down\n", ci->ci_dev->dv_xname);
 	for(;;) {
 		__asm volatile("hlt");
 	}
