@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.115 2007/04/16 20:04:19 bouyer Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.116 2007/04/20 20:39:04 bouyer Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -2667,4 +2667,90 @@ sys/dev/pci/if_bge.c				1.128
 	Patch supplied by Mustafa Dogan in PR kern/36139, confirmed to work
 	by Tonnerre Lombard on #NetBSD IRC channel.
 	[tron, ticket #578]
+
+sys/arch/i386/include/profile.h			1.27 - 1.28
+
+	save and restore %eax, %ecx, otherwise profiling does not work properly.
+	[christos, ticket #579]
+
+sys/dev/ic/i82596.c				1.16
+
+	Remove bogus if_drain. If an attempt to reclaim mbufs was made the
+	interface was marked down. Should fix PR 31540.
+	[skrll, ticket #580]
+
+sys/compat/linux/arch/amd64/linux_machdep.h	1.6
+sys/compat/linux/arch/amd64/syscalls.master	1.18
+sys/compat/linux/common/linux_misc.c		1.168
+sys/compat/linux/common/linux_misc_notalpha.c	1.87
+sys/compat/linux/common/linux_types.h		1.25
+sys/compat/linux/arch/amd64/linux_syscall.h	regen
+sys/compat/linux/arch/amd64/linux_syscallargs.h	regen
+sys/compat/linux/arch/amd64/linux_syscalls.c	regen
+sys/compat/linux/arch/amd64/linux_sysent.c	regen
+
+	Fix compat linux statfs/fstatfs syscalls on amd64.
+	- Do not use statfs64/fstatfs64 as they have an extra size argument.
+	- Add full 64bit linux struct statfs support.
+	[njoly, ticket #581]
+
+sys/compat/linux/common/linux_misc.c			1.170 via patch
+sys/compat/linux/common/linux_statfs.h			1.1 via patch
+sys/compat/linux32/arch/amd64/syscalls.master		1.14 via patch
+sys/compat/linux32/common/linux32_misc.c		1.5 via patch
+sys/compat/linux32/common/linux32_types.h		1.4 via patch
+sys/compat/linux32/files.linux32			1.4 via patch
+sys/compat/linux32/arch/amd64/linux32_syscall.h		regen
+sys/compat/linux32/arch/amd64/linux32_syscallargs.h	regen
+sys/compat/linux32/arch/amd64/linux32_syscalls.c	regen
+sys/compat/linux32/arch/amd64/linux32_sysent.c		regen
+
+	- Add compat amd64 linux32 statfs support, adapted from PR/35956.
+	- Move bsd_to_linux_statfs() function to its own file to be shared
+	  between both linux compats.
+	[njoly, ticket #582]
+
+sys/arch/i386/i386/est.c		sync with 1.37
+sys/arch/i386/i386/ipifuncs.c		sync with 1.16
+sys/arch/x86/include/cpu_msr.h		sync with 1.4
+sys/arch/x86/include/intrdefs.h		sync with 1.8
+sys/arch/x86/include/powernow.h		sync with 1.9
+sys/arch/x86/x86/powernow_k8.c		sync with 1.20
+sys/arch/x86/x86/msr_ipifuncs.c		sync with 1.8
+sys/arch/amd64/amd64/ipifuncs.c		sync with 1.9
+sys/arch/i386/i386/identcpu.c		patch
+sys/arch/i386/i386/machdep.c		patch
+sys/arch/i386/include/cpu.h		patch
+sys/arch/x86/conf/files.x86		patch
+sys/arch/x86/x86/x86_machdep.c		patch
+sys/arch/amd64/amd64/machdep.c		patch
+
+	Add MSR write IPI handler for x86. Use it and the RUN_ONCE framework
+	to make est and powernow drivers work properly with SMP.
+	[mlelstv, ticket #575]
+
+sys/arch/hppa/include/vmparam.h			1.10
+
+	Bump the initial stack size limit to bring in line with other ports.
+	newfs_lfs doesn't core by default now.
+	[skrll, ticket #583]
+
+sys/lib/libkern/arch/sh3/Makefile.inc		1.16
+sys/lib/libkern/arch/sh3/movstrSI12_i4.S	1.1
+
+	Provide __movmemSI12_i4 (gcc4) a.k.a. __movstrSI12_i4 (gcc3) that gcc
+	emits for sh4 to copy 12 bytes at certain optimization levels.
+	Discovered by compiling landisk kernel with -Os.
+	Use gcc3 naming ("movstr") to match the rest of the "movstr" files.
+	[uwe, ticket #585]
+
+sys/arch/sh3/sh3/cache_sh4.c			1.17
+sys/arch/sh3/sh3/mmu_sh4.c			1.12
+
+	Mark inline functions we call while running on P2 with
+	__attribute__((always_inline)) or gcc might decide not to inline them,
+	resulting in P2->P1 call while we mess with the cache, and kernel
+	would just hang immediately on boot. Makes sh4 kernel compiled with -Os
+	actually work.
+	[uwe, ticket #586]
 
