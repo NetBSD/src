@@ -1,4 +1,4 @@
-#	$NetBSD: GUMSTIX,v 1.11 2007/03/14 12:27:21 drochner Exp $
+#	$NetBSD: GUMSTIX,v 1.12 2007/04/20 13:00:08 kiyohara Exp $
 #
 #	GUMSTIX -- Gumstix, Inc. gumstix platforms kernel
 #
@@ -209,9 +209,11 @@ options 	GXIO_BLUETOOTH_ON_HWUART	# Bluetooth module on HWUART
 sm0	at gxio? addr 0x04000300 gpirq 36	# etherstix, net{MMC,CF,DUO}
 sm1	at gxio? addr 0x08000300 gpirq 27	# netDUO(2nd NIC)
 
-# PCMCIA/CF card
-gxpcic* at gxio? addr 0x20000000 gpirq 11	# cfstix, netCF
-pcmcia*	at gxpcic?
+# integrated PCMCIA/CF controller
+pxapcic0 at pxaip?				# cfstix, netCF
+
+# PCMCIA bus support
+pcmcia*	at pxapcic?
 
 # PCMCIA serial interfaces
 com*	at pcmcia? function ?		# Modems and serial cards
