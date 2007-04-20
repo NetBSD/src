@@ -1,4 +1,4 @@
-#	$NetBSD: GUMSTIX,v 1.12 2007/04/20 13:00:08 kiyohara Exp $
+#	$NetBSD: GUMSTIX,v 1.13 2007/04/20 13:22:21 kiyohara Exp $
 #
 #	GUMSTIX -- Gumstix, Inc. gumstix platforms kernel
 #
@@ -47,6 +47,7 @@ file-system	UNION		# union file system
 file-system	PTYFS		# /dev/pts/N support
 file-system	TMPFS		# Efficient memory file-system
 #file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
+#file-system	HFS		# experimental - Apple HFS+ (read-only)
 
 # File system options
 #options 	QUOTA		# UFS quotas
@@ -164,13 +165,14 @@ pxaintc0 at pxaip?				# interrupt controller
 options 	PXAGPIO_HAS_GPION_INTRS
 
 pxagpio0 at pxaip?				# GPIO
+pxartc0	at pxaip?				# RTC
 
 # cotulla integrated 16550 UARTs
 options COM_PXA2X0
 com0	at pxaip? addr 0x40100000 intr 22	# Full Function UART
-com1	at pxaip? addr 0x40700000 intr 20	# Standard UART (waysmall-ST)
+com1	at pxaip? addr 0x40700000 intr 20	# Standard UART (console-st)
 com2	at pxaip? addr 0x40200000 intr 21	# Bluetooth UART (older -bt)
-com3	at pxaip? addr 0x41600000 intr 7	# Hardware UART (waysmall, -bt)
+com3	at pxaip? addr 0x41600000 intr 7	# Hardware UART(console-hw, -bt)
 options 	FFUARTCONSOLE
 #options 	STUARTCONSOLE
 #options 	BTUARTCONSOLE
@@ -184,20 +186,31 @@ options 	PXA2X0_DMAC_DMOVER_CONCURRENCY=4 # Enable dmover(9) backend
 #options 	PXA2X0_DMAC_FIXED_PRIORITY	# Don't want multiple priority
 
 # AC97 Audio support
-pxaacu0 at pxaip? addr 0x40500000 intr 14
+pxaacu0	at pxaip? addr 0x40500000 intr 14
 
 # Audio support
 audio*	at audiobus?
 
 # LCD
-# 44000000-4400ffff : pxa2xx-fb
+#lcd0	at pxaip?
+#wsdisplay* at lcd? console ?
 
-# USB
-# 40600000-4060ffff : pxa2xx-udc
+# USB Controller and Devices
+pxaudc0	at pxaip?				# USB Device Controller
 
-# MMC card
-# 41100000-41100fff : pxa2xx-mci
-# 0xF0000000 by u-boot
+# integrated MMC/SD contoller
+#pxamci0	at pxaip? addr 0x41100000 size 0x48
+#sdmmc*	at pxamci?
+#options 	PXAMCI_DEBUG
+#options 	SDMMC_DEBUG
+#options 	SDMMC_DUMP_CSD
+
+# SCSI bus support
+#scsibus* at scsi?
+
+# SCSI devices
+#sd*	at scsibus? target ? lun ? # SCSI disk drives
+#uk*	at scsibus? target ? lun ? # SCSI unknown
 
 # gumstix device support
 gxio0	at pxaip?
@@ -233,10 +246,7 @@ xi*	at xirc?
 acphy*	at mii? phy ?			# AMD/Altima AC101 PHYs
 sqphy*	at mii? phy ?			# Seeq 80220/80221/80223 PHYs
 
-# USB Controller and Devices
-
-# ISA USB controllers
-#slhci* at pcmcia? function ?		# ScanLogic SL811HS
+# USB Devices
 
 # USB bus support
 #usb*	at slhci?
