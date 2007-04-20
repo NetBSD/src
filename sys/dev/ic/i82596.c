@@ -1,4 +1,4 @@
-/* $NetBSD: i82596.c,v 1.14 2006/07/12 05:12:06 skrll Exp $ */
+/* $NetBSD: i82596.c,v 1.14.8.1 2007/04/20 20:11:09 bouyer Exp $ */
 
 /*
  * Copyright (c) 2003 Jochen Kunz.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82596.c,v 1.14 2006/07/12 05:12:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82596.c,v 1.14.8.1 2007/04/20 20:11:09 bouyer Exp $");
 
 /* autoconfig and device stuff */
 #include <sys/param.h>
@@ -94,7 +94,6 @@ static int iee_ioctl(struct ifnet *, u_long, caddr_t);	/* ioctl routine */
 static int iee_init(struct ifnet *);			/* init routine */
 static void iee_stop(struct ifnet *, int);		/* stop routine */
 static void iee_watchdog(struct ifnet *);		/* timer routine */
-static void iee_drain(struct ifnet *);			/* release resources */
 
 /* internal helper functions */
 static void iee_cb_setup(struct iee_softc *, uint32_t);
@@ -536,7 +535,6 @@ iee_attach(struct iee_softc *sc, uint8_t *eth_addr, int *media, int nmedia,
 	ifp->if_init = iee_init;	/* init routine */
 	ifp->if_stop = iee_stop;	/* stop routine */
 	ifp->if_watchdog = iee_watchdog;	/* timer routine */
-	ifp->if_drain = iee_drain;	/* routine to release resources */
 	IFQ_SET_READY(&ifp->if_snd);
 	/* iee supports IEEE 802.1Q Virtual LANs, see vlan(4). */
 	sc->sc_ethercom.ec_capabilities |= ETHERCAP_VLAN_MTU;
@@ -928,15 +926,5 @@ iee_watchdog(struct ifnet *ifp)
 		printf("%s: iee_watchdog: setup timeout %d\n",
 		    sc->sc_dev.dv_xname, ++sc->sc_setup_timeout);
 	iee_init(ifp);
-	return;
-}
-
-
-
-/* routine to release res. */
-void
-iee_drain(struct ifnet *ifp)
-{
-	iee_stop(ifp, 0);
 	return;
 }
