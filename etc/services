@@ -1,4 +1,4 @@
-#	$NetBSD: services,v 1.84 2007/02/10 19:39:02 reed Exp $
+#	$NetBSD: services,v 1.85 2007/04/20 16:18:02 pooka Exp $
 #
 # Network services, Internet style
 #
@@ -353,6 +353,10 @@ codasrv		2432/tcp		# not used
 codasrv		2432/udp		# server port
 codasrv-se	2433/tcp		# tcp side effects
 codasrv-se	2433/udp		# udp sftp side effect
+
+# 9P file and resource sharing protocol
+9pfs		564/tcp
+9pfs		564/udp
 
 # Iana registered ports commonly found in security logs
 epmap		135/tcp			# DCE endpoint resolution
