@@ -205,6 +205,17 @@ split_quadword_operands (rtx insn, enum rtx_code code, rtx * operands,
     }
 }
 
+static const char *
+register_name (rtx reg)
+{
+  int regno;
+  regno = REGNO (reg);
+  if (regno >= FIRST_PSEUDO_REGISTER)
+    regno = reg_renumber[regno];
+  gcc_assert (regno >= 0);
+  return reg_names[regno];
+}
+
 void
 print_operand_address (FILE * file, rtx addr)
 {
@@ -221,15 +232,15 @@ print_operand_address (FILE * file, rtx addr)
       goto retry;
 
     case REG:
-      fprintf (file, "(%s)", reg_names[REGNO (addr)]);
+      fprintf (file, "(%s)", register_name (addr));
       break;
 
     case PRE_DEC:
-      fprintf (file, "-(%s)", reg_names[REGNO (XEXP (addr, 0))]);
+      fprintf (file, "-(%s)", register_name (XEXP (addr, 0)));
       break;
 
     case POST_INC:
-      fprintf (file, "(%s)+", reg_names[REGNO (XEXP (addr, 0))]);
+      fprintf (file, "(%s)+", register_name (XEXP (addr, 0)));
       break;
 
     case PLUS:
@@ -399,14 +410,14 @@ print_operand_address (FILE * file, rtx addr)
 	}
 
       if (breg != 0)
-	fprintf (file, "(%s)", reg_names[REGNO (breg)]);
+	fprintf (file, "(%s)", register_name (breg));
 
       if (ireg != 0)
 	{
 	  if (GET_CODE (ireg) == MULT)
 	    ireg = XEXP (ireg, 0);
 	  gcc_assert (REG_P (ireg));
-	  fprintf (file, "[%s]", reg_names[REGNO (ireg)]);
+	  fprintf (file, "[%s]", register_name (ireg));
 	}
       break;
 
@@ -444,7 +455,7 @@ print_operand (FILE *file, rtx x, int code)
   else if (code == 'M' && CONST_INT_P (x))
     fprintf (file, "$%d", ~((1 << INTVAL (x)) - 1));
   else if (REG_P (x))
-    fprintf (file, "%s", reg_names[REGNO (x)]);
+    fprintf (file, "%s", register_name (x));
   else if (MEM_P (x))
     output_address (XEXP (x, 0));
   else if (GET_CODE (x) == CONST_DOUBLE && GET_MODE (x) == SFmode)
@@ -1522,6 +1533,85 @@ vax_output_conditional_branch (enum rtx_code code)
       default:
 	gcc_unreachable ();
     }
+}
+
+static rtx
+mkrtx(enum rtx_code code, enum machine_mode mode, rtx base, HOST_WIDE_INT off)
+{
+  rtx tmp;
+
+  if (GET_CODE (base) == CONST)
+    base = XEXP (base, 0);
+
+  if (GET_CODE (base) == PLUS)
+    {
+      off += INTVAL (XEXP (base, 1));
+      base = XEXP (base, 0);
+    }
+  if (code == POST_INC)
+    tmp = gen_rtx_POST_INC (SImode, base);
+  else if (off == 0 || (REG_P (base) && code == REG))
+    tmp = base;
+  else
+    tmp = plus_constant (base, off);
+  return gen_rtx_MEM (mode, tmp);
+}
+
+const char *
+vax_output_movmemsi (rtx insn, rtx *operands)
+{
+  HOST_WIDE_INT n = INTVAL (operands[2]);
+  HOST_WIDE_INT off;
+  rtx src, dest;
+  const char *pat = NULL;
+  const enum rtx_code *src_codes;
+  const enum rtx_code *dest_codes;
+  int code_idx = 0;
+  int mode_idx;
+
+  static const enum machine_mode xmodes[4] =
+    {
+      QImode, HImode, SImode, DImode
+    };
+  static const char * const pats[4] = 
+    {
+      "movb %1,%0", "movw %1,%0", "movl %1,%0", "movq %1,%0", 
+    };
+  static const enum rtx_code codes[2][3] =
+    {
+      { PLUS, PLUS, PLUS },
+      { POST_INC, POST_INC, REG },
+    };
+
+  src = XEXP (operands[1], 0);
+
+  src_codes =
+    codes[REG_P (src) && find_regno_note (insn, REG_DEAD, REGNO(src))];
+
+  dest = XEXP (operands[0], 0);
+
+  dest_codes =
+    codes[REG_P (dest) && find_regno_note (insn, REG_DEAD, REGNO(dest))];
+
+  for (off = 0, code_idx = 0, mode_idx = 3; mode_idx >= 0; mode_idx--)
+    {
+      const enum machine_mode mode = xmodes[mode_idx];
+      const HOST_WIDE_INT mode_len = GET_MODE_SIZE (mode);
+      for (; n >= mode_len; n -= mode_len, off += mode_len)
+	{
+	  if (pat != NULL)
+	    output_asm_insn (pat, operands);
+	  if (n == mode_len)
+	    code_idx = 2;
+	  operands[0] = mkrtx(dest_codes[code_idx], mode, dest, off);
+	  operands[1] = mkrtx(src_codes[code_idx], mode, src, off);
+	  if (pat == NULL)
+	    code_idx = 1;
+	  pat = pats[mode_idx];
+	}
+    }
+
+  return pat;
 }
 
 /* 1 if X is an rtx for a constant that is a valid address.  */
