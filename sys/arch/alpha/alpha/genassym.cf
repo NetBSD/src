@@ -1,4 +1,4 @@
-# $NetBSD: genassym.cf,v 1.13.2.2 2007/03/23 15:52:52 yamt Exp $
+# $NetBSD: genassym.cf,v 1.13.2.3 2007/04/20 13:20:08 yamt Exp $
 
 #
 # Copyright (c) 1994, 1995 Gordon W. Ross
@@ -168,5 +168,4 @@ define	CPU_INFO_CURLWP		offsetof(struct cpu_info, ci_curlwp)
 define	CPU_INFO_FPCURLWP	offsetof(struct cpu_info, ci_fpcurlwp)
 define	CPU_INFO_CURPCB		offsetof(struct cpu_info, ci_curpcb)
 define	CPU_INFO_IDLE_LWP	offsetof(struct cpu_info, ci_data.cpu_idlelwp)
-define	CPU_INFO_WANT_RESCHED	offsetof(struct cpu_info, ci_want_resched)
 define	CPU_INFO_SIZEOF		sizeof(struct cpu_info)

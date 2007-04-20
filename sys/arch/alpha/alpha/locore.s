@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.109.2.2 2007/03/20 12:07:11 yamt Exp $ */
+/* $NetBSD: locore.s,v 1.109.2.3 2007/04/20 13:20:08 yamt Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.109.2.2 2007/03/20 12:07:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.109.2.3 2007/04/20 13:20:08 yamt Exp $");
 
 #include "assym.h"
 
@@ -698,7 +698,7 @@ LEAF(cpu_switchto, 0)
 	SWITCH_CONTEXT				/* swap the context */
 
 	GET_CPUINFO
-	stq	zero, CPU_INFO_WANT_RESCHED(v0)	/* we've rescheduled */
+	stq	s2, CPU_INFO_CURLWP(v0)		/* curlwp = l */
 
 	/*
 	 * Now running on the new u struct.
