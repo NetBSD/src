@@ -232,14 +232,28 @@
    (match_operand 3 "" "")]
   ""
   "
+{
+  if (CONST_INT_P (operands[2]) && INTVAL (operands[2]) <= 48)
+    {
+      emit_insn (gen_movmemsi1_2 (operands[0], operands[1], operands[2]));
+      DONE;
+    }
   emit_insn (gen_movmemhi1 (operands[0], operands[1], operands[2]));
   DONE;
-")
+}")
 
 ;; The definition of this insn does not really explain what it does,
 ;; but it should suffice
 ;; that anything generated as this insn will be recognized as one
 ;; and that it won't successfully combine with anything.
+
+(define_insn "movmemsi1_2"
+  [(set (match_operand:BLK 0 "memory_operand" "=R")
+	(match_operand:BLK 1 "memory_operand" "R"))
+   (use (match_operand:SI 2 "const_int_operand" "g"))]
+  "INTVAL (operands[2]) <= 48"
+  "* return vax_output_movmemsi (insn, operands);")
+
 (define_insn "movmemhi1"
   [(set (match_operand:BLK 0 "memory_operand" "=o")
 	(match_operand:BLK 1 "memory_operand" "o"))
