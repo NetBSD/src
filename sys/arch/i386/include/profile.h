@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.h,v 1.25 2006/02/16 20:17:13 perry Exp $	*/
+/*	$NetBSD: profile.h,v 1.25.18.1 2007/04/20 20:08:24 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,19 +55,28 @@ void									\
 mcount(void)								\
 {									\
 	int selfpc, frompcindex;					\
+	int eax, ecx, edx;						\
+									\
+	__asm volatile("movl %%eax,%0" : "=g" (eax));			\
+	__asm volatile("movl %%ecx,%0" : "=g" (ecx));			\
+	__asm volatile("movl %%edx,%0" : "=g" (edx));			\
 	/*								\
 	 * find the return address for mcount,				\
 	 * and the return address for mcount's caller.			\
 	 *								\
 	 * selfpc = pc pushed by mcount call				\
 	 */								\
-	__asm volatile("movl 4(%%ebp),%0" : "=r" (selfpc));	\
+	__asm volatile("movl 4(%%ebp),%0" : "=r" (selfpc));		\
 	/*								\
 	 * frompcindex = pc pushed by call into self.			\
 	 */								\
-	__asm volatile("movl (%%ebp),%0;movl 4(%0),%0"		\
+	__asm volatile("movl (%%ebp),%0;movl 4(%0),%0"			\
 	    : "=r" (frompcindex));					\
 	_mcount((u_long)frompcindex, (u_long)selfpc);			\
+									\
+	__asm volatile("movl %0,%%edx" : : "g" (edx));			\
+	__asm volatile("movl %0,%%ecx" : : "g" (ecx));			\
+	__asm volatile("movl %0,%%eax" : : "g" (eax));			\
 }
 
 #ifdef _KERNEL
