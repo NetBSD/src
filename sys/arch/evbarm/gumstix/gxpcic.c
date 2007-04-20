@@ -1,4 +1,4 @@
-/*	$NetBSD: gxpcic.c,v 1.3 2007/01/18 10:02:55 kiyohara Exp $ */
+/*	$NetBSD: gxpcic.c,v 1.4 2007/04/20 13:00:08 kiyohara Exp $ */
 /*
  * Copyright (C) 2005, 2006 WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -80,7 +80,7 @@
 
 #include <arch/arm/xscale/pxa2x0var.h>
 #include <arch/arm/xscale/pxa2x0reg.h>
-#include <arch/arm/sa11x0/sa11xx_pcicvar.h>
+#include <arch/arm/xscale/pxa2x0_pcic.h>
 #include <arch/evbarm/gumstix/gumstixvar.h>
 
 
@@ -92,49 +92,45 @@
 
 #define HAVE_CARD(r)	(!((r) & GPIO_SET))
 
-#define GXIO_GPIO8_RESET	8
-#define GXIO_GPIRQ11_nCD	11
-#define GXIO_GPIO26_READY	26
+#define GXIO_GPIRQ11_CD1	11
+#define GXIO_GPIRQ26_PRDY1	26
+#define GXIO_GPIRQ27_PRDY2	27
+#define GXIO_GPIRQ36_CD2	36
 
-struct gxpcic_softc;
 
-struct gxpcic_socket {
-	struct sapcic_socket ss;	/* inherit socket for sa11x0 pcic */
-};
+static	int  	gxpcic_match(struct device *, struct cfdata *, void *);
+static	void  	gxpcic_attach(struct device *, struct device *, void *);
+static	void	gxpcic_pcic_socket_setup(struct pxapcic_socket *);
 
-struct gxpcic_softc {
-	struct sapcic_softc sc_pc;	/* inherit SA11xx pcic */
-
-	bus_space_tag_t sc_iot;
-	bus_space_handle_t sc_ioh;
-	int sc_gpirq;
-
-	struct gxpcic_socket sc_socket[2];
-	int sc_cards;
-};
-
-static int  	gxpcic_match(struct device *, struct cfdata *, void *);
-static void  	gxpcic_attach(struct device *, struct device *, void *);
-
-static	int	gxpcic_card_detect(void *);
-static	int	gxpcic_read(struct sapcic_socket *, int);
-static	void	gxpcic_write(struct sapcic_socket *, int, int);
-static	void	gxpcic_set_power(struct sapcic_socket *, int);
-static	void	gxpcic_clear_intr(int);
-static	void	*gxpcic_intr_establish(struct sapcic_socket *, int,
+static	u_int	gxpcic_read(struct pxapcic_socket *, int);
+static	void	gxpcic_write(struct pxapcic_socket *, int, u_int);
+static	void	gxpcic_set_power(struct pxapcic_socket *, int);
+static	void	gxpcic_clear_intr(struct pxapcic_socket *);
+static	void	*gxpcic_intr_establish(struct pxapcic_socket *, int,
 				       int (*)(void *), void *);
-static	void	gxpcic_intr_disestablish(struct sapcic_socket *, void *);
+static	void	gxpcic_intr_disestablish(struct pxapcic_socket *, void *);
+__inline void gxpcic_cpld_clk(void);
+__inline u_char gxpcic_cpld_read_bits(int bits);
+static	int	gxpcic_count_slot(struct pxapcic_softc *);
 
-CFATTACH_DECL(gxpcic, sizeof(struct gxpcic_softc),
+CFATTACH_DECL(pxapcic_gxpcic, sizeof(struct pxapcic_softc),
     gxpcic_match, gxpcic_attach, NULL, NULL);
 
-static struct sapcic_tag gxpcic_tag = {
+static struct pxapcic_tag gxpcic_pcic_functions = {
 	gxpcic_read,
 	gxpcic_write,
 	gxpcic_set_power,
 	gxpcic_clear_intr,
 	gxpcic_intr_establish,
 	gxpcic_intr_disestablish,
+};
+
+static struct {
+	int cd;
+	int prdy;
+} gxpcic_slot_irqs[] = {
+	{ GXIO_GPIRQ11_CD1, GXIO_GPIRQ26_PRDY1 },
+	{ GXIO_GPIRQ36_CD2, GXIO_GPIRQ27_PRDY2 }
 };
 
 
@@ -144,11 +140,13 @@ gxpcic_match(struct device *parent, struct cfdata *cf, void *aux)
 	struct {
 		int gpio;
 		u_int fn;
-	} gpiomodes[] = {
+	} pcic_gpiomodes[] = {
 		{ 48, GPIO_ALT_FN_2_OUT },		/* nPOE */
 		{ 49, GPIO_ALT_FN_2_OUT },		/* nPWE */
 		{ 50, GPIO_ALT_FN_2_OUT },		/* nPIOR */
 		{ 51, GPIO_ALT_FN_2_OUT },		/* nPIOW */
+		{ 52, GPIO_ALT_FN_2_OUT },		/* nPCE1 */
+		{ 53, GPIO_ALT_FN_2_OUT },		/* nPCE2 */
 		{ 54, GPIO_ALT_FN_2_OUT },		/* pSKTSEL */
 		{ 55, GPIO_ALT_FN_2_OUT },		/* nPREG */
 		{ 56, GPIO_ALT_FN_1_IN },		/* nPWAIT */
@@ -158,13 +156,17 @@ gxpcic_match(struct device *parent, struct cfdata *cf, void *aux)
 	u_int reg;
 	int i;
 
-	for (i = 0; gpiomodes[i].gpio != -1; i++) {
-		reg = pxa2x0_gpio_get_function(gpiomodes[i].gpio);
-		if (GPIO_FN(reg) != GPIO_FN(gpiomodes[i].fn) ||
-		    GPIO_FN_IS_OUT(reg) != GPIO_FN_IS_OUT(gpiomodes[i].fn))
+	/*
+	 * Check GPIO configuration.  If you use these, it is sure already
+	 * to have been set by gxio. 
+	 */
+	for (i = 0; pcic_gpiomodes[i].gpio != -1; i++) {
+		reg = pxa2x0_gpio_get_function(pcic_gpiomodes[i].gpio);
+		if (GPIO_FN(reg) != GPIO_FN(pcic_gpiomodes[i].fn) ||
+		    GPIO_FN_IS_OUT(reg) != GPIO_FN_IS_OUT(pcic_gpiomodes[i].fn))
 			break;
 	}
-	if (gpiomodes[i].gpio != -1)
+	if (pcic_gpiomodes[i].gpio != -1)
 		return 0;
 
 	return	1;	/* match */
@@ -173,166 +175,85 @@ gxpcic_match(struct device *parent, struct cfdata *cf, void *aux)
 static void
 gxpcic_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct gxio_softc *gxsc = device_private(parent);
-	struct gxpcic_softc *sc = device_private(self);
-	struct gxio_attach_args *gxa = aux;
-	struct pcmciabus_attach_args paa;
-	int mecr, val, i, n;
+	struct pxapcic_softc *sc = (struct pxapcic_softc *)self;
+	struct pxaip_attach_args *pxa = (struct pxaip_attach_args *)aux;
+	int nslot, i;
 
-	aprint_normal("\n");
-	aprint_naive("\n");
+	sc->sc_iot = pxa->pxa_iot;
 
-	sc->sc_iot = sc->sc_pc.sc_iot = gxa->gxa_iot;
-	sc->sc_ioh = gxsc->sc_ioh;
-	sc->sc_gpirq = gxa->gxa_gpirq;
-	sc->sc_cards = 0;
+	nslot = gxpcic_count_slot(sc);
 
-	n = bus_space_read_4(sc->sc_iot, sc->sc_ioh, MEMCTL_MECR) & MECR_NOS ?
-	    2 : 1;
-	for (i = 0; i < n; i++) {
-		sc->sc_socket[i].ss.sc = &sc->sc_pc;
-		sc->sc_socket[i].ss.socket = 0;
-		sc->sc_socket[i].ss.pcictag_cookie = NULL;
-		sc->sc_socket[i].ss.pcictag = &gxpcic_tag;
-		sc->sc_socket[i].ss.event_thread = NULL;
-		sc->sc_socket[i].ss.event = 0;
-		sc->sc_socket[i].ss.laststatus = SAPCIC_CARD_INVALID;
-		sc->sc_socket[i].ss.shutdown = 0;
-
-		/* 3.3V only? */
-		sc->sc_socket[i].ss.power_capability = SAPCIC_POWER_3V;
-
-		bus_space_write_4(sc->sc_iot, sc->sc_ioh, MEMCTL_MCMEM(i),
-		    MC_TIMING_VAL(10,10,30));
-		bus_space_write_4(sc->sc_iot, sc->sc_ioh, MEMCTL_MCATT(i),
-		    MC_TIMING_VAL(10,10,30));
-		bus_space_write_4(sc->sc_iot, sc->sc_ioh, MEMCTL_MCIO(i),
-		    MC_TIMING_VAL(6,6,17));
-
-		paa.paa_busname = "pcmcia";
-		paa.pct = (pcmcia_chipset_tag_t)&sa11x0_pcmcia_functions;
-		paa.pch = (pcmcia_chipset_handle_t)&sc->sc_socket[i].ss;
-		paa.iobase = 0;
-		paa.iosize = 0x4000000;
-
-		sc->sc_socket[i].ss.pcmcia =
-		    (struct device *)config_found_ia(&sc->sc_pc.sc_dev,
-		    "pcmciabus", &paa, NULL);
-
-		/* interrupt for card insertion/removal */
-		gxio_intr_establish(sc, GXIO_GPIRQ11_nCD, IST_EDGE_BOTH,
-		    IPL_BIO, gxpcic_card_detect, &sc->sc_socket[i]);
-
-		/* if card was insert then set CIT */
-		val = pxa2x0_gpio_get_function(GXIO_GPIRQ11_nCD);
-		if (HAVE_CARD(val)) {
-			mecr = bus_space_read_4(
-			    sc->sc_iot, sc->sc_ioh, MEMCTL_MECR);
-			bus_space_write_4(sc->sc_iot,
-			    sc->sc_ioh, MEMCTL_MECR, mecr | MECR_CIT);
-		}
-
-		/* schedule kthread creation */
-		kthread_create(sapcic_kthread_create, &sc->sc_socket[i].ss);
+	for (i = 0; i < nslot; i++) {
+		sc->sc_irqpin[i] = gxpcic_slot_irqs[i].prdy;
+		sc->sc_irqcfpin[i] = gxpcic_slot_irqs[i].cd;
 	}
+	sc->sc_nslots = nslot;
 
+	pxapcic_attach_common(sc, &gxpcic_pcic_socket_setup);
 }
 
-static int
-gxpcic_card_detect(void *arg)
+static void
+gxpcic_pcic_socket_setup(struct pxapcic_socket *so)
 {
-	struct gxpcic_socket *socket = arg;
-	struct gxpcic_softc *sc = (struct gxpcic_softc *)socket->ss.sc;
-	int sock_no = socket->ss.socket;
-	int mecr, last, val, s;
+	struct pxapcic_softc *sc = so->sc;
 
-	s = splbio();
-	last = sc->sc_cards;
-	val = pxa2x0_gpio_get_function(GXIO_GPIRQ11_nCD);
-	if (HAVE_CARD(val)) {
-		sc->sc_cards |= 1<<sock_no;
-		/* if it is the first card, turn on expansion memory control. */
-		if (last == 0) {
-			mecr = bus_space_read_4(
-			    sc->sc_iot, sc->sc_ioh, MEMCTL_MECR);
-			bus_space_write_4(sc->sc_iot,
-			    sc->sc_ioh, MEMCTL_MECR, mecr | MECR_CIT);
-		}
-	} else {
-		sc->sc_cards &= ~(1<<sock_no);
-		/* if we loast all cards, turn off expansion memory control. */
-		if (sc->sc_cards == 0) {
-			mecr = bus_space_read_4(
-			    sc->sc_iot, sc->sc_ioh, MEMCTL_MECR);
-			bus_space_write_4(sc->sc_iot,
-			    sc->sc_ioh, MEMCTL_MECR, mecr & ~MECR_CIT);
-		}
-	}
-	splx(s);
+	/* 3.3V only? */
+	so->power_capability = PXAPCIC_POWER_3V;
+	so->pcictag_cookie = NULL;
+	so->pcictag = &gxpcic_pcic_functions;
 
-	DPRINTF(("%s: card %d %s\n", sc->sc_pc.sc_dev.dv_xname, sock_no,
-	    HAVE_CARD(val) ? "inserted" : "removed"));
-
-	sapcic_intr(arg);
-
-	return 1;
+	bus_space_write_4(sc->sc_iot, sc->sc_memctl_ioh,
+	    MEMCTL_MCMEM(so->socket), MC_TIMING_VAL(9 ,9, 29));
+	bus_space_write_4(sc->sc_iot, sc->sc_memctl_ioh,
+	    MEMCTL_MCATT(so->socket), MC_TIMING_VAL(9 ,9, 29));
+	bus_space_write_4(sc->sc_iot, sc->sc_memctl_ioh,
+	    MEMCTL_MCIO(so->socket), MC_TIMING_VAL(5 ,5, 16));
 }
 
-/* ARGSUSED */
-static int
-gxpcic_read(struct sapcic_socket *so, int which)
+static u_int
+gxpcic_read(struct pxapcic_socket *so, int which)
 {
 	int reg;
 
 	switch (which) {
-	case SAPCIC_STATUS_CARD:
-		reg = pxa2x0_gpio_get_function(GXIO_GPIRQ11_nCD);
+	case PXAPCIC_CARD_STATUS:
+		reg = pxa2x0_gpio_get_function(gxpcic_slot_irqs[so->socket].cd);
 		return (HAVE_CARD(reg) ?
-		    SAPCIC_CARD_VALID : SAPCIC_CARD_INVALID);
+		    PXAPCIC_CARD_VALID : PXAPCIC_CARD_INVALID);
 
-	case SAPCIC_STATUS_READY:
-		reg = pxa2x0_gpio_get_function(GXIO_GPIO26_READY);
+	case PXAPCIC_CARD_READY:
+		reg = pxa2x0_gpio_get_function(
+		    gxpcic_slot_irqs[so->socket].prdy);
 		return (reg & GPIO_SET ? 1 : 0);
 
 	default:
 		panic("%s: bogus register", __FUNCTION__);
 	}
+	/* NOTREACHED */
 }
 
 /* ARGSUSED */
 static void
-gxpcic_write(struct sapcic_socket *so, int which, int arg)
+gxpcic_write(struct pxapcic_socket *so, int which, u_int arg)
 {
 
 	switch (which) {
-	case SAPCIC_CONTROL_RESET:
-#if 0	/* XXXX: Our PXA2x0 no necessary ??? */
-		if (arg)
-			pxa2x0_gpio_set_function(GXIO_GPIO8_RESET, GPIO_SET);
-		else
-			pxa2x0_gpio_set_function(GXIO_GPIO8_RESET, GPIO_CLR);
-#endif
-		break;
-
-	case SAPCIC_CONTROL_LINEENABLE:
-		break;
-
-	case SAPCIC_CONTROL_WAITENABLE:
-		break;
-
-	case SAPCIC_CONTROL_POWERSELECT:
+	case PXAPCIC_CARD_POWER:
+	case PXAPCIC_CARD_RESET:
+		/* We can't */
 		break;
 
 	default:
 		panic("%s: bogus register", __FUNCTION__);
 	}
+	/* NOTREACHED */
 }
 
 static void
-gxpcic_set_power(struct sapcic_socket *__so, int arg)
+gxpcic_set_power(struct pxapcic_socket *__so, int arg)
 {
 
-	if(arg != SAPCIC_POWER_OFF && arg != SAPCIC_POWER_3V)
+	if(arg != PXAPCIC_POWER_OFF && arg != PXAPCIC_POWER_3V)
 		panic("%s: bogus arg\n", __FUNCTION__);
 
 	/* 3.3V only? */
@@ -340,34 +261,102 @@ gxpcic_set_power(struct sapcic_socket *__so, int arg)
 
 /* ARGSUSED */
 static void
-gxpcic_clear_intr(int arg)
+gxpcic_clear_intr(struct pxapcic_socket *so)
 {
 
 	/* nothing to do */
 }
 
 static void *
-gxpcic_intr_establish(struct sapcic_socket *so, int level,
+gxpcic_intr_establish(struct pxapcic_socket *so, int level,
     int (* ih_fun)(void *), void *ih_arg)
 {
-	__attribute__((unused))struct gxpcic_softc *sc =
-	    (struct gxpcic_softc *)so->sc;
-	int gpirq;
 
-	gpirq = GXIO_GPIO26_READY;
-
-	DPRINTF(("%s: card %d gpio %d\n",
-	    sc->sc_pc.sc_dev.dv_xname, so->socket, gpirq));
-
-	return gxio_intr_establish(sc, gpirq, IST_EDGE_FALLING, level,
-	    ih_fun, ih_arg);
+	return pxa2x0_gpio_intr_establish(so->irqpin, IST_EDGE_FALLING,
+	    level, ih_fun, ih_arg);
 }
 
+/* ARGSUSED */
 static void
-gxpcic_intr_disestablish(struct sapcic_socket *so, void *ih)
+gxpcic_intr_disestablish(struct pxapcic_socket *so, void *ih)
 {
-	__attribute__((unused))struct gxpcic_softc *sc =
-	    (struct gxpcic_softc *)so->sc;
 
-	gxio_intr_disestablish(sc, ih);
+	pxa2x0_gpio_intr_disestablish(ih);
+}
+
+
+/*
+ * XXXXX: slot count functions from Linux
+ */
+__inline void
+gxpcic_cpld_clk()
+{
+
+	pxa2x0_gpio_set_function(48, GPIO_OUT | GPIO_CLR);
+	pxa2x0_gpio_set_function(48, GPIO_OUT | GPIO_SET);
+}
+
+__inline u_char
+gxpcic_cpld_read_bits(int bits)
+{
+	u_int shift = 0, gpio;
+	u_char result = 0;
+
+	while (bits--) {
+		gpio = pxa2x0_gpio_get_function(11);
+		result |= ((gpio & GPIO_SET) == GPIO_SET) << shift;
+		shift++;
+		gxpcic_cpld_clk();
+	}
+	return result;
+}
+
+/*
+ * We use the CPLD on the CF-CF card to read a value from a shift register.
+ * If we can read that magic sequence, then we have 2 CF cards; otherwise
+ * we assume just one.  The CPLD will send the value of the shift register
+ * on GPIO11 (the CD line for slot 0) when RESET is held in reset.  We use
+ * GPIO48 (nPWE) as a clock signal, GPIO52/53 (card enable for both cards)
+ * to control read/write to the shift register.
+ */
+static int
+gxpcic_count_slot(struct pxapcic_softc *sc)
+{
+	u_int poe, pce1, pce2;
+	int nslot;
+
+	poe = pxa2x0_gpio_get_function(48);
+	pce1 = pxa2x0_gpio_get_function(52);
+	pce2 = pxa2x0_gpio_get_function(53);
+
+	/* Reset */
+	pxa2x0_gpio_set_function(8, GPIO_OUT | GPIO_SET);
+
+	/* Setup the shift register */
+	pxa2x0_gpio_set_function(52, GPIO_OUT | GPIO_SET);
+	pxa2x0_gpio_set_function(53, GPIO_OUT | GPIO_CLR);
+
+	/* Tick the clock to program the shift register */
+	gxpcic_cpld_clk();
+
+	/* Now set shift register into read mode */
+	pxa2x0_gpio_set_function(52, GPIO_OUT | GPIO_CLR);
+	pxa2x0_gpio_set_function(53, GPIO_OUT | GPIO_SET);
+
+	/* We can read the bits now -- 0xc2 means "Dual compact flash" */
+	if (gxpcic_cpld_read_bits(8) != 0xc2)
+		/* We do not have 2 CF slots */
+		nslot = 1;
+	else
+		/* We have 2 CF slots */
+		nslot = 2;
+
+	delay(50);
+	pxa2x0_gpio_set_function(8, GPIO_OUT | GPIO_CLR);	/* clr RESET */
+
+	pxa2x0_gpio_set_function(48, poe);
+	pxa2x0_gpio_set_function(52, pce1);
+	pxa2x0_gpio_set_function(53, pce2);
+
+	return nslot;
 }
