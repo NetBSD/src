@@ -1,4 +1,4 @@
-/*	$NetBSD: lm_isa.c,v 1.14 2006/11/24 22:04:25 wiz Exp $ */
+/*	$NetBSD: lm_isa.c,v 1.14.2.1 2007/04/20 21:09:02 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,15 +37,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lm_isa.c,v 1.14 2006/11/24 22:04:25 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lm_isa.c,v 1.14.2.1 2007/04/20 21:09:02 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/proc.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
-#include <sys/errno.h>
 #include <sys/conf.h>
 
 #include <machine/bus.h>
@@ -53,7 +50,6 @@ __KERNEL_RCSID(0, "$NetBSD: lm_isa.c,v 1.14 2006/11/24 22:04:25 wiz Exp $");
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
 
-#include <machine/intr.h>
 #include <machine/bus.h>
 
 #include <dev/sysmon/sysmonvar.h>
@@ -69,7 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: lm_isa.c,v 1.14 2006/11/24 22:04:25 wiz Exp $");
 
 int lm_isa_match(struct device *, struct cfdata *, void *);
 void lm_isa_attach(struct device *, struct device *, void *);
-u_int8_t lm_isa_readreg(struct lm_softc *, int);
+uint8_t lm_isa_readreg(struct lm_softc *, int);
 void lm_isa_writereg(struct lm_softc *, int, int);
 
 CFATTACH_DECL(lm_isa, sizeof(struct lm_softc),
@@ -77,36 +73,30 @@ CFATTACH_DECL(lm_isa, sizeof(struct lm_softc),
 
 
 int
-lm_isa_match(struct device *parent, struct cfdata *match,
-    void *aux)
+lm_isa_match(struct device *parent, struct cfdata *match, void *aux)
 {
-	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
 	struct isa_attach_args *ia = aux;
-	int iobase;
 	int rv;
 
 	/* Must supply an address */
 	if (ia->ia_nio < 1)
-		return (0);
+		return 0;
 
 	if (ISA_DIRECT_CONFIG(ia))
-		return (0);
+		return 0;
 
 	if (ia->ia_io[0].ir_addr == ISA_UNKNOWN_PORT)
-		return (0);
+		return 0;
 
-	iot = ia->ia_iot;
-	iobase = ia->ia_io[0].ir_addr;
-
-	if (bus_space_map(iot, iobase, 8, 0, &ioh))
-		return (0);
+	if (bus_space_map(ia->ia_iot, ia->ia_io[0].ir_addr, 8, 0, &ioh))
+		return 0;
 
 
 	/* Bus independent probe */
-	rv = lm_probe(iot, ioh);
+	rv = lm_probe(ia->ia_iot, ioh);
 
-	bus_space_unmap(iot, ioh, 8);
+	bus_space_unmap(ia->ia_iot, ioh, 8);
 
 	if (rv) {
 		ia->ia_nio = 1;
@@ -117,7 +107,7 @@ lm_isa_match(struct device *parent, struct cfdata *match,
 		ia->ia_ndrq = 0;
 	}
 
-	return (rv);
+	return rv;
 }
 
 
@@ -125,15 +115,13 @@ void
 lm_isa_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct lm_softc *lmsc = (void *)self;
-	int iobase;
-	bus_space_tag_t iot;
 	struct isa_attach_args *ia = aux;
 
-        iobase = ia->ia_io[0].ir_addr;
-	iot = lmsc->lm_iot = ia->ia_iot;
+	lmsc->lm_iot = ia->ia_iot;
 
-	if (bus_space_map(iot, iobase, 8, 0, &lmsc->lm_ioh)) {
-		printf(": can't map i/o space\n");
+	if (bus_space_map(ia->ia_iot, ia->ia_io[0].ir_addr, 8, 0,
+	    &lmsc->lm_ioh)) {
+		aprint_error(": can't map i/o space\n");
 		return;
 	}
 
@@ -145,21 +133,16 @@ lm_isa_attach(struct device *parent, struct device *self, void *aux)
 }
 
 
-u_int8_t
-lm_isa_readreg(sc, reg)
-	struct lm_softc *sc;
-	int reg;
+uint8_t
+lm_isa_readreg(struct lm_softc *sc, int reg)
 {
 	bus_space_write_1(sc->lm_iot, sc->lm_ioh, LMC_ADDR, reg);
-	return (bus_space_read_1(sc->lm_iot, sc->lm_ioh, LMC_DATA));
+	return bus_space_read_1(sc->lm_iot, sc->lm_ioh, LMC_DATA);
 }
 
 
 void
-lm_isa_writereg(sc, reg, val)
-	struct lm_softc *sc;
-	int reg;
-	int val;
+lm_isa_writereg(struct lm_softc *sc, int reg, int val)
 {
 	bus_space_write_1(sc->lm_iot, sc->lm_ioh, LMC_ADDR, reg);
 	bus_space_write_1(sc->lm_iot, sc->lm_ioh, LMC_DATA, val);
