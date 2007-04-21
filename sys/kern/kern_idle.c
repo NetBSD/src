@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_idle.c,v 1.1.2.7 2007/04/21 15:50:15 ad Exp $	*/
+/*	$NetBSD: kern_idle.c,v 1.1.2.8 2007/04/21 18:11:41 mrg Exp $	*/
 
 /*-
  * Copyright (c)2002, 2006, 2007 YAMAMOTO Takashi,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: kern_idle.c,v 1.1.2.7 2007/04/21 15:50:15 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_idle.c,v 1.1.2.8 2007/04/21 18:11:41 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -112,7 +112,7 @@ create_idle_lwp(struct cpu_info *ci)
 #ifdef MULTIPROCESSOR		/* XXX should be mandatory */
 		cpuid = ci->ci_cpuid;
 #else
-		cpuid = 0
+		cpuid = 0;
 #endif
 		snprintf(name, MAXCOMLEN, "idle:%d", (int)cpuid);
 		lwp_lock(l);
