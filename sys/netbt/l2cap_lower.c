@@ -1,4 +1,4 @@
-/*	$NetBSD: l2cap_lower.c,v 1.5 2007/03/30 20:47:03 plunky Exp $	*/
+/*	$NetBSD: l2cap_lower.c,v 1.6 2007/04/21 06:15:23 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: l2cap_lower.c,v 1.5 2007/03/30 20:47:03 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: l2cap_lower.c,v 1.6 2007/04/21 06:15:23 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -58,6 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: l2cap_lower.c,v 1.5 2007/03/30 20:47:03 plunky Exp $
  * Config failed
  * Other end reported invalid CID
  * Normal disconnection
+ * Change link mode failed
  */
 void
 l2cap_close(struct l2cap_channel *chan, int err)
