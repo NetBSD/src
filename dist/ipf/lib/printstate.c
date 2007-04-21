@@ -1,4 +1,4 @@
-/*	$NetBSD: printstate.c,v 1.1.1.6 2007/04/14 20:17:31 martin Exp $	*/
+/*	$NetBSD: printstate.c,v 1.2 2007/04/21 11:16:53 dsl Exp $	*/
 
 /*
  * Copyright (C) 2002-2005 by Darren Reed.
@@ -61,19 +61,22 @@ u_long now;
 		PRINTF(" id %hu seq %hu type %d\n", sp->is_icmp.ici_id,
 			sp->is_icmp.ici_seq, sp->is_icmp.ici_type);
 
-#ifdef        USE_QUAD_T
-	PRINTF("\tforward: pkts in %qd bytes in %qd pkts out %qd bytes out %qd\n\tbackward: pkts in %qd bytes in %qd pkts out %qd bytes out %qd\n",
-		sp->is_pkts[0], sp->is_bytes[0],
-		sp->is_pkts[1], sp->is_bytes[1],
-		sp->is_pkts[2], sp->is_bytes[2],
-		sp->is_pkts[3], sp->is_bytes[3]);
+#ifdef PRIu64
+#define P_C PRIu64
 #else
-	PRINTF("\tforward: pkts in %ld bytes in %ld pkts out %ld bytes out %ld\n\tbackward: pkts in %ld bytes in %ld pkts out %ld bytes out %ld\n",
+#ifdef USE_QUAD_T
+#define P_C qu
+#else
+#define P_C lu
+#endif
+#endif
+
+	PRINTF("\tforward: pkts in %" P_C " bytes in %" P_C " pkts out %" P_C " bytes out %" P_C "\n\tbackward: pkts in %" P_C " bytes in %" P_C " pkts out %" P_C " bytes out %" P_C "\n",
 		sp->is_pkts[0], sp->is_bytes[0],
 		sp->is_pkts[1], sp->is_bytes[1],
 		sp->is_pkts[2], sp->is_bytes[2],
 		sp->is_pkts[3], sp->is_bytes[3]);
-#endif
+#undef P_C
 
 	PRINTF("\t");
 
