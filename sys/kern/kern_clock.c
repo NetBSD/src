@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.106.2.5 2007/03/20 11:26:51 yamt Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.106.2.6 2007/04/21 15:50:14 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.106.2.5 2007/03/20 11:26:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.106.2.6 2007/04/21 15:50:14 ad Exp $");
 
 #include "opt_ntp.h"
 #include "opt_multiprocessor.h"
@@ -1246,7 +1246,7 @@ statclock(struct clockframe *frame)
 	spc->spc_pscnt = psdiv;
 
 	if (p != NULL) {
-		++p->p_cpticks;
+		++l->l_cpticks;
 		mutex_spin_exit(&p->p_stmutex);
 	}
 

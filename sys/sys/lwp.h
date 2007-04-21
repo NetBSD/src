@@ -1,4 +1,4 @@
-/* 	$NetBSD: lwp.h,v 1.48.2.14 2007/04/16 23:31:19 ad Exp $	*/
+/* 	$NetBSD: lwp.h,v 1.48.2.15 2007/04/21 15:50:20 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -62,6 +62,7 @@
  * l:	*l_mutex
  * p:	l_proc->p_smutex
  * s:	spc_mutex, which may or may not be referenced by l_mutex
+ * t:	l_proc->p_stmutex
  * (:	unlocked, stable
  * !:	unlocked, may only be safely accessed by the LWP itself
  * ?:	undecided
@@ -87,8 +88,10 @@ struct lwp {
 	pri_t		l_usrpri;	/* l: user-priority */
 	pri_t		l_inheritedprio;/* l: inherited priority */
 	SLIST_HEAD(, turnstile) l_pi_lenders; /* l: ts lending us priority */
-	long		l_nvcsw;	/* l: voluntary context switches */
-	long		l_nivcsw;	/* l: involuntary context switches */
+	uint64_t	l_ncsw;		/* l: total context switches */
+	uint64_t	l_nivcsw;	/* l: involuntary context switches */
+	int		l_cpticks;	/* t: Ticks of CPU time */
+	fixpt_t		l_pctcpu;	/* t: %cpu during l_swtime */
 
 	/* Synchronisation */
 	struct turnstile *l_ts;		/* l: current turnstile */
@@ -111,6 +114,7 @@ struct lwp {
 	int		l_prflag;	/* p: process level flags */
 	u_int		l_refcnt;	/* p: reference count on this LWP */
 	lwpid_t		l_lid;		/* (: LWP identifier; local to proc */
+	const char	*l_name;	/* l: name, optional */
 
 	/* Signals */
 	int		l_sigrestore;	/* p: need to restore old sig mask */
