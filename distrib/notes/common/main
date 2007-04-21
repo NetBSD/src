@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.330 2007/04/08 09:35:24 scw Exp $
+.\"	$NetBSD: main,v 1.331 2007/04/21 12:46:04 dsieger Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1400,6 +1400,7 @@ If you're one of them, and would like to mentioned, tell us!)
 .It Ta Naoto Shimazaki Ta Mt igy@NetBSD.org
 .It Ta Takao Shinohara Ta Mt shin@NetBSD.org
 .It Ta Takuya SHIOZAKI Ta Mt tshiozak@NetBSD.org
+.It Ta Daniel Sieger Ta Mt dsieger@NetBSD.org
 .It Ta Chuck Silvers Ta Mt chs@NetBSD.org
 .It Ta Thor Lancelot Simon Ta Mt tls@NetBSD.org
 .It Ta Jeff Smith Ta Mt jeffs@NetBSD.org
