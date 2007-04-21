@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2004/05/16 10:25:14 lukem Exp $
+#	$NetBSD: Makefile,v 1.7 2007/04/21 00:41:19 matt Exp $
 
 .include <bsd.own.mk>
 
@@ -36,6 +36,10 @@ CPPFLAGS.connection.c+=	-DLBXPROXY_t -DTRANS_SERVER -DBSD44SOCKETS
 CPPFLAGS.io.c+=		-DLBXPROXY_t -DTRANS_SERVER ${X11FLAGS.EXTENSION}
 CPPFLAGS.transport.c+=	-DLBXPROXY_t -DTRANS_SERVER -DBSD44SOCKETS \
 			-I${X11SRCDIR.xc}/lib/xtrans  
+
+.if ${MACHINE} == "vax"
+COPTS.connection.c+=	-O2
+.endif
 
 .PATH:		${X11SRCDIR.xc}/programs/${PROG}/config
 CONFIGFILES=	AtomControl
