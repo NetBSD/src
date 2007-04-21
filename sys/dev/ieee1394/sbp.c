@@ -1,4 +1,4 @@
-/*	$NetBSD: sbp.c,v 1.15 2007/03/04 06:02:07 christos Exp $	*/
+/*	$NetBSD: sbp.c,v 1.16 2007/04/21 15:27:44 kiyohara Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -32,7 +32,7 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  * 
- * $FreeBSD: /repoman/r/ncvs/src/sys/dev/firewire/sbp.c,v 1.81 2005/01/06 01:42:41 imp Exp $
+ * $FreeBSD: /repoman/r/ncvs/src/sys/dev/firewire/sbp.c,v 1.89 2007/03/16 05:39:33 simokawa Exp $
  *
  */
 
@@ -124,6 +124,7 @@
  * because of CAM_SCSI2_MAXLUN in cam_xpt.c
  */
 #define SBP_NUM_LUNS 64
+#define SBP_MAXPHYS  MIN(MAXPHYS, (512*1024) /* 512KB */)
 #define SBP_DMA_SIZE PAGE_SIZE
 #define SBP_LOGIN_SIZE sizeof(struct sbp_login_res)
 #define SBP_QUEUE_LEN ((SBP_DMA_SIZE - SBP_LOGIN_SIZE) / sizeof(struct sbp_ocb))
@@ -334,9 +335,9 @@ sysctl_sbp_verify_tags(SYSCTLFN_ARGS)
 
 #define SBP_SEG_MAX rounddown(0xffff, PAGE_SIZE)
 #ifdef __sparc64__ /* iommu */
-#define SBP_IND_MAX howmany(MAXPHYS, SBP_SEG_MAX)
+#define SBP_IND_MAX howmany(SBP_MAXPHYS, SBP_SEG_MAX)
 #else
-#define SBP_IND_MAX howmany(MAXPHYS, PAGE_SIZE)
+#define SBP_IND_MAX howmany(SBP_MAXPHYS, PAGE_SIZE)
 #endif
 struct sbp_ocb {
 	STAILQ_ENTRY(sbp_ocb)	ocb;
@@ -864,8 +865,8 @@ sbp_login(struct sbp_dev *sdev)
 	if (t.tv_sec >= 0 && t.tv_usec > 0)
 		ticks = (t.tv_sec * 1000 + t.tv_usec / 1000) * hz / 1000;
 SBP_DEBUG(0)
-	printf("%s: sec = %ld usec = %ld ticks = %d\n", __func__,
-	    t.tv_sec, t.tv_usec, ticks);
+	printf("%s: sec = %jd usec = %ld ticks = %d\n", __func__,
+	    (intmax_t)t.tv_sec, t.tv_usec, ticks);
 END_DEBUG
 	callout_reset(&sdev->login_callout, ticks,
 			sbp_login_callout, (void *)(sdev));
@@ -2109,6 +2110,11 @@ FW_ATTACH(sbp)
 	int dv_unit, error, s;
 	SBP_ATTACH_START;
 
+	if (DFLTPHYS > SBP_MAXPHYS)
+		device_printf(sbp->fd.dev,
+		    "Warning, DFLTPHYS(%dKB) is larger than "
+		    "SBP_MAXPHYS(%dKB).\n", DFLTPHYS / 1024,
+		    SBP_MAXPHYS / 1024);
 SBP_DEBUG(0)
 	printf("sbp_attach (cold=%d)\n", cold);
 END_DEBUG
@@ -2731,6 +2737,10 @@ END_DEBUG
 		strncpy(cpi->hba_vid, "SBP", HBA_IDLEN);
 		strncpy(cpi->dev_name, sim->sim_name, DEV_IDLEN);
 		cpi->unit_number = sim->unit_number;
+		cpi->transport = XPORT_SPI;	/* XX should havea FireWire */
+		cpi->transport_version = 2;
+		cpi->protocol = PROTO_SCSI;
+		cpi->protocol_version = SCSI_REV_2;
 
 		SCSI_XFER_ERROR(cpi) = XS_REQ_CMP;
 		SCSI_TRANSFER_DONE(sxfer);
@@ -2739,15 +2749,24 @@ END_DEBUG
 	case XPT_GET_TRAN_SETTINGS:
 	{
 		struct ccb_trans_settings *cts = &sxfer->cts;
+		struct ccb_trans_settings_scsi *scsi =
+		    &cts->proto_specific.scsi;
+		struct ccb_trans_settings_spi *spi =
+		    &cts->xport_specific.spi;
+
+		cts->protocol = PROTO_SCSI;
+		cts->protocol_version = SCSI_REV_2;
+		cts->transport = XPORT_SPI;     /* should have a FireWire */
+		cts->transport_version = 2;
+		spi->valid = CTS_SPI_VALID_DISC;
+		spi->flags = CTS_SPI_FLAGS_DISC_ENB;
+		scsi->valid = CTS_SCSI_VALID_TQ;
+		scsi->flags = CTS_SCSI_FLAGS_TAG_ENB;
 SBP_DEBUG(1)
 		printf("%s:%d:%d XPT_GET_TRAN_SETTINGS:.\n",
 			device_get_nameunit(sbp->fd.dev),
 			sxfer->ccb_h.target_id, sxfer->ccb_h.target_lun);
 END_DEBUG
-		/* Enable disconnect and tagged queuing */
-		cts->valid = CCB_TRANS_DISC_VALID | CCB_TRANS_TQ_VALID;
-		cts->flags = CCB_TRANS_DISC_ENB | CCB_TRANS_TAG_ENB;
-
 		SCSI_XFER_ERROR(cts) = XS_REQ_CMP;
 		SCSI_TRANSFER_DONE(sxfer);
 		break;
