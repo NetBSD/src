@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.231 2007/03/04 06:00:46 christos Exp $	*/
+/*	$NetBSD: locore.s,v 1.232 2007/04/21 10:45:45 rjs Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -4893,12 +4893,8 @@ ENTRY(write_user_windows)
  *
  * We lay the process to rest by changing to the `idle' kernel stack,
  * and note that the `last loaded process' is nonexistent.
- *
- * lwp_exit2(0 will free the thread's stack.
  */
 ENTRY(cpu_exit)
-	mov	%o0, %g2		! save lwp for lwp_exit2() call
-
 	/*
 	 * Change pcb to idle u. area, i.e., set %sp to top of stack
 	 * and %psr to PSR_S|PSR_ET, and set cpcb to point to idle_u.
