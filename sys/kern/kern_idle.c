@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_idle.c,v 1.1.2.6 2007/04/16 23:31:20 ad Exp $	*/
+/*	$NetBSD: kern_idle.c,v 1.1.2.7 2007/04/21 15:50:15 ad Exp $	*/
 
 /*-
  * Copyright (c)2002, 2006, 2007 YAMAMOTO Takashi,
@@ -28,13 +28,14 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: kern_idle.c,v 1.1.2.6 2007/04/16 23:31:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_idle.c,v 1.1.2.7 2007/04/21 15:50:15 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
 #include <sys/idle.h>
 #include <sys/lwp.h>
 #include <sys/lockdebug.h>
+#include <sys/kmem.h>
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_extern.h>
@@ -87,8 +88,10 @@ create_idle_lwp(struct cpu_info *ci)
 {
 	struct proc *p = &proc0;
 	struct lwp *l;
+	char *name;
 	vaddr_t uaddr;
 	bool inmem;
+	cpuid_t cpuid;
 	int error;
 
 	KASSERT(ci->ci_data.cpu_idlelwp == NULL);
@@ -101,9 +104,20 @@ create_idle_lwp(struct cpu_info *ci)
 		panic("create_idle_lwp: newlwp failed");
 	}
 	PHOLD(l);
-	l->l_stat = LSRUN;
 	l->l_flag |= (LW_IDLE | LW_BOUND);
 	l->l_cpu = ci;
 	ci->ci_data.cpu_idlelwp = l;
+	name = kmem_alloc(MAXCOMLEN, KM_NOSLEEP);
+	if (name != NULL) {
+#ifdef MULTIPROCESSOR		/* XXX should be mandatory */
+		cpuid = ci->ci_cpuid;
+#else
+		cpuid = 0
+#endif
+		snprintf(name, MAXCOMLEN, "idle:%d", (int)cpuid);
+		lwp_lock(l);
+		l->l_name = name;
+		lwp_unlock(l);
+	}
 	return error;
 }

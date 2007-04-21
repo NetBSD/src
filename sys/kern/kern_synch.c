@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.177.2.27 2007/04/19 04:19:44 ad Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.177.2.28 2007/04/21 15:50:17 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.177.2.27 2007/04/19 04:19:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.177.2.28 2007/04/21 15:50:17 ad Exp $");
 
 #include "opt_kstack.h"
 #include "opt_lockdebug.h"
@@ -287,7 +287,6 @@ yield(void)
 		KASSERT(lwp_locked(l, l->l_cpu->ci_schedstate.spc_mutex));
 		l->l_priority = l->l_usrpri;
 	}
-	l->l_nvcsw++;
 	(void)mi_switch(l);
 	KERNEL_LOCK(l->l_biglocks, l);
 }
@@ -394,10 +393,11 @@ mi_switch(struct lwp *l)
 	KASSERT(l->l_stat != LSRUN);
 	if (l->l_stat == LSONPROC) {
 		KASSERT(lwp_locked(l, l->l_cpu->ci_schedstate.spc_mutex));
-		l->l_stat = LSRUN;
 		if ((l->l_flag & LW_IDLE) == 0) {
+			l->l_stat = LSRUN;
 			sched_enqueue(l, true);
-		}
+		} else
+			l->l_stat = LSIDL;
 	}
 
 	/*
@@ -447,6 +447,7 @@ mi_switch(struct lwp *l)
 		pmap_deactivate(l);
 
 		/* Switch to the new LWP.. */
+		l->l_ncsw++;
 		l->l_flag &= ~LW_RUNNING;
 		oldspl = MUTEX_SPIN_OLDSPL(l->l_cpu);
 		prevlwp = cpu_switchto(l, newl);
@@ -826,6 +827,7 @@ sched_pstats(void *arg)
 		 */
 		minslp = 2;
 		mutex_enter(&p->p_smutex);
+		mutex_spin_enter(&p->p_stmutex);
 		runtm = p->p_rtime.tv_sec;
 		LIST_FOREACH(l, &p->p_lwps, l_sibling) {
 			if ((l->l_flag & LW_IDLE) != 0)
@@ -840,7 +842,29 @@ sched_pstats(void *arg)
 			} else
 				minslp = 0;
 			lwp_unlock(l);
+
+			/*
+			 * p_pctcpu is only for ps.
+			 */
+			l->l_pctcpu = (l->l_pctcpu * ccpu) >> FSHIFT;
+			if (l->l_slptime < 1) {
+				clkhz = stathz != 0 ? stathz : hz;
+#if	(FSHIFT >= CCPU_SHIFT)
+				l->l_pctcpu += (clkhz == 100) ?
+				    ((fixpt_t)l->l_cpticks) <<
+				        (FSHIFT - CCPU_SHIFT) :
+				    100 * (((fixpt_t) p->p_cpticks)
+				        << (FSHIFT - CCPU_SHIFT)) / clkhz;
+#else
+				l->l_pctcpu += ((FSCALE - ccpu) *
+				    (l->l_cpticks * FSCALE / clkhz)) >> FSHIFT;
+#endif
+				l->l_cpticks = 0;
+			}
 		}
+		p->p_pctcpu = (p->p_pctcpu * ccpu) >> FSHIFT;
+		sched_pstats_hook(p, minslp);
+		mutex_spin_exit(&p->p_stmutex);
 
 		/*
 		 * Check if the process exceeds its CPU resource allocation.
@@ -857,28 +881,6 @@ sched_pstats(void *arg)
 					rlim->rlim_cur += 5;
 			}
 		}
-
-		mutex_spin_enter(&p->p_stmutex);
-		p->p_pctcpu = (p->p_pctcpu * ccpu) >> FSHIFT;
-		if (minslp < 1) {
-			/*
-			 * p_pctcpu is only for ps.
-			 */
-			clkhz = stathz != 0 ? stathz : hz;
-#if	(FSHIFT >= CCPU_SHIFT)
-			p->p_pctcpu += (clkhz == 100)?
-			((fixpt_t) p->p_cpticks) << (FSHIFT - CCPU_SHIFT):
-				100 * (((fixpt_t) p->p_cpticks)
-				       << (FSHIFT - CCPU_SHIFT)) / clkhz;
-#else
-			p->p_pctcpu += ((FSCALE - ccpu) *
-					(p->p_cpticks * FSCALE / clkhz)) >> FSHIFT;
-#endif
-			p->p_cpticks = 0;
-		}
-
-		sched_pstats_hook(p, minslp);
-		mutex_spin_exit(&p->p_stmutex);
 		mutex_exit(&p->p_smutex);
 		if (sig) {
 			psignal(p, sig);

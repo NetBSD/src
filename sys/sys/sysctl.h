@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.166.2.3 2007/03/12 06:00:55 rmind Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.166.2.4 2007/04/21 15:50:22 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -459,6 +459,7 @@ struct kinfo_proc {
 #define	KI_WMESGLEN	8
 #define	KI_MAXLOGNAME	24	/* extra for 8 byte alignment */
 #define	KI_MAXEMULLEN	16
+#define	KI_LNAMELEN	20	/* extra 4 for alignment */
 
 #define KI_NOCPU	(~(uint64_t)0)
 
@@ -652,6 +653,10 @@ struct kinfo_lwp {
 	uint64_t l_cpuid;		/* LONG: CPU id */
 	uint32_t l_rtime_sec;		/* STRUCT TIMEVAL: Real time. */
 	uint32_t l_rtime_usec;		/* STRUCT TIMEVAL: Real time. */
+	uint32_t l_cpticks;		/* INT: ticks during l_swtime */
+	uint32_t l_pctcpu;		/* FIXPT_T: cpu usage for ps */
+	uint32_t l_pid;			/* PID_T: process identifier */
+	char	l_name[KI_LNAMELEN];	/* CHAR[]: name, may be empty */
 };
 
 /*

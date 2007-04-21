@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.190.2.3 2007/03/24 14:56:05 yamt Exp $	*/
+/*	$NetBSD: tty.c,v 1.190.2.4 2007/04/21 15:50:18 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.190.2.3 2007/03/24 14:56:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.190.2.4 2007/04/21 15:50:18 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2383,6 +2383,7 @@ ttyinfo(struct tty *tp, int fromsig)
 	struct proc	*p, *pick = NULL;
 	struct timeval	utime, stime;
 	int		tmp;
+	fixpt_t		pctcpu = 0;
 	const char	*msg;
 
 	if (ttycheckoutq_wlock(tp, 0) == 0)
@@ -2417,12 +2418,15 @@ ttyinfo(struct tty *tp, int fromsig)
 	}
 
 	ttyprintf_nolock(tp, " cmd: %s %d [", pick->p_comm, pick->p_pid);
-	LIST_FOREACH(l, &pick->p_lwps, l_sibling)
+	LIST_FOREACH(l, &pick->p_lwps, l_sibling) {
 	    ttyprintf_nolock(tp, "%s%s",
 	    l->l_stat == LSONPROC ? "running" :
 	    l->l_stat == LSRUN ? "runnable" :
 	    l->l_wmesg ? l->l_wmesg : "iowait",
 		(LIST_NEXT(l, l_sibling) != NULL) ? " " : "] ");
+	    pctcpu += l->l_pctcpu;
+	}
+	pctcpu += pick->p_pctcpu;
 
 	mutex_enter(&pick->p_smutex);
 	calcru(pick, &utime, &stime, NULL, NULL);
@@ -2448,7 +2452,7 @@ ttyinfo(struct tty *tp, int fromsig)
 
 #define	pgtok(a)	(((u_long) ((a) * PAGE_SIZE) / 1024))
 	/* Print percentage CPU. */
-	tmp = (pick->p_pctcpu * 10000 + FSCALE / 2) >> FSHIFT;
+	tmp = (pctcpu * 10000 + FSCALE / 2) >> FSHIFT;
 	ttyprintf_nolock(tp, "%d%% ", tmp / 100);
 
 	/* Print resident set size. */

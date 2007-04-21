@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_sysctl.c,v 1.47.2.2 2007/03/12 05:51:56 rmind Exp $ */
+/*	$NetBSD: darwin_sysctl.c,v 1.47.2.3 2007/04/21 15:50:13 ad Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.47.2.2 2007/03/12 05:51:56 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.47.2.3 2007/04/21 15:50:13 ad Exp $");
 
 #include "opt_ktrace.h"
 
@@ -774,7 +774,7 @@ darwin_fill_kproc(p, dkp)
 	/* dep->p_debugger */
 	/* dep->p_sigwait */
 	dep->p_estcpu = p->p_estcpu;
-	dep->p_cpticks = p->p_cpticks;
+	/* dep->p_cpticks */
 	dep->p_pctcpu = p->p_pctcpu;
 	/* (ptr) dep->p_wchan */
 	/* (ptr) dep->p_wmesg */
