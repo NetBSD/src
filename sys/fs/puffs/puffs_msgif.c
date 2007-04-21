@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.c,v 1.30 2007/04/20 21:35:31 pooka Exp $	*/
+/*	$NetBSD: puffs_msgif.c,v 1.31 2007/04/21 10:36:59 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.30 2007/04/20 21:35:31 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.31 2007/04/21 10:36:59 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/fstrans.h>
@@ -76,6 +76,7 @@ struct puffs_park {
 #define PARKFLAG_ONQUEUE1	0x04
 #define PARKFLAG_ONQUEUE2	0x08
 #define PARKFLAG_CALL		0x10
+#define PARKFLAG_WANTREPLY	0x20
 
 static struct pool_cache parkpc;
 static struct pool parkpool;
@@ -405,6 +406,9 @@ touser(struct puffs_mount *pmp, struct puffs_park *park, uint64_t reqid,
 	preq->preq_id = park->park_id = reqid;
 	preq->preq_buflen = ALIGN(park->park_maxlen);
 
+	if (PUFFSOP_WANTREPLY(preq->preq_opclass))
+		park->park_flags |= PARKFLAG_WANTREPLY;
+
 	/*
 	 * To support PCATCH, yet another movie: check if there are signals
 	 * pending and we are issueing a non-FAF.  If so, return an error
@@ -412,7 +416,7 @@ touser(struct puffs_mount *pmp, struct puffs_park *park, uint64_t reqid,
 	 * it to a FAF, fire off to the file server and return an error.
 	 * Yes, this is bordering disgusting.  Barfbags are on me.
 	 */
-	if (PUFFSOP_WANTREPLY(preq->preq_opclass)
+	if ((park->park_flags & PARKFLAG_WANTREPLY)
 	   && (park->park_flags & PARKFLAG_CALL) == 0
 	   && (l->l_flag & LW_PENDSIG) != 0 && sigispending(l, 0)) {
 		if (PUFFSOP_OPCLASS(preq->preq_opclass) == PUFFSOP_VN
@@ -497,7 +501,7 @@ touser(struct puffs_mount *pmp, struct puffs_park *park, uint64_t reqid,
 	cv_broadcast(&pmp->pmp_req_waiter_cv);
 	selnotify(pmp->pmp_sel, 0);
 
-	if (PUFFSOP_WANTREPLY(preq->preq_opclass)
+	if ((park->park_flags & PARKFLAG_WANTREPLY)
 	    && (park->park_flags & PARKFLAG_CALL) == 0) {
 		int error;
 
@@ -675,7 +679,7 @@ puffs_getop(struct puffs_mount *pmp, struct puffs_reqh_get *phg, int nonblock)
 		donesome++;
 
 		mutex_enter(&pmp->pmp_lock);
-		if (PUFFSOP_WANTREPLY(preq->preq_opclass)) {
+		if (park->park_flags & PARKFLAG_WANTREPLY) {
 			TAILQ_INSERT_TAIL(&pmp->pmp_req_replywait, park,
 			    park_entries);
 			park->park_flags |= PARKFLAG_ONQUEUE2;
@@ -782,7 +786,7 @@ puffs_putop(struct puffs_mount *pmp, struct puffs_reqh_put *php)
 		donesome++;
 
  loopout:
-		if (error)
+		if (error && !wgone)
 			park->park_preq->preq_rv = error;
 
 		if (park->park_flags & PARKFLAG_CALL) {
@@ -835,22 +839,32 @@ puffs_userdead(struct puffs_mount *pmp)
 		puffs_park_reference(park);
 
 		KASSERT(park->park_flags & PARKFLAG_ONQUEUE1);
-
-		opclass = park->park_preq->preq_opclass;
-		park->park_preq->preq_rv = ENXIO;
 		TAILQ_REMOVE(&pmp->pmp_req_touser, park, park_entries);
 		park->park_flags &= ~PARKFLAG_ONQUEUE1;
 
-		if (park->park_flags & PARKFLAG_CALL) {
-			park->park_done(park->park_preq, park->park_donearg);
-			puffs_park_release(park, 1);
-		} else if (!PUFFSOP_WANTREPLY(opclass)) {
-			free(park->park_preq, M_PUFFS);
-			puffs_park_release(park, 1);
-		} else {
-			park->park_preq->preq_rv = ENXIO;
-			cv_signal(&park->park_cv);
+		/*
+		 * If the waiter is gone, we may *NOT* access preq anymore.
+		 */
+		if (park->park_flags & PARKFLAG_WAITERGONE) {
+			KASSERT((park->park_flags & PARKFLAG_CALL) == 0);
+			KASSERT(park->park_flags & PARKFLAG_WANTREPLY);
 			puffs_park_release(park, 0);
+		} else {
+			opclass = park->park_preq->preq_opclass;
+			park->park_preq->preq_rv = ENXIO;
+
+			if (park->park_flags & PARKFLAG_CALL) {
+				park->park_done(park->park_preq,
+				    park->park_donearg);
+				puffs_park_release(park, 1);
+			} else if ((park->park_flags & PARKFLAG_WANTREPLY)==0) {
+				free(park->park_preq, M_PUFFS);
+				puffs_park_release(park, 1);
+			} else {
+				park->park_preq->preq_rv = ENXIO;
+				cv_signal(&park->park_cv);
+				puffs_park_release(park, 0);
+			}
 		}
 	}
 
@@ -859,19 +873,27 @@ puffs_userdead(struct puffs_mount *pmp)
 		puffs_park_reference(park);
 
 		KASSERT(park->park_flags & PARKFLAG_ONQUEUE2);
+		KASSERT(park->park_flags & PARKFLAG_WANTREPLY);
 
 		TAILQ_REMOVE(&pmp->pmp_req_replywait, park, park_entries);
 		park->park_flags &= ~PARKFLAG_ONQUEUE2;
 
-		KASSERT(PUFFSOP_WANTREPLY(park->park_preq->preq_opclass));
-
-		park->park_preq->preq_rv = ENXIO;
-		if (park->park_flags & PARKFLAG_CALL) {
-			park->park_done(park->park_preq, park->park_donearg);
-			puffs_park_release(park, 1);
-		} else {
-			cv_signal(&park->park_cv);
+		/*
+		 * If the waiter is gone, we may *NOT* access preq anymore.
+		 */
+		if (park->park_flags & PARKFLAG_WAITERGONE) {
+			KASSERT((park->park_flags & PARKFLAG_CALL) == 0);
 			puffs_park_release(park, 0);
+		} else {
+			park->park_preq->preq_rv = ENXIO;
+			if (park->park_flags & PARKFLAG_CALL) {
+				park->park_done(park->park_preq,
+				    park->park_donearg);
+				puffs_park_release(park, 1);
+			} else {
+				cv_signal(&park->park_cv);
+				puffs_park_release(park, 0);
+			}
 		}
 	}
 }
