@@ -1,4 +1,4 @@
-/*	$NetBSD: rfcomm_sppd.c,v 1.7 2007/04/21 06:15:24 plunky Exp $	*/
+/*	$NetBSD: rfcomm_sppd.c,v 1.8 2007/04/21 10:39:30 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -62,7 +62,7 @@ __COPYRIGHT("@(#) Copyright (c) 2007 Iain Hibbert\n"
 	    "@(#) Copyright (c) 2006 Itronix, Inc.\n"
 	    "@(#) Copyright (c) 2003 Maksim Yevmenkin <m_evmenkin@yahoo.com>\n"
 	    "All rights reserved.\n");
-__RCSID("$NetBSD: rfcomm_sppd.c,v 1.7 2007/04/21 06:15:24 plunky Exp $");
+__RCSID("$NetBSD: rfcomm_sppd.c,v 1.8 2007/04/21 10:39:30 dsl Exp $");
 
 #include <bluetooth.h>
 #include <ctype.h>
@@ -515,7 +515,7 @@ usage(void)
 			"\t-m mode      link mode\n"
 			"\t-s service   service class\n"
 			"\t-t tty       run in background using pty\n"
-			"\n", cmd, strlen(cmd), "");
+			"\n", cmd, (int)strlen(cmd), "");
 
 	fprintf(stderr, "Known service classes:\n");
 	for (s = services ; s->name != NULL ; s++)
