@@ -1,4 +1,4 @@
-/*	$NetBSD: sdp.c,v 1.2 2007/04/11 20:01:01 plunky Exp $	*/
+/*	$NetBSD: sdp.c,v 1.3 2007/04/21 06:15:24 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: sdp.c,v 1.2 2007/04/11 20:01:01 plunky Exp $");
+__RCSID("$NetBSD: sdp.c,v 1.3 2007/04/21 06:15:24 plunky Exp $");
 
 #include <sys/types.h>
 
@@ -213,6 +213,7 @@ config_hid(prop_dictionary_t dict)
 		reconnect_initiate, battery_power,
 		normally_connectable, hid_length;
 	uint8_t *hid_descriptor;
+	const char *mode;
 	int i;
 
 	control_psm = -1;
@@ -284,6 +285,13 @@ config_hid(prop_dictionary_t dict)
 
 	obj = prop_data_create_data(hid_descriptor, hid_length);
 	if (obj == NULL || !prop_dictionary_set(dict, BTHIDEVdescriptor, obj))
+		return errno;
+
+	mode = hid_mode(obj);
+	prop_object_release(obj);
+
+	obj = prop_string_create_cstring_nocopy(mode);
+	if (obj == NULL || !prop_dictionary_set(dict, BTDEVmode, obj))
 		return errno;
 
 	prop_object_release(obj);
@@ -763,4 +771,38 @@ parse_rfcomm_channel(sdp_attr_t *a)
 	SDP_GET8(channel, ptr);
 
 	return (channel);
+}
+
+/*
+ * return appropriate mode for HID descriptor
+ */
+const char *
+hid_mode(prop_data_t desc)
+{
+	report_desc_t r;
+	hid_data_t d;
+	struct hid_item h;
+	const char *mode;
+
+	hid_init(NULL);
+
+	mode = BTDEVauth;	/* default */
+
+	r = hid_use_report_desc(prop_data_data_nocopy(desc),
+				prop_data_size(desc));
+	if (r == NULL)
+		err(EXIT_FAILURE, "hid_use_report_desc");
+
+	d = hid_start_parse(r, ~0, -1);
+	while (hid_get_item(d, &h) > 0) {
+		if (h.kind == hid_collection
+		    && HID_PAGE(h.usage) == HUP_GENERIC_DESKTOP
+		    && HID_USAGE(h.usage) == HUG_KEYBOARD)
+			mode = BTDEVencrypt;
+	}
+
+	hid_end_parse(d);
+	hid_dispose_report_desc(r);
+
+	return mode;
 }
