@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.700 2007/04/08 09:35:24 scw Exp $
+# $NetBSD: mi,v 1.701 2007/04/21 14:28:34 pooka Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -1126,6 +1126,7 @@
 ./usr/sbin/mopd					base-bootserver-bin
 ./usr/sbin/mopprobe				base-bootserver-bin
 ./usr/sbin/moptrace				base-bootserver-bin
+./usr/sbin/mount_9p				base-miscfs-bin		puffs
 ./usr/sbin/mount_psshfs				base-miscfs-bin		puffs
 ./usr/sbin/mountd				base-nfsserver-bin
 ./usr/sbin/moused				base-sysutil-bin
