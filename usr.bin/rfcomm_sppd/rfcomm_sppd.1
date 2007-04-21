@@ -1,4 +1,4 @@
-.\" $NetBSD: rfcomm_sppd.1,v 1.4 2007/03/01 21:44:30 plunky Exp $
+.\" $NetBSD: rfcomm_sppd.1,v 1.5 2007/04/21 06:15:23 plunky Exp $
 .\"
 .\" Copyright (c) 2006 Itronix Inc.
 .\" All rights reserved.
@@ -52,7 +52,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd February 28, 2007
+.Dd April 10, 2007
 .Dt RFCOMM_SPPD 1
 .Os
 .Sh NAME
@@ -61,9 +61,10 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl d Ar device
+.Op Fl m Ar mode
 .Op Fl s Ar service
 .Op Fl t Ar tty
-.Fl a Ar address | Fl c Ar channel
+.Brq Fl a Ar address | Fl c Ar channel 
 .Sh DESCRIPTION
 The
 .Nm
@@ -116,6 +117,18 @@ for a list of available devices.
 If no
 .Ar device
 is specified, the connection will be set up on a system determined device.
+.It Fl m Ar mode
+Set connection link mode.
+Supported modes are:
+.Pp
+.Bl -tag -compact -offset indent
+.It auth
+require devices be paired.
+.It encrypt
+auth, plus enable encryption.
+.It secure
+encryption, plus change of link key.
+.El
 .It Fl s Ar service
 This is the service class that will be searched for on the remote device.
 If no
@@ -173,10 +186,10 @@ server, e.g. with the use of
 .Pp
 In order to use
 .Nm
-to automatically create a link for
+to automatically create a secured link for
 .Xr pppd 8 ,
 use
-.Dl pty Qo rfcomm_sppd -a 00:01:02:03:04:05 -s DUN Qc
+.Dl pty Qo rfcomm_sppd -a 00:01:02:03:04:05 -s DUN -m secure Qc
 .Pp
 in your
 .Xr pppd 8
