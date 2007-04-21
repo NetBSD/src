@@ -1,4 +1,4 @@
-.\"	$NetBSD: cpu_switchto.9,v 1.5 2007/04/18 12:19:45 yamt Exp $
+.\"	$NetBSD: cpu_switchto.9,v 1.6 2007/04/21 17:52:09 yamt Exp $
 .\"
 .\" Copyright (c)2007 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -36,9 +36,9 @@
 .Sh SYNOPSIS
 .In sys/cpu.h
 .\" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-.Ft struct lwp *
+.Ft lwp_t *
 .Fn cpu_switchto \
-"struct lwp *oldlwp" "struct lwp *newlwp"
+"lwp_t *oldlwp" "lwp_t *newlwp"
 .\" ------------------------------------------------------------
 .Sh DESCRIPTION
 .Fn cpu_switchto
