@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.100.2.5 2007/03/24 14:56:02 yamt Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.100.2.6 2007/04/21 15:50:15 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.100.2.5 2007/03/24 14:56:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.100.2.6 2007/04/21 15:50:15 ad Exp $");
 
 #include "opt_kstack.h"
 #include "opt_maxuprc.h"
@@ -357,7 +357,7 @@ proc0_init(void)
 #ifdef __HAVE_SYSCALL_INTERN
 	(*p->p_emul->e_syscall_intern)(p);
 #endif
-	strncpy(p->p_comm, "swapper", MAXCOMLEN);
+	strlcpy(p->p_comm, "system", sizeof(p->p_comm));
 
 	l->l_flag = LW_INMEM | LW_SYSTEM;
 	l->l_stat = LSONPROC;
@@ -369,6 +369,7 @@ proc0_init(void)
 	l->l_usrpri = PRIBIO;
 	l->l_inheritedprio = MAXPRI;
 	SLIST_INIT(&l->l_pi_lenders);
+	l->l_name = "swapper";
 
 	callout_init(&l->l_tsleep_ch);
 	cv_init(&l->l_sigcv, "sigwait");

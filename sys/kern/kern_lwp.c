@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.55.2.12 2007/04/16 23:45:53 ad Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.55.2.13 2007/04/21 15:50:15 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -206,7 +206,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.55.2.12 2007/04/16 23:45:53 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.55.2.13 2007/04/21 15:50:15 ad Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -838,6 +838,7 @@ lwp_free(struct lwp *l, bool recycle, bool last)
 		 * This needs to co-incide with coming off p_lwps.
 		 */
 		timeradd(&l->l_rtime, &p->p_rtime, &p->p_rtime);
+		p->p_pctcpu += l->l_pctcpu;
 		LIST_REMOVE(l, l_sibling);
 		p->p_nlwps--;
 		p->p_nzlwps--;

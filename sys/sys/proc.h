@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.236.2.8 2007/04/03 15:20:43 matt Exp $	*/
+/*	$NetBSD: proc.h,v 1.236.2.9 2007/04/21 15:50:22 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -270,8 +270,7 @@ struct proc {
 	fixpt_t		p_estcpu;	/* t: Time averaged value of p_cpticks XXX belongs in p_startcopy section */
 	fixpt_t		p_estcpu_inherited;
 	unsigned int	p_forktime;
-	int		p_cpticks;	/* t: Ticks of CPU time */
-	fixpt_t		p_pctcpu;	/* t: %cpu for this process during p_swtime */
+	fixpt_t         p_pctcpu;       /* t: %cpu from dead LWPs */
 
 	struct proc	*p_opptr;	/* l: save parent during ptrace. */
 	struct ptimers	*p_timers;	/*    Timers: real, virtual, profiling */

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sleepq.c,v 1.4.2.13 2007/04/19 04:19:44 ad Exp $	*/
+/*	$NetBSD: kern_sleepq.c,v 1.4.2.14 2007/04/21 15:50:16 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.4.2.13 2007/04/19 04:19:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.4.2.14 2007/04/21 15:50:16 ad Exp $");
 
 #include "opt_ktrace.h"
 
@@ -221,7 +221,6 @@ sleepq_enqueue(sleepq_t *sq, pri_t pri, wchan_t wchan, const char *wmesg,
 	l->l_priority = pri;
 	l->l_stat = LSSLEEP;
 	l->l_sleeperr = 0;
-	l->l_nvcsw++;
 
 	sq->sq_waiters++;
 	sleepq_insert(sq, l, sobj);
