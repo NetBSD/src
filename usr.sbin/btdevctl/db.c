@@ -1,4 +1,4 @@
-/*	$NetBSD: db.c,v 1.2 2007/04/11 19:59:02 plunky Exp $	*/
+/*	$NetBSD: db.c,v 1.3 2007/04/21 06:15:24 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: db.c,v 1.2 2007/04/11 19:59:02 plunky Exp $");
+__RCSID("$NetBSD: db.c,v 1.3 2007/04/21 06:15:24 plunky Exp $");
 
 #include <bluetooth.h>
 #include <err.h>
@@ -41,17 +41,19 @@ __RCSID("$NetBSD: db.c,v 1.2 2007/04/11 19:59:02 plunky Exp $");
 #include <prop/proplib.h>
 
 #include <dev/bluetooth/btdev.h>
+#include <dev/bluetooth/bthidev.h>
 #include <dev/bluetooth/btsco.h>
 
 #include "btdevctl.h"
 
 #define BTDEVCTL_PLIST		"/var/db/btdevctl.plist"
-#define BTDEVCTL_VERSION	1
+#define BTDEVCTL_VERSION	2
 
 static prop_dictionary_t db = NULL;
 static int db_flush = TRUE;		/* write db on set */
 
 static void db_update0(void);
+static void db_update1(void);
 
 /*
  * lookup laddr/raddr/service in database and return dictionary
@@ -73,10 +75,8 @@ db_get(bdaddr_t *laddr, bdaddr_t *raddr, const char *service)
 		} else {
 			obj = prop_dictionary_get(db, "btdevctl-version");
 			switch(prop_number_integer_value(obj)) {
-			case 0:
-				db_update0();
-				break;
-
+			case 0: db_update0();
+			case 1: db_update1();
 			case BTDEVCTL_VERSION:
 				break;
 
@@ -221,4 +221,59 @@ db_update0(void)
 	prop_object_release(old);
 
 	db_flush = TRUE;	/* write on set */
+}
+
+/*
+ * update database from version 1. Link Mode capability was added.
+ * By default, we request authentication for HIDs, and encryption
+ * is enabled for keyboards.
+ */
+static void
+db_update1(void)
+{
+	prop_dictionary_t ldev, rdev, srv;
+	prop_object_iterator_t iter0, iter1;
+	prop_dictionary_keysym_t key;
+	prop_object_t obj;
+	bdaddr_t bdaddr;
+
+	iter0 = prop_dictionary_iterator(db);
+	if (iter0 == NULL)
+		err(EXIT_FAILURE, "prop_dictionary_iterator");
+
+	while ((key = prop_object_iterator_next(iter0)) != NULL) {
+		ldev = prop_dictionary_get_keysym(db, key);
+		if (prop_object_type(ldev) != PROP_TYPE_DICTIONARY
+		    || !bt_aton(prop_dictionary_keysym_cstring_nocopy(key), &bdaddr))
+			continue;
+
+		iter1 = prop_dictionary_iterator(ldev);
+		if (iter1 == NULL)
+			err(EXIT_FAILURE, "prop_dictionary_iterator");
+
+		while ((key = prop_object_iterator_next(iter1)) != NULL) {
+			rdev = prop_dictionary_get_keysym(ldev, key);
+			if (prop_object_type(rdev) != PROP_TYPE_DICTIONARY
+			    || !bt_aton(prop_dictionary_keysym_cstring_nocopy(key), &bdaddr))
+				continue;
+
+			srv = prop_dictionary_get(rdev, "HID");
+			if (prop_object_type(srv) != PROP_TYPE_DICTIONARY)
+				continue;
+
+			obj = prop_dictionary_get(srv, BTHIDEVdescriptor);
+			if (prop_object_type(obj) != PROP_TYPE_DATA)
+				continue;
+
+			obj = prop_string_create_cstring_nocopy(hid_mode(obj));
+			if (obj == NULL || !prop_dictionary_set(srv, BTDEVmode, obj))
+				err(EXIT_FAILURE, "Cannot set %s", BTDEVmode);
+
+			prop_object_release(obj);
+		}
+
+		prop_object_iterator_release(iter1);
+	}
+
+	prop_object_iterator_release(iter0);
 }

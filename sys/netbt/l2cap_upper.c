@@ -1,4 +1,4 @@
-/*	$NetBSD: l2cap_upper.c,v 1.6 2007/04/06 17:09:00 plunky Exp $	*/
+/*	$NetBSD: l2cap_upper.c,v 1.7 2007/04/21 06:15:23 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: l2cap_upper.c,v 1.6 2007/04/06 17:09:00 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: l2cap_upper.c,v 1.7 2007/04/21 06:15:23 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -176,21 +176,33 @@ l2cap_connect(struct l2cap_channel *chan, struct sockaddr_bt *dest)
 	if (chan->lc_link == NULL)
 		return EHOSTUNREACH;
 
-	/*
-	 * We queue a connect request right away even though the link
-	 * may not yet be open; the queue will be started automatically
-	 * at the right time.
-	 */
-	chan->lc_state = L2CAP_WAIT_CONNECT_RSP;
-	err = l2cap_send_connect_req(chan);
-	if (err) {
-		chan->lc_state = L2CAP_CLOSED;
-		hci_acl_close(chan->lc_link, err);
-		chan->lc_link = NULL;
-		return err;
+	/* set the link mode */
+	err = l2cap_setmode(chan);
+	if (err == EINPROGRESS) {
+		chan->lc_state = L2CAP_WAIT_SEND_CONNECT_REQ;
+		(*chan->lc_proto->connecting)(chan->lc_upper);
+		return 0;
 	}
+	if (err)
+		goto fail;
+
+	/*
+	 * We can queue a connect request now even though the link may
+	 * not yet be open; Our mode setting is assured, and the queue
+	 * will be started automatically at the right time.
+	 */
+	chan->lc_state = L2CAP_WAIT_RECV_CONNECT_RSP;
+	err = l2cap_send_connect_req(chan);
+	if (err)
+		goto fail;
 
 	return 0;
+
+fail:
+	chan->lc_state = L2CAP_CLOSED;
+	hci_acl_close(chan->lc_link, err);
+	chan->lc_link = NULL;
+	return err;
 }
 
 /*
@@ -395,15 +407,22 @@ l2cap_send(struct l2cap_channel *chan, struct mbuf *m)
 }
 
 /*
- * l2cap_setopt(channel, opt, addr)
+ * l2cap_setopt(l2cap_channel, opt, addr)
  *
  *	Apply configuration options to channel. This corresponds to
  *	"Configure Channel Request" in the L2CAP specification.
+ *
+ *	for SO_L2CAP_LM, the settings will take effect when the
+ *	channel is established. If the channel is already open,
+ *	a call to
+ *		proto->linkmode(upper, new)
+ *
+ *	will be made when the change is complete.
  */
 int
 l2cap_setopt(struct l2cap_channel *chan, int opt, void *addr)
 {
-	int err = 0;
+	int mode, err = 0;
 	uint16_t mtu;
 
 	switch (opt) {
@@ -418,6 +437,23 @@ l2cap_setopt(struct l2cap_channel *chan, int opt, void *addr)
 
 		break;
 
+	case SO_L2CAP_LM:	/* set link mode */
+		mode = *(int *)addr;
+		mode &= (L2CAP_LM_SECURE | L2CAP_LM_ENCRYPT | L2CAP_LM_AUTH);
+
+		if (mode & L2CAP_LM_SECURE)
+			mode |= L2CAP_LM_ENCRYPT;
+
+		if (mode & L2CAP_LM_ENCRYPT)
+			mode |= L2CAP_LM_AUTH;
+
+		chan->lc_mode = mode;
+
+		if (chan->lc_state == L2CAP_OPEN)
+			err = l2cap_setmode(chan);
+
+		break;
+
 	case SO_L2CAP_OQOS:	/* set Outgoing QoS flow spec */
 	case SO_L2CAP_FLUSH:	/* set Outgoing Flush Timeout */
 	default:
@@ -428,6 +464,11 @@ l2cap_setopt(struct l2cap_channel *chan, int opt, void *addr)
 	return err;
 }
 
+/*
+ * l2cap_getopt(l2cap_channel, opt, addr)
+ *
+ *	Return configuration parameters.
+ */
 int
 l2cap_getopt(struct l2cap_channel *chan, int opt, void *addr)
 {
@@ -452,6 +493,10 @@ l2cap_getopt(struct l2cap_channel *chan, int opt, void *addr)
 	case SO_L2CAP_FLUSH:	/* get Flush Timeout */
 		*(uint16_t *)addr = chan->lc_flush;
 		return sizeof(uint16_t);
+
+	case SO_L2CAP_LM:	/* get link mode */
+		*(int *)addr = chan->lc_mode;
+		return sizeof(int);
 
 	default:
 		break;

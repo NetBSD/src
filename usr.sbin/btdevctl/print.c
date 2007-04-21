@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.7 2006/09/29 18:48:17 plunky Exp $	*/
+/*	$NetBSD: print.c,v 1.8 2007/04/21 06:15:24 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: print.c,v 1.7 2006/09/29 18:48:17 plunky Exp $");
+__RCSID("$NetBSD: print.c,v 1.8 2007/04/21 06:15:24 plunky Exp $");
 
 #include <sys/types.h>
 
@@ -98,6 +98,10 @@ cfg_print(prop_dictionary_t dict)
 		return;
 	}
 	printf("remote bdaddr: %s\n", bt_ntoa(prop_data_data_nocopy(obj), NULL));
+
+	obj = prop_dictionary_get(dict, BTDEVmode);
+	if (prop_object_type(obj) == PROP_TYPE_STRING)
+		printf("link mode: %s\n", prop_string_cstring_nocopy(obj));
 
 	obj = prop_dictionary_get(dict, BTDEVtype);
 	if (prop_object_type(obj) != PROP_TYPE_STRING) {
@@ -166,7 +170,7 @@ hid_parse(prop_data_t desc)
 
 	hid_init(NULL);
 
-	r = hid_use_report_desc((unsigned char *)prop_data_data_nocopy(desc),
+	r = hid_use_report_desc(prop_data_data_nocopy(desc),
 				prop_data_size(desc));
 	if (r == NULL)
 		return;

@@ -1,4 +1,4 @@
-.\"	$NetBSD: bluetooth.4,v 1.4 2006/09/02 23:52:45 wiz Exp $
+.\"	$NetBSD: bluetooth.4,v 1.5 2007/04/21 06:15:22 plunky Exp $
 .\"
 .\" Copyright (c) 2006 Itronix Inc.
 .\" All rights reserved.
@@ -30,7 +30,7 @@
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd August 27, 2006
+.Dd April 10, 2007
 .Dt BLUETOOTH 4
 .Os
 .Sh NAME
@@ -142,6 +142,30 @@ L2CAP socket options:
 Incoming MTU
 .It Dv SO_L2CAP_OMTU Op Ar uint16_t
 Outgoing MTU (read-only)
+.It Dv SO_L2CAP_LM Op Ar int
+Link Mode.
+The following bits may be set:
+.Pp
+.Bl -tag -compact -width ".Dv L2CAP_LM_ENCRYPT"
+.It Dv L2CAP_LM_AUTH
+Request authentication
+.Pq pairing .
+.It Dv L2CAP_LM_ENCRYPT
+Request encryption
+.Pq includes auth .
+.It Dv L2CAP_LM_SECURE
+Request secured link
+.Pq encryption, plus change link key .
+.El
+.Pp
+Link mode settings will be applied to the baseband link during L2CAP
+connection establishment.
+If the L2CAP connection is already established,
+.Dv EINPROGRESS
+may be returned, and it is not possible to guarantee that data already queued
+.Pq from either end
+will not be delivered.
+If the mode change fails, the L2CAP connection will be aborted.
 .El
 .Pp
 L2CAP
@@ -174,6 +198,30 @@ RFCOMM socket options:
 .Bl -tag -width XXX
 .It Dv SO_RFCOMM_MTU Op Ar uint16_t
 Maximum Frame Size to use for this link.
+.It Dv SO_RFCOMM_LM Op Ar int
+Link Mode.
+The following bits may be set at any time:
+.Pp
+.Bl -tag -compact -width ".Dv RFCOMM_LM_ENCRYPT"
+.It Dv RFCOMM_LM_AUTH
+Request authentication
+.Pq pairing .
+.It Dv RFCOMM_LM_ENCRYPT
+Request encryption
+.Pq includes auth .
+.It Dv RFCOMM_LM_SECURE
+Request secured link
+.Pq encryption, plus change link key .
+.El
+.Pp
+Link mode settings will be applied to the baseband link during RFCOMM
+connection establishment.
+If the RFCOMM connection is already established,
+.Dv EINPROGRESS
+may be returned, and it is not possible to guarantee that data already queued
+.Pq from either end
+will not be delivered.
+If the mode change fails, the RFCOMM connection will be aborted.
 .El
 .Pp
 RFCOMM
