@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.331 2007/04/21 12:46:04 dsieger Exp $
+.\"	$NetBSD: main,v 1.332 2007/04/21 13:00:46 dsl Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1306,6 +1306,7 @@ If you're one of them, and would like to mentioned, tell us!)
 .It Ta Martti Kuparinen Ta Mt martti@NetBSD.org
 .It Ta Kentaro A. Kurahone Ta Mt kurahone@NetBSD.org
 .It Ta Kevin Lahey Ta Mt kml@NetBSD.org
+.It Ta David Laight Ta Mt dsl@NetBSD.org
 .It Ta Johnny C. Lam Ta Mt jlam@NetBSD.org
 .It Ta Martin J. Laubach Ta Mt mjl@NetBSD.org
 .It Ta Greg Lehey Ta Mt grog@NetBSD.org
