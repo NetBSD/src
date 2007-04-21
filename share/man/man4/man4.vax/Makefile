@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2003/08/31 11:29:06 ragge Exp $
+#	$NetBSD: Makefile,v 1.15 2007/04/21 06:11:58 plunky Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/5/93
 
 MAN=	acc.4 ad.4 asc.4 autoconf.4 \
@@ -10,11 +10,11 @@ MAN=	acc.4 ad.4 asc.4 autoconf.4 \
 	ik.4 il.4 intro.4 ix.4 \
 	kg.4 \
 	lp.4 \
-	mem.4 mt.4 \
+	mem.4 mt.4 mtc.4 \
 	np.4 \
 	pcl.4 ps.4 \
 	qe.4 qt.4 \
-	rf.4 \
+	rf.4 rl.4 \
 	tm.4 ts.4 tu.4 \
 	uda.4 up.4 ut.4 uu.4 \
 	va.4 vp.4 vv.4
