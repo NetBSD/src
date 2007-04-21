@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.992 2007/04/21 06:11:58 plunky Exp $
+# $NetBSD: mi,v 1.993 2007/04/21 14:28:34 pooka Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -2081,6 +2081,7 @@
 ./usr/share/man/cat8/modunload.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/mopd.0			man-bootserver-catman	.cat
 ./usr/share/man/cat8/mount.0			man-sysutil-catman	.cat
+./usr/share/man/cat8/mount_9p.0			man-sysutil-catman	puffs,.cat
 ./usr/share/man/cat8/mount_ados.0		man-adosfs-catman	.cat
 ./usr/share/man/cat8/mount_cd9660.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/mount_ext2fs.0		man-ext2fs-catman	.cat
@@ -4527,6 +4528,7 @@
 ./usr/share/man/man8/modunload.8		man-sysutil-man		.man
 ./usr/share/man/man8/mopd.8			man-bootserver-man	.man
 ./usr/share/man/man8/mount.8			man-sysutil-man		.man
+./usr/share/man/man8/mount_9p.8			man-sysutil-man		puffs,.man
 ./usr/share/man/man8/mount_ados.8		man-adosfs-man		.man
 ./usr/share/man/man8/mount_cd9660.8		man-sysutil-man		.man
 ./usr/share/man/man8/mount_ext2fs.8		man-ext2fs-man		.man
