@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.993 2007/04/21 14:28:34 pooka Exp $
+# $NetBSD: mi,v 1.994 2007/04/21 18:41:49 plunky Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -1846,6 +1846,7 @@
 ./usr/share/man/cat8/cobalt/boot.0		man-sys-catman		.cat
 ./usr/share/man/cat8/cobalt/makedev.0		man-obsolete		obsolete
 ./usr/share/man/cat8/compat_30.0		man-sys-catman		.cat
+./usr/share/man/cat8/compat_darwin.0		man-sys-catman		.cat
 ./usr/share/man/cat8/compat_freebsd.0		man-sys-catman		.cat
 ./usr/share/man/cat8/compat_hpux.0		man-sys-catman		.cat
 ./usr/share/man/cat8/compat_ibcs2.0		man-sys-catman		.cat
@@ -4292,6 +4293,7 @@
 ./usr/share/man/man8/cobalt/boot.8		man-sys-man		.man
 ./usr/share/man/man8/cobalt/makedev.8		man-obsolete		obsolete
 ./usr/share/man/man8/compat_30.8		man-sys-man		.man
+./usr/share/man/man8/compat_darwin.8		man-sys-man		.man
 ./usr/share/man/man8/compat_freebsd.8		man-sys-man		.man
 ./usr/share/man/man8/compat_hpux.8		man-sys-man		.man
 ./usr/share/man/man8/compat_ibcs2.8		man-sys-man		.man
