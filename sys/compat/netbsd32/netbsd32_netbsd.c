@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.122 2007/04/22 08:29:58 dsl Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.123 2007/04/22 14:10:30 dsl Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.122 2007/04/22 08:29:58 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.123 2007/04/22 14:10:30 dsl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -252,12 +252,10 @@ netbsd32_open(l, v, retval)
 		syscallarg(mode_t) mode;
 	} */ *uap = v;
 	struct sys_open_args ua;
-	void *sg;
 
 	NETBSD32TOP_UAP(path, const char);
 	NETBSD32TO64_UAP(flags);
 	NETBSD32TO64_UAP(mode);
-	sg = stackgap_init(l->l_proc, 0);
 
 	return (sys_open(l, &ua, retval));
 }
@@ -552,16 +550,11 @@ netbsd32_access(l, v, retval)
 		syscallarg(int) flags;
 	} */ *uap = v;
 	struct sys_access_args ua;
-	void *sg;
-	int rval;
 
 	NETBSD32TOP_UAP(path, const char);
 	NETBSD32TO64_UAP(flags);
-	sg = stackgap_init(l->l_proc, 0);
 
-	rval = (sys_access(l, &ua, retval));
-	printf("netbsd32_access: rval %d\n", rval);
-	return rval;
+	return sys_access(l, &ua, retval);
 }
 
 int
@@ -772,10 +765,8 @@ netbsd32_revoke(l, v, retval)
 		syscallarg(const netbsd32_charp) path;
 	} */ *uap = v;
 	struct sys_revoke_args ua;
-	void *sg;
 
 	NETBSD32TOP_UAP(path, const char);
-	sg = stackgap_init(l->l_proc, 0);
 
 	return (sys_revoke(l, &ua, retval));
 }
@@ -810,12 +801,10 @@ netbsd32_readlink(l, v, retval)
 		syscallarg(netbsd32_size_t) count;
 	} */ *uap = v;
 	struct sys_readlink_args ua;
-	void *sg;
 
 	NETBSD32TOP_UAP(path, const char);
 	NETBSD32TOP_UAP(buf, char);
 	NETBSD32TOX_UAP(count, size_t);
-	sg = stackgap_init(l->l_proc, 0);
 
 	return (sys_readlink(l, &ua, retval));
 }
