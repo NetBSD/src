@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.181 2007/04/19 04:22:08 ad Exp $
+#	$NetBSD: BRANCHES,v 1.182 2007/04/22 05:15:13 thorpej Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -578,7 +578,7 @@ Notes:		Base atomic primitives need to be implemented for
 		hppa
 		i386		DONE
 		ia64
-		m68k
+		m68k		DONE (except for 68010)
 		mips
 		ns32k
 		powerpc
@@ -616,6 +616,8 @@ Notes:		Base atomic primitives need to be implemented for
 				  stubs.  Possibly do more than one atomic
 				  op as a RAS.  Possibly implement mutex
 				  stubs using the technique.
+
+		m68k		- Need to do 68010 support.
 		
 		i386		- Need to change when x86_patch() is called
 				  so we can test ncpus.
