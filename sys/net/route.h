@@ -1,4 +1,4 @@
-/*	$NetBSD: route.h,v 1.52 2007/03/04 06:03:18 christos Exp $	*/
+/*	$NetBSD: route.h,v 1.53 2007/04/22 13:05:21 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -340,6 +340,7 @@ void	rtcache_init_noclone(struct route *);
 void	rtcache_copy(struct route *, const struct route *, size_t);
 #endif
 
+void	rtcache_clear(struct route *);
 void	rtcache_update(struct route *);
 void	rtcache_free(struct route *);
 

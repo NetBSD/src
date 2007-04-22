@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.88 2007/03/12 18:18:35 ad Exp $	*/
+/*	$NetBSD: route.c,v 1.89 2007/04/22 13:05:21 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.88 2007/03/12 18:18:35 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.89 2007/04/22 13:05:21 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1189,7 +1189,7 @@ rtcache_copy(struct route *new_ro, const struct route *old_ro, size_t new_len)
 	}
 }
 
-static void
+void
 rtcache_clear(struct route *ro)
 {
 #ifdef RTCACHE_DEBUG
