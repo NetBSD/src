@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_fs.c,v 1.40 2007/04/22 08:29:58 dsl Exp $	*/
+/*	$NetBSD: netbsd32_fs.c,v 1.41 2007/04/22 10:54:43 dsl Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.40 2007/04/22 08:29:58 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.41 2007/04/22 10:54:43 dsl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -680,6 +680,8 @@ netbsd32_sys___stat30(l, v, retval)
 	path = SCARG_P32(uap, path);
 
 	error = do_sys_stat(l, path, FOLLOW, &sb);
+	if (error)
+		return (error);
 	netbsd32_from___stat30(&sb, &sb32);
 	error = copyout(&sb32, SCARG_P32(uap, ub), sizeof(sb32));
 	return (error);
