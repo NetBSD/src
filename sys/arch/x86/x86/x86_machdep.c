@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.4.2.2 2007/04/20 20:31:27 bouyer Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.4.2.3 2007/04/22 17:20:44 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.4.2.2 2007/04/20 20:31:27 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.4.2.3 2007/04/22 17:20:44 bouyer Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -124,6 +124,8 @@ check_pa_acc(paddr_t pa, vm_prot_t prot)
 void
 x86_init(void) 
 {
+#ifndef XEN
 	msr_cpu_broadcast_initmtx(); 
+#endif
 }
 
