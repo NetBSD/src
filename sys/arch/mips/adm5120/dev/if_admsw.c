@@ -1,4 +1,4 @@
-/* $NetBSD: if_admsw.c,v 1.2 2007/04/17 03:33:48 dyoung Exp $ */
+/* $NetBSD: if_admsw.c,v 1.3 2007/04/22 19:26:25 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_admsw.c,v 1.2 2007/04/17 03:33:48 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_admsw.c,v 1.3 2007/04/22 19:26:25 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -325,7 +325,6 @@ admsw_reset(struct admsw_softc *sc)
 		while (!(REG_READ(MAC_WT0_REG) & MAC_WT0_WRITE_DONE));
 	}
 	wdog1 = REG_READ(ADM5120_WDOG1);
-	printf("%s: reg[ADM5120_WDOG1] = 0x%08" PRIx32 "\n", __func__, wdog1);
 	REG_WRITE(ADM5120_WDOG1, wdog1 & ~ADM5120_WDOG1_WDE);
 }
 
