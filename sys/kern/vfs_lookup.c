@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.84 2007/02/22 06:34:45 thorpej Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.85 2007/04/22 08:30:01 dsl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.84 2007/02/22 06:34:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.85 2007/04/22 08:30:01 dsl Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -282,7 +282,6 @@ namei(struct nameidata *ndp)
 	if (cnp->cn_flags & OPMASK)
 		panic("namei: flags contaminated with nameiops");
 #endif
-	cwdi = cnp->cn_lwp->l_proc->p_cwdi;
 
 	/*
 	 * Get a buffer for the name to be translated, and copy the
@@ -290,6 +289,7 @@ namei(struct nameidata *ndp)
 	 */
 	if ((cnp->cn_flags & HASBUF) == 0)
 		cnp->cn_pnbuf = PNBUF_GET();
+    emul_retry:
 	if (ndp->ni_segflg == UIO_SYSSPACE)
 		error = copystr(ndp->ni_dirp, cnp->cn_pnbuf,
 			    MAXPATHLEN, &ndp->ni_pathlen);
@@ -320,21 +320,43 @@ namei(struct nameidata *ndp)
 #endif
 
 	/*
-	 * Get starting point for the translation.
+	 * Get root directory for the translation.
 	 */
-	if ((ndp->ni_rootdir = cwdi->cwdi_rdir) == NULL)
-		ndp->ni_rootdir = rootvnode;
+	/* XXX: SMP access to p_cwdi needs locking and vnodes held */
+	cwdi = cnp->cn_lwp->l_proc->p_cwdi;
+	dp = cwdi->cwdi_rdir;
+	if (dp == NULL)
+		dp = rootvnode;
+	ndp->ni_rootdir = dp;
+
 	/*
 	 * Check if starting from root directory or current directory.
 	 */
 	if (cnp->cn_pnbuf[0] == '/') {
-		dp = ndp->ni_rootdir;
-		VREF(dp);
+		if (cnp->cn_flags & TRYEMULROOT) {
+			if (cnp->cn_flags & EMULROOTSET) {
+				/* Called from(eg) emul_find_interp() */
+				dp = ndp->ni_erootdir;
+			} else {
+				if (cwdi->cwdi_edir != NULL) {
+					dp = cwdi->cwdi_edir;
+					ndp->ni_erootdir = dp;
+				} else {
+					cnp->cn_flags &= ~TRYEMULROOT;
+					ndp->ni_erootdir = NULL;
+				}
+			}
+		} else
+			ndp->ni_erootdir = NULL;
 	} else {
 		dp = cwdi->cwdi_cdir;
-		VREF(dp);
+		cnp->cn_flags &= ~TRYEMULROOT;
+		ndp->ni_erootdir = NULL;
 	}
+
+	VREF(dp);
 	vn_lock(dp, LK_EXCLUSIVE | LK_RETRY);
+	/* Loop through symbolic links */
 	for (;;) {
 		if (!dp->v_mount) {
 			/* Give up if the directory is no longer mounted */
@@ -348,6 +370,11 @@ namei(struct nameidata *ndp)
 		if (error != 0) {
 			if (ndp->ni_dvp) {
 				vput(ndp->ni_dvp);
+			}
+			if (cnp->cn_flags & TRYEMULROOT) {
+				/* Retry the whole thing from the normal root */
+				cnp->cn_flags &= ~TRYEMULROOT;
+				goto emul_retry;
 			}
 			PNBUF_PUT(cnp->cn_pnbuf);
 			return (error);
@@ -431,11 +458,15 @@ badlink:
 		 */
 		if (cnp->cn_pnbuf[0] == '/') {
 			vput(dp);
-			dp = ndp->ni_rootdir;
+			/* Keep absolute symbolic links inside emulation root */
+			dp = ndp->ni_erootdir;
+			if (dp == NULL)
+				dp = ndp->ni_rootdir;
 			VREF(dp);
 			vn_lock(dp, LK_EXCLUSIVE | LK_RETRY);
 		}
 	}
+	/* Failed to process a symbolic link */
 	KASSERT(ndp->ni_dvp != ndp->ni_vp);
 	vput(ndp->ni_dvp);
 	vput(ndp->ni_vp);
@@ -559,6 +590,21 @@ lookup(struct nameidata *ndp)
 		 * (because this is the root directory), then we must fail.
 		 */
 		if (cnp->cn_nameptr[0] == '\0') {
+			if (dp == ndp->ni_erootdir) {
+				/*
+				 * We are about to return the emulation root.
+				 * This isn't a good idea because code might
+				 * repeatedly lookup ".." until the file
+				 * matches that returned for "/" and loop
+				 * forever. So convert to to the real root.
+				 */
+				vput(dp);
+				vput(ndp->ni_dvp);
+				ndp->ni_dvp = NULL;
+				dp = ndp->ni_rootdir;
+				VREF(dp);
+				vn_lock(dp, LK_EXCLUSIVE | LK_RETRY);
+			}
 			if (ndp->ni_dvp == NULL && cnp->cn_nameiop != LOOKUP) {
 				switch (cnp->cn_nameiop) {
 				case CREATE:
@@ -652,7 +698,9 @@ dirloop:
 	 * 1. If at root directory (e.g. after chroot)
 	 *    or at absolute root directory
 	 *    then ignore it so can't get out.
-	 * 1a. If we have somehow gotten out of a jail, warn
+	 * 1a. If at the root of the emulation filesystem go to the real
+	 *    root. So "/../<path>" is always absolute.
+	 * 1b. If we have somehow gotten out of a jail, warn
 	 *    and also ignore it so we can't get farther out.
 	 * 2. If this vnode is the root of a mounted
 	 *    filesystem, then replace it with the
@@ -663,7 +711,11 @@ dirloop:
 		struct proc *p = l->l_proc;
 
 		for (;;) {
-			if (dp == ndp->ni_rootdir || dp == rootvnode) {
+			if (dp == ndp->ni_rootdir || dp == ndp->ni_erootdir
+			    || dp == rootvnode) {
+				/* ".." at emulation root goes to real root */
+				if (dp != ndp->ni_rootdir)
+					goto setrootdir;
 				ndp->ni_dvp = dp;
 				ndp->ni_vp = dp;
 				VREF(dp);
@@ -683,6 +735,8 @@ dirloop:
 					p->p_pid, kauth_cred_geteuid(l->l_cred),
 					p->p_comm);
 				    /* Put us at the jail root. */
+				setrootdir:
+				    ndp->ni_erootdir = NULL;
 				    vput(dp);
 				    dp = ndp->ni_rootdir;
 				    ndp->ni_dvp = dp;

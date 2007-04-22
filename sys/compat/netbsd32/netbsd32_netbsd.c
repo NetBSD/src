@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.121 2007/03/18 21:38:33 dsl Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.122 2007/04/22 08:29:58 dsl Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.121 2007/03/18 21:38:33 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.122 2007/04/22 08:29:58 dsl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -258,7 +258,6 @@ netbsd32_open(l, v, retval)
 	NETBSD32TO64_UAP(flags);
 	NETBSD32TO64_UAP(mode);
 	sg = stackgap_init(l->l_proc, 0);
-	CHECK_ALT_EXIST(l, &sg, SCARG(&ua, path));
 
 	return (sys_open(l, &ua, retval));
 }
@@ -554,13 +553,15 @@ netbsd32_access(l, v, retval)
 	} */ *uap = v;
 	struct sys_access_args ua;
 	void *sg;
+	int rval;
 
 	NETBSD32TOP_UAP(path, const char);
 	NETBSD32TO64_UAP(flags);
 	sg = stackgap_init(l->l_proc, 0);
-	CHECK_ALT_EXIST(l, &sg, SCARG(&ua, path));
 
-	return (sys_access(l, &ua, retval));
+	rval = (sys_access(l, &ua, retval));
+	printf("netbsd32_access: rval %d\n", rval);
+	return rval;
 }
 
 int
@@ -775,7 +776,6 @@ netbsd32_revoke(l, v, retval)
 
 	NETBSD32TOP_UAP(path, const char);
 	sg = stackgap_init(l->l_proc, 0);
-	CHECK_ALT_EXIST(l, &sg, SCARG(&ua, path));
 
 	return (sys_revoke(l, &ua, retval));
 }
@@ -816,7 +816,6 @@ netbsd32_readlink(l, v, retval)
 	NETBSD32TOP_UAP(buf, char);
 	NETBSD32TOX_UAP(count, size_t);
 	sg = stackgap_init(l->l_proc, 0);
-	CHECK_ALT_SYMLINK(l, &sg, SCARG(&ua, path));
 
 	return (sys_readlink(l, &ua, retval));
 }
@@ -1498,7 +1497,7 @@ netbsd32___getfh30(l, v, retval)
 	if (error)
 		return (error);
 	fh = NULL;
-	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE,
+	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF | TRYEMULROOT, UIO_USERSPACE,
 	    SCARG_P32(uap, fname), l);
 	error = namei(&nd);
 	if (error)

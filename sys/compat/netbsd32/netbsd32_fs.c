@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_fs.c,v 1.39 2007/03/18 21:38:33 dsl Exp $	*/
+/*	$NetBSD: netbsd32_fs.c,v 1.40 2007/04/22 08:29:58 dsl Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.39 2007/03/18 21:38:33 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.40 2007/04/22 08:29:58 dsl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -328,7 +328,7 @@ netbsd32_utimes(l, v, retval)
 	int error;
 	struct nameidata nd;
 
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG_P32(uap, path), l);
+	NDINIT(&nd, LOOKUP, FOLLOW | TRYEMULROOT, UIO_USERSPACE, SCARG_P32(uap, path), l);
 	if ((error = namei(&nd)) != 0)
 		return (error);
 
@@ -393,7 +393,7 @@ netbsd32_statvfs1(l, v, retval)
 	struct nameidata nd;
 	int error;
 
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG_P32(uap, path), l);
+	NDINIT(&nd, LOOKUP, FOLLOW | TRYEMULROOT, UIO_USERSPACE, SCARG_P32(uap, path), l);
 	if ((error = namei(&nd)) != 0)
 		return (error);
 	/* Allocating on the stack would blow it up */
@@ -652,7 +652,7 @@ netbsd32_lutimes(l, v, retval)
 	int error;
 	struct nameidata nd;
 
-	NDINIT(&nd, LOOKUP, NOFOLLOW, UIO_USERSPACE, SCARG_P32(uap, path), l);
+	NDINIT(&nd, LOOKUP, NOFOLLOW | TRYEMULROOT, UIO_USERSPACE, SCARG_P32(uap, path), l);
 	if ((error = namei(&nd)) != 0)
 		return (error);
 
@@ -675,13 +675,9 @@ netbsd32_sys___stat30(l, v, retval)
 	struct netbsd32_stat sb32;
 	struct stat sb;
 	int error;
-	void *sg;
 	const char *path;
-	struct proc *p = l->l_proc;
 
 	path = SCARG_P32(uap, path);
-	sg = stackgap_init(p, 0);
-	CHECK_ALT_EXIST(l, &sg, path);
 
 	error = do_sys_stat(l, path, FOLLOW, &sb);
 	netbsd32_from___stat30(&sb, &sb32);
@@ -740,7 +736,6 @@ netbsd32_sys___lstat30(l, v, retval)
 
 	path = SCARG_P32(uap, path);
 	sg = stackgap_init(p, 0);
-	CHECK_ALT_EXIST(l, &sg, path);
 
 	error = do_sys_stat(l, path, NOFOLLOW, &sb);
 	if (error)

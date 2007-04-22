@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.184 2007/03/09 05:55:33 yamt Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.185 2007/04/22 08:30:01 dsl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.184 2007/03/09 05:55:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.185 2007/04/22 08:30:01 dsl Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -2176,6 +2176,7 @@ nfs_namei(ndp, nsfh, len, slp, nam, mdp, dposp, retdirp, l, kerbflag, pubflag)
 	ndp->ni_pathlen = (tocp - cnp->cn_pnbuf) + 1;
 	ndp->ni_segflg = UIO_SYSSPACE;
 	ndp->ni_rootdir = rootvnode;
+	ndp->ni_erootdir = NULL;
 
 	if (pubflag) {
 		ndp->ni_loopcnt = 0;

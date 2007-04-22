@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_misc.c,v 1.44 2007/03/16 22:21:43 dsl Exp $	 */
+/*	$NetBSD: svr4_32_misc.c,v 1.45 2007/04/22 08:30:00 dsl Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_misc.c,v 1.44 2007/03/16 22:21:43 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_misc.c,v 1.45 2007/04/22 08:30:00 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -213,12 +213,8 @@ svr4_32_sys_execve(p, v, retval)
 		syscallarg(char **) envp;
 	} */ *uap = v;
 	struct sys_execve_args ap;
-	void *sg;
-
-	sg = stackgap_init(p, 0);
 
 	SCARG(&ap, path) = SCARG_P32(uap, path);
-	CHECK_ALT_EXIST(l, &sg, SCARG(&ap, path));
 	SCARG(&ap, argp) = SCARG_P32(uap, argp);
 	SCARG(&ap, envp) = SCARG_P32(uap, envp);
 
@@ -607,10 +603,6 @@ svr4_32_mknod(l, retval, path, mode, dev)
 	svr4_32_mode_t mode;
 	svr4_32_dev_t dev;
 {
-	void *sg = stackgap_init(l->l_proc, 0);
-
-	CHECK_ALT_CREAT(l, &sg, path);
-
 	if (S_ISFIFO(mode)) {
 		struct sys_mkfifo_args ap;
 		SCARG(&ap, path) = path;
@@ -1363,7 +1355,6 @@ svr4_32_sys_statvfs(l, v, retval)
 	int error;
 
 	SCARG(&fs_args, path) = SCARG_P32(uap, path);
-	CHECK_ALT_EXIST(l, &sg, SCARG(&fs_args, path));
 	SCARG(&fs_args, buf) = fs;
 	SCARG(&fs_args, flags) = ST_WAIT;
 
@@ -1412,7 +1403,6 @@ svr4_32_sys_statvfs64(l, v, retval)
 	int error;
 
 	SCARG(&fs_args, path) = SCARG_P32(uap, path);
-	CHECK_ALT_EXIST(l, &sg, SCARG(&fs_args, path));
 	SCARG(&fs_args, buf) = fs;
 	SCARG(&fs_args, flags) = ST_WAIT;
 
@@ -1633,7 +1623,7 @@ svr4_32_sys_resolvepath(l, v, retval)
 	int error;
 	size_t len;
 
-	NDINIT(&nd, LOOKUP, NOFOLLOW | SAVENAME, UIO_USERSPACE,
+	NDINIT(&nd, LOOKUP, NOFOLLOW | SAVENAME | TRYEMULROOT, UIO_USERSPACE,
 	    SCARG_P32(uap, path), l);
 
 	if ((error = namei(&nd)) != 0)
