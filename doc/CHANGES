@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.833 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.834 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -82,6 +82,8 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		Ultra Enterprise 450. See envctrl(4) [tnn 20070414]
 	ipf(8): Updated to version 4.1.19. [martin 20070414]
 	puffs(4): Support NFS exporting puffs file servers [pooka 20070416]
+	xargs(1): Bring in xargs from FreeBSD to gain -I, -J etc. but keep our
+		GNU compatible exit values. [christos 20070418]
 	bluetooth(4): add 'service level' security [plunky 20070421]
 	mount_9p(8): Add support to mount a 9P file service with puffs.
 		[pooka 20070421]
