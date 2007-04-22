@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.348 2007/03/21 19:29:30 xtraeme Exp $
+.\"	$NetBSD: options.4,v 1.349 2007/04/22 10:43:10 dsl Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -1461,6 +1461,21 @@ See
 for details.
 .Em NOTE :
 not available on all architectures.
+.It Cd options SYSCALL_STATS
+Count the number of times each system call number is called.
+The values can be read through the sysctl interface and display using systat
+.Xr systat 1 .
+.Em NOTE :
+not yet available on all architectures.
+.It Cd options SYSCALL_TIMES
+Count the time spent (using cpu_counter32()) in each system call.
+.Em NOTE :
+Using this option will also enable
+.Em options SYSCALL_STATS
+.It Cd options SYSCALL_TIMES_HASCOUNTER
+Force use of cpu_counter32() even if cpu_hascounter() reports false.
+Useful for systems where the cycle counter doen't run at a constant rate
+(e.g. Soekris boxes).
 .It Cd options XSERVER
 Compiles in kernel support for
 .Tn X11
