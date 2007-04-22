@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.156 2007/04/22 08:30:00 dsl Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.157 2007/04/22 18:41:49 dsl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.156 2007/04/22 08:30:00 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.157 2007/04/22 18:41:49 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1060,8 +1060,9 @@ cwdinit(struct proc *p)
 	cwdi->cwdi_rdir = p->p_cwdi->cwdi_rdir;
 	if (cwdi->cwdi_rdir)
 		VREF(cwdi->cwdi_rdir);
-	/* Don't copy the emulation root */
-	cwdi->cwdi_edir = NULL;
+	cwdi->cwdi_edir = p->p_cwdi->cwdi_edir;
+	if (cwdi->cwdi_edir)
+		VREF(cwdi->cwdi_edir);
 	cwdi->cwdi_cmask =  p->p_cwdi->cwdi_cmask;
 	cwdi->cwdi_refcnt = 1;
 
