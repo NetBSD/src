@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.831 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.832 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -84,3 +84,6 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	bluetooth(4): add 'service level' security [plunky 20070421]
 	mount_9p(8): Add support to mount a 9P file service with puffs.
 		[pooka 20070421]
+	kernel: Remove the CHECK_ALT_xxx() defines and emul_find() used
+		to locate files within an emulation's root directory.
+		Instead get namei() to check the emulation root first.
