@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_var.h,v 1.41 2007/04/22 19:47:41 christos Exp $	*/
+/*	$NetBSD: ip6_var.h,v 1.42 2007/04/22 20:06:07 christos Exp $	*/
 /*	$KAME: ip6_var.h,v 1.33 2000/06/11 14:59:20 jinmei Exp $	*/
 
 /*
@@ -304,7 +304,7 @@ extern int	ip6_use_defzone; /* whether to use the default scope zone
 extern int      ip6_maxflows;           /* maximum amount of flows for ip6ff */
 extern int	ip6_hashsize;		/* size of hash table */
 #endif
-extern int	ip6_rth0;		/* processing routing header type 0 */
+extern int	ip6_rht0;		/* processing routing header type 0 */
 
 struct in6pcb;
 
