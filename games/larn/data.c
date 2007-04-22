@@ -1,4 +1,4 @@
-/*	$NetBSD: data.c,v 1.10 2003/08/07 09:37:23 agc Exp $	 */
+/*	$NetBSD: data.c,v 1.11 2007/04/22 02:09:02 mouse Exp $	 */
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -34,7 +34,7 @@
 #if 0
 static char     sccsid[] = "@(#)data.c	5.3 (Berkeley) 5/13/91";
 #else
-__RCSID("$NetBSD: data.c,v 1.10 2003/08/07 09:37:23 agc Exp $");
+__RCSID("$NetBSD: data.c,v 1.11 2007/04/22 02:09:02 mouse Exp $");
 #endif
 #endif /* not lint */
 
@@ -453,15 +453,15 @@ char           *spelname[] = {
 char           *speldescript[] = {
 	/* 1 */
 	"generates a +2 protection field",
-	"creates and hurls a magic missile equivalent to a + 1 magic arrow",
-	"adds +2 to the casters dexterity",
+	"creates and hurls a magic missile equivalent to a +1 magic arrow",
+	"adds +2 to the caster's dexterity",
 	"causes some monsters to go to sleep",
 	"some monsters may be awed at your magnificence",
 	"causes your hands to emit a screeching sound toward what they point",
 	/* 7 */
 	"causes strands of sticky thread to entangle an enemy",
-	"adds +2 to the casters strength for a short term",
-	"the caster becomes aware of things around him",
+	"adds +2 to the caster's strength for a short term",
+	"the caster becomes aware of things in the vicinity",
 	"restores some hp to the caster",
 	"restores sight to one so unfortunate as to be blinded",
 	"creates a monster near the caster appropriate for the location",
@@ -471,20 +471,20 @@ char           *speldescript[] = {
 	"makes a ball of fire that burns on what it hits",
 	"sends forth a cone of cold which freezes what it touches",
 	"you can find out what this does for yourself",
-	"negates the ability of a monster to use his special abilities",
-	"speeds up the casters movements",
+	"negates the ability of a monster to use its special abilities",
+	"speeds up the caster's movements",
 	"creates a fog of poisonous gas which kills all that is within it",
 	"this changes rock to air",
 	/* 22 */
 	"dries up water in the immediate vicinity",
-	"you finger will emit a lightning bolt when this spell is cast",
+	"your finger will emit a lightning bolt when this spell is cast",
 	"subtracts hit points from both you and a monster",
 	"this globe helps to protect the player from physical attack",
 	"this creates an avalanche of H2O to flood the immediate chamber",
 	"this is a holy spell and calls upon your god to back you up",
 	/* 28 */
-	"terrifies the monster so that hopefully he wont hit the magic user",
-	"the monster is frozen in his tracks if this is successful",
+	"terrifies the monster so that hopefully it won't hit the magic user",
+	"the monster is frozen in its tracks if this is successful",
 	"all movement in the caverns ceases for a limited duration",
 	"moves a particular monster around in the dungeon (hopefully away from you)",
 	"this causes a curtain of fire to appear all around you",

@@ -1,4 +1,4 @@
-/*	$NetBSD: monster.c,v 1.10 2006/03/19 00:37:15 christos Exp $	*/
+/*	$NetBSD: monster.c,v 1.11 2007/04/22 02:09:02 mouse Exp $	*/
 
 /*
  * monster.c	Larn is copyrighted 1986 by Noah Morgan.
@@ -100,7 +100,7 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: monster.c,v 1.10 2006/03/19 00:37:15 christos Exp $");
+__RCSID("$NetBSD: monster.c,v 1.11 2007/04/22 02:09:02 mouse Exp $");
 #endif				/* not lint */
 
 #include <string.h>
@@ -740,7 +740,7 @@ direct(spnum, dam, str, arg)
 			goto fool;
 		} else {
 			lastnum = 278;
-			lprintf(str, "spell caster (thats you)", (long) arg);
+			lprintf(str, "spell caster (that's you)", (long) arg);
 			beep();
 			losehp(dam);
 			return;
@@ -800,7 +800,7 @@ godirect(spnum, dam, str, delay, cshow)
 		}
 		if ((x == playerx) && (y == playery)) {	/* if energy hits player */
 			cursors();
-			lprcat("\nYou are hit my your own magic!");
+			lprcat("\nYou are hit by your own magic!");
 			beep();
 			lastnum = 278;
 			losehp(dam);
@@ -1215,7 +1215,7 @@ hitplayer(x, y)
 	vxy(&x, &y);		/* verify coordinates are within range */
 	lastnum = mster = mitem[x][y];
 	/*
-	 * spirit naga's and poltergeist's do nothing if scarab of negate
+	 * spirit nagas and poltergeists do nothing if scarab of negate
 	 * spirit
 	 */
 	if (c[NEGATESPIRIT] || c[SPIRITPRO])
@@ -1534,10 +1534,10 @@ spattack(x, xx, yy)
 		if (j == 0)	/* if rusting did not occur */
 			switch (m) {
 			case OLEATHER:
-				p = "\nThe %s hit you -- Your lucky you have leather on";
+				p = "\nThe %s hit you -- You're lucky you have leather on";
 				break;
 			case OSSPLATE:
-				p = "\nThe %s hit you -- Your fortunate to have stainless steel armor!";
+				p = "\nThe %s hit you -- You're fortunate to have stainless steel armor!";
 				break;
 			}
 		else {
@@ -1550,7 +1550,7 @@ spattack(x, xx, yy)
 		i = rnd(15) + 8 - c[AC];
 spout:		p = "\nThe %s breathes fire at you!";
 		if (c[FIRERESISTANCE])
-			p = "\nThe %s's flame doesn't phase you!";
+			p = "\nThe %s's flame doesn't faze you!";
 		else
 spout2:	if (p) {
 			lprintf(p, lastmonst);
