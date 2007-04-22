@@ -1,4 +1,4 @@
-/*	$NetBSD: stdlib.h,v 1.76 2006/03/15 17:35:17 kleink Exp $	*/
+/*	$NetBSD: stdlib.h,v 1.77 2007/04/22 08:21:50 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -235,7 +235,8 @@ int	 posix_openpt(int);
  * Implementation-defined extensions
  */
 #if defined(_NETBSD_SOURCE)
-#if defined(alloca) && (alloca == __builtin_alloca) && (__GNUC__ < 2)
+#if defined(alloca) && (alloca == __builtin_alloca) && \
+	defined(__GNUC__) && (__GNUC__ < 2)
 void	*alloca(int);     /* built-in for gcc */ 
 #else 
 void	*alloca(size_t); 
