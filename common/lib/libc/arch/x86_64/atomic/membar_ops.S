@@ -1,4 +1,4 @@
-/*	$NetBSD: membar_ops.S,v 1.1.2.3 2007/04/17 16:06:15 thorpej Exp $	*/
+/*	$NetBSD: membar_ops.S,v 1.1.2.4 2007/04/22 05:12:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -56,19 +56,23 @@ NENTRY(_membar_producer)
 END(_membar_producer_end, 8)
 ATOMIC_OP_ALIAS(membar_producer,_membar_producer)
 ATOMIC_OP_ALIAS(membar_write,_membar_producer)
+STRONG_ALIAS(_membar_write,_membar_producer)
 
 NENTRY(_membar_consumer)
 	ret
 END(_membar_consumer_end, 8)
 ATOMIC_OP_ALIAS(membar_consumer,_membar_consumer)
 ATOMIC_OP_ALIAS(membar_read,_membar_consumer)
+STRONG_ALIAS(_membar_read,_membar_consumer)
 
 NENTRY(_membar_sync)
 	ret
 END(_membar_sync_end, 8)
 ATOMIC_OP_ALIAS(membar_sync,_membar_sync)
 ATOMIC_OP_ALIAS(membar_enter,_membar_sync)
+STRONG_ALIAS(_membar_enter,_membar_sync)
 ATOMIC_OP_ALIAS(membar_exit,_membar_sync)
+STRONG_ALIAS(_membar_exit,_membar_sync)
 
 #if defined(MULTIPROCESSOR)
 NENTRY(_membar_producer_mp)

@@ -1,4 +1,4 @@
-/*	$NetBSD: membar_ops_nop.c,v 1.1.2.1 2007/04/18 07:31:42 thorpej Exp $	*/
+/*	$NetBSD: membar_ops_nop.c,v 1.1.2.2 2007/04/22 05:12:49 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -49,15 +49,22 @@ membar_sync(void)
 
 #undef membar_enter
 atomic_op_alias(membar_enter,_membar_sync)
+__strong_alias(_membar_enter,_membar_sync)
 #undef membar_exit
 atomic_op_alias(membar_exit,_membar_sync)
+__strong_alias(_membar_exit,_membar_sync)
 #undef membar_producer
 atomic_op_alias(membar_producer,_membar_sync)
+__strong_alias(_membar_producer,_membar_sync)
 #undef membar_consumer
 atomic_op_alias(membar_consumer,_membar_sync)
+__strong_alias(_membar_consumer,_membar_sync)
 #undef membar_sync
 atomic_op_alias(membar_sync,_membar_sync)
+__strong_alias(_membar_sync,_membar_sync)
 #undef membar_write
 atomic_op_alias(membar_write,_membar_sync)
+__strong_alias(_membar_write,_membar_sync)
 #undef membar_read
 atomic_op_alias(membar_read,_membar_sync)
+__strong_alias(_membar_read,_membar_sync)

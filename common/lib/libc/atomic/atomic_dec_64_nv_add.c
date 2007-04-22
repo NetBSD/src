@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_dec_64_nv_add.c,v 1.1.2.3 2007/04/17 16:05:10 thorpej Exp $	*/
+/*	$NetBSD: atomic_dec_64_nv_add.c,v 1.1.2.4 2007/04/22 05:12:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -52,6 +52,8 @@ atomic_op_alias(atomic_dec_64_nv,_atomic_dec_64_nv)
 #if defined(_LP64)
 #undef atomic_dec_ulong_nv
 atomic_op_alias(atomic_dec_ulong_nv,_atomic_dec_64_nv)
+__strong_alias(_atomic_dec_ulong_nv,_atomic_dec_64_nv)
 #undef atomic_dec_ptr_nv
 atomic_op_alias(atomic_dec_ptr_nv,_atomic_dec_64_nv)
+__strong_alias(_atomic_dec_ptr_nv,_atomic_dec_64_nv)
 #endif /* _LP64 */

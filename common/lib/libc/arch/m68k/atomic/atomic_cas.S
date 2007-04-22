@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_cas.S,v 1.1.2.1 2007/04/22 04:14:18 thorpej Exp $	*/
+/*	$NetBSD: atomic_cas.S,v 1.1.2.2 2007/04/22 05:12:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -50,6 +50,7 @@ ENTRY_NOPROFILE(_atomic_cas_8)
 	rts
 ATOMIC_OP_ALIAS(atomic_cas_8,_atomic_cas_8)
 ATOMIC_OP_ALIAS(atomic_cas_uchar,_atomic_cas_8)
+STRONG_ALIAS(_atomic_cas_uchar,_atomic_cas_8)
 
 ENTRY_NOPROFILE(_atomic_cas_16)
 	movl	%sp@(4), %a0
@@ -61,6 +62,7 @@ ENTRY_NOPROFILE(_atomic_cas_16)
 	rts
 ATOMIC_OP_ALIAS(atomic_cas_16,_atomic_cas_16)
 ATOMIC_OP_ALIAS(atomic_cas_ushort,_atomic_cas_16)
+STRONG_ALIAS(_atomic_cas_ushort,_atomic_cas_16)
 
 ENTRY_NOPROFILE(_atomic_cas_32)
 	movl	%sp@(4), %a0
@@ -72,5 +74,8 @@ ENTRY_NOPROFILE(_atomic_cas_32)
 	rts
 ATOMIC_OP_ALIAS(atomic_cas_32,_atomic_cas_32)
 ATOMIC_OP_ALIAS(atomic_cas_uint,_atomic_cas_32)
+STRONG_ALIAS(_atomic_cas_uint,_atomic_cas_32)
 ATOMIC_OP_ALIAS(atomic_cas_ulong,_atomic_cas_32)
+STRONG_ALIAS(_atomic_cas_ulong,_atomic_cas_32)
 ATOMIC_OP_ALIAS(atomic_cas_ptr,_atomic_cas_32)
+STRONG_ALIAS(_atomic_cas_ptr,_atomic_cas_32)

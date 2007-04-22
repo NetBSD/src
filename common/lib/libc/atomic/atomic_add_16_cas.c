@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_add_16_cas.c,v 1.1.2.3 2007/04/17 16:02:44 thorpej Exp $	*/
+/*	$NetBSD: atomic_add_16_cas.c,v 1.1.2.4 2007/04/22 05:12:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -52,5 +52,7 @@ atomic_add_16(volatile uint16_t *addr, int16_t val)
 
 #undef atomic_add_16
 atomic_op_alias(atomic_add_16,_atomic_add_16)
+
 #undef atomic_add_short
 atomic_op_alias(atomic_add_short,_atomic_add_16)
+__strong_alias(_atomic_add_short,_atomic_add_16)

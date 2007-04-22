@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_dec_16_add.c,v 1.1.2.4 2007/04/18 04:21:59 thorpej Exp $	*/
+/*	$NetBSD: atomic_dec_16_add.c,v 1.1.2.5 2007/04/22 05:12:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -51,3 +51,4 @@ atomic_dec_16(volatile uint16_t *addr)
 atomic_op_alias(atomic_dec_16,_atomic_dec_16)
 #undef atomic_dec_ushort
 atomic_op_alias(atomic_dec_ushort,_atomic_dec_16)
+__strong_alias(_atomic_dec_ushort,_atomic_dec_16)

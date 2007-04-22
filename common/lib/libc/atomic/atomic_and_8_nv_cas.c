@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_and_8_nv_cas.c,v 1.1.2.3 2007/04/17 16:03:59 thorpej Exp $	*/
+/*	$NetBSD: atomic_and_8_nv_cas.c,v 1.1.2.4 2007/04/22 05:12:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -55,3 +55,4 @@ atomic_and_8_nv(volatile uint8_t *addr, uint8_t val)
 atomic_op_alias(atomic_and_8_nv,_atomic_and_8_nv)
 #undef atomic_and_uchar_nv
 atomic_op_alias(atomic_and_uchar_nv,_atomic_and_8_nv)
+__strong_alias(_atomic_and_uchar_nv,_atomic_and_8_nv)
