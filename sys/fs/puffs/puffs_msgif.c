@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.c,v 1.31 2007/04/21 10:36:59 pooka Exp $	*/
+/*	$NetBSD: puffs_msgif.c,v 1.32 2007/04/22 21:52:37 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.31 2007/04/21 10:36:59 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.32 2007/04/22 21:52:37 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/fstrans.h>
@@ -678,7 +678,9 @@ puffs_getop(struct puffs_mount *pmp, struct puffs_reqh_get *phg, int nonblock)
 		phg->phg_buflen -= preq->preq_buflen;
 		donesome++;
 
+		/* XXXfixme: taking this lock in the wrong order */
 		mutex_enter(&pmp->pmp_lock);
+
 		if (park->park_flags & PARKFLAG_WANTREPLY) {
 			TAILQ_INSERT_TAIL(&pmp->pmp_req_replywait, park,
 			    park_entries);
@@ -824,7 +826,7 @@ puffs_putop(struct puffs_mount *pmp, struct puffs_reqh_put *php)
 void
 puffs_userdead(struct puffs_mount *pmp)
 {
-	struct puffs_park *park;
+	struct puffs_park *park, *park_next;
 
 	/*
 	 * Mark filesystem status as dying so that operations don't
@@ -833,10 +835,11 @@ puffs_userdead(struct puffs_mount *pmp)
 	pmp->pmp_status = PUFFSTAT_DYING;
 
 	/* signal waiters on REQUEST TO file server queue */
-	TAILQ_FOREACH(park, &pmp->pmp_req_touser, park_entries) {
+	for (park = TAILQ_FIRST(&pmp->pmp_req_touser); park; park = park_next) {
 		uint8_t opclass;
 
 		puffs_park_reference(park);
+		park_next = TAILQ_NEXT(park, park_entries);
 
 		KASSERT(park->park_flags & PARKFLAG_ONQUEUE1);
 		TAILQ_REMOVE(&pmp->pmp_req_touser, park, park_entries);
@@ -869,8 +872,9 @@ puffs_userdead(struct puffs_mount *pmp)
 	}
 
 	/* signal waiters on RESPONSE FROM file server queue */
-	TAILQ_FOREACH(park, &pmp->pmp_req_replywait, park_entries) {
+	for (park=TAILQ_FIRST(&pmp->pmp_req_replywait); park; park=park_next) {
 		puffs_park_reference(park);
+		park_next = TAILQ_NEXT(park, park_entries);
 
 		KASSERT(park->park_flags & PARKFLAG_ONQUEUE2);
 		KASSERT(park->park_flags & PARKFLAG_WANTREPLY);
