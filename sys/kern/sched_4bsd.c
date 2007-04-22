@@ -1,4 +1,4 @@
-/*	$NetBSD: sched_4bsd.c,v 1.1.2.26 2007/04/18 12:35:42 ad Exp $	*/
+/*	$NetBSD: sched_4bsd.c,v 1.1.2.27 2007/04/22 08:27:00 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.1.2.26 2007/04/18 12:35:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.1.2.27 2007/04/22 08:27:00 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -279,7 +279,7 @@ decay_cpu_batch(fixpt_t loadfac, fixpt_t estcpu, unsigned int n)
  *
  * Periodically called from sched_pstats(); used to recalculate priorities.
  */
-inline void
+void
 sched_pstats_hook(struct proc *p, int minslp)
 {
 	struct lwp *l;
