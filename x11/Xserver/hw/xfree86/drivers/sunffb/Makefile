@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2005/10/26 10:56:44 macallan Exp $
+#	$NetBSD: Makefile,v 1.5 2007/04/22 23:42:38 macallan Exp $
 
 XMODULEDIR=	${X11USRLIBDIR}/modules/drivers
 
@@ -15,7 +15,16 @@ SRCS=	ffb_driver.c ffb_accel.c ffb_attr.c ffb_stip.c ffb_bcopy.c \
 	ffb_cursor.c ffb_dga.c ffb_dac.c ffb_wid.c ffb_dbe.c
 
 SRCS+=	VISmoveImage.s ffb_asm.s
+
+.if ${MACHINE} == "sparc64"
 AFLAGS+= -x assembler-with-cpp -Wa,-Av9a
+.endif
+
+.if ${MACHINE} == "sparc"
+AFLAGS+= -x assembler-with-cpp -Wa,-Av8plusa
+COPTS= -mv8plus
+.endif
+
 
 CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/drivers/sunffb \
 		-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/common \
