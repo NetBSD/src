@@ -1,4 +1,4 @@
-/*	$NetBSD: ninepuffs.h,v 1.1 2007/04/21 14:21:43 pooka Exp $	*/
+/*	$NetBSD: ninepuffs.h,v 1.2 2007/04/22 18:10:48 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -144,7 +144,8 @@ struct dirfid {
 
 struct p9pnode {
 	p9pfid_t	fid_base;
-	p9pfid_t	fid_open;
+	p9pfid_t	fid_read;
+	p9pfid_t	fid_write;
 	int		opencount;
 
 	LIST_HEAD(,dirfid) dir_openlist;

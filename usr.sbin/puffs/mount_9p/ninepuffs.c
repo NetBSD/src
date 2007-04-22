@@ -1,4 +1,4 @@
-/*	$NetBSD: ninepuffs.c,v 1.1 2007/04/21 14:21:43 pooka Exp $	*/
+/*	$NetBSD: ninepuffs.c,v 1.2 2007/04/22 18:10:48 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ninepuffs.c,v 1.1 2007/04/21 14:21:43 pooka Exp $");
+__RCSID("$NetBSD: ninepuffs.c,v 1.2 2007/04/22 18:10:48 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -147,6 +147,7 @@ main(int argc, char *argv[])
 
 	if (pflags & PUFFS_FLAG_OPDUMP)
 		detach = 0;
+	pflags |= PUFFS_KFLAG_WTCACHE;
 
 	PUFFSOP_INIT(pops);
 
