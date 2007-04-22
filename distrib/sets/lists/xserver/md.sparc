@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc,v 1.19 2006/04/17 21:07:38 macallan Exp $
+# $NetBSD: md.sparc,v 1.20 2007/04/22 23:42:38 macallan Exp $
 ./usr/X11R6/bin/X
 ./usr/X11R6/bin/XFree86
 ./usr/X11R6/bin/Xsun
@@ -79,6 +79,7 @@
 ./usr/X11R6/lib/modules/drivers/suncg14_drv.o
 ./usr/X11R6/lib/modules/drivers/suncg3_drv.o
 ./usr/X11R6/lib/modules/drivers/suncg6_drv.o
+./usr/X11R6/lib/modules/drivers/sunffb_drv.o
 ./usr/X11R6/lib/modules/drivers/sunleo_drv.o
 ./usr/X11R6/lib/modules/drivers/suntcx_drv.o
 ./usr/X11R6/lib/modules/drivers/wsfb_drv.o
@@ -140,6 +141,7 @@
 ./usr/X11R6/lib/modules/libxf4bpp.a
 ./usr/X11R6/lib/modules/libxf8_16bpp.a
 ./usr/X11R6/lib/modules/libxf8_32bpp.a
+./usr/X11R6/lib/modules/libxf8_32wid.a
 ./usr/X11R6/man/cat1/XFree86.0			-unknown-		.cat
 ./usr/X11R6/man/cat1/Xsun.0			-unknown-		.cat
 ./usr/X11R6/man/cat1/Xsun24.0			-unknown-		.cat
@@ -175,6 +177,7 @@
 ./usr/X11R6/man/cat4/suncg14.0			-unknown-		.cat
 ./usr/X11R6/man/cat4/suncg3.0			-unknown-		.cat
 ./usr/X11R6/man/cat4/suncg6.0			-unknown-		.cat
+./usr/X11R6/man/cat4/sunffb.0			-unknown-		.cat
 ./usr/X11R6/man/cat4/sunleo.0			-unknown-		.cat
 ./usr/X11R6/man/cat4/suntcx.0			-unknown-		.cat
 ./usr/X11R6/man/cat4/tek4957.0			-unknown-		.cat
@@ -218,6 +221,7 @@
 ./usr/X11R6/man/man4/suncg14.4			-unknown-		.man
 ./usr/X11R6/man/man4/suncg3.4			-unknown-		.man
 ./usr/X11R6/man/man4/suncg6.4			-unknown-		.man
+./usr/X11R6/man/man4/sunffb.4			-unknown-		.man
 ./usr/X11R6/man/man4/sunleo.4			-unknown-		.man
 ./usr/X11R6/man/man4/suntcx.4			-unknown-		.man
 ./usr/X11R6/man/man4/tek4957.4			-unknown-		.man

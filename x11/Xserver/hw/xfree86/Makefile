@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2005/05/06 22:54:06 martin Exp $
+#	$NetBSD: Makefile,v 1.15 2007/04/22 23:42:38 macallan Exp $
 
 .include <bsd.own.mk>
 
@@ -9,6 +9,10 @@ SUBDIR=	ddc doc drivers dummy etc fbdevhw i2c input int10 loader \
 
 .if ${MACHINE} == "sparc64"
 SUBDIR+=	xf8_32wid
+.endif
+
+.if ${MACHINE} == "sparc"
+SUBDIR+=        xf8_32wid
 .endif
 
 SUBDIR+=	xloader .WAIT bin

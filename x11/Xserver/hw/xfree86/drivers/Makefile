@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2007/04/15 03:56:45 macallan Exp $
+#	$NetBSD: Makefile,v 1.19 2007/04/22 23:42:38 macallan Exp $
 
 SUBDIR=	ati atimisc chips fbdev glint imstt mga nv r128 radeon \
 	s3 s3virge savage sis tdfx trident wsfb
@@ -31,7 +31,7 @@ SUBDIR= sunffb sunleo suncg6 suncg3 suncg14 suntcx sunbw2 ati atimisc \
 
 .if ${MACHINE} == "sparc"
 SUBDIR= sunleo suncg6 suncg3 suncg14 suntcx sunbw2 pnozz ati atimisc \
-	r128 radeon wsfb
+	r128 radeon wsfb sunffb
 .endif
 
 .if ${MACHINE} == "shark"
