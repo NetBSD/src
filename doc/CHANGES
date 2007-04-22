@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.832 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.833 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -28,6 +28,7 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		optical drive should use for reading data,
 		contributed by Kimura Fuyuki. [bouyer 20070122]
 	bind: import 9.4.0-rc2 [christos 20070127]
+	i386, amd64: add cmos(4), driver for x86 CMOS RAM. [dyoung 20070206]
 	newlock2: Merge the newlock2 branch. Introduces a number of new
 		kernel synchronization primitives, improves scalability
 		on MP systems, and replaces the existing SA threads model
