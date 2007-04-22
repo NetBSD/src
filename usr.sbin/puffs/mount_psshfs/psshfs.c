@@ -1,4 +1,4 @@
-/*	$NetBSD: psshfs.c,v 1.13 2007/04/16 13:06:39 pooka Exp $	*/
+/*	$NetBSD: psshfs.c,v 1.14 2007/04/22 20:03:26 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: psshfs.c,v 1.13 2007/04/16 13:06:39 pooka Exp $");
+__RCSID("$NetBSD: psshfs.c,v 1.14 2007/04/22 20:03:26 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -138,6 +138,7 @@ main(int argc, char *argv[])
 
 	if (pflags & PUFFS_FLAG_OPDUMP)
 		detach = 0;
+	pflags |= PUFFS_FLAG_BUILDPATH | PUFFS_KFLAG_WTCACHE;
 
 	if (argc != 2)
 		usage();
@@ -188,7 +189,7 @@ main(int argc, char *argv[])
 	sshargs[6] = "sftp";
 	sshargs[7] = 0;
 
-	pu = puffs_init(pops, "ppshfs", &pctx, PUFFS_FLAG_BUILDPATH | pflags);
+	pu = puffs_init(pops, "ppshfs", &pctx, pflags);
 	if (pu == NULL)
 		err(1, "puffs_init");
 
