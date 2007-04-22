@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_cas_32.S,v 1.1.2.1 2007/04/18 07:32:30 thorpej Exp $	*/
+/*	$NetBSD: atomic_cas_32.S,v 1.1.2.2 2007/04/22 05:12:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -65,8 +65,11 @@ _C_LABEL(_atomic_cas_32_ras_end):
 
 ATOMIC_OP_ALIAS(atomic_cas_32,_atomic_cas_32)
 ATOMIC_OP_ALIAS(atomic_cas_uint,_atomic_cas_32)
+STRONG_ALIAS(_atomic_cas_uint,_atomic_cas_32)
 ATOMIC_OP_ALIAS(atomic_cas_ulong,_atomic_cas_32)
+STRONG_ALIAS(_atomic_cas_ulong,_atomic_cas_32)
 ATOMIC_OP_ALIAS(atomic_cas_ptr,_atomic_cas_32)
+STRONG_ALIAS(_atomic_cas_ptr,_atomic_cas_32)
 
 #else /* _KERNEL */
 

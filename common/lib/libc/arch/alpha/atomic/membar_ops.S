@@ -1,4 +1,4 @@
-/*	$NetBSD: membar_ops.S,v 1.1.2.1 2007/04/18 03:42:40 thorpej Exp $	*/
+/*	$NetBSD: membar_ops.S,v 1.1.2.2 2007/04/22 05:12:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -55,6 +55,7 @@ LEAF_NOPROFILE(_membar_producer, 0)
 EXPORT(_membar_producer_end)
 ATOMIC_OP_ALIAS(membar_producer,_membar_producer)
 ATOMIC_OP_ALIAS(membar_write,_membar_producer)
+STRONG_ALIAS(_membar_write,_membar_producer)
 
 LEAF_NOPROFILE(_membar_sync, 0)
 	RET
@@ -63,8 +64,13 @@ LEAF_NOPROFILE(_membar_sync, 0)
 EXPORT(_membar_sync_end)
 ATOMIC_OP_ALIAS(membar_sync,_membar_sync)
 ATOMIC_OP_ALIAS(membar_enter,_membar_sync)
+STRONG_ALIAS(_membar_enter,_membar_sync)
 ATOMIC_OP_ALIAS(membar_exit,_membar_sync)
+STRONG_ALIAS(_membar_exit,_membar_sync)
 ATOMIC_OP_ALIAS(membar_consumer,_membar_sync)
+STRONG_ALIAS(_membar_consumer,_membar_sync)
+ATOMIC_OP_ALIAS(membar_read,_membar_sync)
+STRONG_ALIAS(_membar_read,_membar_sync)
 
 #if defined(MULTIPROCESSOR)
 LEAF_NOPROFILE(_membar_producer_mp, 0)

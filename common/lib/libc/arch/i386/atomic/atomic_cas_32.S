@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_cas_32.S,v 1.1.2.4 2007/04/17 05:53:17 thorpej Exp $	*/
+/*	$NetBSD: atomic_cas_32.S,v 1.1.2.5 2007/04/22 05:12:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -68,8 +68,11 @@ NENTRY(_atomic_cas_32)
 END(_atomic_cas_32_end, 32)
 ATOMIC_OP_ALIAS(atomic_cas_32,_atomic_cas_32)
 ATOMIC_OP_ALIAS(atomic_cas_uint,_atomic_cas_32)
+STRONG_ALIAS(_atomic_cas_uint,_atomic_cas_32)
 ATOMIC_OP_ALIAS(atomic_cas_ulong,_atomic_cas_32)
+STRONG_ALIAS(_atomic_cas_ulong,_atomic_cas_32)
 ATOMIC_OP_ALIAS(atomic_cas_ptr,_atomic_cas_32)
+STRONG_ALIAS(_atomic_cas_ptr,_atomic_cas_32)
 
 #if defined(I486_CPU) || defined(I586_CPU) || defined(I686_CPU)
 NENTRY(_atomic_cas_32_486)

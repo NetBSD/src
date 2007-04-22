@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_swap.S,v 1.1.2.1 2007/04/16 03:23:47 thorpej Exp $	*/
+/*	$NetBSD: atomic_swap.S,v 1.1.2.2 2007/04/22 05:12:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -49,6 +49,7 @@ NENTRY(_atomic_swap_8)
 	ret
 ATOMIC_OP_ALIAS(atomic_swap_8,_atomic_swap_8)
 ATOMIC_OP_ALIAS(atomic_swap_uchar,_atomic_swap_8)
+STRONG_ALIAS(_atomic_swap_uchar,_atomic_swap_8)
 
 NENTRY(_atomic_swap_16)
 	movl	4(%esp), %edx
@@ -58,6 +59,7 @@ NENTRY(_atomic_swap_16)
 	ret
 ATOMIC_OP_ALIAS(atomic_swap_16,_atomic_swap_16)
 ATOMIC_OP_ALIAS(atomic_swap_ushort,_atomic_swap_16)
+STRONG_ALIAS(_atomic_swap_ushort,_atomic_swap_16)
 
 NENTRY(_atomic_swap_32)
 	movl	4(%esp), %edx
@@ -67,5 +69,8 @@ NENTRY(_atomic_swap_32)
 	ret
 ATOMIC_OP_ALIAS(atomic_swap_32,_atomic_swap_32)
 ATOMIC_OP_ALIAS(atomic_swap_uint,_atomic_swap_32)
+STRONG_ALIAS(_atomic_swap_uint,_atomic_swap_32)
 ATOMIC_OP_ALIAS(atomic_swap_ulong,_atomic_swap_32)
+STRONG_ALIAS(_atomic_swap_ulong,_atomic_swap_32)
 ATOMIC_OP_ALIAS(atomic_swap_ptr,_atomic_swap_32)
+STRONG_ALIAS(_atomic_swap_ptr,_atomic_swap_32)

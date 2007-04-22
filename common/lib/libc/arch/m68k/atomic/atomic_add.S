@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_add.S,v 1.1.2.1 2007/04/22 04:14:18 thorpej Exp $	*/
+/*	$NetBSD: atomic_add.S,v 1.1.2.2 2007/04/22 05:12:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -48,6 +48,7 @@ ENTRY_NOPROFILE(_atomic_add_8)
 	rts
 ATOMIC_OP_ALIAS(atomic_add_8,_atomic_add_8)
 ATOMIC_OP_ALIAS(atomic_add_char,_atomic_add_8)
+STRONG_ALIAS(_atomic_add_char,_atomic_add_8)
 
 ENTRY_NOPROFILE(_atomic_add_8_nv)
 	movl	%sp@(4), %a0
@@ -60,6 +61,7 @@ ENTRY_NOPROFILE(_atomic_add_8_nv)
 	rts
 ATOMIC_OP_ALIAS(atomic_add_8_nv,_atomic_add_8_nv)
 ATOMIC_OP_ALIAS(atomic_add_char_nv,_atomic_add_8_nv)
+STRONG_ALIAS(_atomic_add_char_nv,_atomic_add_8_nv)
 
 ENTRY_NOPROFILE(_atomic_add_16)
 	movl	%sp@(4), %a0
@@ -68,6 +70,7 @@ ENTRY_NOPROFILE(_atomic_add_16)
 	rts
 ATOMIC_OP_ALIAS(atomic_add_16,_atomic_add_16)
 ATOMIC_OP_ALIAS(atomic_add_short,_atomic_add_16)
+STRONG_ALIAS(_atomic_add_short,_atomic_add_16)
 
 ENTRY_NOPROFILE(_atomic_add_16_nv)
 	movl	%sp@(4), %a0
@@ -80,6 +83,7 @@ ENTRY_NOPROFILE(_atomic_add_16_nv)
 	rts
 ATOMIC_OP_ALIAS(atomic_add_16_nv,_atomic_add_16_nv)
 ATOMIC_OP_ALIAS(atomic_add_short_nv,_atomic_add_16_nv)
+STRONG_ALIAS(_atomic_add_short_nv,_atomic_add_16_nv)
 
 ENTRY_NOPROFILE(_atomic_add_32)
 	movl	%sp@(4), %a0
@@ -88,8 +92,11 @@ ENTRY_NOPROFILE(_atomic_add_32)
 	rts
 ATOMIC_OP_ALIAS(atomic_add_32,_atomic_add_32)
 ATOMIC_OP_ALIAS(atomic_add_int,_atomic_add_32)
+STRONG_ALIAS(_atomic_add_int,_atomic_add_32)
 ATOMIC_OP_ALIAS(atomic_add_long,_atomic_add_32)
+STRONG_ALIAS(_atomic_add_long,_atomic_add_32)
 ATOMIC_OP_ALIAS(atomic_add_ptr,_atomic_add_32)
+STRONG_ALIAS(_atomic_add_ptr,_atomic_add_32)
 
 ENTRY_NOPROFILE(_atomic_add_32_nv)
 	movl	%sp@(4), %a0
@@ -102,5 +109,8 @@ ENTRY_NOPROFILE(_atomic_add_32_nv)
 	rts
 ATOMIC_OP_ALIAS(atomic_add_32_nv,_atomic_add_32_nv)
 ATOMIC_OP_ALIAS(atomic_add_int_nv,_atomic_add_32_nv)
+STRONG_ALIAS(_atomic_add_int_nv,_atomic_add_32_nv)
 ATOMIC_OP_ALIAS(atomic_add_long_nv,_atomic_add_32_nv)
+STRONG_ALIAS(_atomic_add_long_nv,_atomic_add_32_nv)
 ATOMIC_OP_ALIAS(atomic_add_ptr_nv,_atomic_add_32_nv)
+STRONG_ALIAS(_atomic_add_ptr_nv,_atomic_add_32_nv)

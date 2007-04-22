@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_inc.S,v 1.1.2.1 2007/04/17 04:28:22 thorpej Exp $	*/
+/*	$NetBSD: atomic_inc.S,v 1.1.2.2 2007/04/22 05:12:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -47,6 +47,7 @@ NENTRY(_atomic_inc_8)
 	ret
 ATOMIC_OP_ALIAS(atomic_inc_8,_atomic_inc_8)
 ATOMIC_OP_ALIAS(atomic_inc_uchar,_atomic_inc_8)
+STRONG_ALIAS(_atomic_inc_uchar,_atomic_inc_8)
 
 NENTRY(_atomic_inc_16)
 	LOCK
@@ -54,6 +55,7 @@ NENTRY(_atomic_inc_16)
 	ret
 ATOMIC_OP_ALIAS(atomic_inc_16,_atomic_inc_16)
 ATOMIC_OP_ALIAS(atomic_inc_ushort,_atomic_inc_16)
+STRONG_ALIAS(_atomic_inc_ushort,_atomic_inc_16)
 
 NENTRY(_atomic_inc_32)
 	LOCK
@@ -61,6 +63,7 @@ NENTRY(_atomic_inc_32)
 	ret
 ATOMIC_OP_ALIAS(atomic_inc_32,_atomic_inc_32)
 ATOMIC_OP_ALIAS(atomic_inc_uint,_atomic_inc_32)
+STRONG_ALIAS(_atomic_inc_uint,_atomic_inc_32)
 
 NENTRY(_atomic_inc_64)
 	LOCK
@@ -68,4 +71,6 @@ NENTRY(_atomic_inc_64)
 	ret
 ATOMIC_OP_ALIAS(atomic_inc_64,_atomic_inc_64)
 ATOMIC_OP_ALIAS(atomic_inc_ulong,_atomic_inc_64)
+STRONG_ALIAS(_atomic_inc_ulong,_atomic_inc_64)
 ATOMIC_OP_ALIAS(atomic_inc_ptr,_atomic_inc_64)
+STRONG_ALIAS(_atomic_inc_ptr,_atomic_inc_64)
