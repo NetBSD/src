@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf32.c,v 1.122 2007/03/05 09:22:02 yamt Exp $	*/
+/*	$NetBSD: exec_elf32.c,v 1.123 2007/04/22 08:30:00 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000, 2005 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf32.c,v 1.122 2007/03/05 09:22:02 yamt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf32.c,v 1.123 2007/04/22 08:30:00 dsl Exp $");
 
 /* If not included by exec_elf64.c, ELFSIZE won't be defined. */
 #ifndef ELFSIZE
@@ -90,6 +90,8 @@ __KERNEL_RCSID(1, "$NetBSD: exec_elf32.c,v 1.122 2007/03/05 09:22:02 yamt Exp $"
 
 #include <machine/cpu.h>
 #include <machine/reg.h>
+
+#include <compat/common/compat_util.h>
 
 #if defined(PAX_MPROTECT) || defined(PAX_SEGVGUARD)
 #include <sys/pax.h>
@@ -341,7 +343,6 @@ elf_load_file(struct lwp *l, struct exec_package *epp, char *path,
     Elf_Addr *last)
 {
 	int error, i;
-	struct nameidata nd;
 	struct vnode *vp;
 	struct vattr attr;
 	Elf_Ehdr eh;
@@ -360,10 +361,16 @@ elf_load_file(struct lwp *l, struct exec_package *epp, char *path,
 	 * 2. read filehdr
 	 * 3. map text, data, and bss out of it using VM_*
 	 */
-	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_SYSSPACE, path, l);
-	if ((error = namei(&nd)) != 0)
-		return error;
-	vp = nd.ni_vp;
+	vp = epp->ep_interp;
+	if (vp == NULL) {
+		error = emul_find_interp(l, epp, path);
+		if (error != 0)
+			return error;
+		vp = epp->ep_interp;
+	}
+	/* We'll tidy this ourselves - otherwise we have locking issues */
+	epp->ep_interp = NULL;
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 
 	/*
 	 * Similarly, if it's not marked as executable, or it's not a regular

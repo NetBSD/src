@@ -1,4 +1,4 @@
-/*	$NetBSD: namei.h,v 1.48 2007/03/23 21:00:25 dsl Exp $	*/
+/*	$NetBSD: namei.h,v 1.49 2007/04/22 08:30:02 dsl Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1991, 1993
@@ -51,6 +51,7 @@ struct nameidata {
 	 */
 	struct	vnode *ni_startdir;	/* starting directory */
 	struct	vnode *ni_rootdir;	/* logical root directory */
+	struct	vnode *ni_erootdir;	/* emulation root directory */
 	/*
 	 * Results: returned from/manipulated by lookup
 	 */
@@ -102,6 +103,8 @@ struct nameidata {
 #define	NOCACHE		0x0020	/* name must not be left in cache */
 #define	FOLLOW		0x0040	/* follow symbolic links */
 #define	NOFOLLOW	0x0000	/* do not follow symbolic links (pseudo) */
+#define	TRYEMULROOT	0x0010	/* try relative to emulation root first */
+#define	EMULROOTSET	0x0080	/* emulation root already in ni_erootdir */
 #define	MODMASK		0x00fc	/* mask of operational modifiers */
 /*
  * Namei parameter descriptors.

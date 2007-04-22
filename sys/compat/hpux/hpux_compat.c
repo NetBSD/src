@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_compat.c,v 1.90 2007/03/09 14:11:28 ad Exp $	*/
+/*	$NetBSD: hpux_compat.c,v 1.91 2007/04/22 08:29:56 dsl Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_compat.c,v 1.90 2007/03/09 14:11:28 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_compat.c,v 1.91 2007/04/22 08:29:56 dsl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -1065,7 +1065,7 @@ hpux_sys_getaccess(struct lwp *l, void *v, register_t *retval)
 	 * Lookup file using caller's effective IDs.
 	 */
 	if (error == 0) {
-		NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE,
+		NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF | TRYEMULROOT, UIO_USERSPACE,
 			SCARG(uap, path), l);
 		error = namei(&nd);
 	}
@@ -1356,7 +1356,7 @@ hpux_sys_utime_6x(struct lwp *l, void *v, register_t *retval)
 	vattr.va_atime.tv_nsec = 0;
 	vattr.va_mtime.tv_sec = tv[1];
 	vattr.va_mtime.tv_nsec = 0;
-	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE,
+	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF | TRYEMULROOT, UIO_USERSPACE,
 	    SCARG(uap, fname), l);
 	if ((error = namei(&nd)))
 		return (error);

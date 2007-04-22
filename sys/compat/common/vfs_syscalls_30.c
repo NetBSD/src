@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_30.c,v 1.21 2007/03/10 17:33:29 dsl Exp $	*/
+/*	$NetBSD: vfs_syscalls_30.c,v 1.22 2007/04/22 08:29:55 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_30.c,v 1.21 2007/03/10 17:33:29 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_30.c,v 1.22 2007/04/22 08:29:55 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -362,7 +362,7 @@ compat_30_sys_getfh(struct lwp *l, void *v, register_t *retval)
 	    0, NULL, NULL, NULL);
 	if (error)
 		return (error);
-	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE,
+	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF | TRYEMULROOT, UIO_USERSPACE,
 	    SCARG(uap, fname), l);
 	error = namei(&nd);
 	if (error)

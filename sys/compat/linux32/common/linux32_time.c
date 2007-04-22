@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_time.c,v 1.10 2007/03/18 21:38:32 dsl Exp $ */
+/*	$NetBSD: linux32_time.c,v 1.11 2007/04/22 08:29:58 dsl Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_time.c,v 1.10 2007/03/18 21:38:32 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_time.c,v 1.11 2007/04/22 08:29:58 dsl Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -230,8 +230,6 @@ linux32_sys_utime(l, v, retval)
         int error;
 
 	NETBSD32TOP_UAP(path, const char);
-        CHECK_ALT_EXIST(l, &sg, SCARG(&ua, path));
-
 
         if (SCARG_P32(uap, times) != NULL) {
                 if ((error = copyin(SCARG_P32(uap, times), &lut, sizeof lut)))

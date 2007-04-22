@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.170 2007/04/11 11:45:55 njoly Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.171 2007/04/22 08:29:57 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.170 2007/04/11 11:45:55 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.171 2007/04/22 08:29:57 dsl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ptrace.h"
@@ -332,8 +332,6 @@ linux_sys_statfs(l, v, retval)
 
 	sg = stackgap_init(p, 0);
 	bsp = stackgap_alloc(p, &sg, sizeof (struct statvfs));
-
-	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
 	SCARG(&bsa, path) = SCARG(uap, path);
 	SCARG(&bsa, buf) = bsp;

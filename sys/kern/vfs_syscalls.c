@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.309 2007/04/09 21:11:03 pooka Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.310 2007/04/22 08:30:01 dsl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.309 2007/04/09 21:11:03 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.310 2007/04/22 08:30:01 dsl Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -447,7 +447,7 @@ sys_mount(struct lwp *l, void *v, register_t *retval)
 	/*
 	 * Get vnode to be covered
 	 */
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE,
+	NDINIT(&nd, LOOKUP, FOLLOW | TRYEMULROOT, UIO_USERSPACE,
 	    SCARG(uap, path), l);
 	if ((error = namei(&nd)) != 0)
 		return (error);
@@ -536,7 +536,7 @@ sys_unmount(struct lwp *l, void *v, register_t *retval)
 	int error;
 	struct nameidata nd;
 
-	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE,
+	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF | TRYEMULROOT, UIO_USERSPACE,
 	    SCARG(uap, path), l);
 	if ((error = namei(&nd)) != 0)
 		return (error);
@@ -744,7 +744,7 @@ sys_quotactl(struct lwp *l, void *v, register_t *retval)
 	int error;
 	struct nameidata nd;
 
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path), l);
+	NDINIT(&nd, LOOKUP, FOLLOW | TRYEMULROOT, UIO_USERSPACE, SCARG(uap, path), l);
 	if ((error = namei(&nd)) != 0)
 		return (error);
 	mp = nd.ni_vp->v_mount;
@@ -839,7 +839,7 @@ sys_statvfs1(struct lwp *l, void *v, register_t *retval)
 	int error;
 	struct nameidata nd;
 
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path), l);
+	NDINIT(&nd, LOOKUP, FOLLOW | TRYEMULROOT, UIO_USERSPACE, SCARG(uap, path), l);
 	if ((error = namei(&nd)) != 0)
 		return error;
 	mp = nd.ni_vp->v_mount;
@@ -1091,7 +1091,7 @@ sys_chdir(struct lwp *l, void *v, register_t *retval)
 	int error;
 	struct nameidata nd;
 
-	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE,
+	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF | TRYEMULROOT, UIO_USERSPACE,
 	    SCARG(uap, path), l);
 	if ((error = change_dir(&nd, l)) != 0)
 		return (error);
@@ -1119,7 +1119,7 @@ sys_chroot(struct lwp *l, void *v, register_t *retval)
 	if ((error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_CHROOT,
 	    KAUTH_REQ_SYSTEM_CHROOT_CHROOT, NULL, NULL, NULL)) != 0)
 		return (error);
-	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE,
+	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF | TRYEMULROOT, UIO_USERSPACE,
 	    SCARG(uap, path), l);
 	if ((error = change_dir(&nd, l)) != 0)
 		return (error);
@@ -1199,7 +1199,7 @@ sys_open(struct lwp *l, void *v, register_t *retval)
 	if ((error = falloc(l, &fp, &indx)) != 0)
 		return (error);
 	cmode = ((SCARG(uap, mode) &~ cwdi->cwdi_cmask) & ALLPERMS) &~ S_ISTXT;
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path), l);
+	NDINIT(&nd, LOOKUP, FOLLOW | TRYEMULROOT, UIO_USERSPACE, SCARG(uap, path), l);
 	l->l_dupfd = -indx - 1;			/* XXX check for fdopen */
 	if ((error = vn_open(&nd, flags, cmode)) != 0) {
 		FILE_UNUSE(fp, l);
@@ -1449,7 +1449,7 @@ sys___getfh30(struct lwp *l, void *v, register_t *retval)
 	    0, NULL, NULL, NULL);
 	if (error)
 		return (error);
-	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE,
+	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF | TRYEMULROOT, UIO_USERSPACE,
 	    SCARG(uap, fname), l);
 	error = namei(&nd);
 	if (error)
@@ -1775,7 +1775,7 @@ sys_mknod(struct lwp *l, void *v, register_t *retval)
 		return (error);
 
 	optype = VOP_MKNOD_DESCOFFSET;
-	NDINIT(&nd, CREATE, LOCKPARENT, UIO_USERSPACE, SCARG(uap, path), l);
+	NDINIT(&nd, CREATE, LOCKPARENT | TRYEMULROOT, UIO_USERSPACE, SCARG(uap, path), l);
 	if ((error = namei(&nd)) != 0)
 		return (error);
 	vp = nd.ni_vp;
@@ -1862,7 +1862,7 @@ sys_mkfifo(struct lwp *l, void *v, register_t *retval)
 	int error;
 	struct nameidata nd;
 
-	NDINIT(&nd, CREATE, LOCKPARENT, UIO_USERSPACE, SCARG(uap, path), l);
+	NDINIT(&nd, CREATE, LOCKPARENT | TRYEMULROOT, UIO_USERSPACE, SCARG(uap, path), l);
 	if ((error = namei(&nd)) != 0)
 		return (error);
 	if (nd.ni_vp != NULL) {
@@ -1899,11 +1899,11 @@ sys_link(struct lwp *l, void *v, register_t *retval)
 	struct nameidata nd;
 	int error;
 
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path), l);
+	NDINIT(&nd, LOOKUP, FOLLOW | TRYEMULROOT, UIO_USERSPACE, SCARG(uap, path), l);
 	if ((error = namei(&nd)) != 0)
 		return (error);
 	vp = nd.ni_vp;
-	NDINIT(&nd, CREATE, LOCKPARENT, UIO_USERSPACE, SCARG(uap, link), l);
+	NDINIT(&nd, CREATE, LOCKPARENT | TRYEMULROOT, UIO_USERSPACE, SCARG(uap, link), l);
 	if ((error = namei(&nd)) != 0)
 		goto out;
 	if (nd.ni_vp) {
@@ -1945,7 +1945,7 @@ sys_symlink(struct lwp *l, void *v, register_t *retval)
 	error = copyinstr(SCARG(uap, path), path, MAXPATHLEN, NULL);
 	if (error)
 		goto out;
-	NDINIT(&nd, CREATE, LOCKPARENT, UIO_USERSPACE, SCARG(uap, link), l);
+	NDINIT(&nd, CREATE, LOCKPARENT | TRYEMULROOT, UIO_USERSPACE, SCARG(uap, link), l);
 	if ((error = namei(&nd)) != 0)
 		goto out;
 	if (nd.ni_vp) {
@@ -1983,7 +1983,7 @@ sys_undelete(struct lwp *l, void *v, register_t *retval)
 	int error;
 	struct nameidata nd;
 
-	NDINIT(&nd, DELETE, LOCKPARENT|DOWHITEOUT, UIO_USERSPACE,
+	NDINIT(&nd, DELETE, LOCKPARENT | DOWHITEOUT | TRYEMULROOT, UIO_USERSPACE,
 	    SCARG(uap, path), l);
 	error = namei(&nd);
 	if (error)
@@ -2023,7 +2023,7 @@ sys_unlink(struct lwp *l, void *v, register_t *retval)
 	pathname_t pathbuf = NULL;
 #endif /* NVERIEXEC > 0 */
 
-	NDINIT(&nd, DELETE, LOCKPARENT | LOCKLEAF, UIO_USERSPACE,
+	NDINIT(&nd, DELETE, LOCKPARENT | LOCKLEAF | TRYEMULROOT, UIO_USERSPACE,
 	    SCARG(uap, path), l);
 	if ((error = namei(&nd)) != 0)
 		return (error);
@@ -2361,7 +2361,7 @@ sys_access(struct lwp *l, void *v, register_t *retval)
 	cred = kauth_cred_dup(l->l_cred);
 	kauth_cred_seteuid(cred, kauth_cred_getuid(l->l_cred));
 	kauth_cred_setegid(cred, kauth_cred_getgid(l->l_cred));
-	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE,
+	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF | TRYEMULROOT, UIO_USERSPACE,
 	    SCARG(uap, path), l);
 	/* Override default credentials */
 	nd.ni_cnd.cn_cred = cred;
@@ -2399,7 +2399,7 @@ do_sys_stat(struct lwp *l, const char *path, unsigned int nd_flags,
 	int error;
 	struct nameidata nd;
 
-	NDINIT(&nd, LOOKUP, nd_flags | LOCKLEAF, UIO_USERSPACE, path, l);
+	NDINIT(&nd, LOOKUP, nd_flags | LOCKLEAF | TRYEMULROOT , UIO_USERSPACE, path, l);
 	error = namei(&nd);
 	if (error != 0)
 		return error;
@@ -2462,7 +2462,7 @@ sys_pathconf(struct lwp *l, void *v, register_t *retval)
 	int error;
 	struct nameidata nd;
 
-	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE,
+	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF | TRYEMULROOT, UIO_USERSPACE,
 	    SCARG(uap, path), l);
 	if ((error = namei(&nd)) != 0)
 		return (error);
@@ -2489,7 +2489,7 @@ sys_readlink(struct lwp *l, void *v, register_t *retval)
 	int error;
 	struct nameidata nd;
 
-	NDINIT(&nd, LOOKUP, NOFOLLOW | LOCKLEAF, UIO_USERSPACE,
+	NDINIT(&nd, LOOKUP, NOFOLLOW | LOCKLEAF | TRYEMULROOT, UIO_USERSPACE,
 	    SCARG(uap, path), l);
 	if ((error = namei(&nd)) != 0)
 		return (error);
@@ -2529,7 +2529,7 @@ sys_chflags(struct lwp *l, void *v, register_t *retval)
 	int error;
 	struct nameidata nd;
 
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path), l);
+	NDINIT(&nd, LOOKUP, FOLLOW | TRYEMULROOT, UIO_USERSPACE, SCARG(uap, path), l);
 	if ((error = namei(&nd)) != 0)
 		return (error);
 	vp = nd.ni_vp;
@@ -2579,7 +2579,7 @@ sys_lchflags(struct lwp *l, void *v, register_t *retval)
 	int error;
 	struct nameidata nd;
 
-	NDINIT(&nd, LOOKUP, NOFOLLOW, UIO_USERSPACE, SCARG(uap, path), l);
+	NDINIT(&nd, LOOKUP, NOFOLLOW | TRYEMULROOT, UIO_USERSPACE, SCARG(uap, path), l);
 	if ((error = namei(&nd)) != 0)
 		return (error);
 	vp = nd.ni_vp;
@@ -2632,7 +2632,7 @@ sys_chmod(struct lwp *l, void *v, register_t *retval)
 	int error;
 	struct nameidata nd;
 
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path), l);
+	NDINIT(&nd, LOOKUP, FOLLOW | TRYEMULROOT, UIO_USERSPACE, SCARG(uap, path), l);
 	if ((error = namei(&nd)) != 0)
 		return (error);
 
@@ -2680,7 +2680,7 @@ sys_lchmod(struct lwp *l, void *v, register_t *retval)
 	int error;
 	struct nameidata nd;
 
-	NDINIT(&nd, LOOKUP, NOFOLLOW, UIO_USERSPACE, SCARG(uap, path), l);
+	NDINIT(&nd, LOOKUP, NOFOLLOW | TRYEMULROOT, UIO_USERSPACE, SCARG(uap, path), l);
 	if ((error = namei(&nd)) != 0)
 		return (error);
 
@@ -2723,7 +2723,7 @@ sys_chown(struct lwp *l, void *v, register_t *retval)
 	int error;
 	struct nameidata nd;
 
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path), l);
+	NDINIT(&nd, LOOKUP, FOLLOW | TRYEMULROOT, UIO_USERSPACE, SCARG(uap, path), l);
 	if ((error = namei(&nd)) != 0)
 		return (error);
 
@@ -2749,7 +2749,7 @@ sys___posix_chown(struct lwp *l, void *v, register_t *retval)
 	int error;
 	struct nameidata nd;
 
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path), l);
+	NDINIT(&nd, LOOKUP, FOLLOW | TRYEMULROOT, UIO_USERSPACE, SCARG(uap, path), l);
 	if ((error = namei(&nd)) != 0)
 		return (error);
 
@@ -2826,7 +2826,7 @@ sys_lchown(struct lwp *l, void *v, register_t *retval)
 	int error;
 	struct nameidata nd;
 
-	NDINIT(&nd, LOOKUP, NOFOLLOW, UIO_USERSPACE, SCARG(uap, path), l);
+	NDINIT(&nd, LOOKUP, NOFOLLOW | TRYEMULROOT, UIO_USERSPACE, SCARG(uap, path), l);
 	if ((error = namei(&nd)) != 0)
 		return (error);
 
@@ -2852,7 +2852,7 @@ sys___posix_lchown(struct lwp *l, void *v, register_t *retval)
 	int error;
 	struct nameidata nd;
 
-	NDINIT(&nd, LOOKUP, NOFOLLOW, UIO_USERSPACE, SCARG(uap, path), l);
+	NDINIT(&nd, LOOKUP, NOFOLLOW | TRYEMULROOT, UIO_USERSPACE, SCARG(uap, path), l);
 	if ((error = namei(&nd)) != 0)
 		return (error);
 
@@ -2932,7 +2932,7 @@ sys_utimes(struct lwp *l, void *v, register_t *retval)
 	int error;
 	struct nameidata nd;
 
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path), l);
+	NDINIT(&nd, LOOKUP, FOLLOW | TRYEMULROOT, UIO_USERSPACE, SCARG(uap, path), l);
 	if ((error = namei(&nd)) != 0)
 		return (error);
 
@@ -2981,7 +2981,7 @@ sys_lutimes(struct lwp *l, void *v, register_t *retval)
 	int error;
 	struct nameidata nd;
 
-	NDINIT(&nd, LOOKUP, NOFOLLOW, UIO_USERSPACE, SCARG(uap, path), l);
+	NDINIT(&nd, LOOKUP, NOFOLLOW | TRYEMULROOT, UIO_USERSPACE, SCARG(uap, path), l);
 	if ((error = namei(&nd)) != 0)
 		return (error);
 
@@ -3039,7 +3039,7 @@ sys_truncate(struct lwp *l, void *v, register_t *retval)
 	int error;
 	struct nameidata nd;
 
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path), l);
+	NDINIT(&nd, LOOKUP, FOLLOW | TRYEMULROOT, UIO_USERSPACE, SCARG(uap, path), l);
 	if ((error = namei(&nd)) != 0)
 		return (error);
 	vp = nd.ni_vp;
@@ -3280,14 +3280,14 @@ rename_files(const char *from, const char *to, struct lwp *l, int retain)
 	struct proc *p;
 	int error;
 
-	NDINIT(&fromnd, DELETE, LOCKPARENT | SAVESTART, UIO_USERSPACE,
+	NDINIT(&fromnd, DELETE, LOCKPARENT | SAVESTART | TRYEMULROOT, UIO_USERSPACE,
 	    from, l);
 	if ((error = namei(&fromnd)) != 0)
 		return (error);
 	if (fromnd.ni_dvp != fromnd.ni_vp)
 		VOP_UNLOCK(fromnd.ni_dvp, 0);
 	fvp = fromnd.ni_vp;
-	NDINIT(&tond, RENAME, LOCKPARENT | LOCKLEAF | NOCACHE | SAVESTART |
+	NDINIT(&tond, RENAME, LOCKPARENT | LOCKLEAF | NOCACHE | SAVESTART | TRYEMULROOT |
 	    (fvp->v_type == VDIR ? CREATEDIR : 0), UIO_USERSPACE, to, l);
 	if ((error = namei(&tond)) != 0) {
 		VOP_ABORTOP(fromnd.ni_dvp, &fromnd.ni_cnd);
@@ -3392,7 +3392,7 @@ sys_mkdir(struct lwp *l, void *v, register_t *retval)
 	int error;
 	struct nameidata nd;
 
-	NDINIT(&nd, CREATE, LOCKPARENT | CREATEDIR, UIO_USERSPACE,
+	NDINIT(&nd, CREATE, LOCKPARENT | CREATEDIR | TRYEMULROOT, UIO_USERSPACE,
 	    SCARG(uap, path), l);
 	if ((error = namei(&nd)) != 0)
 		return (error);
@@ -3431,7 +3431,7 @@ sys_rmdir(struct lwp *l, void *v, register_t *retval)
 	int error;
 	struct nameidata nd;
 
-	NDINIT(&nd, DELETE, LOCKPARENT | LOCKLEAF, UIO_USERSPACE,
+	NDINIT(&nd, DELETE, LOCKPARENT | LOCKLEAF | TRYEMULROOT, UIO_USERSPACE,
 	    SCARG(uap, path), l);
 	if ((error = namei(&nd)) != 0)
 		return (error);
@@ -3541,7 +3541,7 @@ sys_revoke(struct lwp *l, void *v, register_t *retval)
 	int error;
 	struct nameidata nd;
 
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path), l);
+	NDINIT(&nd, LOOKUP, FOLLOW | TRYEMULROOT, UIO_USERSPACE, SCARG(uap, path), l);
 	if ((error = namei(&nd)) != 0)
 		return (error);
 	vp = nd.ni_vp;

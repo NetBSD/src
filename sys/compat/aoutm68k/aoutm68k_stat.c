@@ -1,4 +1,4 @@
-/*	$NetBSD: aoutm68k_stat.c,v 1.18 2007/03/10 21:40:23 dsl Exp $	*/
+/*	$NetBSD: aoutm68k_stat.c,v 1.19 2007/04/22 08:29:55 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aoutm68k_stat.c,v 1.18 2007/03/10 21:40:23 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aoutm68k_stat.c,v 1.19 2007/04/22 08:29:55 dsl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -84,11 +84,6 @@ aoutm68k_compat_43_sys_stat(l, v, retval)
 	struct stat sb;
 	int error;
 
-#ifdef COMPAT_AOUT_ALTPATH
-	void *sg = stackgap_init(l->l_proc, 0);
-	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
-#endif
-
 	error = do_sys_stat(l, SCARG(uap, path), FOLLOW, &sb);
 	if (error)
 		return error;
@@ -129,11 +124,6 @@ aoutm68k_compat_43_sys_lstat(l, v, retval)
 	struct stat sb;
 	int error;
 
-#ifdef COMPAT_AOUT_ALTPATH
-	void *sg = stackgap_init(l->l_proc, 0);
-	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
-#endif
-
 	error = do_sys_stat(l, SCARG(uap, path), NOFOLLOW, &sb);
 	if (error)
 		return error;
@@ -155,11 +145,6 @@ aoutm68k_compat_12_sys_stat(l, v, retval)
 	struct aoutm68k_stat12 ast;
 	struct stat sb;
 	int error;
-
-#ifdef COMPAT_AOUT_ALTPATH
-	void *sg = stackgap_init(l->l_proc, 0);
-	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
-#endif
 
 	error = do_sys_stat(l, SCARG(uap, path), FOLLOW, &sb);
 	if (error)
@@ -201,11 +186,6 @@ aoutm68k_compat_12_sys_lstat(l, v, retval)
 	struct stat sb;
 	int error;
 
-#ifdef COMPAT_AOUT_ALTPATH
-	void *sg = stackgap_init(l->l_proc, 0);
-	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
-#endif
-
 	error = do_sys_stat(l, SCARG(uap, path), NOFOLLOW, &sb);
 	if (error)
 		return error;
@@ -226,11 +206,6 @@ aoutm68k_sys___stat13(l, v, retval)
 	struct aoutm68k_stat ast;
 	struct stat sb;
 	int error;
-
-#ifdef COMPAT_AOUT_ALTPATH
-	void *sg = stackgap_init(l->l_proc, 0);
-	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
-#endif
 
 	error = do_sys_stat(l, SCARG(uap, path), FOLLOW, &sb);
 	if (error)
@@ -272,11 +247,6 @@ aoutm68k_sys___lstat13(l, v, retval)
 	struct aoutm68k_stat ast;
 	struct stat sb;
 	int error;
-
-#ifdef COMPAT_AOUT_ALTPATH
-	void *sg = stackgap_init(l->l_proc, 0);
-	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
-#endif
 
 	error = do_sys_stat(l, SCARG(uap, path), NOFOLLOW, &sb);
 	if (error)

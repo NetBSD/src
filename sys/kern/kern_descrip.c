@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.155 2007/03/21 21:18:56 dsl Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.156 2007/04/22 08:30:00 dsl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.155 2007/03/21 21:18:56 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.156 2007/04/22 08:30:00 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1060,6 +1060,8 @@ cwdinit(struct proc *p)
 	cwdi->cwdi_rdir = p->p_cwdi->cwdi_rdir;
 	if (cwdi->cwdi_rdir)
 		VREF(cwdi->cwdi_rdir);
+	/* Don't copy the emulation root */
+	cwdi->cwdi_edir = NULL;
 	cwdi->cwdi_cmask =  p->p_cwdi->cwdi_cmask;
 	cwdi->cwdi_refcnt = 1;
 
@@ -1115,6 +1117,8 @@ cwdfree(struct cwdinfo *cwdi)
 	vrele(cwdi->cwdi_cdir);
 	if (cwdi->cwdi_rdir)
 		vrele(cwdi->cwdi_rdir);
+	if (cwdi->cwdi_edir)
+		vrele(cwdi->cwdi_edir);
 	pool_put(&cwdi_pool, cwdi);
 }
 
@@ -1750,6 +1754,9 @@ fdcloseexec(struct lwp *l)
 
 	fdunshare(l);
 	cwdunshare(p);
+
+	if (p->p_cwdi->cwdi_edir)
+		vrele(p->p_cwdi->cwdi_edir);
 
 	fdp = p->p_fd;
 	for (fd = 0; fd <= fdp->fd_lastfile; fd++)

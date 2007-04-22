@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_30.c,v 1.19 2007/03/18 21:38:33 dsl Exp $	*/
+/*	$NetBSD: netbsd32_compat_30.c,v 1.20 2007/04/22 08:29:58 dsl Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_30.c,v 1.19 2007/03/18 21:38:33 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_30.c,v 1.20 2007/04/22 08:29:58 dsl Exp $");
 
 #include "opt_nfsserver.h"
 
@@ -118,7 +118,6 @@ compat_30_netbsd32___stat13(l, v, retval)
 
 	path = SCARG_P32(uap, path);
 	sg = stackgap_init(p, 0);
-	CHECK_ALT_EXIST(l, &sg, path);
 
 	error = do_sys_stat(l, path, FOLLOW, &sb);
 	if (error)
@@ -179,7 +178,6 @@ compat_30_netbsd32___lstat13(l, v, retval)
 
 	path = SCARG_P32(uap, path);
 	sg = stackgap_init(p, 0);
-	CHECK_ALT_EXIST(l, &sg, path);
 
 	error = do_sys_stat(l, path, NOFOLLOW, &sb);
 	if (error)

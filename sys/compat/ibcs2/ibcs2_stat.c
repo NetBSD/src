@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_stat.c,v 1.38 2007/03/10 21:40:24 dsl Exp $	*/
+/*	$NetBSD: ibcs2_stat.c,v 1.39 2007/04/22 08:29:56 dsl Exp $	*/
 /*
  * Copyright (c) 1995, 1998 Scott Bartram
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_stat.c,v 1.38 2007/03/10 21:40:24 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_stat.c,v 1.39 2007/04/22 08:29:56 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -144,15 +144,12 @@ ibcs2_sys_statfs(struct lwp *l, void *v, register_t *retval)
 		syscallarg(int) len;
 		syscallarg(int) fstype;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	struct mount *mp;
 	struct statvfs *sp;
 	int error;
 	struct nameidata nd;
-	void *sg = stackgap_init(p, 0);
 
-	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path), l);
+	NDINIT(&nd, LOOKUP, FOLLOW | TRYEMULROOT, UIO_USERSPACE, SCARG(uap, path), l);
 	if ((error = namei(&nd)) != 0)
 		return (error);
 	mp = nd.ni_vp->v_mount;
@@ -200,15 +197,12 @@ ibcs2_sys_statvfs(struct lwp *l, void *v, register_t *retval)
 		syscallarg(const char *) path;
 		syscallarg(struct ibcs2_statvfs *) buf;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	struct mount *mp;
 	struct statvfs *sp;
 	int error;
 	struct nameidata nd;
-	void *sg = stackgap_init(p, 0);
 
-	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path), l);
+	NDINIT(&nd, LOOKUP, FOLLOW | TRYEMULROOT, UIO_USERSPACE, SCARG(uap, path), l);
 	if ((error = namei(&nd)) != 0)
 		return (error);
 	mp = nd.ni_vp->v_mount;
@@ -261,9 +255,6 @@ ibcs2_sys_stat(l, v, retval)
 	struct stat sb;
 	struct ibcs2_stat ibcs2_st;
 	int error;
-	void *sg = stackgap_init(l->l_proc, 0);
-
-	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
 	error = do_sys_stat(l, SCARG(uap, path), FOLLOW, &sb);
 	if (error != 0)
@@ -286,9 +277,6 @@ ibcs2_sys_lstat(l, v, retval)
 	struct stat sb;
 	struct ibcs2_stat ibcs2_st;
 	int error;
-	void *sg = stackgap_init(l->l_proc, 0);
-
-	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
 	error = do_sys_stat(l, SCARG(uap, path), NOFOLLOW, &sb);
 	if (error != 0)

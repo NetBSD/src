@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_util.h,v 1.17 2007/03/04 06:01:12 christos Exp $	*/
+/*	$NetBSD: compat_util.h,v 1.18 2007/04/22 08:29:55 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -69,6 +69,7 @@
 
 struct emul;
 struct proc;
+struct exec_package;
 
 struct emul_flags_xtab {
 	unsigned long omask;
@@ -79,27 +80,13 @@ struct emul_flags_xtab {
 void *	stackgap_init(const struct proc *, size_t);
 void	*stackgap_alloc(const struct proc *, void **, size_t);
 
-int emul_find(struct lwp *, void **, const char *, const char *,
-		   const char **, int);
+void emul_find_root(struct lwp *, struct exec_package *);
 
-int emul_find_interp(struct lwp *, const char *, char *);
+int emul_find_interp(struct lwp *, struct exec_package *, const char *);
 
 unsigned long emul_flags_translate(const struct emul_flags_xtab *tab,
 				   unsigned long in, unsigned long *leftover);
 
 void compat_offseterr(struct vnode *, const char *);
-
-#define	CHECK_ALT_FL_EXISTS	0
-#define	CHECK_ALT_FL_CREAT	1
-#define	CHECK_ALT_FL_SYMLINK	2
-
-#define CHECK_ALT_EXIST(l, sgp, path) \
-    emul_find(l, sgp, l->l_proc->p_emul->e_path, path, &(path), CHECK_ALT_FL_EXISTS)
-
-#define CHECK_ALT_CREAT(l, sgp, path) \
-    emul_find(l, sgp, l->l_proc->p_emul->e_path, path, &(path), CHECK_ALT_FL_CREAT)
-
-#define CHECK_ALT_SYMLINK(l, sgp, path) \
-    emul_find(l, sgp, l->l_proc->p_emul->e_path, path, &(path), CHECK_ALT_FL_SYMLINK)
 
 #endif /* !_COMPAT_UTIL_H_ */
