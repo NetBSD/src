@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs.c,v 1.20 2007/04/16 13:52:38 pooka Exp $	*/
+/*	$NetBSD: dtfs.c,v 1.21 2007/04/22 18:03:18 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -113,6 +113,9 @@ main(int argc, char *argv[])
 			break;
 		case 's': /* stay on top */
 			lflags |= PUFFSLOOP_NODAEMON;
+			break;
+		case 't':
+			pflags |= PUFFS_KFLAG_WTCACHE;
 			break;
 		default:
 			usage();
