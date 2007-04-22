@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_dec.S,v 1.1.2.1 2007/04/22 04:14:19 thorpej Exp $	*/
+/*	$NetBSD: atomic_dec.S,v 1.1.2.2 2007/04/22 05:12:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -39,7 +39,6 @@
 #include "atomic_op_asm.h"
 
 	.text
-	.align	2
 
 ENTRY_NOPROFILE(_atomic_dec_8)
 	movl	%sp@(4), %a0
@@ -47,6 +46,7 @@ ENTRY_NOPROFILE(_atomic_dec_8)
 	rts
 ATOMIC_OP_ALIAS(atomic_dec_8,_atomic_dec_8)
 ATOMIC_OP_ALIAS(atomic_dec_uchar,_atomic_dec_8)
+STRONG_ALIAS(_atomic_dec_uchar,_atomic_dec_8)
 
 ENTRY_NOPROFILE(_atomic_dec_8_nv)
 	movl	%sp@(4), %a0
@@ -59,6 +59,7 @@ ENTRY_NOPROFILE(_atomic_dec_8_nv)
 	rts
 ATOMIC_OP_ALIAS(atomic_dec_8_nv,_atomic_dec_8_nv)
 ATOMIC_OP_ALIAS(atomic_dec_uchar_nv,_atomic_dec_8_nv)
+STRONG_ALIAS(_atomic_dec_uchar_nv,_atomic_dec_8_nv)
 
 ENTRY_NOPROFILE(_atomic_dec_16)
 	movl	%sp@(4), %a0
@@ -66,6 +67,7 @@ ENTRY_NOPROFILE(_atomic_dec_16)
 	rts
 ATOMIC_OP_ALIAS(atomic_dec_16,_atomic_dec_16)
 ATOMIC_OP_ALIAS(atomic_dec_ushort,_atomic_dec_16)
+STRONG_ALIAS(_atomic_dec_ushort,_atomic_dec_16)
 
 ENTRY_NOPROFILE(_atomic_dec_16_nv)
 	movl	%sp@(4), %a0
@@ -78,6 +80,7 @@ ENTRY_NOPROFILE(_atomic_dec_16_nv)
 	rts
 ATOMIC_OP_ALIAS(atomic_dec_16_nv,_atomic_dec_16_nv)
 ATOMIC_OP_ALIAS(atomic_dec_ushort_nv,_atomic_dec_16_nv)
+STRONG_ALIAS(_atomic_dec_ushort_nv,_atomic_dec_16_nv)
 
 ENTRY_NOPROFILE(_atomic_dec_32)
 	movl	%sp@(4), %a0
@@ -85,8 +88,11 @@ ENTRY_NOPROFILE(_atomic_dec_32)
 	rts
 ATOMIC_OP_ALIAS(atomic_dec_32,_atomic_dec_32)
 ATOMIC_OP_ALIAS(atomic_dec_uint,_atomic_dec_32)
+STRONG_ALIAS(_atomic_dec_uint,_atomic_dec_32)
 ATOMIC_OP_ALIAS(atomic_dec_ulong,_atomic_dec_32)
+STRONG_ALIAS(_atomic_dec_ulong,_atomic_dec_32)
 ATOMIC_OP_ALIAS(atomic_dec_ptr,_atomic_dec_32)
+STRONG_ALIAS(_atomic_dec_ptr,_atomic_dec_32)
 
 ENTRY_NOPROFILE(_atomic_dec_32_nv)
 	movl	%sp@(4), %a0
@@ -99,5 +105,8 @@ ENTRY_NOPROFILE(_atomic_dec_32_nv)
 	rts
 ATOMIC_OP_ALIAS(atomic_dec_32_nv,_atomic_dec_32_nv)
 ATOMIC_OP_ALIAS(atomic_dec_uint_nv,_atomic_dec_32_nv)
+STRONG_ALIAS(_atomic_dec_uint_nv,_atomic_dec_32_nv)
 ATOMIC_OP_ALIAS(atomic_dec_ulong_nv,_atomic_dec_32_nv)
+STRONG_ALIAS(_atomic_dec_ulong_nv,_atomic_dec_32_nv)
 ATOMIC_OP_ALIAS(atomic_dec_ptr_nv,_atomic_dec_32_nv)
+STRONG_ALIAS(_atomic_dec_ptr_nv,_atomic_dec_32_nv)

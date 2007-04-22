@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_cas.S,v 1.1.2.1 2007/04/18 03:42:38 thorpej Exp $	*/
+/*	$NetBSD: atomic_cas.S,v 1.1.2.2 2007/04/22 05:12:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -52,6 +52,7 @@ LEAF_NOPROFILE(_atomic_cas_32, 3)
 	END(_atomic_cas_32)
 ATOMIC_OP_ALIAS(atomic_cas_32,_atomic_cas_32)
 ATOMIC_OP_ALIAS(atomic_cas_uint,_atomic_cas_32)
+STRONG_ALIAS(_atomic_cas_uint,_atomic_cas_32)
 
 LEAF_NOPROFILE(_atomic_cas_64, 3)
 1:	mov	a2, t2
@@ -65,4 +66,6 @@ LEAF_NOPROFILE(_atomic_cas_64, 3)
 	END(_atomic_cas_64)
 ATOMIC_OP_ALIAS(atomic_cas_64,_atomic_cas_64)
 ATOMIC_OP_ALIAS(atomic_cas_ulong,_atomic_cas_64)
+STRONG_ALIAS(_atomic_cas_ulong,_atomic_cas_64)
 ATOMIC_OP_ALIAS(atomic_cas_ptr,_atomic_cas_64)
+STRONG_ALIAS(_atomic_cas_ptr,_atomic_cas_64)

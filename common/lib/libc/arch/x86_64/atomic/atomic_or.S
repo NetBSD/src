@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_or.S,v 1.1.2.1 2007/04/17 04:28:25 thorpej Exp $	*/
+/*	$NetBSD: atomic_or.S,v 1.1.2.2 2007/04/22 05:12:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -47,6 +47,7 @@ NENTRY(_atomic_or_8)
 	ret
 ATOMIC_OP_ALIAS(atomic_or_8,_atomic_or_8)
 ATOMIC_OP_ALIAS(atomic_or_uchar,_atomic_or_8)
+STRONG_ALIAS(_atomic_or_uchar,_atomic_or_8)
 
 NENTRY(_atomic_or_16)
 	LOCK
@@ -54,6 +55,7 @@ NENTRY(_atomic_or_16)
 	ret
 ATOMIC_OP_ALIAS(atomic_or_16,_atomic_or_16)
 ATOMIC_OP_ALIAS(atomic_or_ushort,_atomic_or_16)
+STRONG_ALIAS(_atomic_or_ushort,_atomic_or_16)
 
 NENTRY(_atomic_or_32)
 	LOCK
@@ -61,6 +63,7 @@ NENTRY(_atomic_or_32)
 	ret
 ATOMIC_OP_ALIAS(atomic_or_32,_atomic_or_32)
 ATOMIC_OP_ALIAS(atomic_or_uint,_atomic_or_32)
+STRONG_ALIAS(_atomic_or_uint,_atomic_or_32)
 
 NENTRY(_atomic_or_64)
 	LOCK
@@ -68,3 +71,4 @@ NENTRY(_atomic_or_64)
 	ret
 ATOMIC_OP_ALIAS(atomic_or_64,_atomic_or_64)
 ATOMIC_OP_ALIAS(atomic_or_ulong,_atomic_or_64)
+STRONG_ALIAS(_atomic_or_ulong,_atomic_or_64)

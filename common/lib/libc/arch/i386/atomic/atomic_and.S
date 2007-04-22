@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_and.S,v 1.1.2.1 2007/04/16 03:23:46 thorpej Exp $	*/
+/*	$NetBSD: atomic_and.S,v 1.1.2.2 2007/04/22 05:12:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -49,6 +49,7 @@ NENTRY(_atomic_and_8)
 	ret
 ATOMIC_OP_ALIAS(atomic_and_8,_atomic_and_8)
 ATOMIC_OP_ALIAS(atomic_and_uchar,_atomic_and_8)
+STRONG_ALIAS(_atomic_and_uchar,_atomic_and_8)
 
 NENTRY(_atomic_and_16)
 	movl	4(%esp), %edx
@@ -58,6 +59,7 @@ NENTRY(_atomic_and_16)
 	ret
 ATOMIC_OP_ALIAS(atomic_and_16,_atomic_and_16)
 ATOMIC_OP_ALIAS(atomic_and_ushort,_atomic_and_16)
+STRONG_ALIAS(_atomic_and_ushort,_atomic_and_16)
 
 NENTRY(_atomic_and_32)
 	movl	4(%esp), %edx
@@ -67,4 +69,6 @@ NENTRY(_atomic_and_32)
 	ret
 ATOMIC_OP_ALIAS(atomic_and_32,_atomic_and_32)
 ATOMIC_OP_ALIAS(atomic_and_uint,_atomic_and_32)
+STRONG_ALIAS(_atomic_and_uint,_atomic_and_32)
 ATOMIC_OP_ALIAS(atomic_and_ulong,_atomic_and_32)
+STRONG_ALIAS(_atomic_and_ulong,_atomic_and_32)

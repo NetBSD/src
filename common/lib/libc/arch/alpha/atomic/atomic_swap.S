@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_swap.S,v 1.1.2.1 2007/04/18 03:42:39 thorpej Exp $	*/
+/*	$NetBSD: atomic_swap.S,v 1.1.2.2 2007/04/22 05:12:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -50,6 +50,7 @@ LEAF_NOPROFILE(_atomic_swap_32, 2)
 	END(_atomic_swap_32)
 ATOMIC_OP_ALIAS(atomic_swap_32,_atomic_swap_32)
 ATOMIC_OP_ALIAS(atomic_swap_uint,_atomic_swap_32)
+STRONG_ALIAS(_atomic_swap_uint,_atomic_swap_32)
 
 LEAF_NOPROFILE(_atomic_swap_64, 2)
 1:	ldq_l	v0, 0(a0)
@@ -61,4 +62,6 @@ LEAF_NOPROFILE(_atomic_swap_64, 2)
 	END(_atomic_swap_64)
 ATOMIC_OP_ALIAS(atomic_swap_64,_atomic_swap_64)
 ATOMIC_OP_ALIAS(atomic_swap_ulong,_atomic_swap_64)
+STRONG_ALIAS(_atomic_swap_ulong,_atomic_swap_64)
 ATOMIC_OP_ALIAS(atomic_swap_ptr,_atomic_swap_64)
+STRONG_ALIAS(_atomic_swap_ptr,_atomic_swap_64)

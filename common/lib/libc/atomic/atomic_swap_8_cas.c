@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_swap_8_cas.c,v 1.1.2.3 2007/04/17 16:05:14 thorpej Exp $	*/
+/*	$NetBSD: atomic_swap_8_cas.c,v 1.1.2.4 2007/04/22 05:12:49 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -63,3 +63,4 @@ atomic_swap_8(volatile uint8_t *addr, uint8_t new)
 atomic_op_alias(atomic_swap_8,_atomic_swap_8)
 #undef atomic_swap_uchar
 atomic_op_alias(atomic_swap_uchar,_atomic_swap_8)
+__strong_alias(_atomic_swap_uchar,_atomic_swap_8)

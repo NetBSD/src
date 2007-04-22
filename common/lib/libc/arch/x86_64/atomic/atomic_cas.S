@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_cas.S,v 1.1.2.2 2007/04/17 13:28:41 thorpej Exp $	*/
+/*	$NetBSD: atomic_cas.S,v 1.1.2.3 2007/04/22 05:12:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -49,6 +49,7 @@ NENTRY(_atomic_cas_8)
 	ret
 ATOMIC_OP_ALIAS(atomic_cas_8,_atomic_cas_8)
 ATOMIC_OP_ALIAS(atomic_cas_uchar,_atomic_cas_8)
+STRONG_ALIAS(_atomic_cas_uchar,_atomic_cas_8)
 
 NENTRY(_atomic_cas_16)
 	movzwl	%si, %eax
@@ -58,6 +59,7 @@ NENTRY(_atomic_cas_16)
 	ret
 ATOMIC_OP_ALIAS(atomic_cas_16,_atomic_cas_16)
 ATOMIC_OP_ALIAS(atomic_cas_ushort,_atomic_cas_16)
+STRONG_ALIAS(_atomic_cas_ushort,_atomic_cas_16)
 
 NENTRY(_atomic_cas_32)
 	movl	%esi, %eax
@@ -67,6 +69,7 @@ NENTRY(_atomic_cas_32)
 	ret
 ATOMIC_OP_ALIAS(atomic_cas_32,_atomic_cas_32)
 ATOMIC_OP_ALIAS(atomic_cas_uint,_atomic_cas_32)
+STRONG_ALIAS(_atomic_cas_uint,_atomic_cas_32)
 
 NENTRY(_atomic_cas_64)
 	movq	%rsi, %rax
@@ -76,4 +79,6 @@ NENTRY(_atomic_cas_64)
 	ret
 ATOMIC_OP_ALIAS(atomic_cas_64,_atomic_cas_64)
 ATOMIC_OP_ALIAS(atomic_cas_ulong,_atomic_cas_64)
+STRONG_ALIAS(_atomic_cas_ulong,_atomic_cas_64)
 ATOMIC_OP_ALIAS(atomic_cas_ptr,_atomic_cas_64)
+STRONG_ALIAS(_atomic_cas_ptr,_atomic_cas_64)

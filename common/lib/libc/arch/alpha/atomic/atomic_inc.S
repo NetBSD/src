@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_inc.S,v 1.1.2.1 2007/04/18 03:42:38 thorpej Exp $	*/
+/*	$NetBSD: atomic_inc.S,v 1.1.2.2 2007/04/22 05:12:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -50,6 +50,7 @@ LEAF_NOPROFILE(_atomic_inc_32, 1)
 	END(_atomic_inc_32)
 ATOMIC_OP_ALIAS(atomic_inc_32,_atomic_inc_32)
 ATOMIC_OP_ALIAS(atomic_inc_uint,_atomic_inc_32)
+STRONG_ALIAS(_atomic_inc_uint,_atomic_inc_32)
 
 LEAF_NOPROFILE(_atomic_inc_32_nv, 1)
 1:	ldl_l	t1, 0(a0)
@@ -62,6 +63,7 @@ LEAF_NOPROFILE(_atomic_inc_32_nv, 1)
 	END(_atomic_inc_32_nv)
 ATOMIC_OP_ALIAS(atomic_inc_32_nv,_atomic_inc_32_nv)
 ATOMIC_OP_ALIAS(atomic_inc_uint_nv,_atomic_inc_32_nv)
+STRONG_ALIAS(_atomic_inc_uint_nv,_atomic_inc_32_nv)
 
 LEAF_NOPROFILE(_atomic_inc_64, 1)
 1:	ldq_l	t1, 0(a0)
@@ -73,7 +75,9 @@ LEAF_NOPROFILE(_atomic_inc_64, 1)
 	END(_atomic_inc_64)
 ATOMIC_OP_ALIAS(atomic_inc_64,_atomic_inc_64)
 ATOMIC_OP_ALIAS(atomic_inc_ulong,_atomic_inc_64)
+STRONG_ALIAS(_atomic_inc_ulong,_atomic_inc_64)
 ATOMIC_OP_ALIAS(atomic_inc_ptr,_atomic_inc_64)
+STRONG_ALIAS(_atomic_inc_ptr,_atomic_inc_64)
 
 LEAF_NOPROFILE(_atomic_inc_64_nv, 1)
 1:	ldq_l	t1, 0(a0)
@@ -86,4 +90,6 @@ LEAF_NOPROFILE(_atomic_inc_64_nv, 1)
 	END(_atomic_inc_64_nv)
 ATOMIC_OP_ALIAS(atomic_inc_64_nv,_atomic_inc_64_nv)
 ATOMIC_OP_ALIAS(atomic_inc_ulong_nv,_atomic_inc_64_nv)
+STRONG_ALIAS(_atomic_inc_ulong_nv,_atomic_inc_64_nv)
 ATOMIC_OP_ALIAS(atomic_inc_ptr_nv,_atomic_inc_64_nv)
+STRONG_ALIAS(_atomic_inc_ptr_nv,_atomic_inc_64_nv)
