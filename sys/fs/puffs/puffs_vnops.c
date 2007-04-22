@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.61 2007/04/20 11:56:35 pooka Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.62 2007/04/22 18:02:05 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.61 2007/04/20 11:56:35 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.62 2007/04/22 18:02:05 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/fstrans.h>
@@ -1572,11 +1572,18 @@ puffs_write(void *v)
 			}
 		}
 
+		/* synchronous I/O? */
 		if (error == 0 && ap->a_ioflag & IO_SYNC) {
 			simple_lock(&vp->v_interlock);
 			error = VOP_PUTPAGES(vp, trunc_page(origoff),
 			    round_page(uio->uio_offset),
 			    PGO_CLEANIT | PGO_SYNCIO);
+
+		/* write though page cache? */
+		} else if (error == 0 && pmp->pmp_flags & PUFFS_KFLAG_WTCACHE) {
+			simple_lock(&vp->v_interlock);
+			error = VOP_PUTPAGES(vp, trunc_page(origoff),
+			    round_page(uio->uio_offset), PGO_CLEANIT);
 		}
 
 		puffs_updatenode(vp, uflags);
