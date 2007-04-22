@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_file.c,v 1.23 2007/03/10 21:40:25 dsl Exp $ */
+/* $NetBSD: osf1_file.c,v 1.24 2007/04/22 08:29:58 dsl Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_file.c,v 1.23 2007/03/10 21:40:25 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_file.c,v 1.24 2007/04/22 08:29:58 dsl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
@@ -102,10 +102,6 @@ osf1_sys_access(l, v, retval)
 	struct proc *p = l->l_proc;
 	struct sys_access_args a;
 	unsigned long leftovers;
-	void *sg;
-
-	sg = stackgap_init(p, 0);
-	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
 	SCARG(&a, path) = SCARG(uap, path);
 
@@ -127,10 +123,6 @@ osf1_sys_execve(l, v, retval)
 	struct osf1_sys_execve_args *uap = v;
 	struct proc *p = l->l_proc;
 	struct sys_execve_args ap;
-	void *sg;
-
-	sg = stackgap_init(p, 0);
-	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
 	SCARG(&ap, path) = SCARG(uap, path);
 	SCARG(&ap, argp) = SCARG(uap, argp);
@@ -154,10 +146,6 @@ osf1_sys_lstat(l, v, retval)
 	struct stat sb;
 	struct osf1_stat osb;
 	int error;
-	void *sg;
-
-	sg = stackgap_init(p, 0);
-	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
 	error = do_sys_stat(l, SCARG(uap, path), NOFOLLOW, &sb);
 	if (error)
@@ -182,10 +170,6 @@ osf1_sys_lstat2(l, v, retval)
 	struct stat sb;
 	struct osf1_stat2 osb;
 	int error;
-	void *sg;
-
-	sg = stackgap_init(p, 0);
-	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
 	error = do_sys_stat(l, SCARG(uap, path), NOFOLLOW, &sb);
 	if (error)
@@ -204,10 +188,6 @@ osf1_sys_mknod(l, v, retval)
 	struct osf1_sys_mknod_args *uap = v;
 	struct proc *p = l->l_proc;
 	struct sys_mknod_args a;
-	void *sg;
-
-	sg = stackgap_init(p, 0);
-	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
 	SCARG(&a, path) = SCARG(uap, path);
 	SCARG(&a, mode) = SCARG(uap, mode);
@@ -249,10 +229,6 @@ osf1_sys_open(l, v, retval)
 
 	/* pick appropriate path */
 	path = SCARG(uap, path);
-	if (SCARG(&a, flags) & O_CREAT)
-		CHECK_ALT_CREAT(l, &sg, path);
-	else
-		CHECK_ALT_EXIST(l, &sg, path);
 	SCARG(&a, path) = path;
 
 	return sys_open(l, &a, retval);
@@ -267,12 +243,8 @@ osf1_sys_pathconf(l, v, retval)
 	struct osf1_sys_pathconf_args *uap = v;
 	struct proc *p = l->l_proc;
 	struct sys_pathconf_args a;
-	void *sg;
 	int error;
 
-	sg = stackgap_init(p, 0);
-
-	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 	SCARG(&a, path) = SCARG(uap, path);
 
 	error = osf1_cvt_pathconf_name_to_native(SCARG(uap, name),
@@ -299,10 +271,6 @@ osf1_sys_stat(l, v, retval)
 	struct stat sb;
 	struct osf1_stat osb;
 	int error;
-	void *sg;
-
-	sg = stackgap_init(p, 0);
-	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
 	error = do_sys_stat(l, SCARG(uap, path), FOLLOW, &sb);
 	if (error)
@@ -327,10 +295,6 @@ osf1_sys_stat2(l, v, retval)
 	struct stat sb;
 	struct osf1_stat2 osb;
 	int error;
-	void *sg;
-
-	sg = stackgap_init(p, 0);
-	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
 	error = do_sys_stat(l, SCARG(uap, path), FOLLOW, &sb);
 	if (error)
@@ -349,10 +313,6 @@ osf1_sys_truncate(l, v, retval)
 	struct osf1_sys_truncate_args *uap = v;
 	struct proc *p = l->l_proc;
 	struct sys_truncate_args a;
-	void *sg;
-
-	sg = stackgap_init(p, 0);
-	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
 	SCARG(&a, path) = SCARG(uap, path);
 	SCARG(&a, pad) = 0;
@@ -376,9 +336,6 @@ osf1_sys_utimes(l, v, retval)
 	int error;
 
 	sg = stackgap_init(p, 0);
-
-	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
-	SCARG(&a, path) = SCARG(uap, path);
 
 	error = 0;
 	if (SCARG(uap, tptr) == NULL)

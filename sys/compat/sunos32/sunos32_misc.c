@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_misc.c,v 1.47 2007/03/16 22:21:42 dsl Exp $	*/
+/*	$NetBSD: sunos32_misc.c,v 1.48 2007/04/22 08:29:59 dsl Exp $	*/
 /* from :NetBSD: sunos_misc.c,v 1.107 2000/12/01 19:25:10 jdolecek Exp	*/
 
 /*
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.47 2007/03/16 22:21:42 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.48 2007/04/22 08:29:59 dsl Exp $");
 
 #define COMPAT_SUNOS 1
 
@@ -232,15 +232,11 @@ sunos32_sys_creat(l, v, retval)
 		syscallarg(const netbsd32_charp) path;
 		syscallarg(int) mode;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	struct sys_open_args ua;
-	void *sg = stackgap_init(p, 0);
 
 	SUNOS32TOP_UAP(path, const char);
 	SCARG(&ua, flags) = O_WRONLY | O_CREAT | O_TRUNC;
 	SUNOS32TO64_UAP(mode);
-
-	SUNOS32_CHECK_ALT_CREAT(l, &sg, SCARG(&ua, path));
 
 	return (sys_open(l, &ua, retval));
 }
@@ -255,13 +251,10 @@ sunos32_sys_access(l, v, retval)
 		syscallarg(const netbsd32_charp) path;
 		syscallarg(int) flags;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	struct sys_access_args ua;
-	void *sg = stackgap_init(p, 0);
 
 	SUNOS32TOP_UAP(path, const char);
 	SUNOS32TO64_UAP(flags);
-	SUNOS32_CHECK_ALT_EXIST(l, &sg, SCARG(&ua, path));
 
 	return (sys_access(l, &ua, retval));
 }
@@ -307,16 +300,12 @@ sunos32_sys_stat(l, v, retval)
 		syscallarg(const netbsd32_charp) path;
 		syscallarg(netbsd32_stat43p_t) ub;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	struct netbsd32_stat43 sb32;
 	struct stat sb;
-	void *sg;
 	const char *path;
 	int error;
 
 	path = SCARG_P32(uap, path);
-	sg = stackgap_init(p, 0);
-	SUNOS32_CHECK_ALT_EXIST(l, &sg, path);
 
 	error = do_sys_stat(l, path, FOLLOW, &sb);
 	if (error)
@@ -337,20 +326,16 @@ sunos32_sys_lstat(l, v, retval)
 		syscallarg(netbsd32_stat43p_t) ub;
 	} */ *uap = v;
 	struct vnode *vp, *dvp;
-	struct proc *p = l->l_proc;
 	struct stat sb, sb1;
 	struct netbsd32_stat43 sb32;
 	int error;
 	struct nameidata nd;
 	int ndflags;
 	const char *path;
-	void *sg;
 
 	path = SCARG_P32(uap, path);
-	sg = stackgap_init(p, 0);
-	SUNOS32_CHECK_ALT_EXIST(l, &sg, path);
 
-	ndflags = NOFOLLOW | LOCKLEAF | LOCKPARENT;
+	ndflags = NOFOLLOW | LOCKLEAF | LOCKPARENT | TRYEMULROOT;
 again:
 	NDINIT(&nd, LOOKUP, ndflags, UIO_USERSPACE, path, l);
 	if ((error = namei(&nd))) {
@@ -427,12 +412,7 @@ sunos32_sys_execv(l, v, retval)
 		syscallarg(const char *) path;
 		syscallarg(char **) argv;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	const char *path = SCARG_P32(uap, path);
-	void *sg;
-
-	sg = stackgap_init(p, 0);
-	SUNOS32_CHECK_ALT_EXIST(l, &sg, path);
 
 	return execve1(l, path, SCARG_P32(uap, argp), NULL,
 	    sunos32_execve_fetch_element);
@@ -449,12 +429,7 @@ sunos32_sys_execve(l, v, retval)
 		syscallarg(char **) argv;
 		syscallarg(char **) envp;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	const char *path = SCARG_P32(uap, path);
-	void *sg;
-
-	sg = stackgap_init(p, 0);
-	SUNOS32_CHECK_ALT_EXIST(l, &sg, path);
 
 	return execve1(l, path, SCARG_P32(uap, argp),
 	    SCARG_P32(uap, envp),
@@ -1115,7 +1090,6 @@ sunos32_sys_open(l, v, retval)
 	int lf, r;
 	int noctty;
 	int ret;
-	void *sg = stackgap_init(p, 0);
 
 	/* convert mode into NetBSD mode */
 	lf = SCARG(uap, flags);
@@ -1129,11 +1103,6 @@ sunos32_sys_open(l, v, retval)
 	SUNOS32TOP_UAP(path, const char);
 	SCARG(&ua, flags) = r;
 	SUNOS32TO64_UAP(mode);
-
-	if (r & O_CREAT)
-		SUNOS32_CHECK_ALT_CREAT(l, &sg, SCARG(&ua, path));
-	else
-		SUNOS32_CHECK_ALT_EXIST(l, &sg, SCARG(&ua, path));
 
 	ret = sys_open(l, &ua, retval);
 
@@ -1275,19 +1244,15 @@ sunos32_sys_statfs(l, v, retval)
 		syscallarg(const netbsd32_charp) path;
 		syscallarg(sunos32_statfsp_t) buf;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	struct mount *mp;
 	struct statvfs *sp;
 	int error;
 	struct nameidata nd;
 	struct sys_statvfs1_args ua;
-	void *sg;
 
-	sg = stackgap_init(p, 0);
 	SUNOS32TOP_UAP(path, const char);
-	SUNOS32_CHECK_ALT_EXIST(l, &sg, SCARG(&ua, path));
 
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(&ua, path), l);
+	NDINIT(&nd, LOOKUP, FOLLOW | TRYEMULROOT, UIO_USERSPACE, SCARG(&ua, path), l);
 	if ((error = namei(&nd)) != 0)
 		return (error);
 	mp = nd.ni_vp->v_mount;
@@ -1353,15 +1318,11 @@ sunos32_sys_mknod(l, v, retval)
 		syscallarg(int) mode;
 		syscallarg(int) dev;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	struct sys_mknod_args ua;
-	void *sg;
 
-	sg = stackgap_init(p, 0);
 	SUNOS32TOP_UAP(path, const char);
 	SUNOS32TO64_UAP(mode);
 	SUNOS32TO64_UAP(dev);
-	SUNOS32_CHECK_ALT_CREAT(l, &sg, SCARG(&ua, path));
 
 	/* netbsd32_mkfifo/mknod to not do alt checking */
 	if (S_ISFIFO(SCARG(uap, mode)))

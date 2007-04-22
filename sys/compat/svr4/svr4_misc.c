@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_misc.c,v 1.125 2007/03/09 14:11:28 ad Exp $	 */
+/*	$NetBSD: svr4_misc.c,v 1.126 2007/04/22 08:29:59 dsl Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_misc.c,v 1.125 2007/03/09 14:11:28 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_misc.c,v 1.126 2007/04/22 08:29:59 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -187,10 +187,6 @@ svr4_sys_execv(l, v, retval)
 		syscallarg(char **) argv;
 	} */ *uap = v;
 	struct sys_execve_args ap;
-	void *sg;
-
-	sg = stackgap_init(l->l_proc, 0);
-	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
 	SCARG(&ap, path) = SCARG(uap, path);
 	SCARG(&ap, argp) = SCARG(uap, argp);
@@ -212,10 +208,6 @@ svr4_sys_execve(l, v, retval)
 		syscallarg(char **) envp;
 	} */ *uap = v;
 	struct sys_execve_args ap;
-	void *sg;
-
-	sg = stackgap_init(l->l_proc, 0);
-	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
 	SCARG(&ap, path) = SCARG(uap, path);
 	SCARG(&ap, argp) = SCARG(uap, argp);
@@ -586,10 +578,6 @@ svr4_mknod(l, retval, path, mode, dev)
 	svr4_mode_t mode;
 	svr4_dev_t dev;
 {
-	void *sg = stackgap_init(l->l_proc, 0);
-
-	CHECK_ALT_CREAT(l, &sg, path);
-
 	if (S_ISFIFO(mode)) {
 		struct sys_mkfifo_args ap;
 		SCARG(&ap, path) = path;
@@ -1326,7 +1314,6 @@ svr4_sys_statvfs(l, v, retval)
 	struct statvfs *fs = stackgap_alloc(p, &sg, sizeof(struct statvfs));
 	int error;
 
-	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 	SCARG(&fs_args, path) = SCARG(uap, path);
 	SCARG(&fs_args, buf) = fs;
 	SCARG(&fs_args, flags) = ST_WAIT;
@@ -1375,7 +1362,6 @@ svr4_sys_statvfs64(l, v, retval)
 	struct statvfs *fs = stackgap_alloc(p, &sg, sizeof(struct statvfs));
 	int error;
 
-	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 	SCARG(&fs_args, path) = SCARG(uap, path);
 	SCARG(&fs_args, buf) = fs;
 	SCARG(&fs_args, flags) = ST_WAIT;
@@ -1591,7 +1577,7 @@ svr4_sys_resolvepath(l, v, retval)
 	int error;
 	size_t len;
 
-	NDINIT(&nd, LOOKUP, NOFOLLOW | SAVENAME, UIO_USERSPACE,
+	NDINIT(&nd, LOOKUP, NOFOLLOW | SAVENAME | TRYEMULROOT, UIO_USERSPACE,
 	    SCARG(uap, path), l);
 
 	if ((error = namei(&nd)) != 0)

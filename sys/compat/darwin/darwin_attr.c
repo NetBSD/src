@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_attr.c,v 1.16 2007/04/05 07:37:14 dsl Exp $ */
+/*	$NetBSD: darwin_attr.c,v 1.17 2007/04/22 08:29:55 dsl Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_attr.c,v 1.16 2007/04/05 07:37:14 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_attr.c,v 1.17 2007/04/22 08:29:55 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,7 +128,6 @@ darwin_sys_getattrlist(l, v, retval)
 	struct vnode *vp;
 	kauth_cred_t cred;
 	void *sg = stackgap_init(p, 0);
-	int fl;
 
 	if ((error = copyin(SCARG(uap, alist), &kalist, sizeof(kalist))) != 0)
 		return error;
@@ -148,14 +147,6 @@ darwin_sys_getattrlist(l, v, retval)
 	    kalist.commonattr, kalist.volattr, kalist.dirattr,
 	    kalist.fileattr, kalist.forkattr);
 #endif
-
-	/*
-	 * Lookup emulation shadow tree once
-	 */
-	fl = CHECK_ALT_FL_EXISTS;
-	if (follow == NOFOLLOW)
-		fl |= CHECK_ALT_FL_SYMLINK;
-	(void)emul_find(l, &sg, p->p_emul->e_path, SCARG(uap, path), &SCARG(uap, path), fl);
 
 	/*
 	 * Get the informations for path: file related info
@@ -190,7 +181,7 @@ darwin_sys_getattrlist(l, v, retval)
 	kauth_cred_seteuid(cred, kauth_cred_getuid(l->l_cred));
 	kauth_cred_setegid(cred, kauth_cred_getgid(l->l_cred));
 
-	NDINIT(&nd, LOOKUP, follow | LOCKLEAF, UIO_USERSPACE, SCARG(uap, path), l);
+	NDINIT(&nd, LOOKUP, follow | LOCKLEAF | TRYEMULROOT, UIO_USERSPACE, SCARG(uap, path), l);
 	if ((error = namei(&nd)) != 0)
 		goto out2;
 

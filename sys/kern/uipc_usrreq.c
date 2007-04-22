@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.96 2007/04/03 16:11:31 hannken Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.97 2007/04/22 08:30:00 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.96 2007/04/03 16:11:31 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.97 2007/04/22 08:30:00 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -625,7 +625,7 @@ unp_bind(struct unpcb *unp, struct mbuf *nam, struct lwp *l)
 	m_copydata(nam, 0, nam->m_len, (void *)sun);
 	*(((char *)sun) + nam->m_len) = '\0';
 
-	NDINIT(&nd, CREATE, FOLLOW | LOCKPARENT, UIO_SYSSPACE,
+	NDINIT(&nd, CREATE, FOLLOW | LOCKPARENT | TRYEMULROOT, UIO_SYSSPACE,
 	    sun->sun_path, l);
 
 /* SHOULD BE ABLE TO ADOPT EXISTING AND wakeup() ALA FIFO's */
@@ -684,7 +684,7 @@ unp_connect(struct socket *so, struct mbuf *nam, struct lwp *l)
 	m_copydata(nam, 0, nam->m_len, (void *)sun);
 	*(((char *)sun) + nam->m_len) = '\0';
 
-	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_SYSSPACE, sun->sun_path, l);
+	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF | TRYEMULROOT, UIO_SYSSPACE, sun->sun_path, l);
 
 	if ((error = namei(&nd)) != 0)
 		goto bad2;

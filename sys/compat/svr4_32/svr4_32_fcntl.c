@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_fcntl.c,v 1.19 2007/04/07 15:06:53 hannken Exp $	 */
+/*	$NetBSD: svr4_32_fcntl.c,v 1.20 2007/04/22 08:30:00 dsl Exp $	 */
 
 /*-
  * Copyright (c) 1994, 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_fcntl.c,v 1.19 2007/04/07 15:06:53 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_fcntl.c,v 1.20 2007/04/22 08:30:00 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -364,19 +364,12 @@ svr4_32_sys_open(l, v, retval)
 	register_t *retval;
 {
 	struct svr4_32_sys_open_args	*uap = v;
-	struct proc *p = l->l_proc;
 	int			error;
 	struct sys_open_args	cup;
-
-	void *sg = stackgap_init(p, 0);
 
 	SCARG(&cup, flags) = svr4_32_to_bsd_flags(SCARG(uap, flags));
 
 	SCARG(&cup, path) = SCARG_P32(uap, path);
-	if (SCARG(&cup, flags) & O_CREAT)
-		CHECK_ALT_CREAT(l, &sg, SCARG(&cup, path));
-	else
-		CHECK_ALT_EXIST(l, &sg, SCARG(&cup, path));
 
 	SCARG(&cup, mode) = SCARG(uap, mode);
 	error = sys_open(l, &cup, retval);
@@ -385,9 +378,9 @@ svr4_32_sys_open(l, v, retval)
 		return error;
 
 	/* XXXSMP unlocked */
-	if (!(SCARG(&cup, flags) & O_NOCTTY) && SESS_LEADER(p) &&
-	    !(p->p_lflag & PL_CONTROLT)) {
-		struct filedesc	*fdp = p->p_fd;
+	if (!(SCARG(&cup, flags) & O_NOCTTY) && SESS_LEADER(l->l_proc) &&
+	    !(l->l_proc->p_lflag & PL_CONTROLT)) {
+		struct filedesc	*fdp = l->l_proc->p_fd;
 		struct file	*fp;
 
 		fp = fd_getfile(fdp, *retval);
@@ -417,13 +410,9 @@ svr4_32_sys_creat(l, v, retval)
 	register_t *retval;
 {
 	struct svr4_32_sys_creat_args *uap = v;
-	struct proc *p = l->l_proc;
 	struct sys_open_args cup;
 
-	void *sg = stackgap_init(p, 0);
-
 	SCARG(&cup, path) = SCARG_P32(uap, path);
-	CHECK_ALT_EXIST(l, &sg, SCARG(&cup, path));
 	SCARG(&cup, mode) = SCARG(uap, mode);
 	SCARG(&cup, flags) = O_WRONLY | O_CREAT | O_TRUNC;
 
@@ -472,12 +461,8 @@ svr4_32_sys_access(l, v, retval)
 {
 	struct svr4_32_sys_access_args *uap = v;
 	struct sys_access_args cup;
-	struct proc *p = l->l_proc;
-
-	void *sg = stackgap_init(p, 0);
 
 	SCARG(&cup, path) = SCARG_P32(uap, path);
-	CHECK_ALT_EXIST(l, &sg, SCARG(&cup, path));
 	SCARG(&cup, flags) = SCARG(uap, flags);
 
 	return sys_access(l, &cup, retval);
