@@ -1,9 +1,9 @@
-/*	$NetBSD: main.c,v 1.17 2006/04/24 18:00:53 snj Exp $	*/
+/*	$NetBSD: main.c,v 1.18 2007/04/22 02:09:02 mouse Exp $	*/
 
 /* main.c		 */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.17 2006/04/24 18:00:53 snj Exp $");
+__RCSID("$NetBSD: main.c,v 1.18 2007/04/22 02:09:02 mouse Exp $");
 #endif				/* not lint */
 
 #include <sys/types.h>
@@ -808,7 +808,7 @@ parse()
 					case ODARTRAP:
 					case OTRAPARROW:
 					case OTELEPORTER:
-						lprcat("\nIts ");
+						lprcat("\nIt's ");
 						lprcat(objectname[item[i][j]]);
 						flag++;
 					};
