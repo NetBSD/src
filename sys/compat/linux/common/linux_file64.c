@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file64.c,v 1.37 2007/03/10 21:40:24 dsl Exp $	*/
+/*	$NetBSD: linux_file64.c,v 1.38 2007/04/22 08:29:57 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file64.c,v 1.37 2007/03/10 21:40:24 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file64.c,v 1.38 2007/04/22 08:29:57 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -154,12 +154,8 @@ linux_do_stat64(l, v, retval, flags)
 {
 	struct linux_stat64 tmplst;
 	struct stat tmpst;
-	void *sg;
 	int error;
 	struct linux_sys_stat64_args *uap = v;
-
-	sg = stackgap_init(l->l_proc, 0);
-	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
 	error = do_sys_stat(l, SCARG(uap, path), flags, &tmpst);
 	if (error != 0)
@@ -209,10 +205,6 @@ linux_sys_truncate64(l, v, retval)
 		syscallarg(off_t) length;
 	} */ *uap = v;
 	struct sys_truncate_args ta;
-	struct proc *p = l->l_proc;
-	void *sg = stackgap_init(p, 0);
-
-	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
 	/* Linux doesn't have the 'pad' pseudo-parameter */
 	SCARG(&ta, path) = SCARG(uap, path);

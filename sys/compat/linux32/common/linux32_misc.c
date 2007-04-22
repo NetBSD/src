@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_misc.c,v 1.5 2007/04/11 11:45:55 njoly Exp $	*/
+/*	$NetBSD: linux32_misc.c,v 1.6 2007/04/22 08:29:57 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_misc.c,v 1.5 2007/04/11 11:45:55 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_misc.c,v 1.6 2007/04/22 08:29:57 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -88,7 +88,6 @@ linux32_sys_statfs(l, v, retval)
 	bsp = stackgap_alloc(p, &sg, sizeof (struct statvfs));
 
 	NETBSD32TOP(uap, &bsa, path, const char);
-	CHECK_ALT_EXIST(l, &sg, SCARG(&bsa, path));
 
 	SCARG(&bsa, buf) = bsp;
 	SCARG(&bsa, flags) = ST_WAIT;
