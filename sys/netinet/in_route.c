@@ -1,4 +1,4 @@
-/*	$NetBSD: in_route.c,v 1.5 2007/04/18 23:22:26 dyoung Exp $	*/
+/*	$NetBSD: in_route.c,v 1.6 2007/04/22 06:01:57 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2006 David Young.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_route.c,v 1.5 2007/04/18 23:22:26 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_route.c,v 1.6 2007/04/22 06:01:57 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_in_route.h"
@@ -107,6 +107,7 @@ void
 in_rtcache(struct route *ro)
 {
 	KASSERT(ro->ro_rt != NULL);
+	KASSERT(rtcache_getdst(ro) != NULL);
 	KASSERT(rtcache_getdst(ro)->sa_family == AF_INET);
 	LIST_INSERT_HEAD(&in_rtcache_head, ro, ro_rtcache_next);
 }
@@ -114,6 +115,7 @@ in_rtcache(struct route *ro)
 void
 in_rtflush(struct route *ro)
 {
+	KASSERT(rtcache_getdst(ro) != NULL);
 	KASSERT(rtcache_getdst(ro)->sa_family == AF_INET);
 	KASSERT(ro->ro_rt == NULL);
 	LIST_REMOVE(ro, ro_rtcache_next);
@@ -137,7 +139,7 @@ in_rtflushall(void)
 
 	while ((ro = LIST_FIRST(&in_rtcache_head)) != NULL) {
 		KASSERT(ro->ro_rt != NULL);
-		rtcache_free(ro);
+		rtcache_clear(ro);
 	}
 	splx(s);
 }
