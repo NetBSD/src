@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.h,v 1.47 2007/04/19 14:45:03 pooka Exp $	*/
+/*	$NetBSD: puffs.h,v 1.48 2007/04/22 18:02:44 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -241,11 +241,12 @@ enum {
 	PUFFS_STATE_UNMOUNTING,		PUFFS_STATE_UNMOUNTED
 };
 
-#define PUFFS_FLAG_KERN(a)	((a) & 0x0000ffff)
-#define PUFFS_FLAG_LIB(a)	((a) & 0xffff0000)
-
 #define PUFFS_FLAG_BUILDPATH	0x80000000	/* node paths in pnode */
 #define PUFFS_FLAG_OPDUMP	0x40000000	/* dump all operations */
+#define PUFFS_FLAG_MASK		0xc0000000
+
+#define PUFFS_FLAG_KERN(a)	((a) & PUFFS_KFLAG_MASK)
+#define PUFFS_FLAG_LIB(a)	((a) & PUFFS_FLAG_MASK)
 
 /* blocking mode argument */
 #define PUFFSDEV_BLOCK 0
