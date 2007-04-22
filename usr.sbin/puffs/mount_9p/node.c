@@ -1,4 +1,4 @@
-/*	$NetBSD: node.c,v 1.1 2007/04/21 14:21:44 pooka Exp $	*/
+/*	$NetBSD: node.c,v 1.2 2007/04/22 18:10:48 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: node.c,v 1.1 2007/04/21 14:21:44 pooka Exp $");
+__RCSID("$NetBSD: node.c,v 1.2 2007/04/22 18:10:48 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -220,12 +220,11 @@ puffs9p_node_setattr(struct puffs_cc *pcc, void *opc,
  * wait until readdir, since it's probable we need to be able to
  * open a directory there in any case.
  * 
- * If it's a regular file, open it with full permissions here.
- * Let the upper layers of the kernel worry about permission
- * control.
+ * If it's a regular file, open it here with whatever credentials
+ * we happen to have.   Let the upper layers of the kernel worry
+ * about permission control.
  *
- * XXX: this doesn't work too well due to us hitting the open file
- * limit pretty soon
+ * XXX: this does not work fully for the mmap case
  */
 int
 puffs9p_node_open(struct puffs_cc *pcc, void *opc, int mode,
@@ -238,13 +237,23 @@ puffs9p_node_open(struct puffs_cc *pcc, void *opc, int mode,
 	int error = 0;
 
 	p9n->opencount++;
-	if (pn->pn_va.va_type != VDIR && p9n->fid_open == P9P_INVALFID) {
-		nfid = NEXTFID(p9p);
-		error = proto_cc_open(pcc, p9n->fid_base, nfid,
-		    P9PROTO_OMODE_RDWR);
-		if (error)
-			return error;
-		p9n->fid_open = nfid;
+	if (pn->pn_va.va_type != VDIR) {
+		if (mode & FREAD && p9n->fid_read == P9P_INVALFID) {
+			nfid = NEXTFID(p9p);
+			error = proto_cc_open(pcc, p9n->fid_base, nfid,
+			    P9PROTO_OMODE_READ);
+			if (error)
+				return error;
+			p9n->fid_read = nfid;
+		}
+		if (mode & FWRITE && p9n->fid_write == P9P_INVALFID) {
+			nfid = NEXTFID(p9p);
+			error = proto_cc_open(pcc, p9n->fid_base, nfid,
+			    P9PROTO_OMODE_WRITE);
+			if (error)
+				return error;
+			p9n->fid_write = nfid;
+		}
 	}
 
 	return 0;
@@ -257,9 +266,20 @@ puffs9p_node_close(struct puffs_cc *pcc, void *opc, int flags,
 	struct puffs_node *pn = opc;
 	struct p9pnode *p9n = pn->pn_data;
 
-	if (--p9n->opencount == 0)
-		if (pn->pn_va.va_type == VDIR)
+	if (--p9n->opencount == 0) {
+		if (pn->pn_va.va_type == VDIR) {
 			nukealldf(pcc, p9n);
+		} else  {
+			if (p9n->fid_read != P9P_INVALFID) {
+				proto_cc_clunkfid(pcc, p9n->fid_read, 0);
+				p9n->fid_read = P9P_INVALFID;
+			}
+			if (p9n->fid_write != P9P_INVALFID) {
+				proto_cc_clunkfid(pcc, p9n->fid_write, 0);
+				p9n->fid_write = P9P_INVALFID;
+			}
+		}
+	}
 
 	return 0;
 }
@@ -279,7 +299,7 @@ puffs9p_node_read(struct puffs_cc *pcc, void *opc, uint8_t *buf,
 	while (*resid > 0) {
 		p9pbuf_put_1(pb, P9PROTO_T_READ);
 		p9pbuf_put_2(pb, tag);
-		p9pbuf_put_4(pb, p9n->fid_open);
+		p9pbuf_put_4(pb, p9n->fid_read);
 		p9pbuf_put_8(pb, offset+nread);
 		p9pbuf_put_4(pb, MIN((uint32_t)*resid,p9p->maxreq-24));
 		outbuf_enqueue(p9p, pb, pcc, tag);
@@ -325,7 +345,7 @@ puffs9p_node_write(struct puffs_cc *pcc, void *opc, uint8_t *buf,
 
 		p9pbuf_put_1(pb, P9PROTO_T_WRITE);
 		p9pbuf_put_2(pb, tag);
-		p9pbuf_put_4(pb, p9n->fid_open);
+		p9pbuf_put_4(pb, p9n->fid_write);
 		p9pbuf_put_8(pb, offset+nwrite);
 		p9pbuf_put_4(pb, chunk);
 		p9pbuf_write_data(pb, buf+nwrite, chunk);
