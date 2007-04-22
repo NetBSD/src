@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.62 2007/04/22 18:02:05 pooka Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.63 2007/04/22 18:50:28 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.62 2007/04/22 18:02:05 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.63 2007/04/22 18:50:28 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/fstrans.h>
@@ -641,16 +641,18 @@ puffs_close(void *v)
 		kauth_cred_t a_cred;
 		struct lwp *a_l;
 	} */ *ap = v;
+	struct puffs_vnreq_close *close_argp;
 
-	PUFFS_VNREQ(close);
+	close_argp = malloc(sizeof(struct puffs_vnreq_close),
+	    M_PUFFS, M_WAITOK | M_ZERO);
+	close_argp->pvnr_fflag = ap->a_fflag;
+	puffs_credcvt(&close_argp->pvnr_cred, ap->a_cred);
+	close_argp->pvnr_pid = puffs_lwp2pid(ap->a_l);
 
-	close_arg.pvnr_fflag = ap->a_fflag;
-	puffs_credcvt(&close_arg.pvnr_cred, ap->a_cred);
-	close_arg.pvnr_pid = puffs_lwp2pid(ap->a_l);
+	puffs_vntouser_faf(MPTOPUFFSMP(ap->a_vp->v_mount), PUFFS_VN_CLOSE,
+	    close_argp, sizeof(struct puffs_vnreq_close), VPTOPNC(ap->a_vp));
 
-	return puffs_vntouser(MPTOPUFFSMP(ap->a_vp->v_mount), PUFFS_VN_CLOSE,
-	    &close_arg, sizeof(close_arg), 0, VPTOPNC(ap->a_vp),
-	    ap->a_vp, NULL);
+	return 0;
 }
 
 int
