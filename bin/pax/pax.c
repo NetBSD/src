@@ -1,4 +1,4 @@
-/*	$NetBSD: pax.c,v 1.40 2006/02/11 11:04:57 dsl Exp $	*/
+/*	$NetBSD: pax.c,v 1.41 2007/04/23 18:40:22 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)pax.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: pax.c,v 1.40 2006/02/11 11:04:57 dsl Exp $");
+__RCSID("$NetBSD: pax.c,v 1.41 2007/04/23 18:40:22 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -91,6 +91,7 @@ int	Dflag;			/* same as uflag except inode change time */
 int	Hflag;			/* follow command line symlinks (write only) */
 int	Lflag;			/* follow symlinks when writing */
 int	Mflag;			/* treat stdin as an mtree(8) specfile */
+int	Vflag;			/* produce somewhat verbose output (no listing) */
 int	Xflag;			/* archive files with same device id only */
 int	Yflag;			/* same as Dflg except after name mode */
 int	Zflag;			/* same as uflg except after name mode */
