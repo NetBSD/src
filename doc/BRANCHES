@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.182 2007/04/22 05:15:13 thorpej Exp $
+#	$NetBSD: BRANCHES,v 1.183 2007/04/23 06:16:13 skrll Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -478,7 +478,7 @@ Notes:
 		  sparc64		[ WIP ]
 		  arm			[ Done, SA1 tested. ]
 		  macppc/powerpc	[ Done, OEA tested ]
-		  hppa			[ Done, tested ]
+		  hppa			[ WIP. SYSCALLGATE trap issues remain. ]
 		  sh3			[ Done, tested ]
 		  vax			[ Done, UP tested, MP untested ]
 
