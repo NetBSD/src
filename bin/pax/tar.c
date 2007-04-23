@@ -1,4 +1,4 @@
-/*	$NetBSD: tar.c,v 1.64 2006/03/18 05:43:47 christos Exp $	*/
+/*	$NetBSD: tar.c,v 1.65 2007/04/23 18:40:22 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)tar.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: tar.c,v 1.64 2006/03/18 05:43:47 christos Exp $");
+__RCSID("$NetBSD: tar.c,v 1.65 2007/04/23 18:40:22 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -85,7 +85,7 @@ static int check_sum(char *, size_t, char *, size_t, int);
 
 static int tar_nodir;			/* do not write dirs under old tar */
 int is_gnutar;				/* behave like gnu tar; enable gnu
-					 * extensions and skip end-ofvolume
+					 * extensions and skip end-of-volume
 					 * checks
 					 */
 static int seen_gnu_warning;		/* Have we warned yet? */
@@ -789,7 +789,7 @@ ustar_id(char *blk, int size)
 	    !seen_gnu_warning) {
 		seen_gnu_warning = 1;
 		tty_warn(0,
-		    "Trying to read GNU tar archive with extensions off");
+		    "Trying to read GNU tar archive with GNU extensions and end-of-volume checks off");
 	}
 	return check_sum(hd->chksum, sizeof(hd->chksum), blk, BLKMULT, 0);
 }

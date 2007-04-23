@@ -1,4 +1,4 @@
-/*	$NetBSD: ar_io.c,v 1.47 2006/02/11 10:43:17 dsl Exp $	*/
+/*	$NetBSD: ar_io.c,v 1.48 2007/04/23 18:40:22 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)ar_io.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: ar_io.c,v 1.47 2006/02/11 10:43:17 dsl Exp $");
+__RCSID("$NetBSD: ar_io.c,v 1.48 2007/04/23 18:40:22 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -379,7 +379,7 @@ ar_close(void)
 	 * going on (this avoids the user hitting control-c thinking pax is
 	 * broken).
 	 */
-	if (vflag && (artyp == ISTAPE)) {
+	if ((vflag || Vflag) && (artyp == ISTAPE)) {
 		if (vfpart)
 			(void)putc('\n', listf);
 		(void)fprintf(listf,
@@ -416,7 +416,7 @@ ar_close(void)
 	if (zpid > 0)
 		waitpid(zpid, &status, 0);
 
-	if (vflag && (artyp == ISTAPE)) {
+	if ((vflag || Vflag) && (artyp == ISTAPE)) {
 		(void)fputs("done.\n", listf);
 		vfpart = 0;
 		(void)fflush(listf);
@@ -436,7 +436,7 @@ ar_close(void)
 	if (frmt != NULL)
 		++arvol;
 
-	if (!vflag) {
+	if (!vflag && !Vflag) {
 		flcnt = 0;
 		return;
 	}
@@ -448,20 +448,9 @@ ar_close(void)
 		(void)putc('\n', listf);
 		vfpart = 0;
 	}
-	/*
-	 * If we have not determined the format yet, we just say how many bytes
-	 * we have skipped over looking for a header to id. there is no way we
-	 * could have written anything yet.
-	 */
-	if (frmt == NULL) {
-		(void)fprintf(listf, "%s: unknown format, " OFFT_F
-		    " bytes skipped.\n", argv0, rdcnt);
-		(void)fflush(listf);
-		flcnt = 0;
-		return;
-	}
 
-	if (strcmp(NM_CPIO, argv0) == 0) {
+	/* mimic cpio's block count first */
+	if (frmt && strcmp(NM_CPIO, argv0) == 0) {
 		(void)fprintf(listf, OFFT_F " blocks\n",
 		    (rdcnt ? rdcnt : wrcnt) / 5120);
 	}
@@ -1646,10 +1635,10 @@ ar_summary(int n)
 {
 	time_t secs;
 	int len;
-	char buf[MAXPATHLEN];
-	char tbuf[MAXPATHLEN/4];
-	char s1buf[MAXPATHLEN/8];
-	char s2buf[MAXPATHLEN/8];
+	char buf[BUFSIZ];
+	char tbuf[MAXPATHLEN/4];	/* XXX silly size! */
+	char s1buf[MAXPATHLEN/8];	/* XXX very silly size! */
+	char s2buf[MAXPATHLEN/8];	/* XXX very silly size! */
 	FILE *outf;
 
 	if (act == LIST)
@@ -1683,10 +1672,11 @@ ar_summary(int n)
 	}
 
 
-	if (n != 0) {
+	if (n != 0 && *archd.name) {
 		len = snprintf(buf, sizeof(buf), "Working on `%s' (%s)\n",
 		    archd.name, sizefmt(s1buf, sizeof(s1buf), archd.sb.st_size));
 		(void)write(STDERR_FILENO, buf, len);
+		len = 0;
 	}
 
 
