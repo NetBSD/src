@@ -1,4 +1,4 @@
-/*	$NetBSD: ar_subs.c,v 1.52 2007/03/08 17:01:30 rillig Exp $	*/
+/*	$NetBSD: ar_subs.c,v 1.53 2007/04/23 18:40:22 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)ar_subs.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: ar_subs.c,v 1.52 2007/03/08 17:01:30 rillig Exp $");
+__RCSID("$NetBSD: ar_subs.c,v 1.53 2007/04/23 18:40:22 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -802,7 +802,7 @@ append(void)
 	/*
 	 * reading the archive may take a long time. If verbose tell the user
 	 */
-	if (vflag) {
+	if (vflag || Vflag) {
 		(void)fprintf(listf,
 			"%s: Reading archive to position at the end...", argv0);
 		vfpart = 1;
@@ -864,7 +864,7 @@ append(void)
 	/*
 	 * tell the user we are done reading.
 	 */
-	if (vflag && vfpart) {
+	if ((vflag || Vflag) && vfpart) {
 		(void)safe_print("done.\n", listf);
 		vfpart = 0;
 	}

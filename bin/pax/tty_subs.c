@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_subs.c,v 1.18 2006/02/11 10:43:18 dsl Exp $	*/
+/*	$NetBSD: tty_subs.c,v 1.19 2007/04/23 18:40:22 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)tty_subs.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: tty_subs.c,v 1.18 2006/02/11 10:43:18 dsl Exp $");
+__RCSID("$NetBSD: tty_subs.c,v 1.19 2007/04/23 18:40:22 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -156,7 +156,7 @@ tty_warn(int set, const char *fmt, ...)
 	 * when vflag we better ship out an extra \n to get this message on a
 	 * line by itself
 	 */
-	if (vflag && vfpart) {
+	if ((Vflag || vflag) && vfpart) {
 		(void)fputc('\n', stderr);
 		vfpart = 0;
 	}
@@ -183,7 +183,7 @@ syswarn(int set, int errnum, const char *fmt, ...)
 	 * when vflag we better ship out an extra \n to get this message on a
 	 * line by itself
 	 */
-	if (vflag && vfpart) {
+	if ((Vflag || vflag) && vfpart) {
 		(void)fputc('\n', stdout);
 		vfpart = 0;
 	}
