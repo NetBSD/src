@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.99 2007/01/16 19:06:41 cbiere Exp $	*/
+/*	$NetBSD: options.c,v 1.100 2007/04/23 18:40:22 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: options.c,v 1.99 2007/01/16 19:06:41 cbiere Exp $");
+__RCSID("$NetBSD: options.c,v 1.100 2007/04/23 18:40:22 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -255,8 +255,8 @@ pax_options(int argc, char **argv)
 {
 	int c;
 	int i;
-	unsigned int flg = 0;
-	unsigned int bflg = 0;
+	u_int64_t flg = 0;
+	u_int64_t bflg = 0;
 	char *pt;
 	FSUB tmp;
 
@@ -264,7 +264,7 @@ pax_options(int argc, char **argv)
 	 * process option flags
 	 */
 	while ((c = getopt_long(argc, argv,
-	    "0ab:cdf:ijklno:p:rs:tuvwx:zAB:DE:G:HLMN:OPT:U:XYZ",
+	    "0ab:cdf:ijklno:p:rs:tuvwx:zAB:DE:G:HLMN:OPT:U:VXYZ",
 	    pax_longopts, NULL)) != -1) {
 		switch (c) {
 		case '0':
@@ -606,6 +606,13 @@ pax_options(int argc, char **argv)
 			}
 			flg |= CUF;
 			break;
+		case 'V':
+			/*
+			 * somewhat verbose operation mode (no listing)
+			 */
+			Vflag = 1;
+			flg |= VSF;
+			break;
 		case 'X':
 			/*
 			 * do not pass over mount points in the file system
@@ -751,6 +758,8 @@ struct option tar_longopts[] = {
 	{ "absolute-paths",	no_argument,		0,	'P' },
 	{ "sparse",		no_argument,		0,	'S' },
 	{ "files-from",		required_argument,	0,	'T' },
+	{ "summary",		no_argument,		0,	'V' },
+	{ "stats",		no_argument,		0,	'V' },
 	{ "exclude-from",	required_argument,	0,	'X' },
 	{ "compress",		no_argument,		0,	'Z' },
 	{ "uncompress",		no_argument,		0,	'Z' },
@@ -804,8 +813,8 @@ struct option tar_longopts[] = {
 						OPT_NULL },
 	{ "totals",		no_argument,		0,
 						OPT_TOTALS },
-	{ "volume-name",	required_argument,	0,	'V' },
-	{ "label",		required_argument,	0,	'V' },
+	{ "volume-name",	required_argument,	0,	'V' }, /* XXX */
+	{ "label",		required_argument,	0,	'V' }, /* XXX */
 	{ "version",		no_argument,		0,
 						OPT_VERSION },
 	{ "verify",		no_argument,		0,	'W' },
@@ -1045,6 +1054,12 @@ tar_options(int argc, char **argv)
 			break;
 		case 'S':
 			/* do nothing; we already generate sparse files */
+			break;
+		case 'V':
+			/*
+			 * semi-verbose operation mode (no listing)
+			 */
+			Vflag = 1;
 			break;
 		case 'X':
 			/*
@@ -1397,6 +1412,8 @@ struct option cpio_longopts[] = {
 	{ "format",		required_argument,	0,	'H' },
 	{ "dereference",	no_argument,		0,	'L' },
 	{ "swap-halfwords",	no_argument,		0,	'S' },
+	{ "summary",		no_argument,		0,	'V' },
+	{ "stats",		no_argument,		0,	'V' },
 	{ "insecure",		no_argument,		0,
 						OPT_INSECURE },
 	{ "sparse",		no_argument,		0,
@@ -1410,7 +1427,7 @@ struct option cpio_longopts[] = {
 	{ "swap-bytes",		no_argument,		0,	's' },
 	{ "message",		required_argument,	0,	'M' },
 	{ "owner",		required_argument,	0	'R' },
-	{ "dot",		no_argument,		0,	'V' },
+	{ "dot",		no_argument,		0,	'V' }, /* xxx */
 	{ "block-size",		required_argument,	0,
 						OPT_BLOCK_SIZE },
 	{ "no-absolute-pathnames", no_argument,		0,
@@ -1448,8 +1465,8 @@ static void
 cpio_options(int argc, char **argv)
 {
 	FSUB tmp;
-	unsigned int flg = 0;
-	unsigned int bflg = 0;
+	u_int64_t flg = 0;
+	u_int64_t bflg = 0;
 	int c, i;
 	FILE *fp;
 	char *str;
@@ -1680,9 +1697,16 @@ cpio_options(int argc, char **argv)
 			cpio_swp_head = 1;
 			break;
 #ifdef notyet
-		case 'V':
+		case 'V':		/* print a '.' for each file processed */
 			break;
 #endif
+		case 'V':
+			/*
+			 * semi-verbose operation mode (no listing)
+			 */
+			Vflag = 1;
+			flg |= VF;
+			break;
 		case 'Z':
 			/*
 			 * use compress.  Non standard option.
