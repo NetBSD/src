@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.85 2007/04/22 08:30:01 dsl Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.86 2007/04/23 07:04:30 dsl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.85 2007/04/22 08:30:01 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.86 2007/04/23 07:04:30 dsl Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -599,8 +599,10 @@ lookup(struct nameidata *ndp)
 				 * forever. So convert to to the real root.
 				 */
 				vput(dp);
-				vput(ndp->ni_dvp);
-				ndp->ni_dvp = NULL;
+				if (ndp->ni_dvp != NULL) {
+					vput(ndp->ni_dvp);
+					ndp->ni_dvp = NULL;
+				}
 				dp = ndp->ni_rootdir;
 				VREF(dp);
 				vn_lock(dp, LK_EXCLUSIVE | LK_RETRY);
