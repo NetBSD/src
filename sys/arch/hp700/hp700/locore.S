@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.16.2.9 2007/04/12 09:58:40 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.16.2.10 2007/04/23 20:41:11 skrll Exp $	*/
 
 /*	$OpenBSD: locore.S,v 1.46 2001/09/20 18:33:03 mickey Exp $	*/
 
@@ -137,7 +137,6 @@
 	.import	bootdev, data
 	.import	esym, data
 	.import	curlwp, data
-	.import	want_resched, data
 	.import virtual_avail, data
 	.import	lwp0, data
 	.import	proc0paddr, data
