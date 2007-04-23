@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.h,v 1.35 2007/04/16 05:14:54 chs Exp $	*/
+/*	$NetBSD: uvm_pager.h,v 1.36 2007/04/23 20:10:50 pooka Exp $	*/
 
 /*
  *
@@ -150,7 +150,7 @@ struct uvm_pagerops {
 /* pager flags [mostly for flush] */
 
 #define PGO_CLEANIT	0x001	/* write dirty pages to backing store */
-#define PGO_SYNCIO	0x002	/* if PGO_CLEANIT: use sync I/O? */
+#define PGO_SYNCIO	0x002	/* use sync I/O */
 #define PGO_DEACTIVATE	0x004	/* deactivate flushed pages */
 #define PGO_FREE	0x008	/* free flushed pages */
 /* if PGO_FREE is not set then the pages stay where they are. */
