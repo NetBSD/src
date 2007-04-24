@@ -1,4 +1,4 @@
-/* $NetBSD: citrus_dechanyu.c,v 1.1 2007/04/01 18:52:32 tnozaki Exp $ */
+/* $NetBSD: citrus_dechanyu.c,v 1.2 2007/04/24 15:42:08 tnozaki Exp $ */
 
 /*-
  * Copyright (c)2007 Citrus Project,
@@ -27,7 +27,7 @@
  */
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_dechanyu.c,v 1.1 2007/04/01 18:52:32 tnozaki Exp $");
+__RCSID("$NetBSD: citrus_dechanyu.c,v 1.2 2007/04/24 15:42:08 tnozaki Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -229,7 +229,7 @@ _citrus_DECHanyu_mbrtowc_priv(_DECHanyuEncodingInfo * __restrict ei,
 		ch = psenc->ch[0] & 0xFF;
 		if (is_hanyu1(ch) != 0) {
 			ch = psenc->ch[1] & 0xFF;
-			if (is_hanyu22(ch) != 0) {
+			if (is_hanyu2(ch) != 0) {
 				wc |= (wchar_t)HANYUBIT;
 				break;
 			}
