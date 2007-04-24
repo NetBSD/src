@@ -1,4 +1,4 @@
-/*	$NetBSD: pnullfs.c,v 1.7 2007/04/13 13:35:46 pooka Exp $	*/
+/*	$NetBSD: pnullfs.c,v 1.8 2007/04/24 21:38:32 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -133,8 +133,10 @@ main(int argc, char *argv[])
 		err(1, "getrootpathobj");
 	po_root->po_path = argv[0];
 	po_root->po_len = strlen(argv[0]);
-	if (stat(argv[0], &sb) == -1)
+	if (lstat(argv[0], &sb) == -1)
 		err(1, "stat %s", argv[0]);
+	if ((sb.st_mode & S_IFDIR) == 0)
+		errx(1, "%s is not a directory", argv[0]);
 	puffs_stat2vattr(&pn_root->pn_va, &sb);
 
 	if (puffs_start(pu, pn_root, &svfsb) == -1)

@@ -1,4 +1,4 @@
-/*	$NetBSD: rot13fs.c,v 1.5 2007/04/13 13:35:46 pooka Exp $	*/
+/*	$NetBSD: rot13fs.c,v 1.6 2007/04/24 21:38:59 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -164,8 +164,10 @@ main(int argc, char *argv[])
 
 	puffs_set_namemod(pu, rot13path);
 
-	if (stat(argv[0], &sb) == -1)
+	if (lstat(argv[0], &sb) == -1)
 		err(1, "stat %s", argv[0]);
+	if ((sb.st_mode & S_IFDIR) == 0)
+		errx(1, "%s is not a directory", argv[0]);
 	puffs_stat2vattr(&pn_root->pn_va, &sb);
 
 	/* initialize rot13 tables */
