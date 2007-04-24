@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.c,v 1.32 2007/04/22 21:52:37 pooka Exp $	*/
+/*	$NetBSD: puffs_msgif.c,v 1.33 2007/04/24 09:44:57 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.32 2007/04/22 21:52:37 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.33 2007/04/24 09:44:57 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/fstrans.h>
@@ -661,6 +661,12 @@ puffs_getop(struct puffs_mount *pmp, struct puffs_reqh_get *phg, int nonblock)
 			 * to take locks in the correct order.
 			 */
 			mutex_exit(&park->park_mtx);
+
+			/*
+			 * XXX: ONQUEUE1 | ONQUEUE2 invariant doesn't
+			 * hold here
+			 */
+
 			mutex_enter(&pmp->pmp_lock);
 			mutex_enter(&park->park_mtx);
 			if ((park->park_flags & PARKFLAG_WAITERGONE) == 0) {
@@ -802,6 +808,7 @@ puffs_putop(struct puffs_mount *pmp, struct puffs_reqh_put *php)
 
 			cv_signal(&park->park_cv);
 		}
+		park->park_flags |= PARKFLAG_DONE;
 		puffs_park_release(park, release);
 
 		mutex_enter(&pmp->pmp_lock);
