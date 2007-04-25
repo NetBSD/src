@@ -1,11 +1,11 @@
 #!/bin/sh
 #
-# $NetBSD: routed,v 1.9 2004/10/12 14:51:03 lukem Exp $
+# $NetBSD: routed,v 1.9.4.1 2007/04/25 09:13:33 ghen Exp $
 #
 
 # PROVIDE: routed
-# REQUIRE: DAEMON
-# BEFORE:  LOGIN
+# REQUIRE: network
+# BEFORE:  NETWORKING
 
 $_rc_subr_loaded . /etc/rc.subr
 
