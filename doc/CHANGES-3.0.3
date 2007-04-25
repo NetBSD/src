@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0.3,v 1.1.2.35 2007/04/13 09:24:01 ghen Exp $
+#	$NetBSD: CHANGES-3.0.3,v 1.1.2.36 2007/04/25 09:17:23 ghen Exp $
 
 A complete list of changes from the NetBSD 3.0.2 release to the NetBSD 3.0.3
 release:
@@ -1645,4 +1645,12 @@ crypto/dist/ipsec-tools/src/racoon/isakmp_inf.c	via patch
 	Fix a denial of service vulnerability (CVE-2007-1841) which could allow
 	an attacker to disrupt a connection between IPSec peers.
 	[adrianp, ticket #1763]
+
+etc/rc.d/route6d				1.7
+etc/rc.d/routed					1.10
+
+	The "routed" and "route6d" scripts must be run early during system
+	startup because they are part of the network initialization. Use
+	similar dependences as the "rtsold" script.
+	[tron, ticket #1767]
 
