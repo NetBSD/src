@@ -1,4 +1,4 @@
-/*	$NetBSD: sched_4bsd.c,v 1.1.2.27 2007/04/22 08:27:00 yamt Exp $	*/
+/*	$NetBSD: sched_4bsd.c,v 1.1.2.28 2007/04/25 08:34:36 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.1.2.27 2007/04/22 08:27:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.1.2.28 2007/04/25 08:34:36 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -296,8 +296,7 @@ sched_pstats_hook(struct proc *p, int minslp)
 			if ((l->l_flag & LW_IDLE) != 0)
 				continue;
 			lwp_lock(l);
-			if (l->l_slptime <= 1 &&
-			    l->l_priority >= PUSER)
+			if (l->l_slptime <= 1 && l->l_priority >= PUSER)
 				resetpriority(l);
 			lwp_unlock(l);
 		}
