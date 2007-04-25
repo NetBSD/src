@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_pathname.c,v 1.27 2007/04/22 08:30:00 dsl Exp $	*/
+/*	$NetBSD: ultrix_pathname.c,v 1.28 2007/04/25 12:54:26 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_pathname.c,v 1.27 2007/04/22 08:30:00 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_pathname.c,v 1.28 2007/04/25 12:54:26 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -158,8 +158,6 @@ ultrix_sys_open(struct lwp *l, void *v, register_t *retval)
 	int noctty;
 	int ret;
 
-	void *sg = stackgap_init(p, 0);
-
 	/* convert open flags into NetBSD flags */
 	q = SCARG(uap, flags);
 	noctty = q & 0x8000;
@@ -227,7 +225,6 @@ int
 ultrix_sys_statfs(struct lwp *l, void *v, register_t *retval)
 {
 	struct ultrix_sys_statfs_args *uap = v;
-	struct proc *p = l->l_proc;
 	struct mount *mp;
 	struct statvfs *sp;
 	int error;
