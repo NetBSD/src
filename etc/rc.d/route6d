@@ -1,11 +1,11 @@
 #!/bin/sh
 #
-# $NetBSD: route6d,v 1.6 2004/08/13 18:08:03 mycroft Exp $
+# $NetBSD: route6d,v 1.6.2.1 2007/04/25 09:13:27 ghen Exp $
 #
 
 # PROVIDE: route6d
-# REQUIRE: DAEMON
-# BEFORE:  LOGIN
+# REQUIRE: network mountcritlocal
+# BEFORE:  NETWORKING
 
 $_rc_subr_loaded . /etc/rc.subr
 
