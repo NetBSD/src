@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.128 2007/04/16 10:08:33 tron Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.129 2007/04/25 21:12:48 joerg Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.128 2007/04/16 10:08:33 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.129 2007/04/25 21:12:48 joerg Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -3345,6 +3345,8 @@ bge_cksum_pad(struct mbuf *pkt)
 			/* Allocate new empty mbuf, pad it. Compact later. */
 			struct mbuf *n;
 			MGET(n, M_DONTWAIT, MT_DATA);
+			if (n == NULL)
+				return ENOBUFS;
 			n->m_len = 0;
 			last->m_next = n;
 			last = n;
@@ -3781,7 +3783,7 @@ bge_start(struct ifnet *ifp)
 
 	sc = ifp->if_softc;
 
-	if (!sc->bge_link && ifp->if_snd.ifq_len < 10)
+	if ((ifp->if_flags & (IFF_RUNNING|IFF_OACTIVE)) != IFF_RUNNING || sc->bge_link == 0)
 		return;
 
 	prodidx = sc->bge_tx_prodidx;
@@ -3816,7 +3818,6 @@ bge_start(struct ifnet *ifp)
 		 * for the NIC to drain the ring.
 		 */
 		if (bge_encap(sc, m_head, &prodidx)) {
-			printf("bge: failed on len %d?\n", m_head->m_pkthdr.len);
 			ifp->if_flags |= IFF_OACTIVE;
 			break;
 		}
