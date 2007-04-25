@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.86 2007/04/23 07:04:30 dsl Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.87 2007/04/25 20:41:42 dsl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.86 2007/04/23 07:04:30 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.87 2007/04/25 20:41:42 dsl Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -585,43 +585,9 @@ lookup(struct nameidata *ndp)
 
 		/*
 		 * If we've exhausted the path name, then just return the
-		 * current node.  If the caller requested the parent node (i.e.
-		 * it's a CREATE, DELETE, or RENAME), and we don't have one
-		 * (because this is the root directory), then we must fail.
+		 * current node.
 		 */
 		if (cnp->cn_nameptr[0] == '\0') {
-			if (dp == ndp->ni_erootdir) {
-				/*
-				 * We are about to return the emulation root.
-				 * This isn't a good idea because code might
-				 * repeatedly lookup ".." until the file
-				 * matches that returned for "/" and loop
-				 * forever. So convert to to the real root.
-				 */
-				vput(dp);
-				if (ndp->ni_dvp != NULL) {
-					vput(ndp->ni_dvp);
-					ndp->ni_dvp = NULL;
-				}
-				dp = ndp->ni_rootdir;
-				VREF(dp);
-				vn_lock(dp, LK_EXCLUSIVE | LK_RETRY);
-			}
-			if (ndp->ni_dvp == NULL && cnp->cn_nameiop != LOOKUP) {
-				switch (cnp->cn_nameiop) {
-				case CREATE:
-					error = EEXIST;
-					break;
-				case DELETE:
-				case RENAME:
-					error = EBUSY;
-					break;
-				default:
-					KASSERT(0);
-				}
-				vput(dp);
-				goto bad;
-			}
 			ndp->ni_vp = dp;
 			cnp->cn_flags |= ISLASTCN;
 			goto terminal;
@@ -907,6 +873,47 @@ nextname:
 	}
 
 terminal:
+	if (dp == ndp->ni_erootdir) {
+		/*
+		 * We are about to return the emulation root.
+		 * This isn't a good idea because code might repeatedly
+		 * lookup ".." until the file matches that returned
+		 * for "/" and loop forever.
+		 * So convert it to the real root.
+		 */
+		if (ndp->ni_dvp == dp)
+			vrele(dp);
+		else
+			if (ndp->ni_dvp != NULL)
+				vput(ndp->ni_dvp);
+		ndp->ni_dvp = NULL;
+		vput(dp);
+		dp = ndp->ni_rootdir;
+		VREF(dp);
+		vn_lock(dp, LK_EXCLUSIVE | LK_RETRY);
+		ndp->ni_vp = dp;
+	}
+
+	/*
+	 * If the caller requested the parent node (i.e.
+	 * it's a CREATE, DELETE, or RENAME), and we don't have one
+	 * (because this is the root directory), then we must fail.
+	 */
+	if (ndp->ni_dvp == NULL && cnp->cn_nameiop != LOOKUP) {
+		switch (cnp->cn_nameiop) {
+		case CREATE:
+			error = EEXIST;
+			break;
+		case DELETE:
+		case RENAME:
+			error = EBUSY;
+			break;
+		default:
+			KASSERT(0);
+		}
+		vput(dp);
+		goto bad;
+	}
 
 	/*
 	 * Disallow directory write attempts on read-only file systems.
