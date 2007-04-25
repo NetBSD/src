@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.53.8.3 2007/03/25 01:59:02 uwe Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.53.8.4 2007/04/25 05:51:07 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.53.8.3 2007/03/25 01:59:02 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.53.8.4 2007/04/25 05:51:07 skrll Exp $");
 
 #include "opt_kstack_debug.h"
 #include "opt_coredump.h"
@@ -214,7 +214,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack,
 	sf->sf_r15 = spbase + USPACE - PAGE_SIZE;/* current stack pointer */
 	sf->sf_r7_bank = sf->sf_r15;	/* stack top */
 	sf->sf_r6_bank = (vaddr_t)tf;	/* current frame pointer */
-	/* when switch to me, jump to proc_trampoline */
+	/* when switch to me, jump to lwp_trampoline */
 	sf->sf_pr  = (int)lwp_trampoline;
 	/*
 	 * Enable interrupt when switch frame is restored, since
