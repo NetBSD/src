@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.196.2.4 2007/03/24 14:54:46 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.196.2.5 2007/04/25 05:52:41 skrll Exp $	*/
 
 /*
  *
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.196.2.4 2007/03/24 14:54:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.196.2.5 2007/04/25 05:52:41 skrll Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"
@@ -1768,7 +1768,6 @@ pmap_ldt_cleanup(l)
 /*
  * pmap_activate: activate a process' pmap
  *
- * => called from cpu_switch()
  * => if lwp is the curlwp, then set ci_want_pmapload so that
  *    actual MMU context switch will be done by pmap_load() later
  */
