@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.101 2007/03/04 06:03:21 christos Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.102 2007/04/25 00:11:18 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.101 2007/03/04 06:03:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.102 2007/04/25 00:11:18 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -2219,9 +2219,8 @@ tbf_send_packet(struct vif *vifp, struct mbuf *m)
 		imo.imo_multicast_vif = -1;
 #endif
 
-		error = ip_output(m, (struct mbuf *)NULL, (struct route *)NULL,
-		    IP_FORWARDING|IP_MULTICASTOPTS, &imo,
-		    (struct socket *)NULL);
+		error = ip_output(m, NULL, NULL, IP_FORWARDING|IP_MULTICASTOPTS,
+		    &imo, NULL);
 
 		if (mrtdebug & DEBUG_XMIT)
 			log(LOG_DEBUG, "phyint_send on vif %ld err %d\n",
