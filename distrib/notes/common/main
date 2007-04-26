@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.332 2007/04/21 13:00:46 dsl Exp $
+.\"	$NetBSD: main,v 1.333 2007/04/26 19:10:14 pavel Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1161,6 +1161,7 @@ If you're one of them, and would like to mentioned, tell us!)
 .It Ta Geert Hendrickx Ta Mt ghen@NetBSD.org
 .It Ta Jeff Rizzo Ta Mt riz@NetBSD.org
 .It Ta Soren Jacobsen Ta Mt snj@NetBSD.org
+.It Ta Pavel Cahyna Ta Mt pavel@NetBSD.org
 .It Ta Ta
 .
 .br_ne 2i
