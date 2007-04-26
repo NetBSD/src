@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.183 2007/04/23 06:16:13 skrll Exp $
+#	$NetBSD: BRANCHES,v 1.184 2007/04/26 05:51:21 thorpej Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -581,7 +581,7 @@ Notes:		Base atomic primitives need to be implemented for
 		m68k		DONE (except for 68010)
 		mips
 		ns32k
-		powerpc
+		powerpc		DONE except for membar_*()
 		powerpc64
 		sh3
 		sparc
@@ -611,6 +611,9 @@ Notes:		Base atomic primitives need to be implemented for
 
 		all		- Need to replace mb_*() with membar_*().
 
+				- Audit MUTEX_CAS() and RWLOCK_CAS() uses
+				  to see of membar_enter() is required here.
+
 		arm		- Consider using a RAS technique like
 				  MIPS uses for _lock_cas() and the mutex
 				  stubs.  Possibly do more than one atomic
@@ -621,6 +624,9 @@ Notes:		Base atomic primitives need to be implemented for
 		
 		i386		- Need to change when x86_patch() is called
 				  so we can test ncpus.
+
+		powerpc		- Figure out if we need barriers in the
+				  atomic ops themselves (hopefully not!)
 
 		x86_64		- Need to change when x86_patch() is called
 				  so we can test ncpus.
