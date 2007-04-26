@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.77.10.1 2006/05/24 02:22:48 riz Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.77.10.2 2007/04/26 06:55:11 ghen Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.77.10.1 2006/05/24 02:22:48 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.77.10.2 2007/04/26 06:55:11 ghen Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1423,6 +1423,31 @@ u_char	inet6ctlerrmap[PRC_NCMDS] = {
 	ENOPROTOOPT
 };
 
+static int
+sysctl_net_inet6_ip6_rht0(SYSCTLFN_ARGS)
+{  
+	int error, tmp;
+	struct sysctlnode node;
+
+	node = *rnode;
+	tmp = ip6_rht0;
+	node.sysctl_data = &tmp;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		return error;
+
+	switch (tmp) {
+	case -1:	/* disable processing */
+	case 0:		/* disable for host, enable for router */
+	case 1:		/* enable for all */
+		break;
+	default:
+		return EINVAL;
+	}
+	ip6_rht0 = tmp;
+	return 0;
+}
+
 SYSCTL_SETUP(sysctl_net_inet6_ip6_setup, "sysctl net.inet6.ip6 subtree setup")
 {
 
@@ -1652,4 +1677,11 @@ SYSCTL_SETUP(sysctl_net_inet6_ip6_setup, "sysctl net.inet6.ip6 subtree setup")
 		       NULL, 0, &ip6_maxfrags, 0,
 		       CTL_NET, PF_INET6, IPPROTO_IPV6,
 		       IPV6CTL_MAXFRAGS, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+			CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+			CTLTYPE_INT, "rht0",
+			SYSCTL_DESCR("Processing of routing header type 0 (IPv6)"),
+			sysctl_net_inet6_ip6_rht0, 0, &ip6_rht0, 0,
+			CTL_NET, PF_INET6, IPPROTO_IPV6,
+			CTL_CREATE, CTL_EOL);
 }
