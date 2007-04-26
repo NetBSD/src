@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_or.S,v 1.1.2.2 2007/04/22 05:12:43 thorpej Exp $	*/
+/*	$NetBSD: atomic_or.S,v 1.1.2.3 2007/04/26 04:04:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -49,6 +49,20 @@ ATOMIC_OP_ALIAS(atomic_or_8,_atomic_or_8)
 ATOMIC_OP_ALIAS(atomic_or_uchar,_atomic_or_8)
 STRONG_ALIAS(_atomic_or_uchar,_atomic_or_8)
 
+NENTRY(_atomic_or_8_nv)
+	movzbl	(%rdi), %eax
+1:	movb	%sil, %dl
+	orb	%al, %dl
+	LOCK
+	cmpxchgb %dl, (%rdi)
+	/* %eax now contains the old value */
+	jne	1b
+	movzbl	%dl, %eax
+	ret
+ATOMIC_OP_ALIAS(atomic_or_8_nv,_atomic_or_8_nv)
+ATOMIC_OP_ALIAS(atomic_or_uchar_nv,_atomic_or_8_nv)
+STRONG_ALIAS(_atomic_or_uchar_nv,_atomic_or_8_nv)
+
 NENTRY(_atomic_or_16)
 	LOCK
 	orw	%si, (%rdi)
@@ -56,6 +70,20 @@ NENTRY(_atomic_or_16)
 ATOMIC_OP_ALIAS(atomic_or_16,_atomic_or_16)
 ATOMIC_OP_ALIAS(atomic_or_ushort,_atomic_or_16)
 STRONG_ALIAS(_atomic_or_ushort,_atomic_or_16)
+
+NENTRY(_atomic_or_16_nv)
+	movzwl	(%rdi), %eax
+1:	movw	%si, %dx
+	orw	%ax, %dx
+	LOCK
+	cmpxchgw %dx, (%rdi)
+	/* %eax now contains the old value */
+	jne	1b
+	movzwl	%dx, %eax
+	ret
+ATOMIC_OP_ALIAS(atomic_or_16_nv,_atomic_or_16_nv)
+ATOMIC_OP_ALIAS(atomic_or_ushort_nv,_atomic_or_16_nv)
+STRONG_ALIAS(_atomic_or_ushort_nv,_atomic_or_16_nv)
 
 NENTRY(_atomic_or_32)
 	LOCK
@@ -65,6 +93,20 @@ ATOMIC_OP_ALIAS(atomic_or_32,_atomic_or_32)
 ATOMIC_OP_ALIAS(atomic_or_uint,_atomic_or_32)
 STRONG_ALIAS(_atomic_or_uint,_atomic_or_32)
 
+NENTRY(_atomic_or_32_nv)
+	movl	(%rdi), %eax
+1:	movl	%esi, %edx
+	orl	%eax, %edx
+	LOCK
+	cmpxchgl %edx, (%rdi)
+	/* %eax now contains the old value */
+	jne	1b
+	movl	%edx, %eax
+	ret
+ATOMIC_OP_ALIAS(atomic_or_32_nv,_atomic_or_32_nv)
+ATOMIC_OP_ALIAS(atomic_or_uint_nv,_atomic_or_32_nv)
+STRONG_ALIAS(_atomic_or_uint_nv,_atomic_or_32_nv)
+
 NENTRY(_atomic_or_64)
 	LOCK
 	orq	%rsi, (%rdi)
@@ -72,3 +114,17 @@ NENTRY(_atomic_or_64)
 ATOMIC_OP_ALIAS(atomic_or_64,_atomic_or_64)
 ATOMIC_OP_ALIAS(atomic_or_ulong,_atomic_or_64)
 STRONG_ALIAS(_atomic_or_ulong,_atomic_or_64)
+
+NENTRY(_atomic_or_64_nv)
+	movq	(%rdi), %rax
+1:	movq	%rsi, %rdx
+	orq	%rax, %rdx
+	LOCK
+	cmpxchgq %rdx, (%rdi)
+	/* %rax now contains the old value */
+	jne	1b
+	movq	%rdx, %rax
+	ret
+ATOMIC_OP_ALIAS(atomic_or_64_nv,_atomic_or_64_nv)
+ATOMIC_OP_ALIAS(atomic_or_ulong_nv,_atomic_or_64_nv)
+STRONG_ALIAS(_atomic_or_ulong_nv,_atomic_or_64_nv)
