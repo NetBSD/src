@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.994 2007/04/21 18:41:49 plunky Exp $
+# $NetBSD: mi,v 1.995 2007/04/26 17:22:19 dyoung Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -1905,6 +1905,8 @@
 ./usr/share/man/cat8/evbppc/makedev.0		man-obsolete		obsolete
 ./usr/share/man/cat8/evbsh3/MAKEDEV.0		man-obsolete		obsolete
 ./usr/share/man/cat8/evbsh3/makedev.0		man-obsolete		obsolete
+./usr/share/man/cat8/evbsh5/MAKEDEV.0		man-obsolete		obsolete
+./usr/share/man/cat8/evbsh5/makedev.0		man-obsolete		obsolete
 ./usr/share/man/cat8/extattrctl.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/faithd.0			man-router-catman	inet6,.cat
 ./usr/share/man/cat8/fastboot.0			man-sysutil-catman	.cat
@@ -4352,6 +4354,8 @@
 ./usr/share/man/man8/evbppc/makedev.8		man-obsolete		obsolete
 ./usr/share/man/man8/evbsh3/MAKEDEV.8		man-obsolete		obsolete
 ./usr/share/man/man8/evbsh3/makedev.8		man-obsolete		obsolete
+./usr/share/man/man8/evbsh5/MAKEDEV.8		man-obsolete		obsolete
+./usr/share/man/man8/evbsh5/makedev.8		man-obsolete		obsolete
 ./usr/share/man/man8/extattrctl.8		man-sysutil-man		.man
 ./usr/share/man/man8/faithd.8			man-router-man		inet6,.man
 ./usr/share/man/man8/fastboot.8			man-sysutil-man		.man
