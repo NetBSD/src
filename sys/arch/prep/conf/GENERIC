@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.133 2007/03/20 17:20:59 garbled Exp $
+# $NetBSD: GENERIC,v 1.134 2007/04/26 19:44:02 garbled Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/prep/conf/std.prep"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.133 $"
+#ident		"GENERIC-$Revision: 1.134 $"
 
 maxusers	32
 
@@ -312,7 +312,6 @@ wdc*	at pnpbus?
 # PCI IDE controllers
 pciide*		at pci? dev ? function ? flags 0x0000
 hptide*		at pci? dev ? function ?
-options		PCIIDE_SLIDE_SETIRQA
 slide*		at pci? dev ? function ?
 
 #fdc0 at pnpbus?	# standard ISA floppy controller
