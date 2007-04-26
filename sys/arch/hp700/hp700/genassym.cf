@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.11.2.1 2007/03/24 17:27:28 skrll Exp $
+#	$NetBSD: genassym.cf,v 1.11.2.2 2007/04/26 19:38:43 skrll Exp $
 
 #	$OpenBSD: genassym.cf,v 1.18 2001/09/20 18:31:14 mickey Exp $
 
@@ -208,9 +208,6 @@ member	L_STAT		l_stat
 member	L_WCHAN		l_wchan
 member	L_MD		l_md
 member	L_MD_REGS	l_md.md_regs
-
-export	LSRUN
-export	LSONPROC
 
 struct	pcb
 member	PCB_FPREGS	pcb_fpregs
