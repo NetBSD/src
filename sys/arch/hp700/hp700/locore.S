@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.19 2007/03/24 09:45:32 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.20 2007/04/26 19:43:21 skrll Exp $	*/
 
 /*	$OpenBSD: locore.S,v 1.46 2001/09/20 18:33:03 mickey Exp $	*/
 
@@ -175,7 +175,7 @@ ENTRY(start,0)
 /*
  *	start(pdc, boothowto, bootdev, esym, bootapiver, argv, argc)
  *
- *	pdc - PDC entry point (not used, HP-UX compatibility)
+ *	pdc - PDC entry point
  *	boothowto - boot flags (see "reboot.h")
  *	bootdev - boot device (index into bdevsw)
  *	esym - end of symbol table (or &end if not present)
@@ -373,10 +373,8 @@ $callmain:
 	nop
 EXIT(start)
 
-/* int
- * pdc_call(func, pdc_flag, ...)
- *	iodcio_t func;
- *	int pdc_flag;
+/*
+ * int pdc_call(iodcio_t func,int pdc_flag, ...)
  */
 ENTRY(pdc_call,160)
 
