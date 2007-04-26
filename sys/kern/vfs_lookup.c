@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.89 2007/04/26 20:06:55 dsl Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.90 2007/04/26 20:58:37 dsl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.89 2007/04/26 20:06:55 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.90 2007/04/26 20:58:37 dsl Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -329,25 +329,26 @@ namei(struct nameidata *ndp)
 				/* Called from (eg) emul_find_interp() */
 				dp = ndp->ni_erootdir;
 			} else {
-				if (cwdi->cwdi_edir != NULL) {
+				if (cwdi->cwdi_edir == NULL
+				    || (cnp->cn_pnbuf[1] == '.' 
+					   && cnp->cn_pnbuf[2] == '.' 
+					   && cnp->cn_pnbuf[3] == '/')) {
+					ndp->ni_erootdir = NULL;
+				} else {
 					dp = cwdi->cwdi_edir;
 					ndp->ni_erootdir = dp;
-				} else {
-					cnp->cn_flags &= ~TRYEMULROOT;
-					ndp->ni_erootdir = NULL;
 				}
 			}
 		} else
 			ndp->ni_erootdir = NULL;
 	} else {
 		dp = cwdi->cwdi_cdir;
-		cnp->cn_flags &= ~TRYEMULROOT;
 		ndp->ni_erootdir = NULL;
 	}
 
 #ifdef KTRACE
 	if (KTRPOINT(cnp->cn_lwp->l_proc, KTR_NAMEI)) {
-		if (cnp->cn_flags & TRYEMULROOT) {
+		if (ndp->ni_erootdir != NULL) {
 			/*
 			 * To make any sense, the trace entry need to have the
 			 * text of the emulation path prepended.
@@ -389,7 +390,7 @@ namei(struct nameidata *ndp)
 			if (ndp->ni_dvp) {
 				vput(ndp->ni_dvp);
 			}
-			if (cnp->cn_flags & TRYEMULROOT) {
+			if (ndp->ni_erootdir != NULL) {
 				/* Retry the whole thing from the normal root */
 				cnp->cn_flags &= ~TRYEMULROOT;
 				goto emul_retry;
@@ -478,8 +479,12 @@ badlink:
 			vput(dp);
 			/* Keep absolute symbolic links inside emulation root */
 			dp = ndp->ni_erootdir;
-			if (dp == NULL)
+			if (dp == NULL || (cnp->cn_pnbuf[1] == '.' 
+			    && cnp->cn_pnbuf[2] == '.'
+			    && cnp->cn_pnbuf[3] == '/')) {
+				ndp->ni_erootdir = NULL;
 				dp = ndp->ni_rootdir;
+			}
 			VREF(dp);
 			vn_lock(dp, LK_EXCLUSIVE | LK_RETRY);
 		}
@@ -697,11 +702,7 @@ dirloop:
 		struct proc *p = l->l_proc;
 
 		for (;;) {
-			if (dp == ndp->ni_rootdir || dp == ndp->ni_erootdir
-			    || dp == rootvnode) {
-				/* ".." at emulation root goes to real root */
-				if (dp != ndp->ni_rootdir)
-					goto setrootdir;
+			if (dp == ndp->ni_rootdir || dp == rootvnode) {
 				ndp->ni_dvp = dp;
 				ndp->ni_vp = dp;
 				VREF(dp);
@@ -721,8 +722,6 @@ dirloop:
 					p->p_pid, kauth_cred_geteuid(l->l_cred),
 					p->p_comm);
 				    /* Put us at the jail root. */
-				setrootdir:
-				    ndp->ni_erootdir = NULL;
 				    vput(dp);
 				    dp = ndp->ni_rootdir;
 				    ndp->ni_dvp = dp;
