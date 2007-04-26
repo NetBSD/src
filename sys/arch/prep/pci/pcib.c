@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.19 2007/04/26 17:39:54 garbled Exp $	*/
+/*	$NetBSD: pcib.c,v 1.20 2007/04/26 19:27:04 garbled Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.19 2007/04/26 17:39:54 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.20 2007/04/26 19:27:04 garbled Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -45,7 +45,6 @@ __KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.19 2007/04/26 17:39:54 garbled Exp $");
 #include <sys/device.h>
 
 #include <machine/bus.h>
-#include <machine/residual.h>
 
 #include <dev/isa/isavar.h>
 
@@ -109,6 +108,7 @@ void
 pcibattach(struct device *parent, struct device *self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
+	prop_bool_t rav;
 	char devinfo[256];
 	u_int32_t v;
 	int lvlmask = 0;
@@ -157,10 +157,12 @@ pcibattach(struct device *parent, struct device *self, void *aux)
 	 * setting it up differently.  Reset it to 0000h.
 	 */
 
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_SYMPHONY &&
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_SYMPHONY_83C553 &&
-	    strcmp(res->VitalProductData.PrintableModel,
-		"000000000000000000000000000(e2)") == 0) {
+	rav = prop_dictionary_get(device_properties(parent),
+	    "prep-raven-pchb");
+
+	if (rav != NULL && prop_bool_true(rav) &&
+	    PCI_VENDOR(pa->pa_id) == PCI_VENDOR_SYMPHONY &&
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_SYMPHONY_83C553) {
 
 		prop_dictionary_t dict, devsub;
 		prop_number_t pinsub;
