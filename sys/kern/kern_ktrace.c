@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.121 2007/03/29 17:37:13 ad Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.122 2007/04/26 16:27:32 dsl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.121 2007/03/29 17:37:13 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.122 2007/04/26 16:27:32 dsl Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h"
@@ -566,14 +566,25 @@ ktrsysret(struct lwp *l, register_t code, int error, register_t *retval)
 	ktraddentry(l, kte, KTA_WAITOK);
 }
 
-/*
- * XXX: ndp->ni_pathlen should be passed.
- */
 void
-ktrnamei(struct lwp *l, char *path)
+ktrnamei(struct lwp *l, const char *path, size_t pathlen)
 {
+	ktrkmem(l, KTR_NAMEI, path, pathlen);
+}
 
-	ktrkmem(l, KTR_NAMEI, path, strlen(path));
+void
+ktrnamei2(struct lwp *l, const char *eroot, size_t erootlen,
+		const char *path, size_t pathlen)
+{
+	struct ktrace_entry *kte;
+	void *buf;
+
+	if (ktealloc(&kte, &buf, l, KTR_NAMEI, erootlen + pathlen))
+		return;
+	memcpy(buf, eroot, erootlen);
+	buf = (char *)buf + erootlen;
+	memcpy(buf, path, pathlen);
+	ktraddentry(l, kte, KTA_WAITOK);
 }
 
 void

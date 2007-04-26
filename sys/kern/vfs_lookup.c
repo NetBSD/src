@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.87 2007/04/25 20:41:42 dsl Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.88 2007/04/26 16:27:32 dsl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.87 2007/04/25 20:41:42 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.88 2007/04/26 16:27:32 dsl Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -310,15 +310,6 @@ namei(struct nameidata *ndp)
 	}
 	ndp->ni_loopcnt = 0;
 
-#ifdef KTRACE
-	if (KTRPOINT(cnp->cn_lwp->l_proc, KTR_NAMEI))
-		ktrnamei(cnp->cn_lwp, cnp->cn_pnbuf);
-#endif
-#ifdef SYSTRACE
-	if (ISSET(cnp->cn_lwp->l_proc->p_flag, PK_SYSTRACE))
-		systrace_namei(ndp);
-#endif
-
 	/*
 	 * Get root directory for the translation.
 	 */
@@ -353,6 +344,26 @@ namei(struct nameidata *ndp)
 		cnp->cn_flags &= ~TRYEMULROOT;
 		ndp->ni_erootdir = NULL;
 	}
+
+#ifdef KTRACE
+	if (KTRPOINT(cnp->cn_lwp->l_proc, KTR_NAMEI)) {
+		if (cnp->cn_flags & TRYEMULROOT) {
+			if (cnp->cn_flags & EMULROOTSET)
+				ktrnamei2(cnp->cn_lwp, "/emul/???", 9,
+				    cnp->cn_pnbuf, ndp->ni_pathlen);
+			else
+				ktrnamei2(cnp->cn_lwp,
+				    cnp->cn_lwp->l_proc->p_emul->e_path,
+				    strlen(cnp->cn_lwp->l_proc->p_emul->e_path),
+				    cnp->cn_pnbuf, ndp->ni_pathlen);
+		} else
+			ktrnamei(cnp->cn_lwp, cnp->cn_pnbuf, ndp->ni_pathlen);
+	}
+#endif
+#ifdef SYSTRACE
+	if (ISSET(cnp->cn_lwp->l_proc->p_flag, PK_SYSTRACE))
+		systrace_namei(ndp);
+#endif
 
 	VREF(dp);
 	vn_lock(dp, LK_EXCLUSIVE | LK_RETRY);
