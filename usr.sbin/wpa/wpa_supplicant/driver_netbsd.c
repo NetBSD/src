@@ -1,4 +1,4 @@
-/*	$NetBSD: driver_netbsd.c,v 1.1 2005/10/01 18:50:12 scw Exp $	*/
+/*	$NetBSD: driver_netbsd.c,v 1.2 2007/04/26 16:25:56 seanb Exp $	*/
 
 /*
  * WPA Supplicant - driver interaction with BSD net80211 layer
@@ -341,6 +341,7 @@ wpa_driver_bsd_set_key(void *priv, wpa_alg alg,
 		wk.ik_keyix = IEEE80211_KEYIX_NONE;
 	wk.ik_keylen = key_len;
 	memcpy(&wk.ik_keyrsc, seq, seq_len);
+	wk.ik_keyrsc = le64toh(wk.ik_keyrsc);
 	memcpy(wk.ik_keydata, key, key_len);
 
 	return set80211var(drv, IEEE80211_IOC_WPAKEY, &wk, sizeof(wk));
