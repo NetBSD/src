@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.90 2007/04/26 20:58:37 dsl Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.91 2007/04/26 21:21:44 dsl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.90 2007/04/26 20:58:37 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.91 2007/04/26 21:21:44 dsl Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -345,6 +345,7 @@ namei(struct nameidata *ndp)
 		dp = cwdi->cwdi_cdir;
 		ndp->ni_erootdir = NULL;
 	}
+	VREF(dp);
 
 #ifdef KTRACE
 	if (KTRPOINT(cnp->cn_lwp->l_proc, KTR_NAMEI)) {
@@ -373,7 +374,6 @@ namei(struct nameidata *ndp)
 		systrace_namei(ndp);
 #endif
 
-	VREF(dp);
 	vn_lock(dp, LK_EXCLUSIVE | LK_RETRY);
 	/* Loop through symbolic links */
 	for (;;) {
