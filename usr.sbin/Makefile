@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.226 2007/02/20 21:29:08 briggs Exp $
+#	$NetBSD: Makefile,v 1.227 2007/04/26 21:14:46 agc Exp $
 #	from: @(#)Makefile	5.20 (Berkeley) 6/12/93
 
 .include <bsd.own.mk>
@@ -67,7 +67,7 @@ SUBDIR+=pf
 
 # puffs
 .if (${MKPUFFS} != "no")
-SUBDIR+=puffs
+SUBDIR+=puffs fusermount
 .endif
 
 .include <bsd.subdir.mk>
