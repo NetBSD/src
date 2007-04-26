@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_dec.S,v 1.1.2.2 2007/04/26 17:45:31 thorpej Exp $	*/
+/*	$NetBSD: atomic_add.S,v 1.1.2.1 2007/04/26 17:45:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -38,37 +38,31 @@
 
 #include "atomic_op_asm.h"
 
+#include "../../powerpc/atomic/atomic_add.S"
+
 	.text
 
-ENTRY_NOPROFILE(_atomic_dec_32)
-1:	lwarx	%r10,0(%r3)
-	addi	%r10,%r10,-1
-	stwcx.	%r10,0(%r3)
+ENTRY_NOPROFILE(_atomic_add_64)
+1:	ldarx	%r10,0(%r3)
+	add	%r10,%r10,%r4
+	stdcx.	%r10,0(%r3)
 	bne-	1b
 	blr
-ATOMIC_OP_ALIAS(atomic_dec_32,_atomic_dec_32)
-ATOMIC_OP_ALIAS(atomic_dec_uint,_atomic_dec_32)
-STRONG_ALIAS(_atomic_dec_uint,_atomic_dec_32)
-#if !defined(_LP64)
-ATOMIC_OP_ALIAS(atomic_dec_ulong,_atomic_dec_32)
-STRONG_ALIAS(_atomic_dec_ulong,_atomic_dec_32)
-ATOMIC_OP_ALIAS(atomic_dec_ptr,_atomic_dec_32)
-STRONG_ALIAS(_atomic_dec_ptr,_atomic_dec_32)
-#endif
+ATOMIC_OP_ALIAS(atomic_add_64,_atomic_add_64)
+ATOMIC_OP_ALIAS(atomic_add_long,_atomic_add_64)
+STRONG_ALIAS(_atomic_add_long,_atomic_add_64)
+ATOMIC_OP_ALIAS(atomic_add_ptr,_atomic_add_64)
+STRONG_ALIAS(_atomic_add_ptr,_atomic_add_64)
 
-ENTRY_NOPROFILE(_atomic_dec_32_nv)
-1:	lwarx	%r10,0(%r3)
-	addi	%r10,%r10,-1
-	stwcx.	%r10,0(%r3)
+ENTRY_NOPROFILE(_atomic_add_64_nv)
+1:	ldarx	%r10,0(%r3)
+	add	%r10,%r10,%r4
+	stdcx.	%r10,0(%r3)
 	bne-	1b
 	mr	%r3,%r10
 	blr
-ATOMIC_OP_ALIAS(atomic_dec_32_nv,_atomic_dec_32_nv)
-ATOMIC_OP_ALIAS(atomic_dec_uint_nv,_atomic_dec_32_nv)
-STRONG_ALIAS(_atomic_dec_uint_nv,_atomic_dec_32_nv)
-#if !defined(_LP64)
-ATOMIC_OP_ALIAS(atomic_dec_ulong_nv,_atomic_dec_32_nv)
-STRONG_ALIAS(_atomic_dec_ulong_nv,_atomic_dec_32_nv)
-ATOMIC_OP_ALIAS(atomic_dec_ptr_nv,_atomic_dec_32_nv)
-STRONG_ALIAS(_atomic_dec_ptr_nv,_atomic_dec_32_nv)
-#endif
+ATOMIC_OP_ALIAS(atomic_add_64_nv,_atomic_add_64_nv)
+ATOMIC_OP_ALIAS(atomic_add_long_nv,_atomic_add_64_nv)
+STRONG_ALIAS(_atomic_add_long_nv,_atomic_add_64_nv)
+ATOMIC_OP_ALIAS(atomic_add_ptr_nv,_atomic_add_64_nv)
+STRONG_ALIAS(_atomic_add_ptr_nv,_atomic_add_64_nv)

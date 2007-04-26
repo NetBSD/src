@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_inc.S,v 1.1.2.1 2007/04/26 05:47:16 thorpej Exp $	*/
+/*	$NetBSD: atomic_inc.S,v 1.1.2.2 2007/04/26 17:45:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -49,10 +49,12 @@ ENTRY_NOPROFILE(_atomic_inc_32)
 ATOMIC_OP_ALIAS(atomic_inc_32,_atomic_inc_32)
 ATOMIC_OP_ALIAS(atomic_inc_uint,_atomic_inc_32)
 STRONG_ALIAS(_atomic_inc_uint,_atomic_inc_32)
+#if !defined(_LP64)
 ATOMIC_OP_ALIAS(atomic_inc_ulong,_atomic_inc_32)
 STRONG_ALIAS(_atomic_inc_ulong,_atomic_inc_32)
 ATOMIC_OP_ALIAS(atomic_inc_ptr,_atomic_inc_32)
 STRONG_ALIAS(_atomic_inc_ptr,_atomic_inc_32)
+#endif
 
 ENTRY_NOPROFILE(_atomic_inc_32_nv)
 1:	lwarx	%r10,0(%r3)
@@ -64,7 +66,9 @@ ENTRY_NOPROFILE(_atomic_inc_32_nv)
 ATOMIC_OP_ALIAS(atomic_inc_32_nv,_atomic_inc_32_nv)
 ATOMIC_OP_ALIAS(atomic_inc_uint_nv,_atomic_inc_32_nv)
 STRONG_ALIAS(_atomic_inc_uint_nv,_atomic_inc_32_nv)
+#if !defined(_LP64)
 ATOMIC_OP_ALIAS(atomic_inc_ulong_nv,_atomic_inc_32_nv)
 STRONG_ALIAS(_atomic_inc_ulong_nv,_atomic_inc_32_nv)
 ATOMIC_OP_ALIAS(atomic_inc_ptr_nv,_atomic_inc_32_nv)
 STRONG_ALIAS(_atomic_inc_ptr_nv,_atomic_inc_32_nv)
+#endif

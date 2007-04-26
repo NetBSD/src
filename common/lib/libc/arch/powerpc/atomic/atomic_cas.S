@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_cas.S,v 1.1.2.1 2007/04/26 05:47:12 thorpej Exp $	*/
+/*	$NetBSD: atomic_cas.S,v 1.1.2.2 2007/04/26 17:45:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -51,7 +51,9 @@ ENTRY_NOPROFILE(_atomic_cas_32)
 ATOMIC_OP_ALIAS(atomic_cas_32,_atomic_cas_32)
 ATOMIC_OP_ALIAS(atomic_cas_uint,_atomic_cas_32)
 STRONG_ALIAS(_atomic_cas_uint,_atomic_cas_32)
+#if !defined(_LP64)
 ATOMIC_OP_ALIAS(atomic_cas_ulong,_atomic_cas_32)
 STRONG_ALIAS(_atomic_cas_ulong,_atomic_cas_32)
 ATOMIC_OP_ALIAS(atomic_cas_ptr,_atomic_cas_32)
 STRONG_ALIAS(_atomic_cas_ptr,_atomic_cas_32)
+#endif

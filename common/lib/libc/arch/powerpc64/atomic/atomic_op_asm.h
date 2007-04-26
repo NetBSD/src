@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_dec.S,v 1.1.2.2 2007/04/26 17:45:31 thorpej Exp $	*/
+/*	$NetBSD: atomic_op_asm.h,v 1.1.2.1 2007/04/26 17:45:33 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -36,39 +36,19 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "atomic_op_asm.h"
+#ifndef _ATOMIC_OP_ASM_H_
+#define	_ATOMIC_OP_ASM_H_
 
-	.text
+#include <machine/asm.h>
 
-ENTRY_NOPROFILE(_atomic_dec_32)
-1:	lwarx	%r10,0(%r3)
-	addi	%r10,%r10,-1
-	stwcx.	%r10,0(%r3)
-	bne-	1b
-	blr
-ATOMIC_OP_ALIAS(atomic_dec_32,_atomic_dec_32)
-ATOMIC_OP_ALIAS(atomic_dec_uint,_atomic_dec_32)
-STRONG_ALIAS(_atomic_dec_uint,_atomic_dec_32)
-#if !defined(_LP64)
-ATOMIC_OP_ALIAS(atomic_dec_ulong,_atomic_dec_32)
-STRONG_ALIAS(_atomic_dec_ulong,_atomic_dec_32)
-ATOMIC_OP_ALIAS(atomic_dec_ptr,_atomic_dec_32)
-STRONG_ALIAS(_atomic_dec_ptr,_atomic_dec_32)
-#endif
+#if defined(_KERNEL)
 
-ENTRY_NOPROFILE(_atomic_dec_32_nv)
-1:	lwarx	%r10,0(%r3)
-	addi	%r10,%r10,-1
-	stwcx.	%r10,0(%r3)
-	bne-	1b
-	mr	%r3,%r10
-	blr
-ATOMIC_OP_ALIAS(atomic_dec_32_nv,_atomic_dec_32_nv)
-ATOMIC_OP_ALIAS(atomic_dec_uint_nv,_atomic_dec_32_nv)
-STRONG_ALIAS(_atomic_dec_uint_nv,_atomic_dec_32_nv)
-#if !defined(_LP64)
-ATOMIC_OP_ALIAS(atomic_dec_ulong_nv,_atomic_dec_32_nv)
-STRONG_ALIAS(_atomic_dec_ulong_nv,_atomic_dec_32_nv)
-ATOMIC_OP_ALIAS(atomic_dec_ptr_nv,_atomic_dec_32_nv)
-STRONG_ALIAS(_atomic_dec_ptr_nv,_atomic_dec_32_nv)
-#endif
+#define	ATOMIC_OP_ALIAS(a,s)	STRONG_ALIAS(a,s)
+
+#else /* _KERNEL */
+
+#define	ATOMIC_OP_ALIAS(a,s)	WEAK_ALIAS(a,s)
+
+#endif /* _KERNEL */
+
+#endif /* _ATOMIC_OP_ASM_H_ */
