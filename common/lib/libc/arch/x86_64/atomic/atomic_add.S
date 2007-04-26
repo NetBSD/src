@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_add.S,v 1.1.2.2 2007/04/22 05:12:42 thorpej Exp $	*/
+/*	$NetBSD: atomic_add.S,v 1.1.2.3 2007/04/26 04:04:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -49,6 +49,20 @@ ATOMIC_OP_ALIAS(atomic_add_8,_atomic_add_8)
 ATOMIC_OP_ALIAS(atomic_add_char,_atomic_add_8)
 STRONG_ALIAS(_atomic_add_char,_atomic_add_8)
 
+NENTRY(_atomic_add_8_nv)
+	movzbl	(%rdi), %eax
+1:	movb	%sil, %dl
+	addb	%al, %dl
+	LOCK
+	cmpxchgb %dl, (%rdi)
+	/* %eax now contains the old value */
+	jne	1b
+	movzbl	%dl, %eax
+	ret
+ATOMIC_OP_ALIAS(atomic_add_8_nv,_atomic_add_8_nv)
+ATOMIC_OP_ALIAS(atomic_add_char_nv,_atomic_add_8_nv)
+STRONG_ALIAS(_atomic_add_char_nv,_atomic_add_8_nv)
+
 NENTRY(_atomic_add_16)
 	LOCK
 	addw	%si, (%rdi)
@@ -57,6 +71,20 @@ ATOMIC_OP_ALIAS(atomic_add_16,_atomic_add_16)
 ATOMIC_OP_ALIAS(atomic_add_short,_atomic_add_16)
 STRONG_ALIAS(_atomic_add_short,_atomic_add_16)
 
+NENTRY(_atomic_add_16_nv)
+	movzwl	(%rdi), %eax
+1:	movw	%si, %dx
+	addw	%ax, %dx
+	LOCK
+	cmpxchgw %dx, (%rdi)
+	/* %eax now contains the old value */
+	jne	1b
+	movzwl	%dx, %eax
+	ret
+ATOMIC_OP_ALIAS(atomic_add_16_nv,_atomic_add_16_nv)
+ATOMIC_OP_ALIAS(atomic_add_short_nv,_atomic_add_16_nv)
+STRONG_ALIAS(_atomic_add_short_nv,_atomic_add_16_nv)
+
 NENTRY(_atomic_add_32)
 	LOCK
 	addl	%esi, (%rdi)
@@ -64,6 +92,20 @@ NENTRY(_atomic_add_32)
 ATOMIC_OP_ALIAS(atomic_add_32,_atomic_add_32)
 ATOMIC_OP_ALIAS(atomic_add_int,_atomic_add_32)
 STRONG_ALIAS(_atomic_add_int,_atomic_add_32)
+
+NENTRY(_atomic_add_32_nv)
+	movl	(%rdi), %eax
+1:	movl	%esi, %edx
+	addl	%eax, %edx
+	LOCK
+	cmpxchgl %edx, (%rdi)
+	/* %eax now contains the old value */
+	jne	1b
+	movl	%edx, %eax
+	ret
+ATOMIC_OP_ALIAS(atomic_add_32_nv,_atomic_add_32_nv)
+ATOMIC_OP_ALIAS(atomic_add_int_nv,_atomic_add_32_nv)
+STRONG_ALIAS(_atomic_add_int_nv,_atomic_add_32_nv)
 
 NENTRY(_atomic_add_64)
 	LOCK
@@ -74,3 +116,19 @@ ATOMIC_OP_ALIAS(atomic_add_long,_atomic_add_64)
 STRONG_ALIAS(_atomic_add_long,_atomic_add_64)
 ATOMIC_OP_ALIAS(atomic_add_ptr,_atomic_add_64)
 STRONG_ALIAS(_atomic_add_ptr,_atomic_add_64)
+
+NENTRY(_atomic_add_64_nv)
+	movq	(%rdi), %rax
+1:	movq	%rsi, %rdx
+	addq	%rax, %rdx
+	LOCK
+	cmpxchgq %rdx, (%rdi)
+	/* %rax now contains the old value */
+	jne	1b
+	movq	%rdx, %rax
+	ret
+ATOMIC_OP_ALIAS(atomic_add_64_nv,_atomic_add_64_nv)
+ATOMIC_OP_ALIAS(atomic_add_long_nv,_atomic_add_64_nv)
+STRONG_ALIAS(_atomic_add_long_nv,_atomic_add_64_nv)
+ATOMIC_OP_ALIAS(atomic_add_ptr_nv,_atomic_add_64_nv)
+STRONG_ALIAS(_atomic_add_ptr_nv,_atomic_add_64_nv)
