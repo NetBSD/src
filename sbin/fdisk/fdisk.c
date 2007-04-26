@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.103 2007/03/10 14:18:28 apb Exp $ */
+/*	$NetBSD: fdisk.c,v 1.104 2007/04/26 18:51:00 christos Exp $ */
 
 /*
  * Mach Operating System
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.103 2007/03/10 14:18:28 apb Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.104 2007/04/26 18:51:00 christos Exp $");
 #endif /* not lint */
 
 #define MBRPTYPENAMES
@@ -2066,8 +2066,9 @@ change_part(int extended, int part, int sysid, daddr_t start, daddr_t size,
 		 * somewhere to safely write the menu tag.
 		 */
 		if (boot->mbr_bootsel_magic != LE_MBR_BS_MAGIC) {
-			if (yesno("The bootselect code is not installed, "
-					    "do you want to install it now?"))
+			if (f_flag ||
+			    yesno("The bootselect code is not installed, "
+				"do you want to install it now?"))
 				install_bootsel(MBR_BS_ACTIVE);
 		}
 		if (boot->mbr_bootsel_magic == LE_MBR_BS_MAGIC) {
