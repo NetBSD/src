@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1.1,v 1.1.2.42 2007/04/25 09:17:39 ghen Exp $
+#	$NetBSD: CHANGES-3.1.1,v 1.1.2.43 2007/04/26 06:56:45 ghen Exp $
 
 A complete list of changes from the NetBSD 3.1 release to the NetBSD 3.1.1
 release:
@@ -303,4 +303,17 @@ etc/rc.d/routed					1.10
 	startup because they are part of the network initialization. Use
 	similar dependences as the "rtsold" script.
 	[tron, ticket #1767]
+
+sbin/sysctl/sysctl.8				patch
+sys/netinet6/ip6_input.c			1.102 via patch
+sys/netinet6/ip6_var.h				1.41-1.42 via patch
+sys/netinet6/route6.c				1.18 via patch
+
+	Disable processing of routing header type 0 packets since they
+	can be used of DoS attacks. Provide a sysctl to re-enable them
+	(net.inet6.ip6.rht0).
+
+	Information from:
+	http://www.secdev.org/conf/IPv6_RH_security-csw07.pdf
+	[christos, ticket #1766]
 
