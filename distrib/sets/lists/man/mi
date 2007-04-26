@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.995 2007/04/26 17:22:19 dyoung Exp $
+# $NetBSD: mi,v 1.996 2007/04/26 21:22:04 agc Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -1926,6 +1926,7 @@
 ./usr/share/man/cat8/fssconfig.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/ftp-proxy.0		man-pf-catman		pf,.cat
 ./usr/share/man/cat8/ftpd.0			man-netutil-catman	.cat
+./usr/share/man/cat8/fusermount.0		man-sysutil-catman	puffs,.cat
 ./usr/share/man/cat8/fwctl.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/genassym.sh.0		man-obsolete		obsolete
 ./usr/share/man/cat8/getNAME.0			man-man-catman		.cat
@@ -4375,6 +4376,7 @@
 ./usr/share/man/man8/fssconfig.8		man-sysutil-man		.man
 ./usr/share/man/man8/ftp-proxy.8		man-pf-man		pf,.man
 ./usr/share/man/man8/ftpd.8			man-netutil-man		.man
+./usr/share/man/man8/fusermount.8		man-sysutil-man		puffs,.man
 ./usr/share/man/man8/fwctl.8			man-sysutil-man		.man
 ./usr/share/man/man8/genassym.sh.8		man-obsolete		obsolete
 ./usr/share/man/man8/getNAME.8			man-man-man		.man
