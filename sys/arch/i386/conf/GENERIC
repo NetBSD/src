@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.823 2007/04/19 14:34:35 xtraeme Exp $
+# $NetBSD: GENERIC,v 1.824 2007/04/26 17:11:36 dyoung Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.823 $"
+#ident 		"GENERIC-$Revision: 1.824 $"
 
 maxusers	32		# estimated number of users
 
@@ -793,6 +793,7 @@ wdc1	at isa? port 0x170 irq 15 flags 0x00
 
 # ATA (IDE) bus support
 atabus* at ata?
+options	ATADEBUG
 
 # IDE drives
 # Flags are used only with controllers that support DMA operations

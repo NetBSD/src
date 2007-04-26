@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_LAPTOP,v 1.232 2007/04/19 14:34:35 xtraeme Exp $
+#	$NetBSD: GENERIC_LAPTOP,v 1.233 2007/04/26 17:11:35 dyoung Exp $
 #	From: NetBSD: GENERIC,v 1.414 2001/07/30 19:59:05 ad Exp
 #
 #	GENERIC_LAPTOP -- GENERIC with cardbus and some USB devices enabled
@@ -8,7 +8,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.232 $"
+#ident 		"GENERIC-$Revision: 1.233 $"
 
 maxusers	32		# estimated number of users
 
@@ -585,6 +585,7 @@ wdc1	at isa? port 0x170 irq 15 flags 0x00
 
 # ATA (IDE) bus support
 atabus* at ata?
+options	ATADEBUG
 
 # IDE drives
 # Flags are used only with controllers that support DMA operations
