@@ -1,4 +1,4 @@
-/* 	$NetBSD: compat_util.c,v 1.35 2007/04/22 08:29:55 dsl Exp $	*/
+/* 	$NetBSD: compat_util.c,v 1.36 2007/04/26 20:06:55 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_util.c,v 1.35 2007/04/22 08:29:55 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_util.c,v 1.36 2007/04/26 20:06:55 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,11 +101,14 @@ emul_find_interp(struct lwp *l, struct exec_package *epp, const char *itp)
 
 	/* We need to use the emulation root for the new program,
 	 * not the one for the current process. */
-	if (epp->ep_emul_root != NULL)
-		flags = FOLLOW | TRYEMULROOT | EMULROOTSET;
-	else
+	if (epp->ep_emul_root == NULL)
 		flags = FOLLOW;
-	nd.ni_erootdir = epp->ep_emul_root;
+	else {
+		nd.ni_erootdir = epp->ep_emul_root;
+		/* hack: Pass in the emulation path for ktrace calls */
+		nd.ni_next = epp->ep_esch->es_emul->e_path;
+		flags = FOLLOW | TRYEMULROOT | EMULROOTSET;
+	}
 
 	NDINIT(&nd, LOOKUP, flags, UIO_SYSSPACE, itp, l);
 	error = namei(&nd);

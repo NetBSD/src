@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.88 2007/04/26 16:27:32 dsl Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.89 2007/04/26 20:06:55 dsl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.88 2007/04/26 16:27:32 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.89 2007/04/26 20:06:55 dsl Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -326,7 +326,7 @@ namei(struct nameidata *ndp)
 	if (cnp->cn_pnbuf[0] == '/') {
 		if (cnp->cn_flags & TRYEMULROOT) {
 			if (cnp->cn_flags & EMULROOTSET) {
-				/* Called from(eg) emul_find_interp() */
+				/* Called from (eg) emul_find_interp() */
 				dp = ndp->ni_erootdir;
 			} else {
 				if (cwdi->cwdi_edir != NULL) {
@@ -348,14 +348,21 @@ namei(struct nameidata *ndp)
 #ifdef KTRACE
 	if (KTRPOINT(cnp->cn_lwp->l_proc, KTR_NAMEI)) {
 		if (cnp->cn_flags & TRYEMULROOT) {
+			/*
+			 * To make any sense, the trace entry need to have the
+			 * text of the emulation path prepended.
+			 * Usually we can get this from the current process,
+			 * but when called from emul_find_interp() it is only
+			 * in the exec_package - so we get it passed in ni_next
+			 * (this is a hack).
+			 */
+			const char *emul_path;
 			if (cnp->cn_flags & EMULROOTSET)
-				ktrnamei2(cnp->cn_lwp, "/emul/???", 9,
-				    cnp->cn_pnbuf, ndp->ni_pathlen);
+				emul_path = ndp->ni_next;
 			else
-				ktrnamei2(cnp->cn_lwp,
-				    cnp->cn_lwp->l_proc->p_emul->e_path,
-				    strlen(cnp->cn_lwp->l_proc->p_emul->e_path),
-				    cnp->cn_pnbuf, ndp->ni_pathlen);
+				emul_path = cnp->cn_lwp->l_proc->p_emul->e_path;
+			ktrnamei2(cnp->cn_lwp, emul_path, strlen(emul_path),
+			    cnp->cn_pnbuf, ndp->ni_pathlen);
 		} else
 			ktrnamei(cnp->cn_lwp, cnp->cn_pnbuf, ndp->ni_pathlen);
 	}
