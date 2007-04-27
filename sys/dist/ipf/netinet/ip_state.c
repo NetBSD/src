@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_state.c,v 1.19 2007/04/15 10:42:41 martin Exp $	*/
+/*	$NetBSD: ip_state.c,v 1.20 2007/04/27 10:17:21 jnemeth Exp $	*/
 
 /*
  * Copyright (C) 1995-2003 by Darren Reed.
@@ -114,7 +114,7 @@ struct file;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_state.c,v 1.19 2007/04/15 10:42:41 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_state.c,v 1.20 2007/04/27 10:17:21 jnemeth Exp $");
 #else
 static const char sccsid[] = "@(#)ip_state.c	1.8 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_state.c,v 2.186.2.52 2007/02/02 22:50:32 darrenr Exp";
@@ -136,11 +136,7 @@ static ipstate_t *fr_checkicmpmatchingstate __P((fr_info_t *));
 static int fr_state_flush __P((int, int));
 static ips_stat_t *fr_statetstats __P((void));
 static int fr_delstate __P((ipstate_t *, int));
-#if __NetBSD_Version__ >= 499001000
-static int fr_state_remove __P((void*));
-#else
 static int fr_state_remove __P((caddr_t));
-#endif
 static void fr_ipsmove __P((ipstate_t *, u_int));
 static int fr_tcpstate __P((fr_info_t *, tcphdr_t *, ipstate_t *));
 static int fr_tcpoptions __P((fr_info_t *, tcphdr_t *, tcpdata_t *));
@@ -394,11 +390,7 @@ static ips_stat_t *fr_statetstats()
 /* the IP addresses and other protocol specific information.                */
 /* ------------------------------------------------------------------------ */
 static int fr_state_remove(data)
-#if __NetBSD_Version__ >= 499001000
-void *data;
-#else
 caddr_t data;
-#endif
 {
 	ipstate_t *sp, st;
 	int error;
@@ -436,11 +428,7 @@ caddr_t data;
 /* Processes an ioctl call made to operate on the IP Filter state device.   */
 /* ------------------------------------------------------------------------ */
 int fr_state_ioctl(data, cmd, mode, uid, ctx)
-#if __NetBSD_Version__ >= 499001000
-void *data;
-#else
 caddr_t data;
-#endif
 ioctlcmd_t cmd;
 int mode, uid;
 void *ctx;
