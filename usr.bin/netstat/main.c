@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.63 2006/11/15 11:55:00 elad Exp $	*/
+/*	$NetBSD: main.c,v 1.64 2007/04/27 18:37:53 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.4 (Berkeley) 3/1/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.63 2006/11/15 11:55:00 elad Exp $");
+__RCSID("$NetBSD: main.c,v 1.64 2007/04/27 18:37:53 mlelstv Exp $");
 #endif
 #endif /* not lint */
 
@@ -369,13 +369,13 @@ static void print_softintrq __P((void));
 static void usage __P((void));
 static struct protox *name2protox __P((char *));
 static struct protox *knownname __P((char *));
-static void prepare(char *, char *);
+static void prepare(char *, char *, struct protox *tp);
 
 kvm_t *kvmd;
 gid_t egid;
 
 void
-prepare(char *nlistf, char *memf)
+prepare(char *nlistf, char *memf, struct protox *tp)
 {
 	char buf[_POSIX2_LINE_MAX];
 
@@ -390,6 +390,26 @@ prepare(char *nlistf, char *memf)
 		   iflag ||
 #ifndef SMALL
 		   gflag ||
+		   (pflag && tp->pr_sindex == N_DDPSTAT) ||
+#ifdef NS
+		   (pflag && tp->pr_sindex == N_IDPSTAT) ||
+		   (pflag && tp->pr_sindex == N_SPPSTAT) ||
+		   (pflag && tp->pr_sindex == N_NSERR) ||
+#endif
+		   (pflag && tp->pr_sindex == N_TPSTAT) ||
+		   (pflag && tp->pr_sindex == N_CLTPSTAT) ||
+		   (pflag && tp->pr_sindex == N_CLNPSTAT) ||
+		   (pflag && tp->pr_sindex == N_ESISSTAT) ||
+#endif
+		   (pflag && tp->pr_sindex == N_ARPSTAT) ||
+		   (pflag && tp->pr_sindex == N_IGMPSTAT) ||
+		   (pflag && tp->pr_sindex == N_PIMSTAT) ||
+#ifdef IPSEC
+		   (pflag && tp->pr_sindex == N_IPSECSTAT) ||
+		   (pflag && tp->pr_sindex == N_PFKEYSTAT) ||
+#ifdef INET6
+		   (pflag && tp->pr_sindex == N_IPSEC6STAT) ||
+#endif
 #endif
 		   Pflag) {
 		/* These flags are not yet supported via sysctl(3). */
@@ -572,7 +592,7 @@ main(argc, argv)
 	}
 #endif
 
-	prepare(nlistf, memf);
+	prepare(nlistf, memf, tp);
 
 #ifndef SMALL
 	if (Bflag) {
