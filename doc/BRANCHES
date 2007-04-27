@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.184 2007/04/26 05:51:21 thorpej Exp $
+#	$NetBSD: BRANCHES,v 1.185 2007/04/27 06:33:04 thorpej Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -582,10 +582,10 @@ Notes:		Base atomic primitives need to be implemented for
 		mips
 		ns32k
 		powerpc		DONE except for membar_*()
-		powerpc64
+		powerpc64	DONE except for membar_*()
 		sh3
-		sparc
-		sparc64
+		sparc		DONE except for membar_*()
+		sparc64		DONE except for membar_*()
 		vax
 		x86_64		DONE
 
@@ -613,6 +613,9 @@ Notes:		Base atomic primitives need to be implemented for
 
 				- Audit MUTEX_CAS() and RWLOCK_CAS() uses
 				  to see of membar_enter() is required here.
+
+				- Talk to ad@ -- figure out of non-atomic
+				  mutex / rwlock release is actually safe.
 
 		arm		- Consider using a RAS technique like
 				  MIPS uses for _lock_cas() and the mutex
