@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_compat.h,v 1.13 2007/04/14 20:34:36 martin Exp $	*/
+/*	$NetBSD: ip_compat.h,v 1.14 2007/04/27 10:17:15 jnemeth Exp $	*/
 
 /*
  * Copyright (C) 1993-2001, 2003 by Darren Reed.
@@ -732,6 +732,7 @@ typedef unsigned int    u_32_t;
 #  define	GETKTIME(x)	microtime((struct timeval *)x)
 #  define	IPF_PANIC(x,y)	if (x) { printf y; panic("ipf_panic"); }
 #if __NetBSD_Version__ >= 499001000
+typedef unsigned char * caddr_t;
 #  define	COPYIN(a,b,c)	copyin((a), (b), (c))
 #  define	COPYOUT(a,b,c)	copyout((a), (b), (c))
 #  define	BCOPYIN(a,b,c)	bcopy((a), (b), (c))

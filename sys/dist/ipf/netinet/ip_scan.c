@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_scan.c,v 1.9 2007/04/14 20:34:39 martin Exp $	*/
+/*	$NetBSD: ip_scan.c,v 1.10 2007/04/27 10:17:21 jnemeth Exp $	*/
 
 /*
  * Copyright (C) 1995-2001 by Darren Reed.
@@ -573,11 +573,7 @@ ipstate_t *is;
 
 
 int fr_scan_ioctl(data, cmd, mode, uid, ctx)
-#if __NetBSD_Version__ >= 499001000
-void *data;
-#else
 caddr_t data;
-#endif
 ioctlcmd_t cmd;
 int mode, uid;
 void *ctx;

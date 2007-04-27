@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_lookup.h,v 1.6 2007/04/16 02:40:25 dogcow Exp $	*/
+/*	$NetBSD: ip_lookup.h,v 1.7 2007/04/27 10:17:19 jnemeth Exp $	*/
 
 
 #ifndef __IP_LOOKUP_H__
@@ -89,11 +89,7 @@ typedef	struct	ipflookupiter	{
 
 
 extern int ip_lookup_init __P((void));
-#if __NetBSD_Version__ >= 499001000
-extern int ip_lookup_ioctl __P((void*, ioctlcmd_t, int, int, void *));
-#else
 extern int ip_lookup_ioctl __P((caddr_t, ioctlcmd_t, int, int, void *));
-#endif
 extern void ip_lookup_unload __P((void));
 extern void ip_lookup_deref __P((int, void *));
 extern int ip_lookup_iterate __P((void *, int, void *));

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_proxy.c,v 1.13 2007/04/14 20:34:38 martin Exp $	*/
+/*	$NetBSD: ip_proxy.c,v 1.14 2007/04/27 10:17:20 jnemeth Exp $	*/
 
 /*
  * Copyright (C) 1997-2003 by Darren Reed.
@@ -293,11 +293,7 @@ ipnat_t *nat;
 
 
 int appr_ioctl(data, cmd, mode, ctx)
-#if __NetBSD_Version__ >= 499001000
-void *data;
-#else
 caddr_t data;
-#endif
 ioctlcmd_t cmd;
 int mode;
 void *ctx;
