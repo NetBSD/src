@@ -1,4 +1,4 @@
-.\"	$NetBSD: atomic_ops.3,v 1.1.2.2 2007/04/26 06:00:24 thorpej Exp $
+.\"	$NetBSD: atomic_ops.3,v 1.1.2.3 2007/04/27 06:27:53 thorpej Exp $
 .\"
 .\" Copyright (c) 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -90,6 +90,13 @@ For this reason, applications making use of atomic memory operations should
 limit their use to regular memory.
 The results of using atomic memory operations on anything other than
 regular memory are undefined.
+.Pp
+Users of atomic memory operations should take care to modify any given
+memory location either entirely with atomic operations or entirely with
+some other synchronization mechanism.
+Intermixing of atomic operations with other synchronization mechanisms
+for the same memory location results in undefined behavior.
+This should also be considered in light of the access width caveat above.
 .Pp
 On some architectures, atomic operations less than 32-bits wide are
 extremely expensive.
