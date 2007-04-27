@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_lookup.c,v 1.10 2007/04/16 02:40:25 dogcow Exp $	*/
+/*	$NetBSD: ip_lookup.c,v 1.11 2007/04/27 10:17:19 jnemeth Exp $	*/
 
 /*
  * Copyright (C) 2002-2003 by Darren Reed.
@@ -134,11 +134,7 @@ void ip_lookup_unload()
 /* command.                                                                 */
 /* ------------------------------------------------------------------------ */
 int ip_lookup_ioctl(data, cmd, mode, uid, ctx)
-#if __NetBSD_Version__ >= 499001000
-void *data;
-#else
 caddr_t data;
-#endif
 ioctlcmd_t cmd;
 int mode, uid;
 void *ctx;
@@ -649,11 +645,7 @@ void *data;
 
 /*ARGSUSED*/
 int ip_lookup_ioctl(data, cmd, mode, uid, ctx)
-#if __NetBSD_Version__ >= 499001000
-void * data;
-#else
 caddr_t data;
-#endif
 ioctlcmd_t cmd;
 int mode, uid;
 void *ctx;

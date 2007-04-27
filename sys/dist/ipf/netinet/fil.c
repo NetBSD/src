@@ -1,4 +1,4 @@
-/*	$NetBSD: fil.c,v 1.30 2007/04/14 20:34:35 martin Exp $	*/
+/*	$NetBSD: fil.c,v 1.31 2007/04/27 10:17:15 jnemeth Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -154,7 +154,7 @@ struct file;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.30 2007/04/14 20:34:35 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.31 2007/04/27 10:17:15 jnemeth Exp $");
 #else
 static const char sccsid[] = "@(#)fil.c	1.36 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: fil.c,v 2.243.2.99 2007/02/17 12:41:41 darrenr Exp";
@@ -6902,11 +6902,7 @@ int uid;
 /* to the /dev/ipl device.                                                  */
 /* ------------------------------------------------------------------------ */
 int fr_ipf_ioctl(data, cmd, mode, uid, ctx)
-#if __NetBSD_Version__ >= 499001000
-void *data;
-#else
 caddr_t data;
-#endif
 ioctlcmd_t cmd;
 int mode, uid;
 void *ctx;

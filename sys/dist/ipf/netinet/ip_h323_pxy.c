@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_h323_pxy.c,v 1.6 2007/04/14 20:34:36 martin Exp $	*/
+/*	$NetBSD: ip_h323_pxy.c,v 1.7 2007/04/27 10:17:19 jnemeth Exp $	*/
 
 /*
  * Copyright 2001, QNX Software Systems Ltd. All Rights Reserved
@@ -34,7 +34,7 @@
 #include "opt_ipfilter.h"
 #endif
 
-__KERNEL_RCSID(1, "$NetBSD: ip_h323_pxy.c,v 1.6 2007/04/14 20:34:36 martin Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ip_h323_pxy.c,v 1.7 2007/04/27 10:17:19 jnemeth Exp $");
 
 #define IPF_H323_PROXY
 
@@ -142,13 +142,8 @@ ap_session_t *aps;
 			 * We are lucky here because this function is not
 			 * called with ipf_nat locked.
 			 */
-#if __NetBSD_Version__ >= 499001000
-			if (fr_nat_ioctl((void *)ipn, SIOCRMNAT, NAT_SYSSPACE|
-				         NAT_LOCKHELD|FWRITE, 0, NULL) == -1) {
-#else
 			if (fr_nat_ioctl((caddr_t)ipn, SIOCRMNAT, NAT_SYSSPACE|
 				         NAT_LOCKHELD|FWRITE, 0, NULL) == -1) {
-#endif
 				/*EMPTY*/;
 				/* log the error */
 			}
@@ -211,13 +206,8 @@ nat_t *nat;
 		 * of calling fr_nat_ioctl(), we add the nat rule ourself.
 		 */
 		RWLOCK_EXIT(&ipf_nat);
-#if __NetBSD_Version__ >= 499001000
-		if (fr_nat_ioctl((void *)ipn, SIOCADNAT,
-				 NAT_SYSSPACE|FWRITE, 0, NULL) == -1) {
-#else
 		if (fr_nat_ioctl((caddr_t)ipn, SIOCADNAT,
 				 NAT_SYSSPACE|FWRITE, 0, NULL) == -1) {
-#endif
 			READ_ENTER(&ipf_nat);
 			return -1;
 		}

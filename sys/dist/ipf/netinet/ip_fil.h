@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.h,v 1.8 2007/04/14 20:34:36 martin Exp $	*/
+/*	$NetBSD: ip_fil.h,v 1.9 2007/04/27 10:17:17 jnemeth Exp $	*/
 
 /*
  * Copyright (C) 1993-2001, 2003 by Darren Reed.
@@ -1416,11 +1416,7 @@ extern	int	fr_fastroute __P((mb_t *, mb_t **, fr_info_t *, frdest_t *));
 extern	int	fr_inobj __P((void *, void *, int));
 extern	int	fr_inobjsz __P((void *, void *, int, int));
 extern	int	fr_ioctlswitch __P((int, void *, ioctlcmd_t, int, int, void *));
-#if __NetBSD_Version__ >= 499001000
-extern	int	fr_ipf_ioctl __P((void*, ioctlcmd_t, int, int, void *));
-#else
 extern	int	fr_ipf_ioctl __P((caddr_t, ioctlcmd_t, int, int, void *));
-#endif
 extern	int	fr_ipftune __P((ioctlcmd_t, void *));
 extern	int	fr_outobj __P((void *, void *, int));
 extern	int	fr_outobjsz __P((void *, void *, int, int));
