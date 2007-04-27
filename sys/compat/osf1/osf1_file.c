@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_file.c,v 1.24 2007/04/22 08:29:58 dsl Exp $ */
+/* $NetBSD: osf1_file.c,v 1.25 2007/04/27 23:53:15 dogcow Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_file.c,v 1.24 2007/04/22 08:29:58 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_file.c,v 1.25 2007/04/27 23:53:15 dogcow Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
@@ -99,7 +99,6 @@ osf1_sys_access(l, v, retval)
 	register_t *retval;
 {
 	struct osf1_sys_access_args *uap = v;
-	struct proc *p = l->l_proc;
 	struct sys_access_args a;
 	unsigned long leftovers;
 
@@ -121,7 +120,6 @@ osf1_sys_execve(l, v, retval)
 	register_t *retval;
 {
 	struct osf1_sys_execve_args *uap = v;
-	struct proc *p = l->l_proc;
 	struct sys_execve_args ap;
 
 	SCARG(&ap, path) = SCARG(uap, path);
@@ -142,7 +140,6 @@ osf1_sys_lstat(l, v, retval)
 	register_t *retval;
 {
 	struct osf1_sys_lstat_args *uap = v;
-	struct proc *p = l->l_proc;
 	struct stat sb;
 	struct osf1_stat osb;
 	int error;
@@ -166,7 +163,6 @@ osf1_sys_lstat2(l, v, retval)
 	register_t *retval;
 {
 	struct osf1_sys_lstat2_args *uap = v;
-	struct proc *p = l->l_proc;
 	struct stat sb;
 	struct osf1_stat2 osb;
 	int error;
@@ -186,7 +182,6 @@ osf1_sys_mknod(l, v, retval)
 	register_t *retval;
 {
 	struct osf1_sys_mknod_args *uap = v;
-	struct proc *p = l->l_proc;
 	struct sys_mknod_args a;
 
 	SCARG(&a, path) = SCARG(uap, path);
@@ -241,7 +236,6 @@ osf1_sys_pathconf(l, v, retval)
 	register_t *retval;
 {
 	struct osf1_sys_pathconf_args *uap = v;
-	struct proc *p = l->l_proc;
 	struct sys_pathconf_args a;
 	int error;
 
@@ -267,7 +261,6 @@ osf1_sys_stat(l, v, retval)
 	register_t *retval;
 {
 	struct osf1_sys_stat_args *uap = v;
-	struct proc *p = l->l_proc;
 	struct stat sb;
 	struct osf1_stat osb;
 	int error;
@@ -291,7 +284,6 @@ osf1_sys_stat2(l, v, retval)
 	register_t *retval;
 {
 	struct osf1_sys_stat2_args *uap = v;
-	struct proc *p = l->l_proc;
 	struct stat sb;
 	struct osf1_stat2 osb;
 	int error;
@@ -311,7 +303,6 @@ osf1_sys_truncate(l, v, retval)
 	register_t *retval;
 {
 	struct osf1_sys_truncate_args *uap = v;
-	struct proc *p = l->l_proc;
 	struct sys_truncate_args a;
 
 	SCARG(&a, path) = SCARG(uap, path);
