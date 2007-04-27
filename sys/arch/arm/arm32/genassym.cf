@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.29.4.3 2007/03/29 10:52:27 skrll Exp $
+#	$NetBSD: genassym.cf,v 1.29.4.4 2007/04/27 07:23:13 skrll Exp $
 
 # Copyright (c) 1982, 1990 The Regents of the University of California.
 # All rights reserved.
@@ -87,9 +87,6 @@ define	L_WCHAN			offsetof(struct lwp, l_wchan)
 define	L_STAT			offsetof(struct lwp, l_stat)
 define	L_PROC			offsetof(struct lwp, l_proc)
 define	P_RASLIST		offsetof(struct proc, p_raslist)
-
-# Process status constants
-define	LSONPROC		LSONPROC
 
 define	PCB_TF			offsetof(struct pcb, pcb_tf)
 define	PCB_PAGEDIR		offsetof(struct pcb, pcb_pagedir)
