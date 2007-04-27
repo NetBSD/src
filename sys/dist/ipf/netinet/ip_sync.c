@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_sync.c,v 1.7 2007/04/14 20:34:39 martin Exp $	*/
+/*	$NetBSD: ip_sync.c,v 1.8 2007/04/27 10:17:22 jnemeth Exp $	*/
 
 /*
  * Copyright (C) 1995-1998 by Darren Reed.
@@ -998,11 +998,7 @@ synclist_t *sl;
 /* EINVAL on all occasions.                                                 */
 /* ------------------------------------------------------------------------ */
 int fr_sync_ioctl(data, cmd, mode, uid, ctx)
-#if __NetBSD_Version__ >= 499001000
-void *data;
-#else
 caddr_t data;
-#endif
 ioctlcmd_t cmd;
 int mode, uid;
 void *ctx;
