@@ -1,4 +1,4 @@
-/*	$NetBSD: mpbios.c,v 1.35 2007/03/05 16:51:03 drochner Exp $	*/
+/*	$NetBSD: mpbios.c,v 1.36 2007/04/28 14:51:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpbios.c,v 1.35 2007/03/05 16:51:03 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpbios.c,v 1.36 2007/04/28 14:51:58 christos Exp $");
 
 #include "acpi.h"
 #include "lapic.h"
@@ -1011,7 +1011,6 @@ static void
 mpbios_ioapic(const uint8_t *ent, struct device *self)
 {
 	const struct mpbios_ioapic *entry = (const struct mpbios_ioapic *)ent;
-	int locs[IOAPICBUSCF_NLOCS];
 
 	/* XXX let flags checking happen in ioapic driver.. */
 	if (!(entry->apic_flags & IOAPICENTRY_FLAG_EN))
@@ -1021,7 +1020,9 @@ mpbios_ioapic(const uint8_t *ent, struct device *self)
 
 #if NIOAPIC > 0
 	{
+	int locs[IOAPICBUSCF_NLOCS];
 	struct apic_attach_args aaa;
+
 	aaa.apic_id = entry->apic_id;
 	aaa.apic_version = entry->apic_version;
 	aaa.apic_address = (paddr_t)entry->apic_address;
