@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_machdep.c,v 1.53.26.1 2007/03/12 05:50:29 rmind Exp $	*/
+/*	$NetBSD: vme_machdep.c,v 1.53.26.2 2007/04/28 03:55:23 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vme_machdep.c,v 1.53.26.1 2007/03/12 05:50:29 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vme_machdep.c,v 1.53.26.2 2007/04/28 03:55:23 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/extent.h>
@@ -679,7 +679,6 @@ vmeintr4m(void *arg)
 #else
 	/* so, arrange to catch the fault... */
 	{
-	extern struct user *proc0paddr;
 	extern int fkbyte(volatile char *, struct pcb *);
 	volatile char *addr = &ihp->sc->sc_vec->vmebusvec[level];
 	struct pcb *xpcb;
@@ -687,11 +686,8 @@ vmeintr4m(void *arg)
 	int s;
 
 	s = splhigh();
-	if (curlwp == NULL)
-		xpcb = (struct pcb *)proc0paddr;
-	else
-		xpcb = &curlwp->l_addr->u_pcb;
 
+	xpcb = &curlwp->l_addr->u_pcb;
 	saveonfault = (u_long)xpcb->pcb_onfault;
 	vec = fkbyte(addr, xpcb);
 	xpcb->pcb_onfault = (void *)saveonfault;

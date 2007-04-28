@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.221.14.1 2007/03/12 05:50:41 rmind Exp $ */
+/*	$NetBSD: autoconf.c,v 1.221.14.2 2007/04/28 03:55:23 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.221.14.1 2007/03/12 05:50:41 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.221.14.2 2007/04/28 03:55:23 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -913,7 +913,6 @@ st_crazymap(int n)
 void
 cpu_configure(void)
 {
-	extern struct user *proc0paddr;	/* XXX see below */
 
 	/* initialise the softintr system */
 	softintr_init();
@@ -973,7 +972,10 @@ cpu_configure(void)
 	 * XXX stack running into it during auto-configuration.
 	 * XXX - should fix stack usage.
 	 */
-	bzero(proc0paddr, sizeof(struct user));
+	{
+		extern struct user *proc0paddr;
+		bzero(proc0paddr, sizeof(struct user));
+	}
 
 	spl0();
 }
