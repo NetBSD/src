@@ -1,11 +1,12 @@
 #!/bin/sh
 #
-# $NetBSD: amd,v 1.13 2004/10/12 14:51:03 lukem Exp $
+# $NetBSD: amd,v 1.13.10.1 2007/04/28 18:05:35 bouyer Exp $
 #
 
 # PROVIDE: amd
 # REQUIRE: rpcbind mountall ypbind
 # BEFORE:  DAEMON
+# KEYWORD: shutdown
 
 $_rc_subr_loaded . /etc/rc.subr
 
