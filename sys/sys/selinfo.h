@@ -1,4 +1,4 @@
-/*	$NetBSD: selinfo.h,v 1.2.30.1 2007/04/10 00:22:12 ad Exp $	*/
+/*	$NetBSD: selinfo.h,v 1.2.30.2 2007/04/28 22:40:04 ad Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -43,8 +43,8 @@
  */
 struct selinfo {
 	struct klist	sel_klist;	/* knotes attached to this selinfo */
-	struct lwp	*sel_lwp;	/* first thread to be notified */
-	TAILQ_ENTRY(selinfo) sel_chain;	/* entry on LWP's list of selinfo */
+	struct lwp	*sel_lwp;	/* first LWP to be notified */
+	SLIST_ENTRY(selinfo) sel_chain;	/* entry on LWP's list of selinfo */
 	bool		sel_collision;	/* true if more than one waiter */
 };
 

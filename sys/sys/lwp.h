@@ -1,4 +1,4 @@
-/* 	$NetBSD: lwp.h,v 1.56.2.5 2007/04/10 13:26:18 ad Exp $	*/
+/* 	$NetBSD: lwp.h,v 1.56.2.6 2007/04/28 22:40:04 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -115,7 +115,7 @@ typedef struct lwp {
 	lwpid_t		l_lid;		/* (: LWP identifier; local to proc */
 	char		l_name[MAXCOMLEN];/* (: name, optional */
 	int		l_selflag;	/* S: select() flags */
-	TAILQ_HEAD(,selinfo) l_selwait;	/* S: descriptors waited on */
+	SLIST_HEAD(,selinfo) l_selwait;	/* S: descriptors waited on */
 
 	/* Signals */
 	int		l_sigrestore;	/* p: need to restore old sig mask */

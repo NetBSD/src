@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.107.2.5 2007/04/10 00:22:11 ad Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.107.2.6 2007/04/28 22:40:03 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.107.2.5 2007/04/10 00:22:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.107.2.6 2007/04/28 22:40:03 ad Exp $");
 
 #include "opt_kstack.h"
 #include "opt_maxuprc.h"
@@ -358,6 +358,7 @@ proc0_init(void)
 	(*p->p_emul->e_syscall_intern)(p);
 #endif
 	strncpy(p->p_comm, "system", MAXCOMLEN);
+	strncpy(l->l_name, "swapper", MAXCOMLEN);
 
 	l->l_mutex = &sched_mutex;
 	l->l_flag = LW_INMEM | LW_SYSTEM;
@@ -370,7 +371,6 @@ proc0_init(void)
 	l->l_usrpri = PRIBIO;
 	l->l_inheritedprio = MAXPRI;
 	SLIST_INIT(&l->l_pi_lenders);
-	TAILQ_INIT(&l->l_selwait);
 
 	callout_init(&l->l_tsleep_ch);
 	cv_init(&l->l_sigcv, "sigwait");
