@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.89 2007/02/21 22:59:45 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.89.4.1 2007/04/28 21:05:55 ad Exp $	*/
 
 /*
  *
@@ -272,6 +272,7 @@ struct pv_entry {			/* locked by its list's pvh_lock */
 	struct pmap *pv_pmap;		/* the pmap */
 	vaddr_t pv_va;			/* the virtual address */
 	struct vm_page *pv_ptp;		/* the vm_page of the PTP */
+	struct pmap_cpu *pv_alloc_cpu;	/* CPU allocated from */
 };
 
 /*
@@ -495,11 +496,9 @@ kvtopte(vaddr_t va)
 
 paddr_t vtophys(vaddr_t);
 vaddr_t	pmap_map(vaddr_t, paddr_t, paddr_t, vm_prot_t);
-
-#if defined(USER_LDT)
 void	pmap_ldt_cleanup(struct lwp *);
-#define	PMAP_FORK
-#endif /* USER_LDT */
+void	pmap_cpu_init_early(struct cpu_info *);
+void	pmap_cpu_init_late(struct cpu_info *);
 
 /*
  * Hooks for the pool allocator.

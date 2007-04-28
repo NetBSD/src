@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.202.2.3 2007/04/05 21:53:36 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.202.2.4 2007/04/28 21:05:52 ad Exp $	*/
 
 /*
  *
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.202.2.3 2007/04/05 21:53:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.202.2.4 2007/04/28 21:05:52 ad Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"
@@ -190,7 +190,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.202.2.3 2007/04/05 21:53:36 ad Exp $");
  *
  * we have the following locks that we must contend with:
  *
- * "normal" locks:
+ * RW locks:
  *
  *  - pmap_main_lock
  *    this lock is used to prevent deadlock and/or provide mutex
@@ -205,7 +205,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.202.2.3 2007/04/05 21:53:36 ad Exp $");
  *    pmap_main_lock before locking.    since only one thread
  *    can write-lock a lock at a time, this provides mutex.
  *
- * "simple" locks:
+ * mutexes:
  *
  * - pmap lock (per pmap, part of uvm_object)
  *   this lock protects the fields in the pmap structure including
@@ -219,7 +219,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.202.2.3 2007/04/05 21:53:36 ad Exp $");
  *   when traversing the list (e.g. adding/removing mappings,
  *   syncing R/M bits, etc.)
  *
- * - pvalloc_lock
+ * - pmap_cpu::pc_pv_lock
  *   this lock protects the data structures which are used to manage
  *   the free list of pv_entry structures.
  *
@@ -233,11 +233,13 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.202.2.3 2007/04/05 21:53:36 ad Exp $");
  * locking data structures
  */
 
-static kmutex_t pvalloc_lock;
 static kmutex_t pmaps_lock;
 static krwlock_t pmap_main_lock;
 
 #define COUNT(x)	/* nothing */
+
+TAILQ_HEAD(pv_pagelist, pv_page);
+typedef struct pv_pagelist pv_pagelist_t;
 
 /*
  * TLB Shootdown:
@@ -262,31 +264,38 @@ struct pmap_tlb_shootdown_job {
 	struct pmap_tlb_shootdown_job *pj_nextfree;
 };
 
-#define PMAP_TLB_SHOOTDOWN_JOB_ALIGN 32
+#define PMAP_TLB_SHOOTDOWN_JOB_ALIGN 24
 union pmap_tlb_shootdown_job_al {
 	struct pmap_tlb_shootdown_job pja_job;
 	char pja_align[PMAP_TLB_SHOOTDOWN_JOB_ALIGN];
 };
 
-struct pmap_tlb_shootdown_q {
-	TAILQ_HEAD(, pmap_tlb_shootdown_job) pq_head;
-	int pq_pte;			/* aggregate PTE bits */
-	int pq_count;			/* number of pending requests */
-	__cpu_simple_lock_t pq_slock;	/* spin lock on queue */
-	int pq_flushg;		/* pending flush global */
-	int pq_flushu;		/* pending flush user */
-} pmap_tlb_shootdown_q[X86_MAXPROCS];
+struct pmap_cpu {
+	/* TLB shootdown */
+	TAILQ_HEAD(, pmap_tlb_shootdown_job) pc_head;
+	int pc_pte;			/* aggregate PTE bits */
+	int pc_count;			/* number of pending requests */
+	__cpu_simple_lock_t pc_tlb_lock;/* spin lock on queue */
+	int pc_flushg;			/* pending flush global */
+	int pc_flushu;			/* pending flush user */
+	union pmap_tlb_shootdown_job_al *pc_page, *pc_free;
 
-#define	PMAP_TLB_MAXJOBS	16
+	/* PV allocation */
+	pv_pagelist_t pc_pv_freepages;	/* pv_pages with free entrys */
+	pv_pagelist_t pc_pv_unusedpgs;	/* unused pv_pages */
+	u_int pc_pv_nfpvents;		/* # of free pv entries */
+	kmutex_t pc_pv_lock;		/* lock on structures */
+};
 
-void	pmap_tlb_shootdown_q_drain(struct pmap_tlb_shootdown_q *);
+#define	PMAP_TLB_MAXJOBS	32
+
+struct pmap_cpu pmap_cpu[X86_MAXPROCS];
+
+void	pmap_cpu_drain(struct pmap_cpu *);
 struct pmap_tlb_shootdown_job *pmap_tlb_shootdown_job_get
-	   (struct pmap_tlb_shootdown_q *);
-void	pmap_tlb_shootdown_job_put(struct pmap_tlb_shootdown_q *,
+	   (struct pmap_cpu *);
+void	pmap_tlb_shootdown_job_put(struct pmap_cpu *,
 	    struct pmap_tlb_shootdown_job *);
-
-__cpu_simple_lock_t pmap_tlb_shootdown_job_lock;
-union pmap_tlb_shootdown_job_al *pj_page, *pj_free;
 
 /*
  * global data structures
@@ -348,15 +357,9 @@ static bool pmap_initialized = false;	/* pmap_init done yet? */
 static vaddr_t virtual_avail;	/* VA of first free KVA */
 static vaddr_t virtual_end;	/* VA of last free KVA */
 
-
 /*
- * pv_page management structures: locked by pvalloc_lock
+ * pv_page management structures
  */
-
-TAILQ_HEAD(pv_pagelist, pv_page);
-static struct pv_pagelist pv_freepages;	/* list of pv_pages with free entrys */
-static struct pv_pagelist pv_unusedpgs; /* list of unused pv_pages */
-static int pv_nfpvents;			/* # of free pv entries */
 
 #define PVE_LOWAT (PVE_PER_PVPAGE / 2)	/* free pv_entry low water mark */
 #define PVE_HIWAT (PVE_LOWAT + (PVE_PER_PVPAGE * 2))
@@ -365,6 +368,7 @@ static int pv_nfpvents;			/* # of free pv entries */
 static inline int
 pv_compare(struct pv_entry *a, struct pv_entry *b)
 {
+
 	if (a->pv_pmap < b->pv_pmap)
 		return (-1);
 	else if (a->pv_pmap > b->pv_pmap)
@@ -449,8 +453,9 @@ static void		 pmap_enter_pv(struct pv_head *,
 				       vaddr_t, struct vm_page *);
 static void		 pmap_free_pv(struct pmap *, struct pv_entry *);
 static void		 pmap_free_pvs(struct pmap *, struct pv_entry *);
-static void		 pmap_free_pv_doit(struct pv_entry *);
-static void		 pmap_free_pvpage(void);
+static void		 pmap_free_pv_doit(struct pmap *,
+					   struct pv_entry *);
+static void		 pmap_free_pvpage(struct pmap_cpu *);
 static struct vm_page	*pmap_get_ptp(struct pmap *, int);
 static bool		 pmap_is_curpmap(struct pmap *);
 static bool		 pmap_is_active(struct pmap *, int);
@@ -507,7 +512,7 @@ static void
 pmap_apte_flush(struct pmap *pmap)
 {
 #if defined(MULTIPROCESSOR)
-	struct pmap_tlb_shootdown_q *pq;
+	struct pmap_cpu *pc;
 	struct cpu_info *ci, *self = curcpu();
 	CPU_INFO_ITERATOR cii;
 	int s;
@@ -526,11 +531,11 @@ pmap_apte_flush(struct pmap *pmap)
 		if (ci == self)
 			continue;
 		if (pmap_is_active(pmap, ci->ci_cpuid)) {
-			pq = &pmap_tlb_shootdown_q[ci->ci_cpuid];
+			pc = ci->ci_pmap_cpu;
 			s = splipi();
-			__cpu_simple_lock(&pq->pq_slock);
-			pq->pq_flushu++;
-			__cpu_simple_unlock(&pq->pq_slock);
+			__cpu_simple_lock(&pc->pc_tlb_lock);
+			pc->pc_flushu++;
+			__cpu_simple_unlock(&pc->pc_tlb_lock);
 			splx(s);
 			x86_send_ipi(ci, X86_IPI_TLB);
 		}
@@ -827,7 +832,6 @@ pmap_bootstrap(kva_start)
 	struct pmap *kpm;
 	vaddr_t kva;
 	pt_entry_t *pte;
-	int i;
 
 	/*
 	 * set up our local static global vars that keep track of the
@@ -1007,22 +1011,15 @@ pmap_bootstrap(kva_start)
 	/*
 	 * init the static-global locks and global lists.
 	 *
-	 * => pvalloc_lock must be a spin lock.  since the pmap module
-	 *      is entered with and without the kernel lock held, for
-	 *      now it must be at IPL_VM in order to prevent deadlock.
-	 *	note that it is NEVER taken from interrupt context.
-	 *
 	 * => pventry::pvh_lock (initialized elsewhere) must also be
 	 *      a spin lock, again at IPL_VM to prevent deadlock, and
 	 *	again is never taken from interrupt context.
 	 */
 
 	rw_init(&pmap_main_lock);
-	mutex_init(&pvalloc_lock, MUTEX_SPIN, IPL_VM);
 	mutex_init(&pmaps_lock, MUTEX_DEFAULT, IPL_NONE);
 	LIST_INIT(&pmaps);
-	TAILQ_INIT(&pv_freepages);
-	TAILQ_INIT(&pv_unusedpgs);
+	pmap_cpu_init_early(curcpu());
 
 	/*
 	 * initialize the pmap pool.
@@ -1030,17 +1027,6 @@ pmap_bootstrap(kva_start)
 
 	pool_init(&pmap_pmap_pool, sizeof(struct pmap), 0, 0, 0, "pmappl",
 	    &pool_allocator_nointr, IPL_NONE);
-
-	/*
-	 * Initialize the TLB shootdown queues.
-	 */
-
-	__cpu_simple_lock_init(&pmap_tlb_shootdown_job_lock);
-
-	for (i = 0; i < X86_MAXPROCS; i++) {
-		TAILQ_INIT(&pmap_tlb_shootdown_q[i].pq_head);
-		__cpu_simple_lock_init(&pmap_tlb_shootdown_q[i].pq_slock);
-	}
 
 	/*
 	 * initialize the PDE pool and cache.
@@ -1066,26 +1052,75 @@ pmap_bootstrap(kva_start)
 void
 pmap_init()
 {
-	int i;
 
-	pv_nfpvents = 0;
-
-	pj_page = (void *)uvm_km_alloc(kernel_map, PAGE_SIZE, 0, UVM_KMF_WIRED);
-	if (pj_page == NULL)
-		panic("pmap_init: pj_page");
-
-	for (i = 0;
-	     i < (PAGE_SIZE / sizeof (union pmap_tlb_shootdown_job_al) - 1);
-	     i++)
-		pj_page[i].pja_job.pj_nextfree = &pj_page[i + 1].pja_job;
-	pj_page[i].pja_job.pj_nextfree = NULL;
-	pj_free = &pj_page[0];
+	pmap_cpu_init_late(curcpu());
 
 	/*
 	 * done: pmap module is up (and ready for business)
 	 */
 
 	pmap_initialized = true;
+}
+
+/*
+ * pmap_cpu_init_early: perform early per-CPU initialization.
+ */
+
+void
+pmap_cpu_init_early(struct cpu_info *ci)
+{
+	struct pmap_cpu *pc;
+
+	pc = &pmap_cpu[ci->ci_cpuid];
+	ci->ci_pmap_cpu = pc;
+
+	/*
+	 * Initialize the TLB shootdown queues.
+	 */
+	TAILQ_INIT(&pc->pc_head);
+	__cpu_simple_lock_init(&pc->pc_tlb_lock);
+
+	/*
+	 * pc_pv_lock must be a spin lock.  since the pmap module
+	 * is entered with and without the kernel lock held, for
+	 * now it must be at IPL_VM in order to prevent deadlock.
+	 * note that it is NEVER taken from interrupt context.
+	 */
+	mutex_init(&pc->pc_pv_lock, MUTEX_SPIN, IPL_VM);
+ 
+	/*
+	 * Initalize the PV freelist.
+	 */
+	TAILQ_INIT(&pc->pc_pv_freepages);
+	TAILQ_INIT(&pc->pc_pv_unusedpgs);
+}
+
+/*
+ * pmap_cpu_init_late: perform late per-CPU initialization.
+ */
+
+void
+pmap_cpu_init_late(struct cpu_info *ci)
+{
+	struct pmap_cpu *pc = ci->ci_pmap_cpu;
+	int i;
+
+	/*
+	 * Allocate TLB shootdown queue entries.
+	 */
+	pc->pc_page = (void *)uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
+	    UVM_KMF_WIRED);
+	if (pc->pc_page == NULL)
+		panic("pmap_init: pj_page");
+
+	for (i = 0;
+	     i < (PAGE_SIZE / sizeof (union pmap_tlb_shootdown_job_al) - 1);
+	     i++)
+		pc->pc_page[i].pja_job.pj_nextfree =
+		    &pc->pc_page[i + 1].pja_job;
+	pc->pc_page[i].pja_job.pj_nextfree = NULL;
+	pc->pc_free = &pc->pc_page[0];
+
 }
 
 /*
@@ -1104,7 +1139,7 @@ pmap_init()
 
 /*
  * pmap_alloc_pv: function to allocate a pv_entry structure
- * => we lock pvalloc_lock
+ * => we lock pc_pv_lock
  * => if we fail, we call out to pmap_alloc_pvpage
  * => 3 modes:
  *    ALLOCPV_NEED   = we really need a pv_entry, even if we have to steal it
@@ -1122,20 +1157,23 @@ pmap_alloc_pv(pmap, mode)
 {
 	struct pv_page *pvpage;
 	struct pv_entry *pv;
+	struct pmap_cpu *pc;
 
-	mutex_spin_enter(&pvalloc_lock);
+	pc = curcpu()->ci_pmap_cpu;
+	mutex_spin_enter(&pc->pc_pv_lock);
 
-	pvpage = TAILQ_FIRST(&pv_freepages);
+	pvpage = TAILQ_FIRST(&pc->pc_pv_freepages);
 	if (pvpage != NULL) {
 		pvpage->pvinfo.pvpi_nfree--;
 		if (pvpage->pvinfo.pvpi_nfree == 0) {
 			/* nothing left in this one? */
-			TAILQ_REMOVE(&pv_freepages, pvpage, pvinfo.pvpi_list);
+			TAILQ_REMOVE(&pc->pc_pv_freepages, pvpage,
+			    pvinfo.pvpi_list);
 		}
 		pv = pvpage->pvinfo.pvpi_pvfree;
 		KASSERT(pv);
 		pvpage->pvinfo.pvpi_pvfree = SPLAY_RIGHT(pv, pv_node);
-		pv_nfpvents--;  /* took one from pool */
+		pc->pc_pv_nfpvents--;  /* took one from pool */
 	} else {
 		pv = NULL;		/* need more of them */
 	}
@@ -1145,14 +1183,18 @@ pmap_alloc_pv(pmap, mode)
 	 * create more pv_entrys ...
 	 */
 
-	if (pv_nfpvents < PVE_LOWAT || pv == NULL) {
+	if (pc->pc_pv_nfpvents < PVE_LOWAT || pv == NULL) {
 		if (pv == NULL)
 			pv = pmap_alloc_pvpage(pmap, (mode == ALLOCPV_TRY) ?
 					       mode : ALLOCPV_NEED);
 		else
 			(void) pmap_alloc_pvpage(pmap, ALLOCPV_NONEED);
 	}
-	mutex_spin_exit(&pvalloc_lock);
+	mutex_spin_exit(&pc->pc_pv_lock);
+
+	if (pv != NULL)
+		pv->pv_alloc_cpu = pc;
+
 	return(pv);
 }
 
@@ -1165,7 +1207,7 @@ pmap_alloc_pv(pmap, mode)
  *	we make a last ditch effort to steal a pv_page from some other
  *	mapping.    if that fails, we panic...
  *
- * => we assume that the caller holds pvalloc_lock
+ * => we assume that the caller holds pc_pv_lock
  */
 
 static struct pv_entry *
@@ -1173,24 +1215,29 @@ pmap_alloc_pvpage(struct pmap *pmap, int mode)
 {
 	struct pv_page *pvpage;
 	struct pv_entry *pv;
+	struct pmap_cpu *pc;
+
+	pc = curcpu()->ci_pmap_cpu;
 
 	/*
 	 * if we need_entry and we've got unused pv_pages, allocate from there
 	 */
 
-	pvpage = TAILQ_FIRST(&pv_unusedpgs);
+	pvpage = TAILQ_FIRST(&pc->pc_pv_unusedpgs);
 	if (mode != ALLOCPV_NONEED && pvpage != NULL) {
 
 		/* move it to pv_freepages list */
-		TAILQ_REMOVE(&pv_unusedpgs, pvpage, pvinfo.pvpi_list);
-		TAILQ_INSERT_HEAD(&pv_freepages, pvpage, pvinfo.pvpi_list);
+		TAILQ_REMOVE(&pc->pc_pv_unusedpgs, pvpage,
+		    pvinfo.pvpi_list);
+		TAILQ_INSERT_HEAD(&pc->pc_pv_freepages, pvpage,
+		    pvinfo.pvpi_list);
 
 		/* allocate a pv_entry */
 		pvpage->pvinfo.pvpi_nfree--;	/* can't go to zero */
 		pv = pvpage->pvinfo.pvpi_pvfree;
 		KASSERT(pv);
 		pvpage->pvinfo.pvpi_pvfree = SPLAY_RIGHT(pv, pv_node);
-		pv_nfpvents--;  /* took one from pool */
+		pc->pc_pv_nfpvents--;  /* took one from pool */
 		return(pv);
 	}
 
@@ -1199,10 +1246,10 @@ pmap_alloc_pvpage(struct pmap *pmap, int mode)
 	 * pmap is already locked!  (...but entering the mapping is safe...)
 	 */
 
-	mutex_spin_exit(&pvalloc_lock);
+	mutex_spin_exit(&pc->pc_pv_lock);
 	pvpage = (struct pv_page *)uvm_km_alloc(kmem_map, PAGE_SIZE, 0,
 	    UVM_KMF_TRYLOCK|UVM_KMF_NOWAIT|UVM_KMF_WIRED);
-	mutex_spin_enter(&pvalloc_lock);
+	mutex_spin_enter(&pc->pc_pv_lock);
 
 	if (pvpage == NULL)
 		return NULL;
@@ -1213,7 +1260,7 @@ pmap_alloc_pvpage(struct pmap *pmap, int mode)
 /*
  * pmap_add_pvpage: add a pv_page's pv_entrys to the free list
  *
- * => caller must hold pvalloc_lock
+ * => caller must hold pc_pv_lock
  * => if need_entry is true, we allocate and return one pv_entry
  */
 
@@ -1223,6 +1270,9 @@ pmap_add_pvpage(pvp, need_entry)
 	bool need_entry;
 {
 	int tofree, lcv;
+	struct pmap_cpu *pc;
+
+	pc = curcpu()->ci_pmap_cpu;
 
 	/* do we need to return one? */
 	tofree = (need_entry) ? PVE_PER_PVPAGE - 1 : PVE_PER_PVPAGE;
@@ -1235,10 +1285,10 @@ pmap_add_pvpage(pvp, need_entry)
 		pvp->pvinfo.pvpi_pvfree = &pvp->pvents[lcv];
 	}
 	if (need_entry)
-		TAILQ_INSERT_TAIL(&pv_freepages, pvp, pvinfo.pvpi_list);
+		TAILQ_INSERT_TAIL(&pc->pc_pv_freepages, pvp, pvinfo.pvpi_list);
 	else
-		TAILQ_INSERT_TAIL(&pv_unusedpgs, pvp, pvinfo.pvpi_list);
-	pv_nfpvents += tofree;
+		TAILQ_INSERT_TAIL(&pc->pc_pv_unusedpgs, pvp, pvinfo.pvpi_list);
+	pc->pc_pv_nfpvents += tofree;
 	return((need_entry) ? &pvp->pvents[lcv] : NULL);
 }
 
@@ -1248,22 +1298,26 @@ pmap_add_pvpage(pvp, need_entry)
  * => do not call this directly!  instead use either
  *    1. pmap_free_pv ==> free a single pv_entry
  *    2. pmap_free_pvs => free a list of pv_entrys
- * => we must be holding pvalloc_lock
+ * => we must be holding pc_pv_lock
  */
 
 static void
-pmap_free_pv_doit(pv)
+pmap_free_pv_doit(pmap, pv)
+	struct pmap *pmap;
 	struct pv_entry *pv;
 {
 	struct pv_page *pvp;
+	struct pmap_cpu *pc;
 
-	pvp = (struct pv_page *) x86_trunc_page(pv);
-	pv_nfpvents++;
+	pvp = (struct pv_page *)x86_trunc_page(pv);
+	pc = pv->pv_alloc_cpu;
+
+	pc->pc_pv_nfpvents++;
 	pvp->pvinfo.pvpi_nfree++;
 
 	/* nfree == 1 => fully allocated page just became partly allocated */
 	if (pvp->pvinfo.pvpi_nfree == 1) {
-		TAILQ_INSERT_HEAD(&pv_freepages, pvp, pvinfo.pvpi_list);
+		TAILQ_INSERT_HEAD(&pc->pc_pv_freepages, pvp, pvinfo.pvpi_list);
 	}
 
 	/* free it */
@@ -1275,15 +1329,24 @@ pmap_free_pv_doit(pv)
 	 */
 
 	if (pvp->pvinfo.pvpi_nfree == PVE_PER_PVPAGE) {
-		TAILQ_REMOVE(&pv_freepages, pvp, pvinfo.pvpi_list);
-		TAILQ_INSERT_HEAD(&pv_unusedpgs, pvp, pvinfo.pvpi_list);
+		TAILQ_REMOVE(&pc->pc_pv_freepages, pvp, pvinfo.pvpi_list);
+		TAILQ_INSERT_HEAD(&pc->pc_pv_unusedpgs, pvp, pvinfo.pvpi_list);
 	}
+
+	/*
+	 * Can't free the PV page if the PV entries were associated with
+	 * the kernel pmap; the pmap is already locked.
+	 */
+	if (pc->pc_pv_nfpvents > PVE_HIWAT &&
+	    TAILQ_FIRST(&pc->pc_pv_unusedpgs) != NULL &&
+	    pmap != pmap_kernel())
+		pmap_free_pvpage(pc);
 }
 
 /*
  * pmap_free_pv: free a single pv_entry
  *
- * => we gain the pvalloc_lock
+ * => we gain pc_pv_lock
  */
 
 static void
@@ -1291,24 +1354,19 @@ pmap_free_pv(pmap, pv)
 	struct pmap *pmap;
 	struct pv_entry *pv;
 {
-	mutex_spin_enter(&pvalloc_lock);
-	pmap_free_pv_doit(pv);
+	struct pmap_cpu *pc;
 
-	/*
-	 * Can't free the PV page if the PV entries were associated with
-	 * the kernel pmap; the pmap is already locked.
-	 */
-	if (pv_nfpvents > PVE_HIWAT && TAILQ_FIRST(&pv_unusedpgs) != NULL &&
-	    pmap != pmap_kernel())
-		pmap_free_pvpage();
+	pc = pv->pv_alloc_cpu;
 
-	mutex_spin_exit(&pvalloc_lock);
+	mutex_spin_enter(&pc->pc_pv_lock);
+	pmap_free_pv_doit(pmap, pv);
+	mutex_spin_exit(&pc->pc_pv_lock);
 }
 
 /*
  * pmap_free_pvs: free a list of pv_entrys
  *
- * => we gain the pvalloc_lock
+ * => we gain pc_pv_lock
  */
 
 static void
@@ -1317,47 +1375,48 @@ pmap_free_pvs(pmap, pvs)
 	struct pv_entry *pvs;
 {
 	struct pv_entry *nextpv;
+	kmutex_t *lock, *lock2;
 
-	mutex_spin_enter(&pvalloc_lock);
+	if (pvs == NULL)
+		return;
 
+	lock = &pvs->pv_alloc_cpu->pc_pv_lock;
+	mutex_spin_enter(lock);
 	for ( /* null */ ; pvs != NULL ; pvs = nextpv) {
+		lock2 = &pvs->pv_alloc_cpu->pc_pv_lock;
+		if (__predict_false(lock != lock2)) {
+			mutex_spin_exit(lock);
+			lock = lock2;
+			mutex_spin_enter(lock);
+		}
 		nextpv = SPLAY_RIGHT(pvs, pv_node);
-		pmap_free_pv_doit(pvs);
+		pmap_free_pv_doit(pmap, pvs);
 	}
-
-	/*
-	 * Can't free the PV page if the PV entries were associated with
-	 * the kernel pmap; the pmap is already locked.
-	 */
-	if (pv_nfpvents > PVE_HIWAT && TAILQ_FIRST(&pv_unusedpgs) != NULL &&
-	    pmap != pmap_kernel())
-		pmap_free_pvpage();
-
-	mutex_spin_exit(&pvalloc_lock);
+	mutex_spin_exit(lock);
 }
-
 
 /*
  * pmap_free_pvpage: try and free an unused pv_page structure
  *
- * => assume caller is holding the pvalloc_lock and that
- *	there is a page on the pv_unusedpgs list
+ * => must be called with the correct lock held
+ * => must be called with kernel preemption disabled
+ * => assume that there is a page on the pv_unusedpgs list
  */
 
 static void
-pmap_free_pvpage()
+pmap_free_pvpage(struct pmap_cpu *pc)
 {
 	struct pv_page *pvp;
 
-	pvp = TAILQ_FIRST(&pv_unusedpgs);
+	pvp = TAILQ_FIRST(&pc->pc_pv_unusedpgs);
 	/* remove pvp from pv_unusedpgs */
-	TAILQ_REMOVE(&pv_unusedpgs, pvp, pvinfo.pvpi_list);
+	TAILQ_REMOVE(&pc->pc_pv_unusedpgs, pvp, pvinfo.pvpi_list);
 
-	pv_nfpvents -= PVE_PER_PVPAGE;  /* update free count */
+	pc->pc_pv_nfpvents -= PVE_PER_PVPAGE;  /* update free count */
 
-	mutex_spin_exit(&pvalloc_lock);
+	mutex_spin_exit(&pc->pc_pv_lock);
 	uvm_km_free(kmem_map, (vaddr_t)pvp, PAGE_SIZE, UVM_KMF_WIRED);
-	mutex_spin_enter(&pvalloc_lock);
+	mutex_spin_enter(&pc->pc_pv_lock);
 }
 
 /*
@@ -1855,11 +1914,7 @@ pmap_reactivate(struct pmap *pmap)
 	 * for this pmap in the meantime.
 	 */
 
-#if defined(MULTIPROCESSOR)
 	s = splipi(); /* protect from tlb shootdown ipis. */
-#else /* defined(MULTIPROCESSOR) */
-	s = splvm();
-#endif /* defined(MULTIPROCESSOR) */
 	oldcpus = pmap->pm_cpus;
 	x86_atomic_setbits_l(&pmap->pm_cpus, cpumask);
 	if (oldcpus & cpumask) {
@@ -2280,6 +2335,7 @@ pmap_copy_page(srcpa, dstpa)
  * => caller must hold pmap's lock
  * => PTP must be mapped into KVA
  * => PTP should be null if pmap == pmap_kernel()
+ * => must be called with kernel preemption disabled
  */
 
 static void
@@ -2383,6 +2439,7 @@ pmap_remove_ptes(pmap, ptp, ptpva, startva, endva, cpumaskp, flags)
  * => PTP must be mapped into KVA
  * => PTP should be null if pmap == pmap_kernel()
  * => returns true if we removed a mapping
+ * => must be called with kernel preemption disabled
  */
 
 static bool
@@ -3156,7 +3213,6 @@ pmap_enter(pmap, va, pa, prot, flags)
 	int error;
 	bool wired = (flags & PMAP_WIRED) != 0;
 	struct pmap *pmap2;
-	struct cpu_info *ci;
 
 	KASSERT(pmap_initialized);
 
@@ -3191,18 +3247,11 @@ pmap_enter(pmap, va, pa, prot, flags)
 			npte |= PG_M;
 	}
 
-	/* get a cached pve.  we must disable preemption for this. */
-	crit_enter();
-	ci = curcpu();
-	if (ci->ci_freepve != NULL) {
-		freepve = ci->ci_freepve;
-		ci->ci_freepve = NULL;
-	} else
-		freepve = pmap_alloc_pv(pmap, ALLOCPV_NEED);
+	/* get a pve.  we must disable preemption for this. */
+	freepve = pmap_alloc_pv(pmap, ALLOCPV_NEED);
 	if (freepve == NULL) {
 		if (!(flags & PMAP_CANFAIL))
 			panic("pmap_enter: no pv entries available");
-		crit_exit();
 		return ENOMEM;
 	}
 
@@ -3376,15 +3425,10 @@ out:
 	pmap_unmap_ptes(pmap, pmap2);
 	rw_exit(&pmap_main_lock);
 
-	/* put back the cached PVE. */
 	if (freepve != NULL) {
-		ci = curcpu();
-		if (ci->ci_freepve == NULL)
-			ci->ci_freepve = freepve;
-		else
-			pmap_free_pv(pmap, freepve);
+		/* put back the pv, we don't need it. */
+		pmap_free_pv(pmap, freepve);
 	}
-	crit_exit();
 
 	return error;
 }
@@ -3603,7 +3647,7 @@ pmap_tlb_shootdown(pmap, va, pte, cpumaskp)
 	int32_t *cpumaskp;
 {
 	struct cpu_info *ci, *self;
-	struct pmap_tlb_shootdown_q *pq;
+	struct pmap_cpu *pc;
 	struct pmap_tlb_shootdown_job *pj;
 	CPU_INFO_ITERATOR cii;
 	int s;
@@ -3618,11 +3662,7 @@ pmap_tlb_shootdown(pmap, va, pte, cpumaskp)
 		return;
 	}
 
-#if defined(MULTIPROCESSOR)
 	s = splipi();
-#else /* defined(MULTIPROCESSOR) */
-	s = splvm();
-#endif /* defined(MULTIPROCESSOR) */
 	self = curcpu();
 #if 0
 	printf("dshootdown %lx\n", va);
@@ -3634,17 +3674,17 @@ pmap_tlb_shootdown(pmap, va, pte, cpumaskp)
 			continue;
 		if (ci != self && !(ci->ci_flags & CPUF_RUNNING))
 			continue;
-		pq = &pmap_tlb_shootdown_q[ci->ci_cpuid];
-		__cpu_simple_lock(&pq->pq_slock);
+		pc = ci->ci_pmap_cpu;
+		__cpu_simple_lock(&pc->pc_tlb_lock);
 
 		/*
 		 * If there's a global flush already queued, or a
 		 * non-global flush, and this pte doesn't have the G
 		 * bit set, don't bother.
 		 */
-		if (pq->pq_flushg > 0 ||
-		    (pq->pq_flushu > 0 && (pte & pmap_pg_g) == 0)) {
-			__cpu_simple_unlock(&pq->pq_slock);
+		if (pc->pc_flushg > 0 ||
+		    (pc->pc_flushu > 0 && (pte & pmap_pg_g) == 0)) {
+			__cpu_simple_unlock(&pc->pc_tlb_lock);
 			continue;
 		}
 
@@ -3659,15 +3699,15 @@ pmap_tlb_shootdown(pmap, va, pte, cpumaskp)
 		 * cpu_class)
 		 */
 		if (cpu_class == CPUCLASS_386) {
-			pq->pq_flushu++;
+			pc->pc_flushu++;
 			*cpumaskp |= 1U << ci->ci_cpuid;
-			__cpu_simple_unlock(&pq->pq_slock);
+			__cpu_simple_unlock(&pc->pc_tlb_lock);
 			continue;
 		}
 #endif
 
-		pj = pmap_tlb_shootdown_job_get(pq);
-		pq->pq_pte |= pte;
+		pj = pmap_tlb_shootdown_job_get(pc);
+		pc->pc_pte |= pte;
 		if (pj == NULL) {
 			/*
 			 * Couldn't allocate a job entry.
@@ -3675,31 +3715,31 @@ pmap_tlb_shootdown(pmap, va, pte, cpumaskp)
 			 * was due to too many pending flushes; otherwise,
 			 * tell other cpus to kill everything..
 			 */
-			if (ci == self && pq->pq_count < PMAP_TLB_MAXJOBS) {
+			if (ci == self && pc->pc_count < PMAP_TLB_MAXJOBS) {
 				pmap_update_pg(va);
-				__cpu_simple_unlock(&pq->pq_slock);
+				__cpu_simple_unlock(&pc->pc_tlb_lock);
 				continue;
 			} else {
-				if (pq->pq_pte & pmap_pg_g)
-					pq->pq_flushg++;
+				if (pc->pc_pte & pmap_pg_g)
+					pc->pc_flushg++;
 				else
-					pq->pq_flushu++;
+					pc->pc_flushu++;
 				/*
 				 * Since we've nailed the whole thing,
 				 * drain the job entries pending for that
 				 * processor.
 				 */
-				pmap_tlb_shootdown_q_drain(pq);
+				pmap_cpu_drain(pc);
 				*cpumaskp |= 1U << ci->ci_cpuid;
 			}
 		} else {
 			pj->pj_pmap = pmap;
 			pj->pj_va = va;
 			pj->pj_pte = pte;
-			TAILQ_INSERT_TAIL(&pq->pq_head, pj, pj_list);
+			TAILQ_INSERT_TAIL(&pc->pc_head, pj, pj_list);
 			*cpumaskp |= 1U << ci->ci_cpuid;
 		}
-		__cpu_simple_unlock(&pq->pq_slock);
+		__cpu_simple_unlock(&pc->pc_tlb_lock);
 	}
 	splx(s);
 }
@@ -3707,8 +3747,7 @@ pmap_tlb_shootdown(pmap, va, pte, cpumaskp)
 /*
  * pmap_do_tlb_shootdown_checktlbstate: check and update ci_tlbstate.
  *
- * => called at splipi if MULTIPROCESSOR.
- * => called at splvm if !MULTIPROCESSOR.
+ * => called at splipi
  * => return true if we need to maintain user tlbs.
  */
 static inline bool
@@ -3748,72 +3787,62 @@ void
 pmap_do_tlb_shootdown(struct cpu_info *self)
 {
 	u_long cpu_id = self->ci_cpuid;
-	struct pmap_tlb_shootdown_q *pq = &pmap_tlb_shootdown_q[cpu_id];
+	struct pmap_cpu *pc = self->ci_pmap_cpu;
 	struct pmap_tlb_shootdown_job *pj;
 	int s;
-#ifdef MULTIPROCESSOR
 	struct cpu_info *ci;
 	CPU_INFO_ITERATOR cii;
-#endif /* MULTIPROCESSOR */
 
 	KASSERT(self == curcpu());
 
-#ifdef MULTIPROCESSOR
 	s = splipi();
-#else /* MULTIPROCESSOR */
-	s = splvm();
-#endif /* MULTIPROCESSOR */
+	__cpu_simple_lock(&pc->pc_tlb_lock);
 
-	__cpu_simple_lock(&pq->pq_slock);
-
-	if (pq->pq_flushg) {
+	if (pc->pc_flushg) {
 		COUNT(flushg);
 		pmap_do_tlb_shootdown_checktlbstate(self);
 		tlbflushg();
-		pq->pq_flushg = 0;
-		pq->pq_flushu = 0;
-		pmap_tlb_shootdown_q_drain(pq);
+		pc->pc_flushg = 0;
+		pc->pc_flushu = 0;
+		pmap_cpu_drain(pc);
 	} else {
 		/*
 		 * TLB flushes for PTEs with PG_G set may be in the queue
 		 * after a flushu, they need to be dealt with.
 		 */
-		if (pq->pq_flushu) {
+		if (pc->pc_flushu) {
 			COUNT(flushu);
 			pmap_do_tlb_shootdown_checktlbstate(self);
 			tlbflush();
 		}
-		while ((pj = TAILQ_FIRST(&pq->pq_head)) != NULL) {
-			TAILQ_REMOVE(&pq->pq_head, pj, pj_list);
+		while ((pj = TAILQ_FIRST(&pc->pc_head)) != NULL) {
+			TAILQ_REMOVE(&pc->pc_head, pj, pj_list);
 
 			if ((pj->pj_pte & pmap_pg_g) ||
 			    pj->pj_pmap == pmap_kernel()) {
 				pmap_update_pg(pj->pj_va);
-			} else if (!pq->pq_flushu &&
+			} else if (!pc->pc_flushu &&
 			    pj->pj_pmap == self->ci_pmap) {
 				if (pmap_do_tlb_shootdown_checktlbstate(self))
 					pmap_update_pg(pj->pj_va);
 			}
 
-			pmap_tlb_shootdown_job_put(pq, pj);
+			pmap_tlb_shootdown_job_put(pc, pj);
 		}
 
-		pq->pq_flushu = pq->pq_pte = 0;
+		pc->pc_flushu = pc->pc_pte = 0;
 	}
 
-#ifdef MULTIPROCESSOR
 	for (CPU_INFO_FOREACH(cii, ci))
 		x86_atomic_clearbits_l(&ci->ci_tlb_ipi_mask,
 		    (1U << cpu_id));
-#endif /* MULTIPROCESSOR */
-	__cpu_simple_unlock(&pq->pq_slock);
-
+	__cpu_simple_unlock(&pc->pc_tlb_lock);
 	splx(s);
 }
 
 
 /*
- * pmap_tlb_shootdown_q_drain:
+ * pmap_cpu_drain:
  *
  *	Drain a processor's TLB shootdown queue.  We do not perform
  *	the shootdown operations.  This is merely a convenience
@@ -3822,16 +3851,16 @@ pmap_do_tlb_shootdown(struct cpu_info *self)
  *	Note: We expect the queue to be locked.
  */
 void
-pmap_tlb_shootdown_q_drain(pq)
-	struct pmap_tlb_shootdown_q *pq;
+pmap_cpu_drain(pc)
+	struct pmap_cpu *pc;
 {
 	struct pmap_tlb_shootdown_job *pj;
 
-	while ((pj = TAILQ_FIRST(&pq->pq_head)) != NULL) {
-		TAILQ_REMOVE(&pq->pq_head, pj, pj_list);
-		pmap_tlb_shootdown_job_put(pq, pj);
+	while ((pj = TAILQ_FIRST(&pc->pc_head)) != NULL) {
+		TAILQ_REMOVE(&pc->pc_head, pj, pj_list);
+		pmap_tlb_shootdown_job_put(pc, pj);
 	}
-	pq->pq_pte = 0;
+	pc->pc_pte = 0;
 }
 
 /*
@@ -3843,25 +3872,19 @@ pmap_tlb_shootdown_q_drain(pq)
  *	Note: We expect the queue to be locked.
  */
 struct pmap_tlb_shootdown_job *
-pmap_tlb_shootdown_job_get(pq)
-	struct pmap_tlb_shootdown_q *pq;
+pmap_tlb_shootdown_job_get(pc)
+	struct pmap_cpu *pc;
 {
 	struct pmap_tlb_shootdown_job *pj;
 
-	if (pq->pq_count >= PMAP_TLB_MAXJOBS)
+	if (pc->pc_count >= PMAP_TLB_MAXJOBS)
 		return (NULL);
-
-	__cpu_simple_lock(&pmap_tlb_shootdown_job_lock);
-	if (pj_free == NULL) {
-		__cpu_simple_unlock(&pmap_tlb_shootdown_job_lock);
+	if (pc->pc_free == NULL)
 		return NULL;
-	}
-	pj = &pj_free->pja_job;
-	pj_free =
-	    (union pmap_tlb_shootdown_job_al *)pj_free->pja_job.pj_nextfree;
-	__cpu_simple_unlock(&pmap_tlb_shootdown_job_lock);
+	pj = &pc->pc_free->pja_job;
+	pc->pc_free = (void *)pc->pc_free->pja_job.pj_nextfree;
+	pc->pc_count++;
 
-	pq->pq_count++;
 	return (pj);
 }
 
@@ -3873,19 +3896,14 @@ pmap_tlb_shootdown_job_get(pq)
  *	Note: We expect the queue to be locked.
  */
 void
-pmap_tlb_shootdown_job_put(pq, pj)
-	struct pmap_tlb_shootdown_q *pq;
+pmap_tlb_shootdown_job_put(pc, pj)
+	struct pmap_cpu *pc;
 	struct pmap_tlb_shootdown_job *pj;
 {
 
-#ifdef DIAGNOSTIC
-	if (pq->pq_count == 0)
-		panic("pmap_tlb_shootdown_job_put: queue length inconsistency");
-#endif
-	__cpu_simple_lock(&pmap_tlb_shootdown_job_lock);
-	pj->pj_nextfree = &pj_free->pja_job;
-	pj_free = (union pmap_tlb_shootdown_job_al *)pj;
-	__cpu_simple_unlock(&pmap_tlb_shootdown_job_lock);
+	KASSERT(pc->pc_count != 0);
 
-	pq->pq_count--;
+	pj->pj_nextfree = &pc->pc_free->pja_job;
+	pc->pc_free = (void *)pj;
+	pc->pc_count--;
 }
