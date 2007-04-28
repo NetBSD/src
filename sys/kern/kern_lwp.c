@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.61.2.8 2007/04/10 13:26:39 ad Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.61.2.9 2007/04/28 22:40:03 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -200,7 +200,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.61.2.8 2007/04/10 13:26:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.61.2.9 2007/04/28 22:40:03 ad Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -591,7 +591,6 @@ newlwp(struct lwp *l1, struct proc *p2, vaddr_t uaddr, bool inmem,
 	l2->l_cpu = l1->l_cpu;
 	l2->l_flag = inmem ? LW_INMEM : 0;
 	lwp_initspecific(l2);
-	TAILQ_INIT(&l2->l_selwait);
 
 	if (p2->p_flag & PK_SYSTEM) {
 		/*

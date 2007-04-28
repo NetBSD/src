@@ -1,4 +1,40 @@
-/*	$NetBSD: sys_generic.c,v 1.100.2.5 2007/04/13 15:49:48 ad Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.100.2.6 2007/04/28 22:40:04 ad Exp $	*/
+
+/*-
+ * Copyright (c) 2007 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Andrew Doran.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -41,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.100.2.5 2007/04/13 15:49:48 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.100.2.6 2007/04/28 22:40:04 ad Exp $");
 
 #include "opt_ktrace.h"
 
@@ -58,29 +94,34 @@ __KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.100.2.5 2007/04/13 15:49:48 ad Exp
 #include <sys/stat.h>
 #include <sys/kmem.h>
 #include <sys/poll.h>
+#include <sys/mount.h>
+#include <sys/syscallargs.h>
 #ifdef KTRACE
 #include <sys/ktrace.h>
 #endif
 
-#include <sys/mount.h>
-#include <sys/syscallargs.h>
-
 #include <uvm/uvm_extern.h>
 
-int selscan(struct lwp *, fd_mask *, fd_mask *, int, register_t *);
-int pollscan(struct lwp *, struct pollfd *, int, register_t *);
+/* Flags for lwp::l_selflag. */
+#define	SEL_RESET	0	/* awoken, interrupted, or not yet polling */
+#define	SEL_SCANNING	1	/* polling descriptors */
+#define	SEL_BLOCKING	2	/* about to block on select_cv */
 
-static void selclear(void);
+static int	selscan(lwp_t *, fd_mask *, fd_mask *, int, register_t *);
+static int	pollscan(lwp_t *, struct pollfd *, int, register_t *);
+static void	selclear(void);
 
-kmutex_t select_lock;
-kcondvar_t select_cv;
+/* Global state for select()/poll(). */
+kmutex_t	select_lock;
+kcondvar_t	select_cv;
+int		nselcoll;
 
 /*
  * Read system call.
  */
 /* ARGSUSED */
 int
-sys_read(struct lwp *l, void *v, register_t *retval)
+sys_read(lwp_t *l, void *v, register_t *retval)
 {
 	struct sys_read_args /* {
 		syscallarg(int)		fd;
@@ -89,7 +130,7 @@ sys_read(struct lwp *l, void *v, register_t *retval)
 	} */ *uap = v;
 	int		fd;
 	struct file	*fp;
-	struct proc	*p;
+	proc_t		*p;
 	struct filedesc	*fdp;
 
 	fd = SCARG(uap, fd);
@@ -112,12 +153,12 @@ sys_read(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-dofileread(struct lwp *l, int fd, struct file *fp, void *buf, size_t nbyte,
+dofileread(lwp_t *l, int fd, struct file *fp, void *buf, size_t nbyte,
 	off_t *offset, int flags, register_t *retval)
 {
 	struct iovec aiov;
 	struct uio auio;
-	struct proc *p;
+	proc_t *p;
 	struct vmspace *vm;
 	size_t cnt;
 	int error;
@@ -178,7 +219,7 @@ dofileread(struct lwp *l, int fd, struct file *fp, void *buf, size_t nbyte,
  * Scatter read system call.
  */
 int
-sys_readv(struct lwp *l, void *v, register_t *retval)
+sys_readv(lwp_t *l, void *v, register_t *retval)
 {
 	struct sys_readv_args /* {
 		syscallarg(int)				fd;
@@ -187,7 +228,7 @@ sys_readv(struct lwp *l, void *v, register_t *retval)
 	} */ *uap = v;
 	struct filedesc	*fdp;
 	struct file *fp;
-	struct proc *p;
+	proc_t *p;
 	int fd;
 
 	fd = SCARG(uap, fd);
@@ -210,10 +251,10 @@ sys_readv(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-dofilereadv(struct lwp *l, int fd, struct file *fp, const struct iovec *iovp,
+dofilereadv(lwp_t *l, int fd, struct file *fp, const struct iovec *iovp,
 	int iovcnt, off_t *offset, int flags, register_t *retval)
 {
-	struct proc *p;
+	proc_t		*p;
 	struct uio	auio;
 	struct iovec	*iov, *needfree, aiov[UIO_SMALLIOV];
 	struct vmspace	*vm;
@@ -308,7 +349,7 @@ dofilereadv(struct lwp *l, int fd, struct file *fp, const struct iovec *iovp,
  * Write system call
  */
 int
-sys_write(struct lwp *l, void *v, register_t *retval)
+sys_write(lwp_t *l, void *v, register_t *retval)
 {
 	struct sys_write_args /* {
 		syscallarg(int)			fd;
@@ -317,7 +358,7 @@ sys_write(struct lwp *l, void *v, register_t *retval)
 	} */ *uap = v;
 	int		fd;
 	struct file	*fp;
-	struct proc	*p;
+	proc_t		*p;
 	struct filedesc	*fdp;
 
 	fd = SCARG(uap, fd);
@@ -340,12 +381,12 @@ sys_write(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-dofilewrite(struct lwp *l, int fd, struct file *fp, const void *buf,
+dofilewrite(lwp_t *l, int fd, struct file *fp, const void *buf,
 	size_t nbyte, off_t *offset, int flags, register_t *retval)
 {
 	struct iovec aiov;
 	struct uio auio;
-	struct proc *p;
+	proc_t *p;
 	struct vmspace *vm;
 	size_t cnt;
 	int error;
@@ -411,7 +452,7 @@ dofilewrite(struct lwp *l, int fd, struct file *fp, const void *buf,
  * Gather write system call
  */
 int
-sys_writev(struct lwp *l, void *v, register_t *retval)
+sys_writev(lwp_t *l, void *v, register_t *retval)
 {
 	struct sys_writev_args /* {
 		syscallarg(int)				fd;
@@ -420,7 +461,7 @@ sys_writev(struct lwp *l, void *v, register_t *retval)
 	} */ *uap = v;
 	int		fd;
 	struct file	*fp;
-	struct proc	*p;
+	proc_t		*p;
 	struct filedesc	*fdp;
 
 	fd = SCARG(uap, fd);
@@ -443,10 +484,10 @@ sys_writev(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-dofilewritev(struct lwp *l, int fd, struct file *fp, const struct iovec *iovp,
+dofilewritev(lwp_t *l, int fd, struct file *fp, const struct iovec *iovp,
 	int iovcnt, off_t *offset, int flags, register_t *retval)
 {
-	struct proc	*p;
+	proc_t		*p;
 	struct uio	auio;
 	struct iovec	*iov, *needfree, aiov[UIO_SMALLIOV];
 	struct vmspace	*vm;
@@ -547,7 +588,7 @@ dofilewritev(struct lwp *l, int fd, struct file *fp, const struct iovec *iovp,
  */
 /* ARGSUSED */
 int
-sys_ioctl(struct lwp *l, void *v, register_t *retval)
+sys_ioctl(lwp_t *l, void *v, register_t *retval)
 {
 	struct sys_ioctl_args /* {
 		syscallarg(int)		fd;
@@ -555,7 +596,7 @@ sys_ioctl(struct lwp *l, void *v, register_t *retval)
 		syscallarg(void *)	data;
 	} */ *uap = v;
 	struct file	*fp;
-	struct proc	*p;
+	proc_t		*p;
 	struct filedesc	*fdp;
 	u_long		com;
 	int		error;
@@ -698,13 +739,11 @@ sys_ioctl(struct lwp *l, void *v, register_t *retval)
 	}
 }
 
-int	selwait, nselcoll;
-
 /*
  * Select system call.
  */
 int
-sys_pselect(struct lwp *l, void *v, register_t *retval)
+sys_pselect(lwp_t *l, void *v, register_t *retval)
 {
 	struct sys_pselect_args /* {
 		syscallarg(int)				nd;
@@ -766,7 +805,7 @@ gettimeleft(struct timeval *tv, struct timeval *sleeptv)
 }
 
 int
-sys_select(struct lwp *l, void *v, register_t *retval)
+sys_select(lwp_t *l, void *v, register_t *retval)
 {
 	struct sys_select_args /* {
 		syscallarg(int)			nd;
@@ -791,12 +830,12 @@ sys_select(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-selcommon(struct lwp *l, register_t *retval, int nd, fd_set *u_in,
+selcommon(lwp_t *l, register_t *retval, int nd, fd_set *u_in,
 	  fd_set *u_ou, fd_set *u_ex, struct timeval *tv, sigset_t *mask)
 {
 	char		smallbits[howmany(FD_SETSIZE, NFDBITS) *
 			    sizeof(fd_mask) * 6];
-	struct proc	* const p = l->l_proc;
+	proc_t		* const p = l->l_proc;
 	char 		*bits;
 	int		ncoll, error, timo;
 	size_t		ni;
@@ -844,8 +883,9 @@ selcommon(struct lwp *l, register_t *retval, int nd, fd_set *u_in,
 		oldmask = l->l_sigmask;	/* XXXgcc */
 
 	mutex_enter(&select_lock);
+	SLIST_INIT(&l->l_selwait);
 	for (;;) {
-	 	l->l_selflag = 1;
+	 	l->l_selflag = SEL_SCANNING;
 		ncoll = nselcoll;
  		mutex_exit(&select_lock);
 
@@ -857,9 +897,9 @@ selcommon(struct lwp *l, register_t *retval, int nd, fd_set *u_in,
 			break;
 		if (tv && (timo = gettimeleft(tv, &sleeptv)) <= 0)
 			break;
-		if (l->l_selflag == 0 || ncoll != nselcoll)
+		if (l->l_selflag != SEL_SCANNING || ncoll != nselcoll)
 			continue;
-		l->l_selflag = 0;
+		l->l_selflag = SEL_BLOCKING;
 		error = cv_timedwait_sig(&select_cv, &select_lock, timo);
 		if (error != 0)
 			break;
@@ -891,13 +931,13 @@ selcommon(struct lwp *l, register_t *retval, int nd, fd_set *u_in,
 }
 
 int
-selscan(struct lwp *l, fd_mask *ibitp, fd_mask *obitp, int nfd,
+selscan(lwp_t *l, fd_mask *ibitp, fd_mask *obitp, int nfd,
 	register_t *retval)
 {
 	static const int flag[3] = { POLLRDNORM | POLLHUP | POLLERR,
 			       POLLWRNORM | POLLHUP | POLLERR,
 			       POLLRDBAND };
-	struct proc *p = l->l_proc;
+	proc_t *p = l->l_proc;
 	struct filedesc	*fdp;
 	int msk, i, j, fd, n;
 	fd_mask ibits, obits;
@@ -931,7 +971,7 @@ selscan(struct lwp *l, fd_mask *ibitp, fd_mask *obitp, int nfd,
  * Poll system call.
  */
 int
-sys_poll(struct lwp *l, void *v, register_t *retval)
+sys_poll(lwp_t *l, void *v, register_t *retval)
 {
 	struct sys_poll_args /* {
 		syscallarg(struct pollfd *)	fds;
@@ -954,7 +994,7 @@ sys_poll(struct lwp *l, void *v, register_t *retval)
  * Poll system call.
  */
 int
-sys_pollts(struct lwp *l, void *v, register_t *retval)
+sys_pollts(lwp_t *l, void *v, register_t *retval)
 {
 	struct sys_pollts_args /* {
 		syscallarg(struct pollfd *)		fds;
@@ -987,12 +1027,12 @@ sys_pollts(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-pollcommon(struct lwp *l, register_t *retval,
+pollcommon(lwp_t *l, register_t *retval,
 	struct pollfd *u_fds, u_int nfds,
 	struct timeval *tv, sigset_t *mask)
 {
 	char		smallbits[32 * sizeof(struct pollfd)];
-	struct proc	* const p = l->l_proc;
+	proc_t		* const p = l->l_proc;
 	void *		bits;
 	sigset_t	oldmask;
 	int		ncoll, error, timo;
@@ -1029,9 +1069,10 @@ pollcommon(struct lwp *l, register_t *retval,
 		oldmask = l->l_sigmask;	/* XXXgcc */
 
 	mutex_enter(&select_lock);
+	SLIST_INIT(&l->l_selwait);
 	for (;;) {
 		ncoll = nselcoll;
-		l->l_selflag = 1;
+		l->l_selflag = SEL_SCANNING;
 		mutex_exit(&select_lock);
 
 		error = pollscan(l, (struct pollfd *)bits, nfds, retval);
@@ -1041,9 +1082,9 @@ pollcommon(struct lwp *l, register_t *retval,
 			break;
 		if (tv && (timo = gettimeleft(tv, &sleeptv)) <= 0)
 			break;
-		if (l->l_selflag == 0 || nselcoll != ncoll)
+		if (l->l_selflag != SEL_SCANNING || nselcoll != ncoll)
 			continue;
-		l->l_selflag = 0;
+		l->l_selflag = SEL_BLOCKING;
 		error = cv_timedwait_sig(&select_cv, &select_lock, timo);
 		if (error != 0)
 			break;
@@ -1070,9 +1111,9 @@ pollcommon(struct lwp *l, register_t *retval,
 }
 
 int
-pollscan(struct lwp *l, struct pollfd *fds, int nfd, register_t *retval)
+pollscan(lwp_t *l, struct pollfd *fds, int nfd, register_t *retval)
 {
-	struct proc	*p = l->l_proc;
+	proc_t		*p = l->l_proc;
 	struct filedesc	*fdp;
 	int		i, n;
 	struct file	*fp;
@@ -1105,7 +1146,7 @@ pollscan(struct lwp *l, struct pollfd *fds, int nfd, register_t *retval)
 
 /*ARGSUSED*/
 int
-seltrue(dev_t dev, int events, struct lwp *l)
+seltrue(dev_t dev, int events, lwp_t *l)
 {
 
 	return (events & (POLLIN | POLLOUT | POLLRDNORM | POLLWRNORM));
@@ -1115,16 +1156,16 @@ seltrue(dev_t dev, int events, struct lwp *l)
  * Record a select request.
  */
 void
-selrecord(struct lwp *selector, struct selinfo *sip)
+selrecord(lwp_t *selector, struct selinfo *sip)
 {
 
 	mutex_enter(&select_lock);
 	if (sip->sel_lwp == NULL) {
-		/* First waiter. */
+		/* First named waiter, although there may be more. */
 		sip->sel_lwp = selector;
-		TAILQ_INSERT_TAIL(&selector->l_selwait, sip, sel_chain);
+		SLIST_INSERT_HEAD(&selector->l_selwait, sip, sel_chain);
 	} else if (sip->sel_lwp != selector) {
-		/* More than 2 waiters. */
+		/* Multiple waiters. */
 		sip->sel_collision = true;
 	}
 	mutex_exit(&select_lock);
@@ -1136,7 +1177,7 @@ selrecord(struct lwp *selector, struct selinfo *sip)
 void
 selwakeup(struct selinfo *sip)
 {
-	struct lwp *l;
+	lwp_t *l;
 
 	mutex_enter(&select_lock);
 	if (sip->sel_collision) {
@@ -1147,14 +1188,12 @@ selwakeup(struct selinfo *sip)
 	} else if (sip->sel_lwp != NULL) {
 		/* Only one LWP waiting. */
 		l = sip->sel_lwp;
-		if (l->l_selflag != 0) {
-			/* Not yet asleep - make it go around again. */
-			l->l_selflag = 0;
-		} else {
+		if (l->l_selflag == SEL_BLOCKING) {
 			/*
-			 * If it's sleeping, wake it up.  If not, it's already
-			 * awake but hasn't had a chance to remove itself from
-			 * the selector yet.
+			 * If it's sleeping, wake it up.  If not, it's
+			 * already awake but hasn't yet removed itself
+			 * from the selector.  We reset the state below
+			 * so that we only attempt to do this once.
 			 */
 			lwp_lock(l);
 			if (l->l_wchan == &select_cv) {
@@ -1162,7 +1201,13 @@ selwakeup(struct selinfo *sip)
 				lwp_unsleep(l);
 			} else
 				lwp_unlock(l);
+		} else {
+			/*
+			 * Not yet asleep.  Reset its state below so that
+			 * it will go around again.
+			 */
 		}
+		l->l_selflag = SEL_RESET;
 	}
 	mutex_exit(&select_lock);
 }
@@ -1182,15 +1227,14 @@ static void
 selclear(void)
 {
 	struct selinfo *sip;
-	struct lwp *l = curlwp;
+	lwp_t *l = curlwp;
 
 	KASSERT(mutex_owned(&select_lock));
 
-	TAILQ_FOREACH(sip, &l->l_selwait, sel_chain) {
+	SLIST_FOREACH(sip, &l->l_selwait, sel_chain) {
 		KASSERT(sip->sel_lwp == l);
 		sip->sel_lwp = NULL;
 	}
-	TAILQ_INIT(&l->l_selwait);
 }
 
 /*
