@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.184.4.4 2007/04/02 01:32:53 rmind Exp $	*/
+/*	$NetBSD: pmap.c,v 1.184.4.5 2007/04/28 03:57:15 mrg Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.184.4.4 2007/04/02 01:32:53 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.184.4.5 2007/04/28 03:57:15 mrg Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -1097,7 +1097,6 @@ pmap_bootstrap(u_long kernelstart, u_long kernelend)
 		cpus->ci_fplwp = NULL;
 		cpus->ci_spinup = main; /* Call main when we're running. */
 		cpus->ci_paddr = cpu0paddr;
-		cpus->ci_idle_u = (struct pcb *)IDLE_U_VA;
 		cpus->ci_cpcb = (struct pcb *)u0va;
 		cpus->ci_initstack = (void *)INITSTACK_VA;
 		proc0paddr = cpus->ci_cpcb;

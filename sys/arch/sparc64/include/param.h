@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.38 2007/01/24 13:08:14 hubertf Exp $ */
+/*	$NetBSD: param.h,v 1.38.2.1 2007/04/28 03:57:13 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -167,8 +167,8 @@ extern int nbpg, pgofset, pgshift;
  *			and panicstack (32KB)
  * KERNEND+0x018000:	CPUINFO_VA -- cpu_info structure
  * KERNEND+0x020000:	unmapped space (top of panicstack)
- * KERNEND+0x030000:	IDLE_U_VA -- per-cpu 64K locked TTE
- *			u area and bottom of kernel stack
+ * KERNEND+0x030000:	KSTACK_VA -- per-cpu 64K locked TTE
+ *			bottom of kernel stack
  * KERNEND+0x040000:	INITSTACK_VA -- initial kernel stack pointer
  * KERNEND+0x040000:	IODEV_BASE -- begin mapping IO devices here.
  * 0x00000000fe000000:	IODEV_END -- end of device mapping space.
@@ -190,7 +190,6 @@ extern int nbpg, pgofset, pgshift;
 #define	EINTSTACK	(     INTSTACK +  4*_MAXNBPG)
 #define	CPUINFO_VA	(    EINTSTACK              )
 #define	PANICSTACK	(     INTSTACK +  8*_MAXNBPG)
-#define	IDLE_U_VA	(     INTSTACK + 16*_MAXNBPG)
 #define	KSTACK_VA	(     INTSTACK + 16*_MAXNBPG)	/* make this 16 to have a redzone */
 #define	INITSTACK_VA	(    KSTACK_VA +  8*_MAXNBPG)
 #define	IODEV_BASE	( INITSTACK_VA +  0*_MAXNBPG)
