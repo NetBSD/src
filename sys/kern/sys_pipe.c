@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.79.2.3 2007/04/10 13:26:40 ad Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.79.2.4 2007/04/28 21:18:48 ad Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.79.2.3 2007/04/10 13:26:40 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.79.2.4 2007/04/28 21:18:48 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -461,14 +461,21 @@ again:
 				bp->out = 0;
 			}
 			nread += size;
+			continue;
+		}
+
+		/* Lock to see up-to-date value of pipe_status. */
+		mutex_enter(&rpipe->pipe_lock);
+
 #ifndef PIPE_NODIRECT
-		} else if ((rpipe->pipe_state & PIPE_DIRECTR) != 0) {
+		if ((rpipe->pipe_state & PIPE_DIRECTR) != 0) {
 			/*
 			 * Direct copy, bypassing a kernel buffer.
 			 */
 			void *	va;
 
 			KASSERT(rpipe->pipe_state & PIPE_DIRECTW);
+			mutex_exit(&rpipe->pipe_lock);
 
 			size = rpipe->pipe_map.cnt;
 			if (size > uio->uio_resid)
@@ -487,70 +494,67 @@ again:
 				cv_broadcast(&rpipe->pipe_cv);
 				mutex_exit(&rpipe->pipe_lock);
 			}
-#endif
-		} else {
-			/*
-			 * Break if some data was read.
-			 */
-			if (nread > 0)
-				break;
-
-			mutex_enter(&rpipe->pipe_lock);
-
-			/*
-			 * detect EOF condition
-			 * read returns 0 on EOF, no need to set error
-			 */
-			if (rpipe->pipe_state & PIPE_EOF) {
-				mutex_exit(&rpipe->pipe_lock);
-				break;
-			}
-
-			/*
-			 * don't block on non-blocking I/O
-			 */
-			if (fp->f_flag & FNONBLOCK) {
-				mutex_exit(&rpipe->pipe_lock);
-				error = EAGAIN;
-				break;
-			}
-
-			/*
-			 * Unlock the pipe buffer for our remaining processing.
-			 * We will either break out with an error or we will
-			 * sleep and relock to loop.
-			 */
-			pipeunlock(rpipe);
-
-			/*
-			 * The PIPE_DIRECTR flag is not under the control
-			 * of the long-term lock (see pipe_direct_write()),
-			 * so re-check now while holding the spin lock.
-			 */
-			if ((rpipe->pipe_state & PIPE_DIRECTR) != 0)
-				goto again;
-
-			/*
-			 * We want to read more, wake up select/poll.
-			 */
-			pipeselwakeup(rpipe, rpipe->pipe_peer, POLL_IN);
-
-			/*
-			 * If the "write-side" is blocked, wake it up now.
-			 */
-			if (rpipe->pipe_state & PIPE_WANTW) {
-				rpipe->pipe_state &= ~PIPE_WANTW;
-				cv_broadcast(&rpipe->pipe_cv);
-			}
-
-			/* Now wait until the pipe is filled */
-			rpipe->pipe_state |= PIPE_WANTR;
-			error = cv_wait_sig(&rpipe->pipe_cv,
-			    &rpipe->pipe_lock);
-			if (error != 0)
-				goto unlocked_error;
-			goto again;
+			continue;
 		}
+#endif
+		/*
+		 * Break if some data was read.
+		 */
+		if (nread > 0) {
+			mutex_exit(&rpipe->pipe_lock);
+			break;
+		}
+
+		/*
+		 * detect EOF condition
+		 * read returns 0 on EOF, no need to set error
+		 */
+		if (rpipe->pipe_state & PIPE_EOF) {
+			mutex_exit(&rpipe->pipe_lock);
+			break;
+		}
+
+		/*
+		 * don't block on non-blocking I/O
+		 */
+		if (fp->f_flag & FNONBLOCK) {
+			mutex_exit(&rpipe->pipe_lock);
+			error = EAGAIN;
+			break;
+		}
+
+		/*
+		 * Unlock the pipe buffer for our remaining processing.
+		 * We will either break out with an error or we will
+		 * sleep and relock to loop.
+		 */
+		pipeunlock(rpipe);
+
+		/*
+		 * Re-check to see if more direct writes are pending.
+		 */
+		if ((rpipe->pipe_state & PIPE_DIRECTR) != 0)
+			goto again;
+
+		/*
+		 * We want to read more, wake up select/poll.
+		 */
+		pipeselwakeup(rpipe, rpipe->pipe_peer, POLL_IN);
+
+		/*
+		 * If the "write-side" is blocked, wake it up now.
+		 */
+		if (rpipe->pipe_state & PIPE_WANTW) {
+			rpipe->pipe_state &= ~PIPE_WANTW;
+			cv_broadcast(&rpipe->pipe_cv);
+		}
+
+		/* Now wait until the pipe is filled */
+		rpipe->pipe_state |= PIPE_WANTR;
+		error = cv_wait_sig(&rpipe->pipe_cv, &rpipe->pipe_lock);
+		if (error != 0)
+			goto unlocked_error;
+		goto again;
 	}
 
 	if (error == 0)
@@ -704,15 +708,14 @@ pipe_direct_write(struct file *fp, struct pipe *wpipe, struct uio *uio)
 	/* Now we can put the pipe in direct write mode */
 	wpipe->pipe_map.pos = bpos;
 	wpipe->pipe_map.cnt = bcnt;
-	wpipe->pipe_state |= PIPE_DIRECTW;
 
 	/*
-	 * But before we can let someone do a direct read,
-	 * we have to wait until the pipe is drained.
+	 * But before we can let someone do a direct read, we
+	 * have to wait until the pipe is drained.  Release the
+	 * pipe lock while we wait.
 	 */
-
-	/* Relase the pipe lock while we wait */
 	mutex_enter(&wpipe->pipe_lock);
+	wpipe->pipe_state |= PIPE_DIRECTW;
 	pipeunlock(wpipe);
 
 	while (error == 0 && wpipe->pipe_buffer.cnt > 0) {
@@ -747,6 +750,7 @@ pipe_direct_write(struct file *fp, struct pipe *wpipe, struct uio *uio)
 
 	/* Acquire the pipe lock and cleanup */
 	(void)pipelock(wpipe, 0);
+
 	if (pgs != NULL) {
 		pmap_kremove(wpipe->pipe_map.kva, blen);
 		uvm_unloan(pgs, npages, UVM_LOAN_TOPAGE);
