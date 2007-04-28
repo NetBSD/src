@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.105 2007/02/22 06:34:45 thorpej Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.106 2007/04/28 13:11:53 isaki Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.105 2007/02/22 06:34:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.106 2007/04/28 13:11:53 isaki Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
@@ -980,6 +980,10 @@ bitmask_snprintf(u_quad_t val, const char *p, char *bf, size_t buflen)
 					goto skip;
 				if (ch == '=')
 					PUTBYTE(bp, '=', left);
+				else {
+					PUTBYTE(bp, sep, left);
+					sep = ',';
+				}
 				PUTSTR(bp, p, left);
 				break;
 			default:
