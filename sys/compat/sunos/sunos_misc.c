@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_misc.c,v 1.147 2007/04/22 08:29:59 dsl Exp $	*/
+/*	$NetBSD: sunos_misc.c,v 1.148 2007/04/28 00:03:37 dogcow Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_misc.c,v 1.147 2007/04/22 08:29:59 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_misc.c,v 1.148 2007/04/28 00:03:37 dogcow Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
@@ -173,6 +173,8 @@ sunos_sys_access(l, v, retval)
 	void *v;
 	register_t *retval;
 {
+	struct sunos_sys_lstat_args *uap = v;
+
 	return (sys_access(l, uap, retval));
 }
 
@@ -182,6 +184,8 @@ sunos_sys_stat(l, v, retval)
 	void *v;
 	register_t *retval;
 {
+	struct sunos_sys_lstat_args *uap = v;
+
 	return (compat_43_sys_stat(l, uap, retval));
 }
 
@@ -191,6 +195,8 @@ sunos_sys_lstat(l, v, retval)
 	void *v;
 	register_t *retval;
 {
+	struct sunos_sys_lstat_args *uap = v;
+
 	return (compat_43_sys_lstat(l, uap, retval));
 }
 
@@ -823,6 +829,7 @@ sunos_sys_open(l, v, retval)
 	register_t *retval;
 {
 	struct sunos_sys_open_args *uap = v;
+	struct proc *p = l->l_proc;
 	int smode, nmode;
 	int noctty;
 	int ret;
