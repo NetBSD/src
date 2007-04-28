@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.119.4.6 2007/04/09 22:10:08 ad Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.119.4.7 2007/04/28 20:47:03 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.119.4.6 2007/04/09 22:10:08 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.119.4.7 2007/04/28 20:47:03 ad Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -147,6 +147,15 @@ vaddr_t uvm_zerocheckkva;
 #endif /* DEBUG */
 
 /*
+ * locks on the hash table.
+ */
+
+#define	UVM_HASHLOCK_CNT	32
+#define	uvm_hashlock(hash)	(&uvm_hashlocks[(hash) & (UVM_HASHLOCK_CNT - 1)])
+
+static kmutex_t uvm_hashlocks[UVM_HASHLOCK_CNT];
+
+/*
  * local prototypes
  */
 
@@ -173,16 +182,20 @@ uvm_pageinsert_after(struct vm_page *pg, struct vm_page *where)
 {
 	struct pglist *buck;
 	struct uvm_object *uobj = pg->uobject;
+	kmutex_t *lock;
+	u_int hash;
 
 	KASSERT(mutex_owned(&uobj->vmobjlock));
 	KASSERT((pg->flags & PG_TABLED) == 0);
 	KASSERT(where == NULL || (where->flags & PG_TABLED));
 	KASSERT(where == NULL || (where->uobject == uobj));
 
-	buck = &uvm.page_hash[uvm_pagehash(uobj, pg->offset)];
-	mutex_enter(&uvm_hashlock);
+	hash = uvm_pagehash(uobj, pg->offset);
+	buck = &uvm.page_hash[hash];
+	lock = uvm_hashlock(hash);
+	mutex_enter(lock);
 	TAILQ_INSERT_TAIL(buck, pg, hashq);
-	mutex_exit(&uvm_hashlock);
+	mutex_exit(lock);
 
 	if (UVM_OBJ_IS_VNODE(uobj)) {
 		if (uobj->uo_npages == 0) {
@@ -226,14 +239,18 @@ uvm_pageremove(struct vm_page *pg)
 {
 	struct pglist *buck;
 	struct uvm_object *uobj = pg->uobject;
+	kmutex_t *lock;
+	u_int hash;
 
 	KASSERT(mutex_owned(&uobj->vmobjlock));
 	KASSERT(pg->flags & PG_TABLED);
 
-	buck = &uvm.page_hash[uvm_pagehash(uobj, pg->offset)];
-	mutex_enter(&uvm_hashlock);
+	hash = uvm_pagehash(uobj, pg->offset);
+	buck = &uvm.page_hash[hash];
+	lock = uvm_hashlock(hash);
+	mutex_enter(lock);
 	TAILQ_REMOVE(buck, pg, hashq);
-	mutex_exit(&uvm_hashlock);
+	mutex_exit(lock);
 
 	if (UVM_OBJ_IS_VNODE(uobj)) {
 		if (uobj->uo_npages == 1) {
@@ -305,7 +322,13 @@ uvm_page_init(vaddr_t *kvm_startp, vaddr_t *kvm_endp)
 	uvm.page_hashmask = 0;			/* mask for hash function */
 	uvm.page_hash = &uvm_bootbucket;	/* install bootstrap bucket */
 	TAILQ_INIT(uvm.page_hash);		/* init hash table */
-	mutex_init(&uvm_hashlock, MUTEX_DRIVER, IPL_VM);/* init hash table lock */
+
+	/*
+	 * init hashtable locks.
+	 */
+
+	for (i = 0; i < UVM_HASHLOCK_CNT; i++)
+		mutex_init(&uvm_hashlocks[i], MUTEX_DRIVER, IPL_VM);
 
 	/*
 	 * allocate vm_page structures.
@@ -821,7 +844,7 @@ uvm_page_physload(paddr_t start, paddr_t end, paddr_t avail_start,
 void
 uvm_page_rehash(void)
 {
-	int freepages, lcv, bucketcount, oldcount;
+	int freepages, lcv, bucketcount, oldcount, i;
 	struct pglist *newbuckets, *oldbuckets;
 	struct vm_page *pg;
 	size_t newsize, oldsize;
@@ -870,7 +893,9 @@ uvm_page_rehash(void)
 	 * now replace the old buckets with the new ones and rehash everything
 	 */
 
-	mutex_enter(&uvm_hashlock);
+	for (i = 0; i < UVM_HASHLOCK_CNT; i++)
+		mutex_enter(&uvm_hashlocks[i]);
+
 	uvm.page_hash = newbuckets;
 	uvm.page_nhash = bucketcount;
 	uvm.page_hashmask = bucketcount - 1;  /* power of 2 */
@@ -884,7 +909,9 @@ uvm_page_rehash(void)
 			  pg, hashq);
 		}
 	}
-	mutex_exit(&uvm_hashlock);
+
+	for (i = 0; i < UVM_HASHLOCK_CNT; i++)
+		mutex_exit(&uvm_hashlocks[i]);
 
 	/*
 	 * free old bucket array if is not the boot-time table
@@ -1609,17 +1636,21 @@ uvm_pagelookup(struct uvm_object *obj, voff_t off)
 {
 	struct vm_page *pg;
 	struct pglist *buck;
+	kmutex_t *lock;
+	u_int hash;
 
 	KASSERT(mutex_owned(&obj->vmobjlock));
 
-	buck = &uvm.page_hash[uvm_pagehash(obj,off)];
-	mutex_enter(&uvm_hashlock);
+	hash = uvm_pagehash(obj, off);
+	buck = &uvm.page_hash[hash];
+	lock = uvm_hashlock(hash);
+	mutex_enter(lock);
 	TAILQ_FOREACH(pg, buck, hashq) {
 		if (pg->uobject == obj && pg->offset == off) {
 			break;
 		}
 	}
-	mutex_exit(&uvm_hashlock);
+	mutex_exit(lock);
 	KASSERT(pg == NULL || obj->uo_npages != 0);
 	KASSERT(pg == NULL || (pg->flags & (PG_RELEASED|PG_PAGEOUT)) == 0 ||
 		(pg->flags & PG_BUSY) != 0);
