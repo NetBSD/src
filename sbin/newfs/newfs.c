@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs.c,v 1.96 2006/11/25 18:18:22 christos Exp $	*/
+/*	$NetBSD: newfs.c,v 1.97 2007/04/28 02:56:32 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993, 1994
@@ -78,7 +78,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.13 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: newfs.c,v 1.96 2006/11/25 18:18:22 christos Exp $");
+__RCSID("$NetBSD: newfs.c,v 1.97 2007/04/28 02:56:32 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -425,6 +425,7 @@ main(int argc, char *argv[])
 		usage();
 
 	memset(&sb, 0, sizeof sb);
+	memset(&dkw, 0, sizeof dkw);
 	special = argv[0];
 	if (Fflag || mfs) {
 		/*
