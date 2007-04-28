@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.35 2007/03/05 16:51:02 drochner Exp $ */
+/* $NetBSD: cpu.c,v 1.35.2.1 2007/04/28 21:05:52 ad Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.35 2007/03/05 16:51:02 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.35.2.1 2007/04/28 21:05:52 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -531,8 +531,9 @@ cpu_start_secondary(ci)
 	mp_pdirpa = kpm->pm_pdirpa; /* XXX move elsewhere, not per CPU. */
 
 	pcb = ci->ci_idle_pcb;
-
 	ci->ci_flags |= CPUF_AP;
+	pmap_cpu_init_early(ci);
+	pmap_cpu_init_late(ci);
 
 	aprint_debug("%s: starting\n", ci->ci_dev->dv_xname);
 
