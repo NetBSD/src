@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.8,v 1.156 2006/11/25 21:40:05 christos Exp $
+.\"	$NetBSD: sysctl.8,v 1.156.2.1 2007/04/28 18:30:13 bouyer Exp $
 .\"
 .\" Copyright (c) 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -61,7 +61,7 @@
 .\"
 .\"	@(#)sysctl.8	8.1 (Berkeley) 6/6/93
 .\"
-.Dd November 25, 2006
+.Dd April 28, 2007
 .Dt SYSCTL 8
 .Os
 .Sh NAME
@@ -514,6 +514,7 @@ privilege can change the value.
 .It net.inet6.ip6.maxfragpackets	integer	yes
 .It net.inet6.ip6.maxfrags	integer	yes
 .It net.inet6.ip6.redirect	integer	yes
+.It net.inet6.ip6.rht0	integer yes
 .It net.inet6.ip6.rr_prune	integer	yes
 .It net.inet6.ip6.use_deprecated	integer	yes
 .It net.inet6.ip6.v6only	integer	yes
