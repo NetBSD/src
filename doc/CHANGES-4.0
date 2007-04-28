@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.120 2007/04/28 01:18:26 snj Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.121 2007/04/28 18:31:32 bouyer Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -2784,4 +2784,63 @@ sys/arch/x86/x86/mpacpi.c			1.47-1.48
 	Thanks to cube@ for the idea.
 	An ACPI kernel can now boot on a poweredge 2950.
 	[bouyer, ticket #565]
+
+etc/rc.d/route6d				1.7
+etc/rc.d/routed					1.10
+
+	The "routed" and "route6d" scripts must be run early during system
+	startup because they are part of the network initialization.
+	Use similar dependences as the "rtsold" script.
+	This should fix PR misc/36171.
+	[tron, ticket #588]
+
+usr.bin/cdplay/cdplay.1				1.22
+
+	Correct documentation:
+	NetBSD 4.0 will be the first release which supports digital transfer
+	mode. The feature made it into this release because of the rebranch.
+	This fixes PR bin/36199 by Andreas Burghardt.
+	[tron, ticket #589]
+
+etc/rc.d/amd					1.14
+
+	Terminate amd(8) gracefully during system shutdown.
+	This should avoid occasional problems with syncing or unmounting
+	filesystems on machines which use the automounter. Tested
+	successfully under NetBSD-i386 3.1_STABLE and 4.0_BETA2.
+	[tron, ticket #590]
+
+sys/arch/prep/pci/pcib.c			1.19
+
+	Add special code to properly detect a W83C553 pcib sitting on a RAVEN
+	based machine.  
+	With this change, NetBSD finally runs on the MTX604 board..
+	[garbled, ticket #591]
+
+sbin/fdisk/fdisk.c				1.104
+
+	PR/36223: Milos Negovanovic: Don't ask if we want to install
+	mbr_bootselect with -f.
+	[christos, ticket #593]
+
+sys/dev/pci/if_bge.c				1.129
+
+	Fix a NULL reference on failing mbuf allocation.
+	In bge_start return if IFF_OACTIVE is set in combination with
+	IFF_RUNNING, drop obscure check for length of interface queue.
+	Remove message about failing bge_encap, it can happen just too easily
+	because of full descriptor rings.
+	[joerg, ticket #594]
+
+sbin/sysctl/sysctl.8				patch
+sys/netinet6/ip6_input.c			1.102
+sys/netinet6/ip6_var.h				1.41 - 1.42
+sys/netinet6/route6.c				1.18
+
+	Disable processing of routing header type 0 packets since they
+	can be used of DoS attacks. Provide a sysctl to re-enable them
+	(net.inet6.ip6.rht0).
+	Information from:
+		http://www.secdev.org/conf/IPv6_RH_security-csw07.pdf
+	[christos, ticket #587]
 
