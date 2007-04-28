@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.73.2.1 2007/04/10 13:26:20 ad Exp $	*/
+/*	$NetBSD: types.h,v 1.73.2.2 2007/04/28 22:35:41 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993, 1994
@@ -321,13 +321,17 @@ typedef unsigned int pri_t;
  * used in the same place that the structure is defined.
  */
 struct	lwp;
+typedef struct lwp lwp_t;
 struct	user;
 struct	__ucontext;
 struct	proc;
+typedef struct proc proc_t;
 struct	pgrp;
 struct	rusage;
 struct	file;
+typedef struct file file_t;
 struct	buf;
+typedef struct buf buf_t;
 struct	tty;
 struct	uio;
 #endif
