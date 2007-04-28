@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.267.2.2 2007/03/12 05:50:43 rmind Exp $ */
+/*	$NetBSD: machdep.c,v 1.267.2.3 2007/04/28 03:55:25 mrg Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.267.2.2 2007/03/12 05:50:43 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.267.2.3 2007/04/28 03:55:25 mrg Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
@@ -178,6 +178,10 @@ cpu_startup(void)
 #ifdef DEBUG
 	pmapdebug = 0;
 #endif
+
+	/* XXX */
+	if (lwp0.l_addr && lwp0.l_addr->u_pcb.pcb_psr == 0)
+		lwp0.l_addr->u_pcb.pcb_psr = getpsr();
 
 	/*
 	 * Re-map the message buffer from its temporary address
@@ -1368,7 +1372,6 @@ oldmon_w_cmd(u_long va, char *ar)
 		printf("w: arg not allowed\n");
 	}
 }
-#endif /* SUN4 */
 
 int
 ldcontrolb(void *addr)
@@ -1397,6 +1400,7 @@ ldcontrolb(void *addr)
 	splx(s);
 	return (res);
 }
+#endif /* SUN4 */
 
 void
 wzero(void *vb, u_int l)
