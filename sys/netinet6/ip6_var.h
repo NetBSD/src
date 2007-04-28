@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_var.h,v 1.37 2006/05/05 00:03:22 rpaulo Exp $	*/
+/*	$NetBSD: ip6_var.h,v 1.37.12.1 2007/04/28 18:30:13 bouyer Exp $	*/
 /*	$KAME: ip6_var.h,v 1.33 2000/06/11 14:59:20 jinmei Exp $	*/
 
 /*
@@ -280,6 +280,7 @@ extern int	ip6_use_defzone; /* whether to use the default scope zone
 struct in6pcb;
 
 int	icmp6_ctloutput __P((int, struct socket *, int, int, struct mbuf **));
+extern int	ip6_rht0;		/* processing routing header type 0 */
 
 void	ip6_init __P((void));
 void	ip6intr __P((void));
