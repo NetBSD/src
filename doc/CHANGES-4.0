@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.119 2007/04/20 22:05:47 pavel Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.120 2007/04/28 01:18:26 snj Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -2777,4 +2777,11 @@ sys/dev/pci/if_bnxreg.h				1.2
 	descriptors leading to memory corruption, or panics on bus_dma with
 	DIAGNOSTIC kernels.
 	[bouyer, ticket #566]
+
+sys/arch/x86/x86/mpacpi.c			1.47-1.48
+
+	Properly skip inactive devices; avoids a panic in pci_make_tag() later.
+	Thanks to cube@ for the idea.
+	An ACPI kernel can now boot on a poweredge 2950.
+	[bouyer, ticket #565]
 
