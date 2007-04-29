@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.235.2.2 2007/04/28 03:57:14 mrg Exp $	*/
+/*	$NetBSD: locore.s,v 1.235.2.3 2007/04/29 17:27:36 martin Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -6616,11 +6616,13 @@ ENTRY(cpu_idle)
  * cpu_switchto() switches to an lwp to run and runs it, saving the
  * current one away.
  *
- * cpu_switchto(struct lwp *current, struct lwp *next)
+ * stuct lwp * cpu_switchto(struct lwp *current, struct lwp *next)
  * Switch to the specified next LWP
  * Arguments:
  *	i0	'struct lwp *' of the current LWP
  *	i1	'struct lwp *' of the LWP to switch to
+ * Returns:
+ *	the old lwp switched away from
  */
 ENTRY(cpu_switchto)
  flushw
@@ -6630,7 +6632,7 @@ ENTRY(cpu_switchto)
 	 *	%l1 = newpcb
 	 *	%l3 = new trapframe
 	 *	%l4 = new l->l_proc
-	 *	%l5 = cpcb
+	 *	%l5 = pcb of oldlwp
 	 *	%l6 = %hi(CPCB)
 	 *	%l7 = %hi(CURLWP)
 	 *	%i0 = oldlwp
@@ -6646,22 +6648,28 @@ ENTRY(cpu_switchto)
 	rdpr	%pstate, %o1			! oldpstate = %pstate;
 	wrpr	%g0, PSTATE_KERN, %pstate	! make sure we're on normal globals
 						! with traps turned off
-	sethi	%hi(CPCB), %l6
-	sethi	%hi(CURLWP), %l7
-	LDPTR	[%l6 + %lo(CPCB)], %l5
 
-	stx	%i7, [%l5 + PCB_PC]
-	stx	%i6, [%l5 + PCB_SP]
+	brz,pn	%i0, 1f
+	 sethi	%hi(CPCB), %l6
+
+	LDPTR	[%i0 + L_ADDR], %l5
+
+	STPTR	%i7, [%l5 + PCB_PC]
+	STPTR	%i6, [%l5 + PCB_SP]
 	sth	%o1, [%l5 + PCB_PSTATE]
+
+
+	rdpr	%cwp, %o2		! Useless
+	stb	%o2, [%l5 + PCB_CWP]
+
+1:
+	sethi	%hi(CURLWP), %l7
 
 	/* clear ci_wait_resched */
 	sethi	%hi(CPUINFO_VA+CI_WANT_RESCHED), %o0
 	st	%g0, [%o0 + %lo(CPUINFO_VA+CI_WANT_RESCHED)]
 
 	LDPTR   [%i1 + L_ADDR], %l1	! newpcb = l->l_addr;
-
-	rdpr	%cwp, %o2		! Useless
-	stb	%o2, [%l5 + PCB_CWP]
 
 	/*
 	 * Load the new lwp.  To load, we must change stacks and
@@ -6671,11 +6679,12 @@ ENTRY(cpu_switchto)
 	 * We also must load up the `in' and `local' registers.
 	 */
 
+	LDPTR	[%l7 + %lo(CURLWP)], %i0	! remember old curlwp
 	STPTR	%i1, [%l7 + %lo(CURLWP)]	! curlwp = l;
 	STPTR	%l1, [%l6 + %lo(CPCB)]		! cpcb = newpcb;
 
-	ldx	[%l1 + PCB_SP], %i6
-	ldx	[%l1 + PCB_PC], %i7
+	LDPTR	[%l1 + PCB_SP], %i6
+	LDPTR	[%l1 + PCB_PC], %i7
 
 	wrpr	%g0, 0, %otherwin	! These two insns should be redundant
 	wrpr	%g0, 0, %canrestore
@@ -6718,7 +6727,7 @@ Lsw_noras:
 	wr	%g0, ASI_PRIMARY_NOFAULT, %asi		! Restore default ASI
 	!wrpr	%g0, PSTATE_INTR, %pstate
 	ret
-	 restore
+	 restore %i0, %g0, %o0				! return old curlwp
 
 /*
  * Snapshot the current process so that stack frames are up to date.
