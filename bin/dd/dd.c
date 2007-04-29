@@ -1,4 +1,4 @@
-/*	$NetBSD: dd.c,v 1.39 2006/01/09 10:17:05 apb Exp $	*/
+/*	$NetBSD: dd.c,v 1.40 2007/04/29 20:23:34 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)dd.c	8.5 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: dd.c,v 1.39 2006/01/09 10:17:05 apb Exp $");
+__RCSID("$NetBSD: dd.c,v 1.40 2007/04/29 20:23:34 msaitoh Exp $");
 #endif
 #endif /* not lint */
 
@@ -391,7 +391,7 @@ dd_in(void)
 }
 
 /*
- * Cleanup any remaining I/O and flush output.  If necesssary, output file
+ * Cleanup any remaining I/O and flush output.  If necessary, output file
  * is truncated.
  */
 static void

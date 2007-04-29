@@ -1,4 +1,4 @@
-/*	$NetBSD: file_subs.c,v 1.59 2006/02/11 10:43:18 dsl Exp $	*/
+/*	$NetBSD: file_subs.c,v 1.60 2007/04/29 20:23:34 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)file_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: file_subs.c,v 1.59 2006/02/11 10:43:18 dsl Exp $");
+__RCSID("$NetBSD: file_subs.c,v 1.60 2007/04/29 20:23:34 msaitoh Exp $");
 #endif
 #endif /* not lint */
 
@@ -1135,7 +1135,7 @@ set_crc(ARCHD *arcn, int fd)
 
 	/*
 	 * safety check. we want to avoid archiving files that are active as
-	 * they can create inconsistant archive copies.
+	 * they can create inconsistent archive copies.
 	 */
 	if (cpcnt != arcn->sb.st_size)
 		tty_warn(1, "File changed size %s", arcn->org_name);

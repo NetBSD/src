@@ -1,5 +1,5 @@
 #
-# $NetBSD: fpsp.doc,v 1.1 2000/04/14 20:24:37 is Exp $
+# $NetBSD: fpsp.doc,v 1.2 2007/04/29 20:23:35 msaitoh Exp $
 #
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -260,7 +260,7 @@ _060_fpsp_fline:
             |
             |----> may exit through _060_real_trap
             |
-            |----> may exit thorugh _060_real_bsun
+            |----> may exit through _060_real_bsun
             |
             |----> may exit through _060_fpsp_done
 

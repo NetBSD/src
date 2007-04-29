@@ -1,4 +1,4 @@
-/* $NetBSD: csh.h,v 1.16 2005/06/26 19:10:48 christos Exp $ */
+/* $NetBSD: csh.h,v 1.17 2007/04/29 20:23:34 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -306,7 +306,7 @@ Char *lap;
  *
  * Each command is parsed to a tree of command structures and
  * flags are set bottom up during this process, to be propagated down
- * as needed during the semantics/exeuction pass (sh.sem.c).
+ * as needed during the semantics/execution pass (sh.sem.c).
  */
 struct command {
     short t_dtyp;		/* Type of node 		 */

@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vfsops.c,v 1.23 2007/03/12 18:18:32 ad Exp $ */
+/* $NetBSD: udf_vfsops.c,v 1.24 2007/04/29 20:23:36 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: udf_vfsops.c,v 1.23 2007/03/12 18:18:32 ad Exp $");
+__RCSID("$NetBSD: udf_vfsops.c,v 1.24 2007/04/29 20:23:36 msaitoh Exp $");
 #endif /* not lint */
 
 
@@ -493,7 +493,7 @@ udf_mountfs(struct vnode *devvp, struct mount *mp,
 	if ((error = vinvalbuf(devvp, V_SAVE, l->l_cred, l, 0, 0)))
 		return error;
 
-	/* allocate udf part of mount structure; malloc allways succeeds */
+	/* allocate udf part of mount structure; malloc always succeeds */
 	ump = malloc(sizeof(struct udf_mount), M_UDFMNT, M_WAITOK);
 	memset(ump, 0, sizeof(struct udf_mount));
 
@@ -583,7 +583,7 @@ udf_mountfs(struct vnode *devvp, struct mount *mp,
 	mp->mnt_stat.f_namemax = UDF_MAX_NAMELEN;
 	mp->mnt_flag |= MNT_LOCAL;
 
-	/* bshift is allways equal to disc sector size */
+	/* bshift is always equal to disc sector size */
 	mp->mnt_dev_bshift = bshift;
 	mp->mnt_fs_bshift  = bshift;
 

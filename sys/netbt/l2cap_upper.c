@@ -1,4 +1,4 @@
-/*	$NetBSD: l2cap_upper.c,v 1.7 2007/04/21 06:15:23 plunky Exp $	*/
+/*	$NetBSD: l2cap_upper.c,v 1.8 2007/04/29 20:23:36 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: l2cap_upper.c,v 1.7 2007/04/21 06:15:23 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: l2cap_upper.c,v 1.8 2007/04/29 20:23:36 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -55,7 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: l2cap_upper.c,v 1.7 2007/04/21 06:15:23 plunky Exp $
  * l2cap_attach(handle, btproto, upper)
  *
  *	attach new l2cap_channel to handle, populate
- *	with with reasonable defaults
+ *	with reasonable defaults
  */
 int
 l2cap_attach(struct l2cap_channel **handle,

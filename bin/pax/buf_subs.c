@@ -1,4 +1,4 @@
-/*	$NetBSD: buf_subs.c,v 1.27 2006/02/11 10:43:18 dsl Exp $	*/
+/*	$NetBSD: buf_subs.c,v 1.28 2007/04/29 20:23:34 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)buf_subs.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: buf_subs.c,v 1.27 2006/02/11 10:43:18 dsl Exp $");
+__RCSID("$NetBSD: buf_subs.c,v 1.28 2007/04/29 20:23:34 msaitoh Exp $");
 #endif
 #endif /* not lint */
 
@@ -391,7 +391,7 @@ pback(char *pt, int cnt)
 
 /*
  * rd_skip()
- *	skip forward in the archive during a archive read. Used to get quickly
+ *	skip forward in the archive during an archive read. Used to get quickly
  *	past file data and padding for files the user did NOT select.
  * Return:
  *	0 if ok, -1 failure, and 1 when EOF on the archive volume was detected.

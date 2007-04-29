@@ -1,4 +1,4 @@
-/*	$NetBSD: tables.h,v 1.9 2005/09/16 17:05:14 christos Exp $	*/
+/*	$NetBSD: tables.h,v 1.10 2007/04/29 20:23:34 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -133,7 +133,7 @@ typedef struct dlist {
 } DLIST;
 
 /*
- * ftree directory access time reset table. When we are done with with a
+ * ftree directory access time reset table. When we are done with a
  * subtree we reset the access and mod time of the directory when the tflag is
  * set. Not really explicitly specified in the pax spec, but easy and fast to
  * do (and this may have even been intended in the spec, it is not clear).

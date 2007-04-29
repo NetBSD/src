@@ -1,4 +1,4 @@
-/*	$NetBSD: route6d.c,v 1.59 2006/10/07 17:27:57 elad Exp $	*/
+/*	$NetBSD: route6d.c,v 1.60 2007/04/29 20:23:37 msaitoh Exp $	*/
 /*	$KAME: route6d.c,v 1.94 2002/10/26 20:08:55 itojun Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef	lint
-__RCSID("$NetBSD: route6d.c,v 1.59 2006/10/07 17:27:57 elad Exp $");
+__RCSID("$NetBSD: route6d.c,v 1.60 2007/04/29 20:23:37 msaitoh Exp $");
 #endif
 
 #include <stdio.h>
@@ -1498,7 +1498,7 @@ ifconfig1(const char *name, const struct sockaddr *sa, struct ifc *ifcp, int s)
 
 /*
  * Receive and process routing messages.
- * Update interface information as necesssary.
+ * Update interface information as necessary.
  */
 void
 rtrecv(void)

@@ -1,4 +1,4 @@
-/*	$NetBSD: ftree.c,v 1.34 2006/02/11 10:43:18 dsl Exp $	*/
+/*	$NetBSD: ftree.c,v 1.35 2007/04/29 20:23:34 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -78,7 +78,7 @@
 #if 0
 static char sccsid[] = "@(#)ftree.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: ftree.c,v 1.34 2006/02/11 10:43:18 dsl Exp $");
+__RCSID("$NetBSD: ftree.c,v 1.35 2007/04/29 20:23:34 msaitoh Exp $");
 #endif
 #endif /* not lint */
 
@@ -376,7 +376,7 @@ ftree_arg(void)
 			farray[0][i] = '\0';
 		} else {
 			/*
-			 * the user supplied the file args as arguements to pax
+			 * the user supplied the file args as arguments to pax
 			 */
 			if (ftcur == NULL)
 				ftcur = fthead;
@@ -720,7 +720,7 @@ next_file(ARCHD *arcn)
 			}
 			/*
 			 * set link name length, watch out readlink does not
-			 * allways null terminate the link path
+			 * always null terminate the link path
 			 */
 			arcn->ln_name[cnt] = '\0';
 			arcn->ln_nlen = cnt;

@@ -1,4 +1,4 @@
-/*	$NetBSD: __clone.S,v 1.1 2001/07/17 00:33:04 thorpej Exp $	*/
+/*	$NetBSD: __clone.S,v 1.2 2007/04/29 20:23:35 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@ LEAF(__clone, 4)
 	beq	a1, 9f
 
 	/*
-	 * We need to be able to get at the func and arg aguments
+	 * We need to be able to get at the func and arg arguments
 	 * in the child.  Luckily, we have a convenient place to
 	 * do this; the child's stack.
 	 */

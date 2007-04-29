@@ -1,4 +1,4 @@
-/* $NetBSD: set.c,v 1.25 2006/05/14 01:05:42 christos Exp $ */
+/* $NetBSD: set.c,v 1.26 2007/04/29 20:23:34 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)set.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: set.c,v 1.25 2006/05/14 01:05:42 christos Exp $");
+__RCSID("$NetBSD: set.c,v 1.26 2007/04/29 20:23:34 msaitoh Exp $");
 #endif
 #endif /* not lint */
 
@@ -158,7 +158,7 @@ doset(Char **v, struct command *t)
 	    cp = Strsave(value(vp));	/* get the old value back */
 
 	    /*
-	     * convert to cononical pathname (possibly resolving symlinks)
+	     * convert to canonical pathname (possibly resolving symlinks)
 	     */
 	    cp = dcanon(cp, cp);
 
@@ -685,7 +685,7 @@ balance(struct varent *p, int f, int d)
 		break;
 	    case 1:		/* was already right heavy */
 		switch (p->v_right->v_bal) {
-		case 1:	/* sigle rotate */
+		case 1:	/* single rotate */
 		    pp->v_link[ff] = rleft(p);
 		    p->v_left->v_bal = 0;
 		    p->v_bal = 0;
@@ -723,7 +723,7 @@ balance(struct varent *p, int f, int d)
 		    p->v_right->v_bal = 0;
 		    p->v_bal = 0;
 		    break;
-		case 0:	/* signle rotate */
+		case 0:	/* single rotate */
 		    pp->v_link[ff] = rright(p);
 		    p->v_right->v_bal = -1;
 		    p->v_bal = 1;

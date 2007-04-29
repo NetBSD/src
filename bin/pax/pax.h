@@ -1,4 +1,4 @@
-/*	$NetBSD: pax.h,v 1.25 2005/09/24 17:05:21 dsl Exp $	*/
+/*	$NetBSD: pax.h,v 1.26 2007/04/29 20:23:34 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -205,7 +205,7 @@ typedef struct {
 				/* a flawed archive header. */
 	int (*end_wr)(void);	/* end write. write the trailer and do any */
 				/* other format specific functions needed */
-				/* at the ecnd of a archive write */
+				/* at the ecnd of an archive write */
 	int (*trail)		/* returns 0 if a valid trailer, -1 if not */
 		(char *, int, int *); /* For formats which encode the */
 				/* trailer outside of a valid header, a */

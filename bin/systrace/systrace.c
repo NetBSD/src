@@ -1,4 +1,4 @@
-/*	$NetBSD: systrace.c,v 1.34 2006/12/10 01:22:02 christos Exp $	*/
+/*	$NetBSD: systrace.c,v 1.35 2007/04/29 20:23:35 msaitoh Exp $	*/
 /*	$OpenBSD: systrace.c,v 1.32 2002/08/05 23:27:53 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -70,7 +70,7 @@ int noalias = 0;		/* Do not do system call aliasing */
 int iamroot = 0;		/* Set if we are running as root */
 int cradle = 0;			/* Set if we are running in cradle mode */
 int logtofile = 0;		/* Log to file instead of syslog */
-FILE *logfile;			/* Default logfile to send to if enabeld */
+FILE *logfile;			/* Default logfile to send to if enabled */
 char cwd[MAXPATHLEN];		/* Current working directory */
 char home[MAXPATHLEN];		/* Home directory of user */
 char username[LOGIN_NAME_MAX];	/* Username: predicate match and expansion */
@@ -751,7 +751,7 @@ main(int argc, char **argv)
 	setenv("EVENT_NOKQUEUE", "yes", 0);
 	event_init();
 
-	/* Local initalization */
+	/* Local initialization */
 	systrace_initalias();
 	systrace_initpolicy(filename, policypath);
 	systrace_initcb();
