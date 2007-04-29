@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.202.2.5 2007/04/29 14:25:37 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.202.2.6 2007/04/29 15:50:23 ad Exp $	*/
 
 /*
  *
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.202.2.5 2007/04/29 14:25:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.202.2.6 2007/04/29 15:50:23 ad Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"
@@ -441,13 +441,14 @@ extern vaddr_t pentium_idt_vaddr;
  * local prototypes
  */
 
-static struct pv_entry	*pmap_add_pvpage(struct pv_page *, bool);
+static struct pv_entry	*pmap_add_pvpage(struct pmap_cpu *, struct pv_page *,
+					 bool);
 static struct vm_page	*pmap_alloc_ptp(struct pmap *, int);
 static struct pv_entry	*pmap_alloc_pv(struct pmap *, int); /* see codes below */
 #define ALLOCPV_NEED	0	/* need PV now */
 #define ALLOCPV_TRY	1	/* just try to allocate, don't steal */
 #define ALLOCPV_NONEED	2	/* don't need PV, just growing cache */
-static struct pv_entry	*pmap_alloc_pvpage(struct pmap *, int);
+static struct pv_entry	*pmap_alloc_pvpage(struct pmap_cpu *, struct pmap *, int);
 static void		 pmap_enter_pv(struct pv_head *,
 				       struct pv_entry *, struct pmap *,
 				       vaddr_t, struct vm_page *);
@@ -1081,17 +1082,10 @@ pmap_cpu_init_early(struct cpu_info *ci)
 	TAILQ_INIT(&pc->pc_head);
 	__cpu_simple_lock_init(&pc->pc_tlb_lock);
 
-	/*
-	 * pc_pv_lock must be a spin lock.  since the pmap module
-	 * is entered with and without the kernel lock held, for
-	 * now it must be at IPL_VM in order to prevent deadlock.
-	 * note that it is NEVER taken from interrupt context.
-	 */
-	mutex_init(&pc->pc_pv_lock, MUTEX_SPIN, IPL_VM);
- 
-	/*
+ 	/*
 	 * Initalize the PV freelist.
 	 */
+	mutex_init(&pc->pc_pv_lock, MUTEX_DEFAULT, IPL_NONE);
 	TAILQ_INIT(&pc->pc_pv_freepages);
 	TAILQ_INIT(&pc->pc_pv_unusedpgs);
 }
@@ -1160,7 +1154,7 @@ pmap_alloc_pv(pmap, mode)
 	struct pmap_cpu *pc;
 
 	pc = curcpu()->ci_pmap_cpu;
-	mutex_spin_enter(&pc->pc_pv_lock);
+	mutex_enter(&pc->pc_pv_lock);
 
 	pvpage = TAILQ_FIRST(&pc->pc_pv_freepages);
 	if (pvpage != NULL) {
@@ -1185,12 +1179,12 @@ pmap_alloc_pv(pmap, mode)
 
 	if (pc->pc_pv_nfpvents < PVE_LOWAT || pv == NULL) {
 		if (pv == NULL)
-			pv = pmap_alloc_pvpage(pmap, (mode == ALLOCPV_TRY) ?
-					       mode : ALLOCPV_NEED);
+			pv = pmap_alloc_pvpage(pc, pmap,
+			    (mode == ALLOCPV_TRY) ? mode : ALLOCPV_NEED);
 		else
-			(void) pmap_alloc_pvpage(pmap, ALLOCPV_NONEED);
+			(void) pmap_alloc_pvpage(pc, pmap, ALLOCPV_NONEED);
 	}
-	mutex_spin_exit(&pc->pc_pv_lock);
+	mutex_exit(&pc->pc_pv_lock);
 
 	if (pv != NULL)
 		pv->pv_alloc_cpu = pc;
@@ -1211,13 +1205,10 @@ pmap_alloc_pv(pmap, mode)
  */
 
 static struct pv_entry *
-pmap_alloc_pvpage(struct pmap *pmap, int mode)
+pmap_alloc_pvpage(struct pmap_cpu *pc, struct pmap *pmap, int mode)
 {
 	struct pv_page *pvpage;
 	struct pv_entry *pv;
-	struct pmap_cpu *pc;
-
-	pc = curcpu()->ci_pmap_cpu;
 
 	/*
 	 * if we need_entry and we've got unused pv_pages, allocate from there
@@ -1246,15 +1237,15 @@ pmap_alloc_pvpage(struct pmap *pmap, int mode)
 	 * pmap is already locked!  (...but entering the mapping is safe...)
 	 */
 
-	mutex_spin_exit(&pc->pc_pv_lock);
+	mutex_exit(&pc->pc_pv_lock);
 	pvpage = (struct pv_page *)uvm_km_alloc(kmem_map, PAGE_SIZE, 0,
 	    UVM_KMF_TRYLOCK|UVM_KMF_NOWAIT|UVM_KMF_WIRED);
-	mutex_spin_enter(&pc->pc_pv_lock);
+	mutex_enter(&pc->pc_pv_lock);
 
 	if (pvpage == NULL)
 		return NULL;
 
-	return (pmap_add_pvpage(pvpage, mode != ALLOCPV_NONEED));
+	return (pmap_add_pvpage(pc, pvpage, mode != ALLOCPV_NONEED));
 }
 
 /*
@@ -1265,14 +1256,12 @@ pmap_alloc_pvpage(struct pmap *pmap, int mode)
  */
 
 static struct pv_entry *
-pmap_add_pvpage(pvp, need_entry)
+pmap_add_pvpage(pc, pvp, need_entry)
+	struct pmap_cpu *pc;
 	struct pv_page *pvp;
 	bool need_entry;
 {
 	int tofree, lcv;
-	struct pmap_cpu *pc;
-
-	pc = curcpu()->ci_pmap_cpu;
 
 	/* do we need to return one? */
 	tofree = (need_entry) ? PVE_PER_PVPAGE - 1 : PVE_PER_PVPAGE;
@@ -1289,7 +1278,8 @@ pmap_add_pvpage(pvp, need_entry)
 	else
 		TAILQ_INSERT_TAIL(&pc->pc_pv_unusedpgs, pvp, pvinfo.pvpi_list);
 	pc->pc_pv_nfpvents += tofree;
-	return((need_entry) ? &pvp->pvents[lcv] : NULL);
+
+	return ((need_entry) ? &pvp->pvents[lcv] : NULL);
 }
 
 /*
@@ -1358,9 +1348,9 @@ pmap_free_pv(pmap, pv)
 
 	pc = pv->pv_alloc_cpu;
 
-	mutex_spin_enter(&pc->pc_pv_lock);
+	mutex_enter(&pc->pc_pv_lock);
 	pmap_free_pv_doit(pmap, pv);
-	mutex_spin_exit(&pc->pc_pv_lock);
+	mutex_exit(&pc->pc_pv_lock);
 }
 
 /*
@@ -1381,25 +1371,24 @@ pmap_free_pvs(pmap, pvs)
 		return;
 
 	lock = &pvs->pv_alloc_cpu->pc_pv_lock;
-	mutex_spin_enter(lock);
+	mutex_enter(lock);
 	for ( /* null */ ; pvs != NULL ; pvs = nextpv) {
 		lock2 = &pvs->pv_alloc_cpu->pc_pv_lock;
 		if (__predict_false(lock != lock2)) {
-			mutex_spin_exit(lock);
+			mutex_exit(lock);
 			lock = lock2;
-			mutex_spin_enter(lock);
+			mutex_enter(lock);
 		}
 		nextpv = SPLAY_RIGHT(pvs, pv_node);
 		pmap_free_pv_doit(pmap, pvs);
 	}
-	mutex_spin_exit(lock);
+	mutex_exit(lock);
 }
 
 /*
  * pmap_free_pvpage: try and free an unused pv_page structure
  *
  * => must be called with the correct lock held
- * => must be called with kernel preemption disabled
  * => assume that there is a page on the pv_unusedpgs list
  */
 
@@ -1414,9 +1403,9 @@ pmap_free_pvpage(struct pmap_cpu *pc)
 
 	pc->pc_pv_nfpvents -= PVE_PER_PVPAGE;  /* update free count */
 
-	mutex_spin_exit(&pc->pc_pv_lock);
+	mutex_exit(&pc->pc_pv_lock);
 	uvm_km_free(kmem_map, (vaddr_t)pvp, PAGE_SIZE, UVM_KMF_WIRED);
-	mutex_spin_enter(&pc->pc_pv_lock);
+	mutex_enter(&pc->pc_pv_lock);
 }
 
 /*
