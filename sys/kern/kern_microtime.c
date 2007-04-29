@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_microtime.c,v 1.16 2006/06/07 22:33:40 kardel Exp $	*/
+/*	$NetBSD: kern_microtime.c,v 1.16.16.1 2007/04/29 00:47:48 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: kern_microtime.c,v 1.16 2006/06/07 22:33:40 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_microtime.c,v 1.16.16.1 2007/04/29 00:47:48 ad Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -86,7 +86,7 @@ void
 cc_microtime(struct timeval *tvp)
 {
 	static struct timeval lasttime;
-	static struct simplelock microtime_slock = SIMPLELOCK_INITIALIZER;
+	static __cpu_simple_lock_t microtime_slock = __SIMPLE_UNLOCKED;
 	struct timeval t;
 	struct cpu_info *ci = curcpu();
 	int64_t cc, sec, usec;
@@ -110,7 +110,7 @@ cc_microtime(struct timeval *tvp)
 		 * more than the interval between microset() calls.  In any
 		 * case, the following sanity checks will suppress timewarps.
 		 */
-		simple_lock(&microtime_slock);
+		__cpu_simple_lock(&microtime_slock);
 		t = ci->ci_cc_time;
 		cc = cpu_counter32() - ci->ci_cc_cc;
 		if (cc < 0)
@@ -125,7 +125,7 @@ cc_microtime(struct timeval *tvp)
 		 * Can't use the CC -- just use the system time.
 		 */
 		/* XXXSMP: not atomic */
-		simple_lock(&microtime_slock);
+		__cpu_simple_unlock(&microtime_slock);
 		getmicrotime(&t);
 	}
 
@@ -152,7 +152,7 @@ cc_microtime(struct timeval *tvp)
 		}
 	}
 	lasttime = t;
-	simple_unlock(&microtime_slock);
+	__cpu_simple_unlock(&microtime_slock);
 
 	splx(s);
 
