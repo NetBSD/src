@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sysctl.c,v 1.24 2006/11/16 01:32:42 christos Exp $	*/
+/*	$NetBSD: linux_sysctl.c,v 1.24.2.1 2007/04/29 11:05:40 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sysctl.c,v 1.24 2006/11/16 01:32:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sysctl.c,v 1.24.2.1 2007/04/29 11:05:40 bouyer Exp $");
 
 #if defined (_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -65,6 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_sysctl.c,v 1.24 2006/11/16 01:32:42 christos E
 #include <compat/linux/linux_syscallargs.h>
 #include <compat/linux/common/linux_sysctl.h>
 #include <compat/linux/common/linux_exec.h>
+#include <compat/linux/common/linux_machdep.h>
 
 char linux_sysname[128] = "Linux";
 #if defined(__amd64__) || defined(__i386__) || defined(__powerpc__)
