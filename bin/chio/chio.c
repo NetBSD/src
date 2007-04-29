@@ -1,4 +1,4 @@
-/* $NetBSD: chio.c,v 1.27 2005/06/01 15:20:04 lukem Exp $ */
+/* $NetBSD: chio.c,v 1.28 2007/04/29 20:23:34 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 1996, 1998, 1999 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 __COPYRIGHT(
 "@(#) Copyright (c) 1996, 1998, 1999\
 	The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: chio.c,v 1.27 2005/06/01 15:20:04 lukem Exp $");
+__RCSID("$NetBSD: chio.c,v 1.28 2007/04/29 20:23:34 msaitoh Exp $");
 #endif
 
 #include <sys/param.h>
@@ -403,7 +403,7 @@ do_params(const char *cname, int argc, char **argv)
 
 	/* No arguments to this command. */
 	if (argc) {
-		warnx("%s: no arguements expected", cname);
+		warnx("%s: no arguments expected", cname);
 		usage();
 		/* NOTREACHED */
 	}

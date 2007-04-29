@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_subr.c,v 1.32 2006/03/29 07:06:24 thorpej Exp $	*/
+/*	$NetBSD: mscp_subr.c,v 1.33 2007/04/29 20:23:35 msaitoh Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp_subr.c,v 1.32 2006/03/29 07:06:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp_subr.c,v 1.33 2007/04/29 20:23:35 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -744,7 +744,7 @@ static const char *cntlr_msgs[] = {
 	unknown_msg,
 	"serdes overrun",	/* 1 = Serialiser/Deserialiser Overrun */
 	"edc",			/* 2 = Error Detection Code? */
-	"inconsistant internal data struct",/* 3 = Internal Error */
+	"inconsistent internal data struct",/* 3 = Internal Error */
 };
 
 /*
