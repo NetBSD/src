@@ -1,4 +1,4 @@
-/*	$NetBSD: psshfs.c,v 1.14 2007/04/22 20:03:26 pooka Exp $	*/
+/*	$NetBSD: psshfs.c,v 1.15 2007/04/29 10:02:57 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: psshfs.c,v 1.14 2007/04/22 20:03:26 pooka Exp $");
+__RCSID("$NetBSD: psshfs.c,v 1.15 2007/04/29 10:02:57 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -85,7 +85,7 @@ static void
 usage()
 {
 
-	errx(1, "usage: %s [-s] [-o opts] user@host:path mountpath",
+	errx(1, "usage: %s [-es] [-p port] [-o opts] user@host:path mountpath",
 	    getprogname());
 }
 
@@ -99,8 +99,10 @@ main(int argc, char *argv[])
 	char *sshargs[16];
 	char *userhost;
 	char *hostpath;
+	char *sshport = NULL;
 	int mntflags, pflags, ch;
 	int detach, exportfs;
+	int argi;
 
 	setprogname(argv[0]);
 
@@ -109,7 +111,7 @@ main(int argc, char *argv[])
 
 	mntflags = pflags = exportfs = 0;
 	detach = 1;
-	while ((ch = getopt(argc, argv, "eo:s")) != -1) {
+	while ((ch = getopt(argc, argv, "eo:p:s")) != -1) {
 		switch (ch) {
 		case 'e':
 			exportfs = 1;
@@ -119,6 +121,9 @@ main(int argc, char *argv[])
 			if (mp == NULL)
 				err(1, "getmntopts");
 			freemntopts(mp);
+			break;
+		case 'p':
+			sshport = optarg;
 			break;
 		case 's':
 			detach = 0;
@@ -180,14 +185,19 @@ main(int argc, char *argv[])
 		pctx.mountpath = ".";
 
 	/* xblah */
-	sshargs[0] = SSH_PATH;
-	sshargs[1] = argv[0];
-	sshargs[2] = "-oClearAllForwardings=yes";
-	sshargs[3] = "-a";
-	sshargs[4] = "-x";
-	sshargs[5] = "-s";
-	sshargs[6] = "sftp";
-	sshargs[7] = 0;
+	argi = 0;
+	sshargs[argi++] = SSH_PATH;
+	sshargs[argi++] = argv[0];
+	sshargs[argi++] = "-oClearAllForwardings=yes";
+	sshargs[argi++] = "-a";
+	sshargs[argi++] = "-x";
+	sshargs[argi++] = "-s";
+	if (sshport) {
+		sshargs[argi++] = "-p";
+		sshargs[argi++] = sshport;
+	}
+	sshargs[argi++] = "sftp";
+	sshargs[argi] = 0;
 
 	pu = puffs_init(pops, "ppshfs", &pctx, pflags);
 	if (pu == NULL)
