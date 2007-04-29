@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.35.2.1 2007/04/28 21:05:52 ad Exp $ */
+/* $NetBSD: cpu.c,v 1.35.2.2 2007/04/29 12:37:40 ad Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.35.2.1 2007/04/28 21:05:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.35.2.2 2007/04/29 12:37:40 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -298,8 +298,6 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 	ci->ci_cpuid = 0;	/* False for APs, but they're not used anyway */
 #endif
 	ci->ci_func = caa->cpu_func;
-
-	simple_lock_init(&ci->ci_slock);
 
 #if defined(MULTIPROCESSOR)
 	/*
