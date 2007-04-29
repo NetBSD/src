@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.185 2007/04/22 08:30:01 dsl Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.186 2007/04/29 10:30:18 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.185 2007/04/22 08:30:01 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.186 2007/04/29 10:30:18 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -1916,7 +1916,7 @@ nfs_check_wccdata(struct nfsnode *np, const struct timespec *ctime,
 			 * caching.  it's a compromise.
 			 */
 
-			simple_lock(&nmp->nm_slock);
+			mutex_enter(&nmp->nm_lock);
 #if defined(DEBUG)
 			if (!NFS_WCCKLUDGE(nmp, now)) {
 				printf("%s: inaccurate wcc data (%s) detected,"
@@ -1937,11 +1937,11 @@ nfs_check_wccdata(struct nfsnode *np, const struct timespec *ctime,
 #endif
 			nmp->nm_iflag |= NFSMNT_WCCKLUDGE;
 			nmp->nm_wcckludgetime = now;
-			simple_unlock(&nmp->nm_slock);
+			mutex_exit(&nmp->nm_lock);
 		} else if (NFS_WCCKLUDGE(nmp, now)) {
 			error = EPERM; /* XXX */
 		} else if (nmp->nm_iflag & NFSMNT_WCCKLUDGE) {
-			simple_lock(&nmp->nm_slock);
+			mutex_enter(&nmp->nm_lock);
 			if (nmp->nm_iflag & NFSMNT_WCCKLUDGE) {
 #if defined(DEBUG)
 				printf("%s: re-enabling wcc\n",
@@ -1949,7 +1949,7 @@ nfs_check_wccdata(struct nfsnode *np, const struct timespec *ctime,
 #endif
 				nmp->nm_iflag &= ~NFSMNT_WCCKLUDGE;
 			}
-			simple_unlock(&nmp->nm_slock);
+			mutex_exit(&nmp->nm_lock);
 		}
 	}
 
@@ -2668,9 +2668,9 @@ nfs_clearcommit(mp)
 		}
 		simple_unlock(&vp->v_uobj.vmobjlock);
 	}
-	simple_lock(&nmp->nm_slock);
+	mutex_enter(&nmp->nm_lock);
 	nmp->nm_iflag &= ~NFSMNT_STALEWRITEVERF;
-	simple_unlock(&nmp->nm_slock);
+	mutex_exit(&nmp->nm_lock);
 	rw_exit(&nmp->nm_writeverflock);
 }
 
