@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.174 2007/03/04 06:03:38 christos Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.175 2007/04/29 10:30:19 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.174 2007/03/04 06:03:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.175 2007/04/29 10:30:19 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -724,7 +724,10 @@ mountnfs(argp, mp, nam, pth, hst, vpp, l)
 		TAILQ_INIT(&nmp->nm_uidlruhead);
 		TAILQ_INIT(&nmp->nm_bufq);
 		rw_init(&nmp->nm_writeverflock);
-		simple_lock_init(&nmp->nm_slock);
+		mutex_init(&nmp->nm_lock, MUTEX_DEFAULT, IPL_NONE);
+		cv_init(&nmp->nm_rcvcv, "nfsrcv");
+		cv_init(&nmp->nm_sndcv, "nfssnd");
+		cv_init(&nmp->nm_aiocv, "nfsaio");
 	}
 	vfs_getnewfsid(mp);
 	nmp->nm_mountp = mp;
