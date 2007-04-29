@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsmount.h,v 1.43 2007/04/29 10:30:19 yamt Exp $	*/
+/*	$NetBSD: nfsmount.h,v 1.44 2007/04/29 14:57:00 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -170,6 +170,7 @@ struct	nfsmount {
 	u_int64_t nm_maxfilesize;	/* maximum file size */
 	int	nm_iflag;		/* internal flags */
 	int	nm_waiters;		/* number of waiting listeners.. */
+	kcondvar_t nm_disconcv;
 	long	nm_wcckludgetime;	/* see nfs_check_wccdata() */
 	struct io_stats *nm_stats;	/* per nfs mount statistics */
 };
