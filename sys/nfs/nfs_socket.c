@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.150 2007/04/29 10:30:18 yamt Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.151 2007/04/29 14:56:59 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.150 2007/04/29 10:30:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.151 2007/04/29 14:56:59 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -414,14 +414,13 @@ nfs_disconnect(nmp)
 			 * wait for them to go away unhappy, to prevent *nmp
 			 * from evaporating while they're sleeping.
 			 */
+			mutex_enter(&nmp->nm_lock);
 			while (nmp->nm_waiters > 0) {
-				mutex_enter(&nmp->nm_lock);
 				cv_broadcast(&nmp->nm_rcvcv);
 				cv_broadcast(&nmp->nm_sndcv);
-				mutex_exit(&nmp->nm_lock);
-				(void) tsleep(&nmp->nm_waiters, PVFS,
-				    "nfsdis", 0);
+				cv_wait(&nmp->nm_disconcv, &nmp->nm_lock);
 			}
+			mutex_exit(&nmp->nm_lock);
 		}
 		soclose(so);
 	}
@@ -812,20 +811,27 @@ nfs_reply(myrep, lwp)
 		/*
 		 * Get the next Rpc reply off the socket
 		 */
+
+		mutex_enter(&nmp->nm_lock);
 		nmp->nm_waiters++;
+		mutex_exit(&nmp->nm_lock);
+
 		error = nfs_receive(myrep, &nam, &mrep, lwp);
 		nfs_rcvunlock(nmp);
+
+		mutex_enter(&nmp->nm_lock);
+		nmp->nm_waiters--;
+		cv_signal(&nmp->nm_disconcv);
+		mutex_exit(&nmp->nm_lock);
+
 		if (error) {
 
 			if (nmp->nm_iflag & NFSMNT_DISMNT) {
 				/*
 				 * Oops, we're going away now..
 				 */
-				nmp->nm_waiters--;
-				wakeup (&nmp->nm_waiters);
 				return error;
 			}
-			nmp->nm_waiters--;
 			/*
 			 * Ignore routing errors on connectionless protocols? ?
 			 */
@@ -840,7 +846,6 @@ nfs_reply(myrep, lwp)
 			}
 			return (error);
 		}
-		nmp->nm_waiters--;
 		if (nam)
 			m_freem(nam);
 
@@ -1825,7 +1830,7 @@ nfs_rcvlock(struct nfsmount *nmp, struct nfsreq *rep)
 			    slptimeo);
 		}
 		if (*flagp & NFSMNT_DISMNT) {
-			wakeup(&nmp->nm_waiters);
+			cv_signal(&nmp->nm_disconcv);
 			error = EIO;
 			goto quit;
 		}
