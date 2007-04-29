@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.121 2007/04/28 18:31:32 bouyer Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.122 2007/04/29 11:06:22 bouyer Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -2843,4 +2843,10 @@ sys/netinet6/route6.c				1.18
 	Information from:
 		http://www.secdev.org/conf/IPv6_RH_security-csw07.pdf
 	[christos, ticket #587]
+
+sys/compat/linux/arch/amd64/linux_machdep.h	1.8
+sys/compat/linux/common/linux_sysctl.c		1.27
+
+	Linux's uname should return x86_64 as machine_arch
+	[manu, ticket #596]
 
