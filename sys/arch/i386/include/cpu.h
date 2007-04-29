@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.135.2.4 2007/04/28 21:05:54 ad Exp $	*/
+/*	$NetBSD: cpu.h,v 1.135.2.5 2007/04/29 12:37:41 ad Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -57,7 +57,6 @@
 #include <x86/via_padlock.h>
 
 #include <sys/device.h>
-#include <sys/simplelock.h>			/* will also get LOCKDEBUG */
 #include <sys/cpu_data.h>
 #include <sys/cc_microtime.h>
 
@@ -82,7 +81,6 @@ struct cpu_info {
 	 * Public members.
 	 */
 	struct lwp *ci_curlwp;		/* current owner of the processor */
-	struct simplelock ci_slock;	/* lock on this data structure */
 	cpuid_t ci_cpuid;		/* our CPU ID */
 	u_int ci_apicid;		/* our APIC ID */
 	struct cpu_data ci_data;	/* MI per-cpu data */

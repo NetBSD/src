@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.28 2007/02/21 22:59:55 thorpej Exp $	*/
+/*	$NetBSD: intr.c,v 1.28.4.1 2007/04/29 12:37:41 ad Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -104,7 +104,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.28 2007/02/21 22:59:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.28.4.1 2007/04/29 12:37:41 ad Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_acpi.h"
@@ -160,6 +160,8 @@ static int intr_scan_bus(int, int, int *);
 static int intr_find_pcibridge(int, pcitag_t *, pci_chipset_tag_t *);
 #endif
 #endif
+
+kmutex_t x86_intr_lock;
 
 /*
  * Fill in default interrupt table (in case of spurious interrupt
@@ -384,7 +386,7 @@ intr_allocate_slot_cpu(struct cpu_info *ci, struct pic *pic, int pin,
 	start = CPU_IS_PRIMARY(ci) ? NUM_LEGACY_IRQS : 0;
 	slot = -1;
 
-	simple_lock(&ci->ci_slock);
+	mutex_enter(&x86_intr_lock);
 	for (i = start; i < MAX_INTR_SOURCES ; i++) {
 		isp = ci->ci_isources[i];
 		if (isp != NULL && isp->is_pic == pic && isp->is_pin == pin) {
@@ -397,7 +399,7 @@ intr_allocate_slot_cpu(struct cpu_info *ci, struct pic *pic, int pin,
 		}
 	}
 	if (slot == -1) {
-		simple_unlock(&ci->ci_slock);
+		mutex_exit(&x86_intr_lock);
 		return EBUSY;
 	}
 
@@ -406,7 +408,7 @@ intr_allocate_slot_cpu(struct cpu_info *ci, struct pic *pic, int pin,
 		MALLOC(isp, struct intrsource *, sizeof (struct intrsource),
 		    M_DEVBUF, M_NOWAIT|M_ZERO);
 		if (isp == NULL) {
-			simple_unlock(&ci->ci_slock);
+			mutex_exit(&x86_intr_lock);
 			return ENOMEM;
 		}
 		snprintf(isp->is_evname, sizeof (isp->is_evname),
@@ -415,7 +417,7 @@ intr_allocate_slot_cpu(struct cpu_info *ci, struct pic *pic, int pin,
 		    pic->pic_dev.dv_xname, isp->is_evname);
 		ci->ci_isources[slot] = isp;
 	}
-	simple_unlock(&ci->ci_slock);
+	mutex_exit(&x86_intr_lock);
 
 	*index = slot;
 	return 0;
@@ -463,9 +465,9 @@ intr_allocate_slot(struct pic *pic, int legacy_irq, int pin, int level,
 			    "pin %d", pin);
 			evcnt_attach_dynamic(&isp->is_evcnt, EVCNT_TYPE_INTR,
 			    NULL, pic->pic_dev.dv_xname, isp->is_evname);
-			simple_lock(&ci->ci_slock);
+			mutex_enter(&x86_intr_lock);
 			ci->ci_isources[slot] = isp;
-			simple_unlock(&ci->ci_slock);
+			mutex_exit(&x86_intr_lock);
 		} else {
 			if (isp->is_pin != pin) {
 				if (pic == &i8259_pic)
@@ -514,10 +516,10 @@ other:
 found:
 		idtvec = idt_vec_alloc(APIC_LEVEL(level), IDT_INTR_HIGH);
 		if (idtvec == 0) {
-			simple_lock(&ci->ci_slock);
+			mutex_enter(&x86_intr_lock);
 			FREE(ci->ci_isources[slot], M_DEVBUF);
 			ci->ci_isources[slot] = NULL;
-			simple_unlock(&ci->ci_slock);
+			mutex_exit(&x86_intr_lock);
 			return EBUSY;
 		}
 	}
@@ -613,7 +615,7 @@ intr_establish(int legacy_irq, struct pic *pic, int pin, int type, int level,
 		return NULL;
 	}
 
-	simple_lock(&ci->ci_slock);
+	mutex_enter(&x86_intr_lock);
 
 	source->is_pin = pin;
 	source->is_pic = pic;
@@ -628,7 +630,7 @@ intr_establish(int legacy_irq, struct pic *pic, int pin, int type, int level,
 			break;
 	case IST_PULSE:
 		if (type != IST_NONE) {
-			simple_unlock(&ci->ci_slock);
+			mutex_exit(&x86_intr_lock);
 			printf("intr_establish: pic %s pin %d: can't share "
 			       "type %d with %d\n", pic->pic_name, pin,
 				source->is_type, type);
@@ -637,7 +639,7 @@ intr_establish(int legacy_irq, struct pic *pic, int pin, int type, int level,
 		}
 		break;
 	default:
-		simple_unlock(&ci->ci_slock);
+		mutex_exit(&x86_intr_lock);
 		panic("intr_establish: bad intr type %d for pic %s pin %d\n",
 		    source->is_type, pic->pic_dev.dv_xname, pin);
 	}
@@ -672,7 +674,7 @@ intr_establish(int legacy_irq, struct pic *pic, int pin, int type, int level,
 
 	intr_calculatemasks(ci);
 
-	simple_unlock(&ci->ci_slock);
+	mutex_exit(&x86_intr_lock);
 
 	if (ci->ci_isources[slot]->is_resume == NULL ||
 	    source->is_idtvec != idt_vec) {
@@ -718,7 +720,7 @@ intr_disestablish(struct intrhand *ih)
 	source = ci->ci_isources[ih->ih_slot];
 	idtvec = source->is_idtvec;
 
-	simple_lock(&ci->ci_slock);
+	mutex_enter(&x86_intr_lock);
 	pic->pic_hwmask(pic, ih->ih_pin);	
 	x86_atomic_clearbits_l(&ci->ci_ipending, (1 << ih->ih_slot));
 
@@ -729,7 +731,7 @@ intr_disestablish(struct intrhand *ih)
 	     p = &q->ih_next)
 		;
 	if (q == NULL) {
-		simple_unlock(&ci->ci_slock);
+		mutex_exit(&x86_intr_lock);
 		panic("intr_disestablish: handler not registered");
 	}
 
@@ -755,7 +757,7 @@ intr_disestablish(struct intrhand *ih)
 
 	free(ih, M_DEVBUF);
 
-	simple_unlock(&ci->ci_slock);
+	mutex_exit(&x86_intr_lock);
 }
 
 const char *
@@ -822,6 +824,12 @@ cpu_intr_init(struct cpu_info *ci)
 #if defined(INTRSTACKSIZE)
 	char *cp;
 #endif /* defined(INTRSTACKSIZE) */
+	static bool again;
+
+	if (!again) {
+		again = 0;
+		mutex_init(&x86_intr_lock, MUTEX_DEFAULT, IPL_NONE);
+	}
 
 	MALLOC(isp, struct intrsource *, sizeof (struct intrsource), M_DEVBUF,
 	    M_WAITOK|M_ZERO);
@@ -932,7 +940,6 @@ intr_printconfig(void)
 		for (i = 0; i < NIPL; i++)
 			printf("IPL %d mask %lx unmask %lx\n", i,
 			    (u_long)ci->ci_imask[i], (u_long)ci->ci_iunmask[i]);
-		simple_lock(&ci->ci_slock);
 		for (i = 0; i < MAX_INTR_SOURCES; i++) {
 			isp = ci->ci_isources[i];
 			if (isp == NULL)
@@ -946,7 +953,6 @@ intr_printconfig(void)
 				    ih->ih_fun, ih->ih_level);
 
 		}
-		simple_unlock(&ci->ci_slock);
 	}
 }
 #endif
