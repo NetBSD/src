@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.202.2.4 2007/04/28 21:05:52 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.202.2.5 2007/04/29 14:25:37 ad Exp $	*/
 
 /*
  *
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.202.2.4 2007/04/28 21:05:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.202.2.5 2007/04/29 14:25:37 ad Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"
@@ -264,7 +264,7 @@ struct pmap_tlb_shootdown_job {
 	struct pmap_tlb_shootdown_job *pj_nextfree;
 };
 
-#define PMAP_TLB_SHOOTDOWN_JOB_ALIGN 24
+#define PMAP_TLB_SHOOTDOWN_JOB_ALIGN 32
 union pmap_tlb_shootdown_job_al {
 	struct pmap_tlb_shootdown_job pja_job;
 	char pja_align[PMAP_TLB_SHOOTDOWN_JOB_ALIGN];
@@ -464,10 +464,11 @@ static struct pv_entry	*pmap_remove_pv(struct pv_head *, struct pmap *,
 					vaddr_t);
 static void		 pmap_do_remove(struct pmap *, vaddr_t, vaddr_t, int);
 static bool		 pmap_remove_pte(struct pmap *, struct vm_page *,
-					 pt_entry_t *, vaddr_t, int32_t *, int);
+					 pt_entry_t *, vaddr_t, int32_t *,
+					 int, struct pv_entry **);
 static void		 pmap_remove_ptes(struct pmap *, struct vm_page *,
 					  vaddr_t, vaddr_t, vaddr_t, int32_t *,
-					  int);
+					  int, struct pv_entry **);
 #define PMAP_REMOVE_ALL		0	/* remove all mappings */
 #define PMAP_REMOVE_SKIPWIRED	1	/* skip wired mappings */
 
@@ -1120,7 +1121,6 @@ pmap_cpu_init_late(struct cpu_info *ci)
 		    &pc->pc_page[i + 1].pja_job;
 	pc->pc_page[i].pja_job.pj_nextfree = NULL;
 	pc->pc_free = &pc->pc_page[0];
-
 }
 
 /*
@@ -2339,15 +2339,15 @@ pmap_copy_page(srcpa, dstpa)
  */
 
 static void
-pmap_remove_ptes(pmap, ptp, ptpva, startva, endva, cpumaskp, flags)
+pmap_remove_ptes(pmap, ptp, ptpva, startva, endva, cpumaskp, flags, pv_tofree)
 	struct pmap *pmap;
 	struct vm_page *ptp;
 	vaddr_t ptpva;
 	vaddr_t startva, endva;
 	int32_t *cpumaskp;
 	int flags;
+	struct pv_entry **pv_tofree;
 {
-	struct pv_entry *pv_tofree = NULL;	/* list of pv_entrys to free */
 	struct pv_entry *pve;
 	pt_entry_t *pte = (pt_entry_t *) ptpva;
 	pt_entry_t opte;
@@ -2420,14 +2420,12 @@ pmap_remove_ptes(pmap, ptp, ptpva, startva, endva, cpumaskp, flags)
 		mutex_spin_exit(&mdpg->mp_pvhead.pvh_lock);
 
 		if (pve) {
-			SPLAY_RIGHT(pve, pv_node) = pv_tofree;
-			pv_tofree = pve;
+			SPLAY_RIGHT(pve, pv_node) = *pv_tofree;
+			*pv_tofree = pve;
 		}
 
 		/* end of "for" loop: time for next pte */
 	}
-	if (pv_tofree)
-		pmap_free_pvs(pmap, pv_tofree);
 }
 
 
@@ -2443,13 +2441,14 @@ pmap_remove_ptes(pmap, ptp, ptpva, startva, endva, cpumaskp, flags)
  */
 
 static bool
-pmap_remove_pte(pmap, ptp, pte, va, cpumaskp, flags)
+pmap_remove_pte(pmap, ptp, pte, va, cpumaskp, flags, pv_tofree)
 	struct pmap *pmap;
 	struct vm_page *ptp;
 	pt_entry_t *pte;
 	vaddr_t va;
 	int32_t *cpumaskp;
 	int flags;
+	struct pv_entry **pv_tofree;
 {
 	pt_entry_t opte;
 	struct pv_entry *pve;
@@ -2508,8 +2507,11 @@ pmap_remove_pte(pmap, ptp, pte, va, cpumaskp, flags)
 	pve = pmap_remove_pv(&mdpg->mp_pvhead, pmap, va);
 	mutex_spin_exit(&mdpg->mp_pvhead.pvh_lock);
 
-	if (pve)
-		pmap_free_pv(pmap, pve);
+	if (pve) { 
+		SPLAY_RIGHT(pve, pv_node) = *pv_tofree;
+		*pv_tofree = pve;
+	}
+
 	return(true);
 }
 
@@ -2540,6 +2542,7 @@ pmap_do_remove(pmap, sva, eva, flags)
 	int flags;
 {
 	pt_entry_t *ptes, opte;
+	struct pv_entry *pv_tofree = NULL;
 	bool result;
 	paddr_t ptppa;
 	vaddr_t blkendva;
@@ -2586,7 +2589,8 @@ pmap_do_remove(pmap, sva, eva, flags)
 
 			/* do it! */
 			result = pmap_remove_pte(pmap, ptp,
-			    &ptes[x86_btop(sva)], sva, &cpumask, flags);
+			    &ptes[x86_btop(sva)], sva, &cpumask,
+			    flags, &pv_tofree);
 
 			/*
 			 * if mapping removed and the PTP is no longer
@@ -2676,8 +2680,8 @@ pmap_do_remove(pmap, sva, eva, flags)
 #endif
 			}
 		}
-		pmap_remove_ptes(pmap, ptp,
-		    (vaddr_t)&ptes[x86_btop(sva)], sva, blkendva, &cpumask, flags);
+		pmap_remove_ptes(pmap, ptp, (vaddr_t)&ptes[x86_btop(sva)],
+		    sva, blkendva, &cpumask, flags, &pv_tofree);
 
 		/* if PTP is no longer being used, free it! */
 		if (ptp && ptp->wire_count <= 1) {
@@ -2712,12 +2716,15 @@ pmap_do_remove(pmap, sva, eva, flags)
 		}
 	}
 
+	pmap_tlb_shootnow(cpumask);
 	for (ptp = empty_ptps; ptp != NULL; ptp = ptp->mdpage.mp_link)
 		uvm_pagerealloc(ptp, NULL, 0);
-	pmap_tlb_shootnow(cpumask);
 	pmap_unmap_ptes(pmap, pmap2);		/* unlock pmap */
 	rw_exit(&pmap_main_lock);
-	/* Now we can free unused ptps */
+
+	/* Now we can free unused PVs and ptps */
+	if (pv_tofree)
+		pmap_free_pvs(pmap, pv_tofree);
 	for (ptp = empty_ptps; ptp != NULL; ptp = empty_ptps) {
 		empty_ptps = ptp->mdpage.mp_link;
 		uvm_pagefree(ptp);
@@ -2837,21 +2844,16 @@ pmap_page_remove(pg)
 			}
 		}
 		
-		/*
-		 * the pte pointer is now invalid: uvm_pagerealloc()
-		 * may have blocked.  that's ok, since we only need
-		 * to unlock the pmaps.
-		 */
 		pmap_unmap_ptes(pve->pv_pmap, pmap2);	/* unlocks pmap */
 		SPLAY_REMOVE(pvtree, &pvh->pvh_root, pve); /* remove it */
 		SPLAY_RIGHT(pve, pv_node) = killlist;	/* mark it for death */
 		killlist = pve;
 	}
-	pmap_free_pvs(NULL, killlist);
 	rw_exit(&pmap_main_lock);
 	pmap_tlb_shootnow(cpumask);
 
-	/* Now we can free unused ptps */
+	/* Now we can free unused pvs and ptps. */
+	pmap_free_pvs(NULL, killlist);
 	TAILQ_FOREACH(ptp, &empty_ptps, listq)
 		uvm_pagefree(ptp);
 }
@@ -3209,7 +3211,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 	struct vm_page *ptp, *pg;
 	struct vm_page_md *mdpg;
 	struct pv_head *old_pvh, *new_pvh;
-	struct pv_entry *pve = NULL, *freepve; /* XXX gcc */
+	struct pv_entry *pve = NULL, *freepve, *freepve2 = NULL;
 	int error;
 	bool wired = (flags & PMAP_WIRED) != 0;
 	struct pmap *pmap2;
@@ -3247,7 +3249,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 			npte |= PG_M;
 	}
 
-	/* get a pve.  we must disable preemption for this. */
+	/* get a pve. */
 	freepve = pmap_alloc_pv(pmap, ALLOCPV_NEED);
 	if (freepve == NULL) {
 		if (!(flags & PMAP_CANFAIL))
@@ -3381,7 +3383,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 			}
 			mutex_spin_exit(&old_pvh->pvh_lock);
 			if (new_pvh == NULL)
-				pmap_free_pv(pmap, pve);
+				freepve2 = pve;
 			goto shootdown_test;
 		}
 	} else {	/* opte not valid */
@@ -3429,6 +3431,8 @@ out:
 		/* put back the pv, we don't need it. */
 		pmap_free_pv(pmap, freepve);
 	}
+	if (freepve2 != NULL)
+		pmap_free_pv(pmap, freepve2);
 
 	return error;
 }
