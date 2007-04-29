@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.254 2007/04/29 10:30:19 yamt Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.255 2007/04/29 15:30:26 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.254 2007/04/29 10:30:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.255 2007/04/29 15:30:26 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_nfs.h"
@@ -1507,6 +1507,8 @@ nfsmout:
 		mutex_exit(&ctx.nwc_lock);
 		PRELE(l);
 	}
+	mutex_destroy(&ctx.nwc_lock);
+	cv_destroy(&ctx.nwc_cv);
 	*iomode = committed;
 	if (error)
 		uiop->uio_resid = tsiz;
