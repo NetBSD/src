@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.119.4.7 2007/04/28 20:47:03 ad Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.119.4.8 2007/04/29 14:21:38 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.119.4.7 2007/04/28 20:47:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.119.4.8 2007/04/29 14:21:38 ad Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -193,9 +193,9 @@ uvm_pageinsert_after(struct vm_page *pg, struct vm_page *where)
 	hash = uvm_pagehash(uobj, pg->offset);
 	buck = &uvm.page_hash[hash];
 	lock = uvm_hashlock(hash);
-	mutex_enter(lock);
+	mutex_spin_enter(lock);
 	TAILQ_INSERT_TAIL(buck, pg, hashq);
-	mutex_exit(lock);
+	mutex_spin_exit(lock);
 
 	if (UVM_OBJ_IS_VNODE(uobj)) {
 		if (uobj->uo_npages == 0) {
@@ -248,9 +248,9 @@ uvm_pageremove(struct vm_page *pg)
 	hash = uvm_pagehash(uobj, pg->offset);
 	buck = &uvm.page_hash[hash];
 	lock = uvm_hashlock(hash);
-	mutex_enter(lock);
+	mutex_spin_enter(lock);
 	TAILQ_REMOVE(buck, pg, hashq);
-	mutex_exit(lock);
+	mutex_spin_exit(lock);
 
 	if (UVM_OBJ_IS_VNODE(uobj)) {
 		if (uobj->uo_npages == 1) {
@@ -324,11 +324,14 @@ uvm_page_init(vaddr_t *kvm_startp, vaddr_t *kvm_endp)
 	TAILQ_INIT(uvm.page_hash);		/* init hash table */
 
 	/*
-	 * init hashtable locks.
+	 * init hashtable locks.  these must be spinlocks, as they are
+	 * called from sites in the pmap modules where we cannot block.
+	 * if taking multiple locks, the order is: low numbered first,
+	 * high numbered second.
 	 */
 
 	for (i = 0; i < UVM_HASHLOCK_CNT; i++)
-		mutex_init(&uvm_hashlocks[i], MUTEX_DRIVER, IPL_VM);
+		mutex_init(&uvm_hashlocks[i], MUTEX_SPIN, IPL_VM);
 
 	/*
 	 * allocate vm_page structures.
@@ -894,7 +897,7 @@ uvm_page_rehash(void)
 	 */
 
 	for (i = 0; i < UVM_HASHLOCK_CNT; i++)
-		mutex_enter(&uvm_hashlocks[i]);
+		mutex_spin_enter(&uvm_hashlocks[i]);
 
 	uvm.page_hash = newbuckets;
 	uvm.page_nhash = bucketcount;
@@ -911,7 +914,7 @@ uvm_page_rehash(void)
 	}
 
 	for (i = 0; i < UVM_HASHLOCK_CNT; i++)
-		mutex_exit(&uvm_hashlocks[i]);
+		mutex_spin_exit(&uvm_hashlocks[i]);
 
 	/*
 	 * free old bucket array if is not the boot-time table
@@ -1644,13 +1647,13 @@ uvm_pagelookup(struct uvm_object *obj, voff_t off)
 	hash = uvm_pagehash(obj, off);
 	buck = &uvm.page_hash[hash];
 	lock = uvm_hashlock(hash);
-	mutex_enter(lock);
+	mutex_spin_enter(lock);
 	TAILQ_FOREACH(pg, buck, hashq) {
 		if (pg->uobject == obj && pg->offset == off) {
 			break;
 		}
 	}
-	mutex_exit(lock);
+	mutex_spin_exit(lock);
 	KASSERT(pg == NULL || obj->uo_npages != 0);
 	KASSERT(pg == NULL || (pg->flags & (PG_RELEASED|PG_PAGEOUT)) == 0 ||
 		(pg->flags & PG_BUSY) != 0);
