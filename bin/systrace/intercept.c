@@ -1,4 +1,4 @@
-/*	$NetBSD: intercept.c,v 1.27 2006/12/10 01:22:02 christos Exp $	*/
+/*	$NetBSD: intercept.c,v 1.28 2007/04/29 20:23:35 msaitoh Exp $	*/
 /*	$OpenBSD: intercept.c,v 1.29 2002/08/28 03:30:27 itojun Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -30,7 +30,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: intercept.c,v 1.27 2006/12/10 01:22:02 christos Exp $");
+__RCSID("$NetBSD: intercept.c,v 1.28 2007/04/29 20:23:35 msaitoh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -275,7 +275,7 @@ intercept_run(int bg, int fd, uid_t uid, gid_t gid,
 	pid_t pid, cpid;
 	int status;
 
-	/* Block signals so that timeing on signal delivery does not matter */
+	/* Block signals so that timing on signal delivery does not matter */
 	sigemptyset(&none);
 	sigemptyset(&set);
 	sigaddset(&set, SIGUSR1);

@@ -1,4 +1,4 @@
-/*	$NetBSD: sel_subs.c,v 1.20 2006/02/11 10:43:18 dsl Exp $	*/
+/*	$NetBSD: sel_subs.c,v 1.21 2007/04/29 20:23:34 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)sel_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: sel_subs.c,v 1.20 2006/02/11 10:43:18 dsl Exp $");
+__RCSID("$NetBSD: sel_subs.c,v 1.21 2007/04/29 20:23:34 msaitoh Exp $");
 #endif
 #endif /* not lint */
 
@@ -82,7 +82,7 @@ static GRPT **grptb = NULL;		/* group selection table */
 
 /*
  * sel_chk()
- *	check if this file matches a specfied uid, gid or time range
+ *	check if this file matches a specified uid, gid or time range
  * Return:
  *	0 if this archive member should be processed, 1 if it should be skipped
  */

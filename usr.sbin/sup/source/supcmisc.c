@@ -1,4 +1,4 @@
-/*	$NetBSD: supcmisc.c,v 1.15 2006/04/02 01:39:48 christos Exp $	*/
+/*	$NetBSD: supcmisc.c,v 1.16 2007/04/29 20:23:37 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -30,7 +30,7 @@
  * HISTORY
  * Revision 1.5  92/08/11  12:07:22  mrt
  * 	Added release to FILEWHEN name.
- * 	Brad's changes: delinted and updated variable arguement usage.
+ * 	Brad's changes: delinted and updated variable argument usage.
  * 	[92/07/26            mrt]
  *
  * Revision 1.3  89/08/15  15:31:28  bww

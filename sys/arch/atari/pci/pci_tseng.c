@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_tseng.c,v 1.8 2005/12/11 12:17:00 christos Exp $	*/
+/*	$NetBSD: pci_tseng.c,v 1.9 2007/04/29 20:23:35 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1999 Leo Weppelman.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_tseng.c,v 1.8 2005/12/11 12:17:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_tseng.c,v 1.9 2007/04/29 20:23:35 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/queue.h>
@@ -101,7 +101,7 @@ tseng_init(pc, tag, id, ba, fb)
 	if (is_et6000) {
 		/*
 		 * The et6[01]000 cards have MDRAM chips. The
-		 * timeing to those chips is not properly initialized
+		 * timing to those chips is not properly initialized
 		 * by the card on init. The way to determine the
 		 * values is not documented either :-( So that's why
 		 * all this mess below (and in et6000_init()....

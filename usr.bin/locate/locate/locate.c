@@ -1,4 +1,4 @@
-/*	$NetBSD: locate.c,v 1.14 2006/02/12 00:45:01 christos Exp $	*/
+/*	$NetBSD: locate.c,v 1.15 2007/04/29 20:23:37 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -42,14 +42,14 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)locate.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: locate.c,v 1.14 2006/02/12 00:45:01 christos Exp $");
+__RCSID("$NetBSD: locate.c,v 1.15 2007/04/29 20:23:37 msaitoh Exp $");
 #endif /* not lint */
 
 /*
  * Ref: Usenix ;login:, Vol 8, No 1, February/March, 1983, p. 8.
  *
  * Locate scans a file list for the full pathname of a file given only part
- * of the name.  The list has been processed with with "front-compression"
+ * of the name.  The list has been processed with "front-compression"
  * and bigram coding.  Front compression reduces space by a factor of 4-5,
  * bigram coding by a further 20-25%.
  *
