@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.875 2007/04/29 20:31:24 bouyer Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.876 2007/04/29 20:35:02 bouyer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.876 2007/04/29 20:29:53 bouyer Exp
+ *	NetBSD: pcidevs,v 1.877 2007/04/29 20:33:22 bouyer Exp
  */
 
 /*
@@ -7001,11 +7001,11 @@ static const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801H_IFE_GT,
-	    "Intel i82801H IFE (GT) LAN Controller",
+	    "i82801H IFE (GT) LAN Controller",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801H_IFE_G,
-	    "Intel i82801H IFE (G) LAN Controller",
+	    "i82801H IFE (G) LAN Controller",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82815_DC100_HUB,
