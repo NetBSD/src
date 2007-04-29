@@ -1,4 +1,4 @@
-/*	$NetBSD: tables.c,v 1.28 2006/11/24 19:37:02 christos Exp $	*/
+/*	$NetBSD: tables.c,v 1.29 2007/04/29 20:23:34 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)tables.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: tables.c,v 1.28 2006/11/24 19:37:02 christos Exp $");
+__RCSID("$NetBSD: tables.c,v 1.29 2007/04/29 20:23:34 msaitoh Exp $");
 #endif
 #endif /* not lint */
 
@@ -623,7 +623,7 @@ sub_name(char *oname, int *onamelen, size_t onamesize)
  * device/inode mapping table routines
  * (used with formats that store device and inodes fields)
  *
- * device/inode mapping tables remap the device field in a archive header. The
+ * device/inode mapping tables remap the device field in an archive header. The
  * device/inode fields are used to determine when files are hard links to each
  * other. However these values have very little meaning outside of that. This
  * database is used to solve one of two different problems.

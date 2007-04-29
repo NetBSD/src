@@ -1,4 +1,4 @@
-/*	$NetBSD: pat_rep.c,v 1.25 2006/04/24 19:00:29 snj Exp $	*/
+/*	$NetBSD: pat_rep.c,v 1.26 2007/04/29 20:23:34 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)pat_rep.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: pat_rep.c,v 1.25 2006/04/24 19:00:29 snj Exp $");
+__RCSID("$NetBSD: pat_rep.c,v 1.26 2007/04/29 20:23:34 msaitoh Exp $");
 #endif
 #endif /* not lint */
 
@@ -334,8 +334,8 @@ pat_chk(void)
  *	NOTE: When the -c option is used, we are called when there was no match
  *	by pat_match() (that means we did match before the inverted sense of
  *	the logic). Now this seems really strange at first, but with -c we
- *	need to keep track of those patterns that cause a archive member to NOT
- *	be selected (it found an archive member with a specified pattern)
+ *	need to keep track of those patterns that cause an archive member to
+ *	NOT be selected (it found an archive member with a specified pattern)
  * Return:
  *	0 if the pattern pointed at by arcn->pat was tagged as creating a
  *	match, -1 otherwise.
@@ -439,7 +439,7 @@ pat_sel(ARCHD *arcn)
 		/*
 		 * should never happen....
 		 */
-		tty_warn(1, "Pattern list inconsistant");
+		tty_warn(1, "Pattern list inconsistent");
 		return -1;
 	}
 	*ppt = pt->fow;
@@ -511,7 +511,8 @@ pat_match(ARCHD *arcn)
 	/*
 	 * we had a match, now when we invert the sense (-c) we reject this
 	 * member. However we have to tag the pattern a being successful, (in a
-	 * match, not in selecting a archive member) so we call pat_sel() here.
+	 * match, not in selecting an archive member) so we call pat_sel()
+	 * here.
 	 */
 	arcn->pat = pt;
 	if (!cflag)
