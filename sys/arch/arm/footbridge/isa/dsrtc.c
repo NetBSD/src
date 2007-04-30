@@ -1,4 +1,4 @@
-/*	$NetBSD: dsrtc.c,v 1.9 2006/09/11 19:14:57 gdamore Exp $	*/
+/*	$NetBSD: dsrtc.c,v 1.9.4.1 2007/04/30 18:57:18 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Mark Brinicombe.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dsrtc.c,v 1.9 2006/09/11 19:14:57 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dsrtc.c,v 1.9.4.1 2007/04/30 18:57:18 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,9 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: dsrtc.c,v 1.9 2006/09/11 19:14:57 gdamore Exp $");
 #include <sys/conf.h>
 #include <sys/device.h>
 
-#include <machine/rtc.h>
-
-#include <arm/footbridge/todclockvar.h>
+#include <dev/clock_subr.h>
 #include <arm/footbridge/isa/ds1687reg.h>
 
 #include <dev/isa/isavar.h>
@@ -58,6 +56,7 @@ struct dsrtc_softc {
 	struct device	sc_dev;
 	bus_space_tag_t	sc_iot;
 	bus_space_handle_t sc_ioh;
+	struct todr_chip_handle sc_todr;
 };
 
 void dsrtcattach(struct device *parent, struct device *self, void *aux);
@@ -69,8 +68,8 @@ int ds1687_ram_read(struct dsrtc_softc *sc, int addr);
 void ds1687_ram_write(struct dsrtc_softc *sc, int addr, int data);
 #endif
 static void ds1687_bank_select(struct dsrtc_softc *, int);
-static int dsrtc_write(void *, rtc_t *);
-static int dsrtc_read(void *, rtc_t *);
+static int dsrtc_write(todr_chip_handle_t, struct clock_ymdhms *);
+static int dsrtc_read(todr_chip_handle_t, struct clock_ymdhms *);
 
 int
 ds1687_read(struct dsrtc_softc *sc, int addr)
@@ -146,40 +145,38 @@ ds1687_ram_write(struct dsrtc_softc *sc, int addr, int val)
 #endif
 
 static int
-dsrtc_write(void *arg, rtc_t *rtc)
+dsrtc_write(todr_chip_handle_t tc, struct clock_ymdhms *dt)
 {
-	struct dsrtc_softc *sc = arg;
+	struct dsrtc_softc *sc = tc->cookie;
 
-	ds1687_write(sc, RTC_SECONDS, rtc->rtc_sec);
-	ds1687_write(sc, RTC_MINUTES, rtc->rtc_min);
-	ds1687_write(sc, RTC_HOURS, rtc->rtc_hour);
-	ds1687_write(sc, RTC_DAYOFMONTH, rtc->rtc_day);
-	ds1687_write(sc, RTC_MONTH, rtc->rtc_mon);
-	ds1687_write(sc, RTC_YEAR, rtc->rtc_year);
+	ds1687_write(sc, RTC_SECONDS, dt->dt_sec);
+	ds1687_write(sc, RTC_MINUTES, dt->dt_min);
+	ds1687_write(sc, RTC_HOURS, dt->dt_hour);
+	ds1687_write(sc, RTC_DAYOFMONTH, dt->dt_day);
+	ds1687_write(sc, RTC_MONTH, dt->dt_mon);
+	ds1687_write(sc, RTC_YEAR, dt->dt_year % 100);
 	ds1687_bank_select(sc, 1);
-	ds1687_write(sc, RTC_CENTURY, rtc->rtc_cen);
+	ds1687_write(sc, RTC_CENTURY, dt->dt_year / 100);
 	ds1687_bank_select(sc, 0);
-	return(1);
+	return(0);
 }
 
 static int
-dsrtc_read(void *arg, rtc_t *rtc)
+dsrtc_read(todr_chip_handle_t tc, struct clock_ymdhms *dt)
 {
-	struct dsrtc_softc *sc = arg;
+	struct dsrtc_softc *sc = tc->cookie;
 
-	rtc->rtc_micro = 0;
-	rtc->rtc_centi = 0;
-	rtc->rtc_sec   = ds1687_read(sc, RTC_SECONDS);
-	rtc->rtc_min   = ds1687_read(sc, RTC_MINUTES);
-	rtc->rtc_hour  = ds1687_read(sc, RTC_HOURS);
-	rtc->rtc_day   = ds1687_read(sc, RTC_DAYOFMONTH);
-	rtc->rtc_mon   = ds1687_read(sc, RTC_MONTH);
-	rtc->rtc_year  = ds1687_read(sc, RTC_YEAR);
+	dt->dt_sec   = ds1687_read(sc, RTC_SECONDS);
+	dt->dt_min   = ds1687_read(sc, RTC_MINUTES);
+	dt->dt_hour  = ds1687_read(sc, RTC_HOURS);
+	dt->dt_day   = ds1687_read(sc, RTC_DAYOFMONTH);
+	dt->dt_mon   = ds1687_read(sc, RTC_MONTH);
+	dt->dt_year  = ds1687_read(sc, RTC_YEAR);
 	ds1687_bank_select(sc, 1);
-	rtc->rtc_cen   = ds1687_read(sc, RTC_CENTURY); 
+	dt->dt_year  += ds1687_read(sc, RTC_CENTURY) * 100;
 	ds1687_bank_select(sc, 0);
 
-	return(1);
+	return(0);
 }
 
 /* device and attach structures */
@@ -222,7 +219,6 @@ dsrtcattach(struct device *parent, struct device *self, void *aux)
 {
 	struct dsrtc_softc *sc = (struct dsrtc_softc *)self;
 	struct isa_attach_args *ia = aux;
-	struct todclock_attach_args ta;
 	
 	sc->sc_iot = ia->ia_iot;
 	if (bus_space_map(sc->sc_iot, ia->ia_io[0].ir_addr,
@@ -238,12 +234,10 @@ dsrtcattach(struct device *parent, struct device *self, void *aux)
 		printf(": lithium cell is dead, RTC unreliable");
 	printf("\n");
 
-	ta.ta_name = "todclock";
-	ta.ta_rtc_arg = sc;
-	ta.ta_rtc_write = dsrtc_write; 
-	ta.ta_rtc_read = dsrtc_read;
-	ta.ta_flags = 0;
-	config_found(self, &ta, NULL);
+	sc->sc_todr.todr_gettime_ymdhms = dsrtc_read;
+	sc->sc_todr.todr_settime_ymdhms = dsrtc_write;
+	sc->sc_todr.cookie = sc;
+	todr_attach(&sc->sc_todr);
 }
 
 /* End of dsrtc.c */
