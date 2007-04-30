@@ -1,4 +1,4 @@
-/*	$NetBSD: sleepq.h,v 1.2.2.6 2007/04/19 04:19:43 ad Exp $	*/
+/*	$NetBSD: sleepq.h,v 1.2.2.7 2007/04/30 16:38:37 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -139,7 +139,6 @@ sleepq_enter(sleepq_t *sq, lwp_t *l)
 	 * the kernel lock.
 	 */
 	lwp_lock(l);
-	sched_slept(l);
 	lwp_unlock_to(l, sq->sq_mutex);
 	KERNEL_UNLOCK_ALL(l, &l->l_biglocks);
 }
