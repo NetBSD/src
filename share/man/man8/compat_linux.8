@@ -1,4 +1,4 @@
-.\"	$NetBSD: compat_linux.8,v 1.33 2006/09/22 15:37:20 christos Exp $
+.\"	$NetBSD: compat_linux.8,v 1.34 2007/04/30 21:16:55 dsl Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd September 22, 2006
+.Dd April 30, 2007
 .Dt COMPAT_LINUX 8
 .Os
 .Sh NAME
@@ -38,10 +38,11 @@
 .Sh DESCRIPTION
 .Nx
 supports running Linux binaries.
-This applies to arm, alpha, i386, m68k and powerpc systems for now.
+This applies to amd64, arm, alpha, i386, m68k and powerpc systems for now.
 Both the a.out and ELF binary formats are supported.
 Most programs should work, including the ones that use the Linux SVGAlib (only
 on i386).
+NetBSD amd64 can execute both 32bit and 64bit linux programs.
 Programs that will not work include some that use
 i386-specific calls, such as enabling virtual 8086 mode.
 Currently, sound is only partially supported for Linux binaries (they will
@@ -72,7 +73,10 @@ directory for Linux binaries on your
 .Nx
 system.
 This directory is named
-.Pa /emul/linux .
+.Pa /emul/linux
+or 
+.Pa /emul/linux32
+for 32bit emulation on 64bit systems.
 Any file operations done by Linux programs run under
 .Nx
 will look in this directory first.
@@ -93,6 +97,7 @@ to avoid naming conflicts with possible
 .Nx
 counterparts.
 Shared libraries should also be installed in the shadow tree.
+Filenames that start "/../" are only looked up in the real root.
 .Pp
 Generally, you will need to look for the shared libraries that Linux
 binaries depend on only the first few times that you install a Linux
@@ -112,7 +117,7 @@ do the necessary installation steps).
 .Bl -enum
 .It
 For i386, you can simply install the SuSE shared libs using the
-.Pa pkgsrc/emulators/suse_linux
+.Pa pkgsrc/emulators/suse100_linux
 package(s).
 On PowerPC ports, the
 .Pa pkgsrc/emulators/linuxppc_lib
@@ -540,8 +545,9 @@ some point.
 .Sh BUGS
 The information about Linux distributions may become outdated.
 .Pp
-Pathnames pointed to by symbolic links are not looked up in the
-shadow root when running a Linux executable.
+Absolute pathnames pointed to by symbolic links are only looked up in the
+shadow root when the symbolic link itself was found by an absolute
+pathname inside the shadow root.
 This is not consistent.
 .Pp
 Linux executables cannot handle directory offset cookies \*[Gt] 32 bits.
