@@ -1,4 +1,4 @@
-/* $NetBSD: sched.h,v 1.30.2.17 2007/04/22 08:26:59 yamt Exp $ */
+/* $NetBSD: sched.h,v 1.30.2.18 2007/04/30 16:38:37 rmind Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2007 The NetBSD Foundation, Inc.
@@ -190,7 +190,6 @@ void sched_proc_fork(struct proc *, struct proc *);	/* Inherit scheduling histor
 void sched_proc_exit(struct proc *, struct proc *);	/* Chargeback parents */
 void sched_lwp_fork(struct lwp *);
 void sched_lwp_exit(struct lwp *);
-void sched_slept(struct lwp *);
 void sched_setrunnable(struct lwp *);	/* Scheduler-specific actions for setrunnable() */
 void sched_print_runqueue(void (*pr)(const char *, ...));	/* Print runqueues in DDB */
 void sched_pstats_hook(struct proc *, int);
