@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.166.2.4 2007/04/21 15:50:22 ad Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.166.2.5 2007/04/30 16:38:37 rmind Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -273,7 +273,6 @@ struct ctlname {
 #define	KERN_ARND		81	/* void *buf, size_t siz random */
 #define	KERN_SYSVIPC		82	/* node: SysV IPC parameters */
 #define	KERN_MAXID		83	/* number of valid kern ids */
-#define	KERN_SCHED		84	/* node: Scheduler parameters */
 
 
 #define	CTL_KERN_NAMES { \

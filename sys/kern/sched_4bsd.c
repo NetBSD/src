@@ -1,4 +1,4 @@
-/*	$NetBSD: sched_4bsd.c,v 1.1.2.28 2007/04/25 08:34:36 yamt Exp $	*/
+/*	$NetBSD: sched_4bsd.c,v 1.1.2.29 2007/04/30 16:38:36 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.1.2.28 2007/04/25 08:34:36 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.1.2.29 2007/04/30 16:38:36 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -694,32 +694,31 @@ sched_lwp_exit(struct lwp *l)
 
 }
 
-void
-sched_slept(struct lwp *l)
-{
-
-}
-
 /* SysCtl */
 
 SYSCTL_SETUP(sysctl_sched_setup, "sysctl kern.sched subtree setup")
 {
+	const struct sysctlnode *node = NULL;
+
 	sysctl_createv(clog, 0, NULL, NULL,
 		CTLFLAG_PERMANENT,
 		CTLTYPE_NODE, "kern", NULL,
 		NULL, 0, NULL, 0,
 		CTL_KERN, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
+	sysctl_createv(clog, 0, NULL, &node,
 		CTLFLAG_PERMANENT,
 		CTLTYPE_NODE, "sched",
 		SYSCTL_DESCR("Scheduler options"),
 		NULL, 0, NULL, 0,
-		CTL_KERN, KERN_SCHED, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		CTLFLAG_PERMANENT,
-		CTLTYPE_STRING, "name", NULL,
-		NULL, 0, __UNCONST("4.4BSD"), 0,
-		CTL_KERN, KERN_SCHED, CTL_CREATE, CTL_EOL);
+		CTL_KERN, CTL_CREATE, CTL_EOL);
+
+	if (node != NULL) {
+		sysctl_createv(clog, 0, &node, NULL,
+			CTLFLAG_PERMANENT,
+			CTLTYPE_STRING, "name", NULL,
+			NULL, 0, __UNCONST("4.4BSD"), 0,
+			CTL_CREATE, CTL_EOL);
+	}
 }
 
 #if defined(DDB)
