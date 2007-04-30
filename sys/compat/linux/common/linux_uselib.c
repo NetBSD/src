@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_uselib.c,v 1.21 2007/04/22 08:29:57 dsl Exp $	*/
+/*	$NetBSD: linux_uselib.c,v 1.22 2007/04/30 09:20:19 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_uselib.c,v 1.21 2007/04/22 08:29:57 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_uselib.c,v 1.22 2007/04/30 09:20:19 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,7 +93,6 @@ linux_sys_uselib(struct lwp *l, void *v, register_t *retval)
 	struct linux_sys_uselib_args /* {
 		syscallarg(const char *) path;
 	} */ *uap = v;
-	void *sg;
 	long bsize, dsize, tsize, taddr, baddr, daddr;
 	struct nameidata ni;
 	struct vnode *vp;
@@ -101,8 +100,6 @@ linux_sys_uselib(struct lwp *l, void *v, register_t *retval)
 	struct exec_vmcmd_set vcset;
 	int i, magic, error;
 	size_t rem;
-
-	sg = stackgap_init(l->l_proc, 0);
 
 	NDINIT(&ni, LOOKUP, FOLLOW | TRYEMULROOT, UIO_USERSPACE, SCARG(uap, path), l);
 

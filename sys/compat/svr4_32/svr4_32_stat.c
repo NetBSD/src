@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_stat.c,v 1.27 2007/04/22 08:30:00 dsl Exp $	 */
+/*	$NetBSD: svr4_32_stat.c,v 1.28 2007/04/30 09:20:19 dsl Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_stat.c,v 1.27 2007/04/22 08:30:00 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_stat.c,v 1.28 2007/04/30 09:20:19 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -265,8 +265,6 @@ svr4_32_sys_fstat(l, v, retval)
 	struct stat		st;
 	struct svr4_32_stat	svr4_st;
 	int			error;
-
-	void *sg = stackgap_init(p, 0);
 
 	error = do_sys_fstat(l, SCARG(uap, fd), &st);
 	if (error != 0)
