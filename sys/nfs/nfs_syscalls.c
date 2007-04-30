@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.109 2007/04/29 10:30:18 yamt Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.110 2007/04/30 10:30:51 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.109 2007/04/29 10:30:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.110 2007/04/30 10:30:51 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -1043,8 +1043,10 @@ nfssvc_iod(l)
 			myiod->nid_want = p;
 			myiod->nid_mount = NULL;
 			error = cv_wait_sig(&myiod->nid_cv, &myiod->nid_lock);
-			if (error)
+			if (error) {
+				mutex_exit(&myiod->nid_lock);
 				goto quit;
+			}
 		}
 
 		while ((bp = TAILQ_FIRST(&nmp->nm_bufq)) != NULL) {
