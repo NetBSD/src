@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.122 2007/04/29 11:06:22 bouyer Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.123 2007/04/30 19:01:50 bouyer Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -2849,4 +2849,31 @@ sys/compat/linux/common/linux_sysctl.c		1.27
 
 	Linux's uname should return x86_64 as machine_arch
 	[manu, ticket #596]
+
+sys/arch/arm/ep93xx/epclk.c			1.10
+sys/arch/arm/footbridge/footbridge.c		1.17
+sys/arch/arm/footbridge/footbridgevar.h		1.5
+sys/arch/arm/footbridge/isa/dsrtc.c		1.10
+sys/arch/arm/ixp12x0/ixp12x0_clk.c		1.11
+sys/arch/arm/s3c2xx0/s3c24x0_clk.c		1.7
+sys/arch/arm/s3c2xx0/s3c2800_clk.c		1.10
+sys/arch/arm/xscale/becc_timer.c		1.11
+sys/arch/arm/xscale/i80321_timer.c		1.16
+sys/arch/arm/xscale/ixp425_timer.c		1.13
+
+	Add generic TOD support. From Bucky Katz.
+	[rearnsha, ticket #592]
+
+sbin/restore/restore.8				1.50, 1.51
+
+	Improve example of restoring a complete filesystem with "restore -r".
+	[tron, ticket #600]
+
+sys/dev/ld.c					1.47
+
+	Reset error code if an ioctl() request is not handled by the generic
+	disk framework. This stops ld(4) from returning an error for various
+	ioctl() requests which actually *did* work. As a result fdisk(8) and
+	therefore also sysinst(8) work with ld(4) devices once again.
+	[tron, ticket #601]
 
