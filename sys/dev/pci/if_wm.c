@@ -1,3 +1,4 @@
+/*	$NetBSD: if_wm.c,v 1.140 2007/04/30 01:26:35 simonb Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -78,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.139 2007/04/29 20:35:21 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.140 2007/04/30 01:26:35 simonb Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
