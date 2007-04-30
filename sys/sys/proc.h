@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.245 2007/04/30 14:44:31 rmind Exp $	*/
+/*	$NetBSD: proc.h,v 1.246 2007/04/30 20:11:41 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -327,7 +327,6 @@ struct proc {
 
 	u_short		p_xstat;	/* s: Exit status for wait; also stop signal */
 	u_short		p_acflag;	/* p: Acc. flags; see struct lwp also */
-	struct rusage 	*p_ru;		/*    Exit information. XXX */
 	struct mdproc	p_md;		/*    Any machine-dependent fields */
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.108 2007/03/12 18:18:33 ad Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.109 2007/04/30 20:11:41 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.108 2007/03/12 18:18:33 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.109 2007/04/30 20:11:41 dsl Exp $");
 
 #include "opt_kstack.h"
 #include "opt_maxuprc.h"
@@ -222,8 +222,6 @@ POOL_INIT(pgrp_pool, sizeof(struct pgrp), 0, 0, 0, "pgrppl",
 POOL_INIT(plimit_pool, sizeof(struct plimit), 0, 0, 0, "plimitpl",
     &pool_allocator_nointr, IPL_NONE);
 POOL_INIT(pstats_pool, sizeof(struct pstats), 0, 0, 0, "pstatspl",
-    &pool_allocator_nointr, IPL_NONE);
-POOL_INIT(rusage_pool, sizeof(struct rusage), 0, 0, 0, "rusgepl",
     &pool_allocator_nointr, IPL_NONE);
 POOL_INIT(session_pool, sizeof(struct session), 0, 0, 0, "sessionpl",
     &pool_allocator_nointr, IPL_NONE);
