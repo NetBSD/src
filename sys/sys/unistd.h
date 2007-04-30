@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.35 2006/08/14 18:17:48 rpaulo Exp $	*/
+/*	$NetBSD: unistd.h,v 1.36 2007/04/30 14:44:31 rmind Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -61,6 +61,8 @@
 #define	_POSIX2_VERSION		199212L
 
 /* execution-time symbolic constants */
+				/* asynchronous I/O is available */
+#define	_POSIX_ASYNCHRONOUS_IO	200112L
 				/* chown requires appropriate privileges */
 #define	_POSIX_CHOWN_RESTRICTED	1
 				/* clock selection */
