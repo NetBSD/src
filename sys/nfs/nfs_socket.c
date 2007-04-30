@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.151 2007/04/29 14:56:59 yamt Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.152 2007/04/30 23:10:55 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.151 2007/04/29 14:56:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.152 2007/04/30 23:10:55 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -840,8 +840,6 @@ nfs_reply(myrep, lwp)
 #ifdef DEBUG
 				printf("nfs_reply: ignoring error %d\n", error);
 #endif
-				if (myrep->r_flags & R_GETONEREP)
-					return (0);
 				continue;
 			}
 			return (error);
@@ -860,8 +858,6 @@ nfs_reply(myrep, lwp)
 			nfsstats.rpcinvalid++;
 			m_freem(mrep);
 nfsmout:
-			if (myrep->r_flags & R_GETONEREP)
-				return (0);
 			continue;
 		}
 
@@ -944,8 +940,6 @@ nfsmout:
 				panic("nfsreply nil");
 			return (0);
 		}
-		if (myrep->r_flags & R_GETONEREP)
-			return (0);
 	}
 }
 
