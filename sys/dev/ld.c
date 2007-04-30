@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.42.2.2 2007/02/24 13:14:33 bouyer Exp $	*/
+/*	$NetBSD: ld.c,v 1.42.2.3 2007/04/30 19:01:15 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.42.2.2 2007/02/24 13:14:33 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.42.2.3 2007/04/30 19:01:15 bouyer Exp $");
 
 #include "rnd.h"
 
@@ -393,12 +393,12 @@ ldioctl(dev_t dev, u_long cmd, caddr_t addr, int32_t flag, struct lwp *l)
 	unit = DISKUNIT(dev);
 	part = DISKPART(dev);
 	sc = device_lookup(&ld_cd, unit);
-	error = 0;
 
 	error = disk_ioctl(&sc->sc_dk, cmd, addr, flag, l);
 	if (error != EPASSTHROUGH)
 		return (error);
 
+	error = 0;
 	switch (cmd) {
 	case DIOCGDINFO:
 		memcpy(addr, sc->sc_dk.dk_label, sizeof(struct disklabel));
