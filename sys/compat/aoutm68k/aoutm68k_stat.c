@@ -1,4 +1,4 @@
-/*	$NetBSD: aoutm68k_stat.c,v 1.19 2007/04/22 08:29:55 dsl Exp $	*/
+/*	$NetBSD: aoutm68k_stat.c,v 1.20 2007/04/30 14:05:47 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aoutm68k_stat.c,v 1.19 2007/04/22 08:29:55 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aoutm68k_stat.c,v 1.20 2007/04/30 14:05:47 dsl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -264,23 +264,16 @@ aoutm68k_sys_fhstat(l, v, retval)
 	register_t *retval;
 {
 	struct aoutm68k_sys_fhstat_args *uap = v;
-	struct proc *p = l->l_proc;
-	void *sg = stackgap_init(p, 0);
-	struct compat_30_sys___fhstat30_args cup;
 	struct aoutm68k_stat ast;
-	struct stat st;
+	struct stat sb;
 	int error;
 
-	SCARG(&cup, fhp) = SCARG(uap, fhp);
-	SCARG(&cup, sb) = stackgap_alloc(p, &sg, sizeof(st));
+	error = do_fhstat(l, SCARG(uap, fhp), FHANDLE_SIZE_COMPAT, &sb);
+	if (error)
+		return error;
 
-	if ((error = compat_30_sys___fhstat30(l, &cup, retval)) != 0 ||
-	    (error = copyin(SCARG(&cup, sb), &st, sizeof(st))) != 0)
-		return (error);
-
-	aoutm68k_stat13_convert(&st, &ast);
-
-	return (copyout((void *)&ast, (void *)SCARG(uap, sb), sizeof(ast)));
+	aoutm68k_stat13_convert(&sb, &ast);
+	return copyout(&sb, SCARG(uap, sb), sizeof(sb));
 }
 
 #ifdef COMPAT_43
