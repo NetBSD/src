@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1020 2007/04/16 19:17:29 pooka Exp $
+#	$NetBSD: mi,v 1.1021 2007/04/30 14:44:28 rmind Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -72,6 +72,7 @@
 ./usr/bin/yacc					comp-c-bin
 ./usr/include/a.out.h				comp-c-include
 ./usr/include/adosfs/adosfs.h			comp-c-include
+./usr/include/aio.h				comp-c-include
 ./usr/include/altq/altq.h			comp-c-include
 ./usr/include/altq/altq_afmap.h			comp-c-include
 ./usr/include/altq/altq_blue.h			comp-c-include
@@ -1739,6 +1740,7 @@
 ./usr/include/struct.h				comp-c-include
 ./usr/include/sys/acct.h			comp-c-include
 ./usr/include/sys/agpio.h			comp-c-include
+./usr/include/sys/aio.h				comp-c-include
 ./usr/include/sys/ansi.h			comp-c-include
 ./usr/include/sys/ataio.h			comp-c-include
 ./usr/include/sys/audioio.h			comp-c-include
