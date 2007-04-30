@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_30.c,v 1.22 2007/04/22 08:29:55 dsl Exp $	*/
+/*	$NetBSD: vfs_syscalls_30.c,v 1.23 2007/04/30 08:32:15 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_30.c,v 1.22 2007/04/22 08:29:55 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_30.c,v 1.23 2007/04/30 08:32:15 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -405,10 +405,14 @@ compat_30_sys___fhstat30(struct lwp *l, void *v, register_t *retval)
 	struct compat_30_sys___fhstat30_args /* {
 		syscallarg(const fhandle_t *) fhp;
 		syscallarg(struct stat *) sb;
-	} */ *uap = v;
+	} */ *uap_30 = v;
+	struct sys___fhstat40_args uap;
 
-	return dofhstat(l, SCARG(uap, fhp), FHANDLE_SIZE_COMPAT,
-	    SCARG(uap, sb), retval);
+	SCARG(&uap, fhp) = SCARG(uap_30, fhp);
+	SCARG(&uap, fh_size) = FHANDLE_SIZE_COMPAT;
+	SCARG(&uap, sb) = SCARG(uap_30, sb);
+
+	return sys___fhstat40(l, &uap, retval);
 }
 
 /* ARGSUSED */
@@ -419,8 +423,13 @@ compat_30_sys_fhstatvfs1(struct lwp *l, void *v, register_t *retval)
 		syscallarg(const fhandle_t *) fhp;
 		syscallarg(struct statvfs *) buf;
 		syscallarg(int)	flags;
-	} */ *uap = v;
+	} */ *uap_30 = v;
+	struct sys___fhstatvfs140_args uap;
 
-	return dofhstatvfs(l, SCARG(uap, fhp), FHANDLE_SIZE_COMPAT,
-	    SCARG(uap, buf), SCARG(uap, flags), retval);
+	SCARG(&uap, fhp) = SCARG(uap_30, fhp);
+	SCARG(&uap, fh_size) = FHANDLE_SIZE_COMPAT;
+	SCARG(&uap, buf) = SCARG(uap_30, buf);
+	SCARG(&uap, flags) = SCARG(uap_30, flags);
+
+	return sys___fhstatvfs140(l, &uap, retval);
 }
