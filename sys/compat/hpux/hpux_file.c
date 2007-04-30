@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_file.c,v 1.35 2007/04/22 08:29:56 dsl Exp $	*/
+/*	$NetBSD: hpux_file.c,v 1.36 2007/04/30 09:20:18 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -119,7 +119,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_file.c,v 1.35 2007/04/22 08:29:56 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_file.c,v 1.36 2007/04/30 09:20:18 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -209,9 +209,6 @@ hpux_sys_open(l, v, retval)
 	struct proc *p = l->l_proc;
 	struct sys_open_args oa;
 	int flags, nflags, error;
-	void *sg;
-
-	sg = stackgap_init(p, 0);
 
 	/*
 	 * Deal with the mode flags first, since they will affect
