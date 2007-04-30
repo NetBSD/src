@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.160 2007/04/12 13:17:56 jmcneill Exp $
+$NetBSD: UPDATING,v 1.161 2007/04/30 20:50:20 dsl Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -15,6 +15,17 @@ See also: BUILDING, build.sh, Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20070422:
+	The way OS emulations lookup filenames inside the emulation root
+	has been changed.  Rather than modify the pathname (and copy back
+	to userspace) namei() and lookup() directly check the emulation
+	root. One side effect is that absolute symlinks inside the emulated
+	root filesytem will be relative to that filesystem - unless they
+	start /../ this is useful when the emulated root is a real install
+	that has such links.
+	This might affect symlinks that have been added to reference outside
+	the emulated root.
 
 20070412:
 	The pckbc driver on sgimips IP32 has been removed. Use macekbc
