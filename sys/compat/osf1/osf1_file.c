@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_file.c,v 1.25 2007/04/27 23:53:15 dogcow Exp $ */
+/* $NetBSD: osf1_file.c,v 1.26 2007/04/30 09:20:19 dsl Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_file.c,v 1.25 2007/04/27 23:53:15 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_file.c,v 1.26 2007/04/30 09:20:19 dsl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
@@ -198,10 +198,8 @@ osf1_sys_open(l, v, retval)
 	register_t *retval;
 {
 	struct osf1_sys_open_args *uap = v;
-	struct proc *p = l->l_proc;
 	struct sys_open_args a;
 	const char *path;
-	void *sg;
 	unsigned long leftovers;
 #ifdef SYSCALL_DEBUG
 	char pnbuf[1024];
@@ -210,8 +208,6 @@ osf1_sys_open(l, v, retval)
 	    copyinstr(SCARG(uap, path), pnbuf, sizeof pnbuf, NULL) == 0)
 		printf("osf1_open: open: %s\n", pnbuf);
 #endif
-
-	sg = stackgap_init(p, 0);
 
 	/* translate flags */
 	SCARG(&a, flags) = emul_flags_translate(osf1_open_flags_xtab,
