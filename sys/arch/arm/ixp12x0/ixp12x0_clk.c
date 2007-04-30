@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp12x0_clk.c,v 1.10 2005/12/11 12:16:50 christos Exp $	*/
+/*	$NetBSD: ixp12x0_clk.c,v 1.10.24.1 2007/04/30 18:57:18 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp12x0_clk.c,v 1.10 2005/12/11 12:16:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp12x0_clk.c,v 1.10.24.1 2007/04/30 18:57:18 bouyer Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -364,17 +364,4 @@ delay(unsigned int usecs)
 		count -= delta;
 		otick = ticks;
 	}
-}
-
-void
-resettodr(void)
-{
-}
-
-void
-inittodr(time_t base)
-{
-
-	time.tv_sec = base;
-	time.tv_usec = 0;
 }
