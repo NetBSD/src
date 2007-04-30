@@ -1,4 +1,4 @@
-/*	$NetBSD: db_xxx.c,v 1.42 2007/02/22 04:38:06 matt Exp $	*/
+/*	$NetBSD: db_xxx.c,v 1.43 2007/04/30 14:44:30 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -39,7 +39,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.42 2007/02/22 04:38:06 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.43 2007/04/30 14:44:30 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,6 +113,13 @@ db_kgdb_cmd(db_expr_t addr, bool haddr,
 	kgdb_active--;
 }
 #endif
+
+void
+db_show_aio_jobs(db_expr_t addr, bool haddr,
+    db_expr_t count, const char *modif)
+{
+	aio_print_jobs(db_printf);
+}
 
 void
 db_show_all_procs(db_expr_t addr, bool haddr,

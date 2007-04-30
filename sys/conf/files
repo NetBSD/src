@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.837 2007/04/14 19:33:29 tnn Exp $
+#	$NetBSD: files,v 1.838 2007/04/30 14:44:29 rmind Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -1383,6 +1383,7 @@ file	kern/uipc_socket.c
 file	kern/uipc_socket2.c
 file	kern/uipc_syscalls.c
 file	kern/uipc_usrreq.c
+file	kern/vfs_aio.c
 file	kern/vfs_bio.c
 file	kern/vfs_cache.c
 file	kern/vfs_getcwd.c
