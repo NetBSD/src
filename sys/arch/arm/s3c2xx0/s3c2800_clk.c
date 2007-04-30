@@ -1,4 +1,4 @@
-/* $NetBSD: s3c2800_clk.c,v 1.9 2005/12/24 20:06:52 perry Exp $ */
+/* $NetBSD: s3c2800_clk.c,v 1.9.24.1 2007/04/30 18:57:19 bouyer Exp $ */
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited
@@ -34,7 +34,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c2800_clk.c,v 1.9 2005/12/24 20:06:52 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c2800_clk.c,v 1.9.24.1 2007/04/30 18:57:19 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -236,29 +236,6 @@ delay(u_int n)
 		}
 	}
 	/*NOTREACHED*/
-}
-
-/*
- * inittodr:
- *
- *	Initialize time from the time-of-day register.
- */
-void
-inittodr(time_t base)
-{
-
-	time.tv_sec = base;
-	time.tv_usec = 0;
-}
-
-/*
- * resettodr:
- *
- *	Reset the time-of-day register with the current time.
- */
-void
-resettodr(void)
-{
 }
 
 void

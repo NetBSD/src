@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridgevar.h,v 1.4 2005/12/11 12:16:46 christos Exp $	*/
+/*	$NetBSD: footbridgevar.h,v 1.4.24.1 2007/04/30 18:57:17 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -37,7 +37,6 @@
 #include <machine/bus.h>
 #include <machine/rtc.h>
 #include <dev/pci/pcivar.h>
-#include <arm/footbridge/todclockvar.h>
 
 /*
  * DC21285 softc structure.
@@ -77,7 +76,6 @@ union footbridge_attach_args {
 		bus_space_handle_t fba_ioh;	/* Bus handle */
 	} fba_fba;
 	struct pcibus_attach_args fba_pba;	/* pci attach args */
-	struct todclock_attach_args fba_tca;
 	struct fcom_attach_args {
 		const char *fca_name;
 		bus_space_tag_t fca_iot;
