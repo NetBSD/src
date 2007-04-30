@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.h,v 1.63 2007/03/04 06:03:36 christos Exp $	*/
+/*	$NetBSD: nfs.h,v 1.64 2007/04/30 23:10:55 yamt Exp $	*/
 /*
  * Copyright (c) 1989, 1993, 1995
  *	The Regents of the University of California.  All rights reserved.
@@ -351,7 +351,6 @@ extern TAILQ_HEAD(nfsreqhead, nfsreq) nfs_reqq;
 #define	R_SOCKERR	0x10		/* Fatal error on socket */
 #define	R_TPRINTFMSG	0x20		/* Did a tprintf msg. */
 #define	R_MUSTRESEND	0x40		/* Must resend request */
-#define	R_GETONEREP	0x80		/* Probe for one reply only */
 #define	R_REXMITTED	0x100		/* retransmitted after reconnect */
 
 /*
