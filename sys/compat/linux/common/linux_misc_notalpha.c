@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc_notalpha.c,v 1.90 2007/04/30 14:05:47 dsl Exp $	*/
+/*	$NetBSD: linux_misc_notalpha.c,v 1.91 2007/04/30 20:20:28 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc_notalpha.c,v 1.90 2007/04/30 14:05:47 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc_notalpha.c,v 1.91 2007/04/30 20:20:28 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_misc_notalpha.c,v 1.90 2007/04/30 14:05:47 dsl
 #include <sys/resource.h>
 #include <sys/resourcevar.h>
 #include <sys/time.h>
+#include <sys/vfs_syscalls.h>
 #include <sys/wait.h>
 #include <sys/kauth.h>
 
