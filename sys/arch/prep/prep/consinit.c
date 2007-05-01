@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.5 2006/03/09 20:17:27 garbled Exp $	*/
+/*	$NetBSD: consinit.c,v 1.5.28.1 2007/05/01 19:19:00 garbled Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.5 2006/03/09 20:17:27 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.5.28.1 2007/05/01 19:19:00 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,7 +101,7 @@ consinit(void)
 	if (!strcmp(consinfo->devname, "fb")) {
 		pfb_cnattach(consinfo->addr);
 #if (NPCKBC > 0)
-		pckbc_cnattach(&prep_isa_io_space_tag, IO_KBD, KBCMDP,
+		pckbc_cnattach(&genppc_isa_io_space_tag, IO_KBD, KBCMDP,
 		    PCKBC_KBD_SLOT);
 #endif
 		return;
@@ -124,7 +124,7 @@ consinit(void)
 #endif
 dokbd:
 #if (NPCKBC > 0)
-		pckbc_cnattach(&prep_isa_io_space_tag, IO_KBD, KBCMDP,
+		pckbc_cnattach(&genppc_isa_io_space_tag, IO_KBD, KBCMDP,
 		    PCKBC_KBD_SLOT);
 #endif
 		return;
@@ -133,7 +133,7 @@ dokbd:
 
 #if (NCOM > 0)
 	if (!strcmp(consinfo->devname, "com")) {
-		bus_space_tag_t tag = &prep_isa_io_space_tag;
+		bus_space_tag_t tag = &genppc_isa_io_space_tag;
 
 		if(comcnattach(tag, consinfo->addr, consinfo->speed, COM_FREQ,
 		    COM_TYPE_NORMAL,

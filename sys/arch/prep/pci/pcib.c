@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.20.2.3 2007/05/01 18:34:51 garbled Exp $	*/
+/*	$NetBSD: pcib.c,v 1.20.2.4 2007/05/01 19:18:59 garbled Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.20.2.3 2007/05/01 18:34:51 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.20.2.4 2007/05/01 19:18:59 garbled Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -108,10 +108,12 @@ void
 pcibattach(struct device *parent, struct device *self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
-	prop_bool_t rav;
 	char devinfo[256];
 	u_int32_t v;
 	int lvlmask = 0;
+#ifdef prep
+	prop_bool_t rav;
+#endif
 
 	/*
 	 * Just print out a description and defer configuration
@@ -157,6 +159,7 @@ pcibattach(struct device *parent, struct device *self, void *aux)
 	 * setting it up differently.  Reset it to 0000h.
 	 */
 
+#ifdef prep
 	rav = prop_dictionary_get(device_properties(parent),
 	    "prep-raven-pchb");
 
@@ -187,6 +190,7 @@ pcibattach(struct device *parent, struct device *self, void *aux)
 		/* irq 14 is level */
 		lvlmask = 0x0040;
 	}
+#endif /* prep */
 
 #if NISA > 0
 	/* if the lvlmask is different, reinitialize the icu, because we
@@ -212,8 +216,8 @@ pcib_callback(struct device *self)
 	memset(&iba, 0, sizeof(iba));
 	sc->sc_chipset = &genppc_ict;
 	iba.iba_ic = sc->sc_chipset;
-	iba.iba_iot = &prep_isa_io_space_tag;
-	iba.iba_memt = &prep_isa_mem_space_tag;
+	iba.iba_iot = &genppc_isa_io_space_tag;
+	iba.iba_memt = &genppc_isa_mem_space_tag;
 #if NISADMA > 0
 	iba.iba_dmat = &isa_bus_dma_tag;
 #endif
