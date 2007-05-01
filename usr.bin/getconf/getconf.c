@@ -1,4 +1,4 @@
-/*	$NetBSD: getconf.c,v 1.26 2006/12/06 12:02:02 mjf Exp $	*/
+/*	$NetBSD: getconf.c,v 1.27 2007/05/01 01:01:37 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: getconf.c,v 1.26 2006/12/06 12:02:02 mjf Exp $");
+__RCSID("$NetBSD: getconf.c,v 1.27 2007/05/01 01:01:37 rmind Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -78,6 +78,8 @@ static const struct conf_variable conf_table[] =
   { "POSIX2_VERSION",		CONSTANT,	_POSIX2_VERSION		},
 
   /* POSIX.1 Minimum Values */
+  { "_POSIX_AIO_LISTIO_MAX",	CONSTANT,	_POSIX_AIO_LISTIO_MAX	},  
+  { "_POSIX_AIO_MAX",		CONSTANT,       _POSIX_AIO_MAX		},
   { "_POSIX_ARG_MAX",		CONSTANT,	_POSIX_ARG_MAX		},
   { "_POSIX_CHILD_MAX",		CONSTANT,	_POSIX_CHILD_MAX	},
   { "_POSIX_LINK_MAX",		CONSTANT,	_POSIX_LINK_MAX		},
@@ -113,6 +115,8 @@ static const struct conf_variable conf_table[] =
   { "POSIX2_UPE",		SYSCONF,	_SC_2_UPE		},
 
   /* POSIX.1 Configurable System Variables */
+  { "AIO_LISTIO_MAX",		SYSCONF,	_SC_AIO_LISTIO_MAX	},
+  { "AIO_MAX",			SYSCONF,        _SC_AIO_MAX		},
   { "ARG_MAX",			SYSCONF,	_SC_ARG_MAX 		},
   { "CHILD_MAX",		SYSCONF,	_SC_CHILD_MAX		},
   { "CLK_TCK",			SYSCONF,	_SC_CLK_TCK		},
@@ -136,6 +140,7 @@ static const struct conf_variable conf_table[] =
 
   /* POSIX.1b Configurable System Variables */
   { "PAGESIZE",			SYSCONF,	_SC_PAGESIZE		},
+  { "_POSIX_ASYNCHRONOUS_IO",	SYSCONF,	_SC_ASYNCHRONOUS_IO	},
   { "_POSIX_FSYNC",		SYSCONF,	_SC_FSYNC		},
   { "_POSIX_MAPPED_FILES",	SYSCONF,	_SC_MAPPED_FILES	},
   { "_POSIX_MEMLOCK",		SYSCONF,	_SC_MEMLOCK		},

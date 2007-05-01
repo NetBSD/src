@@ -1,4 +1,4 @@
-/*	$NetBSD: sysconf.c,v 1.22 2006/11/25 21:40:04 christos Exp $	*/
+/*	$NetBSD: sysconf.c,v 1.23 2007/05/01 01:01:35 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)sysconf.c	8.2 (Berkeley) 3/20/94";
 #else
-__RCSID("$NetBSD: sysconf.c,v 1.22 2006/11/25 21:40:04 christos Exp $");
+__RCSID("$NetBSD: sysconf.c,v 1.23 2007/05/01 01:01:35 rmind Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -69,16 +69,19 @@ __weak_alias(sysconf,__sysconf)
  * less useful than returning up-to-date values, however.
  */
 long
-sysconf(name)
-	int name;
+sysconf(int name)
 {
 	struct rlimit rl;
 	size_t len;
-	int mib[3], value;
+	int mib[CTL_MAXNAME], value;
+	unsigned int mib_len;
 	struct clockinfo tmpclock;
 	static int clk_tck;
 
 	len = sizeof(value);
+
+	/* Default length of the MIB */
+	mib_len = 2;
 
 	switch (name) {
 
@@ -284,13 +287,25 @@ sysconf(name)
 		mib[0] = CTL_KERN;
 		mib[1] = KERN_SYSVIPC;
 		mib[2] = KERN_SYSVIPC_SHM;
-		if (sysctl(mib, 3, &value, &len, NULL, 0) == -1)
-			return (-1);
-		if (value == 0)
-			return (-1);
-		return (0);
+		mib_len = 3;
+		goto yesno;
 
 /* 1003.1-2001, XSI Option Group */
+	case _SC_AIO_LISTIO_MAX:
+		if (sysctlgetmibinfo("kern.aio_listio_max", &mib[0], &mib_len,
+		    NULL, NULL, NULL, SYSCTL_VERSION))
+			return -1;
+		break; 
+	case _SC_AIO_MAX:
+		if (sysctlgetmibinfo("kern.aio_max", &mib[0], &mib_len,
+		    NULL, NULL, NULL, SYSCTL_VERSION))
+			return -1;
+		break; 
+	case _SC_ASYNCHRONOUS_IO:
+		if (sysctlgetmibinfo("kern.posix_aio", &mib[0], &mib_len,
+		    NULL, NULL, NULL, SYSCTL_VERSION))
+			return -1;
+		goto yesno;
 	case _SC_ATEXIT_MAX:
 		mib[0] = CTL_USER;
 		mib[1] = USER_ATEXIT_MAX;
@@ -302,7 +317,7 @@ sysconf(name)
 	case _SC_GETPW_R_SIZE_MAX:
 		return _GETPW_R_SIZE_MAX;
 
-yesno:		if (sysctl(mib, 2, &value, &len, NULL, 0) == -1)
+yesno:		if (sysctl(mib, mib_len, &value, &len, NULL, 0) == -1)
 			return (-1);
 		if (value == 0)
 			return (-1);
@@ -313,5 +328,5 @@ yesno:		if (sysctl(mib, 2, &value, &len, NULL, 0) == -1)
 		errno = EINVAL;
 		return (-1);
 	}
-	return (sysctl(mib, 2, &value, &len, NULL, 0) == -1 ? -1 : value); 
+	return (sysctl(mib, mib_len, &value, &len, NULL, 0) == -1 ? -1 : value); 
 }
