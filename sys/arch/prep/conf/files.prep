@@ -1,4 +1,4 @@
-#	$NetBSD: files.prep,v 1.57.4.1 2007/05/01 08:55:17 garbled Exp $
+#	$NetBSD: files.prep,v 1.57.4.2 2007/05/01 17:05:09 garbled Exp $
 #
 # prep-specific configuration info
 #
@@ -78,8 +78,8 @@ include "dev/pci/files.pci"
 include "dev/pci/files.agp"
 file	arch/prep/pci/pci_machdep.c		pci
 file	arch/prep/pci/prep_pciconf_direct.c	pci
-file	arch/powerpc/pci/gen_pci_machdep.c	pci
-file	arch/powerpc/pci/gen_pciconf_indirect.c	pci
+file	arch/powerpc/pci/pci_machdep_common.c	pci
+file	arch/powerpc/pci/pciconf_indirect.c	pci
 
 # PCI-Host bridge chipsets
 device	pchb: pcibus
