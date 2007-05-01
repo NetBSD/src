@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.26.16.2 2007/05/01 18:19:07 garbled Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.26.16.3 2007/05/01 18:34:51 garbled Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.26.16.2 2007/05/01 18:19:07 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.26.16.3 2007/05/01 18:34:51 garbled Exp $");
 
 #include "opt_pci.h"
 #include "opt_residual.h"
@@ -74,10 +74,8 @@ union mainbus_attach_args {
 
 /* There can be only one. */
 int mainbus_found = 0;
-struct prep_isa_chipset prep_isa_chipset;
-struct prep_isa_chipset *prep_ict;
+struct powerpc_isa_chipset genppc_ict;
 struct genppc_pci_chipset *genppc_pct;
-
 
 /*
  * Probe for the mainbus; always succeeds.
@@ -163,7 +161,7 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 #if NPNPBUS > 0
 	mba.mba_paa.paa_iot = &prep_isa_io_space_tag;
 	mba.mba_paa.paa_memt = &prep_isa_mem_space_tag;
-	mba.mba_paa.paa_ic = &prep_isa_chipset;
+	mba.mba_paa.paa_ic = &genppc_ict;
 	mba.mba_paa.paa_dmat = &isa_bus_dma_tag;
 	config_found_ia(self, "mainbus", &mba.mba_pba, mainbus_print);
 #endif /* NPNPBUS */
