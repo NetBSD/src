@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.824 2007/04/26 17:11:36 dyoung Exp $
+# $NetBSD: GENERIC,v 1.825 2007/05/01 17:18:54 bouyer Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.824 $"
+#ident 		"GENERIC-$Revision: 1.825 $"
 
 maxusers	32		# estimated number of users
 
@@ -1361,6 +1361,7 @@ pseudo-device 	crypto		# /dev/crypto device
 pseudo-device	swcrypto	# software crypto implementation
 
 # disk/mass storage pseudo-devices
+pseudo-device	bio			# RAID control device driver
 pseudo-device	ccd		4	# concatenated/striped disk devices
 #pseudo-device	cgd		4	# cryptographic disk devices
 pseudo-device	raid		8	# RAIDframe disk driver

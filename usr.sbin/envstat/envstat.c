@@ -1,4 +1,4 @@
-/*	$NetBSD: envstat.c,v 1.23 2006/08/31 10:25:04 gson Exp $ */
+/*	$NetBSD: envstat.c,v 1.24 2007/05/01 17:18:56 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: envstat.c,v 1.23 2006/08/31 10:25:04 gson Exp $");
+__RCSID("$NetBSD: envstat.c,v 1.24 2007/05/01 17:18:56 bouyer Exp $");
 #endif
 
 #include <fcntl.h>
@@ -231,6 +231,9 @@ printrow(int *cetds, envsys_tre_data_t *etds, envsys_basic_info_t *ebis,
 		/* different units need some magic */
 		switch (ebis[i].units)
 		{
+		case ENVSYS_DRIVE:
+			printf(": drive %s",
+			    envsysdrivestatus[etds[i].cur.data_us]);
 		case ENVSYS_INDICATOR:
 			break;
 		case ENVSYS_INTEGER:
@@ -319,6 +322,10 @@ values(size_t width, int celsius, envsys_tre_data_t *etds,
 			}
 
 			switch(etds[i].units) {
+			case ENVSYS_DRIVE:
+				printf(" %*.*s", (int)width, (int)width,
+				    envsysdrivestatus[etds[i].cur.data_us]);
+				break;
 			case ENVSYS_INDICATOR:
 				printf(" %*.*s", (int)width, (int)width,
 				    etds[i].cur.data_us ? "ON" : "OFF");
