@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.31.4.1 2007/05/01 08:55:18 garbled Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.31.4.2 2007/05/01 18:19:07 garbled Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.31.4.1 2007/05/01 08:55:18 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.31.4.2 2007/05/01 18:19:07 garbled Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -67,7 +67,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.31.4.1 2007/05/01 08:55:18 garbled
 
 /* 0 == direct 1 == indirect */
 int prep_pci_config_mode = 1;
-extern struct genppc_pci_chipset *prep_pct;
+extern struct genppc_pci_chipset *genppc_pct;
 extern u_int32_t prep_pci_baseaddr;
 extern u_int32_t prep_pci_basedata;
 
@@ -133,7 +133,7 @@ prep_pci_bus_maxdevs(pci_chipset_tag_t pc, int busno)
 	struct genppc_pci_chipset_businfo *pbi;
 	prop_object_t busmax;
 
-	pbi = SIMPLEQ_FIRST(&prep_pct->pc_pbi);
+	pbi = SIMPLEQ_FIRST(&genppc_pct->pc_pbi);
 	while (busno--)
 		pbi = SIMPLEQ_NEXT(pbi, next);
 	if (pbi == NULL)
@@ -166,7 +166,7 @@ prep_pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 	origdev = dev = pa->pa_device;
 	i = 0;
 
-	pbi = SIMPLEQ_FIRST(&prep_pct->pc_pbi);
+	pbi = SIMPLEQ_FIRST(&genppc_pct->pc_pbi);
 	while (busno--)
 		pbi = SIMPLEQ_NEXT(pbi, next);
 	KASSERT(pbi != NULL);
@@ -188,7 +188,7 @@ prep_pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 		dev = prop_number_integer_value(pbus);
 
 		/* now that we know the parent bus, we need to find it's pbi */
-		pbi = SIMPLEQ_FIRST(&prep_pct->pc_pbi);
+		pbi = SIMPLEQ_FIRST(&genppc_pct->pc_pbi);
 		while (busno--)
 			pbi = SIMPLEQ_NEXT(pbi, next);
 		KASSERT(pbi != NULL);
@@ -346,7 +346,7 @@ prep_pci_conf_hook(pci_chipset_tag_t pct, int bus, int dev, int func,
 			prop_object_release(bmax);
 		}
 
-		SIMPLEQ_INSERT_TAIL(&prep_pct->pc_pbi, pbi, next);
+		SIMPLEQ_INSERT_TAIL(&genppc_pct->pc_pbi, pbi, next);
 	}
 
 	return (PCI_CONF_DEFAULT);

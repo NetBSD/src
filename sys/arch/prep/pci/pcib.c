@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.20.2.1 2007/05/01 08:55:18 garbled Exp $	*/
+/*	$NetBSD: pcib.c,v 1.20.2.2 2007/05/01 18:19:07 garbled Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.20.2.1 2007/05/01 08:55:18 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.20.2.2 2007/05/01 18:19:07 garbled Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -65,7 +65,7 @@ struct pcib_softc {
 };
 
 extern struct prep_isa_chipset prep_isa_chipset;
-extern struct genppc_pci_chipset *prep_pct;
+extern struct genppc_pci_chipset *genppc_pct;
 
 CFATTACH_DECL(pcib, sizeof(struct pcib_softc),
     pcibmatch, pcibattach, NULL, NULL);
@@ -175,7 +175,7 @@ pcibattach(struct device *parent, struct device *self, void *aux)
 		v = pci_conf_read(pa->pa_pc, pa->pa_tag, 0x44) & 0xffff0000;
 		pci_conf_write(pa->pa_pc, pa->pa_tag, 0x44, v);
 
-		pbi = SIMPLEQ_FIRST(&prep_pct->pc_pbi);
+		pbi = SIMPLEQ_FIRST(&genppc_pct->pc_pbi);
 		dict = prop_dictionary_get(pbi->pbi_properties,
 		    "prep-pci-intrmap");
 		devsub = prop_dictionary_get(dict, "devfunc-11");
