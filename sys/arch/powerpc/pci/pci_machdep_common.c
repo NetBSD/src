@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep_common.c,v 1.1.2.1 2007/05/01 17:04:23 garbled Exp $ */
+/* $NetBSD: pci_machdep_common.c,v 1.1.2.2 2007/05/01 17:46:57 garbled Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep_common.c,v 1.1.2.1 2007/05/01 17:04:23 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep_common.c,v 1.1.2.2 2007/05/01 17:46:57 garbled Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -145,3 +145,57 @@ genppc_pci_conf_hook(pci_chipset_tag_t pct, int bus, int dev, int func,
 {
 	return (PCI_CONF_DEFAULT);
 }
+
+int
+genppc_pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
+{
+	int pin = pa->pa_intrpin;
+	int line = pa->pa_intrline;
+	
+#if DEBUG
+	printf("%s: pin: %d, line: %d\n", __FUNCTION__, pin, line);
+#endif
+
+	if (pin == 0) {
+		/* No IRQ used. */
+		aprint_error("pci_intr_map: interrupt pin %d\n", pin);
+		goto bad;
+	}
+
+	if (pin > 4) {
+		aprint_error("pci_intr_map: bad interrupt pin %d\n", pin);
+		goto bad;
+	}
+
+	/*
+	 * Section 6.2.4, `Miscellaneous Functions', says that 255 means
+	 * `unknown' or `no connection' on a PC.  We assume that a device with
+	 * `no connection' either doesn't have an interrupt (in which case the
+	 * pin number should be 0, and would have been noticed above), or
+	 * wasn't configured by the BIOS (in which case we punt, since there's
+	 * no real way we can know how the interrupt lines are mapped in the
+	 * hardware).
+	 *
+	 * XXX
+	 * Since IRQ 0 is only used by the clock, and we can't actually be sure
+	 * that the BIOS did its job, we also recognize that as meaning that
+	 * the BIOS has not configured the device.
+	 */
+	if (line == 0 || line == 255) {
+		aprint_error("pci_intr_map: no mapping for pin %c\n", '@' + pin);
+		goto bad;
+	} else {
+		if (line >= ICU_LEN) {
+			aprint_error("pci_intr_map: bad interrupt line %d\n", line);
+			goto bad;
+		}
+	}
+
+	*ihp = line;
+	return 0;
+
+bad:
+	*ihp = -1;
+	return 1;
+}
+
