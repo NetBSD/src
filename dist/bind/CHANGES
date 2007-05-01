@@ -1,4 +1,9 @@
 
+	--- 9.4.1 released ---
+
+2172.	[bug]		query_addsoa() was being called with a non zone db.
+			[RT #16834]
+
 	--- 9.4.0 released ---
 
 2138.	[bug]		Lock order reversal in resolver.c. [RT #16653]
