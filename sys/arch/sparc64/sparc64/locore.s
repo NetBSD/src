@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.235.2.4 2007/05/01 21:08:27 martin Exp $	*/
+/*	$NetBSD: locore.s,v 1.235.2.5 2007/05/01 21:11:18 martin Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -6664,10 +6664,6 @@ ENTRY(cpu_switchto)
 
 1:
 	sethi	%hi(CURLWP), %l7
-
-	/* clear ci_wait_resched */
-	sethi	%hi(CPUINFO_VA+CI_WANT_RESCHED), %o0
-	st	%g0, [%o0 + %lo(CPUINFO_VA+CI_WANT_RESCHED)]
 
 	LDPTR   [%i1 + L_ADDR], %l1	! newpcb = l->l_addr;
 
