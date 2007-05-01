@@ -1,4 +1,4 @@
-/*	$NetBSD: limits.h,v 1.23 2004/11/10 04:02:52 lukem Exp $	*/
+/*	$NetBSD: limits.h,v 1.24 2007/05/01 01:01:25 rmind Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -38,6 +38,8 @@
 
 #if defined(_POSIX_C_SOURCE) || defined(_XOPEN_SOURCE) || \
     defined(_NETBSD_SOURCE)
+#define	_POSIX_AIO_LISTIO_MAX	2
+#define	_POSIX_AIO_MAX		1
 #define	_POSIX_ARG_MAX		4096
 #define	_POSIX_CHILD_MAX	6
 #define	_POSIX_LINK_MAX		8
