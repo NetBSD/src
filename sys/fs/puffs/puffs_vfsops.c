@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vfsops.c,v 1.40 2007/04/16 13:54:07 pooka Exp $	*/
+/*	$NetBSD: puffs_vfsops.c,v 1.41 2007/05/01 12:18:40 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.40 2007/04/16 13:54:07 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.41 2007/05/01 12:18:40 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -204,9 +204,8 @@ puffs_mount(struct mount *mp, const char *path, void *data,
 
 	mutex_init(&pmp->pmp_lock, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&pmp->pmp_req_waiter_cv, "puffsget");
-	cv_init(&pmp->pmp_req_waitersink_cv, "puffsink");
+	cv_init(&pmp->pmp_refcount_cv, "puffsref");
 	cv_init(&pmp->pmp_unmounting_cv, "puffsum");
-	cv_init(&pmp->pmp_suspend_cv, "pufsusum");
 	TAILQ_INIT(&pmp->pmp_req_touser);
 	TAILQ_INIT(&pmp->pmp_req_replywait);
 	TAILQ_INIT(&pmp->pmp_req_sizepark);
@@ -336,22 +335,21 @@ puffs_unmount(struct mount *mp, int mntflags, struct lwp *l)
 		puffs_nukebypmp(pmp);
 
 		/*
-		 * Sink waiters.  This is still not perfect, since the
-		 * draining is done after userret, not when they really
-		 * exit the file system.  It will probably work as almost
-		 * no call will block and therefore cause a context switch
-		 * and therefore will protected by the biglock after
-		 * exiting userspace.  But ... it's an imperfect world.
+		 * Wait until there are no more users for the mount resource.
+		 * Notice that this is hooked against transport_close
+		 * and return from touser.  In an ideal world, it would
+		 * be hooked against final return from all operations.
+		 * But currently it works well enough, since nobody
+		 * does weird blocking voodoo after return from touser().
 		 */
-		while (pmp->pmp_req_waiters != 0)
-			cv_wait(&pmp->pmp_req_waitersink_cv, &pmp->pmp_lock);
+		while (pmp->pmp_refcount != 0)
+			cv_wait(&pmp->pmp_refcount_cv, &pmp->pmp_lock);
 		mutex_exit(&pmp->pmp_lock);
 
 		/* free resources now that we hopefully have no waiters left */
-		cv_destroy(&pmp->pmp_req_waiter_cv);
-		cv_destroy(&pmp->pmp_req_waitersink_cv);
 		cv_destroy(&pmp->pmp_unmounting_cv);
-		cv_destroy(&pmp->pmp_suspend_cv);
+		cv_destroy(&pmp->pmp_refcount_cv);
+		cv_destroy(&pmp->pmp_req_waiter_cv);
 		mutex_destroy(&pmp->pmp_lock);
 
 		free(pmp->pmp_pnodehash, M_PUFFS);

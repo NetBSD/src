@@ -1,4 +1,4 @@
-/* $NetBSD: puffs_transport.c,v 1.16 2007/04/16 14:09:53 pooka Exp $ */
+/* $NetBSD: puffs_transport.c,v 1.17 2007/05/01 12:18:40 pooka Exp $ */
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_transport.c,v 1.16 2007/04/16 14:09:53 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_transport.c,v 1.17 2007/05/01 12:18:40 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -202,7 +202,7 @@ puffs_fop_close(struct file *fp, struct lwp *l)
 	}
 
 	/*
-	 * Next, analyze unmount was called and the instance is dead.
+	 * Next, analyze if unmount was called and the instance is dead.
 	 * In this case we can just free the structure and go home, it
 	 * was removed from the list by puffs_nukebypmp().
 	 */
@@ -222,7 +222,11 @@ puffs_fop_close(struct file *fp, struct lwp *l)
 	 */
 	mp = PMPTOMP(pmp);
 	mutex_exit(&pi_mtx);
+
+	/* hmm?  suspicious locking? */
+
 	mutex_enter(&pmp->pmp_lock);
+	puffs_mp_reference(pmp);
 
 	/*
 	 * Free the waiting callers before proceeding any further.
@@ -248,30 +252,15 @@ puffs_fop_close(struct file *fp, struct lwp *l)
 	 */
 	if (pmp->pmp_unmounting) {
 		cv_wait(&pmp->pmp_unmounting_cv, &pmp->pmp_lock);
+		puffs_mp_release(pmp);
 		mutex_exit(&pmp->pmp_lock);
 		DPRINTF(("puffs_fop_close: unmount was in progress for pmp %p, "
 		    "restart\n", pmp));
 		goto restart;
 	}
 
-	/*
-	 * Check that suspend isn't running.  Issues here:
-	 * + we cannot nuke the mountpoint while suspend is running
-	 *   because we risk nuking it from under us (as usual... does
-	 *   anyone see a pattern forming?)
-	 * + we must have userdead or the suspend thread might deadlock.
-	 *   this has been done above
-	 * + this DOES NOT solve the problem with the regular unmount path.
-	 *   however, it is way way way way less likely a problem.
-	 *   perhaps vfs_busy() in vfs_suspend() would help?
-	 */
-	if (pmp->pmp_suspend) {
-		cv_wait(&pmp->pmp_suspend_cv, &pmp->pmp_lock);
-		mutex_exit(&pmp->pmp_lock);
-		DPRINTF(("puffs_fop_close: suspend was in progress for pmp %p, "
-		    "restart\n", pmp));
-		goto restart;
-	}
+	/* Won't access pmp from here anymore */
+	puffs_mp_release(pmp);
 	mutex_exit(&pmp->pmp_lock);
 
 	/*
@@ -437,18 +426,18 @@ dosuspendresume(void *arg)
 		goto out;
 	}
 
-	/* do the dance */
-	rv = vfs_suspend(PMPTOMP(pmp), 0);
+	/* Do the dance.  Allow only one concurrent suspend */
+	rv = vfs_suspend(PMPTOMP(pmp), 1);
 	if (rv == 0)
 		vfs_resume(PMPTOMP(pmp));
 
+ out:
 	mutex_enter(&pmp->pmp_lock);
-	KASSERT(pmp->pmp_suspend);
+	KASSERT(pmp->pmp_suspend == 1);
 	pmp->pmp_suspend = 0;
-	cv_broadcast(&pmp->pmp_suspend_cv);
+	puffs_mp_release(pmp);
 	mutex_exit(&pmp->pmp_lock);
 
- out:
 	kthread_exit(0);
 }
 
@@ -496,10 +485,12 @@ puffs_fop_ioctl(struct file *fp, u_long cmd, void *data, struct lwp *l)
 	case PUFFSSUSPENDOP:
 		rv = 0;
 		mutex_enter(&pmp->pmp_lock);
-		if (pmp->pmp_suspend || pmp->pmp_status != PUFFSTAT_RUNNING)
+		if (pmp->pmp_suspend || pmp->pmp_status != PUFFSTAT_RUNNING) {
 			rv = EBUSY;
-		else
+		} else {
+			puffs_mp_reference(pmp);
 			pmp->pmp_suspend = 1;
+		}
 		mutex_exit(&pmp->pmp_lock);
 		if (rv)
 			break;
@@ -543,7 +534,7 @@ filt_puffsioctl(struct knote *kn, long hint)
 		return 0;
 
 	mutex_enter(&pmp->pmp_lock);
-	kn->kn_data = pmp->pmp_req_waiters;
+	kn->kn_data = pmp->pmp_req_touser_count;
 	mutex_exit(&pmp->pmp_lock);
 
 	return kn->kn_data != 0;
