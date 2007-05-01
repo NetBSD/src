@@ -1,4 +1,4 @@
-.\"	$NetBSD: scan_ffs.8,v 1.12 2006/10/17 09:26:21 wiz Exp $
+.\"	$NetBSD: scan_ffs.8,v 1.13 2007/05/01 21:28:50 perseant Exp $
 .\"     OpenBSD: scan_ffs.8,v 1.13 2004/12/14 00:04:21 jmc Exp
 .\"
 .\" Copyright (c) 2005 Juan Romero Pardines
@@ -34,7 +34,7 @@
 .Nd find FFSv1/FFSv2/LFS partitions on a disk or file
 .Sh SYNOPSIS
 .Nm
-.Op Fl lv
+.Op Fl blv
 .Op Fl e Ar end
 .Op Fl F Ar file
 .Op Fl s Ar start
@@ -51,6 +51,14 @@ output.
 .Pp
 The options are as follows:
 .Bl -tag -width XXsXstartXX
+.It Fl b
+Report every superblock found with its sector address, rather than trying
+to report the partition boundaries.
+This option can be useful to find the other superblocks in a partition if
+the first superblock has become corrupted.
+It is most useful if
+.Ar device
+refers to the raw device for the partition, rather than the entire disk.
 .It Fl e Ar end
 Where to stop searching for file systems.
 The
