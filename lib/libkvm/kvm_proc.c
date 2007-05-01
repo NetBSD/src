@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_proc.c,v 1.68 2007/02/24 20:41:34 christos Exp $	*/
+/*	$NetBSD: kvm_proc.c,v 1.69 2007/05/01 06:58:08 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_proc.c	8.3 (Berkeley) 9/23/93";
 #else
-__RCSID("$NetBSD: kvm_proc.c,v 1.68 2007/02/24 20:41:34 christos Exp $");
+__RCSID("$NetBSD: kvm_proc.c,v 1.69 2007/05/01 06:58:08 dsl Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -581,7 +581,11 @@ again:
 			kp2p->p_sigacts = PTRTOUINT64(kp->kp_proc.p_sigacts);
 			kp2p->p_sess = PTRTOUINT64(kp->kp_eproc.e_sess);
 			kp2p->p_tsess = 0;
-			kp2p->p_ru = PTRTOUINT64(kp->kp_proc.p_ru);
+#if 1 /* XXX: dsl - p_ru was only ever non-zero for zombies */
+			kp2p->p_ru = 0;
+#else
+			kp2p->p_ru = PTRTOUINT64(pstats.p_ru);
+#endif
 
 			kp2p->p_eflag = 0;
 			kp2p->p_exitsig = kp->kp_proc.p_exitsig;
