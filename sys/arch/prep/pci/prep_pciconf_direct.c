@@ -1,4 +1,4 @@
-/*	$NetBSD: prep_pciconf_direct.c,v 1.5 2006/06/09 01:19:11 garbled Exp $	*/
+/*	$NetBSD: prep_pciconf_direct.c,v 1.5.24.1 2007/05/01 08:55:18 garbled Exp $	*/
 
 /*
  * Copyright (c) 2002 Klaus J. Klein.  All rights reserved.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: prep_pciconf_direct.c,v 1.5 2006/06/09 01:19:11 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: prep_pciconf_direct.c,v 1.5.24.1 2007/05/01 08:55:18 garbled Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -105,12 +105,12 @@ prep_pci_get_chipset_tag_direct(pci_chipset_tag_t pc)
 	pc->pc_intr_v = NULL;
 
 	pc->pc_intr_map = prep_pci_intr_map;
-	pc->pc_intr_string = prep_pci_intr_string;
-	pc->pc_intr_evcnt = prep_pci_intr_evcnt;
-	pc->pc_intr_establish = prep_pci_intr_establish;
-	pc->pc_intr_disestablish = prep_pci_intr_disestablish;
+	pc->pc_intr_string = genppc_pci_intr_string;
+	pc->pc_intr_evcnt = genppc_pci_intr_evcnt;
+	pc->pc_intr_establish = genppc_pci_intr_establish;
+	pc->pc_intr_disestablish = genppc_pci_intr_disestablish;
 
-	pc->pc_conf_interrupt = prep_pci_conf_interrupt;
+	pc->pc_conf_interrupt = genppc_pci_conf_interrupt;
 	pc->pc_decompose_tag = prep_pci_direct_decompose_tag;
 	pc->pc_conf_hook = prep_pci_conf_hook;
 }
