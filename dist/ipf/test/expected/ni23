@@ -12,7 +12,7 @@ RDR 2.2.2.2         4500  <- -> 1.1.2.3         4500  [3.3.3.1 6700]
 Hostmap table:
 3.3.3.1,2.2.2.2 -> 4.4.4.4 (use = 1 hv = 0)
 List of active state sessions:
-3.3.3.1 -> 2.2.2.2 pass 0x40008402 pr 17 state 0/0 bkt 1294
+3.3.3.1 -> 2.2.2.2 pass 0x40008402 pr 17 state 0/0
 	tag 0 ttl 24 6700 -> 4500
 	forward: pkts in 1 bytes in 28 pkts out 1 bytes out 28
 	backward: pkts in 1 bytes in 28 pkts out 1 bytes out 28
