@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.26.16.1 2007/05/01 08:55:19 garbled Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.26.16.2 2007/05/01 18:19:07 garbled Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.26.16.1 2007/05/01 08:55:19 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.26.16.2 2007/05/01 18:19:07 garbled Exp $");
 
 #include "opt_pci.h"
 #include "opt_residual.h"
@@ -76,7 +76,7 @@ union mainbus_attach_args {
 int mainbus_found = 0;
 struct prep_isa_chipset prep_isa_chipset;
 struct prep_isa_chipset *prep_ict;
-struct genppc_pci_chipset *prep_pct;
+struct genppc_pci_chipset *genppc_pct;
 
 
 /*
@@ -125,9 +125,10 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 	 * XXX that's not currently possible.
 	 */
 #if NPCI > 0
-	prep_pct = malloc(sizeof(struct genppc_pci_chipset), M_DEVBUF, M_NOWAIT);
-	KASSERT(prep_pct != NULL);
-	prep_pci_get_chipset_tag(prep_pct);
+	genppc_pct = malloc(sizeof(struct genppc_pci_chipset), M_DEVBUF,
+	    M_NOWAIT);
+	KASSERT(genppc_pct != NULL);
+	prep_pci_get_chipset_tag(genppc_pct);
 
 	pbi = malloc(sizeof(struct genppc_pci_chipset_businfo),
 	    M_DEVBUF, M_NOWAIT);
@@ -135,8 +136,8 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 	pbi->pbi_properties = prop_dictionary_create();
         KASSERT(pbi->pbi_properties != NULL);
 
-	SIMPLEQ_INIT(&prep_pct->pc_pbi);
-	SIMPLEQ_INSERT_TAIL(&prep_pct->pc_pbi, pbi, next);
+	SIMPLEQ_INIT(&genppc_pct->pc_pbi);
+	SIMPLEQ_INSERT_TAIL(&genppc_pct->pc_pbi, pbi, next);
 
 	/* find the primary host bridge */
 	setup_pciintr_map(pbi, 0, 0, 0);
@@ -147,7 +148,7 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 	memext = extent_create("pcimem", 0x00000000, 0x0fffffff, M_DEVBUF,
 	    NULL, 0, EX_NOWAIT);
 
-	pci_configure_bus(prep_pct, ioext, memext, NULL, 0, CACHELINESIZE);
+	pci_configure_bus(genppc_pct, ioext, memext, NULL, 0, CACHELINESIZE);
 
 	extent_destroy(ioext);
 	extent_destroy(memext);
@@ -173,7 +174,7 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 	mba.mba_pba.pba_memt = &prep_mem_space_tag;
 	mba.mba_pba.pba_dmat = &pci_bus_dma_tag;
 	mba.mba_pba.pba_dmat64 = NULL;
-	mba.mba_pba.pba_pc = prep_pct;
+	mba.mba_pba.pba_pc = genppc_pct;
 	mba.mba_pba.pba_bus = 0;
 	mba.mba_pba.pba_bridgetag = NULL;
 	mba.mba_pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
@@ -181,7 +182,7 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 #endif /* NPCI */
 
 #ifdef RESIDUAL_DATA_DUMP
-	SIMPLEQ_FOREACH(pbi, &prep_pct->pc_pbi, next)
+	SIMPLEQ_FOREACH(pbi, &genppc_pct->pc_pbi, next)
 		printf("%s\n", prop_dictionary_externalize(pbi->pbi_properties));
 #endif
 }
