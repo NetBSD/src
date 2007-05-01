@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.186 2007/04/28 09:31:46 mrg Exp $
+#	$NetBSD: BRANCHES,v 1.187 2007/05/01 01:57:00 garbled Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -355,6 +355,19 @@ Scope:		pkgsrc, basesrc/usr.sbin/pkg_install
 Notes:		A more flexible infrastructure for third-party packages by
 		allowing multiple conflicting packages and versions to co-exist
 		within the same tree
+
+Branch:		ppcoea-renovation
+Description:	General renovation and cleanup of all OEA PowerPC ports.
+Status:		Active
+Start Date:	30 April 2007
+End Date:
+Base Tag:	ppcoea-renovation-base
+Maintainer:	Tim Rightnour <garbled@netbsd.org>
+Scope:		src/sys/arch
+Notes:		This branch is for a general cleanup of all OEA-based PowerPC
+		ports.  The general concept is to get them all compiling, and
+		sharing as much code as possible.  All developers are welcome
+		to commit to this branch.
 
 Branch:		rpaulo-netinet-merge-pcb
 Description:	merge in6pcb with inpcb
