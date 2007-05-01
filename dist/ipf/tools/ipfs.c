@@ -1,4 +1,4 @@
-/*	$NetBSD: ipfs.c,v 1.8 2007/04/14 20:34:34 martin Exp $	*/
+/*	$NetBSD: ipfs.c,v 1.9 2007/05/01 19:08:04 martti Exp $	*/
 
 /*
  * Copyright (C) 2001-2006 by Darren Reed.
@@ -133,6 +133,14 @@ char *ifs, *fname;
 			strcpy(ips.ips_is.is_ifname[1], s);
 			rw = 1;
 		}
+		if (!strncmp(ips.ips_is.is_ifname[2], ifs, olen + 1)) {
+			strcpy(ips.ips_is.is_ifname[2], s);
+			rw = 1;
+		}
+		if (!strncmp(ips.ips_is.is_ifname[3], ifs, olen + 1)) {
+			strcpy(ips.ips_is.is_ifname[3], s);
+			rw = 1;
+		}
 		if (rw == 1) {
 			if (lseek(fd, pos, SEEK_SET) != pos) {
 				perror("lseek");
@@ -190,6 +198,14 @@ char *ifs, *fname;
 			strcpy(nat->nat_ifnames[1], s);
 			rw = 1;
 		}
+		if (!strncmp(nat->nat_ifnames[2], ifs, olen + 1)) {
+			strcpy(nat->nat_ifnames[2], s);
+			rw = 1;
+		}
+		if (!strncmp(nat->nat_ifnames[3], ifs, olen + 1)) {
+			strcpy(nat->nat_ifnames[3], s);
+			rw = 1;
+		}
 		if (rw == 1) {
 			if (lseek(fd, pos, SEEK_SET) != pos) {
 				perror("lseek");
@@ -216,7 +232,7 @@ char *argv[];
 	char *dirname = NULL, *filename = NULL, *ifs = NULL;
 
 	progname = argv[0];
-	while ((c = getopt(argc, argv, "d:f:lNnSRruvWw")) != -1)
+	while ((c = getopt(argc, argv, "d:f:i:lNnSRruvWw")) != -1)
 		switch (c)
 		{
 		case 'd' :
