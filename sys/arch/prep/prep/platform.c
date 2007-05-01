@@ -1,4 +1,4 @@
-/*	$NetBSD: platform.c,v 1.22.18.1 2007/05/01 08:55:19 garbled Exp $	*/
+/*	$NetBSD: platform.c,v 1.22.18.2 2007/05/01 18:19:07 garbled Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: platform.c,v 1.22.18.1 2007/05/01 08:55:19 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: platform.c,v 1.22.18.2 2007/05/01 18:19:07 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,7 +57,7 @@ u_int32_t prep_pci_baseaddr = 0x80000cf8;
 u_int32_t prep_pci_basedata = 0x80000cfc;
 
 struct pciroutinginfo *pciroutinginfo;
-extern struct prep_pci_chipset *prep_pct;
+extern struct prep_pci_chipset *genppc_pct;
 
 extern void pci_intr_fixup_ibm_6015(void);
 /* from mcclock_pnpbus.c */
