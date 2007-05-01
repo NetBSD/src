@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_h323_pxy.c,v 1.7 2007/04/27 10:17:19 jnemeth Exp $	*/
+/*	$NetBSD: ip_h323_pxy.c,v 1.8 2007/05/01 19:08:04 martti Exp $	*/
 
 /*
  * Copyright 2001, QNX Software Systems Ltd. All Rights Reserved
@@ -34,7 +34,7 @@
 #include "opt_ipfilter.h"
 #endif
 
-__KERNEL_RCSID(1, "$NetBSD: ip_h323_pxy.c,v 1.7 2007/04/27 10:17:19 jnemeth Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ip_h323_pxy.c,v 1.8 2007/05/01 19:08:04 martti Exp $");
 
 #define IPF_H323_PROXY
 
@@ -260,7 +260,7 @@ nat_t *nat;
 		nat_t     *nat2;
 
 /*		port = htons(port); */
-		nat2 = nat_outlookup(fin->fin_ifp, IPN_UDP, IPPROTO_UDP,
+		nat2 = nat_outlookup(fin, IPN_UDP, IPPROTO_UDP,
 				    ip->ip_src, ip->ip_dst);
 		if (nat2 == NULL) {
 			struct ip newip;
