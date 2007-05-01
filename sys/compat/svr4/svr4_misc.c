@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_misc.c,v 1.127 2007/04/30 14:05:47 dsl Exp $	 */
+/*	$NetBSD: svr4_misc.c,v 1.128 2007/05/01 17:22:32 dsl Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_misc.c,v 1.127 2007/04/30 14:05:47 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_misc.c,v 1.128 2007/05/01 17:22:32 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1087,11 +1087,7 @@ svr4_setinfo(p, st, s)
 
 	if (p) {
 		s->si_pid = p->p_pid;
-		if (p->p_stat == SZOMB) {
-			s->si_stime = p->p_ru->ru_stime.tv_sec;
-			s->si_utime = p->p_ru->ru_utime.tv_sec;
-		}
-		else {
+		if (p->p_stats != NULL) {
 			s->si_stime = p->p_stats->p_ru.ru_stime.tv_sec;
 			s->si_utime = p->p_stats->p_ru.ru_utime.tv_sec;
 		}
