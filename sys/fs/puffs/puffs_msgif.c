@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.c,v 1.33 2007/04/24 09:44:57 pooka Exp $	*/
+/*	$NetBSD: puffs_msgif.c,v 1.34 2007/05/01 12:18:40 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.33 2007/04/24 09:44:57 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.34 2007/05/01 12:18:40 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/fstrans.h>
@@ -475,7 +475,8 @@ touser(struct puffs_mount *pmp, struct puffs_park *park, uint64_t reqid,
 
 	TAILQ_INSERT_TAIL(&pmp->pmp_req_touser, park, park_entries);
 	park->park_flags |= PARKFLAG_ONQUEUE1;
-	pmp->pmp_req_waiters++;
+	puffs_mp_reference(pmp);
+	pmp->pmp_req_touser_count++;
 	mutex_exit(&pmp->pmp_lock);
 
 #if 0
@@ -531,6 +532,7 @@ touser(struct puffs_mount *pmp, struct puffs_park *park, uint64_t reqid,
 					TAILQ_REMOVE(&pmp->pmp_req_touser,
 					    park, park_entries);
 				park->park_flags &= ~PARKFLAG_ONQUEUE1;
+				pmp->pmp_req_touser_count--;
 				if ((park->park_flags & PARKFLAG_ONQUEUE2) == 0)
 					puffs_park_release(park, 0);
 				else
@@ -570,10 +572,7 @@ touser(struct puffs_mount *pmp, struct puffs_park *park, uint64_t reqid,
 #endif
 
 	mutex_enter(&pmp->pmp_lock);
-	if (--pmp->pmp_req_waiters == 0) {
-		KASSERT(cv_has_waiters(&pmp->pmp_req_waitersink_cv) <= 1);
-		cv_signal(&pmp->pmp_req_waitersink_cv);
-	}
+	puffs_mp_release(pmp);
 	mutex_exit(&pmp->pmp_lock);
 
 	return rv;
@@ -646,6 +645,8 @@ puffs_getop(struct puffs_mount *pmp, struct puffs_reqh_get *phg, int nonblock)
 		TAILQ_REMOVE(&pmp->pmp_req_touser, park, park_entries);
 		KASSERT(park->park_flags & PARKFLAG_ONQUEUE1);
 		park->park_flags &= ~PARKFLAG_ONQUEUE1;
+		pmp->pmp_req_touser_count--;
+		KASSERT(pmp->pmp_req_touser_count >= 0);
 		mutex_exit(&pmp->pmp_lock);
 
 		DPRINTF(("puffsgetop: get op %" PRIu64 " (%d.), from %p "
@@ -673,6 +674,7 @@ puffs_getop(struct puffs_mount *pmp, struct puffs_reqh_get *phg, int nonblock)
 				 TAILQ_INSERT_HEAD(&pmp->pmp_req_touser, park,
 				     park_entries);
 				 park->park_flags |= PARKFLAG_ONQUEUE1;
+				 pmp->pmp_req_touser_count++;
 			}
 
 			if (donesome)
@@ -699,7 +701,7 @@ puffs_getop(struct puffs_mount *pmp, struct puffs_reqh_get *phg, int nonblock)
 	}
 
  out:
-	phg->phg_more = pmp->pmp_req_waiters;
+	phg->phg_more = pmp->pmp_req_touser_count;
 	mutex_exit(&pmp->pmp_lock);
 
 	phg->phg_nops = donesome;
@@ -851,6 +853,7 @@ puffs_userdead(struct puffs_mount *pmp)
 		KASSERT(park->park_flags & PARKFLAG_ONQUEUE1);
 		TAILQ_REMOVE(&pmp->pmp_req_touser, park, park_entries);
 		park->park_flags &= ~PARKFLAG_ONQUEUE1;
+		pmp->pmp_req_touser_count--;
 
 		/*
 		 * If the waiter is gone, we may *NOT* access preq anymore.
