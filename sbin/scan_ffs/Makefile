@@ -1,4 +1,6 @@
-# $NetBSD: Makefile,v 1.7 2005/09/10 23:15:52 xtraeme Exp $
+# $NetBSD: Makefile,v 1.8 2007/05/01 21:28:50 perseant Exp $
+
+.include <bsd.own.mk>
 
 PROG=	scan_ffs
 
@@ -7,6 +9,10 @@ MLINKS=	scan_ffs.8 scan_lfs.8
 
 LDADD=	-lutil
 DPADD=	${LIBUTIL}
+
+SRCS=	scan_ffs.c lfs_cksum.c
+SCAN_FFS=${NETBSDSRCDIR}/sbin/scan_ffs
+.PATH:  ${NETBSDSRCDIR}/sys/ufs/lfs ${SCAN_FFS}
 
 MAN=	scan_ffs.8
 
