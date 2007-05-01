@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.66 2007/02/09 21:55:11 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.66.14.1 2007/05/01 19:19:00 garbled Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.66 2007/02/09 21:55:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.66.14.1 2007/05/01 19:19:00 garbled Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -396,7 +396,7 @@ struct powerpc_bus_space prep_io_space_tag = {
 	.pbs_base = 0x00000000,
 	.pbs_limit = 0x3f800000,
 };
-struct powerpc_bus_space prep_isa_io_space_tag = {
+struct powerpc_bus_space genppc_isa_io_space_tag = {
 	.pbs_flags = _BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_IO_TYPE,
 	.pbs_offset = 0x80000000,
 	.pbs_base = 0x00000000,
@@ -414,7 +414,7 @@ struct powerpc_bus_space prep_mem_space_tag = {
 	.pbs_base = 0x00000000,
 	.pbs_limit = 0x3f000000,
 };
-struct powerpc_bus_space prep_isa_mem_space_tag = {
+struct powerpc_bus_space genppc_isa_mem_space_tag = {
 	.pbs_flags = _BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_MEM_TYPE,
 	.pbs_offset = 0xC0000000,
 	.pbs_base = 0x00000000,
@@ -450,13 +450,13 @@ prep_bus_space_init(void)
 	if (error)
 		panic("prep_bus_space_init: can't init mem tag");
 
-	prep_isa_io_space_tag.pbs_extent = prep_io_space_tag.pbs_extent;
-	error = bus_space_init(&prep_isa_io_space_tag, "isa-ioport", NULL, 0);
+	genppc_isa_io_space_tag.pbs_extent = prep_io_space_tag.pbs_extent;
+	error = bus_space_init(&genppc_isa_io_space_tag, "isa-ioport", NULL, 0);
 	if (error)
 		panic("prep_bus_space_init: can't init isa io tag");
 
-	prep_isa_mem_space_tag.pbs_extent = prep_mem_space_tag.pbs_extent;
-	error = bus_space_init(&prep_isa_mem_space_tag, "isa-iomem", NULL, 0);
+	genppc_isa_mem_space_tag.pbs_extent = prep_mem_space_tag.pbs_extent;
+	error = bus_space_init(&genppc_isa_mem_space_tag, "isa-iomem", NULL, 0);
 	if (error)
 		panic("prep_bus_space_init: can't init isa mem tag");
 }

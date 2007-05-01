@@ -1,4 +1,4 @@
-/*	$NetBSD: pceb.c,v 1.1 2006/02/23 19:44:02 garbled Exp $	*/
+/*	$NetBSD: pceb.c,v 1.1.40.1 2007/05/01 19:18:59 garbled Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pceb.c,v 1.1 2006/02/23 19:44:02 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pceb.c,v 1.1.40.1 2007/05/01 19:18:59 garbled Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -150,8 +150,8 @@ pceb_callback(struct device *self)
 	 * Attach the ISA bus behind this bridge.
 	 */
 	memset(&ea, 0, sizeof(ea));
-	ea.ea_iba.iba_iot = &prep_isa_io_space_tag;
-	ea.ea_iba.iba_memt = &prep_isa_mem_space_tag;
+	ea.ea_iba.iba_iot = &genppc_isa_io_space_tag;
+	ea.ea_iba.iba_memt = &genppc_isa_mem_space_tag;
 #if NISA > 0
 	ea.ea_iba.iba_dmat = &isa_bus_dma_tag;
 #endif
