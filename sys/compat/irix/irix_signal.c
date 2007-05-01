@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_signal.c,v 1.39 2007/03/09 14:11:28 ad Exp $ */
+/*	$NetBSD: irix_signal.c,v 1.40 2007/05/01 17:22:32 dsl Exp $ */
 
 /*-
  * Copyright (c) 1994, 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_signal.c,v 1.39 2007/03/09 14:11:28 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_signal.c,v 1.40 2007/05/01 17:22:32 dsl Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -109,11 +109,7 @@ irix_wait_siginfo(p, st, stat, s)
 
 	if (p) {
 		i.isi_pid = p->p_pid;
-		if (stat == SZOMB) {
-			i.isi_stime = p->p_ru->ru_stime.tv_sec;
-			i.isi_utime = p->p_ru->ru_utime.tv_sec;
-		}
-		else {
+		if (p->p_stats != NULL) {
 			i.isi_stime = p->p_stats->p_ru.ru_stime.tv_sec;
 			i.isi_utime = p->p_stats->p_ru.ru_utime.tv_sec;
 		}
