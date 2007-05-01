@@ -1,4 +1,4 @@
-.\"	$NetBSD: puffs.3,v 1.19 2007/04/16 19:16:02 pooka Exp $
+.\"	$NetBSD: puffs.3,v 1.20 2007/05/01 15:58:00 pooka Exp $
 .\"
 .\" Copyright (c) 2006, 2007 Antti Kantee.  All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd April 16, 2007
+.Dd May 1, 2007
 .Dt PUFFS 3
 .Os
 .Sh NAME
@@ -178,6 +178,15 @@ for more information on cookie mapping.
 See
 .Xr puffs_path 3
 for more information on library calls involving paths.
+.It Dv PUFFS_FLAG_HASHPATH
+Calculate a hash of the path into the path object field
+.Va po_hash .
+This hash value is used by
+.Fn puffs_path_walkcmp
+to avoid doing a full comparison for every path equal in length to
+the one searched for.
+Especially if the file system uses the abovementioned function, it
+is a good idea to define this flag.
 .It Dv PUFFS_FLAG_OPDUMP
 This option makes the framework dump a textual representation of
 each operation before executing it.
