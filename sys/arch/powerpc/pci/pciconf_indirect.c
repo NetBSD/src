@@ -1,4 +1,4 @@
-/* $NetBSD: gen_pciconf_indirect.c,v 1.1.2.1 2007/05/01 07:59:01 garbled Exp $ */
+/* $NetBSD: pciconf_indirect.c,v 1.1.2.1 2007/05/01 17:04:24 garbled Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gen_pciconf_indirect.c,v 1.1.2.1 2007/05/01 07:59:01 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciconf_indirect.c,v 1.1.2.1 2007/05/01 17:04:24 garbled Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
