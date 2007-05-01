@@ -1,4 +1,4 @@
-/*	$NetBSD: paths.c,v 1.5 2007/02/15 21:26:50 pooka Exp $	*/
+/*	$NetBSD: paths.c,v 1.6 2007/05/01 15:58:00 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -30,8 +30,10 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: paths.c,v 1.5 2007/02/15 21:26:50 pooka Exp $");
+__RCSID("$NetBSD: paths.c,v 1.6 2007/05/01 15:58:00 pooka Exp $");
 #endif /* !lint */
+
+#include <sys/hash.h>
 
 #include <assert.h>
 #include <errno.h>
@@ -54,6 +56,7 @@ puffs_path_pcnbuild(struct puffs_usermount *pu, struct puffs_cn *pcn,
 	int rv;
 
 	assert(pn_parent->pn_po.po_path != NULL);
+	assert(pu->pu_flags & PUFFS_FLAG_BUILDPATH);
 
 	if (pu->pu_pathtransform) {
 		rv = pu->pu_pathtransform(pu, &pn_parent->pn_po, pcn, &po);
@@ -74,6 +77,7 @@ puffs_path_pcnbuild(struct puffs_usermount *pu, struct puffs_cn *pcn,
 
 	rv = pu->pu_pathbuild(pu, &pn_parent->pn_po, &po, 0,
 	    &pcn->pcn_po_full);
+	puffs_path_buildhash(pu, &pcn->pcn_po_full);
 
 	if (pu->pu_pathtransform)
 		pu->pu_pathfree(pu, &po);
@@ -120,6 +124,9 @@ puffs_path_prefixadj(struct puffs_usermount *pu, struct puffs_node *pn,
 	if (rv != 0)
 		abort();
 
+	/* adjust hash sum */
+	puffs_path_buildhash(pu, &localpo);
+
 	/* out with the old and in with the new */
 	oldpo = pn->pn_po;
 	pn->pn_po = localpo;
@@ -141,12 +148,41 @@ puffs_path_walkcmp(struct puffs_usermount *pu, struct puffs_node *pn, void *arg)
 	if (po->po_len != PNPLEN(pn))
 		return NULL;
 
+	/*
+	 * If hashing and the hash doesn't match, we know this is
+	 * definitely not a match.  Otherwise check for collisions.
+	 */
+	if (pu->pu_flags & PUFFS_FLAG_HASHPATH)
+		if (pn->pn_po.po_hash != po->po_hash)
+			return NULL;
+
 	po2.po_path = PNPATH(pn);
 	po2.po_len = PNPLEN(pn);
 
 	if (pu->pu_pathcmp(pu, po, &po2, PNPLEN(pn), 0) == 0)
 		return pn;
 	return NULL;
+}
+
+/*
+ * Hash sum building routine.  Use string hash if the buildpath routine
+ * is the standard one, otherwise use binary hashes.  A bit whimsical
+ * way to choose the routine, but the binary works for strings also,
+ * so don't sweat it.
+ */
+void
+puffs_path_buildhash(struct puffs_usermount *pu, struct puffs_pathobj *po)
+{
+
+	if ((pu->pu_flags & PUFFS_FLAG_HASHPATH) == 0)
+		return;
+
+	if (pu->pu_pathbuild == puffs_stdpath_buildpath)
+		po->po_hash = hash32_strn(po->po_path, po->po_len,
+		    HASH32_STR_INIT);
+	else
+		po->po_hash = hash32_buf(po->po_path, po->po_len,
+		    HASH32_BUF_INIT);
 }
 
 /*

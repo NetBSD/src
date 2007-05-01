@@ -1,7 +1,7 @@
-/*	$NetBSD: puffs.h,v 1.48 2007/04/22 18:02:44 pooka Exp $	*/
+/*	$NetBSD: puffs.h,v 1.49 2007/05/01 15:58:01 pooka Exp $	*/
 
 /*
- * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
+ * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
  *
  * Development of this software was supported by the
  * Google Summer of Code program and the Ulla Tuominen Foundation.
@@ -55,8 +55,9 @@ struct puffs_putreq;
 
 /* paths */
 struct puffs_pathobj {
-	void 	*po_path;
-	size_t	po_len;
+	void 		*po_path;
+	size_t		po_len;
+	uint32_t	po_hash;
 };
 
 /* for prefix rename */
@@ -243,7 +244,8 @@ enum {
 
 #define PUFFS_FLAG_BUILDPATH	0x80000000	/* node paths in pnode */
 #define PUFFS_FLAG_OPDUMP	0x40000000	/* dump all operations */
-#define PUFFS_FLAG_MASK		0xc0000000
+#define PUFFS_FLAG_HASHPATH	0x20000000	/* speedup: hash paths */
+#define PUFFS_FLAG_MASK		0xe0000000
 
 #define PUFFS_FLAG_KERN(a)	((a) & PUFFS_KFLAG_MASK)
 #define PUFFS_FLAG_LIB(a)	((a) & PUFFS_FLAG_MASK)
@@ -546,6 +548,7 @@ void	*puffs_path_prefixadj(struct puffs_usermount *,
 			      struct puffs_node *, void *);
 int	puffs_path_pcnbuild(struct puffs_usermount *,
 			    struct puffs_cn *, void *);
+void	puffs_path_buildhash(struct puffs_usermount *, struct puffs_pathobj *);
 
 void	puffs_set_pathbuild(struct puffs_usermount *, pu_pathbuild_fn);
 void	puffs_set_pathtransform(struct puffs_usermount *, pu_pathtransform_fn);
