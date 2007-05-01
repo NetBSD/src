@@ -1,7 +1,0 @@
-OUTPUT_FORMAT="coff-maxq"
-
-SCRIPT_NAME=maxqcoff
-
-ARCH=MAXQ
-
-TEXT_START_ADDR=0x8000

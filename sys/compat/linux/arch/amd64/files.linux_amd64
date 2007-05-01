@@ -1,9 +1,0 @@
-#	$NetBSD: files.linux_amd64,v 1.2 2005/12/11 12:20:14 christos Exp $
-#
-# Config file description for amd64-dependent Linux compat code.
-
-file	compat/linux/arch/amd64/linux_commons.c		compat_linux
-file	compat/linux/arch/amd64/linux_exec_machdep.c	compat_linux
-file	compat/linux/arch/amd64/linux_machdep.c		compat_linux
-file	compat/linux/arch/amd64/linux_syscalls.c	compat_linux
-file	compat/linux/arch/amd64/linux_sysent.c		compat_linux
