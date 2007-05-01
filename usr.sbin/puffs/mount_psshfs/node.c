@@ -1,4 +1,4 @@
-/*	$NetBSD: node.c,v 1.20 2007/04/19 20:31:09 pooka Exp $	*/
+/*	$NetBSD: node.c,v 1.21 2007/05/01 20:43:14 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: node.c,v 1.20 2007/04/19 20:31:09 pooka Exp $");
+__RCSID("$NetBSD: node.c,v 1.21 2007/05/01 20:43:14 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -66,7 +66,6 @@ psshfs_node_lookup(struct puffs_cc *pcc, void *opc, void **newnode,
 
 	rv = sftp_readdir(pcc, pctx, pn_dir);
 	if (rv) {
-		printf("got error from readdir: %d\n", rv);
 		if (rv != EPERM)
 			return rv;
 
