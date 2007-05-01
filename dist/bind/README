@@ -43,6 +43,11 @@ BIND 9
 		Nominum, Inc.
 
 
+BIND 9.4.1
+
+	BIND 9.4.1 is a security release, containing a fix for a
+	security bug in 9.4.0.
+	
 BIND 9.4.0
 
 	BIND 9.4.0 has a number of new features over 9.3,
