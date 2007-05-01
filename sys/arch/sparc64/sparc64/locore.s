@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.235.2.3 2007/04/29 17:27:36 martin Exp $	*/
+/*	$NetBSD: locore.s,v 1.235.2.4 2007/05/01 21:08:27 martin Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -6654,8 +6654,8 @@ ENTRY(cpu_switchto)
 
 	LDPTR	[%i0 + L_ADDR], %l5
 
-	STPTR	%i7, [%l5 + PCB_PC]
-	STPTR	%i6, [%l5 + PCB_SP]
+	stx	%i7, [%l5 + PCB_PC]
+	stx	%i6, [%l5 + PCB_SP]
 	sth	%o1, [%l5 + PCB_PSTATE]
 
 
@@ -6683,8 +6683,8 @@ ENTRY(cpu_switchto)
 	STPTR	%i1, [%l7 + %lo(CURLWP)]	! curlwp = l;
 	STPTR	%l1, [%l6 + %lo(CPCB)]		! cpcb = newpcb;
 
-	LDPTR	[%l1 + PCB_SP], %i6
-	LDPTR	[%l1 + PCB_PC], %i7
+	ldx	[%l1 + PCB_SP], %i6
+	ldx	[%l1 + PCB_PC], %i7
 
 	wrpr	%g0, 0, %otherwin	! These two insns should be redundant
 	wrpr	%g0, 0, %canrestore
