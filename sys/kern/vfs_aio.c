@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_aio.c,v 1.1 2007/04/30 14:44:30 rmind Exp $	*/
+/*	$NetBSD: vfs_aio.c,v 1.2 2007/05/01 01:01:36 rmind Exp $	*/
 
 /*
  * Copyright (c) 2007, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_aio.c,v 1.1 2007/04/30 14:44:30 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_aio.c,v 1.2 2007/05/01 01:01:36 rmind Exp $");
 
 #include <sys/param.h>
 
@@ -49,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_aio.c,v 1.1 2007/04/30 14:44:30 rmind Exp $");
 #include <sys/signal.h>
 #include <sys/signalvar.h>
 #include <sys/syscallargs.h>
+#include <sys/sysctl.h>
 #include <sys/systm.h>
 #include <sys/types.h>
 #include <sys/vnode.h>
@@ -938,6 +939,42 @@ err:
 	}
 
 	return error;
+}
+
+/*
+ * SysCtl
+ */
+
+SYSCTL_SETUP(sysctl_aio_setup, "sysctl aio setup")
+{
+
+	sysctl_createv(clog, 0, NULL, NULL,
+		CTLFLAG_PERMANENT,
+		CTLTYPE_NODE, "kern", NULL,
+		NULL, 0, NULL, 0,
+		CTL_KERN, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
+		CTLTYPE_INT, "posix_aio",
+		SYSCTL_DESCR("Version of IEEE Std 1003.1 and its "
+			     "Asynchronous I/O option to which the "
+			     "system attempts to conform"),
+		NULL, _POSIX_ASYNCHRONOUS_IO, NULL, 0,
+		CTL_KERN, CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
+		CTLTYPE_INT, "aio_listio_max",
+		SYSCTL_DESCR("Maximum number of asynchronous I/O "
+			     "operations in a single list I/O call"),
+		NULL, AIO_LISTIO_MAX, NULL, 0,
+		CTL_KERN, CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
+		CTLTYPE_INT, "aio_max",
+		SYSCTL_DESCR("Maximum number of asynchronous I/O "
+			     "operations"),
+		NULL, AIO_MAX, NULL, 0,
+		CTL_KERN, CTL_CREATE, CTL_EOL);
 }
 
 /*
