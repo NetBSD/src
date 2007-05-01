@@ -1,4 +1,4 @@
-/*	$NetBSD: platform.c,v 1.22 2006/09/07 20:13:05 garbled Exp $	*/
+/*	$NetBSD: platform.c,v 1.22.18.1 2007/05/01 08:55:19 garbled Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: platform.c,v 1.22 2006/09/07 20:13:05 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: platform.c,v 1.22.18.1 2007/05/01 08:55:19 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,8 +53,8 @@ __KERNEL_RCSID(0, "$NetBSD: platform.c,v 1.22 2006/09/07 20:13:05 garbled Exp $"
 
 #include <machine/pcipnp.h>
 
-volatile unsigned char *prep_pci_baseaddr = (unsigned char *)0x80000cf8;
-volatile unsigned char *prep_pci_basedata = (unsigned char *)0x80000cfc;
+u_int32_t prep_pci_baseaddr = 0x80000cf8;
+u_int32_t prep_pci_basedata = 0x80000cfc;
 
 struct pciroutinginfo *pciroutinginfo;
 extern struct prep_pci_chipset *prep_pct;
@@ -207,8 +207,8 @@ pci_chipset_tag_type(void)
 		else {
 			size = pnp_pci_configbase(p, &addr, &data);
 			if (addr != 0 && data != 0) {
-				prep_pci_baseaddr = (unsigned char *)addr;
-				prep_pci_basedata = (unsigned char *)data;
+				prep_pci_baseaddr = addr;
+				prep_pci_basedata = data;
 				break;
 			}
 		}
@@ -283,7 +283,7 @@ create_intr_map(void *v, prop_dictionary_t dict)
  * device was FOUND.
  */
 void
-setup_pciintr_map(struct prep_pci_chipset_businfo *pbi, int bus, int device,
+setup_pciintr_map(struct genppc_pci_chipset_businfo *pbi, int bus, int device,
 	int func)
 {
 	int devfunc, nbus, size, i, found = 0, nrofpcidevs = 0;

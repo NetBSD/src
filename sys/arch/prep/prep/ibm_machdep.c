@@ -1,4 +1,4 @@
-/*	$NetBSD: ibm_machdep.c,v 1.13 2006/06/09 01:19:11 garbled Exp $	*/
+/*	$NetBSD: ibm_machdep.c,v 1.13.24.1 2007/05/01 08:55:18 garbled Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -42,14 +42,14 @@
 #include <machine/intr.h>
 #include <machine/platform.h>
 
-extern struct prep_pci_chipset *prep_pct;
+extern struct genppc_pci_chipset *prep_pct;
 
 void pci_intr_fixup_ibm_6015(void);
 
 void
 pci_intr_fixup_ibm_6015(void)
 {
-	struct prep_pci_chipset_businfo *pbi;
+	struct genppc_pci_chipset_businfo *pbi;
 	prop_dictionary_t dict, sub;
 	prop_number_t intr_num;
 	int i, j;

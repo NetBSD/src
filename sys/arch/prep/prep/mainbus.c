@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.26 2006/10/27 19:52:51 garbled Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.26.16.1 2007/05/01 08:55:19 garbled Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.26 2006/10/27 19:52:51 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.26.16.1 2007/05/01 08:55:19 garbled Exp $");
 
 #include "opt_pci.h"
 #include "opt_residual.h"
@@ -76,7 +76,7 @@ union mainbus_attach_args {
 int mainbus_found = 0;
 struct prep_isa_chipset prep_isa_chipset;
 struct prep_isa_chipset *prep_ict;
-struct prep_pci_chipset *prep_pct;
+struct genppc_pci_chipset *prep_pct;
 
 
 /*
@@ -100,7 +100,7 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 	union mainbus_attach_args mba;
 	struct confargs ca;
 #if NPCI > 0
-	struct prep_pci_chipset_businfo *pbi;
+	struct genppc_pci_chipset_businfo *pbi;
 #ifdef PCI_NETBSD_CONFIGURE
 	struct extent *ioext, *memext;
 #endif
@@ -125,11 +125,11 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 	 * XXX that's not currently possible.
 	 */
 #if NPCI > 0
-	prep_pct = malloc(sizeof(struct prep_pci_chipset), M_DEVBUF, M_NOWAIT);
+	prep_pct = malloc(sizeof(struct genppc_pci_chipset), M_DEVBUF, M_NOWAIT);
 	KASSERT(prep_pct != NULL);
 	prep_pci_get_chipset_tag(prep_pct);
 
-	pbi = malloc(sizeof(struct prep_pci_chipset_businfo),
+	pbi = malloc(sizeof(struct genppc_pci_chipset_businfo),
 	    M_DEVBUF, M_NOWAIT);
 	KASSERT(pbi != NULL);
 	pbi->pbi_properties = prop_dictionary_create();
