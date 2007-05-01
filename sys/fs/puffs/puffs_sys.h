@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_sys.h,v 1.32 2007/04/16 13:03:26 pooka Exp $	*/
+/*	$NetBSD: puffs_sys.h,v 1.33 2007/05/01 12:18:40 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -125,11 +125,9 @@ struct puffs_mount {
 #define pmp_vnopmask pmp_args.pa_vnopmask
 
 	struct puffs_wq			pmp_req_touser;
+	int				pmp_req_touser_count;
 	kcondvar_t			pmp_req_waiter_cv;
 	size_t				pmp_req_maxsize;
-
-	kcondvar_t			pmp_req_waitersink_cv;
-	size_t				pmp_req_waiters;
 
 	struct puffs_wq			pmp_req_replywait;
 	TAILQ_HEAD(, puffs_sizepark)	pmp_req_sizepark;
@@ -142,12 +140,14 @@ struct puffs_mount {
 	void				*pmp_rootcookie;
 	struct selinfo			*pmp_sel;	/* in puffs_instance */
 
-	uint8_t				pmp_status;
+	unsigned int			pmp_refcount;
+	kcondvar_t			pmp_refcount_cv;
 
-	uint8_t				pmp_unmounting;
-	uint8_t				pmp_suspend;
 	kcondvar_t			pmp_unmounting_cv;
-	kcondvar_t			pmp_suspend_cv;
+	uint8_t				pmp_unmounting;
+
+	uint8_t				pmp_status;
+	uint8_t				pmp_suspend;
 
 	uint64_t			pmp_nextreq;
 };
@@ -221,6 +221,9 @@ void	puffs_credcvt(struct puffs_cred *, kauth_cred_t);
 pid_t	puffs_lwp2pid(struct lwp *);
 
 void	puffs_parkdone_asyncbioread(struct puffs_req *, void *);
+
+void	puffs_mp_reference(struct puffs_mount *);
+void	puffs_mp_release(struct puffs_mount *);
 
 void	puffs_updatenode(struct vnode *, int);
 #define PUFFS_UPDATEATIME	0x01
