@@ -1,4 +1,4 @@
-/* $NetBSD: mfi.c,v 1.4 2007/05/01 17:18:55 bouyer Exp $ */
+/* $NetBSD: mfi.c,v 1.5 2007/05/01 19:39:22 dogcow Exp $ */
 /* $OpenBSD: mfi.c,v 1.66 2006/11/28 23:59:45 dlg Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.4 2007/05/01 17:18:55 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.5 2007/05/01 19:39:22 dogcow Exp $");
 
 #include "bio.h"
 
@@ -1917,7 +1917,7 @@ mfi_sensor_gtredata(struct sysmon_envsys *sme, struct envsys_tre_data *tred)
 	struct bioc_vol		bv;
 	int s;
 
-	if (tred->sensor >= sc->sc_ld_cnt || tred->sensor < 0)
+	if (tred->sensor >= sc->sc_ld_cnt)
 		return EINVAL;
 
 	bzero(&bv, sizeof(bv));
