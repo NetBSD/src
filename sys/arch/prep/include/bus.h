@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.12 2006/02/23 19:44:02 garbled Exp $	*/
+/*	$NetBSD: bus.h,v 1.12.32.1 2007/05/01 19:18:59 garbled Exp $	*/
 /*	$OpenBSD: bus.h,v 1.1 1997/10/13 10:53:42 pefo Exp $	*/
 
 /*-
@@ -119,10 +119,10 @@
 
 #ifdef _KERNEL
 extern struct powerpc_bus_space prep_io_space_tag;
-extern struct powerpc_bus_space prep_isa_io_space_tag;
+extern struct powerpc_bus_space genppc_isa_io_space_tag;
 extern struct powerpc_bus_space prep_eisa_io_space_tag;
 extern struct powerpc_bus_space prep_mem_space_tag;
-extern struct powerpc_bus_space prep_isa_mem_space_tag;
+extern struct powerpc_bus_space genppc_isa_mem_space_tag;
 extern struct powerpc_bus_space prep_eisa_mem_space_tag;
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pnpbus.c,v 1.6 2006/10/27 19:52:51 garbled Exp $	*/
+/*	$NetBSD: pnpbus.c,v 1.6.16.1 2007/05/01 19:18:59 garbled Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pnpbus.c,v 1.6 2006/10/27 19:52:51 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pnpbus.c,v 1.6.16.1 2007/05/01 19:18:59 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -588,8 +588,8 @@ pnpbus_io_map(struct pnpresources *r, int idx, bus_space_tag_t *tagp,
 	while (idx--)
 		io = SIMPLEQ_NEXT(io, next);
 
-	*tagp = &prep_isa_io_space_tag;
-	return (bus_space_map(&prep_isa_io_space_tag, io->minbase, io->len,
+	*tagp = &genppc_isa_io_space_tag;
+	return (bus_space_map(&genppc_isa_io_space_tag, io->minbase, io->len,
 	    0, hdlp));
 }
 
@@ -641,8 +641,8 @@ pnpbus_iomem_map(struct pnpresources *r, int idx, bus_space_tag_t *tagp,
 	while (idx--)
 		mem = SIMPLEQ_NEXT(mem, next);
 
-	*tagp = &prep_isa_mem_space_tag;
-	return (bus_space_map(&prep_isa_mem_space_tag, mem->minbase, mem->len,
+	*tagp = &genppc_isa_mem_space_tag;
+	return (bus_space_map(&genppc_isa_mem_space_tag, mem->minbase, mem->len,
 	    0, hdlp));
 }
 
