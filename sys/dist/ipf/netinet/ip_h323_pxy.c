@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_h323_pxy.c,v 1.1.1.3 2007/04/14 20:17:36 martin Exp $	*/
+/*	$NetBSD: ip_h323_pxy.c,v 1.1.1.4 2007/05/01 19:02:24 martti Exp $	*/
 
 /*
  * Copyright 2001, QNX Software Systems Ltd. All Rights Reserved
@@ -254,7 +254,7 @@ nat_t *nat;
 		nat_t     *nat2;
 
 /*		port = htons(port); */
-		nat2 = nat_outlookup(fin->fin_ifp, IPN_UDP, IPPROTO_UDP,
+		nat2 = nat_outlookup(fin, IPN_UDP, IPPROTO_UDP,
 				    ip->ip_src, ip->ip_dst);
 		if (nat2 == NULL) {
 			struct ip newip;

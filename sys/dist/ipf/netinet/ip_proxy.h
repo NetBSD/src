@@ -1,11 +1,11 @@
-/*	$NetBSD: ip_proxy.h,v 1.1.1.4 2007/04/14 20:17:37 martin Exp $	*/
+/*	$NetBSD: ip_proxy.h,v 1.1.1.5 2007/05/01 19:02:40 martti Exp $	*/
 
 /*
  * Copyright (C) 1997-2001 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: ip_proxy.h,v 2.31.2.4 2006/07/14 06:12:17 darrenr Exp
+ * Id: ip_proxy.h,v 2.31.2.5 2007/04/16 21:06:52 darrenr Exp
  */
 
 #ifndef	__IP_PROXY_H__
@@ -442,6 +442,7 @@ extern	ap_session_t	*ap_sess_tab[AP_SESS_SIZE];
 extern	ap_session_t	*ap_sess_list;
 extern	aproxy_t	ap_proxies[];
 extern	int		ippr_ftp_pasvonly;
+extern	int		ipf_proxy_debug;
 
 extern	int	appr_add __P((aproxy_t *));
 extern	int	appr_ctl __P((ap_ctl_t *));

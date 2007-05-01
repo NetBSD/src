@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_solaris.c,v 1.1.1.6 2007/04/14 20:17:22 martin Exp $	*/
+/*	$NetBSD: ip_fil_solaris.c,v 1.1.1.7 2007/05/01 19:00:49 martti Exp $	*/
 
 /*
  * Copyright (C) 1993-2001, 2003 by Darren Reed.
@@ -7,7 +7,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "%W% %G% (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_fil_solaris.c,v 2.62.2.33 2007/02/21 07:20:26 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_fil_solaris.c,v 2.62.2.37 2007/04/16 21:05:50 darrenr Exp";
 #endif
 
 #include <sys/types.h>
@@ -690,6 +690,8 @@ struct in_addr *inp, *inpmask;
 		return -1;
 
 	qif = qifptr;
+	if (qif->qf_ill == NULL)
+		return -1;
 
 #ifdef	USE_INET6
 	if (v == 6) {
@@ -857,7 +859,11 @@ fr_info_t *fin;
 
 #if SOLARIS2 >= 6
 	dir = ire_route_lookup(fin->fin_saddr, 0xffffffff, 0, 0, NULL,
-			       NULL, NULL, MATCH_IRE_DSTONLY|MATCH_IRE_DEFAULT|
+			       NULL, NULL,
+# ifdef IP_ULP_OUT_LABELED
+			       NULL,
+# endif
+			       MATCH_IRE_DSTONLY|MATCH_IRE_DEFAULT|
 			       MATCH_IRE_RECURSIVE);
 #else
 	dir = ire_lookup(fin->fin_saddr);
@@ -883,25 +889,24 @@ void fr_slowtimer __P((void *ptr))
 
 	WRITE_ENTER(&ipf_global);
 	if (fr_running <= 0) {
-		if (fr_running == -1)
+		if (fr_running >= -1) {
 			fr_timer_id = timeout(fr_slowtimer, NULL,
 					      drv_usectohz(500000));
-		else
+		} else {
 			fr_timer_id = NULL;
+		}
 		RWLOCK_EXIT(&ipf_global);
 		return;
 	}
 	MUTEX_DOWNGRADE(&ipf_global);
 
+	ipf_expiretokens();
 	fr_fragexpire();
 	fr_timeoutstate();
 	fr_natexpire();
 	fr_authexpire();
 	fr_ticks++;
-	if (fr_running == -1 || fr_running == 1)
-		fr_timer_id = timeout(fr_slowtimer, NULL, drv_usectohz(500000));
-	else
-		fr_timer_id = NULL;
+	fr_timer_id = timeout(fr_slowtimer, NULL, drv_usectohz(500000));
 	RWLOCK_EXIT(&ipf_global);
 }
 

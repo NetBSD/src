@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_ftp_pxy.c,v 1.1.1.6 2007/04/14 20:17:36 martin Exp $	*/
+/*	$NetBSD: ip_ftp_pxy.c,v 1.1.1.7 2007/05/01 19:02:24 martti Exp $	*/
 
 /*
  * Copyright (C) 1997-2003 by Darren Reed
@@ -8,7 +8,7 @@
  * Simple FTP transparent proxy for in-kernel use.  For use with the NAT
  * code.
  *
- * Id: ip_ftp_pxy.c,v 2.88.2.20 2006/07/14 06:12:12 darrenr Exp
+ * Id: ip_ftp_pxy.c,v 2.88.2.21 2007/04/25 08:09:26 darrenr Exp
  */
 
 #define	IPF_FTP_PROXY
@@ -1143,8 +1143,8 @@ int rv;
 				f->ftps_seq[1] = thseq + 1 - seqoff;
 			} else {
 				if (ippr_ftp_debug > 1) {
-					printf("FIN: thseq %x seqoff %d ftps_seq %x\n",
-					       thseq, seqoff, f->ftps_seq[0]);
+					printf("FIN: thseq %x seqoff %d ftps_seq %x %x\n",
+					       thseq, seqoff, f->ftps_seq[0], f->ftps_seq[1]);
 				}
 				return APR_ERR(1);
 			}

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_state.c,v 1.1.1.19 2007/04/14 20:17:24 martin Exp $	*/
+/*	$NetBSD: ip_state.c,v 1.1.1.20 2007/05/01 19:01:01 martti Exp $	*/
 
 /*
  * Copyright (C) 1995-2003 by Darren Reed.
@@ -113,7 +113,7 @@ struct file;
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)ip_state.c	1.8 6/5/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_state.c,v 2.186.2.52 2007/02/02 22:50:32 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_state.c,v 2.186.2.61 2007/04/29 06:43:46 darrenr Exp";
 #endif
 
 static	ipstate_t **ips_table = NULL;
@@ -151,9 +151,10 @@ int fr_stgetent __P((caddr_t));
 
 u_long	fr_tcpidletimeout = FIVE_DAYS,
 	fr_tcpclosewait = IPF_TTLVAL(2 * TCP_MSL),
-	fr_tcplastack = IPF_TTLVAL(2 * TCP_MSL),
+	fr_tcplastack = IPF_TTLVAL(30),
 	fr_tcptimeout = IPF_TTLVAL(2 * TCP_MSL),
-	fr_tcpclosed = IPF_TTLVAL(60),
+	fr_tcptimewait = IPF_TTLVAL(2 * TCP_MSL),
+	fr_tcpclosed = IPF_TTLVAL(30),
 	fr_tcphalfclosed = IPF_TTLVAL(2 * 3600),	/* 2 hours */
 	fr_udptimeout = IPF_TTLVAL(120),
 	fr_udpacktimeout = IPF_TTLVAL(12),
@@ -173,6 +174,7 @@ ipftq_t	ips_tqtqb[IPF_TCP_NSTATES],
 	ips_iptq,
 	ips_icmptq,
 	ips_icmpacktq,
+	ips_deletetq,
 	*ips_utqe = NULL;
 #ifdef	IPFILTER_LOG
 int	ipstate_logging = 1;
@@ -278,7 +280,13 @@ int fr_stateinit()
 	ips_iptq.ifq_head = NULL;
 	ips_iptq.ifq_tail = &ips_iptq.ifq_head;
 	MUTEX_INIT(&ips_iptq.ifq_lock, "ipftq ip tab");
-	ips_iptq.ifq_next = NULL;
+	ips_iptq.ifq_next = &ips_deletetq;
+	ips_deletetq.ifq_ttl = (u_long)1;
+	ips_deletetq.ifq_ref = 1;
+	ips_deletetq.ifq_head = NULL;
+	ips_deletetq.ifq_tail = &ips_deletetq.ifq_head;
+	MUTEX_INIT(&ips_deletetq.ifq_lock, "state delete queue");
+	ips_deletetq.ifq_next = NULL;
 
 	RWLOCK_INIT(&ipf_state, "ipf IP state rwlock");
 	MUTEX_INIT(&ipf_stinsert, "ipf state insert mutex");
@@ -329,6 +337,7 @@ void fr_stateunload()
 		MUTEX_DESTROY(&ips_udpacktq.ifq_lock);
 		MUTEX_DESTROY(&ips_icmpacktq.ifq_lock);
 		MUTEX_DESTROY(&ips_iptq.ifq_lock);
+		MUTEX_DESTROY(&ips_deletetq.ifq_lock);
 	}
 
 	if (ips_table != NULL) {
@@ -1161,6 +1170,22 @@ u_int flags;
 
 		is->is_tag = fr->fr_logtag;
 
+		/*
+		 * The name '-' is special for network interfaces and causes
+		 * a NULL name to be present, always, allowing packets to
+		 * match it, regardless of their interface.
+		 */
+		if ((fin->fin_ifp == NULL) ||
+		    (fr->fr_ifnames[out << 1][0] == '-' &&
+		     fr->fr_ifnames[out << 1][1] == '\0')) {
+			is->is_ifp[out << 1] = fr->fr_ifas[0];
+			strncpy(is->is_ifname[out << 1], fr->fr_ifnames[0],
+				sizeof(fr->fr_ifnames[0]));
+		} else {
+			is->is_ifp[out << 1] = fin->fin_ifp;
+			COPYIFNAME(fin->fin_ifp, is->is_ifname[out << 1]);
+		}
+
 		is->is_ifp[(out << 1) + 1] = fr->fr_ifas[1];
 		strncpy(is->is_ifname[(out << 1) + 1], fr->fr_ifnames[1],
 			sizeof(fr->fr_ifnames[1]));
@@ -1175,11 +1200,11 @@ u_int flags;
 	} else {
 		pass = fr_flags;
 		is->is_tag = FR_NOLOGTAG;
-	}
 
-	is->is_ifp[out << 1] = fin->fin_ifp;
-	if (fin->fin_ifp != NULL) {
-		COPYIFNAME(fin->fin_ifp, is->is_ifname[out << 1]);
+		if (fin->fin_ifp != NULL) {
+			is->is_ifp[out << 1] = fin->fin_ifp;
+			COPYIFNAME(fin->fin_ifp, is->is_ifname[out << 1]);
+		}
 	}
 
 	/*
@@ -1396,6 +1421,22 @@ ipstate_t *is;
 	tdata = &is->is_tcp.ts_data[source];
 
 	MUTEX_ENTER(&is->is_lock);
+
+	/*
+	 * If a SYN packet is received for a connection that is on the way out
+	 * but hasn't yet departed then advance this session along the way.
+	 */
+	if ((tcp->th_flags & TH_OPENING) == TH_SYN) {
+		if ((is->is_state[0] > IPF_TCPS_ESTABLISHED) &&
+		    (is->is_state[1] > IPF_TCPS_ESTABLISHED)) {
+			is->is_state[!source] = IPF_TCPS_CLOSED;
+			fr_movequeue(&is->is_sti, is->is_sti.tqe_ifq,
+				     &ips_deletetq);
+			MUTEX_ENTER(&is->is_lock);
+			return 0;
+		}
+	}
+
 	if (fr_tcpinwindow(fin, fdata, tdata, tcp, is->is_flags)) {
 #ifdef	IPFILTER_SCAN
 		if (is->is_flags & (IS_SC_CLIENT|IS_SC_SERVER)) {
@@ -1446,8 +1487,9 @@ ipstate_t *is;
 
 		}
 		ret = 1;
-	} else
+	} else {
 		fin->fin_flx |= FI_OOW;
+	}
 	MUTEX_EXIT(&is->is_lock);
 	return ret;
 }
@@ -2354,6 +2396,13 @@ icmp6again:
 		hvm = DOUBLE_HASH(hv);
 		for (isp = &ips_table[hvm]; ((is = *isp) != NULL); ) {
 			isp = &is->is_hnext;
+			/*
+			 * If a connection is about to be deleted, no packets
+			 * are allowed to match it.
+			 */
+			if (is->is_sti.tqe_ifq == &ips_deletetq)
+				continue;
+
 			if ((is->is_p != pr) || (is->is_v != v))
 				continue;
 			is = fr_matchsrcdst(fin, is, &src, &dst, NULL, FI_CMP);
@@ -3015,47 +3064,75 @@ void fr_timeoutstate()
 static int fr_state_flush(which, proto)
 int which, proto;
 {
+	u_long interval, istart, iend;
 	ipftq_t *ifq, *ifqnext;
 	ipftqent_t *tqe, *tqn;
 	ipstate_t *is, **isp;
-	int delete, removed;
-	long try, maxtick;
-	u_long interval;
+	int removed;
 	SPL_INT(s);
 
 	removed = 0;
 
 	SPL_NET(s);
-	for (isp = &ips_list; ((is = *isp) != NULL); ) {
-		delete = 0;
 
-		if ((proto != 0) && (is->is_v != proto)) {
-			isp = &is->is_next;
-			continue;
-		}
-
-		switch (which)
-		{
-		case 0 :
-			delete = 1;
-			break;
-		case 1 :
-		case 2 :
-			if (is->is_p != IPPROTO_TCP)
-				break;
-			if ((is->is_state[0] != IPF_TCPS_ESTABLISHED) ||
-			    (is->is_state[1] != IPF_TCPS_ESTABLISHED))
-				delete = 1;
-			break;
-		}
-
-		if (delete) {
+	switch (which)
+	{
+	case 0 :
+		/*
+		 * Style 0 flush removes everything...
+		 */
+		for (isp = &ips_list; ((is = *isp) != NULL); ) {
+			if ((proto != 0) && (is->is_v != proto)) {
+				isp = &is->is_next;
+				continue;
+			}
 			if (fr_delstate(is, ISL_FLUSH) == 0)
 				removed++;
 			else
 				isp = &is->is_next;
-		} else
-			isp = &is->is_next;
+		}
+		break;
+
+	case 1 :
+		/*
+		 * Since we're only interested in things that are closing,
+		 * we can start with the appropriate timeout queue.
+		 */
+		for (ifq = ips_tqtqb + IPF_TCPS_CLOSE_WAIT; ifq != NULL;
+		     ifq = ifq->ifq_next) {
+
+			for (tqn = ifq->ifq_head; ((tqe = tqn) != NULL); ) {
+				tqn = tqe->tqe_next;
+				is = tqe->tqe_parent;
+				if (is->is_p != IPPROTO_TCP)
+					break;
+				if (fr_delstate(is, ISL_EXPIRE) == 0)
+					removed++;
+			}
+		}
+
+		/*
+		 * Also need to look through the user defined queues.
+		 */
+		for (ifq = ips_utqe; ifq != NULL; ifq = ifqnext) {
+			ifqnext = ifq->ifq_next;
+			for (tqn = ifq->ifq_head; ((tqe = tqn) != NULL); ) {
+				tqn = tqe->tqe_next;
+				is = tqe->tqe_parent;
+				if (is->is_p != IPPROTO_TCP)
+					continue;
+
+				if ((is->is_state[0] > IPF_TCPS_ESTABLISHED) &&
+				    (is->is_state[1] > IPF_TCPS_ESTABLISHED)) {
+					if (fr_delstate(is, ISL_EXPIRE) == 0)
+						removed++;
+				}
+			}
+		}
+		break;
+
+	default :
+		break;
 	}
 
 	if (which != 2) {
@@ -3074,67 +3151,65 @@ int which, proto;
 		goto force_flush_skipped;
 	ips_last_force_flush = fr_ticks;
 
-	if (fr_ticks > IPF_TTLVAL(43200))
+	if (fr_ticks > IPF_TTLVAL(43200 * 1.5)) {
+		istart = IPF_TTLVAL(86400 * 4);
 		interval = IPF_TTLVAL(43200);
-	else if (fr_ticks > IPF_TTLVAL(1800))
+	} else if (fr_ticks > IPF_TTLVAL(1800 * 1.5)) {
+		istart = IPF_TTLVAL(43200);
 		interval = IPF_TTLVAL(1800);
-	else if (fr_ticks > IPF_TTLVAL(30))
+	} else if (fr_ticks > IPF_TTLVAL(30 * 1.5)) {
+		istart = IPF_TTLVAL(1800);
 		interval = IPF_TTLVAL(30);
-	else
-		interval = IPF_TTLVAL(10);
-	try = fr_ticks - (fr_ticks - interval);
-	if (try < 0)
+	} else {
 		goto force_flush_skipped;
+	}
+	if (istart > fr_ticks) {
+		istart = (fr_ticks / interval) * interval;
+	}
+	iend = interval;
 
 	while (removed == 0) {
-		maxtick = fr_ticks - interval;
-		if (maxtick < 0)
-			break;
+		u_long try;
 
-		while (try < maxtick) {
-			for (ifq = ips_tqtqb; ifq != NULL;
-			     ifq = ifq->ifq_next) {
-				for (tqn = ifq->ifq_head;
-				     ((tqe = tqn) != NULL); ) {
-					if (tqe->tqe_die > try)
-						break;
-					tqn = tqe->tqe_next;
-					is = tqe->tqe_parent;
-					if (fr_delstate(is, ISL_EXPIRE) == 0)
-						removed++;
-				}
+		try = fr_ticks - istart; 
+
+		for (ifq = ips_tqtqb; ifq != NULL;
+		     ifq = ifq->ifq_next) {
+			for (tqn = ifq->ifq_head; ((tqe = tqn) != NULL); ) {
+				if (tqe->tqe_die > try)
+					break;
+				tqn = tqe->tqe_next;
+				is = tqe->tqe_parent;
+				if (fr_delstate(is, ISL_EXPIRE) == 0)
+					removed++;
 			}
-
-			for (ifq = ips_utqe; ifq != NULL; ifq = ifqnext) {
-				ifqnext = ifq->ifq_next;
-
-				for (tqn = ifq->ifq_head;
-				     ((tqe = tqn) != NULL); ) {
-					if (tqe->tqe_die > try)
-						break;
-					tqn = tqe->tqe_next;
-					is = tqe->tqe_parent;
-					if (fr_delstate(is, ISL_EXPIRE) == 0)
-						removed++;
-				}
-			}
-			if (try + interval > maxtick)
-				break;
-			try += interval;
 		}
 
-		if (removed == 0) {
+		for (ifq = ips_utqe; ifq != NULL; ifq = ifqnext) {
+			ifqnext = ifq->ifq_next;
+
+			for (tqn = ifq->ifq_head; ((tqe = tqn) != NULL); ) {
+				if (tqe->tqe_die > try)
+					break;
+				tqn = tqe->tqe_next;
+				is = tqe->tqe_parent;
+				if (fr_delstate(is, ISL_EXPIRE) == 0)
+					removed++;
+			}
+		}
+
+		istart -= interval;
+		if (istart == interval) {
 			if (interval == IPF_TTLVAL(43200)) {
 				interval = IPF_TTLVAL(1800);
 			} else if (interval == IPF_TTLVAL(1800)) {
 				interval = IPF_TTLVAL(30);
-			} else if (interval == IPF_TTLVAL(30)) {
-				interval = IPF_TTLVAL(10);
 			} else {
 				break;
 			}
 		}
 	}
+
 force_flush_skipped:
 	SPL_X(s);
 	return removed;
@@ -3170,6 +3245,25 @@ force_flush_skipped:
 /*    dir == 0 : a packet from source to dest                               */
 /*    dir == 1 : a packet from dest to source                               */
 /*                                                                          */
+/* A typical procession for a connection is as follows:                     */
+/*                                                                          */
+/* +--------------+-------------------+                                     */
+/* | Side '0'     | Side '1'          |                                     */
+/* +--------------+-------------------+                                     */
+/* | 0 -> 1 (SYN) |                   |                                     */
+/* |              | 0 -> 2 (SYN-ACK)  |                                     */
+/* | 1 -> 3 (ACK) |                   |                                     */
+/* |              | 2 -> 4 (ACK-PUSH) |                                     */
+/* | 3 -> 4 (ACK) |                   |                                     */
+/* |   ...        |   ...             |                                     */
+/* |              | 4 -> 6 (FIN-ACK)  |                                     */
+/* | 4 -> 5 (ACK) |                   |                                     */
+/* |              | 6 -> 6 (ACK-PUSH) |                                     */
+/* | 5 -> 5 (ACK) |                   |                                     */
+/* | 5 -> 8 (FIN) |                   |                                     */
+/* |              | 6 -> 10 (ACK)     |                                     */
+/* +--------------+-------------------+                                     */
+/*                                                                          */
 /* Locking: it is assumed that the parent of the tqe structure is locked.   */
 /* ------------------------------------------------------------------------ */
 int fr_tcp_age(tqe, fin, tqtab, flags)
@@ -3201,16 +3295,16 @@ int flags;
 
 		switch (nstate)
 		{
-		case IPF_TCPS_CLOSED: /* 0 */
+		case IPF_TCPS_LISTEN: /* 0 */
 			if ((tcpflags & TH_OPENING) == TH_OPENING) {
 				/*
 				 * 'dir' received an S and sends SA in
-				 * response, CLOSED -> SYN_RECEIVED
+				 * response, LISTEN -> SYN_RECEIVED
 				 */
 				nstate = IPF_TCPS_SYN_RECEIVED;
 				rval = 1;
 			} else if ((tcpflags & TH_OPENING) == TH_SYN) {
-				/* 'dir' sent S, CLOSED -> SYN_SENT */
+				/* 'dir' sent S, LISTEN -> SYN_SENT */
 				nstate = IPF_TCPS_SYN_SENT;
 				rval = 1;
 			}
@@ -3229,7 +3323,7 @@ int flags;
 				 */
 				switch (ostate)
 				{
-				case IPF_TCPS_CLOSED :
+				case IPF_TCPS_LISTEN :
 				case IPF_TCPS_SYN_RECEIVED :
 					nstate = IPF_TCPS_HALF_ESTAB;
 					rval = 1;
@@ -3250,11 +3344,7 @@ int flags;
 			 */
 			break;
 
-		case IPF_TCPS_LISTEN: /* 1 */
-			/* NOT USED */
-			break;
-
-		case IPF_TCPS_SYN_SENT: /* 2 */
+		case IPF_TCPS_SYN_SENT: /* 1 */
 			if ((tcpflags & ~(TH_ECN|TH_CWR)) == TH_SYN) {
 				/*
 				 * A retransmitted SYN packet.  We do not reset
@@ -3295,7 +3385,7 @@ int flags;
 			}
 			break;
 
-		case IPF_TCPS_SYN_RECEIVED: /* 3 */
+		case IPF_TCPS_SYN_RECEIVED: /* 2 */
 			if ((tcpflags & (TH_SYN|TH_FIN|TH_ACK)) == TH_ACK) {
 				/*
 				 * we see an A from 'dir' which was in
@@ -3324,7 +3414,7 @@ int flags;
 			}
 			break;
 
-		case IPF_TCPS_HALF_ESTAB: /* 4 */
+		case IPF_TCPS_HALF_ESTAB: /* 3 */
 			if (tcpflags & TH_FIN) {
 				nstate = IPF_TCPS_FIN_WAIT_1;
 				rval = 1;
@@ -3339,7 +3429,7 @@ int flags;
 				 */
 				switch (ostate)
 				{
-				case IPF_TCPS_CLOSED :
+				case IPF_TCPS_LISTEN :
 				case IPF_TCPS_SYN_SENT :
 				case IPF_TCPS_SYN_RECEIVED :
 					rval = 1;
@@ -3355,7 +3445,7 @@ int flags;
 			}
 			break;
 
-		case IPF_TCPS_ESTABLISHED: /* 5 */
+		case IPF_TCPS_ESTABLISHED: /* 4 */
 			rval = 1;
 			if (tcpflags & TH_FIN) {
 				/*
@@ -3363,7 +3453,11 @@ int flags;
 				 * this gives us a half-closed connection;
 				 * ESTABLISHED -> FIN_WAIT_1
 				 */
-				nstate = IPF_TCPS_FIN_WAIT_1;
+				if (ostate == IPF_TCPS_FIN_WAIT_1) {
+					nstate = IPF_TCPS_CLOSING;
+				} else {
+					nstate = IPF_TCPS_FIN_WAIT_1;
+				}
 			} else if (tcpflags & TH_ACK) {
 				/*
 				 * an ACK, should we exclude other flags here?
@@ -3388,7 +3482,7 @@ int flags;
 			}
 			break;
 
-		case IPF_TCPS_CLOSE_WAIT: /* 6 */
+		case IPF_TCPS_CLOSE_WAIT: /* 5 */
 			rval = 1;
 			if (tcpflags & TH_FIN) {
 				/*
@@ -3406,7 +3500,7 @@ int flags;
 			}
 			break;
 
-		case IPF_TCPS_FIN_WAIT_1: /* 7 */
+		case IPF_TCPS_FIN_WAIT_1: /* 6 */
 			rval = 1;
 			if ((tcpflags & TH_ACK) &&
 			    ostate > IPF_TCPS_CLOSE_WAIT) {
@@ -3434,11 +3528,13 @@ int flags;
 			}
 			break;
 
-		case IPF_TCPS_CLOSING: /* 8 */
-			/* NOT USED */
+		case IPF_TCPS_CLOSING: /* 7 */
+			if ((tcpflags & (TH_FIN|TH_ACK)) == TH_ACK) {
+				nstate = IPF_TCPS_TIME_WAIT;
+			}
 			break;
 
-		case IPF_TCPS_LAST_ACK: /* 9 */
+		case IPF_TCPS_LAST_ACK: /* 8 */
 			if (tcpflags & TH_ACK) {
 				if ((tcpflags & TH_PUSH) || dlen)
 					/*
@@ -3457,17 +3553,29 @@ int flags;
 			 */
 			break;
 
-		case IPF_TCPS_FIN_WAIT_2: /* 10 */
+		case IPF_TCPS_FIN_WAIT_2: /* 9 */
+			/* NOT USED */
+#if 0
 			rval = 1;
-			if ((tcpflags & TH_OPENING) == TH_OPENING)
+			if ((tcpflags & TH_OPENING) == TH_OPENING) {
 				nstate = IPF_TCPS_SYN_RECEIVED;
-			else if (tcpflags & TH_SYN)
+			} else if (tcpflags & TH_SYN) {
 				nstate = IPF_TCPS_SYN_SENT;
+			} else if ((tcpflags & (TH_FIN|TH_ACK)) != 0) {
+				nstate = IPF_TCPS_TIME_WAIT;
+			}
+#endif
 			break;
 
-		case IPF_TCPS_TIME_WAIT: /* 11 */
+		case IPF_TCPS_TIME_WAIT: /* 10 */
 			/* we're in 2MSL timeout now */
+			if (ostate == IPF_TCPS_LAST_ACK) {
+				nstate = IPF_TCPS_CLOSED;
+			}
 			rval = 1;
+			break;
+
+		case IPF_TCPS_CLOSED: /* 11 */
 			break;
 
 		default :
@@ -3787,7 +3895,7 @@ ipftq_t *tqp;
 	tqp[IPF_TCPS_CLOSING].ifq_ttl = fr_tcptimeout;
 	tqp[IPF_TCPS_LAST_ACK].ifq_ttl = fr_tcplastack;
 	tqp[IPF_TCPS_FIN_WAIT_2].ifq_ttl = fr_tcpclosewait;
-	tqp[IPF_TCPS_TIME_WAIT].ifq_ttl = fr_tcptimeout;
+	tqp[IPF_TCPS_TIME_WAIT].ifq_ttl = fr_tcptimewait;
 	tqp[IPF_TCPS_HALF_ESTAB].ifq_ttl = fr_tcptimeout;
 }
 
