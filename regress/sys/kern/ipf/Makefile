@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2007/05/01 19:26:45 martti Exp $
+#	$NetBSD: Makefile,v 1.15 2007/05/02 14:30:08 martti Exp $
 #
 # (C)opyright 1993-1996 by Darren Reed.
 #
@@ -82,7 +82,16 @@ p1 p2 p3 p5:
 	@${HOST_SH} ${.CURDIR}/ptest ${.CURDIR} \
 		`${AWK} "/^$@ / { print; } " ${.CURDIR}/test.format`
 
-ip1 ip2:
+ip1:
+	@${HOST_SH} ${.CURDIR}/iptest ${.CURDIR} \
+		`${AWK} "/^$@ / { print; } " ${.CURDIR}/test.format`
+
+ip2:
+	@if [ -d ${MAKEOBJDIRPREFIX}${.CURDIR} ]; then			\
+		mkdir -p ${MAKEOBJDIRPREFIX}${.CURDIR}/input;		\
+		cp -f ${.CURDIR}/input/ip2.data				\
+			${MAKEOBJDIRPREFIX}${.CURDIR}/input/ip2.data;	\
+	fi
 	@${HOST_SH} ${.CURDIR}/iptest ${.CURDIR} \
 		`${AWK} "/^$@ / { print; } " ${.CURDIR}/test.format`
 
