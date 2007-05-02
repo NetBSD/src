@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.153 2007/05/02 14:48:47 yamt Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.154 2007/05/02 16:19:55 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.153 2007/05/02 14:48:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.154 2007/05/02 16:19:55 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -1805,10 +1805,7 @@ nfs_rcvlock(struct nfsmount *nmp, struct nfsreq *rep)
 
 	KASSERT(nmp == rep->r_nmp);
 
-	if (*flagp & NFSMNT_INT)
-		catch = true;
-	else
-		catch = false;
+	catch = (nmp->nm_flag & NFSMNT_INT) != 0;
 	mutex_enter(&nmp->nm_lock);
 	while (/* CONSTCOND */ true) {
 		if (*flagp & NFSMNT_DISMNT) {
