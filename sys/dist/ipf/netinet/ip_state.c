@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_state.c,v 1.22 2007/05/02 02:59:54 dogcow Exp $	*/
+/*	$NetBSD: ip_state.c,v 1.23 2007/05/02 18:47:27 dogcow Exp $	*/
 
 /*
  * Copyright (C) 1995-2003 by Darren Reed.
@@ -114,7 +114,7 @@ struct file;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_state.c,v 1.22 2007/05/02 02:59:54 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_state.c,v 1.23 2007/05/02 18:47:27 dogcow Exp $");
 #else
 static const char sccsid[] = "@(#)ip_state.c	1.8 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_state.c,v 2.186.2.61 2007/04/29 06:43:46 darrenr Exp";
@@ -3135,13 +3135,13 @@ int which, proto;
 		goto force_flush_skipped;
 	ips_last_force_flush = fr_ticks;
 
-	if (fr_ticks > IPF_TTLVAL(64800)) {
+	if (fr_ticks > IPF_TTLVAL(43200 * 15 / 10)) {
 		istart = IPF_TTLVAL(86400 * 4);
 		interval = IPF_TTLVAL(43200);
-	} else if (fr_ticks > IPF_TTLVAL(2700)) {
+	} else if (fr_ticks > IPF_TTLVAL(1800 * 15 / 10)) {
 		istart = IPF_TTLVAL(43200);
 		interval = IPF_TTLVAL(1800);
-	} else if (fr_ticks > IPF_TTLVAL(45)) {
+	} else if (fr_ticks > IPF_TTLVAL(30 * 15 / 10)) {
 		istart = IPF_TTLVAL(1800);
 		interval = IPF_TTLVAL(30);
 	} else {

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.c,v 1.26 2007/05/02 02:59:54 dogcow Exp $	*/
+/*	$NetBSD: ip_nat.c,v 1.27 2007/05/02 18:47:27 dogcow Exp $	*/
 
 /*
  * Copyright (C) 1995-2003 by Darren Reed.
@@ -5245,13 +5245,13 @@ int which;
 		goto nat_force_flush_skipped;
 	nat_last_force_flush = fr_ticks;
 
-	if (fr_ticks > IPF_TTLVAL(64800)) {
+	if (fr_ticks > IPF_TTLVAL(43200 * 15 / 10)) {
 		istart = IPF_TTLVAL(86400 * 4);
 		interval = IPF_TTLVAL(43200);
-	} else if (fr_ticks > IPF_TTLVAL(2700)) {
+	} else if (fr_ticks > IPF_TTLVAL(1800 * 15 / 10)) {
 		istart = IPF_TTLVAL(43200);
 		interval = IPF_TTLVAL(1800);
-	} else if (fr_ticks > IPF_TTLVAL(45)) {
+	} else if (fr_ticks > IPF_TTLVAL(30 * 15 / 10)) {
 		istart = IPF_TTLVAL(1800);
 		interval = IPF_TTLVAL(30);
 	} else {
