@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.147 2007/02/09 21:55:06 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.147.14.1 2007/05/02 03:02:34 macallan Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.147 2007/02/09 21:55:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.147.14.1 2007/05/02 03:02:34 macallan Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -97,6 +97,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.147 2007/02/09 21:55:06 ad Exp $");
 
 #include <dev/usb/ukbdvar.h>
 
+#include <arch/powerpc/pic/picvar.h>
 #include <macppc/dev/adbvar.h>
 #include <macppc/dev/pmuvar.h>
 #include <macppc/dev/cudavar.h>
@@ -204,7 +205,7 @@ initppc(startkernel, endkernel, args)
 #endif
 	consinit();
 
-	oea_init(ext_intr);
+	oea_init(pic_ext_intr);
 
 	ofmaplen = save_ofmap(NULL, 0);
 
