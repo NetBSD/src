@@ -1,4 +1,4 @@
-#	$NetBSD: files.macppc,v 1.84 2007/04/12 22:28:05 dogcow Exp $
+#	$NetBSD: files.macppc,v 1.84.2.1 2007/05/02 03:02:33 macallan Exp $
 #
 # macppc-specific configuration info
 
@@ -8,15 +8,20 @@ maxpartitions 16
 maxusers 2 8 64
 
 include "arch/powerpc/conf/files.ofw"
+include "arch/powerpc/pic/files.pic"
 
 file arch/macppc/macppc/autoconf.c
 file arch/macppc/macppc/bus_dma.c
 file arch/macppc/macppc/clock.c
 file arch/macppc/macppc/disksubr.c		disk
-file arch/macppc/macppc/extintr.c
+#file arch/macppc/macppc/extintr.c
+file arch/macppc/macppc/interrupts.c
+file arch/macppc/macppc/pic_ohare.c
 file arch/macppc/macppc/machdep.c
 file arch/macppc/dev/ofb_cons.c
 file arch/macppc/dev/dbdma.c
+
+defflag opt_interrupt.h PIC_OHARE PIC_GRANDCENTRAL PIC_HEATHROW PIC_OPENPIC
 
 file arch/powerpc/powerpc/procfs_machdep.c	procfs
 file arch/powerpc/powerpc/softintr.c
