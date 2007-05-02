@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_flow.c,v 1.45 2007/04/05 18:11:47 liamjfoy Exp $	*/
+/*	$NetBSD: ip_flow.c,v 1.46 2007/05/02 20:40:24 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.45 2007/04/05 18:11:47 liamjfoy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.46 2007/05/02 20:40:24 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -437,7 +437,7 @@ ipflow_create(const struct route *ro, struct mbuf *m)
 	/*
 	 * Fill in the updated information.
 	 */
-	rtcache_copy(&ipf->ipf_ro, ro, sizeof(ipf->ipf_ro));
+	rtcache_copy(&ipf->ipf_ro, ro);
 	ipf->ipf_dst = ip->ip_dst;
 	ipf->ipf_src = ip->ip_src;
 	ipf->ipf_tos = ip->ip_tos;

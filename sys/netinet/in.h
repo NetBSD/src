@@ -1,4 +1,4 @@
-/*	$NetBSD: in.h,v 1.78 2007/02/17 22:34:11 dyoung Exp $	*/
+/*	$NetBSD: in.h,v 1.79 2007/05/02 20:40:24 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -552,7 +552,41 @@ void	in_socktrim(struct sockaddr_in *);
 #define	satosin(sa)	((struct sockaddr_in *)(sa))
 #define	satocsin(sa)	((const struct sockaddr_in *)(sa))
 #define	sintosa(sin)	((struct sockaddr *)(sin))
+#define	sintocsa(sin)	((const struct sockaddr *)(sin))
 #define	ifatoia(ifa)	((struct in_ifaddr *)(ifa))
+
+int sockaddr_in_cmp(const struct sockaddr *, const struct sockaddr *);
+
+static inline void
+sockaddr_in_init1(struct sockaddr_in *sin, const struct in_addr *addr,
+    in_port_t port)
+{
+	sin->sin_port = port;
+	sin->sin_addr = *addr;
+	memset(sin->sin_zero, 0, sizeof(sin->sin_zero));
+}
+
+static inline void
+sockaddr_in_init(struct sockaddr_in *sin, const struct in_addr *addr,
+    in_port_t port)
+{
+	sin->sin_family = AF_INET;
+	sin->sin_len = sizeof(*sin);
+	sockaddr_in_init1(sin, addr, port);
+}
+
+static inline struct sockaddr *
+sockaddr_in_alloc(const struct in_addr *addr, in_port_t port, int flags)
+{
+	struct sockaddr *sa;
+
+	if ((sa = sockaddr_alloc(AF_INET, flags)) == NULL)
+		return NULL;
+
+	sockaddr_in_init1(satosin(sa), addr, port);
+
+	return sa;
+}
 #endif /* _KERNEL */
 
 #endif /* !_NETINET_IN_H_ */

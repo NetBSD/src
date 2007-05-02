@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.113 2007/03/17 06:32:46 dyoung Exp $	*/
+/*	$NetBSD: nd6.c,v 1.114 2007/05/02 20:40:27 dyoung Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.113 2007/03/17 06:32:46 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.114 2007/05/02 20:40:27 dyoung Exp $");
 
 #include "opt_ipsec.h"
 
@@ -1864,7 +1864,7 @@ nd6_slowtimo(void *ignored_arg)
 #define senderr(e) { error = (e); goto bad;}
 int
 nd6_output(struct ifnet *ifp, struct ifnet *origifp, struct mbuf *m0,
-    struct sockaddr_in6 *dst, struct rtentry *rt0)
+    const struct sockaddr_in6 *dst, struct rtentry *rt0)
 {
 	struct mbuf *m = m0;
 	struct rtentry *rt = rt0;
@@ -1883,9 +1883,7 @@ nd6_output(struct ifnet *ifp, struct ifnet *origifp, struct mbuf *m0,
 	 */
 	if (rt) {
 		if ((rt->rt_flags & RTF_UP) == 0) {
-			if ((rt0 = rt = rtalloc1((struct sockaddr *)dst,
-			    1)) != NULL)
-			{
+			if ((rt0 = rt = rtalloc1(sin6tocsa(dst), 1)) != NULL) {
 				rt->rt_refcnt--;
 				if (rt->rt_ifp != ifp)
 					senderr(EHOSTUNREACH);
@@ -2052,13 +2050,12 @@ nd6_output(struct ifnet *ifp, struct ifnet *origifp, struct mbuf *m0,
 	ipsec_delaux(m);
 #endif
 	if ((ifp->if_flags & IFF_LOOPBACK) != 0) {
-		return (*ifp->if_output)(origifp, m, (struct sockaddr *)dst,
-					 rt);
+		return (*ifp->if_output)(origifp, m, sin6tocsa(dst), rt);
 	}
-	return (*ifp->if_output)(ifp, m, (struct sockaddr *)dst, rt);
+	return (*ifp->if_output)(ifp, m, sin6tocsa(dst), rt);
 
   bad:
-	if (m)
+	if (m != NULL)
 		m_freem(m);
 	return error;
 }

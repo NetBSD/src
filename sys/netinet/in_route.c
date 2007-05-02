@@ -1,4 +1,4 @@
-/*	$NetBSD: in_route.c,v 1.6 2007/04/22 06:01:57 dyoung Exp $	*/
+/*	$NetBSD: in_route.c,v 1.7 2007/05/02 20:40:24 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2006 David Young.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_route.c,v 1.6 2007/04/22 06:01:57 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_route.c,v 1.7 2007/05/02 20:40:24 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_in_route.h"
@@ -60,86 +60,3 @@ __KERNEL_RCSID(0, "$NetBSD: in_route.c,v 1.6 2007/04/22 06:01:57 dyoung Exp $");
 #include <netinet/in_proto.h>
 #include <netinet/in_route.h>
 
-LIST_HEAD(in_rtlist, route) in_rtcache_head =
-    LIST_HEAD_INITIALIZER(in_rtcache_head);
-
-#ifdef IN_RTFLUSH_DEBUG
-#define	in_rtcache_debug() __predict_false(_in_rtcache_debug)
-#else /* IN_RTFLUSH_DEBUG */
-#define	in_rtcache_debug() 0
-#endif /* IN_RTFLUSH_DEBUG */
-
-#ifdef IN_RTFLUSH_DEBUG
-static int _in_rtcache_debug = 0;
-
-SYSCTL_SETUP(sysctl_net_inet_ip_rtcache_setup,
-    "sysctl net.inet.ip.rtcache_debug setup")
-{
-	/* XXX do not duplicate */
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "net", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_NET, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "inet",
-		       SYSCTL_DESCR("PF_INET related settings"),
-		       NULL, 0, NULL, 0,
-		       CTL_NET, PF_INET, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "ip",
-		       SYSCTL_DESCR("IPv4 related settings"),
-		       NULL, 0, NULL, 0,
-		       CTL_NET, PF_INET, IPPROTO_IP, CTL_EOL);
-
-	sysctl_createv(clog, 0, NULL, NULL,
-	               CTLFLAG_PERMANENT|CTLFLAG_READWRITE, CTLTYPE_INT,
-		       "rtcache_debug",
-		       SYSCTL_DESCR("Debug IP route cache"),
-		       NULL, 0, &_in_rtcache_debug, 0,
-		       CTL_NET, PF_INET, IPPROTO_IP, CTL_CREATE, CTL_EOL);
-}
-#endif /* IN_RTFLUSH_DEBUG */
-
-void
-in_rtcache(struct route *ro)
-{
-	KASSERT(ro->ro_rt != NULL);
-	KASSERT(rtcache_getdst(ro) != NULL);
-	KASSERT(rtcache_getdst(ro)->sa_family == AF_INET);
-	LIST_INSERT_HEAD(&in_rtcache_head, ro, ro_rtcache_next);
-}
-
-void
-in_rtflush(struct route *ro)
-{
-	KASSERT(rtcache_getdst(ro) != NULL);
-	KASSERT(rtcache_getdst(ro)->sa_family == AF_INET);
-	KASSERT(ro->ro_rt == NULL);
-	LIST_REMOVE(ro, ro_rtcache_next);
-
-	if (in_rtcache_debug()) {
-		printf("%s: flushing %s\n", __func__,
-		    inet_ntoa((satocsin(rtcache_getdst(ro)))->sin_addr));
-	}
-}
-
-void
-in_rtflushall(void)
-{
-	int s;
-	struct route *ro;
-
-	s = splnet();
-
-	if (in_rtcache_debug())
-		printf("%s: enter\n", __func__);
-
-	while ((ro = LIST_FIRST(&in_rtcache_head)) != NULL) {
-		KASSERT(ro->ro_rt != NULL);
-		rtcache_clear(ro);
-	}
-	splx(s);
-}

@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.36 2007/03/04 06:03:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.37 2007/05/02 20:40:26 dyoung Exp $");
 
 #include "opt_inet.h"
 
@@ -659,25 +659,14 @@ selectroute(dstsock, opts, mopts, ro, retifp, retrt, clone, norouteok)
 		 * If the next hop is an IPv6 address, then the node identified
 		 * by that address must be a neighbor of the sending host.
 		 */
-		ron = (struct route *)&opts->ip6po_nextroute;
-		if (!IN6_ARE_ADDR_EQUAL(
-			    &satocsin6(rtcache_getdst(ron))->sin6_addr,
-			    &sin6_next->sin6_addr))
-			rtcache_free(ron);
-		else
-			rtcache_check(ron);
-		if (ron->ro_rt == NULL) {
-			*satosin6(&ron->ro_dst) = *sin6_next;
-			rtcache_init(ron);
-		}
-		if (ron->ro_rt == NULL ||
-		    (ron->ro_rt->rt_flags & RTF_GATEWAY) != 0 ||
-		    !nd6_is_addr_neighbor(sin6_next, ron->ro_rt->rt_ifp)) {
+		ron = &opts->ip6po_nextroute;
+		if ((rt = rtcache_lookup(ron, sin6tosa(sin6_next))) == NULL ||
+		    (rt->rt_flags & RTF_GATEWAY) != 0 ||
+		    !nd6_is_addr_neighbor(sin6_next, rt->rt_ifp)) {
 			rtcache_free(ron);
 			error = EHOSTUNREACH;
 			goto done;
 		}
-		rt = ron->ro_rt;
 		ifp = rt->rt_ifp;
 
 		/*
@@ -695,23 +684,15 @@ selectroute(dstsock, opts, mopts, ro, retifp, retrt, clone, norouteok)
 	 * cached destination, in case of sharing the cache with IPv4.
 	 */
 	if (ro != NULL) {
-		if (rtcache_getdst(ro)->sa_family != AF_INET6 ||
-		    !IN6_ARE_ADDR_EQUAL(&satocsin6(rtcache_getdst(ro))->sin6_addr, dst))
-			rtcache_free(ro);
-		else
-			rtcache_check(ro);
-		if (ro->ro_rt == NULL) {
-			struct sockaddr_in6 *sa6;
+		union {
+			struct sockaddr		dst;
+			struct sockaddr_in6	dst6;
+		} u;
 
-			/* No route yet, so try to acquire one */
-			sa6 = satosin6(&ro->ro_dst);
-			*sa6 = *dstsock;
-			sa6->sin6_scope_id = 0;
-			if (clone)
-				rtcache_init(ro);
-			else
-				rtcache_init_noclone(ro);
-		}
+		/* No route yet, so try to acquire one */
+		u.dst6 = *dstsock;
+		u.dst6.sin6_scope_id = 0;
+		rt = rtcache_lookup1(ro, &u.dst, clone);
 
 		/*
 		 * do not care about the result if we have the nexthop
@@ -720,11 +701,10 @@ selectroute(dstsock, opts, mopts, ro, retifp, retrt, clone, norouteok)
 		if (opts && opts->ip6po_nexthop)
 			goto done;
 
-		if (ro->ro_rt == NULL)
+		if (rt == NULL)
 			error = EHOSTUNREACH;
 		else
-			ifp = ro->ro_rt->rt_ifp;
-		rt = ro->ro_rt;
+			ifp = rt->rt_ifp;
 
 		/*
 		 * Check if the outgoing interface conflicts with
