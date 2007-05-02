@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.124 2007/05/02 04:51:07 snj Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.125 2007/05/02 05:00:44 snj Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -2878,6 +2878,8 @@ sys/dev/ld.c					1.47
 	[tron, ticket #601]
 
 sys/dev/pci/pcidevs				1.876-1.877
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data.h			regen
 
 	Add: Intel i82801H IFE G and GT LAN Controllers
 	[bouyer, ticket #597]
