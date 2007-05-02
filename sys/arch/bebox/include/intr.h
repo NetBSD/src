@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.25 2007/02/16 02:53:45 ad Exp $	*/
+/*	$NetBSD: intr.h,v 1.25.14.1 2007/05/02 16:24:45 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -64,14 +64,17 @@
 #define	IST_EDGE	2	/* edge-triggered */
 #define	IST_LEVEL	3	/* level-triggered */
 
+#include <machine/cpu.h>
+
 #ifndef _LOCORE
+#include <powerpc/softintr.h>
 
 /*
  * Interrupt handler chains.  intr_establish() inserts a handler into
  * the list.  The handler is called with its (single) argument.
  */
 struct intrhand {
-	int	(*ih_fun) __P((void *));
+	int	(*ih_fun)(void *);
 	void	*ih_arg;
 	u_long	ih_count;
 	struct	intrhand *ih_next;
@@ -92,72 +95,12 @@ void isa_intr_clr __P((int));
 void enable_intr __P((void));
 void disable_intr __P((void));
 
-static __inline int splraise __P((int));
-static __inline int spllower __P((int));
-static __inline void splx __P((int));
-static __inline void set_sint __P((int));
+int splraise(int newcpl);
+void splx(int newcpl);
+int spllower(int newcpl);
+void set_sint(int pending);
 
-extern volatile int cpl, ipending, astpending, tickspending;
 extern int imask[];
-extern long intrcnt[];
-
-/*
- *  Reorder protection in the following inline functions is
- * achieved with the "eieio" instruction which the assembler
- * seems to detect and then doesn't move instructions past....
- */
-static __inline int
-splraise(newcpl)
-	int newcpl;
-{
-	int oldcpl;
-
-	__asm volatile("sync; eieio\n");	/* don't reorder.... */
-	oldcpl = cpl;
-	cpl = oldcpl | newcpl;
-	__asm volatile("sync; eieio\n");	/* reorder protect */
-	return(oldcpl);
-}
-
-static __inline void
-splx(newcpl)
-	int newcpl;
-{
-	__asm volatile("sync; eieio\n");	/* reorder protect */
-	cpl = newcpl;
-	if(ipending & ~newcpl)
-		do_pending_int();
-	__asm volatile("sync; eieio\n");	/* reorder protect */
-}
-
-static __inline int
-spllower(newcpl)
-	int newcpl;
-{
-	int oldcpl;
-
-	__asm volatile("sync; eieio\n");	/* reorder protect */
-	oldcpl = cpl;
-	cpl = newcpl;
-	if(ipending & ~newcpl)
-		do_pending_int();
-	__asm volatile("sync; eieio\n");	/* reorder protect */
-	return(oldcpl);
-}
-
-/* Following code should be implemented with lwarx/stwcx to avoid
- * the disable/enable. i need to read the manual once more.... */
-static __inline void
-set_sint(pending)
-	int	pending;
-{
-	int	msrsave;
-
-	__asm ("mfmsr %0" : "=r"(msrsave));
-	__asm volatile ("mtmsr %0" :: "r"(msrsave & ~PSL_EE));
-	ipending |= pending;
-	__asm volatile ("mtmsr %0" :: "r"(msrsave));
-}
 
 #define	ICU_LEN		32
 #define	IRQ_SLAVE	2

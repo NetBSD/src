@@ -1,4 +1,4 @@
-#	$NetBSD: files.bebox,v 1.48 2007/04/10 02:27:32 macallan Exp $
+#	$NetBSD: files.bebox,v 1.48.4.1 2007/05/02 16:24:45 matt Exp $
 #
 # First try for bebox specific configuration info
 #
@@ -10,16 +10,17 @@ defflag	XSERVER
 
 file	arch/bebox/bebox/autoconf.c
 file	arch/bebox/bebox/clock.c
-file	arch/bebox/bebox/disksubr.c		disk
 file	arch/bebox/bebox/extintr.c
 file	arch/bebox/bebox/machdep.c
 
 file	arch/powerpc/powerpc/bus_dma.c
 file	arch/powerpc/powerpc/bus_space.c
+file	arch/powerpc/powerpc/softintr.c
 file	arch/powerpc/powerpc/procfs_machdep.c	procfs
 
 # General files
 file	dev/cons.c
+file	kern/subr_disk_mbr.c			disk
 
 #
 # Machine-independent SCSI drivers
