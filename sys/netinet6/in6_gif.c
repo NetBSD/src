@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_gif.c,v 1.50 2007/03/04 06:03:25 christos Exp $	*/
+/*	$NetBSD: in6_gif.c,v 1.51 2007/05/02 20:40:26 dyoung Exp $	*/
 /*	$KAME: in6_gif.c,v 1.62 2001/07/29 04:27:25 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_gif.c,v 1.50 2007/03/04 06:03:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_gif.c,v 1.51 2007/05/02 20:40:26 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -92,14 +92,15 @@ in6_gif_output(ifp, family, m)
 	struct mbuf *m;
 {
 	struct gif_softc *sc = (struct gif_softc*)ifp;
-	const struct sockaddr_in6 *cdst =
-	    (const struct sockaddr_in6 *)rtcache_getdst(
-	        (struct route *)&sc->gif_ro6);
 	struct sockaddr_in6 *sin6_src = (struct sockaddr_in6 *)sc->gif_psrc;
 	struct sockaddr_in6 *sin6_dst = (struct sockaddr_in6 *)sc->gif_pdst;
 	struct ip6_hdr *ip6;
 	int proto, error;
 	u_int8_t itos, otos;
+	union {
+		struct sockaddr		dst;
+		struct sockaddr_in6	dst6;
+	} u;
 
 	if (sin6_src == NULL || sin6_dst == NULL ||
 	    sin6_src->sin6_family != AF_INET6 ||
@@ -185,24 +186,10 @@ in6_gif_output(ifp, family, m)
 	ip6->ip6_flow &= ~ntohl(0xff00000);
 	ip6->ip6_flow |= htonl((u_int32_t)otos << 20);
 
-	if (cdst->sin6_family != sin6_dst->sin6_family ||
-	    !IN6_ARE_ADDR_EQUAL(&cdst->sin6_addr, &sin6_dst->sin6_addr))
-		rtcache_free((struct route *)&sc->gif_ro6);
-	else
-		rtcache_check((struct route *)&sc->gif_ro6);
-
-	if (sc->gif_ro6.ro_rt == NULL) {
-		struct sockaddr_in6 *dst =
-		    (struct sockaddr_in6 *)&sc->gif_ro6.ro_dst;
-		memset(dst, 0, sizeof(*dst));
-		dst->sin6_family = sin6_dst->sin6_family;
-		dst->sin6_len = sizeof(struct sockaddr_in6);
-		dst->sin6_addr = sin6_dst->sin6_addr;
-		rtcache_init((struct route *)&sc->gif_ro6);
-		if (sc->gif_ro6.ro_rt == NULL) {
-			m_freem(m);
-			return ENETUNREACH;
-		}
+	sockaddr_in6_init(&u.dst6, &sin6_dst->sin6_addr, 0, 0, 0);
+	if (rtcache_lookup(&sc->gif_ro, &u.dst) == NULL) {
+		m_freem(m);
+		return ENETUNREACH;
 	}
 
 	/* If the route constitutes infinite encapsulation, punt. */
@@ -217,10 +204,10 @@ in6_gif_output(ifp, family, m)
 	 * it is too painful to ask for resend of inner packet, to achieve
 	 * path MTU discovery for encapsulated packets.
 	 */
-	error = ip6_output(m, 0, &sc->gif_ro6, IPV6_MINMTU,
+	error = ip6_output(m, 0, &sc->gif_ro, IPV6_MINMTU,
 		    (struct ip6_moptions *)NULL, (struct socket *)NULL, NULL);
 #else
-	error = ip6_output(m, 0, &sc->gif_ro6, 0,
+	error = ip6_output(m, 0, &sc->gif_ro, 0,
 		    (struct ip6_moptions *)NULL, (struct socket *)NULL, NULL);
 #endif
 
@@ -421,7 +408,7 @@ in6_gif_detach(sc)
 	if (error == 0)
 		sc->encap_cookie6 = NULL;
 
-	rtcache_free((struct route *)&sc->gif_ro6);
+	rtcache_free(&sc->gif_ro);
 
 	return error;
 }
@@ -466,12 +453,14 @@ in6_gif_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 			continue;
 		if (sc->gif_psrc->sa_family != AF_INET6)
 			continue;
-		if (sc->gif_ro6.ro_rt == NULL)
+		if (sc->gif_ro.ro_rt == NULL)
 			continue;
 
-		dst6 = satocsin6(rtcache_getdst((struct route *)&sc->gif_ro6));
+		dst6 = satocsin6(rtcache_getdst(&sc->gif_ro));
 		/* XXX scope */
-		if (IN6_ARE_ADDR_EQUAL(&ip6->ip6_dst, &dst6->sin6_addr))
-			rtcache_free((struct route *)&sc->gif_ro6);
+		if (dst6 == NULL)
+			;
+		else if (IN6_ARE_ADDR_EQUAL(&ip6->ip6_dst, &dst6->sin6_addr))
+			rtcache_free(&sc->gif_ro);
 	}
 }

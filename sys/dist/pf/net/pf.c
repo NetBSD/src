@@ -1,4 +1,4 @@
-/*	$NetBSD: pf.c,v 1.36 2007/03/04 06:02:58 christos Exp $	*/
+/*	$NetBSD: pf.c,v 1.37 2007/05/02 20:40:22 dyoung Exp $	*/
 /*	$OpenBSD: pf.c,v 1.487 2005/04/22 09:53:18 dhartmei Exp $ */
 
 /*
@@ -2693,41 +2693,32 @@ pf_get_mss(struct mbuf *m, int off, u_int16_t th_off, sa_family_t af)
 u_int16_t
 pf_calc_mss(struct pf_addr *addr, sa_family_t af, u_int16_t offer)
 {
-	struct route *rop = NULL;
-#ifdef INET
-	struct sockaddr_in	*dst;
+	union {
+		struct sockaddr		dst;
+		struct sockaddr_in	dst4;
+		struct sockaddr_in6	dst6;
+	} u;
 	struct route		 ro;
-#endif /* INET */
-#ifdef INET6
-	struct sockaddr_in6	*dst6;
-	struct route_in6	 ro6;
-#endif /* INET6 */
+	struct route *rop = &ro;
 	int			 hlen;
 	u_int16_t		 mss = tcp_mssdflt;
 
 	hlen = 0;	/* XXXGCC - -Wunitialized m68k */
 
+	memset(&ro, 0, sizeof(ro));
 	switch (af) {
 #ifdef INET
 	case AF_INET:
 		hlen = sizeof(struct ip);
-		bzero(&ro, sizeof(ro));
-		dst = (struct sockaddr_in *)&ro.ro_dst;
-		dst->sin_family = AF_INET;
-		dst->sin_len = sizeof(*dst);
-		dst->sin_addr = addr->v4;
-		rop = &ro;
+		sockaddr_in_init(&u.dst4, &addr->v4, 0);
+		rtcache_setdst(rop, &u.dst);
 		break;
 #endif /* INET */
 #ifdef INET6
 	case AF_INET6:
 		hlen = sizeof(struct ip6_hdr);
-		bzero(&ro6, sizeof(ro6));
-		dst6 = (struct sockaddr_in6 *)&ro6.ro_dst;
-		dst6->sin6_family = AF_INET6;
-		dst6->sin6_len = sizeof(*dst6);
-		dst6->sin6_addr = addr->v6;
-		rop = (struct route *)&ro6;
+		sockaddr_in6_init(&u.dst6, &addr->v6, 0, 0, 0);
+		rtcache_setdst(rop, &u.dst);
 		break;
 #endif /* INET6 */
 	}
@@ -5268,33 +5259,28 @@ pf_pull_hdr(struct mbuf *m, int off, void *p, int len,
 int
 pf_routable(struct pf_addr *addr, sa_family_t af)
 {
-	struct sockaddr_in	*dst;
-#ifdef INET6
-	struct sockaddr_in6	*dst6;
-	struct route_in6	 ro;
-#else
-	struct route		 ro;
-#endif
+	int rc = 0;
+	union {
+		struct sockaddr		dst;
+		struct sockaddr_in	dst4;
+		struct sockaddr_in6	dst6;
+	} u;
+	struct route ro;
 
 	bzero(&ro, sizeof(ro));
 	switch (af) {
 	case AF_INET:
-		dst = satosin(&ro.ro_dst);
-		dst->sin_family = AF_INET;
-		dst->sin_len = sizeof(*dst);
-		dst->sin_addr = addr->v4;
+		sockaddr_in_init(&u.dst4, &addr->v4, 0);
 		break;
 #ifdef INET6
 	case AF_INET6:
-		dst6 = (struct sockaddr_in6 *)&ro.ro_dst;
-		dst6->sin6_family = AF_INET6;
-		dst6->sin6_len = sizeof(*dst6);
-		dst6->sin6_addr = addr->v6;
+		sockaddr_in6_init(&u.dst6, &addr->v6, 0, 0, 0);
 		break;
 #endif /* INET6 */
 	default:
 		return (0);
 	}
+	rtcache_setdst(&ro, &u.dst);
 
 #ifdef __OpenBSD__
 	rtalloc_noclone((struct route *)&ro, NO_CLONING);
@@ -5303,14 +5289,12 @@ pf_routable(struct pf_addr *addr, sa_family_t af)
 		return (1);
 	}
 #else
-	rtcache_init((struct route *)&ro);
-	if (ro.ro_rt != NULL) {
-		rtcache_free((struct route *)&ro);
-		return (1);
-	}
+	rtcache_init(&ro);
+	rc = (ro.ro_rt != NULL) ? 1 : 0;
+	rtcache_free(&ro);
 #endif
 
-	return (0);
+	return rc;
 }
 
 int
@@ -5378,7 +5362,11 @@ pf_route(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 	struct m_tag		*mtag;
 	struct route		 iproute;
 	struct route		*ro = NULL;
-	struct sockaddr_in	*dst;
+	const struct sockaddr	*dst;
+	union {
+		struct sockaddr		dst;
+		struct sockaddr_in	dst4;
+	} u;
 	struct ip		*ip;
 	struct ifnet		*ifp = NULL;
 	struct pf_addr		 naddr;
@@ -5425,11 +5413,10 @@ pf_route(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 	ip = mtod(m0, struct ip *);
 
 	ro = &iproute;
-	bzero((void *)ro, sizeof(*ro));
-	dst = satosin(&ro->ro_dst);
-	dst->sin_family = AF_INET;
-	dst->sin_len = sizeof(*dst);
-	dst->sin_addr = ip->ip_dst;
+	memset(ro, 0, sizeof(*ro));
+	sockaddr_in_init(&u.dst4, &ip->ip_dst, 0);
+	dst = &u.dst;
+	rtcache_setdst(ro, dst);
 
 	if (r->rt == PF_FASTROUTE) {
 		rtcache_init(ro);
@@ -5442,7 +5429,7 @@ pf_route(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 		ro->ro_rt->rt_use++;
 
 		if (ro->ro_rt->rt_flags & RTF_GATEWAY)
-			dst = satosin(ro->ro_rt->rt_gateway);
+			dst = ro->ro_rt->rt_gateway;
 	} else {
 		if (TAILQ_EMPTY(&r->rpool.list)) {
 			DPFPRINTF(PF_DEBUG_URGENT,
@@ -5454,13 +5441,12 @@ pf_route(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 			    (const struct pf_addr *)&ip->ip_src,
 			    &naddr, NULL, &sn);
 			if (!PF_AZERO(&naddr, AF_INET))
-				dst->sin_addr.s_addr = naddr.v4.s_addr;
+				u.dst4.sin_addr.s_addr = naddr.v4.s_addr;
 			ifp = r->rpool.cur->kif ?
 			    r->rpool.cur->kif->pfik_ifp : NULL;
 		} else {
 			if (!PF_AZERO(&s->rt_addr, AF_INET))
-				dst->sin_addr.s_addr =
-				    s->rt_addr.v4.s_addr;
+				u.dst4.sin_addr.s_addr = s->rt_addr.v4.s_addr;
 			ifp = s->rt_kif ? s->rt_kif->pfik_ifp : NULL;
 		}
 	}
@@ -5539,7 +5525,7 @@ pf_route(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 		else if (m0->m_pkthdr.csum & M_UDPV4_CSUM_OUT)
 			udpstat.udps_outhwcsum++;
 #endif
-		error = (*ifp->if_output)(ifp, m0, sintosa(dst), NULL);
+		error = (*ifp->if_output)(ifp, m0, dst, NULL);
 		goto done;
 	}
 
@@ -5568,8 +5554,7 @@ pf_route(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 		m1 = m0->m_nextpkt;
 		m0->m_nextpkt = 0;
 		if (error == 0)
-			error = (*ifp->if_output)(ifp, m0, sintosa(dst),
-			    NULL);
+			error = (*ifp->if_output)(ifp, m0, dst, NULL);
 		else
 			m_freem(m0);
 	}

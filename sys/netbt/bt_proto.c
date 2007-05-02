@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_proto.c,v 1.7 2007/04/06 11:49:24 plunky Exp $	*/
+/*	$NetBSD: bt_proto.c,v 1.8 2007/05/02 20:40:24 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bt_proto.c,v 1.7 2007/04/06 11:49:24 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bt_proto.c,v 1.8 2007/05/02 20:40:24 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/domain.h>
@@ -101,7 +101,5 @@ struct domain btdomain = {
 	.dom_ifqueues = { NULL, NULL },
 	.dom_link = { NULL },
 	.dom_mowner = MOWNER_INIT("",""),
-	.dom_rtcache = NULL,
-	.dom_rtflush = NULL,
-	.dom_rtflushall = NULL
+	.dom_rtcache = LIST_HEAD_INITIALIZER(btdomain.dom_rtcache)
 };

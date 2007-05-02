@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_iso.c,v 1.30 2007/03/04 06:03:33 christos Exp $	*/
+/*	$NetBSD: tp_iso.c,v 1.31 2007/05/02 20:40:29 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -75,7 +75,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_iso.c,v 1.30 2007/03/04 06:03:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_iso.c,v 1.31 2007/05/02 20:40:29 dyoung Exp $");
 
 #include "opt_iso.h"
 #ifdef ISO
@@ -466,7 +466,7 @@ tpclnp_output_dg(struct mbuf *m0, ...)
 	/*
 	 *	Free route allocated by clnp (if the route was indeed allocated)
 	 */
-	rtcache_free((struct route *)&tmppcb.isop_route);
+	rtcache_free(&tmppcb.isop_route);
 
 	return (err);
 }

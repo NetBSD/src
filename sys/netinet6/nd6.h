@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.h,v 1.45 2007/03/15 23:35:45 dyoung Exp $	*/
+/*	$NetBSD: nd6.h,v 1.46 2007/05/02 20:40:28 dyoung Exp $	*/
 /*	$KAME: nd6.h,v 1.95 2002/06/08 11:31:06 itojun Exp $	*/
 
 /*
@@ -397,7 +397,7 @@ int nd6_ioctl(u_long, void *, struct ifnet *);
 struct rtentry *nd6_cache_lladdr(struct ifnet *, struct in6_addr *,
 	char *, int, int, int);
 int nd6_output(struct ifnet *, struct ifnet *, struct mbuf *,
-	struct sockaddr_in6 *, struct rtentry *);
+	const struct sockaddr_in6 *, struct rtentry *);
 int nd6_storelladdr(const struct ifnet *, const struct rtentry *, struct mbuf *,
 	const struct sockaddr *, uint8_t *, size_t);
 int nd6_sysctl(int, void *, size_t *, void *, size_t);

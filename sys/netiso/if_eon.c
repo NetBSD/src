@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eon.c,v 1.57 2007/03/04 06:03:32 christos Exp $	*/
+/*	$NetBSD: if_eon.c,v 1.58 2007/05/02 20:40:28 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -67,7 +67,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_eon.c,v 1.57 2007/03/04 06:03:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eon.c,v 1.58 2007/05/02 20:40:28 dyoung Exp $");
 
 #include "opt_eon.h"
 
@@ -209,30 +209,23 @@ eonioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 
 void
-eoniphdr(struct eon_iphdr *hdr, const void *loc, struct route *ro,
-    int class, int zero)
+eoniphdr(struct eon_iphdr *hdr, const void *loc, struct route *ro, int class)
 {
 	struct mbuf     mhead;
-	struct sockaddr_in *sin = satosin(&ro->ro_dst);
-	if (zero) {
-		memset(hdr, 0, sizeof(*hdr));
-		memset(ro, 0, sizeof(*ro));
-	}
-	sin->sin_family = AF_INET;
-	sin->sin_len = sizeof(*sin);
-	(void)memcpy(&sin->sin_addr, loc, sizeof(struct in_addr));
-	/* XXX Does this check make any sense? */
-	rtcache_check(ro);
-	if (ro->ro_rt != NULL) {
-		struct sockaddr_in *dst = satosin(rt_key(ro->ro_rt));
-		if (sin->sin_addr.s_addr != dst->sin_addr.s_addr)
-			rtcache_free(ro);
-	}
-	if (ro->ro_rt == NULL)
-		rtcache_init(ro);
+	union {
+		struct sockaddr		dst;
+		struct sockaddr_in	dst4;
+	} u;
+	struct in_addr addr;
+
+	(void)memcpy(&addr, loc, sizeof(addr));
+	sockaddr_in_init(&u.dst4, &addr, 0);
+	rtcache_setdst(ro, &u.dst);
+	rtcache_init(ro);
+
 	if (ro->ro_rt != NULL)
 		ro->ro_rt->rt_use++;
-	hdr->ei_ip.ip_dst = sin->sin_addr;
+	hdr->ei_ip.ip_dst = u.dst4.sin_addr;
 	hdr->ei_ip.ip_p = IPPROTO_EON;
 	hdr->ei_ip.ip_ttl = MAXTTL;
 	hdr->ei_eh.eonh_class = class;
@@ -311,7 +304,7 @@ eonrtrequest(int cmd, struct rtentry *rt, struct rt_addrinfo *info)
 		}
 	}
 	el->el_flags |= RTF_UP;
-	eoniphdr(&el->el_ei, ipaddrloc, &el->el_iproute, EON_NORMAL_ADDR, 0);
+	eoniphdr(&el->el_ei, ipaddrloc, &el->el_iproute, EON_NORMAL_ADDR);
 	if (el->el_iproute.ro_rt != NULL)
 		rt->rt_rmx.rmx_mtu = el->el_iproute.ro_rt->rt_rmx.rmx_mtu
 			- sizeof(el->el_ei);
@@ -371,7 +364,8 @@ eonoutput(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *sdst,
 		case 4:
 			ro = &route;
 			ei = &eon_iphdr;
-			eoniphdr(ei, ipaddrloc, ro, class, 1);
+			memset(ei, 0, sizeof(*ei));
+			eoniphdr(ei, ipaddrloc, ro, class);
 			goto send;
 		}
 einval:

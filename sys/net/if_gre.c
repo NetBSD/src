@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.91 2007/04/14 22:41:42 dyoung Exp $ */
+/*	$NetBSD: if_gre.c,v 1.92 2007/05/02 20:40:23 dyoung Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.91 2007/04/14 22:41:42 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.92 2007/05/02 20:40:23 dyoung Exp $");
 
 #include "opt_gre.h"
 #include "opt_inet.h"
@@ -787,11 +787,10 @@ gre_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 		goto end;
 	}
 	if (sc->route.ro_rt->rt_ifp->if_softc == sc) {
-		rtcache_free(&sc->route);
+		rtcache_clear(&sc->route);
 		m_freem(m);
 	} else
-		error = ip_output(m, NULL, &sc->route, 0,
-		    (struct ip_moptions *)NULL, (struct socket *)NULL);
+		error = ip_output(m, NULL, &sc->route, 0, NULL, NULL);
   end:
 	if (error)
 		ifp->if_oerrors++;
@@ -1148,19 +1147,22 @@ static int
 gre_compute_route(struct gre_softc *sc)
 {
 	struct route *ro;
+	union {
+		struct sockaddr		dst;
+		struct sockaddr_in	dst4;
+	} u;
 
 	ro = &sc->route;
 
-	memset(ro, 0, sizeof(struct route));
-	satosin(&ro->ro_dst)->sin_addr = sc->g_dst;
-	ro->ro_dst.sa_family = AF_INET;
-	ro->ro_dst.sa_len = sizeof(ro->ro_dst);
+	memset(ro, 0, sizeof(*ro));
+	sockaddr_in_init(&u.dst4, &sc->g_dst, 0);
+	rtcache_setdst(ro, &u.dst);
 
 	rtcache_init(ro);
 
 	if (ro->ro_rt == NULL || ro->ro_rt->rt_ifp->if_softc == sc) {
 		GRE_DPRINTF(sc, "%s: route to %s %s\n", sc->sc_if.if_xname,
-		    inet_ntoa(satocsin(rtcache_getdst(ro))->sin_addr),
+		    inet_ntoa(u.dst4.sin_addr),
 		    (ro->ro_rt == NULL)
 		        ?  "does not exist"
 			: "loops back to ourself");
