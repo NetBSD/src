@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.876 2007/04/29 20:35:02 bouyer Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.877 2007/05/02 21:29:16 bouyer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.877 2007/04/29 20:33:22 bouyer Exp
+ *	NetBSD: pcidevs,v 1.878 2007/05/02 21:28:28 bouyer Exp
  */
 
 /*
@@ -2248,6 +2248,10 @@ static const struct pci_vendor pci_vendors[] = {
 	    "Datum Inc. Bancomm-Timing Division",
 	},
 	{
+	    PCI_VENDOR_JMICRON,
+	    "JMicron Technology",
+	},
+	{
 	    PCI_VENDOR_HINT,
 	    "HiNT",
 	},
@@ -2372,7 +2376,7 @@ static const struct pci_vendor pci_vendors[] = {
 	    "INVALID VENDOR ID",
 	},
 };
-const int pci_nvendors = 583;
+const int pci_nvendors = 584;
 
 static const struct pci_product pci_products[] = {
 	{
@@ -8340,6 +8344,30 @@ static const struct pci_product pci_products[] = {
 	    "ITT3204 MPEG Decoder",
 	},
 	{
+	    PCI_VENDOR_JMICRON, PCI_PRODUCT_JMICRON_JMB360,
+	    "JMB360 SATA controller",
+	},
+	{
+	    PCI_VENDOR_JMICRON, PCI_PRODUCT_JMICRON_JMB361,
+	    "JMB361 SATA/PATA controller",
+	},
+	{
+	    PCI_VENDOR_JMICRON, PCI_PRODUCT_JMICRON_JMB363,
+	    "JMB363 SATA/PATA controller",
+	},
+	{
+	    PCI_VENDOR_JMICRON, PCI_PRODUCT_JMICRON_JMB365,
+	    "JMB365 SATA/PATA controller",
+	},
+	{
+	    PCI_VENDOR_JMICRON, PCI_PRODUCT_JMICRON_JMB366,
+	    "JMB366 SATA/PATA controller",
+	},
+	{
+	    PCI_VENDOR_JMICRON, PCI_PRODUCT_JMICRON_JMB368,
+	    "JMB368 PATA controller",
+	},
+	{
 	    PCI_VENDOR_JNI, PCI_PRODUCT_JNI_JNIC1460,
 	    "JNIC-1460 Fibre-Channel adapter",
 	},
@@ -12852,4 +12880,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2619;
+const int pci_nproducts = 2625;
