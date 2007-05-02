@@ -1,4 +1,4 @@
-/*	$NetBSD: envctrl.c,v 1.2 2007/04/15 12:38:09 tnn Exp $ */
+/*	$NetBSD: envctrl.c,v 1.3 2007/05/02 11:40:44 tnn Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: envctrl.c,v 1.2 2007/04/15 12:38:09 tnn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: envctrl.c,v 1.3 2007/05/02 11:40:44 tnn Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -546,8 +546,8 @@ envctrl_update_sensors(struct envctrl_softc *sc)
 	envctrl_set_fanvoltage(sc, ENVCTRL_FANPORT_CPU, cpufan_voltage);
 	envctrl_set_fanvoltage(sc, ENVCTRL_FANPORT_PS, psfan_voltage);
 
-	sc->sc_sensor[8].cur.data_us = cpufan_voltage * 190476;
-	sc->sc_sensor[9].cur.data_us = psfan_voltage * 190476;
+	sc->sc_sensor[8].cur.data_us = cpufan_voltage * ENVCTRL_UVFACT;
+	sc->sc_sensor[9].cur.data_us = psfan_voltage * ENVCTRL_UVFACT;
 	sc->sc_sensor[8].validflags |= ENVSYS_FCURVALID;
 	sc->sc_sensor[9].validflags |= ENVSYS_FCURVALID;
 }

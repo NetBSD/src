@@ -1,4 +1,4 @@
-/*	$NetBSD: envctrlreg.h,v 1.2 2007/04/18 14:49:44 tnn Exp $ */
+/*	$NetBSD: envctrlreg.h,v 1.3 2007/05/02 11:40:44 tnn Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -93,3 +93,5 @@
 #define	ENVCTRL_SOMETHING_ADDR	0x4E	/* PCF8591, not sure what it does */
 #define	ENVCTRL_CPUTEMP_ADDR	0x4F	/* PCF8591, cpu temperatures */
 #define	ENVCTRL_WATCHDOG_ADDR	0x50	/* PCF8583, fan regulator watchdog */
+
+#define	ENVCTRL_UVFACT		190476	/* 10^6 * 12 / 63 */
