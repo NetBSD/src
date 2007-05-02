@@ -1,4 +1,4 @@
-/*	$NetBSD: ninepuffs.c,v 1.2 2007/04/22 18:10:48 pooka Exp $	*/
+/*	$NetBSD: ninepuffs.c,v 1.3 2007/05/02 18:50:30 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ninepuffs.c,v 1.2 2007/04/22 18:10:48 pooka Exp $");
+__RCSID("$NetBSD: ninepuffs.c,v 1.3 2007/05/02 18:50:30 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -392,4 +392,5 @@ puffs9p_eventloop(struct puffs_usermount *pu, struct puffs9p *p9p)
 	}
 
 	puffs_req_destroyget(pgr);
+	puffs_req_destroyput(ppr);
 }

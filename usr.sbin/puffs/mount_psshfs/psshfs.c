@@ -1,4 +1,4 @@
-/*	$NetBSD: psshfs.c,v 1.15 2007/04/29 10:02:57 pooka Exp $	*/
+/*	$NetBSD: psshfs.c,v 1.16 2007/05/02 18:50:30 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: psshfs.c,v 1.15 2007/04/29 10:02:57 pooka Exp $");
+__RCSID("$NetBSD: psshfs.c,v 1.16 2007/05/02 18:50:30 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -421,6 +421,7 @@ psshfs_eventloop(struct puffs_usermount *pu, struct psshfs_ctx *pctx)
 	}
 
 	puffs_req_destroyget(pgr);
+	puffs_req_destroyput(ppr);
 }
 
 static void
