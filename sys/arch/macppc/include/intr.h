@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.24 2007/02/16 02:53:48 ad Exp $	*/
+/*	$NetBSD: intr.h,v 1.24.14.1 2007/05/02 03:01:36 macallan Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -44,23 +44,23 @@
 #endif
 
 /* Interrupt priority `levels'. */
-#define	IPL_NONE	9	/* nothing */
-#define	IPL_SOFTCLOCK	8	/* timeouts */
-#define	IPL_SOFTNET	7	/* protocol stacks */
-#define	IPL_BIO		6	/* block I/O */
-#define	IPL_NET		5	/* network */
-#define	IPL_SOFTSERIAL	4	/* serial */
-#define	IPL_TTY		3	/* terminal */
+#define	IPL_NONE	0	/* nothing */
+#define	IPL_SOFTCLOCK	1	/* timeouts */
+#define	IPL_SOFTNET	2	/* protocol stacks */
+#define	IPL_BIO		3	/* block I/O */
+#define	IPL_NET		4	/* network */
+#define	IPL_SOFTSERIAL	5	/* serial */
+#define	IPL_AUDIO	6	/* audio */
+#define	IPL_TTY		7	/* terminal */
 #define	IPL_LPT		IPL_TTY
-#define	IPL_VM		3	/* memory allocation */
-#define	IPL_AUDIO	2	/* audio */
-#define	IPL_CLOCK	1	/* clock */
-#define	IPL_STATCLOCK	IPL_CLOCK
-#define	IPL_HIGH	1	/* everything */
-#define	IPL_SCHED	IPL_HIGH
-#define	IPL_LOCK	IPL_HIGH
-#define	IPL_SERIAL	0	/* serial */
-#define	NIPL		10
+#define	IPL_VM		8	/* memory allocation */
+#define	IPL_CLOCK	9
+#define	IPL_STATCLOCK	10	/* clock */
+#define	IPL_SCHED	11
+#define	IPL_SERIAL	12	/* serial */
+#define	IPL_LOCK	13
+#define	IPL_HIGH	14	/* everything */
+#define	NIPL		15
 
 /* Interrupt sharing types. */
 #define	IST_NONE	0	/* none */
@@ -144,5 +144,11 @@ void macppc_send_ipi(volatile struct cpu_info *, u_long);
 #endif
 
 #endif /* _LOCORE */
+
+/* probe for a PIC and set it up, return TRUE on success */
+int init_ohare(void);
+int init_heathrow(void);
+int init_grandcentral(void);
+int init_openpic(void);
 
 #endif /* _MACPPC_INTR_H_ */
