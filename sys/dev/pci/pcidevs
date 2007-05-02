@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.855.2.4 2007/02/21 13:17:59 tron Exp $
+$NetBSD: pcidevs,v 1.855.2.5 2007/05/02 04:48:25 snj Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -2000,6 +2000,8 @@ product INTEL 82546GB_QUAD_COPPER_KSP3 0x10b5 i82546GB quad-port Gigabit Etherne
 product INTEL 82572EI		0x10b9	i82572EI 1000baseT Ethernet
 product INTEL 80K3LAN_CPR_SPT 0x10ba	i80003 1000baseT Ethernet
 product INTEL 80K3LAN_SDS_SPT 0x10bb	i80003 Gigabit Ethernet (SERDES)
+product INTEL 82801H_IFE_GT 	0x10c4	i82801H IFE (GT) LAN Controller
+product INTEL 82801H_IFE_G 	0x10c5	i82801H IFE (G) LAN Controller
 product INTEL 82815_DC100_HUB	0x1100	82815 Hub
 product INTEL 82815_DC100_AGP	0x1101	82815 AGP
 product INTEL 82815_DC100_GRAPH	0x1102	82815 Graphics
