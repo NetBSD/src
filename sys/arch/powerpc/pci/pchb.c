@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.1.2.1 2007/05/01 07:59:02 garbled Exp $	*/
+/*	$NetBSD: pchb.c,v 1.1.2.2 2007/05/02 06:27:47 macallan Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.1.2.1 2007/05/01 07:59:02 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.1.2.2 2007/05/02 06:27:47 macallan Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -186,7 +186,10 @@ mpc106_print(struct pci_attach_args *pa, struct device *self)
 static void
 ibm82660_print(struct pci_attach_args *pa, struct device *self)
 {
-	pcireg_t reg1, reg2;
+	pcireg_t reg1;
+#ifdef PREP_BUS_SPACE_IO
+	pcireg_t reg2;
+#endif
 	const char *s1, *s2;
 
 	reg1 = pci_conf_read(pa->pa_pc, pa->pa_tag,
