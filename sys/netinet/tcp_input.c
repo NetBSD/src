@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.263 2007/03/12 18:18:36 ad Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.264 2007/05/02 20:40:25 dyoung Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -152,7 +152,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.263 2007/03/12 18:18:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.264 2007/05/02 20:40:25 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -3214,7 +3214,7 @@ do {									\
 do {									\
 	if ((sc)->sc_ipopts)						\
 		(void) m_free((sc)->sc_ipopts);				\
-	rtcache_free(&(sc)->sc_route4);					\
+	rtcache_free(&(sc)->sc_route);					\
 	if (callout_invoking(&(sc)->sc_timer))				\
 		(sc)->sc_flags |= SCF_DEAD;				\
 	else								\
@@ -3631,14 +3631,13 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst,
 	 * Give the new socket our cached route reference.
 	 */
 	if (inp) {
-		rtcache_copy(&inp->inp_route, &sc->sc_route4, sizeof(inp->inp_route));
-		rtcache_free(&sc->sc_route4);
+		rtcache_copy(&inp->inp_route, &sc->sc_route);
+		rtcache_free(&sc->sc_route);
 	}
 #ifdef INET6
 	else {
-		rtcache_copy((struct route *)&in6p->in6p_route,
-		    (struct route *)&sc->sc_route6, sizeof(in6p->in6p_route));
-		rtcache_free((struct route *)&sc->sc_route6);
+		rtcache_copy(&in6p->in6p_route, &sc->sc_route);
+		rtcache_free(&sc->sc_route);
 	}
 #endif
 
@@ -4064,15 +4063,14 @@ syn_cache_respond(struct syn_cache *sc, struct mbuf *m)
 	u_int hlen;
 	struct socket *so;
 
+	ro = &sc->sc_route;
 	switch (sc->sc_src.sa.sa_family) {
 	case AF_INET:
 		hlen = sizeof(struct ip);
-		ro = &sc->sc_route4;
 		break;
 #ifdef INET6
 	case AF_INET6:
 		hlen = sizeof(struct ip6_hdr);
-		ro = (struct route *)&sc->sc_route6;
 		break;
 #endif
 	default:
@@ -4336,8 +4334,7 @@ syn_cache_respond(struct syn_cache *sc, struct mbuf *m)
 		ip6->ip6_hlim = in6_selecthlim(NULL,
 				ro->ro_rt ? ro->ro_rt->rt_ifp : NULL);
 
-		error = ip6_output(m, NULL /*XXX*/, (struct route_in6 *)ro, 0,
-			(struct ip6_moptions *)0, so, NULL);
+		error = ip6_output(m, NULL /*XXX*/, ro, 0, NULL, so, NULL);
 		break;
 #endif
 	default:

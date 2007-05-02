@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.248 2007/03/25 20:12:20 liamjfoy Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.249 2007/05/02 20:40:25 dyoung Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.248 2007/03/25 20:12:20 liamjfoy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.249 2007/05/02 20:40:25 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_gateway.h"
@@ -1674,23 +1674,18 @@ bad:
 struct in_ifaddr *
 ip_rtaddr(struct in_addr dst)
 {
-	if (!in_hosteq(dst, satocsin(rtcache_getdst(&ipforward_rt))->sin_addr))
-		rtcache_free(&ipforward_rt);
-	else
-		rtcache_check(&ipforward_rt);
+	struct rtentry *rt;
+	union {
+		struct sockaddr		dst;
+		struct sockaddr_in	dst4;
+	} u;
 
-	if (ipforward_rt.ro_rt == NULL) {
-		struct sockaddr_in *sin = satosin(&ipforward_rt.ro_dst);
+	sockaddr_in_init(&u.dst4, &dst, 0);
 
-		sin->sin_family = AF_INET;
-		sin->sin_len = sizeof(*sin);
-		sin->sin_addr = dst;
+	if ((rt = rtcache_lookup(&ipforward_rt, &u.dst)) == NULL)
+		return NULL;
 
-		rtcache_init(&ipforward_rt);
-		if (ipforward_rt.ro_rt == NULL)
-			return NULL;
-	}
-	return ifatoia(ipforward_rt.ro_rt->rt_ifa);
+	return ifatoia(rt->rt_ifa);
 }
 
 /*
@@ -1841,6 +1836,10 @@ ip_forward(struct mbuf *m, int srcrt)
 	int error, type = 0, code = 0, destmtu = 0;
 	struct mbuf *mcopy;
 	n_long dest;
+	union {
+		struct sockaddr		dst;
+		struct sockaddr_in	dst4;
+	} u;
 
 	/*
 	 * We are now in the output path.
@@ -1869,25 +1868,11 @@ ip_forward(struct mbuf *m, int srcrt)
 		return;
 	}
 
-	if (!in_hosteq(ip->ip_dst,
-	               satocsin(rtcache_getdst(&ipforward_rt))->sin_addr))
-		rtcache_free(&ipforward_rt);
-	else
-		rtcache_check(&ipforward_rt);
-	if (ipforward_rt.ro_rt == NULL) {
-		struct sockaddr_in *sin = satosin(&ipforward_rt.ro_dst);
-
-		sin->sin_family = AF_INET;
-		sin->sin_len = sizeof(*sin);
-		sin->sin_addr = ip->ip_dst;
-
-		rtcache_init(&ipforward_rt);
-		if (ipforward_rt.ro_rt == NULL) {
-			icmp_error(m, ICMP_UNREACH, ICMP_UNREACH_NET, dest, 0);
-			return;
-		}
+	sockaddr_in_init(&u.dst4, &ip->ip_dst, 0);
+	if ((rt = rtcache_lookup(&ipforward_rt, &u.dst)) == NULL) {
+		icmp_error(m, ICMP_UNREACH, ICMP_UNREACH_NET, dest, 0);
+		return;
 	}
-	rt = ipforward_rt.ro_rt;
 
 	/*
 	 * Save at most 68 bytes of the packet in case

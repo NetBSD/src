@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.102 2007/04/22 19:47:41 christos Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.103 2007/05/02 20:40:27 dyoung Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.102 2007/04/22 19:47:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.103 2007/05/02 20:40:27 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -237,7 +237,7 @@ ip6intr()
 	}
 }
 
-extern struct	route_in6 ip6_forward_rt;
+extern struct	route ip6_forward_rt;
 
 void
 ip6_input(struct mbuf *m)
@@ -249,6 +249,7 @@ ip6_input(struct mbuf *m)
 	int nxt, ours = 0;
 	struct ifnet *deliverifp = NULL;
 	int srcrt = 0;
+	const struct sockaddr_in6 *cdst;
 #ifdef FAST_IPSEC
 	struct m_tag *mtag;
 	struct tdb_ident *tdbi;
@@ -474,29 +475,31 @@ ip6_input(struct mbuf *m)
 		goto hbhcheck;
 	}
 
+	cdst = satocsin6(rtcache_getdst(&ip6_forward_rt));
 	/*
 	 *  Unicast check
 	 */
-	if (!IN6_ARE_ADDR_EQUAL(&ip6->ip6_dst,
-	    &((const struct sockaddr_in6 *)rtcache_getdst((const struct route *)&ip6_forward_rt))->sin6_addr))
-		rtcache_free((struct route *)&ip6_forward_rt);
+	if (cdst == NULL)
+		;
+	else if (!IN6_ARE_ADDR_EQUAL(&ip6->ip6_dst, &cdst->sin6_addr))
+		rtcache_free(&ip6_forward_rt);
 	else
-		rtcache_check((struct route *)&ip6_forward_rt);
+		rtcache_check(&ip6_forward_rt);
 	if (ip6_forward_rt.ro_rt != NULL) {
 		/* XXX Revalidated route is accounted wrongly. */
 		ip6stat.ip6s_forward_cachehit++;
 	} else {
-		struct sockaddr_in6 *dst6;
+		union {
+			struct sockaddr		dst;
+			struct sockaddr_in6	dst6;
+		} u;
 
 		ip6stat.ip6s_forward_cachemiss++;
 
-		dst6 = &ip6_forward_rt.ro_dst;
-		memset(dst6, 0, sizeof(*dst6));
-		dst6->sin6_len = sizeof(struct sockaddr_in6);
-		dst6->sin6_family = AF_INET6;
-		dst6->sin6_addr = ip6->ip6_dst;
+		sockaddr_in6_init(&u.dst6, &ip6->ip6_dst, 0, 0, 0);
+		rtcache_setdst(&ip6_forward_rt, &u.dst);
 
-		rtcache_init((struct route *)&ip6_forward_rt);
+		rtcache_init(&ip6_forward_rt);
 	}
 
 #define rt6_key(r) ((struct sockaddr_in6 *)((r)->rt_nodes->rn_key))

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.h,v 1.16 2007/03/04 06:03:16 christos Exp $	*/
+/*	$NetBSD: if_gif.h,v 1.17 2007/05/02 20:40:23 dyoung Exp $	*/
 /*	$KAME: if_gif.h,v 1.23 2001/07/27 09:21:42 itojun Exp $	*/
 
 /*
@@ -54,9 +54,6 @@ struct gif_softc {
 	struct sockaddr	*gif_pdst; /* Physical dst addr */
 	union {
 		struct route  gifscr_ro;    /* xxx */
-#ifdef INET6
-		struct route_in6 gifscr_ro6; /* xxx */
-#endif
 	} gifsc_gifscr;
 	int		gif_flags;
 	const struct encaptab *encap_cookie4;
@@ -69,9 +66,6 @@ struct gif_softc {
 #define GIF_ROUTE_TTL	10
 
 #define gif_ro gifsc_gifscr.gifscr_ro
-#ifdef INET6
-#define gif_ro6 gifsc_gifscr.gifscr_ro6
-#endif
 
 #define GIF_MTU		(1280)	/* Default MTU */
 #define	GIF_MTU_MIN	(1280)	/* Minimum MTU */
