@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.40.2.4 2007/04/10 14:25:51 skrll Exp $	*/
+/*	$NetBSD: trap.c,v 1.40.2.5 2007/05/02 07:18:51 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.40.2.4 2007/04/10 14:25:51 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.40.2.5 2007/05/02 07:18:51 skrll Exp $");
 
 /* #define INTRDEBUG */
 /* #define TRAPDEBUG */
@@ -904,23 +904,8 @@ do_onfault:
 		panic ("trap: unimplemented \'%s\' (%d)", tts, type);
 	}
 
-	/*
-	 * In case we were interrupted from the syscall gate page
-	 * treat this as we were not really running user code anymore
-	 * 
-	 * The problem is that if we preempt when returning from this
-	 * trap the interspace branch setting of IASQ to HPPA_SID_KERNEL
-	 * is not picked up by the syscall code. Instead, it will attempt
-	 * to return into the syscall gate page with the user space id
-	 * causing a (fatal) ITLB trap for the process.
-	 */
-
-	if (type & T_USER) {
-		if (!(frame->tf_iisq_head == HPPA_SID_KERNEL &&
-		     (frame->tf_iioq_head & ~PAGE_MASK) == SYSCALLGATE))
-			userret(l, l->l_md.md_regs->tf_iioq_head, 0);
-	}
-
+	if (type & T_USER)
+		userret(l, l->l_md.md_regs->tf_iioq_head, 0);
 
 #ifdef DEBUG
 	frame_sanity_check(0xdead02, type, frame, l);
