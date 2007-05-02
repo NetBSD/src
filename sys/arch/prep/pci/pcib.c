@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.20.2.4 2007/05/01 19:18:59 garbled Exp $	*/
+/*	$NetBSD: pcib.c,v 1.20.2.5 2007/05/02 05:48:09 garbled Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.20.2.4 2007/05/01 19:18:59 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.20.2.5 2007/05/02 05:48:09 garbled Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -120,25 +120,28 @@ pcibattach(struct device *parent, struct device *self, void *aux)
 	 * until all PCI devices have been attached.
 	 */
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
-	printf(": %s (rev. 0x%02x)\n", devinfo, PCI_REVISION(pa->pa_class));
+	aprint_normal(": %s (rev. 0x%02x)\n", devinfo,
+	    PCI_REVISION(pa->pa_class));
 
 	v = pci_conf_read(pa->pa_pc, pa->pa_tag, 0x40);
 	if ((v & 0x20) == 0) {
-		printf("%s: PIRQ[0-3] not used\n", self->dv_xname);
+		aprint_verbose("%s: PIRQ[0-3] not used\n", self->dv_xname);
 	} else {
 		v = pci_conf_read(pa->pa_pc, pa->pa_tag, 0x60);
 		if ((v & 0x80808080) == 0x80808080) {
-			printf("%s: PIRQ[0-3] disabled\n", self->dv_xname);
+			aprint_verbose("%s: PIRQ[0-3] disabled\n",
+			    self->dv_xname);
 		} else {
 			int i;
-			printf("%s:", self->dv_xname);
+			aprint_verbose("%s:", self->dv_xname);
 			for (i = 0; i < 4; i++, v >>= 8) {
 				if ((v & 80) == 0 && (v & 0x0f) != 0) {
-					printf(" PIRQ[%d]=%d", i, v & 0x0f);
+					aprint_verbose(" PIRQ[%d]=%d", i,
+					    v & 0x0f);
 					lvlmask |= (1 << (v & 0x0f));
 				}
 			}
-			printf("\n");
+			aprint_verbose("\n");
 		}
 	}
 
