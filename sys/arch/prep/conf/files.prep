@@ -1,4 +1,4 @@
-#	$NetBSD: files.prep,v 1.57.4.2 2007/05/01 17:05:09 garbled Exp $
+#	$NetBSD: files.prep,v 1.57.4.3 2007/05/02 05:58:50 garbled Exp $
 #
 # prep-specific configuration info
 #
@@ -89,7 +89,7 @@ file	arch/powerpc/pci/pchb.c		pchb
 # PCI-ISA bridges
 device	pcib: isabus
 attach	pcib at pci
-file	arch/prep/pci/pcib.c		pcib
+file	arch/powerpc/pci/pcib.c		pcib
 
 # PCI-EISA bridges
 device	pceb: eisabus, isabus
@@ -107,7 +107,7 @@ file	arch/prep/pci/gten.c		gten needs-flag
 
 include "dev/isa/files.isa"
 file	arch/prep/isa/isa_machdep.c	isa
-file	arch/prep/isa/isadma_machdep.c	isa
+file	arch/powerpc/isa/isadma_machdep.c	isa
 
 # ISA Plug 'n Play devices
 file	arch/prep/isa/isapnp_machdep.c	isapnp
