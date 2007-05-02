@@ -1,4 +1,4 @@
-/*	$NetBSD: refuse.c,v 1.49 2007/05/01 15:58:25 pooka Exp $	*/
+/*	$NetBSD: refuse.c,v 1.50 2007/05/02 18:05:54 pooka Exp $	*/
 
 /*
  * Copyright © 2007 Alistair Crooks.  All rights reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: refuse.c,v 1.49 2007/05/01 15:58:25 pooka Exp $");
+__RCSID("$NetBSD: refuse.c,v 1.50 2007/05/02 18:05:54 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -189,6 +189,14 @@ puffs_fuse_fill_dir(void *buf, const char *name,
 	} else {
 		dtype = puffs_vtype2dt(puffs_mode2vt(stbuf->st_mode));
 		dino = stbuf->st_ino;
+
+		/*
+		 * Some FUSE file systems like to always use 0 as the
+		 * inode number.   Our readdir() doesn't like to show
+		 * directory entries with inode number 0 ==> workaround.
+		 */
+		if (dino == 0)
+			dino = fakeino++;
 	}
 
 	return fill_dirbuf(deh, name, dino, dtype);
