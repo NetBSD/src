@@ -1,4 +1,4 @@
-/*	$NetBSD: picvar.h,v 1.1.2.2 2007/05/02 19:28:01 macallan Exp $ */
+/*	$NetBSD: picvar.h,v 1.1.2.3 2007/05/02 23:51:37 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: picvar.h,v 1.1.2.2 2007/05/02 19:28:01 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: picvar.h,v 1.1.2.3 2007/05/02 23:51:37 macallan Exp $");
 
 #ifndef PIC_VAR_H
 #define PIC_VAR_H
@@ -81,5 +81,8 @@ void	pic_mark_pending(int);
 void	pic_ext_intr(void);
 void	pic_init(void);
 const char *intr_typename(int);
+
+/* address, number of IRQs, enable passthrough */
+static struct openpic_ops * setup_openpic(uint32_t, int, int);
 
 #endif /* PIC_VAR_H */
