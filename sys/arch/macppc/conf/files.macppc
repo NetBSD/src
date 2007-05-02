@@ -1,4 +1,4 @@
-#	$NetBSD: files.macppc,v 1.84.2.1 2007/05/02 03:02:33 macallan Exp $
+#	$NetBSD: files.macppc,v 1.84.2.2 2007/05/02 06:46:02 macallan Exp $
 #
 # macppc-specific configuration info
 
@@ -17,6 +17,7 @@ file arch/macppc/macppc/disksubr.c		disk
 #file arch/macppc/macppc/extintr.c
 file arch/macppc/macppc/interrupts.c
 file arch/macppc/macppc/pic_ohare.c
+file arch/macppc/macppc/pic_heathrow.c
 file arch/macppc/macppc/machdep.c
 file arch/macppc/dev/ofb_cons.c
 file arch/macppc/dev/dbdma.c
@@ -109,7 +110,7 @@ file arch/macppc/dev/ofb.c			ofb needs-flag
 # PCI-Host bridge chipsets
 device pchb: agpbus, agp_apple
 attach pchb at pci
-file arch/macppc/pci/pchb.c			pchb
+file arch/powerpc/pci/pchb.c			pchb
 
 device gm: ifnet, ether, arp, mii
 attach gm at pci
