@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.16 2005/12/24 22:45:34 perry Exp $	*/
+/*	$NetBSD: clock.c,v 1.16.38.1 2007/05/02 16:24:45 matt Exp $	*/
 /*      $OpenBSD: clock.c,v 1.3 1997/10/13 13:42:53 pefo Exp $  */
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.16 2005/12/24 22:45:34 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.16.38.1 2007/05/02 16:24:45 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,12 +54,12 @@ static volatile u_long lasttb;
 void
 decr_intr(struct clockframe *frame)
 {
+	struct cpu_info * const ci = curcpu();
 	int msr;
 	int pri;
 	u_long tb;
 	long ticks;
 	int nticks;
-	extern long intrcnt[];
 
 	/*
 	 * Check whether we are initialized.
@@ -76,14 +76,14 @@ decr_intr(struct clockframe *frame)
 		ticks += ticks_per_intr;
 	__asm volatile ("mtdec %0" :: "r"(ticks));
 
-	intrcnt[CNT_CLOCK]++;
+	ci->ci_ev_clock.ev_count++;
 
 	pri = splclock();
 	if (pri & SPL_CLOCK)
-		tickspending += nticks;
+		ci->ci_tickspending += nticks;
 	else {
-		nticks += tickspending;
-		tickspending = 0;
+		nticks += ci->ci_tickspending;
+		ci->ci_tickspending = 0;
 
 		/*
 		 * lasttb is used during microtime. Set it to the virtual
