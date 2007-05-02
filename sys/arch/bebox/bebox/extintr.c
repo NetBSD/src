@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.24 2005/12/24 22:45:34 perry Exp $	*/
+/*	$NetBSD: extintr.c,v 1.24.38.1 2007/05/02 16:24:45 matt Exp $	*/
 /*      $OpenBSD: isabus.c,v 1.1 1997/10/11 11:53:00 pefo Exp $ */
 
 /*-
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.24 2005/12/24 22:45:34 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.24.38.1 2007/05/02 16:24:45 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -89,13 +89,7 @@ __KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.24 2005/12/24 22:45:34 perry Exp $");
 #include <machine/bus.h>
 #include <dev/isa/isavar.h>
 
-#include "com.h"
-#if NCOM > 0
-extern void comsoft(void);
-#endif
-
 unsigned int imen = 0xffffffff;
-volatile int cpl, ipending, tickspending;
 int imask[NIPL];
 int intrtype[ICU_LEN], intrmask[ICU_LEN], intrlevel[ICU_LEN];
 struct intrhand *intrhand[ICU_LEN];
@@ -156,6 +150,7 @@ static int bebox_intr_map[] = {
 void
 ext_intr()
 {
+	struct cpu_info * const ci = curcpu();
 	int i, irq;
 	int o_imen, r_imen;
 	int pcpl;
@@ -193,7 +188,7 @@ ext_intr()
 		bebox_intr_mask(imen);
 
 	if((pcpl & r_imen) != 0) {
-		ipending |= r_imen;	/* Masked! Mark this as pending */
+		ci->ci_ipending |= r_imen;	/* Masked! Mark this as pending */
 	} else {
 		ih = intrhand[irq];
 		while (ih) {
@@ -434,6 +429,7 @@ intr_calculatemasks()
 void
 do_pending_int()
 {
+	struct cpu_info * const ci = curcpu();
 	struct intrhand *ih;
 	int irq;
 	int pcpl;
@@ -452,7 +448,8 @@ do_pending_int()
 	__asm volatile("mtmsr %0" :: "r"(dmsr));
 
 	pcpl = splhigh();		/* Turn off all */
-	hwpend = ipending & ~pcpl;	/* Do now unmasked pendings */
+again:
+	hwpend = ci->ci_ipending & ~pcpl;	/* Do now unmasked pendings */
 	imen &= ~hwpend;
 	while (hwpend) {
 		irq = ffs(hwpend) - 1;
@@ -474,28 +471,103 @@ do_pending_int()
 		bebox_intr_mask(imen);
 	}
 
-	if ((ipending & ~pcpl) & SINT_CLOCK) {
-		ipending &= ~SINT_CLOCK;
-		softclock(NULL);
-		intrcnt[CNT_SINT_CLOCK]++;
+	if ((ci->ci_ipending & ~pcpl) & SINT_CLOCK) {
+		ci->ci_ipending &= ~SINT_CLOCK;
+		splsoftclock();
+		mtmsr(emsr);
+		KERNEL_LOCK(1, NULL);
+		softintr__run(IPL_SOFTCLOCK);
+		KERNEL_UNLOCK_ONE(NULL);
+		mtmsr(dmsr);
+		ci->ci_cpl = pcpl;
+		ci->ci_ev_softclock.ev_count++;
+		goto again;
 	}
-	if ((ipending & ~pcpl) & SINT_NET) {
-		extern int netisr;
-		int pisr = netisr;
-		netisr = 0;
-		ipending &= ~SINT_NET;
-		softnet(pisr);
-		intrcnt[CNT_SINT_NET]++;
+	if ((ci->ci_ipending & ~pcpl) & SINT_NET) {
+		ci->ci_ipending &= ~SINT_NET;
+		splsoftnet();
+		mtmsr(emsr);
+		KERNEL_LOCK(1, NULL);
+		softintr__run(IPL_SOFTNET);
+		KERNEL_UNLOCK_ONE(NULL);
+		mtmsr(dmsr);
+		ci->ci_cpl = pcpl;
+		ci->ci_ev_softnet.ev_count++;
+		goto again;
 	}
-	if ((ipending & ~pcpl) & SINT_SERIAL) {
-		ipending &= ~SINT_SERIAL;
-#if NCOM > 0
-		comsoft();
-#endif
-		intrcnt[CNT_SINT_SERIAL]++;
+	if ((ci->ci_ipending & ~pcpl) & SINT_SERIAL) {
+		ci->ci_ipending &= ~SINT_SERIAL;
+		splsoftserial();
+		mtmsr(emsr);
+		KERNEL_LOCK(1, NULL);
+		softintr__run(IPL_SOFTSERIAL);
+		KERNEL_UNLOCK_ONE(NULL);
+		mtmsr(dmsr);
+		ci->ci_cpl = pcpl;
+		ci->ci_ev_softserial.ev_count++;
+		goto again;
 	}
-	ipending &= pcpl;
-	cpl = pcpl;	/* Don't use splx... we are here already! */
+
+	ci->ci_ipending &= pcpl;
+	ci->ci_cpl = pcpl;	/* Don't use splx... we are here already! */
 	__asm volatile("mtmsr %0" :: "r"(emsr));
 	processing = 0;
+}
+
+/*
+ *  Reorder protection in the following inline functions is
+ * achieved with the "eieio" instruction which the assembler
+ * seems to detect and then doesn't move instructions past....
+ */
+int
+splraise(int newcpl)
+{
+	struct cpu_info * const ci = curcpu();
+	int oldcpl;
+
+	__asm volatile("sync; eieio\n");	/* don't reorder.... */
+	oldcpl = ci->ci_cpl;
+	ci->ci_cpl = oldcpl | newcpl;
+	__asm volatile("sync; eieio\n");	/* reorder protect */
+	return(oldcpl);
+}
+
+void
+splx(int newcpl)
+{
+	struct cpu_info * const ci = curcpu();
+	__asm volatile("sync; eieio\n");	/* reorder protect */
+	ci->ci_cpl = newcpl;
+	if(ci->ci_ipending & ~newcpl)
+		do_pending_int();
+	__asm volatile("sync; eieio\n");	/* reorder protect */
+}
+
+int
+spllower(int newcpl)
+{
+	struct cpu_info * const ci = curcpu();
+	int oldcpl;
+
+	__asm volatile("sync; eieio\n");	/* reorder protect */
+	oldcpl = ci->ci_cpl;
+	ci->ci_cpl = newcpl;
+	if(ci->ci_ipending & ~newcpl)
+		do_pending_int();
+	__asm volatile("sync; eieio\n");	/* reorder protect */
+	return(oldcpl);
+}
+
+/* Following code should be implemented with lwarx/stwcx to avoid
+ * the disable/enable. i need to read the manual once more.... */
+void
+set_sint(int pending)
+{
+	struct cpu_info * const ci = curcpu();
+	int msrsave;
+
+	__asm ("mfmsr %0" : "=r"(msrsave));
+	__asm volatile ("mtmsr %0" :: "r"(msrsave & ~PSL_EE));
+	ci->ci_ipending |= pending;
+	__asm volatile ("mtmsr %0" :: "r"(msrsave));
 }
