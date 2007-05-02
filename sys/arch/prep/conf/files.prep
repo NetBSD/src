@@ -1,4 +1,4 @@
-#	$NetBSD: files.prep,v 1.57.4.3 2007/05/02 05:58:50 garbled Exp $
+#	$NetBSD: files.prep,v 1.57.4.4 2007/05/02 06:38:04 garbled Exp $
 #
 # prep-specific configuration info
 #
@@ -110,7 +110,7 @@ file	arch/prep/isa/isa_machdep.c	isa
 file	arch/powerpc/isa/isadma_machdep.c	isa
 
 # ISA Plug 'n Play devices
-file	arch/prep/isa/isapnp_machdep.c	isapnp
+file	arch/powerpc/isa/isapnp_machdep.c	isapnp
 
 include "dev/pckbport/files.pckbport"
 
