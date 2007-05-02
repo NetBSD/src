@@ -1,4 +1,4 @@
-/*	$NetBSD: picvar.h,v 1.1.2.1 2007/05/02 02:59:01 macallan Exp $ */
+/*	$NetBSD: picvar.h,v 1.1.2.2 2007/05/02 19:28:01 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: picvar.h,v 1.1.2.1 2007/05/02 02:59:01 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: picvar.h,v 1.1.2.2 2007/05/02 19:28:01 macallan Exp $");
 
 #ifndef PIC_VAR_H
 #define PIC_VAR_H
@@ -46,12 +46,12 @@ struct pic_ops {
 	 * interrupt number
 	 */
 	int (*pic_irq_is_enabled)(struct pic_ops *, int);
-	void (*pic_enable_irq)(struct pic_ops *, int);
-	void (*pic_reenable_irq)(struct pic_ops *, int);
+	void (*pic_enable_irq)(struct pic_ops *, int, int);
+	void (*pic_reenable_irq)(struct pic_ops *, int, int);
 	void (*pic_disable_irq)(struct pic_ops *, int);
 	void (*pic_clear_irq)(struct pic_ops *, int);
-	int (*pic_get_irq)(struct pic_ops *, int);
-	void (*pic_ack_irq)(struct pic_ops *, int);
+	int (*pic_get_irq)(struct pic_ops *);
+	void (*pic_ack_irq)(struct pic_ops *, int); /* IRQ numbner */
 	char pic_name[16];
 };
 
@@ -80,5 +80,6 @@ int	pic_handle_intr(void *);
 void	pic_mark_pending(int);
 void	pic_ext_intr(void);
 void	pic_init(void);
+const char *intr_typename(int);
 
 #endif /* PIC_VAR_H */

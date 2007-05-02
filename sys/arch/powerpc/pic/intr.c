@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.1.2.1 2007/05/02 02:59:01 macallan Exp $ */
+/*	$NetBSD: intr.c,v 1.1.2.2 2007/05/02 19:28:01 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.1.2.1 2007/05/02 02:59:01 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.1.2.2 2007/05/02 19:28:01 macallan Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -406,11 +406,13 @@ void
 pic_enable_irq(int num)
 {
 	struct pic_ops *current;
+	int type;
 
 	current = find_pic_by_irq(num);
 	if (current == NULL)
 		panic("%s: bogus IRQ %d", __func__, num);
-	current->pic_enable_irq(current, num - current->pic_intrbase);
+	type = intrsources[virq[num]].is_type;
+	current->pic_enable_irq(current, num - current->pic_intrbase, type);
 }
 
 void
@@ -488,7 +490,8 @@ again:
 		ci->ci_cpl = pcpl;
 
 		is->is_ev.ev_count++;
-		pic->pic_reenable_irq(pic, is->is_hwirq - pic->pic_intrbase);
+		pic->pic_reenable_irq(pic, is->is_hwirq - pic->pic_intrbase,
+		    is->is_type);
 	}
 #ifdef MULTIPROCESSOR
 	}
@@ -565,7 +568,7 @@ pic_handle_intr(void *cookie)
 	int irq, realirq;
 	int pcpl, msr, r_imen, bail;
 
-	realirq = pic->pic_get_irq(pic, 0);
+	realirq = pic->pic_get_irq(pic);
 	if (realirq == 255)
 		return 0;
 
@@ -577,11 +580,11 @@ pic_handle_intr(void *cookie)
 	if (cpu_number() != 0) {
 		int realirq;
 
-		realirq = pic[0]->pic_get_irq(pic, cpu_number());
+		realirq = pic[0]->pic_get_irq(pic);
 		while (realirq == IPI_VECTOR) {
-			pic->pic_ack_irq(pic, cpu_number());
+			pic->pic_ack_irq(pic, realirq);
 			cpuintr(NULL);
-			realirq = pic->pic_get_irq(pic, cpu_number());
+			realirq = pic->pic_get_irq(pic);
 		}
 		if (realirq == 255) {
 			return 0;
@@ -593,10 +596,10 @@ pic_handle_intr(void *cookie)
 start:
 #ifdef MULTIPROCESSOR
 	while (realirq == IPI_VECTOR) {
-		pic->pic_ack_irq(pic, 0);
+		pic->pic_ack_irq(pic, realirq);
 		cpuintr(NULL);
 
-		realirq = pic->pic_get_irq(pic, 0);
+		realirq = pic->pic_get_irq(pic);
 		if (realirq == 255) {
 			return 0;
 		}
@@ -641,7 +644,7 @@ start:
 		mtmsr(msr);
 		ci->ci_cpl = pcpl;
 		
-		pic->pic_reenable_irq(pic, realirq);
+		pic->pic_reenable_irq(pic, realirq, is->is_type);
 
 		uvmexp.intrs++;
 		is->is_ev.ev_count++;
@@ -650,7 +653,7 @@ start:
 boo:
 #endif /* PIC_DEBUG */
 	pic->pic_ack_irq(pic, 0);
-	realirq = pic->pic_get_irq(pic, 0);
+	realirq = pic->pic_get_irq(pic);
 	if (realirq != 255)
 		goto start;
 
