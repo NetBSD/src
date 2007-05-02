@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_flow.c,v 1.7 2007/05/02 20:40:26 dyoung Exp $	*/
+/*	$NetBSD: ip6_flow.c,v 1.8 2007/05/02 22:39:04 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -65,7 +65,6 @@
 #include <net/pfil.h>
 
 #include <netinet/in.h>
-#include <netinet/in_route.h>
 #include <netinet6/in6_var.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip6.h>
