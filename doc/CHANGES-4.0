@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.123 2007/04/30 19:01:50 bouyer Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.124 2007/05/02 04:51:07 snj Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -2876,4 +2876,9 @@ sys/dev/ld.c					1.47
 	ioctl() requests which actually *did* work. As a result fdisk(8) and
 	therefore also sysinst(8) work with ld(4) devices once again.
 	[tron, ticket #601]
+
+sys/dev/pci/pcidevs				1.876-1.877
+
+	Add: Intel i82801H IFE G and GT LAN Controllers
+	[bouyer, ticket #597]
 
