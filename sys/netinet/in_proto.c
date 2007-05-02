@@ -1,4 +1,4 @@
-/*	$NetBSD: in_proto.c,v 1.83 2007/03/05 00:50:53 liamjfoy Exp $	*/
+/*	$NetBSD: in_proto.c,v 1.84 2007/05/02 20:40:24 dyoung Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.83 2007/03/05 00:50:53 liamjfoy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.84 2007/05/02 20:40:24 dyoung Exp $");
 
 #include "opt_mrouting.h"
 #include "opt_eon.h"			/* ISO CLNL over IP */
@@ -405,6 +405,9 @@ const struct protosw inetsw[] = {
 
 extern struct ifqueue ipintrq;
 
+POOL_INIT(sockaddr_in_pool, sizeof(struct sockaddr_in), 0, 0, 0,
+    "sockaddr_in_pool", NULL, IPL_NET);
+
 struct domain inetdomain = {
 	.dom_family = PF_INET, .dom_name = "internet", .dom_init = NULL,
 	.dom_externalize = NULL, .dom_dispose = NULL,
@@ -422,11 +425,33 @@ struct domain inetdomain = {
 	.dom_ifqueues = { &ipintrq, NULL },
 	.dom_link = { NULL },
 	.dom_mowner = MOWNER_INIT("",""),
-	.dom_rtcache = in_rtcache,
-	.dom_rtflush = in_rtflush,
-	.dom_rtflushall = in_rtflushall
+	.dom_sa_pool = &sockaddr_in_pool,
+	.dom_sa_len = sizeof(struct sockaddr_in),
+	.dom_rtcache = LIST_HEAD_INITIALIZER(inetdomain.dom_rtcache)
 };
 
 u_char	ip_protox[IPPROTO_MAX];
 
 int icmperrppslim = 100;			/* 100pps */
+
+int
+sockaddr_in_cmp(const struct sockaddr *sa1, const struct sockaddr *sa2)
+{
+	uint_fast8_t len;
+	const uint_fast8_t addrofs = offsetof(struct sockaddr_in, sin_addr),
+			   addrend = addrofs + sizeof(struct in_addr);
+	int rc;
+	const struct sockaddr_in *sin1, *sin2;
+
+	sin1 = satocsin(sa1);
+	sin2 = satocsin(sa2);
+
+	len = MIN(addrend, MIN(sin1->sin_len, sin2->sin_len));
+
+	if (len > addrofs &&
+	     (rc = memcmp(&sin1->sin_addr, &sin2->sin_addr,
+	                  len - addrofs)) != 0)
+		return rc;
+
+	return sin1->sin_len - sin2->sin_len;
+}
