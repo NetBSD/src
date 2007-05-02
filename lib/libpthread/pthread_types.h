@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_types.h,v 1.5 2003/09/26 22:48:23 nathanw Exp $	*/
+/*	$NetBSD: pthread_types.h,v 1.6 2007/05/02 21:54:16 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -89,23 +89,17 @@ struct	__pthread_attr_st {
 	void	*pta_private;
 };
 
+/*
+ * ptm_lock will never be spun on: it's locked with
+ * pthread__simple_lock_try() or not at all.
+ */
 struct	__pthread_mutex_st {
 	unsigned int	ptm_magic;
-
-	/* Not a real spinlock; will never be spun on. Locked with
-	 * pthread__simple_lock_try() or not at all. Therefore, not
-	 * subject to preempted-spinlock-continuation.
-	 * 
-	 * Open research question: Would it help threaded applications if
-	 * preempted-lock-continuation were applied to mutexes?
-	 */
 	pthread_spin_t	ptm_lock; 
-
-	/* Protects the owner and blocked queue */
 	pthread_spin_t	ptm_interlock;
 	pthread_t	ptm_owner;
 	struct pthread_queue_t	ptm_blocked;
-	void	*ptm_private;
+	void		*ptm_private;
 };
 
 #define	_PT_MUTEX_MAGIC	0x33330003
