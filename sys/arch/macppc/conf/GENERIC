@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.255.6.1 2007/05/02 03:05:14 macallan Exp $
+# $NetBSD: GENERIC,v 1.255.6.2 2007/05/02 06:46:31 macallan Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.255.6.1 $"
+#ident 		"GENERIC-$Revision: 1.255.6.2 $"
 
 maxusers	32
 
@@ -216,7 +216,7 @@ uni_n*	at mainbus?
 
 # interrupt controller support
 options PIC_OHARE
-#options PIC_HEATHROW
+options PIC_HEATHROW
 #options PIC_GRANDCENTRAL
 #options PIC_OPENPIC
 
