@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_flow.c,v 1.46 2007/05/02 20:40:24 dyoung Exp $	*/
+/*	$NetBSD: ip_flow.c,v 1.47 2007/05/02 22:39:04 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.46 2007/05/02 20:40:24 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.47 2007/05/02 22:39:04 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,7 +62,6 @@ __KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.46 2007/05/02 20:40:24 dyoung Exp $");
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <netinet/in_pcb.h>
-#include <netinet/in_route.h>
 #include <netinet/in_var.h>
 #include <netinet/ip_var.h>
 

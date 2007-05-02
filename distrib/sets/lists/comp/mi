@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1022 2007/05/01 17:18:52 bouyer Exp $
+#	$NetBSD: mi,v 1.1023 2007/05/02 22:39:03 dyoung Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -1379,7 +1379,7 @@
 ./usr/include/netinet/in_gif.h			comp-c-include
 ./usr/include/netinet/in_pcb.h			comp-c-include
 ./usr/include/netinet/in_pcb_hdr.h		comp-c-include
-./usr/include/netinet/in_route.h		comp-c-include
+./usr/include/netinet/in_route.h		comp-obsolete		obsolete
 ./usr/include/netinet/in_selsrc.h		comp-c-include
 ./usr/include/netinet/in_systm.h		comp-c-include
 ./usr/include/netinet/in_var.h			comp-c-include
