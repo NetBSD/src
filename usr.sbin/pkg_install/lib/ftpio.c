@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpio.c,v 1.73 2006/05/11 23:50:15 mrg Exp $	*/
+/*	$NetBSD: ftpio.c,v 1.74 2007/05/03 00:26:53 joerg Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -8,7 +8,7 @@
 #include <sys/cdefs.h>
 #endif
 #ifndef lint
-__RCSID("$NetBSD: ftpio.c,v 1.73 2006/05/11 23:50:15 mrg Exp $");
+__RCSID("$NetBSD: ftpio.c,v 1.74 2007/05/03 00:26:53 joerg Exp $");
 #endif
 
 /*-
@@ -655,7 +655,10 @@ ftp_expand_URL(const char *base, char *pattern)
 	char *s, buf[MaxPathSize];
 	char tmpname[MaxPathSize];
 	char best[MaxPathSize];
-	int rc, tfd;
+	int rc, tfd, retry_tbz;
+
+	retry_tbz = 0;
+	best[0]='\0';
 
 	rc = ftp_start(base);
 	if (rc == -1) {
@@ -684,8 +687,16 @@ ftp_expand_URL(const char *base, char *pattern)
 		 * we can't use the pkg wildcards here as dewey compare
 		 * and alternates won't be handled by ftp(1); sort
 		 * out later, using pmatch() */
-		(void) snprintf(buf,  sizeof(buf), "nlist %.*s*.t[bg]z %s\n",
-				(int)(s-pattern), pattern, tmpname);
+		if (retry_tbz) {
+retry_with_tbz:
+			(void) snprintf(buf,  sizeof(buf), "nlist %.*s*.tbz %s\n",
+					(int)(s-pattern), pattern, tmpname);
+			retry_tbz = 0;
+		} else {
+			(void) snprintf(buf,  sizeof(buf), "nlist %.*s*.tgz %s\n",
+					(int)(s-pattern), pattern, tmpname);
+			retry_tbz = 1;
+		}
 	}
 
 	rc = ftp_cmd(buf, "\n(550|450|226).*\n"); /* catch errors */
@@ -704,7 +715,6 @@ ftp_expand_URL(const char *base, char *pattern)
 		return NULL;
 	}
 	
-	best[0]='\0';
 	if (access(tmpname, R_OK)==0) {
 		int matches;
 		FILE *f;
@@ -746,6 +756,9 @@ ftp_expand_URL(const char *base, char *pattern)
 		if (matches == 0 && Verbose)
 			warnx("nothing appropriate found");
 	}
+
+	if (retry_tbz)
+		goto retry_with_tbz;
 
 	unlink(tmpname);
 
