@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.1.2.7 2007/05/03 03:28:28 macallan Exp $ */
+/*	$NetBSD: intr.c,v 1.1.2.8 2007/05/03 18:13:04 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.1.2.7 2007/05/03 03:28:28 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.1.2.8 2007/05/03 18:13:04 nisimura Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -40,7 +40,6 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.1.2.7 2007/05/03 03:28:28 macallan Exp $"
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/autoconf.h>
 #include <arch/powerpc/pic/picvar.h>
 #include "opt_pic.h"
 
