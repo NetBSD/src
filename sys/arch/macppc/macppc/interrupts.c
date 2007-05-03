@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupts.c,v 1.1.2.1 2007/05/02 03:02:34 macallan Exp $ */
+/*	$NetBSD: interrupts.c,v 1.1.2.2 2007/05/03 04:05:15 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupts.c,v 1.1.2.1 2007/05/02 03:02:34 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupts.c,v 1.1.2.2 2007/05/03 04:05:15 macallan Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -43,6 +43,61 @@ __KERNEL_RCSID(0, "$NetBSD: interrupts.c,v 1.1.2.1 2007/05/02 03:02:34 macallan 
 #include <dev/ofw/openfirm.h>
 
 #include "opt_interrupt.h"
+
+#ifdef PIC_OPENPIC
+static int init_openpic(int, int);
+
+const char *compat[] = {
+	"chrp,open-pic",
+	"open-pic",
+	"openpic",
+	NULL
+};
+
+static int 
+init_openpic(int num, int pass_through)
+{
+	uint32_t reg[5];
+	uint32_t obio_base, pic_base;
+	int      pic, macio;
+
+	macio = OF_finddevice("/pci/mac-io");
+	if (macio == -1)
+		macio = OF_finddevice("mac-io");
+	if (macio == -1)
+		macio = OF_finddevice("/ht/pci/mac-io");
+	if (macio == -1)
+		return FALSE;
+
+	printf("macio: %08x\n", macio);
+
+	pic = OF_child(macio);
+	while ((pic != 0) && (of_compatible(pic, compat) == -1))
+		pic = OF_peer(pic);
+
+	printf("pic: %08x\n", pic);
+	if ((pic == -1) || (pic == 0))
+		return FALSE;
+
+	if (OF_getprop(macio, "assigned-addresses", reg, sizeof(reg)) != 20) 
+		return FALSE;
+
+	obio_base = reg[2];
+	printf("obio-base: %08x\n", obio_base);
+
+	if (OF_getprop(pic, "reg", reg, 8) < 8) 
+		return FALSE;
+
+	pic_base = obio_base + reg[0];
+	printf("pic-base: %08x\n", pic_base);
+
+	aprint_normal("found openpic PIC at %08x\n", pic_base);
+	setup_openpic(pic_base, num, pass_through);
+
+	return TRUE;
+}
+
+#endif /* PIC_OPENPIC */
 
 void
 init_interrupt(void)
@@ -62,7 +117,7 @@ init_interrupt(void)
 		goto done;
 #endif
 #ifdef PIC_OPENPIC
-	if (init_openpic())
+	if (init_openpic(64, 0))
 		goto done;
 #endif
 	panic("%s: no supported interrupt controller found", __func__);
