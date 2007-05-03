@@ -1,4 +1,4 @@
-/*	$NetBSD: comsat.c,v 1.35 2007/02/21 21:06:26 hubertf Exp $	*/
+/*	$NetBSD: comsat.c,v 1.36 2007/05/03 15:09:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -36,7 +36,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)comsat.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: comsat.c,v 1.35 2007/02/21 21:06:26 hubertf Exp $");
+__RCSID("$NetBSD: comsat.c,v 1.36 2007/05/03 15:09:41 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -136,7 +136,7 @@ main(int argc, char *argv[])
 		syslog(LOG_ERR, "sigprocmask get failed (%m)");
 		exit(1);
 	}
-	needupdate++;
+	needupdate = 1;
 	for (;;) {
 		cc = recv(0, msgbuf, sizeof(msgbuf) - 1, 0);
 		if (cc <= 0) {
@@ -167,7 +167,7 @@ static void
 /*ARGSUSED*/
 onalrm(int signo)
 {
-	needupdate++;
+	needupdate = 1;
 }
 
 static void
