@@ -157,6 +157,10 @@ void fuse_destroy(struct fuse *);
 
 void fuse_unmount(const char *, struct fuse_chan *);
 
+struct fuse *fuse_setup(int, char **, const struct fuse_operations *,
+	size_t, char **, int *, int *);
+void fuse_teardown(struct fuse *, char *);
+
 #if FUSE_USE_VERSION == 22
 #define fuse_unmount fuse_unmount_compat22
 #endif
