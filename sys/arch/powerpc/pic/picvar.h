@@ -1,4 +1,4 @@
-/*	$NetBSD: picvar.h,v 1.1.2.5 2007/05/03 03:28:28 macallan Exp $ */
+/*	$NetBSD: picvar.h,v 1.1.2.6 2007/05/03 03:30:48 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -30,11 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-<<<<<<< picvar.h
-__KERNEL_RCSID(0, "$NetBSD: picvar.h,v 1.1.2.5 2007/05/03 03:28:28 macallan Exp $");
-=======
-__KERNEL_RCSID(0, "$NetBSD: picvar.h,v 1.1.2.5 2007/05/03 03:28:28 macallan Exp $");
->>>>>>> 1.1.2.4
+__KERNEL_RCSID(0, "$NetBSD: picvar.h,v 1.1.2.6 2007/05/03 03:30:48 macallan Exp $");
 
 #ifndef PIC_VAR_H
 #define PIC_VAR_H
