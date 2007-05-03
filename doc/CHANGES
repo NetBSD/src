@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.841 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.842 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -93,8 +93,6 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		[dsl 20070422]
 	prep: add support for the MTX604 RAVEN based machine.  Other RAVEN
 		based machines are also likely to work now. [garbled 20070426]
-	wm(4): Added support for the Intel i82801H (ICH8) gigabit ethernet
-		controller.  [bouyer 20070429]
 	kernel: Added support for POSIX Asynchronous I/O. [rmind 20070430]
 	kernel: added bio(4) and associated bioctl(8), a framework to
 		query/control block device controllers. [bouyer 20070501]
