@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.60 $>
+LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.61 $>
 
 
 Changes from 386bsd 0.1 + patchkit 0.2.2 to NetBSD 0.8:
@@ -8593,3 +8593,5 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 		that they must update their fdisk partition tables to use
 		partition ID 0x169 for their NetBSD partitions. [tls 20070124]
 	ataraid(4): Add support for Via V-RAID. [garbled 20070326]
+	wm(4): Added support for the Intel i82801H (ICH8) gigabit ethernet
+		controller.  [bouyer 20070429]
