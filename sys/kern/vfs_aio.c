@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_aio.c,v 1.2 2007/05/01 01:01:36 rmind Exp $	*/
+/*	$NetBSD: vfs_aio.c,v 1.3 2007/05/03 22:03:40 rmind Exp $	*/
 
 /*
  * Copyright (c) 2007, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_aio.c,v 1.2 2007/05/01 01:01:36 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_aio.c,v 1.3 2007/05/03 22:03:40 rmind Exp $");
 
 #include <sys/param.h>
 
@@ -57,9 +57,12 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_aio.c,v 1.2 2007/05/01 01:01:36 rmind Exp $");
 #include <uvm/uvm_extern.h>
 
 /*
- * System-wide counter of AIO operations.
+ * System-wide limits and counter of AIO operations.
  * XXXSMP: We should spin-lock it, or modify atomically.
  */
+static unsigned long aio_listio_max = AIO_LISTIO_MAX;
+static unsigned long aio_max = AIO_MAX;
+
 static unsigned long aio_jobs_count = 0;
 
 /* Prototypes */
@@ -129,7 +132,7 @@ aio_init(struct proc *p)
 	p->p_nrlwps++;
 	lwp_lock(l);
 	l->l_stat = LSRUN;
-	l->l_usrpri = PRIBIO;
+	l->l_usrpri = PUSER - 1; /* XXX */
 	setrunqueue(l);
 	lwp_unlock(l);
 	mutex_exit(&p->p_smutex);
@@ -143,28 +146,30 @@ aio_init(struct proc *p)
 void
 aio_exit(struct proc *p)
 {
+	struct aioproc *aio;
 	struct aio_job *a_job;
 
 	if (p->p_aio == NULL)
 		return;
+	aio = p->p_aio;
 
 	KASSERT(p->p_aio->aio_worker == NULL);
 
 	/* Free AIO queue */
-	while (!TAILQ_EMPTY(&p->p_aio->jobs_queue)) {
-		a_job = TAILQ_FIRST(&p->p_aio->jobs_queue);
-		TAILQ_REMOVE(&p->p_aio->jobs_queue, a_job, list);
-		pool_put(&p->p_aio->jobs_pool, a_job);
+	while (!TAILQ_EMPTY(&aio->jobs_queue)) {
+		a_job = TAILQ_FIRST(&aio->jobs_queue);
+		TAILQ_REMOVE(&aio->jobs_queue, a_job, list);
+		pool_put(&aio->jobs_pool, a_job);
 		aio_jobs_count--; /* XXXSMP */
 	}
 
 	/* Destroy and free the entire AIO data structure */
-	cv_destroy(&p->p_aio->aio_worker_cv);
-	cv_destroy(&p->p_aio->done_cv);
-	mutex_destroy(&p->p_aio->aio_mtx);
-	pool_destroy(&p->p_aio->jobs_pool);
-	pool_destroy(&p->p_aio->lio_pool);
-	kmem_free(p->p_aio, sizeof(struct aioproc));
+	cv_destroy(&aio->aio_worker_cv);
+	cv_destroy(&aio->done_cv);
+	mutex_destroy(&aio->aio_mtx);
+	pool_destroy(&aio->jobs_pool);
+	pool_destroy(&aio->lio_pool);
+	kmem_free(aio, sizeof(struct aioproc));
 	p->p_aio = NULL;
 }
 
@@ -198,8 +203,7 @@ aio_worker(void *arg)
 		 */
 		mutex_enter(&aio->aio_mtx);
 		while ((a_job = TAILQ_FIRST(&aio->jobs_queue)) == NULL) {
-			if (cv_wait_sig(&aio->aio_worker_cv,
-			    &aio->aio_mtx) == EINTR) {
+			if (cv_wait_sig(&aio->aio_worker_cv, &aio->aio_mtx)) {
 				/*
 				 * Thread was interrupted by the
 				 * signal - check for exit.
@@ -283,6 +287,11 @@ aio_process(struct aio_job *a_job)
 		struct iovec aiov;
 		struct uio auio;
 
+		if (aiocbp->aio_nbytes > SSIZE_MAX) {
+			error = EINVAL;
+			goto done;
+		}
+
 		fp = fd_getfile(fdp, fd);
 		if (fp == NULL) {
 			error = EBADF;
@@ -295,11 +304,6 @@ aio_process(struct aio_job *a_job)
 		auio.uio_iovcnt = 1;
 		auio.uio_resid = aiocbp->aio_nbytes;
 		auio.uio_vmspace = p->p_vmspace;
-
-		if (auio.uio_resid > SSIZE_MAX) {
-			error = EINVAL;
-			goto done;
-		}
 
 		FILE_USE(fp);
 		if (a_job->aio_op & AIO_READ) {
@@ -415,7 +419,7 @@ aio_enqueue_job(int op, void *aiocb_uptr, struct lio_req *lio)
 	int error;
 
 	/* Check for the limit */
-	if (aio_jobs_count + 1 > AIO_MAX) /* XXXSMP */
+	if (aio_jobs_count + 1 > aio_max) /* XXXSMP */
 		return EAGAIN;
 
 	/* Get the data structure from user-space */
@@ -512,7 +516,7 @@ aio_enqueue_job(int op, void *aiocb_uptr, struct lio_req *lio)
 	mutex_enter(&aio->aio_mtx);
 
 	/* Fail, if the limit was reached */
-	if (aio->jobs_count >= AIO_LISTIO_MAX) {
+	if (aio->jobs_count >= aio_listio_max) {
 		mutex_exit(&aio->aio_mtx);
 		pool_put(&aio->jobs_pool, a_job);
 		return EAGAIN;
@@ -551,7 +555,7 @@ sys_aio_cancel(struct lwp *l, void *v, register_t *retval)
 	struct aiocb *aiocbp_ptr;
 	struct lio_req *lio;
 	struct filedesc	*fdp = p->p_fd;
-	unsigned int cn, error, fildes;
+	unsigned int cn, errcnt, fildes;
 
 	TAILQ_HEAD(, aio_job) tmp_jobs_list;
 
@@ -585,16 +589,6 @@ sys_aio_cancel(struct lwp *l, void *v, register_t *retval)
 		} else if (a_job->aiocbp.aio_fildes != fildes)
 			continue;
 
-		/* Set the errno and copy structures back to the user-space */
-		a_job->aiocbp._errno = ECANCELED;
-		a_job->aiocbp._state = JOB_DONE;
-		error = copyout(&a_job->aiocbp, a_job->aiocb_uptr,
-		    sizeof(struct aiocb));
-		if (error) {
-			mutex_exit(&aio->aio_mtx);
-			return error;
-		}
-
 		TAILQ_REMOVE(&aio->jobs_queue, a_job, list);
 		TAILQ_INSERT_TAIL(&tmp_jobs_list, a_job, list);
 
@@ -626,15 +620,25 @@ sys_aio_cancel(struct lwp *l, void *v, register_t *retval)
 	mutex_exit(&aio->aio_mtx);
 
 	/* Free the jobs after the lock */
+	errcnt = 0;
 	while (!TAILQ_EMPTY(&tmp_jobs_list)) {
 		a_job = TAILQ_FIRST(&tmp_jobs_list);
 		TAILQ_REMOVE(&tmp_jobs_list, a_job, list);
+		/* Set the errno and copy structures back to the user-space */
+		a_job->aiocbp._errno = ECANCELED;
+		a_job->aiocbp._state = JOB_DONE;
+		if (copyout(&a_job->aiocbp, a_job->aiocb_uptr,
+		    sizeof(struct aiocb)))
+			errcnt++;
 		/* Send a signal if any */
 		aio_sendsig(p, &a_job->aiocbp.aio_sigevent);
 		if (a_job->lio)
 			pool_put(&aio->lio_pool, a_job->lio);
 		pool_put(&aio->jobs_pool, a_job);
 	}
+
+	if (errcnt)
+		return EFAULT;
 
 	/* Set a correct return value */
 	if (*retval == 0)
@@ -748,7 +752,7 @@ sys_aio_suspend(struct lwp *l, void *v, register_t *retval)
 	aio = p->p_aio;
 
 	nent = SCARG(uap, nent);
-	if (nent <= 0 || nent > AIO_LISTIO_MAX)
+	if (nent <= 0 || nent > aio_listio_max)
 		return EAGAIN;
 
 	if (SCARG(uap, timeout)) {
@@ -857,9 +861,9 @@ sys_lio_listio(struct lwp *l, void *v, register_t *retval)
 	nent = SCARG(uap, nent);
 
 	/* Check for the limits, and invalid values */
-	if (nent < 1 || nent > AIO_LISTIO_MAX)
+	if (nent < 1 || nent > aio_listio_max)
 		return EINVAL;
-	if (aio_jobs_count + nent > AIO_MAX) /* XXXSMP */
+	if (aio_jobs_count + nent > aio_max) /* XXXSMP */
 		return EAGAIN;
 	if (mode != LIO_NOWAIT && mode != LIO_WAIT)
 		return EINVAL;
@@ -945,6 +949,50 @@ err:
  * SysCtl
  */
 
+static int
+sysctl_aio_listio_max(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node;
+	int error, newsize;
+
+	node = *rnode;
+	node.sysctl_data = &newsize;
+
+	newsize = aio_listio_max;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		return error;
+
+	/* XXXSMP */
+	if (newsize < 1 || newsize > aio_max)
+		return EINVAL;
+	aio_listio_max = newsize;
+
+	return 0;
+}
+
+static int
+sysctl_aio_max(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node;
+	int error, newsize;
+
+	node = *rnode;
+	node.sysctl_data = &newsize;
+
+	newsize = aio_max;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		return error;
+
+	/* XXXSMP */
+	if (newsize < 1 || newsize < aio_listio_max)
+		return EINVAL;
+	aio_max = newsize;
+
+	return 0;
+}
+
 SYSCTL_SETUP(sysctl_aio_setup, "sysctl aio setup")
 {
 
@@ -954,7 +1002,7 @@ SYSCTL_SETUP(sysctl_aio_setup, "sysctl aio setup")
 		NULL, 0, NULL, 0,
 		CTL_KERN, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
-		CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
+		CTLFLAG_PERMANENT | CTLFLAG_IMMEDIATE,
 		CTLTYPE_INT, "posix_aio",
 		SYSCTL_DESCR("Version of IEEE Std 1003.1 and its "
 			     "Asynchronous I/O option to which the "
@@ -962,18 +1010,18 @@ SYSCTL_SETUP(sysctl_aio_setup, "sysctl aio setup")
 		NULL, _POSIX_ASYNCHRONOUS_IO, NULL, 0,
 		CTL_KERN, CTL_CREATE, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
-		CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
+		CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
 		CTLTYPE_INT, "aio_listio_max",
 		SYSCTL_DESCR("Maximum number of asynchronous I/O "
 			     "operations in a single list I/O call"),
-		NULL, AIO_LISTIO_MAX, NULL, 0,
+		sysctl_aio_listio_max, 0, &aio_listio_max, 0,
 		CTL_KERN, CTL_CREATE, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
-		CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
+		CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
 		CTLTYPE_INT, "aio_max",
 		SYSCTL_DESCR("Maximum number of asynchronous I/O "
 			     "operations"),
-		NULL, AIO_MAX, NULL, 0,
+		sysctl_aio_max, 0, &aio_max, 0,
 		CTL_KERN, CTL_CREATE, CTL_EOL);
 }
 
