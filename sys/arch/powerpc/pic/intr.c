@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.1.2.8 2007/05/03 18:13:04 nisimura Exp $ */
+/*	$NetBSD: intr.c,v 1.1.2.9 2007/05/03 19:38:37 garbled Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.1.2.8 2007/05/03 18:13:04 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.1.2.9 2007/05/03 19:38:37 garbled Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -58,6 +58,7 @@ int max_base = 0;
 uint8_t	virq[NIRQ];
 int	virq_max = 0;
 int	imask[NIPL];
+int	primary_pic = 0;
 
 static int	fakeintr(void *);
 static int	mapirq(uint32_t);
@@ -673,8 +674,8 @@ void
 pic_ext_intr(void)
 {
 
-	KASSERT(pics[0] != NULL);
-	pic_handle_intr(pics[0]);
+	KASSERT(pics[primary_pic] != NULL);
+	pic_handle_intr(pics[primary_pic]);
 
 	return;
 
