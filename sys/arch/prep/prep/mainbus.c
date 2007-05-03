@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.26.16.4 2007/05/01 19:19:00 garbled Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.26.16.5 2007/05/03 20:32:18 garbled Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.26.16.4 2007/05/01 19:19:00 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.26.16.5 2007/05/03 20:32:18 garbled Exp $");
 
 #include "opt_pci.h"
 #include "opt_residual.h"
@@ -154,10 +154,6 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 #endif /* NPCI */
 
 /* scan pnpbus first */
-#if NISA > 0
-	/* Initialize interrupt controller */
-	init_icu(0);
-#endif
 #if NPNPBUS > 0
 	mba.mba_paa.paa_iot = &genppc_isa_io_space_tag;
 	mba.mba_paa.paa_memt = &genppc_isa_mem_space_tag;
