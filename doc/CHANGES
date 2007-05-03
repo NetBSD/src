@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.764.2.9 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.764.2.10 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -618,4 +618,7 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 	i386, amd64: switch bootable iso images to native boot format, and add
 		different bootable kenrels on the iso images. Enable ACPI
 		in default INSTALL and GENERIC kernels. [bouyer 20070306]
-       ataraid(4): Add support for Via V-RAID. [garbled 20070326]
+	ataraid(4): Add support for Via V-RAID. [garbled 20070326]
+	wm(4): Added support for the Intel i82801H (ICH8) gigabit ethernet
+		controller.  [bouyer 20070429]
+
