@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.1.2.3 2007/05/03 00:00:33 macallan Exp $ */
+/*	$NetBSD: intr.c,v 1.1.2.4 2007/05/03 00:02:21 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.1.2.3 2007/05/03 00:00:33 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.1.2.4 2007/05/03 00:02:21 macallan Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -645,8 +645,6 @@ start:
 		mtmsr(msr);
 		ci->ci_cpl = pcpl;
 		
-		pic->pic_reenable_irq(pic, realirq, is->is_type);
-
 		uvmexp.intrs++;
 		is->is_ev.ev_count++;
 	}
