@@ -1,4 +1,4 @@
-/*	$NetBSD: aio.h,v 1.1 2007/04/30 14:44:31 rmind Exp $	*/
+/*	$NetBSD: aio.h,v 1.2 2007/05/03 22:03:50 rmind Exp $	*/
 
 /*
  * Copyright (c) 2007, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -64,8 +64,7 @@ struct aiocb {
 /* Internal kernel data */
 #ifdef _KERNEL
 
-/* Maximal number of allowed AIO operations */
-/* XXX: These will be changeable via sysctl */
+/* Default limits of allowed AIO operations */
 #define AIO_LISTIO_MAX		512
 #define AIO_MAX			AIO_LISTIO_MAX * 16
 
