@@ -1,4 +1,4 @@
-/*	$NetBSD: pic_openpic.c,v 1.1.2.1 2007/05/02 23:51:38 macallan Exp $ */
+/*	$NetBSD: pic_openpic.c,v 1.1.2.2 2007/05/03 03:18:33 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic_openpic.c,v 1.1.2.1 2007/05/02 23:51:38 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic_openpic.c,v 1.1.2.2 2007/05/03 03:18:33 macallan Exp $");
 
 #include "opt_interrupt.h"
 
@@ -62,9 +62,7 @@ struct openpic_ops {
 	uint32_t enable_mask;
 };
 
-static struct openpic_ops *setup_openpic(uint32_t, int, int);
-
-static struct openpic_ops *
+struct pic_ops *
 setup_openpic(uint32_t addr, int num, int passthrough)
 {
 	struct openpic_ops *openpic;
@@ -134,7 +132,7 @@ setup_openpic(uint32_t addr, int num, int passthrough)
 	openpic_write(OPENPIC_IPI_VECTOR(1), x);
 #endif
 
-	return openpic;
+	return pic;
 }
 
 static int
