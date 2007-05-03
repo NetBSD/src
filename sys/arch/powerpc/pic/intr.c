@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.1.2.4 2007/05/03 00:02:21 macallan Exp $ */
+/*	$NetBSD: intr.c,v 1.1.2.5 2007/05/03 00:13:11 garbled Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.1.2.4 2007/05/03 00:02:21 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.1.2.5 2007/05/03 00:13:11 garbled Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -205,6 +205,8 @@ intr_establish(int hwirq, int type, int level, int (*ih_fun)(void *),
 	ih->ih_level = level;
 	ih->ih_irq = irq;
 	*p = ih;
+
+	pic->pic_establish_irq(pic, hwirq - pic->pic_intrbase, is->is_type);
 
 	return ih;
 }
