@@ -1,4 +1,4 @@
-/* $NetBSD: privcmd.c,v 1.15 2006/10/17 19:57:24 bouyer Exp $ */
+/* $NetBSD: privcmd.c,v 1.15.2.1 2007/05/03 05:11:20 snj Exp $ */
 
 /*-
  * Copyright (c) 2004 Christian Limpach.
@@ -32,7 +32,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.15 2006/10/17 19:57:24 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.15.2.1 2007/05/03 05:11:20 snj Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -222,6 +222,7 @@ privcmd_ioctl(void *v)
 				copyout(&mfn, &pmb->arr[i], sizeof(mfn));
 			}
 		}
+		error = 0;
 		break;
 	}
 #ifndef XEN3
