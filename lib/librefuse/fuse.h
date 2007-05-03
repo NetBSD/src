@@ -33,6 +33,8 @@
 #include <puffs.h>
 #include <utime.h>
 
+#include <fuse_opt.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif

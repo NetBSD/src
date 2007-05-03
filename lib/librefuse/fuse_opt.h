@@ -1,4 +1,4 @@
-/*	$NetBSD: fuse_opt.h,v 1.2 2007/02/28 16:28:25 xtraeme Exp $	*/
+/*	$NetBSD: fuse_opt.h,v 1.3 2007/05/03 20:58:22 agc Exp $	*/
 
 /*
  * Copyright (c) 2007 Alistair Crooks.  All rights reserved.
@@ -30,8 +30,6 @@
 
 #ifndef _FUSE_OPT_H_
 #define _FUSE_OPT_H_
-
-#include <fuse.h>
 
 enum {
 	FUSE_OPT_KEY_OPT = -1,
