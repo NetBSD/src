@@ -1,4 +1,4 @@
-/* $NetBSD: pic_prepivr.c,v 1.1.2.2 2007/05/03 16:00:15 nisimura Exp $ */
+/* $NetBSD: pic_prepivr.c,v 1.1.2.3 2007/05/03 19:38:37 garbled Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic_prepivr.c,v 1.1.2.2 2007/05/03 16:00:15 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic_prepivr.c,v 1.1.2.3 2007/05/03 19:38:37 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -72,8 +72,6 @@ struct prepivr_ops {
 vaddr_t prep_intr_reg;		/* PReP interrupt vector register */
 uint32_t prep_intr_reg_off;	/* IVR offset within the mapped page */
 
-void init_prepivr(void);
-
 #define IO_ELCR1	0x4d0
 #define IO_ELCR2	0x4d1
 
@@ -83,8 +81,8 @@ void init_prepivr(void);
  * prep_intr_reg_off.
  */
 
-void
-init_prepivr(void)
+struct pic_ops *
+setup_prepivr(void)
 {
 	struct prepivr_ops *prepivr;
 	struct pic_ops *pic;
@@ -110,6 +108,8 @@ init_prepivr(void)
 	prepivr->pending_events = 0;
 	prepivr->enable_mask = 0xffffffff;
 	prepivr->irqs = 0;
+
+	return pic;
 }
 
 static int
