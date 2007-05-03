@@ -1,4 +1,4 @@
-/*	$NetBSD: refuse.c,v 1.50 2007/05/02 18:05:54 pooka Exp $	*/
+/*	$NetBSD: refuse.c,v 1.51 2007/05/03 21:02:54 agc Exp $	*/
 
 /*
  * Copyright © 2007 Alistair Crooks.  All rights reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: refuse.c,v 1.50 2007/05/02 18:05:54 pooka Exp $");
+__RCSID("$NetBSD: refuse.c,v 1.51 2007/05/03 21:02:54 agc Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -67,10 +67,9 @@ struct fuse_config {
 };
 
 struct fuse_chan {
-	const char *dir;
-	struct fuse_args *args;
-
-	struct puffs_usermount *pu;
+	const char		*dir;
+	struct fuse_args	*args;
+	struct puffs_usermount	*pu;
 };
 
 /* this is the private fuse structure */
@@ -219,6 +218,93 @@ puffs_fuse_dirfil(fuse_dirh_t h, const char *name, int type, ino_t ino)
 		dino = fakeino++;
 
 	return fill_dirbuf(h, name, dino, dtype);
+}
+
+static struct fuse_args *
+deep_copy_args(int argc, char **argv)
+{
+	struct fuse_args	*ap;
+	int			 i;
+
+	NEW(struct fuse_args, ap, "deep_copy_args", return NULL);
+	/* deep copy args structure into channel args */
+	ap->allocated = ((argc / 10) + 1) * 10;
+	NEWARRAY(char *, ap->argv, ap->allocated, "deep_copy_args",
+		return NULL);
+	for (i = 0 ; i < argc ; i++) {
+		ap->argv[i] = strdup(argv[i]);
+	}
+	return ap;
+}
+
+static void
+free_args(struct fuse_args *ap)
+{
+	int	i;
+
+	for (i = 0 ; i < ap->argc ; i++) {
+		free(ap->argv[i]);
+	}
+	free(ap);
+}
+
+/* this function exposes struct fuse to userland */
+struct fuse *
+fuse_setup(int argc, char **argv, const struct fuse_operations *ops,
+	size_t size, char **mountpoint, int *multithreaded, int *fd)
+{
+	struct fuse_chan	*fc;
+	struct fuse_args	*args;
+	struct fuse		*fuse;
+	char			 name[64];
+	char			*slash;
+
+	/* whilst this (assigning the pu_privdata in the puffs
+	 * usermount struct to be the fuse struct) might seem like
+	 * we are chasing our tail here, the logic is as follows:
+		+ the operation wrapper gets called with the puffs
+		  calling conventions
+		+ we need to fix up args first
+		+ then call the fuse user-supplied operation
+		+ then we fix up any values on return that we need to
+		+ and fix up any nodes, etc
+	 * so we need to be able to get at the fuse ops from within the
+	 * puffs_usermount struct
+	 */
+	if (argv == NULL || *argv == NULL) {
+		(void) strlcpy(name, "refuse", sizeof(name));
+	} else {
+		if ((slash = strrchr(*argv, '/')) == NULL) {
+			slash = *argv;
+		} else {
+			slash += 1;
+		}
+		(void) snprintf(name, sizeof(name), "refuse:%s", slash);
+	}
+
+	/* stuff name into fuse_args */
+	args = deep_copy_args(argc, argv);
+	if (args->argc > 0) {
+		FREE(args->argv[0]);
+	}
+	args->argv[0] = strdup(name);
+
+	fc = fuse_mount(*mountpoint = argv[argc - 1], args);
+	fuse = fuse_new(fc, args, ops, size, NULL);
+
+	free_args(args);
+
+	/* XXX - wait for puffs to become multi-threaded */
+	if (multithreaded) {
+		*multithreaded = 0;
+	}
+
+	/* XXX - this is unused */
+	if (fd) {
+		*fd = 0;
+	}
+
+	return fuse;
 }
 
 #define FUSE_ERR_UNLINK(fuse, file) if (fuse->op.unlink) fuse->op.unlink(file)
@@ -967,78 +1053,20 @@ puffs_fuse_fs_statvfs(struct puffs_cc *pcc, struct statvfs *svfsb, pid_t pid)
 
 
 /* End of puffs_fuse operations */
-
-static struct fuse_args *
-deep_copy_args(int argc, char **argv)
-{
-	struct fuse_args	*ap;
-	int			 i;
-
-	NEW(struct fuse_args, ap, "deep_copy_args", return NULL);
-	/* deep copy args structure into channel args */
-	ap->allocated = ((argc / 10) + 1) * 10;
-	NEWARRAY(char *, ap->argv, ap->allocated, "fuse_mount", return NULL);
-	for (i = 0 ; i < argc ; i++) {
-		ap->argv[i] = strdup(argv[i]);
-	}
-	return ap;
-}
-
-static void
-free_args(struct fuse_args *ap)
-{
-	int	i;
-
-	for (i = 0 ; i < ap->argc ; i++) {
-		free(ap->argv[i]);
-	}
-	free(ap);
-}
-
 /* ARGSUSED3 */
 int
 fuse_main_real(int argc, char **argv, const struct fuse_operations *ops,
 	size_t size, void *userdata)
 {
-	struct fuse		*fuse;
-	struct fuse_chan	*fc;
-	struct fuse_args	*args;
-	char			 name[64];
-	char			*slash;
-	int			 ret;
+	struct fuse	*fuse;
+	char		*mountpoint;
+	int		 multithreaded;
+	int		 fd;
 
-	/* whilst this (assigning the pu_privdata in the puffs
-	 * usermount struct to be the fuse struct) might seem like
-	 * we are chasing our tail here, the logic is as follows:
-		+ the operation wrapper gets called with the puffs
-		  calling conventions
-		+ we need to fix up args first
-		+ then call the fuse user-supplied operation
-		+ then we fix up any values on return that we need to
-		+ and fix up any nodes, etc
-	 * so we need to be able to get at the fuse ops from within the
-	 * puffs_usermount struct
-	 */
-	if ((slash = strrchr(*argv, '/')) == NULL) {
-		slash = *argv;
-	} else {
-		slash += 1;
-	}
-	(void) snprintf(name, sizeof(name), "refuse:%s", slash);
+	fuse = fuse_setup(argc, argv, ops, size, &mountpoint, &multithreaded,
+			&fd);
 
-	/* stuff name into fuse_args */
-	args = deep_copy_args(argc, argv);
-	FREE(args->argv[0]);
-	args->argv[0] = strdup(name);
-
-	fc = fuse_mount(argv[argc - 1], args);
-	fuse = fuse_new(fc, args, ops, size, userdata);
-
-	ret = fuse_loop(fuse);
-
-	free_args(args);
-
-	return ret;
+	return fuse_loop(fuse);
 }
 
 /*
@@ -1209,4 +1237,15 @@ fuse_unmount_compat22(const char *mp)
 {
 
 	return;
+}
+
+/* The next function "exposes" struct fuse to userland.  Not much
+* that we can do about this, as we're conforming to a defined
+* interface.  */
+
+void
+fuse_teardown(struct fuse *fuse, char *mountpoint)
+{
+	fuse_unmount(mountpoint, fuse->fc);
+	fuse_destroy(fuse);
 }
