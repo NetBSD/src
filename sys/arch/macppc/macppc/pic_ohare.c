@@ -1,4 +1,4 @@
-/*	$NetBSD: pic_ohare.c,v 1.1.2.1 2007/05/02 03:02:34 macallan Exp $ */
+/*	$NetBSD: pic_ohare.c,v 1.1.2.2 2007/05/03 02:56:16 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic_ohare.c,v 1.1.2.1 2007/05/02 03:02:34 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic_ohare.c,v 1.1.2.2 2007/05/03 02:56:16 macallan Exp $");
 
 #include "opt_interrupt.h"
 
@@ -50,11 +50,11 @@ __KERNEL_RCSID(0, "$NetBSD: pic_ohare.c,v 1.1.2.1 2007/05/02 03:02:34 macallan E
 #include <arch/powerpc/pic/picvar.h>
 
 static int  ohare_irq_is_enabled(struct pic_ops *, int);
-static void ohare_enable_irq(struct pic_ops *, int);
-static void ohare_reenable_irq(struct pic_ops *, int);
+static void ohare_enable_irq(struct pic_ops *, int, int);
+static void ohare_reenable_irq(struct pic_ops *, int, int);
 static void ohare_disable_irq(struct pic_ops *, int);
 static void ohare_clear_irq(struct pic_ops *, int);
-static int  ohare_get_irq(struct pic_ops *, int);
+static int  ohare_get_irq(struct pic_ops *);
 static void ohare_ack_irq(struct pic_ops *, int);
 
 struct ohare_ops {
@@ -156,7 +156,7 @@ ohare_irq_is_enabled(struct pic_ops *pic, int irq)
 }
 
 static void
-ohare_enable_irq(struct pic_ops *pic, int irq)
+ohare_enable_irq(struct pic_ops *pic, int irq, int type)
 {
 	struct ohare_ops *ohare = (struct ohare_ops *)pic;
 	uint32_t mask = 1 << irq;
@@ -166,7 +166,7 @@ ohare_enable_irq(struct pic_ops *pic, int irq)
 }
 
 static void
-ohare_reenable_irq(struct pic_ops *pic, int irq)
+ohare_reenable_irq(struct pic_ops *pic, int irq, int type)
 {
 	struct ohare_ops *ohare = (struct ohare_ops *)pic;
 	uint32_t levels;
@@ -220,7 +220,7 @@ ohare_read_events(struct ohare_ops *ohare)
 }
 
 static int
-ohare_get_irq(struct pic_ops *pic, int cpu)
+ohare_get_irq(struct pic_ops *pic)
 {
 	struct ohare_ops *ohare = (struct ohare_ops *)pic;
 	int bit, mask;
@@ -239,7 +239,7 @@ ohare_get_irq(struct pic_ops *pic, int cpu)
 }
 
 static void
-ohare_ack_irq(struct pic_ops *pic, int cpu)
+ohare_ack_irq(struct pic_ops *pic, int irq)
 {
 }
 
