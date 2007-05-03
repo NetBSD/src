@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.1.2.9 2007/05/03 19:38:37 garbled Exp $ */
+/*	$NetBSD: intr.c,v 1.1.2.10 2007/05/03 19:54:41 garbled Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.1.2.9 2007/05/03 19:38:37 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.1.2.10 2007/05/03 19:54:41 garbled Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -679,4 +679,57 @@ pic_ext_intr(void)
 
 	return;
 
+}
+
+int
+splraise(int ncpl)
+{
+	struct cpu_info *ci = curcpu();
+	int ocpl;
+
+	__asm volatile("sync; eieio");	/* don't reorder.... */
+	ocpl = ci->ci_cpl;
+	ci->ci_cpl = ocpl | ncpl;
+	__asm volatile("sync; eieio");	/* reorder protect */
+	return ocpl;
+}
+
+void
+splx(int ncpl)
+{
+
+	struct cpu_info *ci = curcpu();
+	__asm volatile("sync; eieio");	/* reorder protect */
+	ci->ci_cpl = ncpl;
+	if (ci->ci_ipending & ~ncpl)
+		pic_do_pending_int();
+	__asm volatile("sync; eieio");	/* reorder protect */
+}
+
+int
+spllower(int ncpl)
+{
+	struct cpu_info *ci = curcpu();
+	int ocpl;
+
+	__asm volatile("sync; eieio");	/* reorder protect */
+	ocpl = ci->ci_cpl;
+	ci->ci_cpl = ncpl;
+	if (ci->ci_ipending & ~ncpl)
+		pic_do_pending_int();
+	__asm volatile("sync; eieio");	/* reorder protect */
+	return ocpl;
+}
+
+/* Following code should be implemented with lwarx/stwcx to avoid
+ * the disable/enable. i need to read the manual once more.... */
+void
+softintr(int ipl)
+{
+	int msrsave;
+
+	msrsave = mfmsr();
+	mtmsr(msrsave & ~PSL_EE);
+	curcpu()->ci_ipending |= 1 << ipl;
+	mtmsr(msrsave);
 }
