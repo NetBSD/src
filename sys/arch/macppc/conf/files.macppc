@@ -1,4 +1,4 @@
-#	$NetBSD: files.macppc,v 1.84.2.2 2007/05/02 06:46:02 macallan Exp $
+#	$NetBSD: files.macppc,v 1.84.2.3 2007/05/03 04:10:03 macallan Exp $
 #
 # macppc-specific configuration info
 
@@ -22,7 +22,7 @@ file arch/macppc/macppc/machdep.c
 file arch/macppc/dev/ofb_cons.c
 file arch/macppc/dev/dbdma.c
 
-defflag opt_interrupt.h PIC_OHARE PIC_GRANDCENTRAL PIC_HEATHROW PIC_OPENPIC
+defflag opt_interrupt.h PIC_OHARE PIC_GRANDCENTRAL PIC_HEATHROW
 
 file arch/powerpc/powerpc/procfs_machdep.c	procfs
 file arch/powerpc/powerpc/softintr.c
