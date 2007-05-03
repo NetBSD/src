@@ -1,4 +1,4 @@
-#	$NetBSD: files.prep,v 1.57.4.6 2007/05/03 19:59:01 garbled Exp $
+#	$NetBSD: files.prep,v 1.57.4.7 2007/05/03 20:32:18 garbled Exp $
 #
 # prep-specific configuration info
 #
@@ -106,7 +106,8 @@ file	arch/prep/pci/gten.c		gten needs-flag
 #
 
 include "dev/isa/files.isa"
-file	arch/prep/isa/isa_machdep.c	isa
+file	arch/prep/isa/isa_machdep.c		isa
+file	arch/powerpc/isa/isa_machdep_common.c	isa
 file	arch/powerpc/isa/isadma_machdep.c	isa
 
 # ISA Plug 'n Play devices
