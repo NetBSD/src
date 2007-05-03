@@ -33,8 +33,6 @@
 #include <puffs.h>
 #include <utime.h>
 
-#include <fuse_opt.h>
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -173,5 +171,7 @@ void fuse_unmount_compat22(const char *);
 #ifdef __cplusplus
 }
 #endif
+
+#include <fuse_opt.h>
 
 #endif
