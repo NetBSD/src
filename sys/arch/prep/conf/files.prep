@@ -1,4 +1,4 @@
-#	$NetBSD: files.prep,v 1.57.4.7 2007/05/03 20:32:18 garbled Exp $
+#	$NetBSD: files.prep,v 1.57.4.8 2007/05/03 23:27:26 garbled Exp $
 #
 # prep-specific configuration info
 #
@@ -17,7 +17,7 @@ file	arch/prep/prep/ibm_machdep.c
 file	arch/prep/prep/platform.c
 
 file	arch/prep/prep/autoconf.c
-file	arch/prep/prep/clock.c
+file	arch/powerpc/powerpc/clock.c
 file	arch/prep/prep/consinit.c
 file	kern/subr_disk_mbr.c			disk
 file	arch/prep/prep/machdep.c
