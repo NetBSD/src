@@ -1,4 +1,4 @@
-/*	$NetBSD: aio.h,v 1.1 2007/04/30 14:44:29 rmind Exp $	*/
+/*	$NetBSD: aio.h,v 1.2 2007/05/03 21:22:33 rmind Exp $	*/
 
 /*
  * Copyright (c) 2007, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -25,28 +25,29 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _AIO_H_
-#define _AIO_H_
+#ifndef	_AIO_H_
+#define	_AIO_H_
 
 #include <fcntl.h>
 #include <signal.h>
 #include <time.h>
+
+#include <sys/cdefs.h>
 #include <sys/signal.h>
 
-/*
- * NOTE: Asynchronous I/O block structure and
- * constants are defined in sys/aio.h header.
- */
 #include <sys/aio.h>
 
-/* Prototypes */
-int aio_cancel(int, struct aiocb *);
-int aio_error(const struct aiocb *);
-int aio_fsync(int, struct aiocb *);
-int aio_read(struct aiocb *);
-ssize_t aio_return(struct aiocb *);
-int aio_suspend(const struct aiocb *const[], int, const struct timespec *);
-int aio_write(struct aiocb *);
-int lio_listio(int, struct aiocb *const[], int, struct sigevent *);
+__BEGIN_DECLS
+int	aio_cancel(int, struct aiocb *);
+int	aio_error(const struct aiocb *);
+int	aio_fsync(int, struct aiocb *);
+int	aio_read(struct aiocb *);
+ssize_t	aio_return(struct aiocb *);
+int	aio_suspend(const struct aiocb * const [], int,
+		    const struct timespec *);
+int	aio_write(struct aiocb *);
+int	lio_listio(int, struct aiocb * const __restrict [],
+		    int, struct sigevent * __restrict);
+__END_DECLS
 
-#endif /* _AIO_H_ */
+#endif	/* _AIO_H_ */
