@@ -1,4 +1,4 @@
-/*	$NetBSD: pic_openpic.c,v 1.1.2.5 2007/05/03 18:13:04 nisimura Exp $ */
+/*	$NetBSD: pic_openpic.c,v 1.1.2.6 2007/05/03 19:38:37 garbled Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic_openpic.c,v 1.1.2.5 2007/05/03 18:13:04 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic_openpic.c,v 1.1.2.6 2007/05/03 19:38:37 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -43,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: pic_openpic.c,v 1.1.2.5 2007/05/03 18:13:04 nisimura
 
 #include <arch/powerpc/pic/picvar.h>
 
+static void openpic_set_priority(int cpu, int pri);
 static int  opic_irq_is_enabled(struct pic_ops *, int);
 static void opic_enable_irq(struct pic_ops *, int, int);
 static void opic_disable_irq(struct pic_ops *, int);
@@ -55,8 +56,10 @@ struct openpic_ops {
 	uint32_t enable_mask;
 };
 
+volatile unsigned char *openpic_base;
+
 struct pic_ops *
-setup_openpic(uint32_t addr, int maxirq, int passthrough)
+setup_openpic(uint32_t addr, int passthrough)
 {
 	struct openpic_ops *openpic;
 	struct pic_ops *pic;
@@ -68,10 +71,12 @@ setup_openpic(uint32_t addr, int maxirq, int passthrough)
 	KASSERT(openpic != NULL);
 	pic = &openpic->pic;
 
-	if (maxirq == -1)
-		maxirq = 1 + ((openpic_read(OPENPIC_FEATURE) >> 16) & 0x7ff);
+	x = openpic_read(OPENPIC_FEATURE);
+	aprint_normal("OpenPIC Version 1.%d: "
+	    "Supports %d CPUs and %d interrupt sources.\n",
+	    x & 0xff, ((x & 0x1f00) >> 8) + 1, ((x & 0x07ff0000) >> 16) + 1);
 
-	pic->pic_numintrs = maxirq;
+	pic->pic_numintrs = ((x & 0x07ff0000) >> 16) + 1;
 	pic->pic_cookie = (void *)addr;
 	pic->pic_irq_is_enabled = opic_irq_is_enabled;
 	pic->pic_enable_irq = opic_enable_irq;
@@ -85,7 +90,7 @@ setup_openpic(uint32_t addr, int maxirq, int passthrough)
 	pic_add(pic);
 
 	/* disable all interrupts */
-	for (irq = 0; irq < maxirq; irq++)
+	for (irq = 0; irq < pic->pic_numintrs; irq++)
 		openpic_write(OPENPIC_SRC_VECTOR(irq), OPENPIC_IMASK);
 
 	openpic_set_priority(0, 15);
@@ -98,29 +103,30 @@ setup_openpic(uint32_t addr, int maxirq, int passthrough)
 	}
 	openpic_write(OPENPIC_CONFIG, x);
 
-	/* send all interrupts to CPU 0 */
-	for (irq = 0; irq < maxirq; irq++)
-		openpic_write(OPENPIC_IDEST(irq), 1 << 0);
-
-	for (irq = 0; irq < maxirq; irq++) {
+	for (irq = 0; irq < pic->pic_numintrs; irq++) {
 		x = irq;
 		x |= OPENPIC_IMASK;
-		x |= OPENPIC_POLARITY_POSITIVE;
+		x |= (irq == 0) ?
+		    OPENPIC_POLARITY_POSITIVE : OPENPIC_POLARITY_NEGATIVE;
 		x |= OPENPIC_SENSE_LEVEL;
 		x |= 8 << OPENPIC_PRIORITY_SHIFT;
 		openpic_write(OPENPIC_SRC_VECTOR(irq), x);
+		/* send all interrupts to CPU 0 */
+		openpic_write(OPENPIC_IDEST(irq), 1 << 0);
 	}
+
+	openpic_write(OPENPIC_SPURIOUS_VECTOR, 0xff);
 
 	openpic_set_priority(0, 0);
 
 	/* clear all pending interrunts */
-	for (irq = 0; irq < 256; irq++) {
+	for (irq = 0; irq < pic->pic_numintrs; irq++) {
 		openpic_read_irq(0);
 		openpic_eoi(0);
 	}
 
-	for (irq = 0; irq < maxirq; irq++)
-		openpic_disable_irq(irq);
+	for (irq = 0; irq < pic->pic_numintrs; irq++)
+		opic_disable_irq(pic, irq);
 
 #ifdef MULTIPROCESSOR
 	x = openpic_read(OPENPIC_IPI_VECTOR(1));
@@ -130,6 +136,17 @@ setup_openpic(uint32_t addr, int maxirq, int passthrough)
 #endif
 
 	return pic;
+}
+
+static void
+openpic_set_priority(int cpu, int pri)
+{
+	u_int x;
+
+	x = openpic_read(OPENPIC_CPU_PRIORITY(cpu));
+	x &= ~OPENPIC_CPU_PRIORITY_MASK;
+	x |= pri;
+	openpic_write(OPENPIC_CPU_PRIORITY(cpu), x);
 }
 
 static int
@@ -143,15 +160,25 @@ opic_irq_is_enabled(struct pic_ops *pic, int irq)
 static void
 opic_enable_irq(struct pic_ops *pic, int irq, int type)
 {
+	u_int x;
 
-	openpic_enable_irq(irq, type);
+	x = openpic_read(OPENPIC_SRC_VECTOR(irq));
+	x &= ~(OPENPIC_IMASK | OPENPIC_SENSE_LEVEL | OPENPIC_SENSE_EDGE);
+	if (type == IST_LEVEL)
+		x |= OPENPIC_SENSE_LEVEL;
+	else
+		x |= OPENPIC_SENSE_EDGE;
+	openpic_write(OPENPIC_SRC_VECTOR(irq), x);
 }
 
 static void
 opic_disable_irq(struct pic_ops *pic, int irq)
 {
+	u_int x;
 
-	openpic_disable_irq(irq);
+	x = openpic_read(OPENPIC_SRC_VECTOR(irq));
+	x |= OPENPIC_IMASK;
+	openpic_write(OPENPIC_SRC_VECTOR(irq), x);
 }
 
 static void
