@@ -1,4 +1,4 @@
-/*	$NetBSD: mpc106reg.h,v 1.2 2007/05/01 07:52:51 garbled Exp $	*/
+/*	$NetBSD: mpc106reg.h,v 1.3 2007/05/03 05:00:57 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 2001,2007 The NetBSD Foundation, Inc.
@@ -173,8 +173,8 @@
 #define MPC106_MMSR1		0xe4	/* modified memory status reg 1 */
 #define MPC106_MMSR2		0xec	/* modified memory status reg 2 */
 #define	MPC106_MCCR1		0xf0	/* Memory control configuration 1 */
-#define  MPC106_MCCR1_ROMNAL	__BITS(21,28)	/* burst mode rom reads */
-#define  MPC106_MCCR1_ROMFAL	__BITS(27,23)	/* burst mode rom reads */
+#define  MPC106_MCCR1_ROMNAL	__BITS(31,28)	/* burst mode rom reads */
+#define  MPC106_MCCR1_ROMFAL	__BITS(27,23)	/* nonburst mode rom reads */
 #define  MPC106_MCCR1_501_MODE	__BIT(22)	/* 501 mode conf signal */
 #define  MPC106_MCCR1_8N64	__BIT(21)
 #define  MPC106_MCCR1_BURST	__BIT(20)
