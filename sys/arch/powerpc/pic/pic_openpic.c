@@ -1,4 +1,4 @@
-/*	$NetBSD: pic_openpic.c,v 1.1.2.3 2007/05/03 04:00:52 macallan Exp $ */
+/*	$NetBSD: pic_openpic.c,v 1.1.2.4 2007/05/03 16:00:15 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -30,11 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic_openpic.c,v 1.1.2.3 2007/05/03 04:00:52 macallan Exp $");
-
-#include "opt_interrupt.h"
-
-#ifdef PIC_OPENPIC
+__KERNEL_RCSID(0, "$NetBSD: pic_openpic.c,v 1.1.2.4 2007/05/03 16:00:15 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -44,8 +40,6 @@ __KERNEL_RCSID(0, "$NetBSD: pic_openpic.c,v 1.1.2.3 2007/05/03 04:00:52 macallan
 
 #include <machine/pio.h>
 #include <powerpc/openpic.h>
-
-#include <dev/ofw/openfirm.h>
 
 #include <machine/autoconf.h>
 #include <arch/powerpc/pic/picvar.h>
@@ -63,7 +57,7 @@ struct openpic_ops {
 };
 
 struct pic_ops *
-setup_openpic(uint32_t addr, int num, int passthrough)
+setup_openpic(uint32_t addr, int maxirq, int passthrough)
 {
 	struct openpic_ops *openpic;
 	struct pic_ops *pic;
@@ -75,7 +69,10 @@ setup_openpic(uint32_t addr, int num, int passthrough)
 	KASSERT(openpic != NULL);
 	pic = &openpic->pic;
 
-	pic->pic_numintrs = num;
+	if (maxirq == -1)
+		maxirq = 1 + ((openpic_read(OPENPIC_FEATURE) >> 16) & 0x7ff);
+
+	pic->pic_numintrs = maxirq;
 	pic->pic_cookie = (void *)addr;
 	pic->pic_irq_is_enabled = opic_irq_is_enabled;
 	pic->pic_enable_irq = opic_enable_irq;
@@ -89,7 +86,7 @@ setup_openpic(uint32_t addr, int num, int passthrough)
 	pic_add(pic);
 
 	/* disable all interrupts */
-	for (irq = 0; irq < 256; irq++)
+	for (irq = 0; irq < maxirq; irq++)
 		openpic_write(OPENPIC_SRC_VECTOR(irq), OPENPIC_IMASK);
 
 	openpic_set_priority(0, 15);
@@ -103,10 +100,10 @@ setup_openpic(uint32_t addr, int num, int passthrough)
 	openpic_write(OPENPIC_CONFIG, x);
 
 	/* send all interrupts to CPU 0 */
-	for (irq = 0; irq < ICU_LEN; irq++)
+	for (irq = 0; irq < maxirq; irq++)
 		openpic_write(OPENPIC_IDEST(irq), 1 << 0);
 
-	for (irq = 0; irq < ICU_LEN; irq++) {
+	for (irq = 0; irq < maxirq; irq++) {
 		x = irq;
 		x |= OPENPIC_IMASK;
 		x |= OPENPIC_POLARITY_POSITIVE;
@@ -123,7 +120,7 @@ setup_openpic(uint32_t addr, int num, int passthrough)
 		openpic_eoi(0);
 	}
 
-	for (irq = 0; irq < num; irq++)
+	for (irq = 0; irq < maxirq; irq++)
 		openpic_disable_irq(irq);
 
 #ifdef MULTIPROCESSOR
@@ -178,5 +175,3 @@ opic_ack_irq(struct pic_ops *pic, int irq)
 
 	openpic_eoi(cpu_number());
 }
-
-#endif /* PIC_OPENPIC */

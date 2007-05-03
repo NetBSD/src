@@ -1,4 +1,4 @@
-/* $NetBSD: pic_prepivr.c,v 1.1.2.1 2007/05/03 00:39:32 garbled Exp $ */
+/* $NetBSD: pic_prepivr.c,v 1.1.2.2 2007/05/03 16:00:15 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,11 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic_prepivr.c,v 1.1.2.1 2007/05/03 00:39:32 garbled Exp $");
-
-#include "opt_interrupt.h"
-
-#ifdef PIC_PREPIVR
+__KERNEL_RCSID(0, "$NetBSD: pic_prepivr.c,v 1.1.2.2 2007/05/03 16:00:15 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -206,4 +202,3 @@ prepivr_ack_irq(struct pic_ops *pic, int irq)
 		isa_outb(IO_ICU1, 0xe0 | IRQ_SLAVE);
 	}
 }
-#endif /* PIC_PREPIVR */

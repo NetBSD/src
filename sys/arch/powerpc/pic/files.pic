@@ -1,5 +1,5 @@
 # 
-#	$NetBSD: files.pic,v 1.1.2.3 2007/05/03 00:47:24 garbled Exp $
+#	$NetBSD: files.pic,v 1.1.2.4 2007/05/03 16:00:15 nisimura Exp $
 #
 # generic PIC abstraction
 
@@ -7,5 +7,5 @@ file arch/powerpc/pic/intr.c
 defflag opt_pic.h PIC_DEBUG
 
 defflag opt_interrupt.h PIC_OPENPIC PIC_PREPIVR
-file arch/powerpc/pic/pic_openpic.c
-file arch/powerpc/pic/pic_prepivr.c
+file arch/powerpc/pic/pic_openpic.c	pic_openpic
+file arch/powerpc/pic/pic_prepivr.c	pic_preivr
