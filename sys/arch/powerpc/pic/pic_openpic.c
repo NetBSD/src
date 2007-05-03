@@ -1,4 +1,4 @@
-/*	$NetBSD: pic_openpic.c,v 1.1.2.2 2007/05/03 03:18:33 macallan Exp $ */
+/*	$NetBSD: pic_openpic.c,v 1.1.2.3 2007/05/03 04:00:52 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic_openpic.c,v 1.1.2.2 2007/05/03 03:18:33 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic_openpic.c,v 1.1.2.3 2007/05/03 04:00:52 macallan Exp $");
 
 #include "opt_interrupt.h"
 
@@ -84,6 +84,7 @@ setup_openpic(uint32_t addr, int num, int passthrough)
 	pic->pic_clear_irq = opic_clear_irq;
 	pic->pic_get_irq = opic_get_irq;
 	pic->pic_ack_irq = opic_ack_irq;
+	pic->pic_establish_irq = dummy_pic_establish_intr;
 	strcpy(pic->pic_name, "openpic");
 	pic_add(pic);
 
