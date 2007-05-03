@@ -1,4 +1,4 @@
-/*	$NetBSD: pic_heathrow.c,v 1.1.2.1 2007/05/02 06:47:12 macallan Exp $ */
+/*	$NetBSD: pic_heathrow.c,v 1.1.2.2 2007/05/03 02:56:16 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic_heathrow.c,v 1.1.2.1 2007/05/02 06:47:12 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic_heathrow.c,v 1.1.2.2 2007/05/03 02:56:16 macallan Exp $");
 
 #include "opt_interrupt.h"
 
@@ -50,11 +50,11 @@ __KERNEL_RCSID(0, "$NetBSD: pic_heathrow.c,v 1.1.2.1 2007/05/02 06:47:12 macalla
 #include <arch/powerpc/pic/picvar.h>
 
 static int  heathrow_irq_is_enabled(struct pic_ops *, int);
-static void heathrow_enable_irq(struct pic_ops *, int);
-static void heathrow_reenable_irq(struct pic_ops *, int);
+static void heathrow_enable_irq(struct pic_ops *, int, int);
+static void heathrow_reenable_irq(struct pic_ops *, int, int);
 static void heathrow_disable_irq(struct pic_ops *, int);
 static void heathrow_clear_irq(struct pic_ops *, int);
-static int  heathrow_get_irq(struct pic_ops *, int);
+static int  heathrow_get_irq(struct pic_ops *);
 static void heathrow_ack_irq(struct pic_ops *, int);
 
 struct heathrow_ops {
@@ -90,6 +90,8 @@ int init_heathrow(void)
 	int      heathrow;
 
 	heathrow = OF_finddevice("/pci/mac-io");
+	if (heathrow == -1)
+		heathrow = OF_finddevice("mac-io");
 	if (heathrow == -1)
 		return FALSE;
 
@@ -151,7 +153,7 @@ heathrow_irq_is_enabled(struct pic_ops *pic, int irq)
 }
 
 static void
-heathrow_enable_irq(struct pic_ops *pic, int irq)
+heathrow_enable_irq(struct pic_ops *pic, int irq, int type)
 {
 	struct heathrow_ops *heathrow = (struct heathrow_ops *)pic;
 	uint32_t mask = 1 << (irq & 0x1f);
@@ -166,7 +168,7 @@ heathrow_enable_irq(struct pic_ops *pic, int irq)
 }
 
 static void
-heathrow_reenable_irq(struct pic_ops *pic, int irq)
+heathrow_reenable_irq(struct pic_ops *pic, int irq, int type)
 {
 	struct heathrow_ops *heathrow = (struct heathrow_ops *)pic;
 	uint32_t levels;
@@ -240,7 +242,7 @@ heathrow_read_events(struct heathrow_ops *heathrow)
 }
 
 static int
-heathrow_get_irq(struct pic_ops *pic, int cpu)
+heathrow_get_irq(struct pic_ops *pic)
 {
 	struct heathrow_ops *heathrow = (struct heathrow_ops *)pic;
 	int bit, mask;
@@ -271,7 +273,7 @@ heathrow_get_irq(struct pic_ops *pic, int cpu)
 }
 
 static void
-heathrow_ack_irq(struct pic_ops *pic, int cpu)
+heathrow_ack_irq(struct pic_ops *pic, int irq)
 {
 }
 
