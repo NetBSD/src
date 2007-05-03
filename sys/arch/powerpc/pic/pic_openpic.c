@@ -1,4 +1,4 @@
-/*	$NetBSD: pic_openpic.c,v 1.1.2.4 2007/05/03 16:00:15 nisimura Exp $ */
+/*	$NetBSD: pic_openpic.c,v 1.1.2.5 2007/05/03 18:13:04 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic_openpic.c,v 1.1.2.4 2007/05/03 16:00:15 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic_openpic.c,v 1.1.2.5 2007/05/03 18:13:04 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -41,7 +41,6 @@ __KERNEL_RCSID(0, "$NetBSD: pic_openpic.c,v 1.1.2.4 2007/05/03 16:00:15 nisimura
 #include <machine/pio.h>
 #include <powerpc/openpic.h>
 
-#include <machine/autoconf.h>
 #include <arch/powerpc/pic/picvar.h>
 
 static int  opic_irq_is_enabled(struct pic_ops *, int);
