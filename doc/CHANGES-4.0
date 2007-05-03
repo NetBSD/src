@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.125 2007/05/02 05:00:44 snj Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.126 2007/05/03 05:13:59 snj Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -2883,4 +2883,28 @@ sys/dev/pci/pcidevs_data.h			regen
 
 	Add: Intel i82801H IFE G and GT LAN Controllers
 	[bouyer, ticket #597]
+
+doc/CHANGES					1.836
+share/man/man4/wm.4				1.17
+sys/dev/pci/if_wm.c				1.139-1.140
+sys/dev/pci/if_wmreg.h				1.22
+
+	Add support for ICH8 (i82801H) LAN, from FreeBSD:
+	i82801H IFE (GT) LAN Controller
+	i82801H IFE (G) LAN Controller
+	i82801H (M_AMT) LAN Controller
+	i82801H (AMT) LAN Controller
+	i82801H LAN Controller
+	i82801H (IFE) LAN Controller
+	i82801H (M) LAN Controller
+	[bouyer, ticket #598]
+
+sys/arch/xen/xen/privcmd.c			1.16
+
+	IOCTL_PRIVCMD_MMAPBATCH: mimic linux behavior and return no
+	error even if a pmap_enter_ma() (the underlying hypercall,
+	really) returns one. The fact that the mapping failed is notified
+	to the called by oring 0xF0000000 to the mfn.  This makes Xen 3.0.4
+	HVM work.
+	[bouyer, ticket #599]
 
