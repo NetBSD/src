@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.1.2.2 2007/05/02 19:28:01 macallan Exp $ */
+/*	$NetBSD: intr.c,v 1.1.2.3 2007/05/03 00:00:33 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.1.2.2 2007/05/02 19:28:01 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.1.2.3 2007/05/03 00:00:33 macallan Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -128,7 +128,7 @@ intr_establish(int hwirq, int type, int level, int (*ih_fun)(void *),
 	struct intrhand **p, *q, *ih;
 	struct intr_source *is;
 	struct pic_ops *pic;
-	static struct intrhand fakehand = {fakeintr};
+	static struct intrhand fakehand;
 	int irq;
 
 	if (hwirq >= max_base) {
@@ -191,6 +191,7 @@ intr_establish(int hwirq, int type, int level, int (*ih_fun)(void *),
 	 * until masking is set up.
 	 */
 	fakehand.ih_level = level;
+	fakehand.ih_fun = fakeintr;
 	*p = &fakehand;
 
 	intr_calculatemasks();
@@ -251,7 +252,7 @@ mapirq(uint32_t irq)
 	struct pic_ops *pic;
 	int v;
 
-	if (irq < 0 || irq >= max_base)
+	if (irq >= max_base)
 		panic("invalid irq %d", irq);
 
 	if ((pic = find_pic_by_irq(irq)) == NULL)
