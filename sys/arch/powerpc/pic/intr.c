@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.1.2.5 2007/05/03 00:13:11 garbled Exp $ */
+/*	$NetBSD: intr.c,v 1.1.2.6 2007/05/03 00:42:03 garbled Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.1.2.5 2007/05/03 00:13:11 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.1.2.6 2007/05/03 00:42:03 garbled Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -653,7 +653,7 @@ start:
 #ifdef PIC_DEBUG
 boo:
 #endif /* PIC_DEBUG */
-	pic->pic_ack_irq(pic, 0);
+	pic->pic_ack_irq(pic, realirq);
 	realirq = pic->pic_get_irq(pic);
 	if (realirq != 255)
 		goto start;
