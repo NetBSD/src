@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.134 2007/04/26 19:44:02 garbled Exp $
+# $NetBSD: GENERIC,v 1.134.2.1 2007/05/03 19:59:01 garbled Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,13 +22,14 @@ include 	"arch/prep/conf/std.prep"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.134 $"
+#ident		"GENERIC-$Revision: 1.134.2.1 $"
 
 maxusers	32
 
 # Platform support
 
-options 	OPENPIC				# OpenPIC support (7043-140)
+options 	PIC_OPENPIC	# OpenPIC support (7043-140)
+options		PIC_PREPIVR
 
 # Standard system options
 
@@ -256,7 +257,7 @@ nvram*	at pnpbus?
 # Serial Devices
 
 # ISA serial interfaces
-com0	at isa? port 0x3f8 irq 4	# standard PC serial ports
+#com0	at isa? port 0x3f8 irq 4	# standard PC serial ports
 com1	at isa? port 0x2f8 irq 3
 
 # PCMCIA serial interfaces

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.66.14.1 2007/05/01 19:19:00 garbled Exp $	*/
+/*	$NetBSD: machdep.c,v 1.66.14.2 2007/05/03 19:59:02 garbled Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.66.14.1 2007/05/01 19:19:00 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.66.14.2 2007/05/03 19:59:02 garbled Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -74,6 +74,8 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.66.14.1 2007/05/01 19:19:00 garbled Ex
 #include <machine/trap.h>
 
 #include <powerpc/oea/bat.h>
+#include <powerpc/openpic.h>
+#include <arch/powerpc/pic/picvar.h>
 
 #include <dev/cons.h>
 
@@ -91,6 +93,7 @@ void comsoft(void);
 #endif
 
 #include "ksyms.h"
+#include "opt_interrupt.h"
 
 void initppc(u_long, u_long, u_int, void *);
 void dumpsys(void);
@@ -98,6 +101,7 @@ void strayintr(int);
 int lcsplx(int);
 void prep_bus_space_init(void);
 static void prep_init(void);
+static void init_intr(void);
 
 char bootinfo[BOOTINFO_MAXSIZE];
 char bootpath[256];
@@ -109,6 +113,9 @@ uint32_t prep_intr_reg_off;		/* IVR offset within the mapped page */
 struct mem_region physmemr[OFMEMREGIONS], availmemr[OFMEMREGIONS];
 
 paddr_t avail_end;			/* XXX temporary */
+
+extern int primary_pic;
+extern struct platform_quirkdata platform_quirks[];
 
 RESIDUAL *res;
 RESIDUAL resdata;
@@ -377,6 +384,7 @@ halt_sys:
 int
 lcsplx(int ipl)
 {
+#if 0
 	int oldcpl;
 	struct cpu_info *ci = curcpu();
 
@@ -388,6 +396,8 @@ lcsplx(int ipl)
 	__asm volatile("sync; eieio\n");	/* reorder protect */
 
 	return (oldcpl);
+#endif
+	return spllower(ipl);
 }
 
 struct powerpc_bus_space prep_io_space_tag = {
@@ -461,16 +471,17 @@ prep_bus_space_init(void)
 		panic("prep_bus_space_init: can't init isa mem tag");
 }
 
-#if defined(OPENPIC)
+#if defined(PIC_OPENPIC)
 
 static int
-setup_openpic(PPC_DEVICE *dev)
+prep_setup_openpic(PPC_DEVICE *dev)
 {
 	uint32_t l;
 	uint8_t *p;
 	void *v;
 	int tag, size, item;
-	unsigned char *baseaddr = NULL;
+	uint32_t baseaddr = 0;
+	struct pic_ops *pic;
 
 	l = be32toh(dev->AllocatedOffset);
 	p = res->DevicePnPHeap + l;
@@ -493,22 +504,28 @@ setup_openpic(PPC_DEVICE *dev)
 			continue;
 		/* otherwise, we have a memory packet */
 		if (pa->PPCData[0] == 1)
-			baseaddr = (unsigned char *)mapiodev(
+			baseaddr = (uint32_t)mapiodev(
 			    le64dec(&pa->PPCData[4]) | PREP_BUS_SPACE_IO,
 			    le64dec(&pa->PPCData[12]));
 		else if (pa->PPCData[0] == 2)
-			baseaddr = (unsigned char *)mapiodev(
+			baseaddr = (uint32_t)mapiodev(
 			    le64dec(&pa->PPCData[4]) | PREP_BUS_SPACE_MEM,
 			    le64dec(&pa->PPCData[12]));
-		if (baseaddr == NULL)
+		if (baseaddr == 0)
 			return 0;
-		openpic_init(baseaddr);
+		pic_init();
+		pic = setup_prepivr();
+		(void)setup_openpic(baseaddr, 0);
+		primary_pic = 1;
+		/* set up the IVR as a cascade on openpic 0 */
+		intr_establish(16, IST_LEVEL, IPL_NONE, pic_handle_intr, pic);
+		oea_install_extint(pic_ext_intr);
 		return 1;
 	}
 	return 0;
 }
 
-#endif /* OPENPIC */
+#endif /* PIC_OPENPIC */
 
 /*
  * Locate and setup the isa_ivr.
@@ -573,9 +590,9 @@ prep_init()
 	for (i = 0; i < ((ndev > MAX_DEVICES) ? MAX_DEVICES : ndev); i++) {
 		if (ppc_dev[i].DeviceId.DevId == 0x41d00000) /* ISA_PIC */
 			setup_ivr(&ppc_dev[i]);
-#if defined(OPENPIC)
+#if defined(PIC_OPENPIC)
 		if (ppc_dev[i].DeviceId.DevId == 0x244d000d) { /* MPIC */
-			foundmpic = setup_openpic(&ppc_dev[i]);
+			foundmpic = prep_setup_openpic(&ppc_dev[i]);
 		}
 #else
 		;
@@ -595,4 +612,22 @@ prep_init()
 	}
 	if (!foundmpic)
 		init_intr();
+}
+
+static void
+init_intr(void)
+{
+        int i;
+        openpic_base = 0;
+
+	pic_init();
+        i = find_platform_quirk(res->VitalProductData.PrintableModel);
+        if (i != -1)
+                if (platform_quirks[i].quirk & PLAT_QUIRK_ISA_HANDLER &&
+                    platform_quirks[i].isa_intr_handler == EXT_INTR_I8259) {
+			panic("notyet");
+                        return;
+                }
+	(void)setup_prepivr();
+        oea_install_extint(pic_ext_intr);
 }

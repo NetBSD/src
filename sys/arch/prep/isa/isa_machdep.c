@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.11 2006/05/09 02:48:36 garbled Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.11.26.1 2007/05/03 19:59:01 garbled Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.11 2006/05/09 02:48:36 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.11.26.1 2007/05/03 19:59:01 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -166,6 +166,7 @@ isa_intr_clr(int irq)
 void
 init_icu(int lvlmask)
 {
+#if 0
 	int i;
 	struct intrsource *is;
 
@@ -187,6 +188,7 @@ init_icu(int lvlmask)
 #endif
 	isa_outb(IO_ELCR1, (lvlmask >> 0) & 0xff);
 	isa_outb(IO_ELCR2, (lvlmask >> 8) & 0xff);
+#endif /* 0 */
 
 	isa_outb(IO_ICU1, 0x11);		/* program device, four bytes */
 	isa_outb(IO_ICU1+1, 0);			/* starting at this vector */
@@ -225,6 +227,7 @@ isa_setirqstat(int irq, int enabled, int type)
 int
 isa_intr_alloc(isa_chipset_tag_t c, int mask, int type, int *irq_p)
 {
+#if 0
 	int irq;
 	int maybe_irq = -1;
 	int shared_depth = 0;
@@ -259,5 +262,6 @@ isa_intr_alloc(isa_chipset_tag_t c, int mask, int type, int *irq_p)
 		*irq_p = maybe_irq;
 		return 0;
 	}
+#endif
 	return 1;
 }
