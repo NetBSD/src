@@ -1,6 +1,6 @@
-/*	$NetBSD: pfkey.c,v 1.18.4.2 2007/03/21 14:30:08 vanhu Exp $	*/
+/*	$NetBSD: pfkey.c,v 1.18.4.3 2007/05/04 09:11:57 vanhu Exp $	*/
 
-/* $Id: pfkey.c,v 1.18.4.2 2007/03/21 14:30:08 vanhu Exp $ */
+/* $Id: pfkey.c,v 1.18.4.3 2007/05/04 09:11:57 vanhu Exp $ */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -1282,6 +1282,15 @@ pk_recvupdate(mhp)
 
 	/* turn off schedule */
 	SCHED_KILL(iph2->scr);
+
+	/* Force the update of ph2's ports, as there is at least one
+	 * situation where they'll mismatch with ph1's values
+	 */
+
+#ifdef ENABLE_NATT
+	set_port(iph2->src, extract_port(iph2->ph1->local));
+	set_port(iph2->dst, extract_port(iph2->ph1->remote));
+#endif
 
 	/*
 	 * since we are going to reuse the phase2 handler, we need to
