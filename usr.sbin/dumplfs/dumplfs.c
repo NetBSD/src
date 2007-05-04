@@ -1,4 +1,4 @@
-/*	$NetBSD: dumplfs.c,v 1.34 2006/09/01 19:57:41 perseant Exp $	*/
+/*	$NetBSD: dumplfs.c,v 1.35 2007/05/04 14:13:56 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)dumplfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: dumplfs.c,v 1.34 2006/09/01 19:57:41 perseant Exp $");
+__RCSID("$NetBSD: dumplfs.c,v 1.35 2007/05/04 14:13:56 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -275,9 +275,11 @@ dump_ifile(int fd, struct lfs *lfsp, int do_ientries, int do_segentries, daddr_t
 		if (dip->di_inumber == LFS_IFILE_INUM)
 			break;
 
-	if (dip < dpage)
-		errx(1, "unable to locate ifile inode at disk address 0x%llx",
+	if (dip < dpage) {
+		warnx("unable to locate ifile inode at disk address 0x%llx",
 		     (long long)addr);
+		return;
+	}
 
 	(void)printf("\nIFILE inode\n");
 	dump_dinode(dip);
