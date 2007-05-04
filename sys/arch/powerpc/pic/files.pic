@@ -1,5 +1,5 @@
 # 
-#	$NetBSD: files.pic,v 1.1.2.7 2007/05/04 02:42:19 macallan Exp $
+#	$NetBSD: files.pic,v 1.1.2.8 2007/05/04 06:01:52 macallan Exp $
 #
 # generic PIC abstraction
 
@@ -14,6 +14,6 @@ defflag opt_interrupt.h PIC_OPENPIC:	pic_openpic
 defflag opt_interrupt.h PIC_PREPIVR:	pic_prepivr
 defflag opt_interrupt.h PIC_I8259:	pic_i8259
 
-file arch/powerpc/pic/pic_openpic.c	pic_openpic
-file arch/powerpc/pic/pic_prepivr.c	pic_prepivr
-file arch/powerpc/pic/pic_i8259.c	pic_i8259
+file arch/powerpc/pic/pic_openpic.c	pic_openpic	needs-flag
+file arch/powerpc/pic/pic_prepivr.c	pic_prepivr	needs-flag
+file arch/powerpc/pic/pic_i8259.c	pic_i8259	needs-flag
