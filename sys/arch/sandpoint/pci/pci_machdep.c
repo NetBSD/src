@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.12.38.1 2007/05/04 11:03:24 nisimura Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.12.38.2 2007/05/04 19:18:22 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.12.38.1 2007/05/04 11:03:24 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.12.38.2 2007/05/04 19:18:22 nisimura Exp $");
 
 #include "opt_openpic.h"
 
@@ -211,6 +211,19 @@ pci_intr_map(pa, ihp)
 		goto bad;
 	}
 #if defined(OPENPIC_SERIAL_MODE)
+	/*
+	 * SandPoint III "SP3" brd uses EPIC serial mode IRQ.
+	 * WinBond I/O i8259 PIC interrupt is wired to IRQ0.
+	 */
+#define	SANDPOINT_INTR_SIOINT		0
+#define	SANDPOINT_INTR_PCI0		2
+#define	SANDPOINT_INTR_PCI1		3
+#define	SANDPOINT_INTR_PCI2		4
+#define	SANDPOINT_INTR_PCI3		5
+#define	SANDPOINT_INTR_WINBOND_A	6
+#define	SANDPOINT_INTR_WINBOND_B	7
+#define	SANDPOINT_INTR_WINBOND_C	8
+#define	SANDPOINT_INTR_WINBOND_D	9
 	if (line == 11) {
 		switch (pin) {
 		case PCI_INTERRUPT_PIN_A:
@@ -234,19 +247,26 @@ pci_intr_map(pa, ihp)
 			*ihp = SANDPOINT_INTR_WINBOND_C;
 	} else {
 #else
-	if (1) {
-#endif
 		/*
 		 * Sandpoint has 4 PCI slots.
 		 * Sandpoint rev. X2 has them in a weird order.  Counting
 		 * from center out toward the edge, we have:
-		 * 	Slot 1 (dev 14?) (labelled 1)
-		 * 	Slot 0 (dev 13?) (labelled 2)
+		 * 	Slot 1 (dev 14)  (labelled 1)
+		 * 	Slot 0 (dev 13)  (labelled 2)
 		 * 	Slot 3 (dev 16)  (labelled 3)
 		 * 	Slot 2 (dev 15)  (labelled 4)
 		 * To keep things confusing, we will consistently use a zero-
 		 * based numbering scheme where Motorola's is usually 1-based.
+		 *
+		 * 4 EPIC direct mode interrupts are wired as;
+		 *	IRQ0 - PCI Slot #0 INTA#
+		 *	IRQ1 - PCI Slot #1 INTA# / WinBond I/O
+		 *	IRQ2 - PCI Slot #2 INTA#
+		 *	IRQ3 - PCI Slot #3 INTA#
+		 * WinBond I/O i8259 PIC shares IRQ1 with PCI Slot #0.
 		 */
+	if (1) {
+#endif
 		if (line < 13 || line > 16) {
 			printf("pci_intr_map: bad interrupt line %d,%c\n",
 				line, pin + '@');
@@ -314,7 +334,7 @@ pci_intr_establish(pc, ih, level, func, arg)
 	 * For the Sandpoint, this is the zero-based slot #,
 	 * configured when the bus is set up.
 	 */
-	return intr_establish(ih, IST_LEVEL, level, func, arg);
+	return intr_establish(ih + 16, IST_LEVEL, level, func, arg);
 }
 
 void

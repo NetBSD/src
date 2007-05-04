@@ -1,4 +1,4 @@
-/*	$NetBSD: openpicreg.h,v 1.3.88.2 2007/05/04 14:26:30 nisimura Exp $	*/
+/*	$NetBSD: openpicreg.h,v 1.3.88.3 2007/05/04 19:18:22 nisimura Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -36,41 +36,10 @@
  */
 
 /*
- * consult machdep.c to see interrupt source definition and register
- * location.
+ * This file provides an interface between OPENPIC code and
+ * MPC107/MPC824x EPIC register definition.  Consult machdep.c
+ * to see EPIC register location.
  */
-
-#include "opt_openpic.h"
-
-#if defined(OPENPIC_SERIAL_MODE)
-#define	SANDPOINT_INTR_SIOINT		0
-#define	SANDPOINT_INTR_ISA		SANDPOINT_INTR_SIOINT
-#define	SANDPOINT_INTR_SIOINT2		1 /* unknown... */
-#define	SANDPOINT_INTR_PCI0		2
-#define	SANDPOINT_INTR_PCI1		3
-#define	SANDPOINT_INTR_PCI2		4
-#define	SANDPOINT_INTR_PCI3		5
-#define	SANDPOINT_INTR_WINBOND_A	6
-#define	SANDPOINT_INTR_WINBOND_B	7
-#define	SANDPOINT_INTR_WINBOND_C	8
-#define	SANDPOINT_INTR_IDE0		SANDPOINT_INTR_WINBOND_C
-#define	SANDPOINT_INTR_WINBOND_D	9
-#define	SANDPOINT_INTR_IDE1		SANDPOINT_INTR_WINBOND_D
-#define	SANDPOINT_INTR_RESERVED_10	10
-#define	SANDPOINT_INTR_RESERVED_11	11
-#define	SANDPOINT_INTR_RESERVED_12	12
-#define	SANDPOINT_INTR_RESERVED_13	13
-#define	SANDPOINT_INTR_RESERVED_14	14
-#define	SANDPOINT_INTR_RESERVED_15	15
-#define	SANDPOINT_INTR_I2C		16
-#define	SANDPOINT_INTR_DMA0		17
-#define	SANDPOINT_INTR_DMA1		18
-#define	SANDPOINT_INTR_I2O		19
-#define	SANDPOINT_INTR_TIMER0		20
-#define	SANDPOINT_INTR_TIMER1		21
-#define	SANDPOINT_INTR_TIMER2		22
-#define	SANDPOINT_INTR_TIMER3		23
-#endif
 
 /* XXX XXX XXX */
 extern unsigned epicsteer[];
