@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupts.c,v 1.1.2.2 2007/05/03 04:05:15 macallan Exp $ */
+/*	$NetBSD: interrupts.c,v 1.1.2.3 2007/05/04 02:49:38 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupts.c,v 1.1.2.2 2007/05/03 04:05:15 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupts.c,v 1.1.2.3 2007/05/04 02:49:38 macallan Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -45,7 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: interrupts.c,v 1.1.2.2 2007/05/03 04:05:15 macallan 
 #include "opt_interrupt.h"
 
 #ifdef PIC_OPENPIC
-static int init_openpic(int, int);
+static int init_openpic(int);
 
 const char *compat[] = {
 	"chrp,open-pic",
@@ -55,7 +55,7 @@ const char *compat[] = {
 };
 
 static int 
-init_openpic(int num, int pass_through)
+init_openpic(int pass_through)
 {
 	uint32_t reg[5];
 	uint32_t obio_base, pic_base;
@@ -92,7 +92,7 @@ init_openpic(int num, int pass_through)
 	printf("pic-base: %08x\n", pic_base);
 
 	aprint_normal("found openpic PIC at %08x\n", pic_base);
-	setup_openpic(pic_base, num, pass_through);
+	setup_openpic((void *)pic_base, pass_through);
 
 	return TRUE;
 }
@@ -117,63 +117,10 @@ init_interrupt(void)
 		goto done;
 #endif
 #ifdef PIC_OPENPIC
-	if (init_openpic(64, 0))
+	if (init_openpic(0))
 		goto done;
 #endif
 	panic("%s: no supported interrupt controller found", __func__);
 done:
 	oea_install_extint(pic_ext_intr);
-}
-
-int
-splraise(int ncpl)
-{
-	struct cpu_info *ci = curcpu();
-	int ocpl;
-
-	__asm volatile("sync; eieio");	/* don't reorder.... */
-	ocpl = ci->ci_cpl;
-	ci->ci_cpl = ocpl | ncpl;
-	__asm volatile("sync; eieio");	/* reorder protect */
-	return ocpl;
-}
-
-void
-splx(int ncpl)
-{
-
-	struct cpu_info *ci = curcpu();
-	__asm volatile("sync; eieio");	/* reorder protect */
-	ci->ci_cpl = ncpl;
-	if (ci->ci_ipending & ~ncpl)
-		pic_do_pending_int();
-	__asm volatile("sync; eieio");	/* reorder protect */
-}
-
-int
-spllower(int ncpl)
-{
-	struct cpu_info *ci = curcpu();
-	int ocpl;
-
-	__asm volatile("sync; eieio");	/* reorder protect */
-	ocpl = ci->ci_cpl;
-	ci->ci_cpl = ncpl;
-	if (ci->ci_ipending & ~ncpl)
-		pic_do_pending_int();
-	__asm volatile("sync; eieio");	/* reorder protect */
-	return ocpl;
-}
-
-/* Following code should be implemented with lwarx/stwcx to avoid
- * the disable/enable. i need to read the manual once more.... */
-void
-softintr(int ipl)
-{
-	int msrsave;
-
-	msrsave = mfmsr();
-	mtmsr(msrsave & ~PSL_EE);
-	curcpu()->ci_ipending |= 1 << ipl;
-	mtmsr(msrsave);
 }
