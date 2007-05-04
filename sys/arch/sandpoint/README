@@ -1,4 +1,4 @@
-/*	$NetBSD: README,v 1.2 2001/03/06 20:16:09 briggs Exp $	*/
+/*	$NetBSD: README,v 1.2.90.1 2007/05/04 19:26:52 nisimura Exp $	*/
 
 Overview
 
@@ -144,3 +144,22 @@ register interrupts with the ISA interrupt handler.  The sticky
 part of this is how to deal with one global interrupt priority.
 
 
+
+SandPoint III "SP3" Interrupt Configuration
+
+With a help of additional logic circuit SP3 organizes external
+interrupt sources as EPIC serial mode interrupts.
+	16 serial IRQs
+		IRQ0 - WinBond South bridge i8259 PIC, polarity inverted
+		IRQ1 - reserved
+		IRQ2 - PCI Slot #1, INTA#
+		IRQ3 - PCI Slot #2, INTA#
+		IRQ4 - PCI Slot #3, INTA#
+		IRQ5 - PCI Slot #4, INTA#
+		IRQ6 - WinBond INTA#
+		IRQ7 - WinBond INTB#
+		IRQ8 - WinBond INTC#
+		IRQ9 - WinBond INTD#
+		IRQ10 thru 15 - reserved
+SP3 provides switch selections to emulate SP1/2 compatible EPIC
+direct mode interrupt assignments.
