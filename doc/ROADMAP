@@ -1,4 +1,4 @@
-#	$NetBSD: ROADMAP,v 1.17 2007/03/29 14:28:15 christos Exp $
+#	$NetBSD: ROADMAP,v 1.18 2007/05/04 22:39:43 rmind Exp $
 
 A high-level roadmap for NetBSD
 
@@ -147,7 +147,7 @@ ak. AIO support
     POSIX aio_*() with full support for Asynchronous I/O (AIO) in the
     kernel.
 	Responsible: rmind
-	ETA: 5.0?
+	ETA: 5.0
 
 al. Modern parallel port support
     Complete support for bidirectional and "advanced" functionality
