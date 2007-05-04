@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp.c,v 1.20.6.5 2007/03/21 14:30:08 vanhu Exp $	*/
+/*	$NetBSD: isakmp.c,v 1.20.6.6 2007/05/04 09:12:20 vanhu Exp $	*/
 
 /* Id: isakmp.c,v 1.74 2006/05/07 21:32:59 manubsd Exp */
 
@@ -2352,12 +2352,15 @@ isakmp_chkph1there(iph2)
 	 */
 #ifdef ENABLE_NATT
 	if (!extract_port(iph2->src) && !extract_port(iph2->dst)) {
-		if ((iph1 = getph1byaddrwop(iph2->src, iph2->dst)) != NULL) {
-			set_port(iph2->src, extract_port(iph1->local));
-			set_port(iph2->dst, extract_port(iph1->remote));
+		plog(LLV_DEBUG2, LOCATION, NULL, "CHKPH1THERE: extract_port.\n");
+		if( (iph1 = getph1byaddrwop(iph2->src, iph2->dst)) != NULL){
+			plog(LLV_DEBUG2, LOCATION, NULL, "CHKPH1THERE: found a ph1 wop.\n");
 		}
 	} else {
+		plog(LLV_DEBUG2, LOCATION, NULL, "CHKPH1THERE: searching byaddr.\n");
 		iph1 = getph1byaddr(iph2->src, iph2->dst);
+		if(iph1 != NULL)
+			plog(LLV_DEBUG2, LOCATION, NULL, "CHKPH1THERE: found byaddr.\n");
 	}
 #else
 	iph1 = getph1byaddr(iph2->src, iph2->dst);
@@ -2368,10 +2371,25 @@ isakmp_chkph1there(iph2)
 	if (iph1 != NULL
 	 && iph1->status == PHASE1ST_ESTABLISHED) {
 		/* found isakmp-sa */
+
+		plog(LLV_DEBUG2, LOCATION, NULL, "CHKPH1THERE: got a ph1 handler, setting ports.\n");
+		plog(LLV_DEBUG2, LOCATION, NULL, "iph1->local: %s\n", saddr2str(iph1->local));
+		plog(LLV_DEBUG2, LOCATION, NULL, "iph1->remote: %s\n", saddr2str(iph1->remote));
+		plog(LLV_DEBUG2, LOCATION, NULL, "before:\n");
+		plog(LLV_DEBUG2, LOCATION, NULL, "src: %s\n", saddr2str(iph2->src));
+		plog(LLV_DEBUG2, LOCATION, NULL, "dst: %s\n", saddr2str(iph2->dst));
+		set_port(iph2->src, extract_port(iph1->local));
+		set_port(iph2->dst, extract_port(iph1->remote));
+		plog(LLV_DEBUG2, LOCATION, NULL, "After:\n");
+		plog(LLV_DEBUG2, LOCATION, NULL, "src: %s\n", saddr2str(iph2->src));
+		plog(LLV_DEBUG2, LOCATION, NULL, "dst: %s\n", saddr2str(iph2->dst));
+
 		/* begin quick mode */
 		(void)isakmp_ph2begin_i(iph1, iph2);
 		return;
 	}
+
+	plog(LLV_DEBUG2, LOCATION, NULL, "CHKPH1THERE: no established ph1 handler found\n");
 
 	/* no isakmp-sa found */
 	sched_new(1, isakmp_chkph1there_stub, iph2);
