@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupts.c,v 1.1.2.3 2007/05/04 02:49:38 macallan Exp $ */
+/*	$NetBSD: interrupts.c,v 1.1.2.4 2007/05/04 06:00:28 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupts.c,v 1.1.2.3 2007/05/04 02:49:38 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupts.c,v 1.1.2.4 2007/05/04 06:00:28 macallan Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -38,13 +38,17 @@ __KERNEL_RCSID(0, "$NetBSD: interrupts.c,v 1.1.2.3 2007/05/04 02:49:38 macallan 
 #include <sys/malloc.h>
 #include <sys/kernel.h>
 
+#include <machine/intr.h>
 #include <machine/autoconf.h>
-#include <arch/powerpc/pic/picvar.h>
+#include <powerpc/pic/picvar.h>
 #include <dev/ofw/openfirm.h>
 
 #include "opt_interrupt.h"
+#include "pic_openpic.h"
+#include "pic_ohare.h"
+#include "pic_heathrow.h"
 
-#ifdef PIC_OPENPIC
+#if NPIC_OPENPIC > 0
 static int init_openpic(int);
 
 const char *compat[] = {
@@ -69,13 +73,13 @@ init_openpic(int pass_through)
 	if (macio == -1)
 		return FALSE;
 
-	printf("macio: %08x\n", macio);
+	aprint_debug("macio: %08x\n", macio);
 
 	pic = OF_child(macio);
 	while ((pic != 0) && (of_compatible(pic, compat) == -1))
 		pic = OF_peer(pic);
 
-	printf("pic: %08x\n", pic);
+	aprint_debug("pic: %08x\n", pic);
 	if ((pic == -1) || (pic == 0))
 		return FALSE;
 
@@ -83,13 +87,13 @@ init_openpic(int pass_through)
 		return FALSE;
 
 	obio_base = reg[2];
-	printf("obio-base: %08x\n", obio_base);
+	aprint_debug("obio-base: %08x\n", obio_base);
 
 	if (OF_getprop(pic, "reg", reg, 8) < 8) 
 		return FALSE;
 
 	pic_base = obio_base + reg[0];
-	printf("pic-base: %08x\n", pic_base);
+	aprint_debug("pic-base: %08x\n", pic_base);
 
 	aprint_normal("found openpic PIC at %08x\n", pic_base);
 	setup_openpic((void *)pic_base, pass_through);
@@ -97,26 +101,22 @@ init_openpic(int pass_through)
 	return TRUE;
 }
 
-#endif /* PIC_OPENPIC */
+#endif /* NPIC_OPENPIC > 0 */
 
 void
 init_interrupt(void)
 {
 
 	pic_init();
-#ifdef PIC_OHARE
+#if NPIC_OHARE > 0
 	if (init_ohare())
 		goto done;
 #endif
-#ifdef PIC_GRANDCENTRAL
-	if (init_grandcentral())
-		goto done;
-#endif
-#ifdef PIC_HEATHROW
+#if NPIC_HEATHROW > 0
 	if (init_heathrow())
 		goto done;
 #endif
-#ifdef PIC_OPENPIC
+#if NPIC_OPENPIC > 0
 	if (init_openpic(0))
 		goto done;
 #endif
