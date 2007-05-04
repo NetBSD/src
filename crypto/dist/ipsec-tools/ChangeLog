@@ -7,6 +7,8 @@
 	  track some port matching problems with NAT-T.
 	* src/racoon/handler.c: added some debug in getph1byaddr() to
 	  track some port matching problems with NAT-T.
+	* src/racoon/handler.c: search a ph1 by address if iph2->ph1 is
+	  NULL when validating the new config.
 
 2007-04-04  Yvan Vanhullebus  <vanhu@netasq.com>
 	* src/racoon/oakley.c: dumps peer's ID and peer's certificate
