@@ -1,4 +1,4 @@
-# $NetBSD: ENCPP1,v 1.1.2.1 2007/05/04 11:15:49 nisimura Exp $
+# $NetBSD: ENCPP1,v 1.1.2.2 2007/05/04 14:32:42 nisimura Exp $
 #
 # Ampro EnCorePP1 machine description file
 # 
@@ -22,12 +22,9 @@ include 	"arch/sandpoint/conf/std.sandpoint"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ENCPP1-$Revision: 1.1.2.1 $"
+#ident 		"ENCPP1-$Revision: 1.1.2.2 $"
 
 maxusers	32
-
-options 	OPENPIC_SERIAL_MODE
-options 	ALTIVEC
 
 #options 	IPKDBUSERHACK	# Allow access to mapped memory via kgdb
 #options 	DEBUG_BY_TOOLS	# Allow debugging from toolsnet
