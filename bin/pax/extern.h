@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.52 2007/04/23 18:40:22 christos Exp $	*/
+/*	$NetBSD: extern.h,v 1.53 2007/05/04 21:19:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -220,7 +220,7 @@ int pat_add(char *, char *);
 void pat_chk(void);
 int pat_sel(ARCHD *);
 int pat_match(ARCHD *);
-int mod_name(ARCHD *);
+int mod_name(ARCHD *, int);
 int set_dest(ARCHD *, char *, int);
 
 /*
