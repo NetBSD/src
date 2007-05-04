@@ -1,4 +1,4 @@
-/*	$NetBSD: pic_ohare.c,v 1.1.2.3 2007/05/03 04:03:48 macallan Exp $ */
+/*	$NetBSD: pic_ohare.c,v 1.1.2.4 2007/05/04 02:50:49 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -30,11 +30,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic_ohare.c,v 1.1.2.3 2007/05/03 04:03:48 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic_ohare.c,v 1.1.2.4 2007/05/04 02:50:49 macallan Exp $");
 
 #include "opt_interrupt.h"
-
-#ifdef PIC_OHARE
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -49,11 +47,9 @@ __KERNEL_RCSID(0, "$NetBSD: pic_ohare.c,v 1.1.2.3 2007/05/03 04:03:48 macallan E
 #include <machine/autoconf.h>
 #include <arch/powerpc/pic/picvar.h>
 
-static int  ohare_irq_is_enabled(struct pic_ops *, int);
 static void ohare_enable_irq(struct pic_ops *, int, int);
 static void ohare_reenable_irq(struct pic_ops *, int, int);
 static void ohare_disable_irq(struct pic_ops *, int);
-static void ohare_clear_irq(struct pic_ops *, int);
 static int  ohare_get_irq(struct pic_ops *);
 static void ohare_ack_irq(struct pic_ops *, int);
 
@@ -71,7 +67,7 @@ inline void ohare_read_events(struct ohare_ops *);
 #define INT_ENABLE_REG	((uint32_t)pic->pic_cookie + 0x24)
 #define INT_CLEAR_REG	((uint32_t)pic->pic_cookie + 0x28)
 #define INT_LEVEL_REG	((uint32_t)pic->pic_cookie + 0x2c)
-#define INT_LEVEL_MASK_OHARE	0x1ff00000	/* also for Heathrow */
+#define INT_LEVEL_MASK_OHARE	0x1ff00000
 
 int init_ohare(void)
 {
@@ -121,14 +117,12 @@ setup_ohare(uint32_t addr)
 
 	pic->pic_numintrs = 32;
 	pic->pic_cookie = (void *)addr;
-	pic->pic_irq_is_enabled = ohare_irq_is_enabled;
 	pic->pic_enable_irq = ohare_enable_irq;
 	pic->pic_reenable_irq = ohare_reenable_irq;
 	pic->pic_disable_irq = ohare_disable_irq;
-	pic->pic_clear_irq = ohare_clear_irq;
 	pic->pic_get_irq = ohare_get_irq;
 	pic->pic_ack_irq = ohare_ack_irq;
-	pic->pic_establish_irq = dummy_pic_establish_intr;
+	pic->pic_establish_irq = NULL;
 	strcpy(pic->pic_name, "ohare");
 	pic_add(pic);
 	ohare->pending_events = 0;
@@ -146,14 +140,6 @@ setup_ohare2(uint32_t addr, int irq)
 	pic = setup_ohare(addr);
 	strcpy(pic->pic.pic_name, "ohare2");
 	intr_establish(irq, IST_LEVEL, IPL_NONE, pic_handle_intr, pic);
-}
-
-static int
-ohare_irq_is_enabled(struct pic_ops *pic, int irq)
-{
-	struct ohare_ops *ohare = (struct ohare_ops *)pic;
-	uint32_t mask = 1 << irq;
-	return ((ohare->enable_mask & mask) != 0); 
 }
 
 static void
@@ -190,14 +176,6 @@ ohare_disable_irq(struct pic_ops *pic, int irq)
 
 	ohare->enable_mask &= ~mask;
 	out32rb(INT_ENABLE_REG, ohare->enable_mask); 
-}
-
-static void
-ohare_clear_irq(struct pic_ops *pic, int irq)
-{
-	uint32_t mask = 1 << irq;
-
-	out32rb(INT_CLEAR_REG, mask);
 }
 
 inline void
@@ -243,5 +221,3 @@ static void
 ohare_ack_irq(struct pic_ops *pic, int irq)
 {
 }
-
-#endif /* PIC_OHARE */
