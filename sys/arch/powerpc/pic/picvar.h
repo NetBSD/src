@@ -1,4 +1,4 @@
-/*	$NetBSD: picvar.h,v 1.1.2.7 2007/05/03 19:38:37 garbled Exp $ */
+/*	$NetBSD: picvar.h,v 1.1.2.8 2007/05/04 00:57:24 garbled Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: picvar.h,v 1.1.2.7 2007/05/03 19:38:37 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: picvar.h,v 1.1.2.8 2007/05/04 00:57:24 garbled Exp $");
 
 #ifndef PIC_VAR_H
 #define PIC_VAR_H
@@ -87,5 +87,6 @@ void	dummy_pic_establish_intr(struct pic_ops *, int, int);
 /* address, enable passthrough */
 struct pic_ops *setup_openpic(uint32_t, int);
 struct pic_ops *setup_prepivr(void);
+struct pic_ops *setup_i8259(void);
 
 #endif /* PIC_VAR_H */

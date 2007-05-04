@@ -1,4 +1,4 @@
-/* $NetBSD: pic_prepivr.c,v 1.1.2.4 2007/05/04 00:57:24 garbled Exp $ */
+/* $NetBSD: pic_i8259.c,v 1.1.2.1 2007/05/04 00:57:24 garbled Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic_prepivr.c,v 1.1.2.4 2007/05/04 00:57:24 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic_i8259.c,v 1.1.2.1 2007/05/04 00:57:24 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -53,69 +53,54 @@ __KERNEL_RCSID(0, "$NetBSD: pic_prepivr.c,v 1.1.2.4 2007/05/04 00:57:24 garbled 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
 
-void prepivr_initialize(void);
-static int  prepivr_irq_is_enabled(struct pic_ops *, int);
-static void prepivr_enable_irq(struct pic_ops *, int, int);
-static void prepivr_disable_irq(struct pic_ops *, int);
-static void prepivr_clear_irq(struct pic_ops *, int);
-static int  prepivr_get_irq(struct pic_ops *);
-static void prepivr_ack_irq(struct pic_ops *, int);
-static void prepivr_establish_irq(struct pic_ops *pic, int irq, int type);
+void i8259_initialize(void);
+static int  i8259_irq_is_enabled(struct pic_ops *, int);
+static void i8259_enable_irq(struct pic_ops *, int, int);
+static void i8259_disable_irq(struct pic_ops *, int);
+static void i8259_clear_irq(struct pic_ops *, int);
+static int  i8259_get_irq(struct pic_ops *);
+static void i8259_ack_irq(struct pic_ops *, int);
 
-struct prepivr_ops {
+struct i8259_ops {
 	struct pic_ops pic;
 	uint32_t pending_events;
 	uint32_t enable_mask;
 	uint32_t irqs;
 };
 
-vaddr_t prep_intr_reg;		/* PReP interrupt vector register */
-uint32_t prep_intr_reg_off;	/* IVR offset within the mapped page */
-
-#define IO_ELCR1	0x4d0
-#define IO_ELCR2	0x4d1
-
-/*
- * Prior to calling init_prepivr, the port is expected to have mapped the
- * page containing the IVR with mapiodev to prep_intr_reg and set up the
- * prep_intr_reg_off.
- */
-
 struct pic_ops *
-setup_prepivr(void)
+setup_i8259(void)
 {
-	struct prepivr_ops *prepivr;
+	struct i8259_ops *i8259;
 	struct pic_ops *pic;
-	uint32_t pivr;
 
-	prepivr = malloc(sizeof(struct prepivr_ops), M_DEVBUF, M_NOWAIT);
-	KASSERT(prepivr != NULL);
-	pic = &prepivr->pic;
+	i8259 = malloc(sizeof(struct i8259_ops), M_DEVBUF, M_NOWAIT);
+	KASSERT(i8259 != NULL);
+	pic = &i8259->pic;
 
-	pivr = prep_intr_reg + prep_intr_reg_off;
 	pic->pic_numintrs = 16;
-	pic->pic_cookie = (void *)pivr;
-	pic->pic_irq_is_enabled = prepivr_irq_is_enabled;
-	pic->pic_enable_irq = prepivr_enable_irq;
-	pic->pic_reenable_irq = prepivr_enable_irq;
-	pic->pic_disable_irq = prepivr_disable_irq;
-	pic->pic_clear_irq = prepivr_clear_irq;
-	pic->pic_get_irq = prepivr_get_irq;
-	pic->pic_ack_irq = prepivr_ack_irq;
-	pic->pic_establish_irq = prepivr_establish_irq;
-	strcpy(pic->pic_name, "prepivr");
+	pic->pic_cookie = (void *)NULL;
+	pic->pic_irq_is_enabled = i8259_irq_is_enabled;
+	pic->pic_enable_irq = i8259_enable_irq;
+	pic->pic_reenable_irq = i8259_enable_irq;
+	pic->pic_disable_irq = i8259_disable_irq;
+	pic->pic_clear_irq = i8259_clear_irq;
+	pic->pic_get_irq = i8259_get_irq;
+	pic->pic_ack_irq = i8259_ack_irq;
+	pic->pic_establish_irq = dummy_pic_establish_intr;
+	strcpy(pic->pic_name, "i8259");
 	pic_add(pic);
-	prepivr->pending_events = 0;
-	prepivr->enable_mask = 0xffffffff;
-	prepivr->irqs = 0;
+	i8259->pending_events = 0;
+	i8259->enable_mask = 0xffffffff;
+	i8259->irqs = 0;
 
-	prepivr_initialize();
+	i8259_initialize();
 
 	return pic;
 }
 
 void
-prepivr_initialize(void)
+i8259_initialize(void)
 {
 	isa_outb(IO_ICU1, 0x11);		/* program device, four bytes */
 	isa_outb(IO_ICU1+1, 0);			/* starting at this vector */
@@ -131,73 +116,54 @@ prepivr_initialize(void)
 }
 
 static int
-prepivr_irq_is_enabled(struct pic_ops *pic, int irq)
+i8259_irq_is_enabled(struct pic_ops *pic, int irq)
 {
 	return 1;
 }
 
 static void
-prepivr_establish_irq(struct pic_ops *pic, int irq, int type)
+i8259_enable_irq(struct pic_ops *pic, int irq, int type)
 {
-	u_int8_t elcr[2];
-	int icu, bit;
+	struct i8259_ops *i8259 = (struct i8259_ops *)pic;
 
-	icu = irq / 8;
-	bit = irq % 8;
-	elcr[0] = isa_inb(IO_ELCR1);
-	elcr[1] = isa_inb(IO_ELCR2);
+	i8259->irqs |= 1 << irq;
+	if (i8259->irqs >= 0x100) /* IRQS >= 8 in use? */
+		i8259->irqs |= 1 << IRQ_SLAVE;
 
-	if (type == IST_LEVEL)
-		elcr[icu] |= 1 << bit;
-	else
-		elcr[icu] &= ~(1 << bit);
-
-	isa_outb(IO_ELCR1, elcr[0]);
-	isa_outb(IO_ELCR2, elcr[1]);
+	i8259->enable_mask = ~i8259->irqs;
+	isa_outb(IO_ICU1+1, i8259->enable_mask);
+	isa_outb(IO_ICU2+1, i8259->enable_mask >> 8);
 }
 
 static void
-prepivr_enable_irq(struct pic_ops *pic, int irq, int type)
+i8259_disable_irq(struct pic_ops *pic, int irq)
 {
-	struct prepivr_ops *prepivr = (struct prepivr_ops *)pic;
-
-	prepivr->irqs |= 1 << irq;
-	if (prepivr->irqs >= 0x100) /* IRQS >= 8 in use? */
-		prepivr->irqs |= 1 << IRQ_SLAVE;
-
-	prepivr->enable_mask = ~prepivr->irqs;
-	isa_outb(IO_ICU1+1, prepivr->enable_mask);
-	isa_outb(IO_ICU2+1, prepivr->enable_mask >> 8);
-}
-
-static void
-prepivr_disable_irq(struct pic_ops *pic, int irq)
-{
-	struct prepivr_ops *prepivr = (struct prepivr_ops *)pic;
+	struct i8259_ops *i8259 = (struct i8259_ops *)pic;
 	uint32_t mask = 1 << irq;
 
-	prepivr->enable_mask |= mask;
-	isa_outb(IO_ICU1+1, prepivr->enable_mask);
-	isa_outb(IO_ICU2+1, prepivr->enable_mask >> 8);
+	i8259->enable_mask |= mask;
+	isa_outb(IO_ICU1+1, i8259->enable_mask);
+	isa_outb(IO_ICU2+1, i8259->enable_mask >> 8);
 }
 
 static void
-prepivr_clear_irq(struct pic_ops *pic, int irq)
+i8259_clear_irq(struct pic_ops *pic, int irq)
 {
 	/* do nothing */
 }
 
 static int
-prepivr_get_irq(struct pic_ops *pic)
+i8259_get_irq(struct pic_ops *pic)
 {
-	static int lirq;
 	int irq;
 
-	irq = inb(pic->pic_cookie);
-	if (lirq == 7 && irq == lirq)
-		return 255;
+	isa_outb(IO_ICU1, 0x0c);
+	irq = isa_inb(IO_ICU1) & 0x07;
+	if (irq == IRQ_SLAVE) {
+		isa_outb(IO_ICU2, 0x0c);
+		irq = (isa_inb(IO_ICU2) & 0x07) + 8;
+	}
 
-	lirq = irq;
 	if (irq == 0)
 		return 255;
 
@@ -205,7 +171,7 @@ prepivr_get_irq(struct pic_ops *pic)
 }
 
 static void
-prepivr_ack_irq(struct pic_ops *pic, int irq)
+i8259_ack_irq(struct pic_ops *pic, int irq)
 {
 	if (irq < 8) {
 		isa_outb(IO_ICU1, 0xe0 | irq);
