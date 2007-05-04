@@ -1,4 +1,4 @@
-#	$NetBSD: files.macppc,v 1.84.2.4 2007/05/04 02:52:29 macallan Exp $
+#	$NetBSD: files.macppc,v 1.84.2.5 2007/05/04 05:59:25 macallan Exp $
 #
 # macppc-specific configuration info
 
@@ -29,8 +29,8 @@ defflag opt_interrupt.h PIC_OHARE: pic_ohare
 defflag opt_interrupt.h PIC_GRANDCENTRAL: pic_grandcentral
 defflag opt_interrupt.h PIC_HEATHROW: pic_heathrow
 
-file arch/macppc/macppc/pic_ohare.c		pic_ohare
-file arch/macppc/macppc/pic_heathrow.c		pic_heathrow
+file arch/macppc/macppc/pic_ohare.c		pic_ohare	needs-flag
+file arch/macppc/macppc/pic_heathrow.c		pic_heathrow	needs-flag
 file arch/macppc/macppc/pic_grandcentral.c	pic_grandcentral
 
 file arch/powerpc/powerpc/procfs_machdep.c	procfs
@@ -85,15 +85,15 @@ include "dev/pci/files.agp"
 file arch/macppc/pci/pci_machdep.c		pci
 file arch/macppc/pci/agp_machdep.c		agp
 
-device bandit: pcibus
+device bandit: pcibus, pic_ohare
 attach bandit at mainbus
 file arch/macppc/pci/bandit.c			bandit
 
-device grackle: pcibus
+device grackle: pcibus, pic_heathrow
 attach grackle at mainbus
 file arch/macppc/pci/grackle.c			grackle
 
-device uninorth: pcibus
+device uninorth: pcibus, pic_openpic
 attach uninorth at mainbus
 file arch/macppc/pci/uninorth.c			uninorth
 
