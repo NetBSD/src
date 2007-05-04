@@ -1,4 +1,4 @@
-#	$NetBSD: std.macppc,v 1.21 2006/08/05 21:26:48 sanjayl Exp $
+#	$NetBSD: std.macppc,v 1.21.22.1 2007/05/04 02:51:41 macallan Exp $
 #
 # Standard/required options for NetBSD/macppc.
 
@@ -16,5 +16,3 @@ options 	EXEC_AOUT	# (native) a.out binary support (deprecated)
 options 	EXEC_SCRIPT	# shell script support
 
 options 	INTSTK=0x2000
-
-options 	OPENPIC		# OpenPIC (really only on CHRP-ish systems)
