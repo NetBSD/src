@@ -1,4 +1,4 @@
-/* $NetBSD: pic_prepivr.c,v 1.1.2.4 2007/05/04 00:57:24 garbled Exp $ */
+/* $NetBSD: pic_prepivr.c,v 1.1.2.5 2007/05/04 10:03:28 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic_prepivr.c,v 1.1.2.4 2007/05/04 00:57:24 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic_prepivr.c,v 1.1.2.5 2007/05/04 10:03:28 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -54,10 +54,8 @@ __KERNEL_RCSID(0, "$NetBSD: pic_prepivr.c,v 1.1.2.4 2007/05/04 00:57:24 garbled 
 #include <dev/isa/isavar.h>
 
 void prepivr_initialize(void);
-static int  prepivr_irq_is_enabled(struct pic_ops *, int);
 static void prepivr_enable_irq(struct pic_ops *, int, int);
 static void prepivr_disable_irq(struct pic_ops *, int);
-static void prepivr_clear_irq(struct pic_ops *, int);
 static int  prepivr_get_irq(struct pic_ops *);
 static void prepivr_ack_irq(struct pic_ops *, int);
 static void prepivr_establish_irq(struct pic_ops *pic, int irq, int type);
@@ -95,11 +93,9 @@ setup_prepivr(void)
 	pivr = prep_intr_reg + prep_intr_reg_off;
 	pic->pic_numintrs = 16;
 	pic->pic_cookie = (void *)pivr;
-	pic->pic_irq_is_enabled = prepivr_irq_is_enabled;
 	pic->pic_enable_irq = prepivr_enable_irq;
 	pic->pic_reenable_irq = prepivr_enable_irq;
 	pic->pic_disable_irq = prepivr_disable_irq;
-	pic->pic_clear_irq = prepivr_clear_irq;
 	pic->pic_get_irq = prepivr_get_irq;
 	pic->pic_ack_irq = prepivr_ack_irq;
 	pic->pic_establish_irq = prepivr_establish_irq;
@@ -128,12 +124,6 @@ prepivr_initialize(void)
 	isa_outb(IO_ICU2+1, IRQ_SLAVE);
 	isa_outb(IO_ICU2+1, 1);			/* 8086 mode */
 	isa_outb(IO_ICU2+1, 0xff);		/* leave interrupts masked */
-}
-
-static int
-prepivr_irq_is_enabled(struct pic_ops *pic, int irq)
-{
-	return 1;
 }
 
 static void
@@ -179,12 +169,6 @@ prepivr_disable_irq(struct pic_ops *pic, int irq)
 	prepivr->enable_mask |= mask;
 	isa_outb(IO_ICU1+1, prepivr->enable_mask);
 	isa_outb(IO_ICU2+1, prepivr->enable_mask >> 8);
-}
-
-static void
-prepivr_clear_irq(struct pic_ops *pic, int irq)
-{
-	/* do nothing */
 }
 
 static int
