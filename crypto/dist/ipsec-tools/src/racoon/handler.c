@@ -1,4 +1,4 @@
-/*	$NetBSD: handler.c,v 1.9.6.3 2007/03/23 15:36:58 vanhu Exp $	*/
+/*	$NetBSD: handler.c,v 1.9.6.4 2007/05/04 09:12:32 vanhu Exp $	*/
 
 /* Id: handler.c,v 1.28 2006/05/26 12:17:29 manubsd Exp */
 
@@ -147,13 +147,23 @@ getph1byaddr(local, remote)
 {
 	struct ph1handle *p;
 
+	plog(LLV_DEBUG2, LOCATION, NULL, "getph1byaddr: start\n");
+	plog(LLV_DEBUG2, LOCATION, NULL, "local: %s\n", saddr2str(local));
+	plog(LLV_DEBUG2, LOCATION, NULL, "remote: %s\n", saddr2str(remote));
+
 	LIST_FOREACH(p, &ph1tree, chain) {
 		if (p->status == PHASE1ST_EXPIRED)
 			continue;
+		plog(LLV_DEBUG2, LOCATION, NULL, "p->local: %s\n", saddr2str(p->local));
+		plog(LLV_DEBUG2, LOCATION, NULL, "p->remote: %s\n", saddr2str(p->remote));
 		if (CMPSADDR(local, p->local) == 0
-		 && CMPSADDR(remote, p->remote) == 0)
+			&& CMPSADDR(remote, p->remote) == 0){
+			plog(LLV_DEBUG2, LOCATION, NULL, "matched\n");
 			return p;
+		}
 	}
+
+	plog(LLV_DEBUG2, LOCATION, NULL, "no match\n");
 
 	return NULL;
 }
@@ -692,12 +702,21 @@ flushph2()
 {
 	struct ph2handle *p, *next;
 
+	plog(LLV_DEBUG2, LOCATION, NULL,
+		 "flushing all ph2 handlers...\n");
+
 	for (p = LIST_FIRST(&ph2tree); p; p = next) {
 		next = LIST_NEXT(p, chain);
 
 		/* send delete information */
-		if (p->status == PHASE2ST_ESTABLISHED) 
+		if (p->status == PHASE2ST_ESTABLISHED){
+			plog(LLV_DEBUG2, LOCATION, NULL,
+				 "got a ph2 handler to flush...\n");
 			isakmp_info_send_d2(p);
+		}else{
+			plog(LLV_DEBUG2, LOCATION, NULL,
+				 "skipping ph2 handler (state %d)\n", p->status);
+		}
 
 		delete_spd(p, 0);
 		unbindph12(p);
