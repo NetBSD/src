@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.35 2007/02/09 21:55:11 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.35.14.1 2007/05/04 10:50:48 nisimura Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,12 +32,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.35 2007/02/09 21:55:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.35.14.1 2007/05/04 10:50:48 nisimura Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
-#include "opt_inet.h"
-#include "opt_iso.h"
 #include "opt_ipkdb.h"
 
 #include <sys/param.h>
@@ -74,6 +72,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.35 2007/02/09 21:55:11 ad Exp $");
 
 #include <powerpc/oea/bat.h>
 #include <powerpc/openpic.h>
+#include <arch/powerpc/pic/picvar.h>
 
 #include <ddb/db_extern.h>
 
@@ -87,11 +86,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.35 2007/02/09 21:55:11 ad Exp $");
 #include <dev/ic/vgavar.h>
 #endif
 
-#include "isa.h"
-#if (NISA > 0)
-void isa_intr_init(void);
-#endif
-
 #include "com.h"
 #if (NCOM > 0)
 #include <sys/termios.h>
@@ -101,38 +95,26 @@ void isa_intr_init(void);
 
 #include "ksyms.h"
 
-/*
- * Global variables used here and there
- */
+void initppc(u_int, u_int, u_int, void *);
+void strayintr(int);
+int lcsplx(int);
+void sandpoint_bus_space_init(void);
+void consinit(void);
+
+char *bootpath;
 
 #define	OFMEMREGIONS	32
 struct mem_region physmemr[OFMEMREGIONS], availmemr[OFMEMREGIONS];
 
-char *bootpath;
-unsigned char *eumb_base;
-
-paddr_t avail_end;			/* XXX temporary */
-
-void initppc __P((u_int, u_int, u_int, void *)); /* Called from locore */
-void strayintr __P((int));
-void lcsplx __P((int));
+paddr_t avail_end;
 
 #if NKSYMS || defined(DDB) || defined(LKM)
 extern void *startsym, *endsym;
 #endif
-void consinit(void);
-void ext_intr(void);
-void sandpoint_bus_space_init(void);
 
 void
 initppc(u_int startkernel, u_int endkernel, u_int args, void *btinfo)
 {
-
-#if 1
-	{ extern unsigned char *edata, *end;
-	  memset(&edata, 0, (u_int) &end - (u_int) &edata);
-	}
-#endif
 
 	/*
 	 * Hardcode 32MB for now--we should probe for this or get it
@@ -170,42 +152,38 @@ initppc(u_int startkernel, u_int endkernel, u_int args, void *btinfo)
 	 */
 	boothowto = RB_SINGLE;
 
-	sandpoint_bus_space_init();
-
-consinit();
-printf("avail_end %x\n", (unsigned) avail_end);
-printf("availmemr[0].start %x\n", (unsigned) availmemr[0].start);
-printf("availmemr[0].size %x\n", (unsigned) availmemr[0].size);
-
 	/*
-	 * Initialize BAT registers.  Map the EUMB MEMORY 1M area to the
-	 * end of the address space This includes the PCI/ISA 16M I/O space,
-	 * PCI configuration registers, etc.
+	 * Now setup fixed bat registers
+	 * We setup the memory BAT, the IO space BAT, and a special
+	 * BAT for MPC107/MPC824x EUMB space.
 	 */
 	oea_batinit(
-	    SANDPOINT_BUS_SPACE_EUMB, BAT_BL_64M,
 	    SANDPOINT_BUS_SPACE_MEM,  BAT_BL_256M,
+	    SANDPOINT_BUS_SPACE_IO,   BAT_BL_32M,
+	    SANDPOINT_BUS_SPACE_EUMB, BAT_BL_256K,
 	    0);
 
-	eumb_base = (unsigned char *) SANDPOINT_BUS_SPACE_EUMB;
-
-
 	/*
-	 * Set up trap vectors and interrupt handler
-	 */
-	oea_init(ext_intr);
-
-	/*
-	 * Set EUMB base address
+	 * Set EUMB base address.
 	 */
 	out32rb(SANDPOINT_PCI_CONFIG_ADDR, 0x80000078);
 	out32rb(SANDPOINT_PCI_CONFIG_DATA, SANDPOINT_BUS_SPACE_EUMB);
 	out32rb(SANDPOINT_PCI_CONFIG_ADDR, 0);
 
-	openpic_init(eumb_base + 0x40000);
-#if (NISA > 0)
-	isa_intr_init();
-#endif
+	/*
+	 * Install vectors.
+	 */
+	oea_init(NULL);
+
+	/*	
+	 * Initialize bus_space.
+	 */	
+	sandpoint_bus_space_init();
+
+	consinit();
+printf("avail_end %x\n", (unsigned) avail_end);
+printf("availmemr[0].start %x\n", (unsigned) availmemr[0].start);
+printf("availmemr[0].size %x\n", (unsigned) availmemr[0].size);
 
         /*
 	 * Set the page size.
@@ -233,6 +211,7 @@ printf("availmemr[0].size %x\n", (unsigned) availmemr[0].size);
 void
 mem_regions(struct mem_region **mem, struct mem_region **avail)
 {
+
 	*mem = physmemr;
 	*avail = availmemr;
 }
@@ -244,8 +223,33 @@ void
 cpu_startup(void)
 {
 	int msr;
+	void *baseaddr;
+	struct pic_ops *pic;
 
+	/*
+	 * Do common startup.
+	 */
 	oea_startup(NULL);
+
+	/*
+	 * Prepare EPIC and install external interrupt handler.
+	 */
+	baseaddr = (void *)(SANDPOINT_BUS_SPACE_EUMB + 0x40000);
+	pic_init();
+#if 1 /* PIC_I8259 */
+	/* set up i8259 as a cascade on openpic 0 */
+	pic = setup_i8259();
+	(void)setup_openpic(baseaddr, 0);
+	intr_establish(16, IST_LEVEL, IPL_NONE, pic_handle_intr, pic);
+#else
+	pic = setup_openpic(baseaddr, 0);
+#endif
+	oea_install_extint(pic_ext_intr);
+
+	/*
+	 * Initialize soft interrupt framework.
+	 */
+	softintr__init();
 
 	/*
 	 * Now that we have VM, malloc()s are OK in bus_space.
@@ -264,6 +268,8 @@ cpu_startup(void)
 /*
  * consinit
  * Initialize system console.
+ *
+ * XXX consider MPC8245 DUART console case XXX
  */
 void
 consinit(void)
@@ -278,7 +284,7 @@ consinit(void)
 	initted = 1;
 
 #if (NCOM > 0)
-	tag = &sandpoint_isa_io_bs_tag;
+	tag = &genppc_isa_io_space_tag;
 
 	if(comcnattach(tag, 0x3F8, 38400, COM_FREQ, COM_TYPE_NORMAL,
 	    ((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8)))
@@ -351,28 +357,38 @@ cpu_reboot(int howto, char *what)
 	while (1);
 }
 
-void
+int
 lcsplx(int ipl)
 {
-	splx(ipl);
+
+	return spllower(ipl);
 }
 
-struct powerpc_bus_space sandpoint_io_bs_tag = {
-	_BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_IO_TYPE,
-	0xfe000000, 0x00000000, 0x00c00000,
+struct powerpc_bus_space sandpoint_io_space_tag = {
+	.pbs_flags = _BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_IO_TYPE,
+	.pbs_offset = 0xfe000000,
+	.pbs_base = 0x00000000,
+	.pbs_limit = 0x00c00000,
 };
-struct powerpc_bus_space sandpoint_isa_io_bs_tag = {
-	_BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_IO_TYPE,
-	0xfe000000, 0x00000000, 0x00010000,
+struct powerpc_bus_space genppc_isa_io_space_tag = {
+	.pbs_flags = _BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_IO_TYPE,
+	.pbs_offset = 0xfe000000,
+	.pbs_base = 0x00000000,
+	.pbs_limit = 0x00010000,
 };
-struct powerpc_bus_space sandpoint_mem_bs_tag = {
-	_BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_MEM_TYPE,
-	0x00000000, 0x80000000, 0xfe000000,
+struct powerpc_bus_space sandpoint_mem_space_tag = {
+	.pbs_flags = _BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_MEM_TYPE,
+	.pbs_offset = 0x80000000,
+	.pbs_base = 0x00000000,
+	.pbs_limit = 0xfe000000,	/* ??? */
 };
-struct powerpc_bus_space sandpoint_isa_mem_bs_tag = {
-	_BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_MEM_TYPE,
-	0x00000000, 0xfd000000, 0xfe000000,
+struct powerpc_bus_space genppc_isa_mem_space_tag = {
+	.pbs_flags = _BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_MEM_TYPE,
+	.pbs_offset = 0xfd000000,	/* ??? */
+	.pbs_base = 0x00000000,
+	.pbs_limit = 0xfe000000,	/* ??? */
 };
+/* struct powerpc_bus_space sandpoint_eumb_space_tag = { 0 }; */
 
 static char ex_storage[2][EXTENT_FIXED_STORAGE_SIZE(8)]
     __attribute__((aligned(8)));
@@ -382,31 +398,51 @@ sandpoint_bus_space_init(void)
 {
 	int error;
 
-	error = bus_space_init(&sandpoint_io_bs_tag, "ioport",
+	error = bus_space_init(&sandpoint_io_space_tag, "ioport",
 	    ex_storage[0], sizeof(ex_storage[0]));
 	if (error)
 		panic("sandpoint_bus_space_init: can't init ioport tag");
 
-	error = extent_alloc_region(sandpoint_io_bs_tag.pbs_extent,
+	error = extent_alloc_region(sandpoint_io_space_tag.pbs_extent,
 	    0x00010000, 0x7F0000, EX_NOWAIT);
 	if (error)
 		panic("sandpoint_bus_space_init: can't block out reserved"
 		    " I/O space 0x10000-0x7fffff: error=%d", error);
 
-	sandpoint_isa_io_bs_tag.pbs_extent = sandpoint_io_bs_tag.pbs_extent;
-	error = bus_space_init(&sandpoint_isa_io_bs_tag, "isa-iomem",
+	genppc_isa_io_space_tag.pbs_extent = sandpoint_io_space_tag.pbs_extent;
+	error = bus_space_init(&genppc_isa_io_space_tag, "isa-iomem",
 	    ex_storage[1], sizeof(ex_storage[1]));
 	if (error)
 		panic("sandpoint_bus_space_init: can't init isa iomem tag");
 
-	error = bus_space_init(&sandpoint_mem_bs_tag, "iomem",
+	error = bus_space_init(&sandpoint_mem_space_tag, "iomem",
 	    ex_storage[2], sizeof(ex_storage[2]));
 	if (error)
 		panic("sandpoint_bus_space_init: can't init iomem tag");
 
-	sandpoint_isa_mem_bs_tag.pbs_extent = sandpoint_mem_bs_tag.pbs_extent;
-	error = bus_space_init(&sandpoint_isa_mem_bs_tag, "isa-iomem",
+	genppc_isa_mem_space_tag.pbs_extent = sandpoint_mem_space_tag.pbs_extent;
+	error = bus_space_init(&genppc_isa_mem_space_tag, "isa-iomem",
 	    ex_storage[3], sizeof(ex_storage[3]));
 	if (error)
 		panic("sandpoint_bus_space_init: can't init isa iomem tag");
 }
+
+/* XXX XXX XXX */
+
+unsigned epicsteer[] = {
+	0x10200,	/* external irq 0 */
+	0x10220,	/* external irq 1 */
+	0x10240,	/* external irq 2 */
+	0x10260,	/* external irq 3 */
+	0x10280,	/* external irq 4 */
+	0x11020,	/* I2C */
+	0x11040,	/* DMA 0 */
+	0x11060,	/* DMA 1 */
+	0x110c0,	/* I2O */
+	0x01120,	/* Timer 0 */
+	0x01160,	/* Timer 1 */
+	0x011a0,	/* Timer 2 */
+	0x011e0,	/* Timer 3 */
+	0x11120,	/* DUART 0, MPC8245 */
+	0x11140,	/* DUART 1, MPC8245 */
+};
