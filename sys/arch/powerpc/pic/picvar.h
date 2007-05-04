@@ -1,4 +1,4 @@
-/*	$NetBSD: picvar.h,v 1.1.2.8 2007/05/04 00:57:24 garbled Exp $ */
+/*	$NetBSD: picvar.h,v 1.1.2.9 2007/05/04 02:44:30 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: picvar.h,v 1.1.2.8 2007/05/04 00:57:24 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: picvar.h,v 1.1.2.9 2007/05/04 02:44:30 macallan Exp $");
 
 #ifndef PIC_VAR_H
 #define PIC_VAR_H
@@ -45,14 +45,13 @@ struct pic_ops {
 	 * all functions that take an IRQ number as argument need a local
 	 * interrupt number
 	 */
-	int (*pic_irq_is_enabled)(struct pic_ops *, int);
 	void (*pic_enable_irq)(struct pic_ops *, int, int);
 	void (*pic_reenable_irq)(struct pic_ops *, int, int);
 	void (*pic_disable_irq)(struct pic_ops *, int);
-	void (*pic_clear_irq)(struct pic_ops *, int);
 	int (*pic_get_irq)(struct pic_ops *);
 	void (*pic_ack_irq)(struct pic_ops *, int); /* IRQ numbner */
-	void (*pic_establish_irq)(struct pic_ops *, int, int);
+	/* IRQ number, type, priority */
+	void (*pic_establish_irq)(struct pic_ops *, int, int, int);
 	char pic_name[16];
 };
 
@@ -85,7 +84,7 @@ const char *intr_typename(int);
 void	dummy_pic_establish_intr(struct pic_ops *, int, int);
 
 /* address, enable passthrough */
-struct pic_ops *setup_openpic(uint32_t, int);
+struct pic_ops *setup_openpic(void *, int);
 struct pic_ops *setup_prepivr(void);
 struct pic_ops *setup_i8259(void);
 
