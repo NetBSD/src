@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.35.14.1 2007/05/04 10:50:48 nisimura Exp $	*/
+/*	$NetBSD: machdep.c,v 1.35.14.2 2007/05/04 14:26:30 nisimura Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.35.14.1 2007/05/04 10:50:48 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.35.14.2 2007/05/04 14:26:30 nisimura Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -233,11 +233,13 @@ cpu_startup(void)
 
 	/*
 	 * Prepare EPIC and install external interrupt handler.
+	 *  0..15	used by South bridge i8259 PIC if exists.
+	 *  16..39/41	EPIC interrupts, 24 source or 26 source.
 	 */
 	baseaddr = (void *)(SANDPOINT_BUS_SPACE_EUMB + 0x40000);
 	pic_init();
 #if 1 /* PIC_I8259 */
-	/* set up i8259 as a cascade on openpic 0 */
+	/* set up i8259 as a cascade on EPIC irq 0 */
 	pic = setup_i8259();
 	(void)setup_openpic(baseaddr, 0);
 	intr_establish(16, IST_LEVEL, IPL_NONE, pic_handle_intr, pic);
@@ -430,15 +432,26 @@ sandpoint_bus_space_init(void)
 /* XXX XXX XXX */
 
 unsigned epicsteer[] = {
-	0x10200,	/* external irq 0 */
-	0x10220,	/* external irq 1 */
-	0x10240,	/* external irq 2 */
-	0x10260,	/* external irq 3 */
-	0x10280,	/* external irq 4 */
+	0x10200,	/* external irq 0 direct/serial */
+	0x10220,	/* external irq 1 direct/serial */
+	0x10240,	/* external irq 2 direct/serial */
+	0x10260,	/* external irq 3 direct/serial */
+	0x10280,	/* external irq 4 direct/serial */
+	0x102a0,	/* external irq 5 serial mode */
+	0x102c0,	/* external irq 6 serial mode */
+	0x102e0,	/* external irq 7 serial mode */
+	0x10300,	/* external irq 8 serial mode */
+	0x10320,	/* external irq 9 serial mode */
+	0x10340,	/* external irq 10 serial mode */
+	0x10360,	/* external irq 11 serial mode */
+	0x10380,	/* external irq 12 serial mode */
+	0x103a0,	/* external irq 13 serial mode */
+	0x103c0,	/* external irq 14 serial mode */
+	0x103e0,	/* external irq 15 serial mode */
 	0x11020,	/* I2C */
 	0x11040,	/* DMA 0 */
 	0x11060,	/* DMA 1 */
-	0x110c0,	/* I2O */
+	0x110c0,	/* MU/I2O */
 	0x01120,	/* Timer 0 */
 	0x01160,	/* Timer 1 */
 	0x011a0,	/* Timer 2 */
