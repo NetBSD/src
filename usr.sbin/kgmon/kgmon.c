@@ -1,4 +1,4 @@
-/*	$NetBSD: kgmon.c,v 1.21 2007/05/04 16:19:43 christos Exp $	*/
+/*	$NetBSD: kgmon.c,v 1.22 2007/05/04 22:07:16 dogcow Exp $	*/
 
 /*
  * Copyright (c) 1983, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1992, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)kgmon.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: kgmon.c,v 1.21 2007/05/04 16:19:43 christos Exp $");
+__RCSID("$NetBSD: kgmon.c,v 1.22 2007/05/04 22:07:16 dogcow Exp $");
 #endif
 #endif /* not lint */
 
@@ -61,10 +61,10 @@ __RCSID("$NetBSD: kgmon.c,v 1.21 2007/05/04 16:19:43 christos Exp $");
 
 static struct nlist nl[] = {
 #define	N_GMONPARAM	0
-	{ "__gmonparam" },
+	{ "__gmonparam", 0, 0, 0, 0 },
 #define	N_PROFHZ	1
-	{ "_profhz" },
-	{ 0, }
+	{ "_profhz", 0, 0, 0, 0 },
+	{ 0, 0, 0, 0, 0 }
 };
 
 struct kvmvars {
