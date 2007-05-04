@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1023 2007/05/02 22:39:03 dyoung Exp $
+#	$NetBSD: mi,v 1.1024 2007/05/04 22:37:33 rmind Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -3978,6 +3978,12 @@
 ./usr/share/man/cat3/addnstr.0			comp-c-catman		.cat
 ./usr/share/man/cat3/addr.0			comp-c-catman		.cat
 ./usr/share/man/cat3/addstr.0			comp-c-catman		.cat
+./usr/share/man/cat3/aio_cancel.0		comp-c-catman		.cat
+./usr/share/man/cat3/aio_error.0		comp-c-catman		.cat
+./usr/share/man/cat3/aio_read.0			comp-c-catman		.cat
+./usr/share/man/cat3/aio_return.0		comp-c-catman		.cat
+./usr/share/man/cat3/aio_suspend.0		comp-c-catman		.cat
+./usr/share/man/cat3/aio_write.0		comp-c-catman		.cat
 ./usr/share/man/cat3/alarm.0			comp-c-catman		.cat
 ./usr/share/man/cat3/alloca.0			comp-c-catman		.cat
 ./usr/share/man/cat3/alphasort.0		comp-c-catman		.cat
@@ -5137,6 +5143,7 @@
 ./usr/share/man/cat3/link_ntoa.0		comp-c-catman		.cat
 ./usr/share/man/cat3/linkaddr.0			comp-c-catman		.cat
 ./usr/share/man/cat3/linkntoa.0			comp-c-catman		.cat
+./usr/share/man/cat3/lio_listio.0		comp-c-catman		.cat
 ./usr/share/man/cat3/list_empty.0		comp-obsolete		obsolete
 ./usr/share/man/cat3/list_entry.0		comp-obsolete		obsolete
 ./usr/share/man/cat3/list_first.0		comp-obsolete		obsolete
@@ -8306,6 +8313,12 @@
 ./usr/share/man/man3/addnstr.3			comp-c-man		.man
 ./usr/share/man/man3/addr.3			comp-c-man		.man
 ./usr/share/man/man3/addstr.3			comp-c-man		.man
+./usr/share/man/man3/aio_cancel.3		comp-c-man		.man
+./usr/share/man/man3/aio_error.3		comp-c-man		.man
+./usr/share/man/man3/aio_read.3			comp-c-man		.man
+./usr/share/man/man3/aio_return.3		comp-c-man		.man
+./usr/share/man/man3/aio_suspend.3		comp-c-man		.man
+./usr/share/man/man3/aio_write.3		comp-c-man		.man
 ./usr/share/man/man3/alarm.3			comp-c-man		.man
 ./usr/share/man/man3/alloca.3			comp-c-man		.man
 ./usr/share/man/man3/alphasort.3		comp-c-man		.man
@@ -9465,6 +9478,7 @@
 ./usr/share/man/man3/link_ntoa.3		comp-c-man		.man
 ./usr/share/man/man3/linkaddr.3			comp-c-man		.man
 ./usr/share/man/man3/linkntoa.3			comp-c-man		.man
+./usr/share/man/man3/lio_listio.3		comp-c-man		.man
 ./usr/share/man/man3/list_empty.3		comp-obsolete		obsolete
 ./usr/share/man/man3/list_entry.3		comp-obsolete		obsolete
 ./usr/share/man/man3/list_first.3		comp-obsolete		obsolete
