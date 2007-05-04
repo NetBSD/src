@@ -1,4 +1,4 @@
-/*	$NetBSD: nineproto.c,v 1.1 2007/04/21 14:21:43 pooka Exp $	*/
+/*	$NetBSD: nineproto.c,v 1.2 2007/05/04 18:12:25 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: nineproto.c,v 1.1 2007/04/21 14:21:43 pooka Exp $");
+__RCSID("$NetBSD: nineproto.c,v 1.2 2007/05/04 18:12:25 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -159,6 +159,8 @@ proto_getstat(struct p9pbuf *pb, struct vattr *vap, char **name, uint16_t *rs)
 	vap->va_size = vap->va_bytes = flen;
 	vap->va_uid = ustr2uid(uid);
 	vap->va_gid = gstr2gid(gid);
+	free(uid);
+	free(gid);
 	qid2vattr(vap, &qid);
 
 	/* some defaults */
