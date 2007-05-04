@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_aio.c,v 1.3 2007/05/03 22:03:40 rmind Exp $	*/
+/*	$NetBSD: vfs_aio.c,v 1.4 2007/05/04 14:28:40 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_aio.c,v 1.3 2007/05/03 22:03:40 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_aio.c,v 1.4 2007/05/04 14:28:40 yamt Exp $");
 
 #include <sys/param.h>
 
@@ -268,6 +268,8 @@ exit:
 	error = sigprocmask1(curlwp, SIG_SETMASK, &oss, NULL);
 	KASSERT(error == 0);
 	mutex_exit(&p->p_smutex);
+
+	lwp_exit(curlwp);
 }
 
 static void
