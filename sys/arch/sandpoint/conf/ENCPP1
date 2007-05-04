@@ -1,0 +1,194 @@
+# $NetBSD: ENCPP1,v 1.1.2.1 2007/05/04 11:15:49 nisimura Exp $
+#
+# Ampro EnCorePP1 machine description file
+# 
+# This machine description file is used to generate the default NetBSD
+# kernel.  The generic kernel does not include all options, subsystems
+# and device drivers, but should be useful for most applications.
+#
+# The machine description file can be customised for your specific
+# machine to reduce the kernel size and improve its performance.
+#
+# For further information on compiling NetBSD kernels, see the config(8)
+# man page.
+#
+# For further information on hardware support for this architecture, see
+# the intro(4) man page.  For further information about kernel options
+# for this architecture, see the options(4) man page.  For an explanation
+# of each device driver in this file see the section 4 man page for the
+# device.
+
+include 	"arch/sandpoint/conf/std.sandpoint"
+
+options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
+
+#ident 		"ENCPP1-$Revision: 1.1.2.1 $"
+
+maxusers	32
+
+options 	OPENPIC_SERIAL_MODE
+options 	ALTIVEC
+
+#options 	IPKDBUSERHACK	# Allow access to mapped memory via kgdb
+#options 	DEBUG_BY_TOOLS	# Allow debugging from toolsnet
+# HMAC key to be used for debugging sessions
+#options 	IPKDBKEY="\"HMAC pass phrase text\""
+#options 	IPKDBSECURE	# Allow debugging even when securelevel > 0
+#makeoptions	DEBUG="-g"
+
+#options 	DEBUG
+options 	DIAGNOSTIC
+options 	TRAP_PANICWAIT
+options 	DDB
+#options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
+options 	KTRACE
+#options 	PMAPCHECK
+#options 	PMAPDEBUG
+options 	SYMTAB_SPACE=300000
+options 	USERCONF	# userconf(4) support
+#options	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
+options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
+
+options 	COMPAT_43
+options 	COMPAT_09
+options 	COMPAT_10
+options 	COMPAT_12
+options 	COMPAT_13
+options 	COMPAT_14
+options 	COMPAT_15
+options 	COMPAT_16
+options 	COMPAT_20
+options 	COMPAT_30	# NetBSD 3.0 compatibility.
+options 	COMPAT_386BSD_MBRPART	# recognize old partition ID
+#options 	COMPAT_LINUX		# Linux binary compatibility
+#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
+options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
+
+options 	MSGBUFSIZE=65536
+file-system 	FFS
+file-system 	MFS
+file-system 	NFS
+#file-system 	CD9660
+file-system 	MSDOSFS
+file-system 	FDESC
+file-system 	KERNFS
+file-system 	NULLFS
+#file-system 	OVERLAY
+#file-system 	PORTAL
+file-system 	PROCFS
+#file-system 	UMAPFS
+#file-system 	UNION
+file-system	PTYFS		# /dev/pts/N support
+
+options 	SOFTDEP		# FFS soft updates support.
+#options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
+
+options 	INET
+#options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
+
+#options 	ALTQ		# Manipulate network interfaces' output queues
+#options 	ALTQ_BLUE	# Stochastic Fair Blue
+#options 	ALTQ_CBQ	# Class-Based Queueing
+#options 	ALTQ_CDNR	# Diffserv Traffic Conditioner
+#options 	ALTQ_FIFOQ	# First-In First-Out Queue
+#options 	ALTQ_FLOWVALVE	# RED/flow-valve (red-penalty-box)
+#options 	ALTQ_HFSC	# Hierarchical Fair Service Curve
+#options 	ALTQ_LOCALQ	# Local queueing discipline
+#options 	ALTQ_PRIQ	# Priority Queueing
+#options 	ALTQ_RED	# Random Early Detection
+#options 	ALTQ_RIO	# RED with IN/OUT
+#options 	ALTQ_WFQ	# Weighted Fair Queueing
+
+options 	NFS_BOOT_BOOTPARAM,NFS_BOOT_BOOTP
+
+config		netbsd	root on ? type ?
+
+# network psuedo-devices
+pseudo-device	bpfilter		# packet filter
+pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
+pseudo-device	bridge			# simple inter-network bridging
+#options	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
+#pseudo-device	ipfilter
+pseudo-device	loop
+
+# mouse & keyboard multiplexor pseudo-devices
+#pseudo-device	wsmux
+
+# miscellaneous pseudo-devices
+#pseudo-device	rnd			# /dev/random and in-kernel generator
+#pseudo-device	vnd		
+#options 	VND_COMPRESSION		# compressed vnd(4)
+#pseudo-device	cgd		4	# cryptographic disk devices
+pseudo-device	pty
+pseudo-device	clockctl		# user control of clock subsystem
+pseudo-device	ksyms			# /dev/ksyms
+#pseudo-device	pf			# PF packet filter
+#pseudo-device	pflog			# PF log if
+#
+# device
+#
+options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
+
+#options 	PCIVERBOSE	# verbose PCI device messages
+#options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
+options 	PCI_NETBSD_CONFIGURE	# Have NetBSD configure PCI I/O & Mem
+
+mainbus0 at root
+
+cpu*	at mainbus0
+pci*	at mainbus0 bus ?
+
+ppb*	at pci? dev ? function ?	# PCI-PCI bridges
+pci*	at ppb? bus ?
+
+pchb*	at pci? dev ? function ?	# PCI host bridge
+pcib*	at pci? dev ? function ?	# VIA 82C686B PCI-ISA bridges
+
+isa*	at pcib?			# ISA on PCI-ISA bridge
+
+pciide* at pci? dev ? function ? flags 0x0000	# GENERIC pciide driver
+viaide* at pci? dev ? function ?	# VIA/AMD/Nvidia IDE controllers
+atabus* at ata?
+
+fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
+inphy*	at mii? phy ?			# Intel 82555 PHYs
+ukphy*	at mii? phy ?			# generic unknown PHYs
+
+uhci*	at pci?	dev ? function ?	# Universal Host Controller (Intel)
+usb*	at uhci?
+
+# USB bus support
+usb*	at uhci?
+
+# USB Hubs
+uhub*	at usb?
+
+# USB HID device
+uhidev*	at uhub? port ? configuration ? interface ?
+
+# USB Mice
+ums*	at uhidev? reportid ?
+wsmouse* at ums? mux 0
+
+# Serial adapters
+uplcom* at uhub? port ? 
+ucom*	at uplcom? portno ?
+
+# PCI audio devices
+auvia*	at pci? dev ? function ?	# VIA integrated AC'97 Audio
+
+# Audio support
+audio*	at audiobus?
+
+pckbc0		at isa?			# PS/2 keyboard controller
+pckbd*		at pckbc?		# PC keyboard
+pms*		at pckbc?		# PS/2 mouse for wsmouse
+wskbd* 		at pckbd? console ?
+wsmouse* 	at pms? mux 0
+
+com0	at isa? port 0x3f8 irq 4	# standard PC serial ports
+com1	at isa? port 0x2f8 irq 3
+
+lpt0	at isa? port 0x278 irq 7	# standard PC parallel ports
+
+wd*	at atabus? drive ? flags 0x0000
