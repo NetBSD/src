@@ -1,4 +1,4 @@
-/*	$NetBSD: node.c,v 1.2 2007/04/22 18:10:48 pooka Exp $	*/
+/*	$NetBSD: node.c,v 1.3 2007/05/04 18:17:34 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: node.c,v 1.2 2007/04/22 18:10:48 pooka Exp $");
+__RCSID("$NetBSD: node.c,v 1.3 2007/05/04 18:17:34 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -63,7 +63,6 @@ puffs9p_node_lookup(struct puffs_cc *pcc, void *opc, void **newnode,
 	struct qid9p newqid;
 	uint16_t nqid;
 
-	pb = p9pbuf_make(p9p->maxreq, P9PB_OUT);
 	p9pbuf_put_1(pb, P9PROTO_T_WALK);
 	p9pbuf_put_2(pb, tag);
 	p9pbuf_put_4(pb, p9n_dir->fid_base);
@@ -173,7 +172,6 @@ puffs9p_node_getattr(struct puffs_cc *pcc, void *opc, struct vattr *vap,
 	struct puffs_node *pn = opc;
 	struct p9pnode *p9n = pn->pn_data;
 
-	pb = p9pbuf_make(p9p->maxreq, P9PB_OUT);
 	p9pbuf_put_1(pb, P9PROTO_T_STAT);
 	p9pbuf_put_2(pb, tag);
 	p9pbuf_put_4(pb, p9n->fid_base);
@@ -198,7 +196,6 @@ puffs9p_node_setattr(struct puffs_cc *pcc, void *opc,
 	struct puffs_node *pn = opc;
 	struct p9pnode *p9n = pn->pn_data;
 
-	pb = p9pbuf_make(p9p->maxreq, P9PB_OUT);
 	p9pbuf_put_1(pb, P9PROTO_T_WSTAT);
 	p9pbuf_put_2(pb, tag);
 	p9pbuf_put_4(pb, p9n->fid_base);
@@ -538,10 +535,9 @@ puffs9p_node_rename(struct puffs_cc *pcc, void *opc, void *src,
 
 		rv = noderemove(pcc, pn_targ->pn_data);
 		if (rv)
-			return rv;
+			goto out;
 	}
 
-	pb = p9pbuf_make(p9p->maxreq, P9PB_OUT);
 	p9pbuf_put_1(pb, P9PROTO_T_WSTAT);
 	p9pbuf_put_2(pb, tag);
 	p9pbuf_put_4(pb, p9n_src->fid_base);
