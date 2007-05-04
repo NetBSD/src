@@ -1,4 +1,4 @@
-/*	$NetBSD: pat_rep.c,v 1.26 2007/04/29 20:23:34 msaitoh Exp $	*/
+/*	$NetBSD: pat_rep.c,v 1.27 2007/05/04 21:19:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)pat_rep.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: pat_rep.c,v 1.26 2007/04/29 20:23:34 msaitoh Exp $");
+__RCSID("$NetBSD: pat_rep.c,v 1.27 2007/05/04 21:19:36 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -55,11 +55,6 @@ __RCSID("$NetBSD: pat_rep.c,v 1.26 2007/04/29 20:23:34 msaitoh Exp $");
 #include <string.h>
 #include <unistd.h>
 #include <stdlib.h>
-#ifdef NET2_REGEX
-#include <regexp.h>
-#else
-#include <regex.h>
-#endif
 #include "pax.h"
 #include "pat_rep.h"
 #include "extern.h"
@@ -219,6 +214,10 @@ rep_add(char *str)
 		case 'p':
 		case 'P':
 			rep->flgs  |= PRNT;
+			break;
+		case 's':
+		case 'S':
+			rep->flgs  |= SYML;
 			break;
 		default:
 #ifdef NET2_REGEX
@@ -650,7 +649,7 @@ range_match(char *pattern, int test)
  */
 
 int
-mod_name(ARCHD *arcn)
+mod_name(ARCHD *arcn, int flags)
 {
 	int res = 0;
 
@@ -689,18 +688,20 @@ mod_name(ARCHD *arcn)
 	 * call an oracle here. :)
 	 */
 	if (rephead != NULL) {
+		flags |= (flags & RENM) ? PRNT : 0;
 		/*
 		 * we have replacement strings, modify the name and the link
 		 * name if any.
 		 */
 		if ((res = rep_name(arcn->name, sizeof(arcn->name), 
-			&(arcn->nlen), 1)) != 0)
+			&(arcn->nlen), flags)) != 0)
 			return res;
 
 		if (((arcn->type == PAX_SLK) || (arcn->type == PAX_HLK) ||
 		    (arcn->type == PAX_HRG)) &&
-		    ((res = rep_name(arcn->ln_name, sizeof(arcn->ln_name),
-			&(arcn->ln_nlen), 0)) != 0))
+		    ((res = rep_name(arcn->ln_name,
+		    sizeof(arcn->ln_name), &(arcn->ln_nlen),
+		    flags | (arcn->type == PAX_SLK ? SYML : 0))) != 0))
 			return res;
 	}
 
@@ -917,7 +918,7 @@ fix_path( char *or_name, int *or_len, char *dir_name, int dir_len)
  */
 
 static int
-rep_name(char *name, size_t namelen, int *nlen, int prnt)
+rep_name(char *name, size_t namelen, int *nlen, int flags)
 {
 	REPLACE *pt;
 	char *inpt;
@@ -951,6 +952,8 @@ rep_name(char *name, size_t namelen, int *nlen, int prnt)
 	 */
 	while (pt != NULL) {
 		do {
+			if ((flags & SYML) && (pt->flgs & SYML))
+				continue;
 			/*
 			 * check for a successful substitution, if not go to
 			 * the next pattern, or cleanup if we were global
@@ -994,7 +997,7 @@ rep_name(char *name, size_t namelen, int *nlen, int prnt)
 			    resub(&(pt->rcmp),pm,pt->nstr,inpt, outpt,endpt)
 #endif
 			    ) < 0) {
-				if (prnt)
+				if (flags & PRNT)
 					tty_warn(1, "Replacement name error %s",
 					    name);
 				return 1;
@@ -1045,7 +1048,7 @@ rep_name(char *name, size_t namelen, int *nlen, int prnt)
 
 		*outpt = '\0';
 		if ((outpt == endpt) && (*inpt != '\0')) {
-			if (prnt)
+			if (flags & PRNT)
 				tty_warn(1,"Replacement name too long %s >> %s",
 				    name, nname);
 			return 1;
@@ -1054,7 +1057,7 @@ rep_name(char *name, size_t namelen, int *nlen, int prnt)
 		/*
 		 * inform the user of the result if wanted
 		 */
-		if (prnt && (pt->flgs & PRNT)) {
+		if ((flags & PRNT) && (pt->flgs & PRNT)) {
 			if (*nname == '\0')
 				(void)fprintf(stderr,"%s >> <empty string>\n",
 				    name);
@@ -1068,7 +1071,8 @@ rep_name(char *name, size_t namelen, int *nlen, int prnt)
 		 */
 		if (*nname == '\0')
 			return 1;
-		*nlen = strlcpy(name, nname, namelen);
+		if (flags & RENM)
+			*nlen = strlcpy(name, nname, namelen);
 	}
 	return 0;
 }

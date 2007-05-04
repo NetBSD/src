@@ -1,4 +1,4 @@
-/*	$NetBSD: ar_subs.c,v 1.53 2007/04/23 18:40:22 christos Exp $	*/
+/*	$NetBSD: ar_subs.c,v 1.54 2007/05/04 21:19:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)ar_subs.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: ar_subs.c,v 1.53 2007/04/23 18:40:22 christos Exp $");
+__RCSID("$NetBSD: ar_subs.c,v 1.54 2007/05/04 21:19:36 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -60,6 +60,7 @@ __RCSID("$NetBSD: ar_subs.c,v 1.53 2007/04/23 18:40:22 christos Exp $");
 #include <unistd.h>
 #include <stdlib.h>
 #include "pax.h"
+#include "pat_rep.h"
 #include "extern.h"
 
 static int path_check(ARCHD *, int);
@@ -244,7 +245,7 @@ list(void)
 			 * modify the name as requested by the user if name
 			 * survives modification, do a listing of the file
 			 */
-			if ((res = mod_name(arcn)) < 0)
+			if ((res = mod_name(arcn, RENM)) < 0)
 				break;
 			if (res == 0) {
 				if (arcn->name[0] == '/' && !check_Aflag()) {
@@ -391,7 +392,7 @@ extract(void)
 		/*
 		 * this archive member is now been selected. modify the name.
 		 */
-		if ((pat_sel(arcn) < 0) || ((res = mod_name(arcn)) < 0))
+		if ((pat_sel(arcn) < 0) || ((res = mod_name(arcn, RENM)) < 0))
 			break;
 		if (res > 0) {
 			/*
@@ -580,7 +581,13 @@ wr_archive(ARCHD *arcn, int is_app)
 		 */
 		if (sel_chk(arcn) != 0)
 			continue;
-		if ((res = mod_name(arcn)) < 0)
+		/*
+		 * Here we handle the exclusion -X gnu style patterns which
+		 * are implemented like a pattern list. We don't modify the
+		 * name as this will be done below again, and we don't want
+		 * to double modify it.
+		 */
+		if ((res = mod_name(arcn, 0)) < 0)
 			break;
 		if (res == 1)
 			continue;
@@ -623,7 +630,7 @@ wr_archive(ARCHD *arcn, int is_app)
 		/*
 		 * Now modify the name as requested by the user
 		 */
-		if ((res = mod_name(arcn)) < 0) {
+		if ((res = mod_name(arcn, RENM)) < 0) {
 			/*
 			 * name modification says to skip this file, close the
 			 * file and purge link table entry
@@ -1035,7 +1042,7 @@ copy(void)
 		 * user; set the final destination.
 		 */
 		ftree_sel(arcn);
-		if ((chk_lnk(arcn) < 0) || ((res = mod_name(arcn)) < 0))
+		if ((chk_lnk(arcn) < 0) || ((res = mod_name(arcn, RENM)) < 0))
 			break;
 		if ((res > 0) || (set_dest(arcn, dirbuf, dlen) < 0)) {
 			/*
