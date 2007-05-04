@@ -1,4 +1,4 @@
-/*	$NetBSD: openpicreg.h,v 1.3 2001/08/30 02:08:43 briggs Exp $	*/
+/*	$NetBSD: openpicreg.h,v 1.3.88.1 2007/05/04 10:34:14 nisimura Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  *	* The 5 external interrupts are at 0x10200 + irq * 0x20
  *	* The next 3 interrupts are at 0x11000 + (irq - 4) * 0x20
  *	* The next interrupt is at 0x110C0 + (irq - 4) * 0x20
- *	* The last interrupts are at 0x01120 + (irq - 9) * 0x20
+ *	* The last interrupts are at 0x01120 + (irq - 9) * 0x40
  */
 
 #include "opt_openpic.h"
@@ -101,23 +101,9 @@
 #define	OPENPIC_MAX_EXTERNAL_INT	4
 #endif
 
-/* interrupt vector/priority reg */
-#define OPENPIC_SRC_VECTOR(irq) \
-	    ((irq <= OPENPIC_MAX_EXTERNAL_INT) ? (0x10200 + (irq) * 0x20) \
-		: ((irq <= OPENPIC_MAX_EXTERNAL_INT + 3) ? \
-			(0x11000 + ((irq) - OPENPIC_MAX_EXTERNAL_INT) * 0x20) \
-		    : ((irq == OPENPIC_MAX_EXTERNAL_INT + 4) ? 0x110C0 \
-		       : (0x01120 + \
-			  ((irq) - (OPENPIC_MAX_EXTERNAL_INT + 5)) * 0x40))))
-
-#define	OPENPIC_INIT_SRC(irq) \
-	    (((OPENPIC_IMASK | (8 << OPENPIC_PRIORITY_SHIFT)) | \
-		(((irq) <= OPENPIC_MAX_EXTERNAL_INT) ? \
-		    (OPENPIC_POLARITY_NEGATIVE | OPENPIC_SENSE_LEVEL) : 0)) \
-	    | (irq))
-	    
-#define OPENPIC_IDEST(irq)		OPENPIC_SRC_VECTOR(irq) + 0x10
-
-void openpic_init __P((unsigned char *));
+/* XXX */
+extern unsigned epicsteer[];
+#define OPENPIC_SRC_VECTOR(irq)		(epicsteer[(irq)])
+#define OPENPIC_IDEST(irq)		(epicsteer[(irq)] + 0x10)
 
 #include <powerpc/openpicreg.h>
