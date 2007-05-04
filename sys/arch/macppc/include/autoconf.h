@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.11 2007/03/04 06:00:10 christos Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.11.10.1 2007/05/04 02:38:47 macallan Exp $	*/
 
 /*-
  * Copyright (C) 1998	Internet Research Institute, Inc.
@@ -69,11 +69,7 @@ void *mapiodev __P((paddr_t, psize_t));
 paddr_t kvtop __P((void *));
 
 /* these are in extintr.c */
-void ext_intr __P((void));
 void init_interrupt __P((void));
-void *intr_establish __P((int, int, int, int (*)(void *), void *));
-void intr_disestablish __P((void *));
-const char *intr_typename __P((int));
 
 /* these are in dev/akbd.c */
 int kbd_intr __P((void *));
