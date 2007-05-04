@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_compat.h,v 1.15 2007/05/01 19:08:04 martti Exp $	*/
+/*	$NetBSD: ip_compat.h,v 1.16 2007/05/04 19:50:42 dyoung Exp $	*/
 
 /*
  * Copyright (C) 1993-2001, 2003 by Darren Reed.
@@ -709,6 +709,12 @@ typedef unsigned int    u_32_t;
 /*                                  N E T B S D                            */
 /* ----------------------------------------------------------------------- */
 #ifdef __NetBSD__
+#if defined(_KERNEL)
+#include <sys/systm.h>
+#else
+#include <stddef.h>
+#endif
+
 # if defined(_KERNEL) && !defined(IPFILTER_LKM)
 #  include "bpfilter.h"
 #  if defined(__NetBSD_Version__) && (__NetBSD_Version__ >= 104110000)
@@ -1719,13 +1725,6 @@ typedef	struct	tcpiphdr	tcpiphdr_t;
 
 #ifndef	FR_GROUPLEN
 # define	FR_GROUPLEN	16
-#endif
-
-#ifdef offsetof
-# undef	offsetof
-#endif
-#ifndef offsetof
-# define offsetof(t,m) (int)((&((t *)0L)->m))
 #endif
 
 /*
