@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.h,v 1.9 2007/04/27 10:17:17 jnemeth Exp $	*/
+/*	$NetBSD: ip_fil.h,v 1.10 2007/05/04 19:50:42 dyoung Exp $	*/
 
 /*
  * Copyright (C) 1993-2001, 2003 by Darren Reed.
@@ -623,9 +623,6 @@ typedef	struct	frentry {
 
 #define	FR_NOLOGTAG	0
 
-#ifndef	offsetof
-#define	offsetof(t,m)	(int)((&((t *)0L)->m))
-#endif
 #define	FR_CMPSIZ	(sizeof(struct frentry) - \
 			 offsetof(struct frentry, fr_func))
 
