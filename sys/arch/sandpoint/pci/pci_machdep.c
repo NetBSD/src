@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.12 2005/12/11 12:18:51 christos Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.12.38.1 2007/05/04 11:03:24 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.12 2005/12/11 12:18:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.12.38.1 2007/05/04 11:03:24 nisimura Exp $");
 
 #include "opt_openpic.h"
 
@@ -69,8 +69,6 @@ __KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.12 2005/12/11 12:18:51 christos Ex
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pciconf.h>
-
-#include <sandpoint/isa/icu.h>
 
 struct powerpc_bus_dma_tag pci_bus_dma_tag = {
 	0,			/* _bounce_thresh */
