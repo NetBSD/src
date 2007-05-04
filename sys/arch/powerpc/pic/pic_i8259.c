@@ -1,4 +1,4 @@
-/* $NetBSD: pic_i8259.c,v 1.1.2.1 2007/05/04 00:57:24 garbled Exp $ */
+/* $NetBSD: pic_i8259.c,v 1.1.2.2 2007/05/04 10:03:28 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic_i8259.c,v 1.1.2.1 2007/05/04 00:57:24 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic_i8259.c,v 1.1.2.2 2007/05/04 10:03:28 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -54,10 +54,8 @@ __KERNEL_RCSID(0, "$NetBSD: pic_i8259.c,v 1.1.2.1 2007/05/04 00:57:24 garbled Ex
 #include <dev/isa/isavar.h>
 
 void i8259_initialize(void);
-static int  i8259_irq_is_enabled(struct pic_ops *, int);
 static void i8259_enable_irq(struct pic_ops *, int, int);
 static void i8259_disable_irq(struct pic_ops *, int);
-static void i8259_clear_irq(struct pic_ops *, int);
 static int  i8259_get_irq(struct pic_ops *);
 static void i8259_ack_irq(struct pic_ops *, int);
 
@@ -80,11 +78,9 @@ setup_i8259(void)
 
 	pic->pic_numintrs = 16;
 	pic->pic_cookie = (void *)NULL;
-	pic->pic_irq_is_enabled = i8259_irq_is_enabled;
 	pic->pic_enable_irq = i8259_enable_irq;
 	pic->pic_reenable_irq = i8259_enable_irq;
 	pic->pic_disable_irq = i8259_disable_irq;
-	pic->pic_clear_irq = i8259_clear_irq;
 	pic->pic_get_irq = i8259_get_irq;
 	pic->pic_ack_irq = i8259_ack_irq;
 	pic->pic_establish_irq = dummy_pic_establish_intr;
@@ -115,12 +111,6 @@ i8259_initialize(void)
 	isa_outb(IO_ICU2+1, 0xff);		/* leave interrupts masked */
 }
 
-static int
-i8259_irq_is_enabled(struct pic_ops *pic, int irq)
-{
-	return 1;
-}
-
 static void
 i8259_enable_irq(struct pic_ops *pic, int irq, int type)
 {
@@ -144,12 +134,6 @@ i8259_disable_irq(struct pic_ops *pic, int irq)
 	i8259->enable_mask |= mask;
 	isa_outb(IO_ICU1+1, i8259->enable_mask);
 	isa_outb(IO_ICU2+1, i8259->enable_mask >> 8);
-}
-
-static void
-i8259_clear_irq(struct pic_ops *pic, int irq)
-{
-	/* do nothing */
 }
 
 static int
