@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.12 2007/02/16 02:53:50 ad Exp $	*/
+/*	$NetBSD: intr.h,v 1.12.14.1 2007/05/04 10:34:13 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,58 +35,28 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-/*
- * Sandpoint-specific code developed
- * by Allen Briggs for Wasabi Systems, Inc.
- * 
- * OpenPIC code derived from code with the following notice.
- */
-/*-
- * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
 
-#ifndef _SANDPOINT_INTR_H_
-#define _SANDPOINT_INTR_H_
+#ifndef _MACHINE_INTR_H_
+#define _MACHINE_INTR_H_
 
 /* Interrupt priority `levels'. */
-#define	IPL_NONE	9	/* nothing */
-#define	IPL_SOFTCLOCK	8	/* software clock interrupt */
-#define	IPL_SOFTNET	7	/* software network interrupt */
-#define	IPL_BIO		6	/* block I/O */
-#define	IPL_NET		5	/* network */
-#define	IPL_SOFTSERIAL	4	/* software serial interrupt */
-#define	IPL_TTY		3	/* terminal */
-#define	IPL_VM		3	/* memory allocation */
-#define	IPL_AUDIO	2	/* audio */
-#define	IPL_CLOCK	1	/* clock */
-#define	IPL_STATCLOCK	IPL_CLOCK
-#define	IPL_HIGH	1	/* everything */
-#define	IPL_SCHED	IPL_HIGH
-#define	IPL_LOCK	IPL_HIGH
-#define	IPL_SERIAL	0	/* serial */
-#define	NIPL		10
+#define IPL_NONE        0       /* nothing */
+#define IPL_SOFTCLOCK   1       /* timeouts */
+#define IPL_SOFTNET     2       /* protocol stacks */
+#define IPL_BIO         3       /* block I/O */
+#define IPL_NET         4       /* network */
+#define IPL_SOFTSERIAL  5       /* serial */
+#define IPL_AUDIO       6       /* audio */
+#define IPL_TTY         7       /* terminal */
+#define IPL_LPT         IPL_TTY
+#define IPL_VM          8       /* memory allocation */
+#define IPL_CLOCK       9
+#define IPL_STATCLOCK   10      /* clock */
+#define IPL_SCHED       11
+#define IPL_SERIAL      12      /* serial */
+#define IPL_LOCK        13
+#define IPL_HIGH        14      /* everything */
+#define NIPL            15
 
 /* Interrupt sharing types. */
 #define	IST_NONE	0	/* none */
@@ -95,6 +65,9 @@
 #define	IST_LEVEL	3	/* level-triggered */
 
 #ifndef _LOCORE
+#include <powerpc/softintr.h>
+#include <machine/cpu.h>
+
 /*
  * Interrupt handler chains.  intr_establish() inserts a handler into
  * the list.  The handler is called with its (single) argument.
@@ -102,126 +75,66 @@
 struct intrhand {
 	int	(*ih_fun)(void *);
 	void	*ih_arg;
-	u_long	ih_count;
 	struct	intrhand *ih_next;
 	int	ih_level;
 	int	ih_irq;
 };
 
-void	do_pending_int(void);
-void	*intr_establish(int, int, int, int (*)(void *), void *);
-void	intr_disestablish(void *);
+#include <sys/device.h>
 
-static __inline int splraise(int);
-static __inline int spllower(int);
-static __inline void splx(int);
-static __inline void set_sint(int);
+int splraise(int);
+int spllower(int);
+void softintr(int);
+void splx(int);
 
-extern volatile int cpl, ipending, astpending, tickspending;
+void do_pending_int(void);
+
+void init_intr_ivr(void);
+void init_intr_openpic(void);
+
+void enable_intr(void);
+void disable_intr(void);
+
+void *intr_establish(int, int, int, int (*)(void *), void *);
+void intr_disestablish(void *);
+
+const char *intr_typename(int);
+
+void softnet(int);
+void softserial(void);
+int isa_intr(void);
+void isa_intr_mask(int);
+void isa_intr_clr(int);
+void isa_setirqstat(int, int, int);
+
+extern int imen;
 extern int imask[];
-extern long intrcnt[];
+extern struct intrhand *intrhand[];
 
-/*
- * Reorder protection in the following inline functions is
- * protected with the "eieio" instruction.
- */
-static __inline int
-splraise(newcpl)
-	int newcpl;
-{
-	int oldcpl;
+#define	ICU_LEN			64
 
-	__asm volatile("sync; eieio\n");	/* don't reorder.... */
-	oldcpl = cpl;
-	cpl = oldcpl | newcpl;
-	__asm volatile("sync; eieio\n");	/* reorder protect */
-	return(oldcpl);
-}
+#if 1 /* PIC_I8259 */
+#define	IRQ_SLAVE		2
+#define	LEGAL_IRQ(x)		((x) >= 0 && (x) < ICU_LEN && (x) != IRQ_SLAVE)
+#define	I8259_INTR_NUM		16
+#define	OPENPIC_INTR_NUM	((ICU_LEN)-(I8259_INTR_NUM))
+#else
+#define	LEGAL_IRQ(x)		((x) >= 0 && (x) < ICU_LEN)
+#define	OPENPIC_INTR_NUM	(0)
+#endif
 
-static __inline void
-splx(newcpl)
-	int newcpl;
-{
-	__asm volatile("sync; eieio\n");	/* reorder protect */
-	cpl = newcpl;
-	if(ipending & ~newcpl)
-		do_pending_int();
-	__asm volatile("sync; eieio\n");	/* reorder protect */
-}
+/* Soft interrupt masks. */
+#define SIR_CLOCK       28
+#define SIR_NET         29
+#define SIR_SERIAL      30
+#define SPL_CLOCK       31
 
-static __inline int
-spllower(newcpl)
-	int newcpl;
-{
-	int oldcpl;
+#define setsoftclock()  softintr(SIR_CLOCK);
+#define setsoftnet()    softintr(SIR_NET);
+#define setsoftserial() softintr(SIR_SERIAL);
 
-	__asm volatile("sync; eieio\n");	/* reorder protect */
-	oldcpl = cpl;
-	cpl = newcpl;
-	if(ipending & ~newcpl)
-		do_pending_int();
-	__asm volatile("sync; eieio\n");	/* reorder protect */
-	return(oldcpl);
-}
-
-/* Following code should be implemented with lwarx/stwcx to avoid
- * the disable/enable. i need to read the manual once more.... */
-static __inline void
-set_sint(pending)
-	int	pending;
-{
-	int	msrsave;
-
-	__asm ("mfmsr %0" : "=r"(msrsave));
-	__asm volatile ("mtmsr %0" :: "r"(msrsave & ~PSL_EE));
-	ipending |= pending;
-	__asm volatile ("mtmsr %0" :: "r"(msrsave));
-}
-
-/*
- * Motorola SandPoint PPC eval board interrupt list
- */
-#define	ICU_LEN		25
-#define	ICU_MASK	0x01ffffff
-
-#define	LEGAL_IRQ(x)	((x) >= 0 && (x) < ICU_LEN)
-
-#define	SINT_ISA	0x10000000
-#define	SINT_NET	0x20000000
-#define	SINT_CLOCK	0x40000000
-#define	SINT_SERIAL	0x80000000
-#define	SPL_CLOCK	0x00000001
-#define	SINT_MASK	(SINT_ISA|SINT_CLOCK|SINT_NET|SINT_SERIAL)
-
-#define	CNT_SINT_ISA	28
-#define	CNT_SINT_NET	29
-#define	CNT_SINT_CLOCK	30
-#define	CNT_SINT_SERIAL	31
-#define	CNT_CLOCK	0
-
-#define splbio()	splraise(imask[IPL_BIO])
-#define splnet()	splraise(imask[IPL_NET])
-#define spltty()	splraise(imask[IPL_TTY])
-#define splclock()	splraise(imask[IPL_CLOCK])
-#define splvm()		splraise(imask[IPL_VM])
-#define	splserial()	splraise(imask[IPL_SERIAL])
-#define splstatclock()	splclock()
-#define	splsoftclock()	splraise(imask[IPL_SOFTCLOCK])
-#define	splsoftnet()	splraise(imask[IPL_SOFTNET])
-#define	splsoftserial()	splraise(imask[IPL_SOFTSERIAL])
-
-#define spllpt()	spltty()
-
-#define	setsoftisa()	set_sint(SINT_ISA);
-#define	setsoftclock()	set_sint(SINT_CLOCK);
-#define	setsoftnet()	set_sint(SINT_NET);
-#define	setsoftserial()	set_sint(SINT_SERIAL);
-
-#define	splhigh()	splraise(imask[IPL_HIGH])
+/*#define	splx(x)		spllower(x)*/
 #define	spl0()		spllower(0)
-
-#define splsched()	splhigh()
-#define spllock()	splhigh()
 
 typedef int ipl_t;
 typedef struct {
@@ -242,6 +155,8 @@ splraiseipl(ipl_cookie_t icookie)
 	return splraise(imask[icookie._ipl]);
 }
 
+#include <sys/spl.h>
+
 #endif /* !_LOCORE */
 
-#endif /* !_SANDPOINT_INTR_H_ */
+#endif /* !_MACHINE_INTR_H_ */
