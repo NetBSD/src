@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.24.14.1 2007/05/02 03:01:36 macallan Exp $	*/
+/*	$NetBSD: intr.h,v 1.24.14.2 2007/05/04 02:38:47 macallan Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -39,34 +39,11 @@
 #ifndef _MACPPC_INTR_H_
 #define _MACPPC_INTR_H_
 
+#include <powerpc/intr.h>
+
 #ifdef _KERNEL_OPT
 #include "opt_multiprocessor.h"
 #endif
-
-/* Interrupt priority `levels'. */
-#define	IPL_NONE	0	/* nothing */
-#define	IPL_SOFTCLOCK	1	/* timeouts */
-#define	IPL_SOFTNET	2	/* protocol stacks */
-#define	IPL_BIO		3	/* block I/O */
-#define	IPL_NET		4	/* network */
-#define	IPL_SOFTSERIAL	5	/* serial */
-#define	IPL_AUDIO	6	/* audio */
-#define	IPL_TTY		7	/* terminal */
-#define	IPL_LPT		IPL_TTY
-#define	IPL_VM		8	/* memory allocation */
-#define	IPL_CLOCK	9
-#define	IPL_STATCLOCK	10	/* clock */
-#define	IPL_SCHED	11
-#define	IPL_SERIAL	12	/* serial */
-#define	IPL_LOCK	13
-#define	IPL_HIGH	14	/* everything */
-#define	NIPL		15
-
-/* Interrupt sharing types. */
-#define	IST_NONE	0	/* none */
-#define	IST_PULSE	1	/* pulsed */
-#define	IST_EDGE	2	/* edge-triggered */
-#define	IST_LEVEL	3	/* level-triggered */
 
 #ifndef _LOCORE
 #ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
@@ -149,6 +126,5 @@ void macppc_send_ipi(volatile struct cpu_info *, u_long);
 int init_ohare(void);
 int init_heathrow(void);
 int init_grandcentral(void);
-int init_openpic(void);
 
 #endif /* _MACPPC_INTR_H_ */
