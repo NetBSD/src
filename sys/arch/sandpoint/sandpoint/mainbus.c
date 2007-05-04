@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.18 2005/12/11 12:18:51 christos Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.18.38.1 2007/05/04 10:50:48 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.18 2005/12/11 12:18:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.18.38.1 2007/05/04 10:50:48 nisimura Exp $");
+
+#include "opt_pci.h"
+#include "pci.h"
 
 #include <sys/param.h>
 #include <sys/extent.h>
@@ -40,16 +43,10 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.18 2005/12/11 12:18:51 christos Exp $"
 #include <sys/systm.h>
 
 #include <machine/bus.h>
+#include <machine/isa_machdep.h>
 
-#include "mainbus.h"
-#include "pci.h"
-#include "opt_pci.h"
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pciconf.h>
-
-#if NCPU == 0
-#error	A cpu device is now required
-#endif
 
 int	mainbus_match __P((struct device *, struct cfdata *, void *));
 void	mainbus_attach __P((struct device *, struct device *, void *));
@@ -58,6 +55,8 @@ CFATTACH_DECL(mainbus, sizeof(struct device),
     mainbus_match, mainbus_attach, NULL, NULL);
 
 int	mainbus_print __P((void *, const char *));
+
+struct powerpc_isa_chipset genppc_ict;
 
 /*
  * Probe for the mainbus; always succeeds.
@@ -113,8 +112,8 @@ mainbus_attach(parent, self, aux)
 	extent_destroy(memext);
 #endif
 
-	pba.pba_iot = &sandpoint_io_bs_tag;
-	pba.pba_memt = &sandpoint_mem_bs_tag;
+	pba.pba_iot = &sandpoint_io_space_tag;
+	pba.pba_memt = &sandpoint_mem_space_tag;
 	pba.pba_dmat = &pci_bus_dma_tag;
 	pba.pba_dmat64 = NULL;
 	pba.pba_bus = 0;
