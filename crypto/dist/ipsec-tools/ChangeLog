@@ -1,3 +1,13 @@
+2007-05-04  Yvan Vanhullebus  <vanhu@netasq.com>
+	* src/racoon/pfkey.c: Force the update of ph2 in pk_recvupdate()
+	  if NAT_T support, to solve some port match problems with the
+	  first IPSec SAs negociated as initiator.
+	* src/racoon/isakmp_inf.c: added some debug for DELETE_SA process.
+	* src/racoon/isakmp.c: added some debug in isakmp_chkph1there() to
+	  track some port matching problems with NAT-T.
+	* src/racoon/handler.c: added some debug in getph1byaddr() to
+	  track some port matching problems with NAT-T.
+
 2007-04-04  Yvan Vanhullebus  <vanhu@netasq.com>
 	* src/racoon/oakley.c: dumps peer's ID and peer's certificate
 	  subject /subjectaltname if they don't match.
