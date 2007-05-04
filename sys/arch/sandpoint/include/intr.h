@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.12.14.1 2007/05/04 10:34:13 nisimura Exp $	*/
+/*	$NetBSD: intr.h,v 1.12.14.2 2007/05/04 14:26:30 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -111,17 +111,12 @@ extern int imen;
 extern int imask[];
 extern struct intrhand *intrhand[];
 
-#define	ICU_LEN			64
+#define	ICU_LEN			64	/* XXX */
 
-#if 1 /* PIC_I8259 */
 #define	IRQ_SLAVE		2
 #define	LEGAL_IRQ(x)		((x) >= 0 && (x) < ICU_LEN && (x) != IRQ_SLAVE)
 #define	I8259_INTR_NUM		16
 #define	OPENPIC_INTR_NUM	((ICU_LEN)-(I8259_INTR_NUM))
-#else
-#define	LEGAL_IRQ(x)		((x) >= 0 && (x) < ICU_LEN)
-#define	OPENPIC_INTR_NUM	(0)
-#endif
 
 /* Soft interrupt masks. */
 #define SIR_CLOCK       28

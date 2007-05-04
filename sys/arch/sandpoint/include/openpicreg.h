@@ -1,4 +1,4 @@
-/*	$NetBSD: openpicreg.h,v 1.3.88.1 2007/05/04 10:34:14 nisimura Exp $	*/
+/*	$NetBSD: openpicreg.h,v 1.3.88.2 2007/05/04 14:26:30 nisimura Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -36,13 +36,8 @@
  */
 
 /*
- * INTERRUPT SOURCE register
- * This is kind of odd on the MPC8240.  The interrupts are kind of
- * spread around.
- *	* The 5 external interrupts are at 0x10200 + irq * 0x20
- *	* The next 3 interrupts are at 0x11000 + (irq - 4) * 0x20
- *	* The next interrupt is at 0x110C0 + (irq - 4) * 0x20
- *	* The last interrupts are at 0x01120 + (irq - 9) * 0x40
+ * consult machdep.c to see interrupt source definition and register
+ * location.
  */
 
 #include "opt_openpic.h"
@@ -67,42 +62,19 @@
 #define	SANDPOINT_INTR_RESERVED_13	13
 #define	SANDPOINT_INTR_RESERVED_14	14
 #define	SANDPOINT_INTR_RESERVED_15	15
-#define	SANDPOINT_INTR_SERCON		16	/* Not often used */
-#define	SANDPOINT_INTR_I2C		17
-#define	SANDPOINT_INTR_DMA0		18
-#define	SANDPOINT_INTR_DMA1		19
-#define	SANDPOINT_INTR_I2O		20
-#define	SANDPOINT_INTR_TIMER0		21
-#define	SANDPOINT_INTR_TIMER1		22
-#define	SANDPOINT_INTR_TIMER2		23
-#define	SANDPOINT_INTR_TIMER3		24
-
-#define	OPENPIC_MAX_EXTERNAL_INT	15
-
-#else
-
-#define	SANDPOINT_INTR_PCI0		0
-#define	SANDPOINT_INTR_IDE0		SANDPOINT_INTR_PCI0
-#define	SANDPOINT_INTR_PCI1		1
-#define	SANDPOINT_INTR_IDE1		SANDPOINT_INTR_PCI1
-#define	SANDPOINT_INTR_ISA		SANDPOINT_INTR_PCI1
-#define	SANDPOINT_INTR_PCI2		2
-#define	SANDPOINT_INTR_PCI3		3
-#define	SANDPOINT_INTR_SERCON		4	/* Not often used */
-#define	SANDPOINT_INTR_I2C		5
-#define	SANDPOINT_INTR_DMA0		6
-#define	SANDPOINT_INTR_DMA1		7
-#define	SANDPOINT_INTR_I2O		8
-#define	SANDPOINT_INTR_TIMER0		9
-#define	SANDPOINT_INTR_TIMER1		10
-#define	SANDPOINT_INTR_TIMER2		11
-#define	SANDPOINT_INTR_TIMER3		12
-
-#define	OPENPIC_MAX_EXTERNAL_INT	4
+#define	SANDPOINT_INTR_I2C		16
+#define	SANDPOINT_INTR_DMA0		17
+#define	SANDPOINT_INTR_DMA1		18
+#define	SANDPOINT_INTR_I2O		19
+#define	SANDPOINT_INTR_TIMER0		20
+#define	SANDPOINT_INTR_TIMER1		21
+#define	SANDPOINT_INTR_TIMER2		22
+#define	SANDPOINT_INTR_TIMER3		23
 #endif
 
-/* XXX */
+/* XXX XXX XXX */
 extern unsigned epicsteer[];
+
 #define OPENPIC_SRC_VECTOR(irq)		(epicsteer[(irq)])
 #define OPENPIC_IDEST(irq)		(epicsteer[(irq)] + 0x10)
 
