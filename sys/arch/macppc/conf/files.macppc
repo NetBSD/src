@@ -1,4 +1,4 @@
-#	$NetBSD: files.macppc,v 1.84.2.3 2007/05/03 04:10:03 macallan Exp $
+#	$NetBSD: files.macppc,v 1.84.2.4 2007/05/04 02:52:29 macallan Exp $
 #
 # macppc-specific configuration info
 
@@ -16,13 +16,22 @@ file arch/macppc/macppc/clock.c
 file arch/macppc/macppc/disksubr.c		disk
 #file arch/macppc/macppc/extintr.c
 file arch/macppc/macppc/interrupts.c
-file arch/macppc/macppc/pic_ohare.c
-file arch/macppc/macppc/pic_heathrow.c
 file arch/macppc/macppc/machdep.c
 file arch/macppc/dev/ofb_cons.c
 file arch/macppc/dev/dbdma.c
 
-defflag opt_interrupt.h PIC_OHARE PIC_GRANDCENTRAL PIC_HEATHROW
+# interrupt controllers
+define pic_ohare
+define pic_heathrow
+define pic_grandcentral
+
+defflag opt_interrupt.h PIC_OHARE: pic_ohare
+defflag opt_interrupt.h PIC_GRANDCENTRAL: pic_grandcentral
+defflag opt_interrupt.h PIC_HEATHROW: pic_heathrow
+
+file arch/macppc/macppc/pic_ohare.c		pic_ohare
+file arch/macppc/macppc/pic_heathrow.c		pic_heathrow
+file arch/macppc/macppc/pic_grandcentral.c	pic_grandcentral
 
 file arch/powerpc/powerpc/procfs_machdep.c	procfs
 file arch/powerpc/powerpc/softintr.c
