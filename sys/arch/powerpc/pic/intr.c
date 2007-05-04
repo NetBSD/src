@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.1.2.10 2007/05/03 19:54:41 garbled Exp $ */
+/*	$NetBSD: intr.c,v 1.1.2.11 2007/05/04 02:53:51 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.1.2.10 2007/05/03 19:54:41 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.1.2.11 2007/05/04 02:53:51 macallan Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -129,7 +129,10 @@ intr_establish(int hwirq, int type, int level, int (*ih_fun)(void *),
 	struct intr_source *is;
 	struct pic_ops *pic;
 	static struct intrhand fakehand;
-	int irq;
+	int irq, maxlevel = level;
+
+	if (maxlevel == IPL_NONE)
+		maxlevel = IPL_HIGH;
 
 	if (hwirq >= max_base) {
 
@@ -182,8 +185,10 @@ intr_establish(int hwirq, int type, int level, int (*ih_fun)(void *),
 	 * This is O(N^2), but we want to preserve the order, and N is
 	 * generally small.
 	 */
-	for (p = &is->is_hand; (q = *p) != NULL; p = &q->ih_next)
-		;
+	for (p = &is->is_hand; (q = *p) != NULL; p = &q->ih_next) {
+
+		maxlevel = max(maxlevel, q->ih_level);
+	}
 
 	/*
 	 * Actually install a fake handler momentarily, since we might be doing
@@ -206,7 +211,9 @@ intr_establish(int hwirq, int type, int level, int (*ih_fun)(void *),
 	ih->ih_irq = irq;
 	*p = ih;
 
-	pic->pic_establish_irq(pic, hwirq - pic->pic_intrbase, is->is_type);
+	if (pic->pic_establish_irq != NULL)
+		pic->pic_establish_irq(pic, hwirq - pic->pic_intrbase,
+		    is->is_type, maxlevel);
 
 	return ih;
 }
