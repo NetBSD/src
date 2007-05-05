@@ -1,4 +1,4 @@
-/*	$NetBSD: pic_ohare.c,v 1.1.2.4 2007/05/04 02:50:49 macallan Exp $ */
+/*	$NetBSD: pic_ohare.c,v 1.1.2.5 2007/05/05 02:17:19 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic_ohare.c,v 1.1.2.4 2007/05/04 02:50:49 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic_ohare.c,v 1.1.2.5 2007/05/05 02:17:19 macallan Exp $");
 
 #include "opt_interrupt.h"
 
@@ -57,9 +57,10 @@ struct ohare_ops {
 	struct pic_ops pic;
 	uint32_t pending_events;
 	uint32_t enable_mask;
+	uint32_t level_mask;
 };
 
-static struct ohare_ops *setup_ohare(uint32_t);
+static struct ohare_ops *setup_ohare(uint32_t, int);
 static void setup_ohare2(uint32_t, int);
 inline void ohare_read_events(struct ohare_ops *);
 
@@ -68,24 +69,29 @@ inline void ohare_read_events(struct ohare_ops *);
 #define INT_CLEAR_REG	((uint32_t)pic->pic_cookie + 0x28)
 #define INT_LEVEL_REG	((uint32_t)pic->pic_cookie + 0x2c)
 #define INT_LEVEL_MASK_OHARE	0x1ff00000
+#define INT_LEVEL_MASK_GC	0x3ff00000
 
 int init_ohare(void)
 {
 	uint32_t reg[5];
 	uint32_t obio_base;
 	uint32_t irq;
-	int      ohare, ohare2;
+	int      ohare, ohare2, is_gc = 0;
 
 	ohare = OF_finddevice("/bandit/ohare");
-	if (ohare == -1)
-		return FALSE;
+	if (ohare == -1) {
+		ohare = OF_finddevice("/bandit/gc");
+		is_gc = 1;
+	}
+		
 
 	if (OF_getprop(ohare, "assigned-addresses", reg, sizeof(reg)) != 20) 
 		return FALSE;
 
 	obio_base = reg[2];
-	aprint_normal("found ohare PIC at %08x\n", obio_base);
-	setup_ohare(obio_base);
+	aprint_normal("found %s PIC at %08x\n", 
+	    is_gc ? "Grand Central" : "ohare", obio_base);
+	setup_ohare(obio_base, is_gc);
 
 	/* look for 2nd ohare */
 	ohare2 = OF_finddevice("/bandit/pci106b,7");
@@ -106,7 +112,7 @@ done:
 }
 
 static struct ohare_ops *
-setup_ohare(uint32_t addr)
+setup_ohare(uint32_t addr, int is_gc)
 {
 	struct ohare_ops *ohare;
 	struct pic_ops *pic;
@@ -123,7 +129,15 @@ setup_ohare(uint32_t addr)
 	pic->pic_get_irq = ohare_get_irq;
 	pic->pic_ack_irq = ohare_ack_irq;
 	pic->pic_establish_irq = NULL;
-	strcpy(pic->pic_name, "ohare");
+	if (is_gc) {
+	
+		strcpy(pic->pic_name, "gc");
+		ohare->level_mask = INT_LEVEL_MASK_GC;
+	} else {
+
+		strcpy(pic->pic_name, "ohare");
+		ohare->level_mask = INT_LEVEL_MASK_OHARE;
+	}	
 	pic_add(pic);
 	ohare->pending_events = 0;
 	ohare->enable_mask = 0;
@@ -137,7 +151,7 @@ setup_ohare2(uint32_t addr, int irq)
 {
 	struct ohare_ops *pic;
 
-	pic = setup_ohare(addr);
+	pic = setup_ohare(addr, 0);
 	strcpy(pic->pic.pic_name, "ohare2");
 	intr_establish(irq, IST_LEVEL, IPL_NONE, pic_handle_intr, pic);
 }
@@ -185,10 +199,10 @@ ohare_read_events(struct ohare_ops *ohare)
 	uint32_t irqs, events, levels;
 
 	irqs = in32rb(INT_STATE_REG);
-	events = irqs & ~INT_LEVEL_MASK_OHARE;
+	events = irqs & ~ohare->level_mask;
 
 	levels = in32rb(INT_LEVEL_REG) & ohare->enable_mask;
-	events |= levels & INT_LEVEL_MASK_OHARE;
+	events |= levels & ohare->level_mask;
 	out32rb(INT_CLEAR_REG, events | irqs);
 	ohare->pending_events |= events;
 
