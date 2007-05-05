@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.26 2006/03/17 04:53:55 rumble Exp $	*/
+/*	$NetBSD: util.c,v 1.27 2007/05/05 16:55:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -72,7 +72,7 @@
 #if 0
 static char sccsid[] = "@(#)util.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: util.c,v 1.26 2006/03/17 04:53:55 rumble Exp $");
+__RCSID("$NetBSD: util.c,v 1.27 2007/05/05 16:55:17 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -393,7 +393,7 @@ userinfo(PERSON *pn, struct passwd *pw)
 	    strdup(p) : NULL;
 	pn->homephone = ((p = strsep(&bp, ",")) && *p) ?
 	    strdup(p) : NULL;
-	(void)snprintf(tbuf, sizeof(tbuf), "%s/%s", _PATH_MAILSPOOL,
+	(void)snprintf(tbuf, sizeof(tbuf), "%s/%s", _PATH_MAILDIR,
 	    pw->pw_name);
 	pn->mailrecv = -1;		/* -1 == not_valid */
 	if (stat(tbuf, &sb) < 0) {
