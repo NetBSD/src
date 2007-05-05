@@ -1,4 +1,4 @@
-.\"	$NetBSD: whatis,v 1.19 2006/10/30 18:36:44 hubertf Exp $
+.\"	$NetBSD: whatis,v 1.20 2007/05/05 23:07:12 pavel Exp $
 .
 This is the twelfth major release of
 .Nx
@@ -12,9 +12,7 @@ See the supported hardware list for details.
 .Pp
 Some (but not all!) notable \*M-specific improvements include:
 .(bullet
-Support for booting off RAIDframe RAID-1 mirrors
-.It
-Increase the maximum number of partitions per disklabel from 8 to 16.
+TBD
 .bullet)
 .Pp
 .Nx \*V

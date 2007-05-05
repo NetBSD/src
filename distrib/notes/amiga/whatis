@@ -1,22 +1,10 @@
-.\"	$NetBSD: whatis,v 1.16 2002/07/08 14:42:48 lukem Exp $
+.\"	$NetBSD: whatis,v 1.17 2007/05/05 23:07:11 pavel Exp $
 .
-This is the eighth major release of
+This is the XXXth major release of
 .Nx
 for the Amiga and DraCo line of computers.
 .Pp
 New port-specific features include:
 .(bullet
-Two stage boot loader capable of loading ELF or a.out as well as
-compressed kernels.
-.It
-New device driver support:
-.(bullet -compact
-ZEUS ISDN-link and Individual Computers ISDN surfer
-.It
-BSC ISDN MAster II
-.It
-Repulse audio board
-.It
-Toccata driver (experimental)
-.bullet)
+TBD
 .bullet)
