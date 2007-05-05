@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.842 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.843 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -100,3 +100,7 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	mfi(4): added bio(4) and envsys(4) support. [bouyer 20070501]
 	ipf(8): Updated to version 4.1.20. [martti 20070501]
 	bind: import 9.4.1 [christos 20070501]
+	puffs(3): Add puffs_framebuf(3), which abstracts the buffer
+		management and event loop for networked file systems
+		using puffs_cc(3).  Convert mount_psshfs(8) and 
+		mount_9p(8) to use it.  [pooka 20070505]
