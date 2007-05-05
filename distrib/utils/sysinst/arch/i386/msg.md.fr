@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.fr,v 1.41 2006/12/17 16:59:40 dsl Exp $	*/
+/*	$NetBSD: msg.md.fr,v 1.42 2007/05/05 22:23:34 snj Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -157,8 +157,7 @@ avec la dernière version du code d'ammorcage de NetBSD ?}
 
 message set_kernel_1	{Kernel (GENERIC)}
 message set_kernel_2	{Kernel (GENERIC.MP)}
-message set_kernel_3	{Kernel (GENERIC.MPACPI)}
-message set_kernel_4	{Kernel (GENERIC_LAPTOP)}
-message set_kernel_5	{Kernel (GENERIC_DIAGNOSTIC)}
-/* message set_kernel_6	{Kernel (GENERIC_TINY)} */
-/* message set_kernel_7	{Kernel (GENERIC_PS2TINY)} */
+message set_kernel_3	{Kernel (GENERIC_LAPTOP)}
+message set_kernel_4	{Kernel (GENERIC_DIAGNOSTIC)}
+/* message set_kernel_5	{Kernel (GENERIC_TINY)} */
+/* message set_kernel_6	{Kernel (GENERIC_PS2TINY)} */
