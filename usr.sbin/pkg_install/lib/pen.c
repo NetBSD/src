@@ -1,4 +1,4 @@
-/*	$NetBSD: pen.c,v 1.36 2006/03/17 01:58:25 hubertf Exp $	*/
+/*	$NetBSD: pen.c,v 1.37 2007/05/05 16:43:01 christos Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -11,7 +11,7 @@
 #if 0
 static const char *rcsid = "from FreeBSD Id: pen.c,v 1.25 1997/10/08 07:48:12 charnier Exp";
 #else
-__RCSID("$NetBSD: pen.c,v 1.36 2006/03/17 01:58:25 hubertf Exp $");
+__RCSID("$NetBSD: pen.c,v 1.37 2007/05/05 16:43:01 christos Exp $");
 #endif
 #endif
 
@@ -100,38 +100,48 @@ where_playpen(void)
 static char *
 find_play_pen(char *pen, size_t pensize, size_t sz)
 {
-	char   *cp;
+	const char **cp;
 	struct stat sb;
+	char *r;
+	const char *tmpdir[] = {
+		"PKG_TMPDIR",
+		"TMPDIR",
+		"/var/tmp",
+		"/tmp",
+		"/usr/tmp",
+		NULL
+	};
 
 	if (pen == NULL) {
 		cleanup(0);
-		errx(2,
-		     "find_play_pen(): 'pen' variable is NULL\n"
-		     "(this should not happen, please report!");
+		errx(2, "find_play_pen(): 'pen' variable is NULL\n"
+		     "(this should not happen, please report!)");
 		return NULL;
 	}
 	
-	if (pen[0] && stat(pen, &sb) != FAIL && (min_free(pen) >= sz))
-		return pen;
-	else if ((cp = getenv("PKG_TMPDIR")) != NULL && stat(cp, &sb) != FAIL && (min_free(cp) >= sz))
-		(void) snprintf(pen, pensize, "%s/instmp.XXXXXX", cp);
-	else if ((cp = getenv("TMPDIR")) != NULL && stat(cp, &sb) != FAIL && (min_free(cp) >= sz))
-		(void) snprintf(pen, pensize, "%s/instmp.XXXXXX", cp);
-	else if (stat("/var/tmp", &sb) != FAIL && min_free("/var/tmp") >= sz)
-		strlcpy(pen, "/var/tmp/instmp.XXXXXX", pensize);
-	else if (stat("/tmp", &sb) != FAIL && min_free("/tmp") >= sz)
-		strlcpy(pen, "/tmp/instmp.XXXXXX", pensize);
-	else if (stat("/usr/tmp", &sb) != FAIL && min_free("/usr/tmp") >= sz)
-		strlcpy(pen, "/usr/tmp/instmp.XXXXXX", pensize);
-	else {
-		cleanup(0);
-		errx(2,
-		    "can't find enough temporary space to extract the files, please set your\n"
-		    "PKG_TMPDIR environment variable to a location with at least %lu bytes\n"
-		    "free", (u_long) sz);
-		return NULL;
+	if (pen[0] && (r = strrchr(pen, '/')) != NULL) {
+		*r = '\0';
+		if (stat(pen, &sb) != FAIL && (min_free(pen) >= sz)) {
+			*r = '/';
+			return pen;
+		}
 	}
-	return pen;
+
+	for (cp = tmpdir; *cp; cp++) {
+		const char *d = (**cp == '/') ? *cp : getenv(*cp);
+
+		if (d == NULL || stat(d, &sb) == FAIL || min_free(d) < sz)
+			continue;
+
+		(void)snprintf(pen, pensize, "%s/instmp.XXXXXX", d);
+		return pen;
+	}
+
+	cleanup(0);
+	errx(2, "Can't find enough temporary space to extract the files.\n"
+	    "Please set your PKG_TMPDIR environment variable to a location "
+	    "with at least %zu bytes free", sz);
+	return NULL;
 }
 
 /*
@@ -211,7 +221,7 @@ leave_playpen(char *save)
  * operating systems.
  */
 uint64_t
-min_free(char *tmpdir)
+min_free(const char *tmpdir)
 {
 	struct statvfs buf;
 
