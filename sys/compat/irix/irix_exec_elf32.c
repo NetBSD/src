@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_exec_elf32.c,v 1.13 2007/04/22 08:29:57 dsl Exp $ */
+/*	$NetBSD: irix_exec_elf32.c,v 1.14 2007/05/05 13:12:51 rumble Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_exec_elf32.c,v 1.13 2007/04/22 08:29:57 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_exec_elf32.c,v 1.14 2007/05/05 13:12:51 rumble Exp $");
 
 #ifndef ELFSIZE
 #define ELFSIZE		32	/* XXX should die */
@@ -125,8 +125,7 @@ ELFNAME2(irix,probe_n32)(l, epp, eh, itp, pos)
 		if (strncmp(itp, "/lib32/libc.so", 14) &&
 		    strncmp(itp, "/usr/lib32/libc.so", 18))
 			return ENOEXEC;
-		if ((error = emul_find_interp(l,
-		    epp->ep_esch->es_emul->e_path, itp)))
+		if ((error = emul_find_interp(l, epp, itp)))
 			return error;
 	}
 #ifdef DEBUG_IRIX
