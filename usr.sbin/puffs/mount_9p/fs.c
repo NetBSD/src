@@ -1,4 +1,4 @@
-/*	$NetBSD: fs.c,v 1.1 2007/04/21 14:21:43 pooka Exp $	*/
+/*	$NetBSD: fs.c,v 1.2 2007/05/05 15:49:51 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fs.c,v 1.1 2007/04/21 14:21:43 pooka Exp $");
+__RCSID("$NetBSD: fs.c,v 1.2 2007/05/05 15:49:51 pooka Exp $");
 #endif /* !lint */
 
 #include <err.h>
@@ -41,177 +41,114 @@ __RCSID("$NetBSD: fs.c,v 1.1 2007/04/21 14:21:43 pooka Exp $");
 #include "ninepuffs.h"
 #include "nineproto.h"
 
+#define DO_IO(fname, a1, a2, a3, a4, rv)				\
+	puffs_framebuf_seekset(a2, 0);					\
+	*(a4) = 0;							\
+	rv = fname(a1, a2, a3, a4);					\
+	if (rv || a4 == 0) errx(1, "p9p_handshake_ io failed %d, %d", rv, *a4) 
+
 struct puffs_node *
 p9p_handshake(struct puffs_usermount *pu, const char *username)
 {
 	struct puffs9p *p9p = puffs_getspecific(pu);
-	struct p9pbuf *pb;
+	struct puffs_framebuf *pb;
 	struct puffs_node *pn;
 	struct vattr rootva;
 	uint32_t maxreq;
 	uint16_t dummy;
-	p9ptag_t tagid;
-	int rv, x = 1;
+	p9ptag_t tagid, rtagid;
+	uint8_t type;
+	int rv, done, x = 1;
 
 	/* send initial handshake */
-	pb = p9pbuf_make(p9p->maxreq, P9PB_OUT);
+	pb = p9pbuf_makeout();
 	p9pbuf_put_1(pb, P9PROTO_T_VERSION);
 	p9pbuf_put_2(pb, P9PROTO_NOTAG);
 	p9pbuf_put_4(pb, p9p->maxreq);
 	p9pbuf_put_str(pb, P9PROTO_VERSION);
-	while ((rv = p9pbuf_write(p9p, pb)) != 1) {
-		if (rv == -1) {
-			warn("Tversion send failed");
-			return NULL;
-		}
-	}
+	DO_IO(p9pbuf_write, pu, pb, p9p->servsock, &done, rv);
 
-	p9pbuf_recycle(pb, P9PB_IN);
-	while ((rv = p9pbuf_read(p9p, pb)) != 1) {
-		if (rv == -1) {
-			warn("Rversion receive failed");
-			return NULL;
-		}
-	}
+	puffs_framebuf_recycle(pb);
+	DO_IO(p9pbuf_read, pu, pb, p9p->servsock, &done, rv);
 
-	if (pb->type != P9PROTO_R_VERSION) {
-		warnx("server invalid response to Tversion: %d", pb->type);
+	if ((type = p9pbuf_get_type(pb)) != P9PROTO_R_VERSION)
+		errx(1, "server invalid response to Tversion: %d", type);
+	if ((rtagid = p9pbuf_get_tag(pb)) != P9PROTO_NOTAG) {
+		errx(1, "server invalid tag: %d vs. %d\n",
+		    P9PROTO_NOTAG, tagid);
 		return NULL;
 	}
-	if (pb->tagid != P9PROTO_NOTAG) {
-		warnx("server invalid tag: %d vs. %d\n",
-		    P9PROTO_NOTAG, pb->tagid);
-		return NULL;
-	}
-	if (!p9pbuf_get_4(pb, &maxreq)) {
-		warnx("server invalid response: no request length");
-		return NULL;
-	}
-	if (maxreq < P9P_MINREQLEN) {
-		warnx("server request length below minimum accepted: %d vs. %d",
-		    P9P_MINREQLEN, maxreq);
-		return NULL;
-	}
+	if (p9pbuf_get_4(pb, &maxreq))
+		errx(1, "server invalid response: no request length");
+	if (maxreq < P9P_MINREQLEN)
+		errx(1, "server request length below minimum accepted: "
+		    "%d vs. %d", P9P_MINREQLEN, maxreq);
 	p9p->maxreq = maxreq;
 
 	/* tell the server we don't support authentication */
+	p9pbuf_recycleout(pb);
 	tagid = NEXTTAG(p9p);
-	p9pbuf_recycle(pb, P9PB_OUT);
 	p9pbuf_put_1(pb, P9PROTO_T_AUTH);
 	p9pbuf_put_2(pb, tagid);
 	p9pbuf_put_4(pb, P9PROTO_NOFID);
 	p9pbuf_put_str(pb, username);
 	p9pbuf_put_str(pb, "");
-	while ((rv = p9pbuf_write(p9p, pb)) != 1) {
-		if (rv == -1) {
-			warn("Tauth send failed");
-			return NULL;
-		}
-	}
+	DO_IO(p9pbuf_write, pu, pb, p9p->servsock, &done, rv);
 
-	p9pbuf_recycle(pb, P9PB_IN);
-	while ((rv = p9pbuf_read(p9p, pb)) != 1) {
-		if (rv == -1) {
-			warn("Rauth receive failed");
-			return NULL;
-		}
-	}
+	puffs_framebuf_recycle(pb);
+	DO_IO(p9pbuf_read, pu, pb, p9p->servsock, &done, rv);
 
 	/* assume all Rerror is "no auth" */
-	if (pb->type != P9PROTO_R_ERROR) {
-		warnx("mount_9p supports only NO auth");
-		return NULL;
-	}
-	if (pb->tagid != tagid) {
-		warnx("server invalid tag: %d vs. %d\n", tagid, pb->tagid);
-		return NULL;
-	}
+	if (p9pbuf_get_type(pb) != P9PROTO_R_ERROR)
+		errx(1, "mount_9p supports only NO auth");
+	if ((rtagid = p9pbuf_get_tag(pb)) != tagid)
+		errx(1, "server invalid tag: %d vs. %d\n", tagid, rtagid);
 
 	/* build attach message */
+	p9pbuf_recycleout(pb);
 	tagid = NEXTTAG(p9p);
-	p9pbuf_recycle(pb, P9PB_OUT);
 	p9pbuf_put_1(pb, P9PROTO_T_ATTACH);
 	p9pbuf_put_2(pb, tagid);
 	p9pbuf_put_4(pb, P9P_ROOTFID);
 	p9pbuf_put_4(pb, P9PROTO_NOFID);
 	p9pbuf_put_str(pb, username);
 	p9pbuf_put_str(pb, "");
-	while ((rv = p9pbuf_write(p9p, pb)) != 1) {
-		if (rv == -1) {
-			warn("Tattach send failed");
-			return NULL;
-		}
-	}
+	DO_IO(p9pbuf_write, pu, pb, p9p->servsock, &done, rv);
 
-	p9pbuf_recycle(pb, P9PB_IN);
-	while ((rv = p9pbuf_read(p9p, pb)) != 1) {
-		if (rv == -1) {
-			warn("Rattach receive failed");
-			return NULL;
-		}
-	}
+	puffs_framebuf_recycle(pb);
+	DO_IO(p9pbuf_read, pu, pb, p9p->servsock, &done, rv);
 
-	if (pb->type != P9PROTO_R_ATTACH) {
-		warnx("Rattach not received, got %d", pb->type);
-		return NULL;
-	}
-	if (pb->tagid != tagid) {
-		warnx("server invalid tag: %d vs. %d\n", tagid, pb->tagid);
-		return NULL;
-	}
-#if 0
-	if (!proto_getqid(pb, rqid)) {
-		warnx("cannot read root node qid");
-		return NULL;
-	}
-#endif
+	if ((type = p9pbuf_get_type(pb)) != P9PROTO_R_ATTACH)
+		errx(1, "Rattach not received, got %d", type);
+	if ((rtagid = p9pbuf_get_tag(pb)) != tagid)
+		errx(1, "server invalid tag: %d vs. %d\n", tagid, rtagid);
 
 	/* finally, stat the rootnode */
+	p9pbuf_recycleout(pb);
 	tagid = NEXTTAG(p9p);
-	p9pbuf_recycle(pb, P9PB_OUT);
 	p9pbuf_put_1(pb, P9PROTO_T_STAT);
 	p9pbuf_put_2(pb, tagid);
 	p9pbuf_put_4(pb, P9P_ROOTFID);
-	while ((rv = p9pbuf_write(p9p, pb)) != 1) {
-		if (rv == -1) {
-			warn("Tstat send failed");
-			return NULL;
-		}
-	}
+	DO_IO(p9pbuf_write, pu, pb, p9p->servsock, &done, rv);
 
-	p9pbuf_recycle(pb, P9PB_IN);
-	while ((rv = p9pbuf_read(p9p, pb)) != 1) {
-		if (rv == -1) {
-			warn("Rstat receive failed");
-			return NULL;
-		}
-	}
+	puffs_framebuf_recycle(pb);
+	DO_IO(p9pbuf_read, pu, pb, p9p->servsock, &done, rv);
 
-	if (pb->type != P9PROTO_R_STAT) {
-		warnx("Rstat not received, got %d", pb->type);
-		return NULL;
-	}
-	if (pb->tagid != tagid) {
-		warnx("server invalid tag: %d vs. %d\n", tagid, pb->tagid);
-		return NULL;
-	}
-	if (!p9pbuf_get_2(pb, &dummy)) {
-		warnx("couldn't get stat len parameter");
-		return NULL;
-	}
-	if (!proto_getstat(pb, &rootva, NULL, NULL)) {
-		warnx("could not parse root attributes");
-		return NULL;
-	}
-	p9pbuf_destroy(pb);
+	if ((type = p9pbuf_get_type(pb)) != P9PROTO_R_STAT)
+		errx(1, "Rstat not received, got %d", type);
+	if ((rtagid = p9pbuf_get_tag(pb)) != tagid)
+		errx(1, "server invalid tag: %d vs. %d\n", tagid, rtagid);
+	if (p9pbuf_get_2(pb, &dummy))
+		errx(1, "couldn't get stat len parameter");
+	if (proto_getstat(pb, &rootva, NULL, NULL))
+		errx(1, "could not parse root attributes");
+	puffs_framebuf_destroy(pb);
 
 	rootva.va_nlink = 0156; /* guess, will be fixed with first readdir */
 	pn = newp9pnode_va(pu, &rootva, P9P_ROOTFID);
 
-	if (ioctl(p9p->servsock, FIONBIO, &x) == -1) {
-		warnx("cannot set socket in nonblocking mode");
-		return NULL;
-	}
+	if (ioctl(p9p->servsock, FIONBIO, &x) == -1)
+		err(1, "cannot set socket in nonblocking mode");
 
 	return pn;
 }
