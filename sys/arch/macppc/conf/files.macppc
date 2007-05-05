@@ -1,4 +1,4 @@
-#	$NetBSD: files.macppc,v 1.84.2.5 2007/05/04 05:59:25 macallan Exp $
+#	$NetBSD: files.macppc,v 1.84.2.6 2007/05/05 06:20:27 macallan Exp $
 #
 # macppc-specific configuration info
 
@@ -12,7 +12,7 @@ include "arch/powerpc/pic/files.pic"
 
 file arch/macppc/macppc/autoconf.c
 file arch/macppc/macppc/bus_dma.c
-file arch/macppc/macppc/clock.c
+file arch/powerpc/powerpc/clock.c
 file arch/macppc/macppc/disksubr.c		disk
 #file arch/macppc/macppc/extintr.c
 file arch/macppc/macppc/interrupts.c
