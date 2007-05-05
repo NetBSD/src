@@ -1,32 +1,10 @@
-.\"	$NetBSD: whatis,v 1.10 2002/07/09 08:39:51 lukem Exp $
+.\"	$NetBSD: whatis,v 1.11 2007/05/05 23:07:11 pavel Exp $
 .
-There have been many \*M-specific enhancements since the
-.Nx 1.5
-release.
-These include:
+The \*M-specific enhancements since the
+.Nx 3.0
+release include:
 .(bullet
-Working Loadable Kernel Modules (LKMs)
-.It
-IEEE 754 floating point completion code.
-.It
-PowerStorm 4d20 graphics card support.
-.It
-Multiprocessor support for the following systems:
-.(bullet -compact
-AlphaServer 1200
-.It
-AlphaServer 4100
-.It
-DEC/Alpha Processor, Inc. DP264
-.It
-DEC/Alpha Processor, Inc. UP2000
-.It
-DEC/Alpha Processor, Inc. UP2000+
-.It
-API CS20
-.It
-Compaq DS20
-.bullet)
+TBD
 .bullet)
 .Pp
 .Nx

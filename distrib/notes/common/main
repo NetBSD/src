@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.335 2007/05/05 21:47:35 snj Exp $
+.\"	$NetBSD: main,v 1.336 2007/05/05 23:07:11 pavel Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -53,7 +53,7 @@
 .as MACHINE_LIST " sgimips shark sparc sparc64 sun2 sun3 vax x68k xen zaurus .
 .so \*[.CURDIR]/../common/macros
 .
-.Dd August 22, 2004
+.Dd May 6, 2007
 .Dt INSTALL 8
 .Os NetBSD
 .Sh NAME
@@ -430,10 +430,10 @@ possible, it's likely that
 wouldn't exist.
 .
 .if \n[FOR_RELEASE] \{\
-.Ss Changes Between The NetBSD 2.0 and 3.0 Releases
+.Ss Changes Between The NetBSD 3.0 and 4.0 Releases
 .Pp
 The
-.Nx 3.0
+.Nx 4.0
 release
 provides numerous significant functional enhancements, including
 support for many new devices, integration of hundreds of bug fixes,
@@ -441,7 +441,7 @@ new and updated kernel subsystems, and many user-land enhancements.
 The result of these improvements is a stable operating system fit for
 production use that rivals most commercially available systems.
 .Pp
-It is impossible to completely summarize a year of development that
+It is impossible to completely summarize more than a year of development that
 went into the
 .Nx
 \*V release.
@@ -450,35 +450,19 @@ Some highlights include:
 .Ss2 Kernel
 .
 .(bullet
-Ports to new platforms including:
-iyonix
-and
-Xen 2.0.
+TBD
 .bullet)
 .
 .Ss2 Networking
 .
 .(bullet
-TCP now supports TCP Selective Acknowledgement Options (RFC 2018) for
-enhanced performance especially on long distance connections and
-TCP MD5 signatures (RFC 2385) for enhanced protection agains attacks.
-.It
-The OpenBSD Packet Filter has been integrated as alternative packet
-filer solution.
-.It
-IP Filter has been upgraded to version 4.1.8.
-.It
-The KAME IPsec stack now support ESP over NAT connections (RFC 3948).
-.It
-ipsec-tools 0.6.2 provides IKE support for ESP over NAT connections (RFC 3947),
-user authentification via XAuth and automatic network configurations of VPN
-clients via Mode Config.
+TBD
 .bullet)
 .
 .Ss2 File system
 .
 .(bullet
-UFS_DIRHASH
+TBD
 .bullet)
 .
 .Ss2 Security
@@ -498,23 +482,7 @@ TBD
 .(bullet
 TBD
 .(bullet -compact -offset indent
-am-utils 6-1-20050417
-.It
-BIND 9.3.0
-.It
-cvs 1.11.20
-.It
-OpenSSH 3.9
-.It
-OpenSSL 0.9.7d
-.It
-Postfix 2.1.5
-.It
-sendmail 8.13.3
-.It
-tcpdump 3.8.3
-.It
-XFree86 4.5.0
+TBD: 3rd party package updates
 .bullet)
 .It
 Many new packages in the
