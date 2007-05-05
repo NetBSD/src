@@ -1,4 +1,4 @@
-/*	$NetBSD: uninorth.c,v 1.11 2005/12/11 12:18:06 christos Exp $	*/
+/*	$NetBSD: uninorth.c,v 1.11.38.1 2007/05/05 06:04:23 macallan Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uninorth.c,v 1.11 2005/12/11 12:18:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uninorth.c,v 1.11.38.1 2007/05/05 06:04:23 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -44,20 +44,17 @@ struct uninorth_softc {
 	struct pci_bridge sc_pc;
 };
 
-void uninorth_attach __P((struct device *, struct device *, void *));
-int uninorth_match __P((struct device *, struct cfdata *, void *));
+static void uninorth_attach(struct device *, struct device *, void *);
+static int uninorth_match(struct device *, struct cfdata *, void *);
 
-pcireg_t uninorth_conf_read __P((pci_chipset_tag_t, pcitag_t, int));
-void uninorth_conf_write __P((pci_chipset_tag_t, pcitag_t, int, pcireg_t));
+static pcireg_t uninorth_conf_read(pci_chipset_tag_t, pcitag_t, int);
+static void uninorth_conf_write(pci_chipset_tag_t, pcitag_t, int, pcireg_t);
 
 CFATTACH_DECL(uninorth, sizeof(struct uninorth_softc),
     uninorth_match, uninorth_attach, NULL, NULL);
 
-int
-uninorth_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+static int
+uninorth_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct confargs *ca = aux;
 	char compat[32];
@@ -73,10 +70,8 @@ uninorth_match(parent, cf, aux)
 	return 1;
 }
 
-void
-uninorth_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+static void
+uninorth_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct uninorth_softc *sc = (void *)self;
 	pci_chipset_tag_t pc = &sc->sc_pc;
@@ -144,11 +139,8 @@ uninorth_attach(parent, self, aux)
 	config_found_ia(self, "pcibus", &pba, pcibusprint);
 }
 
-pcireg_t
-uninorth_conf_read(pc, tag, reg)
-	pci_chipset_tag_t pc;
-	pcitag_t tag;
-	int reg;
+static pcireg_t
+uninorth_conf_read(pci_chipset_tag_t pc, pcitag_t tag, int reg)
 {
 	int32_t *daddr = pc->data;
 	pcireg_t data;
@@ -189,12 +181,8 @@ uninorth_conf_read(pc, tag, reg)
 	return data;
 }
 
-void
-uninorth_conf_write(pc, tag, reg, data)
-	pci_chipset_tag_t pc;
-	pcitag_t tag;
-	int reg;
-	pcireg_t data;
+static void
+uninorth_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t data)
 {
 	int32_t *daddr = pc->data;
 	int bus, dev, func, s;
