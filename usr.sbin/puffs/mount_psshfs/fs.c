@@ -1,4 +1,4 @@
-/*	$NetBSD: fs.c,v 1.7 2007/04/18 15:53:20 pooka Exp $	*/
+/*	$NetBSD: fs.c,v 1.8 2007/05/05 15:49:51 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fs.c,v 1.7 2007/04/18 15:53:20 pooka Exp $");
+__RCSID("$NetBSD: fs.c,v 1.8 2007/05/05 15:49:51 pooka Exp $");
 #endif /* !lint */
 
 #include <err.h>
@@ -44,6 +44,12 @@ __RCSID("$NetBSD: fs.c,v 1.7 2007/04/18 15:53:20 pooka Exp $");
 #include "psshfs.h"
 #include "sftp_proto.h"
 
+#define DO_IO(fname, a1, a2, a3, a4, rv)				\
+	puffs_framebuf_seekset(a2, 0);					\
+	*(a4) = 0;							\
+	rv = fname(a1, a2, a3, a4);					\
+	if (rv || a4 == 0) errx(1, "psshfs_domount io failed %d, %d", rv, *a4) 
+
 int
 psshfs_domount(struct puffs_usermount *pu)
 {
@@ -54,71 +60,52 @@ psshfs_domount(struct puffs_usermount *pu)
 	struct puffs_node *pn_root;
 	struct vattr va;
 	struct vattr *rva;
-	struct psbuf *pb;
+	struct puffs_framebuf *pb;
 	char *rootpath;
 	uint32_t count;
-	int rv;
+	int rv, done;
 
-	pb = psbuf_make(PSB_OUT);
+	pb = psbuf_makeout();
 	psbuf_put_1(pb, SSH_FXP_INIT);
 	psbuf_put_4(pb, SFTP_PROTOVERSION);
+	DO_IO(psbuf_write, pu, pb, pctx->sshfd, &done, rv);
 
-	while ((rv = psbuf_write(pctx, pb)) != 1)
-		if (rv == -1)
-			err(1, "write handshake");
-
-	psbuf_recycle(pb, PSB_IN);
-
-	while ((rv = psbuf_read(pctx, pb)) != 1)
-		if (rv == -1)
-			err(1, "read handshake response");
-
-	if (pb->type != SSH_FXP_VERSION)
-		errx(1, "invalid server response");
-	pctx->protover = pb->reqid;
-
+	puffs_framebuf_recycle(pb);
+	DO_IO(psbuf_read, pu, pb, pctx->sshfd, &done, rv);
+	if (psbuf_get_type(pb) != SSH_FXP_VERSION)
+		errx(1, "invalid server response: %d", psbuf_get_type(pb));
+	pctx->protover = psbuf_get_reqid(pb);
 	/* might contain some other stuff, but we're not interested */
 
 	/* scope out our rootpath */
-	psbuf_recycle(pb, PSB_OUT);
+	psbuf_recycleout(pb);
 	psbuf_put_1(pb, SSH_FXP_REALPATH);
 	psbuf_put_4(pb, NEXTREQ(pctx));
 	psbuf_put_str(pb, pctx->mountpath);
-	while ((rv = psbuf_write(pctx, pb)) != 1)
-		if (rv == -1)
-			err(1, "realpath query");
+	DO_IO(psbuf_write, pu, pb, pctx->sshfd, &done, rv);
 
-	psbuf_recycle(pb, PSB_IN);
-
-	while ((rv = psbuf_read(pctx, pb)) != 1)
-		if (rv == -1)
-			err(1, "read realpath query response");
-	if (pb->type != SSH_FXP_NAME)
+	puffs_framebuf_recycle(pb);
+	DO_IO(psbuf_read, pu, pb, pctx->sshfd, &done, rv);
+	if (psbuf_get_type(pb) != SSH_FXP_NAME)
 		errx(1, "invalid server realpath response for \"%s\"",
 		    pctx->mountpath);
-
-	if (!psbuf_get_4(pb, &count))
+	if (psbuf_get_4(pb, &count) == -1)
 		errx(1, "invalid realpath response: count");
-	if (!psbuf_get_str(pb, &rootpath, NULL))
+	if (psbuf_get_str(pb, &rootpath, NULL) == -1)
 		errx(1, "invalid realpath response: rootpath");
 
 	/* stat the rootdir so that we know it's a dir */
-	psbuf_recycle(pb, PSB_OUT);
+	psbuf_recycleout(pb);
 	psbuf_req_str(pb, SSH_FXP_LSTAT, NEXTREQ(pctx), rootpath);
-	while ((rv == psbuf_write(pctx, pb)) != 1)
-		if (rv == -1)
-			errx(1, "lstat");
+	DO_IO(psbuf_write, pu, pb, pctx->sshfd, &done, rv);
 
-	psbuf_recycle(pb, PSB_IN);
-
-	while ((rv = psbuf_read(pctx, pb)) != 1)
-		if (rv == -1)
-			errx(1, "read lstat response");
+	puffs_framebuf_recycle(pb);
+	DO_IO(psbuf_read, pu, pb, pctx->sshfd, &done, rv);
 
 	rv = psbuf_expect_attrs(pb, &va);
 	if (rv)
 		errx(1, "couldn't stat rootpath");
-	psbuf_destroy(pb);
+	puffs_framebuf_destroy(pb);
 
 	if (puffs_mode2vt(va.va_mode) != VDIR)
 		errx(1, "remote path (%s) not a directory", rootpath);

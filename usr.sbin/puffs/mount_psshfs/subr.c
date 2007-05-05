@@ -1,4 +1,4 @@
-/*      $NetBSD: subr.c,v 1.13 2007/04/12 15:09:02 pooka Exp $        */
+/*      $NetBSD: subr.c,v 1.14 2007/05/05 15:49:51 pooka Exp $        */
         
 /*      
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
         
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: subr.c,v 1.13 2007/04/12 15:09:02 pooka Exp $");
+__RCSID("$NetBSD: subr.c,v 1.14 2007/05/05 15:49:51 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -109,7 +109,8 @@ struct readdirattr {
 };
 
 static void
-readdir_getattr_resp(struct psshfs_ctx *pctx, struct psbuf *pb, void *arg)
+readdir_getattr_resp(struct puffs_usermount *pu,
+	struct puffs_framebuf *pb, void *arg)
 {
 	struct readdirattr *rda = arg;
 	struct psshfs_node *psn = rda->psn;
@@ -136,16 +137,17 @@ readdir_getattr_resp(struct psshfs_ctx *pctx, struct psbuf *pb, void *arg)
 
  out:
 	free(rda);
-	psbuf_destroy(pb);
+	puffs_framebuf_destroy(pb);
 }
 
 static void
-readdir_getattr(struct psshfs_ctx *pctx, struct psshfs_node *psn,
+readdir_getattr(struct puffs_usermount *pu, struct psshfs_node *psn,
 	const char *basepath, int idx)
 {
 	char path[MAXPATHLEN+1];
+	struct psshfs_ctx *pctx = puffs_getspecific(pu);
 	struct psshfs_dir *pdir = psn->dir;
-	struct psbuf *pb;
+	struct puffs_framebuf *pb;
 	struct readdirattr *rda;
 	const char *entryname = pdir[idx].entryname;
 	uint32_t reqid = NEXTREQ(pctx);
@@ -159,9 +161,9 @@ readdir_getattr(struct psshfs_ctx *pctx, struct psshfs_node *psn,
 	strcat(path, "/");
 	strlcat(path, entryname, sizeof(path));
 
-	pb = psbuf_make(PSB_OUT);
+	pb = psbuf_makeout();
 	psbuf_req_str(pb, SSH_FXP_LSTAT, reqid, path);
-	pssh_outbuf_enqueue_nocc(pctx, pb, readdir_getattr_resp, rda, reqid);
+	puffs_framebuf_enqueue_cb(pu, pb, readdir_getattr_resp, rda);
 }
 #endif
 
@@ -171,8 +173,7 @@ getpathattr(struct puffs_cc *pcc, const char *path, struct vattr *vap)
 	PSSHFSAUTOVAR(pcc);
 
 	psbuf_req_str(pb, SSH_FXP_LSTAT, reqid, path);
-	pssh_outbuf_enqueue(pctx, pb, pcc, reqid);
-	puffs_cc_yield(pcc);
+	puffs_framebuf_enqueue_cc(pcc, pb);
 
 	rv = psbuf_expect_attrs(pb, vap);
 
@@ -214,7 +215,7 @@ sftp_readdir(struct puffs_cc *pcc, struct psshfs_ctx *pctx,
 {
 	struct psshfs_node *psn = pn->pn_data;
 	struct psshfs_dir *olddir, *testd;
-	struct psbuf *pb;
+	struct puffs_framebuf *pb;
 	uint32_t reqid = NEXTREQ(pctx);
 	uint32_t count, dhandlen;
 	char *dhand = NULL;
@@ -229,11 +230,9 @@ sftp_readdir(struct puffs_cc *pcc, struct psshfs_ctx *pctx,
 
 	puffs_inval_namecache_dir(puffs_cc_getusermount(pcc), pn);
 
-	pb = psbuf_make(PSB_OUT);
+	pb = psbuf_makeout();
 	psbuf_req_str(pb, SSH_FXP_OPENDIR, reqid, PNPATH(pn));
-	pssh_outbuf_enqueue(pctx, pb, pcc, reqid);
-
-	puffs_cc_yield(pcc);
+	puffs_framebuf_enqueue_cc(pcc, pb);
 
 	rv = psbuf_expect_handle(pb, &dhand, &dhandlen);
 	if (rv)
@@ -261,14 +260,12 @@ sftp_readdir(struct puffs_cc *pcc, struct psshfs_ctx *pctx,
 
 	for (;;) {
 		reqid = NEXTREQ(pctx);
-		psbuf_recycle(pb, PSB_OUT);
+		psbuf_recycleout(pb);
 		psbuf_req_data(pb, SSH_FXP_READDIR, reqid, dhand, dhandlen);
-		pssh_outbuf_enqueue(pctx, pb, pcc, reqid);
-
-		puffs_cc_yield(pcc);
+		puffs_framebuf_enqueue_cc(pcc, pb);
 
 		/* check for EOF */
-		if (pb->type == SSH_FXP_STATUS) {
+		if (psbuf_get_type(pb) == SSH_FXP_STATUS) {
 			rv = psbuf_expect_status(pb);
 			goto out;
 		}
@@ -279,19 +276,13 @@ sftp_readdir(struct puffs_cc *pcc, struct psshfs_ctx *pctx,
 		for (; count--; idx++) {
 			if (idx == psn->denttot)
 				allocdirs(psn);
-			if (!psbuf_get_str(pb, &psn->dir[idx].entryname,
-			    NULL)) {
-				rv = EPROTO;
+			if ((rv = psbuf_get_str(pb,
+			    &psn->dir[idx].entryname, NULL)))
 				goto out;
-			}
-			if (!psbuf_get_str(pb, &longname, NULL)) {
-				rv = EPROTO;
+			if ((rv = psbuf_get_str(pb, &longname, NULL)))
 				goto out;
-			}
-			if (!psbuf_get_vattr(pb, &psn->dir[idx].va)) {
-				rv = EPROTO;
+			if ((rv = psbuf_get_vattr(pb, &psn->dir[idx].va)))
 				goto out;
-			}
 			if (sscanf(longname, "%*s%d",
 			    &psn->dir[idx].va.va_nlink) != 1) {
 				rv = EPROTO;
@@ -313,7 +304,8 @@ sftp_readdir(struct puffs_cc *pcc, struct psshfs_ctx *pctx,
 			 * the server responds to our queries out-of-order.
 			 * fixxxme some day
 			 */
-			readdir_getattr(pctx, psn, PNPATH(pn), idx);
+			readdir_getattr(puffs_cc_getusermount(pcc),
+			    psn, PNPATH(pn), idx);
 #endif
 			psn->dir[idx].valid = 1;
 		}
@@ -325,10 +317,10 @@ sftp_readdir(struct puffs_cc *pcc, struct psshfs_ctx *pctx,
 	freedircache(olddir, nent);
 
 	reqid = NEXTREQ(pctx);
-	psbuf_recycle(pb, PSB_OUT);
+	psbuf_recycleout(pb);
 	psbuf_req_data(pb, SSH_FXP_CLOSE, reqid, dhand, dhandlen);
 
-	pssh_outbuf_enqueue_nocc(pctx, pb, NULL, NULL, reqid);
+	puffs_framebuf_enqueue_justsend(puffs_cc_getusermount(pcc), pb, 1);
 	free(dhand);
 	return rv;
 

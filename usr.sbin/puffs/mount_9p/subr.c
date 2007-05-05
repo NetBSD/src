@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.c,v 1.1 2007/04/21 14:21:44 pooka Exp $	*/
+/*	$NetBSD: subr.c,v 1.2 2007/05/05 15:49:51 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: subr.c,v 1.1 2007/04/21 14:21:44 pooka Exp $");
+__RCSID("$NetBSD: subr.c,v 1.2 2007/05/05 15:49:51 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -103,7 +103,7 @@ getdfwithoffset(struct puffs_cc *pcc, struct p9pnode *p9n, off_t wantoff,
 	struct dirfid **rfid)
 {
 	struct puffs9p *p9p = puffs_cc_getspecific(pcc);
-	struct p9pbuf *pb;
+	struct puffs_framebuf *pb;
 	struct dirfid *dfp = NULL;
 	p9ptag_t tag = NEXTTAG(p9p);
 	off_t curoff, advance;
@@ -119,7 +119,7 @@ getdfwithoffset(struct puffs_cc *pcc, struct p9pnode *p9n, off_t wantoff,
 	}
 
 	/* didn't get off easy?  damn, do manual labour */
-	pb = p9pbuf_make(p9p->maxreq, P9PB_OUT);
+	pb = p9pbuf_makeout();
 	dfp = ecalloc(1, sizeof(struct dirfid));
 	dfp->fid = NEXTFID(p9p);
 	error = proto_cc_open(pcc, p9n->fid_base, dfp->fid, P9PROTO_OMODE_READ);
@@ -135,10 +135,9 @@ getdfwithoffset(struct puffs_cc *pcc, struct p9pnode *p9n, off_t wantoff,
 		p9pbuf_put_4(pb, dfp->fid);       
 		p9pbuf_put_8(pb, 0);
 		p9pbuf_put_4(pb, advance);       
-		outbuf_enqueue(p9p, pb, pcc, tag); 
-		puffs_cc_yield(pcc);
+		puffs_framebuf_enqueue_cc(pcc, pb);
 
-		if (pb->type != P9PROTO_R_READ) {
+		if (p9pbuf_get_type(pb) != P9PROTO_R_READ) {
 			error = EPROTO;
 			goto errout;
 		}
@@ -156,7 +155,7 @@ getdfwithoffset(struct puffs_cc *pcc, struct p9pnode *p9n, off_t wantoff,
 		if (count == advance || count == 0)
 			break;
 
-		p9pbuf_recycle(pb, P9PB_OUT);
+		p9pbuf_recycleout(pb);
 	}
 
 	dfp->seekoff = curoff;
@@ -164,7 +163,7 @@ getdfwithoffset(struct puffs_cc *pcc, struct p9pnode *p9n, off_t wantoff,
 	return 0;
 
  errout:
-	p9pbuf_destroy(pb);
+	puffs_framebuf_destroy(pb);
 	free(dfp);
 	return error;
 }

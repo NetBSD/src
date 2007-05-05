@@ -1,7 +1,7 @@
-/*      $NetBSD: psbuf.c,v 1.4 2007/04/18 15:35:02 pooka Exp $        */
+/*      $NetBSD: psbuf.c,v 1.5 2007/05/05 15:49:51 pooka Exp $        */
 
 /*
- * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
+ * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: psbuf.c,v 1.4 2007/04/18 15:35:02 pooka Exp $");
+__RCSID("$NetBSD: psbuf.c,v 1.5 2007/05/05 15:49:51 pooka Exp $");
 #endif /* !lint */
 
 /*
@@ -43,7 +43,6 @@ __RCSID("$NetBSD: psbuf.c,v 1.4 2007/04/18 15:35:02 pooka Exp $");
 #include <sys/time.h>
 #include <sys/vnode.h>
 
-#include <assert.h>
 #include <err.h>
 #include <errno.h>
 #include <stdlib.h>
@@ -53,251 +52,214 @@ __RCSID("$NetBSD: psbuf.c,v 1.4 2007/04/18 15:35:02 pooka Exp $");
 #include "psshfs.h"
 #include "sftp_proto.h"
 
-#define FAILRV(x, rv) do { if (!(x)) return (rv); } while (/*CONSTCOND*/0)
+#define FAILRV(x) do { int rv; if ((rv=x)) return (rv); } while (/*CONSTCOND*/0)
+#define READSTATE_LENGTH(off) (off < 4)
 
-int
-psbuf_read(struct psshfs_ctx *pctx, struct psbuf *pb)
+#define SFTP_LENOFF	0
+#define SFTP_TYPEOFF	4
+#define SFTP_REQIDOFF	5
+
+#define CHECK(v) if (!(v)) abort()
+
+uint8_t
+psbuf_get_type(struct puffs_framebuf *pb)
 {
+	uint8_t type;
+
+	puffs_framebuf_getdata_atoff(pb, SFTP_TYPEOFF, &type, 1);
+	return type;
+}
+
+uint32_t
+psbuf_get_len(struct puffs_framebuf *pb)
+{
+	uint32_t len;
+
+	puffs_framebuf_getdata_atoff(pb, SFTP_LENOFF, &len, 4);
+	return be32toh(len);
+}
+
+uint32_t
+psbuf_get_reqid(struct puffs_framebuf *pb)
+{
+	uint32_t req;
+
+	puffs_framebuf_getdata_atoff(pb, SFTP_REQIDOFF, &req, 4);
+	return be32toh(req);
+}
+
+#define CUROFF(pb) (puffs_framebuf_telloff(pb))
+int
+psbuf_read(struct puffs_usermount *pu, struct puffs_framebuf *pb,
+	int fd, int *done)
+{
+	void *win;
 	ssize_t n;
+	size_t howmuch, winlen;
+	int lenstate;
 
-	assert(pb->state != PSBUF_PUT);
+ the_next_level:
+	if ((lenstate = READSTATE_LENGTH(CUROFF(pb))))
+		howmuch = 4 - CUROFF(pb);
+	else
+		howmuch = psbuf_get_len(pb) - (CUROFF(pb) - 4);
 
- again:
-	n = read(pctx->sshfd, pb->buf+pb->offset, pb->remain);
-	switch (n) {
-	case 0:
-		errno = EIO;
-		return -1;
-	case -1:
-		if (errno == EAGAIN)
-			return 0;
-		return -1;
-	default:
-		pb->offset += n;
-		pb->remain -= n;
+	if (puffs_framebuf_reserve_space(pb, howmuch) == -1)
+		return errno;
+
+	while (howmuch) {
+		winlen = howmuch;
+		if (puffs_framebuf_getwindow(pb, CUROFF(pb), &win, &winlen)==-1)
+			return errno;
+		n = read(fd, win, winlen);
+		switch (n) {
+		case 0:
+			return ECONNRESET;
+		case -1:
+			if (errno == EAGAIN)
+				return 0;
+			return errno;
+		default:
+			howmuch -= n;
+			puffs_framebuf_seekset(pb, CUROFF(pb) + n);
+			break;
+		}
 	}
 
-	if (pb->remain != 0)
+	if (!lenstate) {
+		/* XXX: initial exchange shorter.. but don't worry, be happy */
+		puffs_framebuf_seekset(pb, 9);
+		*done = 1;
 		return 0;
-
-	/* ok, at least there's something to do */
-	assert(pb->state == PSBUF_GETLEN || pb->state == PSBUF_GETDATA);
-
-	if (pb->state == PSBUF_GETLEN) {
-		memcpy(&pb->len, pb->buf, 4);
-		pb->len = ntohl(pb->len);
-		pb->remain = pb->len;
-		pb->offset = 0;
-
-		free(pb->buf); /* XXX */
-		pb->buf = emalloc(pb->len);
-		pb->state = PSBUF_GETDATA;
-		goto again;
-
-	} else if (pb->state == PSBUF_GETDATA) {
-		pb->remain = pb->offset;
-		pb->offset = 0;
-
-		pb->state = PSBUF_GETREADY;
-
-		/* sloppy */
-		if (!psbuf_get_1(pb, &pb->type))
-			errx(1, "invalid server response, no type");
-		if (!psbuf_get_4(pb, &pb->reqid))
-			errx(1, "invalid server response, no reqid");
-
-		return 1;
-	}
-
-	return -1; /* XXX: impossible */
+	} else
+		goto the_next_level;
 }
 
 int
-psbuf_write(struct psshfs_ctx *pctx, struct psbuf *pb)
+psbuf_write(struct puffs_usermount *pu, struct puffs_framebuf *pb,
+	int fd, int *done)
 {
+	void *win;
 	ssize_t n;
-
-	if (pb->state == PSBUF_PUT) {
+	size_t winlen, howmuch;
+	
+	/* finalize buffer.. could be elsewhere ... */
+	if (CUROFF(pb) == 0) {
 		uint32_t len;
 
-		len = htonl(pb->offset - sizeof(len));
-		memcpy(pb->buf, &len, sizeof(len));
-
-		pb->remain = pb->offset;
-		pb->offset = 0;
-
-		pb->state = PSBUF_PUTDONE;
+		len = htobe32(puffs_framebuf_tellsize(pb) - 4);
+		puffs_framebuf_putdata_atoff(pb, 0, &len, 4);
 	}
 
-	assert(pb->state == PSBUF_PUTDONE);
-
-	n = write(pctx->sshfd, pb->buf + pb->offset, pb->remain);
-	if (n == 0) {
-		errno = EIO;
-		return -1;
+	howmuch = puffs_framebuf_tellsize(pb) - CUROFF(pb);
+	while (howmuch) {
+		winlen = howmuch;
+		if (puffs_framebuf_getwindow(pb, CUROFF(pb), &win, &winlen)==-1)
+			return errno;
+		n = write(fd, win, winlen);
+		switch (n) {
+		case 0:
+			return ECONNRESET;
+		case -1:
+			if (errno == EAGAIN)
+				return 0;
+			return errno;
+		default:
+			howmuch -= n;
+			puffs_framebuf_seekset(pb, CUROFF(pb) + n);
+			break;
+		}
 	}
 
-	if (n == -1) {
-		if (errno == EAGAIN)
-			return 0;
-		else
-			return -1;
-	}
+	*done = 1;
+	return 0;
+}
+#undef CUROFF
 
-	pb->offset += n;
-	pb->remain -= n;
+int
+psbuf_cmp(struct puffs_usermount *pu,
+	struct puffs_framebuf *cmp1, struct puffs_framebuf *cmp2)
+{
 
-	if (pb->remain == 0)
-		return 1;
-	else
-		return 0;
+	return psbuf_get_reqid(cmp1) == psbuf_get_reqid(cmp2);
 }
 
-struct psbuf *
-psbuf_make(int incoming)
+struct puffs_framebuf *
+psbuf_makeout()
 {
-	struct psbuf *pb;
+	struct puffs_framebuf *pb;
 
-	pb = emalloc(sizeof(struct psbuf));
-	memset(pb, 0, sizeof(struct psbuf));
-	pb->buf = emalloc(PSDEFALLOC);
-	pb->len = PSDEFALLOC;
-
-	psbuf_recycle(pb, incoming);
-
+	pb = puffs_framebuf_make();
+	puffs_framebuf_seekset(pb, 4);
 	return pb;
 }
 
 void
-psbuf_destroy(struct psbuf *pb)
+psbuf_recycleout(struct puffs_framebuf *pb)
 {
 
-	free(pb->buf);
-	free(pb);
+	puffs_framebuf_recycle(pb);
+	puffs_framebuf_seekset(pb, 4);
 }
 
 void
-psbuf_recycle(struct psbuf *pb, int incoming)
+psbuf_put_1(struct puffs_framebuf *pb, uint8_t val)
 {
+	int rv;
 
-	if (incoming) {
-		pb->offset = 0;
-		pb->remain = 4;
-		pb->state = PSBUF_GETLEN;
-	} else {
-		/* save space for len */
-		pb->remain = pb->len - 4;
-		pb->offset = 4;
-
-		pb->state = PSBUF_PUT;
-	}
+	rv = puffs_framebuf_putdata(pb, &val, 1);
+	CHECK(rv == 0);
 }
 
-static void
-psbuf_putspace(struct psbuf *pb, uint32_t space)
+void
+psbuf_put_2(struct puffs_framebuf *pb, uint16_t val)
 {
-	uint32_t morespace;
-	uint8_t *nb;
+	int rv;
 
-	if (pb->remain >= space)
-		return;
-
-	for (morespace = PSDEFALLOC; morespace < space; morespace += PSDEFALLOC)
-		if (morespace > PSBUFMAX)	
-			err(1, "too much memory");
-
-	nb = erealloc(pb->buf, pb->len + morespace);
-	pb->len += morespace;
-	pb->remain += morespace;
-	pb->buf = nb;
+	HTOBE16(val);
+	rv = puffs_framebuf_putdata(pb, &val, 2);
+	CHECK(rv == 0);
 }
 
-int
-psbuf_put_1(struct psbuf *pb, uint8_t val)
+void
+psbuf_put_4(struct puffs_framebuf *pb, uint32_t val)
 {
+	int rv;
 
-	assert(pb->state == PSBUF_PUT);
-
-	psbuf_putspace(pb, 1);
-	memcpy(pb->buf + pb->offset, &val, 1);
-	pb->offset += 1;
-	pb->remain -= 1;
-
-	return 1;
+	HTOBE32(val);
+	rv = puffs_framebuf_putdata(pb, &val, 4);
+	CHECK(rv == 0);
 }
 
-int
-psbuf_put_2(struct psbuf *pb, uint16_t val)
+void
+psbuf_put_8(struct puffs_framebuf *pb, uint64_t val)
 {
+	int rv;
 
-	assert(pb->state == PSBUF_PUT);
-
-	psbuf_putspace(pb, 2);
-	val = htons(val);
-	memcpy(pb->buf + pb->offset, &val, 2);
-	pb->offset += 2;
-	pb->remain -= 2;
-
-	return 1;
+	HTOBE64(val);
+	rv = puffs_framebuf_putdata(pb, &val, 8);
+	CHECK(rv == 0);
 }
 
-int
-psbuf_put_4(struct psbuf *pb, uint32_t val)
+void
+psbuf_put_data(struct puffs_framebuf *pb, const void *data, uint32_t dlen)
 {
-
-	assert(pb->state == PSBUF_PUT);
-
-	psbuf_putspace(pb, 4);
-	val = htonl(val);
-	memcpy(pb->buf + pb->offset, &val, 4);
-	pb->offset += 4;
-	pb->remain -= 4;
-
-	return 1;
-}
-
-int
-psbuf_put_8(struct psbuf *pb, uint64_t val)
-{
-
-	assert(pb->state == PSBUF_PUT);
-
-	psbuf_putspace(pb, 8);
-#if BYTE_ORDER == LITTLE_ENDIAN
-	val = bswap64(val);
-#endif
-	memcpy(pb->buf + pb->offset, &val, 8);
-	pb->offset += 8;
-	pb->remain -= 8;
-
-	return 1;
-}
-
-int
-psbuf_put_data(struct psbuf *pb, const void *data, uint32_t dlen)
-{
-
-	assert(pb->state == PSBUF_PUT);
+	int rv;
 
 	psbuf_put_4(pb, dlen);
-
-	psbuf_putspace(pb, dlen);
-	memcpy(pb->buf + pb->offset, data, dlen);
-	pb->offset += dlen;
-	pb->remain -= dlen;
-
-	return 1;
+	rv = puffs_framebuf_putdata(pb, data, dlen);
+	CHECK(rv == 0);
 }
 
-int
-psbuf_put_str(struct psbuf *pb, const char *str)
+void
+psbuf_put_str(struct puffs_framebuf *pb, const char *str)
 {
 
-	return psbuf_put_data(pb, str, strlen(str));
+	psbuf_put_data(pb, str, strlen(str));
 }
 
-int
-psbuf_put_vattr(struct psbuf *pb, const struct vattr *va)
+void
+psbuf_put_vattr(struct puffs_framebuf *pb, const struct vattr *va)
 {
 	uint32_t flags;
 	flags = 0;
@@ -327,135 +289,92 @@ psbuf_put_vattr(struct psbuf *pb, const struct vattr *va)
 		psbuf_put_4(pb, va->va_atime.tv_sec);
 		psbuf_put_4(pb, va->va_mtime.tv_sec);
 	}
-
-	return 1;
 }
 
+#define ERETURN(rv) return ((rv) == -1 ? errno : 0)
 
 int
-psbuf_get_1(struct psbuf *pb, uint8_t *val)
+psbuf_get_1(struct puffs_framebuf *pb, uint8_t *val)
 {
 
-	assert(pb->state == PSBUF_GETREADY);
-
-	if (pb->remain < 1)
-		return 0;
-
-	memcpy(val, pb->buf + pb->offset, 1);
-	pb->offset += 1;
-	pb->remain -= 1;
-
-	return 1;
+	ERETURN(puffs_framebuf_getdata(pb, val, 1));
 }
 
 int
-psbuf_get_2(struct psbuf *pb, uint16_t *val)
+psbuf_get_2(struct puffs_framebuf *pb, uint16_t *val)
 {
-	uint16_t v;
+	int rv;
 
-	assert(pb->state == PSBUF_GETREADY);
+	rv = puffs_framebuf_getdata(pb, val, 2);
+	BE16TOH(*val);
 
-	if (pb->remain < 2)
-		return 0;
-
-	memcpy(&v, pb->buf + pb->offset, 2);
-	pb->offset += 2;
-	pb->remain -= 2;
-
-	*val = ntohs(v);
-
-	return 1;
+	ERETURN(rv);
 }
 
 int
-psbuf_get_4(struct psbuf *pb, uint32_t *val)
+psbuf_get_4(struct puffs_framebuf *pb, uint32_t *val)
 {
-	uint32_t v;
+	int rv;
 
-	assert(pb->state == PSBUF_GETREADY);
+	rv = puffs_framebuf_getdata(pb, val, 4);
+	BE32TOH(*val);
 
-	if (pb->remain < 4)
-		return 0;
-
-	memcpy(&v, pb->buf + pb->offset, 4);
-	pb->offset += 4;
-	pb->remain -= 4;
-
-	*val = ntohl(v);
-
-	return 1;
+	ERETURN(rv);
 }
 
 int
-psbuf_get_8(struct psbuf *pb, uint64_t *val)
+psbuf_get_8(struct puffs_framebuf *pb, uint64_t *val)
 {
-	uint64_t v;
+	int rv;
 
-	assert(pb->state == PSBUF_GETREADY);
+	rv = puffs_framebuf_getdata(pb, val, 8);
+	BE64TOH(*val);
 
-	if (pb->remain < 8)
-		return 0;
-
-	memcpy(&v, pb->buf + pb->offset, 8);
-	pb->offset += 8;
-	pb->remain -= 8;
-
-#if BYTE_ORDER == LITTLE_ENDIAN
-	v = bswap64(v);
-#endif
-	*val = v;
-
-	return 1;
-
+	ERETURN(rv);
 }
 
 int
-psbuf_get_str(struct psbuf *pb, char **strp, uint32_t *strlenp)
+psbuf_get_str(struct puffs_framebuf *pb, char **strp, uint32_t *strlenp)
 {
 	char *str;
 	uint32_t len;
 
-	assert(pb->state == PSBUF_GETREADY);
+	FAILRV(psbuf_get_4(pb, &len));
 
-	FAILRV(psbuf_get_4(pb, &len), 0);
-
-	if (pb->remain < len)
-		return 0;
+	if (puffs_framebuf_tellsize(pb) - puffs_framebuf_telloff(pb) < len)
+		return EPROTO;
 
 	str = emalloc(len+1);
-	memcpy(str, pb->buf + pb->offset, len);
+	puffs_framebuf_getdata(pb, str, len);
 	str[len] = '\0';
 	*strp = str;
-
-	pb->offset += len;
-	pb->remain -= len;
 
 	if (strlenp)
 		*strlenp = len;
 
-	return 1;
+	return 0;
 }
 
 int
-psbuf_get_vattr(struct psbuf *pb, struct vattr *vap)
+psbuf_get_vattr(struct puffs_framebuf *pb, struct vattr *vap)
 {
 	uint32_t flags;
 	uint32_t val;
 
 	puffs_vattr_null(vap);
 
-	FAILRV(psbuf_get_4(pb, &flags), 0);
+	FAILRV(psbuf_get_4(pb, &flags));
 
 	if (flags & SSH_FILEXFER_ATTR_SIZE) {
-		FAILRV(psbuf_get_8(pb, &vap->va_size), 0);
+		FAILRV(psbuf_get_8(pb, &vap->va_size));
 		vap->va_bytes = vap->va_size;
 	}
 	if (flags & SSH_FILEXFER_ATTR_UIDGID) {
-		FAILRV(psbuf_get_4(pb, &vap->va_uid), 0);
-		FAILRV(psbuf_get_4(pb, &vap->va_gid), 0);
+		FAILRV(psbuf_get_4(pb, &vap->va_uid));
+		FAILRV(psbuf_get_4(pb, &vap->va_gid));
 	}
 	if (flags & SSH_FILEXFER_ATTR_PERMISSIONS) {
-		FAILRV(psbuf_get_4(pb, &vap->va_mode), 0);
+		FAILRV(psbuf_get_4(pb, &vap->va_mode));
 		vap->va_type = puffs_mode2vt(vap->va_mode);
 	}
 	if (flags & SSH_FILEXFER_ATTR_ACCESSTIME) {
@@ -464,9 +383,9 @@ psbuf_get_vattr(struct psbuf *pb, struct vattr *vap)
 		 * protocol version 3, but it seems like the
 		 * "internet standard" for doing this
 		 */
-		FAILRV(psbuf_get_4(pb, &val), 0);
+		FAILRV(psbuf_get_4(pb, &val));
 		vap->va_atime.tv_sec = val;
-		FAILRV(psbuf_get_4(pb, &val), 0);
+		FAILRV(psbuf_get_4(pb, &val));
 		vap->va_mtime.tv_sec = val;
 		/* make ctime the same as mtime */
 		vap->va_ctime.tv_sec = val;
@@ -476,7 +395,7 @@ psbuf_get_vattr(struct psbuf *pb, struct vattr *vap)
 		vap->va_mtime.tv_nsec = 0;
 	}
 
-	return 1;
+	return 0;
 }
 
 /*
@@ -520,17 +439,19 @@ sftperr_to_errno(int error)
 #define INVALRESPONSE EPROTO
 
 static int
-expectcode(struct psbuf *pb, int value)
+expectcode(struct puffs_framebuf *pb, int value)
 {
 	uint32_t error;
+	uint8_t type;
 
-	if (pb->type == value)
+	type = psbuf_get_type(pb);
+	if (type == value)
 		return 0;
 
-	if (pb->type != SSH_FXP_STATUS)
+	if (type != SSH_FXP_STATUS)
 		return INVALRESPONSE;
 
-	FAILRV(psbuf_get_4(pb, &error), INVALRESPONSE);
+	FAILRV(psbuf_get_4(pb, &error));
 
 	return sftperr_to_errno(error);
 }
@@ -544,38 +465,40 @@ do {									\
 } while (/*CONSTCOND*/0)
 
 int
-psbuf_expect_status(struct psbuf *pb)
+psbuf_expect_status(struct puffs_framebuf *pb)
 {
 	uint32_t error;
 
-	if (pb->type != SSH_FXP_STATUS)
+	if (psbuf_get_type(pb) != SSH_FXP_STATUS)
 		return INVALRESPONSE;
 
-	FAILRV(psbuf_get_4(pb, &error), INVALRESPONSE);
+	FAILRV(psbuf_get_4(pb, &error));
 	
 	return sftperr_to_errno(error);
 }
 
 int
-psbuf_expect_handle(struct psbuf *pb, char **hand, uint32_t *handlen)
+psbuf_expect_handle(struct puffs_framebuf *pb, char **hand, uint32_t *handlen)
 {
 
 	CHECKCODE(pb, SSH_FXP_HANDLE);
-	FAILRV(psbuf_get_str(pb, hand, handlen), INVALRESPONSE);
+	FAILRV(psbuf_get_str(pb, hand, handlen));
 
 	return 0;
 }
 
 /* no memory allocation, direct copy */
 int
-psbuf_do_data(struct psbuf *pb, uint8_t *data, uint32_t *dlen)
+psbuf_do_data(struct puffs_framebuf *pb, uint8_t *data, uint32_t *dlen)
 {
-	uint32_t len;
+	void *win;
+	size_t bufoff;
+	uint32_t len, dataoff, winlen;
 
-	if (pb->type != SSH_FXP_DATA) {
+	if (psbuf_get_type(pb) != SSH_FXP_DATA) {
 		uint32_t val;
 
-		if (pb->type != SSH_FXP_STATUS)
+		if (psbuf_get_type(pb) != SSH_FXP_STATUS)
 			return INVALRESPONSE;
 
 		if (!psbuf_get_4(pb, &val))
@@ -587,38 +510,49 @@ psbuf_do_data(struct psbuf *pb, uint8_t *data, uint32_t *dlen)
 		*dlen = 0;
 		return 0;
 	}
-	if (!psbuf_get_4(pb, &len))
+	if (psbuf_get_4(pb, &len) == -1)
 		return INVALRESPONSE;
 
 	if (*dlen < len)
 		return EINVAL;
 
-	memcpy(data, pb->buf + pb->offset, len);
+	*dlen = 0;
 
-	pb->offset += len;
-	pb->remain -= len;
+	dataoff = 0;
+	while (dataoff < len) {
+		winlen = len-dataoff;
+		bufoff = puffs_framebuf_telloff(pb);
+		if (puffs_framebuf_getwindow(pb, bufoff,
+		    &win, &winlen) == -1)
+			return EINVAL;
+		if (winlen == 0)
+			break;
+			
+		memcpy(data + dataoff, win, winlen);
+		dataoff += winlen;
+	}
 
-	*dlen = len;
+	*dlen = dataoff;
 
 	return 0;
 }
 
 int
-psbuf_expect_name(struct psbuf *pb, uint32_t *count)
+psbuf_expect_name(struct puffs_framebuf *pb, uint32_t *count)
 {
 
 	CHECKCODE(pb, SSH_FXP_NAME);
-	FAILRV(psbuf_get_4(pb, count), INVALRESPONSE);
+	FAILRV(psbuf_get_4(pb, count));
 
 	return 0;
 }
 
 int
-psbuf_expect_attrs(struct psbuf *pb, struct vattr *vap)
+psbuf_expect_attrs(struct puffs_framebuf *pb, struct vattr *vap)
 {
 
 	CHECKCODE(pb, SSH_FXP_ATTRS);
-	FAILRV(psbuf_get_vattr(pb, vap), INVALRESPONSE);
+	FAILRV(psbuf_get_vattr(pb, vap));
 
 	return 0;
 }
@@ -627,21 +561,20 @@ psbuf_expect_attrs(struct psbuf *pb, struct vattr *vap)
  * More helpers: larger-scale put functions
  */
 
-int
-psbuf_req_data(struct psbuf *pb, int type, uint32_t reqid, const void *data,
-	uint32_t dlen)
+void
+psbuf_req_data(struct puffs_framebuf *pb, int type, uint32_t reqid,
+	const void *data, uint32_t dlen)
 {
 
 	psbuf_put_1(pb, type);
 	psbuf_put_4(pb, reqid);
 	psbuf_put_data(pb, data, dlen);
-
-	return 1;
 }
 
-int
-psbuf_req_str(struct psbuf *pb, int type, uint32_t reqid, const char *str)
+void
+psbuf_req_str(struct puffs_framebuf *pb, int type, uint32_t reqid,
+	const char *str)
 {
 
-	return psbuf_req_data(pb, type, reqid, str, strlen(str));
+	psbuf_req_data(pb, type, reqid, str, strlen(str));
 }

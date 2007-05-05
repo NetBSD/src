@@ -1,4 +1,4 @@
-/*	$NetBSD: nineproto.c,v 1.2 2007/05/04 18:12:25 pooka Exp $	*/
+/*	$NetBSD: nineproto.c,v 1.3 2007/05/05 15:49:51 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: nineproto.c,v 1.2 2007/05/04 18:12:25 pooka Exp $");
+__RCSID("$NetBSD: nineproto.c,v 1.3 2007/05/05 15:49:51 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -43,17 +43,17 @@ __RCSID("$NetBSD: nineproto.c,v 1.2 2007/05/04 18:12:25 pooka Exp $");
 #include "nineproto.h"
 
 int
-proto_getqid(struct p9pbuf *pb, struct qid9p *qid)
+proto_getqid(struct puffs_framebuf *pb, struct qid9p *qid)
 {
 
-	if (pb->remain < 13)
-		return 0;
+	if (puffs_framebuf_tellsize(pb) - puffs_framebuf_telloff(pb) < 13)
+		return ENOBUFS;
 
 	p9pbuf_get_1(pb, &qid->qidtype);
 	p9pbuf_get_4(pb, &qid->qidvers);
 	p9pbuf_get_8(pb, &qid->qidpath);
 
-	return 1;
+	return 0;
 }
 
 static uid_t
@@ -106,30 +106,32 @@ gid2gstr(gid_t gid)
 
 #define GETFIELD(a,b,unitsize)						\
 do {									\
-	if (size < unitsize) return 0;					\
-	if (!(a(pb, b))) return 0;					\
+	if (size < unitsize) return EPROTO;				\
+	if ((rv = (a(pb, b)))) return rv;				\
 	size -= unitsize;						\
 } while (/*CONSTCOND*/0)
 #define GETSTR(val,strsize)						\
 do {									\
-	if (!(p9pbuf_get_str(pb, val, strsize))) return 0;		\
-	if (*strsize > size) return 0;					\
+	if ((rv = p9pbuf_get_str(pb, val, strsize))) return rv;		\
+	if (*strsize > size) return EPROTO;				\
 	size -= *strsize;						\
 } while (/*CONSTCOND*/0)
 int
-proto_getstat(struct p9pbuf *pb, struct vattr *vap, char **name, uint16_t *rs)
+proto_getstat(struct puffs_framebuf *pb, struct vattr *vap,
+	char **name, uint16_t *rs)
 {
 	char *uid, *gid;
 	struct qid9p qid;
 	uint64_t flen;
 	uint32_t rdev, mode, atime, mtime;
 	uint16_t size, v16;
+	int rv;
 
 	/* check size */
-	if (!p9pbuf_get_2(pb, &size))
-		return 0;
-	if (p9pbuf_remaining(pb) < size)
-		return 0;
+	if ((rv = p9pbuf_get_2(pb, &size)))
+		return rv;
+	if (puffs_framebuf_tellsize(pb) - puffs_framebuf_telloff(pb) < size)
+		return ENOBUFS;
 
 	if (rs)
 		*rs = size+2; /* compensate for size field itself */
@@ -175,27 +177,25 @@ proto_getstat(struct p9pbuf *pb, struct vattr *vap, char **name, uint16_t *rs)
 	/* muid, not used */
 	GETSTR(NULL, &v16);
 
-	return 1;
+	return 0;
 }
 
 int
 proto_cc_dupfid(struct puffs_cc *pcc, p9pfid_t oldfid, p9pfid_t newfid)
 {
 	struct puffs9p *p9p = puffs_cc_getspecific(pcc);
-	struct p9pbuf *pb;
+	struct puffs_framebuf *pb;
 	p9ptag_t tag = NEXTTAG(p9p);
 	uint16_t qids;
 	int rv, error = 0;
 
-	pb = p9pbuf_make(p9p->maxreq, P9PB_OUT);
+	pb = p9pbuf_makeout();
 	p9pbuf_put_1(pb, P9PROTO_T_WALK);
 	p9pbuf_put_2(pb, tag);
 	p9pbuf_put_4(pb, oldfid);
 	p9pbuf_put_4(pb, newfid);
 	p9pbuf_put_2(pb, 0);
-
-	outbuf_enqueue(p9p, pb, pcc, tag);
-	puffs_cc_yield(pcc);
+	puffs_framebuf_enqueue_cc(pcc, pb);
 
 	rv = proto_expect_walk_nqids(pb, &qids);
 	if (rv)
@@ -203,7 +203,7 @@ proto_cc_dupfid(struct puffs_cc *pcc, p9pfid_t oldfid, p9pfid_t newfid)
 	if (qids != 0)
 		error = EPROTO;
 
-	p9pbuf_destroy(pb);
+	puffs_framebuf_destroy(pb);
 	return error;
 }
 
@@ -211,23 +211,23 @@ int
 proto_cc_clunkfid(struct puffs_cc *pcc, p9pfid_t fid, int waitforit)
 {
 	struct puffs9p *p9p = puffs_cc_getspecific(pcc);
-	struct p9pbuf *pb;
+	struct puffs_framebuf *pb;
 	p9ptag_t tag = NEXTTAG(p9p);
 	int error = 0;
 
-	pb = p9pbuf_make(p9p->maxreq, P9PB_OUT);
+	pb = p9pbuf_makeout();
 	p9pbuf_put_1(pb, P9PROTO_T_CLUNK);
 	p9pbuf_put_2(pb, tag);
 	p9pbuf_put_4(pb, fid);
 
 	if (waitforit) {
-		outbuf_enqueue(p9p, pb, pcc, tag);
-		puffs_cc_yield(pcc);
-		if (pb->type != P9PROTO_R_CLUNK)
+		puffs_framebuf_enqueue_cc(pcc, pb);
+		if (p9pbuf_get_type(pb) != P9PROTO_R_CLUNK)
 			error = EPROTO;
-		p9pbuf_destroy(pb);
+		puffs_framebuf_destroy(pb);
 	} else {
-		outbuf_enqueue_nocc(p9p, pb, NULL, NULL, tag);
+		puffs_framebuf_enqueue_justsend(puffs_cc_getusermount(pcc),
+		    pb, 1);
 	}
 
 	return error;
@@ -240,7 +240,7 @@ int
 proto_cc_open(struct puffs_cc *pcc, p9pfid_t fid, p9pfid_t newfid, int mode)
 {
 	struct puffs9p *p9p = puffs_cc_getspecific(pcc);
-	struct p9pbuf *pb;
+	struct puffs_framebuf *pb;
 	p9ptag_t tag = NEXTTAG(p9p);
 	int error;
 
@@ -248,22 +248,21 @@ proto_cc_open(struct puffs_cc *pcc, p9pfid_t fid, p9pfid_t newfid, int mode)
 	if (error)
 		return error;
 
-	pb = p9pbuf_make(p9p->maxreq, P9PB_OUT);
+	pb = p9pbuf_makeout();
 	p9pbuf_put_1(pb, P9PROTO_T_OPEN);
 	p9pbuf_put_2(pb, tag);
 	p9pbuf_put_4(pb, newfid);
 	p9pbuf_put_1(pb, mode);
-	outbuf_enqueue(p9p, pb, pcc, tag);
-	puffs_cc_yield(pcc);
-	if (pb->type != P9PROTO_R_OPEN)
+	puffs_framebuf_enqueue_cc(pcc, pb);
+	if (p9pbuf_get_type(pb) != P9PROTO_R_OPEN)
 		error = EPROTO;
 
-	p9pbuf_destroy(pb);
+	puffs_framebuf_destroy(pb);
 	return error;
 }
 
 void
-proto_make_stat(struct p9pbuf *pb, const struct vattr *vap,
+proto_make_stat(struct puffs_framebuf *pb, const struct vattr *vap,
 	const char *filename)
 {
 	struct vattr fakeva;
@@ -277,8 +276,8 @@ proto_make_stat(struct p9pbuf *pb, const struct vattr *vap,
 		vap = &fakeva;
 	}
 
-	startoff = p9pbuf_tell(pb);
-	p9pbuf_seekset(pb, startoff + 2 + 2); /* stat[n], containing stat[2] */
+	startoff = puffs_framebuf_telloff(pb);
+	puffs_framebuf_seekset(pb, startoff + 2+2); /* stat[n] incl. stat[2] */
 
 	if (vap->va_mode != (mode_t)PUFFS_VNOVAL)
 		mode = vap->va_mode;
@@ -319,49 +318,41 @@ proto_make_stat(struct p9pbuf *pb, const struct vattr *vap,
 	p9pbuf_put_str(pb, group);
 	p9pbuf_put_str(pb, "");			/* muid		*/
 
-	curoff = p9pbuf_tell(pb);
-	p9pbuf_seekset(pb, startoff);
+	curoff = puffs_framebuf_telloff(pb);
+	puffs_framebuf_seekset(pb, startoff);
 	p9pbuf_put_2(pb, curoff-(startoff+2));	/* stat[n] size	*/
 	p9pbuf_put_2(pb, curoff-(startoff+4));	/* size[2] stat	*/
 
-	p9pbuf_seekset(pb, curoff);
+	puffs_framebuf_seekset(pb, curoff);
 }
 
 int
-proto_expect_walk_nqids(struct p9pbuf *pb, uint16_t *nqids)
+proto_expect_walk_nqids(struct puffs_framebuf *pb, uint16_t *nqids)
 {
 
-	if (pb->type != P9PROTO_R_WALK)
+	if (p9pbuf_get_type(pb) != P9PROTO_R_WALK)
 		return EPROTO;
-	if (!p9pbuf_get_2(pb, nqids))
-		return EPROTO;
-
-	return 0;
+	return p9pbuf_get_2(pb, nqids);
 }
 
 int
-proto_expect_qid(struct p9pbuf *pb, uint8_t op, struct qid9p *qid)
+proto_expect_qid(struct puffs_framebuf *pb, uint8_t op, struct qid9p *qid)
 {
 
-	if (pb->type != op)
+	if (p9pbuf_get_type(pb) != op)
 		return EPROTO;
-	if (!proto_getqid(pb, qid))
-		return EPROTO;
-
-	return 0;
+	return proto_getqid(pb, qid);
 }
 
 int
-proto_expect_stat(struct p9pbuf *pb, struct vattr *va)
+proto_expect_stat(struct puffs_framebuf *pb, struct vattr *va)
 {
 	uint16_t dummy;
+	int rv;
 
-	if (pb->type != P9PROTO_R_STAT)
+	if (p9pbuf_get_type(pb) != P9PROTO_R_STAT)
 		return EPROTO;
-	if (!p9pbuf_get_2(pb, &dummy))
-		return EPROTO;
-	if (!proto_getstat(pb, va, NULL, NULL))
-		return EPROTO;
-
-	return 0;
+	if ((rv = p9pbuf_get_2(pb, &dummy)))
+		return rv;
+	return proto_getstat(pb, va, NULL, NULL);
 }

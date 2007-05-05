@@ -1,7 +1,7 @@
-/*	$NetBSD: psshfs.h,v 1.10 2007/04/19 20:31:09 pooka Exp $	*/
+/*	$NetBSD: psshfs.h,v 1.11 2007/05/05 15:49:51 pooka Exp $	*/
 
 /*
- * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
+ * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -58,11 +58,11 @@ PUFFSOP_PROTOS(psshfs);
 #define PSSHFSAUTOVAR(pcc)						\
 	struct psshfs_ctx *pctx = puffs_cc_getspecific(pcc);		\
 	uint32_t reqid = NEXTREQ(pctx);					\
-	struct psbuf *pb = psbuf_make(PSB_OUT);				\
+	struct puffs_framebuf *pb = psbuf_makeout();			\
 	int rv = 0
 
 #define PSSHFSRETURN(rv)						\
-	psbuf_destroy(pb);						\
+	puffs_framebuf_destroy(pb);					\
 	return (rv)
 
 struct psshfs_dir {
@@ -93,55 +93,6 @@ struct psshfs_node {
 	time_t attrread;
 };
 
-struct psshfs_ctx;
-/*
- * XXX: urgh
- *
- * This is slightly messy / abusatory structure.  It is used for multiple
- * things.  Typical life cycle: create output buffer, append to output
- * queue (pcc included) .  Once the buffer has been sent, the buffer is
- * freed and the structure is appended to reqqueue as psreq.  It is kept
- * there until matching network data is read.  Once this happens, the
- * data from the received buffer is copied to buffer stored on the queue.
- * This should be rewritten, clearly.
- */
-#define PSDEFALLOC 0x2000
-#define PSBUFMAX 0x40000
-#define PSB_OUT 0
-#define PSB_IN 1
-struct psbuf {
-	struct psreq {
-		uint32_t reqid;
-
-		/* either ... */
-		struct puffs_cc *pcc;
-
-		/* ... or */
-		void (*func)(struct psshfs_ctx *, struct psbuf *, void *);
-		void *arg;
-		/* no union, we'd need a "which" flag */
-
-		TAILQ_ENTRY(psbuf) entries;
-	} psr;
-
-	/* in / out */
-	uint32_t len;
-	uint32_t remain;
-	uint32_t offset;
-	uint8_t *buf;
-
-	int state;
-
-	/* helpers for in */
-	uint8_t type;		/* buf[0] */
-	uint32_t reqid;		/* buf[1-4] */
-};
-#define PSBUF_PUT 0
-#define PSBUF_PUTDONE 1
-#define PSBUF_GETLEN 2
-#define PSBUF_GETDATA 3
-#define PSBUF_GETREADY 4
-
 struct psshfs_ctx {
 	int sshfd;
 	pid_t sshpid;
@@ -150,61 +101,54 @@ struct psshfs_ctx {
 	int protover;
 	uint32_t nextreq;
 
-	struct psbuf *curpb;
+	struct puffs_framebuf *curpb;
 
 	struct psshfs_node psn_root;
 	ino_t nextino;
 
 	int canexport;
 	time_t mounttime;
-
-	TAILQ_HEAD(, psbuf) outbufq;
-	TAILQ_HEAD(, psbuf) req_queue;
 };
 
 int	psshfs_domount(struct puffs_usermount *);
 
-struct psbuf 	*psbuf_make(int);
-void		psbuf_destroy(struct psbuf *);
-void		psbuf_recycle(struct psbuf *, int);
+int	psbuf_read(struct puffs_usermount *, struct puffs_framebuf *,int,int*);
+int	psbuf_write(struct puffs_usermount *, struct puffs_framebuf *,int,int*);
+int	psbuf_cmp(struct puffs_usermount *,
+		  struct puffs_framebuf *, struct puffs_framebuf *);
 
-int		psbuf_read(struct psshfs_ctx *, struct psbuf *);
-int		psbuf_write(struct psshfs_ctx *, struct psbuf *);
+struct puffs_framebuf	*psbuf_makeout(void);
+void			psbuf_recycleout(struct puffs_framebuf *);
 
-void		pssh_outbuf_enqueue(struct psshfs_ctx *, struct psbuf *,
-				    struct puffs_cc *, uint32_t);
-void		pssh_outbuf_enqueue_nocc(struct psshfs_ctx *, struct psbuf *,
-				    void (*f)(struct psshfs_ctx *,
-					      struct psbuf *, void *),
-				    void *, uint32_t);
-struct psbuf	*psshreq_get(struct psshfs_ctx *, uint32_t);
+void	psbuf_put_1(struct puffs_framebuf *, uint8_t);
+void	psbuf_put_2(struct puffs_framebuf *, uint16_t);
+void	psbuf_put_4(struct puffs_framebuf *, uint32_t);
+void	psbuf_put_8(struct puffs_framebuf *, uint64_t);
+void	psbuf_put_str(struct puffs_framebuf *, const char *);
+void	psbuf_put_data(struct puffs_framebuf *, const void *, uint32_t);
+void	psbuf_put_vattr(struct puffs_framebuf *, const struct vattr *);
 
+uint8_t		psbuf_get_type(struct puffs_framebuf *);
+uint32_t	psbuf_get_len(struct puffs_framebuf *);
+uint32_t	psbuf_get_reqid(struct puffs_framebuf *);
 
-int	psbuf_put_1(struct psbuf *, uint8_t);
-int	psbuf_put_2(struct psbuf *, uint16_t);
-int	psbuf_put_4(struct psbuf *, uint32_t);
-int	psbuf_put_8(struct psbuf *, uint64_t);
-int	psbuf_put_str(struct psbuf *, const char *);
-int	psbuf_put_data(struct psbuf *, const void *, uint32_t);
-int	psbuf_put_vattr(struct psbuf *, const struct vattr *);
+int	psbuf_get_1(struct puffs_framebuf *, uint8_t *);
+int	psbuf_get_2(struct puffs_framebuf *, uint16_t *);
+int	psbuf_get_4(struct puffs_framebuf *, uint32_t *);
+int	psbuf_get_8(struct puffs_framebuf *, uint64_t *);
+int	psbuf_get_str(struct puffs_framebuf *, char **, uint32_t *);
+int	psbuf_get_vattr(struct puffs_framebuf *, struct vattr *);
 
-int	psbuf_get_1(struct psbuf *, uint8_t *);
-int	psbuf_get_2(struct psbuf *, uint16_t *);
-int	psbuf_get_4(struct psbuf *, uint32_t *);
-int	psbuf_get_8(struct psbuf *, uint64_t *);
-int	psbuf_get_str(struct psbuf *, char **, uint32_t *);
-int	psbuf_get_vattr(struct psbuf *, struct vattr *);
+int	psbuf_expect_status(struct puffs_framebuf *);
+int	psbuf_expect_handle(struct puffs_framebuf *, char **, uint32_t *);
+int	psbuf_expect_name(struct puffs_framebuf *, uint32_t *);
+int	psbuf_expect_attrs(struct puffs_framebuf *, struct vattr *);
 
-int	psbuf_expect_status(struct psbuf *);
-int	psbuf_expect_handle(struct psbuf *, char **, uint32_t *);
-int	psbuf_expect_name(struct psbuf *, uint32_t *);
-int	psbuf_expect_attrs(struct psbuf *, struct vattr *);
+int	psbuf_do_data(struct puffs_framebuf *, uint8_t *, uint32_t *);
 
-int	psbuf_do_data(struct psbuf *, uint8_t *, uint32_t *);
-
-int	psbuf_req_data(struct psbuf *, int, uint32_t, const void *, uint32_t);
-int	psbuf_req_str(struct psbuf *, int, uint32_t, const char *);
-
+void	psbuf_req_data(struct puffs_framebuf *, int, uint32_t,
+		       const void *, uint32_t);
+void	psbuf_req_str(struct puffs_framebuf *, int, uint32_t, const char *);
 
 int	sftp_readdir(struct puffs_cc *, struct psshfs_ctx *,
 		     struct puffs_node *);
