@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_aio.c,v 1.4 2007/05/04 14:28:40 yamt Exp $	*/
+/*	$NetBSD: vfs_aio.c,v 1.5 2007/05/05 20:38:43 ad Exp $	*/
 
 /*
  * Copyright (c) 2007, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_aio.c,v 1.4 2007/05/04 14:28:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_aio.c,v 1.5 2007/05/05 20:38:43 ad Exp $");
 
 #include <sys/param.h>
 
@@ -102,8 +102,8 @@ aio_init(struct proc *p)
 	pool_init(&aio->lio_pool, sizeof(struct lio_req), 0, 0, 0,
 	    "aio_lio_pool", &pool_allocator_nointr, IPL_NONE);
 	mutex_init(&aio->aio_mtx, MUTEX_DEFAULT, IPL_NONE);
-	cv_init(&aio->aio_worker_cv, "aio_worker_cv");
-	cv_init(&aio->done_cv, "aio_done_cv");
+	cv_init(&aio->aio_worker_cv, "aiowork");
+	cv_init(&aio->done_cv, "aiodone");
 	TAILQ_INIT(&aio->jobs_queue);
 
 	/* It is safe to leave this window without AIO worker set */
