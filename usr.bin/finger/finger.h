@@ -1,4 +1,4 @@
-/*	$NetBSD: finger.h,v 1.9 2003/08/07 11:13:45 agc Exp $	*/
+/*	$NetBSD: finger.h,v 1.10 2007/05/05 16:55:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -34,7 +34,6 @@
  *	from: @(#)finger.h	8.1 (Berkeley) 6/6/93
  */
 
-#define _PATH_MAILSPOOL "/var/mail"
 
 /*
  * All unique persons are linked in a list headed by "head" and linkd
