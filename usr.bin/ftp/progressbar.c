@@ -1,4 +1,4 @@
-/*	$NetBSD: progressbar.c,v 1.15 2007/04/17 05:52:03 lukem Exp $	*/
+/*	$NetBSD: progressbar.c,v 1.16 2007/05/05 16:57:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997-2007 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: progressbar.c,v 1.15 2007/04/17 05:52:03 lukem Exp $");
+__RCSID("$NetBSD: progressbar.c,v 1.16 2007/05/05 16:57:54 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -93,7 +93,7 @@ updateprogressmeter(int dummy)
 /*
  * List of order of magnitude suffixes, per IEC 60027-2.
  */
-static const char const *suffixes[] = {
+static const char *suffixes[] = {
 	"",	/* 2^0  (byte) */
 	"KiB",	/* 2^10 Kibibyte */
 	"MiB",	/* 2^20 Mebibyte */
