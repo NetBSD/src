@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_priv.h,v 1.6 2007/04/13 13:35:46 pooka Exp $	*/
+/*	$NetBSD: puffs_priv.h,v 1.7 2007/05/05 15:48:18 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006 Antti Kantee.  All Rights Reserved.
@@ -39,6 +39,8 @@
 
 #define PU_CMAP(pu, c)	(pu->pu_cmap ? pu->pu_cmap(c) : (struct puffs_node *)c)
 
+struct puffs_framectrl;
+
 /*
  * usermount: describes one file system instance
  */
@@ -62,6 +64,8 @@ struct puffs_usermount {
 	pu_pathcmp_fn		pu_pathcmp;
 	pu_pathfree_fn		pu_pathfree;
 	pu_namemod_fn		pu_namemod;
+
+	struct puffs_framectrl	*pu_framectrl;
 
 	void	*pu_privdata;
 };
