@@ -1,4 +1,4 @@
-/* $NetBSD: lib.h,v 1.83 2006/04/24 13:36:23 dillo Exp $ */
+/* $NetBSD: lib.h,v 1.84 2007/05/05 16:43:01 christos Exp $ */
 
 /* from FreeBSD Id: lib.h,v 1.25 1997/10/08 07:48:03 charnier Exp */
 
@@ -307,7 +307,7 @@ void    cleanup(int);
 char   *make_playpen(char *, size_t, size_t);
 char   *where_playpen(void);
 void    leave_playpen(char *);
-uint64_t min_free(char *);
+uint64_t min_free(const char *);
 void    save_dirs(char **, char **);
 void    restore_dirs(char *, char *);
 void    show_version(void);
