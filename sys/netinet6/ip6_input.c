@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.103 2007/05/02 20:40:27 dyoung Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.104 2007/05/05 21:23:50 yamt Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.103 2007/05/02 20:40:27 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.104 2007/05/05 21:23:50 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -246,7 +246,7 @@ ip6_input(struct mbuf *m)
 	int off = sizeof(struct ip6_hdr), nest;
 	u_int32_t plen;
 	u_int32_t rtalert = ~0;
-	int nxt, ours = 0;
+	int nxt, ours = 0, rh_present = 0;
 	struct ifnet *deliverifp = NULL;
 	int srcrt = 0;
 	const struct sockaddr_in6 *cdst;
@@ -755,9 +755,11 @@ ip6_input(struct mbuf *m)
 	in6_ifstat_inc(deliverifp, ifs6_in_deliver);
 	nest = 0;
 
+	rh_present = 0;
 	while (nxt != IPPROTO_DONE) {
 		if (ip6_hdrnestlimit && (++nest > ip6_hdrnestlimit)) {
 			ip6stat.ip6s_toomanyhdr++;
+			in6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_hdrerr);
 			goto bad;
 		}
 
@@ -769,6 +771,15 @@ ip6_input(struct mbuf *m)
 			ip6stat.ip6s_tooshort++;
 			in6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_truncated);
 			goto bad;
+		}
+
+		if (nxt == IPPROTO_ROUTING) {
+			if (rh_present++) {
+				in6_ifstat_inc(m->m_pkthdr.rcvif,
+				    ifs6_in_hdrerr);
+				ip6stat.ip6s_badoptions++;
+				goto bad;
+			}
 		}
 
 #ifdef IPSEC
