@@ -1,4 +1,4 @@
-.\"	$NetBSD: whatis,v 1.3 2002/07/08 14:42:51 lukem Exp $
+.\"	$NetBSD: whatis,v 1.4 2007/05/05 23:07:12 pavel Exp $
 .
 This is the first major release of
 .Nx*M .
@@ -8,14 +8,9 @@ supported the Shark platform as part of
 .Nx Ns /arm32 .
 .Pp
 .Pp
-Unlike previous release of
-.Nx
-for the ARM architecture, the \*M port uses the ELF binary
-format.
-However,
 .Nx \*V
 on \*M is, as usual, also fully backward compatible with old
 .Nx
-a.out ARM binaries, so you don't need to recompile all your local
+ARM binaries, so you don't need to recompile all your local
 programs provided you set the appropriate binary compatibility options
 in your kernel configuration.

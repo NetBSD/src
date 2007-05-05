@@ -1,34 +1,6 @@
-.\"	$NetBSD: whatis,v 1.7 2002/07/08 14:42:52 lukem Exp $
+.\"	$NetBSD: whatis,v 1.8 2007/05/05 23:07:12 pavel Exp $
 .
-This is the sixth major release of
+This is the XXXth major release of
 .Nx
 for the
 .Tn VAX .
-.Pp
-Support for the following machines has been added:
-.(bullet -offset indent
-MicroVAX 3100m90
-.It
-MicroVAX 3100m95
-.It
-VAX 4000/100
-.It
-VAX 4000/105A
-.It
-VAX 4000/108
-.It
-VAX 4000/400
-.It
-VAX 4000/500
-.It
-VAX 4000/600
-.It
-VAX 4000/705A
-.bullet)
-.Pp
-The following drivers were added:
-.(bullet -offset indent
-Interlan NI1010 ethernet
-.It
-DEC DDCMP DMC-11/DMR-11 interface
-.bullet)

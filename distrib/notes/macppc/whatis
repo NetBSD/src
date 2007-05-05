@@ -1,6 +1,6 @@
-.\"	$NetBSD: whatis,v 1.7 2003/09/07 00:01:19 mbw Exp $
+.\"	$NetBSD: whatis,v 1.8 2007/05/05 23:07:12 pavel Exp $
 .
-This is the fourth major release of
+This is the XXXth major release of
 .Nx
 for the \*M platform, including the Apple eMac, iBook, iMac, 
 PowerMacintosh, PowerBook, and Xserve models, as well as clones.
@@ -13,15 +13,7 @@ See the supported hardware list for details.
 .Pp
 Some (but not all!) notable \*M-specific improvements include:
 .(bullet
-Support for the some of the latest models.
-.It
-Support for symmetric multiprocessing (SMP) on systems with more than one CPU.
-.It
-Support for Apple's NeXT-based file system (UFS).  This file system can 
-be shared with 
-.Tn MacOS X 
-and can be used as the root partition for
-.Nx .
+TBD
 .bullet)
 .Pp
 .Nx \*V
