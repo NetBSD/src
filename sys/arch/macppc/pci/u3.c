@@ -51,22 +51,19 @@ struct ibmcpc_softc
     struct pci_bridge sc_pc[8];
 };
 
-void ibmcpc_attach __P((struct device *, struct device *, void *));
-int ibmcpc_match __P((struct device *, struct cfdata *, void *));
+static void ibmcpc_attach(struct device *, struct device *, void *);
+static int ibmcpc_match(struct device *, struct cfdata *, void *);
 
-pcireg_t ibmcpc_conf_read __P((pci_chipset_tag_t, pcitag_t, int));
-void ibmcpc_conf_write __P((pci_chipset_tag_t, pcitag_t, int, pcireg_t));
+static pcireg_t ibmcpc_conf_read(pci_chipset_tag_t, pcitag_t, int);
+static void ibmcpc_conf_write(pci_chipset_tag_t, pcitag_t, int, pcireg_t);
 
 CFATTACH_DECL(ibmcpc, sizeof(struct ibmcpc_softc),
               ibmcpc_match, ibmcpc_attach, NULL, NULL);
 
 #define PCI_DEVFN(slot,func)    ((((slot) & 0x1f) << 3) | ((func) & 0x07))
 
-int
-ibmcpc_match(parent, cf, aux)
-     struct device *parent;
-     struct cfdata *cf;
-     void *aux;
+static int
+ibmcpc_match(struct device *parent, struct cfdata *cf, void *aux)
 {
     struct confargs *ca = aux;
     char compat[32];
@@ -83,10 +80,8 @@ ibmcpc_match(parent, cf, aux)
     return 1;
 }
 
-void
-ibmcpc_attach(parent, self, aux)
-     struct device *parent, *self;
-     void *aux;
+static void
+ibmcpc_attach(struct device *parent, struct device *self, void *aux)
 {
     struct ibmcpc_softc *sc = (void *) self;
     pci_chipset_tag_t pc = sc->sc_pc;
@@ -146,11 +141,8 @@ ibmcpc_attach(parent, self, aux)
     }
 }
 
-pcireg_t
-ibmcpc_conf_read(pc, tag, reg)
-     pci_chipset_tag_t pc;
-     pcitag_t tag;
-     int reg;
+static pcireg_t
+ibmcpc_conf_read(pci_chipset_tag_t pc, pcitag_t tag, int reg)
 {
     u_int32_t daddr = (u_int32_t) pc->data;
     pcireg_t data;
@@ -178,12 +170,8 @@ ibmcpc_conf_read(pc, tag, reg)
     return data;
 }
 
-void
-ibmcpc_conf_write(pc, tag, reg, data)
-     pci_chipset_tag_t pc;
-     pcitag_t tag;
-     int reg;
-     pcireg_t data;
+static void
+ibmcpc_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t data)
 {
     int32_t *daddr = pc->data;
     u_int32_t bus, dev, func;
