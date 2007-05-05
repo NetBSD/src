@@ -1,4 +1,4 @@
-/*	$NetBSD: grackle.c,v 1.10 2005/12/11 12:18:06 christos Exp $	*/
+/*	$NetBSD: grackle.c,v 1.10.38.1 2007/05/05 06:04:20 macallan Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grackle.c,v 1.10 2005/12/11 12:18:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grackle.c,v 1.10.38.1 2007/05/05 06:04:20 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -44,20 +44,17 @@ struct grackle_softc {
 	struct pci_bridge sc_pc;
 };
 
-void grackle_attach __P((struct device *, struct device *, void *));
-int grackle_match __P((struct device *, struct cfdata *, void *));
+static void grackle_attach(struct device *, struct device *, void *);
+static int grackle_match(struct device *, struct cfdata *, void *);
 
-pcireg_t grackle_conf_read __P((pci_chipset_tag_t, pcitag_t, int));
-void grackle_conf_write __P((pci_chipset_tag_t, pcitag_t, int, pcireg_t));
+static pcireg_t grackle_conf_read(pci_chipset_tag_t, pcitag_t, int);
+static void grackle_conf_write(pci_chipset_tag_t, pcitag_t, int, pcireg_t);
 
 CFATTACH_DECL(grackle, sizeof(struct grackle_softc),
     grackle_match, grackle_attach, NULL, NULL);
 
-int
-grackle_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+static int
+grackle_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct confargs *ca = aux;
 	char compat[32];
@@ -76,10 +73,8 @@ grackle_match(parent, cf, aux)
 #define GRACKLE_ADDR 0xfec00000
 #define GRACKLE_DATA 0xfee00000
 
-void
-grackle_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+static void
+grackle_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct grackle_softc *sc = (void *)self;
 	pci_chipset_tag_t pc = &sc->sc_pc;
@@ -132,11 +127,8 @@ grackle_attach(parent, self, aux)
 	config_found_ia(self, "pcibus", &pba, pcibusprint);
 }
 
-pcireg_t
-grackle_conf_read(pc, tag, reg)
-	pci_chipset_tag_t pc;
-	pcitag_t tag;
-	int reg;
+static pcireg_t
+grackle_conf_read(pci_chipset_tag_t pc, pcitag_t tag, int reg)
 {
 	pcireg_t data;
 	int s;
@@ -154,12 +146,8 @@ grackle_conf_read(pc, tag, reg)
 	return data;
 }
 
-void
-grackle_conf_write(pc, tag, reg, data)
-	pci_chipset_tag_t pc;
-	pcitag_t tag;
-	int reg;
-	pcireg_t data;
+static void
+grackle_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t data)
 {
 	int s;
 
