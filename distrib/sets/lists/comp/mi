@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1024 2007/05/04 22:37:33 rmind Exp $
+#	$NetBSD: mi,v 1.1025 2007/05/05 16:11:23 pooka Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -5665,6 +5665,7 @@
 ./usr/share/man/cat3/puffs_cc.0			comp-c-catman		.cat
 ./usr/share/man/cat3/puffs_cred.0		comp-c-catman		.cat
 ./usr/share/man/cat3/puffs_flush.0		comp-c-catman		.cat
+./usr/share/man/cat3/puffs_framebuf.0		comp-c-catman		.cat
 ./usr/share/man/cat3/puffs_node.0		comp-c-catman		.cat
 ./usr/share/man/cat3/puffs_ops.0		comp-c-catman		.cat
 ./usr/share/man/cat3/puffs_path.0		comp-c-catman		.cat
@@ -10000,6 +10001,7 @@
 ./usr/share/man/man3/puffs_cc.3			comp-c-man		.man
 ./usr/share/man/man3/puffs_cred.3		comp-c-man		.man
 ./usr/share/man/man3/puffs_flush.3		comp-c-man		.man
+./usr/share/man/man3/puffs_framebuf.3		comp-c-man		.man
 ./usr/share/man/man3/puffs_node.3		comp-c-man		.man
 ./usr/share/man/man3/puffs_ops.3		comp-c-man		.man
 ./usr/share/man/man3/puffs_path.3		comp-c-man		.man
