@@ -1,4 +1,4 @@
-/*	$NetBSD: bandit.c,v 1.25 2005/12/11 12:18:06 christos Exp $	*/
+/*	$NetBSD: bandit.c,v 1.25.38.1 2007/05/05 05:53:58 macallan Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bandit.c,v 1.25 2005/12/11 12:18:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bandit.c,v 1.25.38.1 2007/05/05 05:53:58 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -44,22 +44,19 @@ struct bandit_softc {
 	struct pci_bridge sc_pc;
 };
 
-void bandit_attach __P((struct device *, struct device *, void *));
-int bandit_match __P((struct device *, struct cfdata *, void *));
+static void bandit_attach(struct device *, struct device *, void *);
+static int bandit_match(struct device *, struct cfdata *, void *);
 
-pcireg_t bandit_conf_read __P((pci_chipset_tag_t, pcitag_t, int));
-void bandit_conf_write __P((pci_chipset_tag_t, pcitag_t, int, pcireg_t));
+static pcireg_t bandit_conf_read(pci_chipset_tag_t, pcitag_t, int);
+static void bandit_conf_write(pci_chipset_tag_t, pcitag_t, int, pcireg_t);
 
-static void bandit_init __P((struct bandit_softc *));
+static void bandit_init(struct bandit_softc *);
 
 CFATTACH_DECL(bandit, sizeof(struct bandit_softc),
     bandit_match, bandit_attach, NULL, NULL);
 
-int
-bandit_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+static int
+bandit_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct confargs *ca = aux;
 
@@ -70,10 +67,8 @@ bandit_match(parent, cf, aux)
 	return 0;
 }
 
-void
-bandit_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+static void
+bandit_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct bandit_softc *sc = (void *)self;
 	pci_chipset_tag_t pc = &sc->sc_pc;
@@ -132,11 +127,8 @@ bandit_attach(parent, self, aux)
 	config_found_ia(self, "pcibus", &pba, pcibusprint);
 }
 
-pcireg_t
-bandit_conf_read(pc, tag, reg)
-	pci_chipset_tag_t pc;
-	pcitag_t tag;
-	int reg;
+static pcireg_t
+bandit_conf_read(pci_chipset_tag_t pc, pcitag_t tag, int reg)
 {
 	pcireg_t data;
 	int bus, dev, func, s;
@@ -174,12 +166,8 @@ bandit_conf_read(pc, tag, reg)
 	return data;
 }
 
-void
-bandit_conf_write(pc, tag, reg, data)
-	pci_chipset_tag_t pc;
-	pcitag_t tag;
-	int reg;
-	pcireg_t data;
+static void
+bandit_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t data)
 {
 	int bus, dev, func, s;
 	u_int32_t x;
@@ -214,9 +202,8 @@ bandit_conf_write(pc, tag, reg, data)
 
 #define	PCI_MODE_IO_COHERENT	0x040	/* I/O coherent */
 
-void
-bandit_init(sc)
-	struct bandit_softc *sc;
+static void
+bandit_init(struct bandit_softc *sc)
 {
 	pci_chipset_tag_t pc = &sc->sc_pc;
 	pcitag_t tag;
