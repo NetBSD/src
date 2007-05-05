@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.h,v 1.49 2007/05/01 15:58:01 pooka Exp $	*/
+/*	$NetBSD: puffs.h,v 1.50 2007/05/05 15:48:18 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -381,6 +381,24 @@ if (cp)	{								\
 	(*(ncp))++;							\
 }
 
+/* framebuf stuff */
+struct puffs_framebuf;
+typedef int (*puffs_framebuf_readframe_fn)(struct puffs_usermount *,
+					   struct puffs_framebuf *,
+					   int, int *);
+typedef	int (*puffs_framebuf_writeframe_fn)(struct puffs_usermount *,
+					    struct puffs_framebuf *,
+					    int, int *);
+typedef int (*puffs_framebuf_respcmp_fn)(struct puffs_usermount *,
+					 struct puffs_framebuf *,
+					 struct puffs_framebuf *);
+typedef void (*puffs_framebuf_loop_fn)(struct puffs_usermount *, void *);
+
+typedef void (*puffs_framebuf_cb)(struct puffs_usermount *,
+				  struct puffs_framebuf *,
+				  void *);
+
+
 __BEGIN_DECLS
 
 struct puffs_usermount *_puffs_mount(int, struct puffs_ops *, const char *, int,
@@ -561,6 +579,43 @@ void	puffs_set_namemod(struct puffs_usermount *, pu_namemod_fn);
  */
 
 int	puffs_fs_suspend(struct puffs_usermount *);
+
+/*
+ * Frame buffering
+ */
+
+struct puffs_framebuf 	*puffs_framebuf_make(void);
+void			puffs_framebuf_destroy(struct puffs_framebuf *);
+void			puffs_framebuf_recycle(struct puffs_framebuf *);
+int			puffs_framebuf_reserve_space(struct puffs_framebuf *,
+						     size_t);
+
+int	puffs_framebuf_putdata(struct puffs_framebuf *, const void *, size_t);
+int	puffs_framebuf_putdata_atoff(struct puffs_framebuf *, size_t,
+				     const void *, size_t);
+int	puffs_framebuf_getdata(struct puffs_framebuf *, void *, size_t);
+int	puffs_framebuf_getdata_atoff(struct puffs_framebuf *, size_t,
+				     void *, size_t);
+
+size_t	puffs_framebuf_telloff(struct puffs_framebuf *);
+size_t	puffs_framebuf_tellsize(struct puffs_framebuf *);
+size_t	puffs_framebuf_remaining(struct puffs_framebuf *);
+int	puffs_framebuf_seekset(struct puffs_framebuf *, size_t);
+int	puffs_framebuf_getwindow(struct puffs_framebuf *, size_t,
+				 void **, size_t *);
+
+int	puffs_framebuf_enqueue_cc(struct puffs_cc *, struct puffs_framebuf *);
+void	puffs_framebuf_enqueue_cb(struct puffs_usermount *,
+				  struct puffs_framebuf *,
+				  puffs_framebuf_cb, void *);
+void	puffs_framebuf_enqueue_justsend(struct puffs_usermount *,
+					struct puffs_framebuf *, int);
+
+int	puffs_framebuf_eventloop(struct puffs_usermount *, int,
+				 puffs_framebuf_readframe_fn,
+				 puffs_framebuf_writeframe_fn,
+				 puffs_framebuf_respcmp_fn,
+				 puffs_framebuf_loop_fn, void *);
 
 __END_DECLS
 
