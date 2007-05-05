@@ -1,4 +1,4 @@
-/*	$NetBSD: ninepuffs.c,v 1.3 2007/05/02 18:50:30 pooka Exp $	*/
+/*	$NetBSD: ninepuffs.c,v 1.4 2007/05/05 15:49:51 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ninepuffs.c,v 1.3 2007/05/02 18:50:30 pooka Exp $");
+__RCSID("$NetBSD: ninepuffs.c,v 1.4 2007/05/05 15:49:51 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -51,8 +51,6 @@ __RCSID("$NetBSD: ninepuffs.c,v 1.3 2007/05/02 18:50:30 pooka Exp $");
 #include "ninepuffs.h"
 
 #define DEFPORT_9P 564
-
-static void puffs9p_eventloop(struct puffs_usermount *, struct puffs9p *);
 
 static void
 usage(void)
@@ -176,8 +174,6 @@ main(int argc, char *argv[])
 	memset(&p9p, 0, sizeof(p9p));
 	p9p.maxreq = P9P_DEFREQLEN;
 	p9p.nextfid = 1;
-	TAILQ_INIT(&p9p.outbufq);
-	TAILQ_INIT(&p9p.req_queue);
 
 	p9p.servsock = serverconnect(srvhost, port);
 	pu = puffs_init(pops, "9P", &p9p, pflags);
@@ -202,195 +198,8 @@ main(int argc, char *argv[])
 	if (detach)
 		daemon(1, 0);
 
-	puffs9p_eventloop(pu, &p9p);
+	puffs_framebuf_eventloop(pu, p9p.servsock,
+	    p9pbuf_read, p9pbuf_write, p9pbuf_cmp, NULL, NULL);
 
 	return 0;
-}
-
-/*
- * enqueue buffer to be handled with cc
- */
-void
-outbuf_enqueue(struct puffs9p *p9p, struct p9pbuf *pb,
-	struct puffs_cc *pcc, uint16_t tagid)
-{
-
-	pb->p9pr.tagid = tagid;
-	pb->p9pr.pcc = pcc;
-	pb->p9pr.func = NULL;
-	pb->p9pr.arg = NULL;
-	TAILQ_INSERT_TAIL(&p9p->outbufq, pb, p9pr.entries);
-}
-
-/*
- * enqueue buffer to be handled with "f".  "f" must not block.
- * gives up struct p9pbuf ownership.
- */
-void
-outbuf_enqueue_nocc(struct puffs9p *p9p, struct p9pbuf *pb,
-	void (*f)(struct puffs9p *, struct p9pbuf *, void *), void *arg,
-	uint16_t tagid)
-{
-
-	pb->p9pr.tagid = tagid;
-	pb->p9pr.pcc = NULL;
-	pb->p9pr.func = f;
-	pb->p9pr.arg = arg;
-	TAILQ_INSERT_TAIL(&p9p->outbufq, pb, p9pr.entries);
-}
-
-struct p9pbuf *
-req_get(struct puffs9p *p9p, uint16_t tagid)
-{
-	struct p9pbuf *pb;
-
-	TAILQ_FOREACH(pb, &p9p->req_queue, p9pr.entries)
-		if (pb->p9pr.tagid == tagid)
-			break;
-
-	if (!pb)
-		return NULL;
-
-	TAILQ_REMOVE(&p9p->req_queue, pb, p9pr.entries);
-
-	return pb;
-}
-
-static void
-handlebuf(struct puffs9p *p9p, struct p9pbuf *datapb,
-	struct puffs_putreq *ppr)
-{
-	struct p9preq p9prtmp;
-	struct p9pbuf *pb;
-
-	/* is this something we are expecting? */
-	pb = req_get(p9p, datapb->tagid);
-
-	if (pb == NULL) {
-		printf("invalid server request response %d\n", datapb->tagid);
-		p9pbuf_destroy(datapb);
-		return;
-	}
-
-	/* keep p9preq clean, xxx uknow */
-	p9prtmp = pb->p9pr;
-	*pb = *datapb;
-	pb->p9pr = p9prtmp;
-	free(datapb);
-
-	/* don't allow both cc and handler func, but allow neither */
-	assert((pb->p9pr.pcc && pb->p9pr.func) == 0);
-	if (pb->p9pr.pcc) {
-		puffs_docc(pb->p9pr.pcc, ppr);
-	} else if (pb->p9pr.func) {
-		pb->p9pr.func(p9p, pb, pb->p9pr.arg);
-	} else {
-		assert(pb->p9pr.arg == NULL);
-		p9pbuf_destroy(pb);
-	}
-}
-
-static int
-psshinput(struct puffs9p *p9p, struct puffs_putreq *ppr)
-{
-	struct p9pbuf *cb;
-	int rv;
-
-	for (;;) {
-		if ((cb = p9p->curpb) == NULL) {
-			cb = p9pbuf_make(p9p->maxreq, P9PB_IN);
-			if (cb == NULL)
-				return -1;
-			p9p->curpb = cb;
-		}
-
-		rv = p9pbuf_read(p9p, cb);
-		if (rv == -1)
-			err(1, "p9pbuf read");
-		if (rv == 0)
-			break;
-
-		handlebuf(p9p, cb, ppr);
-		p9p->curpb = NULL;
-	}
-
-	return rv;
-}
-
-static int
-psshoutput(struct puffs9p *p9p)
-{
-	struct p9pbuf *pb;
-	int rv;
-
-	TAILQ_FOREACH(pb, &p9p->outbufq, p9pr.entries) {
-		rv = p9pbuf_write(p9p, pb);
-		if (rv == -1)
-			return -1;
-		if (rv == 0)
-			return 0;
-
-		/* sent everything, move to cookiequeue */
-		TAILQ_REMOVE(&p9p->outbufq, pb, p9pr.entries);
-		free(pb->buf);
-		TAILQ_INSERT_TAIL(&p9p->req_queue, pb, p9pr.entries);
-	}
-
-	return 1;
-}
-
-#define PFD_SOCK 0
-#define PFD_PUFFS 1
-static void
-puffs9p_eventloop(struct puffs_usermount *pu, struct puffs9p *p9p)
-{
-	struct puffs_getreq *pgr;
-	struct puffs_putreq *ppr;
-	struct pollfd pfds[2];
-
-	pgr = puffs_req_makeget(pu, puffs_getmaxreqlen(pu), 0);
-	if (!pgr)
-		err(1, "makegetreq");
-	ppr = puffs_req_makeput(pu);
-	if (!ppr)
-		err(1, "makeputreq");
-
-	while (puffs_getstate(pu) != PUFFS_STATE_UNMOUNTED) {
-		memset(pfds, 0, sizeof(pfds));
-		pfds[PFD_SOCK].events = POLLIN;
-		if (!TAILQ_EMPTY(&p9p->outbufq))
-			pfds[PFD_SOCK].events |= POLLOUT;
-		pfds[PFD_SOCK].fd = p9p->servsock;
-		pfds[PFD_PUFFS].fd = puffs_getselectable(pu);
-		pfds[PFD_PUFFS].events = POLLIN;
-
-		if (poll(pfds, 2, INFTIM) == -1)
-			err(1, "poll");
-
-		if (pfds[PFD_SOCK].revents & POLLOUT)
-			if (psshoutput(p9p) == -1)
-				err(1, "psshoutput");
-		
-		/* get & possibly dispatch events from kernel */
-		if (pfds[PFD_PUFFS].revents & POLLIN)
-			if (puffs_req_handle(pu, pgr, ppr, 0) == -1)
-				err(1, "puffs_handlereqs");
-
-		/* get input from sftpd, possibly build more responses */
-		if (pfds[PFD_SOCK].revents & POLLIN)
-			if (psshinput(p9p, ppr) == -1)
-				errx(1, "psshinput");
-
-		/* it's likely we got outputtables, poke the ice with a stick */
-		if (psshoutput(p9p) == -1)
-			err(1, "psshoutput");
-
-		/* stuff all replies from both of the above into kernel */
-		if (puffs_req_putput(ppr) == -1)
-			err(1, "putputreq");
-		puffs_req_resetput(ppr);
-	}
-
-	puffs_req_destroyget(pgr);
-	puffs_req_destroyput(ppr);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: psshfs.c,v 1.16 2007/05/02 18:50:30 pooka Exp $	*/
+/*	$NetBSD: psshfs.c,v 1.17 2007/05/05 15:49:51 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -39,25 +39,12 @@
  *
  * Concurrency control is handled currently by vnode locking (this
  * will change in the future).  Context switch locations are easy to
- * find by grepping for puffs_cc_yield().
- *
- * The operation revolves around an event loop.  Incoming requests from
- * the kernel are dispatched off to the libpuffs event handler, which
- * eventually calls the callbacks.  The callbacks do whatever they need
- * to do, queue output and call puffs_cc_yield() to put them to sleep.
- * Meanwhile execution continues.  When an answer to the callback's
- * query arrives, the blocker is located by the protocol's request
- * id and awakened by calling puffs_docc().  All changes made to the
- * buffer (psbuf->buf) will be seen by the callback.  Here the buffer
- * contains the response of the sftp server.  The callback will then
- * proceed to parse the buffer.
- *
- * XXX: struct psbuf is a mess.  it will be fixed sooner or later
+ * find by grepping for puffs_framebuf_enqueue_cc().
  */
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: psshfs.c,v 1.16 2007/05/02 18:50:30 pooka Exp $");
+__RCSID("$NetBSD: psshfs.c,v 1.17 2007/05/05 15:49:51 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -75,7 +62,6 @@ __RCSID("$NetBSD: psshfs.c,v 1.16 2007/05/02 18:50:30 pooka Exp $");
 
 #include "psshfs.h"
 
-static void	psshfs_eventloop(struct puffs_usermount *, struct psshfs_ctx *);
 static void	pssh_connect(struct psshfs_ctx *, char **);
 static void	usage(void);
 
@@ -102,7 +88,7 @@ main(int argc, char *argv[])
 	char *sshport = NULL;
 	int mntflags, pflags, ch;
 	int detach, exportfs;
-	int argi;
+	int argi, x;
 
 	setprogname(argv[0]);
 
@@ -172,8 +158,6 @@ main(int argc, char *argv[])
 	PUFFSOP_SET(pops, psshfs, node, reclaim);
 
 	memset(&pctx, 0, sizeof(pctx));
-	TAILQ_INIT(&pctx.outbufq);
-	TAILQ_INIT(&pctx.req_queue);
 	pctx.mounttime = time(NULL);
 
 	userhost = argv[0];
@@ -217,211 +201,15 @@ main(int argc, char *argv[])
 	if (psshfs_domount(pu) != 0)
 		errx(1, "psshfs_domount");
 
+	x = 1;
+	if (ioctl(pctx.sshfd, FIONBIO, &x) == -1)
+		err(1, "nonblocking descriptor");
+
 	if (detach)
 		daemon(1, 0);
 
-	psshfs_eventloop(pu, &pctx);
-	return 0;
-}
-
-/*
- * enqueue buffer to be handled with cc
- */
-void
-pssh_outbuf_enqueue(struct psshfs_ctx *pctx, struct psbuf *pb,
-	struct puffs_cc *pcc, uint32_t reqid)
-{
-
-	pb->psr.reqid = reqid;
-	pb->psr.pcc = pcc;
-	pb->psr.func = NULL;
-	pb->psr.arg = NULL;
-	TAILQ_INSERT_TAIL(&pctx->outbufq, pb, psr.entries);
-}
-
-/*
- * enqueue buffer to be handled with "f".  "f" must not block.
- * gives up struct psbuf ownership.
- */
-void
-pssh_outbuf_enqueue_nocc(struct psshfs_ctx *pctx, struct psbuf *pb,
-	void (*f)(struct psshfs_ctx *, struct psbuf *, void *), void *arg,
-	uint32_t reqid)
-{
-
-	pb->psr.reqid = reqid;
-	pb->psr.pcc = NULL;
-	pb->psr.func = f;
-	pb->psr.arg = arg;
-	TAILQ_INSERT_TAIL(&pctx->outbufq, pb, psr.entries);
-}
-
-struct psbuf *
-psshreq_get(struct psshfs_ctx *pctx, uint32_t reqid)
-{
-	struct psbuf *pb;
-
-	TAILQ_FOREACH(pb, &pctx->req_queue, psr.entries)
-		if (pb->psr.reqid == reqid)
-			break;
-
-	if (!pb)
-		return NULL;
-
-	TAILQ_REMOVE(&pctx->req_queue, pb, psr.entries);
-
-	return pb;
-}
-
-static void
-handlebuf(struct psshfs_ctx *pctx, struct psbuf *datapb,
-	struct puffs_putreq *ppr)
-{
-	struct psreq psrtmp;
-	struct psbuf *pb;
-
-	/* is this something we are expecting? */
-	pb = psshreq_get(pctx, datapb->reqid);
-
-	if (pb == NULL) {
-		printf("invalid server request response %d\n", datapb->reqid);
-		psbuf_destroy(datapb);
-		return;
-	}
-
-	/* keep psreq clean, xxx uknow */
-	psrtmp = pb->psr;
-	*pb = *datapb;
-	pb->psr = psrtmp;
-	free(datapb);
-
-	/* don't allow both cc and handler func, but allow neither */
-	assert((pb->psr.pcc && pb->psr.func) == 0);
-	if (pb->psr.pcc) {
-		puffs_docc(pb->psr.pcc, ppr);
-	} else if (pb->psr.func) {
-		pb->psr.func(pctx, pb, pb->psr.arg);
-	} else {
-		assert(pb->psr.arg == NULL);
-		psbuf_destroy(pb);
-	}
-}
-
-static int
-psshinput(struct psshfs_ctx *pctx, struct puffs_putreq *ppr)
-{
-	struct psbuf *cb;
-	int rv;
-
-	for (;;) {
-		if ((cb = pctx->curpb) == NULL) {
-			cb = psbuf_make(PSB_IN);
-			if (cb == NULL)
-				return -1;
-			pctx->curpb = cb;
-		}
-
-		rv = psbuf_read(pctx, cb);
-		if (rv == -1)
-			err(1, "psbuf read");
-		if (rv == 0)
-			break;
-
-		handlebuf(pctx, cb, ppr);
-		pctx->curpb = NULL;
-	}
-
-	return rv;
-}
-
-static int
-psshoutput(struct psshfs_ctx *pctx)
-{
-	struct psbuf *pb;
-	int rv;
-
-	TAILQ_FOREACH(pb, &pctx->outbufq, psr.entries) {
-		rv = psbuf_write(pctx, pb);
-		if (rv == -1)
-			return -1;
-		if (rv == 0)
-			return 0;
-
-		/* sent everything, move to cookiequeue */
-		TAILQ_REMOVE(&pctx->outbufq, pb, psr.entries);
-		free(pb->buf);
-		TAILQ_INSERT_TAIL(&pctx->req_queue, pb, psr.entries);
-	}
-
-	return 1;
-}
-
-volatile int timetodie;
-
-#define PFD_SSH 0
-#define PFD_PUFFS 1
-static void
-psshfs_eventloop(struct puffs_usermount *pu, struct psshfs_ctx *pctx)
-{
-	struct puffs_getreq *pgr;
-	struct puffs_putreq *ppr;
-	struct pollfd pfds[2];
-	int x;
-
-	pgr = puffs_req_makeget(pu, puffs_getmaxreqlen(pu), 0);
-	if (!pgr)
-		err(1, "makegetreq");
-	ppr = puffs_req_makeput(pu);
-	if (!ppr)
-		err(1, "makeputreq");
-
-	x = 1;
-	if (ioctl(pctx->sshfd, FIONBIO, &x) == -1)
-		err(1, "nonblocking descriptor");
-
-	while (puffs_getstate(pu) != PUFFS_STATE_UNMOUNTED) {
-		if (timetodie) {
-			kill(pctx->sshpid, SIGTERM);
-			break;
-		}
-
-		memset(pfds, 0, sizeof(pfds));
-		pfds[PFD_SSH].events = POLLIN;
-		if (!TAILQ_EMPTY(&pctx->outbufq))
-			pfds[PFD_SSH].events |= POLLOUT;
-		pfds[PFD_SSH].fd = pctx->sshfd;
-		pfds[PFD_PUFFS].fd = puffs_getselectable(pu);
-		pfds[PFD_PUFFS].events = POLLIN;
-
-		if (poll(pfds, 2, INFTIM) == -1)
-			err(1, "poll");
-
-		if (pfds[PFD_SSH].revents & POLLOUT)
-			if (psshoutput(pctx) == -1)
-				err(1, "psshoutput");
-		
-		/* get & possibly dispatch events from kernel */
-		if (pfds[PFD_PUFFS].revents & POLLIN)
-			if (puffs_req_handle(pu, pgr, ppr, 0) == -1)
-				err(1, "puffs_handlereqs");
-
-		/* get input from sftpd, possibly build more responses */
-		if (pfds[PFD_SSH].revents & POLLIN)
-			if (psshinput(pctx, ppr) == -1)
-				errx(1, "psshinput");
-
-		/* it's likely we got outputtables, poke the ice with a stick */
-		if (psshoutput(pctx) == -1)
-			err(1, "psshoutput");
-
-		/* stuff all replies from both of the above into kernel */
-		if (puffs_req_putput(ppr) == -1)
-			err(1, "putputreq");
-		puffs_req_resetput(ppr);
-	}
-
-	puffs_req_destroyget(pgr);
-	puffs_req_destroyput(ppr);
+	return puffs_framebuf_eventloop(pu, pctx.sshfd,
+	    psbuf_read, psbuf_write, psbuf_cmp, NULL, NULL);
 }
 
 static void

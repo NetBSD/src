@@ -1,4 +1,4 @@
-/*	$NetBSD: ninepuffs.h,v 1.2 2007/04/22 18:10:48 pooka Exp $	*/
+/*	$NetBSD: ninepuffs.h,v 1.3 2007/05/05 15:49:51 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -64,64 +64,12 @@ typedef uint32_t p9pfid_t;
 #define AUTOVAR(pcc)							\
 	struct puffs9p *p9p = puffs_cc_getspecific(pcc);		\
 	uint16_t tag = NEXTTAG(p9p);					\
-	struct p9pbuf *pb = p9pbuf_make(p9p->maxreq, P9PB_OUT);		\
+	struct puffs_framebuf *pb = p9pbuf_makeout();			\
 	int rv = 0
 
 #define RETURN(rv)							\
-	p9pbuf_destroy(pb);						\
+	puffs_framebuf_destroy(pb);					\
 	return (rv)
-
-struct puffs9p;
-/*
- * XXX: urgh
- *
- * This is slightly messy / abusatory structure.  It is used for multiple
- * things.  Typical life cycle: create output buffer, append to output
- * queue (pcc included) .  Once the buffer has been sent, the buffer is
- * freed and the structure is appended to reqqueue as psreq.  It is kept
- * there until matching network data is read.  Once this happens, the
- * data from the received buffer is copied to buffer stored on the queue.
- * This should be rewritten, clearly.
- *
- * Also, this should not be copypasted from psshfs.  But that's
- * another matter ;)
- */
-#define P9PB_OUT 0
-#define P9PB_IN 1
-struct p9pbuf {
-	struct p9preq {
-		p9ptag_t tagid;
-
-		/* either ... */
-		struct puffs_cc *pcc;
-
-		/* ... or */
-		void (*func)(struct puffs9p *, struct p9pbuf *, void *);
-		void *arg;
-		/* no union, we'd need a "which" flag */
-
-		TAILQ_ENTRY(p9pbuf) entries;
-	} p9pr;
-
-	/* in / out */
-	uint32_t len;
-	uint32_t offset;
-	uint8_t *buf;
-
-	/* helpers for in */
-	uint32_t remain;
-	uint8_t type;
-	p9ptag_t tagid;
-
-	int state;
-};
-#define P9PBUF_PUT 0
-#define P9PBUF_PUTDONE 1
-#define P9PBUF_GETLEN 2
-#define P9PBUF_GETDATA 3
-#define P9PBUF_GETREADY 4
-
-#define P9PB_CHECK(pb, space) if (pb->remain < (space)) return ENOMEM
 
 struct puffs9p {
 	int servsock;
@@ -130,10 +78,6 @@ struct puffs9p {
 	p9pfid_t nextfid;
 
 	size_t maxreq;		/* negotiated with server */
-	struct p9pbuf *curpb;
-
-	TAILQ_HEAD(, p9pbuf) outbufq;
-	TAILQ_HEAD(, p9pbuf) req_queue;
 };
 
 struct dirfid {
@@ -151,53 +95,46 @@ struct p9pnode {
 	LIST_HEAD(,dirfid) dir_openlist;
 };
 
-struct p9pbuf 	*p9pbuf_make(size_t, int);
-void		p9pbuf_destroy(struct p9pbuf *);
-void		p9pbuf_recycle(struct p9pbuf *, int);
+struct puffs_framebuf	*p9pbuf_makeout(void);
+void			p9pbuf_recycleout(struct puffs_framebuf *);
 
-int		p9pbuf_read(struct puffs9p *, struct p9pbuf *);
-int		p9pbuf_write(struct puffs9p *, struct p9pbuf *);
+int	p9pbuf_read(struct puffs_usermount *, struct puffs_framebuf *,int,int*);
+int	p9pbuf_write(struct puffs_usermount *, struct puffs_framebuf*,int,int*);
+int	p9pbuf_cmp(struct puffs_usermount *,
+		   struct puffs_framebuf *, struct puffs_framebuf *);
 
-void		outbuf_enqueue(struct puffs9p *, struct p9pbuf *,
-			       struct puffs_cc *, uint16_t);
-void		outbuf_enqueue_nocc(struct puffs9p *, struct p9pbuf *,
-				    void (*f)(struct puffs9p *,
-					struct p9pbuf *, void *),
-					void *, uint16_t);
-struct p9pbuf	*req_get(struct puffs9p *, uint16_t);
+void	p9pbuf_put_1(struct puffs_framebuf *, uint8_t);
+void	p9pbuf_put_2(struct puffs_framebuf *, uint16_t);
+void	p9pbuf_put_4(struct puffs_framebuf *, uint32_t);
+void	p9pbuf_put_8(struct puffs_framebuf *, uint64_t);
+void	p9pbuf_put_str(struct puffs_framebuf *, const char *);
+void	p9pbuf_put_data(struct puffs_framebuf *, const void *, uint16_t);
+void	p9pbuf_write_data(struct puffs_framebuf *, uint8_t *, uint32_t);
 
+int	p9pbuf_get_1(struct puffs_framebuf *, uint8_t *);
+int	p9pbuf_get_2(struct puffs_framebuf *, uint16_t *);
+int	p9pbuf_get_4(struct puffs_framebuf *, uint32_t *);
+int	p9pbuf_get_8(struct puffs_framebuf *, uint64_t *);
+int	p9pbuf_get_str(struct puffs_framebuf *, char **, uint16_t *);
+int	p9pbuf_get_data(struct puffs_framebuf *, uint8_t **, uint16_t *);
+int	p9pbuf_read_data(struct puffs_framebuf *, uint8_t *, uint32_t);
 
-int	p9pbuf_put_1(struct p9pbuf *, uint8_t);
-int	p9pbuf_put_2(struct p9pbuf *, uint16_t);
-int	p9pbuf_put_4(struct p9pbuf *, uint32_t);
-int	p9pbuf_put_8(struct p9pbuf *, uint64_t);
-int	p9pbuf_put_str(struct p9pbuf *, const char *);
-int	p9pbuf_put_data(struct p9pbuf *, const void *, uint16_t);
-int	p9pbuf_write_data(struct p9pbuf *, uint8_t *, uint32_t);
+uint8_t		p9pbuf_get_type(struct puffs_framebuf *);
+uint16_t	p9pbuf_get_tag(struct puffs_framebuf *);
 
-int	p9pbuf_get_1(struct p9pbuf *, uint8_t *);
-int	p9pbuf_get_2(struct p9pbuf *, uint16_t *);
-int	p9pbuf_get_4(struct p9pbuf *, uint32_t *);
-int	p9pbuf_get_8(struct p9pbuf *, uint64_t *);
-int	p9pbuf_get_str(struct p9pbuf *, char **, uint16_t *);
-int	p9pbuf_get_data(struct p9pbuf *, uint8_t **, uint16_t *);
-int	p9pbuf_read_data(struct p9pbuf *, uint8_t *, uint32_t);
-
-int	p9pbuf_remaining(struct p9pbuf *);
-int	p9pbuf_tell(struct p9pbuf *);
-void	p9pbuf_seekset(struct p9pbuf *, int);
-
-int	proto_getqid(struct p9pbuf *, struct qid9p *);
-int	proto_getstat(struct p9pbuf *, struct vattr *, char **, uint16_t *);
-int	proto_expect_walk_nqids(struct p9pbuf *, uint16_t *);
-int	proto_expect_stat(struct p9pbuf *, struct vattr *);
-int	proto_expect_qid(struct p9pbuf *, uint8_t, struct qid9p *);
+int	proto_getqid(struct puffs_framebuf *, struct qid9p *);
+int	proto_getstat(struct puffs_framebuf *, struct vattr *,
+		      char **, uint16_t *);
+int	proto_expect_walk_nqids(struct puffs_framebuf *, uint16_t *);
+int	proto_expect_stat(struct puffs_framebuf *, struct vattr *);
+int	proto_expect_qid(struct puffs_framebuf *, uint8_t, struct qid9p *);
 
 int	proto_cc_dupfid(struct puffs_cc *, p9pfid_t, p9pfid_t);
 int	proto_cc_clunkfid(struct puffs_cc *, p9pfid_t, int);
 int	proto_cc_open(struct puffs_cc *, p9pfid_t, p9pfid_t, int);
 
-void	proto_make_stat(struct p9pbuf *, const struct vattr *, const char *);
+void	proto_make_stat(struct puffs_framebuf *, const struct vattr *,
+			const char *);
 
 struct puffs_node	*p9p_handshake(struct puffs_usermount *, const char *);
 
