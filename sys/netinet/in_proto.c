@@ -1,4 +1,4 @@
-/*	$NetBSD: in_proto.c,v 1.85 2007/05/02 22:39:03 dyoung Exp $	*/
+/*	$NetBSD: in_proto.c,v 1.86 2007/05/06 02:56:37 dyoung Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.85 2007/05/02 22:39:03 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.86 2007/05/06 02:56:37 dyoung Exp $");
 
 #include "opt_mrouting.h"
 #include "opt_eon.h"			/* ISO CLNL over IP */
@@ -426,6 +426,8 @@ struct domain inetdomain = {
 	.dom_mowner = MOWNER_INIT("",""),
 	.dom_sa_pool = &sockaddr_in_pool,
 	.dom_sa_len = sizeof(struct sockaddr_in),
+	.dom_sa_cmpofs = offsetof(struct sockaddr_in, sin_addr),
+	.dom_sa_cmplen = sizeof(struct in_addr),
 	.dom_rtcache = LIST_HEAD_INITIALIZER(inetdomain.dom_rtcache)
 };
 
