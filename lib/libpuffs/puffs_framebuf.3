@@ -1,4 +1,4 @@
-.\"	$NetBSD: puffs_framebuf.3,v 1.1 2007/05/05 16:09:17 pooka Exp $
+.\"	$NetBSD: puffs_framebuf.3,v 1.2 2007/05/06 13:56:03 pooka Exp $
 .\"
 .\" Copyright (c) 2007 Antti Kantee.  All rights reserved.
 .\"
@@ -57,7 +57,7 @@
 .Ft int
 .Fo puffs_framebuf_getdata_atoff
 .Fa "struct puffs_framebuf *pufbuf" "size_t offset"
-.Fa "void * data" "size_t dlen"
+.Fa "void *data" "size_t dlen"
 .Fc
 .Ft size_t
 .Fn puffs_framebuf_telloff "struct puffs_framebuf *pufbuf"
@@ -77,6 +77,10 @@
 .Fa "struct puffs_cc *pcc" "struct puffs_framebuf *pufbuf"
 .Fc
 .Ft void
+.Fo puffs_framebuf_cb
+.Fa "struct puffs_usermount *pu" "struct puffs_framebuf *pufbuf" "void *arg"
+.Fc
+.Ft void
 .Fo puffs_framebuf_enqueue_cb
 .Fa "struct puffs_usermount *pu" "struct puffs_framebuf *pufbuf"
 .Fa "puffs_framebuf_cb fcb" "void *fcb_arg"
@@ -86,11 +90,28 @@
 .Fa "struct puffs_usermount *pu" "struct puffs_framebuf *pufbuf" "int waitreply"
 .Fc
 .Ft int
+.Fo puffs_framebuf_readframe_fn
+.Fa "struct puffs_usermount *pu" "struct puffs_framebuf *pufbuf"
+.Fa "int fd" "int *done"
+.Fc
+.Ft int
+.Fo puffs_framebuf_writeframe_fn
+.Fa "struct puffs_usermount *pu" "struct puffs_framebuf *pufbuf"
+.Fa "int fd" "int *done"
+.Fc
+.Ft int
+.Fo puffs_framebuf_respcmp_fn
+.Fa "struct puffs_usermount *pu"
+.Fa "struct puffs_framebuf *cmp1" "struct puffs_framebuf *cmp2"
+.Fc
+.Ft void
+.Fn puffs_framebuf_loop_fn "struct puffs_usermount *pu"
+.Ft int
 .Fo puffs_framebuf_eventloop
 .Fa "struct puffs_usermount *pu" "int fd"
 .Fa "puffs_framebuf_readframe_fn rfb" "puffs_framebuf_writeframe_fn wfb"
-.Fa "puffs_framebuf_respcmp_fn cmpfn"
-.Fa "puffs_framebuf_loop_fn lfn" "void *lfn_arg"
+.Fa "puffs_framebuf_respcmp_fn cmpfb"
+.Fa "puffs_framebuf_loop_fn lfn"
 .Fc
 .Sh DESCRIPTION
 .Em IMPORTANT NOTE!
@@ -99,10 +120,232 @@ stable.
 In case you update your system sources, please recompile everything
 and fix complation errors.
 If your sources are out-of-sync, incorrect operation may result.
-The interfaces in this document will most likely be hugely simplified
-in later versions or made transparent to the implementation.
 .Pp
-Under construction.
+The
+.Nm
+routines provide buffering and an event loop structured around the
+buffers.
+It operates on top of the puffs continuation framework,
+.Xr puffs_cc 3 ,
+and multiplexes execution automatically to an instance whenever
+one is runnable.
+Currently only request-response type "client pull" protocols are
+supported, but support for protocols which also feature "server
+push" type messaging may be added at a later date.
+.Pp
+The file system is entered in two different ways:
+.Bl -bullet -offset indent
+.It
+An event arrives from the kernel and the
+.Xr puffs_ops 3
+callbacks are called to start processing the event.
+.It
+A file system which has sent out a request receives a response.
+Execution is resumed from the place where the file system yielded.
+.El
+.Pp
+For a file server to use
+.Nm ,
+it must implemented three different routines:
+.Bl -tag -width "xcmpfbx"
+.It rfb
+Read a frame onto the specified buffer.
+.It wfb
+Write a frame from the specified buffer.
+.It cmpfb
+Identify if a buffer is the response to the specified buffer.
+.El
+.Pp
+Additionally, a fourth optional one called
+.Fn lfn
+may be specified.
+It will be called from the event loop once per loop (please note that
+"once per loop" is not a well-defined interval, but rather it should be
+considered as a synonym for "occasionally").
+It can be used to control information such as a requirement to
+unmount the file system.
+.Pp
+The buffers of
+.Nm
+provide automatic memory management of buffers for the file servers.
+They provide a cursor to the current buffer offset.
+Reading or writing data through the normal routines will advance that cursor.
+Additionally, the buffer size is provided to the user.
+It represents the maximum offset where data was written.
+.Pp
+Generally the write functions will fail if the cannot allocate enough
+memory to satisfy the buffer length requirements.
+Read functions will fail if the amount of data written to the buffer
+is not large enough to satisfy the read.
+.Bl -tag -width xxxx
+.It Fn puffs_framebuf_make
+Create a buffer.
+Return the address of the buffer or
+.Dv NULL
+in case no memory was available.
+.It Fn puffs_framebuf_destroy pufbuf
+Free memory used by buffer.
+.It Fn puffs_framebuf_recycle pufbuf
+Reset offsets so that buffer can be reused.
+Does not free memory or reallocate memory.
+.It Fn puffs_framebuf_reserver_space pufbuf space
+Make sure that the buffer has
+.Ar space
+bytes of available memory starting from the current offset.
+This is not strictly necessary, but can be used for optimizations
+where it is known in advance how much memory will be required.
+.It Fn puffs_framebuf_putdata pufbuf data dlen
+Write
+.Ar dlen
+amount of data from the address
+.Ar data
+into the buffer.
+Moves the offset cursor forward
+.Ar dlen
+bytes.
+.It Fn puffs_framebuf_putdata_atoff pufbuf offset data dlen
+Like
+.Fn puffs_framebuf_putdata ,
+except writes data at buffer offset
+.Ar offset .
+It is legal to write past the current end of the buffer.
+Does NOT modify the current offset cursor.
+.It Fn puffs_framebuf_getdata pufbuf data dlen
+Read
+.Ar dlen
+bytes of data from the buffer into
+.Ar data .
+Advances the offset cursor.
+.It Fn puffs_framebuf_getdata_atoff pufbuf offset data dlen 
+Read data from buffer position
+.Ar offset .
+Does NOT modify the offset cursor.
+.It Fn puffs_framebuf_telloff pufbuf
+Return the offset into the buffer.
+.It Fn puffs_framebuf_tellsize pufbuf
+Return the maximum offset where data has been written, i.e. buffer size.
+.It Fn puffs_framebuf_remaining pufbuf
+Distance from current offset to the end of the buffer, i.e. size-offset.
+.It Fn puffs_framebuf_seekset pufbuf offset
+Set the offset cursor to the position
+.Ar offset .
+This does NOT modify the buffer size, but reserves at least
+enough memory memory for a write to
+.Ar offset
+and will fail if memory cannot be allocated.
+.It Fn puffs_framebuf_getwindow pufbuf offset winp winlen
+Get a direct memory window into the buffer starting from
+.Ar offset .
+The maximum mapped window size will be
+.Ar winlen
+bytes, but this routine might return a smaller window and the caller
+should always check the actual mapped size after the call.
+The window is returned in
+.Ar winp .
+This function not modify the buffer offset, but it DOES set the buffer
+size to
+.Ar offset +
+.Ar winlen
+in case that value is greater than the current size.
+The window is valid until the next until the next
+.Fn puffs_framebuf
+call operating on the buffer in question.
+.It Fn puffs_framebuf_enqueue_cc pcc pufbuf
+Add the buffer
+.Ar pufbuf
+to outgoing queue and yield with the continuation
+.Ar pcc .
+Execution is resumed once a response is received.
+.It Fn puffs_framebuf_cb pu pufbuf arg
+Callback function.
+Called when a response to a specific request arrives from the server.
+May not block.
+.It Fn puffs_framebuf_enqueue_cb pu pufbuf fcb fcb_arg
+Enqueue the buffer
+.Ar pufbuf
+for outgoing data and immediately return.
+Once a response arrives, the callback
+.Fn fcb
+will be called with the argument
+.Ar fcb_arg .
+The callback function
+.Fn fcb
+is responsible for freeing the buffer.
+.It Fn puffs_framebuf_enqueue_justsend pu pufbuf waitreply
+Enqueue the buffer
+.Ar pufbuf
+for outgoing traffic and immediately return.
+The parameter
+.Ar waitreply
+can be used to control if the buffer is to be freed immediately after
+sending of if a response is expected and the buffer should be freed
+only after the response arrives (receiving an unexpected message from
+the server is treated as an error).
+.It Fn puffs_framebuf_readframe_fn pu pufbuf fd done
+Callback function.
+Read at most one frame from file descriptor
+.Ar fd
+into the buffer
+.Ar pufbuf.
+If a complete frame is read, the value pointed to by
+.Ar done
+must be set to 1.
+This function should return 0 on success (even if a complete frame was not
+yet read) and a non-zero
+.Er errno
+to signal a fatal error.
+This routine will be called with the same buffer argument until a
+complete frame has been read.
+May not block.
+.It Fn puffs_framebuf_writeframe_fn pu pufbuf fd done
+Write the frame contained in
+.Ar pufbuf
+to the file descriptor
+.Ar fd .
+In case the entire frame is succesfully written,
+.Ar *done
+should be set to 1.
+This function should return 0 on success (even if a complete frame was not
+yet written) and a non-zero
+.Er errno
+to signal a fatal error.
+This routine will be called with the same buffer argument until the
+complete frame has been written.
+May not block.
+.It Fn puffs_framebuf_respcmp_fn pu pufbuf_cmp1 pufbuf_cmp2
+Compare if
+.Ar pufbuf_cmp1
+is the response to the message in
+.Ar pufbuf_cmp2 .
+Should return 1 if true, 0 if false.
+May not block.
+.It Fn puffs_framebuf_loop_fn pu
+If supplied, called once every loop.
+The file system is free to do any processing it sees necessary.
+May not block.
+.It Fn puffs_framebuf_eventloop pu fd rfb wfb cmpfb lfn
+Enter event loop and start processing requests from the kernel and
+file system backend.
+This returns either when a fatal error occurs or when the file system
+is unmounted.
+.El
+.Sh CODE REFERENCES
+The current users of
+.Nm
+in the tree are
+.Xr mount_psshfs 8
+and
+.Xr mount_9p 8 .
+See
+.Pa src/usr.sbin/puffs/mount_psshfs
+and
+.Pa src/usr.sbin/puffs/mount_9p
+for the respective usage examples.
+.Sh RETURN VALUES
+These functions generally return \-1 to signal error and set
+.Er errno
+to indicate the type of error.
 .Sh SEE ALSO
 .Xr puffs 3 ,
-.Xr puffs_cc 3
+.Xr puffs_cc 3 ,
+.Xr puffs_ops 3
