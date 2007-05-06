@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.34 2007/02/09 21:37:49 macallan Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.34.14.1 2007/05/06 05:11:41 macallan Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.34 2007/02/09 21:37:49 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.34.14.1 2007/05/06 05:11:41 macallan Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -80,6 +80,9 @@ int cardbus_number = 2;
 const char *pb3400_compat[] = {"AAPL,3400/2400", NULL};
 #endif
 
+pcitag_t genppc_pci_indirect_make_tag(void *, int, int, int);
+void genppc_pci_indirect_decompose_tag(void *, pcitag_t, int *, int *, int *);
+
 /*
  * PCI doesn't have any special needs; just use the generic versions
  * of these functions.
@@ -102,7 +105,7 @@ struct macppc_bus_dma_tag pci_bus_dma_tag = {
 };
 
 void
-pci_attach_hook(parent, self, pba)
+macppc_pci_attach_hook(parent, self, pba)
 	struct device *parent, *self;
 	struct pcibus_attach_args *pba;
 {
@@ -111,7 +114,7 @@ pci_attach_hook(parent, self, pba)
 	int node, nn, sz;
 	int32_t busrange[2];
 
-	for (node = pc->node; node; node = nn) {
+	for (node = pc->pc_node; node; node = nn) {
 		sz = OF_getprop(node, "bus-range", busrange, 8);
 		if (sz == 8 && busrange[0] == bus) {
 			fixpci(node, pc);
@@ -121,178 +124,39 @@ pci_attach_hook(parent, self, pba)
 			continue;
 		while ((nn = OF_peer(node)) == 0) {
 			node = OF_parent(node);
-			if (node == pc->node)
+			if (node == pc->pc_node)
 				return;		/* not found */
 		}
 	}
 }
 
-int
-pci_bus_maxdevs(pc, busno)
-	pci_chipset_tag_t pc;
-	int busno;
-{
-
-	/*
-	 * Bus number is irrelevant.  Configuration Mechanism 1 is in
-	 * use, can have devices 0-32 (i.e. the `normal' range).
-	 */
-	return 32;
-}
-
-pcitag_t
-pci_make_tag(pc, bus, device, function)
-	pci_chipset_tag_t pc;
-	int bus, device, function;
-{
-	pcitag_t tag;
-
-	if (bus >= 256 || device >= 32 || function >= 8)
-		panic("pci_make_tag: bad request");
-
-	/* XXX magic number */
-	tag = 0x80000000 | (bus << 16) | (device << 11) | (function << 8);
-
-	return tag;
-}
-
 void
-pci_decompose_tag(pc, tag, bp, dp, fp)
-	pci_chipset_tag_t pc;
-	pcitag_t tag;
-	int *bp, *dp, *fp;
+macppc_pci_get_chipset_tag(pci_chipset_tag_t pc)
 {
 
-	if (bp != NULL)
-		*bp = (tag >> 16) & 0xff;
-	if (dp != NULL)
-		*dp = (tag >> 11) & 0x1f;
-	if (fp != NULL)
-		*fp = (tag >> 8) & 0x07;
-}
+	pc->pc_conf_v = (void *)pc;
 
-pcireg_t
-pci_conf_read(pc, tag, reg)
-	pci_chipset_tag_t pc;
-	pcitag_t tag;
-	int reg;
-{
+	pc->pc_attach_hook = macppc_pci_attach_hook;
+	pc->pc_bus_maxdevs = genppc_pci_bus_maxdevs;
 
-	return (*pc->conf_read)(pc, tag, reg);
-}
+	pc->pc_make_tag = genppc_pci_indirect_make_tag;
+	pc->pc_decompose_tag = genppc_pci_indirect_decompose_tag;
 
-void
-pci_conf_write(pc, tag, reg, data)
-	pci_chipset_tag_t pc;
-	pcitag_t tag;
-	int reg;
-	pcireg_t data;
-{
+	pc->pc_intr_v = (void *)pc;
 
-	(*pc->conf_write)(pc, tag, reg, data);
-}
+	pc->pc_intr_map = genppc_pci_intr_map;
+	pc->pc_intr_string = genppc_pci_intr_string;
+	pc->pc_intr_evcnt = genppc_pci_intr_evcnt;
+	pc->pc_intr_establish = genppc_pci_intr_establish;
+	pc->pc_intr_disestablish = genppc_pci_intr_disestablish;
 
-int
-pci_intr_map(pa, ihp)
-	struct pci_attach_args *pa;
-	pci_intr_handle_t *ihp;
-{
-	int pin = pa->pa_intrpin;
-	int line = pa->pa_intrline;
-	
-#if DEBUG
-	printf("%s: pin: %d, line: %d\n", __FUNCTION__, pin, line);
-#endif
+	pc->pc_conf_interrupt = genppc_pci_conf_interrupt;
+	pc->pc_conf_hook = genppc_pci_conf_hook;
 
-	if (pin == 0) {
-		/* No IRQ used. */
-		aprint_error("pci_intr_map: interrupt pin %d\n", pin);
-		goto bad;
-	}
-
-	if (pin > 4) {
-		aprint_error("pci_intr_map: bad interrupt pin %d\n", pin);
-		goto bad;
-	}
-
-	/*
-	 * Section 6.2.4, `Miscellaneous Functions', says that 255 means
-	 * `unknown' or `no connection' on a PC.  We assume that a device with
-	 * `no connection' either doesn't have an interrupt (in which case the
-	 * pin number should be 0, and would have been noticed above), or
-	 * wasn't configured by the BIOS (in which case we punt, since there's
-	 * no real way we can know how the interrupt lines are mapped in the
-	 * hardware).
-	 *
-	 * XXX
-	 * Since IRQ 0 is only used by the clock, and we can't actually be sure
-	 * that the BIOS did its job, we also recognize that as meaning that
-	 * the BIOS has not configured the device.
-	 */
-	if (line == 0 || line == 255) {
-		aprint_error("pci_intr_map: no mapping for pin %c\n", '@' + pin);
-		goto bad;
-	} else {
-		if (line >= ICU_LEN) {
-			aprint_error("pci_intr_map: bad interrupt line %d\n", line);
-			goto bad;
-		}
-	}
-
-	*ihp = line;
-	return 0;
-
-bad:
-	*ihp = -1;
-	return 1;
-}
-
-const char *
-pci_intr_string(pc, ih)
-	pci_chipset_tag_t pc;
-	pci_intr_handle_t ih;
-{
-	static char irqstr[8];		/* 4 + 2 + NULL + sanity */
-
-	if (ih == 0 || ih >= ICU_LEN)
-		panic("pci_intr_string: bogus handle 0x%x", ih);
-
-	sprintf(irqstr, "irq %d", ih);
-	return (irqstr);
-	
-}
-
-const struct evcnt *
-pci_intr_evcnt(pc, ih)
-	pci_chipset_tag_t pc;
-	pci_intr_handle_t ih;
-{
-
-	/* XXX for now, no evcnt parent reported */
-	return NULL;
-}
-
-void *
-pci_intr_establish(pc, ih, level, func, arg)
-	pci_chipset_tag_t pc;
-	pci_intr_handle_t ih;
-	int level, (*func) __P((void *));
-	void *arg;
-{
-
-	if (ih == 0 || ih >= ICU_LEN)
-		panic("pci_intr_establish: bogus handle 0x%x", ih);
-
-	return intr_establish(ih, IST_LEVEL, level, func, arg);
-}
-
-void
-pci_intr_disestablish(pc, cookie)
-	pci_chipset_tag_t pc;
-	void *cookie;
-{
-
-	intr_disestablish(cookie);
+	pc->pc_bus = 0;
+	pc->pc_node = 0;
+	pc->pc_memt = 0;
+	pc->pc_iot = 0;
 }
 
 #define pcibus(x) \
@@ -339,7 +203,7 @@ fixpci(parent, pc)
 		 * look at 00:0d:00 for a Qlogic ISP 1020 to
 		 * make sure we really have an E100 here 
 		 */
-		printf("\nfound E100 candidate tlp");
+		aprint_debug("\nfound E100 candidate tlp");
 		isp = pci_conf_read(pc, tag_isp, PCI_ID_REG);
 		if ((PCI_VENDOR(isp) == PCI_VENDOR_QLOGIC) &&
 		    (PCI_PRODUCT(isp) == PCI_PRODUCT_QLOGIC_ISP1020)) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: grackle.c,v 1.10.38.1 2007/05/05 06:04:20 macallan Exp $	*/
+/*	$NetBSD: grackle.c,v 1.10.38.2 2007/05/06 05:11:41 macallan Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grackle.c,v 1.10.38.1 2007/05/05 06:04:20 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grackle.c,v 1.10.38.2 2007/05/06 05:11:41 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -41,14 +41,14 @@ __KERNEL_RCSID(0, "$NetBSD: grackle.c,v 1.10.38.1 2007/05/05 06:04:20 macallan E
 
 struct grackle_softc {
 	struct device sc_dev;
-	struct pci_bridge sc_pc;
+	struct genppc_pci_chipset sc_pc;
 };
 
 static void grackle_attach(struct device *, struct device *, void *);
 static int grackle_match(struct device *, struct cfdata *, void *);
 
-static pcireg_t grackle_conf_read(pci_chipset_tag_t, pcitag_t, int);
-static void grackle_conf_write(pci_chipset_tag_t, pcitag_t, int, pcireg_t);
+static pcireg_t grackle_conf_read(void *, pcitag_t, int);
+static void grackle_conf_write(void *, pcitag_t, int, pcireg_t);
 
 CFATTACH_DECL(grackle, sizeof(struct grackle_softc),
     grackle_match, grackle_attach, NULL, NULL);
@@ -94,13 +94,14 @@ grackle_attach(struct device *parent, struct device *self, void *aux)
 	if (OF_getprop(node, "bus-range", busrange, sizeof(busrange)) != 8)
 		return;
 
-	pc->node = node;
-	pc->addr = mapiodev(GRACKLE_ADDR, 4);
-	pc->data = mapiodev(GRACKLE_DATA, 4);
-	pc->bus = busrange[0];
-	pc->conf_read = grackle_conf_read;
-	pc->conf_write = grackle_conf_write;
-	pc->memt = (bus_space_tag_t)0;
+	macppc_pci_get_chipset_tag(pc);
+	pc->pc_node = node;
+	pc->pc_addr = mapiodev(GRACKLE_ADDR, 4);
+	pc->pc_data = mapiodev(GRACKLE_DATA, 4);
+	pc->pc_bus = busrange[0];
+	pc->pc_conf_read = grackle_conf_read;
+	pc->pc_conf_write = grackle_conf_write;
+	pc->pc_memt = (bus_space_tag_t)0;
 
 	/* find i/o tag */
 	len = OF_getprop(node, "ranges", ranges, sizeof(ranges));
@@ -109,17 +110,17 @@ grackle_attach(struct device *parent, struct device *self, void *aux)
 	while (len >= sizeof(ranges[0])) {
 		if ((rp->pci_hi & OFW_PCI_PHYS_HI_SPACEMASK) ==
 		     OFW_PCI_PHYS_HI_SPACE_IO)
-			pc->iot = (bus_space_tag_t)rp->host;
+			pc->pc_iot = (bus_space_tag_t)rp->host;
 		len -= sizeof(ranges[0]);
 		rp++;
 	}
 
 	memset(&pba, 0, sizeof(pba));
-	pba.pba_memt = pc->memt;
-	pba.pba_iot = pc->iot;
+	pba.pba_memt = pc->pc_memt;
+	pba.pba_iot = pc->pc_iot;
 	pba.pba_dmat = &pci_bus_dma_tag;
 	pba.pba_dmat64 = NULL;
-	pba.pba_bus = pc->bus;
+	pba.pba_bus = pc->pc_bus;
 	pba.pba_bridgetag = NULL;
 	pba.pba_pc = pc;
 	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
@@ -128,18 +129,19 @@ grackle_attach(struct device *parent, struct device *self, void *aux)
 }
 
 static pcireg_t
-grackle_conf_read(pci_chipset_tag_t pc, pcitag_t tag, int reg)
+grackle_conf_read(void *cookie, pcitag_t tag, int reg)
 {
+	pci_chipset_tag_t pc = cookie;
 	pcireg_t data;
 	int s;
 
 	s = splhigh();
 
-	out32rb(pc->addr, tag | reg);
+	out32rb(pc->pc_addr, tag | reg);
 	data = 0xffffffff;
-	if (!badaddr(pc->data, 4))
-		data = in32rb(pc->data);
-	out32rb(pc->addr, 0);
+	if (!badaddr(pc->pc_data, 4))
+		data = in32rb(pc->pc_data);
+	out32rb(pc->pc_addr, 0);
 
 	splx(s);
 
@@ -147,15 +149,16 @@ grackle_conf_read(pci_chipset_tag_t pc, pcitag_t tag, int reg)
 }
 
 static void
-grackle_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t data)
+grackle_conf_write(void *cookie, pcitag_t tag, int reg, pcireg_t data)
 {
+	pci_chipset_tag_t pc = cookie;
 	int s;
 
 	s = splhigh();
 
-	out32rb(pc->addr, tag | reg);
-	out32rb(pc->data, data);
-	out32rb(pc->addr, 0);
+	out32rb(pc->pc_addr, tag | reg);
+	out32rb(pc->pc_data, data);
+	out32rb(pc->pc_addr, 0);
 
 	splx(s);
 }

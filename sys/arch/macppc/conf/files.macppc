@@ -1,4 +1,4 @@
-#	$NetBSD: files.macppc,v 1.84.2.6 2007/05/05 06:20:27 macallan Exp $
+#	$NetBSD: files.macppc,v 1.84.2.7 2007/05/06 05:11:40 macallan Exp $
 #
 # macppc-specific configuration info
 
@@ -23,15 +23,12 @@ file arch/macppc/dev/dbdma.c
 # interrupt controllers
 define pic_ohare
 define pic_heathrow
-define pic_grandcentral
 
 defflag opt_interrupt.h PIC_OHARE: pic_ohare
-defflag opt_interrupt.h PIC_GRANDCENTRAL: pic_grandcentral
 defflag opt_interrupt.h PIC_HEATHROW: pic_heathrow
 
 file arch/macppc/macppc/pic_ohare.c		pic_ohare	needs-flag
 file arch/macppc/macppc/pic_heathrow.c		pic_heathrow	needs-flag
-file arch/macppc/macppc/pic_grandcentral.c	pic_grandcentral
 
 file arch/powerpc/powerpc/procfs_machdep.c	procfs
 file arch/powerpc/powerpc/softintr.c
@@ -84,6 +81,8 @@ include "dev/pci/files.pci"
 include "dev/pci/files.agp"
 file arch/macppc/pci/pci_machdep.c		pci
 file arch/macppc/pci/agp_machdep.c		agp
+file arch/powerpc/pci/pciconf_indirect.c	pci
+file arch/powerpc/pci/pci_machdep_common.c	pci
 
 device bandit: pcibus, pic_ohare
 attach bandit at mainbus

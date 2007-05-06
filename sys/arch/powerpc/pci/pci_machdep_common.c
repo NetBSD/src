@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep_common.c,v 1.1.2.2 2007/05/01 17:46:57 garbled Exp $ */
+/* $NetBSD: pci_machdep_common.c,v 1.1.2.3 2007/05/06 05:11:42 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep_common.c,v 1.1.2.2 2007/05/01 17:46:57 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep_common.c,v 1.1.2.3 2007/05/06 05:11:42 macallan Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -70,6 +70,11 @@ __KERNEL_RCSID(0, "$NetBSD: pci_machdep_common.c,v 1.1.2.2 2007/05/01 17:46:57 g
  * PCI doesn't have any special needs; just use the generic versions
  * of these functions.
  */
+/* 
+ * XXX for now macppc needs its own pci_bus_dma_tag
+ * this will go away once we use the common bus_space stuff
+ */
+#ifndef macppc 
 struct powerpc_bus_dma_tag pci_bus_dma_tag = {
 	0,			/* _bounce_thresh */
 	_bus_dmamap_create,
@@ -86,7 +91,7 @@ struct powerpc_bus_dma_tag pci_bus_dma_tag = {
 	_bus_dmamem_unmap,
 	_bus_dmamem_mmap,
 };
-
+#endif
 int
 genppc_pci_bus_maxdevs(pci_chipset_tag_t pc, int busno)
 {
@@ -98,7 +103,12 @@ genppc_pci_intr_string(void *v, pci_intr_handle_t ih)
 {
 	static char irqstr[8];		/* 4 + 2 + NULL + sanity */
 
-	if (ih == 0 || ih >= ICU_LEN || ih == IRQ_SLAVE)
+	if (ih == 0 || ih >= ICU_LEN
+/* XXX on macppc it's completely legal to have PCI interrupts on a slave PIC */
+#ifdef IRQ_SLAVE
+	    || ih == IRQ_SLAVE
+#endif
+	    )
 		panic("pci_intr_string: bogus handle 0x%x", ih);
 
 	sprintf(irqstr, "irq %d", ih);
@@ -119,7 +129,11 @@ genppc_pci_intr_establish(void *v, pci_intr_handle_t ih, int level,
     int (*func)(void *), void *arg)
 {
 
-	if (ih == 0 || ih >= ICU_LEN || ih == IRQ_SLAVE)
+	if (ih == 0 || ih >= ICU_LEN
+#ifdef IRQ_SLAVE
+	    || ih == IRQ_SLAVE
+#endif
+	    )
 		panic("pci_intr_establish: bogus handle 0x%x", ih);
 
 	return intr_establish(ih, IST_LEVEL, level, func, arg);
