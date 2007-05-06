@@ -1,4 +1,4 @@
-/*	$NetBSD: node.c,v 1.4 2007/05/05 15:49:51 pooka Exp $	*/
+/*	$NetBSD: node.c,v 1.5 2007/05/06 21:58:24 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: node.c,v 1.4 2007/05/05 15:49:51 pooka Exp $");
+__RCSID("$NetBSD: node.c,v 1.5 2007/05/06 21:58:24 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -227,7 +227,6 @@ puffs9p_node_open(struct puffs_cc *pcc, void *opc, int mode,
 	p9pfid_t nfid;
 	int error = 0;
 
-	p9n->opencount++;
 	if (pn->pn_va.va_type != VDIR) {
 		if (mode & FREAD && p9n->fid_read == P9P_INVALFID) {
 			nfid = NEXTFID(p9p);
@@ -251,27 +250,26 @@ puffs9p_node_open(struct puffs_cc *pcc, void *opc, int mode,
 }
 
 int
-puffs9p_node_close(struct puffs_cc *pcc, void *opc, int flags,
-	const struct puffs_cred *pcr, pid_t pid)
+puffs9p_node_inactive(struct puffs_cc *pcc, void *opc, pid_t pid,
+	int *refcount)
 {
 	struct puffs_node *pn = opc;
 	struct p9pnode *p9n = pn->pn_data;
 
-	if (--p9n->opencount == 0) {
-		if (pn->pn_va.va_type == VDIR) {
-			nukealldf(pcc, p9n);
-		} else  {
-			if (p9n->fid_read != P9P_INVALFID) {
-				proto_cc_clunkfid(pcc, p9n->fid_read, 0);
-				p9n->fid_read = P9P_INVALFID;
-			}
-			if (p9n->fid_write != P9P_INVALFID) {
-				proto_cc_clunkfid(pcc, p9n->fid_write, 0);
-				p9n->fid_write = P9P_INVALFID;
-			}
+	if (pn->pn_va.va_type == VDIR) {
+		nukealldf(pcc, p9n);
+	} else  {
+		if (p9n->fid_read != P9P_INVALFID) {
+			proto_cc_clunkfid(pcc, p9n->fid_read, 0);
+			p9n->fid_read = P9P_INVALFID;
+		}
+		if (p9n->fid_write != P9P_INVALFID) {
+			proto_cc_clunkfid(pcc, p9n->fid_write, 0);
+			p9n->fid_write = P9P_INVALFID;
 		}
 	}
 
+	*refcount = 1;
 	return 0;
 }
 
