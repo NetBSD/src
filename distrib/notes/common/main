@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.336 2007/05/05 23:07:11 pavel Exp $
+.\"	$NetBSD: main,v 1.337 2007/05/06 11:00:04 pavel Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1013,11 +1013,11 @@ Without CVS, this project would be impossible to manage, so our hats
 go off to Brian Berliner, Jeff Polk, and the various other people
 who've had a hand in making CVS a useful tool.
 .It
-The following individuals and organizations (each in alphabetical order)
-have made donations or loans of hardware and/or money, to support
+We list the individuals and organizations
+that have made donations or loans of hardware and/or money, to support
 .Nx
-development, and deserve credit for it:
-.so ../common/donations -----------------------------------------------
+development, and deserve credit for it at
+.Lk http://www.NetBSD.org/donations .
 (If you're not on that list and should be, tell us!
 We probably were not able to get in touch with you, to verify that you
 wanted to be listed.)

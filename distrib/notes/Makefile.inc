@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.36 2006/04/22 02:57:29 uwe Exp $
+#	$NetBSD: Makefile.inc,v 1.37 2007/05/06 11:00:03 pavel Exp $
 #
 
 # Ross Harvey <ross@NetBSD.org>
@@ -20,7 +20,7 @@ TOCS=	${TARG}.PostScript.toc ${TARG}.ASCII.toc ${TARG}.HTML.toc \
 	${TARG}.more.toc
 SRCS=	${MAIN} whatis ${COMMON}/contents hardware xfer prep \
 	${.CURDIR}/install ${COMMON}/postinstall upgrade \
-	${COMMON}/donations ${COMMON}/legal.common legal \
+	${COMMON}/legal.common legal \
 	${.CURDIR}/../Makefile.inc ${MERGED_SRCS}
 
 PRESET=	${GFLAGS} -dM=${M} -dV=${DISTRIBVER} -d.CURDIR=${.CURDIR} -r${M}=1
