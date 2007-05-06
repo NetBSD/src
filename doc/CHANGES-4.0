@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.126 2007/05/03 05:13:59 snj Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.127 2007/05/06 22:13:02 snj Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -2907,4 +2907,10 @@ sys/arch/xen/xen/privcmd.c			1.16
 	to the called by oring 0xF0000000 to the mfn.  This makes Xen 3.0.4
 	HVM work.
 	[bouyer, ticket #599]
+
+usr.bin/make/parse.c				1.129 via patch
+
+	Avoid coredumping. Found by accidentally running make instead of gmake
+	in java's control/make directory.
+	[dsl, ticket #479]
 
