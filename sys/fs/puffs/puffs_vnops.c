@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.64 2007/04/24 16:29:29 pooka Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.65 2007/05/06 19:43:14 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.64 2007/04/24 16:29:29 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.65 2007/05/06 19:43:14 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/fstrans.h>
@@ -754,10 +754,34 @@ puffs_setattr(void *v)
 		struct lwp *a_l;
 	} */ *ap = v;
 	int error;
+	struct vattr *vap = ap->a_vap;
+	struct puffs_node *pn = ap->a_vp->v_data;
 
 	PUFFS_VNREQ(setattr);
 
-	(void)memcpy(&setattr_arg.pvnr_va, ap->a_vap, sizeof(struct vattr));
+	/*
+	 * Flush metacache first.  If we are called with some explicit
+	 * parameters, treat them as information overriding metacache
+	 * information.
+	 */
+	if (pn->pn_stat & PNODE_METACACHE_MASK) {
+		if ((pn->pn_stat & PNODE_METACACHE_ATIME)
+		    && vap->va_atime.tv_sec == VNOVAL)
+			vap->va_atime = pn->pn_mc_atime;
+		if ((pn->pn_stat & PNODE_METACACHE_CTIME)
+		    && vap->va_ctime.tv_sec == VNOVAL)
+			vap->va_ctime = pn->pn_mc_ctime;
+		if ((pn->pn_stat & PNODE_METACACHE_MTIME)
+		    && vap->va_mtime.tv_sec == VNOVAL)
+			vap->va_mtime = pn->pn_mc_mtime;
+		if ((pn->pn_stat & PNODE_METACACHE_SIZE)
+		    && vap->va_size == VNOVAL)
+			vap->va_size = pn->pn_mc_size;
+
+		pn->pn_stat &= ~PNODE_METACACHE_MASK;
+	}
+
+	(void)memcpy(&setattr_arg.pvnr_va, vap, sizeof(struct vattr));
 	puffs_credcvt(&setattr_arg.pvnr_cred, ap->a_cred);
 	setattr_arg.pvnr_pid = puffs_lwp2pid(ap->a_l);
 
@@ -767,8 +791,8 @@ puffs_setattr(void *v)
 	if (error)
 		return error;
 
-	if (ap->a_vap->va_size != VNOVAL)
-		uvm_vnp_setsize(ap->a_vp, ap->a_vap->va_size);
+	if (vap->va_size != VNOVAL)
+		uvm_vnp_setsize(ap->a_vp, vap->va_size);
 
 	return 0;
 }
@@ -1008,23 +1032,12 @@ puffs_fsync(void *v)
 	pn = VPTOPP(vp);
 	pmp = MPTOPUFFSMP(vp->v_mount);
 
-	/* flush out information from our metacache */
+	/* flush out information from our metacache, see vop_setattr */
 	if (pn->pn_stat & PNODE_METACACHE_MASK) {
 		vattr_null(&va);
-		if (pn->pn_stat & PNODE_METACACHE_ATIME)
-			va.va_atime = pn->pn_mc_atime;
-		if (pn->pn_stat & PNODE_METACACHE_CTIME)
-			va.va_ctime = pn->pn_mc_ctime;
-		if (pn->pn_stat & PNODE_METACACHE_MTIME)
-			va.va_mtime = pn->pn_mc_ctime;
-		if (pn->pn_stat & PNODE_METACACHE_SIZE)
-			va.va_size = pn->pn_mc_size;
-
 		error = VOP_SETATTR(vp, &va, FSCRED, NULL); 
 		if (error)
 			return error;
-
-		pn->pn_stat &= ~PNODE_METACACHE_MASK;
 	}
 
 	/*
