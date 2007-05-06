@@ -1,4 +1,4 @@
-/*	$NetBSD: ofb_cons.c,v 1.7 2007/02/28 04:21:51 thorpej Exp $	*/
+/*	$NetBSD: ofb_cons.c,v 1.7.10.1 2007/05/06 22:52:20 macallan Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofb_cons.c,v 1.7 2007/02/28 04:21:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofb_cons.c,v 1.7.10.1 2007/05/06 22:52:20 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -230,8 +230,8 @@ ofb_init_rasops(int node, struct rasops_info *ri)
 	ri->ri_bits = (char *)fbaddr;
 	ri->ri_flg = RI_CENTER | RI_FULLCLEAR;
 
-	/* If screen is smaller than 1024x768, use small font. */
-	if ((width < 1024 || height < 768) && (romfont_loaded)) {
+	/* mimic firmware output if we can find the ROM font */
+	if (romfont_loaded) {
 		int cols, rows;
 
 		/* 
