@@ -1,4 +1,4 @@
-/*	$NetBSD: node.c,v 1.5 2007/05/06 21:58:24 pooka Exp $	*/
+/*	$NetBSD: node.c,v 1.6 2007/05/06 22:17:50 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: node.c,v 1.5 2007/05/06 21:58:24 pooka Exp $");
+__RCSID("$NetBSD: node.c,v 1.6 2007/05/06 22:17:50 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -194,7 +194,7 @@ puffs9p_node_setattr(struct puffs_cc *pcc, void *opc,
 	p9pbuf_put_1(pb, P9PROTO_T_WSTAT);
 	p9pbuf_put_2(pb, tag);
 	p9pbuf_put_4(pb, p9n->fid_base);
-	proto_make_stat(pb, va, NULL);
+	proto_make_stat(pb, va, NULL, pn->pn_va.va_type);
 	puffs_framebuf_enqueue_cc(pcc, pb);
 
 	if (p9pbuf_get_type(pb) != P9PROTO_R_WSTAT)
@@ -495,7 +495,7 @@ puffs9p_node_rmdir(struct puffs_cc *pcc, void *opc, void *targ,
 }
 
 /*
- * 9P supports renames only for regular files within a directory
+ * 9P supports renames only for files within a directory
  * from what I could tell.  So just support in-directory renames
  * for now.
  */ 
@@ -525,7 +525,7 @@ puffs9p_node_rename(struct puffs_cc *pcc, void *opc, void *src,
 	p9pbuf_put_1(pb, P9PROTO_T_WSTAT);
 	p9pbuf_put_2(pb, tag);
 	p9pbuf_put_4(pb, p9n_src->fid_base);
-	proto_make_stat(pb, NULL, pcn_targ->pcn_name);
+	proto_make_stat(pb, NULL, pcn_targ->pcn_name, pn_src->pn_va.va_type);
 	puffs_framebuf_enqueue_cc(pcc, pb);
 
 	if (p9pbuf_get_type(pb) != P9PROTO_R_WSTAT)
