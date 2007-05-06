@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_proto.c,v 1.23 2007/05/02 20:40:29 dyoung Exp $	*/
+/*	$NetBSD: iso_proto.c,v 1.24 2007/05/06 02:56:38 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -65,7 +65,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iso_proto.c,v 1.23 2007/05/02 20:40:29 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iso_proto.c,v 1.24 2007/05/06 02:56:38 dyoung Exp $");
 
 
 #include <sys/param.h>
@@ -194,7 +194,8 @@ struct domain   isodomain = {
 	.dom_mowner = MOWNER_INIT("",""),
 	.dom_sa_pool = &sockaddr_iso_pool,
 	.dom_sa_len = sizeof(struct sockaddr_iso),
-	.dom_rtcache = LIST_HEAD_INITIALIZER(isodomain.dom_rtcache)
+	.dom_rtcache = LIST_HEAD_INITIALIZER(isodomain.dom_rtcache),
+	.dom_sockaddr_cmp = sockaddr_iso_cmp
 };
 
 int
