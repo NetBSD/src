@@ -1,4 +1,4 @@
-/*	$NetBSD: node.c,v 1.22 2007/05/05 15:49:51 pooka Exp $	*/
+/*	$NetBSD: node.c,v 1.23 2007/05/06 15:30:18 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: node.c,v 1.22 2007/05/05 15:49:51 pooka Exp $");
+__RCSID("$NetBSD: node.c,v 1.23 2007/05/06 15:30:18 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -185,20 +185,17 @@ psshfs_node_create(struct puffs_cc *pcc, void *opc, void **newnode,
 	puffs_framebuf_enqueue_cc(pcc, pb);
 
 	rv = psbuf_expect_handle(pb, &fhand, &fhandlen);
-	if (rv)
+	if (rv == 0)
+		*newnode = pn_new;
+	else
 		goto out;
 
 	reqid = NEXTREQ(pctx);
 	psbuf_recycleout(pb);
 	psbuf_req_data(pb, SSH_FXP_CLOSE, reqid, fhand, fhandlen);
-	puffs_framebuf_enqueue_cc(pcc, pb);
-
-	rv = psbuf_expect_status(pb);
-
-	if (rv == 0)
-		*newnode = pn_new;
-	else
-		nukenode(pn_new, pcn->pcn_name, 1);
+	puffs_framebuf_enqueue_justsend(pu, pb, 1);
+	free(fhand);
+	return 0;
 
  out:
 	free(fhand);
