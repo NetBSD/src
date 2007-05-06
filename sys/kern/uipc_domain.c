@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_domain.c,v 1.64 2007/05/02 20:40:23 dyoung Exp $	*/
+/*	$NetBSD: uipc_domain.c,v 1.65 2007/05/06 02:56:37 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.64 2007/05/02 20:40:23 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.65 2007/05/06 02:56:37 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -209,20 +209,33 @@ sockaddr_copy(struct sockaddr *dst, const struct sockaddr *src)
 int
 sockaddr_cmp(const struct sockaddr *sa1, const struct sockaddr *sa2)
 {
-	int rc;
+	int len, rc;
 	struct domain *dom;
 
 	if (sa1->sa_family != sa2->sa_family)
 		return sa1->sa_family - sa2->sa_family;
 
-	if ((dom = pffinddomain(sa1->sa_family)) != NULL &&
-	    dom->dom_sockaddr_cmp != NULL)
+	dom = pffinddomain(sa1->sa_family);
+
+	if (dom != NULL && dom->dom_sockaddr_cmp != NULL)
 		return (*dom->dom_sockaddr_cmp)(sa1, sa2);
 
-	if ((rc = memcmp(sa1, sa2, MIN(sa1->sa_len, sa2->sa_len))) != 0)
+	len = MIN(sa1->sa_len, sa2->sa_len);
+
+	if (dom == NULL || dom->dom_sa_cmplen == 0) {
+		if ((rc = memcmp(sa1, sa2, len)) != 0)
+			return rc;
+		return sa1->sa_len - sa2->sa_len;
+	}
+
+	if ((rc = memcmp((const char *)sa1 + dom->dom_sa_cmpofs,
+		         (const char *)sa2 + dom->dom_sa_cmpofs,
+			 MIN(dom->dom_sa_cmplen,
+			     len - MIN(len, dom->dom_sa_cmpofs)))) != 0)
 		return rc;
 
-	return sa1->sa_len - sa2->sa_len;
+	return MIN(dom->dom_sa_cmplen + dom->dom_sa_cmpofs, sa1->sa_len) -
+	       MIN(dom->dom_sa_cmplen + dom->dom_sa_cmpofs, sa2->sa_len);
 }
 
 struct sockaddr *
