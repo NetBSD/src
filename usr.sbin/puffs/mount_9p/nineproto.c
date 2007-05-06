@@ -1,4 +1,4 @@
-/*	$NetBSD: nineproto.c,v 1.4 2007/05/06 10:54:56 pooka Exp $	*/
+/*	$NetBSD: nineproto.c,v 1.5 2007/05/06 22:17:50 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: nineproto.c,v 1.4 2007/05/06 10:54:56 pooka Exp $");
+__RCSID("$NetBSD: nineproto.c,v 1.5 2007/05/06 22:17:50 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -263,7 +263,7 @@ proto_cc_open(struct puffs_cc *pcc, p9pfid_t fid, p9pfid_t newfid, int mode)
 
 void
 proto_make_stat(struct puffs_framebuf *pb, const struct vattr *vap,
-	const char *filename)
+	const char *filename, enum vtype vt)
 {
 	struct vattr fakeva;
 	uint32_t mode, atime, mtime;
@@ -280,7 +280,7 @@ proto_make_stat(struct puffs_framebuf *pb, const struct vattr *vap,
 	puffs_framebuf_seekset(pb, startoff + 2+2); /* stat[n] incl. stat[2] */
 
 	if (vap->va_mode != (mode_t)PUFFS_VNOVAL)
-		mode = vap->va_mode;
+		mode = vap->va_mode | (vt == VDIR ? P9PROTO_CPERM_DIR : 0);
 	else
 		mode = P9PROTO_STAT_NOVAL4;
 	if (vap->va_atime.tv_sec != (time_t)PUFFS_VNOVAL)
