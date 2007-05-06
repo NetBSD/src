@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.h,v 1.50 2007/05/05 15:48:18 pooka Exp $	*/
+/*	$NetBSD: puffs.h,v 1.51 2007/05/06 10:21:45 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -392,7 +392,7 @@ typedef	int (*puffs_framebuf_writeframe_fn)(struct puffs_usermount *,
 typedef int (*puffs_framebuf_respcmp_fn)(struct puffs_usermount *,
 					 struct puffs_framebuf *,
 					 struct puffs_framebuf *);
-typedef void (*puffs_framebuf_loop_fn)(struct puffs_usermount *, void *);
+typedef void (*puffs_framebuf_loop_fn)(struct puffs_usermount *);
 
 typedef void (*puffs_framebuf_cb)(struct puffs_usermount *,
 				  struct puffs_framebuf *,
@@ -615,7 +615,7 @@ int	puffs_framebuf_eventloop(struct puffs_usermount *, int,
 				 puffs_framebuf_readframe_fn,
 				 puffs_framebuf_writeframe_fn,
 				 puffs_framebuf_respcmp_fn,
-				 puffs_framebuf_loop_fn, void *);
+				 puffs_framebuf_loop_fn);
 
 __END_DECLS
 

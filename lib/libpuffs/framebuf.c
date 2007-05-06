@@ -1,4 +1,4 @@
-/*	$NetBSD: framebuf.c,v 1.1 2007/05/05 15:48:18 pooka Exp $	*/
+/*	$NetBSD: framebuf.c,v 1.2 2007/05/06 10:21:45 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: framebuf.c,v 1.1 2007/05/05 15:48:18 pooka Exp $");
+__RCSID("$NetBSD: framebuf.c,v 1.2 2007/05/06 10:21:45 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -456,7 +456,7 @@ int
 puffs_framebuf_eventloop(struct puffs_usermount *pu, int io_fd,
 	puffs_framebuf_readframe_fn rfb, puffs_framebuf_writeframe_fn wfb,
 	puffs_framebuf_respcmp_fn cmpfb,
-	puffs_framebuf_loop_fn lfb, void *lfb_arg)
+	puffs_framebuf_loop_fn lfb)
 {
 	struct puffs_getreq *pgr = NULL;
 	struct puffs_putreq *ppr = NULL;
@@ -488,7 +488,7 @@ puffs_framebuf_eventloop(struct puffs_usermount *pu, int io_fd,
 	puffsfd = puffs_getselectable(pu);
 	while (puffs_getstate(pu) != PUFFS_STATE_UNMOUNTED) {
 		if (lfb)
-			lfb(pu, lfb_arg);
+			lfb(pu);
 
 		memset(pfds, 0, sizeof(pfds));
 		pfds[FRAMEFD].events = POLLIN;
