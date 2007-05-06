@@ -1,4 +1,4 @@
-/*	$NetBSD: ninepuffs.h,v 1.4 2007/05/06 21:58:24 pooka Exp $	*/
+/*	$NetBSD: ninepuffs.h,v 1.5 2007/05/06 22:17:50 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -133,7 +133,7 @@ int	proto_cc_clunkfid(struct puffs_cc *, p9pfid_t, int);
 int	proto_cc_open(struct puffs_cc *, p9pfid_t, p9pfid_t, int);
 
 void	proto_make_stat(struct puffs_framebuf *, const struct vattr *,
-			const char *);
+			const char *, enum vtype);
 
 struct puffs_node	*p9p_handshake(struct puffs_usermount *, const char *);
 
