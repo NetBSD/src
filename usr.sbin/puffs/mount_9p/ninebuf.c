@@ -1,4 +1,4 @@
-/*      $NetBSD: ninebuf.c,v 1.2 2007/05/05 15:49:51 pooka Exp $	*/
+/*      $NetBSD: ninebuf.c,v 1.3 2007/05/06 10:54:55 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ninebuf.c,v 1.2 2007/05/05 15:49:51 pooka Exp $");
+__RCSID("$NetBSD: ninebuf.c,v 1.3 2007/05/06 10:54:55 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -301,7 +301,7 @@ p9pbuf_get_data(struct puffs_framebuf *pb, uint8_t **dp, uint16_t *dlenp)
 	if (rv)
 		return errno;
 
-        if (puffs_framebuf_tellsize(pb) - puffs_framebuf_telloff(pb) < len)
+        if (puffs_framebuf_remaining(pb) < len)
                 return EPROTO;
  
 	if (dp) {

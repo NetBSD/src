@@ -1,4 +1,4 @@
-/*      $NetBSD: psbuf.c,v 1.5 2007/05/05 15:49:51 pooka Exp $        */
+/*      $NetBSD: psbuf.c,v 1.6 2007/05/06 10:54:56 pooka Exp $        */
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: psbuf.c,v 1.5 2007/05/05 15:49:51 pooka Exp $");
+__RCSID("$NetBSD: psbuf.c,v 1.6 2007/05/06 10:54:56 pooka Exp $");
 #endif /* !lint */
 
 /*
@@ -341,7 +341,7 @@ psbuf_get_str(struct puffs_framebuf *pb, char **strp, uint32_t *strlenp)
 
 	FAILRV(psbuf_get_4(pb, &len));
 
-	if (puffs_framebuf_tellsize(pb) - puffs_framebuf_telloff(pb) < len)
+	if (puffs_framebuf_remaining(pb) < len)
 		return EPROTO;
 
 	str = emalloc(len+1);
