@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.104 2007/05/05 21:23:50 yamt Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.105 2007/05/06 02:29:33 dyoung Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.104 2007/05/05 21:23:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.105 2007/05/06 02:29:33 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -243,13 +243,17 @@ void
 ip6_input(struct mbuf *m)
 {
 	struct ip6_hdr *ip6;
-	int off = sizeof(struct ip6_hdr), nest;
+	int hit, off = sizeof(struct ip6_hdr), nest;
 	u_int32_t plen;
 	u_int32_t rtalert = ~0;
 	int nxt, ours = 0, rh_present = 0;
 	struct ifnet *deliverifp = NULL;
 	int srcrt = 0;
-	const struct sockaddr_in6 *cdst;
+	const struct rtentry *rt;
+	union {
+		struct sockaddr		dst;
+		struct sockaddr_in6	dst6;
+	} u;
 #ifdef FAST_IPSEC
 	struct m_tag *mtag;
 	struct tdb_ident *tdbi;
@@ -475,32 +479,16 @@ ip6_input(struct mbuf *m)
 		goto hbhcheck;
 	}
 
-	cdst = satocsin6(rtcache_getdst(&ip6_forward_rt));
+	sockaddr_in6_init(&u.dst6, &ip6->ip6_dst, 0, 0, 0);
+
 	/*
 	 *  Unicast check
 	 */
-	if (cdst == NULL)
-		;
-	else if (!IN6_ARE_ADDR_EQUAL(&ip6->ip6_dst, &cdst->sin6_addr))
-		rtcache_free(&ip6_forward_rt);
-	else
-		rtcache_check(&ip6_forward_rt);
-	if (ip6_forward_rt.ro_rt != NULL) {
-		/* XXX Revalidated route is accounted wrongly. */
+	rt = rtcache_lookup2(&ip6_forward_rt, &u.dst, 1, &hit);
+	if (hit)
 		ip6stat.ip6s_forward_cachehit++;
-	} else {
-		union {
-			struct sockaddr		dst;
-			struct sockaddr_in6	dst6;
-		} u;
-
+	else
 		ip6stat.ip6s_forward_cachemiss++;
-
-		sockaddr_in6_init(&u.dst6, &ip6->ip6_dst, 0, 0, 0);
-		rtcache_setdst(&ip6_forward_rt, &u.dst);
-
-		rtcache_init(&ip6_forward_rt);
-	}
 
 #define rt6_key(r) ((struct sockaddr_in6 *)((r)->rt_nodes->rn_key))
 
@@ -513,22 +501,19 @@ ip6_input(struct mbuf *m)
 	 * But we think it's even useful in some situations, e.g. when using
 	 * a special daemon which wants to intercept the packet.
 	 */
-	if (ip6_forward_rt.ro_rt != NULL &&
-	    (ip6_forward_rt.ro_rt->rt_flags &
-	     (RTF_HOST|RTF_GATEWAY)) == RTF_HOST &&
-	    !(ip6_forward_rt.ro_rt->rt_flags & RTF_CLONED) &&
+	if (rt != NULL &&
+	    (rt->rt_flags & (RTF_HOST|RTF_GATEWAY)) == RTF_HOST &&
+	    !(rt->rt_flags & RTF_CLONED) &&
 #if 0
 	    /*
 	     * The check below is redundant since the comparison of
 	     * the destination and the key of the rtentry has
 	     * already done through looking up the routing table.
 	     */
-	    IN6_ARE_ADDR_EQUAL(&ip6->ip6_dst,
-	    &rt6_key(ip6_forward_rt.ro_rt)->sin6_addr) &&
+	    IN6_ARE_ADDR_EQUAL(&ip6->ip6_dst, &rt6_key(rt)->sin6_addr) &&
 #endif
-	    ip6_forward_rt.ro_rt->rt_ifp->if_type == IFT_LOOP) {
-		struct in6_ifaddr *ia6 =
-			(struct in6_ifaddr *)ip6_forward_rt.ro_rt->rt_ifa;
+	    rt->rt_ifp->if_type == IFT_LOOP) {
+		struct in6_ifaddr *ia6 = (struct in6_ifaddr *)rt->rt_ifa;
 		if (ia6->ia6_flags & IN6_IFF_ANYCAST)
 			m->m_flags |= M_ANYCAST6;
 		/*
@@ -556,12 +541,11 @@ ip6_input(struct mbuf *m)
 	 */
 #if defined(NFAITH) && 0 < NFAITH
 	if (ip6_keepfaith) {
-		if (ip6_forward_rt.ro_rt != NULL &&
-		    ip6_forward_rt.ro_rt->rt_ifp != NULL &&
-		    ip6_forward_rt.ro_rt->rt_ifp->if_type == IFT_FAITH) {
+		if (rt != NULL && rt->rt_ifp != NULL &&
+		    rt->rt_ifp->if_type == IFT_FAITH) {
 			/* XXX do we need more sanity checks? */
 			ours = 1;
-			deliverifp = ip6_forward_rt.ro_rt->rt_ifp; /* faith */
+			deliverifp = rt->rt_ifp; /* faith */
 			goto hbhcheck;
 		}
 	}
