@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.188 2007/05/06 22:14:35 yamt Exp $
+#	$NetBSD: BRANCHES,v 1.189 2007/05/06 22:26:44 yamt Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -496,6 +496,7 @@ Notes:
 		  m68k			[ broken ]
 		  ns32k			[ broken ]
 		  ia64			[ broken ]
+		  pdp10			[ broken ]
 
 		How to adapt a port?
 
