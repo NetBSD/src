@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.h,v 1.18.38.1 2007/05/06 05:11:41 macallan Exp $	*/
+/*	$NetBSD: pci_machdep.h,v 1.18.38.2 2007/05/06 22:50:18 macallan Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -34,38 +34,6 @@
 #define MACPPC_PCI_MACHDEP_H
 
 #include <powerpc/pci_machdep.h>
-
-/*
- * Machine-specific definitions for PCI autoconfiguration.
- */
-
-/*
- * Forward declarations.
- */
-struct pci_attach_args;
-
-/*
- * macppc-specific PCI structure and type definitions.
- * NOT TO BE USED DIRECTLY BY MACHINE INDEPENDENT CODE.
- *
- * Configuration tag; created from a {bus,device,function} triplet by
- * pci_make_tag(), and passed to pci_conf_read() and pci_conf_write().
- * We could instead always pass the {bus,device,function} triplet to
- * the read and write routines, but this would cause extra overhead.
- */
-
-#if 0
-struct pci_bridge {
-	int node;
-	u_int *addr;
-	u_int *data;
-	int bus;
-	bus_space_tag_t memt;
-	bus_space_tag_t iot;
-	pcireg_t (*conf_read)(pci_chipset_tag_t, pcitag_t, int);
-	void (*conf_write)(pci_chipset_tag_t, pcitag_t, int, pcireg_t);
-};
-#endif
 
 extern struct macppc_bus_dma_tag pci_bus_dma_tag;
 
