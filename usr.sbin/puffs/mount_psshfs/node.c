@@ -1,4 +1,4 @@
-/*	$NetBSD: node.c,v 1.23 2007/05/06 15:30:18 pooka Exp $	*/
+/*	$NetBSD: node.c,v 1.24 2007/05/06 19:48:51 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: node.c,v 1.23 2007/05/06 15:30:18 pooka Exp $");
+__RCSID("$NetBSD: node.c,v 1.24 2007/05/06 19:48:51 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -203,6 +203,76 @@ psshfs_node_create(struct puffs_cc *pcc, void *opc, void **newnode,
 }
 
 int
+psshfs_node_open(struct puffs_cc *pcc, void *opc, int mode,
+	const struct puffs_cred *pcr, pid_t pid)
+{
+	PSSHFSAUTOVAR(pcc);
+	struct vattr va;
+	struct puffs_node *pn = opc;
+	struct psshfs_node *psn = pn->pn_data;
+
+	if (pn->pn_va.va_type == VDIR)
+		goto out;
+
+	puffs_vattr_null(&va);
+	if (mode & FREAD && psn->fhand_r == NULL) {
+		psbuf_req_str(pb, SSH_FXP_OPEN, reqid, PNPATH(pn));
+		psbuf_put_4(pb, SSH_FXF_READ);
+		psbuf_put_vattr(pb, &va);
+		puffs_framebuf_enqueue_cc(pcc, pb);
+
+		rv = psbuf_expect_handle(pb, &psn->fhand_r, &psn->fhand_r_len);
+		if (rv)
+			goto out;
+		psbuf_recycleout(pb);
+	}
+	if (mode & FWRITE && psn->fhand_w == NULL) {
+		psbuf_req_str(pb, SSH_FXP_OPEN, reqid, PNPATH(pn));
+		psbuf_put_4(pb, SSH_FXF_WRITE);
+		psbuf_put_vattr(pb, &va);
+		puffs_framebuf_enqueue_cc(pcc, pb);
+
+		rv = psbuf_expect_handle(pb, &psn->fhand_w, &psn->fhand_w_len);
+		if (rv)
+			goto out;
+	}
+
+ out:
+	PSSHFSRETURN(rv);
+}
+
+int
+psshfs_node_inactive(struct puffs_cc *pcc, void *opc, pid_t pid, int *refcount)
+{
+	struct psshfs_ctx *pctx = puffs_cc_getspecific(pcc);
+	struct puffs_usermount *pu = puffs_cc_getusermount(pcc);
+	struct puffs_node *pn = opc;
+	struct psshfs_node *psn = pn->pn_data;
+	uint32_t reqid = NEXTREQ(pctx);
+	struct puffs_framebuf *pb1, *pb2;
+
+	if (psn->fhand_r) {
+		pb1 = psbuf_makeout();
+		psbuf_req_data(pb1, SSH_FXP_CLOSE, reqid,
+		    psn->fhand_r, psn->fhand_r_len);
+		puffs_framebuf_enqueue_justsend(pu, pb1, 1);
+		free(psn->fhand_r);
+		psn->fhand_r = NULL;
+	}
+	if (psn->fhand_w) {
+		pb2 = psbuf_makeout();
+		psbuf_req_data(pb2, SSH_FXP_CLOSE, reqid,
+		    psn->fhand_w, psn->fhand_w_len);
+		puffs_framebuf_enqueue_justsend(pu, pb2, 1);
+		free(psn->fhand_w);
+		psn->fhand_w = NULL;
+	}
+
+	*refcount = 1;
+	return 0;
+}
+
+int
 psshfs_node_readdir(struct puffs_cc *pcc, void *opc, struct dirent *dent,
 	off_t *readoff, size_t *reslen, const struct puffs_cred *pcr,
 	int *eofflag, off_t *cookies, size_t *ncookies)
@@ -241,29 +311,16 @@ psshfs_node_read(struct puffs_cc *pcc, void *opc, uint8_t *buf,
 {
 	PSSHFSAUTOVAR(pcc);
 	struct puffs_node *pn = opc;
-	char *fhand = NULL;
-	struct vattr va;
-	uint32_t readlen, fhandlen;
+	struct psshfs_node *psn = pn->pn_data;
+	uint32_t readlen;
 
 	if (pn->pn_va.va_type == VDIR) {
 		rv = EISDIR;
 		goto err;
 	}
 
-	puffs_vattr_null(&va);
-	psbuf_req_str(pb, SSH_FXP_OPEN, reqid, PNPATH(pn));
-	psbuf_put_4(pb, SSH_FXF_READ);
-	psbuf_put_vattr(pb, &va);
-	puffs_framebuf_enqueue_cc(pcc, pb);
-
-	rv = psbuf_expect_handle(pb, &fhand, &fhandlen);
-	if (rv)
-		goto err;
-
 	readlen = *resid;
-	reqid = NEXTREQ(pctx);
-	psbuf_recycleout(pb);
-	psbuf_req_data(pb, SSH_FXP_READ, reqid, fhand, fhandlen);
+	psbuf_req_data(pb, SSH_FXP_READ, reqid, psn->fhand_r, psn->fhand_r_len);
 	psbuf_put_8(pb, offset);
 	psbuf_put_4(pb, readlen);
 	puffs_framebuf_enqueue_cc(pcc, pb);
@@ -272,16 +329,7 @@ psshfs_node_read(struct puffs_cc *pcc, void *opc, uint8_t *buf,
 	if (rv == 0)
 		*resid -= readlen;
 
-	reqid = NEXTREQ(pctx);
-	psbuf_recycleout(pb);
-	psbuf_req_data(pb, SSH_FXP_CLOSE, reqid, fhand, fhandlen);
-
-	puffs_framebuf_enqueue_justsend(puffs_cc_getusermount(pcc), pb, 1);
-	free(fhand);
-	return 0;
-
  err:
-	free(fhand);
 	PSSHFSRETURN(rv);
 }
 
@@ -293,68 +341,16 @@ psshfs_node_write(struct puffs_cc *pcc, void *opc, uint8_t *buf,
 {
 	PSSHFSAUTOVAR(pcc);
 	struct puffs_node *pn = opc;
-	char *fhand = NULL;
-	struct vattr va, kludgeva1, kludgeva2;
-	uint32_t writelen, oflags, fhandlen;
+	struct psshfs_node *psn = pn->pn_data;
+	uint32_t writelen;
 
 	if (pn->pn_va.va_type == VDIR) {
 		rv = EISDIR;
 		goto err;
 	}
 
-	/*
-	 * XXXX: this is wrong - we shouldn't muck the file permissions
-	 * at this stage any more.  However, we need this, since currently
-	 * we can't tell the sftp server "hey, this data was already
-	 * authenticated to UBC, it's ok to let us write this".  Yes, it
-	 * will fail e.g. if we don't own the file.  Tough love.
-	 * 
-	 * TODO-point: Investigate solving this with open filehandles
-	 * or something like that.
-	 */
-	kludgeva1 = pn->pn_va;
-
-	puffs_vattr_null(&kludgeva2);
-	kludgeva2.va_mode = 0700;
-	rv = psshfs_node_setattr(pcc, opc, &kludgeva2, cred, 0);
-	if (rv)
-		goto err;
-
-	/* XXXcontinuation: ok, file is mode 700 now, we can open it rw */
-
-	oflags = SSH_FXF_WRITE;
-#if 0
-	/*
-	 * At least OpenSSH doesn't appear to support this, so can't
-	 * do it the right way.
-	 */
-	if (ioflag & PUFFS_IO_APPEND)
-		oflags |= SSH_FXF_APPEND;
-#endif
-	if (ioflag & PUFFS_IO_APPEND)
-		offset = pn->pn_va.va_size;
-
-	puffs_vattr_null(&va);
-	psbuf_req_str(pb, SSH_FXP_OPEN, reqid, PNPATH(pn));
-	psbuf_put_4(pb, oflags);
-	psbuf_put_vattr(pb, &va);
-	puffs_framebuf_enqueue_cc(pcc, pb);
-
-	rv = psbuf_expect_handle(pb, &fhand, &fhandlen);
-	if (rv)
-		goto err;
-
-	/* moreXXX: file is open, revert old creds for crying out loud! */
-	rv = psshfs_node_setattr(pcc, opc, &kludgeva1, cred, 0);
-
-	/* are we screwed a la royal jelly? */
-	if (rv)
-		goto closefile;
-
 	writelen = *resid;
-	reqid = NEXTREQ(pctx);
-	psbuf_recycleout(pb);
-	psbuf_req_data(pb, SSH_FXP_WRITE, reqid, fhand, fhandlen);
+	psbuf_req_data(pb, SSH_FXP_WRITE, reqid, psn->fhand_w,psn->fhand_w_len);
 	psbuf_put_8(pb, offset);
 	psbuf_put_data(pb, buf, writelen);
 	puffs_framebuf_enqueue_cc(pcc, pb);
@@ -366,17 +362,7 @@ psshfs_node_write(struct puffs_cc *pcc, void *opc, uint8_t *buf,
 	if (pn->pn_va.va_size < offset + writelen)
 		pn->pn_va.va_size = offset + writelen;
 
- closefile:
-	reqid = NEXTREQ(pctx);
-	psbuf_recycleout(pb);
-	psbuf_req_data(pb, SSH_FXP_CLOSE, reqid, fhand, fhandlen);
-
-	puffs_framebuf_enqueue_justsend(puffs_cc_getusermount(pcc), pb, 1);
-	free(fhand);
-	return 0;
-
  err:
-	free(fhand);
 	PSSHFSRETURN(rv);
 }
 
