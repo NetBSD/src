@@ -1,4 +1,4 @@
-/*	$NetBSD: nineproto.c,v 1.3 2007/05/05 15:49:51 pooka Exp $	*/
+/*	$NetBSD: nineproto.c,v 1.4 2007/05/06 10:54:56 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: nineproto.c,v 1.3 2007/05/05 15:49:51 pooka Exp $");
+__RCSID("$NetBSD: nineproto.c,v 1.4 2007/05/06 10:54:56 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -46,7 +46,7 @@ int
 proto_getqid(struct puffs_framebuf *pb, struct qid9p *qid)
 {
 
-	if (puffs_framebuf_tellsize(pb) - puffs_framebuf_telloff(pb) < 13)
+	if (puffs_framebuf_remaining(pb) < 1+4+8)
 		return ENOBUFS;
 
 	p9pbuf_get_1(pb, &qid->qidtype);
@@ -130,7 +130,7 @@ proto_getstat(struct puffs_framebuf *pb, struct vattr *vap,
 	/* check size */
 	if ((rv = p9pbuf_get_2(pb, &size)))
 		return rv;
-	if (puffs_framebuf_tellsize(pb) - puffs_framebuf_telloff(pb) < size)
+	if (puffs_framebuf_remaining(pb) < size)
 		return ENOBUFS;
 
 	if (rs)
