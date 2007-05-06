@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep.h,v 1.1.2.2 2007/05/01 17:46:57 garbled Exp $ */
+/* $NetBSD: pci_machdep.h,v 1.1.2.3 2007/05/06 05:11:42 macallan Exp $ */
 
 /*-
  * Copyright (c) 2002,2007 The NetBSD Foundation, Inc.
@@ -148,7 +148,10 @@ void genppc_pci_conf_interrupt(void *, int, int, int, int, int *);
 int genppc_pci_conf_hook(pci_chipset_tag_t, int, int, int, pcireg_t);
 int genppc_pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp);
 
+/* XXX for now macppc needs its own pci_bus_dma_tag */
+#ifndef macppc
 extern struct powerpc_bus_dma_tag pci_bus_dma_tag;
+#endif
 #endif /* _KERNEL */
 
 #endif /* _PCI_MACHDEP_H_ */
