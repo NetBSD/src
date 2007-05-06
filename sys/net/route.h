@@ -1,4 +1,4 @@
-/*	$NetBSD: route.h,v 1.54 2007/05/02 20:40:23 dyoung Exp $	*/
+/*	$NetBSD: route.h,v 1.55 2007/05/06 02:17:54 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -340,11 +340,20 @@ void	rtcache_init_noclone(struct route *);
 void	rtcache_copy(struct route *, const struct route *);
 #endif
 
-struct rtentry *rtcache_lookup1(struct route *, const struct sockaddr *, int);
+struct rtentry *rtcache_lookup2(struct route *, const struct sockaddr *, int,
+    int *);
 void	rtcache_clear(struct route *);
 void	rtcache_update(struct route *, int);
 void	rtcache_free(struct route *);
 int	rtcache_setdst(struct route *, const struct sockaddr *);
+
+static inline struct rtentry *
+rtcache_lookup1(struct route *ro, const struct sockaddr *dst, int clone)
+{
+	int hit;
+
+	return rtcache_lookup2(ro, dst, clone, &hit);
+}
 
 static inline struct rtentry *
 rtcache_lookup_noclone(struct route *ro, const struct sockaddr *dst)
@@ -364,13 +373,22 @@ rtcache_getdst(const struct route *ro)
 	return ro->ro_sa;
 }
 
+/* Return 0 if the route is still present in the routing table.
+ * Otherwise, return non-zero.
+ */
+static inline int
+rtcache_down(const struct route *ro)
+{
+	return ro->ro_rt != NULL &&
+	       ((ro->ro_rt->rt_flags & RTF_UP) == 0 ||
+	        ro->ro_rt->rt_ifp == NULL);
+}
+
 static inline void
 rtcache_check1(struct route *ro, int clone)
 {
 	/* XXX The rt_ifp check should be asserted. */
-	if (ro->ro_rt != NULL &&
-	    ((ro->ro_rt->rt_flags & RTF_UP) == 0 ||
-	     ro->ro_rt->rt_ifp == NULL))
+	if (rtcache_down(ro))
 		rtcache_update(ro, clone);
 	KASSERT(ro->ro_rt == NULL || ro->ro_rt->rt_ifp != NULL);
 }
