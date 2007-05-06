@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.98.2.2 2007/04/13 15:47:03 ad Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.98.2.3 2007/05/06 11:44:29 ad Exp $	*/
 
 /*
  * Copyright (c) 2002 Networks Associates Technology, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.98.2.2 2007/04/13 15:47:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.98.2.3 2007/05/06 11:44:29 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1634,6 +1634,7 @@ ffs_blkfree(struct fs *fs, struct vnode *devvp, daddr_t bno, long size,
 		if (!ffs_isfreeblock(fs, blksfree, fragno)) {
 			if (devvp->v_type != VBLK) {
 				/* devvp is a snapshot */
+				mutex_exit(&ump->um_lock);
 				brelse(bp);
 				return;
 			}
