@@ -1,4 +1,4 @@
-/*	$NetBSD: framebuf.c,v 1.2 2007/05/06 10:21:45 pooka Exp $	*/
+/*	$NetBSD: framebuf.c,v 1.3 2007/05/06 10:54:41 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: framebuf.c,v 1.2 2007/05/06 10:21:45 pooka Exp $");
+__RCSID("$NetBSD: framebuf.c,v 1.3 2007/05/06 10:54:41 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -229,6 +229,13 @@ puffs_framebuf_tellsize(struct puffs_framebuf *pufbuf)
 {
 
 	return pufbuf->maxoff;
+}
+
+size_t
+puffs_framebuf_remaining(struct puffs_framebuf *pufbuf)
+{
+
+	return puffs_framebuf_tellsize(pufbuf) - puffs_framebuf_telloff(pufbuf);
 }
 
 int
