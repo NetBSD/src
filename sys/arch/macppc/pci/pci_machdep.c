@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.34.14.1 2007/05/06 05:11:41 macallan Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.34.14.2 2007/05/06 22:51:40 macallan Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.34.14.1 2007/05/06 05:11:41 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.34.14.2 2007/05/06 22:51:40 macallan Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -71,8 +71,8 @@ __KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.34.14.1 2007/05/06 05:11:41 macall
 
 #include "opt_macppc.h"
 
-static void fixpci __P((int, pci_chipset_tag_t));
-static int find_node_intr __P((int, u_int32_t *, u_int32_t *));
+static void fixpci(int, pci_chipset_tag_t);
+static int find_node_intr(int, u_int32_t *, u_int32_t *);
 static void fix_cardbus_bridge(int, pci_chipset_tag_t, pcitag_t);
 
 #ifdef PB3400_CARDBUS_HACK
@@ -166,10 +166,8 @@ macppc_pci_get_chipset_tag(pci_chipset_tag_t pc)
 #define pcifunc(x) \
 	(((x) & OFW_PCI_PHYS_HI_FUNCTIONMASK) >> OFW_PCI_PHYS_HI_FUNCTIONSHIFT)
 
-void
-fixpci(parent, pc)
-	int parent;
-	pci_chipset_tag_t pc;
+static void
+fixpci(int parent, pci_chipset_tag_t pc)
 {
 	int node;
 	pcitag_t tag;
@@ -388,10 +386,8 @@ fix_cardbus_bridge(int node, pci_chipset_tag_t pc, pcitag_t tag)
 /*
  * Find PCI IRQ of the node from OF tree.
  */
-int
-find_node_intr(node, addr, intr)
-	int node;
-	u_int32_t *addr, *intr;
+static int
+find_node_intr(int node, u_int32_t *addr, uint32_t *intr)
 {
 	int parent, len, mlen, iparent;
 	int match, i;

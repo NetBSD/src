@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.147.14.1 2007/05/02 03:02:34 macallan Exp $	*/
+/*	$NetBSD: machdep.c,v 1.147.14.2 2007/05/06 22:50:49 macallan Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.147.14.1 2007/05/02 03:02:34 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.147.14.2 2007/05/06 22:50:49 macallan Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -400,7 +400,7 @@ cpu_startup()
 void
 consinit()
 {
-	static int initted;
+	static int initted = 0;
 
 	if (initted)
 		return;
