@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.187 2007/05/01 01:57:00 garbled Exp $
+#	$NetBSD: BRANCHES,v 1.188 2007/05/06 22:14:35 yamt Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -480,9 +480,8 @@ Base Tag:	yamt-idlelwp-base5
 Maintainer:	YAMAMOTO Takashi <yamt@NetBSD.org>
 Scope:		src/sys  (src/common is tagged but not branched)
 Notes:		
-		Status of ports (minimal goals):
-		  alpha			[ Done,
-					  UP tested, MP not tested ]
+		Status of ports:
+		  alpha			[ Done, UP tested, MP not tested ]
 		  i386			[ Done, tested ]
 		  amd64			[ Done, tested ]
 		  mips			[ Done, MIPS1 tested, MIPSX needs
@@ -494,6 +493,9 @@ Notes:
 		  hppa			[ WIP. SYSCALLGATE trap issues remain. ]
 		  sh3			[ Done, tested ]
 		  vax			[ Done, UP tested, MP untested ]
+		  m68k			[ broken ]
+		  ns32k			[ broken ]
+		  ia64			[ broken ]
 
 		How to adapt a port?
 
