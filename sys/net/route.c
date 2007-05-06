@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.90 2007/05/02 20:40:23 dyoung Exp $	*/
+/*	$NetBSD: route.c,v 1.91 2007/05/06 02:17:54 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
 #include "opt_route.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.90 2007/05/02 20:40:23 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.91 2007/05/06 02:17:54 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -1280,7 +1280,8 @@ rtcache_clear(struct route *ro)
 }
 
 struct rtentry *
-rtcache_lookup1(struct route *ro, const struct sockaddr *dst, int clone)
+rtcache_lookup2(struct route *ro, const struct sockaddr *dst, int clone,
+    int *hitp)
 {
 	const struct sockaddr *odst;
 
@@ -1290,13 +1291,15 @@ rtcache_lookup1(struct route *ro, const struct sockaddr *dst, int clone)
 		;
 	else if (sockaddr_cmp(odst, dst) != 0)
 		rtcache_free(ro);
-	else
-		rtcache_check1(ro, clone);
+	else if (rtcache_down(ro))
+		rtcache_clear(ro);
 
 	if (ro->ro_rt == NULL) {
+		*hitp = 0;
 		rtcache_setdst(ro, dst);
 		_rtcache_init(ro, clone);
-	}
+	} else
+		*hitp = 1;
 
 	return ro->ro_rt;
 }
