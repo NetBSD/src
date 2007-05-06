@@ -1,4 +1,4 @@
-/*	$NetBSD: ninepuffs.c,v 1.4 2007/05/05 15:49:51 pooka Exp $	*/
+/*	$NetBSD: ninepuffs.c,v 1.5 2007/05/06 10:51:19 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ninepuffs.c,v 1.4 2007/05/05 15:49:51 pooka Exp $");
+__RCSID("$NetBSD: ninepuffs.c,v 1.5 2007/05/06 10:51:19 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -199,7 +199,7 @@ main(int argc, char *argv[])
 		daemon(1, 0);
 
 	puffs_framebuf_eventloop(pu, p9p.servsock,
-	    p9pbuf_read, p9pbuf_write, p9pbuf_cmp, NULL, NULL);
+	    p9pbuf_read, p9pbuf_write, p9pbuf_cmp, NULL);
 
 	return 0;
 }
