@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_rum.c,v 1.40 2006/09/18 16:20:20 damien Exp $	*/
-/*	$NetBSD: if_rum.c,v 1.9 2007/03/13 13:51:54 drochner Exp $	*/
+/*	$NetBSD: if_rum.c,v 1.10 2007/05/07 05:44:00 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 Damien Bergamini <damien.bergamini@free.fr>
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rum.c,v 1.9 2007/03/13 13:51:54 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rum.c,v 1.10 2007/05/07 05:44:00 xtraeme Exp $");
 
 #include "bpfilter.h"
 
@@ -89,6 +89,7 @@ int rum_debug = 0;
 /* various supported device vendors/products */
 static const struct usb_devno rum_devs[] = {
 	{ USB_VENDOR_ABOCOM,		USB_PRODUCT_ABOCOM_RT2573 },
+	{ USB_VENDOR_ASUSTEK,		USB_PRODUCT_ASUSTEK_WL167G_2 },
 	{ USB_VENDOR_BELKIN,		USB_PRODUCT_BELKIN_F5D7050A },
 	{ USB_VENDOR_BELKIN,		USB_PRODUCT_BELKIN_F5D9050V3 },
 	{ USB_VENDOR_CISCOLINKSYS,	USB_PRODUCT_CISCOLINKSYS_WUSB54GC },

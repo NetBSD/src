@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.462 2007/05/03 06:33:23 skrll Exp $
+$NetBSD: usbdevs,v 1.463 2007/05/07 05:44:00 xtraeme Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -634,6 +634,7 @@ product ASIX AX88172		0x1720	USB 2.0 10/100 ethernet controller
 
 /* ASUSTeK computer products */
 product ASUSTEK WL167G		0x1707	WL-167g USB2.0 WLAN Adapter
+product ASUSTEK WL167G_2	0x1723	WL-167g USB2.0 WLAN Adapter (version 2)
 
 /* ATen products */
 product ATEN UC1284		0x2001	Parallel printer adapter
