@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_aio.c,v 1.5 2007/05/05 20:38:43 ad Exp $	*/
+/*	$NetBSD: sys_aio.c,v 1.1 2007/05/07 22:22:21 rmind Exp $	*/
 
 /*
  * Copyright (c) 2007, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_aio.c,v 1.5 2007/05/05 20:38:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_aio.c,v 1.1 2007/05/07 22:22:21 rmind Exp $");
 
 #include <sys/param.h>
 
