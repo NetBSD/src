@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.131 2007/05/07 03:24:52 snj Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.132 2007/05/07 03:31:41 snj Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -2947,4 +2947,9 @@ sys/dev/ic/sgecvar.h				1.7
 	Don't set OW in the first transmit descriptor until all descriptors
 	have been set up.  Always try to drain the transmit ring.
 	[mhitch, ticket #609]
+
+gnu/dist/gcc4/gcc/rtl.h				1.2
+
+	Add CONST_INT_P
+	[mhitch, ticket #610]
 
