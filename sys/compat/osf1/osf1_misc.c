@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_misc.c,v 1.77 2007/05/07 16:53:19 dsl Exp $ */
+/* $NetBSD: osf1_misc.c,v 1.78 2007/05/07 21:18:26 dogcow Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_misc.c,v 1.77 2007/05/07 16:53:19 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_misc.c,v 1.78 2007/05/07 21:18:26 dogcow Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
@@ -435,17 +435,16 @@ osf1_sys_wait4(l, v, retval)
 	struct osf1_rusage osf1_rusage;
 	struct rusage netbsd_rusage;
 	unsigned long leftovers;
-	void *sg;
 	int error, status, was_zombie;
 
 	/* translate options */
-	SCARG(&uap, options) = emul_flags_translate(osf1_wait_options_xtab,
+	SCARG(uap, options) = emul_flags_translate(osf1_wait_options_xtab,
 	    SCARG(uap, options), &leftovers);
 	if (leftovers != 0)
 		return (EINVAL);
 
 	error = do_sys_wait(l, & SCARG(uap, pid), &status,
-	    SCARG(&a, options) | WOPTSCHECKED,
+	    SCARG(uap, options) | WOPTSCHECKED,
 	    SCARG(uap, rusage) != NULL ? &netbsd_rusage : NULL, &was_zombie);
 
 	retval[0] = SCARG(uap, pid);
