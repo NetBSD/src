@@ -1,4 +1,4 @@
-/*	$NetBSD: node.c,v 1.6 2007/05/06 22:17:50 pooka Exp $	*/
+/*	$NetBSD: node.c,v 1.7 2007/05/07 17:20:58 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: node.c,v 1.6 2007/05/06 22:17:50 pooka Exp $");
+__RCSID("$NetBSD: node.c,v 1.7 2007/05/07 17:20:58 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -214,8 +214,6 @@ puffs9p_node_setattr(struct puffs_cc *pcc, void *opc,
  * If it's a regular file, open it here with whatever credentials
  * we happen to have.   Let the upper layers of the kernel worry
  * about permission control.
- *
- * XXX: this does not work fully for the mmap case
  */
 int
 puffs9p_node_open(struct puffs_cc *pcc, void *opc, int mode,
@@ -227,6 +225,7 @@ puffs9p_node_open(struct puffs_cc *pcc, void *opc, int mode,
 	p9pfid_t nfid;
 	int error = 0;
 
+	puffs_setback(pcc, PUFFS_SETBACK_INACT_N1);
 	if (pn->pn_va.va_type != VDIR) {
 		if (mode & FREAD && p9n->fid_read == P9P_INVALFID) {
 			nfid = NEXTFID(p9p);
