@@ -1,4 +1,4 @@
-/*	$NetBSD: powerd.c,v 1.6 2006/02/05 14:11:18 christos Exp $	*/
+/*	$NetBSD: powerd.c,v 1.7 2007/05/07 02:33:35 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -39,6 +39,7 @@
  * Power management daemon for sysmon.
  */
 
+#include <sys/cdefs.h>
 #include <sys/param.h>
 #include <sys/event.h>
 #include <sys/power.h>
@@ -55,8 +56,6 @@
 int	debug;
 
 static int kq;
-
-#define	A_CNT(x)		(sizeof((x)) / sizeof((x)[0]))
 
 #define	_PATH_DEV_POWER		"/dev/power"
 #define	_PATH_POWERD_SCRIPTS	"/etc/powerd/scripts"
@@ -141,7 +140,7 @@ main(int argc, char *argv[])
 		void (*handler)(struct kevent *);
 		int i, rv;
 
-		rv = wait_for_events(events, A_CNT(events));
+		rv = wait_for_events(events, __arraycount(events));
 		for (i = 0; i < rv; i++) {
 			handler = (void *) events[i].udata;
 			(*handler)(&events[i]);
@@ -163,7 +162,7 @@ run_script(const char *argv[])
 	char path[MAXPATHLEN+1];
 	size_t i, j;
 
-	for (i = 0; i < A_CNT(script_paths); i++) {
+	for (i = 0; i < __arraycount(script_paths); i++) {
 		(void)snprintf(path, sizeof(path), "%s/%s", script_paths[i],
 		    argv[0]);
 		if (access(path, R_OK|X_OK) == 0) {
@@ -226,7 +225,7 @@ static struct kevent *
 allocchange(void)
 {
 
-	if (nchanges == A_CNT(changebuf)) {
+	if (nchanges == __arraycount(changebuf)) {
 		(void)wait_for_events(NULL, 0);
 		nchanges = 0;
 	}
