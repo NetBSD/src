@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.131.2.7 2007/03/24 17:13:14 ad Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.131.2.8 2007/05/07 10:55:46 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001, 2004 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.131.2.7 2007/03/24 17:13:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.131.2.8 2007/05/07 10:55:46 yamt Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -375,6 +375,7 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	p2->p_pptr = parent;
 	LIST_INIT(&p2->p_children);
 
+	p2->p_aio = NULL;
 
 #ifdef KTRACE
 	/*

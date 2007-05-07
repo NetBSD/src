@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.h,v 1.6.14.2 2007/04/15 16:03:35 yamt Exp $	*/
+/*	$NetBSD: ip_fil.h,v 1.6.14.3 2007/05/07 10:55:36 yamt Exp $	*/
 
 /*
  * Copyright (C) 1993-2001, 2003 by Darren Reed.
@@ -623,9 +623,6 @@ typedef	struct	frentry {
 
 #define	FR_NOLOGTAG	0
 
-#ifndef	offsetof
-#define	offsetof(t,m)	(int)((&((t *)0L)->m))
-#endif
 #define	FR_CMPSIZ	(sizeof(struct frentry) - \
 			 offsetof(struct frentry, fr_func))
 
@@ -1416,11 +1413,7 @@ extern	int	fr_fastroute __P((mb_t *, mb_t **, fr_info_t *, frdest_t *));
 extern	int	fr_inobj __P((void *, void *, int));
 extern	int	fr_inobjsz __P((void *, void *, int, int));
 extern	int	fr_ioctlswitch __P((int, void *, ioctlcmd_t, int, int, void *));
-#if __NetBSD_Version__ >= 499001000
-extern	int	fr_ipf_ioctl __P((void*, ioctlcmd_t, int, int, void *));
-#else
 extern	int	fr_ipf_ioctl __P((caddr_t, ioctlcmd_t, int, int, void *));
-#endif
 extern	int	fr_ipftune __P((ioctlcmd_t, void *));
 extern	int	fr_outobj __P((void *, void *, int));
 extern	int	fr_outobjsz __P((void *, void *, int, int));

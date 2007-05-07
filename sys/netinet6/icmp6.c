@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.129.2.2 2007/03/12 05:59:56 rmind Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.129.2.3 2007/05/07 10:56:01 yamt Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.129.2.2 2007/03/12 05:59:56 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.129.2.3 2007/05/07 10:56:01 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -2056,7 +2056,7 @@ icmp6_reflect(struct mbuf *m, size_t off)
 	if (src == NULL) {
 		int e;
 		struct sockaddr_in6 sin6;
-		struct route_in6 ro;
+		struct route ro;
 
 		/*
 		 * This case matches to multicasts, our anycast, or unicasts
@@ -2069,9 +2069,8 @@ icmp6_reflect(struct mbuf *m, size_t off)
 		sin6.sin6_addr = ip6->ip6_dst; /* zone ID should be embedded */
 
 		memset(&ro, 0, sizeof(ro));
-		src = in6_selectsrc(&sin6, NULL, NULL, (struct route *)&ro,
-		    NULL, &outif, &e);
-		rtcache_free((struct route *)&ro);
+		src = in6_selectsrc(&sin6, NULL, NULL, &ro, NULL, &outif, &e);
+		rtcache_free(&ro);
 		if (src == NULL) {
 			nd6log((LOG_DEBUG,
 			    "icmp6_reflect: source can't be determined: "

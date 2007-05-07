@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_bus.c,v 1.4 2007/02/10 03:38:47 tsutsui Exp $ */
+/*	$NetBSD: adb_bus.c,v 1.4.2.1 2007/05/07 10:55:24 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb_bus.c,v 1.4 2007/02/10 03:38:47 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb_bus.c,v 1.4.2.1 2007/05/07 10:55:24 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -195,15 +195,19 @@ nadb_devprint(void *aux, const char *what)
 {
 	struct adb_attach_args *aaa = aux;
 
+	if (what == NULL)
+		return 0;
+
 	switch(aaa->dev->original_addr) {
 		case 2:
-			printf(": ADB Keyboard");
+			printf("%s: ADB Keyboard", what);
 			break;
 		case 3:
-			printf(": ADB relative pointing device");
+			printf("%s: ADB relative pointing device", what);
 			break;
 		default:
-			printf(": something from address %d:%02x",
+			printf("%s: something from address %d:%02x",
+			    what,
 			    aaa->dev->original_addr,
 			    aaa->dev->handler_id);
 			break;

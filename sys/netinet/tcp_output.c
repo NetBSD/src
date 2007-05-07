@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.154.2.2 2007/03/12 05:59:39 rmind Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.154.2.3 2007/05/07 10:56:00 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -142,7 +142,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.154.2.2 2007/03/12 05:59:39 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.154.2.3 2007/05/07 10:56:00 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -589,7 +589,7 @@ tcp_output(struct tcpcb *tp)
 #ifdef INET6
 	else if (tp->t_in6pcb) {
 		so = tp->t_in6pcb->in6p_socket;
-		ro = (struct route *)&tp->t_in6pcb->in6p_route;
+		ro = &tp->t_in6pcb->in6p_route;
 	}
 #endif
 
@@ -1578,9 +1578,8 @@ timer:
 			opts = tp->t_in6pcb->in6p_outputopts;
 		else
 			opts = NULL;
-		error = ip6_output(m, opts, (struct route_in6 *)ro,
-			so->so_options & SO_DONTROUTE,
-			(struct ip6_moptions *)0, so, NULL);
+		error = ip6_output(m, opts, ro, so->so_options & SO_DONTROUTE,
+			NULL, so, NULL);
 		break;
 	    }
 #endif

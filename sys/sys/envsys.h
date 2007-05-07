@@ -1,4 +1,4 @@
-/* $NetBSD: envsys.h,v 1.10 2006/03/15 11:22:23 lukem Exp $ */
+/* $NetBSD: envsys.h,v 1.10.16.1 2007/05/07 10:56:13 yamt Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -95,15 +95,33 @@ enum envsys_units {
 	ENVSYS_SAMPHOUR,
 	ENVSYS_INDICATOR,	/* boolean indicator */
 	ENVSYS_INTEGER,		/* generic integer return */
+	ENVSYS_DRIVE,		/* disk status */
 	ENVSYS_NSENSORS
 };
+
+/* drive status */
+#define ENVSYS_DRIVE_EMPTY      1
+#define ENVSYS_DRIVE_READY      2
+#define ENVSYS_DRIVE_POWERUP    3
+#define ENVSYS_DRIVE_ONLINE     4
+#define ENVSYS_DRIVE_IDLE       5
+#define ENVSYS_DRIVE_ACTIVE     6
+#define ENVSYS_DRIVE_REBUILD    7
+#define ENVSYS_DRIVE_POWERDOWN  8
+#define ENVSYS_DRIVE_FAIL       9
+#define ENVSYS_DRIVE_PFAIL      10
 
 #ifdef ENVSYSUNITNAMES
 static const char * const envsysunitnames[] = {
     "degC", "RPM", "VAC", "V", "Ohms", "W",
-    "A", "Wh", "Ah", "bool", "integer", "Unk"
+    "A", "Wh", "Ah", "bool", "integer", "drive", "Unk"
+};
+static const char * const envsysdrivestatus[] = {
+    "unknown", "empty", "ready", "powering up", "online", "idle", "active",
+    "rebuilding", "powering down", "failed", "degraded"
 };
 #endif
+
 
 /* flags for validflags */
 #define ENVSYS_FVALID		0x00000001  /* sensor is valid */

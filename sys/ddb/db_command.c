@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.92.2.1 2007/02/27 16:53:43 yamt Exp $	*/
+/*	$NetBSD: db_command.c,v 1.92.2.2 2007/05/07 10:55:22 yamt Exp $	*/
 
 /*
  * Mach Operating System
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.92.2.1 2007/02/27 16:53:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.92.2.2 2007/05/07 10:55:22 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -140,6 +140,7 @@ static const struct db_command db_show_all_cmds[] = {
 };
 
 static const struct db_command db_show_cmds[] = {
+	{ "aio_jobs",	db_show_aio_jobs,	0,	NULL },
 	{ "all",	NULL,			0,	db_show_all_cmds },
 #if defined(INET) && (NARP > 0)
 	{ "arptab",	db_show_arptab,		0,	NULL },

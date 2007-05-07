@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_20.c,v 1.7.2.2 2007/03/24 14:55:13 yamt Exp $	*/
+/*	$NetBSD: netbsd32_compat_20.c,v 1.7.2.3 2007/05/07 10:55:15 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_20.c,v 1.7.2.2 2007/03/24 14:55:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_20.c,v 1.7.2.3 2007/05/07 10:55:15 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,7 +113,7 @@ compat_20_netbsd32_getfsstat(l, v, retval)
 			sp = &mp->mnt_stat;
 			/*
 			 * If MNT_NOWAIT or MNT_LAZY is specified, do not
-			 * refresh the fsstat cache. MNT_WAIT or MNT_LAXY
+			 * refresh the fsstat cache. MNT_WAIT or MNT_LAZY
 			 * overrides MNT_NOWAIT.
 			 */
 			if (SCARG(uap, flags) != MNT_NOWAIT &&
@@ -164,7 +164,7 @@ compat_20_netbsd32_statfs(l, v, retval)
 	int error;
 	struct nameidata nd;
 
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG_P32(uap, path), l);
+	NDINIT(&nd, LOOKUP, FOLLOW | TRYEMULROOT, UIO_USERSPACE, SCARG_P32(uap, path), l);
 	if ((error = namei(&nd)) != 0)
 		return (error);
 	mp = nd.ni_vp->v_mount;

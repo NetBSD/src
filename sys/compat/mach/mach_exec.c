@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_exec.c,v 1.62.2.1 2007/02/27 16:53:37 yamt Exp $	 */
+/*	$NetBSD: mach_exec.c,v 1.62.2.2 2007/05/07 10:55:15 yamt Exp $	 */
 
 /*-
  * Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_exec.c,v 1.62.2.1 2007/02/27 16:53:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_exec.c,v 1.62.2.2 2007/05/07 10:55:15 yamt Exp $");
 
 #include "opt_syscall_debug.h"
 
@@ -204,7 +204,7 @@ mach_e_proc_exec(p, epp)
 {
 	mach_e_proc_init(p, p->p_vmspace);
 
-	if (p->p_emul != epp->ep_es->es_emul)
+	if (p->p_emul != epp->ep_esch->es_emul)
 		mach_e_lwp_fork(NULL, proc_representative_lwp(p, NULL, 1));
 
 	return;

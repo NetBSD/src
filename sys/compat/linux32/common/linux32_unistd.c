@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_unistd.c,v 1.5.2.3 2007/04/15 16:03:16 yamt Exp $ */
+/*	$NetBSD: linux32_unistd.c,v 1.5.2.4 2007/05/07 10:55:15 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_unistd.c,v 1.5.2.3 2007/04/15 16:03:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_unistd.c,v 1.5.2.4 2007/05/07 10:55:15 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -98,13 +98,9 @@ linux32_sys_access(l, v, retval)
 		syscallarg(int) flags;
 	} */ *uap = v;
 	struct sys_access_args ua;
-	void *sg;
 
 	NETBSD32TOP_UAP(path, const char);
 	NETBSD32TO64_UAP(flags);
-
-	sg = stackgap_init(l->l_proc, 0);
-	CHECK_ALT_EXIST(l, &sg, SCARG(&ua, path));
 
 	return sys_access(l, &ua, retval);
 }
@@ -331,12 +327,9 @@ linux32_sys_chdir(l, v, retval)
 		syscallarg(const netbsd32_charp) path;
 	} */ *uap = v;
 	struct sys_chdir_args ua;
-	void *sg = stackgap_init(l->l_proc, 0);
 
 	NETBSD32TOP_UAP(path, const char);
 
-	CHECK_ALT_EXIST(l, &sg, SCARG(&ua, path));
-	
 	return sys_chdir(l, &ua, retval);
 }
 
@@ -351,14 +344,10 @@ linux32_sys_link(l, v, retval)
 		syscallarg(const netbsd32_charp) link;
 	} */ *uap = v;
 	struct sys_link_args ua;
-	void *sg = stackgap_init(l->l_proc, 0);
 
 	NETBSD32TOP_UAP(path, const char);
 	NETBSD32TOP_UAP(link, const char);
 
-	CHECK_ALT_EXIST(l, &sg, SCARG(&ua, path));
-	CHECK_ALT_CREAT(l, &sg, SCARG(&ua, link));
-	
 	return sys_link(l, &ua, retval);
 }
 
@@ -373,13 +362,10 @@ linux32_sys_creat(l, v, retval)
 		syscallarg(int) mode;
 	} */ *uap = v;
 	struct sys_open_args ua;
-	void *sg = stackgap_init(l->l_proc, 0);
 
 	NETBSD32TOP_UAP(path, const char);
 	SCARG(&ua, flags) = O_CREAT | O_TRUNC | O_WRONLY;
 	NETBSD32TO64_UAP(mode);
-
-	CHECK_ALT_EXIST(l, &sg, SCARG(&ua, path));
 
 	return sys_open(l, &ua, retval);
 }
@@ -415,12 +401,9 @@ linux32_sys_chmod(l, v, retval)
 		syscallarg(int) mode;
 	} */ *uap = v;
 	struct sys_chmod_args ua;
-	void *sg = stackgap_init(l->l_proc, 0);
 
 	NETBSD32TOP_UAP(path, const char);
 	NETBSD32TO64_UAP(mode);
-
-	CHECK_ALT_EXIST(l, &sg, SCARG(&ua, path));
 
 	return sys_chmod(l, &ua, retval);
 }
@@ -437,10 +420,8 @@ linux32_sys_lchown16(l, v, retval)
 		syscallarg(int) gid;
 	} */ *uap = v;
         struct sys___posix_lchown_args ua;
-        void *sg = stackgap_init(l->l_proc, 0);
 
 	NETBSD32TOP_UAP(path, const char);
-        CHECK_ALT_SYMLINK(l, &sg, SCARG(&ua, path));
 
         if ((linux32_uid_t)SCARG(uap, uid) == (linux32_uid_t)-1)
         	SCARG(&ua, uid) = (uid_t)-1;
@@ -481,14 +462,10 @@ linux32_sys_rename(l, v, retval)
 		syscallarg(const netbsd32_charp) to;
 	} */ *uap = v;
 	struct sys_rename_args ua;
-	void *sg = stackgap_init(l->l_proc, 0);
 
 	NETBSD32TOP_UAP(from, const char);
 	NETBSD32TOP_UAP(to, const char);
 
-	CHECK_ALT_EXIST(l, &sg, SCARG(&ua, from));
-	CHECK_ALT_CREAT(l, &sg, SCARG(&ua, to));
-	
 	return sys___posix_rename(l, &ua, retval);
 }
 
@@ -503,13 +480,10 @@ linux32_sys_mkdir(l, v, retval)
 		syscallarg(int) mode;
 	} */ *uap = v;
 	struct sys_mkdir_args ua;
-	void *sg = stackgap_init(l->l_proc, 0);
 
 	NETBSD32TOP_UAP(path, const char);
 	NETBSD32TO64_UAP(mode);
 
-	CHECK_ALT_CREAT(l, &sg, SCARG(&ua, path));
-	
 	return sys_mkdir(l, &ua, retval);
 }
 
@@ -523,12 +497,9 @@ linux32_sys_rmdir(l, v, retval)
 		syscallarg(const netbsd32_charp) path;
 	} */ *uap = v;
 	struct sys_rmdir_args ua;
-	void *sg = stackgap_init(l->l_proc, 0);
 
 	NETBSD32TOP_UAP(path, const char);
 
-	CHECK_ALT_EXIST(l, &sg, SCARG(&ua, path));
-	
 	return sys_rmdir(l, &ua, retval);
 }
 
@@ -579,14 +550,10 @@ linux32_sys_symlink(l, v, retval)
 		syscallarg(const netbsd32_charp) link;
 	} */ *uap = v;
 	struct sys_symlink_args ua;
-	void *sg = stackgap_init(l->l_proc, 0);
 
 	NETBSD32TOP_UAP(path, const char);
 	NETBSD32TOP_UAP(link, const char);
 
-	CHECK_ALT_EXIST(l, &sg, SCARG(&ua, path));
-	CHECK_ALT_CREAT(l, &sg, SCARG(&ua, link));
-	
 	return sys_symlink(l, &ua, retval);
 }
 

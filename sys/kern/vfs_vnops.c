@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.133.2.2 2007/04/15 16:03:54 yamt Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.133.2.3 2007/05/07 10:55:51 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.133.2.2 2007/04/15 16:03:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.133.2.3 2007/05/07 10:55:51 yamt Exp $");
 
 #include "fs_union.h"
 #include "veriexec.h"
@@ -105,15 +105,17 @@ vn_open(struct nameidata *ndp, int fmode, int cmode)
 	int error;
 	pathname_t pn = NULL;
 
+	ndp->ni_cnd.cn_flags &= TRYEMULROOT;
+
 	if (fmode & O_CREAT) {
 		ndp->ni_cnd.cn_nameiop = CREATE;
-		ndp->ni_cnd.cn_flags = LOCKPARENT | LOCKLEAF;
+		ndp->ni_cnd.cn_flags |= LOCKPARENT | LOCKLEAF;
 		if ((fmode & O_EXCL) == 0 &&
 		    ((fmode & O_NOFOLLOW) == 0))
 			ndp->ni_cnd.cn_flags |= FOLLOW;
 	} else {
 		ndp->ni_cnd.cn_nameiop = LOOKUP;
-		ndp->ni_cnd.cn_flags = LOCKLEAF;
+		ndp->ni_cnd.cn_flags |= LOCKLEAF;
 		if ((fmode & O_NOFOLLOW) == 0)
 			ndp->ni_cnd.cn_flags |= FOLLOW;
 	}

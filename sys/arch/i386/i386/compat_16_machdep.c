@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_16_machdep.c,v 1.11.2.1 2007/03/12 05:48:20 rmind Exp $	*/
+/*	$NetBSD: compat_16_machdep.c,v 1.11.2.2 2007/05/07 10:54:57 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.11.2.1 2007/03/12 05:48:20 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.11.2.2 2007/05/07 10:54:57 yamt Exp $");
 
 #include "opt_vm86.h"
 #include "opt_compat_netbsd.h"
@@ -289,7 +289,7 @@ struct compat_16_vm86_struct {
 };
 
 int
-compat_16_i386_vm86(struct lwp *l, char *args, register_t *retval)
+compat_16_x86_vm86(struct lwp *l, char *args, register_t *retval)
 {
 	struct trapframe *tf = l->l_md.md_regs;
 	struct pcb *pcb = &l->l_addr->u_pcb;

@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_stat.c,v 1.14.2.2 2007/03/24 14:55:08 yamt Exp $ */
+/*	$NetBSD: irix_stat.c,v 1.14.2.3 2007/05/07 10:55:11 yamt Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_stat.c,v 1.14.2.2 2007/03/24 14:55:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_stat.c,v 1.14.2.3 2007/05/07 10:55:11 yamt Exp $");
 
 #include <sys/errno.h>
 #include <sys/types.h>
@@ -165,10 +165,7 @@ irix_sys_xstat(l, v, retval)
 		syscallarg(struct stat *) buf;
 	} */ *uap = v;
 	struct stat st;
-	void *sg = stackgap_init(l->l_proc, 0);
 	int error;
-
-	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
 	error = do_sys_stat(l, SCARG(uap, path), FOLLOW, &st);
 	if (error != 0)
@@ -189,10 +186,7 @@ irix_sys_lxstat(l, v, retval)
 		syscallarg(struct stat *) buf;
 	} */ *uap = v;
 	struct stat st;
-	void *sg = stackgap_init(l->l_proc, 0);
 	int error;
-
-	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
 	error = do_sys_stat(l, SCARG(uap, path), NOFOLLOW, &st);
 	if (error != 0)

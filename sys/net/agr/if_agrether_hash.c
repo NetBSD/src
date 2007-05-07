@@ -1,4 +1,4 @@
-/*	$NetBSD: if_agrether_hash.c,v 1.2 2005/12/11 12:24:54 christos Exp $	*/
+/*	$NetBSD: if_agrether_hash.c,v 1.2.26.1 2007/05/07 10:55:54 yamt Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_agrether_hash.c,v 1.2 2005/12/11 12:24:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_agrether_hash.c,v 1.2.26.1 2007/05/07 10:55:54 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -127,6 +127,7 @@ agrether_hashmbuf(struct agr_softc *sc, struct mbuf *m)
 	} else if (etype == htobe16(ETHERTYPE_IPV6)) {
 		struct ip6_hdr ip6_store;
 		const struct ip6_hdr *ip6;
+		uint32_t flowlabel;
 
 		ip6 = agr_m_extract(m, off, sizeof(*ip6), &ip6_store);
 		if (ip6 == NULL) {
@@ -137,7 +138,8 @@ agrether_hashmbuf(struct agr_softc *sc, struct mbuf *m)
 		hash = HASH(&ip6->ip6_dst, sizeof(ip6->ip6_dst), hash);
 		/* hash = HASH(&ip6->ip6_nxt, sizeof(ip6->ip6_nxt), hash); */
 
-		/* use flow label? */
+		flowlabel = ip6->ip6_flow & IPV6_FLOWLABEL_MASK;
+		hash = HASH(&flowlabel, sizeof(flowlabel), hash);
 
 		/* use port numbers for tcp and udp? */
 	}

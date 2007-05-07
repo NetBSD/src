@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_stream.c,v 1.19.2.2 2007/03/24 14:55:18 yamt Exp $	 */
+/*	$NetBSD: svr4_32_stream.c,v 1.19.2.3 2007/05/07 10:55:21 yamt Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_stream.c,v 1.19.2.2 2007/03/24 14:55:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_stream.c,v 1.19.2.3 2007/05/07 10:55:21 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -55,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_32_stream.c,v 1.19.2.2 2007/03/24 14:55:18 yamt
 #include <sys/tty.h>
 #include <sys/file.h>
 #include <sys/filedesc.h>
+#include <sys/namei.h>
 #include <sys/select.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
@@ -270,55 +271,44 @@ show_msg(str, fd, ctl, dat, flags)
  * We need to create a socket with the same name when we bind,
  * so we need to remove the pipe before, otherwise we'll get address
  * already in use. So we *carefully* remove the pipe, to avoid
- * using this as a random file removal tool. We use system calls
- * to avoid code duplication.
+ * using this as a random file removal tool.
  */
 static int
 clean_pipe(l, path)
 	struct lwp *l;
 	const char *path;
 {
-	struct sys___lstat30_args la;
-	struct proc *p = l->l_proc;
-	struct sys_unlink_args ua;
-	register_t retval;
-	struct stat st;
+	struct nameidata nd;
+	struct vattr va;
 	int error;
-	void *sg = stackgap_init(p, 0);
-	size_t len = strlen(path) + 1;
-	void *tpath;
 
-	tpath = stackgap_alloc(p, &sg, len);
-	SCARG(&la, ub) = stackgap_alloc(p, &sg, sizeof(struct stat));
+	NDINIT(&nd, DELETE, NOFOLLOW | LOCKPARENT | LOCKLEAF | TRYEMULROOT,
+	    UIO_SYSSPACE, path, l);
 
-	if ((error = copyout(path, tpath, len)) != 0)
+	error = namei(&nd);
+	if (error != 0)
 		return error;
-
-	SCARG(&la, path) = tpath;
-
-	if ((error = sys___lstat30(l, &la, &retval)) != 0)
-		return 0;
-
-	if ((error = copyin(SCARG(&la, ub), &st, sizeof(st))) != 0)
-		return 0;
 
 	/*
 	 * Make sure we are dealing with a mode 0 named pipe.
 	 */
-	if ((st.st_mode & S_IFMT) != S_IFIFO)
-		return 0;
+	if (nd.ni_vp->v_type != VFIFO)
+		goto bad;
+        error = VOP_GETATTR(nd.ni_vp, &va, l->l_cred, l);
+	if (error != 0)
+		goto bad;
+	if ((va.va_mode & ALLPERMS) != 0)
+		goto bad;
 
-	if ((st.st_mode & ALLPERMS) != 0)
-		return 0;
+	return VOP_REMOVE(nd.ni_dvp, nd.ni_vp, &nd.ni_cnd);
 
-	SCARG(&ua, path) = SCARG(&la, path);
-
-	if ((error = sys_unlink(l, &ua, &retval)) != 0) {
-		DPRINTF(("clean_pipe: unlink failed %d\n", error));
-		return error;
-	}
-
-	return 0;
+    bad:
+	if (nd.ni_dvp == nd.ni_vp)
+		vrele(nd.ni_dvp);
+	else
+		vput(nd.ni_dvp);
+	vput(nd.ni_vp);
+	return error;
 }
 
 static void

@@ -1,4 +1,4 @@
-/*	$NetBSD: nslm7x.c,v 1.29.2.2 2007/03/24 14:55:28 yamt Exp $ */
+/*	$NetBSD: nslm7x.c,v 1.29.2.3 2007/05/07 10:55:26 yamt Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nslm7x.c,v 1.29.2.2 2007/03/24 14:55:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nslm7x.c,v 1.29.2.3 2007/05/07 10:55:26 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1931,6 +1931,7 @@ lm_refresh_temp(struct lm_softc *sc, int n)
 	 * sensor is between -55 degC and +125 degC.
 	 */
 	sdata = (*sc->lm_readreg)(sc, sc->lm_sensors[n].reg);
+	DPRINTF(("%s: temp[%d] 0x%x\n", __func__, n, sdata));
 	if (sdata > 0x7d && sdata < 0xc9) {
 		INVALIDATE_SENSOR(n);
 	} else {
@@ -1963,6 +1964,7 @@ lm_refresh_fanrpm(struct lm_softc *sc, int n)
 	}
 
 	data = (*sc->lm_readreg)(sc, sc->lm_sensors[n].reg);
+	DPRINTF(("%s: fan[%d] 0x%x\n", __func__, n, data));
 	if (data == 0xff || data == 0x00) {
 		INVALIDATE_SENSOR(n);
 	} else {
@@ -1997,7 +1999,7 @@ wb_w83637hf_refresh_vcore(struct lm_softc *sc, int n)
 	int data;
 
 	data = (*sc->lm_readreg)(sc, sc->lm_sensors[n].reg);
-
+	DPRINTF(("%s: volt[%d] 0x%x\n", __func__, n, data));
 	/*
 	 * Depending on the voltage detection method,
 	 * one of the following formulas is used:
@@ -2016,6 +2018,7 @@ wb_refresh_nvolt(struct lm_softc *sc, int n)
 	int data;
 
 	data = (*sc->lm_readreg)(sc, sc->lm_sensors[n].reg);
+	DPRINTF(("%s: volt[%d] 0x%x\n", __func__, n , data));
 	sc->sensors[n].cur.data_s = ((data << 4) - WB_VREF);
 	sc->sensors[n].cur.data_s *= sc->lm_sensors[n].rfact;
 	sc->sensors[n].cur.data_s /= 10;
@@ -2028,6 +2031,7 @@ wb_w83627ehf_refresh_nvolt(struct lm_softc *sc, int n)
 	int data;
 
 	data = (*sc->lm_readreg)(sc, sc->lm_sensors[n].reg);
+	DPRINTF(("%s: volt[%d] 0x%x\n", __func__, n , data));
 	sc->sensors[n].cur.data_s = ((data << 3) - WB_W83627EHF_VREF);
 	sc->sensors[n].cur.data_s *= RFACT(232, 10);
 	sc->sensors[n].cur.data_s /= 10;
@@ -2048,6 +2052,7 @@ wb_refresh_temp(struct lm_softc *sc, int n)
 	 */
 	sdata = (*sc->lm_readreg)(sc, sc->lm_sensors[n].reg) << 1;
 	sdata += (*sc->lm_readreg)(sc, sc->lm_sensors[n].reg + 1) >> 7;
+	DPRINTF(("%s: temp[%d] 0x%x\n", __func__, n , sdata));
 	if (sdata > 0x0fa && sdata < 0x1a6) {
 		INVALIDATE_SENSOR(n);
 	} else {
@@ -2097,6 +2102,7 @@ wb_refresh_fanrpm(struct lm_softc *sc, int n)
 	}
 
 	data = (*sc->lm_readreg)(sc, sc->lm_sensors[n].reg);
+	DPRINTF(("%s: fan[%d] 0x%x\n", __func__, n , data));
 	if (data == 0xff || data == 0x00) {
 		INVALIDATE_SENSOR(n);
 	} else {
@@ -2140,6 +2146,7 @@ wb_w83792d_refresh_fanrpm(struct lm_softc *sc, int n)
 	}
 
 	data = (*sc->lm_readreg)(sc, sc->lm_sensors[n].reg);
+	DPRINTF(("%s: fan[%d] 0x%x\n", __func__, n , data));
 	if (data == 0xff || data == 0x00) {
 		INVALIDATE_SENSOR(n);
 	} else {
@@ -2161,6 +2168,7 @@ as_refresh_temp(struct lm_softc *sc, int n)
 	 */
 	sdata = (*sc->lm_readreg)(sc, sc->lm_sensors[n].reg) << 1;
 	sdata += (*sc->lm_readreg)(sc, sc->lm_sensors[n].reg + 1) >> 7;
+	DPRINTF(("%s: temp[%d] 0x%x\n", __func__, n , data));
 	if (sdata == 0x1ff) {
 		INVALIDATE_SENSOR(n);
 	} else {

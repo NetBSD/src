@@ -1,4 +1,4 @@
-/* $NetBSD: auixp.c,v 1.21.4.1 2007/03/12 05:55:11 rmind Exp $ */
+/* $NetBSD: auixp.c,v 1.21.4.2 2007/05/07 10:55:29 yamt Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Reinoud Zandijk <reinoud@netbsd.org>
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auixp.c,v 1.21.4.1 2007/03/12 05:55:11 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auixp.c,v 1.21.4.2 2007/05/07 10:55:29 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -686,7 +686,7 @@ auixp_program_dma_chain(struct auixp_softc *sc, struct auixp_dma *dma)
 	iot = sc->sc_iot;
 	ioh = sc->sc_ioh;
 	/* get hardware start address of DMA chain and set valid-flag in it */
-	/* XXX allways at start? XXX */
+	/* XXX always at start? XXX */
 	value = DMAADDR(dma);
 	value = value | ATI_REG_LINKPTR_EN;
 

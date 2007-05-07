@@ -1,4 +1,4 @@
-/*	$NetBSD: resourcevar.h,v 1.33.2.1 2007/03/12 06:00:54 rmind Exp $	*/
+/*	$NetBSD: resourcevar.h,v 1.33.2.2 2007/05/07 10:56:14 yamt Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -38,7 +38,6 @@
 
 /*
  * Kernel per-process accounting / statistics
- * (not necessarily resident except when running).
  */
 struct pstats {
 #define	pstat_startzero	p_ru

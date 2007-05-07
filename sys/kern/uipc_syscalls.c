@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.106.2.2 2007/04/15 16:03:52 yamt Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.106.2.3 2007/05/07 10:55:49 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.106.2.2 2007/04/15 16:03:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.106.2.3 2007/05/07 10:55:49 yamt Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_pipe.h"
@@ -232,18 +232,15 @@ sys_accept(struct lwp *l, void *v, register_t *retval)
 	fp->f_flag = fflag;
 	fp->f_ops = &socketops;
 	fp->f_data = (void *)so;
-	FILE_UNUSE(fp, l);
 	nam = m_get(M_WAIT, MT_SONAME);
 	if ((error = soaccept(so, nam)) == 0 && SCARG(uap, name)) {
 		if (namelen > nam->m_len)
 			namelen = nam->m_len;
 		/* SHOULD COPY OUT A CHAIN HERE */
-		if ((error = copyout(mtod(nam, void *),
-		    (void *)SCARG(uap, name), namelen)) != 0 ||
-		    (error = copyout((void *)&namelen,
-		    (void *)SCARG(uap, anamelen),
-		    sizeof(*SCARG(uap, anamelen)))) != 0) {
-			soclose(so);
+		error = copyout(mtod(nam, void *), SCARG(uap, name), namelen);
+		if (error == 0) {
+			error = copyout(&namelen, SCARG(uap, anamelen),
+			    sizeof(*SCARG(uap, anamelen)));
 		}
 	}
 	/* if an error occurred, free the file descriptor */
@@ -252,6 +249,7 @@ sys_accept(struct lwp *l, void *v, register_t *retval)
 		closef(fp, l);
 	} else {
 		FILE_SET_MATURE(fp);
+		FILE_UNUSE(fp, l);
 	}
 	m_freem(nam);
 	splx(s);

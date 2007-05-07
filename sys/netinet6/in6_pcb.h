@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.h,v 1.30.10.1 2007/02/27 16:55:00 yamt Exp $	*/
+/*	$NetBSD: in6_pcb.h,v 1.30.10.2 2007/05/07 10:56:03 yamt Exp $	*/
 /*	$KAME: in6_pcb.h,v 1.45 2001/02/09 05:59:46 itojun Exp $	*/
 
 /*
@@ -86,7 +86,7 @@ struct	in6pcb {
 #define in6p_socket	in6p_head.inph_socket
 #define in6p_table	in6p_head.inph_table
 #define in6p_sp		in6p_head.inph_sp
-	struct	route_in6 in6p_route;	/* placeholder for routing entry */
+	struct	route in6p_route;	/* placeholder for routing entry */
 	u_int16_t in6p_fport;		/* foreign port */
 	u_int16_t in6p_lport;		/* local port */
 	u_int32_t in6p_flowinfo;	/* priority and flowlabel */

@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.55.2.4 2007/04/15 16:03:12 yamt Exp $
+#	$NetBSD: files.xen,v 1.55.2.5 2007/05/07 10:55:06 yamt Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -55,7 +55,6 @@ file	netns/ns_cksum.c		ns
 file	arch/xen/i386/pmap.c
 file	arch/i386/i386/process_machdep.c
 file	arch/i386/i386/procfs_machdep.c	procfs
-file	arch/xen/i386/sys_machdep.c
 file	arch/i386/i386/syscall.c
 file	arch/xen/i386/trap.c
 file	arch/i386/i386/vm_machdep.c
@@ -108,6 +107,7 @@ file	arch/xen/x86/intr.c
 file	arch/x86/x86/ipi.c		multiprocessor
 file	arch/x86/x86/lock_machdep.c	lockdebug
 file	arch/x86/x86/softintr.c
+file	arch/x86/x86/sys_machdep.c
 file	arch/x86/x86/x86_machdep.c
 
 include	"arch/xen/conf/files.compat"

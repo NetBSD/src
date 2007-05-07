@@ -1,4 +1,4 @@
-/*	$NetBSD: route.h,v 1.50.2.2 2007/03/12 05:59:15 rmind Exp $	*/
+/*	$NetBSD: route.h,v 1.50.2.3 2007/05/07 10:55:54 yamt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -53,7 +53,7 @@
  */
 struct route {
 	struct	rtentry		*ro_rt;
-	struct	sockaddr	ro_dst;
+	struct	sockaddr	*ro_sa;
 	LIST_ENTRY(route)	ro_rtcache_next;
 };
 
@@ -330,44 +330,73 @@ struct rtentry *rtfindparent(struct radix_node_head *, struct route *);
 #ifdef RTCACHE_DEBUG
 #define	rtcache_init(ro)		rtcache_init_debug(__func__, ro)
 #define	rtcache_init_noclone(ro)	rtcache_init_noclone_debug(__func__, ro)
-#define	rtcache_copy(ro, oro, len)	rtcache_copy_debug(__func__, ro, oro, len)
+#define	rtcache_copy(ro, oro)	rtcache_copy_debug(__func__, ro, oro)
 void	rtcache_init_debug(const char *, struct route *);
 void	rtcache_init_noclone_debug(const char *, struct route *);
-void	rtcache_copy_debug(const char *, struct route *, const struct route *, size_t);
+void	rtcache_copy_debug(const char *, struct route *, const struct route *);
 #else
 void	rtcache_init(struct route *);
 void	rtcache_init_noclone(struct route *);
-void	rtcache_copy(struct route *, const struct route *, size_t);
+void	rtcache_copy(struct route *, const struct route *);
 #endif
 
-void	rtcache_update(struct route *);
+struct rtentry *rtcache_lookup2(struct route *, const struct sockaddr *, int,
+    int *);
+void	rtcache_clear(struct route *);
+void	rtcache_update(struct route *, int);
 void	rtcache_free(struct route *);
+int	rtcache_setdst(struct route *, const struct sockaddr *);
+
+static inline struct rtentry *
+rtcache_lookup1(struct route *ro, const struct sockaddr *dst, int clone)
+{
+	int hit;
+
+	return rtcache_lookup2(ro, dst, clone, &hit);
+}
+
+static inline struct rtentry *
+rtcache_lookup_noclone(struct route *ro, const struct sockaddr *dst)
+{
+	return rtcache_lookup1(ro, dst, 0);
+}
+
+static inline struct rtentry *
+rtcache_lookup(struct route *ro, const struct sockaddr *dst)
+{
+	return rtcache_lookup1(ro, dst, 1);
+}
 
 static inline const struct sockaddr *
 rtcache_getdst(const struct route *ro)
 {
-	return &ro->ro_dst;
+	return ro->ro_sa;
+}
+
+/* Return 0 if the route is still present in the routing table.
+ * Otherwise, return non-zero.
+ */
+static inline int
+rtcache_down(const struct route *ro)
+{
+	return ro->ro_rt != NULL &&
+	       ((ro->ro_rt->rt_flags & RTF_UP) == 0 ||
+	        ro->ro_rt->rt_ifp == NULL);
 }
 
 static inline void
-rtcache_setdst(struct route *ro, struct sockaddr *sa)
+rtcache_check1(struct route *ro, int clone)
 {
-#if 0
-	KASSERT(ro->ro_sa != sa);
-	rtcache_free(ro);
-	ro->ro_sa = sa;
-#endif
+	/* XXX The rt_ifp check should be asserted. */
+	if (rtcache_down(ro))
+		rtcache_update(ro, clone);
+	KASSERT(ro->ro_rt == NULL || ro->ro_rt->rt_ifp != NULL);
 }
 
 static inline void
 rtcache_check(struct route *ro)
 {
-	/* XXX The rt_ifp check should be asserted. */
-	if (ro->ro_rt != NULL &&
-	    ((ro->ro_rt->rt_flags & RTF_UP) == 0 ||
-	     ro->ro_rt->rt_ifp == NULL))
-		rtcache_update(ro);
-	KASSERT(ro->ro_rt == NULL || ro->ro_rt->rt_ifp != NULL);
+	return rtcache_check1(ro, 1);
 }
 
 static inline void

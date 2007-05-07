@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_subr.c,v 1.66.2.2 2007/03/24 14:56:17 yamt Exp $	*/
+/*	$NetBSD: lfs_subr.c,v 1.66.2.3 2007/05/07 10:56:17 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.66.2.2 2007/03/24 14:56:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.66.2.3 2007/05/07 10:56:17 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -575,7 +575,9 @@ lfs_segunlock(struct lfs *fs)
 }
 
 /*
- * drain dirops and start writer.
+ * Drain dirops and start writer.
+ *
+ * No simple_locks are held when we enter and none are held when we return.
  */
 int
 lfs_writer_enter(struct lfs *fs, const char *wmesg)
