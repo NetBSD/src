@@ -1,4 +1,4 @@
-/* $NetBSD: gdtoa.h,v 1.6 2006/05/04 18:59:23 christos Exp $ */
+/* $NetBSD: gdtoa.h,v 1.6.4.1 2007/05/07 19:49:07 pavel Exp $ */
 
 /****************************************************************
 
@@ -105,6 +105,10 @@ extern "C" {
 #endif
 
 #define	dtoa		__dtoa
+#define	gdtoa		__gdtoa
+#define	ldtoa		__ldtoa
+#define	hldtoa		__hldtoa
+#define	hdtoa		__hdtoa
 #define	freedtoa	__freedtoa
 #define	strtodg		__strtodg_D2A
 #define	strtopQ		__strtopQ_D2A
@@ -114,6 +118,13 @@ extern "C" {
 
 extern char* dtoa  ANSI((double d, int mode, int ndigits, int *decpt,
 			int *sign, char **rve));
+extern char* hdtoa ANSI((double d, const char *xdigs, int ndigits, int *decpt,
+			int *sign, char **rve));
+extern char* ldtoa ANSI((long double *ld, int mode, int ndigits, int *decpt,
+			int *sign, char **rve));
+extern char* hldtoa ANSI((long double e, const char *xdigs, int ndigits,
+			int *decpt, int *sign, char **rve));
+
 extern char* gdtoa ANSI((FPI *fpi, int be, ULong *bits, int *kindp,
 			int mode, int ndigits, int *decpt, char **rve));
 extern void freedtoa ANSI((char*));

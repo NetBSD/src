@@ -1,4 +1,4 @@
-/*	$NetBSD: isfinitel.c,v 1.1 2003/10/29 20:03:51 kleink Exp $	*/
+/*	$NetBSD: isfinitel.c,v 1.1.16.1 2007/05/07 19:49:07 pavel Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: isfinitel.c,v 1.1 2003/10/29 20:03:51 kleink Exp $");
+__RCSID("$NetBSD: isfinitel.c,v 1.1.16.1 2007/05/07 19:49:07 pavel Exp $");
 #endif
 
 #include <machine/ieee.h>
@@ -56,7 +56,8 @@ __isfinitel(long double x)
 
 	u.extu_ld = x;
 
-	_DIAGASSERT(u.extu_ext.ext_exp == 0 || u.extu_ext.ext_int == 1);
+	_DIAGASSERT(u.extu_ext.ext_exp == 0 ||
+	    (u.extu_ext.ext_frach & 0x80000000));
 
 	if (u.extu_ext.ext_exp == EXT_EXP_INFNAN)
 		return 0;

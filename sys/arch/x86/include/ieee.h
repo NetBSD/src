@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee.h,v 1.9 2005/04/15 22:39:12 kleink Exp $ */
+/*	$NetBSD: ieee.h,v 1.9.32.1 2007/05/07 19:49:10 pavel Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -49,7 +49,14 @@
 #include <sys/ieee754.h>
 
 #define	EXT_EXPBITS	15
-#define	EXT_FRACBITS	64
+#define EXT_FRACHBITS	32
+#define	EXT_FRACLBITS	32
+#define	EXT_FRACBITS	(EXT_FRACLBITS + EXT_FRACHBITS)
+
+#define	EXT_TO_ARRAY32(u, a) do {			\
+	(a)[0] = (uint32_t)(u).extu_ext.ext_fracl;	\
+	(a)[1] = (uint32_t)(u).extu_ext.ext_frach;	\
+} while(/*CONSTCOND*/0)
 
 /*
  * struct ieee_ext is the raw storage layout of the 80-bit
@@ -60,10 +67,12 @@
  *   i386:  16 bits.
  */
 struct ieee_ext {
-	u_int	ext_fracl;
-	u_int	ext_frach:31;
+	u_int	ext_fracl:EXT_FRACLBITS;
+	u_int	ext_frach:EXT_FRACHBITS;
+#if 0
 	u_int	ext_int:1;
-	u_int	ext_exp:15;
+#endif
+	u_int	ext_exp:EXT_EXPBITS;
 	u_int	ext_sign:1;
 };
 

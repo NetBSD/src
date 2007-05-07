@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: scan.l,v 1.35 2006/10/16 13:33:57 he Exp $ */
+/* $NetBSD: scan.l,v 1.35.2.1 2007/05/07 19:49:08 pavel Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: scan.l,v 1.35 2006/10/16 13:33:57 he Exp $");
+__RCSID("$NetBSD: scan.l,v 1.35.2.1 2007/05/07 19:49:08 pavel Exp $");
 #endif
 
 #include <stdlib.h>
@@ -99,6 +99,7 @@ EX	([eE][+-]?[0-9]+)
 0[xX]{HD}+[lLuU]*		return (icon(16));
 {D}+\.{D}*{EX}?[fFlL]?		|
 {D}+{EX}[fFlL]?			|
+0[xX]{HD}+p{HD}+[fFlL]?		|
 \.{D}+{EX}?[fFlL]?		return (fcon());
 "="				return (operator(T_ASSIGN, ASSIGN));
 "*="				return (operator(T_OPASS, MULASS));
@@ -684,8 +685,24 @@ fcon(void)
 
 	errno = 0;
 	d = strtod(cp, &eptr);
-	if (eptr != cp + len)
-		LERROR("fcon()");
+	if (eptr != cp + len) {
+		switch (*eptr) {
+		/*
+		 * XXX: non-native non-current strtod() may not handle hex
+		 * floats, ignore the rest if we find traces of hex float
+		 * syntax...
+		 */
+		case 'p':
+		case 'P':
+		case 'x':
+		case 'X':
+			d = 0;
+			errno = 0;
+			break;
+		default:
+			LERROR("fcon()");
+		}
+	}
 	if (errno != 0)
 		/* floating-point constant out of range */
 		warning(248);

@@ -1,4 +1,4 @@
-/* $NetBSD: gdtoa.c,v 1.1.1.1 2006/01/25 15:18:45 kleink Exp $ */
+/* $NetBSD: gdtoa.c,v 1.1.1.1.4.1 2007/05/07 19:49:06 pavel Exp $ */
 
 /****************************************************************
 
@@ -55,7 +55,7 @@ bitstob(ULong *bits, int nbits, int *bbits)
 		k = 1;
 #endif
 	b = Balloc(k);
-	be = bits + ((nbits - 1) >> kshift);
+	be = bits + (((unsigned int)nbits - 1) >> kshift);
 	x = x0 = b->x;
 	do {
 		*x++ = *bits & ALL_ON;
@@ -154,8 +154,8 @@ gdtoa
 		to hold the suppressed trailing zeros.
 	*/
 
-	int bbits, b2, b5, be0, dig, i, ieps, ilim, ilim0, ilim1, inex;
-	int j, j1, k, k0, k_check, kind, leftright, m2, m5, nbits;
+	int bbits, b2, b5, be0, dig, i, ieps, ilim = 0, ilim0, ilim1 = 0, inex;
+	int j, jj1, k, k0, k_check, kind, leftright, m2, m5, nbits;
 	int rdir, s2, s5, spec_case, try_quick;
 	Long L;
 	Bigint *b, *b1, *delta, *mlo, *mhi, *mhi1, *S;
@@ -247,8 +247,8 @@ gdtoa
 	k_check = 1;
 #ifdef IBM
 	j = be + bbits - 1;
-	if ( (j1 = j & 3) !=0)
-		dval(d) *= 1 << j1;
+	if ( (jj1 = j & 3) !=0)
+		dval(d) *= 1 << jj1;
 	word0(d) += j << Exp_shift - 2 & Exp_mask;
 #else
 	word0(d) += (be + bbits - 1) << Exp_shift;
@@ -294,7 +294,7 @@ gdtoa
 			break;
 		case 2:
 			leftright = 0;
-			/* no break */
+			/*FALLTHROUGH*/
 		case 4:
 			if (ndigits <= 0)
 				ndigits = 1;
@@ -302,7 +302,7 @@ gdtoa
 			break;
 		case 3:
 			leftright = 0;
-			/* no break */
+			/*FALLTHROUGH*/
 		case 5:
 			i = ndigits + k + 1;
 			ilim = i;
@@ -310,7 +310,7 @@ gdtoa
 			if (i <= 0)
 				i = 1;
 		}
-	s = s0 = rv_alloc(i);
+	s = s0 = rv_alloc((size_t)i);
 
 	if ( (rdir = fpi->rounding - 1) !=0) {
 		if (rdir < 0)
@@ -340,14 +340,14 @@ gdtoa
 		ieps = 2; /* conservative */
 		if (k > 0) {
 			ds = tens[k&0xf];
-			j = k >> 4;
+			j = (unsigned int)k >> 4;
 			if (j & Bletch) {
 				/* prevent overflows */
 				j &= Bletch - 1;
 				dval(d) /= bigtens[n_bigtens-1];
 				ieps++;
 				}
-			for(; j; j >>= 1, i++)
+			for(; j; j /= 2, i++)
 				if (j & 1) {
 					ieps++;
 					ds *= bigtens[i];
@@ -355,9 +355,9 @@ gdtoa
 			}
 		else  {
 			ds = 1.;
-			if ( (j1 = -k) !=0) {
-				dval(d) *= tens[j1 & 0xf];
-				for(j = j1 >> 4; j; j >>= 1, i++)
+			if ( (jj1 = -k) !=0) {
+				dval(d) *= tens[jj1 & 0xf];
+				for(j = jj1 >> 4; j; j >>= 1, i++)
 					if (j & 1) {
 						ieps++;
 						dval(d) *= bigtens[i];
@@ -470,7 +470,7 @@ gdtoa
 					goto ret1;
 					}
 				dval(d) += dval(d);
-				if (dval(d) > ds || dval(d) == ds && L & 1) {
+				if (dval(d) > ds || (dval(d) == ds && L & 1)) {
  bump_up:
 					inex = STRTOG_Inexhi;
 					while(*--s == '9')
@@ -628,10 +628,10 @@ gdtoa
 			 */
 			j = cmp(b, mlo);
 			delta = diff(S, mhi);
-			j1 = delta->sign ? 1 : cmp(b, delta);
+			jj1 = delta->sign ? 1 : cmp(b, delta);
 			Bfree(delta);
 #ifndef ROUND_BIASED
-			if (j1 == 0 && !mode && !(bits[0] & 1) && !rdir) {
+			if (jj1 == 0 && !mode && !(bits[0] & 1) && !rdir) {
 				if (dig == '9')
 					goto round_9_up;
 				if (j <= 0) {
@@ -646,11 +646,11 @@ gdtoa
 				goto ret;
 				}
 #endif
-			if (j < 0 || j == 0 && !mode
+			if (j < 0 || (j == 0 && !mode
 #ifndef ROUND_BIASED
 							&& !(bits[0] & 1)
 #endif
-					) {
+					)) {
 				if (rdir && (b->wds > 1 || b->x[0])) {
 					if (rdir == 2) {
 						inex = STRTOG_Inexlo;
@@ -670,10 +670,10 @@ gdtoa
 					inex = STRTOG_Inexhi;
 					goto accept;
 					}
-				if (j1 > 0) {
+				if (jj1 > 0) {
 					b = lshift(b, 1);
-					j1 = cmp(b, S);
-					if ((j1 > 0 || j1 == 0 && dig & 1)
+					jj1 = cmp(b, S);
+					if ((jj1 > 0 || (jj1 == 0 && dig & 1))
 					&& dig++ == '9')
 						goto round_9_up;
 					inex = STRTOG_Inexhi;
@@ -684,7 +684,7 @@ gdtoa
 				*s++ = dig;
 				goto ret;
 				}
-			if (j1 > 0 && rdir != 2) {
+			if (jj1 > 0 && rdir != 2) {
 				if (dig == '9') { /* possible if i == 1 */
  round_9_up:
 					*s++ = '9';
@@ -718,13 +718,13 @@ gdtoa
 	/* Round off last digit */
 
 	if (rdir) {
-		if (rdir == 2 || b->wds <= 1 && !b->x[0])
+		if (rdir == 2 || (b->wds <= 1 && !b->x[0]))
 			goto chopzeros;
 		goto roundoff;
 		}
 	b = lshift(b, 1);
 	j = cmp(b, S);
-	if (j > 0 || j == 0 && dig & 1) {
+	if (j > 0 || (j == 0 && dig & 1)) {
  roundoff:
 		inex = STRTOG_Inexhi;
 		while(*--s == '9')

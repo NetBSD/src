@@ -1,4 +1,4 @@
-/*	$NetBSD: stdio.h,v 1.66 2006/11/22 17:23:24 christos Exp $	*/
+/*	$NetBSD: stdio.h,v 1.66.2.1 2007/05/07 19:49:10 pavel Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -157,7 +157,6 @@ __END_DECLS
 #define	__SOFF	0x1000		/* set iff _offset is in fact correct */
 #define	__SMOD	0x2000		/* true => fgetln modified _p text */
 #define	__SALC	0x4000		/* allocate string space dynamically */
-#define	__SAFE	0x8000		/* don't call signal-unsafe functions */
 
 /*
  * The following three definitions are for ANSI C, which took them
@@ -316,9 +315,7 @@ __END_DECLS
 /*
  * Functions defined in ISO XPG4.2, ISO C99, POSIX 1003.1-2001 or later.
  */
-#if !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) && \
-    !defined(_XOPEN_SOURCE) || \
-    ((__STDC_VERSION__ - 0) >= 199901L) || \
+#if ((__STDC_VERSION__ - 0) >= 199901L) || \
     ((_POSIX_C_SOURCE - 0) >= 200112L) || \
     (defined(_XOPEN_SOURCE) && defined(_XOPEN_SOURCE_EXTENDED)) || \
     ((_XOPEN_SOURCE - 0) >= 500) || \

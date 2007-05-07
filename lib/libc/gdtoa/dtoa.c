@@ -1,4 +1,4 @@
-/* $NetBSD: dtoa.c,v 1.3 2006/02/28 18:51:08 kleink Exp $ */
+/* $NetBSD: dtoa.c,v 1.3.4.1 2007/05/07 19:49:06 pavel Exp $ */
 
 /****************************************************************
 
@@ -317,7 +317,7 @@ dtoa
 			if (i <= 0)
 				i = 1;
 		}
-	s = s0 = rv_alloc(i);
+	s = s0 = rv_alloc((size_t)i);
 
 #ifdef Honor_FLT_ROUNDS
 	if (mode > 1 && rounding != 1)

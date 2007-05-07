@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee.h,v 1.10 2005/12/11 12:19:05 christos Exp $	*/
+/*	$NetBSD: ieee.h,v 1.10.24.1 2007/05/07 19:49:09 pavel Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,13 +55,25 @@
  */
 
 #if defined(__arch64__) || defined(_KERNEL)
+
 #define	EXT_EXPBITS	15
-#define	EXT_FRACBITS	112
+#define EXT_FRACHBITS	16
+#define	EXT_FRACHMBITS	32
+#define	EXT_FRACLMBITS	32
+#define	EXT_FRACLBITS	32
+#define	EXT_FRACBITS	(EXT_FRACLBITS + EXT_FRACLMBITS + EXT_FRACHMBITS + EXT_FRACHBITS)
+
+#define	EXT_TO_ARRAY32(u, a) do {			\
+	(a)[0] = (uint32_t)(u).extu_ext.ext_fracl;	\
+	(a)[1] = (uint32_t)(u).extu_ext.ext_fraclm;	\
+	(a)[2] = (uint32_t)(u).extu_ext.ext_frachm;	\
+	(a)[3] = (uint32_t)(u).extu_ext.ext_frach;	\
+} while(/*CONSTCOND*/0)
 
 struct ieee_ext {
 	u_int	ext_sign:1;
-	u_int	ext_exp:15;
-	u_int	ext_frach:16;
+	u_int	ext_exp:EXT_EXPBITS;
+	u_int	ext_frach:EXT_FRACHBITS;
 	u_int	ext_frachm;
 	u_int	ext_fraclm;
 	u_int	ext_fracl;

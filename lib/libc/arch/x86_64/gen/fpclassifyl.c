@@ -1,4 +1,4 @@
-/*	$NetBSD: fpclassifyl.c,v 1.2 2004/01/18 19:33:01 matt Exp $	*/
+/*	$NetBSD: fpclassifyl.c,v 1.2.16.1 2007/05/07 19:49:08 pavel Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: fpclassifyl.c,v 1.2 2004/01/18 19:33:01 matt Exp $");
+__RCSID("$NetBSD: fpclassifyl.c,v 1.2.16.1 2007/05/07 19:49:08 pavel Exp $");
 #endif
 
 #include <machine/ieee.h>
@@ -56,15 +56,18 @@ __fpclassifyl(long double x)
 
 	u.extu_ld = x;
 
-	_DIAGASSERT(u.extu_ext.ext_exp == 0 || u.extu_ext.ext_int == 1);
+	_DIAGASSERT(u.extu_ext.ext_exp == 0 ||
+	    (u.extu_ext.ext_frach & 0x80000000));
 
 	if (u.extu_ext.ext_exp == 0) {
-		if (u.extu_ext.ext_frach == 0 && u.extu_ext.ext_fracl == 0)
+		if ((u.extu_ext.ext_frach & 0x7fffffff) == 0 &&
+		    u.extu_ext.ext_fracl == 0)
 			return FP_ZERO;
 		else
 			return FP_SUBNORMAL;
 	} else if (u.extu_ext.ext_exp == EXT_EXP_INFNAN) {
-		if (u.extu_ext.ext_frach == 0 && u.extu_ext.ext_fracl == 0)
+		if ((u.extu_ext.ext_frach & 0x7fffffff) == 0 &&
+		    u.extu_ext.ext_fracl == 0)
 			return FP_INFINITE;
 		else
 			return FP_NAN;

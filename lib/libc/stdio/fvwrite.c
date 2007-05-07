@@ -1,4 +1,4 @@
-/*	$NetBSD: fvwrite.c,v 1.16 2006/10/27 19:59:58 christos Exp $	*/
+/*	$NetBSD: fvwrite.c,v 1.16.2.1 2007/05/07 19:49:09 pavel Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)fvwrite.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: fvwrite.c,v 1.16 2006/10/27 19:59:58 christos Exp $");
+__RCSID("$NetBSD: fvwrite.c,v 1.16.2.1 2007/05/07 19:49:09 pavel Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -56,7 +56,6 @@ __RCSID("$NetBSD: fvwrite.c,v 1.16 2006/10/27 19:59:58 christos Exp $");
  * This routine is large and unsightly, but most of the ugliness due
  * to the three different kinds of output buffering is handled here.
  */
-/* NB: async-signal-safe when fp->_flags & __SAFE */
 int
 __sfvwrite(fp, uio)
 	FILE *fp;
