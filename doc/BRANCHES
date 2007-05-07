@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.189 2007/05/06 22:26:44 yamt Exp $
+#	$NetBSD: BRANCHES,v 1.190 2007/05/07 13:05:17 yamt Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -476,7 +476,7 @@ Description:	idle lwp, and some changes depending on it.
 Status:		Active
 Start Date:	Fri Feb 17 2007
 End Date:	
-Base Tag:	yamt-idlelwp-base5
+Base Tag:	yamt-idlelwp-base6
 Maintainer:	YAMAMOTO Takashi <yamt@NetBSD.org>
 Scope:		src/sys  (src/common is tagged but not branched)
 Notes:		
