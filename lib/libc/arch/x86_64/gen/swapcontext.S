@@ -1,4 +1,4 @@
-/*	$NetBSD: swapcontext.S,v 1.3 2004/12/01 01:08:18 ws Exp $	*/
+/*	$NetBSD: swapcontext.S,v 1.3.10.1 2007/05/07 02:48:03 snj Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -38,7 +38,7 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: swapcontext.S,v 1.3 2004/12/01 01:08:18 ws Exp $")
+	RCSID("$NetBSD: swapcontext.S,v 1.3.10.1 2007/05/07 02:48:03 snj Exp $")
 #endif /* LIBC_SCCS && !lint */
 
 /*
@@ -48,28 +48,26 @@
  */
 
 ENTRY(swapcontext)
-	pushq	%r12
-	pushq	%r13
-	movq	%rdi,%r12		/* preserve oucp */
-	movq	%rsi,%r13		/* preserve ucp */
+	pushq	%rdi				/* preserve oucp */
+	pushq	%rsi				/* preserve ucp */
 #ifdef PIC
 	call	PIC_PLT(_C_LABEL(_getcontext))
 #else
 	call	_C_LABEL(_getcontext)
 #endif
+	popq	%rsi
+	popq	%rdi
 	testl	%eax,%eax
 	jnz	2f
-	movq	16(%rsp),%r11
-	movq	%r11,(56 + 21 * 8)(%r12)
-	leaq	24(%rsp),%r11
-	movq	%r11,(56 + 24 * 8)(%r12)
-	movq	%r13,%rdi
+	movq	0(%rsp),%r11
+	movq	%r11,(56 + 21 * 8)(%rdi)
+	leaq	8(%rsp),%r11
+	movq	%r11,(56 + 24 * 8)(%rdi)
+	movq	%rsi,%rdi
 #ifdef PIC
 	call	PIC_PLT(_C_LABEL(setcontext))
 #else
 	call	_C_LABEL(setcontext)
 #endif
 2:
-	popq	%r13
-	popq	%r12
 	ret
