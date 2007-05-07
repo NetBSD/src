@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnodeops.9,v 1.61 2007/03/29 12:06:58 pooka Exp $
+.\"     $NetBSD: vnodeops.9,v 1.62 2007/05/07 21:41:49 pooka Exp $
 .\"
 .\" Copyright (c) 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd March 29, 2007
+.Dd May 8, 2007
 .Dt VNODEOPS 9
 .Os
 .Sh NAME
@@ -764,10 +764,9 @@ are also eliminated.
 If the operation is successful zero is returned, otherwise an
 appropriate error is returned.
 .It Fn VOP_MMAP "vp" "fflags" "cred" "l"
-Map file into user address space.
-The argument
+Inform file system that
 .Fa vp
-is the locked vnode of the file to map into an address space.
+is in the process of being memory mapped.
 The argument
 .Fa fflags
 is a set of flags.
@@ -776,14 +775,16 @@ The argument
 is the caller's credentials and
 .Fa l
 the calling process requesting the map.
-If the operation is successful, zero is returned, otherwise an
-appropriate error code is returned.
+If the file system allows the memory mapping, zero is returned, otherwise
+an appropriate error code is returned.
 .Pp
 Most file systems do not supply a function for
-.Fn VOP_MMAP .
-This function implements the
-.Xr mmap 2
-system call.
+.Fn VOP_MMAP
+and use
+.Fn genfs_mmap
+to default for success.
+Only file systems which do not integrate with the page cache at all
+typically want to disallow memory mapping.
 .It Fn VOP_FSYNC "vp" "cred" "flags" "offlo" "offhi" "l"
 Flush pending data buffers for a file to disk.
 The argument
