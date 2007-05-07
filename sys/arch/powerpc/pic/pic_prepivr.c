@@ -1,4 +1,4 @@
-/* $NetBSD: pic_prepivr.c,v 1.1.2.5 2007/05/04 10:03:28 nisimura Exp $ */
+/* $NetBSD: pic_prepivr.c,v 1.1.2.6 2007/05/07 17:21:43 garbled Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic_prepivr.c,v 1.1.2.5 2007/05/04 10:03:28 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic_prepivr.c,v 1.1.2.6 2007/05/07 17:21:43 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -58,7 +58,7 @@ static void prepivr_enable_irq(struct pic_ops *, int, int);
 static void prepivr_disable_irq(struct pic_ops *, int);
 static int  prepivr_get_irq(struct pic_ops *);
 static void prepivr_ack_irq(struct pic_ops *, int);
-static void prepivr_establish_irq(struct pic_ops *pic, int irq, int type);
+static void prepivr_establish_irq(struct pic_ops *, int, int, int);
 
 struct prepivr_ops {
 	struct pic_ops pic;
@@ -127,7 +127,7 @@ prepivr_initialize(void)
 }
 
 static void
-prepivr_establish_irq(struct pic_ops *pic, int irq, int type)
+prepivr_establish_irq(struct pic_ops *pic, int irq, int type, int maxlevel)
 {
 	u_int8_t elcr[2];
 	int icu, bit;
