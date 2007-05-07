@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.66.14.2 2007/05/03 19:59:02 garbled Exp $	*/
+/*	$NetBSD: machdep.c,v 1.66.14.3 2007/05/07 17:01:11 garbled Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.66.14.2 2007/05/03 19:59:02 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.66.14.3 2007/05/07 17:01:11 garbled Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -625,7 +625,7 @@ init_intr(void)
         if (i != -1)
                 if (platform_quirks[i].quirk & PLAT_QUIRK_ISA_HANDLER &&
                     platform_quirks[i].isa_intr_handler == EXT_INTR_I8259) {
-			panic("notyet");
+			(void)setup_i8259();
                         return;
                 }
 	(void)setup_prepivr();
