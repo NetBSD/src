@@ -1,3 +1,13 @@
+/*	$NetBSD: getport.c,v 1.5.4.1 2007/05/07 17:04:35 pavel Exp $	*/
+
+/*
+ * Copyright (C) 2002-2005 by Darren Reed.
+ * 
+ * See the IPFILTER.LICENCE file for details on licencing.  
+ *   
+ * Id: getport.c,v 1.1.4.6 2006/06/16 17:21:00 darrenr Exp 
+ */     
+
 #include "ipf.h"
 
 int getport(fr, name, port)

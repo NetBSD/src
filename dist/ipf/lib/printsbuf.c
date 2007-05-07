@@ -1,4 +1,12 @@
-/*	$NetBSD: printsbuf.c,v 1.2 2004/11/13 19:16:10 he Exp $	*/
+/*	$NetBSD: printsbuf.c,v 1.2.12.1 2007/05/07 17:04:58 pavel Exp $	*/
+
+/*
+ * Copyright (C) 2002-2004 by Darren Reed.
+ * 
+ * See the IPFILTER.LICENCE file for details on licencing.  
+ *   
+ * Id: printsbuf.c,v 1.2.4.2 2006/06/16 17:21:14 darrenr Exp 
+ */     
 
 #ifdef	IPFILTER_SCAN
 

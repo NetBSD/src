@@ -1,7 +1,7 @@
-/*	$NetBSD: ip_ftp_pxy.c,v 1.10 2006/04/04 16:17:19 martti Exp $	*/
+/*	$NetBSD: ip_ftp_pxy.c,v 1.10.12.1 2007/05/07 17:05:21 pavel Exp $	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ip_ftp_pxy.c,v 1.10 2006/04/04 16:17:19 martti Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ip_ftp_pxy.c,v 1.10.12.1 2007/05/07 17:05:21 pavel Exp $");
 
 /*
  * Copyright (C) 1997-2003 by Darren Reed
@@ -11,7 +11,7 @@ __KERNEL_RCSID(1, "$NetBSD: ip_ftp_pxy.c,v 1.10 2006/04/04 16:17:19 martti Exp $
  * Simple FTP transparent proxy for in-kernel use.  For use with the NAT
  * code.
  *
- * Id: ip_ftp_pxy.c,v 2.88.2.19 2006/04/01 10:14:53 darrenr Exp
+ * Id: ip_ftp_pxy.c,v 2.88.2.21 2007/04/25 08:09:26 darrenr Exp
  */
 
 #define	IPF_FTP_PROXY
@@ -373,7 +373,7 @@ int dlen;
 			}
 			(void) fr_addstate(&fi, NULL, SI_W_DPORT);
 			if (fi.fin_state != NULL)
-				fr_statederef(&fi, (ipstate_t **)&fi.fin_state);
+				fr_statederef((ipstate_t **)&fi.fin_state);
 		}
 		ip->ip_len = slen;
 		ip->ip_src = swip;
@@ -735,7 +735,7 @@ u_int data_ip;
 			}
 			(void) fr_addstate(&fi, NULL, sflags);
 			if (fi.fin_state != NULL)
-				fr_statederef(&fi, (ipstate_t **)&fi.fin_state);
+				fr_statederef((ipstate_t **)&fi.fin_state);
 		}
 
 		ip->ip_len = slen;
@@ -1146,8 +1146,8 @@ int rv;
 				f->ftps_seq[1] = thseq + 1 - seqoff;
 			} else {
 				if (ippr_ftp_debug > 1) {
-					printf("FIN: thseq %x seqoff %d ftps_seq %x\n",
-					       thseq, seqoff, f->ftps_seq[0]);
+					printf("FIN: thseq %x seqoff %d ftps_seq %x %x\n",
+					       thseq, seqoff, f->ftps_seq[0], f->ftps_seq[1]);
 				}
 				return APR_ERR(1);
 			}

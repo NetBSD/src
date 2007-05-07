@@ -1,7 +1,7 @@
-/*	$NetBSD: printhashnode.c,v 1.1.1.1 2004/03/28 08:56:20 martti Exp $	*/
+/*	$NetBSD: printhashnode.c,v 1.1.1.1.18.1 2007/05/07 17:04:54 pavel Exp $	*/
 
 /*
- * Copyright (C) 2002 by Darren Reed.
+ * Copyright (C) 2002-2005 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  */
@@ -47,6 +47,7 @@ int opts;
 		}
 		putchar(';');
 	}
+
 	ipep = ipe.ipe_next;
 	return ipep;
 }

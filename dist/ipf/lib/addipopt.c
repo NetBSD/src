@@ -1,11 +1,11 @@
-/*	$NetBSD: addipopt.c,v 1.1.1.1 2004/03/28 08:56:18 martti Exp $	*/
+/*	$NetBSD: addipopt.c,v 1.1.1.1.18.1 2007/05/07 17:04:29 pavel Exp $	*/
 
 /*
- * Copyright (C) 1993-2001 by Darren Reed.
+ * Copyright (C) 2000-2002 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: addipopt.c,v 1.7 2002/01/28 06:50:45 darrenr Exp
+ * Id: addipopt.c,v 1.7.4.1 2006/06/16 17:20:56 darrenr Exp
  */
 
 #include "ipf.h"
