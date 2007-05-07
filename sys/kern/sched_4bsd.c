@@ -1,4 +1,4 @@
-/*	$NetBSD: sched_4bsd.c,v 1.1.2.29 2007/04/30 16:38:36 rmind Exp $	*/
+/*	$NetBSD: sched_4bsd.c,v 1.1.2.30 2007/05/07 11:03:58 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.1.2.29 2007/04/30 16:38:36 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.1.2.30 2007/05/07 11:03:58 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -600,7 +600,7 @@ sched_schedclock(struct lwp *l)
 }
 
 /*
- * scheduler_fork_hook:
+ * sched_proc_fork:
  *
  *	Inherit the parent's scheduler history.
  */
@@ -615,7 +615,7 @@ sched_proc_fork(struct proc *parent, struct proc *child)
 }
 
 /*
- * scheduler_wait_hook:
+ * sched_proc_exit:
  *
  *	Chargeback parents for the sins of their children.
  */
