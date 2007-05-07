@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs_vfsops.c,v 1.15 2007/04/16 13:25:09 pooka Exp $	*/
+/*	$NetBSD: dtfs_vfsops.c,v 1.16 2007/05/07 17:22:50 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -36,6 +36,7 @@
 #include <errno.h>
 #include <puffs.h>
 #include <string.h>
+#include <stdlib.h>
 #include <unistd.h>
 #include <util.h>
 
@@ -214,4 +215,11 @@ dtfs_fs_suspend(struct puffs_cc *pcc, int status)
 	printf("suspend status %d\n", status);
 	if (status == 1)
 		sleep(3);
+}
+
+int
+dtfs_fs_unmount(struct puffs_cc *pcc, int flags, pid_t pid)
+{
+
+	return 0;
 }
