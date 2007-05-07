@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_12.c,v 1.21.2.2 2007/03/24 14:55:13 yamt Exp $	*/
+/*	$NetBSD: netbsd32_compat_12.c,v 1.21.2.3 2007/05/07 10:55:15 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_12.c,v 1.21.2.2 2007/03/24 14:55:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_12.c,v 1.21.2.3 2007/05/07 10:55:15 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -138,7 +138,6 @@ compat_12_netbsd32_stat12(l, v, retval)
 	void *v;
 	register_t *retval;
 {
-	struct proc *p = l->l_proc;
 	struct compat_12_netbsd32_stat12_args /* {
 		syscallarg(const netbsd32_charp) path;
 		syscallarg(netbsd32_stat12p_t) ub;
@@ -147,13 +146,10 @@ compat_12_netbsd32_stat12(l, v, retval)
 	struct stat12 sb12;
 	struct stat12 *sp12 = &sb12;
 	struct compat_12_sys_stat_args ua;
-	void *sg;
 	int rv;
 
 	NETBSD32TOP_UAP(path, const char);
 	SCARG(&ua, ub) = &sb12;
-	sg = stackgap_init(p, 0);
-	CHECK_ALT_EXIST(l, &sg, SCARG(&ua, path));
 
 	rv = compat_12_sys_stat(l, &ua, retval);
 	if (rv)
@@ -199,7 +195,6 @@ compat_12_netbsd32_lstat12(l, v, retval)
 	void *v;
 	register_t *retval;
 {
-	struct proc *p = l->l_proc;
 	struct compat_12_netbsd32_lstat12_args /* {
 		syscallarg(const netbsd32_charp) path;
 		syscallarg(netbsd32_stat12p_t) ub;
@@ -208,13 +203,10 @@ compat_12_netbsd32_lstat12(l, v, retval)
 	struct stat12 sb12;
 	struct stat12 *sp12 = &sb12;
 	struct compat_12_sys_lstat_args ua;
-	void *sg;
 	int rv;
 
 	NETBSD32TOP_UAP(path, const char);
 	SCARG(&ua, ub) = &sb12;
-	sg = stackgap_init(p, 0);
-	CHECK_ALT_EXIST(l, &sg, SCARG(&ua, path));
 
 	rv = compat_12_sys_lstat(l, &ua, retval);
 	if (rv)

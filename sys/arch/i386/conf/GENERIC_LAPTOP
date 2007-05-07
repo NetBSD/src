@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_LAPTOP,v 1.220.2.3 2007/04/15 16:02:46 yamt Exp $
+#	$NetBSD: GENERIC_LAPTOP,v 1.220.2.4 2007/05/07 10:54:56 yamt Exp $
 #	From: NetBSD: GENERIC,v 1.414 2001/07/30 19:59:05 ad Exp
 #
 #	GENERIC_LAPTOP -- GENERIC with cardbus and some USB devices enabled
@@ -8,7 +8,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.220.2.3 $"
+#ident 		"GENERIC-$Revision: 1.220.2.4 $"
 
 maxusers	32		# estimated number of users
 
@@ -512,6 +512,9 @@ iic*	at piixpm?			# SMBus on PIIX4
 # LM7[89] and compatible hardware monitors
 #lm0	at isa?	port 0x290		# other common: 0x280, 0x310
 
+# Abit uGuru Hardware system monitor
+#ug0    at isa? port 0xe0
+
 # VIA VT82C686A/VT8231 Hardware Monitor and Power Management Timer
 #viaenv*	at pci? dev ? function ?
 
@@ -582,6 +585,7 @@ wdc1	at isa? port 0x170 irq 15 flags 0x00
 
 # ATA (IDE) bus support
 atabus* at ata?
+options	ATADEBUG
 
 # IDE drives
 # Flags are used only with controllers that support DMA operations
@@ -805,6 +809,17 @@ ucom*	at ugensa?
 # Toshiba Oboe
 oboe* 	at pci? dev ? function ?
 irframe* at oboe?
+
+
+# PCI IEEE1394 controllers
+#fwohci*	at pci? dev ? function ?	# IEEE1394 Open Host Controller
+
+# CardBus IEEE1394 controllers
+#fwohci*	at cardbus? function ?	# IEEE1394 Open Host Controller
+
+#ieee1394if* at fwohci?
+#fwip*	at ieee1394if?			# IP over IEEE1394
+#sbp*	at ieee1394if? euihi ? euilo ?	# SCSI over IEEE1394
 
 
 # Audio Devices

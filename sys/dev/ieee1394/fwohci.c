@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.105.2.1 2007/03/12 05:54:46 rmind Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.105.2.2 2007/05/07 10:55:28 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
@@ -33,7 +33,7 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  *
- * $FreeBSD: /repoman/r/ncvs/src/sys/dev/firewire/fwohci.c,v 1.81 2005/03/29 01:44:59 sam Exp $
+ * $FreeBSD: /repoman/r/ncvs/src/sys/dev/firewire/fwohci.c,v 1.86 2007/03/19 03:35:45 simokawa Exp $
  *
  */
 
@@ -58,7 +58,7 @@
 #include <sys/ktr.h>
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.105.2.1 2007/03/12 05:54:46 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.105.2.2 2007/05/07 10:55:28 yamt Exp $");
 
 #if defined(__DragonFly__) || __FreeBSD_version < 500000
 #include <machine/clock.h>		/* for DELAY() */
@@ -506,6 +506,8 @@ fwohci_probe_phy(struct fwohci_softc *sc, device_t dev)
  *    It is not actually available port on your PC .
  */
 	OWRITE(sc, OHCI_HCCCTL, OHCI_HCC_LPS);
+	DELAY(500);
+
 	reg = fwphy_rddata(sc, FW_PHY_SPD_REG);
 
 	if((reg >> 5) != 7 ){

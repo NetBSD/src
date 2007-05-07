@@ -1,4 +1,4 @@
-/*      $NetBSD: if_etherip.h,v 1.2 2006/12/15 21:18:52 joerg Exp $        */
+/*      $NetBSD: if_etherip.h,v 1.2.6.1 2007/05/07 10:55:53 yamt Exp $        */
 
 /*
  *  Copyright (c) 2006, Hans Rosenfeld <rosenfeld@grumpf.hope-2000.org>
@@ -52,9 +52,6 @@ struct etherip_softc {
 #ifdef INET
                 struct route     scr_ro;        /* cached inet route          */
 #endif
-#ifdef INET6
-                struct route_in6 scr_ro6;       /* cached inet6 route         */
-#endif
         } sc_scr;
 #ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
         void *sc_si;                            /* softintr handle            */
@@ -62,7 +59,6 @@ struct etherip_softc {
         LIST_ENTRY(etherip_softc) etherip_list; /* list of etherip tunnels    */
 };
 #define sc_ro  sc_scr.scr_ro
-#define sc_ro6 sc_scr.scr_ro6
 
 struct etherip_header {
         u_int8_t eip_ver;       /* version/reserved */

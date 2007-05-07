@@ -1,4 +1,4 @@
-/* $NetBSD: if_admsw.c,v 1.1.2.2 2007/03/24 14:54:52 yamt Exp $ */
+/* $NetBSD: if_admsw.c,v 1.1.2.3 2007/05/07 10:55:00 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_admsw.c,v 1.1.2.2 2007/03/24 14:54:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_admsw.c,v 1.1.2.3 2007/05/07 10:55:00 yamt Exp $");
 
 #include "bpfilter.h"
 
@@ -325,7 +325,6 @@ admsw_reset(struct admsw_softc *sc)
 		while (!(REG_READ(MAC_WT0_REG) & MAC_WT0_WRITE_DONE));
 	}
 	wdog1 = REG_READ(ADM5120_WDOG1);
-	printf("%s: reg[ADM5120_WDOG1] = 0x%08" PRIx32 "\n", __func__, wdog1);
 	REG_WRITE(ADM5120_WDOG1, wdog1 & ~ADM5120_WDOG1_WDE);
 }
 
@@ -807,9 +806,8 @@ admsw_intr(void *arg)
 	char buf[64];
 
 	pending = REG_READ(ADMSW_INT_ST);
-	/* printf("admsw_intr: %x\n",pending); */
 
-	if ((pending & ~(ADMSW_INTR_RHD|ADMSW_INTR_RLD|ADMSW_INTR_SHD|ADMSW_INTR_SLD)) != 0) {
+	if ((pending & ~(ADMSW_INTR_RHD|ADMSW_INTR_RLD|ADMSW_INTR_SHD|ADMSW_INTR_SLD|ADMSW_INTR_W1TE|ADMSW_INTR_W0TE)) != 0) {
 		printf("%s: pending=%s\n", __func__,
 		    bitmask_snprintf(pending, ADMSW_INT_FMT, buf, sizeof(buf)));
 	}

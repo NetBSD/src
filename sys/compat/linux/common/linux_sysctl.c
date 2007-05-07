@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sysctl.c,v 1.25.2.1 2007/03/24 14:55:09 yamt Exp $	*/
+/*	$NetBSD: linux_sysctl.c,v 1.25.2.2 2007/05/07 10:55:13 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sysctl.c,v 1.25.2.1 2007/03/24 14:55:09 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sysctl.c,v 1.25.2.2 2007/05/07 10:55:13 yamt Exp $");
 
 #if defined (_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -64,6 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_sysctl.c,v 1.25.2.1 2007/03/24 14:55:09 yamt E
 #include <compat/linux/linux_syscallargs.h>
 #include <compat/linux/common/linux_sysctl.h>
 #include <compat/linux/common/linux_exec.h>
+#include <compat/linux/common/linux_machdep.h>
 
 char linux_sysname[128] = "Linux";
 #if defined(__amd64__) || defined(__i386__) || defined(__powerpc__)
@@ -115,6 +116,7 @@ SYSCTL_SETUP(linux_sysctl_setup, "linux emulated sysctl subtree setup")
 		       NULL, 0, linux_version, sizeof(linux_version),
 		       LINUX_KERN_VERSION, CTL_EOL);
 
+#if 0
 #ifndef LINUX_UNAME_ARCH
 #define LINUX_UNAME_ARCH machine
 #endif
@@ -124,6 +126,7 @@ SYSCTL_SETUP(linux_sysctl_setup, "linux emulated sysctl subtree setup")
 		       CTLTYPE_STRING, "machine", NULL,
 		       NULL, 0, linux_machine, sizeof(linux_machine),
 		       LINUX_KERN_VERSION, CTL_EOL);
+#endif
 
 	linux_sysctl_root.sysctl_flags &= ~CTLFLAG_READWRITE;
 }

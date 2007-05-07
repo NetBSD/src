@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.h,v 1.82.10.2 2007/03/12 06:00:54 rmind Exp $	*/
+/*	$NetBSD: socket.h,v 1.82.10.3 2007/05/07 10:56:14 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -536,6 +536,16 @@ struct cmsghdr {
 __BEGIN_DECLS
 int	__cmsg_alignbytes(void);
 __END_DECLS
+
+#ifdef	_KERNEL
+__BEGIN_DECLS
+struct sockaddr *sockaddr_copy(struct sockaddr *, const struct sockaddr *);
+struct sockaddr *sockaddr_alloc(sa_family_t, int);
+int sockaddr_cmp(const struct sockaddr *, const struct sockaddr *);
+struct sockaddr *sockaddr_dup(const struct sockaddr *, int);
+void sockaddr_free(struct sockaddr *);
+__END_DECLS
+#endif /* _KERNEL */
 
 #ifndef	_KERNEL
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.c,v 1.91.2.2 2007/03/12 05:52:26 rmind Exp $	*/
+/*	$NetBSD: linux_exec.c,v 1.91.2.3 2007/05/07 10:55:12 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995, 1998, 2000, 2007 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec.c,v 1.91.2.2 2007/03/12 05:52:26 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec.c,v 1.91.2.3 2007/05/07 10:55:12 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,12 +103,7 @@ linux_sys_execve(l, v, retval)
 		syscallarg(char **) argv;
 		syscallarg(char **) envp;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	struct sys_execve_args ap;
-	void *sg;
-
-	sg = stackgap_init(p, 0);
-	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
 	SCARG(&ap, path) = SCARG(uap, path);
 	SCARG(&ap, argp) = SCARG(uap, argp);

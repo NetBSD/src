@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.143.2.2 2007/03/12 05:59:39 rmind Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.143.2.3 2007/05/07 10:56:01 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -471,16 +471,7 @@ union syn_cache_sa {
 struct syn_cache {
 	TAILQ_ENTRY(syn_cache) sc_bucketq;	/* link on bucket list */
 	struct callout sc_timer;		/* rexmt timer */
-	union {					/* cached route */
-		struct route route4;
-#ifdef INET6
-		struct route_in6 route6;
-#endif
-	} sc_route_u;
-#define sc_route4	sc_route_u.route4
-#ifdef INET6
-#define sc_route6	sc_route_u.route6
-#endif
+	struct route sc_route;
 	long sc_win;				/* advertised window */
 	int sc_bucketidx;			/* our bucket index */
 	u_int32_t sc_hash;

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.106.2.3 2007/03/24 14:56:02 yamt Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.106.2.4 2007/05/07 10:55:46 yamt Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991, 1993
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.106.2.3 2007/03/24 14:56:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.106.2.4 2007/05/07 10:55:46 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -356,6 +356,7 @@ malloc(unsigned long size, struct malloc_type *ksp, int flags)
 	copysize = 1 << indx < MAX_COPY ? 1 << indx : MAX_COPY;
 #endif
 	if (kbp->kb_next == NULL) {
+		int s;
 		kbp->kb_last = NULL;
 		if (size > MAXALLOCSAVE)
 			allocsize = round_page(size);
@@ -363,11 +364,13 @@ malloc(unsigned long size, struct malloc_type *ksp, int flags)
 			allocsize = 1 << indx;
 		npg = btoc(allocsize);
 		mutex_exit(&malloc_lock);
+		s = splvm();
 		va = (void *) uvm_km_alloc(kmem_map,
 		    (vsize_t)ctob(npg), 0,
 		    ((flags & M_NOWAIT) ? UVM_KMF_NOWAIT : 0) |
 		    ((flags & M_CANFAIL) ? UVM_KMF_CANFAIL : 0) |
 		    UVM_KMF_WIRED);
+		splx(s);
 		if (__predict_false(va == NULL)) {
 			/*
 			 * Kmem_malloc() can return NULL, even if it can

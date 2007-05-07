@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.210.2.3 2007/03/24 14:56:11 yamt Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.210.2.4 2007/05/07 10:56:00 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.210.2.3 2007/03/24 14:56:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.210.2.4 2007/05/07 10:56:00 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -906,8 +906,7 @@ tcp_respond(struct tcpcb *tp, struct mbuf *template, struct mbuf *m,
 #endif
 #ifdef INET6
 	case AF_INET6:
-		error = ip6_output(m, NULL, (struct route_in6 *)ro, 0,
-		    (struct ip6_moptions *)0, so, NULL);
+		error = ip6_output(m, NULL, ro, 0, NULL, so, NULL);
 		break;
 #endif
 	default:

@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_fat.c,v 1.12.4.1 2007/03/12 05:58:11 rmind Exp $	*/
+/*	$NetBSD: msdosfs_fat.c,v 1.12.4.2 2007/05/07 10:55:41 yamt Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_fat.c,v 1.12.4.1 2007/03/12 05:58:11 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_fat.c,v 1.12.4.2 2007/05/07 10:55:41 yamt Exp $");
 
 /*
  * kernel include files.
@@ -426,7 +426,7 @@ updatefats(pmp, bp, fatbn)
 		 * other fats and then writing them back out.  This could tie up
 		 * the fat for quite a while. Preventing others from accessing it.
 		 * To prevent us from going after the fat quite so much we use
-		 * delayed writes, unless they specfied "synchronous" when the
+		 * delayed writes, unless they specified "synchronous" when the
 		 * filesystem was mounted.  If synch is asked for then use
 		 * bwrite()'s and really slow things down.
 		 */

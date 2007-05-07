@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_machdep.c,v 1.19.26.1 2007/03/12 05:50:08 rmind Exp $ */
+/*	$NetBSD: darwin_machdep.c,v 1.19.26.2 2007/05/07 10:55:00 yamt Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_machdep.c,v 1.19.26.1 2007/03/12 05:50:08 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_machdep.c,v 1.19.26.2 2007/05/07 10:55:00 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,15 +90,15 @@ darwin_sendsig(ksi, mask)
 
 	/* Use an alternate signal stack? */
 	onstack =
-	    (p->p_sigctx.ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
+	    (l->l_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
 	    (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
 
 	/* Set the new stack pointer sfp */
 	if (onstack) {
 		sfp = (struct darwin_sigframe *)
-		    ((void *)p->p_sigctx.ps_sigstk.ss_sp +
-		    p->p_sigctx.ps_sigstk.ss_size);
-		stack_size = p->p_sigctx.ps_sigstk.ss_size;
+		    ((char *)l->l_sigstk.ss_sp +
+		    l->l_sigstk.ss_size);
+		stack_size = l->l_sigstk.ss_size;
 	} else {
 		sfp = (struct darwin_sigframe *)tf->fixreg[1];
 		stack_size = 0;
@@ -177,7 +177,7 @@ darwin_sendsig(ksi, mask)
 
 	/* Remember that we're now on the signal stack. */
 	if (onstack)
-		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
+		l->l_sigstk.ss_flags |= SS_ONSTACK;
 
 	return;
 }
@@ -195,7 +195,6 @@ darwin_sys_sigreturn_x2(struct lwp *l, void *v, register_t *retval)
 	struct darwin_sys_sigreturn_x2_args /* {
 		syscallarg(struct darwin_ucontext *) uctx;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	struct darwin_ucontext uctx;
 	struct darwin_mcontext mctx;
 	struct trapframe *tf;
@@ -242,13 +241,13 @@ darwin_sys_sigreturn_x2(struct lwp *l, void *v, register_t *retval)
 
 	/* Restore signal stack */
 	if (uctx.uc_onstack & SS_ONSTACK)
-		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
+		l->l_sigstk.ss_flags |= SS_ONSTACK;
 	else
-		p->p_sigctx.ps_sigstk.ss_flags &= ~SS_ONSTACK;
+		l->l_sigstk.ss_flags &= ~SS_ONSTACK;
 
 	/* Restore signal mask */
 	native_sigset13_to_sigset(&uctx.uc_sigmask, &mask);
-	(void)sigprocmask1(p, SIG_SETMASK, &mask, 0);
+	(void)sigprocmask1(l, SIG_SETMASK, &mask, 0);
 
 	return (EJUSTRETURN);
 }

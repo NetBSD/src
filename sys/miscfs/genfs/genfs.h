@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs.h,v 1.20 2005/12/11 12:24:50 christos Exp $	*/
+/*	$NetBSD: genfs.h,v 1.20.26.1 2007/05/07 10:55:52 yamt Exp $	*/
 
 int	genfs_badop(void *);
 int	genfs_nullop(void *);
@@ -26,3 +26,5 @@ int	genfs_getpages(void *);
 int	genfs_putpages(void *);
 int	genfs_null_putpages(void *);
 int	genfs_compat_getpages(void *);
+
+int	genfs_do_putpages(struct vnode *, off_t, off_t, int, struct vm_page **);

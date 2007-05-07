@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_output.c,v 1.31.2.1 2007/03/12 06:00:32 rmind Exp $	*/
+/*	$NetBSD: tp_output.c,v 1.31.2.2 2007/05/07 10:56:10 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -62,7 +62,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_output.c,v 1.31.2.1 2007/03/12 06:00:32 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_output.c,v 1.31.2.2 2007/05/07 10:56:10 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -104,7 +104,7 @@ __KERNEL_RCSID(0, "$NetBSD: tp_output.c,v 1.31.2.1 2007/03/12 06:00:32 rmind Exp
  *	using the parameters passed in via (param).
  *	(cmd) may be TP_STRICT or TP_FORCE or both.
  *  Force means it will set all the values in (tpcb) to those in
- *  the input arguements iff no errors were encountered.
+ *  the input arguments iff no errors were encountered.
  *  Strict means that no inconsistency will be tolerated.  If it's
  *  not used, checksum and tpdusize inconsistencies will be tolerated.
  *  The reason for this is that in some cases, when we're negotiating down

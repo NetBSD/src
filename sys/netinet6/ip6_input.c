@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.94.2.3 2007/03/24 14:56:12 yamt Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.94.2.4 2007/05/07 10:56:04 yamt Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.94.2.3 2007/03/24 14:56:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.94.2.4 2007/05/07 10:56:04 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -237,18 +237,23 @@ ip6intr()
 	}
 }
 
-extern struct	route_in6 ip6_forward_rt;
+extern struct	route ip6_forward_rt;
 
 void
 ip6_input(struct mbuf *m)
 {
 	struct ip6_hdr *ip6;
-	int off = sizeof(struct ip6_hdr), nest;
+	int hit, off = sizeof(struct ip6_hdr), nest;
 	u_int32_t plen;
 	u_int32_t rtalert = ~0;
-	int nxt, ours = 0;
+	int nxt, ours = 0, rh_present = 0;
 	struct ifnet *deliverifp = NULL;
 	int srcrt = 0;
+	const struct rtentry *rt;
+	union {
+		struct sockaddr		dst;
+		struct sockaddr_in6	dst6;
+	} u;
 #ifdef FAST_IPSEC
 	struct m_tag *mtag;
 	struct tdb_ident *tdbi;
@@ -474,30 +479,16 @@ ip6_input(struct mbuf *m)
 		goto hbhcheck;
 	}
 
+	sockaddr_in6_init(&u.dst6, &ip6->ip6_dst, 0, 0, 0);
+
 	/*
 	 *  Unicast check
 	 */
-	if (!IN6_ARE_ADDR_EQUAL(&ip6->ip6_dst,
-	    &((const struct sockaddr_in6 *)rtcache_getdst((const struct route *)&ip6_forward_rt))->sin6_addr))
-		rtcache_free((struct route *)&ip6_forward_rt);
-	else
-		rtcache_check((struct route *)&ip6_forward_rt);
-	if (ip6_forward_rt.ro_rt != NULL) {
-		/* XXX Revalidated route is accounted wrongly. */
+	rt = rtcache_lookup2(&ip6_forward_rt, &u.dst, 1, &hit);
+	if (hit)
 		ip6stat.ip6s_forward_cachehit++;
-	} else {
-		struct sockaddr_in6 *dst6;
-
+	else
 		ip6stat.ip6s_forward_cachemiss++;
-
-		dst6 = &ip6_forward_rt.ro_dst;
-		memset(dst6, 0, sizeof(*dst6));
-		dst6->sin6_len = sizeof(struct sockaddr_in6);
-		dst6->sin6_family = AF_INET6;
-		dst6->sin6_addr = ip6->ip6_dst;
-
-		rtcache_init((struct route *)&ip6_forward_rt);
-	}
 
 #define rt6_key(r) ((struct sockaddr_in6 *)((r)->rt_nodes->rn_key))
 
@@ -510,22 +501,19 @@ ip6_input(struct mbuf *m)
 	 * But we think it's even useful in some situations, e.g. when using
 	 * a special daemon which wants to intercept the packet.
 	 */
-	if (ip6_forward_rt.ro_rt != NULL &&
-	    (ip6_forward_rt.ro_rt->rt_flags &
-	     (RTF_HOST|RTF_GATEWAY)) == RTF_HOST &&
-	    !(ip6_forward_rt.ro_rt->rt_flags & RTF_CLONED) &&
+	if (rt != NULL &&
+	    (rt->rt_flags & (RTF_HOST|RTF_GATEWAY)) == RTF_HOST &&
+	    !(rt->rt_flags & RTF_CLONED) &&
 #if 0
 	    /*
 	     * The check below is redundant since the comparison of
 	     * the destination and the key of the rtentry has
 	     * already done through looking up the routing table.
 	     */
-	    IN6_ARE_ADDR_EQUAL(&ip6->ip6_dst,
-	    &rt6_key(ip6_forward_rt.ro_rt)->sin6_addr) &&
+	    IN6_ARE_ADDR_EQUAL(&ip6->ip6_dst, &rt6_key(rt)->sin6_addr) &&
 #endif
-	    ip6_forward_rt.ro_rt->rt_ifp->if_type == IFT_LOOP) {
-		struct in6_ifaddr *ia6 =
-			(struct in6_ifaddr *)ip6_forward_rt.ro_rt->rt_ifa;
+	    rt->rt_ifp->if_type == IFT_LOOP) {
+		struct in6_ifaddr *ia6 = (struct in6_ifaddr *)rt->rt_ifa;
 		if (ia6->ia6_flags & IN6_IFF_ANYCAST)
 			m->m_flags |= M_ANYCAST6;
 		/*
@@ -553,12 +541,11 @@ ip6_input(struct mbuf *m)
 	 */
 #if defined(NFAITH) && 0 < NFAITH
 	if (ip6_keepfaith) {
-		if (ip6_forward_rt.ro_rt != NULL &&
-		    ip6_forward_rt.ro_rt->rt_ifp != NULL &&
-		    ip6_forward_rt.ro_rt->rt_ifp->if_type == IFT_FAITH) {
+		if (rt != NULL && rt->rt_ifp != NULL &&
+		    rt->rt_ifp->if_type == IFT_FAITH) {
 			/* XXX do we need more sanity checks? */
 			ours = 1;
-			deliverifp = ip6_forward_rt.ro_rt->rt_ifp; /* faith */
+			deliverifp = rt->rt_ifp; /* faith */
 			goto hbhcheck;
 		}
 	}
@@ -752,9 +739,11 @@ ip6_input(struct mbuf *m)
 	in6_ifstat_inc(deliverifp, ifs6_in_deliver);
 	nest = 0;
 
+	rh_present = 0;
 	while (nxt != IPPROTO_DONE) {
 		if (ip6_hdrnestlimit && (++nest > ip6_hdrnestlimit)) {
 			ip6stat.ip6s_toomanyhdr++;
+			in6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_hdrerr);
 			goto bad;
 		}
 
@@ -766,6 +755,15 @@ ip6_input(struct mbuf *m)
 			ip6stat.ip6s_tooshort++;
 			in6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_truncated);
 			goto bad;
+		}
+
+		if (nxt == IPPROTO_ROUTING) {
+			if (rh_present++) {
+				in6_ifstat_inc(m->m_pkthdr.rcvif,
+				    ifs6_in_hdrerr);
+				ip6stat.ip6s_badoptions++;
+				goto bad;
+			}
 		}
 
 #ifdef IPSEC
@@ -1656,6 +1654,31 @@ sysctl_net_inet6_ip6_hashsize(SYSCTLFN_ARGS)
 }
 #endif /* GATEWAY */
 
+static int
+sysctl_net_inet6_ip6_rht0(SYSCTLFN_ARGS)
+{  
+	int error, tmp;
+	struct sysctlnode node;
+
+	node = *rnode;
+	tmp = ip6_rht0;
+	node.sysctl_data = &tmp;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		return error;
+
+	switch (tmp) {
+	case -1:	/* disable processing */
+	case 0:		/* disable for host, enable for router */
+	case 1:		/* enable for all */
+		break;
+	default:
+		return EINVAL;
+	}
+	ip6_rht0 = tmp;
+	return 0;
+}
+
 /*
  * System control for IP6
  */
@@ -1955,4 +1978,11 @@ SYSCTL_SETUP(sysctl_net_inet6_ip6_setup, "sysctl net.inet6.ip6 subtree setup")
 			CTL_NET, PF_INET6, IPPROTO_IPV6,
 			CTL_CREATE, CTL_EOL);
 #endif
+	sysctl_createv(clog, 0, NULL, NULL,
+			CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+			CTLTYPE_INT, "rht0",
+			SYSCTL_DESCR("Processing of routing header type 0 (IPv6)"),
+			sysctl_net_inet6_ip6_rht0, 0, &ip6_rht0, 0,
+			CTL_NET, PF_INET6, IPPROTO_IPV6,
+			CTL_CREATE, CTL_EOL);
 }

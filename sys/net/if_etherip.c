@@ -1,4 +1,4 @@
-/*      $NetBSD: if_etherip.c,v 1.4.6.1 2007/03/12 05:59:10 rmind Exp $        */
+/*      $NetBSD: if_etherip.c,v 1.4.6.2 2007/05/07 10:55:53 yamt Exp $        */
 
 /*
  *  Copyright (c) 2006, Hans Rosenfeld <rosenfeld@grumpf.hope-2000.org>
@@ -321,6 +321,7 @@ etherip_detach(struct device* self, int flags)
 	etherip_delete_tunnel(ifp);
 	ether_ifdetach(ifp);
 	if_detach(ifp);
+	rtcache_free(&sc->sc_ro);
 	ifmedia_delete_instance(&sc->sc_im, IFM_INST_ANY);
 
 	return 0;
