@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs.c,v 1.21 2007/04/22 18:03:18 pooka Exp $	*/
+/*	$NetBSD: dtfs.c,v 1.22 2007/05/07 17:18:50 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -75,6 +75,7 @@ dosuspend(int v)
 {
 
 	puffs_fs_suspend(pu);
+	puffs_fs_suspend(pu);
 }
 
 int
@@ -92,9 +93,10 @@ main(int argc, char *argv[])
 
 	setprogname(argv[0]);
 
-	pflags = lflags = mntflags = 0;
+	lflags = mntflags = 0;
 	khashbuckets = 256;
-	while ((ch = getopt(argc, argv, "bc:do:s")) != -1) {
+	pflags = PUFFS_KFLAG_IAONDEMAND;
+	while ((ch = getopt(argc, argv, "bc:dio:s")) != -1) {
 		switch (ch) {
 		case 'b': /* build paths, for debugging the feature */
 			pflags |= PUFFS_FLAG_BUILDPATH;
@@ -104,6 +106,9 @@ main(int argc, char *argv[])
 			break;
 		case 'd':
 			dynamicfh = 1;
+			break;
+		case 'i':
+			pflags &= ~PUFFS_KFLAG_IAONDEMAND;
 			break;
 		case 'o':
 			mp = getmntopts(optarg, puffsmopts, &mntflags, &pflags);
