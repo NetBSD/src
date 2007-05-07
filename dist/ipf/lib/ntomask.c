@@ -1,4 +1,12 @@
-/*	$NetBSD: ntomask.c,v 1.1.1.1 2004/03/28 08:56:19 martti Exp $	*/
+/*	$NetBSD: ntomask.c,v 1.1.1.1.18.1 2007/05/07 17:04:48 pavel Exp $	*/
+
+/*
+ * Copyright (C) 2002-2005 by Darren Reed.
+ * 
+ * See the IPFILTER.LICENCE file for details on licencing.  
+ *   
+ * Id: ntomask.c,v 1.6.2.1 2006/06/16 17:21:07 darrenr Exp 
+ */     
 
 #include "ipf.h"
 
