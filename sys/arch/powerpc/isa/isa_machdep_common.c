@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep_common.c,v 1.1.2.1 2007/05/03 20:33:20 garbled Exp $	*/
+/*	$NetBSD: isa_machdep_common.c,v 1.1.2.2 2007/05/07 18:11:40 garbled Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep_common.c,v 1.1.2.1 2007/05/03 20:33:20 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep_common.c,v 1.1.2.2 2007/05/07 18:11:40 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,7 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: isa_machdep_common.c,v 1.1.2.1 2007/05/03 20:33:20 g
 #define	IO_ELCR2	0x4d1
 
 const struct evcnt *
-isa_intr_evcnt(isa_chipset_tag_t ic, int irq)
+genppc_isa_intr_evcnt(isa_chipset_tag_t ic, int irq)
 {
 
 	/* XXX for now, no evcnt parent reported */
@@ -65,7 +65,7 @@ isa_intr_evcnt(isa_chipset_tag_t ic, int irq)
  * Set up an interrupt handler to start being called.
  */
 void *
-isa_intr_establish(isa_chipset_tag_t ic, int irq, int type, int level,
+genppc_isa_intr_establish(isa_chipset_tag_t ic, int irq, int type, int level,
     int (*ih_fun)(void *), void *ih_arg)
 {
 
@@ -76,14 +76,14 @@ isa_intr_establish(isa_chipset_tag_t ic, int irq, int type, int level,
  * Deregister an interrupt handler.
  */
 void
-isa_intr_disestablish(isa_chipset_tag_t ic, void *arg)
+genppc_isa_intr_disestablish(isa_chipset_tag_t ic, void *arg)
 {
 
 	intr_disestablish(arg);
 }
 
 void
-isa_attach_hook(struct device *parent, struct device *self,
+genppc_isa_attach_hook(struct device *parent, struct device *self,
     struct isabus_attach_args *iba)
 {
 
