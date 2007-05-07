@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.129 2007/05/07 02:58:31 snj Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.130 2007/05/07 03:22:10 snj Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -2932,4 +2932,11 @@ share/mk/sys.mk					1.91-1.92
 	Make vax default to -O1 -fgcse -fstrength-reduce -fgcse-after-reload.
 	We can build again.  This addresses PR#34783.
 	[mhitch, ticket #606]
+
+sys/dev/ic/sgec.c				1.29
+
+	Improve the transmit logic.  Use bus_dma_load_mbuf on the entire
+	mbuf and load each segment.  in transmit interrupt service, take
+	advatnage on know how many segments/descriptors are in each packet.
+	[mhitch, ticket #608]
 
