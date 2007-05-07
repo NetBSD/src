@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.175 2007/04/30 20:11:41 dsl Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.176 2007/05/07 09:30:14 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.175 2007/04/30 20:11:41 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.176 2007/05/07 09:30:14 dsl Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -813,8 +813,13 @@ find_stopped_child(struct proc *parent, pid_t pid, int options,
 
 		if (child != NULL || error != 0 ||
 		    ((options & WNOHANG) != 0 && dead == NULL)) {
-		    	if (child != NULL)
+		    	if (child != NULL) {
 			    	*status_p = child->p_xstat;
+				if (child->p_stat == SZOMB) {
+					ruadd(&parent->p_stats->p_cru,
+					    &child->p_stats->p_cru);
+				}
+			}
 			mutex_exit(&proclist_mutex);
 			*child_p = child;
 			return error;
@@ -900,7 +905,6 @@ proc_free(struct proc *p, struct rusage *caller_ru)
 	parent = p->p_pptr;
 	scheduler_wait_hook(parent, p);
 	ruadd(&parent->p_stats->p_cru, &p->p_stats->p_ru);
-	ruadd(&parent->p_stats->p_cru, &p->p_stats->p_cru);
 	p->p_xstat = 0;
 
 	/*
