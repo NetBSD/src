@@ -1,4 +1,4 @@
-/*	$NetBSD: node.c,v 1.24 2007/05/06 19:48:51 pooka Exp $	*/
+/*	$NetBSD: node.c,v 1.25 2007/05/07 17:20:58 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: node.c,v 1.24 2007/05/06 19:48:51 pooka Exp $");
+__RCSID("$NetBSD: node.c,v 1.25 2007/05/07 17:20:58 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -214,6 +214,7 @@ psshfs_node_open(struct puffs_cc *pcc, void *opc, int mode,
 	if (pn->pn_va.va_type == VDIR)
 		goto out;
 
+	puffs_setback(pcc, PUFFS_SETBACK_INACT_N1);
 	puffs_vattr_null(&va);
 	if (mode & FREAD && psn->fhand_r == NULL) {
 		psbuf_req_str(pb, SSH_FXP_OPEN, reqid, PNPATH(pn));
