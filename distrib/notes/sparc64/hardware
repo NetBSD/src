@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.17 2004/06/12 07:35:15 mbw Exp $
+.\"	$NetBSD: hardware,v 1.18 2007/05/07 19:34:19 martin Exp $
 .
 .Ss2 Supported machines
 The minimal configuration requires 32 MB of RAM and ~60 MB of disk space.
@@ -233,13 +233,4 @@ present)
 Floppy drives
 .It
 smart card reader
-.It
-X Server on ffb framebuffers, including on-board ATI mach64 and Creator series
-.(bullet -compact
-Creator3D framebuffers
-.Pq Em ffb
-.It
-General PCI VGA support (currently experimental
-.Em machfb )
-.bullet)
 .bullet)
