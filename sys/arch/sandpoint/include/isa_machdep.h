@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.h,v 1.5.38.1 2007/05/04 10:34:13 nisimura Exp $	*/
+/*	$NetBSD: isa_machdep.h,v 1.5.38.2 2007/05/07 18:25:24 garbled Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -45,5 +45,18 @@
 #define isa_inb(x)	inb(SANDPOINT_BUS_SPACE_IO + (x))
 
 extern struct powerpc_bus_dma_tag isa_bus_dma_tag;
+extern struct pic_ops *isa_pic;
+
+/* function mappings */
+#define isa_attach_hook(p, s, iaa)					\
+	genppc_isa_attach_hook(p, s, iaa)
+#define isa_intr_evcnt(ic, irq)						\
+	genppc_isa_intr_evcnt(ic, irq)
+#define isa_intr_establish(ic, irq, type, level, fun, arg)		\
+	genppc_isa_intr_establish(ic, irq, type, level, fun, arg)
+#define isa_intr_disestablish(ic, arg)					\
+	genppc_isa_intr_disestablish(ic, arg)
+#define isa_intr_alloc(ic, mask, type, irqp)				\
+	genppc_isa_intr_alloc(ic, isa_pic, mask, type, irqp)
 
 #endif /* _MACHINE_ISA_MACHDEP_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.35.14.2 2007/05/04 14:26:30 nisimura Exp $	*/
+/*	$NetBSD: machdep.c,v 1.35.14.3 2007/05/07 18:25:24 garbled Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.35.14.2 2007/05/04 14:26:30 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.35.14.3 2007/05/07 18:25:24 garbled Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -107,6 +107,7 @@ char *bootpath;
 struct mem_region physmemr[OFMEMREGIONS], availmemr[OFMEMREGIONS];
 
 paddr_t avail_end;
+struct pic_ops *isa_pic = NULL;
 
 #if NKSYMS || defined(DDB) || defined(LKM)
 extern void *startsym, *endsym;
@@ -224,7 +225,6 @@ cpu_startup(void)
 {
 	int msr;
 	void *baseaddr;
-	struct pic_ops *pic;
 
 	/*
 	 * Do common startup.
@@ -240,11 +240,11 @@ cpu_startup(void)
 	pic_init();
 #if 1 /* PIC_I8259 */
 	/* set up i8259 as a cascade on EPIC irq 0 */
-	pic = setup_i8259();
+	isa_pic = setup_i8259();
 	(void)setup_openpic(baseaddr, 0);
-	intr_establish(16, IST_LEVEL, IPL_NONE, pic_handle_intr, pic);
+	intr_establish(16, IST_LEVEL, IPL_NONE, pic_handle_intr, isa_pic);
 #else
-	pic = setup_openpic(baseaddr, 0);
+	(void)setup_openpic(baseaddr, 0);
 #endif
 	oea_install_extint(pic_ext_intr);
 
