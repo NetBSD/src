@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.h,v 1.2 2005/12/11 12:18:43 christos Exp $	*/
+/*	$NetBSD: isa_machdep.h,v 1.2.38.1 2007/05/07 18:10:52 garbled Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -101,17 +101,19 @@ typedef struct powerpc_isa_chipset *isa_chipset_tag_t;
 
 struct device;			/* XXX */
 struct isabus_attach_args;	/* XXX */
+struct pic_ops;			/* XXX */
 
 /*
  * Functions provided to machine-independent ISA code.
  */
-void	isa_attach_hook(struct device *, struct device *,
+void	genppc_isa_attach_hook(struct device *, struct device *,
 	    struct isabus_attach_args *);
-const struct evcnt *isa_intr_evcnt(isa_chipset_tag_t, int);
-void	*isa_intr_establish(isa_chipset_tag_t, int /*irq*/, int /*type*/,
+const struct evcnt *genppc_isa_intr_evcnt(isa_chipset_tag_t, int);
+void	*genppc_isa_intr_establish(isa_chipset_tag_t, int /*irq*/, int /*type*/,
 	    int /*level*/, int (*ih_fun)(void *), void *);
-void	isa_intr_disestablish(isa_chipset_tag_t, void *);
-int	isa_intr_alloc(isa_chipset_tag_t, int, int, int *);
+void	genppc_isa_intr_disestablish(isa_chipset_tag_t, void *);
+int	genppc_isa_intr_alloc(isa_chipset_tag_t, struct pic_ops *, int,
+	    int, int *);
 
 #define	isa_dmainit(ic, bst, dmat, d)					\
 	_isa_dmainit(&(ic)->ic_dmastate, (bst), (dmat), (d))

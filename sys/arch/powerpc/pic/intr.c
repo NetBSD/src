@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.1.2.12 2007/05/04 10:03:28 nisimura Exp $ */
+/*	$NetBSD: intr.c,v 1.1.2.13 2007/05/07 18:11:41 garbled Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.1.2.12 2007/05/04 10:03:28 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.1.2.13 2007/05/07 18:11:41 garbled Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -42,6 +42,10 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.1.2.12 2007/05/04 10:03:28 nisimura Exp $
 
 #include <arch/powerpc/pic/picvar.h>
 #include "opt_pic.h"
+#include "opt_interrupt.h"
+#if defined(PIC_I8259) || defined (PIC_PREPIVR)
+#include <machine/isa_machdep.h>
+#endif
 
 #define MAX_PICS	8	/* 8 PICs ought to be enough for everyone */
 
@@ -740,3 +744,60 @@ softintr(int ipl)
 	curcpu()->ci_ipending |= 1 << ipl;
 	mtmsr(msrsave);
 }
+
+#if defined(PIC_PREPIVR) || defined(PIC_I8259)
+/*
+ * isa_intr_alloc needs to be done here, because it needs direct access to
+ * the various interrupt handler structures.
+ */
+
+int
+genppc_isa_intr_alloc(isa_chipset_tag_t ic, struct pic_ops *pic,
+    int mask, int type, int *irq_p)
+{
+	int irq, vi;
+	int maybe_irq = -1;
+	int shared_depth = 0;
+	struct intr_source *is;
+
+	if (pic == NULL)
+		return 1;
+
+	for (irq = 0; (mask != 0 && irq < pic->pic_numintrs);
+	     mask >>= 1, irq++) {
+		if ((mask & 1) == 0)
+			continue;
+		vi = virq[irq + pic->pic_intrbase];
+		if (!vi) {
+			*irq_p = irq;
+			return 0;
+		}
+		is = &intrsources[vi];
+		if (is->is_type == IST_NONE) {
+			*irq_p = irq;
+			return 0;
+		}
+		/* Level interrupts can be shared */
+		if (type == IST_LEVEL && is->is_type == IST_LEVEL) {
+			struct intrhand *ih = is->is_hand;
+			int depth;
+
+			if (maybe_irq == -1) {
+				maybe_irq = irq;
+				continue;
+			}
+			for (depth = 0; ih != NULL; ih = ih->ih_next)
+				depth++;
+			if (depth < shared_depth) {
+				maybe_irq = irq;
+				shared_depth = depth;
+			}
+		}
+	}
+	if (maybe_irq != -1) {
+		*irq_p = maybe_irq;
+		return 0;
+	}
+	return 1;
+}
+#endif
