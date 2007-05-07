@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.136 2007/05/07 19:51:40 pavel Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.137 2007/05/07 22:34:04 pavel Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -3287,4 +3287,15 @@ usr.bin/xlint/lint1/scan.l			1.36-1.37
 	Add parsing support for NAN and INFINITY to scanf
 
 	[manu, ticket #607]
+
+distrib/utils/sysinst/arch/i386/md.h		1.57
+distrib/utils/sysinst/arch/i386/msg.md.de	1.10
+distrib/utils/sysinst/arch/i386/msg.md.en	1.52
+distrib/utils/sysinst/arch/i386/msg.md.es	1.5
+distrib/utils/sysinst/arch/i386/msg.md.fr	1.42
+distrib/utils/sysinst/arch/i386/msg.md.pl	1.25
+
+	Remove GENERIC.MPACPI from the list of kernels, as it is no longer
+	built.
+	[snj, ticket #613]
 
