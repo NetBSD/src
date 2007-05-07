@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs_vnops.c,v 1.24 2007/04/20 08:29:28 pooka Exp $	*/
+/*	$NetBSD: dtfs_vnops.c,v 1.25 2007/05/07 17:18:50 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -190,6 +190,9 @@ dtfs_node_remove(struct puffs_cc *pcc, void *opc, void *targ,
 		return EPERM;
 
 	dtfs_nukenode(targ, pn_parent, pcn->pcn_name);
+
+	/* call inactive for removed node when its time comes */
+	puffs_setback(pcc, PUFFS_SETBACK_INACT_N2);
 
 	return 0;
 }
