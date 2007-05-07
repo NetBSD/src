@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.67 2007/03/14 12:27:21 drochner Exp $
+# $NetBSD: INSTALL,v 1.68 2007/05/07 09:02:05 jnemeth Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include	"arch/amd64/conf/std.amd64"
 
-#ident 		"INSTALL-$Revision: 1.67 $"
+#ident 		"INSTALL-$Revision: 1.68 $"
 
 maxusers	32		# estimated number of users
 
@@ -463,7 +463,9 @@ wm*	at pci? dev ? function ?	# Intel 82543/82544 gigabit
 # tr at pcmcia has problems with Cardbus bridges
 #tr*	at pcmcia? function ?		# TROPIC based Token-Ring
 #wi*	at pcmcia? function ?		# Lucent/Intersil WaveLan IEEE (802.11)
-#xi*	at pcmcia? function ?		# Xircom CreditCard Ethernet
+#xirc*	at pcmcia? function ?		# Xircom CreditCard Ethernet
+#com*	at xirc?
+#xi*	at xirc?
 
 #mhzc*	at pcmcia? function ?		# Megahertz Ethernet/Modem combo cards
 #com*	at mhzc?
