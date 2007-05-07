@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_misc.c,v 1.85 2007/04/22 08:29:56 dsl Exp $	*/
+/*	$NetBSD: ibcs2_misc.c,v 1.86 2007/05/07 16:53:18 dsl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.85 2007/04/22 08:29:56 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.86 2007/05/07 16:53:18 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -216,35 +216,28 @@ ibcs2_sys_waitsys(l, v, retval)
 		syscallarg(int) a3;
 	} */ *uap = v;
 #endif
-	struct proc *p = l->l_proc;
 	int error;
-	struct sys_wait4_args w4;
-	void *sg;
-
-	sg = stackgap_init(p, 0);
-
-	SCARG(&w4, rusage) = NULL;
-	SCARG(&w4, status) = stackgap_alloc(p, &sg, sizeof(int));
+	int pid, options, status, was_zombie;
 
 #if defined(__i386__)
 #define WAITPID_EFLAGS	0x8c4	/* OF, SF, ZF, PF */
 	if ((l->l_md.md_regs->tf_eflags & WAITPID_EFLAGS) == WAITPID_EFLAGS) {
 		/* waitpid */
-		SCARG(&w4, pid) = SCARG(uap, a1);
-		SCARG(&w4, options) = SCARG(uap, a3);
+		pid = SCARG(uap, a1);
+		options = SCARG(uap, a3);
 	} else {
 #endif
 		/* wait */
-		SCARG(&w4, pid) = WAIT_ANY;
-		SCARG(&w4, options) = 0;
+		pid = WAIT_ANY;
+		options = 0;
 #if defined(__i386__)
 	}
 #endif
 
-	if ((error = sys_wait4(l, &w4, retval)) != 0)
-		return error;
-
-	return copyin(SCARG(&w4, status), &retval[1], sizeof(int));
+	error = do_sys_wait(l, &pid, &status, options, NULL, &was_zombie);
+	retval[0] = pid;
+	retval[1] = status;
+	return error;
 }
 
 int

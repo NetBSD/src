@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.246 2007/04/30 20:11:41 dsl Exp $	*/
+/*	$NetBSD: proc.h,v 1.247 2007/05/07 16:53:17 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -529,10 +529,10 @@ void	wakeup(wchan_t);
 void	wakeup_one(wchan_t);
 int	kpause(const char *, bool, int, kmutex_t *);
 void	exit1(struct lwp *, int);
-int	find_stopped_child(struct proc *, pid_t, int, struct proc **, int *);
+int	do_sys_wait(struct lwp *, int *, int *, int, struct rusage *, int *);
 struct proc *proc_alloc(void);
 void	proc0_init(void);
-void	proc_free(struct proc *, struct rusage *);
+void	proc_free(struct proc *);
 void	proc_free_mem(struct proc *);
 void	exit_lwps(struct lwp *l);
 int	fork1(struct lwp *, int, int, void *, size_t,

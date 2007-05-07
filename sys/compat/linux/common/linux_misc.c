@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.172 2007/04/30 14:05:47 dsl Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.173 2007/05/07 16:53:18 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.172 2007/04/30 14:05:47 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.173 2007/05/07 16:53:18 dsl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ptrace.h"
@@ -191,23 +191,23 @@ static int linux_mmap __P((struct lwp *, struct linux_sys_mmap_args *,
  * to be converted in order for Linux binaries to get a valid signal
  * number out of it.
  */
-void
-bsd_to_linux_wstat(st)
-	int *st;
+int
+bsd_to_linux_wstat(int st)
 {
 
 	int sig;
 
-	if (WIFSIGNALED(*st)) {
-		sig = WTERMSIG(*st);
+	if (WIFSIGNALED(st)) {
+		sig = WTERMSIG(st);
 		if (sig >= 0 && sig < NSIG)
-			*st= (*st& ~0177) | native_to_linux_signo[sig];
-	} else if (WIFSTOPPED(*st)) {
-		sig = WSTOPSIG(*st);
+			st= (st & ~0177) | native_to_linux_signo[sig];
+	} else if (WIFSTOPPED(st)) {
+		sig = WSTOPSIG(st);
 		if (sig >= 0 && sig < NSIG)
-			*st = (*st & ~0xff00) |
+			st = (st & ~0xff00) |
 			    (native_to_linux_signo[sig] << 8);
 	}
+	return st;
 }
 
 /*
@@ -227,19 +227,11 @@ linux_sys_wait4(l, v, retval)
 		syscallarg(int) options;
 		syscallarg(struct rusage *) rusage;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
-	struct sys_wait4_args w4a;
-	int error, *status, tstat, options, linux_options;
-	void *sg;
-
-	if (SCARG(uap, status) != NULL) {
-		sg = stackgap_init(p, 0);
-		status = (int *) stackgap_alloc(p, &sg, sizeof *status);
-	} else
-		status = NULL;
+	int error, status, options, linux_options, was_zombie;
+	struct rusage ru;
 
 	linux_options = SCARG(uap, options);
-	options = 0;
+	options = WOPTSCHECKED;
 	if (linux_options & ~(LINUX_WAIT4_KNOWNFLAGS))
 		return (EINVAL);
 
@@ -255,26 +247,22 @@ linux_sys_wait4(l, v, retval)
 	if (linux_options & LINUX_WAIT4_WNOTHREAD)
 		printf("WARNING: %s: linux process %d.%d called "
 		       "waitpid with __WNOTHREAD set!",
-		       __FILE__, p->p_pid, l->l_lid);
+		       __FILE__, l->l_proc->p_pid, l->l_lid);
 
 # endif
 
-	SCARG(&w4a, pid) = SCARG(uap, pid);
-	SCARG(&w4a, status) = status;
-	SCARG(&w4a, options) = options;
-	SCARG(&w4a, rusage) = SCARG(uap, rusage);
+	error = do_sys_wait(l, &SCARG(uap, pid), &status, options, &ru,
+	    &was_zombie);
 
-	if ((error = sys_wait4(l, &w4a, retval)))
+	retval[0] = SCARG(uap, pid);
+	if (SCARG(uap, pid) == 0)
 		return error;
 
-	sigdelset(&p->p_sigpend.sp_set, SIGCHLD);	/* XXXAD ksiginfo leak */
+	sigdelset(&l->l_proc->p_sigpend.sp_set, SIGCHLD);	/* XXXAD ksiginfo leak */
 
-	if (status != NULL) {
-		if ((error = copyin(status, &tstat, sizeof tstat)))
-			return error;
-
-		bsd_to_linux_wstat(&tstat);
-		return copyout(&tstat, SCARG(uap, status), sizeof tstat);
+	if (SCARG(uap, status) != NULL) {
+		status = bsd_to_linux_wstat(status);
+		return copyout(&status, SCARG(uap, status), sizeof status);
 	}
 
 	return 0;
