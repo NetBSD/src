@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.127 2007/05/06 22:13:02 snj Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.128 2007/05/07 02:46:24 snj Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -2913,4 +2913,10 @@ usr.bin/make/parse.c				1.129 via patch
 	Avoid coredumping. Found by accidentally running make instead of gmake
 	in java's control/make directory.
 	[dsl, ticket #479]
+
+usr.bin/netstat/main.c				1.64
+
+	Fall back to kvm interface for protocols that do not yet
+	offer a sysctl interface. Fixes PR#36210.
+	[mlelstv, ticket #604]
 
