@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1025 2007/05/05 16:11:23 pooka Exp $
+#	$NetBSD: mi,v 1.1026 2007/05/07 11:17:13 yamt Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -2253,6 +2253,7 @@
 ./usr/libdata/debug/sbin/apmlabel.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/atactl.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/badsect.debug		comp-sysutil-debug	debug
+./usr/libdata/debug/sbin/bioctl.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/brconfig.debug		comp-netutil-debug	debug
 ./usr/libdata/debug/sbin/ccdconfig.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/cgdconfig.debug	comp-sysutil-debug	crypto,debug
