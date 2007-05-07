@@ -1,5 +1,12 @@
-/*	$NetBSD: hostname.c,v 1.2 2006/05/10 21:53:14 mrg Exp $	*/
+/*	$NetBSD: hostname.c,v 1.2.4.1 2007/05/07 17:04:37 pavel Exp $	*/
 
+/*
+ * Copyright (C) 2002-2003 by Darren Reed.
+ * 
+ * See the IPFILTER.LICENCE file for details on licencing.  
+ *   
+ * Id: hostname.c,v 1.6.2.2 2007/01/16 02:25:22 darrenr Exp 
+ */     
 
 #include "ipf.h"
 
@@ -12,7 +19,7 @@ void *ip;
 	struct in_addr ipa;
 	struct netent *np;
 
-	memset(&ipa, 0, sizeof ipa);	/* XXX gcc */
+	memset(&ipa, 0, sizeof(ipa));	/* XXX gcc */
 
 	if (v == 4) {
 		ipa.s_addr = *(u_32_t *)ip;

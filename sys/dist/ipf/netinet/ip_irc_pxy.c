@@ -1,11 +1,11 @@
-/*	$NetBSD: ip_irc_pxy.c,v 1.7 2006/04/04 16:17:19 martti Exp $	*/
+/*	$NetBSD: ip_irc_pxy.c,v 1.7.12.1 2007/05/07 17:05:22 pavel Exp $	*/
 
 /*
  * Copyright (C) 2000-2003 Darren Reed
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: ip_irc_pxy.c,v 2.39.2.5 2005/12/04 23:39:27 darrenr Exp
+ * Id: ip_irc_pxy.c,v 2.39.2.6 2006/07/14 06:12:14 darrenr Exp
  */
 
 #define	IPF_IRC_PROXY
@@ -388,13 +388,13 @@ nat_t *nat;
 	 * it is the most likely so use it here to check for a conflicting
 	 * mapping.
 	 */
-	bcopy((caddr_t)fin, (caddr_t)&fi, sizeof(fi));
+	bcopy((void *)fin, (void *)&fi, sizeof(fi));
 	fi.fin_data[0] = sp;
 	fi.fin_data[1] = fin->fin_data[1];
 	nat2 = nat_outlookup(fin, IPN_TCP, nat->nat_p, nat->nat_inip,
 			     ip->ip_dst);
 	if (nat2 == NULL) {
-		bcopy((caddr_t)fin, (caddr_t)&fi, sizeof(fi));
+		bcopy((void *)fin, (void *)&fi, sizeof(fi));
 		bzero((char *)tcp2, sizeof(*tcp2));
 		tcp2->th_win = htons(8192);
 		tcp2->th_sport = sp;
@@ -417,7 +417,7 @@ nat_t *nat;
 
 			(void) fr_addstate(&fi, NULL, SI_W_DPORT);
 			if (fi.fin_state != NULL)
-				fr_statederef(&fi, (ipstate_t **)&fi.fin_state);
+				fr_statederef((ipstate_t **)&fi.fin_state);
 		}
 		ip->ip_src = swip;
 	}

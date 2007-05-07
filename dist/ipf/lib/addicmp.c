@@ -1,11 +1,11 @@
-/*	$NetBSD: addicmp.c,v 1.8 2006/04/04 16:17:18 martti Exp $	*/
+/*	$NetBSD: addicmp.c,v 1.8.4.1 2007/05/07 17:04:29 pavel Exp $	*/
 
 /*
- * Copyright (C) 1993-2001 by Darren Reed.
+ * Copyright (C) 2000-2006 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: addicmp.c,v 1.10.2.4 2006/02/25 17:41:57 darrenr Exp
+ * Id: addicmp.c,v 1.10.2.5 2006/06/16 17:20:55 darrenr Exp
  */
 
 #include <ctype.h>

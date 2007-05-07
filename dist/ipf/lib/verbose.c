@@ -1,11 +1,11 @@
-/*	$NetBSD: verbose.c,v 1.1.1.1 2004/03/28 08:56:20 martti Exp $	*/
+/*	$NetBSD: verbose.c,v 1.1.1.1.18.1 2007/05/07 17:05:04 pavel Exp $	*/
 
 /*
- * Copyright (C) 1993-2001 by Darren Reed.
+ * Copyright (C) 2000-2001 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: verbose.c,v 1.6 2001/06/09 17:09:25 darrenr Exp
+ * Id: verbose.c,v 1.6.4.1 2006/06/16 17:21:18 darrenr Exp
  */
 
 #if defined(__STDC__)

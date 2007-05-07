@@ -1,4 +1,12 @@
-/*	$NetBSD: kmemcpywrap.c,v 1.1.1.1 2004/03/28 08:56:18 martti Exp $	*/
+/*	$NetBSD: kmemcpywrap.c,v 1.1.1.1.18.1 2007/05/07 17:04:44 pavel Exp $	*/
+
+/*
+ * Copyright (C) 2002 by Darren Reed.
+ * 
+ * See the IPFILTER.LICENCE file for details on licencing.  
+ *   
+ * Id: kmemcpywrap.c,v 1.1.4.1 2006/06/16 17:21:05 darrenr Exp 
+ */     
 
 #include "ipf.h"
 #include "kmem.h"

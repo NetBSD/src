@@ -1,15 +1,15 @@
-/*	$NetBSD: ip_log.c,v 1.5 2006/04/04 16:17:19 martti Exp $	*/
+/*	$NetBSD: ip_log.c,v 1.5.12.1 2007/05/07 17:05:22 pavel Exp $	*/
 
 /*
  * Copyright (C) 1997-2003 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: ip_log.c,v 2.75.2.11 2006/03/26 13:50:47 darrenr Exp
+ * Id: ip_log.c,v 2.75.2.15 2007/02/03 00:49:30 darrenr Exp
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_log.c,v 1.5 2006/04/04 16:17:19 martti Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_log.c,v 1.5.12.1 2007/05/07 17:05:22 pavel Exp $");
 
 #include <sys/param.h>
 #if defined(KERNEL) || defined(_KERNEL)
@@ -20,7 +20,11 @@ __KERNEL_RCSID(0, "$NetBSD: ip_log.c,v 1.5 2006/04/04 16:17:19 martti Exp $");
 #endif
 #if defined(__NetBSD__) && (NetBSD >= 199905) && !defined(IPFILTER_LKM) && \
     defined(_KERNEL)
-# include "opt_ipfilter.h"
+# if (__NetBSD_Version__ < 399001400)
+#  include "opt_ipfilter_log.h"
+# else
+#  include "opt_ipfilter.h"
+# endif
 #endif
 #if defined(__FreeBSD__) && !defined(IPFILTER_LKM)
 # if defined(_KERNEL)
@@ -153,7 +157,7 @@ extern int selwait;
 # if defined(linux) && defined(_KERNEL)
 wait_queue_head_t	iplh_linux[IPL_LOGSIZE];
 # endif
-# if SOLARIS
+# if SOLARIS && defined(_KERNEL)
 extern	kcondvar_t	iplwait;
 extern	struct pollhead	iplpollhead[IPL_LOGSIZE];
 # endif
@@ -162,7 +166,6 @@ iplog_t	**iplh[IPL_LOGSIZE], *iplt[IPL_LOGSIZE], *ipll[IPL_LOGSIZE];
 int	iplused[IPL_LOGSIZE];
 static fr_info_t	iplcrc[IPL_LOGSIZE];
 int	ipl_suppress = 1;
-int	ipl_buffer_sz;
 int	ipl_logmax = IPL_LOGMAX;
 int	ipl_logall = 0;
 int	ipl_log_init = 0;
@@ -265,8 +268,11 @@ u_int flags;
 	struct ifnet *ifp;
 # endif /* SOLARIS || __hpux */
 
-	ipfl.fl_nattag.ipt_num[0] = 0;
 	m = fin->fin_m;
+	if (m == NULL)
+		return -1;
+
+	ipfl.fl_nattag.ipt_num[0] = 0;
 	ifp = fin->fin_ifp;
 	hlen = fin->fin_hlen;
 	/*
@@ -421,7 +427,7 @@ void **items;
 size_t *itemsz;
 int *types, cnt;
 {
-	caddr_t buf, ptr;
+	char *buf, *ptr;
 	iplog_t *ipl;
 	size_t len;
 	int i;
@@ -458,7 +464,7 @@ int *types, cnt;
 	 * check that we have space to record this information and can
 	 * allocate that much.
 	 */
-	KMALLOCS(buf, caddr_t, len);
+	KMALLOCS(buf, void *, len);
 	if (buf == NULL)
 		return -1;
 	SPL_NET(s);
@@ -495,7 +501,7 @@ int *types, cnt;
 	 */
 	for (i = 0, ptr = buf + sizeof(*ipl); i < cnt; i++) {
 		if (types[i] == 0) {
-			bcopy(items[i], ptr, itemsz[i]);
+			memcpy(ptr, items[i], itemsz[i]);
 		} else if (types[i] == 1) {
 			COPYDATA(items[i], 0, itemsz[i], ptr);
 		}
@@ -622,7 +628,7 @@ struct uio *uio;
 		iplused[unit] -= dlen;
 		MUTEX_EXIT(&ipl_mutex);
 		SPL_X(s);
-		error = UIOMOVE((caddr_t)ipl, dlen, UIO_READ, uio);
+		error = UIOMOVE((void *)ipl, dlen, UIO_READ, uio);
 		if (error) {
 			SPL_NET(s);
 			MUTEX_ENTER(&ipl_mutex);
@@ -632,7 +638,7 @@ struct uio *uio;
 			break;
 		}
 		MUTEX_ENTER(&ipl_mutex);
-		KFREES((caddr_t)ipl, dlen);
+		KFREES((void *)ipl, dlen);
 		SPL_NET(s);
 	}
 	if (!iplt[unit]) {
@@ -665,7 +671,7 @@ minor_t unit;
 	MUTEX_ENTER(&ipl_mutex);
 	while ((ipl = iplt[unit]) != NULL) {
 		iplt[unit] = ipl->ipl_next;
-		KFREES((caddr_t)ipl, ipl->ipl_dsize);
+		KFREES((void *)ipl, ipl->ipl_dsize);
 	}
 	iplh[unit] = &iplt[unit];
 	ipll[unit] = NULL;

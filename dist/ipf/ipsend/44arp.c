@@ -1,4 +1,4 @@
-/*	$NetBSD: 44arp.c,v 1.5 2005/02/08 07:01:53 martti Exp $	*/
+/*	$NetBSD: 44arp.c,v 1.5.12.1 2007/05/07 17:04:27 pavel Exp $	*/
 
 /*
  * Based upon 4.4BSD's /usr/sbin/arp
@@ -16,7 +16,9 @@
 #if defined(__FreeBSD__)
 # include "radix_ipf.h"
 #endif
-#include <net/route.h>
+#ifndef __osf__
+# include <net/route.h>
+#endif
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
 #include <arpa/inet.h>

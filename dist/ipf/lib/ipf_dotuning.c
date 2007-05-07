@@ -1,4 +1,12 @@
-/*	$NetBSD: ipf_dotuning.c,v 1.3 2006/04/04 16:17:18 martti Exp $	*/
+/*	$NetBSD: ipf_dotuning.c,v 1.3.4.1 2007/05/07 17:04:39 pavel Exp $	*/
+
+/*
+ * Copyright (C) 2003-2005 by Darren Reed.
+ * 
+ * See the IPFILTER.LICENCE file for details on licencing.  
+ *   
+ * Id: ipf_dotuning.c,v 1.2.4.3 2006/06/16 17:21:02 darrenr Exp 
+ */     
 
 #include "ipf.h"
 #include "netinet/ipl.h"

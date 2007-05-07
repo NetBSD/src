@@ -1,4 +1,12 @@
-/*	$NetBSD: printpacket6.c,v 1.1.1.1 2004/03/28 08:56:20 martti Exp $	*/
+/*	$NetBSD: printpacket6.c,v 1.1.1.1.18.1 2007/05/07 17:04:56 pavel Exp $	*/
+
+/*
+ * Copyright (C) 2002 by Darren Reed.
+ * 
+ * See the IPFILTER.LICENCE file for details on licencing.  
+ *   
+ * Id: printpacket6.c,v 1.3.4.1 2006/06/16 17:21:13 darrenr Exp 
+ */     
 
 #include "ipf.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sock.c,v 1.9.4.1 2007/01/17 21:58:57 tron Exp $	*/
+/*	$NetBSD: sock.c,v 1.9.4.2 2007/05/07 17:04:28 pavel Exp $	*/
 
 /*
  * sock.c (C) 1995-1998 Darren Reed
@@ -8,7 +8,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)sock.c	1.2 1/11/96 (C)1995 Darren Reed";
-static const char rcsid[] = "@(#)Id: sock.c,v 2.8.4.4 2006/03/21 16:10:56 darrenr Exp";
+static const char rcsid[] = "@(#)Id: sock.c,v 2.8.4.6 2007/02/17 12:41:51 darrenr Exp";
 #endif
 #include <sys/param.h>
 #include <sys/types.h>
@@ -31,6 +31,9 @@ typedef int     boolean_t;
 # include <sys/dir.h>
 #endif
 #if !defined(__osf__)
+# ifdef __NetBSD__ 
+#  include <machine/lock.h>
+# endif
 # define _KERNEL
 # define	KERNEL
 # ifdef	ultrix
@@ -67,7 +70,9 @@ typedef int     boolean_t;
 #if defined(__FreeBSD__)
 # include "radix_ipf.h"
 #endif
-#include <net/route.h>
+#ifndef __osf__
+# include <net/route.h>
+#endif
 #include <netinet/ip_var.h>
 #include <netinet/in_pcb.h>
 #include <netinet/tcp_timer.h>

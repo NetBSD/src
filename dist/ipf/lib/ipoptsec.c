@@ -1,11 +1,11 @@
-/*	$NetBSD: ipoptsec.c,v 1.1.1.1 2004/03/28 08:56:19 martti Exp $	*/
+/*	$NetBSD: ipoptsec.c,v 1.1.1.1.18.1 2007/05/07 17:04:42 pavel Exp $	*/
 
 /*
- * Copyright (C) 1993-2001 by Darren Reed.
+ * Copyright (C) 2001-2002 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: ipoptsec.c,v 1.2 2002/01/28 06:50:46 darrenr Exp
+ * Id: ipoptsec.c,v 1.2.4.1 2006/06/16 17:21:04 darrenr Exp
  */
 
 #include "ipf.h"

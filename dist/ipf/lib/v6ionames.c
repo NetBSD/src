@@ -1,11 +1,11 @@
-/*	$NetBSD: v6ionames.c,v 1.5 2006/04/04 16:17:18 martti Exp $	*/
+/*	$NetBSD: v6ionames.c,v 1.5.4.1 2007/05/07 17:05:03 pavel Exp $	*/
 
 /*
- * Copyright (C) 1993-2001 by Darren Reed.
+ * Copyright (C) 2003-2005 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: v6ionames.c,v 1.1.4.2 2005/10/17 18:31:09 darrenr Exp
+ * Id: v6ionames.c,v 1.1.4.3 2006/06/16 17:21:18 darrenr Exp
  */
 #include "ipf.h"
 
