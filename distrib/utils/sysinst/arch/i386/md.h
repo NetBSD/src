@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.56 2006/11/19 11:37:32 dsl Exp $	*/
+/*	$NetBSD: md.h,v 1.56.2.1 2007/05/07 22:28:09 pavel Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -64,19 +64,17 @@
 
 #define SET_KERNEL_GENERIC	SET_KERNEL_1
 #define SET_KERNEL_MP		SET_KERNEL_2
-#define SET_KERNEL_MPACPI	SET_KERNEL_3
-#define SET_KERNEL_LAPTOP	SET_KERNEL_4
-#define SET_KERNEL_DIAGNOSTIC	SET_KERNEL_5
-/* #define SET_KERNEL_TINY		SET_KERNEL_6 */
-/* #define SET_KERNEL_PS2		SET_KERNEL_7 */
+#define SET_KERNEL_LAPTOP	SET_KERNEL_3
+#define SET_KERNEL_DIAGNOSTIC	SET_KERNEL_4
+/* #define SET_KERNEL_TINY		SET_KERNEL_5 */
+/* #define SET_KERNEL_PS2		SET_KERNEL_6 */
 
 #define SET_KERNEL_1_NAME	"kern-GENERIC"
 #define SET_KERNEL_2_NAME	"kern-GENERIC.MP"
-#define SET_KERNEL_3_NAME	"kern-GENERIC.MPACPI"
-#define SET_KERNEL_4_NAME	"kern-GENERIC_LAPTOP"
-#define SET_KERNEL_5_NAME	"kern-GENERIC_DIAGNOSTIC"
-/* #define SET_KERNEL_6_NAME	"kern-GENERIC_TINY" */
-/* #define SET_KERNEL_7_NAME	"kern-GENERIC_PS2TINY" */
+#define SET_KERNEL_3_NAME	"kern-GENERIC_LAPTOP"
+#define SET_KERNEL_4_NAME	"kern-GENERIC_DIAGNOSTIC"
+/* #define SET_KERNEL_5_NAME	"kern-GENERIC_TINY" */
+/* #define SET_KERNEL_6_NAME	"kern-GENERIC_PS2TINY" */
 
 /*
  * Disk names accepted as valid targets for a from-scratch installation.
