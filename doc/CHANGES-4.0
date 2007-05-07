@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.130 2007/05/07 03:22:10 snj Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.131 2007/05/07 03:24:52 snj Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -2939,4 +2939,12 @@ sys/dev/ic/sgec.c				1.29
 	mbuf and load each segment.  in transmit interrupt service, take
 	advatnage on know how many segments/descriptors are in each packet.
 	[mhitch, ticket #608]
+
+sys/dev/ic/sgec.c				1.30
+sys/dev/ic/sgecvar.h				1.7
+
+	Count tx/rx intrs.
+	Don't set OW in the first transmit descriptor until all descriptors
+	have been set up.  Always try to drain the transmit ring.
+	[mhitch, ticket #609]
 
