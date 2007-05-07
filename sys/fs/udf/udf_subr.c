@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.31.2.2 2007/04/15 16:03:47 yamt Exp $ */
+/* $NetBSD: udf_subr.c,v 1.31.2.3 2007/05/07 10:55:43 yamt Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: udf_subr.c,v 1.31.2.2 2007/04/15 16:03:47 yamt Exp $");
+__RCSID("$NetBSD: udf_subr.c,v 1.31.2.3 2007/05/07 10:55:43 yamt Exp $");
 #endif /* not lint */
 
 
@@ -2008,7 +2008,7 @@ udf_get_node(struct udf_mount *ump, struct long_ad *node_icb_loc,
 		return error;
 	}
 
-	/* allways return locked vnode */
+	/* always return locked vnode */
 	if ((error = vn_lock(nvp, LK_EXCLUSIVE | LK_RETRY))) {
 		/* recycle vnode and unlock; simultanious will fail too */
 		ungetnewvnode(nvp);

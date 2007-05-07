@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_lockdebug.c,v 1.2.2.2 2007/03/12 05:58:40 rmind Exp $	*/
+/*	$NetBSD: subr_lockdebug.c,v 1.2.2.3 2007/05/07 10:55:46 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.2.2.2 2007/03/12 05:58:40 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.2.2.3 2007/05/07 10:55:46 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -640,7 +640,7 @@ lockdebug_lock_print(void *addr, void (*pr)(const char *, ...))
  *	An error has been trapped - dump lock info and call panic().
  */
 void
-lockdebug_abort(int id, volatile void *lock, lockops_t *ops,
+lockdebug_abort(u_int id, volatile void *lock, lockops_t *ops,
 		const char *func, const char *msg)
 {
 #ifdef LOCKDEBUG

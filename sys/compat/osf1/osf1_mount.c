@@ -1,4 +1,4 @@
-/*	$NetBSD: osf1_mount.c,v 1.31.2.1 2007/03/12 05:52:39 rmind Exp $	*/
+/*	$NetBSD: osf1_mount.c,v 1.31.2.2 2007/05/07 10:55:17 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_mount.c,v 1.31.2.1 2007/03/12 05:52:39 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_mount.c,v 1.31.2.2 2007/05/07 10:55:17 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -235,7 +235,7 @@ osf1_sys_statfs(l, v, retval)
 	int error;
 	struct nameidata nd;
 
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path), l);
+	NDINIT(&nd, LOOKUP, FOLLOW | TRYEMULROOT, UIO_USERSPACE, SCARG(uap, path), l);
 	if ((error = namei(&nd)))
 		return (error);
 	mp = nd.ni_vp->v_mount;

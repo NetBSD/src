@@ -1,7 +1,7 @@
-/*	$NetBSD: linux32_syscall.c,v 1.8.2.3 2007/03/24 14:54:32 yamt Exp $ */
+/*	$NetBSD: linux32_syscall.c,v 1.8.2.4 2007/05/07 10:54:51 yamt Exp $ */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_syscall.c,v 1.8.2.3 2007/03/24 14:54:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_syscall.c,v 1.8.2.4 2007/05/07 10:54:51 yamt Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -142,7 +142,8 @@ out:
 		/* nothing to do */
 		break;
 	default:
-		frame->tf_rax = native_to_linux32_errno[error];
+		error = native_to_linux32_errno[error];
+		frame->tf_rax = error;
 		frame->tf_rflags |= PSL_C;	/* carry bit */
 		break;
 	}
@@ -280,7 +281,8 @@ out:
 		/* nothing to do */
 		break;
 	default:
-		frame->tf_rax = native_to_linux32_errno[error];
+		error = native_to_linux32_errno[error];
+		frame->tf_rax = error;
 		frame->tf_rflags |= PSL_C;	/* carry bit */
 		break;
 	}

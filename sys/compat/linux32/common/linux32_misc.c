@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_misc.c,v 1.4.4.1 2007/04/15 16:03:15 yamt Exp $	*/
+/*	$NetBSD: linux32_misc.c,v 1.4.4.2 2007/05/07 10:55:14 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -39,13 +39,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_misc.c,v 1.4.4.1 2007/04/15 16:03:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_misc.c,v 1.4.4.2 2007/05/07 10:55:14 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/time.h>
 #include <sys/types.h>
 #include <sys/malloc.h>
+#include <sys/fstypes.h>
+#include <sys/vfs_syscalls.h>
 
 #include <compat/netbsd32/netbsd32.h>
 #include <compat/netbsd32/netbsd32_syscallargs.h>
@@ -77,33 +79,17 @@ linux32_sys_statfs(l, v, retval)
 		syscallarg(const netbsd32_charp char) path;
 		syscallarg(linux32_statfsp) sp;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
-	struct statvfs *btmp, *bsp;
+	struct statvfs *sb;
 	struct linux_statfs ltmp;
-	struct sys_statvfs1_args bsa;
-	void *sg;
 	int error;
 
-	sg = stackgap_init(p, 0);
-	bsp = stackgap_alloc(p, &sg, sizeof (struct statvfs));
-
-	NETBSD32TOP(uap, &bsa, path, const char);
-	CHECK_ALT_EXIST(l, &sg, SCARG(&bsa, path));
-
-	SCARG(&bsa, buf) = bsp;
-	SCARG(&bsa, flags) = ST_WAIT;
-
-	if ((error = sys_statvfs1(l, &bsa, retval)))
-		return error;
-
-	btmp = STATVFSBUF_GET();
-	error = copyin(bsp, btmp, sizeof(*btmp));
-	if (error) {
-		goto out;
+	sb = STATVFSBUF_GET();
+	error = do_sys_pstatvfs(l, SCARG_P32(uap, path), ST_WAIT, sb);
+	if (error == 0) {
+		bsd_to_linux_statfs(sb, &ltmp);
+		error = copyout(&ltmp, SCARG_P32(uap, sp), sizeof ltmp);
 	}
-	bsd_to_linux_statfs(btmp, &ltmp);
-	error = copyout(&ltmp, SCARG_P32(uap, sp), sizeof ltmp);
-out:
-	STATVFSBUF_PUT(btmp);
+
+	STATVFSBUF_PUT(sb);
 	return error;
 }

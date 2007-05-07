@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_flow.c,v 1.39.2.4 2007/04/15 16:04:00 yamt Exp $	*/
+/*	$NetBSD: ip_flow.c,v 1.39.2.5 2007/05/07 10:55:59 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.39.2.4 2007/04/15 16:04:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.39.2.5 2007/05/07 10:55:59 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,7 +62,6 @@ __KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.39.2.4 2007/04/15 16:04:00 yamt Exp $"
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <netinet/in_pcb.h>
-#include <netinet/in_route.h>
 #include <netinet/in_var.h>
 #include <netinet/ip_var.h>
 
@@ -437,7 +436,7 @@ ipflow_create(const struct route *ro, struct mbuf *m)
 	/*
 	 * Fill in the updated information.
 	 */
-	rtcache_copy(&ipf->ipf_ro, ro, sizeof(ipf->ipf_ro));
+	rtcache_copy(&ipf->ipf_ro, ro);
 	ipf->ipf_dst = ip->ip_dst;
 	ipf->ipf_src = ip->ip_src;
 	ipf->ipf_tos = ip->ip_tos;

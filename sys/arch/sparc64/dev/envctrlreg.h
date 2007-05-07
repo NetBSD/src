@@ -1,4 +1,4 @@
-/*	$NetBSD: envctrlreg.h,v 1.1.2.2 2007/04/15 16:03:08 yamt Exp $ */
+/*	$NetBSD: envctrlreg.h,v 1.1.2.3 2007/05/07 10:55:03 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -35,6 +35,10 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#define	ENVCTRL_SHELF0_ADDR	0x20	/* PCF8574, LEDs at disk shelves */
+#define	ENVCTRL_SHELF1_ADDR	0x21	
+#define	ENVCTRL_SHELF2_ADDR	0x22
 
 #define	ENVCTRL_FANVOLTAGE_ADDR	0x27	/* TDA8444 */
 #define	ENVCTRL_FANVOLTAGE_MAX	0x3F
@@ -89,3 +93,5 @@
 #define	ENVCTRL_SOMETHING_ADDR	0x4E	/* PCF8591, not sure what it does */
 #define	ENVCTRL_CPUTEMP_ADDR	0x4F	/* PCF8591, cpu temperatures */
 #define	ENVCTRL_WATCHDOG_ADDR	0x50	/* PCF8583, fan regulator watchdog */
+
+#define	ENVCTRL_UVFACT		190476	/* 10^6 * 12 / 63 */

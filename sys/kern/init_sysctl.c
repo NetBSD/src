@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.96.2.6 2007/04/21 15:50:14 ad Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.96.2.7 2007/05/07 10:55:44 yamt Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.96.2.6 2007/04/21 15:50:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.96.2.7 2007/05/07 10:55:44 yamt Exp $");
 
 #include "opt_sysv.h"
 #include "opt_multiprocessor.h"
@@ -2702,7 +2702,7 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki)
 	ki->p_sigacts = PTRTOUINT64(p->p_sigacts);
 	ki->p_sess = PTRTOUINT64(p->p_session);
 	ki->p_tsess = 0;	/* may be changed if controlling tty below */
-	ki->p_ru = PTRTOUINT64(p->p_ru);
+	ki->p_ru = PTRTOUINT64(&p->p_stats->p_ru);
 
 	ki->p_eflag = 0;
 	ki->p_exitsig = p->p_exitsig;

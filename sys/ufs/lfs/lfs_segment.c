@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.196.2.2 2007/03/12 06:01:08 rmind Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.196.2.3 2007/05/07 10:56:16 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.196.2.2 2007/03/12 06:01:08 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.196.2.3 2007/05/07 10:56:16 yamt Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -647,7 +647,8 @@ lfs_segwrite(struct mount *mp, int flags)
 	else if (!(sp->seg_flags & SEGM_FORCE_CKP)) {
 		do {
 			um_error = lfs_writevnodes(fs, mp, sp, VN_REG);
-			if (!fs->lfs_dirops || !fs->lfs_flushvp) {
+			if (do_ckp ||
+			    (sp->seg_flags & SEGM_W_DIROPS && !fs->lfs_dirops)) {
 				if (!writer_set) {
 					lfs_writer_enter(fs, "lfs writer");
 					writer_set = 1;
@@ -1656,6 +1657,9 @@ lfs_updatemeta(struct segment *sp)
 		}
 
 	}
+
+	/* This inode has been modified */
+	LFS_SET_UINO(VTOI(vp), IN_MODIFIED);
 }
 
 /*
@@ -2303,6 +2307,7 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 			lfs_stats.cleanblocks += nblocks - 1;
 		}
 	}
+
 	return (lfs_initseg(fs) || do_again);
 }
 

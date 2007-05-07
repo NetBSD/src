@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.134.2.2 2007/03/12 05:51:44 rmind Exp $	*/
+/*	$NetBSD: machdep.c,v 1.134.2.3 2007/05/07 10:55:04 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.134.2.2 2007/03/12 05:51:44 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.134.2.3 2007/05/07 10:55:04 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -119,7 +119,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.134.2.2 2007/03/12 05:51:44 rmind Exp 
 #endif
 
 #include <net/netisr.h>
-#undef PS	/* XXX netccitt/pk.h conflict with machine/reg.h? */
 
 #include <machine/db_machdep.h>
 #include <ddb/db_sym.h>

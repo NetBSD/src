@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.22.2.4 2007/03/26 09:51:32 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.22.2.5 2007/05/07 10:55:06 yamt Exp $	*/
 /*	NetBSD: pmap.c,v 1.179 2004/10/10 09:55:24 yamt Exp		*/
 
 /*
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.22.2.4 2007/03/26 09:51:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.22.2.5 2007/05/07 10:55:06 yamt Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"
@@ -1954,7 +1954,7 @@ pmap_destroy(pmap)
 		 * No need to lock the pmap for ldt_free (or anything else),
 		 * we're the last one to use it.
 		 */
-		ldt_free(pmap);
+		ldt_free(pmap->pm_ldt_sel);
 		uvm_km_free(kernel_map, (vaddr_t)pmap->pm_ldt,
 		    pmap->pm_ldt_len * sizeof(union descriptor), UVM_KMF_WIRED);
 	}
@@ -1986,28 +1986,56 @@ void
 pmap_fork(pmap1, pmap2)
 	struct pmap *pmap1, *pmap2;
 {
+#ifdef USER_LDT
+	union descriptor *new_ldt;
+	size_t len;
+	int sel;
+
+ retry:
+	if (pmap1->pm_flags & PMF_USER_LDT) {
+		len = pmap1->pm_ldt_len * sizeof(union descriptor);
+		new_ldt = (union descriptor *)uvm_km_alloc(kernel_map,
+		    len, 0, UVM_KMF_WIRED);
+		sel = ldt_alloc(new_ldt, len);
+	} else {
+		len = -1;
+		new_ldt = NULL;
+		sel = -1;
+	}
+
 	simple_lock(&pmap1->pm_obj.vmobjlock);
 	simple_lock(&pmap2->pm_obj.vmobjlock);
 
-#ifdef USER_LDT
 	/* Copy the LDT, if necessary. */
 	if (pmap1->pm_flags & PMF_USER_LDT) {
-		union descriptor *new_ldt;
-		size_t len;
+		if (len != pmap1->pm_ldt_len * sizeof(union descriptor)) {
+			simple_unlock(&pmap2->pm_obj.vmobjlock);
+			simple_unlock(&pmap1->pm_obj.vmobjlock);
+			if (len != -1) {
+				ldt_free(sel);
+				uvm_km_free(kernel_map, (vaddr_t)new_ldt,
+				    len, UVM_KMF_WIRED);
+			}
+			goto retry;
+		}
 
-		len = pmap1->pm_ldt_len * sizeof(union descriptor);
-		new_ldt = (union descriptor *)uvm_km_alloc(kernel_map, len, 0,
-		    UVM_KMF_WIRED);
 		memcpy(new_ldt, pmap1->pm_ldt, len);
 		pmap2->pm_ldt = new_ldt;
 		pmap2->pm_ldt_len = pmap1->pm_ldt_len;
 		pmap2->pm_flags |= PMF_USER_LDT;
-		ldt_alloc(pmap2, new_ldt, len);
+		pmap2->pm_ldt_sel = sel;
+		len = -1;
 	}
-#endif /* USER_LDT */
 
 	simple_unlock(&pmap2->pm_obj.vmobjlock);
 	simple_unlock(&pmap1->pm_obj.vmobjlock);
+
+	if (len != -1) {
+		ldt_free(sel);
+		uvm_km_free(kernel_map, (vaddr_t)new_ldt, len,
+		    UVM_KMF_WIRED);
+	}
+#endif /* USER_LDT */
 }
 #endif /* PMAP_FORK */
 
@@ -2025,11 +2053,12 @@ pmap_ldt_cleanup(l)
 	pmap_t pmap = l->l_proc->p_vmspace->vm_map.pmap;
 	union descriptor *old_ldt = NULL;
 	size_t len = 0;
+	int sel = -1;
 
 	simple_lock(&pmap->pm_obj.vmobjlock);
 
 	if (pmap->pm_flags & PMF_USER_LDT) {
-		ldt_free(pmap);
+		sel = pmap->pm_ldt_sel;
 		pmap->pm_ldt_sel = GSEL(GLDT_SEL, SEL_KPL);
 		pcb->pcb_ldt_sel = pmap->pm_ldt_sel;
 		if (l == curlwp)
@@ -2045,6 +2074,8 @@ pmap_ldt_cleanup(l)
 
 	if (old_ldt != NULL)
 		uvm_km_free(kernel_map, (vaddr_t)old_ldt, len, UVM_KMF_WIRED);
+	if (sel != -1)
+		ldt_free(sel);
 }
 #endif /* USER_LDT */
 

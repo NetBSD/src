@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.h,v 1.5.26.1 2007/03/24 14:55:08 yamt Exp $ */
+/*	$NetBSD: linux_machdep.h,v 1.5.26.2 2007/05/07 10:55:12 yamt Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -112,7 +112,7 @@ __END_DECLS
 #define LINUX_VSYSCALL_SIZE	1024
 #define LINUX_VSYSCALL_MAXNR	3
 
-#define LINUX_UNAME_ARCH machine_arch
+#define LINUX_UNAME_ARCH MACHINE_ARCH
 #define LINUX_NPTL
 #define LINUX_LARGEFILE64
 

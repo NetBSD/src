@@ -1,4 +1,4 @@
-/*	$NetBSD: l2cap.h,v 1.2.4.2 2007/03/24 14:56:09 yamt Exp $	*/
+/*	$NetBSD: l2cap.h,v 1.2.4.3 2007/05/07 10:55:56 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -54,7 +54,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: l2cap.h,v 1.2.4.2 2007/03/24 14:56:09 yamt Exp $
+ * $Id: l2cap.h,v 1.2.4.3 2007/05/07 10:55:56 yamt Exp $
  * $FreeBSD: src/sys/netgraph/bluetooth/include/l2cap.h,v 1.4 2005/08/31 18:13:23 emax Exp $
  */
 
@@ -338,11 +338,18 @@ typedef union {
  **************************************************************************
  **************************************************************************/
 
-#define SO_L2CAP_IMTU		1
-#define SO_L2CAP_OMTU		2
-#define SO_L2CAP_IQOS		3
-#define SO_L2CAP_OQOS		4
-#define SO_L2CAP_FLUSH		5
+/* Socket options */
+#define SO_L2CAP_IMTU		1	/* incoming MTU */
+#define SO_L2CAP_OMTU		2	/* outgoing MTU */
+#define SO_L2CAP_IQOS		3	/* incoming QoS */
+#define SO_L2CAP_OQOS		4	/* outgoing QoS */
+#define SO_L2CAP_FLUSH		5	/* flush timeout */
+#define SO_L2CAP_LM		6	/* link mode */
+
+/* L2CAP link mode flags */
+#define L2CAP_LM_AUTH		(1<<0)	/* want authentication */
+#define L2CAP_LM_ENCRYPT	(1<<1)	/* want encryption */
+#define L2CAP_LM_SECURE		(1<<2)	/* want secured link */
 
 #ifdef _KERNEL
 
@@ -367,6 +374,7 @@ struct l2cap_channel {
 	struct hci_link		*lc_link;	/* ACL connection (down) */
 	uint16_t		 lc_state;	/* channel state */
 	uint16_t		 lc_flags;	/* channel flags */
+	uint8_t			 lc_ident;	/* cached request id */
 
 	uint16_t		 lc_lcid;	/* local channel ID */
 	struct sockaddr_bt	 lc_laddr;	/* local address */
@@ -374,6 +382,7 @@ struct l2cap_channel {
 	uint16_t		 lc_rcid;	/* remote channel ID */
 	struct sockaddr_bt	 lc_raddr;	/* remote address */
 
+	int			 lc_mode;	/* link mode */
 	uint16_t		 lc_imtu;	/* incoming mtu */
 	uint16_t		 lc_omtu;	/* outgoing mtu */
 	uint16_t		 lc_flush;	/* flush timeout */
@@ -390,11 +399,13 @@ struct l2cap_channel {
 };
 
 /* l2cap_channel state */
-#define L2CAP_CLOSED		0	/* closed */
-#define L2CAP_WAIT_CONNECT_RSP	1	/* have sent connect request */
-#define L2CAP_WAIT_CONFIG	2	/* waiting for configuration */
-#define L2CAP_OPEN		3	/* user data transfer state */
-#define L2CAP_WAIT_DISCONNECT	4	/* have sent disconnect request */
+#define L2CAP_CLOSED			0 /* closed */
+#define L2CAP_WAIT_SEND_CONNECT_REQ	1 /* waiting to send connect request */
+#define L2CAP_WAIT_RECV_CONNECT_RSP	2 /* waiting to recv connect response */
+#define L2CAP_WAIT_SEND_CONNECT_RSP	3 /* waiting to send connect response */
+#define L2CAP_WAIT_CONFIG		4 /* waiting for configuration */
+#define L2CAP_OPEN			5 /* user data transfer state */
+#define L2CAP_WAIT_DISCONNECT		6 /* have sent disconnect request */
 
 /* l2cap_channel flags */
 #define L2CAP_SHUTDOWN		(1<<0)	/* channel is closing */
@@ -436,6 +447,7 @@ void l2cap_recv_frame(struct mbuf *, struct hci_link *);
 int l2cap_start(struct l2cap_channel *);
 
 /* l2cap_misc.c */
+int l2cap_setmode(struct l2cap_channel *);
 int l2cap_cid_alloc(struct l2cap_channel *);
 struct l2cap_channel *l2cap_cid_lookup(uint16_t);
 int l2cap_request_alloc(struct l2cap_channel *, uint8_t);
@@ -448,6 +460,7 @@ void l2cap_recv_signal(struct mbuf *, struct hci_link *);
 int l2cap_send_connect_req(struct l2cap_channel *);
 int l2cap_send_config_req(struct l2cap_channel *);
 int l2cap_send_disconnect_req(struct l2cap_channel *);
+int l2cap_send_connect_rsp(struct hci_link *, uint8_t, uint16_t, uint16_t, uint16_t);
 
 /* l2cap_socket.c */
 int l2cap_usrreq(struct socket *, int, struct mbuf *, struct mbuf *, struct mbuf *, struct lwp *);

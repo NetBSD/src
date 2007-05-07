@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.c,v 1.20.2.2 2007/04/15 16:03:39 yamt Exp $	*/
+/*	$NetBSD: ip_nat.c,v 1.20.2.3 2007/05/07 10:55:37 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995-2003 by Darren Reed.
@@ -116,7 +116,7 @@ extern struct ifnet vpnif;
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)ip_nat.c	1.11 6/5/96 (C) 1995 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_nat.c,v 2.195.2.73 2007/02/02 23:53:33 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_nat.c,v 2.195.2.76 2007/04/29 06:43:17 darrenr Exp";
 #endif
 
 
@@ -188,15 +188,9 @@ static	void	nat_addrdr __P((struct ipnat *));
 static	void	nat_delete __P((struct nat *, int));
 static	void	nat_delrdr __P((struct ipnat *));
 static	void	nat_delnat __P((struct ipnat *));
-#if __NetBSD_Version__ >= 499001000
-static	int	fr_natgetent __P((void *));
-static	int	fr_natgetsz __P((void *));
-static	int	fr_natputent __P((void *, int));
-#else
 static	int	fr_natgetent __P((caddr_t));
 static	int	fr_natgetsz __P((caddr_t));
 static	int	fr_natputent __P((caddr_t, int));
-#endif
 static	int	nat_extraflush __P((int));
 static	void	nat_tabmove __P((nat_t *));
 static	int	nat_match __P((fr_info_t *, ipnat_t *));
@@ -647,11 +641,7 @@ u_32_t n;
 /* ------------------------------------------------------------------------ */
 int fr_nat_ioctl(data, cmd, mode, uid, ctx)
 ioctlcmd_t cmd;
-#if __NetBSD_Version__ >= 499001000
-void *data;
-#else
 caddr_t data;
-#endif
 int mode, uid;
 void *ctx;
 {
@@ -732,8 +722,9 @@ void *ctx;
 			break;
 
 		token = ipf_findtoken(iter.igi_type, uid, ctx);
-		if (token != NULL)
+		if (token != NULL) {
 			error  = nat_iterator(token, &iter);
+		}
 		RWLOCK_EXIT(&ipf_tokens);
 		break;
 	    }
@@ -1176,7 +1167,7 @@ int getlock;
 /* structure is copied back to the user.                                    */
 /* ------------------------------------------------------------------------ */
 static int fr_natgetsz(data)
-void *data;
+caddr_t data;
 {
 	ap_session_t *aps;
 	nat_t *nat, *n;
@@ -1235,7 +1226,7 @@ void *data;
 /* proxy is also copied, as to is the NAT rule which was responsible for it */
 /* ------------------------------------------------------------------------ */
 static int fr_natgetent(data)
-void *data;
+caddr_t data;
 {
 	int error, outsize;
 	ap_session_t *aps;
@@ -1347,7 +1338,7 @@ finished:
 /* firewall rule data structures, if pointers to them indicate so.          */
 /* ------------------------------------------------------------------------ */
 static int fr_natputent(data, getlock)
-void *data;
+caddr_t data;
 int getlock;
 {
 	nat_save_t *ipn, *ipnn;
@@ -1689,11 +1680,15 @@ int logtype;
 	if (nat->nat_tqe.tqe_ifq != NULL)
 		fr_deletequeueentry(&nat->nat_tqe);
 
+	if (logtype == NL_EXPIRE)
+		nat_stats.ns_expire++;
+
 	nat->nat_ref--;
 	if (nat->nat_ref > 0) {
 		MUTEX_EXIT(&ipf_nat_new);
 		return;
 	}
+
 	/*
 	 * At this point, nat_ref can be either 0 or -1
 	 */
@@ -4975,9 +4970,7 @@ ipfgeniter_t *itp;
 					hm = NULL;
 				}
 				if (count == 1) {
-					/*MUTEX_ENTER(&nexthm->hm_lock);*/
-					nexthm->hm_ref++;
-					/*MUTEX_EXIT(&nextipnat->hm_lock);*/
+					ATOMIC_INC32(nexthm->hm_ref);
 				}
 			} else {
 				bzero(&zerohm, sizeof(zerohm));
@@ -5131,6 +5124,7 @@ ipfgeniter_t *itp;
 	case IPFGENITER_NAT :
 		error = nat_getnext(token, itp);
 		break;
+
 	case IPFGENITER_NATFRAG :
 #ifdef USE_MUTEXES
 		error = fr_nextfrag(token, itp, &ipfr_natlist,
@@ -5168,40 +5162,71 @@ ipfgeniter_t *itp;
 static int nat_extraflush(which)
 int which;
 {
+	u_long interval, istart, iend;
 	ipftq_t *ifq, *ifqnext;
 	ipftqent_t *tqe, *tqn;
-	int delete, removed;
 	nat_t *nat, **natp;
-	long try, maxtick;
-	u_long interval;
+	int removed;
 	SPL_INT(s);
 
 	removed = 0;
 
 	SPL_NET(s);
-	for (natp = &nat_instances; ((nat = *natp) != NULL); ) {
-		delete = 0;
 
-		switch (which)
-		{
-		case 0 :
-			delete = 1;
-			break;
-		case 1 :
-		case 2 :
-			if (nat->nat_p != IPPROTO_TCP)
-				break;
-			if ((nat->nat_tcpstate[0] != IPF_TCPS_ESTABLISHED) ||
-			    (nat->nat_tcpstate[1] != IPF_TCPS_ESTABLISHED))
-				delete = 1;
-			break;
+	switch (which)
+	{
+	case 0 :
+		/*
+		 * Style 0 flush removes everything...
+		 */
+		for (natp = &nat_instances; ((nat = *natp) != NULL); ) {
+			nat_delete(nat, NL_FLUSH);
+			removed++;
+		}
+		break;
+
+	case 1 :
+		/*
+		 * Since we're only interested in things that are closing,
+		 * we can start with the appropriate timeout queue.
+		 */
+		for (ifq = ips_tqtqb + IPF_TCPS_CLOSE_WAIT; ifq != NULL;
+		     ifq = ifq->ifq_next) {
+
+			for (tqn = ifq->ifq_head; ((tqe = tqn) != NULL); ) {
+				tqn = tqe->tqe_next;
+				nat = tqe->tqe_parent;
+				if (nat->nat_p != IPPROTO_TCP)
+					break;
+				nat_delete(nat, NL_EXPIRE);
+				removed++;
+			}
 		}
 
-		if (delete) {
-			nat_delete(nat, ISL_FLUSH);
-			removed++;
-		} else
-			natp = &nat->nat_next;
+		/*
+		 * Also need to look through the user defined queues.
+		 */
+		for (ifq = ips_utqe; ifq != NULL; ifq = ifqnext) {
+			ifqnext = ifq->ifq_next;
+			for (tqn = ifq->ifq_head; ((tqe = tqn) != NULL); ) {
+				tqn = tqe->tqe_next;
+				nat = tqe->tqe_parent;
+				if (nat->nat_p != IPPROTO_TCP)
+					continue;
+
+				if ((nat->nat_tcpstate[0] >
+				     IPF_TCPS_ESTABLISHED) &&
+				    (nat->nat_tcpstate[1] >
+				     IPF_TCPS_ESTABLISHED)) {
+					nat_delete(nat, NL_EXPIRE);
+					removed++;
+				}
+			}
+		}
+		break;
+
+	default :
+		break;
 	}
 
 	if (which != 2) {
@@ -5217,71 +5242,69 @@ int which;
 	 * at random until N have been freed up.
 	 */
 	if (fr_ticks - nat_last_force_flush < IPF_TTLVAL(5))
-		goto force_flush_skipped;
+		goto nat_force_flush_skipped;
 	nat_last_force_flush = fr_ticks;
 
-	if (fr_ticks > IPF_TTLVAL(43200))
+	if (fr_ticks > IPF_TTLVAL(43200 * 15 / 10)) {
+		istart = IPF_TTLVAL(86400 * 4);
 		interval = IPF_TTLVAL(43200);
-	else if (fr_ticks > IPF_TTLVAL(1800))
+	} else if (fr_ticks > IPF_TTLVAL(1800 * 15 / 10)) {
+		istart = IPF_TTLVAL(43200);
 		interval = IPF_TTLVAL(1800);
-	else if (fr_ticks > IPF_TTLVAL(30))
+	} else if (fr_ticks > IPF_TTLVAL(30 * 15 / 10)) {
+		istart = IPF_TTLVAL(1800);
 		interval = IPF_TTLVAL(30);
-	else
-		interval = IPF_TTLVAL(10);
-	try = fr_ticks - (fr_ticks - interval);
-	if (try < 0)
-		goto force_flush_skipped;
+	} else {
+		goto nat_force_flush_skipped;
+	}
+	iend = interval;
+	if (istart > fr_ticks) {
+		istart = (fr_ticks / interval) * interval;
+	}
 
 	while (removed == 0) {
-		maxtick = fr_ticks - interval;
-		if (maxtick < 0)
-			break;
+		u_long try;
 
-		while (try < maxtick) {
-			for (ifq = nat_tqb; ifq != NULL;
-			     ifq = ifq->ifq_next) {
-				for (tqn = ifq->ifq_head;
-				     ((tqe = tqn) != NULL); ) {
-					if (tqe->tqe_die > try)
-						break;
-					tqn = tqe->tqe_next;
-					nat = tqe->tqe_parent;
-					nat_delete(nat, ISL_EXPIRE);
-					removed++;
-				}
+		try = fr_ticks - istart; 
+
+		for (ifq = ips_tqtqb; ifq != NULL;
+		     ifq = ifq->ifq_next) {
+			for (tqn = ifq->ifq_head; ((tqe = tqn) != NULL); ) {
+				if (tqe->tqe_die > try)
+					break;
+				tqn = tqe->tqe_next;
+				nat = tqe->tqe_parent;
+				nat_delete(nat, NL_EXPIRE);
+				removed++;
 			}
-
-			for (ifq = nat_utqe; ifq != NULL; ifq = ifqnext) {
-				ifqnext = ifq->ifq_next;
-
-				for (tqn = ifq->ifq_head;
-				     ((tqe = tqn) != NULL); ) {
-					if (tqe->tqe_die > try)
-						break;
-					tqn = tqe->tqe_next;
-					nat = tqe->tqe_parent;
-					nat_delete(nat, ISL_EXPIRE);
-					removed++;
-				}
-			}
-			if (try + interval > maxtick)
-				break;
-			try += interval;
 		}
 
-		if (removed == 0) {
+		for (ifq = ips_utqe; ifq != NULL; ifq = ifqnext) {
+			ifqnext = ifq->ifq_next;
+
+			for (tqn = ifq->ifq_head; ((tqe = tqn) != NULL); ) {
+				if (tqe->tqe_die > try)
+					break;
+				tqn = tqe->tqe_next;
+				nat = tqe->tqe_parent;
+				nat_delete(nat, NL_EXPIRE);
+				removed++;
+			}
+		}
+
+		istart -= interval;
+		if (istart == interval) {
 			if (interval == IPF_TTLVAL(43200)) {
 				interval = IPF_TTLVAL(1800);
 			} else if (interval == IPF_TTLVAL(1800)) {
 				interval = IPF_TTLVAL(30);
-			} else if (interval == IPF_TTLVAL(30)) {
-				interval = IPF_TTLVAL(10);
 			} else {
 				break;
 			}
 		}
 	}
-force_flush_skipped:
+
+nat_force_flush_skipped:
 	SPL_X(s);
 	return removed;
 }

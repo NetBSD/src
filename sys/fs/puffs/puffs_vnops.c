@@ -1,7 +1,7 @@
-/*	$NetBSD: puffs_vnops.c,v 1.51.2.3 2007/04/15 16:03:47 yamt Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.51.2.4 2007/05/07 10:55:42 yamt Exp $	*/
 
 /*
- * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
+ * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
  *
  * Development of this software was supported by the
  * Google Summer of Code program and the Ulla Tuominen Foundation.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.51.2.3 2007/04/15 16:03:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.51.2.4 2007/05/07 10:55:42 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/fstrans.h>
@@ -641,16 +641,18 @@ puffs_close(void *v)
 		kauth_cred_t a_cred;
 		struct lwp *a_l;
 	} */ *ap = v;
+	struct puffs_vnreq_close *close_argp;
 
-	PUFFS_VNREQ(close);
+	close_argp = malloc(sizeof(struct puffs_vnreq_close),
+	    M_PUFFS, M_WAITOK | M_ZERO);
+	close_argp->pvnr_fflag = ap->a_fflag;
+	puffs_credcvt(&close_argp->pvnr_cred, ap->a_cred);
+	close_argp->pvnr_pid = puffs_lwp2pid(ap->a_l);
 
-	close_arg.pvnr_fflag = ap->a_fflag;
-	puffs_credcvt(&close_arg.pvnr_cred, ap->a_cred);
-	close_arg.pvnr_pid = puffs_lwp2pid(ap->a_l);
+	puffs_vntouser_faf(MPTOPUFFSMP(ap->a_vp->v_mount), PUFFS_VN_CLOSE,
+	    close_argp, sizeof(struct puffs_vnreq_close), VPTOPNC(ap->a_vp));
 
-	return puffs_vntouser(MPTOPUFFSMP(ap->a_vp->v_mount), PUFFS_VN_CLOSE,
-	    &close_arg, sizeof(close_arg), 0, VPTOPNC(ap->a_vp),
-	    ap->a_vp, NULL);
+	return 0;
 }
 
 int
@@ -752,10 +754,34 @@ puffs_setattr(void *v)
 		struct lwp *a_l;
 	} */ *ap = v;
 	int error;
+	struct vattr *vap = ap->a_vap;
+	struct puffs_node *pn = ap->a_vp->v_data;
 
 	PUFFS_VNREQ(setattr);
 
-	(void)memcpy(&setattr_arg.pvnr_va, ap->a_vap, sizeof(struct vattr));
+	/*
+	 * Flush metacache first.  If we are called with some explicit
+	 * parameters, treat them as information overriding metacache
+	 * information.
+	 */
+	if (pn->pn_stat & PNODE_METACACHE_MASK) {
+		if ((pn->pn_stat & PNODE_METACACHE_ATIME)
+		    && vap->va_atime.tv_sec == VNOVAL)
+			vap->va_atime = pn->pn_mc_atime;
+		if ((pn->pn_stat & PNODE_METACACHE_CTIME)
+		    && vap->va_ctime.tv_sec == VNOVAL)
+			vap->va_ctime = pn->pn_mc_ctime;
+		if ((pn->pn_stat & PNODE_METACACHE_MTIME)
+		    && vap->va_mtime.tv_sec == VNOVAL)
+			vap->va_mtime = pn->pn_mc_mtime;
+		if ((pn->pn_stat & PNODE_METACACHE_SIZE)
+		    && vap->va_size == VNOVAL)
+			vap->va_size = pn->pn_mc_size;
+
+		pn->pn_stat &= ~PNODE_METACACHE_MASK;
+	}
+
+	(void)memcpy(&setattr_arg.pvnr_va, vap, sizeof(struct vattr));
 	puffs_credcvt(&setattr_arg.pvnr_cred, ap->a_cred);
 	setattr_arg.pvnr_pid = puffs_lwp2pid(ap->a_l);
 
@@ -765,8 +791,8 @@ puffs_setattr(void *v)
 	if (error)
 		return error;
 
-	if (ap->a_vap->va_size != VNOVAL)
-		uvm_vnp_setsize(ap->a_vp, ap->a_vap->va_size);
+	if (vap->va_size != VNOVAL)
+		uvm_vnp_setsize(ap->a_vp, vap->va_size);
 
 	return 0;
 }
@@ -872,7 +898,7 @@ puffs_reclaim(void *v)
 	return 0;
 }
 
-#define CSIZE sizeof(*ap->a_cookies)
+#define CSIZE sizeof(**ap->a_cookies)
 int
 puffs_readdir(void *v)
 {
@@ -887,14 +913,14 @@ puffs_readdir(void *v)
 	} */ *ap = v;
 	struct puffs_mount *pmp = MPTOPUFFSMP(ap->a_vp->v_mount);
 	struct puffs_vnreq_readdir *readdir_argp;
-	size_t argsize, cookiemem, cookiesmax;
+	size_t argsize, tomove, cookiemem, cookiesmax;
 	struct uio *uio = ap->a_uio;
 	size_t howmuch;
 	int error;
 
 	if (ap->a_cookies) {
 		KASSERT(ap->a_ncookies != NULL);
-		if ((pmp->pmp_flags & PUFFS_KFLAG_CANEXPORT) == 0)
+		if (pmp->pmp_args.pa_fhsize == 0)
 			return EOPNOTSUPP;
 		cookiesmax = uio->uio_resid/_DIRENT_MINSIZE((struct dirent *)0);
 		cookiemem = ALIGN(cookiesmax*CSIZE); /* play safe */
@@ -903,9 +929,9 @@ puffs_readdir(void *v)
 		cookiemem = 0;
 	}
 
-	argsize = sizeof(struct puffs_vnreq_readdir)
-	    + uio->uio_resid + cookiemem;
-	readdir_argp = malloc(argsize, M_PUFFS, M_ZERO | M_WAITOK);
+	argsize = sizeof(struct puffs_vnreq_readdir);
+	tomove = uio->uio_resid + cookiemem;
+	readdir_argp = malloc(argsize + tomove, M_PUFFS, M_ZERO | M_WAITOK);
 
 	puffs_credcvt(&readdir_argp->pvnr_cred, ap->a_cred);
 	readdir_argp->pvnr_offset = uio->uio_offset;
@@ -915,8 +941,8 @@ puffs_readdir(void *v)
 	readdir_argp->pvnr_dentoff = cookiemem;
 
 	error = puffs_vntouser(MPTOPUFFSMP(ap->a_vp->v_mount),
-	    PUFFS_VN_READDIR, readdir_argp, argsize,
-	    uio->uio_resid + cookiemem, VPTOPNC(ap->a_vp), ap->a_vp, NULL);
+	    PUFFS_VN_READDIR, readdir_argp, argsize, tomove,
+	    VPTOPNC(ap->a_vp), ap->a_vp, NULL);
 	if (error)
 		goto out;
 
@@ -1006,23 +1032,12 @@ puffs_fsync(void *v)
 	pn = VPTOPP(vp);
 	pmp = MPTOPUFFSMP(vp->v_mount);
 
-	/* flush out information from our metacache */
+	/* flush out information from our metacache, see vop_setattr */
 	if (pn->pn_stat & PNODE_METACACHE_MASK) {
 		vattr_null(&va);
-		if (pn->pn_stat & PNODE_METACACHE_ATIME)
-			va.va_atime = pn->pn_mc_atime;
-		if (pn->pn_stat & PNODE_METACACHE_CTIME)
-			va.va_ctime = pn->pn_mc_ctime;
-		if (pn->pn_stat & PNODE_METACACHE_MTIME)
-			va.va_mtime = pn->pn_mc_ctime;
-		if (pn->pn_stat & PNODE_METACACHE_SIZE)
-			va.va_size = pn->pn_mc_size;
-
 		error = VOP_SETATTR(vp, &va, FSCRED, NULL); 
 		if (error)
 			return error;
-
-		pn->pn_stat &= ~PNODE_METACACHE_MASK;
 	}
 
 	/*
@@ -1529,24 +1544,18 @@ puffs_write(void *v)
 			error = uiomove(win, bytelen, uio);
 
 			/*
-			 * did we grow the file?
-			 * XXX: should probably ask userspace to extend
-			 * it's idea of the *first* before growing it
-			 * here.  Or we need some mechanism to "rollback"
-			 * in case putpages fails.
+			 * There is no guarantee that the faults
+			 * generated by uiomove() succeed at all.
+			 * Therefore, in case of an uiomove() error,
+			 * opt to not extend the file at all and
+			 * return an error.  Otherwise, if we attempt
+			 * to clear the memory we couldn't fault to,
+			 * we might generate a kernel page fault.
 			 */
 			newoff = oldoff + bytelen;
-			if (vp->v_size < newoff) {
+			if (vp->v_size < newoff && error == 0) {
 				uflags |= PUFFS_UPDATESIZE;
 				uvm_vnp_setsize(vp, newoff);
-
-				/*
-				 * in case we couldn't copy data to the
-				 * window, zero it out so that we don't
-				 * have any random leftovers in there.
-				 */
-				if (error)
-					memset(win, 0, bytelen);
 			}
 
 			ubc_release(win, ubcflags);
@@ -1572,11 +1581,18 @@ puffs_write(void *v)
 			}
 		}
 
+		/* synchronous I/O? */
 		if (error == 0 && ap->a_ioflag & IO_SYNC) {
 			simple_lock(&vp->v_interlock);
 			error = VOP_PUTPAGES(vp, trunc_page(origoff),
 			    round_page(uio->uio_offset),
 			    PGO_CLEANIT | PGO_SYNCIO);
+
+		/* write though page cache? */
+		} else if (error == 0 && pmp->pmp_flags & PUFFS_KFLAG_WTCACHE) {
+			simple_lock(&vp->v_interlock);
+			error = VOP_PUTPAGES(vp, trunc_page(origoff),
+			    round_page(uio->uio_offset), PGO_CLEANIT);
 		}
 
 		puffs_updatenode(vp, uflags);

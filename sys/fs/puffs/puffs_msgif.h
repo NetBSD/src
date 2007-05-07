@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.h,v 1.19.2.2 2007/04/15 16:03:46 yamt Exp $	*/
+/*	$NetBSD: puffs_msgif.h,v 1.19.2.3 2007/05/07 10:55:42 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -86,7 +86,7 @@ enum {
 #define PUFFS_VN_MAX PUFFS_VN_SETEXTATTR
 
 #define PUFFSDEVELVERS	0x80000000
-#define PUFFSVERSION	7
+#define PUFFSVERSION	8
 #define PUFFSNAMESIZE	32
 struct puffs_kargs {
 	unsigned int	pa_vers;
@@ -94,8 +94,10 @@ struct puffs_kargs {
 	uint32_t	pa_flags;
 
 	size_t		pa_maxreqlen;
-	size_t		pa_fhsize;
 	int		pa_nhashbuckets;
+
+	size_t		pa_fhsize;
+	int		pa_fhflags;
 
 	char		pa_name[PUFFSNAMESIZE+1];   /* name for puffs type */
 	uint8_t		pa_vnopmask[PUFFS_VN_MAX];
@@ -103,8 +105,15 @@ struct puffs_kargs {
 #define PUFFS_KFLAG_ALLOWCTL	0x01	/* ioctl/fcntl commands allowed */
 #define PUFFS_KFLAG_NOCACHE	0x02	/* flush page cache immediately	*/
 #define PUFFS_KFLAG_ALLOPS	0x04	/* ignore pa_vnopmask, send all */
-#define PUFFS_KFLAG_CANEXPORT	0x08	/* file system can be exported  */
+#define PUFFS_KFLAG_WTCACHE	0x08	/* page cache is write-through  */
 #define PUFFS_KFLAG_MASK	0x0f
+
+#define PUFFS_FHFLAG_DYNAMIC	0x01
+#define PUFFS_FHFLAG_NFSV2	0x02
+#define PUFFS_FHFLAG_NFSV3	0x04
+#define PUFFS_FHFLAG_PROTOMASK	0x06
+
+#define PUFFS_FHSIZE_MAX	1020	/* XXX: FHANDLE_SIZE_MAX - 4 */
 
 /*
  * This is the device minor number for the cloning device.  Make it
@@ -330,9 +339,6 @@ struct puffs_kcn {
 #define PUFFSLOOKUP_ISLASTCN	0x08000 /* is last component of lookup */
 
 
-/* XXX */
-#define PUFFS_FHSIZE	48
-
 /*
  * Next come the individual requests.  They are all subclassed from
  * puffs_req and contain request-specific fields in addition.  Note
@@ -385,7 +391,7 @@ struct puffs_vfsreq_fhtonode {
 	dev_t			pvfsr_rdev;		/* IN	*/
 
 	size_t			pvfsr_dsize;		/* OUT */
-	uint8_t			pvfsr_data[PUFFS_FHSIZE]/* OUT, XXX */
+	uint8_t			pvfsr_data[0]		/* OUT, XXX */
 				    __aligned(ALIGNBYTES+1);
 };
 
@@ -395,7 +401,7 @@ struct puffs_vfsreq_nodetofh {
 	void			*pvfsr_fhcookie;	/* OUT	*/
 
 	size_t			pvfsr_dsize;		/* OUT/IN  */
-	uint8_t			pvfsr_data[PUFFS_FHSIZE]/* IN, XXX */
+	uint8_t			pvfsr_data[0]		/* IN, XXX */
 				    __aligned(ALIGNBYTES+1);
 };
 

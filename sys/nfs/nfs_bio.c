@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.147.2.2 2007/03/12 06:00:35 rmind Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.147.2.3 2007/05/07 10:56:10 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.147.2.2 2007/03/12 06:00:35 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.147.2.3 2007/05/07 10:56:10 yamt Exp $");
 
 #include "opt_nfs.h"
 #include "opt_ddb.h"
@@ -511,7 +511,9 @@ nfs_write(v)
 	 */
 	if (l && l->l_proc && uio->uio_offset + uio->uio_resid >
 	      l->l_proc->p_rlimit[RLIMIT_FSIZE].rlim_cur) {
+		mutex_enter(&proclist_mutex);
 		psignal(l->l_proc, SIGXFSZ);
+		mutex_exit(&proclist_mutex);
 		return (EFBIG);
 	}
 
@@ -740,7 +742,8 @@ nfs_asyncio(bp)
 {
 	int i;
 	struct nfsmount *nmp;
-	int gotiod, slpflag = 0, slptimeo = 0, error;
+	int gotiod, slptimeo = 0, error;
+	bool catch = false;
 
 	if (nfs_numasync == 0)
 		return (EIO);
@@ -748,7 +751,7 @@ nfs_asyncio(bp)
 	nmp = VFSTONFS(bp->b_vp->v_mount);
 again:
 	if (nmp->nm_flag & NFSMNT_INT)
-		slpflag = PCATCH;
+		catch = true;
 	gotiod = false;
 
 	/*
@@ -758,7 +761,7 @@ again:
 	for (i = 0; i < NFS_MAXASYNCDAEMON; i++) {
 		struct nfs_iod *iod = &nfs_asyncdaemon[i];
 
-		simple_lock(&iod->nid_slock);
+		mutex_enter(&iod->nid_lock);
 		if (iod->nid_want) {
 			/*
 			 * Found one, so wake it up and tell it which
@@ -766,14 +769,14 @@ again:
 			 */
 			iod->nid_want = NULL;
 			iod->nid_mount = nmp;
-			wakeup(&iod->nid_want);
-			simple_lock(&nmp->nm_slock);
-			simple_unlock(&iod->nid_slock);
+			cv_signal(&iod->nid_cv);
+			mutex_enter(&nmp->nm_lock);
+			mutex_exit(&iod->nid_lock);
 			nmp->nm_bufqiods++;
 			gotiod = true;
 			break;
 		}
-		simple_unlock(&iod->nid_slock);
+		mutex_exit(&iod->nid_lock);
 	}
 
 	/*
@@ -782,12 +785,12 @@ again:
 	 */
 
 	if (!gotiod) {
-		simple_lock(&nmp->nm_slock);
+		mutex_enter(&nmp->nm_lock);
 		if (nmp->nm_bufqiods > 0)
 			gotiod = true;
 	}
 
-	LOCK_ASSERT(simple_lock_held(&nmp->nm_slock));
+	KASSERT(mutex_owned(&nmp->nm_lock));
 
 	/*
 	 * If we have an iod which can process the request, then queue
@@ -809,15 +812,19 @@ again:
 	  		/* Enque for later, to avoid free-page deadlock */
 			  (void) 0;
 		} else while (nmp->nm_bufqlen >= 2*nfs_numasync) {
-			nmp->nm_bufqwant = true;
-			error = ltsleep(&nmp->nm_bufq,
-			    slpflag | PRIBIO | PNORELOCK,
-			    "nfsaio", slptimeo, &nmp->nm_slock);
+			if (catch) {
+				error = cv_timedwait_sig(&nmp->nm_aiocv, 
+				    &nmp->nm_lock, slptimeo);
+			} else {
+				error = cv_timedwait(&nmp->nm_aiocv,
+				    &nmp->nm_lock, slptimeo);
+			}
 			if (error) {
+				mutex_exit(&nmp->nm_lock);
 				if (nfs_sigintr(nmp, NULL, curlwp))
 					return (EINTR);
-				if (slpflag == PCATCH) {
-					slpflag = 0;
+				if (catch) {
+					catch = false;
 					slptimeo = 2 * hz;
 				}
 			}
@@ -827,17 +834,17 @@ again:
 			 * so check and loop if nescessary.
 			 */
 
-			if (nmp->nm_bufqiods == 0)
+			if (nmp->nm_bufqiods == 0) {
+				mutex_exit(&nmp->nm_lock);
 				goto again;
-
-			simple_lock(&nmp->nm_slock);
+			}
 		}
 		TAILQ_INSERT_TAIL(&nmp->nm_bufq, bp, b_freelist);
 		nmp->nm_bufqlen++;
-		simple_unlock(&nmp->nm_slock);
+		mutex_exit(&nmp->nm_lock);
 		return (0);
 	}
-	simple_unlock(&nmp->nm_slock);
+	mutex_exit(&nmp->nm_lock);
 
 	/*
 	 * All the iods are busy on other mounts, so return EIO to

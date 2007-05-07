@@ -1,11 +1,11 @@
-/*	$NetBSD: sys_machdep.c,v 1.80.2.2 2007/03/12 05:48:24 rmind Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.1.4.2 2007/05/07 10:55:05 yamt Exp $	*/
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Charles M. Hannum.
+ * by Charles M. Hannum, and by Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -37,13 +37,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.80.2.2 2007/03/12 05:48:24 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.1.4.2 2007/05/07 10:55:05 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_mtrr.h"
 #include "opt_perfctrs.h"
 #include "opt_user_ldt.h"
 #include "opt_vm86.h"
+#include "opt_xen.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,6 +73,16 @@ __KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.80.2.2 2007/03/12 05:48:24 rmind E
 #include <machine/sysarch.h>
 #include <machine/mtrr.h>
 
+#ifdef __x86_64__
+/* Need to be checked. */
+#undef	USER_LDT
+#undef	PERFCTRS
+#undef	VM86
+#undef	IOPERM
+#else
+#define	IOPERM
+#endif
+
 #ifdef VM86
 #include <machine/vm86.h>
 #endif
@@ -82,21 +93,16 @@ __KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.80.2.2 2007/03/12 05:48:24 rmind E
 
 extern struct vm_map *kernel_map;
 
-int i386_iopl(struct lwp *, void *, register_t *);
-int i386_get_ioperm(struct lwp *, void *, register_t *);
-int i386_set_ioperm(struct lwp *, void *, register_t *);
-int i386_get_mtrr(struct lwp *, void *, register_t *);
-int i386_set_mtrr(struct lwp *, void *, register_t *);
-
-#ifdef USER_LDT
+int x86_get_ioperm(struct lwp *, void *, register_t *);
+int x86_set_ioperm(struct lwp *, void *, register_t *);
+int x86_get_mtrr(struct lwp *, void *, register_t *);
+int x86_set_mtrr(struct lwp *, void *, register_t *);
 
 #ifdef LDT_DEBUG
-static void i386_print_ldt(int, const struct segment_descriptor *);
+static void x86_print_ldt(int, const struct segment_descriptor *);
 
 static void
-i386_print_ldt(i, d)
-	int  i;
-	const struct segment_descriptor *d;
+x86_print_ldt(int i, const struct segment_descriptor *d)
 {
 	printf("[%d] lolimit=0x%x, lobase=0x%x, type=%u, dpl=%u, p=%u, "
 	    "hilimit=0x%x, xx=%x, def32=%u, gran=%u, hibase=0x%x\n",
@@ -106,17 +112,15 @@ i386_print_ldt(i, d)
 #endif
 
 int
-i386_get_ldt(l, args, retval)
-	struct lwp *l;
-	void *args;
-	register_t *retval;
+x86_get_ldt(struct lwp *l, void *args, register_t *retval)
 {
+#ifdef USER_LDT
 	int error;
 	struct proc *p = l->l_proc;
 	pmap_t pmap = p->p_vmspace->vm_map.pmap;
 	int nldt, num;
 	union descriptor *lp, *cp;
-	struct i386_get_ldt_args ua;
+	struct x86_get_ldt_args ua;
 
 	error = kauth_authorize_machdep(l->l_cred, KAUTH_MACHDEP_LDT_GET,
 	    NULL, NULL, NULL, NULL);
@@ -127,7 +131,7 @@ i386_get_ldt(l, args, retval)
 		return (error);
 
 #ifdef	LDT_DEBUG
-	printf("i386_get_ldt: start=%d num=%d descs=%p\n", ua.start,
+	printf("x86_get_ldt: start=%d num=%d descs=%p\n", ua.start,
 	    ua.num, ua.desc);
 #endif
 
@@ -161,7 +165,7 @@ i386_get_ldt(l, args, retval)
 	{
 		int i;
 		for (i = 0; i < num; i++)
-			i386_print_ldt(i, &lp[i].sd);
+			x86_print_ldt(i, &lp[i].sd);
 	}
 #endif
 
@@ -174,22 +178,23 @@ i386_get_ldt(l, args, retval)
 
 	free(cp, M_TEMP);
 	return (error);
+#else
+	return EINVAL;
+#endif
 }
 
 int
-i386_set_ldt(l, args, retval)
-	struct lwp *l;
-	void *args;
-	register_t *retval;
+x86_set_ldt(struct lwp *l, void *args, register_t *retval)
 {
-	int error, i, n;
+#ifdef USER_LDT
+	int error, i, n, sel, free_sel;
 	struct proc *p = l->l_proc;
 	struct pcb *pcb = &l->l_addr->u_pcb;
 	pmap_t pmap = p->p_vmspace->vm_map.pmap;
-	struct i386_set_ldt_args ua;
+	struct x86_set_ldt_args ua;
 	union descriptor *descv;
-	size_t old_len, new_len, ldt_len;
-	union descriptor *old_ldt, *new_ldt;
+	size_t old_len, new_len, ldt_len, free_len;
+	union descriptor *old_ldt, *new_ldt, *free_ldt;
 
 	error = kauth_authorize_machdep(l->l_cred, KAUTH_MACHDEP_LDT_SET,
 	    NULL, NULL, NULL, NULL);
@@ -280,6 +285,11 @@ i386_set_ldt(l, args, retval)
 	}
 
 	/* allocate user ldt */
+	free_sel = -1;
+	new_ldt = NULL;
+	new_len = 0;
+	free_ldt = NULL;
+	free_len = 0;
 	simple_lock(&pmap->pm_lock);
 	if (pmap->pm_ldt == 0 || (ua.start + ua.num) > pmap->pm_ldt_len) {
 		if (pmap->pm_flags & PMF_USER_LDT)
@@ -293,6 +303,8 @@ i386_set_ldt(l, args, retval)
 		simple_unlock(&pmap->pm_lock);
 		new_ldt = (union descriptor *)uvm_km_alloc(kernel_map,
 		    new_len, 0, UVM_KMF_WIRED);
+		memset(new_ldt, 0, new_len);
+		sel = ldt_alloc(new_ldt, new_len);
 		simple_lock(&pmap->pm_lock);
 
 		if (pmap->pm_ldt != NULL && ldt_len <= pmap->pm_ldt_len) {
@@ -304,12 +316,12 @@ i386_set_ldt(l, args, retval)
 			 * hey.. not our problem if user applications
 			 * have race conditions like that.
 			 */
-			uvm_km_free(kernel_map, (vaddr_t)new_ldt, new_len,
-			    UVM_KMF_WIRED);
 			goto copy;
 		}
 
 		old_ldt = pmap->pm_ldt;
+		free_ldt = old_ldt;
+		free_len = pmap->pm_ldt_len * sizeof(union descriptor);
 
 		if (old_ldt != NULL) {
 			old_len = pmap->pm_ldt_len * sizeof(union descriptor);
@@ -321,20 +333,20 @@ i386_set_ldt(l, args, retval)
 		memcpy(new_ldt, old_ldt, old_len);
 		memset((char *)new_ldt + old_len, 0, new_len - old_len);
 
-		if (old_ldt != ldt)
-			uvm_km_free(kernel_map, (vaddr_t)old_ldt, old_len,
-			    UVM_KMF_WIRED);
-
 		pmap->pm_ldt = new_ldt;
 		pmap->pm_ldt_len = ldt_len;
 
 		if (pmap->pm_flags & PMF_USER_LDT)
-			ldt_free(pmap);
-		else
+			free_sel = pmap->pm_ldt_sel;
+		else {
 			pmap->pm_flags |= PMF_USER_LDT;
-		ldt_alloc(pmap, new_ldt, new_len);
+			free_sel = -1;
+		}
+		pmap->pm_ldt_sel = sel;
 		pcb->pcb_ldt_sel = pmap->pm_ldt_sel;
-		lldt(pcb->pcb_ldt_sel);
+		if (pcb == curpcb)
+			lldt(pcb->pcb_ldt_sel);
+		new_ldt = NULL;
 	}
 copy:
 	/* Now actually replace the descriptors. */
@@ -342,21 +354,34 @@ copy:
 		pmap->pm_ldt[n] = descv[i];
 
 	simple_unlock(&pmap->pm_lock);
-
 	*retval = ua.start;
 
+	if (new_ldt != NULL)
+		uvm_km_free(kernel_map, (vaddr_t)new_ldt, new_len,
+		    UVM_KMF_WIRED);
+	if (free_sel != -1)
+		ldt_free(free_sel);
+	if (free_ldt != NULL)
+		uvm_km_free(kernel_map, (vaddr_t)free_ldt, free_len,
+		    UVM_KMF_WIRED);
 out:
 	free(descv, M_TEMP);
 	return (error);
+#else
+	return EINVAL;
+#endif
 }
-#endif	/* USER_LDT */
 
 int
-i386_iopl(struct lwp *l, void *args, register_t *retval)
+x86_iopl(struct lwp *l, void *args, register_t *retval)
 {
 	int error;
+	struct x86_iopl_args ua;
+#ifdef XEN
+	struct pcb *pcb = &l->l_addr->u_pcb;
+#else
 	struct trapframe *tf = l->l_md.md_regs;
-	struct i386_iopl_args ua;
+#endif
 
 	error = kauth_authorize_machdep(l->l_cred, KAUTH_MACHDEP_IOPL,
 	    NULL, NULL, NULL, NULL);
@@ -366,20 +391,53 @@ i386_iopl(struct lwp *l, void *args, register_t *retval)
 	if ((error = copyin(args, &ua, sizeof(ua))) != 0)
 		return error;
 
+#ifdef XEN
+	{
+		pcb->pcb_tss.tss_ioopt &= ~SEL_RPL;
+		if (ua.iopl)
+			pcb->pcb_tss.tss_ioopt |= SEL_UPL; /* i/o pl */
+		else
+			pcb->pcb_tss.tss_ioopt |= SEL_KPL; /* i/o pl */
+	}
+	/* Force the change at ring 0. */
+#ifdef XEN3
+	{
+		struct physdev_op physop;
+		physop.cmd = PHYSDEVOP_SET_IOPL;
+		physop.u.set_iopl.iopl = pcb->pcb_tss.tss_ioopt & SEL_RPL;
+		HYPERVISOR_physdev_op(&physop);
+	}
+#else /* XEN3 */
+	{
+		dom0_op_t op;
+		op.cmd = DOM0_IOPL;
+		op.u.iopl.domain = DOMID_SELF;
+		op.u.iopl.iopl = pcb->pcb_tss.tss_ioopt & SEL_RPL; /* i/o pl */
+		HYPERVISOR_dom0_op(&op);
+	}
+#endif /* XEN3 */
+#elif defined(__x86_64__)
+	if (ua.iopl)
+		tf->tf_rflags |= PSL_IOPL;
+	else
+		tf->tf_rflags &= ~PSL_IOPL;
+#else
 	if (ua.iopl)
 		tf->tf_eflags |= PSL_IOPL;
 	else
 		tf->tf_eflags &= ~PSL_IOPL;
+#endif
 
 	return 0;
 }
 
 int
-i386_get_ioperm(struct lwp *l, void *args, register_t *retval)
+x86_get_ioperm(struct lwp *l, void *args, register_t *retval)
 {
+#ifdef IOPERM
 	int error;
 	struct pcb *pcb = &l->l_addr->u_pcb;
-	struct i386_get_ioperm_args ua;
+	struct x86_get_ioperm_args ua;
 
 	error = kauth_authorize_machdep(l->l_cred, KAUTH_MACHDEP_IOPERM_GET,
 	    NULL, NULL, NULL, NULL);
@@ -390,14 +448,18 @@ i386_get_ioperm(struct lwp *l, void *args, register_t *retval)
 		return (error);
 
 	return copyout(pcb->pcb_iomap, ua.iomap, sizeof(pcb->pcb_iomap));
+#else
+	return EINVAL;
+#endif
 }
 
 int
-i386_set_ioperm(struct lwp *l, void *args, register_t *retval)
+x86_set_ioperm(struct lwp *l, void *args, register_t *retval)
 {
+#ifdef IOPERM
 	int error;
 	struct pcb *pcb = &l->l_addr->u_pcb;
-	struct i386_set_ioperm_args ua;
+	struct x86_set_ioperm_args ua;
 
   	error = kauth_authorize_machdep(l->l_cred, KAUTH_MACHDEP_IOPERM_SET,
 	    NULL, NULL, NULL, NULL);
@@ -408,13 +470,16 @@ i386_set_ioperm(struct lwp *l, void *args, register_t *retval)
 		return (error);
 
 	return copyin(ua.iomap, pcb->pcb_iomap, sizeof(pcb->pcb_iomap));
+#else
+	return EINVAL;
+#endif
 }
 
-#ifdef MTRR
 int
-i386_get_mtrr(struct lwp *l, void *args, register_t *retval)
+x86_get_mtrr(struct lwp *l, void *args, register_t *retval)
 {
-	struct i386_get_mtrr_args ua;
+#ifdef MTRR
+	struct x86_get_mtrr_args ua;
 	int error, n;
 
 	if (mtrr_funcs == NULL)
@@ -438,13 +503,17 @@ i386_get_mtrr(struct lwp *l, void *args, register_t *retval)
 	copyout(&n, ua.n, sizeof (int));
 
 	return error;
+#else
+	return EINVAL;
+#endif
 }
 
 int
-i386_set_mtrr(struct lwp *l, void *args, register_t *retval)
+x86_set_mtrr(struct lwp *l, void *args, register_t *retval)
 {
+#ifdef MTRR
 	int error, n;
-	struct i386_set_mtrr_args ua;
+	struct x86_set_mtrr_args ua;
 
 	if (mtrr_funcs == NULL)
 		return ENOSYS;
@@ -469,8 +538,10 @@ i386_set_mtrr(struct lwp *l, void *args, register_t *retval)
 	copyout(&n, ua.n, sizeof n);
 
 	return error;
-}
+#else
+	return EINVAL;
 #endif
+}
 
 int
 sys_sysarch(struct lwp *l, void *v, register_t *retval)
@@ -482,56 +553,54 @@ sys_sysarch(struct lwp *l, void *v, register_t *retval)
 	int error = 0;
 
 	switch(SCARG(uap, op)) {
-#ifdef	USER_LDT
-	case I386_GET_LDT: 
-		error = i386_get_ldt(l, SCARG(uap, parms), retval);
+	case X86_IOPL: 
+		error = x86_iopl(l, SCARG(uap, parms), retval);
 		break;
 
-	case I386_SET_LDT: 
-		error = i386_set_ldt(l, SCARG(uap, parms), retval);
-		break;
-#endif
-
-	case I386_IOPL: 
-		error = i386_iopl(l, SCARG(uap, parms), retval);
+	case X86_GET_LDT: 
+		error = x86_get_ldt(l, SCARG(uap, parms), retval);
 		break;
 
-	case I386_GET_IOPERM: 
-		error = i386_get_ioperm(l, SCARG(uap, parms), retval);
+	case X86_SET_LDT: 
+		error = x86_set_ldt(l, SCARG(uap, parms), retval);
 		break;
 
-	case I386_SET_IOPERM: 
-		error = i386_set_ioperm(l, SCARG(uap, parms), retval);
+	case X86_GET_IOPERM: 
+		error = x86_get_ioperm(l, SCARG(uap, parms), retval);
+		break;
+
+	case X86_SET_IOPERM: 
+		error = x86_set_ioperm(l, SCARG(uap, parms), retval);
+		break;
+
+	case X86_GET_MTRR:
+		error = x86_get_mtrr(l, SCARG(uap, parms), retval);
+		break;
+	case X86_SET_MTRR:
+		error = x86_set_mtrr(l, SCARG(uap, parms), retval);
 		break;
 
 #ifdef VM86
-	case I386_VM86:
-		error = i386_vm86(l, SCARG(uap, parms), retval);
+	case X86_VM86:
+		error = x86_vm86(l, SCARG(uap, parms), retval);
 		break;
 #ifdef COMPAT_16
-	case I386_OLD_VM86:
-		error = compat_16_i386_vm86(l, SCARG(uap, parms), retval);
+	case X86_OLD_VM86:
+		error = compat_16_x86_vm86(l, SCARG(uap, parms), retval);
 		break;
 #endif
 #endif
-#ifdef MTRR
-	case I386_GET_MTRR:
-		error = i386_get_mtrr(l, SCARG(uap, parms), retval);
-		break;
-	case I386_SET_MTRR:
-		error = i386_set_mtrr(l, SCARG(uap, parms), retval);
-		break;
-#endif
+
 #ifdef PERFCTRS
-	case I386_PMC_INFO:
+	case X86_PMC_INFO:
 		error = pmc_info(l, SCARG(uap, parms), retval);
 		break;
 
-	case I386_PMC_STARTSTOP:
+	case X86_PMC_STARTSTOP:
 		error = pmc_startstop(l, SCARG(uap, parms), retval);
 		break;
 
-	case I386_PMC_READ:
+	case X86_PMC_READ:
 		error = pmc_read(l, SCARG(uap, parms), retval);
 		break;
 #endif

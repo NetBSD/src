@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_vnops.c,v 1.29 2006/12/09 16:11:52 chs Exp $	*/
+/*	$NetBSD: layer_vnops.c,v 1.29.2.1 2007/05/07 10:55:53 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -67,8 +67,7 @@
  *
  * Ancestors:
  *	@(#)lofs_vnops.c	1.2 (Berkeley) 6/18/92
- *	$Id: layer_vnops.c,v 1.29 2006/12/09 16:11:52 chs Exp $
- *	$Id: layer_vnops.c,v 1.29 2006/12/09 16:11:52 chs Exp $
+ *	Id: lofs_vnops.c,v 1.11 1992/05/30 10:05:43 jsp Exp jsp
  *	...and...
  *	@(#)null_vnodeops.c 1.20 92/07/07 UCLA Ficus project
  */
@@ -233,7 +232,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.29 2006/12/09 16:11:52 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.29.2.1 2007/05/07 10:55:53 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -995,6 +994,9 @@ layer_putpages(v)
 
 	ap->a_vp = LAYERVPTOLOWERVP(vp);
 	simple_unlock(&vp->v_interlock);
+	if (ap->a_flags & PGO_RECLAIM) {
+		return 0;
+	}
 	simple_lock(&ap->a_vp->v_interlock);
 	error = VCALL(ap->a_vp, VOFFSET(vop_putpages), ap);
 	return error;

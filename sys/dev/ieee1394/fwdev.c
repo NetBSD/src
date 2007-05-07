@@ -1,4 +1,4 @@
-/*	$NetBSD: fwdev.c,v 1.8.4.1 2007/03/12 05:54:45 rmind Exp $	*/
+/*	$NetBSD: fwdev.c,v 1.8.4.2 2007/05/07 10:55:28 yamt Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -32,7 +32,7 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  * 
- * $FreeBSD: /repoman/r/ncvs/src/sys/dev/firewire/fwdev.c,v 1.46 2005/03/31 12:19:42 phk Exp $
+ * $FreeBSD: /repoman/r/ncvs/src/sys/dev/firewire/fwdev.c,v 1.49 2007/03/16 05:39:33 simokawa Exp $
  *
  */
 
@@ -964,7 +964,8 @@ fwdev_destroydev(struct firewire_softc *sc)
 #if defined(__FreeBSD__) && __FreeBSD_version >= 500000
 #define NDEVTYPE 2
 void
-fwdev_clone(void *arg, char *name, int namelen, DEV_T *dev)
+fwdev_clone(void *arg, struct ucred *cred, char *name, int namelen,
+    struct cdev **dev)
 {
 	struct firewire_softc *sc;
 	char *devnames[NDEVTYPE] = {"fw", "fwmem"};

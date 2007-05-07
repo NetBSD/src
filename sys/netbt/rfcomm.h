@@ -1,4 +1,4 @@
-/*	$NetBSD: rfcomm.h,v 1.2 2006/10/01 06:08:08 plunky Exp $	*/
+/*	$NetBSD: rfcomm.h,v 1.2.4.1 2007/05/07 10:55:56 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -55,7 +55,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: rfcomm.h,v 1.2 2006/10/01 06:08:08 plunky Exp $
+ * $Id: rfcomm.h,v 1.2.4.1 2007/05/07 10:55:56 yamt Exp $
  * $FreeBSD: src/sys/netgraph/bluetooth/include/ng_btsocket_rfcomm.h,v 1.4 2005/01/11 01:39:53 emax Exp $
  */
 
@@ -236,8 +236,10 @@ struct rfcomm_mcc_pn
  *************************************************************************
  *************************************************************************/
 
+/* Socket options */
 #define SO_RFCOMM_MTU		1	/* mtu */
 #define SO_RFCOMM_FC_INFO	2	/* flow control info (below) */
+#define SO_RFCOMM_LM		3	/* link mode */
 
 /* Flow control information */
 struct rfcomm_fc_info {
@@ -248,6 +250,11 @@ struct rfcomm_fc_info {
 	uint8_t		cfc;		/* credit flow control */
 	uint8_t		reserved;
 };
+
+/* RFCOMM link mode flags */
+#define RFCOMM_LM_AUTH		(1<<0)	/* want authentication */
+#define RFCOMM_LM_ENCRYPT	(1<<1)	/* want encryption */
+#define RFCOMM_LM_SECURE	(1<<2)	/* want secured link */
 
 #ifdef _KERNEL
 
@@ -313,6 +320,7 @@ struct rfcomm_dlc {
 	uint16_t		 rd_flags;   /* DLC flags */
 	uint16_t		 rd_state;   /* DLC state */
 	uint16_t		 rd_mtu;     /* MTU */
+	int			 rd_mode;    /* link mode */
 
 	struct sockaddr_bt	 rd_laddr;   /* local address */
 	struct sockaddr_bt	 rd_raddr;   /* remote address */
@@ -361,9 +369,12 @@ struct rfcomm_dlc {
 #define RFCOMM_DLC_CLOSED		0	/* no session */
 #define RFCOMM_DLC_WAIT_SESSION		1	/* waiting for session */
 #define RFCOMM_DLC_WAIT_CONNECT		2	/* waiting for connect */
-#define RFCOMM_DLC_OPEN			3	/* can send/receive */
-#define RFCOMM_DLC_WAIT_DISCONNECT	4	/* waiting for disconnect */
-#define RFCOMM_DLC_LISTEN		5	/* listening DLC */
+#define RFCOMM_DLC_WAIT_SEND_SABM	3	/* waiting to send SABM */
+#define RFCOMM_DLC_WAIT_SEND_UA		4	/* waiting to send UA */
+#define RFCOMM_DLC_WAIT_RECV_UA		5	/* waiting to receive UA */
+#define RFCOMM_DLC_OPEN			6	/* can send/receive */
+#define RFCOMM_DLC_WAIT_DISCONNECT	7	/* waiting for disconnect */
+#define RFCOMM_DLC_LISTEN		8	/* listening DLC */
 
 /*
  * Bluetooth RFCOMM socket kernel prototypes
@@ -376,7 +387,9 @@ struct rfcomm_dlc *rfcomm_dlc_lookup(struct rfcomm_session *, int);
 struct rfcomm_dlc *rfcomm_dlc_newconn(struct rfcomm_session *, int);
 void rfcomm_dlc_close(struct rfcomm_dlc *, int);
 void rfcomm_dlc_timeout(void *);
+int rfcomm_dlc_setmode(struct rfcomm_dlc *);
 int rfcomm_dlc_connect(struct rfcomm_dlc *);
+int rfcomm_dlc_open(struct rfcomm_dlc *);
 void rfcomm_dlc_start(struct rfcomm_dlc *);
 
 /* rfcomm_session.c */

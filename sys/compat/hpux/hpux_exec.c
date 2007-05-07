@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_exec.c,v 1.49.2.1 2007/03/12 05:51:59 rmind Exp $	*/
+/*	$NetBSD: hpux_exec.c,v 1.49.2.2 2007/05/07 10:55:10 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_exec.c,v 1.49.2.1 2007/03/12 05:51:59 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_exec.c,v 1.49.2.2 2007/05/07 10:55:10 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
@@ -172,10 +172,6 @@ hpux_sys_execv(l, v, retval)
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
 	struct sys_execve_args ap;
-	void *sg;
-
-	sg = stackgap_init(p, 0);
-	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
 	SCARG(&ap, path) = SCARG(uap, path);
 	SCARG(&ap, argp) = SCARG(uap, argp);
@@ -197,10 +193,6 @@ hpux_sys_execve(l, v, retval)
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
 	struct sys_execve_args ap;
-	void *sg;
-
-	sg = stackgap_init(p, 0);
-	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
 	SCARG(&ap, path) = SCARG(uap, path);
 	SCARG(&ap, argp) = SCARG(uap, argp);

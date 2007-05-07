@@ -1,4 +1,4 @@
-/*	$NetBSD: envctrl.c,v 1.2.2.2 2007/04/15 16:03:08 yamt Exp $ */
+/*	$NetBSD: envctrl.c,v 1.2.2.3 2007/05/07 10:55:03 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: envctrl.c,v 1.2.2.2 2007/04/15 16:03:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: envctrl.c,v 1.2.2.3 2007/05/07 10:55:03 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -113,19 +113,9 @@ static void envctrl_update_sensors(struct envctrl_softc *);
 static void envctrl_interpolate_ob_table(int *, uint8_t *);
 
 static const struct envsys_range envctrl_ranges[] = {
-	{0, 0, ENVSYS_STEMP},
-	{0, 0, ENVSYS_STEMP},
-	{0, 0, ENVSYS_STEMP},
-	{0, 0, ENVSYS_STEMP},
-	{0, 0, ENVSYS_STEMP},
-	{0, 0, ENVSYS_STEMP},
-	{0, 0, ENVSYS_STEMP},
-	{0, 0, ENVSYS_STEMP},
-	{0, 0, ENVSYS_SVOLTS_DC},
-	{0, 0, ENVSYS_SVOLTS_DC},
-	{0, 0, ENVSYS_INTEGER},
-	{0, 0, ENVSYS_INTEGER},
-	{0, 0, 0}
+	{  0,  7,	ENVSYS_STEMP},
+	{  8,  9,	ENVSYS_SVOLTS_DC},
+	{ 10, 11,	ENVSYS_INTEGER}, 
 };
 
 static int
@@ -556,8 +546,8 @@ envctrl_update_sensors(struct envctrl_softc *sc)
 	envctrl_set_fanvoltage(sc, ENVCTRL_FANPORT_CPU, cpufan_voltage);
 	envctrl_set_fanvoltage(sc, ENVCTRL_FANPORT_PS, psfan_voltage);
 
-	sc->sc_sensor[8].cur.data_us = cpufan_voltage * 190476;
-	sc->sc_sensor[9].cur.data_us = psfan_voltage * 190476;
+	sc->sc_sensor[8].cur.data_us = cpufan_voltage * ENVCTRL_UVFACT;
+	sc->sc_sensor[9].cur.data_us = psfan_voltage * ENVCTRL_UVFACT;
 	sc->sc_sensor[8].validflags |= ENVSYS_FCURVALID;
 	sc->sc_sensor[9].validflags |= ENVSYS_FCURVALID;
 }

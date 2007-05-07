@@ -1,4 +1,4 @@
-/*	$NetBSD: aoutm68k_stat.c,v 1.16.2.1 2007/03/12 05:51:52 rmind Exp $	*/
+/*	$NetBSD: aoutm68k_stat.c,v 1.16.2.2 2007/05/07 10:55:07 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aoutm68k_stat.c,v 1.16.2.1 2007/03/12 05:51:52 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aoutm68k_stat.c,v 1.16.2.2 2007/05/07 10:55:07 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -84,11 +84,6 @@ aoutm68k_compat_43_sys_stat(l, v, retval)
 	struct stat sb;
 	int error;
 
-#ifdef COMPAT_AOUT_ALTPATH
-	void *sg = stackgap_init(l->l_proc, 0);
-	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
-#endif
-
 	error = do_sys_stat(l, SCARG(uap, path), FOLLOW, &sb);
 	if (error)
 		return error;
@@ -129,11 +124,6 @@ aoutm68k_compat_43_sys_lstat(l, v, retval)
 	struct stat sb;
 	int error;
 
-#ifdef COMPAT_AOUT_ALTPATH
-	void *sg = stackgap_init(l->l_proc, 0);
-	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
-#endif
-
 	error = do_sys_stat(l, SCARG(uap, path), NOFOLLOW, &sb);
 	if (error)
 		return error;
@@ -155,11 +145,6 @@ aoutm68k_compat_12_sys_stat(l, v, retval)
 	struct aoutm68k_stat12 ast;
 	struct stat sb;
 	int error;
-
-#ifdef COMPAT_AOUT_ALTPATH
-	void *sg = stackgap_init(l->l_proc, 0);
-	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
-#endif
 
 	error = do_sys_stat(l, SCARG(uap, path), FOLLOW, &sb);
 	if (error)
@@ -201,11 +186,6 @@ aoutm68k_compat_12_sys_lstat(l, v, retval)
 	struct stat sb;
 	int error;
 
-#ifdef COMPAT_AOUT_ALTPATH
-	void *sg = stackgap_init(l->l_proc, 0);
-	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
-#endif
-
 	error = do_sys_stat(l, SCARG(uap, path), NOFOLLOW, &sb);
 	if (error)
 		return error;
@@ -226,11 +206,6 @@ aoutm68k_sys___stat13(l, v, retval)
 	struct aoutm68k_stat ast;
 	struct stat sb;
 	int error;
-
-#ifdef COMPAT_AOUT_ALTPATH
-	void *sg = stackgap_init(l->l_proc, 0);
-	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
-#endif
 
 	error = do_sys_stat(l, SCARG(uap, path), FOLLOW, &sb);
 	if (error)
@@ -273,11 +248,6 @@ aoutm68k_sys___lstat13(l, v, retval)
 	struct stat sb;
 	int error;
 
-#ifdef COMPAT_AOUT_ALTPATH
-	void *sg = stackgap_init(l->l_proc, 0);
-	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
-#endif
-
 	error = do_sys_stat(l, SCARG(uap, path), NOFOLLOW, &sb);
 	if (error)
 		return error;
@@ -294,23 +264,16 @@ aoutm68k_sys_fhstat(l, v, retval)
 	register_t *retval;
 {
 	struct aoutm68k_sys_fhstat_args *uap = v;
-	struct proc *p = l->l_proc;
-	void *sg = stackgap_init(p, 0);
-	struct compat_30_sys___fhstat30_args cup;
 	struct aoutm68k_stat ast;
-	struct stat st;
+	struct stat sb;
 	int error;
 
-	SCARG(&cup, fhp) = SCARG(uap, fhp);
-	SCARG(&cup, sb) = stackgap_alloc(p, &sg, sizeof(st));
+	error = do_fhstat(l, SCARG(uap, fhp), FHANDLE_SIZE_COMPAT, &sb);
+	if (error)
+		return error;
 
-	if ((error = compat_30_sys___fhstat30(l, &cup, retval)) != 0 ||
-	    (error = copyin(SCARG(&cup, sb), &st, sizeof(st))) != 0)
-		return (error);
-
-	aoutm68k_stat13_convert(&st, &ast);
-
-	return (copyout((void *)&ast, (void *)SCARG(uap, sb), sizeof(ast)));
+	aoutm68k_stat13_convert(&sb, &ast);
+	return copyout(&sb, SCARG(uap, sb), sizeof(sb));
 }
 
 #ifdef COMPAT_43

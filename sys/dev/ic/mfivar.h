@@ -1,4 +1,4 @@
-/* $NetBSD: mfivar.h,v 1.2.10.1 2007/03/12 05:53:38 rmind Exp $ */
+/* $NetBSD: mfivar.h,v 1.2.10.2 2007/05/07 10:55:26 yamt Exp $ */
 /* $OpenBSD: mfivar.h,v 1.28 2006/08/31 18:18:46 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
@@ -16,9 +16,12 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <dev/sysmon/sysmonvar.h>
+#include <sys/envsys.h>
+
 #define DEVNAME(_s)     ((_s)->sc_dev.dv_xname)
 
-/* #define MFI_DEBUG */
+// #define MFI_DEBUG
 #ifdef MFI_DEBUG
 extern uint32_t			mfi_debug;
 #define DPRINTF(x...)		do { if (mfi_debug) printf(x); } while(0)
@@ -142,7 +145,11 @@ struct mfi_softc {
 
 	struct mfi_ccb_list	sc_ccb_freeq;
 
-	struct sensor		*sc_sensors;
+	struct sysmon_envsys    sc_envsys;
+#define sc_ranges       sc_envsys.sme_ranges
+#define sc_sensor_info  sc_envsys.sme_sensor_info
+#define sc_sensor_data  sc_envsys.sme_sensor_data
+
 };
 
 int	mfi_attach(struct mfi_softc *sc);

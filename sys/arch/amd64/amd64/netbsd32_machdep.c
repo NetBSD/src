@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.32.2.3 2007/03/24 14:54:32 yamt Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.32.2.4 2007/05/07 10:54:51 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.32.2.3 2007/03/24 14:54:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.32.2.4 2007/05/07 10:54:51 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_coredump.h"
@@ -592,15 +592,15 @@ netbsd32_sysarch(l, v, retval)
 	int error;
 
 	switch (SCARG(uap, op)) {
-		case X86_64_IOPL:
-			error = x86_64_iopl(l,
+		case X86_IOPL:
+			error = x86_iopl(l,
 			    NETBSD32PTR64(SCARG(uap, parms)), retval);
 			break;
-		case X86_64_GET_MTRR:
+		case X86_GET_MTRR:
 			error = x86_64_get_mtrr32(l,
 			    NETBSD32PTR64(SCARG(uap, parms)), retval);
 			break;
-		case X86_64_SET_MTRR:
+		case X86_SET_MTRR:
 			error = x86_64_set_mtrr32(l,
 			    NETBSD32PTR64(SCARG(uap, parms)), retval);
 			break;

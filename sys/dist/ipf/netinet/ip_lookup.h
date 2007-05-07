@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_lookup.h,v 1.3.14.2 2007/04/15 16:03:39 yamt Exp $	*/
+/*	$NetBSD: ip_lookup.h,v 1.3.14.3 2007/05/07 10:55:37 yamt Exp $	*/
 
 
 #ifndef __IP_LOOKUP_H__
@@ -66,7 +66,7 @@ typedef	union	{
 		char	ilik_ival;
 		u_char	ilik_type;	/* IPLT_* */
 		u_char	ilik_otype;
-		char	ilik_unit;	/* IPL_LOG* */
+		u_char	ilik_unit;	/* IPL_LOG* */
 	} ilik_unstr;
 	u_32_t	ilik_key;
 } iplookupiterkey_t;
@@ -89,11 +89,7 @@ typedef	struct	ipflookupiter	{
 
 
 extern int ip_lookup_init __P((void));
-#if __NetBSD_Version__ >= 499001000
-extern int ip_lookup_ioctl __P((void*, ioctlcmd_t, int, int, void *));
-#else
 extern int ip_lookup_ioctl __P((caddr_t, ioctlcmd_t, int, int, void *));
-#endif
 extern void ip_lookup_unload __P((void));
 extern void ip_lookup_deref __P((int, void *));
 extern int ip_lookup_iterate __P((void *, int, void *));

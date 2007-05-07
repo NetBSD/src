@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp.h,v 1.21.26.2 2007/03/12 06:00:28 rmind Exp $	*/
+/*	$NetBSD: clnp.h,v 1.21.26.3 2007/05/07 10:56:08 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -56,6 +56,8 @@ SOFTWARE.
 
 #ifndef _NETISO_CLNP_H_
 #define _NETISO_CLNP_H_
+
+#include <net/route.h>
 
 /*
  * ARGO Project, Computer Sciences Dept., University of Wisconsin - Madison
@@ -446,7 +448,7 @@ struct clnp_cache {
 	int             clc_segoff;	/* offset of seg part of header */
 	struct rtentry *clc_rt;	/* ptr to rtentry (points into the route
 				 * structure) */
-	struct sockaddr *clc_firsthop;	/* first hop of packet */
+	const struct sockaddr *clc_firsthop;	/* first hop of packet */
 	struct ifnet   *clc_ifp;/* ptr to interface structure */
 	struct iso_ifaddr
 	               *clc_ifa;/* ptr to interface address */
@@ -465,7 +467,6 @@ struct clnp_optidx;
 struct isopcb;
 struct snpa_hdr;
 struct iso_ifaddr;
-struct route_iso;
 
 /* clnp_debug.c */
 char *clnp_hexp (const char *, int, char *);
@@ -478,7 +479,7 @@ void clnp_discard (struct mbuf *, u_int);
 void clnp_emit_er (struct mbuf *, u_int);
 int clnp_er_index (u_int);
 
-int clnp_fragment (struct ifnet *, struct mbuf *, struct sockaddr *,
+int clnp_fragment (struct ifnet *, struct mbuf *, const struct sockaddr *,
 		       int, int, int, struct rtentry *);
 struct mbuf *clnp_reass (struct mbuf *, struct iso_addr *,
 			     struct iso_addr *, struct clnp_segment *);
@@ -524,10 +525,10 @@ int clnp_ours   (struct iso_addr *);
 void clnp_forward (struct mbuf *, int, struct iso_addr *,
 		       struct clnp_optidx *, int, struct snpa_hdr *);
 void *clnp_insert_addr (void *, struct iso_addr *, struct iso_addr *);
-int clnp_route  (struct iso_addr *, struct route_iso *, int,
-		     struct sockaddr **, struct iso_ifaddr **);
-int clnp_srcroute (struct mbuf *, struct clnp_optidx *, struct route_iso *,
-		       struct sockaddr **, struct iso_ifaddr **,
+int clnp_route  (struct iso_addr *, struct route *, int,
+		     const struct sockaddr **, struct iso_ifaddr **);
+int clnp_srcroute (struct mbuf *, struct clnp_optidx *, struct route *,
+		       const struct sockaddr **, struct iso_ifaddr **,
 		       struct iso_addr *);
 int clnp_echoreply (struct mbuf *, int, struct sockaddr_iso *,
 		        struct sockaddr_iso *, struct clnp_optidx *);

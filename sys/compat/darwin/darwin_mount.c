@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_mount.c,v 1.10 2007/02/09 21:55:16 ad Exp $ */
+/*	$NetBSD: darwin_mount.c,v 1.10.2.1 2007/05/07 10:55:09 yamt Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_mount.c,v 1.10 2007/02/09 21:55:16 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_mount.c,v 1.10.2.1 2007/05/07 10:55:09 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -157,7 +157,7 @@ darwin_sys_statfs(struct lwp *l, void *v, register_t *retval)
 	struct nameidata nd;
 	int error;
 
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path), l);
+	NDINIT(&nd, LOOKUP, FOLLOW | TRYEMULROOT, UIO_USERSPACE, SCARG(uap, path), l);
 	if ((error = namei(&nd)) != 0)
 		return error;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.236.2.9 2007/04/21 15:50:22 ad Exp $	*/
+/*	$NetBSD: proc.h,v 1.236.2.10 2007/05/07 10:56:14 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -82,6 +82,7 @@
 #endif
 
 #include <machine/proc.h>		/* Machine-dependent proc substruct */
+#include <sys/aio.h>
 #include <sys/lock.h>
 #include <sys/rwlock.h>
 #include <sys/mutex.h>
@@ -231,6 +232,7 @@ struct proc {
 	struct plimit	*p_limit;	/*    Process limits */
 	struct vmspace	*p_vmspace;	/*    Address space */
 	struct sigacts	*p_sigacts;	/*    Process sigactions */
+	struct aioproc	*p_aio;		/* p: Asynchronous I/O data */
 
 	specificdata_reference
 			p_specdataref;	/* subsystem proc-specific data */
@@ -325,7 +327,6 @@ struct proc {
 
 	u_short		p_xstat;	/* s: Exit status for wait; also stop signal */
 	u_short		p_acflag;	/* p: Acc. flags; see struct lwp also */
-	struct rusage 	*p_ru;		/*    Exit information. XXX */
 	struct mdproc	p_md;		/*    Any machine-dependent fields */
 };
 

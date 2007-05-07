@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_syscall.c,v 1.11.2.1 2007/03/12 05:46:16 rmind Exp $ */
+/*	$NetBSD: linux_syscall.c,v 1.11.2.2 2007/05/07 10:54:51 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.11.2.1 2007/03/12 05:46:16 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.11.2.2 2007/05/07 10:54:51 yamt Exp $");
 
 #include "opt_compat_linux.h"
 
@@ -159,7 +159,8 @@ linux_syscall_plain(struct trapframe *frame)
 		break;
 	default:
 	bad:
-		frame->tf_rax = native_to_linux_errno[error];
+		error = native_to_linux_errno[error];
+		frame->tf_rax = error;
 		frame->tf_rflags |= PSL_C;	/* carry bit */
 		break;
 	}
@@ -247,7 +248,8 @@ out:
 		break;
 	default:
 	bad:
-		frame->tf_rax = native_to_linux_errno[error];
+		error = native_to_linux_errno[error];
+		frame->tf_rax = error;
 		frame->tf_rflags |= PSL_C;	/* carry bit */
 		break;
 	}

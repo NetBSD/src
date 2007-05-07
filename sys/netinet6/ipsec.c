@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.114.2.2 2007/04/15 16:04:01 yamt Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.114.2.3 2007/05/07 10:56:06 yamt Exp $	*/
 /*	$KAME: ipsec.c,v 1.136 2002/05/19 00:36:39 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.114.2.2 2007/04/15 16:04:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.114.2.3 2007/05/07 10:56:06 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -2621,14 +2621,16 @@ ipsec4_checksa(isr, state)
  * IPsec output logic for IPv4.
  */
 int
-ipsec4_output(struct ipsec_output_state *state, struct secpolicy *sp,
-    int flags)
+ipsec4_output(struct ipsec_output_state *state, struct secpolicy *sp, int flags)
 {
 	struct ip *ip = NULL;
 	struct ipsecrequest *isr = NULL;
 	int s;
 	int error;
-	struct sockaddr_in *dst4;
+	union {
+		struct sockaddr		dst;
+		struct sockaddr_in	dst4;
+	} u;
 
 	if (!state)
 		panic("state == NULL in ipsec4_output");
@@ -2732,28 +2734,20 @@ ipsec4_output(struct ipsec_output_state *state, struct secpolicy *sp,
 			ip = mtod(state->m, struct ip *);
 
 			state->ro = &isr->sav->sah->sa_route;
-			state->dst = (struct sockaddr *)&state->ro->ro_dst;
-			dst4 = (struct sockaddr_in *)state->dst;
-			if (dst4->sin_addr.s_addr != ip->ip_dst.s_addr)
+
+			sockaddr_in_init(&u.dst4, &ip->ip_dst, 0);
+			if (rtcache_lookup(state->ro, &u.dst) == NULL) {
 				rtcache_free(state->ro);
-			else
-				rtcache_check(state->ro);
-			if (state->ro->ro_rt == NULL) {
-				dst4->sin_family = AF_INET;
-				dst4->sin_len = sizeof(*dst4);
-				dst4->sin_addr = ip->ip_dst;
-				rtcache_init(state->ro);
-				if (state->ro->ro_rt == NULL) {
-					ipstat.ips_noroute++;
-					error = EHOSTUNREACH;
-					goto bad;
-				}
+				ipstat.ips_noroute++;
+				error = EHOSTUNREACH;
+				goto bad;
 			}
 
 			/* adjust state->dst if tunnel endpoint is offlink */
 			if (state->ro->ro_rt->rt_flags & RTF_GATEWAY) {
-				state->dst = (struct sockaddr *)state->ro->ro_rt->rt_gateway;
-				dst4 = (struct sockaddr_in *)state->dst;
+				state->dst = state->ro->ro_rt->rt_gateway;
+			} else {
+				state->dst = rtcache_getdst(state->ro);
 			}
 
 			state->encap++;
@@ -3023,7 +3017,6 @@ ipsec6_output_tunnel(struct ipsec_output_state *state, struct secpolicy *sp,
 	struct ipsecrequest *isr = NULL;
 	int error = 0;
 	int plen;
-	struct sockaddr_in6* dst6;
 	int s;
 
 	if (!state)
@@ -3120,31 +3113,26 @@ ipsec6_output_tunnel(struct ipsec_output_state *state, struct secpolicy *sp,
 			ip6 = mtod(state->m, struct ip6_hdr *);
 
 			state->ro = &isr->sav->sah->sa_route;
-			state->dst = (struct sockaddr *)&state->ro->ro_dst;
-			dst6 = (struct sockaddr_in6 *)state->dst;
-			if (!IN6_ARE_ADDR_EQUAL(&dst6->sin6_addr, &ip6->ip6_dst))
-				rtcache_free(state->ro);
-			else
-				rtcache_check(state->ro);
+			union {
+				struct sockaddr		dst;
+				struct sockaddr_in6	dst6;
+			} u;
+
+			sockaddr_in6_init(&u.dst6, &ip6->ip6_dst, 0, 0, 0);
+			rtcache_lookup(state->ro, &u.dst);
 			if (state->ro->ro_rt == NULL) {
-				bzero(dst6, sizeof(*dst6));
-				dst6->sin6_family = AF_INET6;
-				dst6->sin6_len = sizeof(*dst6);
-				dst6->sin6_addr = ip6->ip6_dst;
-				rtcache_init(state->ro);
-				if (state->ro->ro_rt == NULL) {
-					ip6stat.ip6s_noroute++;
-					ipsec6stat.out_noroute++;
-					error = EHOSTUNREACH;
-					goto bad;
-				}
+				rtcache_free(state->ro);
+				ip6stat.ip6s_noroute++;
+				ipsec6stat.out_noroute++;
+				error = EHOSTUNREACH;
+				goto bad;
 			}
 
 			/* adjust state->dst if tunnel endpoint is offlink */
 			if (state->ro->ro_rt->rt_flags & RTF_GATEWAY) {
-				state->dst = (struct sockaddr *)state->ro->ro_rt->rt_gateway;
-				dst6 = (struct sockaddr_in6 *)state->dst;
-			}
+				state->dst = state->ro->ro_rt->rt_gateway;
+			} else
+				state->dst = rtcache_getdst(state->ro);
 		} else
 			splx(s);
 

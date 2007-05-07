@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_pcb.h,v 1.14.10.2 2007/03/12 06:00:30 rmind Exp $	*/
+/*	$NetBSD: iso_pcb.h,v 1.14.10.3 2007/05/07 10:56:09 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -61,6 +61,8 @@ SOFTWARE.
 #ifndef _NETISO_ISO_PCB_H_
 #define _NETISO_ISO_PCB_H_
 
+#include <net/route.h>
+
 #define	MAXX25CRUDLEN	16	/* 16 bytes of call request user data */
 
 /*
@@ -73,10 +75,7 @@ struct isopcb {
 	struct socket  *isop_socket;	/* back pointer to socket */
 	struct sockaddr_iso *isop_laddr;
 	struct sockaddr_iso *isop_faddr;
-	struct route_iso {
-		struct rtentry *ro_rt;
-		struct sockaddr_iso ro_dst;
-	}               isop_route;	/* CLNP routing entry */
+	struct route   isop_route;	/* CLNP routing entry */
 	struct mbuf    *isop_options;	/* CLNP options */
 	struct mbuf    *isop_optindex;	/* CLNP options index */
 	struct mbuf    *isop_clnpcache;	/* CLNP cached hdr */

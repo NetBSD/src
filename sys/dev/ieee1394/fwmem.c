@@ -1,4 +1,4 @@
-/*	$NetBSD: fwmem.c,v 1.2.28.1 2007/03/12 05:54:46 rmind Exp $	*/
+/*	$NetBSD: fwmem.c,v 1.2.28.2 2007/05/07 10:55:28 yamt Exp $	*/
 /*-
  * Copyright (c) 2002-2003
  * 	Hidetoshi Shimokawa. All rights reserved.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __FBSDID
-__FBSDID("$FreeBSD: /repoman/r/ncvs/src/sys/dev/firewire/fwmem.c,v 1.31 2005/01/06 01:42:41 imp Exp $");
+__FBSDID("$FreeBSD: /repoman/r/ncvs/src/sys/dev/firewire/fwmem.c,v 1.32 2007/03/16 05:11:42 simokawa Exp $");
 #endif
 
 #if defined(__FreeBSD__)

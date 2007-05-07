@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.831.2.6 2007/04/15 16:03:17 yamt Exp $
+#	$NetBSD: files,v 1.831.2.7 2007/05/07 10:55:21 yamt Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -41,6 +41,7 @@ defflag	opt_sched.h		SCHED_4BSD
 defparam			SOMAXKVA
 defflag	opt_sock_counters.h	SOSEND_COUNTERS
 defflag	opt_sosend_loan.h	SOSEND_NO_LOAN
+defflag	opt_route.h		RTCACHE_DEBUG RTFLUSH_DEBUG
 
 defflag				MULTIPROCESSOR
 
@@ -1146,6 +1147,7 @@ defpseudo rnd
 defpseudo ksyms
 defpseudo nullcons
 defpseudo lockstat
+defpseudo bio:		sysmon_envsys
 
 defpseudo loop:		ifnet
 defpseudo sl:		ifnet
@@ -1244,6 +1246,7 @@ file	dev/auconv.c			auconv | mulaw
 file	dev/audio.c			audio | midi | midibus	needs-flag
 file	dev/audiobell.c			audiobell
 file	dev/aurateconv.c		aurateconv		needs-flag
+file	dev/bio.c			bio			needs-flag
 file	dev/ccd.c			ccd			needs-flag
 file	dev/cgd.c			cgd			needs-flag
 file	dev/cgd_crypto.c		cgd
@@ -1388,6 +1391,7 @@ file	kern/uipc_socket.c
 file	kern/uipc_socket2.c
 file	kern/uipc_syscalls.c
 file	kern/uipc_usrreq.c
+file	kern/vfs_aio.c
 file	kern/vfs_bio.c
 file	kern/vfs_cache.c
 file	kern/vfs_getcwd.c

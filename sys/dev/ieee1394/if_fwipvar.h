@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fwipvar.h,v 1.2 2005/12/11 12:22:02 christos Exp $	*/
+/*	$NetBSD: if_fwipvar.h,v 1.2.28.1 2007/05/07 10:55:28 yamt Exp $	*/
 /*-
  * Copyright (c) 2004
  *	Doug Rabson
@@ -34,7 +34,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  * 
- * $FreeBSD: /repoman/r/ncvs/src/sys/dev/firewire/if_fwipvar.h,v 1.3 2005/01/06 01:42:41 imp Exp $
+ * $FreeBSD: /repoman/r/ncvs/src/sys/dev/firewire/if_fwipvar.h,v 1.4 2005/06/10 16:49:08 brooks Exp $
  */
 
 #ifndef _NET_IF_FWIPVAR_H_
@@ -58,13 +58,10 @@ struct fwip_softc {
 	struct crom_chunk spec6;	/* specifier description IPv6 */
 	struct crom_chunk ver6;		/* version description IPv6 */
 	struct fwip_eth_softc {
-		/* XXX this must be the first for if_fwsubr.c */
-#if defined(__FreeBSD__)
-		struct fw_com	fwcom;	/* firewire common data      */
-#elif defined(__NetBSD__)
+#if defined(__NetBSD__)
 		struct ieee1394com fwcom;
 #endif
-		#define fwip_if		fw_softc.fwcom.fc_if
+		struct ifnet *fwip_ifp;
 		struct fwip_softc *fwip;
 	} fw_softc;
 };

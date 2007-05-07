@@ -1,4 +1,4 @@
-/*	$NetBSD: ddp_input.c,v 1.12.2.2 2007/03/12 05:59:33 rmind Exp $	 */
+/*	$NetBSD: ddp_input.c,v 1.12.2.3 2007/05/07 10:55:55 yamt Exp $	 */
 
 /*
  * Copyright (c) 1990,1994 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ddp_input.c,v 1.12.2.2 2007/03/12 05:59:33 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ddp_input.c,v 1.12.2.3 2007/05/07 10:55:55 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -144,6 +144,10 @@ ddp_input(m, ifp, elh, phase)
 	struct ddpcb   *ddp;
 	int             dlen, mlen;
 	u_short         cksum = 0;
+	union {
+		struct sockaddr		dst;
+		struct sockaddr_at	dsta;
+	} u;
 
 	bzero((void *) & from, sizeof(struct sockaddr_at));
 	if (elh) {
@@ -267,27 +271,18 @@ ddp_input(m, ifp, elh, phase)
 			m_freem(m);
 			return;
 		}
-		if (satocsat(rtcache_getdst(&forwro))->sat_addr.s_net != to.sat_addr.s_net ||
-		    satocsat(rtcache_getdst(&forwro))->sat_addr.s_node != to.sat_addr.s_node)
-			rtcache_free(&forwro);
-		else
-			rtcache_check(&forwro);
-		if (forwro.ro_rt == NULL) {
-			memset(&forwro.ro_dst, 0, sizeof(struct sockaddr_at));
-			forwro.ro_dst.sa_len = sizeof(struct sockaddr_at);
-			forwro.ro_dst.sa_family = AF_APPLETALK;
-			satosat(&forwro.ro_dst)->sat_addr.s_net =
-			    to.sat_addr.s_net;
-			satosat(&forwro.ro_dst)->sat_addr.s_node =
-			    to.sat_addr.s_node;
-			rtcache_init(&forwro);
-		}
+		sockaddr_at_init(&u.dsta, &to.sat_addr, 0);
+		(void)rtcache_lookup(&forwro, &u.dst);
+#if 0		/* XXX The if-condition is always false.  What was this
+		 * actually trying to test?
+		 */
 		if (to.sat_addr.s_net !=
 		    satocsat(rtcache_getdst(&forwro))->sat_addr.s_net &&
 		    ddpe.deh_hops == DDP_MAXHOPS) {
 			m_freem(m);
 			return;
 		}
+#endif
 		if (ddp_firewall &&
 		    (forwro.ro_rt == NULL || forwro.ro_rt->rt_ifp != ifp)) {
 			m_freem(m);

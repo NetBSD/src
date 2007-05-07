@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_sync.h,v 1.4.14.2 2007/04/15 16:03:43 yamt Exp $	*/
+/*	$NetBSD: ip_sync.h,v 1.4.14.3 2007/05/07 10:55:40 yamt Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -104,11 +104,7 @@ typedef	struct	syncupdent	{		/* 28 or 32 bytes */
 extern	synclogent_t	synclog[SYNCLOG_SZ];
 
 
-#if __NetBSD_Version__ >= 499001000
-extern	int fr_sync_ioctl __P((void*, ioctlcmd_t, int, int, void *));
-#else
 extern	int fr_sync_ioctl __P((caddr_t, ioctlcmd_t, int, int, void *));
-#endif
 extern	synclist_t *ipfsync_new __P((int, fr_info_t *, void *));
 extern	void ipfsync_del __P((synclist_t *));
 extern	void ipfsync_update __P((int, fr_info_t *, synclist_t *));

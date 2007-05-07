@@ -1,4 +1,4 @@
-/*	$NetBSD: gumstix_machdep.c,v 1.3 2007/01/18 10:06:47 kiyohara Exp $ */
+/*	$NetBSD: gumstix_machdep.c,v 1.3.2.1 2007/05/07 10:54:54 yamt Exp $ */
 /*
  * Copyright (C) 2005, 2006, 2007  WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -292,6 +292,7 @@ int comcnspeed = CONSPEED;
 int comcnmode = CONMODE;
 
 extern void gxio_config_pin(void);
+extern void gxio_config_busheader(char *);
 
 /*
  * void cpu_reboot(int howto, char *bootstr)
@@ -936,7 +937,6 @@ read_system_serial()
 static void
 process_kernel_args(int argc, char *argv[])
 {
-	extern char busheader[MAX_BOOT_STRING];
 	static const char busheader_name[] = "busheader=";
 	int i, j;
 
@@ -951,8 +951,8 @@ process_kernel_args(int argc, char *argv[])
 
 	for (i = 1, j = 0; i < argc; i++) {
 		if (!strncmp(argv[i], busheader_name, strlen(busheader_name))) {
-			strncpy(busheader,
-			    argv[i] + strlen(busheader_name), MAX_BOOT_STRING);
+			/* configure for GPIOs of busheader side */
+			gxio_config_busheader(argv[i] + strlen(busheader_name));
 			continue;
 		}
 		if (j == MAX_BOOT_STRING) {

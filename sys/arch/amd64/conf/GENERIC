@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.126.2.2 2007/03/24 14:54:32 yamt Exp $
+# $NetBSD: GENERIC,v 1.126.2.3 2007/05/07 10:54:52 yamt Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.126.2.2 $"
+#ident 		"GENERIC-$Revision: 1.126.2.3 $"
 
 maxusers	32		# estimated number of users
 
@@ -491,6 +491,7 @@ wdc1	at isa? port 0x170 irq 15 flags 0x00
 
 # ATA (IDE) bus support
 atabus* at ata?
+options	ATADEBUG
 
 # IDE drives
 # Flags are used only with controllers that support DMA operations
@@ -881,6 +882,7 @@ pseudo-device 	crypto			# /dev/crypto device
 pseudo-device	swcrypto		# software crypto implementation
 
 # disk/mass storage pseudo-devices
+pseudo-device	bio			# RAID control device driver
 pseudo-device	ccd		4	# concatenated/striped disk devices
 #pseudo-device	cgd		4	# cryptographic disk devices
 pseudo-device	raid		8	# RAIDframe disk driver

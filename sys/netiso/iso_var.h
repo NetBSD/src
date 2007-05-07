@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_var.h,v 1.23.26.2 2007/03/12 06:00:30 rmind Exp $	*/
+/*	$NetBSD: iso_var.h,v 1.23.26.3 2007/05/07 10:56:09 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1991, 1993
@@ -157,7 +157,7 @@ int iso_ifinit (struct ifnet *, struct iso_ifaddr *, struct sockaddr_iso *,
 struct ifaddr *iso_ifwithidi (struct sockaddr *);
 int iso_ck_addr (struct iso_addr *);
 int iso_eqtype (struct iso_addr *, struct iso_addr *);
-struct iso_ifaddr *iso_localifa (struct sockaddr_iso *);
+struct iso_ifaddr *iso_localifa (const struct sockaddr_iso *);
 int iso_nlctloutput (int, int, void *, struct mbuf *);
 void dump_isoaddr(const struct sockaddr_iso *);
 

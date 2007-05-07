@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.122.2.1 2007/03/12 05:52:15 rmind Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.122.2.2 2007/05/07 10:55:12 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.122.2.1 2007/03/12 05:52:15 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.122.2.2 2007/05/07 10:55:12 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -593,7 +593,7 @@ linux_read_ldt(l, uap, retval)
 	register_t *retval;
 {
 	struct proc *p = l->l_proc;
-	struct i386_get_ldt_args gl;
+	struct x86_get_ldt_args gl;
 	int error;
 	void *sg;
 	char *parms;
@@ -610,7 +610,7 @@ linux_read_ldt(l, uap, retval)
 	if ((error = copyout(&gl, parms, sizeof(gl))) != 0)
 		return (error);
 
-	if ((error = i386_get_ldt(l, parms, retval)) != 0)
+	if ((error = x86_get_ldt(l, parms, retval)) != 0)
 		return (error);
 
 	*retval *= sizeof(union descriptor);
@@ -642,7 +642,7 @@ linux_write_ldt(l, uap, retval)
 	struct proc *p = l->l_proc;
 	struct linux_ldt_info ldt_info;
 	struct segment_descriptor sd;
-	struct i386_set_ldt_args sl;
+	struct x86_set_ldt_args sl;
 	int error;
 	void *sg;
 	char *parms;
@@ -700,7 +700,7 @@ linux_write_ldt(l, uap, retval)
 	if ((error = copyout(&sl, parms, sizeof(sl))) != 0)
 		return (error);
 
-	if ((error = i386_set_ldt(l, parms, retval)) != 0)
+	if ((error = x86_set_ldt(l, parms, retval)) != 0)
 		return (error);
 
 	*retval = 0;

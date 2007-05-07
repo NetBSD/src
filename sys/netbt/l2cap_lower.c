@@ -1,4 +1,4 @@
-/*	$NetBSD: l2cap_lower.c,v 1.1.20.3 2007/04/15 16:03:58 yamt Exp $	*/
+/*	$NetBSD: l2cap_lower.c,v 1.1.20.4 2007/05/07 10:55:56 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: l2cap_lower.c,v 1.1.20.3 2007/04/15 16:03:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: l2cap_lower.c,v 1.1.20.4 2007/05/07 10:55:56 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -58,6 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: l2cap_lower.c,v 1.1.20.3 2007/04/15 16:03:58 yamt Ex
  * Config failed
  * Other end reported invalid CID
  * Normal disconnection
+ * Change link mode failed
  */
 void
 l2cap_close(struct l2cap_channel *chan, int err)

@@ -1,4 +1,4 @@
-/*	$NetBSD: aarp.c,v 1.21.4.1 2007/02/27 16:54:50 yamt Exp $	*/
+/*	$NetBSD: aarp.c,v 1.21.4.2 2007/05/07 10:55:55 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aarp.c,v 1.21.4.1 2007/02/27 16:54:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aarp.c,v 1.21.4.2 2007/05/07 10:55:55 yamt Exp $");
 
 #include "opt_mbuftrace.h"
 
@@ -134,8 +134,7 @@ at_ifawithnet(sat, ifp)
 	struct sockaddr_at *sat2;
 	struct netrange *nr;
 
-	for (ifa = ifp->if_addrlist.tqh_first; ifa;
-	    ifa = ifa->ifa_list.tqe_next) {
+	TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
 		if (ifa->ifa_addr->sa_family != AF_APPLETALK)
 			continue;
 
@@ -329,6 +328,7 @@ at_aarpinput(ifp, m)
 {
 	struct ether_aarp *ea;
 	struct at_ifaddr *aa;
+	struct ifaddr *ia;
 	struct aarptab *aat;
 	struct ether_header *eh;
 	struct llc     *llc;
@@ -364,13 +364,13 @@ at_aarpinput(ifp, m)
 		 * Since we don't know the net, we just look for the first
 		 * phase 1 address on the interface.
 		 */
-		for (aa = (struct at_ifaddr *) ifp->if_addrlist.tqh_first; aa;
-		    aa = (struct at_ifaddr *) aa->aa_ifa.ifa_list.tqe_next) {
+		TAILQ_FOREACH(ia, &ifp->if_addrlist, ifa_list) {
+			aa = (struct at_ifaddr *)ia;
 			if (AA_SAT(aa)->sat_family == AF_APPLETALK &&
 			    (aa->aa_flags & AFA_PHASE2) == 0)
 				break;
 		}
-		if (aa == NULL) {
+		if (ia == NULL) {
 			m_freem(m);
 			return;
 		}
@@ -539,6 +539,7 @@ aarpprobe(arp)
 	struct mbuf    *m;
 	struct ether_header *eh;
 	struct ether_aarp *ea;
+	struct ifaddr *ia;
 	struct at_ifaddr *aa;
 	struct llc     *llc;
 	struct sockaddr sa;
@@ -551,13 +552,13 @@ aarpprobe(arp)
          * interface with the same address as we're looking for. If the
          * net is phase 2, generate an 802.2 and SNAP header.
          */
-	for (aa = (struct at_ifaddr *) ifp->if_addrlist.tqh_first; aa;
-	     aa = (struct at_ifaddr *) aa->aa_ifa.ifa_list.tqe_next) {
+	TAILQ_FOREACH(ia, &ifp->if_addrlist, ifa_list) {
+		aa = (struct at_ifaddr *)ia;
 		if (AA_SAT(aa)->sat_family == AF_APPLETALK &&
 		    (aa->aa_flags & AFA_PROBING))
 			break;
 	}
-	if (aa == NULL) {	/* serious error XXX */
+	if (ia == NULL) {	/* serious error XXX */
 		printf("aarpprobe why did this happen?!\n");
 		return;
 	}

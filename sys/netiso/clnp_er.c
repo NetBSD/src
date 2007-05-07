@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_er.c,v 1.20.2.1 2007/03/12 06:00:28 rmind Exp $	*/
+/*	$NetBSD: clnp_er.c,v 1.20.2.2 2007/05/07 10:56:08 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clnp_er.c,v 1.20.2.1 2007/03/12 06:00:28 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clnp_er.c,v 1.20.2.2 2007/05/07 10:56:08 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -246,9 +246,9 @@ clnp_emit_er(m, reason)
 {
 	struct clnp_fixed *clnp = mtod(m, struct clnp_fixed *);
 	struct clnp_fixed *er;
-	struct route_iso route;
+	struct route route;
 	struct ifnet   *ifp;
-	struct sockaddr *first_hop;
+	const struct sockaddr *first_hop;
 	struct iso_addr src, dst, *our_addr;
 	char *hoff, *hend;
 	int total_len;	/* total len of dg */
@@ -261,7 +261,7 @@ clnp_emit_er(m, reason)
 	}
 #endif
 
-	bzero((void *) & route, sizeof(route));
+	memset(&route, 0, sizeof(route));
 
 	/*
 	 * If header length is incorrect, or entire header is not contained
@@ -321,7 +321,7 @@ clnp_emit_er(m, reason)
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_DISCARD]) {
 		printf("clnp_emit_er: packet routed to %s\n",
-		    clnp_iso_addrp(&satosiso(first_hop)->siso_addr));
+		    clnp_iso_addrp(&satocsiso(first_hop)->siso_addr));
 	}
 #endif
 
@@ -378,7 +378,7 @@ bad:
 
 done:
 	/* free route if it is a temp */
-	rtcache_free((struct route *)&route);
+	rtcache_free(&route);
 }
 
 int

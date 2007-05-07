@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.81.2.4 2007/04/15 16:02:46 yamt Exp $
+# $NetBSD: ALL,v 1.81.2.5 2007/05/07 10:54:55 yamt Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.81.2.4 $"
+#ident 		"ALL-$Revision: 1.81.2.5 $"
 
 maxusers	32		# estimated number of users
 
@@ -624,6 +624,9 @@ lm0	at isa?	port 0x290		# other common: 0x280, 0x310
 nsclpcsio*	at isa?
 gpio*		at nsclpcsio?
 
+# Abit uGuru Hardware system monitor
+ug0    at isa? port 0xe0
+
 # VIA VT82C686A/VT8231 Hardware Monitor and Power Management Timer
 viaenv* 	at pci? dev ? function ?
 
@@ -788,6 +791,7 @@ wdc1	at isa? port 0x170 irq 15 flags 0x00
 
 # ATA (IDE) bus support
 atabus* at ata?
+options	ATADEBUG
 
 # IDE drives
 # Flags are used only with controllers that support DMA operations

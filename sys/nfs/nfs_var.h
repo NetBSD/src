@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_var.h,v 1.64.2.2 2007/03/12 06:00:37 rmind Exp $	*/
+/*	$NetBSD: nfs_var.h,v 1.64.2.3 2007/05/07 10:56:11 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -191,11 +191,7 @@ int nfs_rephead(int, struct nfsrv_descript *, struct nfssvc_sock *,
 	int, int, u_quad_t *, struct mbuf **, struct mbuf **, char **);
 void nfs_timer(void *);
 int nfs_sigintr(struct nfsmount *, struct nfsreq *, struct lwp *);
-int nfs_sndlock(int *, struct nfsreq *);
 void nfs_exit(struct proc *, void *);
-void nfs_sndunlock(int *);
-int nfs_rcvlock(struct nfsreq *);
-void nfs_rcvunlock(struct nfsmount *);
 int nfs_getreq(struct nfsrv_descript *, struct nfsd *, int);
 int nfs_msg(struct lwp *, const char *, const char *);
 void nfsrv_rcv(struct socket *, void *, int);

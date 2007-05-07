@@ -1,6 +1,5 @@
-#	$NetBSD: Makefile,v 1.31 2006/09/25 10:55:54 xtraeme Exp $
+#	$NetBSD: Makefile,v 1.31.4.1 2007/05/07 10:55:52 yamt Exp $
 
-COMPAT_UTIL_OVERRIDE=	linux
 .include "../Makefile.inc"
 
 .PATH:	$S/compat/linux/arch/${MACHINE_ARCH}

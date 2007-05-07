@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.26.2.1 2007/03/12 05:51:39 rmind Exp $	*/
+/*	$NetBSD: kbd.c,v 1.26.2.2 2007/05/07 10:55:04 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.26.2.1 2007/03/12 05:51:39 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.26.2.2 2007/05/07 10:55:04 yamt Exp $");
 
 #include "ite.h"
 #include "bell.h"
@@ -260,7 +260,7 @@ kbdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 #if NBELL > 0
 		return opm_bell_setup((struct bell_info *)data);
 #else
-		return (0);	/* allways success */
+		return (0);	/* always success */
 #endif
 
 	case FIONBIO:		/* we will remove this someday (soon???) */

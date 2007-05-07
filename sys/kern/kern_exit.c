@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.166.2.7 2007/04/15 16:03:49 yamt Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.166.2.8 2007/05/07 10:55:45 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.166.2.7 2007/04/15 16:03:49 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.166.2.8 2007/05/07 10:55:45 yamt Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -82,6 +82,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.166.2.7 2007/04/15 16:03:49 yamt Exp
 #include "opt_sysv.h"
 
 #include <sys/param.h>
+#include <sys/aio.h>
 #include <sys/systm.h>
 #include <sys/ioctl.h>
 #include <sys/tty.h>
@@ -153,8 +154,8 @@ exit_psignal(struct proc *p, struct proc *pp, ksiginfo_t *ksi)
 	ksi->ksi_uid = kauth_cred_geteuid(p->p_cred);
 	ksi->ksi_status = p->p_xstat;
 	/* XXX: is this still valid? */
-	ksi->ksi_utime = p->p_ru->ru_utime.tv_sec;
-	ksi->ksi_stime = p->p_ru->ru_stime.tv_sec;
+	ksi->ksi_utime = p->p_stats->p_ru.ru_utime.tv_sec;
+	ksi->ksi_stime = p->p_stats->p_ru.ru_stime.tv_sec;
 }
 
 /*
@@ -235,6 +236,9 @@ exit1(struct lwp *l, int rv)
 	} else
 		mutex_exit(&p->p_smutex);
 
+	/* Destroy all AIO works */
+	aio_exit(p);
+
 	/*
 	 * Drain all remaining references that procfs, ptrace and others may
 	 * have on the process.
@@ -259,7 +263,6 @@ exit1(struct lwp *l, int rv)
 #ifdef PGINPROF
 	vmsizmon();
 #endif
-	p->p_ru = pool_get(&rusage_pool, PR_WAITOK);
 	timers_free(p, TIMERS_ALL);
 #if defined(__HAVE_RAS)
 	ras_purgeall(p);
@@ -526,13 +529,9 @@ exit1(struct lwp *l, int rv)
 		mutex_exit(&proclist_mutex);
 	}
 
-	/*
-	 * Save final rusage info, adding in child rusage info and self
-	 * times.  It's OK to call caclru() unlocked here.
-	 */
-	*p->p_ru = p->p_stats->p_ru;
-	calcru(p, &p->p_ru->ru_utime, &p->p_ru->ru_stime, NULL, NULL);
-	ruadd(p->p_ru, &p->p_stats->p_cru);
+	/* Calculate the final rusage info.  */
+	calcru(p, &p->p_stats->p_ru.ru_utime, &p->p_stats->p_ru.ru_stime,
+	    NULL, NULL);
 
 	if (wakeinit)
 		cv_signal(&initproc->p_waitcv);
@@ -836,7 +835,6 @@ proc_free(struct proc *p, struct rusage *caller_ru)
 {
 	struct plimit *plim;
 	struct pstats *pstats;
-	struct rusage *ru;
 	struct proc *parent;
 	struct lwp *l;
 	ksiginfo_t ksi;
@@ -851,7 +849,7 @@ proc_free(struct proc *p, struct rusage *caller_ru)
 	KASSERT(p->p_stat == SZOMB);
 
 	if (caller_ru != NULL)
-		memcpy(caller_ru, p->p_ru, sizeof(*caller_ru));
+		memcpy(caller_ru, &p->p_stats->p_ru, sizeof(*caller_ru));
 
 	/*
 	 * If we got the child via ptrace(2) or procfs, and
@@ -892,7 +890,8 @@ proc_free(struct proc *p, struct rusage *caller_ru)
 
 	parent = p->p_pptr;
 	sched_proc_exit(parent, p);
-	ruadd(&parent->p_stats->p_cru, p->p_ru);
+	ruadd(&parent->p_stats->p_cru, &p->p_stats->p_ru);
+	ruadd(&parent->p_stats->p_cru, &p->p_stats->p_cru);
 	p->p_xstat = 0;
 
 	/*
@@ -912,7 +911,6 @@ proc_free(struct proc *p, struct rusage *caller_ru)
 	uid = kauth_cred_getuid(p->p_cred);
 	vp = p->p_textvp;
 	cred = p->p_cred;
-	ru = p->p_ru;
 	l = LIST_FIRST(&p->p_lwps);
 
 	mutex_destroy(&p->p_rasmutex);
@@ -963,7 +961,6 @@ proc_free(struct proc *p, struct rusage *caller_ru)
 	 * Collect child u-areas.
 	 */
 	uvm_uarea_drain(false);
-	pool_put(&rusage_pool, ru);
 }
 
 /*

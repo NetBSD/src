@@ -1,4 +1,4 @@
-/*	$NetBSD: filedesc.h,v 1.36.10.1 2007/03/12 06:00:51 rmind Exp $	*/
+/*	$NetBSD: filedesc.h,v 1.36.10.2 2007/05/07 10:56:13 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -91,6 +91,7 @@ struct cwdinfo {
 	u_short		cwdi_cmask;	/* mask for file creation */
 	u_short		cwdi_refcnt;	/* reference count */
 	struct simplelock cwdi_slock;	/* mutex */
+	struct vnode	*cwdi_edir;	/* emulation root (if known) */
 };
 
 

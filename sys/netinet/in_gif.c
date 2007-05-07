@@ -1,4 +1,4 @@
-/*	$NetBSD: in_gif.c,v 1.54.2.2 2007/03/12 05:59:36 rmind Exp $	*/
+/*	$NetBSD: in_gif.c,v 1.54.2.3 2007/05/07 10:55:58 yamt Exp $	*/
 /*	$KAME: in_gif.c,v 1.66 2001/07/29 04:46:09 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_gif.c,v 1.54.2.2 2007/03/12 05:59:36 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_gif.c,v 1.54.2.3 2007/05/07 10:55:58 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -91,12 +91,15 @@ int
 in_gif_output(struct ifnet *ifp, int family, struct mbuf *m)
 {
 	struct gif_softc *sc = (struct gif_softc*)ifp;
-	struct sockaddr_in *dst = (struct sockaddr_in *)&sc->gif_ro.ro_dst;
 	struct sockaddr_in *sin_src = (struct sockaddr_in *)sc->gif_psrc;
 	struct sockaddr_in *sin_dst = (struct sockaddr_in *)sc->gif_pdst;
 	struct ip iphdr;	/* capsule IP header, host byte ordered */
 	int proto, error;
 	u_int8_t tos;
+	union {
+		struct sockaddr		dst;
+		struct sockaddr_in	dst4;
+	} u;
 
 	if (sin_src == NULL || sin_dst == NULL ||
 	    sin_src->sin_family != AF_INET ||
@@ -179,21 +182,10 @@ in_gif_output(struct ifnet *ifp, int family, struct mbuf *m)
 		return ENOBUFS;
 	bcopy(&iphdr, mtod(m, struct ip *), sizeof(struct ip));
 
-	if (dst->sin_family != sin_dst->sin_family ||
-	    !in_hosteq(dst->sin_addr, sin_dst->sin_addr))
-		rtcache_free(&sc->gif_ro);
-	else
-		rtcache_check(&sc->gif_ro);
-	if (sc->gif_ro.ro_rt == NULL) {
-		memset(dst, 0, sizeof(*dst));
-		dst->sin_family = sin_dst->sin_family;
-		dst->sin_len = sizeof(struct sockaddr_in);
-		dst->sin_addr = sin_dst->sin_addr;
-		rtcache_init(&sc->gif_ro);
-		if (sc->gif_ro.ro_rt == NULL) {
-			m_freem(m);
-			return ENETUNREACH;
-		}
+	sockaddr_in_init(&u.dst4, &sin_dst->sin_addr, 0);
+	if (rtcache_lookup(&sc->gif_ro, &u.dst) == NULL) {
+		m_freem(m);
+		return ENETUNREACH;
 	}
 
 	/* If the route constitutes infinite encapsulation, punt. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_pcb.c,v 1.36.2.2 2007/03/12 06:00:30 rmind Exp $	*/
+/*	$NetBSD: iso_pcb.c,v 1.36.2.3 2007/05/07 10:56:09 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -62,7 +62,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iso_pcb.c,v 1.36.2.2 2007/03/12 06:00:30 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iso_pcb.c,v 1.36.2.3 2007/05/07 10:56:09 yamt Exp $");
 
 #include "opt_iso.h"
 
@@ -515,7 +515,7 @@ iso_pcbdetach(void *v)
 		printf("iso_pcbdetach 3 \n");
 	}
 #endif
-	rtcache_free((struct route *)&isop->isop_route);
+	rtcache_free(&isop->isop_route);
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_ISO]) {
 		printf("iso_pcbdetach 3.1\n");
