@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.840 2007/05/02 20:40:22 dyoung Exp $
+#	$NetBSD: files,v 1.841 2007/05/07 22:22:20 rmind Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -1357,6 +1357,7 @@ file	kern/subr_userconf.c		userconf
 file	kern/subr_vmem.c
 file	kern/subr_workqueue.c
 file	kern/subr_xxx.c
+file	kern/sys_aio.c
 file	kern/sys_generic.c
 file	kern/sys_lwp.c
 file	kern/sys_pipe.c			!pipe_socketpair
@@ -1386,7 +1387,6 @@ file	kern/uipc_socket.c
 file	kern/uipc_socket2.c
 file	kern/uipc_syscalls.c
 file	kern/uipc_usrreq.c
-file	kern/vfs_aio.c
 file	kern/vfs_bio.c
 file	kern/vfs_cache.c
 file	kern/vfs_getcwd.c
