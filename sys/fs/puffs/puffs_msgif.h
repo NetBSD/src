@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.h,v 1.28 2007/04/22 18:02:05 pooka Exp $	*/
+/*	$NetBSD: puffs_msgif.h,v 1.29 2007/05/07 17:14:54 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -86,7 +86,7 @@ enum {
 #define PUFFS_VN_MAX PUFFS_VN_SETEXTATTR
 
 #define PUFFSDEVELVERS	0x80000000
-#define PUFFSVERSION	8
+#define PUFFSVERSION	9
 #define PUFFSNAMESIZE	32
 struct puffs_kargs {
 	unsigned int	pa_vers;
@@ -106,7 +106,8 @@ struct puffs_kargs {
 #define PUFFS_KFLAG_NOCACHE	0x02	/* flush page cache immediately	*/
 #define PUFFS_KFLAG_ALLOPS	0x04	/* ignore pa_vnopmask, send all */
 #define PUFFS_KFLAG_WTCACHE	0x08	/* page cache is write-through  */
-#define PUFFS_KFLAG_MASK	0x0f
+#define PUFFS_KFLAG_IAONDEMAND	0x10	/* call inactive only on demand */
+#define PUFFS_KFLAG_MASK	0x1f
 
 #define PUFFS_FHFLAG_DYNAMIC	0x01
 #define PUFFS_FHFLAG_NFSV2	0x02
@@ -216,6 +217,7 @@ struct puffs_req {
 		} out;
 		struct {
 			int	rv;		/* cur */
+			int	setbacks;	/* cur */
 			void	*buf;		/* next */
 		} in;
 	} u;
@@ -232,7 +234,12 @@ struct puffs_req {
 #define preq_optype	u.out.optype
 #define preq_cookie	u.out.cookie
 #define preq_rv		u.in.rv
+#define preq_setbacks	u.in.setbacks
 #define preq_nextbuf	u.in.buf
+
+#define PUFFS_SETBACK_INACT_N1	0x01	/* set VOP_INACTIVE for node 1 */
+#define PUFFS_SETBACK_INACT_N2	0x02	/* set VOP_INACTIVE for node 2 */
+#define PUFFS_SETBACK_MASK	0x03
 
 /*
  * Some operations have unknown size requirements.  So as the first
