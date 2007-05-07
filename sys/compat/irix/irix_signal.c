@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_signal.c,v 1.40 2007/05/01 17:22:32 dsl Exp $ */
+/*	$NetBSD: irix_signal.c,v 1.41 2007/05/07 16:53:18 dsl Exp $ */
 
 /*-
  * Copyright (c) 1994, 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_signal.c,v 1.40 2007/05/01 17:22:32 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_signal.c,v 1.41 2007/05/07 16:53:18 dsl Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -94,10 +94,7 @@ static void irix_get_sigcontext __P((struct irix_sigcontext*, struct lwp *));
  * This is ripped from svr4_setinfo. See irix_sys_waitsys...
  */
 static int
-irix_wait_siginfo(p, st, stat, s)
-	struct proc *p;
-	int st, stat;
-	struct irix_irix5_siginfo *s;
+irix_wait_siginfo(int pid, struct rusage *ru, int st, struct irix_irix5_siginfo *s)
 {
 	struct irix_irix5_siginfo i;
 	int sig;
@@ -107,12 +104,10 @@ irix_wait_siginfo(p, st, stat, s)
 	i.isi_signo = SVR4_SIGCHLD;
 	i.isi_errno = 0; /* XXX? */
 
-	if (p) {
-		i.isi_pid = p->p_pid;
-		if (p->p_stats != NULL) {
-			i.isi_stime = p->p_stats->p_ru.ru_stime.tv_sec;
-			i.isi_utime = p->p_stats->p_ru.ru_utime.tv_sec;
-		}
+	i.isi_pid = pid;
+	if (pid != 0) {
+		i.isi_stime = ru->ru_stime.tv_sec;
+		i.isi_utime = ru->ru_utime.tv_sec;
 	}
 
 	if (WIFEXITED(st)) {
@@ -858,6 +853,7 @@ irix_sys_waitsys(l, v, retval)
 	} */ *uap = v;
 	struct proc *parent = l->l_proc, *child;
 	int options, status, error, stat;
+	int was_zombie;
 	struct rusage ru;
 
 	switch (SCARG(uap, type)) {
@@ -883,7 +879,7 @@ irix_sys_waitsys(l, v, retval)
 #endif
 
 	/* Translate options */
-	options = 0;
+	options = WOPTSCHECKED;
 	if (SCARG(uap, options) & SVR4_WNOWAIT)
 		options |= WNOWAIT;
 	if (SCARG(uap, options) & SVR4_WNOHANG)
@@ -893,55 +889,20 @@ irix_sys_waitsys(l, v, retval)
 	if (SCARG(uap, options) & (SVR4_WSTOPPED|SVR4_WCONTINUED))
 		options |= WUNTRACED;
 
-	mutex_enter(&proclist_lock);
-	error = find_stopped_child(parent, SCARG(uap,pid), options, &child,
-	    &status);
-	stat = child->p_stat;	/* XXXSMP */
-	if (error != 0) {
-		mutex_exit(&proclist_lock);
+	error = do_sys_wait4(parent, &SCARG(uap,pid), options, &ru,
+	    &status, &was_zombie);
+
+	if (error != 0)
 		return error;
-	}
-	*retval = 0;
-	if (child == NULL) {
-		mutex_exit(&proclist_lock);
-		return irix_wait_siginfo(NULL, 0, stat, SCARG(uap, info));
-	}
 
-	if (stat == SZOMB) {
-#ifdef DEBUG_IRIX
-		printf("irix_sys_wait(): found %d\n", child->p_pid);
-#endif
-		if ((error = irix_wait_siginfo(child, status, stat,
-		    SCARG(uap, info))) != 0) {
-			mutex_exit(&proclist_lock);
-			return error;
-		}
-
-		if ((SCARG(uap, options) & SVR4_WNOWAIT)) {
-#ifdef DEBUG_IRIX
-			printf(("irix_sys_wait(): Don't wait\n"));
-#endif
-			mutex_exit(&proclist_lock);
-			return 0;
-		}
-
-		/* proc_free() will release the lock. */
-		proc_free(child, (SCARG(uap, ru) == NULL ? NULL : &ru));
-
+	if (was_zombie) {
 		if (SCARG(uap, ru))
-			error = copyout(&ru, (void *)SCARG(uap, ru), sizeof(ru));
-
-		return error;
+			error = copyout(&ru, SCARG(uap, ru), sizeof(ru));
+		if (error != 0)
+			return error;
 	}
 
-	/* Child state must be SSTOP */
-
-#ifdef DEBUG_IRIX
-	printf("jobcontrol %d\n", child->p_pid);
-#endif
-	mutex_exit(&proclist_lock);
-	return irix_wait_siginfo(child, W_STOPCODE(status), stat,
-	    SCARG(uap, info));
+	return irix_wait_siginfo(SCARG(uap, pid), &ru, status, SCARG(uap,info));
 }
 
 int

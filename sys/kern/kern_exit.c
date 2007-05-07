@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.176 2007/05/07 09:30:14 dsl Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.177 2007/05/07 16:53:17 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.176 2007/05/07 09:30:14 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.177 2007/05/07 16:53:17 dsl Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -127,6 +127,9 @@ int debug_exit = 0;
 #else
 #define DPRINTF(x)
 #endif
+
+static int
+find_stopped_child(struct proc *, pid_t, int, struct proc **, int *);
 
 /*
  * Fill in the appropriate signal information, and signal the parent.
@@ -664,6 +667,48 @@ exit_lwps(struct lwp *l)
 }
 
 int
+do_sys_wait(struct lwp *l, int *pid, int *status, int options,
+    struct rusage *ru, int *was_zombie)
+{
+	struct proc	*child;
+	int		error;
+
+	mutex_enter(&proclist_lock);
+
+	error = find_stopped_child(l->l_proc, *pid, options, &child, status);
+
+	if (child == NULL) {
+		mutex_exit(&proclist_lock);
+		*pid = 0;
+		return error;
+	}
+
+	*pid = child->p_pid;
+
+	if (ru != NULL)
+		*ru = child->p_stats->p_ru;
+
+	if (child->p_stat == SZOMB) {
+		/* proc_free() will release the proclist_lock. */
+		*was_zombie = 1;
+		if (options & WNOWAIT)
+			mutex_exit(&proclist_lock);
+		else {
+			KERNEL_LOCK(1, l);		/* XXXSMP */
+			proc_free(child);
+			KERNEL_UNLOCK_ONE(l);		/* XXXSMP */
+		}
+	} else {
+		/* Child state must have been SSTOP. */
+		*was_zombie = 0;
+		mutex_exit(&proclist_lock);
+		*status = W_STOPCODE(*status);
+	}
+
+	return 0;
+}
+
+int
 sys_wait4(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_wait4_args /* {
@@ -672,57 +717,24 @@ sys_wait4(struct lwp *l, void *v, register_t *retval)
 		syscallarg(int)			options;
 		syscallarg(struct rusage *)	rusage;
 	} */ *uap = v;
-	struct proc	*child, *parent;
 	int		status, error;
+	int		was_zombie;
 	struct rusage	ru;
 
-	parent = l->l_proc;
+	error = do_sys_wait(l, &SCARG(uap, pid), &status, SCARG(uap, options),
+	    SCARG(uap, rusage) != NULL ? &ru : NULL, &was_zombie);
 
+	retval[0] = SCARG(uap, pid);
 	if (SCARG(uap, pid) == 0)
-		SCARG(uap, pid) = -parent->p_pgid;
-	if (SCARG(uap, options) & ~(WUNTRACED|WNOHANG|WALTSIG|WALLSIG))
-		return (EINVAL);
-
-	mutex_enter(&proclist_lock);
-
-	error = find_stopped_child(parent, SCARG(uap,pid), SCARG(uap,options),
-	    &child, &status);
-	if (error != 0) {
-		mutex_exit(&proclist_lock);
 		return error;
-	}
-	if (child == NULL) {
-		mutex_exit(&proclist_lock);
-		*retval = 0;
-		return 0;
-	}
 
-	retval[0] = child->p_pid;
+	if (SCARG(uap, rusage))
+		error = copyout(&ru, SCARG(uap, rusage), sizeof(ru));
 
-	if (P_ZOMBIE(child)) {
-		KERNEL_LOCK(1, l);		/* XXXSMP */
-		/* proc_free() will release the proclist_lock. */
-		proc_free(child, (SCARG(uap, rusage) == NULL ? NULL : &ru));
-		KERNEL_UNLOCK_ONE(l);		/* XXXSMP */
+	if (error == 0 && SCARG(uap, status))
+		error = copyout(&status, SCARG(uap, status), sizeof(status));
 
-		if (SCARG(uap, rusage))
-			error = copyout(&ru, SCARG(uap, rusage), sizeof(ru));
-		if (error == 0 && SCARG(uap, status))
-			error = copyout(&status, SCARG(uap, status),
-			    sizeof(status));
-
-		return error;
-	}
-
-	mutex_exit(&proclist_lock);
-
-	/* Child state must have been SSTOP. */
-	if (SCARG(uap, status)) {
-		status = W_STOPCODE(status);
-		return copyout(&status, SCARG(uap, status), sizeof(status));
-	}
-
-	return 0;
+	return error;
 }
 
 /*
@@ -732,7 +744,7 @@ sys_wait4(struct lwp *l, void *v, register_t *retval)
  * Must be called with the proclist_lock held, and may release
  * while waiting.
  */
-int
+static int
 find_stopped_child(struct proc *parent, pid_t pid, int options,
 		   struct proc **child_p, int *status_p)
 {
@@ -740,6 +752,15 @@ find_stopped_child(struct proc *parent, pid_t pid, int options,
 	int error;
 
 	KASSERT(mutex_owned(&proclist_lock));
+
+	if (options & ~(WUNTRACED|WNOHANG|WALTSIG|WALLSIG)
+	    && !(options & WOPTSCHECKED)) {
+		*child_p = NULL;
+		return EINVAL;
+	}
+
+	if (pid == 0 && !(options & WOPTSCHECKED))
+		pid = -parent->p_pgid;
 
 	for (;;) {
 		error = ECHILD;
@@ -833,8 +854,10 @@ find_stopped_child(struct proc *parent, pid_t pid, int options,
 		mutex_exit(&proclist_mutex);
 		mutex_enter(&proclist_lock);
 
-		if (error != 0)
+		if (error != 0) {
+			*child_p = NULL;
 			return error;
+		}
 	}
 }
 
@@ -845,7 +868,7 @@ find_stopped_child(struct proc *parent, pid_t pid, int options,
  * *ru is returned to the caller, and must be freed by the caller.
  */
 void
-proc_free(struct proc *p, struct rusage *caller_ru)
+proc_free(struct proc *p)
 {
 	struct plimit *plim;
 	struct pstats *pstats;
@@ -861,9 +884,6 @@ proc_free(struct proc *p, struct rusage *caller_ru)
 	KASSERT(p->p_nzlwps == 1);
 	KASSERT(p->p_nrlwps == 0);
 	KASSERT(p->p_stat == SZOMB);
-
-	if (caller_ru != NULL)
-		memcpy(caller_ru, &p->p_stats->p_ru, sizeof(*caller_ru));
 
 	/*
 	 * If we got the child via ptrace(2) or procfs, and
