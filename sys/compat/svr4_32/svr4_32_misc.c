@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_misc.c,v 1.47 2007/05/01 17:22:32 dsl Exp $	 */
+/*	$NetBSD: svr4_32_misc.c,v 1.48 2007/05/07 16:53:19 dsl Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_misc.c,v 1.47 2007/05/01 17:22:32 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_misc.c,v 1.48 2007/05/07 16:53:19 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,7 +105,7 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_32_misc.c,v 1.47 2007/05/01 17:22:32 dsl Exp $"
 static int svr4_to_bsd_mmap_flags __P((int));
 
 static inline clock_t timeval_to_clock_t __P((struct timeval *));
-static int svr4_32_setinfo	__P((struct proc *, int, svr4_32_siginfo_tp));
+static int svr4_32_setinfo(int, struct rusage *, int, svr4_32_siginfo_tp);
 
 struct svr4_32_hrtcntl_args;
 static int svr4_32_hrtcntl	__P((struct proc *, struct svr4_32_hrtcntl_args *,
@@ -122,29 +122,14 @@ svr4_32_sys_wait(l, v, retval)
 	register_t *retval;
 {
 	struct svr4_32_sys_wait_args *uap = v;
-	struct proc *p = l->l_proc;
-	struct sys_wait4_args w4;
-	int error;
-	size_t sz = sizeof(*SCARG(&w4, status));
+	int error, was_zombie;
+	int pid = WAIT_ANY;
 	int st, sig;
 
-	SCARG(&w4, rusage) = NULL;
-	SCARG(&w4, options) = 0;
+	error = do_sys_wait(l, &pid, &st, 0, NULL, &was_zombie);
 
-	if (SCARG_P32(uap, status) == 0) {
-		void *sg = stackgap_init(p, 0);
-
-		SCARG(&w4, status) = stackgap_alloc(p, &sg, sz);
-	}
-	else
-		SCARG(&w4, status) = SCARG_P32(uap, status);
-
-	SCARG(&w4, pid) = WAIT_ANY;
-
-	if ((error = sys_wait4(l, &w4, retval)) != 0)
-		return error;
-
-	if ((error = copyin(SCARG(&w4, status), &st, sizeof(st))) != 0)
+	retval[0] = pid;
+	if (pid == 0)
 		return error;
 
 	if (WIFSIGNALED(st)) {
@@ -164,11 +149,8 @@ svr4_32_sys_wait(l, v, retval)
 	retval[1] = st;
 
 	if (SCARG_P32(uap, status))
-		if ((error = copyout(&st, SCARG_P32(uap, status),
-				     sizeof(st))) != 0)
-			return error;
-
-	return 0;
+		error = copyout(&st, SCARG_P32(uap, status), sizeof(st));
+	return error;
 }
 
 
@@ -1110,10 +1092,7 @@ svr4_32_sys_hrtsys(l, v, retval)
 
 
 static int
-svr4_32_setinfo(p, st, si)
-	struct proc *p;
-	int st;
-	svr4_32_siginfo_tp si;
+svr4_32_setinfo(int pid, struct rusage *ru, int st, svr4_32_siginfo_tp si)
 {
 	svr4_32_siginfo_t *s = NETBSD32PTR64(si);
 	svr4_32_siginfo_t i;
@@ -1124,12 +1103,10 @@ svr4_32_setinfo(p, st, si)
 	i.si_signo = SVR4_SIGCHLD;
 	i.si_errno = 0;	/* XXX? */
 
-	if (p) {
-		i.si_pid = p->p_pid;
-		if (p->p_stats != NULL) {
-			i.si_stime = p->p_stats->p_ru.ru_stime.tv_sec;
-			i.si_utime = p->p_stats->p_ru.ru_utime.tv_sec;
-		}
+	if (pid != 0) {
+		i.si_pid = pid;
+		i.si_stime = ru->ru_stime.tv_sec;
+		i.si_utime = ru->ru_utime.tv_sec;
 	}
 
 	if (WIFEXITED(st)) {
@@ -1169,16 +1146,15 @@ svr4_32_sys_waitsys(l, v, retval)
 	register_t *retval;
 {
 	struct svr4_32_sys_waitsys_args *uap = v;
-	struct proc *parent = l->l_proc;
-	int options, error, status;
-	struct proc *child;
+	int options, error, status, was_zombie;;
+	struct rusage ru;
 
 	switch (SCARG(uap, grp)) {
 	case SVR4_P_PID:
 		break;
 
 	case SVR4_P_PGID:
-		SCARG(uap, id) = -parent->p_pgid;
+		SCARG(uap, id) = -l->l_proc->p_pgid;
 		break;
 
 	case SVR4_P_ALL:
@@ -1194,7 +1170,7 @@ svr4_32_sys_waitsys(l, v, retval)
 		 SCARG(uap, info), SCARG(uap, options)));
 
 	/* Translate options */
-	options = 0;
+	options = WOPTSCHECKED;
 	if (SCARG(uap, options) & SVR4_WNOWAIT)
 		options |= WNOWAIT;
 	if (SCARG(uap, options) & SVR4_WNOHANG)
@@ -1204,41 +1180,14 @@ svr4_32_sys_waitsys(l, v, retval)
 	if (SCARG(uap, options) & (SVR4_WSTOPPED|SVR4_WCONTINUED))
 		options |= WUNTRACED;
 
-	mutex_enter(&proclist_lock);
-	error = find_stopped_child(parent, SCARG(uap, id), options, &child,
-	    &status);
-	if (error != 0) {
-		mutex_exit(&proclist_lock);
+	error = do_sys_wait(l, &SCARG(uap, id), &status, options, &ru,
+	    &was_zombie);
+
+	retval[0] = SCARG(uap, id);
+	if (error != 0)
 		return error;
-	}
-	*retval = 0;
-	if (child == NULL) {
-		mutex_exit(&proclist_lock);
-		return svr4_32_setinfo(NULL, 0, SCARG(uap, info));
-	}
 
-	if (child->p_stat == SZOMB) {
-		DPRINTF(("found %d\n", child->p_pid));
-		error = svr4_32_setinfo(child, status, SCARG(uap,info));
-		if (error) {
-			mutex_exit(&proclist_lock);
-			return error;
-		}
-
-		if ((SCARG(uap, options) & SVR4_WNOWAIT)) {
-			mutex_exit(&proclist_lock);
-			DPRINTF(("Don't wait\n"));
-			return 0;
-		}
-
-		/* proc_free() will release the lock */
-		proc_free(child, NULL);
-		return 0;
-	}
-
-	DPRINTF(("jobcontrol %d\n", child->p_pid));
-	mutex_exit(&proclist_lock);
-	return svr4_32_setinfo(child, W_STOPCODE(status), SCARG(uap, info));
+	return svr4_32_setinfo(SCARG(uap, id), &ru, status, SCARG(uap, info));
 }
 
 static int
