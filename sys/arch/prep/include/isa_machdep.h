@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.h,v 1.9.38.2 2007/05/03 20:32:18 garbled Exp $	*/
+/*	$NetBSD: isa_machdep.h,v 1.9.38.3 2007/05/07 18:14:57 garbled Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -50,6 +50,20 @@
 #define isa_inb(x)	inb(PREP_BUS_SPACE_IO + (x))
 
 extern struct powerpc_bus_dma_tag isa_bus_dma_tag;
+extern struct pic_ops *isa_pic;
+extern int isa_pcmciamask;
+
+/* function mappings */
+#define isa_attach_hook(p, s, iaa)					\
+	genppc_isa_attach_hook(p, s, iaa)
+#define isa_intr_evcnt(ic, irq)						\
+	genppc_isa_intr_evcnt(ic, irq)
+#define isa_intr_establish(ic, irq, type, level, fun, arg)		\
+	genppc_isa_intr_establish(ic, irq, type, level, fun, arg)
+#define isa_intr_disestablish(ic, arg)					\
+	genppc_isa_intr_disestablish(ic, arg)
+#define isa_intr_alloc(ic, mask, type, irqp)				\
+	genppc_isa_intr_alloc(ic, isa_pic, mask & isa_pcmciamask, type, irqp)
 
 /*
  * Miscellanous functions.
