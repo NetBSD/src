@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.h,v 1.51 2007/05/06 10:21:45 pooka Exp $	*/
+/*	$NetBSD: puffs.h,v 1.52 2007/05/07 17:16:07 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -427,6 +427,8 @@ void			puffs_setfhsize(struct puffs_usermount *, size_t, int);
 void			puffs_setncookiehash(struct puffs_usermount *, int);
 
 struct puffs_pathobj	*puffs_getrootpathobj(struct puffs_usermount *);
+
+void			puffs_setback(struct puffs_cc *, int);
 
 struct puffs_node	*puffs_pn_new(struct puffs_usermount *, void *);
 void			puffs_pn_put(struct puffs_node *);
