@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.464 2007/05/07 07:14:58 xtraeme Exp $
+$NetBSD: usbdevs,v 1.465 2007/05/07 07:29:03 xtraeme Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -416,6 +416,7 @@ vendor CCYU		0x1065	CCYU Technology
 vendor PLX		0x10b5	PLX
 vendor ASANTE		0x10bd	Asante
 vendor JRC		0x1145	Japan Radio Company
+vendor SPHAIRON		0x114b	Sphairon Access Systems GmbH
 vendor SERVERWORKS	0x1166	ServerWorks
 vendor DELORME		0x1163	DeLorme
 vendor ACERCM		0x1189	Acer Communications & Multimedia
@@ -1928,6 +1929,9 @@ product SONY CLIE_TJ25		0x0169	Sony Clie tj25
 /* SOURCENEXT products */
 product SOURCENEXT KEIKAI8	0x039f	KeikaiDenwa 8
 product SOURCENEXT KEIKAI8_CHG	0x012e	KeikaiDenwa 8 with charger
+
+/* Sphairon Access Systems GmbH products */
+product SPHAIRON UB801R 	0x0110	UB801R
 
 /* STMicroelectronics products */
 product STMICRO COMMUNICATOR	0x7554	USB Communicator
