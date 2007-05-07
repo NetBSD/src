@@ -1,4 +1,4 @@
-/*      $NetBSD: sgec.c,v 1.27.24.1 2007/05/07 03:21:32 snj Exp $ */
+/*      $NetBSD: sgec.c,v 1.27.24.2 2007/05/07 03:23:57 snj Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sgec.c,v 1.27.24.1 2007/05/07 03:21:32 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sgec.c,v 1.27.24.2 2007/05/07 03:23:57 snj Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -182,7 +182,17 @@ sgec_attach(sc)
 	/* For vmstat -i
 	 */
 	evcnt_attach_dynamic(&sc->sc_intrcnt, EVCNT_TYPE_INTR, NULL,
-		sc->sc_dev.dv_xname, "intr");
+	    sc->sc_dev.dv_xname, "intr");
+	evcnt_attach_dynamic(&sc->sc_rxintrcnt, EVCNT_TYPE_INTR,
+	    &sc->sc_intrcnt, sc->sc_dev.dv_xname, "rx intr");
+	evcnt_attach_dynamic(&sc->sc_txintrcnt, EVCNT_TYPE_INTR,
+	    &sc->sc_intrcnt, sc->sc_dev.dv_xname, "tx intr");
+	evcnt_attach_dynamic(&sc->sc_txdraincnt, EVCNT_TYPE_INTR,
+	    &sc->sc_intrcnt, sc->sc_dev.dv_xname, "tx drain");
+	evcnt_attach_dynamic(&sc->sc_nobufintrcnt, EVCNT_TYPE_INTR,
+	    &sc->sc_intrcnt, sc->sc_dev.dv_xname, "nobuf intr");
+	evcnt_attach_dynamic(&sc->sc_nointrcnt, EVCNT_TYPE_INTR,
+	    &sc->sc_intrcnt, sc->sc_dev.dv_xname, "no intr");
 
 	/*
 	 * Create ring loops of the buffer chains.
@@ -271,7 +281,7 @@ zeinit(sc)
 	if (zereset(sc))
 		return;
 
-	sc->sc_nexttx = sc->sc_inq = sc->sc_lastack = 0;
+	sc->sc_nexttx = sc->sc_inq = sc->sc_lastack = sc->sc_txcnt = 0;
 	/*
 	 * Release and init transmit descriptors.
 	 */
@@ -318,9 +328,10 @@ zestart(ifp)
 	struct ze_cdata *zc = sc->sc_zedata;
 	paddr_t	buffer;
 	struct mbuf *m;
-	int nexttx, len, i, totlen, error;
+	int nexttx, starttx;
+	int len, i, totlen, error;
 	int old_inq = sc->sc_inq;
-	short orword;
+	uint16_t orword, tdr;
 	bus_dmamap_t map;
 
 	while (sc->sc_inq < (TXDESCS - 1)) {
@@ -361,27 +372,33 @@ zestart(ifp)
 		 */
 		totlen = 0;
 		orword = ZE_TDES1_FS;
+		starttx = nexttx;
 		for (i = 0; i < map->dm_nsegs; i++) {
 			buffer = map->dm_segs[i].ds_addr;
 			len = map->dm_segs[i].ds_len;
 
-			if (len == 0)
-				continue;
+			KASSERT(len > 0);
 
 			totlen += len;
 			/* Word alignment calc */
 			if (totlen == m->m_pkthdr.len) {
-				orword |= ZE_TDES1_LS | ZE_TDES1_IC;
+				sc->sc_txcnt += map->dm_nsegs;
+				if (sc->sc_txcnt >= TXDESCS * 3 / 4) {
+					orword |= ZE_TDES1_IC;
+					sc->sc_txcnt = 0;
+				}
+				orword |= ZE_TDES1_LS;
 				sc->sc_txmbuf[nexttx] = m;
 			}
 			zc->zc_xmit[nexttx].ze_bufsize = len;
 			zc->zc_xmit[nexttx].ze_bufaddr = (char *)buffer;
 			zc->zc_xmit[nexttx].ze_tdes1 = orword;
-			zc->zc_xmit[nexttx].ze_tdr = ZE_TDR_OW;
+			zc->zc_xmit[nexttx].ze_tdr = tdr;
 
 			if (++nexttx == TXDESCS)
 				nexttx = 0;
 			orword = 0;
+			tdr = ZE_TDR_OW;
 		}
 
 		sc->sc_inq += map->dm_nsegs;
@@ -391,6 +408,10 @@ zestart(ifp)
 		if (totlen != m->m_pkthdr.len)
 			panic("zestart: len fault");
 #endif
+		/*
+		 * Turn ownership of the packet over to the device.
+		 */
+		zc->zc_xmit[starttx].ze_tdr = ZE_TDR_OW;
 
 		/*
 		 * Kick off the transmit logic, if it is stopped.
@@ -416,11 +437,17 @@ sgec_intr(sc)
 	int csr, len;
 
 	csr = ZE_RCSR(ZE_CSR5);
-	if ((csr & ZE_NICSR5_IS) == 0) /* Wasn't we */
+	if ((csr & ZE_NICSR5_IS) == 0) { /* Wasn't we */
+		sc->sc_nointrcnt.ev_count++;
 		return 0;
+	}
 	ZE_WCSR(ZE_CSR5, csr);
 
+	if (csr & ZE_NICSR5_RU)
+		sc->sc_nobufintrcnt.ev_count++;
+
 	if (csr & ZE_NICSR5_RI) {
+		sc->sc_rxintrcnt.ev_count++;
 		while ((zc->zc_recv[sc->sc_nextrx].ze_framelen &
 		    ZE_FRAMELEN_OW) == 0) {
 
@@ -446,13 +473,15 @@ sgec_intr(sc)
 		}
 	}
 
-	if (csr & ZE_NICSR5_TI) {
-		int lastack = sc->sc_lastack;
-		while ((zc->zc_xmit[lastack].ze_tdr & ZE_TDR_OW) == 0) {
+	if (csr & ZE_NICSR5_TI)
+		sc->sc_txintrcnt.ev_count++;
+	if (sc->sc_lastack != sc->sc_nexttx) {
+		int lastack;
+		for (lastack = sc->sc_lastack; lastack != sc->sc_nexttx; ) {
 			bus_dmamap_t map;
 			int nlastack;
 
-			if (lastack == sc->sc_nexttx)
+			if ((zc->zc_xmit[lastack].ze_tdr & ZE_TDR_OW) != 0)
 				break;
 
 			if ((zc->zc_xmit[lastack].ze_tdes1 & ZE_TDES1_DT) ==
@@ -470,6 +499,10 @@ sgec_intr(sc)
 			if (zc->zc_xmit[nlastack].ze_tdr & ZE_TDR_OW)
 				break;
 			lastack = nlastack;
+			if (sc->sc_txcnt > map->dm_nsegs)
+			    sc->sc_txcnt -= map->dm_nsegs;
+			else
+			    sc->sc_txcnt = 0;
 			sc->sc_inq -= map->dm_nsegs;
 			KASSERT(zc->zc_xmit[lastack].ze_tdes1 & ZE_TDES1_LS);
 			ifp->if_opackets++;
@@ -484,11 +517,14 @@ sgec_intr(sc)
 			if (++lastack == TXDESCS)
 				lastack = 0;
 		}
-		sc->sc_lastack = lastack;
-		if (sc->sc_inq == 0)
-			ifp->if_timer = 0;
-		ifp->if_flags &= ~IFF_OACTIVE;
-		zestart(ifp); /* Put in more in queue */
+		if (lastack != sc->sc_lastack) {
+			sc->sc_txdraincnt.ev_count++;
+			sc->sc_lastack = lastack;
+			if (sc->sc_inq == 0)
+				ifp->if_timer = 0;
+			ifp->if_flags &= ~IFF_OACTIVE;
+			zestart(ifp); /* Put in more in queue */
+		}
 	}
 	return 1;
 }
