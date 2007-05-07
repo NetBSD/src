@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee754.h,v 1.6 2005/12/03 17:10:46 christos Exp $	*/
+/*	$NetBSD: ieee754.h,v 1.6.24.1 2007/05/07 19:49:10 pavel Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -87,31 +87,33 @@
 #define	SNG_EXPBITS	8
 #define	SNG_FRACBITS	23
 
-#define	DBL_EXPBITS	11
-#define	DBL_FRACBITS	52
-
 struct ieee_single {
 #if _BYTE_ORDER == _BIG_ENDIAN
 	u_int	sng_sign:1;
-	u_int	sng_exp:8;
-	u_int	sng_frac:23;
+	u_int	sng_exp:SNG_EXPBITS;
+	u_int	sng_frac:SNG_FRACBITS;
 #else
-	u_int	sng_frac:23;
-	u_int	sng_exp:8;
+	u_int	sng_frac:SNG_FRACBITS;
+	u_int	sng_exp:SNG_EXPBITS;
 	u_int	sng_sign:1;
 #endif
 };
 
+#define	DBL_EXPBITS	11
+#define	DBL_FRACHBITS	20
+#define	DBL_FRACLBITS	32
+#define	DBL_FRACBITS	(DBL_FRACHBITS + DBL_FRACLBITS)
+
 struct ieee_double {
 #if _BYTE_ORDER == _BIG_ENDIAN
 	u_int	dbl_sign:1;
-	u_int	dbl_exp:11;
-	u_int	dbl_frach:20;
-	u_int	dbl_fracl;
+	u_int	dbl_exp:DBL_EXPBITS;
+	u_int	dbl_frach:DBL_FRACHBITS;
+	u_int	dbl_fracl:DBL_FRACLBITS;
 #else
-	u_int	dbl_fracl;
-	u_int	dbl_frach:20;
-	u_int	dbl_exp:11;
+	u_int	dbl_fracl:DBL_FRACLBITS;
+	u_int	dbl_frach:DBL_FRACHBITS;
+	u_int	dbl_exp:DBL_EXPBITS;
 	u_int	dbl_sign:1;
 #endif
 };
