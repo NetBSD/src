@@ -1,4 +1,4 @@
-/* $NetBSD: gdtoaimp.h,v 1.5 2006/05/04 18:59:23 christos Exp $ */
+/* $NetBSD: gdtoaimp.h,v 1.5.4.1 2007/05/07 19:49:06 pavel Exp $ */
 
 /****************************************************************
 
@@ -592,12 +592,12 @@ extern void memcpy_D2A ANSI((void*, const void*, size_t));
  extern int match ANSI((CONST char**, CONST char*));
  extern Bigint *mult ANSI((Bigint*, Bigint*));
  extern Bigint *multadd ANSI((Bigint*, int, int));
- extern char *nrv_alloc ANSI((CONST char*, char **, int));
+ extern char *nrv_alloc ANSI((CONST char*, char **, size_t));
  extern Bigint *pow5mult ANSI((Bigint*, int));
  extern int quorem ANSI((Bigint*, Bigint*));
  extern double ratio ANSI((Bigint*, Bigint*));
  extern void rshift ANSI((Bigint*, int));
- extern char *rv_alloc ANSI((int));
+ extern char *rv_alloc ANSI((size_t));
  extern Bigint *s2b ANSI((CONST char*, int, int, ULong));
  extern Bigint *set_ones ANSI((Bigint*, int));
  extern char *strcp ANSI((char*, const char*));

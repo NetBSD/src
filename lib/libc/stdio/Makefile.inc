@@ -1,10 +1,10 @@
 #	from: @(#)Makefile.inc	5.7 (Berkeley) 6/27/91
-#	$NetBSD: Makefile.inc,v 1.34 2006/10/27 19:59:58 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.34.2.1 2007/05/07 19:49:09 pavel Exp $
 
 # stdio sources
 .PATH: ${.CURDIR}/stdio
 
-COPTS.vfprintf.c+=	-Wno-uninitialized	# see rev 1.46 for why
+CPPFLAGS+=-DWIDE_DOUBLE
 
 SRCS+=	asprintf.c clrerr.c fclose.c fdopen.c feof.c ferror.c fflush.c \
 	fgetc.c fgetln.c fgetpos.c fgets.c fgetstr.c fgetwc.c fgetwln.c \

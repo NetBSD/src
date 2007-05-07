@@ -1,4 +1,4 @@
-/* $NetBSD: dmisc.c,v 1.2 2006/01/25 15:27:42 kleink Exp $ */
+/* $NetBSD: dmisc.c,v 1.2.4.1 2007/05/07 19:49:07 pavel Exp $ */
 
 /****************************************************************
 
@@ -39,12 +39,13 @@ THIS SOFTWARE.
 
  char *
 #ifdef KR_headers
-rv_alloc(i) int i;
+rv_alloc(i) size_t i;
 #else
-rv_alloc(int i)
+rv_alloc(size_t i)
 #endif
 {
-	int j, k, *r;
+	size_t j;
+	int k, *r;
 
 	j = sizeof(ULong);
 	for(k = 0;
@@ -62,9 +63,9 @@ rv_alloc(int i)
 
  char *
 #ifdef KR_headers
-nrv_alloc(s, rve, n) CONST char *s; char **rve; int n;
+nrv_alloc(s, rve, n) CONST char *s; char **rve; size_t n;
 #else
-nrv_alloc(CONST char *s, char **rve, int n)
+nrv_alloc(CONST char *s, char **rve, size_t n)
 #endif
 {
 	char *rv, *t;
