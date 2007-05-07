@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.66.14.4 2007/05/07 17:20:08 garbled Exp $	*/
+/*	$NetBSD: machdep.c,v 1.66.14.5 2007/05/07 18:14:58 garbled Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.66.14.4 2007/05/07 17:20:08 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.66.14.5 2007/05/07 18:14:58 garbled Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -113,6 +113,8 @@ uint32_t prep_intr_reg_off;		/* IVR offset within the mapped page */
 struct mem_region physmemr[OFMEMREGIONS], availmemr[OFMEMREGIONS];
 
 paddr_t avail_end;			/* XXX temporary */
+struct pic_ops *isa_pic;
+int isa_pcmciamask = 0x8b28;
 
 extern int primary_pic;
 extern struct platform_quirkdata platform_quirks[];
@@ -481,7 +483,6 @@ prep_setup_openpic(PPC_DEVICE *dev)
 	void *v;
 	int tag, size, item;
 	unsigned char *baseaddr = NULL;
-	struct pic_ops *pic;
 
 	l = be32toh(dev->AllocatedOffset);
 	p = res->DevicePnPHeap + l;
@@ -514,11 +515,12 @@ prep_setup_openpic(PPC_DEVICE *dev)
 		if (baseaddr == NULL)
 			return 0;
 		pic_init();
-		pic = setup_prepivr();
+		isa_pic = setup_prepivr();
 		(void)setup_openpic(baseaddr, 0);
 		primary_pic = 1;
 		/* set up the IVR as a cascade on openpic 0 */
-		intr_establish(16, IST_LEVEL, IPL_NONE, pic_handle_intr, pic);
+		intr_establish(16, IST_LEVEL, IPL_NONE, pic_handle_intr,
+		    isa_pic);
 		oea_install_extint(pic_ext_intr);
 		return 1;
 	}
@@ -625,9 +627,9 @@ init_intr(void)
         if (i != -1)
                 if (platform_quirks[i].quirk & PLAT_QUIRK_ISA_HANDLER &&
                     platform_quirks[i].isa_intr_handler == EXT_INTR_I8259) {
-			(void)setup_i8259();
+			isa_pic = setup_i8259();
                         return;
                 }
-	(void)setup_prepivr();
+	isa_pic = setup_prepivr();
         oea_install_extint(pic_ext_intr);
 }
