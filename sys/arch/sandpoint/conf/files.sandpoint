@@ -1,4 +1,4 @@
-#	$NetBSD: files.sandpoint,v 1.20.4.1 2007/05/04 10:40:28 nisimura Exp $
+#	$NetBSD: files.sandpoint,v 1.20.4.2 2007/05/07 18:25:23 garbled Exp $
 #
 # Motorola's "SandPoint" evaluation board's specific configuration info
 #
@@ -75,7 +75,6 @@ file	arch/powerpc/pci/pcib.c			pcib
 #
 
 include "dev/isa/files.isa"
-file	arch/sandpoint/isa/isa_machdep.c	isa
 file	arch/powerpc/isa/isa_machdep_common.c	isa
 file	arch/powerpc/isa/isadma_machdep.c	isa
 
