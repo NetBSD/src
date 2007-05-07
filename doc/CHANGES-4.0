@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.132 2007/05/07 03:31:41 snj Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.133 2007/05/07 03:33:14 snj Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -2952,4 +2952,10 @@ gnu/dist/gcc4/gcc/rtl.h				1.2
 
 	Add CONST_INT_P
 	[mhitch, ticket #610]
+
+gnu/dist/gcc4/gcc/config/vax/vax.md		1.11
+
+	Make movmemhi insn pattern use "o" constraint to avoid codegen bugs.
+	Fix some non-use of MEM_P, REG_P, CONST_INT_P.
+	[mhitch, ticket #611]
 
