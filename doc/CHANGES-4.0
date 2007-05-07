@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.128 2007/05/07 02:46:24 snj Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.129 2007/05/07 02:58:31 snj Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -2919,4 +2919,17 @@ usr.bin/netstat/main.c				1.64
 	Fall back to kvm interface for protocols that do not yet
 	offer a sysctl interface. Fixes PR#36210.
 	[mlelstv, ticket #604]
+
+lib/libc/arch/x86_64/gen/swapcontext.S		1.4
+
+	Don't clobber callee save registers r12 & r13 in swapcontext.  They
+	were saved in the stack, but the subsequent swapcontext would return
+	to the earlier stack frame and never restore them.
+	[pooka, ticket #605]
+
+share/mk/sys.mk					1.91-1.92
+
+	Make vax default to -O1 -fgcse -fstrength-reduce -fgcse-after-reload.
+	We can build again.  This addresses PR#34783.
+	[mhitch, ticket #606]
 
