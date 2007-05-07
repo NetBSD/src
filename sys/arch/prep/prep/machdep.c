@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.66.14.3 2007/05/07 17:01:11 garbled Exp $	*/
+/*	$NetBSD: machdep.c,v 1.66.14.4 2007/05/07 17:20:08 garbled Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.66.14.3 2007/05/07 17:01:11 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.66.14.4 2007/05/07 17:20:08 garbled Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -480,7 +480,7 @@ prep_setup_openpic(PPC_DEVICE *dev)
 	uint8_t *p;
 	void *v;
 	int tag, size, item;
-	uint32_t baseaddr = 0;
+	unsigned char *baseaddr = NULL;
 	struct pic_ops *pic;
 
 	l = be32toh(dev->AllocatedOffset);
@@ -504,14 +504,14 @@ prep_setup_openpic(PPC_DEVICE *dev)
 			continue;
 		/* otherwise, we have a memory packet */
 		if (pa->PPCData[0] == 1)
-			baseaddr = (uint32_t)mapiodev(
+			baseaddr = (unsigned char *)mapiodev(
 			    le64dec(&pa->PPCData[4]) | PREP_BUS_SPACE_IO,
 			    le64dec(&pa->PPCData[12]));
 		else if (pa->PPCData[0] == 2)
-			baseaddr = (uint32_t)mapiodev(
+			baseaddr = (unsigned char *)mapiodev(
 			    le64dec(&pa->PPCData[4]) | PREP_BUS_SPACE_MEM,
 			    le64dec(&pa->PPCData[12]));
-		if (baseaddr == 0)
+		if (baseaddr == NULL)
 			return 0;
 		pic_init();
 		pic = setup_prepivr();
