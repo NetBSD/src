@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.137 2007/05/07 22:34:04 pavel Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.138 2007/05/08 09:58:06 pavel Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -3298,4 +3298,20 @@ distrib/utils/sysinst/arch/i386/msg.md.pl	1.25
 	Remove GENERIC.MPACPI from the list of kernels, as it is no longer
 	built.
 	[snj, ticket #613]
+
+usr.bin/passwd/pam_passwd.c			1.4
+
+	Display a message indicating who's password is being changed.
+	[jnemeth, ticket #626]
+
+distrib/sets/makesrctars			1.33
+
+	Move common from src.tgz to syssrc.tgz.
+	[jnemeth, ticket #628]
+
+etc/security					1.101
+
+	PR/36058 -- fix check for group/other writable home directories from
+	Jukka Salmi
+	[jnemeth, ticket #627]
 
