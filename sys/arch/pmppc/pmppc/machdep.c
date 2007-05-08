@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.22 2007/02/09 21:55:10 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.22.14.1 2007/05/08 17:10:48 garbled Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.22 2007/02/09 21:55:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.22.14.1 2007/05/08 17:10:48 garbled Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -115,6 +115,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.22 2007/02/09 21:55:10 ad Exp $");
 #include <machine/pmppc.h>
 
 #include <powerpc/oea/bat.h>
+#include <arch/powerpc/pic/picvar.h>
 
 #include <ddb/db_extern.h>
 
@@ -186,7 +187,6 @@ void
 initppc(u_int startkernel, u_int endkernel, u_int args, void *btinfo)
 {
 	extern void consinit(void);
-	extern void ext_intr(void);
 	extern u_long ticks_per_sec;
 	extern unsigned char edata[], end[];
 
@@ -232,7 +232,7 @@ initppc(u_int startkernel, u_int endkernel, u_int args, void *btinfo)
 	/*
 	 * Set up trap vectors
 	 */
-	oea_init(ext_intr);
+	oea_init(NULL);
 
 	/*
 	 * Set up console.
@@ -304,6 +304,10 @@ cpu_startup()
 	/* Set up interrupt controller */
 	cpc700_init_intr(&pmppc_mem_tag, CPC_UIC_BASE,
 	    CPC_INTR_MASK(PMPPC_I_ETH_INT), 0);
+
+	pic_init();
+	(void)setup_cpc700();
+	oea_install_extint(pic_ext_intr);
 
 #if 0
 /* XXX doesn't seem to be needed anymore */
