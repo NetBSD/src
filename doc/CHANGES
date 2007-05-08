@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.846 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.847 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -101,3 +101,6 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		mount_9p(8) to use it.  [pooka 20070505]
 	kernel: Add the TFTPROOT kernel option for TFTP'ing root RAMdisk 
 		at root mount time. [manu 20070508]
+	ug(4): Driver splitted in three parts to support the new ACPI
+		attachment (ug* at acpi?). Patch from Mihai Chelaru.
+		[xtraeme 20070508]
