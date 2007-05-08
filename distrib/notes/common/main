@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.337 2007/05/06 11:00:04 pavel Exp $
+.\"	$NetBSD: main,v 1.338 2007/05/08 18:39:33 plunky Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -450,6 +450,22 @@ Some highlights include:
 .Ss2 Kernel
 .
 .(bullet
+Added a Bluetooth protocol stack including:
+.(bullet -compact -offset indent
+hardware drivers:
+.Xr ubt 4
+for USB controllers, and
+.Xr bt3c 4
+for the 3Com Bluetooth PC-Card
+.It
+socket based access to the HCI, L2CAP, RFCOMM and SCO protocols
+.It
+pseudo drivers for integrating services on remote Bluetooth
+devices such as Keyboards, Mice and SCO Audio into the
+.Nx
+device framework
+.bullet)
+.It
 TBD
 .bullet)
 .
@@ -474,6 +490,32 @@ TBD
 .Ss2 System administration and user tools
 .
 .(bullet
+Various utilities to support Bluetooth were added:
+.(bullet -compact -offset indent
+.Xr btconfig 8
+for controller configuration
+.It
+.Xr btdevctl 8
+to manage pseudo devices relating to remote services
+.It
+.Xr bthcid 8
+and
+.Xr btpin 1
+for authenticating radio connections
+.It
+.Xr sdpd 8
+for providing service discovery to remote devices
+.It
+.Xr sdpquery 1
+for querying services on remote devices
+.It
+.Xr rfcomm_sppd 1
+to access remote services over RFCOMM via stdio or pty
+.It
+.Xr bthset 1
+for making connections to Bluetooth headsets
+.bullet)
+.It
 TBD
 .bullet)
 .
