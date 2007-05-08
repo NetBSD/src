@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.177 2007/05/07 16:53:17 dsl Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.178 2007/05/08 20:10:15 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.177 2007/05/07 16:53:17 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.178 2007/05/08 20:10:15 dsl Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -128,8 +128,8 @@ int debug_exit = 0;
 #define DPRINTF(x)
 #endif
 
-static int
-find_stopped_child(struct proc *, pid_t, int, struct proc **, int *);
+static int find_stopped_child(struct proc *, pid_t, int, struct proc **, int *);
+static void proc_free(struct proc *, struct rusage *);
 
 /*
  * Fill in the appropriate signal information, and signal the parent.
@@ -685,9 +685,6 @@ do_sys_wait(struct lwp *l, int *pid, int *status, int options,
 
 	*pid = child->p_pid;
 
-	if (ru != NULL)
-		*ru = child->p_stats->p_ru;
-
 	if (child->p_stat == SZOMB) {
 		/* proc_free() will release the proclist_lock. */
 		*was_zombie = 1;
@@ -695,7 +692,7 @@ do_sys_wait(struct lwp *l, int *pid, int *status, int options,
 			mutex_exit(&proclist_lock);
 		else {
 			KERNEL_LOCK(1, l);		/* XXXSMP */
-			proc_free(child);
+			proc_free(child, ru);
 			KERNEL_UNLOCK_ONE(l);		/* XXXSMP */
 		}
 	} else {
@@ -836,10 +833,6 @@ find_stopped_child(struct proc *parent, pid_t pid, int options,
 		    ((options & WNOHANG) != 0 && dead == NULL)) {
 		    	if (child != NULL) {
 			    	*status_p = child->p_xstat;
-				if (child->p_stat == SZOMB) {
-					ruadd(&parent->p_stats->p_cru,
-					    &child->p_stats->p_cru);
-				}
 			}
 			mutex_exit(&proclist_mutex);
 			*child_p = child;
@@ -867,8 +860,8 @@ find_stopped_child(struct proc *parent, pid_t pid, int options,
  *
  * *ru is returned to the caller, and must be freed by the caller.
  */
-void
-proc_free(struct proc *p)
+static void
+proc_free(struct proc *p, struct rusage *ru)
 {
 	struct plimit *plim;
 	struct pstats *pstats;
@@ -924,7 +917,14 @@ proc_free(struct proc *p)
 
 	parent = p->p_pptr;
 	scheduler_wait_hook(parent, p);
+	/*
+	 * Add child times of exiting process onto its own times.
+	 * This cannot be done any earlier else it might get done twice.
+	 */
+	ruadd(&p->p_stats->p_ru, &p->p_stats->p_cru);
 	ruadd(&parent->p_stats->p_cru, &p->p_stats->p_ru);
+	if (ru != NULL)
+		*ru = p->p_stats->p_ru;
 	p->p_xstat = 0;
 
 	/*
