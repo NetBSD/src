@@ -1,4 +1,4 @@
-.\" $NetBSD: acpi.4,v 1.26 2007/03/21 07:07:03 wiz Exp $
+.\" $NetBSD: acpi.4,v 1.27 2007/05/08 16:52:24 xtraeme Exp $
 .\"
 .\" Copyright (c) 2002, 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -31,7 +31,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd March 14, 2007
+.Dd May 8, 2007
 .Dt ACPI 4
 .Os
 .Sh NAME
@@ -58,6 +58,7 @@
 .Cd "pcppi*    at acpi?"
 .Cd "sony*     at acpi?"
 .Cd "spic*     at acpi?"
+.Cd "ug*       at acpi?"
 .Cd "vald*     at acpi?"
 .Cd "wss*      at acpi?"
 .Cd "ym*       at acpi?"
@@ -151,6 +152,8 @@ Standard ISA parallel port interface.
 Roland MPU-401 (compatible) MIDI UART.
 .It pcppi
 AT-style speaker sound.
+.It ug
+Abit uGuru Hardware monitor.
 .It wss
 Windows Sound System-compatible sound cards based on the AD1848 and compatible chips.
 .It ym
@@ -190,6 +193,7 @@ Toshiba Libretto device.
 .Xr pcppi 4 ,
 .Xr sony 4 ,
 .Xr spic 4 ,
+.Xr ug 4 ,
 .Xr vald 4 ,
 .Xr wss 4 ,
 .Xr ym 4 ,
