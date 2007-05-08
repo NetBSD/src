@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.678.2.3 2007/03/06 20:43:48 bouyer Exp $
+# $NetBSD: mi,v 1.678.2.4 2007/05/08 10:45:07 pavel Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -122,6 +122,7 @@
 ./sbin						base-sys-root
 ./sbin/amrctl					base-sysutil-root
 ./sbin/atactl					base-sysutil-root
+./sbin/bioctl					base-sysutil-root
 ./sbin/badsect					base-sysutil-root
 ./sbin/brconfig					base-netutil-root
 ./sbin/ccdconfig				base-sysutil-root
