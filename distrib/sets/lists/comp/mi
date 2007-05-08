@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.981.2.1 2007/02/06 22:20:43 tron Exp $
+#	$NetBSD: mi,v 1.981.2.2 2007/05/08 10:45:13 pavel Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -155,6 +155,7 @@
 ./usr/include/dev/auconv.h			comp-obsolete		obsolete
 ./usr/include/dev/audio_if.h			comp-obsolete		obsolete
 ./usr/include/dev/audiovar.h			comp-obsolete		obsolete
+./usr/include/dev/biovar.h			comp-c-include
 ./usr/include/dev/bluetooth			comp-c-include
 ./usr/include/dev/bluetooth/btdev.h		comp-c-include
 ./usr/include/dev/bluetooth/bthidev.h		comp-c-include

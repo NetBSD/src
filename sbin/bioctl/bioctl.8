@@ -1,0 +1,164 @@
+.\"	$NetBSD: bioctl.8,v 1.2.2.2 2007/05/08 10:45:03 pavel Exp $
+.\"	$OpenBSD: bioctl.8,v 1.43 2007/03/20 06:12:11 jmc Exp $
+.\"
+.\" Copyright (c) 2004, 2005 Marco Peereboom
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHORS AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHORS OR CONTRIBUTORS BE LIABLE FOR
+.\" ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.Dd April 8, 2007
+.Dt BIOCTL 8
+.Os
+.Sh NAME
+.Nm bioctl
+.Nd RAID management interface
+.Sh SYNOPSIS
+.Nm bioctl
+.Bk -words
+.Op Fl Dhiv
+.Op Fl a Ar alarm-function
+.Op Fl b Ar channel:target[.lun]
+.Op Fl c Ar raidlevel
+.Op Fl H Ar channel:target[.lun]
+.Op Fl l Ar special[,special[,...]]
+.Op Fl u Ar channel:target[.lun]
+.Ar device
+.Ek
+.Sh DESCRIPTION
+RAID device drivers which support management functionality can
+register their services with the
+.Xr bio 4
+driver.
+.Nm bioctl
+then can be used to maintain RAID volumes.
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl a Ar alarm-function
+Control the RAID card's alarm functionality, if supported.
+.Ar alarm-function
+may be one of:
+.Pp
+.Bl -tag -width disable -compact
+.It Ar disable
+Disable the alarm on the RAID controller.
+.It Ar enable
+Enable the alarm on the RAID controller.
+.It Ar get
+Retrieve the current alarm state (enabled or disabled).
+.It Ar silence | Ar quiet
+Silence the alarm if it is currently beeping.
+.El
+.Pp
+The
+.Ar alarm-function
+may be specified as given above,
+or by the first letter only
+(e.g. -a e).
+.It Fl b Ar channel:target[.lun]
+Instruct the device at
+.Ar channel:target[.lun]
+to start blinking, if there is
+.Xr ses 4
+or
+.Xr safte 4
+support in the enclosure.
+.It Fl c Ar raidlevel
+Create a
+.Xr softraid 4
+device of level
+.Ar raidlevel .
+The device must begin with
+.Dq softraid
+followed by a number.
+.It Fl D
+Enable debug output.
+.It Fl H Ar channel:target[.lun]
+If the device at
+.Ar channel:target[.lun]
+is currently marked
+.Dq Unused ,
+promote it to being a
+.Dq Hot Spare .
+.It Fl h
+Where necessary, produce "human-readable" output.
+Use unit suffixes: Byte, Kilobyte, Megabyte,
+Gigabyte, Terabyte, Petabyte, Exabyte in order to reduce the number of
+digits to four or less.
+.It Fl i
+Enumerate the selected RAID devices.
+.It Fl l Ar special[,special[,...]]
+Use
+.Ar special
+device list to create within the
+.Xr softraid 4
+framework.
+Requires
+.Fl c .
+.It Fl u Ar channel:target[.lun]
+Instruct the device at
+.Ar channel:target[.lun]
+to cease blinking, if there is
+.Xr ses 4
+or
+.Xr safte 4
+support in the enclosure.
+.It Fl v
+Be more verbose in output.
+.It Ar device
+Select a drive by name (e.g. sd0) or a RAID controller by name (e.g. ami0).
+For operations which will be performed against
+.Xr ses 4
+or
+.Xr safte 4
+enclosures, it is also possible to directly specify the enclosure name
+(e.g. safte0).
+.El
+.Sh EXAMPLES
+The following command, executed from the command line, shows the status of
+the logical drives on the RAID controller:
+.Bd -literal 
+# bioctl -h mfi0
+Volume  Status           Size Device  
+ mfi0 0 Online            74G mfi0    RAID1
+      0 Online            75G 1:0.0   noencl <ATA     WDC WD800JD-75MS1E04>
+      1 Online            75G 1:1.0   noencl <ATA     WDC WD800JD-75MS1E04>
+ mfi0 1 Online           697G mfi0    RAID5
+      0 Online           233G 1:3.0   noencl <ATA     WDC WD2500JS-75N2E04>
+      1 Online           233G 1:2.0   noencl <ATA     WDC WD2500JS-75N2E04>
+      2 Online           233G 1:4.0   noencl <ATA     WDC WD2500JS-75N2E04>
+      3 Online           233G 1:5.0   noencl <ATA     WDC WD2500JS-75N2E04>
+.Ed
+.Sh SEE ALSO
+.Xr bio 4 ,
+.Xr mfi 4 ,
+.Sh BUGS
+the softraid stuff available at this time.
+.Sh HISTORY
+The
+.Nm
+command first appeared in
+.Ox 3.8 .
+.Sh AUTHORS
+The
+.Nm
+interface was written by
+.An Marco Peereboom Aq marco@openbsd.org .
