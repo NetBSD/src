@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep.h,v 1.1.2.3 2007/05/06 05:11:42 macallan Exp $ */
+/* $NetBSD: pci_machdep.h,v 1.1.2.4 2007/05/08 20:21:41 rjs Exp $ */
 
 /*-
  * Copyright (c) 2002,2007 The NetBSD Foundation, Inc.
@@ -147,6 +147,13 @@ void genppc_pci_intr_disestablish(void *, void *);
 void genppc_pci_conf_interrupt(void *, int, int, int, int, int *);
 int genppc_pci_conf_hook(pci_chipset_tag_t, int, int, int, pcireg_t);
 int genppc_pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp);
+
+void genppc_pci_indirect_attach_hook(struct device *, struct device *,
+    struct pcibus_attach_args *);
+pcitag_t genppc_pci_indirect_make_tag(void *, int, int, int);
+pcireg_t genppc_pci_indirect_conf_read(void *, pcitag_t, int);
+void genppc_pci_indirect_conf_write(void *, pcitag_t, int, pcireg_t);
+void genppc_pci_indirect_decompose_tag(void *, pcitag_t, int *, int *, int *);
 
 /* XXX for now macppc needs its own pci_bus_dma_tag */
 #ifndef macppc

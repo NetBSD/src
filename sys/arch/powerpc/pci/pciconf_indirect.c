@@ -1,4 +1,4 @@
-/* $NetBSD: pciconf_indirect.c,v 1.1.2.2 2007/05/06 05:11:42 macallan Exp $ */
+/* $NetBSD: pciconf_indirect.c,v 1.1.2.3 2007/05/08 20:21:41 rjs Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciconf_indirect.c,v 1.1.2.2 2007/05/06 05:11:42 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciconf_indirect.c,v 1.1.2.3 2007/05/08 20:21:41 rjs Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -57,9 +57,6 @@ __KERNEL_RCSID(0, "$NetBSD: pciconf_indirect.c,v 1.1.2.2 2007/05/06 05:11:42 mac
 #include <machine/bus.h>
 #include <machine/intr.h>
 #include <machine/pio.h>
-#ifdef prep
-#include <machine/platform.h>
-#endif
 
 #if NISA > 0
 #include <dev/isa/isavar.h>
@@ -70,13 +67,6 @@ __KERNEL_RCSID(0, "$NetBSD: pciconf_indirect.c,v 1.1.2.2 2007/05/06 05:11:42 mac
 #include <dev/pci/pcidevs.h>
 
 #define	PCI_MODE1_ENABLE	0x80000000UL
-
-void genppc_pci_indirect_attach_hook(struct device *, struct device *,
-    struct pcibus_attach_args *);
-pcitag_t genppc_pci_indirect_make_tag(void *, int, int, int);
-pcireg_t genppc_pci_indirect_conf_read(void *, pcitag_t, int);
-void genppc_pci_indirect_conf_write(void *, pcitag_t, int, pcireg_t);
-void genppc_pci_indirect_decompose_tag(void *, pcitag_t, int *, int *, int *);
 
 void
 genppc_pci_indirect_attach_hook(struct device *parent, struct device *self,
