@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.844 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.845 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -94,10 +94,6 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	prep: add support for the MTX604 RAVEN based machine.  Other RAVEN
 		based machines are also likely to work now. [garbled 20070426]
 	kernel: Added support for POSIX Asynchronous I/O. [rmind 20070430]
-	kernel: added bio(4) and associated bioctl(8), a framework to
-		query/control block device controllers. [bouyer 20070501]
-	envsys(4): added DRIVE type sensor. [bouyer 20070501]
-	mfi(4): added bio(4) and envsys(4) support. [bouyer 20070501]
 	ipf(8): Updated to version 4.1.20. [martti 20070501]
 	bind: import 9.4.1 [christos 20070501]
 	puffs(3): Add puffs_framebuf(3), which abstracts the buffer
