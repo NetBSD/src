@@ -1,4 +1,4 @@
-/*	$NetBSD: wd33c93reg.h,v 1.2 2007/05/08 00:20:15 rumble Exp $	*/
+/*	$NetBSD: wd33c93reg.h,v 1.3 2007/05/08 00:29:30 rumble Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -199,7 +199,8 @@
  * FIFO register
  */
 
-#define SBIC_FIFO_DEEP		12
+#define SBIC_FIFO_93_DEPTH		5
+#define SBIC_FIFO_93AB_DEPTH		12
 
 /*
  * maximum possible size in TC registers. Since this is 24 bit, it's easy
@@ -213,7 +214,8 @@
  */
 
 #define SBIC_SYN_OFF_MASK	0x0f
-#define SBIC_SYN_MAX_OFFSET	SBIC_FIFO_DEEP
+#define SBIC_SYN_93_MAX_OFFSET	(SBIC_FIFO_93_DEPTH - 1) /* 4 is recommended */
+#define SBIC_SYN_93AB_MAX_OFFSET SBIC_FIFO_93AB_DEPTH
 #define SBIC_SYN_PER_MASK	0x70
 #define SBIC_SYN_MIN_PERIOD	2	/* upto 8, encoded as 0 */
 #define SBIC_SYN_FSS		0x80	/* Enable Fast SCSI Transfers (10MB/s)*/
