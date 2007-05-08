@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.46 2007/04/11 21:33:41 degroote Exp $	*/
+/*	$NetBSD: key.c,v 1.47 2007/05/08 14:03:05 degroote Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.46 2007/04/11 21:33:41 degroote Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.47 2007/05/08 14:03:05 degroote Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -7391,6 +7391,11 @@ key_init()
 	/* system default */
 	ip4_def_policy.policy = IPSEC_POLICY_NONE;
 	ip4_def_policy.refcnt++;	/*never reclaim this*/
+
+#ifdef INET6
+	ip6_def_policy.policy = IPSEC_POLICY_NONE;
+	ip6_def_policy.refcnt++;	/*never reclaim this*/
+#endif
 
 
 #ifndef IPSEC_DEBUG2
