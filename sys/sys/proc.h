@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.247 2007/05/07 16:53:17 dsl Exp $	*/
+/*	$NetBSD: proc.h,v 1.248 2007/05/08 20:10:14 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -532,7 +532,6 @@ void	exit1(struct lwp *, int);
 int	do_sys_wait(struct lwp *, int *, int *, int, struct rusage *, int *);
 struct proc *proc_alloc(void);
 void	proc0_init(void);
-void	proc_free(struct proc *);
 void	proc_free_mem(struct proc *);
 void	exit_lwps(struct lwp *l);
 int	fork1(struct lwp *, int, int, void *, size_t,
