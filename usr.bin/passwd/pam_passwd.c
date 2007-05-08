@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_passwd.c,v 1.3 2005/02/26 07:19:25 thorpej Exp $	*/
+/*	$NetBSD: pam_passwd.c,v 1.3.4.1 2007/05/08 09:39:37 ghen Exp $	*/
 
 /*-
  * Copyright (c) 2002 Networks Associates Technologies, Inc.
@@ -38,7 +38,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/usr.bin/passwd/passwd.c,v 1.23 2003/04/18 21:27:09 nectar Exp $");
 #else
-__RCSID("$NetBSD: pam_passwd.c,v 1.3 2005/02/26 07:19:25 thorpej Exp $");
+__RCSID("$NetBSD: pam_passwd.c,v 1.3.4.1 2007/05/08 09:39:37 ghen Exp $");
 #endif
 
 #include <sys/param.h>
@@ -97,6 +97,8 @@ pwpam_process(const char *username, int argc, char **argv)
 		usage();
 		/* NOTREACHED */
 	}
+
+	(void)printf("Changing password for %s.\n", username);
 
 	/* initialize PAM -- always use the program name "passwd" */
 	pam_err = pam_start("passwd", username, &pamc, &pamh);
