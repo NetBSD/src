@@ -1,4 +1,4 @@
-/*	$NetBSD: services_mkdb.c,v 1.6 2007/05/08 20:14:59 christos Exp $	*/
+/*	$NetBSD: services_mkdb.c,v 1.7 2007/05/08 20:17:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: services_mkdb.c,v 1.6 2007/05/08 20:14:59 christos Exp $");
+__RCSID("$NetBSD: services_mkdb.c,v 1.7 2007/05/08 20:17:57 christos Exp $");
 #endif /* not lint */
 
 
@@ -172,7 +172,7 @@ main(int argc, char *argv[])
 			/* key `\376service/proto', data = `indirect key' */
 			key.size = snprintf(keyb, sizeof(keyb), "\376%s/%s",
 			    sl->sl_str[i], proto) + 1;
-			store(fname, line, db, &key, &data, 1);
+			store(fname, line, db, &key, &data, warndup);
 
 			/* key `\376service', data = `indirect key' */
 			killproto(&key);
