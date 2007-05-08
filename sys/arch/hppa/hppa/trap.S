@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.S,v 1.16 2007/04/12 10:07:36 skrll Exp $	*/
+/*	$NetBSD: trap.S,v 1.17 2007/05/08 07:01:17 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -187,7 +187,7 @@ $bsd_syscall:
 	.import $syscall,code
 	.call
 	ldil	L%$syscall, %t2
-	be,n	R%$syscall(%sr7, %t2)
+	be,n	R%$syscall(%sr1, %t2)
 	nop
 
 	.align	NBPG
