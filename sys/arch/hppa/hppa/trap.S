@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.S,v 1.17 2007/05/08 07:01:17 skrll Exp $	*/
+/*	$NetBSD: trap.S,v 1.18 2007/05/08 07:06:45 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -542,7 +542,6 @@ $syscall_end:
 /*
  * interrupt vector table
  */
-/* XXX - fredette changed sr4 to sr7 below: */
 #define	TLABEL(name)	$trap$name
 #define	TELABEL(num)	__CONCAT(trap_ep_,num)
 #define TRAP(name,num) \
