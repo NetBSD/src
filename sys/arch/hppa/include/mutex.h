@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.4 2007/02/15 22:52:42 ad Exp $	*/
+/*	$NetBSD: mutex.h,v 1.4.2.1 2007/05/08 22:28:40 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -46,7 +46,11 @@
  * know who owns the lock.  For adaptive mutexes, we need an owner
  * field and additional interlock
  */
+
 #ifndef __ASSEMBLER__
+
+#include <machine/lock.h>
+
 struct kmutex {
 	union {
 		/*
