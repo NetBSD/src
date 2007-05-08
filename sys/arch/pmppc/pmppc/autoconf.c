@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.8 2005/12/11 12:18:42 christos Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.8.38.1 2007/05/08 17:10:47 garbled Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.8 2005/12/11 12:18:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.8.38.1 2007/05/08 17:10:47 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -132,4 +132,10 @@ findroot(void)
 			return;
 		}
 	}
+}
+
+void
+device_register(device_t dev, void *aux)
+{
+	/* do nothing */
 }
