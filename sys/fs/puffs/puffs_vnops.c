@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.66 2007/05/07 17:14:54 pooka Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.67 2007/05/08 21:39:03 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.66 2007/05/07 17:14:54 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.67 2007/05/08 21:39:03 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/fstrans.h>
@@ -694,7 +694,7 @@ puffs_getattr(void *v)
 	} */ *ap = v;
 	struct mount *mp;
 	struct vnode *vp;
-	struct vattr *vap;
+	struct vattr *vap, *rvap;
 	struct puffs_node *pn;
 	int error;
 
@@ -713,7 +713,21 @@ puffs_getattr(void *v)
 	if (error)
 		return error;
 
-	(void) memcpy(vap, &getattr_arg.pvnr_va, sizeof(struct vattr));
+	rvap = &getattr_arg.pvnr_va;
+	/*
+	 * Don't listen to the file server regarding special device
+	 * size info, the file server doesn't know anything about them.
+	 */
+	if (vp->v_type == VBLK || vp->v_type == VCHR)
+		rvap->va_size = vp->v_size;
+
+	/* Ditto for blocksize (ufs comment: this doesn't belong here) */
+	if (vp->v_type == VBLK)
+		rvap->va_blocksize = BLKDEV_IOSIZE;
+	else if (vp->v_type == VCHR)
+		rvap->va_blocksize = MAXBSIZE;
+
+	(void) memcpy(vap, rvap, sizeof(struct vattr));
 	vap->va_fsid = mp->mnt_stat.f_fsidx.__fsid_val[0];
 
 	pn = VPTOPP(vp);
@@ -726,8 +740,9 @@ puffs_getattr(void *v)
 	if (pn->pn_stat & PNODE_METACACHE_SIZE) {
 		vap->va_size = pn->pn_mc_size;
 	} else {
-		if (getattr_arg.pvnr_va.va_size != VNOVAL)
-			uvm_vnp_setsize(vp, getattr_arg.pvnr_va.va_size);
+		if (rvap->va_size != VNOVAL
+		    && vp->v_type != VBLK && vp->v_type != VCHR)
+			uvm_vnp_setsize(vp, rvap->va_size);
 	}
 
 	return 0;
