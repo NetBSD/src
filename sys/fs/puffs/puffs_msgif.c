@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.c,v 1.35 2007/05/07 17:14:54 pooka Exp $	*/
+/*	$NetBSD: puffs_msgif.c,v 1.36 2007/05/08 21:16:55 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.35 2007/05/07 17:14:54 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.36 2007/05/08 21:16:55 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/fstrans.h>
@@ -203,6 +203,7 @@ puffs_reqtofaf(struct puffs_park *park)
 
 	park->park_preq = newpreq;
 	park->park_preq->preq_opclass |= PUFFSOPFLAG_FAF;
+	park->park_flags &= ~PARKFLAG_WANTREPLY;
 }
 
 
@@ -536,11 +537,12 @@ touser(struct puffs_mount *pmp, struct puffs_park *park, uint64_t reqid)
 
 				mutex_enter(&pmp->pmp_lock);
 				mutex_enter(&park->park_mtx);
-				if (park->park_flags & PARKFLAG_ONQUEUE1)
+				if (park->park_flags & PARKFLAG_ONQUEUE1) {
 					TAILQ_REMOVE(&pmp->pmp_req_touser,
 					    park, park_entries);
-				park->park_flags &= ~PARKFLAG_ONQUEUE1;
-				pmp->pmp_req_touser_count--;
+					pmp->pmp_req_touser_count--;
+					park->park_flags &= ~PARKFLAG_ONQUEUE1;
+				}
 				if ((park->park_flags & PARKFLAG_ONQUEUE2) == 0)
 					puffs_park_release(park, 0);
 				else
