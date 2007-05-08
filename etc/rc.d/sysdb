@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: sysdb,v 1.15 2004/10/12 13:23:44 lukem Exp $
+# $NetBSD: sysdb,v 1.16 2007/05/08 20:33:59 christos Exp $
 #
 
 # PROVIDE: sysdb
@@ -12,24 +12,58 @@ $_rc_subr_loaded . /etc/rc.subr
 name="sysdb"
 start_cmd="sysdb_start"
 stop_cmd=":"
-extra_commands="devdb utmp"
+extra_commands="devdb utmp services netgroup password"
 devdb_cmd="build_devdb"
 utmp_cmd="build_utmp"
+services_cmd="build_services"
+netgroup_cmd="build_netgroup"
+password_cmd="build_password"
+echo=:
 
 sysdb_start()
 {
-	echo "Building databases..."
+	echo -n "Building databases:"
+	echo=echo
+	comma=" "
 	$devdb_cmd
 	$utmp_cmd
+	$services_cmd
+	$netgroup_cmd
+	$password_cmd
+	echo " done"
+}
+
+check_file()
+{
+	local src="$1"
+	local db="$2"
+	shift 2
+	if [ \( ! -f "$db" \) -o \( "$src" -nt "$db" \) ]; then
+		$echo -n "$comma$(basename "$src")"
+		comma=", "
+		"$@"
+	fi
+}
+
+build_services()
+{
+	check_file /etc/services /etc/services.db services_mkdb -q
+}
+
+build_netgroup()
+{
+	check_file /etc/netgroup /etc/netgroup.db netgroup_mkdb
 }
 
 build_devdb()
 {
-	if [ /var/run/dev.db -nt /dev ]; then
-		: # it's fine
-	else
-		dev_mkdb
-	fi
+	check_file /dev /var/run/dev.db dev_mkdb
+}
+
+build_password()
+{
+	local p=/etc/master.passwd
+	check_file $p /etc/spwd.db pwd_mkdb $p
 }
 
 build_utmp()
@@ -39,8 +73,14 @@ build_utmp()
 	#	because install and chown may not be available then
 	#	(possibly no /usr).
 	#
-	install -c -m 664 -g utmp /dev/null /var/run/utmp
-	install -c -m 664 -g utmp /dev/null /var/run/utmpx
+	local i
+	for i in "" x; do
+		if [ ! -f /var/run/utmp$i ]; then
+			$echo -n "${comma}utmp$i"
+			comma=", "
+			install -c -m 664 -g utmp /dev/null /var/run/utmp$i
+		fi
+	done
 }
 
 load_rc_config $name
