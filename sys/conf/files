@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.819.2.1 2006/12/21 12:46:22 tron Exp $
+#	$NetBSD: files,v 1.819.2.2 2007/05/08 10:45:11 pavel Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -1136,6 +1136,7 @@ defpseudo rnd
 defpseudo ksyms
 defpseudo nullcons
 defpseudo lockstat
+defpseudo bio:		sysmon_envsys
 
 defpseudo loop:		ifnet
 defpseudo sl:		ifnet
@@ -1232,6 +1233,7 @@ file	dev/auconv.c			auconv | mulaw
 file	dev/audio.c			audio | midi | midibus	needs-flag
 file	dev/audiobell.c			audiobell
 file	dev/aurateconv.c		aurateconv		needs-flag
+file	dev/bio.c			bio			needs-flag
 file	dev/ccd.c			ccd			needs-flag
 file	dev/cgd.c			cgd			needs-flag
 file	dev/cgd_crypto.c		cgd
