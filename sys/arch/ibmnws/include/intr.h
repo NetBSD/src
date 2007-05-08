@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.9 2007/02/16 02:53:47 ad Exp $	*/
+/*	$NetBSD: intr.h,v 1.9.14.1 2007/05/08 20:24:54 rjs Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -65,9 +65,8 @@
 #define	IST_LEVEL	3	/* level-triggered */
 
 #ifndef _LOCORE
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 #include <powerpc/softintr.h>
-#endif
+#include <machine/cpu.h>
 
 /*
  * Interrupt handler chains.  intr_establish() inserts a handler into
@@ -96,6 +95,7 @@ struct intrsource {
 int splraise(int);
 int spllower(int);
 void softintr(int);
+void splx(int);
 
 void do_pending_int(void);
 
@@ -121,7 +121,6 @@ extern struct intrhand *intrhand[];
 extern vaddr_t prep_intr_reg;
 
 #define	ICU_LEN			32
-extern struct intrsource intrsources[ICU_LEN];
 
 #define	IRQ_SLAVE		2
 #define	LEGAL_IRQ(x)		((x) >= 0 && (x) < ICU_LEN && (x) != IRQ_SLAVE)
@@ -130,22 +129,17 @@ extern struct intrsource intrsources[ICU_LEN];
 #define	PREP_INTR_REG	0xbffff000
 #define	INTR_VECTOR_REG	0xff0
 
-#define	SINT_CLOCK	0x20000000
-#define	SINT_NET	0x40000000
-#define	SINT_SERIAL	0x80000000
-#define	SPL_CLOCK	0x00000001
-#define	SINT_MASK	(SINT_CLOCK|SINT_NET|SINT_SERIAL)
+/* Soft interrupt masks. */
+#define SIR_CLOCK       28
+#define SIR_NET         29
+#define SIR_SERIAL      30
+#define SPL_CLOCK       31
 
-#define	CNT_SINT_NET	29
-#define	CNT_SINT_CLOCK	30
-#define	CNT_SINT_SERIAL	31
-#define	CNT_CLOCK	0
+#define setsoftclock()  softintr(SIR_CLOCK);
+#define setsoftnet()    softintr(SIR_NET);
+#define setsoftserial() softintr(SIR_SERIAL);
 
-#define	setsoftclock()	softintr(SINT_CLOCK);
-#define	setsoftnet()	softintr(SINT_NET);
-#define	setsoftserial()	softintr(SINT_SERIAL);
-
-#define	splx(x)		spllower(x)
+/*#define	splx(x)		spllower(x)*/
 #define	spl0()		spllower(0)
 
 typedef int ipl_t;
