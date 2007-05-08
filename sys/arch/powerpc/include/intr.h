@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.1.2.1 2007/05/04 02:37:04 macallan Exp $ */
+/*	$NetBSD: intr.h,v 1.1.2.2 2007/05/08 18:24:57 garbled Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.h,v 1.1.2.1 2007/05/04 02:37:04 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.h,v 1.1.2.2 2007/05/08 18:24:57 garbled Exp $");
 
 #ifndef POWERPC_INTR_MACHDEP_H
 #define POWERPC_INTR_MACHDEP_H
@@ -64,5 +64,64 @@ const char *intr_typename(int);
 #define	IST_EDGE	2	/* edge-triggered */
 #define	IST_LEVEL	3	/* level-triggered */
 
+#ifndef _LOCORE
+#include <powerpc/softintr.h>
+
+/*
+ * Interrupt handler chains.  intr_establish() inserts a handler into
+ * the list.  The handler is called with its (single) argument.
+ */
+struct intrhand {
+	int	(*ih_fun)(void *);
+	void	*ih_arg;
+	struct	intrhand *ih_next;
+	int	ih_level;
+	int	ih_irq;
+};
+
+void softnet(int);
+void softserial(void);
+int splraise(int);
+int spllower(int);
+void splx(int);
+void softintr(int);
+
+extern volatile int astpending, tickspending;
+extern int imask[];
+
+/* Soft interrupt masks. */
+#define SIR_CLOCK	28
+#define SIR_NET		29
+#define SIR_SERIAL	30
+#define SPL_CLOCK	31
+
+#define setsoftclock()	softintr(SIR_CLOCK)
+#define setsoftnet()	softintr(SIR_NET)
+#define setsoftserial()	softintr(SIR_SERIAL)
+
+#define spl0()		spllower(0)
+
+typedef int ipl_t;
+typedef struct {
+	ipl_t _ipl;
+} ipl_cookie_t;
+
+static inline ipl_cookie_t
+makeiplcookie(ipl_t ipl)
+{
+
+	return (ipl_cookie_t){._ipl = ipl};
+}
+
+static inline int
+splraiseipl(ipl_cookie_t icookie)
+{
+
+	return splraise(imask[icookie._ipl]);
+}
+
+#include <sys/spl.h>
+
+#endif /* _LOCORE */
 
 #endif /* POWERPC_INTR_MACHDEP_H */

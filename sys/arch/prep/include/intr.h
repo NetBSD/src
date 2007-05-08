@@ -1,11 +1,11 @@
-/*	$NetBSD: intr.h,v 1.29.14.1 2007/05/03 19:59:01 garbled Exp $	*/
+/*	$NetBSD: intr.h,v 1.29.14.2 2007/05/08 18:24:57 garbled Exp $	*/
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Charles M. Hannum.
+ * by Tim Rightnour
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -39,78 +39,19 @@
 #ifndef _PREP_INTR_H_
 #define _PREP_INTR_H_
 
-/* Interrupt priority `levels'. */
-#define IPL_NONE        0       /* nothing */
-#define IPL_SOFTCLOCK   1       /* timeouts */
-#define IPL_SOFTNET     2       /* protocol stacks */
-#define IPL_BIO         3       /* block I/O */
-#define IPL_NET         4       /* network */
-#define IPL_SOFTSERIAL  5       /* serial */
-#define IPL_AUDIO       6       /* audio */
-#define IPL_TTY         7       /* terminal */
-#define IPL_LPT         IPL_TTY
-#define IPL_VM          8       /* memory allocation */
-#define IPL_CLOCK       9
-#define IPL_STATCLOCK   10      /* clock */
-#define IPL_SCHED       11
-#define IPL_SERIAL      12      /* serial */
-#define IPL_LOCK        13
-#define IPL_HIGH        14      /* everything */
-#define NIPL            15
-
-/* Interrupt sharing types. */
-#define	IST_NONE	0	/* none */
-#define	IST_PULSE	1	/* pulsed */
-#define	IST_EDGE	2	/* edge-triggered */
-#define	IST_LEVEL	3	/* level-triggered */
+#include <powerpc/intr.h>
 
 #ifndef _LOCORE
-#include <powerpc/softintr.h>
 #include <machine/cpu.h>
-
-/*
- * Interrupt handler chains.  intr_establish() inserts a handler into
- * the list.  The handler is called with its (single) argument.
- */
-struct intrhand {
-	int	(*ih_fun)(void *);
-	void	*ih_arg;
-	struct	intrhand *ih_next;
-	int	ih_level;
-	int	ih_irq;
-};
-
 #include <sys/device.h>
-
-int splraise(int);
-int spllower(int);
-void softintr(int);
-void splx(int);
-
-void do_pending_int(void);
 
 void init_intr_ivr(void);
 void init_intr_openpic(void);
 void openpic_init(unsigned char *);
-
 void enable_intr(void);
 void disable_intr(void);
 
-void *intr_establish(int, int, int, int (*)(void *), void *);
-void intr_disestablish(void *);
-
-const char *intr_typename(int);
-
-void softnet(int);
-void softserial(void);
-int isa_intr(void);
-void isa_intr_mask(int);
-void isa_intr_clr(int);
-void isa_setirqstat(int, int, int);
-
-extern int imen;
 extern int imask[];
-extern struct intrhand *intrhand[];
 extern vaddr_t prep_intr_reg;
 extern uint32_t prep_intr_reg_off;
 
@@ -123,40 +64,6 @@ extern uint32_t prep_intr_reg_off;
 
 #define	PREP_INTR_REG	0xbffff000
 #define	INTR_VECTOR_REG	0xff0
-
-/* Soft interrupt masks. */
-#define SIR_CLOCK       28
-#define SIR_NET         29
-#define SIR_SERIAL      30
-#define SPL_CLOCK       31
-
-#define setsoftclock()  softintr(SIR_CLOCK);
-#define setsoftnet()    softintr(SIR_NET);
-#define setsoftserial() softintr(SIR_SERIAL);
-
-/*#define	splx(x)		spllower(x)*/
-#define	spl0()		spllower(0)
-
-typedef int ipl_t;
-typedef struct {
-	ipl_t _ipl;
-} ipl_cookie_t;
-
-static inline ipl_cookie_t
-makeiplcookie(ipl_t ipl)
-{
-
-	return (ipl_cookie_t){._ipl = ipl};
-}
-
-static inline int
-splraiseipl(ipl_cookie_t icookie)
-{
-
-	return splraise(imask[icookie._ipl]);
-}
-
-#include <sys/spl.h>
 
 #endif /* !_LOCORE */
 
