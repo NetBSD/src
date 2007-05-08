@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.139 2007/05/08 11:42:59 pavel Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.140 2007/05/08 19:43:18 pavel Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -3281,11 +3281,11 @@ sys/arch/sparc/include/ieee.h			1.11-1.12
 sys/arch/x86/include/ieee.h			1.10
 sys/sys/ieee754.h				1.7
 usr.bin/xlint/lint1/scan.l			1.36-1.37
-
-	Add support for multi-byte/collation support in scanf and printf
-	Add long double and hex double support
-	Add parsing support for NAN and INFINITY to scanf
-
+distrib/utils/libhack/Makefile			1.19-1.20
+distrib/utils/libhack/Makefile.inc		1.20-1.21
+distrib/utils/libhack/multibyte.c		1.1
+distrib/utils/libhack/syslog.c			1.6
+distrib/utils/libhack/mbrtowc.c			delete
 	[manu, ticket #607]
 
 distrib/utils/sysinst/arch/i386/md.h		1.57
@@ -3347,4 +3347,6 @@ usr.sbin/envstat/envstat.c			1.24
 	status of disk and logical volumes attached to mfi controllers from
 	userland.
 	[bouyer, ticket #603]
+
+	[manu, ticket #607]
 
