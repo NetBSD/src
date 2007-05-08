@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia_codec.c,v 1.37 2007/05/08 05:03:50 kent Exp $	*/
+/*	$NetBSD: azalia_codec.c,v 1.38 2007/05/08 05:18:20 kent Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia_codec.c,v 1.37 2007/05/08 05:03:50 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia_codec.c,v 1.38 2007/05/08 05:18:20 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -1841,7 +1841,7 @@ alc260_mixer_init(codec_t *this)
 		this->extra[ALC260_EXTRA_MASTER] = 0; /* unmute */
 		/* If the headphone presents, mute the internal speaker */
 		this->comresp(this, 0x14, CORB_GET_PIN_SENSE, 0, &value);
-		mc.un.ord = value & CORB_PS_PRESENSE ? 1 : 0;
+		mc.un.ord = value & CORB_PS_PRESENCE ? 1 : 0;
 		generic_mixer_set(this, 0x10, MI_TARGET_OUTAMP, &mc);
 		this->get_port = alc260_get_port;
 	}
@@ -1919,7 +1919,7 @@ alc260_set_port(codec_t *this, mixer_ctrl_t *mc)
 		err = this->comresp(this, 0x14, CORB_GET_PIN_SENSE, 0, &value);
 		if (err)
 			return err;
-		if (!(value & CORB_PS_PRESENSE)) {
+		if (!(value & CORB_PS_PRESENCE)) {
 			return generic_mixer_set(this, m->nid, m->target, mc);
 		}
 		return 0;
@@ -1960,7 +1960,7 @@ alc260_unsol_event(codec_t *this, int tag)
 			break;
 		mc.dev = -1;
 		mc.type = AUDIO_MIXER_ENUM;
-		if (value & CORB_PS_PRESENSE) {
+		if (value & CORB_PS_PRESENCE) {
 			DPRINTF(("%s: headphone has been inserted.\n", __func__));
 			mc.un.ord = 1; /* mute */
 			generic_mixer_set(this, 0x10, MI_TARGET_OUTAMP, &mc);
@@ -2985,7 +2985,7 @@ stac9200_mixer_init(codec_t *this)
 		    CORB_UNSOL_ENABLE | STAC9200_EVENT_HP, NULL);
 		/* If the headphone presents, mute the internal speaker */
 		this->comresp(this, STAC9200_NID_HP, CORB_GET_PIN_SENSE, 0, &value);
-		if (value & CORB_PS_PRESENSE) {
+		if (value & CORB_PS_PRESENCE) {
 			generic_mixer_pinctrl(this, STAC9200_NID_SPEAKER, 0);
 		} else {
 			generic_mixer_pinctrl(this,
@@ -3007,7 +3007,7 @@ stac9200_unsol_event(codec_t *this, int tag)
 		    CORB_GET_PIN_SENSE, 0, &value);
 		if (err)
 			break;
-		if (value & CORB_PS_PRESENSE) {
+		if (value & CORB_PS_PRESENCE) {
 			DPRINTF(("%s: headphone has been inserted.\n", __func__));
 			generic_mixer_pinctrl(this, STAC9200_NID_SPEAKER, 0);
 		} else {
