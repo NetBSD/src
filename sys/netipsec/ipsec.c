@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.31 2007/04/15 14:17:12 degroote Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.32 2007/05/08 14:07:42 degroote Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $	*/
 /*	$KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.31 2007/04/15 14:17:12 degroote Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.32 2007/05/08 14:07:42 degroote Exp $");
 
 /*
  * IPsec controller part.
@@ -445,7 +445,7 @@ key_allocsp_default(int af, const char* where, int tag)
 #endif
         default:
 	        KEYDEBUG(KEYDEBUG_IPSEC_STAMP,
-		    printf("key_allocsp_default called with a bad family : %d\n",
+		    printf("key_allocsp_default : unexpected protocol family %u\n",
                    af));
             return NULL;
     }
@@ -668,20 +668,22 @@ ipsec_getpolicybyaddr(m, dir, flag, error)
 		("ipsec4_getpolicybaddr: invalid direction %u", dir));
 
 	sp = NULL;
-	if (key_havesp(dir)) {
-		/* Make an index to look for a policy. */
-		*error = ipsec_setspidx(m, &spidx,
-					(flag & IP_FORWARDING) ? 0 : 1);
-		if (*error != 0) {
-			DPRINTF(("ipsec_getpolicybyaddr: setpidx failed,"
-				" dir %u flag %u\n", dir, flag));
-			bzero(&spidx, sizeof (spidx));
-			return NULL;
-		}
-		spidx.dir = dir;
 
+	/* Make an index to look for a policy. */
+	*error = ipsec_setspidx(m, &spidx, (flag & IP_FORWARDING) ? 0 : 1);
+	if (*error != 0) {
+		DPRINTF(("ipsec_getpolicybyaddr: setpidx failed,"
+			" dir %u flag %u\n", dir, flag));
+		bzero(&spidx, sizeof (spidx));
+		return NULL;
+	}
+
+	spidx.dir = dir;
+
+	if (key_havesp(dir)) {
 		sp = KEY_ALLOCSP(&spidx, dir);
 	}
+
 	if (sp == NULL)			/* no SP found, use system default */
 		sp = KEY_ALLOCSP_DEFAULT(spidx.dst.sa.sa_family);
 	IPSEC_ASSERT(sp != NULL, ("ipsec_getpolicybyaddr: null SP"));
