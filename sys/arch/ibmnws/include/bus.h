@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.2 2005/12/11 12:17:50 christos Exp $	*/
+/*	$NetBSD: bus.h,v 1.2.38.1 2007/05/08 20:24:54 rjs Exp $	*/
 /*	$OpenBSD: bus.h,v 1.1 1997/10/13 10:53:42 pefo Exp $	*/
 
 /*-
@@ -118,10 +118,10 @@
 #define BUS_MEM_TO_PHYS(t, x)	((x) & ~MPC105_DIRECT_MAPPED_SPACE)
 
 #ifdef _KERNEL
-extern struct powerpc_bus_space io_bus_space_tag;
-extern struct powerpc_bus_space isa_io_bus_space_tag;
-extern struct powerpc_bus_space mem_bus_space_tag;
-extern struct powerpc_bus_space isa_mem_bus_space_tag;
+extern struct powerpc_bus_space ibmnws_io_space_tag;
+extern struct powerpc_bus_space genppc_isa_io_space_tag;
+extern struct powerpc_bus_space ibmnws_mem_space_tag;
+extern struct powerpc_bus_space genppc_isa_mem_space_tag;
 #endif
 
 #include <powerpc/bus.h>

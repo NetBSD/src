@@ -1,4 +1,4 @@
-#	$NetBSD: files.ibmnws,v 1.9 2007/04/10 02:41:28 macallan Exp $
+#	$NetBSD: files.ibmnws,v 1.9.4.1 2007/05/08 20:24:53 rjs Exp $
 #
 # ibmnws-specific configuration info
 #
@@ -6,10 +6,11 @@ maxpartitions 8
 
 maxusers 2 8 64
 
+include	"arch/powerpc/pic/files.pic"
+
 file	arch/ibmnws/ibmnws/autoconf.c
-file	arch/ibmnws/ibmnws/clock.c
+file	arch/powerpc/powerpc/clock.c
 file	arch/ibmnws/ibmnws/consinit.c
-file	arch/ibmnws/ibmnws/extintr.c
 file	arch/ibmnws/ibmnws/machdep.c
 
 file	arch/powerpc/powerpc/bus_dma.c
@@ -67,30 +68,31 @@ include "dev/wsfb/files.wsfb"
 # XXX devices to 'pci'.
 #
 include "dev/pci/files.pci"
+include "dev/pci/files.agp"
 file	arch/ibmnws/pci/pci_machdep.c		pci
-# file	arch/ibmnws/pci/ibmnws_pciconf_direct.c	pci
-file	arch/ibmnws/pci/ibmnws_pciconf_indirect.c	pci
+file	arch/powerpc/pci/pci_machdep_common.c	pci
+file	arch/powerpc/pci/pciconf_indirect.c	pci
 
 # PCI-Host bridge chipsets
 device	pchb: pcibus
 attach	pchb at pci
-file	arch/ibmnws/pci/pchb.c			pchb
+file	arch/powerpc/pci/pchb.c			pchb
 
 # PCI-ISA bridges
 device	pcib: isabus
 attach	pcib at pci
-file	arch/ibmnws/pci/pcib.c			pcib
+file	arch/powerpc/pci/pcib.c			pcib
 
 #
 # ISA and mixed ISA+PCI drivers
 #
 
 include "dev/isa/files.isa"
-file	arch/prep/isa/isa_machdep.c		isa
-file	arch/powerpc/isa/isadma_machdep.c	isadma
+file	arch/powerpc/isa/isa_machdep_common.c	isa
+file	arch/powerpc/isa/isadma_machdep.c	isa
 
 # ISA Plug 'n Play devices
-file	arch/prep/isa/isapnp_machdep.c		isapnp
+file	arch/powerpc/isa/isapnp_machdep.c	isapnp
 
 # Audio controller
 device	paud { }: audiobus, isadma, ad1848, auconv

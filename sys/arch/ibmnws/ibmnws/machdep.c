@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.8 2007/02/09 21:55:05 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.8.14.1 2007/05/08 20:24:53 rjs Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -30,6 +30,9 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.8.14.1 2007/05/08 20:24:53 rjs Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -67,6 +70,7 @@
 #include <machine/trap.h>
 
 #include <powerpc/oea/bat.h>
+#include <arch/powerpc/pic/picvar.h>
 
 #include <dev/cons.h>
 
@@ -89,6 +93,8 @@ vaddr_t prep_intr_reg;			/* PReP interrupt vector register */
 struct mem_region physmemr[OFMEMREGIONS], availmemr[OFMEMREGIONS];
 
 paddr_t avail_end;			/* XXX temporary */
+struct pic_ops *isa_pic;
+int isa_pcmciamask = 0x8b28;
 
 #if NKSYMS || defined(DDB) || defined(LKM)
 extern void *endsym, *startsym;
@@ -161,13 +167,10 @@ initppc(u_long startkernel, u_long endkernel, u_int args, void *btinfo)
 	 */
 	consinit();
 
-	oea_init(NULL);
-
 	/*
-	 * external interrupt handler install
+	 * Install vectors and interrupt handler.
 	 */
-
-	init_intr_ivr();
+	oea_init(NULL);
 
         /*
 	 * Set the page size.
@@ -214,6 +217,10 @@ cpu_startup(void)
 	 * Do common startup.
 	 */
 	oea_startup("IBM NetworkStation 1000 (8362-XXX)");
+
+	isa_pic = setup_prepivr();
+
+        oea_install_extint(pic_ext_intr);
 
 	/*
 	 * Initialize soft interrupt framework.
@@ -311,6 +318,7 @@ halt_sys:
 int
 lcsplx(int ipl)
 {
+#if 0
 	int oldcpl;
 	struct cpu_info *ci = curcpu();
 
@@ -322,21 +330,23 @@ lcsplx(int ipl)
 	__asm volatile("sync; eieio\n");	/* reorder protect */
 
 	return (oldcpl);
+#endif
+	return spllower(ipl);
 }
 
-struct powerpc_bus_space io_bus_space_tag = {
+struct powerpc_bus_space ibmnws_io_space_tag = {
 	_BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_IO_TYPE,
 	0x80000000, 0x00000000, 0x3f800000,
 };
-struct powerpc_bus_space isa_io_bus_space_tag = {
+struct powerpc_bus_space genppc_isa_io_space_tag = {
 	_BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_IO_TYPE,
 	0x80000000, 0x00000000, 0x00010000,
 };
-struct powerpc_bus_space mem_bus_space_tag = {
+struct powerpc_bus_space ibmnws_mem_space_tag = {
 	_BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_MEM_TYPE,
 	0xC0000000, 0x00000000, 0x3f000000,
 };
-struct powerpc_bus_space isa_mem_bus_space_tag = {
+struct powerpc_bus_space genppc_isa_mem_space_tag = {
 	_BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_MEM_TYPE,
 	0xC0000000, 0x00000000, 0x01000000,
 };
@@ -349,28 +359,28 @@ ibmnws_bus_space_init(void)
 {
 	int error;
 
-	error = bus_space_init(&io_bus_space_tag, "ioport",
+	error = bus_space_init(&ibmnws_io_space_tag, "ioport",
 	    ex_storage[0], sizeof(ex_storage[0]));
 	if (error)
-		panic("prep_bus_space_init: can't init io tag");
+		panic("ibmnws_bus_space_init: can't init io tag");
 
-	error = extent_alloc_region(io_bus_space_tag.pbs_extent,
+	error = extent_alloc_region(ibmnws_io_space_tag.pbs_extent,
 	    0x10000, 0x7F0000, EX_NOWAIT);
 	if (error)
-		panic("prep_bus_space_init: can't block out reserved I/O"
+		panic("ibmnws_bus_space_init: can't block out reserved I/O"
 		    " space 0x10000-0x7fffff: error=%d", error);
-	error = bus_space_init(&mem_bus_space_tag, "iomem",
+	error = bus_space_init(&ibmnws_mem_space_tag, "iomem",
 	    ex_storage[1], sizeof(ex_storage[1]));
 	if (error)
-		panic("prep_bus_space_init: can't init mem tag");
+		panic("ibmnws_bus_space_init: can't init mem tag");
 
-	isa_io_bus_space_tag.pbs_extent = io_bus_space_tag.pbs_extent;
-	error = bus_space_init(&isa_io_bus_space_tag, "isa-ioport", NULL, 0);
+	genppc_isa_io_space_tag.pbs_extent = ibmnws_io_space_tag.pbs_extent;
+	error = bus_space_init(&genppc_isa_io_space_tag, "isa-ioport", NULL, 0);
 	if (error)
-		panic("bus_space_init: can't init isa io tag");
+		panic("ibmnws_bus_space_init: can't init isa io tag");
 
-	isa_mem_bus_space_tag.pbs_extent = mem_bus_space_tag.pbs_extent;
-	error = bus_space_init(&isa_mem_bus_space_tag, "isa-iomem", NULL, 0);
+	genppc_isa_mem_space_tag.pbs_extent = ibmnws_mem_space_tag.pbs_extent;
+	error = bus_space_init(&genppc_isa_mem_space_tag, "isa-iomem", NULL, 0);
 	if (error)
-		panic("bus_space_init: can't init isa mem tag");
+		panic("ibmnws_bus_space_init: can't init isa mem tag");
 }

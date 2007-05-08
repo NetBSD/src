@@ -1,4 +1,4 @@
-#	$NetBSD: std.ibmnws,v 1.4 2006/04/18 20:06:38 rjs Exp $
+#	$NetBSD: std.ibmnws,v 1.4.26.1 2007/05/08 20:24:53 rjs Exp $
 #
 # standard, required NetBSD/ibmnws 'options'
 
@@ -15,3 +15,4 @@ makeoptions     TEXTADDR=0x100000
 
 options         INTSTK=0x4000
 options         PCKBCNOTEST
+options		PCI_NETBSD_CONFIGURE
