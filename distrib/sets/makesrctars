@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: makesrctars,v 1.32 2006/09/07 22:03:58 tron Exp $
+#	$NetBSD: makesrctars,v 1.32.2.1 2007/05/08 09:45:56 pavel Exp $
 #
 # makesrctars srcdir setdir
 #	Create source tarballs in setdir from the source under srcdir.
@@ -100,11 +100,11 @@ fi
 srcprefix=usr/src
 export setdir MTREE PAX CKSUM GZIP PASSWD srcprefix
 
-makeset src . -v '^\.\/gnu|^\.\/share|^\.\/sys|^\.\/usr\.bin\/config'
+makeset src . -v '^\.\/gnu|^\.\/share|^\.\/sys|^\.\/usr\.bin\/config|^\.\/common'
 
 makeset gnusrc gnu
 
-makeset syssrc . -e '^\..type=dir|^\.\/sys|^\.\/usr\.bin.type=dir|^\.\/usr\.bin\/config'
+makeset syssrc . -e '^\..type=dir|^\.\/sys|^\.\/usr\.bin.type=dir|^\.\/usr\.bin\/config|^\.\/common'
 
 makeset sharesrc share
 
