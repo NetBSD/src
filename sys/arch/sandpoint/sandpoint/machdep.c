@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.35.14.3 2007/05/07 18:25:24 garbled Exp $	*/
+/*	$NetBSD: machdep.c,v 1.35.14.4 2007/05/08 16:56:29 nisimura Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.35.14.3 2007/05/07 18:25:24 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.35.14.4 2007/05/08 16:56:29 nisimura Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -69,6 +69,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.35.14.3 2007/05/07 18:25:24 garbled Ex
 #include <machine/pmap.h>
 #include <machine/powerpc.h>
 #include <machine/trap.h>
+#include <machine/bootinfo.h>
 
 #include <powerpc/oea/bat.h>
 #include <powerpc/openpic.h>
@@ -77,14 +78,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.35.14.3 2007/05/07 18:25:24 garbled Ex
 #include <ddb/db_extern.h>
 
 #include <dev/cons.h>
-
-#include "vga.h"
-#if (NVGA > 0)
-#include <dev/ic/mc6845reg.h>
-#include <dev/ic/pcdisplayvar.h>
-#include <dev/ic/vgareg.h>
-#include <dev/ic/vgavar.h>
-#endif
 
 #include "com.h"
 #if (NCOM > 0)
@@ -95,13 +88,13 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.35.14.3 2007/05/07 18:25:24 garbled Ex
 
 #include "ksyms.h"
 
+char bootinfo[BOOTINFO_MAXSIZE];
+
 void initppc(u_int, u_int, u_int, void *);
 void strayintr(int);
 int lcsplx(int);
 void sandpoint_bus_space_init(void);
 void consinit(void);
-
-char *bootpath;
 
 #define	OFMEMREGIONS	32
 struct mem_region physmemr[OFMEMREGIONS], availmemr[OFMEMREGIONS];
@@ -116,42 +109,52 @@ extern void *startsym, *endsym;
 void
 initppc(u_int startkernel, u_int endkernel, u_int args, void *btinfo)
 {
+	struct btinfo_magic *bi_magic = btinfo;
 
+	if ((unsigned)btinfo != 0 && (unsigned)btinfo < startkernel
+	    && bi_magic->magic == BOOTINFO_MAGIC)
+		memcpy(bootinfo, btinfo, sizeof(bootinfo));
+	else
+		args = RB_SINGLE;	/* boot via S-record loader */
+		
 	/*
-	 * Hardcode 32MB for now--we should probe for this or get it
-	 * from a boot loader, but for now, we are booting via an
-	 * S-record loader.
+	 * XXX could determine real size by analysing MEMC SDRAM registers XXX
 	 */
-	{	/* XXX AKB */
-		u_int32_t	physmemsize;
+	{
+		struct btinfo_memory *meminfo;
+		size_t memsize = 32 * 1024 * 1024; /* assume 32MB */
 
-		physmemsize = 32 * 1024 * 1024;
+		meminfo =
+			(struct btinfo_memory *)lookup_bootinfo(BTINFO_MEMORY);
+		if (meminfo)
+			memsize = meminfo->memsize & ~PGOFSET;
 		physmemr[0].start = 0;
-		physmemr[0].size = physmemsize;
-		physmemr[1].size = 0;
+		physmemr[0].size = memsize;
 		availmemr[0].start = (endkernel + PGOFSET) & ~PGOFSET;
-		availmemr[0].size = physmemsize - availmemr[0].start;
-		availmemr[1].size = 0;
+		availmemr[0].size = memsize - availmemr[0].start;
 	}
 	avail_end = physmemr[0].start + physmemr[0].size;    /* XXX temporary */
 
 	/*
 	 * Get CPU clock
 	 */
-	{	/* XXX AKB */
+	{
+		struct btinfo_clock *clockinfo;
+		u_long ticks = 100 * 1000 * 1000; /* assume 100MHz */
 		extern u_long ticks_per_sec, ns_per_tick;
 
-		ticks_per_sec = 100000000;	/* 100 MHz */
-		/* ticks_per_sec = 66000000;	* 66 MHz */
-		ticks_per_sec /= 4;	/* 4 cycles per DEC tick */
-		cpu_timebase = ticks_per_sec;
+		clockinfo =
+			(struct btinfo_clock *)lookup_bootinfo(BTINFO_CLOCK);
+		if (clockinfo)
+			ticks = clockinfo->ticks_per_sec;
+		ticks_per_sec = ticks;
 		ns_per_tick = 1000000000 / ticks_per_sec;
 	}
 
 	/*
 	 * boothowto
 	 */
-	boothowto = RB_SINGLE;
+	boothowto = args;
 
 	/*
 	 * Now setup fixed bat registers
@@ -182,9 +185,6 @@ initppc(u_int startkernel, u_int endkernel, u_int args, void *btinfo)
 	sandpoint_bus_space_init();
 
 	consinit();
-printf("avail_end %x\n", (unsigned) avail_end);
-printf("availmemr[0].start %x\n", (unsigned) availmemr[0].start);
-printf("availmemr[0].size %x\n", (unsigned) availmemr[0].size);
 
         /*
 	 * Set the page size.
@@ -225,6 +225,7 @@ cpu_startup(void)
 {
 	int msr;
 	void *baseaddr;
+	struct pic_ops *pic;
 
 	/*
 	 * Do common startup.
@@ -268,33 +269,67 @@ cpu_startup(void)
 }
 
 /*
+ * lookup_bootinfo:
+ * Look up information in bootinfo of boot loader.
+ */
+void *
+lookup_bootinfo(type)
+	int type;
+{
+	struct btinfo_common *bt;
+	struct btinfo_common *help = (struct btinfo_common *)bootinfo;
+
+	if (help->next == 0)
+		return (NULL);	/* bootinfo[] was not made */ 
+	do {
+		bt = help;
+		if (bt->type == type)
+			return (help);
+		help = (struct btinfo_common *)((char*)help + bt->next);
+	} while (bt->next &&
+		(size_t)help < (size_t)bootinfo + BOOTINFO_MAXSIZE);
+
+	return (NULL);
+}
+
+/*
  * consinit
  * Initialize system console.
- *
- * XXX consider MPC8245 DUART console case XXX
  */
 void
 consinit(void)
 {
+	struct btinfo_console *consinfo;
+	struct btinfo_console bi_cons = { { 0, 0 },  "com", 0x3f8, 38400 };
 	static int initted;
-#if (NCOM > 0)
-	bus_space_tag_t tag;
-#endif
 
 	if (initted)
 		return;
 	initted = 1;
 
+	consinfo = (struct btinfo_console *)lookup_bootinfo(BTINFO_CONSOLE);
+	if (consinfo == NULL)
+		consinfo = &bi_cons;
+
 #if (NCOM > 0)
-	tag = &genppc_isa_io_space_tag;
-
-	if(comcnattach(tag, 0x3F8, 38400, COM_FREQ, COM_TYPE_NORMAL,
-	    ((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8)))
-		panic("can't init serial console");
-	else
-		return;
+	if (strcmp(consinfo->devname, "com") == 0
+	    || strcmp(consinfo->devname, "eumb") == 0) {
+		bus_space_tag_t tag = &genppc_isa_io_space_tag;
+		int frq = COM_FREQ;	
+#if 0
+		if (strcmp(consinfo->devname, "eumb") == 0) {
+			tag = &genppc_eumb_space_tag;
+			frq = ticks_per_sec;
+		}
 #endif
+		if (comcnattach(tag, consinfo->addr, consinfo->speed,
+		    frq, COM_TYPE_NORMAL,
+		    ((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8)))
+			panic("can't init serial console");
 
+		return;
+	}
+#endif
 	panic("console device missing -- serial console not in kernel");
 	/* Of course, this is moot if there is no console... */
 }
@@ -390,7 +425,14 @@ struct powerpc_bus_space genppc_isa_mem_space_tag = {
 	.pbs_base = 0x00000000,
 	.pbs_limit = 0xfe000000,	/* ??? */
 };
-/* struct powerpc_bus_space sandpoint_eumb_space_tag = { 0 }; */
+#if 0
+struct powerpc_bus_space sandpoint_eumb_space_tag = {
+	.pbs_flags = _BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_MEM_TYPE,
+	.pbs_offset = 0xfc000000,
+	.pbs_base = 0x00000000,
+	.pbs_limit = 0x00040000,
+};
+#endif
 
 static char ex_storage[2][EXTENT_FIXED_STORAGE_SIZE(8)]
     __attribute__((aligned(8)));
