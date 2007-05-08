@@ -1,4 +1,4 @@
-/*	$NetBSD: wd33c93.c,v 1.12 2007/05/08 00:20:15 rumble Exp $	*/
+/*	$NetBSD: wd33c93.c,v 1.13 2007/05/08 00:29:30 rumble Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd33c93.c,v 1.12 2007/05/08 00:20:15 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd33c93.c,v 1.13 2007/05/08 00:29:30 rumble Exp $");
 
 #include "opt_ddb.h"
 
@@ -206,8 +206,6 @@ wd33c93_attach(struct wd33c93_softc *dev)
 	chan->chan_id = dev->sc_id;
 
 	callout_init(&dev->sc_watchdog);
-
-	dev->sc_maxoffset = SBIC_SYN_MAX_OFFSET; /* Max Sync Offset */
 
 	/*
 	 * Add reference to adapter so that we drop the reference after
@@ -372,6 +370,13 @@ wd33c93_reset(struct wd33c93_softc *dev)
 		    dev->sc_fsyncperiods[2]));
 		dev->sc_minsyncperiod = dev->sc_fsyncperiods[0];
 	}
+
+	/* Max Sync Offset */
+	if (dev->sc_chip == SBIC_CHIP_WD33C93A ||
+	    dev->sc_chip == SBIC_CHIP_WD33C93B)
+		dev->sc_maxoffset = SBIC_SYN_93AB_MAX_OFFSET;
+	else
+		dev->sc_maxoffset = SBIC_SYN_93_MAX_OFFSET;
 
 	/*
 	 * don't allow Selection (SBIC_RID_ES)
