@@ -1,4 +1,4 @@
-/*     $NetBSD: ug.c,v 1.4 2007/05/07 07:48:28 xtraeme Exp $ */
+/* $NetBSD: ug.c,v 1.1 2007/05/08 16:48:38 xtraeme Exp $ */
 
 /*
  * Copyright (c) 2007 Mihai Chelaru <kefren@netbsd.ro>
@@ -25,14 +25,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * Driver for Abit uGuru (interface is inspired from it.c and nslm7x.c)
- * Inspired by olle sandberg linux driver as Abit didn't care to release docs
- * Support for uGuru 2005 from Louis Kruger and Hans de Goede linux driver
- */
-
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ug.c,v 1.4 2007/05/07 07:48:28 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,137 +46,277 @@ __KERNEL_RCSID(0, "$NetBSD: ug.c,v 1.4 2007/05/07 07:48:28 xtraeme Exp $");
 
 #include <dev/sysmon/sysmonvar.h>
 
-#include <dev/isa/ugvar.h>
+#include <dev/ic/ugreg.h>
+#include <dev/ic/ugvar.h>
 
-/* autoconf(9) functions */
-static int  ug_isa_match(struct device *, struct cfdata *, void *);
-static void ug_isa_attach(struct device *, struct device *, void *);
+uint8_t ug_ver;
 
-CFATTACH_DECL(ug_isa, sizeof(struct ug_softc),
-    ug_isa_match, ug_isa_attach, NULL, NULL);
+/*
+ * Imported from linux driver
+ */
 
-/* driver internal functions */
-int ug_reset(struct ug_softc *);
-uint8_t ug_read(struct ug_softc *, unsigned short);
-int ug_waitfor(struct ug_softc *, uint16_t, uint8_t);
-void ug_setup_sensors(struct ug_softc*);
-void ug2_attach(struct ug_softc*);
-int ug2_wait_ready(struct ug_softc*);
-int ug2_wait_readable(struct ug_softc*);
-int ug2_sync(struct ug_softc*);
-int ug2_read(struct ug_softc*, uint8_t, uint8_t, uint8_t, uint8_t*);
+struct ug2_motherboard_info ug2_mb[] = {
+	{ 0x000C, "unknown. Please send-pr(1)", {
+		{ "CPU Core", 0, 0, 10, 1, 0 },
+		{ "DDR", 1, 0, 10, 1, 0 },
+		{ "DDR VTT", 2, 0, 10, 1, 0 },
+		{ "CPU VTT 1.2V", 3, 0, 10, 1, 0 },
+		{ "MCH & PCIE 1.5V", 4, 0, 10, 1, 0 },
+		{ "MCH 2.5V", 5, 0, 20, 1, 0 },
+		{ "ICH 1.05V", 6, 0, 10, 1, 0 },
+		{ "ATX +12V (24-Pin)", 7, 0, 60, 1, 0 },
+		{ "ATX +12V (4-pin)", 8, 0, 60, 1, 0 },
+		{ "ATX +5V", 9, 0, 30, 1, 0 },
+		{ "+3.3V", 10, 0, 20, 1, 0 },
+		{ "5VSB", 11, 0, 30, 1, 0 },
+		{ "CPU", 24, 1, 1, 1, 0 },
+		{ "System", 25, 1, 1, 1, 0 },
+		{ "PWM", 26, 1, 1, 1, 0 },
+		{ "CPU Fan", 32, 2, 60, 1, 0 },
+		{ "NB Fan", 33, 2, 60, 1, 0 },
+		{ "SYS FAN", 34, 2, 60, 1, 0 },
+		{ "AUX1 Fan", 35, 2, 60, 1, 0 },
+		{ NULL, 0, 0, 0, 0, 0 } }
+	},
+	{ 0x000D, "Abit AW8", {
+		{ "CPU Core", 0, 0, 10, 1, 0 },
+		{ "DDR", 1, 0, 10, 1, 0 },
+		{ "DDR VTT", 2, 0, 10, 1, 0 },
+		{ "CPU VTT 1.2V", 3, 0, 10, 1, 0 },
+		{ "MCH & PCIE 1.5V", 4, 0, 10, 1, 0 },
+		{ "MCH 2.5V", 5, 0, 20, 1, 0 },
+		{ "ICH 1.05V", 6, 0, 10, 1, 0 },
+		{ "ATX +12V (24-Pin)", 7, 0, 60, 1, 0 },
+		{ "ATX +12V (4-pin)", 8, 0, 60, 1, 0 },
+		{ "ATX +5V", 9, 0, 30, 1, 0 },
+		{ "+3.3V", 10, 0, 20, 1, 0 },
+		{ "5VSB", 11, 0, 30, 1, 0 },
+		{ "CPU", 24, 1, 1, 1, 0 },
+		{ "System", 25, 1, 1, 1, 0 },
+		{ "PWM1", 26, 1, 1, 1, 0 },
+		{ "PWM2", 27, 1, 1, 1, 0 },
+		{ "PWM3", 28, 1, 1, 1, 0 },
+		{ "PWM4", 29, 1, 1, 1, 0 },
+		{ "CPU Fan", 32, 2, 60, 1, 0 },
+		{ "NB Fan", 33, 2, 60, 1, 0 },
+		{ "SYS Fan", 34, 2, 60, 1, 0 },
+		{ "AUX1 Fan", 35, 2, 60, 1, 0 },
+		{ "AUX2 Fan", 36, 2, 60, 1, 0 },
+		{ "AUX3 Fan", 37, 2, 60, 1, 0 },
+		{ "AUX4 Fan", 38, 2, 60, 1, 0 },
+		{ "AUX5 Fan", 39, 2, 60, 1, 0 },
+		{ NULL, 0, 0, 0, 0, 0 } }
+	},
+	{ 0x000E, "Abit AL8", {
+		{ "CPU Core", 0, 0, 10, 1, 0 },
+		{ "DDR", 1, 0, 10, 1, 0 },
+		{ "DDR VTT", 2, 0, 10, 1, 0 },
+		{ "CPU VTT 1.2V", 3, 0, 10, 1, 0 },
+		{ "MCH & PCIE 1.5V", 4, 0, 10, 1, 0 },
+		{ "MCH 2.5V", 5, 0, 20, 1, 0 },
+		{ "ICH 1.05V", 6, 0, 10, 1, 0 },
+		{ "ATX +12V (24-Pin)", 7, 0, 60, 1, 0 },
+		{ "ATX +12V (4-pin)", 8, 0, 60, 1, 0 },
+		{ "ATX +5V", 9, 0, 30, 1, 0 },
+		{ "+3.3V", 10, 0, 20, 1, 0 },
+		{ "5VSB", 11, 0, 30, 1, 0 },
+		{ "CPU", 24, 1, 1, 1, 0 },
+		{ "System", 25, 1, 1, 1, 0 },
+		{ "PWM", 26, 1, 1, 1, 0 },
+		{ "CPU Fan", 32, 2, 60, 1, 0 },
+		{ "NB Fan", 33, 2, 60, 1, 0 },
+		{ "SYS Fan", 34, 2, 60, 1, 0 },
+		{ NULL, 0, 0, 0, 0, 0 } }
+	},
+	{ 0x000F, "unknown. Please send-pr(1)", {
+		{ "CPU Core", 0, 0, 10, 1, 0 },
+		{ "DDR", 1, 0, 10, 1, 0 },
+		{ "DDR VTT", 2, 0, 10, 1, 0 },
+		{ "CPU VTT 1.2V", 3, 0, 10, 1, 0 },
+		{ "MCH & PCIE 1.5V", 4, 0, 10, 1, 0 },
+		{ "MCH 2.5V", 5, 0, 20, 1, 0 },
+		{ "ICH 1.05V", 6, 0, 10, 1, 0 },
+		{ "ATX +12V (24-Pin)", 7, 0, 60, 1, 0 },
+		{ "ATX +12V (4-pin)", 8, 0, 60, 1, 0 },
+		{ "ATX +5V", 9, 0, 30, 1, 0 },
+		{ "+3.3V", 10, 0, 20, 1, 0 },
+		{ "5VSB", 11, 0, 30, 1, 0 },
+		{ "CPU", 24, 1, 1, 1, 0 },
+		{ "System", 25, 1, 1, 1, 0 },
+		{ "PWM", 26, 1, 1, 1, 0 },
+		{ "CPU Fan", 32, 2, 60, 1, 0 },
+		{ "NB Fan", 33, 2, 60, 1, 0 },
+		{ "SYS Fan", 34, 2, 60, 1, 0 },
+		{ NULL, 0, 0, 0, 0, 0 } }
+	},
+	{ 0x0010, "Abit NI8 SLI GR", {
+		{ "CPU Core", 0, 0, 10, 1, 0 },
+		{ "DDR", 1, 0, 10, 1, 0 },
+		{ "DDR VTT", 2, 0, 10, 1, 0 },
+		{ "CPU VTT 1.2V", 3, 0, 10, 1, 0 },
+		{ "NB 1.4V", 4, 0, 10, 1, 0 },
+		{ "SB 1.5V", 6, 0, 10, 1, 0 },
+		{ "ATX +12V (24-Pin)", 7, 0, 60, 1, 0 },
+		{ "ATX +12V (4-pin)", 8, 0, 60, 1, 0 },
+		{ "ATX +5V", 9, 0, 30, 1, 0 },
+		{ "+3.3V", 10, 0, 20, 1, 0 },
+		{ "5VSB", 11, 0, 30, 1, 0 },
+		{ "CPU", 24, 1, 1, 1, 0 },
+		{ "SYS", 25, 1, 1, 1, 0 },
+		{ "PWM", 26, 1, 1, 1, 0 },
+		{ "CPU Fan", 32, 2, 60, 1, 0 },
+		{ "NB Fan", 33, 2, 60, 1, 0 },
+		{ "SYS Fan", 34, 2, 60, 1, 0 },
+		{ "AUX1 Fan", 35, 2, 60, 1, 0 },
+		{ "OTES1 Fan", 36, 2, 60, 1, 0 },
+		{ NULL, 0, 0, 0, 0, 0 } }
+	},
+	{ 0x0011, "Abit AT8 32X", {
+		{ "CPU Core", 0, 0, 10, 1, 0 },
+		{ "DDR", 1, 0, 20, 1, 0 },
+		{ "DDR VTT", 2, 0, 10, 1, 0 },
+		{ "CPU VDDA 2.5V", 6, 0, 20, 1, 0 },
+		{ "NB 1.8V", 4, 0, 10, 1, 0 },
+		{ "NB 1.8V Dual", 5, 0, 10, 1, 0 },
+		{ "HTV 1.2", 3, 0, 10, 1, 0 },
+		{ "PCIE 1.2V", 12, 0, 10, 1, 0 },
+		{ "NB 1.2V", 13, 0, 10, 1, 0 },
+		{ "ATX +12V (24-Pin)", 7, 0, 60, 1, 0 },
+		{ "ATX +12V (4-pin)", 8, 0, 60, 1, 0 },
+		{ "ATX +5V", 9, 0, 30, 1, 0 },
+		{ "+3.3V", 10, 0, 20, 1, 0 },
+		{ "5VSB", 11, 0, 30, 1, 0 },
+		{ "CPU", 24, 1, 1, 1, 0 },
+		{ "NB", 25, 1, 1, 1, 0 },
+		{ "System", 26, 1, 1, 1, 0 },
+		{ "PWM", 27, 1, 1, 1, 0 },
+		{ "CPU Fan", 32, 2, 60, 1, 0 },
+		{ "NB Fan", 33, 2, 60, 1, 0 },
+		{ "SYS Fan", 34, 2, 60, 1, 0 },
+		{ "AUX1 Fan", 35, 2, 60, 1, 0 },
+		{ "AUX2 Fan", 36, 2, 60, 1, 0 },
+		{ NULL, 0, 0, 0, 0, 0 } }
+	},
+	{ 0x0012, "unknown. Please send-pr(1)", {
+		{ "CPU Core", 0, 0, 10, 1, 0 },
+		{ "DDR", 1, 0, 20, 1, 0 },
+		{ "DDR VTT", 2, 0, 10, 1, 0 },
+		{ "HyperTransport", 3, 0, 10, 1, 0 },
+		{ "CPU VDDA 2.5V", 5, 0, 20, 1, 0 },
+		{ "NB", 4, 0, 10, 1, 0 },
+		{ "SB", 6, 0, 10, 1, 0 },
+		{ "ATX +12V (24-Pin)", 7, 0, 60, 1, 0 },
+		{ "ATX +12V (4-pin)", 8, 0, 60, 1, 0 },
+		{ "ATX +5V", 9, 0, 30, 1, 0 },
+		{ "+3.3V", 10, 0, 20, 1, 0 },
+		{ "5VSB", 11, 0, 30, 1, 0 },
+		{ "CPU", 24, 1, 1, 1, 0 },
+		{ "SYS", 25, 1, 1, 1, 0 },
+		{ "PWM", 26, 1, 1, 1, 0 },
+		{ "CPU Fan", 32, 2, 60, 1, 0 },
+		{ "NB Fan", 33, 2, 60, 1, 0 },
+		{ "SYS Fan", 34, 2, 60, 1, 0 },
+		{ "AUX1 Fan", 36, 2, 60, 1, 0 },
+		{ NULL, 0, 0, 0, 0, 0 } }
+	},
+	{ 0x0013, "unknown. Please send-pr(1)", {
+		{ "CPU Core", 0, 0, 10, 1, 0 },
+		{ "DDR", 1, 0, 10, 1, 0 },
+		{ "DDR VTT", 2, 0, 10, 1, 0 },
+		{ "CPU VTT 1.2V", 3, 0, 10, 1, 0 },
+		{ "MCH & PCIE 1.5V", 4, 0, 10, 1, 0 },
+		{ "MCH 2.5V", 5, 0, 20, 1, 0 },
+		{ "ICH 1.05V", 6, 0, 10, 1, 0 },
+		{ "ATX +12V (24-Pin)", 7, 0, 60, 1, 0 },
+		{ "ATX +12V (4-pin)", 8, 0, 60, 1, 0 },
+		{ "ATX +5V", 9, 0, 30, 1, 0 },
+		{ "+3.3V", 10, 0, 20, 1, 0 },
+		{ "5VSB", 11, 0, 30, 1, 0 },
+		{ "CPU", 24, 1, 1, 1, 0 },
+		{ "System", 25, 1, 1, 1, 0 },
+		{ "PWM1", 26, 1, 1, 1, 0 },
+		{ "PWM2", 27, 1, 1, 1, 0 },
+		{ "PWM3", 28, 1, 1, 1, 0 },
+		{ "PWM4", 29, 1, 1, 1, 0 },
+		{ "CPU Fan", 32, 2, 60, 1, 0 },
+		{ "NB Fan", 33, 2, 60, 1, 0 },
+		{ "SYS Fan", 34, 2, 60, 1, 0 },
+		{ "AUX1 Fan", 35, 2, 60, 1, 0 },
+		{ "AUX2 Fan", 36, 2, 60, 1, 0 },
+		{ "AUX3 Fan", 37, 2, 60, 1, 0 },
+		{ "AUX4 Fan", 38, 2, 60, 1, 0 },
+		{ NULL, 0, 0, 0, 0, 0 } }
+	},
+	{ 0x0014, "Abit AB9 Pro", {
+		{ "CPU Core", 0, 0, 10, 1, 0 },
+		{ "DDR", 1, 0, 10, 1, 0 },
+		{ "DDR VTT", 2, 0, 10, 1, 0 },
+		{ "CPU VTT 1.2V", 3, 0, 10, 1, 0 },
+		{ "MCH & PCIE 1.5V", 4, 0, 10, 1, 0 },
+		{ "MCH 2.5V", 5, 0, 20, 1, 0 },
+		{ "ICH 1.05V", 6, 0, 10, 1, 0 },
+		{ "ATX +12V (24-Pin)", 7, 0, 60, 1, 0 },
+		{ "ATX +12V (4-pin)", 8, 0, 60, 1, 0 },
+		{ "ATX +5V", 9, 0, 30, 1, 0 },
+		{ "+3.3V", 10, 0, 20, 1, 0 },
+		{ "5VSB", 11, 0, 30, 1, 0 },
+		{ "CPU", 24, 1, 1, 1, 0 },
+		{ "System", 25, 1, 1, 1, 0 },
+		{ "PWM", 26, 1, 1, 1, 0 },
+		{ "CPU Fan", 32, 2, 60, 1, 0 },
+		{ "NB Fan", 33, 2, 60, 1, 0 },
+		{ "SYS Fan", 34, 2, 60, 1, 0 },
+		{ NULL, 0, 0, 0, 0, 0 } }
+	},
+	{ 0x0015, "unknown. Please send-pr(1)", {
+		{ "CPU Core", 0, 0, 10, 1, 0 },
+		{ "DDR", 1, 0, 20, 1, 0 },
+		{ "DDR VTT", 2, 0, 10, 1, 0 },
+		{ "HyperTransport", 3, 0, 10, 1, 0 },
+		{ "CPU VDDA 2.5V", 5, 0, 20, 1, 0 },
+		{ "NB", 4, 0, 10, 1, 0 },
+		{ "SB", 6, 0, 10, 1, 0 },
+		{ "ATX +12V (24-Pin)", 7, 0, 60, 1, 0 },
+		{ "ATX +12V (4-pin)", 8, 0, 60, 1, 0 },
+		{ "ATX +5V", 9, 0, 30, 1, 0 },
+		{ "+3.3V", 10, 0, 20, 1, 0 },
+		{ "5VSB", 11, 0, 30, 1, 0 },
+		{ "CPU", 24, 1, 1, 1, 0 },
+		{ "SYS", 25, 1, 1, 1, 0 },
+		{ "PWM", 26, 1, 1, 1, 0 },
+		{ "CPU Fan", 32, 2, 60, 1, 0 },
+		{ "NB Fan", 33, 2, 60, 1, 0 },
+		{ "SYS Fan", 34, 2, 60, 1, 0 },
+		{ "AUX1 Fan", 33, 2, 60, 1, 0 },
+		{ "AUX2 Fan", 35, 2, 60, 1, 0 },
+		{ "AUX3 Fan", 36, 2, 60, 1, 0 },
+		{ NULL, 0, 0, 0, 0, 0 } }
+	},
+	{ 0x0016, "generic", {
+		{ "CPU Core", 0, 0, 10, 1, 0 },
+		{ "DDR", 1, 0, 20, 1, 0 },
+		{ "DDR VTT", 2, 0, 10, 1, 0 },
+		{ "CPU VTT 1.2V", 3, 0, 10, 1, 0 },
+		{ "MCH & PCIE 1.5V", 4, 0, 10, 1, 0 },
+		{ "MCH 2.5V", 5, 0, 20, 1, 0 },
+		{ "ICH 1.05V", 6, 0, 10, 1, 0 },
+		{ "ATX +12V (24-Pin)", 7, 0, 60, 1, 0 },
+		{ "ATX +12V (4-pin)", 8, 0, 60, 1, 0 },
+		{ "ATX +5V", 9, 0, 30, 1, 0 },
+		{ "+3.3V", 10, 0, 20, 1, 0 },
+		{ "5VSB", 11, 0, 30, 1, 0 },
+		{ "CPU", 24, 1, 1, 1, 0 },
+		{ "System", 25, 1, 1, 1, 0 },
+		{ "PWM", 26, 1, 1, 1, 0 },
+		{ "CPU Fan", 32, 2, 60, 1, 0 },
+		{ "NB Fan", 33, 2, 60, 1, 0 },
+		{ "SYS FAN", 34, 2, 60, 1, 0 },
+		{ "AUX1 Fan", 35, 2, 60, 1, 0 },
+		{ NULL, 0, 0, 0, 0, 0 } }
+	},
+	{ 0x0000, NULL, { { NULL, 0, 0, 0, 0, 0 } } }
+};
 
-/* envsys(9) glue */
-static int ug_gtredata(struct sysmon_envsys *, envsys_tre_data_t *);
-static int ug2_gtredata(struct sysmon_envsys *, envsys_tre_data_t *);
-static int ug_streinfo_ni(struct sysmon_envsys *, envsys_basic_info_t *);
-
-static uint8_t ug_ver;
-
-static int
-ug_isa_match(struct device *parent, struct cfdata *match, void *aux)
-{
-	struct isa_attach_args *ia = aux;
-	struct ug_softc wrap_sc;
-	bus_space_handle_t bsh;
-	uint8_t valc, vald;
-
-	if (ia->ia_nio < 1)     /* need base addr */
-		return 0;
-
-	if (ISA_DIRECT_CONFIG(ia))
-		return 0;
-
-	if (ia->ia_io[0].ir_addr == ISA_UNKNOWN_PORT)
-		return 0;
-
-	if (bus_space_map(ia->ia_iot, ia->ia_io[0].ir_addr, 8, 0, &bsh))
-		return 0;
-
-	valc = bus_space_read_1(ia->ia_iot, bsh, UG_CMD);
-	vald = bus_space_read_1(ia->ia_iot, bsh, UG_DATA);
-
-	ug_ver = 0;
-
-	/* Check for uGuru 2003 */
-
-	if (((vald == 0) || (vald == 8)) && (valc == 0xAC))
-		ug_ver = 1;
-
-	/* Check for uGuru 2005 */
-
-	wrap_sc.sc_iot = ia->ia_iot;
-	wrap_sc.sc_ioh = bsh;
-
-	if (ug2_sync(&wrap_sc) == 1)
-		ug_ver = 2;
-
-	/* unmap, prepare ia and bye */
-	bus_space_unmap(ia->ia_iot, bsh, 8);
-
-	if (ug_ver != 0) {
-		ia->ia_nio = 1;
-		ia->ia_io[0].ir_size = 8;
-		ia->ia_niomem = 0;
-		ia->ia_nirq = 0;
-		ia->ia_ndrq = 0;
-		return 1;
-	}
-
-	return 0;
-
-}
-
-static void
-ug_isa_attach(struct device *parent, struct device *self, void *aux)
-{
-	struct ug_softc *sc = (void *)self;
-	struct isa_attach_args *ia = aux;
-	int i;
-
-	if (bus_space_map(sc->sc_iot, ia->ia_io[0].ir_addr,
-	    8, 0, &sc->sc_ioh)) {
-		aprint_error(": can't map i/o space\n");
-		return;
-	}
-
-	ia->ia_iot = sc->sc_iot;
-	sc->version = ug_ver;
-
-	if (sc->version == 2) {
-		ug2_attach(sc);
-		return;
-	}
-
-	aprint_normal(": Abit uGuru system monitor\n");
-
-	if (!ug_reset(sc))
-		aprint_error("%s: reset failed.\n", sc->sc_dev.dv_xname);
-
-	ug_setup_sensors(sc);
-
-	for (i = 0; i < UG_NUM_SENSORS; i++) {
-		sc->sc_data[i].sensor = sc->sc_info[i].sensor = i;
-		sc->sc_data[i].validflags = (ENVSYS_FVALID|ENVSYS_FCURVALID);
-		sc->sc_info[i].validflags = ENVSYS_FVALID;
-		sc->sc_data[i].warnflags = ENVSYS_WARN_OK;
-	}
-
-	sc->sc_sysmon.sme_ranges = ug_ranges;
-	sc->sc_sysmon.sme_sensor_info = sc->sc_info;
-	sc->sc_sysmon.sme_sensor_data = sc->sc_data;
-	sc->sc_sysmon.sme_cookie = sc;
-	sc->sc_sysmon.sme_gtredata = ug_gtredata;
-	sc->sc_sysmon.sme_streinfo = ug_streinfo_ni;
-	sc->sc_sysmon.sme_nsensors = UG_NUM_SENSORS;
-	sc->sc_sysmon.sme_envsys_version = UG_DRV_VERSION;
-	sc->sc_sysmon.sme_flags = 0;
-
-	if (sysmon_envsys_register(&sc->sc_sysmon))
-		aprint_error("%s: unable to register with sysmon\n",
-		    sc->sc_dev.dv_xname);
-
-}
 
 int
 ug_reset(struct ug_softc *sc)
@@ -297,7 +430,7 @@ ug_setup_sensors(struct ug_softc *sc)
 	COPYDESCR(sc->sc_info[18].desc, "AUX Fan 2");
 }
 
-static int
+int
 ug_gtredata(struct sysmon_envsys *sme, envsys_tre_data_t *tred)
 {
 	struct ug_softc *sc = sme->sme_cookie;
@@ -346,7 +479,7 @@ ug_gtredata(struct sysmon_envsys *sme, envsys_tre_data_t *tred)
 	return 0;
 }
 
-static int
+int
 ug_streinfo_ni(struct sysmon_envsys *sme, envsys_basic_info_t *binfo)
 {
 	/* not implemented */
@@ -448,7 +581,7 @@ ug2_attach(struct ug_softc *sc)
 		    sc->sc_dev.dv_xname);
 }
 
-static int
+int
 ug2_gtredata(struct sysmon_envsys *sme, envsys_tre_data_t *tred)
 {
 	struct ug_softc *sc = sme->sme_cookie;
