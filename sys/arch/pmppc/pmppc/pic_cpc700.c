@@ -1,11 +1,11 @@
-/*	$NetBSD: intr.h,v 1.11.14.1 2007/05/08 17:10:47 garbled Exp $	*/
+/* $NetBSD: pic_cpc700.c,v 1.1.2.1 2007/05/08 17:10:48 garbled Exp $ */
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Charles M. Hannum.
+ * by Tim Rightnour
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,79 +36,82 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _PMPPC_INTR_H_
-#define _PMPPC_INTR_H_
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pic_cpc700.c,v 1.1.2.1 2007/05/08 17:10:48 garbled Exp $");
 
-#include <powerpc/intr.h>
+#include <sys/param.h>
+#include <sys/malloc.h>
+#include <sys/kernel.h>
 
-#ifndef _LOCORE
-#include <powerpc/softintr.h>
+#include <uvm/uvm_extern.h>
 
-/*
- * Interrupt handler chains.  intr_establish() inserts a handler into
- * the list.  The handler is called with its (single) argument.
- */
-struct intrhand {
-	int	(*ih_fun)(void *);
-	void	*ih_arg;
-	struct	intrhand *ih_next;
-	int	ih_level;
-	int	ih_irq;
+#include <machine/pio.h>
+#include <machine/intr.h>
+#include <machine/bus.h>
+
+#include <arch/powerpc/pic/picvar.h>
+
+#include <dev/ic/cpc700reg.h>
+#include <dev/ic/cpc700uic.h>
+
+static void cpc700_pic_enable_irq(struct pic_ops *, int, int);
+static void cpc700_pic_disable_irq(struct pic_ops *, int);
+static int  cpc700_get_irq(struct pic_ops *);
+static void cpc700_ack_irq(struct pic_ops *, int);
+
+struct cpc700_ops {
+	struct pic_ops pic;
 };
 
-struct pic_ops *setup_cpc700(void);
-
-void softnet(int);
-void softserial(void);
-int splraise(int);
-int spllower(int);
-void splx(int);
-void softintr(int);
-
-extern volatile int astpending, tickspending;
-extern int imask[];
-
-/*
- * IBM CPC700 interrupts
- */
-#define	ICU_LEN		32
-#define	ICU_MASK	0x1f000fc0
-
-#define	LEGAL_IRQ(x)	((x) >= 0 && (x) <= 31 && (ICU_MASK & (0x80000000 >> (x))))
-
-/* Soft interrupt masks. */
-#define SIR_CLOCK	28
-#define SIR_NET		29
-#define SIR_SERIAL	30
-#define SPL_CLOCK	31
-
-#define	setsoftclock()	softintr(SIR_CLOCK)
-#define	setsoftnet()	softintr(SIR_NET)
-#define	setsoftserial()	softintr(SIR_SERIAL)
-
-#define	spl0()		spllower(0)
-
-typedef int ipl_t;
-typedef struct {
-	ipl_t _ipl;
-} ipl_cookie_t;
-
-static inline ipl_cookie_t
-makeiplcookie(ipl_t ipl)
+struct pic_ops *
+setup_cpc700(void)
 {
+	struct cpc700_ops *cpc700;
+	struct pic_ops *pic;
 
-	return (ipl_cookie_t){._ipl = ipl};
+	cpc700 = malloc(sizeof(struct cpc700_ops), M_DEVBUF, M_NOWAIT);
+	KASSERT(cpc700 != NULL);
+	pic = &cpc700->pic;
+
+	pic->pic_numintrs = 32;
+	pic->pic_cookie = (void *)NULL;
+	pic->pic_enable_irq = cpc700_pic_enable_irq;
+	pic->pic_reenable_irq = cpc700_pic_enable_irq;
+	pic->pic_disable_irq = cpc700_pic_disable_irq;
+	pic->pic_get_irq = cpc700_get_irq;
+	pic->pic_ack_irq = cpc700_ack_irq;
+	pic->pic_establish_irq = dummy_pic_establish_intr;
+	strcpy(pic->pic_name, "cpc700");
+	pic_add(pic);
+
+	return pic;
 }
 
-static inline int
-splraiseipl(ipl_cookie_t icookie)
+static void
+cpc700_pic_enable_irq(struct pic_ops *pic, int irq, int type)
 {
-
-	return splraise(imask[icookie._ipl]);
+	cpc700_enable_irq(irq);
 }
 
-#include <sys/spl.h>
+static void
+cpc700_pic_disable_irq(struct pic_ops *pic, int irq)
+{
+	cpc700_disable_irq(irq);
+}
 
-#endif /* !_LOCORE */
+static int
+cpc700_get_irq(struct pic_ops *pic)
+{
+	int irq;
 
-#endif /* !_PMPPC_INTR_H_ */
+	irq = cpc700_read_irq();
+	if (irq < 0)
+		return 255;
+	return irq;
+}
+
+static void
+cpc700_ack_irq(struct pic_ops *pic, int irq)
+{
+	cpc700_eoi(irq);
+}

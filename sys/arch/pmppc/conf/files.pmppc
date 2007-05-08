@@ -1,19 +1,22 @@
-#	$NetBSD: files.pmppc,v 1.12 2007/04/10 02:49:16 macallan Exp $
+#	$NetBSD: files.pmppc,v 1.12.4.1 2007/05/08 17:10:47 garbled Exp $
 #
 #
 maxpartitions 16
 
 maxusers 2 8 64
 
+include "arch/powerpc/pic/files.pic"
+
 file	arch/pmppc/pmppc/autoconf.c
-file	arch/pmppc/pmppc/clock.c
-file	arch/pmppc/pmppc/disksubr.c		disk
-file	arch/pmppc/pmppc/extintr.c
+file	arch/powerpc/powerpc/clock.c
+file	kern/subr_disk_mbr.c			disk
+file	arch/pmppc/pmppc/pic_cpc700.c
 file	arch/pmppc/pmppc/machdep.c
 
 file	arch/powerpc/powerpc/bus_dma.c
 file	arch/powerpc/powerpc/bus_space.c
 file	arch/powerpc/powerpc/procfs_machdep.c	procfs
+file	arch/powerpc/powerpc/softintr.c
 
 # General files
 file	dev/cons.c
