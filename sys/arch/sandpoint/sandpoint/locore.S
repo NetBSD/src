@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.10.38.1 2007/05/04 10:50:48 nisimura Exp $	*/
+/*	$NetBSD: locore.S,v 1.10.38.2 2007/05/08 16:56:28 nisimura Exp $	*/
 /*	$OpenBSD: locore.S,v 1.4 1997/01/26 09:06:38 rahnds Exp $	*/
 
 /*
@@ -125,8 +125,8 @@ __start:
 	lis	3,__start@ha
 	addi	3,3,__start@l
 
-	xor	5,5,5
-	xor	6,6,6
+	/* 3 and 4 were updated here, 5 and 6 are passed intact */
+
 	bl	_C_LABEL(initppc)
 	bl	_C_LABEL(main)
 
