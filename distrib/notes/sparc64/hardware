@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.20 2007/05/08 19:45:10 jnemeth Exp $
+.\"	$NetBSD: hardware,v 1.21 2007/05/08 19:53:20 jnemeth Exp $
 .
 .Ss2 Supported machines
 The minimal configuration requires 32 MB of RAM and ~60 MB of disk space.
@@ -197,7 +197,7 @@ Most IDE and ATAPI disk/tape/CD-ROM devices should work
 Floppy drives
 .(bullet -offset indent
 .Em fdc ;
-floppy disk drive.
+floppy disk drive (SBus based machines only for now).
 .It
 Serial devices
 .(bullet -compact
@@ -235,8 +235,6 @@ been tested on UltraSPARC PCI systems that may
 .(bullet -offset indent
 SMP (NetBSD/sparc64 currently only uses one CPU if more than one is 
 present)
-.It
-Floppy drives
 .It
 smart card reader
 .bullet)
