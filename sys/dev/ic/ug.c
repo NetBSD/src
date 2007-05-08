@@ -1,4 +1,4 @@
-/* $NetBSD: ug.c,v 1.1 2007/05/08 16:48:38 xtraeme Exp $ */
+/* $NetBSD: ug.c,v 1.2 2007/05/08 17:17:14 xtraeme Exp $ */
 
 /*
  * Copyright (c) 2007 Mihai Chelaru <kefren@netbsd.ro>
@@ -26,6 +26,7 @@
  */
 
 #include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ug.c,v 1.2 2007/05/08 17:17:14 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
