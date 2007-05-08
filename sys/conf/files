@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.842 2007/05/08 06:10:27 manu Exp $
+#	$NetBSD: files,v 1.843 2007/05/08 16:48:37 xtraeme Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -784,6 +784,11 @@ file	dev/ic/clmpcc.c			clmpcc			needs-flag
 #
 device	lm: sysmon_envsys
 file	dev/ic/nslm7x.c			lm			needs-flag
+
+# Abit uGuru
+#
+device	ug: sysmon_envsys
+file	dev/ic/ug.c			ug			needs-flag
 
 # Essential Communications Corp. HIPPI Interface
 #
