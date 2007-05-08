@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.998 2007/05/08 19:39:28 jnemeth Exp $
+# $NetBSD: mi,v 1.999 2007/05/08 22:33:51 xtraeme Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -3785,6 +3785,7 @@
 ./usr/share/man/man4/sparc/xy.4			man-sys-man		.man
 ./usr/share/man/man4/sparc/zx.4			man-sys-man		.man
 ./usr/share/man/man4/sparc64/envctrl.4		man-sys-man		.man
+./usr/share/man/man4/sparc64/fdc.4		man-sys-man		.man
 ./usr/share/man/man4/sparc64/intro.4		man-sys-man		.man
 ./usr/share/man/man4/sparc64/sab.4		man-sys-man		.man
 ./usr/share/man/man4/sparc64/sabtty.4		man-sys-man		.man
