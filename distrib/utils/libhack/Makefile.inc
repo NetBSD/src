@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.19 2005/05/15 10:15:47 dsl Exp $
+# $NetBSD: Makefile.inc,v 1.19.4.1 2007/05/08 19:40:58 pavel Exp $
 #
 # Include this fragment to build libhack.o
 # It is .o and not .a to make sure these are the
@@ -18,8 +18,7 @@
 
 CPPFLAGS+=	-DSMALL
 HACKOBJS+=	getcap.o getgrent.o getnet.o getnetgr.o getpwent.o \
-		localeconv.o perror.o setlocale.o \
-		mbrtowc.o \
+		localeconv.o multibyte.o perror.o setlocale.o \
 		strerror.o strsignal.o syslog.o utmp.o yplib.o
 
 libhack.o: ${HACKOBJS}
@@ -35,7 +34,7 @@ getnet.o:	${HACKSRC}/getnet.c
 getnetgr.o:	${HACKSRC}/getnetgr.c
 getpwent.o:	${HACKSRC}/getpwent.c
 localeconv.o:	${HACKSRC}/localeconv.c
-mbrtowc.o:	${HACKSRC}/mbrtowc.c
+multibyte.o:	${HACKSRC}/multibyte.c
 perror.o:	${HACKSRC}/perror.c
 setlocale.o:	${HACKSRC}/setlocale.c
 strerror.o:	${HACKSRC}/strerror.c
