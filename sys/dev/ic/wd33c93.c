@@ -1,4 +1,4 @@
-/*	$NetBSD: wd33c93.c,v 1.13 2007/05/08 00:29:30 rumble Exp $	*/
+/*	$NetBSD: wd33c93.c,v 1.14 2007/05/08 02:08:17 rumble Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd33c93.c,v 1.13 2007/05/08 00:29:30 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd33c93.c,v 1.14 2007/05/08 02:08:17 rumble Exp $");
 
 #include "opt_ddb.h"
 
@@ -220,9 +220,12 @@ wd33c93_attach(struct wd33c93_softc *dev)
 	dev->sc_cfflags = device_cfdata(&dev->sc_dev)->cf_flags;
 	wd33c93_init(dev);
 	
-	printf(": %s (%d.%d MHz clock, SCSI ID %d)\n",
+	printf(": %s (%d.%d MHz clock, %s, SCSI ID %d)\n",
 	    wd33c93_chip_names[dev->sc_chip],
 	    dev->sc_clkfreq / 10, dev->sc_clkfreq % 10,
+	    (dev->sc_dmamode == SBIC_CTL_DMA) ? "DMA" :
+	    (dev->sc_dmamode == SBIC_CTL_DBA_DMA) ? "DBA" :
+	    (dev->sc_dmamode == SBIC_CTL_BURST_DMA) ? "BURST DMA" : "PIO",
 	    dev->sc_channel.chan_id);
 	if (dev->sc_chip == SBIC_CHIP_WD33C93B) {
 		printf("%s: microcode revision 0x%02x",
