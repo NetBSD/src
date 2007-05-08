@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia.c,v 1.48 2007/05/08 01:39:33 kent Exp $	*/
+/*	$NetBSD: azalia.c,v 1.49 2007/05/08 04:35:37 kent Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.48 2007/05/08 01:39:33 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.49 2007/05/08 04:35:37 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -1461,6 +1461,7 @@ azalia_codec_connect_stream(codec_t *this, int dir, uint16_t fmt, int number)
 	nchan = (fmt & HDA_SD_FMT_CHAN) + 1;
 	startchan = 0;
 	for (i = 0; i < group->nconv; i++) {
+		uint32_t stream_chan;
 		nid = group->conv[i];
 
 		/* surround and c/lfe handling */
@@ -1473,8 +1474,11 @@ azalia_codec_connect_stream(codec_t *this, int dir, uint16_t fmt, int number)
 		err = this->comresp(this, nid, CORB_SET_CONVERTER_FORMAT, fmt, NULL);
 		if (err)
 			goto exit;
+		stream_chan = (number << 4) | startchan;
+		if (startchan >= nchan)
+			stream_chan = 0; /* stream#0 */
 		err = this->comresp(this, nid, CORB_SET_CONVERTER_STREAM_CHANNEL,
-				    (number << 4) | startchan, NULL);
+				    stream_chan, NULL);
 		if (err)
 			goto exit;
 		if (this->w[nid].widgetcap & COP_AWCAP_DIGITAL) {
