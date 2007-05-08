@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia.c,v 1.47 2007/03/11 14:34:04 kent Exp $	*/
+/*	$NetBSD: azalia.c,v 1.48 2007/05/08 01:39:33 kent Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.47 2007/03/11 14:34:04 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.48 2007/05/08 01:39:33 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -1718,6 +1718,30 @@ azalia_widget_init_pin(widget_t *this, const codec_t *codec)
 	if (err)
 		return err;
 	this->d.pin.cap = result;
+
+	/* input pin */
+	if ((this->d.pin.cap & COP_PINCAP_INPUT) &&
+	    (this->d.pin.cap & COP_PINCAP_OUTPUT) == 0) {
+		err = codec->comresp(codec, this->nid,
+		    CORB_GET_PIN_WIDGET_CONTROL, 0, &result);
+		if (err == 0) {
+			result &= ~CORB_PWC_OUTPUT;
+			result |= CORB_PWC_INPUT;
+			codec->comresp(codec, this->nid,
+			     CORB_SET_PIN_WIDGET_CONTROL, result, NULL);
+		}
+	}
+	/* output pin, or bidirectional pin */
+	if (this->d.pin.cap & COP_PINCAP_OUTPUT) {
+		err = codec->comresp(codec, this->nid,
+		    CORB_GET_PIN_WIDGET_CONTROL, 0, &result);
+		if (err == 0) {
+			result &= ~CORB_PWC_INPUT;
+			result |= CORB_PWC_OUTPUT;
+			codec->comresp(codec, this->nid,
+			    CORB_SET_PIN_WIDGET_CONTROL, result, NULL);
+		}
+	}
 	return 0;
 }
 
