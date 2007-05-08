@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.29 2006/11/11 18:47:10 jmmv Exp $
+#	$NetBSD: GENERIC,v 1.29.16.1 2007/05/08 20:24:53 rjs Exp $
 #
 #
 
@@ -102,7 +102,6 @@ cpu0	at mainbus0
 pci0	at mainbus0 bus ?
 pci*	at pchb? bus ?
 
-options 	PCI_NETBSD_CONFIGURE
 options 	PCIVERBOSE
 
 # PCI bridges
