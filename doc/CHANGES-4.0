@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.138 2007/05/08 09:58:06 pavel Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.139 2007/05/08 11:42:59 pavel Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -3314,4 +3314,37 @@ etc/security					1.101
 	PR/36058 -- fix check for group/other writable home directories from
 	Jukka Salmi
 	[jnemeth, ticket #627]
+
+distrib/sets/lists/base/mi			1.704
+distrib/sets/lists/comp/mi			1.1022
+distrib/sets/lists/man/mi			1.997
+doc/CHANGES					1.839
+sbin/Makefile					patch
+sbin/bioctl/Makefile				1.1
+sbin/bioctl/bioctl.8				1.1
+sbin/bioctl/bioctl.c				1.1
+sbin/bioctl/strtonum.c				1.1
+sbin/bioctl/strtonum.h				1.1
+share/man/man4/Makefile				1.426
+share/man/man4/bio.4				1.1
+sys/arch/amd64/conf/GENERIC			1.139
+sys/arch/i386/conf/GENERIC			1.825
+sys/arch/i386/conf/XEN2_DOM0			1.25
+sys/conf/files					1.839
+sys/conf/majors					patch
+sys/dev/Makefile				1.25
+sys/dev/bio.c					patch
+sys/dev/biovar.h				patch
+sys/dev/ic/mfi.c				1.4-1.5
+sys/dev/ic/mfivar.h				1.4
+sys/sys/envsys.h				1.11
+usr.sbin/envstat/envstat.c			1.24
+
+	added bio(4) and associated bioctl(8), a framework to query/control
+	block device controllers.
+	Add a DRIVE sensor type to envsys(4).
+	added bio(4) and envsys(4) support to mfi(4), this allows querying
+	status of disk and logical volumes attached to mfi controllers from
+	userland.
+	[bouyer, ticket #603]
 
