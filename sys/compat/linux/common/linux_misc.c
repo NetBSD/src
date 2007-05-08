@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.173 2007/05/07 16:53:18 dsl Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.174 2007/05/08 20:54:15 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.173 2007/05/07 16:53:18 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.174 2007/05/08 20:54:15 dsl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ptrace.h"
@@ -251,8 +251,8 @@ linux_sys_wait4(l, v, retval)
 
 # endif
 
-	error = do_sys_wait(l, &SCARG(uap, pid), &status, options, &ru,
-	    &was_zombie);
+	error = do_sys_wait(l, &SCARG(uap, pid), &status, options,
+	    SCARG(uap, rusage) != NULL ? &ru : NULL, &was_zombie);
 
 	retval[0] = SCARG(uap, pid);
 	if (SCARG(uap, pid) == 0)
@@ -260,12 +260,15 @@ linux_sys_wait4(l, v, retval)
 
 	sigdelset(&l->l_proc->p_sigpend.sp_set, SIGCHLD);	/* XXXAD ksiginfo leak */
 
-	if (SCARG(uap, status) != NULL) {
+	if (SCARG(uap, rusage) != NULL)
+		error = copyout(&ru, SCARG(uap, rusage), sizeof(ru));
+
+	if (error == 0 && SCARG(uap, status) != NULL) {
 		status = bsd_to_linux_wstat(status);
-		return copyout(&status, SCARG(uap, status), sizeof status);
+		error = copyout(&status, SCARG(uap, status), sizeof status);
 	}
 
-	return 0;
+	return error;
 }
 
 /*
