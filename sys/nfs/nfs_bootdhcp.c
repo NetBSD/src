@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bootdhcp.c,v 1.34 2007/05/08 06:10:28 manu Exp $	*/
+/*	$NetBSD: nfs_bootdhcp.c,v 1.35 2007/05/08 09:29:50 manu Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bootdhcp.c,v 1.34 2007/05/08 06:10:28 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bootdhcp.c,v 1.35 2007/05/08 09:29:50 manu Exp $");
 
 #include "opt_nfs_boot.h"
 #include "opt_tftproot.h"
@@ -276,9 +276,7 @@ nfs_bootdhcp(nd, lwp)
 		goto out;
 	}
 
-#ifdef TFTPROOT
 out:
-#endif
 	if (error) {
 		(void) nfs_boot_ifupdown(ifp, lwp, 0);
 		nfs_boot_flushrt(ifp);

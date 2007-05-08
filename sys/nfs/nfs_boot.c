@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_boot.c,v 1.65 2007/05/08 06:10:28 manu Exp $	*/
+/*	$NetBSD: nfs_boot.c,v 1.66 2007/05/08 09:29:50 manu Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_boot.c,v 1.65 2007/05/08 06:10:28 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_boot.c,v 1.66 2007/05/08 09:29:50 manu Exp $");
 
 #include "opt_nfs.h"
 #include "opt_tftproot.h"
@@ -171,7 +171,9 @@ nfs_boot_init(nd, lwp)
 	if (error)
 		nfs_boot_cleanup(nd, lwp);
 
+#ifdef TFTPROOT
 out:
+#endif
 	return (error);
 }
 
