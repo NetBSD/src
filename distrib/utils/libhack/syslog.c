@@ -40,6 +40,7 @@ vsyslog(int fac, const char *fmt, va_list ap)
 	fflush(stderr);
 }
 
+void syslog_ss(int, struct syslog_data *, const char *, ...);
 __strong_alias(_syslog_ss, syslog_ss)
 void
 syslog_ss(int priority, struct syslog_data *data, const char *fmt, ...)
@@ -50,6 +51,7 @@ syslog_ss(int priority, struct syslog_data *data, const char *fmt, ...)
 	va_end(ap);
 }
 
+void vsyslog_ss(int, struct syslog_data *, const char *, va_list);
 __strong_alias(_vsyslog_ss, vsyslog_ss)
 void
 vsyslog_ss(int priority, struct syslog_data *data, const char *fmt, va_list ap)
