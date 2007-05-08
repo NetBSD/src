@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.35.14.4 2007/05/08 16:56:29 nisimura Exp $	*/
+/*	$NetBSD: machdep.c,v 1.35.14.5 2007/05/08 18:24:57 garbled Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.35.14.4 2007/05/08 16:56:29 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.35.14.5 2007/05/08 18:24:57 garbled Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -225,7 +225,6 @@ cpu_startup(void)
 {
 	int msr;
 	void *baseaddr;
-	struct pic_ops *pic;
 
 	/*
 	 * Do common startup.
