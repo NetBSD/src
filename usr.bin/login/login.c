@@ -1,4 +1,4 @@
-/*	$NetBSD: login.c,v 1.94 2007/01/17 00:21:43 hubertf Exp $	*/
+/*	$NetBSD: login.c,v 1.95 2007/05/09 01:56:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994
@@ -40,7 +40,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: login.c,v 1.94 2007/01/17 00:21:43 hubertf Exp $");
+__RCSID("$NetBSD: login.c,v 1.95 2007/05/09 01:56:25 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -71,6 +71,7 @@ __RCSID("$NetBSD: login.c,v 1.94 2007/01/17 00:21:43 hubertf Exp $");
 #include <ttyent.h>
 #include <tzfile.h>
 #include <unistd.h>
+#include <sysexits.h>
 #ifdef SUPPORT_UTMP
 #include <utmp.h>
 #endif
@@ -230,7 +231,7 @@ main(int argc, char *argv[])
 		switch (ch) {
 		case 'a':
 			if (uid)
-				errx(1, "-a option: %s", strerror(EPERM));
+				errx(EXIT_FAILURE, "-a option: %s", strerror(EPERM));
 			decode_ss(optarg);
 #ifdef notdef
 			(void)sockaddr_snprintf(optarg,
@@ -245,7 +246,7 @@ main(int argc, char *argv[])
 			break;
 		case 'h':
 			if (uid)
-				errx(1, "-h option: %s", strerror(EPERM));
+				errx(EXIT_FAILURE, "-h option: %s", strerror(EPERM));
 			hflag = 1;
 #ifdef notdef
 			if (domain && (p = strchr(optarg, '.')) != NULL &&
@@ -299,7 +300,7 @@ main(int argc, char *argv[])
 		nested = strdup(user_from_uid(getuid(), 0));
 		if (nested == NULL) {
 			syslog(LOG_ERR, "strdup: %m");
-			sleepexit(1);
+			sleepexit(EXIT_FAILURE);
 		}
 	}
 
@@ -489,7 +490,7 @@ main(int argc, char *argv[])
 		if (cnt > login_backoff) {
 			if (cnt >= login_retries) {
 				badlogin(username);
-				sleepexit(1);
+				sleepexit(EXIT_FAILURE);
 			}
 			sleep((u_int)((cnt - login_backoff) * 5));
 		}
@@ -530,12 +531,12 @@ main(int argc, char *argv[])
 		if (login_getcapbool(lc, "requirehome", 0)) {
 			(void)printf("Home directory %s required\n",
 			    pwd->pw_dir);
-			sleepexit(1);
+			sleepexit(EXIT_FAILURE);
 		}
 #endif	
 		(void)printf("No home directory %s!\n", pwd->pw_dir);
-		if (chdir("/"))
-			exit(0);
+		if (chdir("/") == -1)
+			exit(EXIT_FAILURE);
 		pwd->pw_dir = "/";
 		(void)printf("Logging in with home = \"/\".\n");
 	}
@@ -558,7 +559,7 @@ main(int argc, char *argv[])
 	if (pwd->pw_expire) {
 		if (now.tv_sec >= pwd->pw_expire) {
 			(void)printf("Sorry -- your account has expired.\n");
-			sleepexit(1);
+			sleepexit(EXIT_FAILURE);
 		} else if (pwd->pw_expire - now.tv_sec < pw_warntime && 
 		    !quietlog)
 			(void)printf("Warning: your account expires on %s",
@@ -569,7 +570,7 @@ main(int argc, char *argv[])
 			need_chpass = 1;
 		else if (now.tv_sec >= pwd->pw_change) {
 			(void)printf("Sorry -- your password has expired.\n");
-			sleepexit(1);
+			sleepexit(EXIT_FAILURE);
 		} else if (pwd->pw_change - now.tv_sec < pw_warntime && 
 		    !quietlog)
 			(void)printf("Warning: your password expires on %s",
@@ -599,12 +600,12 @@ main(int argc, char *argv[])
 	if (nested == NULL && setusercontext(lc, pwd, pwd->pw_uid,
 	    LOGIN_SETLOGIN) != 0) {
 		syslog(LOG_ERR, "setusercontext failed");
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 	if (setusercontext(lc, pwd, pwd->pw_uid,
 	    (LOGIN_SETALL & ~(LOGIN_SETPATH|LOGIN_SETLOGIN))) != 0) {
 		syslog(LOG_ERR, "setusercontext failed");
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 #else
 	(void)setgid(pwd->pw_gid);
@@ -627,7 +628,7 @@ main(int argc, char *argv[])
 	if ((shell = login_getcapstr(lc, "shell", NULL, NULL)) != NULL) {
 		if ((shell = strdup(shell)) == NULL) {
 			syslog(LOG_ERR, "Cannot alloc mem");
-			sleepexit(1);
+			sleepexit(EXIT_FAILURE);
 		}
 		pwd->pw_shell = shell;
 	}
@@ -727,14 +728,14 @@ main(int argc, char *argv[])
 			switch (fork()) {
 			case -1:
 				warn("fork");
-				sleepexit(1);
+				sleepexit(EXIT_FAILURE);
 			case 0:
 				execl(_PATH_BINPASSWD, "passwd", NULL);
-				_exit(1);
+				_exit(EXIT_FAILURE);
 			default:
 				if (wait(&status) == -1 ||
 				    WEXITSTATUS(status))
-					sleepexit(1);
+					sleepexit(EXIT_FAILURE);
 			}
 		}
 	}
@@ -744,7 +745,7 @@ main(int argc, char *argv[])
 		k5_write_creds();
 #endif
 	execlp(pwd->pw_shell, tbuf, NULL);
-	err(1, "%s", pwd->pw_shell);
+	err(EXIT_FAILURE, "%s", pwd->pw_shell);
 }
 
 #if defined(KERBEROS5)
@@ -761,20 +762,29 @@ main(int argc, char *argv[])
 void
 dofork(void)
 {
-	int child;
+	pid_t child, wchild;
 
-	if (!(child = fork()))
+	switch (child = fork()) {
+	case 0:
 		return; /* Child process */
+	case -1:
+		err(EXIT_FAILURE, "Can't fork");
+		/*NOTREACHED*/
+	default:
+		break;
+	}
 
 	/*
 	 * Setup stuff?  This would be things we could do in parallel
 	 * with login
 	 */
-	(void)chdir("/");	/* Let's not keep the fs busy... */
+	if (chdir("/") == -1)	/* Let's not keep the fs busy... */
+		err(EXIT_FAILURE, "Can't chdir to `/'");
 
 	/* If we're the parent, watch the child until it dies */
-	while (wait(0) != child)
-		;
+	while ((wchild = wait(NULL)) != child)
+		if (wchild == -1)
+			err(EXIT_FAILURE, "Can't wait");
 
 	/* Cleanup stuff */
 	/* Run kdestroy to destroy tickets */
@@ -782,7 +792,7 @@ dofork(void)
 		k5destroy();
 
 	/* Leave */
-	exit(0);
+	exit(EXIT_SUCCESS);
 }
 #endif
 
@@ -798,7 +808,7 @@ getloginname(void)
 		for (p = nbuf; (ch = getchar()) != '\n'; ) {
 			if (ch == EOF) {
 				badlogin(username);
-				exit(0);
+				exit(EXIT_FAILURE);
 			}
 			if (p < nbuf + (NBUFSIZ - 1))
 				*p++ = ch;
@@ -857,7 +867,7 @@ timedout(int signo)
 {
 
 	(void)fprintf(stderr, "Login timed out after %d seconds\n", timeout);
-	exit(0);
+	exit(EXIT_FAILURE);
 }
 
 void
@@ -869,7 +879,7 @@ checknologin(char *fname)
 	if ((fd = open(fname ? fname : _PATH_NOLOGIN, O_RDONLY, 0)) >= 0) {
 		while ((nchars = read(fd, tbuf, sizeof(tbuf))) > 0)
 			(void)write(fileno(stdout), tbuf, nchars);
-		sleepexit(0);
+		sleepexit(EXIT_SUCCESS);
 	}
 }
 
@@ -1057,13 +1067,13 @@ decode_ss(const char *arg)
 	size_t len = strlen(arg);
 	
 	if (len > sizeof(*ssp) * 4 + 1 || len < sizeof(*ssp))
-		errx(1, "Bad argument");
+		errx(EXIT_FAILURE, "Bad argument");
 
 	if ((ssp = malloc(len)) == NULL)
-		err(1, NULL);
+		err(EXIT_FAILURE, NULL);
 
 	if (strunvis((char *)ssp, arg) != sizeof(*ssp))
-		errx(1, "Decoding error");
+		errx(EXIT_FAILURE, "Decoding error");
 
 	(void)memcpy(&ss, ssp, sizeof(ss));
 	have_ss = 1;
@@ -1075,5 +1085,5 @@ usage(void)
 	(void)fprintf(stderr,
 	    "Usage: %s [-Ffps] [-a address] [-h hostname] [username]\n",
 	    getprogname());
-	exit(1);
+	exit(EXIT_FAILURE);
 }
