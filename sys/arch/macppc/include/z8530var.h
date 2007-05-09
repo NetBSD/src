@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530var.h,v 1.10 2007/03/04 06:00:11 christos Exp $	*/
+/*	$NetBSD: z8530var.h,v 1.10.10.1 2007/05/09 03:56:02 macallan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -140,9 +140,7 @@ struct zsc_softc {
 	dbdma_regmap_t *zsc_txdmareg[2];
 	dbdma_command_t *zsc_txdmacmd[2];
 	/* XXX tx only, for now */
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 	void *zsc_si;			/* softintr handler */
-#endif
 };
 
 /*
