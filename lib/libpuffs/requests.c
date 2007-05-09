@@ -1,4 +1,4 @@
-/*	$NetBSD: requests.c,v 1.5 2007/04/13 13:35:46 pooka Exp $	*/
+/*	$NetBSD: requests.c,v 1.6 2007/05/09 18:36:52 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006 Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: requests.c,v 1.5 2007/04/13 13:35:46 pooka Exp $");
+__RCSID("$NetBSD: requests.c,v 1.6 2007/05/09 18:36:52 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -222,11 +222,14 @@ puffs_req_destroyput(struct puffs_putreq *ppr)
 }
 
 int
-puffs_req_handle(struct puffs_usermount *pu, struct puffs_getreq *pgr,
-	struct puffs_putreq *ppr, int maxops)
+puffs_req_handle(struct puffs_getreq *pgr, struct puffs_putreq *ppr, int maxops)
 {
+	struct puffs_usermount *pu;
 	struct puffs_req *preq;
 	int pval;
+
+	assert(pgr->pgr_pu == ppr->ppr_pu);
+	pu = pgr->pgr_pu;
 
 	puffs_req_setmaxget(pgr, maxops);
 	if (puffs_req_loadget(pgr) == -1)
