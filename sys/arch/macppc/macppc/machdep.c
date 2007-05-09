@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.147.14.2 2007/05/06 22:50:49 macallan Exp $	*/
+/*	$NetBSD: machdep.c,v 1.147.14.3 2007/05/09 03:56:02 macallan Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.147.14.2 2007/05/06 22:50:49 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.147.14.3 2007/05/09 03:56:02 macallan Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -385,12 +385,11 @@ void
 cpu_startup()
 {
 	oea_startup(NULL);
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
+
 	/*
 	 * Initialize soft interrupt framework.
 	 */
 	softintr__init();
-#endif
 }
 
 /*
@@ -439,23 +438,6 @@ dumpsys()
 {
 	printf("dumpsys: TBD\n");
 }
-
-#ifndef __HAVE_GENERIC_SOFT_INTERRUPTS
-#include "com.h"
-/*
- * Soft tty interrupts.
- */
-void
-softserial()
-{
-#if NZSC > 0
-	zssoft(NULL);
-#endif
-#if NCOM > 0
-	comsoft();
-#endif
-}
-#endif
 
 #if 0
 /*

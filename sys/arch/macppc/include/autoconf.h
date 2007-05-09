@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.11.10.1 2007/05/04 02:38:47 macallan Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.11.10.2 2007/05/09 03:56:01 macallan Exp $	*/
 
 /*-
  * Copyright (C) 1998	Internet Research Institute, Inc.
@@ -79,14 +79,6 @@ int adbkbd_cnattach(void);
 /* these are in dev/ofb.c */
 int ofb_is_console __P((void));
 int ofb_cnattach __P((void));
-
-#ifndef __HAVE_GENERIC_SOFT_INTERRUPTS
-/* these are in dev/zs.c */
-int zssoft __P((void *));
-
-/* these are in ../../dev/ic/com.c */
-void comsoft __P((void));
-#endif
 
 extern int console_node;
 extern int console_instance;
