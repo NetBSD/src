@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.153 2007/04/29 10:30:18 yamt Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.154 2007/05/09 23:17:45 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.153 2007/04/29 10:30:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.154 2007/05/09 23:17:45 yamt Exp $");
 
 #include "opt_nfs.h"
 #include "opt_ddb.h"
@@ -575,7 +575,7 @@ nfs_write(v)
 	} while (uio->uio_resid > 0);
 	if (wrotedata)
 		VN_KNOTE(vp, NOTE_WRITE | (extended ? NOTE_EXTEND : 0));
-	if (ioflag & IO_SYNC) {
+	if (error == 0 && (ioflag & IO_SYNC) != 0) {
 		simple_lock(&vp->v_interlock);
 		error = VOP_PUTPAGES(vp,
 		    trunc_page(origoff & ~(nmp->nm_wsize - 1)),
