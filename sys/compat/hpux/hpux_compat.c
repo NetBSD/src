@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_compat.c,v 1.92 2007/05/07 16:53:18 dsl Exp $	*/
+/*	$NetBSD: hpux_compat.c,v 1.93 2007/05/09 20:42:12 dsl Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_compat.c,v 1.92 2007/05/07 16:53:18 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_compat.c,v 1.93 2007/05/09 20:42:12 dsl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -199,10 +199,7 @@ hpux_sys_wait(struct lwp *l, void *v, register_t *retval)
 	int sig;
 	int status;
 	int was_zombie;
-	int child_pid == WAIT_ANY;
-
-	SCARG(&w4, rusage) = NULL;
-	SCARG(&w4, options) = 0;
+	int pid = WAIT_ANY;
 
 	error = do_sys_wait(l, &pid, &status, 0, NULL, &was_zombie);
 
