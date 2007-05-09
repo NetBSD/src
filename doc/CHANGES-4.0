@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.140 2007/05/08 19:43:18 pavel Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.141 2007/05/09 10:34:25 ghen Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -3349,4 +3349,10 @@ usr.sbin/envstat/envstat.c			1.24
 	[bouyer, ticket #603]
 
 	[manu, ticket #607]
+
+xsrc/xfree/xc/programs/Xserver/hw/netbsd/arm32vidc/private.h	1.6-1.7
+
+	Fix the check for versions < 4.99.1 to not include 4.0_BETA2, to fix
+	the build for acorn32.
+	[pavel, ticket #629]
 
