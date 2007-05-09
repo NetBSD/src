@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep.h,v 1.1.2.4 2007/05/08 20:21:41 rjs Exp $ */
+/* $NetBSD: pci_machdep.h,v 1.1.2.5 2007/05/09 09:02:52 garbled Exp $ */
 
 /*-
  * Copyright (c) 2002,2007 The NetBSD Foundation, Inc.
@@ -86,7 +86,8 @@ struct genppc_pci_chipset {
 	void		*(*pc_intr_establish)(void *, pci_intr_handle_t,
 			    int, int (*)(void *), void *);
 	void		(*pc_intr_disestablish)(void *, void *);
-	void		(*pc_conf_interrupt)(void *, int, int, int, int, int *);
+	void		(*pc_conf_interrupt)(pci_chipset_tag_t, int, int, int,
+			    int, int *);
 	void		(*pc_decompose_tag)(void *, pcitag_t, int *,
 			    int *, int *);
 	int		(*pc_conf_hook)(pci_chipset_tag_t, int, int, int,
@@ -144,10 +145,11 @@ const struct evcnt *genppc_pci_intr_evcnt(void *, pci_intr_handle_t);
 void *genppc_pci_intr_establish(void *, pci_intr_handle_t, int, int (*)(void *),
     void *);
 void genppc_pci_intr_disestablish(void *, void *);
-void genppc_pci_conf_interrupt(void *, int, int, int, int, int *);
+void genppc_pci_conf_interrupt(pci_chipset_tag_t, int, int, int, int, int *);
 int genppc_pci_conf_hook(pci_chipset_tag_t, int, int, int, pcireg_t);
 int genppc_pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp);
 
+/* generic indirect PCI functions */
 void genppc_pci_indirect_attach_hook(struct device *, struct device *,
     struct pcibus_attach_args *);
 pcitag_t genppc_pci_indirect_make_tag(void *, int, int, int);

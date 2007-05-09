@@ -1,4 +1,4 @@
-/*	$NetBSD: pmppc_pci_machdep.h,v 1.1.2.1 2007/05/08 19:52:59 garbled Exp $	*/
+/*	$NetBSD: pmppc_pci_machdep.h,v 1.1.2.2 2007/05/09 09:02:51 garbled Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -30,12 +30,12 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * Machine-specific definitions for PCI autoconfiguration.
- */
+#include <powerpc/pci_machdep.h>
+
+#ifdef _KERNEL
 
 /*
- * be-specific PCI structure and type definitions.
+ * pmppc-specific PCI structure and type definitions.
  * NOT TO BE USED DIRECTLY BY MACHINE INDEPENDENT CODE.
  *
  * Configuration tag; created from a {bus,device,function} triplet by
@@ -44,31 +44,10 @@
  * the read and write routines, but this would cause extra overhead.
  */
 
-struct pci_attach_args;	/* Forward declaration */
+int pmppc_pci_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
+void pmppc_pci_conf_interrupt(pci_chipset_tag_t, int, int, int, int, int *);
 
-/*
- * Types provided to machine-independent PCI code
- */
-typedef void *pci_chipset_tag_t;
-typedef int pcitag_t;
-typedef int pci_intr_handle_t;
+void pmppc_pci_get_chipset_tag(pci_chipset_tag_t);
+
 extern struct powerpc_bus_dma_tag pci_bus_dma_tag;
-
-/*
- * Functions provided to machine-independent PCI code.
- */
-void		pci_attach_hook(struct device *, struct device *,
-		    struct pcibus_attach_args *);
-int		pci_bus_maxdevs(pci_chipset_tag_t, int);
-pcitag_t	pci_make_tag(pci_chipset_tag_t, int, int, int);
-void		pci_decompose_tag(pci_chipset_tag_t, pcitag_t,
-		    int *, int *, int *);
-pcireg_t	pci_conf_read(pci_chipset_tag_t, pcitag_t, int);
-void		pci_conf_write(pci_chipset_tag_t, pcitag_t, int,
-		    pcireg_t);
-int		pci_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
-const char	*pci_intr_string(pci_chipset_tag_t, pci_intr_handle_t);
-const struct evcnt *pci_intr_evcnt(pci_chipset_tag_t, pci_intr_handle_t);
-void		*pci_intr_establish(pci_chipset_tag_t, pci_intr_handle_t,
-		    int, int (*)(void *), void *);
-void		pci_intr_disestablish(pci_chipset_tag_t, void *);
+#endif

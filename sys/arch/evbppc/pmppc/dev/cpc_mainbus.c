@@ -1,4 +1,4 @@
-/*	$NetBSD: cpc_mainbus.c,v 1.1.2.1 2007/05/08 19:53:01 garbled Exp $	*/
+/*	$NetBSD: cpc_mainbus.c,v 1.1.2.2 2007/05/09 09:02:51 garbled Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpc_mainbus.c,v 1.1.2.1 2007/05/08 19:53:01 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpc_mainbus.c,v 1.1.2.2 2007/05/09 09:02:51 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/extent.h>
@@ -59,6 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpc_mainbus.c,v 1.1.2.1 2007/05/08 19:53:01 garbled 
 #include <machine/pmppc.h>
 #include <arch/evbppc/pmppc/dev/mainbus.h>
 
+struct genppc_pci_chipset *genppc_pct;
 
 void
 cpc_attach(struct device *self, pci_chipset_tag_t pc, bus_space_tag_t mem,
@@ -82,7 +83,20 @@ cpc_mainbus_match(struct device *parent, struct cfdata *cf, void *aux)
 void
 cpc_mainbus_attach(struct device *parent, struct device *self, void *aux)
 {
-	cpc_attach(self, 0, &pmppc_mem_tag, &pmppc_pci_io_tag,
+	struct genppc_pci_chipset_businfo *pbi;
+
+	genppc_pct = malloc(sizeof(struct genppc_pci_chipset), M_DEVBUF,
+	    M_NOWAIT);
+	pmppc_pci_get_chipset_tag(genppc_pct);
+	pbi = malloc(sizeof(struct genppc_pci_chipset_businfo),
+	    M_DEVBUF, M_NOWAIT);
+	KASSERT(pbi != NULL);
+	pbi->pbi_properties = prop_dictionary_create();
+	KASSERT(pbi->pbi_properties != NULL);
+	SIMPLEQ_INIT(&genppc_pct->pc_pbi);
+	SIMPLEQ_INSERT_TAIL(&genppc_pct->pc_pbi, pbi, next);
+
+	cpc_attach(self, genppc_pct, &pmppc_mem_tag, &pmppc_pci_io_tag,
 		   &pci_bus_dma_tag, a_config.a_is_monarch,
 		   a_config.a_bus_freq);
 

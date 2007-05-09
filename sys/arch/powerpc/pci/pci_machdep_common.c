@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep_common.c,v 1.1.2.3 2007/05/06 05:11:42 macallan Exp $ */
+/* $NetBSD: pci_machdep_common.c,v 1.1.2.4 2007/05/09 09:02:52 garbled Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep_common.c,v 1.1.2.3 2007/05/06 05:11:42 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep_common.c,v 1.1.2.4 2007/05/09 09:02:52 garbled Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -147,7 +147,7 @@ genppc_pci_intr_disestablish(void *v, void *cookie)
 }
 
 void
-genppc_pci_conf_interrupt(void *v, int bus, int dev, int pin,
+genppc_pci_conf_interrupt(pci_chipset_tag_t pct, int bus, int dev, int pin,
     int swiz, int *iline)
 {
 	/* do nothing */
