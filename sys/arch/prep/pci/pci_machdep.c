@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.31.4.2 2007/05/01 18:19:07 garbled Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.31.4.3 2007/05/09 09:02:52 garbled Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.31.4.2 2007/05/01 18:19:07 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.31.4.3 2007/05/09 09:02:52 garbled Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -70,13 +70,6 @@ int prep_pci_config_mode = 1;
 extern struct genppc_pci_chipset *genppc_pct;
 extern u_int32_t prep_pci_baseaddr;
 extern u_int32_t prep_pci_basedata;
-
-void genppc_pci_indirect_attach_hook(struct device *, struct device *,
-    struct pcibus_attach_args *);
-pcitag_t genppc_pci_indirect_make_tag(void *, int, int, int);
-pcireg_t genppc_pci_indirect_conf_read(void *, pcitag_t, int);
-void genppc_pci_indirect_conf_write(void *, pcitag_t, int, pcireg_t);
-void genppc_pci_indirect_decompose_tag(void *, pcitag_t, int *, int *, int *);
 
 static void
 prep_pci_get_chipset_tag_indirect(pci_chipset_tag_t pc)

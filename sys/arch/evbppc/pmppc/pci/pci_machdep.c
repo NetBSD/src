@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.1.2.1 2007/05/08 19:53:02 garbled Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.1.2.2 2007/05/09 09:02:51 garbled Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.1.2.1 2007/05/08 19:53:02 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.1.2.2 2007/05/09 09:02:51 garbled Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -68,7 +68,10 @@ __KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.1.2.1 2007/05/08 19:53:02 garbled 
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
+#include <dev/pci/pcidevs.h>
 #include <dev/pci/pciconf.h>
+
+#include <machine/pmppc_pci_machdep.h>
 
 /*
  * Address conversion as seen from a PCI master.
@@ -81,24 +84,46 @@ __KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.1.2.1 2007/05/08 19:53:02 garbled 
 static bus_addr_t phys_to_pci(bus_dma_tag_t, bus_addr_t);
 static bus_addr_t pci_to_phys(bus_dma_tag_t, bus_addr_t);
 
-struct powerpc_bus_dma_tag pci_bus_dma_tag = {
-	0,			/* _bounce_thresh */
-	_bus_dmamap_create,
-	_bus_dmamap_destroy,
-	_bus_dmamap_load,
-	_bus_dmamap_load_mbuf,
-	_bus_dmamap_load_uio,
-	_bus_dmamap_load_raw,
-	_bus_dmamap_unload,
-	NULL,			/* _dmamap_sync */
-	_bus_dmamem_alloc,
-	_bus_dmamem_free,
-	_bus_dmamem_map,
-	_bus_dmamem_unmap,
-	_bus_dmamem_mmap,
-	phys_to_pci,
-	pci_to_phys,
-};
+extern struct powerpc_bus_dma_tag pci_bus_dma_tag;
+
+void
+pmppc_pci_get_chipset_tag(pci_chipset_tag_t pc)
+{
+	pc->pc_conf_v = (void *)pc;
+
+	pc->pc_attach_hook = genppc_pci_indirect_attach_hook;
+	pc->pc_bus_maxdevs = genppc_pci_bus_maxdevs;
+	pc->pc_make_tag = genppc_pci_indirect_make_tag;
+	pc->pc_conf_read = genppc_pci_indirect_conf_read;
+	pc->pc_conf_write = genppc_pci_indirect_conf_write;
+
+	pc->pc_intr_v = (void *)pc;
+
+	pc->pc_intr_map = pmppc_pci_intr_map;
+	pc->pc_intr_string = genppc_pci_intr_string;
+	pc->pc_intr_evcnt = genppc_pci_intr_evcnt;
+	pc->pc_intr_establish = genppc_pci_intr_establish;
+	pc->pc_intr_disestablish = genppc_pci_intr_disestablish;
+
+	pc->pc_conf_interrupt = pmppc_pci_conf_interrupt;
+	pc->pc_decompose_tag = genppc_pci_indirect_decompose_tag;
+	pc->pc_conf_hook = genppc_pci_conf_hook;
+
+	pc->pc_addr = mapiodev(CPC_PCICFGADR, 4);
+	pc->pc_data = mapiodev(CPC_PCICFGDATA, 4);
+	pc->pc_bus = 0;
+	pc->pc_node = 0;
+	pc->pc_memt = 0;
+	pc->pc_iot = 0;
+
+	/* the following two lines are required because unlike other ports, 
+	 * we cannot just add PHYS_TO_BUS_MEM/BUS_MEM_TO_PHYS defines to
+	 * bus.h, because it would impact other evbppc ports.
+	 */
+	pci_bus_dma_tag._dma_phys_to_bus_mem = phys_to_pci;
+	pci_bus_dma_tag._dma_bus_mem_to_phys = pci_to_phys;
+}
+
 
 static bus_addr_t
 phys_to_pci(bus_dma_tag_t t, bus_addr_t a)
@@ -111,91 +136,8 @@ static bus_addr_t pci_to_phys(bus_dma_tag_t t, bus_addr_t a)
 	return PCI_MEM_TO_PHYS(a);
 }
 
-void
-pci_attach_hook(struct device *parent, struct device *self,
-		struct pcibus_attach_args *pba)
-{
-}
-
 int
-pci_bus_maxdevs(pci_chipset_tag_t pc, int busno)
-{
-
-	/*
-	 * Bus number is irrelevant.  Configuration Mechanism 1 is in
-	 * use, can have devices 0-32 (i.e. the `normal' range).
-	 */
-	return (32);
-}
-
-pcitag_t
-pci_make_tag(pci_chipset_tag_t pc, int bus, int device, int function)
-{
-	pcitag_t tag;
-
-	if (bus >= 256 || device >= 32 || function >= 8)
-		panic("pci_make_tag: bad request");
-
-	tag = CPC_PCI_CONFIG_ENABLE |
-		    (bus << 16) | (device << 11) | (function << 8);
-	return (tag);
-}
-
-void
-pci_decompose_tag(pci_chipset_tag_t pc, pcitag_t tag, int *bp, int *dp, int *fp)
-{
-
-	if (bp != NULL)
-		*bp = (tag >> 16) & 0xff;
-	if (dp != NULL)
-		*dp = (tag >> 11) & 0x1f;
-	if (fp != NULL)
-		*fp = (tag >> 8) & 0x7;
-}
-
-#define SP_PCI(tag, reg) ((tag) | (reg))
-
-pcireg_t
-pci_conf_read(pci_chipset_tag_t pc, pcitag_t tag, int reg)
-{
-	pcireg_t data;
-	struct faultbuf env, *oldfault;
-
-	oldfault = curpcb->pcb_onfault;
-	if (setfault(&env)) {
-		curpcb->pcb_onfault = oldfault;
-		return 0;
-	}
-
-/*printf("pci_conf_read %x %x\n", tag, reg);*/
-	out32rb(CPC_PCICFGADR, SP_PCI(tag, reg));
-	data = in32rb(CPC_PCICFGDATA);
-	/*out32rb(CPC_PCICFGADR, 0);*/
-
-	curpcb->pcb_onfault = oldfault;
-	return data;
-}
-
-void
-pci_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t data)
-{
-	struct faultbuf env, *oldfault;
-
-	oldfault = curpcb->pcb_onfault;
-	if (setfault(&env)) {
-		curpcb->pcb_onfault = oldfault;
-		return;
-	}
-
-/*printf("pci_conf_write %x %x %x\n", tag, reg, data);*/
-	out32rb(CPC_PCICFGADR, SP_PCI(tag, reg));
-	out32rb(CPC_PCICFGDATA, data);
-	/*out32rb(CPC_PCICFGADR, 0);*/
-	curpcb->pcb_onfault = oldfault;
-}
-
-int
-pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
+pmppc_pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
 	int	pin = pa->pa_intrpin;
 	int	line = pa->pa_intrline;
@@ -229,46 +171,9 @@ bad:
 	return 1;
 }
 
-const char *
-pci_intr_string(pci_chipset_tag_t pc, pci_intr_handle_t ih)
-{
-	static char irqstr[8];		/* 4 + 2 + NULL + sanity */
-
-	if (ih < 0 || ih >= ICU_LEN)
-		panic("pci_intr_string: bogus handle 0x%x", ih);
-
-	sprintf(irqstr, "irq %d", ih);
-	return (irqstr);
-	
-}
-
-const struct evcnt *
-pci_intr_evcnt(pci_chipset_tag_t pc, pci_intr_handle_t ih)
-{
-
-	/* XXX for now, no evcnt parent reported */
-	return NULL;
-}
-
-void *
-pci_intr_establish(pci_chipset_tag_t pc, pci_intr_handle_t ih, int level,
-		   int (*func)(void *), void *arg)
-{
-	/*
-	 * ih is the value assigned in pci_intr_map(), above.
-	 */
-	return intr_establish(ih, IST_LEVEL, level, func, arg);
-}
-
 void
-pci_intr_disestablish(pci_chipset_tag_t pc, void *cookie)
-{
-	intr_disestablish(cookie);
-}
-
-void
-pci_conf_interrupt(pci_chipset_tag_t pc, int bus, int dev, int pin, int swiz,
-    int *iline)
+pmppc_pci_conf_interrupt(pci_chipset_tag_t pc, int bus, int dev, int pin,
+    int swiz, int *iline)
 {
 	int line;
 
