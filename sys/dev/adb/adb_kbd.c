@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_kbd.c,v 1.9 2007/04/16 23:33:10 macallan Exp $	*/
+/*	$NetBSD: adb_kbd.c,v 1.10 2007/05/09 00:10:56 macallan Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb_kbd.c,v 1.9 2007/04/16 23:33:10 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb_kbd.c,v 1.10 2007/05/09 00:10:56 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -78,6 +78,7 @@ struct adbkbd_softc {
 	int sc_polled_chars;
 	int sc_trans[3];
 	int sc_capslock;
+	uint32_t sc_timestamp;
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 	int sc_rawkbd;
 #endif
@@ -192,6 +193,7 @@ adbkbd_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_trans[1] = 103;	/* F11 */
 	sc->sc_trans[2] = 111;	/* F12 */
 	sc->sc_power = 0x7f;
+	sc->sc_timestamp = 0;
 
 	printf(" addr %d: ", sc->sc_adbdev->current_addr);
 
@@ -376,10 +378,17 @@ adbkbd_keys(struct adbkbd_softc *sc, uint8_t k1, uint8_t k2)
 	DPRINTF("[%02x %02x]", k1, k2);
 
 	if (((k1 == k2) && (k1 == 0x7f)) || (k1 == sc->sc_power)) {
+		uint32_t now = time_second;
+		uint32_t diff = now - sc->sc_timestamp;
 
-		/* power button, report to sysmon */
-		sc->sc_pe = k1;
-		sysmon_task_queue_sched(0, adbkbd_powerbutton, sc);
+		sc->sc_timestamp = now;
+		if ((diff > 1) && (diff < 5)) {
+
+			/* power button, report to sysmon */
+			sc->sc_pe = k1;
+		
+			sysmon_task_queue_sched(0, adbkbd_powerbutton, sc);
+		}
 	} else {
 
 		adbkbd_key(sc, k1);
