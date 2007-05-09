@@ -49,6 +49,9 @@ base-krb5-examples	example configuration files for the Kerberos V network authen
 base-krb5-root	root file system support for the Kerberos V network authentication system
 base-krb5-shlib	root file system support for the Kerberos V network authentication system
 base-locale-Pig	igPey atinLey ocaleley upportsey
+base-locale-af	Afghan language locale support
+base-locale-be	Belgian language locale support
+base-locale-bg	Bulgarian language locale support
 base-locale-bin	utilities for working with locales
 base-locale-ca	Catalan language locale support
 base-locale-cs	Czech language locale support
@@ -59,26 +62,33 @@ base-locale-en	English language locale support
 base-locale-eo	Esperanto language locale support
 base-locale-es	Spanish language locale support
 base-locale-et Estonian language locale support
+base-locale-eu Basque language/region locale support
 base-locale-fi	Finnish language locale support
 base-locale-fr	French language locale support
 base-locale-gl	Galician language locale support
 base-locale-he	Hebrew language locale support
 base-locale-hr	Croatian language locale support
 base-locale-hu	Hungarian language locale support
+base-locale-hy	Armenian language locale support
 base-locale-id	Indonesian language locale support
 base-locale-is	Icelandic language locale support
 base-locale-it	Italian language locale support
 base-locale-ja	Japanese language locale support
+base-locale-kk	Kazakh language locale support
 base-locale-ko	Korean language locale support
 base-locale-lt	Lithuanian language locale support
+base-locale-nb	Norwegian Bokmal language locale support
 base-locale-nl	Dutch language locale support
+base-locale-nn	Norwegian Nynorsk language locale support
 base-locale-no	Norwegian language locale support
 base-locale-pl	Polish language locale support
 base-locale-pt	Portuguese language locale support
+base-locale-ro	Romanian language locale support
 base-locale-ru	Russian language locale support
 base-locale-share	/usr/share file system support for all locales 
 base-locale-sk	Slovak language locale support
 base-locale-sl	Slovenian language locale support
+base-locale-sr	Suriname language locale support
 base-locale-sv	Swedish language locale support
 base-locale-tr	Turkish language locale support
 base-locale-uk	Ukrainian language locale support
@@ -127,10 +137,6 @@ base-router-bin	network routing utilities
 base-router-examples base directories for network routing utilities
 base-router-root	root file system support for network routing utilities
 base-secsh-bin	secure shell SSH client and server
-base-sendmail-bin	the sendmail(8) mailer
-base-sendmail-root	root file system support for the sendmail(8) mailer
-base-sendmail-share	shared data files for the sendmail(8) mailer
-base-sendmail-usr	/usr file system support for the sendmail(8) mailer
 base-slip-bin	the SLIP serial line internet protocol
 base-slip-root	root file system support for the SLIP remote access protocol
 base-smbfs-root root file system support for the smbfs client SMB filesystem support
