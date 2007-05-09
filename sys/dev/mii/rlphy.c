@@ -1,4 +1,4 @@
-/*	$NetBSD: rlphy.c,v 1.14 2007/03/20 10:17:18 tsutsui Exp $	*/
+/*	$NetBSD: rlphy.c,v 1.15 2007/05/09 23:16:37 tsutsui Exp $	*/
 /*	$OpenBSD: rlphy.c,v 1.20 2005/07/31 05:27:30 pvalchev Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rlphy.c,v 1.14 2007/03/20 10:17:18 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rlphy.c,v 1.15 2007/05/09 23:16:37 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,7 +64,7 @@ struct rlphy_softc {
 int	rlphymatch(struct device *, struct cfdata *, void *);
 void	rlphyattach(struct device *, struct device *, void *);
 
-CFATTACH_DECL(rlphy, sizeof(struct mii_softc),
+CFATTACH_DECL(rlphy, sizeof(struct rlphy_softc),
     rlphymatch, rlphyattach, mii_phy_detach, mii_phy_activate);
 
 int	rlphy_service(struct mii_softc *, struct mii_data *, int);
