@@ -1,4 +1,4 @@
-/* $NetBSD: pic_prepivr.c,v 1.1.2.7 2007/05/09 20:22:38 garbled Exp $ */
+/* $NetBSD: i8259_common.c,v 1.1.2.1 2007/05/09 20:22:38 garbled Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic_prepivr.c,v 1.1.2.7 2007/05/09 20:22:38 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i8259_common.c,v 1.1.2.1 2007/05/09 20:22:38 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -53,85 +53,54 @@ __KERNEL_RCSID(0, "$NetBSD: pic_prepivr.c,v 1.1.2.7 2007/05/09 20:22:38 garbled 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
 
-static int  prepivr_get_irq(struct pic_ops *);
-static void prepivr_establish_irq(struct pic_ops *, int, int, int);
-
-vaddr_t prep_intr_reg;		/* PReP interrupt vector register */
-uint32_t prep_intr_reg_off;	/* IVR offset within the mapped page */
-
-#define IO_ELCR1	0x4d0
-#define IO_ELCR2	0x4d1
-
-/*
- * Prior to calling init_prepivr, the port is expected to have mapped the
- * page containing the IVR with mapiodev to prep_intr_reg and set up the
- * prep_intr_reg_off.
- */
-
-struct pic_ops *
-setup_prepivr(void)
+void
+i8259_initialize(void)
 {
-	struct i8259_ops *prepivr;
-	struct pic_ops *pic;
-	uint32_t pivr;
+	isa_outb(IO_ICU1, 0x11);		/* program device, four bytes */
+	isa_outb(IO_ICU1+1, 0);			/* starting at this vector */
+	isa_outb(IO_ICU1+1, 1 << IRQ_SLAVE);	/* slave on line 2 */
+	isa_outb(IO_ICU1+1, 1);			/* 8086 mode */
+	isa_outb(IO_ICU1+1, 0xff);		/* leave interrupts masked */
 
-	prepivr = malloc(sizeof(struct i8259_ops), M_DEVBUF, M_NOWAIT);
-	KASSERT(prepivr != NULL);
-	pic = &prepivr->pic;
-
-	pivr = prep_intr_reg + prep_intr_reg_off;
-	pic->pic_numintrs = 16;
-	pic->pic_cookie = (void *)pivr;
-	pic->pic_enable_irq = i8259_enable_irq;
-	pic->pic_reenable_irq = i8259_enable_irq;
-	pic->pic_disable_irq = i8259_disable_irq;
-	pic->pic_get_irq = prepivr_get_irq;
-	pic->pic_ack_irq = i8259_ack_irq;
-	pic->pic_establish_irq = prepivr_establish_irq;
-	strcpy(pic->pic_name, "prepivr");
-	pic_add(pic);
-	prepivr->pending_events = 0;
-	prepivr->enable_mask = 0xffffffff;
-	prepivr->irqs = 0;
-
-	i8259_initialize();
-
-	return pic;
+	isa_outb(IO_ICU2, 0x11);		/* program device, four bytes */
+	isa_outb(IO_ICU2+1, 8);			/* starting at this vector */
+	isa_outb(IO_ICU2+1, IRQ_SLAVE);
+	isa_outb(IO_ICU2+1, 1);			/* 8086 mode */
+	isa_outb(IO_ICU2+1, 0xff);		/* leave interrupts masked */
 }
 
-static void
-prepivr_establish_irq(struct pic_ops *pic, int irq, int type, int maxlevel)
+void
+i8259_enable_irq(struct pic_ops *pic, int irq, int type)
 {
-	u_int8_t elcr[2];
-	int icu, bit;
+	struct i8259_ops *i8259 = (struct i8259_ops *)pic;
 
-	icu = irq / 8;
-	bit = irq % 8;
-	elcr[0] = isa_inb(IO_ELCR1);
-	elcr[1] = isa_inb(IO_ELCR2);
+	i8259->irqs |= 1 << irq;
+	if (i8259->irqs >= 0x100) /* IRQS >= 8 in use? */
+		i8259->irqs |= 1 << IRQ_SLAVE;
 
-	if (type == IST_LEVEL)
-		elcr[icu] |= 1 << bit;
-	else
-		elcr[icu] &= ~(1 << bit);
-
-	isa_outb(IO_ELCR1, elcr[0]);
-	isa_outb(IO_ELCR2, elcr[1]);
+	i8259->enable_mask = ~i8259->irqs;
+	isa_outb(IO_ICU1+1, i8259->enable_mask);
+	isa_outb(IO_ICU2+1, i8259->enable_mask >> 8);
 }
 
-static int
-prepivr_get_irq(struct pic_ops *pic)
+void
+i8259_disable_irq(struct pic_ops *pic, int irq)
 {
-	static int lirq;
-	int irq;
+	struct i8259_ops *i8259 = (struct i8259_ops *)pic;
+	uint32_t mask = 1 << irq;
 
-	irq = inb(pic->pic_cookie);
-	if (lirq == 7 && irq == lirq)
-		return 255;
+	i8259->enable_mask |= mask;
+	isa_outb(IO_ICU1+1, i8259->enable_mask);
+	isa_outb(IO_ICU2+1, i8259->enable_mask >> 8);
+}
 
-	lirq = irq;
-	if (irq == 0)
-		return 255;
-
-	return irq;
+void
+i8259_ack_irq(struct pic_ops *pic, int irq)
+{
+	if (irq < 8) {
+		isa_outb(IO_ICU1, 0xe0 | irq);
+	} else {
+		isa_outb(IO_ICU2, 0xe0 | (irq & 7));
+		isa_outb(IO_ICU1, 0xe0 | IRQ_SLAVE);
+	}
 }
