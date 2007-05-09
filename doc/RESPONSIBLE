@@ -1,4 +1,4 @@
-#	$NetBSD: RESPONSIBLE,v 1.78 2007/04/08 09:58:14 scw Exp $
+#	$NetBSD: RESPONSIBLE,v 1.79 2007/05/09 19:36:58 agc Exp $
 
 List of sections of the system, and who is responsible for them (or at
 least considered an expert on them).
@@ -72,7 +72,9 @@ tz		kleink
 
 Userland Misc:
 
+iscsi target	agc
 root.cache	[no one]
+syspkgs		agc, apb
 termcap		blymn, jdc
 [uw]tmp{,x}	christos
 
