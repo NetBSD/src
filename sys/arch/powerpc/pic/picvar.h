@@ -1,4 +1,4 @@
-/*	$NetBSD: picvar.h,v 1.1.2.10 2007/05/04 10:03:28 nisimura Exp $ */
+/*	$NetBSD: picvar.h,v 1.1.2.11 2007/05/09 20:22:39 garbled Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: picvar.h,v 1.1.2.10 2007/05/04 10:03:28 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: picvar.h,v 1.1.2.11 2007/05/09 20:22:39 garbled Exp $");
 
 #ifndef PIC_VAR_H
 #define PIC_VAR_H
@@ -66,6 +66,13 @@ struct intr_source {
 	char is_source[16];
 };
 
+struct i8259_ops {
+	struct pic_ops pic;
+	uint32_t pending_events;
+	uint32_t enable_mask;
+	uint32_t irqs; 
+};
+
 /*
  * add a pic, fill in pic_intrbase, return pic_intrbase on success, 
  * -1 otherwise
@@ -87,5 +94,11 @@ void	dummy_pic_establish_intr(struct pic_ops *, int, int, int);
 struct pic_ops *setup_openpic(void *, int);
 struct pic_ops *setup_prepivr(void);
 struct pic_ops *setup_i8259(void);
+
+/* i8259 common decls */
+void i8259_initialize(void);  
+void i8259_enable_irq(struct pic_ops *, int, int);
+void i8259_disable_irq(struct pic_ops *, int);
+void i8259_ack_irq(struct pic_ops *, int);
 
 #endif /* PIC_VAR_H */

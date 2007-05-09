@@ -1,4 +1,4 @@
-/* $NetBSD: pic_i8259.c,v 1.1.2.2 2007/05/04 10:03:28 nisimura Exp $ */
+/* $NetBSD: pic_i8259.c,v 1.1.2.3 2007/05/09 20:22:38 garbled Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic_i8259.c,v 1.1.2.2 2007/05/04 10:03:28 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic_i8259.c,v 1.1.2.3 2007/05/09 20:22:38 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -54,17 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: pic_i8259.c,v 1.1.2.2 2007/05/04 10:03:28 nisimura E
 #include <dev/isa/isavar.h>
 
 void i8259_initialize(void);
-static void i8259_enable_irq(struct pic_ops *, int, int);
-static void i8259_disable_irq(struct pic_ops *, int);
 static int  i8259_get_irq(struct pic_ops *);
-static void i8259_ack_irq(struct pic_ops *, int);
-
-struct i8259_ops {
-	struct pic_ops pic;
-	uint32_t pending_events;
-	uint32_t enable_mask;
-	uint32_t irqs;
-};
 
 struct pic_ops *
 setup_i8259(void)
@@ -95,47 +85,6 @@ setup_i8259(void)
 	return pic;
 }
 
-void
-i8259_initialize(void)
-{
-	isa_outb(IO_ICU1, 0x11);		/* program device, four bytes */
-	isa_outb(IO_ICU1+1, 0);			/* starting at this vector */
-	isa_outb(IO_ICU1+1, 1 << IRQ_SLAVE);	/* slave on line 2 */
-	isa_outb(IO_ICU1+1, 1);			/* 8086 mode */
-	isa_outb(IO_ICU1+1, 0xff);		/* leave interrupts masked */
-
-	isa_outb(IO_ICU2, 0x11);		/* program device, four bytes */
-	isa_outb(IO_ICU2+1, 8);			/* starting at this vector */
-	isa_outb(IO_ICU2+1, IRQ_SLAVE);
-	isa_outb(IO_ICU2+1, 1);			/* 8086 mode */
-	isa_outb(IO_ICU2+1, 0xff);		/* leave interrupts masked */
-}
-
-static void
-i8259_enable_irq(struct pic_ops *pic, int irq, int type)
-{
-	struct i8259_ops *i8259 = (struct i8259_ops *)pic;
-
-	i8259->irqs |= 1 << irq;
-	if (i8259->irqs >= 0x100) /* IRQS >= 8 in use? */
-		i8259->irqs |= 1 << IRQ_SLAVE;
-
-	i8259->enable_mask = ~i8259->irqs;
-	isa_outb(IO_ICU1+1, i8259->enable_mask);
-	isa_outb(IO_ICU2+1, i8259->enable_mask >> 8);
-}
-
-static void
-i8259_disable_irq(struct pic_ops *pic, int irq)
-{
-	struct i8259_ops *i8259 = (struct i8259_ops *)pic;
-	uint32_t mask = 1 << irq;
-
-	i8259->enable_mask |= mask;
-	isa_outb(IO_ICU1+1, i8259->enable_mask);
-	isa_outb(IO_ICU2+1, i8259->enable_mask >> 8);
-}
-
 static int
 i8259_get_irq(struct pic_ops *pic)
 {
@@ -152,15 +101,4 @@ i8259_get_irq(struct pic_ops *pic)
 		return 255;
 
 	return irq;
-}
-
-static void
-i8259_ack_irq(struct pic_ops *pic, int irq)
-{
-	if (irq < 8) {
-		isa_outb(IO_ICU1, 0xe0 | irq);
-	} else {
-		isa_outb(IO_ICU2, 0xe0 | (irq & 7));
-		isa_outb(IO_ICU1, 0xe0 | IRQ_SLAVE);
-	}
 }
