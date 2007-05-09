@@ -1,4 +1,4 @@
-/*	$NetBSD: stringlist.c,v 1.11 2006/07/27 15:36:29 christos Exp $	*/
+/*	$NetBSD: stringlist.c,v 1.12 2007/05/09 17:10:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: stringlist.c,v 1.11 2006/07/27 15:36:29 christos Exp $");
+__RCSID("$NetBSD: stringlist.c,v 1.12 2007/05/09 17:10:29 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -55,6 +55,7 @@ __weak_alias(sl_add,_sl_add)
 __weak_alias(sl_find,_sl_find)
 __weak_alias(sl_free,_sl_free)
 __weak_alias(sl_init,_sl_init)
+__weak_alias(sl_delete,_sl_delete)
 #endif
 
 #define _SL_CHUNKSIZE	20
