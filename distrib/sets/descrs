@@ -167,7 +167,10 @@ base-texinfo_locale-he Hebrew language support for the GNU texinfo software
 base-texinfo_locale-hr Croatian language support for the GNU texinfo software
 base-texinfo_locale-ja Japanese language support for the GNU texinfo software
 base-texinfo_locale-nl Dutch language support for the GNU texinfo software
+base-texinfo_locale-no Norwegian Bokmal language support for the GNU texinfo software
 base-texinfo_locale-no Norwegian language support for the GNU texinfo software
+base-texinfo_locale-pl Polish language support for the GNU texinfo software
+base-texinfo_locale-pl Romanian language support for the GNU texinfo software
 base-texinfo_locale-ru Russian language support for the GNU texinfo software
 base-texinfo_locale-sv Swedish language support for the GNU texinfo software
 base-texinfo_locale-tr Turkish language support for the GNU texinfo software
@@ -241,17 +244,36 @@ comp-c-share	This contains data files installed in /usr/share and used by C lang
 comp-c-share	language.
 comp-c-share	programming utilities, including user reference documents on the C
 comp-c-shlib	shared libraries for binary file utilities and machine opcodes
+comp-c_locale-be	Belgian language locale support for development utilities
+comp-c_locale-ca	Canadian language locale support for development utilities
+comp-c_locale-cs	Czech language locale support for development utilities
 comp-c_locale-da	Danish language locale support for development utilities
 comp-c_locale-de	German language locale support for development utilities
+comp-c_locale-el	Greek language locale support for development utilities
 comp-c_locale-es	Spanish language locale support for development utilities
+comp-c_locale-et	Estonian language locale support for development utilities
+comp-c_locale-fi	Finnish language locale support for development utilities
 comp-c_locale-fr	French language locale support for development utilities
+comp-c_locale-gl	Galician language locale support for development utilities
+comp-c_locale-id	Indonesian language locale support for development utilities
+comp-c_locale-it	Italian language locale support for development utilities
+comp-c_locale-ja	Japanese language locale support for development utilities
 comp-c_locale-ko	Korean language locale support for development utilities
 comp-c_locale-nl	Dutch language locale support for development utilities
+comp-c_locale-nn	Norwegian Nynorsk language locale support for development utilities
 comp-c_locale-no	Norwegian language locale support for development utilities
 comp-c_locale-pl	Polish language locale support for development utilities
-comp-c_locale-pt	Portuguese language locale support for development utilities
+comp-c_locale-pt_BR	Portuguese Brazilian language locale support for development utilities
+comp-c_locale-ro	Romanian language locale support for development utilities
+comp-c_locale-ru	Russian language locale support for development utilities
+comp-c_locale-sk	Slovak language locale support for development utilities
 comp-c_locale-sl	Slovenian language locale support for development utilities
+comp-c_locale-sr	Suriname language locale support for development utilities
 comp-c_locale-sv	Swedish language locale support for development utilities
+comp-c_locale-tr	Turkish language locale support for development utilities
+comp-c_locale-uk	Ukranian language locale support for development utilities
+comp-c_locale-zh_CN	Chinese language locale support for development utilities
+comp-c_locale-zh_TW	Taiwanese language locale support for development utilities
 comp-cvs-bin	CVS is a version control system, which allows you to keep old versions
 comp-cvs-bin	allows triggers to enable/log/control various operations and works well
 comp-cvs-bin	but operates on hierarchical collections of directories consisting of
@@ -498,6 +520,8 @@ etc-dhcpd-rc	startup script for DHCP dynamic host configuration protocol daemon
 etc-games-etc	configuration file for games
 etc-games-scores	empty score files for games
 etc-ipf-rc	startup script for IP filter
+etc-iscsi-etc	configuration files for the NetBSD iSCSI target
+etc-iscsi-rc	startup script for the NetBSD iSCSI target
 etc-isdn-rc	startup script for ISDN (Integrated Services Digital Network) network connectivity utilities
 etc-krb5-rc	startup script for the Kerberos V authentication service 
 etc-lpr-etc	configuration file for printing services
@@ -525,9 +549,7 @@ etc-router-etc	configuration files for network routing
 etc-router-rc	startup scripts for routing services
 etc-secsh-etc	configuration file for SSH secure remote shell utility
 etc-secsh-rc	startup script for SSH secure remote shell utility
-etc-sendmail-etc	configuration files for the sendmail(8) mailer 
 etc-sendmail-log	empty log files for the sendmail(8) mailer 
-etc-sendmail-rc	startup script for the sendmail(8) mailer
 etc-sys-defaults	default system startup configuration files
 etc-sys-etc	system software configuration files
 etc-sys-log	empty system log files
@@ -544,6 +566,8 @@ games-games-catman	formatted manual pages for command-line games
 games-games-man	manual pages source for command-line games
 games-games-root	data and score files for command line games
 games-games-share	shared data files for command-line games
+games-sys-root	required root file system structure for configuration files
+games-usd-doc	miscellaneous documentation for games
 games-utils-bin	miscellaneous utilities from /usr/games
 games-utils-catman	formatted manual pages for miscellaneous utilities from /usr/games
 games-utils-man	manual pages source for miscellaneous utilities from /usr/games
@@ -590,9 +614,13 @@ man-groff-catman	formatted manual pages for the groff documentation formatting u
 man-groff-man	manual pages source for the groff documentation formatting utility
 man-hesiod-catman	formatted manual pages for the HESIOD network information system
 man-hesiod-man	manual pages source for the HESIOD network information system
+man-hfs-catman	formatted manual pages for the HFS file system
+man-hfs-man	manual pages source for the HFS file system
 man-info-share	required file system structure for GNU texinfo documentation
 man-ipf-catman	formatted manual pages for the IPfilter packet filtering software
 man-ipf-man	manual pages source for the IPfilter packet filtering software
+man-iscsi-catman	formatted manual pages for NetBSD iSCSI target
+man-iscsi-man	manual pages source for NetBSD iSCSI target
 man-isdn-catman	formatted manual pages for ISDN (Integrated Services Data Networking) support
 man-isdn-man	manual pages source for ISDN (Integrated Services Data Networking) support
 man-krb5-catman	formatted manual pages for the Kerberos V network authentication system
@@ -639,11 +667,13 @@ man-rcs-man	manual pages source for the rcs(1) revision control system
 man-reference-catman	formatted manual pages for miscellaneous system- and non-system-related reference documents 
 man-reference-man	manual pages source for miscellaneous system- and non-system-related reference documents 
 man-router-catman	formatted manual pages for routing utilities
-man-router-man	manual pages source for routing utilities
+man-router-man		manual pages source for routing utilities
+man-rpcserver-catman	formatted manual pages for RPC server utility
+man-rpcserver-man	manual pages source for RPC server utility
+man-rpcutil-catman	formatted manual pages for RPC utility
+man-rpcutil-man		manual pages source for RPC utility
 man-secsh-catman	formatted manual pages for the ssh(1) remote secure shell connection utility
 man-secsh-man	manual pages source for the ssh(1) remote secure shell connection utility
-man-sendmail-catman	formatted manual pages for the sendmail(8) mailer
-man-sendmail-man	manual pages source for the sendmail(8) mailer
 man-shlib-catman	formatted manual pages for shared library support
 man-shlib-man	manual pages source for shared library support
 man-slip-catman	formatted manual pages for SLIP (serial line IP) remote access protocol
@@ -655,6 +685,7 @@ man-sup-man	manual pages source for the sup(8) software update protocol
 man-sys-catman	formatted manual pages for base operating system functionality
 man-sys-info	the GNU texinfo software
 man-sys-man	manual pages source for base operating system functionality
+man-sys-root	required root file system structure for manual pages
 man-sysutil-catman	formatted manual pages for system utilities
 man-sysutil-man	manual pages source for system utilities
 man-texinfo-catman	formatted manual pages for texinfo utilities
@@ -685,7 +716,6 @@ misc-postfix-htmldoc	HTML documentation for postfix
 misc-psd-doc	the Programmer's Supplementary Documentation for BSD
 misc-reference-share	miscellaneous reference documents
 misc-router-examples	example configuration files for routing daemons
-misc-sendmail-share	m4 templates for sendmail configuration
 misc-smm-doc	the System Manager's Manual for BSD
 misc-sup-examples	example configuration files for sup(8)
 misc-sys-examples	example configuration files for kernel functionality
@@ -693,133 +723,126 @@ misc-sysutil-examples	example configuration files for system utilities
 misc-usd-doc	the User's Supplementary Documents for BSD 
 misc-util-htmldoc	HTML documentation for miscellaneous utilities 
 text-groff-bin	Groff (GNU Troff) is a document processor which reads plain text mixed
-text-groff-bin	LaserJet 4 printers, HTML format (still alpha), and typewriter-like
-text-groff-bin	an enhanced version of the X11 xditview previewer, and an implementation
-text-groff-bin	devices. Also included is a modified version of the Berkeley -me macros,
-text-groff-bin	macros and the -ms macros, and drivers for PostScript, TeX dvi format, HP
-text-groff-bin	of the -mm macros. 
-text-groff-bin	release are implementations of troff, pic, eqn, tbl, refer, the -man
 text-groff-bin	with formatting commands and produces formatted output. Included in this
+text-groff-bin	release are implementations of troff, pic, eqn, tbl, refer, the -man
+text-groff-bin	macros and the -ms macros, and drivers for PostScript, TeX dvi format, HP
+text-groff-bin	LaserJet 4 printers, HTML format (still alpha), and typewriter-like
+text-groff-bin	devices. Also included is a modified version of the Berkeley -me macros,
+text-groff-bin	an enhanced version of the X11 xditview previewer, and an implementation
+text-groff-bin	of the -mm macros. 
+text-groff-catman	This package contains manual page sources for the groff family of text
+text-groff-catman	formatters. As described in the DESCR file for text-groff-catman, the
+text-groff-catman	online manual pages for groff contain information about the following
+text-groff-catman	groff-related utilities:
 text-groff-catman	
+text-groff-catman	        grog - grog reads files and guesses which of the groff(1) options
+text-groff-catman	        -e, -man, -me, -mm, -ms, -p, -s, and -t are  required  for
+text-groff-catman	        printing  files, and  prints  the groff command including those
+text-groff-catman	        options on the standard output;
 text-groff-catman	
+text-groff-catman	        troff - describes the GNU version of troff, which is part of the
+text-groff-catman	        groff document formatting  system;
 text-groff-catman	
+text-groff-catman	        tbl - tbl compiles  descriptions  of tables embedded within troff
+text-groff-catman	        input files into commands that are understood  by  troff;
 text-groff-catman	
+text-groff-catman	        pic - pic compiles  descriptions  of  pictures embedded within
+text-groff-catman	        troff or TeX input files into commands that are understood  by
+text-groff-catman	        TeX or  troff;
 text-groff-catman	
+text-groff-catman	        eqn - compiles descriptions  of  equations  embedded  within  troff
+text-groff-catman	        input files  into  commands that are understood by troff
 text-groff-catman	
+text-groff-catman	        soelim - eliminate .so directives from nroff input
 text-groff-catman	
+text-groff-catman	        refer - preprocess bibliographic references for groff
 text-groff-catman	
+text-groff-catman	        grops - translates the output of GNU  troff  to  PostScript
 text-groff-catman	
+text-groff-catman	        grodvi - convert groff output to TeX dvi format
 text-groff-catman	
+text-groff-catman	        grotty - translates  the  output  of  GNU troff into a form
+text-groff-catman	        suitable for  typewriter-like  devices
 text-groff-catman	
+text-groff-catman	        groff_font  -  format of groff device and font description files
 text-groff-catman	
+text-groff-catman	        groff_out - groff intermediate output format
 text-groff-catman	
+text-groff-catman	        groff_ms, ms - groff ms macros
 text-groff-catman	
+text-groff-catman	        me - macros for formatting technical papers
 text-groff-catman	
-text-groff-catman		-e, -man, -me, -mm, -ms, -p, -s, and -t are  required  for
-text-groff-catman		TeX or  troff;
-text-groff-catman		eqn - compiles descriptions  of  equations  embedded  within  troff
-text-groff-catman		grodvi - convert groff output to TeX dvi format
-text-groff-catman		groff document formatting  system;
-text-groff-catman		groff_char - lists the standard groff input characters
-text-groff-catman		groff_font  -  format of groff device and font description files
-text-groff-catman		groff_ms, ms - groff ms macros
-text-groff-catman		groff_out - groff intermediate output format
-text-groff-catman		grog - grog reads files and guesses which of the groff(1) options
-text-groff-catman		grops - translates the output of GNU  troff  to  PostScript
-text-groff-catman		grotty - translates  the  output  of  GNU troff into a form
-text-groff-catman		input files  into  commands that are understood by troff
-text-groff-catman		input files into commands that are understood  by  troff;
-text-groff-catman		me - macros for formatting technical papers
-text-groff-catman		options on the standard output;
-text-groff-catman		pic - pic compiles  descriptions  of  pictures embedded within
-text-groff-catman		printing  files, and  prints  the groff command including those
-text-groff-catman		refer - preprocess bibliographic references for groff
-text-groff-catman		soelim - eliminate .so directives from nroff input
-text-groff-catman		suitable for  typewriter-like  devices
-text-groff-catman		tbl - tbl compiles  descriptions  of tables embedded within troff
-text-groff-catman		troff - describes the GNU version of troff, which is part of the
-text-groff-catman		troff or TeX input files into commands that are understood  by
-text-groff-catman	The manual pages include information about the following groff-related
-text-groff-catman	utilities:
+text-groff-catman	        groff_char - lists the standard groff input characters
+text-groff-catman	
 text-groff-font	
-text-groff-font	
-text-groff-font	
-text-groff-font	
-text-groff-font	
-text-groff-font	
-text-groff-font	              character set.
+text-groff-font	This package contains groff font description files. The font files for
+text-groff-font	device <name> are stored in a directory 'dev<name>'. There are two types
+text-groff-font	of files per device: a device description file called DESC and for each
+text-groff-font	font F a font file called F. These are text files; there is no associated
+text-groff-font	binary format. Available devices are:
 text-groff-font	       X100   For a 100dpi X11 previewer
 text-groff-font	       X75    For a 75 dpi X11 previewer
 text-groff-font	       ascii  For typewriter-like devices
 text-groff-font	       dvi    For TeX dvi format
 text-groff-font	       latin1 For  typewriter-like  devices using the ISO Latin-1
+text-groff-font	              character set.
 text-groff-font	       ps     For PostScript printers and previewers
-text-groff-font	This package contains groff font description files. The font files for
-text-groff-font	binary format. Available devices are:
-text-groff-font	device <name> are stored in a directory 'dev<name>'. There are two types
-text-groff-font	font F a font file called F. These are text files; there is no associated
-text-groff-font	of files per device: a device description file called DESC and for each
-text-groff-man	
-text-groff-man	
-text-groff-man	
-text-groff-man	
-text-groff-man	
-text-groff-man	
-text-groff-man	
-text-groff-man	
-text-groff-man	
-text-groff-man	
-text-groff-man	
-text-groff-man	
-text-groff-man	
-text-groff-man	
-text-groff-man	
-text-groff-man		-e, -man, -me, -mm, -ms, -p, -s, and -t are  required  for
-text-groff-man		TeX or  troff;
-text-groff-man		eqn - compiles descriptions  of  equations  embedded  within  troff
-text-groff-man		grodvi - convert groff output to TeX dvi format
-text-groff-man		groff document formatting  system;
-text-groff-man		groff_char - lists the standard groff input characters
-text-groff-man		groff_font  -  format of groff device and font description files
-text-groff-man		groff_ms, ms - groff ms macros
-text-groff-man		groff_out - groff intermediate output format
-text-groff-man		grog - grog reads files and guesses which of the groff(1) options
-text-groff-man		grops - translates the output of GNU  troff  to  PostScript
-text-groff-man		grotty - translates  the  output  of  GNU troff into a form
-text-groff-man		input files  into  commands that are understood by troff
-text-groff-man		input files into commands that are understood  by  troff;
-text-groff-man		me - macros for formatting technical papers
-text-groff-man		options on the standard output;
-text-groff-man		pic - pic compiles  descriptions  of  pictures embedded within
-text-groff-man		printing  files, and  prints  the groff command including those
-text-groff-man		refer - preprocess bibliographic references for groff
-text-groff-man		soelim - eliminate .so directives from nroff input
-text-groff-man		suitable for  typewriter-like  devices
-text-groff-man		tbl - tbl compiles  descriptions  of tables embedded within troff
-text-groff-man		troff - describes the GNU version of troff, which is part of the
-text-groff-man		troff or TeX input files into commands that are understood  by
 text-groff-man	This package contains manual page sources for the groff family of text
 text-groff-man	formatters. As described in the DESCR file for text-groff-catman, the
-text-groff-man	groff-related utilities:
 text-groff-man	online manual pages for groff contain information about the following
-text-groff-share	
-text-groff-share	
-text-groff-share	
-text-groff-share	
-text-groff-share	
-text-groff-share	
-text-groff-share		Swedish language;
-text-groff-share		displaying/printing the online manual pages;
-text-groff-share		format the BSD manual pages;
-text-groff-share		formats; mm has supports macro output in various languages other
-text-groff-share		man - wrapper for the man.old and mandoc macro sets for
-text-groff-share		man.old - old style manual page macros;
-text-groff-share		mandoc - a set of content-based and domain-based macros used to
-text-groff-share		me, mm - formatting facility for technical papers in various
-text-groff-share		mmse - example macro set file which generates macro output in
-text-groff-share		ms - the Manuscript macros, set of macros for writing manuscripts;
-text-groff-share		than English;
+text-groff-man	groff-related utilities:
+text-groff-man	
+text-groff-man	        grog - grog reads files and guesses which of the groff(1) options
+text-groff-man	        -e, -man, -me, -mm, -ms, -p, -s, and -t are  required  for
+text-groff-man	        printing  files, and  prints  the groff command including those
+text-groff-man	        options on the standard output;
+text-groff-man	
+text-groff-man	        troff - describes the GNU version of troff, which is part of the
+text-groff-man	        groff document formatting  system;
+text-groff-man	
+text-groff-man	        tbl - tbl compiles  descriptions  of tables embedded within troff
+text-groff-man	        input files into commands that are understood  by  troff;
+text-groff-man	
+text-groff-man	        pic - pic compiles  descriptions  of  pictures embedded within
+text-groff-man	        troff or TeX input files into commands that are understood  by
+text-groff-man	        TeX or  troff;
+text-groff-man	
+text-groff-man	        eqn - compiles descriptions  of  equations  embedded  within  troff
+text-groff-man	        input files  into  commands that are understood by troff
+text-groff-man	
+text-groff-man	        soelim - eliminate .so directives from nroff input
+text-groff-man	
+text-groff-man	        refer - preprocess bibliographic references for groff
+text-groff-man	
+text-groff-man	        grops - translates the output of GNU  troff  to  PostScript
+text-groff-man	
+text-groff-man	        grodvi - convert groff output to TeX dvi format
+text-groff-man	
+text-groff-man	        grotty - translates  the  output  of  GNU troff into a form
+text-groff-man	        suitable for  typewriter-like  devices
+text-groff-man	
+text-groff-man	        groff_font  -  format of groff device and font description files
+text-groff-man	
+text-groff-man	        groff_out - groff intermediate output format
+text-groff-man	
+text-groff-man	        groff_ms, ms - groff ms macros
+text-groff-man	
+text-groff-man	        me - macros for formatting technical papers
+text-groff-man	
+text-groff-man	        groff_char - lists the standard groff input characters
+text-groff-man	
 text-groff-share	This package contains groff macros and data files for the macro sets
 text-groff-share	distributed with groff. These include:
+text-groff-share		man - wrapper for the man.old and mandoc macro sets for
+text-groff-share		displaying/printing the online manual pages;
+text-groff-share		man.old - old style manual page macros;
+text-groff-share		mandoc - a set of content-based and domain-based macros used to
+text-groff-share		format the BSD manual pages;
+text-groff-share		me, mm - formatting facility for technical papers in various
+text-groff-share		formats; mm has supports macro output in various languages other
+text-groff-share		than English;
+text-groff-share		mmse - example macro set file which generates macro output in
+text-groff-share		Swedish language;
+text-groff-share		ms - the Manuscript macros, set of macros for writing manuscripts;
 text-texinfo-bin	the GNU texinfo software
 text-texinfo-share	shared files for the GNU texinfo software
