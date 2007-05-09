@@ -1,4 +1,4 @@
-.\"	$NetBSD: puffs.3,v 1.20 2007/05/01 15:58:00 pooka Exp $
+.\"	$NetBSD: puffs.3,v 1.21 2007/05/09 13:54:08 pooka Exp $
 .\"
 .\" Copyright (c) 2006, 2007 Antti Kantee.  All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd May 1, 2007
+.Dd May 9, 2007
 .Dt PUFFS 3
 .Os
 .Sh NAME
@@ -164,6 +164,23 @@ for example).
 This flag requests that all operations are sent to userspace.
 Normally the kernel shortcircuits unimplemented operations.
 This flag is mostly useful for debugging purposes.
+.It Dv PUFFS_KFLAG_WTCACHE
+Set the file system cache behaviour as write-through.
+This means that all writes are immediately issued to the file server
+instead of being flushed in file system sync.
+This is useful especially for distributed file systems.
+.It Dv PUFFS_KFLAG_IAONDEMAND
+Issue inactive only on demand.
+If a file server defines the inactive method, call it only if the file
+server has explicitly requested that inactive be called for the
+node in question.
+Once inactive has been called for a node, it will not be called
+again unless the request to call inactive is reissued by the file server.
+See
+.Fn puffs_setback
+in
+.Xr puffs_ops 3
+for more information.
 .It Dv PUFFS_FLAG_BUILDPATH
 The framework will build a complete path name, which is supplied
 with each operation and can be found from the
