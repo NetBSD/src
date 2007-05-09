@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.142 2007/05/09 22:54:35 pavel Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.143 2007/05/09 23:15:45 pavel Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -3347,8 +3347,6 @@ usr.sbin/envstat/envstat.c			1.24
 	status of disk and logical volumes attached to mfi controllers from
 	userland.
 	[bouyer, ticket #603]
-
-	[manu, ticket #607]
 
 xsrc/xfree/xc/programs/Xserver/hw/netbsd/arm32vidc/private.h	1.6-1.7
 
