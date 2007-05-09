@@ -1,4 +1,4 @@
-.\"	$NetBSD: mount_psshfs.8,v 1.7 2007/05/09 20:25:20 tnn Exp $
+.\"	$NetBSD: mount_psshfs.8,v 1.8 2007/05/09 21:00:27 tnn Exp $
 .\"
 .\" Copyright (c) 2007 Antti Kantee.  All rights reserved.
 .\"
@@ -84,7 +84,27 @@ For a list of valid options, see
 This flag can be used to make the program stay on top.
 The default is to detach from the terminal and run in the background.
 .El
+.Sh EXAMPLES
+The following example illustrates how to mount the directory
+.Em /usr
+on server
+.Em bigiron
+as user
+.Em abc
+on local directory
+.Em /mnt
+with ssh transport compression enabled:
+.Bd -literal -offset indent
+mount_psshfs -O Compression=yes abc@bigiron:/usr /mnt
+.Ed
+.Pp
+It is possible to use
+.Xr fstab 5
+for psshfs mounts, with SSH public key authentication:
+.Pp
+.Dl "abc@bigiron:/usr /mnt psshfs rw,noauto,-O=BatchMode=yes,-O=IdentityFile=/root/.ssh/id_rsa 0 0"
 .Sh SEE ALSO
+.Xr fstab 5 ,
 .Xr sftp 1 ,
 .Xr puffs 3 ,
 .Xr puffs 4 ,
