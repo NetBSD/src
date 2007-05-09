@@ -1,16 +1,18 @@
-# $NetBSD: MVME1600,v 1.26 2006/08/26 20:26:55 christos Exp $
+# $NetBSD: MVME1600,v 1.26.20.1 2007/05/09 18:23:32 garbled Exp $
 #
 
 include 	"arch/mvmeppc/conf/std.mvmeppc"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"MVME1600-$Revision: 1.26 $"
+#ident		"MVME1600-$Revision: 1.26.20.1 $"
 
 maxusers	8
 
 # Which board to support
 options 	SUPPORT_MVME160X
+options		PIC_I8259
+#options	PIC_PREPIVR
 
 # Standard system options
 

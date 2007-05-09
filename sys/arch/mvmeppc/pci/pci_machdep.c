@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.5 2005/12/11 12:18:20 christos Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.5.38.1 2007/05/09 18:23:35 garbled Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.5 2005/12/11 12:18:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.5.38.1 2007/05/09 18:23:35 garbled Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -62,199 +62,48 @@ __KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.5 2005/12/11 12:18:20 christos Exp
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcidevs.h>
 
-#define	PCI_MODE1_ENABLE	0x80000000UL
+#include <machine/pci_machdep.h>
+
+extern struct genppc_pci_chipset *genppc_pct;
+
 #define	PCI_MODE1_ADDRESS_REG	(MVMEPPC_KVA_BASE_IO + 0xcf8)
 #define	PCI_MODE1_DATA_REG	(MVMEPPC_KVA_BASE_IO + 0xcfc)
 
-#define	o2i(off)	((off)/sizeof(pcireg_t))
-
 void pci_intr_fixup(int, int, int *);
 
-#ifdef DEBUG
-#define	DPRF(x)	printf x
-#else
-#define	DPRF(x)
-#endif
-
-/*
- * PCI doesn't have any special needs; just use the generic versions
- * of these functions.
- */
-struct powerpc_bus_dma_tag pci_bus_dma_tag = {
-	0,			/* _bounce_thresh */
-	_bus_dmamap_create,
-	_bus_dmamap_destroy,
-	_bus_dmamap_load,
-	_bus_dmamap_load_mbuf,
-	_bus_dmamap_load_uio,
-	_bus_dmamap_load_raw,
-	_bus_dmamap_unload,
-	NULL,			/* _dmamap_sync */
-	_bus_dmamem_alloc,
-	_bus_dmamem_free,
-	_bus_dmamem_map,
-	_bus_dmamem_unmap,
-	_bus_dmamem_mmap,
-};
-
 void
-pci_attach_hook(struct device *parent, struct device *self,
-    struct pcibus_attach_args *pba)
+mvmeppc_pci_get_chipset_tag(pci_chipset_tag_t pc)
 {
+	pc->pc_conf_v = (void *)pc;
 
-	/* Nothing to do. */
-}
+	pc->pc_attach_hook = genppc_pci_indirect_attach_hook;
+	pc->pc_bus_maxdevs = genppc_pci_bus_maxdevs;
+	pc->pc_make_tag = genppc_pci_indirect_make_tag;
+	pc->pc_conf_read = genppc_pci_indirect_conf_read;
+	pc->pc_conf_write = genppc_pci_indirect_conf_write;
 
-int
-pci_bus_maxdevs(pci_chipset_tag_t pc, int busno)
-{
+	pc->pc_intr_v = (void *)pc;
 
-	/*
-	 * Bus number is irrelevant.  Configuration Mechanism 1 is in
-	 * use, can have devices 0-32 (i.e. the `normal' range).
-	 */
-	return (32);
-}
+	pc->pc_intr_map = genppc_pci_intr_map;
+	pc->pc_intr_string = genppc_pci_intr_string;
+	pc->pc_intr_evcnt = genppc_pci_intr_evcnt;
+	pc->pc_intr_establish = genppc_pci_intr_establish;
+	pc->pc_intr_disestablish = genppc_pci_intr_disestablish;
 
-pcitag_t
-pci_make_tag(pci_chipset_tag_t pc, int bus, int device, int function)
-{
-	pcitag_t tag;
+	pc->pc_conf_interrupt = mvmeppc_pci_conf_interrupt;
+	pc->pc_decompose_tag = genppc_pci_indirect_decompose_tag;
+	pc->pc_conf_hook = genppc_pci_conf_hook;
 
-	if (bus >= 256 || device >= 32 || function >= 8)
-		panic("pci_make_tag: bad request");
-
-	tag = PCI_MODE1_ENABLE |
-		    (bus << 16) | (device << 11) | (function << 8);
-	return tag;
+	pc->pc_addr = mapiodev(PCI_MODE1_ADDRESS_REG, 4);
+	pc->pc_data = mapiodev(PCI_MODE1_DATA_REG, 4);
+	pc->pc_bus = 0;
+	pc->pc_node = 0;
+	pc->pc_memt = 0;
+	pc->pc_iot = 0;
 }
 
 void
-pci_decompose_tag(pci_chipset_tag_t pc, pcitag_t tag, int *bp, int *dp, int *fp)
-{
-
-	if (bp != NULL)
-		*bp = (tag >> 16) & 0xff;
-	if (dp != NULL)
-		*dp = (tag >> 11) & 0x1f;
-	if (fp != NULL)
-		*fp = (tag >> 8) & 0x7;
-	return;
-}
-
-pcireg_t
-pci_conf_read(pci_chipset_tag_t pc, pcitag_t tag, int reg)
-{
-	pcireg_t data;
-
-	out32rb(PCI_MODE1_ADDRESS_REG, tag | reg);
-	data = in32rb(PCI_MODE1_DATA_REG);
-	out32rb(PCI_MODE1_ADDRESS_REG, 0);
-	return data;
-}
-
-void
-pci_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t data)
-{
-
-	out32rb(PCI_MODE1_ADDRESS_REG, tag | reg);
-	out32rb(PCI_MODE1_DATA_REG, data);
-	out32rb(PCI_MODE1_ADDRESS_REG, 0);
-}
-
-int
-pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
-{
-	int pin = pa->pa_intrpin;
-	int line = pa->pa_intrline;
-
-	if (pin == 0) {
-		/* No IRQ used. */
-		goto bad;
-	}
-
-	if (pin > 4) {
-		printf("pci_intr_map: bad interrupt pin %d\n", pin);
-		goto bad;
-	}
-
-	/*
-	* Section 6.2.4, `Miscellaneous Functions', says that 255 means
-	* `unknown' or `no connection' on a PC.  We assume that a device with
-	* `no connection' either doesn't have an interrupt (in which case the
-	* pin number should be 0, and would have been noticed above), or
-	* wasn't configured by the BIOS (in which case we punt, since there's
-	* no real way we can know how the interrupt lines are mapped in the
-	* hardware).
-	*
-	* XXX
-	* Since IRQ 0 is only used by the clock, and we can't actually be sure
-	* that the BIOS did its job, we also recognize that as meaning that
-	* the BIOS has not configured the device.
-	*/
-	if (line == 0 || line == 255) {
-		printf("pci_intr_map: no mapping for pin %c\n", '@' + pin);
-		goto bad;
-	} else {
-		if (line >= ICU_LEN) {
-			printf("pci_intr_map: bad interrupt line %d\n", line);
-			goto bad;
-		}
-		if (line == IRQ_SLAVE) {
-			printf("pci_intr_map: changed line 2 to line 9\n");
-			line = 9;
-		}
-	}
-
-	*ihp = line;
-	return 0;
-
-bad:
-	*ihp = -1;
-	return 1;
-}
-
-const char *
-pci_intr_string(pci_chipset_tag_t pc, pci_intr_handle_t ih)
-{
-	static char irqstr[8];		/* 4 + 2 + NULL + sanity */
-
-	if (ih == 0 || ih >= ICU_LEN || ih == IRQ_SLAVE)
-		panic("pci_intr_string: bogus handle 0x%x", ih);
-
-	sprintf(irqstr, "irq %d", ih);
-	return (irqstr);
-	
-}
-
-const struct evcnt *
-pci_intr_evcnt(pci_chipset_tag_t pc, pci_intr_handle_t ih)
-{
-
-	/* XXX for now, no evcnt parent reported */
-	return NULL;
-}
-
-void *
-pci_intr_establish(pci_chipset_tag_t pc, pci_intr_handle_t ih, int level,
-    int (*func)(void *), void *arg)
-{
-
-	if (ih == 0 || ih >= ICU_LEN || ih == IRQ_SLAVE)
-		panic("pci_intr_establish: bogus handle 0x%x", ih);
-
-	return isa_intr_establish(NULL, ih, IST_LEVEL, level, func, arg);
-}
-
-void
-pci_intr_disestablish(pci_chipset_tag_t pc, void *cookie)
-{
-
-	isa_intr_disestablish(NULL, cookie);
-}
-
-void
-pci_conf_interrupt(pci_chipset_tag_t pc, int bus, int dev, int pin,
+mvmeppc_pci_conf_interrupt(pci_chipset_tag_t pc, int bus, int dev, int pin,
     int swiz, int *iline)
 {
 
