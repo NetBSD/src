@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.1.2.14 2007/05/09 04:15:58 macallan Exp $ */
+/*	$NetBSD: intr.c,v 1.1.2.15 2007/05/09 21:09:58 matt Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.1.2.14 2007/05/09 04:15:58 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.1.2.15 2007/05/09 21:09:58 matt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -293,22 +293,19 @@ mapirq(uint32_t irq)
 	return v;
 }
 
+static const char * const intr_typenames[] = {
+   [IST_NONE]  = "none",
+   [IST_PULSE] = "pulsed",
+   [IST_EDGE]  = "edge-triggered",
+   [IST_LEVEL] = "level-triggered",
+};
+
 const char *
 intr_typename(int type)
 {
-
-	switch (type) {
-        case IST_NONE :
-		return "none";
-        case IST_PULSE:
-		return "pulsed";
-        case IST_EDGE:
-		return "edge-triggered";
-        case IST_LEVEL:
-		return "level-triggered";
-	default:
-		panic("intr_typename: invalid type %d", type);
-	}
+	KASSERT((unsigned int) type < __arraycount(intr_typenames));
+	KASSERT(intr_typenames[type] != NULL);
+	return intr_typenames[type];
 }
 
 /*
