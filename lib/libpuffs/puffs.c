@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.c,v 1.41 2007/05/09 18:23:12 pooka Exp $	*/
+/*	$NetBSD: puffs.c,v 1.42 2007/05/09 18:36:52 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: puffs.c,v 1.41 2007/05/09 18:23:12 pooka Exp $");
+__RCSID("$NetBSD: puffs.c,v 1.42 2007/05/09 18:36:52 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -432,7 +432,7 @@ puffs_mainloop(struct puffs_usermount *pu, int flags)
 	    || puffs_getstate(pu) == PUFFS_STATE_UNMOUNTING) {
 		puffs_req_resetput(ppr);
 
-		if (puffs_req_handle(pu, pgr, ppr, 0) == -1) {
+		if (puffs_req_handle(pgr, ppr, 0) == -1) {
 			rv = -1;
 			break;
 		}

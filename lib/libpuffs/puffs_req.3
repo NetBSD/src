@@ -1,4 +1,4 @@
-.\"	$NetBSD: puffs_req.3,v 1.2 2007/01/20 16:49:36 wiz Exp $
+.\"	$NetBSD: puffs_req.3,v 1.3 2007/05/09 18:36:52 pooka Exp $
 .\"
 .\" Copyright (c) 2007 Antti Kantee.  All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd January 20, 2007
+.Dd May 9, 2007
 .Dt PUFFS_REQ 3
 .Os
 .Sh NAME
@@ -59,8 +59,7 @@
 .Fn puffs_req_destroyput "struct puffs_putreq *ppr"
 .Ft int
 .Fo puffs_req_handle
-.Fa "struct puffs_usermount *pu" "struct puffs_getreq *pgr"
-.Fa "struct puffs_putreq *ppr" "int maxops"
+.Fa "struct puffs_getreq *pgr" "struct puffs_putreq *ppr" "int maxops"
 .Fc
 .Ft int
 .Fo puffs_dopreq

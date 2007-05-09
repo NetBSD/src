@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.h,v 1.52 2007/05/07 17:16:07 pooka Exp $	*/
+/*	$NetBSD: puffs.h,v 1.53 2007/05/09 18:36:52 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -361,7 +361,7 @@ enum {
 #define PUFFSOP_SETFSNOP(ops, opname)					\
     (ops)->puffs_fs_##opname = puffs_fsnop_##opname
 
-#define PUFFS_DEVEL_LIBVERSION 13
+#define PUFFS_DEVEL_LIBVERSION 14
 #define puffs_mount(a,b,c,d,e,f) \
     _puffs_mount(PUFFS_DEVEL_LIBVERSION,a,b,c,d,e,f)
 #define puffs_init(a,b,c,d) \
@@ -513,8 +513,7 @@ int			puffs_req_putput(struct puffs_putreq *);
 void			puffs_req_resetput(struct puffs_putreq *);
 void			puffs_req_destroyput(struct puffs_putreq *);
 
-int			puffs_req_handle(struct puffs_usermount *,
-					 struct puffs_getreq *,
+int			puffs_req_handle(struct puffs_getreq *,
 					 struct puffs_putreq *, int);
 
 /*

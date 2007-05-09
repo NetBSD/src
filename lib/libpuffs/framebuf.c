@@ -1,4 +1,4 @@
-/*	$NetBSD: framebuf.c,v 1.3 2007/05/06 10:54:41 pooka Exp $	*/
+/*	$NetBSD: framebuf.c,v 1.4 2007/05/09 18:36:52 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: framebuf.c,v 1.3 2007/05/06 10:54:41 pooka Exp $");
+__RCSID("$NetBSD: framebuf.c,v 1.4 2007/05/09 18:36:52 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -515,7 +515,7 @@ puffs_framebuf_eventloop(struct puffs_usermount *pu, int io_fd,
 
 		/* get & possibly dispatch events from kernel */
 		if (pfds[PUFFSFD].revents & POLLIN)
-			if (puffs_req_handle(pu, pgr, ppr, 0) == -1)
+			if (puffs_req_handle(pgr, ppr, 0) == -1)
 				goto out;
 
 		/* get input from framefd, possibly build more responses */
