@@ -1,4 +1,4 @@
-/*	$NetBSD: psshfs.c,v 1.21 2007/05/09 19:54:39 tnn Exp $	*/
+/*	$NetBSD: psshfs.c,v 1.22 2007/05/09 20:25:20 tnn Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: psshfs.c,v 1.21 2007/05/09 19:54:39 tnn Exp $");
+__RCSID("$NetBSD: psshfs.c,v 1.22 2007/05/09 20:25:20 tnn Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -84,7 +84,7 @@ usage()
 {
 
 	errx(1, "usage: %s "
-	    "[-es] [-O sshopt value] [-o opts] user@host:path mountpath",
+	    "[-es] [-O sshopt=value] [-o opts] user@host:path mountpath",
 	    getprogname());
 }
 
@@ -96,7 +96,6 @@ main(int argc, char *argv[])
 	struct puffs_ops *pops;
 	mntoptparse_t mp;
 	char **sshargs;
-	char *arg;
 	char *userhost;
 	char *hostpath;
 	int mntflags, pflags, ch;
@@ -121,13 +120,8 @@ main(int argc, char *argv[])
 			exportfs = 1;
 			break;
 		case 'O':
-			if (optind == argc)
-				usage();
-			if (asprintf(&arg, "-o%s=%s", optarg,
-			    argv[optind]) == -1)
-				err(1, "asprintf");
-			add_ssharg(&sshargs, &nargs, arg);
-			optind++;
+			add_ssharg(&sshargs, &nargs, "-o");
+			add_ssharg(&sshargs, &nargs, optarg);
 			break;
 		case 'o':
 			mp = getmntopts(optarg, puffsmopts, &mntflags, &pflags);
