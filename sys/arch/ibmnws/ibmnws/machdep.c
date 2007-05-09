@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.8.14.1 2007/05/08 20:24:53 rjs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.8.14.2 2007/05/09 13:41:56 rjs Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.8.14.1 2007/05/08 20:24:53 rjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.8.14.2 2007/05/09 13:41:56 rjs Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -212,6 +212,7 @@ cpu_startup(void)
 	prep_intr_reg = (vaddr_t) mapiodev(PREP_INTR_REG, PAGE_SIZE);
 	if (!prep_intr_reg)
 		panic("startup: no room for interrupt register");
+	prep_intr_reg_off = INTR_VECTOR_REG;
 
 	/*
 	 * Do common startup.
