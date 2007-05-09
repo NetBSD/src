@@ -1,4 +1,4 @@
-.\"	$NetBSD: puffs.3,v 1.21 2007/05/09 13:54:08 pooka Exp $
+.\"	$NetBSD: puffs.3,v 1.22 2007/05/09 18:24:11 pooka Exp $
 .\"
 .\" Copyright (c) 2006, 2007 Antti Kantee.  All rights reserved.
 .\"
@@ -93,13 +93,18 @@ where they are processed and results are sent back to the kernel.
 .Pp
 It is possible to use
 .Nm
-in two different ways.
+in three different ways.
 Calling
 .Fn puffs_mainloop
 takes execution context away from the caller and automatically handles
 all requests by using the callbacks.
-Alternatively, control can be kept with the caller and operations
-handled manually.
+Using the
+.Xr puffs_framebuf 3
+functionality provides it's own, network-oriented event loop.
+Finally, control can be kept with the caller and operations
+handled manually using
+.Xr puffs_req 3
+directly.
 .Ss Library operation
 Operations on the library always require a poiter to the opaque context
 identifier,
