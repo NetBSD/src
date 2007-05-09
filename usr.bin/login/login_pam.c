@@ -1,4 +1,4 @@
-/*     $NetBSD: login_pam.c,v 1.17 2006/04/17 16:29:44 christos Exp $       */
+/*     $NetBSD: login_pam.c,v 1.18 2007/05/09 01:56:25 christos Exp $       */
 
 /*-
  * Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994
@@ -40,7 +40,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: login_pam.c,v 1.17 2006/04/17 16:29:44 christos Exp $");
+__RCSID("$NetBSD: login_pam.c,v 1.18 2007/05/09 01:56:25 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -461,9 +461,9 @@ skip_auth:
 		}
 
 		(void)printf("No home directory %s!\n", pwd->pw_dir);
-		if (chdir("/")) {
+		if (chdir("/") == -1) {
 			pam_end(pamh, PAM_SUCCESS);
-			exit(EXIT_SUCCESS);
+			exit(EXIT_FAILURE);
 		}
 		pwd->pw_dir = "/";
 		(void)printf("Logging in with home = \"/\".\n");
@@ -703,7 +703,7 @@ getloginname(void)
 		for (p = nbuf; (ch = getchar()) != '\n'; ) {
 			if (ch == EOF) {
 				badlogin(username);
-				exit(EXIT_SUCCESS);
+				exit(EXIT_FAILURE);
 			}
 			if (p < nbuf + (NBUFSIZ - 1))
 				*p++ = ch;
@@ -762,7 +762,7 @@ timedout(int signo)
 {
 
 	(void)fprintf(stderr, "Login timed out after %d seconds\n", timeout);
-	exit(EXIT_SUCCESS);
+	exit(EXIT_FAILURE);
 }
 
 static void
