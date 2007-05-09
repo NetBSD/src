@@ -1,4 +1,4 @@
-#	$NetBSD: files.mvmeppc,v 1.11 2007/04/10 02:45:46 macallan Exp $
+#	$NetBSD: files.mvmeppc,v 1.11.4.1 2007/05/09 18:23:33 garbled Exp $
 #
 # Motorola's MVMEPPC boards specific configuration info
 #
@@ -6,15 +6,16 @@ maxpartitions 8
 
 maxusers 2 8 64
 
+include "arch/powerpc/pic/files.pic"
+
 defflag	opt_mvmetype.h		SUPPORT_MVME160X
 defflag	opt_mvmetype.h		SUPPORT_MVME210X
 defflag	opt_mvmetype.h		SUPPORT_MVME230X
 defflag	opt_mvmetype.h		SUPPORT_MVME240X
 
 file	arch/mvmeppc/mvmeppc/autoconf.c
-file	arch/mvmeppc/mvmeppc/clock.c
-file	arch/mvmeppc/mvmeppc/disksubr.c		disk
-file	arch/mvmeppc/mvmeppc/extintr.c
+file	arch/powerpc/powerpc/clock.c
+file	kern/subr_disk_mbr.c			disk
 file	arch/mvmeppc/mvmeppc/machdep.c
 file	arch/mvmeppc/mvmeppc/platform.c
 file	arch/mvmeppc/mvmeppc/platform_160x.c	support_mvme160x
@@ -22,6 +23,8 @@ file	arch/mvmeppc/mvmeppc/platform_160x.c	support_mvme160x
 file	arch/powerpc/powerpc/bus_dma.c
 file	arch/powerpc/powerpc/bus_space.c
 file	arch/powerpc/powerpc/procfs_machdep.c	procfs
+file	arch/powerpc/powerpc/softintr.c
+
 # General files
 file	dev/cons.c
 
@@ -57,17 +60,20 @@ include "dev/wsfb/files.wsfb"
 #
 include "dev/i2o/files.i2o"
 include "dev/pci/files.pci"
-file	arch/mvmeppc/pci/pci_machdep.c	pci
+include "dev/pci/files.agp"
+file	arch/mvmeppc/pci/pci_machdep.c		pci
+file	arch/powerpc/pci/pci_machdep_common.c	pci
+file	arch/powerpc/pci/pciconf_indirect.c	pci
 
 # PCI-Host bridge chipsets
 device	pchb: pcibus
 attach	pchb at pci
-file	arch/mvmeppc/pci/pchb.c		pchb
+file	arch/powerpc/pci/pchb.c		pchb
 
 # PCI-ISA bridges
 device	pcib: isabus
 attach	pcib at pci
-file	arch/mvmeppc/pci/pcib.c		pcib
+file	arch/powerpc/pci/pcib.c		pcib
 
 #
 # ISA and mixed ISA+PCI drivers
@@ -75,8 +81,8 @@ file	arch/mvmeppc/pci/pcib.c		pcib
 
 include "dev/isa/files.isa"
 
-file	arch/mvmeppc/isa/isa_machdep.c	isa
-file	arch/mvmeppc/isa/isadma_machdep.c	isa
+file	arch/powerpc/isa/isa_machdep_common.c	isa
+file	arch/powerpc/isa/isadma_machdep.c	isa
 
 device	mkclock: mk48txx
 attach	mkclock at isa with mkclock_isa

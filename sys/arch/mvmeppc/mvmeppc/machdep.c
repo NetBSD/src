@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.22 2007/02/09 21:55:07 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.22.14.1 2007/05/09 18:23:34 garbled Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.22 2007/02/09 21:55:07 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.22.14.1 2007/05/09 18:23:34 garbled Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_mvmetype.h"
@@ -118,17 +118,14 @@ void mvmeppc_bus_space_init(void);
  * Global variables used here and there
  */
 struct mvmeppc_bootinfo bootinfo;
-
-vaddr_t mvmeppc_intr_reg;	/* PReP-compatible  interrupt vector register */
-
+vaddr_t prep_intr_reg;	/* PReP-compatible  interrupt vector register */
+uint32_t prep_intr_reg_off = INTR_VECTOR_REG;
 struct mem_region physmemr[2], availmemr[2];
-
 paddr_t avail_end;			/* XXX temporary */
+struct pic_ops *isa_pic;
 
 void
-initppc(startkernel, endkernel, btinfo)
-	u_long startkernel, endkernel;
-	void *btinfo;
+initppc(u_long startkernel, u_long endkernel, void *btinfo)
 {
 #if NKSYMS || defined(DDB) || defined(LKM)
 	extern void *startsym, *endsym;
@@ -184,7 +181,9 @@ initppc(startkernel, endkernel, btinfo)
 	/*
 	 * Install vectors and interrupt handler.
 	 */
-	oea_init(platform->ext_intr);
+	oea_init(NULL);
+
+	(*platform->pic_setup)();
 
 	/*
 	 * Init bus_space so consinit can work.
@@ -219,8 +218,7 @@ initppc(startkernel, endkernel, btinfo)
 }
 
 void
-mem_regions(mem, avail)
-	struct mem_region **mem, **avail;
+mem_regions(struct mem_region **mem, struct mem_region **avail)
 {
 
 	*mem = physmemr;
@@ -238,8 +236,8 @@ cpu_startup()
 	/*
 	 * Mapping PReP-compatible interrput vector register.
 	 */
-	mvmeppc_intr_reg = (vaddr_t) mapiodev(MVMEPPC_INTR_REG, PAGE_SIZE);
-	if (!mvmeppc_intr_reg)
+	prep_intr_reg = (vaddr_t) mapiodev(MVMEPPC_INTR_REG, PAGE_SIZE);
+	if (!prep_intr_reg)
 		panic("startup: no room for interrupt register");
 
 	sprintf(modelbuf, "%s\nCore Speed: %dMHz, Bus Speed: %dMHz\n",
@@ -247,6 +245,7 @@ cpu_startup()
 	    bootinfo.bi_mpuspeed/1000000,
 	    bootinfo.bi_busspeed/1000000);
 	oea_startup(modelbuf);
+	softintr__init();
 
 	/*
 	 * Now allow hardware interrupts.
@@ -312,7 +311,7 @@ dokbd:
 
 #if (NCOM > 0)
 	if (!strcmp(bootinfo.bi_consoledev, "PC16550")) {
-		bus_space_tag_t tag = &mvmeppc_isa_io_bs_tag;
+		bus_space_tag_t tag = &genppc_isa_io_space_tag;
 		static const bus_addr_t caddr[2] = {0x3f8, 0x2f8};
 		int rv;
 		rv = comcnattach(tag, caddr[bootinfo.bi_consolechan],
@@ -343,8 +342,7 @@ softserial()
  * Stray interrupts.
  */
 void
-strayintr(irq)
-	int irq;
+strayintr(int irq)
 {
 
 	log(LOG_ERR, "stray interrupt %d\n", irq);
@@ -354,9 +352,7 @@ strayintr(irq)
  * Halt or reboot the machine after syncing/dumping according to howto.
  */
 void
-cpu_reboot(howto, what)
-	int howto;
-	char *what;
+cpu_reboot(int howto, char *what)
 {
 	static int syncing;
 
@@ -407,23 +403,13 @@ halt_sys:
  * splx() differing in that it returns the previous priority level.
  */
 int
-lcsplx(ipl)
-	int ipl;
+lcsplx(int ipl)
 {
-	int oldcpl;
-
-	__asm volatile("sync; eieio\n");	/* reorder protect */
-	oldcpl = cpl;
-	cpl = ipl;
-	if (ipending & ~ipl)
-		do_pending_int();
-	__asm volatile("sync; eieio\n");	/* reorder protect */
-
-	return (oldcpl);
+	return spllower(ipl);
 }
 
 
-struct powerpc_bus_space mvmeppc_isa_io_bs_tag = {
+struct powerpc_bus_space genppc_isa_io_space_tag = {
 	_BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_IO_TYPE,
 	MVMEPPC_PHYS_BASE_IO,	/* 60x-bus address of ISA I/O Space */
 	0x00000000,		/* Corresponds to ISA-bus I/O address 0x0 */
@@ -437,7 +423,7 @@ struct powerpc_bus_space mvmeppc_pci_io_bs_tag = {
 	MVMEPPC_PHYS_SIZE_IO,	/* End of PCI-bus I/O address space, +1 */
 };
 
-struct powerpc_bus_space mvmeppc_isa_mem_bs_tag = {
+struct powerpc_bus_space genppc_isa_mem_space_tag = {
 	_BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_MEM_TYPE,
 	MVMEPPC_PHYS_BASE_MEM,	/* 60x-bus address of ISA Memory Space */
 	0x00000000,		/* Corresponds to ISA-bus Memory addr 0x0 */
@@ -469,13 +455,13 @@ mvmeppc_bus_space_init(void)
 	    EX_NOWAIT) != 0)
 		panic("mvmeppc_bus_space_init: reserving I/O hole");
 
-	mvmeppc_isa_io_bs_tag.pbs_extent = mvmeppc_pci_io_bs_tag.pbs_extent;
-	error = bus_space_init(&mvmeppc_isa_io_bs_tag, "isa_io", NULL, 0);
+	genppc_isa_io_space_tag.pbs_extent = mvmeppc_pci_io_bs_tag.pbs_extent;
+	error = bus_space_init(&genppc_isa_io_space_tag, "isa_io", NULL, 0);
 
 	error = bus_space_init(&mvmeppc_pci_mem_bs_tag, "pci_mem",
 	    ex_storage[MVMEPPC_BUS_SPACE_MEM],
 	    sizeof(ex_storage[MVMEPPC_BUS_SPACE_MEM]));
 
-	mvmeppc_isa_mem_bs_tag.pbs_extent = mvmeppc_pci_mem_bs_tag.pbs_extent;
-	error = bus_space_init(&mvmeppc_isa_mem_bs_tag, "isa_mem", NULL, 0);
+	genppc_isa_mem_space_tag.pbs_extent = mvmeppc_pci_mem_bs_tag.pbs_extent;
+	error = bus_space_init(&genppc_isa_mem_space_tag, "isa_mem", NULL, 0);
 }

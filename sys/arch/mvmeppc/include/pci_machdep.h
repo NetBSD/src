@@ -1,8 +1,11 @@
-/*	$NetBSD: pci_machdep.h,v 1.4 2005/12/11 12:18:19 christos Exp $	*/
+/*	$NetBSD: pci_machdep.h,v 1.4.38.1 2007/05/09 18:23:33 garbled Exp $	*/
 
-/*
- * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
- * Copyright (c) 1994 Charles M. Hannum.  All rights reserved.
+/*-
+ * Copyright (c) 2007 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Tim Rightnour
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -14,73 +17,41 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by Charles M. Hannum.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
- * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  */
+
 #ifndef _MACHINE_PCI_MACHDEP_H_
 #define _MACHINE_PCI_MACHDEP_H_
 
-/*
- * Machine-specific definitions for PCI autoconfiguration.
- */
-
-/*
- * Forward declarations.
- */
-struct pci_attach_args;
-
-/*
- * be-specific PCI structure and type definitions.
- * NOT TO BE USED DIRECTLY BY MACHINE INDEPENDENT CODE.
- *
- * Configuration tag; created from a {bus,device,function} triplet by
- * pci_make_tag(), and passed to pci_conf_read() and pci_conf_write().
- * We could instead always pass the {bus,device,function} triplet to
- * the read and write routines, but this would cause extra overhead.
- */
-
-/*
- * Types provided to machine-independent PCI code
- */
-typedef void *pci_chipset_tag_t;
-typedef int pcitag_t;
-typedef int pci_intr_handle_t;
+#include <powerpc/pci_machdep.h>
 
 #ifdef _KERNEL
-extern struct powerpc_bus_dma_tag pci_bus_dma_tag;
 
 /*
- * Functions provided to machine-independent PCI code.
+ * mvmeppc-specific PCI structure and type definitions.
+ * NOT TO BE USED DIRECTLY BY MACHINE INDEPENDENT CODE.
  */
-void		pci_attach_hook(struct device *, struct device *,
-		    struct pcibus_attach_args *);
-int		pci_bus_maxdevs(pci_chipset_tag_t, int);
-pcitag_t	pci_make_tag(pci_chipset_tag_t, int, int, int);
-void		pci_decompose_tag(pci_chipset_tag_t, pcitag_t,
-		    int *, int *, int *);
-pcireg_t	pci_conf_read(pci_chipset_tag_t, pcitag_t, int);
-void		pci_conf_write(pci_chipset_tag_t, pcitag_t, int, pcireg_t);
-int		pci_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
-const char	*pci_intr_string(pci_chipset_tag_t, pci_intr_handle_t);
-const struct evcnt *pci_intr_evcnt(pci_chipset_tag_t, pci_intr_handle_t);
-void		*pci_intr_establish(pci_chipset_tag_t, pci_intr_handle_t,
-		    int, int (*)(void *), void *);
-void		pci_intr_disestablish(pci_chipset_tag_t, void *);
-void		pci_conf_interrupt(pci_chipset_tag_t pc, int bus, int dev,
-		    int func, int swiz, int *iline);
+
+void mvmeppc_pci_conf_interrupt(pci_chipset_tag_t, int, int, int, int, int *);
+void mvmeppc_pci_get_chipset_tag(pci_chipset_tag_t);
+
+extern struct powerpc_bus_dma_tag pci_bus_dma_tag;
 
 #endif /* _KERNEL */
-
 #endif /* _MACHINE_PCI_MACHDEP_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.7 2005/12/11 12:18:20 christos Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.7.38.1 2007/05/09 18:23:34 garbled Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.7 2005/12/11 12:18:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.7.38.1 2007/05/09 18:23:34 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,7 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.7 2005/12/11 12:18:20 christos Exp $"
 #include <machine/pte.h>
 #include <machine/intr.h>
 
-static void findroot __P((void));
+static void findroot(void);
 
 /*
  * Determine i/o configuration for a machine.
@@ -125,4 +125,10 @@ findroot(void)
 			return;
 		}
 	}
+}
+
+void
+device_register(struct device *dev, void *aux)
+{
+	/* do nothing */
 }
