@@ -1,4 +1,4 @@
-/*	$NetBSD: psshfs.c,v 1.22 2007/05/09 20:25:20 tnn Exp $	*/
+/*	$NetBSD: psshfs.c,v 1.23 2007/05/09 21:46:27 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: psshfs.c,v 1.22 2007/05/09 20:25:20 tnn Exp $");
+__RCSID("$NetBSD: psshfs.c,v 1.23 2007/05/09 21:46:27 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -83,9 +83,10 @@ static void
 usage()
 {
 
-	errx(1, "usage: %s "
-	    "[-es] [-O sshopt=value] [-o opts] user@host:path mountpath",
+	fprintf(stderr, "usage: %s "
+	    "[-es] [-O sshopt=value] [-o opts] user@host:path mountpath\n",
 	    getprogname());
+	exit(1);
 }
 
 int
