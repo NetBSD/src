@@ -1,4 +1,4 @@
-.\"	$NetBSD: mount_psshfs.8,v 1.5 2007/04/29 10:02:56 pooka Exp $
+.\"	$NetBSD: mount_psshfs.8,v 1.6 2007/05/09 19:54:39 tnn Exp $
 .\"
 .\" Copyright (c) 2007 Antti Kantee.  All rights reserved.
 .\"
@@ -74,9 +74,12 @@ The most notable of these is
 which disables the name cache and page cache for the file system.
 It slows operations down, but will behave better when multiple
 entities are accessing the same directory tree via various routes.
-.It Fl p Ar sshport
-Make ssh connection to port
-.Ar sshport .
+.It Fl O Ar sshopt value
+Pass an option to
+.Xr ssh 1 , for example
+.Fl O Ar Port 22 .
+For a list of valid options, see
+.Xr ssh_config 5 .
 .It Fl s
 This flag can be used to make the program stay on top.
 The default is to detach from the terminal and run in the background.
@@ -86,6 +89,7 @@ The default is to detach from the terminal and run in the background.
 .Xr puffs 3 ,
 .Xr puffs 4 ,
 .Xr mount 8 ,
+.Xr ssh_config 5 ,
 .Xr sshd 8
 .Sh HISTORY
 The

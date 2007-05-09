@@ -1,4 +1,4 @@
-/*	$NetBSD: psshfs.c,v 1.20 2007/05/07 17:20:58 pooka Exp $	*/
+/*	$NetBSD: psshfs.c,v 1.21 2007/05/09 19:54:39 tnn Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: psshfs.c,v 1.20 2007/05/07 17:20:58 pooka Exp $");
+__RCSID("$NetBSD: psshfs.c,v 1.21 2007/05/09 19:54:39 tnn Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -64,14 +64,27 @@ __RCSID("$NetBSD: psshfs.c,v 1.20 2007/05/07 17:20:58 pooka Exp $");
 
 static void	pssh_connect(struct psshfs_ctx *, char **);
 static void	usage(void);
+static void	add_ssharg(char ***, int *, char *);
 
 #define SSH_PATH "/usr/bin/ssh"
+
+static void
+add_ssharg(char ***sshargs, int *nargs, char *arg)
+{
+	
+	*sshargs = realloc(*sshargs, (*nargs + 2) * sizeof(char*));
+	if (!*sshargs)
+		err(1, "realloc");
+	(*sshargs)[(*nargs)++] = arg;
+	(*sshargs)[*nargs] = NULL;
+}
 
 static void
 usage()
 {
 
-	errx(1, "usage: %s [-es] [-p port] [-o opts] user@host:path mountpath",
+	errx(1, "usage: %s "
+	    "[-es] [-O sshopt value] [-o opts] user@host:path mountpath",
 	    getprogname());
 }
 
@@ -82,34 +95,45 @@ main(int argc, char *argv[])
 	struct puffs_usermount *pu;
 	struct puffs_ops *pops;
 	mntoptparse_t mp;
-	char *sshargs[16];
+	char **sshargs;
+	char *arg;
 	char *userhost;
 	char *hostpath;
-	char *sshport = NULL;
 	int mntflags, pflags, ch;
 	int detach, exportfs;
-	int argi, x;
+	int nargs, x;
 
 	setprogname(argv[0]);
 
 	if (argc < 3)
 		usage();
 
-	mntflags = pflags = exportfs = 0;
+	mntflags = pflags = exportfs = nargs = 0;
 	detach = 1;
-	while ((ch = getopt(argc, argv, "eo:p:s")) != -1) {
+	sshargs = NULL;
+	add_ssharg(&sshargs, &nargs, SSH_PATH);
+	add_ssharg(&sshargs, &nargs, "-axs");
+	add_ssharg(&sshargs, &nargs, "-oClearAllForwardings=yes");
+
+	while ((ch = getopt(argc, argv, "eo:O:s")) != -1) {
 		switch (ch) {
 		case 'e':
 			exportfs = 1;
+			break;
+		case 'O':
+			if (optind == argc)
+				usage();
+			if (asprintf(&arg, "-o%s=%s", optarg,
+			    argv[optind]) == -1)
+				err(1, "asprintf");
+			add_ssharg(&sshargs, &nargs, arg);
+			optind++;
 			break;
 		case 'o':
 			mp = getmntopts(optarg, puffsmopts, &mntflags, &pflags);
 			if (mp == NULL)
 				err(1, "getmntopts");
 			freemntopts(mp);
-			break;
-		case 'p':
-			sshport = optarg;
 			break;
 		case 's':
 			detach = 0;
@@ -171,20 +195,8 @@ main(int argc, char *argv[])
 	} else
 		pctx.mountpath = ".";
 
-	/* xblah */
-	argi = 0;
-	sshargs[argi++] = SSH_PATH;
-	sshargs[argi++] = argv[0];
-	sshargs[argi++] = "-oClearAllForwardings=yes";
-	sshargs[argi++] = "-a";
-	sshargs[argi++] = "-x";
-	sshargs[argi++] = "-s";
-	if (sshport) {
-		sshargs[argi++] = "-p";
-		sshargs[argi++] = sshport;
-	}
-	sshargs[argi++] = "sftp";
-	sshargs[argi] = 0;
+	add_ssharg(&sshargs, &nargs, argv[0]);
+	add_ssharg(&sshargs, &nargs, "sftp");
 
 	pu = puffs_init(pops, "ppshfs", &pctx, pflags);
 	if (pu == NULL)
