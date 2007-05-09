@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.9 2005/12/11 12:18:20 christos Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.9.38.1 2007/05/09 18:23:35 garbled Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.9 2005/12/11 12:18:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.9.38.1 2007/05/09 18:23:35 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/extent.h>
@@ -46,6 +46,8 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.9 2005/12/11 12:18:20 christos Exp $")
 #include "opt_pci.h"
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pciconf.h>
+#include <machine/pci_machdep.h>
+#include <machine/isa_machdep.h>
 
 int	mainbus_match(struct device *, struct cfdata *, void *);
 void	mainbus_attach(struct device *, struct device *, void *);
@@ -58,6 +60,8 @@ int	mainbus_print(void *, const char *);
 
 /* There can be only one */
 static int mainbus_found;
+struct powerpc_isa_chipset genppc_ict;
+struct genppc_pci_chipset *genppc_pct;
 
 /*
  * Probe for the mainbus; always succeeds.
@@ -84,13 +88,16 @@ mainbus_attach(parent, self, aux)
 	void *aux;
 {
 	struct pcibus_attach_args pba;
+#if NPCI > 0
+	struct genppc_pci_chipset_businfo *pbi;
+#endif
 #ifdef PCI_NETBSD_CONFIGURE
 	struct extent *ioext, *memext;
 #endif
 
 	mainbus_found = 1;
 
-	printf("\n");
+	aprint_normal("\n");
 
 	/* attach cpu */
 	config_found_ia(self, "mainbus", NULL, mainbus_print);
@@ -102,6 +109,20 @@ mainbus_attach(parent, self, aux)
 	 * XXX that's not currently possible.
 	 */
 #if NPCI > 0
+	genppc_pct = malloc(sizeof(struct genppc_pci_chipset), M_DEVBUF,
+	    M_NOWAIT);
+	KASSERT(genppc_pct != NULL);
+	mvmeppc_pci_get_chipset_tag(genppc_pct);
+
+	pbi = malloc(sizeof(struct genppc_pci_chipset_businfo),
+	    M_DEVBUF, M_NOWAIT);
+	KASSERT(pbi != NULL);
+	pbi->pbi_properties = prop_dictionary_create();
+	KASSERT(pbi->pbi_properties != NULL);
+
+	SIMPLEQ_INIT(&genppc_pct->pc_pbi);
+	SIMPLEQ_INSERT_TAIL(&genppc_pct->pc_pbi, pbi, next);
+
 #ifdef PCI_NETBSD_CONFIGURE
 	ioext  = extent_create("pciio",  0x00008000, 0x0000ffff, M_DEVBUF,
 	    NULL, 0, EX_NOWAIT);
@@ -118,6 +139,7 @@ mainbus_attach(parent, self, aux)
 	pba.pba_memt = &mvmeppc_pci_mem_bs_tag;
 	pba.pba_dmat = &pci_bus_dma_tag;
 	pba.pba_dmat64 = NULL;
+	pba.pba_pc = genppc_pct;
 	pba.pba_bus = 0;
 	pba.pba_bridgetag = NULL;
 	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;

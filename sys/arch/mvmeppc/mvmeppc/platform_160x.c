@@ -1,4 +1,4 @@
-/*	$NetBSD: platform_160x.c,v 1.5 2005/12/11 12:18:20 christos Exp $	*/
+/*	$NetBSD: platform_160x.c,v 1.5.38.1 2007/05/09 18:23:35 garbled Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: platform_160x.c,v 1.5 2005/12/11 12:18:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: platform_160x.c,v 1.5.38.1 2007/05/09 18:23:35 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -48,17 +48,19 @@ __KERNEL_RCSID(0, "$NetBSD: platform_160x.c,v 1.5 2005/12/11 12:18:20 christos E
 #include <machine/bootinfo.h>
 #include <machine/pio.h>
 #include <machine/platform.h>
+#include <arch/powerpc/pic/picvar.h>
 
 static int	p160x_match(struct platform *);
 static void	p160x_pci_intr_fixup(int, int, int *);
 static void	p160x_cpu_setup(struct device *);
 static void	p160x_reset(void);
+static void	p160x_pic_setup(void);
 
 struct platform	platform_160x = {
 	NULL,
+	p160x_pic_setup,
 	p160x_match,
 	p160x_pci_intr_fixup,
-	ext_intr,
 	p160x_cpu_setup,
 	p160x_reset
 };
@@ -87,6 +89,8 @@ static u_int32_t p160x_dram_size[] = {
 	0x08000000, 0x02000000, 0x00800000, 0x00000000,
 	0x10000000, 0x04000000, 0x01000000, 0x00000000
 };
+
+extern struct pic_ops *isa_pic;
 
 static int
 p160x_match(struct platform *p)
@@ -138,6 +142,16 @@ static void
 p160x_cpu_setup(struct device *dev)
 {
 }
+
+static void
+p160x_pic_setup(void)
+{
+	pic_init();
+	/* I really wonder if this shouldn't be prepivr instead */
+	isa_pic = setup_i8259();
+	oea_install_extint(pic_ext_intr);
+}
+
 
 static void
 p160x_reset(void)

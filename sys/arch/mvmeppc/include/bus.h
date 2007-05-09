@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.4 2005/12/11 12:18:19 christos Exp $	*/
+/*	$NetBSD: bus.h,v 1.4.38.1 2007/05/09 18:23:33 garbled Exp $	*/
 
 /*-
  * Copyright (c) 200e The NetBSD Foundation, Inc.
@@ -61,8 +61,8 @@
 #define	MVMEPPC_BUS_SPACE_NUM_REGIONS	2
 
 #ifdef _KERNEL
-extern struct powerpc_bus_space mvmeppc_isa_io_bs_tag;
-extern struct powerpc_bus_space mvmeppc_isa_mem_bs_tag;
+extern struct powerpc_bus_space genppc_isa_io_space_tag;
+extern struct powerpc_bus_space genppc_isa_mem_space_tag;
 extern struct powerpc_bus_space mvmeppc_pci_io_bs_tag;
 extern struct powerpc_bus_space mvmeppc_pci_mem_bs_tag;
 #endif
