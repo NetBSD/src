@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia_codec.c,v 1.38 2007/05/08 05:18:20 kent Exp $	*/
+/*	$NetBSD: azalia_codec.c,v 1.39 2007/05/10 05:44:37 kent Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia_codec.c,v 1.38 2007/05/08 05:18:20 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia_codec.c,v 1.39 2007/05/10 05:44:37 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -2973,13 +2973,18 @@ stac9200_mixer_init(codec_t *this)
 	mc.un.value.level[1] = mc.un.value.level[0];
 	generic_mixer_set(this, 0x0c, MI_TARGET_OUTAMP, &mc);
 
+#define STAC9220_DELL_INSPIRON6400_ID	0x01bd1028
 #define STAC9200_DELL_INSPIRON9400_ID	0x01cd1028
 #define STAC9200_DELL_640M_ID		0x01d81028
 #define STAC9200_EVENT_HP	0
 #define STAC9200_NID_HP		0x0d
 #define STAC9200_NID_SPEAKER	0x0e
 	if (this->subid == STAC9200_DELL_INSPIRON9400_ID ||
+	    this->subid == STAC9200_DELL_INSPIRON9400_ID ||
 	    this->subid == STAC9200_DELL_640M_ID) {
+		/* Does every DELL model have the same pin configuration?
+		 * I'm not sure. */
+
 		/* setup a unsolicited event for the headphones */
 		this->comresp(this, STAC9200_NID_HP, CORB_SET_UNSOLICITED_RESPONSE,
 		    CORB_UNSOL_ENABLE | STAC9200_EVENT_HP, NULL);
