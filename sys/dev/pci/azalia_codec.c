@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia_codec.c,v 1.40 2007/05/10 07:34:59 sketch Exp $	*/
+/*	$NetBSD: azalia_codec.c,v 1.41 2007/05/10 07:48:16 sketch Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia_codec.c,v 1.40 2007/05/10 07:34:59 sketch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia_codec.c,v 1.41 2007/05/10 07:48:16 sketch Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -2973,7 +2973,7 @@ stac9200_mixer_init(codec_t *this)
 	mc.un.value.level[1] = mc.un.value.level[0];
 	generic_mixer_set(this, 0x0c, MI_TARGET_OUTAMP, &mc);
 
-#define STAC9220_DELL_INSPIRON6400_ID	0x01bd1028
+#define STAC9200_DELL_INSPIRON6400_ID	0x01bd1028
 #define STAC9200_DELL_INSPIRON9400_ID	0x01cd1028
 #define STAC9200_DELL_640M_ID		0x01d81028
 #define STAC9200_EVENT_HP	0
