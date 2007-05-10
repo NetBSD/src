@@ -1,4 +1,4 @@
-/*	$NetBSD: getaddrinfo.c,v 1.87 2006/10/15 16:14:46 christos Exp $	*/
+/*	$NetBSD: getaddrinfo.c,v 1.88 2007/05/10 18:44:24 christos Exp $	*/
 /*	$KAME: getaddrinfo.c,v 1.29 2000/08/31 17:26:57 itojun Exp $	*/
 
 /*
@@ -55,7 +55,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getaddrinfo.c,v 1.87 2006/10/15 16:14:46 christos Exp $");
+__RCSID("$NetBSD: getaddrinfo.c,v 1.88 2007/05/10 18:44:24 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -1148,11 +1148,13 @@ getanswer(const querybuf *answer, int anslen, const char *qname, int qtype,
 				continue;
 			}
 		} else if (type != qtype) {
-			if (type != T_KEY && type != T_SIG)
-				syslog(LOG_NOTICE|LOG_AUTH,
+			if (type != T_KEY && type != T_SIG) {
+				struct syslog_data sd = SYSLOG_DATA_INIT;
+				syslog_r(LOG_NOTICE|LOG_AUTH, &sd,
 	       "gethostby*.getanswer: asked for \"%s %s %s\", got type \"%s\"",
 				       qname, p_class(C_IN), p_type(qtype),
 				       p_type(type));
+			}
 			cp += n;
 			continue;		/* XXX - had_error++ ? */
 		}
@@ -1160,7 +1162,8 @@ getanswer(const querybuf *answer, int anslen, const char *qname, int qtype,
 		case T_A:
 		case T_AAAA:
 			if (strcasecmp(canonname, bp) != 0) {
-				syslog(LOG_NOTICE|LOG_AUTH,
+				struct syslog_data sd = SYSLOG_DATA_INIT;
+				syslog_r(LOG_NOTICE|LOG_AUTH, &sd,
 				       AskedForGot, canonname, bp);
 				cp += n;
 				continue;	/* XXX - had_error++ ? */
