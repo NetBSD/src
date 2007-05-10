@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.148 2007/04/18 01:50:45 lukem Exp $	*/
+/*	$NetBSD: ftp.c,v 1.149 2007/05/10 05:17:10 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-2007 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.148 2007/04/18 01:50:45 lukem Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.149 2007/05/10 05:17:10 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -567,20 +567,104 @@ abortxfer(int notused)
 	siglongjmp(xferabort, 1);
 }
 
+/*
+ * Read data from infd & write to outfd, using buf/bufsize as the temporary
+ * buffer, dealing with short writes.
+ * If rate_limit != 0, rate-limit the transfer.
+ * If hash_interval != 0, fputc('c', ttyout) every hash_interval bytes.
+ * Updates global variables: bytes.
+ * Returns 0 if ok, 1 if there was a read error, 2 if there was a write error.
+ * In the case of error, errno contains the appropriate error code.
+ */
+static int
+copy_bytes(int infd, int outfd, char *buf, size_t bufsize,
+	int rate_limit, int hash_interval)
+{
+	volatile off_t	hashc;
+	ssize_t		inc, outc;
+	char		*bufp;
+	struct timeval	tvthen, tvnow, tvdiff;
+	off_t		bufrem, bufchunk;
+	int		serr;
+
+	hashc = hash_interval;
+	if (rate_limit)
+		bufchunk = rate_limit;
+	else
+		bufchunk = bufsize;
+
+	while (1) {
+		if (rate_limit) {
+			(void)gettimeofday(&tvthen, NULL);
+		}
+		errno = 0;
+		inc = outc = 0;
+					/* copy bufchunk at a time */
+		bufrem = bufchunk;
+		while (bufrem > 0) {
+			inc = read(infd, buf, MIN(bufsize, bufrem));
+			if (inc <= 0)
+				goto copy_done;
+			bytes += inc;
+			bufrem -= inc;
+			bufp = buf;
+			while (inc > 0) {
+				outc = write(outfd, bufp, inc);
+				if (outc < 0)
+					goto copy_done;
+				inc -= outc;
+				bufp += outc;
+			}
+			if (hash_interval) {
+				while (bytes >= hashc) {
+					(void)putc('#', ttyout);
+					hashc += hash_interval;
+				}
+				(void)fflush(ttyout);
+			}
+		}
+		if (rate_limit) {	/* rate limited; wait if necessary */
+			while (1) {
+				(void)gettimeofday(&tvnow, NULL);
+				timersub(&tvnow, &tvthen, &tvdiff);
+				if (tvdiff.tv_sec > 0)
+					break;
+				usleep(1000000 - tvdiff.tv_usec);
+			}
+		}
+	}
+
+ copy_done:
+	serr = errno;
+	if (hash_interval && bytes > 0) {
+		if (bytes < hash_interval)
+			(void)putc('#', ttyout);
+		(void)putc('\n', ttyout);
+		(void)fflush(ttyout);
+	}
+	errno = serr;
+	if (inc == -1)
+		return 1;
+	if (outc == -1)
+		return 2;
+
+	return 0;
+}
+
 void
 sendrequest(const char *cmd, const char *local, const char *remote,
 	    int printnames)
 {
 	struct stat st;
-	int c, d;
+	int c;
 	FILE *volatile fin;
 	FILE *volatile dout;
 	int (*volatile closefunc)(FILE *);
 	sigfunc volatile oldintr;
 	sigfunc volatile oldintp;
 	off_t volatile hashbytes;
+	int hash_interval;
 	char *volatile lmode;
-	char *bufp;
 	static size_t bufsize;
 	static char *buf;
 	int oprogress;
@@ -693,79 +777,17 @@ sendrequest(const char *cmd, const char *local, const char *remote,
 
 	progressmeter(-1);
 	oldintp = xsignal(SIGPIPE, SIG_IGN);
+	hash_interval = (hash && (!progress || filesize < 0)) ? mark : 0;
 
 	switch (curtype) {
 
 	case TYPE_I:
 	case TYPE_L:
-		if (rate_put) {		/* rate limited */
-			while (1) {
-				struct timeval then, now, td;
-				off_t bufrem;
-
-				(void)gettimeofday(&then, NULL);
-				errno = c = d = 0;
-				bufrem = rate_put;
-				while (bufrem > 0) {
-					if ((c = read(fileno(fin), buf,
-					    MIN(bufsize, bufrem))) <= 0)
-						goto senddone;
-					bytes += c;
-					bufrem -= c;
-					for (bufp = buf; c > 0;
-					    c -= d, bufp += d)
-						if ((d = write(fileno(dout),
-						    bufp, c)) <= 0)
-							break;
-					if (d < 0)
-						goto senddone;
-					if (hash &&
-					    (!progress || filesize < 0) ) {
-						while (bytes >= hashbytes) {
-							(void)putc('#', ttyout);
-							hashbytes += mark;
-						}
-						(void)fflush(ttyout);
-					}
-				}
-				while (1) {
-					(void)gettimeofday(&now, NULL);
-					timersub(&now, &then, &td);
-					if (td.tv_sec > 0)
-						break;
-					usleep(1000000 - td.tv_usec);
-				}
-			}
-		} else {		/* simpler/faster; no rate limit */
-			while (1) {
-				errno = c = d = 0;
-				if ((c = read(fileno(fin), buf, bufsize)) <= 0)
-					goto senddone;
-				bytes += c;
-				for (bufp = buf; c > 0; c -= d, bufp += d)
-					if ((d = write(fileno(dout), bufp, c))
-					    <= 0)
-						break;
-				if (d < 0)
-					goto senddone;
-				if (hash && (!progress || filesize < 0) ) {
-					while (bytes >= hashbytes) {
-						(void)putc('#', ttyout);
-						hashbytes += mark;
-					}
-					(void)fflush(ttyout);
-				}
-			}
-		}
- senddone:
-		if (hash && (!progress || filesize < 0) && bytes > 0) {
-			if (bytes < mark)
-				(void)putc('#', ttyout);
-			(void)putc('\n', ttyout);
-		}
-		if (c < 0)
+		c = copy_bytes(fileno(fin), fileno(dout), buf, bufsize,
+			       rate_put, hash_interval);
+		if (c == 1) {
 			warn("Reading `%s'", local);
-		if (d < 0) {
+		} else if (c == 2) {
 			if (errno != EPIPE)
 				warn("Writing to network");
 			bytes = -1;
@@ -775,8 +797,7 @@ sendrequest(const char *cmd, const char *local, const char *remote,
 	case TYPE_A:
 		while ((c = getc(fin)) != EOF) {
 			if (c == '\n') {
-				while (hash && (!progress || filesize < 0) &&
-				    (bytes >= hashbytes)) {
+				while (hash_interval && bytes >= hashbytes) {
 					(void)putc('#', ttyout);
 					(void)fflush(ttyout);
 					hashbytes += mark;
@@ -795,7 +816,7 @@ sendrequest(const char *cmd, const char *local, const char *remote,
 			}
 #endif
 		}
-		if (hash && (!progress || filesize < 0)) {
+		if (hash_interval) {
 			if (bytes < hashbytes)
 				(void)putc('#', ttyout);
 			(void)putc('\n', ttyout);
@@ -876,6 +897,7 @@ recvrequest(const char *cmd, const char *volatile local, const char *remote,
 	static size_t bufsize;
 	static char *buf;
 	off_t volatile hashbytes;
+	int hash_interval;
 	struct stat st;
 	time_t mtime;
 	struct timeval tval[2];
@@ -1015,6 +1037,7 @@ recvrequest(const char *cmd, const char *volatile local, const char *remote,
 	}
 
 	progressmeter(-1);
+	hash_interval = (hash && (!progress || filesize < 0)) ? mark : 0;
 
 	switch (curtype) {
 
@@ -1025,73 +1048,14 @@ recvrequest(const char *cmd, const char *volatile local, const char *remote,
 			warn("Can't seek to restart `%s'", local);
 			goto cleanuprecv;
 		}
-		if (rate_get) {		/* rate limiting */
-			while (1) {
-				struct timeval then, now, td;
-				off_t bufrem;
-
-				(void)gettimeofday(&then, NULL);
-				errno = c = d = 0;
-				for (bufrem = rate_get; bufrem > 0; ) {
-					if ((c = read(fileno(din), buf,
-					    MIN(bufsize, bufrem))) <= 0)
-						goto recvdone;
-					bytes += c;
-					bufrem -=c;
-					if ((d = write(fileno(fout), buf, c))
-					    != c)
-						goto recvdone;
-					if (hash &&
-					    (!progress || filesize < 0)) {
-						while (bytes >= hashbytes) {
-							(void)putc('#', ttyout);
-							hashbytes += mark;
-						}
-						(void)fflush(ttyout);
-					}
-				}
-					/* sleep until time is up */
-				while (1) {
-					(void)gettimeofday(&now, NULL);
-					timersub(&now, &then, &td);
-					if (td.tv_sec > 0)
-						break;
-					usleep(1000000 - td.tv_usec);
-				}
-			}
-		} else {		/* faster code (no limiting) */
-			while (1) {
-				errno = c = d = 0;
-				if ((c = read(fileno(din), buf, bufsize)) <= 0)
-					goto recvdone;
-				bytes += c;
-				if ((d = write(fileno(fout), buf, c)) != c)
-					goto recvdone;
-				if (hash && (!progress || filesize < 0)) {
-					while (bytes >= hashbytes) {
-						(void)putc('#', ttyout);
-						hashbytes += mark;
-					}
-					(void)fflush(ttyout);
-				}
-			}
-		}
- recvdone:
-		if (hash && (!progress || filesize < 0) && bytes > 0) {
-			if (bytes < mark)
-				(void)putc('#', ttyout);
-			(void)putc('\n', ttyout);
-		}
-		if (c < 0) {
+		c = copy_bytes(fileno(din), fileno(fout), buf, bufsize,
+			       rate_get, hash_interval);
+		if (c == 1) {
 			if (errno != EPIPE)
 				warn("Reading from network");
 			bytes = -1;
-		}
-		if (d < c) {
-			if (d < 0)
-				warn("Writing `%s'", local);
-			else
-				warnx("Writing `%s': short write", local);
+		} else if (c == 2) {
+			warn("Writing `%s'", local);
 		}
 		break;
 
@@ -1118,8 +1082,7 @@ recvrequest(const char *cmd, const char *volatile local, const char *remote,
 			if (c == '\n')
 				bare_lfs++;
 			while (c == '\r') {
-				while (hash && (!progress || filesize < 0) &&
-				    (bytes >= hashbytes)) {
+				while (hash_interval && bytes >= hashbytes) {
 					(void)putc('#', ttyout);
 					(void)fflush(ttyout);
 					hashbytes += mark;
@@ -1142,7 +1105,7 @@ recvrequest(const char *cmd, const char *volatile local, const char *remote,
 	contin2:	;
 		}
  break2:
-		if (hash && (!progress || filesize < 0)) {
+		if (hash_interval) {
 			if (bytes < hashbytes)
 				(void)putc('#', ttyout);
 			(void)putc('\n', ttyout);
