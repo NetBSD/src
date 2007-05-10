@@ -1,4 +1,4 @@
-/*	$NetBSD: mkheaders.c,v 1.10 2007/01/13 23:47:36 christos Exp $	*/
+/*	$NetBSD: mkheaders.c,v 1.11 2007/05/10 21:01:14 dsl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -103,10 +103,10 @@ fprint_global(FILE *fp, const char *name, unsigned int value)
 {
 	fprintf(fp, "#ifdef _LOCORE\n"
 	    " .global _KERNEL_OPT_%s\n"
-	    " .set _KERNEL_OPT_%s,0x%x\n"
+	    " .equ _KERNEL_OPT_%s,0x%x\n"
 	    "#else\n"
 	    "__asm(\" .global _KERNEL_OPT_%s\\n"
-	    " .set _KERNEL_OPT_%s,0x%x\");\n"
+	    " .equ _KERNEL_OPT_%s,0x%x\");\n"
 	    "#endif\n",
 	    name, name, value,
 	    name, name, value);
