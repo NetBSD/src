@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.35.14.6 2007/05/10 15:25:39 garbled Exp $	*/
+/*	$NetBSD: machdep.c,v 1.35.14.7 2007/05/10 16:23:37 garbled Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.35.14.6 2007/05/10 15:25:39 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.35.14.7 2007/05/10 16:23:37 garbled Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -245,11 +245,6 @@ cpu_startup(void)
 	(void)setup_openpic(baseaddr, 0);
 #endif
 	oea_install_extint(pic_ext_intr);
-
-	/*
-	 * Initialize soft interrupt framework.
-	 */
-	softintr__init();
 
 	/*
 	 * Now that we have VM, malloc()s are OK in bus_space.

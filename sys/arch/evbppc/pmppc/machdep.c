@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.1.2.2 2007/05/10 15:25:37 garbled Exp $	*/
+/*	$NetBSD: machdep.c,v 1.1.2.3 2007/05/10 16:23:37 garbled Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1.2.2 2007/05/10 15:25:37 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1.2.3 2007/05/10 16:23:37 garbled Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -283,11 +283,8 @@ mem_regions(struct mem_region **mem, struct mem_region **avail)
 void
 cpu_startup()
 {
-/*	int msr;*/
 
 	oea_startup(NULL);
-
-	softintr__init();
 
 	/*
 	 * Now that we have VM, malloc()s are OK in bus_space.
