@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.127 2007/02/18 18:16:24 christos Exp $	*/
+/*	$NetBSD: namespace.h,v 1.128 2007/05/10 11:52:28 he Exp $	*/
 
 /*-
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -524,6 +524,7 @@
 #define signal			_signal
 #define sl_add			_sl_add
 #define sl_create		_sl_create
+#define sl_delete		_sl_delete
 #define sl_find			_sl_find
 #define sl_free			_sl_free
 #define sl_init			_sl_init
