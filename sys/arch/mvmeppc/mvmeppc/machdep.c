@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.22.14.1 2007/05/09 18:23:34 garbled Exp $	*/
+/*	$NetBSD: machdep.c,v 1.22.14.2 2007/05/10 15:25:38 garbled Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.22.14.1 2007/05/09 18:23:34 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.22.14.2 2007/05/10 15:25:38 garbled Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_mvmetype.h"
@@ -109,8 +109,6 @@ void comsoft(void);
 #include "ksyms.h"
 
 void initppc(u_long, u_long, void *);
-void strayintr(int);
-int lcsplx(int);
 void mvmeppc_bus_space_init(void);
 
 
@@ -327,28 +325,6 @@ dokbd:
 }
 
 /*
- * Soft tty interrupts.
- */
-void
-softserial()
-{
-
-#if (NCOM > 0)
-	comsoft();
-#endif
-}
-
-/*
- * Stray interrupts.
- */
-void
-strayintr(int irq)
-{
-
-	log(LOG_ERR, "stray interrupt %d\n", irq);
-}
-
-/*
  * Halt or reboot the machine after syncing/dumping according to howto.
  */
 void
@@ -397,17 +373,6 @@ halt_sys:
 		continue;
 	/* NOTREACHED */
 }
-
-/*
- * lcsplx() is called from locore; it is an open-coded version of
- * splx() differing in that it returns the previous priority level.
- */
-int
-lcsplx(int ipl)
-{
-	return spllower(ipl);
-}
-
 
 struct powerpc_bus_space genppc_isa_io_space_tag = {
 	_BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_IO_TYPE,
