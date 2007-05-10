@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sysctl.c,v 1.28 2007/05/06 23:25:26 christos Exp $	*/
+/*	$NetBSD: linux_sysctl.c,v 1.29 2007/05/10 17:12:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sysctl.c,v 1.28 2007/05/06 23:25:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sysctl.c,v 1.29 2007/05/10 17:12:32 christos Exp $");
 
 #if defined (_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -116,11 +116,11 @@ SYSCTL_SETUP(linux_sysctl_setup, "linux emulated sysctl subtree setup")
 		       NULL, 0, linux_version, sizeof(linux_version),
 		       LINUX_KERN_VERSION, CTL_EOL);
 
-#if 0
 #ifndef LINUX_UNAME_ARCH
 #define LINUX_UNAME_ARCH machine
 #endif
 	strlcpy(linux_machine, LINUX_UNAME_ARCH, sizeof(linux_machine));
+#if 0
 	sysctl_createv(clog, 0, &node, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRING, "machine", NULL,
