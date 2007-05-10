@@ -1,4 +1,4 @@
-/*	$NetBSD: pceb.c,v 1.1.40.1 2007/05/01 19:18:59 garbled Exp $	*/
+/*	$NetBSD: pceb.c,v 1.1.40.2 2007/05/10 15:46:08 garbled Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pceb.c,v 1.1.40.1 2007/05/01 19:18:59 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pceb.c,v 1.1.40.2 2007/05/10 15:46:08 garbled Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -107,14 +107,14 @@ pcebattach(struct device *parent, struct device *self, void *aux)
 	char devinfo[256];
 	int error;
 
-	printf("\n");
+	aprint_normal("\n");
 
 	/*
 	 * Just print out a description and defer configuration
 	 * until all PCI devices have been attached.
 	 */
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
-	printf("%s: %s (rev. 0x%02x)\n", self->dv_xname, devinfo,
+	aprint_normal("%s: %s (rev. 0x%02x)\n", self->dv_xname, devinfo,
 	    PCI_REVISION(pa->pa_class));
 
 	prep_eisa_io_space_tag.pbs_extent = prep_io_space_tag.pbs_extent;

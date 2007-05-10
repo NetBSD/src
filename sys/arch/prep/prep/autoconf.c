@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.20.2.1 2007/05/10 15:25:39 garbled Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.20.2.2 2007/05/10 15:46:08 garbled Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.20.2.1 2007/05/10 15:25:39 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.20.2.2 2007/05/10 15:46:08 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,7 +91,7 @@ cpu_rootconf(void)
 {
 	findroot();
 
-	printf("boot device: %s\n",
+	aprint_normal("boot device: %s\n",
 	    booted_device ? booted_device->dv_xname : "<unknown>");
 
 	setroot(booted_device, booted_partition);

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.66.14.7 2007/05/10 15:25:39 garbled Exp $	*/
+/*	$NetBSD: machdep.c,v 1.66.14.8 2007/05/10 15:46:09 garbled Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.66.14.7 2007/05/10 15:25:39 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.66.14.8 2007/05/10 15:46:09 garbled Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -143,7 +143,7 @@ initppc(u_long startkernel, u_long endkernel, u_int args, void *btinfo)
 		} else
 			panic("No residual data.");
 	}
-	printf("got residual data\n");
+	aprint_normal("got residual data\n");
 
 	/*
 	 * Set memory region

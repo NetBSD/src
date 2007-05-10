@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.31.4.3 2007/05/09 09:02:52 garbled Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.31.4.4 2007/05/10 15:46:08 garbled Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.31.4.3 2007/05/09 09:02:52 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.31.4.4 2007/05/10 15:46:08 garbled Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -200,7 +200,7 @@ prep_pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 	if (pin == 0)
 		goto bad;
 	if (pin > 4) {
-		printf("pci_intr_map: bad interrupt pin %d\n", pin);
+		aprint_error("pci_intr_map: bad interrupt pin %d\n", pin);
 		goto bad;
 	}
 
@@ -229,15 +229,17 @@ prep_pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 	* the BIOS has not configured the device.
 	*/
 	if (line == 0 || line == 255) {
-		printf("pci_intr_map: no mapping for pin %c\n", '@' + pin);
+		aprint_error("pci_intr_map: no mapping for pin %c\n",
+		    '@' + pin);
 		goto bad;
 	} else {
 		if (line >= ICU_LEN) {
-			printf("pci_intr_map: bad interrupt line %d\n", line);
+			aprint_error("pci_intr_map: bad interrupt line %d\n",
+			    line);
 			goto bad;
 		}
 		if (line == IRQ_SLAVE) {
-			printf("pci_intr_map: changed line 2 to line 9\n");
+			aprint_verbose("pci_intr_map: changed line 2 to line 9\n");
 			line = 9;
 		}
 	}

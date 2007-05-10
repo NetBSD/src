@@ -1,4 +1,4 @@
-/*	$NetBSD: prep_pciconf_direct.c,v 1.5.24.1 2007/05/01 08:55:18 garbled Exp $	*/
+/*	$NetBSD: prep_pciconf_direct.c,v 1.5.24.2 2007/05/10 15:46:08 garbled Exp $	*/
 
 /*
  * Copyright (c) 2002 Klaus J. Klein.  All rights reserved.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: prep_pciconf_direct.c,v 1.5.24.1 2007/05/01 08:55:18 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: prep_pciconf_direct.c,v 1.5.24.2 2007/05/10 15:46:08 garbled Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -65,7 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: prep_pciconf_direct.c,v 1.5.24.1 2007/05/01 08:55:18
 #include <prop/proplib.h>
 
 #ifdef DEBUG
-#define        DPRINTF(x) printf x
+#define        DPRINTF(x) aprint_debug x
 #else
 #define        DPRINTF(x)
 #endif
@@ -121,7 +121,7 @@ prep_pci_direct_attach_hook(struct device *parent, struct device *self,
 {
 
 	if (pba->pba_bus == 0)
-		printf(": direct-mapped configuration space access");
+		aprint_normal(": direct-mapped configuration space access");
 }
 
 pcitag_t
