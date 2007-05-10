@@ -1,4 +1,4 @@
-/*	$NetBSD: arcemu.c,v 1.14 2007/05/10 17:27:05 rumble Exp $	*/
+/*	$NetBSD: arcemu.c,v 1.15 2007/05/10 17:45:58 rumble Exp $	*/
 
 /*
  * Copyright (c) 2004 Steve Rumble 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arcemu.c,v 1.14 2007/05/10 17:27:05 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arcemu.c,v 1.15 2007/05/10 17:45:58 rumble Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,7 +111,7 @@ arcemu_init(const char **env)
 {
 	switch (arcemu_identify()) {
 	case MACH_SGI_IP12:
-		arcemu_ip12_init(env);
+		arcemu_ip12_init(ARCEMU_IP12_ENVOK(env) ? env : NULL);
 		break;
 
 	default:
