@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.5.26.1 2007/05/08 20:24:54 rjs Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.5.26.2 2007/05/10 17:23:06 garbled Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -130,8 +130,8 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 #endif
 
 	bzero(&mba, sizeof(mba));
-	mba.mba_pba.pba_iot = &ibmnws_io_space_tag;
-	mba.mba_pba.pba_memt = &ibmnws_mem_space_tag;
+	mba.mba_pba.pba_iot = &prep_io_space_tag;
+	mba.mba_pba.pba_memt = &prep_mem_space_tag;
 	mba.mba_pba.pba_dmat = &pci_bus_dma_tag;
 	mba.mba_pba.pba_dmat64 = NULL;
 	mba.mba_pba.pba_pc = genppc_pct;

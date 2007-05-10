@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.7.38.2 2007/05/10 15:25:38 garbled Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.7.38.3 2007/05/10 17:23:06 garbled Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.7.38.2 2007/05/10 15:25:38 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.7.38.3 2007/05/10 17:23:06 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,7 +77,7 @@ cpu_rootconf()
 {
 	findroot();
 
-	printf("boot device: %s\n",
+	aprint_normal("boot device: %s\n",
 	    booted_device ? booted_device->dv_xname : "<unknown>");
 
 	setroot(booted_device, booted_partition);
@@ -99,7 +99,7 @@ findroot(void)
 	const char *name;
 
 #if 0
-	printf("howto %x bootdev %x ", boothowto, bootdev);
+	aprint_normal("howto %x bootdev %x ", boothowto, bootdev);
 #endif
 
 	if ((bootdev & B_MAGICMASK) != (u_long)B_DEVMAGIC)

@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.2.38.1 2007/05/08 20:24:53 rjs Exp $	*/
+/*	$NetBSD: consinit.c,v 1.2.38.2 2007/05/10 17:23:05 garbled Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -89,7 +89,7 @@ consinit(void)
 #if (NVGA > 0)
 	if (!strcmp(CONSOLE, "vga")) {
 #if (NVGA > 0)
-		if (!vga_cnattach(&ibmnws_io_space_tag, &ibmnws_mem_space_tag, -1, 1))
+		if (!vga_cnattach(&prep_io_space_tag, &prep_mem_space_tag, -1, 1))
 			goto dokbd;
 #endif
 dokbd:

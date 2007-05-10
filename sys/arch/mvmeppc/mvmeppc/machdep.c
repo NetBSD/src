@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.22.14.3 2007/05/10 16:23:37 garbled Exp $	*/
+/*	$NetBSD: machdep.c,v 1.22.14.4 2007/05/10 17:23:06 garbled Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.22.14.3 2007/05/10 16:23:37 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.22.14.4 2007/05/10 17:23:06 garbled Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_mvmetype.h"
@@ -55,7 +55,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.22.14.3 2007/05/10 16:23:37 garbled Ex
 #include <sys/syslog.h>
 #include <sys/systm.h>
 #include <sys/user.h>
-#include <sys/ksyms.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -98,19 +97,9 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.22.14.3 2007/05/10 16:23:37 garbled Ex
 #include <sys/termios.h>
 #include <dev/ic/comreg.h>
 #include <dev/ic/comvar.h>
-void comsoft(void);
 #endif
-
-#ifdef DDB
-#include <machine/db_machdep.h>
-#include <ddb/db_extern.h>
-#endif
-
-#include "ksyms.h"
 
 void initppc(u_long, u_long, void *);
-void mvmeppc_bus_space_init(void);
-
 
 /*
  * Global variables used here and there
@@ -125,10 +114,6 @@ struct pic_ops *isa_pic;
 void
 initppc(u_long startkernel, u_long endkernel, void *btinfo)
 {
-#if NKSYMS || defined(DDB) || defined(LKM)
-	extern void *startsym, *endsym;
-#endif
-
 	/*
 	 * Copy bootinfo.
 	 */
@@ -168,59 +153,9 @@ initppc(u_long startkernel, u_long endkernel, void *btinfo)
 		ns_per_tick = 1000000000 / ticks_per_sec;
 	}
 
-	/*
-	 * Setup fixed BAT registers.
-	 */
-	oea_batinit(
-	    MVMEPPC_PHYS_BASE_IO,  BAT_BL_256M,
-	    MVMEPPC_PHYS_BASE_MEM, BAT_BL_256M,
-	    0);
-
-	/*
-	 * Install vectors and interrupt handler.
-	 */
-	oea_init(NULL);
+	prep_initppc(startkernel, endkernel, boothowto);
 
 	(*platform->pic_setup)();
-
-	/*
-	 * Init bus_space so consinit can work.
-	 */
-	mvmeppc_bus_space_init();
-
-#ifdef DEBUG
-	/*
-	 * The console should be initialized as early as possible.
-	 */
-	consinit();
-#endif
-
-        /*
-	 * Set the page size.
-	 */
-	uvm_setpagesize();
-
-	/*
-	 * Initialize pmap module.
-	 */
-	pmap_bootstrap(startkernel, endkernel);
-
-#if NKSYMS || defined(DDB) || defined(LKM)
-	ksyms_init((int)((u_long)endsym - (u_long)startsym), startsym, endsym);
-#endif
-
-#ifdef DDB
-	if (boothowto & RB_KDB)
-		Debugger();
-#endif
-}
-
-void
-mem_regions(struct mem_region **mem, struct mem_region **avail)
-{
-
-	*mem = physmemr;
-	*avail = availmemr;
 }
 
 /*
@@ -371,61 +306,4 @@ halt_sys:
 	for (;;)
 		continue;
 	/* NOTREACHED */
-}
-
-struct powerpc_bus_space genppc_isa_io_space_tag = {
-	_BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_IO_TYPE,
-	MVMEPPC_PHYS_BASE_IO,	/* 60x-bus address of ISA I/O Space */
-	0x00000000,		/* Corresponds to ISA-bus I/O address 0x0 */
-	0x00010000,		/* End of ISA-bus I/O address space, +1 */
-};
-
-struct powerpc_bus_space mvmeppc_pci_io_bs_tag = {
-	_BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_IO_TYPE,
-	MVMEPPC_PHYS_BASE_IO,	/* 60x-bus address of PCI I/O Space */
-	0x00000000,		/* Corresponds to PCI-bus I/O address 0x0 */
-	MVMEPPC_PHYS_SIZE_IO,	/* End of PCI-bus I/O address space, +1 */
-};
-
-struct powerpc_bus_space genppc_isa_mem_space_tag = {
-	_BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_MEM_TYPE,
-	MVMEPPC_PHYS_BASE_MEM,	/* 60x-bus address of ISA Memory Space */
-	0x00000000,		/* Corresponds to ISA-bus Memory addr 0x0 */
-	0x01000000,		/* End of ISA-bus Memory addr space, +1 */
-};
-
-struct powerpc_bus_space mvmeppc_pci_mem_bs_tag = {
-	_BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_MEM_TYPE,
-	MVMEPPC_PHYS_BASE_MEM,	/* 60x-bus address of PCI Memory Space */
-	0x00000000,		/* Corresponds to PCI-bus Memory addr 0x0 */
-	MVMEPPC_PHYS_SIZE_MEM,	/* End of PCI-bus Memory addr space, +1 */
-};
-static char ex_storage[MVMEPPC_BUS_SPACE_NUM_REGIONS][EXTENT_FIXED_STORAGE_SIZE(8)]
-    __attribute__((aligned(8)));
-
-
-void
-mvmeppc_bus_space_init(void)
-{
-
-	int error;
-
-	error = bus_space_init(&mvmeppc_pci_io_bs_tag, "pci_io",
-	    ex_storage[MVMEPPC_BUS_SPACE_IO],
-	    sizeof(ex_storage[MVMEPPC_BUS_SPACE_IO]));
-
-	if (extent_alloc_region(mvmeppc_pci_io_bs_tag.pbs_extent,
-	    MVMEPPC_PHYS_RESVD_START_IO, MVMEPPC_PHYS_RESVD_SIZE_IO,
-	    EX_NOWAIT) != 0)
-		panic("mvmeppc_bus_space_init: reserving I/O hole");
-
-	genppc_isa_io_space_tag.pbs_extent = mvmeppc_pci_io_bs_tag.pbs_extent;
-	error = bus_space_init(&genppc_isa_io_space_tag, "isa_io", NULL, 0);
-
-	error = bus_space_init(&mvmeppc_pci_mem_bs_tag, "pci_mem",
-	    ex_storage[MVMEPPC_BUS_SPACE_MEM],
-	    sizeof(ex_storage[MVMEPPC_BUS_SPACE_MEM]));
-
-	genppc_isa_mem_space_tag.pbs_extent = mvmeppc_pci_mem_bs_tag.pbs_extent;
-	error = bus_space_init(&genppc_isa_mem_space_tag, "isa_mem", NULL, 0);
 }

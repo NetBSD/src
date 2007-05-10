@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.66.14.9 2007/05/10 16:23:37 garbled Exp $	*/
+/*	$NetBSD: machdep.c,v 1.66.14.10 2007/05/10 17:23:07 garbled Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,10 +32,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.66.14.9 2007/05/10 16:23:37 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.66.14.10 2007/05/10 17:23:07 garbled Exp $");
 
 #include "opt_compat_netbsd.h"
-#include "opt_ddb.h"
 #include "opt_openpic.h"
 
 #include <sys/param.h>
@@ -83,11 +82,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.66.14.9 2007/05/10 16:23:37 garbled Ex
 #include <sys/termios.h>
 #include <dev/ic/comreg.h>
 #include <dev/ic/comvar.h>
-#endif
-
-#ifdef DDB
-#include <machine/db_machdep.h>
-#include <ddb/db_extern.h>
 #endif
 
 #include "opt_interrupt.h"

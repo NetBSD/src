@@ -1,4 +1,4 @@
-/* $NetBSD: prep_machdep.c,v 1.1.2.1 2007/05/09 19:46:20 garbled Exp $ */
+/* $NetBSD: prep_machdep.c,v 1.1.2.2 2007/05/10 17:23:07 garbled Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: prep_machdep.c,v 1.1.2.1 2007/05/09 19:46:20 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: prep_machdep.c,v 1.1.2.2 2007/05/10 17:23:07 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/extent.h>
@@ -58,6 +58,14 @@ __KERNEL_RCSID(0, "$NetBSD: prep_machdep.c,v 1.1.2.1 2007/05/09 19:46:20 garbled
 #include <machine/bus.h>
 #include <machine/pmap.h>
 #include <powerpc/oea/bat.h>
+
+#include "opt_ddb.h"
+#ifdef DDB
+#include <machine/db_machdep.h>
+#include <ddb/db_extern.h>
+#endif
+
+#include "ksyms.h"
 
 #if NKSYMS || defined(DDB) || defined(LKM)
 extern void *endsym, *startsym;

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.8.14.4 2007/05/10 16:23:37 garbled Exp $	*/
+/*	$NetBSD: machdep.c,v 1.8.14.5 2007/05/10 17:23:05 garbled Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,10 +32,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.8.14.4 2007/05/10 16:23:37 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.8.14.5 2007/05/10 17:23:05 garbled Exp $");
 
 #include "opt_compat_netbsd.h"
-#include "opt_ddb.h"
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -54,7 +53,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.8.14.4 2007/05/10 16:23:37 garbled Exp
 #include <sys/syslog.h>
 #include <sys/systm.h>
 #include <sys/user.h>
-#include <sys/ksyms.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -74,17 +72,8 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.8.14.4 2007/05/10 16:23:37 garbled Exp
 
 #include <dev/cons.h>
 
-#ifdef DDB
-#include <machine/db_machdep.h>
-#include <ddb/db_extern.h>
-#endif
-
-#include "ksyms.h"
-
 void initppc(u_long, u_long, u_int, void *);
 void dumpsys(void);
-void ibmnws_bus_space_init(void);
-
 vaddr_t prep_intr_reg;			/* PReP interrupt vector register */
 
 #define	OFMEMREGIONS	32
@@ -93,10 +82,6 @@ struct mem_region physmemr[OFMEMREGIONS], availmemr[OFMEMREGIONS];
 paddr_t avail_end;			/* XXX temporary */
 struct pic_ops *isa_pic;
 int isa_pcmciamask = 0x8b28;
-
-#if NKSYMS || defined(DDB) || defined(LKM)
-extern void *endsym, *startsym;
-#endif
 
 void
 initppc(u_long startkernel, u_long endkernel, u_int args, void *btinfo)
@@ -137,65 +122,12 @@ initppc(u_long startkernel, u_long endkernel, u_int args, void *btinfo)
 		ns_per_tick = 1000000000 / ticks_per_sec;
 	}
 
-	/* Initialize the CPU type */
-	/* ident_platform(); */
-
 	/*
 	 * boothowto
 	 */
 	boothowto = 0;		/* XXX - should make this an option */
 
-	/*
-	 * Initialize bus_space.
-	 */
-	ibmnws_bus_space_init();
-
-	/*
-	 * Now setup fixed bat registers
-	 */
-	oea_batinit(
-	    PREP_BUS_SPACE_MEM, BAT_BL_256M,
-	    PREP_BUS_SPACE_IO,  BAT_BL_256M,
-	    0);
-
-	/*
-	 * i386 port says, that this shouldn't be here,
-	 * but I really think the console should be initialized
-	 * as early as possible.
-	 */
-	consinit();
-
-	/*
-	 * Install vectors and interrupt handler.
-	 */
-	oea_init(NULL);
-
-        /*
-	 * Set the page size.
-	 */
-	uvm_setpagesize();
-
-	/*
-	 * Initialize pmap module.
-	 */
-	pmap_bootstrap(startkernel, endkernel);
-
-#if NKSYMS || defined(DDB) || defined(LKM)
-	ksyms_init((int)((u_long)endsym - (u_long)startsym), startsym, endsym);
-#endif
-
-#ifdef DDB
-	if (boothowto & RB_KDB)
-		Debugger();
-#endif
-}
-
-void
-mem_regions(struct mem_region **mem, struct mem_region **avail)
-{
-
-	*mem = physmemr;
-	*avail = availmemr;
+	prep_initppc(startkernel, endkernel, args);
 }
 
 /*
@@ -304,55 +236,4 @@ halt_sys:
 	for (;;)
 		continue;
 	/* NOTREACHED */
-}
-
-struct powerpc_bus_space ibmnws_io_space_tag = {
-	_BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_IO_TYPE,
-	0x80000000, 0x00000000, 0x3f800000,
-};
-struct powerpc_bus_space genppc_isa_io_space_tag = {
-	_BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_IO_TYPE,
-	0x80000000, 0x00000000, 0x00010000,
-};
-struct powerpc_bus_space ibmnws_mem_space_tag = {
-	_BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_MEM_TYPE,
-	0xC0000000, 0x00000000, 0x3f000000,
-};
-struct powerpc_bus_space genppc_isa_mem_space_tag = {
-	_BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_MEM_TYPE,
-	0xC0000000, 0x00000000, 0x01000000,
-};
-
-static char ex_storage[2][EXTENT_FIXED_STORAGE_SIZE(8)]
-    __attribute__((aligned(8)));
-
-void
-ibmnws_bus_space_init(void)
-{
-	int error;
-
-	error = bus_space_init(&ibmnws_io_space_tag, "ioport",
-	    ex_storage[0], sizeof(ex_storage[0]));
-	if (error)
-		panic("ibmnws_bus_space_init: can't init io tag");
-
-	error = extent_alloc_region(ibmnws_io_space_tag.pbs_extent,
-	    0x10000, 0x7F0000, EX_NOWAIT);
-	if (error)
-		panic("ibmnws_bus_space_init: can't block out reserved I/O"
-		    " space 0x10000-0x7fffff: error=%d", error);
-	error = bus_space_init(&ibmnws_mem_space_tag, "iomem",
-	    ex_storage[1], sizeof(ex_storage[1]));
-	if (error)
-		panic("ibmnws_bus_space_init: can't init mem tag");
-
-	genppc_isa_io_space_tag.pbs_extent = ibmnws_io_space_tag.pbs_extent;
-	error = bus_space_init(&genppc_isa_io_space_tag, "isa-ioport", NULL, 0);
-	if (error)
-		panic("ibmnws_bus_space_init: can't init isa io tag");
-
-	genppc_isa_mem_space_tag.pbs_extent = ibmnws_mem_space_tag.pbs_extent;
-	error = bus_space_init(&genppc_isa_mem_space_tag, "isa-iomem", NULL, 0);
-	if (error)
-		panic("ibmnws_bus_space_init: can't init isa mem tag");
 }
