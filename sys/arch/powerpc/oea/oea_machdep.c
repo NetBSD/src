@@ -1,4 +1,4 @@
-/*	$NetBSD: oea_machdep.c,v 1.33 2007/03/04 10:14:51 macallan Exp $	*/
+/*	$NetBSD: oea_machdep.c,v 1.33.10.1 2007/05/10 16:23:37 garbled Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.33 2007/03/04 10:14:51 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.33.10.1 2007/05/10 16:23:37 garbled Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -744,6 +744,11 @@ oea_startup(const char *model)
 
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
+
+	/*
+	 * Initialize soft interrupt framework.
+	 */
+	softintr__init();
 }
 
 /*
@@ -755,24 +760,6 @@ oea_dumpsys(void)
 {
 	printf("dumpsys: TBD\n");
 }
-
-#ifndef __HAVE_GENERIC_SOFT_INTERRUPTS
-/*
- * Soft networking interrupts.
- */
-void
-softnet(int pendisr)
-{
-#define DONETISR(bit, fn) do {		\
-	if (pendisr & (1 << bit))	\
-		(*fn)();		\
-} while (0)
-
-#include <net/netisr_dispatch.h>
-
-#undef DONETISR
-}
-#endif
 
 /*
  * Convert kernel VA to physical address

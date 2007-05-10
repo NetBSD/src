@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.66.14.8 2007/05/10 15:46:09 garbled Exp $	*/
+/*	$NetBSD: machdep.c,v 1.66.14.9 2007/05/10 16:23:37 garbled Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.66.14.8 2007/05/10 15:46:09 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.66.14.9 2007/05/10 16:23:37 garbled Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -193,11 +193,6 @@ cpu_startup(void)
 	 * external interrupt handler install
 	 */
 	prep_init();
-
-	/*
-	 * Initialize soft interrupt framework.
-	 */
-	softintr__init();
 
 	/*
 	 * Now allow hardware interrupts.

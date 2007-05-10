@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.89.14.1 2007/05/06 17:00:57 ober Exp $	*/
+/*	$NetBSD: machdep.c,v 1.89.14.2 2007/05/10 16:23:36 garbled Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.89.14.1 2007/05/06 17:00:57 ober Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.89.14.2 2007/05/10 16:23:36 garbled Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -263,11 +263,6 @@ cpu_startup()
 	 * Now that we have VM, malloc's are OK in bus_space.
 	 */
 	bus_space_mallocok();
-
-	/*
-	* Initialize soft interrupt framework.
-	*/
-	softintr__init();
 
 	/*
 	 * Now allow hardware interrupts.
