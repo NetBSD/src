@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.6 2003/07/11 11:54:10 he Exp $
+#	$NetBSD: list,v 1.7 2007/05/10 23:22:28 dogcow Exp $
 
 PROG	bin/cat
 PROG	bin/chmod
@@ -54,7 +54,7 @@ SPECIAL	umount		srcdir	distrib/utils/x_umount
 # various files that we need in /etc for the install
 COPY	${NETBSDSRCDIR}/etc/netconfig	etc/netconfig
 COPY	${NETBSDSRCDIR}/etc/protocols	etc/protocols
-COPY	${NETBSDSRCDIR}/etc/services	etc/services
+COPY	${NETBSDSRCDIR}/distrib/common/services	etc/services
 
 # we need the boot block code in /usr/mdec
 MTREE	./usr/mdec/std		type=dir uname=root gname=wheel mode=0755

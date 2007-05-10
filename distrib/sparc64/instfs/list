@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.6 2006/11/11 14:47:27 jmmv Exp $
+#	$NetBSD: list,v 1.7 2007/05/10 23:22:32 dogcow Exp $
 
 SRCDIRS	bin sbin libexec usr.bin/less usr.bin usr.sbin gnu/usr.bin
 
@@ -84,7 +84,7 @@ COPY	${NETBSDSRCDIR}/etc/group		etc/group
 COPY	${NETBSDSRCDIR}/etc/master.passwd	etc/master.passwd
 COPY	${NETBSDSRCDIR}/etc/netconfig		etc/netconfig
 COPY	${NETBSDSRCDIR}/etc/protocols		etc/protocols
-COPY	${NETBSDSRCDIR}/etc/services		etc/services
+COPY	${NETBSDSRCDIR}/distrib/common/services		etc/services
 
 COPY	${NETBSDSRCDIR}/usr.sbin/dhcp/clientscript/dhclient-script sbin/dhclient-script	555
 
