@@ -1,4 +1,4 @@
-#	$NetBSD: special,v 1.110 2007/02/20 16:56:10 kiyohara Exp $
+#	$NetBSD: special,v 1.111 2007/05/10 17:45:50 christos Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
 # This file may be overwritten on upgrades.
@@ -113,7 +113,6 @@
 ./etc/namedb			type=dir  mode=0755
 ./etc/netconfig			type=file mode=0644
 ./etc/netgroup			type=file mode=0644 optional
-./etc/netgroup.db		type=file mode=0644 optional tags=exclude
 ./etc/netstart.local		type=file mode=0644 optional
 ./etc/networks			type=file mode=0644
 ./etc/newsyslog.conf		type=file mode=0644

@@ -1,4 +1,4 @@
-/*	$NetBSD: netgroup.h,v 1.8 2006/07/27 18:10:45 christos Exp $	*/
+/*	$NetBSD: netgroup.h,v 1.9 2007/05/10 17:45:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -38,7 +38,7 @@
 
 #define	_PATH_NETGROUP		"/etc/netgroup"
 
-#define	_PATH_NETGROUP_DB	"/etc/netgroup.db"
+#define	_PATH_NETGROUP_DB	"/var/db/netgroup.db"
 
 #define	_PATH_NETGROUP_MKDB	"/usr/sbin/netgroup_mkdb"
 
