@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.22.14.2 2007/05/10 15:25:38 garbled Exp $	*/
+/*	$NetBSD: machdep.c,v 1.22.14.3 2007/05/10 16:23:37 garbled Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.22.14.2 2007/05/10 15:25:38 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.22.14.3 2007/05/10 16:23:37 garbled Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_mvmetype.h"
@@ -243,7 +243,6 @@ cpu_startup()
 	    bootinfo.bi_mpuspeed/1000000,
 	    bootinfo.bi_busspeed/1000000);
 	oea_startup(modelbuf);
-	softintr__init();
 
 	/*
 	 * Now allow hardware interrupts.
