@@ -1,4 +1,4 @@
-/*	$NetBSD: arcemu.c,v 1.13 2007/02/21 04:27:10 rumble Exp $	*/
+/*	$NetBSD: arcemu.c,v 1.14 2007/05/10 17:27:05 rumble Exp $	*/
 
 /*
  * Copyright (c) 2004 Steve Rumble 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arcemu.c,v 1.13 2007/02/21 04:27:10 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arcemu.c,v 1.14 2007/05/10 17:27:05 rumble Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,7 +107,7 @@ static struct arcbios_fv arcemu_v = {
  * Establish our emulated ARCBIOS vector or return ARCBIOS failure.
  */
 int
-arcemu_init(char **env)
+arcemu_init(const char **env)
 {
 	switch (arcemu_identify()) {
 	case MACH_SGI_IP12:
@@ -133,6 +133,25 @@ arcemu_identify()
 	 *       since it's the only non-ARCS offering with one.
 	 */
 	return (MACH_SGI_IP12); /* boy, that was easy! */
+}
+
+static boolean_t
+extractenv(const char **env, const char *key, char *dest, int len)
+{
+	int i;
+
+	if (env == NULL)
+		return (false);
+
+	for (i = 0; env[i] != NULL; i++) {
+		if (strncasecmp(env[i], key, strlen(key)) == 0 &&
+		    env[i][strlen(key)] == '=') {
+			strlcpy(dest, strchr(env[i], '=') + 1, len);
+			return (true);
+		}
+	}
+
+	return (false);
 }
 
 /*
@@ -246,9 +265,8 @@ arcemu_ip12_eeprom_read()
 }
 
 static void
-arcemu_ip12_init(char **env)
+arcemu_ip12_init(const char **env)
 {
-	int i;
 
 	arcemu_v.GetPeer =		  arcemu_ip12_GetPeer;
 	arcemu_v.GetChild =		  arcemu_ip12_GetChild;
@@ -262,38 +280,16 @@ arcemu_ip12_init(char **env)
 	arcemu_ip12_eeprom_read();
 
 	memset(&ip12env, 0, sizeof(ip12env));
-	for (i = 0; env[i] != NULL; i++) {
-		if (strncasecmp(env[i], "dbaud=", 6) == 0)
-			strlcpy(ip12env.dbaud, strchr(env[i], '=') + 1,
-			    sizeof(ip12env.dbaud));
-		else if (strncasecmp(env[i], "rbaud=", 6) == 0)
-			strlcpy(ip12env.rbaud, strchr(env[i], '=') + 1,
-			    sizeof(ip12env.rbaud));
-		else if (strncasecmp(env[i], "bootmode=", 9) == 0)
-			strlcpy(&ip12env.bootmode, strchr(env[i], '=') + 1,
-			    sizeof(ip12env.bootmode));
-		else if (strncasecmp(env[i], "console=", 8) == 0)
-			strlcpy(&ip12env.console, strchr(env[i], '=') + 1,
-			    sizeof(ip12env.console));
-		else if (strncasecmp(env[i], "diskless=", 9) == 0)
-			strlcpy(&ip12env.diskless, strchr(env[i], '=') + 1,
-			    sizeof(ip12env.diskless));
-		else if (strncasecmp(env[i], "volume=", 7) == 0)
-			strlcpy(ip12env.volume, strchr(env[i], '=') + 1,
-			    sizeof(ip12env.volume));
-		else if (strncasecmp(env[i], "cpufreq=", 8) == 0)
-			strlcpy(ip12env.cpufreq, strchr(env[i], '=') + 1,
-			    sizeof(ip12env.cpufreq));
-		else if (strncasecmp(env[i], "gfx=", 4) == 0)
-			strlcpy(ip12env.gfx, strchr(env[i], '=') + 1,
-			    sizeof(ip12env.gfx));
-		else if (strncasecmp(env[i], "netaddr=", 8) == 0)
-			strlcpy(ip12env.netaddr, strchr(env[i], '=') + 1,
-			    sizeof(ip12env.netaddr));
-		else if (strncasecmp(env[i], "dlserver=", 9) == 0)
-			strlcpy(ip12env.dlserver, strchr(env[i], '=') + 1,
-			    sizeof(ip12env.dlserver));
-	}
+	extractenv(env, "dbaud", ip12env.dbaud, sizeof(ip12env.dbaud));
+	extractenv(env, "rbaud", ip12env.rbaud, sizeof(ip12env.rbaud));
+	extractenv(env, "bootmode",&ip12env.bootmode, sizeof(ip12env.bootmode));
+	extractenv(env, "console", &ip12env.console, sizeof(ip12env.console));
+	extractenv(env, "diskless",&ip12env.diskless, sizeof(ip12env.diskless));
+	extractenv(env, "volume", ip12env.volume, sizeof(ip12env.volume));
+	extractenv(env, "cpufreq", ip12env.cpufreq, sizeof(ip12env.cpufreq));
+	extractenv(env, "gfx", ip12env.gfx, sizeof(ip12env.gfx));
+	extractenv(env, "netaddr", ip12env.netaddr, sizeof(ip12env.netaddr));
+	extractenv(env, "dlserver", ip12env.dlserver, sizeof(ip12env.dlserver));
 
 	strcpy(arcbios_system_identifier, "SGI-IP12");
 	strcpy(arcbios_sysid_vendor, "SGI");

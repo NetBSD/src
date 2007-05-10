@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.110 2007/03/06 12:41:52 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.111 2007/05/10 17:27:06 rumble Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.110 2007/03/06 12:41:52 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.111 2007/05/10 17:27:06 rumble Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -271,9 +271,16 @@ mach_init(int argc, char **argv, int magic, struct btinfo_common *btinfo)
 	 * try to init real arcbios, and if that fails (return value 1),
 	 * fall back to the emulator.  If the latter fails also we
 	 * don't have much to panic with.
+	 *
+	 * The third argument (magic) is the environment variable array if
+	 * there's no bootinfo.
 	 */
-	if (arcbios_init(ARCS_VECTOR) == 1)
-		arcemu_init((char **)magic);
+	if (arcbios_init(ARCS_VECTOR) == 1) {
+		if (magic == BOOTINFO_MAGIC)
+			arcemu_init(NULL);	/* XXX - need some prom env */
+		else
+			arcemu_init((const char **)magic);
+	}
 
 	strcpy(cpu_model, arcbios_system_identifier);
 
