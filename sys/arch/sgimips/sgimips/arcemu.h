@@ -1,4 +1,4 @@
-/*	$NetBSD: arcemu.h,v 1.8 2007/05/10 17:27:06 rumble Exp $	*/
+/*	$NetBSD: arcemu.h,v 1.9 2007/05/10 17:45:58 rumble Exp $	*/
 
 /*
  * Copyright (c) 2004 Steve Rumble 
@@ -58,6 +58,10 @@ static void *	arcemu_ip12_GetMemoryDescriptor(void *mem);
 
 static void	arcemu_ip12_eeprom_read(void);
 static void	arcemu_ip12_putc(dev_t, int);
+
+#define ARCEMU_IP12_ENVOK(_x) 			\
+    (MIPS_PHYS_TO_KSEG1((_x)) >= 0xa0380000 &&	\
+     MIPS_PHYS_TO_KSEG1((_x)) <  0xa0400000)
 
 /* ARCBIOS Component Tree. Represented in linear fashion. */
 static struct arcbios_component ip12_tree[] = {
