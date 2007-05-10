@@ -1,4 +1,4 @@
-/*	$NetBSD: arcemu.c,v 1.15 2007/05/10 17:45:58 rumble Exp $	*/
+/*	$NetBSD: arcemu.c,v 1.16 2007/05/10 21:24:37 rumble Exp $	*/
 
 /*
  * Copyright (c) 2004 Steve Rumble 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arcemu.c,v 1.15 2007/05/10 17:45:58 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arcemu.c,v 1.16 2007/05/10 21:24:37 rumble Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -200,6 +200,7 @@ static struct arcemu_ip12env {
 	char gfx[32];
 	char netaddr[32];
 	char dlserver[32];
+	char osloadoptions[32];
 } ip12env;
 
 static void
@@ -290,6 +291,8 @@ arcemu_ip12_init(const char **env)
 	extractenv(env, "gfx", ip12env.gfx, sizeof(ip12env.gfx));
 	extractenv(env, "netaddr", ip12env.netaddr, sizeof(ip12env.netaddr));
 	extractenv(env, "dlserver", ip12env.dlserver, sizeof(ip12env.dlserver));
+	extractenv(env, "osloadoptions", ip12env.osloadoptions,
+	    sizeof(ip12env.osloadoptions));
 
 	strcpy(arcbios_system_identifier, "SGI-IP12");
 	strcpy(arcbios_sysid_vendor, "SGI");
@@ -372,9 +375,24 @@ arcemu_ip12_GetEnvironmentVariable(const char *var)
 			return (ip12env.gfx);
 	}
 
-	/* makebootdev() can handle "dksc(a,b,c)/netbsd", etc already */
-	if (strcasecmp("OSLoadPartition", var) == 0)
+	/*
+	 * Ugly Kludge Alert!
+	 *
+	 * Since we don't yet have an ip12 bootloader, we can only squish
+	 * a kernel into the volume header. However, this makes the bootfile
+	 * something like 'dksc(0,1,8)', which translates into 'sd0i'. Ick.
+	 * Munge what we return to always map to 'sd0a'. Lord have mercy.
+	 *
+	 * makebootdev() can handle "dksc(a,b,c)/netbsd", etc already
+	 */
+	if (strcasecmp("OSLoadPartition", var) == 0) {
+		char *hack;
+
+		hack = strstr(ip12nvram.bootfile, ",8)");
+		if (hack != NULL)
+			hack[1] = '0';
 		return (ip12nvram.bootfile);
+	}
 
 	/* pull filename from e.g.: "dksc(0,1,0)netbsd" */
 	if (strcasecmp("OSLoadFilename", var) == 0) {
@@ -384,6 +402,19 @@ arcemu_ip12_GetEnvironmentVariable(const char *var)
 			return (file + 1);
 		else	
 			return (NULL);
+	}
+
+	/*
+	 * As far as I can tell, old systems had no analogue of OSLoadOptions.
+	 * So, to allow forcing of single user mode, we accomodate the
+	 * user setting the ARCBIOSy environment variable "OSLoadOptions" to
+	 * something other than "auto".
+	 */
+	if (strcasecmp("OSLoadOptions", var) == 0) {
+		if (ip12env.osloadoptions[0] == '\0')
+			return ("auto");
+		else
+			return (ip12env.osloadoptions);
 	}
 
 	return (NULL);
