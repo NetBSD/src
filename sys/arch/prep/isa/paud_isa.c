@@ -1,4 +1,4 @@
-/*	$NetBSD: paud_isa.c,v 1.10 2005/12/11 12:18:47 christos Exp $	*/
+/*	$NetBSD: paud_isa.c,v 1.10.38.1 2007/05/10 15:46:07 garbled Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: paud_isa.c,v 1.10 2005/12/11 12:18:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: paud_isa.c,v 1.10.38.1 2007/05/10 15:46:07 garbled Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -165,7 +165,7 @@ paud_attach_isa(struct device *parent, struct device *self, void *aux)
 	sc->sc_ic = ia->ia_ic;
 
 	if (ad1848_isa_mapprobe(sc, ia->ia_io[0].ir_addr) == 0) {
-		printf(": attach failed\n");
+		aprint_error(": attach failed\n");
 		return;
 	}
 	sc->sc_playdrq = ia->ia_drq[0].ir_drq;
@@ -173,7 +173,7 @@ paud_attach_isa(struct device *parent, struct device *self, void *aux)
 	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq[0].ir_irq,
 	    IST_EDGE, IPL_AUDIO, ad1848_isa_intr, sc);
 	ad1848_isa_attach(sc);
-	printf("\n");
+	aprint_normal("\n");
 	audio_attach_mi(&paud_hw_if, &sc->sc_ad1848, &sc->sc_ad1848.sc_dev);
 
 }
