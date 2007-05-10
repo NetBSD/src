@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.338 2007/05/08 18:39:33 plunky Exp $
+.\"	$NetBSD: main,v 1.339 2007/05/10 18:34:02 plunky Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -484,6 +484,19 @@ TBD
 .Ss2 Security
 .
 .(bullet
+The kernel authorization framework
+.Xr kauth 9
+was added, replacing the traditional BSD credential management and
+privileged operation access control with an abstract layer, allowing
+the implementation of various security models either as part of the
+.Nx
+distribution or as third-party LKMs.
+.Pp
+.Nx Ap s
+kernel authorization is a hybrid clean-room implementation of a
+similar interface developed by Apple, extending its capabilities
+and combining concepts of credential inheritance control.
+.It
 TBD
 .bullet)
 .
