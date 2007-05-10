@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.1 2006/03/30 15:45:42 shige Exp $
+#	$NetBSD: list,v 1.2 2007/05/10 23:22:29 dogcow Exp $
 
 SRCDIRS	bin sbin usr.bin/less usr.bin usr.sbin gnu/usr.bin
 
@@ -63,7 +63,7 @@ COPY	${NETBSDSRCDIR}/etc/group		etc/group
 COPY	${NETBSDSRCDIR}/etc/master.passwd	etc/master.passwd
 COPY	${NETBSDSRCDIR}/etc/netconfig		etc/netconfig
 COPY	${NETBSDSRCDIR}/etc/protocols		etc/protocols
-COPY	${NETBSDSRCDIR}/etc/services		etc/services
+COPY	${NETBSDSRCDIR}/distrib/common/services		etc/services
 
 # and the common installation tools
 COPY	${DESTDIR}/usr/share/misc/termcap	usr/share/misc/termcap

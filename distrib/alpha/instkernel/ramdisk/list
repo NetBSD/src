@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.23 2003/12/27 21:30:27 martin Exp $
+#	$NetBSD: list,v 1.24 2007/05/10 23:22:28 dogcow Exp $
 
 SRCDIRS	bin sbin usr.bin/less usr.bin usr.sbin gnu/usr.bin
 
@@ -70,7 +70,7 @@ COPY	${NETBSDSRCDIR}/etc/group		etc/group
 COPY	${NETBSDSRCDIR}/etc/master.passwd	etc/master.passwd
 COPY	${NETBSDSRCDIR}/etc/protocols		etc/protocols
 COPY	${NETBSDSRCDIR}/etc/netconfig		etc/netconfig
-COPY	${NETBSDSRCDIR}/etc/services		etc/services
+COPY	${NETBSDSRCDIR}/distrib/common/services		etc/services
 
 CMD	${TOOL_PWD_MKDB} -L -d . etc/master.passwd
 MTREE	./etc/pwd.db	type=file uname=root gname=wheel mode=0644

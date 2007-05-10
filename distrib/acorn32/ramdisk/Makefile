@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2002/05/02 18:02:18 lukem Exp $
+#	$NetBSD: Makefile,v 1.15 2007/05/10 23:22:27 dogcow Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -19,7 +19,7 @@ IMAGEDEPENDS=	${CRUNCHBIN} \
 		disktab.preinstall dot.hdprofile dot.profile termcap.vt100 \
 		${NETBSDSRCDIR}/etc/group ${NETBSDSRCDIR}/etc/master.passwd \
 		${NETBSDSRCDIR}/etc/netconfig ${NETBSDSRCDIR}/etc/protocols \
-		${NETBSDSRCDIR}/etc/services
+		${NETBSDSRCDIR}/distrib/common/services
 
 IMAGE_RELEASEDIR=	installation/misc
 
