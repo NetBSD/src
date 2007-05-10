@@ -1,4 +1,4 @@
-/*	$NetBSD: platform.c,v 1.22.18.2 2007/05/01 18:19:07 garbled Exp $	*/
+/*	$NetBSD: platform.c,v 1.22.18.3 2007/05/10 15:46:09 garbled Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: platform.c,v 1.22.18.2 2007/05/01 18:19:07 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: platform.c,v 1.22.18.3 2007/05/10 15:46:09 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -314,7 +314,7 @@ setup_pciintr_map(struct genppc_pci_chipset_businfo *pbi, int bus, int device,
 		}
 	}
 	if (!found) {
-		printf("Couldn't find PNP data for bus %d devfunc 0x%x\n",
+		aprint_error("Couldn't find PNP data for bus %d devfunc 0x%x\n",
 		    bus, devfunc);
 		return;
 	}

@@ -1,4 +1,4 @@
-/* $NetBSD: nvram_pnpbus.c,v 1.8 2007/03/21 04:13:53 garbled Exp $ */
+/* $NetBSD: nvram_pnpbus.c,v 1.8.4.1 2007/05/10 15:46:08 garbled Exp $ */
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvram_pnpbus.c,v 1.8 2007/03/21 04:13:53 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvram_pnpbus.c,v 1.8.4.1 2007/05/10 15:46:08 garbled Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -540,7 +540,7 @@ mkclock_pnpbus_nvrd(struct mk48txx_softc *osc, int off)
 	int s;
 
 #ifdef DEBUG
-	printf("mkclock_pnpbus_nvrd(%d)", off);
+	aprint_debug("mkclock_pnpbus_nvrd(%d)", off);
 #endif
 	s = splclock();
 	bus_space_write_1(sc->sc_bst, sc->sc_bsh, 0, off & 0xff);
@@ -548,7 +548,7 @@ mkclock_pnpbus_nvrd(struct mk48txx_softc *osc, int off)
 	datum = bus_space_read_1(sc->sc_data, sc->sc_datah, 0);
 	splx(s);
 #ifdef DEBUG
-	printf(" -> %02x\n", datum);
+	aprint_debug(" -> %02x\n", datum);
 #endif
 	return datum;
 }
@@ -560,7 +560,7 @@ mkclock_pnpbus_nvwr(struct mk48txx_softc *osc, int off, uint8_t datum)
 	int s;
 
 #ifdef DEBUG
-	printf("mkclock_isa_nvwr(%d, %02x)\n", off, datum);
+	aprint_debug("mkclock_isa_nvwr(%d, %02x)\n", off, datum);
 #endif
 	s = splclock();
 	bus_space_write_1(sc->sc_bst, sc->sc_bsh, 0, off & 0xff);

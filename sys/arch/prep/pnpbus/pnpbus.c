@@ -1,4 +1,4 @@
-/*	$NetBSD: pnpbus.c,v 1.6.16.1 2007/05/01 19:18:59 garbled Exp $	*/
+/*	$NetBSD: pnpbus.c,v 1.6.16.2 2007/05/10 15:46:08 garbled Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pnpbus.c,v 1.6.16.1 2007/05/01 19:18:59 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pnpbus.c,v 1.6.16.2 2007/05/10 15:46:08 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,7 +84,7 @@ pnpbus_attach(struct device *parent, struct device *self, void *aux)
 	struct pnpbus_softc *sc = (struct pnpbus_softc *)self;
 	struct pnpbus_attach_args *paa = aux;
 
-	printf("\n");
+	aprint_normal("\n");
 
 	pnpbus_softc = sc;
 	sc->sc_ic = paa->paa_ic;

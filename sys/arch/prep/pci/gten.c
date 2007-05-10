@@ -1,4 +1,4 @@
-/*	$NetBSD: gten.c,v 1.15 2007/03/04 06:00:38 christos Exp $	*/
+/*	$NetBSD: gten.c,v 1.15.10.1 2007/05/10 15:46:07 garbled Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gten.c,v 1.15 2007/03/04 06:00:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gten.c,v 1.15.10.1 2007/05/10 15:46:07 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -137,7 +137,7 @@ gten_attach(struct device *parent, struct device *self, void *aux)
 		PCI_MAPREG_TYPE_MEM|PCI_MAPREG_MEM_TYPE_32BIT,
 		&gt->gt_memaddr, &gt->gt_memsize, NULL);
 	if (error) {
-		printf(": can't determine memory size: error=%d\n",
+		aprint_error(": can't determine memory size: error=%d\n",
 			error);
 		return;
 	}
@@ -148,7 +148,7 @@ gten_attach(struct device *parent, struct device *self, void *aux)
 		MALLOC(gt->gt_ri, struct rasops_info *, sizeof(*gt->gt_ri),
 			M_DEVBUF, M_NOWAIT);
 		if (gt->gt_ri == NULL) {
-			printf(": can't alloc memory\n");
+			aprint_error(": can't alloc memory\n");
 			return;
 		}
 		memset(gt->gt_ri, 0, sizeof(*gt->gt_ri));
@@ -164,7 +164,8 @@ gten_attach(struct device *parent, struct device *self, void *aux)
 			(bus_space_handle_t *) &gt->gt_ri->ri_bits);
 #endif
 		if (error) {
-			printf(": can't map frame buffer: error=%d\n", error);
+			aprint_error(": can't map frame buffer: error=%d\n",
+			    error);
 			return;
 		}
 
@@ -173,19 +174,19 @@ gten_attach(struct device *parent, struct device *self, void *aux)
 
 	gt->gt_paddr = vtophys((vaddr_t)gt->gt_ri->ri_bits);
 	if (gt->gt_paddr == 0) {
-		printf(": cannot map framebuffer\n");
+		aprint_error(": cannot map framebuffer\n");
 		return;
 	}
 	gt->gt_psize = gt->gt_memsize - GTEN_VRAM_OFFSET;
 
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
-	printf(": %s\n", devinfo);
+	aprint_normal(": %s\n", devinfo);
 	format_bytes(pbuf, sizeof(pbuf), gt->gt_psize);
-	printf("%s: %s, %dx%d, %dbpp\n", self->dv_xname, pbuf,
+	aprint_normal("%s: %s, %dx%d, %dbpp\n", self->dv_xname, pbuf,
 	       gt->gt_ri->ri_width, gt->gt_ri->ri_height,
 	       gt->gt_ri->ri_depth);
 #if defined(DEBUG)
-	printf("%s: text %dx%d, =+%d+%d\n", self->dv_xname,
+	aprint_debug("%s: text %dx%d, =+%d+%d\n", self->dv_xname,
 	       gt->gt_ri->ri_cols, gt->gt_ri->ri_rows,
 	       gt->gt_ri->ri_xorigin, gt->gt_ri->ri_yorigin);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.26.16.5 2007/05/03 20:32:18 garbled Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.26.16.6 2007/05/10 15:46:09 garbled Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.26.16.5 2007/05/03 20:32:18 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.26.16.6 2007/05/10 15:46:09 garbled Exp $");
 
 #include "opt_pci.h"
 #include "opt_residual.h"
@@ -106,7 +106,7 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 
 	mainbus_found = 1;
 
-	printf("\n");
+	aprint_normal("\n");
 
 #if defined(RESIDUAL_DATA_DUMP)
 	print_residual_device_info();
