@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.175 2007/04/17 05:52:03 lukem Exp $	*/
+/*	$NetBSD: fetch.c,v 1.176 2007/05/10 12:22:04 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.175 2007/04/17 05:52:03 lukem Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.176 2007/05/10 12:22:04 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -485,7 +485,8 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 	static char		*xferbuf;
 	const char		*cp, *token;
 	char			*ep;
-	char			*volatile buf;
+	char			buf[FTPBUFLEN];
+	const char		*errormsg;
 	char			*volatile savefile;
 	char			*volatile auth;
 	char			*volatile location;
@@ -505,7 +506,7 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 	closefunc = NULL;
 	fin = fout = NULL;
 	s = -1;
-	buf = savefile = NULL;
+	savefile = NULL;
 	auth = location = message = NULL;
 	ischunked = isproxy = hcode = 0;
 	rval = 1;
@@ -822,8 +823,11 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 		}
 
 				/* Read the response */
-		if ((buf = fparseln(fin, &len, NULL, "\0\0\0", 0)) == NULL) {
-			warn("Receiving HTTP reply");
+		len = getline(fin, buf, sizeof(buf), &errormsg);
+		if (len < 0) {
+			if (*errormsg == '\n')
+				errormsg++;
+			warnx("Receiving HTTP reply: %s", errormsg);
 			goto cleanup_fetch_url;
 		}
 		while (len > 0 && (ISLWS(buf[len-1])))
@@ -843,10 +847,11 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 
 				/* Read the rest of the header. */
 		while (1) {
-			FREEPTR(buf);
-			if ((buf = fparseln(fin, &len, NULL, "\0\0\0", 0))
-			    == NULL) {
-				warn("Receiving HTTP reply");
+			len = getline(fin, buf, sizeof(buf), &errormsg);
+			if (len < 0) {
+				if (*errormsg == '\n')
+					errormsg++;
+				warnx("Receiving HTTP reply: %s", errormsg);
 				goto cleanup_fetch_url;
 			}
 			while (len > 0 && (ISLWS(buf[len-1])))
@@ -978,7 +983,6 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 
 		}
 				/* finished parsing header */
-		FREEPTR(buf);
 
 		switch (hcode) {
 		case 200:
@@ -1278,7 +1282,6 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 	if (ppass != NULL)
 		memset(ppass, 0, strlen(ppass));
 	FREEPTR(ppass);
-	FREEPTR(buf);
 	FREEPTR(auth);
 	FREEPTR(location);
 	FREEPTR(message);
