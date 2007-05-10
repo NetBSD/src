@@ -1,4 +1,4 @@
-#	$NetBSD: files.ibmnws,v 1.9.4.1 2007/05/08 20:24:53 rjs Exp $
+#	$NetBSD: files.ibmnws,v 1.9.4.2 2007/05/10 17:23:05 garbled Exp $
 #
 # ibmnws-specific configuration info
 #
@@ -12,6 +12,7 @@ file	arch/ibmnws/ibmnws/autoconf.c
 file	arch/powerpc/powerpc/clock.c
 file	arch/ibmnws/ibmnws/consinit.c
 file	arch/ibmnws/ibmnws/machdep.c
+file	arch/powerpc/oea/prep_machdep.c
 
 file	arch/powerpc/powerpc/bus_dma.c
 file	arch/powerpc/powerpc/bus_space.c
