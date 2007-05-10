@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.84 2007/03/21 12:17:31 tsutsui Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.85 2007/05/10 14:04:47 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -1358,9 +1358,21 @@ re_txeof(struct rtk_softc *sc)
 	 * interrupt that will cause us to re-enter this routine.
 	 * This is done in case the transmitter has gone idle.
 	 */
-	if (sc->re_ldata.re_txq_free < RE_TX_QLEN)
+	if (sc->re_ldata.re_txq_free < RE_TX_QLEN) {
 		CSR_WRITE_4(sc, RTK_TIMERCNT, 1);
-	else
+		if ((sc->sc_quirk & RTKQ_PCIE) != 0) {
+			/*
+			 * Some chips will ignore a second TX request
+			 * issued while an existing transmission is in
+			 * progress. If the transmitter goes idle but
+			 * there are still packets waiting to be sent,
+			 * we need to restart the channel here to flush
+			 * them out. This only seems to be required with
+			 * the PCIe devices.
+			 */
+			CSR_WRITE_2(sc, RTK_GTXSTART, RTK_TXSTART_START);
+		}
+	} else
 		ifp->if_timer = 0;
 }
 
