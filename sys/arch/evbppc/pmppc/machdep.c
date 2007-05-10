@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.1.2.1 2007/05/08 19:53:00 garbled Exp $	*/
+/*	$NetBSD: machdep.c,v 1.1.2.2 2007/05/10 15:25:37 garbled Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1.2.1 2007/05/08 19:53:00 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1.2.2 2007/05/10 15:25:37 garbled Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -168,13 +168,8 @@ struct mem_region physmemr[2], availmemr[2];
 
 struct a_config a_config;
 
-void lcsplx(int);		/* Called from locore */
 void initppc(u_int, u_int, u_int, void *); /* Called from locore */
-
-void strayintr(int);
-
 void pmppc_setup(void);
-
 void setleds(int leds);
 
 /*
@@ -368,15 +363,6 @@ kgdb_port_init(void)
 #endif
 
 /*
- * Stray interrupts.
- */
-void
-strayintr(int irq)
-{
-	log(LOG_ERR, "stray interrupt %d\n", irq);
-}
-
-/*
  * Halt or reboot the machine after syncing/dumping according to howto.
  */
 void
@@ -428,12 +414,6 @@ cpu_reboot(int howto, char *what)
 	out8(PMPPC_RESET, PMPPC_RESET_SEQ_STEP2);
 
 	while (1);
-}
-
-void
-lcsplx(int ipl)
-{
-	splx(ipl);
 }
 
 void

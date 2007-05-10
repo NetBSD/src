@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.20 2007/04/26 19:27:04 garbled Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.20.2.1 2007/05/10 15:25:39 garbled Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.20 2007/04/26 19:27:04 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.20.2.1 2007/05/10 15:25:39 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,12 +83,7 @@ cpu_configure(void)
 	if (config_rootfound("mainbus", NULL) == NULL)
 		panic("configure: mainbus not configured");
 
-	printf("biomask %x netmask %x ttymask %x\n",
-	    imask[IPL_BIO] & 0x1fffffff,
-	    imask[IPL_NET] & 0x1fffffff,
-	    imask[IPL_TTY] & 0x1fffffff);
-
-	spl0();
+	genppc_cpu_configure();
 }
 
 void

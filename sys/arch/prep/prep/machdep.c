@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.66.14.6 2007/05/09 19:47:39 garbled Exp $	*/
+/*	$NetBSD: machdep.c,v 1.66.14.7 2007/05/10 15:25:39 garbled Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.66.14.6 2007/05/09 19:47:39 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.66.14.7 2007/05/10 15:25:39 garbled Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -94,8 +94,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.66.14.6 2007/05/09 19:47:39 garbled Ex
 
 void initppc(u_long, u_long, u_int, void *);
 void dumpsys(void);
-void strayintr(int);
-int lcsplx(int);
 static void prep_init(void);
 static void init_intr(void);
 
@@ -289,16 +287,6 @@ halt_sys:
 	for (;;)
 		continue;
 	/* NOTREACHED */
-}
-
-/*
- * lcsplx() is called from locore; it is an open-coded version of
- * splx() differing in that it returns the previous priority level.
- */
-int
-lcsplx(int ipl)
-{
-	return spllower(ipl);
 }
 
 struct powerpc_bus_space prep_eisa_io_space_tag = {
