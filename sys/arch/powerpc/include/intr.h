@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.1.2.2 2007/05/08 18:24:57 garbled Exp $ */
+/*	$NetBSD: intr.h,v 1.1.2.3 2007/05/10 15:25:38 garbled Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.h,v 1.1.2.2 2007/05/08 18:24:57 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.h,v 1.1.2.3 2007/05/10 15:25:38 garbled Exp $");
 
 #ifndef POWERPC_INTR_MACHDEP_H
 #define POWERPC_INTR_MACHDEP_H
@@ -38,6 +38,7 @@ __KERNEL_RCSID(0, "$NetBSD: intr.h,v 1.1.2.2 2007/05/08 18:24:57 garbled Exp $")
 void *intr_establish(int, int, int, int (*)(void *), void *);
 void intr_disestablish(void *);
 const char *intr_typename(int);
+void genppc_cpu_configure(void);
 
 /* Interrupt priority `levels'. */
 #define	IPL_NONE	0	/* nothing */
@@ -79,14 +80,11 @@ struct intrhand {
 	int	ih_irq;
 };
 
-void softnet(int);
-void softserial(void);
 int splraise(int);
 int spllower(int);
 void splx(int);
 void softintr(int);
 
-extern volatile int astpending, tickspending;
 extern int imask[];
 
 /* Soft interrupt masks. */

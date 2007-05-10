@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.147.14.3 2007/05/09 03:56:02 macallan Exp $	*/
+/*	$NetBSD: machdep.c,v 1.147.14.4 2007/05/10 15:25:37 garbled Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.147.14.3 2007/05/09 03:56:02 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.147.14.4 2007/05/10 15:25:37 garbled Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -146,7 +146,6 @@ struct ofw_translations ofmap[32];
 
 int ofkbd_cngetc(dev_t);
 void cninit_kd(void);
-int lcsplx(int);
 int save_ofmap(struct ofw_translations *, int);
 void restore_ofmap(struct ofw_translations *, int);
 static void dumpsys(void);
@@ -439,18 +438,6 @@ dumpsys()
 	printf("dumpsys: TBD\n");
 }
 
-#if 0
-/*
- * Stray interrupts.
- */
-void
-strayintr(irq)
-	int irq;
-{
-	log(LOG_ERR, "stray interrupt %d\n", irq);
-}
-#endif
-
 /*
  * Halt or reboot the machine after syncing/dumping according to howto.
  */
@@ -557,13 +544,6 @@ callback(p)
 	panic("callback");	/* for now			XXX */
 }
 #endif
-
-int
-lcsplx(ipl)
-	int ipl;
-{
-	return spllower(ipl); 	/* XXX */
-}
 
 #include "akbd.h"
 #include "ukbd.h"

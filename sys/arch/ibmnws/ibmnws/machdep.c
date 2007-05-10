@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.8.14.2 2007/05/09 13:41:56 rjs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.8.14.3 2007/05/10 15:25:37 garbled Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.8.14.2 2007/05/09 13:41:56 rjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.8.14.3 2007/05/10 15:25:37 garbled Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -83,8 +83,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.8.14.2 2007/05/09 13:41:56 rjs Exp $")
 
 void initppc(u_long, u_long, u_int, void *);
 void dumpsys(void);
-void strayintr(int);
-int lcsplx(int);
 void ibmnws_bus_space_init(void);
 
 vaddr_t prep_intr_reg;			/* PReP interrupt vector register */
@@ -310,29 +308,6 @@ halt_sys:
 	for (;;)
 		continue;
 	/* NOTREACHED */
-}
-
-/*
- * lcsplx() is called from locore; it is an open-coded version of
- * splx() differing in that it returns the previous priority level.
- */
-int
-lcsplx(int ipl)
-{
-#if 0
-	int oldcpl;
-	struct cpu_info *ci = curcpu();
-
-	__asm volatile("sync; eieio\n");	/* reorder protect */
-	oldcpl = ci->ci_cpl;
-	ci->ci_cpl = ipl;
-	if (ci->ci_ipending & ~ipl)
-		do_pending_int();
-	__asm volatile("sync; eieio\n");	/* reorder protect */
-
-	return (oldcpl);
-#endif
-	return spllower(ipl);
 }
 
 struct powerpc_bus_space ibmnws_io_space_tag = {

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.7.38.1 2007/05/09 18:23:34 garbled Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.7.38.2 2007/05/10 15:25:38 garbled Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.7.38.1 2007/05/09 18:23:34 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.7.38.2 2007/05/10 15:25:38 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,16 +65,11 @@ static void findroot(void);
 void
 cpu_configure()
 {
-	/* startrtclock(); */
 
 	if (config_rootfound("mainbus", NULL) == NULL)
 		panic("configure: mainbus not configured");
 
-	printf("biomask %x netmask %x ttymask %x\n",
-	    (u_short)imask[IPL_BIO], (u_short)imask[IPL_NET],
-	    (u_short)imask[IPL_TTY]);
-
-	spl0();
+	genppc_cpu_configure();
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.1.2.15 2007/05/09 21:09:58 matt Exp $ */
+/*	$NetBSD: intr.c,v 1.1.2.16 2007/05/10 15:25:38 garbled Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.1.2.15 2007/05/09 21:09:58 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.1.2.16 2007/05/10 15:25:38 garbled Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -729,6 +729,17 @@ softintr(int ipl)
 	mtmsr(msrsave & ~PSL_EE);
 	curcpu()->ci_ipending |= 1 << ipl;
 	mtmsr(msrsave);
+}
+
+void
+genppc_cpu_configure(void)
+{
+	printf("biomask %x netmask %x ttymask %x\n",
+	    imask[IPL_BIO] & 0x1fffffff,
+	    imask[IPL_NET] & 0x1fffffff,
+	    imask[IPL_TTY] & 0x1fffffff);
+
+	spl0();
 }
 
 #if defined(PIC_PREPIVR) || defined(PIC_I8259)

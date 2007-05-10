@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.35.14.5 2007/05/08 18:24:57 garbled Exp $	*/
+/*	$NetBSD: machdep.c,v 1.35.14.6 2007/05/10 15:25:39 garbled Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.35.14.5 2007/05/08 18:24:57 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.35.14.6 2007/05/10 15:25:39 garbled Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -91,8 +91,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.35.14.5 2007/05/08 18:24:57 garbled Ex
 char bootinfo[BOOTINFO_MAXSIZE];
 
 void initppc(u_int, u_int, u_int, void *);
-void strayintr(int);
-int lcsplx(int);
 void sandpoint_bus_space_init(void);
 void consinit(void);
 
@@ -334,15 +332,6 @@ consinit(void)
 }
 
 /*
- * Stray interrupts.
- */
-void
-strayintr(int irq)
-{
-	log(LOG_ERR, "stray interrupt %d\n", irq);
-}
-
-/*
  * Halt or reboot the machine after syncing/dumping according to howto.
  */
 void
@@ -391,13 +380,6 @@ cpu_reboot(int howto, char *what)
 }
 #endif
 	while (1);
-}
-
-int
-lcsplx(int ipl)
-{
-
-	return spllower(ipl);
 }
 
 struct powerpc_bus_space sandpoint_io_space_tag = {

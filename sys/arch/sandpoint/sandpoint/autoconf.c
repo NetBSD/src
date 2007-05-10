@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.12 2005/12/11 12:18:51 christos Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.12.38.1 2007/05/10 15:25:39 garbled Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.12 2005/12/11 12:18:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.12.38.1 2007/05/10 15:25:39 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,20 +66,11 @@ void enable_intr(void);
 void
 cpu_configure()
 {
-	/* startrtclock(); */
-
-	disable_intr();
 
 	if (config_rootfound("mainbus", NULL) == NULL)
 		panic("configure: mainbus not configured");
 
-	printf("biomask %x netmask %x ttymask %x\n",
-	    (u_short)imask[IPL_BIO], (u_short)imask[IPL_NET],
-	    (u_short)imask[IPL_TTY]);
-
-	enable_intr();
-
-	spl0();
+	genppc_cpu_configure();
 }
 
 void

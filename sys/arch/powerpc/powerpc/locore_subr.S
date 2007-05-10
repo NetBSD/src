@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.30 2007/02/09 21:55:11 ad Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.30.14.1 2007/05/10 15:25:38 garbled Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -176,7 +176,7 @@ ASENTRY(Idle)
 #endif
 
 	li	%r3,0			/* go IPL_SCHED to IPL_NONE */
-	bl	_C_LABEL(lcsplx)
+	bl	_C_LABEL(spllower)
 	mr	%r31,%r3		/* save returned IPL mask */
 
 /*
@@ -199,7 +199,7 @@ ASENTRY(Idle)
 #endif
 
 	mr	%r3,%r31		/* get back IPL mask */
-	bl	_C_LABEL(lcsplx)	/* raise spl back to IPL_SCHED */
+	bl	_C_LABEL(spllower)	/* raise spl back to IPL_SCHED */
 
 	bl	_C_LABEL(sched_lock_idle)
 	b	_ASM_LABEL(Idle)
@@ -533,7 +533,7 @@ _C_LABEL(fork_trampoline):
 	bl	_C_LABEL(proc_trampoline_mp)
 #endif
 	li	%r3,0
-	bl	_C_LABEL(lcsplx)
+	bl	_C_LABEL(spllower)
 	mtlr	%r31
 	mr	%r3,%r30
 	blrl				/* jump indirect to r31 */
