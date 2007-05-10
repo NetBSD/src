@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_priv.h,v 1.7 2007/05/05 15:48:18 pooka Exp $	*/
+/*	$NetBSD: puffs_priv.h,v 1.8 2007/05/10 12:26:28 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006 Antti Kantee.  All Rights Reserved.
@@ -88,7 +88,7 @@ struct puffs_cc {
 
 	TAILQ_ENTRY(puffs_cc)	entries;
 };
-#define PCC_ONCE	0x01
+#define PCC_FAKECC	0x01
 #define PCC_REALCC	0x02
 #define PCC_FREEPRIV	0x04
 #define PCC_PREQ_NOCOPY	0x08
@@ -105,7 +105,7 @@ struct puffs_cc {
 #define pcc_init_local(ap)   						\
 do {									\
 	memset(ap, 0, sizeof(*ap));					\
-	(ap)->pcc_flags = PCC_ONCE;					\
+	(ap)->pcc_flags = PCC_FAKECC;					\
 } while (/*CONSTCOND*/0)
 
 /*

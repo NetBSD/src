@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.c,v 1.42 2007/05/09 18:36:52 pooka Exp $	*/
+/*	$NetBSD: puffs.c,v 1.43 2007/05/10 12:26:28 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: puffs.c,v 1.42 2007/05/09 18:36:52 pooka Exp $");
+__RCSID("$NetBSD: puffs.c,v 1.43 2007/05/10 12:26:28 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -55,6 +55,13 @@ __RCSID("$NetBSD: puffs.c,v 1.42 2007/05/09 18:36:52 pooka Exp $");
 #include <unistd.h>
 
 #include "puffs_priv.h"
+
+/*
+ * Set the following to 1 to not handle each request on a separate
+ * stack.  This is highly volatile kludge, therefore no external
+ * interface.
+ */
+int puffs_fakecc;
 
 /* Most file systems want this for opts, so just give it to them */
 const struct mntopt puffsmopts[] = {
@@ -452,6 +459,7 @@ int
 puffs_dopreq(struct puffs_usermount *pu, struct puffs_req *preq,
 	struct puffs_putreq *ppr)
 {
+	struct puffs_cc fakecc;
 	struct puffs_cc *pcc;
 	int rv;
 
@@ -474,13 +482,22 @@ puffs_dopreq(struct puffs_usermount *pu, struct puffs_req *preq,
 	if (pu->pu_flags & PUFFS_FLAG_OPDUMP)
 		puffsdump_req(preq);
 
-	pcc = puffs_cc_create(pu);
+	if (puffs_fakecc) {
+		pcc = &fakecc;
+		pcc_init_local(pcc);
 
-	/* XXX: temporary kludging */
-	pcc->pcc_preq = malloc(preq->preq_buflen);
-	if (pcc->pcc_preq == NULL)
-		return -1;
-	(void) memcpy(pcc->pcc_preq, preq, preq->preq_buflen);
+		pcc->pcc_pu = pu;
+		pcc->pcc_preq = preq;
+		pcc->pcc_flags = PCC_FAKECC;
+	} else {
+		pcc = puffs_cc_create(pu);
+
+		/* XXX: temporary kludging */
+		pcc->pcc_preq = malloc(preq->preq_buflen);
+		if (pcc->pcc_preq == NULL)
+			return -1;
+		(void) memcpy(pcc->pcc_preq, preq, preq->preq_buflen);
+	}
 
 	rv = puffs_docc(pcc, ppr);
 
@@ -500,7 +517,10 @@ puffs_docc(struct puffs_cc *pcc, struct puffs_putreq *ppr)
 
 	assert((pcc->pcc_flags & PCC_DONE) == 0);
 
-	puffs_cc_continue(pcc);
+	if (pcc->pcc_flags & PCC_REALCC)
+		puffs_cc_continue(pcc);
+	else
+		puffs_calldispatcher(pcc);
 	rv = pcc->pcc_rv;
 
 	if ((pcc->pcc_flags & PCC_DONE) == 0)
@@ -512,12 +532,18 @@ puffs_docc(struct puffs_cc *pcc, struct puffs_putreq *ppr)
 		if (pu->pu_flags & PUFFS_FLAG_OPDUMP)
 			puffsdump_rv(pcc->pcc_preq);
 
-		puffs_req_putcc(ppr, pcc);
+		if (pcc->pcc_flags & PCC_REALCC)
+			puffs_req_putcc(ppr, pcc);
+		else
+			puffs_req_put(ppr, pcc->pcc_preq);
 		break;
 	case PUFFCALL_IGNORE:
-		puffs_cc_destroy(pcc);
+		if (pcc->pcc_flags & PCC_REALCC)
+			puffs_cc_destroy(pcc);
 		break;
 	case PUFFCALL_AGAIN:
+		if (pcc->pcc_flags & PCC_FAKECC)
+			assert(pcc->pcc_flags & PCC_DONE);
 		break;
 	default:
 		assert(/*CONSTCOND*/0);
@@ -538,7 +564,7 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 	void *opcookie = preq->preq_cookie;
 	int error, rv, buildpath;
 
-	assert(pcc->pcc_flags & (PCC_ONCE | PCC_REALCC));
+	assert(pcc->pcc_flags & (PCC_FAKECC | PCC_REALCC));
 
 	if (PUFFSOP_WANTREPLY(preq->preq_opclass))
 		rv = PUFFCALL_ANSWER;
