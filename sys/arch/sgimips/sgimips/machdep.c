@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.111 2007/05/10 17:27:06 rumble Exp $	*/
+/*	$NetBSD: machdep.c,v 1.112 2007/05/10 21:24:37 rumble Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.111 2007/05/10 17:27:06 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.112 2007/05/10 21:24:37 rumble Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -258,7 +258,7 @@ mach_init(int argc, char **argv, int magic, struct btinfo_common *btinfo)
 	void *v;
 	vsize_t size;
 	struct arcbios_mem *mem;
-	const char *cpufreq;
+	const char *cpufreq, *osload;
 	struct btinfo_symtab *bi_syms;
 	void *ssym;
 	vaddr_t kernend;
@@ -323,6 +323,9 @@ mach_init(int argc, char **argv, int magic, struct btinfo_common *btinfo)
 	curcpu()->ci_cpu_freq = strtoul(cpufreq, NULL, 10) * 1000000;
 
 	/*
+	 * Try to get the boot device information from ARCBIOS. If we fail,
+	 * attempt to use the environment variables passed as follows:
+	 *
 	 * argv[0] can be either the bootloader loaded by the PROM, or a
 	 * kernel loaded directly by the PROM.
 	 *
@@ -332,14 +335,23 @@ mach_init(int argc, char **argv, int magic, struct btinfo_common *btinfo)
 	 * If argv[1] isn't an environment string, try to use it to set the
 	 * boot device.
 	 */
-	if (argc > 1 && strchr(argv[1], '=') != 0)
+	osload = ARCBIOS->GetEnvironmentVariable("OSLoadPartition");
+	if (osload != NULL)
+		makebootdev(osload);
+	else if (argc > 1 && strchr(argv[1], '=') != 0)
 		makebootdev(argv[1]);
 
 	boothowto = RB_SINGLE;
 
 	/*
 	 * Single- or multi-user ('auto' in SGI terms).
+	 *
+	 * Query ARCBIOS first, then default to environment variables.
 	 */
+	osload = ARCBIOS->GetEnvironmentVariable("OSLoadOptions");
+	if (osload != NULL && strcmp(osload, "auto") == 0)
+		boothowto &= ~RB_SINGLE;
+
 	for (i = 0; i < argc; i++) {
 		if (strcmp(argv[i], "OSLoadOptions=auto") == 0)
 			boothowto &= ~RB_SINGLE;
