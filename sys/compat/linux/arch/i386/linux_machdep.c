@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.124 2007/04/16 19:12:20 ad Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.125 2007/05/10 21:30:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.124 2007/04/16 19:12:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.125 2007/05/10 21:30:14 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -1182,4 +1182,14 @@ linux_usertrap(struct lwp *l, vaddr_t trapaddr,
     void *arg)
 {
 	return 0;
+}
+
+const char *
+linux_get_uname_arch(void)
+{
+	static char uname_arch[5] = "i386";
+
+	if (uname_arch[1] == '3')
+		uname_arch[1] += cpu_class;
+	return uname_arch;
 }
