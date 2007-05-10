@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.9.38.1 2007/05/09 18:23:35 garbled Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.9.38.2 2007/05/10 17:23:06 garbled Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.9.38.1 2007/05/09 18:23:35 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.9.38.2 2007/05/10 17:23:06 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/extent.h>
@@ -135,8 +135,8 @@ mainbus_attach(parent, self, aux)
 	extent_destroy(memext);
 #endif
 
-	pba.pba_iot = &mvmeppc_pci_io_bs_tag;
-	pba.pba_memt = &mvmeppc_pci_mem_bs_tag;
+	pba.pba_iot = &prep_io_space_tag;
+	pba.pba_memt = &prep_mem_space_tag;
 	pba.pba_dmat = &pci_bus_dma_tag;
 	pba.pba_dmat64 = NULL;
 	pba.pba_pc = genppc_pct;

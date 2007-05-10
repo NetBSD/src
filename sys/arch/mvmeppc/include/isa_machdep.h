@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.h,v 1.4.38.1 2007/05/09 18:23:33 garbled Exp $	*/
+/*	$NetBSD: isa_machdep.h,v 1.4.38.2 2007/05/10 17:23:06 garbled Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -41,8 +41,8 @@
 
 #include <powerpc/isa_machdep.h>
 
-#define	isa_outb(x,y)	outb(MVMEPPC_PHYS_BASE_IO + (x), y)
-#define isa_inb(x)	inb(MVMEPPC_PHYS_BASE_IO + (x))
+#define	isa_outb(x,y)	outb(PREP_BUS_SPACE_IO + (x), y)
+#define isa_inb(x)	inb(PREP_BUS_SPACE_IO + (x))
 
 extern struct powerpc_bus_dma_tag isa_bus_dma_tag;
 extern struct pic_ops *isa_pic;

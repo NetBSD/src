@@ -1,4 +1,4 @@
-/*	$NetBSD: platform_160x.c,v 1.5.38.1 2007/05/09 18:23:35 garbled Exp $	*/
+/*	$NetBSD: platform_160x.c,v 1.5.38.2 2007/05/10 17:23:06 garbled Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: platform_160x.c,v 1.5.38.1 2007/05/09 18:23:35 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: platform_160x.c,v 1.5.38.2 2007/05/10 17:23:06 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -134,7 +134,7 @@ static void
 p160x_pci_intr_fixup(int bus, int dev, int *line)
 {
 
-	printf("p160x_pci_intr_fixup: bus=%d, dev=%d, line=%d\n",
+	aprint_verbose("p160x_pci_intr_fixup: bus=%d, dev=%d, line=%d\n",
 	    bus, dev, *line);
 }
 

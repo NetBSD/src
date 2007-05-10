@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.5.38.1 2007/05/09 18:23:35 garbled Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.5.38.2 2007/05/10 17:23:07 garbled Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.5.38.1 2007/05/09 18:23:35 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.5.38.2 2007/05/10 17:23:07 garbled Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -66,8 +66,8 @@ __KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.5.38.1 2007/05/09 18:23:35 garbled
 
 extern struct genppc_pci_chipset *genppc_pct;
 
-#define	PCI_MODE1_ADDRESS_REG	(MVMEPPC_KVA_BASE_IO + 0xcf8)
-#define	PCI_MODE1_DATA_REG	(MVMEPPC_KVA_BASE_IO + 0xcfc)
+#define	PCI_MODE1_ADDRESS_REG	(PREP_BUS_SPACE_IO + 0xcf8)
+#define	PCI_MODE1_DATA_REG	(PREP_BUS_SPACE_IO + 0xcfc)
 
 void pci_intr_fixup(int, int, int *);
 
