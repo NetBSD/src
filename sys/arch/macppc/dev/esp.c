@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.22 2007/03/05 10:50:24 tsutsui Exp $	*/
+/*	$NetBSD: esp.c,v 1.22.10.1 2007/05/11 00:19:26 macallan Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.22 2007/03/05 10:50:24 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.22.10.1 2007/05/11 00:19:26 macallan Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -246,7 +246,7 @@ espattach(parent, self, aux)
 	sc->sc_maxxfer = 64 * 1024;
 
 	/* and the interuppts */
-	intr_establish(esc->sc_pri, IST_LEVEL, IPL_BIO, ncr53c9x_intr, sc);
+	intr_establish(esc->sc_pri, IST_EDGE, IPL_BIO, ncr53c9x_intr, sc);
 
 	/* Reset SCSI bus when halt. */
 	shutdownhook_establish(esp_shutdownhook, sc);

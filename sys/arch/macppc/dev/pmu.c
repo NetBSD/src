@@ -1,4 +1,4 @@
-/*	$NetBSD: pmu.c,v 1.5.4.1 2007/05/09 02:01:03 macallan Exp $ */
+/*	$NetBSD: pmu.c,v 1.5.4.2 2007/05/11 00:19:27 macallan Exp $ */
 
 /*-
  * Copyright (c) 2006 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmu.c,v 1.5.4.1 2007/05/09 02:01:03 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmu.c,v 1.5.4.2 2007/05/11 00:19:27 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -257,13 +257,17 @@ pmu_attach(struct device *parent, struct device *dev, void *aux)
 	int irq = ca->ca_intr[0];
 	int node, extint_node, root_node;
 	int nbat = 1, i, pmnode;
+	int type = IST_EDGE;
 	uint8_t cmd[2] = {2, 0};
 	uint8_t resp[16];
 	char name[256];
 
 	extint_node = getnodebyname(OF_parent(ca->ca_node), "extint-gpio1");
-	if (extint_node)
+	if (extint_node) {
+
 		OF_getprop(extint_node, "interrupts", &irq, 4);
+		type = IST_LEVEL;
+	}
 
 	printf(" irq %d: ", irq);
 
@@ -286,7 +290,7 @@ pmu_attach(struct device *parent, struct device *dev, void *aux)
 		printf("%s: unable to map registers\n", dev->dv_xname);
 		return;
 	}
-	sc->sc_ih = intr_establish(irq, IST_LEVEL, IPL_TTY, pmu_intr, sc);
+	sc->sc_ih = intr_establish(irq, type, IPL_TTY, pmu_intr, sc);
 
 	pmu_init(sc);
 
