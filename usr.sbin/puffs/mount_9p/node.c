@@ -1,4 +1,4 @@
-/*	$NetBSD: node.c,v 1.7 2007/05/07 17:20:58 pooka Exp $	*/
+/*	$NetBSD: node.c,v 1.8 2007/05/11 16:23:00 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: node.c,v 1.7 2007/05/07 17:20:58 pooka Exp $");
+__RCSID("$NetBSD: node.c,v 1.8 2007/05/11 16:23:00 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -69,7 +69,7 @@ puffs9p_node_lookup(struct puffs_cc *pcc, void *opc, void **newnode,
 	p9pbuf_put_4(pb, tfid);
 	p9pbuf_put_2(pb, 1);
 	p9pbuf_put_str(pb, pcn->pcn_name);
-	puffs_framebuf_enqueue_cc(pcc, pb);
+	GETRESPONSE(pb);
 
 	rv = proto_expect_walk_nqids(pb, &nqid);
 	if (rv) {
@@ -128,7 +128,7 @@ puffs9p_node_readdir(struct puffs_cc *pcc, void *opc, struct dirent *dent,
 	p9pbuf_put_4(pb, dfp->fid);
 	p9pbuf_put_8(pb, *readoff);
 	p9pbuf_put_4(pb, *reslen); /* XXX */
-	puffs_framebuf_enqueue_cc(pcc, pb);
+	GETRESPONSE(pb);
 
 	p9pbuf_get_4(pb, &count);
 
@@ -171,7 +171,7 @@ puffs9p_node_getattr(struct puffs_cc *pcc, void *opc, struct vattr *vap,
 	p9pbuf_put_1(pb, P9PROTO_T_STAT);
 	p9pbuf_put_2(pb, tag);
 	p9pbuf_put_4(pb, p9n->fid_base);
-	puffs_framebuf_enqueue_cc(pcc, pb);
+	GETRESPONSE(pb);
 
 	rv = proto_expect_stat(pb, &pn->pn_va);
 	if (rv)
@@ -195,7 +195,7 @@ puffs9p_node_setattr(struct puffs_cc *pcc, void *opc,
 	p9pbuf_put_2(pb, tag);
 	p9pbuf_put_4(pb, p9n->fid_base);
 	proto_make_stat(pb, va, NULL, pn->pn_va.va_type);
-	puffs_framebuf_enqueue_cc(pcc, pb);
+	GETRESPONSE(pb);
 
 	if (p9pbuf_get_type(pb) != P9PROTO_R_WSTAT)
 		rv = EPROTO;
@@ -290,7 +290,7 @@ puffs9p_node_read(struct puffs_cc *pcc, void *opc, uint8_t *buf,
 		p9pbuf_put_4(pb, p9n->fid_read);
 		p9pbuf_put_8(pb, offset+nread);
 		p9pbuf_put_4(pb, MIN((uint32_t)*resid,p9p->maxreq-24));
-		puffs_framebuf_enqueue_cc(pcc, pb);
+		GETRESPONSE(pb);
 
 		if (p9pbuf_get_type(pb) != P9PROTO_R_READ) {
 			rv = EPROTO;
@@ -334,7 +334,7 @@ puffs9p_node_write(struct puffs_cc *pcc, void *opc, uint8_t *buf,
 		p9pbuf_put_8(pb, offset+nwrite);
 		p9pbuf_put_4(pb, chunk);
 		p9pbuf_write_data(pb, buf+nwrite, chunk);
-		puffs_framebuf_enqueue_cc(pcc, pb);
+		GETRESPONSE(pb);
 
 		if (p9pbuf_get_type(pb) != P9PROTO_R_WRITE) {
 			rv = EPROTO;
@@ -384,7 +384,7 @@ nodecreate(struct puffs_cc *pcc, struct puffs_node *pn, void **newnode,
 	p9pbuf_put_str(pb, name);
 	p9pbuf_put_4(pb, dirbit | (vap->va_mode & 0777));
 	p9pbuf_put_1(pb, 0);
-	puffs_framebuf_enqueue_cc(pcc, pb);
+	GETRESPONSE(pb);
 
 	rv = proto_expect_qid(pb, P9PROTO_R_CREATE, &nqid);
 	if (rv)
@@ -405,7 +405,7 @@ nodecreate(struct puffs_cc *pcc, struct puffs_node *pn, void **newnode,
 	p9pbuf_put_4(pb, nfid);
 	p9pbuf_put_2(pb, 1);
 	p9pbuf_put_str(pb, name);
-	puffs_framebuf_enqueue_cc(pcc, pb);
+	GETRESPONSE(pb);
 
 	/*
 	 * someone removed it already? try again
@@ -457,7 +457,7 @@ noderemove(struct puffs_cc *pcc, struct p9pnode *p9n)
 	p9pbuf_put_1(pb, P9PROTO_T_REMOVE);
 	p9pbuf_put_2(pb, tag);
 	p9pbuf_put_4(pb, testfid);
-	puffs_framebuf_enqueue_cc(pcc, pb);
+	GETRESPONSE(pb);
 
 	if (p9pbuf_get_type(pb) != P9PROTO_R_REMOVE) {
 		rv = EPROTO;
@@ -525,7 +525,7 @@ puffs9p_node_rename(struct puffs_cc *pcc, void *opc, void *src,
 	p9pbuf_put_2(pb, tag);
 	p9pbuf_put_4(pb, p9n_src->fid_base);
 	proto_make_stat(pb, NULL, pcn_targ->pcn_name, pn_src->pn_va.va_type);
-	puffs_framebuf_enqueue_cc(pcc, pb);
+	GETRESPONSE(pb);
 
 	if (p9pbuf_get_type(pb) != P9PROTO_R_WSTAT)
 		rv = EPROTO;

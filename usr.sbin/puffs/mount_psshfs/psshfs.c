@@ -1,4 +1,4 @@
-/*	$NetBSD: psshfs.c,v 1.23 2007/05/09 21:46:27 pooka Exp $	*/
+/*	$NetBSD: psshfs.c,v 1.24 2007/05/11 16:23:01 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: psshfs.c,v 1.23 2007/05/09 21:46:27 pooka Exp $");
+__RCSID("$NetBSD: psshfs.c,v 1.24 2007/05/11 16:23:01 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -218,7 +218,7 @@ main(int argc, char *argv[])
 	if (detach)
 		daemon(1, 0);
 
-	return puffs_framebuf_eventloop(pu, pctx.sshfd,
+	return puffs_framebuf_eventloop(pu, &pctx.sshfd, 1,
 	    psbuf_read, psbuf_write, psbuf_cmp, NULL);
 }
 

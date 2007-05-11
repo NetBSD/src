@@ -1,4 +1,4 @@
-/*	$NetBSD: psshfs.h,v 1.12 2007/05/06 19:48:51 pooka Exp $	*/
+/*	$NetBSD: psshfs.h,v 1.13 2007/05/11 16:23:01 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -64,6 +64,10 @@ PUFFSOP_PROTOS(psshfs);
 #define PSSHFSRETURN(rv)						\
 	puffs_framebuf_destroy(pb);					\
 	return (rv)
+
+#define GETRESPONSE(pb) puffs_framebuf_enqueue_cc(pcc, pctx->sshfd, pb)
+#define JUSTSEND(pb) puffs_framebuf_enqueue_justsend(pu, pctx->sshfd, pb, 1)
+#define SENDCB(pb, f, a) puffs_framebuf_enqueue_cb(pu, pctx->sshfd, pb, f,a)
 
 struct psshfs_dir {
 	int valid;

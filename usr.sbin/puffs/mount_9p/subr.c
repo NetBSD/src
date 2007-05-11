@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.c,v 1.2 2007/05/05 15:49:51 pooka Exp $	*/
+/*	$NetBSD: subr.c,v 1.3 2007/05/11 16:23:00 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: subr.c,v 1.2 2007/05/05 15:49:51 pooka Exp $");
+__RCSID("$NetBSD: subr.c,v 1.3 2007/05/11 16:23:00 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -135,7 +135,7 @@ getdfwithoffset(struct puffs_cc *pcc, struct p9pnode *p9n, off_t wantoff,
 		p9pbuf_put_4(pb, dfp->fid);       
 		p9pbuf_put_8(pb, 0);
 		p9pbuf_put_4(pb, advance);       
-		puffs_framebuf_enqueue_cc(pcc, pb);
+		GETRESPONSE(pb);
 
 		if (p9pbuf_get_type(pb) != P9PROTO_R_READ) {
 			error = EPROTO;

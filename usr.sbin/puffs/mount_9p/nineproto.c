@@ -1,4 +1,4 @@
-/*	$NetBSD: nineproto.c,v 1.5 2007/05/06 22:17:50 pooka Exp $	*/
+/*	$NetBSD: nineproto.c,v 1.6 2007/05/11 16:23:00 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: nineproto.c,v 1.5 2007/05/06 22:17:50 pooka Exp $");
+__RCSID("$NetBSD: nineproto.c,v 1.6 2007/05/11 16:23:00 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -195,7 +195,7 @@ proto_cc_dupfid(struct puffs_cc *pcc, p9pfid_t oldfid, p9pfid_t newfid)
 	p9pbuf_put_4(pb, oldfid);
 	p9pbuf_put_4(pb, newfid);
 	p9pbuf_put_2(pb, 0);
-	puffs_framebuf_enqueue_cc(pcc, pb);
+	GETRESPONSE(pb);
 
 	rv = proto_expect_walk_nqids(pb, &qids);
 	if (rv)
@@ -210,6 +210,7 @@ proto_cc_dupfid(struct puffs_cc *pcc, p9pfid_t oldfid, p9pfid_t newfid)
 int
 proto_cc_clunkfid(struct puffs_cc *pcc, p9pfid_t fid, int waitforit)
 {
+	struct puffs_usermount *pu = puffs_cc_getusermount(pcc);
 	struct puffs9p *p9p = puffs_cc_getspecific(pcc);
 	struct puffs_framebuf *pb;
 	p9ptag_t tag = NEXTTAG(p9p);
@@ -221,13 +222,12 @@ proto_cc_clunkfid(struct puffs_cc *pcc, p9pfid_t fid, int waitforit)
 	p9pbuf_put_4(pb, fid);
 
 	if (waitforit) {
-		puffs_framebuf_enqueue_cc(pcc, pb);
+		GETRESPONSE(pb);
 		if (p9pbuf_get_type(pb) != P9PROTO_R_CLUNK)
 			error = EPROTO;
 		puffs_framebuf_destroy(pb);
 	} else {
-		puffs_framebuf_enqueue_justsend(puffs_cc_getusermount(pcc),
-		    pb, 1);
+		JUSTSEND(pb);
 	}
 
 	return error;
@@ -253,7 +253,7 @@ proto_cc_open(struct puffs_cc *pcc, p9pfid_t fid, p9pfid_t newfid, int mode)
 	p9pbuf_put_2(pb, tag);
 	p9pbuf_put_4(pb, newfid);
 	p9pbuf_put_1(pb, mode);
-	puffs_framebuf_enqueue_cc(pcc, pb);
+	GETRESPONSE(pb);
 	if (p9pbuf_get_type(pb) != P9PROTO_R_OPEN)
 		error = EPROTO;
 
