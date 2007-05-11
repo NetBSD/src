@@ -1,11 +1,10 @@
-/*	$NetBSD: dispatcher.c,v 1.1 2007/05/11 21:42:42 pooka Exp $	*/
+/*	$NetBSD: dispatcher.c,v 1.2 2007/05/11 21:44:00 pooka Exp $	*/
 
 /*
- * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
+ * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
  *
  * Development of this software was supported by the
- * Google Summer of Code program and the Ulla Tuominen Foundation.
- * The Google SoC project was mentored by Bill Studenmund.
+ * Ulla Tuominen Foundation.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -34,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: dispatcher.c,v 1.1 2007/05/11 21:42:42 pooka Exp $");
+__RCSID("$NetBSD: dispatcher.c,v 1.2 2007/05/11 21:44:00 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
