@@ -1,4 +1,4 @@
-/*	$NetBSD: ninepuffs.c,v 1.8 2007/05/11 16:23:00 pooka Exp $	*/
+/*	$NetBSD: ninepuffs.c,v 1.9 2007/05/11 21:27:45 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ninepuffs.c,v 1.8 2007/05/11 16:23:00 pooka Exp $");
+__RCSID("$NetBSD: ninepuffs.c,v 1.9 2007/05/11 21:27:45 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -103,7 +103,7 @@ main(int argc, char *argv[])
 	char *srvhost;
 	char *user;
 	unsigned short port;
-	int mntflags, pflags, ch;
+	int mntflags, pflags, lflags, ch;
 	int detach;
 
 	setprogname(argv[0]);
@@ -111,7 +111,7 @@ main(int argc, char *argv[])
 	if (argc < 3)
 		usage();
 
-	mntflags = pflags = 0;
+	mntflags = pflags = lflags = 0;
 	detach = 1;
 	port = DEFPORT_9P;
 
@@ -127,7 +127,7 @@ main(int argc, char *argv[])
 			port = atoi(optarg);
 			break;
 		case 's':
-			detach = 0;
+			lflags |= PUFFSLOOP_NODAEMON;
 			break;
 		default:
 			usage();
@@ -144,7 +144,7 @@ main(int argc, char *argv[])
 	srvhost = argv[1];
 
 	if (pflags & PUFFS_FLAG_OPDUMP)
-		detach = 0;
+		lflags |= PUFFSLOOP_NODAEMON;
 	pflags |= PUFFS_KFLAG_WTCACHE | PUFFS_KFLAG_IAONDEMAND;
 
 	PUFFSOP_INIT(pops);
@@ -195,11 +195,11 @@ main(int argc, char *argv[])
 	if (puffs_start(pu, pn_root, &svfsb) == -1)
 		err(1, "puffs_start");
 
-	if (detach)
-		daemon(1, 0);
+	if (puffs_framebuf_init(pu, p9pbuf_read, p9pbuf_write,
+	    p9pbuf_cmp, NULL) == -1)
+		err(1, "puffs_framebuf_init");
+	if (puffs_framebuf_addfd(pu, p9p.servsock) == -1)
+		err(1, "puffs_framebuf_addfd");
 
-	puffs_framebuf_eventloop(pu, &p9p.servsock, 1,
-	    p9pbuf_read, p9pbuf_write, p9pbuf_cmp, NULL);
-
-	return 0;
+	return puffs_mainloop(pu, lflags);
 }
