@@ -1,4 +1,4 @@
-/*	$NetBSD: vr_idle.S,v 1.11 2007/02/09 21:55:04 ad Exp $	*/
+/*	$NetBSD: vr_idle.S,v 1.12 2007/05/11 12:56:01 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -66,7 +66,7 @@ LEAF(vr_idle)
 	nop
 
 	/* Try to zero some free pages. */
-	lw	t0, _C_LABEL(uvm) + UVM_PAGE_IDLE_ZERO
+	lbu	t0, _C_LABEL(uvm) + UVM_PAGE_IDLE_ZERO
 	nop
 	beq	t0, zero, 1f
 	nop
