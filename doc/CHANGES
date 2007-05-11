@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.848 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.849 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -106,3 +106,7 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	ug(4): Driver splitted in three parts to support the new ACPI
 		attachment (ug* at acpi?). Patch from Mihai Chelaru.
 		[xtraeme 20070508]
+	pf(4): Make 'nat' and 'rdr' translation rules obey state
+		policy flags ('if-bound', 'group-bound', 'floating').
+		Extend pf.conf(5) syntax to express the translation-state
+		policies. [dyoung 20070510]
