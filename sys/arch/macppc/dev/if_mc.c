@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mc.c,v 1.12 2007/03/04 06:00:10 christos Exp $	*/
+/*	$NetBSD: if_mc.c,v 1.12.10.1 2007/05/11 00:19:27 macallan Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@bga.com>
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mc.c,v 1.12 2007/03/04 06:00:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mc.c,v 1.12.10.1 2007/05/11 00:19:27 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -174,9 +174,9 @@ mc_attach(parent, self, aux)
 	dbdma_reset(sc->sc_txdma);
 
 	/* install interrupt handlers */
-	/*intr_establish(ca->ca_intr[1], IST_LEVEL, IPL_NET, mc_dmaintr, sc);*/
-	intr_establish(ca->ca_intr[2], IST_LEVEL, IPL_NET, mc_dmaintr, sc);
-	intr_establish(ca->ca_intr[0], IST_LEVEL, IPL_NET, mcintr, sc);
+	/*intr_establish(ca->ca_intr[1], IST_EDGE, IPL_NET, mc_dmaintr, sc);*/
+	intr_establish(ca->ca_intr[2], IST_EDGE, IPL_NET, mc_dmaintr, sc);
+	intr_establish(ca->ca_intr[0], IST_EDGE, IPL_NET, mcintr, sc);
 
 	sc->sc_biucc = XMTSP_64;
 	sc->sc_fifocc = XMTFW_16 | RCVFW_64 | XMTFWU | RCVFWU |

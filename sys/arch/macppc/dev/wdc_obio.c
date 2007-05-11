@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_obio.c,v 1.46 2006/11/07 02:23:27 macallan Exp $	*/
+/*	$NetBSD: wdc_obio.c,v 1.46.16.1 2007/05/11 00:19:27 macallan Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.46 2006/11/07 02:23:27 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.46.16.1 2007/05/11 00:19:27 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -184,7 +184,7 @@ wdc_obio_attach(parent, self, aux)
 	wdr->data32ioh = wdr->cmd_ioh;
 #endif
 
-	sc->sc_ih = intr_establish(intr, IST_LEVEL, IPL_BIO, wdcintr, chp);
+	sc->sc_ih = intr_establish(intr, IST_EDGE, IPL_BIO, wdcintr, chp);
 
 	if (use_dma) {
 		sc->sc_dmacmd = dbdma_alloc(sizeof(dbdma_command_t) * 20);

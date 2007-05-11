@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.42 2007/03/04 06:00:10 christos Exp $	*/
+/*	$NetBSD: zs.c,v 1.42.10.1 2007/05/11 00:19:27 macallan Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Bill Studenmund
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.42 2007/03/04 06:00:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.42.10.1 2007/05/11 00:19:27 macallan Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -379,11 +379,11 @@ zsc_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/* XXX - Now safe to install interrupt handlers. */
-	intr_establish(intr[0][0], IST_LEVEL, IPL_TTY, zshard, zsc);
-	intr_establish(intr[1][0], IST_LEVEL, IPL_TTY, zshard, zsc);
+	intr_establish(intr[0][0], IST_EDGE, IPL_TTY, zshard, zsc);
+	intr_establish(intr[1][0], IST_EDGE, IPL_TTY, zshard, zsc);
 #ifdef ZS_TXDMA
-	intr_establish(intr[0][1], IST_LEVEL, IPL_TTY, zs_txdma_int, (void *)0);
-	intr_establish(intr[1][1], IST_LEVEL, IPL_TTY, zs_txdma_int, (void *)1);
+	intr_establish(intr[0][1], IST_EDGE, IPL_TTY, zs_txdma_int, (void *)0);
+	intr_establish(intr[1][1], IST_EDGE, IPL_TTY, zs_txdma_int, (void *)1);
 #endif
 
 	zsc->zsc_si = softintr_establish(IPL_SOFTSERIAL,

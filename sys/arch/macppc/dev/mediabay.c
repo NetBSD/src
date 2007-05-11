@@ -1,4 +1,4 @@
-/*	$NetBSD: mediabay.c,v 1.12 2006/12/10 02:41:30 macallan Exp $	*/
+/*	$NetBSD: mediabay.c,v 1.12.14.1 2007/05/11 00:19:27 macallan Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mediabay.c,v 1.12 2006/12/10 02:41:30 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mediabay.c,v 1.12.14.1 2007/05/11 00:19:27 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -113,10 +113,10 @@ mediabay_attach(parent, self, aux)
 	sc->sc_node = ca->ca_node;
 	sc->sc_baseaddr = ca->ca_baseaddr;
 	irq = ca->ca_intr[0];
-	itype = IST_LEVEL;
+	itype = IST_EDGE;
 
-	if (ca->ca_nintr == 8 && ca->ca_intr[1] == 0)
-		itype = IST_EDGE;
+	if (ca->ca_nintr == 8 && ca->ca_intr[1] != 0)
+		itype = IST_LEVEL;
 
 	printf(" irq %d %s\n", irq, intr_typename(itype));
 

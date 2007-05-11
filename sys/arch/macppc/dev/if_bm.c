@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bm.c,v 1.31 2007/03/04 10:06:49 macallan Exp $	*/
+/*	$NetBSD: if_bm.c,v 1.31.10.1 2007/05/11 00:19:27 macallan Exp $	*/
 
 /*-
  * Copyright (C) 1998, 1999, 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bm.c,v 1.31 2007/03/04 10:06:49 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bm.c,v 1.31.10.1 2007/05/11 00:19:27 macallan Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -243,8 +243,8 @@ bmac_attach(parent, self, aux)
 	printf(" irq %d,%d: address %s\n", ca->ca_intr[0], ca->ca_intr[2],
 		ether_sprintf(laddr));
 
-	intr_establish(ca->ca_intr[0], IST_LEVEL, IPL_NET, bmac_intr, sc);
-	intr_establish(ca->ca_intr[2], IST_LEVEL, IPL_NET, bmac_rint, sc);
+	intr_establish(ca->ca_intr[0], IST_EDGE, IPL_NET, bmac_intr, sc);
+	intr_establish(ca->ca_intr[2], IST_EDGE, IPL_NET, bmac_rint, sc);
 
 	memcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
 	ifp->if_softc = sc;
