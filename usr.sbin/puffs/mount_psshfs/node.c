@@ -1,4 +1,4 @@
-/*	$NetBSD: node.c,v 1.25 2007/05/07 17:20:58 pooka Exp $	*/
+/*	$NetBSD: node.c,v 1.26 2007/05/11 16:23:01 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: node.c,v 1.25 2007/05/07 17:20:58 pooka Exp $");
+__RCSID("$NetBSD: node.c,v 1.26 2007/05/11 16:23:01 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -153,7 +153,7 @@ psshfs_node_setattr(struct puffs_cc *pcc, void *opc,
 	}
 			
 	psbuf_put_vattr(pb, &kludgeva);
-	puffs_framebuf_enqueue_cc(pcc, pb);
+	GETRESPONSE(pb);
 
 	rv = psbuf_expect_status(pb);
 	if (rv == 0)
@@ -182,7 +182,7 @@ psshfs_node_create(struct puffs_cc *pcc, void *opc, void **newnode,
 	psbuf_req_str(pb, SSH_FXP_OPEN, reqid, PCNPATH(pcn));
 	psbuf_put_4(pb, SSH_FXF_WRITE | SSH_FXF_CREAT | SSH_FXF_TRUNC);
 	psbuf_put_vattr(pb, va);
-	puffs_framebuf_enqueue_cc(pcc, pb);
+	GETRESPONSE(pb);
 
 	rv = psbuf_expect_handle(pb, &fhand, &fhandlen);
 	if (rv == 0)
@@ -193,7 +193,7 @@ psshfs_node_create(struct puffs_cc *pcc, void *opc, void **newnode,
 	reqid = NEXTREQ(pctx);
 	psbuf_recycleout(pb);
 	psbuf_req_data(pb, SSH_FXP_CLOSE, reqid, fhand, fhandlen);
-	puffs_framebuf_enqueue_justsend(pu, pb, 1);
+	JUSTSEND(pb);
 	free(fhand);
 	return 0;
 
@@ -220,7 +220,7 @@ psshfs_node_open(struct puffs_cc *pcc, void *opc, int mode,
 		psbuf_req_str(pb, SSH_FXP_OPEN, reqid, PNPATH(pn));
 		psbuf_put_4(pb, SSH_FXF_READ);
 		psbuf_put_vattr(pb, &va);
-		puffs_framebuf_enqueue_cc(pcc, pb);
+		GETRESPONSE(pb);
 
 		rv = psbuf_expect_handle(pb, &psn->fhand_r, &psn->fhand_r_len);
 		if (rv)
@@ -231,7 +231,7 @@ psshfs_node_open(struct puffs_cc *pcc, void *opc, int mode,
 		psbuf_req_str(pb, SSH_FXP_OPEN, reqid, PNPATH(pn));
 		psbuf_put_4(pb, SSH_FXF_WRITE);
 		psbuf_put_vattr(pb, &va);
-		puffs_framebuf_enqueue_cc(pcc, pb);
+		GETRESPONSE(pb);
 
 		rv = psbuf_expect_handle(pb, &psn->fhand_w, &psn->fhand_w_len);
 		if (rv)
@@ -256,7 +256,7 @@ psshfs_node_inactive(struct puffs_cc *pcc, void *opc, pid_t pid, int *refcount)
 		pb1 = psbuf_makeout();
 		psbuf_req_data(pb1, SSH_FXP_CLOSE, reqid,
 		    psn->fhand_r, psn->fhand_r_len);
-		puffs_framebuf_enqueue_justsend(pu, pb1, 1);
+		JUSTSEND(pb1);
 		free(psn->fhand_r);
 		psn->fhand_r = NULL;
 	}
@@ -264,7 +264,7 @@ psshfs_node_inactive(struct puffs_cc *pcc, void *opc, pid_t pid, int *refcount)
 		pb2 = psbuf_makeout();
 		psbuf_req_data(pb2, SSH_FXP_CLOSE, reqid,
 		    psn->fhand_w, psn->fhand_w_len);
-		puffs_framebuf_enqueue_justsend(pu, pb2, 1);
+		JUSTSEND(pb2);
 		free(psn->fhand_w);
 		psn->fhand_w = NULL;
 	}
@@ -324,7 +324,7 @@ psshfs_node_read(struct puffs_cc *pcc, void *opc, uint8_t *buf,
 	psbuf_req_data(pb, SSH_FXP_READ, reqid, psn->fhand_r, psn->fhand_r_len);
 	psbuf_put_8(pb, offset);
 	psbuf_put_4(pb, readlen);
-	puffs_framebuf_enqueue_cc(pcc, pb);
+	GETRESPONSE(pb);
 
 	rv = psbuf_do_data(pb, buf, &readlen);
 	if (rv == 0)
@@ -354,7 +354,7 @@ psshfs_node_write(struct puffs_cc *pcc, void *opc, uint8_t *buf,
 	psbuf_req_data(pb, SSH_FXP_WRITE, reqid, psn->fhand_w,psn->fhand_w_len);
 	psbuf_put_8(pb, offset);
 	psbuf_put_data(pb, buf, writelen);
-	puffs_framebuf_enqueue_cc(pcc, pb);
+	GETRESPONSE(pb);
 
 	rv = psbuf_expect_status(pb);
 	if (rv == 0)
@@ -382,7 +382,7 @@ psshfs_node_readlink(struct puffs_cc *pcc, void *opc,
 	}
 
 	psbuf_req_str(pb, SSH_FXP_READLINK, reqid, PNPATH(pn));
-	puffs_framebuf_enqueue_cc(pcc, pb);
+	GETRESPONSE(pb);
 
 	rv = psbuf_expect_name(pb, &count);
 	if (rv)
@@ -415,7 +415,7 @@ psshfs_node_remove(struct puffs_cc *pcc, void *opc, void *targ,
 	}
 
 	psbuf_req_str(pb, SSH_FXP_REMOVE, reqid, PNPATH(pn_targ));
-	puffs_framebuf_enqueue_cc(pcc, pb);
+	GETRESPONSE(pb);
 
 	rv = psbuf_expect_status(pb);
 
@@ -443,7 +443,7 @@ psshfs_node_mkdir(struct puffs_cc *pcc, void *opc, void **newnode,
 
 	psbuf_req_str(pb, SSH_FXP_MKDIR, reqid, PCNPATH(pcn));
 	psbuf_put_vattr(pb, va);
-	puffs_framebuf_enqueue_cc(pcc, pb);
+	GETRESPONSE(pb);
 
 	rv = psbuf_expect_status(pb);
 
@@ -464,7 +464,7 @@ psshfs_node_rmdir(struct puffs_cc *pcc, void *opc, void *targ,
 	struct puffs_node *pn_targ = targ;
 
 	psbuf_req_str(pb, SSH_FXP_RMDIR, reqid, PNPATH(pn_targ));
-	puffs_framebuf_enqueue_cc(pcc, pb);
+	GETRESPONSE(pb);
 
 	rv = psbuf_expect_status(pb);
 	if (rv == 0)
@@ -500,7 +500,7 @@ psshfs_node_symlink(struct puffs_cc *pcc, void *opc, void **newnode,
 	 */
 	psbuf_req_str(pb, SSH_FXP_SYMLINK, reqid, link_target);
 	psbuf_put_str(pb, PCNPATH(pcn));
-	puffs_framebuf_enqueue_cc(pcc, pb);
+	GETRESPONSE(pb);
 
 	rv = psbuf_expect_status(pb);
 	if (rv == 0)
@@ -536,7 +536,7 @@ psshfs_node_rename(struct puffs_cc *pcc, void *opc, void *src,
 
 	psbuf_req_str(pb, SSH_FXP_RENAME, reqid, PCNPATH(pcn_src));
 	psbuf_put_str(pb, PCNPATH(pcn_targ));
-	puffs_framebuf_enqueue_cc(pcc, pb);
+	GETRESPONSE(pb);
 
 	rv = psbuf_expect_status(pb);
 	if (rv == 0) {

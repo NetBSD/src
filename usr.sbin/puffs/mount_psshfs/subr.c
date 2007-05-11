@@ -1,4 +1,4 @@
-/*      $NetBSD: subr.c,v 1.14 2007/05/05 15:49:51 pooka Exp $        */
+/*      $NetBSD: subr.c,v 1.15 2007/05/11 16:23:01 pooka Exp $        */
         
 /*      
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
         
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: subr.c,v 1.14 2007/05/05 15:49:51 pooka Exp $");
+__RCSID("$NetBSD: subr.c,v 1.15 2007/05/11 16:23:01 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -163,7 +163,7 @@ readdir_getattr(struct puffs_usermount *pu, struct psshfs_node *psn,
 
 	pb = psbuf_makeout();
 	psbuf_req_str(pb, SSH_FXP_LSTAT, reqid, path);
-	puffs_framebuf_enqueue_cb(pu, pb, readdir_getattr_resp, rda);
+	SENDCB(pb, readdir_getattr_resp, rda);
 }
 #endif
 
@@ -173,7 +173,7 @@ getpathattr(struct puffs_cc *pcc, const char *path, struct vattr *vap)
 	PSSHFSAUTOVAR(pcc);
 
 	psbuf_req_str(pb, SSH_FXP_LSTAT, reqid, path);
-	puffs_framebuf_enqueue_cc(pcc, pb);
+	GETRESPONSE(pb);
 
 	rv = psbuf_expect_attrs(pb, vap);
 
@@ -213,6 +213,7 @@ int
 sftp_readdir(struct puffs_cc *pcc, struct psshfs_ctx *pctx,
 	struct puffs_node *pn)
 {
+	struct puffs_usermount *pu = puffs_cc_getusermount(pcc);
 	struct psshfs_node *psn = pn->pn_data;
 	struct psshfs_dir *olddir, *testd;
 	struct puffs_framebuf *pb;
@@ -232,7 +233,7 @@ sftp_readdir(struct puffs_cc *pcc, struct psshfs_ctx *pctx,
 
 	pb = psbuf_makeout();
 	psbuf_req_str(pb, SSH_FXP_OPENDIR, reqid, PNPATH(pn));
-	puffs_framebuf_enqueue_cc(pcc, pb);
+	GETRESPONSE(pb);
 
 	rv = psbuf_expect_handle(pb, &dhand, &dhandlen);
 	if (rv)
@@ -262,7 +263,7 @@ sftp_readdir(struct puffs_cc *pcc, struct psshfs_ctx *pctx,
 		reqid = NEXTREQ(pctx);
 		psbuf_recycleout(pb);
 		psbuf_req_data(pb, SSH_FXP_READDIR, reqid, dhand, dhandlen);
-		puffs_framebuf_enqueue_cc(pcc, pb);
+		GETRESPONSE(pb);
 
 		/* check for EOF */
 		if (psbuf_get_type(pb) == SSH_FXP_STATUS) {
@@ -320,7 +321,7 @@ sftp_readdir(struct puffs_cc *pcc, struct psshfs_ctx *pctx,
 	psbuf_recycleout(pb);
 	psbuf_req_data(pb, SSH_FXP_CLOSE, reqid, dhand, dhandlen);
 
-	puffs_framebuf_enqueue_justsend(puffs_cc_getusermount(pcc), pb, 1);
+	JUSTSEND(pb);
 	free(dhand);
 	return rv;
 
