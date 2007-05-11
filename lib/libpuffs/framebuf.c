@@ -1,4 +1,4 @@
-/*	$NetBSD: framebuf.c,v 1.5 2007/05/11 16:22:38 pooka Exp $	*/
+/*	$NetBSD: framebuf.c,v 1.6 2007/05/11 21:27:13 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: framebuf.c,v 1.5 2007/05/11 16:22:38 pooka Exp $");
+__RCSID("$NetBSD: framebuf.c,v 1.6 2007/05/11 21:27:13 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -67,42 +67,16 @@ struct puffs_framebuf {
 #define ISTAT_INTERNAL	0x02	/* never leaves library			*/
 #define ISTAT_NOREPLY	0x04	/* nuke after sending 			*/
 
-struct puffs_fctrl_io {
-	int io_fd;
-	int wrstat;
-
-	struct puffs_framebuf *cur_in;
-
-	TAILQ_HEAD(, puffs_framebuf) snd_qing;	/* queueing to be sent */
-	TAILQ_HEAD(, puffs_framebuf) res_qing;	/* q'ing for rescue */
-
-	LIST_ENTRY(puffs_fctrl_io) fio_entries;
-};
-#define EN_WRITE(fio) (fio->wrstat == 0 && !TAILQ_EMPTY(&fio->snd_qing))
-#define RM_WRITE(fio) (fio->wrstat == 1 && TAILQ_EMPTY(&fio->snd_qing))
-
-struct puffs_framectrl {
-	puffs_framebuf_readframe_fn rfb;
-	puffs_framebuf_writeframe_fn wfb;
-	puffs_framebuf_respcmp_fn cmpfb;
-
-	struct kevent *evs;
-	struct kevent *ch_evs;
-	size_t nevs;
-	int kq;
-
-	LIST_HEAD(, puffs_fctrl_io) fb_ios;
-};
-
 #define PUFBUF_INCRALLOC 65536	/* 64k ought to be enough for anyone */
 #define PUFBUF_REMAIN(p) (p->len - p->offset)
 
 static struct puffs_fctrl_io *
 getfiobyfd(struct puffs_usermount *pu, int fd)
 {
+	struct puffs_framectrl *pfctrl = &pu->pu_framectrl;
 	struct puffs_fctrl_io *fio;
 
-	LIST_FOREACH(fio, &pu->pu_framectrl->fb_ios, fio_entries)
+	LIST_FOREACH(fio, &pfctrl->fb_ios, fio_entries)
 		if (fio->io_fd == fd)
 			return fio;
 	return NULL;
@@ -413,8 +387,8 @@ moveinfo(struct puffs_framebuf *from, struct puffs_framebuf *to)
 	to->maxoff = from->maxoff;
 }
 
-static int
-handle_input(struct puffs_usermount *pu, struct puffs_framectrl *fctrl,
+int
+puffs_framebuf_input(struct puffs_usermount *pu, struct puffs_framectrl *fctrl,
 	struct puffs_fctrl_io *fio, struct puffs_putreq *ppr)
 {
 	struct puffs_framebuf *pufbuf, *appbuf;
@@ -468,8 +442,8 @@ handle_input(struct puffs_usermount *pu, struct puffs_framectrl *fctrl,
 	return rv;
 }
 
-static int
-handle_output(struct puffs_usermount *pu, struct puffs_framectrl *fctrl,
+int
+puffs_framebuf_output(struct puffs_usermount *pu, struct puffs_framectrl *fctrl,
 	struct puffs_fctrl_io *fio)
 {
 	struct puffs_framebuf *pufbuf, *pufbuf_next;
@@ -511,18 +485,19 @@ handle_output(struct puffs_usermount *pu, struct puffs_framectrl *fctrl,
 int
 puffs_framebuf_addfd(struct puffs_usermount *pu, int fd)
 {
-	struct puffs_framectrl *pfctrl = pu->pu_framectrl;
+	struct puffs_framectrl *pfctrl = &pu->pu_framectrl;
 	struct puffs_fctrl_io *fio;
 	struct kevent kev[2];
 	struct kevent *newevs;
-	int rv;
+	int rv, nfds;
 
-	newevs = realloc(pfctrl->evs, (2*pfctrl->nevs+1)*sizeof(struct kevent));
+	nfds = pfctrl->nfds+1;
+	newevs = realloc(pfctrl->evs, (2*nfds+1) * sizeof(struct kevent));
 	if (newevs == NULL)
 		return -1;
 	pfctrl->evs = newevs;
 
-	newevs = realloc(pfctrl->ch_evs, pfctrl->nevs * sizeof(struct kevent));
+	newevs = realloc(pfctrl->ch_evs, nfds * sizeof(struct kevent));
 	if (newevs == NULL)
 		return -1;
 	pfctrl->ch_evs = newevs;
@@ -531,12 +506,15 @@ puffs_framebuf_addfd(struct puffs_usermount *pu, int fd)
 	if (fio == NULL)
 		return -1;
 
-	EV_SET(&kev[0], fd, EVFILT_READ, EV_ADD, 0, 0, (intptr_t)fio);
-	EV_SET(&kev[1], fd, EVFILT_WRITE, EV_ADD|EV_DISABLE, 0,0,(intptr_t)fio);
-	rv = kevent(pfctrl->kq, kev, 2, NULL, 0, NULL);
-	if (rv == -1) {
-		free(fio);
-		return -1;
+	if (pu->pu_state & PU_INLOOP) {
+		EV_SET(&kev[0], fd, EVFILT_READ, EV_ADD, 0, 0, (intptr_t)fio);
+		EV_SET(&kev[1], fd, EVFILT_WRITE, EV_ADD|EV_DISABLE,
+		    0, 0, (intptr_t)fio);
+		rv = kevent(pu->pu_kq, kev, 2, NULL, 0, NULL);
+		if (rv == -1) {
+			free(fio);
+			return -1;
+		}
 	}
 
 	fio->io_fd = fd;
@@ -546,7 +524,7 @@ puffs_framebuf_addfd(struct puffs_usermount *pu, int fd)
 	TAILQ_INIT(&fio->res_qing);
 
 	LIST_INSERT_HEAD(&pfctrl->fb_ios, fio, fio_entries);
-	pfctrl->nevs++;
+	pfctrl->nfds = nfds;
 
 	return 0;
 }
@@ -554,14 +532,16 @@ puffs_framebuf_addfd(struct puffs_usermount *pu, int fd)
 static int
 removefio(struct puffs_usermount *pu, struct puffs_fctrl_io *fio)
 {
-	struct puffs_framectrl *pfctrl = pu->pu_framectrl;
+	struct puffs_framectrl *pfctrl = &pu->pu_framectrl;
 	struct puffs_framebuf *pufbuf;
 	struct kevent kev[2];
 
 	/* found, now remove */
-	EV_SET(&kev[0], fio->io_fd, EVFILT_READ, EV_DELETE, 0, 0, 0);
-	EV_SET(&kev[1], fio->io_fd, EVFILT_WRITE, EV_DELETE, 0, 0, 0);
-	(void) kevent(pfctrl->kq, kev, 2, NULL, 0, NULL);
+	if (pu->pu_state & PU_INLOOP) {
+		EV_SET(&kev[0], fio->io_fd, EVFILT_READ, EV_DELETE, 0, 0, 0);
+		EV_SET(&kev[1], fio->io_fd, EVFILT_WRITE, EV_DELETE, 0, 0, 0);
+		(void) kevent(pu->pu_kq, kev, 2, NULL, 0, NULL);
+	}
 
 	LIST_REMOVE(fio, fio_entries);
 
@@ -579,7 +559,7 @@ removefio(struct puffs_usermount *pu, struct puffs_fctrl_io *fio)
 	free(fio);
 
 	/* don't bother with realloc */
-	pfctrl->nevs--;
+	pfctrl->nfds--;
 
 	return 0;
 
@@ -600,150 +580,34 @@ puffs_framebuf_removefd(struct puffs_usermount *pu, int fd)
 }
 
 int
-puffs_framebuf_eventloop(struct puffs_usermount *pu, int *io_fds, size_t nfds,
+puffs_framebuf_init(struct puffs_usermount *pu,
 	puffs_framebuf_readframe_fn rfb, puffs_framebuf_writeframe_fn wfb,
 	puffs_framebuf_respcmp_fn cmpfb,
 	puffs_framebuf_loop_fn lfb)
 {
-	struct puffs_getreq *pgr = NULL;
-	struct puffs_putreq *ppr = NULL;
-	struct puffs_framectrl *pfctrl = NULL;
-	struct puffs_fctrl_io *fio;
-	struct kevent kev;
-	struct kevent *curev;
-	size_t nchanges;
-	int puffsfd, sverrno;
-	int ndone;
+	struct puffs_framectrl *pfctrl;
 
-	assert(puffs_getstate(pu) >= PUFFS_STATE_RUNNING);
-
-	pgr = puffs_req_makeget(pu, puffs_getmaxreqlen(pu), 0);
-	if (pgr == NULL)
-		goto out;
-
-	ppr = puffs_req_makeput(pu);
-	if (ppr == NULL)
-		goto out;
-
-	pfctrl = malloc(sizeof(struct puffs_framectrl));
-	if (pfctrl == NULL)
-		goto out;
+	pfctrl = &pu->pu_framectrl;
 	pfctrl->rfb = rfb;
 	pfctrl->wfb = wfb;
 	pfctrl->cmpfb = cmpfb;
-	pfctrl->evs = malloc(sizeof(struct kevent));
-	if (pfctrl->evs == NULL)
-		goto out;
+	pfctrl->lfb = lfb;
+	pfctrl->evs = NULL;
 	pfctrl->ch_evs = NULL;
-	pfctrl->nevs = 1;
-	pfctrl->kq = kqueue();
-	if (pfctrl->kq == -1)
-		goto out;
-	LIST_INIT(&pfctrl->fb_ios);
-	pu->pu_framectrl = pfctrl;
+	pfctrl->nfds = 0;
 
-	for (; nfds--; io_fds++)
-		if (puffs_framebuf_addfd(pu, *io_fds) == -1)
-			goto out;
+	return 0;
+}
 
-	puffsfd = puffs_getselectable(pu);
-	EV_SET(&kev, puffsfd, EVFILT_READ, EV_ADD, 0, 0, 0);
-	if (kevent(pfctrl->kq, &kev, 1, NULL, 0, NULL) == -1)
-		goto out;
+void
+puffs_framebuf_exit(struct puffs_usermount *pu)
+{
+	struct puffs_framectrl *pfctrl = &pu->pu_framectrl;
+	struct puffs_fctrl_io *fio;
 
-	while (puffs_getstate(pu) != PUFFS_STATE_UNMOUNTED) {
-		if (lfb)
-			lfb(pu);
+	while ((fio = LIST_FIRST(&pfctrl->fb_ios)) != NULL)
+		removefio(pu, fio);
+	free(pfctrl->evs);
 
-		/*
-		 * Build list of which to enable/disable in writecheck.
-		 * Don't bother worrying about O(n) for now.
-		 */
-		nchanges = 0;
-		LIST_FOREACH(fio, &pfctrl->fb_ios, fio_entries) {
-			/*
-			 * Try to write out everything to avoid the
-			 * need for enabling EVFILT_WRITE.  The likely
-			 * case is that we can fit everything into the
-			 * socket buffer.
-			 */
-			if (handle_output(pu, pfctrl, fio) == -1)
-				goto out;
-
-			assert((EN_WRITE(fio) && RM_WRITE(fio)) == 0);
-			if (EN_WRITE(fio)) {
-				EV_SET(&pfctrl->ch_evs[nchanges], fio->io_fd,
-				    EVFILT_WRITE, EV_ENABLE, 0, 0,
-				    (uintptr_t)fio);
-				fio->wrstat = 1; /* XXX: not before call */
-				nchanges++;
-			}
-			if (RM_WRITE(fio)) {
-				EV_SET(&pfctrl->ch_evs[nchanges], fio->io_fd,
-				    EVFILT_WRITE, EV_DISABLE, 0, 0,
-				    (uintptr_t)fio);
-				fio->wrstat = 0; /* XXX: not before call */
-				nchanges++;
-			}
-		}
-
-		ndone = kevent(pfctrl->kq, pfctrl->ch_evs, nchanges,
-		    pfctrl->evs, pfctrl->nevs, NULL);
-		if (ndone == -1)
-			goto out;
-
-		/* XXX: handle errors */
-
-		/* iterate over the results */
-		for (curev = pfctrl->evs; ndone--; curev++) {
-			/* get & possibly dispatch events from kernel */
-			if (curev->ident == puffsfd) {
-				if (puffs_req_handle(pgr, ppr, 0) == -1)
-					goto out;
-				continue;
-			}
-
-			if (curev->filter == EVFILT_READ) {
-				if (handle_input(pu, pfctrl,
-				    (void *)curev->udata, ppr) == -1)
-					goto out;
-			}
-
-			if (curev->filter == EVFILT_WRITE) {
-				if (handle_output(pu, pfctrl,
-				    (void *)curev->udata) == -1)
-					goto out;
-			}
-		}
-
-		/* stuff all replies from both of the above into kernel */
-		if (puffs_req_putput(ppr) == -1)
-			goto out;
-		puffs_req_resetput(ppr);
-	}
-	errno = 0;
-
- out:
-	/* store the real error for a while */
-	sverrno = errno;
-
-	if (pfctrl) {
-		while ((fio = LIST_FIRST(&pfctrl->fb_ios)) != NULL)
-			removefio(pu, fio);
-		pu->pu_framectrl = NULL;
-		free(pfctrl->evs);
-		close(pfctrl->kq); /* takes care of puffsfd */
-		free(pfctrl);
-	}
-
-	if (ppr)
-		puffs_req_destroyput(ppr);
-	if (pgr)
-		puffs_req_destroyget(pgr);
-
-	errno = sverrno;
-	if (errno)
-		return -1;
-	else
-		return 0;
+	/* closing pu->pu_kq takes care of puffsfd */
 }

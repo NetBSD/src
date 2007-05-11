@@ -1,4 +1,4 @@
-/*	$NetBSD: requests.c,v 1.6 2007/05/09 18:36:52 pooka Exp $	*/
+/*	$NetBSD: requests.c,v 1.7 2007/05/11 21:27:13 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006 Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: requests.c,v 1.6 2007/05/09 18:36:52 pooka Exp $");
+__RCSID("$NetBSD: requests.c,v 1.7 2007/05/11 21:27:13 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -241,7 +241,7 @@ puffs_req_handle(struct puffs_getreq *pgr, struct puffs_putreq *ppr, int maxops)
 
 	pval = 0;
 	while ((preq = puffs_req_get(pgr)) != NULL
-	    && pu->pu_state != PUFFS_STATE_UNMOUNTED)
+	    && puffs_getstate(pu) != PUFFS_STATE_UNMOUNTED)
 		pval = puffs_dopreq(pu, preq, ppr);
 
 	return pval;
