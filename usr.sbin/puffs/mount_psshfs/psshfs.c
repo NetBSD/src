@@ -1,4 +1,4 @@
-/*	$NetBSD: psshfs.c,v 1.24 2007/05/11 16:23:01 pooka Exp $	*/
+/*	$NetBSD: psshfs.c,v 1.25 2007/05/11 21:27:45 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: psshfs.c,v 1.24 2007/05/11 16:23:01 pooka Exp $");
+__RCSID("$NetBSD: psshfs.c,v 1.25 2007/05/11 21:27:45 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -99,8 +99,8 @@ main(int argc, char *argv[])
 	char **sshargs;
 	char *userhost;
 	char *hostpath;
-	int mntflags, pflags, ch;
-	int detach, exportfs;
+	int mntflags, pflags, lflags, ch;
+	int exportfs;
 	int nargs, x;
 
 	setprogname(argv[0]);
@@ -108,8 +108,7 @@ main(int argc, char *argv[])
 	if (argc < 3)
 		usage();
 
-	mntflags = pflags = exportfs = nargs = 0;
-	detach = 1;
+	mntflags = pflags = lflags = exportfs = nargs = 0;
 	sshargs = NULL;
 	add_ssharg(&sshargs, &nargs, SSH_PATH);
 	add_ssharg(&sshargs, &nargs, "-axs");
@@ -131,7 +130,7 @@ main(int argc, char *argv[])
 			freemntopts(mp);
 			break;
 		case 's':
-			detach = 0;
+			lflags |= PUFFSLOOP_NODAEMON;
 			break;
 		default:
 			usage();
@@ -147,7 +146,7 @@ main(int argc, char *argv[])
 #endif
 
 	if (pflags & PUFFS_FLAG_OPDUMP)
-		detach = 0;
+		lflags |= PUFFSLOOP_NODAEMON;
 	pflags |= PUFFS_FLAG_BUILDPATH;
 	pflags |= PUFFS_KFLAG_WTCACHE | PUFFS_KFLAG_IAONDEMAND;
 
@@ -215,11 +214,13 @@ main(int argc, char *argv[])
 	if (ioctl(pctx.sshfd, FIONBIO, &x) == -1)
 		err(1, "nonblocking descriptor");
 
-	if (detach)
-		daemon(1, 0);
+	if (puffs_framebuf_init(pu, psbuf_read, psbuf_write,
+	    psbuf_cmp, NULL) == -1)
+		err(1, "framebuf init");
+	if (puffs_framebuf_addfd(pu, pctx.sshfd) == -1)
+		err(1, "framebuf addfd");
 
-	return puffs_framebuf_eventloop(pu, &pctx.sshfd, 1,
-	    psbuf_read, psbuf_write, psbuf_cmp, NULL);
+	return puffs_mainloop(pu, lflags);
 }
 
 static void
