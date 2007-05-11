@@ -1,4 +1,4 @@
-/*	$NetBSD: awacs.c,v 1.28 2007/03/25 23:25:23 macallan Exp $	*/
+/*	$NetBSD: awacs.c,v 1.28.4.1 2007/05/11 00:19:26 macallan Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awacs.c,v 1.28 2007/03/25 23:25:23 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awacs.c,v 1.28.4.1 2007/05/11 00:19:26 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -350,7 +350,7 @@ awacs_attach(struct device *parent, struct device *self, void *aux)
 		cirq = ca->ca_intr[0];
 		oirq = ca->ca_intr[1];
 		iirq = ca->ca_intr[2];
-		cirq_type = oirq_type = iirq_type = IST_LEVEL;
+		cirq_type = oirq_type = iirq_type = IST_EDGE;
 	}
 
 	intr_establish(cirq, cirq_type, IPL_BIO, awacs_status_intr, sc);
