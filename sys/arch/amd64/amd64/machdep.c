@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.53 2007/03/20 21:07:39 xtraeme Exp $	*/
+/*	$NetBSD: machdep.c,v 1.54 2007/05/11 14:01:46 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.53 2007/03/20 21:07:39 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.54 2007/05/11 14:01:46 fvdl Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_ddb.h"
@@ -433,8 +433,6 @@ buildcontext(struct lwp *l, void *catcher, void *f)
 
 	tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_es = GSEL(GUDATA_SEL, SEL_UPL);
-	tf->tf_fs = GSEL(GUDATA_SEL, SEL_UPL);
-	tf->tf_gs = GSEL(GUDATA_SEL, SEL_UPL);
 
 	tf->tf_rip = (u_int64_t)catcher;
 	tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
@@ -889,8 +887,6 @@ setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 	tf = l->l_md.md_regs;
 	tf->tf_ds = LSEL(LUDATA_SEL, SEL_UPL);
 	tf->tf_es = LSEL(LUDATA_SEL, SEL_UPL);
-	tf->tf_fs = LSEL(LUDATA_SEL, SEL_UPL);
-	tf->tf_gs = LSEL(LUDATA_SEL, SEL_UPL);
 	tf->tf_rdi = 0;
 	tf->tf_rsi = 0;
 	tf->tf_rbp = 0;
@@ -1884,6 +1880,15 @@ int
 valid_user_selector(struct lwp *l, uint64_t seg, char *ldtp, int len)
 {
 	return memseg_baseaddr(l, seg, ldtp, len, NULL);
+}
+
+void
+load_fsgs32(uint16_t fs, uint16_t gs)
+{
+	if (fs != 0)
+		__asm("movw %0, %%fs" : "=r" (fs));
+	if (gs != 0)
+		lgs(gs);
 }
 
 /*
