@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_priv.h,v 1.8 2007/05/10 12:26:28 pooka Exp $	*/
+/*	$NetBSD: puffs_priv.h,v 1.9 2007/05/11 21:27:13 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006 Antti Kantee.  All Rights Reserved.
@@ -39,7 +39,32 @@
 
 #define PU_CMAP(pu, c)	(pu->pu_cmap ? pu->pu_cmap(c) : (struct puffs_node *)c)
 
-struct puffs_framectrl;
+struct puffs_framectrl {
+	puffs_framebuf_readframe_fn rfb;
+	puffs_framebuf_writeframe_fn wfb;
+	puffs_framebuf_respcmp_fn cmpfb;
+	puffs_framebuf_loop_fn lfb;
+
+	struct kevent *evs;
+	struct kevent *ch_evs;
+	size_t nfds;
+
+	LIST_HEAD(, puffs_fctrl_io) fb_ios;
+};
+
+struct puffs_fctrl_io {
+	int io_fd;
+	int wrstat;
+
+	struct puffs_framebuf *cur_in;
+
+	TAILQ_HEAD(, puffs_framebuf) snd_qing;	/* queueing to be sent */
+	TAILQ_HEAD(, puffs_framebuf) res_qing;	/* q'ing for rescue */
+
+	LIST_ENTRY(puffs_fctrl_io) fio_entries;
+};
+#define FIO_EN_WRITE(fio) (fio->wrstat == 0 && !TAILQ_EMPTY(&fio->snd_qing))
+#define FIO_RM_WRITE(fio) (fio->wrstat == 1 && TAILQ_EMPTY(&fio->snd_qing))
 
 /*
  * usermount: describes one file system instance
@@ -51,7 +76,12 @@ struct puffs_usermount {
 	uint32_t		pu_flags;
 	size_t			pu_cc_stacksize;
 
+	int			pu_kq;
+	int			pu_haskq;
 	int			pu_state;
+#define PU_STATEMASK	0xff
+#define PU_INLOOP	0x100
+#define PU_SETSTATE(pu, s) (pu->pu_state = (s) | (pu->pu_state & ~PU_STATEMASK))
 
 	struct puffs_node	*pu_pn_root;
 
@@ -65,7 +95,7 @@ struct puffs_usermount {
 	pu_pathfree_fn		pu_pathfree;
 	pu_namemod_fn		pu_namemod;
 
-	struct puffs_framectrl	*pu_framectrl;
+	struct puffs_framectrl	pu_framectrl;
 
 	void	*pu_privdata;
 };
@@ -142,9 +172,16 @@ struct puffs_putreq {
 	struct puffs_getreq	*ppr_pgr;
 };
 
+
 __BEGIN_DECLS
 
 void	puffs_calldispatcher(struct puffs_cc *);
+
+int	puffs_framebuf_input(struct puffs_usermount *, struct puffs_framectrl *,
+			     struct puffs_fctrl_io *, struct puffs_putreq *);
+int	puffs_framebuf_output(struct puffs_usermount *, struct puffs_framectrl*,
+			      struct puffs_fctrl_io *);
+void	puffs_framebuf_exit(struct puffs_usermount *);
 
 __END_DECLS
 
