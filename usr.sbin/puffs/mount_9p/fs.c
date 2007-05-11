@@ -1,4 +1,4 @@
-/*	$NetBSD: fs.c,v 1.2 2007/05/05 15:49:51 pooka Exp $	*/
+/*	$NetBSD: fs.c,v 1.3 2007/05/11 11:43:08 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fs.c,v 1.2 2007/05/05 15:49:51 pooka Exp $");
+__RCSID("$NetBSD: fs.c,v 1.3 2007/05/11 11:43:08 pooka Exp $");
 #endif /* !lint */
 
 #include <err.h>
@@ -75,7 +75,7 @@ p9p_handshake(struct puffs_usermount *pu, const char *username)
 		errx(1, "server invalid response to Tversion: %d", type);
 	if ((rtagid = p9pbuf_get_tag(pb)) != P9PROTO_NOTAG) {
 		errx(1, "server invalid tag: %d vs. %d\n",
-		    P9PROTO_NOTAG, tagid);
+		    P9PROTO_NOTAG, rtagid);
 		return NULL;
 	}
 	if (p9pbuf_get_4(pb, &maxreq))
