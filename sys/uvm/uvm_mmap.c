@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.108 2007/03/04 06:03:48 christos Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.109 2007/05/11 20:05:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.108 2007/03/04 06:03:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.109 2007/05/11 20:05:50 christos Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_pax.h"
@@ -664,7 +664,7 @@ sys_munmap(struct lwp *l, void *v, register_t *retval)
 	size += pageoff;
 	size = (vsize_t)round_page(size);
 
-	if ((int)size < 0)
+	if ((ssize_t)size < 0)
 		return (EINVAL);
 	if (size == 0)
 		return (0);
@@ -771,7 +771,7 @@ sys_minherit(struct lwp *l, void *v, register_t *retval)
 	size += pageoff;
 	size = (vsize_t)round_page(size);
 
-	if ((int)size < 0)
+	if ((ssize_t)size < 0)
 		return (EINVAL);
 	error = uvm_map_inherit(&p->p_vmspace->vm_map, addr, addr + size,
 				inherit);
