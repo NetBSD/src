@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.131 2007/05/11 17:48:16 jnemeth Exp $	*/
+/*	$NetBSD: fd.c,v 1.132 2007/05/11 18:10:57 jnemeth Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -108,7 +108,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.131 2007/05/11 17:48:16 jnemeth Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.132 2007/05/11 18:10:57 jnemeth Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -147,8 +147,8 @@ __KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.131 2007/05/11 17:48:16 jnemeth Exp $");
 #define FDUNIT(dev)	(minor(dev) / 8)
 #define FDTYPE(dev)	(minor(dev) % 8)
 
-/* XXX misuse a flag to identify format operation */
-#define B_FORMAT B_XXX
+/* (mis)use device use flag to identify format operation */
+#define B_FORMAT B_DEVPRIVATE
 
 #define FD_DEBUG
 #ifdef FD_DEBUG
@@ -359,7 +359,7 @@ static void establish_chip_type(
 		bus_space_handle_t);
 
 #ifdef MEMORY_DISK_HOOKS
-int	fd_read_md_image(size_t *, caddr_t *);
+int	fd_read_md_image(size_t *, void **);
 #endif
 
 #define OBP_FDNAME	(CPU_ISSUN4M ? "SUNW,fdtwo" : "fd")
@@ -645,7 +645,7 @@ fdcattach(struct fdc_softc *fdc, int pri)
 	}
 
 	fdciop = &fdc->sc_io;
-	if (bus_intr_establish2(fdc->sc_bustag, pri, IPL_BIO,
+	if (bus_intr_establish2(fdc->sc_bustag, pri, 0,
 				fdc_c_hwintr, fdc, fdchwintr) == NULL) {
 		printf("\n%s: cannot register interrupt handler\n",
 			fdc->sc_dev.dv_xname);
@@ -1571,7 +1571,7 @@ loop:
 		read = bp->b_flags & B_READ;
 
 		/* Setup for pseudo DMA */
-		fdc->sc_data = bp->b_data + fd->sc_skip;
+		fdc->sc_data = (char *)bp->b_data + fd->sc_skip;
 		fdc->sc_tc = fd->sc_nbytes;
 
 		bus_space_write_1(fdc->sc_bustag, fdc->sc_handle,
@@ -1906,7 +1906,7 @@ fdcretry(struct fdc_softc *fdc)
 }
 
 int
-fdioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
+fdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 {
 	struct fd_softc *fd;
 	struct fdc_softc *fdc;
@@ -2162,7 +2162,7 @@ fdformat(dev_t dev, struct ne7_fd_formb *finfo, struct proc *p)
 		      / DEV_BSIZE;
 
 	bp->b_bcount = sizeof(struct fd_idfield_data) * finfo->fd_formb_nsecs;
-	bp->b_data = (caddr_t)finfo;
+	bp->b_data = (void *)finfo;
 
 #ifdef FD_DEBUG
 	if (fdc_debug) {
@@ -2305,16 +2305,16 @@ fd_mountroot_hook(struct device *dev)
 #define FDMICROROOTSIZE ((2*18*80) << DEV_BSHIFT)
 
 int
-fd_read_md_image(size_t	*sizep, caddr_t	*addrp)
+fd_read_md_image(size_t	*sizep, void *	*addrp)
 {
 	struct buf buf, *bp = &buf;
 	dev_t dev;
 	off_t offset;
-	caddr_t addr;
+	void *addr;
 
 	dev = makedev(54,0);	/* XXX */
 
-	MALLOC(addr, caddr_t, FDMICROROOTSIZE, M_DEVBUF, M_WAITOK);
+	MALLOC(addr, void *, FDMICROROOTSIZE, M_DEVBUF, M_WAITOK);
 	*addrp = addr;
 
 	if (fdopen(dev, 0, S_IFCHR, NULL))
@@ -2333,7 +2333,7 @@ fd_read_md_image(size_t	*sizep, caddr_t	*addrp)
 		bp->b_data = addr;
 		fdstrategy(bp);
 		while ((bp->b_flags & B_DONE) == 0) {
-			tsleep((caddr_t)bp, PRIBIO + 1, "physio", 0);
+			tsleep((void *)bp, PRIBIO + 1, "physio", 0);
 		}
 		if (bp->b_error)
 			panic("fd: mountroot: fdread error %d", bp->b_error);
@@ -2341,7 +2341,7 @@ fd_read_md_image(size_t	*sizep, caddr_t	*addrp)
 		if (bp->b_resid != 0)
 			break;
 
-		addr += DEV_BSIZE;
+		addr = (char *)addr + DEV_BSIZE;
 		offset += DEV_BSIZE;
 		if (offset + DEV_BSIZE > FDMICROROOTSIZE)
 			break;
