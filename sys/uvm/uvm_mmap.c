@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.110 2007/05/11 20:41:14 christos Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.111 2007/05/11 21:30:23 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.110 2007/05/11 20:41:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.111 2007/05/11 21:30:23 christos Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_pax.h"
@@ -89,7 +89,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.110 2007/05/11 20:41:14 christos Exp 
 #define COMPAT_ZERODEV(dev)	(0)
 #endif
 
-#define RANGE_TEST(addr, size)					\
+#define RANGE_TEST(addr, size, ismmap)				\
 	do {							\
 		vaddr_t vm_min_address = VM_MIN_ADDRESS;	\
 		vaddr_t vm_max_address = VM_MAXUSER_ADDRESS;	\
@@ -98,9 +98,11 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.110 2007/05/11 20:41:14 christos Exp 
 		if (addr < vm_min_address)			\
 			return EINVAL;				\
 		if (eaddr > vm_max_address)			\
-			return EFBIG;				\
-		if (addr > eaddr)				\
-			return EOVERFLOW; /* no wrapping! */	\
+			return /*CONSTCOND*/			\
+			    ismmap ? EFBIG : EINVAL;		\
+		if (addr > eaddr) /* no wrapping! */		\
+			return /*CONSTCOND*/			\
+			    ismmap ? EOVERFLOW : EINVAL;	\
 	} while (/*CONSTCOND*/0)
 
 /*
@@ -357,7 +359,7 @@ sys_mmap(l, v, retval)
 		if (addr & PAGE_MASK)
 			return (EINVAL);
 
-		RANGE_TEST(addr, size);
+		RANGE_TEST(addr, size, 1);
 
 	} else if (addr == 0 || !(flags & MAP_TRYFIXED)) {
 
@@ -586,7 +588,7 @@ sys___msync13(struct lwp *l, void *v, register_t *retval)
 	size += pageoff;
 	size = (vsize_t)round_page(size);
 
-	RANGE_TEST(addr, size);
+	RANGE_TEST(addr, size, 0);
 
 	/*
 	 * get map
@@ -669,7 +671,7 @@ sys_munmap(struct lwp *l, void *v, register_t *retval)
 	if (size == 0)
 		return (0);
 
-	RANGE_TEST(addr, size);
+	RANGE_TEST(addr, size, 0);
 
 	map = &p->p_vmspace->vm_map;
 
@@ -727,7 +729,7 @@ sys_mprotect(struct lwp *l, void *v, register_t *retval)
 	size += pageoff;
 	size = round_page(size);
 
-	RANGE_TEST(addr, size);
+	RANGE_TEST(addr, size, 0);
 
 	error = uvm_map_protect(&p->p_vmspace->vm_map, addr, addr + size, prot,
 				false);
@@ -765,7 +767,7 @@ sys_minherit(struct lwp *l, void *v, register_t *retval)
 	size += pageoff;
 	size = (vsize_t)round_page(size);
 
-	RANGE_TEST(addr, size);
+	RANGE_TEST(addr, size, 0);
 
 	error = uvm_map_inherit(&p->p_vmspace->vm_map, addr, addr + size,
 				inherit);
@@ -803,7 +805,7 @@ sys_madvise(struct lwp *l, void *v, register_t *retval)
 	size += pageoff;
 	size = (vsize_t)round_page(size);
 
-	RANGE_TEST(addr, size);
+	RANGE_TEST(addr, size, 0);
 
 	switch (advice) {
 	case MADV_NORMAL:
@@ -905,7 +907,7 @@ sys_mlock(struct lwp *l, void *v, register_t *retval)
 	size += pageoff;
 	size = (vsize_t)round_page(size);
 
-	RANGE_TEST(addr, size);
+	RANGE_TEST(addr, size, 0);
 
 	if (atop(size) + uvmexp.wired > uvmexp.wiredmax)
 		return (EAGAIN);
@@ -953,7 +955,7 @@ sys_munlock(struct lwp *l, void *v, register_t *retval)
 	size += pageoff;
 	size = (vsize_t)round_page(size);
 
-	RANGE_TEST(addr, size);
+	RANGE_TEST(addr, size, 0);
 
 	error = uvm_map_pageable(&p->p_vmspace->vm_map, addr, addr+size, true,
 	    0);
