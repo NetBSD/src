@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.112 2007/05/10 21:24:37 rumble Exp $	*/
+/*	$NetBSD: machdep.c,v 1.113 2007/05/11 02:30:00 rumble Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.112 2007/05/10 21:24:37 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.113 2007/05/11 02:30:00 rumble Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -375,6 +375,16 @@ mach_init(int argc, char **argv, int magic, struct btinfo_common *btinfo)
 	 */
 
 	for (i = 0; i < argc; i++) {
+		/*
+		 * Unfortunately, it appears that IP12's prom passes a '-a'
+		 * flag when booting a kernel directly from a disk volume
+		 * header. This corresponds to RB_ASKNAME in NetBSD, but
+		 * appears to mean 'autoboot' in prehistoric SGI-speak.
+		 */
+		if (mach_type < MACH_SGI_IP20 && bootinfo == NULL &&
+		    strcmp(argv[i], "-a") == 0)
+			continue;
+
 		/*
 		 * Extract out any flags passed for the kernel in the
 		 * argument string.  Warn for unknown/invalid flags,
