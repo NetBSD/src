@@ -1,4 +1,4 @@
-#	$NetBSD: files.macppc,v 1.84.2.7 2007/05/06 05:11:40 macallan Exp $
+#	$NetBSD: files.macppc,v 1.84.2.8 2007/05/11 06:20:57 macallan Exp $
 #
 # macppc-specific configuration info
 
@@ -25,6 +25,7 @@ define pic_ohare
 define pic_heathrow
 
 defflag opt_interrupt.h PIC_OHARE: pic_ohare
+defflag opt_interrupt.h OHARE_DEBUG
 defflag opt_interrupt.h PIC_HEATHROW: pic_heathrow
 
 file arch/macppc/macppc/pic_ohare.c		pic_ohare	needs-flag
