@@ -1,4 +1,4 @@
-/*	$NetBSD: pic_ohare.c,v 1.1.2.5 2007/05/05 02:17:19 macallan Exp $ */
+/*	$NetBSD: pic_ohare.c,v 1.1.2.6 2007/05/11 00:18:05 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic_ohare.c,v 1.1.2.5 2007/05/05 02:17:19 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic_ohare.c,v 1.1.2.6 2007/05/11 00:18:05 macallan Exp $");
 
 #include "opt_interrupt.h"
 
@@ -52,6 +52,7 @@ static void ohare_reenable_irq(struct pic_ops *, int, int);
 static void ohare_disable_irq(struct pic_ops *, int);
 static int  ohare_get_irq(struct pic_ops *);
 static void ohare_ack_irq(struct pic_ops *, int);
+static void ohare_establish_irq(struct pic_ops *, int, int, int);
 
 struct ohare_ops {
 	struct pic_ops pic;
@@ -105,7 +106,7 @@ int init_ohare(void)
 		goto done;
 
 	obio_base = reg[2];			
-	aprint_normal("found ohare2 PIC at %08x\n", obio_base);
+	aprint_normal("found ohare2 PIC at %08x, irq %d\n", obio_base, irq);
 	setup_ohare2(obio_base, irq);	
 done:
 	return TRUE;
@@ -128,15 +129,15 @@ setup_ohare(uint32_t addr, int is_gc)
 	pic->pic_disable_irq = ohare_disable_irq;
 	pic->pic_get_irq = ohare_get_irq;
 	pic->pic_ack_irq = ohare_ack_irq;
-	pic->pic_establish_irq = NULL;
+	pic->pic_establish_irq = ohare_establish_irq;
 	if (is_gc) {
 	
 		strcpy(pic->pic_name, "gc");
-		ohare->level_mask = INT_LEVEL_MASK_GC;
+		ohare->level_mask = 0;
 	} else {
 
 		strcpy(pic->pic_name, "ohare");
-		ohare->level_mask = INT_LEVEL_MASK_OHARE;
+		ohare->level_mask = 0;
 	}	
 	pic_add(pic);
 	ohare->pending_events = 0;
@@ -234,4 +235,22 @@ ohare_get_irq(struct pic_ops *pic)
 static void
 ohare_ack_irq(struct pic_ops *pic, int irq)
 {
+}
+
+static void
+ohare_establish_irq(struct pic_ops *pic, int irq, int type, int pri)
+{
+	struct ohare_ops *ohare = (struct ohare_ops *)pic;
+	uint32_t mask = (1 << irq);
+
+	KASSERT((irq >= 0) && (irq < 32));
+
+	if (type == IST_LEVEL) {
+
+		ohare->level_mask |= mask;
+	} else {
+
+		ohare->level_mask &= ~mask;
+	}
+	aprint_debug("mask: %08x\n", ohare->level_mask);
 }
