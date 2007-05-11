@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.h,v 1.54 2007/05/11 16:22:38 pooka Exp $	*/
+/*	$NetBSD: puffs.h,v 1.55 2007/05/11 21:27:13 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -361,7 +361,7 @@ enum {
 #define PUFFSOP_SETFSNOP(ops, opname)					\
     (ops)->puffs_fs_##opname = puffs_fsnop_##opname
 
-#define PUFFS_DEVEL_LIBVERSION 15
+#define PUFFS_DEVEL_LIBVERSION 16
 #define puffs_mount(a,b,c,d,e,f) \
     _puffs_mount(PUFFS_DEVEL_LIBVERSION,a,b,c,d,e,f)
 #define puffs_init(a,b,c,d) \
@@ -585,6 +585,12 @@ int	puffs_fs_suspend(struct puffs_usermount *);
  * Frame buffering
  */
 
+int	puffs_framebuf_init(struct puffs_usermount *,
+			    puffs_framebuf_readframe_fn,
+			    puffs_framebuf_writeframe_fn,
+			    puffs_framebuf_respcmp_fn,
+			    puffs_framebuf_loop_fn);
+
 struct puffs_framebuf 	*puffs_framebuf_make(void);
 void			puffs_framebuf_destroy(struct puffs_framebuf *);
 void			puffs_framebuf_recycle(struct puffs_framebuf *);
@@ -615,12 +621,6 @@ int	puffs_framebuf_enqueue_justsend(struct puffs_usermount *, int,
 
 int	puffs_framebuf_addfd(struct puffs_usermount *pu, int);
 int	puffs_framebuf_removefd(struct puffs_usermount *pu, int);
-
-int	puffs_framebuf_eventloop(struct puffs_usermount *, int *, size_t,
-				 puffs_framebuf_readframe_fn,
-				 puffs_framebuf_writeframe_fn,
-				 puffs_framebuf_respcmp_fn,
-				 puffs_framebuf_loop_fn);
 
 __END_DECLS
 
