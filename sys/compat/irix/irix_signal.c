@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_signal.c,v 1.41 2007/05/07 16:53:18 dsl Exp $ */
+/*	$NetBSD: irix_signal.c,v 1.42 2007/05/11 02:25:34 rumble Exp $ */
 
 /*-
  * Copyright (c) 1994, 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_signal.c,v 1.41 2007/05/07 16:53:18 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_signal.c,v 1.42 2007/05/11 02:25:34 rumble Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -72,7 +72,7 @@ __KERNEL_RCSID(0, "$NetBSD: irix_signal.c,v 1.41 2007/05/07 16:53:18 dsl Exp $")
 extern const int native_to_svr4_signo[];
 extern const int svr4_to_native_signo[];
 
-static int irix_wait_siginfo __P((struct proc *, int, int,
+static int irix_wait_siginfo __P((int, struct rusage *, int,
     struct irix_irix5_siginfo *));
 static void irix_signal_siginfo __P((struct irix_irix5_siginfo *,
     int, u_long, void *));
@@ -851,8 +851,8 @@ irix_sys_waitsys(l, v, retval)
 		syscallarg(int) options;
 		syscallarg(struct rusage *) ru;
 	} */ *uap = v;
-	struct proc *parent = l->l_proc, *child;
-	int options, status, error, stat;
+	struct proc *parent = l->l_proc;
+	int options, status, error;
 	int was_zombie;
 	struct rusage ru;
 
@@ -889,8 +889,8 @@ irix_sys_waitsys(l, v, retval)
 	if (SCARG(uap, options) & (SVR4_WSTOPPED|SVR4_WCONTINUED))
 		options |= WUNTRACED;
 
-	error = do_sys_wait4(parent, &SCARG(uap,pid), options, &ru,
-	    &status, &was_zombie);
+	error = do_sys_wait(l, &SCARG(uap,pid), &status, options, &ru,
+	    &was_zombie);
 
 	if (error != 0)
 		return error;
