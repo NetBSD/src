@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_LAPTOP,v 1.234 2007/05/08 16:55:55 xtraeme Exp $
+#	$NetBSD: GENERIC_LAPTOP,v 1.235 2007/05/11 13:17:20 is Exp $
 #	From: NetBSD: GENERIC,v 1.414 2001/07/30 19:59:05 ad Exp
 #
 #	GENERIC_LAPTOP -- GENERIC with cardbus and some USB devices enabled
@@ -8,7 +8,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.234 $"
+#ident 		"GENERIC-$Revision: 1.235 $"
 
 maxusers	32		# estimated number of users
 
@@ -752,6 +752,9 @@ umidi* at uhub? port ? configuration ?
 # USB-IrDA bridge spec
 uirda* at uhub? port ? configuration ? interface ?
 irframe* at uirda?
+
+stuirda* at uhub? port ? configuration ? interface ?
+irframe* at stuirda?
 
 # SigmaTel STIr4200 USB/IrDA Bridge
 ustir* at uhub? port ?

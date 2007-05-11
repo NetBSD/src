@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.75 2007/05/06 22:54:20 jnemeth Exp $
+#	$NetBSD: files.usb,v 1.76 2007/05/11 13:12:14 is Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -114,7 +114,12 @@ file	dev/usb/umass_scsipi.c		umass & (scsibus | atapibus)
 # IrDA bridges
 device	uirda: irbus
 attach	uirda at usbifif
-file	dev/usb/uirda.c			uirda
+file	dev/usb/uirda.c			uirda | stuirda
+
+# SigmaTel not quite UIRDA IrDA bridge
+device	stuirda: irbus,firmload
+attach	stuirda at usbifif
+file	dev/usb/stuirda.c		stuirda
 
 # SigmaTel IrDA bridge
 device	ustir: irbus, irdasir
