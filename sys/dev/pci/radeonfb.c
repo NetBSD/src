@@ -1,4 +1,4 @@
-/* $NetBSD: radeonfb.c,v 1.7.2.2 2007/03/04 12:35:35 bouyer Exp $ */
+/* $NetBSD: radeonfb.c,v 1.7.2.3 2007/05/12 15:44:38 pavel Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.7.2.2 2007/03/04 12:35:35 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.7.2.3 2007/05/12 15:44:38 pavel Exp $");
 
 #define RADEONFB_DEFAULT_DEPTH 32
 
@@ -174,8 +174,6 @@ static void radeonfb_pickres(struct radeonfb_display *, uint16_t *,
 static const struct videomode *radeonfb_port_mode(struct radeonfb_softc *,
     struct radeonfb_port *, int, int);
 
-
-#define	RADEON_DEBUG
 #ifdef	RADEON_DEBUG
 int	radeon_debug = 1;
 #define	DPRINTF(x)	\
@@ -1543,6 +1541,7 @@ nobios:
 		char	edid[128];
 		uint8_t	ddc;
 		struct edid_info *eip = &sc->sc_ports[i].rp_edid;
+		prop_data_t edid_data;
 
 		DPRINTF(("Port #%d:\n", i));
 		DPRINTF(("    conn = %d\n", sc->sc_ports[i].rp_conn_type));
@@ -1551,12 +1550,30 @@ nobios:
 		DPRINTF(("    tmds = %d\n", sc->sc_ports[i].rp_tmds_type));
 
 		sc->sc_ports[i].rp_edid_valid = 0;
-		ddc = sc->sc_ports[i].rp_ddc_type;
-		if (ddc != RADEON_DDC_NONE) {
-			if ((radeonfb_i2c_read_edid(sc, ddc, edid) == 0) &&
-			    (edid_parse(edid, eip) == 0)) {
+		/* first look for static EDID data */
+		if ((edid_data = prop_dictionary_get(device_properties(
+		    &sc->sc_dev), "EDID")) != NULL) {
+
+			aprint_normal("%s: using static EDID\n",
+			    sc->sc_dev.dv_xname);
+			memcpy(edid, prop_data_data_nocopy(edid_data), 128);
+			if (edid_parse(edid, eip) == 0) {
+
 				sc->sc_ports[i].rp_edid_valid = 1;
 				edid_print(eip);
+			}
+		}
+		/* if we didn't find any we'll try to talk to the monitor */
+		if (sc->sc_ports[i].rp_edid_valid != 1) {
+
+			ddc = sc->sc_ports[i].rp_ddc_type;
+			if (ddc != RADEON_DDC_NONE) {
+				if ((radeonfb_i2c_read_edid(sc, ddc, edid)
+				    == 0) && (edid_parse(edid, eip) == 0)) {
+
+					sc->sc_ports[i].rp_edid_valid = 1;
+					edid_print(eip);
+				}
 			}
 		}
 	}
