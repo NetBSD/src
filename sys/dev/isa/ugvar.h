@@ -1,4 +1,4 @@
-/*     $NetBSD: ugvar.h,v 1.1.4.3 2007/01/21 17:09:10 bouyer Exp $ */
+/*     $NetBSD: ugvar.h,v 1.1.4.4 2007/05/12 17:28:38 snj Exp $ */
 
 /*
  * Copyright (c) 2007 Mihai Chelaru <kefren@netbsd.ro>
@@ -71,6 +71,10 @@
 #define UG_RFACT4	4360 * UG_RFACT / 255
 #define UG_RFACT6	6250 * UG_RFACT / 255
 #define UG_RFACT_FAN	15300/255
+
+/* Voltage and Fan sensors offsets */
+#define UG_VOLT_MIN	3
+#define UG_FAN_MIN	14
 
 /*
  * sc->sensors sub-intervals for each unit type.
