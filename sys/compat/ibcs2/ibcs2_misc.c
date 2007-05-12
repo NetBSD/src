@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_misc.c,v 1.87 2007/05/12 17:28:19 dsl Exp $	*/
+/*	$NetBSD: ibcs2_misc.c,v 1.88 2007/05/12 18:10:20 dsl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.87 2007/05/12 17:28:19 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.88 2007/05/12 18:10:20 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -996,32 +996,24 @@ ibcs2_sys_times(l, v, retval)
 	struct ibcs2_sys_times_args /* {
 		syscallarg(struct tms *) tp;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
-	int error;
-	struct sys_getrusage_args ga;
 	struct tms tms;
-        struct timeval t;
-	void *sg = stackgap_init(p, 0);
-        struct rusage *ru = stackgap_alloc(p, &sg, sizeof(*ru));
+	struct timeval t;
+	struct rusage *ru;
 #define CONVTCK(r)      (r.tv_sec * hz + r.tv_usec / (1000000 / hz))
 
-	SCARG(&ga, who) = RUSAGE_SELF;
-	SCARG(&ga, rusage) = ru;
-	error = sys_getrusage(l, &ga, retval);
-	if (error)
-                return error;
-        tms.tms_utime = CONVTCK(ru->ru_utime);
-        tms.tms_stime = CONVTCK(ru->ru_stime);
+	ru = &l->l_proc->p_stats->p_ru;
+	mutex_enter(&l->l_proc->p_smutex);
+	calcru(l->l_proc, &ru->ru_utime, &ru->ru_stime, NULL, NULL);
+	mutex_exit(&l->l_proc->p_smutex);
+	tms.tms_utime = CONVTCK(ru->ru_utime);
+	tms.tms_stime = CONVTCK(ru->ru_stime);
 
-	SCARG(&ga, who) = RUSAGE_CHILDREN;
-        error = sys_getrusage(l, &ga, retval);
-	if (error)
-		return error;
-        tms.tms_cutime = CONVTCK(ru->ru_utime);
-        tms.tms_cstime = CONVTCK(ru->ru_stime);
+	ru = &l->l_proc->p_stats->p_cru;
+	tms.tms_cutime = CONVTCK(ru->ru_utime);
+	tms.tms_cstime = CONVTCK(ru->ru_stime);
 
 	microtime(&t);
-        *retval = CONVTCK(t);
+	*retval = CONVTCK(t);
 
 	return copyout(&tms, SCARG(uap, tp), sizeof(tms));
 }
