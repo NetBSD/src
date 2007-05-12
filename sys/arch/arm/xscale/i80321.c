@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321.c,v 1.18 2006/02/25 02:28:56 wiz Exp $	*/
+/*	$NetBSD: i80321.c,v 1.19 2007/05/12 14:34:03 gavan Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i80321.c,v 1.18 2006/02/25 02:28:56 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i80321.c,v 1.19 2007/05/12 14:34:03 gavan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,6 +51,8 @@ __KERNEL_RCSID(0, "$NetBSD: i80321.c,v 1.18 2006/02/25 02:28:56 wiz Exp $");
 
 #include <arm/xscale/i80321reg.h>
 #include <arm/xscale/i80321var.h>
+
+#include "opt_i80321.h"
 
 /*
  * Statically-allocated bus_space structure used to access the
@@ -221,8 +223,13 @@ i80321_attach(struct i80321_softc *sc)
 	 * Set up the ATU configuration register.  All we do
 	 * right now is enable Outbound Windows.
 	 */
+#ifdef I80321_USE_DIRECT_WIN
+	bus_space_write_4(sc->sc_st, sc->sc_atu_sh, ATU_ATUCR,
+	    ATUCR_OUT_EN | ATUCR_DAE);
+#else
 	bus_space_write_4(sc->sc_st, sc->sc_atu_sh, ATU_ATUCR,
 	    ATUCR_OUT_EN);
+#endif
 
 	/*
 	 * Enable bus mastering, memory access, SERR, and parity
