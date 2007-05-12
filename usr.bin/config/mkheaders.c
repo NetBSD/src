@@ -1,4 +1,4 @@
-/*	$NetBSD: mkheaders.c,v 1.11 2007/05/10 21:01:14 dsl Exp $	*/
+/*	$NetBSD: mkheaders.c,v 1.12 2007/05/12 10:15:31 dsl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,11 +55,7 @@
 #include <err.h>
 #include "defs.h"
 
-#ifdef notyet
 #include <crc_extern.h>
-#else
-#define fprint_global(fp, name, value)
-#endif
 
 static int emitcnt(struct nvlist *);
 static int emitlocs(void);
@@ -70,7 +66,15 @@ static int herr(const char *, const char *, FILE *);
 static int defopts_print(const char *, void *, void *);
 static char *cntname(const char *);
 
-#define UNDEFINED ~0u
+/*
+ * We define a global symbol with the name of each option and its value.
+ * This should stop code compiled with different options being linked together.
+ */
+
+/* Unlikely constant for undefined options */
+#define UNDEFINED ('n' << 24 | 0 << 20 | 't' << 12 | 0xdef)
+/* Value for defined options with value UNDEFINED */
+#define	DEFINED (0xdef1 << 16 | 'n' << 8 | 0xed)
 
 /*
  * Make the various config-generated header files.
@@ -97,19 +101,31 @@ mkheaders(void)
 	return (0);
 }
 
-#ifdef notyet
 static void
 fprint_global(FILE *fp, const char *name, unsigned int value)
 {
+	/*
+	 * We have to doubt the founding fathers here.
+	 * The gas syntax for hppa is 'var .equ value', for all? other
+	 * instruction sets it is ' .equ var,value'.  both have been used in
+	 * various assemblers, but supporting a common syntax would be good.
+	 * Fortunately we can use .equiv since it has a consistent syntax,
+	 * but requires us to detect multiple assignments - event with the
+	 * same value.
+	 */
 	fprintf(fp, "#ifdef _LOCORE\n"
+	    " .ifndef _KERNEL_OPT_%s\n"
 	    " .global _KERNEL_OPT_%s\n"
-	    " .equ _KERNEL_OPT_%s,0x%x\n"
+	    " .equiv _KERNEL_OPT_%s,0x%x\n"
+	    " .endif\n"
 	    "#else\n"
-	    "__asm(\" .global _KERNEL_OPT_%s\\n"
-	    " .equ _KERNEL_OPT_%s,0x%x\");\n"
+	    "__asm(\" .ifndef _KERNEL_OPT_%s\\n"
+	    " .global _KERNEL_OPT_%s\\n"
+	    " .equiv _KERNEL_OPT_%s,0x%x\\n"
+	    " .endif\");\n"
 	    "#endif\n",
-	    name, name, value,
-	    name, name, value);
+	    name, name, name, value,
+	    name, name, name, value);
 }
 
 /* Convert the option argument to a 32bit numder */
@@ -127,9 +143,8 @@ global_hash(const char *str)
 
 	/* Avoid colliding with the value used for undefined options. */
 	/* At least until I stop any options being set to zero */
-	return h != UNDEFINED ? h : 0xcafebabe;
+	return h != UNDEFINED ? h : DEFINED;
 }
-#endif
 
 static void
 fprintcnt(FILE *fp, struct nvlist *nv)
