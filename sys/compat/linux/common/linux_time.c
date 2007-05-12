@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_time.c,v 1.16 2007/03/04 06:01:24 christos Exp $ */
+/*	$NetBSD: linux_time.c,v 1.17 2007/05/12 20:23:36 dsl Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_time.c,v 1.16 2007/03/04 06:01:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_time.c,v 1.17 2007/05/12 20:23:36 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/ucred.h>
@@ -113,7 +113,7 @@ linux_sys_settimeofday(l, v, retval)
 	register_t *retval;
 {
 	struct linux_sys_settimeofday_args /* {
-		syscallarg(struct timeval *) tz;
+		syscallarg(struct timeval *) tp;
 		syscallarg(struct timezone *) tzp;
 	} */ *uap = v;
 	int error = 0;
@@ -132,7 +132,7 @@ linux_sys_settimeofday(l, v, retval)
 		error = copyin(SCARG(uap, tzp), &linux_sys_tz, sizeof(linux_sys_tz));
 		if (error)
 			return (error);
-   }
+	}
 
 	return (0);
 }
