@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_file.c,v 1.26 2007/04/30 09:20:19 dsl Exp $ */
+/* $NetBSD: osf1_file.c,v 1.27 2007/05/12 17:28:20 dsl Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_file.c,v 1.26 2007/04/30 09:20:19 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_file.c,v 1.27 2007/05/12 17:28:20 dsl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
@@ -315,38 +315,27 @@ osf1_sys_utimes(l, v, retval)
 	register_t *retval;
 {
 	struct osf1_sys_utimes_args *uap = v;
-	struct proc *p = l->l_proc;
-	struct sys_utimes_args a;
 	struct osf1_timeval otv;
-	struct timeval tv;
-	void *sg;
+	struct timeval tv[2], *tvp;
 	int error;
 
-	sg = stackgap_init(p, 0);
-
-	error = 0;
 	if (SCARG(uap, tptr) == NULL)
-		SCARG(&a, tptr) = NULL;
+		tvp = NULL;
 	else {
-		SCARG(&a, tptr) = stackgap_alloc(p, &sg, sizeof tv);
-
 		/* get the OSF/1 timeval argument */
-		error = copyin(SCARG(uap, tptr),
-		    (void *)&otv, sizeof otv);
-		if (error == 0) {
+		error = copyin(SCARG(uap, tptr), &otv, sizeof otv);
+		if (error != 0)
+			return error;
 
-			/* fill in and copy out the NetBSD timeval */
-			memset(&tv, 0, sizeof tv);
-			tv.tv_sec = otv.tv_sec;
-			tv.tv_usec = otv.tv_usec;
-
-			error = copyout((void *)&tv,
-			    __UNCONST(SCARG(&a, tptr)), sizeof tv);
-		}
+		/* fill in and copy out the NetBSD timeval */
+		tv[0].tv_sec = otv.tv_sec;
+		tv[0].tv_usec = otv.tv_usec;
+		/* Set access and modified to the same time */
+		tv[1].tv_sec = otv.tv_sec;
+		tv[1].tv_usec = otv.tv_usec;
+		tvp = tv;
 	}
 
-	if (error == 0)
-		error = sys_utimes(l, &a, retval);
-
-	return (error);
+	return do_sys_utimes(l, NULL, SCARG(uap, path), FOLLOW,
+			    tvp, UIO_SYSSPACE);
 }
