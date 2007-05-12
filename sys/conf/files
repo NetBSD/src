@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.843 2007/05/08 16:48:37 xtraeme Exp $
+#	$NetBSD: files,v 1.844 2007/05/12 11:04:58 bouyer Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -890,6 +890,11 @@ file	dev/ic/upc.c			upc
 file	dev/ic/wdc_upc.c		wdc_upc
 file	dev/ic/com_upc.c		com_upc
 file	dev/ic/lpt_upc.c		lpt_upc
+
+# AHCI-compatible SATA controllers
+define ahcisata_core
+file dev/ic/ahcisata_core.c ahcisata_core
+device ahcisata: ata, ata_dma, ata_udma, sata, ahcisata_core
 
 # DECchip 21x4x Ethernet controller family, and assorted clones.
 #
