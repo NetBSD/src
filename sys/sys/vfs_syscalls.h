@@ -1,4 +1,4 @@
-/*     $NetBSD: vfs_syscalls.h,v 1.3 2007/04/30 08:32:14 dsl Exp $        */
+/*     $NetBSD: vfs_syscalls.h,v 1.4 2007/05/12 17:28:20 dsl Exp $        */
 
 #ifndef _SYS_VFS_SYSCALLS_H_
 #define _SYS_VFS_SYSCALLS_H_
@@ -20,6 +20,9 @@ int do_sys_pstatvfs(struct lwp *, const char *, int, struct statvfs *);
 int do_sys_fstatvfs(struct lwp *, int, int, struct statvfs *);
 /* VFS status - call copyfn() for each entry */
 int do_sys_getvfsstat(struct lwp *, void *, size_t, int, int (*)(const void *, void *, size_t), size_t, register_t *);
+
+int do_sys_utimes(struct lwp *, struct vnode *, const char *, int,
+    const struct timeval *, enum uio_seg);
 
 int	vfs_copyinfh_alloc(const void *, size_t, fhandle_t **);
 void	vfs_copyinfh_free(fhandle_t *);

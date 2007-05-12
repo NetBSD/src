@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_misc.c,v 1.86 2007/05/07 16:53:18 dsl Exp $	*/
+/*	$NetBSD: ibcs2_misc.c,v 1.87 2007/05/12 17:28:19 dsl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.86 2007/05/07 16:53:18 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.87 2007/05/12 17:28:19 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,6 +124,7 @@ __KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.86 2007/05/07 16:53:18 dsl Exp $");
 #include <sys/utsname.h>
 #include <sys/unistd.h>
 #include <sys/kauth.h>
+#include <sys/vfs_syscalls.h>
 
 #include <netinet/in.h>
 #include <sys/syscallargs.h>
@@ -1064,27 +1065,25 @@ ibcs2_sys_utime(l, v, retval)
 		syscallarg(struct ibcs2_utimbuf *) buf;
 	} */ *uap = v;
 	int error;
-	struct sys_utimes_args sa;
-	struct timeval *tp;
+	struct timeval *tptr;
+	struct timeval tp[2];
 
-	void *sg = stackgap_init(l->l_proc, 0);
-	tp = stackgap_alloc(l->l_proc, &sg, 2 * sizeof(struct timeval *));
-	SCARG(&sa, path) = SCARG(uap, path);
 	if (SCARG(uap, buf)) {
 		struct ibcs2_utimbuf ubuf;
 
-		error = copyin((void *)SCARG(uap, buf), (void *)&ubuf,
-		    sizeof(ubuf));
+		error = copyin(SCARG(uap, buf), &ubuf, sizeof(ubuf));
 		if (error)
 			return error;
 		tp[0].tv_sec = ubuf.actime;
 		tp[0].tv_usec = 0;
 		tp[1].tv_sec = ubuf.modtime;
 		tp[1].tv_usec = 0;
-		SCARG(&sa, tptr) = tp;
+		tptr = tp;
 	} else
-		SCARG(&sa, tptr) = NULL;
-	return sys_utimes(l, &sa, retval);
+		tptr = NULL;
+
+	return do_sys_utimes(l, NULL, SCARG(uap, path), FOLLOW,
+			    tptr, UIO_SYSSPACE);
 }
 
 int

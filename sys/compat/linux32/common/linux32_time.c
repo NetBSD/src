@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_time.c,v 1.11 2007/04/22 08:29:58 dsl Exp $ */
+/*	$NetBSD: linux32_time.c,v 1.12 2007/05/12 17:28:19 dsl Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_time.c,v 1.11 2007/04/22 08:29:58 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_time.c,v 1.12 2007/05/12 17:28:19 dsl Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -43,10 +43,12 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_time.c,v 1.11 2007/04/22 08:29:58 dsl Exp $"
 #include <sys/kauth.h>
 #include <sys/kernel.h>
 #include <sys/fcntl.h>
+#include <sys/namei.h>
 #include <sys/select.h>
 #include <sys/proc.h>
 #include <sys/ucred.h>
 #include <sys/swap.h>
+#include <sys/vfs_syscalls.h>
 
 #include <machine/types.h>
 
@@ -222,14 +224,9 @@ linux32_sys_utime(l, v, retval)
 		syscallarg(const netbsd32_charp) path;
 		syscallarg(linux32_utimbufp_t) times;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
-        void *sg = stackgap_init(p, 0);
-        struct sys_utimes_args ua;
         struct timeval tv[2], *tvp;
         struct linux32_utimbuf lut;
         int error;
-
-	NETBSD32TOP_UAP(path, const char);
 
         if (SCARG_P32(uap, times) != NULL) {
                 if ((error = copyin(SCARG_P32(uap, times), &lut, sizeof lut)))
@@ -239,15 +236,11 @@ linux32_sys_utime(l, v, retval)
                 tv[0].tv_usec = 0;
                 tv[1].tv_sec = (long)lut.l_modtime;
 		tv[1].tv_usec = 0;
-
-	        tvp = (struct timeval *) stackgap_alloc(p, &sg, sizeof(tv));
-
-                if ((error = copyout(tv, tvp, sizeof(tv))))
-                        return error;
-                SCARG(&ua, tptr) = tvp;
+                tvp = tv;
         } else {
-               SCARG(&ua, tptr) = NULL;
+		tvp = NULL;
 	}
                      
-        return sys_utimes(l, &ua, retval);
+        return do_sys_utimes(l, NULL, SCARG_P32(uap, path), FOLLOW,
+			    tvp, UIO_SYSSPACE);
 } 

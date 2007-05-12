@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.311 2007/04/30 08:32:14 dsl Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.312 2007/05/12 17:28:20 dsl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.311 2007/04/30 08:32:14 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.312 2007/05/12 17:28:20 dsl Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -98,8 +98,6 @@ static int change_dir(struct nameidata *, struct lwp *);
 static int change_flags(struct vnode *, u_long, struct lwp *);
 static int change_mode(struct vnode *, int, struct lwp *l);
 static int change_owner(struct vnode *, uid_t, gid_t, struct lwp *, int);
-static int change_utimes(struct vnode *vp, const struct timeval *,
-	       struct lwp *l);
 static int rename_files(const char *, const char *, struct lwp *, int);
 
 void checkdirs(struct vnode *);
@@ -2924,17 +2922,9 @@ sys_utimes(struct lwp *l, void *v, register_t *retval)
 		syscallarg(const char *) path;
 		syscallarg(const struct timeval *) tptr;
 	} */ *uap = v;
-	int error;
-	struct nameidata nd;
 
-	NDINIT(&nd, LOOKUP, FOLLOW | TRYEMULROOT, UIO_USERSPACE, SCARG(uap, path), l);
-	if ((error = namei(&nd)) != 0)
-		return (error);
-
-	error = change_utimes(nd.ni_vp, SCARG(uap, tptr), l);
-
-	vrele(nd.ni_vp);
-	return (error);
+	return do_sys_utimes(l, NULL, SCARG(uap, path), FOLLOW,
+			SCARG(uap, tptr), UIO_USERSPACE);
 }
 
 /*
@@ -2948,15 +2938,16 @@ sys_futimes(struct lwp *l, void *v, register_t *retval)
 		syscallarg(int) fd;
 		syscallarg(const struct timeval *) tptr;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	int error;
 	struct file *fp;
 
 	/* getvnode() will use the descriptor for us */
-	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
+	if ((error = getvnode(l->l_proc->p_fd, SCARG(uap, fd), &fp)) != 0)
 		return (error);
 
-	error = change_utimes((struct vnode *)fp->f_data, SCARG(uap, tptr), l);
+	error = do_sys_utimes(l, fp->f_data, NULL, 0, 
+			SCARG(uap, tptr), UIO_USERSPACE);
+
 	FILE_UNUSE(fp, l);
 	return (error);
 }
@@ -2965,7 +2956,6 @@ sys_futimes(struct lwp *l, void *v, register_t *retval)
  * Set the access and modification times given a path name; this
  * version does not follow links.
  */
-/* ARGSUSED */
 int
 sys_lutimes(struct lwp *l, void *v, register_t *retval)
 {
@@ -2973,26 +2963,20 @@ sys_lutimes(struct lwp *l, void *v, register_t *retval)
 		syscallarg(const char *) path;
 		syscallarg(const struct timeval *) tptr;
 	} */ *uap = v;
-	int error;
-	struct nameidata nd;
 
-	NDINIT(&nd, LOOKUP, NOFOLLOW | TRYEMULROOT, UIO_USERSPACE, SCARG(uap, path), l);
-	if ((error = namei(&nd)) != 0)
-		return (error);
-
-	error = change_utimes(nd.ni_vp, SCARG(uap, tptr), l);
-
-	vrele(nd.ni_vp);
-	return (error);
+	return do_sys_utimes(l, NULL, SCARG(uap, path), NOFOLLOW,
+			SCARG(uap, tptr), UIO_USERSPACE);
 }
 
 /*
  * Common routine to set access and modification times given a vnode.
  */
-static int
-change_utimes(struct vnode *vp, const struct timeval *tptr, struct lwp *l)
+int
+do_sys_utimes(struct lwp *l, struct vnode *vp, const char *path, int flag,
+    const struct timeval *tptr, enum uio_seg seg)
 {
 	struct vattr vattr;
+	struct nameidata nd;
 	int error;
 
 	VATTR_NULL(&vattr);
@@ -3003,17 +2987,32 @@ change_utimes(struct vnode *vp, const struct timeval *tptr, struct lwp *l)
 	} else {
 		struct timeval tv[2];
 
-		error = copyin(tptr, tv, sizeof(tv));
-		if (error)
-			goto out;
-		TIMEVAL_TO_TIMESPEC(&tv[0], &vattr.va_atime);
-		TIMEVAL_TO_TIMESPEC(&tv[1], &vattr.va_mtime);
+		if (seg != UIO_SYSSPACE) {
+			error = copyin(tptr, &tv, sizeof (tv));
+			if (error != 0)
+				return error;
+			tptr = tv;
+		}
+		TIMEVAL_TO_TIMESPEC(tptr, &vattr.va_atime);
+		TIMEVAL_TO_TIMESPEC(tptr + 1, &vattr.va_mtime);
 	}
+
+	if (vp == NULL) {
+		NDINIT(&nd, LOOKUP, flag | TRYEMULROOT, UIO_USERSPACE, path, l);
+		if ((error = namei(&nd)) != 0)
+			return (error);
+		vp = nd.ni_vp;
+	} else
+		nd.ni_vp = NULL;
+
 	VOP_LEASE(vp, l, l->l_cred, LEASE_WRITE);
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_SETATTR(vp, &vattr, l->l_cred, l);
 	VOP_UNLOCK(vp, 0);
-out:
+
+	if (nd.ni_vp != NULL)
+		vrele(nd.ni_vp);
+
 	return (error);
 }
 
