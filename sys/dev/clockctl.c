@@ -1,4 +1,4 @@
-/*      $NetBSD: clockctl.c,v 1.21 2007/03/04 06:01:41 christos Exp $ */
+/*      $NetBSD: clockctl.c,v 1.22 2007/05/12 20:27:13 dsl Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clockctl.c,v 1.21 2007/03/04 06:01:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clockctl.c,v 1.22 2007/05/12 20:27:13 dsl Exp $");
 
 #include "opt_ntp.h"
 
@@ -83,7 +83,7 @@ clockctlioctl(
 			struct clockctl_settimeofday *args =
 			    (struct clockctl_settimeofday *)data;
 
-			error = settimeofday1(args->tv, args->tzp, l->l_proc);
+			error = settimeofday1(args->tv, true, args->tzp, l, false);
 			if (error)
 				return (error);
 			break;

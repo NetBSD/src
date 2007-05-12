@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_time.c,v 1.12 2007/03/04 06:01:28 christos Exp $ */
+/* $NetBSD: osf1_time.c,v 1.13 2007/05/12 20:27:40 dsl Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_time.c,v 1.12 2007/03/04 06:01:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_time.c,v 1.13 2007/05/12 20:27:40 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -235,58 +235,24 @@ osf1_sys_settimeofday(l, v, retval)
 	register_t *retval;
 {
 	struct osf1_sys_settimeofday_args *uap = v;
-	struct proc *p = l->l_proc;
-	struct sys_settimeofday_args a;
 	struct osf1_timeval otv;
-	struct osf1_timezone otz;
-	struct timeval tv;
-	struct timezone tz;
+	struct timeval tv, *tvp;
 	int error = 0;
-	void *sg;
 
-	sg = stackgap_init(p, 0);
 	if (SCARG(uap, tv) == NULL)
-		SCARG(&a, tv) = NULL;
+		tvp = NULL;
 	else {
-		SCARG(&a, tv) = stackgap_alloc(p, &sg, sizeof tv);
-
 		/* get the OSF/1 timeval argument */
-		error = copyin((void *)SCARG(uap, tv),
-		    (void *)&otv, sizeof otv);
-		if (error == 0) {
+		error = copyin(SCARG(uap, tv), &otv, sizeof otv);
+		if (error != 0)
+			return error;
 
-			/* fill in and copy out the NetBSD timeval */
-			memset(&tv, 0, sizeof tv);
-			tv.tv_sec = otv.tv_sec;
-			tv.tv_usec = otv.tv_usec;
-
-			error = copyout((void *)&tv,
-			    __UNCONST(SCARG(&a, tv)), sizeof tv);
-		}
+		tv.tv_sec = otv.tv_sec;
+		tv.tv_usec = otv.tv_usec;
+		tvp = &tv;
 	}
 
-	if (SCARG(uap, tzp) == NULL)
-		SCARG(&a, tzp) = NULL;
-	else {
-		SCARG(&a, tzp) = stackgap_alloc(p, &sg, sizeof tz);
+	/* NetBSD ignores the timezone field */
 
-		/* get the OSF/1 timeval argument */
-		error = copyin((void *)SCARG(uap, tzp),
-		    (void *)&otz, sizeof otz);
-		if (error == 0) {
-
-			/* fill in and copy out the NetBSD timezone */
-			memset(&tz, 0, sizeof tz);
-			tz.tz_minuteswest = otz.tz_minuteswest;
-			tz.tz_dsttime = otz.tz_dsttime;
-
-			error = copyout((void *)&tz,
-			    __UNCONST(SCARG(&a, tzp)), sizeof tz);
-		}
-	}
-
-	if (error == 0)
-		error = sys_settimeofday(l, &a, retval);
-
-	return (error);
+	return settimeofday1(tvp, false, (const void *)SCARG(uap, tzp), l, true);
 }

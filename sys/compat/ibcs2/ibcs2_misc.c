@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_misc.c,v 1.88 2007/05/12 18:10:20 dsl Exp $	*/
+/*	$NetBSD: ibcs2_misc.c,v 1.89 2007/05/12 20:27:18 dsl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.88 2007/05/12 18:10:20 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.89 2007/05/12 20:27:18 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1027,23 +1027,14 @@ ibcs2_sys_stime(l, v, retval)
 	struct ibcs2_sys_stime_args /* {
 		syscallarg(long *) timep;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
+	struct timeval tv;
 	int error;
-	struct sys_settimeofday_args sa;
-	void *sg = stackgap_init(p, 0);
-	struct timeval *tvp;
 
-	tvp = stackgap_alloc(p, &sg, sizeof(*SCARG(&sa, tv)));
-	SCARG(&sa, tzp) = NULL;
-	error = copyin((void *)SCARG(uap, timep),
-		       (void *)&tvp->tv_sec, sizeof(long));
+	error = copyin(SCARG(uap, timep), &tv.tv_sec, sizeof(long));
 	if (error)
 		return error;
-	tvp->tv_usec = 0;
-	SCARG(&sa, tv) = tvp;
-	if ((error = sys_settimeofday(l, &sa, retval)) != 0)
-		return EPERM;
-	return 0;
+	tv.tv_usec = 0;
+	return settimeofday1(&tv, false, NULL, l, true);
 }
 
 int
