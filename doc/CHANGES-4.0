@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.143 2007/05/09 23:15:45 pavel Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.144 2007/05/12 16:27:20 pavel Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -3359,4 +3359,24 @@ sys/arch/i386/conf/INSTALL			1.302
 	Comment out 'bnx' to make the INSTALL kernel fit on an 2.88M floppy
 	image again.
 	[salo, ticket #632]
+
+sys/netinet6/icmp6.c				1.126
+
+	Fix an infinite loop (and local DoS) in ICMPv6 processing.
+	Fixes pr/34994 and probably pr/35333.
+	[degroote, ticket #631]
+
+usr.sbin/wpa/wpa_supplicant/driver_netbsd.c	1.2
+
+	Fix endian issue in wpa_supplicant.
+	[seanb, ticket #636]
+
+sys/dev/pci/radeonfb.c				1.13
+
+	use EDID data passed as property when present.
+	This should allow radeonfb to do The Right Thing on Macs that use
+	non-standard video timings and have built-in monitors that don't
+	provide data via DDC since those usually have an EDID block in the
+	OF tree.
+	[macallan, ticket #615]
 
