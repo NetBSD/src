@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.118 2007/03/12 18:18:33 ad Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.119 2007/05/12 20:27:57 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.118 2007/03/12 18:18:33 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.119 2007/05/12 20:27:57 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/resourcevar.h>
@@ -457,39 +457,46 @@ sys_settimeofday(struct lwp *l, void *v, register_t *retval)
 		syscallarg(const struct timeval *) tv;
 		syscallarg(const void *) tzp;	really "const struct timezone *"
 	} */ *uap = v;
-	int error;
 
-	if ((error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_TIME,
-	    KAUTH_REQ_SYSTEM_TIME_SYSTEM, NULL, NULL, NULL)) != 0)
-		return (error);
-
-	return settimeofday1(SCARG(uap, tv), SCARG(uap, tzp), l->l_proc);
+	return settimeofday1(SCARG(uap, tv), true, SCARG(uap, tzp), l, true);
 }
 
 int
-settimeofday1(const struct timeval *utv, const struct timezone *utzp,
-    struct proc *p)
+settimeofday1(const struct timeval *utv, bool userspace,
+    const void *utzp, struct lwp *l, bool check_kauth)
 {
 	struct timeval atv;
 	struct timespec ts;
 	int error;
 
 	/* Verify all parameters before changing time. */
+
+	if (check_kauth) {
+		error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_TIME,
+		    KAUTH_REQ_SYSTEM_TIME_SYSTEM, NULL, NULL, NULL);
+		if (error != 0)
+			return (error);
+	}
+
 	/*
 	 * NetBSD has no kernel notion of time zone, and only an
 	 * obsolete program would try to set it, so we log a warning.
 	 */
 	if (utzp)
 		log(LOG_WARNING, "pid %d attempted to set the "
-		    "(obsolete) kernel time zone\n", p->p_pid);
+		    "(obsolete) kernel time zone\n", l->l_proc->p_pid);
 
 	if (utv == NULL) 
 		return 0;
 
-	if ((error = copyin(utv, &atv, sizeof(atv))) != 0)
-		return error;
-	TIMEVAL_TO_TIMESPEC(&atv, &ts);
-	return settime(p, &ts);
+	if (userspace) {
+		if ((error = copyin(utv, &atv, sizeof(atv))) != 0)
+			return error;
+		utv = &atv;
+	}
+
+	TIMEVAL_TO_TIMESPEC(utv, &ts);
+	return settime(l->l_proc, &ts);
 }
 
 #ifndef __HAVE_TIMECOUNTER
