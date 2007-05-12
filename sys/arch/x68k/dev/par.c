@@ -1,4 +1,4 @@
-/*	$NetBSD: par.c,v 1.30 2007/03/11 08:22:33 isaki Exp $	*/
+/*	$NetBSD: par.c,v 1.31 2007/05/12 06:31:19 isaki Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: par.c,v 1.30 2007/03/11 08:22:33 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: par.c,v 1.31 2007/05/12 06:31:19 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -504,8 +504,8 @@ parsendch(struct par_softc *sc, u_char ch)
 	/* if either offline, busy or out of paper, wait for that
 	   condition to clear */
 	s = spl1();
-	while (!error 
-	       && (parsend_pending 
+	while (!error
+	       && (parsend_pending
 		   || !(intio_get_sicilian_intr() & SICILIAN_STAT_PAR)))
 	{
 		/* wait a second, and try again */
