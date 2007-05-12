@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.151 2007/05/12 17:47:45 snj Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.152 2007/05/12 19:31:20 pavel Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -3427,4 +3427,12 @@ sys/arch/vax/include/vaxfp.h			1.6
 	deal with the vax in a slightly disgusting way. Provide constants
 	for the widths of the bitfields and use them.  Fixes the vax build.
 	[mhitch, ticket #646]
+
+sys/netinet6/ipsec.c				1.116
+sys/netipsec/ipsec.c				1.29 via patch
+sys/netipsec/key.c				1.43-1.46
+sys/netkey/key.c				1.154-1.155
+
+	Fix several FAST_IPSEC issues.
+	[degroote, ticket #630]
 
