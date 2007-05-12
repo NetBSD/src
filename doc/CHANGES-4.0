@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.147 2007/05/12 17:34:49 snj Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.148 2007/05/12 17:38:18 snj Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -3405,4 +3405,9 @@ sys/dev/isa/it.c				1.8
 	Don't refresh all sensors in the gtredata function, just the sensor
 	that was requested. This is related to PR#36226.
 	[xtraeme, ticket #622]
+
+distrib/notes/sparc64/hardware			1.18
+
+	Adapt unsupported hardware section
+	[martin, ticket #624]
 
