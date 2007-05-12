@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.145 2007/05/12 16:57:35 snj Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.146 2007/05/12 17:29:20 snj Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -3385,4 +3385,18 @@ share/man/man9/uvm.9				1.83
 	Sync the uvm_fault interface with reality after the removal of the
 	"fault type" third argument in rev. 1.110 of sys/uvm/uvm_fault.c
 	[pavel, ticket #623]
+
+sys/dev/usb/files.usb				1.75
+sys/dev/usb/if_rum.c				1.10
+sys/dev/usb/usbdevs				1.463
+
+	Add support for ASUS WL-167g ver 2.  Fixes PR#35113.
+	[xtraeme, ticket #617]
+
+sys/dev/isa/ug.c				1.4
+sys/dev/isa/ugvar.h				1.4
+
+	Don't refresh all sensors in the gtredata function, just the sensor
+	that was requested. This is related to PR#36226.
+	[xtraeme, ticket #620]
 
