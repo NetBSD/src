@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_descrip.c,v 1.21 2007/03/04 06:01:27 christos Exp $ */
+/* $NetBSD: osf1_descrip.c,v 1.22 2007/05/12 23:02:49 dsl Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_descrip.c,v 1.21 2007/03/04 06:01:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_descrip.c,v 1.22 2007/05/12 23:02:49 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -152,17 +152,18 @@ osf1_sys_fcntl(l, v, retval)
 			SCARG(&a, cmd) = F_SETLK;
 		else if (SCARG(uap, cmd) == OSF1_F_SETLKW)
 			SCARG(&a, cmd) = F_SETLKW;
-		SCARG(&a, arg) = stackgap_alloc(p, &sg, sizeof nflock);
 
 		error = copyin(SCARG(uap, arg), &oflock, sizeof oflock);
-		if (error == 0)
-			error = osf1_cvt_flock_to_native(&oflock, &nflock);
-		if (error == 0)
-			error = copyout(&nflock, SCARG(&a, arg),
-			    sizeof nflock);
 		if (error != 0)
-			return (error);
-		break;
+			return error;
+		error = osf1_cvt_flock_to_native(&oflock, &nflock);
+		if (error != 0)
+			return error;
+		error = do_fcntl_lock(l, SCARG(uap, fd), SCARG(&a, cmd), &nflock);
+		if (SCARG(&a, cmd) != F_GETLK || error != 0)
+			return error;
+		osf1_cvt_flock_from_native(&nflock, &oflock);
+		return copyout(&oflock, SCARG(uap, arg), sizeof oflock);
 
 	case OSF1_F_RGETLK:		/* [lock mgr op] XXX not supported */
 	case OSF1_F_RSETLK:		/* [lock mgr op] XXX not supported */
@@ -194,15 +195,6 @@ osf1_sys_fcntl(l, v, retval)
 		xfl |= emul_flags_translate(osf1_fcntl_getsetfl_flags_rxtab,
 		    leftovers, NULL);
 		retval[0] = xfl;
-		break;
-
-	case OSF1_F_GETLK:
-		error = copyin(SCARG(&a, arg), &nflock, sizeof nflock);
-		if (error == 0) {
-			osf1_cvt_flock_from_native(&nflock, &oflock);
-			error = copyout(&oflock, SCARG(uap, arg),
-			    sizeof oflock);
-		}
 		break;
 	}
 
