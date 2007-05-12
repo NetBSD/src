@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.72 2006/10/31 22:21:17 joerg Exp $
+#	$NetBSD: files.usb,v 1.72.2.1 2007/05/12 17:08:13 snj Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -259,7 +259,7 @@ file	dev/usb/if_atu.c		atu
 attach	ral at usbdevif with ural
 file	dev/usb/if_ural.c		ural
 
-device	rum: ether, ifnet, arp, wlan
+device	rum: ether, ifnet, arp, wlan, firmload
 attach	rum at usbdevif
 file	dev/usb/if_rum.c		rum
 
