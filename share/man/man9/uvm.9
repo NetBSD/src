@@ -1,4 +1,4 @@
-.\"	$NetBSD: uvm.9,v 1.78.2.1 2006/12/09 11:53:42 bouyer Exp $
+.\"	$NetBSD: uvm.9,v 1.78.2.2 2007/05/12 16:56:51 snj Exp $
 .\"
 .\" Copyright (c) 1998 Matthew R. Green
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd December 7, 2006
+.Dd May 6, 2007
 .Dt UVM 9
 .Os
 .Sh NAME
@@ -419,7 +419,7 @@ allocated to back that virtual space later.
 .Sh PAGE FAULT HANDLING
 .Ft int
 .br
-.Fn uvm_fault "struct vm_map *orig_map" "vaddr_t vaddr" "vm_fault_t fault_type" "vm_prot_t access_type" ;
+.Fn uvm_fault "struct vm_map *orig_map" "vaddr_t vaddr" "vm_prot_t access_type" ;
 .Pp
 .Fn uvm_fault
 is the main entry point for faults.
@@ -427,9 +427,7 @@ It takes
 .Fa orig_map
 as the map the fault originated in, a
 .Fa vaddr
-offset into the map the fault occurred,
-.Fa fault_type
-describing the type of fault, and
+offset into the map the fault occurred, and
 .Fa access_type
 describing the type of access requested.
 .Fn uvm_fault
