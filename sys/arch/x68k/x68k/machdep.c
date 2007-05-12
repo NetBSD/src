@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.140 2007/04/29 05:31:00 isaki Exp $	*/
+/*	$NetBSD: machdep.c,v 1.141 2007/05/12 06:31:19 isaki Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.140 2007/04/29 05:31:00 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.141 2007/05/12 06:31:19 isaki Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -150,10 +150,10 @@ void doboot(void) __attribute__((__noreturn__));
 /* the following is used externally (sysctl_hw) */
 char	machine[] = MACHINE;	/* from <machine/param.h> */
 
-/* Our exported CPU info; we can have only one. */  
+/* Our exported CPU info; we can have only one. */
 struct cpu_info cpu_info_store;
 
-struct vm_map *exec_map = NULL;  
+struct vm_map *exec_map = NULL;
 struct vm_map *mb_map = NULL;
 struct vm_map *phys_map = NULL;
 
@@ -380,7 +380,7 @@ static const char *fpu_descr[] = {
 void
 identifycpu(void)
 {
-        /* there's alot of XXX in here... */
+	/* there's alot of XXX in here... */
 	const char *cpu_type, *mach, *mmu, *fpu;
 	char clock[16];
 
@@ -516,10 +516,10 @@ cpu_reboot(int howto, char *bootstr)
 	 *  a2: the power switch is off
 	 *	Remove the power; the simplest way is go back to ROM eg. reboot
 	 * b) RB_HALT
-	 *      call cngetc
-         * c) otherwise
+	 *	call cngetc
+	 * c) otherwise
 	 *	Reboot
-	*/
+	 */
 	if (((howto & RB_POWERDOWN) == RB_POWERDOWN) && power_switch_is_off)
 		doboot();
 	else if (/*((howto & RB_POWERDOWN) == RB_POWERDOWN) ||*/
@@ -995,7 +995,7 @@ nmihand(struct frame frame)
 /*
  * cpu_exec_aout_makecmds():
  *	cpu-dependent a.out format hook for execve().
- * 
+ *
  * Determine of the given exec package refers to something which we
  * understand and, if so, set up the vmcmds for it.
  *
@@ -1117,7 +1117,7 @@ mem_exists(void *mem, u_long basemax)
 	DPRINTF ((" Let's begin. mem=%p, base=%p, m=%p, b=%p\n",
 		  mem, base, m, b));
 
-	(void) *m; 
+	(void) *m;
 	/*
 	 * Can't check by writing if the corresponding
 	 * base address isn't memory.
