@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.149 2007/05/12 17:40:13 snj Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.150 2007/05/12 17:43:42 snj Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -3415,4 +3415,9 @@ distrib/notes/sparc64/hardware			1.19
 
 	Note sunsolve now requires a login.
 	[martin, ticket #625]
+
+gnu/dist/binutils/gas/config/tc-vax.c		1.5
+
+	Fix LP64 bug.
+	[mhitch, ticket #644]
 
