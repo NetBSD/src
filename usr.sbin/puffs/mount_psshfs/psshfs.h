@@ -1,4 +1,4 @@
-/*	$NetBSD: psshfs.h,v 1.13 2007/05/11 16:23:01 pooka Exp $	*/
+/*	$NetBSD: psshfs.h,v 1.14 2007/05/12 09:41:30 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -98,8 +98,8 @@ struct psshfs_node {
 
 	char *fhand_r;
 	char *fhand_w;
-	size_t fhand_r_len;
-	size_t fhand_w_len;
+	uint32_t fhand_r_len;
+	uint32_t fhand_w_len;
 };
 
 struct psshfs_ctx {
