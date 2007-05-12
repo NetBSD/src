@@ -1,4 +1,4 @@
-/*	$NetBSD: hdtoa.c,v 1.5.2.2 2007/05/07 19:49:06 pavel Exp $	*/
+/*	$NetBSD: hdtoa.c,v 1.5.2.3 2007/05/12 17:46:23 snj Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005 David Schultz <das@FreeBSD.ORG>
@@ -30,7 +30,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/lib/libc/gdtoa/_hdtoa.c,v 1.4 2007/01/03 04:57:58 das Exp $");
 #else
-__RCSID("$NetBSD: hdtoa.c,v 1.5.2.2 2007/05/07 19:49:06 pavel Exp $");
+__RCSID("$NetBSD: hdtoa.c,v 1.5.2.3 2007/05/12 17:46:23 snj Exp $");
 #endif
 
 #include <float.h>
@@ -38,6 +38,20 @@ __RCSID("$NetBSD: hdtoa.c,v 1.5.2.2 2007/05/07 19:49:06 pavel Exp $");
 #include <math.h>
 #ifndef __vax__
 #include <machine/ieee.h>
+#else
+#include <machine/vaxfp.h>
+#define ieee_double_u vax_dfloating_u
+#define dblu_d dfltu_d
+#define dblu_dbl dfltu_dflt
+#define dbl_sign dflt_sign
+#define dbl_exp dflt_exp
+#define dbl_frach dflt_frach
+#define dbl_fracm dflt_fracm
+#define dbl_fracl dflt_fracl
+#define DBL_FRACHBITS	DFLT_FRACHBITS
+#define DBL_FRACMBITS	DFLT_FRACMBITS
+#define DBL_FRACLBITS	DFLT_FRACLBITS
+#define DBL_EXPBITS	DFLT_EXPBITS
 #endif
 #include "gdtoaimp.h"
 
@@ -186,6 +200,12 @@ hdtoa(double d, const char *xdigs, int ndigits, int *decpt, int *sign,
 		*s = u.dblu_dbl.dbl_fracl & 0xf;
 		u.dblu_dbl.dbl_fracl >>= 4;
 	}
+#ifdef DBL_FRACMBITS
+	for (; s > s0; s--) {
+		*s = u.dblu_dbl.dbl_fracm & 0xf;
+		u.dblu_dbl.dbl_fracm >>= 4;
+	}
+#endif
 	for (; s > s0; s--) {
 		*s = u.dblu_dbl.dbl_frach & 0xf;
 		u.dblu_dbl.dbl_frach >>= 4;
