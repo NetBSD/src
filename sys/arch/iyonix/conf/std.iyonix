@@ -1,4 +1,4 @@
-#	$NetBSD: std.iyonix,v 1.3 2005/12/11 12:17:51 christos Exp $
+#	$NetBSD: std.iyonix,v 1.4 2007/05/12 14:34:04 gavan Exp $
 #
 # standard NetBSD/iyonix for GENERIC options
 
@@ -18,3 +18,4 @@ options 	ARM_INTR_IMPL="<arch/arm/xscale/i80321_intr.h>"
 
 # We need to configure the PCI bus.
 options 	PCI_NETBSD_CONFIGURE
+options		I80321_USE_DIRECT_WIN
