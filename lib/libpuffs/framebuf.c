@@ -1,4 +1,4 @@
-/*	$NetBSD: framebuf.c,v 1.6 2007/05/11 21:27:13 pooka Exp $	*/
+/*	$NetBSD: framebuf.c,v 1.7 2007/05/12 07:44:58 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: framebuf.c,v 1.6 2007/05/11 21:27:13 pooka Exp $");
+__RCSID("$NetBSD: framebuf.c,v 1.7 2007/05/12 07:44:58 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -489,7 +489,8 @@ puffs_framebuf_addfd(struct puffs_usermount *pu, int fd)
 	struct puffs_fctrl_io *fio;
 	struct kevent kev[2];
 	struct kevent *newevs;
-	int rv, nfds;
+	size_t nfds;
+	int rv;
 
 	nfds = pfctrl->nfds+1;
 	newevs = realloc(pfctrl->evs, (2*nfds+1) * sizeof(struct kevent));
