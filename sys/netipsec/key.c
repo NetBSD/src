@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.30 2006/11/16 01:33:49 christos Exp $	*/
+/*	$NetBSD: key.c,v 1.30.2.1 2007/05/12 19:24:48 pavel Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.30 2006/11/16 01:33:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.30.2.1 2007/05/12 19:24:48 pavel Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -2147,7 +2147,7 @@ key_spddelete2(so, m, mhp)
 	/* Is there SP in SPD ? */
 	if ((sp = key_getspbyid(id)) == NULL) {
 		ipseclog((LOG_DEBUG, "key_spddelete2: no SP found id:%u.\n", id));
-		key_senderror(so, m, EINVAL);
+		return key_senderror(so, m, EINVAL);
 	}
 
 	key_sp_dead(sp);
@@ -2255,7 +2255,9 @@ key_spdget(so, m, mhp)
 		return key_senderror(so, m, ENOENT);
 	}
 
-	n = key_setdumpsp(sp, SADB_X_SPDGET, 0, mhp->msg->sadb_msg_pid);
+	n = key_setdumpsp(sp, SADB_X_SPDGET, mhp->msg->sadb_msg_seq,
+                                         mhp->msg->sadb_msg_pid);
+    KEY_FREESP(&sp); /* ref gained by key_getspbyid */
 	if (n != NULL) {
 		m_freem(m);
 		return key_sendup_mbuf(so, n, KEY_SENDUP_ONE);
@@ -4829,7 +4831,7 @@ key_do_getnewspi(spirange, saidx)
 	}
 
 	if (spmin == spmax) {
-		if (key_checkspidup(saidx, spmin) != NULL) {
+		if (key_checkspidup(saidx, htonl(spmin)) != NULL) {
 			ipseclog((LOG_DEBUG, "key_do_getnewspi: SPI %u exists already.\n", spmin));
 			return 0;
 		}
@@ -4847,7 +4849,7 @@ key_do_getnewspi(spirange, saidx)
 			/* generate pseudo-random SPI value ranged. */
 			newspi = spmin + (key_random() % (spmax - spmin + 1));
 
-			if (key_checkspidup(saidx, newspi) == NULL)
+			if (key_checkspidup(saidx, htonl(newspi)) == NULL)
 				break;
 		}
 

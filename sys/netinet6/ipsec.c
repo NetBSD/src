@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.110.2.1 2006/12/20 23:03:08 bouyer Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.110.2.2 2007/05/12 19:24:49 pavel Exp $	*/
 /*	$KAME: ipsec.c,v 1.136 2002/05/19 00:36:39 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.110.2.1 2006/12/20 23:03:08 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.110.2.2 2007/05/12 19:24:49 pavel Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -213,14 +213,16 @@ ipsec_checkpcbcache(m, pcbsp, dir)
 			return NULL;
 		if (ipsec_setspidx(m, &spidx, 1) != 0)
 			return NULL;
-		if (bcmp(&pcbsp->sp_cache[dir].cacheidx, &spidx,
-			 sizeof(spidx))) {
-			if (!pcbsp->sp_cache[dir].cachesp->spidx ||
-			    !key_cmpspidx_withmask(pcbsp->sp_cache[dir].cachesp->spidx,
-			    &spidx))
-				return NULL;
-			pcbsp->sp_cache[dir].cacheidx = spidx;
-		}
+
+		/*
+         * We have to make an exact match here since the cached rule
+         * might have lower priority than a rule that would otherwise
+         * have matched the packet. 
+         */
+
+		if (bcmp(&pcbsp->sp_cache[dir].cacheidx, &spidx, sizeof(spidx))) 
+			return NULL;
+		
 	} else {
 		/*
 		 * The pcb is connected, and the L4 code is sure that:
