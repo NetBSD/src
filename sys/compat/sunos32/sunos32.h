@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32.h,v 1.11 2007/04/22 08:29:59 dsl Exp $	 */
+/*	$NetBSD: sunos32.h,v 1.12 2007/05/12 20:27:56 dsl Exp $	 */
 
 /*
  * Copyright (c) 2001 Matthew R. Green
@@ -41,10 +41,10 @@
  * Typedefs for pointer-types.
  */
 /* stime() */
-typedef u_int32_t sunos32_time_tp;
+typedef netbsd32_pointer_t sunos32_time_tp;
 
 /* statfs(), fstatfs() */
-typedef u_int32_t sunos32_statfsp_t;
+typedef netbsd32_pointer_t sunos32_statfsp_t;
 
 /* ustat() */
 typedef netbsd32_pointer_t sunos32_ustatp_t;
