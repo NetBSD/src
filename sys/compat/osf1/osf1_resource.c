@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_resource.c,v 1.7 2007/03/04 06:01:28 christos Exp $ */
+/* $NetBSD: osf1_resource.c,v 1.8 2007/05/12 14:09:34 dsl Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_resource.c,v 1.7 2007/03/04 06:01:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_resource.c,v 1.8 2007/05/12 14:09:34 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,20 +94,16 @@ osf1_sys_getrusage(l, v, retval)
 	register_t *retval;
 {
 	struct osf1_sys_getrusage_args *uap = v;
-	struct proc *p = l->l_proc;
-	struct sys_getrusage_args a;
 	struct osf1_rusage osf1_rusage;
-	struct rusage netbsd_rusage;
-	void *sg;
-	int error;
+	struct rusage *netbsd_rusage;
 
 	switch (SCARG(uap, who)) {
 	case OSF1_RUSAGE_SELF:
-		SCARG(&a, who) = RUSAGE_SELF;
+		netbsd_rusage = &l->l_proc->p_stats->p_ru;
 		break;
 
 	case OSF1_RUSAGE_CHILDREN:
-		SCARG(&a, who) = RUSAGE_CHILDREN;
+		netbsd_rusage = &l->l_proc->p_stats->p_cru;
 		break;
 
 	case OSF1_RUSAGE_THREAD:		/* XXX not supported */
@@ -115,20 +111,8 @@ osf1_sys_getrusage(l, v, retval)
 		return (EINVAL);
 	}
 
-	sg = stackgap_init(p, 0);
-	SCARG(&a, rusage) = stackgap_alloc(p, &sg, sizeof netbsd_rusage);
-
-	error = sys_getrusage(l, &a, retval);
-	if (error == 0)
-                error = copyin((void *)SCARG(&a, rusage),
-		    (void *)&netbsd_rusage, sizeof netbsd_rusage);
-	if (error == 0) {
-		osf1_cvt_rusage_from_native(&netbsd_rusage, &osf1_rusage);
-                error = copyout((void *)&osf1_rusage,
-		    (void *)SCARG(uap, rusage), sizeof osf1_rusage);
-	}
-
-	return (error);
+	osf1_cvt_rusage_from_native(netbsd_rusage, &osf1_rusage);
+	return copyout(&osf1_rusage, SCARG(uap, rusage), sizeof osf1_rusage);
 }
 
 int

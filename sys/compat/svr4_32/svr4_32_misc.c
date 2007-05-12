@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_misc.c,v 1.48 2007/05/07 16:53:19 dsl Exp $	 */
+/*	$NetBSD: svr4_32_misc.c,v 1.49 2007/05/12 14:09:35 dsl Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_misc.c,v 1.48 2007/05/07 16:53:19 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_misc.c,v 1.49 2007/05/12 14:09:35 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -820,7 +820,6 @@ timeval_to_clock_t(tv)
 	return tv->tv_sec * hz + tv->tv_usec / (1000000 / hz);
 }
 
-
 int
 svr4_32_sys_times(l, v, retval)
 	struct lwp *l;
@@ -828,40 +827,17 @@ svr4_32_sys_times(l, v, retval)
 	register_t *retval;
 {
 	struct svr4_32_sys_times_args *uap = v;
-	struct proc 		*p = l->l_proc;
-	int			 error;
 	struct tms		 tms;
 	struct timeval		 t;
-	struct rusage		*ru;
-	struct rusage		 r;
-	struct sys_getrusage_args 	 ga;
+	struct rusage		 *ru;
 
-	void *sg = stackgap_init(p, 0);
-	ru = stackgap_alloc(p, &sg, sizeof(struct rusage));
+	ru = &l->l_proc->p_stats->p_ru;
+	tms.tms_utime = timeval_to_clock_t(&ru->ru_utime);
+	tms.tms_stime = timeval_to_clock_t(&ru->ru_stime);
 
-	SCARG(&ga, who) = RUSAGE_SELF;
-	SCARG(&ga, rusage) = ru;
-
-	error = sys_getrusage(l, &ga, retval);
-	if (error)
-		return error;
-
-	if ((error = copyin(ru, &r, sizeof r)) != 0)
-		return error;
-
-	tms.tms_utime = timeval_to_clock_t(&r.ru_utime);
-	tms.tms_stime = timeval_to_clock_t(&r.ru_stime);
-
-	SCARG(&ga, who) = RUSAGE_CHILDREN;
-	error = sys_getrusage(l, &ga, retval);
-	if (error)
-		return error;
-
-	if ((error = copyin(ru, &r, sizeof r)) != 0)
-		return error;
-
-	tms.tms_cutime = timeval_to_clock_t(&r.ru_utime);
-	tms.tms_cstime = timeval_to_clock_t(&r.ru_stime);
+	ru = &l->l_proc->p_stats->p_cru;
+	tms.tms_cutime = timeval_to_clock_t(&ru->ru_utime);
+	tms.tms_cstime = timeval_to_clock_t(&ru->ru_stime);
 
 	microtime(&t);
 	*retval = timeval_to_clock_t(&t);
@@ -878,66 +854,43 @@ svr4_32_sys_ulimit(l, v, retval)
 {
 	struct svr4_32_sys_ulimit_args *uap = v;
 	struct proc *p = l->l_proc;
+	int error;
+	struct rlimit krl;
+	register_t r;
 
 	switch (SCARG(uap, cmd)) {
 	case SVR4_GFILLIM:
-		*retval = p->p_rlimit[RLIMIT_FSIZE].rlim_cur / 512;
-		if (*retval == -1)
-			*retval = 0x7fffffff;
-		return 0;
+		r = p->p_rlimit[RLIMIT_FSIZE].rlim_cur / 512;
+		break;
 
 	case SVR4_SFILLIM:
-		{
-			int error;
-			struct sys_setrlimit_args srl;
-			struct rlimit krl;
-			void *sg = stackgap_init(p, 0);
-			struct rlimit *url = (struct rlimit *)
-				stackgap_alloc(p, &sg, sizeof *url);
+		krl.rlim_cur = SCARG(uap, newlimit) * 512;
+		krl.rlim_max = p->p_rlimit[RLIMIT_FSIZE].rlim_max;
 
-			krl.rlim_cur = SCARG(uap, newlimit) * 512;
-			krl.rlim_max = p->p_rlimit[RLIMIT_FSIZE].rlim_max;
+		error = dosetrlimit(l, l->l_proc, RLIMIT_FSIZE, &krl);
+		if (error)
+			return error;
 
-			error = copyout(&krl, url, sizeof(*url));
-			if (error)
-				return error;
-
-			SCARG(&srl, which) = RLIMIT_FSIZE;
-			SCARG(&srl, rlp) = url;
-
-			error = sys_setrlimit(l, &srl, retval);
-			if (error)
-				return error;
-
-			*retval = p->p_rlimit[RLIMIT_FSIZE].rlim_cur;
-			if (*retval == -1)
-				*retval = 0x7fffffff;
-			return 0;
-		}
+		r = p->p_rlimit[RLIMIT_FSIZE].rlim_cur;
+		break;
 
 	case SVR4_GMEMLIM:
-		{
-			struct vmspace *vm = p->p_vmspace;
-			register_t r = p->p_rlimit[RLIMIT_DATA].rlim_cur;
-
-			if (r == -1)
-				r = 0x7fffffff;
-			r += (long) vm->vm_daddr;
-			if (r > 0x7fffffff)
-				r = 0x7fffffff;
-			*retval = r;
-			return 0;
-		}
+		r = p->p_rlimit[RLIMIT_DATA].rlim_cur;
+		if (r > 0x7fffffff)
+			r = 0x7fffffff;
+		r += (long)p->p_vmspace->vm_daddr;
+		break;
 
 	case SVR4_GDESLIM:
-		*retval = p->p_rlimit[RLIMIT_NOFILE].rlim_cur;
-		if (*retval == -1)
-			*retval = 0x7fffffff;
-		return 0;
+		r = p->p_rlimit[RLIMIT_NOFILE].rlim_cur;
+		break;
 
 	default:
 		return EINVAL;
 	}
+
+	*retval = r > 0x7fffffff ? 0x7fffffff : r;
+	return 0;
 }
 
 
@@ -1330,6 +1283,7 @@ svr4_32_sys_fstatvfs64(l, v, retval)
 }
 
 
+
 int
 svr4_32_sys_alarm(l, v, retval)
 	struct lwp *l;
@@ -1337,38 +1291,18 @@ svr4_32_sys_alarm(l, v, retval)
 	register_t *retval;
 {
 	struct svr4_32_sys_alarm_args *uap = v;
-	struct proc *p = l->l_proc;
-	int error;
-        struct itimerval *ntp, *otp, tp;
-	struct sys_setitimer_args sa;
-	void *sg = stackgap_init(p, 0);
+        struct itimerval tp;
 
-        ntp = stackgap_alloc(p, &sg, sizeof(struct itimerval));
-        otp = stackgap_alloc(p, &sg, sizeof(struct itimerval));
+	dogetitimer(l->l_proc, ITIMER_REAL, &tp);
+        if (tp.it_value.tv_usec)
+                tp.it_value.tv_sec++;
+        *retval = (register_t)tp.it_value.tv_sec;
 
         timerclear(&tp.it_interval);
         tp.it_value.tv_sec = SCARG(uap, sec);
         tp.it_value.tv_usec = 0;
 
-	if ((error = copyout(&tp, ntp, sizeof(tp))) != 0)
-		return error;
-
-	SCARG(&sa, which) = ITIMER_REAL;
-	SCARG(&sa, itv) = ntp;
-	SCARG(&sa, oitv) = otp;
-
-        if ((error = sys_setitimer(l, &sa, retval)) != 0)
-		return error;
-
-	if ((error = copyin(otp, &tp, sizeof(tp))) != 0)
-		return error;
-
-        if (tp.it_value.tv_usec)
-                tp.it_value.tv_sec++;
-
-        *retval = (register_t) tp.it_value.tv_sec;
-
-        return 0;
+        return dosetitimer(l->l_proc, ITIMER_REAL, &tp);
 }
 
 
