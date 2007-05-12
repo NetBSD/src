@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_resource.c,v 1.5 2007/03/18 21:38:32 dsl Exp $ */
+/*	$NetBSD: linux32_resource.c,v 1.6 2007/05/12 21:07:02 dsl Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_resource.c,v 1.5 2007/03/18 21:38:32 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_resource.c,v 1.6 2007/05/12 21:07:02 dsl Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_resource.c,v 1.5 2007/03/18 21:38:32 dsl Exp
 #include <sys/fcntl.h>
 #include <sys/select.h>
 #include <sys/proc.h>
+#include <sys/resourcevar.h>
 #include <sys/ucred.h>
 #include <sys/swap.h>
 
@@ -80,26 +81,14 @@ linux32_sys_getrlimit(l, v, retval)
 		syscallarg(int) which;
 		syscallarg(netbsd32_orlimitp_t) rlp;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
-	void *sg = stackgap_init(p, 0);
-	struct sys_getrlimit_args ap;
 	struct orlimit orl;
-	struct rlimit rl;
-	int error;
+	int which;
 
-	SCARG(&ap, which) = linux_to_bsd_limit(SCARG(uap, which));
-	if ((error = SCARG(&ap, which)) < 0)
-		return -error;
+	which = linux_to_bsd_limit(SCARG(uap, which));
+	if (which < 0)
+		return -which;
 
-	SCARG(&ap, rlp) = stackgap_alloc(p, &sg, sizeof rl);
-
-	if ((error = sys_getrlimit(l, &ap, retval)) != 0)
-		return error;
-
-	if ((error = copyin(SCARG(&ap, rlp), &rl, sizeof(rl))) != 0)
-		return error;
-
-	bsd_to_linux_rlimit(&orl, &rl);
+	bsd_to_linux_rlimit(&orl, &l->l_proc->p_rlimit[which]);
 
 	return copyout(&orl, SCARG_P32(uap, rlp), sizeof(orl));
 }
@@ -114,27 +103,21 @@ linux32_sys_setrlimit(l, v, retval)
 		syscallarg(int) which;
 		syscallarg(netbsd32_orlimitp_t) rlp;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
-	void *sg = stackgap_init(p, 0);
-	struct sys_getrlimit_args ap;
 	struct rlimit rl;
 	struct orlimit orl;
 	int error;
-
-	SCARG(&ap, which) = linux_to_bsd_limit(SCARG(uap, which));
-	SCARG(&ap, rlp) = stackgap_alloc(p, &sg, sizeof rl);
-	if ((error = SCARG(&ap, which)) < 0)
-		return -error;
+	int which;
 
 	if ((error = copyin(SCARG_P32(uap, rlp), &orl, sizeof(orl))) != 0)
 		return error;
 
+	which = linux_to_bsd_limit(SCARG(uap, which));
+	if (which < 0)
+		return -which;
+
 	linux_to_bsd_rlimit(&rl, &orl);
 
-	if ((error = copyout(&rl, SCARG(&ap, rlp), sizeof(rl))) != 0)
-		return error;
-
-	return sys_setrlimit(l, &ap, retval);
+	return dosetrlimit(l, l->l_proc, which, &rl);
 }
 
 int
