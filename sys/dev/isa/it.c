@@ -1,8 +1,8 @@
-/*	$NetBSD: it.c,v 1.6.2.1 2007/01/09 14:38:56 tron Exp $	*/
+/*	$NetBSD: it.c,v 1.6.2.2 2007/05/12 17:32:22 snj Exp $	*/
 /*	$OpenBSD: it.c,v 1.19 2006/04/10 00:57:54 deraadt Exp $	*/
 
 /*
- * Copyright (c) 2006 Juan Romero Pardines <juan@xtrarom.org>
+ * Copyright (c) 2006-2007 Juan Romero Pardines <juan@xtrarom.org>
  * Copyright (c) 2003 Julien Bordet <zejames@greyhats.org>
  * All rights reserved.
  *
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: it.c,v 1.6.2.1 2007/01/09 14:38:56 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: it.c,v 1.6.2.2 2007/05/12 17:32:22 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,6 +54,9 @@ __KERNEL_RCSID(0, "$NetBSD: it.c,v 1.6.2.1 2007/01/09 14:38:56 tron Exp $");
 #include <dev/sysmon/sysmonvar.h>
 
 #include <dev/isa/itvar.h>
+
+#define IT_VOLTSTART_IDX	2	/* voltage start index */
+#define IT_FANSTART_IDX		7	/* fan start index */
 
 #if defined(ITDEBUG)
 #define DPRINTF(x)		do { printf x; } while (0)
@@ -85,9 +88,9 @@ static void it_writereg(struct it_softc *, int, int);
 
 /* envsys(9) glue */
 static void it_setup_sensors(struct it_softc *);
-static void it_refresh_temp(struct it_softc *);
-static void it_refresh_volts(struct it_softc *);
-static void it_refresh_fans(struct it_softc *);
+static void it_refresh_temp(struct it_softc *, envsys_tre_data_t *);
+static void it_refresh_volts(struct it_softc *, envsys_tre_data_t *);
+static void it_refresh_fans(struct it_softc *, envsys_tre_data_t *);
 static int it_gtredata(struct sysmon_envsys *, envsys_tre_data_t *);
 static int it_streinfo(struct sysmon_envsys *, envsys_basic_info_t *);
 
@@ -247,7 +250,7 @@ it_setup_sensors(struct it_softc *sc)
 	int i;
 
 	/* temperatures */
-	for (i = 0; i < 2; i++) {
+	for (i = 0; i < IT_VOLTSTART_IDX; i++) {
 		sc->sc_data[i].units = ENVSYS_STEMP;
 		sc->sc_info[i].units = ENVSYS_STEMP;
 	}
@@ -256,7 +259,7 @@ it_setup_sensors(struct it_softc *sc)
 	COPYDESCR(sc->sc_info[1].desc, "System Temp");
 
 	/* voltages */
-	for (i = 2; i < 7; i++) {
+	for (i = IT_VOLTSTART_IDX; i < IT_FANSTART_IDX; i++) {
 		sc->sc_data[i].units = ENVSYS_SVOLTS_DC;
 		sc->sc_info[i].units = ENVSYS_SVOLTS_DC;
 	}
@@ -268,7 +271,7 @@ it_setup_sensors(struct it_softc *sc)
 	COPYDESCR(sc->sc_info[6].desc, "VBAT");
 
 	/* fans */
-	for (i = 7; i < 9; i++) {
+	for (i = IT_FANSTART_IDX; i < IT_NUM_SENSORS; i++) {
 		sc->sc_data[i].units = ENVSYS_SFANRPM;
 		sc->sc_info[i].units = ENVSYS_SFANRPM;
 	}
@@ -279,58 +282,58 @@ it_setup_sensors(struct it_softc *sc)
 #undef COPYDESCR
 
 static void
-it_refresh_temp(struct it_softc *sc)
+it_refresh_temp(struct it_softc *sc, envsys_tre_data_t *tred)
 {
-	int i, sdata;
+	int sdata;
 
-	for (i = 0; i < 2; i++) {
-		sdata = it_readreg(sc, IT_SENSORTEMPBASE + i);
-		DPRINTF(("sdata[temp%d] 0x%x\n", i, sdata));
-		/* Convert temperature to Fahrenheit degres */
-		sc->sc_data[i].cur.data_us = sdata * 1000000 + 273150000;
-	}
+	sdata = it_readreg(sc, IT_SENSORTEMPBASE + tred->sensor);
+	DPRINTF(("sdata[temp%d] 0x%x\n", tred->sensor, sdata));
+	/* Convert temperature to Fahrenheit degres */
+	sc->sc_data[tred->sensor].cur.data_us = sdata * 1000000 + 273150000;
 }
 
 static void
-it_refresh_volts(struct it_softc *sc)
+it_refresh_volts(struct it_softc *sc, envsys_tre_data_t *tred)
 {
 	int i, sdata;
 
-	for (i = 0; i < 5; i++) {
-		sdata = it_readreg(sc, it_sensorvolt[i]);
-		DPRINTF(("sdata[volt%d] 0x%x\n", i, sdata));
-		/* voltage returned as (mV >> 4) */
-		sc->sc_data[2 + i].cur.data_s = (sdata << 4);
-		/* rfact is (factor * 10^4) */
-		sc->sc_data[2 + i].cur.data_s *= it_vrfact[i];
-		/* division by 10 gets us back to uVDC */
-		sc->sc_data[2 + i].cur.data_s /= 10;
-		sc->sc_info[2 + i].rfact = sc->sc_data[2 + i].cur.data_s;
-	}
+	i = tred->sensor - IT_VOLTSTART_IDX;
+
+	sdata = it_readreg(sc, it_sensorvolt[i]);
+	DPRINTF(("sdata[volt%d] 0x%x\n", i, sdata));
+	/* voltage returned as (mV >> 4) */
+	sc->sc_data[tred->sensor].cur.data_s = (sdata << 4);
+	/* rfact is (factor * 10^4) */
+	sc->sc_data[tred->sensor].cur.data_s *= it_vrfact[i];
+	/* division by 10 gets us back to uVDC */
+	sc->sc_data[tred->sensor].cur.data_s /= 10;
+	sc->sc_info[tred->sensor].rfact =
+	    sc->sc_data[tred->sensor].cur.data_s;
 }
 
 static void
-it_refresh_fans(struct it_softc *sc)
+it_refresh_fans(struct it_softc *sc, envsys_tre_data_t *tred)
 {
 	int i, sdata, divisor, odivisor, ndivisor;
 
+	i = tred->sensor - IT_FANSTART_IDX;
 	odivisor = ndivisor = divisor = it_readreg(sc, IT_FAN);
-	for (i = 0; i < 2; i++, divisor >>= 3) {
-		if ((sdata = it_readreg(sc, IT_SENSORFANBASE + i)) == 0xff) {
-			if (i == 2)
-				ndivisor ^= 0x40;
-			else {
-				ndivisor &= ~(7 << (i * 3));
-				ndivisor |= ((divisor + 1) & 7) << (i * 3);
-			}
-		} else {
-			if (i == 2)
-				divisor = divisor & 1 ? 3 : 1;
-			sc->sc_data[7 + i].cur.data_us =
-			    1350000 / (sdata << (divisor & 7));
+
+	if ((sdata = it_readreg(sc, IT_SENSORFANBASE + i)) == 0xff) {
+		if (i == 2)
+			ndivisor ^= 0x40;
+		else {
+			ndivisor &= ~(7 << (i * 3));
+			ndivisor |= ((divisor + 1) & 7) << (i * 3);
 		}
-		DPRINTF(("sdata[fan%d] 0x%x div: 0x%x\n", i, sdata, divisor));
+	} else {
+		if (i == 2)
+			divisor = divisor & 1 ? 3 : 1;
+		sc->sc_data[tred->sensor].cur.data_us =
+		    1350000 / (sdata << (divisor & 7));
 	}
+
+	DPRINTF(("sdata[fan%d] 0x%x div: 0x%x\n", i, sdata, divisor));
 	if (ndivisor != odivisor)
 		it_writereg(sc, IT_FAN, ndivisor);
 }
@@ -340,13 +343,17 @@ it_gtredata(struct sysmon_envsys *sme, struct envsys_tre_data *tred)
 {
 	struct it_softc *sc = sme->sme_cookie;
 
-	/* Refresh our stored data for every sensor */
-	it_refresh_temp(sc); 
-	it_refresh_volts(sc);
-	it_refresh_fans(sc);
-        
+	if (tred->sensor < IT_VOLTSTART_IDX)
+		it_refresh_temp(sc, tred);
+	else if (tred->sensor >= IT_VOLTSTART_IDX &&
+	         tred->sensor < IT_FANSTART_IDX)
+		it_refresh_volts(sc, tred);
+	else if (tred->sensor >= IT_FANSTART_IDX)
+		it_refresh_fans(sc, tred);
+        else
+		return 0;
+
 	*tred = sc->sc_data[tred->sensor]; 
-                                
 	return 0;
 }
 
