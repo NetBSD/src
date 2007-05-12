@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_misc.c,v 1.148 2007/04/28 00:03:37 dogcow Exp $	*/
+/*	$NetBSD: sunos_misc.c,v 1.149 2007/05/12 20:27:56 dsl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_misc.c,v 1.148 2007/04/28 00:03:37 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_misc.c,v 1.149 2007/05/12 20:27:56 dsl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
@@ -118,10 +118,7 @@ sunos_sys_stime(l, v, retval)
 	register_t *retval;
 {
 	struct sunos_sys_stime_args *uap = v;
-	struct sys_settimeofday_args ap;
-	struct proc *p = l->l_proc;
-	void *sg = stackgap_init(p, 0);
-	struct timeval tv, *sgtvp;
+	struct timeval tv;
 	int error;
 
 	error = copyin(SCARG(uap, tp), &tv.tv_sec, sizeof(tv.tv_sec));
@@ -129,14 +126,7 @@ sunos_sys_stime(l, v, retval)
 		return error;
 	tv.tv_usec = 0;
 
-	SCARG(&ap, tv) = sgtvp = stackgap_alloc(p, &sg, sizeof(struct timeval));
-	SCARG(&ap, tzp) = NULL;
-
-	error = copyout(&tv, sgtvp, sizeof(struct timeval));
-	if (error)
-		return error;
-
-	return sys_settimeofday(l, &ap, retval);
+	return settimeofday1(&tv, false, NULL, l, true);
 }
 
 int

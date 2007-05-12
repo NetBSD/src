@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_misc.c,v 1.48 2007/04/22 08:29:59 dsl Exp $	*/
+/*	$NetBSD: sunos32_misc.c,v 1.49 2007/05/12 20:27:56 dsl Exp $	*/
 /* from :NetBSD: sunos_misc.c,v 1.107 2000/12/01 19:25:10 jdolecek Exp	*/
 
 /*
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.48 2007/04/22 08:29:59 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.49 2007/05/12 20:27:56 dsl Exp $");
 
 #define COMPAT_SUNOS 1
 
@@ -181,27 +181,17 @@ sunos32_sys_stime(l, v, retval)
 	struct sunos32_sys_stime_args /* {
 		syscallarg(sunos32_time_tp) tp;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
-	struct sys_settimeofday_args ap;
-	void *sg = stackgap_init(p, 0);
 	struct netbsd32_timeval ntv;
-	struct timeval tv, *sgtvp;
+	struct timeval tv;
 	int error;
 
-	error = copyin((void *)(u_long)SCARG(uap, tp), &ntv.tv_sec, sizeof(ntv.tv_sec));
+	error = copyin(SCARG_P32(uap, tp), &ntv.tv_sec, sizeof(ntv.tv_sec));
 	if (error)
 		return error;
 	tv.tv_sec = ntv.tv_sec;
 	tv.tv_usec = 0;
 
-	SCARG(&ap, tv) = sgtvp = stackgap_alloc(p, &sg, sizeof(struct timeval));
-	SCARG(&ap, tzp) = NULL;
-
-	error = copyout(&tv, sgtvp, sizeof(struct timeval));
-	if (error)
-		return error;
-
-	return sys_settimeofday(l, &ap, retval);
+	return settimeofday1(&tv, false, NULL, l, true);
 }
 
 int
@@ -1261,7 +1251,7 @@ sunos32_sys_statfs(l, v, retval)
 	if ((error = VFS_STATVFS(mp, sp, l)) != 0)
 		return (error);
 	sp->f_flag = mp->mnt_flag & MNT_VISFLAGMASK;
-	return sunstatfs(sp, (void *)(u_long)SCARG(uap, buf));
+	return sunstatfs(sp, SCARG_P32(uap, buf));
 }
 
 int
@@ -1288,7 +1278,7 @@ sunos32_sys_fstatfs(l, v, retval)
 	if ((error = VFS_STATVFS(mp, sp, l)) != 0)
 		goto out;
 	sp->f_flag = mp->mnt_flag & MNT_VISFLAGMASK;
-	error = sunstatfs(sp, (void *)(u_long)SCARG(uap, buf));
+	error = sunstatfs(sp, SCARG_P32(uap, buf));
  out:
 	FILE_UNUSE(fp, l);
 	return (error);
