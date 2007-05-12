@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.37 2007/03/05 03:31:29 dogcow Exp $	*/
+/*	$NetBSD: machdep.c,v 1.38 2007/05/12 07:06:54 jld Exp $	*/
 /*	NetBSD: machdep.c,v 1.559 2004/07/22 15:12:46 mycroft Exp 	*/
 
 /*-
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.37 2007/03/05 03:31:29 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.38 2007/05/12 07:06:54 jld Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -268,7 +268,6 @@ void (*microtime_func)(struct timeval *) = i8254_microtime;
 void (*initclock_func)(void) = i8254_initclocks;
 #else
 void (*delay_func)(int) = xen_delay;
-void (*microtime_func)(struct timeval *) = xen_microtime;
 void (*initclock_func)(void) = xen_initclocks;
 #endif
 
