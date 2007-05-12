@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_fs.c,v 1.42 2007/04/30 08:32:15 dsl Exp $	*/
+/*	$NetBSD: netbsd32_fs.c,v 1.43 2007/05/12 17:28:19 dsl Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.42 2007/04/30 08:32:15 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.43 2007/05/12 17:28:19 dsl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -66,7 +66,6 @@ static int dofilereadv32 __P((struct lwp *, int, struct file *, struct netbsd32_
 			      int, off_t *, int, register_t *));
 static int dofilewritev32 __P((struct lwp *, int, struct file *, struct netbsd32_iovec *,
 			       int,  off_t *, int, register_t *));
-static int change_utimes32 __P((struct vnode *, netbsd32_timevalp_t, struct lwp *));
 
 int
 netbsd32_readv(l, v, retval)
@@ -315,6 +314,31 @@ out:
 	return (error);
 }
 
+/*
+ * Common routine to set access and modification times given a vnode.
+ */
+static int
+get_utimes32(const netbsd32_timevalp_t *tptr, struct timeval *tv,
+    struct timeval **tvp)
+{
+	int error;
+	struct netbsd32_timeval tv32[2];
+
+	if (tptr == NULL) {
+		*tvp = NULL;
+		return 0;
+	}
+
+	error = copyin(tptr, tv32, sizeof(tv32));
+	if (error)
+		return error;
+	netbsd32_to_timeval(&tv32[0], &tv[0]);
+	netbsd32_to_timeval(&tv32[1], &tv[1]);
+
+	*tvp = tv;
+	return 0;
+}
+
 int
 netbsd32_utimes(l, v, retval)
 	struct lwp *l;
@@ -326,54 +350,14 @@ netbsd32_utimes(l, v, retval)
 		syscallarg(const netbsd32_timevalp_t) tptr;
 	} */ *uap = v;
 	int error;
-	struct nameidata nd;
+	struct timeval tv[2], *tvp;
 
-	NDINIT(&nd, LOOKUP, FOLLOW | TRYEMULROOT, UIO_USERSPACE, SCARG_P32(uap, path), l);
-	if ((error = namei(&nd)) != 0)
-		return (error);
+	error = get_utimes32(SCARG_P32(uap, tptr), tv, &tvp);
+	if (error != 0)
+		return error;
 
-	error = change_utimes32(nd.ni_vp, SCARG(uap, tptr), l);
-
-	vrele(nd.ni_vp);
-	return (error);
-}
-
-/*
- * Common routine to set access and modification times given a vnode.
- */
-static int
-change_utimes32(vp, tptr, l)
-	struct vnode *vp;
-	netbsd32_timevalp_t tptr;
-	struct lwp *l;
-{
-	struct netbsd32_timeval tv32[2];
-	struct timeval tv[2];
-	struct vattr vattr;
-	int error;
-
-	VATTR_NULL(&vattr);
-	if (NETBSD32PTR64(tptr) == 0) {
-		microtime(&tv[0]);
-		tv[1] = tv[0];
-		vattr.va_vaflags |= VA_UTIMES_NULL;
-	} else {
-		error = copyin(NETBSD32PTR64(tptr), tv32,
-		    sizeof(tv32));
-		if (error)
-			return (error);
-		netbsd32_to_timeval(&tv32[0], &tv[0]);
-		netbsd32_to_timeval(&tv32[1], &tv[1]);
-	}
-	VOP_LEASE(vp, l, l->l_cred, LEASE_WRITE);
-	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-	vattr.va_atime.tv_sec = tv[0].tv_sec;
-	vattr.va_atime.tv_nsec = tv[0].tv_usec * 1000;
-	vattr.va_mtime.tv_sec = tv[1].tv_sec;
-	vattr.va_mtime.tv_nsec = tv[1].tv_usec * 1000;
-	error = VOP_SETATTR(vp, &vattr, l->l_cred, l);
-	VOP_UNLOCK(vp, 0);
-	return (error);
+	return do_sys_utimes(l, NULL, SCARG_P32(uap, path), FOLLOW,
+			    tvp, UIO_SYSSPACE);
 }
 
 static int
@@ -489,14 +473,18 @@ netbsd32_futimes(l, v, retval)
 	} */ *uap = v;
 	int error;
 	struct file *fp;
-	struct proc *p = l->l_proc;
+	struct timeval tv[2], *tvp;
+
+	error = get_utimes32(SCARG_P32(uap, tptr), tv, &tvp);
+	if (error != 0)
+		return error;
 
 	/* getvnode() will use the descriptor for us */
-	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
+	if ((error = getvnode(l->l_proc->p_fd, SCARG(uap, fd), &fp)) != 0)
 		return (error);
 
-	error = change_utimes32((struct vnode *)fp->f_data,
-				SCARG(uap, tptr), l);
+	error = do_sys_utimes(l, fp->f_data, NULL, 0, tvp, UIO_SYSSPACE);
+
 	FILE_UNUSE(fp, l);
 	return (error);
 }
@@ -542,16 +530,14 @@ netbsd32_lutimes(l, v, retval)
 		syscallarg(const netbsd32_timevalp_t) tptr;
 	} */ *uap = v;
 	int error;
-	struct nameidata nd;
+	struct timeval tv[2], *tvp;
 
-	NDINIT(&nd, LOOKUP, NOFOLLOW | TRYEMULROOT, UIO_USERSPACE, SCARG_P32(uap, path), l);
-	if ((error = namei(&nd)) != 0)
-		return (error);
+	error = get_utimes32(SCARG_P32(uap, tptr), tv, &tvp);
+	if (error != 0)
+		return error;
 
-	error = change_utimes32(nd.ni_vp, SCARG(uap, tptr), l);
-
-	vrele(nd.ni_vp);
-	return (error);
+	return do_sys_utimes(l, NULL, SCARG_P32(uap, path), NOFOLLOW,
+			    tvp, UIO_SYSSPACE);
 }
 
 int
