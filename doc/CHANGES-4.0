@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.150 2007/05/12 17:43:42 snj Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.151 2007/05/12 17:47:45 snj Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -3420,4 +3420,11 @@ gnu/dist/binutils/gas/config/tc-vax.c		1.5
 
 	Fix LP64 bug.
 	[mhitch, ticket #644]
+
+lib/libc/gdtoa/hdtoa.c				1.5
+sys/arch/vax/include/vaxfp.h			1.6
+
+	deal with the vax in a slightly disgusting way. Provide constants
+	for the widths of the bitfields and use them.  Fixes the vax build.
+	[mhitch, ticket #646]
 
