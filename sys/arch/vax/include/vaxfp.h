@@ -1,4 +1,4 @@
-/*	$NetBSD: vaxfp.h,v 1.5 2005/12/11 12:19:34 christos Exp $	*/
+/*	$NetBSD: vaxfp.h,v 1.5.24.1 2007/05/12 17:46:23 snj Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -44,25 +44,32 @@
 #ifndef _VAX_VAXFP_H_
 #define	_VAX_VAXFP_H_
 
-#define	FFLT_EXPBITS		8
-#define	FFLT_FRACBITS		23
 
-#define	DFLT_EXPBITS		8
-#define	DFLT_FRACBITS		55
+#define	FFLT_EXPBITS	8
+#define	FFLT_FRACHBITS	7
+#define	FFLT_FRACLBITS	16
+#define	FFLT_FRACBITS	(FFLT_FRACLBITS + FFLT_FRACHBITS)
 
 struct vax_f_floating {
-	unsigned int	fflt_frach:7;
-	unsigned int	fflt_exp:8;
+	unsigned int	fflt_frach:FFLT_FRACHBITS;
+	unsigned int	fflt_exp:FFLT_EXPBITS;
 	unsigned int	fflt_sign:1;
-	unsigned int	fflt_fracl:16;
+	unsigned int	fflt_fracl:FFLT_FRACLBITS;
 };
 
+#define	DFLT_EXPBITS	8
+#define	DFLT_FRACHBITS	7
+#define	DFLT_FRACMBITS	16
+#define	DFLT_FRACLBITS	32
+#define	DFLT_FRACBITS	(DFLT_FRACLBITS + DFLT_FRACMBITS + DFLT_FRACHBITS)
+
 struct vax_d_floating {
-	unsigned int	dflt_frach:7;
-	unsigned int	dflt_exp:8;
+
+	unsigned int	dflt_frach:DFLT_FRACHBITS;
+	unsigned int	dflt_exp:DFLT_EXPBITS;
 	unsigned int	dflt_sign:1;
-	unsigned int	dflt_fracm:16;
-	unsigned int	dflt_fracl;
+	unsigned int	dflt_fracm:DFLT_FRACMBITS;
+	unsigned int	dflt_fracl:DFLT_FRACLBITS;
 };
 
 /*
