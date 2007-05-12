@@ -1,4 +1,4 @@
-/*     $NetBSD: ug.c,v 1.1.4.3 2007/01/21 17:09:10 bouyer Exp $ */
+/*     $NetBSD: ug.c,v 1.1.4.4 2007/05/12 17:28:38 snj Exp $ */
 
 /*
  * Copyright (c) 2007 Mihai Chelaru <kefren@netbsd.ro>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ug.c,v 1.1.4.3 2007/01/21 17:09:10 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ug.c,v 1.1.4.4 2007/05/12 17:28:38 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -255,7 +255,7 @@ ug_setup_sensors(struct ug_softc *sc)
 	int i;
 
 	/* Setup Temps */
-	for (i = 0; i < 3; i++)
+	for (i = 0; i < UG_VOLT_MIN; i++)
 		sc->sc_data[i].units = sc->sc_info[i].units = ENVSYS_STEMP;
 
 #define COPYDESCR(x, y)				\
@@ -269,25 +269,25 @@ ug_setup_sensors(struct ug_softc *sc)
 
 	/* Right, Now setup U sensors */
 
-	for (i = 3; i < 14; i++) {
+	for (i = UG_VOLT_MIN; i < UG_FAN_MIN; i++) {
 		sc->sc_data[i].units = sc->sc_info[i].units = ENVSYS_SVOLTS_DC;
 		sc->sc_info[i].rfact = UG_RFACT;
 	}
 
-	COPYDESCR(sc->sc_info[3].desc, "VCore");
-	COPYDESCR(sc->sc_info[4].desc, "DDRVdd");
-	COPYDESCR(sc->sc_info[5].desc, "DDRVtt");
-	COPYDESCR(sc->sc_info[6].desc, "NBVdd");
-	COPYDESCR(sc->sc_info[7].desc, "SBVdd");
-	COPYDESCR(sc->sc_info[8].desc, "HTVdd");
+	COPYDESCR(sc->sc_info[3].desc, "HTVdd");
+	COPYDESCR(sc->sc_info[4].desc, "VCore");
+	COPYDESCR(sc->sc_info[5].desc, "DDRVdd");
+	COPYDESCR(sc->sc_info[6].desc, "Vdd3V3");
+	COPYDESCR(sc->sc_info[7].desc, "Vdd5V");
+	COPYDESCR(sc->sc_info[8].desc, "NBVdd");
 	COPYDESCR(sc->sc_info[9].desc, "AGPVdd");
-	COPYDESCR(sc->sc_info[10].desc, "Vdd5V");
-	COPYDESCR(sc->sc_info[11].desc, "Vdd3V3");
-	COPYDESCR(sc->sc_info[12].desc, "Vdd5VSB");
-	COPYDESCR(sc->sc_info[13].desc, "Vdd3VDual");
+	COPYDESCR(sc->sc_info[10].desc, "DDRVtt");
+	COPYDESCR(sc->sc_info[11].desc, "Vdd5VSB");
+	COPYDESCR(sc->sc_info[12].desc, "Vdd3VDual");
+	COPYDESCR(sc->sc_info[13].desc, "SBVdd");
 
 	/* Fan sensors */
-	for (i = 14; i < 19; i++)
+	for (i = UG_FAN_MIN; i < UG_NUM_SENSORS; i++)
 		sc->sc_data[i].units = sc->sc_info[i].units = ENVSYS_SFANRPM;
 
 	COPYDESCR(sc->sc_info[14].desc, "CPU Fan");
@@ -304,29 +304,43 @@ ug_gtredata(struct sysmon_envsys *sme, envsys_tre_data_t *tred)
 	envsys_tre_data_t *t = sc->sc_data;	/* For easier read */
 
 	/* Sensors return C while we need uK */
-	t[0].cur.data_us = ug_read(sc, UG_CPUTEMP) * 1000000 + 273150000;
-	t[1].cur.data_us = ug_read(sc, UG_SYSTEMP) * 1000000 + 273150000;
-	t[2].cur.data_us = ug_read(sc, UG_PWMTEMP) * 1000000 + 273150000;
+
+	if (tred->sensor < UG_VOLT_MIN - 1) /* CPU and SYS Temps */
+		t[tred->sensor].cur.data_us = ug_read(sc, UG_CPUTEMP +
+		    tred->sensor) * 1000000 + 273150000;
+	else if (tred->sensor == 2) /* PWMTEMP */
+		t[tred->sensor].cur.data_us = ug_read(sc, UG_PWMTEMP)
+		    * 1000000 + 273150000;
 
 	/* Voltages */
-	t[3].cur.data_s = ug_read(sc, UG_VCORE) * UG_RFACT3;
-	t[4].cur.data_s = ug_read(sc, UG_DDRVDD) * UG_RFACT3;
-	t[5].cur.data_s = ug_read(sc, UG_DDRVTT) * UG_RFACT3;
-	t[6].cur.data_s = ug_read(sc, UG_NBVDD) * UG_RFACT3;
-	t[7].cur.data_s = ug_read(sc, UG_SBVDD) * UG_RFACT3;
-	t[8].cur.data_s = ug_read(sc, UG_HTV) * UG_RFACT3;
-	t[9].cur.data_s = ug_read(sc, UG_AGP) * UG_RFACT3;
-	t[10].cur.data_s = ug_read(sc, UG_5V) * UG_RFACT6;
-	t[11].cur.data_s = ug_read(sc, UG_3V3) * UG_RFACT4;
-	t[12].cur.data_s = ug_read(sc, UG_5VSB) * UG_RFACT6;
-	t[13].cur.data_s = ug_read(sc, UG_3VDUAL) * UG_RFACT4;
+
+#define VOLT_SENSOR	UG_HTV + tred->sensor - UG_VOLT_MIN
+
+	else
+	    if ((tred->sensor >= UG_VOLT_MIN) && (tred->sensor < UG_FAN_MIN)) {
+		t[tred->sensor].cur.data_s = ug_read(sc, VOLT_SENSOR);
+		switch(VOLT_SENSOR) {
+			case UG_5V:		/* 6V RFact */
+			case UG_5VSB:
+				t[tred->sensor].cur.data_s *= UG_RFACT6;
+				break;
+			case UG_3V3:		/* 4V RFact */
+			case UG_3VDUAL:
+				t[tred->sensor].cur.data_s *= UG_RFACT4;
+				break;
+			default:		/* 3V RFact */
+				t[tred->sensor].cur.data_s *= UG_RFACT3;
+		}
+	    } else
+
+#undef VOLT_SENSOR
 
 	/* and Fans */
-	t[14].cur.data_s = ug_read(sc, UG_CPUFAN) * UG_RFACT_FAN;
-	t[15].cur.data_s = ug_read(sc, UG_NBFAN) * UG_RFACT_FAN;
-	t[16].cur.data_s = ug_read(sc, UG_SYSFAN) * UG_RFACT_FAN;
-	t[17].cur.data_s = ug_read(sc, UG_AUXFAN1) * UG_RFACT_FAN;
-	t[18].cur.data_s = ug_read(sc, UG_AUXFAN2) * UG_RFACT_FAN;
+	if (tred->sensor >= UG_FAN_MIN)
+		t[tred->sensor].cur.data_s = ug_read(sc, UG_CPUFAN +
+		    tred->sensor - UG_FAN_MIN) * UG_RFACT_FAN;
+	else
+		return ENODEV;		/* should I scream and panic ? */
 
 	*tred = sc->sc_data[tred->sensor];
 	return 0;
@@ -440,28 +454,35 @@ ug2_gtredata(struct sysmon_envsys *sme, envsys_tre_data_t *tred)
 	struct ug_softc *sc = sme->sme_cookie;
 	envsys_tre_data_t *t = sc->sc_data;	/* makes code readable */
 	struct ug2_sensor_info *si = (struct ug2_sensor_info *)sc->mbsens;
-	int i, rfact;
+	int rfact = 1;
 	uint8_t v;
+
+	if (tred->sensor >= sc->sc_sysmon.sme_nsensors)
+		return ENODEV;	/* ?! */
+
+	si += tred->sensor;
 
 #define SENSOR_VALUE (v * si->multiplier * rfact / si->divisor + si->offset)
 
-	for (i = 0; i< sc->sc_sysmon.sme_nsensors; i++, si++)
-		if (ug2_read(sc, UG2_SENSORS_BANK, UG2_VALUES_OFFSET +
-		    si->port, 1, &v) == 1)
-			switch (si->type) {
-			case UG2_TEMP_SENSOR:
-			    rfact = 1;
-			    t[i].cur.data_us = SENSOR_VALUE * 1000000 + 273150000;
-			    break;
-			case UG2_VOLTAGE_SENSOR:
-			    rfact = UG_RFACT;
-			    t[i].cur.data_us = SENSOR_VALUE;
-			    break;
-			default:
-			    rfact = 1;
-			    t[i].cur.data_s = SENSOR_VALUE;
-			}
+	if (ug2_read(sc, UG2_SENSORS_BANK, UG2_VALUES_OFFSET +
+	    si->port, 1, &v) == 1) {
+		switch (si->type) {
+		case UG2_TEMP_SENSOR:
+		    t[tred->sensor].cur.data_us = SENSOR_VALUE * 1000000
+			+ 273150000;
+		    break;
+		case UG2_VOLTAGE_SENSOR:
+		    rfact = UG_RFACT;
+		    t[tred->sensor].cur.data_us = SENSOR_VALUE;
+		    break;
+		default:
+		    t[tred->sensor].cur.data_s = SENSOR_VALUE;
+		}
+	} else
+		return ENODEV;
+
 #undef SENSOR_VALUE
+
 	*tred = sc->sc_data[tred->sensor];
 	return 0;
 }
