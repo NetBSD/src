@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.144 2007/05/12 16:27:20 pavel Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.145 2007/05/12 16:57:35 snj Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -3379,4 +3379,10 @@ sys/dev/pci/radeonfb.c				1.13
 	provide data via DDC since those usually have an EDID block in the
 	OF tree.
 	[macallan, ticket #615]
+
+share/man/man9/uvm.9				1.83
+
+	Sync the uvm_fault interface with reality after the removal of the
+	"fault type" third argument in rev. 1.110 of sys/uvm/uvm_fault.c
+	[pavel, ticket #623]
 
