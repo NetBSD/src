@@ -1,4 +1,4 @@
-/*	$NetBSD: check_bound.c,v 1.3 2006/05/25 02:31:38 christos Exp $	*/
+/*	$NetBSD: check_bound.c,v 1.4 2007/05/13 20:03:46 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -68,9 +68,9 @@ struct fdlist {
 
 static struct fdlist *fdhead;	/* Link list of the check fd's */
 static struct fdlist *fdtail;
-static char *nullstring = "";
+static const char emptystring[] = "";
 
-static bool_t check_bound __P((struct fdlist *, char *uaddr));
+static bool_t check_bound(struct fdlist *, const char *uaddr);
 
 /*
  * Returns 1 if the given address is bound for the given addr & transport
@@ -78,7 +78,7 @@ static bool_t check_bound __P((struct fdlist *, char *uaddr));
  * Returns 0 for success.
  */
 static bool_t
-check_bound(struct fdlist *fdl, char *uaddr)
+check_bound(struct fdlist *fdl, const char *uaddr)
 {
 	int fd;
 	struct netbuf *na;
@@ -136,7 +136,7 @@ add_bndlist(struct netconfig *nconf, struct netbuf *baddr)
 }
 
 bool_t
-is_bound(char *netid, char *uaddr)
+is_bound(const char *netid, const char *uaddr)
 {
 	struct fdlist *fdl;
 
@@ -166,7 +166,7 @@ mergeaddr(SVCXPRT *xprt, char *netid, char *uaddr, char *saddr)
 		return (NULL);
 	if (check_bound(fdl, uaddr) == FALSE)
 		/* that server died */
-		return strdup(nullstring);
+		return strdup(emptystring);
 	/*
 	 * If saddr is not NULL, the remote client may have included the
 	 * address by which it contacted us.  Use that for the "client" uaddr,
@@ -215,7 +215,7 @@ mergeaddr(SVCXPRT *xprt, char *netid, char *uaddr, char *saddr)
  * structure should not be freed.
  */
 struct netconfig *
-rpcbind_get_conf(char *netid)
+rpcbind_get_conf(const char *netid)
 {
 	struct fdlist *fdl;
 

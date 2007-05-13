@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcb_stat.c,v 1.4 2006/03/17 02:56:05 elad Exp $	*/
+/*	$NetBSD: rpcb_stat.c,v 1.5 2007/05/13 20:03:47 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -52,7 +52,7 @@
 static rpcb_stat_byvers inf;
 
 void
-rpcbs_init()
+rpcbs_init(void)
 {
 
 }
@@ -100,8 +100,8 @@ rpcbs_unset(rpcvers_t rtype, bool_t success)
 }
 
 void
-rpcbs_getaddr(rpcvers_t rtype, rpcprog_t prog, rpcvers_t vers, char *netid,
-	      char *uaddr)
+rpcbs_getaddr(rpcvers_t rtype, rpcprog_t prog, rpcvers_t vers,
+    const char *netid, const char *uaddr)
 {
 	rpcbs_addrlist *al;
 	struct netconfig *nconf;

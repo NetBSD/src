@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.12 2006/05/25 02:37:38 christos Exp $	*/
+/*	$NetBSD: util.c,v 1.13 2007/05/13 20:03:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -61,9 +61,9 @@ static struct sockaddr_in *local_in4;
 static struct sockaddr_in6 *local_in6;
 #endif
 
-static int bitmaskcmp __P((void *, void *, void *, int));
+static int bitmaskcmp(void *, void *, void *, int);
 #ifdef INET6
-static void in6_fillscopeid __P((struct sockaddr_in6 *));
+static void in6_fillscopeid(struct sockaddr_in6 *);
 #endif
 
 /*
