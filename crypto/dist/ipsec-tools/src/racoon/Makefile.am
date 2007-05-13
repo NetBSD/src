@@ -31,12 +31,12 @@ racoon_SOURCES = \
 	safefile.c backupsa.c genlist.c rsalist.c \
 	cftoken.l cfparse.y prsa_tok.l prsa_par.y 
 EXTRA_racoon_SOURCES = isakmp_xauth.c isakmp_cfg.c isakmp_unity.c throttle.c \
-	isakmp_frag.c nattraversal.c $(MISSING_ALGOS)
+	isakmp_frag.c nattraversal.c security.c $(MISSING_ALGOS)
 racoon_LDFLAGS = ../libipsec/libipsec.la
 racoon_LDADD = $(CRYPTOBJS) $(HYBRID_OBJS) $(NATT_OBJS) $(FRAG_OBJS) $(LEXLIB) \
-	vmbuf.o sockmisc.o misc.o
+	 $(SECCTX_OBJS) vmbuf.o sockmisc.o misc.o
 racoon_DEPENDENCIES = ../libipsec/libipsec.la \
-	$(CRYPTOBJS) $(HYBRID_OBJS) $(NATT_OBJS) $(FRAG_OBJS) \
+	$(CRYPTOBJS) $(HYBRID_OBJS) $(NATT_OBJS) $(FRAG_OBJS) $(SECCTX_OBJS) \
 	vmbuf.o sockmisc.o misc.o
 
 racoonctl_SOURCES = racoonctl.c str2val.c 
@@ -83,7 +83,7 @@ man8_MANS = racoon.8 racoonctl.8 plainrsa-gen.8
 EXTRA_DIST = \
    ${man5_MANS} ${man8_MANS} \
    missing/crypto/rijndael/boxes-fst.dat \
-   doc/FAQ doc/README.certificate doc/README.gssapi \
+   doc/FAQ doc/README.certificate doc/README.gssapi doc/README.plainrsa \
    contrib/sp.pl stats.pl \
    samples/psk.txt.sample  samples/racoon.conf.sample \
    samples/psk.txt.in samples/racoon.conf.in \

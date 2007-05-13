@@ -1,6 +1,6 @@
-/*	$NetBSD: proposal.c,v 1.11 2006/10/09 06:32:59 manu Exp $	*/
+/*	$NetBSD: proposal.c,v 1.11.2.1 2007/05/13 10:14:06 jdc Exp $	*/
 
-/* $Id: proposal.c,v 1.11 2006/10/09 06:32:59 manu Exp $ */
+/* $Id: proposal.c,v 1.11.2.1 2007/05/13 10:14:06 jdc Exp $ */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -315,6 +315,57 @@ cmpsaprop_alloc(ph1, pp1, pp2, side)
 		goto err;
 	}
 
+#ifdef HAVE_SECCTX
+	/* check the security_context properties.
+	 * It is possible for one side to have a security context
+	 * and the other side doesn't. If so, this is an error.
+	 */
+
+	if (*pp1->sctx.ctx_str && !(*pp2->sctx.ctx_str)) {
+		plog(LLV_ERROR, LOCATION, NULL,
+		     "My proposal missing security context\n");
+		goto err;
+	}
+	if (!(*pp1->sctx.ctx_str) && *pp2->sctx.ctx_str) {
+		plog(LLV_ERROR, LOCATION, NULL, 
+		     "Peer is missing security context\n");
+		goto err;
+	}
+
+	if (*pp1->sctx.ctx_str && *pp2->sctx.ctx_str) {
+		if (pp1->sctx.ctx_doi == pp2->sctx.ctx_doi)
+			newpp->sctx.ctx_doi = pp1->sctx.ctx_doi;
+		else {
+			plog(LLV_ERROR, LOCATION, NULL, 
+			     "sec doi mismatched: my:%d peer:%d\n",
+			     pp2->sctx.ctx_doi, pp1->sctx.ctx_doi);
+			     goto err;
+		}
+
+		if (pp1->sctx.ctx_alg == pp2->sctx.ctx_alg)
+			newpp->sctx.ctx_alg = pp1->sctx.ctx_alg;
+		else {
+			plog(LLV_ERROR, LOCATION, NULL,
+			     "sec alg mismatched: my:%d peer:%d\n",
+			     pp2->sctx.ctx_alg, pp1->sctx.ctx_alg);
+			goto err;
+		}
+
+		if ((pp1->sctx.ctx_strlen != pp2->sctx.ctx_strlen) ||
+		     memcmp(pp1->sctx.ctx_str, pp2->sctx.ctx_str,
+		     pp1->sctx.ctx_strlen) != 0) {
+			plog(LLV_ERROR, LOCATION, NULL,
+			     "sec ctx string mismatched: my:%s peer:%s\n",
+			     pp2->sctx.ctx_str, pp1->sctx.ctx_str);
+				goto err;
+		} else {
+			newpp->sctx.ctx_strlen = pp1->sctx.ctx_strlen;
+			memcpy(newpp->sctx.ctx_str, pp1->sctx.ctx_str,
+				pp1->sctx.ctx_strlen);
+		}
+	}
+#endif /* HAVE_SECCTX */
+
 	npr1 = npr2 = 0;
 	for (pr1 = pp1->head; pr1; pr1 = pr1->next)
 		npr1++;
@@ -427,7 +478,7 @@ cmpsaprop_alloc(ph1, pp1, pp2, side)
 
 		for (tr1 = pr1->head; tr1; tr1 = tr1->next) {
 			for (tr2 = pr2->head; tr2; tr2 = tr2->next) {
-				if (cmpsatrns(pr1->proto_id, tr1, tr2) == 0)
+				if (cmpsatrns(pr1->proto_id, tr1, tr2, ph1->rmconf->pcheck_level) == 0)
 					goto found;
 			}
 		}
@@ -529,9 +580,10 @@ cmpsaprop(pp1, pp2)
  * tr2: my satrns
  */
 int
-cmpsatrns(proto_id, tr1, tr2)
+cmpsatrns(proto_id, tr1, tr2, check_level)
 	int proto_id;
 	const struct satrns *tr1, *tr2;
+	int check_level;
 {
 	if (tr1->trns_id != tr2->trns_id) {
 		plog(LLV_WARNING, LOCATION, NULL,
@@ -551,16 +603,34 @@ cmpsatrns(proto_id, tr1, tr2)
 		return 1;
 	}
 
-	/* XXX
-	 * At this moment for interoperability, the responder obey
-	 * the initiator.  It should be defined a notify message.
+	/* Check key length regarding checkmode
+	 * XXX Shall we send some kind of notify message when key length rejected ?
 	 */
-	if (tr1->encklen > tr2->encklen) {
+	switch(check_level){
+	case PROP_CHECK_OBEY:
+		return 0;
+		break;
+
+	case PROP_CHECK_STRICT:
+		/* FALLTHROUGH */
+	case PROP_CHECK_CLAIM:
+		if (tr1->encklen < tr2->encklen) {
 		plog(LLV_WARNING, LOCATION, NULL,
-			"less key length proposed, "
-			"mine:%d peer:%d.  Use initiaotr's one.\n",
+				 "low key length proposed, "
+				 "mine:%d peer:%d.\n",
 			tr2->encklen, tr1->encklen);
-		/* FALLTHRU */
+			return 1;
+		}
+		break;
+	case PROP_CHECK_EXACT:
+		if (tr1->encklen != tr2->encklen) {
+			plog(LLV_WARNING, LOCATION, NULL,
+				 "key length mismatched, "
+				 "mine:%d peer:%d.\n",
+				 tr2->encklen, tr1->encklen);
+			return 1;
+		}
+		break;
 	}
 
 	return 0;
@@ -1137,6 +1207,15 @@ set_proposal_from_proposal(iph2)
 		pp0->lifebyte = iph2->sainfo->lifebyte;
 		pp0->pfs_group = iph2->sainfo->pfs_group;
 
+#ifdef HAVE_SECCTX
+		if (*pp_peer->sctx.ctx_str) {
+			pp0->sctx.ctx_doi = pp_peer->sctx.ctx_doi;
+			pp0->sctx.ctx_alg = pp_peer->sctx.ctx_alg;
+			pp0->sctx.ctx_strlen = pp_peer->sctx.ctx_strlen;
+			memcpy(pp0->sctx.ctx_str, pp_peer->sctx.ctx_str,
+			       pp_peer->sctx.ctx_strlen);
+		}
+#endif /* HAVE_SECCTX */
 
 		if (pp_peer->next != NULL) {
 			plog(LLV_ERROR, LOCATION, NULL,

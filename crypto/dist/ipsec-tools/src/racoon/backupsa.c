@@ -1,4 +1,4 @@
-/*	$NetBSD: backupsa.c,v 1.6 2006/10/22 15:10:31 vanhu Exp $	*/
+/*	$NetBSD: backupsa.c,v 1.6.2.1 2007/05/13 10:14:04 jdc Exp $	*/
 
 /*	$KAME: backupsa.c,v 1.16 2001/12/31 20:13:40 thorpej Exp $	*/
 
@@ -94,17 +94,8 @@ static int str2num __P((char *, int));
  * output the sa parameter.
  */
 int
-backupsa_to_file(satype, mode, src, dst, spi, reqid, wsize,
-                keymat, e_type, e_keylen, a_type, a_keylen, flags,
-                l_alloc, l_bytes, l_addtime, l_usetime, seq)
-        u_int satype, mode, wsize;
-        struct sockaddr *src, *dst;
-        u_int32_t spi, reqid;
-        caddr_t keymat;
-        u_int e_type, e_keylen, a_type, a_keylen, flags;
-        u_int32_t l_alloc;
-        u_int64_t l_bytes, l_addtime, l_usetime;
-        u_int32_t seq;
+backupsa_to_file(sa_args)
+	struct pfkey_send_sa_args *sa_args;
 {
 	char buf[1024];
 	struct tm *tm;
@@ -132,7 +123,7 @@ backupsa_to_file(satype, mode, src, dst, spi, reqid, wsize,
 	if (len < 0)
 		goto err;
 
-        i = getnameinfo(src, sysdep_sa_len(src), p, len, NULL, 0, NIFLAGS);
+        i = getnameinfo(sa_args->src, sysdep_sa_len(sa_args->src), p, len, NULL, 0, NIFLAGS);
 	if (i != 0)
 		goto err;
 	l = strlen(p);
@@ -149,7 +140,7 @@ backupsa_to_file(satype, mode, src, dst, spi, reqid, wsize,
 	if (len < 0)
 		goto err;
 
-        i = getnameinfo(dst, sysdep_sa_len(dst), p, len, NULL, 0, NIFLAGS);
+        i = getnameinfo(sa_args->dst, sysdep_sa_len(sa_args->dst), p, len, NULL, 0, NIFLAGS);
 	if (i != 0)
 		goto err;
 	l = strlen(p);
@@ -162,11 +153,14 @@ backupsa_to_file(satype, mode, src, dst, spi, reqid, wsize,
 		" %u %lu %u %u %u "
 		"%u %u %u %u %u "
 		"%u %llu %llu %llu %u",
-		satype, (unsigned long)ntohl(spi), mode, reqid, wsize,
-		e_type, e_keylen, a_type, a_keylen, flags,
-		l_alloc, (unsigned long long)l_bytes,
-		(unsigned long long)l_addtime, (unsigned long long)l_usetime,
-		seq);
+		sa_args->satype, (unsigned long)ntohl(sa_args->spi), 
+		sa_args->mode, sa_args->reqid, sa_args->wsize, sa_args->e_type, 
+		sa_args->e_keylen, sa_args->a_type, sa_args->a_keylen, 
+		sa_args->flags, sa_args->l_alloc, 
+		(unsigned long long)sa_args->l_bytes, 
+		(unsigned long long)sa_args->l_addtime, 
+		(unsigned long long)sa_args->l_usetime, sa_args->seq);
+
 	if (l < 0 || l >= len)
 		goto err;
 	p += l;
@@ -174,7 +168,7 @@ backupsa_to_file(satype, mode, src, dst, spi, reqid, wsize,
 	if (len < 0)
 		goto err;
 
-	k = val2str(keymat, e_keylen + a_keylen);
+	k = val2str(sa_args->keymat, sa_args->e_keylen + sa_args->a_keylen);
 	l = snprintf(p, len, " %s", k);
 	racoon_free(k);
 	if (l < 0 || l >= len)
@@ -211,17 +205,11 @@ backupsa_from_file()
 	struct tm tm;
 	time_t created, current;
 	char *p, *q;
-        u_int satype, mode;
-        struct sockaddr *src = NULL;
-        struct sockaddr *dst = NULL;
-        caddr_t keymat = NULL;
-        u_int32_t spi, reqid;
 	size_t keymatlen;
-        u_int wsize, e_type, e_keylen, a_type, a_keylen, flags;
-        u_int32_t l_alloc;
-        u_int64_t l_bytes, l_addtime, l_usetime;
-        u_int32_t seq;
 	int line;
+	struct pfkey_send_sa_args sa_args;
+
+	memset(&sa_args, 0, sizeof(sa_args));
 
 	if (safefile(lcconf->pathinfo[LC_PATHTYPE_BACKUPSA], 1) == 0)
 		fp = fopen(lcconf->pathinfo[LC_PATHTYPE_BACKUPSA], "r");
@@ -257,14 +245,14 @@ backupsa_from_file()
 		for (q = p; *q != '\0' && !isspace((int)*q); q++)
 			;
 		*q = '\0';
-		if ((src = str2saddr(p, NULL)) == NULL)
+		if ((sa_args.src = str2saddr(p, NULL)) == NULL)
 			goto next;
 		p = q + 1;
 
 		for (q = p; *q != '\0' && !isspace((int)*q); q++)
 			;
 		*q = '\0';
-		if ((dst = str2saddr(p, NULL)) == NULL)
+		if ((sa_args.dst = str2saddr(p, NULL)) == NULL)
 			goto next;
 		p = q + 1;
 
@@ -280,27 +268,27 @@ do { 								\
 	p = q + 1; 						\
 } while (/*CONSTCOND*/0);
 
-		GETNEXTNUM(satype, strtoul);
-		GETNEXTNUM(spi, strtoul);
-		spi = ntohl(spi);
-		GETNEXTNUM(mode, strtoul);
-		GETNEXTNUM(reqid, strtoul);
-		GETNEXTNUM(wsize, strtoul);
-		GETNEXTNUM(e_type, strtoul);
-		GETNEXTNUM(e_keylen, strtoul);
-		GETNEXTNUM(a_type, strtoul);
-		GETNEXTNUM(a_keylen, strtoul);
-		GETNEXTNUM(flags, strtoul);
-		GETNEXTNUM(l_alloc, strtoul);
-		GETNEXTNUM(l_bytes, strtouq);
-		GETNEXTNUM(l_addtime, strtouq);
-		GETNEXTNUM(l_usetime, strtouq);
-		GETNEXTNUM(seq, strtoul);
+		GETNEXTNUM(sa_args.satype, strtoul);
+		GETNEXTNUM(sa_args.spi, strtoul);
+		sa_args.spi = ntohl(sa_args.spi);
+		GETNEXTNUM(sa_args.mode, strtoul);
+		GETNEXTNUM(sa_args.reqid, strtoul);
+		GETNEXTNUM(sa_args.wsize, strtoul);
+		GETNEXTNUM(sa_args.e_type, strtoul);
+		GETNEXTNUM(sa_args.e_keylen, strtoul);
+		GETNEXTNUM(sa_args.a_type, strtoul);
+		GETNEXTNUM(sa_args.a_keylen, strtoul);
+		GETNEXTNUM(sa_args.flags, strtoul);
+		GETNEXTNUM(sa_args.l_alloc, strtoul);
+		GETNEXTNUM(sa_args.l_bytes, strtouq);
+		GETNEXTNUM(sa_args.l_addtime, strtouq);
+		GETNEXTNUM(sa_args.l_usetime, strtouq);
+		GETNEXTNUM(sa_args.seq, strtoul);
 
 #undef GETNEXTNUM
 
-		keymat = str2val(p, 16, &keymatlen);
-		if (keymat == NULL) {
+		sa_args.keymat = str2val(p, 16, &keymatlen);
+		if (sa_args.keymat == NULL) {
 			plog(LLV_ERROR, LOCATION, NULL,
 				"illegal format(keymat) line#%d in %s: %s\n",
 				line, lcconf->pathinfo[LC_PATHTYPE_BACKUPSA], 
@@ -308,26 +296,15 @@ do { 								\
 			goto next;
 		}
 
-		if (created + l_addtime < current) {
+		if (created + sa_args.l_addtime < current) {
 			plog(LLV_DEBUG, LOCATION, NULL,
 				"ignore this line#%d in %s due to expiration\n",
 				line, lcconf->pathinfo[LC_PATHTYPE_BACKUPSA]);
 			goto next;
 		}
-		l_addtime -= current - created;
+		sa_args.l_addtime -= current - created;
 
-		if (pfkey_send_add(
-				lcconf->sock_pfkey,
-				satype,
-				mode,
-				src,
-				dst,
-				spi,
-				reqid,
-				wsize,
-				keymat,
-				e_type, e_keylen, a_type, a_keylen, flags,
-				0, l_bytes, l_addtime, 0, seq) < 0) {
+		if (pfkey_send_add2(&sa_args) < 0) {
 			plog(LLV_ERROR, LOCATION, NULL,
 				"restore SA failed line#%d in %s: %s\n",
 				line, lcconf->pathinfo[LC_PATHTYPE_BACKUPSA], 
@@ -335,17 +312,17 @@ do { 								\
 		}
 
 next:
-	 	if (src != NULL) {
-			racoon_free(src);
-			src = NULL;
+	 	if (sa_args.src != NULL) {
+			racoon_free(sa_args.src);
+			sa_args.src = NULL;
 		}
-		if (dst != NULL) {
-			racoon_free(dst);
-			dst = NULL;
+		if (sa_args.dst != NULL) {
+			racoon_free(sa_args.dst);
+			sa_args.dst = NULL;
 		}
-		if (keymat != NULL) {
-			racoon_free(keymat);
-			keymat = NULL;
+		if (sa_args.keymat != NULL) {
+			racoon_free(sa_args.keymat);
+			sa_args.keymat = NULL;
 		}
 	}
 

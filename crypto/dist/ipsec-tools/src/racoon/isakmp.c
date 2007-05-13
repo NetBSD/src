@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp.c,v 1.20 2006/10/02 21:19:43 manu Exp $	*/
+/*	$NetBSD: isakmp.c,v 1.20.2.1 2007/05/13 10:14:05 jdc Exp $	*/
 
 /* Id: isakmp.c,v 1.74 2006/05/07 21:32:59 manubsd Exp */
 
@@ -845,8 +845,7 @@ ph1_main(iph1, msg)
 	VPTRINIT(iph1->sendbuf);
 
 	/* turn off schedule */
-	if (iph1->scr)
-		SCHED_KILL(iph1->scr);
+	SCHED_KILL(iph1->scr);
 
 	/* send */
 	plog(LLV_DEBUG, LOCATION, NULL, "===\n");
@@ -1007,8 +1006,7 @@ quick_main(iph2, msg)
 	VPTRINIT(iph2->sendbuf);
 
 	/* turn off schedule */
-	if (iph2->scr)
-		SCHED_KILL(iph2->scr);
+	SCHED_KILL(iph2->scr);
 
 	/* send */
 	plog(LLV_DEBUG, LOCATION, NULL, "===\n");
@@ -1204,8 +1202,6 @@ isakmp_ph1begin_r(msg, remote, local, etype)
 		delph1(iph1);
 		return -1;
 	}
-	printf("%s: iph1->local = %p\n", __func__, iph1->local);
-
 	(void)insph1(iph1);
 
 	plog(LLV_DEBUG, LOCATION, NULL, "===\n");
@@ -1911,30 +1907,44 @@ void
 isakmp_ph1resend_stub(p)
 	void *p;
 {
-	(void)isakmp_ph1resend((struct ph1handle *)p);
+	struct ph1handle *iph1;
+
+	iph1=(struct ph1handle *)p;
+	if(isakmp_ph1resend(iph1) < 0){
+		if(iph1->scr != NULL){
+			/* Should not happen...
+			 */
+			sched_kill(iph1->scr);
+			iph1->scr=NULL;
+		}
+
+		remph1(iph1);
+		delph1(iph1);
+	}
 }
 
 int
 isakmp_ph1resend(iph1)
 	struct ph1handle *iph1;
 {
-	if (iph1->retry_counter < 0) {
+	/* Note: NEVER do the rem/del here, it will be done by the caller or by the _stub function
+	 */
+	if (iph1->retry_counter <= 0) {
 		plog(LLV_ERROR, LOCATION, NULL,
 			"phase1 negotiation failed due to time up. %s\n",
 			isakmp_pindex(&iph1->index, iph1->msgid));
 		EVT_PUSH(iph1->local, iph1->remote, 
 		    EVTT_PEER_NO_RESPONSE, NULL);
 
-		remph1(iph1);
-		delph1(iph1);
 		return -1;
 	}
 
 	if (isakmp_send(iph1, iph1->sendbuf) < 0){
-		iph1->retry_counter--;
-
-		iph1->scr = sched_new(iph1->rmconf->retry_interval,
-							  isakmp_ph1resend_stub, iph1);
+		plog(LLV_ERROR, LOCATION, NULL,
+			 "phase1 negotiation failed due to send error. %s\n",
+			 isakmp_pindex(&iph1->index, iph1->msgid));
+		EVT_PUSH(iph1->local, iph1->remote, 
+				 EVTT_PEER_NO_RESPONSE, NULL);
 		return -1;
 	}
 
@@ -1955,27 +1965,47 @@ void
 isakmp_ph2resend_stub(p)
 	void *p;
 {
+	struct ph2handle *iph2;
 
-	(void)isakmp_ph2resend((struct ph2handle *)p);
+	iph2=(struct ph2handle *)p;
+
+	if(isakmp_ph2resend(iph2) < 0){
+		unbindph12(iph2);
+		remph2(iph2);
+		delph2(iph2);
+	}
 }
 
 int
 isakmp_ph2resend(iph2)
 	struct ph2handle *iph2;
 {
-	if (iph2->retry_counter < 0) {
+	/* Note: NEVER do the unbind/rem/del here, it will be done by the caller or by the _stub function
+	 */
+	if (iph2->ph1->status == PHASE1ST_EXPIRED){
+		plog(LLV_ERROR, LOCATION, NULL,
+			"phase2 negotiation failed due to phase1 expired. %s\n",
+				isakmp_pindex(&iph2->ph1->index, iph2->msgid));
+		return -1;
+	}
+
+	if (iph2->retry_counter <= 0) {
 		plog(LLV_ERROR, LOCATION, NULL,
 			"phase2 negotiation failed due to time up. %s\n",
 				isakmp_pindex(&iph2->ph1->index, iph2->msgid));
 		EVT_PUSH(iph2->src, iph2->dst, EVTT_PEER_NO_RESPONSE, NULL);
 		unbindph12(iph2);
-		remph2(iph2);
-		delph2(iph2);
 		return -1;
 	}
 
-	if (isakmp_send(iph2->ph1, iph2->sendbuf) < 0)
+	if (isakmp_send(iph2->ph1, iph2->sendbuf) < 0){
+		plog(LLV_ERROR, LOCATION, NULL,
+			"phase2 negotiation failed due to send error. %s\n",
+				isakmp_pindex(&iph2->ph1->index, iph2->msgid));
+		EVT_PUSH(iph2->src, iph2->dst, EVTT_PEER_NO_RESPONSE, NULL);
+
 		return -1;
+	}
 
 	plog(LLV_DEBUG, LOCATION, NULL,
 		"resend phase2 packet %s\n",
@@ -3346,7 +3376,7 @@ purge_remote(iph1)
 
 		/* delete a relative phase 2 handle. */
 		if (iph2 != NULL) {
-			delete_spd(iph2);
+			delete_spd(iph2, 0);
 			unbindph12(iph2);
 			remph2(iph2);
 			delph2(iph2);
@@ -3367,15 +3397,15 @@ purge_remote(iph1)
 		 "purged ISAKMP-SA spi=%s.\n",
 		 isakmp_pindex(&(iph1->index), iph1->msgid));
 
-	if (iph1->sce)
-		SCHED_KILL(iph1->sce);
+	SCHED_KILL(iph1->sce);
 
 	iph1->sce = sched_new(1, isakmp_ph1delete_stub, iph1);
 }
 
 void 
-delete_spd(iph2)
+delete_spd(iph2, created)
 	struct ph2handle *iph2;
+ 	u_int64_t created;
 {
 	struct policyindex spidx;
 	struct sockaddr_storage addr;
@@ -3573,6 +3603,23 @@ delete_spd(iph2)
 		spidx.ul_proto = IPSEC_ULPROTO_ANY;
 
 #undef _XIDT
+
+	/* Check if the generated SPD has the same timestamp as the SA.
+	 * If timestamps are different, this means that the SPD entry has been
+	 * refreshed by another SA, and should NOT be deleted with the current SA.
+	 */
+	if( created ){
+		struct secpolicy *p;
+		
+		p = getsp(&spidx);
+		if(p != NULL){
+			/* just do no test if p is NULL, because this probably just means
+			 * that the policy has already be deleted for some reason.
+			 */
+			if(p->spidx.created != created)
+				goto purge;
+		}
+	}
 
 	/* End of code from get_proposal_r
 	 */

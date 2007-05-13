@@ -1,3 +1,130 @@
+---------------------------------------------
+
+	0.7.beta3 released
+
+2007-03-26  Yvan Vanhullebus  <vanhu@netasq.com>
+	* src/racoon/isakmp_inf.c: Store the DPD main scheduler in ph1
+	  handler, to be able to cancel it when removing the handler, and
+	  some minor cleanups in DPD code.
+
+2007-03-23  Yvan Vanhullebus  <vanhu@netasq.com>
+	* src/racoon/{oakley.c|racoon.conf.5}: give more details about
+	  what is checked when using certificates to authenticate. Patch
+	  by Cyrus Rahman.
+	* src/racoon/handler.c: expire zombie handlers in getph2byid(), to
+	  avoid situations where we'll never negociate a phase2
+	  again. Would be better to find out why do we have such zombies !!
+	* src/racoon/{ipsec_doi.c|security.c}: fixed a segfault when using
+	  security labels between a 32bit and a 64bit host. Patch by
+	  Joy Latten.
+
+2007-03-22  Yvan Vanhullebus  <vanhu@netasq.com>
+	* src/racoon/{ipsec_doi.c|cfparse.y}: fixed subnet check to
+	  generate IPV4_ADDRESS when needed in sockaddr2id().
+
+2007-03-21  Yvan Vanhullebus  <vanhu@netasq.com>
+	* src/racoon/schedule.h: checks if arg is NULL in SCHED_KILL.
+	* src/racoon/{handler.c|isakmp.c|isakmp_inf.c|pfkey.c}: NULL sched
+	  check is now done in SCHED_KILL.
+	
+2007-03-15  Yvan Vanhullebus  <vanhu@netasq.com>
+	* src/racoon/isakmp.c: Consider a negociation timeout when
+	  retry_counter is <=0 instead of < 0.
+	* src/racoon/grabmyaddr.c: enable monitoring of ipv6 addresse
+	  changes on linux. Patch by Yves-Alexis Perez.
+
+---------------------------------------------
+
+	0.7.beta2 released
+
+2007-02-27  Matthew Grooms  <mgrooms@shrew.net>
+	* src/racoon/ipsec_doi.c: add logic to match ip address ids to
+	  ip subnet ids when appropriate. reported by Yvan.
+
+2007-02-21  Yvan Vanhullebus  <vanhu@netasq.com>
+	* src/racoon/ipsec_doi.c: block variable declaration before code
+	  in ipsecdoi_id2str().
+	
+2007-02-20  Yvan Vanhullebus  <vanhu@netasq.com>
+	* src/racoon/{handler.c|isakmp_var.h}: updated delete_spd() calls.
+	* src/racoon/isakmp.c: Only delete a generated SPD if it's
+	  creation date matches the creation date of the SA we are
+	  currently deleting.
+	* src/racoon/{pfkey.c|isakmp_inf.c}: fills creation date of
+	  generated SPDs.
+	* src/racoon/policy.h: added 'created' var.
+	* src/racoon/isakmp_inf.c: Removed a debug printf....
+
+2007-02-19  Yvan Vanhullebus  <vanhu@netasq.com>
+	* src/racoon/isakmp.c: Removed a debug printf....
+
+2007-02-16  Yvan Vanhullebus  <vanhu@netasq.com>
+	* src/racoon/ipsec_doi.c: Fixed a %zu in a printf. Reported by
+	  Olivier Warin.
+	
+---------------------------------------------
+
+	0.7.beta1 released
+
+2007-02-15  Emmanuel Dreyfus  <manu@netbsd.org>
+	* configure.ac: fix typo in SELinux option
+	* src/racoon/security.c: missing file from Joy Latten
+
+2007-02-15  Yvan Vanhullebus  <vanhu@netasq.com>
+	* src/racoon/isakmp.c: Fixed the way phase1/2 messages are
+	  sent/resent, to avoid zombie handles and acces to freed memory.
+	* src/racoon/isakmp_inf.c: Just expire a ph1 handle when receiving
+	  a DELETE-SA instead of calling purge_remote(). Reported by
+	  "Uncle Pedro" on Sourceforge's bugtracker.
+
+2007-02-02  Yvan Vanhullebus  <vanhu@netasq.com>
+	* src/racoon/cfparse.y: Fixed a check of NAT-T support in libipsec. 
+
+2007-02-01  Yvan Vanhullebus  <vanhu@netasq.com>
+	* src/racoon/isakmp_inf.c: When receiving an Isakmp DELETE_SA,
+	  gets the cookie of the SA to be deleted from payload instead of
+	  just deleting the Isakmp SA used to protect the informational.
+	  Problem reported by "unclepedro" on Sourceforge's bugtracker.
+
+2006-12-18  Yvan Vanhullebus  <vanhu@netasq.com>
+	From Joy Latten <latten@austin.ibm.com>
+	* src/racoon/crypto_openssl.c: fixed a memory leak
+
+---------------------------------------------
+
+	Branch for 0.7 created (ipsec-tools-0_7-branch)
+
+2006-12-11 Emmanuel Dreyfus  <manu@netbsd.org>
+	* src/libipsec/{Makefile.am|libpfkey.h|pfkey.c}
+	  src/racoon/{backupsa.c|pfkey.c}: Bring back API and ABI backward
+	  compatibility with previous libipsec interface change. Bump 
+	  libipsec minor version. Remove ifdefs in struct pfkey_send_sa_args
+	  to avoid ABI compatibility lossage.
+	* src/libipsec/{libpfkey.h|pfkey.c} src/racoon/cfparse.y: add 
+	  capability flags to detect missing optional feature in libipsec
+
+2006-12-10 Emmanuel Dreyfus  <manu@netbsd.org>
+	From Joy Latten <latten@austin.ibm.com>
+	* src/racoon/Makefile.am
+	  src/racoon/doc/README.plainrsa: new file documenting plain RSA auth
+
+2006-12-09 Emmanuel Dreyfus  <manu@netbsd.org>
+	From Joy Latten <latten@austin.ibm.com>
+	* configure.ac src/libipsec/{libpfkey.h|pfkey.c}
+	  src/racoon/{Makefile.am|backupsa.c|backupsa.h|cftoken.l|ipsec_doi.c}
+	  src/racoon/{ipsec_doi.h|isakmp_inf.c|isakmp_quick.c|pfkey.c|policy.c}
+	  src/racoon/{policy.h|proposal.c|proposal.h|remoteconf.c}: Add 		  support for SELinux security contexts. Also cleanup the libipsec
+	  interface for adding and updating security associations.
+
+	From Simon Chang <simonychang@gmail.com>
+	* src/racoon/racoon.conf.5: More hints about plain RSA authentication
+
+2006-12-05  Yvan Vanhullebus  <vanhu@netasq.com>
+	* src/racoon/proposal.[ch]: Check keys length regarding
+	  pcheck_level in cmpsatrns().
+	* src/racoon/racoon.conf.5: updated man page about what is
+	  impacted by proposal_check level.
+
 2006-11-12  Matthew Grooms <mgrooms@shrew.net>
 	* src/racoon/sainfo.c: fix anonymous sainfo selection.
 

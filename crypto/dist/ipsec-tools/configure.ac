@@ -2,7 +2,7 @@ dnl -*- mode: m4 -*-
 dnl Id: configure.ac,v 1.77 2006/07/20 19:19:27 manubsd Exp
 
 AC_PREREQ(2.52)
-AC_INIT(ipsec-tools, CVS)
+AC_INIT(ipsec-tools, 0.7-beta3)
 AC_CONFIG_SRCDIR([configure.ac])
 AM_CONFIG_HEADER(config.h)
 
@@ -756,7 +756,7 @@ AC_MSG_RESULT($kernel_secctx)
 AC_MSG_CHECKING(whether to support Security Context)
 AC_ARG_ENABLE(security-context,
 	[  --enable-security-context    enable Security Context(yes/no/kernel)],
-	[if test "$enable_security-context" = "kernel"; then
+	[if test "$enable_security_context" = "kernel"; then
 		enable_security_context=$kernel_secctx; fi],
 	[enable_security_context=$kernel_secctx])
 AC_MSG_RESULT($enable_security_context)
@@ -768,6 +768,7 @@ if test "$enable_security_context" = "yes"; then
 		AC_DEFINE([HAVE_SECCTX], [], [Enable Security Context])
 		SECCTX_OBJS="security.o"
 		AC_SUBST(SECCTX_OBJS)
+		LIBS="$LIBS -lselinux"
 	fi
 fi
 

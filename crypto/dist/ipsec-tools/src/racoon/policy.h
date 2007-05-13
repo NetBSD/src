@@ -1,4 +1,4 @@
-/*	$NetBSD: policy.h,v 1.4 2006/09/09 16:22:10 manu Exp $	*/
+/*	$NetBSD: policy.h,v 1.4.2.1 2007/05/13 10:14:06 jdc Exp $	*/
 
 /* Id: policy.h,v 1.5 2004/06/11 16:00:17 ludvigm Exp */
 
@@ -36,6 +36,19 @@
 
 #include <sys/queue.h>
 
+
+#ifdef HAVE_SECCTX
+#define MAX_CTXSTR_SIZE 50
+struct security_ctx {
+	u_int8_t ctx_doi;       /* Security Context DOI */
+	u_int8_t ctx_alg;       /* Security Context Algorithm */
+	u_int16_t ctx_strlen;   /* Security Context stringlength
+				 * (includes terminating NULL)
+				 */
+	char ctx_str[MAX_CTXSTR_SIZE];  /* Security Context string */
+};
+#endif
+
 /* refs. ipsec.h */
 /*
  * Security Policy Index
@@ -52,6 +65,10 @@ struct policyindex {
 	u_int8_t prefd;			/* prefix length in bits for dst */
 	u_int16_t ul_proto;		/* upper layer Protocol */
 	u_int32_t priority;		/* priority for the policy */
+ 	u_int64_t created;		/* Used for generated SPD entries deletion */
+#ifdef HAVE_SECCTX
+	struct security_ctx sec_ctx;    /* Security Context */
+#endif
 };
 
 /* Security Policy Data Base */
@@ -92,7 +109,7 @@ struct ipsecrequest {
 };
 
 #ifdef HAVE_PFKEY_POLICY_PRIORITY
-#define KEY_SETSECSPIDX(_dir, s, d, ps, pd, ulp, _priority, idx)              \
+#define KEY_SETSECSPIDX(_dir, s, d, ps, pd, ulp, _priority, _created, idx)              \
 do {                                                                         \
 	bzero((idx), sizeof(struct policyindex));                            \
 	(idx)->dir = (_dir);                                                 \
@@ -100,17 +117,19 @@ do {                                                                         \
 	(idx)->prefd = (pd);                                                 \
 	(idx)->ul_proto = (ulp);                                             \
 	(idx)->priority = (_priority);                                        \
+	(idx)->created = (_created);                                        \
 	memcpy(&(idx)->src, (s), sysdep_sa_len((struct sockaddr *)(s)));          \
 	memcpy(&(idx)->dst, (d), sysdep_sa_len((struct sockaddr *)(d)));          \
 } while (0)
 #else
-#define KEY_SETSECSPIDX(_dir, s, d, ps, pd, ulp, idx)              \
+#define KEY_SETSECSPIDX(_dir, s, d, ps, pd, ulp, _created, idx)              \
 do {                                                                         \
 	bzero((idx), sizeof(struct policyindex));                            \
 	(idx)->dir = (_dir);                                                 \
 	(idx)->prefs = (ps);                                                 \
 	(idx)->prefd = (pd);                                                 \
 	(idx)->ul_proto = (ulp);                                             \
+	(idx)->created = (_created);                                        \
 	memcpy(&(idx)->src, (s), sysdep_sa_len((struct sockaddr *)(s)));          \
 	memcpy(&(idx)->dst, (d), sysdep_sa_len((struct sockaddr *)(d)));          \
 } while (0)
@@ -133,5 +152,11 @@ extern void initsp __P((void));
 extern struct ipsecrequest *newipsecreq __P((void));
 
 extern const char *spidx2str __P((const struct policyindex *));
+#ifdef HAVE_SECCTX
+#include <selinux/selinux.h>
+extern int get_security_context __P((vchar_t *, struct policyindex *));
+extern int within_range __P((security_context_t, security_context_t));
+extern void set_secctx_in_proposal __P((struct ph2handle *, struct policyindex));
+#endif
 
 #endif /* _POLICY_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: cftoken.l,v 1.10 2006/10/06 12:02:27 manu Exp $	*/
+/*	$NetBSD: cftoken.l,v 1.10.2.1 2007/05/13 10:14:04 jdc Exp $	*/
 
 /* Id: cftoken.l,v 1.53 2006/08/22 18:17:17 manubsd Exp */
 
@@ -72,6 +72,7 @@
 #include "isakmp_var.h"
 #include "isakmp.h"
 #include "ipsec_doi.h"
+#include "policy.h"
 #include "proposal.h"
 #include "remoteconf.h"
 #ifdef GC

@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto_openssl.c,v 1.11 2006/11/09 20:22:18 christos Exp $	*/
+/*	$NetBSD: crypto_openssl.c,v 1.11.2.1 2007/05/13 10:14:04 jdc Exp $	*/
 
 /* Id: crypto_openssl.c,v 1.47 2006/05/06 20:42:09 manubsd Exp */
 
@@ -132,7 +132,7 @@ eay_str2asn1dn(str, len)
 	char *buf;
 	char *field, *value;
 	int i, j;
-	vchar_t *ret;
+	vchar_t *ret = NULL;
 	caddr_t p;
 
 	if (len == -1)
@@ -217,6 +217,8 @@ eay_str2asn1dn(str, len)
 		racoon_free(buf);
 	if (name)
 		X509_NAME_free(name);
+	if (ret)
+		vfree(ret);
 	return NULL;
 }
 
