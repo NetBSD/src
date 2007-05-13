@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.819.2.3 2007/05/13 06:52:52 pavel Exp $
+#	$NetBSD: files,v 1.819.2.4 2007/05/13 10:28:08 jdc Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -232,6 +232,8 @@ defflag	opt_md.h		MEMORY_DISK_HOOKS MEMORY_DISK_IS_ROOT
 				MEMORY_DISK_DYNAMIC
 defparam opt_md.h		MEMORY_DISK_SERVER MEMORY_DISK_ROOT_SIZE
 				MEMORY_RBFLAGS
+
+defflag opt_tftproot.h		TFTPROOT TFTPROOT_DEBUG
 
 # Support for hardware performance monitoring counters
 #
@@ -1339,6 +1341,7 @@ file	kern/subr_prof.c
 file	kern/subr_once.c
 file	kern/subr_optstr.c
 file	kern/subr_specificdata.c
+file	kern/subr_tftproot.c		tftproot
 file	kern/subr_userconf.c		userconf
 file	kern/subr_vmem.c
 file	kern/subr_workqueue.c
