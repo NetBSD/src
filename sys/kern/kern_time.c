@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.119 2007/05/12 20:27:57 dsl Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.120 2007/05/13 10:34:25 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.119 2007/05/12 20:27:57 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.120 2007/05/13 10:34:25 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/resourcevar.h>
@@ -292,14 +292,10 @@ sys_clock_getres(struct lwp *l, void *v, register_t *retval)
 	case CLOCK_REALTIME:
 	case CLOCK_MONOTONIC:
 		ts.tv_sec = 0;
-#ifdef __HAVE_TIMECOUNTER
 		if (tc_getfrequency() > 1000000000)
 			ts.tv_nsec = 1;
 		else
 			ts.tv_nsec = 1000000000 / tc_getfrequency();
-#else /* !__HAVE_TIMECOUNTER */
-		ts.tv_nsec = 1000000000 / hz;
-#endif /* !__HAVE_TIMECOUNTER */
 		break;
 	default:
 		return (EINVAL);
@@ -315,29 +311,42 @@ sys_clock_getres(struct lwp *l, void *v, register_t *retval)
 int
 sys_nanosleep(struct lwp *l, void *v, register_t *retval)
 {
-#ifdef __HAVE_TIMECOUNTER
 	struct sys_nanosleep_args/* {
 		syscallarg(struct timespec *) rqtp;
 		syscallarg(struct timespec *) rmtp;
 	} */ *uap = v;
 	struct timespec rmt, rqt;
-	int error, timo;
+	int error, error1;
 
 	error = copyin(SCARG(uap, rqtp), &rqt, sizeof(struct timespec));
 	if (error)
 		return (error);
 
-	if (itimespecfix(&rqt))
+	error = nanosleep1(l, &rqt, SCARG(uap, rmtp) ? &rmt : NULL);
+	if (SCARG(uap, rmtp) == NULL || (error != 0 && error != EINTR))
+		return error;
+
+	error1 = copyout(&rmt, SCARG(uap, rmtp), sizeof(rmt));
+	return error1 ? error1 : error;
+}
+
+int
+nanosleep1(struct lwp *l, struct timespec *rqt, struct timespec *rmt)
+{
+#ifdef __HAVE_TIMECOUNTER
+	int error, timo;
+
+	if (itimespecfix(rqt))
 		return (EINVAL);
 
-	timo = tstohz(&rqt);
+	timo = tstohz(rqt);
 	/*
 	 * Avoid inadvertantly sleeping forever
 	 */
 	if (timo == 0)
 		timo = 1;
 
-	getnanouptime(&rmt);
+	getnanouptime(rmt);
 
 	error = kpause("nanoslp", true, timo, NULL);
 	if (error == ERESTART)
@@ -345,39 +354,23 @@ sys_nanosleep(struct lwp *l, void *v, register_t *retval)
 	if (error == EWOULDBLOCK)
 		error = 0;
 
-	if (SCARG(uap, rmtp)) {
-		int error1;
+	if (rmt!= NULL) {
 		struct timespec rmtend;
 
 		getnanouptime(&rmtend);
 
-		timespecsub(&rmtend, &rmt, &rmt);
-		timespecsub(&rqt, &rmt, &rmt);
-		if (rmt.tv_sec < 0)
-			timespecclear(&rmt);
-
-		error1 = copyout((void *)&rmt, (void *)SCARG(uap,rmtp),
-			sizeof(rmt));
-		if (error1)
-			return (error1);
+		timespecsub(&rmtend, rmt, rmt);
+		timespecsub(rqt, rmt, rmt);
+		if (rmt->tv_sec < 0)
+			timespecclear(rmt);
 	}
 
 	return error;
 #else /* !__HAVE_TIMECOUNTER */
-	struct sys_nanosleep_args/* {
-		syscallarg(struct timespec *) rqtp;
-		syscallarg(struct timespec *) rmtp;
-	} */ *uap = v;
-	struct timespec rqt;
-	struct timespec rmt;
 	struct timeval atv, utv;
 	int error, s, timo;
 
-	error = copyin(SCARG(uap, rqtp), &rqt, sizeof(struct timespec));
-	if (error)
-		return (error);
-
-	TIMESPEC_TO_TIMEVAL(&atv,&rqt);
+	TIMESPEC_TO_TIMEVAL(&atv, rqt);
 	if (itimerfix(&atv))
 		return (EINVAL);
 
@@ -397,9 +390,7 @@ sys_nanosleep(struct lwp *l, void *v, register_t *retval)
 	if (error == EWOULDBLOCK)
 		error = 0;
 
-	if (SCARG(uap, rmtp)) {
-		int error1;
-
+	if (rmt != NULL) {
 		s = splclock();
 		utv = time;
 		splx(s);
@@ -408,11 +399,7 @@ sys_nanosleep(struct lwp *l, void *v, register_t *retval)
 		if (utv.tv_sec < 0)
 			timerclear(&utv);
 
-		TIMEVAL_TO_TIMESPEC(&utv,&rmt);
-		error1 = copyout((void *)&rmt, (void *)SCARG(uap,rmtp),
-			sizeof(rmt));
-		if (error1)
-			return (error1);
+		TIMEVAL_TO_TIMESPEC(&utv, rmt);
 	}
 
 	return error;
