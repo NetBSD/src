@@ -1,4 +1,4 @@
-/*	$NetBSD: services_mkdb.c,v 1.7 2007/05/08 20:17:57 christos Exp $	*/
+/*	$NetBSD: services_mkdb.c,v 1.8 2007/05/13 17:43:59 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: services_mkdb.c,v 1.7 2007/05/08 20:17:57 christos Exp $");
+__RCSID("$NetBSD: services_mkdb.c,v 1.8 2007/05/13 17:43:59 christos Exp $");
 #endif /* not lint */
 
 
@@ -63,6 +63,16 @@ static void	store(const char *, size_t, DB *, DBT *, DBT *, int);
 static void	killproto(DBT *);
 static char    *getstring(const char *, size_t, char **, const char *);
 static void	usage(void) __attribute__((__noreturn__));
+
+static const HASHINFO hinfo = {
+	.bsize = 256,
+	.ffactor = 4,
+	.nelem = 32768,
+	.cachesize = 1024,
+	.hash = NULL,
+	.lorder = 0
+};
+
 
 int
 main(int argc, char *argv[])
@@ -108,7 +118,7 @@ main(int argc, char *argv[])
 
 	(void)snprintf(tname, sizeof(tname), "%s.tmp", dbname);
 	db = dbopen(tname, O_RDWR | O_CREAT | O_EXCL,
-	    (S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH), DB_HASH, NULL);
+	    (S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH), DB_HASH, &hinfo);
 	if (!db)
 		err(1, "Error opening temporary database `%s'", tname);
 
@@ -124,7 +134,10 @@ main(int argc, char *argv[])
 
 		if (len == 0)
 			continue;
-		cp = p;
+		for (cp = p; *cp && isspace((unsigned char)*cp); cp++)
+			continue;
+		if (*cp == '\0' || *cp == '#')
+			continue;
 
 		if ((name = getstring(fname, line, &cp, "name")) == NULL)
 			continue;
