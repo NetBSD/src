@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcbind.c,v 1.11 2007/05/13 20:03:47 christos Exp $	*/
+/*	$NetBSD: rpcbind.c,v 1.12 2007/05/13 21:19:56 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -298,6 +298,9 @@ init_transport(struct netconfig *nconf)
 			freeaddrinfo(res);
 		return 1;
 	}
+	if (sa->sa_family == AF_LOCAL)
+		if (chmod(sun.sun_path, S_IRWXU|S_IRWXG|S_IRWXO) == -1)
+			warn("Cannot chmod `%s'", sun.sun_path);
 
 	/* Copy the address */
 	taddr.addr.len = taddr.addr.maxlen = addrlen;
