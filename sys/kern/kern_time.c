@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.122 2007/05/13 14:43:53 dsl Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.123 2007/05/13 19:51:35 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.122 2007/05/13 14:43:53 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.123 2007/05/13 19:51:35 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/resourcevar.h>
@@ -334,7 +334,8 @@ nanosleep1(struct lwp *l, struct timespec *rqt, struct timespec *rmt)
 	if (timo == 0)
 		timo = 1;
 
-	getnanouptime(rmt);
+	if (rmt != NULL)
+		getnanouptime(rmt);
 
 	error = kpause("nanoslp", true, timo, NULL);
 	if (error == ERESTART)
