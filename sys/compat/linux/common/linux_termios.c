@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_termios.c,v 1.27 2006/11/25 22:03:41 elad Exp $	*/
+/*	$NetBSD: linux_termios.c,v 1.27.2.1 2007/05/13 22:19:56 pavel Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_termios.c,v 1.27 2006/11/25 22:03:41 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_termios.c,v 1.27.2.1 2007/05/13 22:19:56 pavel Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ptm.h"
@@ -106,7 +106,7 @@ linux_ioctl_termios(l, uap, retval)
 	com = SCARG(uap, com);
 	retval[0] = 0;
 
-	switch (com & 0xffff) {
+	switch (com) {
 	case LINUX_TCGETS:
 		error = (*bsdioctl)(fp, TIOCGETA, (caddr_t)&tmpbts, l);
 		if (error)
