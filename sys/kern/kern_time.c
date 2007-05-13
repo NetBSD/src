@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.121 2007/05/13 10:58:51 dsl Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.122 2007/05/13 14:43:53 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.121 2007/05/13 10:58:51 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.122 2007/05/13 14:43:53 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/resourcevar.h>
@@ -78,9 +78,8 @@ __KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.121 2007/05/13 10:58:51 dsl Exp $");
 #include <sys/vnode.h>
 #include <sys/signalvar.h>
 #include <sys/syslog.h>
-#ifdef __HAVE_TIMECOUNTER
 #include <sys/timetc.h>
-#else /* !__HAVE_TIMECOUNTER */
+#ifndef __HAVE_TIMECOUNTER
 #include <sys/timevar.h>
 #endif /* !__HAVE_TIMECOUNTER */
 #include <sys/kauth.h>
