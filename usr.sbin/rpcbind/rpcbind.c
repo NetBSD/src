@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcbind.c,v 1.9 2006/06/14 16:25:17 ginsbach Exp $	*/
+/*	$NetBSD: rpcbind.c,v 1.10 2007/05/13 13:38:29 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -97,8 +97,8 @@ char *tcptrans;		/* Name of TCP transport */
 char *udp_uaddr;	/* Universal UDP address */
 char *tcp_uaddr;	/* Universal TCP address */
 #endif
-static char servname[] = "rpcbind";
-static char superuser[] = "superuser";
+static const char servname[] = "sunrpc";
+static const char superuser[] = "superuser";
 
 int main __P((int, char *[]));
 
