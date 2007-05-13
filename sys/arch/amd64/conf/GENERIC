@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.120.2.7 2007/05/12 20:28:47 pavel Exp $
+# $NetBSD: GENERIC,v 1.120.2.8 2007/05/13 06:52:51 pavel Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.120.2.7 $"
+#ident 		"GENERIC-$Revision: 1.120.2.8 $"
 
 maxusers	32		# estimated number of users
 
@@ -256,6 +256,7 @@ options 	MPBIOS_SCANPCI		# MPBIOS configures PCI roots
 #pckbc*  	at acpi?		# PC keyboard controller
 #attimer*	at acpi?		# AT Timer
 #pcppi*  	at acpi?                # AT-style speaker sound
+#ug*		at acpi?		# Abit uGuru Hardware Monitor
 #wss* 		at acpi?		# NeoMagic 256AV in wss mode
 
 cpu* 		at mainbus?
