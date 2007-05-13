@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.150 2006/11/01 10:17:58 yamt Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.150.2.1 2007/05/13 10:28:37 jdc Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.150 2006/11/01 10:17:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.150.2.1 2007/05/13 10:28:37 jdc Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -95,6 +95,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.150 2006/11/01 10:17:58 yamt Exp $")
 #include "opt_ptrace.h"
 #include "opt_systrace.h"
 #include "opt_powerhook.h"
+#include "opt_tftproot.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -133,6 +134,10 @@ struct hook_desc {
 typedef LIST_HEAD(, hook_desc) hook_list_t;
 
 MALLOC_DEFINE(M_IOV, "iov", "large iov's");
+
+#ifdef TFTPROOT
+int tftproot_dhcpboot(struct device *);
+#endif
 
 void
 uio_setup_sysspace(struct uio *uio)
@@ -818,6 +823,11 @@ setroot(struct device *bootdv, int bootpartition)
 	struct ifnet *ifp;
 	const char *deffsname;
 	struct vfsops *vops;
+
+#ifdef TFTPROOT
+	if (tftproot_dhcpboot(bootdv) != 0)
+		boothowto |= RB_ASKNAME;
+#endif
 
 #ifdef MEMORY_DISK_HOOKS
 	for (i = 0; i < NMD; i++) {
