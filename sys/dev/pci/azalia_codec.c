@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia_codec.c,v 1.41 2007/05/10 07:48:16 sketch Exp $	*/
+/*	$NetBSD: azalia_codec.c,v 1.42 2007/05/13 03:28:19 kent Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia_codec.c,v 1.41 2007/05/10 07:48:16 sketch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia_codec.c,v 1.42 2007/05/13 03:28:19 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -2871,7 +2871,7 @@ stac9221_mixer_init(codec_t *this)
 	err = generic_mixer_init(this);
 	if (err)
 		return err;
-	if (false && this->subid == STAC9221_MAC) {
+	if (this->subid == STAC9221_MAC) {
 		stac9221_gpio_unmute(this, 0);
 		stac9221_gpio_unmute(this, 1);
 	}
@@ -2883,17 +2883,20 @@ stac9221_gpio_unmute(codec_t *this, int pin)
 {
 	uint32_t data, mask, dir;
 
-	this->comresp(this, 0, CORB_GET_GPIO_DATA, 0, &data);
-	this->comresp(this, 0, CORB_GET_GPIO_ENABLE_MASK, 0, &mask);
-	this->comresp(this, 0, CORB_GET_GPIO_DIRECTION, 0, &dir);
+	this->comresp(this, this->audiofunc, CORB_GET_GPIO_DATA, 0, &data);
+	this->comresp(this, this->audiofunc,
+	    CORB_GET_GPIO_ENABLE_MASK, 0, &mask);
+	this->comresp(this, this->audiofunc, CORB_GET_GPIO_DIRECTION, 0, &dir);
 	data &= ~(1 << pin);
 	mask |= 1 << pin;
 	dir |= 1 << pin;
-	this->comresp(this, 0, 0x7e7, 0, NULL);
-	this->comresp(this, 0, CORB_SET_GPIO_ENABLE_MASK, mask, NULL);
-	this->comresp(this, 0, CORB_SET_GPIO_DIRECTION, dir, NULL);
+	this->comresp(this, this->audiofunc, 0x7e7, 0, NULL);
+	this->comresp(this, this->audiofunc,
+	    CORB_SET_GPIO_ENABLE_MASK, mask, NULL);
+	this->comresp(this, this->audiofunc,
+	    CORB_SET_GPIO_DIRECTION, dir, NULL);
 	DELAY(1000);
-	this->comresp(this, 0, CORB_SET_GPIO_DATA, data, NULL);
+	this->comresp(this, this->audiofunc, CORB_SET_GPIO_DATA, data, NULL);
 	return 0;
 }
 
