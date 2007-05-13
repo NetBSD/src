@@ -1,4 +1,4 @@
-.\"	$NetBSD: workqueue_create.9,v 1.5 2007/03/01 14:24:25 yamt Exp $
+.\"	$NetBSD: workqueue_create.9,v 1.6 2007/05/13 18:43:50 xtraeme Exp $
 .\"
 .\" Copyright (c)2005 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\" ------------------------------------------------------------
-.Dd March 1, 2007
+.Dd May 13, 2007
 .Dt WORKQUEUE_CREATE 9
 .Os
 .\" ------------------------------------------------------------
@@ -49,14 +49,14 @@ It takes the following arguments.
 .Bl -tag -width flags
 .It Fa wqp
 Specify where to store the created workqueue.
+.It Fa name
+The name of the workqueue.
 .It Fa func
 The function to be called for each
 .Fa work .
 .It Fa arg
 An argument to be passed as a second argument of
 .Fa func .
-.It Fa name
-The name of the workqueue.
 .It Fa prio
 The process priority to be used when sleeping to wait requests.
 .It Fa ipl
