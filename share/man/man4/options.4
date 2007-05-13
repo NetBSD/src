@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.340 2006/11/22 02:02:51 elad Exp $
+.\"	$NetBSD: options.4,v 1.340.2.1 2007/05/13 10:26:36 jdc Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -1180,6 +1180,22 @@ See
 and
 .Xr vnconfig 8
 for more information.
+.It Cd options TFTPROOT
+Download the root memory disk through TFTP at root mount time. This enable
+the use of a root
+.Tn RAM
+disk without requiring it to be embedded in the kernel using
+.Xr mdsetimage 8 .
+The 
+.Tn RAM
+disk name is obtained using DHCP's filename parameter.
+This option require 
+.Em MEMORY_DISK_HOOKS ,
+.Em MEMORY_DISK_DYNAMIC ,
+and
+.Em MEMORY_DISK_IS_ROOT .
+It is incompatible with
+.Em MEMORY_DISK_ROOT_SIZE .
 .It Cd options MALLOC_NOINLINE
 Time critical fixed size memory allocation is performed with
 .Fn MALLOC
