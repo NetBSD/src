@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: sysdb,v 1.17 2007/05/10 17:45:50 christos Exp $
+# $NetBSD: sysdb,v 1.18 2007/05/13 17:23:56 christos Exp $
 #
 
 # PROVIDE: sysdb
@@ -37,7 +37,11 @@ check_file()
 {
 	local src="$1"
 	local db="$2"
+
 	shift 2
+	if [ ! -f "$src" ]; then
+		return
+	fi
 	if [ \( ! -f "$db" \) -o \( "$src" -nt "$db" \) ]; then
 		$echo -n "$comma$(basename "$src")"
 		comma=", "
