@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_doi.h,v 1.8 2006/10/19 09:35:44 vanhu Exp $	*/
+/*	$NetBSD: ipsec_doi.h,v 1.8.2.1 2007/05/13 10:14:05 jdc Exp $	*/
 
 /* Id: ipsec_doi.h,v 1.15 2006/08/11 16:06:30 vanhu Exp */
 
@@ -135,6 +135,10 @@
 #define IPSECDOI_ATTR_KEY_ROUNDS              7 /* B */
 #define IPSECDOI_ATTR_COMP_DICT_SIZE          8 /* B */
 #define IPSECDOI_ATTR_COMP_PRIVALG            9 /* V */
+
+#ifdef HAVE_SECCTX
+#define IPSECDOI_ATTR_SECCTX		     10 /* V */
+#endif
 
 /* 4.6.1 Security Association Payload */
 struct ipsecdoi_pl_sa {

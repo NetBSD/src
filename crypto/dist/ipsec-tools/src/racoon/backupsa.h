@@ -1,4 +1,4 @@
-/*	$NetBSD: backupsa.h,v 1.4 2006/09/09 16:22:09 manu Exp $	*/
+/*	$NetBSD: backupsa.h,v 1.4.2.1 2007/05/13 10:14:04 jdc Exp $	*/
 
 /* Id: backupsa.h,v 1.3 2004/06/11 16:00:15 ludvigm Exp */
 
@@ -34,10 +34,7 @@
 #ifndef _BACKUPSA_H
 #define _BACKUPSA_H
 
-extern int backupsa_to_file __P((u_int, u_int,
-	struct sockaddr *, struct sockaddr *, u_int32_t, u_int32_t, u_int,
-	caddr_t, u_int, u_int, u_int, u_int, u_int,
-	u_int32_t, u_int64_t, u_int64_t, u_int64_t, u_int32_t));
+extern int backupsa_to_file __P((struct pfkey_send_sa_args *));
 extern int backupsa_from_file __P((void));
 extern int backupsa_clean __P((void));
 

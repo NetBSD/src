@@ -1,4 +1,4 @@
-/*	$NetBSD: handler.c,v 1.9 2006/10/03 08:02:51 vanhu Exp $	*/
+/*	$NetBSD: handler.c,v 1.9.2.1 2007/05/13 10:14:04 jdc Exp $	*/
 
 /* Id: handler.c,v 1.28 2006/05/26 12:17:29 manubsd Exp */
 
@@ -292,8 +292,7 @@ delph1(iph1)
 #endif
 
 #ifdef ENABLE_DPD
-	if (iph1->dpd_r_u != NULL)
-		SCHED_KILL(iph1->dpd_r_u);
+	SCHED_KILL(iph1->dpd_r_u);
 #endif
 
 	if (iph1->remote) {
@@ -481,8 +480,21 @@ getph2byid(src, dst, spid)
 	LIST_FOREACH(p, &ph2tree, chain) {
 		if (spid == p->spid &&
 		    CMPSADDR(src, p->src) == 0 &&
-		    CMPSADDR(dst, p->dst) == 0)
-			return p;
+		    CMPSADDR(dst, p->dst) == 0){
+			/* Sanity check to detect zombie handlers
+			 * XXX Sould be done "somewhere" more interesting,
+			 * because we have lots of getph2byxxxx(), but this one
+			 * is called by pk_recvacquire(), so is the most important.
+			 */
+			if(p->status < PHASE2ST_ESTABLISHED &&
+			   p->retry_counter == 0
+			   && p->sce == NULL && p->scr == NULL){
+				plog(LLV_DEBUG, LOCATION, NULL,
+					 "Zombie ph2 found, expiring it\n");
+				isakmp_ph2expire(p);
+			}else
+				return p;
+		}
 	}
 
 	return NULL;
@@ -687,7 +699,7 @@ flushph2()
 		if (p->status == PHASE2ST_ESTABLISHED) 
 			isakmp_info_send_d2(p);
 
-		delete_spd(p);
+		delete_spd(p, 0);
 		unbindph12(p);
 		remph2(p);
 		delph2(p);

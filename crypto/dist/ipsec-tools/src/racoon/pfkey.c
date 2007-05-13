@@ -1,6 +1,6 @@
-/*	$NetBSD: pfkey.c,v 1.16 2006/10/06 12:02:27 manu Exp $	*/
+/*	$NetBSD: pfkey.c,v 1.16.2.1 2007/05/13 10:14:06 jdc Exp $	*/
 
-/* $Id: pfkey.c,v 1.16 2006/10/06 12:02:27 manu Exp $ */
+/* $Id: pfkey.c,v 1.16.2.1 2007/05/13 10:14:06 jdc Exp $ */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -85,6 +85,7 @@
 #include "localconf.h"
 #include "remoteconf.h"
 #include "handler.h"
+#include "policy.h"
 #include "proposal.h"
 #include "isakmp_var.h"
 #include "isakmp.h"
@@ -92,7 +93,6 @@
 #include "ipsec_doi.h"
 #include "oakley.h"
 #include "pfkey.h"
-#include "policy.h"
 #include "algorithm.h"
 #include "sainfo.h"
 #include "admin.h"
@@ -1029,13 +1029,8 @@ pk_sendupdate(iph2)
 	struct ph2handle *iph2;
 {
 	struct saproto *pr;
-	struct sockaddr *src = NULL, *dst = NULL;
-	u_int e_type, e_keylen, a_type, a_keylen, flags;
-	u_int satype, mode;
-	u_int64_t lifebyte = 0;
-	u_int wsize = 4;  /* XXX static size of window */ 
+	struct pfkey_send_sa_args sa_args;
 	int proxy = 0;
-	struct ph2natt natt;
 
 	/* sanity check */
 	if (iph2->approval == NULL) {
@@ -1048,113 +1043,99 @@ pk_sendupdate(iph2)
 	else if (iph2->sainfo && iph2->sainfo->id_i)
 		proxy = 1;
 
+	/* fill in some needed for pfkey_send_update2 */
+	memset (&sa_args, 0, sizeof (sa_args));
+	sa_args.so = lcconf->sock_pfkey;
+	sa_args.l_addtime = iph2->approval->lifetime;
+	sa_args.seq = iph2->seq; 
+	sa_args.wsize = 4;
+
 	/* for mobile IPv6 */
 	if (proxy && iph2->src_id && iph2->dst_id &&
 	    ipsecdoi_transportmode(iph2->approval)) {
-		src = iph2->src_id;
-		dst = iph2->dst_id;
+		sa_args.dst = iph2->src_id;
+		sa_args.src = iph2->dst_id;
 	} else {
-		src = iph2->src;
-		dst = iph2->dst;
+		sa_args.dst = iph2->src;
+		sa_args.src = iph2->dst;
 	}
 
 	for (pr = iph2->approval->head; pr != NULL; pr = pr->next) {
 		/* validity check */
-		satype = ipsecdoi2pfkey_proto(pr->proto_id);
-		if (satype == ~0) {
+		sa_args.satype = ipsecdoi2pfkey_proto(pr->proto_id);
+		if (sa_args.satype == ~0) {
 			plog(LLV_ERROR, LOCATION, NULL,
 				"invalid proto_id %d\n", pr->proto_id);
 			return -1;
 		}
-		else if (satype == SADB_X_SATYPE_IPCOMP) {
+		else if (sa_args.satype == SADB_X_SATYPE_IPCOMP) {
 			/* IPCOMP has no replay window */
-			wsize = 0;
+			sa_args.wsize = 0;
 		}
 #ifdef ENABLE_SAMODE_UNSPECIFIED
-		mode = IPSEC_MODE_ANY;
+		sa_args.mode = IPSEC_MODE_ANY;
 #else
-		mode = ipsecdoi2pfkey_mode(pr->encmode);
-		if (mode == ~0) {
+		sa_args.mode = ipsecdoi2pfkey_mode(pr->encmode);
+		if (sa_args.mode == ~0) {
 			plog(LLV_ERROR, LOCATION, NULL,
 				"invalid encmode %d\n", pr->encmode);
 			return -1;
 		}
 #endif
-
 		/* set algorithm type and key length */
-		e_keylen = pr->head->encklen;
+		sa_args.e_keylen = pr->head->encklen;
 		if (pfkey_convertfromipsecdoi(
 				pr->proto_id,
 				pr->head->trns_id,
 				pr->head->authtype,
-				&e_type, &e_keylen,
-				&a_type, &a_keylen, &flags) < 0)
+				&sa_args.e_type, &sa_args.e_keylen,
+				&sa_args.a_type, &sa_args.a_keylen, 
+				&sa_args.flags) < 0)
 			return -1;
 
 #if 0
-		lifebyte = iph2->approval->lifebyte * 1024,
+		sa_args.l_bytes = iph2->approval->lifebyte * 1024,
 #else
-		lifebyte = 0;
+		sa_args.l_bytes = 0;
 #endif
 
+#ifdef HAVE_SECCTX
+		if (*iph2->approval->sctx.ctx_str) {
+			sa_args.ctxdoi = iph2->approval->sctx.ctx_doi;
+			sa_args.ctxalg = iph2->approval->sctx.ctx_alg;
+			sa_args.ctxstrlen = iph2->approval->sctx.ctx_strlen;
+			sa_args.ctxstr = iph2->approval->sctx.ctx_str;
+		}
+#endif /* HAVE_SECCTX */
+
 #ifdef ENABLE_NATT
-		plog(LLV_DEBUG, LOCATION, NULL, "call pfkey_send_update_nat\n");
 		if (pr->udp_encap) {
-			memset (&natt, 0, sizeof (natt));
-			natt.type = iph2->ph1->natt_options->encaps_type;
-			natt.sport = extract_port (iph2->ph1->remote);
-			natt.dport = extract_port (iph2->ph1->local);
-			natt.oa = NULL;		// FIXME: Here comes OA!!!
-			natt.frag = iph2->ph1->rmconf->esp_frag;
+			sa_args.l_natt_type = iph2->ph1->natt_options->encaps_type;
+			sa_args.l_natt_sport = extract_port (iph2->ph1->remote);
+			sa_args.l_natt_dport = extract_port (iph2->ph1->local);
+			sa_args.l_natt_oa = NULL;  // FIXME: Here comes OA!!!
+#ifdef SADB_X_EXT_NAT_T_FRAG
+			sa_args.l_natt_frag = iph2->ph1->rmconf->esp_frag;
+#endif
 		} else {
-			memset (&natt, 0, sizeof (natt));
-
 			/* Remove port information, that SA doesn't use it */
-			set_port(src, 0);
-			set_port(dst, 0);
+			set_port(sa_args.src, 0);
+			set_port(sa_args.dst, 0);
 		}
 
-		if (pfkey_send_update_nat(
-				lcconf->sock_pfkey,
-				satype,
-				mode,
-				dst,
-				src,
-				pr->spi,
-				pr->reqid_in,
-				wsize,	
-				pr->keymat->v,
-				e_type, e_keylen, a_type, a_keylen, flags,
-				0, lifebyte, iph2->approval->lifetime, 0,
-				iph2->seq,
-				natt.type, natt.sport, natt.dport, natt.oa,
-				natt.frag) < 0) {
-			plog(LLV_ERROR, LOCATION, NULL,
-				"libipsec failed send update_nat (%s)\n",
-				ipsec_strerror());
-			return -1;
-		}
-#else
-		plog(LLV_DEBUG, LOCATION, NULL, "call pfkey_send_update\n");
-		if (pfkey_send_update(
-				lcconf->sock_pfkey,
-				satype,
-				mode,
-				dst,
-				src,
-				pr->spi,
-				pr->reqid_in,
-				wsize,	
-				pr->keymat->v,
-				e_type, e_keylen, a_type, a_keylen, flags,
-				0, lifebyte, iph2->approval->lifetime, 0,
-				iph2->seq) < 0) {
+#endif
+		/* more info to fill in */
+		sa_args.spi = pr->spi;
+		sa_args.reqid = pr->reqid_in;
+		sa_args.keymat = pr->keymat->v;
+
+		plog(LLV_DEBUG, LOCATION, NULL, "call pfkey_send_update2\n");
+		if (pfkey_send_update2(&sa_args) < 0) {
 			plog(LLV_ERROR, LOCATION, NULL,
 				"libipsec failed send update (%s)\n",
 				ipsec_strerror());
 			return -1;
 		}
-#endif /* ENABLE_NATT */
 
 		if (!lcconf->pathinfo[LC_PATHTYPE_BACKUPSA])
 			continue;
@@ -1165,22 +1146,21 @@ pk_sendupdate(iph2)
 		 * But it is impossible because there is not key in the
 		 * information from the kernel.
 		 */
-		if (backupsa_to_file(satype, mode, dst, src,
-				pr->spi, pr->reqid_in, 4,
-				pr->keymat->v,
-				e_type, e_keylen, a_type, a_keylen, flags,
-				0, iph2->approval->lifebyte * 1024,
-				iph2->approval->lifetime, 0,
-				iph2->seq) < 0) {
+		
+		/* change some things before backing up */
+		sa_args.wsize = 4;
+		sa_args.l_bytes = iph2->approval->lifebyte * 1024;
+		
+		if (backupsa_to_file(&sa_args) < 0) {
 			plog(LLV_ERROR, LOCATION, NULL,
 				"backuped SA failed: %s\n",
-				sadbsecas2str(dst, src,
-				satype, pr->spi, mode));
+				sadbsecas2str(sa_args.src, sa_args.dst,
+				sa_args.satype, sa_args.spi, sa_args.mode));
 		}
 		plog(LLV_DEBUG, LOCATION, NULL,
 			"backuped SA: %s\n",
-			sadbsecas2str(dst, src,
-			satype, pr->spi, mode));
+			sadbsecas2str(sa_args.src, sa_args.dst,
+			sa_args.satype, sa_args.spi, sa_args.mode));
 	}
 
 	return 0;
@@ -1301,8 +1281,7 @@ pk_recvupdate(mhp)
 	iph2->ph1->ph2cnt++;
 
 	/* turn off schedule */
-	if (iph2->scr)
-		SCHED_KILL(iph2->scr);
+	SCHED_KILL(iph2->scr);
 
 	/*
 	 * since we are going to reuse the phase2 handler, we need to
@@ -1325,13 +1304,8 @@ pk_sendadd(iph2)
 	struct ph2handle *iph2;
 {
 	struct saproto *pr;
-	struct sockaddr *src = NULL, *dst = NULL;
-	u_int e_type, e_keylen, a_type, a_keylen, flags;
-	u_int satype, mode;
-	u_int64_t lifebyte = 0;
-	u_int wsize = 4; /* XXX static size of window */ 
 	int proxy = 0;
-	struct ph2natt natt;
+	struct pfkey_send_sa_args sa_args;
 
 	/* sanity check */
 	if (iph2->approval == NULL) {
@@ -1345,33 +1319,40 @@ pk_sendadd(iph2)
 	else if (iph2->sainfo && iph2->sainfo->id_i)
 		proxy = 1;
 
+	/* fill in some needed for pfkey_send_update2 */
+	memset (&sa_args, 0, sizeof (sa_args));
+	sa_args.so = lcconf->sock_pfkey;
+	sa_args.l_addtime = iph2->approval->lifetime;
+	sa_args.seq = iph2->seq;
+	sa_args.wsize = 4;
+
 	/* for mobile IPv6 */
 	if (proxy && iph2->src_id && iph2->dst_id &&
 	    ipsecdoi_transportmode(iph2->approval)) {
-		src = iph2->src_id;
-		dst = iph2->dst_id;
+		sa_args.src = iph2->src_id;
+		sa_args.dst = iph2->dst_id;
 	} else {
-		src = iph2->src;
-		dst = iph2->dst;
+		sa_args.src = iph2->src;
+		sa_args.dst = iph2->dst;
 	}
 
 	for (pr = iph2->approval->head; pr != NULL; pr = pr->next) {
 		/* validity check */
-		satype = ipsecdoi2pfkey_proto(pr->proto_id);
-		if (satype == ~0) {
+		sa_args.satype = ipsecdoi2pfkey_proto(pr->proto_id);
+		if (sa_args.satype == ~0) {
 			plog(LLV_ERROR, LOCATION, NULL,
 				"invalid proto_id %d\n", pr->proto_id);
 			return -1;
 		}
-		else if (satype == SADB_X_SATYPE_IPCOMP) {
+		else if (sa_args.satype == SADB_X_SATYPE_IPCOMP) {
 			/* no replay window for IPCOMP */
-			wsize = 0;
+			sa_args.wsize = 0;
 		}
 #ifdef ENABLE_SAMODE_UNSPECIFIED
-		mode = IPSEC_MODE_ANY;
+		sa_args.mode = IPSEC_MODE_ANY;
 #else
-		mode = ipsecdoi2pfkey_mode(pr->encmode);
-		if (mode == ~0) {
+		sa_args.mode = ipsecdoi2pfkey_mode(pr->encmode);
+		if (sa_args.mode == ~0) {
 			plog(LLV_ERROR, LOCATION, NULL,
 				"invalid encmode %d\n", pr->encmode);
 			return -1;
@@ -1379,85 +1360,67 @@ pk_sendadd(iph2)
 #endif
 
 		/* set algorithm type and key length */
-		e_keylen = pr->head->encklen;
+		sa_args.e_keylen = pr->head->encklen;
 		if (pfkey_convertfromipsecdoi(
 				pr->proto_id,
 				pr->head->trns_id,
 				pr->head->authtype,
-				&e_type, &e_keylen,
-				&a_type, &a_keylen, &flags) < 0)
+				&sa_args.e_type, &sa_args.e_keylen,
+				&sa_args.a_type, &sa_args.a_keylen, 
+				&sa_args.flags) < 0)
 			return -1;
 
 #if 0
-		lifebyte = iph2->approval->lifebyte * 1024,
+		sa_args.l_bytes = iph2->approval->lifebyte * 1024,
 #else
-		lifebyte = 0;
+		sa_args.l_bytes = 0;
 #endif
 
+#ifdef HAVE_SECCTX
+		if (*iph2->approval->sctx.ctx_str) {
+			sa_args.ctxdoi = iph2->approval->sctx.ctx_doi;
+			sa_args.ctxalg = iph2->approval->sctx.ctx_alg;
+			sa_args.ctxstrlen = iph2->approval->sctx.ctx_strlen;
+			sa_args.ctxstr = iph2->approval->sctx.ctx_str;
+		}
+#endif /* HAVE_SECCTX */
+
 #ifdef ENABLE_NATT
-		plog(LLV_DEBUG, LOCATION, NULL, "call pfkey_send_add_nat\n");
+		plog(LLV_DEBUG, LOCATION, NULL, "call pfkey_send_add2 "
+		    "(NAT flavor)\n");
 
 		if (pr->udp_encap) {
-			memset (&natt, 0, sizeof (natt));
-			natt.type = UDP_ENCAP_ESPINUDP;
-			natt.sport = extract_port (iph2->ph1->local);
-			natt.dport = extract_port (iph2->ph1->remote);
-			natt.oa = NULL;		// FIXME: Here comes OA!!!
-			natt.frag = iph2->ph1->rmconf->esp_frag;
+			sa_args.l_natt_type = UDP_ENCAP_ESPINUDP;
+			sa_args.l_natt_sport = extract_port(iph2->ph1->local);
+			sa_args.l_natt_dport = extract_port(iph2->ph1->remote);
+			sa_args.l_natt_oa = NULL; // FIXME: Here comes OA!!!
+#ifdef SADB_X_EXT_NAT_T_FRAG
+			sa_args.l_natt_frag = iph2->ph1->rmconf->esp_frag;
+#endif
 		} else {
-			memset (&natt, 0, sizeof (natt));
-
 			/* Remove port information, that SA doesn't use it */
-			set_port(src, 0);
-			set_port(dst, 0);
+			set_port(sa_args.src, 0);
+			set_port(sa_args.dst, 0);
 		}
 
-		if (pfkey_send_add_nat(
-				lcconf->sock_pfkey,
-				satype,
-				mode,
-				src,
-				dst,
-				pr->spi_p,
-				pr->reqid_out,
-				wsize,	
-				pr->keymat_p->v,
-				e_type, e_keylen, a_type, a_keylen, flags,
-				0, lifebyte, iph2->approval->lifetime, 0,
-				iph2->seq,
-				natt.type, natt.sport, natt.dport, natt.oa,
-				natt.frag) < 0) {
-			plog(LLV_ERROR, LOCATION, NULL,
-				"libipsec failed send add_nat (%s)\n",
-				ipsec_strerror());
-			return -1;
-		}
 #else
-		plog(LLV_DEBUG, LOCATION, NULL, "call pfkey_send_add\n");
-
 		/* Remove port information, it is not used without NAT-T */
-		set_port(src, 0);
-		set_port(dst, 0);
+		set_port(sa_args.src, 0);
+		set_port(sa_args.dst, 0);
+#endif
 
-		if (pfkey_send_add(
-				lcconf->sock_pfkey,
-				satype,
-				mode,
-				src,
-				dst,
-				pr->spi_p,
-				pr->reqid_out,
-				wsize,
-				pr->keymat_p->v,
-				e_type, e_keylen, a_type, a_keylen, flags,
-				0, lifebyte, iph2->approval->lifetime, 0,
-				iph2->seq) < 0) {
+		/* more info to fill in */
+		sa_args.spi = pr->spi_p;
+		sa_args.reqid = pr->reqid_out;
+		sa_args.keymat = pr->keymat_p->v;
+
+		plog(LLV_DEBUG, LOCATION, NULL, "call pfkey_send_add2\n");
+		if (pfkey_send_add2(&sa_args) < 0) {
 			plog(LLV_ERROR, LOCATION, NULL,
 				"libipsec failed send add (%s)\n",
 				ipsec_strerror());
 			return -1;
 		}
-#endif /* ENABLE_NATT */
 
 		if (!lcconf->pathinfo[LC_PATHTYPE_BACKUPSA])
 			continue;
@@ -1468,24 +1431,17 @@ pk_sendadd(iph2)
 		 * But it is impossible because there is not key in the
 		 * information from the kernel.
 		 */
-		if (backupsa_to_file(satype, mode, src, dst,
-				pr->spi_p, pr->reqid_out, 4,
-				pr->keymat_p->v,
-				e_type, e_keylen, a_type, a_keylen, flags,
-				0, iph2->approval->lifebyte * 1024,
-				iph2->approval->lifetime, 0,
-				iph2->seq) < 0) {
+		if (backupsa_to_file(&sa_args) < 0) {
 			plog(LLV_ERROR, LOCATION, NULL,
 				"backuped SA failed: %s\n",
-				sadbsecas2str(src, dst,
-				satype, pr->spi_p, mode));
+				sadbsecas2str(sa_args.src, sa_args.dst,
+				sa_args.satype, sa_args.spi, sa_args.mode));
 		}
 		plog(LLV_DEBUG, LOCATION, NULL,
 			"backuped SA: %s\n",
-			sadbsecas2str(src, dst,
-			satype, pr->spi_p, mode));
+			sadbsecas2str(sa_args.src, sa_args.dst,
+			sa_args.satype, sa_args.spi, sa_args.mode));
 	}
-
 	return 0;
 }
 
@@ -1676,6 +1632,11 @@ pk_recvacquire(mhp)
 	struct sockaddr *src, *dst;
 	int n;	/* # of phase 2 handler */
 	int remoteid=0;
+#ifdef HAVE_SECCTX
+	struct sadb_x_sec_ctx *m_sec_ctx;
+#endif /* HAVE_SECCTX */
+	struct policyindex spidx;
+
 
 	/* ignore this message because of local test mode. */
 	if (f_local)
@@ -1694,6 +1655,22 @@ pk_recvacquire(mhp)
 	xpl = (struct sadb_x_policy *)mhp[SADB_X_EXT_POLICY];
 	src = PFKEY_ADDR_SADDR(mhp[SADB_EXT_ADDRESS_SRC]);
 	dst = PFKEY_ADDR_SADDR(mhp[SADB_EXT_ADDRESS_DST]);
+
+#ifdef HAVE_SECCTX
+	m_sec_ctx = (struct sadb_x_sec_ctx *)mhp[SADB_X_EXT_SEC_CTX];
+
+	if (m_sec_ctx != NULL) {
+		plog(LLV_INFO, LOCATION, NULL, "security context doi: %u\n",
+		     m_sec_ctx->sadb_x_ctx_doi);
+		plog(LLV_INFO, LOCATION, NULL, 
+		     "security context algorithm: %u\n",
+		     m_sec_ctx->sadb_x_ctx_alg);
+		plog(LLV_INFO, LOCATION, NULL, "security context length: %u\n",
+		     m_sec_ctx->sadb_x_ctx_len);
+		plog(LLV_INFO, LOCATION, NULL, "security context: %s\n",
+		     ((char *)m_sec_ctx + sizeof(struct sadb_x_sec_ctx)));
+	}
+#endif /* HAVE_SECCTX */
 
 	/* ignore if type is not IPSEC_POLICY_IPSEC */
 	if (xpl->sadb_x_policy_type != IPSEC_POLICY_IPSEC) {
@@ -1782,14 +1759,25 @@ pk_recvacquire(mhp)
 
 	/* get inbound policy */
     {
-	struct policyindex spidx;
 
+	memset(&spidx, 0, sizeof(spidx));
 	spidx.dir = IPSEC_DIR_INBOUND;
 	memcpy(&spidx.src, &sp_out->spidx.dst, sizeof(spidx.src));
 	memcpy(&spidx.dst, &sp_out->spidx.src, sizeof(spidx.dst));
 	spidx.prefs = sp_out->spidx.prefd;
 	spidx.prefd = sp_out->spidx.prefs;
 	spidx.ul_proto = sp_out->spidx.ul_proto;
+
+#ifdef HAVE_SECCTX
+	if (m_sec_ctx) {
+		spidx.sec_ctx.ctx_doi = m_sec_ctx->sadb_x_ctx_doi;
+		spidx.sec_ctx.ctx_alg = m_sec_ctx->sadb_x_ctx_alg;
+		spidx.sec_ctx.ctx_strlen = m_sec_ctx->sadb_x_ctx_len;
+		memcpy(spidx.sec_ctx.ctx_str,
+		      ((char *)m_sec_ctx + sizeof(struct sadb_x_sec_ctx)),
+		      spidx.sec_ctx.ctx_strlen);
+	}
+#endif /* HAVE_SECCTX */
 
 	sp_in = getsp(&spidx);
 	if (sp_in) {
@@ -1889,6 +1877,12 @@ pk_recvacquire(mhp)
 		delph2(iph2[n]);
 		return -1;
 	}
+#ifdef HAVE_SECCTX
+	if (m_sec_ctx) {
+		set_secctx_in_proposal(iph2[n], spidx);
+	}
+#endif /* HAVE_SECCTX */
+
 	insph2(iph2[n]);
 
 	/* start isakmp initiation by using ident exchange */
@@ -2018,6 +2012,11 @@ getsadbpolicy(policy0, policylen0, type, iph2)
 	int policylen;
 	int xisrlen;
 	u_int satype, mode;
+	int len = 0;
+#ifdef HAVE_SECCTX
+	int ctxlen = 0;
+#endif /* HAVE_SECCTX */
+
 
 	/* get policy buffer size */
 	policylen = sizeof(struct sadb_x_policy);
@@ -2032,6 +2031,14 @@ getsadbpolicy(policy0, policylen0, type, iph2)
 			policylen += PFKEY_ALIGN8(xisrlen);
 		}
 	}
+
+#ifdef HAVE_SECCTX
+	if (*spidx->sec_ctx.ctx_str) {
+		ctxlen = sizeof(struct sadb_x_sec_ctx)
+				+ PFKEY_ALIGN8(spidx->sec_ctx.ctx_strlen);
+		policylen += ctxlen;
+	}
+#endif /* HAVE_SECCTX */
 
 	/* make policy structure */
 	policy = racoon_malloc(policylen);
@@ -2051,12 +2058,30 @@ getsadbpolicy(policy0, policylen0, type, iph2)
 #ifdef HAVE_PFKEY_POLICY_PRIORITY
 	xpl->sadb_x_policy_priority = PRIORITY_DEFAULT;
 #endif
+	len++;
+
+#ifdef HAVE_SECCTX
+	if (*spidx->sec_ctx.ctx_str) {
+		struct sadb_x_sec_ctx *p;
+
+		p = (struct sadb_x_sec_ctx *)(xpl + len);
+		memset(p, 0, ctxlen);
+		p->sadb_x_sec_len = PFKEY_UNIT64(ctxlen);
+		p->sadb_x_sec_exttype = SADB_X_EXT_SEC_CTX;
+		p->sadb_x_ctx_len = spidx->sec_ctx.ctx_strlen;
+		p->sadb_x_ctx_doi = spidx->sec_ctx.ctx_doi;
+		p->sadb_x_ctx_alg = spidx->sec_ctx.ctx_alg;
+ 
+		memcpy(p + 1,spidx->sec_ctx.ctx_str,spidx->sec_ctx.ctx_strlen);
+		len += ctxlen;
+	}
+#endif /* HAVE_SECCTX */
 
 	/* no need to append policy information any more if type is SPDDELETE */
 	if (type == SADB_X_SPDDELETE)
 		goto end;
 
-	xisr = (struct sadb_x_ipsecrequest *)(xpl + 1);
+	xisr = (struct sadb_x_ipsecrequest *)(xpl + len);
 
 	/* The order of things is reversed for use in add policy messages */
 	for (pr = iph2->approval->head; pr; pr = pr->next) rlist_len++;
@@ -2183,8 +2208,10 @@ pk_recvspdupdate(mhp)
 {
 	struct sadb_address *saddr, *daddr;
 	struct sadb_x_policy *xpl;
+ 	struct sadb_lifetime *lt;
 	struct policyindex spidx;
 	struct secpolicy *sp;
+ 	u_int64_t created;
 
 	/* sanity check */
 	if (mhp[0] == NULL
@@ -2198,6 +2225,11 @@ pk_recvspdupdate(mhp)
 	saddr = (struct sadb_address *)mhp[SADB_EXT_ADDRESS_SRC];
 	daddr = (struct sadb_address *)mhp[SADB_EXT_ADDRESS_DST];
 	xpl = (struct sadb_x_policy *)mhp[SADB_X_EXT_POLICY];
+	lt = (struct sadb_lifetime*)mhp[SADB_EXT_LIFETIME_HARD];
+	if(lt != NULL)
+		created = lt->sadb_lifetime_addtime;
+	else
+		created = 0;
 
 #ifdef HAVE_PFKEY_POLICY_PRIORITY
 	KEY_SETSECSPIDX(xpl->sadb_x_policy_dir,
@@ -2207,6 +2239,7 @@ pk_recvspdupdate(mhp)
 			daddr->sadb_address_prefixlen,
 			saddr->sadb_address_proto,
 			xpl->sadb_x_policy_priority,
+			created,
 			&spidx);
 #else
 	KEY_SETSECSPIDX(xpl->sadb_x_policy_dir,
@@ -2215,8 +2248,21 @@ pk_recvspdupdate(mhp)
 			saddr->sadb_address_prefixlen,
 			daddr->sadb_address_prefixlen,
 			saddr->sadb_address_proto,
+			created,
 			&spidx);
 #endif
+
+#ifdef HAVE_SECCTX
+	if (mhp[SADB_X_EXT_SEC_CTX] != NULL) {
+		struct sadb_x_sec_ctx *ctx;
+
+		ctx = (struct sadb_x_sec_ctx *)mhp[SADB_X_EXT_SEC_CTX];
+		spidx.sec_ctx.ctx_alg = ctx->sadb_x_ctx_alg;
+		spidx.sec_ctx.ctx_doi = ctx->sadb_x_ctx_doi;
+		spidx.sec_ctx.ctx_strlen = ctx->sadb_x_ctx_len;
+		memcpy(spidx.sec_ctx.ctx_str, ctx + 1, ctx->sadb_x_ctx_len);
+	}
+#endif /* HAVE_SECCTX */
 
 	sp = getsp(&spidx);
 	if (sp == NULL) {
@@ -2284,8 +2330,10 @@ pk_recvspdadd(mhp)
 {
 	struct sadb_address *saddr, *daddr;
 	struct sadb_x_policy *xpl;
+	struct sadb_lifetime *lt;
 	struct policyindex spidx;
 	struct secpolicy *sp;
+	u_int64_t created;
 
 	/* sanity check */
 	if (mhp[0] == NULL
@@ -2299,6 +2347,11 @@ pk_recvspdadd(mhp)
 	saddr = (struct sadb_address *)mhp[SADB_EXT_ADDRESS_SRC];
 	daddr = (struct sadb_address *)mhp[SADB_EXT_ADDRESS_DST];
 	xpl = (struct sadb_x_policy *)mhp[SADB_X_EXT_POLICY];
+	lt = (struct sadb_lifetime*)mhp[SADB_EXT_LIFETIME_HARD];
+	if(lt != NULL)
+		created = lt->sadb_lifetime_addtime;
+	else
+		created = 0;
 
 #ifdef HAVE_PFKEY_POLICY_PRIORITY
 	KEY_SETSECSPIDX(xpl->sadb_x_policy_dir,
@@ -2308,6 +2361,7 @@ pk_recvspdadd(mhp)
 			daddr->sadb_address_prefixlen,
 			saddr->sadb_address_proto,
 			xpl->sadb_x_policy_priority,
+			created,
 			&spidx);
 #else
 	KEY_SETSECSPIDX(xpl->sadb_x_policy_dir,
@@ -2316,8 +2370,21 @@ pk_recvspdadd(mhp)
 			saddr->sadb_address_prefixlen,
 			daddr->sadb_address_prefixlen,
 			saddr->sadb_address_proto,
+			created,
 			&spidx);
 #endif
+
+#ifdef HAVE_SECCTX
+	if (mhp[SADB_X_EXT_SEC_CTX] != NULL) {
+		struct sadb_x_sec_ctx *ctx;
+
+		ctx = (struct sadb_x_sec_ctx *)mhp[SADB_X_EXT_SEC_CTX];
+		spidx.sec_ctx.ctx_alg = ctx->sadb_x_ctx_alg;
+		spidx.sec_ctx.ctx_doi = ctx->sadb_x_ctx_doi;
+		spidx.sec_ctx.ctx_strlen = ctx->sadb_x_ctx_len;
+		memcpy(spidx.sec_ctx.ctx_str, ctx + 1, ctx->sadb_x_ctx_len);
+	}
+#endif /* HAVE_SECCTX */
 
 	sp = getsp(&spidx);
 	if (sp != NULL) {
@@ -2380,8 +2447,10 @@ pk_recvspddelete(mhp)
 {
 	struct sadb_address *saddr, *daddr;
 	struct sadb_x_policy *xpl;
+	struct sadb_lifetime *lt;
 	struct policyindex spidx;
 	struct secpolicy *sp;
+	u_int64_t created;
 
 	/* sanity check */
 	if (mhp[0] == NULL
@@ -2395,6 +2464,11 @@ pk_recvspddelete(mhp)
 	saddr = (struct sadb_address *)mhp[SADB_EXT_ADDRESS_SRC];
 	daddr = (struct sadb_address *)mhp[SADB_EXT_ADDRESS_DST];
 	xpl = (struct sadb_x_policy *)mhp[SADB_X_EXT_POLICY];
+	lt = (struct sadb_lifetime*)mhp[SADB_EXT_LIFETIME_HARD];
+	if(lt != NULL)
+		created = lt->sadb_lifetime_addtime;
+	else
+		created = 0;
 
 #ifdef HAVE_PFKEY_POLICY_PRIORITY
 	KEY_SETSECSPIDX(xpl->sadb_x_policy_dir,
@@ -2404,6 +2478,7 @@ pk_recvspddelete(mhp)
 			daddr->sadb_address_prefixlen,
 			saddr->sadb_address_proto,
 			xpl->sadb_x_policy_priority,
+			created,
 			&spidx);
 #else
 	KEY_SETSECSPIDX(xpl->sadb_x_policy_dir,
@@ -2412,8 +2487,21 @@ pk_recvspddelete(mhp)
 			saddr->sadb_address_prefixlen,
 			daddr->sadb_address_prefixlen,
 			saddr->sadb_address_proto,
+			created,
 			&spidx);
 #endif
+
+#ifdef HAVE_SECCTX
+	if (mhp[SADB_X_EXT_SEC_CTX] != NULL) {
+		struct sadb_x_sec_ctx *ctx;
+
+		ctx = (struct sadb_x_sec_ctx *)mhp[SADB_X_EXT_SEC_CTX];
+		spidx.sec_ctx.ctx_alg = ctx->sadb_x_ctx_alg;
+		spidx.sec_ctx.ctx_doi = ctx->sadb_x_ctx_doi;
+		spidx.sec_ctx.ctx_strlen = ctx->sadb_x_ctx_len;
+		memcpy(spidx.sec_ctx.ctx_str, ctx + 1, ctx->sadb_x_ctx_len);
+	}
+#endif /* HAVE_SECCTX */
 
 	sp = getsp(&spidx);
 	if (sp == NULL) {
@@ -2435,8 +2523,10 @@ pk_recvspdexpire(mhp)
 {
 	struct sadb_address *saddr, *daddr;
 	struct sadb_x_policy *xpl;
+	struct sadb_lifetime *lt;
 	struct policyindex spidx;
 	struct secpolicy *sp;
+	u_int64_t created;
 
 	/* sanity check */
 	if (mhp[0] == NULL
@@ -2450,6 +2540,11 @@ pk_recvspdexpire(mhp)
 	saddr = (struct sadb_address *)mhp[SADB_EXT_ADDRESS_SRC];
 	daddr = (struct sadb_address *)mhp[SADB_EXT_ADDRESS_DST];
 	xpl = (struct sadb_x_policy *)mhp[SADB_X_EXT_POLICY];
+	lt = (struct sadb_lifetime*)mhp[SADB_EXT_LIFETIME_HARD];
+	if(lt != NULL)
+		created = lt->sadb_lifetime_addtime;
+	else
+		created = 0;
 
 #ifdef HAVE_PFKEY_POLICY_PRIORITY
 	KEY_SETSECSPIDX(xpl->sadb_x_policy_dir,
@@ -2459,6 +2554,7 @@ pk_recvspdexpire(mhp)
 			daddr->sadb_address_prefixlen,
 			saddr->sadb_address_proto,
 			xpl->sadb_x_policy_priority,
+			created,
 			&spidx);
 #else
 	KEY_SETSECSPIDX(xpl->sadb_x_policy_dir,
@@ -2467,8 +2563,21 @@ pk_recvspdexpire(mhp)
 			saddr->sadb_address_prefixlen,
 			daddr->sadb_address_prefixlen,
 			saddr->sadb_address_proto,
+			created,
 			&spidx);
 #endif
+
+#ifdef HAVE_SECCTX
+	if (mhp[SADB_X_EXT_SEC_CTX] != NULL) {
+		struct sadb_x_sec_ctx *ctx;
+
+		ctx = (struct sadb_x_sec_ctx *)mhp[SADB_X_EXT_SEC_CTX];
+		spidx.sec_ctx.ctx_alg = ctx->sadb_x_ctx_alg;
+		spidx.sec_ctx.ctx_doi = ctx->sadb_x_ctx_doi;
+		spidx.sec_ctx.ctx_strlen = ctx->sadb_x_ctx_len;
+		memcpy(spidx.sec_ctx.ctx_str, ctx + 1, ctx->sadb_x_ctx_len);
+	}
+#endif /* HAVE_SECCTX */
 
 	sp = getsp(&spidx);
 	if (sp == NULL) {
@@ -2505,8 +2614,10 @@ pk_recvspddump(mhp)
 	struct sadb_msg *msg;
 	struct sadb_address *saddr, *daddr;
 	struct sadb_x_policy *xpl;
+	struct sadb_lifetime *lt;
 	struct policyindex spidx;
 	struct secpolicy *sp;
+	u_int64_t created;
 
 	/* sanity check */
 	if (mhp[0] == NULL) {
@@ -2519,6 +2630,11 @@ pk_recvspddump(mhp)
 	saddr = (struct sadb_address *)mhp[SADB_EXT_ADDRESS_SRC];
 	daddr = (struct sadb_address *)mhp[SADB_EXT_ADDRESS_DST];
 	xpl = (struct sadb_x_policy *)mhp[SADB_X_EXT_POLICY];
+	lt = (struct sadb_lifetime*)mhp[SADB_EXT_LIFETIME_HARD];
+	if(lt != NULL)
+		created = lt->sadb_lifetime_addtime;
+	else
+		created = 0;
 
 	if (saddr == NULL || daddr == NULL || xpl == NULL) {
 		plog(LLV_ERROR, LOCATION, NULL,
@@ -2534,6 +2650,7 @@ pk_recvspddump(mhp)
 			daddr->sadb_address_prefixlen,
 			saddr->sadb_address_proto,
 			xpl->sadb_x_policy_priority,
+			created,
 			&spidx);
 #else
 	KEY_SETSECSPIDX(xpl->sadb_x_policy_dir,
@@ -2542,8 +2659,21 @@ pk_recvspddump(mhp)
 			saddr->sadb_address_prefixlen,
 			daddr->sadb_address_prefixlen,
 			saddr->sadb_address_proto,
+			created,
 			&spidx);
 #endif
+
+#ifdef HAVE_SECCTX
+	if (mhp[SADB_X_EXT_SEC_CTX] != NULL) {
+		struct sadb_x_sec_ctx *ctx;
+
+		ctx = (struct sadb_x_sec_ctx *)mhp[SADB_X_EXT_SEC_CTX];
+		spidx.sec_ctx.ctx_alg = ctx->sadb_x_ctx_alg;
+		spidx.sec_ctx.ctx_doi = ctx->sadb_x_ctx_doi;
+		spidx.sec_ctx.ctx_strlen = ctx->sadb_x_ctx_len;
+		memcpy(spidx.sec_ctx.ctx_str, ctx + 1, ctx->sadb_x_ctx_len);
+	}
+#endif /* HAVE_SECCTX */
 
 	sp = getsp(&spidx);
 	if (sp != NULL) {
@@ -2736,6 +2866,8 @@ addnewsp(mhp)
 	struct secpolicy *new = NULL;
 	struct sadb_address *saddr, *daddr;
 	struct sadb_x_policy *xpl;
+	struct sadb_lifetime *lt;
+	u_int64_t created;
 
 	/* sanity check */
 	if (mhp[SADB_EXT_ADDRESS_SRC] == NULL
@@ -2749,6 +2881,16 @@ addnewsp(mhp)
 	saddr = (struct sadb_address *)mhp[SADB_EXT_ADDRESS_SRC];
 	daddr = (struct sadb_address *)mhp[SADB_EXT_ADDRESS_DST];
 	xpl = (struct sadb_x_policy *)mhp[SADB_X_EXT_POLICY];
+	lt = (struct sadb_lifetime*)mhp[SADB_EXT_LIFETIME_HARD];
+	if(lt != NULL)
+		created = lt->sadb_lifetime_addtime;
+	else
+		created = 0;
+	lt = (struct sadb_lifetime*)mhp[SADB_EXT_LIFETIME_HARD];
+	if(lt != NULL)
+		created = lt->sadb_lifetime_addtime;
+	else
+		created = 0;
 
 #ifdef __linux__
 	/* bsd skips over per-socket policies because there will be no
@@ -2903,6 +3045,7 @@ addnewsp(mhp)
 			daddr->sadb_address_prefixlen,
 			saddr->sadb_address_proto,
 			xpl->sadb_x_policy_priority,
+			created,
 			&new->spidx);
 #else
 	KEY_SETSECSPIDX(xpl->sadb_x_policy_dir,
@@ -2911,8 +3054,21 @@ addnewsp(mhp)
 			saddr->sadb_address_prefixlen,
 			daddr->sadb_address_prefixlen,
 			saddr->sadb_address_proto,
+			created,
 			&new->spidx);
 #endif
+
+#ifdef HAVE_SECCTX
+	if (mhp[SADB_X_EXT_SEC_CTX] != NULL) {
+		struct sadb_x_sec_ctx *ctx;
+
+		ctx = (struct sadb_x_sec_ctx *)mhp[SADB_X_EXT_SEC_CTX];
+		new->spidx.sec_ctx.ctx_alg = ctx->sadb_x_ctx_alg;
+		new->spidx.sec_ctx.ctx_doi = ctx->sadb_x_ctx_doi;
+		new->spidx.sec_ctx.ctx_strlen = ctx->sadb_x_ctx_len;
+		memcpy(new->spidx.sec_ctx.ctx_str,ctx + 1,ctx->sadb_x_ctx_len);
+	}
+#endif /* HAVE_SECCTX */
 
 	inssp(new);
 
