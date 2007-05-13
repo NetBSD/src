@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_misc.c,v 1.107 2007/05/12 23:02:50 dsl Exp $	*/
+/*	$NetBSD: ultrix_misc.c,v 1.108 2007/05/13 11:06:41 dsl Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_misc.c,v 1.107 2007/05/12 23:02:50 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_misc.c,v 1.108 2007/05/13 11:06:41 dsl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
@@ -802,8 +802,6 @@ ultrix_sys_fcntl(struct lwp *l, void *v, register_t *retval)
 		error = ultrix_to_bsd_flock(&ufl, &fl);
 		if (error)
 			return (error);
-		sg = stackgap_init(p, 0);
-		flp = (struct flock *)stackgap_alloc(p, &sg, sizeof(*flp));
 		error = do_fcntl_lock(l, SCARG(uap, fd), SCARG(uap, cmd), &fl);
 		if (SCARG(uap, cmd) != F_GETLK || error != 0)
 			return error;
