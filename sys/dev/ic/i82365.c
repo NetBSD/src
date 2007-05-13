@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365.c,v 1.98.2.2 2007/04/10 12:07:09 ad Exp $	*/
+/*	$NetBSD: i82365.c,v 1.98.2.3 2007/05/13 17:36:24 ad Exp $	*/
 
 /*
  * Copyright (c) 2004 Charles M. Hannum.  All rights reserved.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82365.c,v 1.98.2.2 2007/04/10 12:07:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82365.c,v 1.98.2.3 2007/05/13 17:36:24 ad Exp $");
 
 #define	PCICDEBUG
 
@@ -434,7 +434,7 @@ pcic_attach_socket(h)
 	config_pending_incr();
 	snprintf(cs, sizeof(cs), "%d,%d", h->chip, h->socket);
 
-	if (kthread_create(PRI_NONE, false, pcic_event_thread, h,
+	if (kthread_create(PRI_NONE, 0, NULL, pcic_event_thread, h,
 	    &h->event_thread, "%s,%s", h->ph_parent->dv_xname, cs)) {
 		printf("%s: unable to create event thread for sock 0x%02x\n",
 		    h->ph_parent->dv_xname, h->sock);

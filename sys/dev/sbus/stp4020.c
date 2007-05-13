@@ -1,4 +1,4 @@
-/*	$NetBSD: stp4020.c,v 1.49 2006/12/11 11:42:48 jdc Exp $ */
+/*	$NetBSD: stp4020.c,v 1.49.6.1 2007/05/13 17:36:28 ad Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stp4020.c,v 1.49 2006/12/11 11:42:48 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stp4020.c,v 1.49.6.1 2007/05/13 17:36:28 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -156,7 +156,6 @@ static void	stp4020_wr_winctl(struct stp4020_socket *, int, int, int);
 
 void	stp4020_delay(struct stp4020_softc *sc, unsigned int);
 void	stp4020_attach_socket(struct stp4020_socket *, int);
-void	stp4020_create_event_thread(void *);
 void	stp4020_event_thread(void *);
 void	stp4020_queue_event(struct stp4020_softc *, int, int);
 
@@ -470,12 +469,7 @@ stp4020attach(parent, self, aux)
 
 	sc->sc_pct = (pcmcia_chipset_tag_t)&stp4020_functions;
 
-	/*
-	 * Arrange that a kernel thread be created to handle
-	 * insert/removal events.
-	 */
 	SIMPLEQ_INIT(&sc->events);
-	kthread_create(stp4020_create_event_thread, sc);
 
 	for (i = 0; i < STP4020_NSOCK; i++) {
 		struct stp4020_socket *h = &sc->sc_socks[i];
@@ -486,6 +480,15 @@ stp4020attach(parent, self, aux)
 			stp4020_dump_regs(h);
 #endif
 		stp4020_attach_socket(h, sa->sa_frequency);
+	}
+
+	/*
+	 * Arrange that a kernel thread be created to handle
+	 * insert/removal events.
+	 */
+	if (kthread_create(PRI_NONE, 0, NULL, stp4020_event_thread, sc,
+	    &sc->event_thread, "%s", name)) {
+		panic("%s: unable to create event thread", name);
 	}
 }
 
@@ -553,23 +556,6 @@ stp4020_attach_socket(h, speed)
 
 	pcmcia_card_attach(h->pcmcia);
 	h->flags |= STP4020_SOCKET_BUSY;
-}
-
-
-/*
- * Deferred thread creation callback.
- */
-void
-stp4020_create_event_thread(arg)
-	void *arg;
-{
-	struct stp4020_softc *sc = arg;
-	const char *name = sc->sc_dev.dv_xname;
-
-	if (kthread_create1(stp4020_event_thread, sc, &sc->event_thread,
-			   "%s", name)) {
-		panic("%s: unable to create event thread", name);
-	}
 }
 
 /*

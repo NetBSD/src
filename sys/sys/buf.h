@@ -1,4 +1,4 @@
-/*     $NetBSD: buf.h,v 1.95.2.1 2007/03/13 17:51:18 ad Exp $ */
+/*     $NetBSD: buf.h,v 1.95.2.2 2007/05/13 17:36:39 ad Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -96,7 +96,6 @@ struct kauth_cred;
  */
 LIST_HEAD(workhead, worklist);
 
-
 /*
  * These are currently used only by the soft dependency code, hence
  * are stored once in a global variable. If other subsystems wanted
@@ -113,6 +112,8 @@ struct bio_ops {
 	int	(*io_countdeps)(struct buf *, int);
 	void	(*io_pageiodone)(struct buf *);
 };
+
+extern kmutex_t bqueue_lock;
 
 /*
  * The buffer header describes an I/O operation in the kernel.
@@ -176,8 +177,9 @@ struct buf {
 do {									\
 	LIST_INIT(&(bp)->b_dep);					\
 	mutex_init(&(bp)->b_interlock, MUTEX_DRIVER, IPL_BIO);		\
-	cv_init(&(bp)->b_cv, "bufwait");				\
+	cv_init(&(bp)->b_cv, "biowait");				\
 	(bp)->b_dev = NODEV;						\
+	(bp)->b_error = 0;						\
 	BIO_SETPRIO((bp), BPRIO_DEFAULT);				\
 } while (/*CONSTCOND*/0)
 
@@ -279,14 +281,14 @@ void	allocbuf(struct buf *, int, int);
 void	bawrite(struct buf *);
 void	bdirty(struct buf *);
 void	bdwrite(struct buf *);
-void	biodone(struct buf *);
+void	biodone(struct buf *, int, int);
 int	biowait(struct buf *);
 int	bread(struct vnode *, daddr_t, int, struct kauth_cred *, struct buf **);
 int	breada(struct vnode *, daddr_t, int, daddr_t, int, struct kauth_cred *,
 	       struct buf **);
 int	breadn(struct vnode *, daddr_t, int, daddr_t *, int *, int,
 	       struct kauth_cred *, struct buf **);
-void	brelse(struct buf *);
+void	brelse(struct buf *, int);
 void	bremfree(struct buf *);
 void	bufinit(void);
 int	bwrite(struct buf *);

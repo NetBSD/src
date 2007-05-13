@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.118.6.1 2007/03/13 17:51:21 ad Exp $	*/
+/*	$NetBSD: lfs.h,v 1.118.6.2 2007/05/13 17:36:43 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -536,7 +536,7 @@ typedef struct _cleanerinfo {
 	(void) LFS_BWRITE_LOG(bp); /* Ifile */			 	\
     } else {							 	\
 	mutex_exit(&(fs)->lfs_interlock);				\
-	brelse(bp);						 	\
+	brelse(bp, 0);						 	\
     }									\
 } while (0)
 
@@ -548,7 +548,7 @@ typedef struct _cleanerinfo {
 	if ((FS)->lfs_version > 1) {					\
 		LFS_CLEANERINFO((CIP), (FS), (BP));			\
 		(FS)->lfs_freehd = (CIP)->free_head;			\
-		brelse(BP);						\
+		brelse(BP, 0);						\
 	}								\
 	*(FREEP) = (FS)->lfs_freehd;					\
 } while (0)
@@ -568,7 +568,7 @@ typedef struct _cleanerinfo {
 #define LFS_GET_TAILFREE(FS, CIP, BP, FREEP) do {			\
 	LFS_CLEANERINFO((CIP), (FS), (BP));				\
 	*(FREEP) = (CIP)->free_tail;					\
-	brelse(BP);							\
+	brelse(BP, 0);							\
 } while (0)
 
 #define LFS_PUT_TAILFREE(FS, CIP, BP, VAL) do {				\

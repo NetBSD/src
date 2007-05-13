@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.88.2.1 2007/04/05 21:57:54 ad Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.88.2.2 2007/05/13 17:36:46 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.88.2.1 2007/04/05 21:57:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.88.2.2 2007/05/13 17:36:46 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ffs.h"
@@ -266,7 +266,7 @@ searchloop:
 		 */
 		if ((dp->i_offset & bmask) == 0) {
 			if (bp != NULL)
-				brelse(bp);
+				brelse(bp, 0);
 			error = ufs_blkatoff(vdp, (off_t)dp->i_offset, NULL,
 			    &bp);
 			if (error)
@@ -410,7 +410,7 @@ notfound:
 		goto searchloop;
 	}
 	if (bp != NULL)
-		brelse(bp);
+		brelse(bp, 0);
 	/*
 	 * If creating, and at end of pathname and current
 	 * directory has not been removed, then can consider
@@ -495,7 +495,7 @@ found:
 		DIP_ASSIGN(dp, size, dp->i_size);
 		dp->i_flag |= IN_CHANGE | IN_UPDATE;
 	}
-	brelse(bp);
+	brelse(bp, 0);
 
 	/*
 	 * Found component in pathname.
@@ -1355,7 +1355,7 @@ ufs_blkatoff(struct vnode *vp, off_t offset, char **res, struct buf **bpp)
 	error = breadn(vp, blks[0], blksizes[0], &blks[1], &blksizes[1],
 	    run - 1, NOCRED, &bp);
 	if (error != 0) {
-		brelse(bp);
+		brelse(bp, 0);
 		*bpp = NULL;
 		return error;
 	}

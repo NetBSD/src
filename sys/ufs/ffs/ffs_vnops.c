@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.86.4.2 2007/03/21 20:11:58 ad Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.86.4.3 2007/05/13 17:36:43 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.86.4.2 2007/03/21 20:11:58 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.86.4.3 2007/05/13 17:36:43 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -246,7 +246,7 @@ ffs_fsync(void *v)
 		struct lwp *a_l;
 	} */ *ap = v;
 	struct buf *bp;
-	int s, num, error, i;
+	int num, error, i;
 	struct indir ia[NIADDR + 1];
 	int bsize;
 	daddr_t blk_high;
@@ -286,28 +286,27 @@ ffs_fsync(void *v)
 	 * Then, flush indirect blocks.
 	 */
 
-	s = splbio();
 	if (blk_high >= NDADDR) {
 		error = ufs_getlbns(vp, blk_high, ia, &num);
-		if (error) {
-			splx(s);
+		if (error)
 			goto out;
-		}
+
+		mutex_enter(&bqueue_lock);
 		for (i = 0; i < num; i++) {
-			bp = incore(vp, ia[i].in_lbn);
-			if (bp != NULL) {
-				mutex_enter(&bp->b_interlock);
-				if (!(bp->b_flags & B_BUSY) && (bp->b_flags & B_DELWRI)) {
-					bp->b_flags |= B_BUSY | B_VFLUSH;
-					mutex_exit(&bp->b_interlock);
-					splx(s);
-					bawrite(bp);
-					s = splbio();
-				} else {
-					mutex_exit(&bp->b_interlock);
-				}
+			if ((bp = incore(vp, ia[i].in_lbn)) == NULL)
+				continue;
+			mutex_enter(&bp->b_interlock);
+			if ((bp->b_flags & (B_BUSY | B_DELWRI)) != B_DELWRI) {
+				mutex_exit(&bp->b_interlock);
+				continue;
 			}
+			bp->b_flags |= B_BUSY | B_VFLUSH;
+			mutex_exit(&bp->b_interlock);
+			mutex_exit(&bqueue_lock);
+			bawrite(bp);
+			mutex_enter(&bqueue_lock);
 		}
+		mutex_exit(&bqueue_lock);
 	}
 
 	if (ap->a_flags & FSYNC_WAIT) {
@@ -316,7 +315,6 @@ ffs_fsync(void *v)
 			cv_wait(&vp->v_outputcv, &global_v_numoutput_lock);
 		mutex_exit(&global_v_numoutput_lock);
 	}
-	splx(s);
 
 	error = ffs_update(vp, NULL, NULL,
 	    ((ap->a_flags & (FSYNC_WAIT | FSYNC_DATAONLY)) == FSYNC_WAIT)
@@ -350,7 +348,7 @@ ffs_full_fsync(void *v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct buf *bp, *nbp;
-	int s, error, passes, skipmeta, inodedeps_only, waitfor;
+	int error, passes, skipmeta, inodedeps_only, waitfor;
 
 	if (vp->v_type == VBLK &&
 	    vp->v_specmountpoint != NULL &&
@@ -379,11 +377,13 @@ ffs_full_fsync(void *v)
 	skipmeta = 0;
 	if (ap->a_flags & FSYNC_WAIT)
 		skipmeta = 1;
-	s = splbio();
 
 loop:
-	LIST_FOREACH(bp, &vp->v_dirtyblkhd, b_vnbufs)
+	LIST_FOREACH(bp, &vp->v_dirtyblkhd, b_vnbufs) {
+		mutex_enter(&bp->b_interlock);
 		bp->b_flags &= ~B_SCANNED;
+		mutex_exit(&bp->b_interlock);
+	}
 	for (bp = LIST_FIRST(&vp->v_dirtyblkhd); bp; bp = nbp) {
 		nbp = LIST_NEXT(bp, b_vnbufs);
 		mutex_enter(&bp->b_interlock);
@@ -397,9 +397,8 @@ loop:
 			mutex_exit(&bp->b_interlock);
 			continue;
 		}
-		mutex_exit(&bp->b_interlock);
 		bp->b_flags |= B_BUSY | B_VFLUSH | B_SCANNED;
-		splx(s);
+		mutex_exit(&bp->b_interlock);
 		/*
 		 * On our final pass through, do all I/O synchronously
 		 * so that we can find out if our flush is failing
@@ -409,7 +408,6 @@ loop:
 			(void) bawrite(bp);
 		else if ((error = bwrite(bp)) != 0)
 			return (error);
-		s = splbio();
 		/*
 		 * Since we may have slept during the I/O, we need
 		 * to start from a known point.
@@ -426,7 +424,6 @@ loop:
 			cv_wait(&vp->v_outputcv, &global_v_numoutput_lock);
 		}
 		mutex_exit(&global_v_numoutput_lock);
-		splx(s);
 
 		/*
 		 * Ensure that any filesystem metadata associated
@@ -435,7 +432,6 @@ loop:
 		if ((error = softdep_sync_metadata(ap)) != 0)
 			return (error);
 
-		s = splbio();
 		if (!LIST_EMPTY(&vp->v_dirtyblkhd)) {
 			/*
 			* Block devices associated with filesystems may
@@ -455,7 +451,6 @@ loop:
 #endif
 		}
 	}
-	splx(s);
 
 	if (inodedeps_only)
 		waitfor = 0;

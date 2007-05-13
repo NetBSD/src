@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.122.2.5 2007/04/09 22:10:09 ad Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.122.2.6 2007/05/13 17:36:47 ad Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.122.2.5 2007/04/09 22:10:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.122.2.6 2007/05/13 17:36:47 ad Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -1055,9 +1055,7 @@ swstrategy(struct buf *bp)
 	sdp = swapdrum_getsdp(pageno);
 	mutex_exit(&uvm_swap_data_lock);
 	if (sdp == NULL) {
-		bp->b_error = EINVAL;
-		bp->b_flags |= B_ERROR;
-		biodone(bp);
+		biodone(bp, EINVAL, 0);
 		UVMHIST_LOG(pdhist, "  failed to get swap device", 0, 0, 0, 0);
 		return;
 	}
@@ -1295,12 +1293,9 @@ sw_reg_strategy(struct swapdev *sdp, struct buf *bp, int bn)
 out: /* Arrive here at splbio */
 	vnx->vx_flags &= ~VX_BUSY;
 	if (vnx->vx_pending == 0) {
-		if (vnx->vx_error != 0) {
-			bp->b_error = vnx->vx_error;
-			bp->b_flags |= B_ERROR;
-		}
+		error = vnx->vx_error;
 		pool_put(&vndxfer_pool, vnx);
-		biodone(bp);
+		biodone(bp, error, bp->b_resid);
 	}
 	splx(s);
 }
@@ -1387,11 +1382,10 @@ sw_reg_iodone(struct buf *bp)
 	 */
 	if (vnx->vx_error != 0) {
 		/* pass error upward */
-		pbp->b_flags |= B_ERROR;
-		pbp->b_error = vnx->vx_error;
+		error = vnx->vx_error;
 		if ((vnx->vx_flags & VX_BUSY) == 0 && vnx->vx_pending == 0) {
 			pool_put(&vndxfer_pool, vnx);
-			biodone(pbp);
+			biodone(pbp, error, 0);
 		}
 	} else if (pbp->b_resid == 0) {
 		KASSERT(vnx->vx_pending == 0);
@@ -1399,7 +1393,7 @@ sw_reg_iodone(struct buf *bp)
 			UVMHIST_LOG(pdhist, "  iodone error=%d !",
 			    pbp, vnx->vx_error, 0, 0);
 			pool_put(&vndxfer_pool, vnx);
-			biodone(pbp);
+			biodone(pbp, 0, 0);
 		}
 	}
 

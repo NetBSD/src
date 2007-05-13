@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_icp.c,v 1.16 2006/11/16 01:32:51 christos Exp $	*/
+/*	$NetBSD: ld_icp.c,v 1.16.8.1 2007/05/13 17:36:25 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_icp.c,v 1.16 2006/11/16 01:32:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_icp.c,v 1.16.8.1 2007/05/13 17:36:25 ad Exp $");
 
 #include "rnd.h"
 
@@ -308,6 +308,7 @@ ld_icp_intr(struct icp_ccb *ic)
 	struct buf *bp;
 	struct ld_icp_softc *sc;
 	struct icp_softc *icp;
+	int error;
 
 	bp = ic->ic_context;
 	sc = (struct ld_icp_softc *)ic->ic_dv;
@@ -316,9 +317,7 @@ ld_icp_intr(struct icp_ccb *ic)
 	if (ic->ic_status != ICP_S_OK) {
 		printf("%s: request failed; status=0x%04x\n",
 		    ic->ic_dv->dv_xname, ic->ic_status);
-		bp->b_flags |= B_ERROR;
-		bp->b_error = EIO;
-		bp->b_resid = bp->b_bcount;
+		error = EIO;
 
 		icp->icp_evt.size = sizeof(icp->icp_evt.eu.sync);
 		icp->icp_evt.eu.sync.ionode = device_unit(&icp->icp_dv);
@@ -332,11 +331,11 @@ ld_icp_intr(struct icp_ccb *ic)
 			icp_store_event(icp, GDT_ES_SYNC, icp->icp_service,
 			    &icp->icp_evt);
 	} else
-		bp->b_resid = 0;
+		error = 0;
 
 	icp_ccb_unmap(icp, ic);
 	icp_ccb_free(icp, ic);
-	lddone(&sc->sc_ld, bp);
+	lddone(&sc->sc_ld, bp, error);
 }
 
 void

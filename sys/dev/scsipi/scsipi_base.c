@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.143.6.4 2007/04/10 12:07:11 ad Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.143.6.5 2007/05/13 17:36:28 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.143.6.4 2007/04/10 12:07:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.143.6.5 2007/05/13 17:36:28 ad Exp $");
 
 #include "opt_scsi.h"
 
@@ -135,7 +135,7 @@ scsipi_channel_init(struct scsipi_channel *chan)
 	/*
 	 * Create the asynchronous completion thread.
 	 */
-	if (kthread_create(PRI_NONE, false, scsipi_completion_thread, chan,
+	if (kthread_create(PRI_NONE, 0, NULL, scsipi_completion_thread, chan,
 	    &chan->chan_thread, "%s", chan->chan_name)) {
 		printf("%s: unable to create completion thread for "
 		    "channel %d\n", adapt->adapt_dev->dv_xname,

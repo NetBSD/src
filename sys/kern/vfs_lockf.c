@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lockf.c,v 1.58.2.3 2007/04/13 15:41:07 ad Exp $	*/
+/*	$NetBSD: vfs_lockf.c,v 1.58.2.4 2007/05/13 17:36:36 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lockf.c,v 1.58.2.3 2007/04/13 15:41:07 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lockf.c,v 1.58.2.4 2007/05/13 17:36:36 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,7 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_lockf.c,v 1.58.2.3 2007/04/13 15:41:07 ad Exp $"
 /*
  * The lockf structure is a kernel structure which contains the information
  * associated with a byte range lock.  The lockf structures are linked into
- * the inode structure. Locks are sorted by the starting byte of the lock for
+ * the vnode structure.  Locks are sorted by the starting byte of the lock for
  * efficiency.
  *
  * lf_next is used for two purposes, depending on whether the lock is
@@ -191,17 +191,16 @@ lf_alloc(uid_t uid, int allowfail)
 {
 	struct uidinfo *uip;
 	struct lockf *lock;
-	int s;
 
 	uip = uid_find(uid);
-	UILOCK(uip, s);
+	mutex_enter(&uip->ui_lock);
 	if (uid && allowfail && uip->ui_lockcnt >
 	    (allowfail == 1 ? maxlocksperuid : (maxlocksperuid * 2))) {
-		UIUNLOCK(uip, s);
+		mutex_exit(&uip->ui_lock);
 		return NULL;
 	}
 	uip->ui_lockcnt++;
-	UIUNLOCK(uip, s);
+	mutex_exit(&uip->ui_lock);
 	lock = pool_get(&lockfpool, PR_WAITOK);
 	lock->lf_uid = uid;
 	cv_init(&lock->lf_cv, "lockf");
@@ -212,12 +211,11 @@ static void
 lf_free(struct lockf *lock)
 {
 	struct uidinfo *uip;
-	int s;
 
 	uip = uid_find(lock->lf_uid);
-	UILOCK(uip, s);
+	mutex_enter(&uip->ui_lock);
 	uip->ui_lockcnt--;
-	UIUNLOCK(uip, s);
+	mutex_exit(&uip->ui_lock);
 	cv_destroy(&lock->lf_cv);
 	pool_put(&lockfpool, lock);
 }
@@ -422,7 +420,7 @@ lf_clearlock(struct lockf *unlock, struct lockf **sparelock)
 #endif /* LOCKF_DEBUG */
 	prev = head;
 	while ((ovcase = lf_findoverlap(lf, unlock, SELF,
-					&prev, &overlap)) != 0) {
+	    &prev, &overlap)) != 0) {
 		/*
 		 * Wakeup the list of locks to be retried.
 		 */
@@ -833,7 +831,7 @@ lf_advlock(struct vop_advlock_args *ap, struct lockf **head, off_t size)
 		return EINVAL;
 
 	/*
-	 * Allocate locks before acquiring the simple lock.  We need two
+	 * Allocate locks before acquiring the interlock.  We need two
 	 * locks in the worst case.
 	 */
 	switch (ap->a_op) {

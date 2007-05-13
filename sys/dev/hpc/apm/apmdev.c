@@ -1,4 +1,4 @@
-/*	$NetBSD: apmdev.c,v 1.10 2007/03/04 06:01:47 christos Exp $ */
+/*	$NetBSD: apmdev.c,v 1.10.2.1 2007/05/13 17:36:23 ad Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apmdev.c,v 1.10 2007/03/04 06:01:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apmdev.c,v 1.10.2.1 2007/05/13 17:36:23 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_apmdev.h"
@@ -135,7 +135,6 @@ static int	apmmatch(struct device *, struct cfdata *, void *);
 
 static void	apm_event_handle(struct apm_softc *, u_int, u_int);
 static void	apm_periodic_check(struct apm_softc *);
-static void	apm_create_thread(void *);
 static void	apm_thread(void *);
 static void	apm_perror(const char *, int, ...)
 		    __attribute__((__format__(__printf__,1,3)));
@@ -714,9 +713,16 @@ apmattach(struct device *parent, struct device *self, void *aux)
 	 * Create a kernel thread to periodically check for APM events,
 	 * and notify other subsystems when they occur.
 	 */
-	kthread_create(apm_create_thread, sc);
-
-	return;
+	if (kthread_create(PRI_NONE, 0, NULL, apm_thread, sc,
+	    &sc->sc_thread, "%s", sc->sc_dev.dv_xname) != 0) {
+		/*
+		 * We were unable to create the APM thread; bail out.
+		 */
+		sc->ops->disconnect(sc->cookie);
+		printf("%s: unable to create thread, "
+		    "kernel APM support disabled\n",
+		       sc->sc_dev.dv_xname);
+	}
 }
 
 /*
@@ -730,24 +736,6 @@ apmprint(void *aux, const char *pnp)
 
 	return (UNCONF);
 }
-
-void
-apm_create_thread(void *arg)
-{
-	struct apm_softc *sc = arg;
-
-	if (kthread_create1(apm_thread, sc, &sc->sc_thread,
-			    "%s", sc->sc_dev.dv_xname) == 0)
-		return;
-
-	/*
-	 * We were unable to create the APM thread; bail out.
-	 */
-	sc->ops->disconnect(sc->cookie);
-	printf("%s: unable to create thread, kernel APM support disabled\n",
-	       sc->sc_dev.dv_xname);
-}
-
 void
 apm_thread(void *arg)
 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.153.2.3 2007/04/12 23:12:56 ad Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.153.2.4 2007/05/13 17:36:33 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.153.2.3 2007/04/12 23:12:56 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.153.2.4 2007/05/13 17:36:33 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -600,7 +600,11 @@ sys_fcntl(struct lwp *l, void *v, register_t *retval)
 				error = EBADF;
 				goto out;
 			}
-			p->p_flag |= PK_ADVLOCK;
+			if ((p->p_flag & PK_ADVLOCK) == 0) {
+				mutex_enter(&p->p_mutex);
+				p->p_flag |= PK_ADVLOCK;
+				mutex_exit(&p->p_mutex);
+			}
 			error = VOP_ADVLOCK(vp, p, F_SETLK, &fl, flg);
 			goto out;
 
@@ -609,7 +613,11 @@ sys_fcntl(struct lwp *l, void *v, register_t *retval)
 				error = EBADF;
 				goto out;
 			}
-			p->p_flag |= PK_ADVLOCK;
+			if ((p->p_flag & PK_ADVLOCK) == 0) {
+				mutex_enter(&p->p_mutex);
+				p->p_flag |= PK_ADVLOCK;
+				mutex_exit(&p->p_mutex);
+			}
 			error = VOP_ADVLOCK(vp, p, F_SETLK, &fl, flg);
 			goto out;
 
@@ -975,11 +983,13 @@ restart:
 int
 falloc(struct lwp *l, struct file **resultfp, int *resultfd)
 {
+	struct filedesc	*fdp;
 	struct file	*fp, *fq;
 	struct proc	*p;
 	int		error, i;
 
 	p = l->l_proc;
+	fdp = p->p_fd;
 
  restart:
 	if ((error = fdalloc(p, 0, &i)) != 0) {
@@ -991,13 +1001,16 @@ falloc(struct lwp *l, struct file **resultfp, int *resultfd)
 	}
 
 	fp = pool_get(&file_pool, PR_WAITOK);
+	memset(fp, 0, sizeof(struct file));
+	mutex_init(&fp->f_lock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_enter(&filelist_lock);
 	if (nfiles >= maxfiles) {
 		tablefull("file", "increase kern.maxfiles or MAXFILES");
 		mutex_exit(&filelist_lock);
-		rw_enter(&p->p_fd->fd_lock, RW_WRITER);
-		fd_unused(p->p_fd, i);
-		rw_exit(&p->p_fd->fd_lock);
+		rw_enter(&fdp->fd_lock, RW_WRITER);
+		fd_unused(fdp, i);
+		rw_exit(&fdp->fd_lock);
+		mutex_destroy(&fp->f_lock);
 		pool_put(&file_pool, fp);
 		return (ENFILE);
 	}
@@ -1008,18 +1021,16 @@ falloc(struct lwp *l, struct file **resultfp, int *resultfd)
 	 * the list of open files.
 	 */
 	nfiles++;
-	memset(fp, 0, sizeof(struct file));
 	fp->f_iflags = FIF_LARVAL;
-	if ((fq = p->p_fd->fd_ofiles[0]) != NULL) {
+	cv_init(&fp->f_cv, "closef");
+	rw_enter(&fdp->fd_lock, RW_WRITER);	/* XXXAD check order */
+	if ((fq = fdp->fd_ofiles[0]) != NULL) {
 		LIST_INSERT_AFTER(fq, fp, f_list);
 	} else {
 		LIST_INSERT_HEAD(&filehead, fp, f_list);
 	}
-	mutex_exit(&filelist_lock);
-	KDASSERT(p->p_fd->fd_ofiles[i] == NULL);
-	p->p_fd->fd_ofiles[i] = fp;
-	mutex_init(&fp->f_lock, MUTEX_DEFAULT, IPL_NONE);
-	cv_init(&fp->f_cv, "closef");
+	KDASSERT(fdp->fd_ofiles[i] == NULL);
+	fdp->fd_ofiles[i] = fp;
 	fp->f_count = 1;
 	fp->f_cred = l->l_cred;
 	kauth_cred_hold(fp->f_cred);
@@ -1027,8 +1038,11 @@ falloc(struct lwp *l, struct file **resultfp, int *resultfd)
 		fp->f_usecount = 1;
 		*resultfp = fp;
 	}
+	mutex_exit(&filelist_lock);
+	rw_exit(&fdp->fd_lock);
 	if (resultfd)
 		*resultfd = i;
+
 	return (0);
 }
 
@@ -1393,7 +1407,7 @@ fdfree(struct lwp *l)
 int
 closef(struct file *fp, struct lwp *l)
 {
-	struct proc	*p = l ? l->l_proc : NULL;
+	struct proc	*p = l->l_proc;
 	struct vnode	*vp;
 	struct flock	lf;
 	int		error;
@@ -1409,7 +1423,7 @@ closef(struct file *fp, struct lwp *l)
 	 * If the descriptor was in a message, POSIX-style locks
 	 * aren't passed with the descriptor.
 	 */
-	if (p && (p->p_flag & PK_ADVLOCK) && fp->f_type == DTYPE_VNODE) {
+	if ((p->p_flag & PK_ADVLOCK) && fp->f_type == DTYPE_VNODE) {
 		lf.l_whence = SEEK_SET;
 		lf.l_start = 0;
 		lf.l_len = 0;

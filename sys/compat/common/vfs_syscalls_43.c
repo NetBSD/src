@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_43.c,v 1.37 2007/03/10 17:33:29 dsl Exp $	*/
+/*	$NetBSD: vfs_syscalls_43.c,v 1.37.2.1 2007/05/13 17:36:20 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_43.c,v 1.37 2007/03/10 17:33:29 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_43.c,v 1.37.2.1 2007/05/13 17:36:20 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_union.h"
@@ -534,6 +534,7 @@ sysctl_vfs_generic_conf(SYSCTLFN_ARGS)
 	vfc.vfc_flags = 0;
 	vfc.vfc_mountroot = vfsp->vfs_mountroot;
 	vfc.vfc_next = NULL;
+	vfs_delref(vfsp);
 
 	node = *rnode;
 	node.sysctl_data = &vfc;

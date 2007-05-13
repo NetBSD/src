@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.306.2.4 2007/04/13 15:49:48 ad Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.306.2.5 2007/05/13 17:36:37 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.306.2.4 2007/04/13 15:49:48 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.306.2.5 2007/05/13 17:36:37 ad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -337,7 +337,6 @@ mount_domount(struct lwp *l, struct vnode *vp, const char *fstype,
 	mutex_init(&mp->mnt_mutex, MUTEX_DEFAULT, IPL_NONE);
 	(void)vfs_busy(mp, LK_NOWAIT, 0);
 
-	mp->mnt_op->vfs_refcount++;
 	mp->mnt_vnodecovered = vp;
 	mp->mnt_stat.f_owner = kauth_cred_geteuid(l->l_cred);
 	mp->mnt_unmounter = NULL;
@@ -379,8 +378,8 @@ mount_domount(struct lwp *l, struct vnode *vp, const char *fstype,
 			vrele(vp);
 	} else {
 		vp->v_mountedhere = NULL;
-		mp->mnt_op->vfs_refcount--;
 		vfs_unbusy(mp);
+		vfs_delref(mp->mnt_op);
 		free(mp, M_MOUNT);
 		vput(vp);
 	}
@@ -664,7 +663,6 @@ dounmount(struct mount *mp, int flags, struct lwp *l)
 	CIRCLEQ_REMOVE(&mountlist, mp, mnt_list);
 	if ((coveredvp = mp->mnt_vnodecovered) != NULLVP)
 		coveredvp->v_mountedhere = NULL;
-	mp->mnt_op->vfs_refcount--;
 	if (TAILQ_FIRST(&mp->mnt_vnodelist) != NULL)
 		panic("unmount: dangling vnode");
 	mp->mnt_iflag |= IMNT_GONE;
@@ -682,6 +680,7 @@ dounmount(struct mount *mp, int flags, struct lwp *l)
 	mutex_exit(&mp->mnt_mutex);
 	vfs_hooks_unmount(mp);
 	mutex_destroy(&mp->mnt_mutex);
+	vfs_delref(mp->mnt_op);
 	free(mp, M_MOUNT);
 	return (0);
 }

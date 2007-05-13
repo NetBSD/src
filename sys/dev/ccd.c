@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.118.2.2 2007/04/13 20:56:20 ad Exp $	*/
+/*	$NetBSD: ccd.c,v 1.118.2.3 2007/05/13 17:36:20 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2007 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.118.2.2 2007/04/13 20:56:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.118.2.3 2007/05/13 17:36:20 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -657,7 +657,7 @@ ccdstrategy(struct buf *bp)
 	int unit = ccdunit(bp->b_dev);
 	struct ccd_softc *cs = &ccd_softc[unit];
 	daddr_t blkno;
-	int s;
+	int s, error = 0;
 	int wlabel;
 	struct disklabel *lp;
 
@@ -670,8 +670,7 @@ ccdstrategy(struct buf *bp)
 		if (ccddebug & CCDB_FOLLOW)
 			printf("ccdstrategy: unit %d: not inited\n", unit);
 #endif
-		bp->b_error = ENXIO;
-		bp->b_flags |= B_ERROR;
+		error = ENXIO;
 		goto done;
 	}
 
@@ -703,8 +702,7 @@ ccdstrategy(struct buf *bp)
 	return;
 
  done:
-	bp->b_resid = bp->b_bcount;
-	biodone(bp);
+	biodone(bp, error, bp->b_bcount);
 }
 
 static void
@@ -889,7 +887,7 @@ ccdintr(struct ccd_softc *cs, struct buf *bp)
 		bp->b_resid = bp->b_bcount;
 	disk_unbusy(&cs->sc_dkdev, (bp->b_bcount - bp->b_resid),
 	    (bp->b_flags & B_READ));
-	biodone(bp);
+	biodone(bp, bp->b_error, bp->b_resid);
 }
 
 /*

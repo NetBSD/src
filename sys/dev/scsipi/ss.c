@@ -1,4 +1,4 @@
-/*	$NetBSD: ss.c,v 1.70 2007/03/04 06:02:44 christos Exp $	*/
+/*	$NetBSD: ss.c,v 1.70.2.1 2007/05/13 17:36:29 ad Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ss.c,v 1.70 2007/03/04 06:02:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ss.c,v 1.70.2.1 2007/05/13 17:36:29 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -402,7 +402,7 @@ ssstrategy(struct buf *bp)
 {
 	struct ss_softc *ss = ss_cd.cd_devs[SSUNIT(bp->b_dev)];
 	struct scsipi_periph *periph = ss->sc_periph;
-	int s;
+	int s, error = 0;
 
 	SC_DEBUG(ss->sc_periph, SCSIPI_DB1,
 	    ("ssstrategy %d bytes @ blk %" PRId64 "\n", bp->b_bcount, bp->b_blkno));
@@ -411,18 +411,16 @@ ssstrategy(struct buf *bp)
 	 * If the device has been made invalid, error out
 	 */
 	if (!device_is_active(&ss->sc_dev)) {
-		bp->b_flags |= B_ERROR;
 		if (periph->periph_flags & PERIPH_OPEN)
-			bp->b_error = EIO;
+			error = EIO;
 		else
-			bp->b_error = ENODEV;
+			error = ENODEV;
 		goto done;
 	}
 
 	/* If negative offset, error */
 	if (bp->b_blkno < 0) {
-		bp->b_flags |= B_ERROR;
-		bp->b_error = EINVAL;
+		error = EINVAL;
 		goto done;
 	}
 
@@ -457,8 +455,7 @@ done:
 	/*
 	 * Correctly set the buf to indicate a completed xfer
 	 */
-	bp->b_resid = bp->b_bcount;
-	biodone(bp);
+	biodone(bp, error, 0);
 }
 
 /*
@@ -523,11 +520,7 @@ ssdone(struct scsipi_xfer *xs, int error)
 	struct buf *bp = xs->bp;
 
 	if (bp) {
-		bp->b_error = error;
-		bp->b_resid = xs->resid;
-		if (error)
-			bp->b_flags |= B_ERROR;
-		biodone(bp);
+		biodone(bp, error, xs->resid);
 	}
 }
 

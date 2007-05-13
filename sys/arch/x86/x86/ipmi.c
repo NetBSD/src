@@ -1,4 +1,4 @@
-/*	$NetBSD: ipmi.c,v 1.5.6.2 2007/04/10 12:07:07 ad Exp $ */
+/*	$NetBSD: ipmi.c,v 1.5.6.3 2007/05/13 17:36:19 ad Exp $ */
 /*
  * Copyright (c) 2006 Manuel Bouyer.
  *
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.5.6.2 2007/04/10 12:07:07 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.5.6.3 2007/05/13 17:36:19 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1835,7 +1835,7 @@ ipmi_attach(struct device *parent, struct device *self, void *aux)
 	callout_init(&sc->sc_callout);
 	callout_setfunc(&sc->sc_callout, _bmc_io_wait, sc);
 
-	if (kthread_create(PRI_NONE, false, ipmi_poll_thread, sc,
+	if (kthread_create(PRI_NONE, 0, NULL, ipmi_poll_thread, sc,
 	    &sc->sc_kthread, DEVNAME(sc)) != 0) {
 		printf("%s: unable to create polling thread, ipmi disabled\n",
 		    DEVNAME(sc));

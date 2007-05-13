@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_bmap.c,v 1.44 2007/02/22 06:10:49 thorpej Exp $	*/
+/*	$NetBSD: ufs_bmap.c,v 1.44.4.1 2007/05/13 17:36:46 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_bmap.c,v 1.44 2007/02/22 06:10:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_bmap.c,v 1.44.4.1 2007/05/13 17:36:46 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,7 +120,7 @@ ufs_bmaparray(struct vnode *vp, daddr_t bn, daddr_t *bnp, struct indir *ap,
     int *nump, int *runp, ufs_issequential_callback_t is_sequential)
 {
 	struct inode *ip;
-	struct buf *bp;
+	struct buf *bp, *cbp;
 	struct ufsmount *ump;
 	struct mount *mp;
 	struct indir a[NIADDR + 1], *xap;
@@ -220,14 +220,22 @@ ufs_bmaparray(struct vnode *vp, daddr_t bn, daddr_t *bnp, struct indir *ap,
 		 */
 
 		metalbn = xap->in_lbn;
-		if ((daddr == 0 && !incore(vp, metalbn)) || metalbn == bn)
+		if (metalbn == bn)
 			break;
+		if (daddr == 0) {
+			mutex_enter(&bqueue_lock);
+			cbp = incore(vp, metalbn);
+			mutex_exit(&bqueue_lock);
+			if (cbp == NULL)
+				break;
+		}
+
 		/*
 		 * If we get here, we've either got the block in the cache
 		 * or we have a disk address for it, go fetch it.
 		 */
 		if (bp)
-			brelse(bp);
+			brelse(bp, 0);
 
 		xap->in_exists = 1;
 		bp = getblk(vp, metalbn, mp->mnt_stat.f_iosize, 0, 0);
@@ -241,7 +249,9 @@ ufs_bmaparray(struct vnode *vp, daddr_t bn, daddr_t *bnp, struct indir *ap,
 
 			return (ENOMEM);
 		}
+		mutex_enter(&bp->b_interlock);
 		if (bp->b_flags & (B_DONE | B_DELWRI)) {
+			mutex_exit(&bp->b_interlock);
 			trace(TR_BREADHIT, pack(vp, size), metalbn);
 		}
 #ifdef DIAGNOSTIC
@@ -249,14 +259,15 @@ ufs_bmaparray(struct vnode *vp, daddr_t bn, daddr_t *bnp, struct indir *ap,
 			panic("ufs_bmaparray: indirect block not in cache");
 #endif
 		else {
-			trace(TR_BREADMISS, pack(vp, size), metalbn);
 			bp->b_blkno = blkptrtodb(ump, daddr);
 			bp->b_flags |= B_READ;
 			BIO_SETPRIO(bp, BPRIO_TIMECRITICAL);
+			mutex_exit(&bp->b_interlock);
+			trace(TR_BREADMISS, pack(vp, size), metalbn);
 			VOP_STRATEGY(vp, bp);
 			curproc->p_stats->p_ru.ru_inblock++;	/* XXX */
 			if ((error = biowait(bp)) != 0) {
-				brelse(bp);
+				brelse(bp, 0);
 				return (error);
 			}
 		}
@@ -289,7 +300,7 @@ ufs_bmaparray(struct vnode *vp, daddr_t bn, daddr_t *bnp, struct indir *ap,
 		}
 	}
 	if (bp)
-		brelse(bp);
+		brelse(bp, 0);
 
 	/*
 	 * Since this is FFS independent code, we are out of scope for the

@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_alloc.c,v 1.34 2007/01/04 16:55:29 elad Exp $	*/
+/*	$NetBSD: ext2fs_alloc.c,v 1.34.6.1 2007/05/13 17:36:40 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_alloc.c,v 1.34 2007/01/04 16:55:29 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_alloc.c,v 1.34.6.1 2007/05/13 17:36:40 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -364,7 +364,7 @@ ext2fs_alloccg(struct inode *ip, int cg, daddr_t bpref, int size)
 		fs->e2fs_gd[cg].ext2bgd_b_bitmap),
 		(int)fs->e2fs_bsize, NOCRED, &bp);
 	if (error) {
-		brelse(bp);
+		brelse(bp, 0);
 		return (0);
 	}
 	bbp = (char *)bp->b_data;
@@ -451,7 +451,7 @@ ext2fs_nodealloccg(struct inode *ip, int cg, daddr_t ipref, int mode)
 		fs->e2fs_gd[cg].ext2bgd_i_bitmap),
 		(int)fs->e2fs_bsize, NOCRED, &bp);
 	if (error) {
-		brelse(bp);
+		brelse(bp, 0);
 		return (0);
 	}
 	ibp = (char *)bp->b_data;
@@ -523,7 +523,7 @@ ext2fs_blkfree(struct inode *ip, daddr_t bno)
 		fsbtodb(fs, fs->e2fs_gd[cg].ext2bgd_b_bitmap),
 		(int)fs->e2fs_bsize, NOCRED, &bp);
 	if (error) {
-		brelse(bp);
+		brelse(bp, 0);
 		return;
 	}
 	bbp = (char *)bp->b_data;
@@ -565,7 +565,7 @@ ext2fs_vfree(struct vnode *pvp, ino_t ino, int mode)
 		fsbtodb(fs, fs->e2fs_gd[cg].ext2bgd_i_bitmap),
 		(int)fs->e2fs_bsize, NOCRED, &bp);
 	if (error) {
-		brelse(bp);
+		brelse(bp, 0);
 		return (0);
 	}
 	ibp = (char *)bp->b_data;

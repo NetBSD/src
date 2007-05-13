@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.170.2.6 2007/04/13 20:56:18 ad Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.170.2.7 2007/05/13 17:36:36 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -82,7 +82,7 @@
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.170.2.6 2007/04/13 20:56:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.170.2.7 2007/05/13 17:36:36 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -381,7 +381,7 @@ bufinit(void)
 	int use_std;
 	u_int i;
 
-	mutex_init(&bqueue_lock, MUTEX_SPIN, IPL_BIO);
+	mutex_init(&bqueue_lock, MUTEX_DRIVER, IPL_BIO);
 	cv_init(&needbuffer_cv, "needbuf");
 
 	/*
@@ -449,10 +449,9 @@ static int
 buf_lotsfree(void)
 {
 	int try, thresh;
-	struct lwp *l = curlwp;
 
 	/* Always allocate if doing copy on write */
-	if (l->l_pflag & LP_UFSCOW)
+	if (curlwp->l_pflag & LP_UFSCOW)
 		return 1;
 
 	/* Always allocate if less than the low water mark. */
@@ -595,6 +594,7 @@ bio_doread(struct vnode *vp, daddr_t blkno, int size, kauth_cred_t cred,
 	 * Note that if buffer is B_INVAL, getblk() won't return it.
 	 * Therefore, it's valid if its I/O has completed or been delayed.
 	 */
+	mutex_enter(&bp->b_interlock);
 	if (!ISSET(bp->b_flags, (B_DONE | B_DELWRI))) {
 		/* Start I/O for the buffer. */
 		SET(bp->b_flags, B_READ | async);
@@ -602,12 +602,15 @@ bio_doread(struct vnode *vp, daddr_t blkno, int size, kauth_cred_t cred,
 			BIO_SETPRIO(bp, BPRIO_TIMELIMITED);
 		else
 			BIO_SETPRIO(bp, BPRIO_TIMECRITICAL);
+		mutex_exit(&bp->b_interlock);
 		VOP_STRATEGY(vp, bp);
 
 		/* Pay for the read. */
 		p->p_stats->p_ru.ru_inblock++;
-	} else if (async) {
-		brelse(bp);
+	} else {
+		mutex_exit(&bp->b_interlock);
+		if (async)
+			brelse(bp, 0);
 	}
 
 	if (vp->v_type == VBLK)
@@ -663,14 +666,18 @@ breadn(struct vnode *vp, daddr_t blkno, int size, daddr_t *rablks,
 	/*
 	 * For each of the read-ahead blocks, start a read, if necessary.
 	 */
+	mutex_enter(&bqueue_lock);
 	for (i = 0; i < nrablks; i++) {
 		/* If it's in the cache, just go on to next one. */
 		if (incore(vp, rablks[i]))
 			continue;
 
 		/* Get a buffer for the read-ahead block */
+		mutex_exit(&bqueue_lock);
 		(void) bio_doread(vp, rablks[i], rasizes[i], cred, B_ASYNC);
+		mutex_enter(&bqueue_lock);
 	}
+	mutex_exit(&bqueue_lock);
 
 	/* Otherwise, we had to start a read for it; wait until it's valid. */
 	return (biowait(bp));
@@ -769,7 +776,7 @@ bwrite(struct buf *bp)
 		rv = biowait(bp);
 
 		/* Release the buffer. */
-		brelse(bp);
+		brelse(bp, 0);
 
 		return (rv);
 	} else {
@@ -832,7 +839,7 @@ bdwrite(struct buf *bp)
 	CLR(bp->b_flags, B_DONE);
 	mutex_exit(&bp->b_interlock);
 
-	brelse(bp);
+	brelse(bp, 0);
 }
 
 /*
@@ -879,7 +886,7 @@ bdirty(struct buf *bp)
  * Described in Bach (p. 46).
  */
 void
-brelse(struct buf *bp)
+brelse(struct buf *bp, int set)
 {
 	struct bqueue *bufq;
 	struct vnode *vp;
@@ -888,6 +895,8 @@ brelse(struct buf *bp)
 
 	mutex_enter(&bqueue_lock);
 	mutex_enter(&bp->b_interlock);
+
+	SET(bp->b_flags, set);
 
 	KASSERT(ISSET(bp->b_flags, B_BUSY));
 	KASSERT(!ISSET(bp->b_flags, B_CALL));
@@ -906,8 +915,10 @@ brelse(struct buf *bp)
 	 */
 
 	/* If it's locked, don't report an error; try again later. */
-	if (ISSET(bp->b_flags, (B_LOCKED|B_ERROR)) == (B_LOCKED|B_ERROR))
+	if (ISSET(bp->b_flags, (B_LOCKED|B_ERROR)) == (B_LOCKED|B_ERROR)) {
 		CLR(bp->b_flags, B_ERROR);
+		bp->b_error = 0;
+	}
 
 	/* If it's not cacheable, or an error, mark it invalid. */
 	if (ISSET(bp->b_flags, (B_NOCACHE|B_ERROR)))
@@ -1015,6 +1026,8 @@ incore(struct vnode *vp, daddr_t blkno)
 {
 	struct buf *bp;
 
+	KASSERT(mutex_owned(&bqueue_lock));
+
 	/* Search hash chain */
 	LIST_FOREACH(bp, BUFHASH(vp, blkno), b_hash) {
 		if (bp->b_lblkno == blkno && bp->b_vp == vp &&
@@ -1083,7 +1096,7 @@ start:
 		if (incore(vp, blkno) != NULL) {
 			/* The block has come into memory in the meantime. */
 			mutex_exit(&bqueue_lock);
-			brelse(bp);
+			brelse(bp, 0);
 			mutex_enter(&bqueue_lock);
 			goto start;		
 		}
@@ -1346,7 +1359,7 @@ buf_trim(void)
 		bp->b_bcount = bp->b_bufsize = 0;
 	}
 	/* brelse() will return the buffer to the global buffer pool */
-	brelse(bp);
+	brelse(bp, 0);
 	mutex_enter(&bqueue_lock);
 	return size;
 }
@@ -1383,10 +1396,13 @@ biowait(struct buf *bp)
 		cv_wait(&bp->b_cv, &bp->b_interlock);
 
 	/* check errors. */
-	if (ISSET(bp->b_flags, B_ERROR))
-		error = bp->b_error ? bp->b_error : EIO;
-	else
+	if (ISSET(bp->b_flags, B_ERROR)) {
+		KASSERT(bp->b_error != 0);
+		error = bp->b_error;
+	} else {
+		KASSERT(bp->b_error == 0);
 		error = 0;
+	}
 
 	mutex_exit(&bp->b_interlock);
 	return (error);
@@ -1409,10 +1425,18 @@ biowait(struct buf *bp)
  * for the vn device, that puts malloc'd buffers on the free lists!)
  */
 void
-biodone(struct buf *bp)
+biodone(struct buf *bp, int error, int resid)
 {
 
 	mutex_enter(&bp->b_interlock);
+	if (error) {
+		bp->b_error = error;
+		bp->b_resid = bp->b_bcount;
+		SET(bp->b_flags, B_ERROR);
+	} else {
+		bp->b_resid = resid;
+		CLR(bp->b_flags, B_ERROR);
+	}
 	if (ISSET(bp->b_flags, B_DONE))
 		panic("biodone already");
 	SET(bp->b_flags, B_DONE);		/* note that it's done */
@@ -1421,7 +1445,7 @@ biodone(struct buf *bp)
 	if (LIST_FIRST(&bp->b_dep) != NULL && bioops.io_complete)
 		(*bioops.io_complete)(bp);
 
-	if (!ISSET(bp->b_flags, B_READ))	/* wake up reader */
+	if (!ISSET(bp->b_flags, B_READ))	/* wake up writer */
 		vwakeup(bp);
 
 	/*
@@ -1435,7 +1459,7 @@ biodone(struct buf *bp)
 	} else {
 		if (ISSET(bp->b_flags, B_ASYNC)) {	/* if async, release */
 			mutex_exit(&bp->b_interlock);
-			brelse(bp);
+			brelse(bp, 0);
 		} else {			/* or just wakeup the buffer */
 			CLR(bp->b_flags, B_WANTED);
 			cv_broadcast(&bp->b_cv);
@@ -1825,10 +1849,8 @@ nestiobuf_iodone(struct buf *bp)
 
 	error = 0;
 	if ((bp->b_flags & B_ERROR) != 0) {
-		error = EIO;
-		/* check if an error code was returned */
-		if (bp->b_error)
-			error = bp->b_error;
+		KASSERT(bp->b_error != 0);
+		error = bp->b_error;
 	} else if ((bp->b_bcount < bp->b_bufsize) || (bp->b_resid > 0)) {
 		/*
 		 * Not all got transfered, raise an error. We have no way to
@@ -1888,17 +1910,10 @@ nestiobuf_done(struct buf *mbp, int donebytes, int error)
 	}
 	mutex_enter(&mbp->b_interlock);
 	KASSERT(mbp->b_resid >= donebytes);
-	if (error) {
-		mbp->b_flags |= B_ERROR;
-		mbp->b_error = error;
-	}
 	mbp->b_resid -= donebytes;
 	if (mbp->b_resid == 0) {
-		if ((mbp->b_flags & B_ERROR) != 0) {
-			mbp->b_resid = mbp->b_bcount; /* be conservative */
-		}
 		mutex_exit(&mbp->b_interlock);
-		biodone(mbp);
+		biodone(mbp, error, mbp->b_resid);
 	} else
 		mutex_exit(&mbp->b_interlock);
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.44 2007/03/04 06:01:41 christos Exp $ */
+/* $NetBSD: cgd.c,v 1.44.2.1 2007/05/13 17:36:20 ad Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.44 2007/03/04 06:01:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.44.2.1 2007/05/13 17:36:20 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -393,7 +393,7 @@ cgdiodone(struct buf *nbp)
 		obp->b_resid = obp->b_bcount;
 	disk_unbusy(&dksc->sc_dkdev, obp->b_bcount - obp->b_resid,
 	    (obp->b_flags & B_READ));
-	biodone(obp);
+	biodone(obp, obp->b_error, obp->b_resid);
 	dk_iodone(di, dksc);
 }
 

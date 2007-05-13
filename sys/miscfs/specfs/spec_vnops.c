@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.98.2.3 2007/04/13 20:56:18 ad Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.98.2.4 2007/05/13 17:36:37 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.98.2.3 2007/04/13 20:56:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.98.2.4 2007/05/13 17:36:37 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -297,11 +297,11 @@ spec_read(v)
 			error = bread(vp, bn, bsize, NOCRED, &bp);
 			n = min(n, bsize - bp->b_resid);
 			if (error) {
-				brelse(bp);
+				brelse(bp, 0);
 				return (error);
 			}
 			error = uiomove((char *)bp->b_data + on, n, uio);
-			brelse(bp);
+			brelse(bp, 0);
 		} while (error == 0 && uio->uio_resid > 0 && n != 0);
 		return (error);
 
@@ -373,13 +373,13 @@ spec_write(v)
 			else
 				error = bread(vp, bn, bsize, NOCRED, &bp);
 			if (error) {
-				brelse(bp);
+				brelse(bp, 0);
 				return (error);
 			}
 			n = min(n, bsize - bp->b_resid);
 			error = uiomove((char *)bp->b_data + on, n, uio);
 			if (error)
-				brelse(bp);
+				brelse(bp, 0);
 			else {
 				if (n + on == bsize)
 					bawrite(bp);
@@ -584,9 +584,7 @@ spec_strategy(v)
 	}
 
 	if (error) {
-		bp->b_error = error;
-		bp->b_flags |= B_ERROR;
-		biodone(bp);
+		biodone(bp, error, 0);
 		return (error);
 	}
 

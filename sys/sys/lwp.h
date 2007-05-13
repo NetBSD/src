@@ -1,4 +1,4 @@
-/* 	$NetBSD: lwp.h,v 1.56.2.6 2007/04/28 22:40:04 ad Exp $	*/
+/* 	$NetBSD: lwp.h,v 1.56.2.7 2007/05/13 17:36:40 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  * Fields are clustered together by usage (to increase the likelyhood
  * of cache hits) and by size (to reduce dead space in the structure).
  */
-typedef struct lwp {
+struct lwp {
 	/* Scheduling and overall state */
 	struct lwp	*l_forw;	/* s: run queue */
 	struct lwp	*l_back;	/* s: run queue */
@@ -150,7 +150,7 @@ typedef struct lwp {
 	/* These are only used by 'options SYSCALL_TIMES' */
 	uint32_t        l_syscall_time; /* !: time epoch for current syscall */
 	uint64_t        *l_syscall_counter; /* !: counter for current process */
-} lwp_t;
+};
 
 #if !defined(USER_TO_UAREA)
 #if !defined(UAREA_USER_OFFSET)

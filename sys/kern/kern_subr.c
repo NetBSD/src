@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.156.2.1 2007/03/13 17:50:57 ad Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.156.2.2 2007/05/13 17:36:35 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002, 2007, 2006 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.156.2.1 2007/03/13 17:50:57 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.156.2.2 2007/05/13 17:36:35 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -866,6 +866,8 @@ setroot(struct device *bootdv, int bootpartition)
 			rootspec = (const char *)ifp->if_xname;
 		}
 	}
+	if (vops != NULL)
+		vfs_delref(vops);
 
 	/*
 	 * If wildcarded root and we the boot device wasn't determined,
@@ -996,6 +998,7 @@ setroot(struct device *bootdv, int bootpartition)
 				printf(" halt reboot\n");
 			} else {
 				mountroot = vops->vfs_mountroot;
+				vfs_delref(vops);
 				break;
 			}
 		}

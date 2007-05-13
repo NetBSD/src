@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.107.2.1 2007/03/13 17:51:25 ad Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.107.2.2 2007/05/13 17:36:44 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.107.2.1 2007/03/13 17:51:25 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.107.2.2 2007/05/13 17:36:44 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -754,7 +754,7 @@ lfs_indirtrunc(struct inode *ip, daddr_t lbn, daddr_t dbn,
 		error = biowait(bp);
 	}
 	if (error) {
-		brelse(bp);
+		brelse(bp, 0);
 		*countp = *rcountp = 0;
 		return (error);
 	}
@@ -821,8 +821,7 @@ lfs_indirtrunc(struct inode *ip, daddr_t lbn, daddr_t dbn,
 			fs->lfs_avail += btofsb(fs, bp->b_bcount);
 			wakeup(&fs->lfs_avail);
 		}
-		bp->b_flags |= B_INVAL;
-		brelse(bp);
+		brelse(bp, B_INVAL);
 	}
 
 	*countp = blocksreleased;
@@ -878,7 +877,7 @@ restart:
 		}
 		LFS_UNLOCK_BUF(bp);
 		mutex_exit(&bp->b_interlock);
-		brelse(bp);
+		brelse(bp, 0);
 	}
 
 	for (bp = LIST_FIRST(&vp->v_dirtyblkhd); bp; bp = nbp) {
@@ -904,7 +903,7 @@ restart:
 		}
 		LFS_UNLOCK_BUF(bp);
 		mutex_exit(&bp->b_interlock);
-		brelse(bp);
+		brelse(bp, 0);
 	}
 
 	splx(s);

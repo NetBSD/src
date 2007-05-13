@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.c,v 1.73.2.2 2007/04/10 12:07:09 ad Exp $ */
+/* $NetBSD: isp_netbsd.c,v 1.73.2.3 2007/05/13 17:36:24 ad Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_netbsd.c,v 1.73.2.2 2007/04/10 12:07:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_netbsd.c,v 1.73.2.3 2007/05/13 17:36:24 ad Exp $");
 
 #include <dev/ic/isp_netbsd.h>
 #include <sys/scsiio.h>
@@ -201,7 +201,7 @@ isp_config_interrupts(struct device *self)
 	if (IS_FC(isp)) {
 		isp->isp_osinfo.no_mbox_ints = 0;
 
-		if (kthread_create(PRI_NONE, false, isp_fc_worker, isp,
+		if (kthread_create(PRI_NONE, 0, NULL, isp_fc_worker, isp,
 		    &isp->isp_osinfo.thread, "%s:fc_thrd", isp->isp_name)) {
 			isp_prt(isp, ISP_LOGERR,
 			    "unable to create FC worker thread");

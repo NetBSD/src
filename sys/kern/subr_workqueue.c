@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_workqueue.c,v 1.12.2.3 2007/04/10 11:37:02 ad Exp $	*/
+/*	$NetBSD: subr_workqueue.c,v 1.12.2.4 2007/05/13 17:36:36 ad Exp $	*/
 
 /*-
  * Copyright (c)2002, 2005 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_workqueue.c,v 1.12.2.3 2007/04/10 11:37:02 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_workqueue.c,v 1.12.2.4 2007/05/13 17:36:36 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -134,13 +134,14 @@ static int
 workqueue_initqueue(struct workqueue *wq, int ipl, int flags)
 {
 	struct workqueue_queue *q = &wq->wq_queue;
-	int error;
+	int error, ktf;
 
 	mutex_init(&q->q_mutex, MUTEX_SPIN, ipl);
 	cv_init(&q->q_cv, wq->wq_name);
 	SIMPLEQ_INIT(&q->q_queue);
-	error = kthread_create(wq->wq_prio, ((flags & WQ_MPSAFE) != 0),
-	    workqueue_worker, wq, &q->q_worker, wq->wq_name);
+	ktf = ((flags & WQ_MPSAFE) != 0 ? KTHREAD_MPSAFE : 0);
+	error = kthread_create(wq->wq_prio, ktf, NULL, workqueue_worker,
+	    wq, &q->q_worker, wq->wq_name);
 
 	return error;
 }

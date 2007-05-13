@@ -1,4 +1,4 @@
-/*	$NetBSD: amr.c,v 1.44.2.2 2007/04/10 12:07:11 ad Exp $	*/
+/*	$NetBSD: amr.c,v 1.44.2.3 2007/05/13 17:36:27 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.44.2.2 2007/04/10 12:07:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.44.2.3 2007/05/13 17:36:27 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -491,7 +491,7 @@ amr_attach(struct device *parent, struct device *self, void *aux)
 
 	/* XXX This doesn't work for newer boards yet. */
 	if ((apt->apt_flags & AT_QUARTZ) == 0) {
-		rv = kthread_create(PRI_NONE, false, amr_thread, amr,
+		rv = kthread_create(PRI_NONE, 0, NULL, amr_thread, amr,
 		    &amr->amr_thread, "%s", amr->amr_dv.dv_xname);
  		if (rv != 0)
 			aprint_error("%s: unable to create thread (%d)",

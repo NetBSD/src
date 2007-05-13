@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.262 2007/03/04 06:02:42 christos Exp $	*/
+/*	$NetBSD: cd.c,v 1.262.2.1 2007/05/13 17:36:28 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004, 2005 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.262 2007/03/04 06:02:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.262.2.1 2007/05/13 17:36:28 ad Exp $");
 
 #include "rnd.h"
 
@@ -568,7 +568,7 @@ cdstrategy(struct buf *bp)
 	struct disklabel *lp;
 	struct scsipi_periph *periph = cd->sc_periph;
 	daddr_t blkno;
-	int s;
+	int s, error = 0;
 
 	SC_DEBUG(cd->sc_periph, SCSIPI_DB2, ("cdstrategy "));
 	SC_DEBUG(cd->sc_periph, SCSIPI_DB1,
@@ -579,10 +579,10 @@ cdstrategy(struct buf *bp)
 	 */
 	if ((periph->periph_flags & PERIPH_MEDIA_LOADED) == 0) {
 		if (periph->periph_flags & PERIPH_OPEN)
-			bp->b_error = EIO;
+			error = EIO;
 		else
-			bp->b_error = ENODEV;
-		goto bad;
+			error = ENODEV;
+		goto done;
 	}
 
 	lp = cd->sc_dk.dk_label;
@@ -593,8 +593,8 @@ cdstrategy(struct buf *bp)
 	 */
 	if ((bp->b_bcount % lp->d_secsize) != 0 ||
 	    bp->b_blkno < 0 ) {
-		bp->b_error = EINVAL;
-		goto bad;
+		error = EINVAL;
+		goto done;
 	}
 	/*
 	 * If it's a null transfer, return immediately
@@ -643,10 +643,9 @@ cdstrategy(struct buf *bp)
 			long count;
 
 			if ((bp->b_flags & B_READ) == 0) {
-
 				/* XXXX We don't support bouncing writes. */
-				bp->b_error = EACCES;
-				goto bad;
+				error = EACCES;
+				goto done;
 			}
 			count = ((blkno * lp->d_secsize) % cd->params.blksize);
 			/* XXX Store starting offset in bp->b_rawblkno */
@@ -659,15 +658,15 @@ cdstrategy(struct buf *bp)
 			nbp = getiobuf_nowait();
 			if (!nbp) {
 				/* No memory -- fail the iop. */
-				bp->b_error = ENOMEM;
-				goto bad;
+				error = ENOMEM;
+				goto done;
 			}
 			bounce = malloc(count, M_DEVBUF, M_NOWAIT);
 			if (!bounce) {
 				/* No memory -- fail the iop. */
 				putiobuf(nbp);
-				bp->b_error = ENOMEM;
-				goto bad;
+				error = ENOMEM;
+				goto done;
 			}
 
 			/* Set up the IOP to the bounce buffer. */
@@ -717,14 +716,11 @@ cdstrategy(struct buf *bp)
 	splx(s);
 	return;
 
-bad:
-	bp->b_flags |= B_ERROR;
 done:
 	/*
 	 * Correctly set the buf to indicate a completed xfer
 	 */
-	bp->b_resid = bp->b_bcount;
-	biodone(bp);
+	biodone(bp, error, bp->b_bcount);
 }
 
 /*
@@ -778,10 +774,7 @@ cdstart(struct scsipi_periph *periph)
 		if (__predict_false(
 		    (periph->periph_flags & PERIPH_MEDIA_LOADED) == 0)) {
 			if ((bp = BUFQ_GET(cd->buf_queue)) != NULL) {
-				bp->b_error = EIO;
-				bp->b_flags |= B_ERROR;
-				bp->b_resid = bp->b_bcount;
-				biodone(bp);
+				biodone(bp, EIO, bp->b_bcount);
 				continue;
 			} else {
 				return;
@@ -890,22 +883,12 @@ cddone(struct scsipi_xfer *xs, int error)
 	struct buf *bp = xs->bp;
 
 	if (bp) {
-		/* note, bp->b_resid is NOT initialised */
-		bp->b_error = error;
-		bp->b_resid = xs->resid;
-		if (error) {
-			/* on a read/write error bp->b_resid is zero, so fix */
-			bp->b_resid = bp->b_bcount;
-			bp->b_flags |= B_ERROR;
-		}
-
-		disk_unbusy(&cd->sc_dk, bp->b_bcount - bp->b_resid,
+		disk_unbusy(&cd->sc_dk, bp->b_bcount - xs->resid,
 		    (bp->b_flags & B_READ));
 #if NRND > 0
 		rnd_add_uint32(&cd->rnd_source, bp->b_rawblkno);
 #endif
-
-		biodone(bp);
+		biodone(bp, error, xs->resid);
 	}
 }
 
@@ -987,11 +970,8 @@ cdbounce(struct buf *bp)
 		}
 	}
 done:
-	obp->b_flags |= bp->b_flags & B_ERROR;
-	obp->b_error = bp->b_error;
-	obp->b_resid = bp->b_resid;
 	free(bp->b_data, M_DEVBUF);
-	biodone(obp);
+	biodone(obp, bp->b_error, bp->b_resid);
 }
 
 static int

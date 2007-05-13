@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.151.2.3 2007/04/09 22:10:05 ad Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.151.2.4 2007/05/13 17:36:38 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.151.2.3 2007/04/09 22:10:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.151.2.4 2007/05/13 17:36:38 ad Exp $");
 
 #include "opt_nfs.h"
 #include "opt_ddb.h"
@@ -191,7 +191,7 @@ nfs_bioread(vp, uio, ioflag, cred, cflag)
 			bp->b_flags |= B_READ;
 			error = nfs_doio(bp);
 			if (error) {
-				brelse(bp);
+				brelse(bp, 0);
 				return (error);
 			}
 		}
@@ -242,7 +242,7 @@ diragain:
 			 * deal with it.
 			 */
 			nfs_putdircache(np, ndp);
-			brelse(bp);
+			brelse(bp, 0);
 			/*
 			 * nfs_request maps NFSERR_BAD_COOKIE to EINVAL.
 			 */
@@ -269,8 +269,7 @@ diragain:
 			KASSERT(bp->b_bcount != bp->b_resid ||
 			    ndp->dc_blkcookie == bp->b_dcookie);
 			nfs_putdircache(np, ndp);
-			bp->b_flags |= B_NOCACHE;
-			brelse(bp);
+			brelse(bp, B_NOCACHE);
 			return 0;
 		}
 
@@ -306,7 +305,7 @@ diragain:
 				(unsigned long)NFS_GETCOOKIE(pdp));
 #endif
 			nfs_putdircache(np, ndp);
-			brelse(bp);
+			brelse(bp, 0);
 			nfs_invaldircache(vp, 0);
 			nfs_vinvalbuf(vp, 0, cred, l, 0);
 			goto diragain;
@@ -402,11 +401,10 @@ diragain:
 				rabp->b_dcookie = nndp->dc_cookie;
 				rabp->b_flags |= (B_READ | B_ASYNC);
 				if (nfs_asyncio(rabp)) {
-				    rabp->b_flags |= B_INVAL;
-				    brelse(rabp);
+				    brelse(rabp, B_INVAL);
 				}
 			    } else
-				brelse(rabp);
+				brelse(rabp, 0);
 			}
 		}
 		nfs_putdircache(np, nndp);
@@ -437,7 +435,7 @@ diragain:
 		printf(" nfsbioread: type %x unexpected\n",vp->v_type);
 	    }
 	    if (got_buf)
-		brelse(bp);
+		brelse(bp, 0);
 	} while (error == 0 && uio->uio_resid > 0 && n > 0);
 	return (error);
 }
@@ -1216,8 +1214,7 @@ nfs_doio(bp)
 	} else {
 		error = nfs_doio_write(bp, uiop);
 	}
-	bp->b_resid = uiop->uio_resid;
-	biodone(bp);
+	biodone(bp, error, uiop->uio_resid);
 	return (error);
 }
 

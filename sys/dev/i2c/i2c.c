@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.c,v 1.13.6.2 2007/04/10 12:07:08 ad Exp $	*/
+/*	$NetBSD: i2c.c,v 1.13.6.3 2007/05/13 17:36:24 ad Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -123,7 +123,7 @@ iic_attach(struct device *parent, struct device *self, void *aux)
 	LIST_INIT(&(sc->sc_tag->ic_list));
 	LIST_INIT(&(sc->sc_tag->ic_proc_list));
 
-	rv = kthread_create(PRI_NONE, false, iic_smbus_intr_thread,
+	rv = kthread_create(PRI_NONE, 0, NULL, iic_smbus_intr_thread,
 	    ic, &ic->ic_intr_thread, "%s", ic->ic_devname);
 	if (rv)
 		printf("%s: unable to create intr thread\n", ic->ic_devname);

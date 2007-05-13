@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.122.2.1 2007/03/13 17:51:50 ad Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.122.2.2 2007/05/13 17:36:44 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.122.2.1 2007/03/13 17:51:50 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.122.2.2 2007/05/13 17:36:44 ad Exp $");
 
 #ifndef LFS
 # define LFS		/* for prototypes in syscallargs.h */
@@ -306,7 +306,7 @@ lfs_markv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov,
 				LFS_IENTRY(ifp, fs, blkp->bi_inode, bp);
 				/* XXX fix for force write */
 				v_daddr = ifp->if_daddr;
-				brelse(bp);
+				brelse(bp, 0);
 			}
 			if (v_daddr == LFS_UNUSED_DADDR)
 				continue;
@@ -384,7 +384,7 @@ lfs_markv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov,
 					LFS_SET_UINO(ip, IN_CLEANING);
 					mutex_exit(&fs->lfs_interlock);
 				}
-				brelse(bp);
+				brelse(bp, 0);
 			}
 			continue;
 		}
@@ -717,7 +717,7 @@ lfs_bmapv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 			else {
 				LFS_IENTRY(ifp, fs, blkp->bi_inode, bp);
 				v_daddr = ifp->if_daddr;
-				brelse(bp);
+				brelse(bp, 0);
 			}
 			if (v_daddr == LFS_UNUSED_DADDR) {
 				blkp->bi_daddr = LFS_UNUSED_DADDR;
@@ -883,19 +883,19 @@ lfs_do_segclean(struct lfs *fs, unsigned long segnum)
 	if (sup->su_nbytes) {
 		DLOG((DLOG_CLEAN, "lfs_segclean: not cleaning segment %lu:"
 		      " %d live bytes\n", segnum, sup->su_nbytes));
-		brelse(bp);
+		brelse(bp, 0);
 		return (EBUSY);
 	}
 	if (sup->su_flags & SEGUSE_ACTIVE) {
 		DLOG((DLOG_CLEAN, "lfs_segclean: not cleaning segment %lu:"
 		      " segment is active\n", segnum));
-		brelse(bp);
+		brelse(bp, 0);
 		return (EBUSY);
 	}
 	if (!(sup->su_flags & SEGUSE_DIRTY)) {
 		DLOG((DLOG_CLEAN, "lfs_segclean: not cleaning segment %lu:"
 		      " segment is already clean\n", segnum));
-		brelse(bp);
+		brelse(bp, 0);
 		return (EALREADY);
 	}
 
@@ -1146,15 +1146,14 @@ lfs_fastvget(struct mount *mp, ino_t ino, daddr_t daddr, struct vnode **vpp,
 			/* Unlock and discard unneeded inode. */
 			lockmgr(&vp->v_lock, LK_RELEASE, &vp->v_interlock);
 			lfs_vunref(vp);
-			brelse(bp);
+			brelse(bp, 0);
 			*vpp = NULL;
 			return (error);
 		}
 		dip = lfs_ifind(ump->um_lfs, ino, bp);
 		if (dip == NULL) {
 			/* Assume write has not completed yet; try again */
-			bp->b_flags |= B_INVAL;
-			brelse(bp);
+			brelse(bp, B_INVAL);
 			++retries;
 			if (retries > LFS_IFIND_RETRIES)
 				panic("lfs_fastvget: dinode not found");
@@ -1163,7 +1162,7 @@ lfs_fastvget(struct mount *mp, ino_t ino, daddr_t daddr, struct vnode **vpp,
 			goto again;
 		}
 		*ip->i_din.ffs1_din = *dip;
-		brelse(bp);
+		brelse(bp, 0);
 	}
 	lfs_vinit(mp, &vp);
 

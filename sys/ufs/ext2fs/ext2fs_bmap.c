@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_bmap.c,v 1.21 2005/12/11 12:25:25 christos Exp $	*/
+/*	$NetBSD: ext2fs_bmap.c,v 1.21.30.1 2007/05/13 17:36:40 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_bmap.c,v 1.21 2005/12/11 12:25:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_bmap.c,v 1.21.30.1 2007/05/13 17:36:40 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -141,7 +141,7 @@ ext2fs_bmaparray(struct vnode *vp, daddr_t bn, daddr_t *bnp, struct indir *ap,
 		int *nump, int *runp)
 {
 	struct inode *ip;
-	struct buf *bp;
+	struct buf *bp, *cbp;
 	struct ufsmount *ump;
 	struct mount *mp;
 	struct indir a[NIADDR+1], *xap;
@@ -208,14 +208,21 @@ ext2fs_bmaparray(struct vnode *vp, daddr_t bn, daddr_t *bnp, struct indir *ap,
 		 */
 
 		metalbn = xap->in_lbn;
-		if ((daddr == 0 && !incore(vp, metalbn)) || metalbn == bn)
+		if (metalbn == bn)
 			break;
+		if (daddr == 0) {
+			mutex_enter(&bqueue_lock);
+			cbp = incore(vp, metalbn);
+			mutex_exit(&bqueue_lock);
+			if (cbp == NULL)
+				break;
+		}
 		/*
 		 * If we get here, we've either got the block in the cache
 		 * or we have a disk address for it, go fetch it.
 		 */
 		if (bp)
-			brelse(bp);
+			brelse(bp, 0);
 
 		xap->in_exists = 1;
 		bp = getblk(vp, metalbn, mp->mnt_stat.f_iosize, 0, 0);
@@ -243,7 +250,7 @@ ext2fs_bmaparray(struct vnode *vp, daddr_t bn, daddr_t *bnp, struct indir *ap,
 			VOP_STRATEGY(vp, bp);
 			curproc->p_stats->p_ru.ru_inblock++;	/* XXX */
 			if ((error = biowait(bp)) != 0) {
-				brelse(bp);
+				brelse(bp, 0);
 				return (error);
 			}
 		}
@@ -259,7 +266,7 @@ ext2fs_bmaparray(struct vnode *vp, daddr_t bn, daddr_t *bnp, struct indir *ap,
 				++bn, ++*runp);
 	}
 	if (bp)
-		brelse(bp);
+		brelse(bp, 0);
 
 	daddr = blkptrtodb(ump, daddr);
 	*bnp = daddr == 0 ? -1 : daddr;

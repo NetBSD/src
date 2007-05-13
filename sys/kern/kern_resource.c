@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.116.2.1 2007/03/21 20:16:31 ad Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.116.2.2 2007/05/13 17:36:35 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.116.2.1 2007/03/21 20:16:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.116.2.2 2007/05/13 17:36:35 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,8 +65,7 @@ rlim_t maxsmap = MAXSSIZ;
 
 struct uihashhead *uihashtbl;
 u_long uihash;		/* size of hash table - 1 */
-struct simplelock uihashtbl_slock = SIMPLELOCK_INITIALIZER;
-
+kmutex_t uihashtbl_lock;
 
 /*
  * Resource controls and accounting.
@@ -948,6 +947,23 @@ SYSCTL_SETUP(sysctl_proc_setup, "sysctl proc subtree setup")
 		       CTL_PROC, PROC_CURPROC, PROC_PID_STOPEXIT, CTL_EOL);
 }
 
+void
+uid_init(void)
+{
+
+	/*
+	 * XXXSMP This could be at IPL_SOFTNET, but for now we want
+	 * to to be deadlock free, so it must be at IPL_VM.
+	 */
+	mutex_init(&uihashtbl_lock, MUTEX_DRIVER, IPL_VM);
+
+	/*
+	 * Ensure that uid 0 is always in the user hash table, as
+	 * sbreserve() expects it available from interrupt context.
+	 */
+	(void)uid_find(0);
+}
+
 struct uidinfo *
 uid_find(uid_t uid)
 {
@@ -958,26 +974,28 @@ uid_find(uid_t uid)
 	uipp = UIHASH(uid);
 
 again:
-	simple_lock(&uihashtbl_slock);
+	mutex_enter(&uihashtbl_lock);
 	LIST_FOREACH(uip, uipp, ui_hash)
 		if (uip->ui_uid == uid) {
-			simple_unlock(&uihashtbl_slock);
-			if (newuip)
+			mutex_exit(&uihashtbl_lock);
+			if (newuip) {
 				free(newuip, M_PROC);
+				mutex_destroy(&newuip->ui_lock);
+			}
 			return uip;
 		}
-
 	if (newuip == NULL) {
-		simple_unlock(&uihashtbl_slock);
+		mutex_exit(&uihashtbl_lock);
+		/* Must not be called from interrupt context. */
 		newuip = malloc(sizeof(*uip), M_PROC, M_WAITOK | M_ZERO);
+		mutex_init(&newuip->ui_lock, MUTEX_DRIVER, IPL_SOFTNET);
 		goto again;
 	}
 	uip = newuip;
 
 	LIST_INSERT_HEAD(uipp, uip, ui_hash);
 	uip->ui_uid = uid;
-	simple_lock_init(&uip->ui_slock);
-	simple_unlock(&uihashtbl_slock);
+	mutex_exit(&uihashtbl_lock);
 
 	return uip;
 }
@@ -990,16 +1008,15 @@ int
 chgproccnt(uid_t uid, int diff)
 {
 	struct uidinfo *uip;
-	int s;
 
 	if (diff == 0)
 		return 0;
 
 	uip = uid_find(uid);
-	UILOCK(uip, s);
+	mutex_enter(&uip->ui_lock);
 	uip->ui_proccnt += diff;
 	KASSERT(uip->ui_proccnt >= 0);
-	UIUNLOCK(uip, s);
+	mutex_exit(&uip->ui_lock);
 	return uip->ui_proccnt;
 }
 
@@ -1007,18 +1024,16 @@ int
 chgsbsize(struct uidinfo *uip, u_long *hiwat, u_long to, rlim_t xmax)
 {
 	rlim_t nsb;
-	int s;
 
-	UILOCK(uip, s);
+	mutex_enter(&uip->ui_lock);
 	nsb = uip->ui_sbsize + to - *hiwat;
 	if (to > *hiwat && nsb > xmax) {
-		UIUNLOCK(uip, s);
-		splx(s);
+		mutex_exit(&uip->ui_lock);
 		return 0;
 	}
 	*hiwat = to;
 	uip->ui_sbsize = nsb;
 	KASSERT(uip->ui_sbsize >= 0);
-	UIUNLOCK(uip, s);
+	mutex_exit(&uip->ui_lock);
 	return 1;
 }

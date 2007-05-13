@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_ataraid.c,v 1.19.2.1 2007/03/13 16:50:22 ad Exp $	*/
+/*	$NetBSD: ld_ataraid.c,v 1.19.2.2 2007/05/13 17:36:22 ad Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_ataraid.c,v 1.19.2.1 2007/03/13 16:50:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_ataraid.c,v 1.19.2.2 2007/05/13 17:36:22 ad Exp $");
 
 #include "rnd.h"
 
@@ -446,7 +446,7 @@ ld_ataraid_iodone_raid0(struct buf *vbp)
 	struct ataraid_array_info *aai = sc->sc_aai;
 	struct ataraid_disk_info *adi;
 	long count;
-	int s, iodone;
+	int s, iodone, error = 0;
 
 	s = splbio();
 
@@ -492,8 +492,7 @@ ld_ataraid_iodone_raid0(struct buf *vbp)
 			 */
 			;
 		else {
-			bp->b_flags |= B_ERROR;
-			bp->b_error = cbp->cb_buf.b_error ?
+			error = cbp->cb_buf.b_error ?
 			    cbp->cb_buf.b_error : EIO;
 		}
 
@@ -518,7 +517,7 @@ ld_ataraid_iodone_raid0(struct buf *vbp)
 	if (bp->b_resid < 0)
 		panic("ld_ataraid_iodone_raid0: count");
 	if (bp->b_resid == 0)
-		lddone(&sc->sc_ld, bp);
+		lddone(&sc->sc_ld, bp, error);
 
 out:
 	splx(s);
