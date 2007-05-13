@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia.c,v 1.49 2007/05/08 04:35:37 kent Exp $	*/
+/*	$NetBSD: azalia.c,v 1.50 2007/05/13 03:30:47 kent Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.49 2007/05/08 04:35:37 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.50 2007/05/13 03:30:47 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -283,7 +283,7 @@ azalia_pci_match(struct device *parent, struct cfdata *match,
 
 	pa = aux;
 	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_MULTIMEDIA
-	    && PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_HDAUDIO)
+	    && PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_MULTIMEDIA_HDAUDIO)
 		return 1;
 	return 0;
 }

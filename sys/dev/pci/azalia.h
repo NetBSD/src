@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia.h,v 1.16 2007/05/08 05:18:20 kent Exp $	*/
+/*	$NetBSD: azalia.h,v 1.17 2007/05/13 03:30:46 kent Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -442,7 +442,9 @@
 #define HDA_MAX_CHANNELS	16
 
 
-#define PCI_SUBCLASS_HDAUDIO	0x03
+#ifndef PCI_SUBCLASS_MULTIMEDIA_HDAUDIO
+#define PCI_SUBCLASS_MULTIMEDIA_HDAUDIO	0x03
+#endif
 
 /* memory-mapped types */
 typedef struct {
