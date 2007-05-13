@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_resource.c,v 1.9 2007/05/12 21:07:02 dsl Exp $ */
+/*	$NetBSD: irix_resource.c,v 1.10 2007/05/13 15:56:17 dsl Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_resource.c,v 1.9 2007/05/12 21:07:02 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_resource.c,v 1.10 2007/05/13 15:56:17 dsl Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: irix_resource.c,v 1.9 2007/05/12 21:07:02 dsl Exp $"
 #include <sys/proc.h>
 #include <sys/systm.h>
 #include <sys/resource.h>
+#include <sys/resourcevar.h>
 #include <sys/syscallargs.h>
 
 #include <compat/common/compat_util.h>
@@ -172,6 +173,7 @@ irix_sys_setrlimit(l, v, retval)
 		syscallarg(const struct irix_rlimit *) rlp;
 	} */ *uap = v;
 	struct irix_rlimit irlp;
+	struct rlimit rlp;
 	int which;
 	int error;
 
@@ -192,7 +194,7 @@ irix_sys_setrlimit(l, v, retval)
 	else
 		rlp.rlim_max = irlp.rlim_cur;
 
-	return dosetrlimit(l, l->proc, which, &rlp);
+	return dosetrlimit(l, l->l_proc, which, &rlp);
 }
 
 int
@@ -227,5 +229,5 @@ irix_sys_setrlimit64(l, v, retval)
 	else
 		rlp.rlim_max = irlp.rlim_cur;
 
-	return dosetrlimit(l, l->proc, which, &rlp);
+	return dosetrlimit(l, l->l_proc, which, &rlp);
 }
