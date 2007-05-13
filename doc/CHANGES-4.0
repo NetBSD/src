@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.156 2007/05/13 21:26:58 pavel Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.157 2007/05/13 22:22:55 pavel Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -3537,4 +3537,11 @@ sys/kern/uipc_syscalls.c			1.108-1.109 via patch
 
 	Fix memory leak in socket code.
 	[yamt, ticket #621]
+
+sys/compat/linux/arch/amd64/linux_machdep.c	1.21
+sys/compat/linux/arch/amd64/linux_machdep.h	1.7
+sys/compat/linux/common/linux_termios.c		1.30
+
+	Fix Linux pts on amd64.
+	[manu, ticket #637]
 
