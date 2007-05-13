@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.152 2007/05/12 19:31:20 pavel Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.153 2007/05/13 07:48:49 pavel Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -3435,4 +3435,40 @@ sys/netkey/key.c				1.154-1.155
 
 	Fix several FAST_IPSEC issues.
 	[degroote, ticket #630]
+
+sys/arch/amd64/conf/GENERIC			1.141
+sys/arch/amd64/conf/INSTALL			1.68
+sys/arch/hpcarm/conf/IPAQ			1.50
+sys/arch/hpcarm/conf/JORNADA820			1.8
+sys/arch/i386/conf/SWINGER			1.90
+
+	Update kernel config files to splitting of the xi driver into xi 
+	and xirc. From PR/36234.
+	[jnemeth, ticket #639]
+
+sys/arch/amd64/conf/GENERIC			patch
+sys/arch/i386/conf/ALL				patch
+sys/arch/i386/conf/GENERIC			patch
+sys/conf/files					patch
+sys/dev/acpi/files.acpi				patch
+sys/dev/acpi/ug_acpi.c				patch
+sys/dev/ic/ug.c					patch
+sys/dev/ic/ugreg.h				patch
+sys/dev/ic/ugvar.h				patch
+sys/dev/isa/files.isa				patch
+sys/dev/isa/ug_isa.c				patch
+share/man/man4/ug.4				patch
+doc/CHANGES					patch
+src/sys/dev/isa/ug.c				delete
+src/sys/dev/isa/ugvar.h				delete
+
+	Add an acpi atachement for the ug hardware monitor driver.
+	[xtraeme, ticket #633]
+
+sys/coda/coda_vnops.c				1.53-1.60 via patch
+doc/CHANGES					patched by hand
+
+	overhaul the coda kernel module (vnode locking rules, uvm_fault
+	handling, general cleanup) 
+	[gdt, ticket #643]
 
