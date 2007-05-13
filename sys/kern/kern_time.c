@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.120 2007/05/13 10:34:25 dsl Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.121 2007/05/13 10:58:51 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.120 2007/05/13 10:34:25 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.121 2007/05/13 10:58:51 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/resourcevar.h>
@@ -215,18 +215,7 @@ sys_clock_gettime(struct lwp *l, void *v, register_t *retval)
 		nanotime(&ats);
 		break;
 	case CLOCK_MONOTONIC:
-#ifdef __HAVE_TIMECOUNTER
 		nanouptime(&ats);
-#else /* !__HAVE_TIMECOUNTER */
-		{
-		int s;
-
-		/* XXX "hz" granularity */
-		s = splclock();
-		TIMEVAL_TO_TIMESPEC(&mono_time,&ats);
-		splx(s);
-		}
-#endif /* !__HAVE_TIMECOUNTER */
 		break;
 	default:
 		return (EINVAL);
