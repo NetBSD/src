@@ -1,4 +1,4 @@
-#	$NetBSD: TWINTAIL,v 1.19 2007/03/14 12:27:22 drochner Exp $
+#	$NetBSD: TWINTAIL,v 1.20 2007/05/13 14:18:57 he Exp $
 #
 #	TWINTAIL -- Genetec corp. G4255EB-X002 Evaluation Board Kernel
 #
@@ -138,7 +138,7 @@ options 	DIAGNOSTIC	# internally consistency checks
 #options 	IPKDBKEY="\"Debug_it_over_network\""
 #options  	DEBUG_KGDB
 makeoptions	DEBUG="-g -O2"	# compile full symbol table
-options 	SYMTAB_SPACE=300000
+options 	SYMTAB_SPACE=320000
 #options 	AUDIO_DEBUG=2
 
 config		netbsd		root on ? type ?
