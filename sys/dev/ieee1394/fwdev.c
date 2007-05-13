@@ -1,4 +1,4 @@
-/*	$NetBSD: fwdev.c,v 1.9 2007/03/04 06:02:05 christos Exp $	*/
+/*	$NetBSD: fwdev.c,v 1.9.2.1 2007/05/13 17:36:25 ad Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -904,10 +904,7 @@ fw_strategy(struct bio *bp)
 
 	FWDEV_STRATEGY_START;
 
-	bp->bio_error = EOPNOTSUPP;
-	bp->bio_flags |= BIO_ERROR;
-	bp->bio_resid = bp->bio_bcount;
-	biodone(bp);
+	biodone(bp, EOPNOTSUPP, bp->bio_bcount);
 }
 
 #if defined(__FreeBSD__)

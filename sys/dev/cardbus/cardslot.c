@@ -1,4 +1,4 @@
-/*	$NetBSD: cardslot.c,v 1.34.6.2 2007/04/10 12:07:08 ad Exp $	*/
+/*	$NetBSD: cardslot.c,v 1.34.6.3 2007/05/13 17:36:22 ad Exp $	*/
 
 /*
  * Copyright (c) 1999 and 2000
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardslot.c,v 1.34.6.2 2007/04/10 12:07:08 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardslot.c,v 1.34.6.3 2007/05/13 17:36:22 ad Exp $");
 
 #include "opt_cardslot.h"
 
@@ -145,8 +145,8 @@ cardslotattach(struct device *parent, struct device *self,
 
 	if (csc != NULL || psc != NULL) {
 		config_pending_incr();
-		if (kthread_create(PRI_NONE, false, cardslot_event_thread, sc,
-		    &sc->sc_event_thread, "%s", sc->sc_dev.dv_xname)) {
+		if (kthread_create(PRI_NONE, 0, NULL, cardslot_event_thread,
+		    sc, &sc->sc_event_thread, "%s", sc->sc_dev.dv_xname)) {
 			printf("%s: unable to create thread for slot %d\n",
 			    sc->sc_dev.dv_xname, sc->sc_slot);
 			panic("cardslotattach");

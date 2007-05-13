@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.337.2.2 2007/04/10 13:24:23 ad Exp $ */
+/*	$NetBSD: wd.c,v 1.337.2.3 2007/05/13 17:36:22 ad Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.337.2.2 2007/04/10 13:24:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.337.2.3 2007/05/13 17:36:22 ad Exp $");
 
 #include "opt_ata.h"
 
@@ -512,23 +512,25 @@ wdstrategy(struct buf *bp)
 	struct wd_softc *wd = device_lookup(&wd_cd, WDUNIT(bp->b_dev));
 	struct disklabel *lp = wd->sc_dk.dk_label;
 	daddr_t blkno;
-	int s;
+	int s, error;
 
 	ATADEBUG_PRINT(("wdstrategy (%s)\n", wd->sc_dev.dv_xname),
 	    DEBUG_XFERS);
+
+	error = 0;
 
 	/* Valid request?  */
 	if (bp->b_blkno < 0 ||
 	    (bp->b_bcount % lp->d_secsize) != 0 ||
 	    (bp->b_bcount / lp->d_secsize) >= (1 << NBBY)) {
-		bp->b_error = EINVAL;
-		goto bad;
+		error = EINVAL;
+		goto done;
 	}
 
 	/* If device invalidated (e.g. media change, door open), error. */
 	if ((wd->sc_flags & WDF_LOADED) == 0) {
-		bp->b_error = EIO;
-		goto bad;
+		error = EIO;
+		goto done;
 	}
 
 	/* If it's a null transfer, return immediately. */
@@ -591,12 +593,9 @@ wdstrategy(struct buf *bp)
 	wdstart(wd);
 	splx(s);
 	return;
-bad:
-	bp->b_flags |= B_ERROR;
 done:
 	/* Toss transfer; we're done early. */
-	bp->b_resid = bp->b_bcount;
-	biodone(bp);
+	biodone(bp, error, 0);
 }
 
 /*
@@ -661,11 +660,8 @@ wd_split_mod15_write(struct buf *bp)
 	return;
 
  done:
-	obp->b_flags |= bp->b_flags & B_ERROR;
-	obp->b_error = bp->b_error;
-	obp->b_resid = bp->b_resid;
 	putiobuf(bp);
-	biodone(obp);
+	biodone(obp, bp->b_error, bp->b_resid);
 	sc->openings++;
 	/* wddone() will call wdstart() */
 }
@@ -692,10 +688,7 @@ __wdstart(struct wd_softc *wd, struct buf *bp)
 		nbp = getiobuf_nowait();
 		if (__predict_false(nbp == NULL)) {
 			/* No memory -- fail the iop. */
-			bp->b_error = ENOMEM;
-			bp->b_flags |= B_ERROR;
-			bp->b_resid = bp->b_bcount;
-			biodone(bp);
+			biodone(bp, ENOMEM, 0);
 			wd->openings++;
 			return;
 		}
@@ -765,7 +758,7 @@ wddone(void *v)
 	struct wd_softc *wd = v;
 	struct buf *bp = wd->sc_bp;
 	const char *errmsg;
-	int do_perror = 0;
+	int do_perror = 0, error = 0;
 	ATADEBUG_PRINT(("wddone %s\n", wd->sc_dev.dv_xname),
 	    DEBUG_XFERS);
 
@@ -829,8 +822,7 @@ retry2:
 			wd->sc_bscount++;
 		}
 #endif
-		bp->b_flags |= B_ERROR;
-		bp->b_error = EIO;
+		error = EIO;
 		break;
 	case NOERROR:
 noerror:	if ((wd->sc_wdc_bio.flags & ATA_CORR) || wd->retries > 0)
@@ -838,8 +830,7 @@ noerror:	if ((wd->sc_wdc_bio.flags & ATA_CORR) || wd->retries > 0)
 			    wd->sc_dev.dv_xname);
 		break;
 	case ERR_NODEV:
-		bp->b_flags |= B_ERROR;
-		bp->b_error = EIO;
+		error = EIO;
 		break;
 	}
 	disk_unbusy(&wd->sc_dk, (bp->b_bcount - bp->b_resid),
@@ -850,9 +841,9 @@ noerror:	if ((wd->sc_wdc_bio.flags & ATA_CORR) || wd->retries > 0)
 	/* XXX Yuck, but we don't want to increment openings in this case */
 	if (__predict_false((bp->b_flags & B_CALL) != 0 &&
 			    bp->b_iodone == wd_split_mod15_write))
-		biodone(bp);
+		biodone(bp, error, bp->b_resid);
 	else {
-		biodone(bp);
+		biodone(bp, error, bp->b_resid);
 		wd->openings++;
 	}
 	wdstart(wd);
@@ -2081,11 +2072,8 @@ wdioctlstrategy(struct buf *bp)
 		}
 	}
 
-	bp->b_error = 0;
-	biodone(bp);
+	biodone(bp, 0, 0);
 	return;
 bad:
-	bp->b_flags |= B_ERROR;
-	bp->b_error = error;
-	biodone(bp);
+	biodone(bp, error, bp->b_bcount);
 }

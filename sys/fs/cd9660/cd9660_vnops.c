@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vnops.c,v 1.26 2007/03/04 06:02:59 christos Exp $	*/
+/*	$NetBSD: cd9660_vnops.c,v 1.26.2.1 2007/05/13 17:36:31 ad Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vnops.c,v 1.26 2007/03/04 06:02:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vnops.c,v 1.26.2.1 2007/05/13 17:36:31 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -311,12 +311,12 @@ cd9660_read(v)
 		}
 		n = MIN(n, size - bp->b_resid);
 		if (error) {
-			brelse(bp);
+			brelse(bp, 0);
 			return (error);
 		}
 
 		error = uiomove((char *)bp->b_data + on, (int)n, uio);
-		brelse(bp);
+		brelse(bp, 0);
 	} while (error == 0 && uio->uio_resid > 0 && n != 0);
 
 out:
@@ -482,7 +482,7 @@ cd9660_readdir(v)
 		 */
 		if ((idp->curroff & bmask) == 0) {
 			if (bp != NULL)
-				brelse(bp);
+				brelse(bp, 0);
 			error = cd9660_blkatoff(vdp, (off_t)idp->curroff,
 					     NULL, &bp);
 			if (error)
@@ -598,7 +598,7 @@ cd9660_readdir(v)
 	}
 
 	if (bp)
-		brelse (bp);
+		brelse(bp, 0);
 
 	uio->uio_offset = idp->uio_off;
 	*ap->a_eofflag = idp->eofflag;
@@ -651,7 +651,7 @@ cd9660_readlink(v)
 		      (imp->im_bshift - DEV_BSHIFT),
 		      imp->logical_block_size, NOCRED, &bp);
 	if (error) {
-		brelse(bp);
+		brelse(bp, 0);
 		return (EINVAL);
 	}
 
@@ -666,7 +666,7 @@ cd9660_readlink(v)
 	 */
 	if ((ip->i_number & imp->im_bmask) + isonum_711(dirp->length)
 	    > imp->logical_block_size) {
-		brelse(bp);
+		brelse(bp, 0);
 		return (EINVAL);
 	}
 
@@ -689,13 +689,13 @@ cd9660_readlink(v)
 		if (use_pnbuf) {
 			PNBUF_PUT(symname);
 		}
-		brelse(bp);
+		brelse(bp, 0);
 		return (EINVAL);
 	}
 	/*
 	 * Don't forget before you leave from home ;-)
 	 */
-	brelse(bp);
+	brelse(bp, 0);
 
 	/*
 	 * return with the symbolic name to caller's.
@@ -766,16 +766,14 @@ cd9660_strategy(v)
 	if (bp->b_blkno == bp->b_lblkno) {
 		error = VOP_BMAP(vp, bp->b_lblkno, NULL, &bp->b_blkno, NULL);
 		if (error) {
-			bp->b_error = error;
-			bp->b_flags |= B_ERROR;
-			biodone(bp);
+			biodone(bp, error, 0);
 			return (error);
 		}
 		if ((long)bp->b_blkno == -1)
 			clrbuf(bp);
 	}
 	if ((long)bp->b_blkno == -1) {
-		biodone(bp);
+		biodone(bp, 0, bp->b_resid);
 		return (0);
 	}
 	vp = ip->i_devvp;

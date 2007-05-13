@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.37.4.1 2007/03/21 20:10:19 ad Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.37.4.2 2007/05/13 17:36:33 ad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.37.4.1 2007/03/21 20:10:19 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.37.4.2 2007/05/13 17:36:33 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -1221,16 +1221,18 @@ tmpfs_inactive(void *v)
 {
 	struct vnode *vp = ((struct vop_inactive_args *)v)->a_vp;
 	struct lwp *l = ((struct vop_inactive_args *)v)->a_l;
+	nlink_t links;
 
 	struct tmpfs_node *node;
 
 	KASSERT(VOP_ISLOCKED(vp));
 
 	node = VP_TO_TMPFS_NODE(vp);
+	links = node->tn_links;
 
 	VOP_UNLOCK(vp, 0);
 
-	if (node->tn_links == 0)
+	if (links == 0)
 		vrecycle(vp, NULL, l);
 
 	return 0;

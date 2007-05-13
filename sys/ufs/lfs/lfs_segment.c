@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.198.2.2 2007/03/21 20:11:59 ad Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.198.2.3 2007/05/13 17:36:44 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.198.2.2 2007/03/21 20:11:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.198.2.3 2007/05/13 17:36:44 ad Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -319,7 +319,7 @@ lfs_vflush(struct vnode *vp)
 			}
 			/* Copied from lfs_writeseg */
 			if (bp->b_flags & B_CALL) {
-				biodone(bp);
+				biodone(bp, bp->b_error, bp->b_resid);
 			} else {
 				bremfree(bp);
 				LFS_UNLOCK_BUF(bp);
@@ -327,7 +327,7 @@ lfs_vflush(struct vnode *vp)
 					 B_GATHERED);
 				bp->b_flags |= B_DONE;
 				reassignbuf(bp, vp);
-				brelse(bp);
+				brelse(bp, 0);
 			}
 		}
 		splx(s);
@@ -704,7 +704,7 @@ lfs_segwrite(struct mount *mp, int flags)
 			if (dirty)
 				error = LFS_BWRITE_LOG(bp); /* Ifile */
 			else
-				brelse(bp);
+				brelse(bp, 0);
 			segleft -= fs->lfs_sepb;
 			curseg += fs->lfs_sepb;
 		}
@@ -1248,7 +1248,7 @@ lfs_writeinode(struct lfs *fs, struct segment *sp, struct inode *ip)
 
 	if (gotblk) {
 		LFS_LOCK_BUF(bp);
-		brelse(bp);
+		brelse(bp, 0);
 	}
 
 	/* Increment inode count in segment summary block. */
@@ -1684,7 +1684,7 @@ lfs_rewind(struct lfs *fs, int newsn)
 	for (sn = 0; sn < fs->lfs_nseg; ++sn) {
 		LFS_SEGENTRY(sup, fs, sn, bp);
 		isdirty = sup->su_flags & SEGUSE_DIRTY;
-		brelse(bp);
+		brelse(bp, 0);
 
 		if (!isdirty)
 			break;
@@ -1741,7 +1741,7 @@ lfs_initseg(struct lfs *fs)
 			fs->lfs_offset += btofsb(fs, LFS_SBPAD);
 			sp->seg_bytes_left -= LFS_SBPAD;
 		}
-		brelse(bp);
+		brelse(bp, 0);
 		/* Segment zero could also contain the labelpad */
 		if (fs->lfs_version > 1 && sp->seg_number == 0 &&
 		    fs->lfs_start < btofsb(fs, LFS_LABELPAD)) {
@@ -1826,7 +1826,7 @@ lfs_unset_inval_all(struct lfs *fs)
 			sup->su_flags &= ~SEGUSE_INVAL;
 			LFS_WRITESEGENTRY(sup, fs, i, bp);
 		} else
-			brelse(bp);
+			brelse(bp, 0);
 	}
 }
 
@@ -1895,7 +1895,7 @@ lfs_newseg(struct lfs *fs)
 		    !(sup->su_flags & SEGUSE_EMPTY))
 			LFS_WRITESEGENTRY(sup, fs, sn, bp);
 		else
-			brelse(bp);
+			brelse(bp, 0);
 
 		if (!isdirty)
 			break;
@@ -2105,9 +2105,7 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 				if (bp->b_flags & B_CALL) {
 					DLOG((DLOG_SEG, "lfs_writeseg: "
 					      "indir bp should not be B_CALL\n"));
-					s = splbio();
-					biodone(bp);
-					splx(s);
+					biodone(bp, bp->b_error, bp->b_resid);
 					bp = NULL;
 				} else {
 					/* Still on free list, leave it there */
@@ -2531,7 +2529,7 @@ lfs_cluster_aiodone(struct buf *bp)
 				tbp->b_flags |= B_AGE;
 		}
 
-		biodone(tbp);
+		biodone(tbp, tbp->b_error, tbp->b_resid);
 
 		/*
 		 * If this is the last block for this vnode, but

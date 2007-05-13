@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_aac.c,v 1.13 2006/11/16 01:32:51 christos Exp $	*/
+/*	$NetBSD: ld_aac.c,v 1.13.8.1 2007/05/13 17:36:24 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_aac.c,v 1.13 2006/11/16 01:32:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_aac.c,v 1.13.8.1 2007/05/13 17:36:24 ad Exp $");
 
 #include "rnd.h"
 
@@ -254,6 +254,7 @@ ld_aac_intr(struct aac_ccb *ac)
 	struct aac_softc *aac;
 	struct buf *bp;
 	u_int32_t status;
+	int error;
 
 	bp = ac->ac_context;
 	sc = (struct ld_aac_softc *)ac->ac_device;
@@ -271,16 +272,13 @@ ld_aac_intr(struct aac_ccb *ac)
 	aac_ccb_free(aac, ac);
 
 	if (status != ST_OK) {
-		bp->b_flags |= B_ERROR;
-		bp->b_error = EIO;
-		bp->b_resid = bp->b_bcount;
-
+		error = EIO;
 		printf("%s: I/O error: %s\n", sc->sc_ld.sc_dv.dv_xname,
 		    aac_describe_code(aac_command_status_table, status));
 	} else
-		bp->b_resid = 0;
+		error = 0;
 
-	lddone(&sc->sc_ld, bp);
+	lddone(&sc->sc_ld, bp, error);
 }
 
 static int

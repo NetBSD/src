@@ -1,4 +1,4 @@
-/*	$NetBSD: fw_port.h,v 1.21.2.2 2007/04/10 12:07:10 ad Exp $	*/
+/*	$NetBSD: fw_port.h,v 1.21.2.3 2007/05/13 17:36:25 ad Exp $	*/
 /*
  * Copyright (c) 2004 KIYOHARA Takashi
  * All rights reserved.
@@ -567,7 +567,7 @@ typedef struct proc fw_thread;
 #define FW_LOCK
 #define FW_UNLOCK
 #define THREAD_CREATE(f, sc, p, name, arg) \
-     kthread_create(PRI_NONE, false, f, (void *)sc, p, name, arg)
+     kthread_create(PRI_NONE, 0, NULL, f, (void *)sc, p, name, arg)
 #define THREAD_EXIT(x)  kthread_exit(x)
 #define fw_kthread_create(func, arg)	(*(func))(arg)
 

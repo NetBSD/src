@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.43.2.3 2007/04/13 20:56:19 ad Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.43.2.4 2007/05/13 17:36:42 ad Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.43.2.3 2007/04/13 20:56:19 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.43.2.4 2007/05/13 17:36:42 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -340,14 +340,13 @@ ffs_snapshot(struct mount *mp, struct vnode *vp,
 	if (len > 0) {
 		if ((error = bread(devvp, fsbtodb(fs, fs->fs_csaddr + loc),
 		    len, KERNCRED, &bp)) != 0) {
-			brelse(bp);
+			brelse(bp, 0);
 			free(copy_fs->fs_csp, M_UFSMNT);
 			goto out1;
 		}
 		bcopy(bp->b_data, space, (u_int)len);
 		space = (char *)space + len;
-		bp->b_flags |= B_INVAL | B_NOCACHE;
-		brelse(bp);
+		brelse(bp, B_INVAL | B_NOCACHE);
 	}
 	if (fs->fs_contigsumsize > 0) {
 		copy_fs->fs_maxcluster = lp = space;
@@ -610,7 +609,7 @@ out1:
 	for (loc = 0; loc < len; loc++) {
 		error = bread(vp, blkno + loc, fs->fs_bsize, KERNCRED, &nbp);
 		if (error) {
-			brelse(nbp);
+			brelse(nbp, 0);
 			fs->fs_snapinum[snaploc] = 0;
 			FREE(snapblklist, M_UFSMNT);
 			goto done;
@@ -636,7 +635,7 @@ done:
 		error = bread(vp, lblkno(fs, fs->fs_sblockloc), fs->fs_bsize,
 		    KERNCRED, &nbp);
 		if (error) {
-			brelse(nbp);
+			brelse(nbp, 0);
 			fs->fs_snapinum[snaploc] = 0;
 		}
 		bcopy(sbbuf, nbp->b_data, fs->fs_bsize);
@@ -713,18 +712,18 @@ cgaccount(int cg, struct vnode *vp, void *data, int passno)
 	error = bread(ip->i_devvp, fsbtodb(fs, cgtod(fs, cg)),
 		(int)fs->fs_cgsize, KERNCRED, &bp);
 	if (error) {
-		brelse(bp);
+		brelse(bp, 0);
 		return (error);
 	}
 	cgp = (struct cg *)bp->b_data;
 	if (!cg_chkmagic(cgp, ns)) {
-		brelse(bp);
+		brelse(bp, 0);
 		return (EIO);
 	}
 	ACTIVECG_SET(fs, cg);
 
 	bcopy(bp->b_data, data, fs->fs_cgsize);
-	brelse(bp);
+	brelse(bp, 0);
 	if (fs->fs_cgsize < fs->fs_bsize)
 		memset((char *)data + fs->fs_cgsize, 0,
 		    fs->fs_bsize - fs->fs_cgsize);
@@ -811,7 +810,7 @@ expunge_ufs1(struct vnode *snapvp, struct inode *cancelip, struct fs *fs,
 			return (error);
 		indiroff = (lbn - NDADDR) % NINDIR(fs);
 		blkno = idb_get(VTOI(snapvp), bp->b_data, indiroff);
-		brelse(bp);
+		brelse(bp, 0);
 	}
 	bf = malloc(fs->fs_bsize, M_UFSMNT, M_WAITOK);
 	if (blkno != 0)
@@ -904,7 +903,7 @@ indiracct_ufs1(struct vnode *snapvp, struct vnode *cancelvp, int level,
 	bp->b_blkno = fsbtodb(fs, blkno);
 	if ((bp->b_flags & (B_DONE | B_DELWRI)) == 0 &&
 	    (error = readfsblk(bp->b_vp, bp->b_data, fragstoblks(fs, blkno)))) {
-		brelse(bp);
+		brelse(bp, 0);
 		return (error);
 	}
 	/*
@@ -915,7 +914,7 @@ indiracct_ufs1(struct vnode *snapvp, struct vnode *cancelvp, int level,
 		last = NINDIR(fs);
 	bap = malloc(fs->fs_bsize, M_DEVBUF, M_WAITOK);
 	bcopy(bp->b_data, (void *)bap, fs->fs_bsize);
-	brelse(bp);
+	brelse(bp, 0);
 	error = (*acctfunc)(snapvp, &bap[0], &bap[last], fs,
 	    level == 0 ? rlbn : -1, expungetype);
 	if (error || level == 0)
@@ -996,7 +995,7 @@ snapacct_ufs1(struct vnode *vp, ufs1_daddr_t *oldblkp, ufs1_daddr_t *lastblkp,
 		blkno = ufs_rw32(*blkp, ns);
 		if (expungetype == BLK_SNAP && blkno == BLK_NOCOPY) {
 			if (lbn >= NDADDR)
-				brelse(ibp);
+				brelse(ibp, 0);
 		} else {
 			if (blkno != 0)
 				panic("snapacct_ufs1: bad block");
@@ -1079,7 +1078,7 @@ expunge_ufs2(struct vnode *snapvp, struct inode *cancelip, struct fs *fs,
 			return (error);
 		indiroff = (lbn - NDADDR) % NINDIR(fs);
 		blkno = idb_get(VTOI(snapvp), bp->b_data, indiroff);
-		brelse(bp);
+		brelse(bp, 0);
 	}
 	bf = malloc(fs->fs_bsize, M_UFSMNT, M_WAITOK);
 	if (blkno != 0)
@@ -1172,7 +1171,7 @@ indiracct_ufs2(struct vnode *snapvp, struct vnode *cancelvp, int level,
 	bp->b_blkno = fsbtodb(fs, blkno);
 	if ((bp->b_flags & (B_DONE | B_DELWRI)) == 0 &&
 	    (error = readfsblk(bp->b_vp, bp->b_data, fragstoblks(fs, blkno)))) {
-		brelse(bp);
+		brelse(bp, 0);
 		return (error);
 	}
 	/*
@@ -1183,7 +1182,7 @@ indiracct_ufs2(struct vnode *snapvp, struct vnode *cancelvp, int level,
 		last = NINDIR(fs);
 	bap = malloc(fs->fs_bsize, M_DEVBUF, M_WAITOK);
 	bcopy(bp->b_data, (void *)bap, fs->fs_bsize);
-	brelse(bp);
+	brelse(bp, 0);
 	error = (*acctfunc)(snapvp, &bap[0], &bap[last], fs,
 	    level == 0 ? rlbn : -1, expungetype);
 	if (error || level == 0)
@@ -1264,7 +1263,7 @@ snapacct_ufs2(struct vnode *vp, ufs2_daddr_t *oldblkp, ufs2_daddr_t *lastblkp,
 		blkno = ufs_rw64(*blkp, ns);
 		if (expungetype == BLK_SNAP && blkno == BLK_NOCOPY) {
 			if (lbn >= NDADDR)
-				brelse(ibp);
+				brelse(ibp, 0);
 		} else {
 			if (blkno != 0)
 				panic("snapacct_ufs2: bad block");
@@ -1525,7 +1524,7 @@ retry:
 			      VI_MTX(devvp)) != 0) {
 #if 0 /* CID-2949: dead code */
 				if (lbn >= NDADDR)
-					brelse(ibp);
+					brelse(ibp, 0);
 #endif 
 				vn_lock(vp, LK_EXCLUSIVE | LK_SLEEPFAIL);
 				goto retry;
@@ -1547,7 +1546,7 @@ retry:
 			 * it is not needed.
 			 */
 			if (lbn >= NDADDR)
-				brelse(ibp);
+				brelse(ibp, 0);
 			continue;
 		}
 		/*
@@ -1586,7 +1585,7 @@ retry:
 			return (1);
 		}
 		if (lbn >= NDADDR)
-			brelse(ibp);
+			brelse(ibp, 0);
 #ifdef DEBUG
 		if (snapdebug)
 			printf("%s%llu lbn %" PRId64 " %s %llu size %ld\n",
@@ -1901,7 +1900,7 @@ retry:
 				break;
 			indiroff = (lbn - NDADDR) % NINDIR(fs);
 			blkno = idb_get(ip, ibp->b_data, indiroff);
-			brelse(ibp);
+			brelse(ibp, 0);
 		}
 #ifdef DIAGNOSTIC
 		if (blkno == BLK_SNAP && bp->b_lblkno >= 0)

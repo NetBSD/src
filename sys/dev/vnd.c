@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.165.2.4 2007/04/10 13:24:29 ad Exp $	*/
+/*	$NetBSD: vnd.c,v 1.165.2.5 2007/05/13 17:36:21 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -137,7 +137,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.165.2.4 2007/04/10 13:24:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.165.2.5 2007/05/13 17:36:21 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -450,27 +450,27 @@ vndstrategy(struct buf *bp)
 	    (struct vnd_softc *)device_lookup(&vnd_cd, unit);
 	struct disklabel *lp = vnd->sc_dkdev.dk_label;
 	daddr_t blkno;
-	int s = splbio();
+	int s = splbio(), error = 0;
 
 	if ((vnd->sc_flags & VNF_INITED) == 0) {
-		bp->b_error = ENXIO;
-		goto bad;
+		error = ENXIO;
+		goto done;
 	}
 
 	/*
 	 * The transfer must be a whole number of blocks.
 	 */
 	if ((bp->b_bcount % lp->d_secsize) != 0) {
-		bp->b_error = EINVAL;
-		goto bad;
+		error = EINVAL;
+		goto done;
 	}
 
 	/*
 	 * check if we're read-only.
 	 */
 	if ((vnd->sc_flags & VNF_READONLY) && !(bp->b_flags & B_READ)) {
-		bp->b_error = EACCES;
-		goto bad;
+		error = EACCES;
+		goto done;
 	}
 
 	/* If it's a nil transfer, wake up the top half now. */
@@ -520,11 +520,8 @@ vndstrategy(struct buf *bp)
 	splx(s);
 	return;
 
-bad:
-	bp->b_flags |= B_ERROR;
 done:
-	bp->b_resid = bp->b_bcount;
-	biodone(bp);
+	biodone(bp, error, bp->b_bcount);
 	splx(s);
 }
 
@@ -635,7 +632,7 @@ vndthread(void *arg)
 		continue;
 
 done:
-		biodone(obp);
+		biodone(obp, obp->b_error, obp->b_resid);
 		s = splbio();
 	}
 
@@ -680,6 +677,7 @@ handle_with_rdwr(struct vnd_softc *vnd, const struct buf *obp, struct buf *bp)
 	off_t offset;
 	size_t resid;
 	struct vnode *vp;
+	int error;
 
 	doread = bp->b_flags & B_READ;
 	offset = obp->b_rawblkno * vnd->sc_dkdev.dk_label->d_secsize;
@@ -696,22 +694,16 @@ handle_with_rdwr(struct vnd_softc *vnd, const struct buf *obp, struct buf *bp)
 #endif
 
 	/* Issue the read or write operation. */
-	bp->b_error =
-	    vn_rdwr(doread ? UIO_READ : UIO_WRITE,
+	error = vn_rdwr(doread ? UIO_READ : UIO_WRITE,
 	    vp, bp->b_data, bp->b_bcount, offset,
 	    UIO_SYSSPACE, 0, vnd->sc_cred, &resid, NULL);
-	bp->b_resid = resid;
-	if (bp->b_error != 0)
-		bp->b_flags |= B_ERROR;
-	else
-		KASSERT(!(bp->b_flags & B_ERROR));
 
 	/* We need to increase the number of outputs on the vnode if
 	 * there was any write to it. */
 	if (!doread)
 		V_INCR_NUMOUTPUT(vp);
 
-	biodone(bp);
+	biodone(bp, error, resid);
 }
 
 /*
@@ -836,11 +828,8 @@ vndiodone(struct buf *bp)
 	if (vnd->sc_active == 0) {
 		wakeup(&vnd->sc_tab);
 	}
-	obp->b_flags |= bp->b_flags & B_ERROR;
-	obp->b_error = bp->b_error;
-	obp->b_resid = bp->b_resid;
 	VND_PUTXFER(vnd, vnx);
-	biodone(obp);
+	biodone(obp, bp->b_error, bp->b_resid);
 }
 
 /* ARGSUSED */
@@ -1177,7 +1166,7 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		vnd->sc_flags |= VNF_INITED;
 
 		/* create the kernel thread, wait for it to be up */
-		error = kthread_create(PRIBIO, false, vndthread, vnd,
+		error = kthread_create(PRIBIO, 0, NULL, vndthread, vnd,
 		    &vnd->sc_kthread, vnd->sc_dev.dv_xname);
 		if (error)
 			goto close_and_exit;

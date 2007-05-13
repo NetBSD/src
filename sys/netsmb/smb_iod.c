@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_iod.c,v 1.26.18.3 2007/04/10 12:07:14 ad Exp $	*/
+/*	$NetBSD: smb_iod.c,v 1.26.18.4 2007/05/13 17:36:38 ad Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_iod.c,v 1.26.18.3 2007/04/10 12:07:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_iod.c,v 1.26.18.4 2007/05/13 17:36:38 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -696,7 +696,7 @@ smb_iod_create(struct smb_vc *vcp)
 	smb_sl_init(&iod->iod_evlock, "smbevl");
 	SIMPLEQ_INIT(&iod->iod_evlist);
 #ifdef __NetBSD__
-	error = kthread_create(PRI_NONE, false, smb_iod_thread, iod,
+	error = kthread_create(PRI_NONE, 0, NULL, smb_iod_thread, iod,
 	   &iod->iod_l, "smbiod%d", iod->iod_id);
 #else
 	error = kthread_create(smb_iod_thread, iod, &iod->iod_p,

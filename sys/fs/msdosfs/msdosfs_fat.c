@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_fat.c,v 1.13 2007/03/04 06:02:59 christos Exp $	*/
+/*	$NetBSD: msdosfs_fat.c,v 1.13.2.1 2007/05/13 17:36:31 ad Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_fat.c,v 1.13 2007/03/04 06:02:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_fat.c,v 1.13.2.1 2007/05/13 17:36:31 ad Exp $");
 
 /*
  * kernel include files.
@@ -259,11 +259,11 @@ pcbmap(dep, findcn, bnp, cnp, sp)
 		fatblock(pmp, byteoffset, &bn, &bsize, &bo);
 		if (bn != bp_bn) {
 			if (bp)
-				brelse(bp);
+				brelse(bp, 0);
 			error = bread(pmp->pm_devvp, de_bn2kb(pmp, bn), bsize,
 			    NOCRED, &bp);
 			if (error) {
-				brelse(bp);
+				brelse(bp, 0);
 				return (error);
 			}
 			bp_bn = bn;
@@ -271,7 +271,7 @@ pcbmap(dep, findcn, bnp, cnp, sp)
 		prevcn = cn;
 		if (bo >= bsize) {
 			if (bp)
-				brelse(bp);
+				brelse(bp, 0);
 			return (EIO);
 		}
 		KASSERT(bp != NULL);
@@ -286,7 +286,7 @@ pcbmap(dep, findcn, bnp, cnp, sp)
 
 	if (!MSDOSFSEOF(cn, pmp->pm_fatmask)) {
 		if (bp)
-			brelse(bp);
+			brelse(bp, 0);
 		if (bnp)
 			*bnp = cntobn(pmp, cn);
 		if (cnp)
@@ -299,7 +299,7 @@ hiteof:;
 	if (cnp)
 		*cnp = i;
 	if (bp)
-		brelse(bp);
+		brelse(bp, 0);
 	/* update last file cluster entry in the fat cache */
 	fc_setcache(dep, FC_LASTFC, i - 1, prevcn);
 	return (E2BIG);
@@ -406,7 +406,7 @@ updatefats(pmp, bp, fatbn)
 			 * Ignore the error, but turn off FSInfo update for the future.
 			 */
 			pmp->pm_fsinfo = 0;
-			brelse(bpn);
+			brelse(bpn, 0);
 		} else {
 			struct fsinfo *fp = (struct fsinfo *)bpn->b_data;
 
@@ -585,7 +585,7 @@ fatentry(function, pmp, cn, oldcontents, newcontents)
 	fatblock(pmp, byteoffset, &bn, &bsize, &bo);
 	if ((error = bread(pmp->pm_devvp, de_bn2kb(pmp, bn), bsize, NOCRED,
 	    &bp)) != 0) {
-		brelse(bp);
+		brelse(bp, 0);
 		return (error);
 	}
 
@@ -631,7 +631,7 @@ fatentry(function, pmp, cn, oldcontents, newcontents)
 		pmp->pm_fmod = 1;
 	}
 	if (bp)
-		brelse(bp);
+		brelse(bp, 0);
 	return (0);
 }
 
@@ -670,7 +670,7 @@ fatchain(pmp, start, count, fillwith)
 		error = bread(pmp->pm_devvp, de_bn2kb(pmp, bn), bsize, NOCRED,
 		    &bp);
 		if (error) {
-			brelse(bp);
+			brelse(bp, 0);
 			return (error);
 		}
 		while (count > 0) {
@@ -912,7 +912,7 @@ freeclusterchain(pmp, cluster)
 			error = bread(pmp->pm_devvp, de_bn2kb(pmp, bn), bsize,
 			    NOCRED, &bp);
 			if (error) {
-				brelse(bp);
+				brelse(bp, 0);
 				return (error);
 			}
 			lbn = bn;
@@ -982,12 +982,12 @@ fillinusemap(pmp)
 		if (!bo || !bp) {
 			/* Read new FAT block */
 			if (bp)
-				brelse(bp);
+				brelse(bp, 0);
 			fatblock(pmp, byteoffset, &bn, &bsize, NULL);
 			error = bread(pmp->pm_devvp, de_bn2kb(pmp, bn), bsize,
 			    NOCRED, &bp);
 			if (error) {
-				brelse(bp);
+				brelse(bp, 0);
 				return (error);
 			}
 		}
@@ -1002,7 +1002,7 @@ fillinusemap(pmp)
 		if (readcn == 0)
 			usemap_free(pmp, cn);
 	}
-	brelse(bp);
+	brelse(bp, 0);
 	return (0);
 }
 

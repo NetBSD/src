@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.299.2.7 2007/04/13 20:56:17 ad Exp $	*/
+/*	$NetBSD: init_main.c,v 1.299.2.8 2007/05/13 17:36:33 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.299.2.7 2007/04/13 20:56:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.299.2.8 2007/05/13 17:36:33 ad Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_kcont.h"
@@ -122,6 +122,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.299.2.7 2007/04/13 20:56:17 ad Exp $
 #include <sys/sleepq.h>
 #include <sys/iostat.h>
 #include <sys/uuid.h>
+#include <sys/extent.h>
 #ifdef FAST_IPSEC
 #include <netipsec/ipsec.h>
 #endif
@@ -274,6 +275,9 @@ main(void)
 
 	kmem_init();
 
+	/* Initialize the extent manager. */
+	extent_init();
+
 	/* Do machine-dependent initialization. */
 	cpu_startup();
 
@@ -326,9 +330,10 @@ main(void)
 	/* Create process 0 (the swapper). */
 	proc0_init();
 
-	/*
-	 * Charge root for one process.
-	 */
+	/* Initialize the UID hash table. */
+	uid_init();
+
+	/* Charge root for one process. */
 	(void)chgproccnt(0, 1);
 
 	/* Initialize the run queues, turnstiles and sleep queues. */
@@ -587,11 +592,12 @@ main(void)
 
 	/* Create the pageout daemon kernel thread. */
 	uvm_swap_init();
-	if (kthread_create(PVM, true, uvm_pageout, NULL, NULL, "pgdaemon"))
+	if (kthread_create(PVM, KTHREAD_MPSAFE, NULL, uvm_pageout,
+	    NULL, NULL, "pgdaemon"))
 		panic("fork pagedaemon");
 
 	/* Create the filesystem syncer kernel thread. */
-	if (kthread_create(PINOD, false, sched_sync, NULL, NULL, "ioflush"))
+	if (kthread_create(PINOD, 0, NULL, sched_sync, NULL, NULL, "ioflush"))
 		panic("fork syncer");
 
 	/* Create the aiodone daemon kernel thread. */

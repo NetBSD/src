@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vnops.c,v 1.44 2007/03/04 06:03:46 christos Exp $	*/
+/*	$NetBSD: mfs_vnops.c,v 1.44.2.1 2007/05/13 17:36:45 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfs_vnops.c,v 1.44 2007/03/04 06:03:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfs_vnops.c,v 1.44.2.1 2007/05/13 17:36:45 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -152,8 +152,7 @@ mfs_strategy(void *v)
 			memcpy(bp->b_data, base, bp->b_bcount);
 		else
 			memcpy(base, bp->b_data, bp->b_bcount);
-		bp->b_resid = 0;
-		biodone(bp);
+		biodone(bp, bp->b_error, 0);
 	} else if (mfsp->mfs_proc == p) {
 		mfs_doio(bp, mfsp->mfs_baseoff);
 	} else if (doing_shutdown) {
@@ -163,8 +162,7 @@ mfs_strategy(void *v)
 		 */
 		if (bp->b_flags & B_READ)
 			printf("warning: mfs read during shutdown\n");
-		bp->b_resid = 0;
-		biodone(bp);
+		biodone(bp, bp->b_error, 0);
 	} else {
 		BUFQ_PUT(mfsp->mfs_buflist, bp);
 		wakeup((void *)vp);
@@ -180,16 +178,14 @@ mfs_strategy(void *v)
 void
 mfs_doio(struct buf *bp, void *base)
 {
+	int error;
+
 	base = (char *)base + (bp->b_blkno << DEV_BSHIFT);
 	if (bp->b_flags & B_READ)
-		bp->b_error = copyin(base, bp->b_data, bp->b_bcount);
+		error = copyin(base, bp->b_data, bp->b_bcount);
 	else
-		bp->b_error = copyout(bp->b_data, base, bp->b_bcount);
-	if (bp->b_error)
-		bp->b_flags |= B_ERROR;
-	else
-		bp->b_resid = 0;
-	biodone(bp);
+		error = copyout(bp->b_data, base, bp->b_bcount);
+	biodone(bp, error, 0);
 }
 
 /*

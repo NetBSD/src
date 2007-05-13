@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.32.2.4 2007/04/13 20:56:20 ad Exp $	*/
+/*	$NetBSD: fss.c,v 1.32.2.5 2007/05/13 17:36:21 ad Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.32.2.4 2007/04/13 20:56:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.32.2.5 2007/05/13 17:36:21 ad Exp $");
 
 #include "fss.h"
 
@@ -234,11 +234,7 @@ fss_strategy(struct buf *bp)
 	    sc == NULL || !FSS_ISVALID(sc)) {
 
 		FSS_UNLOCK(sc, s);
-
-		bp->b_error = (sc == NULL ? ENODEV : EROFS);
-		bp->b_flags |= B_ERROR;
-		bp->b_resid = bp->b_bcount;
-		biodone(bp);
+		biodone(bp, (sc == NULL ? ENODEV : EROFS), 0);
 		return;
 	}
 
@@ -416,7 +412,7 @@ fss_softc_alloc(struct fss_softc *sc)
 	if (sc->sc_indir_data == NULL)
 		return(ENOMEM);
 
-	if ((error = kthread_create(PINOD, false, fss_bs_thread, sc,
+	if ((error = kthread_create(PINOD, 0, NULL, fss_bs_thread, sc,
 	    &sc->sc_bs_lwp, "fssbs%d", sc->sc_unit)) != 0)
 		return error;
 
@@ -1082,15 +1078,7 @@ fss_bs_thread(void *arg)
 			} else
 				error = ENXIO;
 
-			if (error) {
-				bp->b_error = error;
-				bp->b_flags |= B_ERROR;
-				bp->b_resid = bp->b_bcount;
-			} else
-				bp->b_resid = 0;
-
-			biodone(bp);
-
+			biodone(bp, error, bp->b_resid);
 			continue;
 		}
 
@@ -1138,10 +1126,7 @@ fss_bs_thread(void *arg)
 		nio++;
 
 		if (!FSS_ISVALID(sc)) {
-			bp->b_error = ENXIO;
-			bp->b_flags |= B_ERROR;
-			bp->b_resid = bp->b_bcount;
-			biodone(bp);
+			biodone(bp, ENXIO, 0);
 			continue;
 		}
 
@@ -1167,10 +1152,7 @@ fss_bs_thread(void *arg)
 		bdev_strategy(nbp);
 
 		if (biowait(nbp) != 0) {
-			bp->b_resid = bp->b_bcount;
-			bp->b_error = nbp->b_error;
-			bp->b_flags |= B_ERROR;
-			biodone(bp);
+			biodone(bp, nbp->b_error, 0);
 			FSS_LOCK(sc, s);
 			continue;
 		}
@@ -1225,9 +1207,6 @@ fss_bs_thread(void *arg)
 
 			if ((error = fss_bs_io(sc, FSS_READ, *indirp,
 			    off, len, addr)) != 0) {
-				bp->b_resid = bp->b_bcount;
-				bp->b_error = error;
-				bp->b_flags |= B_ERROR;
 				FSS_LOCK(sc, s);
 				break;
 			}
@@ -1236,6 +1215,6 @@ fss_bs_thread(void *arg)
 
 		}
 
-		biodone(bp);
+		biodone(bp, error, 0);
 	}
 }

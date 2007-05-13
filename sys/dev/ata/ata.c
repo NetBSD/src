@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.86.2.4 2007/04/10 13:24:22 ad Exp $	*/
+/*	$NetBSD: ata.c,v 1.86.2.5 2007/05/13 17:36:22 ad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.86.2.4 2007/04/10 13:24:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.86.2.5 2007/05/13 17:36:22 ad Exp $");
 
 #include "opt_ata.h"
 
@@ -411,7 +411,7 @@ atabus_attach(struct device *parent, struct device *self, void *aux)
 	TAILQ_INSERT_TAIL(&atabus_initq_head, initq, atabus_initq);
 	config_pending_incr();
 
-	if ((error = kthread_create(PRI_NONE, false, atabus_thread, sc,
+	if ((error = kthread_create(PRI_NONE, 0, NULL, atabus_thread, sc,
 	    &chp->ch_thread, "%s", sc->sc_dev.dv_xname)) != 0)
 		aprint_error("%s: unable to create kernel thread: error %d\n",
 		    sc->sc_dev.dv_xname, error);

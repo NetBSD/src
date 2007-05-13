@@ -1,4 +1,4 @@
-/*	$NetBSD: mly.c,v 1.34.2.2 2007/04/10 12:07:11 ad Exp $	*/
+/*	$NetBSD: mly.c,v 1.34.2.3 2007/05/13 17:36:27 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mly.c,v 1.34.2.2 2007/04/10 12:07:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mly.c,v 1.34.2.3 2007/05/13 17:36:27 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -550,7 +550,7 @@ mly_attach(struct device *parent, struct device *self, void *aux)
 	 * Finally, create our monitoring thread.
 	 */
 	mly->mly_state |= MLY_STATE_INITOK;
-	rv = kthread_create(PRI_NONE, false, mly_thread, mly,
+	rv = kthread_create(PRI_NONE, 0, NULL, mly_thread, mly,
 	    &mly->mly_thread, "%s", mly->mly_dv.dv_xname);
  	if (rv != 0)
 		printf("%s: unable to create thread (%d)\n",

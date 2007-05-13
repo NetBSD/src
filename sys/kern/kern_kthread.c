@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_kthread.c,v 1.16.6.3 2007/04/10 18:34:46 ad Exp $	*/
+/*	$NetBSD: kern_kthread.c,v 1.16.6.4 2007/05/13 17:36:34 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2007 The NetBSD Foundation, Inc.
@@ -38,13 +38,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_kthread.c,v 1.16.6.3 2007/04/10 18:34:46 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_kthread.c,v 1.16.6.4 2007/05/13 17:36:34 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/kthread.h>
 #include <sys/proc.h>
+#include <sys/sched.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -59,7 +60,8 @@ __KERNEL_RCSID(0, "$NetBSD: kern_kthread.c,v 1.16.6.3 2007/04/10 18:34:46 ad Exp
  * Fork a kernel thread.  Any process can request this to be done.
  */
 int
-kthread_create(pri_t pri, bool mpsafe, void (*func)(void *), void *arg,
+kthread_create(pri_t pri, int flag, struct cpu_info *ci,
+	       void (*func)(void *), void *arg,
 	       lwp_t **lp, const char *fmt, ...)
 {
 	lwp_t *l;
@@ -77,28 +79,53 @@ kthread_create(pri_t pri, bool mpsafe, void (*func)(void *), void *arg,
 		uvm_uarea_free(uaddr);
 		return error;
 	}
-
-	/* Set parameters. */
-	if (pri == PRI_NONE) {
-		/* Minimum kernel priority level. */
-		pri = PUSER - 1;
-	}
-	if (mpsafe)
-		l->l_pflag |= LP_MPSAFE;
+	uvm_lwp_hold(l);
 	if (fmt != NULL) {
 		va_start(ap, fmt);
 		vsnprintf(l->l_name, MAXCOMLEN, fmt, ap);
 		va_end(ap);
 	}
 
-	/* Set the new LWP running. */
+	/*
+	 * Set parameters.
+	 */
+	if ((flag & KTHREAD_INTR) != 0) {
+		KASSERT((flag & KTHREAD_MPSAFE) != 0);
+	}
+
 	mutex_enter(&proc0.p_smutex);
 	lwp_lock(l);
+	if (pri == PRI_NONE) {
+		/* Minimum kernel priority level. */
+		pri = PUSER - 1;
+	}
 	l->l_usrpri = pri;
 	l->l_priority = pri;
-	l->l_stat = LSRUN;
+#ifdef notyet
+	if (ci != NULL) {
+		l->l_flag |= LW_BOUND;
+		l->l_cpu = ci;
+	}
+	if ((flag & KTHREAD_INTR) != 0)
+		l->l_flag |= LW_INTR;
+#endif
+	if ((flag & KTHREAD_MPSAFE) != 0)
+		l->l_pflag |= LP_MPSAFE;
+
+	/*
+	 * Set the new LWP running, unless the caller has requested
+	 * otherwise.
+	 */
+	if ((flag & KTHREAD_IDLE) == 0) {
+		l->l_stat = LSRUN;
+		setrunqueue(l);
+	}
+
+	/*
+	 * The LWP is not created suspended or stopped and cannot be set
+	 * into those states later, so must be considered runnable.
+	 */
 	proc0.p_nrlwps++;
-	setrunqueue(l);
 	lwp_unlock(l);
 	mutex_exit(&proc0.p_smutex);
 
@@ -132,4 +159,17 @@ kthread_exit(int ecode)
 	 */
 	for (;;)
 		;
+}
+
+/*
+ * Destroy an inactive kthread.  The kthread must be in the LSIDL state.
+ */
+void
+kthread_destroy(lwp_t *l)
+{
+
+	KASSERT((l->l_flag & LW_SYSTEM) != 0);
+	KASSERT(l->l_stat == LSIDL);
+
+	lwp_exit(l);
 }

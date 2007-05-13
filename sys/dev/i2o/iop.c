@@ -1,4 +1,4 @@
-/*	$NetBSD: iop.c,v 1.64.2.3 2007/04/10 12:07:09 ad Exp $	*/
+/*	$NetBSD: iop.c,v 1.64.2.4 2007/05/13 17:36:24 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.64.2.3 2007/04/10 12:07:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.64.2.4 2007/05/13 17:36:24 ad Exp $");
 
 #include "opt_i2o.h"
 #include "iop.h"
@@ -602,7 +602,7 @@ iop_config_interrupts(struct device *self)
 	mutex_exit(&sc->sc_conflock);
 
 	if (rv == 0) {
-		rv = kthread_create(PRI_NONE, false, iop_reconf_thread, sc,
+		rv = kthread_create(PRI_NONE, 0, NULL, iop_reconf_thread, sc,
 		    &sc->sc_reconf_thread, "%s", sc->sc_dv.dv_xname);
  		if (rv != 0) {
 			printf("%s: unable to create reconfiguration thread (%d)",

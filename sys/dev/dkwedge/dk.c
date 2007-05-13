@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.22.2.1 2007/03/13 17:50:28 ad Exp $	*/
+/*	$NetBSD: dk.c,v 1.22.2.2 2007/05/13 17:36:23 ad Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.22.2.1 2007/03/13 17:50:28 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.22.2.2 2007/05/13 17:36:23 ad Exp $");
 
 #include "opt_dkwedge.h"
 
@@ -999,11 +999,10 @@ static void
 dkstrategy(struct buf *bp)
 {
 	struct dkwedge_softc *sc = dkwedge_lookup(bp->b_dev);
-	int s;
+	int s, error = 0;
 
 	if (sc->sc_state != DKW_STATE_RUNNING) {
-		bp->b_error = ENXIO;
-		bp->b_flags |= B_ERROR;
+		error = ENXIO;
 		goto done;
 	}
 
@@ -1027,8 +1026,7 @@ dkstrategy(struct buf *bp)
 	return;
 
  done:
-	bp->b_resid = bp->b_bcount;
-	biodone(bp);
+	biodone(bp, error, 0);
 }
 
 /*
@@ -1051,10 +1049,7 @@ dkstart(struct dkwedge_softc *sc)
 				sc->sc_flags &= ~DK_F_WAIT_DRAIN;
 				wakeup(&sc->sc_iopend);
 			}
-			bp->b_error = ENXIO;
-			bp->b_flags |= B_ERROR;
-			bp->b_resid = bp->b_bcount;
-			biodone(bp);
+			biodone(bp, ENXIO, 0);
 		}
 
 		/* Instrumentation. */
@@ -1103,12 +1098,10 @@ dkiodone(struct buf *bp)
 {
 	struct buf *obp = bp->b_private;
 	struct dkwedge_softc *sc = dkwedge_lookup(obp->b_dev);
+	int resid, error;
 
-	if (bp->b_flags & B_ERROR) {
-		obp->b_flags |= B_ERROR;
-		obp->b_error = bp->b_error;
-	}
-	obp->b_resid = bp->b_resid;
+	error = bp->b_error;
+	resid = bp->b_resid;
 	putiobuf(bp);
 
 	if (sc->sc_iopend-- == 1 && (sc->sc_flags & DK_F_WAIT_DRAIN) != 0) {
@@ -1116,10 +1109,9 @@ dkiodone(struct buf *bp)
 		wakeup(&sc->sc_iopend);
 	}
 
-	disk_unbusy(&sc->sc_dk, obp->b_bcount - obp->b_resid,
+	disk_unbusy(&sc->sc_dk, obp->b_bcount - resid,
 	    obp->b_flags & B_READ);
-
-	biodone(obp);
+	biodone(obp, error, resid);
 
 	/* Kick the queue in case there is more work we can do. */
 	dkstart(sc);

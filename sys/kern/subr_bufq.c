@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_bufq.c,v 1.12 2005/12/26 10:36:47 yamt Exp $	*/
+/*	$NetBSD: subr_bufq.c,v 1.12.32.1 2007/05/13 17:36:35 ad Exp $	*/
 /*	NetBSD: subr_disk.c,v 1.70 2005/08/20 12:00:01 yamt Exp $	*/
 
 /*-
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_bufq.c,v 1.12 2005/12/26 10:36:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_bufq.c,v 1.12.32.1 2007/05/13 17:36:35 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -193,10 +193,7 @@ bufq_drain(struct bufq_state *bufq)
 	struct buf *bp;
 
 	while ((bp = BUFQ_GET(bufq)) != NULL) {
-		bp->b_error = EIO;
-		bp->b_flags |= B_ERROR;
-		bp->b_resid = bp->b_bcount;
-		biodone(bp);
+		biodone(bp, EIO, 0);
 	}
 }
 

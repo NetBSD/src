@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.46 2007/03/04 06:01:42 christos Exp $	*/
+/*	$NetBSD: ld.c,v 1.46.2.1 2007/05/13 17:36:21 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.46 2007/03/04 06:01:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.46.2.1 2007/05/13 17:36:21 ad Exp $");
 
 #include "rnd.h"
 
@@ -550,14 +550,15 @@ ldstrategy(struct buf *bp)
 	struct ld_softc *sc;
 	struct disklabel *lp;
 	daddr_t blkno;
-	int s, part;
+	int s, part, error;
 
 	sc = device_lookup(&ld_cd, DISKUNIT(bp->b_dev));
 	part = DISKPART(bp->b_dev);
+	error = 0;
 
 	if ((sc->sc_flags & LDF_DETACH) != 0) {
-		bp->b_error = EIO;
-		goto bad;
+		error = EIO;
+		goto done;
 	}
 
 	lp = sc->sc_dk.dk_label;
@@ -567,8 +568,8 @@ ldstrategy(struct buf *bp)
 	 * not be negative.
 	 */
 	if ((bp->b_bcount % lp->d_secsize) != 0 || bp->b_blkno < 0) {
-		bp->b_error = EINVAL;
-		goto bad;
+		error = EINVAL;
+		goto done;
 	}
 
 	/* If it's a null transfer, return immediately. */
@@ -606,11 +607,8 @@ ldstrategy(struct buf *bp)
 	splx(s);
 	return;
 
- bad:
-	bp->b_flags |= B_ERROR;
  done:
-	bp->b_resid = bp->b_bcount;
-	biodone(bp);
+	biodone(bp, error, 0);
 }
 
 static void
@@ -652,11 +650,8 @@ ldstart(struct ld_softc *sc, struct buf *bp)
 				break;
 			} else {
 				(void) BUFQ_GET(sc->sc_bufq);
-				bp->b_error = error;
-				bp->b_flags |= B_ERROR;
-				bp->b_resid = bp->b_bcount;
 				mutex_exit(&sc->sc_mutex);
-				biodone(bp);
+				biodone(bp, error, 0);
 				mutex_enter(&sc->sc_mutex);
 			}
 		}
@@ -666,20 +661,19 @@ ldstart(struct ld_softc *sc, struct buf *bp)
 }
 
 void
-lddone(struct ld_softc *sc, struct buf *bp)
+lddone(struct ld_softc *sc, struct buf *bp, int error)
 {
 
-	if ((bp->b_flags & B_ERROR) != 0) {
+	if (error != 0) {
 		diskerr(bp, "ld", "error", LOG_PRINTF, 0, sc->sc_dk.dk_label);
 		printf("\n");
 	}
 
-	disk_unbusy(&sc->sc_dk, bp->b_bcount - bp->b_resid,
-	    (bp->b_flags & B_READ));
+	disk_unbusy(&sc->sc_dk, bp->b_bcount, (bp->b_flags & B_READ));
 #if NRND > 0
 	rnd_add_uint32(&sc->sc_rnd_source, bp->b_rawblkno);
 #endif
-	biodone(bp);
+	biodone(bp, error, 0);
 
 	mutex_enter(&sc->sc_mutex);
 	if (--sc->sc_queuecnt <= sc->sc_maxqueuecnt) {

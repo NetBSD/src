@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.49.2.1 2007/03/13 17:50:45 ad Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.49.2.2 2007/05/13 17:36:32 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.49.2.1 2007/03/13 17:50:45 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.49.2.2 2007/05/13 17:36:32 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -431,7 +431,7 @@ ntfs_mountfs(devvp, mp, argsp, l)
 	ntmp = malloc( sizeof *ntmp, M_NTFSMNT, M_WAITOK );
 	bzero( ntmp, sizeof *ntmp );
 	bcopy( bp->b_data, &ntmp->ntm_bootfile, sizeof(struct bootfile) );
-	brelse( bp );
+	brelse( bp , 0 );
 	bp = NULL;
 
 	if (strncmp(ntmp->ntm_bootfile.bf_sysid, NTFS_BBID, NTFS_BBIDLEN)) {
@@ -574,7 +574,7 @@ out1:
 out:
 	devvp->v_specmountpoint = NULL;
 	if (bp)
-		brelse(bp);
+		brelse(bp, 0);
 
 	if (error) {
 		if (ntmp) {

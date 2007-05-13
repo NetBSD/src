@@ -1,12 +1,12 @@
-/*	$NetBSD: kthread.h,v 1.4.82.2 2007/04/10 12:07:14 ad Exp $	*/
+/*	$NetBSD: kthread.h,v 1.4.82.3 2007/05/13 17:36:39 ad Exp $	*/
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
- * NASA Ames Research Center.
+ * NASA Ames Research Center, and by Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -47,10 +47,16 @@
 #ifdef _KERNEL
 #include <sys/proc.h>
 
-int	kthread_create(pri_t, bool, void (*)(void *), void *,
-			struct lwp **, const char *, ...)
-	    __attribute__((__format__(__printf__,6,7)));
+#define	KTHREAD_IDLE	0x01	/* do not set runnable */
+#define	KTHREAD_MPSAFE	0x02	/* does not need kernel_lock */
+#define	KTHREAD_INTR	0x04	/* interrupt handler */
+
+int	kthread_create(pri_t, int, struct cpu_info *,
+		       void (*)(void *), void *,
+		       lwp_t **, const char *, ...)
+	    __attribute__((__format__(__printf__,7,8)));
 void	kthread_exit(int) __attribute__((__noreturn__));
+void	kthread_destroy(lwp_t *);
 #endif /* _KERNEL */
 
 #endif /* _SYS_KTHREAD_H_ */

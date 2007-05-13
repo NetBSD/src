@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_taskq.c,v 1.7.8.2 2007/04/10 12:07:12 ad Exp $	*/
+/*	$NetBSD: sysmon_taskq.c,v 1.7.8.3 2007/05/13 17:36:30 ad Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_taskq.c,v 1.7.8.2 2007/04/10 12:07:12 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_taskq.c,v 1.7.8.3 2007/05/13 17:36:30 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -105,7 +105,7 @@ sysmon_task_queue_init(void)
 	sysmon_task_queue_initialized = 1;
 	simple_unlock(&sysmon_task_queue_initialized_slock);
 
-	error = kthread_create(PRI_NONE, false, sysmon_task_queue_thread,
+	error = kthread_create(PRI_NONE, 0, NULL, sysmon_task_queue_thread,
 	    NULL, &sysmon_task_queue_lwp, "sysmon");
 	if (error) {
 		printf("Unable to create sysmon task queue thread, "

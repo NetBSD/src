@@ -1,5 +1,5 @@
 /*	$wasabi: ld_twa.c,v 1.9 2006/02/14 18:44:37 jordanr Exp $	*/
-/*	$NetBSD: ld_twa.c,v 1.5.6.1 2007/04/05 21:57:46 ad Exp $ */
+/*	$NetBSD: ld_twa.c,v 1.5.6.2 2007/05/13 17:36:27 ad Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_twa.c,v 1.5.6.1 2007/04/05 21:57:46 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_twa.c,v 1.5.6.2 2007/05/13 17:36:27 ad Exp $");
 
 #include "rnd.h"
 
@@ -213,27 +213,18 @@ static void
 ld_twa_handler(struct twa_request *tr)
 {
 	uint8_t	status;
-	struct buf *bp;
 	struct ld_twa_softc *sc;
 	struct twa_softc *twa;
+	int error;
 
-	bp = tr->bp;
 	sc = (struct ld_twa_softc *)tr->tr_ld_sc;
 	twa = (struct twa_softc *)sc->sc_ld.sc_dv.dv_parent;
 
 	status = tr->tr_command->command.cmd_pkt_9k.status;
+	error = (status != 0 ? EIO : 0);
 
-	if (status != 0) {
-		bp->b_flags |= B_ERROR;
-		bp->b_error = EIO;
-		bp->b_resid = bp->b_bcount;
-	} else {
-		bp->b_resid = 0;
-		bp->b_error = 0;
-	}
 	twa_release_request(tr);
-
-	lddone(&sc->sc_ld, bp);
+	lddone(&sc->sc_ld, tr->bp, error);
 }
 
 static int

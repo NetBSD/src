@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_iohidsystem.c,v 1.38.2.3 2007/04/13 20:56:21 ad Exp $ */
+/*	$NetBSD: darwin_iohidsystem.c,v 1.38.2.4 2007/05/13 17:36:20 ad Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_iohidsystem.c,v 1.38.2.3 2007/04/13 20:56:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_iohidsystem.c,v 1.38.2.4 2007/05/13 17:36:20 ad Exp $");
 
 #include "opt_ktrace.h"
 
@@ -222,7 +222,7 @@ darwin_iohidsystem_connect_method_scalari_scalaro(args)
 			dita->dita_shmem = kvaddr;
 			dita->dita_done = 0;
 
-			kthread_create(PRI_NONE, false,
+			kthread_create(PRI_NONE, 0, NULL,
 			    darwin_iohidsystem_thread,
 			    (void *)dita, &dita->dita_l,
 			    "iohidsystem");

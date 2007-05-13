@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.98.2.3 2007/05/06 11:44:29 ad Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.98.2.4 2007/05/13 17:36:41 ad Exp $	*/
 
 /*
  * Copyright (c) 2002 Networks Associates Technology, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.98.2.3 2007/05/06 11:44:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.98.2.4 2007/05/13 17:36:41 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -271,13 +271,13 @@ ffs_realloccg(struct inode *ip, daddr_t lbprev, daddr_t bpref, int osize,
 	 */
 	if (bpp != NULL &&
 	    (error = bread(ITOV(ip), lbprev, osize, NOCRED, &bp)) != 0) {
-		brelse(bp);
+		brelse(bp, 0);
 		return (error);
 	}
 #ifdef QUOTA
 	if ((error = chkdq(ip, btodb(nsize - osize), cred, 0)) != 0) {
 		if (bpp != NULL) {
-			brelse(bp);
+			brelse(bp, 0);
 		}
 		return (error);
 	}
@@ -295,8 +295,10 @@ ffs_realloccg(struct inode *ip, daddr_t lbprev, daddr_t bpref, int osize,
 			if (bp->b_blkno != fsbtodb(fs, bno))
 				panic("bad blockno");
 			allocbuf(bp, nsize, 1);
-			bp->b_flags |= B_DONE;
 			memset((char *)bp->b_data + osize, 0, nsize - osize);
+			mutex_enter(&bp->b_interlock);
+			bp->b_flags |= B_DONE;
+			mutex_exit(&bp->b_interlock);
 			*bpp = bp;
 		}
 		if (blknop != NULL) {
@@ -375,8 +377,10 @@ ffs_realloccg(struct inode *ip, daddr_t lbprev, daddr_t bpref, int osize,
 		if (bpp != NULL) {
 			bp->b_blkno = fsbtodb(fs, bno);
 			allocbuf(bp, nsize, 1);
-			bp->b_flags |= B_DONE;
 			memset((char *)bp->b_data + osize, 0, (u_int)nsize - osize);
+			mutex_enter(&bp->b_interlock);
+			bp->b_flags |= B_DONE;
+			mutex_exit(&bp->b_interlock);
 			*bpp = bp;
 		}
 		if (blknop != NULL) {
@@ -393,7 +397,7 @@ ffs_realloccg(struct inode *ip, daddr_t lbprev, daddr_t bpref, int osize,
 	(void) chkdq(ip, -btodb(nsize - osize), cred, FORCE);
 #endif
 	if (bpp != NULL) {
-		brelse(bp);
+		brelse(bp, 0);
 	}
 
 nospace:
@@ -503,7 +507,7 @@ ffs_reallocblks(void *v)
 	} else {
 		idp = &start_ap[start_lvl - 1];
 		if (bread(vp, idp->in_lbn, (int)fs->fs_bsize, NOCRED, &sbp)) {
-			brelse(sbp);
+			brelse(sbp, 0);
 			return (ENOSPC);
 		}
 		sbap = (int32_t *)sbp->b_data;
@@ -644,9 +648,9 @@ ffs_reallocblks(void *v)
 
 fail:
 	if (ssize < len)
-		brelse(ebp);
+		brelse(ebp, 0);
 	if (sbap != &ip->i_ffs1_db[0])
-		brelse(sbp);
+		brelse(sbp, 0);
 	return (ENOSPC);
 #endif /* XXXUBC */
 }
@@ -1119,7 +1123,7 @@ ffs_fragextend(struct inode *ip, int cg, daddr_t bprev, int osize, int nsize)
 	return (bprev);
 
  fail:
- 	brelse(bp);
+ 	brelse(bp, 0);
  	mutex_enter(&ump->um_lock);
  	return (0);
 }
@@ -1233,7 +1237,7 @@ ffs_alloccg(struct inode *ip, int cg, daddr_t bpref, int size)
 	return blkno;
 
  fail:
- 	brelse(bp);
+ 	brelse(bp, 0);
  	mutex_enter(&ump->um_lock);
  	return (0);
 }
@@ -1435,7 +1439,7 @@ ffs_clusteralloc(struct inode *ip, int cg, daddr_t bpref, int len)
 	return (bno);
 
 fail:
-	brelse(bp);
+	brelse(bp, 0);
 	mutex_enter(&ump->um_lock);
 	return (0);
 }
@@ -1559,7 +1563,7 @@ gotit:
 	bdwrite(bp);
 	return (cg * fs->fs_ipg + ipref);
  fail:
-	brelse(bp);
+	brelse(bp, 0);
 	mutex_enter(&ump->um_lock);
 	return (0);
 }
@@ -1614,12 +1618,12 @@ ffs_blkfree(struct fs *fs, struct vnode *devvp, daddr_t bno, long size,
 	}
 	error = bread(devvp, cgblkno, (int)fs->fs_cgsize, NOCRED, &bp);
 	if (error) {
-		brelse(bp);
+		brelse(bp, 0);
 		return;
 	}
 	cgp = (struct cg *)bp->b_data;
 	if (!cg_chkmagic(cgp, needswap)) {
-		brelse(bp);
+		brelse(bp, 0);
 		return;
 	}
 	cgp->cg_old_time = ufs_rw32(time_second, needswap);
@@ -1635,7 +1639,7 @@ ffs_blkfree(struct fs *fs, struct vnode *devvp, daddr_t bno, long size,
 			if (devvp->v_type != VBLK) {
 				/* devvp is a snapshot */
 				mutex_exit(&ump->um_lock);
-				brelse(bp);
+				brelse(bp, 0);
 				return;
 			}
 			printf("dev = 0x%x, block = %" PRId64 ", fs = %s\n",
@@ -1742,12 +1746,12 @@ ffs_checkblk(struct inode *ip, daddr_t bno, long size)
 	error = bread(ip->i_devvp, fsbtodb(fs, cgtod(fs, dtog(fs, bno))),
 		(int)fs->fs_cgsize, NOCRED, &bp);
 	if (error) {
-		brelse(bp);
+		brelse(bp, 0);
 		return 0;
 	}
 	cgp = (struct cg *)bp->b_data;
 	if (!cg_chkmagic(cgp, UFS_FSNEEDSWAP(fs))) {
-		brelse(bp);
+		brelse(bp, 0);
 		return 0;
 	}
 	bno = dtogd(fs, bno);
@@ -1762,7 +1766,7 @@ ffs_checkblk(struct inode *ip, daddr_t bno, long size)
 		if (free != 0 && free != frags)
 			panic("checkblk: partially free fragment");
 	}
-	brelse(bp);
+	brelse(bp, 0);
 	return (!free);
 }
 #endif /* XXXUBC */
@@ -1815,12 +1819,12 @@ ffs_freefile(struct fs *fs, struct vnode *devvp, ino_t ino, int mode)
 		    dev, (unsigned long long)ino, fs->fs_fsmnt);
 	error = bread(devvp, cgbno, (int)fs->fs_cgsize, NOCRED, &bp);
 	if (error) {
-		brelse(bp);
+		brelse(bp, 0);
 		return (error);
 	}
 	cgp = (struct cg *)bp->b_data;
 	if (!cg_chkmagic(cgp, needswap)) {
-		brelse(bp);
+		brelse(bp, 0);
 		return (0);
 	}
 	cgp->cg_old_time = ufs_rw32(time_second, needswap);
@@ -1876,18 +1880,18 @@ ffs_checkfreefile(struct fs *fs, struct vnode *devvp, ino_t ino)
 	if ((u_int)ino >= fs->fs_ipg * fs->fs_ncg)
 		return 1;
 	if (bread(devvp, cgbno, (int)fs->fs_cgsize, NOCRED, &bp)) {
-		brelse(bp);
+		brelse(bp, 0);
 		return 1;
 	}
 	cgp = (struct cg *)bp->b_data;
 	if (!cg_chkmagic(cgp, UFS_FSNEEDSWAP(fs))) {
-		brelse(bp);
+		brelse(bp, 0);
 		return 1;
 	}
 	inosused = cg_inosused(cgp, UFS_FSNEEDSWAP(fs));
 	ino %= fs->fs_ipg;
 	ret = isclr(inosused, ino);
-	brelse(bp);
+	brelse(bp, 0);
 	return ret;
 }
 

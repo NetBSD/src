@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_balloc.c,v 1.62.6.1 2007/03/13 17:51:22 ad Exp $	*/
+/*	$NetBSD: lfs_balloc.c,v 1.62.6.2 2007/05/13 17:36:43 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.62.6.1 2007/03/13 17:51:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.62.6.2 2007/05/13 17:36:43 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -417,13 +417,13 @@ lfs_fragextend(struct vnode *vp, int osize, int nsize, daddr_t lbn, struct buf *
 	 * Don't bother to read in that case.
 	 */
 	if (bpp && (error = bread(vp, lbn, osize, NOCRED, bpp))) {
-		brelse(*bpp);
+		brelse(*bpp, 0);
 		goto out;
 	}
 #ifdef QUOTA
 	if ((error = chkdq(ip, bb, cred, 0))) {
 		if (bpp)
-			brelse(*bpp);
+			brelse(*bpp, 0);
 		goto out;
 	}
 #endif
@@ -437,7 +437,7 @@ lfs_fragextend(struct vnode *vp, int osize, int nsize, daddr_t lbn, struct buf *
 	if (bpp && ((*bpp)->b_flags & B_DELWRI)) {
 		if (!lfs_fits(fs, bb)) {
 			if (bpp)
-				brelse(*bpp);
+				brelse(*bpp, 0);
 #ifdef QUOTA
 			chkdq(ip, -bb, cred, 0);
 #endif

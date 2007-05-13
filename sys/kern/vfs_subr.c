@@ -1,7 +1,7 @@
-/*	$NetBSD: vfs_subr.c,v 1.283.2.5 2007/04/13 15:49:49 ad Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.283.2.6 2007/05/13 17:36:36 ad Exp $	*/
 
 /*-
- * Copyright (c) 1997, 1998, 2004, 2005 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998, 2004, 2005, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.283.2.5 2007/04/13 15:49:49 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.283.2.6 2007/05/13 17:36:36 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -154,6 +154,7 @@ kmutex_t mntid_lock;
 kmutex_t mntvnode_lock;
 kmutex_t vnode_free_list_lock;
 kmutex_t spechash_lock;
+kmutex_t vfs_list_lock;
 
 /* XXX - gross; single global lock to protect v_numoutput */
 kmutex_t global_v_numoutput_lock;
@@ -197,6 +198,8 @@ vntblinit(void)
 	mutex_init(&mntvnode_lock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&vnode_free_list_lock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&spechash_lock, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&vfs_list_lock, MUTEX_DEFAULT, IPL_NONE);
+
 	mutex_init(&global_v_numoutput_lock, MUTEX_DRIVER, IPL_BIO);
 
 	mount_specificdata_domain = specificdata_domain_create();
@@ -359,12 +362,15 @@ vfs_rootmountalloc(const char *fstypename, const char *devname,
 	struct vfsops *vfsp = NULL;
 	struct mount *mp;
 
+	mutex_enter(&vfs_list_lock);
 	LIST_FOREACH(vfsp, &vfs_list, vfs_list)
 		if (!strncmp(vfsp->vfs_name, fstypename, MFSNAMELEN))
 			break;
-
 	if (vfsp == NULL)
 		return (ENODEV);
+	vfsp->vfs_refcount++;
+	mutex_exit(&vfs_list_lock);
+
 	mp = malloc((u_long)sizeof(struct mount), M_MOUNT, M_WAITOK);
 	memset((char *)mp, 0, (u_long)sizeof(struct mount));
 	lockinit(&mp->mnt_lock, PVFS, "vfslock", 0, 0);
@@ -374,7 +380,6 @@ vfs_rootmountalloc(const char *fstypename, const char *devname,
 	mp->mnt_op = vfsp;
 	mp->mnt_flag = MNT_RDONLY;
 	mp->mnt_vnodecovered = NULLVP;
-	vfsp->vfs_refcount++;
 	strncpy(mp->mnt_stat.f_fstypename, vfsp->vfs_name, MFSNAMELEN);
 	mp->mnt_stat.f_mntonname[0] = '/';
 	(void) copystr(devname, mp->mnt_stat.f_mntfromname, MNAMELEN - 1, 0);
@@ -741,7 +746,7 @@ restart:
 		}
 		bp->b_flags |= B_BUSY | B_INVAL | B_VFLUSH;
 		mutex_exit(&bp->b_interlock);
-		brelse(bp);
+		brelse(bp, 0);
 	}
 
 	for (bp = LIST_FIRST(&vp->v_dirtyblkhd); bp; bp = nbp) {
@@ -776,7 +781,7 @@ restart:
 		}
 		bp->b_flags |= B_BUSY | B_INVAL | B_VFLUSH;
 		mutex_exit(&bp->b_interlock);
-		brelse(bp);
+		brelse(bp, 0);
 	}
 
 #ifdef DIAGNOSTIC
@@ -827,7 +832,7 @@ restart:
 		}
 		bp->b_flags |= B_BUSY | B_INVAL | B_VFLUSH;
 		mutex_exit(&bp->b_interlock);
-		brelse(bp);
+		brelse(bp, 0);
 	}
 
 	for (bp = LIST_FIRST(&vp->v_dirtyblkhd); bp; bp = nbp) {
@@ -850,7 +855,7 @@ restart:
 		}
 		bp->b_flags |= B_BUSY | B_INVAL | B_VFLUSH;
 		mutex_exit(&bp->b_interlock);
-		brelse(bp);
+		brelse(bp, 0);
 	}
 
 	return (0);
@@ -942,6 +947,7 @@ brelvp(struct buf *bp)
 
 	s = splbio();
 	vp = bp->b_vp;
+
 	/*
 	 * Delete from old vnode list, if on one.
 	 */
@@ -1131,7 +1137,6 @@ loop:
 		nvp->v_specmountpoint = NULL;
 		mutex_exit(&spechash_lock);
 		nvp->v_speclockf = NULL;
-		/* XXXAD destroy later */
 		mutex_init(&nvp->v_spec_cow_lock, MUTEX_DEFAULT, IPL_NONE);
 		SLIST_INIT(&nvp->v_spec_cow_head);
 		nvp->v_spec_cow_req = 0;
@@ -1171,13 +1176,13 @@ vwait(struct vnode *vp, int flags)
 	vp->v_waitcnt++;
 	while ((vp->v_flag & flags) != 0)
 		cv_wait(&vp->v_cv, &vp->v_interlock);
+	vp->v_waitcnt--;
 
 	/*
-	 * Notify the locker (in vunwait()) what we are about
+	 * Notify the locker (in vunwait()) that we are about
 	 * to exit the interlock.
 	 */
-	if (--vp->v_waitcnt == 0)
-		cv_broadcast(&vp->v_cv);
+	cv_broadcast(&vp->v_cv);
 }
 
 /*
@@ -1262,7 +1267,7 @@ vget(struct vnode *vp, int flags)
 void
 vput(struct vnode *vp)
 {
-	struct lwp *l = curlwp;		/* XXX */
+	struct lwp *l = curlwp;
 
 #ifdef DIAGNOSTIC
 	if (vp == NULL)
@@ -1306,7 +1311,7 @@ vput(struct vnode *vp)
 void
 vrele(struct vnode *vp)
 {
-	struct lwp *l = curlwp;		/* XXX */
+	struct lwp *l = curlwp;
 
 #ifdef DIAGNOSTIC
 	if (vp == NULL)
@@ -1628,6 +1633,7 @@ vclean(struct vnode *vp, int flags, struct lwp *l)
 				}
 			}
 			mutex_exit(&spechash_lock);
+			mutex_destroy(&vp->v_spec_cow_lock);
 			FREE(vp->v_specinfo, M_VNODE);
 			vp->v_specinfo = NULL;
 		}
@@ -1696,7 +1702,7 @@ vclean(struct vnode *vp, int flags, struct lwp *l)
 	vp->v_tag = VT_NON;
 	mutex_enter(&vp->v_interlock);
 	VN_KNOTE(vp, NOTE_REVOKE);	/* FreeBSD has this in vn_pollgone() */
-	vunwait(vp, VXLOCK|VLOCKSWORK);
+	vunwait(vp, VXLOCK|VLOCKSWORK|VFREEING);
 	mutex_exit(&vp->v_interlock);
 }
 
@@ -1960,6 +1966,7 @@ sysctl_vfs_generic_fstypes(SYSCTLFN_ARGS)
 	needed = 0;
 	left = *oldlenp;
 
+	mutex_enter(&vfs_list_lock);
 	LIST_FOREACH(v, &vfs_list, vfs_list) {
 		if (where == NULL)
 			needed += strlen(v->vfs_name) + 1;
@@ -1977,7 +1984,11 @@ sysctl_vfs_generic_fstypes(SYSCTLFN_ARGS)
 			if (left < slen + 1)
 				break;
 			/* +1 to copy out the trailing NUL byte */
+			v->vfs_refcount++;
+			mutex_exit(&vfs_list_lock);
 			error = copyout(bf, where, slen + 1);
+			mutex_enter(&vfs_list_lock);
+			v->vfs_refcount--;
 			if (error)
 				break;
 			where += slen;
@@ -1985,6 +1996,7 @@ sysctl_vfs_generic_fstypes(SYSCTLFN_ARGS)
 			left -= slen;
 		}
 	}
+	mutex_exit(&vfs_list_lock);
 	*oldlenp = needed;
 	return (error);
 }
@@ -2333,19 +2345,25 @@ vfs_mountroot(void)
 	/*
 	 * Try each file system currently configured into the kernel.
 	 */
+	mutex_enter(&vfs_list_lock);
 	LIST_FOREACH(v, &vfs_list, vfs_list) {
 		if (v->vfs_mountroot == NULL)
 			continue;
 #ifdef DEBUG
 		aprint_normal("mountroot: trying %s...\n", v->vfs_name);
 #endif
+		v->vfs_refcount++;
+		mutex_exit(&vfs_list_lock);
 		error = (*v->vfs_mountroot)();
+		mutex_enter(&vfs_list_lock);
+		v->vfs_refcount--;
 		if (!error) {
 			aprint_normal("root file system type: %s\n",
 			    v->vfs_name);
 			break;
 		}
 	}
+	mutex_exit(&vfs_list_lock);
 
 	if (v == NULL) {
 		printf("no file system for %s", root_device->dv_xname);
@@ -2365,20 +2383,36 @@ done:
 
 /*
  * Given a file system name, look up the vfsops for that
- * file system, or return NULL if file system isn't present
- * in the kernel.
+ * file system and add a reference.  Return NULL if file
+ * system isn't present in the kernel.
  */
 struct vfsops *
 vfs_getopsbyname(const char *name)
 {
 	struct vfsops *v;
 
+	mutex_enter(&vfs_list_lock);
 	LIST_FOREACH(v, &vfs_list, vfs_list) {
-		if (strcmp(v->vfs_name, name) == 0)
+		if (strcmp(v->vfs_name, name) == 0) {
+			v->vfs_refcount++;
 			break;
+		}
 	}
+	mutex_exit(&vfs_list_lock);
 
 	return (v);
+}
+
+/*
+ * Drop a reference to a file system type.
+ */
+void
+vfs_delref(struct vfsops *vfs)
+{
+
+	mutex_enter(&vfs_list_lock);
+	vfs->vfs_refcount--;
+	mutex_exit(&vfs_list_lock);
 }
 
 /*
@@ -2390,6 +2424,7 @@ vfs_attach(struct vfsops *vfs)
 	struct vfsops *v;
 	int error = 0;
 
+	mutex_enter(&vfs_list_lock);
 
 	/*
 	 * Make sure this file system doesn't already exist.
@@ -2420,8 +2455,8 @@ vfs_attach(struct vfsops *vfs)
 	 * Sanity: make sure the reference count is 0.
 	 */
 	vfs->vfs_refcount = 0;
-
  out:
+	mutex_exit(&vfs_list_lock);
 	return (error);
 }
 
@@ -2432,12 +2467,17 @@ int
 vfs_detach(struct vfsops *vfs)
 {
 	struct vfsops *v;
+	int error = 0;
+
+	mutex_enter(&vfs_list_lock);
 
 	/*
 	 * Make sure no one is using the filesystem.
 	 */
-	if (vfs->vfs_refcount != 0)
-		return (EBUSY);
+	if (vfs->vfs_refcount != 0) {
+		error = EBUSY;
+		goto out;
+	}
 
 	/*
 	 * ...and remove it from the kernel's list.
@@ -2449,8 +2489,10 @@ vfs_detach(struct vfsops *vfs)
 		}
 	}
 
-	if (v == NULL)
-		return (ESRCH);
+	if (v == NULL) {
+		error = ESRCH;
+		goto out;
+	}
 
 	/*
 	 * Now run the file system-specific cleanups.
@@ -2461,7 +2503,9 @@ vfs_detach(struct vfsops *vfs)
 	 * Free the vnode operations vector.
 	 */
 	vfs_opv_free(vfs->vfs_opv_descs);
-	return (0);
+ out:
+ 	mutex_exit(&vfs_list_lock);
+	return (error);
 }
 
 void
@@ -2469,11 +2513,17 @@ vfs_reinit(void)
 {
 	struct vfsops *vfs;
 
+	mutex_enter(&vfs_list_lock);
 	LIST_FOREACH(vfs, &vfs_list, vfs_list) {
 		if (vfs->vfs_reinit) {
+			vfs->vfs_refcount++;
+			mutex_exit(&vfs_list_lock);
 			(*vfs->vfs_reinit)();
+			mutex_enter(&vfs_list_lock);
+			vfs->vfs_refcount--;
 		}
 	}
+	mutex_exit(&vfs_list_lock);
 }
 
 void
@@ -2682,12 +2732,12 @@ vfs_vnode_print(struct vnode *vp, int full, void (*pr)(const char *, ...))
 	uvm_object_printit(&vp->v_uobj, full, pr);
 	bitmask_snprintf(vp->v_flag, vnode_flagbits, bf, sizeof(bf));
 	(*pr)("\nVNODE flags %s\n", bf);
-	(*pr)("mp %p numoutput %d size 0x%llx\n",
-	      vp->v_mount, vp->v_numoutput, vp->v_size);
+	(*pr)("mp %p numoutput %d size 0x%llx waitcnt %d\n",
+	      vp->v_mount, vp->v_numoutput, vp->v_size, vp->v_waitcnt);
 
-	(*pr)("data %p usecount %d writecount %ld holdcnt %ld numoutput %d\n",
+	(*pr)("data %p usecount %d writecount %ld holdcnt %ld\n",
 	      vp->v_data, vp->v_usecount, vp->v_writecount,
-	      vp->v_holdcnt, vp->v_numoutput);
+	      vp->v_holdcnt);
 
 	(*pr)("tag %s(%d) type %s(%d) mount %p typedata %p\n",
 	      ARRAY_PRINT(vp->v_tag, vnode_tags), vp->v_tag,

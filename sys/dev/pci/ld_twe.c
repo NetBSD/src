@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_twe.c,v 1.26.8.1 2007/04/05 21:57:46 ad Exp $	*/
+/*	$NetBSD: ld_twe.c,v 1.26.8.2 2007/05/13 17:36:27 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_twe.c,v 1.26.8.1 2007/04/05 21:57:46 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_twe.c,v 1.26.8.2 2007/05/13 17:36:27 ad Exp $");
 
 #include "rnd.h"
 
@@ -250,27 +250,17 @@ ld_twe_start(struct ld_softc *ld, struct buf *bp)
 static void
 ld_twe_handler(struct twe_ccb *ccb, int error)
 {
-	struct buf *bp;
 	struct twe_context *tx;
 	struct ld_twe_softc *sc;
 	struct twe_softc *twe;
 
 	tx = &ccb->ccb_tx;
-	bp = tx->tx_context;
 	sc = (struct ld_twe_softc *)tx->tx_dv;
 	twe = (struct twe_softc *)device_parent(&sc->sc_ld.sc_dv);
 
 	twe_ccb_unmap(twe, ccb);
 	twe_ccb_free(twe, ccb);
-
-	if (error) {
-		bp->b_flags |= B_ERROR;
-		bp->b_error = error;
-		bp->b_resid = bp->b_bcount;
-	} else
-		bp->b_resid = 0;
-
-	lddone(&sc->sc_ld, bp);
+	lddone(&sc->sc_ld, tx->tx_context, error);
 }
 
 static int

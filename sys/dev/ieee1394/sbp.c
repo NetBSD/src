@@ -1,4 +1,4 @@
-/*	$NetBSD: sbp.c,v 1.15.2.2 2007/04/10 12:07:10 ad Exp $	*/
+/*	$NetBSD: sbp.c,v 1.15.2.3 2007/05/13 17:36:26 ad Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -1199,7 +1199,7 @@ fw_kthread_create0(void *arg)
 	struct sbp_softc *sbp = (struct sbp_softc *)arg;
 
 	/* create thread */
-	if (kthread_create(PRI_NONE, false, sbp_scsipi_scan_target,
+	if (kthread_create(PRI_NONE, 0, NULL, sbp_scsipi_scan_target,
 	    &sbp->target, &sbp->lwp, "sbp%d_attach",
 	    device_unit(sbp->fd.dev))) {
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.38.2.1 2007/03/13 17:50:39 ad Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.38.2.2 2007/05/13 17:36:32 ad Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.38.2.1 2007/03/13 17:50:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.38.2.2 2007/05/13 17:36:32 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -530,11 +530,11 @@ msdosfs_read(v)
 		    NOCRED, &bp);
 		n = MIN(n, pmp->pm_bpcluster - bp->b_resid);
 		if (error) {
-			brelse(bp);
+			brelse(bp, 0);
 			return (error);
 		}
 		error = uiomove((char *)bp->b_data + on, (int) n, uio);
-		brelse(bp);
+		brelse(bp, 0);
 	} while (error == 0 && uio->uio_resid > 0 && n != 0);
 
 out:
@@ -1129,7 +1129,7 @@ abortit:
 		    pmp->pm_bpcluster, NOCRED, &bp);
 		if (error) {
 			/* XXX should really panic here, fs is corrupt */
-			brelse(bp);
+			brelse(bp, 0);
 			VOP_UNLOCK(fvp, 0);
 			goto bad;
 		}
@@ -1542,7 +1542,7 @@ msdosfs_readdir(v)
 		error = bread(pmp->pm_devvp, de_bn2kb(pmp, bn), blsize,
 		    NOCRED, &bp);
 		if (error) {
-			brelse(bp);
+			brelse(bp, 0);
 			return (error);
 		}
 		n = MIN(n, blsize - bp->b_resid);
@@ -1563,7 +1563,7 @@ msdosfs_readdir(v)
 			 * If this is an unused entry, we can stop.
 			 */
 			if (dentp->deName[0] == SLOT_EMPTY) {
-				brelse(bp);
+				brelse(bp, 0);
 				goto out;
 			}
 			/*
@@ -1625,13 +1625,13 @@ msdosfs_readdir(v)
 			chksum = -1;
 			dirbuf.d_reclen = _DIRENT_SIZE(&dirbuf);
 			if (uio->uio_resid < dirbuf.d_reclen) {
-				brelse(bp);
+				brelse(bp, 0);
 				goto out;
 			}
 			error = uiomove(&dirbuf,
 					dirbuf.d_reclen, uio);
 			if (error) {
-				brelse(bp);
+				brelse(bp, 0);
 				goto out;
 			}
 			uio_off = offset + sizeof(struct direntry);
@@ -1639,12 +1639,12 @@ msdosfs_readdir(v)
 				*cookies++ = offset + sizeof(struct direntry);
 				ncookies++;
 				if (ncookies >= nc) {
-					brelse(bp);
+					brelse(bp, 0);
 					goto out;
 				}
 			}
 		}
-		brelse(bp);
+		brelse(bp, 0);
 	}
 
 out:
@@ -1754,7 +1754,7 @@ msdosfs_strategy(v)
 			bp->b_blkno = de_bn2kb(dep->de_pmp, bp->b_blkno);
 	}
 	if (bp->b_blkno == -1) {
-		biodone(bp);
+		biodone(bp, bp->b_error, bp->b_resid);
 		return (error);
 	}
 

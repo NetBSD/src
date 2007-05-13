@@ -1,4 +1,4 @@
-/*	$NetBSD: mlx.c,v 1.51.2.2 2007/04/10 12:07:09 ad Exp $	*/
+/*	$NetBSD: mlx.c,v 1.51.2.3 2007/05/13 17:36:25 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mlx.c,v 1.51.2.2 2007/04/10 12:07:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mlx.c,v 1.51.2.3 2007/05/13 17:36:25 ad Exp $");
 
 #include "ld.h"
 
@@ -503,7 +503,7 @@ mlx_init(struct mlx_softc *mlx, const char *intrstr)
 		mlx_sdh = shutdownhook_establish(mlx_shutdown, NULL);
 
 		/* Create a status monitoring thread. */
-		rv = kthread_create(PRI_NONE, false, mlx_periodic_thread,
+		rv = kthread_create(PRI_NONE, 0, NULL, mlx_periodic_thread,
 		    NULL, &mlx_periodic_lwp, "mlxtask");
 		if (rv != 0)
 			printf("mlx_init: unable to create thread (%d)\n", rv);
