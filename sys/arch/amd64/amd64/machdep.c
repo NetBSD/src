@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.54 2007/05/11 14:01:46 fvdl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.55 2007/05/13 20:48:23 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.54 2007/05/11 14:01:46 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.55 2007/05/13 20:48:23 fvdl Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_ddb.h"
@@ -327,6 +327,9 @@ x86_64_proc0_tss_ldt_init(void)
 	    (u_int16_t)((char *)pcb->pcb_iomap - (char *)&pcb->pcb_tss);
 	for (x = 0; x < sizeof(pcb->pcb_iomap) / 4; x++)
 		pcb->pcb_iomap[x] = 0xffffffff;
+
+	pcb->pcb_fs = 0;
+	pcb->pcb_gs = 0;
 
 	pcb->pcb_ldt_sel = pmap_kernel()->pm_ldt_sel =
 	    GSYSSEL(GLDT_SEL, SEL_KPL);
@@ -878,6 +881,8 @@ setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 
 	l->l_md.md_flags &= ~MDP_USEDFPU;
 	pcb->pcb_flags = 0;
+	pcb->pcb_fs = 0;
+	pcb->pcb_gs = 0;
 	pcb->pcb_savefpu.fp_fxsave.fx_fcw = __NetBSD_NPXCW__;
 	pcb->pcb_savefpu.fp_fxsave.fx_mxcsr = __INITIAL_MXCSR__;
 	pcb->pcb_savefpu.fp_fxsave.fx_mxcsr_mask = __INITIAL_MXCSR_MASK__;
