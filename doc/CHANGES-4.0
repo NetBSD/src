@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.155 2007/05/13 10:36:13 jdc Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.156 2007/05/13 21:26:58 pavel Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -3531,4 +3531,10 @@ sys/nfs/nfsdiskless.h				1.25
 	Add the TFTPROOT kernel option for TFTP'ing root RAMdisk at root
 	mount time.
 	[manu, ticket #635]
+
+sys/kern/uipc_socket.c				1.139 via patch
+sys/kern/uipc_syscalls.c			1.108-1.109 via patch
+
+	Fix memory leak in socket code.
+	[yamt, ticket #621]
 
