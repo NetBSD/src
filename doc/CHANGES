@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.851 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.852 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -80,7 +80,6 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		OpenBSD [jmcneill 20070412]
 	sparc64: add support for hardware monitoring on
 		Ultra Enterprise 450. See envctrl(4) [tnn 20070414]
-	ipf(8): Updated to version 4.1.19. [martin 20070414]
 	coda: overhaul kernel module (vnode locking rules, uvm_fault
 		handling, general cleanup) [gdt 20070415]
 	puffs(4): Support NFS exporting puffs file servers [pooka 20070416]
