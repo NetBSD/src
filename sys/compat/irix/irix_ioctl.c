@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_ioctl.c,v 1.13 2007/03/04 06:01:17 christos Exp $ */
+/*	$NetBSD: irix_ioctl.c,v 1.14 2007/05/13 15:57:39 dsl Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_ioctl.c,v 1.13 2007/03/04 06:01:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_ioctl.c,v 1.14 2007/05/13 15:57:39 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -90,8 +90,6 @@ irix_sys_ioctl(l, v, retval)
 	struct vnode *vp;
 	struct vattr vattr;
 	struct irix_ioctl_usrdata iiu;
-	struct irix_ioctl_usrdata *iiup;
-	void *sg = stackgap_init(p, 0);
 	int error, val;
 
 	/*
@@ -113,10 +111,10 @@ irix_sys_ioctl(l, v, retval)
 	 * commands need to set the return value, which is normally
 	 * impossible in the file methods and lower. We do the job by
 	 * copying the retval address and the data argument to a
-	 * struct irix_ioctl_usrdata in the stackgap. The data argument
+	 * struct irix_ioctl_usrdata. The data argument
 	 * is set to the address of the structure, and the underlying
 	 * code will be able to retreive both data and the retval address
-	 * by fetching the struct irix_ioctl_usrdata.
+	 * from the struct irix_ioctl_usrdata.
 	 *
 	 * We also bypass the checks in sys_ioctl() because theses ioctl
 	 * are defined _IO but really are _IOR. XXX need security review.
@@ -133,14 +131,10 @@ irix_sys_ioctl(l, v, retval)
 			goto out;
 		}
 
-		iiup = stackgap_alloc(p, &sg, sizeof(iiu));
 		iiu.iiu_data = data;
 		iiu.iiu_retval = retval;
-		data = (void *)iiup;
-		if ((error = copyout(&iiu, iiup, sizeof(iiu))) != 0)
-			goto out;
 
-		error = (*fp->f_ops->fo_ioctl)(fp, cmd, data, l);
+		error = (*fp->f_ops->fo_ioctl)(fp, cmd, &iiu, l);
 out:
 		FILE_UNUSE(fp, l);
 		return error;
