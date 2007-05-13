@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_cpu.c,v 1.1.2.2 2007/03/24 12:07:23 yamt Exp $	*/
+/*	$NetBSD: kern_cpu.c,v 1.1.2.3 2007/05/13 17:02:58 ad Exp $	*/
 
 /*-
  * Copyright (c)2007 YAMAMOTO Takashi,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.1.2.2 2007/03/24 12:07:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.1.2.3 2007/05/13 17:02:58 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,8 +40,10 @@ __KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.1.2.2 2007/03/24 12:07:23 yamt Exp $"
 int
 mi_cpu_attach(struct cpu_info *ci)
 {
+	struct schedstate_percpu *spc = &ci->ci_schedstate;
 	int error;
 
+	mutex_init(&spc->spc_lwplock, MUTEX_SPIN, IPL_SCHED);
 	sched_cpuattach(ci);
 
 	error = create_idle_lwp(ci);

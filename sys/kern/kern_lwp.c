@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.55.2.13 2007/04/21 15:50:15 ad Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.55.2.14 2007/05/13 17:02:58 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -161,15 +161,15 @@
  *
  *	States and their associated locks:
  *
- *	LSIDL, LSZOMB
+ *	LSIDL, LSZOMB, LSONPROC:
  *
- *		Always covered by spc_mutex.
+ *		Always covered by spc_lwplock, which protects running LWPs.
+ *		This is a per-CPU lock.
  *
- *	LSONPROC, LSRUN:
+ *	LSRUN:
  *
- *		Always covered by spc_mutex, which protects the run queues
- *		and other miscellaneous items.  If the scheduler is changed
- *		to use per-CPU run queues, this may become a per-CPU mutex.
+ *		Always covered by spc_mutex, which protects the run queues.
+ *		This may be a per-CPU lock, depending on the scheduler.
  *
  *	LSSLEEP:
  *
@@ -181,12 +181,14 @@
  *		If the LWP was previously sleeping (l_wchan != NULL), then
  *		l_mutex references the sleep queue mutex.  If the LWP was
  *		runnable or on the CPU when halted, or has been removed from
- *		the sleep queue since halted, then the mutex is spc_mutex.
+ *		the sleep queue since halted, then the mutex is spc_lwplock.
  *
  *	The lock order is as follows:
  *
- *		sleepq_t::sq_mutex  |---> spc_mutex
- *		tschain_t::tc_mutex |
+ *		spc::spc_lwplock ->
+ *		    sleepq_t::sq_mutex ->
+ *			tschain_t::tc_mutex ->
+ *			    spc::spc_mutex
  *
  *	Each process has an scheduler state mutex (proc::p_smutex), and a
  *	number of counters on LWPs and their states: p_nzlwps, p_nrlwps, and
@@ -206,7 +208,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.55.2.13 2007/04/21 15:50:15 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.55.2.14 2007/05/13 17:02:58 ad Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
