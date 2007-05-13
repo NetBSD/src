@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_fcntl.c,v 1.21 2007/05/12 23:02:49 dsl Exp $	 */
+/*	$NetBSD: svr4_32_fcntl.c,v 1.22 2007/05/13 08:14:06 dsl Exp $	 */
 
 /*-
  * Copyright (c) 1994, 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_fcntl.c,v 1.21 2007/05/12 23:02:49 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_fcntl.c,v 1.22 2007/05/13 08:14:06 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -231,10 +231,7 @@ svr4_32_to_bsd_flock64(iflp, oflp)
 
 
 static int
-fd_revoke(l, fd, retval)
-	struct lwp *l;
-	int fd;
-	register_t *retval;
+fd_revoke(struct lwp *l, int fd, register_t *retval)
 {
 	struct filedesc *fdp = l->l_proc->p_fd;
 	struct file *fp;
@@ -245,6 +242,7 @@ fd_revoke(l, fd, retval)
 	if ((fp = fd_getfile(fdp, fd)) == NULL)
 		return EBADF;
 
+	simple_unlock(&fp->f_slock);
 	if (fp->f_type != DTYPE_VNODE)
 		return EINVAL;
 
@@ -292,6 +290,7 @@ fd_truncate(l, fd, flp, retval)
 	if ((fp = fd_getfile(fdp, fd)) == NULL)
 		return EBADF;
 
+	simple_unlock(&fp->f_slock);
 	vp = (struct vnode *)fp->f_data;
 	if (fp->f_type != DTYPE_VNODE || vp->v_type == VFIFO)
 		return ESPIPE;
@@ -343,20 +342,21 @@ svr4_32_sys_open(l, v, retval)
 	SCARG(&cup, flags) = svr4_32_to_bsd_flags(SCARG(uap, flags));
 
 	SCARG(&cup, path) = SCARG_P32(uap, path);
-
 	SCARG(&cup, mode) = SCARG(uap, mode);
 	error = sys_open(l, &cup, retval);
 
 	if (error)
 		return error;
 
-	/* XXXSMP unlocked */
+	/* XXXAD locking */
+
 	if (!(SCARG(&cup, flags) & O_NOCTTY) && SESS_LEADER(l->l_proc) &&
 	    !(l->l_proc->p_lflag & PL_CONTROLT)) {
 		struct filedesc	*fdp = l->l_proc->p_fd;
 		struct file	*fp;
 
 		fp = fd_getfile(fdp, *retval);
+		simple_unlock(&fp->f_slock);
 
 		/* ignore any error, just give it a try */
 		if (fp != NULL && fp->f_type == DTYPE_VNODE)
@@ -538,78 +538,73 @@ svr4_32_sys_fcntl(l, v, retval)
 	register_t *retval;
 {
 	struct svr4_32_sys_fcntl_args	*uap = v;
-	int				error;
-	struct sys_fcntl_args		fa;
+	struct sys_fcntl_args	fa;
 	register_t		flags;
 	struct svr4_32_flock64	ifl64;
 	struct svr4_32_flock	ifl;
 	struct flock		fl;
+	int error;
+	int cmd;
 
 	SCARG(&fa, fd) = SCARG(uap, fd);
 	SCARG(&fa, arg) = SCARG_P32(uap, arg);
 
 	switch (SCARG(uap, cmd)) {
 	case SVR4_F_DUPFD:
-		SCARG(&fa, cmd) = F_DUPFD;
-		return sys_fcntl(l, &fa, retval);
+		cmd = F_DUPFD;
+		break;
 	case SVR4_F_GETFD:
-		SCARG(&fa, cmd) = F_GETFD;
-		return sys_fcntl(l, &fa, retval);
+		cmd = F_GETFD;
+		break;
 	case SVR4_F_SETFD:
-		SCARG(&fa, cmd) = F_SETFD;
-		return sys_fcntl(l, &fa, retval);
+		cmd = F_SETFD;
+		break;
 
 	case SVR4_F_GETFL:
-		SCARG(&fa, cmd) = F_GETFL;
-		error = sys_fcntl(l, &fa, retval);
-		if (error)
-			return error;
-		*retval = bsd_to_svr4_32_flags(*retval);
-		return error;
+		cmd = F_GETFL;
+		break;
 
 	case SVR4_F_SETFL:
 		/*
 		 * we must save the O_ASYNC flag, as that is
 		 * handled by ioctl(_, I_SETSIG, _) emulation.
 		 */
-
 		SCARG(&fa, cmd) = F_GETFL;
 		if ((error = sys_fcntl(l, &fa, &flags)) != 0)
 			return error;
 		flags &= O_ASYNC;
 		flags |= svr4_32_to_bsd_flags((u_long) SCARG_P32(uap, arg));
-		SCARG(&fa, cmd) = F_SETFL;
+		cmd = F_SETFL;
 		SCARG(&fa, arg) = (void *) flags;
-		return sys_fcntl(l, &fa, retval);
+		break;
 
 	case SVR4_F_GETLK:
-		SCARG(&fa, cmd) = F_GETLK;
+		cmd = F_GETLK;
 		goto lock32;
 	case SVR4_F_SETLK:
-		SCARG(&fa, cmd) = F_SETLK;
+		cmd = F_SETLK;
 		goto lock32;
 	case SVR4_F_SETLKW:
-		SCARG(&fa, cmd) = F_SETLKW;
+		cmd = F_SETLKW;
 	    lock32:
 		error = copyin(SCARG_P32(uap, arg), &ifl, sizeof ifl);
 		if (error)
 			return error;
 		svr4_32_to_bsd_flock(&ifl, &fl);
 
-		error = do_fcntl_lock(l, SCARG(&fa, fd), SCARG(&fa, cmd), &fl);
+		error = do_fcntl_lock(l, SCARG(uap, fd), cmd, &fl);
+		if (cmd != F_GETLK || error != 0)
+			return error;
 
-		if (SCARG(&fa, cmd) == F_GETLK && error == 0) {
-			bsd_to_svr4_32_flock(&fl, &ifl);
-			error = copyout(&ifl, SCARG_P32(uap, arg), sizeof ifl);
-		}
-		return error;
+		bsd_to_svr4_32_flock(&fl, &ifl);
+		return copyout(&ifl, SCARG_P32(uap, arg), sizeof ifl);
 
 	case SVR4_F_DUP2FD:
 		{
 			struct sys_dup2_args du;
 
 			SCARG(&du, from) = SCARG(uap, fd);
-			SCARG(&du, to) = (intptr_t)SCARG_P32(uap, arg);
+			SCARG(&du, to) = (int)(u_long)SCARG_P32(uap, arg);
 			error = sys_dup2(l, &du, retval);
 			if (error)
 				return error;
@@ -625,30 +620,28 @@ svr4_32_sys_fcntl(l, v, retval)
 		return fd_truncate(l, SCARG(uap, fd), &fl, retval);
 
 	case SVR4_F_GETLK64:
-		SCARG(&fa, cmd) = F_GETLK;
+		cmd = F_GETLK;
 		goto lock64;
 	case SVR4_F_SETLK64:
-		SCARG(&fa, cmd) = F_SETLK;
+		cmd = F_SETLK;
 		goto lock64;
 	case SVR4_F_SETLKW64:
-		SCARG(&fa, cmd) = F_SETLKW;
+		cmd = F_SETLKW;
 	    lock64:
 		error = copyin(SCARG_P32(uap, arg), &ifl64, sizeof ifl64);
 		if (error)
 			return error;
 		svr4_32_to_bsd_flock64(&ifl64, &fl);
 
-		error = do_fcntl_lock(l, SCARG(&fa, fd), SCARG(&fa, cmd), &fl);
+		error = do_fcntl_lock(l, SCARG(uap, fd), cmd, &fl);
+		if (cmd != F_GETLK || error != 0)
+			return error;
 
-		if (SCARG(&fa, cmd) == F_GETLK && error == 0) {
-			bsd_to_svr4_32_flock64(&fl, &ifl64);
-			error = copyout(&ifl64, SCARG_P32(uap, arg), sizeof ifl64);
-		}
-		return error;
+		bsd_to_svr4_32_flock64(&fl, &ifl64);
+		return copyout(&ifl64, SCARG_P32(uap, arg), sizeof ifl64);
 
 	case SVR4_F_FREESP64:
-		error = copyin(SCARG_P32(uap, arg), &ifl64,
-		    sizeof ifl64);
+		error = copyin(SCARG_P32(uap, arg), &ifl64, sizeof ifl64);
 		if (error)
 			return error;
 		svr4_32_to_bsd_flock64(&ifl64, &fl);
@@ -660,4 +653,19 @@ svr4_32_sys_fcntl(l, v, retval)
 	default:
 		return ENOSYS;
 	}
+
+	SCARG(&fa, cmd) = cmd;
+
+	error = sys_fcntl(l, &fa, retval);
+	if (error != 0)
+		return error;
+
+	switch (SCARG(uap, cmd)) {
+
+	case SVR4_F_GETFL:
+		*retval = bsd_to_svr4_32_flags(*retval);
+		break;
+	}
+
+	return 0;
 }
