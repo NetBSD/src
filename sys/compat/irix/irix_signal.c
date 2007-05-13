@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_signal.c,v 1.42 2007/05/11 02:25:34 rumble Exp $ */
+/*	$NetBSD: irix_signal.c,v 1.43 2007/05/13 15:39:29 dsl Exp $ */
 
 /*-
  * Copyright (c) 1994, 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_signal.c,v 1.42 2007/05/11 02:25:34 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_signal.c,v 1.43 2007/05/13 15:39:29 dsl Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -919,32 +919,39 @@ irix_sys_sigprocmask(l, v, retval)
 	struct proc *p = l->l_proc;
 	struct svr4_sys_sigprocmask_args cup;
 	int error;
-	sigset_t *obss;
+	sigset_t obss, nbss;
 	irix_sigset_t niss, oiss;
-	void *sg;
 
-	SCARG(&cup, how) = SCARG(uap, how);
-	SCARG(&cup, set) = (const svr4_sigset_t *)SCARG(uap, set);
-	SCARG(&cup, oset) = (svr4_sigset_t *)SCARG(uap, oset);
-
-	if (SCARG(uap, how) == IRIX_SIG_SETMASK32) {
-		sg = stackgap_init(p, 0);
-		if ((error = copyin(SCARG(uap, set), &niss, sizeof(niss))) != 0)
-			return error;
-		SCARG(&cup, set) = stackgap_alloc(p, &sg, sizeof(niss));
-
-		obss = &l->l_sigmask;
-		native_to_irix_sigset(obss, &oiss);
-		/* preserve the higher 32 bits */
-		niss.bits[3] = oiss.bits[3];
-
-		if ((error = copyout(&niss, SCARG(&cup, oset),
-		    sizeof(niss))) != 0)
-			return error;
-
-		SCARG(&cup, how) = SVR4_SIG_SETMASK;
+	if (SCARG(uap, how) != IRIX_SIG_SETMASK32) {
+		SCARG(&cup, how) = SCARG(uap, how);
+		SCARG(&cup, set) = (const svr4_sigset_t *)SCARG(uap, set);
+		SCARG(&cup, oset) = (svr4_sigset_t *)SCARG(uap, oset);
+		return svr4_sys_sigprocmask(l, &cup, retval);
 	}
-	return svr4_sys_sigprocmask(l, &cup, retval);
+
+	if ((error = copyin(SCARG(uap, set), &niss, sizeof(niss))) != 0)
+		return error;
+
+	/* We must preserve the high bits of the irix sigmask, so mustget them */
+	native_to_irix_sigset(&l->l_sigmask, &oiss);
+	/* The irix bitmask is 128 bits, I think we only have the bottom 32 */
+	niss.bits[1] = oiss.bits[1];
+	niss.bits[2] = oiss.bits[2];
+	niss.bits[3] = oiss.bits[3];
+	/* We now need the corresponding netbsd mask */
+	irix_to_native_sigset(&niss, &nbss);
+
+	mutex_enter(&p->p_smutex);
+	error = sigprocmask1(l, SIG_SETMASK, &nbss, &obss);
+	mutex_exit(&p->p_smutex);
+
+	if (error != 0 || SCARG(&cup, oset) == NULL)
+		return error;
+
+	native_to_irix_sigset(&obss, &oiss);
+
+	/* XXX: should this copyout only be 4 bytes ? */
+	return copyout(&oiss, SCARG(&cup, oset), sizeof(oiss));
 }
 
 int
