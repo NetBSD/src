@@ -1,4 +1,4 @@
-#	$NetBSD: files.acpi,v 1.40 2006/08/14 09:34:43 itohy Exp $
+#	$NetBSD: files.acpi,v 1.40.6.1 2007/05/13 06:52:53 pavel Exp $
 
 include "dev/acpi/acpica/files.acpica"
 
@@ -95,3 +95,7 @@ file	dev/acpi/attimer_acpi.c		attimer_acpi
 # Yamaha OPL3-SAx
 attach	ym at acpinodebus with ym_acpi
 file	dev/acpi/ym_acpi.c		ym_acpi
+
+# Abit uGuru 2005
+attach	ug at acpinodebus with ug_acpi
+file	dev/acpi/ug_acpi.c		ug_acpi
