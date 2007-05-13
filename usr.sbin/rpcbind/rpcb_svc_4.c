@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcb_svc_4.c,v 1.5 2006/05/25 02:33:16 christos Exp $	*/
+/*	$NetBSD: rpcb_svc_4.c,v 1.6 2007/05/13 20:03:47 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -51,13 +51,15 @@
 #include <stdlib.h>
 #include "rpcbind.h"
 
-static void *rpcbproc_getaddr_4_local __P((void *, struct svc_req *, SVCXPRT *,
-				      rpcvers_t));
-static void *rpcbproc_getversaddr_4_local __P((void *, struct svc_req *, SVCXPRT *, rpcvers_t));
-static void *rpcbproc_getaddrlist_4_local
-	__P((void *, struct svc_req *, SVCXPRT *, rpcvers_t));
-static void free_rpcb_entry_list __P((rpcb_entry_list_ptr *));
-static void *rpcbproc_dump_4_local __P((void *, struct svc_req *, SVCXPRT *, rpcvers_t));
+static void *rpcbproc_getaddr_4_local(void *, struct svc_req *, SVCXPRT *,
+    rpcvers_t);
+static void *rpcbproc_getversaddr_4_local(void *, struct svc_req *, SVCXPRT *,
+    rpcvers_t);
+static void *rpcbproc_getaddrlist_4_local(void *, struct svc_req *, SVCXPRT *,
+    rpcvers_t);
+static void free_rpcb_entry_list(rpcb_entry_list_ptr *);
+static void *rpcbproc_dump_4_local(void *, struct svc_req *, SVCXPRT *,
+    rpcvers_t);
 
 /*
  * Called by svc_getreqset. There is a separate server handle for
@@ -75,7 +77,7 @@ rpcb_service_4(struct svc_req *rqstp, SVCXPRT *transp)
 	} argument;
 	char *result;
 	xdrproc_t xdr_argument, xdr_result;
-	void *(*local) __P((void *, struct svc_req *, SVCXPRT *, rpcvers_t));
+	void *(*local)(void *, struct svc_req *, SVCXPRT *, rpcvers_t);
 
 	rpcbs_procinfo(RPCBVERS_4_STAT, rqstp->rq_proc);
 

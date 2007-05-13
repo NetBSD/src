@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_svc.c,v 1.4 2003/07/13 12:16:05 itojun Exp $	*/
+/*	$NetBSD: pmap_svc.c,v 1.5 2007/05/13 20:03:47 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -58,11 +58,10 @@ static	char sccsid[] = "@(#)pmap_svc.c 1.23 89/04/05 Copyr 1984 Sun Micro";
 #endif
 #include "rpcbind.h"
 
-static struct pmaplist *find_service_pmap __P((rpcprog_t, rpcvers_t,
-					       rpcprot_t));
-static bool_t pmapproc_change __P((struct svc_req *, SVCXPRT *, u_long));
-static bool_t pmapproc_getport __P((struct svc_req *, SVCXPRT *));
-static bool_t pmapproc_dump __P((struct svc_req *, SVCXPRT *));
+static struct pmaplist *find_service_pmap(rpcprog_t, rpcvers_t, rpcprot_t);
+static bool_t pmapproc_change(struct svc_req *, SVCXPRT *, u_long);
+static bool_t pmapproc_getport(struct svc_req *, SVCXPRT *);
+static bool_t pmapproc_dump(struct svc_req *, SVCXPRT *);
 
 /*
  * Called for all the version 2 inquiries.
@@ -200,9 +199,9 @@ pmapproc_change(struct svc_req *rqstp, SVCXPRT *xprt, unsigned long op)
 	 * and looping.
 	 */
 	if (sc == NULL)
-		rpcbreg.r_owner = "unknown";
+		rpcbreg.r_owner = __UNCONST(unknown);
 	else if (sc->sc_uid == 0)
-		rpcbreg.r_owner = "superuser";
+		rpcbreg.r_owner = __UNCONST(superuser);
 	else {
 		/* r_owner will be strdup-ed later */
 		snprintf(uidbuf, sizeof uidbuf, "%d", sc->sc_uid);
@@ -220,9 +219,9 @@ pmapproc_change(struct svc_req *rqstp, SVCXPRT *xprt, unsigned long op)
 		    (int)(reg.pm_port & 0xff));
 		rpcbreg.r_addr = buf;
 		if (reg.pm_prot == IPPROTO_UDP) {
-			rpcbreg.r_netid = udptrans;
+			rpcbreg.r_netid = __UNCONST(udptrans);
 		} else if (reg.pm_prot == IPPROTO_TCP) {
-			rpcbreg.r_netid = tcptrans;
+			rpcbreg.r_netid = __UNCONST(tcptrans);
 		} else {
 			ans = FALSE;
 			goto done_change;
@@ -232,9 +231,9 @@ pmapproc_change(struct svc_req *rqstp, SVCXPRT *xprt, unsigned long op)
 		bool_t ans1, ans2;
 
 		rpcbreg.r_addr = NULL;
-		rpcbreg.r_netid = tcptrans;
+		rpcbreg.r_netid = __UNCONST(tcptrans);
 		ans1 = map_unset(&rpcbreg, rpcbreg.r_owner);
-		rpcbreg.r_netid = udptrans;
+		rpcbreg.r_netid = __UNCONST(udptrans);
 		ans2 = map_unset(&rpcbreg, rpcbreg.r_owner);
 		ans = ans1 || ans2;
 	} else {
@@ -293,9 +292,9 @@ pmapproc_getport(struct svc_req *rqstp, SVCXPRT *xprt)
 #endif
 	fnd = find_service_pmap(reg.pm_prog, reg.pm_vers, reg.pm_prot);
 	if (fnd) {
-		char serveuaddr[32], *ua;
+		char serveuaddr[32];
 		int h1, h2, h3, h4, p1, p2;
-		char *netid;
+		const char *netid, *ua;
 
 		if (reg.pm_prot == IPPROTO_UDP) {
 			ua = udp_uaddr;

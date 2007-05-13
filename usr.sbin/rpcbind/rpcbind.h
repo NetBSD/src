@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcbind.h,v 1.1 2000/06/03 00:47:21 fvdl Exp $	*/
+/*	$NetBSD: rpcbind.h,v 1.2 2007/05/13 20:03:47 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -73,68 +73,71 @@ extern rpcblist_ptr list_rbl;	/* A list of version 3 & 4 rpcbind services */
 
 #ifdef PORTMAP
 extern struct pmaplist *list_pml; /* A list of version 2 rpcbind services */
-extern char *udptrans;		/* Name of UDP transport */
-extern char *tcptrans;		/* Name of TCP transport */
-extern char *udp_uaddr;		/* Universal UDP address */
-extern char *tcp_uaddr;		/* Universal TCP address */
+extern const char *udptrans;	/* Name of UDP transport */
+extern const char *tcptrans;	/* Name of TCP transport */
+extern const char *udp_uaddr;	/* Universal UDP address */
+extern const char *tcp_uaddr;	/* Universal TCP address */
 #endif
 
-int add_bndlist __P((struct netconfig *, struct netbuf *));
-bool_t is_bound __P((char *, char *));
-char *mergeaddr __P((SVCXPRT *, char *, char *, char *));
-struct netconfig *rpcbind_get_conf __P((char *));
+extern const char superuser[];
+extern const char unknown[];
 
-void rpcbs_init __P((void)); 
-void rpcbs_procinfo __P((rpcvers_t, rpcproc_t));
-void rpcbs_set __P((rpcvers_t, bool_t));
-void rpcbs_unset __P((rpcvers_t, bool_t));
-void rpcbs_getaddr __P((rpcvers_t, rpcprog_t, rpcvers_t, char *, char *));
-void rpcbs_rmtcall __P((rpcvers_t, rpcproc_t, rpcprog_t, rpcvers_t, rpcproc_t,
-			char *, rpcblist_ptr));
-void *rpcbproc_getstat __P((void *, struct svc_req *, SVCXPRT *, rpcvers_t));
+int add_bndlist(struct netconfig *, struct netbuf *);
+bool_t is_bound(const char *, const char *);
+char *mergeaddr(SVCXPRT *, char *, char *, char *);
+struct netconfig *rpcbind_get_conf(const char *);
 
-void rpcb_service_3 __P((struct svc_req *, SVCXPRT *));
-void rpcb_service_4 __P((struct svc_req *, SVCXPRT *));
+void rpcbs_init(void); 
+void rpcbs_procinfo(rpcvers_t, rpcproc_t);
+void rpcbs_set(rpcvers_t, bool_t);
+void rpcbs_unset(rpcvers_t, bool_t);
+void rpcbs_getaddr(rpcvers_t, rpcprog_t, rpcvers_t, const char *, const char *);
+void rpcbs_rmtcall(rpcvers_t, rpcproc_t, rpcprog_t, rpcvers_t, rpcproc_t,
+			char *, rpcblist_ptr);
+void *rpcbproc_getstat(void *, struct svc_req *, SVCXPRT *, rpcvers_t);
+
+void rpcb_service_3(struct svc_req *, SVCXPRT *);
+void rpcb_service_4(struct svc_req *, SVCXPRT *);
 
 /* Common functions shared between versions */
-void *rpcbproc_set_com __P((void *, struct svc_req *, SVCXPRT *, rpcvers_t));
-void *rpcbproc_unset_com __P((void *, struct svc_req *, SVCXPRT *, rpcvers_t));
-bool_t map_set __P((RPCB *, char *));
-bool_t map_unset __P((RPCB *, char *));
-void delete_prog __P((int));
-void *rpcbproc_getaddr_com __P((RPCB *, struct svc_req *, SVCXPRT *, rpcvers_t,
-				 rpcvers_t));
-void *rpcbproc_gettime_com __P((void *, struct svc_req *, SVCXPRT *,
-				rpcvers_t));
-void *rpcbproc_uaddr2taddr_com __P((void *, struct svc_req *,
-					     SVCXPRT *, rpcvers_t));
-void *rpcbproc_taddr2uaddr_com __P((void *, struct svc_req *, SVCXPRT *,
-				    rpcvers_t));
-int create_rmtcall_fd __P((struct netconfig *));
-void rpcbproc_callit_com __P((struct svc_req *, SVCXPRT *, rpcvers_t,
-			      rpcvers_t));
-void my_svc_run __P((void));
+void *rpcbproc_set_com(void *, struct svc_req *, SVCXPRT *, rpcvers_t);
+void *rpcbproc_unset_com(void *, struct svc_req *, SVCXPRT *, rpcvers_t);
+bool_t map_set(RPCB *, char *);
+bool_t map_unset(RPCB *, const char *);
+void delete_prog(int);
+void *rpcbproc_getaddr_com(RPCB *, struct svc_req *, SVCXPRT *, rpcvers_t,
+				 rpcvers_t);
+void *rpcbproc_gettime_com(void *, struct svc_req *, SVCXPRT *,
+				rpcvers_t);
+void *rpcbproc_uaddr2taddr_com(void *, struct svc_req *,
+					     SVCXPRT *, rpcvers_t);
+void *rpcbproc_taddr2uaddr_com(void *, struct svc_req *, SVCXPRT *,
+				    rpcvers_t);
+int create_rmtcall_fd(struct netconfig *);
+void rpcbproc_callit_com(struct svc_req *, SVCXPRT *, rpcvers_t,
+			      rpcvers_t);
+void my_svc_run(void);
 
-void rpcbind_abort __P((void));
-void reap __P((int));
-void toggle_verboselog __P((int));
+void rpcbind_abort(void);
+void reap(int);
+void toggle_verboselog(int);
 
-int check_access __P((SVCXPRT *, rpcproc_t, void *, int));
-int check_callit __P((SVCXPRT *, struct r_rmtcall_args *, int));
-void logit __P((int, struct sockaddr *, rpcproc_t, rpcprog_t, const char *));
-int is_loopback __P((struct netbuf *));
+int check_access(SVCXPRT *, rpcproc_t, void *, int);
+int check_callit(SVCXPRT *, struct r_rmtcall_args *, int);
+void logit(int, struct sockaddr *, rpcproc_t, rpcprog_t, const char *);
+int is_loopback(struct netbuf *);
 
 #ifdef PORTMAP
-extern void pmap_service __P((struct svc_req *, SVCXPRT *));
+extern void pmap_service(struct svc_req *, SVCXPRT *);
 #endif
 
-void write_warmstart __P((void));
-void read_warmstart __P((void));
+void write_warmstart(void);
+void read_warmstart(void);
 
-char *addrmerge __P((struct netbuf *caller, char *serv_uaddr, char *clnt_uaddr,
-		     char *netid));
-void network_init __P((void));
-struct sockaddr *local_sa __P((int));
+char *addrmerge(struct netbuf *caller, char *serv_uaddr, char *clnt_uaddr,
+		     char *netid);
+void network_init(void);
+struct sockaddr *local_sa(int);
 
 /* For different getaddr semantics */
 #define	RPCB_ALLVERS 0

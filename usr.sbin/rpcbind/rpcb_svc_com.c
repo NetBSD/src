@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcb_svc_com.c,v 1.10 2003/10/21 02:53:02 fvdl Exp $	*/
+/*	$NetBSD: rpcb_svc_com.c,v 1.11 2007/05/13 20:03:47 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -63,7 +63,7 @@
 
 #define RPC_BUF_MAX	65536	/* can be raised if required */
 
-static char *nullstring = "";
+static char emptystring[] = "";
 static int rpcb_rmtcalls;
 
 struct rmtcallfd_list {
@@ -91,29 +91,29 @@ struct finfo {
 static struct finfo     FINFO[NFORWARD];
 
 
-static bool_t xdr_encap_parms __P((XDR *, struct encap_parms *));
-static bool_t xdr_rmtcall_args __P((XDR *, struct r_rmtcall_args *));
-static bool_t xdr_rmtcall_result __P((XDR *, struct r_rmtcall_args *));
-static bool_t xdr_opaque_parms __P((XDR *, struct r_rmtcall_args *));
-static int find_rmtcallfd_by_netid __P((char *));
-static SVCXPRT *find_rmtcallxprt_by_fd __P((int));
-static u_int32_t forward_register __P((u_int32_t, struct netbuf *, int, char *,
-				    rpcproc_t, rpcvers_t));
-static struct finfo *forward_find __P((u_int32_t));
-static int free_slot_by_xid __P((u_int32_t));
-static int free_slot_by_index __P((int));
-static int netbufcmp __P((struct netbuf *, struct netbuf *));
-static struct netbuf *netbufdup __P((struct netbuf *));
-static void netbuffree __P((struct netbuf *));
-static int check_rmtcalls __P((struct pollfd *, int));
-static void xprt_set_caller __P((SVCXPRT *, struct finfo *));
-static void send_svcsyserr __P((SVCXPRT *, struct finfo *));
-static void handle_reply __P((int, SVCXPRT *));
-static void find_versions __P((rpcprog_t, char *, rpcvers_t *, rpcvers_t *));
-static rpcblist_ptr find_service __P((rpcprog_t, rpcvers_t, char *));
-static char *getowner __P((SVCXPRT *, char *, size_t));
-static int add_pmaplist __P((RPCB *));
-static int del_pmaplist __P((RPCB *));
+static bool_t xdr_encap_parms(XDR *, struct encap_parms *);
+static bool_t xdr_rmtcall_args(XDR *, struct r_rmtcall_args *);
+static bool_t xdr_rmtcall_result(XDR *, struct r_rmtcall_args *);
+static bool_t xdr_opaque_parms(XDR *, struct r_rmtcall_args *);
+static int find_rmtcallfd_by_netid(char *);
+static SVCXPRT *find_rmtcallxprt_by_fd(int);
+static u_int32_t forward_register(u_int32_t, struct netbuf *, int, char *,
+				    rpcproc_t, rpcvers_t);
+static struct finfo *forward_find(u_int32_t);
+static int free_slot_by_xid(u_int32_t);
+static int free_slot_by_index(int);
+static int netbufcmp(struct netbuf *, struct netbuf *);
+static struct netbuf *netbufdup(struct netbuf *);
+static void netbuffree(struct netbuf *);
+static int check_rmtcalls(struct pollfd *, int);
+static void xprt_set_caller(SVCXPRT *, struct finfo *);
+static void send_svcsyserr(SVCXPRT *, struct finfo *);
+static void handle_reply(int, SVCXPRT *);
+static void find_versions(rpcprog_t, char *, rpcvers_t *, rpcvers_t *);
+static rpcblist_ptr find_service(rpcprog_t, rpcvers_t, char *);
+static char *getowner(SVCXPRT *, char *, size_t);
+static int add_pmaplist(RPCB *);
+static int del_pmaplist(RPCB *);
 
 /*
  * Set a mapping of program, version, netid
@@ -233,7 +233,7 @@ rpcbproc_unset_com(void *arg, struct svc_req *rqstp, SVCXPRT *transp,
 }
 
 bool_t
-map_unset(RPCB *regp, char *owner)
+map_unset(RPCB *regp, const char *owner)
 {
 	int ans = 0;
 	rpcblist_ptr rbl, prev, tmp;
@@ -255,7 +255,7 @@ map_unset(RPCB *regp, char *owner)
 		 * Check whether appropriate uid. Unset only
 		 * if superuser or the owner itself.
 		 */
-		if (strcmp(owner, "superuser") &&
+		if (strcmp(owner, superuser) &&
 			strcmp(rbl->rpcb_map.r_owner, owner))
 			return (0);
 		/* found it; rbl moves forward, prev stays */
@@ -297,7 +297,7 @@ delete_prog(int prog)
 		reg.r_prog = rbl->rpcb_map.r_prog;
 		reg.r_vers = rbl->rpcb_map.r_vers;
 		reg.r_netid = strdup(rbl->rpcb_map.r_netid);
-		(void) map_unset(&reg, "superuser");
+		(void)map_unset(&reg, superuser);
 		free(reg.r_netid);
 	}
 }
@@ -327,10 +327,10 @@ rpcbproc_getaddr_com(RPCB *regp, struct svc_req *rqstp, SVCXPRT *transp,
 			 * The server died.  Unset all versions of this prog.
 			 */
 			delete_prog(regp->r_prog);
-			uaddr = nullstring;
+			uaddr = emptystring;
 		}
 	} else {
-		uaddr = nullstring;
+		uaddr = emptystring;
 	}
 #ifdef RPCBIND_DEBUG
 	if (debugging)
@@ -396,7 +396,7 @@ rpcbproc_taddr2uaddr_com(void *arg, struct svc_req *rqstp, SVCXPRT *transp,
 	int fd;
 
 	if ((fd = open("/dev/null", O_RDONLY)) == -1) {
-		uaddr = (char *)strerror(errno);
+		uaddr = strerror(errno);
 		return (&uaddr);
 	}
 #endif /* CHEW_FDS */
@@ -404,7 +404,7 @@ rpcbproc_taddr2uaddr_com(void *arg, struct svc_req *rqstp, SVCXPRT *transp,
 		free((void *) uaddr);
 	if (((nconf = rpcbind_get_conf(transp->xp_netid)) == NULL) ||
 		((uaddr = taddr2uaddr(nconf, taddr)) == NULL)) {
-		uaddr = nullstring;
+		uaddr = emptystring;
 	}
 	return (void *)&uaddr;
 }
@@ -672,11 +672,11 @@ rpcbproc_callit_com(struct svc_req *rqstp, SVCXPRT *transp,
 		fprintf(stderr, "%s %s req for (%lu, %lu, %lu, %s) from %s : ",
 			versnum == PMAPVERS ? "pmap_rmtcall" :
 			versnum == RPCBVERS ? "rpcb_rmtcall" :
-			versnum == RPCBVERS4 ? "rpcb_indirect" : "unknown",
+			versnum == RPCBVERS4 ? "rpcb_indirect" : unknown,
 			reply_type == RPCBPROC_INDIRECT ? "indirect" : "callit",
 			(unsigned long)a.rmt_prog, (unsigned long)a.rmt_vers,
 			(unsigned long)a.rmt_proc, transp->xp_netid,
-			uaddr ? uaddr : "unknown");
+			uaddr ? uaddr : unknown);
 		if (uaddr)
 			free((void *) uaddr);
 	}
@@ -1019,11 +1019,11 @@ free_slot_by_xid(u_int32_t xid)
 }
 
 static int
-free_slot_by_index(int index)
+free_slot_by_index(int idx)
 {
 	struct finfo	*fi;
 
-	fi = &FINFO[index];
+	fi = &FINFO[idx];
 	if (fi->flag & FINFO_ACTIVE) {
 		netbuffree(fi->caller_addr);
 		/* XXX may be too big, but can't access xprt array here */
@@ -1268,7 +1268,7 @@ handle_reply(int fd, SVCXPRT *xprt)
 				    svc_getrpccaller(xprt));
 	if (debugging) {
 		fprintf(stderr, "handle_reply:  forwarding address %s to %s\n",
-			a.rmt_uaddr, uaddr ? uaddr : "unknown");
+			a.rmt_uaddr, uaddr ? uaddr : unknown);
 	}
 	if (uaddr)
 		free((void *) uaddr);
@@ -1355,9 +1355,9 @@ getowner(SVCXPRT *transp, char *owner, size_t ownersize)
 
 	sc = __svc_getcallercreds(transp);
 	if (sc == NULL)
-		strlcpy(owner, "unknown", ownersize);
+		strlcpy(owner, unknown, ownersize);
 	else if (sc->sc_uid == 0)
-		strlcpy(owner, "superuser", ownersize);
+		strlcpy(owner, superuser, ownersize);
 	else
 		snprintf(owner, ownersize, "%d", sc->sc_uid);
 
