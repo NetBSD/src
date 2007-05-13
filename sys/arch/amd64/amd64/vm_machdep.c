@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.20 2007/03/04 05:59:13 christos Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.21 2007/05/13 20:48:24 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.20 2007/03/04 05:59:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.21 2007/05/13 20:48:24 fvdl Exp $");
 
 #include "opt_coredump.h"
 #include "opt_user_ldt.h"
@@ -213,8 +213,9 @@ cpu_lwp_fork(l1, l2, stack, stacksize, func, arg)
 	pcb->pcb_rsp = (u_int64_t)sf;
 	pcb->pcb_rbp = 0;
 
-	pcb->pcb_fs = l1->l_addr->u_pcb.pcb_fs;
-	pcb->pcb_gs = l1->l_addr->u_pcb.pcb_fs;
+	pcb->pcb_flags = 0;
+	pcb->pcb_fs = 0;
+	pcb->pcb_gs = 0;
 }
 
 void
