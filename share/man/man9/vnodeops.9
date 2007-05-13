@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnodeops.9,v 1.62 2007/05/07 21:41:49 pooka Exp $
+.\"     $NetBSD: vnodeops.9,v 1.63 2007/05/13 19:02:17 tnn Exp $
 .\"
 .\" Copyright (c) 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd May 8, 2007
+.Dd May 13, 2007
 .Dt VNODEOPS 9
 .Os
 .Sh NAME
@@ -1094,7 +1094,7 @@ flags.
 If the operation is successful zero is returned, otherwise an
 appropriate error code is returned.
 .Fn VOP_LOCK
-is used to serialise access to the file system such as to present two
+is used to serialise access to the file system such as to prevent two
 writes to the same file from happening at the same time.
 Kernel code should use
 .Xr vn_lock 9
@@ -1120,7 +1120,7 @@ writes to the same file from happening at the same time.
 Test if the vnode
 .Fa vp
 is locked.
-A non-zero values is returned if the vnode is not locked, otherwise
+A non-zero value is returned if the vnode is not locked, otherwise
 zero is returned.
 .It Fn VOP_BMAP "vp" "bn" "vpp" "bnp" "runp"
 Convert the logical block number
