@@ -1,4 +1,4 @@
-/* $NetBSD: sched.h,v 1.30.2.18 2007/04/30 16:38:37 rmind Exp $ */
+/* $NetBSD: sched.h,v 1.30.2.19 2007/05/13 17:02:58 ad Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2007 The NetBSD Foundation, Inc.
@@ -117,19 +117,24 @@ struct sched_param {
 #include <sys/time.h>
 
 /*
- * Per-CPU scheduler state.
+ * Per-CPU scheduler state.  Field markings and the corresponding locks: 
+ *
+ * s:	splsched, may only be safely accessed by the CPU itself
+ * m:	spc_mutex
+ * (:	unlocked, stable
  */
 struct schedstate_percpu {
-	void *spc_sched_info;	/* Scheduler-specific structure */
-	kmutex_t *spc_mutex;	/* Mutex for locking the runqueue */
-	struct timeval spc_runtime;	/* time curproc started running */
-	volatile int spc_flags;	/* flags; see below */
-	u_int spc_schedticks;		/* ticks for schedclock() */
-	uint64_t spc_cp_time[CPUSTATES]; /* CPU state statistics */
-	pri_t spc_curpriority;		/* usrpri of curproc */
-	int spc_ticks;		        /* ticks until sched_tick() */
-	int spc_pscnt;			/* prof/stat counter */
-	int spc_psdiv;			/* prof/stat divisor */
+	void		*spc_sched_info;/* (: scheduler-specific structure */
+	kmutex_t	*spc_mutex;	/* (: lock on below, runnable LWPs */
+	kmutex_t	spc_lwplock;	/* (: general purpose lock for LWPs */
+	struct timeval	spc_runtime;	/* s: time curlwp started running */
+	volatile int	spc_flags;	/* s: flags; see below */
+	u_int		spc_schedticks;	/* s: ticks for schedclock() */
+	uint64_t	spc_cp_time[CPUSTATES];/* s: CPU state statistics */
+	pri_t		spc_curpriority;/* m: usrpri of curlwp */
+	int		spc_ticks;	/* s: ticks until sched_tick() */
+	int		spc_pscnt;	/* s: prof/stat counter */
+	int		spc_psdiv;	/* s: prof/stat divisor */
 };
 
 /* spc_flags */

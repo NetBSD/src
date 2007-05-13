@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.177.2.28 2007/04/21 15:50:17 ad Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.177.2.29 2007/05/13 17:02:58 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.177.2.28 2007/04/21 15:50:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.177.2.29 2007/05/13 17:02:58 ad Exp $");
 
 #include "opt_kstack.h"
 #include "opt_lockdebug.h"
@@ -283,10 +283,9 @@ yield(void)
 
 	KERNEL_UNLOCK_ALL(l, &l->l_biglocks);
 	lwp_lock(l);
-	if (l->l_stat == LSONPROC) {
-		KASSERT(lwp_locked(l, l->l_cpu->ci_schedstate.spc_mutex));
-		l->l_priority = l->l_usrpri;
-	}
+	KASSERT(lwp_locked(l, &l->l_cpu->ci_schedstate.spc_lwplock));
+	KASSERT(l->l_stat == LSONPROC);
+	l->l_priority = l->l_usrpri;
 	(void)mi_switch(l);
 	KERNEL_LOCK(l->l_biglocks, l);
 }
@@ -302,10 +301,9 @@ preempt(void)
 
 	KERNEL_UNLOCK_ALL(l, &l->l_biglocks);
 	lwp_lock(l);
-	if (l->l_stat == LSONPROC) {
-		KASSERT(lwp_locked(l, l->l_cpu->ci_schedstate.spc_mutex));
-		l->l_priority = l->l_usrpri;
-	}
+	KASSERT(lwp_locked(l, &l->l_cpu->ci_schedstate.spc_lwplock));
+	KASSERT(l->l_stat == LSONPROC);
+	l->l_priority = l->l_usrpri;
 	l->l_nivcsw++;
 	(void)mi_switch(l);
 	KERNEL_LOCK(l->l_biglocks, l);
@@ -348,7 +346,7 @@ updatertime(struct lwp *l, struct schedstate_percpu *spc)
 /*
  * The machine independent parts of context switch.
  *
- * Returns 1 if another process was actually run.
+ * Returns 1 if another LWP was actually run.
  */
 int
 mi_switch(struct lwp *l)
@@ -357,7 +355,8 @@ mi_switch(struct lwp *l)
 	struct lwp *newl;
 	int retval, oldspl;
 
-	LOCK_ASSERT(lwp_locked(l, NULL));
+	KASSERT(lwp_locked(l, NULL));
+	LOCKDEBUG_BARRIER(l->l_mutex, 1);
 
 #ifdef LOCKDEBUG
 	spinlock_switchcheck();
@@ -373,7 +372,6 @@ mi_switch(struct lwp *l)
 	 * updated by this CPU.
 	 */
 	KDASSERT(l->l_cpu == curcpu());
-	spc = &l->l_cpu->ci_schedstate;
 
 	/* Count time spent in current system call */
 	SYSCALL_TIME_SLEEP(l);
@@ -386,33 +384,27 @@ mi_switch(struct lwp *l)
 		pmc_save_context(l->l_proc);
 	}
 #endif
-
-	/*
-	 * If on the CPU and we have gotten this far, then we must yield.
-	 */
-	KASSERT(l->l_stat != LSRUN);
-	if (l->l_stat == LSONPROC) {
-		KASSERT(lwp_locked(l, l->l_cpu->ci_schedstate.spc_mutex));
-		if ((l->l_flag & LW_IDLE) == 0) {
-			l->l_stat = LSRUN;
-			sched_enqueue(l, true);
-		} else
-			l->l_stat = LSIDL;
-	}
-
 	/*
 	 * Process is about to yield the CPU; clear the appropriate
 	 * scheduling flags.
 	 */
+	spc = &l->l_cpu->ci_schedstate;
 	spc->spc_flags &= ~SPCF_SWITCHCLEAR;
-
-	LOCKDEBUG_BARRIER(l->l_mutex, 1);
+	updatertime(l, spc);
 
 	/*
-	 * Acquire the spc_mutex if necessary.
+	 * If on the CPU and we have gotten this far, then we must yield.
 	 */
-	if (l->l_mutex != spc->spc_mutex) {
-		mutex_spin_enter(spc->spc_mutex);
+	mutex_spin_enter(spc->spc_mutex);
+	KASSERT(l->l_stat != LSRUN);
+	if (l->l_stat == LSONPROC) {
+		KASSERT(lwp_locked(l, &spc->spc_lwplock));
+		if ((l->l_flag & LW_IDLE) == 0) {
+			l->l_stat = LSRUN;
+			lwp_setlock(l, spc->spc_mutex);
+			sched_enqueue(l, true);
+		} else
+			l->l_stat = LSIDL;
 	}
 
 	/*
@@ -422,23 +414,35 @@ mi_switch(struct lwp *l)
 	newl = sched_nextlwp();
 	if (newl) {
 		sched_dequeue(newl);
+		KASSERT(lwp_locked(newl, spc->spc_mutex));
+		newl->l_stat = LSONPROC;
+		newl->l_cpu = l->l_cpu;
+		newl->l_flag |= LW_RUNNING;
+		lwp_setlock(newl, &spc->spc_lwplock);
 	} else {
 		newl = l->l_cpu->ci_data.cpu_idlelwp;
-		KASSERT(newl != NULL);
+		newl->l_stat = LSONPROC;
+		newl->l_flag |= LW_RUNNING;
 	}
-	KASSERT(lwp_locked(newl, spc->spc_mutex));
-	newl->l_stat = LSONPROC;
-	newl->l_cpu = l->l_cpu;
-	newl->l_flag |= LW_RUNNING;
+	spc->spc_curpriority = newl->l_usrpri;
 	cpu_did_resched();
 
-	if (l->l_mutex != spc->spc_mutex) {
-		mutex_spin_exit(spc->spc_mutex);
-	}
-
-	updatertime(l, spc);
 	if (l != newl) {
 		struct lwp *prevlwp;
+
+		/*
+		 * If the old LWP has been moved to a run queue above,
+		 * drop the general purpose LWP lock: it's now locked
+		 * by the scheduler lock.
+		 *
+		 * Otherwise, drop the scheduler lock.  We're done with
+		 * the run queues for now.
+		 */
+		if (l->l_mutex == spc->spc_mutex) {
+			mutex_spin_exit(&spc->spc_lwplock);
+		} else {
+			mutex_spin_exit(spc->spc_mutex);
+		}
 
 		/* Unlocked, but for statistics only. */
 		uvmexp.swtch++;
@@ -469,6 +473,7 @@ mi_switch(struct lwp *l)
 		retval = 1;
 	} else {
 		/* Nothing to do - just unlock and return. */
+		mutex_spin_exit(spc->spc_mutex);
 		lwp_unlock(l);
 		retval = 0;
 	}
@@ -551,7 +556,7 @@ setrunnable(struct lwp *l)
 		return;
 	}
 
-	LOCK_ASSERT(lwp_locked(l, l->l_cpu->ci_schedstate.spc_mutex));
+	KASSERT(lwp_locked(l, &l->l_cpu->ci_schedstate.spc_lwplock));
 
 	/*
 	 * If the LWP is still on the CPU, mark it as LSONPROC.  It may be
@@ -568,6 +573,8 @@ setrunnable(struct lwp *l)
 	 * Set the LWP runnable.  If it's swapped out, we need to wake the swapper
 	 * to bring it back in.  Otherwise, enter it into a run queue.
 	 */
+	spc_lock(l->l_cpu);
+	lwp_unlock_to(l, l->l_cpu->ci_schedstate.spc_mutex);
 	sched_setrunnable(l);
 	l->l_stat = LSRUN;
 	l->l_slptime = 0;
@@ -737,7 +744,7 @@ static void
 sched_changepri(struct lwp *l, pri_t pri)
 {
 
-	LOCK_ASSERT(lwp_locked(l, l->l_cpu->ci_schedstate.spc_mutex));
+	KASSERT(lwp_locked(l, NULL));
 
 	l->l_usrpri = pri;
 	if (l->l_priority < PUSER)
@@ -747,6 +754,8 @@ sched_changepri(struct lwp *l, pri_t pri)
 		l->l_priority = pri;
 		return;
 	}
+
+	KASSERT(lwp_locked(l, l->l_cpu->ci_schedstate.spc_mutex));
 
 	sched_dequeue(l);
 	l->l_priority = pri;
@@ -758,12 +767,14 @@ static void
 sched_lendpri(struct lwp *l, pri_t pri)
 {
 
-	LOCK_ASSERT(lwp_locked(l, l->l_cpu->ci_schedstate.spc_mutex));
+	KASSERT(lwp_locked(l, NULL));
 
 	if (l->l_stat != LSRUN || (l->l_flag & LW_INMEM) == 0) {
 		l->l_inheritedprio = pri;
 		return;
 	}
+
+	KASSERT(lwp_locked(l, l->l_cpu->ci_schedstate.spc_mutex));
 
 	sched_dequeue(l);
 	l->l_inheritedprio = pri;
