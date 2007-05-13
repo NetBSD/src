@@ -1,4 +1,4 @@
-/*	$NetBSD: timevar.h,v 1.9 2007/05/13 10:34:25 dsl Exp $	*/
+/*	$NetBSD: timevar.h,v 1.10 2007/05/13 10:58:50 dsl Exp $	*/
 
 /*
  *  Copyright (c) 2005 The NetBSD Foundation.
@@ -206,6 +206,9 @@ extern volatile struct timeval time;
 #define	time_second	time.tv_sec
 #define	time_uptime	mono_time.tv_sec
 #define tc_getfrequency() hz
+#define nanouptime(ats) do { int _s = splclock(); \
+	TIMEVAL_TO_TIMESPEC(&mono_time, ats); \
+	splx(_s); } while (0)
 #endif /* !__HAVE_TIMECOUNTER */
 
 #endif /* !_SYS_TIMEVAR_H_ */
