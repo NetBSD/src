@@ -1,4 +1,4 @@
-/*	$NetBSD: sched_4bsd.c,v 1.1.2.30 2007/05/07 11:03:58 yamt Exp $	*/
+/*	$NetBSD: sched_4bsd.c,v 1.1.2.31 2007/05/13 17:02:59 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.1.2.30 2007/05/07 11:03:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.1.2.31 2007/05/13 17:02:59 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -404,7 +404,7 @@ runqueue_enqueue(runqueue_t *rq, struct lwp *l)
 	subqueue_t *sq;
 	const int whichq = lwp_eprio(l) / PPQ;
 
-	LOCK_ASSERT(lwp_locked(l, l->l_cpu->ci_schedstate.spc_mutex));
+	KASSERT(lwp_locked(l, l->l_cpu->ci_schedstate.spc_mutex));
 
 	runqueue_check(rq, whichq, NULL);
 	rq->rq_bitmap |= RQMASK(whichq);
@@ -419,7 +419,7 @@ runqueue_dequeue(runqueue_t *rq, struct lwp *l)
 	subqueue_t *sq;
 	const int whichq = lwp_eprio(l) / PPQ;
 
-	LOCK_ASSERT(lwp_locked(l, l->l_cpu->ci_schedstate.spc_mutex));
+	KASSERT(lwp_locked(l, l->l_cpu->ci_schedstate.spc_mutex));
 
 	runqueue_check(rq, whichq, l);
 	KASSERT((rq->rq_bitmap & RQMASK(whichq)) != 0);
@@ -482,7 +482,7 @@ sched_rqinit()
 	runqueue_init(&global_queue);
 	mutex_init(&sched_mutex, MUTEX_SPIN, IPL_SCHED);
 	/* Initialize the lock pointer for lwp0 */
-	lwp0.l_mutex = &sched_mutex;
+	lwp0.l_mutex = &curcpu()->ci_schedstate.spc_lwplock;
 }
 
 void

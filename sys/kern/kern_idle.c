@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_idle.c,v 1.1.2.8 2007/04/21 18:11:41 mrg Exp $	*/
+/*	$NetBSD: kern_idle.c,v 1.1.2.9 2007/05/13 17:02:58 ad Exp $	*/
 
 /*-
  * Copyright (c)2002, 2006, 2007 YAMAMOTO Takashi,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: kern_idle.c,v 1.1.2.8 2007/04/21 18:11:41 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_idle.c,v 1.1.2.9 2007/05/13 17:02:58 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -75,7 +75,7 @@ idle_loop(void *dummy)
 			}
 		}
 schedule:
-		KASSERT(l->l_mutex == l->l_cpu->ci_schedstate.spc_mutex);
+		KASSERT(l->l_mutex == &l->l_cpu->ci_schedstate.spc_lwplock);
 		lwp_lock(l);
 		mi_switch(l);
 		KASSERT(curlwp == l);
@@ -106,6 +106,7 @@ create_idle_lwp(struct cpu_info *ci)
 	PHOLD(l);
 	l->l_flag |= (LW_IDLE | LW_BOUND);
 	l->l_cpu = ci;
+	l->l_mutex = &ci->ci_schedstate.spc_lwplock;
 	ci->ci_data.cpu_idlelwp = l;
 	name = kmem_alloc(MAXCOMLEN, KM_NOSLEEP);
 	if (name != NULL) {

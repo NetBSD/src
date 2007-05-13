@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sleepq.c,v 1.4.2.14 2007/04/21 15:50:16 ad Exp $	*/
+/*	$NetBSD: kern_sleepq.c,v 1.4.2.15 2007/05/13 17:02:58 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.4.2.14 2007/04/21 15:50:16 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.4.2.15 2007/05/13 17:02:58 ad Exp $");
 
 #include "opt_ktrace.h"
 
@@ -109,6 +109,7 @@ sleepq_init(sleepq_t *sq, kmutex_t *mtx)
 int
 sleepq_remove(sleepq_t *sq, lwp_t *l)
 {
+	struct schedstate_percpu *spc;
 	struct cpu_info *ci;
 
 	KASSERT(lwp_locked(l, sq->sq_mutex));
@@ -130,6 +131,7 @@ sleepq_remove(sleepq_t *sq, lwp_t *l)
 	l->l_flag &= ~LW_SINTR;
 
 	ci = l->l_cpu;
+	spc = &ci->ci_schedstate;
 
 	/*
 	 * If not sleeping, the LWP must have been suspended.  Let whoever
@@ -137,7 +139,7 @@ sleepq_remove(sleepq_t *sq, lwp_t *l)
 	 */
 	if (l->l_stat != LSSLEEP) {
 	 	KASSERT(l->l_stat == LSSTOP || l->l_stat == LSSUSPENDED);
-		lwp_setlock(l, ci->ci_schedstate.spc_mutex);
+		lwp_setlock(l, &spc->spc_lwplock);
 		return 0;
 	}
 
@@ -148,7 +150,7 @@ sleepq_remove(sleepq_t *sq, lwp_t *l)
 	if ((l->l_flag & LW_RUNNING) != 0) {
 		l->l_stat = LSONPROC;
 		l->l_slptime = 0;
-		lwp_setlock(l, ci->ci_schedstate.spc_mutex);
+		lwp_setlock(l, &spc->spc_lwplock);
 		return 0;
 	}
 
@@ -157,18 +159,17 @@ sleepq_remove(sleepq_t *sq, lwp_t *l)
 	 * this LWP to pick it up again.
 	 */
 	spc_lock(ci);
-	lwp_setlock(l, ci->ci_schedstate.spc_mutex);
+	lwp_setlock(l, spc->spc_mutex);
 	sched_setrunnable(l);
 	l->l_stat = LSRUN;
 	l->l_slptime = 0;
 	if ((l->l_flag & LW_INMEM) != 0) {
 		sched_enqueue(l, false);
-		if (lwp_eprio(l) < ci->ci_schedstate.spc_curpriority)
+		if (lwp_eprio(l) < spc->spc_curpriority)
 			cpu_need_resched(ci, 0);
 		spc_unlock(ci);
 		return 0;
 	}
-
 	spc_unlock(ci);
 	return 1;
 }
@@ -270,7 +271,6 @@ sleepq_block(int timo, bool catch)
 		callout_reset(&l->l_tsleep_ch, timo, sleepq_timeout, l);
 
 	mi_switch(l);
-	l->l_cpu->ci_schedstate.spc_curpriority = l->l_usrpri;
 
 	/*
 	 * When we reach this point, the LWP and sleep queue are unlocked.
