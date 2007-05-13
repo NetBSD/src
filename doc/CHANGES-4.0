@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.153 2007/05/13 07:48:49 pavel Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.154 2007/05/13 08:03:43 pavel Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -3471,4 +3471,16 @@ doc/CHANGES					patched by hand
 	overhaul the coda kernel module (vnode locking rules, uvm_fault
 	handling, general cleanup) 
 	[gdt, ticket #643]
+
+sys/uvm/uvm_readahead.c				1.4
+
+	Add temporary workaround for PR kern/36019 (panic on sun2 and sun3).
+	[tsutsui, ticket #641]
+
+distrib/sun2/miniroot/Makefile			1.22
+distrib/sun2/miniroot/list			1.5
+
+	Use crunched binary on sun2 miniroot so that miniroot is
+	now much smaller (18MB -> 4MB).
+	[tsutsui, ticket #642]
 
