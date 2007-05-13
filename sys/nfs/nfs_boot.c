@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_boot.c,v 1.63 2006/03/01 12:38:32 yamt Exp $	*/
+/*	$NetBSD: nfs_boot.c,v 1.63.18.1 2007/05/13 10:30:31 jdc Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -42,9 +42,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_boot.c,v 1.63 2006/03/01 12:38:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_boot.c,v 1.63.18.1 2007/05/13 10:30:31 jdc Exp $");
 
 #include "opt_nfs.h"
+#include "opt_tftproot.h"
 #include "opt_nfs_boot.h"
 
 #include <sys/param.h>
@@ -112,7 +113,7 @@ nfs_boot_init(nd, lwp)
 	struct lwp *lwp;
 {
 	struct ifnet *ifp;
-	int error;
+	int error = 0;
 
 	/*
 	 * Find the network interface.
@@ -158,6 +159,10 @@ nfs_boot_init(nd, lwp)
 	if (nd->nd_gwip.s_addr)
 		nfs_boot_defrt(&nd->nd_gwip);
 
+#ifdef TFTPROOT
+	if (nd->nd_nomount)
+		goto out;
+#endif
 	/*
 	 * Now fetch the NFS file handles as appropriate.
 	 */
@@ -166,6 +171,9 @@ nfs_boot_init(nd, lwp)
 	if (error)
 		nfs_boot_cleanup(nd, lwp);
 
+#ifdef TFTPROOT
+out:
+#endif
 	return (error);
 }
 
