@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.151 2007/04/24 22:46:03 perseant Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.152 2007/05/13 13:11:53 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.151 2007/04/24 22:46:03 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.152 2007/05/13 13:11:53 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -463,13 +463,13 @@ startover:
 	origvsize = vp->v_size;
 	origoffset = ap->a_offset;
 	orignpages = *ap->a_count;
-	GOP_SIZE(vp, vp->v_size, &diskeof, 0);
+	GOP_SIZE(vp, origvsize, &diskeof, 0);
 	if (flags & PGO_PASTEOF) {
-		newsize = MAX(vp->v_size,
+		newsize = MAX(origvsize,
 		    origoffset + (orignpages << PAGE_SHIFT));
 		GOP_SIZE(vp, newsize, &memeof, GOP_SIZE_MEM);
 	} else {
-		GOP_SIZE(vp, vp->v_size, &memeof, GOP_SIZE_MEM);
+		GOP_SIZE(vp, origvsize, &memeof, GOP_SIZE_MEM);
 	}
 	KASSERT(ap->a_centeridx >= 0 || ap->a_centeridx <= orignpages);
 	KASSERT((origoffset & (PAGE_SIZE - 1)) == 0 && origoffset >= 0);
