@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcbind.c,v 1.10 2007/05/13 13:38:29 christos Exp $	*/
+/*	$NetBSD: rpcbind.c,v 1.11 2007/05/13 20:03:47 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -92,21 +92,21 @@ static int warmstart = 0;	/* Grab a old copy of registrations */
 
 #ifdef PORTMAP
 struct pmaplist *list_pml;	/* A list of version 2 rpcbind services */
-char *udptrans;		/* Name of UDP transport */
-char *tcptrans;		/* Name of TCP transport */
-char *udp_uaddr;	/* Universal UDP address */
-char *tcp_uaddr;	/* Universal TCP address */
+const char *udptrans;		/* Name of UDP transport */
+const char *tcptrans;		/* Name of TCP transport */
+const char *udp_uaddr;		/* Universal UDP address */
+const char *tcp_uaddr;		/* Universal TCP address */
 #endif
 static const char servname[] = "sunrpc";
-static const char superuser[] = "superuser";
 
-int main __P((int, char *[]));
+const char superuser[] = "superuser";
+const char unknown[] = "unknown";
 
-static int init_transport __P((struct netconfig *));
-static void rbllist_add __P((rpcprog_t, rpcvers_t, struct netconfig *,
-			     struct netbuf *));
-static void terminate __P((int));
-static void parseargs __P((int, char *[]));
+static int init_transport(struct netconfig *);
+static void rbllist_add(rpcprog_t, rpcvers_t, struct netconfig *,
+    struct netbuf *);
+static void terminate(int);
+static void parseargs(int, char *[]);
 
 int
 main(int argc, char *argv[])
@@ -126,26 +126,19 @@ main(int argc, char *argv[])
 			rl.rlim_cur = 128;
 		setrlimit(RLIMIT_NOFILE, &rl);
 	}
-	openlog("rpcbind", 0, LOG_DAEMON);
-	if (geteuid()) { /* This command allowed only to root */
-		fprintf(stderr, "Sorry. You are not superuser\n");
-		exit(1);
-	}
+	if (geteuid()) /* This command allowed only to root */
+		errx(1, "Sorry. You are not superuser");
 	nc_handle = setnetconfig(); 	/* open netconfig file */
-	if (nc_handle == NULL) {
-		syslog(LOG_ERR, "could not read /etc/netconfig");
-		exit(1);
-	}
+	if (nc_handle == NULL)
+		errx(1, "could not read /etc/netconfig");
 #ifdef PORTMAP
 	udptrans = "";
 	tcptrans = "";
 #endif
 
 	nconf = getnetconfigent("local");
-	if (nconf == NULL) {
-		syslog(LOG_ERR, "%s: can't find local transport\n", argv[0]);
-		exit(1);
-	}
+	if (nconf == NULL)
+		errx(1, "can't find local transport");
 
 	rpc_control(RPC_SVC_CONNMAXREC_SET, &maxrec);
 
@@ -183,6 +176,8 @@ main(int argc, char *argv[])
 		if (daemon(0, 0))
 			err(1, "fork failed");
 	}
+
+	openlog("rpcbind", 0, LOG_DAEMON);
 	pidfile(NULL);
 
 	if (runasdaemon) {
@@ -231,17 +226,17 @@ init_transport(struct netconfig *nconf)
 	if ((nconf->nc_semantics != NC_TPI_CLTS) &&
 		(nconf->nc_semantics != NC_TPI_COTS) &&
 		(nconf->nc_semantics != NC_TPI_COTS_ORD))
-		return (1);	/* not my type */
+		return 1;	/* not my type */
 #ifdef ND_DEBUG
 	if (debugging) {
 		int i;
 		char **s;
 
-		(void) fprintf(stderr, "%s: %ld lookup routines :\n",
-			nconf->nc_netid, nconf->nc_nlookups);
+		(void)fprintf(stderr, "%s: %ld lookup routines :\n",
+		    nconf->nc_netid, nconf->nc_nlookups);
 		for (i = 0, s = nconf->nc_lookups; i < nconf->nc_nlookups;
 		     i++, s++)
-			fprintf(stderr, "[%d] - %s\n", i, *s);
+			(void)fprintf(stderr, "[%d] - %s\n", i, *s);
 	}
 #endif
 
@@ -249,18 +244,13 @@ init_transport(struct netconfig *nconf)
 	 * XXX - using RPC library internal functions.
 	 */
 	if ((fd = __rpc_nconf2fd(nconf)) < 0) {
-		int non_fatal;
-
-		non_fatal = (errno == EAFNOSUPPORT || errno == EPROTONOSUPPORT);
-		syslog(non_fatal?LOG_DEBUG:LOG_ERR,
-		    "cannot create socket for %s", nconf->nc_netid);
-		return (1);
+		warn("Cannot create socket for `%s' (%m)", nconf->nc_netid);
+		return 1;
 	}
 
 	if (!__rpc_nconf2sockinfo(nconf, &si)) {
-		syslog(LOG_ERR, "cannot get information for %s",
-		    nconf->nc_netid);
-		return (1);
+		warnx("Cannot get information for `%s'", nconf->nc_netid);
+		return 1;
 	}
 
 	if (si.si_af == AF_INET6) {
@@ -270,30 +260,31 @@ init_transport(struct netconfig *nconf)
 		 */
 		if (setsockopt(fd, IPPROTO_IPV6, IPV6_V6ONLY, &one,
 		    sizeof one) < 0) {
-			syslog(LOG_ERR, "can't make socket ipv6 only");
-			return (1);
+			warn("Can't make socket ipv6 only");
+			return 1;
 		}
 	}
 
 
 	if (!strcmp(nconf->nc_netid, "local")) {
-		memset(&sun, 0, sizeof sun);
+		(void)memset(&sun, 0, sizeof sun);
 		sun.sun_family = AF_LOCAL;
-		unlink(_PATH_RPCBINDSOCK);
-		strlcpy(sun.sun_path, _PATH_RPCBINDSOCK, sizeof(sun.sun_path));
+		(void)unlink(_PATH_RPCBINDSOCK);
+		(void)strlcpy(sun.sun_path, _PATH_RPCBINDSOCK,
+		    sizeof(sun.sun_path));
 		sun.sun_len = SUN_LEN(&sun);
-		addrlen = sizeof (struct sockaddr_un);
+		addrlen = sizeof(struct sockaddr_un);
 		sa = (struct sockaddr *)&sun;
 	} else {
 		/* Get rpcbind's address on this transport */
 
-		memset(&hints, 0, sizeof hints);
+		(void)memset(&hints, 0, sizeof hints);
 		hints.ai_flags = AI_PASSIVE;
 		hints.ai_family = si.si_af;
 		hints.ai_socktype = si.si_socktype;
 		hints.ai_protocol = si.si_proto;
 		if ((aicode = getaddrinfo(NULL, servname, &hints, &res)) != 0) {
-			syslog(LOG_ERR, "cannot get local address for %s: %s",
+			warnx("Cannot get local address for `%s' (%s)",
 			    nconf->nc_netid, gai_strerror(aicode));
 			return 1;
 		}
@@ -302,7 +293,7 @@ init_transport(struct netconfig *nconf)
 	}
 
 	if (bind(fd, sa, addrlen) < 0) {
-		syslog(LOG_ERR, "cannot bind %s: %m", nconf->nc_netid);
+		warn("Cannot bind `%s'", nconf->nc_netid);
 		if (res != NULL)
 			freeaddrinfo(res);
 		return 1;
@@ -312,13 +303,13 @@ init_transport(struct netconfig *nconf)
 	taddr.addr.len = taddr.addr.maxlen = addrlen;
 	taddr.addr.buf = malloc(addrlen);
 	if (taddr.addr.buf == NULL) {
-		syslog(LOG_ERR, "cannot allocate memory for %s address",
+		warn("Cannot allocate memory for `%s' address",
 		    nconf->nc_netid);
 		if (res != NULL)
 			freeaddrinfo(res);
 		return 1;
 	}
-	memcpy(taddr.addr.buf, sa, addrlen);
+	(void)memcpy(taddr.addr.buf, sa, addrlen);
 #ifdef ND_DEBUG
 	if (debugging) {
 		/* for debugging print out our universal address */
@@ -328,8 +319,8 @@ init_transport(struct netconfig *nconf)
 		nb.buf = sa;
 		nb.len = nb.maxlen = sa->sa_len;
 		uaddr = taddr2uaddr(nconf, &nb);
-		(void) fprintf(stderr, "rpcbind : my address is %s\n", uaddr);
-		(void) free(uaddr);
+		(void)fprintf(stderr, "rpcbind: my address is %s\n", uaddr);
+		(void)free(uaddr);
 	}
 #endif
 
@@ -342,8 +333,7 @@ init_transport(struct netconfig *nconf)
 	my_xprt = (SVCXPRT *)svc_tli_create(fd, nconf, &taddr, RPC_MAXDATASIZE,
 	    RPC_MAXDATASIZE);
 	if (my_xprt == (SVCXPRT *)NULL) {
-		syslog(LOG_ERR, "%s: could not create service",
-				nconf->nc_netid);
+		warnx("Could not create service for `%s'", nconf->nc_netid);
 		goto error;
 	}
 
@@ -359,26 +349,30 @@ init_transport(struct netconfig *nconf)
 
 		if (!svc_register(my_xprt, PMAPPROG, PMAPVERS,
 			pmap_service, 0)) {
-			syslog(LOG_ERR, "could not register on %s",
-					nconf->nc_netid);
+			warn("Could not register on `%s'", nconf->nc_netid);
 			goto error;
 		}
 		pml = malloc(sizeof (struct pmaplist));
 		if (pml == NULL) {
-			syslog(LOG_ERR, "no memory!");
-			exit(1);
+			warn("Cannot allocate memory");
+			goto error;
 		}
 		pml->pml_map.pm_prog = PMAPPROG;
 		pml->pml_map.pm_vers = PMAPVERS;
 		pml->pml_map.pm_port = PMAPPORT;
 		if (strcmp(nconf->nc_proto, NC_TCP) == 0) {
 			if (tcptrans[0]) {
-				syslog(LOG_ERR,
-				"cannot have more than one TCP transport");
+				warnx(
+				    "Cannot have more than one TCP transport");
 				free(pml);
 				goto error;
 			}
 			tcptrans = strdup(nconf->nc_netid);
+			if (tcptrans == NULL) {
+				free(pml);
+				warn("Cannot allocate memory");
+				goto error;
+			}
 			pml->pml_map.pm_prot = IPPROTO_TCP;
 
 			/* Let's snarf the universal address */
@@ -386,11 +380,17 @@ init_transport(struct netconfig *nconf)
 			tcp_uaddr = taddr2uaddr(nconf, &taddr.addr);
 		} else if (strcmp(nconf->nc_proto, NC_UDP) == 0) {
 			if (udptrans[0]) {
-				syslog(LOG_ERR,
-				"cannot have more than one UDP transport");
+				free(pml);
+				warnx(
+				"Cannot have more than one UDP transport");
 				goto error;
 			}
 			udptrans = strdup(nconf->nc_netid);
+			if (udptrans == NULL) {
+				free(pml);
+				warn("Cannot allocate memory");
+				goto error;
+			}
 			pml->pml_map.pm_prot = IPPROTO_UDP;
 
 			/* Let's snarf the universal address */
@@ -403,8 +403,8 @@ init_transport(struct netconfig *nconf)
 		/* Add version 3 information */
 		pml = malloc(sizeof (struct pmaplist));
 		if (pml == NULL) {
-			syslog(LOG_ERR, "no memory!");
-			exit(1);
+			warn("Cannot allocate memory");
+			goto error;
 		}
 		pml->pml_map = list_pml->pml_map;
 		pml->pml_map.pm_vers = RPCBVERS;
@@ -414,8 +414,8 @@ init_transport(struct netconfig *nconf)
 		/* Add version 4 information */
 		pml = malloc(sizeof (struct pmaplist));
 		if (pml == NULL) {
-			syslog(LOG_ERR, "no memory!");
-			exit(1);
+			warn("Cannot allocate memory");
+			goto error;
 		}
 		pml->pml_map = list_pml->pml_map;
 		pml->pml_map.pm_vers = RPCBVERS4;
@@ -429,16 +429,14 @@ init_transport(struct netconfig *nconf)
 
 	/* version 3 registration */
 	if (!svc_reg(my_xprt, RPCBPROG, RPCBVERS, rpcb_service_3, NULL)) {
-		syslog(LOG_ERR, "could not register %s version 3",
-				nconf->nc_netid);
+		warn("Could not register %s version 3", nconf->nc_netid);
 		goto error;
 	}
 	rbllist_add(RPCBPROG, RPCBVERS, nconf, &taddr.addr);
 
 	/* version 4 registration */
 	if (!svc_reg(my_xprt, RPCBPROG, RPCBVERS4, rpcb_service_4, NULL)) {
-		syslog(LOG_ERR, "could not register %s version 4",
-				nconf->nc_netid);
+		warn("Could not register %s version 4", nconf->nc_netid);
 		goto error;
 	}
 	rbllist_add(RPCBPROG, RPCBVERS4, nconf, &taddr.addr);
@@ -480,7 +478,7 @@ init_transport(struct netconfig *nconf)
 	}
 	return (0);
 error:
-	close(fd);
+	(void)close(fd);
 	return (1);
 }
 
@@ -492,8 +490,8 @@ rbllist_add(rpcprog_t prog, rpcvers_t vers, struct netconfig *nconf,
 
 	rbl = malloc(sizeof(rpcblist));
 	if (rbl == NULL) {
-		syslog(LOG_ERR, "no memory!");
-		exit(1);
+		warn("Out of memory");
+		return;
 	}
 
 	rbl->rpcb_map.r_prog = prog;
