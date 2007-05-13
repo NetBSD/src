@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.15 2006/09/20 09:54:55 manu Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.15.2.1 2007/05/13 22:19:56 pavel Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.15 2006/09/20 09:54:55 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.15.2.1 2007/05/13 22:19:56 pavel Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -45,6 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.15 2006/09/20 09:54:55 manu Exp 
 #include <sys/user.h>
 #include <sys/wait.h>
 #include <sys/ucontext.h>
+#include <sys/conf.h>
 
 #include <machine/reg.h>
 #include <machine/pcb.h>
@@ -52,6 +53,18 @@ __KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.15 2006/09/20 09:54:55 manu Exp 
 #include <machine/mcontext.h>
 #include <machine/specialreg.h>
 #include <machine/vmparam.h>
+
+/* 
+ * To see whether wscons is configured (for virtual console ioctl calls).
+ */
+#if defined(_KERNEL_OPT)
+#include "wsdisplay.h"
+#endif
+#if (NWSDISPLAY > 0)
+#include <dev/wscons/wsconsio.h>
+#include <dev/wscons/wsdisplay_usl_io.h>
+#endif
+
 
 #include <compat/linux/common/linux_signal.h>
 #include <compat/linux/common/linux_errno.h>
@@ -339,6 +352,23 @@ linux_fakedev(dev, raw)
         dev_t dev;
 	int raw;
 {
+
+       extern const struct cdevsw ptc_cdevsw, pts_cdevsw;
+       const struct cdevsw *cd = cdevsw_lookup(dev);
+
+       if (raw) {
+#if (NWSDISPLAY > 0)
+	       extern const struct cdevsw wsdisplay_cdevsw;
+	       if (cd == &wsdisplay_cdevsw)
+		       return makedev(LINUX_CONS_MAJOR, (minor(dev) + 1));
+#endif
+       }
+
+       if (cd == &ptc_cdevsw)
+	       return makedev(LINUX_PTC_MAJOR, minor(dev));
+       if (cd == &pts_cdevsw)
+	       return makedev(LINUX_PTS_MAJOR, minor(dev));
+
 	return ((minor(dev) & 0xff) | ((major(dev) & 0xfff) << 8)
 	    | (((unsigned long long int) (minor(dev) & ~0xff)) << 12)
 	    | (((unsigned long long int) (major(dev) & ~0xfff)) << 32));
