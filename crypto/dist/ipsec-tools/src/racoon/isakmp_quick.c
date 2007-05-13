@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_quick.c,v 1.10 2006/10/03 08:02:51 vanhu Exp $	*/
+/*	$NetBSD: isakmp_quick.c,v 1.10.2.1 2007/05/13 10:14:05 jdc Exp $	*/
 
 /* Id: isakmp_quick.c,v 1.29 2006/08/22 18:17:17 manubsd Exp */
 
@@ -73,6 +73,7 @@
 #include "localconf.h"
 #include "remoteconf.h"
 #include "handler.h"
+#include "policy.h"
 #include "proposal.h"
 #include "isakmp_var.h"
 #include "isakmp.h"
@@ -2088,6 +2089,19 @@ get_proposal_r(iph2)
 	if (spidx.ul_proto == 0)
 		spidx.ul_proto = IPSEC_ULPROTO_ANY;
 
+#ifdef HAVE_SECCTX
+	/*
+	 * Need to use security context in spidx to ensure the correct
+	 * policy is selected. The only way to get the security context
+	 * is to look into the proposal sent by peer ahead of time.
+	 */
+	if (get_security_context(iph2->sa, &spidx)) {
+		plog(LLV_ERROR, LOCATION, NULL,
+		     "error occurred trying to get security context.\n");
+		return ISAKMP_INTERNAL_ERROR;
+	}
+#endif /* HAVE_SECCTX */
+
 	/* get inbound policy */
 	sp_in = getsp_r(&spidx);
 	if (sp_in == NULL) {
@@ -2165,6 +2179,12 @@ get_proposal_r(iph2)
 			"failed to create saprop.\n");
 		return ISAKMP_INTERNAL_ERROR;
 	}
+
+#ifdef HAVE_SECCTX
+	if (spidx.sec_ctx.ctx_str) {
+		set_secctx_in_proposal(iph2, spidx);
+	}
+#endif /* HAVE_SECCTX */
 
 	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_doi.c,v 1.22 2006/10/19 09:35:44 vanhu Exp $	*/
+/*	$NetBSD: ipsec_doi.c,v 1.22.2.1 2007/05/13 10:14:04 jdc Exp $	*/
 
 /* Id: ipsec_doi.c,v 1.55 2006/08/17 09:20:41 vanhu Exp */
 
@@ -2439,6 +2439,16 @@ ahmismatch:
 			}
 			break;
 
+#ifdef HAVE_SECCTX
+		case IPSECDOI_ATTR_SECCTX:
+			if (flag) {
+				plog(LLV_ERROR, LOCATION, NULL,
+					"SECCTX must be in TLV.\n");
+				return -1;
+			}
+		break;
+#endif
+
 		case IPSECDOI_ATTR_KEY_ROUNDS:
 		case IPSECDOI_ATTR_COMP_DICT_SIZE:
 		case IPSECDOI_ATTR_COMP_PRIVALG:
@@ -2942,6 +2952,9 @@ setph2proposal0(iph2, pp, pr)
 	caddr_t x0, x;
 	u_int8_t *np_t; /* pointer next trns type in previous header */
 	const u_int8_t *spi;
+#ifdef HAVE_SECCTX
+	int truectxlen = 0;
+#endif
 
 	p = vmalloc(sizeof(*prop) + sizeof(pr->spi));
 	if (p == NULL)
@@ -3044,6 +3057,17 @@ setph2proposal0(iph2, pp, pr)
 		if (alg_oakley_dhdef_ok(iph2->sainfo->pfs_group))
 			attrlen += sizeof(struct isakmp_data);
 
+#ifdef HAVE_SECCTX
+		/* ctx_str is defined as char ctx_str[MAX_CTXSTR_SIZ].
+		 * The string may be smaller than MAX_CTXSTR_SIZ.
+		 */
+		if (*pp->sctx.ctx_str) {
+			truectxlen = sizeof(struct security_ctx) -
+				     (MAX_CTXSTR_SIZE - pp->sctx.ctx_strlen);
+			attrlen += sizeof(struct isakmp_data) + truectxlen;
+		}
+#endif /* HAVE_SECCTX */
+
 		p = vrealloc(p, p->l + sizeof(*trns) + attrlen);
 		if (p == NULL)
 			return NULL;
@@ -3098,6 +3122,15 @@ setph2proposal0(iph2, pp, pr)
 			x = isakmp_set_attr_l(x, IPSECDOI_ATTR_GRP_DESC,
 				iph2->sainfo->pfs_group);
 
+#ifdef HAVE_SECCTX
+		if (*pp->sctx.ctx_str) {
+			struct security_ctx secctx;
+			secctx = pp->sctx;
+			secctx.ctx_strlen = htons(pp->sctx.ctx_strlen);
+			x = isakmp_set_attr_v(x, IPSECDOI_ATTR_SECCTX,
+					     (caddr_t)&secctx, truectxlen);
+		}
+#endif
 		/* update length of this transform. */
 		trns = (struct isakmp_pl_t *)(p->v + trnsoff);
 		trns->h.len = htons(sizeof(*trns) + attrlen);
@@ -3301,6 +3334,63 @@ doi2ipproto(proto)
 }
 
 /*
+ * Check if a subnet id is valid for comparison
+ * with an address id ( address length mask )
+ * and compare them
+ * Return value
+ * =  0 for match
+ * =  1 for mismatch
+ */
+
+int
+ipsecdoi_subnetisaddr_v4( subnet, address )
+	const vchar_t *subnet;
+	const vchar_t *address;
+{
+	struct in_addr *mask;
+
+	if (address->l != sizeof(struct in_addr))
+		return 1;
+
+	if (subnet->l != (sizeof(struct in_addr)*2))
+		return 1;
+
+	mask = (struct in_addr*)(subnet->v + sizeof(struct in_addr));
+
+	if (mask->s_addr!=0xffffffff)
+		return 1;
+
+	return memcmp(subnet->v,address->v,address->l);
+}
+
+#ifdef INET6
+
+int
+ipsecdoi_subnetisaddr_v6( subnet, address )
+	const vchar_t *subnet;
+	const vchar_t *address;
+{
+	struct in6_addr *mask;
+	int i;
+
+	if (address->l != sizeof(struct in6_addr))
+		return 1;
+
+	if (subnet->l != (sizeof(struct in6_addr)*2))
+		return 1;
+
+	mask = (struct in6_addr*)(subnet->v + sizeof(struct in6_addr));
+
+	for (i=0; i<16; i++)
+		if(mask->s6_addr[i]!=0xff)
+			return 1;
+
+	return memcmp(subnet->v,address->v,address->l);
+}
+
+#endif
+
+/*
  * Check and Compare two IDs
  * - specify 0 for exact if wildcards are allowed
  * Return value
@@ -3343,21 +3433,54 @@ ipsecdoi_chkcmpids( idt, ids, exact )
 
 	id_bt = (struct ipsecdoi_id_b *) idt->v;
 	id_bs = (struct ipsecdoi_id_b *) ids->v;
-	if (id_bs->type != id_bt->type)
-	{
-		plog(LLV_DEBUG, LOCATION, NULL,
-			"check and compare ids : id type mismatch %s != %s\n",
-			s_ipsecdoi_ident(id_bs->type),
-			s_ipsecdoi_ident(id_bt->type));
-		return 1;
-	}
-
-	/* compare the ID data. */
 
 	ident_t.v = idt->v + sizeof(*id_bt);
 	ident_t.l = idt->l - sizeof(*id_bt);
 	ident_s.v = ids->v + sizeof(*id_bs);
 	ident_s.l = ids->l - sizeof(*id_bs);
+
+	if (id_bs->type != id_bt->type)
+	{
+		/*
+		 * special exception for comparing
+                 * address to subnet id types when
+                 * the netmask is address length
+                 */
+
+		if ((id_bs->type == IPSECDOI_ID_IPV4_ADDR)&&
+		    (id_bt->type == IPSECDOI_ID_IPV4_ADDR_SUBNET)) {
+			result = ipsecdoi_subnetisaddr_v4(&ident_t,&ident_s);
+			goto cmpid_result;
+		}
+
+		if ((id_bs->type == IPSECDOI_ID_IPV4_ADDR_SUBNET)&&
+		    (id_bt->type == IPSECDOI_ID_IPV4_ADDR)) {
+			result = ipsecdoi_subnetisaddr_v4(&ident_s,&ident_t);
+			goto cmpid_result;
+		}
+
+#ifdef INET6
+		if ((id_bs->type == IPSECDOI_ID_IPV6_ADDR)&&
+		    (id_bt->type == IPSECDOI_ID_IPV6_ADDR_SUBNET)) {
+			result = ipsecdoi_subnetisaddr_v6(&ident_t,&ident_s);
+			goto cmpid_result;
+		}
+
+		if ((id_bs->type == IPSECDOI_ID_IPV6_ADDR_SUBNET)&&
+		    (id_bt->type == IPSECDOI_ID_IPV6_ADDR)) {
+			result = ipsecdoi_subnetisaddr_v6(&ident_s,&ident_t);
+			goto cmpid_result;
+		}
+#endif
+		plog(LLV_DEBUG, LOCATION, NULL,
+			"check and compare ids : id type mismatch %s != %s\n",
+			s_ipsecdoi_ident(id_bs->type),
+			s_ipsecdoi_ident(id_bt->type));
+
+		return 1;
+	}
+
+	/* compare the ID data. */
 
 	switch (id_bt->type) {
 	        case IPSECDOI_ID_DER_ASN1_DN:
@@ -3449,8 +3572,8 @@ cmpid_invalid:
 	/* id integrity error */
 	plog(LLV_DEBUG, LOCATION, NULL, "check and compare ids : %s integrity error\n",
 		s_ipsecdoi_ident(id_bs->type));
-	plog(LLV_DEBUG, LOCATION, NULL, "cmpid target: length = \'%i\'\n", ident_t.l );
-	plog(LLV_DEBUG, LOCATION, NULL, "cmpid source: length = \'%i\'\n", ident_s.l );
+	plog(LLV_DEBUG, LOCATION, NULL, "cmpid target: length = \'%zu\'\n", ident_t.l );
+	plog(LLV_DEBUG, LOCATION, NULL, "cmpid source: length = \'%zu\'\n", ident_s.l );
 
 	return -1;
 }
@@ -3988,7 +4111,7 @@ ipsecdoi_sockaddr2id(saddr, prefixlen, ul_proto)
 	switch (saddr->sa_family) {
 	case AF_INET:
 		len1 = sizeof(struct in_addr);
-		if (prefixlen == ~0) {
+		if (prefixlen == (sizeof(struct in_addr) << 3)) {
 			type = IPSECDOI_ID_IPV4_ADDR;
 			len2 = 0;
 		} else {
@@ -4001,7 +4124,7 @@ ipsecdoi_sockaddr2id(saddr, prefixlen, ul_proto)
 #ifdef INET6
 	case AF_INET6:
 		len1 = sizeof(struct in6_addr);
-		if (prefixlen == ~0) {
+		if (prefixlen == (sizeof(struct in6_addr) << 3)) {
 			type = IPSECDOI_ID_IPV6_ADDR;
 			len2 = 0;
 		} else {
@@ -4413,10 +4536,11 @@ ipsecdoi_id2str(id)
 	case IPSECDOI_ID_DER_ASN1_DN:
 	case IPSECDOI_ID_DER_ASN1_GN:
 	{
+		X509_NAME *xn = NULL;
+
 		dat = id->v + sizeof(*id_b);
 		len = id->l - sizeof(*id_b);
 
-		X509_NAME *xn = NULL;
 		if (d2i_X509_NAME(&xn, (void*) &dat, len) != NULL) {
 			BIO *bio = BIO_new(BIO_s_mem());
 			X509_NAME_print_ex(bio, xn, 0, 0);
@@ -4645,7 +4769,15 @@ ipsecdoi_t2satrns(t, pp, pr, tr)
 			}
 			tr->encklen = ntohs(d->lorv);
 			break;
-
+#ifdef HAVE_SECCTX
+		case IPSECDOI_ATTR_SECCTX:
+		{
+			int len = ntohs(d->lorv);
+			memcpy(&pp->sctx, d + 1, len);
+			pp->sctx.ctx_strlen = ntohs(pp->sctx.ctx_strlen);
+			break;
+		}
+#endif /* HAVE_SECCTX */
 		case IPSECDOI_ATTR_KEY_ROUNDS:
 		case IPSECDOI_ATTR_COMP_DICT_SIZE:
 		case IPSECDOI_ATTR_COMP_PRIVALG:
