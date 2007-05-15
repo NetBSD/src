@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.h,v 1.10 2007/04/27 10:17:20 jnemeth Exp $	*/
+/*	$NetBSD: ip_nat.h,v 1.11 2007/05/15 22:52:50 martin Exp $	*/
 
 /*
  * Copyright (C) 1995-2001, 2003 by Darren Reed.
@@ -6,7 +6,7 @@
  * See the IPFILTER.LICENCE file for details on licencing.
  *
  * @(#)ip_nat.h	1.5 2/4/96
- * Id: ip_nat.h,v 2.90.2.16 2006/12/19 01:59:45 darrenr Exp
+ * Id: ip_nat.h,v 2.90.2.17 2007/05/11 10:19:11 darrenr Exp
  */
 
 #ifndef	__IP_NAT_H__
@@ -136,6 +136,8 @@ typedef	struct	nat	{
 #define	nat_seq		nat_un.nat_uni.ici_seq
 #define	nat_id		nat_un.nat_uni.ici_id
 #define	nat_tcpstate	nat_tqe.tqe_state
+#define	nat_die		nat_tqe.tqe_die
+#define	nat_touched	nat_tqe.tqe_touched
 
 /*
  * Values for nat_dir
