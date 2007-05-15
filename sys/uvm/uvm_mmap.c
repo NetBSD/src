@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.111 2007/05/11 21:30:23 christos Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.112 2007/05/15 19:47:46 elad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.111 2007/05/11 21:30:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.112 2007/05/15 19:47:46 elad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_pax.h"
@@ -446,26 +446,6 @@ sys_mmap(l, v, retval)
 
 		maxprot = VM_PROT_EXECUTE;
 
-#if NVERIEXEC > 0
-		/*
-		 * Check if the file can be executed indirectly.
-		 */
-		if (veriexec_verify(l, vp, "(mmap)", VERIEXEC_INDIRECT, NULL)) {
-			/*
-			 * Don't allow executable mappings if we can't
-			 * indirectly execute the file.
-			 */
-			if (prot & VM_PROT_EXECUTE)
-				return (EPERM);
-
-			/*
-			 * Strip the executable bit from 'maxprot' to make sure
-			 * it can't be made executable later.
-			 */
-			maxprot &= ~VM_PROT_EXECUTE;
-		}
-#endif /* NVERIEXEC > 0 */
-
 		/* check read access */
 		if (fp->f_flag & FREAD)
 			maxprot |= VM_PROT_READ;
@@ -526,6 +506,33 @@ sys_mmap(l, v, retval)
 			return (ENOMEM);
 		}
 	}
+
+#if NVERIEXEC > 0
+	if (handle != NULL) {
+		/*
+		 * Check if the file can be executed indirectly.
+		 *
+		 * XXX: This gives false warnings about "Incorrect access type"
+		 * XXX: if the mapping is not executable. Harmless, but will be
+		 * XXX: fixed as part of other changes.
+		 */
+		if (veriexec_verify(l, handle, "(mmap)", VERIEXEC_INDIRECT,
+		    NULL)) {
+			/*
+			 * Don't allow executable mappings if we can't
+			 * indirectly execute the file.
+			 */
+			if (prot & VM_PROT_EXECUTE)
+				return (EPERM);
+
+			/*
+			 * Strip the executable bit from 'maxprot' to make sure
+			 * it can't be made executable later.
+			 */
+			maxprot &= ~VM_PROT_EXECUTE;
+		}
+	}
+#endif /* NVERIEXEC > 0 */
 
 #ifdef PAX_MPROTECT
 	pax_mprotect(l, &prot, &maxprot);

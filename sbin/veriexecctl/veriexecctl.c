@@ -1,4 +1,4 @@
-/*	$NetBSD: veriexecctl.c,v 1.26 2006/11/29 01:12:00 elad Exp $	*/
+/*	$NetBSD: veriexecctl.c,v 1.27 2007/05/15 19:47:46 elad Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@NetBSD.org>
@@ -30,11 +30,9 @@
  *
  */
 
-#include <sys/ioctl.h>
 #include <sys/param.h>
-#include <sys/queue.h>
-#include <sys/verified_exec.h>
 #include <sys/statvfs.h>
+#include <sys/verified_exec.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -43,7 +41,6 @@
 #include <unistd.h>
 #include <err.h>
 #include <errno.h>
-#include <inttypes.h>
 
 #include <prop/proplib.h>
 
@@ -51,229 +48,72 @@
 
 #define	VERIEXEC_DEVICE	"/dev/veriexec"
 
-extern prop_dictionary_t load_params;
-extern char *filename;
-extern int yynerrs;
-int gfd, verbose = 0, phase;
-size_t line;
+#define	STATUS_STRING(status)	((status) == FINGERPRINT_NOTEVAL ?	\
+					     "not evaluated" :		\
+				 (status) == FINGERPRINT_VALID ?	\
+					     "valid" :			\
+				 (status) == FINGERPRINT_NOMATCH ?	\
+					     "mismatch" :		\
+					     "<unknown>")
 
-/*
- * Prototypes
- */
-static FILE *openlock(const char *);
-static void phase1_preload(void);
-static int fingerprint_load(char*);
-static void usage(void) __attribute__((__noreturn__));
+extern int yyparse(void);
 
-static FILE *
-openlock(const char *path)
-{
-	int lfd;
-
-	if ((lfd = open(path, O_RDONLY|O_EXLOCK, 0)) == -1)
-		return NULL;
-
-	return fdopen(lfd, "r");
-}
-
-struct veriexec_up *
-dev_lookup(char *vfs)
-{
-	struct veriexec_up *p;
-
-	CIRCLEQ_FOREACH(p, &params_list, vu_list)
-		if (strcmp(dict_gets(p->vu_preload, "mount"), vfs) == 0)
-			return (p);
-
-	return NULL;
-}
-
-struct veriexec_up *
-dev_add(char *vfs)
-{
-	struct veriexec_up *up;
-
-	if ((up = calloc((size_t)1, sizeof(*up))) == NULL)
-		err(1, "No memory");
-
-	up->vu_preload = prop_dictionary_create();
-
-	dict_sets(up->vu_preload, "mount", vfs);
-	prop_dictionary_set_uint64(up->vu_preload, "count", 1);
-
-	CIRCLEQ_INSERT_TAIL(&params_list, up, vu_list);
-
-	return up;
-}
-
-/* Load all devices, get rid of the list. */
-static void
-phase1_preload(void)
-{
-	if (verbose)
-		printf("Phase 1: Calculating hash table sizes:\n");
-
-	while (!CIRCLEQ_EMPTY(&params_list)) {
-		struct veriexec_up *vup;
-		struct statvfs sv;
-
-		vup = CIRCLEQ_FIRST(&params_list);
-
-		if (statvfs(dict_gets(vup->vu_preload, "mount"), &sv) != 0)
-			err(1, "Can't statvfs() `%s'",
-			    dict_gets(vup->vu_preload, "mount"));
-
-		if (prop_dictionary_send_ioctl(vup->vu_preload, gfd,
-		    VERIEXEC_TABLESIZE) == -1) {
-			if (errno != EEXIST)
-				err(1, "Error in phase 1: Can't "
-				    "set hash table size for mount `%s'",
-				    sv.f_mntonname);
-		}
-
-		if (verbose) {
-			uint64_t count;
-
-			prop_dictionary_get_uint64(vup->vu_preload, "count",
-			    &count);
-			printf(" => Hash table sizing successful for mount "
-			    "`%s'. (%" PRIu64 " entries)\n", sv.f_mntonname,
-			    count);
-		}
-
-		CIRCLEQ_REMOVE(&params_list, vup, vu_list);
-
-		prop_object_release(vup->vu_preload);
-
-		free(vup);
-	}
-}
-
-/*
- * Load the fingerprint. Assumes that the fingerprint pseudo-device is
- * opened and the file handle is in gfd.
- */
-void
-phase2_load(void)
-{
-	uint8_t t;
-
-	/*
-	 * If there's no access type specified, use the default.
-	 */
-	prop_dictionary_get_uint8(load_params, "entry-type", &t);
-	if (!(t & (VERIEXEC_DIRECT|VERIEXEC_INDIRECT|VERIEXEC_FILE))) {
-		t |= VERIEXEC_DIRECT;
-		prop_dictionary_set_uint8(load_params, "entry-type", t);
-	}
-
-	if (prop_dictionary_send_ioctl(load_params, gfd, VERIEXEC_LOAD) == -1)
-		warn("Cannot load params from `%s'",
-		    dict_gets(load_params, "file"));
-
-	prop_object_release(load_params);
-
-	load_params = NULL;
-}
-
-/*
- * Fingerprint load handling.
- */
-static int
-fingerprint_load(char *ifile)
-{
-	CIRCLEQ_INIT(&params_list);
-
-	if ((yyin = openlock(ifile)) == NULL)
-		err(1, "Cannot open `%s'", ifile);
-
-	/*
-	 * Phase 1: Scan all config files, creating the list of devices
-	 *	    we have fingerprinted files on, and the amount of
-	 *	    files per device. Lock all files to maintain sync.
-	 */
-	phase = 1;
-
-	if (verbose) {
-		(void)printf("Phase 1: Building hash table information:\n");
-		(void)printf("=> Parsing \"%s\"\n", ifile);
-	}
-
-	line = 1;
-	yyparse();
-	if (yynerrs)
-		return -1;
-
-	phase1_preload();
-
-	/*
-	 * Phase 2: After we have a circular queue containing all the
-	 * 	    devices we care about and the sizes for the hash
-	 *	    tables, do a rescan, this time actually loading the
-	 *	    file data.
-	 */
-	rewind(yyin);
-	phase = 2;
-	if (verbose) {
-		(void)printf("Phase 2: Loading per-file fingerprints.\n");
-		(void)printf("=> Parsing \"%s\"\n", ifile);
-	}
-
-	line = 1;
-	yyparse();
-
-	(void)fclose(yyin);
-	
-	return 0;
-}
+int gfd, verbose = 0, error = EXIT_SUCCESS;
+size_t line = 0;
 
 static void
 usage(void)
 {
-	(void)fprintf(stderr, "Usage: %s [-v] [load <signature_file>]\n", 
-	    getprogname());
+	const char *progname = getprogname();
+
+	(void)fprintf(stderr, "Usage:\n"
+	    "%s [-ekv] load <signature_file>\n"
+	    "%s delete <file | mount_point>\n"
+	    "%s query <file>\n"
+	    "%s dump\n"
+	    "%s flush\n", progname, progname, progname, progname, progname);
+
 	exit(1);
 }
 
 static void
-print_flags(unsigned char flags)
+flags2str(uint8_t flags, char *buf, size_t len)
 {
-	char buf[64];
+	uint8_t all;
 
-	if (!flags) {
-		printf("<none>\n");
+	all = (VERIEXEC_DIRECT | VERIEXEC_INDIRECT | VERIEXEC_FILE |
+	    VERIEXEC_UNTRUSTED);
+	if (flags & ~all) {
+		if (verbose)
+			warnx("Contaminated flags `0x%x'", (flags & ~all));
 		return;
 	}
 
-	memset(buf, 0, sizeof(buf));
-
 	while (flags) {
 		if (*buf)
-			strlcat(buf, ", ", sizeof(buf));
+			strlcat(buf, ", ", len);
 
 		if (flags & VERIEXEC_DIRECT) {
-			strlcat(buf, "direct", sizeof(buf));
+			strlcat(buf, "direct", len);
 			flags &= ~VERIEXEC_DIRECT;
 			continue;
 		}
 		if (flags & VERIEXEC_INDIRECT) {
-			strlcat(buf, "indirect", sizeof(buf));
+			strlcat(buf, "indirect", len);
 			flags &= ~VERIEXEC_INDIRECT;
 			continue;
 		}
 		if (flags & VERIEXEC_FILE) {
-			strlcat(buf, "file", sizeof(buf));
+			strlcat(buf, "file", len);
 			flags &= ~VERIEXEC_FILE;
 			continue;
 		}
 		if (flags & VERIEXEC_UNTRUSTED) {
-			strlcat(buf, "untrusted", sizeof(buf));
+			strlcat(buf, "untrusted", len);
 			flags &= ~VERIEXEC_UNTRUSTED;
 			continue;
 		}
 	}
-
-	printf("%s\n", buf);
 }
 
 static void
@@ -283,34 +123,95 @@ print_query(prop_dictionary_t qp, char *file)
 	const char *v;
 	int i;
 	uint8_t u8;
+	char buf[64];
 
 	if (statvfs(file, &sv) != 0)
 		err(1, "Can't statvfs() `%s'\n", file);
 
 	printf("Filename: %s\n", file);
 	printf("Mount: %s\n", sv.f_mntonname);
-	printf("Entry flags: ");
 	prop_dictionary_get_uint8(qp, "entry-type", &u8);
-	print_flags(u8);
+	memset(buf, 0, sizeof(buf));
+	flags2str(u8, buf, sizeof(buf));
+	printf("Entry flags: %s\n", buf);
 	prop_dictionary_get_uint8(qp, "status", &u8);
 	printf("Entry status: %s\n", STATUS_STRING(u8));
 	printf("Fingerprint algorithm: %s\n", dict_gets(qp, "fp-type"));
 	printf("Fingerprint: ");
-	v = dict_getd(qp, "fp");
+	 v = dict_getd(qp, "fp");
 	for (i = 0; i < prop_data_size(prop_dictionary_get(qp, "fp")); i++)
 		printf("%02x", v[i] & 0xff);
 	printf("\n");	
 }
 
+static char *
+escape(const char *s)
+{
+	char *q, *p;
+	size_t len;
+
+	len = strlen(s);
+	if (len >= MAXPATHLEN)
+		return (NULL);
+
+	len *= 2;
+	q = p = calloc(1, len + 1);
+
+	while (*s) {
+		if (*s == ' ' || *s == '\t')
+			*p++ = '\\';
+
+		*p++ = *s++;
+	}
+
+	return (q);
+}
+
+static void
+print_entry(prop_dictionary_t entry)
+{
+	char *file, *fp;
+	const uint8_t *v;
+	size_t len, i;
+	uint8_t u8;
+	char flags[64];
+
+	/* Get fingerprint in ASCII. */
+	len = prop_data_size(prop_dictionary_get(entry, "fp"));
+	len *= 2;
+	fp = calloc(1, len + 1);
+	v = dict_getd(entry, "fp");
+	for (i = 0; i < len; i++)
+		snprintf(fp, len + 1, "%s%02x", fp, v[i] & 0xff);
+
+	/* Get flags. */
+	memset(flags, 0, sizeof(flags));
+	prop_dictionary_get_uint8(entry, "entry-type", &u8);
+	flags2str(u8, flags, sizeof(flags));
+
+	file = escape(dict_gets(entry, "file"));
+	printf("%s %s %s %s\n", file, dict_gets(entry, "fp-type"), fp, flags);
+	free(file);
+}
+
 int
 main(int argc, char **argv)
 {
+	extern boolean_t keep_filename, eval_on_load;
 	int c;
 
 	setprogname(argv[0]);
 
-	while ((c = getopt(argc, argv, "v")) != -1)
+	while ((c = getopt(argc, argv, "ekv")) != -1)
 		switch (c) {
+		case 'e':
+			eval_on_load = TRUE;
+			break;
+
+		case 'k':
+			keep_filename = TRUE;
+			break;
+
 		case 'v':
 			verbose = 1;
 			break;
@@ -329,9 +230,18 @@ main(int argc, char **argv)
 	 * Handle the different commands we can do.
 	 */
 	if (argc == 2 && strcasecmp(argv[0], "load") == 0) {
-		load_params = NULL;
-		filename = argv[1];
-		fingerprint_load(argv[1]);
+		extern FILE *yyin;
+		int lfd;
+
+		lfd = open(argv[1], O_RDONLY|O_EXLOCK, 0);
+		if (lfd == -1)
+			err(1, "Cannot open `%s'", argv[1]);
+
+		yyin = fdopen(lfd, "r");
+
+		yyparse();
+
+		(void)fclose(yyin);
 	} else if (argc == 2 && strcasecmp(argv[0], "delete") == 0) {
 		prop_dictionary_t dp;
 		struct stat sb;
@@ -347,28 +257,29 @@ main(int argc, char **argv)
 		 * remove the entire table. If it's neither, abort.
 		 */
 		if (!S_ISDIR(sb.st_mode) && !S_ISREG(sb.st_mode))
-			errx(1, "`%s' is not a regular file or directory.", argv[1]);
+			errx(1, "`%s' is not a regular file or directory.",
+			    argv[1]);
 
-		if (prop_dictionary_send_ioctl(dp, gfd, VERIEXEC_DELETE) == -1)
+		if (prop_dictionary_send_ioctl(dp, gfd, VERIEXEC_DELETE) != 0)
 			err(1, "Error deleting `%s'", argv[1]);
 
 		prop_object_release(dp);
 	} else if (argc == 2 && strcasecmp(argv[0], "query") == 0) {
 		prop_dictionary_t qp, rqp;
-		struct stat sb;
-
-		if (stat(argv[1], &sb) == -1)
-			err(1, "Can't stat `%s'", argv[1]);
-		if (!S_ISREG(sb.st_mode))
-			errx(1, "`%s' is not a regular file.", argv[1]);
+		int r;
 
 		qp = prop_dictionary_create();
 
 		dict_sets(qp, "file", argv[1]);
 
-		if (prop_dictionary_sendrecv_ioctl(qp, gfd, VERIEXEC_QUERY,
-		    &rqp) == -1)
+		r = prop_dictionary_sendrecv_ioctl(qp, gfd, VERIEXEC_QUERY,
+		    &rqp);
+		if (r) {
+			if (r == ENOENT)
+				errx(1, "No Veriexec entry for `%s'", argv[1]);
+
 			err(1, "Error querying `%s'", argv[1]);
+		}
 
 		if (rqp != NULL) {
 			print_query(rqp, argv[1]);
@@ -376,9 +287,25 @@ main(int argc, char **argv)
 		}
 
 		prop_object_release(qp);
+	} else if (argc == 1 && strcasecmp(argv[0], "dump") == 0) {
+		prop_array_t entries;
+		size_t nentries, i;
+
+		if (prop_array_recv_ioctl(gfd, VERIEXEC_DUMP,
+		    &entries) == -1)
+			err(1, "Error dumping tables");
+
+		nentries = prop_array_count(entries);
+		for (i = 0; i < nentries; i++)
+			print_entry(prop_array_get(entries, i));
+
+		prop_object_release(entries);
+	} else if (argc == 1 && strcasecmp(argv[0], "flush") == 0) {
+		if (ioctl(gfd, VERIEXEC_FLUSH) == -1)
+			err(1, "Cannot flush Veriexec database");
 	} else
 		usage();
 
 	(void)close(gfd);
-	return 0;
+	return error;
 }
