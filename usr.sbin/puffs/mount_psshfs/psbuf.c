@@ -1,4 +1,4 @@
-/*      $NetBSD: psbuf.c,v 1.7 2007/05/12 09:41:30 pooka Exp $        */
+/*      $NetBSD: psbuf.c,v 1.8 2007/05/15 13:46:47 pooka Exp $        */
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: psbuf.c,v 1.7 2007/05/12 09:41:30 pooka Exp $");
+__RCSID("$NetBSD: psbuf.c,v 1.8 2007/05/15 13:46:47 pooka Exp $");
 #endif /* !lint */
 
 /*
@@ -156,7 +156,7 @@ psbuf_write(struct puffs_usermount *pu, struct puffs_framebuf *pb,
 		winlen = howmuch;
 		if (puffs_framebuf_getwindow(pb, CUROFF(pb), &win, &winlen)==-1)
 			return errno;
-		n = write(fd, win, winlen);
+		n = send(fd, win, winlen, MSG_NOSIGNAL);
 		switch (n) {
 		case 0:
 			return ECONNRESET;
