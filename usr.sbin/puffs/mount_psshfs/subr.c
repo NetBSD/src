@@ -1,4 +1,4 @@
-/*      $NetBSD: subr.c,v 1.16 2007/05/15 13:46:48 pooka Exp $        */
+/*      $NetBSD: subr.c,v 1.17 2007/05/15 14:17:30 pooka Exp $        */
         
 /*      
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
         
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: subr.c,v 1.16 2007/05/15 13:46:48 pooka Exp $");
+__RCSID("$NetBSD: subr.c,v 1.17 2007/05/15 14:17:30 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -287,8 +287,10 @@ sftp_readdir(struct puffs_cc *pcc, struct psshfs_ctx *pctx,
 				goto out;
 			if ((rv = psbuf_get_str(pb, &longname, NULL)))
 				goto out;
-			if ((rv = psbuf_get_vattr(pb, &psn->dir[idx].va)))
+			if ((rv = psbuf_get_vattr(pb, &psn->dir[idx].va))) {
+				free(longname);
 				goto out;
+			}
 			if (sscanf(longname, "%*s%d",
 			    &psn->dir[idx].va.va_nlink) != 1) {
 				rv = EPROTO;
