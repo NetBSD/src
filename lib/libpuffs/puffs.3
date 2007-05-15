@@ -1,4 +1,4 @@
-.\"	$NetBSD: puffs.3,v 1.22 2007/05/09 18:24:11 pooka Exp $
+.\"	$NetBSD: puffs.3,v 1.23 2007/05/15 13:44:47 pooka Exp $
 .\"
 .\" Copyright (c) 2006, 2007 Antti Kantee.  All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd May 9, 2007
+.Dd May 15, 2007
 .Dt PUFFS 3
 .Os
 .Sh NAME
@@ -51,8 +51,6 @@
 .Fa "struct puffs_usermount *pu" "void *rootcookie" "struct statvfs *svfsb"
 .Fc
 .Ft int
-.Fn puffs_mainloop "struct puffs_usermount *pu" "int flags"
-.Ft int
 .Fn puffs_getselectable "struct puffs_usermount *pu"
 .Ft int
 .Fn puffs_setblockingmode "struct puffs_usermount *pu" "int mode"
@@ -74,6 +72,14 @@
 .Fn puffs_setfhsize "struct puffs_usermount *pu" "size_t fhsize" "int flags"
 .Ft void
 .Fn puffs_setncookiehash "struct puffs_usermount *pu" "int nhashes"
+.Ft void
+.Fn puffs_ml_loop_fn "struct puffs_usermount *pu"
+.Ft void
+.Fn puffs_ml_setloopfn "struct puffs_usermount *pu" "puffs_ml_loop_fn lfn"
+.Ft void
+.Fn puffs_ml_settimeout "struct puffs_usermount *pu" "struct timespec *ts"
+.Ft int
+.Fn puffs_mainloop "struct puffs_usermount *pu" "int flags"
 .Sh DESCRIPTION
 .Em IMPORTANT NOTE!
 This document describes interfaces which are not yet guaranteed to be
@@ -93,20 +99,23 @@ where they are processed and results are sent back to the kernel.
 .Pp
 It is possible to use
 .Nm
-in three different ways.
+in two different ways.
 Calling
 .Fn puffs_mainloop
 takes execution context away from the caller and automatically handles
 all requests by using the callbacks.
-Using the
+By using
 .Xr puffs_framebuf 3
-functionality provides it's own, network-oriented event loop.
-Finally, control can be kept with the caller and operations
+in conjuction with
+.Fn puffs_mainloop ,
+it is possible to handle I/O to and from file descriptors.
+This is suited e.g. for distributed file servers.
+Alternatively, control can be kept with the caller and operations
 handled manually using
 .Xr puffs_req 3
 directly.
 .Ss Library operation
-Operations on the library always require a poiter to the opaque context
+Operations on the library always require a pointer to the opaque context
 identifier,
 .Va struct puffs_usermount .
 There are two ways of acquiring this context:
@@ -349,11 +358,29 @@ by calling
 .Fn puffs_start .
 Immediately after the return of this function the file system must
 be ready to process requests.
-.Pp
-To handle all requests automatically until the file system is
-unmounted,
-.Fn puffs_mainloop
-should be used.
+.Ss Using the built-in eventloop
+.Bl -tag -width xxxx
+.It Fn puffs_ml_loop_fn pu
+Loop function signature.
+.It Fn puffs_ml_setloopfn pu lfn
+Set loop function to
+.Ar lfn .
+This function is called once each time the event loop loops.
+It is not a well-defined interval, but it can be made fairly regular
+by setting the loop timeout by
+.Fn puffs_ml_settimeout .
+.It Fn puffs_ml_settimeout pu ts
+Sets the loop timeout to
+.Ar ts
+or disables it if
+.Ar ts
+is
+.Dv NULL .
+This can be used to roughly control how often the loop callback
+.Fn lfn
+is called
+.It Fn puffs_mainloop pu flags
+Handle all requests automatically until the file system is unmounted.
 It returns 0 if the file system was succesfully unmounted or \-1 if it
 was killed in action.
 Unless
@@ -362,6 +389,12 @@ is used to pass
 .Dv PUFFSLOOP_NODAEMON ,
 .Fn puffs_mainloop
 will also detach from the terminal.
+.Pp
+In case
+.Xr puffs_framebuf 3
+has been initialized, I/O from the relevant descriptors is processed
+automatically by the eventloop.
+.El
 .Ss Cookies
 Every file (regular file, directory, device node, ...) instance is
 attached to the kernel using a cookie.
@@ -388,6 +421,7 @@ to provide an alternative cookie-to-node mapping function.
 .Xr puffs_cc 3 ,
 .Xr puffs_cred 3 ,
 .Xr puffs_flush 3 ,
+.Xr puffs_framebuf 3 ,
 .Xr puffs_node 3 ,
 .Xr puffs_ops 3 ,
 .Xr puffs_path 3 ,
