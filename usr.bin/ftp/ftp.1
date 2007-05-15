@@ -1,4 +1,4 @@
-.\" 	$NetBSD: ftp.1,v 1.116 2007/05/10 05:59:30 lukem Exp $
+.\" 	$NetBSD: ftp.1,v 1.117 2007/05/15 23:54:19 lukem Exp $
 .\"
 .\" Copyright (c) 1996-2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1007,7 +1007,7 @@ traffic.
 servers are required to support the
 .Dv PASV
 command by
-.Li RFC 1123 ,
+.Li RFC1123 ,
 some do not.)
 .It Ic pdir Op Ar remote-path
 Perform
@@ -1622,7 +1622,7 @@ ascii or binary (respectively).
 The default transfer type is binary.
 .Pp
 In order to be compliant with
-.Li RFC 1738 ,
+.Li RFC3986 ,
 .Nm
 interprets the
 .Ar path
@@ -1675,7 +1675,7 @@ Any
 .Sq Li \&% Ns Ar XX
 codes
 (per
-.Li RFC 1738 )
+.Li RFC3986 )
 within the path components are decoded, with
 .Ar XX
 representing a character code in hexadecimal.
@@ -2320,7 +2320,7 @@ URL characters are required in the username or password
 or
 .Sq / ) ,
 encode them with
-.Li RFC 1738
+.Li RFC3986
 .Sq Li \&% Ns Ar XX
 encoding.
 .Pp
@@ -2363,16 +2363,25 @@ for an example of how to make this automatic.
 .Xr ftpd 8
 .Sh STANDARDS
 .Nm
-attempts to be compliant with
-.Li RFC 959 ,
-.Li RFC 1123 ,
-.Li RFC 1738 ,
-.Li RFC 2068 ,
-.Li RFC 2389 ,
-.Li RFC 2428 ,
-.Li RFC 2732 ,
-and
-.Li RFC 3659 .
+attempts to be compliant with:
+.Bl -tag -offset indent -width 8n
+.It Li RFC0959
+.Em File Transfer Protocol
+.It Li RFC1123
+.Em Requirements for Internet Hosts - Application and Support
+.It Li RFC1635
+.Em How to Use Anonymous FTP
+.It Li RFC2389
+.Em Feature negotiation mechanism for the File Transfer Protocol
+.It Li RFC2428
+.Em FTP Extensions for IPv6 and NATs
+.It Li RFC2616
+.Em Hypertext Transfer Protocol -- HTTP/1.1
+.It Li RFC3659
+.Em Extensions to FTP
+.It Li RFC3986
+.Em Uniform Resource Identifier (URI)
+.El
 .Sh HISTORY
 The
 .Nm
