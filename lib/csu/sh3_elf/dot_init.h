@@ -1,4 +1,4 @@
-/*	$NetBSD: dot_init.h,v 1.4 2006/10/17 01:10:26 uwe Exp $	*/
+/*	$NetBSD: dot_init.h,v 1.5 2007/05/15 16:51:41 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ross Harvey
@@ -41,8 +41,6 @@
  * rudimentary indirection to the entry points we would supply with
  * MD_SECTION_PROLOGUE.
  */
-#define	MD_DO_NOT_NEED_FALLTHRU
-
 #define MD_INIT_SECTION_PROLOGUE MD_SECTION_PROLOGUE(.init, _init)
 #define MD_FINI_SECTION_PROLOGUE MD_SECTION_PROLOGUE(.fini, _fini)
 
@@ -57,7 +55,7 @@
 		".previous")
 
 /*
- * Declare the entry point global because of MD_DO_NOT_NEED_FALLTHRU.
+ * Declare the entry point global.
  */
 #define MD_SECTION_PROLOGUE(section, entry_pt)				\
 	MD_ASM_IN_SECTION(section,					\

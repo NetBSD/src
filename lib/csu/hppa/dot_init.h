@@ -1,4 +1,4 @@
-/* $NetBSD: dot_init.h,v 1.3 2006/09/08 19:18:26 skrll Exp $ */
+/* $NetBSD: dot_init.h,v 1.4 2007/05/15 16:51:38 skrll Exp $ */
 
 /*-
  * Copyright (c) 2004 Nick Hudson
@@ -70,5 +70,3 @@
 
 #define	MD_INIT_SECTION_EPILOGUE MD_SECTION_EPILOGUE(.init)
 #define	MD_FINI_SECTION_EPILOGUE MD_SECTION_EPILOGUE(.fini)
-
-#define	MD_DO_NOT_NEED_FALLTHRU
