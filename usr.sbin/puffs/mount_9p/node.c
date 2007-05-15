@@ -1,4 +1,4 @@
-/*	$NetBSD: node.c,v 1.8 2007/05/11 16:23:00 pooka Exp $	*/
+/*	$NetBSD: node.c,v 1.9 2007/05/15 13:56:00 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -27,13 +27,14 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: node.c,v 1.8 2007/05/11 16:23:00 pooka Exp $");
+__RCSID("$NetBSD: node.c,v 1.9 2007/05/15 13:56:00 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
 #include <errno.h>
 #include <puffs.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "ninepuffs.h"
 #include "nineproto.h"
@@ -152,6 +153,7 @@ puffs9p_node_readdir(struct puffs_cc *pcc, void *opc, struct dirent *dent,
 		count -= statsize;
 		*readoff += statsize;
 		dfp->seekoff += statsize;
+		free(name);
 	}
 
 	storedf(p9n, dfp);
