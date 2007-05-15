@@ -1,4 +1,4 @@
-/*	$NetBSD: veriexecctl.h,v 1.9 2006/11/28 22:22:03 elad Exp $	*/
+/*	$NetBSD: veriexecctl.h,v 1.10 2007/05/15 19:47:47 elad Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@NetBSD.org>
@@ -33,14 +33,6 @@
 #ifndef _VERIEXECCTL_H_
 #define _VERIEXECCTL_H_
 
-#define	STATUS_STRING(status)	((status) == FINGERPRINT_NOTEVAL ?	\
-					     "not evaluated" :		\
-				 (status) == FINGERPRINT_VALID ?	\
-					     "valid" :			\
-				 (status) == FINGERPRINT_NOMATCH ?	\
-					     "mismatch" :		\
-					     "<unknown>")
-
 #define dict_sets(d, k, v) \
 	prop_dictionary_set(d, k, prop_string_create_cstring(v))
 
@@ -52,24 +44,5 @@
 
 #define	dict_getd(d, k) \
 	prop_data_data_nocopy(prop_dictionary_get(d, k))
-
-CIRCLEQ_HEAD(veriexec_ups, veriexec_up) params_list;
-struct veriexec_up {
-	prop_dictionary_t vu_preload;
-        CIRCLEQ_ENTRY(veriexec_up) vu_list;
-};
-
-extern int gfd, verbose, phase;
-extern size_t line;
-extern char *infile;
-extern FILE *yyin;
-
-int yywrap(void);
-int yylex(void);
-int yyparse(void);
-void yyerror(const char *);
-struct veriexec_up *dev_lookup(char *);
-struct veriexec_up *dev_add(char *);
-void phase2_load(void);
 
 #endif /* _VERIEXECCTL_H_ */

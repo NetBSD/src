@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: veriexecctl_conf.l,v 1.10 2006/11/29 14:28:30 elad Exp $	*/
+/*	$NetBSD: veriexecctl_conf.l,v 1.11 2007/05/15 19:47:47 elad Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@NetBSD.org>
@@ -31,26 +31,22 @@
  *
  */
 
-#include <sys/param.h>
-#include <sys/types.h>
-#include <sys/queue.h>
-#include <sys/verified_exec.h>
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 #include <err.h>
 
 #include <prop/proplib.h>
 
 #include "veriexecctl_parse.h"
-#include "veriexecctl.h"
 
-u_int64_t entries;
-char *filename;
+int yylex(void);
 
-static char *dequote(const char *s)
+extern size_t line;
+extern int verbose;
+
+static char *
+dequote(const char *s)
 {
 	size_t len;
 	const char *p;
@@ -104,6 +100,7 @@ PCHAR           (\\.|[^ \t])
 	/* comments, white-outs */
 [ \t\r]		|
 #.*		;
+^#.*\n		|
 #.*\n		|
 \\\n		|
 ^\n		{ line++; }
@@ -118,7 +115,11 @@ PCHAR           (\\.|[^ \t])
 			return TOKEN_COMMA;
 		}
 
-.		{ yyerror("Invalid character"); }
+.		{
+			if (verbose)
+				warnx("Invalid character '%c' in line %zu",
+				    *yytext, line);
+		}
 
 %%
 
@@ -126,11 +127,4 @@ int
 yywrap(void)
 {
 	return 1;
-}
-
-void
-yyerror(const char *string)
-{
-	(void)fprintf(stderr, "%s: %s at \"%s\", line %zu\n", getprogname(),
-	    string, yytext, line);
 }

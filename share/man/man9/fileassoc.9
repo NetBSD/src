@@ -1,4 +1,4 @@
-.\" $NetBSD: fileassoc.9,v 1.19 2007/02/06 01:09:48 elad Exp $
+.\" $NetBSD: fileassoc.9,v 1.20 2007/05/15 19:47:43 elad Exp $
 .\"
 .\" Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd February 6, 2007
+.Dd May 15, 2007
 .Dt FILEASSOC 9
 .Os
 .Sh NAME
@@ -83,7 +83,8 @@ These routines allow a developer to allocate a
 .Nm
 slot to be used for private data.
 .Bl -tag -width "123456"
-.It Ft int Fn fileassoc_register "const char *name"  "fileassoc_cleanup_cb cleanup_cb" "fileassoc_t *result"
+.It Ft int Fn fileassoc_register "const char *name" \
+"fileassoc_cleanup_cb_t cleanup_cb" "fileassoc_t *result"
 Registers a new fileassoc as
 .Ar name ,
 and returns a
@@ -108,9 +109,7 @@ indication whether the passed data is file- or mount-specific.
 .Ar cleanup_cb
 should be a function receiving a
 .Ft void *
-and an
-.Ft int ,
-returning
+and returning
 .Ft void .
 See the
 .Sx EXAMPLES
@@ -157,12 +156,14 @@ If specified, the fileassoc's
 will be called with a pointer to the private data-structure.
 .Pp
 .It Ft int Fn fileassoc_table_run "struct mount *mp" "fileassoc_t id" \
-"fileassoc_cb_t cb"
+"fileassoc_cb_t cb" "void *cookie"
 For each entry for
 .Ar id ,
 call
 .Ar cb
-with the entry being the argument.
+with the entry being the first argument, and
+.Ar cookie
+being the second argument.
 .Pp
 .Ar cb
 is a function returning

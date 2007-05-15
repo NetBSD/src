@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: veriexecctl_parse.y,v 1.20 2006/12/08 23:22:19 elad Exp $	*/
+/*	$NetBSD: veriexecctl_parse.y,v 1.21 2007/05/15 19:47:47 elad Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@NetBSD.org>
@@ -31,24 +31,24 @@
  *
  */
 
-#include <sys/param.h>
-#include <sys/ioctl.h>
-#include <sys/statvfs.h>
-#include <sys/mount.h>
-
+#include <sys/stat.h>
 #include <sys/verified_exec.h>
+
 #include <ctype.h>
 #include <stdio.h>
 #include <string.h>
-#include <errno.h>
 #include <err.h>
 
 #include <prop/proplib.h>
 
 #include "veriexecctl.h"
 
+extern int yylex(void);
+extern size_t line;
+extern int verbose, error;
+
+boolean_t keep_filename = FALSE, eval_on_load = FALSE;
 prop_dictionary_t load_params;
-static size_t convert(u_char *, u_char *);
 
 %}
 
@@ -65,48 +65,46 @@ static size_t convert(u_char *, u_char *);
 
 statement	:	/* empty */
 		|	statement path type fingerprint flags eol {
+	extern int gfd;
 	struct stat sb;
-	struct veriexec_up *p;
-	struct statvfs sf;
-
-	if (phase == 2) {
-		phase2_load();
-		goto phase_2_end;
-	}
 
 	if (stat(dict_gets(load_params, "file"), &sb) == -1) {
-		warnx("Line %lu: Can't stat `%s'",
-		    (unsigned long)line, dict_gets(load_params, "file"));
-		goto phase_2_end;
+		if (verbose)
+			warnx("Line %zu: Can't stat `%s'", line,
+			    dict_gets(load_params, "file"));
+		error = EXIT_FAILURE;
+		goto skip;
 	}
 
 	/* Only regular files */
 	if (!S_ISREG(sb.st_mode)) {
-		warnx("Line %lu: %s is not a regular file",
-		    (unsigned long)line, dict_gets(load_params, "file"));
-		goto phase_2_end;
-	}
-
-	if (statvfs(dict_gets(load_params, "file"), &sf) == -1)
-		err(1, "Cannot statvfs `%s'", dict_gets(load_params, "file"));
-
-	if ((p = dev_lookup(sf.f_mntonname)) != NULL) {
-		uint64_t n;
-
-		prop_dictionary_get_uint64(p->vu_preload, "count", &n);
-		n++;
-		prop_dictionary_set_uint64(p->vu_preload, "count", n);
-
-		goto phase_2_end;
+		if (verbose)
+			warnx("Line %zu: %s is not a regular file", line,
+			    dict_gets(load_params, "file"));
+		error = EXIT_FAILURE;
+		goto skip;
 	}
 
 	if (verbose) {
-		(void)printf( " => Adding mount `%s'.\n", sf.f_mntonname);
+		(void)printf( "Adding file `%s'.\n",
+		    dict_gets(load_params, "file"));
 	}
 
-	dev_add(sf.f_mntonname);
+	prop_dictionary_set(load_params, "keep-filename",
+	    prop_bool_create(keep_filename));
 
-phase_2_end:
+	prop_dictionary_set(load_params, "eval-on-load",
+	    prop_bool_create(eval_on_load));
+
+	if (prop_dictionary_send_ioctl(load_params, gfd, VERIEXEC_LOAD) != 0) {
+		if (verbose)
+			warn("Cannot load params from `%s'",
+			    dict_gets(load_params, "file"));
+		error = EXIT_FAILURE;
+	}
+
+ skip:
+	prop_object_release(load_params);
 	load_params = NULL;
 }
 		|	statement eol
@@ -124,33 +122,30 @@ path		:	PATH {
 		;
 
 type		:	STRING {
-	if (phase == 2) {
-		dict_sets(load_params, "fp-type", $1);
-	}
+	dict_sets(load_params, "fp-type", $1);
 }
 		;
 
 
 fingerprint	:	STRING {
-	if (phase == 2) {
-		char *fp;
-		size_t n;
+	char *fp;
+	size_t n;
 
-		fp = malloc(strlen($1) / 2);
-		if (fp == NULL)
-			err(1, "Fingerprint mem alloc failed");
+	fp = malloc(strlen($1) / 2);
+	if (fp == NULL)
+		err(1, "Cannot allocate memory for fingerprint");
 
-		n = convert($1, fp);
-		if (n == -1) {
-			free(fp);
-			yyerror("Bad fingerprint");
-			YYERROR;
-		}
-
-		dict_setd(load_params, "fp", fp, n);
+	n = convert($1, fp);
+	if (n == -1) {
 		free(fp);
+		if (verbose)
+			warnx("Bad fingerprint `%s' in line %zu", $1, line);
+		error = EXIT_FAILURE;
+		YYERROR;
 	}
-				
+
+	dict_setd(load_params, "fp", fp, n);
+	free(fp);
 }
 	    ;
 
@@ -163,35 +158,34 @@ flags_spec	:	flag_spec
 		;
 
 flag_spec	:	STRING {
-	if (phase == 2) {
-		uint8_t t = 0;
+	uint8_t t = 0;
 
-		prop_dictionary_get_uint8(load_params, "entry-type", &t);
+	prop_dictionary_get_uint8(load_params, "entry-type", &t);
 
-		if (strcasecmp($1, "direct") == 0) {
-			t |= VERIEXEC_DIRECT;
-		} else if (strcasecmp($1, "indirect") == 0) {
-			t |= VERIEXEC_INDIRECT;
-		} else if (strcasecmp($1, "file") == 0) {
-			t |= VERIEXEC_FILE;
-		} else if (strcasecmp($1, "program") == 0) {
-			t |= VERIEXEC_DIRECT;
-		} else if (strcasecmp($1, "interpreter") == 0) {
-			t |= VERIEXEC_INDIRECT;
-		} else if (strcasecmp($1, "script") == 0) {
-			t |= (VERIEXEC_FILE | VERIEXEC_DIRECT);
-		} else if (strcasecmp($1, "library") == 0) {
-			t |= (VERIEXEC_FILE | VERIEXEC_INDIRECT);
-		} else if (strcasecmp($1, "untrusted") == 0) {
-			t |= VERIEXEC_UNTRUSTED;
-		} else {
-			yyerror("Bad flag");
-			YYERROR;
-		}
-
-		prop_dictionary_set_uint8(load_params, "entry-type", t);
+	if (strcasecmp($1, "direct") == 0) {
+		t |= VERIEXEC_DIRECT;
+	} else if (strcasecmp($1, "indirect") == 0) {
+		t |= VERIEXEC_INDIRECT;
+	} else if (strcasecmp($1, "file") == 0) {
+		t |= VERIEXEC_FILE;
+	} else if (strcasecmp($1, "program") == 0) {
+		t |= VERIEXEC_DIRECT;
+	} else if (strcasecmp($1, "interpreter") == 0) {
+		t |= VERIEXEC_INDIRECT;
+	} else if (strcasecmp($1, "script") == 0) {
+		t |= (VERIEXEC_FILE | VERIEXEC_DIRECT);
+	} else if (strcasecmp($1, "library") == 0) {
+		t |= (VERIEXEC_FILE | VERIEXEC_INDIRECT);
+	} else if (strcasecmp($1, "untrusted") == 0) {
+		t |= VERIEXEC_UNTRUSTED;
+	} else {
+		if (verbose)
+			warnx("Bad flag `%s' in line %zu", $1, line);
+		error = EXIT_FAILURE;
+		YYERROR;
 	}
 
+	prop_dictionary_set_uint8(load_params, "entry-type", t);
 }
 		;
 
@@ -199,7 +193,7 @@ eol		:	EOL
 		;
 
 %%
-		
+
 /*
  * Takes the hexadecimal string pointed to by "fp" and converts it to a 
  * "count" byte binary number which is stored in the array pointed to
@@ -240,4 +234,11 @@ convert(u_char *fp, u_char *out)
 	}
 
 	return count;
+}
+
+static void
+yyerror(const char *msg)
+{
+	if (verbose)
+		warnx("%s in line %zu", msg, line);
 }
