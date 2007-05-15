@@ -1,4 +1,4 @@
-# $NetBSD: XEN2_DOM0,v 1.25 2007/05/01 17:18:55 bouyer Exp $
+# $NetBSD: XEN2_DOM0,v 1.26 2007/05/15 17:53:45 bouyer Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -356,6 +356,8 @@ geodeide* 	at pci? dev ? function ?	# AMD Geode IDE controllers
 hptide* 	at pci? dev ? function ?	# Triones/HighPoint IDE controllers
 iteide* 	at pci? dev ? function ?	# IT Express IDE controllers
 ixpide*		at pci? dev ? function ?	# ATI IXP IDE controllers
+jmide* 		at pci? dev ? function ? 	# JMicron PCI-e PATA/SATA controllers
+ahcisata* 	at jmide?
 optiide* 	at pci? dev ? function ?	# Opti IDE controllers
 piixide* 	at pci? dev ? function ?	# Intel IDE controllers
 pdcide* 	at pci? dev ? function ?	# Promise IDE controllers
