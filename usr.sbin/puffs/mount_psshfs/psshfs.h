@@ -1,4 +1,4 @@
-/*	$NetBSD: psshfs.h,v 1.14 2007/05/12 09:41:30 pooka Exp $	*/
+/*	$NetBSD: psshfs.h,v 1.15 2007/05/15 13:46:48 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -65,9 +65,29 @@ PUFFSOP_PROTOS(psshfs);
 	puffs_framebuf_destroy(pb);					\
 	return (rv)
 
-#define GETRESPONSE(pb) puffs_framebuf_enqueue_cc(pcc, pctx->sshfd, pb)
-#define JUSTSEND(pb) puffs_framebuf_enqueue_justsend(pu, pctx->sshfd, pb, 1)
-#define SENDCB(pb, f, a) puffs_framebuf_enqueue_cb(pu, pctx->sshfd, pb, f,a)
+#define GETRESPONSE(pb)							\
+do {									\
+	if (puffs_framev_enqueue_cc(pcc, pctx->sshfd, pb) == -1) {	\
+		rv = errno;						\
+		goto out;						\
+	}								\
+} while (/*CONSTCOND*/0)
+
+#define JUSTSEND(pb)							\
+do {									\
+	if (puffs_framev_enqueue_justsend(pu,pctx->sshfd,pb,1) == -1) {	\
+		rv = errno;						\
+		goto out;						\
+	}								\
+} while (/*CONSTCOND*/0)
+	
+#define SENDCB(pb, f, a)						\
+do {									\
+	if (puffs_framev_enqueue_cb(pu, pctx->sshfd, pb, f,a) == -1) {	\
+		rv = errno;						\
+		goto out;						\
+	}								\
+} while (/*CONSTCOND*/0)
 
 struct psshfs_dir {
 	int valid;

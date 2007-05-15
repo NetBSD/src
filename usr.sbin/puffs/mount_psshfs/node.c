@@ -1,4 +1,4 @@
-/*	$NetBSD: node.c,v 1.26 2007/05/11 16:23:01 pooka Exp $	*/
+/*	$NetBSD: node.c,v 1.27 2007/05/15 13:46:47 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: node.c,v 1.26 2007/05/11 16:23:01 pooka Exp $");
+__RCSID("$NetBSD: node.c,v 1.27 2007/05/15 13:46:47 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -159,6 +159,7 @@ psshfs_node_setattr(struct puffs_cc *pcc, void *opc,
 	if (rv == 0)
 		puffs_setvattr(&pn->pn_va, &kludgeva);
 
+ out:
 	PSSHFSRETURN(rv);
 }
 
@@ -251,6 +252,7 @@ psshfs_node_inactive(struct puffs_cc *pcc, void *opc, pid_t pid, int *refcount)
 	struct psshfs_node *psn = pn->pn_data;
 	uint32_t reqid = NEXTREQ(pctx);
 	struct puffs_framebuf *pb1, *pb2;
+	int rv;
 
 	if (psn->fhand_r) {
 		pb1 = psbuf_makeout();
@@ -269,6 +271,7 @@ psshfs_node_inactive(struct puffs_cc *pcc, void *opc, pid_t pid, int *refcount)
 		psn->fhand_w = NULL;
 	}
 
+ out:
 	*refcount = 1;
 	return 0;
 }
@@ -317,7 +320,7 @@ psshfs_node_read(struct puffs_cc *pcc, void *opc, uint8_t *buf,
 
 	if (pn->pn_va.va_type == VDIR) {
 		rv = EISDIR;
-		goto err;
+		goto out;
 	}
 
 	readlen = *resid;
@@ -330,7 +333,7 @@ psshfs_node_read(struct puffs_cc *pcc, void *opc, uint8_t *buf,
 	if (rv == 0)
 		*resid -= readlen;
 
- err:
+ out:
 	PSSHFSRETURN(rv);
 }
 
@@ -347,7 +350,7 @@ psshfs_node_write(struct puffs_cc *pcc, void *opc, uint8_t *buf,
 
 	if (pn->pn_va.va_type == VDIR) {
 		rv = EISDIR;
-		goto err;
+		goto out;
 	}
 
 	writelen = *resid;
@@ -363,7 +366,7 @@ psshfs_node_write(struct puffs_cc *pcc, void *opc, uint8_t *buf,
 	if (pn->pn_va.va_size < offset + writelen)
 		pn->pn_va.va_size = offset + writelen;
 
- err:
+ out:
 	PSSHFSRETURN(rv);
 }
 
@@ -470,6 +473,7 @@ psshfs_node_rmdir(struct puffs_cc *pcc, void *opc, void *targ,
 	if (rv == 0)
 		nukenode(pn_targ, pcn->pcn_name, 0);
 
+ out:
 	PSSHFSRETURN(rv);
 }
 

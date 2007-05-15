@@ -1,4 +1,4 @@
-/*	$NetBSD: ninepuffs.h,v 1.6 2007/05/11 16:23:00 pooka Exp $	*/
+/*	$NetBSD: ninepuffs.h,v 1.7 2007/05/15 13:46:47 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -71,9 +71,9 @@ typedef uint32_t p9pfid_t;
 	puffs_framebuf_destroy(pb);					\
 	return (rv)
 
-#define GETRESPONSE(pb) puffs_framebuf_enqueue_cc(pcc,p9p->servsock,pb)
-#define JUSTSEND(pb) puffs_framebuf_enqueue_justsend(pu,p9p->servsock,pb,1)
-#define SENDCB(pb, f, a) puffs_framebuf_enqueue_cb(pu,p9p->servsock pb,f,a)
+#define GETRESPONSE(pb) puffs_framev_enqueue_cc(pcc,p9p->servsock,pb)
+#define JUSTSEND(pb) puffs_framev_enqueue_justsend(pu,p9p->servsock,pb,1)
+#define SENDCB(pb, f, a) puffs_framev_enqueue_cb(pu,p9p->servsock pb,f,a)
 
 struct puffs9p {
 	int servsock;
