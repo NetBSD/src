@@ -165,8 +165,13 @@ void fuse_teardown(struct fuse *, char *);
 
 void fuse_unmount_compat22(const char *);
 
+#if FUSE_VERSION >= 26
+#define fuse_main(argc, argv, op, arg) \
+            fuse_main_real(argc, argv, op, sizeof(*(op)), arg)
+#else
 #define fuse_main(argc, argv, op) \
             fuse_main_real(argc, argv, op, sizeof(*(op)), NULL)
+#endif
 
 #ifdef __cplusplus
 }
