@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: etcupdate,v 1.34 2007/03/26 18:11:03 apb Exp $
+# $NetBSD: etcupdate,v 1.35 2007/05/15 12:59:27 martti Exp $
 #
 # Copyright (c) 2001 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -75,10 +75,11 @@ MACHINE_ARCH="${MACHINE_ARCH:=`uname -p`}"
 export MACHINE_ARCH
 
 # Settings for post-installation procedures
-NEED_MTREE=false
 NEED_MAKEDEV=false
+NEED_MTREE=false
 NEED_NEWALIASES=false
 NEED_PWD_MKDB=false
+NEED_SERVICES_MKDB=false
 
 myname="${0##*/}"
 
@@ -161,6 +162,9 @@ install_file() {
 		;;
 	/etc/master.passwd)
 		NEED_PWD_MKDB=true
+		;;
+	/etc/services)
+		NEED_SERVICES_MKDB=true
 		;;
 	esac
 }
@@ -656,6 +660,20 @@ if ${NEED_PWD_MKDB}; then
 		     "the changes visible"
 		echo "*** This is done by running \"pwd_mkdb -p" \
 		     "/etc/master.passwd\" as root"
+		echo ""
+	fi
+fi
+if ${NEED_SERVICES_MKDB}; then
+	if yesno "Do you want to rebuild the services databases from the" \
+	         "new /etc/services"
+	then
+		verbose "Running services_mkdb"
+		services_mkdb
+	else
+		echo ""
+		echo "*** You SHOULD rebuild the services databases to make" \
+		     "the changes visible"
+		echo "*** This is done by running \"services_mkdb\" as root"
 		echo ""
 	fi
 fi
