@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.h,v 1.55 2007/05/11 21:27:13 pooka Exp $	*/
+/*	$NetBSD: puffs.h,v 1.56 2007/05/15 13:44:47 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -40,6 +40,7 @@
 #include <sys/mount.h>
 #include <sys/stat.h>
 #include <sys/statvfs.h>
+#include <sys/time.h>
 #include <sys/vnode.h>
 
 #include <fs/puffs/puffs_msgif.h>
@@ -361,7 +362,7 @@ enum {
 #define PUFFSOP_SETFSNOP(ops, opname)					\
     (ops)->puffs_fs_##opname = puffs_fsnop_##opname
 
-#define PUFFS_DEVEL_LIBVERSION 16
+#define PUFFS_DEVEL_LIBVERSION 17
 #define puffs_mount(a,b,c,d,e,f) \
     _puffs_mount(PUFFS_DEVEL_LIBVERSION,a,b,c,d,e,f)
 #define puffs_init(a,b,c,d) \
@@ -381,22 +382,27 @@ if (cp)	{								\
 	(*(ncp))++;							\
 }
 
+/* mainloop */
+typedef void (*puffs_ml_loop_fn)(struct puffs_usermount *);
+
 /* framebuf stuff */
 struct puffs_framebuf;
-typedef int (*puffs_framebuf_readframe_fn)(struct puffs_usermount *,
+typedef int (*puffs_framev_readframe_fn)(struct puffs_usermount *,
 					   struct puffs_framebuf *,
 					   int, int *);
-typedef	int (*puffs_framebuf_writeframe_fn)(struct puffs_usermount *,
+typedef	int (*puffs_framev_writeframe_fn)(struct puffs_usermount *,
 					    struct puffs_framebuf *,
 					    int, int *);
-typedef int (*puffs_framebuf_respcmp_fn)(struct puffs_usermount *,
+typedef int (*puffs_framev_respcmp_fn)(struct puffs_usermount *,
 					 struct puffs_framebuf *,
 					 struct puffs_framebuf *);
-typedef void (*puffs_framebuf_loop_fn)(struct puffs_usermount *);
-
-typedef void (*puffs_framebuf_cb)(struct puffs_usermount *,
-				  struct puffs_framebuf *,
-				  void *);
+typedef void (*puffs_framev_fdnotify_fn)(struct puffs_usermount *, int, int);
+typedef void (*puffs_framev_cb)(struct puffs_usermount *,
+				struct puffs_framebuf *,
+				void *);
+#define PUFFS_FBGONE_READ	0x01
+#define PUFFS_FBGONE_WRITE	0x02
+#define PUFFS_FBGONE_BOTH(a)	((a)==(PUFFS_FBGONE_READ|PUFFS_FBGONE_WRITE))
 
 
 __BEGIN_DECLS
@@ -415,6 +421,9 @@ int	puffs_getselectable(struct puffs_usermount *);
 int	puffs_setblockingmode(struct puffs_usermount *, int);
 int	puffs_getstate(struct puffs_usermount *);
 void	puffs_setstacksize(struct puffs_usermount *, size_t);
+
+void	puffs_ml_setloopfn(struct puffs_usermount *, puffs_ml_loop_fn);
+void	puffs_ml_settimeout(struct puffs_usermount *, struct timespec *);
 
 void			puffs_setroot(struct puffs_usermount *,
 				      struct puffs_node *);
@@ -533,7 +542,7 @@ void			puffs_cc_destroy(struct puffs_cc *);
 
 int	puffs_dopreq(struct puffs_usermount *, struct puffs_req *,
 		     struct puffs_putreq *);
-int	puffs_docc(struct puffs_cc *, struct puffs_putreq *);
+void	puffs_docc(struct puffs_cc *, struct puffs_putreq *);
 
 /*
  * Flushing / invalidation routines
@@ -585,11 +594,11 @@ int	puffs_fs_suspend(struct puffs_usermount *);
  * Frame buffering
  */
 
-int	puffs_framebuf_init(struct puffs_usermount *,
-			    puffs_framebuf_readframe_fn,
-			    puffs_framebuf_writeframe_fn,
-			    puffs_framebuf_respcmp_fn,
-			    puffs_framebuf_loop_fn);
+void	puffs_framev_init(struct puffs_usermount *,
+			  puffs_framev_readframe_fn,
+			  puffs_framev_writeframe_fn,
+			  puffs_framev_respcmp_fn,
+			  puffs_framev_fdnotify_fn);
 
 struct puffs_framebuf 	*puffs_framebuf_make(void);
 void			puffs_framebuf_destroy(struct puffs_framebuf *);
@@ -611,16 +620,17 @@ int	puffs_framebuf_seekset(struct puffs_framebuf *, size_t);
 int	puffs_framebuf_getwindow(struct puffs_framebuf *, size_t,
 				 void **, size_t *);
 
-int	puffs_framebuf_enqueue_cc(struct puffs_cc *, int,
-				  struct puffs_framebuf *);
-int	puffs_framebuf_enqueue_cb(struct puffs_usermount *, int,
-				  struct puffs_framebuf *,
-				  puffs_framebuf_cb, void *);
-int	puffs_framebuf_enqueue_justsend(struct puffs_usermount *, int,
-					struct puffs_framebuf *, int);
+int	puffs_framev_enqueue_cc(struct puffs_cc *, int,
+				struct puffs_framebuf *);
+int	puffs_framev_enqueue_cb(struct puffs_usermount *, int,
+				struct puffs_framebuf *,
+				puffs_framev_cb, void *);
+int	puffs_framev_enqueue_justsend(struct puffs_usermount *, int,
+				      struct puffs_framebuf *, int);
 
-int	puffs_framebuf_addfd(struct puffs_usermount *pu, int);
-int	puffs_framebuf_removefd(struct puffs_usermount *pu, int);
+int	puffs_framev_addfd(struct puffs_usermount *pu, int);
+int	puffs_framev_removefd(struct puffs_usermount *pu, int, int);
+void	puffs_framev_unmountonclose(struct puffs_usermount *pu, int, int);
 
 __END_DECLS
 

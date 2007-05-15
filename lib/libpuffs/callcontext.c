@@ -1,4 +1,4 @@
-/*	$NetBSD: callcontext.c,v 1.5 2007/05/10 12:36:44 pooka Exp $	*/
+/*	$NetBSD: callcontext.c,v 1.6 2007/05/15 13:44:46 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006 Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: callcontext.c,v 1.5 2007/05/10 12:36:44 pooka Exp $");
+__RCSID("$NetBSD: callcontext.c,v 1.6 2007/05/15 13:44:46 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -52,8 +52,8 @@ void
 puffs_cc_yield(struct puffs_cc *pcc)
 {
 
-	assert((pcc->pcc_flags & PCC_DONE) == 0);
 	assert(pcc->pcc_flags & PCC_REALCC);
+	pcc->pcc_flags &= ~PCC_BORROWED;
 
 	/* romanes eunt domus */
 	swapcontext(&pcc->pcc_uc, &pcc->pcc_uc_ret);
@@ -67,6 +67,23 @@ puffs_cc_continue(struct puffs_cc *pcc)
 
 	/* ramble on */
 	swapcontext(&pcc->pcc_uc_ret, &pcc->pcc_uc);
+}
+
+/*
+ * "Borrows" pcc, *NOT* called from pcc owner.  Acts like continue.
+ * So the idea is to use this, give something the context back to
+ * run to completion and then jump back to where ever this was called
+ * from after the op dispatching is complete (or if the pcc decides to
+ * yield again).
+ */
+void
+puffs_goto(struct puffs_cc *loanpcc)
+{
+
+	assert(loanpcc->pcc_flags & PCC_REALCC);
+	loanpcc->pcc_flags |= PCC_BORROWED;
+
+	swapcontext(&loanpcc->pcc_uc_ret, &loanpcc->pcc_uc);
 }
 
 struct puffs_usermount *
@@ -94,7 +111,6 @@ puffs_cc_create(struct puffs_usermount *pu)
 		return NULL;
 	memset(pcc, 0, sizeof(struct puffs_cc));
 	pcc->pcc_pu = pu;
-	pcc->pcc_priv = (void *)0xdeadbeef;
 	pcc->pcc_flags = PCC_REALCC;
 
 	/* initialize both ucontext's */

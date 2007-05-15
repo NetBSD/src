@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.c,v 1.45 2007/05/11 21:42:42 pooka Exp $	*/
+/*	$NetBSD: puffs.c,v 1.46 2007/05/15 13:44:47 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: puffs.c,v 1.45 2007/05/11 21:42:42 pooka Exp $");
+__RCSID("$NetBSD: puffs.c,v 1.46 2007/05/15 13:44:47 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -114,10 +114,24 @@ puffs_getselectable(struct puffs_usermount *pu)
 int
 puffs_setblockingmode(struct puffs_usermount *pu, int mode)
 {
-	int x;
+	int rv, x;
+
+	if (mode != PUFFSDEV_BLOCK && mode != PUFFSDEV_NONBLOCK) {
+		errno = EINVAL;
+		return -1;
+	}
 
 	x = mode;
-	return ioctl(pu->pu_kargs.pa_fd, FIONBIO, &x);
+	rv = ioctl(pu->pu_kargs.pa_fd, FIONBIO, &x);
+
+	if (rv == 0) {
+		if (mode == PUFFSDEV_BLOCK)
+			pu->pu_state &= ~PU_ASYNCFD;
+		else
+			pu->pu_state |= PU_ASYNCFD;
+	}
+
+	return rv;
 }
 
 int
@@ -244,6 +258,25 @@ puffs_set_namemod(struct puffs_usermount *pu, pu_namemod_fn fn)
 }
 
 void
+puffs_ml_setloopfn(struct puffs_usermount *pu, puffs_ml_loop_fn lfn)
+{
+
+	pu->pu_ml_lfn = lfn;
+}
+
+void
+puffs_ml_settimeout(struct puffs_usermount *pu, struct timespec *ts)
+{
+
+	if (ts == NULL) {
+		pu->pu_ml_timep = NULL;
+	} else {
+		pu->pu_ml_timeout = *ts;
+		pu->pu_ml_timep = &pu->pu_ml_timeout;
+	}
+}
+
+void
 puffs_setback(struct puffs_cc *pcc, int whatback)
 {
 	struct puffs_req *preq = pcc->pcc_preq;
@@ -317,6 +350,7 @@ _puffs_init(int develv, struct puffs_ops *pops, const char *puffsname,
 	pu->pu_cc_stacksize = PUFFS_CC_STACKSIZE_DEFAULT;
 	LIST_INIT(&pu->pu_pnodelst);
 	LIST_INIT(&pu->pu_framectrl.fb_ios);
+	LIST_INIT(&pu->pu_ccnukelst);
 
 	/* defaults for some user-settable translation functions */
 	pu->pu_cmap = NULL; /* identity translation */
@@ -395,7 +429,7 @@ puffs_exit(struct puffs_usermount *pu, int force)
 	while ((pn = LIST_FIRST(&pu->pu_pnodelst)) != NULL)
 		puffs_pn_put(pn);
 
-	puffs_framebuf_exit(pu);
+	puffs_framev_exit(pu);
 	if (pu->pu_haskq)
 		close(pu->pu_kq);
 	free(pu);
@@ -403,9 +437,6 @@ puffs_exit(struct puffs_usermount *pu, int force)
 	return 0; /* always succesful for now, WILL CHANGE */
 }
 
-/*
- * XXX: should deal with errors way way way better
- */
 int
 puffs_mainloop(struct puffs_usermount *pu, int flags)
 {
@@ -459,8 +490,20 @@ puffs_mainloop(struct puffs_usermount *pu, int flags)
 		goto out;
 
 	while (puffs_getstate(pu) != PUFFS_STATE_UNMOUNTED) {
-		if (pfctrl->lfb)
-			pfctrl->lfb(pu);
+		if (pu->pu_ml_lfn)
+			pu->pu_ml_lfn(pu);
+
+		/* micro optimization: skip kevent syscall if possible */
+		if (pfctrl->nfds == 0 && pu->pu_ml_timep == NULL
+		    && (pu->pu_state & PU_ASYNCFD) == 0) {
+			if (puffs_req_handle(pgr, ppr, 0) == -1)
+				goto out;
+			if (puffs_req_putput(ppr) == -1)
+				goto out;
+			puffs_req_resetput(ppr);
+			continue;
+		}
+		/* else: do full processing */
 
 		/*
 		 * Build list of which to enable/disable in writecheck.
@@ -468,38 +511,48 @@ puffs_mainloop(struct puffs_usermount *pu, int flags)
 		 */
 		nchanges = 0;
 		LIST_FOREACH(fio, &pfctrl->fb_ios, fio_entries) {
+			if (fio->stat & FIO_WRGONE)
+				continue;
+
 			/*
 			 * Try to write out everything to avoid the
 			 * need for enabling EVFILT_WRITE.  The likely
 			 * case is that we can fit everything into the
 			 * socket buffer.
 			 */
-			if (puffs_framebuf_output(pu, pfctrl, fio) == -1)
-				goto out;
+			if (puffs_framev_output(pu, pfctrl, fio)) {
+				/* need kernel notify? (error condition) */
+				if (puffs_req_putput(ppr) == -1)
+					goto out;
+				puffs_req_resetput(ppr);
+			}
 
+			/* en/disable write checks for kqueue as needed */
 			assert((FIO_EN_WRITE(fio) && FIO_RM_WRITE(fio)) == 0);
 			if (FIO_EN_WRITE(fio)) {
-				EV_SET(&pfctrl->ch_evs[nchanges], fio->io_fd,
+				EV_SET(&pfctrl->evs[nchanges], fio->io_fd,
 				    EVFILT_WRITE, EV_ENABLE, 0, 0,
 				    (uintptr_t)fio);
-				fio->wrstat = 1; /* XXX: not before call */
+				fio->stat |= FIO_WR;
 				nchanges++;
 			}
 			if (FIO_RM_WRITE(fio)) {
-				EV_SET(&pfctrl->ch_evs[nchanges], fio->io_fd,
+				EV_SET(&pfctrl->evs[nchanges], fio->io_fd,
 				    EVFILT_WRITE, EV_DISABLE, 0, 0,
 				    (uintptr_t)fio);
-				fio->wrstat = 0; /* XXX: not before call */
+				fio->stat &= ~FIO_WR;
 				nchanges++;
 			}
+			assert(nchanges <= pfctrl->nfds);
 		}
 
-		ndone = kevent(pu->pu_kq, pfctrl->ch_evs, nchanges,
-		    pfctrl->evs, pfctrl->nfds+1, NULL);
+		ndone = kevent(pu->pu_kq, pfctrl->evs, nchanges,
+		    pfctrl->evs, pfctrl->nfds+1, pu->pu_ml_timep);
 		if (ndone == -1)
 			goto out;
-
-		/* XXX: handle errors */
+		/* micro optimize */
+		if (ndone == 0)
+			continue;
 
 		/* iterate over the results */
 		for (curev = pfctrl->evs; ndone--; curev++) {
@@ -510,16 +563,31 @@ puffs_mainloop(struct puffs_usermount *pu, int flags)
 				continue;
 			}
 
-			if (curev->filter == EVFILT_READ) {
-				if (puffs_framebuf_input(pu, pfctrl,
-				    (void *)curev->udata, ppr) == -1)
-					goto out;
+			fio = (void *)curev->udata;
+			if (curev->flags & EV_ERROR) {
+				assert(curev->filter == EVFILT_WRITE);
+				fio->stat &= ~FIO_WR;
+
+				/* XXX: how to know if it's a transient error */
+				puffs_framev_writeclose(pu, fio,
+				    (int)curev->data);
+				continue;
 			}
 
-			if (curev->filter == EVFILT_WRITE) {
-				if (puffs_framebuf_output(pu, pfctrl,
-				    (void *)curev->udata) == -1)
-					goto out;
+			if (curev->filter == EVFILT_READ) {
+				if (curev->flags & EV_EOF)
+					puffs_framev_readclose(pu, fio,
+					    ECONNABORTED);
+				else
+					puffs_framev_input(pu, pfctrl,
+					    fio, ppr);
+
+			} else if (curev->filter == EVFILT_WRITE) {
+				if (curev->flags & EV_EOF)
+					puffs_framev_writeclose(pu, fio,
+					    ECONNABORTED);
+				else
+					puffs_framev_output(pu, pfctrl, fio);
 			}
 		}
 
@@ -527,6 +595,15 @@ puffs_mainloop(struct puffs_usermount *pu, int flags)
 		if (puffs_req_putput(ppr) == -1)
 			goto out;
 		puffs_req_resetput(ppr);
+
+		/*
+		 * Really free fd's now that we don't have references
+		 * to them.
+		 */
+		while ((fio = LIST_FIRST(&pfctrl->fb_ios_rmlist)) != NULL) {
+			LIST_REMOVE(fio, fio_entries);
+			free(fio);
+		}
 	}
 	errno = 0;
 

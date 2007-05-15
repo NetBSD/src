@@ -1,4 +1,4 @@
-/*	$NetBSD: dispatcher.c,v 1.2 2007/05/11 21:44:00 pooka Exp $	*/
+/*	$NetBSD: dispatcher.c,v 1.3 2007/05/15 13:44:46 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: dispatcher.c,v 1.2 2007/05/11 21:44:00 pooka Exp $");
+__RCSID("$NetBSD: dispatcher.c,v 1.3 2007/05/15 13:44:46 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -48,6 +48,8 @@ __RCSID("$NetBSD: dispatcher.c,v 1.2 2007/05/11 21:44:00 pooka Exp $");
 
 #include "puffs_priv.h"
 
+static void processresult(struct puffs_cc *, struct puffs_putreq *, int);
+
 /*
  * Set the following to 1 to not handle each request on a separate
  * stack.  This is highly volatile kludge, therefore no external
@@ -55,13 +57,13 @@ __RCSID("$NetBSD: dispatcher.c,v 1.2 2007/05/11 21:44:00 pooka Exp $");
  */
 int puffs_fakecc;
 
+/* user-visible point to handle a request from */
 int
 puffs_dopreq(struct puffs_usermount *pu, struct puffs_req *preq,
 	struct puffs_putreq *ppr)
 {
 	struct puffs_cc fakecc;
 	struct puffs_cc *pcc;
-	int rv;
 
 	/*
 	 * XXX: the structure is currently a mess.  anyway, trap
@@ -99,57 +101,32 @@ puffs_dopreq(struct puffs_usermount *pu, struct puffs_req *preq,
 		(void) memcpy(pcc->pcc_preq, preq, preq->preq_buflen);
 	}
 
-	rv = puffs_docc(pcc, ppr);
-
-	if ((pcc->pcc_flags & PCC_DONE) == 0)
-		return 0;
-
-	return rv;
+	puffs_docc(pcc, ppr);
+	return 0;
 }
 
 enum {PUFFCALL_ANSWER, PUFFCALL_IGNORE, PUFFCALL_AGAIN};
 
-int
+/* user-visible continuation point */
+void
 puffs_docc(struct puffs_cc *pcc, struct puffs_putreq *ppr)
 {
 	struct puffs_usermount *pu = pcc->pcc_pu;
-	int rv;
+	struct puffs_cc *pcc_iter;
 
 	assert((pcc->pcc_flags & PCC_DONE) == 0);
+	pcc->pcc_ppr = ppr;
 
 	if (pcc->pcc_flags & PCC_REALCC)
 		puffs_cc_continue(pcc);
 	else
 		puffs_calldispatcher(pcc);
-	rv = pcc->pcc_rv;
 
-	if ((pcc->pcc_flags & PCC_DONE) == 0)
-		rv = PUFFCALL_AGAIN;
-
-	/* check if we need to store this reply */
-	switch (rv) {
-	case PUFFCALL_ANSWER:
-		if (pu->pu_flags & PUFFS_FLAG_OPDUMP)
-			puffsdump_rv(pcc->pcc_preq);
-
-		if (pcc->pcc_flags & PCC_REALCC)
-			puffs_req_putcc(ppr, pcc);
-		else
-			puffs_req_put(ppr, pcc->pcc_preq);
-		break;
-	case PUFFCALL_IGNORE:
-		if (pcc->pcc_flags & PCC_REALCC)
-			puffs_cc_destroy(pcc);
-		break;
-	case PUFFCALL_AGAIN:
-		if (pcc->pcc_flags & PCC_FAKECC)
-			assert(pcc->pcc_flags & PCC_DONE);
-		break;
-	default:
-		assert(/*CONSTCOND*/0);
+	/* can't do this above due to PCC_BORROWED */
+	while ((pcc_iter = LIST_FIRST(&pu->pu_ccnukelst)) != NULL) {
+		LIST_REMOVE(pcc_iter, nlst_entries);
+		puffs_cc_destroy(pcc_iter);
 	}
-
-	return 0;
 }
 
 /* library private, but linked from callcontext.c */
@@ -871,9 +848,47 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 	}
 
 	preq->preq_rv = error;
-
-	pcc->pcc_rv = rv;
 	pcc->pcc_flags |= PCC_DONE;
+
+	/*
+	 * Note, we are calling this from here so that we can run it
+	 * off of the continuation stack.  Otherwise puffs_goto() would
+	 * not work.
+	 */
+	processresult(pcc, pcc->pcc_ppr, rv);
+}
+
+static void
+processresult(struct puffs_cc *pcc, struct puffs_putreq *ppr, int how)
+{
+	struct puffs_usermount *pu = puffs_cc_getusermount(pcc);
+
+	/* check if we need to store this reply */
+	switch (how) {
+	case PUFFCALL_ANSWER:
+		if (pu->pu_flags & PUFFS_FLAG_OPDUMP)
+			puffsdump_rv(pcc->pcc_preq);
+
+		if (pcc->pcc_flags & PCC_REALCC)
+			puffs_req_putcc(ppr, pcc);
+		else
+			puffs_req_put(ppr, pcc->pcc_preq);
+		break;
+	case PUFFCALL_IGNORE:
+		if (pcc->pcc_flags & PCC_REALCC)
+			LIST_INSERT_HEAD(&pu->pu_ccnukelst, pcc, nlst_entries);
+		break;
+	case PUFFCALL_AGAIN:
+		if (pcc->pcc_flags & PCC_FAKECC)
+			assert(pcc->pcc_flags & PCC_DONE);
+		break;
+	default:
+		assert(/*CONSTCOND*/0);
+	}
+
+	/* who needs information when you're living on borrowed time? */
+	if (pcc->pcc_flags & PCC_BORROWED)
+		puffs_cc_yield(pcc); /* back to borrow source */
 }
 
 
