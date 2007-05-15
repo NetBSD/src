@@ -1,4 +1,4 @@
-# $NetBSD: services,v 1.86 2007/05/08 20:38:37 christos Exp $
+# $NetBSD: services,v 1.87 2007/05/15 19:58:27 christos Exp $
 # See also: services(5), http://www.sethwklein.net/projects/iana-etc/
 #
 # PORT NUMBERS
@@ -19715,3 +19715,101 @@ iqobject        48619/udp  # iqobject
 # 
 # []
 # 
+# Local NetBSD additions [aliases or missing stuff]
+sink		9/tcp	null
+sink		9/udp	null
+users		11/tcp
+quote		17/tcp
+quote		17/udp
+ttytst		19/tcp	source
+ttytst		19/udp	source
+mail		25/tcp
+mail		25/udp
+timserver	37/tcp
+timserver	37/udp
+resource	39/tcp
+resource	39/udp
+netrjs		77/tcp
+netrjs		77/udp
+krb5		88/tcp
+krb5		88/udp
+hostnames	101/tcp
+hostnames	101/udp
+tsap		102/tcp
+tsap		102/udp
+cso-ns		105/tcp
+cso-ns		105/udp
+poppass		106/tcp	poppassd
+postoffice	109/tcp
+rpcbind		111/tcp
+rpcbind		111/udp
+authentications	113/tcp
+readnews	119/tcp	untp
+imap2		143/tcp imap4
+imap2		143/udp imap4
+z3950		210/tcp wais
+z3950		210/udp wais
+krcmd		544/tcp
+ekshell  	545/tcp
+comsat		512/udp
+whod		513/udp
+cmd		514/tcp
+spooler		515/tcp
+spooler		515/udp
+route		520/udp routed
+timeserver	525/tcp
+timeserver	525/udp
+newdate		526/tcp
+newdate		526/udp
+rpc		530/tcp
+rpc		530/udp
+chat		531/tcp
+chat		531/udp
+netnews		532/tcp
+netnews		532/udp
+uucpd		540/tcp
+uucpd		540/udp
+rdist		541/tcp	rdistd
+rfs_server	556/tcp	rfs		# Brunhoff remote filesystem
+smtps		465/tcp			# smtp protocol over TLS/SSL
+smtps		465/udp			# smtp protocol over TLS/SSL
+kdc		750/tcp	kerberos4
+kdc		750/udp	kerberos4
+kerberos-master	751/udp			# Kerberos admin server udp
+kerberos-master	751/tcp			# Kerberos admin server tcp
+hprop		754/tcp			# Heimdal KDC database propagation
+krbupdate	760/tcp	 kreg		# BSD Kerberos registration
+kpwd		761/tcp			# old BSD Kerberos `passwd'
+supfilesrv	871/tcp			# SUP server
+swat		901/tcp			# Samba Web Administration Tool
+kpop		1109/tcp		# Kerberos POP server
+supfiledbg	1127/tcp		# SUP debugging
+prospero-np	1525/tcp		# Prospero non-privileged
+prospero-np	1525/udp
+radacct		1813/tcp
+radacct		1813/udp
+sieve		2000/tcp		# RFC3028
+lmtp		2003/tcp		# Local Mail Transfer Protocol
+nfsd		2049/udp		# Sun NFS
+nfsd		2049/tcp		# Sun NFS
+eklogin		2105/tcp		# Kerberos encrypted `rlogin'
+zephyr-hm-srv   2105/udp		# Zephyr hm-serv connection
+ekshell2	2106/tcp		# Encrypted kshell - UColorado, Boulder
+iscsi		3260/tcp
+fud		4201/udp		# Cyrus IMAP finger-like service
+X11		6000/tcp		# X Window System
+ircd		6667/tcp		# Often used IRC port (also see 194)
+kamanda		10081/udp		# Amanda with Kerberos
+amandaidx	10082/tcp		# Amanda index server
+amidxtape	10083/tcp		# Amanda dump image server
+hunt		26740/udp		# multi-player/multi-host maze-wars
+#
+# Netatalk (in-kernel Appletalk) services
+# Note: The running kernel must be configured with "options NETATALK"
+# and software not included in NetBSD, such as Netatalk version 1.4b2
+# or later, must be used to take advantage of these services.
+#
+rtmp		1/ddp			# Routing Table Maintenance Protocol
+nbp		2/ddp			# Name Binding Protocol
+echo		4/ddp			# AppleTalk Echo Protocol
+zip		6/ddp			# Zone Information Protocol
