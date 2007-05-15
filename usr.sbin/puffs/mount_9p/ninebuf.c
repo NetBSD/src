@@ -1,4 +1,4 @@
-/*      $NetBSD: ninebuf.c,v 1.4 2007/05/15 13:46:47 pooka Exp $	*/
+/*      $NetBSD: ninebuf.c,v 1.5 2007/05/15 14:22:58 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ninebuf.c,v 1.4 2007/05/15 13:46:47 pooka Exp $");
+__RCSID("$NetBSD: ninebuf.c,v 1.5 2007/05/15 14:22:58 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -307,8 +307,10 @@ p9pbuf_get_data(struct puffs_framebuf *pb, uint8_t **dp, uint16_t *dlenp)
 	if (dp) {
 		data = emalloc(len+1);   
 		rv = puffs_framebuf_getdata(pb, data, len);
-		if (rv)
+		if (rv) {
+			free(data);
 			return errno;
+		}
 		data[len] = '\0';
 		*dp = data;
 	} else
