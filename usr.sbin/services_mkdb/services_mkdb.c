@@ -1,4 +1,4 @@
-/*	$NetBSD: services_mkdb.c,v 1.8 2007/05/13 17:43:59 christos Exp $	*/
+/*	$NetBSD: services_mkdb.c,v 1.9 2007/05/15 19:57:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,12 +38,12 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: services_mkdb.c,v 1.8 2007/05/13 17:43:59 christos Exp $");
+__RCSID("$NetBSD: services_mkdb.c,v 1.9 2007/05/15 19:57:40 christos Exp $");
 #endif /* not lint */
-
 
 #include <sys/param.h>
 
+#include <assert.h>
 #include <db.h>
 #include <err.h>
 #include <fcntl.h>
@@ -54,14 +54,23 @@ __RCSID("$NetBSD: services_mkdb.c,v 1.8 2007/05/13 17:43:59 christos Exp $");
 #include <unistd.h>
 #include <util.h>
 #include <ctype.h>
+#include <errno.h>
 #include <stringlist.h>
 
 static char tname[MAXPATHLEN];
 
+#define	PMASK		0xffff
+#define PROTOMAX	5
+
+static void	add(DB *, StringList *, size_t, const char *, size_t *, int);
+static StringList ***parseservices(const char *, StringList *);
 static void	cleanup(void);
-static void	store(const char *, size_t, DB *, DBT *, DBT *, int);
+static void	store(DB *, DBT *, DBT *, int);
 static void	killproto(DBT *);
 static char    *getstring(const char *, size_t, char **, const char *);
+static size_t	getprotoindex(StringList *, const char *);
+static const char *getprotostr(StringList *, size_t);
+static const char *mkaliases(StringList *, char *, size_t);
 static void	usage(void) __attribute__((__noreturn__));
 
 static const HASHINFO hinfo = {
@@ -78,14 +87,13 @@ int
 main(int argc, char *argv[])
 {
 	DB	*db;
-	FILE	*fp;
 	int	 ch;
-	size_t	 len, line, cnt;
-	char	 keyb[BUFSIZ], datab[BUFSIZ], *p;
-	DBT	 data, key;
 	const char *fname = _PATH_SERVICES;
 	const char *dbname = _PATH_SERVICES_DB;
 	int	 warndup = 1;
+	size_t	 cnt = 0;
+	StringList *sl, ***svc;
+	size_t port, proto;
 
 	setprogname(argv[0]);
 
@@ -110,8 +118,7 @@ main(int argc, char *argv[])
 	if (argc == 1)
 		fname = argv[0];
 
-	if ((fp = fopen(fname, "r")) == NULL)
-		err(1, "Cannot open `%s'", fname);
+	svc = parseservices(fname, sl = sl_init());
 
 	if (atexit(cleanup))
 		err(1, "Cannot install exit handler");
@@ -122,20 +129,104 @@ main(int argc, char *argv[])
 	if (!db)
 		err(1, "Error opening temporary database `%s'", tname);
 
+
+	for (port = 0; port < PMASK + 1; port++) {
+		if (svc[port] == NULL)
+			continue;
+
+		for (proto = 0; proto < PROTOMAX; proto++) {
+			StringList *s;
+			if ((s = svc[port][proto]) == NULL)
+				continue;
+			add(db, s, port, getprotostr(sl, proto), &cnt, warndup);
+		}
+
+		free(svc[port]);
+	}
+
+	free(svc);
+	sl_free(sl, 1);
+
+	if ((db->close)(db))
+		err(1, "Error closing temporary database `%s'", tname);
+
+	if (rename(tname, dbname) == -1)
+		err(1, "Cannot rename `%s' to `%s'", tname, dbname);
+
+	return 0;
+}
+
+static void
+add(DB *db, StringList *sl, size_t port, const char *proto, size_t *cnt,
+    int warndup)
+{
+	size_t i;
+	char	 keyb[BUFSIZ], datab[BUFSIZ], abuf[BUFSIZ];
+	DBT	 data, key;
 	key.data = keyb;
 	data.data = datab;
 
-	cnt = line = 0;
+#ifdef DEBUG
+	(void)printf("add %s %zu %s [ ", sl->sl_str[0], port, proto);
+	for (i = 1; i < sl->sl_cur; i++)
+	    (void)printf("%s ", sl->sl_str[i]);
+	(void)printf("]\n");
+#endif
+
+	/* key `indirect key', data `full line' */
+	data.size = snprintf(datab, sizeof(datab), "%zu", (*cnt)++) + 1;
+	key.size = snprintf(keyb, sizeof(keyb), "%s %zu/%s %s",
+	    sl->sl_str[0], port, proto, mkaliases(sl, abuf, sizeof(abuf))) + 1;
+	store(db, &data, &key, warndup);
+
+	/* key `\377port/proto', data = `indirect key' */
+	key.size = snprintf(keyb, sizeof(keyb), "\377%zu/%s",
+	    port, proto) + 1;
+	store(db, &key, &data, warndup);
+
+	/* key `\377port', data = `indirect key' */
+	killproto(&key);
+	store(db, &key, &data, warndup);
+
+	/* add references for service and all aliases */
+	for (i = 0; i < sl->sl_cur; i++) {
+		/* key `\376service/proto', data = `indirect key' */
+		key.size = snprintf(keyb, sizeof(keyb), "\376%s/%s",
+		    sl->sl_str[i], proto) + 1;
+		store(db, &key, &data, warndup);
+
+		/* key `\376service', data = `indirect key' */
+		killproto(&key);
+		store(db, &key, &data, warndup);
+	}
+	sl_free(sl, 1);
+}
+
+static StringList ***
+parseservices(const char *fname, StringList *sl)
+{
+	size_t len, line, pindex;
+	FILE *fp;
+	StringList ***svc, *s;
+	char *p, *ep;
+
+	if ((fp = fopen(fname, "r")) == NULL)
+		err(1, "Cannot open `%s'", fname);
+
+	line = 0;
+	svc = ecalloc(PMASK + 1, sizeof(StringList **));
+
 	/* XXX: change NULL to "\0\0#" when fparseln fixed */
 	for (; (p = fparseln(fp, &len, &line, NULL, 0)) != NULL; free(p)) {
 		char	*name, *port, *proto, *aliases, *cp, *alias;
-		StringList *sl;
-		size_t i;
+		unsigned long pnum;
 
 		if (len == 0)
 			continue;
+
 		for (cp = p; *cp && isspace((unsigned char)*cp); cp++)
 			continue;
+
 		if (*cp == '\0' || *cp == '#')
 			continue;
 
@@ -145,6 +236,15 @@ main(int argc, char *argv[])
 		if ((port = getstring(fname, line, &cp, "port")) == NULL)
 			continue;
 
+		if (cp) {
+			for (aliases = cp; *cp && *cp != '#'; cp++)
+				continue;
+
+			if (*cp)
+				*cp = '\0';
+		} else
+			aliases = NULL;
+
 		proto = strchr(port, '/');
 		if (proto == NULL || proto[1] == '\0') {
 			warnx("%s, %zu: no protocol found", fname, line);
@@ -152,55 +252,41 @@ main(int argc, char *argv[])
 		}
 		*proto++ = '\0';
 
-		for (aliases = cp; cp && isspace((unsigned char)*aliases);
-		    aliases++)
+		errno = 0;
+		pnum = strtoul(port, &ep, 0);
+		if (*port == '\0' || *ep != '\0') {
+			warnx("%s, %zu: invalid port `%s'", fname, line, port);
 			continue;
+		}
+		if ((errno == ERANGE && pnum == ULONG_MAX) || pnum > PMASK) {
+			warnx("%s, %zu: port too big `%s'", fname, line, port);
+			continue;
+		}
 
-		/* key `indirect key', data `full line' */
-		data.size = snprintf(datab, sizeof(datab), "%zu", cnt++) + 1;
-		key.size = snprintf(keyb, sizeof(keyb), "%s %s/%s %s",
-		    name, port, proto, aliases ? aliases : "") + 1;
-		store(fname, line, db, &data, &key, warndup);
+		if (svc[pnum] == NULL)
+			svc[pnum] = ecalloc(PROTOMAX, sizeof(StringList *));
 
-		/* key `\377port/proto', data = `indirect key' */
-		key.size = snprintf(keyb, sizeof(keyb), "\377%s/%s",
-		    port, proto) + 1;
-		store(fname, line, db, &key, &data, warndup);
-
-		/* key `\377port', data = `indirect key' */
-		killproto(&key);
-		store(fname, line, db, &key, &data, 0);
-
+		pindex = getprotoindex(sl, proto);
+		if (svc[pnum][pindex] == NULL)
+			s = svc[pnum][pindex] = sl_init();
+		else
+			s = svc[pnum][pindex];
+			
 		/* build list of aliases */
-		sl = sl_init();
-		(void)sl_add(sl, name);
-		while ((alias = strsep(&cp, " \t")) != NULL) {
-			if (alias[0] == '\0')
-				continue;
-			(void)sl_add(sl, alias);
-		}
+		if (sl_find(s, name) == NULL)
+			(void)sl_add(s, estrdup(name));
 
-		/* add references for service and all aliases */
-		for (i = 0; i < sl->sl_cur; i++) {
-			/* key `\376service/proto', data = `indirect key' */
-			key.size = snprintf(keyb, sizeof(keyb), "\376%s/%s",
-			    sl->sl_str[i], proto) + 1;
-			store(fname, line, db, &key, &data, warndup);
-
-			/* key `\376service', data = `indirect key' */
-			killproto(&key);
-			store(fname, line, db, &key, &data, 0);
+		if (aliases) {
+			while ((alias = strsep(&aliases, " \t")) != NULL) {
+				if (alias[0] == '\0')
+					continue;
+				if (sl_find(s, alias) == NULL)
+					(void)sl_add(s, estrdup(alias));
+			}
 		}
-		sl_free(sl, 0);
 	}
-
-	if ((db->close)(db))
-		err(1, "Error closing temporary database `%s'", tname);
-
-	if (rename(tname, dbname) == -1)
-		err(1, "Cannot rename `%s' to `%s'", tname, dbname);
-
-	return 0;
+	(void)fclose(fp);
+	return svc;
 }
 
 /*
@@ -239,15 +325,22 @@ killproto(DBT *key)
 }
 
 static void
-store(const char *fname, size_t line, DB *db, DBT *key, DBT *data, int warndup)
+store(DB *db, DBT *key, DBT *data, int warndup)
 {
+#ifdef DEBUG
+	int k = key->size - 1;
+	int d = data->size - 1;
+	(void)printf("store [%*.*s] [%*.*s]\n",
+		k, k, (char *)key->data + 1,
+		d, d, (char *)data->data + 1);
+#endif
 	switch ((db->put)(db, key, data, R_NOOVERWRITE)) {
 	case 0:
 		break;
 	case 1:
 		if (warndup)
-			warnx("%s, %zu: duplicate service `%s'",
-			    fname, line, &((char *)key->data)[1]);
+			warnx("duplicate service `%s'",
+			    &((char *)key->data)[1]);
 		break;
 	case -1:
 		err(1, "put");
@@ -256,6 +349,52 @@ store(const char *fname, size_t line, DB *db, DBT *key, DBT *data, int warndup)
 		abort();
 		break;
 	}
+}
+
+static size_t
+getprotoindex(StringList *sl, const char *str)
+{
+	size_t i;
+
+	for (i= 0; i < sl->sl_cur; i++)
+		if (strcmp(sl->sl_str[i], str) == 0)
+			return i;
+
+	if (i == PROTOMAX)
+		errx(1, "Ran out of protocols adding `%s';"
+		    " recompile with larger PROTOMAX", str);
+	(void)sl_add(sl, estrdup(str));
+	return i;
+}
+
+static const char *
+getprotostr(StringList *sl, size_t i)
+{
+	assert(i < sl->sl_cur);
+	return sl->sl_str[i];
+}
+
+static const char *
+mkaliases(StringList *sl, char *buf, size_t len)
+{
+	size_t nc, i, pos;
+
+	for (i = 1, pos = 0; i < sl->sl_cur; i++) {
+		nc = strlcpy(buf + pos, sl->sl_str[i], len);
+		if (nc >= len)
+			goto out;
+		pos += nc;
+		len -= nc;
+		nc = strlcpy(buf + pos, " ", len);
+		if (nc >= len)
+			goto out;
+		pos += nc;
+		len -= nc;
+	}
+	return buf;
+out:
+	warn("aliases for `%s' truncated", sl->sl_str[0]);
+	return buf;
 }
 
 static void
