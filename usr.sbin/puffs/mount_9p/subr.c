@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.c,v 1.3 2007/05/11 16:23:00 pooka Exp $	*/
+/*	$NetBSD: subr.c,v 1.4 2007/05/15 17:08:34 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: subr.c,v 1.3 2007/05/11 16:23:00 pooka Exp $");
+__RCSID("$NetBSD: subr.c,v 1.4 2007/05/15 17:08:34 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -157,6 +157,7 @@ getdfwithoffset(struct puffs_cc *pcc, struct p9pnode *p9n, off_t wantoff,
 
 		p9pbuf_recycleout(pb);
 	}
+	puffs_framebuf_destroy(pb);
 
 	dfp->seekoff = curoff;
 	*rfid = dfp;
@@ -186,10 +187,9 @@ storedf(struct p9pnode *p9n, struct dirfid *dfp)
 void
 nukealldf(struct puffs_cc *pcc, struct p9pnode *p9n)
 {
-	struct dirfid *dfp, *dfp_next;
+	struct dirfid *dfp;
 
-	for (dfp = LIST_FIRST(&p9n->dir_openlist); dfp; dfp = dfp_next) {
-		dfp_next = LIST_NEXT(dfp, entries);
+	while ((dfp = LIST_FIRST(&p9n->dir_openlist)) != NULL) {
 		LIST_REMOVE(dfp, entries);
 		releasedf(pcc, dfp);
 	}
