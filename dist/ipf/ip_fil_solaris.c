@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_solaris.c,v 1.1.1.7 2007/05/01 19:00:49 martti Exp $	*/
+/*	$NetBSD: ip_fil_solaris.c,v 1.1.1.8 2007/05/15 22:26:00 martin Exp $	*/
 
 /*
  * Copyright (C) 1993-2001, 2003 by Darren Reed.
@@ -7,7 +7,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "%W% %G% (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_fil_solaris.c,v 2.62.2.37 2007/04/16 21:05:50 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_fil_solaris.c,v 2.62.2.39 2007/05/12 10:37:15 darrenr Exp";
 #endif
 
 #include <sys/types.h>
@@ -724,6 +724,9 @@ struct in_addr *inp, *inpmask;
 	}
 #endif
 
+	if (((ill_t *)qif->qf_ill)->ill_ipif == NULL)
+		return -1;
+
 	switch (atype)
 	{
 	case FRI_BROADCAST :
@@ -1023,7 +1026,8 @@ frdest_t *fdp;
 		if (!fr || !(fr->fr_flags & FR_RETMASK)) {
 			u_32_t pass;
 
-			(void) fr_checkstate(fin, &pass);
+			if (fr_checkstate(fin, &pass) != NULL)
+				fr_statederef((ipstate_t **)&fin->fin_state);
 		}
 
 		switch (fr_checknatout(fin, NULL))

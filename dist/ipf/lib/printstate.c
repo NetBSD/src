@@ -1,4 +1,4 @@
-/*	$NetBSD: printstate.c,v 1.1.1.7 2007/05/01 19:01:53 martti Exp $	*/
+/*	$NetBSD: printstate.c,v 1.1.1.8 2007/05/15 22:26:09 martin Exp $	*/
 
 /*
  * Copyright (C) 2002-2005 by Darren Reed.
@@ -26,7 +26,7 @@ u_long now;
 		hostname(sp->is_v, &sp->is_dst.in4), sp->is_pass, sp->is_p,
 		sp->is_state[0], sp->is_state[1]);
 	if (opts & OPT_DEBUG)
-		PRINTF(" bkt %d", sp->is_hv);
+		PRINTF(" bkt %d ref %d", sp->is_hv, sp->is_ref);
 	PRINTF("\n\ttag %u ttl %lu", sp->is_tag, sp->is_die - now);
 
 	if (sp->is_p == IPPROTO_TCP) {

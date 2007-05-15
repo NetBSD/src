@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_linux.c,v 1.1.1.5 2007/04/14 20:17:22 martin Exp $	*/
+/*	$NetBSD: ip_fil_linux.c,v 1.1.1.6 2007/05/15 22:25:59 martin Exp $	*/
 
 #include <linux/version.h>
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,0)
@@ -601,7 +601,8 @@ frdest_t *fdp;
 		if (!fr || !(fr->fr_flags & FR_RETMASK)) {
 			u_32_t pass;
 
-			(void) fr_checkstate(fin, &pass);
+			if (fr_checkstate(fin, &pass) != NULL)
+				fr_statederef((ipstate_t **)&fin->fin_state);
 		}
 
 		switch (fr_checknatout(fin, NULL))

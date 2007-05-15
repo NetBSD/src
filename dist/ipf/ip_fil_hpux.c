@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_hpux.c,v 1.1.1.5 2007/04/14 20:17:22 martin Exp $	*/
+/*	$NetBSD: ip_fil_hpux.c,v 1.1.1.6 2007/05/15 22:25:59 martin Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -7,7 +7,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "%W% %G% (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_fil_hpux.c,v 2.45.2.16 2007/02/08 20:05:13 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_fil_hpux.c,v 2.45.2.17 2007/05/10 06:00:55 darrenr Exp";
 #endif
 
 #include <sys/types.h>
@@ -886,7 +886,8 @@ frdest_t *fdp;
 				u_32_t pass;
 
 				fin->fin_flx &= ~FI_STATE;
-				(void) fr_checkstate(fin, &pass);
+				if (fr_checkstate(fin, &pass) != NULL)
+					fr_statederef((ipstate_t **)&fin->fin_state);
 			}
 			
 			switch (fr_checknatout(fin, NULL))

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_proxy.c,v 1.1.1.6 2007/04/14 20:17:37 martin Exp $	*/
+/*	$NetBSD: ip_proxy.c,v 1.1.1.7 2007/05/15 22:26:15 martin Exp $	*/
 
 /*
  * Copyright (C) 1997-2003 by Darren Reed.
@@ -105,7 +105,7 @@ struct file;
 /* END OF INCLUDES */
 
 #if !defined(lint)
-static const char rcsid[] = "@(#)Id: ip_proxy.c,v 2.62.2.18 2006/07/14 06:12:17 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_proxy.c,v 2.62.2.19 2007/04/30 09:07:51 darrenr Exp";
 #endif
 
 static int appr_fixseqack __P((fr_info_t *, ip_t *, ap_session_t *, int ));
@@ -816,7 +816,7 @@ int inc;
 
 	if (ipf_proxy_debug > 8)
 		printf("appr_fixseqack: seq %x ack %x\n",
-			ntohl(tcp->th_seq), ntohl(tcp->th_ack));
+			(u_32_t)ntohl(tcp->th_seq), (u_32_t)ntohl(tcp->th_ack));
 	return ch ? 2 : 0;
 }
 

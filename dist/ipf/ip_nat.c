@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.c,v 1.1.1.21 2007/05/01 19:00:55 martti Exp $	*/
+/*	$NetBSD: ip_nat.c,v 1.1.1.22 2007/05/15 22:26:01 martin Exp $	*/
 
 /*
  * Copyright (C) 1995-2003 by Darren Reed.
@@ -113,7 +113,7 @@ extern struct ifnet vpnif;
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)ip_nat.c	1.11 6/5/96 (C) 1995 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_nat.c,v 2.195.2.76 2007/04/29 06:43:17 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_nat.c,v 2.195.2.82 2007/05/13 00:08:53 darrenr Exp";
 #endif
 
 
@@ -178,6 +178,7 @@ int	fr_nat_init = 0;
 extern	int		pfil_delayed_copy;
 #endif
 
+static	int	nat_flush_entry __P((void *));
 static	int	nat_flushtable __P((void));
 static	int	nat_clearlist __P((void));
 static	void	nat_addnat __P((struct ipnat *));
@@ -853,10 +854,8 @@ void *ctx;
 				ret = nat_flushtable();
 			else if (arg == 1)
 				ret = nat_clearlist();
-			else if (arg >=2 && arg <= 4)
-				ret = nat_extraflush(arg - 2);
 			else
-				error = EINVAL;
+				ret = nat_extraflush(arg);
 		}
 
 		if (getlock) {
@@ -919,6 +918,10 @@ void *ctx;
 			error = ipf_deltoken(arg, uid, ctx);
 		else
 			error = EFAULT;
+		break;
+
+	case SIOCGTQTAB :
+		error = fr_outobj(data, nat_tqb, IPFOBJ_STATETQTAB);
 		break;
 
 	default :
@@ -3744,6 +3747,7 @@ maskloop:
 			MUTEX_ENTER(&nat->nat_lock);
 			nat->nat_ref++;
 			MUTEX_EXIT(&nat->nat_lock);
+			nat->nat_touched = fr_ticks;
 			fin->fin_nat = nat;
 		}
 	} else
@@ -4037,8 +4041,8 @@ maskloop:
 			MUTEX_ENTER(&nat->nat_lock);
 			nat->nat_ref++;
 			MUTEX_EXIT(&nat->nat_lock);
+			nat->nat_touched = fr_ticks;
 			fin->fin_nat = nat;
-			fin->fin_state = nat->nat_state;
 		}
 	} else
 		rval = natfailed;
@@ -5153,10 +5157,9 @@ ipfgeniter_t *itp;
 static int nat_extraflush(which)
 int which;
 {
-	u_long interval, istart, iend;
 	ipftq_t *ifq, *ifqnext;
-	ipftqent_t *tqe, *tqn;
 	nat_t *nat, **natp;
+	ipftqent_t *tqn;
 	int removed;
 	SPL_INT(s);
 
@@ -5181,12 +5184,12 @@ int which;
 		 * Since we're only interested in things that are closing,
 		 * we can start with the appropriate timeout queue.
 		 */
-		for (ifq = ips_tqtqb + IPF_TCPS_CLOSE_WAIT; ifq != NULL;
+		for (ifq = nat_tqb + IPF_TCPS_CLOSE_WAIT; ifq != NULL;
 		     ifq = ifq->ifq_next) {
 
-			for (tqn = ifq->ifq_head; ((tqe = tqn) != NULL); ) {
-				tqn = tqe->tqe_next;
-				nat = tqe->tqe_parent;
+			for (tqn = ifq->ifq_head; tqn != NULL; ) {
+				nat = tqn->tqe_parent;
+				tqn = tqn->tqe_next;
 				if (nat->nat_p != IPPROTO_TCP)
 					break;
 				nat_delete(nat, NL_EXPIRE);
@@ -5197,11 +5200,11 @@ int which;
 		/*
 		 * Also need to look through the user defined queues.
 		 */
-		for (ifq = ips_utqe; ifq != NULL; ifq = ifqnext) {
+		for (ifq = nat_utqe; ifq != NULL; ifq = ifqnext) {
 			ifqnext = ifq->ifq_next;
-			for (tqn = ifq->ifq_head; ((tqe = tqn) != NULL); ) {
-				tqn = tqe->tqe_next;
-				nat = tqe->tqe_parent;
+			for (tqn = ifq->ifq_head; tqn != NULL; ) {
+				nat = tqn->tqe_parent;
+				tqn = tqn->tqe_next;
 				if (nat->nat_p != IPPROTO_TCP)
 					continue;
 
@@ -5216,7 +5219,43 @@ int which;
 		}
 		break;
 
+		/*
+		 * Args 5-11 correspond to flushing those particular states
+		 * for TCP connections.
+		 */
+	case IPF_TCPS_CLOSE_WAIT :
+	case IPF_TCPS_FIN_WAIT_1 :
+	case IPF_TCPS_CLOSING :
+	case IPF_TCPS_LAST_ACK :
+	case IPF_TCPS_FIN_WAIT_2 :
+	case IPF_TCPS_TIME_WAIT :
+	case IPF_TCPS_CLOSED :
+		tqn = nat_tqb[which].ifq_head;
+		while (tqn != NULL) {
+			nat = tqn->tqe_parent;
+			tqn = tqn->tqe_next;
+			nat_delete(nat, NL_FLUSH);
+			removed++;
+		}
+		break;
+	 
 	default :
+		if (which < 30)
+			break;
+	   
+		/*
+		 * Take a large arbitrary number to mean the number of seconds
+		 * for which which consider to be the maximum value we'll allow
+		 * the expiration to be.
+		 */
+		which = IPF_TTLVAL(which);
+		for (natp = &nat_instances; ((nat = *natp) != NULL); ) {
+			if (fr_ticks - nat->nat_touched > which) {
+				nat_delete(nat, NL_FLUSH);
+				removed++;
+			} else
+				natp = &nat->nat_next;
+		}
 		break;
 	}
 
@@ -5226,76 +5265,32 @@ int which;
 	}
 
 	/*
-	 * Asked to remove inactive entries because the table is full, try
-	 * again, 3 times, if first attempt failed with a different criteria
-	 * each time.  The order tried in must be in decreasing age.
-	 * Another alternative is to implement random drop and drop N entries
-	 * at random until N have been freed up.
+	 * Asked to remove inactive entries because the table is full.
 	 */
-	if (fr_ticks - nat_last_force_flush < IPF_TTLVAL(5))
-		goto nat_force_flush_skipped;
-	nat_last_force_flush = fr_ticks;
-
-	if (fr_ticks > IPF_TTLVAL(43200 * 1.5)) {
-		istart = IPF_TTLVAL(86400 * 4);
-		interval = IPF_TTLVAL(43200);
-	} else if (fr_ticks > IPF_TTLVAL(1800 * 1.5)) {
-		istart = IPF_TTLVAL(43200);
-		interval = IPF_TTLVAL(1800);
-	} else if (fr_ticks > IPF_TTLVAL(30 * 1.5)) {
-		istart = IPF_TTLVAL(1800);
-		interval = IPF_TTLVAL(30);
-	} else {
-		goto nat_force_flush_skipped;
-	}
-	iend = interval;
-	if (istart > fr_ticks) {
-		istart = (fr_ticks / interval) * interval;
+	if (fr_ticks - nat_last_force_flush > IPF_TTLVAL(5)) {
+		nat_last_force_flush = fr_ticks;
+		removed = ipf_queueflush(nat_flush_entry, nat_tqb, nat_utqe);
 	}
 
-	while (removed == 0) {
-		u_long try;
-
-		try = fr_ticks - istart; 
-
-		for (ifq = ips_tqtqb; ifq != NULL;
-		     ifq = ifq->ifq_next) {
-			for (tqn = ifq->ifq_head; ((tqe = tqn) != NULL); ) {
-				if (tqe->tqe_die > try)
-					break;
-				tqn = tqe->tqe_next;
-				nat = tqe->tqe_parent;
-				nat_delete(nat, NL_EXPIRE);
-				removed++;
-			}
-		}
-
-		for (ifq = ips_utqe; ifq != NULL; ifq = ifqnext) {
-			ifqnext = ifq->ifq_next;
-
-			for (tqn = ifq->ifq_head; ((tqe = tqn) != NULL); ) {
-				if (tqe->tqe_die > try)
-					break;
-				tqn = tqe->tqe_next;
-				nat = tqe->tqe_parent;
-				nat_delete(nat, NL_EXPIRE);
-				removed++;
-			}
-		}
-
-		istart -= interval;
-		if (istart == interval) {
-			if (interval == IPF_TTLVAL(43200)) {
-				interval = IPF_TTLVAL(1800);
-			} else if (interval == IPF_TTLVAL(1800)) {
-				interval = IPF_TTLVAL(30);
-			} else {
-				break;
-			}
-		}
-	}
-
-nat_force_flush_skipped:
 	SPL_X(s);
 	return removed;
+}
+
+
+/* ------------------------------------------------------------------------ */
+/* Function:    nat_flush_entry                                             */
+/* Returns:     1 - always succeeds                                         */
+/* Parameters:  entry(I) - pointer to NAT entry                             */
+/* Write Locks: ipf_nat                                                     */
+/*                                                                          */
+/* This function is a stepping stone between ipf_queueflush() and           */
+/* nat_dlete().  It is used so we can provide a uniform interface via the   */
+/* ipf_queueflush() function.  Since the nat_delete() function returns void */
+/* we translate that to mean it always succeeds in deleting something.      */
+/* ------------------------------------------------------------------------ */
+static int nat_flush_entry(entry)
+void *entry;
+{
+	nat_delete(entry, NL_FLUSH);
+	return 1;
 }

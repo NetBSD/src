@@ -1,4 +1,4 @@
-/*	$NetBSD: ipnat.c,v 1.1.1.4 2007/04/14 20:17:34 martin Exp $	*/
+/*	$NetBSD: ipnat.c,v 1.1.1.5 2007/05/15 22:26:12 martin Exp $	*/
 
 /*
  * Copyright (C) 2001-2006 by Darren Reed.
@@ -67,7 +67,7 @@ extern	char	*sys_errlist[];
 
 #if !defined(lint)
 static const char sccsid[] ="@(#)ipnat.c	1.9 6/5/96 (C) 1993 Darren Reed";
-static const char rcsid[] = "@(#)Id: ipnat.c,v 1.24.2.5 2006/12/12 16:13:01 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ipnat.c,v 1.24.2.6 2007/05/11 11:16:55 darrenr Exp";
 #endif
 
 
@@ -89,6 +89,7 @@ void	dostats_live __P((int, natstat_t *, int));
 void	showhostmap_dead __P((natstat_t *));
 void	showhostmap_live __P((int, natstat_t *));
 void	dostats_dead __P((natstat_t *, int));
+void	showtqtable_live __P((int));
 
 int	opts;
 
@@ -364,6 +365,8 @@ int fd, opts, alive;
 		if (opts & OPT_VERBOSE)
 			printf("table %p list %p\n",
 				nsp->ns_table, nsp->ns_list);
+		if (alive)
+			showtqtable_live(fd);
 	}
 
 	if (opts & OPT_LIST) {
@@ -494,5 +497,23 @@ natstat_t *nsp;
 			break;
 		printhostmap(&hm, 0);
 		nsp->ns_maplist = hm.hm_next;
+	}
+}
+
+
+void showtqtable_live(fd)
+int fd;
+{
+	ipftq_t table[IPF_TCP_NSTATES];
+	ipfobj_t obj;
+
+	bzero((char *)&obj, sizeof(obj));
+	obj.ipfo_rev = IPFILTER_VERSION;
+	obj.ipfo_size = sizeof(table);
+	obj.ipfo_ptr = (void *)table;
+	obj.ipfo_type = IPFOBJ_STATETQTAB;
+
+	if (ioctl(fd, SIOCGTQTAB, &obj) == 0) {
+		printtqtable(table);      
 	}
 }

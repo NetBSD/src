@@ -2,11 +2,11 @@
 #
 # Purpose:	IP Filter Product Specification File (PSF) for swpackage
 #
-# Copyright:	Copyright (c) 2000 Darren Reed
+# Copyright:	Copyright (c) 2100 Darren Reed
 #
 # Description:	PSF for IP FIlter 4.1
 #
-# Id: ipf.psf.dist,v 1.1.2.23 2007/04/29 06:55:23 darrenr Exp
+# Id: ipf.psf.dist,v 1.1.2.25 2007/05/13 00:10:39 darrenr Exp
 
 
 # The vendor definition here applies to all subsequently defined products.
@@ -26,7 +26,7 @@ bundle
 	tag		IPF
 	title		IP Filter 4.1
 	description	Firewall/NAT
-	revision	A.04.01.20
+	revision	A.04.01.22
 	architecture	HP-UX_HPREV_32/64
 	machine_type	9000/[678]??:*
 	os_name		HP-UX
@@ -37,7 +37,7 @@ bundle
 	is_reference	false
 	vendor_tag	IPFilter
 	hp_srdo		swtype=O;user=B;bundle_type=O
-	contents	IPF-RUN,r=A.04.01.20,a=HP-UX_HPREV_32/64,v=IPFilter
+	contents	IPF-RUN,r=A.04.01.22,a=HP-UX_HPREV_32/64,v=IPFilter
 end # bundle IPF
 
 # Product definition(s):
@@ -46,7 +46,7 @@ product
 	title		IP Filter 4.1
 	description	Firewall/NAT
 	copyright	< ../../SunOS5/copyright
-	revision	A.04.01.20
+	revision	A.04.01.22
 	architecture	HP-UX_HPREV_32/64
 	machine_type	9000/[678]??:*
 	os_name		HP-UX
@@ -70,7 +70,7 @@ product
 	tag		IPF-ALL
 	title		IP Filter 4.1 : IPF-ALL
 	description	< ../IPF-ALL/description
-	revision	A.04.01.20
+	revision	A.04.01.22
 	architecture	HP-UX_HPREV_32/64
 	machine_type	9000/[678]??:*
 	os_name		HP-UX

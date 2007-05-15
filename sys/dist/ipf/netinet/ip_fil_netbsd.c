@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_netbsd.c,v 1.1.1.7 2007/05/01 19:02:23 martti Exp $	*/
+/*	$NetBSD: ip_fil_netbsd.c,v 1.1.1.8 2007/05/15 22:26:13 martin Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -7,7 +7,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_fil_netbsd.c,v 2.55.2.48 2007/04/06 09:17:38 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_fil_netbsd.c,v 2.55.2.49 2007/05/10 06:00:56 darrenr Exp";
 #endif
 
 #if defined(KERNEL) || defined(_KERNEL)
@@ -1151,7 +1151,8 @@ frdest_t *fdp;
 		if (!fr || !(fr->fr_flags & FR_RETMASK)) {
 			u_32_t pass;
 
-			(void) fr_checkstate(fin, &pass);
+			if (fr_checkstate(fin, &pass) != NULL)
+				fr_statederef((ipstate_t **)&fin->fin_state);
 		}
 
 		switch (fr_checknatout(fin, NULL))

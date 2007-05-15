@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_ftp_pxy.c,v 1.1.1.18 2007/05/01 19:00:50 martti Exp $	*/
+/*	$NetBSD: ip_ftp_pxy.c,v 1.1.1.19 2007/05/15 22:26:00 martin Exp $	*/
 
 /*
  * Copyright (C) 1997-2003 by Darren Reed
@@ -8,7 +8,7 @@
  * Simple FTP transparent proxy for in-kernel use.  For use with the NAT
  * code.
  *
- * Id: ip_ftp_pxy.c,v 2.88.2.21 2007/04/25 08:09:26 darrenr Exp
+ * Id: ip_ftp_pxy.c,v 2.88.2.22 2007/05/10 09:30:39 darrenr Exp
  */
 
 #define	IPF_FTP_PROXY
@@ -375,19 +375,6 @@ int dlen;
 		ip->ip_len = slen;
 		ip->ip_src = swip;
 		ip->ip_dst = swip2;
-	} else {
-		ipstate_t *is;
-
-		nat_update(&fi, nat2, nat->nat_ptr);
-		READ_ENTER(&ipf_state);
-		is = nat2->nat_state;
-		if (is != NULL) {
-			MUTEX_ENTER(&is->is_lock);
-			(void)fr_tcp_age(&is->is_sti, &fi, ips_tqtqb,
-					 is->is_flags);
-			MUTEX_EXIT(&is->is_lock);
-		}
-		RWLOCK_EXIT(&ipf_state);
 	}
 	return APR_INC(inc);
 }
@@ -738,19 +725,6 @@ u_int data_ip;
 		ip->ip_len = slen;
 		ip->ip_src = swip;
 		ip->ip_dst = swip2;
-	} else {
-		ipstate_t *is;
-
-		nat_update(&fi, nat2, nat->nat_ptr);
-		READ_ENTER(&ipf_state);
-		is = nat2->nat_state;
-		if (is != NULL) {
-			MUTEX_ENTER(&is->is_lock);
-			(void)fr_tcp_age(&is->is_sti, &fi, ips_tqtqb,
-					 is->is_flags);
-			MUTEX_EXIT(&is->is_lock);
-		}
-		RWLOCK_EXIT(&ipf_state);
 	}
 	return inc;
 }
