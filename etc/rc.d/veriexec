@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: veriexec,v 1.8 2005/10/15 23:26:30 elad Exp $
+#	$NetBSD: veriexec,v 1.9 2007/05/15 19:47:48 elad Exp $
 #
 
 # PROVIDE: veriexec
@@ -16,7 +16,7 @@ start_cmd="veriexec_start"
 veriexec_start()
 {
 	echo -n "Loading fingerprints..."
-	/sbin/veriexecctl load /etc/signatures
+	/sbin/veriexecctl ${veriexec_flags} load /etc/signatures
 	echo " done."
 
 	# We can't set these before loading the fingerprints, because

@@ -1,4 +1,4 @@
-.\" $NetBSD: veriexecctl.8,v 1.29 2006/11/29 14:28:30 elad Exp $
+.\" $NetBSD: veriexecctl.8,v 1.30 2007/05/15 19:47:47 elad Exp $
 .\"
 .\" Copyright (c) 1999
 .\"	Brett Lymn - blymn@baea.com.au, brett_lymn@yahoo.com.au
@@ -29,142 +29,199 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$Id: veriexecctl.8,v 1.29 2006/11/29 14:28:30 elad Exp $
+.\"	$Id: veriexecctl.8,v 1.30 2007/05/15 19:47:47 elad Exp $
 .\"
-.Dd November 29, 2006
+.Dd May 15, 2007
 .Dt VERIEXECCTL 8
 .Os
 .Sh NAME
 .Nm veriexecctl
-.Nd load or report veriexec fingerprints
+.Nd manage the
+.Em Veriexec
+subsystem
 .Sh SYNOPSIS
 .Nm
-.Cm load Ar signatures
+.Op Fl ek
+.Cm load Ar file
 .Nm
-.Cm delete Op file | mount_point
+.Cm delete Ar file | mount_point
+.Nm
+.Cm dump
+.Nm
+.Cm flush
 .Nm
 .Cm query Ar file
 .Sh DESCRIPTION
 The
 .Nm
-command is used to manipulate the Veriexec feature.
-Veriexec must have been configured into the booted kernel for this
-commaned to work.
+command is used to manipulate
+.Em Veriexec ,
+the
+.Nx
+file integrity subsystem.
 .Ss Commands
-.Bl -tag -width 25n
-.It Cm load Ar signatures
+.Bl -tag -width XXXX
+.It Cm load Ar file
 Load the fingerprint entries contained in
-.Ar signatures
-into the in kernel tables.
-This operation is only available if kern.veriexec.strict is zero.
-Once loaded the kernel can then validate executed programs
-or files against the loaded fingerprints and report when fingerprints
-do not match.
-.It Cm delete Op file | mount_point
-Delete the specified file from the Veriexec table in which it is stored.
-If the argument is a mount_point (or a directory), the device id for
-it is fetched and the entire Veriexec table that refers to it is
-removed.
+.Ar file .
+This operation is only allowed in learning mode (strict level zero).
+.Pp
+The following flags are allowed with this command:
+.Bl -tag -width indent
+.It Fl e
+Evaluate fingerprint on load, as opposed to when the file is accessed.
+.It Fl k
+Keep the filenames in the entry for more accurate logging.
+.El
+.It Cm delete Ar file | mount_point
+Delete either a single entry
+.Ar file
+or all entries on
+.Ar mount_point
+from being monitored by
+.Em Veriexec .
+.It Cm dump
+Dump the
+.Em Veriexec
+database from the kernel.
+Only entries that have the filename will be presented.
+.Pp
+This can be used to recover a lost database:
+.Bd -literal -offset indent
+# veriexecctl dump > /etc/signatures
+.Ed
+.It Cm flush
+Delete all entries in the
+.Em Veriexec
+database.
 .It Cm query Ar file
-Query Veriexec about information associated with
+Query
+.Em Veriexec
+for information associated with
 .Ar file :
 Filename, mount, fingerprint, fingerprint algorithm, evaluation status,
 and entry type.
 .El
 .Ss Signatures
-The
-.Pa signatures
-file contains lines of fields (separated by one or more whitespace
-characters) of the form:
+.Em Veriexec
+loads entries to the in-kernel database from a file describing files to be
+monitored and the type of monitoring.
+This file is often referred to as the
+.Sq signatures
+file.
+It has a line based structure, where each line has several fields separated
+by white-space (space, tabs, etc.) taking the following form:
 .Pp
-.Dl path	type	fingerprint	options
+.Dl path	type	fingerprint	flags
 .Pp
-Where
-.Em path
-is the full path to the file (spaces, tabs, etc. can be escaped if prefixed
-with a backslash) and
-.Em type
-is the type of fingerprint used, see above for the default list.
-Other fingerprints may be available depending on kernel configuration.
-The
-.Em fingerprint
-field is a hexadecimal representation of the fingerprint for
-the file.
-The field
-.Em options
-contains the associated options for the file.
-Currently there are eight valid options, five of which are aliases
-to improve readability of the database files:
+The description for each field is as follows:
+.Bl -tag -width XXXX
+.It path
+The full path to the file.
+White-space characters can be escaped if prefixed with a
+.Sq \ .
+.It type
+Type of fingerprinting algorithm used for the file.
 .Pp
-.Bl -tag
-.It Dv DIRECT
+Requires kernel support for the specified algorithm.
+List of fingerprinting algorithms supported by the kernel can be obtained by
+using the following command:
+.Bd -literal -offset indent
+# sysctl kern.veriexec.algorithms
+.Ed
+.It fingerprint
+The fingerprint for the file.
+Can (usually) be generated using the following command:
+.Bd -literal -offset indent
+% cksum -a \*[Lt]algorithm\*[Gt] \*[Lt]file\*[Gt] 
+.Ed
+.It flags
+Optional listing of entry flags, separated by a comma.
+These may include:
+.Bl -tag -width XXXX
+.It direct
 Allow direct execution only.
-.It Dv INDIRECT
-If this option is set then the executable cannot be invoked directly, it
-can only be used as an interpreter in scripts.
-.It Dv FILE
-Indicates that the fingerprint is associated with a file, not an
-executable.
-Files have their fingerprints verified during
+.Pp
+Execution of a program is said to be
+.Dq direct
+when the program is invoked by the user (either in a script, manually typing it,
+etc.) via the
+.Xr execve 2
+syscall.
+.It indirect
+Allow indirect execution only.
+.Pp
+Execution of a program is said to be
+.Dq indirect
+if it is invoked by the kernel to interpret a script (
+.Dq hash-bang ).
+.It file
+Allow opening the file only, via the
 .Xr open 2
-and are automatically made read only.
-This option may be used to verify shared libraries have not been
-tampered with.
-.It Dv PROGRAM
-An alias for
-.Dv DIRECT ,
-allow direct execution only.
-.It Dv INTERPRETER
-An alias for
-.Dv INDIRECT ,
-the executable may only be used as an interpreter
-for scripts.
-.It Dv SCRIPT
-The file is a script.
-For correct operation of veriexec, a script must have both
-.Dv FILE
-and
-.Dv DIRECT
-attributes set.
-This option is a shorthand way of setting the options for correct
-operation of scripts.
-.It Dv LIBRARY
-The file is a library, this option is an alias for
-.Dv FILE
-and
-.Dv INDIRECT .
-.It Dv UNTRUSTED
-This option is used to indicate that the file is located on
-untrusted storage, and its fingerprint should not be cached,
-but calculated each time it is accessed and when pages with
-this file as backing store are paged in.
+syscall (no execution is allowed).
+.It untrusted
+Indicate that the file is located on untrusted storage and its fingerprint
+evaluation status should not be cached, but rather re-calculated each time
+it is accessed.
+.\"It also enabled per-page fingerprints for the file, causing pages it as
+.\"backing store to be verified for their integrity as well.
+.Pp
+Fingerprints for untrusted files will always be evaluated on load.
 .El
 .Pp
-There must be only one executable/fingerprint pair per line.
-Comments are indicated by the first character of a line being a
+To improve readaibility of the signatures file, the following aliases are
+provided:
+.Bl -tag -width XXXX
+.It program
+An alias for
+.Dq direct .
+.It interpreter
+An alias for
+.Dq indirect
+.It script
+An alias for both
+.Dq direct
+and
+.Dq file .
+.It library
+An alias for both
+.Dq file
+and
+.Dq indirect .
+.El
+.Pp
+If no flags are specified,
+.Dq direct
+is assumed.
+.El
+.Pp
+Comments begin with a
 .Sq \&#
-character.
-Multiple options can be combined using a
-.Sq \&,
-character.
-If no options are specified, both direct and indirect execution
-are implied.
+character and span to the end of the line.
+.Pp
+Automatic generation of the signatures file is possible using the
+.Xr veriexecgen 8
+program.
 .Sh FILES
 .Bl -tag -width /etc/signatures -compact
 .It Pa /dev/veriexec
-veriexec device node
+.Em Veriexec
+pseudo-device
 .It Pa /etc/signatures
 default signatures file
 .El
 .Sh SEE ALSO
 .Xr veriexec 4 ,
-.Xr veriexecgen 8
+.Xr veriexecgen 8 ,
+.Xr veriexec 9
 .Sh HISTORY
 .Nm
 first appeared in
 .Nx 2.0 .
+.Sh AUTHORS
+.An Brett Lymn Aq blymn@NetBSD.org
+.An Elad Efrat Aq elad@NetBSD.org
 .Sh NOTES
-.Nm
-requires the kernel to have been configured with the
+The kernel is expected to have the
 .Dq veriexec
 pseudo-device.
