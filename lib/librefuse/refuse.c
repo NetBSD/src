@@ -1,4 +1,4 @@
-/*	$NetBSD: refuse.c,v 1.52 2007/05/15 22:46:06 agc Exp $	*/
+/*	$NetBSD: refuse.c,v 1.53 2007/05/15 22:56:16 agc Exp $	*/
 
 /*
  * Copyright © 2007 Alistair Crooks.  All rights reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: refuse.c,v 1.52 2007/05/15 22:46:06 agc Exp $");
+__RCSID("$NetBSD: refuse.c,v 1.53 2007/05/15 22:56:16 agc Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -248,6 +248,29 @@ free_args(struct fuse_args *ap)
 	free(ap);
 }
 
+static void
+set_refuse_mount_name(char **argv, char *name, size_t size)
+{
+	char	*slash;
+
+	if (argv == NULL || *argv == NULL) {
+		(void) strlcpy(name, "refuse", size);
+	} else {
+		if ((slash = strrchr(*argv, '/')) == NULL) {
+			slash = *argv;
+		} else {
+			slash += 1;
+		}
+		if (strncmp(*argv, "refuse:", 7) == 0) {
+			/* we've already done this */
+			(void) strlcpy(name, *argv, size);
+		} else {
+			(void) snprintf(name, size, "refuse:%s", slash);
+		}
+	}
+}
+
+
 /* this function exposes struct fuse to userland */
 struct fuse *
 fuse_setup(int argc, char **argv, const struct fuse_operations *ops,
@@ -257,7 +280,7 @@ fuse_setup(int argc, char **argv, const struct fuse_operations *ops,
 	struct fuse_args	*args;
 	struct fuse		*fuse;
 	char			 name[64];
-	char			*slash;
+	int			 i;
 
 	/* whilst this (assigning the pu_privdata in the puffs
 	 * usermount struct to be the fuse struct) might seem like
@@ -271,16 +294,7 @@ fuse_setup(int argc, char **argv, const struct fuse_operations *ops,
 	 * so we need to be able to get at the fuse ops from within the
 	 * puffs_usermount struct
 	 */
-	if (argv == NULL || *argv == NULL) {
-		(void) strlcpy(name, "refuse", sizeof(name));
-	} else {
-		if ((slash = strrchr(*argv, '/')) == NULL) {
-			slash = *argv;
-		} else {
-			slash += 1;
-		}
-		(void) snprintf(name, sizeof(name), "refuse:%s", slash);
-	}
+	set_refuse_mount_name(argv, name, sizeof(name));
 
 	/* stuff name into fuse_args */
 	args = deep_copy_args(argc, argv);
@@ -289,7 +303,10 @@ fuse_setup(int argc, char **argv, const struct fuse_operations *ops,
 	}
 	args->argv[0] = strdup(name);
 
-	fc = fuse_mount(*mountpoint = argv[argc - 1], args);
+	for (i = argc - 1 ; i > 0 && *argv[i] == '-' ; --i) {
+	}
+
+	fc = fuse_mount(*mountpoint = argv[i], args);
 	fuse = fuse_new(fc, args, ops, size, NULL);
 
 	free_args(args);
@@ -1079,6 +1096,7 @@ struct fuse_chan *
 fuse_mount(const char *dir, struct fuse_args *args)
 {
  	struct fuse_chan	*fc;
+	char			 name[64];
 
  	NEW(struct fuse_chan, fc, "fuse_mount", exit(EXIT_FAILURE));
 
@@ -1090,7 +1108,12 @@ fuse_mount(const char *dir, struct fuse_args *args)
 	 * reasons"
 	 */
 	fc->args = deep_copy_args(args->argc, args->argv);
-  
+
+	if (args->argc > 0) {
+		set_refuse_mount_name(args->argv, name, sizeof(name));
+		args->argv[0] = strdup(name);
+	}
+	
 	return fc;
 }
 
@@ -1107,6 +1130,8 @@ fuse_new(struct fuse_chan *fc, struct fuse_args *args,
 	struct statvfs		svfsb;
 	struct stat		st;
 	struct fuse		*fuse;
+	char			 name[64];
+	char			*argv0;
 
 	NEW(struct fuse, fuse, "fuse_new", exit(EXIT_FAILURE));
 
@@ -1148,8 +1173,11 @@ fuse_new(struct fuse_chan *fc, struct fuse_args *args,
         PUFFSOP_SET(pops, puffs_fuse, node, write);
         PUFFSOP_SET(pops, puffs_fuse, node, reclaim);
 
+	argv0 = (*args->argv[0] == 0x0) ? fc->args->argv[0] : args->argv[0];
+	set_refuse_mount_name(&argv0, name, sizeof(name));
+
 	pu = puffs_mount(pops, fc->dir, MNT_NODEV | MNT_NOSUID,
-			 args->argv[0], fuse,
+			 name, fuse,
 			 PUFFS_FLAG_BUILDPATH
 			   | PUFFS_FLAG_HASHPATH
 			   | PUFFS_FLAG_OPDUMP
