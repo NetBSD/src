@@ -1,4 +1,4 @@
-/*	$NetBSD: fil.c,v 1.33 2007/05/02 09:53:09 martti Exp $	*/
+/*	$NetBSD: fil.c,v 1.34 2007/05/15 22:52:48 martin Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -154,10 +154,10 @@ struct file;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.33 2007/05/02 09:53:09 martti Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.34 2007/05/15 22:52:48 martin Exp $");
 #else
 static const char sccsid[] = "@(#)fil.c	1.36 6/5/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: fil.c,v 2.243.2.102 2007/04/16 21:06:24 darrenr Exp";
+static const char rcsid[] = "@(#)Id: fil.c,v 2.243.2.104 2007/05/11 13:41:51 darrenr Exp";
 #endif
 #endif
 
@@ -3150,7 +3150,7 @@ nodata:
  * SUCH DAMAGE.
  *
  *	@(#)uipc_mbuf.c	8.2 (Berkeley) 1/4/94
- * Id: fil.c,v 2.243.2.102 2007/04/16 21:06:24 darrenr Exp
+ * Id: fil.c,v 2.243.2.104 2007/05/11 13:41:51 darrenr Exp
  */
 /*
  * Copy data from an mbuf chain starting "off" bytes from the beginning,
@@ -4691,7 +4691,7 @@ void *data;
 
 
 #if !defined(_KERNEL) || (!defined(__NetBSD__) && !defined(__OpenBSD__) && !defined(__FreeBSD__)) || \
-    (defined(__FreeBSD__) && (__FreeBSD_version < 490000)) || \
+    (defined(__FreeBSD__) && (__FreeBSD_version < 501000)) || \
     (defined(__NetBSD__) && (__NetBSD_Version__ < 105000000)) || \
     (defined(__OpenBSD__) && (OpenBSD < 200006))
 /*
@@ -5404,7 +5404,8 @@ static	int	fr_objbytes[IPFOBJ_COUNT][2] = {
 	{ 0,	sizeof(struct ipfruleiter) },
 	{ 0,	sizeof(struct ipfgeniter) },
 	{ 0,	sizeof(struct ipftable) },
-	{ 0,	sizeof(struct ipflookupiter) }
+	{ 0,	sizeof(struct ipflookupiter) },
+	{ 0,	sizeof(struct ipftq) * IPF_TCP_NSTATES },
 };
 
 
@@ -7117,4 +7118,124 @@ void *ctx;
 	}
 
 	return error;
+}
+
+
+/* ------------------------------------------------------------------------ */
+/* Function:    ipf_queueflush                                              */
+/* Returns:     int - number of entries flushed (0 = none)                  */
+/* Parameters:  deletefn(I) - function to call to delete entry              */
+/*              ipfqs(I)    - top of the list of ipf internal queues        */
+/*              userqs(I)   - top of the list of user defined timeouts      */
+/*                                                                          */
+/* This fucntion gets called when the state/NAT hash tables fill up and we  */
+/* need to try a bit harder to free up some space.  The algorithm used is   */
+/* to look for the oldest entries on each timeout queue and free them if    */
+/* they are within the given window we are considering.  Where the window   */
+/* starts and the steps taken to increase its size depend upon how long ipf */
+/* has been running (fr_ticks.)  Anything modified in the last 30 seconds   */
+/* is not touched.                                                          */
+/*                                              touched                     */
+/*         die     fr_ticks   30*1.5    1800*1.5   |  43200*1.5             */
+/*           |          |        |           |     |     |                  */
+/* future <--+----------+--------+-----------+-----+-----+-----------> past */
+/*                     now        \_int=30s_/ \_int=1hr_/ \_int=12hr        */
+/*                                                                          */
+/* Points to note:                                                          */
+/* - tqe_die is the time, in the future, when entries die.                  */
+/* - tqe_die - fr_ticks is how long left the connection has to live in ipf  */
+/*   ticks.                                                                 */
+/* - tqe_touched is when the entry was last used by NAT/state               */
+/* - the closer tqe_touched is to fr_ticks, the further tqe_die will be for */
+/*   any given timeout queue and vice versa.                                */
+/* - both tqe_die and tqe_touched increase over time                        */
+/* - timeout queues are sorted with the highest value of tqe_die at the     */
+/*   bottom and therefore the smallest values of each are at the top        */
+/*                                                                          */
+/* We start by setting up a maximum range to scan for things to move of     */
+/* iend (newest) to istart (oldest) in chunks of "interval".  If nothing is */
+/* found in that range, "interval" is adjusted (so long as it isn't 30) and */
+/* we start again with a new value for "iend" and "istart".  The downside   */
+/* of the current implementation is that it may return removing just 1 entry*/
+/* every time (pathological case) where it could remove more.               */
+/* ------------------------------------------------------------------------ */
+int ipf_queueflush(deletefn, ipfqs, userqs)
+ipftq_delete_fn_t deletefn;
+ipftq_t *ipfqs, *userqs;
+{
+	u_long interval, istart, iend;
+	ipftq_t *ifq, *ifqnext;
+	ipftqent_t *tqe, *tqn;
+	int removed;
+
+	/*
+	 * NOTE: Use of "* 15 / 10" is required here because if "* 1.5" is
+	 *       used then the operations are upgraded to floating point
+	 *       and kernels don't like floating point...
+	 */
+	if (fr_ticks > IPF_TTLVAL(43200 * 15 / 10)) {
+		istart = IPF_TTLVAL(86400 * 4);
+		interval = IPF_TTLVAL(43200);
+	} else if (fr_ticks > IPF_TTLVAL(1800 * 15 / 10)) {
+		istart = IPF_TTLVAL(43200);
+		interval = IPF_TTLVAL(1800);
+	} else if (fr_ticks > IPF_TTLVAL(30 * 15 / 10)) {
+		istart = IPF_TTLVAL(1800);
+		interval = IPF_TTLVAL(30);
+	} else {
+		return 0;
+	}
+	if (istart > fr_ticks) {
+		istart = (fr_ticks / interval) * interval;
+	}
+
+	iend = fr_ticks - interval;
+	if (istart > iend)
+		istart = iend - interval;
+	removed = 0;
+
+	while (removed == 0) {
+		u_long try;
+
+		try = fr_ticks - istart; 
+
+		for (ifq = ipfqs; ifq != NULL; ifq = ifq->ifq_next) {
+			for (tqn = ifq->ifq_head; ((tqe = tqn) != NULL); ) {
+				if (try < tqe->tqe_touched)
+					break;
+				tqn = tqe->tqe_next;
+				if ((*deletefn)(tqe->tqe_parent) == 0)
+					removed++;
+			}
+		}
+
+		for (ifq = userqs; ifq != NULL; ifq = ifqnext) {
+			ifqnext = ifq->ifq_next;
+
+			for (tqn = ifq->ifq_head; ((tqe = tqn) != NULL); ) {
+				if (try < tqe->tqe_touched)
+					break;
+				tqn = tqe->tqe_next;
+				if ((*deletefn)(tqe->tqe_parent) == 0)
+					removed++;
+			}
+		}
+
+		istart -= interval;
+		if (try >= iend) {
+			if (interval == IPF_TTLVAL(43200)) {
+				interval = IPF_TTLVAL(1800);
+			} else if (interval == IPF_TTLVAL(1800)) {
+				interval = IPF_TTLVAL(30);
+			} else {
+				break;
+			}
+			if (interval >= fr_ticks)
+				break;
+
+			iend = fr_ticks - interval;
+		}
+	}
+
+	return removed;
 }
