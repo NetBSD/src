@@ -1,4 +1,4 @@
-.\" $NetBSD: veriexec.9,v 1.13 2007/01/11 16:24:47 elad Exp $
+.\" $NetBSD: veriexec.9,v 1.14 2007/05/15 19:47:43 elad Exp $
 .\"
 .\" Copyright 2006 Elad Efrat <elad@NetBSD.org>
 .\" Copyright 2006 Brett Lymn <blymn@NetBSD.org>
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 11, 2007
+.Dd May 15, 2007
 .Dt VERIEXEC 9
 .Os
 .Sh NAME
@@ -37,18 +37,23 @@
 .In sys/verified_exec.h
 .Sh DESCRIPTION
 .Nm
-is the KPI for Veriexec,
+is the KPI for
+.Em Veriexec ,
 the
 .Nx
 in-kernel file integrity subsystem.
 It is responsible for managing the supported hashing algorithms, fingerprint
 calculation and comparison, file monitoring tables, and relevant hooks to
-enforce the Veriexec policy.
+enforce the
+.Em Veriexec
+policy.
 .Ss Core Routines
 .Bl -tag
 .It Ft void Fn veriexec_init "void"
-Initialize the Veriexec subsystem.
-Should be called only once during system startup.
+Initialize the
+.Em Veriexec
+subsystem.
+Called only once during system startup.
 .It Ft "boolean_t" Fn veriexec_lookup "struct vnode *vp"
 Check if
 .Ar vp
@@ -95,43 +100,6 @@ Purge the file entry for
 This invalidates the fingerprint so it will be evaluated next time the file
 is accessed.
 .\" veriexec_page_verify() intentionally not documented.
-.It Ft void Fn veriexec_report "const u_char *msg" "u_char *name" \
-"struct lwp *l" "int flags"
-Log a Veriexec message in
-.Ar msg
-for file
-.Ar name .
-.Ar l
-is optionally the LWP context in question.
-.Pp
-.Ar flags
-control how the message will be formatted, where will it be logged to, and
-whether the system should panic after posting it.
-Flags can be binary-OR'd together.
-Available flags include:
-.Bl -tag
-.It Dv REPORT_ALWAYS
-The message should always be printed.
-This is a synonym for 0.
-.It Dv REPORT_VERBOSE
-The message should be printed only if Veriexec is in verbose mode.
-.It Dv REPORT_DEBUG
-The message should be printed only if Veriexec is in debug verbosity.
-.It Dv REPORT_ALARM
-The message is an alarm.
-If
-.Ar l
-is not
-.Dv NULL ,
-user and process ids will be printed.
-The log will be sent to the
-.Em LOG_ALERT
-syslog facility.
-.It Dv REPORT_PANIC
-The system should
-.Xr panic 9
-after posting the message.
-.El
 .El
 .Ss Fingerprint Related Routines
 .Bl -tag
@@ -155,21 +123,11 @@ context.
 .El
 .Ss Table Management Routines
 .Bl -tag
-.It Ft int Fn veriexec_table_add "struct lwp *l" "prop_dictionary_t dict"
-Prepare storage for a
-.Em Veriexec
-table, to optimize the lookup time.
-.Pp
-.Ar dict
-holds the following elements:
-.Bl -column mount
-.Sy Name	Type	Purpose
-.It mount	string	mount-point
-.It count	uint64	estimated number of entries
-.El
 .It Ft int Fn veriexec_file_add "struct lwp *l" \
 "prop_dictionary_t dict"
-Add a Veriexec entry for the file described by
+Add a
+.Em Veriexec
+entry for the file described by
 .Ar dict .
 .Pp
 .Ar dict
@@ -177,20 +135,24 @@ is expected to have the following:
 .Bl -column entryxtype string
 .Sy Name	Type	Purpose
 .It file	string	filename
-.It entry-type	uint8	entry type flags ( see access flags above )
+.It entry-type	uint8	entry type flags ( see Xr veriexec 4 )
 .It fp-type	string	fingerprint hashing algorithm
 .It fp	data	the fingerprint
 .El
-.It Ft int Fn veriexec_table_delete "struct lwp *l" "struct mount *mp"
-Remove
-.Em Veriexec
-table for mount-point
-.Ar mp .
 .It Ft int Fn veriexec_file_delete "struct lwp *l" "struct vnode *vp"
 Remove
 .Em Veriexec
 entry for
 .Ar vp .
+.It Ft int Fn veriexec_table_delete "struct lwp *l" "struct mount *mp"
+Remove
+.Em Veriexec
+table for mount-point
+.Ar mp .
+.It Ft int Fn veriexec_flush "struct lwp *l"
+Delete all
+.Em Veriexec
+tables.
 .El
 .Ss Hook Handlers
 .Bl -tag
@@ -262,7 +224,7 @@ dictionary,
 with the following elements:
 .Bl -column entryxtype string
 .Sy Name	Type	Purpose
-.It entry-type	uint8	entry type ( see above )
+.It entry-type	uint8	entry type flags ( see Xr veriexec 4 )
 .It status	uint8	entry status ( see below )
 .It fp-type	string	fingerprint hashing algorithm
 .It fp	data	the fingerprint
@@ -282,6 +244,20 @@ If no entry was found,
 .Er ENOENT
 is returned.
 Otherwise, zero.
+.It Ft int Fn veriexec_dump "struct lwp *l" "prop_array_t rarray"
+Fill
+.Ar rarray
+with entries for all files monitored by
+.Em Veriexec
+that have a filename associated with them.
+.Pp
+Each element in
+.Ar rarray
+is a dictionary with the same elements as filled by
+.Fn veriexec_convert ,
+with an additional field,
+.Dq file ,
+containing the filename.
 .El
 .Sh FILES
 .Bl -column srcxsysxkernxkernxverifiedexecxc foo
@@ -304,8 +280,9 @@ Otherwise, zero.
 .An Brett Lymn Aq blymn@NetBSD.org
 .An Elad Efrat Aq elad@NetBSD.org
 .Sh CAVEATS
-There are two known issues with Veriexec that should be considered when
-using it.
+There are two known issues with
+.Em Veriexec
+that should be considered when using it.
 .Ss Remote File-systems
 There is an issue providing protection for files residing on mounts from
 remote hosts.

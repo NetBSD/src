@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.312 2007/05/12 17:28:20 dsl Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.313 2007/05/15 19:47:45 elad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.312 2007/05/12 17:28:20 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.313 2007/05/15 19:47:45 elad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -101,13 +101,6 @@ static int change_owner(struct vnode *, uid_t, gid_t, struct lwp *, int);
 static int rename_files(const char *, const char *, struct lwp *, int);
 
 void checkdirs(struct vnode *);
-
-static int mount_update(struct lwp *, struct vnode *, const char *, int,
-    void *, struct nameidata *);
-static int mount_domount(struct lwp *, struct vnode *, const char *,
-    const char *, int, void *, struct nameidata *);
-static int mount_getargs(struct lwp *, struct vnode *, const char *, int,
-    void *, struct nameidata *);
 
 int dovfsusermount = 0;
 
@@ -2016,10 +2009,20 @@ sys_unlink(struct lwp *l, void *v, register_t *retval)
 	pathname_t pathbuf = NULL;
 #endif /* NVERIEXEC > 0 */
 
+#if NVERIEXEC > 0
+	error = pathname_get(SCARG(uap, path), UIO_USERSPACE, &pathbuf);
+	if (error)
+		return (error);
+
+	NDINIT(&nd, DELETE, LOCKPARENT | LOCKLEAF, UIO_SYSSPACE,
+	    pathname_path(pathbuf), l);
+#else
 	NDINIT(&nd, DELETE, LOCKPARENT | LOCKLEAF | TRYEMULROOT, UIO_USERSPACE,
 	    SCARG(uap, path), l);
+#endif /* NVERIEXEC > 0 */
+
 	if ((error = namei(&nd)) != 0)
-		return (error);
+		goto out;
 	vp = nd.ni_vp;
 
 	/*
@@ -2037,13 +2040,9 @@ sys_unlink(struct lwp *l, void *v, register_t *retval)
 	}
 
 #if NVERIEXEC > 0
-	error = pathname_get(nd.ni_dirp, nd.ni_segflg, &pathbuf);
-
 	/* Handle remove requests for veriexec entries. */
-	if (!error) {
+	if (!error)
 		error = veriexec_removechk(vp, pathname_path(pathbuf), l);
-		pathname_put(pathbuf);
-	}
 
 	if (error) {
 		VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
@@ -2063,6 +2062,9 @@ sys_unlink(struct lwp *l, void *v, register_t *retval)
 #endif /* FILEASSOC */
 	error = VOP_REMOVE(nd.ni_dvp, nd.ni_vp, &nd.ni_cnd);
 out:
+#if NVERIEXEC > 0
+	pathname_put(pathbuf);
+#endif /* NVERIEXEC > 0 */
 	return (error);
 }
 
@@ -3321,19 +3323,18 @@ rename_files(const char *from, const char *to, struct lwp *l, int retain)
 
 #if NVERIEXEC > 0
 	if (!error) {
-		pathname_t frompath = NULL, topath = NULL;
+		char *f1, *f2;
 
-		error = pathname_get(fromnd.ni_dirp, fromnd.ni_segflg,
-		    &frompath);
-		if (!error)
-			error = pathname_get(tond.ni_dirp, tond.ni_segflg,
-			    &topath);
-		if (!error)
-			error = veriexec_renamechk(fvp, pathname_path(frompath),
-			    tvp, pathname_path(topath), l);
+		f1 = malloc(fromnd.ni_cnd.cn_namelen + 1, M_TEMP, M_WAITOK);
+		strlcpy(f1, fromnd.ni_cnd.cn_nameptr, fromnd.ni_cnd.cn_namelen);
 
-		pathname_put(frompath);
-		pathname_put(topath);
+		f2 = malloc(tond.ni_cnd.cn_namelen + 1, M_TEMP, M_WAITOK);
+		strlcpy(f1, tond.ni_cnd.cn_nameptr, tond.ni_cnd.cn_namelen);
+
+		error = veriexec_renamechk(fvp, f1, tvp, f2, l);
+
+		free(f1, M_TEMP);
+		free(f2, M_TEMP);
 	}
 #endif /* NVERIEXEC > 0 */
 
