@@ -1,4 +1,4 @@
-/*	$NetBSD: node.c,v 1.9 2007/05/15 13:56:00 pooka Exp $	*/
+/*	$NetBSD: node.c,v 1.10 2007/05/15 14:12:41 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: node.c,v 1.9 2007/05/15 13:56:00 pooka Exp $");
+__RCSID("$NetBSD: node.c,v 1.10 2007/05/15 14:12:41 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -144,8 +144,16 @@ puffs9p_node_readdir(struct puffs_cc *pcc, void *opc, struct dirent *dent,
 	}
 
 	while (count > 0) {
-		if ((rv = proto_getstat(pb, &va, &name, &statsize)))
+		if ((rv = proto_getstat(pb, &va, &name, &statsize))) {
+			/*
+			 * If there was an error, it's unlikely we'll be
+			 * coming back, so just nuke the dfp.  If we do
+			 * come back for some strange reason, we'll just
+			 * regen it.
+			 */
+			releasedf(pcc, dfp);
 			goto out;
+		}
 
 		puffs_nextdent(&dent, name, va.va_fileid,
 		    puffs_vtype2dt(va.va_type), reslen);
