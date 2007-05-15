@@ -1,0 +1,75 @@
+.\"	$NetBSD: jmide.4,v 1.1 2007/05/15 17:53:43 bouyer Exp $
+.\"
+.\"
+.\" Copyright (c) 2007 Manuel Bouyer.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"      This product includes software developed by Manuel Bouyer.
+.\" 4. The name of the author may not be used to endorse or promote products
+.\"    derived from this software without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+.\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.\"
+.Dd May 13, 2007
+.Dt JMIDE 4
+.Os
+.Sh NAME
+.Nm jmide
+.Nd JMicron Technology JMB36x PCIe to SATA II/PATA controller driver
+.Sh SYNOPSIS
+.Cd "jmide* at pci? dev ? function ? flags 0x0000"
+.Cd "ahcisata* at jmide?"
+.Sh DESCRIPTION
+The
+.Nm
+driver supports the JMicron Technology JMB36x IDE controllers.
+.Pp
+These PCI-e controllers exist if different flavours (1 or 2 PATA Ultra/133
+ports and/or 1 or 2 SATA-II ports), and are highly flexible.
+The SATA ports can be attached to the integrated AHCI controller or
+attached to the PCI IDE channels in PATA emulation, in either single-drive
+emulation on each PCI IDE channels, or in master/slave emulation on one of the
+PCI IDE channels.
+.Pp
+When enabled, the AHCI controller can either be on the PCI function 0 or
+function 2.
+The PCI IDE controller can also be on either PCI function, and
+can share the PCI function with AHCI.
+The
+.Nm
+driver supports both the AHCI controller and PCI IDE controller in various
+configurations.
+.Sh SEE ALSO
+.Xr ahcisata 4 ,
+.Xr ata 4 ,
+.Xr atapi 4 ,
+.Xr intro 4 ,
+.Xr pci 4 ,
+.Xr pciide 4 ,
+.Xr wd 4 ,
+.Xr wdc 4
+.Sh AUTHORS
+.An -nosplit
+The
+.Nm
+driver was written by
+.An Manuel Bouyer .
