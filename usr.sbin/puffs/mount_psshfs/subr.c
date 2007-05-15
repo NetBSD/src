@@ -1,4 +1,4 @@
-/*      $NetBSD: subr.c,v 1.15 2007/05/11 16:23:01 pooka Exp $        */
+/*      $NetBSD: subr.c,v 1.16 2007/05/15 13:46:48 pooka Exp $        */
         
 /*      
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
         
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: subr.c,v 1.15 2007/05/11 16:23:01 pooka Exp $");
+__RCSID("$NetBSD: subr.c,v 1.16 2007/05/15 13:46:48 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -140,7 +140,7 @@ readdir_getattr_resp(struct puffs_usermount *pu,
 	puffs_framebuf_destroy(pb);
 }
 
-static void
+static int
 readdir_getattr(struct puffs_usermount *pu, struct psshfs_node *psn,
 	const char *basepath, int idx)
 {
@@ -151,6 +151,7 @@ readdir_getattr(struct puffs_usermount *pu, struct psshfs_node *psn,
 	struct readdirattr *rda;
 	const char *entryname = pdir[idx].entryname;
 	uint32_t reqid = NEXTREQ(pctx);
+	int rv = 0;
 
 	rda = emalloc(sizeof(struct readdirattr));
 	rda->psn = psn;
@@ -164,6 +165,9 @@ readdir_getattr(struct puffs_usermount *pu, struct psshfs_node *psn,
 	pb = psbuf_makeout();
 	psbuf_req_str(pb, SSH_FXP_LSTAT, reqid, path);
 	SENDCB(pb, readdir_getattr_resp, rda);
+
+ out:
+	return rv;
 }
 #endif
 
@@ -177,6 +181,7 @@ getpathattr(struct puffs_cc *pcc, const char *path, struct vattr *vap)
 
 	rv = psbuf_expect_attrs(pb, vap);
 
+ out:
 	PSSHFSRETURN(rv);
 }
 
@@ -225,6 +230,9 @@ sftp_readdir(struct puffs_cc *pcc, struct psshfs_ctx *pctx,
 	int idx, rv;
 
 	assert(pn->pn_va.va_type == VDIR);
+	idx = 0;
+	olddir = psn->dir;
+	nent = psn->dentnext;
 
 	if (psn->dir && (time(NULL) - psn->dentread) < PSSHFS_REFRESHIVAL)
 		return 0;
@@ -243,8 +251,6 @@ sftp_readdir(struct puffs_cc *pcc, struct psshfs_ctx *pctx,
 	 * Well, the following is O(n^2), so feel free to improve if it
 	 * gets too taxing on your system.
 	 */
-	olddir = psn->dir;
-	nent = psn->dentnext;
 
 	/*
 	 * note: for the "getattr in batch" to work, this must be before
@@ -257,7 +263,6 @@ sftp_readdir(struct puffs_cc *pcc, struct psshfs_ctx *pctx,
 	psn->dentnext = 0;
 	psn->denttot = 0;
 	psn->dir = NULL;
-	idx = 0;
 
 	for (;;) {
 		reqid = NEXTREQ(pctx);
@@ -305,8 +310,10 @@ sftp_readdir(struct puffs_cc *pcc, struct psshfs_ctx *pctx,
 			 * the server responds to our queries out-of-order.
 			 * fixxxme some day
 			 */
-			readdir_getattr(puffs_cc_getusermount(pcc),
+			rv = readdir_getattr(puffs_cc_getusermount(pcc),
 			    psn, PNPATH(pn), idx);
+			if (rv)
+				goto out;
 #endif
 			psn->dir[idx].valid = 1;
 		}
