@@ -1,11 +1,11 @@
-/*	$NetBSD: printfr.c,v 1.1.1.6 2007/04/14 20:17:31 martin Exp $	*/
+/*	$NetBSD: printfr.c,v 1.1.1.7 2007/05/15 22:26:09 martin Exp $	*/
 
 /*
  * Copyright (C) 2000-2006 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: printfr.c,v 1.43.2.17 2006/06/16 17:21:10 darrenr Exp
+ * Id: printfr.c,v 1.43.2.18 2007/05/07 06:55:38 darrenr Exp
  */
 
 #include "ipf.h"
@@ -470,7 +470,12 @@ ioctlfunc_t	iocfunc;
 		}
 		printf(")");
 	}
+
 	if (fp->fr_pps)
 		printf(" pps %d", fp->fr_pps);
+
+	if ((fp->fr_flags & FR_KEEPSTATE) && (opts & OPT_VERBOSE)) {
+		printf(" # count %d", fp->fr_statecnt);
+	}
 	(void)putchar('\n');
 }
