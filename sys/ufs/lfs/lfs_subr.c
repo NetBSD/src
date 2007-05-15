@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_subr.c,v 1.69 2007/04/18 00:50:06 perseant Exp $	*/
+/*	$NetBSD: lfs_subr.c,v 1.70 2007/05/15 14:35:29 tnn Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.69 2007/04/18 00:50:06 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.70 2007/05/15 14:35:29 tnn Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -310,7 +310,7 @@ lfs_seglock(struct lfs *fs, unsigned long flags)
 		} else {
 			while (fs->lfs_seglock) {
 				(void)ltsleep(&fs->lfs_seglock, PRIBIO + 1,
-					"lfs seglock", 0, &fs->lfs_interlock);
+					"lfs_seglock", 0, &fs->lfs_interlock);
 			}
 		}
 	}
