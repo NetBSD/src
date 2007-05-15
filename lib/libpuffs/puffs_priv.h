@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_priv.h,v 1.9 2007/05/11 21:27:13 pooka Exp $	*/
+/*	$NetBSD: puffs_priv.h,v 1.10 2007/05/15 13:44:47 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006 Antti Kantee.  All Rights Reserved.
@@ -40,21 +40,24 @@
 #define PU_CMAP(pu, c)	(pu->pu_cmap ? pu->pu_cmap(c) : (struct puffs_node *)c)
 
 struct puffs_framectrl {
-	puffs_framebuf_readframe_fn rfb;
-	puffs_framebuf_writeframe_fn wfb;
-	puffs_framebuf_respcmp_fn cmpfb;
-	puffs_framebuf_loop_fn lfb;
+	puffs_framev_readframe_fn rfb;
+	puffs_framev_writeframe_fn wfb;
+	puffs_framev_respcmp_fn cmpfb;
+	puffs_framev_fdnotify_fn fdnotfn;
 
 	struct kevent *evs;
-	struct kevent *ch_evs;
 	size_t nfds;
 
+	struct timespec timeout;
+	struct timespec *timp;
+
 	LIST_HEAD(, puffs_fctrl_io) fb_ios;
+	LIST_HEAD(, puffs_fctrl_io) fb_ios_rmlist;
 };
 
 struct puffs_fctrl_io {
 	int io_fd;
-	int wrstat;
+	int stat;
 
 	struct puffs_framebuf *cur_in;
 
@@ -63,8 +66,13 @@ struct puffs_fctrl_io {
 
 	LIST_ENTRY(puffs_fctrl_io) fio_entries;
 };
-#define FIO_EN_WRITE(fio) (fio->wrstat == 0 && !TAILQ_EMPTY(&fio->snd_qing))
-#define FIO_RM_WRITE(fio) (fio->wrstat == 1 && TAILQ_EMPTY(&fio->snd_qing))
+#define FIO_WR		0x01
+#define FIO_WRGONE	0x02
+#define FIO_RDGONE	0x04
+#define FIO_DEAD	0x08
+
+#define FIO_EN_WRITE(fio) (!(fio->stat & FIO_WR)&& !TAILQ_EMPTY(&fio->snd_qing))
+#define FIO_RM_WRITE(fio) ((fio->stat & FIO_WR) && TAILQ_EMPTY(&fio->snd_qing))
 
 /*
  * usermount: describes one file system instance
@@ -81,11 +89,13 @@ struct puffs_usermount {
 	int			pu_state;
 #define PU_STATEMASK	0xff
 #define PU_INLOOP	0x100
+#define PU_ASYNCFD	0x200
 #define PU_SETSTATE(pu, s) (pu->pu_state = (s) | (pu->pu_state & ~PU_STATEMASK))
 
 	struct puffs_node	*pu_pn_root;
 
 	LIST_HEAD(, puffs_node)	pu_pnodelst;
+	LIST_HEAD(, puffs_cc)	pu_ccnukelst;
 
 	struct puffs_node	*(*pu_cmap)(void *);
 
@@ -97,7 +107,11 @@ struct puffs_usermount {
 
 	struct puffs_framectrl	pu_framectrl;
 
-	void	*pu_privdata;
+	puffs_ml_loop_fn	pu_ml_lfn;
+	struct timespec		pu_ml_timeout;
+	struct timespec		*pu_ml_timep;
+
+	void			*pu_privdata;
 };
 
 /* call context */
@@ -111,23 +125,15 @@ struct puffs_cc {
 	void			*pcc_stack;
 
 	int			pcc_flags;
-
-	/* these are for threading information to the implementation	*/
-	void			*pcc_priv;
-	int			pcc_rv;
+	struct puffs_putreq	*pcc_ppr;
 
 	TAILQ_ENTRY(puffs_cc)	entries;
+	LIST_ENTRY(puffs_cc)	nlst_entries;
 };
 #define PCC_FAKECC	0x01
 #define PCC_REALCC	0x02
-#define PCC_FREEPRIV	0x04
-#define PCC_PREQ_NOCOPY	0x08
-#define PCC_DONE	0x10
-
-#define PCC_CALL_NONE	0x10000
-#define PCC_CALL_IN	0x20000
-#define PCC_CALL_OUT	0x40000
-#define PCC_CALL_MASK	0x70000
+#define PCC_DONE	0x04
+#define PCC_BORROWED	0x08
 
 #define pcc_callstat(a)	   (a->pcc_flags & PCC_CALL_MASK)
 #define pcc_callset(a, b)  (a->pcc_flags = (a->pcc_flags & ~PCC_CALL_MASK) | b)
@@ -177,11 +183,17 @@ __BEGIN_DECLS
 
 void	puffs_calldispatcher(struct puffs_cc *);
 
-int	puffs_framebuf_input(struct puffs_usermount *, struct puffs_framectrl *,
-			     struct puffs_fctrl_io *, struct puffs_putreq *);
-int	puffs_framebuf_output(struct puffs_usermount *, struct puffs_framectrl*,
-			      struct puffs_fctrl_io *);
-void	puffs_framebuf_exit(struct puffs_usermount *);
+void	puffs_framev_input(struct puffs_usermount *, struct puffs_framectrl *,
+			   struct puffs_fctrl_io *, struct puffs_putreq *);
+int	puffs_framev_output(struct puffs_usermount *, struct puffs_framectrl*,
+			    struct puffs_fctrl_io *);
+void	puffs_framev_exit(struct puffs_usermount *);
+void	puffs_framev_readclose(struct puffs_usermount *,
+			       struct puffs_fctrl_io *, int);
+void	puffs_framev_writeclose(struct puffs_usermount *,
+				struct puffs_fctrl_io *, int);
+
+void	puffs_goto(struct puffs_cc *);
 
 __END_DECLS
 
