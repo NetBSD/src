@@ -1,4 +1,4 @@
-/* $NetBSD: dot_init.h,v 1.4 2007/05/15 16:48:13 skrll Exp $ */
+/* $NetBSD: dot_init.h,v 1.5 2007/05/15 16:51:42 skrll Exp $ */
 
 /*-
  * Copyright (c) 2001 Ross Harvey
@@ -62,5 +62,3 @@
 
 #define MD_CALL_STATIC_FUNCTION(section, func) \
 __asm(".section " #section "; call " #func "; .previous");
-
-#define	MD_DO_NOT_NEED_FALLTHRU

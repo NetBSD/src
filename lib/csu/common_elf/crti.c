@@ -1,4 +1,4 @@
-/*	$NetBSD: crti.c,v 1.4 2006/06/30 09:00:46 simonb Exp $	*/
+/*	$NetBSD: crti.c,v 1.5 2007/05/15 16:51:38 skrll Exp $	*/
 
 /*- 
  * Copyright (c) 1998, 2001, 2002 The NetBSD Foundation, Inc.
@@ -42,28 +42,6 @@
 
 #include "sysident.h"
 #include <dot_init.h>
-
-#ifndef MD_DO_NOT_NEED_FALLTHRU
-INIT_FALLTHRU_DECL;
-FINI_FALLTHRU_DECL;
-
-void	_init(void) __attribute__((section(".init")));
-void	_fini(void) __attribute__((section(".fini")));
-
-void
-_init(void)
-{
-
-	INIT_FALLTHRU();
-}
-
-void
-_fini(void)
-{
-
-	FINI_FALLTHRU();
-}
-#endif /* MD_DO_NOT_NEED_FALLTHRU */
 
 MD_INIT_SECTION_PROLOGUE;
 MD_FINI_SECTION_PROLOGUE;
