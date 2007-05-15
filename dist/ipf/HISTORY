@@ -10,6 +10,26 @@
 # and especially those who have found the time to port IP Filter to new
 # platforms.
 #
+4.1.22 - Released 13 May 2007
+
+fix endless loop when flushing state/NAT by idle time
+
+4.1.21 - Released 12 May 2007
+
+show the number of states created against a rule with "-v" for ipfstat
+
+fix build problems with FreeBSD
+
+make it possible to flush the state table by idle time and TCP state
+
+fix flushing out idle connections when state/NAT tables fill
+
+print out the TCP state population with ipfstat/ipnat
+
+stop creation of state table orphans via return-*/fastroute
+
+fix printing out of rule groups - they now only appear once
+
 4.1.20 - Released 30 April 2007
 
 adjust TCP state numbers, making 11 closed (was 0) to better facilitate
