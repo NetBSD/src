@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.138 2007/04/17 05:52:04 lukem Exp $	*/
+/*	$NetBSD: util.c,v 1.139 2007/05/15 23:54:19 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-2007 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.138 2007/04/17 05:52:04 lukem Exp $");
+__RCSID("$NetBSD: util.c,v 1.139 2007/05/15 23:54:19 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -175,7 +175,7 @@ parse_feat(const char *line)
 
 			/*
 			 * work-around broken ProFTPd servers that can't
-			 * even obey RFC 2389.
+			 * even obey RFC2389.
 			 */
 	while (*line && isspace((int)*line))
 		line++;
@@ -399,7 +399,7 @@ ftp_login(const char *host, const char *luser, const char *lpass)
 	 */
 	if (anonftp) {
 		FREEPTR(user);
-		user = ftp_strdup("anonymous");	/* as per RFC 1635 */
+		user = ftp_strdup("anonymous");	/* as per RFC1635 */
 		FREEPTR(pass);
 		pass = ftp_strdup(getoptionvalue("anonpass"));
 	}

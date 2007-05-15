@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.176 2007/05/10 12:22:04 lukem Exp $	*/
+/*	$NetBSD: fetch.c,v 1.177 2007/05/15 23:54:18 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.176 2007/05/10 12:22:04 lukem Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.177 2007/05/15 23:54:18 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -286,7 +286,7 @@ url_decode(char *url)
 
 
 /*
- * Parse URL of form:
+ * Parse URL of form (per RFC3986):
  *	<type>://[<user>[:<password>]@]<host>[:<port>][/<path>]
  * Returns -1 if a parse error occurred, otherwise 0.
  * It's the caller's responsibility to url_decode() the returned
@@ -296,12 +296,9 @@ url_decode(char *url)
  * malloc(3)ed strings of the relevant section, and port to
  * the number given, or ftpport if ftp://, or httpport if http://.
  *
- * If <host> is surrounded by `[' and ']', it's parsed as an
- * IPv6 address (as per RFC 2732).
- *
- * XXX: this is not totally RFC 1738 compliant; <path> will have the
+ * XXX: this is not totally RFC3986 compliant; <path> will have the
  * leading `/' unless it's an ftp:// URL, as this makes things easier
- * for file:// and http:// URLs. ftp:// URLs have the `/' between the
+ * for file:// and http:// URLs.  ftp:// URLs have the `/' between the
  * host and the URL-path removed, but any additional leading slashes
  * in the URL-path are retained (because they imply that we should
  * later do "CWD" with a null argument).
@@ -309,11 +306,14 @@ url_decode(char *url)
  * Examples:
  *	 input URL			 output path
  *	 ---------			 -----------
- *	"ftp://host"			NULL
- *	"http://host/"			NULL
+ *	"http://host"			"/"
+ *	"http://host/"			"/"
+ *	"http://host/path"		"/path"
  *	"file://host/dir/file"		"dir/file"
+ *	"ftp://host"			""
  *	"ftp://host/"			""
- *	"ftp://host//"			NULL
+ *	"ftp://host//"			"/"
+ *	"ftp://host/dir/file"		"dir/file"
  *	"ftp://host//dir/file"		"/dir/file"
  */
 static int
@@ -398,7 +398,7 @@ parse_url(const char *url, const char *desc, url_t *type,
 #ifdef INET6
 			/*
 			 * Check if thost is an encoded IPv6 address, as per
-			 * RFC 2732:
+			 * RFC3986:
 			 *	`[' ipv6-address ']'
 			 */
 	if (*thost == '[') {
@@ -424,8 +424,8 @@ parse_url(const char *url, const char *desc, url_t *type,
 			cp = NULL;
 	} else
 #endif /* INET6 */
-	    if ((cp = strchr(thost, ':')) != NULL)
-		*cp++ =  '\0';
+		if ((cp = strchr(thost, ':')) != NULL)
+			*cp++ =  '\0';
 	*host = thost;
 
 			/* look for [:port] */
@@ -444,8 +444,12 @@ parse_url(const char *url, const char *desc, url_t *type,
 
 	if (tport != NULL)
 		*port = ftp_strdup(tport);
-	if (*path == NULL)
-		*path = ftp_strdup("/");
+	if (*path == NULL) {
+		const char *emptypath = "/";
+		if (*type == FTP_URL_T)	/* skip first / for ftp URLs */
+			emptypath++;
+		*path = ftp_strdup(emptypath);
+	}
 
 	DPRINTF("parse_url: user `%s' pass `%s' host %s port %s(%d) "
 	    "path `%s'\n",
@@ -925,11 +929,11 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 				struct tm parsed;
 				char *t;
 
-							/* RFC 1123 */
+							/* RFC1123 */
 				if ((t = strptime(cp,
 						"%a, %d %b %Y %H:%M:%S GMT",
 						&parsed))
-							/* RFC 850 */
+							/* RFC0850 */
 				    || (t = strptime(cp,
 						"%a, %d-%b-%y %H:%M:%S GMT",
 						&parsed))
@@ -1483,12 +1487,12 @@ fetch_ftp(const char *url)
 		 * directories in one step.
 		 *
 		 * If we are dealing with an `ftp://host/path' URL
-		 * (urltype is FTP_URL_T), then RFC 1738 says we need to
+		 * (urltype is FTP_URL_T), then RFC3986 says we need to
 		 * send a separate CWD command for each unescaped "/"
 		 * in the path, and we have to interpret %hex escaping
 		 * *after* we find the slashes.  It's possible to get
 		 * empty components here, (from multiple adjacent
-		 * slashes in the path) and RFC 1738 says that we should
+		 * slashes in the path) and RFC3986 says that we should
 		 * still do `CWD ' (with a null argument) in such cases.
 		 *
 		 * Many ftp servers don't support `CWD ', so if there's an
@@ -1560,8 +1564,8 @@ fetch_ftp(const char *url)
 						fprintf(stderr,
 "\n"
 "ftp: The `CWD ' command (without a directory), which is required by\n"
-"     RFC 1738 to support the empty directory in the URL pathname (`//'),\n"
-"     conflicts with the server's conformance to RFC 959.\n"
+"     RFC3986 to support the empty directory in the URL pathname (`//'),\n"
+"     conflicts with the server's conformance to RFC0959.\n"
 "     Try the same URL without the `//' in the URL pathname.\n"
 "\n");
 					goto cleanup_fetch_ftp;
