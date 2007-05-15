@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.999 2007/05/08 22:33:51 xtraeme Exp $
+# $NetBSD: mi,v 1.1000 2007/05/15 14:15:11 macallan Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -574,6 +574,9 @@
 ./usr/share/man/cat4/acpilid.0			man-sys-catman		.cat
 ./usr/share/man/cat4/acpitz.0			man-sys-catman		.cat
 ./usr/share/man/cat4/adb.0			man-sys-catman		.cat
+./usr/share/man/cat4/adbbt.0			man-sys-catman		.cat
+./usr/share/man/cat4/adbkbd.0			man-sys-catman		.cat
+./usr/share/man/cat4/adbms.0			man-sys-catman		.cat
 ./usr/share/man/cat4/adc.0			man-sys-catman		.cat
 ./usr/share/man/cat4/adt7467c.0			man-sys-catman		.cat
 ./usr/share/man/cat4/adv.0			man-sys-catman		.cat
@@ -772,6 +775,7 @@
 ./usr/share/man/cat4/crypto.0			man-sys-catman		.cat
 ./usr/share/man/cat4/cs.0			man-sys-catman		.cat
 ./usr/share/man/cat4/cs80bus.0			man-sys-catman		.cat
+./usr/share/man/cat4/cuda.0			man-sys-catman		.cat
 ./usr/share/man/cat4/cue.0			man-sys-catman		.cat
 ./usr/share/man/cat4/cy.0			man-sys-catman		.cat
 ./usr/share/man/cat4/cypide.0			man-sys-catman		.cat
@@ -1119,6 +1123,7 @@
 ./usr/share/man/cat4/mvme68k/pcctwo.0		man-sys-catman		.cat
 ./usr/share/man/cat4/mvme68k/wdsc.0		man-sys-catman		.cat
 ./usr/share/man/cat4/mvme68k/zsc.0		man-sys-catman		.cat
+./usr/share/man/cat4/nadb.0			man-sys-catman		.cat
 ./usr/share/man/cat4/nca.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ncr.0			man-obsolete		obsolete
 ./usr/share/man/cat4/ne.0			man-sys-catman		.cat
@@ -1202,6 +1207,7 @@
 ./usr/share/man/cat4/pmppc/rtc.0		man-sys-catman		.cat
 ./usr/share/man/cat4/pms.0			man-sys-catman		.cat
 ./usr/share/man/cat4/pmsi.0			man-sys-catman		.cat
+./usr/share/man/cat4/pmu.0			man-sys-catman		.cat
 ./usr/share/man/cat4/pnaphy.0			man-sys-catman		.cat
 ./usr/share/man/cat4/podulebus.0		man-sys-catman		.cat
 ./usr/share/man/cat4/ppb.0			man-sys-catman		.cat
@@ -1281,6 +1287,7 @@
 ./usr/share/man/cat4/sgimips/pic.0		man-sys-catman		.cat
 ./usr/share/man/cat4/sgimips/sq.0		man-sys-catman		.cat
 ./usr/share/man/cat4/sgimips/wdsc.0		man-sys-catman		.cat
+./usr/share/man/cat4/sgsmix.0			man-sys-catman		.cat
 ./usr/share/man/cat4/shb.0			man-sys-catman		.cat
 ./usr/share/man/cat4/shpcic.0			man-sys-catman		.cat
 ./usr/share/man/cat4/si.0			man-sys-catman		.cat
@@ -3028,6 +3035,9 @@
 ./usr/share/man/man4/acpilid.4			man-sys-man		.man
 ./usr/share/man/man4/acpitz.4			man-sys-man		.man
 ./usr/share/man/man4/adb.4			man-sys-man		.man
+./usr/share/man/man4/adbbt.4			man-sys-man		.man
+./usr/share/man/man4/adbkbd.4			man-sys-man		.man
+./usr/share/man/man4/adbms.4			man-sys-man		.man
 ./usr/share/man/man4/adc.4			man-sys-man		.man
 ./usr/share/man/man4/adt7467c.4			man-sys-man		.man
 ./usr/share/man/man4/adv.4			man-sys-man		.man
@@ -3226,6 +3236,7 @@
 ./usr/share/man/man4/crypto.4			man-sys-man		.man
 ./usr/share/man/man4/cs.4			man-sys-man		.man
 ./usr/share/man/man4/cs80bus.4			man-sys-man		.man
+./usr/share/man/man4/cuda.4			man-sys-man		.man
 ./usr/share/man/man4/cue.4			man-sys-man		.man
 ./usr/share/man/man4/cy.4			man-sys-man		.man
 ./usr/share/man/man4/cypide.4			man-sys-man		.man
@@ -3573,6 +3584,7 @@
 ./usr/share/man/man4/mvme68k/pcctwo.4		man-sys-man		.man
 ./usr/share/man/man4/mvme68k/wdsc.4		man-sys-man		.man
 ./usr/share/man/man4/mvme68k/zsc.4		man-sys-man		.man
+./usr/share/man/man4/nadb.4			man-sys-man		.man
 ./usr/share/man/man4/nca.4			man-sys-man		.man
 ./usr/share/man/man4/ncr.4			man-obsolete		obsolete
 ./usr/share/man/man4/ne.4			man-sys-man		.man
@@ -3656,6 +3668,7 @@
 ./usr/share/man/man4/pmppc/rtc.4		man-sys-man		.man
 ./usr/share/man/man4/pms.4			man-sys-man		.man
 ./usr/share/man/man4/pmsi.4			man-sys-man		.man
+./usr/share/man/man4/pmu.4			man-sys-man		.man
 ./usr/share/man/man4/pnaphy.4			man-sys-man		.man
 ./usr/share/man/man4/podulebus.4		man-sys-man		.man
 ./usr/share/man/man4/ppb.4			man-sys-man		.man
@@ -3735,6 +3748,7 @@
 ./usr/share/man/man4/sgimips/pic.4		man-sys-man		.man
 ./usr/share/man/man4/sgimips/sq.4		man-sys-man		.man
 ./usr/share/man/man4/sgimips/wdsc.4		man-sys-man		.man
+./usr/share/man/man4/sgsmix.4			man-sys-man		.man
 ./usr/share/man/man4/shb.4			man-sys-man		.man
 ./usr/share/man/man4/shpcic.4			man-sys-man		.man
 ./usr/share/man/man4/si.4			man-sys-man		.man
