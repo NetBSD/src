@@ -1,3 +1,5 @@
+/* $NetBSD: fuse.h,v 1.18 2007/05/16 22:17:52 xtraeme Exp $ */
+
 /*
  * Copyright © 2007 Alistair Crooks.  All rights reserved.
  *
