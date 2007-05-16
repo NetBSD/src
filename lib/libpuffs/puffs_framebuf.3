@@ -1,4 +1,4 @@
-.\"	$NetBSD: puffs_framebuf.3,v 1.5 2007/05/16 09:41:04 pooka Exp $
+.\"	$NetBSD: puffs_framebuf.3,v 1.6 2007/05/16 10:07:11 pooka Exp $
 .\"
 .\" Copyright (c) 2007 Antti Kantee.  All rights reserved.
 .\"
@@ -79,6 +79,7 @@
 .Ft void
 .Fo puffs_framev_cb
 .Fa "struct puffs_usermount *pu" "struct puffs_framebuf *pufbuf" "void *arg"
+.Fa "int error"
 .Fc
 .Ft void
 .Fo puffs_framev_enqueue_cb
@@ -283,9 +284,15 @@ to outgoing queue and yield with the continuation
 Execution is resumed once a response is received.
 Returns 0 if the buffer was succesfully enqueued (not necessarily
 delivered) and non-zero to signal a non-recoverable error.
-.It Fn puffs_framev_cb pu pufbuf arg
+.It Fn puffs_framev_cb pu pufbuf arg error
 Callback function.
 Called when a response to a specific request arrives from the server.
+If
+.Ar error
+is non-zero, the framework was unable to obtain a response and the
+function should not examine the contents of
+.Ar pufbuf ,
+only do resource cleanup.
 May not block.
 .It Fn puffs_framev_enqueue_cb pu pufbuf fcb fcb_arg
 Enqueue the buffer
