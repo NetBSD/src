@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2007/04/15 05:59:04 dogcow Exp $
+#	$NetBSD: Makefile,v 1.8 2007/05/16 04:26:07 taca Exp $
 
 MKPRIVATELIB=	yes
 
@@ -24,7 +24,7 @@ SRCS=		addicmp.c addipopt.c alist_free.c alist_new.c bcopywrap.c \
 		printifname.c printhostmask.c printlog.c printmask.c \
 		printnat.c printpooldata.c printportcmp.c printpacket.c \
 		printpacket6.c printproto.c \
-		printsbuf.c printstate.c printtunable.c \
+		printsbuf.c printstate.c printtqtable.c printtunable.c \
 		remove_hash.c remove_hashnode.c remove_pool.c \
 		remove_poolnode.c resetlexer.c rwlock_emul.c tcpflags.c \
 		tcp_flags.c var.c verbose.c v6ionames.c \
