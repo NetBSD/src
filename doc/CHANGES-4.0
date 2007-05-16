@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.157 2007/05/13 22:22:55 pavel Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.158 2007/05/16 21:33:39 jdc Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -3544,4 +3544,33 @@ sys/compat/linux/common/linux_termios.c		1.30
 
 	Fix Linux pts on amd64.
 	[manu, ticket #637]
+
+sys/dev/pcmcia/aic_pcmcia.c			patch
+doc/HACKS					patch
+
+	Work around rbus resource allocation problem with Adaptec 1460
+	PCMCIA SCSI adapters.  PR#26909, PR#31245.
+	[jnemeth, ticket #638]
+
+sys/dev/cardbus/if_re_cardbus.c			1.13
+sys/dev/cardbus/if_rtk_cardbus.c		1.32
+sys/dev/ic/rtl8169.c				1.84-1.85
+sys/dev/ic/rtl81x9.c				1.72
+sys/dev/ic/rtl81x9reg.h				1.27
+sys/dev/ic/rtl81x9var.h				1.39
+sys/dev/pci/if_re_pci.c				1.27 via patch
+sys/dev/pci/if_rtk_pci.c			1.32
+
+	Cleanup handling of quirks on each RealTek chip
+	Pull a fix for PCIe RealTek variants from FreeBSD
+	[tsutsui, ticket #640]
+
+sys/arch/alpha/conf/GENERIC			1.306-1.309
+sys/arch/alpha/conf/INSTALL			1.94
+sys/arch/alpha/conf/ALPHA			delete
+
+	Fix device node for the second serial port on DEC 3000 machines.
+	Merge GENERIC and ALPHA kernel configurations. GENERIC gains
+	everything that ALPHA had and ALPHA is removed.
+	[pavel, ticket #645]
 
