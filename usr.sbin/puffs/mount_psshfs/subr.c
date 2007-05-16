@@ -1,4 +1,4 @@
-/*      $NetBSD: subr.c,v 1.17 2007/05/15 14:17:30 pooka Exp $        */
+/*      $NetBSD: subr.c,v 1.18 2007/05/16 10:04:08 pooka Exp $        */
         
 /*      
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
         
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: subr.c,v 1.17 2007/05/15 14:17:30 pooka Exp $");
+__RCSID("$NetBSD: subr.c,v 1.18 2007/05/16 10:04:08 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -110,12 +110,15 @@ struct readdirattr {
 
 static void
 readdir_getattr_resp(struct puffs_usermount *pu,
-	struct puffs_framebuf *pb, void *arg)
+	struct puffs_framebuf *pb, void *arg, int error)
 {
 	struct readdirattr *rda = arg;
 	struct psshfs_node *psn = rda->psn;
 	struct psshfs_dir *pdir;
 	struct vattr va;
+
+	if (error)
+		goto out;
 
 	pdir = lookup(psn->dir, psn->denttot, rda->entryname);
 	if (!pdir)
