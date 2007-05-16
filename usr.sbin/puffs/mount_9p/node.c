@@ -1,4 +1,4 @@
-/*	$NetBSD: node.c,v 1.10 2007/05/15 14:12:41 pooka Exp $	*/
+/*	$NetBSD: node.c,v 1.11 2007/05/16 09:57:21 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: node.c,v 1.10 2007/05/15 14:12:41 pooka Exp $");
+__RCSID("$NetBSD: node.c,v 1.11 2007/05/16 09:57:21 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -210,6 +210,7 @@ puffs9p_node_setattr(struct puffs_cc *pcc, void *opc,
 	if (p9pbuf_get_type(pb) != P9PROTO_R_WSTAT)
 		rv = EPROTO;
 
+ out:
 	RETURN(rv);
 }
 
@@ -317,6 +318,7 @@ puffs9p_node_read(struct puffs_cc *pcc, void *opc, uint8_t *buf,
 		p9pbuf_recycleout(pb);
 	}
 			
+ out:
 	RETURN(rv);
 }
 
@@ -363,6 +365,7 @@ puffs9p_node_write(struct puffs_cc *pcc, void *opc, uint8_t *buf,
 		p9pbuf_recycleout(pb);
 	}
 			
+ out:
 	RETURN(rv);
 }
 
@@ -463,10 +466,17 @@ noderemove(struct puffs_cc *pcc, struct p9pnode *p9n)
 	p9pfid_t testfid = NEXTFID(p9p);
 
 	rv = proto_cc_dupfid(pcc, p9n->fid_base, testfid);
+	if (rv)
+		goto out;
 
 	p9pbuf_put_1(pb, P9PROTO_T_REMOVE);
 	p9pbuf_put_2(pb, tag);
 	p9pbuf_put_4(pb, testfid);
+
+	/*
+	 * XXX: error handling isn't very robust, but doom is impending
+	 * anyway, so just accept we're going belly up and play dead
+	 */
 	GETRESPONSE(pb);
 
 	if (p9pbuf_get_type(pb) != P9PROTO_R_REMOVE) {
@@ -476,6 +486,7 @@ noderemove(struct puffs_cc *pcc, struct p9pnode *p9n)
 		p9n->fid_base = P9P_INVALFID;
 	}
 
+ out:
 	RETURN(rv);
 }
 
