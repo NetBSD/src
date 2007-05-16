@@ -1,4 +1,4 @@
-/*	$NetBSD: security.c,v 1.9 2007/05/13 20:03:47 christos Exp $	*/
+/*	$NetBSD: security.c,v 1.10 2007/05/16 14:42:08 christos Exp $	*/
 
 #include <sys/types.h>
 #include <sys/time.h>
@@ -29,9 +29,7 @@
 #include "rpcbind.h"
 
 #ifdef LIBWRAP
-# define unknown __unknown
 # include <tcpd.h>
-# undef unknown
 #ifndef LIBWRAP_ALLOW_FACILITY
 # define LIBWRAP_ALLOW_FACILITY LOG_AUTH
 #endif
