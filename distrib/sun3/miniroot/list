@@ -1,5 +1,5 @@
 #
-# $NetBSD: list,v 1.14 2007/03/03 06:40:09 apb Exp $
+# $NetBSD: list,v 1.15 2007/05/16 13:07:16 tsutsui Exp $
 #
 
 COPY	${KERNEL3}			netbsd.sun3
@@ -25,8 +25,8 @@ COPY	${DESTDIR}/etc/netconfig	etc/netconfig
 COPY	${DESTDIR}/etc/passwd		etc/passwd
 COPY	${DESTDIR}/etc/protocols	etc/protocols
 COPY	${DESTDIR}/etc/pwd.db		etc/pwd.db
-COPY	${DESTDIR}/etc/services		etc/services
 COPY	${DESTDIR}/etc/spwd.db		etc/spwd.db
+COPY	${NETBSDSRCDIR}/distrib/common/services		etc/services
 
 # some /etc files get special handling (for MFS /tmp yuck)
 COPY	${DESTDIR}/etc/disktab		etc/disktab.shadow
