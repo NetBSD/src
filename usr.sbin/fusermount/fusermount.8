@@ -1,4 +1,4 @@
-.\" $NetBSD: fusermount.8,v 1.1 2007/04/26 21:13:39 agc Exp $ */
+.\" $NetBSD: fusermount.8,v 1.2 2007/05/16 21:16:31 agc Exp $ */
 .\"
 .\" Copyright (c) 2007 Alistair Crooks.  All rights reserved.
 .\"
@@ -92,6 +92,19 @@ file systems demand its existence.
 .Nm
 returns 0 for successful operation, or
 non-zero if one of the operations did not complete successfully.
+.Sh EXAMPLE
+The command
+.Dl fusermount -d ntfs-3g unused mount.ntfs-3g ntfs.img /mnt
+will mount the file
+.Pa ntfs.img
+on the directory
+.Pa /mnt .
+Please note the
+.Pa unused
+argument in the command, which is necessary for compatibility
+with other implementations of the
+.Nm
+command.
 .Sh SEE ALSO
 .Xr df 1 ,
 .Xr libpuffs 3 ,
