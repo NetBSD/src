@@ -1,4 +1,4 @@
-/*	$NetBSD: cfparse.y,v 1.21 2007/05/16 20:59:04 christos Exp $	*/
+/*	$NetBSD: cfparse.y,v 1.22 2007/05/16 21:00:40 christos Exp $	*/
 
 /* Id: cfparse.y,v 1.66 2006/08/22 18:17:17 manubsd Exp */
 
@@ -1055,8 +1055,10 @@ splitdns
 			if (!icc->splitdns_len)
 			{
 				icc->splitdns_list = racoon_malloc($1->l);
-				if(icc->splitdns_list == NULL)
+				if(icc->splitdns_list == NULL) {
 					yyerror("error allocating splitdns list buffer");
+					return -1;
+				}
 				memcpy(icc->splitdns_list,$1->v,$1->l);
 				icc->splitdns_len = $1->l;
 			}
@@ -1064,8 +1066,10 @@ splitdns
 			{
 				int len = icc->splitdns_len + $1->l + 1;
 				icc->splitdns_list = racoon_realloc(icc->splitdns_list,len);
-				if(icc->splitdns_list == NULL)
+				if(icc->splitdns_list == NULL) {
 					yyerror("error allocating splitdns list buffer");
+					return -1;
+				}
 				icc->splitdns_list[icc->splitdns_len] = ',';
 				memcpy(icc->splitdns_list + icc->splitdns_len + 1, $1->v, $1->l);
 				icc->splitdns_len = len;
