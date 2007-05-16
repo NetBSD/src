@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.190 2007/05/07 13:05:17 yamt Exp $
+#	$NetBSD: BRANCHES,v 1.191 2007/05/16 23:53:13 wrstuden Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -414,6 +414,23 @@ Scope:		x11
 Notes:		Requires parts of xsrc/xfree (HEAD)
 		xsrc/local, xsrc/xfree/xc/programs/Xserver/hw/netbsd
 		Requires xorg (XORG-6_8_1)
+
+Branch:  	wrstuden-fixsa
+Description:	Fix a number of issues present with Scheduler Activations.
+Status: 	Active
+Start Date:	15 May 2007
+End Date:
+Base Tag:	wrstuden-fixsa-base
+Maintainer:	Bill Stouder-Studenmund <wrstuden@NetBSD.org>
+Scope:		src, though all the interesting stuff is in the kernel
+		or lib/libpthread or maybe gdb.
+Notes:		This branch is based off of the netbsd-4 branch!
+		This branch is intended to stage improvements for the
+		Scheduler Activations system for NetBSD 4. Improvements
+		include not allocating memory while preparing to tsleep(),
+		reducing inappropriate upcall delivery (hopefully also
+		eliminating the need to mlock stacks), and being
+		able to pthread_kill() running threads.
 
 Branch:		vmlocking
 Description:	Make memory allocators and trap handling MP safe
