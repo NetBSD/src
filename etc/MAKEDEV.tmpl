@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.85 2007/03/21 23:07:00 dyoung Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.86 2007/05/16 13:06:03 martti Exp $
 #
 # Copyright (c) 2003,2007 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -783,6 +783,10 @@ fd*)
 ld*)
 	name=ld; unit=${i#ld}; blk=%ld_blk%; chr=%ld_chr%
 	%MKDISK% $name $unit $blk $chr
+	;;
+
+bio)
+	mkdev bio c %bio_chr% 0
 	;;
 
 ed*)
