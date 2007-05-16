@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: sysdb,v 1.18 2007/05/13 17:23:56 christos Exp $
+# $NetBSD: sysdb,v 1.19 2007/05/16 01:24:42 christos Exp $
 #
 
 # PROVIDE: sysdb
@@ -39,7 +39,7 @@ check_file()
 	local db="$2"
 
 	shift 2
-	if [ ! -f "$src" ]; then
+	if [ ! -e "$src" ]; then
 		return
 	fi
 	if [ \( ! -f "$db" \) -o \( "$src" -nt "$db" \) ]; then
