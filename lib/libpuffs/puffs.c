@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.c,v 1.47 2007/05/15 16:45:22 pooka Exp $	*/
+/*	$NetBSD: puffs.c,v 1.48 2007/05/16 09:41:04 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: puffs.c,v 1.47 2007/05/15 16:45:22 pooka Exp $");
+__RCSID("$NetBSD: puffs.c,v 1.48 2007/05/16 09:41:04 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -577,7 +577,7 @@ puffs_mainloop(struct puffs_usermount *pu, int flags)
 			if (curev->filter == EVFILT_READ) {
 				if (curev->flags & EV_EOF)
 					puffs_framev_readclose(pu, fio,
-					    ECONNABORTED);
+					    ECONNRESET);
 				else
 					puffs_framev_input(pu, pfctrl,
 					    fio, ppr);
@@ -585,7 +585,7 @@ puffs_mainloop(struct puffs_usermount *pu, int flags)
 			} else if (curev->filter == EVFILT_WRITE) {
 				if (curev->flags & EV_EOF)
 					puffs_framev_writeclose(pu, fio,
-					    ECONNABORTED);
+					    ECONNRESET);
 				else
 					puffs_framev_output(pu, pfctrl, fio);
 			}
