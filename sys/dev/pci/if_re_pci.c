@@ -1,4 +1,4 @@
-/*	$NetBSD: if_re_pci.c,v 1.21.2.3 2007/03/10 18:34:21 bouyer Exp $	*/
+/*	$NetBSD: if_re_pci.c,v 1.21.2.4 2007/05/16 20:48:07 jdc Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -96,77 +96,33 @@ static void	re_pci_attach(struct device *, struct device *, void *);
  */
 static const struct rtk_type re_devs[] = {
 	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8139,
-	    RTK_HWREV_8139CPLUS,
+	    RTK_8139CPLUS,
 	    "RealTek 8139C+ 10/100BaseTX" },
 	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8101E,
-	    RTK_HWREV_8100E,
-	    "RealTek 8100E PCIe 10/100BaseTX" },
-	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8101E,
-	    RTK_HWREV_8100E_SPIN2,
-	    "RealTek 8100E PCIe 10/100BaseTX" },
-	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8101E,
-	    RTK_HWREV_8101E,
-	    "RealTek 8101E PCIe 10/100BaseTX" },
+	    RTK_8101E,
+	    "RealTek 8100E/8101E PCIe 10/100BaseTX" },
 	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8168,
-	    RTK_HWREV_8168_SPIN1,
-	    "RealTek 8168B/8111B PCIe Gigabit Ethernet" },
-	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8168,
-	    RTK_HWREV_8168_SPIN2,
+	    RTK_8168,
 	    "RealTek 8168B/8111B PCIe Gigabit Ethernet" },
 	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8169,
-	    RTK_HWREV_8169,
-	    "RealTek 8169 Gigabit Ethernet" },
-	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8169,
-	    RTK_HWREV_8169S,
-	    "RealTek 8169S Single-chip Gigabit Ethernet" },
-	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8169,
-	    RTK_HWREV_8110S,
-	    "RealTek 8110S Single-chip Gigabit Ethernet" },
-	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8169,
-	    RTK_HWREV_8169_8110SB,
-	    "RealTek 8169SB/8110SB Single-chip Gigabit Ethernet" },
-	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8169,
-	    RTK_HWREV_8169_8110SC,
-	    "RealTek 8169SC/8110SC Single-chip Gigabit Ethernet" },
+	    RTK_8169,
+	    "RealTek 8169/8110 Gigabit Ethernet" },
 	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8169SC,
-	    RTK_HWREV_8169_8110SC,
+	    RTK_8169,
 	    "RealTek 8169SC/8110SC Single-chip Gigabit Ethernet" },
 	{ PCI_VENDOR_COREGA, PCI_PRODUCT_COREGA_LAPCIGT,
-	    RTK_HWREV_8169S,
+	    RTK_8169,
 	    "Corega CG-LAPCIGT Gigabit Ethernet" },
 	{ PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DGE528T,
-	    RTK_HWREV_8169S,
+	    RTK_8169,
 	    "D-Link DGE-528T Gigabit Ethernet" },
 	{ PCI_VENDOR_USR2, PCI_PRODUCT_USR2_USR997902,
-	    RTK_HWREV_8169S,
+	    RTK_8169,
 	    "US Robotics (3Com) USR997902 Gigabit Ethernet" },
 	{ PCI_VENDOR_LINKSYS, PCI_PRODUCT_LINKSYS_EG1032,
-	    RTK_HWREV_8169S,
+	    RTK_8169,
 	    "Linksys EG1032 rev. 3 Gigabit Ethernet" },
 	{ 0, 0, 0, NULL }
-};
-
-static const struct rtk_hwrev re_hwrevs[] = {
-	{ RTK_HWREV_8139, RTK_8139,  "" },
-	{ RTK_HWREV_8139A, RTK_8139, "A" },
-	{ RTK_HWREV_8139AG, RTK_8139, "A-G" },
-	{ RTK_HWREV_8139B, RTK_8139, "B" },
-	{ RTK_HWREV_8130, RTK_8139, "8130" },
-	{ RTK_HWREV_8139C, RTK_8139, "C" },
-	{ RTK_HWREV_8139D, RTK_8139, "8139D/8100B/8100C" },
-	{ RTK_HWREV_8139CPLUS, RTK_8139CPLUS, "C+"},
-	{ RTK_HWREV_8168_SPIN1, RTK_8169, "8168B/8111B"},
-	{ RTK_HWREV_8168_SPIN2, RTK_8169, "8168B/8111B"},
-	{ RTK_HWREV_8169, RTK_8169, "8169"},
-	{ RTK_HWREV_8169S, RTK_8169, "8169S"},
-	{ RTK_HWREV_8110S, RTK_8169, "8110S"},
-	{ RTK_HWREV_8169_8110SB, RTK_8169, "8169SB"},
-	{ RTK_HWREV_8169_8110SC, RTK_8169, "8169SC"},
-	{ RTK_HWREV_8100E, RTK_8169, "8100E"},
-	{ RTK_HWREV_8101E, RTK_8169, "8101E"},
-	{ RTK_HWREV_8100, RTK_8139, "8100"},
-	{ RTK_HWREV_8101, RTK_8139, "8101"},
-	{ 0, 0, NULL }
 };
 
 #define RE_LINKSYS_EG1032_SUBID	0x00241737
@@ -183,55 +139,29 @@ re_pci_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	const struct rtk_type	*t;
 	struct pci_attach_args	*pa = aux;
-	bus_space_tag_t		iot, memt, bst;
-	bus_space_handle_t	ioh, memh, bsh;
-	bus_size_t		memsize, iosize, bsize;
-	u_int32_t		hwrev;
 	pcireg_t subid;
-	boolean_t ioh_valid, memh_valid;
 
 	subid = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_SUBSYS_ID_REG);
 
 	/* special-case Linksys EG1032, since rev 2 uses sk(4) */
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_LINKSYS &&
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_LINKSYS_EG1032 &&
-	    subid == RE_LINKSYS_EG1032_SUBID)
-		return 1;
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_LINKSYS_EG1032) {
+		if (subid != RE_LINKSYS_EG1032_SUBID)
+			return 0;
+	}
+	/* Don't match 8139 other than C-PLUS */
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_REALTEK &&
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_REALTEK_RT8139) {
+		if (PCI_REVISION(pa->pa_class) != 0x20)
+			return 0;
+	}
 
 	t = re_devs;
 
 	while (t->rtk_name != NULL) {
 		if ((PCI_VENDOR(pa->pa_id) == t->rtk_vid) &&
 		    (PCI_PRODUCT(pa->pa_id) == t->rtk_did)) {
-
-			/*
-			 * Temporarily map the I/O space
-			 * so we can read the chip ID register.
-			 */
-			ioh_valid = (pci_mapreg_map(pa, RTK_PCI_LOIO,
-			    PCI_MAPREG_TYPE_IO, 0, &iot, &ioh,
-			    NULL, &iosize) == 0);
-			memh_valid = (pci_mapreg_map(pa, RTK_PCI_LOMEM,
-			    PCI_MAPREG_TYPE_MEM, 0, &memt, &memh,
-			    NULL, &memsize) == 0);
-			if (ioh_valid) {
-				bst = iot;
-				bsh = ioh;
-				bsize = iosize;
-			} else if (memh_valid) {
-				bst = memt;
-				bsh = memh;
-				bsize = memsize;
-			} else
-				return 0;
-			hwrev = bus_space_read_4(bst, bsh, RTK_TXCFG) &
-			    RTK_TXCFG_HWREV;
-			if (ioh_valid)
-				bus_space_unmap(iot, ioh, iosize);
-			if (memh_valid)
-				bus_space_unmap(memt, memh, memsize);
-			if (t->rtk_basetype == hwrev)
-				return 2;	/* defeat rtk(4) */
+			return 2;	/* defect rtk(4) */
 		}
 		t++;
 	}
@@ -249,10 +179,9 @@ re_pci_attach(struct device *parent, struct device *self, void *aux)
 	pci_intr_handle_t ih;
 	const char *intrstr = NULL;
 	const struct rtk_type	*t;
-	const struct rtk_hwrev	*hw_rev;
 	uint32_t		hwrev;
 	int			error = 0;
-	int			pmreg;
+	pcireg_t		pmreg, memtype;
 	boolean_t		ioh_valid, memh_valid;
 	pcireg_t		command;
 	bus_space_tag_t		iot, memt;
@@ -298,8 +227,18 @@ re_pci_attach(struct device *parent, struct device *self, void *aux)
 
 	ioh_valid = (pci_mapreg_map(pa, RTK_PCI_LOIO, PCI_MAPREG_TYPE_IO, 0,
 	    &iot, &ioh, NULL, &iosize) == 0);
-	memh_valid = (pci_mapreg_map(pa, RTK_PCI_LOMEM, PCI_MAPREG_TYPE_MEM, 0,
-	    &memt, &memh, NULL, &memsize) == 0);
+	memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, RTK_PCI_LOMEM);
+	switch (memtype) {
+	case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT:
+	case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_64BIT:
+		memh_valid = (pci_mapreg_map(pa, RTK_PCI_LOMEM,
+		    memtype, 0, &memt, &memh, NULL, &memsize) == 0);
+		break;
+	default:
+		memh_valid = 0;
+		break;
+	}
+
 	if (ioh_valid) {
 		sc->rtk_btag = iot;
 		sc->rtk_bhandle = ioh;
@@ -319,23 +258,20 @@ re_pci_attach(struct device *parent, struct device *self, void *aux)
 	while (t->rtk_name != NULL) {
 		if ((PCI_VENDOR(pa->pa_id) == t->rtk_vid) &&
 		    (PCI_PRODUCT(pa->pa_id) == t->rtk_did)) {
-
-			if (t->rtk_basetype == hwrev)
-				break;
+			break;
 		}
 		t++;
 	}
-	aprint_normal(": %s\n", t->rtk_name);
 
-	hw_rev = re_hwrevs;
-	hwrev = CSR_READ_4(sc, RTK_TXCFG) & RTK_TXCFG_HWREV;
-	while (hw_rev->rtk_desc != NULL) {
-		if (hw_rev->rtk_rev == hwrev) {
-			sc->rtk_type = hw_rev->rtk_type;
-			break;
-		}
-		hw_rev++;
-	}
+	if (t->rtk_basetype == RTK_8139CPLUS)
+		sc->sc_quirk |= RTKQ_8139CPLUS;
+
+	if (t->rtk_basetype == RTK_8168 ||
+	    t->rtk_basetype == RTK_8101E)
+		sc->sc_quirk |= RTKQ_PCIE;
+
+	aprint_normal(": %s (rev. 0x%02x)\n",
+	    t->rtk_name, PCI_REVISION(pa->pa_class));
 
 	sc->sc_dmat = pa->pa_dmat;
 
