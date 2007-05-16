@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.525 2007/05/15 22:57:37 martin Exp $
+#	$NetBSD: 3RDPARTY,v 1.526 2007/05/16 06:56:19 mrg Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -293,7 +293,7 @@ Maintainer:	FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/gdb/
 Home Page:	http://www.gnu.org/software/gdb/
 Mailing List:	bug-gdb@gnu.org
-Responsible:	thorpej, mrg
+Responsible:	thorpej
 License:	GPLv2, LGPLv2
 Notes:
 When updating GDB, it is imperative to test that:
