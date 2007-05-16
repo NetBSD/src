@@ -28,6 +28,12 @@
 #ifndef FUSE_H_
 #define FUSE_H_	20070123
 
+/* set the default version to use for the fuse interface */
+/* this value determines the API to be used */
+#ifndef FUSE_USE_VERSION
+#define FUSE_USE_VERSION	26
+#endif
+
 #include <sys/types.h>
 
 #include <puffs.h>
@@ -165,7 +171,7 @@ void fuse_teardown(struct fuse *, char *);
 
 void fuse_unmount_compat22(const char *);
 
-#if FUSE_VERSION >= 26
+#if FUSE_USE_VERSION >= 26
 #define fuse_main(argc, argv, op, arg) \
             fuse_main_real(argc, argv, op, sizeof(*(op)), arg)
 #else
