@@ -1,4 +1,4 @@
-/*	$NetBSD: framebuf.c,v 1.8 2007/05/15 13:44:46 pooka Exp $	*/
+/*	$NetBSD: framebuf.c,v 1.9 2007/05/16 09:41:04 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: framebuf.c,v 1.8 2007/05/15 13:44:46 pooka Exp $");
+__RCSID("$NetBSD: framebuf.c,v 1.9 2007/05/16 09:41:04 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -656,7 +656,7 @@ puffs_framev_removefd(struct puffs_usermount *pu, int fd, int error)
 		return -1;
 	}
 
-	return removefio(pu, fio, error ? error : ECONNABORTED);
+	return removefio(pu, fio, error ? error : ECONNRESET);
 }
 
 static void
@@ -664,7 +664,7 @@ defaultnot(struct puffs_usermount *pu, int fd, int what)
 {
 
 	if (PUFFS_FBGONE_BOTH(what))
-		(void) puffs_framev_removefd(pu, fd, ECONNABORTED);
+		(void) puffs_framev_removefd(pu, fd, ECONNRESET);
 }
 
 void
