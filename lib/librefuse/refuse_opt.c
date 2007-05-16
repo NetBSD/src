@@ -1,4 +1,4 @@
-/* 	$NetBSD: refuse_opt.c,v 1.9 2007/04/17 06:34:48 agc Exp $	*/
+/* 	$NetBSD: refuse_opt.c,v 1.10 2007/05/16 21:39:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -40,6 +40,7 @@
 #include "defs.h"
 #include "fuse.h"
 #include "fuse_opt.h"
+#include <err.h>
 
 #ifdef FUSE_OPT_DEBUG
 #define DPRINTF(x)	do { printf x; } while ( /* CONSTCOND */ 0)
@@ -80,22 +81,6 @@ static int fuse_opt_popt(struct fuse_opt_option *, const struct fuse_opt *);
  *
  */
 
-/* function to perform a deep copy of the args structure */
-static struct fuse_args *
-deep_copy_args(int argc, char **argv)
-{
-	struct fuse_args	*ap;
-
-	NEW(struct fuse_args, ap, "deep_copy_args", return NULL);
-	/* deep copy args structure into channel args */
-	ap->allocated = ((argc / 10) + 1) * 10;
-	NEWARRAY(char *, ap->argv, ap->allocated, "fuse_mount", return NULL);
-	for (ap->argc = 0 ; ap->argc < argc ; ap->argc++) {
-		ap->argv[ap->argc] = strdup(argv[ap->argc]);
-	}
-	return ap;
-}
-
 /* ARGSUSED */
 int
 fuse_opt_add_arg(struct fuse_args *args, const char *arg)
@@ -103,18 +88,24 @@ fuse_opt_add_arg(struct fuse_args *args, const char *arg)
 	struct fuse_args	*ap;
 
 	if (args->allocated == 0) {
-		ap = deep_copy_args(args->argc, args->argv);
+		ap = _fuse_deep_copy_args(args->argc, args->argv);
 		args->argv = ap->argv;
 		args->argc = ap->argc;
 		args->allocated = ap->allocated;
 		(void) free(ap);
 	} else if (args->allocated == args->argc) {
-		args->allocated += 10;
-		RENEW(char *, args->argv, args->allocated,
-		    "fuse_opt_add_arg", return -1);
+		void *a;
+		int na = args->allocated + 10;
+
+		if ((a = realloc(args->argv, na * sizeof(*args->argv))) == NULL)
+			return -1;
+
+		args->argv = a;
+		args->allocated = na;
 	}
 	DPRINTF(("%s: arguments passed: [arg:%s]\n", __func__, arg));
-	args->argv[args->argc++] = strdup(arg);
+	if ((args->argv[args->argc++] = strdup(arg)) == NULL)
+		err(1, "fuse_opt_add_arg");
         return 0;
 }
 
@@ -122,12 +113,7 @@ fuse_opt_add_arg(struct fuse_args *args, const char *arg)
 void
 fuse_opt_free_args(struct fuse_args *args)
 {
-	int	i;
-
-	for (i = 0 ; i < args->argc ; i++) {
-		FREE(args->argv[i]);
-	}
-	FREE(args->argv);
+	_fuse_free_args(args);
 	args->allocated = args->argc = 0;
 }
 
@@ -136,15 +122,30 @@ int
 fuse_opt_insert_arg(struct fuse_args *args, int pos, const char *arg)
 {
 	int	i;
+	int	na;
+	void   *a;
 
 	DPRINTF(("%s: arguments passed: [pos=%d] [arg=%s]\n",
 	    __func__, pos, arg));
-	ALLOC(char *, args->argv, args->allocated, args->argc, 10, 10,
-	    "fuse_opt_insert_org", return -1);
-	for (i = args->argc++ ; i > pos ; --i) {
+	if (args->argv == NULL) {
+		na = 10;
+		a = malloc(na * sizeof(*args->argv));
+	} else {
+		na = args->allocated + 10;
+		a = realloc(args->argv, na * sizeof(*args->argv));
+	}
+	if (a == NULL) {
+		warn("fuse_opt_insert_arg");
+		return -1;
+	}
+	args->argv = a;
+	args->allocated = na;
+
+	for (i = args->argc++; i > pos; --i) {
 		args->argv[i] = args->argv[i - 1];
 	}
-	args->argv[pos] = strdup(arg);
+	if ((args->argv[pos] = strdup(arg)) == NULL)
+		err(1, "fuse_opt_insert_arg");
 	return 0;
 }
 
