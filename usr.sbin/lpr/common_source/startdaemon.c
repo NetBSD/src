@@ -1,4 +1,4 @@
-/*	$NetBSD: startdaemon.c,v 1.14 2005/11/28 03:26:06 christos Exp $	*/
+/*	$NetBSD: startdaemon.c,v 1.15 2007/05/16 20:45:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)startdaemon.c	8.2 (Berkeley) 4/17/94";
 #else
-__RCSID("$NetBSD: startdaemon.c,v 1.14 2005/11/28 03:26:06 christos Exp $");
+__RCSID("$NetBSD: startdaemon.c,v 1.15 2007/05/16 20:45:45 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -63,7 +63,7 @@ startdaemon(const char *pname)
 {
 	struct sockaddr_un un;
 	int s;
-	size_t n;
+	int n;
 	char buf[BUFSIZ];
 
 	s = socket(AF_LOCAL, SOCK_STREAM, 0);
