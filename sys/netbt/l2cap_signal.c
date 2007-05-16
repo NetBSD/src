@@ -1,4 +1,4 @@
-/*	$NetBSD: l2cap_signal.c,v 1.7 2007/04/21 06:15:23 plunky Exp $	*/
+/*	$NetBSD: l2cap_signal.c,v 1.8 2007/05/16 18:34:49 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: l2cap_signal.c,v 1.7 2007/04/21 06:15:23 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: l2cap_signal.c,v 1.8 2007/05/16 18:34:49 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -918,18 +918,18 @@ l2cap_send_signal(struct hci_link *link, uint8_t code, uint8_t ident,
 
 	/* Command Data */
 	if (length > 0)
-		m_copyback(m, sizeof(hdr) + sizeof(cmd), length, data);
+		m_copyback(m, sizeof(*hdr) + sizeof(*cmd), length, data);
 
 	/* Command Header */
 	cmd->code = code;
 	cmd->ident = ident;
 	cmd->length = htole16(length);
-	length += sizeof(cmd);
+	length += sizeof(*cmd);
 
 	/* C-Frame Header */
 	hdr->length = htole16(length);
 	hdr->dcid = htole16(L2CAP_SIGNAL_CID);
-	length += sizeof(hdr);
+	length += sizeof(*hdr);
 
 	if (m->m_pkthdr.len != MAX(MHLEN, length)) {
 		m_freem(m);
