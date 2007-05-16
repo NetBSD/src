@@ -1,4 +1,4 @@
-/* $NetBSD: defs.h,v 1.1 2007/02/11 10:31:37 agc Exp $ */
+/* $NetBSD: defs.h,v 1.2 2007/05/16 21:39:08 christos Exp $ */
 
 /*
  * Copyright (c) 1999-2005 Alistair Crooks.  All rights reserved.
@@ -40,53 +40,5 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-#define NEWARRAY(type,ptr,size,where,action) do {			\
-	if ((ptr = (type *) calloc(sizeof(type), (unsigned)(size))) == NULL) { \
-		(void) fprintf(stderr, "%s: can't allocate %lu bytes\n", \
-			where, (unsigned long)(size * sizeof(type)));	\
-		action;							\
-	}								\
-} while( /* CONSTCOND */ 0)
-
-#define RENEW(type,ptr,size,where,action) do {				\
-	type *_newptr;							\
-	if ((_newptr = (type *) realloc(ptr, sizeof(type) * (size))) == NULL) { \
-		(void) fprintf(stderr, "%s: can't realloc %lu bytes\n",	\
-			where, (unsigned long)(size * sizeof(type)));	\
-		action;							\
-	} else {							\
-		ptr = _newptr;						\
-	}								\
-} while( /* CONSTCOND */ 0)
-
-#define NEW(type, ptr, where, action)	NEWARRAY(type, ptr, 1, where, action)
-
-#define FREE(ptr)	(void) free(ptr)
-
-#define ALLOC(type, v, size, c, init, incr, where, action) do {		\
-	uint32_t	_newsize = size;				\
-	if (size == 0) {						\
-		_newsize = init;					\
-		NEWARRAY(type, v, _newsize, where ": new", action);	\
-	} else if (c == size) {						\
-		_newsize = size + incr;					\
-		RENEW(type, v, _newsize, where ": renew", action);	\
-	}								\
-	size = _newsize;						\
-} while( /* CONSTCOND */ 0)
-
-/*		(void) memset(&v[size], 0x0, sizeof(type) * incr);	\*/
-
-#define DEFINE_ARRAY(name, type)					\
-typedef struct name {							\
-	uint32_t	c;						\
-	uint32_t	size;						\
-	type	       *v;						\
-} name
-
-#ifndef ABS
-#define ABS(a)		(((a) < 0) ? -(a) : (a))
-#endif
 
 #endif /* !DEFS_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: refuse.c,v 1.54 2007/05/16 10:53:41 pooka Exp $	*/
+/*	$NetBSD: refuse.c,v 1.55 2007/05/16 21:39:08 christos Exp $	*/
 
 /*
  * Copyright © 2007 Alistair Crooks.  All rights reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: refuse.c,v 1.54 2007/05/16 10:53:41 pooka Exp $");
+__RCSID("$NetBSD: refuse.c,v 1.55 2007/05/16 21:39:08 christos Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -118,7 +118,8 @@ newrn(struct puffs_usermount *pu)
 	struct puffs_node *pn;
 	struct refusenode *rn;
 
-	NEW(struct refusenode, rn, "newrn", exit(EXIT_FAILURE));
+	if ((rn = malloc(sizeof(*rn))) == NULL)
+		err(1, "newrn");
 	pn = puffs_pn_new(pu, rn);
 
 	return pn;
@@ -151,8 +152,7 @@ fill_dirbuf(struct puffs_fuse_dirh *dh, const char *name, ino_t dino,
 
 	/* initial? */
 	if (dh->bufsize == 0) {
-		dh->dbuf = malloc(DIR_CHUNKSIZE);
-		if (dh->dbuf == NULL)
+		if ((dh->dbuf = malloc(DIR_CHUNKSIZE)) == NULL)
 			err(1, "fill_dirbuf");
 		dh->d = dh->dbuf;
 		dh->reslen = dh->bufsize = DIR_CHUNKSIZE;
@@ -220,29 +220,34 @@ puffs_fuse_dirfil(fuse_dirh_t h, const char *name, int type, ino_t ino)
 	return fill_dirbuf(h, name, dino, dtype);
 }
 
-static struct fuse_args *
-deep_copy_args(int argc, char **argv)
+struct fuse_args *
+_fuse_deep_copy_args(int argc, char **argv)
 {
 	struct fuse_args	*ap;
-	int			 i;
+	size_t			 i;
 
-	NEW(struct fuse_args, ap, "deep_copy_args", return NULL);
+	if ((ap = malloc(sizeof(*ap))) == NULL)
+		err(1, "_fuse_deep_copy_args");
 	/* deep copy args structure into channel args */
 	ap->allocated = ((argc / 10) + 1) * 10;
-	NEWARRAY(char *, ap->argv, ap->allocated, "deep_copy_args",
-		return NULL);
-	for (i = 0 ; i < argc ; i++) {
-		ap->argv[i] = strdup(argv[i]);
+
+	if ((ap->argv = calloc((size_t)ap->allocated,
+	    sizeof(*ap->argv))) == NULL)
+		err(1, "_fuse_deep_copy_args");
+
+	for (i = 0; i < argc; i++) {
+		if ((ap->argv[i] = strdup(argv[i])) == NULL)
+			err(1, "_fuse_deep_copy_args");
 	}
 	return ap;
 }
 
-static void
-free_args(struct fuse_args *ap)
+void
+_fuse_free_args(struct fuse_args *ap)
 {
 	int	i;
 
-	for (i = 0 ; i < ap->argc ; i++) {
+	for (i = 0; i < ap->argc; i++) {
 		free(ap->argv[i]);
 	}
 	free(ap);
@@ -297,11 +302,12 @@ fuse_setup(int argc, char **argv, const struct fuse_operations *ops,
 	set_refuse_mount_name(argv, name, sizeof(name));
 
 	/* stuff name into fuse_args */
-	args = deep_copy_args(argc, argv);
+	args = _fuse_deep_copy_args(argc, argv);
 	if (args->argc > 0) {
-		FREE(args->argv[0]);
+		free(args->argv[0]);
 	}
-	args->argv[0] = strdup(name);
+	if ((args->argv[0] = strdup(name)) == NULL)
+		err(1, "fuse_setup");
 
 	for (i = argc - 1 ; i > 0 && *argv[i] == '-' ; --i) {
 	}
@@ -309,7 +315,7 @@ fuse_setup(int argc, char **argv, const struct fuse_operations *ops,
 	fc = fuse_mount(*mountpoint = argv[i], args);
 	fuse = fuse_new(fc, args, ops, size, NULL);
 
-	free_args(args);
+	_fuse_free_args(args);
 
 	/* XXX - wait for puffs to become multi-threaded */
 	if (multithreaded) {
@@ -1098,20 +1104,23 @@ fuse_mount(const char *dir, struct fuse_args *args)
  	struct fuse_chan	*fc;
 	char			 name[64];
 
- 	NEW(struct fuse_chan, fc, "fuse_mount", exit(EXIT_FAILURE));
+	if ((fc = malloc(sizeof(*fc))) == NULL)
+		err(1, "fuse_mount");
 
- 	fc->dir = strdup(dir);
+	if ((fc->dir = strdup(dir)) == NULL)
+		err(1, "fuse_mount");
 
 	/*
 	 * we need to deep copy the args struct - some fuse file
 	 * systems "clean up" the argument vector for "security
 	 * reasons"
 	 */
-	fc->args = deep_copy_args(args->argc, args->argv);
+	fc->args = _fuse_deep_copy_args(args->argc, args->argv);
 
 	if (args->argc > 0) {
 		set_refuse_mount_name(args->argv, name, sizeof(name));
-		args->argv[0] = strdup(name);
+		if ((args->argv[0] = strdup(name)) == NULL)
+			err(1, "fuse_mount");
 	}
 	
 	return fc;
@@ -1134,7 +1143,8 @@ fuse_new(struct fuse_chan *fc, struct fuse_args *args,
 	char			*argv0;
 	extern int		puffs_fakecc;
 
-	NEW(struct fuse, fuse, "fuse_new", exit(EXIT_FAILURE));
+	if ((fuse = malloc(sizeof(*fuse))) == NULL)
+		err(1, "fuse_new");
 
 	/* copy fuse ops to their own stucture */
 	(void) memcpy(&fuse->op, ops, sizeof(fuse->op));
@@ -1195,7 +1205,8 @@ fuse_new(struct fuse_chan *fc, struct fuse_args *args,
 	rn_root->flags |= RN_ROOT;
 
 	po_root = puffs_getrootpathobj(pu);
-	po_root->po_path = strdup("/");
+	if ((po_root->po_path = strdup("/")) == NULL)
+		err(1, "fuse_new");
 	po_root->po_len = 1;
 
 	/* sane defaults */
@@ -1231,7 +1242,7 @@ fuse_destroy(struct fuse *fuse)
 
 
 	/* XXXXXX: missing stuff */
-	FREE(fuse);
+	free(fuse);
 }
 
 /* XXX: threads */

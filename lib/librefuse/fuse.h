@@ -179,6 +179,9 @@ void fuse_unmount_compat22(const char *);
             fuse_main_real(argc, argv, op, sizeof(*(op)), NULL)
 #endif
 
+struct fuse_args *_fuse_deep_copy_args(int, char **);
+void _fuse_free_args(struct fuse_args *);
+
 #ifdef __cplusplus
 }
 #endif
