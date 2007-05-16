@@ -1,4 +1,4 @@
-# $NetBSD: rescue.mi,v 1.22 2007/03/23 05:48:34 lukem Exp $
+# $NetBSD: rescue.mi,v 1.23 2007/05/16 12:42:00 tsutsui Exp $
 ./rescue/[					base-rescue-root
 ./rescue/atactl					base-rescue-root
 ./rescue/badsect				base-rescue-root
@@ -26,6 +26,8 @@
 ./rescue/domainname				base-rescue-root
 ./rescue/dump					base-rescue-root
 ./rescue/dump_lfs				base-rescue-root
+./rescue/dumpfs					base-rescue-root
+./rescue/dumplfs				base-rescue-root
 ./rescue/echo					base-rescue-root
 ./rescue/ed					base-rescue-root
 ./rescue/egrep					base-rescue-root
