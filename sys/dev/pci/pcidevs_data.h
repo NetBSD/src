@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.877 2007/05/02 21:29:16 bouyer Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.878 2007/05/16 19:08:53 mrg Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.878 2007/05/02 21:28:28 bouyer Exp
+ *	NetBSD: pcidevs,v 1.879 2007/05/16 19:07:42 mrg Exp
  */
 
 /*
@@ -9252,6 +9252,10 @@ static const struct pci_product pci_products[] = {
 	    "RIVA TNT2 Model 64",
 	},
 	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP04_SMBUS,
+	    "MCP04 SMBus",
+	},
+	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP04_IDE,
 	    "MCP04 IDE",
 	},
@@ -12880,4 +12884,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2625;
+const int pci_nproducts = 2626;
