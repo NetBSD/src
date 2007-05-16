@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.h,v 1.56 2007/05/15 13:44:47 pooka Exp $	*/
+/*	$NetBSD: puffs.h,v 1.57 2007/05/16 10:04:08 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -362,7 +362,7 @@ enum {
 #define PUFFSOP_SETFSNOP(ops, opname)					\
     (ops)->puffs_fs_##opname = puffs_fsnop_##opname
 
-#define PUFFS_DEVEL_LIBVERSION 17
+#define PUFFS_DEVEL_LIBVERSION 18
 #define puffs_mount(a,b,c,d,e,f) \
     _puffs_mount(PUFFS_DEVEL_LIBVERSION,a,b,c,d,e,f)
 #define puffs_init(a,b,c,d) \
@@ -399,7 +399,7 @@ typedef int (*puffs_framev_respcmp_fn)(struct puffs_usermount *,
 typedef void (*puffs_framev_fdnotify_fn)(struct puffs_usermount *, int, int);
 typedef void (*puffs_framev_cb)(struct puffs_usermount *,
 				struct puffs_framebuf *,
-				void *);
+				void *, int);
 #define PUFFS_FBGONE_READ	0x01
 #define PUFFS_FBGONE_WRITE	0x02
 #define PUFFS_FBGONE_BOTH(a)	((a)==(PUFFS_FBGONE_READ|PUFFS_FBGONE_WRITE))

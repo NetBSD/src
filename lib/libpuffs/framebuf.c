@@ -1,4 +1,4 @@
-/*	$NetBSD: framebuf.c,v 1.9 2007/05/16 09:41:04 pooka Exp $	*/
+/*	$NetBSD: framebuf.c,v 1.10 2007/05/16 10:04:08 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: framebuf.c,v 1.9 2007/05/16 09:41:04 pooka Exp $");
+__RCSID("$NetBSD: framebuf.c,v 1.10 2007/05/16 10:04:08 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -282,7 +282,7 @@ errnotify(struct puffs_framebuf *pufbuf, int error)
 	} else if (pufbuf->fcb) {
 		pufbuf->istat &= ~ISTAT_NODESTROY;
 		pufbuf->fcb(puffs_cc_getusermount(pufbuf->pcc),
-		    pufbuf, pufbuf->fcb_arg);
+		    pufbuf, pufbuf->fcb_arg, error);
 	} else {
 		pufbuf->istat &= ~ISTAT_NODESTROY;
 		puffs_framebuf_destroy(pufbuf);
@@ -461,7 +461,7 @@ puffs_framev_input(struct puffs_usermount *pu, struct puffs_framectrl *fctrl,
 		if (appbuf->pcc) {
 			puffs_docc(appbuf->pcc, ppr);
 		} else if (appbuf->fcb) {
-			appbuf->fcb(pu, appbuf, appbuf->fcb_arg);
+			appbuf->fcb(pu, appbuf, appbuf->fcb_arg, 0);
 		} else {
 			puffs_framebuf_destroy(appbuf);
 		}
