@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_svc.c,v 1.5 2007/05/13 20:03:47 christos Exp $	*/
+/*	$NetBSD: pmap_svc.c,v 1.6 2007/05/16 14:42:07 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -199,9 +199,9 @@ pmapproc_change(struct svc_req *rqstp, SVCXPRT *xprt, unsigned long op)
 	 * and looping.
 	 */
 	if (sc == NULL)
-		rpcbreg.r_owner = __UNCONST(unknown);
+		rpcbreg.r_owner = __UNCONST(rpcbind_unknown);
 	else if (sc->sc_uid == 0)
-		rpcbreg.r_owner = __UNCONST(superuser);
+		rpcbreg.r_owner = __UNCONST(rpcbind_superuser);
 	else {
 		/* r_owner will be strdup-ed later */
 		snprintf(uidbuf, sizeof uidbuf, "%d", sc->sc_uid);

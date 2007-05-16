@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcb_svc_com.c,v 1.11 2007/05/13 20:03:47 christos Exp $	*/
+/*	$NetBSD: rpcb_svc_com.c,v 1.12 2007/05/16 14:42:07 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -255,7 +255,7 @@ map_unset(RPCB *regp, const char *owner)
 		 * Check whether appropriate uid. Unset only
 		 * if superuser or the owner itself.
 		 */
-		if (strcmp(owner, superuser) &&
+		if (strcmp(owner, rpcbind_superuser) &&
 			strcmp(rbl->rpcb_map.r_owner, owner))
 			return (0);
 		/* found it; rbl moves forward, prev stays */
@@ -297,7 +297,7 @@ delete_prog(int prog)
 		reg.r_prog = rbl->rpcb_map.r_prog;
 		reg.r_vers = rbl->rpcb_map.r_vers;
 		reg.r_netid = strdup(rbl->rpcb_map.r_netid);
-		(void)map_unset(&reg, superuser);
+		(void)map_unset(&reg, rpcbind_superuser);
 		free(reg.r_netid);
 	}
 }
@@ -672,11 +672,12 @@ rpcbproc_callit_com(struct svc_req *rqstp, SVCXPRT *transp,
 		fprintf(stderr, "%s %s req for (%lu, %lu, %lu, %s) from %s : ",
 			versnum == PMAPVERS ? "pmap_rmtcall" :
 			versnum == RPCBVERS ? "rpcb_rmtcall" :
-			versnum == RPCBVERS4 ? "rpcb_indirect" : unknown,
+			versnum == RPCBVERS4 ? "rpcb_indirect" :
+			rpcbind_unknown,
 			reply_type == RPCBPROC_INDIRECT ? "indirect" : "callit",
 			(unsigned long)a.rmt_prog, (unsigned long)a.rmt_vers,
 			(unsigned long)a.rmt_proc, transp->xp_netid,
-			uaddr ? uaddr : unknown);
+			uaddr ? uaddr : rpcbind_unknown);
 		if (uaddr)
 			free((void *) uaddr);
 	}
@@ -1268,7 +1269,7 @@ handle_reply(int fd, SVCXPRT *xprt)
 				    svc_getrpccaller(xprt));
 	if (debugging) {
 		fprintf(stderr, "handle_reply:  forwarding address %s to %s\n",
-			a.rmt_uaddr, uaddr ? uaddr : unknown);
+			a.rmt_uaddr, uaddr ? uaddr : rpcbind_unknown);
 	}
 	if (uaddr)
 		free((void *) uaddr);
@@ -1355,9 +1356,9 @@ getowner(SVCXPRT *transp, char *owner, size_t ownersize)
 
 	sc = __svc_getcallercreds(transp);
 	if (sc == NULL)
-		strlcpy(owner, unknown, ownersize);
+		strlcpy(owner, rpcbind_unknown, ownersize);
 	else if (sc->sc_uid == 0)
-		strlcpy(owner, superuser, ownersize);
+		strlcpy(owner, rpcbind_superuser, ownersize);
 	else
 		snprintf(owner, ownersize, "%d", sc->sc_uid);
 

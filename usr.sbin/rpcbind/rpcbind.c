@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcbind.c,v 1.12 2007/05/13 21:19:56 christos Exp $	*/
+/*	$NetBSD: rpcbind.c,v 1.13 2007/05/16 14:42:08 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -99,8 +99,8 @@ const char *tcp_uaddr;		/* Universal TCP address */
 #endif
 static const char servname[] = "sunrpc";
 
-const char superuser[] = "superuser";
-const char unknown[] = "unknown";
+const char rpcbind_superuser[] = "superuser";
+const char rpcbind_unknown[] = "unknown";
 
 static int init_transport(struct netconfig *);
 static void rbllist_add(rpcprog_t, rpcvers_t, struct netconfig *,
@@ -501,7 +501,7 @@ rbllist_add(rpcprog_t prog, rpcvers_t vers, struct netconfig *nconf,
 	rbl->rpcb_map.r_vers = vers;
 	rbl->rpcb_map.r_netid = strdup(nconf->nc_netid);
 	rbl->rpcb_map.r_addr = taddr2uaddr(nconf, addr);
-	rbl->rpcb_map.r_owner = strdup(superuser);
+	rbl->rpcb_map.r_owner = strdup(rpcbind_superuser);
 	rbl->rpcb_next = list_rbl;	/* Attach to global list */
 	list_rbl = rbl;
 }

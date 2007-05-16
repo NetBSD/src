@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcbind.h,v 1.2 2007/05/13 20:03:47 christos Exp $	*/
+/*	$NetBSD: rpcbind.h,v 1.3 2007/05/16 14:42:08 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -79,8 +79,8 @@ extern const char *udp_uaddr;	/* Universal UDP address */
 extern const char *tcp_uaddr;	/* Universal TCP address */
 #endif
 
-extern const char superuser[];
-extern const char unknown[];
+extern const char rpcbind_superuser[];
+extern const char rpcbind_unknown[];
 
 int add_bndlist(struct netconfig *, struct netbuf *);
 bool_t is_bound(const char *, const char *);
