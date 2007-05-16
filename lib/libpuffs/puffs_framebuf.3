@@ -1,4 +1,4 @@
-.\"	$NetBSD: puffs_framebuf.3,v 1.4 2007/05/16 07:56:09 pooka Exp $
+.\"	$NetBSD: puffs_framebuf.3,v 1.5 2007/05/16 09:41:04 pooka Exp $
 .\"
 .\" Copyright (c) 2007 Antti Kantee.  All rights reserved.
 .\"
@@ -409,7 +409,7 @@ Removing a file descriptor causes all operations blocked either on
 output or input to be released with the error value
 .Ar error .
 In case 0 is supplied as this parameter,
-.Er ECONNABORTED
+.Er ECONNRESET
 is used.
 .Pp
 The file system
