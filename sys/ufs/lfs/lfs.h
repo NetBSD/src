@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.119 2007/04/17 01:16:46 perseant Exp $	*/
+/*	$NetBSD: lfs.h,v 1.120 2007/05/16 19:11:37 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -966,7 +966,6 @@ struct segment {
 #define SEGM_PAGEDAEMON	0x10		/* pagedaemon called us */
 #define SEGM_WRITERD	0x20		/* LFS writed called us */
 #define SEGM_FORCE_CKP	0x40		/* Force checkpoint right away */
-#define SEGM_W_DIROPS	0x80		/* Write dirops in generic segwrite */
 	u_int16_t seg_flags;		/* run-time flags for this segment */
 	u_int32_t seg_iocount;		/* number of ios pending */
 	int	  ndupino;		/* number of duplicate inodes */
