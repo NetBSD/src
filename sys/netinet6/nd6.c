@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.114 2007/05/02 20:40:27 dyoung Exp $	*/
+/*	$NetBSD: nd6.c,v 1.115 2007/05/17 00:53:26 dyoung Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.114 2007/05/02 20:40:27 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.115 2007/05/17 00:53:26 dyoung Exp $");
 
 #include "opt_ipsec.h"
 
@@ -1584,6 +1584,27 @@ nd6_ioctl(u_long cmd, void *data, struct ifnet *ifp)
 	return error;
 }
 
+void
+nd6_llinfo_release_pkts(struct llinfo_nd6 *ln, struct ifnet *ifp,
+    struct rtentry *rt)
+{
+	struct mbuf *m_hold, *m_hold_next;
+
+	for (m_hold = ln->ln_hold, ln->ln_hold = NULL;
+	     m_hold != NULL;
+	     m_hold = m_hold_next) {
+		m_hold_next = m_hold->m_nextpkt;
+		m_hold->m_nextpkt = NULL;
+
+		/*
+		 * we assume ifp is not a p2p here, so
+		 * just set the 2nd argument as the 
+		 * 1st one.
+		 */
+		nd6_output(ifp, ifp, m_hold, satocsin6(rt_key(rt)), rt);
+	}
+}
+
 /*
  * Create neighbor cache entry and cache link-layer address,
  * on reception of inbound ND6 packets.  (RS/RA/NS/redirect)
@@ -1718,31 +1739,7 @@ fail:
 			 */
 			nd6_llinfo_settimer(ln, (long)nd6_gctimer * hz);
 
- 			if (ln->ln_hold) {
-				struct mbuf *m_hold, *m_hold_next;
-				for (m_hold = ln->ln_hold; m_hold;
-				     m_hold = m_hold_next) {
-					struct mbuf *mpkt = NULL;
-			
-					m_hold_next = m_hold->m_nextpkt;
-					mpkt = m_copym(m_hold, 0, M_COPYALL, M_DONTWAIT);
-					if (mpkt == NULL) {
-						m_freem(m_hold);
-						break;
-					}
-					mpkt->m_nextpkt = NULL;
-
-					/*
-					 * we assume ifp is not a p2p here, so
-					 * just set the 2nd argument as the 
-					 * 1st one.
-					 */
-					nd6_output(ifp, ifp, mpkt,
-					     (struct sockaddr_in6 *)rt_key(rt),
-					     rt);
-				}
- 				ln->ln_hold = NULL;
- 			}
+			nd6_llinfo_release_pkts(ln, ifp, rt);
 		} else if (ln->ln_state == ND6_LLINFO_INCOMPLETE) {
 			/* probe right away */
 			nd6_llinfo_settimer((void *)ln, 0);
