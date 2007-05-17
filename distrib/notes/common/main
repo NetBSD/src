@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.339 2007/05/10 18:34:02 plunky Exp $
+.\"	$NetBSD: main,v 1.340 2007/05/17 08:56:46 lkundrak Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1327,6 +1327,7 @@ If you're one of them, and would like to mentioned, tell us!)
 .It Ta John Kohl Ta Mt jtk@NetBSD.org
 .It Ta Daniel de Kok Ta Mt daniel@NetBSD.org
 .It Ta Paul Kranenburg Ta Mt pk@NetBSD.org
+.It Ta Lubomir Kundrak Ta Mt lkundrak@NetBSD.org
 .It Ta Martti Kuparinen Ta Mt martti@NetBSD.org
 .It Ta Kentaro A. Kurahone Ta Mt kurahone@NetBSD.org
 .It Ta Kevin Lahey Ta Mt kml@NetBSD.org
