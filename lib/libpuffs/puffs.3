@@ -1,4 +1,4 @@
-.\"	$NetBSD: puffs.3,v 1.23 2007/05/15 13:44:47 pooka Exp $
+.\"	$NetBSD: puffs.3,v 1.24 2007/05/17 15:21:14 pooka Exp $
 .\"
 .\" Copyright (c) 2006, 2007 Antti Kantee.  All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd May 15, 2007
+.Dd May 17, 2007
 .Dt PUFFS 3
 .Os
 .Sh NAME
@@ -39,16 +39,9 @@
 .Fa "uint32_t flags"
 .Fc
 .Ft int
-.Fn puffs_domount "struct puffs_usermount *pu" "const char *dir" "int mntflags"
-.Ft struct puffs_usermount *
 .Fo puffs_mount
-.Fa "struct puffs_ops *pops" "const char *dir" "int mntflags"
-.Fa "const char *puffsname" "void *private"
-.Fa "uint32_t pflags"
-.Fc
-.Ft int
-.Fo puffs_start
-.Fa "struct puffs_usermount *pu" "void *rootcookie" "struct statvfs *svfsb"
+.Fa "struct puffs_usermount *pu" "const char *dir" "int mntflags"
+.Fa "void *root_cookie"
 .Fc
 .Ft int
 .Fn puffs_getselectable "struct puffs_usermount *pu"
@@ -60,6 +53,10 @@
 .Fn puffs_setstacksize "struct puffs_usermount *pu" "size_t stacksize"
 .Ft void
 .Fn puffs_setroot "struct puffs_usermount *pu" "struct puffs_node *node"
+.Ft void
+.Fo puffs_setrootinfo
+.Fa "struct puffs_usermount *pu" "enum vtype vt" "vsize_t vsize" "dev_t rdev"
+.Fc
 .Ft struct puffs_node *
 .Fn puffs_getroot "struct puffs_usermount *pu"
 .Ft void *
@@ -118,15 +115,8 @@ directly.
 Operations on the library always require a pointer to the opaque context
 identifier,
 .Va struct puffs_usermount .
-There are two ways of acquiring this context:
-.Fn puffs_init
-and
-.Fn puffs_mount .
-They are equivalent except in the sense that the latter also proceeds
-to mount the file system.
-The former can be used when special parameters need to be set and
-only then proceed with mounting by calling
-.Fn puffs_domount .
+It is obtained by calling
+.Fn puffs_init .
 .Pp
 The callbacks are passed as the fields in the structure
 .Fa pops .
@@ -142,7 +132,7 @@ All operations are initialized to a default state with the call
 .Fn PUFFSOP_INIT pops .
 All of the VFS routines are mandatory, but all of the node operations
 with the exception of
-.Fn puffs_fs_lookup
+.Fn puffs_node_lookup
 are optional.
 However, leaving operations blank will naturally have an effect on the
 features available from the file system implementation.
@@ -246,7 +236,7 @@ Returns the state of the file system.
 It is maintained by the framework and is mostly useful for the framework
 itself.
 Possible values are
-.Dv PUFFS_STATE_MOUNTING ,
+.Dv PUFFS_STATE_BEFOREMOUNT ,
 .Dv PUFFS_STATE_RUNNING ,
 .Dv PUFFS_STATE_UNMOUNTING
 and
@@ -264,17 +254,20 @@ to
 Setting the root node is currently required only if the path
 framework is used, see
 .Xr puffs_path 3 .
-.Pp
-This, if desired, should be done before the file system is activated
-with
-.Fn puffs_start .
+.It Fn puffs_setrootinfo pu vt vsize rdev
+The default root node is a directory.
+In case the file system wants something different, it can call this
+function and set the type, size and possible device type to whatever
+it wants.
+This routine is independent of
+.Fn puffs_setroot .
 .It Fn puffs_getroot "pu"
 Returns the root node set earlier.
 .It Fn puffs_getspecific "pu"
 Returns the
 .Fa private
 argument of
-.Fn puffs_mount .
+.Fn puffs_init .
 .It Fn puffs_setmaxreqlen "pu" "maxreqlen"
 In case the file system desires a maximum buffer length different from
 the default, the amount
@@ -284,7 +277,7 @@ will be requested from the kernel when the file system is mounted.
 It is legal to call this function only between
 .Fn puffs_init
 and
-.Fn puffs_domount .
+.Fn puffs_mount .
 .It Fn puffs_getmaxreqlen "pu"
 Returns the maximum request length the kernel will need for a single
 request.
@@ -333,7 +326,7 @@ In case the file handles are too large, mount will return an error.
 It is legal to call this function only between
 .Fn puffs_init
 and
-.Fn puffs_domount .
+.Fn puffs_mount .
 .It Fn puffs_setncookiehash "pu" "ncookiehash"
 The parameter
 .Fa ncookiehash
@@ -346,7 +339,7 @@ very many active files.
 It is legal to call this function only between
 .Fn puffs_init
 and
-.Fn puffs_domount .
+.Fn puffs_mount .
 .El
 .Pp
 After the correct setup for the library has been established and the
