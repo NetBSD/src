@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_sys.h,v 1.34 2007/05/07 17:14:54 pooka Exp $	*/
+/*	$NetBSD: puffs_sys.h,v 1.35 2007/05/17 13:59:22 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -137,8 +137,13 @@ struct puffs_mount {
 	int				pmp_npnodehash;
 
 	struct mount			*pmp_mp;
+
 	struct vnode			*pmp_root;
-	void				*pmp_rootcookie;
+	void				*pmp_root_cookie;
+	enum vtype			pmp_root_vtype;
+	vsize_t				pmp_root_vsize;
+	dev_t				pmp_root_rdev;
+
 	struct selinfo			*pmp_sel;	/* in puffs_instance */
 
 	unsigned int			pmp_refcount;
@@ -194,8 +199,6 @@ void	puffs_msgif_init(void);
 void	puffs_msgif_destroy(void);
 void 	*puffs_park_alloc(int);
 void	puffs_park_release(void *, int);
-
-int	puffs_start2(struct puffs_mount *, struct puffs_startreq *);
 
 int	puffs_vfstouser(struct puffs_mount *, int, void *, size_t);
 void	puffs_suspendtouser(struct puffs_mount *, int);
