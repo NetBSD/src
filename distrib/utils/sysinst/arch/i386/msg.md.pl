@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.pl,v 1.25 2007/05/05 22:23:34 snj Exp $	*/
+/*	$NetBSD: msg.md.pl,v 1.26 2007/05/17 01:50:49 hubertf Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.md.en,v 1.24 2001/01/27 07:34:39 jmc Exp 	*/
 
@@ -162,5 +162,5 @@ message set_kernel_1	{Kernel (GENERIC)}
 message set_kernel_2	{Kernel (GENERIC.MP)}
 message set_kernel_3	{Kernel (GENERIC_LAPTOP)}
 message set_kernel_4	{Kernel (GENERIC_DIAGNOSTIC)}
-/* message set_kernel_5	{Kernel (GENERIC_TINY)} */
+message set_kernel_5	{Kernel (GENERIC.NOACPI)}
 /* message set_kernel_6	{Kernel (GENERIC_PS2TINY)} */

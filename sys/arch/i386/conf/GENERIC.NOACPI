@@ -1,0 +1,9 @@
+#	$NetBSD: GENERIC.NOACPI,v 1.1 2007/05/17 01:50:48 hubertf Exp $
+#
+#	GENERIC.NOACPI -- GENERIC without ACPI
+#
+
+include "arch/i386/conf/GENERIC"
+
+no acpi0 at mainbus0
+no ioapic* at mainbus?
