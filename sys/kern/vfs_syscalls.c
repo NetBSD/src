@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.313 2007/05/15 19:47:45 elad Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.314 2007/05/17 00:46:30 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.313 2007/05/15 19:47:45 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.314 2007/05/17 00:46:30 christos Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -776,8 +776,6 @@ done:
 		size_t len;
 		char *bp;
 		char *path = PNBUF_GET();
-		if (!path)
-			return ENOMEM;
 
 		bp = path + MAXPATHLEN;
 		*--bp = '\0';
@@ -1754,6 +1752,7 @@ sys_mknod(struct lwp *l, void *v, register_t *retval)
 	struct vnode *vp;
 	struct vattr vattr;
 	int error, optype;
+	char *path;
 	struct nameidata nd;
 
 	if ((error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_MKNOD,
@@ -1761,9 +1760,13 @@ sys_mknod(struct lwp *l, void *v, register_t *retval)
 		return (error);
 
 	optype = VOP_MKNOD_DESCOFFSET;
-	NDINIT(&nd, CREATE, LOCKPARENT | TRYEMULROOT, UIO_USERSPACE, SCARG(uap, path), l);
+	path = PNBUF_GET();
+	error = copyinstr(SCARG(uap, path), path, MAXPATHLEN, NULL);
+	if (error)
+		goto out;
+	NDINIT(&nd, CREATE, LOCKPARENT | TRYEMULROOT, UIO_SYSSPACE, path, l);
 	if ((error = namei(&nd)) != 0)
-		return (error);
+		goto out;
 	vp = nd.ni_vp;
 	if (vp != NULL)
 		error = EEXIST;
@@ -1787,6 +1790,10 @@ sys_mknod(struct lwp *l, void *v, register_t *retval)
 			optype = VOP_WHITEOUT_DESCOFFSET;
 			break;
 		case S_IFREG:
+#if NVERIEXEC > 0
+			error = veriexec_openchk(l, nd.ni_vp, nd.ni_dirp,
+			    O_CREAT);
+#endif /* NVERIEXEC > 0 */
 			vattr.va_type = VREG;
 			vattr.va_rdev = VNOVAL;
 			optype = VOP_CREATE_DESCOFFSET;
@@ -1829,6 +1836,8 @@ sys_mknod(struct lwp *l, void *v, register_t *retval)
 		if (vp)
 			vrele(vp);
 	}
+out:
+	PNBUF_PUT(path);
 	return (error);
 }
 
