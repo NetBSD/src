@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.159 2007/05/17 06:03:42 jdc Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.160 2007/05/17 21:30:59 jdc Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -5439,4 +5439,55 @@ usr.sbin/bind/named/Makefile			patch
 
 	Update BIND to version 9.4.1.
 	[christos, ticket #602]
+
+include/arpa/inet.h				patch
+include/arpa/nameser.h				patch
+include/arpa/nameser_compat.h			patch
+include/netdb.h					patch
+include/res_update.h				patch
+include/resolv.h				patch
+lib/libc/include/isc/assertions.h		patch
+lib/libc/include/isc/dst.h			patch
+lib/libc/include/isc/eventlib.h			patch
+lib/libc/include/isc/heap.h			patch
+lib/libc/include/isc/list.h			patch
+lib/libc/include/isc/memcluster.h		patch
+lib/libc/include/resolv_mt.h			patch
+lib/libc/inet/inet_cidr_ntop.c			patch
+lib/libc/inet/inet_cidr_pton.c			patch
+lib/libc/inet/inet_ntop.c			patch
+lib/libc/inet/inet_pton.c			patch
+lib/libc/inet/nsap_addr.c			patch
+lib/libc/isc/assertions.c			patch
+lib/libc/isc/ev_streams.c			patch
+lib/libc/isc/ev_timers.c			patch
+lib/libc/isc/eventlib_p.h			patch
+lib/libc/nameser/ns_name.c			patch
+lib/libc/nameser/ns_netint.c			patch
+lib/libc/nameser/ns_parse.c			patch
+lib/libc/nameser/ns_print.c			patch
+lib/libc/nameser/ns_samedomain.c		patch
+lib/libc/nameser/ns_ttl.c			patch
+lib/libc/net/base64.c				patch
+lib/libc/net/gethnamaddr.c			patch
+lib/libc/net/getnetent.c			patch
+lib/libc/net/getnetnamadr.c			patch
+lib/libc/net/sethostent.c			patch
+lib/libc/resolv/Makefile.inc			patch
+lib/libc/resolv/__dn_comp.c			patch
+lib/libc/resolv/herror.c			patch
+lib/libc/resolv/mtctxres.c			patch
+lib/libc/resolv/res_comp.c			patch
+lib/libc/resolv/res_data.c			patch
+lib/libc/resolv/res_debug.c			patch
+lib/libc/resolv/res_debug.h			patch
+lib/libc/resolv/res_init.c			patch
+lib/libc/resolv/res_mkquery.c			patch
+lib/libc/resolv/res_private.h			patch
+lib/libc/resolv/res_query.c			patch
+lib/libc/resolv/res_send.c			patch
+lib/libc/resolv/res_state.c			patch
+
+	Add missing BIND 9.4.x include file and library changes.
+	[tron, ticket #662]
 
