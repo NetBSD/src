@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_proc.c,v 1.69 2007/05/01 06:58:08 dsl Exp $	*/
+/*	$NetBSD: kvm_proc.c,v 1.70 2007/05/17 21:42:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_proc.c	8.3 (Berkeley) 9/23/93";
 #else
-__RCSID("$NetBSD: kvm_proc.c,v 1.69 2007/05/01 06:58:08 dsl Exp $");
+__RCSID("$NetBSD: kvm_proc.c,v 1.70 2007/05/17 21:42:32 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -620,7 +620,7 @@ again:
 			kp2p->p_estcpu = kp->kp_proc.p_estcpu;
 			kp2p->p_rtime_sec = kp->kp_proc.p_rtime.tv_sec;
 			kp2p->p_rtime_usec = kp->kp_proc.p_rtime.tv_usec;
-			kp2p->p_cpticks = kp->kp_proc.p_cpticks;
+			kp2p->p_cpticks = kl[0].l_cpticks;
 			kp2p->p_pctcpu = kp->kp_proc.p_pctcpu;
 			kp2p->p_swtime = kl[0].l_swtime;
 			kp2p->p_slptime = kl[0].l_slptime;
@@ -773,6 +773,7 @@ kvm_getlwps(kd, pid, paddr, esize, cnt)
 		struct proc p;
 		struct lwp l;
 		u_long laddr;
+		void *back;
 		int i;
 
 		st = kvm_read(kd, paddr, &p, sizeof(p));
@@ -793,8 +794,14 @@ kvm_getlwps(kd, pid, paddr, esize, cnt)
 			}
 			kl = &kd->lwpbase[i];
 			kl->l_laddr = laddr;
-			kl->l_forw = PTRTOUINT64(l.l_forw);
-			kl->l_back = PTRTOUINT64(l.l_back);
+			kl->l_forw = PTRTOUINT64(l.l_runq.tqe_next);
+			laddr = (u_long)PTRTOUINT64(l.l_runq.tqe_prev);
+			st = kvm_read(kd, laddr, &back, sizeof(back));
+			if (st == -1) {
+				_kvm_syserr(kd, kd->program, "kvm_getlwps");
+				return (NULL);
+			}
+			kl->l_back = PTRTOUINT64(back);
 			kl->l_addr = PTRTOUINT64(l.l_addr);
 			kl->l_lid = l.l_lid;
 			kl->l_flag = l.l_flag;
