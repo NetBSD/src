@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.24.4.1 2007/03/12 05:51:43 rmind Exp $	*/
+/*	$NetBSD: clock.c,v 1.24.4.2 2007/05/17 13:41:06 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.24.4.1 2007/03/12 05:51:43 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.24.4.2 2007/05/17 13:41:06 yamt Exp $");
 
 #include "clock.h"
 
@@ -230,7 +230,7 @@ DELAY(mic)
 	 */
 
 	/*
-	 * this function uses HSync pulses as base units. The custom chips 
+	 * this function uses HSync pulses as base units. The custom chips
 	 * display only deals with 31.6kHz/2 refresh, this gives us a
 	 * resolution of 1/15800 s, which is ~63us (add some fuzz so we really
 	 * wait awhile, even if using small timeouts)
@@ -422,7 +422,7 @@ stopclock(void)
  * locore has been changed to turn the profile clock on/off when switching
  * into/out of a process that is profiling (startprofclock/stopprofclock).
  * This reduces the impact of the profiling clock on other users, and might
- * possibly increase the accuracy of the profiling. 
+ * possibly increase the accuracy of the profiling.
  */
 int  profint   = PRF_INTERVAL;	/* Clock ticks between interrupts */
 int  profscale = 0;		/* Scale factor from sys clock to prof clock */

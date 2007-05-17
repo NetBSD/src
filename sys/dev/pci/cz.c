@@ -1,4 +1,4 @@
-/*	$NetBSD: cz.c,v 1.42.4.1 2007/03/12 05:55:13 rmind Exp $	*/
+/*	$NetBSD: cz.c,v 1.42.4.2 2007/05/17 13:41:30 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cz.c,v 1.42.4.1 2007/03/12 05:55:13 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cz.c,v 1.42.4.2 2007/05/17 13:41:30 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1631,7 +1631,7 @@ cztty_receive(struct cztty_softc *sc, struct tty *tp)
 
 	while ((get != put) && ((tp->t_canq.c_cc + tp->t_rawq.c_cc) < tp->t_hiwat)) {
 #ifdef HOSTRAMCODE
-		if (hostram)
+		if (hostram) {
 			ch = ((char *)fifoaddr)[get];
 		} else {
 #endif

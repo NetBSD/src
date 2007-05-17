@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_readahead.c,v 1.2.30.1 2007/03/24 14:56:19 yamt Exp $	*/
+/*	$NetBSD: uvm_readahead.c,v 1.2.30.2 2007/05/17 13:42:02 yamt Exp $	*/
 
 /*-
  * Copyright (c)2003, 2005 YAMAMOTO Takashi,
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_readahead.c,v 1.2.30.1 2007/03/24 14:56:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_readahead.c,v 1.2.30.2 2007/05/17 13:42:02 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/pool.h>
@@ -65,6 +65,12 @@ struct uvm_ractx {
 	size_t ra_winsize;	/* window size */
 	off_t ra_next;		/* next offset to read-ahead */
 };
+
+#if defined(sun2) || (defined(sun3) && defined(_SUN3_))
+/* XXX: on sun2 and sun3 (but not sun3x) MAXPHYS is 0xe000 */
+#undef MAXPHYS	
+#define MAXPHYS		0x8000	/* XXX */
+#endif
 
 #define	RA_WINSIZE_INIT	MAXPHYS			/* initial window size */
 #define	RA_WINSIZE_MAX	(MAXPHYS * 8)		/* max window size */

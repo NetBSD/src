@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.228.2.3 2007/05/07 10:56:17 yamt Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.228.2.4 2007/05/17 13:42:00 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.228.2.3 2007/05/07 10:56:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.228.2.4 2007/05/17 13:42:00 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -230,7 +230,7 @@ lfs_writerd(void *arg)
 				if ((fs->lfs_dirvcount > LFS_MAX_FSDIROP(fs) ||
 				     lfs_dirvcount > LFS_MAX_DIROP) &&
 				    fs->lfs_dirops == 0)
-					fsflags |= SEGM_W_DIROPS;
+					fsflags |= SEGM_CKP;
 				if (fs->lfs_pdflush) {
 					DLOG((DLOG_FLUSH, "lfs_writerd: pdflush set\n"));
 					fs->lfs_pdflush = 0;
@@ -910,8 +910,8 @@ lfs_unmount(struct mount *mp, int mntflags, struct lwp *l)
 	fs = ump->um_lfs;
 
 	/* Two checkpoints */
-	lfs_segwrite(mp, SEGM_CKP | SEGM_SYNC | SEGM_W_DIROPS);
-	lfs_segwrite(mp, SEGM_CKP | SEGM_SYNC | SEGM_W_DIROPS);
+	lfs_segwrite(mp, SEGM_CKP | SEGM_SYNC);
+	lfs_segwrite(mp, SEGM_CKP | SEGM_SYNC);
 
 	/* wake up the cleaner so it can die */
 	lfs_wakeup_cleaner(fs);

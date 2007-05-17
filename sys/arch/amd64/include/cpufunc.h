@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.14.2.1 2007/03/12 05:46:36 rmind Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.14.2.2 2007/05/17 13:40:51 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -96,7 +96,18 @@ static __inline void
 invlpg(u_int64_t addr)
 { 
         __asm volatile("invlpg (%0)" : : "r" (addr) : "memory");
-}  
+}
+
+static __inline void
+lgs(u_short sel)
+{
+	__asm volatile("cli");
+	__asm volatile("swapgs");
+	__asm volatile("movw %0, %%gs" : : "r" (sel));
+	__asm volatile("mfence");
+	__asm volatile("swapgs");
+	__asm volatile("sti");
+}
 
 static __inline void
 lidt(struct region_descriptor *region)

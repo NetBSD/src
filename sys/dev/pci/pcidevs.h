@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.868.2.4 2007/05/07 10:55:31 yamt Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.868.2.5 2007/05/17 13:41:33 yamt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.878 2007/05/02 21:28:28 bouyer Exp
+ *	NetBSD: pcidevs,v 1.879 2007/05/16 19:07:42 mrg Exp
  */
 
 /*
@@ -2698,6 +2698,7 @@
 #define	PCI_PRODUCT_NVIDIA_RIVATNT2U	0x0029		/* RIVA TNT2 Ultra */
 #define	PCI_PRODUCT_NVIDIA_VANTA	0x002c		/* Vanta */
 #define	PCI_PRODUCT_NVIDIA_RIVATNT2M64	0x002d		/* RIVA TNT2 Model 64 */
+#define	PCI_PRODUCT_NVIDIA_MCP04_SMBUS	0x0034		/* MCP04 SMBus */
 #define	PCI_PRODUCT_NVIDIA_MCP04_IDE	0x0035		/* MCP04 IDE */
 #define	PCI_PRODUCT_NVIDIA_MCP04_SATA	0x0036		/* MCP04 SATA */
 #define	PCI_PRODUCT_NVIDIA_MCP04_LAN1	0x0037		/* MCP04 Ethernet */

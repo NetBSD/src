@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_fcntl.c,v 1.25.2.2 2007/05/07 10:55:10 yamt Exp $	*/
+/*	$NetBSD: ibcs2_fcntl.c,v 1.25.2.3 2007/05/17 13:41:10 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Bartram
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_fcntl.c,v 1.25.2.2 2007/05/07 10:55:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_fcntl.c,v 1.25.2.3 2007/05/17 13:41:10 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -274,11 +274,11 @@ ibcs2_sys_fcntl(l, v, retval)
 		syscallarg(int) cmd;
 		syscallarg(char *) arg;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
-	int error;
 	struct sys_fcntl_args fa;
-	struct flock *flp;
+	struct flock fl;
 	struct ibcs2_flock ifl;
+	int error;
+	int cmd;
 
 	switch(SCARG(uap, cmd)) {
 	case IBCS2_F_DUPFD:
@@ -312,54 +312,26 @@ ibcs2_sys_fcntl(l, v, retval)
 		return sys_fcntl(l, &fa, retval);
 
 	case IBCS2_F_GETLK:
-	    {
-		void *sg = stackgap_init(p, 0);
-		flp = stackgap_alloc(p, &sg, sizeof(*flp));
-		error = copyin((void *)SCARG(uap, arg), (void *)&ifl,
-			       ibcs2_flock_len);
-		if (error)
-			return error;
-		cvt_iflock2flock(&ifl, flp);
-		SCARG(&fa, fd) = SCARG(uap, fd);
-		SCARG(&fa, cmd) = F_GETLK;
-		SCARG(&fa, arg) = (void *)flp;
-		error = sys_fcntl(l, &fa, retval);
-		if (error)
-			return error;
-		cvt_flock2iflock(flp, &ifl);
-		return copyout((void *)&ifl, (void *)SCARG(uap, arg),
-			       ibcs2_flock_len);
-	    }
-
+		cmd = F_GETLK;
+		goto lock;
 	case IBCS2_F_SETLK:
-	    {
-		void *sg = stackgap_init(p, 0);
-		flp = stackgap_alloc(p, &sg, sizeof(*flp));
-		error = copyin((void *)SCARG(uap, arg), (void *)&ifl,
-			       ibcs2_flock_len);
-		if (error)
-			return error;
-		cvt_iflock2flock(&ifl, flp);
-		SCARG(&fa, fd) = SCARG(uap, fd);
-		SCARG(&fa, cmd) = F_SETLK;
-		SCARG(&fa, arg) = (void *)flp;
-		return sys_fcntl(l, &fa, retval);
-	    }
-
+		cmd = F_SETLK;
+		goto lock;
 	case IBCS2_F_SETLKW:
-	    {
-		void *sg = stackgap_init(p, 0);
-		flp = stackgap_alloc(p, &sg, sizeof(*flp));
-		error = copyin((void *)SCARG(uap, arg), (void *)&ifl,
-			       ibcs2_flock_len);
+		cmd = F_SETLKW;
+	    lock:
+		error = copyin(SCARG(uap, arg), &ifl, ibcs2_flock_len);
 		if (error)
 			return error;
-		cvt_iflock2flock(&ifl, flp);
-		SCARG(&fa, fd) = SCARG(uap, fd);
-		SCARG(&fa, cmd) = F_SETLKW;
-		SCARG(&fa, arg) = (void *)flp;
-		return sys_fcntl(l, &fa, retval);
-	    }
+		cvt_iflock2flock(&ifl, &fl);
+		error = do_fcntl_lock(l, SCARG(uap, fd), cmd, &fl);
+		if (cmd != F_GETLK || error != 0)
+			return error;
+		cvt_flock2iflock(&fl, &ifl);
+		return copyout(&ifl, SCARG(uap, arg), ibcs2_flock_len);
+
+	default:
+		return ENOSYS;
 	}
-	return ENOSYS;
+
 }

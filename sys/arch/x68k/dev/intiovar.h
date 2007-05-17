@@ -1,4 +1,4 @@
-/*	$NetBSD: intiovar.h,v 1.7 2005/12/11 12:19:37 christos Exp $	*/
+/*	$NetBSD: intiovar.h,v 1.7.26.1 2007/05/17 13:41:03 yamt Exp $	*/
 
 /*
  *
@@ -87,7 +87,7 @@ int intio_intr(struct frame *);
 
 
 #define PHYS_INTIODEV 0x00c00000
-  
+
 extern u_int8_t *intiobase;
 
 #define INTIO_ADDR(a)	((volatile u_int8_t *) (((u_int32_t) (a)) - (PHYS_INTIODEV) + intiobase))

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.32.2.4 2007/05/07 10:54:51 yamt Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.32.2.5 2007/05/17 13:40:49 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.32.2.4 2007/05/07 10:54:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.32.2.5 2007/05/17 13:40:49 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_coredump.h"
@@ -140,8 +140,6 @@ netbsd32_setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 	tf = l->l_md.md_regs;
 	tf->tf_ds = LSEL(LUDATA32_SEL, SEL_UPL);
 	tf->tf_es = LSEL(LUDATA32_SEL, SEL_UPL);
-	tf->tf_fs = LSEL(LUDATA32_SEL, SEL_UPL);
-	tf->tf_gs = LSEL(LUDATA32_SEL, SEL_UPL);
 	tf->tf_rdi = 0;
 	tf->tf_rsi = 0;
 	tf->tf_rbp = 0;
@@ -165,6 +163,7 @@ static void
 netbsd32_sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 {
 	struct lwp *l = curlwp;
+	struct pcb *pcb = &l->l_addr->u_pcb;
 	struct proc *p = l->l_proc;
 	struct trapframe *tf;
 	int sig = ksi->ksi_signo;
@@ -206,8 +205,8 @@ netbsd32_sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 
 	frame.sf_sc.sc_ds = tf->tf_ds;
 	frame.sf_sc.sc_es = tf->tf_es;
-	frame.sf_sc.sc_fs = tf->tf_fs;
-	frame.sf_sc.sc_gs = tf->tf_gs;
+	frame.sf_sc.sc_fs = pcb->pcb_fs;
+	frame.sf_sc.sc_gs = pcb->pcb_gs;
 
 	frame.sf_sc.sc_eflags = tf->tf_rflags;
 	frame.sf_sc.sc_edi = tf->tf_rdi;
@@ -250,8 +249,6 @@ netbsd32_sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 	 */
 	tf->tf_ds = GSEL(GUDATA32_SEL, SEL_UPL);
 	tf->tf_es = GSEL(GUDATA32_SEL, SEL_UPL);
-	tf->tf_fs = GSEL(GUDATA32_SEL, SEL_UPL);
-	tf->tf_gs = GSEL(GUDATA32_SEL, SEL_UPL);
 
 	tf->tf_rip = (u_int64_t)catcher;
 	tf->tf_cs = GSEL(GUCODE32_SEL, SEL_UPL);
@@ -335,8 +332,6 @@ netbsd32_sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	 */
 	tf->tf_ds = GSEL(GUDATA32_SEL, SEL_UPL);
 	tf->tf_es = GSEL(GUDATA32_SEL, SEL_UPL);
-	tf->tf_fs = GSEL(GUDATA32_SEL, SEL_UPL);
-	tf->tf_gs = GSEL(GUDATA32_SEL, SEL_UPL);
 
 	tf->tf_rip = (u_int64_t)catcher;
 	tf->tf_cs = GSEL(GUCODE32_SEL, SEL_UPL);
@@ -391,8 +386,8 @@ compat_16_netbsd32___sigreturn14(struct lwp *l, void *v, register_t *retval)
 
 	tf->tf_ds = context.sc_ds;
 	tf->tf_es = context.sc_es;
-	tf->tf_fs = context.sc_fs;
-	tf->tf_gs = context.sc_gs;
+
+	load_fsgs32(context.sc_fs, context.sc_gs);
 
 	tf->tf_rflags = context.sc_eflags;
 	tf->tf_rdi = context.sc_edi;
@@ -475,9 +470,10 @@ int
 netbsd32_process_read_regs(struct lwp *l, struct reg32 *regs)
 {
 	struct trapframe *tf = l->l_md.md_regs;
+	struct pcb *pcb = &l->l_addr->u_pcb;
 
-	regs->r_gs = LSEL(LUCODE32_SEL, SEL_UPL);
-	regs->r_fs = LSEL(LUCODE32_SEL, SEL_UPL);
+	regs->r_gs = pcb->pcb_gs & 0xffff;
+	regs->r_fs = pcb->pcb_fs & 0xffff;
 	regs->r_es = LSEL(LUCODE32_SEL, SEL_UPL);
 	regs->r_ds = LSEL(LUCODE32_SEL, SEL_UPL);
 	regs->r_eflags = tf->tf_rflags;
@@ -816,8 +812,9 @@ cpu_setmcontext32(struct lwp *l, const mcontext32_t *mcp, unsigned int flags)
 		error = check_mcontext32(mcp, tf);
 		if (error != 0)
 			return error;
-		tf->tf_gs = gr[_REG32_GS];
-		tf->tf_fs = gr[_REG32_FS];
+
+		load_fsgs32(gr[_REG32_FS], gr[_REG32_GS]);
+
 		tf->tf_es = gr[_REG32_ES];
 		tf->tf_ds = gr[_REG32_DS];
 		/* Only change the user-alterable part of eflags */
@@ -863,12 +860,13 @@ void
 cpu_getmcontext32(struct lwp *l, mcontext32_t *mcp, unsigned int *flags)
 {
 	const struct trapframe *tf = l->l_md.md_regs;
+	struct pcb *pcb = &l->l_addr->u_pcb;
 	__greg32_t *gr = mcp->__gregs;
 	__greg32_t ras_eip;
 
 	/* Save register context. */
-	gr[_REG32_GS]  = tf->tf_gs;
-	gr[_REG32_FS]  = tf->tf_fs;
+	gr[_REG32_GS]  = pcb->pcb_gs;
+	gr[_REG32_FS]  = pcb->pcb_fs;
 	gr[_REG32_ES]  = tf->tf_es;
 	gr[_REG32_DS]  = tf->tf_ds;
 	gr[_REG32_EFL] = tf->tf_rflags;

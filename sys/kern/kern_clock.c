@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.106.2.6 2007/04/21 15:50:14 ad Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.106.2.7 2007/05/17 13:41:44 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.106.2.6 2007/04/21 15:50:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.106.2.7 2007/05/17 13:41:44 yamt Exp $");
 
 #include "opt_ntp.h"
 #include "opt_multiprocessor.h"
@@ -93,9 +93,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.106.2.6 2007/04/21 15:50:14 ad Exp 
 #include <sys/timex.h>
 #include <sys/sched.h>
 #include <sys/time.h>
-#ifdef __HAVE_TIMECOUNTER
 #include <sys/timetc.h>
-#endif
 
 #include <machine/cpu.h>
 #include <machine/intr.h>
@@ -1659,5 +1657,11 @@ getmicrotime(struct timeval *tvp)
 	s = splclock();
 	*tvp = time;
 	splx(s);
+}
+
+u_int64_t
+tc_getfrequency(void)
+{
+	return hz;
 }
 #endif /* !__HAVE_TIMECOUNTER */

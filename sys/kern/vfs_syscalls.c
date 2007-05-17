@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.300.2.4 2007/05/07 10:55:51 yamt Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.300.2.5 2007/05/17 13:41:48 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.300.2.4 2007/05/07 10:55:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.300.2.5 2007/05/17 13:41:48 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -98,18 +98,9 @@ static int change_dir(struct nameidata *, struct lwp *);
 static int change_flags(struct vnode *, u_long, struct lwp *);
 static int change_mode(struct vnode *, int, struct lwp *l);
 static int change_owner(struct vnode *, uid_t, gid_t, struct lwp *, int);
-static int change_utimes(struct vnode *vp, const struct timeval *,
-	       struct lwp *l);
 static int rename_files(const char *, const char *, struct lwp *, int);
 
 void checkdirs(struct vnode *);
-
-static int mount_update(struct lwp *, struct vnode *, const char *, int,
-    void *, struct nameidata *);
-static int mount_domount(struct lwp *, struct vnode *, const char *,
-    const char *, int, void *, struct nameidata *);
-static int mount_getargs(struct lwp *, struct vnode *, const char *, int,
-    void *, struct nameidata *);
 
 int dovfsusermount = 0;
 
@@ -785,8 +776,6 @@ done:
 		size_t len;
 		char *bp;
 		char *path = PNBUF_GET();
-		if (!path)
-			return ENOMEM;
 
 		bp = path + MAXPATHLEN;
 		*--bp = '\0';
@@ -1763,6 +1752,7 @@ sys_mknod(struct lwp *l, void *v, register_t *retval)
 	struct vnode *vp;
 	struct vattr vattr;
 	int error, optype;
+	char *path;
 	struct nameidata nd;
 
 	if ((error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_MKNOD,
@@ -1770,9 +1760,13 @@ sys_mknod(struct lwp *l, void *v, register_t *retval)
 		return (error);
 
 	optype = VOP_MKNOD_DESCOFFSET;
-	NDINIT(&nd, CREATE, LOCKPARENT | TRYEMULROOT, UIO_USERSPACE, SCARG(uap, path), l);
+	path = PNBUF_GET();
+	error = copyinstr(SCARG(uap, path), path, MAXPATHLEN, NULL);
+	if (error)
+		goto out;
+	NDINIT(&nd, CREATE, LOCKPARENT | TRYEMULROOT, UIO_SYSSPACE, path, l);
 	if ((error = namei(&nd)) != 0)
-		return (error);
+		goto out;
 	vp = nd.ni_vp;
 	if (vp != NULL)
 		error = EEXIST;
@@ -1796,6 +1790,10 @@ sys_mknod(struct lwp *l, void *v, register_t *retval)
 			optype = VOP_WHITEOUT_DESCOFFSET;
 			break;
 		case S_IFREG:
+#if NVERIEXEC > 0
+			error = veriexec_openchk(l, nd.ni_vp, nd.ni_dirp,
+			    O_CREAT);
+#endif /* NVERIEXEC > 0 */
 			vattr.va_type = VREG;
 			vattr.va_rdev = VNOVAL;
 			optype = VOP_CREATE_DESCOFFSET;
@@ -1838,6 +1836,8 @@ sys_mknod(struct lwp *l, void *v, register_t *retval)
 		if (vp)
 			vrele(vp);
 	}
+out:
+	PNBUF_PUT(path);
 	return (error);
 }
 
@@ -2018,10 +2018,20 @@ sys_unlink(struct lwp *l, void *v, register_t *retval)
 	pathname_t pathbuf = NULL;
 #endif /* NVERIEXEC > 0 */
 
+#if NVERIEXEC > 0
+	error = pathname_get(SCARG(uap, path), UIO_USERSPACE, &pathbuf);
+	if (error)
+		return (error);
+
+	NDINIT(&nd, DELETE, LOCKPARENT | LOCKLEAF, UIO_SYSSPACE,
+	    pathname_path(pathbuf), l);
+#else
 	NDINIT(&nd, DELETE, LOCKPARENT | LOCKLEAF | TRYEMULROOT, UIO_USERSPACE,
 	    SCARG(uap, path), l);
+#endif /* NVERIEXEC > 0 */
+
 	if ((error = namei(&nd)) != 0)
-		return (error);
+		goto out;
 	vp = nd.ni_vp;
 
 	/*
@@ -2039,13 +2049,9 @@ sys_unlink(struct lwp *l, void *v, register_t *retval)
 	}
 
 #if NVERIEXEC > 0
-	error = pathname_get(nd.ni_dirp, nd.ni_segflg, &pathbuf);
-
 	/* Handle remove requests for veriexec entries. */
-	if (!error) {
+	if (!error)
 		error = veriexec_removechk(vp, pathname_path(pathbuf), l);
-		pathname_put(pathbuf);
-	}
 
 	if (error) {
 		VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
@@ -2065,6 +2071,9 @@ sys_unlink(struct lwp *l, void *v, register_t *retval)
 #endif /* FILEASSOC */
 	error = VOP_REMOVE(nd.ni_dvp, nd.ni_vp, &nd.ni_cnd);
 out:
+#if NVERIEXEC > 0
+	pathname_put(pathbuf);
+#endif /* NVERIEXEC > 0 */
 	return (error);
 }
 
@@ -2924,17 +2933,9 @@ sys_utimes(struct lwp *l, void *v, register_t *retval)
 		syscallarg(const char *) path;
 		syscallarg(const struct timeval *) tptr;
 	} */ *uap = v;
-	int error;
-	struct nameidata nd;
 
-	NDINIT(&nd, LOOKUP, FOLLOW | TRYEMULROOT, UIO_USERSPACE, SCARG(uap, path), l);
-	if ((error = namei(&nd)) != 0)
-		return (error);
-
-	error = change_utimes(nd.ni_vp, SCARG(uap, tptr), l);
-
-	vrele(nd.ni_vp);
-	return (error);
+	return do_sys_utimes(l, NULL, SCARG(uap, path), FOLLOW,
+			SCARG(uap, tptr), UIO_USERSPACE);
 }
 
 /*
@@ -2948,15 +2949,16 @@ sys_futimes(struct lwp *l, void *v, register_t *retval)
 		syscallarg(int) fd;
 		syscallarg(const struct timeval *) tptr;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	int error;
 	struct file *fp;
 
 	/* getvnode() will use the descriptor for us */
-	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
+	if ((error = getvnode(l->l_proc->p_fd, SCARG(uap, fd), &fp)) != 0)
 		return (error);
 
-	error = change_utimes((struct vnode *)fp->f_data, SCARG(uap, tptr), l);
+	error = do_sys_utimes(l, fp->f_data, NULL, 0, 
+			SCARG(uap, tptr), UIO_USERSPACE);
+
 	FILE_UNUSE(fp, l);
 	return (error);
 }
@@ -2965,7 +2967,6 @@ sys_futimes(struct lwp *l, void *v, register_t *retval)
  * Set the access and modification times given a path name; this
  * version does not follow links.
  */
-/* ARGSUSED */
 int
 sys_lutimes(struct lwp *l, void *v, register_t *retval)
 {
@@ -2973,26 +2974,20 @@ sys_lutimes(struct lwp *l, void *v, register_t *retval)
 		syscallarg(const char *) path;
 		syscallarg(const struct timeval *) tptr;
 	} */ *uap = v;
-	int error;
-	struct nameidata nd;
 
-	NDINIT(&nd, LOOKUP, NOFOLLOW | TRYEMULROOT, UIO_USERSPACE, SCARG(uap, path), l);
-	if ((error = namei(&nd)) != 0)
-		return (error);
-
-	error = change_utimes(nd.ni_vp, SCARG(uap, tptr), l);
-
-	vrele(nd.ni_vp);
-	return (error);
+	return do_sys_utimes(l, NULL, SCARG(uap, path), NOFOLLOW,
+			SCARG(uap, tptr), UIO_USERSPACE);
 }
 
 /*
  * Common routine to set access and modification times given a vnode.
  */
-static int
-change_utimes(struct vnode *vp, const struct timeval *tptr, struct lwp *l)
+int
+do_sys_utimes(struct lwp *l, struct vnode *vp, const char *path, int flag,
+    const struct timeval *tptr, enum uio_seg seg)
 {
 	struct vattr vattr;
+	struct nameidata nd;
 	int error;
 
 	VATTR_NULL(&vattr);
@@ -3003,17 +2998,32 @@ change_utimes(struct vnode *vp, const struct timeval *tptr, struct lwp *l)
 	} else {
 		struct timeval tv[2];
 
-		error = copyin(tptr, tv, sizeof(tv));
-		if (error)
-			goto out;
-		TIMEVAL_TO_TIMESPEC(&tv[0], &vattr.va_atime);
-		TIMEVAL_TO_TIMESPEC(&tv[1], &vattr.va_mtime);
+		if (seg != UIO_SYSSPACE) {
+			error = copyin(tptr, &tv, sizeof (tv));
+			if (error != 0)
+				return error;
+			tptr = tv;
+		}
+		TIMEVAL_TO_TIMESPEC(tptr, &vattr.va_atime);
+		TIMEVAL_TO_TIMESPEC(tptr + 1, &vattr.va_mtime);
 	}
+
+	if (vp == NULL) {
+		NDINIT(&nd, LOOKUP, flag | TRYEMULROOT, UIO_USERSPACE, path, l);
+		if ((error = namei(&nd)) != 0)
+			return (error);
+		vp = nd.ni_vp;
+	} else
+		nd.ni_vp = NULL;
+
 	VOP_LEASE(vp, l, l->l_cred, LEASE_WRITE);
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_SETATTR(vp, &vattr, l->l_cred, l);
 	VOP_UNLOCK(vp, 0);
-out:
+
+	if (nd.ni_vp != NULL)
+		vrele(nd.ni_vp);
+
 	return (error);
 }
 
@@ -3322,19 +3332,18 @@ rename_files(const char *from, const char *to, struct lwp *l, int retain)
 
 #if NVERIEXEC > 0
 	if (!error) {
-		pathname_t frompath = NULL, topath = NULL;
+		char *f1, *f2;
 
-		error = pathname_get(fromnd.ni_dirp, fromnd.ni_segflg,
-		    &frompath);
-		if (!error)
-			error = pathname_get(tond.ni_dirp, tond.ni_segflg,
-			    &topath);
-		if (!error)
-			error = veriexec_renamechk(fvp, pathname_path(frompath),
-			    tvp, pathname_path(topath), l);
+		f1 = malloc(fromnd.ni_cnd.cn_namelen + 1, M_TEMP, M_WAITOK);
+		strlcpy(f1, fromnd.ni_cnd.cn_nameptr, fromnd.ni_cnd.cn_namelen);
 
-		pathname_put(frompath);
-		pathname_put(topath);
+		f2 = malloc(tond.ni_cnd.cn_namelen + 1, M_TEMP, M_WAITOK);
+		strlcpy(f1, tond.ni_cnd.cn_nameptr, tond.ni_cnd.cn_namelen);
+
+		error = veriexec_renamechk(fvp, f1, tvp, f2, l);
+
+		free(f1, M_TEMP);
+		free(f2, M_TEMP);
 	}
 #endif /* NVERIEXEC > 0 */
 

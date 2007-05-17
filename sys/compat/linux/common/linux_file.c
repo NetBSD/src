@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file.c,v 1.77.2.3 2007/05/07 10:55:12 yamt Exp $	*/
+/*	$NetBSD: linux_file.c,v 1.77.2.4 2007/05/17 13:41:13 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.77.2.3 2007/05/07 10:55:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.77.2.4 2007/05/17 13:41:13 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -288,9 +288,9 @@ linux_sys_fcntl(l, v, retval)
 	struct proc *p = l->l_proc;
 	int fd, cmd, error;
 	u_long val;
-	void *arg, *sg;
+	void *arg;
 	struct linux_flock lfl;
-	struct flock *bfp, bfl;
+	struct flock bfl;
 	struct sys_fcntl_args fca;
 	struct filedesc *fdp;
 	struct file *fp;
@@ -376,19 +376,11 @@ linux_sys_fcntl(l, v, retval)
 		return (error);
 	    }
 	case LINUX_F_GETLK:
-		sg = stackgap_init(p, 0);
-		bfp = (struct flock *) stackgap_alloc(p, &sg, sizeof *bfp);
 		if ((error = copyin(arg, &lfl, sizeof lfl)))
 			return error;
 		linux_to_bsd_flock(&lfl, &bfl);
-		if ((error = copyout(&bfl, bfp, sizeof bfl)))
-			return error;
-		SCARG(&fca, fd) = fd;
-		SCARG(&fca, cmd) = F_GETLK;
-		SCARG(&fca, arg) = bfp;
-		if ((error = sys_fcntl(l, &fca, retval)))
-			return error;
-		if ((error = copyin(bfp, &bfl, sizeof bfl)))
+		error = do_fcntl_lock(l, fd, F_GETLK, &bfl);
+		if (error)
 			return error;
 		bsd_to_linux_flock(&bfl, &lfl);
 		return copyout(&lfl, arg, sizeof lfl);
@@ -399,12 +391,7 @@ linux_sys_fcntl(l, v, retval)
 		if ((error = copyin(arg, &lfl, sizeof lfl)))
 			return error;
 		linux_to_bsd_flock(&lfl, &bfl);
-		sg = stackgap_init(p, 0);
-		bfp = (struct flock *) stackgap_alloc(p, &sg, sizeof *bfp);
-		if ((error = copyout(&bfl, bfp, sizeof bfl)))
-			return error;
-		arg = (void *)bfp;
-		break;
+		return do_fcntl_lock(l, fd, cmd, &bfl);
 
 	case LINUX_F_SETOWN:
 	case LINUX_F_GETOWN:

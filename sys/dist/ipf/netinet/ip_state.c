@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_state.c,v 1.16.2.3 2007/05/07 10:55:39 yamt Exp $	*/
+/*	$NetBSD: ip_state.c,v 1.16.2.4 2007/05/17 13:41:41 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995-2003 by Darren Reed.
@@ -114,10 +114,10 @@ struct file;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_state.c,v 1.16.2.3 2007/05/07 10:55:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_state.c,v 1.16.2.4 2007/05/17 13:41:41 yamt Exp $");
 #else
 static const char sccsid[] = "@(#)ip_state.c	1.8 6/5/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_state.c,v 2.186.2.61 2007/04/29 06:43:46 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_state.c,v 2.186.2.66 2007/05/13 00:08:54 darrenr Exp";
 #endif
 #endif
 
@@ -134,6 +134,7 @@ static ipstate_t *fr_matchsrcdst __P((fr_info_t *, ipstate_t *, i6addr_t *,
 				      i6addr_t *, tcphdr_t *, u_32_t));
 static ipstate_t *fr_checkicmpmatchingstate __P((fr_info_t *));
 static int fr_state_flush __P((int, int));
+static int fr_state_flush_entry __P((void *));
 static ips_stat_t *fr_statetstats __P((void));
 static int fr_delstate __P((ipstate_t *, int));
 static int fr_state_remove __P((caddr_t));
@@ -254,6 +255,7 @@ int fr_stateinit()
 		fr_state_maxbucket *= 2;
 	}
 
+	ips_stats.iss_tcptab = ips_tqtqb;
 	fr_sttab_init(ips_tqtqb);
 	ips_tqtqb[IPF_TCP_NSTATES - 1].ifq_next = &ips_udptq;
 	ips_udptq.ifq_ttl = (u_long)fr_udptimeout;
@@ -458,27 +460,19 @@ void *ctx;
 	 */
 	case SIOCIPFFL :
 		BCOPYIN(data, (char *)&arg, sizeof(arg));
-		if (arg == 0 || arg == 1) {
-			WRITE_ENTER(&ipf_state);
-			ret = fr_state_flush(arg, 4);
-			RWLOCK_EXIT(&ipf_state);
-			BCOPYOUT((char *)&ret, data, sizeof(ret));
-		} else {
-			error = EINVAL;
-		}
+		WRITE_ENTER(&ipf_state);
+		ret = fr_state_flush(arg, 4);
+		RWLOCK_EXIT(&ipf_state);
+		BCOPYOUT((char *)&ret, data, sizeof(ret));
 		break;
 
 #ifdef	USE_INET6
 	case SIOCIPFL6 :
 		BCOPYIN(data, (char *)&arg, sizeof(arg));
-		if (arg == 0 || arg == 1) {
-			WRITE_ENTER(&ipf_state);
-			ret = fr_state_flush(arg, 6);
-			RWLOCK_EXIT(&ipf_state);
-			BCOPYOUT((char *)&ret, data, sizeof(ret));
-		} else {
-			error = EINVAL;
-		}
+		WRITE_ENTER(&ipf_state);
+		ret = fr_state_flush(arg, 6);
+		RWLOCK_EXIT(&ipf_state);
+		BCOPYOUT((char *)&ret, data, sizeof(ret));
 		break;
 #endif
 #ifdef	IPFILTER_LOG
@@ -599,6 +593,10 @@ void *ctx;
 	case SIOCIPFDELTOK :
 		BCOPYIN(data, (char *)&arg, sizeof(arg));
 		error = ipf_deltoken(arg, uid, ctx);
+		break;
+
+	case SIOCGTQTAB :
+		error = fr_outobj(data, ips_tqtqb, IPFOBJ_STATETQTAB);
 		break;
 
 	default :
@@ -911,7 +909,7 @@ u_int flags;
 	 */
 	fr = fin->fin_fr;
 	if (fr != NULL) {
-		if ((ips_num == fr_statemax) && (fr->fr_statemax == 0)) {
+		if ((ips_num >= fr_statemax) && (fr->fr_statemax == 0)) {
 			ATOMIC_INCL(ips_stats.iss_max);
 			fr_state_doflush = 1;
 			return NULL;
@@ -919,7 +917,6 @@ u_int flags;
 		if ((fr->fr_statemax != 0) &&
 		    (fr->fr_statecnt >= fr->fr_statemax)) {
 			ATOMIC_INCL(ips_stats.iss_maxref);
-			fr_state_doflush = 1;
 			return NULL;
 		}
 	}
@@ -2851,7 +2848,7 @@ void *ifp;
 
 /* ------------------------------------------------------------------------ */
 /* Function:    fr_delstate                                                 */
-/* Returns:     Nil                                                         */
+/* Returns:     int - 0 = entry deleted, else reference count on struct     */
 /* Parameters:  is(I)  - pointer to state structure to delete               */
 /*              why(I) - if not 0, log reason why it was deleted            */
 /* Write Locks: ipf_state                                                   */
@@ -3048,7 +3045,6 @@ void fr_timeoutstate()
 static int fr_state_flush(which, proto)
 int which, proto;
 {
-	u_long interval, istart, iend;
 	ipftq_t *ifq, *ifqnext;
 	ipftqent_t *tqe, *tqn;
 	ipstate_t *is, **isp;
@@ -3115,7 +3111,51 @@ int which, proto;
 		}
 		break;
 
+	case 2 :
+		break;
+
+		/*  
+		 * Args 5-11 correspond to flushing those particular states
+		 * for TCP connections.
+		 */
+	case IPF_TCPS_CLOSE_WAIT :
+	case IPF_TCPS_FIN_WAIT_1 :
+	case IPF_TCPS_CLOSING :
+	case IPF_TCPS_LAST_ACK :
+	case IPF_TCPS_FIN_WAIT_2 :
+	case IPF_TCPS_TIME_WAIT :
+	case IPF_TCPS_CLOSED :
+		tqn = ips_tqtqb[which].ifq_head;
+		while (tqn != NULL) {
+			tqe = tqn;
+			tqn = tqe->tqe_next;
+			is = tqe->tqe_parent;
+			if (fr_delstate(is, ISL_FLUSH) == 0)
+				removed++;
+		}
+		break;
+
 	default :
+		if (which < 30)
+			break;
+
+		/* 
+		 * Take a large arbitrary number to mean the number of seconds
+		 * for which which consider to be the maximum value we'll allow
+		 * the expiration to be.
+		 */
+		which = IPF_TTLVAL(which);
+		for (isp = &ips_list; ((is = *isp) != NULL); ) {
+			if ((proto == 0) || (is->is_v == proto)) {
+				if (fr_ticks - is->is_touched > which) {
+					if (fr_delstate(is, ISL_FLUSH) == 0) {
+						removed++;
+						continue;
+					}
+				}
+			}
+			isp = &is->is_next;
+		}
 		break;
 	}
 
@@ -3125,80 +3165,34 @@ int which, proto;
 	}
 
 	/*
-	 * Asked to remove inactive entries because the table is full, try
-	 * again, 3 times, if first attempt failed with a different criteria
-	 * each time.  The order tried in must be in decreasing age.
-	 * Another alternative is to implement random drop and drop N entries
-	 * at random until N have been freed up.
+	 * Asked to remove inactive entries because the table is full.
 	 */
-	if (fr_ticks - ips_last_force_flush < IPF_TTLVAL(5))
-		goto force_flush_skipped;
-	ips_last_force_flush = fr_ticks;
-
-	if (fr_ticks > IPF_TTLVAL(43200 * 15 / 10)) {
-		istart = IPF_TTLVAL(86400 * 4);
-		interval = IPF_TTLVAL(43200);
-	} else if (fr_ticks > IPF_TTLVAL(1800 * 15 / 10)) {
-		istart = IPF_TTLVAL(43200);
-		interval = IPF_TTLVAL(1800);
-	} else if (fr_ticks > IPF_TTLVAL(30 * 15 / 10)) {
-		istart = IPF_TTLVAL(1800);
-		interval = IPF_TTLVAL(30);
-	} else {
-		goto force_flush_skipped;
-	}
-	if (istart > fr_ticks) {
-		istart = (fr_ticks / interval) * interval;
-	}
-	iend = interval;
-
-	while (removed == 0) {
-		u_long try;
-
-		try = fr_ticks - istart; 
-
-		for (ifq = ips_tqtqb; ifq != NULL;
-		     ifq = ifq->ifq_next) {
-			for (tqn = ifq->ifq_head; ((tqe = tqn) != NULL); ) {
-				if (tqe->tqe_die > try)
-					break;
-				tqn = tqe->tqe_next;
-				is = tqe->tqe_parent;
-				if (fr_delstate(is, ISL_EXPIRE) == 0)
-					removed++;
-			}
-		}
-
-		for (ifq = ips_utqe; ifq != NULL; ifq = ifqnext) {
-			ifqnext = ifq->ifq_next;
-
-			for (tqn = ifq->ifq_head; ((tqe = tqn) != NULL); ) {
-				if (tqe->tqe_die > try)
-					break;
-				tqn = tqe->tqe_next;
-				is = tqe->tqe_parent;
-				if (fr_delstate(is, ISL_EXPIRE) == 0)
-					removed++;
-			}
-		}
-
-		istart -= interval;
-		if (istart == interval) {
-			if (interval == IPF_TTLVAL(43200)) {
-				interval = IPF_TTLVAL(1800);
-			} else if (interval == IPF_TTLVAL(1800)) {
-				interval = IPF_TTLVAL(30);
-			} else {
-				break;
-			}
-		}
+	if (fr_ticks - ips_last_force_flush > IPF_TTLVAL(5)) {
+		ips_last_force_flush = fr_ticks;
+                removed = ipf_queueflush(fr_state_flush_entry, ips_tqtqb,
+					 ips_utqe);
 	}
 
-force_flush_skipped:
 	SPL_X(s);
 	return removed;
 }
 
+
+/* ------------------------------------------------------------------------ */
+/* Function:    fr_state_flush_entry                                        */
+/* Returns:     int - 0 = entry deleted, else not deleted                   */
+/* Parameters:  entry(I)  - pointer to state structure to delete            */
+/* Write Locks: ipf_state                                                   */
+/*                                                                          */
+/* This function is a stepping stone between ipf_queueflush() and           */
+/* fr_delstate().  It is used so we can provide a uniform interface via the */
+/* ipf_queueflush() function.                                               */
+/* ------------------------------------------------------------------------ */
+static int fr_state_flush_entry(entry)
+void *entry;
+{
+	return fr_delstate(entry, ISL_FLUSH);
+}     
 
 
 /* ------------------------------------------------------------------------ */

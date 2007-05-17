@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.156.4.2 2007/03/12 05:59:40 rmind Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.156.4.3 2007/05/17 13:41:51 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.156.4.2 2007/03/12 05:59:40 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.156.4.3 2007/05/17 13:41:51 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -384,16 +384,8 @@ udp_input(struct mbuf *m, ...)
 		goto badcsum;
 
 	/* construct source and dst sockaddrs. */
-	bzero(&src, sizeof(src));
-	src.sin_family = AF_INET;
-	src.sin_len = sizeof(struct sockaddr_in);
-	bcopy(&ip->ip_src, &src.sin_addr, sizeof(src.sin_addr));
-	src.sin_port = uh->uh_sport;
-	bzero(&dst, sizeof(dst));
-	dst.sin_family = AF_INET;
-	dst.sin_len = sizeof(struct sockaddr_in);
-	bcopy(&ip->ip_dst, &dst.sin_addr, sizeof(dst.sin_addr));
-	dst.sin_port = uh->uh_dport;
+	sockaddr_in_init(&src, &ip->ip_src, uh->uh_sport);
+	sockaddr_in_init(&dst, &ip->ip_dst, uh->uh_dport);
 
 	if ((n = udp4_realinput(&src, &dst, &m, iphlen)) == -1) {
 		udpstat.udps_hdrops++;
