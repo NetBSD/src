@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmonvar.h,v 1.12.10.1 2007/03/12 05:57:13 rmind Exp $	*/
+/*	$NetBSD: sysmonvar.h,v 1.12.10.2 2007/05/17 13:41:34 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -135,6 +135,4 @@ void	sysmon_pswitch_unregister(struct sysmon_pswitch *);
 
 void	sysmon_pswitch_event(struct sysmon_pswitch *, int);
  
-int	sysmonioctl_envsys(dev_t, u_long, void *, int, struct lwp *);
-
 #endif /* _DEV_SYSMON_SYSMONVAR_H_ */

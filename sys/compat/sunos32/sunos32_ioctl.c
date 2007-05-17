@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_ioctl.c,v 1.17.2.2 2007/03/24 14:55:16 yamt Exp $	*/
+/*	$NetBSD: sunos32_ioctl.c,v 1.17.2.3 2007/05/17 13:41:19 yamt Exp $	*/
 /* from: NetBSD: sunos_ioctl.c,v 1.35 2001/02/03 22:20:02 mrg Exp 	*/
 
 /*
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos32_ioctl.c,v 1.17.2.2 2007/03/24 14:55:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos32_ioctl.c,v 1.17.2.3 2007/05/17 13:41:19 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd32.h"
@@ -1028,7 +1028,6 @@ sunos32_sys_fcntl(l, v, retval)
 		syscallarg(int) cmd;
 		syscallarg(netbsd32_voidp) arg;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	uintptr_t flg;
 	int n, ret;
 
@@ -1050,37 +1049,19 @@ sunos32_sys_fcntl(l, v, retval)
 	case F_SETLKW:
 		{
 			int error;
-			struct sunos_flock	 ifl;
-			struct flock		*flp, fl;
-			void *sg = stackgap_init(p, 0);
-			struct sys_fcntl_args		fa;
-
-			SCARG(&fa, fd) = SCARG(uap, fd);
-			SCARG(&fa, cmd) = SCARG(uap, cmd);
-
-			flp = stackgap_alloc(p, &sg, sizeof(struct flock));
-			SCARG(&fa, arg) = (void *) flp;
+			struct sunos_flock	ifl;
+			struct flock		fl;
 
 			error = copyin(SCARG_P32(uap, arg), &ifl, sizeof ifl);
 			if (error)
 				return error;
-
 			sunos_to_bsd_flock(&ifl, &fl);
 
-			error = copyout(&fl, flp, sizeof fl);
-			if (error)
-				return error;
-
-			error = sys_fcntl(l, &fa, retval);
-			if (error || SCARG(&fa, cmd) != F_GETLK)
-				return error;
-
-			error = copyin(flp, &fl, sizeof fl);
-			if (error)
+			error = do_fcntl_lock(l, SCARG(uap, fd), SCARG(uap, cmd), &fl);
+			if (error || SCARG(uap, cmd) != F_GETLK)
 				return error;
 
 			bsd_to_sunos_flock(&fl, &ifl);
-
 			return copyout(&ifl, SCARG_P32(uap, arg), sizeof ifl);
 		}
 		break;

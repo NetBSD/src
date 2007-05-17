@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.831.2.7 2007/05/07 10:55:21 yamt Exp $
+#	$NetBSD: files,v 1.831.2.8 2007/05/17 13:41:22 yamt Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -235,6 +235,8 @@ defflag	opt_md.h		MEMORY_DISK_HOOKS MEMORY_DISK_IS_ROOT
 				MEMORY_DISK_DYNAMIC
 defparam opt_md.h		MEMORY_DISK_SERVER MEMORY_DISK_ROOT_SIZE
 				MEMORY_RBFLAGS
+
+defflag opt_tftproot.h		TFTPROOT TFTPROOT_DEBUG
 
 # Support for hardware performance monitoring counters
 #
@@ -785,6 +787,11 @@ file	dev/ic/clmpcc.c			clmpcc			needs-flag
 device	lm: sysmon_envsys
 file	dev/ic/nslm7x.c			lm			needs-flag
 
+# Abit uGuru
+#
+device	ug: sysmon_envsys
+file	dev/ic/ug.c			ug			needs-flag
+
 # Essential Communications Corp. HIPPI Interface
 #
 device	esh: hippi, ifnet
@@ -885,6 +892,11 @@ file	dev/ic/upc.c			upc
 file	dev/ic/wdc_upc.c		wdc_upc
 file	dev/ic/com_upc.c		com_upc
 file	dev/ic/lpt_upc.c		lpt_upc
+
+# AHCI-compatible SATA controllers
+define ahcisata_core
+file dev/ic/ahcisata_core.c ahcisata_core
+device ahcisata: ata, ata_dma, ata_udma, sata, ahcisata_core
 
 # DECchip 21x4x Ethernet controller family, and assorted clones.
 #
@@ -1358,10 +1370,12 @@ file	kern/subr_prof.c
 file	kern/subr_once.c
 file	kern/subr_optstr.c
 file	kern/subr_specificdata.c
+file	kern/subr_tftproot.c		tftproot
 file	kern/subr_userconf.c		userconf
 file	kern/subr_vmem.c
 file	kern/subr_workqueue.c
 file	kern/subr_xxx.c
+file	kern/sys_aio.c
 file	kern/sys_generic.c
 file	kern/sys_lwp.c
 file	kern/sys_pipe.c			!pipe_socketpair
@@ -1391,7 +1405,6 @@ file	kern/uipc_socket.c
 file	kern/uipc_socket2.c
 file	kern/uipc_syscalls.c
 file	kern/uipc_usrreq.c
-file	kern/vfs_aio.c
 file	kern/vfs_bio.c
 file	kern/vfs_cache.c
 file	kern/vfs_getcwd.c

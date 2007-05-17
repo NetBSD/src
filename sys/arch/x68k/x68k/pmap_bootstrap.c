@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.29.26.1 2007/03/12 05:51:44 rmind Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.29.26.2 2007/05/17 13:41:07 yamt Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.29.26.1 2007/03/12 05:51:44 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.29.26.2 2007/05/17 13:41:07 yamt Exp $");
 
 #include "opt_m680x0.h"
 
@@ -262,9 +262,9 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 			*ste++ = SG_NV;
 			*pte++ = PG_NV;
 		}
- 		/*
+		/*
 		 * Initialize the last one to point to Sysptmap.
- 		 */
+		 */
 		*ste = kptmpa | SG_RW | SG_V;
 		*pte = kptmpa | PG_RW | PG_CI | PG_V;
 	}
@@ -305,7 +305,7 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 		protopte += PAGE_SIZE;
 	}
 	/*
-	 * map the kernel segment table cache invalidated for 
+	 * map the kernel segment table cache invalidated for
 	 * these machines (for the 68040 not strictly necessary, but
 	 * recommended by Motorola; for the 68060 mandatory)
 	 * XXX this includes p0upa.  why?

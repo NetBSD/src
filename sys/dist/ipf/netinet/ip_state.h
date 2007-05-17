@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_state.h,v 1.5.14.3 2007/05/07 10:55:40 yamt Exp $	*/
+/*	$NetBSD: ip_state.h,v 1.5.14.4 2007/05/17 13:41:42 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995-2001 by Darren Reed.
@@ -6,7 +6,7 @@
  * See the IPFILTER.LICENCE file for details on licencing.
  *
  * @(#)ip_state.h	1.3 1/12/96 (C) 1995 Darren Reed
- * Id: ip_state.h,v 2.68.2.7 2006/12/18 15:53:40 darrenr Exp
+ * Id: ip_state.h,v 2.68.2.8 2007/05/11 10:44:14 darrenr Exp
  */
 #ifndef _NETINET_IP_STATE_H_
 #define _NETINET_IP_STATE_H_
@@ -215,6 +215,7 @@ typedef	struct	ips_stat {
 	ipstate_t **iss_table;
 	ipstate_t *iss_list;
 	u_long	*iss_bucketlen;
+	ipftq_t	*iss_tcptab;
 } ips_stat_t;
 
 

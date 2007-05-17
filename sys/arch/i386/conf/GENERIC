@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.808.2.8 2007/05/07 10:54:55 yamt Exp $
+# $NetBSD: GENERIC,v 1.808.2.9 2007/05/17 13:40:56 yamt Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.808.2.8 $"
+#ident 		"GENERIC-$Revision: 1.808.2.9 $"
 
 maxusers	32		# estimated number of users
 
@@ -366,6 +366,7 @@ mpu*		at acpi?		# Roland MPU-401 MIDI UART
 npx*		at acpi?		# Math coprocessor
 pckbc*  	at acpi?		# PC keyboard controller
 pcppi*		at acpi?                # AT-style speaker sound
+ug* 		at acpi?		# Abit uGuru Hardware monitor
 wss* 		at acpi?		# NeoMagic 256AV in wss mode
 ym* 		at acpi?		# Yamaha OPL3-SA[23] audio
 
@@ -763,6 +764,8 @@ geodeide* 	at pci? dev ? function ?	# AMD Geode IDE controllers
 hptide* 	at pci? dev ? function ?	# Triones/HighPoint IDE controllers
 iteide* 	at pci? dev ? function ?	# IT Express IDE controllers
 ixpide* 	at pci? dev ? function ?	# ATI IXP IDE controllers
+jmide* 		at pci? dev ? function ? 	# JMicron PCI-e PATA/SATA controllers
+ahcisata* 	at jmide?
 optiide* 	at pci? dev ? function ?	# Opti IDE controllers
 piixide* 	at pci? dev ? function ?	# Intel IDE controllers
 pdcide* 	at pci? dev ? function ?	# Promise IDE controllers

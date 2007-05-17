@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_exec.c,v 1.49.2.2 2007/05/07 10:55:10 yamt Exp $	*/
+/*	$NetBSD: hpux_exec.c,v 1.49.2.3 2007/05/17 13:41:10 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_exec.c,v 1.49.2.2 2007/05/07 10:55:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_exec.c,v 1.49.2.3 2007/05/17 13:41:10 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
@@ -170,7 +170,6 @@ hpux_sys_execv(l, v, retval)
 		syscallarg(const char *) path;
 		syscallarg(char **) argv;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	struct sys_execve_args ap;
 
 	SCARG(&ap, path) = SCARG(uap, path);
@@ -191,7 +190,6 @@ hpux_sys_execve(l, v, retval)
 		syscallarg(char **) argv;
 		syscallarg(char **) envp;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	struct sys_execve_args ap;
 
 	SCARG(&ap, path) = SCARG(uap, path);

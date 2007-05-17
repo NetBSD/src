@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.69.2.4 2007/05/07 10:56:07 yamt Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.69.2.5 2007/05/17 13:41:52 yamt Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.69.2.4 2007/05/07 10:56:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.69.2.5 2007/05/17 13:41:52 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -806,28 +806,7 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 	}
 	rt->rt_flags &= ~RTF_REJECT;
 	ln->ln_asked = 0;
-	if (ln->ln_hold) {
-		struct mbuf *m_hold, *m_hold_next;
-
-		for (m_hold = ln->ln_hold; m_hold; m_hold = m_hold_next) {
-			struct mbuf *mpkt = NULL;
-			
-			m_hold_next = m_hold->m_nextpkt;
-			mpkt = m_copym(m_hold, 0, M_COPYALL, M_DONTWAIT);
-			if (mpkt == NULL) {
-				m_freem(m_hold);
-				break;
-			}
-			mpkt->m_nextpkt = NULL;
-			/*
-			 * we assume ifp is not a loopback here, so just set
-			 * the 2nd argument as the 1st one.
-			 */
-			nd6_output(ifp, ifp, mpkt,
-			    (struct sockaddr_in6 *)rt_key(rt), rt);
-		}
- 		ln->ln_hold = NULL;
-	}
+	nd6_llinfo_release_pkts(ln, ifp, rt);
 
  freeit:
 	m_freem(m);

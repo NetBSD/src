@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_compat.c,v 1.85.2.3 2007/05/07 10:55:10 yamt Exp $	*/
+/*	$NetBSD: hpux_compat.c,v 1.85.2.4 2007/05/17 13:41:10 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_compat.c,v 1.85.2.3 2007/05/07 10:55:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_compat.c,v 1.85.2.4 2007/05/17 13:41:10 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -194,52 +194,37 @@ hpux_sys_wait3(struct lwp *l, void *v, register_t *retval)
 int
 hpux_sys_wait(struct lwp *l, void *v, register_t *retval)
 {
-	struct proc *p = l->l_proc;
 	struct hpux_sys_wait_args *uap = v;
-	struct sys_wait4_args w4;
 	int error;
 	int sig;
-	size_t sz = sizeof(*SCARG(&w4, status));
 	int status;
+	int was_zombie;
+	int pid = WAIT_ANY;
 
-	SCARG(&w4, rusage) = NULL;
-	SCARG(&w4, options) = 0;
+	error = do_sys_wait(l, &pid, &status, 0, NULL, &was_zombie);
 
-	if (SCARG(uap, status) == NULL) {
-		void *sg = stackgap_init(p, 0);
-		SCARG(&w4, status) = stackgap_alloc(p, &sg, sz);
+	retval[0] = pid;
+	if (pid == 0) {
+		/*
+		 * HP-UX wait always returns EINTR when interrupted by a signal
+		 * (well, unless its emulating a BSD process, but we don't bother...)
+		 */
+		if (error == ERESTART)
+			error = EINTR;
+		return error;
 	}
-	else
-		SCARG(&w4, status) = SCARG(uap, status);
-
-	SCARG(&w4, pid) = WAIT_ANY;
-
-	error = sys_wait4(l, &w4, retval);
-	/*
-	 * HP-UX wait always returns EINTR when interrupted by a signal
-	 * (well, unless its emulating a BSD process, but we don't bother...)
-	 */
-	if (error == ERESTART)
-		error = EINTR;
-	if (error)
-		return error;
-
-	if ((error = copyin(SCARG(&w4, status), &status, sizeof(status))) != 0)
-		return error;
 
 	sig = status & 0xFF;
 	if (sig == WSTOPPED) {
 		sig = (status >> 8) & 0xFF;
-		retval[1] = (bsdtohpuxsig(sig) << 8) | WSTOPPED;
+		status = (bsdtohpuxsig(sig) << 8) | WSTOPPED;
 	} else if (sig)
-		retval[1] = (status & 0xFF00) |
-			bsdtohpuxsig(sig & 0x7F) | (sig & 0x80);
+		status = (status & 0xFF00) | bsdtohpuxsig(sig & 0x7F) | (sig & 0x80);
 
-	if (SCARG(uap, status) == NULL)
-		return error;
-	else
-		return copyout(&retval[1],
-			       SCARG(uap, status), sizeof(retval[1]));
+	retval[1] = status;
+	if (SCARG(uap, status) != NULL)
+		error = copyout(&status, SCARG(uap, status), sizeof(status));
+	return error;
 }
 
 int
@@ -252,28 +237,25 @@ hpux_sys_waitpid(struct lwp *l, void *v, register_t *retval)
 		syscallarg(struct rusage *) rusage;
 	} */ *uap = v;
 	int rv, sig, xstat, error;
+	int was_zombie;
 
-	SCARG(uap, rusage) = 0;
-	error = sys_wait4(l, uap, retval);
-	/*
-	 * HP-UX wait always returns EINTR when interrupted by a signal
-	 * (well, unless its emulating a BSD process, but we don't bother...)
-	 */
-	if (error == ERESTART)
-		error = EINTR;
-	if (error)
-		return (error);
+	/* XXX: Caller supplied rusage ignored */
+	error = do_sys_wait(l, &SCARG(uap, pid), &rv, SCARG(uap, options), NULL,
+	    &was_zombie);
+
+	retval[0] = SCARG(uap, pid);
+	if (SCARG(uap, pid) == 0) {
+		/*
+		 * HP-UX wait always returns EINTR when interrupted by a signal
+		 * (well, unless its emulating a BSD process, but we don't bother...)
+		 */
+		if (error == ERESTART)
+			error = EINTR;
+		return error;
+	}
 
 	if (SCARG(uap, status)) {
-		/*
-		 * Wait4 already wrote the status out to user space,
-		 * pull it back, change the signal portion, and write
-		 * it back out.
-		 */
-		error = copyin(SCARG(uap, status), &rv, sizeof(int));
-		if (error)
-			return (error);
-
+		/* Change the signal part of the status */
 		if (WIFSTOPPED(rv)) {
 			sig = WSTOPSIG(rv);
 			rv = W_STOPCODE(bsdtohpuxsig(sig));

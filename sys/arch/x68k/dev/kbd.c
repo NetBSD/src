@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.26.2.2 2007/05/07 10:55:04 yamt Exp $	*/
+/*	$NetBSD: kbd.c,v 1.26.2.3 2007/05/17 13:41:04 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.26.2.2 2007/05/07 10:55:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.26.2.3 2007/05/17 13:41:04 yamt Exp $");
 
 #include "ite.h"
 #include "bell.h"
@@ -389,7 +389,7 @@ unsigned char kbdled;
 void
 kbd_setLED(void)
 {
-        mfp_send_usart(~kbdled | 0x80);
+	mfp_send_usart(~kbdled | 0x80);
 }
 
 int

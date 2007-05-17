@@ -1,4 +1,4 @@
-/*	$NetBSD: stuirda.c,v 1.1.2.2 2007/05/07 10:55:33 yamt Exp $	*/
+/*	$NetBSD: stuirda.c,v 1.1.2.3 2007/05/17 13:41:35 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001,2007 The NetBSD Foundation, Inc.
@@ -106,12 +106,9 @@ USB_DECLARE_DRIVER(stuirda);
 
 USB_MATCH(stuirda)
 {
-	USB_MATCH_START(stuirda, uaa);
+	USB_IFMATCH_START(stuirda, uaa);
 
 	DPRINTFN(50,("stuirda_match\n"));
-
-	if (uaa->iface == NULL)
-		return (UMATCH_NONE);
 
 	if (stuirda_lookup(uaa->vendor, uaa->product) != NULL)
 		return (UMATCH_VENDOR_PRODUCT);
@@ -123,7 +120,7 @@ void uirda_attach(struct device *,struct device *,void *);
 
 USB_ATTACH(stuirda)
 {
-	USB_ATTACH_START(stuirda, sc, uaa);
+	USB_IFATTACH_START(stuirda, sc, uaa);
 
 	(void)uaa;
 

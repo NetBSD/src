@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia.c,v 1.43.2.2 2007/03/12 05:55:11 rmind Exp $	*/
+/*	$NetBSD: azalia.c,v 1.43.2.3 2007/05/17 13:41:29 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.43.2.2 2007/03/12 05:55:11 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.43.2.3 2007/05/17 13:41:29 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -283,7 +283,7 @@ azalia_pci_match(struct device *parent, struct cfdata *match,
 
 	pa = aux;
 	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_MULTIMEDIA
-	    && PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_HDAUDIO)
+	    && PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_MULTIMEDIA_HDAUDIO)
 		return 1;
 	return 0;
 }
@@ -1461,6 +1461,7 @@ azalia_codec_connect_stream(codec_t *this, int dir, uint16_t fmt, int number)
 	nchan = (fmt & HDA_SD_FMT_CHAN) + 1;
 	startchan = 0;
 	for (i = 0; i < group->nconv; i++) {
+		uint32_t stream_chan;
 		nid = group->conv[i];
 
 		/* surround and c/lfe handling */
@@ -1473,8 +1474,11 @@ azalia_codec_connect_stream(codec_t *this, int dir, uint16_t fmt, int number)
 		err = this->comresp(this, nid, CORB_SET_CONVERTER_FORMAT, fmt, NULL);
 		if (err)
 			goto exit;
+		stream_chan = (number << 4) | startchan;
+		if (startchan >= nchan)
+			stream_chan = 0; /* stream#0 */
 		err = this->comresp(this, nid, CORB_SET_CONVERTER_STREAM_CHANNEL,
-				    (number << 4) | startchan, NULL);
+				    stream_chan, NULL);
 		if (err)
 			goto exit;
 		if (this->w[nid].widgetcap & COP_AWCAP_DIGITAL) {
@@ -1718,6 +1722,30 @@ azalia_widget_init_pin(widget_t *this, const codec_t *codec)
 	if (err)
 		return err;
 	this->d.pin.cap = result;
+
+	/* input pin */
+	if ((this->d.pin.cap & COP_PINCAP_INPUT) &&
+	    (this->d.pin.cap & COP_PINCAP_OUTPUT) == 0) {
+		err = codec->comresp(codec, this->nid,
+		    CORB_GET_PIN_WIDGET_CONTROL, 0, &result);
+		if (err == 0) {
+			result &= ~CORB_PWC_OUTPUT;
+			result |= CORB_PWC_INPUT;
+			codec->comresp(codec, this->nid,
+			     CORB_SET_PIN_WIDGET_CONTROL, result, NULL);
+		}
+	}
+	/* output pin, or bidirectional pin */
+	if (this->d.pin.cap & COP_PINCAP_OUTPUT) {
+		err = codec->comresp(codec, this->nid,
+		    CORB_GET_PIN_WIDGET_CONTROL, 0, &result);
+		if (err == 0) {
+			result &= ~CORB_PWC_INPUT;
+			result |= CORB_PWC_OUTPUT;
+			codec->comresp(codec, this->nid,
+			    CORB_SET_PIN_WIDGET_CONTROL, result, NULL);
+		}
+	}
 	return 0;
 }
 

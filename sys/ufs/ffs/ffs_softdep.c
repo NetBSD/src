@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.82.2.4 2007/04/15 16:04:06 yamt Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.82.2.5 2007/05/17 13:41:57 yamt Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.82.2.4 2007/04/15 16:04:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.82.2.5 2007/05/17 13:41:57 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -5158,6 +5158,9 @@ flush_inodedep_deps(fs, ino)
 			ACQUIRE_LOCK(&lk);
 			if (error) {
 				return error;
+			}
+			if (inodedep_lookup(fs, ino, 0, &inodedep) == 0) {
+				return (0);
 			}
 		} else {
 			/*
