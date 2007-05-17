@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.296 2007/03/04 14:46:45 yamt Exp $ */
+/* $NetBSD: machdep.c,v 1.297 2007/05/17 14:51:12 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -75,21 +75,19 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.296 2007/03/04 14:46:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.297 2007/05/17 14:51:12 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/signalvar.h>
 #include <sys/kernel.h>
+#include <sys/cpu.h>
 #include <sys/proc.h>
 #include <sys/ras.h>
 #include <sys/sched.h>
-#include <sys/buf.h>
 #include <sys/reboot.h>
 #include <sys/device.h>
-#include <sys/file.h>
 #include <sys/malloc.h>
-#include <sys/mbuf.h>
 #include <sys/mman.h>
 #include <sys/msgbuf.h>
 #include <sys/ioctl.h>
@@ -669,14 +667,6 @@ nobootinfo:
 	lwp0.l_md.md_tf =
 	    (struct trapframe *)proc0paddr->u_pcb.pcb_hw.apcb_ksp;
 	simple_lock_init(&proc0paddr->u_pcb.pcb_fpcpu_slock);
-
-	/*
-	 * Initialize the primary CPU's idle PCB to proc0's.  In a
-	 * MULTIPROCESSOR configuration, each CPU will later get
-	 * its own idle PCB when autoconfiguration runs.
-	 */
-	ci->ci_idle_pcb = &proc0paddr->u_pcb;
-	ci->ci_idle_pcb_paddr = (u_long)lwp0.l_md.md_pcbpaddr;
 
 	/* Indicate that proc0 has a CPU. */
 	lwp0.l_cpu = ci;
@@ -1998,4 +1988,26 @@ cpu_setmcontext(l, mcp, flags)
 	}
 
 	return (0);
+}
+
+/*
+ * Preempt the current process if in interrupt from user mode,
+ * or after the current trap/syscall if in system mode.
+ */
+void
+cpu_need_resched(struct cpu_info *ci, int flags)
+{
+#if defined(MULTIPROCESSOR)
+	bool immed = (flags & RESCHED_IMMED) != 0;
+#endif /* defined(MULTIPROCESSOR) */
+
+	ci->ci_want_resched = 1;
+	if (ci->ci_curlwp != ci->ci_data.cpu_idlelwp) {
+		aston(ci->ci_curlwp);
+#if defined(MULTIPROCESSOR)
+		if (immed && ci != curcpu()) {
+			alpha_send_ipi(ci->ci_cpuid, 0);
+		}
+#endif /* defined(MULTIPROCESSOR) */
+	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.84 2006/11/09 15:08:04 tsutsui Exp $ */
+/*	$NetBSD: clock.c,v 1.85 2007/05/17 14:51:31 yamt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.84 2006/11/09 15:08:04 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.85 2007/05/17 14:51:31 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -511,7 +511,7 @@ statintr(cap)
 int
 schedintr(void *arg)
 {
-	if (curlwp)
-		schedclock(curlwp);
+
+	schedclock(curlwp);
 	return (1);
 }

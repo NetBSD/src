@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.4 2007/04/06 17:48:06 matt Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.5 2007/05/17 14:51:33 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -94,7 +94,7 @@ NENTRY(mutex_spin_enter, 0)
 	sobgeq	CI_MTX_COUNT(%r1), 2f		/* decr mutex count */
 	brb	3f
 2:	movl	%r2, CI_MTX_OLDSPL(%r1)		/*   save was-current IPL */
-3:	
+3:
 #if defined(DIAGNOSTIC) || defined(MULTIPROCESSOR)
 	bbssi	$0, (%r0), 4f			/* take out mutex */
 	ret

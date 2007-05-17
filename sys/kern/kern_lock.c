@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.112 2007/04/14 06:59:25 perseant Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.113 2007/05/17 14:51:39 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2006 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.112 2007/04/14 06:59:25 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.113 2007/05/17 14:51:39 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_ddb.h"
@@ -1392,7 +1392,7 @@ simple_lock_freecheck(void *start, void *end)
 }
 
 /*
- * We must be holding exactly one lock: the sched_lock.
+ * We must be holding exactly one lock: the spc_lock.
  */
 
 void
@@ -1479,8 +1479,8 @@ void
 assert_sleepable(struct simplelock *interlock, const char *msg)
 {
 
-	if (curlwp == NULL) {
-		panic("assert_sleepable: NULL curlwp");
+	if (CURCPU_IDLE_P()) {
+		panic("assert_sleepable: idle");
 	}
 	simple_lock_only_held(interlock, msg);
 }

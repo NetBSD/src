@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.42 2007/02/18 07:25:35 matt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.43 2007/05/17 14:51:16 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -67,7 +67,7 @@
 	{ "booted_kernel", CTLTYPE_STRING }, \
 	{ "console_device", CTLTYPE_STRUCT }, \
 	{ "powersave", CTLTYPE_INT }, \
-}    
+}
 
 #ifdef _KERNEL
 
@@ -251,7 +251,6 @@ extern int astpending;
  * or after the current trap/syscall if in system mode.
  */
 extern int want_resched;	/* resched() was called */
-#define	cpu_need_resched(ci)	(want_resched = 1, setsoftast())
 
 /*
  * Give a profiling tick to the current process when the user profiling
@@ -260,16 +259,19 @@ extern int want_resched;	/* resched() was called */
  */
 #define	cpu_need_proftick(l)	((l)->l_pflag |= LP_OWEUPC, setsoftast())
 
+/*
+ * reset want_resched, it's been processed.
+ */
+#define	cpu_did_resched()	do { want_resched = 0; } while(0)
+
 #ifndef acorn26
 /*
  * cpu device glue (belongs in cpuvar.h)
  */
 
 struct device;
-void	cpu_attach	__P((struct device *));
-int	cpu_alloc_idlepcb	__P((struct cpu_info *));
+void	cpu_attach(struct device *);
 #endif
-
 
 /*
  * Random cruft
@@ -278,24 +280,24 @@ int	cpu_alloc_idlepcb	__P((struct cpu_info *));
 struct lwp;
 
 /* locore.S */
-void atomic_set_bit	__P((u_int *address, u_int setmask));
-void atomic_clear_bit	__P((u_int *address, u_int clearmask));
+void atomic_set_bit(u_int *, u_int);
+void atomic_clear_bit(u_int *, u_int);
 
 /* cpuswitch.S */
 struct pcb;
-void	savectx		__P((struct pcb *pcb));
+void	savectx(struct pcb *);
 
 /* ast.c */
-void userret		__P((register struct lwp *p));
+void userret(register struct lwp *);
 
 /* machdep.h */
-void bootsync		__P((void));
+void bootsync(void);
 
 /* fault.c */
-int badaddr_read	__P((void *, size_t, void *));
+int badaddr_read(void *, size_t, void *);
 
 /* syscall.c */
-void swi_handler	__P((trapframe_t *));
+void swi_handler(trapframe_t *);
 
 #endif	/* !_LOCORE */
 
