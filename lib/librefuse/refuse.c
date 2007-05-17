@@ -1,4 +1,4 @@
-/*	$NetBSD: refuse.c,v 1.58 2007/05/17 16:41:18 pooka Exp $	*/
+/*	$NetBSD: refuse.c,v 1.59 2007/05/17 21:00:32 pooka Exp $	*/
 
 /*
  * Copyright © 2007 Alistair Crooks.  All rights reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: refuse.c,v 1.58 2007/05/17 16:41:18 pooka Exp $");
+__RCSID("$NetBSD: refuse.c,v 1.59 2007/05/17 21:00:32 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -1176,6 +1176,7 @@ fuse_new(struct fuse_chan *fc, struct fuse_args *args,
 	if ((po_root->po_path = strdup("/")) == NULL)
 		err(1, "fuse_new");
 	po_root->po_len = 1;
+	puffs_path_buildhash(pu, po_root);
 
 	/* sane defaults */
 	puffs_vattr_null(&pn_root->pn_va);
