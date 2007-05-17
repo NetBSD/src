@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnfileops.9,v 1.11 2006/10/04 11:35:47 pooka Exp $
+.\"     $NetBSD: vnfileops.9,v 1.12 2007/05/17 17:47:10 pooka Exp $
 .\"
 .\" Copyright (c) 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd October 4, 2006
+.Dd May 17, 2007
 .Dt VNFILEOPS 9
 .Os
 .Sh NAME
@@ -148,8 +148,7 @@ with the events
 .Fa events
 and the calling lwp
 .Fa l .
-If the operation is success zero is returned, otherwise an appropriate
-error code is returned.
+The function returns a bitmask of available events.
 .It Fn vn_statfile "fp" "sb" "l"
 Common code for a stat operation.
 The file descriptor is specified by the argument
