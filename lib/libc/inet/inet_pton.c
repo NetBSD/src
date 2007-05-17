@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_pton.c,v 1.3.2.1 2007/05/17 00:43:49 jdc Exp $	*/
+/*	$NetBSD: inet_pton.c,v 1.3.2.2 2007/05/17 21:25:14 jdc Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -22,7 +22,7 @@
 #if 0
 static const char rcsid[] = "Id: inet_pton.c,v 1.3.18.2 2005/07/28 07:38:07 marka Exp";
 #else
-__RCSID("$NetBSD: inet_pton.c,v 1.3.2.1 2007/05/17 00:43:49 jdc Exp $");
+__RCSID("$NetBSD: inet_pton.c,v 1.3.2.2 2007/05/17 21:25:14 jdc Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 

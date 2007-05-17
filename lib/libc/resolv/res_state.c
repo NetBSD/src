@@ -1,4 +1,4 @@
-/*	$NetBSD: res_state.c,v 1.5 2004/06/09 18:07:03 christos Exp $	*/
+/*	$NetBSD: res_state.c,v 1.5.10.1 2007/05/17 21:25:19 jdc Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: res_state.c,v 1.5 2004/06/09 18:07:03 christos Exp $");
+__RCSID("$NetBSD: res_state.c,v 1.5.10.1 2007/05/17 21:25:19 jdc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -47,7 +47,11 @@ __RCSID("$NetBSD: res_state.c,v 1.5 2004/06/09 18:07:03 christos Exp $");
 #include <netdb.h>
 #include <resolv.h>
 
-struct __res_state _nres;
+struct __res_state _nres
+# if defined(__BIND_RES_TEXT)
+	= { .retrans = RES_TIMEOUT, }	/*%< Motorola, et al. */
+# endif
+	;
 
 res_state __res_get_state_nothread(void);
 void __res_put_state_nothread(res_state);

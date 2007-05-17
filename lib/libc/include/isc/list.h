@@ -1,4 +1,4 @@
-/*	$NetBSD: list.h,v 1.2.10.1 2007/05/17 00:43:48 jdc Exp $	*/
+/*	$NetBSD: list.h,v 1.2.10.2 2007/05/17 21:25:13 jdc Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")

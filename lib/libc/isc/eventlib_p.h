@@ -1,4 +1,4 @@
-/*	$NetBSD: eventlib_p.h,v 1.1.1.1.10.1 2007/05/17 00:43:50 jdc Exp $	*/
+/*	$NetBSD: eventlib_p.h,v 1.1.1.1.10.2 2007/05/17 21:25:15 jdc Exp $	*/
 
 /*
  * Copyright (c) 2005 by Internet Systems Consortium, Inc. ("ISC")

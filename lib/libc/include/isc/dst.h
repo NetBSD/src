@@ -1,4 +1,4 @@
-/*	$NetBSD: dst.h,v 1.1.1.1.10.1 2007/05/17 00:43:48 jdc Exp $	*/
+/*	$NetBSD: dst.h,v 1.1.1.1.10.2 2007/05/17 21:25:12 jdc Exp $	*/
 
 #ifndef DST_H
 #define DST_H

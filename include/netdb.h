@@ -1,4 +1,4 @@
-/*	$NetBSD: netdb.h,v 1.55 2006/11/24 19:46:58 christos Exp $	*/
+/*	$NetBSD: netdb.h,v 1.55.2.1 2007/05/17 21:25:10 jdc Exp $	*/
 
 /*
  * Copyright (c) 1980, 1983, 1988, 1993
@@ -82,7 +82,7 @@
 
 /*
  *      @(#)netdb.h	8.1 (Berkeley) 6/2/93
- *	Id: netdb.h,v 1.12.2.1.4.4 2004/03/16 02:19:19 marka Exp
+ *	Id: netdb.h,v 1.15.18.6 2006/10/02 01:23:09 marka Exp
  */
 
 #ifndef _NETDB_H_
@@ -124,7 +124,7 @@ typedef _BSD_SIZE_T_	size_t;
 #define	_PATH_SERVICES	"/etc/services"
 #endif
 #ifndef _PATH_SERVICES_DB
-#define	_PATH_SERVICES_DB "/etc/services.db"
+#define	_PATH_SERVICES_DB "/var/db/services.db"
 #endif
 #endif
 
@@ -132,33 +132,33 @@ __BEGIN_DECLS
 extern int h_errno;
 __END_DECLS
 
-/*
+/*%
  * Structures returned by network data base library.  All addresses are
  * supplied in host order, and returned in network order (suitable for
  * use in system calls).
  */
 struct	hostent {
-	char	*h_name;	/* official name of host */
-	char	**h_aliases;	/* alias list */
-	int	h_addrtype;	/* host address type */
-	int	h_length;	/* length of address */
-	char	**h_addr_list;	/* list of addresses from name server */
-#define	h_addr	h_addr_list[0]	/* address, for backward compatibility */
+	char	*h_name;	/*%< official name of host */
+	char	**h_aliases;	/*%< alias list */
+	int	h_addrtype;	/*%< host address type */
+	int	h_length;	/*%< length of address */
+	char	**h_addr_list;	/*%< list of addresses from name server */
+#define	h_addr	h_addr_list[0]	/*%< address, for backward compatiblity */
 };
 
-/*
+/*%
  * Assumption here is that a network number
  * fits in an unsigned long -- probably a poor one.
  */
 struct	netent {
-	char		*n_name;	/* official name of net */
-	char		**n_aliases;	/* alias list */
-	int		n_addrtype;	/* net address type */
+	char		*n_name;	/*%< official name of net */
+	char		**n_aliases;	/*%< alias list */
+	int		n_addrtype;	/*%< net address type */
 #if (defined(__sparc__) && defined(_LP64)) || \
     (defined(__sh__) && defined(_LP64) && (_BYTE_ORDER == _BIG_ENDIAN))
 	int		__n_pad0;	/* ABI compatibility */
 #endif
-	uint32_t	n_net;		/* network # */
+	uint32_t	n_net;		/*%< network # */
 #if defined(__alpha__) || (defined(__i386__) && defined(_LP64)) || \
     (defined(__sh__) && defined(_LP64) && (_BYTE_ORDER == _LITTLE_ENDIAN))
 	int		__n_pad0;	/* ABI compatibility */
@@ -166,16 +166,16 @@ struct	netent {
 };
 
 struct	servent {
-	char	*s_name;	/* official service name */
-	char	**s_aliases;	/* alias list */
-	int	s_port;		/* port # */
-	char	*s_proto;	/* protocol to use */
+	char	*s_name;	/*%< official service name */
+	char	**s_aliases;	/*%< alias list */
+	int	s_port;		/*%< port # */
+	char	*s_proto;	/*%< protocol to use */
 };
 
 struct	protoent {
-	char	*p_name;	/* official protocol name */
-	char	**p_aliases;	/* alias list */
-	int	p_proto;	/* protocol # */
+	char	*p_name;	/*%< official protocol name */
+	char	**p_aliases;	/*%< alias list */
+	int	p_proto;	/*%< protocol # */
 };
 
 /*
@@ -192,38 +192,39 @@ struct	protoent {
 #if (_POSIX_C_SOURCE - 0) >= 200112L || (_XOPEN_SOURCE - 0) >= 520 || \
     defined(_NETBSD_SOURCE)
 struct addrinfo {
-	int	ai_flags;	/* AI_xxx */
-	int	ai_family;	/* PF_xxx */
-	int	ai_socktype;	/* SOCK_xxx */
-	int	ai_protocol;	/* 0 or IPPROTO_xxx for IPv4 and IPv6 */
+	int		ai_flags;	/*%< AI_PASSIVE, AI_CANONNAME */
+	int		ai_family;	/*%< PF_xxx */
+	int		ai_socktype;	/*%< SOCK_xxx */
+	int		ai_protocol;	/*%< 0 or IPPROTO_xxx for IPv4 and IPv6 */
 #if defined(__sparc__) && defined(_LP64)
-	int	__ai_pad0;	/* ABI compatibility */
+	int		__ai_pad0;	/* ABI compatibility */
 #endif
-	socklen_t ai_addrlen;	/* length of ai_addr */
+	socklen_t	 ai_addrlen;	/*%< length of ai_addr */
 #if defined(__alpha__) || (defined(__i386__) && defined(_LP64))
-	int	__ai_pad0;	/* ABI compatbility */
+	int		__ai_pad0;	/* ABI compatibility */
 #endif
-	char	*ai_canonname;	/* canonical name for hostname */
-	struct sockaddr *ai_addr;	/* binary address */
-	struct addrinfo *ai_next;	/* next structure in linked list */
+	char		*ai_canonname;	/*%< canonical name for hostname */
+	struct sockaddr	*ai_addr; 	/*%< binary address */
+	struct addrinfo	*ai_next; 	/*%< next structure in linked list */
 };
 #endif
 
-/*
+/*%
  * Error return codes from gethostbyname() and gethostbyaddr()
  * (left in extern int h_errno).
  */
 
 #if defined(_NETBSD_SOURCE)
-#define	NETDB_INTERNAL	-1	/* see errno */
-#define	NETDB_SUCCESS	0	/* no problem */
+#define	NETDB_INTERNAL	-1	/*%< see errno */
+#define	NETDB_SUCCESS	0	/*%< no problem */
 #endif
-#define	HOST_NOT_FOUND	1 /* Authoritative Answer Host not found */
-#define	TRY_AGAIN	2 /* Non-Authoritative Host not found, or SERVERFAIL */
-#define	NO_RECOVERY	3 /* Non recoverable errors, FORMERR, REFUSED, NOTIMP */
-#define	NO_DATA		4 /* Valid name, no data record of requested type */
-#if defined(_NETBSD_SOURCE)
 #define	NO_ADDRESS	NO_DATA		/* no address, look for MX record */
+#define	HOST_NOT_FOUND	1 /*%< Authoritative Answer Host not found */
+#define	TRY_AGAIN	2 /*%< Non-Authoritive Host not found, or SERVERFAIL */
+#define	NO_RECOVERY	3 /*%< Non recoverable errors, FORMERR, REFUSED, NOTIMP */
+#define	NO_DATA		4 /*%< Valid name, no data record of requested type */
+#if defined(_NETBSD_SOURCE)
+#define	NO_ADDRESS	NO_DATA		/*%< no address, look for MX record */
 #endif
 
 /*
@@ -231,24 +232,24 @@ struct addrinfo {
  */
 #if (_POSIX_C_SOURCE - 0) >= 200112L || (_XOPEN_SOURCE - 0) >= 520 || \
     defined(_NETBSD_SOURCE)
-#define	EAI_ADDRFAMILY	 1	/* address family for hostname not supported */
-#define	EAI_AGAIN	 2	/* temporary failure in name resolution */
-#define	EAI_BADFLAGS	 3	/* invalid value for ai_flags */
-#define	EAI_FAIL	 4	/* non-recoverable failure in name resolution */
-#define	EAI_FAMILY	 5	/* ai_family not supported */
-#define	EAI_MEMORY	 6	/* memory allocation failure */
-#define	EAI_NODATA	 7	/* no address associated with hostname */
-#define	EAI_NONAME	 8	/* hostname nor servname provided, or not known */
-#define	EAI_SERVICE	 9	/* servname not supported for ai_socktype */
-#define	EAI_SOCKTYPE	10	/* ai_socktype not supported */
-#define	EAI_SYSTEM	11	/* system error returned in errno */
+#define	EAI_ADDRFAMILY	 1	/*%< address family for hostname not supported */
+#define	EAI_AGAIN	 2	/*%< temporary failure in name resolution */
+#define	EAI_BADFLAGS	 3	/*%< invalid value for ai_flags */
+#define	EAI_FAIL	 4	/*%< non-recoverable failure in name resolution */
+#define	EAI_FAMILY	 5	/*%< ai_family not supported */
+#define	EAI_MEMORY	 6	/*%< memory allocation failure */
+#define	EAI_NODATA	 7	/*%< no address associated with hostname */
+#define	EAI_NONAME	 8	/*%< hostname nor servname provided, or not known */
+#define	EAI_SERVICE	 9	/*%< servname not supported for ai_socktype */
+#define	EAI_SOCKTYPE	10	/*%< ai_socktype not supported */
+#define	EAI_SYSTEM	11	/*%< system error returned in errno */
 #define	EAI_BADHINTS	12	/* invalid value for hints */
 #define	EAI_PROTOCOL	13	/* resolved protocol is unknown */
 #define	EAI_OVERFLOW	14	/* argument buffer overflow */
 #define	EAI_MAX		15
 #endif /* _POSIX_C_SOURCE >= 200112 || _XOPEN_SOURCE >= 520 || _NETBSD_SOURCE */
 
-/*
+/*%
  * Flag values for getaddrinfo()
  */
 #if (_POSIX_C_SOURCE - 0) >= 200112L || (_XOPEN_SOURCE - 0) >= 520 || \
@@ -264,7 +265,7 @@ struct addrinfo {
 
 #if (_POSIX_C_SOURCE - 0) >= 200112L || (_XOPEN_SOURCE - 0) >= 520 || \
     defined(_NETBSD_SOURCE)
-/*
+/*%
  * Constants for getnameinfo()
  */
 #if defined(_NETBSD_SOURCE)
@@ -272,7 +273,7 @@ struct addrinfo {
 #define	NI_MAXSERV	32
 #endif
 
-/*
+/*%
  * Flag values for getnameinfo()
  */
 #define	NI_NOFQDN	0x00000001
@@ -282,7 +283,7 @@ struct addrinfo {
 #define	NI_DGRAM	0x00000010
 #define	NI_NUMERICSCOPE	0x00000040
 
-/*
+/*%
  * Scope delimit character
  */
 #if defined(_NETBSD_SOURCE)
