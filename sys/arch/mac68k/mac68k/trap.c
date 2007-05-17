@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.125 2007/03/08 02:24:41 tsutsui Exp $	*/
+/*	$NetBSD: trap.c,v 1.126 2007/05/17 22:15:23 rjs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.125 2007/03/08 02:24:41 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.126 2007/05/17 22:15:23 rjs Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -547,7 +547,7 @@ copyfault:
 			l->l_pflag &= ~LP_OWEUPC;
 			ADDUPROF(l);
 		}
-		if (want_resched)
+		if (curcpu()->ci_want_resched)
 			preempt();
 		goto out;
 
