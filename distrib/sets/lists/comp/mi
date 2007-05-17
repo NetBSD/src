@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1026 2007/05/07 11:17:13 yamt Exp $
+#	$NetBSD: mi,v 1.1027 2007/05/17 15:21:00 yamt Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -6721,9 +6721,9 @@
 ./usr/share/man/cat9/cpu_dump.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/cpu_dumpconf.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/cpu_dumpsize.0		comp-sys-catman		.cat
-./usr/share/man/cat9/cpu_exit.0			comp-sys-catman		.cat
+./usr/share/man/cat9/cpu_exit.0			comp-obsolete		obsolete
 ./usr/share/man/cat9/cpu_fork.0			comp-obsolete		obsolete
-./usr/share/man/cat9/cpu_idle.0			comp-obsolete		obsolete
+./usr/share/man/cat9/cpu_idle.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/cpu_initclocks.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/cpu_lwp_fork.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/cpu_need_resched.0		comp-sys-catman		.cat
@@ -6734,6 +6734,7 @@
 ./usr/share/man/cat9/cpu_swapin.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/cpu_swapout.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/cpu_switch.0		comp-sys-catman		.cat
+./usr/share/man/cat9/cpu_switchto.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/cpu_sysctl.0		comp-obsolete		obsolete
 ./usr/share/man/cat9/cpu_wait.0			comp-obsolete		obsolete
 ./usr/share/man/cat9/crcopy.0			comp-obsolete		obsolete
@@ -6755,7 +6756,7 @@
 ./usr/share/man/cat9/crypto_newsession.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/crypto_register.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/crypto_unregister.0	comp-sys-catman		.cat
-./usr/share/man/cat9/ctxsw.0			comp-sys-catman		.cat
+./usr/share/man/cat9/ctxsw.0			comp-obsolete		obsolete
 ./usr/share/man/cat9/curcpu.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/curproc.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/cv.0			comp-sys-catman		.cat
@@ -11052,9 +11053,9 @@
 ./usr/share/man/man9/cpu_dump.9			comp-sys-man		.man
 ./usr/share/man/man9/cpu_dumpconf.9		comp-sys-man		.man
 ./usr/share/man/man9/cpu_dumpsize.9		comp-sys-man		.man
-./usr/share/man/man9/cpu_exit.9			comp-sys-man		.man
+./usr/share/man/man9/cpu_exit.9			comp-obsolete		obsolete
 ./usr/share/man/man9/cpu_fork.9			comp-obsolete		obsolete
-./usr/share/man/man9/cpu_idle.9			comp-obsolete		obsolete
+./usr/share/man/man9/cpu_idle.9			comp-sys-man		.man
 ./usr/share/man/man9/cpu_initclocks.9		comp-sys-man		.man
 ./usr/share/man/man9/cpu_lwp_fork.9		comp-sys-man		.man
 ./usr/share/man/man9/cpu_need_resched.9		comp-sys-man		.man
@@ -11065,6 +11066,7 @@
 ./usr/share/man/man9/cpu_swapin.9		comp-sys-man		.man
 ./usr/share/man/man9/cpu_swapout.9		comp-sys-man		.man
 ./usr/share/man/man9/cpu_switch.9		comp-sys-man		.man
+./usr/share/man/man9/cpu_switchto.9		comp-sys-man		.man
 ./usr/share/man/man9/cpu_sysctl.9		comp-obsolete		obsolete
 ./usr/share/man/man9/cpu_wait.9			comp-obsolete		obsolete
 ./usr/share/man/man9/crcopy.9			comp-obsolete		obsolete
@@ -11086,7 +11088,7 @@
 ./usr/share/man/man9/crypto_newsession.9	comp-sys-man		.man
 ./usr/share/man/man9/crypto_register.9		comp-sys-man		.man
 ./usr/share/man/man9/crypto_unregister.9	comp-sys-man		.man
-./usr/share/man/man9/ctxsw.9			comp-sys-man		.man
+./usr/share/man/man9/ctxsw.9			comp-obsolete		obsolete
 ./usr/share/man/man9/curcpu.9			comp-sys-man		.man
 ./usr/share/man/man9/curproc.9			comp-sys-man		.man
 ./usr/share/man/man9/cv.9			comp-sys-man		.man
