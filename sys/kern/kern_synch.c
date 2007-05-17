@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.173 2006/11/03 20:46:00 ad Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.173.4.1 2007/05/17 22:53:05 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.173 2006/11/03 20:46:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.173.4.1 2007/05/17 22:53:05 wrstuden Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -445,7 +445,6 @@ ltsleep(volatile const void *ident, int priority, const char *wmesg, int timo,
 	struct lwp *l = curlwp;
 	struct proc *p = l ? l->l_proc : NULL;
 	struct slpque *qp;
-	struct sadata_upcall *sau;
 	int sig, s;
 	int catch = priority & PCATCH;
 	int relock = (priority & PNORELOCK) == 0;
@@ -481,18 +480,6 @@ ltsleep(volatile const void *ident, int priority, const char *wmesg, int timo,
 	if (KTRPOINT(p, KTR_CSW))
 		ktrcsw(l, 1, 0);
 #endif
-
-	/*
-	 * XXX We need to allocate the sadata_upcall structure here,
-	 * XXX since we can't sleep while waiting for memory inside
-	 * XXX sa_upcall().  It would be nice if we could safely
-	 * XXX allocate the sadata_upcall structure on the stack, here.
-	 */
-	if (l->l_flag & L_SA) {
-		sau = sadata_upcall_alloc(0);
-	} else {
-		sau = NULL;
-	}
 
 	SCHED_LOCK(s);
 
@@ -567,7 +554,7 @@ ltsleep(volatile const void *ident, int priority, const char *wmesg, int timo,
 	p->p_stats->p_ru.ru_nvcsw++;
 	SCHED_ASSERT_LOCKED();
 	if (l->l_flag & L_SA)
-		sa_switch(l, sau, SA_UPCALL_BLOCKED);
+		sa_switch(l, SA_UPCALL_BLOCKED);
 	else
 		mi_switch(l, NULL);
 
