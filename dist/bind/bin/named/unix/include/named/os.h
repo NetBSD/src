@@ -1,7 +1,7 @@
-/*	$NetBSD: os.h,v 1.1.1.3 2005/12/21 23:08:11 christos Exp $	*/
+/*	$NetBSD: os.h,v 1.1.1.3.4.1 2007/05/17 00:35:22 jdc Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,10 +17,12 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: os.h,v 1.14.2.2.8.9 2004/09/29 06:36:44 marka Exp */
+/* Id: os.h,v 1.22.18.3 2005/04/29 00:15:39 marka Exp */
 
 #ifndef NS_OS_H
 #define NS_OS_H 1
+
+/*! \file */
 
 #include <isc/types.h>
 

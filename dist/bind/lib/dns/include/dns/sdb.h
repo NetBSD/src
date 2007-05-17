@@ -1,7 +1,7 @@
-/*	$NetBSD: sdb.h,v 1.1.1.3 2005/12/21 23:16:57 christos Exp $	*/
+/*	$NetBSD: sdb.h,v 1.1.1.3.4.1 2007/05/17 00:41:03 jdc Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: sdb.h,v 1.12.12.3 2004/03/08 09:04:39 marka Exp */
+/* Id: sdb.h,v 1.15.18.2 2005/04/29 00:16:21 marka Exp */
 
 #ifndef DNS_SDB_H
 #define DNS_SDB_H 1
@@ -26,7 +26,8 @@
  ***** Module Info
  *****/
 
-/*
+/*! \file
+ * \brief
  * Simple database API.
  */
 
@@ -42,17 +43,17 @@
  *** Types
  ***/
 
-/*
+/*%
  * A simple database.  This is an opaque type.
  */
 typedef struct dns_sdb dns_sdb_t;
 
-/*
+/*%
  * A simple database lookup in progress.  This is an opaque type.
  */
 typedef struct dns_sdblookup dns_sdblookup_t;
 
-/*
+/*%
  * A simple database traversal in progress.  This is an opaque type.
  */
 typedef struct dns_sdballnodes dns_sdballnodes_t;
@@ -98,7 +99,7 @@ isc_result_t
 dns_sdb_register(const char *drivername, const dns_sdbmethods_t *methods,
 		 void *driverdata, unsigned int flags, isc_mem_t *mctx,
 		 dns_sdbimplementation_t **sdbimp);
-/*
+/*%<
  * Register a simple database driver for the database type 'drivername',
  * implemented by the functions in '*methods'.
  *
@@ -128,7 +129,7 @@ dns_sdb_register(const char *drivername, const dns_sdbmethods_t *methods,
  * The allnodes function, if non-NULL, fills in an opaque structure to be
  * used by a database iterator.  This allows the zone to be transferred.
  * This may use a considerable amount of memory for large zones, and the
- * zone transfer may not be fully RFC 1035 compliant if the zone is 
+ * zone transfer may not be fully RFC1035 compliant if the zone is 
  * frequently changed.
  *
  * The create function will be called for each zone configured
@@ -158,19 +159,20 @@ dns_sdb_register(const char *drivername, const dns_sdbmethods_t *methods,
 
 void
 dns_sdb_unregister(dns_sdbimplementation_t **sdbimp);
-/*
+/*%<
  * Removes the simple database driver from the list of registered database
  * types.  There must be no active databases of this type when this function
  * is called.
  */
 
+/*% See dns_sdb_putradata() */
 isc_result_t
 dns_sdb_putrr(dns_sdblookup_t *lookup, const char *type, dns_ttl_t ttl,
 	      const char *data);
 isc_result_t
 dns_sdb_putrdata(dns_sdblookup_t *lookup, dns_rdatatype_t type, dns_ttl_t ttl,
 		 const unsigned char *rdata, unsigned int rdlen);
-/*
+/*%<
  * Add a single resource record to the lookup structure to be
  * returned in the query response.  dns_sdb_putrr() takes the
  * resource record in master file text format as a null-terminated
@@ -178,6 +180,7 @@ dns_sdb_putrdata(dns_sdblookup_t *lookup, dns_rdatatype_t type, dns_ttl_t ttl,
  * uncompressed wire format.
  */
 
+/*% See dns_sdb_putnamerdata() */
 isc_result_t
 dns_sdb_putnamedrr(dns_sdballnodes_t *allnodes, const char *name,
 		   const char *type, dns_ttl_t ttl, const char *data);
@@ -185,7 +188,7 @@ isc_result_t
 dns_sdb_putnamedrdata(dns_sdballnodes_t *allnodes, const char *name,
 		      dns_rdatatype_t type, dns_ttl_t ttl,
 		      const void *rdata, unsigned int rdlen);
-/*
+/*%<
  * Add a single resource record to the allnodes structure to be
  * included in a zone transfer response, in text or wire
  * format as above.
@@ -194,7 +197,7 @@ dns_sdb_putnamedrdata(dns_sdballnodes_t *allnodes, const char *name,
 isc_result_t
 dns_sdb_putsoa(dns_sdblookup_t *lookup, const char *mname, const char *rname,
 	       isc_uint32_t serial);
-/*
+/*%<
  * This function may optionally be called from the 'authority' callback
  * to simplify construction of the SOA record for 'zone'.  It will
  * provide a SOA listing 'mname' as as the master server and 'rname' as

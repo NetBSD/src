@@ -1,7 +1,7 @@
-/*	$NetBSD: net.h,v 1.1.1.3 2005/12/21 23:17:48 christos Exp $	*/
+/*	$NetBSD: net.h,v 1.1.1.3.4.1 2007/05/17 00:43:02 jdc Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: net.h,v 1.15.12.10 2004/04/29 01:31:23 marka Exp */
+/* Id: net.h,v 1.21.18.5 2005/04/27 05:02:38 sra Exp */
 
 #ifndef ISC_NET_H
 #define ISC_NET_H 1
@@ -74,7 +74,7 @@
  *
  * Standards:
  *	BSD Socket API
- *	RFC 2553
+ *	RFC2553
  */
 
 /***
@@ -258,6 +258,17 @@ isc_net_probeipv6(void);
  *	ISC_R_NOTFOUND		IPv6 is not supported.
  *	ISC_R_DISABLED		IPv6 is disabled.
  *	ISC_R_UNEXPECTED
+ */
+
+isc_result_t
+isc_net_probeunix(void);
+/*
+ * Check if UNIX domain sockets are supported.
+ *
+ * Returns:
+ *
+ *	ISC_R_SUCCESS
+ *	ISC_R_NOTFOUND
  */
 
 isc_result_t

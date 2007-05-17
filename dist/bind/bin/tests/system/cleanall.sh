@@ -15,7 +15,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: cleanall.sh,v 1.8.206.1 2004/03/06 10:21:47 marka Exp
+# Id: cleanall.sh,v 1.9 2004/03/05 04:59:12 marka Exp
 
 #
 # Clean up after system tests.

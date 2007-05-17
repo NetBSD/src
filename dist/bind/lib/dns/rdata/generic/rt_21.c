@@ -1,4 +1,4 @@
-/*	$NetBSD: rt_21.c,v 1.1.1.3 2005/12/21 23:17:06 christos Exp $	*/
+/*	$NetBSD: rt_21.c,v 1.1.1.3.4.1 2007/05/17 00:41:29 jdc Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
@@ -17,11 +17,11 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: rt_21.c,v 1.37.2.1.2.5 2005/03/17 03:58:31 marka Exp */
+/* Id: rt_21.c,v 1.41.18.3 2005/04/27 05:01:52 sra Exp */
 
 /* reviewed: Thu Mar 16 15:02:31 PST 2000 by brister */
 
-/* RFC 1183 */
+/* RFC1183 */
 
 #ifndef RDATA_GENERIC_RT_21_C
 #define RDATA_GENERIC_RT_21_C

@@ -1,7 +1,7 @@
-/*	$NetBSD: tcpmsg.c,v 1.1.1.3 2005/12/21 23:16:39 christos Exp $	*/
+/*	$NetBSD: tcpmsg.c,v 1.1.1.3.4.1 2007/05/17 00:40:47 jdc Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,7 +17,9 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: tcpmsg.c,v 1.24.206.1 2004/03/06 08:13:46 marka Exp */
+/* Id: tcpmsg.c,v 1.25.18.4 2006/08/10 23:59:29 marka Exp */
+
+/*! \file */
 
 #include <config.h>
 
@@ -54,6 +56,7 @@ recv_length(isc_task_t *task, isc_event_t *ev_in) {
 	INSIST(VALID_TCPMSG(tcpmsg));
 
 	dev = &tcpmsg->event;
+	tcpmsg->address = ev->address;
 
 	if (ev->result != ISC_R_SUCCESS) {
 		tcpmsg->result = ev->result;
@@ -110,6 +113,7 @@ recv_message(isc_task_t *task, isc_event_t *ev_in) {
 	INSIST(VALID_TCPMSG(tcpmsg));
 
 	dev = &tcpmsg->event;
+	tcpmsg->address = ev->address;
 
 	if (ev->result != ISC_R_SUCCESS) {
 		tcpmsg->result = ev->result;
@@ -118,7 +122,6 @@ recv_message(isc_task_t *task, isc_event_t *ev_in) {
 
 	tcpmsg->result = ISC_R_SUCCESS;
 	isc_buffer_add(&tcpmsg->buffer, ev->n);
-	tcpmsg->address = ev->address;
 
 	XDEBUG(("Received %d bytes (of %d)\n", ev->n, tcpmsg->size));
 

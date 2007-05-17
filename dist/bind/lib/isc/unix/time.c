@@ -1,7 +1,7 @@
-/*	$NetBSD: time.c,v 1.1.1.3 2005/12/21 23:17:39 christos Exp $	*/
+/*	$NetBSD: time.c,v 1.1.1.3.4.1 2007/05/17 00:42:51 jdc Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,7 +17,9 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: time.c,v 1.34.2.6.2.4 2004/03/06 08:15:03 marka Exp */
+/* Id: time.c,v 1.47.18.2 2005/04/29 00:17:09 marka Exp */
+
+/*! \file */
 
 #include <config.h>
 
@@ -35,9 +37,9 @@
 #include <isc/time.h>
 #include <isc/util.h>
 
-#define NS_PER_S	1000000000	/* Nanoseconds per second. */
-#define NS_PER_US	1000		/* Nanoseconds per microsecond. */
-#define US_PER_S	1000000		/* Microseconds per second. */
+#define NS_PER_S	1000000000	/*%< Nanoseconds per second. */
+#define NS_PER_US	1000		/*%< Nanoseconds per microsecond. */
+#define US_PER_S	1000000		/*%< Microseconds per second. */
 
 /*
  * All of the INSIST()s checks of nanoseconds < NS_PER_S are for
@@ -50,7 +52,7 @@
 #define ISC_FIX_TV_USEC 1
 #endif
 
-/***
+/*%
  *** Intervals
  ***/
 

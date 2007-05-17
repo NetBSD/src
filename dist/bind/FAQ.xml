@@ -1,7 +1,8 @@
+<?xml-stylesheet href="common.css" type="text/css"?>
 <!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
        "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd" []>
 <!--
- - Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
  - Copyright (C) 2000-2003  Internet Software Consortium.
  -
  - Permission to use, copy, modify, and distribute this software for any
@@ -17,10 +18,26 @@
  - PERFORMANCE OF THIS SOFTWARE.
 -->
 
-<!-- Id: FAQ.xml,v 1.4.6.3 2005/11/02 22:53:51 marka Exp -->
+<!-- Id: FAQ.xml,v 1.4.4.8 2007/02/05 05:23:39 marka Exp -->
 
 <article class="faq">
   <title>Frequently Asked Questions about BIND 9</title>
+  <articleinfo>
+    <copyright>
+      <year>2004</year>
+      <year>2005</year>
+      <year>2006</year>
+      <year>2007</year>
+      <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
+    </copyright>
+    <copyright>
+      <year>2000</year>
+      <year>2001</year>
+      <year>2002</year>
+      <year>2003</year>
+      <holder>Internet Software Consortium.</holder>
+    </copyright>
+  </articleinfo>
   <qandaset defaultlabel='qanda'>
     <qandaentry>
       <question>
@@ -67,6 +84,26 @@
     <qandaentry>
       <question>
 	<para>
+	  Why do I get the following errors:
+<programlisting>general: errno2result.c:109: unexpected error:
+general: unable to convert errno to isc_result: 14: Bad address
+client: UDP client handler shutting down due to fatal receive error: unexpected error</programlisting>
+	</para>
+      </question>
+      <answer>
+	<para>
+	  This is the result of a Linux kernel bug.
+	</para>
+	<para>
+	  See:
+	  <ulink url="http://marc.theaimsgroup.com/?l=linux-netdev&amp;m=113081708031466&amp;w=2">http://marc.theaimsgroup.com/?l=linux-netdev&amp;m=113081708031466&amp;w=2</ulink>
+	</para>
+      </answer>
+    </qandaentry>
+
+    <qandaentry>
+      <question>
+	<para>
 	  Why does named log the warning message <quote>no TTL specified -
 	  using SOA MINTTL instead</quote>?
 	</para>
@@ -104,6 +141,10 @@ example.com. 86400 IN SOA ns hostmaster ( 1 3600 1800 1814400 3600 )</programlis
 	  the number of CPUs.  Note that the amount of memory used
 	  is not cumulative; if each process is using 10M of memory,
 	  only a total of 10M is used.
+	</para>
+	<para>
+	  Newer versions of Linux's ps command hide the individual threads
+	  and require -L to display them.
 	</para>
       </answer>
     </qandaentry>
@@ -146,17 +187,17 @@ example.com. 86400 IN SOA ns hostmaster ( 1 3600 1800 1814400 3600 )</programlis
     <qandaentry>
       <question>
 	<para>
-	How do I produce a usable core file from a multithreaded
+	How do I produce a usable core file from a multi-threaded
 	named on Linux?
 	</para>
       </question>
       <answer>
 	<para>
-	If the Linux kernel is 2.4.7 or newer, multithreaded core
+	If the Linux kernel is 2.4.7 or newer, multi-threaded core
 	dumps are usable (that is, the correct thread is dumped).
 	Otherwise, if using a 2.2 kernel, apply the kernel patch
 	found in contrib/linux/coredump-patch and rebuild the kernel.
-	This patch will cause multithreaded programs to dump the
+	This patch will cause multi-threaded programs to dump the
 	correct thread.
 	</para>
       </answer>
@@ -516,7 +557,7 @@ Master 10.0.1.1:
 	};
 	view "external" {
 		match-clients { key external; any; };
-		server 10.0.0.2 { keys external; };
+		server 10.0.1.2 { keys external; };
 		recursion no;
 		...
 	};
@@ -532,7 +573,7 @@ Slave 10.0.1.2:
 	};
 	view "external" {
 		match-clients { key external; any; };
-		server 10.0.0.1 { keys external; };
+		server 10.0.1.1 { keys external; };
 		recursion no;
 		...
 	};</programlisting>
@@ -604,7 +645,7 @@ named-checkzone example.com tmp</programlisting>
 	</informalexample>
 	<para>
 	  A CNAME record cannot exist with the same name as another record
-	  except for the DNSSEC records which prove its existance (NSEC).
+	  except for the DNSSEC records which prove its existence (NSEC).
 	</para>
 	<para>
 	  RFC 1034, Section 3.6.2: <quote>If a CNAME RR is present at a node,
@@ -728,7 +769,7 @@ Master 10.0.1.1:
 	  contains leading white space (tab/space) but the is no
 	  current record owner name to inherit the name from.  Usually
 	  this is the result of putting white space before a comment.
-	  Forgeting the "@" for the SOA record or indenting the master
+	  Forgetting the "@" for the SOA record or indenting the master
 	  file.
 	</para>
       </answer>
@@ -742,7 +783,7 @@ Master 10.0.1.1:
       </question>
       <answer>
 	<para>
-	  You are running chrooted (-t) and have not supplied local timzone
+	  You are running chrooted (-t) and have not supplied local timezone
 	  information in the chroot area.
 	</para>
 	<simplelist>
@@ -905,7 +946,7 @@ zone "example.net" {
     <qandaentry>
       <question>
 	<para>
-	  How do I intergrate BIND 9 and Solaris SMF
+	  How do I integrate BIND 9 and Solaris SMF
 	</para>
       </question>
       <answer>
@@ -937,7 +978,7 @@ zone "example.net" {
 	  You would have to add both the CNAME and address records
 	  (A/AAAA) as glue to the parent zone and have CNAMEs be
 	  followed when doing additional section processing to make
-	  it work.  No namesever implementation supports either of
+	  it work.  No nameserver implementation supports either of
 	  these requirements.
 	</para>
       </answer>
@@ -956,7 +997,7 @@ zone "example.net" {
 	  space you are using then you have failed to follow RFC 1918
 	  usage rules and are leaking queries to the Internet.  You
 	  should establish your own zones for these addresses to prevent
-	  you quering the Internet's name servers for these addresses.
+	  you querying the Internet's name servers for these addresses.
 	  Please see <ulink url="http://as112.net/">http://as112.net/</ulink>
 	  for details of the problems you are causing and the counter
 	  measures that have had to be deployed.
@@ -997,9 +1038,318 @@ empty:
 	       1 3600 1200 604800 10800 )
 @ 10800 IN NS &lt;name-of-server&gt;.</programlisting>
 	</informalexample>
+	<para>
 	<note>
 	  Future versions of named are likely to do this automatically.
 	</note>
+	</para>
+      </answer>
+    </qandaentry>
+
+    <qandaentry>
+      <question>
+	<para>
+	   I'm running BIND on Red Hat Enterprise Linux or Fedora Core -
+	</para>
+	<para>
+	  Why can't named update slave zone database files?
+	</para>
+	<para>
+	  Why can't named create DDNS journal files or update
+	  the master zones from journals?
+	</para>
+	<para>
+	  Why can't named create custom log files?
+	</para>
+      </question>
+
+      <answer>
+	<para>
+	  Red Hat Security Enhanced Linux (SELinux) policy security
+	  protections :
+	</para>
+
+	<para>
+	   Red Hat have adopted the National Security Agency's
+	   SELinux security policy ( see http://www.nsa.gov/selinux
+	   ) and recommendations for BIND security , which are more
+	   secure than running named in a chroot and make use of
+	   the bind-chroot environment unnecessary .
+	</para>
+
+	<para>
+	  By default, named is not allowed by the SELinux policy
+	  to write, create or delete any files EXCEPT in these
+	  directories:
+	  <informalexample>
+	    <programlisting>
+$ROOTDIR/var/named/slaves
+$ROOTDIR/var/named/data
+$ROOTDIR/var/tmp
+	    </programlisting>
+	  </informalexample>
+	  where $ROOTDIR may be set in /etc/sysconfig/named if
+	  bind-chroot is installed.
+	</para>
+
+	<para>
+	  The SELinux policy particularly does NOT allow named to modify
+	  the $ROOTDIR/var/named directory, the default location for master
+	  zone database files.
+	</para>
+
+	<para>
+	  SELinux policy overrules file access permissions - so
+	  even if all the files under /var/named have ownership
+	  named:named and mode rw-rw-r--, named will still not be
+	  able to write or create files except in the directories
+	  above, with SELinux in Enforcing mode.
+	</para>
+  
+	<para>
+	  So, to allow named to update slave or DDNS zone files,
+	  it is best to locate them in $ROOTDIR/var/named/slaves,
+	  with named.conf zone statements such as:
+	  <informalexample>
+	    <programlisting>
+zone "slave.zone." IN {
+	type slave;
+	file "slaves/slave.zone.db";
+	...
+};   
+zone "ddns.zone." IN  {
+	type master;
+	allow-updates {...};
+	file "slaves/ddns.zone.db";
+};
+	    </programlisting>
+	  </informalexample>
+	</para>
+
+	<para>
+	  To allow named to create its cache dump and statistics
+	  files, for example, you could use named.conf options
+	  statements such as:
+	  <informalexample>
+	    <programlisting>
+options {
+	...
+	dump-file "/var/named/data/cache_dump.db";
+	statistics-file "/var/named/data/named_stats.txt";
+	...
+};
+	    </programlisting>
+	  </informalexample>
+	</para>
+
+	<para>
+	  You can also tell SELinux to allow named to update any
+	  zone database files, by setting the SELinux tunable boolean
+	  parameter 'named_write_master_zones=1', using the
+	  system-config-securitylevel GUI, using the 'setsebool'
+	  command, or in /etc/selinux/targeted/booleans.
+	</para>
+  
+	<para>
+	  You can disable SELinux protection for named entirely by
+	  setting the 'named_disable_trans=1' SELinux tunable boolean
+	  parameter.
+	</para>
+    
+	<para>
+	  The SELinux named policy defines these SELinux contexts for named:
+	  <informalexample>
+	    <programlisting>
+named_zone_t : for zone database files       - $ROOTDIR/var/named/*
+named_conf_t : for named configuration files - $ROOTDIR/etc/{named,rndc}.*
+named_cache_t: for files modifiable by named - $ROOTDIR/var/{tmp,named/{slaves,data}}
+	    </programlisting>
+	  </informalexample>
+	</para>
+   
+	<para>
+	  If you want to retain use of the SELinux policy for named,
+	  and put named files in different locations, you can do
+	  so by changing the context of the custom file locations
+	  .
+	</para>
+
+	<para>
+	  To create a custom configuration file location, e.g.
+	  '/root/named.conf', to use with the 'named -c' option,
+	  do:
+	  <informalexample>
+	    <programlisting>
+# chcon system_u:object_r:named_conf_t /root/named.conf
+	    </programlisting>
+	  </informalexample>
+	</para>
+  
+	<para>
+	  To create a custom modifiable named data location, e.g.
+	  '/var/log/named' for a log file, do:
+	  <informalexample>
+	    <programlisting>
+# chcon system_u:object_r:named_cache_t /var/log/named
+	    </programlisting>
+	  </informalexample>
+	</para>
+   
+	<para>
+   To create a custom zone file location, e.g. /root/zones/, do:
+	  <informalexample>
+	    <programlisting>
+# chcon system_u:object_r:named_zone_t /root/zones/{.,*}
+	    </programlisting>
+	  </informalexample>
+	</para>
+  
+	<para>
+	  See these man-pages for more information : selinux(8),
+	  named_selinux(8), chcon(1), setsebool(8)
+	</para>
+      </answer>
+    </qandaentry>
+
+    <qandaentry>
+      <question>
+	<para>
+	  I want to forward all DNS queries from my caching nameserver to
+	  another server. But there are some domains which have to be
+	  served locally, via rbldnsd.
+	</para>
+	<para>
+	  How do I achieve this ?
+	</para>
+      </question>
+      <answer>
+        <programlisting>
+options {
+	forward only;
+	forwarders { &lt;ip.of.primary.nameserver&gt;; };
+};
+
+zone "sbl-xbl.spamhaus.org" {
+	type forward; forward only;
+	forwarders { &lt;ip.of.rbldns.server&gt; port 530; };
+};
+
+zone "list.dsbl.org" {
+	type forward; forward only;
+	forwarders { &lt;ip.of.rbldns.server&gt; port 530; };
+};
+        </programlisting>
+      </answer>
+    </qandaentry>
+
+    <qandaentry>
+      <question>
+	<para>
+	  Will named be affected by the 2007 changes to daylight savings
+	  rules in the US.
+	</para>
+      </question>
+      <answer>
+	<para>
+	  No, so long as the machines internal clock (as reported
+	  by "date -u") remains at UTC.  The only visible change
+	  if you fail to upgrade your OS, if you are in a affected
+	  area, will be that log messages will be a hour out during
+	  the period where the old rules do not match the new rules.
+	</para>
+	<para>
+	  For most OS's this change just means that you need to
+	  update the conversion rules from UTC to local time.
+	  Normally this involves updating a file in /etc (which
+	  sets the default timezone for the machine) and possibly
+	  a directory which has all the conversion rules for the
+	  world (e.g. /usr/share/zoneinfo).  When updating the OS
+	  do not forget to update any chroot areas as well.
+	  See your OS's documentation for more details.
+	</para>
+	<para>
+	  The local timezone conversion rules can also be done on
+	  a individual basis by setting the TZ environment variable
+	  appropriately.  See your OS's documentation for more
+	  details.
+	</para>
+      </answer>
+    </qandaentry>
+
+    <qandaentry>
+      <question>
+	<para>
+	  Why do we get the following warning at run time:
+<programlisting>kernel: process `named' is using obsolete setsockopt SO_BSDCOMPAT</programlisting>
+	</para>
+      </question>
+      <answer>
+	<para>
+          The early Linux kernels broke sendto() by having it return     
+          that a ICMP unreachable had be received for non connected
+          UDP sockets.  This made non connected UDP sockets work like
+          connected UDP socket which is fine when you are only talking
+          to one destination.  Named however talks to multiple
+          destinations and it caused problems.
+	</para>
+	<para>
+          Rather than fix sendto() to just have BSD behaviour they added
+          SO_BSDCOMPAT to turn BSD behaviour on/off on a per socket basis.
+	</para>
+	<para>
+          Later they decided to make BSD behaviour the default and
+          to aggressively track down applications that used SO_BSDCOMPAT
+          by issuing a warning.  This is the sort of things vendors
+          do in alpha/beta stages of a release so that their code is
+          clean.  They then turn the warning *off* for release code.
+	</para>
+	<para>
+          We still have customers that have kernels that require
+          SO_BSDCOMPAT to operate.  We therefore cannot remove the
+          setsockopt(SO_BSDCOMPAT) call.
+	</para>
+	<para>
+          Now most/all portable applications that use SO_BSDCOMPAT use it
+          conditionally manner so just removing SO_BSDCOMPAT from the
+          header file would be safe as long as the binary was not to
+          be moved between systems.  BIND's use is conditional.
+	</para>
+	<para>
+	  In short, the Linux developers should either, remove the #define for
+	  SO_BSDCOMPAT, and/or remove the warning.
+	</para>
+      </answer>
+    </qandaentry>
+
+    <qandaentry>
+      <question>
+	<para>
+	  Isn't "make install"  supposed to generate a default named.conf?
+	</para>
+      </question>
+      <answer>
+	<para>
+	  Short Answer: No. 
+	</para>
+	<para>
+	  Long Answer: There really isn't a default configuration which fits
+	  any site perfectly.  There are lots of decisions that need to
+	  be made and there is no consensus on what the defaults should be.
+	  For example FreeBSD uses /etc/namedb as the location where the
+	  configuration files for named are stored.  Others use /var/named.
+	</para>
+	<para>
+	  What addresses to listen on?  For a laptop on the move a lot
+	  you may only want to listen on the loop back interfaces.
+	</para>
+	<para>
+	  Who do you offer recursive service to?  Is there are firewall
+	  to consider?  If so is it stateless or stateful.  Are you
+	  directly on the Internet?  Are you on a private network? Are
+	  you on a NAT'd network? The answers
+	  to all these questions change how you configure even a
+	  caching name server.
+	</para>
       </answer>
     </qandaentry>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: res_init.c,v 1.1.1.3 2005/12/21 23:15:56 christos Exp $	*/
+/*	$NetBSD: res_init.c,v 1.1.1.3.4.1 2007/05/17 00:40:24 jdc Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993
@@ -72,7 +72,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 static const char sccsid[] = "@(#)res_init.c	8.1 (Berkeley) 6/7/93";
-static const char rcsid[] = "Id: res_init.c,v 1.9.2.5.4.5 2005/11/03 00:00:52 marka Exp";
+static const char rcsid[] = "Id: res_init.c,v 1.16.18.5 2006/08/30 23:23:13 marka Exp";
 #endif /* LIBC_SCCS and not lint */
 
 #include "port_before.h"
@@ -100,7 +100,7 @@ static const char rcsid[] = "Id: res_init.c,v 1.9.2.5.4.5 2005/11/03 00:00:52 ma
 
 #include "res_private.h"
 
-/* Options.  Should all be left alone. */
+/*% Options.  Should all be left alone. */
 #define RESOLVSORT
 #define DEBUG
 
@@ -116,7 +116,7 @@ static const char sort_mask[] = "/&";
 static u_int32_t net_mask __P((struct in_addr));
 #endif
 
-#if !defined(isascii)	/* XXX - could be a function */
+#if !defined(isascii)	/*%< XXX - could be a function */
 # define isascii(c) (!(c & 0200))
 #endif
 
@@ -124,7 +124,7 @@ static u_int32_t net_mask __P((struct in_addr));
  * Resolver state default settings.
  */
 
-/*
+/*%
  * Set up default settings.  If the configuration file exist, the values
  * there will have precedence.  Otherwise, the server address is set to
  * INADDR_ANY and the default domain name comes from the gethostname().
@@ -152,14 +152,14 @@ res_ninit(res_state statp) {
 	return (__res_vinit(statp, 0));
 }
 
-/* This function has to be reachable by res_data.c but not publically. */
+/*% This function has to be reachable by res_data.c but not publically. */
 int
 __res_vinit(res_state statp, int preinit) {
 	register FILE *fp;
 	register char *cp, **pp;
 	register int n;
 	char buf[BUFSIZ];
-	int nserv = 0;    /* number of nameserver records read from file */
+	int nserv = 0;    /*%< number of nameserver records read from file */
 	int haveenv = 0;
 	int havesearch = 0;
 #ifdef RESOLVSORT
@@ -239,17 +239,10 @@ __res_vinit(res_state statp, int preinit) {
 			if (buf[0] == '+')
 				buf[0] = '.';
 			cp = strchr(buf, '.');
-			if (cp == NULL) {
-				if (strlcpy(statp->defdname, buf,
-					sizeof(statp->defdname))
-					>= sizeof(statp->defdname))
-					goto freedata;
-			} else {
-				if (strlcpy(statp->defdname, cp+1,
-					sizeof(statp->defdname))
-					 >= sizeof(statp->defdname))
-					goto freedata;
-			}
+			cp = (cp == NULL) ? buf : (cp + 1);
+			if (strlen(cp) >= sizeof(statp->defdname))
+				goto freedata; 
+			strcpy(statp->defdname, cp);
 		}
 	}
 #endif	/* SOLARIS2 */
@@ -271,7 +264,7 @@ __res_vinit(res_state statp, int preinit) {
 		pp = statp->dnsrch;
 		*pp++ = cp;
 		for (n = 0; *cp && pp < statp->dnsrch + MAXDNSRCH; cp++) {
-			if (*cp == '\n')	/* silly backwards compat */
+			if (*cp == '\n')	/*%< silly backwards compat */
 				break;
 			else if (*cp == ' ' || *cp == '\t') {
 				*cp = 0;
@@ -303,7 +296,7 @@ __res_vinit(res_state statp, int preinit) {
 			continue;
 		/* read default domain name */
 		if (MATCH(buf, "domain")) {
-		    if (haveenv)	/* skip if have from environ */
+		    if (haveenv)	/*%< skip if have from environ */
 			    continue;
 		    cp = buf + sizeof("domain") - 1;
 		    while (*cp == ' ' || *cp == '\t')
@@ -319,7 +312,7 @@ __res_vinit(res_state statp, int preinit) {
 		}
 		/* set search list */
 		if (MATCH(buf, "search")) {
-		    if (haveenv)	/* skip if have from environ */
+		    if (haveenv)	/*%< skip if have from environ */
 			    continue;
 		    cp = buf + sizeof("search") - 1;
 		    while (*cp == ' ' || *cp == '\t')
@@ -473,7 +466,7 @@ __res_vinit(res_state statp, int preinit) {
 		while (pp < statp->dnsrch + MAXDFLSRCH) {
 			if (dots < LOCALDOMAINPARTS)
 				break;
-			cp = strchr(cp, '.') + 1;    /* we know there is one */
+			cp = strchr(cp, '.') + 1;    /*%< we know there is one */
 			*pp++ = cp;
 			dots--;
 		}
@@ -635,7 +628,7 @@ res_setoptions(res_state statp, const char *options, const char *source)
 #ifdef RESOLVSORT
 /* XXX - should really support CIDR which means explicit masks always. */
 static u_int32_t
-net_mask(in)		/* XXX - should really use system's version of this */
+net_mask(in)		/*!< XXX - should really use system's version of this  */
 	struct in_addr in;
 {
 	register u_int32_t i = ntohl(in.s_addr);
@@ -656,7 +649,7 @@ res_randomid(void) {
 	return (0xffff & (now.tv_sec ^ now.tv_usec ^ getpid()));
 }
 
-/*
+/*%
  * This routine is for closing the socket if a virtual circuit is used and
  * the program wants to close it.  This provides support for endhostent()
  * which expects to close the socket.
@@ -799,3 +792,5 @@ res_getservers(res_state statp, union res_sockaddr_union *set, int cnt) {
 	}
 	return (statp->nscount);
 }
+
+/*! \file */

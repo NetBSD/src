@@ -1,4 +1,4 @@
-/*	$NetBSD: nis_ho.c,v 1.1.1.3 2005/12/21 23:15:35 christos Exp $	*/
+/*	$NetBSD: nis_ho.c,v 1.1.1.3.4.1 2007/05/17 00:39:58 jdc Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -18,7 +18,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "Id: nis_ho.c,v 1.2.2.1.4.1 2004/03/09 08:33:38 marka Exp";
+static const char rcsid[] = "Id: nis_ho.c,v 1.4.18.1 2005/04/27 05:01:03 sra Exp";
 #endif /* LIBC_SCCS and not lint */
 
 /* Imports */
@@ -81,7 +81,7 @@ struct pvt {
 	char *		h_addr_ptrs[MAXADDRS + 1];
 	char *		host_aliases[MAXALIASES + 1];
 	char		hostbuf[8*1024];
-	u_char		host_addr[16];	/* IPv4 or IPv6 */
+	u_char		host_addr[16];	/*%< IPv4 or IPv6 */
 	struct __res_state  *res;
 	void		(*free_res)(void *);
 };
@@ -371,7 +371,7 @@ ho_addrinfo(struct irs_ho *this, const char *name, const struct addrinfo *pai)
 	cur = &sentinel;
 
 	switch(pai->ai_family) {
-	case AF_UNSPEC:		/* INET6 then INET4 */
+	case AF_UNSPEC:		/*%< INET6 then INET4 */
 		q.family = AF_INET6;
 		q.next = &q2;
 		q2.family = AF_INET;
@@ -383,7 +383,7 @@ ho_addrinfo(struct irs_ho *this, const char *name, const struct addrinfo *pai)
 		q.family = AF_INET;
 		break;
 	default:
-		RES_SET_H_ERRNO(pvt->res, NO_RECOVERY); /* ??? */
+		RES_SET_H_ERRNO(pvt->res, NO_RECOVERY); /*%< ??? */
 		return(NULL);
 	}
 
@@ -416,7 +416,7 @@ ho_addrinfo(struct irs_ho *this, const char *name, const struct addrinfo *pai)
 
 /* Private */
 
-/*
+/*%
 ipnodes:
 ::1             localhost
 127.0.0.1       localhost
@@ -533,3 +533,5 @@ init(struct irs_ho *this) {
 	return (0);
 }
 #endif /*WANT_IRS_NIS*/
+
+/*! \file */

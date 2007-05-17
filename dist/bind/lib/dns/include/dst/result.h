@@ -1,7 +1,7 @@
-/*	$NetBSD: result.h,v 1.1.1.1 2005/12/21 23:17:00 christos Exp $	*/
+/*	$NetBSD: result.h,v 1.1.1.1.6.1 2007/05/17 00:41:10 jdc Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,10 +17,12 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: result.h,v 1.1.4.1 2004/12/09 04:07:20 marka Exp */
+/* Id: result.h,v 1.1.6.3 2005/04/29 00:16:29 marka Exp */
 
 #ifndef DST_RESULT_H
 #define DST_RESULT_H 1
+
+/*! \file */
 
 #include <isc/lang.h>
 #include <isc/resultclass.h>

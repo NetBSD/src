@@ -1,7 +1,7 @@
-/*	$NetBSD: byaddr_test.c,v 1.1.1.3 2005/12/21 23:08:19 christos Exp $	*/
+/*	$NetBSD: byaddr_test.c,v 1.1.1.3.4.1 2007/05/17 00:35:33 jdc Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,9 +17,10 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: byaddr_test.c,v 1.22.22.3 2004/03/08 04:04:24 marka Exp */
+/* Id: byaddr_test.c,v 1.24.18.2 2005/04/29 00:15:42 marka Exp */
 
-/*
+/*! \file
+ * \author
  * Principal Author: Bob Halley
  */
 

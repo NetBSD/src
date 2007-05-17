@@ -1,4 +1,4 @@
-/*	$NetBSD: gai_strerror.c,v 1.1.1.3 2005/12/21 23:15:24 christos Exp $	*/
+/*	$NetBSD: gai_strerror.c,v 1.1.1.3.4.1 2007/05/17 00:39:46 jdc Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -28,21 +28,20 @@
 
 static const char *gai_errlist[] = {
 	"no error",
-	"address family not supported for name",/* EAI_ADDRFAMILY */
-	"temporary failure",			/* EAI_AGAIN */
-	"invalid flags",			/* EAI_BADFLAGS */
-	"permanent failure",			/* EAI_FAIL */
-	"address family not supported",		/* EAI_FAMILY */
-	"memory failure",			/* EAI_MEMORY */
-	"no address",				/* EAI_NODATA */
-	"unknown name or service",		/* EAI_NONAME */
-	"service not supported for socktype",	/* EAI_SERVICE */
-	"socktype not supported",		/* EAI_SOCKTYPE */
-	"system failure",			/* EAI_SYSTEM */
-	"bad hints",				/* EAI_BADHINTS */
-	"bad protocol",				/* EAI_PROTOCOL */
-
-	"unknown error"				/* Must be last. */
+	"address family not supported for name",/*%< EAI_ADDRFAMILY */
+	"temporary failure",			/*%< EAI_AGAIN */
+	"invalid flags",			/*%< EAI_BADFLAGS */
+	"permanent failure",			/*%< EAI_FAIL */
+	"address family not supported",		/*%< EAI_FAMILY */
+	"memory failure",			/*%< EAI_MEMORY */
+	"no address",				/*%< EAI_NODATA */
+	"unknown name or service",		/*%< EAI_NONAME */
+	"service not supported for socktype",	/*%< EAI_SERVICE */
+	"socktype not supported",		/*%< EAI_SOCKTYPE */
+	"system failure",			/*%< EAI_SYSTEM */
+	"bad hints",				/*%< EAI_BADHINTS */
+	"bad protocol",				/*%< EAI_PROTOCOL */
+	"unknown error"				/*%< Must be last. */
 };
 
 static const int gai_nerr = (sizeof(gai_errlist)/sizeof(*gai_errlist));
@@ -68,18 +67,26 @@ gai_strerror(int ecode) {
 
 #ifdef DO_PTHREADS
         if (!once) {
-                pthread_mutex_lock(&lock);
-                if (!once++)
-                        pthread_key_create(&key, free);
-                pthread_mutex_unlock(&lock);
+                if (pthread_mutex_lock(&lock) != 0)
+			goto unknown;
+                if (!once) {
+                        if (pthread_key_create(&key, free) != 0)
+				goto unknown;
+			once = 1;
+		}
+                if (pthread_mutex_unlock(&lock) != 0)
+			goto unknown;
         }
 
 	buf = pthread_getspecific(key);
         if (buf == NULL) {
 		buf = malloc(EAI_BUFSIZE);
                 if (buf == NULL)
-                        return ("unknown error");
-                pthread_setspecific(key, buf);
+                        goto unknown;
+                if (pthread_setspecific(key, buf) != 0) {
+			free(buf);
+			goto unknown;
+		}
         }
 #endif
 	/* 
@@ -88,4 +95,11 @@ gai_strerror(int ecode) {
 	 */
 	sprintf(buf, "%s: %d", gai_errlist[gai_nerr - 1], ecode);
 	return (buf);
+
+#ifdef DO_PTHREADS
+ unknown:
+	return ("unknown error");
+#endif
 }
+
+/*! \file */

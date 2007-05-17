@@ -1,4 +1,4 @@
-/*	$NetBSD: irp_pr.c,v 1.1.1.3 2005/12/21 23:15:33 christos Exp $	*/
+/*	$NetBSD: irp_pr.c,v 1.1.1.3.4.1 2007/05/17 00:39:54 jdc Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -18,7 +18,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "Id: irp_pr.c,v 1.1.206.1 2004/03/09 08:33:37 marka Exp";
+static const char rcsid[] = "Id: irp_pr.c,v 1.2.18.1 2005/04/27 05:01:01 sra Exp";
 #endif /* LIBC_SCCS and not lint */
 
 /* extern */
@@ -71,9 +71,7 @@ static void			free_proto(struct protoent *pr);
 
 /* Public */
 
-
-
-/*
+/*%
  * struct irs_pr * irs_irp_pr(struct irs_acc *this)
  *
  */
@@ -109,9 +107,7 @@ irs_irp_pr(struct irs_acc *this) {
 
 /* Methods */
 
-
-
-/*
+/*%
  * void pr_close(struct irs_pr *this)
  *
  */
@@ -128,9 +124,7 @@ pr_close(struct irs_pr *this) {
 	memput(this, sizeof *this);
 }
 
-
-
-/*
+/*%
  * struct protoent * pr_byname(struct irs_pr *this, const char *name)
  *
  */
@@ -179,9 +173,7 @@ pr_byname(struct irs_pr *this, const char *name) {
 	return (pr);
 }
 
-
-
-/*
+/*%
  * struct protoent * pr_bynumber(struct irs_pr *this, int proto)
  *
  */
@@ -230,10 +222,7 @@ pr_bynumber(struct irs_pr *this, int proto) {
 	return (pr);
 }
 
-
-
-
-/*
+/*%
  * void pr_rewind(struct irs_pr *this)
  *
  */
@@ -262,14 +251,7 @@ pr_rewind(struct irs_pr *this) {
 	return;
 }
 
-
-
-
-/*
- * struct protoent * pr_next(struct irs_pr *this)
- *
- * Notes:
- *
+/*%
  *	Prepares the cache if necessary and returns the next item in it.
  *
  */
@@ -313,10 +295,7 @@ pr_next(struct irs_pr *this) {
 	return (pr);
 }
 
-
-
-
-/*
+/*%
  * void pr_minimize(struct irs_pr *this)
  *
  */
@@ -328,14 +307,7 @@ pr_minimize(struct irs_pr *this) {
 	irs_irp_disconnect(pvt->girpdata);
 }
 
-
-
-
-
-
-/*
- * static void free_proto(struct protoent *pw);
- *
+/*%
  *	Deallocate all the memory irp_unmarshall_pr allocated.
  *
  */
@@ -353,3 +325,5 @@ free_proto(struct protoent *pr) {
 	for (p = pr->p_aliases ; p != NULL && *p != NULL ; p++)
 		free(*p);
 }
+
+/*! \file */

@@ -1,7 +1,7 @@
-/*	$NetBSD: dname_39.h,v 1.1.1.3 2005/12/21 23:17:01 christos Exp $	*/
+/*	$NetBSD: dname_39.h,v 1.1.1.3.4.1 2007/05/17 00:41:15 jdc Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -20,9 +20,10 @@
 #ifndef GENERIC_DNAME_39_H
 #define GENERIC_DNAME_39_H 1
 
-/* Id: dname_39.h,v 1.16.206.1 2004/03/06 08:14:04 marka Exp */
+/* Id: dname_39.h,v 1.17.18.2 2005/04/29 00:16:31 marka Exp */
 
-/* RFC2672 */
+/*! 
+ *  \brief per RFC2672 */
 
 typedef struct dns_rdata_dname {
 	dns_rdatacommon_t	common;

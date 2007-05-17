@@ -1,4 +1,4 @@
-/*	$NetBSD: bdb.c,v 1.1.1.1 2004/05/17 23:43:51 christos Exp $	*/
+/*	$NetBSD: bdb.c,v 1.1.1.1.10.1 2007/05/17 00:37:37 jdc Exp $	*/
 
 /*
  * Copyright (C) 2002  Nuno M. Rodrigues.
@@ -17,7 +17,7 @@
  * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: bdb.c,v 1.1.4.1 2002/07/02 04:45:34 marka Exp */
+/* Id: bdb.c,v 1.1 2002/05/16 04:25:22 marka Exp */
 
 /*
  * BIND 9.1.x simple database driver

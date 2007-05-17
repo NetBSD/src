@@ -1,7 +1,7 @@
-/*	$NetBSD: keyboard.h,v 1.1.1.3 2005/12/21 23:17:39 christos Exp $	*/
+/*	$NetBSD: keyboard.h,v 1.1.1.3.4.1 2007/05/17 00:42:51 jdc Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,10 +17,12 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: keyboard.h,v 1.6.206.1 2004/03/06 08:15:04 marka Exp */
+/* Id: keyboard.h,v 1.7.18.2 2005/04/29 00:17:09 marka Exp */
 
 #ifndef ISC_KEYBOARD_H
 #define ISC_KEYBOARD_H 1
+
+/*! \file */
 
 #include <termios.h>
 

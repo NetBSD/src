@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2006  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: config.h.win32,v 1.6.12.5 2004/04/29 05:12:04 marka Exp */
+/* Id: config.h.win32,v 1.8.18.6 2006/09/27 00:29:46 marka Exp */
 
 /*
  * win32 configuration file
@@ -37,6 +37,16 @@
  * ANSI C compliance enabled
  */
 #define __STDC__ 1
+
+/*
+ * Silence compiler warnings about using strcpy and friends.
+ */
+#define _CRT_SECURE_NO_DEPRECATE 1
+
+/*
+ * Use 32 bit time.
+ */
+#define _USE_32BIT_TIME_T 1
 
 /*
  * Windows NT and 2K only
@@ -103,6 +113,15 @@
 
 /* Define if you have h_errno */
 #define HAVE_H_ERRNO
+
+/* Define if you have RSA_generate_key(). */
+#define HAVE_RSA_GENERATE_KEY
+
+/* Define if you have DSA_generate_parameters(). */
+#define HAVE_DSA_GENERATE_PARAMETERS
+
+/* Define if you have DH_generate_parameters(). */
+#define HAVE_DH_GENERATE_PARAMETERS
 
 #define ISC_PLATFORM_NEEDSTRLCAT
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ev_waits.c,v 1.1.1.3 2005/12/21 23:15:42 christos Exp $	*/
+/*	$NetBSD: ev_waits.c,v 1.1.1.3.4.1 2007/05/17 00:40:04 jdc Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -22,7 +22,7 @@
  */
 
 #if !defined(LINT) && !defined(CODECENTER)
-static const char rcsid[] = "Id: ev_waits.c,v 1.1.2.1.4.1 2004/03/09 08:33:43 marka Exp";
+static const char rcsid[] = "Id: ev_waits.c,v 1.3.18.1 2005/04/27 05:01:06 sra Exp";
 #endif
 
 #include "port_before.h"
@@ -46,7 +46,7 @@ static evWaitList *	evGetWaitList(evContext_p *, const void *, int);
 
 /* Public. */
 
-/*
+/*%
  * Enter a new wait function on the queue.
  */
 int
@@ -74,7 +74,7 @@ evWaitFor(evContext opaqueCtx, const void *tag,
 	return (0);
 }
 
-/*
+/*%
  * Mark runnable all waiting functions having a certain tag.
  */
 int
@@ -101,7 +101,7 @@ evDo(evContext opaqueCtx, const void *tag) {
 	return (0);
 }
 
-/*
+/*%
  * Remove a waiting (or ready to run) function from the queue.
  */
 int
@@ -245,3 +245,5 @@ evGetWaitList(evContext_p *ctx, const void *tag, int should_create) {
 		this = evNewWaitList(ctx);
 	return (this);
 }
+
+/*! \file */

@@ -1,4 +1,4 @@
-/*	$NetBSD: heap.h,v 1.1.1.1 2004/05/20 19:49:41 christos Exp $	*/
+/*	$NetBSD: heap.h,v 1.1.1.1.10.1 2007/05/17 00:43:48 jdc Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -47,3 +47,5 @@ int		heap_increased(heap_context, int);
 int		heap_decreased(heap_context, int);
 void *		heap_element(heap_context, int);
 int		heap_for_each(heap_context, heap_for_each_func, void *);
+
+/*! \file */

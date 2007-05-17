@@ -1,7 +1,7 @@
-/*	$NetBSD: getrrset.c,v 1.1.1.3 2005/12/21 23:17:58 christos Exp $	*/
+/*	$NetBSD: getrrset.c,v 1.1.1.3.4.1 2007/05/17 00:43:22 jdc Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,7 +17,77 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: getrrset.c,v 1.11.2.3.2.2 2004/03/06 08:15:31 marka Exp */
+/* Id: getrrset.c,v 1.14.18.2 2005/04/29 00:17:18 marka Exp */
+
+/*! \file */
+
+/**
+ * DESCRIPTION
+ * 
+ *    lwres_getrrsetbyname() gets a set of resource records associated with
+ *    a hostname, class, and type. hostname is a pointer a to
+ *    null-terminated string. The flags field is currently unused and must
+ *    be zero.
+ * 
+ *    After a successful call to lwres_getrrsetbyname(), *res is a pointer
+ *    to an #rrsetinfo structure, containing a list of one or more #rdatainfo
+ *    structures containing resource records and potentially another list of
+ *    rdatainfo structures containing SIG resource records associated with
+ *    those records. The members #rri_rdclass and #rri_rdtype are copied from
+ *    the parameters. #rri_ttl and #rri_name are properties of the obtained
+ *    rrset. The resource records contained in #rri_rdatas and #rri_sigs are
+ *    in uncompressed DNS wire format. Properties of the rdataset are
+ *    represented in the #rri_flags bitfield. If the #RRSET_VALIDATED bit is
+ *    set, the data has been DNSSEC validated and the signatures verified.
+ * 
+ *    All of the information returned by lwres_getrrsetbyname() is
+ *    dynamically allocated: the rrsetinfo and rdatainfo structures, and the
+ *    canonical host name strings pointed to by the rrsetinfostructure.
+ *    Memory allocated for the dynamically allocated structures created by a
+ *    successful call to lwres_getrrsetbyname() is released by
+ *    lwres_freerrset(). rrset is a pointer to a struct rrset created by a
+ *    call to lwres_getrrsetbyname().
+ * 
+ *    The following structures are used:
+ * 
+ * \code
+ * struct  rdatainfo {
+ *         unsigned int            rdi_length;     // length of data
+ *         unsigned char           *rdi_data;      // record data
+ * };
+ * 
+ * struct  rrsetinfo {
+ *         unsigned int            rri_flags;      // RRSET_VALIDATED...
+ *         unsigned int            rri_rdclass;    // class number
+ *         unsigned int            rri_rdtype;     // RR type number
+ *         unsigned int            rri_ttl;        // time to live
+ *         unsigned int            rri_nrdatas;    // size of rdatas array
+ *         unsigned int            rri_nsigs;      // size of sigs array
+ *         char                    *rri_name;      // canonical name
+ *         struct rdatainfo        *rri_rdatas;    // individual records
+ *         struct rdatainfo        *rri_sigs;      // individual signatures
+ * };
+ * \endcode
+ * 
+ * \section getrrset_return Return Values
+ * 
+ *    lwres_getrrsetbyname() returns zero on success, and one of the
+ *    following error codes if an error occurred:
+ * 
+ * \li   #ERRSET_NONAME: the name does not exist
+ * 
+ * \li   #ERRSET_NODATA:
+ *           the name exists, but does not have data of the desired type
+ * 
+ * \li   #ERRSET_NOMEMORY:
+ *           memory could not be allocated
+ * 
+ * \li   #ERRSET_INVAL:
+ *           a parameter is invalid
+ * 
+ * \li   #ERRSET_FAIL:
+ *           other failure
+ */
 
 #include <config.h>
 
@@ -31,6 +101,9 @@
 
 #include "assert_p.h"
 
+/*!
+ * Structure to map results
+ */
 static unsigned int
 lwresult_to_result(lwres_result_t lwresult) {
 	switch (lwresult) {
@@ -42,7 +115,8 @@ lwresult_to_result(lwres_result_t lwresult) {
 	}
 }
 
-/*
+/*@{*/
+/*!
  * malloc / calloc functions that guarantee to only
  * return NULL if there is an error, like they used
  * to before the ANSI C committee broke them.
@@ -63,7 +137,9 @@ sane_calloc(size_t number, size_t size) {
 		memset(mem, 0, len);
 	return (mem);
 }
+/*@}*/
 
+/*% Returns a set of resource records associated with a hostname, class, and type. hostname is a pointer a to null-terminated string. */
 int
 lwres_getrrsetbyname(const char *hostname, unsigned int rdclass,
 		     unsigned int rdtype, unsigned int flags,
@@ -193,6 +269,7 @@ lwres_getrrsetbyname(const char *hostname, unsigned int rdclass,
 	return (result);
 }
 
+/*% Releases memory allocated for the dynamically allocated structures created by a successful call to lwres_getrrsetbyname(). */
 void
 lwres_freerrset(struct rrsetinfo *rrset) {
 	unsigned int i;

@@ -1,4 +1,4 @@
-/*	$NetBSD: dname_39.c,v 1.1.1.3 2005/12/21 23:17:01 christos Exp $	*/
+/*	$NetBSD: dname_39.c,v 1.1.1.3.4.1 2007/05/17 00:41:15 jdc Exp $	*/
 
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: dname_39.c,v 1.34.206.2 2004/03/06 08:14:04 marka Exp */
+/* Id: dname_39.c,v 1.36 2004/03/05 05:10:10 marka Exp */
 
 /* Reviewed: Wed Mar 15 16:52:38 PST 2000 by explorer */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_addr.c,v 1.1.1.3 2005/12/21 23:15:36 christos Exp $	*/
+/*	$NetBSD: inet_addr.c,v 1.1.1.3.4.1 2007/05/17 00:39:36 jdc Exp $	*/
 
 /*
  * Copyright (c) 1983, 1990, 1993
@@ -72,7 +72,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 static const char sccsid[] = "@(#)inet_addr.c	8.1 (Berkeley) 6/17/93";
-static const char rcsid[] = "Id: inet_addr.c,v 1.2.206.2 2004/03/17 00:29:45 marka Exp";
+static const char rcsid[] = "Id: inet_addr.c,v 1.4.18.1 2005/04/27 05:00:52 sra Exp";
 #endif /* LIBC_SCCS and not lint */
 
 #include "port_before.h"
@@ -87,7 +87,7 @@ static const char rcsid[] = "Id: inet_addr.c,v 1.2.206.2 2004/03/17 00:29:45 mar
 
 #include "port_after.h"
 
-/*
+/*%
  * Ascii internet address interpretation routine.
  * The value returned is in network order.
  */
@@ -100,7 +100,7 @@ inet_addr(const char *cp) {
 	return (INADDR_NONE);
 }
 
-/* 
+/*%
  * Check whether "cp" is a valid ascii representation
  * of an Internet address and convert to a binary address.
  * Returns 1 if the address is valid, 0 if not.
@@ -181,22 +181,22 @@ inet_aton(const char *cp, struct in_addr *addr) {
 	 */
 	n = pp - parts + 1;
 	switch (n) {
-	case 1:				/* a -- 32 bits */
+	case 1:				/*%< a -- 32 bits */
 		break;
 
-	case 2:				/* a.b -- 8.24 bits */
+	case 2:				/*%< a.b -- 8.24 bits */
 		if (val > 0xffffffU)
 			return (0);
 		val |= parts[0] << 24;
 		break;
 
-	case 3:				/* a.b.c -- 8.8.16 bits */
+	case 3:				/*%< a.b.c -- 8.8.16 bits */
 		if (val > 0xffffU)
 			return (0);
 		val |= (parts[0] << 24) | (parts[1] << 16);
 		break;
 
-	case 4:				/* a.b.c.d -- 8.8.8.8 bits */
+	case 4:				/*%< a.b.c.d -- 8.8.8.8 bits */
 		if (val > 0xffU)
 			return (0);
 		val |= (parts[0] << 24) | (parts[1] << 16) | (parts[2] << 8);
@@ -206,3 +206,5 @@ inet_aton(const char *cp, struct in_addr *addr) {
 		addr->s_addr = htonl(val);
 	return (1);
 }
+
+/*! \file */

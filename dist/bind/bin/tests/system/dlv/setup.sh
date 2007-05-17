@@ -14,7 +14,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: setup.sh,v 1.2.4.1 2004/05/14 05:20:33 marka Exp
+# Id: setup.sh,v 1.2.2.1 2004/05/14 05:19:48 marka Exp
 
 ../../genrandom 400 random.data
 

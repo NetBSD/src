@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 #
-# Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2001  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and distribute this software for any
@@ -15,7 +15,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: stop.pl,v 1.4.12.3 2004/03/08 04:04:33 marka Exp
+# Id: stop.pl,v 1.6.18.4 2006/03/05 23:58:51 marka Exp
 
 # Framework for stopping test servers
 # Based on the type of server specified, signal the server to stop, wait
@@ -50,7 +50,7 @@ my $errors = 0;
 
 die "$usage\n" unless defined($test);
 die "No test directory: \"$test\"\n" unless (-d $test);
-die "No server directory: \"$server\"\n" if (defined($server) && !-d $server);
+die "No server directory: \"$server\"\n" if (defined($server) && !-d "$test/$server");
     
 # Global variables
 my $testdir = abs_path($test);
@@ -80,7 +80,7 @@ if ($use_rndc) {
 		stop_rndc($server);
 	}
 
-	wait_for_servers(5, grep /^ns/, @servers);
+	wait_for_servers(30, grep /^ns/, @servers);
 }
 
 
@@ -88,8 +88,8 @@ if ($use_rndc) {
 foreach my $server (@servers) {
 	stop_signal($server, "TERM");
 }
-wait_for_servers(5, @servers);
 
+wait_for_servers(60, @servers);
 
 # Pass 3: SIGABRT
 foreach my $server (@servers) {

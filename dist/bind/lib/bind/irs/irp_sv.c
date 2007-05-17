@@ -1,4 +1,4 @@
-/*	$NetBSD: irp_sv.c,v 1.1.1.3 2005/12/21 23:15:33 christos Exp $	*/
+/*	$NetBSD: irp_sv.c,v 1.1.1.3.4.1 2007/05/17 00:39:54 jdc Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -18,7 +18,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "Id: irp_sv.c,v 1.1.206.1 2004/03/09 08:33:37 marka Exp";
+static const char rcsid[] = "Id: irp_sv.c,v 1.2.18.1 2005/04/27 05:01:01 sra Exp";
 #endif /* LIBC_SCCS and not lint */
 
 /* extern */
@@ -75,9 +75,7 @@ static void			free_service(struct servent *sv);
 
 /* Public */
 
-
-
-/*
+/*%
  * struct irs_sv * irs_irp_sv(struct irs_acc *this)
  *
  */
@@ -114,9 +112,7 @@ irs_irp_sv(struct irs_acc *this) {
 
 /* Methods */
 
-
-
-/*
+/*%
  * void sv_close(struct irs_sv *this)
  *
  */
@@ -133,14 +129,7 @@ sv_close(struct irs_sv *this) {
 	memput(this, sizeof *this);
 }
 
-
-
-
-/*
- * struct servent * sv_next(struct irs_sv *this)
- *
- * Notes:
- *
+/*%
  *	Fills the cache if necessary and returns the next item from it.
  *
  */
@@ -184,10 +173,7 @@ sv_next(struct irs_sv *this) {
 	return (sv);
 }
 
-
-
-
-/*
+/*%
  * struct servent * sv_byname(struct irs_sv *this, const char *name,
  *				const char *proto)
  *
@@ -238,10 +224,7 @@ sv_byname(struct irs_sv *this, const char *name, const char *proto) {
 	return (sv);
 }
 
-
-
-
-/*
+/*%
  * struct servent * sv_byport(struct irs_sv *this, int port,
  *				const char *proto)
  *
@@ -293,11 +276,7 @@ sv_byport(struct irs_sv *this, int port, const char *proto) {
 	return (sv);
 }
 
-
-
-
-
-/*
+/*%
  * void sv_rewind(struct irs_sv *this)
  *
  */
@@ -326,11 +305,7 @@ sv_rewind(struct irs_sv *this) {
 	return;
 }
 
-
-
-
-
-/*
+/*%
  * void sv_minimize(struct irs_sv *this)
  *
  */
@@ -369,3 +344,5 @@ free_service(struct servent *sv) {
 }
 
 
+
+/*! \file */

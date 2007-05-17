@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_net_ntop.c,v 1.1.1.3 2005/12/21 23:15:37 christos Exp $	*/
+/*	$NetBSD: inet_net_ntop.c,v 1.1.1.3.4.1 2007/05/17 00:39:38 jdc Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -18,7 +18,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "Id: inet_net_ntop.c,v 1.1.2.1.8.1 2004/03/09 08:33:32 marka Exp";
+static const char rcsid[] = "Id: inet_net_ntop.c,v 1.3.18.2 2006/06/20 02:51:32 marka Exp";
 #endif
 
 #include "port_before.h"
@@ -46,7 +46,7 @@ static char *	inet_net_ntop_ipv4 __P((const u_char *src, int bits,
 static char *	inet_net_ntop_ipv6 __P((const u_char *src, int bits,
 					char *dst, size_t size));
 
-/*
+/*%
  * char *
  * inet_net_ntop(af, src, bits, dst, size)
  *	convert network number from network to presentation format.
@@ -75,7 +75,7 @@ inet_net_ntop(af, src, bits, dst, size)
 	}
 }
 
-/*
+/*%
  * static char *
  * inet_net_ntop_ipv4(src, bits, dst, size)
  *	convert IPv4 network number from network to presentation format.
@@ -150,7 +150,7 @@ inet_net_ntop_ipv4(src, bits, dst, size)
 	return (NULL);
 }
 
-/*
+/*%
  * static char *
  * inet_net_ntop_ipv6(src, bits, fakebits, dst, size)
  *	convert IPv6 network number from network to presentation format.
@@ -266,7 +266,7 @@ inet_net_ntop_ipv6(const u_char *src, int bits, char *dst, size_t size) {
 		}
 	}
 	/* Format CIDR /width. */
-	SPRINTF((cp, "/%u", bits));
+	sprintf(cp, "/%u", bits);
 	if (strlen(outbuf) + 1 > size)
 		goto emsgsize;
 	strcpy(dst, outbuf);
@@ -277,3 +277,5 @@ emsgsize:
 	errno = EMSGSIZE;
 	return (NULL);
 }
+
+/*! \file */

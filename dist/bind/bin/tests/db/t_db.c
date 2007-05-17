@@ -1,7 +1,7 @@
-/*	$NetBSD: t_db.c,v 1.1.1.3 2005/12/21 23:08:28 christos Exp $	*/
+/*	$NetBSD: t_db.c,v 1.1.1.3.4.1 2007/05/17 00:35:43 jdc Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: t_db.c,v 1.29.206.3 2004/10/25 01:36:06 marka Exp */
+/* Id: t_db.c,v 1.31.18.3 2005/11/30 23:52:53 marka Exp */
 
 #include <config.h>
 
@@ -405,8 +405,10 @@ test_dns_db_zc_x(const char *filename, dns_dbtype_t dbtype,
 			/*
 			 * Skip comment lines.
 			 */
-			if ((isspace((unsigned char)*p)) || (*p == '#'))
+			if ((isspace((unsigned char)*p)) || (*p == '#')) {
+				(void)free(p);
 				continue;
+			}
 
 			cnt = t_bustline(p, tokens);
 			if (cnt == 4) {

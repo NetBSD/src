@@ -1,4 +1,4 @@
-/*	$NetBSD: master_test.c,v 1.1.1.3 2005/12/21 23:08:22 christos Exp $	*/
+/*	$NetBSD: master_test.c,v 1.1.1.3.4.1 2007/05/17 00:35:38 jdc Exp $	*/
 
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: master_test.c,v 1.27.206.1 2004/03/06 10:21:38 marka Exp */
+/* Id: master_test.c,v 1.28 2004/03/05 04:58:39 marka Exp */
 
 #include <config.h>
 

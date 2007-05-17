@@ -1,7 +1,7 @@
-/*	$NetBSD: lwdgnba.c,v 1.1.1.3 2005/12/21 23:07:56 christos Exp $	*/
+/*	$NetBSD: lwdgnba.c,v 1.1.1.3.4.1 2007/05/17 00:35:10 jdc Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,7 +17,9 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: lwdgnba.c,v 1.13.2.1.2.5 2004/03/08 04:04:19 marka Exp */
+/* Id: lwdgnba.c,v 1.16.18.2 2005/04/29 00:15:24 marka Exp */
+
+/*! \file */
 
 #include <config.h>
 

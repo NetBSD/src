@@ -1,7 +1,7 @@
-/*	$NetBSD: log.h,v 1.1.1.3 2005/12/21 23:08:10 christos Exp $	*/
+/*	$NetBSD: log.h,v 1.1.1.3.4.1 2007/05/17 00:35:17 jdc Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,10 +17,12 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: log.h,v 1.19.12.3 2004/03/08 04:04:21 marka Exp */
+/* Id: log.h,v 1.21.18.2 2005/04/29 00:15:35 marka Exp */
 
 #ifndef NAMED_LOG_H
 #define NAMED_LOG_H 1
+
+/*! \file */
 
 #include <isc/log.h>
 #include <isc/types.h>
@@ -56,7 +58,7 @@
 
 isc_result_t
 ns_log_init(isc_boolean_t safe);
-/*
+/*%
  * Initialize the logging system and set up an initial default
  * logging default configuration that will be used until the
  * config file has been read.
@@ -68,7 +70,7 @@ ns_log_init(isc_boolean_t safe);
 
 isc_result_t
 ns_log_setdefaultchannels(isc_logconfig_t *lcfg);
-/*
+/*%
  * Set up logging channels according to the named defaults, which
  * may differ from the logging library defaults.  Currently,
  * this just means setting up default_debug.
@@ -76,19 +78,19 @@ ns_log_setdefaultchannels(isc_logconfig_t *lcfg);
 
 isc_result_t
 ns_log_setsafechannels(isc_logconfig_t *lcfg);
-/*
+/*%
  * Like ns_log_setdefaultchannels(), but omits any logging to files.
  */
 
 isc_result_t
 ns_log_setdefaultcategory(isc_logconfig_t *lcfg);
-/*
+/*%
  * Set up "category default" to go to the right places.
  */
 
 isc_result_t
 ns_log_setunmatchedcategory(isc_logconfig_t *lcfg);
-/*
+/*%
  * Set up "category unmatched" to go to the right places.
  */
 

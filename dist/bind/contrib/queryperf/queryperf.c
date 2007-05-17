@@ -1,4 +1,4 @@
-/*	$NetBSD: queryperf.c,v 1.1.1.4 2005/12/21 23:11:17 christos Exp $	*/
+/*	$NetBSD: queryperf.c,v 1.1.1.4.4.1 2007/05/17 00:37:36 jdc Exp $	*/
 
 /*
  * Copyright (C) 2000, 2001  Nominum, Inc.
@@ -20,7 +20,7 @@
 /***
  ***	DNS Query Performance Testing Tool  (queryperf.c)
  ***
- ***	Version Id: queryperf.c,v 1.1.1.2.2.5.4.3 2004/06/21 00:45:30 marka Exp
+ ***	Version Id: queryperf.c,v 1.8.192.3 2005/10/29 00:21:12 jinmei Exp
  ***
  ***	Stephen Jacob <sj@nominum.com>
  ***/
@@ -54,6 +54,9 @@
 #define DEF_SERVER_TO_QUERY		"127.0.0.1"
 #define DEF_SERVER_PORT			"53"
 #define DEF_BUFFER_SIZE			32		/* in k */
+
+#define DEF_RTTARRAY_SIZE		50000
+#define DEF_RTTARRAY_UNIT		100		/* in usec */
 
 /*
  * Other constants / definitions
@@ -133,6 +136,9 @@ struct addrinfo *server_ai;				/* init NULL */
 int run_only_once = FALSE;
 int use_timelimit = FALSE;
 unsigned int run_timelimit;				/* init 0 */
+unsigned int print_interval;				/* init 0 */
+
+unsigned int target_qps;				/* init 0 */
 
 int serverset = FALSE, portset = FALSE;
 int queriesset = FALSE, timeoutset = FALSE;
@@ -152,12 +158,37 @@ FILE *datafile_ptr;					/* init NULL */
 unsigned int runs_through_file;				/* init 0 */
 
 unsigned int num_queries_sent;				/* init 0 */
+unsigned int num_queries_sent_interval;
 unsigned int num_queries_outstanding;			/* init 0 */
 unsigned int num_queries_timed_out;			/* init 0 */
+unsigned int num_queries_possiblydelayed;		/* init 0 */
+unsigned int num_queries_timed_out_interval;
+unsigned int num_queries_possiblydelayed_interval;
 
 struct timeval time_of_program_start;
 struct timeval time_of_first_query;
+double time_of_first_query_sec;
+struct timeval time_of_first_query_interval;
 struct timeval time_of_end_of_run;
+struct timeval time_of_stop_sending;
+
+struct timeval time_of_queryset_start;
+double query_interval;
+struct timeval time_of_next_queryset;
+
+double rtt_max = -1;
+double rtt_max_interval = -1;
+double rtt_min = -1;
+double rtt_min_interval = -1;
+double rtt_total;
+double rtt_total_interval;
+int rttarray_size = DEF_RTTARRAY_SIZE;
+int rttarray_unit = DEF_RTTARRAY_UNIT;
+unsigned int *rttarray = NULL;
+unsigned int *rttarray_interval = NULL;
+unsigned int rtt_overflows;
+unsigned int rtt_overflows_interval;
+char *rtt_histogram_file = NULL;
 
 struct query_status *status;				/* init NULL */
 unsigned int query_status_allocated;			/* init 0 */
@@ -188,7 +219,7 @@ void
 show_startup_info(void) {
 	printf("\n"
 "DNS Query Performance Testing Tool\n"
-"Version: Id: queryperf.c,v 1.1.1.2.2.5.4.3 2004/06/21 00:45:30 marka Exp\n"
+"Version: Id: queryperf.c,v 1.8.192.3 2005/10/29 00:21:12 jinmei Exp\n"
 "\n");
 }
 
@@ -202,7 +233,8 @@ show_usage(void) {
 "\n"
 "Usage: queryperf [-d datafile] [-s server_addr] [-p port] [-q num_queries]\n"
 "                 [-b bufsize] [-t timeout] [-n] [-l limit] [-f family] [-1]\n"
-"                 [-e] [-D] [-c] [-v] [-h]\n"
+"                 [-i interval] [-r arraysize] [-u unit] [-H histfile]\n"
+"                 [-T qps] [-e] [-D] [-c] [-v] [-h]\n"
 "  -d specifies the input data file (default: stdin)\n"
 "  -s sets the server to query (default: %s)\n"
 "  -p sets the port on which to query the server (default: %s)\n"
@@ -212,7 +244,12 @@ show_usage(void) {
 "  -l specifies how a limit for how long to run tests in seconds (no default)\n"
 "  -1 run through input only once (default: multiple iff limit given)\n"
 "  -b set input/output buffer size in kilobytes (default: %d k)\n"
+"  -i specifies interval of intermediate outputs in seconds (default: 0=none)\n"
 "  -f specify address family of DNS transport, inet or inet6 (default: any)\n"
+"  -r set RTT statistics array size (default: %d)\n"
+"  -u set RTT statistics time unit in usec (default: %d)\n"
+"  -H specifies RTT histogram data file (default: none)\n"
+"  -T specify the target qps (default: 0=unspecified)\n"
 "  -e enable EDNS 0\n"
 "  -D set the DNSSEC OK bit (implies EDNS)\n"
 "  -c print the number of packets with each rcode\n"
@@ -221,7 +258,7 @@ show_usage(void) {
 "\n",
 	        DEF_SERVER_TO_QUERY, DEF_SERVER_PORT,
 	        DEF_MAX_QUERIES_OUTSTANDING, DEF_QUERY_TIMEOUT,
-		DEF_BUFFER_SIZE);
+		DEF_BUFFER_SIZE, DEF_RTTARRAY_SIZE, DEF_RTTARRAY_UNIT);
 }
 
 /*
@@ -475,7 +512,8 @@ parse_args(int argc, char **argv) {
 	int c;
 	unsigned int uint_arg_val;
 
-	while ((c = getopt(argc, argv, "f:q:t:nd:s:p:1l:b:eDcvh")) != -1) {
+	while ((c = getopt(argc, argv,
+			   "f:q:t:i:nd:s:p:1l:b:eDcvr:T::u:H:h")) != -1) {
 		switch (c) {
 		case 'f':
 			if (strcmp(optarg, "inet") == 0)
@@ -536,7 +574,7 @@ parse_args(int argc, char **argv) {
 			}
 			serverset = TRUE;
 			break;
-			
+
 		case 'p':
 			if (is_uint(optarg, &uint_arg_val) == TRUE &&
 			    uint_arg_val < MAX_PORT)
@@ -589,6 +627,45 @@ parse_args(int argc, char **argv) {
 			break;
 		case 'v':
 			verbose = 1;
+			break;
+		case 'i':
+			if (is_uint(optarg, &uint_arg_val) == TRUE)
+				print_interval = uint_arg_val;
+			else {
+				fprintf(stderr, "Invalid interval: %s\n",
+					optarg);
+				return (-1);
+			}
+			break;
+		case 'r':
+			if (is_uint(optarg, &uint_arg_val) == TRUE)
+				rttarray_size = uint_arg_val;
+			else {
+				fprintf(stderr, "Invalid RTT array size: %s\n",
+					optarg);
+				return (-1);
+			}
+			break;
+		case 'u':
+			if (is_uint(optarg, &uint_arg_val) == TRUE)
+				rttarray_unit = uint_arg_val;
+			else {
+				fprintf(stderr, "Invalid RTT unit: %s\n",
+					optarg);
+				return (-1);
+			}
+			break;
+		case 'H':
+			rtt_histogram_file = optarg;
+			break;
+		case 'T':
+			if (is_uint(optarg, &uint_arg_val) == TRUE)
+				target_qps = uint_arg_val;
+			else {
+				fprintf(stderr, "Invalid target qps: %s\n",
+					optarg);
+				return (-1);
+			}
 			break;
 		case 'h':
 			return (-1);
@@ -783,6 +860,65 @@ change_socket(void) {
 }
 
 /*
+ * reset_rttarray:
+ *   (re)allocate RTT array and zero-clear the whole buffer.
+ *   if array is being used, it is freed.
+ *   Returns -1 on failure
+ *   Returns a non-negative integer otherwise
+ */
+int
+reset_rttarray(int size) {
+	if (rttarray != NULL)
+		free(rttarray);
+	if (rttarray_interval != NULL)
+		free(rttarray_interval);
+
+	rttarray = NULL;
+	rttarray_interval = NULL;
+	rtt_max = -1;
+	rtt_min = -1;
+
+	if (size > 0) {
+		rttarray = malloc(size * sizeof(rttarray[0]));
+		if (rttarray == NULL) {
+			fprintf(stderr,
+				"Error: allocating memory for RTT array\n");
+			return (-1);
+		}
+		memset(rttarray, 0, size * sizeof(rttarray[0]));
+
+		rttarray_interval = malloc(size *
+					   sizeof(rttarray_interval[0]));
+		if (rttarray_interval == NULL) {
+			fprintf(stderr,
+				"Error: allocating memory for RTT array\n");
+			return (-1);
+		}
+
+		memset(rttarray_interval, 0,
+		       size * sizeof(rttarray_interval[0]));
+	}
+
+	return (0);
+}
+
+/*
+ * set_query_interval:
+ *   set the interval of consecutive queries if the target qps are specified.
+ *   Returns -1 on failure
+ *   Returns a non-negative integer otherwise
+ */
+int
+set_query_interval(unsigned int qps) {
+	if (qps == 0)
+		return (0);
+
+	query_interval = (1.0 / (double)qps);
+
+	return (0);
+}
+
+/*
  * setup:
  *   Set configuration options from command line arguments
  *   Open datafile ready for reading
@@ -826,6 +962,12 @@ setup(int argc, char **argv) {
 	if ((query_socket = change_socket()) == -1)
 		return (-1);
 
+	if (reset_rttarray(rttarray_size) == -1)
+		return (-1);
+
+	if (set_query_interval(target_qps) == -1)
+		return (-1);
+
 	return (0);
 }
 
@@ -840,6 +982,20 @@ set_timenow(struct timeval *tv) {
 		        "time() instead\n");
 		tv->tv_sec = time(NULL);
 		tv->tv_usec = 0;
+	}
+}
+
+/*
+ * addtv:
+ *   add tv1 and tv2, store the result in tv_result.
+ */
+void
+addtv(struct timeval *tv1, struct timeval *tv2, struct timeval *tv_result) {
+	tv_result->tv_sec = tv1->tv_sec + tv2->tv_sec;
+	tv_result->tv_usec = tv1->tv_usec + tv2->tv_usec;
+	if (tv_result->tv_usec > 1000000) {
+		tv_result->tv_sec++;
+		tv_result->tv_usec -= 1000000;
 	}
 }
 
@@ -923,6 +1079,7 @@ keep_sending(int *reached_end_input) {
 	} else {
 		if (*reached_end_input == TRUE)
 			runs_through_file++;
+		set_timenow(&time_of_stop_sending);
 		stop = TRUE;
 		return (FALSE);
 	}
@@ -1301,6 +1458,8 @@ send_query(char *query_desc) {
 
 	if (setup_phase == TRUE) {
 		set_timenow(&time_of_first_query);
+		time_of_first_query_sec = (double)time_of_first_query.tv_sec +
+			((double)time_of_first_query.tv_usec / 1000000.0);
 		setup_phase = FALSE;
 		if (getnameinfo(server_ai->ai_addr, server_ai->ai_addrlen,
 				serveraddr, sizeof(serveraddr), NULL, 0,
@@ -1313,12 +1472,12 @@ send_query(char *query_desc) {
 	}
 
 	/* Find the first slot in status[] that is not in use */
-	for(count = 0; (status[count].in_use == TRUE)
-	    && (count < max_queries_outstanding); count++);
+	for (count = 0; (status[count].in_use == TRUE)
+	     && (count < max_queries_outstanding); count++);
 
 	if (status[count].in_use == TRUE) {
 		fprintf(stderr, "Unexpected error: We have run out of "
-		        "status[] space!\n");
+			"status[] space!\n");
 		return;
 	}
 
@@ -1329,8 +1488,60 @@ send_query(char *query_desc) {
 		status[count].desc = strdup(query_desc);
 	set_timenow(&status[count].sent_timestamp);
 
+	if (num_queries_sent_interval == 0)
+		set_timenow(&time_of_first_query_interval);
+
 	num_queries_sent++;
+	num_queries_sent_interval++;
 	num_queries_outstanding++;
+}
+
+void
+register_rtt(struct timeval *timestamp) {
+	int i;
+	int oldquery = FALSE;
+	struct timeval now;
+	double rtt;
+
+	set_timenow(&now);
+	rtt = difftv(now, *timestamp);
+
+	if (difftv(*timestamp, time_of_first_query_interval) < 0)
+		oldquery = TRUE;
+
+	if (rtt_max < 0 || rtt_max < rtt)
+		rtt_max = rtt;
+
+	if (rtt_min < 0 || rtt_min > rtt)
+		rtt_min = rtt;
+
+	rtt_total += rtt;
+
+	if (!oldquery) {
+		if (rtt_max_interval < 0 || rtt_max_interval < rtt)
+			rtt_max_interval = rtt;
+
+		if (rtt_min_interval < 0 || rtt_min_interval > rtt)
+			rtt_min_interval = rtt;
+
+		rtt_total_interval += rtt;
+	}
+
+	if (rttarray == NULL)
+		return;
+
+	i = (int)(rtt * (1000000.0 / rttarray_unit));
+	if (i < rttarray_size) {
+		rttarray[i]++;
+		if (!oldquery)
+			rttarray_interval[i]++;
+	} else {
+		fprintf(stderr, "Warning: RTT is out of range: %.6lf\n",
+			rtt);
+		rtt_overflows++;
+		if (!oldquery)
+			rtt_overflows_interval++;
+	}
 }
 
 /*
@@ -1344,12 +1555,17 @@ void
 register_response(unsigned short int id, unsigned int rcode) {
 	unsigned int ct = 0;
 	int found = FALSE;
+	struct timeval now;
+	double rtt;
 
-	for(; (ct < query_status_allocated) && (found == FALSE); ct++) {
+	for (; (ct < query_status_allocated) && (found == FALSE); ct++) {
 		if ((status[ct].in_use == TRUE) && (status[ct].id == id)) {
 			status[ct].in_use = FALSE;
 			num_queries_outstanding--;
 			found = TRUE;
+
+			register_rtt(&status[ct].sent_timestamp);
+
 			if (status[ct].desc) {
 				printf("> %s %s\n", rcode_strings[rcode],
 				       status[ct].desc);
@@ -1360,9 +1576,15 @@ register_response(unsigned short int id, unsigned int rcode) {
 		}
 	}
 
-	if (found == FALSE)
-		fprintf(stderr, "Warning: Received a response with an "
-		        "unexpected (maybe timed out) id: %u\n", id);
+	if (found == FALSE) {
+		if (target_qps > 0) {
+			num_queries_possiblydelayed++;
+			num_queries_possiblydelayed_interval++;
+		} else {
+			fprintf(stderr, "Warning: Received a response with an "
+				"unexpected (maybe timed out) id: %u\n", id);
+		}
+	}
 }
 
 /*
@@ -1451,21 +1673,57 @@ data_available(double wait) {
  *   decrementing the number of outstanding queries.
  */
 void
-process_responses(void) {
+process_responses(int adjust_rate) {
+	double wait;
+	struct timeval now, waituntil;
 	double first_packet_wait = RESPONSE_BLOCKING_WAIT_TIME;
 	unsigned int outstanding = queries_outstanding();
 
-	/*
-	 * Don't block waiting for packets at all if we aren't looking for
-	 * any responses or if we are now able to send new queries.
-	 */
-	if ((outstanding == 0) || (outstanding < max_queries_outstanding)) {
-		first_packet_wait = 0.0;
-	}
+	if (adjust_rate == TRUE) {
+		double u;
 
-	if (data_available(first_packet_wait) == TRUE) {
-		while (data_available(0.0) == TRUE)
-			;
+		u = time_of_first_query_sec +
+			query_interval * num_queries_sent;
+		waituntil.tv_sec = (long)floor(u);
+		waituntil.tv_usec = (long)(1000000.0 * (u - waituntil.tv_sec));
+
+		/*
+		 * Wait until a response arrives or the specified limit is
+		 * reached.
+		 */
+		while (1) {
+			set_timenow(&now);
+			wait = difftv(waituntil, now);
+			if (wait <= 0)
+				wait = 0.0;
+			if (data_available(wait) != TRUE)
+				break;
+
+			/*
+			 * We have reached the limit.  Read as many responses
+			 * as possible without waiting, and exit.
+			 */
+			if (wait == 0) {
+				while (data_available(0.0) == TRUE)
+					;
+				break;
+			}
+		}
+	} else {
+		/*
+		 * Don't block waiting for packets at all if we aren't
+		 * looking for any responses or if we are now able to send new
+		 * queries.
+		 */
+		if ((outstanding == 0) ||
+		    (outstanding < max_queries_outstanding)) {
+			first_packet_wait = 0.0;
+		}
+
+		if (data_available(first_packet_wait) == TRUE) {
+			while (data_available(0.0) == TRUE)
+				;
+		}
 	}
 }
 
@@ -1476,31 +1734,90 @@ process_responses(void) {
  *   the number of queries outstanding for each one removed.
  */
 void
-retire_old_queries(void) {
+retire_old_queries(int sending) {
 	unsigned int count = 0;
 	struct timeval curr_time;
+	double timeout = query_timeout;
+	int timeout_reduced = FALSE;
+
+	/*
+	 * If we have target qps and would not be able to send any packets
+	 * due to buffer full, check whether we are behind the schedule.
+	 * If we are, purge some queries more aggressively.
+	 */
+	if (target_qps > 0 && sending == TRUE && count == 0 &&
+	    queries_outstanding() == max_queries_outstanding) {
+		struct timeval next, now;
+		double n;
+
+		n = time_of_first_query_sec +
+			query_interval * num_queries_sent;
+		next.tv_sec = (long)floor(n);
+		next.tv_usec = (long)(1000000.0 * (n - next.tv_sec));
+
+		set_timenow(&now);
+		if (difftv(next, now) <= 0) {
+			timeout_reduced = TRUE;
+			timeout = 0.001; /* XXX: ad-hoc value */
+		}
+	}
 
 	set_timenow(&curr_time);
 
-	for(; count < query_status_allocated; count++) {
+	for (; count < query_status_allocated; count++) {
 
 		if ((status[count].in_use == TRUE)
 		    && (difftv(curr_time, status[count].sent_timestamp)
-		    >= (double)query_timeout)) {
+		    >= (double)timeout)) {
 
 			status[count].in_use = FALSE;
 			num_queries_outstanding--;
 			num_queries_timed_out++;
+			num_queries_timed_out_interval++;
 
-			if (status[count].desc) {
-				printf("> T %s\n", status[count].desc);
-				free(status[count].desc);
-			} else {
-				printf("[Timeout] Query timed out: msg id %u\n",
-				       status[count].id);
+			if (timeout_reduced == FALSE) {
+				if (status[count].desc) {
+					printf("> T %s\n", status[count].desc);
+					free(status[count].desc);
+				} else {
+					printf("[Timeout] Query timed out: "
+					       "msg id %u\n",
+					       status[count].id);
+				}
 			}
 		}
 	}
+}
+
+/*
+ * print_histogram
+ *   Print RTT histogram to the specified file in the gnuplot format
+ */
+void
+print_histogram(unsigned int total) {
+	int i;
+	double ratio;
+	FILE *fp;
+
+	if (rtt_histogram_file == NULL || rttarray == NULL)
+		return;
+
+	fp = fopen((const char *)rtt_histogram_file, "w+");
+	if (fp == NULL) {
+		fprintf(stderr, "Error opening RTT histogram file: %s\n",
+			rtt_histogram_file);
+		return;
+	}
+
+	for (i = 0; i < rttarray_size; i++) {
+		ratio = ((double)rttarray[i] / (double)total) * 100;
+		fprintf(fp, "%.6lf %.3lf\n",
+			(double)(i * rttarray_unit) +
+			(double)rttarray_unit / 2,
+			ratio);
+	}
+
+	(void)fclose(fp);
 }
 
 /*
@@ -1508,58 +1825,116 @@ retire_old_queries(void) {
  *   Print out statistics based on the results of the test
  */
 void
-print_statistics(void) {
+print_statistics(int intermediate, unsigned int sent, unsigned int timed_out,
+		 unsigned int possibly_delayed,
+		 struct timeval *first_query,
+		 struct timeval *program_start,
+		 struct timeval *end_perf, struct timeval *end_query,
+		 double rmax, double rmin, double rtotal,
+		 unsigned int roverflows, unsigned int *rarray)
+{
 	unsigned int num_queries_completed;
-	double per_lost, per_completed;
-	double run_time, queries_per_sec;
+	double per_lost, per_completed, per_lost2, per_completed2; 
+	double run_time, queries_per_sec, queries_per_sec2;
+	double queries_per_sec_total;
+	double rtt_average, rtt_stddev;
 	struct timeval start_time;
 
-	num_queries_completed = num_queries_sent - num_queries_timed_out;
+	num_queries_completed = sent - timed_out;
 
 	if (num_queries_completed == 0) {
 		per_lost = 0.0;
 		per_completed = 0.0;
+
+		per_lost2 = 0.0;
+		per_completed2 = 0.0;
 	} else {
-		per_lost = 100.0 * (double)num_queries_timed_out
-		           / (double)num_queries_sent;
+		per_lost = (100.0 * (double)timed_out) / (double)sent;
 		per_completed = 100.0 - per_lost;
+
+		per_lost2 = (100.0 * (double)(timed_out - possibly_delayed))
+			/ (double)sent;
+		per_completed2 = 100 - per_lost2;
 	}
 
-	if (num_queries_sent == 0) {
-		start_time.tv_sec = time_of_program_start.tv_sec;
-		start_time.tv_usec = time_of_program_start.tv_usec;
+	if (sent == 0) {
+		start_time.tv_sec = program_start->tv_sec;
+		start_time.tv_usec = program_start->tv_usec;
 		run_time = 0.0;
 		queries_per_sec = 0.0;
+		queries_per_sec2 = 0.0;
+		queries_per_sec_total = 0.0;
 	} else {
-		start_time.tv_sec = time_of_first_query.tv_sec;
-		start_time.tv_usec = time_of_first_query.tv_usec;
-		run_time = difftv(time_of_end_of_run, time_of_first_query);
+		start_time.tv_sec = first_query->tv_sec;
+		start_time.tv_usec = first_query->tv_usec;
+		run_time = difftv(*end_perf, *first_query);
 		queries_per_sec = (double)num_queries_completed / run_time;
+		queries_per_sec2 = (double)(num_queries_completed +
+					    possibly_delayed) / run_time;
+
+		queries_per_sec_total = (double)sent /
+			difftv(*end_query, *first_query);
+	}
+
+	if (num_queries_completed > 0) {
+		int i;
+		double sum = 0;
+
+		rtt_average = rtt_total / (double)num_queries_completed;
+		for (i = 0; i < rttarray_size; i++) {
+			if (rarray[i] != 0) {
+				double mean, diff;
+
+				mean = (double)(i * rttarray_unit) +
+				(double)rttarray_unit / 2;
+				diff = rtt_average - (mean / 1000000.0);
+				sum += (diff * diff) * rarray[i];
+			}
+		}
+		rtt_stddev = sqrt(sum / (double)num_queries_completed);
+	} else {
+		rtt_average = 0.0;
+		rtt_stddev = 0.0;
 	}
 
 	printf("\n");
 
-	printf("Statistics:\n");
+	printf("%sStatistics:\n", intermediate ? "Intermediate " : "");
 
 	printf("\n");
 
-	printf("  Parse input file:     %s\n",
-	       ((run_only_once == TRUE) ? "once" : "multiple times"));
-	if (use_timelimit)
-		printf("  Run time limit:       %u seconds\n", run_timelimit);
-	if (run_only_once == FALSE)
-		printf("  Ran through file:     %u times\n",
-		       runs_through_file);
-	else
-		printf("  Ended due to:         reaching %s\n",
-		       ((runs_through_file == 0) ? "time limit"
-		       : "end of file"));
+	if (!intermediate) {
+		printf("  Parse input file:     %s\n",
+		       ((run_only_once == TRUE) ? "once" : "multiple times"));
+		if (use_timelimit)
+			printf("  Run time limit:       %u seconds\n",
+			       run_timelimit);
+		if (run_only_once == FALSE)
+			printf("  Ran through file:     %u times\n",
+			       runs_through_file);
+		else
+			printf("  Ended due to:         reaching %s\n",
+			       ((runs_through_file == 0) ? "time limit"
+				: "end of file"));
 
-	printf("\n");
+		printf("\n");
+	}
 
-	printf("  Queries sent:         %u queries\n", num_queries_sent);
+	printf("  Queries sent:         %u queries\n", sent);
 	printf("  Queries completed:    %u queries\n", num_queries_completed);
-	printf("  Queries lost:         %u queries\n", num_queries_timed_out);
+	printf("  Queries lost:         %u queries\n", timed_out);
+	printf("  Queries delayed(?):   %u queries\n", possibly_delayed);
+
+	printf("\n");
+
+	printf("  RTT max:         	%3.6lf sec\n", rmax);
+	printf("  RTT min:              %3.6lf sec\n", rmin);
+	printf("  RTT average:          %3.6lf sec\n", rtt_average);
+	printf("  RTT std deviation:    %3.6lf sec\n", rtt_stddev);
+	printf("  RTT out of range:     %u queries\n", roverflows);
+
+	if (!intermediate)	/* XXX should we print this case also? */
+		print_histogram(num_queries_completed);
 
 	printf("\n");
 
@@ -1576,28 +1951,88 @@ print_statistics(void) {
 	}
 
 	printf("  Percentage completed: %6.2lf%%\n", per_completed);
+	if (possibly_delayed > 0)
+		printf("     (w/ delayed qrys): %6.2lf%%\n", per_completed2);
 	printf("  Percentage lost:      %6.2lf%%\n", per_lost);
+	if (possibly_delayed > 0)
+		printf("    (w/o delayed qrys): %6.2lf%%\n", per_lost2);
 
 	printf("\n");
 
 	printf("  Started at:           %s",
 	       ctime((const time_t *)&start_time.tv_sec));
 	printf("  Finished at:          %s",
-	       ctime((const time_t *)&time_of_end_of_run.tv_sec));
+	       ctime((const time_t *)&end_perf->tv_sec));
 	printf("  Ran for:              %.6lf seconds\n", run_time);
 
 	printf("\n");
 
 	printf("  Queries per second:   %.6lf qps\n", queries_per_sec);
+	if (possibly_delayed > 0) {
+		printf("   (w/ delayed qrys):   %.6lf qps\n",
+		       queries_per_sec2);
+	}
+	if (target_qps > 0) {
+		printf("  Total QPS/target:     %.6lf/%d qps\n",
+		       queries_per_sec_total, target_qps);		
+	}
 
 	printf("\n");
 }
 
+void
+print_interval_statistics() {
+	struct timeval time_now;
+
+	if (use_timelimit == FALSE)
+		return;
+
+	if (setup_phase == TRUE)
+		return;
+
+	if (print_interval == 0)
+		return;
+
+	if (timelimit_reached() == TRUE)
+		return;
+
+	set_timenow(&time_now);
+	if (difftv(time_now, time_of_first_query_interval)
+	    <= (double)print_interval)
+		return;
+
+	/* Don't count currently outstanding queries */
+	num_queries_sent_interval -= queries_outstanding();
+	print_statistics(TRUE, num_queries_sent_interval,
+			 num_queries_timed_out_interval,
+			 num_queries_possiblydelayed_interval,
+			 &time_of_first_query_interval,
+			 &time_of_first_query_interval, &time_now, &time_now,
+			 rtt_max_interval, rtt_min_interval,
+			 rtt_total_interval, rtt_overflows_interval,
+			 rttarray_interval);
+
+	/* Reset intermediate counters */
+	num_queries_sent_interval = 0;
+	num_queries_timed_out_interval = 0;
+	num_queries_possiblydelayed_interval = 0;
+	rtt_max_interval = -1;
+	rtt_min_interval = -1;
+	rtt_total_interval = 0.0;
+	rtt_overflows_interval = 0;
+	if (rttarray_interval != NULL) {
+		memset(rttarray_interval, 0,
+		       sizeof(rttarray_interval[0]) * rttarray_size);
+	}
+}
+
 /*
- * dnsqtest Program Mainline
+ * queryperf Program Mainline
  */
 int
 main(int argc, char **argv) {
+	int adjust_rate;
+	int sending = FALSE;
 	int got_eof = FALSE;
 	int input_length = MAX_INPUT_LEN;
 	char input_line[MAX_INPUT_LEN + 1];
@@ -1605,6 +2040,8 @@ main(int argc, char **argv) {
 	set_timenow(&time_of_program_start);
 	time_of_first_query.tv_sec = 0;
 	time_of_first_query.tv_usec = 0;
+	time_of_first_query_interval.tv_sec = 0;
+	time_of_first_query_interval.tv_usec = 0;
 	time_of_end_of_run.tv_sec = 0;
 	time_of_end_of_run.tv_usec = 0;
 
@@ -1617,9 +2054,13 @@ main(int argc, char **argv) {
 
 	printf("[Status] Processing input data\n");
 
-	while (keep_sending(&got_eof) == TRUE || queries_outstanding() > 0) {
-		while (keep_sending(&got_eof) == TRUE
-		       && queries_outstanding() < max_queries_outstanding) {
+	while ((sending = keep_sending(&got_eof)) == TRUE ||
+	       queries_outstanding() > 0) {
+		print_interval_statistics();
+		adjust_rate = FALSE;
+
+		while ((sending = keep_sending(&got_eof)) == TRUE &&
+		       queries_outstanding() < max_queries_outstanding) {
 			int len = next_input_line(input_line, input_length);
 			if (len == 0) {
 				got_eof = TRUE;
@@ -1641,12 +2082,17 @@ main(int argc, char **argv) {
 					update_config(input_line);
 				else {
 					send_query(input_line);
+					if (target_qps > 0 &&
+					    (num_queries_sent %
+					     max_queries_outstanding) == 0) {
+						adjust_rate = TRUE;
+					}
 				}
 			}
 		}
 
-		retire_old_queries();
-		process_responses();
+		process_responses(adjust_rate);
+		retire_old_queries(sending);
 	}
 
 	set_timenow(&time_of_end_of_run);
@@ -1656,7 +2102,11 @@ main(int argc, char **argv) {
 	close_socket();
 	close_datafile();
 
-	print_statistics();
+	print_statistics(FALSE, num_queries_sent, num_queries_timed_out,
+			 num_queries_possiblydelayed,
+			 &time_of_first_query, &time_of_program_start,
+			 &time_of_end_of_run, &time_of_stop_sending,
+			 rtt_max, rtt_min, rtt_total, rtt_overflows, rttarray);
 
 	return (0);
 }

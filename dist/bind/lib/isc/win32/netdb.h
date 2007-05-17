@@ -1,4 +1,4 @@
-/*	$NetBSD: netdb.h,v 1.1.1.3 2005/12/21 23:17:42 christos Exp $	*/
+/*	$NetBSD: netdb.h,v 1.1.1.3.4.1 2007/05/17 00:42:57 jdc Exp $	*/
 
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: netdb.h,v 1.2.2.2.2.3 2004/03/11 01:02:38 marka Exp */
+/* Id: netdb.h,v 1.3 2004/03/05 05:11:58 marka Exp */
 
 #ifndef NETDB_H
 #define NETDB_H 1

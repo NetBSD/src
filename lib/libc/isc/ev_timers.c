@@ -1,4 +1,4 @@
-/*	$NetBSD: ev_timers.c,v 1.2 2004/05/20 19:52:31 christos Exp $	*/
+/*	$NetBSD: ev_timers.c,v 1.2.10.1 2007/05/17 00:43:50 jdc Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -24,9 +24,9 @@
 #include <sys/cdefs.h>
 #if !defined(LINT) && !defined(CODECENTER) && !defined(lint)
 #ifdef notdef
-static const char rcsid[] = "Id: ev_timers.c,v 1.2.2.1.4.5 2004/03/17 02:39:13 marka Exp";
+static const char rcsid[] = "Id: ev_timers.c,v 1.5.18.1 2005/04/27 05:01:06 sra Exp";
 #else
-__RCSID("$NetBSD: ev_timers.c,v 1.2 2004/05/20 19:52:31 christos Exp $");
+__RCSID("$NetBSD: ev_timers.c,v 1.2.10.1 2007/05/17 00:43:50 jdc Exp $");
 #endif
 #endif
 
@@ -123,8 +123,10 @@ evNowTime() {
 	int m = CLOCK_REALTIME;
 
 #ifdef CLOCK_MONOTONIC
+#ifndef _LIBC
 	if (__evOptMonoTime)
 		m = CLOCK_MONOTONIC;
+#endif
 #endif
 	if (clock_gettime(m, &tsnow) == 0)
 		return (tsnow);
@@ -508,3 +510,5 @@ idle_timeout(evContext opaqueCtx,
 	}
 }
 #endif
+
+/*! \file */

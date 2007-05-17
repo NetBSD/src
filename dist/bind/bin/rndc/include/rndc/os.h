@@ -1,7 +1,7 @@
-/*	$NetBSD: os.h,v 1.1.1.3 2005/12/21 23:08:18 christos Exp $	*/
+/*	$NetBSD: os.h,v 1.1.1.3.4.1 2007/05/17 00:35:29 jdc Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,7 +17,9 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: os.h,v 1.4.206.1 2004/03/06 10:21:33 marka Exp */
+/* Id: os.h,v 1.5.18.2 2005/04/29 00:15:41 marka Exp */
+
+/*! \file */
 
 #ifndef RNDC_OS_H
 #define RNDC_OS_H 1
@@ -28,13 +30,13 @@
 ISC_LANG_BEGINDECLS
 
 FILE *safe_create(const char *filename);
-/*
+/*%<
  * Open 'filename' for writing, truncate if necessary.  If the file was
  * created ensure that only the owner can read/write it.
  */
 
 int set_user(FILE *fd, const char *user);
-/*
+/*%<
  * Set the owner of the file refernced by 'fd' to 'user'.
  * Returns:
  *   0 		success

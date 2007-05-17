@@ -1,7 +1,7 @@
-/*	$NetBSD: dnssec.c,v 1.1.1.4 2005/12/21 23:16:07 christos Exp $	*/
+/*	$NetBSD: dnssec.c,v 1.1.1.4.4.1 2007/05/17 00:40:34 jdc Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -18,9 +18,10 @@
  */
 
 /*
- * Id: dnssec.c,v 1.69.2.5.2.7 2004/06/11 00:30:54 marka Exp
+ * Id: dnssec.c,v 1.81.18.6 2006/03/07 00:34:53 marka Exp
  */
 
+/*! \file */
 
 #include <config.h>
 
@@ -332,8 +333,7 @@ cleanup_array:
 cleanup_context:
 	dst_context_destroy(&ctx);
 cleanup_databuf:
-	if (databuf != NULL)
-		isc_buffer_free(&databuf);
+	isc_buffer_free(&databuf);
 cleanup_signature:
 	isc_mem_put(mctx, sig.signature, sig.siglen);
 
@@ -522,10 +522,10 @@ dns_dnssec_verify(dns_name_t *name, dns_rdataset_t *set, dst_key_t *key,
 
 isc_result_t
 dns_dnssec_findzonekeys2(dns_db_t *db, dns_dbversion_t *ver,
-			dns_dbnode_t *node, dns_name_t *name,
-			const char *directory, isc_mem_t *mctx,
-			unsigned int maxkeys, dst_key_t **keys,
-			unsigned int *nkeys)
+			 dns_dbnode_t *node, dns_name_t *name,
+			 const char *directory, isc_mem_t *mctx,
+			 unsigned int maxkeys, dst_key_t **keys,
+			 unsigned int *nkeys)
 {
 	dns_rdataset_t rdataset;
 	dns_rdata_t rdata = DNS_RDATA_INIT;

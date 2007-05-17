@@ -1,7 +1,7 @@
-/*	$NetBSD: logconf.c,v 1.1.1.3 2005/12/21 23:07:56 christos Exp $	*/
+/*	$NetBSD: logconf.c,v 1.1.1.3.4.1 2007/05/17 00:35:09 jdc Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,7 +17,9 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: logconf.c,v 1.30.2.3.10.2 2004/03/06 10:21:18 marka Exp */
+/* Id: logconf.c,v 1.35.18.5 2006/03/02 00:37:21 marka Exp */
+
+/*! \file */
 
 #include <config.h>
 
@@ -38,18 +40,18 @@
 	       if (result != ISC_R_SUCCESS) goto cleanup; 	 \
 	} while (0)
 
-/*
+/*%
  * Set up a logging category according to the named.conf data
  * in 'ccat' and add it to 'lctx'.
  */
 static isc_result_t
-category_fromconf(cfg_obj_t *ccat, isc_logconfig_t *lctx) {
+category_fromconf(const cfg_obj_t *ccat, isc_logconfig_t *lctx) {
 	isc_result_t result;
 	const char *catname;
 	isc_logcategory_t *category;
 	isc_logmodule_t *module;
-	cfg_obj_t *destinations = NULL;
-	cfg_listelt_t *element = NULL;
+	const cfg_obj_t *destinations = NULL;
+	const cfg_listelt_t *element = NULL;
 
 	catname = cfg_obj_asstring(cfg_tuple_get(ccat, "name"));
 	category = isc_log_categorybyname(ns_g_lctx, catname);
@@ -70,8 +72,8 @@ category_fromconf(cfg_obj_t *ccat, isc_logconfig_t *lctx) {
 	     element != NULL;
 	     element = cfg_list_next(element))
 	{
-		cfg_obj_t *channel = cfg_listelt_value(element);
-		char *channelname = cfg_obj_asstring(channel);
+		const cfg_obj_t *channel = cfg_listelt_value(element);
+		const char *channelname = cfg_obj_asstring(channel);
 
 		result = isc_log_usechannel(lctx, channelname, category,
 					    module);
@@ -86,23 +88,23 @@ category_fromconf(cfg_obj_t *ccat, isc_logconfig_t *lctx) {
 	return (ISC_R_SUCCESS);
 }
 
-/*
+/*%
  * Set up a logging channel according to the named.conf data
  * in 'cchan' and add it to 'lctx'.
  */
 static isc_result_t
-channel_fromconf(cfg_obj_t *channel, isc_logconfig_t *lctx) {
+channel_fromconf(const cfg_obj_t *channel, isc_logconfig_t *lctx) {
 	isc_result_t result;
 	isc_logdestination_t dest;
 	unsigned int type;
 	unsigned int flags = 0;
 	int level;
 	const char *channelname;
-	cfg_obj_t *fileobj = NULL;
-	cfg_obj_t *syslogobj = NULL;
-	cfg_obj_t *nullobj = NULL;
-	cfg_obj_t *stderrobj = NULL;
-	cfg_obj_t *severity = NULL;
+	const cfg_obj_t *fileobj = NULL;
+	const cfg_obj_t *syslogobj = NULL;
+	const cfg_obj_t *nullobj = NULL;
+	const cfg_obj_t *stderrobj = NULL;
+	const cfg_obj_t *severity = NULL;
 	int i;
 
 	channelname = cfg_obj_asstring(cfg_map_getname(channel));
@@ -132,9 +134,10 @@ channel_fromconf(cfg_obj_t *channel, isc_logconfig_t *lctx) {
 	type = ISC_LOG_TONULL;
 	
 	if (fileobj != NULL) {
-		cfg_obj_t *pathobj = cfg_tuple_get(fileobj, "file");
-		cfg_obj_t *sizeobj = cfg_tuple_get(fileobj, "size");
-		cfg_obj_t *versionsobj = cfg_tuple_get(fileobj, "versions");
+		const cfg_obj_t *pathobj = cfg_tuple_get(fileobj, "file");
+		const cfg_obj_t *sizeobj = cfg_tuple_get(fileobj, "size");
+		const cfg_obj_t *versionsobj =
+				 cfg_tuple_get(fileobj, "versions");
 		isc_int32_t versions = ISC_LOG_ROLLNEVER;
 		isc_offset_t size = 0;
 
@@ -159,7 +162,7 @@ channel_fromconf(cfg_obj_t *channel, isc_logconfig_t *lctx) {
 		type = ISC_LOG_TOSYSLOG;
 
 		if (cfg_obj_isstring(syslogobj)) {
-			char *facilitystr = cfg_obj_asstring(syslogobj);
+			const char *facilitystr = cfg_obj_asstring(syslogobj);
 			(void)isc_syslog_facilityfromstring(facilitystr,
 							    &facility);
 		}
@@ -176,9 +179,9 @@ channel_fromconf(cfg_obj_t *channel, isc_logconfig_t *lctx) {
 	 * Munge flags.
 	 */
 	{
-		cfg_obj_t *printcat = NULL;
-		cfg_obj_t *printsev = NULL;
-		cfg_obj_t *printtime = NULL;
+		const cfg_obj_t *printcat = NULL;
+		const cfg_obj_t *printsev = NULL;
+		const cfg_obj_t *printtime = NULL;
 
 		(void)cfg_map_get(channel, "print-category", &printcat);
 		(void)cfg_map_get(channel, "print-severity", &printsev);
@@ -195,7 +198,7 @@ channel_fromconf(cfg_obj_t *channel, isc_logconfig_t *lctx) {
 	level = ISC_LOG_INFO;
 	if (cfg_map_get(channel, "severity", &severity) == ISC_R_SUCCESS) {
 		if (cfg_obj_isstring(severity)) {
-			char *str = cfg_obj_asstring(severity);
+			const char *str = cfg_obj_asstring(severity);
 			if (strcasecmp(str, "critical") == 0)
 				level = ISC_LOG_CRITICAL;
 			else if (strcasecmp(str, "error") == 0)
@@ -244,13 +247,14 @@ channel_fromconf(cfg_obj_t *channel, isc_logconfig_t *lctx) {
 }
 
 isc_result_t
-ns_log_configure(isc_logconfig_t *logconf, cfg_obj_t *logstmt) {
+ns_log_configure(isc_logconfig_t *logconf, const cfg_obj_t *logstmt) {
 	isc_result_t result;
-	cfg_obj_t *channels = NULL;
-	cfg_obj_t *categories = NULL;
-	cfg_listelt_t *element;
+	const cfg_obj_t *channels = NULL;
+	const cfg_obj_t *categories = NULL;
+	const cfg_listelt_t *element;
 	isc_boolean_t default_set = ISC_FALSE;
 	isc_boolean_t unmatched_set = ISC_FALSE;
+	const cfg_obj_t *catname;
 
 	CHECK(ns_log_setdefaultchannels(logconf));
 
@@ -259,7 +263,7 @@ ns_log_configure(isc_logconfig_t *logconf, cfg_obj_t *logstmt) {
 	     element != NULL;
 	     element = cfg_list_next(element))
 	{
-		cfg_obj_t *channel = cfg_listelt_value(element);
+		const cfg_obj_t *channel = cfg_listelt_value(element);
 		CHECK(channel_fromconf(channel, logconf));
 	}
 
@@ -268,15 +272,15 @@ ns_log_configure(isc_logconfig_t *logconf, cfg_obj_t *logstmt) {
 	     element != NULL;
 	     element = cfg_list_next(element))
 	{
-		cfg_obj_t *category = cfg_listelt_value(element);
+		const cfg_obj_t *category = cfg_listelt_value(element);
 		CHECK(category_fromconf(category, logconf));
 		if (!default_set) {
-			cfg_obj_t *catname = cfg_tuple_get(category, "name");
+			catname = cfg_tuple_get(category, "name");
 			if (strcmp(cfg_obj_asstring(catname), "default") == 0)
 				default_set = ISC_TRUE;
 		}
 		if (!unmatched_set) {
-			cfg_obj_t *catname = cfg_tuple_get(category, "name");
+			catname = cfg_tuple_get(category, "name");
 			if (strcmp(cfg_obj_asstring(catname), "unmatched") == 0)
 				unmatched_set = ISC_TRUE;
 		}

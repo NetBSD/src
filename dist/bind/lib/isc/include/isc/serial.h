@@ -1,7 +1,7 @@
-/*	$NetBSD: serial.h,v 1.1.1.3 2005/12/21 23:17:29 christos Exp $	*/
+/*	$NetBSD: serial.h,v 1.1.1.3.4.1 2007/05/17 00:42:36 jdc Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: serial.h,v 1.9.206.1 2004/03/06 08:14:48 marka Exp */
+/* Id: serial.h,v 1.10.18.2 2005/04/29 00:17:02 marka Exp */
 
 #ifndef ISC_SERIAL_H
 #define ISC_SERIAL_H 1
@@ -25,9 +25,8 @@
 #include <isc/lang.h>
 #include <isc/types.h>
 
-/*
- *	Implement 32 bit serial space arithmetic comparision functions.
- *
+/*! \file
+ *	\brief Implement 32 bit serial space arithmetic comparision functions.
  *	Note: Undefined results are returned as ISC_FALSE.
  */
 
@@ -39,37 +38,37 @@ ISC_LANG_BEGINDECLS
 
 isc_boolean_t
 isc_serial_lt(isc_uint32_t a, isc_uint32_t b);
-/*
+/*%<
  *	Return true if 'a' < 'b' otherwise false.
  */
 
 isc_boolean_t
 isc_serial_gt(isc_uint32_t a, isc_uint32_t b);
-/*
+/*%<
  *	Return true if 'a' > 'b' otherwise false.
  */
 
 isc_boolean_t
 isc_serial_le(isc_uint32_t a, isc_uint32_t b);
-/*
+/*%<
  *	Return true if 'a' <= 'b' otherwise false.
  */
 
 isc_boolean_t
 isc_serial_ge(isc_uint32_t a, isc_uint32_t b);
-/*
+/*%<
  *	Return true if 'a' >= 'b' otherwise false.
  */
 
 isc_boolean_t
 isc_serial_eq(isc_uint32_t a, isc_uint32_t b);
-/*
+/*%<
  *	Return true if 'a' == 'b' otherwise false.
  */
 
 isc_boolean_t
 isc_serial_ne(isc_uint32_t a, isc_uint32_t b);
-/*
+/*%<
  *	Return true if 'a' != 'b' otherwise false.
  */
 

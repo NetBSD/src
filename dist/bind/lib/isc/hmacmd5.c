@@ -1,7 +1,7 @@
-/*	$NetBSD: hmacmd5.c,v 1.1.1.3 2005/12/21 23:17:15 christos Exp $	*/
+/*	$NetBSD: hmacmd5.c,v 1.1.1.3.4.1 2007/05/17 00:41:45 jdc Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,11 +17,11 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: hmacmd5.c,v 1.5.12.3 2004/03/08 09:04:48 marka Exp */
+/* Id: hmacmd5.c,v 1.7.18.5 2006/02/26 22:30:56 marka Exp */
 
-/*
+/*! \file
  * This code implements the HMAC-MD5 keyed hash algorithm
- * described in RFC 2104.
+ * described in RFC2104.
  */
 
 #include "config.h"
@@ -37,7 +37,7 @@
 #define IPAD 0x36
 #define OPAD 0x5C
 
-/*
+/*!
  * Start HMAC-MD5 process.  Initialize an md5 context and digest the key.
  */
 void
@@ -67,10 +67,9 @@ void
 isc_hmacmd5_invalidate(isc_hmacmd5_t *ctx) {
 	isc_md5_invalidate(&ctx->md5ctx);
 	memset(ctx->key, 0, sizeof(ctx->key));
-	memset(ctx, 0, sizeof(ctx));
 }
 
-/*
+/*!
  * Update context to reflect the concatenation of another buffer full
  * of bytes.
  */
@@ -81,7 +80,7 @@ isc_hmacmd5_update(isc_hmacmd5_t *ctx, const unsigned char *buf,
 	isc_md5_update(&ctx->md5ctx, buf, len);
 }
 
-/*
+/*!
  * Compute signature - finalize MD5 operation and reapply MD5.
  */
 void
@@ -102,14 +101,20 @@ isc_hmacmd5_sign(isc_hmacmd5_t *ctx, unsigned char *digest) {
 	isc_hmacmd5_invalidate(ctx);
 }
 
-/*
+/*!
  * Verify signature - finalize MD5 operation and reapply MD5, then
  * compare to the supplied digest.
  */
 isc_boolean_t
 isc_hmacmd5_verify(isc_hmacmd5_t *ctx, unsigned char *digest) {
+	return (isc_hmacmd5_verify2(ctx, digest, ISC_MD5_DIGESTLENGTH));
+}
+
+isc_boolean_t
+isc_hmacmd5_verify2(isc_hmacmd5_t *ctx, unsigned char *digest, size_t len) {
 	unsigned char newdigest[ISC_MD5_DIGESTLENGTH];
 
+	REQUIRE(len <= ISC_MD5_DIGESTLENGTH);
 	isc_hmacmd5_sign(ctx, newdigest);
-	return (ISC_TF(memcmp(digest, newdigest, ISC_MD5_DIGESTLENGTH) == 0));
+	return (ISC_TF(memcmp(digest, newdigest, len) == 0));
 }

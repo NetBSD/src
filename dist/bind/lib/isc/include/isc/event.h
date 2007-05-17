@@ -1,7 +1,7 @@
-/*	$NetBSD: event.h,v 1.1.1.3 2005/12/21 23:17:24 christos Exp $	*/
+/*	$NetBSD: event.h,v 1.1.1.3.4.1 2007/05/17 00:42:27 jdc Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,10 +17,12 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: event.h,v 1.24.2.2.8.2 2004/04/15 02:10:41 marka Exp */
+/* Id: event.h,v 1.27.18.3 2005/04/29 00:16:54 marka Exp */
 
 #ifndef ISC_EVENT_H
 #define ISC_EVENT_H 1
+
+/*! \file */
 
 #include <isc/lang.h>
 #include <isc/types.h>
@@ -43,14 +45,14 @@ typedef void (*isc_eventdestructor_t)(isc_event_t *);
 	void *				ev_destroy_arg; \
 	ISC_LINK(ltype)			ev_link
 
-/*
+/*%
  * Attributes matching a mask of 0x000000ff are reserved for the task library's
  * definition.  Attributes of 0xffffff00 may be used by the application
  * or non-ISC libraries.
  */
 #define ISC_EVENTATTR_NOPURGE		0x00000001
 
-/*
+/*%
  * The ISC_EVENTATTR_CANCELED attribute is intended to indicate
  * that an event is delivered as a result of a canceled operation
  * rather than successful completion, by mutual agreement
@@ -73,7 +75,7 @@ do { \
 	ISC_LINK_INIT((event), ev_link); \
 } while (0)
 
-/*
+/*%
  * This structure is public because "subclassing" it may be useful when
  * defining new event types.
  */
@@ -91,22 +93,26 @@ ISC_LANG_BEGINDECLS
 isc_event_t *
 isc_event_allocate(isc_mem_t *mctx, void *sender, isc_eventtype_t type,
 		   isc_taskaction_t action, const void *arg, size_t size);
-/*
+/*%<
+ * Allocate an event structure. 
+ *
  * Allocate and initialize in a structure with initial elements
  * defined by:
  *
+ * \code
  *	struct {
  *		ISC_EVENT_COMMON(struct isc_event);
  *		...
  *	};
+ * \endcode
  *	
  * Requires:
- *	'size' >= sizeof(struct isc_event)
- *	'action' to be non NULL
+ *\li	'size' >= sizeof(struct isc_event)
+ *\li	'action' to be non NULL
  *
  * Returns:
- *	a pointer to a initialized structure of the requested size.
- *	NULL if unable to allocate memory.
+ *\li	a pointer to a initialized structure of the requested size.
+ *\li	NULL if unable to allocate memory.
  */
 
 void

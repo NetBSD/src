@@ -1,4 +1,4 @@
-/*	$NetBSD: timer_test.c,v 1.1.1.3 2005/12/21 23:08:26 christos Exp $	*/
+/*	$NetBSD: timer_test.c,v 1.1.1.3.4.1 2007/05/17 00:35:42 jdc Exp $	*/
 
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: timer_test.c,v 1.36.12.3 2004/03/08 04:04:28 marka Exp */
+/* Id: timer_test.c,v 1.38 2004/03/05 04:58:40 marka Exp */
 
 #include <config.h>
 

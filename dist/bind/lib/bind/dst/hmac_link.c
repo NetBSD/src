@@ -1,8 +1,8 @@
-/*	$NetBSD: hmac_link.c,v 1.1.1.3 2005/12/21 23:15:19 christos Exp $	*/
+/*	$NetBSD: hmac_link.c,v 1.1.1.3.4.1 2007/05/17 00:39:19 jdc Exp $	*/
 
 #ifdef HMAC_MD5
 #ifndef LINT
-static const char rcsid[] = "Header: /proj/cvs/prod/bind9/lib/bind/dst/hmac_link.c,v 1.2.2.1.4.1 2005/07/28 07:43:16 marka Exp";
+static const char rcsid[] = "Header: /proj/cvs/prod/bind9/lib/bind/dst/hmac_link.c,v 1.3.164.3 2006/03/10 00:20:08 marka Exp";
 #endif
 /*
  * Portions Copyright (c) 1995-1998 by Trusted Information Systems, Inc.
@@ -21,7 +21,7 @@ static const char rcsid[] = "Header: /proj/cvs/prod/bind9/lib/bind/dst/hmac_link
  * WITH THE USE OR PERFORMANCE OF THE SOFTWARE.
  */
 
-/* 
+/*%
  * This file contains an implementation of the HMAC-MD5 algorithm.
  */
 #include "port_before.h"
@@ -48,7 +48,7 @@ static const char rcsid[] = "Header: /proj/cvs/prod/bind9/lib/bind/dst/hmac_link
 #  endif
 # endif
 # ifndef _MD5_H_
-#  define _MD5_H_ 1	/* make sure we do not include rsaref md5.h file */
+#  define _MD5_H_ 1	/*%< make sure we do not include rsaref md5.h file */
 # endif
 #endif
 
@@ -95,6 +95,9 @@ dst_hmac_md5_sign(const int mode, DST_KEY *d_key, void **context,
 	int sign_len = 0;
 	MD5_CTX *ctx = NULL;
 
+	if (d_key == NULL || d_key->dk_KEY_struct == NULL)
+		return (-1);
+
 	if (mode & SIG_MODE_INIT) 
 		ctx = (MD5_CTX *) malloc(sizeof(*ctx));
 	else if (context)
@@ -102,8 +105,6 @@ dst_hmac_md5_sign(const int mode, DST_KEY *d_key, void **context,
 	if (ctx == NULL) 
 		return (-1);
 
-	if (d_key == NULL || d_key->dk_KEY_struct == NULL)
-		return (-1);
 	key = (HMAC_Key *) d_key->dk_KEY_struct;
 
 	if (mode & SIG_MODE_INIT) {
@@ -162,14 +163,14 @@ dst_hmac_md5_verify(const int mode, DST_KEY *d_key, void **context,
 	HMAC_Key *key;
 	MD5_CTX *ctx = NULL;
 
+	if (d_key == NULL || d_key->dk_KEY_struct == NULL)
+		return (-1);
+
 	if (mode & SIG_MODE_INIT) 
 		ctx = (MD5_CTX *) malloc(sizeof(*ctx));
 	else if (context)
 		ctx = (MD5_CTX *) *context;
 	if (ctx == NULL) 
-		return (-1);
-
-	if (d_key == NULL || d_key->dk_KEY_struct == NULL)
 		return (-1);
 
 	key = (HMAC_Key *) d_key->dk_KEY_struct;
@@ -274,7 +275,7 @@ dst_buffer_to_hmac_md5(DST_KEY *dkey, const u_char *key, const int keylen)
 
 static int
 dst_hmac_md5_key_to_file_format(const DST_KEY *dkey, char *buff,
-			    const int buff_len)
+			        const int buff_len)
 {
 	char *bp;
 	int len, b_len, i, key_len;
@@ -284,14 +285,13 @@ dst_hmac_md5_key_to_file_format(const DST_KEY *dkey, char *buff,
 	if (dkey == NULL || dkey->dk_KEY_struct == NULL) 
 		return (0);
 	if (buff == NULL || buff_len <= (int) strlen(key_file_fmt_str))
-		return (-1);	/* no OR not enough space in output area */
-
+		return (-1);	/*%< no OR not enough space in output area */
 	hkey = (HMAC_Key *) dkey->dk_KEY_struct;
-	memset(buff, 0, buff_len);	/* just in case */
+	memset(buff, 0, buff_len);	/*%< just in case */
 	/* write file header */
 	sprintf(buff, key_file_fmt_str, KEY_FILE_FORMAT, KEY_HMAC_MD5, "HMAC");
 
-	bp = (char *) strchr(buff, '\0');
+	bp = buff + strlen(buff);
 	b_len = buff_len - (bp - buff);
 
 	memset(key, 0, HMAC_LEN);
@@ -336,9 +336,9 @@ dst_hmac_md5_key_from_file_format(DST_KEY *dkey, const char *buff,
 {
 	const char *p = buff, *eol;
 	u_char key[HMAC_LEN+1];	/* b64_pton needs more than 64 bytes do decode
-							 * it should probably be fixed rather than doing
-							 * this
-							 */
+				 * it should probably be fixed rather than doing
+				 * this
+				 */
 	u_char *tmp;
 	int key_len, len;
 
@@ -357,9 +357,11 @@ dst_hmac_md5_key_from_file_format(DST_KEY *dkey, const char *buff,
 		return (-4);
 	len = eol - p;
 	tmp = malloc(len + 2);
+	if (tmp == NULL)
+		return (-5);
 	memcpy(tmp, p, len);
 	*(tmp + len) = 0x0;
-	key_len = b64_pton((char *)tmp, key, HMAC_LEN+1);	/* see above */
+	key_len = b64_pton((char *)tmp, key, HMAC_LEN+1);	/*%< see above */
 	SAFE_FREE2(tmp, len + 2);
 
 	if (dst_buffer_to_hmac_md5(dkey, key, key_len) < 0) {
@@ -368,7 +370,7 @@ dst_hmac_md5_key_from_file_format(DST_KEY *dkey, const char *buff,
 	return (0);
 }
 
-/*
+/*%
  * dst_hmac_md5_to_dns_key() 
  *         function to extract hmac key from DST_KEY structure 
  * intput: 
@@ -442,7 +444,7 @@ dst_hmac_md5_generate_key(DST_KEY *key, const int nothing)
 	return (-1);
 }
 
-/*
+/*%
  * dst_hmac_md5_init()  Function to answer set up function pointers for HMAC
  *	   related functions 
  */
@@ -479,3 +481,5 @@ dst_hmac_md5_init(){
 	return (0);
 }
 #endif
+
+/*! \file */

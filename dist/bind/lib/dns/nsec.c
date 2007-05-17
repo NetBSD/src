@@ -1,7 +1,7 @@
-/*	$NetBSD: nsec.c,v 1.1.1.1 2004/05/17 23:44:51 christos Exp $	*/
+/*	$NetBSD: nsec.c,v 1.1.1.1.10.1 2007/05/17 00:40:39 jdc Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,7 +17,9 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: nsec.c,v 1.5.2.1 2004/03/08 02:07:55 marka Exp */
+/* Id: nsec.c,v 1.5.20.2 2005/04/29 00:15:59 marka Exp */
+
+/*! \file */
 
 #include <config.h>
 

@@ -1,7 +1,7 @@
-/*	$NetBSD: mr_9.h,v 1.1.1.3 2005/12/21 23:17:04 christos Exp $	*/
+/*	$NetBSD: mr_9.h,v 1.1.1.3.4.1 2007/05/17 00:41:24 jdc Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,10 +17,11 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
+/* */
 #ifndef GENERIC_MR_9_H
 #define GENERIC_MR_9_H 1
 
-/* Id: mr_9.h,v 1.21.206.1 2004/03/06 08:14:08 marka Exp */
+/* Id: mr_9.h,v 1.22.18.2 2005/04/29 00:16:36 marka Exp */
 
 typedef struct dns_rdata_mr {
 	dns_rdatacommon_t	common;

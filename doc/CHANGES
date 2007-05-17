@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.764.2.15 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.764.2.16 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -604,6 +604,7 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 		[skrll 20061229]
 	ug(4): driver for the Abit uGuru hardware system monitor,
 		contributed by Mihai Chelaru. [xtraeme 20070106]
+	bind: import 9.4.0-rc2 [christos 20070127]
 	i386, amd64: remove option COMPAT_386BSD_MBRPART from default
 		kernels.  NetBSD has not used partition ID 0x165 for many,
 		many years, and the presence of this option in INSTALL
@@ -619,6 +620,9 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 		different bootable kenrels on the iso images. Enable ACPI
 		in default INSTALL and GENERIC kernels. [bouyer 20070306]
 	ataraid(4): Add support for Via V-RAID. [garbled 20070326]
+	bind: import 9.4.0 [ghen 20070330]
+	coda: overhaul kernel module (vnode locking rules, uvm_fault
+		handling, general cleanup) [gdt 20070415]
 	wm(4): Added support for the Intel i82801H (ICH8) gigabit ethernet
 		controller.  [bouyer 20070429]
 	ipf(8): Updated to version 4.1.20. [martti 20070501]
@@ -626,8 +630,7 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 		query/control block device controllers. [bouyer 20070501]
 	envsys(4): added DRIVE type sensor. [bouyer 20070501]
 	mfi(4): added bio(4) and envsys(4) support. [bouyer 20070501]
+	bind: import 9.4.1 [christos 20070501]
 	ug(4): Driver split in three parts to support the new ACPI
 		attachment (ug* at acpi?). Patch from Mihai Chelaru. 
 		[xtraeme 20070508]
-	coda: overhaul kernel module (vnode locking rules, uvm_fault
-		handling, general cleanup) [gdt 20070415]

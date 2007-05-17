@@ -1,4 +1,4 @@
-/*	$NetBSD: quota.c,v 1.1.1.3 2005/12/21 23:17:20 christos Exp $	*/
+/*	$NetBSD: quota.c,v 1.1.1.3.4.1 2007/05/17 00:41:48 jdc Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,9 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: quota.c,v 1.11.12.5 2005/07/29 00:13:09 marka Exp */
+/* Id: quota.c,v 1.13.18.3 2005/07/27 02:44:21 marka Exp */
+
+/*! \file */
 
 #include <config.h>
 

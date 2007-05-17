@@ -1,4 +1,4 @@
-/*	$NetBSD: movefile.c,v 1.1.1.3 2005/12/21 23:15:44 christos Exp $	*/
+/*	$NetBSD: movefile.c,v 1.1.1.3.4.1 2007/05/17 00:40:07 jdc Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -35,3 +35,5 @@ isc_movefile(const char *oldname, const char *newname) {
 #else
 	static int os_port_has_isc_movefile = 1;
 #endif
+
+/*! \file */

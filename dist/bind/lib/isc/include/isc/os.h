@@ -1,7 +1,7 @@
-/*	$NetBSD: os.h,v 1.1.1.3 2005/12/21 23:17:28 christos Exp $	*/
+/*	$NetBSD: os.h,v 1.1.1.3.4.1 2007/05/17 00:42:33 jdc Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,10 +17,12 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: os.h,v 1.5.206.1 2004/03/06 08:14:45 marka Exp */
+/* Id: os.h,v 1.6.18.2 2005/04/29 00:17:00 marka Exp */
 
 #ifndef ISC_OS_H
 #define ISC_OS_H 1
+
+/*! \file */
 
 #include <isc/lang.h>
 
@@ -28,7 +30,7 @@ ISC_LANG_BEGINDECLS
 
 unsigned int
 isc_os_ncpus(void);
-/*
+/*%<
  * Return the number of CPUs available on the system, or 1 if this cannot
  * be determined.
  */

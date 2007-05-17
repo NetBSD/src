@@ -15,7 +15,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: genzone.sh,v 1.3.202.4 2004/03/08 04:04:33 marka Exp
+# Id: genzone.sh,v 1.6 2004/03/05 04:59:12 marka Exp
 
 #
 # Set up a test zone

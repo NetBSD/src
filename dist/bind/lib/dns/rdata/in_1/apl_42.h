@@ -1,7 +1,7 @@
-/*	$NetBSD: apl_42.h,v 1.3 2005/12/22 00:26:24 christos Exp $	*/
+/*	$NetBSD: apl_42.h,v 1.3.4.1 2007/05/17 00:41:37 jdc Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,10 +17,11 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
+/* */
 #ifndef IN_1_APL_42_H
 #define IN_1_APL_42_H 1
 
-/* Id: apl_42.h,v 1.1.202.3 2004/03/08 09:04:44 marka Exp */
+/* Id: apl_42.h,v 1.2.18.2 2005/04/29 00:16:42 marka Exp */
 
 typedef struct dns_rdata_apl_ent {
 	isc_boolean_t	negative;

@@ -1,4 +1,4 @@
-/*	$NetBSD: proforma.c,v 1.1.1.3 2005/12/21 23:17:05 christos Exp $	*/
+/*	$NetBSD: proforma.c,v 1.1.1.3.4.1 2007/05/17 00:41:27 jdc Exp $	*/
 
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: proforma.c,v 1.30.12.4 2004/03/08 09:04:41 marka Exp */
+/* Id: proforma.c,v 1.34 2004/03/05 05:10:17 marka Exp */
 
 #ifndef RDATA_GENERIC_#_#_C
 #define RDATA_GENERIC_#_#_C

@@ -1,6 +1,6 @@
-.\"	$NetBSD: named.conf.5,v 1.1.1.2 2005/12/21 23:07:59 christos Exp $
+.\"	$NetBSD: named.conf.5,v 1.1.1.2.4.1 2007/05/17 00:35:12 jdc Exp $
 .\"
-.\" Copyright (C) 2004, 2005 Internet Systems Consortium, Inc. ("ISC")
+.\" Copyright (C) 2004-2007 Internet Systems Consortium, Inc. ("ISC")
 .\" 
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -14,15 +14,18 @@
 .\" OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 .\" PERFORMANCE OF THIS SOFTWARE.
 .\"
-.\" Id: named.conf.5,v 1.1.4.6 2005/10/13 02:33:47 marka Exp
+.\" Id: named.conf.5,v 1.1.2.23 2007/01/30 00:23:44 marka Exp
 .\"
 .hy 0
 .ad l
-.\" ** You probably do not want to edit this file directly **
-.\" It was generated using the DocBook XSL Stylesheets (version 1.69.1).
-.\" Instead of manually editing it, you probably should edit the DocBook XML
-.\" source for it and then use the DocBook XSL Stylesheets to regenerate it.
-.TH "\\FINAMED.CONF\\FR" "5" "Aug 13, 2004" "BIND9" "BIND9"
+.\"     Title: \fInamed.conf\fR
+.\"    Author: 
+.\" Generator: DocBook XSL Stylesheets v1.71.1 <http://docbook.sf.net/>
+.\"      Date: Aug 13, 2004
+.\"    Manual: BIND9
+.\"    Source: BIND9
+.\"
+.TH "\fINAMED.CONF\fR" "5" "Aug 13, 2004" "BIND9" "BIND9"
 .\" disable hyphenation
 .nh
 .\" disable justification (adjust text to left margin only)
@@ -45,31 +48,40 @@ C++ style: // to end of line
 Unix style: # to end of line
 .SH "ACL"
 .sp
+.RS 4
 .nf
 acl \fIstring\fR { \fIaddress_match_element\fR; ... };
 .fi
+.RE
 .SH "KEY"
 .sp
+.RS 4
 .nf
 key \fIdomain_name\fR {
 	algorithm \fIstring\fR;
 	secret \fIstring\fR;
 };
 .fi
+.RE
 .SH "MASTERS"
 .sp
+.RS 4
 .nf
 masters \fIstring\fR [ port \fIinteger\fR ] {
 	( \fImasters\fR | \fIipv4_address\fR [port \fIinteger\fR] |
 	\fIipv6_address\fR [port \fIinteger\fR] ) [ key \fIstring\fR ]; ...
 };
 .fi
+.RE
 .SH "SERVER"
 .sp
+.RS 4
 .nf
-server ( \fIipv4_address\fR | \fIipv6_address\fR ) {
+server ( \fIipv4_address\fR\fI[/prefixlen]\fR | \fIipv6_address\fR\fI[/prefixlen]\fR ) {
 	bogus \fIboolean\fR;
 	edns \fIboolean\fR;
+	edns\-udp\-size \fIinteger\fR;
+	max\-udp\-size \fIinteger\fR;
 	provide\-ixfr \fIboolean\fR;
 	request\-ixfr \fIboolean\fR;
 	keys \fIserver_key\fR;
@@ -82,15 +94,19 @@ server ( \fIipv4_address\fR | \fIipv6_address\fR ) {
 	support\-ixfr \fIboolean\fR; // obsolete
 };
 .fi
+.RE
 .SH "TRUSTED\-KEYS"
 .sp
+.RS 4
 .nf
 trusted\-keys {
 	\fIdomain_name\fR \fIflags\fR \fIprotocol\fR \fIalgorithm\fR \fIkey\fR; ... 
 };
 .fi
+.RE
 .SH "CONTROLS"
 .sp
+.RS 4
 .nf
 controls {
 	inet ( \fIipv4_address\fR | \fIipv6_address\fR | * )
@@ -100,8 +116,10 @@ controls {
 	unix \fIunsupported\fR; // not implemented
 };
 .fi
+.RE
 .SH "LOGGING"
 .sp
+.RS 4
 .nf
 logging {
 	channel \fIstring\fR {
@@ -117,8 +135,10 @@ logging {
 	category \fIstring\fR { \fIstring\fR; ... };
 };
 .fi
+.RE
 .SH "LWRES"
 .sp
+.RS 4
 .nf
 lwres {
 	listen\-on [ port \fIinteger\fR ] {
@@ -129,8 +149,10 @@ lwres {
 	ndots \fIinteger\fR;
 };
 .fi
+.RE
 .SH "OPTIONS"
 .sp
+.RS 4
 .nf
 options {
 	avoid\-v4\-udp\-ports { \fIport\fR; ... };
@@ -186,8 +208,8 @@ options {
 	rfc2308\-type1 \fIboolean\fR; // not yet implemented
 	additional\-from\-auth \fIboolean\fR;
 	additional\-from\-cache \fIboolean\fR;
-	query\-source \fIquerysource4\fR;
-	query\-source\-v6 \fIquerysource6\fR;
+	query\-source ( ( \fIipv4_address\fR | * ) | [ address ( \fIipv4_address\fR | * ) ] ) [ port ( \fIinteger\fR | * ) ];
+	query\-source\-v6 ( ( \fIipv6_address\fR | * ) | [ address ( \fIipv6_address\fR | * ) ] ) [ port ( \fIinteger\fR | * ) ];
 	cleaning\-interval \fIinteger\fR;
 	min\-roots \fIinteger\fR; // not implemented
 	lame\-ttl \fIinteger\fR;
@@ -195,30 +217,48 @@ options {
 	max\-cache\-ttl \fIinteger\fR;
 	transfer\-format ( many\-answers | one\-answer );
 	max\-cache\-size \fIsize_no_default\fR;
+	max\-acache\-size \fIsize_no_default\fR;
+	clients\-per\-query \fInumber\fR;
+	max\-clients\-per\-query \fInumber\fR;
 	check\-names ( master | slave | response )
 		( fail | warn | ignore );
-	cache\-file \fIquoted_string\fR;
+	check\-mx ( fail | warn | ignore );
+	check\-integrity \fIboolean\fR;
+	check\-mx\-cname ( fail | warn | ignore );
+	check\-srv\-cname ( fail | warn | ignore );
+	cache\-file \fIquoted_string\fR; // test option
 	suppress\-initial\-notify \fIboolean\fR; // not yet implemented
 	preferred\-glue \fIstring\fR;
 	dual\-stack\-servers [ port \fIinteger\fR ] {
 		( \fIquoted_string\fR [port \fIinteger\fR] |
 		\fIipv4_address\fR [port \fIinteger\fR] |
 		\fIipv6_address\fR [port \fIinteger\fR] ); ...
-	}
+	};
 	edns\-udp\-size \fIinteger\fR;
+	max\-udp\-size \fIinteger\fR;
 	root\-delegation\-only [ exclude { \fIquoted_string\fR; ... } ];
 	disable\-algorithms \fIstring\fR { \fIstring\fR; ... };
 	dnssec\-enable \fIboolean\fR;
+	dnssec\-validation \fIboolean\fR;
 	dnssec\-lookaside \fIstring\fR trust\-anchor \fIstring\fR;
 	dnssec\-must\-be\-secure \fIstring\fR \fIboolean\fR;
+	dnssec\-accept\-expired \fIboolean\fR;
+	empty\-server \fIstring\fR;
+	empty\-contact \fIstring\fR;
+	empty\-zones\-enable \fIboolean\fR;
+	disable\-empty\-zone \fIstring\fR;
 	dialup \fIdialuptype\fR;
 	ixfr\-from\-differences \fIixfrdiff\fR;
 	allow\-query { \fIaddress_match_element\fR; ... };
+	allow\-query\-cache { \fIaddress_match_element\fR; ... };
 	allow\-transfer { \fIaddress_match_element\fR; ... };
+	allow\-update { \fIaddress_match_element\fR; ... };
 	allow\-update\-forwarding { \fIaddress_match_element\fR; ... };
+	update\-check\-ksk \fIboolean\fR;
 	notify \fInotifytype\fR;
 	notify\-source ( \fIipv4_address\fR | * ) [ port ( \fIinteger\fR | * ) ];
 	notify\-source\-v6 ( \fIipv6_address\fR | * ) [ port ( \fIinteger\fR | * ) ];
+	notify\-delay \fIseconds\fR;
 	also\-notify [ port \fIinteger\fR ] { ( \fIipv4_address\fR | \fIipv6_address\fR )
 		[ port \fIinteger\fR ]; ... };
 	allow\-notify { \fIaddress_match_element\fR; ... };
@@ -248,6 +288,8 @@ options {
 	use\-alt\-transfer\-source \fIboolean\fR;
 	zone\-statistics \fIboolean\fR;
 	key\-directory \fIquoted_string\fR;
+	zero\-no\-soa\-ttl \fIboolean\fR;
+	zero\-no\-soa\-ttl\-cache \fIboolean\fR;
 	allow\-v6\-synthesis { \fIaddress_match_element\fR; ... }; // obsolete
 	deallocate\-on\-exit \fIboolean\fR; // obsolete
 	fake\-iquery \fIboolean\fR; // obsolete
@@ -262,8 +304,10 @@ options {
 	use\-id\-pool \fIboolean\fR; // obsolete
 };
 .fi
+.RE
 .SH "VIEW"
 .sp
+.RS 4
 .nf
 view \fIstring\fR \fIoptional_class\fR {
 	match\-clients { \fIaddress_match_element\fR; ... };
@@ -276,7 +320,7 @@ view \fIstring\fR \fIoptional_class\fR {
 	zone \fIstring\fR \fIoptional_class\fR {
 		...
 	};
-	server ( \fIipv4_address\fR | \fIipv6_address\fR ) {
+	server ( \fIipv4_address\fR\fI[/prefixlen]\fR | \fIipv6_address\fR\fI[/prefixlen]\fR ) {
 		...
 	};
 	trusted\-keys {
@@ -297,8 +341,8 @@ view \fIstring\fR \fIoptional_class\fR {
 	rfc2308\-type1 \fIboolean\fR; // not yet implemented
 	additional\-from\-auth \fIboolean\fR;
 	additional\-from\-cache \fIboolean\fR;
-	query\-source \fIquerysource4\fR;
-	query\-source\-v6 \fIquerysource6\fR;
+	query\-source ( ( \fIipv4_address\fR | * ) | [ address ( \fIipv4_address\fR | * ) ] ) [ port ( \fIinteger\fR | * ) ];
+	query\-source\-v6 ( ( \fIipv6_address\fR | * ) | [ address ( \fIipv6_address\fR | * ) ] ) [ port ( \fIinteger\fR | * ) ];
 	cleaning\-interval \fIinteger\fR;
 	min\-roots \fIinteger\fR; // not implemented
 	lame\-ttl \fIinteger\fR;
@@ -306,9 +350,16 @@ view \fIstring\fR \fIoptional_class\fR {
 	max\-cache\-ttl \fIinteger\fR;
 	transfer\-format ( many\-answers | one\-answer );
 	max\-cache\-size \fIsize_no_default\fR;
+	max\-acache\-size \fIsize_no_default\fR;
+	clients\-per\-query \fInumber\fR;
+	max\-clients\-per\-query \fInumber\fR;
 	check\-names ( master | slave | response )
 		( fail | warn | ignore );
-	cache\-file \fIquoted_string\fR;
+	check\-mx ( fail | warn | ignore );
+	check\-integrity \fIboolean\fR;
+	check\-mx\-cname ( fail | warn | ignore );
+	check\-srv\-cname ( fail | warn | ignore );
+	cache\-file \fIquoted_string\fR; // test option
 	suppress\-initial\-notify \fIboolean\fR; // not yet implemented
 	preferred\-glue \fIstring\fR;
 	dual\-stack\-servers [ port \fIinteger\fR ] {
@@ -317,19 +368,30 @@ view \fIstring\fR \fIoptional_class\fR {
 		\fIipv6_address\fR [port \fIinteger\fR] ); ...
 	};
 	edns\-udp\-size \fIinteger\fR;
+	max\-udp\-size \fIinteger\fR;
 	root\-delegation\-only [ exclude { \fIquoted_string\fR; ... } ];
 	disable\-algorithms \fIstring\fR { \fIstring\fR; ... };
 	dnssec\-enable \fIboolean\fR;
+	dnssec\-validation \fIboolean\fR;
 	dnssec\-lookaside \fIstring\fR trust\-anchor \fIstring\fR;
 	dnssec\-must\-be\-secure \fIstring\fR \fIboolean\fR;
+	dnssec\-accept\-expired \fIboolean\fR;
+	empty\-server \fIstring\fR;
+	empty\-contact \fIstring\fR;
+	empty\-zones\-enable \fIboolean\fR;
+	disable\-empty\-zone \fIstring\fR;
 	dialup \fIdialuptype\fR;
 	ixfr\-from\-differences \fIixfrdiff\fR;
 	allow\-query { \fIaddress_match_element\fR; ... };
+	allow\-query\-cache { \fIaddress_match_element\fR; ... };
 	allow\-transfer { \fIaddress_match_element\fR; ... };
+	allow\-update { \fIaddress_match_element\fR; ... };
 	allow\-update\-forwarding { \fIaddress_match_element\fR; ... };
+	update\-check\-ksk \fIboolean\fR;
 	notify \fInotifytype\fR;
 	notify\-source ( \fIipv4_address\fR | * ) [ port ( \fIinteger\fR | * ) ];
 	notify\-source\-v6 ( \fIipv6_address\fR | * ) [ port ( \fIinteger\fR | * ) ];
+	notify\-delay \fIseconds\fR;
 	also\-notify [ port \fIinteger\fR ] { ( \fIipv4_address\fR | \fIipv6_address\fR )
 		[ port \fIinteger\fR ]; ... };
 	allow\-notify { \fIaddress_match_element\fR; ... };
@@ -359,14 +421,18 @@ view \fIstring\fR \fIoptional_class\fR {
 	use\-alt\-transfer\-source \fIboolean\fR;
 	zone\-statistics \fIboolean\fR;
 	key\-directory \fIquoted_string\fR;
+	zero\-no\-soa\-ttl \fIboolean\fR;
+	zero\-no\-soa\-ttl\-cache \fIboolean\fR;
 	allow\-v6\-synthesis { \fIaddress_match_element\fR; ... }; // obsolete
 	fetch\-glue \fIboolean\fR; // obsolete
 	maintain\-ixfr\-base \fIboolean\fR; // obsolete
 	max\-ixfr\-log\-size \fIsize\fR; // obsolete
 };
 .fi
+.RE
 .SH "ZONE"
 .sp
+.RS 4
 .nf
 zone \fIstring\fR \fIoptional_class\fR {
 	type ( master | slave | stub | hint |
@@ -380,8 +446,14 @@ zone \fIstring\fR \fIoptional_class\fR {
 	database \fIstring\fR;
 	delegation\-only \fIboolean\fR;
 	check\-names ( fail | warn | ignore );
+	check\-mx ( fail | warn | ignore );
+	check\-integrity \fIboolean\fR;
+	check\-mx\-cname ( fail | warn | ignore );
+	check\-srv\-cname ( fail | warn | ignore );
 	dialup \fIdialuptype\fR;
 	ixfr\-from\-differences \fIboolean\fR;
+	journal \fIquoted_string\fR;
+	zero\-no\-soa\-ttl \fIboolean\fR;
 	allow\-query { \fIaddress_match_element\fR; ... };
 	allow\-transfer { \fIaddress_match_element\fR; ... };
 	allow\-update { \fIaddress_match_element\fR; ... };
@@ -391,9 +463,11 @@ zone \fIstring\fR \fIoptional_class\fR {
 		( name | subdomain | wildcard | self ) \fIstring\fR
 		\fIrrtypelist\fR; ...
 	};
+	update\-check\-ksk \fIboolean\fR;
 	notify \fInotifytype\fR;
 	notify\-source ( \fIipv4_address\fR | * ) [ port ( \fIinteger\fR | * ) ];
 	notify\-source\-v6 ( \fIipv6_address\fR | * ) [ port ( \fIinteger\fR | * ) ];
+	notify\-delay \fIseconds\fR;
 	also\-notify [ port \fIinteger\fR ] { ( \fIipv4_address\fR | \fIipv6_address\fR )
 		[ port \fIinteger\fR ]; ... };
 	allow\-notify { \fIaddress_match_element\fR; ... };
@@ -430,6 +504,7 @@ zone \fIstring\fR \fIoptional_class\fR {
 	pubkey \fIinteger\fR \fIinteger\fR \fIinteger\fR \fIquoted_string\fR; // obsolete
 };
 .fi
+.RE
 .SH "FILES"
 .PP
 \fI/etc/named.conf\fR
@@ -437,4 +512,7 @@ zone \fIstring\fR \fIoptional_class\fR {
 .PP
 \fBnamed\fR(8),
 \fBrndc\fR(8),
-\fBBIND 9 Adminstrators Reference Manual\fR().
+\fBBIND 9 Administrator Reference Manual\fR().
+.SH "COPYRIGHT"
+Copyright \(co 2004\-2007 Internet Systems Consortium, Inc. ("ISC")
+.br

@@ -1,7 +1,7 @@
-/*	$NetBSD: dst_openssl.h,v 1.1.1.1 2005/12/21 23:16:05 christos Exp $	*/
+/*	$NetBSD: dst_openssl.h,v 1.1.1.1.6.1 2007/05/17 00:40:35 jdc Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: dst_openssl.h,v 1.1.2.1 2004/12/09 04:07:17 marka Exp */
+/* Id: dst_openssl.h,v 1.1.4.3 2005/04/29 00:15:52 marka Exp */
 
 #ifndef DST_OPENSSL_H
 #define DST_OPENSSL_H 1
@@ -33,3 +33,4 @@ dst__openssl_toresult(isc_result_t fallback);
 ISC_LANG_ENDDECLS
 
 #endif /* DST_OPENSSL_H */
+/*! \file */

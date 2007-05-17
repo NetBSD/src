@@ -1,4 +1,4 @@
-/*	$NetBSD: hesiod.h,v 1.1.1.3 2005/12/21 23:15:20 christos Exp $	*/
+/*	$NetBSD: hesiod.h,v 1.1.1.3.4.1 2007/05/17 00:39:22 jdc Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -17,12 +17,13 @@
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/*
+/*! \file 
+ * \brief
  * This file is primarily maintained by <tytso@mit.edu> and <ghudson@mit.edu>.
  */
 
 /*
- * Id: hesiod.h,v 1.1.2.1.4.1 2004/03/09 08:33:29 marka Exp
+ * Id: hesiod.h,v 1.3.18.1 2005/04/27 05:00:49 sra Exp
  */
 
 #ifndef _HESIOD_H_INCLUDED

@@ -1,7 +1,7 @@
-/*	$NetBSD: lwresd.h,v 1.1.1.3 2005/12/21 23:08:10 christos Exp $	*/
+/*	$NetBSD: lwresd.h,v 1.1.1.3.4.1 2007/05/17 00:35:19 jdc Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,10 +17,12 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: lwresd.h,v 1.12.208.1 2004/03/06 10:21:25 marka Exp */
+/* Id: lwresd.h,v 1.13.18.4 2006/03/02 00:37:21 marka Exp */
 
 #ifndef NAMED_LWRESD_H
 #define NAMED_LWRESD_H 1
+
+/*! \file */
 
 #include <isc/types.h>
 #include <isc/sockaddr.h>
@@ -54,17 +56,17 @@ struct ns_lwreslistener {
 	ISC_LINK(ns_lwreslistener_t) link;
 };
 
-/*
+/*%
  * Configure lwresd.
  */
 isc_result_t
-ns_lwresd_configure(isc_mem_t *mctx, cfg_obj_t *config);
+ns_lwresd_configure(isc_mem_t *mctx, const cfg_obj_t *config);
 
 isc_result_t
 ns_lwresd_parseeresolvconf(isc_mem_t *mctx, cfg_parser_t *pctx,
 			   cfg_obj_t **configp);
 
-/*
+/*%
  * Trigger shutdown.
  */
 void
@@ -73,28 +75,36 @@ ns_lwresd_shutdown(void);
 /*
  * Manager functions
  */
+/*% create manager */
 isc_result_t
-ns_lwdmanager_create(isc_mem_t *mctx, cfg_obj_t *lwres, ns_lwresd_t **lwresdp);
+ns_lwdmanager_create(isc_mem_t *mctx, const cfg_obj_t *lwres,
+		      ns_lwresd_t **lwresdp);
 
+/*% attach to manager */
 void
 ns_lwdmanager_attach(ns_lwresd_t *source, ns_lwresd_t **targetp);
 
+/*% detach from manager */
 void
 ns_lwdmanager_detach(ns_lwresd_t **lwresdp);
 
 /*
  * Listener functions
  */
+/*% attach to listener */
 void
 ns_lwreslistener_attach(ns_lwreslistener_t *source,
 			ns_lwreslistener_t **targetp);
 
+/*% detach from lister */
 void
 ns_lwreslistener_detach(ns_lwreslistener_t **listenerp);
 
+/*% link client manager */
 void
 ns_lwreslistener_unlinkcm(ns_lwreslistener_t *listener, ns_lwdclientmgr_t *cm);
 
+/*% unlink client manager */
 void
 ns_lwreslistener_linkcm(ns_lwreslistener_t *listener, ns_lwdclientmgr_t *cm);
 

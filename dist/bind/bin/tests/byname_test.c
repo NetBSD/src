@@ -1,4 +1,4 @@
-/*	$NetBSD: byname_test.c,v 1.1.1.3 2005/12/21 23:08:19 christos Exp $	*/
+/*	$NetBSD: byname_test.c,v 1.1.1.3.4.1 2007/05/17 00:35:33 jdc Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
@@ -17,9 +17,10 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: byname_test.c,v 1.25.206.3 2005/06/26 23:17:52 marka Exp */
+/* Id: byname_test.c,v 1.26.18.3 2005/06/23 23:51:47 marka Exp */
 
-/*
+/*! \file
+ * \author
  * Principal Author: Bob Halley
  */
 
@@ -126,7 +127,7 @@ do_find(isc_boolean_t want_event) {
 	dns_fixedname_init(&target);
 	result = dns_adb_createfind(view->adb, task, adb_callback, NULL,
 				    dns_fixedname_name(&name),
-				    dns_rootname, options, 0,
+				    dns_rootname, 0, options, 0,
 				    dns_fixedname_name(&target), 0,
 				    &find);
 	if (result == ISC_R_SUCCESS) {

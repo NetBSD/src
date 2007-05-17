@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_test.c,v 1.1.1.3 2005/12/21 23:08:20 christos Exp $	*/
+/*	$NetBSD: adb_test.c,v 1.1.1.3.4.1 2007/05/17 00:35:32 jdc Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,9 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: adb_test.c,v 1.62.206.3 2005/06/26 23:17:52 marka Exp */
+/* Id: adb_test.c,v 1.63.18.3 2005/06/23 23:51:47 marka Exp */
+
+/*! \file */
 
 #include <config.h>
 
@@ -263,7 +265,7 @@ lookup(const char *target) {
 	options |= DNS_ADBFIND_HINTOK;
 	options |= DNS_ADBFIND_GLUEOK;
 	result = dns_adb_createfind(adb, t2, lookup_callback, client,
-				    &client->name, dns_rootname, options,
+				    &client->name, dns_rootname, 0, options,
 				    now, NULL, view->dstport, &client->find);
 #if 0
 	check_result(result, "dns_adb_createfind()");

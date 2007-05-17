@@ -1,7 +1,7 @@
-/*	$NetBSD: mx_15.h,v 1.1.1.3 2005/12/21 23:17:04 christos Exp $	*/
+/*	$NetBSD: mx_15.h,v 1.1.1.3.4.1 2007/05/17 00:41:24 jdc Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,10 +17,11 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
+/* */
 #ifndef GENERIC_MX_15_H
 #define GENERIC_MX_15_H 1
 
-/* Id: mx_15.h,v 1.24.206.1 2004/03/06 08:14:09 marka Exp */
+/* Id: mx_15.h,v 1.25.18.2 2005/04/29 00:16:36 marka Exp */
 
 typedef struct dns_rdata_mx {
 	dns_rdatacommon_t	common;

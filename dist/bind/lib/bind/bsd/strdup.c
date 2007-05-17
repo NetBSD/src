@@ -1,4 +1,4 @@
-/*	$NetBSD: strdup.c,v 1.1.1.1 2004/05/17 23:44:40 christos Exp $	*/
+/*	$NetBSD: strdup.c,v 1.1.1.1.10.1 2007/05/17 00:39:12 jdc Exp $	*/
 
 #include "port_before.h"
 
@@ -18,3 +18,5 @@ strdup(const char *src) {
 	return (dst);
 }
 #endif
+
+/*! \file */

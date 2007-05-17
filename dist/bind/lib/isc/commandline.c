@@ -1,7 +1,7 @@
-/*	$NetBSD: commandline.c,v 1.1.1.3 2005/12/21 23:17:13 christos Exp $	*/
+/*	$NetBSD: commandline.c,v 1.1.1.3.4.1 2007/05/17 00:41:43 jdc Exp $	*/
 
 /*
- * Portions Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -50,9 +50,9 @@
  * SUCH DAMAGE.
  */
 
-/* Id: commandline.c,v 1.15.206.1 2004/03/06 08:14:28 marka Exp */
+/* Id: commandline.c,v 1.16.18.2 2005/04/29 00:16:45 marka Exp */
 
-/*
+/*! \file
  * This file was adapted from the NetBSD project's source tree, RCS ID:
  *    NetBSD: getopt.c,v 1.15 1999/09/20 04:39:37 lukem Exp
  *
@@ -61,8 +61,8 @@
  */
 
 /*
- * Principal Authors: Computer Systems Research Group at UC Berkeley
- * Principal ISC caretaker: DCL
+ * \author Principal Authors: Computer Systems Research Group at UC Berkeley
+ * \author Principal ISC caretaker: DCL
  */
 
 #include <config.h>
@@ -74,17 +74,17 @@
 #include <isc/string.h>
 #include <isc/util.h>
 
-/* Index into parent argv vector. */
+/*% Index into parent argv vector. */
 LIBISC_EXTERNAL_DATA int isc_commandline_index = 1;
-/* Character checked for validity. */
+/*% Character checked for validity. */
 LIBISC_EXTERNAL_DATA int isc_commandline_option;
-/* Argument associated with option. */
+/*% Argument associated with option. */
 LIBISC_EXTERNAL_DATA char *isc_commandline_argument;
-/* For printing error messages. */
+/*% For printing error messages. */
 LIBISC_EXTERNAL_DATA char *isc_commandline_progname;
-/* Print error messages. */
+/*% Print error messages. */
 LIBISC_EXTERNAL_DATA isc_boolean_t isc_commandline_errprint = ISC_TRUE;
-/* Reset processing. */
+/*% Reset processing. */
 LIBISC_EXTERNAL_DATA isc_boolean_t isc_commandline_reset = ISC_TRUE;
 
 static char endopt = '\0';
@@ -93,7 +93,7 @@ static char endopt = '\0';
 #define	BADARG	':'
 #define ENDOPT  &endopt
 
-/*
+/*!
  * getopt --
  *	Parse argc/argv argument vector.
  */

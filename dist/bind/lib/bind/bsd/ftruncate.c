@@ -1,10 +1,11 @@
-/*	$NetBSD: ftruncate.c,v 1.1.1.1 2004/05/17 23:44:40 christos Exp $	*/
+/*	$NetBSD: ftruncate.c,v 1.1.1.1.10.1 2007/05/17 00:39:04 jdc Exp $	*/
 
 #ifndef LINT
-static const char rcsid[] = "Id: ftruncate.c,v 1.1 2001/03/29 06:30:32 marka Exp";
+static const char rcsid[] = "Id: ftruncate.c,v 1.1.352.3 2005/06/22 22:05:45 marka Exp";
 #endif
 
-/*
+/*! \file
+ * \brief
  * ftruncate - set file size, BSD Style
  *
  * shortens or enlarges the file as neeeded

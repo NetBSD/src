@@ -1,4 +1,4 @@
-/*	$NetBSD: platform.h,v 1.3 2005/12/22 00:19:00 christos Exp $	*/
+/*	$NetBSD: platform.h,v 1.3.4.1 2007/05/17 00:43:56 jdc Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,9 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: platform.h.in,v 1.12.2.1.10.5 2005/06/08 02:08:32 marka Exp */
+/* Id: platform.h.in,v 1.14.18.5 2005/06/08 02:07:59 marka Exp */
+
+/*! \file */
 
 #ifndef LWRES_PLATFORM_H
 #define LWRES_PLATFORM_H 1
@@ -98,7 +100,7 @@
 /*! \brief
  * Define if this system needs strtoul.
  */
-#undef ISC_PLATFORM_NEEDSTRTOUL
+#undef LWRES_PLATFORM_NEEDSTRTOUL
 
 #ifndef LWRES_PLATFORM_USEDECLSPEC
 #define LIBLWRES_EXTERNAL_DATA
@@ -109,5 +111,12 @@
 #define LIBLWRES_EXTERNAL_DATA __declspec(dllimport)
 #endif
 #endif
+
+/*
+ * Tell Emacs to use C mode on this file.
+ * Local Variables:
+ * mode: c
+ * End:
+ */
 
 #endif /* LWRES_PLATFORM_H */

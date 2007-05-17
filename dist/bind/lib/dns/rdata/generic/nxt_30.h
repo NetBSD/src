@@ -1,7 +1,7 @@
-/*	$NetBSD: nxt_30.h,v 1.1.1.3 2005/12/21 23:17:05 christos Exp $	*/
+/*	$NetBSD: nxt_30.h,v 1.1.1.3.4.1 2007/05/17 00:41:26 jdc Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -20,9 +20,10 @@
 #ifndef GENERIC_NXT_30_H
 #define GENERIC_NXT_30_H 1
 
-/* Id: nxt_30.h,v 1.18.12.3 2004/03/08 09:04:41 marka Exp */
+/* Id: nxt_30.h,v 1.21.18.2 2005/04/29 00:16:38 marka Exp */
 
-/* RFC 2535 */
+/*!
+ *  \brief RFC2535 */
 
 typedef struct dns_rdata_nxt {
 	dns_rdatacommon_t	common;

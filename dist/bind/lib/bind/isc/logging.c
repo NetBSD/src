@@ -1,4 +1,4 @@
-/*	$NetBSD: logging.c,v 1.1.1.3 2005/12/21 23:15:43 christos Exp $	*/
+/*	$NetBSD: logging.c,v 1.1.1.3.4.1 2007/05/17 00:40:06 jdc Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -18,7 +18,7 @@
  */
 
 #if !defined(LINT) && !defined(CODECENTER)
-static const char rcsid[] = "Id: logging.c,v 1.3.2.1.4.2 2004/03/17 01:49:42 marka Exp";
+static const char rcsid[] = "Id: logging.c,v 1.6.18.1 2005/04/27 05:01:07 sra Exp";
 #endif /* not lint */
 
 #include "port_before.h"
@@ -260,7 +260,7 @@ log_check(log_context lc, int category, int level) {
 		return (0);
 
 	if (category < 0 || category > lc->num_categories)
-		category = 0;		/* use default */
+		category = 0;		/*%< use default */
 	lcl = lc->categories[category];
 	if (lcl == NULL) {
 		category = 0;
@@ -304,7 +304,7 @@ log_vwrite(log_context lc, int category, int level, const char *format,
 		return;
 
 	if (category < 0 || category > lc->num_categories)
-		category = 0;		/* use default */
+		category = 0;		/*%< use default */
 	original_category = category;
 	lcl = lc->categories[category];
 	if (lcl == NULL) {
@@ -443,7 +443,7 @@ log_write(log_context lc, int category, int level, const char *format, ...) {
 	va_end(args);
 }
 
-/*
+/*%
  * Functions to create, set, or destroy contexts
  */
 
@@ -720,3 +720,5 @@ log_free_channel(log_channel chan) {
 	}
 	return (0);
 }
+
+/*! \file */
