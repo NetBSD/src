@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.2.10.1 2007/05/17 00:43:51 jdc Exp $
+#	$NetBSD: Makefile.inc,v 1.2.10.2 2007/05/17 21:25:17 jdc Exp $
 
 # net sources
 .PATH: ${.CURDIR}/resolv

@@ -1,4 +1,4 @@
-/*	$NetBSD: getnetent.c,v 1.16 2004/05/08 18:52:15 kleink Exp $	*/
+/*	$NetBSD: getnetent.c,v 1.16.10.1 2007/05/17 21:25:16 jdc Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -44,7 +44,7 @@
 static char sccsid[] = "@(#)getnetent.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: getnetent.c,v 8.4 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: getnetent.c,v 1.16 2004/05/08 18:52:15 kleink Exp $");
+__RCSID("$NetBSD: getnetent.c,v 1.16.10.1 2007/05/17 21:25:16 jdc Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 

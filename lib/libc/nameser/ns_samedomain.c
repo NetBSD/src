@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_samedomain.c,v 1.2.10.1 2007/05/17 00:43:51 jdc Exp $	*/
+/*	$NetBSD: ns_samedomain.c,v 1.2.10.2 2007/05/17 21:25:15 jdc Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -22,7 +22,7 @@
 #ifdef notdef
 static const char rcsid[] = "Id: ns_samedomain.c,v 1.5.18.1 2005/04/27 05:01:09 sra Exp";
 #else
-__RCSID("$NetBSD: ns_samedomain.c,v 1.2.10.1 2007/05/17 00:43:51 jdc Exp $");
+__RCSID("$NetBSD: ns_samedomain.c,v 1.2.10.2 2007/05/17 21:25:15 jdc Exp $");
 #endif
 #endif
 

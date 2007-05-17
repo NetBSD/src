@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_ttl.c,v 1.3.2.1 2007/05/17 00:43:51 jdc Exp $	*/
+/*	$NetBSD: ns_ttl.c,v 1.3.2.2 2007/05/17 21:25:16 jdc Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -22,7 +22,7 @@
 #ifdef notdef
 static const char rcsid[] = "Id: ns_ttl.c,v 1.2.18.2 2005/07/28 07:38:10 marka Exp";
 #else
-__RCSID("$NetBSD: ns_ttl.c,v 1.3.2.1 2007/05/17 00:43:51 jdc Exp $");
+__RCSID("$NetBSD: ns_ttl.c,v 1.3.2.2 2007/05/17 21:25:16 jdc Exp $");
 #endif
 #endif
 
