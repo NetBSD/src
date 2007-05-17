@@ -1,4 +1,4 @@
-/*	$NetBSD: rot13fs.c,v 1.6 2007/04/24 21:38:59 pooka Exp $	*/
+/*	$NetBSD: rot13fs.c,v 1.7 2007/05/17 14:13:05 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -83,7 +83,6 @@ main(int argc, char *argv[])
 	struct puffs_ops *pops;
 	struct puffs_pathobj *po_root;
 	struct puffs_node *pn_root;
-	struct statvfs svfsb;
 	struct stat sb;
 	mntoptparse_t mp;
 	int mntflags, pflags, lflags;
@@ -119,6 +118,11 @@ main(int argc, char *argv[])
 	if (argc != 2)
 		usage();
 
+	if (lstat(argv[0], &sb) == -1)
+		err(1, "stat %s", argv[0]);
+	if ((sb.st_mode & S_IFDIR) == 0)
+		errx(1, "%s is not a directory", argv[0]);
+
 	PUFFSOP_INIT(pops);
 
 	PUFFSOP_SET(pops, puffs_null, fs, statvfs);
@@ -144,12 +148,8 @@ main(int argc, char *argv[])
 	PUFFSOP_SET(pops, puffs_null, node, readlink);
 	PUFFSOP_SET(pops, puffs_null, node, reclaim);
 
-	if ((pu = puffs_mount(pops, argv[1], mntflags, "rot13", NULL,
-	    pflags)) == NULL)
+	if ((pu = puffs_init(pops, "rot13", NULL, pflags)) == NULL)
 		err(1, "mount");
-
-	if (statvfs(argv[0], &svfsb) == -1)
-		err(1, "statvfs %s", argv[0]);
 
 	pn_root = puffs_pn_new(pu, NULL);
 	if (pn_root == NULL)
@@ -161,14 +161,9 @@ main(int argc, char *argv[])
 		err(1, "getrootpathobj");
 	po_root->po_path = argv[0];
 	po_root->po_len = strlen(argv[0]);
+	puffs_stat2vattr(&pn_root->pn_va, &sb);
 
 	puffs_set_namemod(pu, rot13path);
-
-	if (lstat(argv[0], &sb) == -1)
-		err(1, "stat %s", argv[0]);
-	if ((sb.st_mode & S_IFDIR) == 0)
-		errx(1, "%s is not a directory", argv[0]);
-	puffs_stat2vattr(&pn_root->pn_va, &sb);
 
 	/* initialize rot13 tables */
 	for (i = 0; i < 256; i++)
@@ -178,13 +173,10 @@ main(int argc, char *argv[])
 	for (i = 0; i < 26; i++)
 		tbl[i + 'A'] = 'A' + ((i + 13) % 26);
 
-	if (puffs_start(pu, pn_root, &svfsb) == -1)
-		err(1, "puffs_start");
+	if (puffs_mount(pu, argv[0], mntflags, pn_root) == -1)
+		err(1, "puffs_mount");
 
-	if (puffs_mainloop(pu, lflags) == -1)
-		err(1, "mainloop");
-
-	return 0;
+	return puffs_mainloop(pu, lflags);
 }
 
 int
