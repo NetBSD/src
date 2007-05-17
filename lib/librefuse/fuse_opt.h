@@ -1,4 +1,4 @@
-/*	$NetBSD: fuse_opt.h,v 1.3 2007/05/03 20:58:22 agc Exp $	*/
+/*	$NetBSD: fuse_opt.h,v 1.4 2007/05/17 01:55:43 christos Exp $	*/
 
 /*
  * Copyright (c) 2007 Alistair Crooks.  All rights reserved.
@@ -51,6 +51,7 @@ typedef int (*fuse_opt_proc_t)(void *, const char *, int, struct fuse_args *);
 
 
 int fuse_opt_add_arg(struct fuse_args *, const char *);
+struct fuse_args *fuse_opt_deep_copy_args(int, char **);
 void fuse_opt_free_args(struct fuse_args *);
 int fuse_opt_insert_arg(struct fuse_args *, int, const char *);
 int fuse_opt_add_opt(char **, const char *);
