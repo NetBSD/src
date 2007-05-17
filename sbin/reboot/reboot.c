@@ -1,4 +1,4 @@
-/*	$NetBSD: reboot.c,v 1.33 2003/08/07 10:04:37 agc Exp $	*/
+/*	$NetBSD: reboot.c,v 1.34 2007/05/17 00:32:01 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1993\n"
 #if 0
 static char sccsid[] = "@(#)reboot.c	8.1 (Berkeley) 6/5/93";
 #else
-__RCSID("$NetBSD: reboot.c,v 1.33 2003/08/07 10:04:37 agc Exp $");
+__RCSID("$NetBSD: reboot.c,v 1.34 2007/05/17 00:32:01 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -74,11 +74,12 @@ main(int argc, char *argv[])
 	char *bootstr, **av;
 
 	progname = getprogname();
-	if (!strcmp(progname, "halt") || !strcmp(progname, "-halt")) {
+	if (progname[0] == '-')
+		progname++;
+	if (strcmp(progname, "halt") == 0) {
 		dohalt = 1;
 		howto = RB_HALT;
-	} else if (!strcmp(progname, "poweroff") 
-		   || !strcmp(progname, "-poweroff")) {
+	} else if (strcmp(progname, "poweroff") == 0) {
 		dopoweroff = 1;
 		howto = RB_HALT | RB_POWERDOWN;
 	} else
