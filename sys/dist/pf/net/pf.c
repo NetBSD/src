@@ -1,4 +1,4 @@
-/*	$NetBSD: pf.c,v 1.38 2007/05/10 22:30:55 dyoung Exp $	*/
+/*	$NetBSD: pf.c,v 1.39 2007/05/17 17:04:12 christos Exp $	*/
 /*	$OpenBSD: pf.c,v 1.487 2005/04/22 09:53:18 dhartmei Exp $ */
 
 /*
@@ -5782,7 +5782,6 @@ pf_check_proto_cksum(struct mbuf *m, int off, int len, u_int8_t p,
 			m_copydata(m, off, sizeof(uh), &uh); /* XXX */
 			return udp_input_checksum(af, m, &uh, off, len) != 0;
 		}
-		break;
 	}
 #endif /* __NetBSD__ */
 	switch (af) {
