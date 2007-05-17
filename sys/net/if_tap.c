@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.27 2007/03/09 18:42:22 drochner Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.28 2007/05/17 18:01:57 christos Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004 The NetBSD Foundation.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.27 2007/03/09 18:42:22 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.28 2007/05/17 18:01:57 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "bpfilter.h"
@@ -1068,7 +1068,7 @@ tap_dev_poll(int unit, int events, struct lwp *l)
 	int revents = 0;
 
 	if (sc == NULL)
-		return (ENXIO);
+		return POLLERR;
 
 	if (events & (POLLIN|POLLRDNORM)) {
 		struct ifnet *ifp = &sc->sc_ec.ec_if;
