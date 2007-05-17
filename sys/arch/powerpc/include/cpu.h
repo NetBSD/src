@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.55 2007/03/04 06:00:37 christos Exp $	*/
+/*	$NetBSD: cpu.h,v 1.56 2007/05/17 14:51:26 yamt Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -65,11 +65,10 @@ struct cpu_info {
 	struct pmap *ci_curpm;
 	struct lwp *ci_fpulwp;
 	struct lwp *ci_veclwp;
-	struct pcb *ci_idle_pcb;	/* PA of our idle pcb */
 	int ci_cpuid;
 
 	volatile int ci_astpending;
-	int ci_want_resched;
+	int ci_need_resched;
 	volatile u_long ci_lasttb;
 	volatile int ci_tickspending;
 	volatile int ci_cpl;
@@ -288,8 +287,11 @@ cntlzw(uint32_t val)
 
 #define	LWP_PC(l)		(trapframe(l)->srr0)
 
+#define	cpu_swapin(p)
 #define	cpu_swapout(p)
 #define	cpu_proc_fork(p1, p2)
+#define	cpu_idle()		(curcpu()->ci_idlespin())
+#define cpu_lwp_free2(l)
 
 extern int powersave;
 extern int cpu_timebase;
@@ -310,8 +312,9 @@ void unmapiodev(vaddr_t, vsize_t);
 
 #define	DELAY(n)		delay(n)
 
-#define	cpu_need_resched(ci)	(ci->ci_want_resched = 1, ci->ci_astpending = 1)
-#define	cpu_need_proftick(p)	((l)->l_pflag |= LP_OWEUPC, curcpu()->ci_astpending = 1)
+#define	cpu_need_resched(ci, v)	(ci->ci_need_resched = ci->ci_astpending = 1)
+#define	cpu_did_resched()	((void)(curcpu()->ci_need_resched = 0))
+#define	cpu_need_proftick(l)	((l)->l_pflag |= LP_OWEUPC, curcpu()->ci_astpending = 1)
 #define	cpu_signotify(l)	(curcpu()->ci_astpending = 1)	/* XXXSMP */
 
 #if defined(PPC_OEA) || defined(PPC_OEA64) || defined (PPC_OEA64_BRIDGE)

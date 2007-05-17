@@ -1,4 +1,4 @@
-/* 	$NetBSD: ioapic.c,v 1.18 2007/03/05 16:51:03 drochner Exp $	*/
+/* 	$NetBSD: ioapic.c,v 1.19 2007/05/17 14:51:35 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.18 2007/03/05 16:51:03 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.19 2007/05/17 14:51:35 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -134,10 +134,6 @@ ioapic_lock(struct ioapic_softc *sc)
 
 	flags = read_psl();
 	disable_intr();
-	if (sc->sc_pic.pic_lock == __SIMPLELOCK_LOCKED) {
-		enable_intr();
-		panic("huh?");
-	}
 	__cpu_simple_lock(&sc->sc_pic.pic_lock);
 	return flags;
 }

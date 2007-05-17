@@ -1,4 +1,4 @@
-/*	$NetBSD: patch.c,v 1.2 2007/02/09 21:55:14 ad Exp $	*/
+/*	$NetBSD: patch.c,v 1.3 2007/05/17 14:51:35 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: patch.c,v 1.2 2007/02/09 21:55:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: patch.c,v 1.3 2007/05/17 14:51:35 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -68,7 +68,6 @@ void	amd64_spllower(int);
 void	amd64_spllower_end(void);
 void	amd64_spllower_patch(void);
 
-void	mutex_spin_exit(int);
 void	mutex_spin_exit_end(void);
 void	i686_mutex_spin_exit(int);
 void	i686_mutex_spin_exit_end(void);

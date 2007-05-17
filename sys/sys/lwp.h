@@ -1,4 +1,4 @@
-/* 	$NetBSD: lwp.h,v 1.59 2007/05/17 12:05:03 yamt Exp $	*/
+/* 	$NetBSD: lwp.h,v 1.60 2007/05/17 14:51:42 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -61,7 +61,8 @@
  * c:	condition variable interlock, passed to cv_wait()
  * l:	*l_mutex
  * p:	l_proc->p_smutex
- * s:	sched_mutex, which may or may not be referenced by l_mutex
+ * s:	spc_mutex, which may or may not be referenced by l_mutex
+ * t:	l_proc->p_stmutex
  * (:	unlocked, stable
  * !:	unlocked, may only be safely accessed by the LWP itself
  * ?:	undecided
@@ -69,10 +70,10 @@
  * Fields are clustered together by usage (to increase the likelyhood
  * of cache hits) and by size (to reduce dead space in the structure).
  */
-typedef struct lwp {
+struct lwp {
 	/* Scheduling and overall state */
-	struct lwp	*l_forw;	/* s: run queue */
-	struct lwp	*l_back;	/* s: run queue */
+	TAILQ_ENTRY(lwp) l_runq;	/* s: run queue */
+	void		*l_sched_info;	/* s: Scheduler-specific structure */
 	struct cpu_info *volatile l_cpu;/* s: CPU we're on if LSONPROC */
 	kmutex_t * volatile l_mutex;	/* l: ptr to mutex on sched state */
 	struct user	*l_addr;	/* l: KVA of u-area (PROC ONLY) */
@@ -87,8 +88,10 @@ typedef struct lwp {
 	pri_t		l_usrpri;	/* l: user-priority */
 	pri_t		l_inheritedprio;/* l: inherited priority */
 	SLIST_HEAD(, turnstile) l_pi_lenders; /* l: ts lending us priority */
-	long		l_nvcsw;	/* l: voluntary context switches */
-	long		l_nivcsw;	/* l: involuntary context switches */
+	uint64_t	l_ncsw;		/* l: total context switches */
+	uint64_t	l_nivcsw;	/* l: involuntary context switches */
+	int		l_cpticks;	/* t: Ticks of CPU time */
+	fixpt_t		l_pctcpu;	/* t: %cpu during l_swtime */
 
 	/* Synchronisation */
 	struct turnstile *l_ts;		/* l: current turnstile */
@@ -111,6 +114,7 @@ typedef struct lwp {
 	int		l_prflag;	/* p: process level flags */
 	u_int		l_refcnt;	/* p: reference count on this LWP */
 	lwpid_t		l_lid;		/* (: LWP identifier; local to proc */
+	const char	*l_name;	/* l: name, optional */
 
 	/* Signals */
 	int		l_sigrestore;	/* p: need to restore old sig mask */
@@ -145,7 +149,7 @@ typedef struct lwp {
 	/* These are only used by 'options SYSCALL_TIMES' */
 	uint32_t        l_syscall_time; /* !: time epoch for current syscall */
 	uint64_t        *l_syscall_counter; /* !: counter for current process */
-} lwp_t;
+};
 
 #if !defined(USER_TO_UAREA)
 #if !defined(UAREA_USER_OFFSET)
@@ -158,7 +162,6 @@ typedef struct lwp {
 LIST_HEAD(lwplist, lwp);		/* a list of LWPs */
 
 #ifdef _KERNEL
-extern kmutex_t	sched_mutex;		/* Mutex on global run queue */
 extern kmutex_t alllwp_mutex;		/* Mutex on alllwp */
 extern struct lwplist alllwp;		/* List of all LWPs. */
 
@@ -168,6 +171,7 @@ extern lwp_t lwp0;			/* LWP for proc0 */
 #endif
 
 /* These flags are kept in l_flag. */
+#define	LW_IDLE		0x00000001 /* Idle lwp. */
 #define	LW_INMEM	0x00000004 /* Loaded into memory. */
 #define	LW_SELECT	0x00000040 /* Selecting; wakeup/waiting danger. */
 #define	LW_SINTR	0x00000080 /* Sleep is interruptible. */
@@ -179,7 +183,9 @@ extern lwp_t lwp0;			/* LWP for proc0 */
 #define	LW_CANCELLED	0x02000000 /* tsleep should not sleep */
 #define	LW_WUSERRET	0x04000000 /* Call proc::p_userret on return to user */
 #define	LW_WREBOOT	0x08000000 /* System is rebooting, please suspend */
-#define	LW_UNPARKED	0x10000000 /* unpark op pending */
+#define	LW_UNPARKED	0x10000000 /* Unpark op pending */
+#define	LW_RUNNING	0x20000000 /* Active on a CPU (except if LSZOMB) */
+#define	LW_BOUND	0x80000000 /* Bound to a CPU */
 
 /* The second set of flags is kept in l_pflag. */
 #define	LP_KTRACTIVE	0x00000001 /* Executing ktrace operation */
@@ -230,26 +236,7 @@ do {									\
 		lwp_update_creds(l);					\
 } while (/* CONSTCOND */ 0)
 
-void	preempt(void);
-int	mi_switch(lwp_t *, lwp_t *);
-#ifndef remrunqueue
-void	remrunqueue(lwp_t *);
-#endif
-void	resetpriority(lwp_t *);
-void	setrunnable(lwp_t *);
-#ifndef setrunqueue
-void	setrunqueue(lwp_t *);
-#endif
-#ifndef nextrunqueue
-lwp_t	*nextrunqueue(void);
-#endif
-void	unsleep(lwp_t *);
-#ifndef cpu_switch
-int	cpu_switch(lwp_t *, lwp_t *);
-#endif
-#ifndef cpu_switchto
-void	cpu_switchto(lwp_t *, lwp_t *);
-#endif
+void	lwp_startup(lwp_t *, lwp_t *);
 
 int	lwp_locked(lwp_t *, kmutex_t *);
 void	lwp_setlock(lwp_t *, kmutex_t *);
@@ -270,12 +257,12 @@ void	cpu_setfunc(lwp_t *, void (*)(void *), void *);
 void	startlwp(void *);
 void	upcallret(lwp_t *);
 void	lwp_exit(lwp_t *) __attribute__((__noreturn__));
-void	lwp_exit2(lwp_t *);
-lwp_t	*proc_representative_lwp(struct proc *, int *, int);
+void	lwp_exit_switchaway(lwp_t *);
+lwp_t *proc_representative_lwp(struct proc *, int *, int);
 int	lwp_suspend(lwp_t *, lwp_t *);
 int	lwp_create1(lwp_t *, const void *, size_t, u_long, lwpid_t *);
 void	lwp_update_creds(lwp_t *);
-lwp_t	*lwp_find(struct proc *, int);
+lwp_t *lwp_find(struct proc *, int);
 void	lwp_userret(lwp_t *);
 void	lwp_need_userret(lwp_t *);
 void	lwp_free(lwp_t *, bool, bool);
@@ -319,15 +306,13 @@ lwp_lock(lwp_t *l)
 static inline void
 lwp_unlock(lwp_t *l)
 {
-	LOCK_ASSERT(mutex_owned(l->l_mutex));
-
 	mutex_spin_exit(l->l_mutex);
 }
 
 static inline void
 lwp_changepri(lwp_t *l, pri_t pri)
 {
-	LOCK_ASSERT(mutex_owned(l->l_mutex));
+	KASSERT(mutex_owned(l->l_mutex));
 
 	if (l->l_priority == pri)
 		return;
@@ -338,7 +323,7 @@ lwp_changepri(lwp_t *l, pri_t pri)
 static inline void
 lwp_lendpri(lwp_t *l, pri_t pri)
 {
-	LOCK_ASSERT(mutex_owned(l->l_mutex));
+	KASSERT(mutex_owned(l->l_mutex));
 
 	if (l->l_inheritedprio == pri)
 		return;
@@ -349,7 +334,7 @@ lwp_lendpri(lwp_t *l, pri_t pri)
 static inline void
 lwp_unsleep(lwp_t *l)
 {
-	LOCK_ASSERT(mutex_owned(l->l_mutex));
+	KASSERT(mutex_owned(l->l_mutex));
 
 	(*l->l_syncobj->sobj_unsleep)(l);
 }
@@ -365,49 +350,22 @@ int newlwp(lwp_t *, struct proc *, vaddr_t, bool, int,
     void *, size_t, void (*)(void *), void *, lwp_t **);
 
 /*
- * Once we have per-CPU run queues and a modular scheduler interface,
- * we should provide real stubs for the below that LKMs can use.
+ * We should provide real stubs for the below that LKMs can use.
  */
-extern kmutex_t	sched_mutex;
-
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 
 static inline void
-sched_lock(const int heldmutex)
+spc_lock(struct cpu_info *ci)
 {
-	(void)heldmutex;
-	mutex_spin_enter(&sched_mutex);
+	mutex_spin_enter(ci->ci_schedstate.spc_mutex);
 }
 
 static inline void
-sched_unlock(const int heldmutex)
+spc_unlock(struct cpu_info *ci)
 {
-	(void)heldmutex;
-	mutex_spin_exit(&sched_mutex);
+	mutex_spin_exit(ci->ci_schedstate.spc_mutex);
 }
 
-#else	/* defined(MULTIPROCESSOR) || defined(LOCKDEBUG) */
-
-static inline void
-sched_lock(const int heldmutex)
-{
-	if (!heldmutex)
-		mutex_spin_enter(&sched_mutex);
-}
-
-static inline void
-sched_unlock(const int heldmutex)
-{
-	if (!heldmutex)
-		mutex_spin_exit(&sched_mutex);
-}
-
-#endif	/* defined(MULTIPROCESSOR) || defined(LOCKDEBUG) */
-
-void	sched_lock_idle(void);
-void	sched_unlock_idle(void);
-
-#endif	/* _KERNEL */
+#endif /* _KERNEL */
 
 /* Flags for _lwp_create(), as per Solaris. */
 

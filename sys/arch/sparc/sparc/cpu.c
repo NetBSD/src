@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.200 2007/03/04 22:12:43 mrg Exp $ */
+/*	$NetBSD: cpu.c,v 1.201 2007/05/17 14:51:29 yamt Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.200 2007/03/04 22:12:43 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.201 2007/05/17 14:51:29 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -90,7 +90,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.200 2007/03/04 22:12:43 mrg Exp $");
 #endif
 
 struct cpu_softc {
-	struct device	sc_dv;		/* generic device info */
+	struct device	sc_dev;		/* generic device info */
 	struct cpu_info	*sc_cpuinfo;
 };
 
@@ -235,10 +235,10 @@ alloc_cpuinfo(void)
 	bzero((void *)cpi, sz);
 
 	/*
-	 * Arrange pcb, idle stack and interrupt stack in the same
+	 * Arrange pcb and interrupt stack in the same
 	 * way as is done for the boot CPU in locore.
 	 */
-	cpi->eintstack = cpi->idle_u = (void *)((vaddr_t)cpi + sz - USPACE);
+	cpi->eintstack = (void *)((vaddr_t)cpi + sz - USPACE);
 
 	/* Allocate virtual space for pmap page_copy/page_zero */
 	va = uvm_km_alloc(kernel_map, 2*PAGE_SIZE, 0, UVM_KMF_VAONLY);
@@ -411,8 +411,6 @@ cpu_attach(struct cpu_softc *sc, int node, int mid)
 	 * (see autoconf.c and cpuunit.c)
 	 */
 	if (cpus == NULL) {
-		extern struct pcb idle_u[];
-
 		cpus = malloc(sparc_ncpus * sizeof(cpi), M_DEVBUF, M_NOWAIT);
 		bzero(cpus, sparc_ncpus * sizeof(cpi));
 
@@ -437,7 +435,6 @@ cpu_attach(struct cpu_softc *sc, int node, int mid)
 #endif
 		cpi->master = 1;
 		cpi->eintstack = eintstack;
-		cpi->idle_u = idle_u;
 		/* Note: `curpcb' is set to `proc0' in locore */
 
 		/*
@@ -449,15 +446,33 @@ cpu_attach(struct cpu_softc *sc, int node, int mid)
 			bootmid = mid;
 	} else {
 #if defined(MULTIPROCESSOR)
+		int error;
+
+		/*
+		 * Allocate and initiize this cpu's cpu_info.
+		 */
 		cpi = sc->sc_cpuinfo = alloc_cpuinfo();
 		cpi->ci_self = cpi;
-		cpi->curpcb = cpi->idle_u;
-		cpi->curpcb->pcb_wim = 1;
+
 		/*
-		 * Note: `idle_u' and `eintstack' are set in alloc_cpuinfo().
+		 * Call the MI attach which creates an idle LWP for us.
+		 */
+		error = mi_cpu_attach(cpi);
+		if (error != 0) {
+			aprint_normal("\n");
+			aprint_error("%s: mi_cpu_attach failed with %d\n",
+			    sc->sc_dev.dv_xname, error);
+			return;
+		}
+
+		/*
+		 * Note: `eintstack' is set in alloc_cpuinfo() above.
 		 * The %wim register will be initialized in cpu_hatch().
 		 */
+		cpi->curpcb = cpi->ci_data.cpu_idlelwp->l_addr;
+		cpi->curpcb->pcb_wim = 1;
 		getcpuinfo(cpi, node);
+
 #else
 		sc->sc_cpuinfo = NULL;
 		printf(": no SMP support in kernel\n");
@@ -466,7 +481,7 @@ cpu_attach(struct cpu_softc *sc, int node, int mid)
 	}
 
 #ifdef DEBUG
-	cpi->redzone = (void *)((long)cpi->idle_u + REDSIZE);
+	cpi->redzone = (void *)((long)cpi->eintstack + REDSIZE);
 #endif
 
 	/*
@@ -924,9 +939,9 @@ cache_print(struct cpu_softc *sc)
 
 	if (sc->sc_cpuinfo->flags & CPUFLG_SUN4CACHEBUG)
 		printf("%s: cache chip bug; trap page uncached\n",
-		    sc->sc_dv.dv_xname);
+		    sc->sc_dev.dv_xname);
 
-	printf("%s: ", sc->sc_dv.dv_xname);
+	printf("%s: ", sc->sc_dev.dv_xname);
 
 	if (ci->c_totalsize == 0) {
 		printf("no cache\n");

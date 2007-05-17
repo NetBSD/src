@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.55 2007/03/21 10:26:19 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.56 2007/05/17 14:51:25 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,7 +76,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.55 2007/03/21 10:26:19 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.56 2007/05/17 14:51:25 yamt Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -377,8 +377,8 @@ mach_init(argc, argv, envp, bim, bip)
 	v = (void *)uvm_pageboot_alloc(USPACE); 
 	lwp0.l_addr = proc0paddr = (struct user *)v;
 	lwp0.l_md.md_regs = (struct frame *)(v + USPACE) - 1;
-	curpcb = &lwp0.l_addr->u_pcb;
-	curpcb->pcb_context[11] = MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
+	proc0paddr->u_pcb.pcb_context[11] =
+	    MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
 
 	/*
 	 * Set up interrupt handling and I/O addresses.

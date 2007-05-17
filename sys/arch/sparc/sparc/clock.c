@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.100 2007/03/04 22:12:43 mrg Exp $ */
+/*	$NetBSD: clock.c,v 1.101 2007/05/17 14:51:29 yamt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.100 2007/03/04 22:12:43 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.101 2007/05/17 14:51:29 yamt Exp $");
 
 #include "opt_sparc_arch.h"
 
@@ -201,11 +201,8 @@ setstatclockrate(int newhz)
 void
 schedintr(void *v)
 {
-	struct lwp *l = curlwp;
 
-	/* XXX - should consult a cpuinfo.schedtickpending */
-	if (l != NULL)
-		schedclock(l);
+	schedclock(curlwp);
 }
 
 /*

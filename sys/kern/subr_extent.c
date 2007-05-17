@@ -1,7 +1,7 @@
-/*	$NetBSD: subr_extent.c,v 1.65 2007/03/13 15:59:47 ad Exp $	*/
+/*	$NetBSD: subr_extent.c,v 1.66 2007/05/17 14:51:41 yamt Exp $	*/
 
 /*-
- * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996, 1998, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_extent.c,v 1.65 2007/03/13 15:59:47 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_extent.c,v 1.66 2007/05/17 14:51:41 yamt Exp $");
 
 #ifdef _KERNEL
 #include "opt_lockdebug.h"
@@ -92,7 +92,7 @@ pool_put(pool, rp)		free(rp,0)
 #define	\
 panic(a)			printf(a)
 #define	\
-splhigh()			(1)
+splvm()			(1)
 #define	\
 splx(s)				((void)(s))
 
@@ -200,7 +200,7 @@ extent_alloc_region_descriptor(struct extent *ex, int flags)
 	}
 
  alloc:
-	s = splhigh();
+	s = splvm();
 	if (expool_initialized == 0)
 		expool_init();
 	rp = pool_get(&expool, (flags & EX_WAITOK) ? PR_WAITOK : 0);
@@ -237,7 +237,7 @@ extent_free_region_descriptor(struct extent *ex, struct extent_region *rp)
 				    er_link);
 				goto wake_em_up;
 			} else {
-				s = splhigh();
+				s = splvm();
 				pool_put(&expool, rp);
 				splx(s);
 			}
@@ -258,7 +258,7 @@ extent_free_region_descriptor(struct extent *ex, struct extent_region *rp)
 	/*
 	 * We know it's dynamically allocated if we get here.
 	 */
-	s = splhigh();
+	s = splvm();
 	pool_put(&expool, rp);
 	splx(s);
 }
@@ -321,7 +321,7 @@ extent_create(const char *name, u_long start, u_long end,
 			LIST_INSERT_HEAD(&fex->fex_freelist, rp, er_link);
 		}
 	} else {
-		s = splhigh();
+		s = splvm();
 		if (expool_initialized == 0)
 			expool_init();
 		splx(s);

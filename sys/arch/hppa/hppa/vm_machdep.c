@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.24 2007/03/16 08:02:49 skrll Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.25 2007/05/17 14:51:20 yamt Exp $	*/
 
 /*	$OpenBSD: vm_machdep.c,v 1.25 2001/09/19 20:50:56 mickey Exp $	*/
 
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.24 2007/03/16 08:02:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.25 2007/05/17 14:51:20 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -181,44 +181,26 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 		tf->tf_sp = (register_t)stack;
 
 	/*
-	 * Build a stack frame for the cpu_switch & co.
+	 * Build stack frames for the cpu_switchto & co.
 	 */
 	osp = sp;
 
-	/* std frame + callee-save registers */
+	/* lwp_trampoline's frame */
+	sp += HPPA_FRAME_SIZE;
+
+	*(register_t *)(sp + HPPA_FRAME_PSP) = osp;
+	*(register_t *)(sp + HPPA_FRAME_CRP) = (register_t)lwp_trampoline;
+
+	*HPPA_FRAME_CARG(2, sp) = KERNMODE(func);
+	*HPPA_FRAME_CARG(3, sp) = (register_t)arg;
+
+	/*
+	 * cpu_switchto's frame
+	 * 	stack usage is std frame + callee-save registers
+	 */
 	sp += HPPA_FRAME_SIZE + 16*4;
-	*HPPA_FRAME_CARG(1, sp) = KERNMODE(func);
-	*HPPA_FRAME_CARG(2, sp) = (register_t)arg;
-	*(register_t*)(sp + HPPA_FRAME_PSP) = osp;
-	*(register_t*)(sp + HPPA_FRAME_CRP) = (register_t)switch_trampoline;
 	pcbp->pcb_ksp = sp;
 	fdcache(HPPA_SID_KERNEL, (vaddr_t)l2->l_addr, sp - (vaddr_t)l2->l_addr);
-}
-
-void
-cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
-{
-	struct pcb *pcbp;
-	struct trapframe *tf;
-	register_t sp, osp;
-
-	pcbp = &l->l_addr->u_pcb;
-	sp = (register_t)pcbp + PAGE_SIZE;
-	l->l_md.md_regs = tf = (struct trapframe *)sp;
-	sp += sizeof(struct trapframe);
-
-	cpu_swapin(l);
-
-	osp = sp;
-
-	/* std frame + callee-save registers */
-	sp += HPPA_FRAME_SIZE + 16*4;
-	*HPPA_FRAME_CARG(1, sp) = KERNMODE(func);
-	*HPPA_FRAME_CARG(2, sp) = (register_t)arg;
-	*(register_t*)(sp + HPPA_FRAME_PSP) = osp;
-	*(register_t*)(sp + HPPA_FRAME_CRP) = (register_t)switch_trampoline;
-	pcbp->pcb_ksp = sp;
-	fdcache(HPPA_SID_KERNEL, (vaddr_t)l->l_addr, sp - (vaddr_t)l->l_addr);
 }
 
 void
@@ -238,13 +220,6 @@ cpu_lwp_free2(struct lwp *l)
 {
 
 	(void)l;
-}
-
-void
-cpu_exit(struct lwp *l)
-{
-	(void) splsched();
-	switch_exit(l, lwp_exit2);
 }
 
 /*

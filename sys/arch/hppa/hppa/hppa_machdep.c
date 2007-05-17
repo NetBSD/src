@@ -1,4 +1,4 @@
-/*	$NetBSD: hppa_machdep.c,v 1.8 2007/03/04 05:59:55 christos Exp $	*/
+/*	$NetBSD: hppa_machdep.c,v 1.9 2007/05/17 14:51:19 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hppa_machdep.c,v 1.8 2007/03/04 05:59:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hppa_machdep.c,v 1.9 2007/05/17 14:51:19 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,6 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: hppa_machdep.c,v 1.8 2007/03/04 05:59:55 christos Ex
 #include <sys/user.h>
 #include <sys/proc.h>
 #include <sys/ras.h>
+#include <sys/cpu.h>
 
 #include <sys/kernel.h>
 
@@ -274,5 +275,20 @@ hppa_ras(struct lwp *l)
 		rasaddr |= HPPA_PC_PRIV_USER;
 		tf->tf_iioq_head = rasaddr;
 		tf->tf_iioq_tail = rasaddr + 4;
+	}
+}
+
+void
+cpu_need_resched(struct cpu_info *ci, int flags)
+{
+	bool immed = (flags & RESCHED_IMMED) != 0;
+
+	if (want_resched && !immed)
+		return;
+	want_resched = 1;
+
+        if (ci->ci_curlwp != ci->ci_data.cpu_idlelwp) {
+		/* aston(ci->ci_curlwp); */
+		setsoftast();
 	}
 }
