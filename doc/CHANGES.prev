@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.66 $>
+LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.67 $>
 
 
 Changes from 386bsd 0.1 + patchkit 0.2.2 to NetBSD 0.8:
@@ -8133,7 +8133,7 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 	build.sh: Add experimental ability to build syspkgs. [apb 20060104]
 	postfix(1): Updated to 2.2.8. [rpaulo 20060109]
 	ews4800mips: Add sysinst support. [tsutsui 20060109]
-	zlib(3): Updated to 1.2.3 and shared between kernel and userland.
+	zlib: Updated to 1.2.3 and shared between kernel and userland.
 		[christos 20060114]
 	firmload(9): Add an API for loading firmware images used by hardware
 		devices.  [thorpej 20060116]
@@ -8375,11 +8375,11 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 		RISC OS monitor definitions into the kernel. [bjh21 20060820]
 	netns: Support for XNS in the kernel and userspace has been
 		removed. [matt 20060825]
-	netccitt: Support for CCITT/X.26 in the kernel and userspace has
+	netccit: Support for CCITT/X.26 in the kernel and userspace has
 		been removed. [matt 20060825]
 	mips64: Preliminary support for a MIPS64 toolchain using the N64
 		ABI. [matt 20060825]
-	postfix(1): Updated to 2.3.3 [rpaulo 20060827]
+	postfix: Updated to 2.3.3 [rpaulo 20060827]
 	landisk: Initial import of landisk port for SuperH based
 		network storage appliances by I-O DATA.  The port was
 		done by NONAKA Kimihiro <nonaka@NetBSD.org>.
@@ -8390,7 +8390,7 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 		Not all ports have adopted it yet.  [gdamore 20060902]
 	sun2: Add timecounter support. [gdamore 20060903]
 	gcc(1): Switch sh5 to GCC4. [scw 20060904]
-	tcp(4): Add support for Explicit Congestion Notification as defined
+	tcp: Add support for Explicit Congestion Notification as defined
 		in RFC 3168. Sponsored by Google SoC. [rpaulo 20060905]
 	prep: Convert prep to MI todr(9) driver. [garbled 20060905]
 	sun3: Add timecounter support. [gdamore 20060905]
@@ -8419,7 +8419,7 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 	mipsco: Add timecounter support.  [gdamore 20060915]
 	hpcmips: Add timecounter support.  [gdamore 20060915]
 	sgimips: Add timecounter support.  [gdamore 20060916]
-	veriexec(4): Add veriexecgen(8), a tool for easy and fast generation
+	veriexec: Add veriexecgen(8), a tool for easy and fast generation
 		  of Veriexec fingerprint files. [elad 20060916]
 	gcc(1): Switch m68k to GCC4 [tsutsui 20060917]
 	gcc(1): Switch mips to GCC4 [simonb 20060919]
@@ -8444,7 +8444,7 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 	evbmips: Add AR5315/2315 support, specifically the Meraki Mini,
 		which can be found at http://www.meraki.net/
 		[gdamore 20060925]
-	ssh(1): Import openssh-4.4 [christos 20060928]
+	ssh: Import openssh-4.4 [christos 20060928]
 	macppc: add timecounter support [macallan 20060929]
 	ofctl(8): initial import, formerly known as ofdump2. For macppc,
 		shark, sparc64.
@@ -8481,7 +8481,6 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 	tcp(4): Added RFC 3465 Appropriate Byte Counting (ABC) [yamt 20061019]
 	wm(4): Added support for the Intel 80003 gigabit ethernet controller.
 		[bouyer 20061021]
-	vge(4): Fix hardware VLAN tagging support. [tsutsui 20061021]
 	gcc(1): Update to GCC 4.1.2-20061021 snapshot.  [mrg 20061021]
 	mail(1): Mime and multi-character set handling; command line editing
 		and completion. Thanks to Anon Ymous [christos 20061021]
@@ -8489,12 +8488,12 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 		and ei(4) drivers for Acorn SCSI Expansion Cards and
 		Ethernet 1 cards respectively, in place of asc(4) and ie(4).
 		[bjh21 20061022]
-	puffs(4): Integrate Pass-to-Userspace Framework File System, which
+	puffs: Integrate Pass-to-Userspace Framework File System, which
 		can be used to build userspace file system servers
 		[pooka 20061022]
 	hpcarm: Add timecounter support and convert to MI todr(9).
 		[peter 20061023]
-	less(1): Updated to version 394.  [mrg 20061025]
+	less: Updated to version 394.  [mrg 20061025]
 	i386: The support for the Multiboot Specification no longer relies
 		on the a.out kludge which means that a stock GRUB (without
 		custom patches) can be used to successfully boot the kernel.
@@ -8523,25 +8522,22 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 		kernels. [tls 20061101]
 	useradd(8): Change the default shell for newly added users to
 		/bin/sh. [pavel 20061102]
-	re(4): Fix RTL8139C+ support. From FreeBSD and Brian A. Seklecki.
-		[tsutsui 20061103]
 	tmpfs: NFS support is now complete.  At the very least, all the
 		relevant tmpfs regression tests pass successfully when
 		executed over a remote tmpfs mounted through NFS.
 		[jmmv 20061105]
 	tmpfs: Add a LKM for this file system. [jmmv 20061105]
-	postfix(1): Updated to 2.3.4 [rpaulo 20061107]
+	postfix: Updated to 2.3.4 [rpaulo 20061107]
 	macppc: use accelerated wsdisplay drivers [macallan 20061107]
 	evbarm: Add support for Certance CP-3100 [scw 20061108]
 	tmpfs: Audit kqueue notifications and add several regression
 		tests for them.  [jmmv 20061109]
-	vnd(4): Make this work with files stored on file systems without
+	vnd: Make this work with files stored on file systems without
 		the bmap and strategy operations.  This includes tmpfs
 		and smbfs.  [jmmv 20061109]
-	mount_nfs(8): Remove NQNFS support. [yamt 20061109]
-	paxctl(8): Enable as a tool, and add make rules to run paxctl on
+	paxctl: Enable as a tool, and add make rules to run paxctl on
 		binaries to what PROG_PAX is set. [christos 20061110]
-	lfs_cleanerd(8): Move from /usr/libexec to /libexec so that the
+	lfs_cleanerd: Move from /usr/libexec to /libexec so that the
 		root file system can be safely placed on a LFS volume.
 		[jmmv 20061110]
 	tmpfs: Drop experimental status and enable it by default in the
@@ -8553,24 +8549,16 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 		/etc/mk.conf [christos 20061111]
 	uucp: Removed from base; package can be found in pkgsrc
 		[christos 20061111]
-	ex(4): Add a workaround for a hardware ip4csum-tx bug which would
-		sometimes put wrong IPv4 checksum on sending 21 or 22 byte
-		IP packets. [tsutsui 20061112]
 	openssl: update to 0.9.8d [christos 20061113]
 	wm(4): Add IPv6 Rx tcp/udp checksum offloading. [yamt 20061116]
-	re(4): Add a workaround for a hardware ip4csum-tx bug on sending
-		28 byte or less IP packets. [tsutsui 20061117]
 	mac68k: Add timecounter support. [hauke 20061120]
+	etherip(4): New driver based on tap(4) and gif(4) by Hans Rosenfeld.
+		[rpaulo 20061123]
 	tcp(4), ifconfig(8), wm(4): Add TCPv6 hardware transmit segment
 		offload support. [yamt 20061124]
 	ahcisata(4): Added driver for AHCI 1.0 and 1.1 compliant SATA
 		controllers. [bouyer 20061130]
-	mail(1): Many new features including command line editing, MIME
-		support, threading and sorting of messages, improved message
-		selection, and redirection of command output; from Anon Ymous.
-		[christos 20061201]
 	shark: add support for igsfb at ofbus. [macallan 20061207]
-	re(4): Fix hardware VLAN tagging support. [tsutsui 20061216]
 	mfi(4): driver for LSI Logic & Dell MegaRAID SAS RAID controller.
 		Ported from OpenBSD, tested on i386 and amd64.
 		[bouyer 20061217]
@@ -8578,12 +8566,12 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 		device. Ported from OpenBSD by cube@, with some bus_dma
 		fixes by me. [bouyer 20061217]
 	shark: add support for XFree86 with wsfb. [macallan 20061220]
-	nfe(4): Enable hardware checksum support. [tsutsui 20070109]
 	iwi(4): Update to use the single file firmware format. The new
 		firmware is available in pkgsrc/sysutils/iwi-firmware3.
 		[skrll 20061229]
 	ug(4): driver for the Abit uGuru hardware system monitor,
 		contributed by Mihai Chelaru. [xtraeme 20070106]
+	bind: import 9.4.0-rc2 [christos 20070127]
 	i386, amd64: remove option COMPAT_386BSD_MBRPART from default
 		kernels.  NetBSD has not used partition ID 0x165 for many,
 		many years, and the presence of this option in INSTALL
@@ -8592,7 +8580,16 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 		Those with very, very old NetBSD installations may find
 		that they must update their fdisk partition tables to use
 		partition ID 0x169 for their NetBSD partitions. [tls 20070124]
+	build: 'make iso-image' in src/ (or build.sh iso-image) will build
+		iso images, eventually bootable, using in-tree tools.
+		[bouyer 20070306]
+	i386, amd64: switch bootable iso images to native boot format, and add
+		different bootable kenrels on the iso images. Enable ACPI
+		in default INSTALL and GENERIC kernels. [bouyer 20070306]
 	ataraid(4): Add support for Via V-RAID. [garbled 20070326]
+	bind: import 9.4.0 [ghen 20070330]
+	coda: overhaul kernel module (vnode locking rules, uvm_fault
+		handling, general cleanup) [gdt 20070415]
 	wm(4): Added support for the Intel i82801H (ICH8) gigabit ethernet
 		controller.  [bouyer 20070429]
 	ipf(8): Updated to version 4.1.20. [martti 20070501]
@@ -8600,6 +8597,7 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 		query/control block device controllers. [bouyer 20070501]
 	envsys(4): added DRIVE type sensor. [bouyer 20070501]
 	mfi(4): added bio(4) and envsys(4) support. [bouyer 20070501]
+	bind: import 9.4.1 [christos 20070501]
 	ug(4): Driver split in three parts to support the new ACPI
-		attachment (ug* at acpi?). Patch from Mihai Chelaru.
+		attachment (ug* at acpi?). Patch from Mihai Chelaru. 
 		[xtraeme 20070508]
