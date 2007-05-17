@@ -1,4 +1,4 @@
-/* 	$NetBSD: refuse_opt.c,v 1.10 2007/05/16 21:39:08 christos Exp $	*/
+/* 	$NetBSD: refuse_opt.c,v 1.11 2007/05/17 01:55:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -88,7 +88,7 @@ fuse_opt_add_arg(struct fuse_args *args, const char *arg)
 	struct fuse_args	*ap;
 
 	if (args->allocated == 0) {
-		ap = _fuse_deep_copy_args(args->argc, args->argv);
+		ap = fuse_opt_deep_copy_args(args->argc, args->argv);
 		args->argv = ap->argv;
 		args->argc = ap->argc;
 		args->allocated = ap->allocated;
@@ -106,15 +106,44 @@ fuse_opt_add_arg(struct fuse_args *args, const char *arg)
 	DPRINTF(("%s: arguments passed: [arg:%s]\n", __func__, arg));
 	if ((args->argv[args->argc++] = strdup(arg)) == NULL)
 		err(1, "fuse_opt_add_arg");
+	args->argv[args->argc] = NULL;
         return 0;
 }
 
-/* ARGSUSED */
-void
-fuse_opt_free_args(struct fuse_args *args)
+struct fuse_args *
+fuse_opt_deep_copy_args(int argc, char **argv)
 {
-	_fuse_free_args(args);
-	args->allocated = args->argc = 0;
+	struct fuse_args	*ap;
+	size_t			 i;
+
+	if ((ap = malloc(sizeof(*ap))) == NULL)
+		err(1, "_fuse_deep_copy_args");
+	/* deep copy args structure into channel args */
+	ap->allocated = ((argc / 10) + 1) * 10;
+
+	if ((ap->argv = calloc((size_t)ap->allocated,
+	    sizeof(*ap->argv))) == NULL)
+		err(1, "_fuse_deep_copy_args");
+
+	for (i = 0; i < argc; i++) {
+		if ((ap->argv[i] = strdup(argv[i])) == NULL)
+			err(1, "_fuse_deep_copy_args");
+	}
+	ap->argv[ap->argc = i] = NULL;
+	return ap;
+}
+
+void
+fuse_opt_free_args(struct fuse_args *ap)
+{
+	int	i;
+
+	for (i = 0; i < ap->argc; i++) {
+		free(ap->argv[i]);
+	}
+	free(ap->argv);
+	ap->argv = NULL;
+	ap->allocated = ap->argc = 0;
 }
 
 /* ARGSUSED */
@@ -146,6 +175,7 @@ fuse_opt_insert_arg(struct fuse_args *args, int pos, const char *arg)
 	}
 	if ((args->argv[pos] = strdup(arg)) == NULL)
 		err(1, "fuse_opt_insert_arg");
+	args->argv[args->argc] = NULL;
 	return 0;
 }
 
