@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs.c,v 1.23 2007/05/07 17:22:50 pooka Exp $	*/
+/*	$NetBSD: dtfs.c,v 1.24 2007/05/17 14:10:13 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -62,8 +62,8 @@ static void
 usage()
 {
 
-	errx(1, "usage: %s [-bsd] [-c hashbuckets] [-o mntopt] [-o puffsopt] "
-	    "mountpath", getprogname());
+	errx(1, "usage: %s [-bsdt] [-c hashbuckets] [-o mntopt] [-o puffsopt]\n"
+	    "    [-r rootnodetype] mountpath", getprogname());
 }
 
 /*
@@ -86,6 +86,7 @@ main(int argc, char *argv[])
 	struct dtfs_mount dtm;
 	struct puffs_pathobj *po_root;
 	struct puffs_ops *pops;
+	char *rtstr;
 	mntoptparse_t mp;
 	int pflags, lflags, mntflags;
 	int ch;
@@ -93,10 +94,11 @@ main(int argc, char *argv[])
 
 	setprogname(argv[0]);
 
+	rtstr = NULL;
 	lflags = mntflags = 0;
 	khashbuckets = 256;
 	pflags = PUFFS_KFLAG_IAONDEMAND;
-	while ((ch = getopt(argc, argv, "bc:dio:s")) != -1) {
+	while ((ch = getopt(argc, argv, "bc:dio:r:s")) != -1) {
 		switch (ch) {
 		case 'b': /* build paths, for debugging the feature */
 			pflags |= PUFFS_FLAG_BUILDPATH;
@@ -115,6 +117,9 @@ main(int argc, char *argv[])
 			if (mp == NULL)
 				err(1, "getmntopts");
 			freemntopts(mp);
+			break;
+		case 'r':
+			rtstr = optarg;
 			break;
 		case 's': /* stay on top */
 			lflags |= PUFFSLOOP_NODAEMON;
@@ -174,21 +179,19 @@ main(int argc, char *argv[])
 	    | (dynamicfh ? PUFFS_FHFLAG_DYNAMIC : 0));
 	puffs_setncookiehash(pu, khashbuckets);
 
-	if (puffs_domount(pu, argv[0], mntflags) == -1)
-		err(1, "mount");
-
 	if (signal(SIGUSR1, dosuspend) == SIG_ERR)
 		warn("cannot set suspend sighandler");
 
-	/* init & call puffs_start() */
-	if (dtfs_domount(pu) != 0)
+	/* init */
+	if (dtfs_domount(pu, rtstr) != 0)
 		errx(1, "dtfs_domount failed");
 
-	/* XXX: wrong order, but I need to refactor this further anyway */
 	po_root = puffs_getrootpathobj(pu);
 	po_root->po_path = argv[0];
 	po_root->po_len = strlen(argv[0]);
 
+	if (puffs_mount(pu,  argv[0], mntflags, puffs_getroot(pu)) == -1)
+		err(1, "mount");
 	if (puffs_mainloop(pu, lflags) == -1)
 		err(1, "mainloop");
 
