@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_aio.c,v 1.1.2.2 2007/05/17 13:41:47 yamt Exp $	*/
+/*	$NetBSD: sys_aio.c,v 1.1.2.3 2007/05/17 13:43:17 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_aio.c,v 1.1.2.2 2007/05/17 13:41:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_aio.c,v 1.1.2.3 2007/05/17 13:43:17 yamt Exp $");
 
 #include <sys/param.h>
 
@@ -133,7 +133,7 @@ aio_init(struct proc *p)
 	lwp_lock(l);
 	l->l_stat = LSRUN;
 	l->l_usrpri = PUSER - 1; /* XXX */
-	setrunqueue(l);
+	sched_enqueue(l, false);
 	lwp_unlock(l);
 	mutex_exit(&p->p_smutex);
 
