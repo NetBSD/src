@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.192 2007/05/17 13:43:59 yamt Exp $
+#	$NetBSD: BRANCHES,v 1.193 2007/05/17 14:52:50 yamt Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -480,68 +480,6 @@ Notes:
 		also destroyed.
 
 		Lots of testing required.
-
-Branch:		yamt-idlelwp
-Description:	idle lwp, and some changes depending on it.
-
-		1. separate context switching and thread scheduling.
-		   (cf. gmcgarry_ctxsw)
-		2. implement idle lwp.
-		3. clean up related MD/MI interfaces.
-		4. make scheduler(s) modular.
-
-Status:		Active
-Start Date:	Fri Feb 17 2007
-End Date:	
-Base Tag:	yamt-idlelwp-base8
-Maintainer:	YAMAMOTO Takashi <yamt@NetBSD.org>
-Scope:		src/sys  (src/common is tagged but not branched)
-Notes:		
-		Status of ports:
-		  alpha			[ Done, UP tested, MP not tested ]
-		  i386			[ Done, tested ]
-		  amd64			[ Done, tested ]
-		  mips			[ Done, MIPS1 tested, MIPSX needs
-					  further testing + fixes ]
-		  sparc			[ WIP, commited known broken ]
-		  sparc64		[ WIP, commited known broken ]
-		  arm			[ Done, SA1 tested. ]
-		  macppc/powerpc	[ Done, OEA tested ]
-		  hppa			[ WIP. SYSCALLGATE trap issues remain. ]
-		  sh3			[ Done, tested ]
-		  vax			[ Done, UP tested, MP untested ]
-		  m68k			[ broken ]
-		  ns32k			[ broken ]
-		  ia64			[ broken ]
-		  pdp10			[ broken ]
-
-		How to adapt a port?
-
-		- unify cpu_switch, cpu_exit, cpu_switchto into
-		  a single cpu_switchto.  see cpu_switchto.9.
-
-		- implement cpu_idle.  see cpu_idle.9.
-
-		- add a flag argument to cpu_need_resched.
-		  handle RESCHED_IMMED flag, which means "cause a preemption
-		  as soon as possible."  eg. in the case of MULTIPROCESSOR,
-		  send an IPI to the target cpu.
-
-		- "curlwp == NULL" is not a valid check for idle state anymore.
-		  use "(curlwp->l_flag & LW_IDLE) != 0" instead.  curlwp is
-		  almost always non-NULL, with exceptions like early on boot.
-
-		- remove idle pcbs.
-
-		- (if MULTIPROCESSOR) tweak processor trampoline code.
-
-		- (if MULTIPROCESSOR) call mi_cpu_attach when attaching
-		  secondary processors.
-
-		- (if schedhz!=0) call schedclock regardless of the value of
-		  curlwp.
-
-		- of course, update MD users of scheduler/switching API.
 
 Branch:		yamt-lazymbuf
 Description:	implement and evaluate lazy mapping of mbuf external data pages
@@ -1141,6 +1079,68 @@ Notes:		No longer active due to lack of time, and introduction
 		deal.
 
 		Any other wrstuden-devbsize tag may (and should) go away.
+
+Branch:		yamt-idlelwp
+Description:	idle lwp, and some changes depending on it.
+
+		1. separate context switching and thread scheduling.
+		   (cf. gmcgarry_ctxsw)
+		2. implement idle lwp.
+		3. clean up related MD/MI interfaces.
+		4. make scheduler(s) modular.
+
+Status:		Terminated; merged to -current
+Start Date:	Fri Feb 17 2007
+End Date:	Thu May 17 2007
+Base Tag:	yamt-idlelwp-base8
+Maintainer:	YAMAMOTO Takashi <yamt@NetBSD.org>
+Scope:		src/sys  (src/common is tagged but not branched)
+Notes:		
+		Status of ports:
+		  alpha			[ Done, UP tested, MP not tested ]
+		  i386			[ Done, tested ]
+		  amd64			[ Done, tested ]
+		  mips			[ Done, MIPS1 tested, MIPSX needs
+					  further testing + fixes ]
+		  sparc			[ WIP, commited known broken ]
+		  sparc64		[ WIP, commited known broken ]
+		  arm			[ Done, SA1 tested. ]
+		  macppc/powerpc	[ Done, OEA tested ]
+		  hppa			[ WIP. SYSCALLGATE trap issues remain. ]
+		  sh3			[ Done, tested ]
+		  vax			[ Done, UP tested, MP untested ]
+		  m68k			[ broken ]
+		  ns32k			[ broken ]
+		  ia64			[ broken ]
+		  pdp10			[ broken ]
+
+		How to adapt a port?
+
+		- unify cpu_switch, cpu_exit, cpu_switchto into
+		  a single cpu_switchto.  see cpu_switchto.9.
+
+		- implement cpu_idle.  see cpu_idle.9.
+
+		- add a flag argument to cpu_need_resched.
+		  handle RESCHED_IMMED flag, which means "cause a preemption
+		  as soon as possible."  eg. in the case of MULTIPROCESSOR,
+		  send an IPI to the target cpu.
+
+		- "curlwp == NULL" is not a valid check for idle state anymore.
+		  use "(curlwp->l_flag & LW_IDLE) != 0" instead.  curlwp is
+		  almost always non-NULL, with exceptions like early on boot.
+
+		- remove idle pcbs.
+
+		- (if MULTIPROCESSOR) tweak processor trampoline code.
+
+		- (if MULTIPROCESSOR) call mi_cpu_attach when attaching
+		  secondary processors.
+
+		- (if schedhz!=0) call schedclock regardless of the value of
+		  curlwp.
+
+		- of course, update MD users of scheduler/switching API.
 
 Branch:		yamt-km, yamt-km-doc
 Description:	simplify/improve kernel memory management and bootstrap
