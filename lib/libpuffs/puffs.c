@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.c,v 1.48 2007/05/16 09:41:04 pooka Exp $	*/
+/*	$NetBSD: puffs.c,v 1.49 2007/05/17 14:03:13 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: puffs.c,v 1.48 2007/05/16 09:41:04 pooka Exp $");
+__RCSID("$NetBSD: puffs.c,v 1.49 2007/05/17 14:03:13 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -176,6 +176,21 @@ puffs_getroot(struct puffs_usermount *pu)
 	return pu->pu_pn_root;
 }
 
+void
+puffs_setrootinfo(struct puffs_usermount *pu, enum vtype vt,
+	vsize_t vsize, dev_t rdev)
+{
+	struct puffs_kargs *pargs = &pu->pu_kargs;
+
+	if (puffs_getstate(pu) != PUFFS_STATE_BEFOREMOUNT)
+		warnx("puffs_setrootinfo: call has effect only "
+		    "before mount\n");
+
+	pargs->pa_root_vtype = vt;
+	pargs->pa_root_vsize = vsize;
+	pargs->pa_root_rdev = rdev;
+}
+
 void *
 puffs_getspecific(struct puffs_usermount *pu)
 {
@@ -291,7 +306,8 @@ puffs_setback(struct puffs_cc *pcc, int whatback)
 }
 
 int
-puffs_domount(struct puffs_usermount *pu, const char *dir, int mntflags)
+puffs_mount(struct puffs_usermount *pu, const char *dir, int mntflags,
+	void *cookie)
 {
 
 #if 1
@@ -301,9 +317,10 @@ puffs_domount(struct puffs_usermount *pu, const char *dir, int mntflags)
 		mntflags |= MNT_NOSUID | MNT_NODEV;
 #endif
 
+	pu->pu_kargs.pa_root_cookie = cookie;
 	if (mount(MOUNT_PUFFS, dir, mntflags, &pu->pu_kargs) == -1)
 		return -1;
-	PU_SETSTATE(pu, PUFFS_STATE_MOUNTING);
+	PU_SETSTATE(pu, PUFFS_STATE_RUNNING);
 
 	return 0;
 }
@@ -342,6 +359,12 @@ _puffs_init(int develv, struct puffs_ops *pops, const char *puffsname,
 	fillvnopmask(pops, pargs->pa_vnopmask);
 	(void)strlcpy(pargs->pa_name, puffsname, sizeof(pargs->pa_name));
 
+	puffs_zerostatvfs(&pargs->pa_svfsb);
+	pargs->pa_root_cookie = NULL;
+	pargs->pa_root_vtype = VDIR;
+	pargs->pa_root_vsize = 0;
+	pargs->pa_root_rdev = 0;
+
 	pu->pu_flags = pflags;
 	pu->pu_ops = *pops;
 	free(pops); /* XXX */
@@ -370,45 +393,6 @@ _puffs_init(int develv, struct puffs_ops *pops, const char *puffsname,
 	close(fd);
 	free(pu);
 	return NULL;
-}
-
-struct puffs_usermount *
-_puffs_mount(int develv, struct puffs_ops *pops, const char *dir, int mntflags,
-	const char *puffsname, void *priv, uint32_t pflags)
-{
-	struct puffs_usermount *pu;
-	int sverrno;
-
-	pu = _puffs_init(develv, pops, puffsname, priv, pflags);
-	if (pu == NULL)
-		return NULL;
-
-	if (puffs_domount(pu, dir, mntflags) == -1) {
-		sverrno = errno;
-		puffs_exit(pu, 1);
-		errno = sverrno;
-		return NULL;
-	}
-
-	return pu;
-}
-
-int
-puffs_start(struct puffs_usermount *pu, void *rootcookie, struct statvfs *sbp)
-{
-	struct puffs_startreq sreq;
-
-	memset(&sreq, 0, sizeof(struct puffs_startreq));
-	sreq.psr_cookie = rootcookie;
-	sreq.psr_sb = *sbp;
-
-	/* tell kernel we're flying */
-	if (ioctl(pu->pu_kargs.pa_fd, PUFFSSTARTOP, &sreq) == -1)
-		return -1;
-
-	PU_SETSTATE(pu, PUFFS_STATE_RUNNING);
-
-	return 0;
 }
 
 /*
