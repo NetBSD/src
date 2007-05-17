@@ -1,4 +1,4 @@
-/*	$NetBSD: refuse.c,v 1.57 2007/05/17 14:13:04 pooka Exp $	*/
+/*	$NetBSD: refuse.c,v 1.58 2007/05/17 16:41:18 pooka Exp $	*/
 
 /*
  * Copyright © 2007 Alistair Crooks.  All rights reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: refuse.c,v 1.57 2007/05/17 14:13:04 pooka Exp $");
+__RCSID("$NetBSD: refuse.c,v 1.58 2007/05/17 16:41:18 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -120,6 +120,7 @@ newrn(struct puffs_usermount *pu)
 
 	if ((rn = malloc(sizeof(*rn))) == NULL)
 		err(1, "newrn");
+	memset(rn, 0, sizeof(struct refusenode));
 	pn = puffs_pn_new(pu, rn);
 
 	return pn;
