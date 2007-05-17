@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.86 2007/02/20 16:21:04 ad Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.87 2007/05/17 07:26:23 hannken Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.86 2007/02/20 16:21:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.87 2007/05/17 07:26:23 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -254,8 +254,7 @@ ffs_fsync(void *v)
 
 	vp = ap->a_vp;
 
-	if ((error = fstrans_start(vp->v_mount, FSTRANS_LAZY)) != 0)
-		return error;
+	fstrans_start(vp->v_mount, FSTRANS_LAZY);
 	/*
 	 * XXX no easy way to sync a range in a file with softdep.
 	 */
@@ -493,8 +492,7 @@ ffs_reclaim(void *v)
 	struct ufsmount *ump = ip->i_ump;
 	int error;
 
-	if ((error = fstrans_start(mp, FSTRANS_LAZY)) != 0)
-		return error;
+	fstrans_start(mp, FSTRANS_LAZY);
 	if ((error = ufs_reclaim(vp, ap->a_l)) != 0) {
 		fstrans_done(mp);
 		return (error);
@@ -631,8 +629,7 @@ ffs_getextattr(void *v)
 #ifdef UFS_EXTATTR
 		int error;
 
-		if ((error = fstrans_start(vp->v_mount, FSTRANS_SHARED)) != 0)
-			return error;
+		fstrans_start(vp->v_mount, FSTRANS_SHARED);
 		error = ufs_getextattr(ap);
 		fstrans_done(vp->v_mount);
 		return error;
@@ -664,8 +661,7 @@ ffs_setextattr(void *v)
 #ifdef UFS_EXTATTR
 		int error;
 
-		if ((error = fstrans_start(vp->v_mount, FSTRANS_SHARED)) != 0)
-			return error;
+		fstrans_start(vp->v_mount, FSTRANS_SHARED);
 		error = ufs_setextattr(ap);
 		fstrans_done(vp->v_mount);
 		return error;
@@ -717,8 +713,7 @@ ffs_deleteextattr(void *v)
 #ifdef UFS_EXTATTR
 		int error;
 
-		if ((error = fstrans_start(vp->v_mount, FSTRANS_SHARED)) != 0)
-			return error;
+		fstrans_start(vp->v_mount, FSTRANS_SHARED);
 		error = ufs_deleteextattr(ap);
 		fstrans_done(vp->v_mount);
 		return error;

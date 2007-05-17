@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.152 2007/05/13 13:11:53 yamt Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.153 2007/05/17 07:26:22 hannken Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.152 2007/05/13 13:11:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.153 2007/05/17 07:26:22 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -599,11 +599,10 @@ startover:
 	UVMHIST_LOG(ubchist, "ridx %d npages %d startoff %ld endoff %ld",
 	    ridx, npages, startoffset, endoffset);
 
-	if (!has_trans &&
-	    (error = fstrans_start(vp->v_mount, FSTRANS_SHARED)) != 0) {
-		goto out_err;
+	if (!has_trans) {
+		fstrans_start(vp->v_mount, FSTRANS_SHARED);
+		has_trans = true;
 	}
-	has_trans = true;
 
 	/*
 	 * hold g_glock to prevent a race with truncate.
@@ -1093,12 +1092,12 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff, int flags,
 
 	if ((flags & PGO_CLEANIT) != 0) {
 		simple_unlock(slock);
-		if (pagedaemon)
+		if (pagedaemon) {
 			error = fstrans_start_nowait(vp->v_mount, FSTRANS_LAZY);
-		else
-			error = fstrans_start(vp->v_mount, FSTRANS_LAZY);
-		if (error)
-			return error;
+			if (error)
+				return error;
+		} else
+			fstrans_start(vp->v_mount, FSTRANS_LAZY);
 		has_trans = true;
 		simple_lock(slock);
 	}
