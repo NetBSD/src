@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.55 2007/05/13 20:48:23 fvdl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.56 2007/05/17 10:42:42 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.55 2007/05/13 20:48:23 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.56 2007/05/17 10:42:42 fvdl Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_ddb.h"
@@ -1888,12 +1888,12 @@ valid_user_selector(struct lwp *l, uint64_t seg, char *ldtp, int len)
 }
 
 void
-load_fsgs32(uint16_t fs, uint16_t gs)
+load_fsgs32(uint16_t fsval, uint16_t gsval)
 {
-	if (fs != 0)
-		__asm("movw %0, %%fs" : "=r" (fs));
-	if (gs != 0)
-		lgs(gs);
+	if (fsval != 0)
+		__asm("movw %0, %%fs" : : "r" (fsval));
+	if (gsval != 0)
+		lgs(gsval);
 }
 
 /*
