@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_cidr_pton.c,v 1.2.10.1 2007/05/17 00:43:49 jdc Exp $	*/
+/*	$NetBSD: inet_cidr_pton.c,v 1.2.10.2 2007/05/17 21:25:13 jdc Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -22,7 +22,7 @@
 #if 0
 static const char rcsid[] = "Id: inet_cidr_pton.c,v 1.5.18.1 2005/04/27 05:00:53 sra Exp";
 #else
-__RCSID("$NetBSD: inet_cidr_pton.c,v 1.2.10.1 2007/05/17 00:43:49 jdc Exp $");
+__RCSID("$NetBSD: inet_cidr_pton.c,v 1.2.10.2 2007/05/17 21:25:13 jdc Exp $");
 #endif
 #endif
 
