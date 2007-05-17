@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.28.2.4 2007/03/24 14:54:32 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.28.2.5 2007/05/17 13:40:49 yamt Exp $	*/
 
 /*
  *
@@ -108,7 +108,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.28.2.4 2007/03/24 14:54:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.28.2.5 2007/05/17 13:40:49 yamt Exp $");
 
 #ifndef __x86_64__
 #include "opt_cputype.h"
@@ -2038,11 +2038,15 @@ pmap_activate(l)
 		 * mark the pmap in use by this processor.
 		 */
 		x86_atomic_setbits_ul(&pmap->pm_cpus, (1U << cpu_number()));
+		if (l->l_proc->p_flag & PK_32) {
+			load_fsgs32(pcb->pcb_fs, pcb->pcb_gs);
+		} else {
+			if (pcb->pcb_flags & PCB_GS64)
+				wrmsr(MSR_KERNELGSBASE, pcb->pcb_gs);
+			if (pcb->pcb_flags & PCB_FS64)
+				wrmsr(MSR_FSBASE, pcb->pcb_fs);
+		}
 	}
-	if (pcb->pcb_flags & PCB_GS64)
-		wrmsr(MSR_KERNELGSBASE, pcb->pcb_gs);
-	if (pcb->pcb_flags & PCB_FS64)
-		wrmsr(MSR_FSBASE, pcb->pcb_fs);
 }
 
 /*
@@ -2054,12 +2058,20 @@ pmap_deactivate(l)
 	struct lwp *l;
 {
 	struct pmap *pmap = l->l_proc->p_vmspace->vm_map.pmap;
+	struct pcb *pcb = &l->l_addr->u_pcb;
+	uint16_t segval;
 
 	/*
 	 * mark the pmap no longer in use by this processor. 
 	 */
 	x86_atomic_clearbits_ul(&pmap->pm_cpus, (1U << cpu_number()));
 
+	if (l->l_proc->p_flag & PK_32) {
+		__asm("movw %%fs, %0" : "=r" (segval));
+		pcb->pcb_fs = (uint64_t)segval;
+		__asm("movw %%gs, %0" : "=r" (segval));
+		pcb->pcb_gs = (uint64_t)segval;
+	}
 }
 
 /*

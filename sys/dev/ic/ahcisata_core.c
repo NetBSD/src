@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata.c,v 1.3.4.1 2007/03/12 05:55:10 rmind Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.1.2.2 2007/05/17 13:41:24 yamt Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata.c,v 1.3.4.1 2007/03/12 05:55:10 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.1.2.2 2007/05/17 13:41:24 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -42,78 +42,15 @@ __KERNEL_RCSID(0, "$NetBSD: ahcisata.c,v 1.3.4.1 2007/03/12 05:55:10 rmind Exp $
 
 #include <uvm/uvm_extern.h>
 
-#include <dev/pci/pcivar.h>
-#include <dev/pci/pcidevs.h>
-#include <dev/pci/pciidereg.h>
-#include <dev/pci/pciidevar.h>
-#include <dev/pci/ahcisatareg.h>
+#include <dev/ic/wdcreg.h>
 #include <dev/ata/atareg.h>
 #include <dev/ata/satavar.h>
 #include <dev/ata/satareg.h>
+#include <dev/ic/ahcisatavar.h>
 
-#define AHCI_DEBUG
-
-#define DEBUG_INTR   0x01
-#define DEBUG_XFERS  0x02
-#define DEBUG_FUNCS  0x08
-#define DEBUG_PROBE  0x10
-#define DEBUG_DETACH 0x20
 #ifdef AHCI_DEBUG
 int ahcidebug_mask = 0x0;
-#define AHCIDEBUG_PRINT(args, level) \
-        if (ahcidebug_mask & (level)) \
-		printf args
-#else
-#define AHCIDEBUG_PRINT(args, level)
 #endif
-
-struct ahci_softc {
-	struct atac_softc sc_atac;
-	bus_space_tag_t sc_ahcit; /* ahci registers mapping */
-	bus_space_handle_t sc_ahcih;
-	bus_dma_tag_t sc_dmat; /* DMA memory mappings: */
-	void *sc_cmd_hdr; /* command tables and received FIS */
-	bus_dmamap_t sc_cmd_hdrd;
-
-	int sc_ncmds; /* number of command slots */
-	struct ata_channel *sc_chanarray[AHCI_MAX_PORTS];
-	struct ahci_channel {
-		struct ata_channel ata_channel; /* generic part */
-		bus_space_handle_t ahcic_scontrol;
-		bus_space_handle_t ahcic_sstatus;
-		bus_space_handle_t ahcic_serror;
-		/* pointers allocated from sc_cmd_hdrd */
-		struct ahci_r_fis *ahcic_rfis; /* received FIS */
-		bus_addr_t ahcic_bus_rfis;
-		struct ahci_cmd_header *ahcic_cmdh; /* command headers */
-		bus_addr_t ahcic_bus_cmdh;
-		/* command tables (allocated per-channel) */
-		bus_dmamap_t ahcic_cmd_tbld;
-		struct ahci_cmd_tbl *ahcic_cmd_tbl[AHCI_MAX_CMDS];
-		bus_addr_t ahcic_bus_cmd_tbl[AHCI_MAX_CMDS];
-		bus_dmamap_t ahcic_datad[AHCI_MAX_CMDS];
-		u_int32_t  ahcic_cmds_active; /* active commands */
-	} sc_channels[AHCI_MAX_PORTS];
-};
-
-#define AHCINAME(sc) ((sc)->sc_atac.atac_dev.dv_xname)
-
-#define AHCI_CMDH_SYNC(sc, achp, cmd, op) bus_dmamap_sync((sc)->sc_dmat, \
-    (sc)->sc_cmd_hdrd, \
-    (char *)(&(achp)->ahcic_cmdh[(cmd)]) - (char *)(sc)->sc_cmd_hdr, \
-    sizeof(struct ahci_cmd_header), (op))
-#define AHCI_RFIS_SYNC(sc, achp, op) bus_dmamap_sync((sc)->sc_dmat, \
-    (sc)->sc_cmd_hdrd, (void *)(achp)->ahcic_rfis - (sc)->sc_cmd_hdr, \
-    AHCI_RFIS_SIZE, (op))
-#define AHCI_CMDTBL_SYNC(sc, achp, cmd, op) bus_dmamap_sync((sc)->sc_dmat, \
-    (achp)->ahcic_cmd_tbld, AHCI_CMDTBL_SIZE * (cmd), \
-    AHCI_CMDTBL_SIZE, (op))
-
-#define AHCI_READ(sc, reg) bus_space_read_4((sc)->sc_ahcit, \
-    (sc)->sc_ahcih, (reg))
-#define AHCI_WRITE(sc, reg, val) bus_space_write_4((sc)->sc_ahcit, \
-    (sc)->sc_ahcih, (reg), (val))
-    
 
 void ahci_probe_drive(struct ata_channel *);
 void ahci_setup_channel(struct ata_channel *);
@@ -151,49 +88,11 @@ const struct ata_bustype ahci_ata_bustype = {
 	ahci_killpending
 };
 
-static int  ahci_match(struct device *, struct cfdata *, void *);
-static void ahci_attach(struct device *, struct device *, void *);
-
-int  ahci_intr(void *);
 void ahci_intr_port(struct ahci_softc *, struct ahci_channel *);
 
-CFATTACH_DECL(ahcisata, sizeof(struct ahci_softc),
-    ahci_match, ahci_attach, NULL, NULL);
-
-static int
-ahci_match(struct device *parent, struct cfdata *match,
-    void *aux)
+void
+ahci_attach(struct ahci_softc *sc)
 {
-	struct pci_attach_args *pa = aux;
-	bus_space_tag_t regt;
-	bus_space_handle_t regh;
-	bus_size_t size;
-	int ret = 0;
-
-	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_MASS_STORAGE &&
-	    PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_MASS_STORAGE_SATA &&
-	    PCI_INTERFACE(pa->pa_class) == PCI_INTERFACE_SATA_AHCI) {
-		/* check if the chip is in ahci mode */
-		if (pci_mapreg_map(pa, AHCI_PCI_ABAR,
-		    PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT, 0,
-		    &regt, &regh, NULL, &size) != 0)
-			return (0);
-		if (bus_space_read_4(regt, regh, AHCI_GHC) & AHCI_GHC_AE)
-			ret = 3;
-		bus_space_unmap(regt, regh, size);
-		return (3);
-	}
-
-	return (ret);
-}
-
-static void
-ahci_attach(struct device *parent, struct device *self, void *aux)
-{
-	struct pci_attach_args *pa = aux;
-	struct ahci_softc *sc = (struct ahci_softc *)self;
-	bus_size_t size;
-	char devinfo[256];
 	u_int32_t ahci_cap, ahci_rev, ahci_ports;
 	int i, j, port;
 	struct ahci_channel *achp;
@@ -204,16 +103,7 @@ ahci_attach(struct device *parent, struct device *self, void *aux)
 	int dmasize;
 	void *cmdhp;
 	void *cmdtblp;
-	const char *intrstr;
-	pci_intr_handle_t intrhandle;
-	void *ih;
 
-	if (pci_mapreg_map(pa, AHCI_PCI_ABAR,
-	    PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT, 0,
-	    &sc->sc_ahcit, &sc->sc_ahcih, NULL, &size) != 0) {
-		aprint_error("%s: can't map ahci registers\n", AHCINAME(sc));
-		return;
-	}
 	/* reset controller */
 	AHCI_WRITE(sc, AHCI_GHC, AHCI_GHC_HR);
 	delay(1000);
@@ -233,9 +123,6 @@ ahci_attach(struct device *parent, struct device *self, void *aux)
 	ahci_cap = AHCI_READ(sc, AHCI_CAP);
 	sc->sc_atac.atac_nchannels = (ahci_cap & AHCI_CAP_NPMASK) + 1;
 	sc->sc_ncmds = ((ahci_cap & AHCI_CAP_NCS) >> 8) + 1;
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
-	aprint_naive(": AHCI disk controller\n");
-	aprint_normal(": %s\n", devinfo);
 	ahci_rev = AHCI_READ(sc, AHCI_VS);
 	aprint_normal("%s: AHCI revision ", AHCINAME(sc));
 	switch(ahci_rev) {
@@ -263,7 +150,6 @@ ahci_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_atac.atac_bustype_ata = &ahci_ata_bustype;
 	sc->sc_atac.atac_set_modes = ahci_setup_channel;
 
-	sc->sc_dmat = pa->pa_dmat;
 	dmasize =
 	    (AHCI_RFIS_SIZE + AHCI_CMDH_SIZE) * sc->sc_atac.atac_nchannels;
 	error = bus_dmamem_alloc(sc->sc_dmat, dmasize, PAGE_SIZE, 0,
@@ -298,18 +184,6 @@ ahci_attach(struct device *parent, struct device *self, void *aux)
 
 	/* clear interrupts */
 	AHCI_WRITE(sc, AHCI_IS, AHCI_READ(sc, AHCI_IS));
-	if (pci_intr_map(pa, &intrhandle) != 0) {
-		aprint_error("%s: couldn't map interrupt\n", AHCINAME(sc));
-		return;
-	}
-	intrstr = pci_intr_string(pa->pa_pc, intrhandle);
-	ih = pci_intr_establish(pa->pa_pc, intrhandle, IPL_BIO, ahci_intr, sc);
-	if (ih == NULL) {
-		aprint_error("%s: couldn't establish interrupt", AHCINAME(sc));
-		return;
-	}
-	aprint_normal("%s: interrupting at %s\n", AHCINAME(sc),
-	    intrstr ? intrstr : "unknown interrupt");
 	/* enable interrupts */
 	AHCI_WRITE(sc, AHCI_GHC, AHCI_READ(sc, AHCI_GHC) | AHCI_GHC_IE);
 

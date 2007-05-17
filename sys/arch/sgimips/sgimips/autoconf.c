@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.34.2.1 2007/02/27 16:52:58 yamt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.34.2.2 2007/05/17 13:41:01 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.34.2.1 2007/02/27 16:52:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.34.2.2 2007/05/17 13:41:01 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -96,7 +96,7 @@ cpu_configure()
  * 'dksc(0,1,0)netbsd'
  */
 void
-makebootdev(char *cp)
+makebootdev(const char *cp)
 {
 	if (booted_protocol != NULL)
 		return;

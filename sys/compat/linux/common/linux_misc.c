@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.166.2.4 2007/05/07 10:55:13 yamt Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.166.2.5 2007/05/17 13:41:14 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.166.2.4 2007/05/07 10:55:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.166.2.5 2007/05/17 13:41:14 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ptrace.h"
@@ -191,23 +191,23 @@ static int linux_mmap __P((struct lwp *, struct linux_sys_mmap_args *,
  * to be converted in order for Linux binaries to get a valid signal
  * number out of it.
  */
-void
-bsd_to_linux_wstat(st)
-	int *st;
+int
+bsd_to_linux_wstat(int st)
 {
 
 	int sig;
 
-	if (WIFSIGNALED(*st)) {
-		sig = WTERMSIG(*st);
+	if (WIFSIGNALED(st)) {
+		sig = WTERMSIG(st);
 		if (sig >= 0 && sig < NSIG)
-			*st= (*st& ~0177) | native_to_linux_signo[sig];
-	} else if (WIFSTOPPED(*st)) {
-		sig = WSTOPSIG(*st);
+			st= (st & ~0177) | native_to_linux_signo[sig];
+	} else if (WIFSTOPPED(st)) {
+		sig = WSTOPSIG(st);
 		if (sig >= 0 && sig < NSIG)
-			*st = (*st & ~0xff00) |
+			st = (st & ~0xff00) |
 			    (native_to_linux_signo[sig] << 8);
 	}
+	return st;
 }
 
 /*
@@ -227,19 +227,11 @@ linux_sys_wait4(l, v, retval)
 		syscallarg(int) options;
 		syscallarg(struct rusage *) rusage;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
-	struct sys_wait4_args w4a;
-	int error, *status, tstat, options, linux_options;
-	void *sg;
-
-	if (SCARG(uap, status) != NULL) {
-		sg = stackgap_init(p, 0);
-		status = (int *) stackgap_alloc(p, &sg, sizeof *status);
-	} else
-		status = NULL;
+	int error, status, options, linux_options, was_zombie;
+	struct rusage ru;
 
 	linux_options = SCARG(uap, options);
-	options = 0;
+	options = WOPTSCHECKED;
 	if (linux_options & ~(LINUX_WAIT4_KNOWNFLAGS))
 		return (EINVAL);
 
@@ -255,29 +247,28 @@ linux_sys_wait4(l, v, retval)
 	if (linux_options & LINUX_WAIT4_WNOTHREAD)
 		printf("WARNING: %s: linux process %d.%d called "
 		       "waitpid with __WNOTHREAD set!",
-		       __FILE__, p->p_pid, l->l_lid);
+		       __FILE__, l->l_proc->p_pid, l->l_lid);
 
 # endif
 
-	SCARG(&w4a, pid) = SCARG(uap, pid);
-	SCARG(&w4a, status) = status;
-	SCARG(&w4a, options) = options;
-	SCARG(&w4a, rusage) = SCARG(uap, rusage);
+	error = do_sys_wait(l, &SCARG(uap, pid), &status, options,
+	    SCARG(uap, rusage) != NULL ? &ru : NULL, &was_zombie);
 
-	if ((error = sys_wait4(l, &w4a, retval)))
+	retval[0] = SCARG(uap, pid);
+	if (SCARG(uap, pid) == 0)
 		return error;
 
-	sigdelset(&p->p_sigpend.sp_set, SIGCHLD);	/* XXXAD ksiginfo leak */
+	sigdelset(&l->l_proc->p_sigpend.sp_set, SIGCHLD);	/* XXXAD ksiginfo leak */
 
-	if (status != NULL) {
-		if ((error = copyin(status, &tstat, sizeof tstat)))
-			return error;
+	if (SCARG(uap, rusage) != NULL)
+		error = copyout(&ru, SCARG(uap, rusage), sizeof(ru));
 
-		bsd_to_linux_wstat(&tstat);
-		return copyout(&tstat, SCARG(uap, status), sizeof tstat);
+	if (error == 0 && SCARG(uap, status) != NULL) {
+		status = bsd_to_linux_wstat(status);
+		error = copyout(&status, SCARG(uap, status), sizeof status);
 	}
 
-	return 0;
+	return error;
 }
 
 /*
@@ -382,7 +373,7 @@ linux_sys_uname(struct lwp *l, void *v, register_t *retval)
 	strncpy(luts.l_nodename, hostname, sizeof(luts.l_nodename));
 	strncpy(luts.l_release, linux_release, sizeof(luts.l_release));
 	strncpy(luts.l_version, linux_version, sizeof(luts.l_version));
-	strncpy(luts.l_machine, linux_machine, sizeof(luts.l_machine));
+	strncpy(luts.l_machine, LINUX_UNAME_ARCH, sizeof(luts.l_machine));
 	strncpy(luts.l_domainname, domainname, sizeof(luts.l_domainname));
 
 	return copyout(&luts, SCARG(uap, up), sizeof(luts));
@@ -1559,26 +1550,18 @@ linux_sys_getrlimit(l, v, retval)
 		syscallarg(struct orlimit *) rlp;
 # endif
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
-	void *sg = stackgap_init(p, 0);
-	struct sys_getrlimit_args ap;
-	struct rlimit rl;
 # ifdef LINUX_LARGEFILE64
 	struct rlimit orl;
 # else
 	struct orlimit orl;
 # endif
-	int error;
+	int which;
 
-	SCARG(&ap, which) = linux_to_bsd_limit(SCARG(uap, which));
-	if ((error = SCARG(&ap, which)) < 0)
-		return -error;
-	SCARG(&ap, rlp) = stackgap_alloc(p, &sg, sizeof rl);
-	if ((error = sys_getrlimit(l, &ap, retval)) != 0)
-		return error;
-	if ((error = copyin(SCARG(&ap, rlp), &rl, sizeof(rl))) != 0)
-		return error;
-	bsd_to_linux_rlimit(&orl, &rl);
+	which = linux_to_bsd_limit(SCARG(uap, which));
+	if (which < 0)
+		return -which;
+
+	bsd_to_linux_rlimit(&orl, &l->l_proc->p_rlimit[which]);
 
 	return copyout(&orl, SCARG(uap, rlp), sizeof(orl));
 }
@@ -1597,9 +1580,6 @@ linux_sys_setrlimit(l, v, retval)
 		syscallarg(struct orlimit *) rlp;
 # endif
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
-	void *sg = stackgap_init(p, 0);
-	struct sys_getrlimit_args ap;
 	struct rlimit rl;
 # ifdef LINUX_LARGEFILE64
 	struct rlimit orl;
@@ -1607,17 +1587,17 @@ linux_sys_setrlimit(l, v, retval)
 	struct orlimit orl;
 # endif
 	int error;
+	int which;
 
-	SCARG(&ap, which) = linux_to_bsd_limit(SCARG(uap, which));
-	SCARG(&ap, rlp) = stackgap_alloc(p, &sg, sizeof rl);
-	if ((error = SCARG(&ap, which)) < 0)
-		return -error;
 	if ((error = copyin(SCARG(uap, rlp), &orl, sizeof(orl))) != 0)
 		return error;
+
+	which = linux_to_bsd_limit(SCARG(uap, which));
+	if (which < 0)
+		return -which;
+
 	linux_to_bsd_rlimit(&rl, &orl);
-	if ((error = copyout(&rl, SCARG(&ap, rlp), sizeof(rl))) != 0)
-		return error;
-	return sys_setrlimit(l, &ap, retval);
+	return dosetrlimit(l, l->l_proc, which, &rl);
 }
 
 # if !defined(__mips__) && !defined(__amd64__)

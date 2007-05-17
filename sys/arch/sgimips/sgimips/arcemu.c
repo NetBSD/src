@@ -1,4 +1,4 @@
-/*	$NetBSD: arcemu.c,v 1.12.26.1 2007/02/27 16:52:58 yamt Exp $	*/
+/*	$NetBSD: arcemu.c,v 1.12.26.2 2007/05/17 13:41:00 yamt Exp $	*/
 
 /*
  * Copyright (c) 2004 Steve Rumble 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arcemu.c,v 1.12.26.1 2007/02/27 16:52:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arcemu.c,v 1.12.26.2 2007/05/17 13:41:00 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,11 +107,11 @@ static struct arcbios_fv arcemu_v = {
  * Establish our emulated ARCBIOS vector or return ARCBIOS failure.
  */
 int
-arcemu_init(char **env)
+arcemu_init(const char **env)
 {
 	switch (arcemu_identify()) {
 	case MACH_SGI_IP12:
-		arcemu_ip12_init(env);
+		arcemu_ip12_init(ARCEMU_IP12_ENVOK(env) ? env : NULL);
 		break;
 
 	default:
@@ -133,6 +133,25 @@ arcemu_identify()
 	 *       since it's the only non-ARCS offering with one.
 	 */
 	return (MACH_SGI_IP12); /* boy, that was easy! */
+}
+
+static boolean_t
+extractenv(const char **env, const char *key, char *dest, int len)
+{
+	int i;
+
+	if (env == NULL)
+		return (false);
+
+	for (i = 0; env[i] != NULL; i++) {
+		if (strncasecmp(env[i], key, strlen(key)) == 0 &&
+		    env[i][strlen(key)] == '=') {
+			strlcpy(dest, strchr(env[i], '=') + 1, len);
+			return (true);
+		}
+	}
+
+	return (false);
 }
 
 /*
@@ -181,6 +200,7 @@ static struct arcemu_ip12env {
 	char gfx[32];
 	char netaddr[32];
 	char dlserver[32];
+	char osloadoptions[32];
 } ip12env;
 
 static void
@@ -246,9 +266,8 @@ arcemu_ip12_eeprom_read()
 }
 
 static void
-arcemu_ip12_init(char **env)
+arcemu_ip12_init(const char **env)
 {
-	int i;
 
 	arcemu_v.GetPeer =		  arcemu_ip12_GetPeer;
 	arcemu_v.GetChild =		  arcemu_ip12_GetChild;
@@ -262,38 +281,18 @@ arcemu_ip12_init(char **env)
 	arcemu_ip12_eeprom_read();
 
 	memset(&ip12env, 0, sizeof(ip12env));
-	for (i = 0; env[i] != NULL; i++) {
-		if (strncasecmp(env[i], "dbaud=", 6) == 0)
-			strlcpy(ip12env.dbaud, strchr(env[i], '=') + 1,
-			    sizeof(ip12env.dbaud));
-		else if (strncasecmp(env[i], "rbaud=", 6) == 0)
-			strlcpy(ip12env.rbaud, strchr(env[i], '=') + 1,
-			    sizeof(ip12env.rbaud));
-		else if (strncasecmp(env[i], "bootmode=", 9) == 0)
-			strlcpy(&ip12env.bootmode, strchr(env[i], '=') + 1,
-			    sizeof(ip12env.bootmode));
-		else if (strncasecmp(env[i], "console=", 8) == 0)
-			strlcpy(&ip12env.console, strchr(env[i], '=') + 1,
-			    sizeof(ip12env.console));
-		else if (strncasecmp(env[i], "diskless=", 9) == 0)
-			strlcpy(&ip12env.diskless, strchr(env[i], '=') + 1,
-			    sizeof(ip12env.diskless));
-		else if (strncasecmp(env[i], "volume=", 7) == 0)
-			strlcpy(ip12env.volume, strchr(env[i], '=') + 1,
-			    sizeof(ip12env.volume));
-		else if (strncasecmp(env[i], "cpufreq=", 8) == 0)
-			strlcpy(ip12env.cpufreq, strchr(env[i], '=') + 1,
-			    sizeof(ip12env.cpufreq));
-		else if (strncasecmp(env[i], "gfx=", 4) == 0)
-			strlcpy(ip12env.gfx, strchr(env[i], '=') + 1,
-			    sizeof(ip12env.gfx));
-		else if (strncasecmp(env[i], "netaddr=", 8) == 0)
-			strlcpy(ip12env.netaddr, strchr(env[i], '=') + 1,
-			    sizeof(ip12env.netaddr));
-		else if (strncasecmp(env[i], "dlserver=", 9) == 0)
-			strlcpy(ip12env.dlserver, strchr(env[i], '=') + 1,
-			    sizeof(ip12env.dlserver));
-	}
+	extractenv(env, "dbaud", ip12env.dbaud, sizeof(ip12env.dbaud));
+	extractenv(env, "rbaud", ip12env.rbaud, sizeof(ip12env.rbaud));
+	extractenv(env, "bootmode",&ip12env.bootmode, sizeof(ip12env.bootmode));
+	extractenv(env, "console", &ip12env.console, sizeof(ip12env.console));
+	extractenv(env, "diskless",&ip12env.diskless, sizeof(ip12env.diskless));
+	extractenv(env, "volume", ip12env.volume, sizeof(ip12env.volume));
+	extractenv(env, "cpufreq", ip12env.cpufreq, sizeof(ip12env.cpufreq));
+	extractenv(env, "gfx", ip12env.gfx, sizeof(ip12env.gfx));
+	extractenv(env, "netaddr", ip12env.netaddr, sizeof(ip12env.netaddr));
+	extractenv(env, "dlserver", ip12env.dlserver, sizeof(ip12env.dlserver));
+	extractenv(env, "osloadoptions", ip12env.osloadoptions,
+	    sizeof(ip12env.osloadoptions));
 
 	strcpy(arcbios_system_identifier, "SGI-IP12");
 	strcpy(arcbios_sysid_vendor, "SGI");
@@ -376,9 +375,24 @@ arcemu_ip12_GetEnvironmentVariable(const char *var)
 			return (ip12env.gfx);
 	}
 
-	/* makebootdev() can handle "dksc(a,b,c)/netbsd", etc already */
-	if (strcasecmp("OSLoadPartition", var) == 0)
+	/*
+	 * Ugly Kludge Alert!
+	 *
+	 * Since we don't yet have an ip12 bootloader, we can only squish
+	 * a kernel into the volume header. However, this makes the bootfile
+	 * something like 'dksc(0,1,8)', which translates into 'sd0i'. Ick.
+	 * Munge what we return to always map to 'sd0a'. Lord have mercy.
+	 *
+	 * makebootdev() can handle "dksc(a,b,c)/netbsd", etc already
+	 */
+	if (strcasecmp("OSLoadPartition", var) == 0) {
+		char *hack;
+
+		hack = strstr(ip12nvram.bootfile, ",8)");
+		if (hack != NULL)
+			hack[1] = '0';
 		return (ip12nvram.bootfile);
+	}
 
 	/* pull filename from e.g.: "dksc(0,1,0)netbsd" */
 	if (strcasecmp("OSLoadFilename", var) == 0) {
@@ -388,6 +402,19 @@ arcemu_ip12_GetEnvironmentVariable(const char *var)
 			return (file + 1);
 		else	
 			return (NULL);
+	}
+
+	/*
+	 * As far as I can tell, old systems had no analogue of OSLoadOptions.
+	 * So, to allow forcing of single user mode, we accomodate the
+	 * user setting the ARCBIOSy environment variable "OSLoadOptions" to
+	 * something other than "auto".
+	 */
+	if (strcasecmp("OSLoadOptions", var) == 0) {
+		if (ip12env.osloadoptions[0] == '\0')
+			return ("auto");
+		else
+			return (ip12env.osloadoptions);
 	}
 
 	return (NULL);

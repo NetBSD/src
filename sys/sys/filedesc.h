@@ -1,4 +1,4 @@
-/*	$NetBSD: filedesc.h,v 1.36.10.2 2007/05/07 10:56:13 yamt Exp $	*/
+/*	$NetBSD: filedesc.h,v 1.36.10.3 2007/05/17 13:41:55 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -161,6 +161,8 @@ int	getsock(struct filedesc *, int, struct file **);
 
 struct stat;
 int	do_sys_fstat(struct lwp *, int, struct stat *);
+struct flock;
+int	do_fcntl_lock(struct lwp *, int, int, struct flock *);
 #endif /* _KERNEL */
 
 #endif /* !_SYS_FILEDESC_H_ */

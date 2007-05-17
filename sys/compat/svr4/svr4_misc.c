@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_misc.c,v 1.123.2.2 2007/05/07 10:55:20 yamt Exp $	 */
+/*	$NetBSD: svr4_misc.c,v 1.123.2.3 2007/05/17 13:41:20 yamt Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_misc.c,v 1.123.2.2 2007/05/07 10:55:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_misc.c,v 1.123.2.3 2007/05/17 13:41:20 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,7 +105,7 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_misc.c,v 1.123.2.2 2007/05/07 10:55:20 yamt Exp
 static int svr4_to_bsd_mmap_flags __P((int));
 
 static inline clock_t timeval_to_clock_t __P((struct timeval *));
-static void svr4_setinfo	__P((struct proc *, int, svr4_siginfo_t *));
+static void svr4_setinfo(int, struct rusage *, int, svr4_siginfo_t *);
 
 struct svr4_hrtcntl_args;
 static int svr4_hrtcntl	__P((struct lwp *, struct svr4_hrtcntl_args *,
@@ -122,29 +122,14 @@ svr4_sys_wait(l, v, retval)
 	register_t *retval;
 {
 	struct svr4_sys_wait_args *uap = v;
-	struct sys_wait4_args w4;
-	struct proc *p = l->l_proc;
-	int error;
-	size_t sz = sizeof(*SCARG(&w4, status));
+	int error, was_zombie;
 	int st, sig;
+	int pid = WAIT_ANY;
 
-	SCARG(&w4, rusage) = NULL;
-	SCARG(&w4, options) = 0;
+	error = do_sys_wait(l, &pid, &st, 0, NULL, &was_zombie);
 
-	if (SCARG(uap, status) == NULL) {
-		void *sg = stackgap_init(p, 0);
-
-		SCARG(&w4, status) = stackgap_alloc(p, &sg, sz);
-	}
-	else
-		SCARG(&w4, status) = SCARG(uap, status);
-
-	SCARG(&w4, pid) = WAIT_ANY;
-
-	if ((error = sys_wait4(l, &w4, retval)) != 0)
-		return error;
-
-	if ((error = copyin(SCARG(&w4, status), &st, sizeof(st))) != 0)
+	retval[0] = pid;
+	if (pid == 0)
 		return error;
 
 	if (WIFSIGNALED(st)) {
@@ -164,10 +149,9 @@ svr4_sys_wait(l, v, retval)
 	retval[1] = st;
 
 	if (SCARG(uap, status))
-		if ((error = copyout(&st, SCARG(uap, status), sizeof(st))) != 0)
-			return error;
+		error = copyout(&st, SCARG(uap, status), sizeof(st));
 
-	return 0;
+	return error;
 }
 
 
@@ -812,40 +796,22 @@ svr4_sys_times(l, v, retval)
 	register_t *retval;
 {
 	struct svr4_sys_times_args *uap = v;
-	struct proc *p = l->l_proc;
-	int			 error;
 	struct tms		 tms;
 	struct timeval		 t;
-	struct rusage		*ru;
-	struct rusage		 r;
-	struct sys_getrusage_args 	 ga;
+	struct rusage		 *ru;
+	struct proc		 *p = l->l_proc;
 
-	void *sg = stackgap_init(p, 0);
-	ru = stackgap_alloc(p, &sg, sizeof(struct rusage));
+	ru = &p->p_stats->p_ru;
+	mutex_enter(&p->p_smutex);
+	calcru(p, &ru->ru_utime, &ru->ru_stime, NULL, NULL);
+	mutex_exit(&p->p_smutex);
 
-	SCARG(&ga, who) = RUSAGE_SELF;
-	SCARG(&ga, rusage) = ru;
+	tms.tms_utime = timeval_to_clock_t(&ru->ru_utime);
+	tms.tms_stime = timeval_to_clock_t(&ru->ru_stime);
 
-	error = sys_getrusage(l, &ga, retval);
-	if (error)
-		return error;
-
-	if ((error = copyin(ru, &r, sizeof r)) != 0)
-		return error;
-
-	tms.tms_utime = timeval_to_clock_t(&r.ru_utime);
-	tms.tms_stime = timeval_to_clock_t(&r.ru_stime);
-
-	SCARG(&ga, who) = RUSAGE_CHILDREN;
-	error = sys_getrusage(l, &ga, retval);
-	if (error)
-		return error;
-
-	if ((error = copyin(ru, &r, sizeof r)) != 0)
-		return error;
-
-	tms.tms_cutime = timeval_to_clock_t(&r.ru_utime);
-	tms.tms_cstime = timeval_to_clock_t(&r.ru_stime);
+	ru = &p->p_stats->p_cru;
+	tms.tms_cutime = timeval_to_clock_t(&ru->ru_utime);
+	tms.tms_cstime = timeval_to_clock_t(&ru->ru_stime);
 
 	microtime(&t);
 	*retval = timeval_to_clock_t(&t);
@@ -862,66 +828,43 @@ svr4_sys_ulimit(l, v, retval)
 {
 	struct svr4_sys_ulimit_args *uap = v;
 	struct proc *p = l->l_proc;
+	int error;
+	struct rlimit krl;
+	register_t r;
 
 	switch (SCARG(uap, cmd)) {
 	case SVR4_GFILLIM:
-		*retval = p->p_rlimit[RLIMIT_FSIZE].rlim_cur / 512;
-		if (*retval == -1)
-			*retval = 0x7fffffff;
-		return 0;
+		r = p->p_rlimit[RLIMIT_FSIZE].rlim_cur / 512;
+		break;
 
 	case SVR4_SFILLIM:
-		{
-			int error;
-			struct sys_setrlimit_args srl;
-			struct rlimit krl;
-			void *sg = stackgap_init(p, 0);
-			struct rlimit *url = (struct rlimit *)
-				stackgap_alloc(p, &sg, sizeof *url);
+		krl.rlim_cur = SCARG(uap, newlimit) * 512;
+		krl.rlim_max = p->p_rlimit[RLIMIT_FSIZE].rlim_max;
 
-			krl.rlim_cur = SCARG(uap, newlimit) * 512;
-			krl.rlim_max = p->p_rlimit[RLIMIT_FSIZE].rlim_max;
+		error = dosetrlimit(l, l->l_proc, RLIMIT_FSIZE, &krl);
+		if (error)
+			return error;
 
-			error = copyout(&krl, url, sizeof(*url));
-			if (error)
-				return error;
-
-			SCARG(&srl, which) = RLIMIT_FSIZE;
-			SCARG(&srl, rlp) = url;
-
-			error = sys_setrlimit(l, &srl, retval);
-			if (error)
-				return error;
-
-			*retval = p->p_rlimit[RLIMIT_FSIZE].rlim_cur;
-			if (*retval == -1)
-				*retval = 0x7fffffff;
-			return 0;
-		}
+		r = p->p_rlimit[RLIMIT_FSIZE].rlim_cur;
+		break;
 
 	case SVR4_GMEMLIM:
-		{
-			struct vmspace *vm = p->p_vmspace;
-			register_t r = p->p_rlimit[RLIMIT_DATA].rlim_cur;
-
-			if (r == -1)
-				r = 0x7fffffff;
-			r += (long) vm->vm_daddr;
-			if (r > 0x7fffffff)
-				r = 0x7fffffff;
-			*retval = r;
-			return 0;
-		}
+		r = p->p_rlimit[RLIMIT_DATA].rlim_cur;
+		if (r > 0x7fffffff)
+			r = 0x7fffffff;
+		r += (long)p->p_vmspace->vm_daddr;
+		break;
 
 	case SVR4_GDESLIM:
-		*retval = p->p_rlimit[RLIMIT_NOFILE].rlim_cur;
-		if (*retval == -1)
-			*retval = 0x7fffffff;
-		return 0;
+		r = p->p_rlimit[RLIMIT_NOFILE].rlim_cur;
+		break;
 
 	default:
 		return EINVAL;
 	}
+
+	*retval = r > 0x7fffffff ? 0x7fffffff : r;
+	return 0;
 }
 
 
@@ -1073,10 +1016,7 @@ svr4_sys_hrtsys(l, v, retval)
 
 
 static void
-svr4_setinfo(p, st, s)
-	struct proc *p;
-	int st;
-	svr4_siginfo_t *s;
+svr4_setinfo(int pid, struct rusage *ru, int st, svr4_siginfo_t *s)
 {
 	int sig;
 
@@ -1085,12 +1025,10 @@ svr4_setinfo(p, st, s)
 	s->si_signo = SVR4_SIGCHLD;
 	s->si_errno = 0;	/* XXX? */
 
-	if (p) {
-		s->si_pid = p->p_pid;
-		if (p->p_stats != NULL) {
-			s->si_stime = p->p_stats->p_ru.ru_stime.tv_sec;
-			s->si_utime = p->p_stats->p_ru.ru_utime.tv_sec;
-		}
+	if (pid != 0) {
+		s->si_pid = pid;
+		s->si_stime = ru->ru_stime.tv_sec;
+		s->si_utime = ru->ru_utime.tv_sec;
 	}
 
 	if (WIFEXITED(st)) {
@@ -1131,8 +1069,8 @@ svr4_sys_waitsys(l, v, retval)
 	struct svr4_sys_waitsys_args *uap = v;
 	int options, status;
 	int error;
-	struct proc *parent = l->l_proc;
-	struct proc *child;
+	int was_zombie;
+	struct rusage ru;
 	svr4_siginfo_t i;
 
 	switch (SCARG(uap, grp)) {
@@ -1140,7 +1078,7 @@ svr4_sys_waitsys(l, v, retval)
 		break;
 
 	case SVR4_P_PGID:
-		SCARG(uap, id) = -parent->p_pgid;
+		SCARG(uap, id) = -l->l_proc->p_pgid;
 		break;
 
 	case SVR4_P_ALL:
@@ -1152,7 +1090,7 @@ svr4_sys_waitsys(l, v, retval)
 	}
 
 	/* Translate options */
-	options = 0;
+	options = WOPTSCHECKED;
 	if (SCARG(uap, options) & SVR4_WNOWAIT)
 		options |= WNOWAIT;
 	if (SCARG(uap, options) & SVR4_WNOHANG)
@@ -1166,40 +1104,14 @@ svr4_sys_waitsys(l, v, retval)
 	         SCARG(uap, grp), SCARG(uap, id),
 		 SCARG(uap, info), SCARG(uap, options)));
 
-	mutex_enter(&proclist_lock);
+	error = do_sys_wait(l, &SCARG(uap, id), &status, options, &ru,
+	    &was_zombie);
 
-	error = find_stopped_child(parent, SCARG(uap, id), options, &child,
-	    &status);
-	if (error != 0) {
-		mutex_exit(&proclist_lock);
+	retval[0] = SCARG(uap, id);
+	if (error != 0)
 		return error;
-	}
-	*retval = 0;
-	if (child == NULL) {
-		mutex_exit(&proclist_lock);
-		svr4_setinfo(NULL, 0, &i);
-		return copyout(&i, SCARG(uap, info), sizeof(i));
-	}
 
-	if (child->p_stat == SZOMB) {
-		DPRINTF(("found %d\n", child->p_pid));
-		svr4_setinfo(child, status, &i);
-
-		if ((SCARG(uap, options) & SVR4_WNOWAIT)) {
-			DPRINTF(("Don't wait\n"));
-			mutex_exit(&proclist_lock);
-			return 0;
-		}
-
-		/* proc_free() will release the lock. */
-		proc_free(child, NULL);
-		return copyout(&i, SCARG(uap, info), sizeof(i));
-	}
-
-	DPRINTF(("jobcontrol %d\n", child->p_pid));
-
-	svr4_setinfo(child, W_STOPCODE(status), &i);
-	mutex_exit(&proclist_lock);
+	svr4_setinfo(SCARG(uap, id), &ru, status, &i);
 	return copyout(&i, SCARG(uap, info), sizeof(i));
 }
 
@@ -1350,38 +1262,18 @@ svr4_sys_alarm(l, v, retval)
 	register_t *retval;
 {
 	struct svr4_sys_alarm_args *uap = v;
-	struct proc *p = l->l_proc;
-	int error;
-        struct itimerval *ntp, *otp, tp;
-	struct sys_setitimer_args sa;
-	void *sg = stackgap_init(p, 0);
+        struct itimerval tp;
 
-        ntp = stackgap_alloc(p, &sg, sizeof(struct itimerval));
-        otp = stackgap_alloc(p, &sg, sizeof(struct itimerval));
+	dogetitimer(l->l_proc, ITIMER_REAL, &tp);
+        if (tp.it_value.tv_usec)
+                tp.it_value.tv_sec++;
+        *retval = (register_t)tp.it_value.tv_sec;
 
         timerclear(&tp.it_interval);
         tp.it_value.tv_sec = SCARG(uap, sec);
         tp.it_value.tv_usec = 0;
 
-	if ((error = copyout(&tp, ntp, sizeof(tp))) != 0)
-		return error;
-
-	SCARG(&sa, which) = ITIMER_REAL;
-	SCARG(&sa, itv) = ntp;
-	SCARG(&sa, oitv) = otp;
-
-        if ((error = sys_setitimer(l, &sa, retval)) != 0)
-		return error;
-
-	if ((error = copyin(otp, &tp, sizeof(tp))) != 0)
-		return error;
-
-        if (tp.it_value.tv_usec)
-                tp.it_value.tv_sec++;
-
-        *retval = (register_t) tp.it_value.tv_sec;
-
-        return 0;
+        return dosetitimer(l->l_proc, ITIMER_REAL, &tp);
 }
 
 

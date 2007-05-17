@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisatareg.h,v 1.1 2006/11/30 21:01:16 bouyer Exp $	*/
+/*	$NetBSD: ahcisatareg.h,v 1.1.2.2 2007/05/17 13:41:25 yamt Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.

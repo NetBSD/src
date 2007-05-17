@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.98.4.1 2007/05/07 10:56:16 yamt Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.98.4.2 2007/05/17 13:41:58 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.98.4.1 2007/05/07 10:56:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.98.4.2 2007/05/17 13:41:58 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -689,7 +689,7 @@ lfs_check(struct vnode *vp, daddr_t blkno, int flags)
 	/* If there are too many pending dirops, we have to flush them. */
 	if (fs->lfs_dirvcount > LFS_MAX_FSDIROP(fs) ||
 	    lfs_dirvcount > LFS_MAX_DIROP || fs->lfs_diropwait > 0) {
-		flags |= SEGM_W_DIROPS;
+		flags |= SEGM_CKP;
 	}
 
 	if (locked_queue_count + INOCOUNT(fs) > LFS_MAX_BUFS ||

@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stat.c,v 1.59.2.2 2007/05/07 10:55:20 yamt Exp $	 */
+/*	$NetBSD: svr4_stat.c,v 1.59.2.3 2007/05/17 13:41:21 yamt Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_stat.c,v 1.59.2.2 2007/05/07 10:55:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_stat.c,v 1.59.2.3 2007/05/17 13:41:21 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -637,16 +637,10 @@ svr4_sys_utime(l, v, retval)
 	register_t *retval;
 {
 	struct svr4_sys_utime_args *uap = v;
-	struct proc *p = l->l_proc;
 	struct svr4_utimbuf ub;
-	struct timeval tbuf[2];
-	struct sys_utimes_args ap;
+	struct timeval tbuf[2], *tvp;
 	int error;
-	void *ttp;
-	void *sg = stackgap_init(p, 0);
 
-	ttp = stackgap_alloc(p, &sg, sizeof(tbuf));
-	SCARG(&ap, path) = SCARG(uap, path);
 	if (SCARG(uap, ubuf) != NULL) {
 		if ((error = copyin(SCARG(uap, ubuf), &ub, sizeof(ub))) != 0)
 			return error;
@@ -654,14 +648,12 @@ svr4_sys_utime(l, v, retval)
 		tbuf[0].tv_usec = 0;
 		tbuf[1].tv_sec = ub.modtime;
 		tbuf[1].tv_usec = 0;
-		error = copyout(tbuf, ttp, sizeof(tbuf));
-		if (error)
-			return error;
-		SCARG(&ap, tptr) = ttp;
-	}
-	else
-		SCARG(&ap, tptr) = NULL;
-	return sys_utimes(l, &ap, retval);
+		tvp = tbuf;
+	} else
+		tvp = NULL;
+
+	return do_sys_utimes(l, NULL, SCARG(uap, path), FOLLOW,
+			    tvp, UIO_SYSSPACE);
 }
 
 

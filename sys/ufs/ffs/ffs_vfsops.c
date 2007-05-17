@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.196.2.2 2007/04/15 16:04:08 yamt Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.196.2.3 2007/05/17 13:41:57 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.196.2.2 2007/04/15 16:04:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.196.2.3 2007/05/17 13:41:57 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1312,8 +1312,7 @@ ffs_sync(struct mount *mp, int waitfor, kauth_cred_t cred, struct lwp *l)
 		printf("fs = %s\n", fs->fs_fsmnt);
 		panic("update: rofs mod");
 	}
-	if ((error = fstrans_start(mp, FSTRANS_SHARED)) != 0)
-		return error;
+	fstrans_start(mp, FSTRANS_SHARED);
 	/*
 	 * Write back each (modified) inode.
 	 */

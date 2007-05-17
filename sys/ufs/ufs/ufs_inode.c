@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_inode.c,v 1.64.2.1 2007/04/15 16:04:08 yamt Exp $	*/
+/*	$NetBSD: ufs_inode.c,v 1.64.2.2 2007/05/17 13:42:00 yamt Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.64.2.1 2007/04/15 16:04:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.64.2.2 2007/05/17 13:42:00 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -90,8 +90,7 @@ ufs_inactive(void *v)
 		vprint("ufs_inactive: pushing active", vp);
 
 	transmp = vp->v_mount;
-	if ((error = fstrans_start(transmp, FSTRANS_SHARED)) != 0)
-		return error;
+	fstrans_start(transmp, FSTRANS_SHARED);
 	/*
 	 * Ignore inodes related to stale file handles.
 	 */

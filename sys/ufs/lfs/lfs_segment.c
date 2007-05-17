@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.196.2.3 2007/05/07 10:56:16 yamt Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.196.2.4 2007/05/17 13:41:59 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.196.2.3 2007/05/07 10:56:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.196.2.4 2007/05/17 13:41:59 yamt Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -647,8 +647,8 @@ lfs_segwrite(struct mount *mp, int flags)
 	else if (!(sp->seg_flags & SEGM_FORCE_CKP)) {
 		do {
 			um_error = lfs_writevnodes(fs, mp, sp, VN_REG);
-			if (do_ckp ||
-			    (sp->seg_flags & SEGM_W_DIROPS && !fs->lfs_dirops)) {
+
+			if (do_ckp || fs->lfs_dirops == 0) {
 				if (!writer_set) {
 					lfs_writer_enter(fs, "lfs writer");
 					writer_set = 1;

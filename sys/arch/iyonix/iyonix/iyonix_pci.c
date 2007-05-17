@@ -1,4 +1,4 @@
-/*	$NetBSD: iyonix_pci.c,v 1.3 2006/02/10 20:52:57 gdamore Exp $	*/
+/*	$NetBSD: iyonix_pci.c,v 1.3.20.1 2007/05/17 13:40:59 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iyonix_pci.c,v 1.3 2006/02/10 20:52:57 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iyonix_pci.c,v 1.3.20.1 2007/05/17 13:40:59 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -182,15 +182,6 @@ pci_conf_read_byte(pci_chipset_tag_t pc, pcitag_t tag, int addr)
 int
 pci_conf_hook(void *v, int bus, int dev, int func, pcireg_t id)
 {
-
-	/*
-	 * Given the way we currently configure the PCI support in the
-	 * Xscale, we don't have enough space to map the graphics card.
-	 * We leave it unconfigured for the time being.
-	 */
-        if (PCI_VENDOR(id) == PCI_VENDOR_NVIDIA &&
-            PCI_PRODUCT(id) == PCI_PRODUCT_NVIDIA_GEFORCE2MX)
-                return 0;
 
 	/*
 	 * We need to disable devices in the Southbridge, and as

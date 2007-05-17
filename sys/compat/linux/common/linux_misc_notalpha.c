@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc_notalpha.c,v 1.85.2.3 2007/05/07 10:55:13 yamt Exp $	*/
+/*	$NetBSD: linux_misc_notalpha.c,v 1.85.2.4 2007/05/17 13:41:14 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc_notalpha.c,v 1.85.2.3 2007/05/07 10:55:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc_notalpha.c,v 1.85.2.4 2007/05/17 13:41:14 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -270,17 +270,9 @@ linux_sys_utime(l, v, retval)
 		syscallarg(const char *) path;
 		syscallarg(struct linux_utimbuf *)times;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
-	void *sg;
 	int error;
-	struct sys_utimes_args ua;
 	struct timeval tv[2], *tvp;
 	struct linux_utimbuf lut;
-
-	sg = stackgap_init(p, 0);
-	tvp = (struct timeval *) stackgap_alloc(p, &sg, sizeof(tv));
-
-	SCARG(&ua, path) = SCARG(uap, path);
 
 	if (SCARG(uap, times) != NULL) {
 		if ((error = copyin(SCARG(uap, times), &lut, sizeof lut)))
@@ -288,14 +280,12 @@ linux_sys_utime(l, v, retval)
 		tv[0].tv_usec = tv[1].tv_usec = 0;
 		tv[0].tv_sec = lut.l_actime;
 		tv[1].tv_sec = lut.l_modtime;
-		if ((error = copyout(tv, tvp, sizeof tv)))
-			return error;
-		SCARG(&ua, tptr) = tvp;
-	}
-	else
-		SCARG(&ua, tptr) = NULL;
+		tvp = tv;
+	} else
+		tvp = NULL;
 
-	return sys_utimes(l, &ua, retval);
+	return do_sys_utimes(l, NULL, SCARG(uap, path), FOLLOW,
+			   tvp,  UIO_SYSSPACE);
 }
 
 #ifndef __amd64__

@@ -1,4 +1,4 @@
-/*	$NetBSD: pf.c,v 1.34.2.3 2007/05/07 10:55:41 yamt Exp $	*/
+/*	$NetBSD: pf.c,v 1.34.2.4 2007/05/17 13:41:42 yamt Exp $	*/
 /*	$OpenBSD: pf.c,v 1.487 2005/04/22 09:53:18 dhartmei Exp $ */
 
 /*
@@ -274,10 +274,6 @@ struct pf_pool_limit pf_pool_limits[PF_LIMIT_MAX] = {
 	  (s)->lan.addr.addr32[3] != (s)->gwy.addr.addr32[3])) || \
 	(s)->lan.port != (s)->gwy.port
 
-#define BOUND_IFACE(r, k) (((r)->rule_flag & PFRULE_IFBOUND) ? (k) :   \
-	((r)->rule_flag & PFRULE_GRBOUND) ? (k)->pfik_parent :	       \
-	(k)->pfik_parent->pfik_parent)
-
 #define STATE_INC_COUNTERS(s)				\
 	do {						\
 		s->rule.ptr->states++;			\
@@ -319,6 +315,24 @@ RB_GENERATE(pf_state_tree_id, pf_state,
     u.s.entry_id, pf_state_compare_id);
 RB_GENERATE(pf_anchor_global, pf_anchor, entry_global, pf_anchor_compare);
 RB_GENERATE(pf_anchor_node, pf_anchor, entry_node, pf_anchor_compare);
+
+static inline struct pfi_kif *
+bound_iface(const struct pf_rule *r, const struct pf_rule *nr,
+    struct pfi_kif *k)
+{
+	uint32_t rule_flag;
+
+	rule_flag = r->rule_flag;
+	if (nr != NULL)
+		rule_flag |= nr->rule_flag;
+
+	if ((rule_flag & PFRULE_IFBOUND) != 0)
+		return k;
+	else if ((rule_flag & PFRULE_GRBOUND) != 0)
+		return k->pfik_parent;
+	else
+		return k->pfik_parent->pfik_parent;
+}
 
 static __inline int
 pf_src_compare(struct pf_src_node *a, struct pf_src_node *b)
@@ -3091,7 +3105,7 @@ cleanup:
 			pool_put(&pf_state_pl, s);
 			return (PF_DROP);
 		}
-		if (pf_insert_state(BOUND_IFACE(r, kif), s)) {
+		if (pf_insert_state(bound_iface(r, nr, kif), s)) {
 			pf_normalize_tcp_cleanup(s);
 			REASON_SET(&reason, PFRES_STATEINS);
 			pf_src_tree_remove_state(s);
@@ -3396,7 +3410,7 @@ cleanup:
 			s->nat_src_node = nsn;
 			s->nat_src_node->states++;
 		}
-		if (pf_insert_state(BOUND_IFACE(r, kif), s)) {
+		if (pf_insert_state(bound_iface(r, nr, kif), s)) {
 			REASON_SET(&reason, PFRES_STATEINS);
 			pf_src_tree_remove_state(s);
 			STATE_DEC_COUNTERS(s);
@@ -3686,7 +3700,7 @@ cleanup:
 			s->nat_src_node = nsn;
 			s->nat_src_node->states++;
 		}
-		if (pf_insert_state(BOUND_IFACE(r, kif), s)) {
+		if (pf_insert_state(bound_iface(r, nr, kif), s)) {
 			REASON_SET(&reason, PFRES_STATEINS);
 			pf_src_tree_remove_state(s);
 			STATE_DEC_COUNTERS(s);
@@ -3959,7 +3973,7 @@ cleanup:
 			s->nat_src_node = nsn;
 			s->nat_src_node->states++;
 		}
-		if (pf_insert_state(BOUND_IFACE(r, kif), s)) {
+		if (pf_insert_state(bound_iface(r, nr, kif), s)) {
 			REASON_SET(&reason, PFRES_STATEINS);
 			pf_src_tree_remove_state(s);
 			STATE_DEC_COUNTERS(s);

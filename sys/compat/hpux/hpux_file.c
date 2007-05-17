@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_file.c,v 1.31.2.3 2007/05/07 10:55:10 yamt Exp $	*/
+/*	$NetBSD: hpux_file.c,v 1.31.2.4 2007/05/17 13:41:10 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -119,7 +119,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_file.c,v 1.31.2.3 2007/05/07 10:55:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_file.c,v 1.31.2.4 2007/05/17 13:41:10 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -175,7 +175,6 @@ hpux_sys_creat(l, v, retval)
 		syscallarg(const char *) path;
 		syscallarg(int) mode;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	struct sys_open_args oa;
 
 	SCARG(&oa, path) = SCARG(uap, path);
@@ -631,7 +630,6 @@ hpux_sys_access(l, v, retval)
 		syscallarg(const char *) path;
 		syscallarg(int) flags;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 
 	return (sys_access(l, uap, retval));
 }
@@ -648,7 +646,6 @@ hpux_sys_unlink(l, v, retval)
 	struct hpux_sys_unlink_args /* {
 		syscallarg(char *) path;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 
 	return (sys_unlink(l, uap, retval));
 }
@@ -665,7 +662,6 @@ hpux_sys_chdir(l, v, retval)
 	struct hpux_sys_chdir_args /* {
 		syscallarg(const char *) path;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 
 	return (sys_chdir(l, uap, retval));
 }
@@ -684,7 +680,6 @@ hpux_sys_mknod(l, v, retval)
 		syscallarg(int) mode;
 		syscallarf(int) dev;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	struct sys_mkfifo_args bma;
 
 	/*
@@ -711,7 +706,6 @@ hpux_sys_chmod(l, v, retval)
 		syscallarg(const char *) path;
 		syscallarg(int) mode;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 
 	return (sys_chmod(l, uap, retval));
 }
@@ -730,7 +724,6 @@ hpux_sys_chown(l, v, retval)
 		syscallarg(int) uid;
 		syscallarg(int) gid;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 
 	/* XXX What about older HP-UX executables? */
 
@@ -750,7 +743,6 @@ hpux_sys_rename(l, v, retval)
 		syscallarg(const char *) from;
 		syscallarg(const char *) to;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 
 	return (sys___posix_rename(l, uap, retval));
 }
@@ -768,7 +760,6 @@ hpux_sys_mkdir(l, v, retval)
 		syscallarg(char *) path;
 		syscallarg(int) mode;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 
 	return (sys_mkdir(l, uap, retval));
 }
@@ -785,7 +776,6 @@ hpux_sys_rmdir(l, v, retval)
 	struct hpux_sys_rmdir_args /* {
 		syscallarg(const char *) path;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 
 	return (sys_rmdir(l, uap, retval));
 }
@@ -803,7 +793,6 @@ hpux_sys_symlink(l, v, retval)
 		syscallarg(const char *) path;
 		syscallarg(const char *) link;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 
 	return (sys_symlink(l, uap, retval));
 }
@@ -822,7 +811,6 @@ hpux_sys_readlink(l, v, retval)
 		syscallarg(char *) buf;
 		syscallarg(int) count;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 
 	return (sys_readlink(l, uap, retval));
 }
@@ -840,7 +828,6 @@ hpux_sys_truncate(l, v, retval)
 		syscallarg(const char *) path;
 		syscallarg(long) length;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 
 	return (compat_43_sys_truncate(l, uap, retval));
 }

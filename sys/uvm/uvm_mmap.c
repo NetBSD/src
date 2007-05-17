@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.105.2.2 2007/03/12 06:01:12 rmind Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.105.2.3 2007/05/17 13:42:02 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.105.2.2 2007/03/12 06:01:12 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.105.2.3 2007/05/17 13:42:02 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_pax.h"
@@ -88,6 +88,22 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.105.2.2 2007/03/12 06:01:12 rmind Exp
 #ifndef COMPAT_ZERODEV
 #define COMPAT_ZERODEV(dev)	(0)
 #endif
+
+#define RANGE_TEST(addr, size, ismmap)				\
+	do {							\
+		vaddr_t vm_min_address = VM_MIN_ADDRESS;	\
+		vaddr_t vm_max_address = VM_MAXUSER_ADDRESS;	\
+		vaddr_t eaddr = addr + size;			\
+								\
+		if (addr < vm_min_address)			\
+			return EINVAL;				\
+		if (eaddr > vm_max_address)			\
+			return /*CONSTCOND*/			\
+			    ismmap ? EFBIG : EINVAL;		\
+		if (addr > eaddr) /* no wrapping! */		\
+			return /*CONSTCOND*/			\
+			    ismmap ? EOVERFLOW : EINVAL;	\
+	} while (/*CONSTCOND*/0)
 
 /*
  * unimplemented VM system calls:
@@ -297,7 +313,7 @@ sys_mmap(l, v, retval)
 	vsize_t size, pageoff;
 	vm_prot_t prot, maxprot;
 	int flags, fd;
-	vaddr_t vm_min_address = VM_MIN_ADDRESS, defaddr;
+	vaddr_t defaddr;
 	struct filedesc *fdp = p->p_fd;
 	struct file *fp;
 	struct vnode *vp;
@@ -332,13 +348,10 @@ sys_mmap(l, v, retval)
 	pos  -= pageoff;
 	size += pageoff;			/* add offset */
 	size = (vsize_t)round_page(size);	/* round up */
-	if ((ssize_t) size < 0)
-		return (EINVAL);			/* don't allow wrap */
 
 	/*
 	 * now check (MAP_FIXED) or get (!MAP_FIXED) the "addr"
 	 */
-
 	if (flags & MAP_FIXED) {
 
 		/* ensure address and file offset are aligned properly */
@@ -346,13 +359,7 @@ sys_mmap(l, v, retval)
 		if (addr & PAGE_MASK)
 			return (EINVAL);
 
-		if (VM_MAXUSER_ADDRESS > 0 &&
-		    (addr + size) > VM_MAXUSER_ADDRESS)
-			return (EFBIG);
-		if (vm_min_address > 0 && addr < vm_min_address)
-			return (EINVAL);
-		if (addr > addr + size)
-			return (EOVERFLOW);		/* no wrapping! */
+		RANGE_TEST(addr, size, 1);
 
 	} else if (addr == 0 || !(flags & MAP_TRYFIXED)) {
 
@@ -439,26 +446,6 @@ sys_mmap(l, v, retval)
 
 		maxprot = VM_PROT_EXECUTE;
 
-#if NVERIEXEC > 0
-		/*
-		 * Check if the file can be executed indirectly.
-		 */
-		if (veriexec_verify(l, vp, "(mmap)", VERIEXEC_INDIRECT, NULL)) {
-			/*
-			 * Don't allow executable mappings if we can't
-			 * indirectly execute the file.
-			 */
-			if (prot & VM_PROT_EXECUTE)
-				return (EPERM);
-
-			/*
-			 * Strip the executable bit from 'maxprot' to make sure
-			 * it can't be made executable later.
-			 */
-			maxprot &= ~VM_PROT_EXECUTE;
-		}
-#endif /* NVERIEXEC > 0 */
-
 		/* check read access */
 		if (fp->f_flag & FREAD)
 			maxprot |= VM_PROT_READ;
@@ -519,6 +506,33 @@ sys_mmap(l, v, retval)
 			return (ENOMEM);
 		}
 	}
+
+#if NVERIEXEC > 0
+	if (handle != NULL) {
+		/*
+		 * Check if the file can be executed indirectly.
+		 *
+		 * XXX: This gives false warnings about "Incorrect access type"
+		 * XXX: if the mapping is not executable. Harmless, but will be
+		 * XXX: fixed as part of other changes.
+		 */
+		if (veriexec_verify(l, handle, "(mmap)", VERIEXEC_INDIRECT,
+		    NULL)) {
+			/*
+			 * Don't allow executable mappings if we can't
+			 * indirectly execute the file.
+			 */
+			if (prot & VM_PROT_EXECUTE)
+				return (EPERM);
+
+			/*
+			 * Strip the executable bit from 'maxprot' to make sure
+			 * it can't be made executable later.
+			 */
+			maxprot &= ~VM_PROT_EXECUTE;
+		}
+	}
+#endif /* NVERIEXEC > 0 */
 
 #ifdef PAX_MPROTECT
 	pax_mprotect(l, &prot, &maxprot);
@@ -581,9 +595,7 @@ sys___msync13(struct lwp *l, void *v, register_t *retval)
 	size += pageoff;
 	size = (vsize_t)round_page(size);
 
-	/* disallow wrap-around. */
-	if (addr + size < addr)
-		return (EINVAL);
+	RANGE_TEST(addr, size, 0);
 
 	/*
 	 * get map
@@ -645,7 +657,6 @@ sys_munmap(struct lwp *l, void *v, register_t *retval)
 	vaddr_t addr;
 	vsize_t size, pageoff;
 	struct vm_map *map;
-	vaddr_t vm_min_address = VM_MIN_ADDRESS;
 	struct vm_map_entry *dead_entries;
 
 	/*
@@ -664,21 +675,11 @@ sys_munmap(struct lwp *l, void *v, register_t *retval)
 	size += pageoff;
 	size = (vsize_t)round_page(size);
 
-	if ((int)size < 0)
-		return (EINVAL);
 	if (size == 0)
 		return (0);
 
-	/*
-	 * Check for illegal addresses.  Watch out for address wrap...
-	 * Note that VM_*_ADDRESS are not constants due to casts (argh).
-	 */
-	if (VM_MAXUSER_ADDRESS > 0 && addr + size > VM_MAXUSER_ADDRESS)
-		return (EINVAL);
-	if (vm_min_address > 0 && addr < vm_min_address)
-		return (EINVAL);
-	if (addr > addr + size)
-		return (EINVAL);
+	RANGE_TEST(addr, size, 0);
+
 	map = &p->p_vmspace->vm_map;
 
 	/*
@@ -735,6 +736,8 @@ sys_mprotect(struct lwp *l, void *v, register_t *retval)
 	size += pageoff;
 	size = round_page(size);
 
+	RANGE_TEST(addr, size, 0);
+
 	error = uvm_map_protect(&p->p_vmspace->vm_map, addr, addr + size, prot,
 				false);
 	return error;
@@ -771,8 +774,8 @@ sys_minherit(struct lwp *l, void *v, register_t *retval)
 	size += pageoff;
 	size = (vsize_t)round_page(size);
 
-	if ((int)size < 0)
-		return (EINVAL);
+	RANGE_TEST(addr, size, 0);
+
 	error = uvm_map_inherit(&p->p_vmspace->vm_map, addr, addr + size,
 				inherit);
 	return error;
@@ -809,8 +812,7 @@ sys_madvise(struct lwp *l, void *v, register_t *retval)
 	size += pageoff;
 	size = (vsize_t)round_page(size);
 
-	if ((ssize_t)size <= 0)
-		return (EINVAL);
+	RANGE_TEST(addr, size, 0);
 
 	switch (advice) {
 	case MADV_NORMAL:
@@ -912,9 +914,7 @@ sys_mlock(struct lwp *l, void *v, register_t *retval)
 	size += pageoff;
 	size = (vsize_t)round_page(size);
 
-	/* disallow wrap-around. */
-	if (addr + size < addr)
-		return (EINVAL);
+	RANGE_TEST(addr, size, 0);
 
 	if (atop(size) + uvmexp.wired > uvmexp.wiredmax)
 		return (EAGAIN);
@@ -962,9 +962,7 @@ sys_munlock(struct lwp *l, void *v, register_t *retval)
 	size += pageoff;
 	size = (vsize_t)round_page(size);
 
-	/* disallow wrap-around. */
-	if (addr + size < addr)
-		return (EINVAL);
+	RANGE_TEST(addr, size, 0);
 
 	error = uvm_map_pageable(&p->p_vmspace->vm_map, addr, addr+size, true,
 	    0);

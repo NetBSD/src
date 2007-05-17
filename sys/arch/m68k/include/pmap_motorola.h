@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.h,v 1.10.20.1 2007/03/12 05:48:45 rmind Exp $	*/
+/*	$NetBSD: pmap_motorola.h,v 1.10.20.2 2007/05/17 13:40:59 yamt Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -110,7 +110,11 @@ typedef struct pmap	*pmap_t;
  * physically contiguous pages for the ST in pmap.c!
  */
 #define MAXKL2SIZE	32
+#if PAGE_SIZE == 8192
+#define MAXUL2SIZE	16
+#else
 #define MAXUL2SIZE	8
+#endif
 #define l2tobm(n)	(1 << (n))
 #define bmtol2(n)	(ffs(n) - 1)
 
@@ -151,7 +155,11 @@ struct pv_page_info {
  * This is basically:
  * ((PAGE_SIZE - sizeof(struct pv_page_info)) / sizeof(struct pv_entry))
  */
+#if PAGE_SIZE == 8192
+#define	NPVPPG	340
+#else
 #define	NPVPPG	170
+#endif
 
 struct pv_page {
 	struct pv_page_info pvp_pgi;

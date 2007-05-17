@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_sys.h,v 1.24.2.4 2007/05/07 10:55:42 yamt Exp $	*/
+/*	$NetBSD: puffs_sys.h,v 1.24.2.5 2007/05/17 13:41:44 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -108,8 +108,9 @@ extern int puffsdebug; /* puffs_subr.c */
 #define PUFFS_TOFHSIZE(s) ((s)==0 ? (s) : (s)+4)
 #define PUFFS_FROMFHSIZE(s) ((s)==0 ? (s) : (s)-4)
 
+#define ALLOPS(pmp) (pmp->pmp_flags & PUFFS_KFLAG_ALLOPS)
 #define EXISTSOP(pmp, op) \
- (((pmp)->pmp_flags&PUFFS_KFLAG_ALLOPS) || ((pmp)->pmp_vnopmask[PUFFS_VN_##op]))
+ (ALLOPS(pmp) || ((pmp)->pmp_vnopmask[PUFFS_VN_##op]))
 
 #define PUFFS_DOCACHE(pmp)	(((pmp)->pmp_flags & PUFFS_KFLAG_NOCACHE) == 0)
 
@@ -160,6 +161,7 @@ struct puffs_mount {
 
 #define PNODE_NOREFS	0x01	/* vnode inactive, no backend reference	*/
 #define PNODE_SUSPEND	0x02	/* issue all operations as FAF		*/
+#define PNODE_DOINACT	0x04	/* if inactive-on-demand, call inactive */
 
 #define PNODE_METACACHE_ATIME	0x10	/* cache atime metadata */
 #define PNODE_METACACHE_CTIME	0x20	/* cache atime metadata */
@@ -198,14 +200,13 @@ int	puffs_start2(struct puffs_mount *, struct puffs_startreq *);
 int	puffs_vfstouser(struct puffs_mount *, int, void *, size_t);
 void	puffs_suspendtouser(struct puffs_mount *, int);
 int	puffs_vntouser(struct puffs_mount *, int, void *, size_t, size_t,
-		       void *, struct vnode *, struct vnode *);
-void	puffs_vntouser_faf(struct puffs_mount *, int, void *, size_t, void *);
+		       struct vnode *, struct vnode *);
 int	puffs_vntouser_req(struct puffs_mount *, int, void *, size_t, size_t,
-			   void *, uint64_t, struct vnode *, struct vnode *);
+			   uint64_t, struct vnode *, struct vnode *);
 void	puffs_vntouser_call(struct puffs_mount *, int, void *, size_t, size_t,
-			    void *, parkdone_fn, void *,
-			    struct vnode *, struct vnode *);
-void	puffs_vntouser_faf(struct puffs_mount *, int, void *, size_t, void *);
+			    parkdone_fn, void *, struct vnode *, struct vnode*);
+void	puffs_vntouser_faf(struct puffs_mount *, int, void *, size_t,
+			   struct vnode *);
 void	puffs_cacheop(struct puffs_mount *, struct puffs_park *,
 		      struct puffs_cacheinfo *, size_t, void *);
 struct puffs_park *puffs_cacheop_alloc(void);

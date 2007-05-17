@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sysctl.c,v 1.25.2.2 2007/05/07 10:55:13 yamt Exp $	*/
+/*	$NetBSD: linux_sysctl.c,v 1.25.2.3 2007/05/17 13:41:15 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sysctl.c,v 1.25.2.2 2007/05/07 10:55:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sysctl.c,v 1.25.2.3 2007/05/17 13:41:15 yamt Exp $");
 
 #if defined (_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -74,7 +74,6 @@ char linux_version[128] = "#0 Wed Feb 20 20:00:02 CET 2002";
 char linux_release[128] = "2.0.38";
 char linux_version[128] = "#0 Sun Nov 11 11:11:11 MET 2000";
 #endif
-char linux_machine[128] = "";
 
 #ifndef _LKM
 static
@@ -115,18 +114,6 @@ SYSCTL_SETUP(linux_sysctl_setup, "linux emulated sysctl subtree setup")
 		       CTLTYPE_STRING, "version", NULL,
 		       NULL, 0, linux_version, sizeof(linux_version),
 		       LINUX_KERN_VERSION, CTL_EOL);
-
-#if 0
-#ifndef LINUX_UNAME_ARCH
-#define LINUX_UNAME_ARCH machine
-#endif
-	strlcpy(linux_machine, LINUX_UNAME_ARCH, sizeof(linux_machine));
-	sysctl_createv(clog, 0, &node, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_STRING, "machine", NULL,
-		       NULL, 0, linux_machine, sizeof(linux_machine),
-		       LINUX_KERN_VERSION, CTL_EOL);
-#endif
 
 	linux_sysctl_root.sysctl_flags &= ~CTLFLAG_READWRITE;
 }

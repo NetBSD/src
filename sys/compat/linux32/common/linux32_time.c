@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_time.c,v 1.7.2.3 2007/05/07 10:55:14 yamt Exp $ */
+/*	$NetBSD: linux32_time.c,v 1.7.2.4 2007/05/17 13:41:16 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_time.c,v 1.7.2.3 2007/05/07 10:55:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_time.c,v 1.7.2.4 2007/05/17 13:41:16 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -43,10 +43,13 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_time.c,v 1.7.2.3 2007/05/07 10:55:14 yamt Ex
 #include <sys/kauth.h>
 #include <sys/kernel.h>
 #include <sys/fcntl.h>
+#include <sys/namei.h>
 #include <sys/select.h>
 #include <sys/proc.h>
+#include <sys/resourcevar.h>
 #include <sys/ucred.h>
 #include <sys/swap.h>
+#include <sys/vfs_syscalls.h>
 
 #include <machine/types.h>
 
@@ -148,6 +151,12 @@ linux32_sys_time(l, v, retval)
 }
 
 
+static inline linux32_clock_t
+timeval_to_clock_t(struct timeval *tv)
+{
+	return tv->tv_sec * hz + tv->tv_usec / (1000000 / hz);
+}
+
 int
 linux32_sys_times(l, v, retval)
 	struct lwp *l;
@@ -158,31 +167,27 @@ linux32_sys_times(l, v, retval)
 		syscallarg(linux32_tmsp_t) tms;
 	} */ *uap = v;
 	struct linux32_tms ltms32;
-	struct linux_tms ltms;
-	struct linux_tms *ltmsp;
-	struct linux_sys_times_args ua;
-	void *sg = stackgap_init(l->l_proc, 0);
-	int error;
 
-	ltmsp = stackgap_alloc(l->l_proc, &sg, sizeof(*ltmsp));
-	SCARG(&ua, tms) = (struct times *)ltmsp;
+	struct timeval		 t;
+	struct rusage		 *ru;
+	struct proc		 *p = l->l_proc;
 
-	if ((error = linux_sys_times(l, &ua, retval)) != 0)
-		return error;
+	ru = &p->p_stats->p_ru;
+	mutex_enter(&p->p_smutex);
+	calcru(p, &ru->ru_utime, &ru->ru_stime, NULL, NULL);
+	mutex_exit(&p->p_smutex);
 
-	if ((error = copyin(ltmsp, &ltms, sizeof(ltms))) != 0)
-		return error;
+	ltms32.ltms32_utime = timeval_to_clock_t(&ru->ru_utime);
+	ltms32.ltms32_stime = timeval_to_clock_t(&ru->ru_stime);
 
-	ltms32.ltms32_utime = (linux32_clock_t)ltms.ltms_utime;
-	ltms32.ltms32_stime = (linux32_clock_t)ltms.ltms_stime;
-	ltms32.ltms32_cutime = (linux32_clock_t)ltms.ltms_cutime;
-	ltms32.ltms32_cstime = (linux32_clock_t)ltms.ltms_cstime;
+	ru = &p->p_stats->p_cru;
+	ltms32.ltms32_cutime = timeval_to_clock_t(&ru->ru_utime);
+	ltms32.ltms32_cstime = timeval_to_clock_t(&ru->ru_stime);
 
-	if ((error = copyout(&ltms32, 
-	    SCARG_P32(uap, tms), sizeof(ltms32))) != 0)
-		return error;
+	microtime(&t);
+	*retval = timeval_to_clock_t(&t);
 
-	return 0;
+	return copyout(&ltms32, SCARG_P32(uap, tms), sizeof(ltms32));
 }
 
 int
@@ -222,14 +227,9 @@ linux32_sys_utime(l, v, retval)
 		syscallarg(const netbsd32_charp) path;
 		syscallarg(linux32_utimbufp_t) times;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
-        void *sg = stackgap_init(p, 0);
-        struct sys_utimes_args ua;
         struct timeval tv[2], *tvp;
         struct linux32_utimbuf lut;
         int error;
-
-	NETBSD32TOP_UAP(path, const char);
 
         if (SCARG_P32(uap, times) != NULL) {
                 if ((error = copyin(SCARG_P32(uap, times), &lut, sizeof lut)))
@@ -239,15 +239,11 @@ linux32_sys_utime(l, v, retval)
                 tv[0].tv_usec = 0;
                 tv[1].tv_sec = (long)lut.l_modtime;
 		tv[1].tv_usec = 0;
-
-	        tvp = (struct timeval *) stackgap_alloc(p, &sg, sizeof(tv));
-
-                if ((error = copyout(tv, tvp, sizeof(tv))))
-                        return error;
-                SCARG(&ua, tptr) = tvp;
+                tvp = tv;
         } else {
-               SCARG(&ua, tptr) = NULL;
+		tvp = NULL;
 	}
                      
-        return sys_utimes(l, &ua, retval);
+        return do_sys_utimes(l, NULL, SCARG_P32(uap, path), FOLLOW,
+			    tvp, UIO_SYSSPACE);
 } 

@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.29.14.1 2007/03/12 05:51:41 rmind Exp $	*/
+/*	$NetBSD: zs.c,v 1.29.14.2 2007/05/17 13:41:05 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 Minoura Makoto
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.29.14.1 2007/03/12 05:51:41 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.29.14.2 2007/05/17 13:41:05 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -322,7 +322,7 @@ zshard(void *arg)
 	/*
 	 * Actually, zs hardware ipl is 5.
 	 * Here we disable all interrupts to shorten the zshard
-	 * handling time.  Otherwise, too many characters are 
+	 * handling time.  Otherwise, too many characters are
 	 * dropped.
 	 */
 	s = splhigh();

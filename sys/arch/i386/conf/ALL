@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.81.2.5 2007/05/07 10:54:55 yamt Exp $
+# $NetBSD: ALL,v 1.81.2.6 2007/05/17 13:40:56 yamt Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.81.2.5 $"
+#ident 		"ALL-$Revision: 1.81.2.6 $"
 
 maxusers	32		# estimated number of users
 
@@ -354,6 +354,7 @@ mpu*		at acpi?		# Roland MPU-401 MIDI UART
 npx*		at acpi?		# Math coprocessor
 pckbc*  	at acpi?		# PC keyboard controller
 pcppi*		at acpi?                # AT-style speaker sound
+ug* 		at acpi?		# Abit uGuru Hardware monitor
 wss* 		at acpi?		# NeoMagic 256AV in wss mode
 ym* 		at acpi?		# Yamaha OPL3-SA[23] audio
 
@@ -1378,6 +1379,7 @@ pseudo-device	vnd			# disk-like interface to files
 options 	VND_COMPRESSION		# compressed vnd(4)
 
 # network pseudo-devices
+pseudo-device	agr			# Link aggregation agr(4)
 pseudo-device	bpfilter		# Berkeley packet filter
 pseudo-device	carp			# Common Address Redundancy Protocol
 pseudo-device	ipfilter		# IP filter (firewall) and NAT

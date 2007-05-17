@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_subr.c,v 1.20.2.5 2007/05/07 10:55:42 yamt Exp $	*/
+/*	$NetBSD: puffs_subr.c,v 1.20.2.6 2007/05/17 13:41:44 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_subr.c,v 1.20.2.5 2007/05/07 10:55:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_subr.c,v 1.20.2.6 2007/05/17 13:41:44 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -132,6 +132,9 @@ puffs_getvnode(struct mount *mp, void *cookie, enum vtype type,
 	/*
 	 * clerical tasks & footwork
 	 */
+
+	/* default size */
+	uvm_vnp_setsize(vp, 0);
 
 	/* dances based on vnode type. almost ufs_vinit(), but not quite */
 	switch (type) {

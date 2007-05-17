@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.277.2.3 2007/05/07 10:55:29 yamt Exp $
+#	$NetBSD: files.pci,v 1.277.2.4 2007/05/17 13:41:31 yamt Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -217,9 +217,8 @@ attach	pciide at pci
 file	dev/pci/pciide.c		pciide
 
 # AHCI SATA controllers
-device	ahcisata: ata, ata_dma, ata_udma, sata
-attach	ahcisata at pci
-file	dev/pci/ahcisata.c		ahcisata
+attach	ahcisata at pci with ahcisata_pci
+file	dev/pci/ahcisata_pci.c		ahcisata_pci
 
 # Acard IDE controllers
 device	acardide: ata, ata_dma, ata_udma, pciide_common, wdc_common
@@ -260,6 +259,13 @@ file	dev/pci/hptide.c		hptide
 device	iteide: ata, ata_dma, ata_udma, pciide_common, wdc_common
 attach	iteide at pci
 file	dev/pci/iteide.c		iteide
+
+# Jmicron hybrid IDE/AHCI controllers
+define  jmide_hl { }
+device	jmide: ata, ata_dma, ata_udma, pciide_common, wdc_common, jmide_hl
+attach	jmide at pci
+attach	ahcisata at jmide_hl with jmahci
+file	dev/pci/jmide.c			jmide | jmahci needs-flag
 
 # Opti IDE controllers
 device	optiide: ata, ata_dma, pciide_common, wdc_common

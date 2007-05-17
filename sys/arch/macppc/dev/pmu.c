@@ -1,4 +1,4 @@
-/*	$NetBSD: pmu.c,v 1.3.2.1 2007/04/15 16:02:50 yamt Exp $ */
+/*	$NetBSD: pmu.c,v 1.3.2.2 2007/05/17 13:40:59 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmu.c,v 1.3.2.1 2007/04/15 16:02:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmu.c,v 1.3.2.2 2007/05/17 13:40:59 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,6 +96,8 @@ struct pmu_softc {
 	/* ADB */
 	void (*sc_adb_handler)(void *, int, uint8_t *);
 	void *sc_adb_cookie;
+	void (*sc_callback)(void *);
+	void *sc_cb_cookie;
 };
 
 CFATTACH_DECL(pmu, sizeof(struct pmu_softc),
@@ -114,7 +116,7 @@ static void pmu_create_thread(void *);
 static void pmu_thread(void *);
 static void pmu_eject_card(struct pmu_softc *, int);
 static void pmu_update_brightness(struct pmu_softc *);
-
+static void pmu_register_callback(void *, void (*)(void *), void *);
 /*
  * send a message to the PMU.
  */
@@ -276,6 +278,7 @@ pmu_attach(struct device *parent, struct device *dev, void *aux)
 	sc->sc_brightness = sc->sc_brightness_wanted = 0x80;
 	sc->sc_volume = sc->sc_volume_wanted = 0x80;
 	sc->sc_flags = 0;
+	sc->sc_callback = NULL;
 
 	if (bus_space_map(sc->sc_memt, ca->ca_reg[0] + ca->ca_baseaddr,
 	    ca->ca_reg[1], 0, &sc->sc_memh) != 0) {
@@ -289,6 +292,7 @@ pmu_attach(struct device *parent, struct device *dev, void *aux)
 
 	sc->sc_pmu_ops.cookie = sc;
 	sc->sc_pmu_ops.do_command = pmu_send;
+	sc->sc_pmu_ops.register_callback = pmu_register_callback;
 
 	if (pmu0 == NULL)
 		pmu0 = sc;
@@ -386,6 +390,15 @@ bat_done:
 	config_found_ia(&sc->sc_dev, "i2cbus", &iba, iicbus_print);
 #endif
 	kthread_create(pmu_create_thread, sc);
+}
+
+static void
+pmu_register_callback(void *pmu_cookie, void (*cb)(void *), void *cookie)
+{
+	struct pmu_softc *sc = pmu_cookie;
+
+	sc->sc_callback = cb;
+	sc->sc_cb_cookie = cookie;
 }
 
 static void
@@ -947,7 +960,7 @@ pmu_thread(void *cookie)
 	int ticks = hz, i;
 	
 	while (1) {
-		tsleep(&sc->sc_event, PWAIT, "pmu_wait", ticks);
+		tsleep(&sc->sc_event, PWAIT, "wait", ticks);
 		if (sc->sc_pending_eject != 0) {
 			DPRINTF("eject %d\n", sc->sc_pending_eject);
 			for (i = 1; i < 3; i++) {
@@ -968,6 +981,9 @@ pmu_thread(void *cookie)
 			//set_volume(sc->sc_volume_wanted);
 			sc->sc_volume = sc->sc_volume_wanted;
 		}
+
+		if (sc->sc_callback != NULL)
+			sc->sc_callback(sc->sc_cb_cookie);
 	}
 }
 

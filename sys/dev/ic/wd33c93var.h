@@ -1,4 +1,4 @@
-/*	$NetBSD: wd33c93var.h,v 1.4.6.1 2007/03/12 05:53:48 rmind Exp $	*/
+/*	$NetBSD: wd33c93var.h,v 1.4.6.2 2007/05/17 13:41:27 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -171,8 +171,10 @@ struct wd33c93_softc {
 	int	sc_rev;			/* Chip revision */
 	int	sc_cfflags;		/* Copy of config flags */
 	int	sc_maxxfer;		/* Maximum transfer size */
-	uint8_t	sc_maxoffset;		/* Maximum sync ofset (bytes) */
+	uint8_t	sc_maxoffset;		/* Maximum sync offset (bytes) */
+	uint8_t sc_minsyncperiod;	/* Minimum supported sync xfer period */
 	uint8_t	sc_syncperiods[7];	/* Sync transfer periods (4ns units) */
+	uint8_t	sc_fsyncperiods[3];	/* Sync transfer periods for Fast SCSI*/
 
 	int  (*sc_dmasetup) (struct wd33c93_softc *, void **,
 					    size_t *, int, size_t *);

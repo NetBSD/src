@@ -1,4 +1,4 @@
-/*	$NetBSD: battery.c,v 1.1.2.1 2007/04/15 16:02:50 yamt Exp $ */
+/*	$NetBSD: battery.c,v 1.1.2.2 2007/05/17 13:40:59 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: battery.c,v 1.1.2.1 2007/04/15 16:02:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: battery.c,v 1.1.2.2 2007/05/17 13:40:59 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,9 +77,11 @@ struct battery_softc {
 	struct sysmon_envsys sc_sysmon;
 	struct envsys_basic_info sc_sinfo[BAT_NSENSORS];
 	struct envsys_tre_data sc_sdata[BAT_NSENSORS];
+	struct sysmon_pswitch sc_sm_acpower;
 
 	/* battery status */
 	int sc_flags;
+	int sc_oflags;
 	int sc_voltage;
 	int sc_charge;
 	int sc_current;
@@ -88,6 +90,7 @@ struct battery_softc {
 	int sc_bat_temp;
 	int sc_vmax_charged;
 	int sc_vmax_charging;
+	uint32_t sc_timestamp;
 };
 
 static void battery_attach(struct device *, struct device *, void *);
@@ -97,6 +100,7 @@ static void battery_setup_envsys(struct battery_softc *);
 static int battery_gtredata(struct sysmon_envsys *, struct envsys_tre_data *);
 static int battery_streinfo(struct sysmon_envsys *,
     struct envsys_basic_info *);
+static void battery_poll(void *);
 
 CFATTACH_DECL(battery, sizeof(struct battery_softc),
     battery_match, battery_attach, NULL, NULL);
@@ -136,7 +140,19 @@ battery_attach(struct device *parent, struct device *self, void *aux)
 		printf("[comet]\n");
 	}
 	battery_update(sc, 1);
+	/* trigger a status update */
+	sc->sc_oflags = ~sc->sc_flags;
+
 	battery_setup_envsys(sc);
+	sc->sc_pmu_ops->register_callback(sc->sc_pmu_ops->cookie, battery_poll,
+	    sc);
+
+	memset(&sc->sc_sm_acpower, 0, sizeof(struct sysmon_pswitch));
+	sc->sc_sm_acpower.smpsw_name = "AC Power";
+	sc->sc_sm_acpower.smpsw_type = PSWITCH_TYPE_ACADAPTER;
+	if (sysmon_pswitch_register(&sc->sc_sm_acpower) != 0)
+		printf("%s: unable to register AC power status with sysmon\n",
+		    sc->sc_dev.dv_xname);
 }
 
 static int
@@ -144,6 +160,10 @@ battery_update(struct battery_softc *sc, int out)
 {
 	int len, vmax, pcharge, vb;
 	uint8_t buf[16];
+
+	if (sc->sc_timestamp == time_second)
+		return 0;
+	sc->sc_timestamp = time_second;
 
 	len = sc->sc_pmu_ops->do_command(sc->sc_pmu_ops->cookie,
 	    PMU_BATTERY_STATE, 0, NULL, 16, buf);
@@ -321,4 +341,20 @@ battery_streinfo(struct sysmon_envsys *sme, struct envsys_basic_info *binfo)
 	binfo->validflags = 0;
 
 	return 0;
+}
+
+static void
+battery_poll(void *cookie)
+{
+	struct battery_softc *sc = cookie;
+
+	battery_update(sc, 0);
+	if ((sc->sc_flags & PMU_PWR_AC_PRESENT) == sc->sc_oflags)
+		return;
+
+	sc->sc_oflags = sc->sc_flags & PMU_PWR_AC_PRESENT;
+
+	sysmon_pswitch_event(&sc->sc_sm_acpower, 
+	    sc->sc_oflags ? PSWITCH_EVENT_PRESSED :
+	    PSWITCH_EVENT_RELEASED);
 }

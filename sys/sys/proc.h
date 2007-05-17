@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.236.2.10 2007/05/07 10:56:14 yamt Exp $	*/
+/*	$NetBSD: proc.h,v 1.236.2.11 2007/05/17 13:41:56 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -517,11 +517,10 @@ int	mtsleep(wchan_t, pri_t, const char *, int, kmutex_t *);
 void	wakeup(wchan_t);
 void	wakeup_one(wchan_t);
 int	kpause(const char *, bool, int, kmutex_t *);
-void	exit1(struct lwp *, int);
-int	find_stopped_child(struct proc *, pid_t, int, struct proc **, int *);
+void	exit1(struct lwp *, int) __attribute__((__noreturn__));
+int	do_sys_wait(struct lwp *, int *, int *, int, struct rusage *, int *);
 struct proc *proc_alloc(void);
 void	proc0_init(void);
-void	proc_free(struct proc *, struct rusage *);
 void	proc_free_mem(struct proc *);
 void	exit_lwps(struct lwp *l);
 int	fork1(struct lwp *, int, int, void *, size_t,

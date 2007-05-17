@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_oldolduname.c,v 1.61.2.1 2007/03/24 14:55:09 yamt Exp $	*/
+/*	$NetBSD: linux_oldolduname.c,v 1.61.2.2 2007/05/17 13:41:14 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_oldolduname.c,v 1.61.2.1 2007/03/24 14:55:09 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_oldolduname.c,v 1.61.2.2 2007/05/17 13:41:14 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_oldolduname.c,v 1.61.2.1 2007/03/24 14:55:09 y
 #include <compat/linux/common/linux_mmap.h>
 #include <compat/linux/common/linux_signal.h>
 #include <compat/linux/common/linux_oldolduname.h>
+#include <compat/linux/common/linux_machdep.h>
 
 #include <compat/linux/linux_syscallargs.h>
 
@@ -69,7 +70,7 @@ linux_sys_oldolduname(struct lwp *l, void *v,
 	strncpy(luts.l_nodename, hostname, sizeof(luts.l_nodename));
 	strncpy(luts.l_release, linux_release, sizeof(luts.l_release));
 	strncpy(luts.l_version, linux_version, sizeof(luts.l_version));
-	strncpy(luts.l_machine, linux_machine, sizeof(luts.l_machine));
+	strncpy(luts.l_machine, LINUX_UNAME_ARCH, sizeof(luts.l_machine));
 
 	return copyout(&luts, SCARG(uap, up), sizeof(luts));
 }

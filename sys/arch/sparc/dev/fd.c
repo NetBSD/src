@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.127.2.1 2007/03/12 05:50:28 rmind Exp $	*/
+/*	$NetBSD: fd.c,v 1.127.2.2 2007/05/17 13:41:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -108,7 +108,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.127.2.1 2007/03/12 05:50:28 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.127.2.2 2007/05/17 13:41:01 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -1333,15 +1333,17 @@ fdc_c_hwintr(void *arg)
 			break;
 
 		if ((msr & NE7_NDM) == 0) {
+			/* Execution phase finished, get result. */
 			fdcresult(fdc);
 			fdc->sc_istatus = FDC_ISTATUS_DONE;
 			softintr_schedule(fdc->sc_sicookie);
-#ifdef FD_DEBUG
-			if (fdc_debug > 1)
-				printf("fdc: overrun: tc = %d\n", fdc->sc_tc);
-#endif
 			break;
 		}
+
+		if (fdc->sc_tc == 0)
+			/* For some reason the controller wants to transfer
+			   more data then what we want to transfer. */
+			panic("fdc: overrun");
 
 		/* Another byte can be transferred */
 		if ((msr & NE7_DIO) != 0)
@@ -1353,10 +1355,7 @@ fdc_c_hwintr(void *arg)
 
 		fdc->sc_data++;
 		if (--fdc->sc_tc == 0) {
-			fdc->sc_istatus = FDC_ISTATUS_DONE;
 			FTC_FLIP;
-			fdcresult(fdc);
-			softintr_schedule(fdc->sc_sicookie);
 			break;
 		}
 	}
