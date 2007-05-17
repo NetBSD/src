@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.82 2007/03/04 06:00:08 christos Exp $	*/
+/*	$NetBSD: cpu.h,v 1.83 2007/05/17 22:15:22 rjs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -120,6 +120,7 @@ struct cpu_info {
 	struct cpu_data ci_data;	/* MI per-cpu data */
 	int	ci_mtx_oldspl;
 	int	ci_mtx_count;
+	int	ci_want_resched;
 };
 
 extern struct cpu_info cpu_info_store;
@@ -156,8 +157,7 @@ struct clockframe {
  * Preempt the current process if in interrupt from user mode,
  * or after the current trap/syscall if in system mode.
  */
-extern int want_resched;	/* resched() was called */
-#define	cpu_need_resched(ci)	{ want_resched++; aston(); }
+#define	cpu_need_resched(ci, v)	{ ci->ci_want_resched++; aston(); }
 
 /*
  * Give a profiling tick to the current process from the softclock
