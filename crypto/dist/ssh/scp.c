@@ -1,4 +1,4 @@
-/*	$NetBSD: scp.c,v 1.30 2007/03/10 22:52:09 christos Exp $	*/
+/*	$NetBSD: scp.c,v 1.31 2007/05/17 00:17:50 christos Exp $	*/
 /* $OpenBSD: scp.c,v 1.156 2007/01/22 13:06:21 djm Exp $ */
 /*
  * scp - secure remote copy.  This is basically patched BSD rcp which
@@ -73,7 +73,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: scp.c,v 1.30 2007/03/10 22:52:09 christos Exp $");
+__RCSID("$NetBSD: scp.c,v 1.31 2007/05/17 00:17:50 christos Exp $");
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -121,7 +121,11 @@ int verbose_mode = 0;
 int showprogress = 1;
 
 /* This is the program to execute for the secured connection. ("ssh" or -S) */
+#ifdef RESCUEDIR
+char *ssh_program = RESCUEDIR "/ssh";
+#else
 char *ssh_program = _PATH_SSH_PROGRAM;
+#endif
 
 /* This is used to store the pid of ssh_program */
 pid_t do_cmd_pid = -1;
