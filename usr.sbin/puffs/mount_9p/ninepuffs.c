@@ -1,4 +1,4 @@
-/*	$NetBSD: ninepuffs.c,v 1.10 2007/05/15 13:46:47 pooka Exp $	*/
+/*	$NetBSD: ninepuffs.c,v 1.11 2007/05/17 14:13:05 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ninepuffs.c,v 1.10 2007/05/15 13:46:47 pooka Exp $");
+__RCSID("$NetBSD: ninepuffs.c,v 1.11 2007/05/17 14:13:05 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -98,7 +98,6 @@ main(int argc, char *argv[])
 	struct puffs_usermount *pu;
 	struct puffs_ops *pops;
 	struct puffs_node *pn_root;
-	struct statvfs svfsb;
 	mntoptparse_t mp;
 	char *srvhost;
 	char *user;
@@ -188,17 +187,13 @@ main(int argc, char *argv[])
 	if (puffs_setblockingmode(pu, PUFFSDEV_NONBLOCK) == -1)
 		err(1, "setblockingmode");
 
-	if (puffs_domount(pu, argv[2], mntflags) == -1)
-		err(1, "puffs_domount");
-
-	puffs_zerostatvfs(&svfsb);
-	if (puffs_start(pu, pn_root, &svfsb) == -1)
-		err(1, "puffs_start");
-
 	puffs_framev_init(pu, p9pbuf_read, p9pbuf_write, p9pbuf_cmp,
 	    puffs_framev_unmountonclose);
 	if (puffs_framev_addfd(pu, p9p.servsock) == -1)
 		err(1, "puffs_framebuf_addfd");
+
+	if (puffs_mount(pu, argv[2], mntflags, pn_root) == -1)
+		err(1, "puffs_mount");
 
 	return puffs_mainloop(pu, lflags);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctlfs.c,v 1.21 2007/04/17 11:43:32 pooka Exp $	*/
+/*	$NetBSD: sysctlfs.c,v 1.22 2007/05/17 14:13:06 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -272,11 +272,12 @@ main(int argc, char *argv[])
 
 	puffs_setfhsize(pu, sizeof(struct sfsfid), PUFFS_FHFLAG_NFSV3);
 
-	if (puffs_domount(pu, argv[0], mntflags) == -1)
-		err(1, "puffs_domount");
-
 	if (sysctlfs_domount(pu) != 0)
 		errx(1, "domount");
+
+	if (puffs_mount(pu, argv[0], mntflags, puffs_getroot(pu)) == -1)
+		err(1, "puffs_mount");
+
 	if (puffs_mainloop(pu, lflags) == -1)
 		err(1, "mainloop");
 
@@ -289,7 +290,6 @@ sysctlfs_domount(struct puffs_usermount *pu)
 	struct puffs_pathobj *po_root;
 	struct puffs_node *pn_root;
 	struct timeval tv_now;
-	struct statvfs sb;
 
 	rn.myid = 2;
 	rn.sysctl_flags = CTLTYPE_NODE;
@@ -304,10 +304,6 @@ sysctlfs_domount(struct puffs_usermount *pu)
 	po_root = puffs_getrootpathobj(pu);
 	po_root->po_path = &sname_root;
 	po_root->po_len = 0;
-
-	puffs_zerostatvfs(&sb);
-	if (puffs_start(pu, pn_root, &sb) == -1)
-		return errno;
 
 	return 0;
 }
