@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.41 2006/09/13 11:35:53 mrg Exp $
+#	$NetBSD: genassym.cf,v 1.42 2007/05/17 14:51:32 yamt Exp $
 
 #
 # Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -119,8 +119,6 @@ define	USRSTACK	USRSTACK
 define	PAGE_SIZE	PAGE_SIZE
 
 # Important offsets into the lwp and proc structs & associated constants
-define	L_FORW			offsetof(struct lwp, l_forw)
-define	L_BACK			offsetof(struct lwp, l_back)
 define	L_ADDR			offsetof(struct lwp, l_addr)
 define	L_STAT			offsetof(struct lwp, l_stat)
 define	L_WCHAN			offsetof(struct lwp, l_wchan)
@@ -177,7 +175,6 @@ define	CI_INITSTACK	offsetof(struct cpu_info, ci_initstack)
 define	CI_PADDR	offsetof(struct cpu_info, ci_paddr)
 define	CI_WANT_AST	offsetof(struct cpu_info, ci_want_ast)
 define	CI_WANT_RESCHED	offsetof(struct cpu_info, ci_want_resched)
-define	CI_IDLE_U	offsetof(struct cpu_info, ci_idle_u)
 define	CI_EINTRSTACK	offsetof(struct cpu_info, ci_eintstack)
 
 # CPU boot arguments structure

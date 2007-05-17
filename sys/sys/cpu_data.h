@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_data.h,v 1.7 2007/02/09 21:55:37 ad Exp $	*/
+/*	$NetBSD: cpu_data.h,v 1.8 2007/05/17 14:51:42 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -63,6 +63,7 @@ struct lwp;
 
 struct cpu_data {
 	struct schedstate_percpu cpu_schedstate; /* scheduler state */
+	struct lwp *cpu_idlelwp;	/* idle lwp */
 
 	struct callout * volatile cpu_callout;	/* MP: a callout running */
 
@@ -89,6 +90,6 @@ struct cpu_data {
 #define	ci_spin_locks2		ci_data.cpu_spin_locks2
 #define	ci_lkdebug_recurse	ci_data.cpu_lkdebug_recurse
 
-void	mi_cpu_init(struct cpu_info *ci);
+int mi_cpu_attach(struct cpu_info *ci);
 
 #endif /* _SYS_CPU_DATA_H_ */

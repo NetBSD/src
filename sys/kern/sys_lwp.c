@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_lwp.c,v 1.18 2007/03/24 16:43:56 rmind Exp $	*/
+/*	$NetBSD: sys_lwp.c,v 1.19 2007/05/17 14:51:41 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.18 2007/03/24 16:43:56 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.19 2007/05/17 14:51:41 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,10 +128,10 @@ sys__lwp_create(struct lwp *l, void *v, register_t *retval)
 	    	if (p->p_stat == SSTOP || (p->p_sflag & PS_STOPPING) != 0)
 	    		l2->l_stat = LSSTOP;
 		else {
-			KASSERT(lwp_locked(l2, &sched_mutex));
+			KASSERT(lwp_locked(l2, l2->l_cpu->ci_schedstate.spc_mutex));
 			p->p_nrlwps++;
 			l2->l_stat = LSRUN;
-			setrunqueue(l2);
+			sched_enqueue(l2, false);
 		}
 	} else
 		l2->l_stat = LSSUSPENDED;
@@ -462,26 +462,18 @@ sys__lwp_park(struct lwp *l, void *v, register_t *retval)
 	 * Before going the full route and blocking, check to see if an
 	 * unpark op is pending.
 	 */
-	sleepq_lwp_lock(l);
+	lwp_lock(l);
 	if ((l->l_flag & (LW_CANCELLED | LW_UNPARKED)) != 0) {
 		l->l_flag &= ~(LW_CANCELLED | LW_UNPARKED);
-		sleepq_lwp_unlock(l);
+		lwp_unlock(l);
 		sleepq_unlock(sq);
 		return EALREADY;
 	}
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	lwp_unlock_to(l, sq->sq_mutex);
-#endif
 
-	/*
-	 * For now we ignore the ucontext argument.  In the future, we may
-	 * put our stack up to be recycled.  If it's binned, a trampoline
-	 * function could call sleepq_unblock() on our behalf.
-	 */
 	KERNEL_UNLOCK_ALL(l, &l->l_biglocks); /* XXX for compat32 */
-	sleepq_block(sq, sched_kpri(l), wchan, "parked", timo, 1,
-	    &lwp_park_sobj);
-	error = sleepq_unblock(timo, 1);
+	sleepq_enqueue(sq, sched_kpri(l), wchan, "parked", &lwp_park_sobj);
+	error = sleepq_block(timo, true);
 	switch (error) {
 	case EWOULDBLOCK:
 		error = ETIMEDOUT;

@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.301 2007/03/13 17:23:49 ad Exp $	*/
+/*	$NetBSD: init_main.c,v 1.302 2007/05/17 14:51:37 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.301 2007/03/13 17:23:49 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.302 2007/05/17 14:51:37 yamt Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_kcont.h"
@@ -95,6 +95,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.301 2007/03/13 17:23:49 ad Exp $");
 #include <sys/file.h>
 #include <sys/errno.h>
 #include <sys/callout.h>
+#include <sys/cpu.h>
 #include <sys/kernel.h>
 #include <sys/kcont.h>
 #include <sys/kmem.h>
@@ -119,6 +120,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.301 2007/03/13 17:23:49 ad Exp $");
 #include <sys/sysctl.h>
 #include <sys/event.h>
 #include <sys/mbuf.h>
+#include <sys/sched.h>
 #include <sys/sleepq.h>
 #include <sys/iostat.h>
 #ifdef FAST_IPSEC
@@ -194,7 +196,7 @@ int	boothowto;
 int	cold = 1;			/* still working on startup */
 struct timeval boottime;	        /* time at system startup - will only follow settime deltas */
 time_t	rootfstime;			/* recorded root fs time, if known */
-int	ncpu =  1;			/* number of CPUs configured, assume 1 */
+int	ncpu = 0;			/* number of CPUs configured, assume 1 */
 
 volatile int start_init_exec;		/* semaphore for start_init() */
 
@@ -238,13 +240,8 @@ main(void)
 	struct pdevinit *pdev;
 	int s, error;
 	extern struct pdevinit pdevinit[];
-	extern void schedcpu(void *);
 #ifdef NVNODE_IMPLICIT
 	int usevnodes;
-#endif
-#ifdef MULTIPROCESSOR
-	CPU_INFO_ITERATOR cii;
-	struct cpu_info *ci;
 #endif
 
 	/*
@@ -331,9 +328,13 @@ main(void)
 	(void)chgproccnt(0, 1);
 
 	/* Initialize the run queues, turnstiles and sleep queues. */
-	rqinit();
+	sched_rqinit();
 	turnstile_init();
 	sleeptab_init(&sleeptab);
+
+	/* MI initialization of the boot cpu */
+	error = mi_cpu_attach(curcpu());
+	KASSERT(error == 0);
 
 	/* Initialize the sysctl subsystem. */
 	sysctl_init();
@@ -460,8 +461,8 @@ main(void)
 	pipe_init();
 #endif
 
-	/* Kick off timeout driven events by calling first time. */
-	schedcpu(NULL);
+	/* Setup the scheduler */
+	sched_setup();
 
 #ifdef KTRACE
 	/* Initialize ktrace. */
@@ -595,12 +596,6 @@ main(void)
 #if defined(MULTIPROCESSOR)
 	/* Boot the secondary processors. */
 	cpu_boot_secondary_processors();
-
-	/* Count the number of running CPUs. */
-	for (CPU_INFO_FOREACH(cii, ci)) {
-		ncpu++;
-	}
-	ncpu--;
 #endif
 
 	/* Initialize exec structures */

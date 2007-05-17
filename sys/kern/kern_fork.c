@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.138 2007/04/30 14:44:30 rmind Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.139 2007/05/17 14:51:39 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001, 2004 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.138 2007/04/30 14:44:30 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.139 2007/05/17 14:51:39 yamt Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -398,7 +398,7 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	p2->p_sigacts = sigactsinit(p1, flags & FORK_SHARESIGS);
 	p2->p_sflag |=
 	    (p1->p_sflag & (PS_STOPFORK | PS_STOPEXEC | PS_NOCLDSTOP));
-	scheduler_fork_hook(p1, p2);
+	sched_proc_fork(p1, p2);
 	mutex_exit(&p1->p_smutex);
 
 	p2->p_stflag = p1->p_stflag;
@@ -521,7 +521,7 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 		lwp_lock(l2);
 		l2->l_stat = LSRUN;
 		l2->l_flag |= tmp;
-		setrunqueue(l2);
+		sched_enqueue(l2, false);
 		lwp_unlock(l2);
 	}
 
@@ -558,19 +558,3 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 
 	return (0);
 }
-
-#if defined(MULTIPROCESSOR)
-/*
- * XXX This is a slight hack to get newly-formed processes to
- * XXX acquire the kernel lock as soon as they run.
- */
-void
-proc_trampoline_mp(void)
-{
-	struct lwp *l;
-
-	l = curlwp;
-
-	KERNEL_LOCK(1, l);
-}
-#endif

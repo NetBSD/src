@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.252 2007/03/12 18:18:33 ad Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.253 2007/05/17 14:51:40 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.252 2007/03/12 18:18:33 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.253 2007/05/17 14:51:40 yamt Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_ptrace.h"
@@ -1551,7 +1551,7 @@ sigswitch(bool ppsig, int ppmask, int signo)
 
 	mutex_exit(&p->p_smutex);
 	lwp_lock(l);
-	mi_switch(l, NULL);
+	mi_switch(l);
 	KERNEL_LOCK(biglocks, l);
 	mutex_enter(&p->p_smutex);
 }

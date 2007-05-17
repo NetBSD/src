@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm,v 1.83 2007/03/09 19:21:58 thorpej Exp $
+#	$NetBSD: files.arm,v 1.84 2007/05/17 14:51:16 yamt Exp $
 
 # temporary define to allow easy moving to ../arch/arm/arm32
 defflag				ARM32
@@ -118,6 +118,7 @@ file	arch/arm/arm/cpufunc_asm_xscale.S	cpu_xscale_80200 |
 						    cpu_xscale_pxa250 |
 						    cpu_xscale_pxa270
 file	arch/arm/arm/cpufunc_asm_ixp12x0.S	cpu_ixp12x0
+file	arch/arm/arm/idle_machdep.c
 file	arch/arm/arm/lock_cas.S
 file	arch/arm/arm/process_machdep.c
 file	arch/arm/arm/procfs_machdep.c		procfs

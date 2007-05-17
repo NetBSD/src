@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.105 2007/03/24 21:15:39 rmind Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.106 2007/05/17 14:51:43 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.105 2007/03/24 21:15:39 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.106 2007/05/17 14:51:43 yamt Exp $");
 
 #include "opt_coredump.h"
 #include "opt_kgdb.h"
@@ -84,6 +84,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.105 2007/03/24 21:15:39 rmind Exp $")
 #include <sys/resourcevar.h>
 #include <sys/buf.h>
 #include <sys/user.h>
+#include <sys/syncobj.h>
 
 #include <uvm/uvm.h>
 
@@ -443,7 +444,7 @@ uvm_swapin(struct lwp *l)
 	cpu_swapin(l);
 	lwp_lock(l);
 	if (l->l_stat == LSRUN)
-		setrunqueue(l);
+		sched_enqueue(l, false);
 	l->l_flag |= LW_INMEM;
 	l->l_swtime = 0;
 	lwp_unlock(l);
@@ -571,10 +572,18 @@ uvm_scheduler(void)
  * swappable: is LWP "l" swappable?
  */
 
-#define	swappable(l)							\
-	(((l)->l_flag & (LW_INMEM)) &&					\
-	 ((((l)->l_flag) & (LW_SYSTEM | LW_WEXIT)) == 0) &&		\
-	 (l)->l_holdcnt == 0)
+static bool
+swappable(struct lwp *l)
+{
+
+	if ((l->l_flag & (LW_INMEM|LW_RUNNING|LW_SYSTEM|LW_WEXIT)) != LW_INMEM)
+		return false;
+	if (l->l_holdcnt != 0)
+		return false;
+	if (l->l_syncobj == &rw_syncobj || l->l_syncobj == &mutex_syncobj)
+		return false;
+	return true;
+}
 
 /*
  * swapout_threads: find threads that can be swapped and unwire their
@@ -693,7 +702,7 @@ uvm_swapout(struct lwp *l)
 	/*
 	 * Mark it as (potentially) swapped out.
 	 */
-	if (l->l_stat == LSONPROC) {
+	if (!swappable(l)) {
 		KDASSERT(l->l_cpu != curcpu());
 		lwp_unlock(l);
 		return;
@@ -701,7 +710,7 @@ uvm_swapout(struct lwp *l)
 	l->l_flag &= ~LW_INMEM;
 	l->l_swtime = 0;
 	if (l->l_stat == LSRUN)
-		remrunqueue(l);
+		sched_dequeue(l);
 	lwp_unlock(l);
 	p->p_stats->p_ru.ru_nswap++;	/* XXXSMP */
 	++uvmexp.swapouts;

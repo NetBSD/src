@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.7 2005/12/11 12:16:25 christos Exp $	*/
+/*	$NetBSD: frame.h,v 1.8 2007/05/17 14:51:15 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -161,7 +161,6 @@ struct switchframe {
 	uint64_t	sf_r14;
 	uint64_t	sf_r13;
 	uint64_t	sf_r12;
-	uint64_t	sf_rbp;
 	uint64_t	sf_rbx;
 	uint64_t	sf_rip;
 };

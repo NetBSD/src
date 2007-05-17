@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips1.S,v 1.61 2007/02/09 21:55:06 ad Exp $	*/
+/*	$NetBSD: locore_mips1.S,v 1.62 2007/05/17 14:51:24 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -250,8 +250,7 @@ NESTED_NOPROFILE(mips1_KernGenException, KERNFRAME_SIZ, ra)
  * Check for kernel restartable atomic sequences.
  */
 	lw	k1, TF_BASE+TF_REG_EPC(sp)	# restore exception PC
-	lui	t0, %hi(_C_LABEL(_lock_ras_start))
-	ori	t0, zero, %lo(_C_LABEL(_lock_ras_start))
+	la	t0, _C_LABEL(_lock_ras_start)
 	li	t1, -MIPS_LOCK_RAS_SIZE
 	and	t1, t1, k1
 	bne	t1, t0, 1f
@@ -310,7 +309,9 @@ NESTED_NOPROFILE(mips1_UserGenException, CALLFRAME_SIZ, ra)
 /*
  * Save all the registers but the kernel temporaries onto stack.
  */
-	lw	k1, _C_LABEL(curpcb)
+	lw	k1, CPUVAR(CURLWP)
+	nop
+	lw	k1, L_ADDR(k1)
 	nop
 	addu	k1, k1, USPACE - FRAME_SIZ
 	sw	AT, FRAME_AST(k1)
@@ -366,14 +367,13 @@ NESTED_NOPROFILE(mips1_UserGenException, CALLFRAME_SIZ, ra)
 /*
  * Call the exception handler.
  */
+	lw	MIPS_CURLWP, CPUVAR(CURLWP)
 	jal	_C_LABEL(trap)
 	mtc0	t0, MIPS_COP_0_STATUS
 /*
  * Check pending asynchronous traps.
  */
-	lw	t0, _C_LABEL(curlwp)		# t0 = curlwp
-	nop
-	lw	t0, L_MD_ASTPENDING(t0)		# any pending ast?
+	lw	t0, L_MD_ASTPENDING(MIPS_CURLWP)# any pending ast?
 	nop
 	beq	t0, zero, 1f			# if no, skip ast processing
 	nop
@@ -402,7 +402,9 @@ NESTED_NOPROFILE(mips1_SystemCall, CALLFRAME_SIZ, ra)
 /*
  * Save all the registers but kernel temporaries onto stack.
  */
-	lw	k1, _C_LABEL(curpcb)
+	lw	k1, CPUVAR(CURLWP)
+	nop
+	lw	k1, L_ADDR(k1)
 	nop
 	addu	k1, k1, USPACE - FRAME_SIZ
 	#sw	AT, FRAME_AST(k1)
@@ -414,7 +416,7 @@ NESTED_NOPROFILE(mips1_SystemCall, CALLFRAME_SIZ, ra)
 	sw	a1, FRAME_A1(k1)
 	sw	a2, FRAME_A2(k1)
 	sw	a3, FRAME_A3(k1)
-	lw	a0, _C_LABEL(curlwp)		# 1st arg is curlwp
+	lw	a0, CPUVAR(CURLWP)		# 1st arg is curlwp
 	mfhi	v1
 	#sw	t0, FRAME_T0(k1)		# no need to save temp regs
 	#sw	t1, FRAME_T1(k1)
@@ -454,7 +456,7 @@ NESTED_NOPROFILE(mips1_SystemCall, CALLFRAME_SIZ, ra)
 	sw	ra, CALLFRAME_RA(sp)
 #endif
 	lw	t0, L_PROC(a0)			# t0 = curlwp->l_proc
-	nop
+	move	MIPS_CURLWP, a0			# set curlwp reg
 	lw	t1, P_MD_SYSCALL(t0)		# t1 = syscall
 	ori	t0, a1, MIPS_SR_INT_IE		# turn on IEc, enable intr.
 	and	t0, t0, ~MIPS_SR_COP_1_BIT	# turn off FPU
@@ -466,9 +468,7 @@ NESTED_NOPROFILE(mips1_SystemCall, CALLFRAME_SIZ, ra)
 /*
  * Check pending asynchronous traps.
  */
-	lw	t0, _C_LABEL(curlwp)		# t0 = curlwp
-	nop
-	lw	t0, L_MD_ASTPENDING(t0)		# any pending ast?
+	lw	t0, L_MD_ASTPENDING(MIPS_CURLWP)# any pending ast?
 	nop
 	beq	t0, zero, 1f
 	nop
@@ -550,8 +550,7 @@ NESTED_NOPROFILE(mips1_KernIntr, KERNFRAME_SIZ, ra)
  * Check for kernel restartable atomic sequences.
  */
 	lw	k1, TF_BASE+TF_REG_EPC(sp)	# restore exception PC
-	lui	t0, %hi(_C_LABEL(_lock_ras_start))
-	ori	t0, zero, %lo(_C_LABEL(_lock_ras_start))
+	la	t0, _C_LABEL(_lock_ras_start)
 	li	t1, -MIPS_LOCK_RAS_SIZE
 	and	t1, t1, k1
 	bne	t1, t0, 1f
@@ -608,7 +607,9 @@ NESTED_NOPROFILE(mips1_UserIntr, CALLFRAME_SIZ, ra)
  * Save the relevant user registers onto the stack.
  * We don't need to save s0 - s8 because the compiler does it for us.
  */
-	lw	k1, _C_LABEL(curpcb)
+	lw	k1, CPUVAR(CURLWP)
+	nop
+	lw	k1, L_ADDR(k1)
 	nop
 	addu	k1, k1, USPACE - FRAME_SIZ
 	sw	AT, FRAME_AST(k1)
@@ -645,6 +646,8 @@ NESTED_NOPROFILE(mips1_UserIntr, CALLFRAME_SIZ, ra)
 #ifdef __GP_SUPPORT__
 	la	gp, _C_LABEL(_gp)		# switch to kernel GP
 #endif
+	sw	MIPS_CURLWP, MIPS_CURLWP_FRAME(k1)# save curlwp reg
+	lw	MIPS_CURLWP, CPUVAR(CURLWP)	# set curlwp reg
 	.set	at
 	and	t0, a0, ~MIPS_SR_COP_1_BIT	# turn off the FPU
 	.set	noat
@@ -660,16 +663,15 @@ NESTED_NOPROFILE(mips1_UserIntr, CALLFRAME_SIZ, ra)
 /*
  * Check pending asynchoronous traps.
  */
-	lw	v0, _C_LABEL(curlwp)		# v0 = curlwp
 	addu	a1, sp, CALLFRAME_SIZ
 	nop
 	lw	a0, FRAME_SR(a1)
-	lw	v0, L_MD_ASTPENDING(v0)		# any pending ast?
+	lw	v0, L_MD_ASTPENDING(MIPS_CURLWP)# any pending ast?
 	mtc0	a0, MIPS_COP_0_STATUS		# restore SR, disable intrs
 	beq	v0, zero, 1f			# if no, skip ast processing
-	nop					# -delay slot-
+	lw	MIPS_CURLWP, MIPS_CURLWP_FRAME(a1) # restore curlwp reg
 /*
- * We have pending asynchronous traps; save remaining user state in stack.
+ * We have pending asynchronous traps; save remaining user state in stack. 
  */
 	sw	s0, FRAME_S0(a1)
 	sw	s1, FRAME_S1(a1)
@@ -683,6 +685,7 @@ NESTED_NOPROFILE(mips1_UserIntr, CALLFRAME_SIZ, ra)
 
 	lw	a0, FRAME_EPC(a1)		# argument is interrupted PC
 	li	t0, MIPS_HARD_INT_MASK | MIPS_SR_INT_IE
+	lw	MIPS_CURLWP, CPUVAR(CURLWP)	# set curlwp reg
 	jal	_C_LABEL(ast)
 	mtc0	t0, MIPS_COP_0_STATUS		# enable interrupts (spl0)
 
@@ -1012,7 +1015,7 @@ END(mips1_wbflush)
 #endif /* !ENABLE_MIPS_TX3900 */
 
 /*
- * mips1_proc_trampoline
+ * mips1_lwp_trampoline
  *
  * Special arrangement for a process about to go user mode right after
  * fork() system call.  When the first CPU tick is scheduled to the
@@ -1022,10 +1025,20 @@ END(mips1_wbflush)
  * handled in a normal way.  No need to save any registers although this
  * calls another.
  */
-LEAF(mips1_proc_trampoline)
+LEAF(mips1_lwp_trampoline)
 	addu	sp, sp, -CALLFRAME_SIZ
-	jal	ra, s0
+
+	# Call lwp_startup(), with args from cpu_switchto()/cpu_setfunc()
+	la	t0, _C_LABEL(lwp_startup)
+	move	a0, v0
+	jal	ra, t0
+	move	a1, s7
+
+	# Call the routine specified by cpu_setfunc()
+	jal	ra, s0			
 	move	a0, s1
+
+	# Return to user (won't happen if a kernel thread)
 	.set	noat
 XLEAF(mips1_xcpt_return)
 	addu	a1, sp, CALLFRAME_SIZ	# a1 points exception frame
@@ -1071,7 +1084,7 @@ XLEAF(mips1_xcpt_return)
 	j	k0
 	rfe
 	.set	at
-END(mips1_proc_trampoline)
+END(mips1_lwp_trampoline)
 
 /*
  * void mips1_cpu_switch_resume(struct lwp *newlwp)
@@ -1231,8 +1244,8 @@ LEAF(mips1_TBIA)
 	.globl _C_LABEL(mips1_locoresw)
 _C_LABEL(mips1_locoresw):
 	.word _C_LABEL(mips1_cpu_switch_resume)
-	.word _C_LABEL(mips1_proc_trampoline)
-	.word _C_LABEL(mips_idle)
+	.word _C_LABEL(mips1_lwp_trampoline)
+	.word _C_LABEL(nullop)			# idle
 
 mips1_excpt_sw:
 	####

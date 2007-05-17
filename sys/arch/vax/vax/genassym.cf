@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.32 2007/03/12 02:22:43 matt Exp $
+#	$NetBSD: genassym.cf,v 1.33 2007/05/17 14:51:33 yamt Exp $
 #
 # Copyright (c) 1997 Ludd, University of Lule}, Sweden.
 # All rights reserved.
@@ -51,17 +51,12 @@ include	<machine/uvax.h>
 
 define	L_PRIORITY	offsetof(struct lwp, l_priority)
 define	L_ADDR		offsetof(struct lwp, l_addr)
-define	L_BACK		offsetof(struct lwp, l_back)
 define	L_CPU		offsetof(struct lwp, l_cpu)
 define	L_STAT		offsetof(struct lwp, l_stat)
 define	L_PROC		offsetof(struct lwp, l_proc)
 
 define	P_VMSPACE	offsetof(struct proc, p_vmspace)
 define	P_MD_SYSCALL	offsetof(struct proc, p_md.md_syscall)
-
-define	PH_RLINK	offsetof(struct prochd, ph_rlink)
-
-define	LSONPROC	LSONPROC
 
 define	P0BR		offsetof(struct pcb, P0BR)
 define	P0LR		offsetof(struct pcb, P0LR)
@@ -84,8 +79,6 @@ define	UVME_INTRS	offsetof(struct uvmexp, intrs)
 define	UVME_SOFTS	offsetof(struct uvmexp, softs)
 
 define	CI_CURLWP	offsetof(struct cpu_info, ci_curlwp)
-define	CI_WANT_RESCHED	offsetof(struct cpu_info, ci_want_resched)
-define	CI_EXIT		offsetof(struct cpu_info, ci_exit)
 define	CI_MTX_COUNT	offsetof(struct cpu_info, ci_mtx_count)
 define	CI_MTX_OLDSPL	offsetof(struct cpu_info, ci_mtx_oldspl)
 

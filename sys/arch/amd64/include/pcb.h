@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.5 2007/03/04 05:59:15 christos Exp $	*/
+/*	$NetBSD: pcb.h,v 1.6 2007/05/17 14:51:15 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -114,7 +114,6 @@ struct pcb {
 	void *	pcb_onfault;		/* copyin/out fault recovery */
 	struct cpu_info *pcb_fpcpu;	/* cpu holding our fp state. */
 	unsigned pcb_iomap[NIOPORTS/32];	/* I/O bitmap */
-	struct pmap *pcb_pmap;		/* back pointer to our pmap */
 	uint64_t pcb_gs;
 	uint64_t pcb_fs;
 };

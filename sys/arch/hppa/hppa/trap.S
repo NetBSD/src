@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.S,v 1.18 2007/05/08 07:06:45 skrll Exp $	*/
+/*	$NetBSD: trap.S,v 1.19 2007/05/17 14:51:19 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -2197,12 +2197,9 @@ $trapnowvirt:
 	bb,>=,n	%arg0, TFF_LAST_POS, $trap_return
 	nop
 
-	/* see if curlwp has really changed */
+	/* load curlwp's trapframe pointer */
 	ldil	L%curlwp, %t1
 	ldw	R%curlwp(%t1), %t2
-	comb,=,n %r0, %t2, $trap_return
-
-	/* means curlwp has actually changed */
 	ldw	L_MD(%t2), %t3
 
 $trap_return:

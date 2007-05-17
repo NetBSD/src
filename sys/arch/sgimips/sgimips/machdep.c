@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.113 2007/05/11 02:30:00 rumble Exp $	*/
+/*	$NetBSD: machdep.c,v 1.114 2007/05/17 14:51:28 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.113 2007/05/11 02:30:00 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.114 2007/05/17 14:51:28 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -647,8 +647,8 @@ mach_init(int argc, char **argv, int magic, struct btinfo_common *btinfo)
 	v = (void *)uvm_pageboot_alloc(USPACE);
 	lwp0.l_addr = proc0paddr = (struct user *)v;
 	lwp0.l_md.md_regs = (struct frame *)((char *)v + USPACE) - 1;
-	curpcb = &lwp0.l_addr->u_pcb;
-	curpcb->pcb_context[11] = MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
+	proc0paddr->u_pcb.pcb_context[11] =
+	    MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
 }
 
 void

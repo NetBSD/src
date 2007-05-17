@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.118 2007/03/04 06:00:38 christos Exp $	*/
+/*	$NetBSD: trap.c,v 1.119 2007/05/17 14:51:27 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.118 2007/03/04 06:00:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.119 2007/05/17 14:51:27 yamt Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -347,7 +347,7 @@ trap(struct trapframe *frame)
 			ADDUPROF(p);
 		}
 		/* Check whether we are being preempted. */
-		if (ci->ci_want_resched)
+		if (ci->ci_need_resched)
 			preempt();
 		KERNEL_UNLOCK_LAST(l);
 		break;

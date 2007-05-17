@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.178 2007/05/08 20:10:15 dsl Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.179 2007/05/17 14:51:39 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.178 2007/05/08 20:10:15 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.179 2007/05/17 14:51:39 yamt Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -234,7 +234,7 @@ exit1(struct lwp *l, int rv)
 		p->p_nrlwps--;
 		l->l_stat = LSSTOP;
 		mutex_exit(&p->p_smutex);
-		mi_switch(l, NULL);
+		mi_switch(l);
 		KERNEL_LOCK(l->l_biglocks, l);
 	} else
 		mutex_exit(&p->p_smutex);
@@ -596,16 +596,7 @@ exit1(struct lwp *l, int rv)
 	KERNEL_UNLOCK_ALL(l, NULL);
 #endif
 
-	/*
-	 * Finally, call machine-dependent code to switch to a new
-	 * context (possibly the idle context).  Once we are no longer
-	 * using the dead lwp's stack, lwp_exit2() will be called.
-	 *
-	 * Note that cpu_exit() will end with a call equivalent to
-	 * cpu_switch(), finishing our execution (pun intended).
-	 */
-	uvmexp.swtch++;	/* XXXSMP unlocked */
-	cpu_exit(l);
+	lwp_exit_switchaway(l);
 }
 
 void
@@ -916,7 +907,7 @@ proc_free(struct proc *p, struct rusage *ru)
 	leavepgrp(p);
 
 	parent = p->p_pptr;
-	scheduler_wait_hook(parent, p);
+	sched_proc_exit(parent, p);
 	/*
 	 * Add child times of exiting process onto its own times.
 	 * This cannot be done any earlier else it might get done twice.

@@ -1,4 +1,4 @@
-/* $NetBSD: systemsw.c,v 1.11 2006/09/14 00:03:46 gdamore Exp $ */
+/* $NetBSD: systemsw.c,v 1.12 2007/05/17 14:51:28 yamt Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -33,13 +33,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: systemsw.c,v 1.11 2006/09/14 00:03:46 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: systemsw.c,v 1.12 2007/05/17 14:51:28 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
+#include <sys/cpu.h>
 
 #include <mips/locore.h>
+
 #include <machine/intr.h>
 #include <machine/systemsw.h>
 

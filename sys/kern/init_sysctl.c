@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.100 2007/04/30 20:11:41 dsl Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.101 2007/05/17 14:51:38 yamt Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.100 2007/04/30 20:11:41 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.101 2007/05/17 14:51:38 yamt Exp $");
 
 #include "opt_sysv.h"
 #include "opt_multiprocessor.h"
@@ -193,7 +193,6 @@ static int sysctl_kern_hostid(SYSCTLFN_PROTO);
 static int sysctl_setlen(SYSCTLFN_PROTO);
 static int sysctl_kern_clockrate(SYSCTLFN_PROTO);
 static int sysctl_kern_file(SYSCTLFN_PROTO);
-static int sysctl_kern_autonice(SYSCTLFN_PROTO);
 static int sysctl_msgbuf(SYSCTLFN_PROTO);
 static int sysctl_kern_defcorename(SYSCTLFN_PROTO);
 static int sysctl_kern_cptime(SYSCTLFN_PROTO);
@@ -493,20 +492,6 @@ SYSCTL_SETUP(sysctl_kern_setup, "sysctl kern subtree setup")
 		       CTLTYPE_STRUCT, "timex", NULL,
 		       sysctl_notavail, 0, NULL, 0,
 		       CTL_KERN, KERN_TIMEX, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "autonicetime",
-		       SYSCTL_DESCR("CPU clock seconds before non-root "
-				    "process priority is lowered"),
-		       sysctl_kern_autonice, 0, &autonicetime, 0,
-		       CTL_KERN, KERN_AUTONICETIME, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "autoniceval",
-		       SYSCTL_DESCR("Automatic reniced non-root process "
-				    "priority"),
-		       sysctl_kern_autonice, 0, &autoniceval, 0,
-		       CTL_KERN, KERN_AUTONICEVAL, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "rtc_offset",
@@ -1341,40 +1326,6 @@ sysctl_kern_file(SYSCTLFN_ARGS)
 }
 
 /*
- * sysctl helper routine for kern.autonicetime and kern.autoniceval.
- * asserts that the assigned value is in the correct range.
- */
-static int
-sysctl_kern_autonice(SYSCTLFN_ARGS)
-{
-	int error, t = 0;
-	struct sysctlnode node;
-
-	node = *rnode;
-	t = *(int*)node.sysctl_data;
-	node.sysctl_data = &t;
-	error = sysctl_lookup(SYSCTLFN_CALL(&node));
-	if (error || newp == NULL)
-		return (error);
-
-	switch (node.sysctl_num) {
-	case KERN_AUTONICETIME:
-		if (t >= 0)
-			autonicetime = t;
-		break;
-	case KERN_AUTONICEVAL:
-		if (t < PRIO_MIN)
-			t = PRIO_MIN;
-		else if (t > PRIO_MAX)
-			t = PRIO_MAX;
-		autoniceval = t;
-		break;
-	}
-
-	return (0);
-}
-
-/*
  * sysctl helper routine for kern.msgbufsize and kern.msgbuf.  for the
  * former it merely checks the message buffer is set up.  for the latter,
  * it also copies out the data if necessary.
@@ -1709,36 +1660,62 @@ sysctl_kern_lwp(SYSCTLFN_ARGS)
 	elem_count = name[2];
 
 	mutex_enter(&proclist_lock);
-	p = p_find(pid, PFIND_LOCKED);
-	if (p == NULL) {
-		mutex_exit(&proclist_lock);
-		return (ESRCH);
-	}
-	mutex_enter(&p->p_smutex);	
-	LIST_FOREACH(l2, &p->p_lwps, l_sibling) {
-		if (buflen >= elem_size && elem_count > 0) {
-			lwp_lock(l2);
-			fill_lwp(l2, &klwp);
-			lwp_unlock(l2);
+	if (pid == -1) {
+		LIST_FOREACH(l2, &alllwp, l_list) {
+			if (buflen >= elem_size && elem_count > 0) {
+				lwp_lock(l2);
+				fill_lwp(l2, &klwp);
+				lwp_unlock(l2);
 
-			/*
-			 * Copy out elem_size, but not larger than
-			 * the size of a struct kinfo_proc2.
-			 *
-			 * XXX We should not be holding p_smutex, but
-			 * for now, the buffer is wired.  Fix later.
-			 */
-			error = dcopyout(l, &klwp, dp,
-			    min(sizeof(klwp), elem_size));
-			if (error)
-				goto cleanup;
-			dp += elem_size;
-			buflen -= elem_size;
-			elem_count--;
+				/*
+				 * Copy out elem_size, but not larger than
+				 * the size of a struct kinfo_proc2.
+				 *
+				 * XXX We should not be holding p_smutex, but
+				 * for now, the buffer is wired.  Fix later.
+				 */
+				error = dcopyout(l, &klwp, dp,
+				    min(sizeof(klwp), elem_size));
+				if (error)
+					goto cleanup;
+				dp += elem_size;
+				buflen -= elem_size;
+				elem_count--;
+			}
+			needed += elem_size;
 		}
-		needed += elem_size;
+	} else {
+		p = p_find(pid, PFIND_LOCKED);
+		if (p == NULL) {
+			mutex_exit(&proclist_lock);
+			return (ESRCH);
+		}
+		mutex_enter(&p->p_smutex);	
+		LIST_FOREACH(l2, &p->p_lwps, l_sibling) {
+			if (buflen >= elem_size && elem_count > 0) {
+				lwp_lock(l2);
+				fill_lwp(l2, &klwp);
+				lwp_unlock(l2);
+
+				/*
+				 * Copy out elem_size, but not larger than
+				 * the size of a struct kinfo_proc2.
+				 *
+				 * XXX We should not be holding p_smutex, but
+				 * for now, the buffer is wired.  Fix later.
+				 */
+				error = dcopyout(l, &klwp, dp,
+				    min(sizeof(klwp), elem_size));
+				if (error)
+					goto cleanup;
+				dp += elem_size;
+				buflen -= elem_size;
+				elem_count--;
+			}
+			needed += elem_size;
+		}
+		mutex_exit(&p->p_smutex);
 	}
-	mutex_exit(&p->p_smutex);
 	mutex_exit(&proclist_lock);
 
 	if (where != NULL) {
@@ -2767,8 +2744,8 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki)
 	}
 
 	ki->p_estcpu = p->p_estcpu;
-	ki->p_cpticks = p->p_cpticks;
-	ki->p_pctcpu = p->p_pctcpu;
+
+	mutex_enter(&p->p_smutex);
 
 	ki->p_uticks = p->p_uticks;
 	ki->p_sticks = p->p_sticks;
@@ -2777,16 +2754,18 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki)
 	ki->p_tracep = PTRTOUINT64(p->p_tracep);
 	ki->p_traceflag = p->p_traceflag;
 
-	mutex_enter(&p->p_smutex);
-
 	memcpy(&ki->p_sigignore, &p->p_sigctx.ps_sigignore,sizeof(ki_sigset_t));
 	memcpy(&ki->p_sigcatch, &p->p_sigctx.ps_sigcatch, sizeof(ki_sigset_t));
 
+	ki->p_cpticks = 0;
+	ki->p_pctcpu = p->p_pctcpu;
 	ss1 = p->p_sigpend.sp_set;
 	LIST_FOREACH(l, &p->p_lwps, l_sibling) {
 		/* This is hardly correct, but... */
 		sigplusset(&l->l_sigpend.sp_set, &ss1);
 		sigplusset(&l->l_sigmask, &ss2);
+		ki->p_cpticks += l->l_cpticks;
+		ki->p_pctcpu += l->l_pctcpu;
 	}
 	memcpy(&ki->p_siglist, &ss1, sizeof(ki_sigset_t));
 	memcpy(&ki->p_sigmask, &ss2, sizeof(ki_sigset_t));
@@ -2827,8 +2806,8 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki)
 		l = proc_representative_lwp(p, &tmp, 1);
 		lwp_lock(l);
 		ki->p_nrlwps = tmp;
-		ki->p_forw = PTRTOUINT64(l->l_forw);
-		ki->p_back = PTRTOUINT64(l->l_back);
+		ki->p_forw = 0;
+		ki->p_back = 0;
 		ki->p_addr = PTRTOUINT64(l->l_addr);
 		ki->p_stat = l->l_stat;
 		ki->p_flag |= sysctl_map_flags(sysctl_lwpflagmap, l->l_flag);
@@ -2886,7 +2865,7 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki)
 		ki->p_uru_nvcsw = 0;
 		ki->p_uru_nivcsw = 0;
 		LIST_FOREACH(l2, &p->p_lwps, l_sibling) {
-			ki->p_uru_nvcsw += l->l_nvcsw;
+			ki->p_uru_nvcsw += (l->l_ncsw - l->l_nivcsw);
 			ki->p_uru_nivcsw += l->l_nivcsw;
 		}
 
@@ -2911,9 +2890,10 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki)
 static void
 fill_lwp(struct lwp *l, struct kinfo_lwp *kl)
 {
+	struct proc *p = l->l_proc;
 
-	kl->l_forw = PTRTOUINT64(l->l_forw);
-	kl->l_back = PTRTOUINT64(l->l_back);
+	kl->l_forw = 0;
+	kl->l_back = 0;
 	kl->l_laddr = PTRTOUINT64(l);
 	kl->l_addr = PTRTOUINT64(l->l_addr);
 	kl->l_stat = l->l_stat;
@@ -2939,6 +2919,13 @@ fill_lwp(struct lwp *l, struct kinfo_lwp *kl)
 #endif
 	kl->l_rtime_sec = l->l_rtime.tv_sec;
 	kl->l_rtime_usec = l->l_rtime.tv_usec;
+	kl->l_cpticks = l->l_cpticks;
+	kl->l_pctcpu = l->l_pctcpu;
+	kl->l_pid = p->p_pid;
+	if (l->l_name == NULL)
+		kl->l_name[0] = '\0';
+	else
+		strlcpy(kl->l_name, l->l_name, sizeof(kl->l_name));
 }
 
 /*

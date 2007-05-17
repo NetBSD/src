@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.56 2007/05/17 10:42:42 fvdl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.57 2007/05/17 14:51:14 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.56 2007/05/17 10:42:42 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.57 2007/05/17 14:51:14 yamt Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_ddb.h"
@@ -92,18 +92,15 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.56 2007/05/17 10:42:42 fvdl Exp $");
 #include <sys/signal.h>
 #include <sys/signalvar.h>
 #include <sys/kernel.h>
-#include <sys/proc.h>
+#include <sys/cpu.h>
 #include <sys/user.h>
 #include <sys/exec.h>
-#include <sys/buf.h>
 #include <sys/reboot.h>
 #include <sys/conf.h>
-#include <sys/file.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/msgbuf.h>
 #include <sys/mount.h>
-#include <sys/vnode.h>
 #include <sys/extent.h>
 #include <sys/core.h>
 #include <sys/kcore.h>
@@ -127,6 +124,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.56 2007/05/17 10:42:42 fvdl Exp $");
 #include <machine/cpu.h>
 #include <machine/cpufunc.h>
 #include <machine/gdt.h>
+#include <machine/intr.h>
 #include <machine/pio.h>
 #include <machine/psl.h>
 #include <machine/reg.h>
@@ -307,6 +305,9 @@ cpu_startup(void)
 
 	/* Safe for i/o port / memory space allocation to use malloc now. */
 	x86_bus_space_mallocok();
+
+	gdt_init();
+	x86_64_proc0_tss_ldt_init();
 }
 
 /*
@@ -315,13 +316,12 @@ cpu_startup(void)
 void
 x86_64_proc0_tss_ldt_init(void)
 {
+	struct lwp *l;
 	struct pcb *pcb;
 	int x;
 
-	gdt_init();
-
-	cpu_info_primary.ci_curpcb = pcb = &lwp0.l_addr->u_pcb;
-
+	l = &lwp0;
+	pcb = &l->l_addr->u_pcb;
 	pcb->pcb_flags = 0;
 	pcb->pcb_tss.tss_iobase =
 	    (u_int16_t)((char *)pcb->pcb_iomap - (char *)&pcb->pcb_tss);
@@ -334,40 +334,16 @@ x86_64_proc0_tss_ldt_init(void)
 	pcb->pcb_ldt_sel = pmap_kernel()->pm_ldt_sel =
 	    GSYSSEL(GLDT_SEL, SEL_KPL);
 	pcb->pcb_cr0 = rcr0();
-	pcb->pcb_tss.tss_rsp0 = (u_int64_t)lwp0.l_addr + USPACE - 16;
-	pcb->pcb_tss.tss_ist[0] = (u_int64_t)lwp0.l_addr + PAGE_SIZE;
+	pcb->pcb_tss.tss_rsp0 = (u_int64_t)l->l_addr + USPACE - 16;
+	pcb->pcb_tss.tss_ist[0] = (u_int64_t)l->l_addr + PAGE_SIZE;
 	pcb->pcb_tss.tss_ist[1] = (uint64_t) x86_64_doubleflt_stack
 	    + PAGE_SIZE - 16;
-	lwp0.l_md.md_regs = (struct trapframe *)pcb->pcb_tss.tss_rsp0 - 1;
-	lwp0.l_md.md_tss_sel = tss_alloc(pcb);
+	l->l_md.md_regs = (struct trapframe *)pcb->pcb_tss.tss_rsp0 - 1;
+	l->l_md.md_tss_sel = tss_alloc(pcb);
 
-	ltr(lwp0.l_md.md_tss_sel);
+	ltr(l->l_md.md_tss_sel);
 	lldt(pcb->pcb_ldt_sel);
 }
-
-/*       
- * Set up TSS and LDT for a new PCB.
- */         
-         
-void    
-x86_64_init_pcb_tss_ldt(struct cpu_info *ci)   
-{        
-	int x;      
-	struct pcb *pcb = ci->ci_idle_pcb;
- 
-	pcb->pcb_tss.tss_iobase =
-	    (u_int16_t)((char *)pcb->pcb_iomap - (char *)&pcb->pcb_tss);
-	for (x = 0; x < sizeof(pcb->pcb_iomap) / 4; x++)
-		pcb->pcb_iomap[x] = 0xffffffff;
-
-	/* XXXfvdl pmap_kernel not needed */ 
-	pcb->pcb_ldt_sel = pmap_kernel()->pm_ldt_sel =
-	    GSYSSEL(GLDT_SEL, SEL_KPL);
-	pcb->pcb_cr0 = rcr0();
-        
-        ci->ci_idle_tss_sel = tss_alloc(pcb);
-}       
-
 
 /*  
  * machine dependent system variables.
@@ -1031,7 +1007,6 @@ init_x86_64(paddr_t first_avail)
 	cpu_init_msrs(&cpu_info_primary);
 
 	lwp0.l_addr = proc0paddr;
-	cpu_info_primary.ci_curpcb = &lwp0.l_addr->u_pcb;
 
 	x86_bus_space_init();
 
@@ -1534,6 +1509,8 @@ init_x86_64(paddr_t first_avail)
         /* Make sure maxproc is sane */ 
         if (maxproc > cpu_maxproc())
                 maxproc = cpu_maxproc();
+
+	curlwp = &lwp0;
 }
 
 void
@@ -1749,15 +1726,28 @@ cpu_initclocks(void)
 }
 
 void
-cpu_need_resched(struct cpu_info *ci)
+cpu_need_resched(struct cpu_info *ci, int flags)
 {
+	bool immed = (flags & RESCHED_IMMED) != 0;
+
+	if (ci->ci_want_resched && !immed)
+		return;
 	ci->ci_want_resched = 1;
-	if (ci->ci_curlwp != NULL)
+
+	if (ci->ci_curlwp != ci->ci_data.cpu_idlelwp) {
 		aston(ci->ci_curlwp);
 #ifdef MULTIPROCESSOR
-	if (ci != curcpu())
-		x86_send_ipi(ci, 0);
+		if (immed && ci != curcpu()) {
+			x86_send_ipi(ci, 0);
+		}
 #endif
+	} else {
+#ifdef MULTIPROCESSOR
+		if ((ci->ci_feature2_flags & CPUID2_MONITOR) == 0 &&
+		    ci != curcpu())
+			x86_send_ipi(ci, 0);
+#endif
+	}
 }
 
 void

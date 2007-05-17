@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sleepq.c,v 1.8 2007/03/29 17:34:39 ad Exp $	*/
+/*	$NetBSD: kern_sleepq.c,v 1.9 2007/05/17 14:51:40 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,15 +42,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.8 2007/03/29 17:34:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.9 2007/05/17 14:51:40 yamt Exp $");
 
-#include "opt_multiprocessor.h"
-#include "opt_lockdebug.h"
 #include "opt_ktrace.h"
 
 #include <sys/param.h>
 #include <sys/lock.h>
 #include <sys/kernel.h>
+#include <sys/cpu.h>
 #include <sys/pool.h>
 #include <sys/proc.h> 
 #include <sys/resourcevar.h>
@@ -64,7 +63,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.8 2007/03/29 17:34:39 ad Exp $");
 #include <uvm/uvm_extern.h>
 
 int	sleepq_sigtoerror(lwp_t *, int);
-void	updatepri(lwp_t *);
 
 /* General purpose sleep table, used by ltsleep() and condition variables. */
 sleeptab_t	sleeptab;
@@ -81,14 +79,9 @@ sleeptab_init(sleeptab_t *st)
 	int i;
 
 	for (i = 0; i < SLEEPTAB_HASH_SIZE; i++) {
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 		sq = &st->st_queues[i].st_queue;
 		mutex_init(&st->st_queues[i].st_mutex, MUTEX_SPIN, IPL_SCHED);
 		sleepq_init(sq, &st->st_queues[i].st_mutex);
-#else
-		sq = &st->st_queues[i];
-		sleepq_init(sq, &sched_mutex);
-#endif
 	}
 }
 
@@ -116,6 +109,7 @@ sleepq_init(sleepq_t *sq, kmutex_t *mtx)
 int
 sleepq_remove(sleepq_t *sq, lwp_t *l)
 {
+	struct schedstate_percpu *spc;
 	struct cpu_info *ci;
 
 	KASSERT(lwp_locked(l, sq->sq_mutex));
@@ -136,34 +130,27 @@ sleepq_remove(sleepq_t *sq, lwp_t *l)
 	l->l_sleepq = NULL;
 	l->l_flag &= ~LW_SINTR;
 
+	ci = l->l_cpu;
+	spc = &ci->ci_schedstate;
+
 	/*
 	 * If not sleeping, the LWP must have been suspended.  Let whoever
 	 * holds it stopped set it running again.
 	 */
 	if (l->l_stat != LSSLEEP) {
 	 	KASSERT(l->l_stat == LSSTOP || l->l_stat == LSSUSPENDED);
-		lwp_setlock(l, &sched_mutex);
+		lwp_setlock(l, &spc->spc_lwplock);
 		return 0;
 	}
-
-	sched_lock(1);
-	lwp_setlock(l, &sched_mutex);
 
 	/*
 	 * If the LWP is still on the CPU, mark it as LSONPROC.  It may be
 	 * about to call mi_switch(), in which case it will yield.
-	 *
-	 * XXXSMP Will need to change for preemption.
 	 */
-	ci = l->l_cpu;
-#ifdef MULTIPROCESSOR
-	if (ci->ci_curlwp == l) {
-#else
-	if (l == curlwp) {
-#endif
+	if ((l->l_flag & LW_RUNNING) != 0) {
 		l->l_stat = LSONPROC;
 		l->l_slptime = 0;
-		sched_unlock(1);
+		lwp_setlock(l, &spc->spc_lwplock);
 		return 0;
 	}
 
@@ -171,19 +158,19 @@ sleepq_remove(sleepq_t *sq, lwp_t *l)
 	 * Set it running.  We'll try to get the last CPU that ran
 	 * this LWP to pick it up again.
 	 */
-	if (l->l_slptime > 1)
-		updatepri(l);
+	spc_lock(ci);
+	lwp_setlock(l, spc->spc_mutex);
+	sched_setrunnable(l);
 	l->l_stat = LSRUN;
 	l->l_slptime = 0;
 	if ((l->l_flag & LW_INMEM) != 0) {
-		setrunqueue(l);
-		if (lwp_eprio(l) < ci->ci_schedstate.spc_curpriority)
-			cpu_need_resched(ci);
-		sched_unlock(1);
+		sched_enqueue(l, false);
+		if (lwp_eprio(l) < spc->spc_curpriority)
+			cpu_need_resched(ci, 0);
+		spc_unlock(ci);
 		return 0;
 	}
-
-	sched_unlock(1);
+	spc_unlock(ci);
 	return 1;
 }
 
@@ -210,9 +197,16 @@ sleepq_insert(sleepq_t *sq, lwp_t *l, syncobj_t *sobj)
 	TAILQ_INSERT_TAIL(&sq->sq_queue, l, l_sleepchain);
 }
 
+/*
+ * sleepq_enqueue:
+ *
+ *	Enter an LWP into the sleep queue and prepare for sleep.  The sleep
+ *	queue must already be locked, and any interlock (such as the kernel
+ *	lock) must have be released (see sleeptab_lookup(), sleepq_enter()).
+ */
 void
 sleepq_enqueue(sleepq_t *sq, pri_t pri, wchan_t wchan, const char *wmesg,
-    syncobj_t *sobj)
+	       syncobj_t *sobj)
 {
 	lwp_t *l = curlwp;
 
@@ -228,15 +222,23 @@ sleepq_enqueue(sleepq_t *sq, pri_t pri, wchan_t wchan, const char *wmesg,
 	l->l_priority = pri;
 	l->l_stat = LSSLEEP;
 	l->l_sleeperr = 0;
-	l->l_nvcsw++;
 
 	sq->sq_waiters++;
 	sleepq_insert(sq, l, sobj);
 }
 
-void
-sleepq_switch(int timo, bool catch)
+/*
+ * sleepq_block:
+ *
+ *	After any intermediate step such as releasing an interlock, switch.
+ * 	sleepq_block() may return early under exceptional conditions, for
+ * 	example if the LWP's containing process is exiting.
+ */
+int
+sleepq_block(int timo, bool catch)
 {
+	int error = 0, expired, sig;
+	struct proc *p;
 	lwp_t *l = curlwp;
 
 #ifdef KTRACE
@@ -251,72 +253,28 @@ sleepq_switch(int timo, bool catch)
 	if (catch) {
 		l->l_flag |= LW_SINTR;
 		if ((l->l_flag & LW_PENDSIG) != 0 && sigispending(l, 0)) {
-			l->l_sleeperr = EPASSTHROUGH;
 			/* lwp_unsleep() will release the lock */
 			lwp_unsleep(l);
-			return;
+			error = EINTR;
+			goto catchit;
 		}
 		if ((l->l_flag & (LW_CANCELLED|LW_WEXIT|LW_WCORE)) != 0) {
 			l->l_flag &= ~LW_CANCELLED;
-			l->l_sleeperr = EINTR;
 			/* lwp_unsleep() will release the lock */
 			lwp_unsleep(l);
-			return;
+			error = EINTR;
+			goto catchit;
 		}
 	}
 
 	if (timo)
 		callout_reset(&l->l_tsleep_ch, timo, sleepq_timeout, l);
 
-	mi_switch(l, NULL);
-	l->l_cpu->ci_schedstate.spc_curpriority = l->l_usrpri;
+	mi_switch(l);
 
 	/*
 	 * When we reach this point, the LWP and sleep queue are unlocked.
 	 */
-	KASSERT(l->l_wchan == NULL && l->l_sleepq == NULL);
-}
-
-/*
- * sleepq_block:
- *
- *	Enter an LWP into the sleep queue and prepare for sleep.  The sleep
- *	queue must already be locked, and any interlock (such as the kernel
- *	lock) must have be released (see sleeptab_lookup(), sleepq_enter()).
- *
- * 	sleepq_block() may return early under exceptional conditions, for
- * 	example if the LWP's containing process is exiting.
- */
-void
-sleepq_block(sleepq_t *sq, pri_t pri, wchan_t wchan, const char *wmesg,
-	     int timo, bool catch, syncobj_t *sobj)
-{
-
-	sleepq_enqueue(sq, pri, wchan, wmesg, sobj);
-	sleepq_switch(timo, catch);
-}
-
-/*
- * sleepq_unblock:
- *
- *	After any intermediate step such as updating statistics, re-acquire
- *	the kernel lock and record the switch for ktrace.  Note that we are
- *	no longer on the sleep queue at this point.
- *
- *	This is split out from sleepq_block() in expectation that at some
- *	point in the future, LWPs may awake on different kernel stacks than
- *	those they went asleep on.
- */
-int
-sleepq_unblock(int timo, bool catch)
-{
-	int error, expired, sig;
-	struct proc *p;
-	lwp_t *l;
-
-	l = curlwp;
-	error = l->l_sleeperr;
-
 	if (timo) {
 		/*
 		 * Even if the callout appears to have fired, we need to
@@ -324,12 +282,12 @@ sleepq_unblock(int timo, bool catch)
 		 */
 		expired = callout_expired(&l->l_tsleep_ch);
 		callout_stop(&l->l_tsleep_ch);
-		if (expired && error == 0)
+		if (expired)
 			error = EWOULDBLOCK;
 	}
 
-	if (catch && (error == 0 || error == EPASSTHROUGH)) {
-		l->l_sleeperr = 0;
+	if (catch && error == 0) {
+  catchit:
 		p = l->l_proc;
 		if ((l->l_flag & (LW_CANCELLED | LW_WEXIT | LW_WCORE)) != 0)
 			error = EINTR;
@@ -340,10 +298,6 @@ sleepq_unblock(int timo, bool catch)
 				error = sleepq_sigtoerror(l, sig);
 			mutex_exit(&p->p_smutex);
 			KERNEL_UNLOCK_LAST(l);
-		}
-		if (error == EPASSTHROUGH) {
-			/* Raced */
-			error = EINTR;
 		}
 	}
 

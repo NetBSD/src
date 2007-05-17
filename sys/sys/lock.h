@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.70 2007/03/12 16:31:54 ad Exp $	*/
+/*	$NetBSD: lock.h,v 1.71 2007/05/17 14:51:42 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -352,10 +352,10 @@ void	spinlock_acquire_count(volatile struct lock *, int);
 #define	SPINLOCK_BACKOFF_HOOK		nullop(NULL)
 #endif
 #ifndef	SPINLOCK_BACKOFF_MIN
-#define	SPINLOCK_BACKOFF_MIN	8
+#define	SPINLOCK_BACKOFF_MIN	4
 #endif
 #ifndef	SPINLOCK_BACKOFF_MAX
-#define	SPINLOCK_BACKOFF_MAX	512
+#define	SPINLOCK_BACKOFF_MAX	128
 #endif
 
 #define	SPINLOCK_BACKOFF(count)					\

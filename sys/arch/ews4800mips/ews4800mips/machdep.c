@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.6 2007/03/04 12:24:09 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.7 2007/05/17 14:51:18 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.6 2007/03/04 12:24:09 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.7 2007/05/17 14:51:18 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -168,8 +168,8 @@ mach_init(int argc, char *argv[], struct bootinfo *bi)
 	v = (void *)uvm_pageboot_alloc(USPACE);	/* proc0 USPACE */
 	lwp0.l_addr = proc0paddr = (struct user *) v;
 	lwp0.l_md.md_regs = (struct frame *)((char *)v + USPACE) - 1;
-	curpcb = &lwp0.l_addr->u_pcb;
-	curpcb->pcb_context[11] = MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
+	proc0paddr->u_pcb.pcb_context[11] =
+	    MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
 }
 
 void
