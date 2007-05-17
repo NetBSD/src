@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.c,v 1.37 2007/03/30 00:12:54 uwe Exp $	*/
+/*	$NetBSD: exception.c,v 1.38 2007/05/17 14:51:28 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.37 2007/03/30 00:12:54 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.38 2007/05/17 14:51:28 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -282,9 +282,11 @@ tlb_exception(struct lwp *l, struct trapframe *tf, uint32_t va)
 		KDASSERT(l->l_md.md_regs == tf);
 		LWP_CACHE_CREDS(l, l->l_proc);
 	} else {
+#if 0 /* FIXME: probably wrong for yamt-idlelwp */
 		KDASSERT(l == NULL ||		/* idle */
 		    l == &lwp0 ||		/* kthread */
 		    l->l_md.md_regs != tf);	/* other */
+#endif
 	}
 
 	switch (tf->tf_expevt) {

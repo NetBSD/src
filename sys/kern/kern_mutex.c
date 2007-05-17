@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_mutex.c,v 1.13 2007/03/12 22:34:08 ad Exp $	*/
+/*	$NetBSD: kern_mutex.c,v 1.14 2007/05/17 14:51:40 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
 #define	__MUTEX_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.13 2007/03/12 22:34:08 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.14 2007/05/17 14:51:40 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -603,7 +603,7 @@ mutex_vector_enter(kmutex_t *mtx)
 		 *   completes before the modification of curlwp becomes
 		 *   visible to this CPU.
 		 *
-		 * o cpu_switch() posts a store fence before setting curlwp
+		 * o mi_switch() posts a store fence before setting curlwp
 		 *   and before resuming execution of an LWP.
 		 * 
 		 * o _kernel_lock() posts a store fence before setting
@@ -659,8 +659,6 @@ mutex_vector_enter(kmutex_t *mtx)
 
 		LOCKSTAT_STOP_TIMER(lsflag, slptime);
 		LOCKSTAT_COUNT(slpcnt, 1);
-
-		turnstile_unblock();
 	}
 
 	LOCKSTAT_EVENT(lsflag, mtx, LB_ADAPTIVE_MUTEX | LB_SLEEP1,
@@ -873,47 +871,3 @@ mutex_spin_retry(kmutex_t *mtx)
 #endif	/* MULTIPROCESSOR */
 }
 #endif	/* defined(__HAVE_SPIN_MUTEX_STUBS) || defined(FULL) */
-
-/*
- * sched_lock_idle:
- *
- *	XXX Ugly hack for cpu_switch().
- */
-void
-sched_lock_idle(void)
-{
-#ifdef FULL
-	kmutex_t *mtx = &sched_mutex;
-
-	curcpu()->ci_mtx_count--;
-
-	if (!__cpu_simple_lock_try(&mtx->mtx_lock)) {
-		mutex_spin_retry(mtx);
-		return;
-	}
-
-	MUTEX_LOCKED(mtx);
-#else
-	curcpu()->ci_mtx_count--;
-#endif	/* FULL */
-}
-
-/*
- * sched_unlock_idle:
- *
- *	XXX Ugly hack for cpu_switch().
- */
-void
-sched_unlock_idle(void)
-{
-#ifdef FULL
-	kmutex_t *mtx = &sched_mutex;
-
-	if (mtx->mtx_lock != __SIMPLELOCK_LOCKED)
-		MUTEX_ABORT(mtx, "sched_mutex not locked");
-
-	MUTEX_UNLOCKED(mtx);
-	__cpu_simple_unlock(&mtx->mtx_lock);
-#endif	/* FULL */
-	curcpu()->ci_mtx_count++;
-}

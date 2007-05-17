@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.249 2007/05/17 12:05:04 yamt Exp $	*/
+/*	$NetBSD: proc.h,v 1.250 2007/05/17 14:51:43 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -268,11 +268,11 @@ struct proc {
 	struct lwp	*p_zomblwp;	/* s: detached LWP to be reaped */
 
 	/* scheduling */
+	void		*p_sched_info;	/* s: Scheduler-specific structure */
 	fixpt_t		p_estcpu;	/* t: Time averaged value of p_cpticks XXX belongs in p_startcopy section */
 	fixpt_t		p_estcpu_inherited;
 	unsigned int	p_forktime;
-	int		p_cpticks;	/* t: Ticks of CPU time */
-	fixpt_t		p_pctcpu;	/* t: %cpu for this process during p_swtime */
+	fixpt_t         p_pctcpu;       /* t: %cpu from dead LWPs */
 
 	struct proc	*p_opptr;	/* l: save parent during ptrace. */
 	struct ptimers	*p_timers;	/*    Timers: real, virtual, profiling */
@@ -452,7 +452,7 @@ do {									\
 #define	FORK_SYSTEM	0x80		/* Fork a kernel thread */
 
 /*
- * Allow machine-dependent code to override curproc in <machine/cpu.h> for
+ * Allow machine-dependent code to override curlwp in <machine/cpu.h> for
  * its own convenience.  Otherwise, we declare it as appropriate.
  */
 #if !defined(curlwp)
@@ -461,20 +461,10 @@ do {									\
 #else
 extern struct lwp	*curlwp;		/* Current running LWP */
 #endif /* MULTIPROCESSOR */
-#endif /* ! curproc */
+#endif /* ! curlwp */
 
-static struct proc *__curproc(void);
-
-static __inline struct proc *
-__curproc()
-{
-	struct lwp *l = curlwp;
-
-	if (l == NULL)
-		return NULL;
-	return l->l_proc;
-}
-#define	curproc	__curproc()
+#define	CURCPU_IDLE_P()	(curlwp == curcpu()->ci_data.cpu_idlelwp)
+#define	curproc		(curlwp->l_proc)
 
 extern struct proc	proc0;		/* Process slot for swapper */
 extern int		nprocs, maxproc; /* Current and max number of procs */
@@ -521,7 +511,6 @@ void	sessdelete(struct session *);
 void	yield(void);
 void	pgdelete(struct pgrp *);
 void	procinit(void);
-void	resetprocpriority(struct proc *);
 void	suspendsched(void);
 int	ltsleep(wchan_t, pri_t, const char *, int, volatile struct simplelock *);
 int	mtsleep(wchan_t, pri_t, const char *, int, kmutex_t *);
@@ -536,17 +525,14 @@ void	proc_free_mem(struct proc *);
 void	exit_lwps(struct lwp *l);
 int	fork1(struct lwp *, int, int, void *, size_t,
 	    void (*)(void *), void *, register_t *, struct proc **);
-void	rqinit(void);
 int	pgid_in_session(struct proc *, pid_t);
-#ifndef cpu_idle
-void	cpu_idle(void);
-#endif
-void	cpu_exit(struct lwp *);
 void	cpu_lwp_fork(struct lwp *, struct lwp *, void *, size_t,
 	    void (*)(void *), void *);
 #ifndef cpu_lwp_free
 void	cpu_lwp_free(struct lwp *, int);
+#ifndef cpu_lwp_free2
 void	cpu_lwp_free2(struct lwp *);
+#endif
 #endif
 
 #ifdef __HAVE_SYSCALL_INTERN
@@ -603,10 +589,6 @@ void assert_sleepable(struct simplelock *, const char *);
 /* Compatibility with old, non-interlocked tsleep call */
 #define	tsleep(chan, pri, wmesg, timo)					\
 	ltsleep(chan, pri, wmesg, timo, NULL)
-
-#if defined(MULTIPROCESSOR)
-void	proc_trampoline_mp(void);	/* XXX */
-#endif
 
 #ifdef KSTACK_CHECK_MAGIC
 void kstack_setup_magic(const struct lwp *);

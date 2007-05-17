@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.62 2007/03/04 06:00:49 christos Exp $ */
+/*	$NetBSD: cpu.h,v 1.63 2007/05/17 14:51:31 yamt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -114,7 +114,6 @@ struct cpu_info {
 	struct lwp		*ci_fplwp;
 
 	void			*ci_eintstack;
-	struct pcb		*ci_idle_u;
 
 	int			ci_mtx_count;
 	int			ci_mtx_oldspl;
@@ -252,12 +251,6 @@ void setsoftint(void);
 void setsoftnet(void);
 
 /*
- * Preempt the current process if in interrupt from user mode,
- * or after the current trap/syscall if in system mode.
- */
-#define	cpu_need_resched(ci)	(want_resched = 1, want_ast = 1)
-
-/*
  * Give a profiling tick to the current process when the user profiling
  * buffer pages are invalid.  On the sparc, request an ast to send us
  * through trap(), marking the proc as needing a profiling tick.
@@ -313,7 +306,7 @@ int	probeset(paddr_t, int, int, uint64_t);
 #define	 write_all_windows() __asm volatile("flushw" : : )
 #define	 write_user_windows() __asm volatile("flushw" : : )
 
-void 	proc_trampoline(void);
+void 	lwp_trampoline(void);
 struct pcb;
 void	snapshot(struct pcb *);
 struct frame *getfp(void);

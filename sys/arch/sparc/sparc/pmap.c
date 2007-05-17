@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.314 2007/03/12 18:18:27 ad Exp $ */
+/*	$NetBSD: pmap.c,v 1.315 2007/05/17 14:51:30 yamt Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.314 2007/03/12 18:18:27 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.315 2007/05/17 14:51:30 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -7406,7 +7406,7 @@ pmap_activate(struct lwp *l)
 	 */
 
 	s = splvm();
-	if (l->l_proc == curproc) {
+	if (l == curlwp) {
 		write_user_windows();
 		if (pm->pm_ctx == NULL) {
 			ctx_alloc(pm);	/* performs setcontext() */

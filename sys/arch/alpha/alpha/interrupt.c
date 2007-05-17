@@ -1,4 +1,4 @@
-/* $NetBSD: interrupt.c,v 1.72 2007/02/09 21:55:01 ad Exp $ */
+/* $NetBSD: interrupt.c,v 1.73 2007/05/17 14:51:11 yamt Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.72 2007/02/09 21:55:01 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.73 2007/05/17 14:51:11 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -209,7 +209,6 @@ interrupt(unsigned long a0, unsigned long a1, unsigned long a2,
 	static int microset_iter;	/* call cc_microset() once per sec. */
 	struct cpu_info *ci = curcpu();
 	struct cpu_softc *sc = ci->ci_softc;
-	struct lwp *l;
 
 	switch (a0) {
 	case ALPHA_INTR_XPROC:	/* interprocessor interrupt */
@@ -271,8 +270,8 @@ interrupt(unsigned long a0, unsigned long a1, unsigned long a2,
 			 * do so.
 			 */
 			if ((++ci->ci_schedstate.spc_schedticks & 0x3f) == 0 &&
-			    (l = ci->ci_curlwp) != NULL && schedhz != 0)
-				schedclock(l);
+			    schedhz != 0)
+				schedclock(ci->ci_curlwp);
 		}
 		break;
 

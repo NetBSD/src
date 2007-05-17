@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_thread.c,v 1.40 2007/03/24 16:43:56 rmind Exp $ */
+/*	$NetBSD: mach_thread.c,v 1.41 2007/05/17 14:51:37 yamt Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_thread.c,v 1.40 2007/03/24 16:43:56 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_thread.c,v 1.41 2007/05/17 14:51:37 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -126,7 +126,7 @@ mach_sys_swtch_pri(struct lwp *l, void *v, register_t *retval)
 		l->l_priority = l->l_usrpri;
 		l->l_proc->p_stats->p_ru.ru_nivcsw++;	/* XXXSMP */
 	}
-	*retval = mi_switch(l, NULL);
+	*retval = mi_switch(l);
 	KERNEL_LOCK(l->l_biglocks, l);
 
 	return 0;
@@ -221,7 +221,7 @@ mach_thread_create_running(args)
 	lwp_lock(mctc.mctc_lwp);
 	mctc.mctc_lwp->l_private = 0;
 	mctc.mctc_lwp->l_stat = LSRUN;
-	setrunqueue(mctc.mctc_lwp);
+	sched_enqueue(mctc.mctc_lwp, false);
 	p->p_nrlwps++;
 	lwp_unlock(mctc.mctc_lwp);
 	mutex_exit(&p->p_smutex);

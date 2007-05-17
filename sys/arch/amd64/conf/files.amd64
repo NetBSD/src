@@ -1,4 +1,4 @@
-#	$NetBSD: files.amd64,v 1.37 2007/04/16 19:12:17 ad Exp $
+#	$NetBSD: files.amd64,v 1.38 2007/05/17 14:51:14 yamt Exp $
 #
 # new style config file for amd64 architecture
 #
@@ -34,6 +34,7 @@ file	arch/amd64/amd64/db_trace.c		ddb
 file	arch/amd64/amd64/kgdb_machdep.c		kgdb
 file	kern/subr_disk_mbr.c			disk
 file	arch/amd64/amd64/gdt.c
+file	arch/x86/x86/idle_machdep.c
 #
 # XXXfvdl write the optimized versions for these.
 #

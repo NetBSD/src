@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.30 2007/02/09 21:55:11 ad Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.31 2007/05/17 14:51:27 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -87,6 +87,13 @@
 #define	CFRAME_LRSAVE(t0)	/* nothing */
 #endif
 
+/*
+ * We don't save r30&r31 since they saved in the callframe.
+ * We also want the "current" value of r30 instead of the saved value
+ * since we need to return the LWP that ran before us, not ourselves.
+ * if we save r30, when we got restored, that would be the r30 that
+ * would have been saved when we were replaced which would be ourself.
+ */
 #define	SWITCHFRAME_SAVE(t0)					\
 	streg	%r10,(SFRAME_USER_SR)(t0);	/* USER_SR */	\
 	streg	%r11,(SFRAME_CR)(t0);		/* CR */	\
@@ -107,9 +114,7 @@
 	streg	%r26,(SFRAME_R26)(t0);				\
 	streg	%r27,(SFRAME_R27)(t0);				\
 	streg	%r28,(SFRAME_R28)(t0);				\
-	streg	%r29,(SFRAME_R29)(t0);				\
-	streg	%r30,(SFRAME_R30)(t0);				\
-	streg	%r31,(SFRAME_R31)(t0)
+	streg	%r29,(SFRAME_R29)(t0)
 
 #define	SWITCHFRAME_RESTORE(t0)					\
 	ldreg	%r10,(SFRAME_USER_SR)(t0);	/* USER_SR */	\
@@ -131,148 +136,52 @@
 	ldreg	%r26,(SFRAME_R26)(t0);				\
 	ldreg	%r27,(SFRAME_R27)(t0);				\
 	ldreg	%r28,(SFRAME_R28)(t0);				\
-	ldreg	%r29,(SFRAME_R29)(t0);				\
-	ldreg	%r30,(SFRAME_R30)(t0);				\
-	ldreg	%r31,(SFRAME_R31)(t0)
+	ldreg	%r29,(SFRAME_R29)(t0)
 
 	.data
 GLOBAL(powersave)
 	.long	-1
 
-	.rodata
-.Lqspanic:
-	.string	"cpu_switch: queue %d [%08x] is empty!" 
-.Lcurpcbpanic:
-	.string "cpu_switch: curpcb is null!"
-
 	.text
 	.align 2
 /*
- * No lwps are runnable, so loop waiting for one.
- * Separate label here for accounting purposes.
- * When we get here, interrupts are off (MSR[EE]=0), sched_lock is held,
- * spl is IPL_SCHED, and %r31 is a scratch register.
+ * struct lwp *
+ * cpu_switchto(struct lwp *current, struct lwp *new)
+ * switch to the indicated new LWP.
+ * 	r3 - current LWP (maybe NULL, if so don't save state)
+ * 	r4 - LWP to switch to
+ *	scheduler lock held
+ *	SPL is IPL_SCHED.
  */
-ASENTRY(Idle)
-	lis	%r8,_C_LABEL(sched_whichqs)@ha
-	ldint	%r9,_C_LABEL(sched_whichqs)@l(%r8)
-
-	or.	%r9,%r9,%r9
-	bne+	.Lsw1			/* at least one queue non-empty */
-
-	bl	_C_LABEL(sched_unlock_idle)
-
-	/*
-	 * Re-enable interrupts before lowering IPL so we won't
-	 * block them when we shouldn't.
-	 */
-#if defined(PPC_IBM4XX)
-	wrteei	1			/* reenable ints again */
-#else /* PPC_OEA */
-	mfmsr	%r4
-	ori	%r4,%r4,PSL_EE@l	/* reenable ints again */
-	mtmsr	%r4
-	isync
-#endif
-
-	li	%r3,0			/* go IPL_SCHED to IPL_NONE */
-	bl	_C_LABEL(lcsplx)
-	mr	%r31,%r3		/* save returned IPL mask */
-
-/*
- * At this point, other routines can be called (such as uvm_pageidlezero).
- */
-
-	GET_CPUINFO(%r8)
-	ldptr	%r9,CI_IDLESPIN(%r8)
-	mtctr	%r9
-	bctrl
-
-#if defined(PPC_IBM4XX)
-	wrteei	0			/* disable interrupts while
-					   manipulating runque */
-#else /* PPC_OEA */
-	mfmsr	%r4
-	andi.	%r4,%r4,~PSL_EE@l	/* disable interrupts while
-					   manipulating runque */
-	mtmsr	%r4
-#endif
-
-	mr	%r3,%r31		/* get back IPL mask */
-	bl	_C_LABEL(lcsplx)	/* raise spl back to IPL_SCHED */
-
-	bl	_C_LABEL(sched_lock_idle)
-	b	_ASM_LABEL(Idle)
-
-/*
- * switch_exit(struct lwp *l, void (*exit)(struct lwp *))
- * switch_exit gets called from cpu_exit to complete the exit procedure.
- * spl is IPL_SCHED.
- */
-ENTRY(switch_exit)
-/* First switch to the idle pcb/kernel stack */
-	GET_CPUINFO(%r7)
-	ldptr	%r6,CI_IDLE_PCB(%r7)
-	stptr	%r6,CI_CURPCB(%r7)
-
-	/*
-	 * Adjust the stack to provide space for the callee to save LR.
-	 */
-	addi	%r1,%r6,USPACE-CALLFRAMELEN
-	/*
-	 * Schedule the vmspace and stack to be freed (the lwp arg is
-	 * already in r3).  Function to call is in r4.
-	 */
-	mtctr	%r4
-	bctrl
-
-	bl	_C_LABEL(sched_lock_idle)
-
-/* Fall through to cpu_switch to actually select another lwp */
-	li	%r3,0			/* indicate exited lwp */
-
-/*
- * void cpu_switch(struct lwp *l)
- *	r3 = new lwp
- *	scheduler lock is held
- *	spl is IPL_SCHED
- * Find a runnable lwp and switch to it.
- */
-ENTRY_NOPROFILE(cpu_switch)
+ENTRY(cpu_switchto)
 	mflr	%r0			/* save lr */
 	streg	%r0,CFRAME_LR(%r1)
 	stptru	%r1,-CALLFRAMELEN(%r1)
-	streg	%r30,CFRAME_R30(%r1)
 	streg	%r31,CFRAME_R31(%r1)
+	streg	%r30,CFRAME_R30(%r1)
+	mr	%r30,%r3		/* r30 = curlwp */
+	mr	%r31,%r4		/* r31 = newlwp */
 
-	mr	%r30,%r3
-	GET_CPUINFO(%r7)
-#if defined(MULTIPROCESSOR)
-	/* Switch to the idle PCB unless we're already running on it. */
-	cmpwi	%r30,0			/* old lwp was exiting? */
-	beq	1f
+	/* 
+	 * If the oldlwp was null, don't bother saving the switch state.
+	 */
+	cmpwi	%r30,0
+	beq	switchto_restore
 
-#if defined(PPC_OEA) || defined(PPC_OEA64_BRIDGE)
+#if defined(PPC_OEA)  || defined (PPC_OEA64_BRIDGE)
 	mfsr	%r10,USER_SR		/* save USER_SR for copyin/copyout */
 #else
-	li	%r10,0			/* no USER_SR needed */
+	li	%r10,0			/* USER_SR not needed */
 #endif
 	mfcr	%r11			/* save cr */
 	mr	%r12,%r2		/* save r2 */
 	CFRAME_LRSAVE(%r1)
 	stptru	%r1,-SFRAMELEN(%r1)	/* still running on old stack */
 	SWITCHFRAME_SAVE(%r1)		/* save USER_SR, CR, R2, non-volatile */
-	ldptr	%r3,L_ADDR(%r30)	/* get PCB address */
-	streg	%r1,PCB_SP(%r3)		/* save SP */
+	ldptr	%r4,L_ADDR(%r30)	/* put PCB addr in r4 */
+	streg	%r1,PCB_SP(%r4)		/* store old lwp's SP */
 
-	ldptr	%r6,CI_IDLE_PCB(%r7)
-	addi	%r1,%r6,USPACE-CALLFRAMELEN /* callframe rsvd at stack top */
-
-1:
-#endif
-	li	%r0,0
-	streg	%r0,CI_CURLWP(%r7)	/* Zero to not accumulate cpu time */
-
+switchto_restore:
 /* Lock the scheduler. */
 #if defined(PPC_IBM4XX)
 	wrteei	0			/* disable interrupts while
@@ -285,49 +194,6 @@ ENTRY_NOPROFILE(cpu_switch)
 	isync
 #endif
 
-/* Find a new lwp */
-	lis	%r8,_C_LABEL(sched_whichqs)@ha
-	ldint	%r9,_C_LABEL(sched_whichqs)@l(%r8)
-
-	or.	%r9,%r9,%r9
-	beq-	_ASM_LABEL(Idle)	/* all queues empty */
-	/*
-	 * Idle returns here.
-	 * r9 = current value of sched_whichqs
-	 * scheduler lock is held
-	 * spl is IPL_SCHED
-	 * MSR[EE] == 0 (interrupts are off)
-	 */
-.Lsw1:
-	cntlzw	%r10,%r9
-	lis	%r4,_C_LABEL(sched_qs)@ha
-	addi	%r4,%r4,_C_LABEL(sched_qs)@l
-	slwi	%r3,%r10,3
-	add	%r3,%r3,%r4		/* select queue */
-
-	ldptr	%r31,L_FORW(%r3)	/* get first lwp from queue */
-	cmplw	%r31,%r3		/* empty queue? */
-	bne+	1f			/*     nope.  skip panic */
-	mr	%r5,%r9			/* save sched_whichqs value */
-	mr	%r4,%r10		/* save the bit # */
-	lis	%r8,.Lqspanic@ha	/* get panic string (HI) */
-	addi	%r3,%r8,.Lqspanic@l	/* get panic string (LO) */
-	bl	_C_LABEL(panic)		/* now panic */
-1:
-					/* unlink first lwp from queue */
-	ldptr	%r4,L_FORW(%r31)	/* next = l->l_forw */
-	streg	%r4,L_FORW(%r3)		/* qh->qh_flink = next; */
-	streg	%r3,L_BACK(%r4)		/* next->l_back = qh */
-
-	cmpl	%cr0,%r3,%r4		/* queue empty? */
-	bne	1f
-
-	lis	%r3,0x80000000@h
-	srw	%r3,%r3,%r10
-	andc	%r9,%r9,%r3
-	stint	%r9,_C_LABEL(sched_whichqs)@l(%r8) /* mark it empty */
-
-switch_common:
 	/*
 	 * r31 = lwp now running on this cpu
 	 * r30 = previous lwp (maybe be NULL)
@@ -335,78 +201,26 @@ switch_common:
 	 * spl is IPL_SCHED.
 	 * MSR[EE] == 0 (interrupts are off)
 	 */
-1:
-	/* just did this resched thing */
-	li	%r3,0
+
 	GET_CPUINFO(%r7)
-	stint	%r3,CI_WANT_RESCHED(%r7)
-	streg	%r3,L_BACK(%r31)	/* probably superfluous */
-
-#ifdef MULTIPROCESSOR
-	streg	%r7,L_CPU(%r31)		/* l->l_cpu = curcpu() */
-#endif
-
-	/* lwp now running on a processor. */
-	li	%r3,LSONPROC		/* l->l_stat = LSONPROC */
-	stint	%r3,L_STAT(%r31)
-
-	/* record new lwp */
 	stptr	%r31,CI_CURLWP(%r7)
 	ldptr	%r4,L_ADDR(%r31)	/* put PCB addr in r4 */
-	stptr	%r4,CI_CURPCB(%r7)	/* indicate new pcb */
-	ldptr	%r3,PCB_PM(%r4)		/* save pmap pointer */
-	stptru	%r3,CI_CURPM(%r7)
-#if 0
-	li	%r3,CI_CURPCB
-#if defined(PPC_OEA64) || defined(PPC_OEA64_BRIDGE)
-	stdcx.	%r4,%r3,%r7		/* clear possible reservation */
-#else
-	stwcx.	%r4,%r3,%r7		/* clear possible reservation */
-#endif
-	isync
-#endif
+	stptr	%r4,CI_CURPCB(%r7)	/* using a new pcb */
+	ldptr	%r3,PCB_PM(%r4)
+	stptr	%r3,CI_CURPM(%r7)	/* and maybe a new pmap */
 
-
-#if !defined(MULTIPROCESSOR)		/* XXX */
-	li	%r3,0			/* if it is the same lwp, return 0 */
-	cmpl	%cr0,%r31,%r30		/* is it the same lwp? */
-	beq	switch_return
-
-	or.	%r30,%r30,%r30		/* old lwp was exiting? */
-	beq	switch_exited
-
-#if defined(PPC_OEA)  || defined (PPC_OEA64_BRIDGE)
-	mfsr	%r10,USER_SR		/* save USER_SR for copyin/copyout */
-#else /* PPC_OEA */
-	li	%r10,0			/* no SR needed */
-#endif
-	mfcr	%r11			/* save cr */
-	mr	%r12,%r2		/* save r2 */
-	CFRAME_LRSAVE(%r1)
-	stptru	%r1,-SFRAMELEN(%r1)	/* still running on old stack */
-	SWITCHFRAME_SAVE(%r1)		/* save USER_SR, CR, R2, non-volatile */
-	ldptr	%r3,L_ADDR(%r30)
-	streg	%r1,PCB_SP(%r3)		/* save SP */
-
-
-switch_exited:
-#endif
-
+	/*
+	 * Now restore the register state.
+	 */
 	ldreg	%r1,PCB_SP(%r4)		/* get new lwp's SP */
 	SWITCHFRAME_RESTORE(%r1)	/* get non-volatile, CR, R2, USER_SR */
 	ldreg	%r1,0(%r1)		/* get saved SP */
 	mr	%r2,%r12		/* get saved r2 */
 	mtcr	%r11			/* get saved cr */
-	isync
 #if defined(PPC_OEA)  || defined (PPC_OEA64_BRIDGE)
 	mtsr	USER_SR,%r10		/* get saved USER_SR */
-	isync
 #endif
-
-	li	%r3,1			/* switched lwps */
-
-switch_return:
-	mr	%r30,%r3		/* save return value */
+	isync
 
 #if defined(PPC_IBM4XX)
 	wrteei	1			/* interrupts are okay again */
@@ -429,20 +243,14 @@ switch_return:
 1:
 #endif
 
-	bl	_C_LABEL(sched_unlock_idle)
-
-#if defined(DIAGNOSTIC)
-	GET_CPUINFO(%r3)
-	ldptr	%r0,CI_CURPCB(%r3)	/* load curcpu()->ci_curpcb */
-	or.	%r0,%r0,%r0		/* is it NULL? */
-	bne	2f			/*    nope, that's good. */
-	lis	%r3,.Lcurpcbpanic@ha	/* get panic string (HI) */
-	addi	%r3,%r3,.Lcurpcbpanic@l	/* get panic string (LO) */
-	bl	_C_LABEL(panic)
-2:
-#endif
-
-	mr	%r3,%r30		/* restore return value */
+	/*
+	 * Move back old-lwp and new-lwp to r3 and r4.  We need to return
+	 * r3.  However, lwp_startup needs r4 and we return to fork_trampoline
+	 * will directly invoke lwp_startup.  So we "waste" an instruction by
+	 * always doing it here.
+	 */
+	mr	%r3,%r30
+	mr	%r4,%r31
 
 /*
  * Note that callframe linkages are setup in cpu_lwp_fork().
@@ -460,80 +268,23 @@ ENTRY_NOPROFILE(emptyidlespin)
 	blr				/* CPUINIT needs a raw blr */
 
 /*
- * void
- * cpu_switchto(struct lwp *current, struct lwp *new)
- * Variant of cpu_switch, but instead of picking a new LWP from the run
- * queue, switch to the indicated new LWP.
- * 	r3 - current LWP
- * 	r4 - LWP to switch to
- *	scheduler lock held
- *	SPL is IPL_SCHED.
- */
-ENTRY(cpu_switchto)
-	mflr	%r0			/* save lr */
-	streg	%r0,CFRAME_LR(%r1)
-	stptru	%r1,-CALLFRAMELEN(%r1)
-	streg	%r31,CFRAME_R31(%r1)
-	streg	%r30,CFRAME_R30(%r1)
-	mr	%r30,%r3		/* r30 = curlwp */
-	mr	%r31,%r4		/* r31 = newlwp */
-
-	GET_CPUINFO(%r7)
-#if defined(MULTIPROCESSOR)
-	/* Switch to the idle PCB unless we're already running on it. */
-	cmpwi	%r30,0			/* old lwp was exiting? */
-	beq	1f
-
-#if defined(PPC_OEA)  || defined (PPC_OEA64_BRIDGE)
-	mfsr	%r10,USER_SR		/* save USER_SR for copyin/copyout */
-#else
-	li	%r10,0			/* USER_SR not needed */
-#endif
-	mfcr	%r11			/* save cr */
-	mr	%r12,%r2		/* save r2 */
-	CFRAME_LRSAVE(%r1)
-	stptru	%r1,-SFRAMELEN(%r1)	/* still running on old stack */
-	SWITCHFRAME_SAVE(%r1)		/* save USER_SR, CR, R2, non-volatile */
-	ldreg	%r3,L_ADDR(%r30)	/* get PCB */
-	streg	%r1,PCB_SP(%r3)		/* save SP */
-
-	ldreg	%r6,CI_IDLE_PCB(%r7)
-	addi	%r1,%r6,USPACE-CALLFRAMELEN /* callframe rsvd at stack top */
-
-1:
-#endif /* MULTIPROCESSOR */
-#if 0
-	li	%r0,0
-	streg	%r0,CI_CURLWP(%r7)	/* Zero to not accumulate cpu time */
-	ldreg	%r0,CI_CURPCB(%r7)
-#endif
-
-/* Lock the scheduler. */
-#if defined(PPC_IBM4XX)
-	wrteei	0			/* disable interrupts while
-					   manipulating runque */
-#else /* PPC_OEA */
-	mfmsr	%r3
-	andi.	%r3,%r3,~PSL_EE@l	/* disable interrupts while
-					   manipulating runque */
-	mtmsr	%r3
-	isync
-#endif
-
-	b	switch_common
-/* NOTREACHED */
-
-/*
  * Child comes here at the end of a fork.
  * Return to userspace via the trap return path.
  */
-	.globl	_C_LABEL(fork_trampoline)
-_C_LABEL(fork_trampoline):
+	.globl	_C_LABEL(cpu_lwp_bootstrap)
+_C_LABEL(cpu_lwp_bootstrap):
 #if defined(MULTIPROCESSOR)
+	mr	%r28,%r3
+	mr	%r29,%r4
 	bl	_C_LABEL(proc_trampoline_mp)
+	mr	%r4,%r29
+	mr	%r3,%r28
 #endif
-	li	%r3,0
-	bl	_C_LABEL(lcsplx)
+	/*
+	 * r3 (old lwp) and r4 (new lwp) are setup in cpu_switchto.
+	 */
+	bl	_C_LABEL(lwp_startup)
+
 	mtlr	%r31
 	mr	%r3,%r30
 	blrl				/* jump indirect to r31 */

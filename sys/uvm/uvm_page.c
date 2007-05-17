@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.120 2007/04/14 07:01:33 perseant Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.121 2007/05/17 14:51:43 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.120 2007/04/14 07:01:33 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.121 2007/05/17 14:51:43 yamt Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -1526,8 +1526,7 @@ uvm_page_own(struct vm_page *pg, const char *tag)
  *
  * => try to complete one color bucket at a time, to reduce our impact
  *	on the CPU cache.
- * => we loop until we either reach the target or whichqs indicates that
- *	there is a process ready to run.
+ * => we loop until we either reach the target or there is a lwp ready to run.
  */
 void
 uvm_pageidlezero(void)
@@ -1541,8 +1540,9 @@ uvm_pageidlezero(void)
 	s = uvm_lock_fpageq();
 	firstbucket = nextbucket;
 	do {
-		if (sched_whichqs != 0)
+		if (sched_curcpu_runnable_p()) {
 			goto quit;
+		}
 		if (uvmexp.zeropages >= UVM_PAGEZERO_TARGET) {
 			uvm.page_idle_zero = false;
 			goto quit;
@@ -1551,7 +1551,7 @@ uvm_pageidlezero(void)
 			pgfl = &uvm.page_free[free_list];
 			while ((pg = TAILQ_FIRST(&pgfl->pgfl_buckets[
 			    nextbucket].pgfl_queues[PGFL_UNKNOWN])) != NULL) {
-				if (sched_whichqs != 0)
+				if (sched_curcpu_runnable_p())
 					goto quit;
 
 				TAILQ_REMOVE(&pgfl->pgfl_buckets[

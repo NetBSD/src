@@ -1,4 +1,4 @@
-/*	$NetBSD: sleepq.h,v 1.6 2007/03/29 17:34:39 ad Exp $	*/
+/*	$NetBSD: sleepq.h,v 1.7 2007/05/17 14:51:43 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -64,38 +64,32 @@ typedef struct sleepq {
 	u_int			sq_waiters;	/* count of waiters */
 } sleepq_t;
 
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
+#ifdef _LP64
 typedef struct sleeptab {
-	/*
-	 * The lock must go first, as certain architectures
-	 * have strict alignment requirements; then pad out
-	 * to 1/2 a presumed cache line size of 64 bytes.
-	 * We put the queue head in the same line as the
-	 * mutex, as the queue head itself isn't very write
-	 * intensive.
-	 */
 	struct {
 		kmutex_t	st_mutex;
 		sleepq_t	st_queue __aligned(32);
 	} st_queues[SLEEPTAB_HASH_SIZE];
 } __aligned(64) sleeptab_t;
-#else	/* defined(MULTIPROCESSOR) || defined(LOCKDEBUG) */
+#else	/* _LP64 */
 typedef struct sleeptab {
-	sleepq_t		st_queues[SLEEPTAB_HASH_SIZE];
-} __aligned(64) sleeptab_t;
-#endif	/* defined(MULTIPROCESSOR) || defined(LOCKDEBUG) */
+	struct {
+		kmutex_t	st_mutex;
+		sleepq_t	st_queue;
+	} st_queues[SLEEPTAB_HASH_SIZE];
+} __aligned(32) sleeptab_t;
+#endif	/* _LP64 */
 
 void	sleepq_init(sleepq_t *, kmutex_t *);
 int	sleepq_remove(sleepq_t *, lwp_t *);
-void	sleepq_block(sleepq_t *, pri_t, wchan_t, const char *, int, bool,
-		     syncobj_t *);
+void	sleepq_enqueue(sleepq_t *, pri_t, wchan_t, const char *, syncobj_t *);
 void	sleepq_unsleep(lwp_t *);
 void	sleepq_timeout(void *);
 lwp_t	*sleepq_wake(sleepq_t *, wchan_t, u_int);
 int	sleepq_abort(kmutex_t *, int);
 void	sleepq_changepri(lwp_t *, pri_t);
 void	sleepq_lendpri(lwp_t *, pri_t);
-int	sleepq_unblock(int, bool);
+int	sleepq_block(int, bool);
 void	sleepq_insert(sleepq_t *, lwp_t *, syncobj_t *);
 
 void	sleepq_enqueue(sleepq_t *, pri_t, wchan_t, const char *, syncobj_t *);
@@ -115,7 +109,7 @@ sleepq_dontsleep(lwp_t *l)
 {
 	extern int cold;
 
-	return cold || (doing_shutdown && (panicstr || l == NULL));
+	return cold || (doing_shutdown && (panicstr || CURCPU_IDLE_P()));
 }
 
 /*
@@ -127,11 +121,7 @@ sleeptab_lookup(sleeptab_t *st, wchan_t wchan)
 {
 	sleepq_t *sq;
 
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	sq = &st->st_queues[SLEEPTAB_HASH(wchan)].st_queue;
-#else
-	sq = &st->st_queues[SLEEPTAB_HASH(wchan)];
-#endif
 	mutex_spin_enter(sq->sq_mutex);
 	return sq;
 }
@@ -143,19 +133,14 @@ sleeptab_lookup(sleeptab_t *st, wchan_t wchan)
 static inline void
 sleepq_enter(sleepq_t *sq, lwp_t *l)
 {
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	/*
 	 * Acquire the per-LWP mutex and lend it ours (the sleep queue
 	 * lock).  Once that's done we're interlocked, and so can release
 	 * the kernel lock.
-	 *
-	 * XXXSMP we need to do the lock-swap here because some broken
-	 * code (selwakeup()?) uses setrunnable() to synchronise.
 	 */
 	lwp_lock(l);
 	lwp_unlock_to(l, sq->sq_mutex);
 	KERNEL_UNLOCK_ALL(l, &l->l_biglocks);
-#endif
 }
 
 static inline void
@@ -169,19 +154,6 @@ sleepq_unlock(sleepq_t *sq)
 {
 	mutex_spin_exit(sq->sq_mutex);
 }
-
-/*
- * Lock and unlock an LWP while holding the sleep queue lock.
- *
- * XXX Ugly.
- */
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
-#define	sleepq_lwp_lock(l)	lwp_lock(l)
-#define	sleepq_lwp_unlock(l)	lwp_unlock(l)
-#else
-#define	sleepq_lwp_lock(l)	/* nothing */
-#define	sleepq_lwp_unlock(l)	/* nothing */
-#endif
 
 /*
  * Turnstiles, specialized sleep queues for use by kernel locks.
@@ -199,19 +171,10 @@ typedef struct turnstile {
 	SLIST_ENTRY(turnstile)	ts_pichain;
 } turnstile_t;
 
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 typedef struct tschain {
-	kmutex_t		*tc_mutex;	/* mutex on structs & queues */
-	LIST_HEAD(, turnstile)	tc_chain;	/* turnstile chain */
-	kmutex_t		tc_mutexstore __aligned(32);
-} __aligned(64) tschain_t;
-#else
-/* Try to align the chain to 1/2 a presumed cache line of 64 bytes. */
-typedef struct tschain {
-	kmutex_t		*tc_mutex;	/* mutex on structs & queues */
+	kmutex_t		tc_mutex;	/* mutex on structs & queues */
 	LIST_HEAD(, turnstile)	tc_chain;	/* turnstile chain */
 } __aligned(32) tschain_t;
-#endif
 
 #define	TS_READER_Q	0		/* reader sleep queue */
 #define	TS_WRITER_Q	1		/* writer sleep queue */
@@ -233,13 +196,6 @@ void	turnstile_exit(wchan_t);
 void	turnstile_block(turnstile_t *, int, wchan_t, syncobj_t *);
 void	turnstile_wakeup(turnstile_t *, int, int, lwp_t *);
 void	turnstile_print(volatile void *, void (*)(const char *, ...));
-
-static inline void
-turnstile_unblock(void)
-{
-	(void)sleepq_unblock(0, 0);
-}
-
 void	turnstile_unsleep(lwp_t *);
 void	turnstile_changepri(lwp_t *, pri_t);
 
