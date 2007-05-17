@@ -1,4 +1,4 @@
-/*	$NetBSD: irp_nw.c,v 1.1.1.3 2005/12/21 23:15:32 christos Exp $	*/
+/*	$NetBSD: irp_nw.c,v 1.1.1.3.4.1 2007/05/17 00:39:54 jdc Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -18,7 +18,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "Id: irp_nw.c,v 1.1.206.1 2004/03/09 08:33:37 marka Exp";
+static const char rcsid[] = "Id: irp_nw.c,v 1.2.18.2 2006/03/10 00:20:08 marka Exp";
 #endif /* LIBC_SCCS and not lint */
 
 #if 0
@@ -81,9 +81,7 @@ static void		free_nw(struct nwent *nw);
 
 /* Public */
 
-
-
-/*
+/*%
  * struct irs_nw * irs_irp_nw(struct irs_acc *this) 
  *
  */
@@ -119,9 +117,7 @@ irs_irp_nw(struct irs_acc *this) {
 
 /* Methods */
 
-
-
-/*
+/*%
  * void nw_close(struct irs_nw *this) 
  *
  */
@@ -138,10 +134,7 @@ nw_close(struct irs_nw *this) {
 	memput(this, sizeof *this);
 }
 
-
-
-
-/*
+/*%
  * struct nwent * nw_byaddr(struct irs_nw *this, void *net, 
  * 				int length, int type) 
  *
@@ -154,7 +147,7 @@ nw_byaddr(struct irs_nw *this, void *net, int length, int type) {
 	char *body = NULL;
 	size_t bodylen;
 	int code;
-	char paddr[24];			/* bigenough for ip4 w/ cidr spec. */
+	char paddr[24];			/*%< bigenough for ip4 w/ cidr spec. */
 	char text[256];
 
 	if (inet_net_ntop(type, net, length, paddr, sizeof paddr) == NULL) {
@@ -191,10 +184,7 @@ nw_byaddr(struct irs_nw *this, void *net, int length, int type) {
 	return (nw);
 }
 
-
-
-
-/*
+/*%
  * struct nwent * nw_byname(struct irs_nw *this, const char *name, int type) 
  *
  */
@@ -243,10 +233,7 @@ nw_byname(struct irs_nw *this, const char *name, int type) {
 	return (nw);
 }
 
-
-
-
-/*
+/*%
  * void nw_rewind(struct irs_nw *this) 
  *
  */
@@ -275,16 +262,7 @@ nw_rewind(struct irs_nw *this) {
 	return;
 }
 
-
-
-
-
-
-/*
- * struct nwent * nw_next(struct irs_nw *this) 
- *
- * Notes:
- * 	
+/*%
  * 	Prepares the cache if necessary and returns the first, or 
  * 	next item from it.
  */
@@ -321,15 +299,12 @@ nw_next(struct irs_nw *this) {
 		nw = NULL;
 	}
 
+	if (body != NULL)
+		memput(body, bodylen);
 	return (nw);
 }
 
-
-
-
-
-
-/*
+/*%
  * void nw_minimize(struct irs_nw *this) 
  *
  */
@@ -346,11 +321,7 @@ nw_minimize(struct irs_nw *this) {
 
 /* private. */
 
-
-
-/*
- * static void free_passwd(struct passwd *pw);
- *
+/*%
  *	deallocate all the memory irp_unmarshall_pw allocated.
  *
  */
@@ -375,3 +346,5 @@ free_nw(struct nwent *nw) {
 	if (nw->n_addr != NULL)
 		free(nw->n_addr);
 }
+
+/*! \file */

@@ -1,7 +1,7 @@
-/*	$NetBSD: file.c,v 1.1.1.3 2005/12/21 23:17:32 christos Exp $	*/
+/*	$NetBSD: file.c,v 1.1.1.3.4.1 2007/05/17 00:42:47 jdc Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -50,7 +50,9 @@
  * SUCH DAMAGE.
  */
 
-/* Id: file.c,v 1.38.12.8 2004/03/16 05:50:25 marka Exp */
+/* Id: file.c,v 1.47.18.2 2005/04/29 00:17:07 marka Exp */
+
+/*! \file */
 
 #include <config.h>
 
@@ -156,7 +158,7 @@ isc_file_settime(const char *file, isc_time_t *time) {
 }
 
 #undef TEMPLATE
-#define TEMPLATE "tmp-XXXXXXXXXX" /* 14 characters. */
+#define TEMPLATE "tmp-XXXXXXXXXX" /*%< 14 characters. */
 
 isc_result_t
 isc_file_mktemplate(const char *path, char *buf, size_t buflen) {

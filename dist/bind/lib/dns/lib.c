@@ -1,7 +1,7 @@
-/*	$NetBSD: lib.c,v 1.1.1.3 2005/12/21 23:16:13 christos Exp $	*/
+/*	$NetBSD: lib.c,v 1.1.1.3.4.1 2007/05/17 00:40:37 jdc Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,7 +17,9 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: lib.c,v 1.9.12.3 2004/03/08 09:04:30 marka Exp */
+/* Id: lib.c,v 1.11.18.3 2005/08/15 01:46:50 marka Exp */
+
+/*! \file */
 
 #include <config.h>
 
@@ -33,6 +35,7 @@
  *** Globals
  ***/
 
+LIBDNS_EXTERNAL_DATA unsigned int			dns_pps = 0U;
 LIBDNS_EXTERNAL_DATA isc_msgcat_t *			dns_msgcat = NULL;
 
 

@@ -1,7 +1,7 @@
-/*	$NetBSD: lwdgrbn.c,v 1.1.1.3 2005/12/21 23:07:57 christos Exp $	*/
+/*	$NetBSD: lwdgrbn.c,v 1.1.1.3.4.1 2007/05/17 00:35:10 jdc Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,7 +17,9 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: lwdgrbn.c,v 1.11.208.3 2004/03/08 04:04:19 marka Exp */
+/* Id: lwdgrbn.c,v 1.13.18.5 2006/12/07 23:57:58 marka Exp */
+
+/*! \file */
 
 #include <config.h>
 
@@ -185,8 +187,6 @@ iterate_node(lwres_grbnresponse_t *grbn, dns_db_t *db, dns_dbnode_t *node,
 		isc_mem_put(mctx, oldlens, oldsize * sizeof(*oldlens));
 	if (newrdatas != NULL)
 		isc_mem_put(mctx, newrdatas, used * sizeof(*oldrdatas));
-	if (newlens != NULL)
-		isc_mem_put(mctx, newlens, used * sizeof(*oldlens));
 	return (result);
 }
 
@@ -360,7 +360,7 @@ lookup_done(isc_task_t *task, isc_event_t *event) {
 	client->sendlength = r.length;
 	result = ns_lwdclient_sendreply(client, &r);
 	if (result != ISC_R_SUCCESS)
-		goto out;
+		goto out2;
 
 	NS_LWDCLIENT_SETSEND(client);
 
@@ -380,7 +380,7 @@ lookup_done(isc_task_t *task, isc_event_t *event) {
 	if (grbn->siglen != NULL)
 		isc_mem_put(cm->mctx, grbn->siglen,
 			    grbn->nsigs * sizeof(lwres_uint16_t));
-
+ out2:
 	if (client->lookup != NULL)
 		dns_lookup_destroy(&client->lookup);
 	if (lwb.base != NULL)

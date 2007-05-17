@@ -1,7 +1,7 @@
-/*	$NetBSD: random.h,v 1.1.1.3 2005/12/21 23:17:28 christos Exp $	*/
+/*	$NetBSD: random.h,v 1.1.1.3.4.1 2007/05/17 00:42:34 jdc Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: random.h,v 1.11.206.1 2004/03/06 08:14:46 marka Exp */
+/* Id: random.h,v 1.12.18.2 2005/04/29 00:17:01 marka Exp */
 
 #ifndef ISC_RANDOM_H
 #define ISC_RANDOM_H 1
@@ -25,9 +25,11 @@
 #include <isc/lang.h>
 #include <isc/types.h>
 
-/*
- * Implements a random state pool which will let the caller return a
- * series of possibly non-reproducable random values.  Note that the
+/*! \file
+ * \brief Implements a random state pool which will let the caller return a
+ * series of possibly non-reproducable random values.  
+ *
+ * Note that the
  * strength of these numbers is not all that high, and should not be
  * used in cryptography functions.  It is useful for jittering values
  * a bit here and there, such as timeouts, etc.
@@ -37,13 +39,13 @@ ISC_LANG_BEGINDECLS
 
 void
 isc_random_seed(isc_uint32_t seed);
-/*
+/*%<
  * Set the initial seed of the random state.
  */
 
 void
 isc_random_get(isc_uint32_t *val);
-/*
+/*%<
  * Get a random value.
  *
  * Requires:
@@ -52,7 +54,7 @@ isc_random_get(isc_uint32_t *val);
 
 isc_uint32_t
 isc_random_jitter(isc_uint32_t max, isc_uint32_t jitter);
-/*
+/*%<
  * Get a random value between (max - jitter) and (max).
  * This is useful for jittering timer values.
  */

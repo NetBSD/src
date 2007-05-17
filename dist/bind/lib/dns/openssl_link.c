@@ -1,7 +1,7 @@
-/*	$NetBSD: openssl_link.c,v 1.1.1.1 2005/12/21 23:16:09 christos Exp $	*/
+/*	$NetBSD: openssl_link.c,v 1.1.1.1.6.1 2007/05/17 00:40:40 jdc Exp $	*/
 
 /*
- * Portions Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 1999-2003  Internet Software Consortium.
  * Portions Copyright (C) 1995-2000 by Network Associates, Inc.
  *
@@ -20,7 +20,7 @@
 
 /*
  * Principal Author: Brian Wellington
- * Id: openssl_link.c,v 1.1.4.1 2004/12/09 04:07:18 marka Exp
+ * Id: openssl_link.c,v 1.1.6.9 2006/05/23 23:51:04 marka Exp
  */
 #ifdef OPENSSL
 
@@ -39,9 +39,11 @@
 
 #include <openssl/err.h>
 #include <openssl/rand.h>
+#include <openssl/evp.h>
+#include <openssl/conf.h>
 #include <openssl/crypto.h>
 
-#if defined(CRYPTO_LOCK_ENGINE) && (OPENSSL_VERSION_NUMBER < 0x00907000L)
+#if defined(CRYPTO_LOCK_ENGINE) && (OPENSSL_VERSION_NUMBER != 0x00907000L)
 #define USE_ENGINE 1
 #endif
 
@@ -134,6 +136,11 @@ isc_result_t
 dst__openssl_init() {
 	isc_result_t result;
 
+#ifdef  DNS_CRYPTO_LEAKS
+	CRYPTO_malloc_debug_init();
+	CRYPTO_set_mem_debug_options(V_CRYPTO_MDEBUG_ALL);
+	CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
+#endif
 	CRYPTO_set_mem_functions(mem_alloc, mem_realloc, mem_free);
 	nlocks = CRYPTO_num_locks();
 	locks = mem_alloc(sizeof(isc_mutex_t) * nlocks);
@@ -162,7 +169,7 @@ dst__openssl_init() {
 		goto cleanup_rm;
 	}
 	ENGINE_set_RAND(e, rm);
-	RAND_set_rand_method(e);
+	RAND_set_rand_method(rm);
 #else
 	RAND_set_rand_method(rm);
 #endif
@@ -181,6 +188,33 @@ dst__openssl_init() {
 
 void
 dst__openssl_destroy() {
+
+	/*
+	 * Sequence taken from apps_shutdown() in <apps/apps.h>.
+	 */
+#if (OPENSSL_VERSION_NUMBER >= 0x00907000L)
+	CONF_modules_unload(1);
+#endif
+	EVP_cleanup();
+#if defined(USE_ENGINE) && OPENSSL_VERSION_NUMBER >= 0x00907000L
+	ENGINE_cleanup();
+#endif
+#if (OPENSSL_VERSION_NUMBER >= 0x00907000L)
+	CRYPTO_cleanup_all_ex_data();
+#endif
+	ERR_clear_error();
+	ERR_free_strings();
+	ERR_remove_state(0);
+
+#ifdef  DNS_CRYPTO_LEAKS
+	CRYPTO_mem_leaks_fp(stderr);
+#endif
+
+#if 0
+	/*
+	 * The old error sequence that leaked.  Remove for 9.4.1 if
+	 * there are no issues by then.
+	 */
 	ERR_clear_error();
 #ifdef USE_ENGINE
 	if (e != NULL) {
@@ -188,12 +222,17 @@ dst__openssl_destroy() {
 		e = NULL;
 	}
 #endif
+#endif
 	if (locks != NULL) {
 		DESTROYMUTEXBLOCK(locks, nlocks);
 		mem_free(locks);
 	}
-	if (rm != NULL)
+	if (rm != NULL) {
+#if OPENSSL_VERSION_NUMBER >= 0x00907000L
+		RAND_cleanup();
+#endif
 		mem_free(rm);
+	}
 }
 
 isc_result_t
@@ -219,3 +258,4 @@ dst__openssl_toresult(isc_result_t fallback) {
 EMPTY_TRANSLATION_UNIT
 
 #endif /* OPENSSL */
+/*! \file */

@@ -1,7 +1,7 @@
-/*	$NetBSD: netscope.c,v 1.1.1.1 2004/05/17 23:45:02 christos Exp $	*/
+/*	$NetBSD: netscope.c,v 1.1.1.1.10.1 2007/05/17 00:41:48 jdc Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,10 +17,14 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
+/*! \file */
+
 #if defined(LIBC_SCCS) && !defined(lint)
 static char rcsid[] =
-	"Id: netscope.c,v 1.5.142.7 2004/03/12 10:31:26 marka Exp";
+	"Id: netscope.c,v 1.7.18.4 2006/08/25 05:25:51 marka Exp";
 #endif /* LIBC_SCCS and not lint */
+
+#include <config.h>
 
 #include <isc/string.h>
 #include <isc/net.h>

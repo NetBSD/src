@@ -1,7 +1,7 @@
-/*	$NetBSD: sortlist.h,v 1.1.1.3 2005/12/21 23:08:10 christos Exp $	*/
+/*	$NetBSD: sortlist.h,v 1.1.1.3.4.1 2007/05/17 00:35:20 jdc Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,22 +17,24 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: sortlist.h,v 1.4.208.1 2004/03/06 10:21:26 marka Exp */
+/* Id: sortlist.h,v 1.5.18.4 2006/03/02 00:37:21 marka Exp */
 
 #ifndef NAMED_SORTLIST_H
 #define NAMED_SORTLIST_H 1
+
+/*! \file */
 
 #include <isc/types.h>
 
 #include <dns/types.h>
 
-/*
+/*%
  * Type for callback functions that rank addresses.
  */
 typedef int 
-(*dns_addressorderfunc_t)(isc_netaddr_t *address, void *arg);
+(*dns_addressorderfunc_t)(const isc_netaddr_t *address, const void *arg);
 
-/*
+/*%
  * Return value type for setup_sortlist.
  */
 typedef enum {
@@ -42,8 +44,9 @@ typedef enum {
 } ns_sortlisttype_t;
 
 ns_sortlisttype_t
-ns_sortlist_setup(dns_acl_t *acl, isc_netaddr_t *clientaddr, void **argp);
-/*
+ns_sortlist_setup(dns_acl_t *acl, isc_netaddr_t *clientaddr,
+		  const void **argp);
+/*%<
  * Find the sortlist statement in 'acl' that applies to 'clientaddr', if any.
  *
  * If a 1-element sortlist item applies, return NS_SORTLISTTYPE_1ELEMENT and
@@ -57,15 +60,15 @@ ns_sortlist_setup(dns_acl_t *acl, isc_netaddr_t *clientaddr, void **argp);
  */
 
 int
-ns_sortlist_addrorder1(isc_netaddr_t *addr, void *arg);
-/*
+ns_sortlist_addrorder1(const isc_netaddr_t *addr, const void *arg);
+/*%<
  * Find the sort order of 'addr' in 'arg', the matching element
  * of a 1-element top-level sortlist statement.
  */
 
 int
-ns_sortlist_addrorder2(isc_netaddr_t *addr, void *arg);
-/*
+ns_sortlist_addrorder2(const isc_netaddr_t *addr, const void *arg);
+/*%<
  * Find the sort order of 'addr' in 'arg', a topology-like
  * ACL forming the second element in a 2-element top-level
  * sortlist statement.
@@ -74,8 +77,8 @@ ns_sortlist_addrorder2(isc_netaddr_t *addr, void *arg);
 void
 ns_sortlist_byaddrsetup(dns_acl_t *sortlist_acl, isc_netaddr_t *client_addr,
 			dns_addressorderfunc_t *orderp,
-			void **argp);
-/*
+			const void **argp);
+/*%<
  * Find the sortlist statement in 'acl' that applies to 'clientaddr', if any.
  * If a sortlist statement applies, return in '*orderp' a pointer to a function
  * for ranking network addresses based on that sortlist statement, and in

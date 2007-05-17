@@ -1,7 +1,7 @@
-/*	$NetBSD: types.h,v 1.1.1.3 2005/12/21 23:08:11 christos Exp $	*/
+/*	$NetBSD: types.h,v 1.1.1.3.4.1 2007/05/17 00:35:21 jdc Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,10 +17,12 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: types.h,v 1.19.208.2 2004/03/06 10:21:26 marka Exp */
+/* Id: types.h,v 1.21.18.2 2005/04/29 00:15:38 marka Exp */
 
 #ifndef NAMED_TYPES_H
 #define NAMED_TYPES_H 1
+
+/*! \file */
 
 #include <dns/types.h>
 

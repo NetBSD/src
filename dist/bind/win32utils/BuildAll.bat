@@ -30,6 +30,10 @@ rem a future release of BIND 9 for Windows NT/2000/XP.
 
 echo Setting up the BIND files required for the build
 
+rem Get and update for the latest build of the openssl library
+perl updateopenssl.pl
+
+rem Setup the files
 call BuildSetup.bat
 
 echo Build all of the Library files
@@ -100,6 +104,7 @@ cd ..\..
 cd check\win32
 nmake /nologo -f namedcheckconf.mak CFG="namedcheckconf - Win32 Release"  NO_EXTERNAL_DEPS="1"
 nmake /nologo -f namedcheckzone.mak CFG="namedcheckzone - Win32 Release"  NO_EXTERNAL_DEPS="1"
+copy /Y ..\..\..\Build\Release\named-checkzone.exe ..\..\..\Build\Release\named-compilezone.exe
 copy ..\*.html ..\..\..\Build\Release
 cd ..\..
 

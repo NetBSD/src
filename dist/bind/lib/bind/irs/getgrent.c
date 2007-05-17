@@ -1,4 +1,4 @@
-/*	$NetBSD: getgrent.c,v 1.1.1.3 2005/12/21 23:15:28 christos Exp $	*/
+/*	$NetBSD: getgrent.c,v 1.1.1.3.4.1 2007/05/17 00:39:48 jdc Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -18,7 +18,7 @@
  */
 
 #if !defined(LINT) && !defined(CODECENTER)
-static const char rcsid[] = "Id: getgrent.c,v 1.3.206.1 2004/03/09 08:33:35 marka Exp";
+static const char rcsid[] = "Id: getgrent.c,v 1.4.18.1 2005/04/27 05:00:57 sra Exp";
 #endif
 
 /* Imports */
@@ -223,3 +223,4 @@ init() {
 }
 
 #endif /* WANT_IRS_GR */
+/*! \file */

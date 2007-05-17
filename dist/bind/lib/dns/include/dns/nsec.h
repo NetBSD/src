@@ -1,7 +1,7 @@
-/*	$NetBSD: nsec.h,v 1.1.1.1 2004/05/17 23:44:58 christos Exp $	*/
+/*	$NetBSD: nsec.h,v 1.1.1.1.10.1 2007/05/17 00:40:59 jdc Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,10 +17,12 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: nsec.h,v 1.4.2.1 2004/03/08 02:08:00 marka Exp */
+/* Id: nsec.h,v 1.4.20.2 2005/04/29 00:16:16 marka Exp */
 
 #ifndef DNS_NSEC_H
 #define DNS_NSEC_H 1
+
+/*! \file */
 
 #include <isc/lang.h>
 
@@ -35,33 +37,33 @@ isc_result_t
 dns_nsec_buildrdata(dns_db_t *db, dns_dbversion_t *version,
 		    dns_dbnode_t *node, dns_name_t *target,
 		    unsigned char *buffer, dns_rdata_t *rdata);
-/*
+/*%<
  * Build the rdata of a NSEC record.
  *
  * Requires:
- *	buffer	Points to a temporary buffer of at least
+ *\li	buffer	Points to a temporary buffer of at least
  * 		DNS_NSEC_BUFFERSIZE bytes.
- *	rdata	Points to an initialized dns_rdata_t.
+ *\li	rdata	Points to an initialized dns_rdata_t.
  *
  * Ensures:
- *      *rdata	Contains a valid NSEC rdata.  The 'data' member refers
+ *  \li    *rdata	Contains a valid NSEC rdata.  The 'data' member refers
  *		to 'buffer'.
  */
 
 isc_result_t
 dns_nsec_build(dns_db_t *db, dns_dbversion_t *version, dns_dbnode_t *node,
 	       dns_name_t *target, dns_ttl_t ttl);
-/*
+/*%<
  * Build a NSEC record and add it to a database.
  */
 
 isc_boolean_t
 dns_nsec_typepresent(dns_rdata_t *nsec, dns_rdatatype_t type);
-/*
+/*%<
  * Determine if a type is marked as present in an NSEC record.
  *
  * Requires:
- *	'nsec' points to a valid rdataset of type NSEC
+ *\li	'nsec' points to a valid rdataset of type NSEC
  */
 
 ISC_LANG_ENDDECLS

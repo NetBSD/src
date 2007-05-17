@@ -1,7 +1,7 @@
-/*	$NetBSD: ccmsg.c,v 1.1.1.3 2005/12/21 23:17:51 christos Exp $	*/
+/*	$NetBSD: ccmsg.c,v 1.1.1.3.4.1 2007/05/17 00:43:08 jdc Exp $	*/
 
 /*
- * Portions Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 2001  Internet Software Consortium.
  * Portions Copyright (C) 2001  Nominum, Inc.
  *
@@ -18,7 +18,9 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: ccmsg.c,v 1.4.206.1 2004/03/06 08:15:19 marka Exp */
+/* Id: ccmsg.c,v 1.5.18.2 2005/04/29 00:17:11 marka Exp */
+
+/*! \file */
 
 #include <config.h>
 

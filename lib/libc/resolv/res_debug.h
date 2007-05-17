@@ -1,4 +1,4 @@
-/*	$NetBSD: res_debug.h,v 1.1.1.1 2004/05/20 17:18:55 christos Exp $	*/
+/*	$NetBSD: res_debug.h,v 1.1.1.1.10.1 2007/05/17 00:43:52 jdc Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -34,3 +34,4 @@
 #endif
 
 #endif /* _RES_DEBUG_H_ */ 
+/*! \file */

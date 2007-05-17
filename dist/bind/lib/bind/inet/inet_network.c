@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_network.c,v 1.1.1.3 2005/12/21 23:15:38 christos Exp $	*/
+/*	$NetBSD: inet_network.c,v 1.1.1.3.4.1 2007/05/17 00:39:40 jdc Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -46,7 +46,7 @@ static const char sccsid[] = "@(#)inet_network.c	8.1 (Berkeley) 6/4/93";
 
 #include "port_after.h"
 
-/*
+/*%
  * Internet network address interpretation routine.
  * The library routines call this routine to interpret
  * network numbers.
@@ -104,3 +104,5 @@ again:
 	}
 	return (val);
 }
+
+/*! \file */

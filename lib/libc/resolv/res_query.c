@@ -1,4 +1,4 @@
-/*	$NetBSD: res_query.c,v 1.7 2006/01/24 17:41:25 christos Exp $	*/
+/*	$NetBSD: res_query.c,v 1.7.4.1 2007/05/17 00:43:53 jdc Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -74,9 +74,9 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 #ifdef notdef
 static const char sccsid[] = "@(#)res_query.c	8.1 (Berkeley) 6/4/93";
-static const char rcsid[] = "Id: res_query.c,v 1.2.2.3.4.2 2004/03/16 12:34:19 marka Exp";
+static const char rcsid[] = "Id: res_query.c,v 1.7.18.1 2005/04/27 05:01:11 sra Exp";
 #else
-__RCSID("$NetBSD: res_query.c,v 1.7 2006/01/24 17:41:25 christos Exp $");
+__RCSID("$NetBSD: res_query.c,v 1.7.4.1 2007/05/17 00:43:53 jdc Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -118,7 +118,7 @@ __weak_alias(res_hostalias,__res_hostalias)
 #define MAXPACKET	1024
 #endif
 
-/*
+/*%
  * Formulate a normal query, send, and await answer.
  * Returned answer is placed in supplied buffer "answer".
  * Perform preliminary check of answer, returning success only
@@ -130,10 +130,10 @@ __weak_alias(res_hostalias,__res_hostalias)
  */
 int
 res_nquery(res_state statp,
-	   const char *name,	/* domain name */
-	   int class, int type,	/* class and type of query */
-	   u_char *answer,	/* buffer to put answer */
-	   int anslen)		/* size of answer buffer */
+	   const char *name,	/*%< domain name */
+	   int class, int type,	/*%< class and type of query */
+	   u_char *answer,	/*%< buffer to put answer */
+	   int anslen)		/*%< size of answer buffer */
 {
 	u_char buf[MAXPACKET];
 	HEADER *hp = (HEADER *)(void *)answer;
@@ -143,8 +143,7 @@ res_nquery(res_state statp,
 	oflags = statp->_flags;
 
 again:
-	hp->rcode = NOERROR;	/* default */
-
+	hp->rcode = NOERROR;	/*%< default */
 #ifdef DEBUG
 	if (statp->options & RES_DEBUG)
 		printf(";; res_query(%s, %d, %d)\n", name, class, type);
@@ -216,7 +215,7 @@ again:
 	return (n);
 }
 
-/*
+/*%
  * Formulate a normal query, send, and retrieve answer in supplied buffer.
  * Return the size of the response on success, -1 on error.
  * If enabled, implement search rules until answer or unrecoverable failure
@@ -224,10 +223,10 @@ again:
  */
 int
 res_nsearch(res_state statp,
-	    const char *name,	/* domain name */
-	    int class, int type,	/* class and type of query */
-	    u_char *answer,	/* buffer to put answer */
-	    int anslen)		/* size of answer */
+	    const char *name,	/*%< domain name */
+	    int class, int type,	/*%< class and type of query */
+	    u_char *answer,	/*%< buffer to put answer */
+	    int anslen)		/*%< size of answer */
 {
 	const char *cp, * const *domain;
 	HEADER *hp = (HEADER *)(void *)answer;
@@ -239,8 +238,7 @@ res_nsearch(res_state statp,
 	int searched = 0;
 
 	errno = 0;
-	RES_SET_H_ERRNO(statp, HOST_NOT_FOUND);  /* True if we never query. */
-
+	RES_SET_H_ERRNO(statp, HOST_NOT_FOUND);  /*%< True if we never query. */
 	dots = 0;
 	for (cp = name; *cp != '\0'; cp++)
 		dots += (*cp == '.');
@@ -365,7 +363,7 @@ res_nsearch(res_state statp,
 	return (-1);
 }
 
-/*
+/*%
  * Perform a call on res_query on the concatenation of name and domain,
  * removing a trailing dot from name if domain is NULL.
  */
@@ -373,9 +371,9 @@ int
 res_nquerydomain(res_state statp,
 	    const char *name,
 	    const char *domain,
-	    int class, int type,	/* class and type of query */
-	    u_char *answer,		/* buffer to put answer */
-	    int anslen)		/* size of answer */
+	    int class, int type,	/*%< class and type of query */
+	    u_char *answer,		/*%< buffer to put answer */
+	    int anslen)		/*%< size of answer */
 {
 	char nbuf[MAXDNAME];
 	const char *longname = nbuf;
@@ -457,3 +455,5 @@ res_hostalias(const res_state statp, const char *name, char *dst, size_t siz) {
 	fclose(fp);
 	return (NULL);
 }
+
+/*! \file */

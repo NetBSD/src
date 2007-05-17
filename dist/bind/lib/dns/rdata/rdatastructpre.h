@@ -1,4 +1,4 @@
-/*	$NetBSD: rdatastructpre.h,v 1.1.1.3 2005/12/21 23:17:00 christos Exp $	*/
+/*	$NetBSD: rdatastructpre.h,v 1.1.1.3.4.1 2007/05/17 00:41:10 jdc Exp $	*/
 
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: rdatastructpre.h,v 1.13.206.1 2004/03/06 08:14:02 marka Exp */
+/* Id: rdatastructpre.h,v 1.14 2004/03/05 05:10:04 marka Exp */
 
 #ifndef DNS_RDATASTRUCT_H
 #define DNS_RDATASTRUCT_H 1

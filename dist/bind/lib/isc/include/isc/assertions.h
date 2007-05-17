@@ -1,7 +1,7 @@
-/*	$NetBSD: assertions.h,v 1.3 2006/08/23 04:10:51 jnemeth Exp $	*/
+/*	$NetBSD: assertions.h,v 1.3.2.1 2007/05/17 00:42:25 jdc Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1997-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -18,7 +18,9 @@
  */
 
 /*
- * Id: assertions.h,v 1.17.206.1 2004/03/06 08:14:38 marka Exp
+ * Id: assertions.h,v 1.18.18.2 2005/04/29 00:16:52 marka Exp
+ */
+/*! \file assertions.h
  */
 
 #ifndef ISC_ASSERTIONS_H
@@ -29,6 +31,7 @@
 
 ISC_LANG_BEGINDECLS
 
+/*% isc assertion type */
 typedef enum {
 	isc_assertiontype_require,
 	isc_assertiontype_ensure,

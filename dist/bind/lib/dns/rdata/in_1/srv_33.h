@@ -1,7 +1,7 @@
-/*	$NetBSD: srv_33.h,v 1.1.1.3 2005/12/21 23:17:10 christos Exp $	*/
+/*	$NetBSD: srv_33.h,v 1.1.1.3.4.1 2007/05/17 00:41:39 jdc Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -20,11 +20,12 @@
 #ifndef IN_1_SRV_33_H
 #define IN_1_SRV_33_H 1
 
-/* Id: srv_33.h,v 1.14.206.1 2004/03/06 08:14:19 marka Exp */
+/* Id: srv_33.h,v 1.15.18.2 2005/04/29 00:16:43 marka Exp */
 
 /* Reviewed: Fri Mar 17 13:01:00 PST 2000 by bwelling */
 
-/* RFC 2782 */
+/*! 
+ *  \brief Per RFC2782 */
 
 typedef struct dns_rdata_in_srv {
 	dns_rdatacommon_t	common;

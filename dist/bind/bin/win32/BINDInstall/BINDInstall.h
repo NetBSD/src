@@ -1,4 +1,4 @@
-/*	$NetBSD: BINDInstall.h,v 1.1.1.3 2005/12/21 23:09:33 christos Exp $	*/
+/*	$NetBSD: BINDInstall.h,v 1.1.1.3.4.1 2007/05/17 00:37:17 jdc Exp $	*/
 
 /*
  * Portions Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: BINDInstall.h,v 1.3.206.1 2004/03/06 10:22:53 marka Exp */
+/* Id: BINDInstall.h,v 1.4 2004/03/05 05:04:16 marka Exp */
 
 /*
  * Copyright (c) 1999-2000 by Nortel Networks Corporation

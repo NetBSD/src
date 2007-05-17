@@ -1,4 +1,4 @@
-/*	$NetBSD: platform.h,v 1.1.1.3 2005/12/21 23:18:14 christos Exp $	*/
+/*	$NetBSD: platform.h,v 1.1.1.3.4.1 2007/05/17 00:43:41 jdc Exp $	*/
 
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: platform.h,v 1.4.206.1 2004/03/06 08:15:46 marka Exp */
+/* Id: platform.h,v 1.5 2004/03/05 05:13:35 marka Exp */
 
 #ifndef LWRES_PLATFORM_H
 #define LWRES_PLATFORM_H 1

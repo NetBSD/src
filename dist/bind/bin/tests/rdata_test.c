@@ -1,7 +1,7 @@
-/*	$NetBSD: rdata_test.c,v 1.1.1.3 2005/12/21 23:08:24 christos Exp $	*/
+/*	$NetBSD: rdata_test.c,v 1.1.1.3.4.1 2007/05/17 00:35:40 jdc Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: rdata_test.c,v 1.35.12.9 2005/03/17 03:58:28 marka Exp */
+/* Id: rdata_test.c,v 1.41.18.5 2006/02/26 23:49:49 marka Exp */
 
 #include <config.h>
 
@@ -271,6 +271,11 @@ viastruct(dns_rdata_t *rdata, isc_mem_t *mctx,
 		result = dns_rdata_tostruct(rdata, sp = &txt, NULL);
 		break;
 	}
+	case dns_rdatatype_spf: {
+		dns_rdata_spf_t spf;
+		result = dns_rdata_tostruct(rdata, sp = &spf, NULL);
+		break;
+	}
 	case dns_rdatatype_unspec: {
 		dns_rdata_unspec_t unspec;
 		result = dns_rdata_tostruct(rdata, sp = &unspec, NULL);
@@ -306,7 +311,7 @@ viastruct(dns_rdata_t *rdata, isc_mem_t *mctx,
 		break;
 	}
 	if (result != ISC_R_SUCCESS)
-		fprintf(stdout, "viastruct: tostuct %d %d return %s\n",
+		fprintf(stdout, "viastruct: tostruct %d %d return %s\n",
 			rdata->type, rdata->rdclass,
 			dns_result_totext(result));
 	else
@@ -528,6 +533,11 @@ viastruct(dns_rdata_t *rdata, isc_mem_t *mctx,
 		result = dns_rdata_tostruct(rdata, sp = &txt, mctx);
 		break;
 	}
+	case dns_rdatatype_spf: {
+		dns_rdata_spf_t spf;
+		result = dns_rdata_tostruct(rdata, sp = &spf, mctx);
+		break;
+	}
 	case dns_rdatatype_unspec: {
 		dns_rdata_unspec_t unspec;
 		result = dns_rdata_tostruct(rdata, sp = &unspec, mctx);
@@ -563,7 +573,7 @@ viastruct(dns_rdata_t *rdata, isc_mem_t *mctx,
 		break;
 	}
 	if (result != ISC_R_SUCCESS)
-		fprintf(stdout, "viastruct: tostuct %d %d return %s\n",
+		fprintf(stdout, "viastruct: tostruct %d %d return %s\n",
 			rdata->type, rdata->rdclass,
 			dns_result_totext(result));
 	else {
@@ -574,7 +584,7 @@ viastruct(dns_rdata_t *rdata, isc_mem_t *mctx,
 		result = dns_rdata_fromstruct(rdata2, rdc, rdt, sp, b);
 		if (result != ISC_R_SUCCESS)
 			fprintf(stdout,
-				"viastruct: fromstuct %d %d return %s\n",
+				"viastruct: fromstruct %d %d return %s\n",
 				rdata->type, rdata->rdclass,
 				dns_result_totext(result));
 		else if (rdata->length != rdata2->length ||
@@ -813,6 +823,11 @@ viastruct(dns_rdata_t *rdata, isc_mem_t *mctx,
 	case dns_rdatatype_txt: {
 		dns_rdata_txt_t txt;
 		result = dns_rdata_fromstruct(rdata2, rdc, rdt, &txt, b);
+		break;
+	}
+	case dns_rdatatype_spf: {
+		dns_rdata_spf_t spf;
+		result = dns_rdata_fromstruct(rdata2, rdc, rdt, &spf, b);
 		break;
 	}
 	case dns_rdatatype_unspec: {

@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_parse.c,v 1.3 2006/10/15 16:13:12 christos Exp $	*/
+/*	$NetBSD: ns_parse.c,v 1.3.2.1 2007/05/17 00:43:50 jdc Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -20,9 +20,9 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #ifdef notdef
-static const char rcsid[] = "Id: ns_parse.c,v 1.3.2.1.4.1 2004/03/09 08:33:44 marka Exp";
+static const char rcsid[] = "Id: ns_parse.c,v 1.5.18.3 2005/10/11 00:25:10 marka Exp";
 #else
-__RCSID("$NetBSD: ns_parse.c,v 1.3 2006/10/15 16:13:12 christos Exp $");
+__RCSID("$NetBSD: ns_parse.c,v 1.3.2.1 2007/05/17 00:43:50 jdc Exp $");
 #endif
 #endif
 
@@ -47,28 +47,33 @@ static void	setsection(ns_msg *msg, ns_sect sect);
 
 /* Macros. */
 
+#ifndef SOLARIS2
 #define RETERR(err) do { errno = (err); return (-1); } while (/*NOTREACHED*//*CONSTCOND*/0)
+#else
+#define RETERR(err) \
+	do { errno = (err); if (errno == errno) return (-1); } while (0)
+#endif
 
 /* Public. */
 
 /* These need to be in the same order as the nres.h:ns_flag enum. */
 struct _ns_flagdata _ns_flagdata[16] = {
-	{ 0x8000, 15 },		/* qr. */
-	{ 0x7800, 11 },		/* opcode. */
-	{ 0x0400, 10 },		/* aa. */
-	{ 0x0200, 9 },		/* tc. */
-	{ 0x0100, 8 },		/* rd. */
-	{ 0x0080, 7 },		/* ra. */
-	{ 0x0040, 6 },		/* z. */
-	{ 0x0020, 5 },		/* ad. */
-	{ 0x0010, 4 },		/* cd. */
-	{ 0x000f, 0 },		/* rcode. */
-	{ 0x0000, 0 },		/* expansion (1/6). */
-	{ 0x0000, 0 },		/* expansion (2/6). */
-	{ 0x0000, 0 },		/* expansion (3/6). */
-	{ 0x0000, 0 },		/* expansion (4/6). */
-	{ 0x0000, 0 },		/* expansion (5/6). */
-	{ 0x0000, 0 },		/* expansion (6/6). */
+	{ 0x8000, 15 },		/*%< qr. */
+	{ 0x7800, 11 },		/*%< opcode. */
+	{ 0x0400, 10 },		/*%< aa. */
+	{ 0x0200, 9 },		/*%< tc. */
+	{ 0x0100, 8 },		/*%< rd. */
+	{ 0x0080, 7 },		/*%< ra. */
+	{ 0x0040, 6 },		/*%< z. */
+	{ 0x0020, 5 },		/*%< ad. */
+	{ 0x0010, 4 },		/*%< cd. */
+	{ 0x000f, 0 },		/*%< rcode. */
+	{ 0x0000, 0 },		/*%< expansion (1/6). */
+	{ 0x0000, 0 },		/*%< expansion (2/6). */
+	{ 0x0000, 0 },		/*%< expansion (3/6). */
+	{ 0x0000, 0 },		/*%< expansion (4/6). */
+	{ 0x0000, 0 },		/*%< expansion (5/6). */
+	{ 0x0000, 0 },		/*%< expansion (6/6). */
 };
 
 int ns_msg_getflag(ns_msg handle, int flag) {
@@ -139,9 +144,11 @@ ns_initparse(const u_char *msg, int msglen, ns_msg *handle) {
 int
 ns_parserr(ns_msg *handle, ns_sect section, int rrnum, ns_rr *rr) {
 	int b;
+	int tmp;
 
 	/* Make section right. */
-	if (/* section < 0 || */ section >= ns_s_max)
+	tmp = section;
+	if (tmp < 0 || section >= ns_s_max)
 		RETERR(ENODEV);
 	if (section != handle->_sect)
 		setsection(handle, section);
@@ -207,3 +214,5 @@ setsection(ns_msg *msg, ns_sect sect) {
 		msg->_msg_ptr = msg->_sections[(int)sect];
 	}
 }
+
+/*! \file */

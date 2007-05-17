@@ -15,7 +15,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: nanny.pl,v 1.8.206.1 2004/03/06 13:16:12 marka Exp
+# Id: nanny.pl,v 1.9 2004/03/05 05:04:27 marka Exp
 
 # A simple nanny to make sure named stays running.
 

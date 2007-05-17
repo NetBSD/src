@@ -1,7 +1,7 @@
-/*	$NetBSD: t_master.c,v 1.1.1.3 2005/12/21 23:08:39 christos Exp $	*/
+/*	$NetBSD: t_master.c,v 1.1.1.3.4.1 2007/05/17 00:35:45 jdc Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: t_master.c,v 1.30.206.3 2004/03/08 04:04:29 marka Exp */
+/* Id: t_master.c,v 1.32.18.2 2005/11/30 23:52:53 marka Exp */
 
 #include <config.h>
 
@@ -155,8 +155,10 @@ test_master_x(const char *filename) {
 			/*
 			 * Skip comment lines.
 			 */
-			if ((isspace(*p & 0xff)) || (*p == '#'))
+			if ((isspace(*p & 0xff)) || (*p == '#')) {
+				(void)free(p);
 				continue;
+			}
 
 			/*
 			 * Name of data file, origin, zclass, expected result.

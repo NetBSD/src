@@ -1,7 +1,7 @@
-/*	$NetBSD: zonekey.c,v 1.1.1.3 2005/12/21 23:16:47 christos Exp $	*/
+/*	$NetBSD: zonekey.c,v 1.1.1.3.4.1 2007/05/17 00:40:50 jdc Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,7 +17,9 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: zonekey.c,v 1.3.206.3 2004/03/08 09:04:33 marka Exp */
+/* Id: zonekey.c,v 1.5.18.2 2005/04/29 00:16:08 marka Exp */
+
+/*! \file */
 
 #include <config.h>
 

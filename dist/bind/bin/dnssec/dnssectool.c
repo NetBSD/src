@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssectool.c,v 1.1.1.3 2005/12/21 23:07:50 christos Exp $	*/
+/*	$NetBSD: dnssectool.c,v 1.1.1.3.4.1 2007/05/17 00:35:04 jdc Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,13 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: dnssectool.c,v 1.31.2.3.2.6 2005/07/02 02:42:43 marka Exp */
+/* Id: dnssectool.c,v 1.40.18.3 2005/07/01 03:55:28 marka Exp */
+
+/*! \file */
+
+/*%
+ * DNSSEC Support Routines.
+ */
 
 #include <config.h>
 

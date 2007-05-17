@@ -1,4 +1,4 @@
-/*	$NetBSD: nsap_addr.c,v 1.1.1.3 2005/12/21 23:15:39 christos Exp $	*/
+/*	$NetBSD: nsap_addr.c,v 1.1.1.3.4.1 2007/05/17 00:39:43 jdc Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -18,7 +18,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "Id: nsap_addr.c,v 1.2.206.2 2005/07/28 07:43:18 marka Exp";
+static const char rcsid[] = "Id: nsap_addr.c,v 1.3.18.2 2005/07/28 07:38:08 marka Exp";
 #endif /* LIBC_SCCS and not lint */
 
 #include "port_before.h"
@@ -109,3 +109,5 @@ inet_nsap_ntoa(int binlen, const u_char *binary, char *ascii) {
 	*ascii = '\0';
 	return (start);
 }
+
+/*! \file */

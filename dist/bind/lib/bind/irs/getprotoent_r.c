@@ -1,4 +1,4 @@
-/*	$NetBSD: getprotoent_r.c,v 1.1.1.3 2005/12/21 23:15:30 christos Exp $	*/
+/*	$NetBSD: getprotoent_r.c,v 1.1.1.3.4.1 2007/05/17 00:39:51 jdc Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -18,7 +18,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "Id: getprotoent_r.c,v 1.3.206.1 2004/03/09 08:33:36 marka Exp";
+static const char rcsid[] = "Id: getprotoent_r.c,v 1.4.18.2 2006/08/01 01:19:12 marka Exp";
 #endif /* LIBC_SCCS and not lint */
 
 #include <port_before.h>
@@ -78,7 +78,7 @@ getprotobynumber_r(int proto, struct protoent *pptr, PROTO_R_ARGS) {
 #endif
 }
 
-/*
+/*%
  *	These assume a single context is in operation per thread.
  *	If this is not the case we will need to call irs directly
  *	rather than through the base functions.
@@ -111,6 +111,9 @@ setprotoent_r(int stay_open, PROTO_R_ENT_ARGS)
 setprotoent_r(int stay_open)
 #endif
 {
+#ifdef PROTO_R_ENT_UNUSED
+        PROTO_R_ENT_UNUSED;
+#endif
 	setprotoent(stay_open);
 #ifdef PROTO_R_SET_RESULT
 	return (PROTO_R_SET_RESULT);
@@ -124,6 +127,9 @@ endprotoent_r(PROTO_R_ENT_ARGS)
 endprotoent_r()
 #endif
 {
+#ifdef PROTO_R_ENT_UNUSED
+        PROTO_R_ENT_UNUSED;
+#endif
 	endprotoent();
 	PROTO_R_END_RESULT(PROTO_R_OK);
 }
@@ -138,7 +144,7 @@ copy_protoent(struct protoent *pe, struct protoent *pptr, PROTO_R_COPY_ARGS) {
 	int numptr, len;
 
 	/* Find out the amount of space required to store the answer. */
-	numptr = 1; /* NULL ptr */
+	numptr = 1; /*%< NULL ptr */
 	len = (char *)ALIGN(buf) - buf;
 	for (i = 0; pe->p_aliases[i]; i++, numptr++) {
 		len += strlen(pe->p_aliases[i]) + 1;
@@ -216,3 +222,4 @@ copy_protoent(struct protoent *pe, struct protoent *pptr, PROTO_R_COPY_ARGS) {
 	static int getprotoent_r_unknown_system = 0;
 #endif /* PROTO_R_RETURN */
 #endif /* !defined(_REENTRANT) || !defined(DO_PTHREADS) */
+/*! \file */

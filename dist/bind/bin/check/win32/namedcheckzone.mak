@@ -26,6 +26,81 @@ NULL=nul
 !ENDIF 
 
 !IF  "$(CFG)" == "namedcheckzone - Win32 Release"
+_VC_MANIFEST_INC=0
+_VC_MANIFEST_BASENAME=__VC80
+!ELSE
+_VC_MANIFEST_INC=1
+_VC_MANIFEST_BASENAME=__VC80.Debug
+!ENDIF
+
+####################################################
+# Specifying name of temporary resource file used only in incremental builds:
+
+!if "$(_VC_MANIFEST_INC)" == "1"
+_VC_MANIFEST_AUTO_RES=$(_VC_MANIFEST_BASENAME).auto.res
+!else
+_VC_MANIFEST_AUTO_RES=
+!endif
+
+####################################################
+# _VC_MANIFEST_EMBED_EXE - command to embed manifest in EXE:
+
+!if "$(_VC_MANIFEST_INC)" == "1"
+
+#MT_SPECIAL_RETURN=1090650113
+#MT_SPECIAL_SWITCH=-notify_resource_update
+MT_SPECIAL_RETURN=0
+MT_SPECIAL_SWITCH=
+_VC_MANIFEST_EMBED_EXE= \
+if exist $@.manifest mt.exe -manifest $@.manifest -out:$(_VC_MANIFEST_BASENAME).auto.manifest $(MT_SPECIAL_SWITCH) & \
+if "%ERRORLEVEL%" == "$(MT_SPECIAL_RETURN)" \
+rc /r $(_VC_MANIFEST_BASENAME).auto.rc & \
+link $** /out:$@ $(LFLAGS)
+
+!else
+
+_VC_MANIFEST_EMBED_EXE= \
+if exist $@.manifest mt.exe -manifest $@.manifest -outputresource:$@;1
+
+!endif
+
+####################################################
+# _VC_MANIFEST_EMBED_DLL - command to embed manifest in DLL:
+
+!if "$(_VC_MANIFEST_INC)" == "1"
+
+#MT_SPECIAL_RETURN=1090650113
+#MT_SPECIAL_SWITCH=-notify_resource_update
+MT_SPECIAL_RETURN=0
+MT_SPECIAL_SWITCH=
+_VC_MANIFEST_EMBED_EXE= \
+if exist $@.manifest mt.exe -manifest $@.manifest -out:$(_VC_MANIFEST_BASENAME).auto.manifest $(MT_SPECIAL_SWITCH) & \
+if "%ERRORLEVEL%" == "$(MT_SPECIAL_RETURN)" \
+rc /r $(_VC_MANIFEST_BASENAME).auto.rc & \
+link $** /out:$@ $(LFLAGS)
+
+!else
+
+_VC_MANIFEST_EMBED_EXE= \
+if exist $@.manifest mt.exe -manifest $@.manifest -outputresource:$@;2
+
+!endif
+####################################################
+# _VC_MANIFEST_CLEAN - command to clean resources files generated temporarily:
+
+!if "$(_VC_MANIFEST_INC)" == "1"
+
+_VC_MANIFEST_CLEAN=-del $(_VC_MANIFEST_BASENAME).auto.res \
+    $(_VC_MANIFEST_BASENAME).auto.rc \
+    $(_VC_MANIFEST_BASENAME).auto.manifest
+
+!else
+
+_VC_MANIFEST_CLEAN=
+
+!endif
+
+!IF  "$(CFG)" == "namedcheckzone - Win32 Release"
 
 OUTDIR=.\Release
 INTDIR=.\Release
@@ -49,12 +124,13 @@ CLEAN :
 	-@erase "$(INTDIR)\named-checkzone.obj"
 	-@erase "$(INTDIR)\vc60.idb"
 	-@erase "..\..\..\Build\Release\named-checkzone.exe"
+	-@$(_VC_MANIFEST_CLEAN)
 
 "$(OUTDIR)" :
     if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
 
 CPP=cl.exe
-CPP_PROJ=/nologo /MD /W3 /GX /O2 /I "./" /I "../../../" /I "../../../lib/isc/win32" /I "../../../lib/isc/win32/include" /I "../../../lib/isc/include" /I "../../../lib/dns/include" /D "NDEBUG" /D "WIN32" /D "_CONSOLE" /D "_MBCS" /D "__STDC__" /Fp"$(INTDIR)\namedcheckzone.pch" /YX /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c 
+CPP_PROJ=/nologo /MD /W3 /GX /O2 /I "./" /I "../../../" /I "../../../lib/isc/win32" /I "../../../lib/isc/win32/include" /I "../../../lib/isc/include" /I "../../../lib/isc/noatomic/include" /I "../../../lib/dns/include" /I "../../../lib/isccfg/include" /D "NDEBUG" /D "WIN32" /D "_CONSOLE" /D "_MBCS" /D "__STDC__" /Fp"$(INTDIR)\namedcheckzone.pch" /YX /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c 
 
 .c{$(INTDIR)}.obj::
    $(CPP) @<<
@@ -92,17 +168,19 @@ BSC32_FLAGS=/nologo /o"$(OUTDIR)\namedcheckzone.bsc"
 BSC32_SBRS= \
 	
 LINK32=link.exe
-LINK32_FLAGS=user32.lib advapi32.lib ws2_32.lib ../../../lib/isc/win32/Release/libisc.lib ../../../lib/dns/win32/Release/libdns.lib /nologo /subsystem:console /incremental:no /pdb:"$(OUTDIR)\named-checkzone.pdb" /machine:I386 /out:"../../../Build/Release/named-checkzone.exe" 
+LINK32_FLAGS=user32.lib advapi32.lib ws2_32.lib ../../../lib/isc/win32/Release/libisc.lib ../../../lib/isccfg/win32/Release/libisccfg.lib ../../../lib/dns/win32/Release/libdns.lib /nologo /subsystem:console /incremental:no /pdb:"$(OUTDIR)\named-checkzone.pdb" /machine:I386 /out:"../../../Build/Release/named-checkzone.exe" 
 LINK32_OBJS= \
 	"$(INTDIR)\check-tool.obj" \
 	"$(INTDIR)\named-checkzone.obj" \
 	"..\..\..\lib\dns\win32\Release\libdns.lib" \
+	"..\..\..\lib\isccfg\win32\Release\libisccfg.lib" \
 	"..\..\..\lib\isc\win32\Release\libisc.lib"
 
 "..\..\..\Build\Release\named-checkzone.exe" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
     $(LINK32) @<<
   $(LINK32_FLAGS) $(LINK32_OBJS)
 <<
+    $(_VC_MANIFEST_EMBED_EXE)
 
 !ELSEIF  "$(CFG)" == "namedcheckzone - Win32 Debug"
 
@@ -137,12 +215,13 @@ CLEAN :
 	-@erase "$(OUTDIR)\namedcheckzone.bsc"
 	-@erase "..\..\..\Build\Debug\named-checkzone.exe"
 	-@erase "..\..\..\Build\Debug\named-checkzone.ilk"
+	-@$(_VC_MANIFEST_CLEAN)
 
 "$(OUTDIR)" :
     if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
 
 CPP=cl.exe
-CPP_PROJ=/nologo /MDd /W3 /Gm /GX /ZI /Od /I "./" /I "../../../" /I "../../../lib/isc/win32" /I "../../../lib/isc/win32/include" /I "../../../lib/isc/include" /I "../../../lib/dns/include" /D "_DEBUG" /D "__STDC__" /D "WIN32" /D "_CONSOLE" /D "_MBCS" /FR"$(INTDIR)\\" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /GZ /c 
+CPP_PROJ=/nologo /MDd /W3 /Gm /GX /ZI /Od /I "./" /I "../../../" /I "../../../lib/isc/win32" /I "../../../lib/isc/win32/include" /I "../../../lib/isc/include" /I "../../../lib/isc/noatomic/include" /I "../../../lib/dns/include" /I "../../../lib/isccfg/include" /D "_DEBUG" /D "__STDC__" /D "WIN32" /D "_CONSOLE" /D "_MBCS" /FR"$(INTDIR)\\" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /GZ /c 
 
 .c{$(INTDIR)}.obj::
    $(CPP) @<<
@@ -187,17 +266,19 @@ BSC32_SBRS= \
 <<
 
 LINK32=link.exe
-LINK32_FLAGS=user32.lib advapi32.lib ws2_32.lib ../../../lib/isc/win32/Debug/libisc.lib ../../../lib/dns/win32/Debug/libdns.lib /nologo /subsystem:console /incremental:yes /pdb:"$(OUTDIR)\named-checkzone.pdb" /debug /machine:I386 /out:"../../../Build/Debug/named-checkzone.exe" /pdbtype:sept 
+LINK32_FLAGS=user32.lib advapi32.lib ws2_32.lib ../../../lib/isc/win32/Debug/libisc.lib ../../../lib/isccfg/win32/Debug/libisccfg.lib ../../../lib/dns/win32/Debug/libdns.lib /nologo /subsystem:console /incremental:yes /pdb:"$(OUTDIR)\named-checkzone.pdb" /debug /machine:I386 /out:"../../../Build/Debug/named-checkzone.exe" /pdbtype:sept 
 LINK32_OBJS= \
 	"$(INTDIR)\check-tool.obj" \
 	"$(INTDIR)\named-checkzone.obj" \
 	"..\..\..\lib\dns\win32\Debug\libdns.lib" \
+	"..\..\..\lib\isccfg\win32\Debug\libisccfg.lib" \
 	"..\..\..\lib\isc\win32\Debug\libisc.lib"
 
 "..\..\..\Build\Debug\named-checkzone.exe" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
     $(LINK32) @<<
   $(LINK32_FLAGS) $(LINK32_OBJS)
 <<
+    $(_VC_MANIFEST_EMBED_EXE)
 
 !ENDIF 
 
@@ -303,3 +384,21 @@ SOURCE="..\named-checkzone.c"
 
 !ENDIF 
 
+####################################################
+# Commands to generate initial empty manifest file and the RC file
+# that references it, and for generating the .res file:
+
+$(_VC_MANIFEST_BASENAME).auto.res : $(_VC_MANIFEST_BASENAME).auto.rc
+
+$(_VC_MANIFEST_BASENAME).auto.rc : $(_VC_MANIFEST_BASENAME).auto.manifest
+    type <<$@
+#include <winuser.h>
+1RT_MANIFEST"$(_VC_MANIFEST_BASENAME).auto.manifest"
+<< KEEP
+
+$(_VC_MANIFEST_BASENAME).auto.manifest :
+    type <<$@
+<?xml version='1.0' encoding='UTF-8' standalone='yes'?>
+<assembly xmlns='urn:schemas-microsoft-com:asm.v1' manifestVersion='1.0'>
+</assembly>
+<< KEEP

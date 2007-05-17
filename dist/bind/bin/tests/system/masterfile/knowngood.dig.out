@@ -19,6 +19,7 @@ c.ttl2.			2	IN	TXT	"inherited ttl 2"
 d.ttl2.			3	IN	TXT	"default ttl 3"
 e.ttl2.			2	IN	TXT	"explicit ttl 2"
 f.ttl2.			3	IN	TXT	"default ttl 3"
+ns.ttl2.		1	IN	A	10.53.0.1
 ttl2.			1	IN	SOA	ns.ttl2. hostmaster.ttl2. 1 3600 1800 1814400 3
 ttl2.			1	IN	SOA	ns.ttl2. hostmaster.ttl2. 1 3600 1800 1814400 3
 ttl2.			1	IN	NS	ns.ttl2.
@@ -28,4 +29,5 @@ c.ttl2.			2	IN	TXT	"inherited ttl 2"
 d.ttl2.			3	IN	TXT	"default ttl 3"
 e.ttl2.			2	IN	TXT	"explicit ttl 2"
 f.ttl2.			3	IN	TXT	"default ttl 3"
+ns.ttl2.		1	IN	A	10.53.0.1
 ttl2.			1	IN	SOA	ns.ttl2. hostmaster.ttl2. 1 3600 1800 1814400 3

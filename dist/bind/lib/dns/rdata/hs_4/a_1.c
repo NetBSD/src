@@ -1,4 +1,4 @@
-/*	$NetBSD: a_1.c,v 1.1.1.3 2005/12/21 23:17:08 christos Exp $	*/
+/*	$NetBSD: a_1.c,v 1.1.1.3.4.1 2007/05/17 00:41:34 jdc Exp $	*/
 
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: a_1.c,v 1.25.12.4 2004/03/08 09:04:43 marka Exp */
+/* Id: a_1.c,v 1.29 2004/03/05 05:10:20 marka Exp */
 
 /* reviewed: Thu Mar 16 15:58:36 PST 2000 by brister */
 

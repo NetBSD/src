@@ -1,7 +1,7 @@
-/*	$NetBSD: lookup.c,v 1.1.1.3 2005/12/21 23:16:14 christos Exp $	*/
+/*	$NetBSD: lookup.c,v 1.1.1.3.4.1 2007/05/17 00:40:38 jdc Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,7 +17,9 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: lookup.c,v 1.9.12.5 2004/04/15 02:10:40 marka Exp */
+/* Id: lookup.c,v 1.14.18.4 2005/11/30 03:44:39 marka Exp */
+
+/*! \file */
 
 #include <config.h>
 
@@ -156,11 +158,6 @@ build_event(dns_lookup_t *lookup) {
 			dns_rdataset_disassociate(rdataset);
 		isc_mem_put(lookup->mctx, rdataset, sizeof(dns_rdataset_t));
 	}
-	if (sigrdataset != NULL) {
-		if (dns_rdataset_isassociated(sigrdataset))
-			dns_rdataset_disassociate(sigrdataset);
-		isc_mem_put(lookup->mctx, sigrdataset, sizeof(dns_rdataset_t));
-	}
 	return (result);
 }
 
@@ -231,13 +228,14 @@ lookup_find(dns_lookup_t *lookup, dns_fetchevent_t *event) {
 					send_event = ISC_TRUE;
 				goto done;
 			}
-		} else {
+		} else if (event != NULL) {
 			result = event->result;
 			fname = dns_fixedname_name(&event->foundname);
 			dns_resolver_destroyfetch(&lookup->fetch);
 			INSIST(event->rdataset == &lookup->rdataset);
 			INSIST(event->sigrdataset == &lookup->sigrdataset);
-		}
+		} else
+			fname = NULL;	/* Silence compiler warning. */
 
 		/*
 		 * If we've been canceled, forget about the result.

@@ -1,9 +1,19 @@
-/*	$NetBSD: getnameinfo.c,v 1.1.1.4 2005/12/21 23:15:30 christos Exp $	*/
+/*	$NetBSD: getnameinfo.c,v 1.1.1.4.4.1 2007/05/17 00:39:50 jdc Exp $	*/
 
 /*
  * Issues to be discussed:
  * - Thread safe-ness must be checked
  */
+
+#if ( defined(__linux__) || defined(__linux) || defined(LINUX) )
+#ifndef IF_NAMESIZE
+# ifdef IFNAMSIZ
+#  define IF_NAMESIZE  IFNAMSIZ
+# else
+#  define IF_NAMESIZE 16
+# endif
+#endif
+#endif
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -55,7 +65,7 @@
 
 #include <port_after.h>
 
-/*
+/*%
  * Note that a_off will be dynamically adjusted so that to be consistent
  * with the definition of sockaddr_in{,6}.
  * The value presented below is just a guess.
@@ -131,7 +141,7 @@ getnameinfo(sa, salen, host, hostlen, serv, servlen, flags)
  found:
 	if (salen != afd->a_socklen) return EAI_FAIL;
 
-	port = ((const struct sockinet *)sa)->si_port; /* network byte order */
+	port = ((const struct sockinet *)sa)->si_port; /*%< network byte order */
 	addr = (const char *)sa + afd->a_off;
 
 	if (serv == NULL || servlen == 0U) {
@@ -243,13 +253,13 @@ ip6_parsenumeric(const struct sockaddr *sa, const char *addr, char *host,
 		return EAI_SYSTEM;
 
 	numaddrlen = strlen(numaddr);
-	if (numaddrlen + 1 > hostlen) /* don't forget terminator */
+	if (numaddrlen + 1 > hostlen) /*%< don't forget terminator */
 		return EAI_MEMORY;
 	strcpy(host, numaddr);
 
 #ifdef HAVE_SIN6_SCOPE_ID
 	if (((const struct sockaddr_in6 *)sa)->sin6_scope_id) {
-		char scopebuf[MAXHOSTNAMELEN]; /* XXX */
+		char scopebuf[MAXHOSTNAMELEN]; /*%< XXX */
 		int scopelen;
 
 		/* ip6_sa2str never fails */
@@ -322,3 +332,5 @@ ip6_sa2str(const struct sockaddr_in6 *sa6, char *buf,
 	return(strlen(tmp));
 }
 #endif
+
+/*! \file */

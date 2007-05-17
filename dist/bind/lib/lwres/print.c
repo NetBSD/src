@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.1.1.2 2005/12/21 23:18:01 christos Exp $	*/
+/*	$NetBSD: print.c,v 1.1.1.2.4.1 2007/05/17 00:43:25 jdc Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: print.c,v 1.2.4.7 2005/10/14 01:38:51 marka Exp */
+/* Id: print.c,v 1.2.2.7 2005/10/14 01:28:30 marka Exp */
 
 #include <config.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_makeaddr.c,v 1.1.1.3 2005/12/21 23:15:37 christos Exp $	*/
+/*	$NetBSD: inet_makeaddr.c,v 1.1.1.3.4.1 2007/05/17 00:39:37 jdc Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -45,7 +45,7 @@ static const char sccsid[] = "@(#)inet_makeaddr.c	8.1 (Berkeley) 6/4/93";
 
 #include "port_after.h"
 
-/*
+/*%
  * Formulate an Internet address from network + host.  Used in
  * building addresses stored in the ifnet structure.
  */
@@ -66,3 +66,5 @@ inet_makeaddr(net, host)
 	a.s_addr = htonl(a.s_addr);
 	return (a);
 }
+
+/*! \file */

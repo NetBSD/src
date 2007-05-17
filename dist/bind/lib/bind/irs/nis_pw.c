@@ -1,4 +1,4 @@
-/*	$NetBSD: nis_pw.c,v 1.1.1.3 2005/12/21 23:15:36 christos Exp $	*/
+/*	$NetBSD: nis_pw.c,v 1.1.1.3.4.1 2007/05/17 00:39:59 jdc Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -18,7 +18,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "Id: nis_pw.c,v 1.2.206.1 2004/03/09 08:33:38 marka Exp";
+static const char rcsid[] = "Id: nis_pw.c,v 1.3.18.1 2005/04/27 05:01:04 sra Exp";
 #endif /* LIBC_SCCS and not lint */
 
 /* Imports */
@@ -232,7 +232,7 @@ makepasswdent(struct irs_pw *this) {
 	if (!(cp = strchr(cp, ':')))
 		goto cleanup;
 #ifdef HAS_PW_CLASS
-	pvt->passwd.pw_class = cp;	/* Needs to point at a \0. */
+	pvt->passwd.pw_class = cp;	/*%< Needs to point at a \0. */
 #endif
 	*cp++ = '\0';
 
@@ -287,3 +287,4 @@ nisfree(struct pvt *pvt, enum do_what do_what) {
 }
 
 #endif /* WANT_IRS_PW && WANT_IRS_NIS */
+/*! \file */

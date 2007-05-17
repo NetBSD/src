@@ -1,7 +1,7 @@
-/*	$NetBSD: setitimer.c,v 1.1.1.1 2004/05/17 23:44:40 christos Exp $	*/
+/*	$NetBSD: setitimer.c,v 1.1.1.1.10.1 2007/05/17 00:39:12 jdc Exp $	*/
 
 #ifndef LINT
-static const char rcsid[] = "Id: setitimer.c,v 1.1 2001/03/29 06:30:35 marka Exp";
+static const char rcsid[] = "Id: setitimer.c,v 1.1.352.1 2005/04/27 05:00:44 sra Exp";
 #endif
 
 #include "port_before.h"
@@ -10,7 +10,7 @@ static const char rcsid[] = "Id: setitimer.c,v 1.1 2001/03/29 06:30:35 marka Exp
 
 #include "port_after.h"
 
-/*
+/*%
  * Setitimer emulation routine.
  */
 #ifndef NEED_SETITIMER
@@ -27,3 +27,5 @@ __setitimer(int which, const struct itimerval *value,
 		return (-1);
 }
 #endif
+
+/*! \file */

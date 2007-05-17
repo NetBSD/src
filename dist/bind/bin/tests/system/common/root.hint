@@ -13,7 +13,7 @@
 ; OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 ; PERFORMANCE OF THIS SOFTWARE.
 
-; Id: root.hint,v 1.2.206.1 2004/03/06 10:21:54 marka Exp
+; Id: root.hint,v 1.3 2004/03/05 04:59:48 marka Exp
 
 $TTL 999999
 .			 IN NS	a.root-servers.nil.

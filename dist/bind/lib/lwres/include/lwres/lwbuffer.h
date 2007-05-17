@@ -1,7 +1,7 @@
-/*	$NetBSD: lwbuffer.h,v 1.1.1.3 2005/12/21 23:18:02 christos Exp $	*/
+/*	$NetBSD: lwbuffer.h,v 1.1.1.3.4.1 2007/05/17 00:43:27 jdc Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,17 +17,10 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: lwbuffer.h,v 1.15.206.1 2004/03/06 08:15:35 marka Exp */
+/* Id: lwbuffer.h,v 1.16.18.2 2005/04/29 00:17:22 marka Exp */
 
-#ifndef LWRES_LWBUFFER_H
-#define LWRES_LWBUFFER_H 1
 
-/*****
- ***** Module Info
- *****/
-
-/*
- * Buffers
+/*! \file lwbuffer.h
  *
  * A buffer is a region of memory, together with a set of related subregions.
  * Buffers are used for parsing and I/O operations.
@@ -53,6 +46,7 @@
  * region is empty.  If the current offset advances beyond the chosen offset,
  * the active region will also be empty.
  *
+ * \verbatim
  *  /----- used region -----\/-- available --\
  *  +----------------------------------------+
  *  | consumed  | remaining |                |
@@ -70,9 +64,11 @@
  * a-b == consumed region.
  * b-d == remaining region.
  * b-c == optional active region.
+ * \endverbatim
  *
  * The following invariants are maintained by all routines:
  *
+ *\verbatim
  *	length > 0
  *
  *	base is a valid pointer to length bytes of memory
@@ -83,23 +79,27 @@
  *
  *	0 <= active <= used
  *	(although active < current implies empty active region)
+ *\endverbatim
  *
- * MP:
+ * \li MP:
  *	Buffers have no synchronization.  Clients must ensure exclusive
  *	access.
  *
- * Reliability:
+ * \li Reliability:
  *	No anticipated impact.
  *
- * Resources:
+ * \li Resources:
  *	Memory: 1 pointer + 6 unsigned integers per buffer.
  *
- * Security:
+ * \li Security:
  *	No anticipated impact.
  *
- * Standards:
+ * \li Standards:
  *	None.
  */
+
+#ifndef LWRES_LWBUFFER_H
+#define LWRES_LWBUFFER_H 1
 
 /***
  *** Imports
@@ -118,32 +118,35 @@ LWRES_LANG_BEGINDECLS
 #define LWRES_BUFFER_VALID(b)		((b) != NULL && \
 					 (b)->magic == LWRES_BUFFER_MAGIC)
 
-/*
+/*!
  * The following macros MUST be used only on valid buffers.  It is the
  * caller's responsibility to ensure this by using the LWRES_BUFFER_VALID
  * check above, or by calling another lwres_buffer_*() function (rather than
  * another macro.)
  */
 
-/*
+/*!
  * Get the length of the used region of buffer "b"
  */
 #define LWRES_BUFFER_USEDCOUNT(b)	((b)->used)
 
-/*
+/*!
  * Get the length of the available region of buffer "b"
  */
 #define LWRES_BUFFER_AVAILABLECOUNT(b)	((b)->length - (b)->used)
 
 #define LWRES_BUFFER_REMAINING(b)	((b)->used - (b)->current)
 
-/*
+/*!
  * Note that the buffer structure is public.  This is principally so buffer
  * operations can be implemented using macros.  Applications are strongly
  * discouraged from directly manipulating the structure.
  */
 
 typedef struct lwres_buffer lwres_buffer_t;
+/*!
+ * Buffer data structure
+ */
 struct lwres_buffer {
 	unsigned int		magic;
 	unsigned char 	       *base;
@@ -160,7 +163,7 @@ struct lwres_buffer {
 
 void
 lwres_buffer_init(lwres_buffer_t *b, void *base, unsigned int length);
-/*
+/**<
  * Make 'b' refer to the 'length'-byte region starting at base.
  *
  * Requires:
@@ -173,7 +176,7 @@ lwres_buffer_init(lwres_buffer_t *b, void *base, unsigned int length);
 
 void
 lwres_buffer_invalidate(lwres_buffer_t *b);
-/*
+/**<
  * Make 'b' an invalid buffer.
  *
  * Requires:
@@ -186,7 +189,7 @@ lwres_buffer_invalidate(lwres_buffer_t *b);
 
 void
 lwres_buffer_add(lwres_buffer_t *b, unsigned int n);
-/*
+/**<
  * Increase the 'used' region of 'b' by 'n' bytes.
  *
  * Requires:
@@ -199,7 +202,7 @@ lwres_buffer_add(lwres_buffer_t *b, unsigned int n);
 
 void
 lwres_buffer_subtract(lwres_buffer_t *b, unsigned int n);
-/*
+/**<
  * Decrease the 'used' region of 'b' by 'n' bytes.
  *
  * Requires:
@@ -212,7 +215,7 @@ lwres_buffer_subtract(lwres_buffer_t *b, unsigned int n);
 
 void
 lwres_buffer_clear(lwres_buffer_t *b);
-/*
+/**<
  * Make the used region empty.
  *
  * Requires:
@@ -225,9 +228,10 @@ lwres_buffer_clear(lwres_buffer_t *b);
  *
  */
 
+
 void
 lwres_buffer_first(lwres_buffer_t *b);
-/*
+/**<
  * Make the consumed region empty.
  *
  * Requires:
@@ -242,7 +246,7 @@ lwres_buffer_first(lwres_buffer_t *b);
 
 void
 lwres_buffer_forward(lwres_buffer_t *b, unsigned int n);
-/*
+/**<
  * Increase the 'consumed' region of 'b' by 'n' bytes.
  *
  * Requires:
@@ -255,7 +259,7 @@ lwres_buffer_forward(lwres_buffer_t *b, unsigned int n);
 
 void
 lwres_buffer_back(lwres_buffer_t *b, unsigned int n);
-/*
+/**<
  * Decrease the 'consumed' region of 'b' by 'n' bytes.
  *
  * Requires:
@@ -268,7 +272,7 @@ lwres_buffer_back(lwres_buffer_t *b, unsigned int n);
 
 lwres_uint8_t
 lwres_buffer_getuint8(lwres_buffer_t *b);
-/*
+/**<
  * Read an unsigned 8-bit integer from 'b' and return it.
  *
  * Requires:
@@ -288,7 +292,7 @@ lwres_buffer_getuint8(lwres_buffer_t *b);
 
 void
 lwres_buffer_putuint8(lwres_buffer_t *b, lwres_uint8_t val);
-/*
+/**<
  * Store an unsigned 8-bit integer from 'val' into 'b'.
  *
  * Requires:
@@ -302,7 +306,7 @@ lwres_buffer_putuint8(lwres_buffer_t *b, lwres_uint8_t val);
 
 lwres_uint16_t
 lwres_buffer_getuint16(lwres_buffer_t *b);
-/*
+/**<
  * Read an unsigned 16-bit integer in network byte order from 'b', convert
  * it to host byte order, and return it.
  *
@@ -323,7 +327,7 @@ lwres_buffer_getuint16(lwres_buffer_t *b);
 
 void
 lwres_buffer_putuint16(lwres_buffer_t *b, lwres_uint16_t val);
-/*
+/**<
  * Store an unsigned 16-bit integer in host byte order from 'val'
  * into 'b' in network byte order.
  *
@@ -338,7 +342,7 @@ lwres_buffer_putuint16(lwres_buffer_t *b, lwres_uint16_t val);
 
 lwres_uint32_t
 lwres_buffer_getuint32(lwres_buffer_t *b);
-/*
+/**<
  * Read an unsigned 32-bit integer in network byte order from 'b', convert
  * it to host byte order, and return it.
  *
@@ -359,7 +363,7 @@ lwres_buffer_getuint32(lwres_buffer_t *b);
 
 void
 lwres_buffer_putuint32(lwres_buffer_t *b, lwres_uint32_t val);
-/*
+/**<
  * Store an unsigned 32-bit integer in host byte order from 'val'
  * into 'b' in network byte order.
  *
@@ -375,7 +379,7 @@ lwres_buffer_putuint32(lwres_buffer_t *b, lwres_uint32_t val);
 void
 lwres_buffer_putmem(lwres_buffer_t *b, const unsigned char *base,
 		    unsigned int length);
-/*
+/**<
  * Copy 'length' bytes of memory at 'base' into 'b'.
  *
  * Requires:
@@ -388,7 +392,7 @@ lwres_buffer_putmem(lwres_buffer_t *b, const unsigned char *base,
 void
 lwres_buffer_getmem(lwres_buffer_t *b, unsigned char *base,
 		    unsigned int length);
-/*
+/**<
  * Copy 'length' bytes of memory from 'b' into 'base'.
  *
  * Requires:

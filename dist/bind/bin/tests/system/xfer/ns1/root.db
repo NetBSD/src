@@ -13,7 +13,7 @@
 ; OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 ; PERFORMANCE OF THIS SOFTWARE.
 
-; Id: root.db,v 1.6.12.3 2004/03/08 09:04:19 marka Exp
+; Id: root.db,v 1.8 2004/03/05 05:03:57 marka Exp
 
 $TTL 300
 . 			IN SOA	gson.nominum.com. a.root.servers.nil. (

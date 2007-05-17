@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2006/05/11 23:16:30 mrg Exp $
+#	$NetBSD: Makefile,v 1.17.4.1 2007/05/17 00:43:57 jdc Exp $
 
 .include <bsd.own.mk>
 
@@ -21,7 +21,7 @@ COPTS.${f}.c+=  -fno-strict-aliasing
 .PATH: ${DIST}/unix ${DIST}
 
 SRCS_UNIX=	os.c
-SRCS=	aclconf.c builtin.c client.c config.c control.c controlconf.c \
+SRCS=	builtin.c client.c config.c control.c controlconf.c \
 	interfacemgr.c listenlist.c log.c logconf.c \
 	lwaddr.c lwdclient.c lwderror.c \
 	lwdgabn.c lwdgnba.c lwdgrbn.c lwdnoop.c lwresd.c lwsearch.c \
