@@ -1,7 +1,7 @@
-/*	$NetBSD: netscope.h,v 1.1.1.1 2004/05/17 23:45:04 christos Exp $	*/
+/*	$NetBSD: netscope.h,v 1.1.1.1.10.1 2007/05/17 00:42:32 jdc Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,22 +17,25 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: netscope.h,v 1.4.142.5 2004/03/08 09:04:52 marka Exp */
+/* Id: netscope.h,v 1.5.18.2 2005/04/29 00:17:00 marka Exp */
 
 #ifndef ISC_NETSCOPE_H
 #define ISC_NETSCOPE_H 1
 
+/*! \file */
+
 ISC_LANG_BEGINDECLS
 
-/*
+/*%
  * Convert a string of an IPv6 scope zone to zone index.  If the conversion
  * succeeds, 'zoneid' will store the index value.
+ *
  * XXXJT: when a standard interface for this purpose is defined,
  * we should use it.
  *
  * Returns:
- *	ISC_R_SUCCESS: conversion succeeds
- *	ISC_R_FAILURE: conversion fails
+ * \li	ISC_R_SUCCESS: conversion succeeds
+ * \li	ISC_R_FAILURE: conversion fails
  */
 isc_result_t
 isc_netscope_pton(int af, char *scopename, void *addr, isc_uint32_t *zoneid);

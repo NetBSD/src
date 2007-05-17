@@ -1,7 +1,7 @@
-/*	$NetBSD: timer.h,v 1.1.1.3 2005/12/21 23:16:57 christos Exp $	*/
+/*	$NetBSD: timer.h,v 1.1.1.3.4.1 2007/05/17 00:41:06 jdc Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,10 +17,12 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: timer.h,v 1.2.206.1 2004/03/06 08:14:00 marka Exp */
+/* Id: timer.h,v 1.3.18.2 2005/04/29 00:16:23 marka Exp */
 
 #ifndef DNS_TIMER_H
 #define DNS_TIMER_H 1
+
+/*! \file */
 
 /***
  ***	Imports
@@ -38,10 +40,10 @@ ISC_LANG_BEGINDECLS
 isc_result_t
 dns_timer_setidle(isc_timer_t *timer, unsigned int maxtime,
 		  unsigned int idletime, isc_boolean_t purge);
-/*
+/*%<
  * Convenience function for setting up simple, one-second-granularity
  * idle timers as used by zone transfers.
- *
+ * \brief
  * Set the timer 'timer' to go off after 'idletime' seconds of inactivity,
  * or after 'maxtime' at the very latest.  Events are purged iff
  * 'purge' is ISC_TRUE.

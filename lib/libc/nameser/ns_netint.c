@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_netint.c,v 1.2 2004/05/20 20:19:00 christos Exp $	*/
+/*	$NetBSD: ns_netint.c,v 1.2.10.1 2007/05/17 00:43:50 jdc Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -20,9 +20,9 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #ifdef notdef
-static const char rcsid[] = "Id: ns_netint.c,v 1.1.206.1 2004/03/09 08:33:44 marka Exp";
+static const char rcsid[] = "Id: ns_netint.c,v 1.2.18.1 2005/04/27 05:01:08 sra Exp";
 #else
-__RCSID("$NetBSD: ns_netint.c,v 1.2 2004/05/20 20:19:00 christos Exp $");
+__RCSID("$NetBSD: ns_netint.c,v 1.2.10.1 2007/05/17 00:43:50 jdc Exp $");
 #endif
 #endif
 
@@ -61,3 +61,5 @@ void
 ns_put32(u_int32_t src, u_char *dst) {
 	NS_PUT32(src, dst);
 }
+
+/*! \file */

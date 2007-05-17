@@ -1,7 +1,7 @@
-/*	$NetBSD: control.h,v 1.1.1.4 2005/12/21 23:08:10 christos Exp $	*/
+/*	$NetBSD: control.h,v 1.1.1.4.4.1 2007/05/17 00:35:16 jdc Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2001-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,18 +17,20 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: control.h,v 1.6.2.2.2.7 2004/09/03 03:43:32 marka Exp */
+/* Id: control.h,v 1.14.18.8 2006/03/09 23:46:20 marka Exp */
 
 #ifndef NAMED_CONTROL_H
 #define NAMED_CONTROL_H 1
 
-/*
+/*! \file
+ * \brief
  * The name server command channel.
  */
 
 #include <isccc/types.h>
 
-#include <named/aclconf.h>
+#include <isccfg/aclconf.h>
+
 #include <named/types.h>
 
 #define NS_CONTROL_PORT			953
@@ -50,18 +52,21 @@
 #define NS_COMMAND_FREEZE	"freeze"
 #define NS_COMMAND_UNFREEZE	"unfreeze"
 #define NS_COMMAND_THAW		"thaw"
+#define NS_COMMAND_TIMERPOKE	"timerpoke"
 #define NS_COMMAND_RECURSING	"recursing"
 #define NS_COMMAND_NULL		"null"
+#define NS_COMMAND_NOTIFY	"notify"
+#define NS_COMMAND_VALIDATION	"validation"
 
 isc_result_t
 ns_controls_create(ns_server_t *server, ns_controls_t **ctrlsp);
-/*
+/*%<
  * Create an initial, empty set of command channels for 'server'.
  */
 
 void
 ns_controls_destroy(ns_controls_t **ctrlsp);
-/*
+/*%<
  * Destroy a set of command channels.
  *
  * Requires:
@@ -69,9 +74,9 @@ ns_controls_destroy(ns_controls_t **ctrlsp);
  */
 
 isc_result_t
-ns_controls_configure(ns_controls_t *controls, cfg_obj_t *config,
-		      ns_aclconfctx_t *aclconfctx);
-/*
+ns_controls_configure(ns_controls_t *controls, const cfg_obj_t *config,
+		      cfg_aclconfctx_t *aclconfctx);
+/*%<
  * Configure zero or more command channels into 'controls'
  * as defined in the configuration parse tree 'config'.
  * The channels will evaluate ACLs in the context of
@@ -80,7 +85,7 @@ ns_controls_configure(ns_controls_t *controls, cfg_obj_t *config,
 
 void
 ns_controls_shutdown(ns_controls_t *controls);
-/*
+/*%<
  * Initiate shutdown of all the command channels in 'controls'.
  */
 

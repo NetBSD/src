@@ -1,4 +1,4 @@
-/*	$NetBSD: gen.c,v 1.1.1.3 2005/12/21 23:15:27 christos Exp $	*/
+/*	$NetBSD: gen.c,v 1.1.1.3.4.1 2007/05/17 00:39:46 jdc Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -18,10 +18,11 @@
  */
 
 #if !defined(LINT) && !defined(CODECENTER)
-static const char rcsid[] = "Id: gen.c,v 1.3.206.3 2004/09/16 00:57:34 marka Exp";
+static const char rcsid[] = "Id: gen.c,v 1.5.18.2 2005/04/27 05:00:56 sra Exp";
 #endif
 
-/*
+/*! \file
+ * \brief
  * this is the top level dispatcher
  *
  * The dispatcher is implemented as an accessor class; it is an

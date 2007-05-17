@@ -1,7 +1,7 @@
-/*	$NetBSD: lex.c,v 1.1.1.4 2005/12/21 23:17:17 christos Exp $	*/
+/*	$NetBSD: lex.c,v 1.1.1.4.4.1 2007/05/17 00:41:46 jdc Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,7 +17,9 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: lex.c,v 1.66.2.6.2.8 2004/08/28 06:25:21 marka Exp */
+/* Id: lex.c,v 1.78.18.5 2005/11/30 03:44:39 marka Exp */
+
+/*! \file */
 
 #include <config.h>
 
@@ -374,9 +376,6 @@ isc_lex_gettoken(isc_lex_t *lex, unsigned int options, isc_token_t *tokenp) {
 	source = HEAD(lex->sources);
 	REQUIRE(tokenp != NULL);
 
-	lex->saved_paren_count = lex->paren_count;
-	source->saved_line = source->line;
-
 	if (source == NULL) {
 		if ((options & ISC_LEXOPT_NOMORE) != 0) {
 			tokenp->type = isc_tokentype_nomore;
@@ -387,6 +386,9 @@ isc_lex_gettoken(isc_lex_t *lex, unsigned int options, isc_token_t *tokenp) {
 
 	if (source->result != ISC_R_SUCCESS)
 		return (source->result);
+
+	lex->saved_paren_count = lex->paren_count;
+	source->saved_line = source->line;
 
 	if (isc_buffer_remaininglength(source->pushback) == 0 &&
 	    source->at_eof)
@@ -565,7 +567,11 @@ isc_lex_gettoken(isc_lex_t *lex, unsigned int options, isc_token_t *tokenp) {
 			} else if (isdigit((unsigned char)c) &&
 				   (options & ISC_LEXOPT_NUMBER) != 0) {
 				lex->last_was_eol = ISC_FALSE;
-				state = lexstate_number;
+				if ((options & ISC_LEXOPT_OCTAL) != 0 &&
+				    (c == '8' || c == '9'))
+					state = lexstate_string;
+				else
+					state = lexstate_number;
 				goto no_read;
 			} else {
 				lex->last_was_eol = ISC_FALSE;
@@ -586,7 +592,9 @@ isc_lex_gettoken(isc_lex_t *lex, unsigned int options, isc_token_t *tokenp) {
 				    c == '\n' || c == EOF ||
 				    lex->specials[c]) {
 					int base;
-					if ((options & ISC_LEXOPT_CNUMBER) != 0)
+					if ((options & ISC_LEXOPT_OCTAL) != 0)
+						base = 8;
+					else if ((options & ISC_LEXOPT_CNUMBER) != 0)
 						base = 0;
 					else
 						base = 10;
@@ -622,6 +630,9 @@ isc_lex_gettoken(isc_lex_t *lex, unsigned int options, isc_token_t *tokenp) {
 					/* Above test supports hex numbers */
 					state = lexstate_string;
 				}
+			} else if ((options & ISC_LEXOPT_OCTAL) != 0 &&
+				   (c == '8' || c == '9')) {
+				state = lexstate_string;
 			}
 			if (remaining == 0U) {
 				result = grow_data(lex, &remaining,
@@ -635,9 +646,13 @@ isc_lex_gettoken(isc_lex_t *lex, unsigned int options, isc_token_t *tokenp) {
 			remaining--;
 			break;
 		case lexstate_string:
-			if ((!escaped &&
-			     (c == ' ' || c == '\t' || lex->specials[c])) ||
-			    c == '\r' || c == '\n' || c == EOF) {
+			/*
+			 * EOF needs to be checked before lex->specials[c]
+			 * as lex->specials[EOF] is not a good idea.
+			 */
+			if (c == '\r' || c == '\n' || c == EOF ||
+			    (!escaped &&
+			     (c == ' ' || c == '\t' || lex->specials[c]))) {
 				pushback(source, c);
 				if (source->result != ISC_R_SUCCESS) {
 					result = source->result;
@@ -815,6 +830,33 @@ isc_lex_getmastertoken(isc_lex_t *lex, isc_token_t *token,
 		if (expect == isc_tokentype_number)
 			return (ISC_R_BADNUMBER);
 		return (ISC_R_UNEXPECTEDTOKEN);
+	}
+	return (ISC_R_SUCCESS);
+}
+
+isc_result_t
+isc_lex_getoctaltoken(isc_lex_t *lex, isc_token_t *token, isc_boolean_t eol)
+{
+	unsigned int options = ISC_LEXOPT_EOL | ISC_LEXOPT_EOF |
+			       ISC_LEXOPT_DNSMULTILINE | ISC_LEXOPT_ESCAPE|
+			       ISC_LEXOPT_NUMBER | ISC_LEXOPT_OCTAL;
+	isc_result_t result;
+
+	result = isc_lex_gettoken(lex, options, token);
+	if (result == ISC_R_RANGE)
+		isc_lex_ungettoken(lex, token);
+	if (result != ISC_R_SUCCESS)
+		return (result);
+
+	if (eol && ((token->type == isc_tokentype_eol) ||
+		    (token->type == isc_tokentype_eof)))
+		return (ISC_R_SUCCESS);
+	if (token->type != isc_tokentype_number) {
+		isc_lex_ungettoken(lex, token);
+		if (token->type == isc_tokentype_eol ||
+		    token->type == isc_tokentype_eof)
+			return (ISC_R_UNEXPECTEDEND);
+		return (ISC_R_BADNUMBER);
 	}
 	return (ISC_R_SUCCESS);
 }

@@ -1,7 +1,7 @@
-/*	$NetBSD: client.c,v 1.1.1.4 2005/12/21 23:07:54 christos Exp $	*/
+/*	$NetBSD: client.c,v 1.1.1.4.4.1 2007/05/17 00:35:07 jdc Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,13 +17,14 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: client.c,v 1.176.2.13.4.26 2005/07/27 02:53:14 marka Exp */
+/* Id: client.c,v 1.219.18.20 2006/07/22 01:02:36 marka Exp */
 
 #include <config.h>
 
 #include <isc/formatcheck.h>
 #include <isc/mutex.h>
 #include <isc/once.h>
+#include <isc/platform.h>
 #include <isc/print.h>
 #include <isc/stdio.h>
 #include <isc/string.h>
@@ -35,12 +36,13 @@
 #include <dns/dispatch.h>
 #include <dns/events.h>
 #include <dns/message.h>
+#include <dns/peer.h>
 #include <dns/rcode.h>
-#include <dns/resolver.h>
 #include <dns/rdata.h>
 #include <dns/rdataclass.h>
 #include <dns/rdatalist.h>
 #include <dns/rdataset.h>
+#include <dns/resolver.h>
 #include <dns/tsig.h>
 #include <dns/view.h>
 #include <dns/zone.h>
@@ -55,7 +57,9 @@
  *** Client
  ***/
 
-/*
+/*! \file
+ * Client Routines
+ *
  * Important note!
  *
  * All client state changes, other than that from idle to listening, occur
@@ -89,6 +93,25 @@
 #define SEND_BUFFER_SIZE		4096
 #define RECV_BUFFER_SIZE		4096
 
+#ifdef ISC_PLATFORM_USETHREADS
+#define NMCTXS				100
+/*%<
+ * Number of 'mctx pools' for clients. (Should this be configurable?)
+ * When enabling threads, we use a pool of memory contexts shared by
+ * client objects, since concurrent access to a shared context would cause
+ * heavy contentions.  The above constant is expected to be enough for
+ * completely avoiding contentions among threads for an authoritative-only
+ * server.
+ */
+#else
+#define NMCTXS				0
+/*%<
+ * If named with built without thread, simply share manager's context.  Using
+ * a separate context in this case would simply waste memory.
+ */
+#endif
+
+/*% nameserver client manager structure */
 struct ns_clientmgr {
 	/* Unlocked. */
 	unsigned int			magic;
@@ -98,15 +121,20 @@ struct ns_clientmgr {
 	isc_mutex_t			lock;
 	/* Locked by lock. */
 	isc_boolean_t			exiting;
-	client_list_t			active; 	/* Active clients */
-	client_list_t			recursing; 	/* Recursing clients */
-	client_list_t 			inactive;	/* To be recycled */
+	client_list_t			active; 	/*%< Active clients */
+	client_list_t			recursing; 	/*%< Recursing clients */
+	client_list_t 			inactive;	/*%< To be recycled */
+#if NMCTXS > 0
+	/*%< mctx pool for clients. */
+	unsigned int			nextmctx;
+	isc_mem_t *			mctxpool[NMCTXS];
+#endif
 };
 
 #define MANAGER_MAGIC			ISC_MAGIC('N', 'S', 'C', 'm')
 #define VALID_MANAGER(m)		ISC_MAGIC_VALID(m, MANAGER_MAGIC)
 
-/*
+/*! 
  * Client object states.  Ordering is significant: higher-numbered
  * states are generally "more active", meaning that the client can
  * have more dynamically allocated data, outstanding events, etc.
@@ -119,12 +147,12 @@ struct ns_clientmgr {
  */
 
 #define NS_CLIENTSTATE_FREED    0
-/*
+/*%<
  * The client object no longer exists.
  */
 
 #define NS_CLIENTSTATE_INACTIVE 1
-/*
+/*%<
  * The client object exists and has a task and timer.
  * Its "query" struct and sendbuf are initialized.
  * It is on the client manager's list of inactive clients.
@@ -132,7 +160,7 @@ struct ns_clientmgr {
  */
 
 #define NS_CLIENTSTATE_READY    2
-/*
+/*%<
  * The client object is either a TCP or a UDP one, and
  * it is associated with a network interface.  It is on the
  * client manager's list of active clients.
@@ -145,7 +173,7 @@ struct ns_clientmgr {
  */
 
 #define NS_CLIENTSTATE_READING  3
-/*
+/*%<
  * The client object is a TCP client object that has received
  * a connection.  It has a tcpsocket, tcpmsg, TCP quota, and an
  * outstanding TCP read request.  This state is not used for
@@ -153,19 +181,27 @@ struct ns_clientmgr {
  */
 
 #define NS_CLIENTSTATE_WORKING  4
-/*
+/*%<
  * The client object has received a request and is working
  * on it.  It has a view, and it may have any of a non-reset OPT,
  * recursion quota, and an outstanding write request.
  */
 
 #define NS_CLIENTSTATE_MAX      9
-/*
+/*%<
  * Sentinel value used to indicate "no state".  When client->newstate
  * has this value, we are not attempting to exit the current state.
  * Must be greater than any valid state.
  */
 
+/*
+ * Enable ns_client_dropport() by default.
+ */
+#ifndef NS_CLIENT_DROPPORT
+#define NS_CLIENT_DROPPORT 1
+#endif
+
+unsigned int ns_client_requests;
 
 static void client_read(ns_client_t *client);
 static void client_accept(ns_client_t *client);
@@ -223,7 +259,7 @@ ns_client_settimeout(ns_client_t *client, unsigned int seconds) {
 	}
 }
 
-/*
+/*%
  * Check for a deactivation or shutdown request and take appropriate
  * action.  Returns ISC_TRUE if either is in progress; in this case
  * the caller must no longer use the client object as it may have been
@@ -287,8 +323,17 @@ exit_check(ns_client_t *client) {
 		}
 		/*
 		 * I/O cancel is complete.  Burn down all state
-		 * related to the current request.
+		 * related to the current request.  Ensure that
+		 * the client is on the active list and not the
+		 * recursing list.
 		 */
+		LOCK(&client->manager->lock);
+		if (client->list == &client->manager->recursing) {
+			ISC_LIST_UNLINK(*client->list, client, link);
+			ISC_LIST_APPEND(client->manager->active, client, link);
+			client->list = &client->manager->active;
+		}
+		UNLOCK(&client->manager->lock);
 		ns_client_endrequest(client);
 
 		client->state = NS_CLIENTSTATE_READING;
@@ -476,7 +521,7 @@ exit_check(ns_client_t *client) {
 
 		CTRACE("free");
 		client->magic = 0;
-		isc_mem_put(client->mctx, client, sizeof(*client));
+		isc_mem_putanddetach(&client->mctx, client, sizeof(*client));
 
 		goto unlock;
 	}
@@ -497,7 +542,7 @@ exit_check(ns_client_t *client) {
 	return (ISC_TRUE);
 }
 
-/*
+/*%
  * The client's task has received the client's control event
  * as part of the startup process.
  */
@@ -523,7 +568,7 @@ client_start(isc_task_t *task, isc_event_t *event) {
 }
 
 
-/*
+/*%
  * The client's task has received a shutdown event.
  */
 static void
@@ -578,6 +623,7 @@ ns_client_endrequest(ns_client_t *client) {
 
 	client->udpsize = 512;
 	client->extflags = 0;
+	client->ednsversion = -1;
 	dns_message_reset(client->message, DNS_MESSAGE_INTENTPARSE);
 
 	if (client->recursionquota != NULL)
@@ -692,7 +738,7 @@ client_senddone(isc_task_t *task, isc_event_t *event) {
 	ns_client_next(client, ISC_R_SUCCESS);
 }
 
-/*
+/*%
  * We only want to fail with ISC_R_NOSPACE when called from
  * ns_client_sendraw() and not when called from ns_client_send(),
  * tcpbuffer is NULL when called from ns_client_sendraw() and
@@ -974,6 +1020,34 @@ ns_client_send(ns_client_t *client) {
 	ns_client_next(client, result);
 }
 
+#if NS_CLIENT_DROPPORT
+#define DROPPORT_NO		0
+#define DROPPORT_REQUEST	1
+#define DROPPORT_RESPONSE	2
+/*%
+ * ns_client_dropport determines if certain requests / responses
+ * should be dropped based on the port number.
+ *
+ * Returns:
+ * \li	0:	Don't drop.
+ * \li	1:	Drop request.
+ * \li	2:	Drop (error) response.
+ */
+static int
+ns_client_dropport(in_port_t port) {
+	switch (port) {
+	case 7: /* echo */
+	case 13: /* daytime */
+	case 19: /* chargen */
+	case 37: /* time */
+		return (DROPPORT_REQUEST);
+	case 464: /* kpasswd */
+		return (DROPPORT_RESPONSE);
+	}
+	return (DROPPORT_NO);
+}
+#endif
+
 void
 ns_client_error(ns_client_t *client, isc_result_t result) {
 	dns_rcode_t rcode;
@@ -985,6 +1059,28 @@ ns_client_error(ns_client_t *client, isc_result_t result) {
 
 	message = client->message;
 	rcode = dns_result_torcode(result);
+
+#if NS_CLIENT_DROPPORT
+	/*
+	 * Don't send FORMERR to ports on the drop port list.
+	 */
+	if (rcode == dns_rcode_formerr &&
+	    ns_client_dropport(isc_sockaddr_getport(&client->peeraddr)) !=
+	    DROPPORT_NO) {
+		char buf[64];
+		isc_buffer_t b;
+
+		isc_buffer_init(&b, buf, sizeof(buf) - 1);
+		if (dns_rcode_totext(rcode, &b) != ISC_R_SUCCESS)
+			isc_buffer_putstr(&b, "UNKNOWN RCODE");
+		ns_client_log(client, DNS_LOGCATEGORY_SECURITY,
+			      NS_LOGMODULE_CLIENT, ISC_LOG_DEBUG(10),
+			      "dropped error (%.*s) response: suspicious port",
+			      (int)isc_buffer_usedlength(&b), buf);
+		ns_client_next(client, ISC_R_SUCCESS);
+		return;
+	}
+#endif
 
 	/*
 	 * Message may be an in-progress reply that we had trouble
@@ -1119,6 +1215,64 @@ allowed(isc_netaddr_t *addr, dns_name_t *signer, dns_acl_t *acl) {
 }
 
 /*
+ * Callback to see if a non-recursive query coming from 'srcaddr' to
+ * 'destaddr', with optional key 'mykey' for class 'rdclass' would be
+ * delivered to 'myview'.
+ *
+ * We run this unlocked as both the view list and the interface list
+ * are updated when the approprite task has exclusivity.
+ */
+isc_boolean_t
+ns_client_isself(dns_view_t *myview, dns_tsigkey_t *mykey,
+		 isc_sockaddr_t *srcaddr, isc_sockaddr_t *dstaddr,
+		 dns_rdataclass_t rdclass, void *arg)
+{
+	dns_view_t *view;
+	dns_tsigkey_t *key;
+	isc_netaddr_t netsrc;
+	isc_netaddr_t netdst;
+
+	UNUSED(arg);
+
+	if (!ns_interfacemgr_listeningon(ns_g_server->interfacemgr, dstaddr))
+		return (ISC_FALSE);
+
+	isc_netaddr_fromsockaddr(&netsrc, srcaddr);
+	isc_netaddr_fromsockaddr(&netdst, dstaddr);
+
+	for (view = ISC_LIST_HEAD(ns_g_server->viewlist);
+	     view != NULL;
+	     view = ISC_LIST_NEXT(view, link)) {
+		dns_name_t *tsig = NULL;
+
+		if (view->matchrecursiveonly)
+			continue;
+
+		if (rdclass != view->rdclass)
+			continue;
+
+		if (mykey != NULL) {
+			isc_boolean_t match;
+			isc_result_t result;
+
+			tsig = &mykey->name;
+			result = dns_view_gettsig(view, tsig, &key);
+			if (result != ISC_R_SUCCESS)
+				continue;
+			match = dst_key_compare(mykey->key, key->key);
+			dns_tsigkey_detach(&key);
+			if (!match)
+				continue;
+		}
+
+		if (allowed(&netsrc, tsig, view->matchclients) &&
+		    allowed(&netdst, tsig, view->matchdestinations))
+			break;
+	}
+	return (ISC_TF(view == myview));
+}
+
+/*
  * Handle an incoming request event from the socket (UDP case)
  * or tcpmsg (TCP case).
  */
@@ -1151,6 +1305,8 @@ client_request(isc_task_t *task, isc_event_t *event) {
 	       TCP_CLIENT(client) ?
 	       NS_CLIENTSTATE_READING :
 	       NS_CLIENTSTATE_READY);
+
+	ns_client_requests++;
 
 	if (event->ev_type == ISC_SOCKEVENT_RECVDONE) {
 		INSIST(!TCP_CLIENT(client));
@@ -1210,6 +1366,17 @@ client_request(isc_task_t *task, isc_event_t *event) {
 
 	isc_netaddr_fromsockaddr(&netaddr, &client->peeraddr);
 
+#if NS_CLIENT_DROPPORT
+	if (ns_client_dropport(isc_sockaddr_getport(&client->peeraddr)) ==
+	    DROPPORT_REQUEST) {
+		ns_client_log(client, DNS_LOGCATEGORY_SECURITY,
+			      NS_LOGMODULE_CLIENT, ISC_LOG_DEBUG(10),
+			      "dropped request: suspicious port");
+		ns_client_next(client, ISC_R_SUCCESS);
+		goto cleanup;
+	}
+#endif
+
 	ns_client_log(client, NS_LOGCATEGORY_CLIENT,
 		      NS_LOGMODULE_CLIENT, ISC_LOG_DEBUG(3),
 		      "%s request",
@@ -1244,6 +1411,7 @@ client_request(isc_task_t *task, isc_event_t *event) {
 			      NS_LOGMODULE_CLIENT, ISC_LOG_DEBUG(2),
 			      "dropping multicast request");
 		ns_client_next(client, DNS_R_REFUSED);
+		goto cleanup;
 	}
 
 	result = dns_message_peekheader(buffer, &id, &flags);
@@ -1309,8 +1477,6 @@ client_request(isc_task_t *task, isc_event_t *event) {
 	 */
 	opt = dns_message_getopt(client->message);
 	if (opt != NULL) {
-		unsigned int version;
-
 		/*
 		 * Set the client's UDP buffer size.
 		 */
@@ -1329,22 +1495,24 @@ client_request(isc_task_t *task, isc_event_t *event) {
 		client->extflags = (isc_uint16_t)(opt->ttl & 0xFFFF);
 
 		/*
+		 * Do we understand this version of EDNS?
+		 *
+		 * XXXRTH need library support for this!
+		 */
+		client->ednsversion = (opt->ttl & 0x00FF0000) >> 16;
+		if (client->ednsversion > 0) {
+			result = client_addopt(client);
+			if (result == ISC_R_SUCCESS)
+				result = DNS_R_BADVERS;
+			ns_client_error(client, result);
+			goto cleanup;
+		}
+		/*
 		 * Create an OPT for our reply.
 		 */
 		result = client_addopt(client);
 		if (result != ISC_R_SUCCESS) {
 			ns_client_error(client, result);
-			goto cleanup;
-		}
-
-		/*
-		 * Do we understand this version of ENDS?
-		 *
-		 * XXXRTH need library support for this!
-		 */
-		version = (opt->ttl & 0x00FF0000) >> 16;
-		if (version != 0) {
-			ns_client_error(client, DNS_R_BADVERS);
 			goto cleanup;
 		}
 	}
@@ -1534,12 +1702,15 @@ client_request(isc_task_t *task, isc_event_t *event) {
 	 * Decide whether recursive service is available to this client.
 	 * We do this here rather than in the query code so that we can
 	 * set the RA bit correctly on all kinds of responses, not just
-	 * responses to ordinary queries.
+	 * responses to ordinary queries.  Note if you can't query the
+	 * cache there is no point in setting RA.
 	 */
 	ra = ISC_FALSE;
 	if (client->view->resolver != NULL &&
 	    client->view->recursion == ISC_TRUE &&
 	    ns_client_checkaclsilent(client, client->view->recursionacl,
+				     ISC_TRUE) == ISC_R_SUCCESS &&
+	    ns_client_checkaclsilent(client, client->view->queryacl,
 				     ISC_TRUE) == ISC_R_SUCCESS)
 		ra = ISC_TRUE;
 
@@ -1549,6 +1720,19 @@ client_request(isc_task_t *task, isc_event_t *event) {
 	ns_client_log(client, DNS_LOGCATEGORY_SECURITY, NS_LOGMODULE_CLIENT,
 		      ISC_LOG_DEBUG(3), ra ? "recursion available" :
 		      			     "recursion not available");
+
+	/*
+	 * Adjust maximum UDP response size for this client.
+	 */
+	if (client->udpsize > 512) {
+		dns_peer_t *peer = NULL;
+		isc_uint16_t udpsize = view->maxudp;
+		(void) dns_peerlist_peerbyaddr(view->peers, &netaddr, &peer);
+		if (peer != NULL)
+			dns_peer_getmaxudp(peer, &udpsize);
+		if (client->udpsize > udpsize)
+			client->udpsize = udpsize;
+	}
 
 	/*
 	 * Dispatch the request.
@@ -1611,9 +1795,42 @@ client_timeout(isc_task_t *task, isc_event_t *event) {
 }
 
 static isc_result_t
+get_clientmctx(ns_clientmgr_t *manager, isc_mem_t **mctxp) {
+	isc_mem_t *clientmctx;
+#if NMCTXS > 0
+	isc_result_t result;
+#endif
+
+	/*
+	 * Caller must be holding the manager lock.
+	 */
+#if NMCTXS > 0
+	INSIST(manager->nextmctx < NMCTXS);
+	clientmctx = manager->mctxpool[manager->nextmctx];
+	if (clientmctx == NULL) {
+		result = isc_mem_create(0, 0, &clientmctx);
+		if (result != ISC_R_SUCCESS)
+			return (result);
+
+		manager->mctxpool[manager->nextmctx] = clientmctx;
+		manager->nextmctx++;
+		if (manager->nextmctx == NMCTXS)
+			manager->nextmctx = 0;
+	}
+#else
+	clientmctx = manager->mctx;
+#endif
+
+	isc_mem_attach(clientmctx, mctxp);
+
+	return (ISC_R_SUCCESS);
+}
+
+static isc_result_t
 client_create(ns_clientmgr_t *manager, ns_client_t **clientp) {
 	ns_client_t *client;
 	isc_result_t result;
+	isc_mem_t *mctx = NULL;
 
 	/*
 	 * Caller must be holding the manager lock.
@@ -1625,9 +1842,16 @@ client_create(ns_clientmgr_t *manager, ns_client_t **clientp) {
 
 	REQUIRE(clientp != NULL && *clientp == NULL);
 
-	client = isc_mem_get(manager->mctx, sizeof(*client));
-	if (client == NULL)
+	result = get_clientmctx(manager, &mctx);
+	if (result != ISC_R_SUCCESS)
+		return (result);
+
+	client = isc_mem_get(mctx, sizeof(*client));
+	if (client == NULL) {
+		isc_mem_detach(&mctx);
 		return (ISC_R_NOMEMORY);
+	}
+	client->mctx = mctx;
 
 	client->task = NULL;
 	result = isc_task_create(manager->taskmgr, 0, &client->task);
@@ -1644,7 +1868,7 @@ client_create(ns_clientmgr_t *manager, ns_client_t **clientp) {
 	client->timerset = ISC_FALSE;
 
 	client->message = NULL;
-	result = dns_message_create(manager->mctx, DNS_MESSAGE_INTENTPARSE,
+	result = dns_message_create(client->mctx, DNS_MESSAGE_INTENTPARSE,
 				    &client->message);
 	if (result != ISC_R_SUCCESS)
 		goto cleanup_timer;
@@ -1652,7 +1876,7 @@ client_create(ns_clientmgr_t *manager, ns_client_t **clientp) {
 	/* XXXRTH  Hardwired constants */
 
 	client->sendevent = (isc_socketevent_t *)
-			    isc_event_allocate(manager->mctx, client,
+			    isc_event_allocate(client->mctx, client,
 					       ISC_SOCKEVENT_SENDDONE,
 					       client_senddone, client,
 					       sizeof(isc_socketevent_t));
@@ -1661,14 +1885,14 @@ client_create(ns_clientmgr_t *manager, ns_client_t **clientp) {
 		goto cleanup_message;
 	}
 
-	client->recvbuf = isc_mem_get(manager->mctx, RECV_BUFFER_SIZE);
+	client->recvbuf = isc_mem_get(client->mctx, RECV_BUFFER_SIZE);
 	if  (client->recvbuf == NULL) {
 		result = ISC_R_NOMEMORY;
 		goto cleanup_sendevent;
 	}
 
 	client->recvevent = (isc_socketevent_t *)
-			    isc_event_allocate(manager->mctx, client,
+			    isc_event_allocate(client->mctx, client,
 					       ISC_SOCKEVENT_RECVDONE,
 					       client_request, client,
 					       sizeof(isc_socketevent_t));
@@ -1678,7 +1902,6 @@ client_create(ns_clientmgr_t *manager, ns_client_t **clientp) {
 	}
 
 	client->magic = NS_CLIENT_MAGIC;
-	client->mctx = manager->mctx;
 	client->manager = NULL;
 	client->state = NS_CLIENTSTATE_INACTIVE;
 	client->newstate = NS_CLIENTSTATE_MAX;
@@ -1700,6 +1923,7 @@ client_create(ns_clientmgr_t *manager, ns_client_t **clientp) {
 	client->opt = NULL;
 	client->udpsize = 512;
 	client->extflags = 0;
+	client->ednsversion = -1;
 	client->next = NULL;
 	client->shutdown = NULL;
 	client->shutdown_arg = NULL;
@@ -1748,7 +1972,7 @@ client_create(ns_clientmgr_t *manager, ns_client_t **clientp) {
 	isc_event_free((isc_event_t **)&client->recvevent);
 
  cleanup_recvbuf:
-	isc_mem_put(manager->mctx, client->recvbuf, RECV_BUFFER_SIZE);
+	isc_mem_put(client->mctx, client->recvbuf, RECV_BUFFER_SIZE);
 
  cleanup_sendevent:
 	isc_event_free((isc_event_t **)&client->sendevent);
@@ -1765,7 +1989,7 @@ client_create(ns_clientmgr_t *manager, ns_client_t **clientp) {
 	isc_task_detach(&client->task);
 
  cleanup_client:
-	isc_mem_put(manager->mctx, client, sizeof(*client));
+	isc_mem_putanddetach(&client->mctx, client, sizeof(*client));
 
 	return (result);
 }
@@ -2018,11 +2242,22 @@ ns_client_replace(ns_client_t *client) {
 
 static void
 clientmgr_destroy(ns_clientmgr_t *manager) {
+#if NMCTXS > 0
+	int i;
+#endif
+
 	REQUIRE(ISC_LIST_EMPTY(manager->active));
 	REQUIRE(ISC_LIST_EMPTY(manager->inactive));
 	REQUIRE(ISC_LIST_EMPTY(manager->recursing));
 
 	MTRACE("clientmgr_destroy");
+
+#if NMCTXS > 0
+	for (i = 0; i < NMCTXS; i++) {
+		if (manager->mctxpool[i] != NULL)
+			isc_mem_detach(&manager->mctxpool[i]);
+	}
+#endif
 
 	DESTROYLOCK(&manager->lock);
 	manager->magic = 0;
@@ -2035,6 +2270,9 @@ ns_clientmgr_create(isc_mem_t *mctx, isc_taskmgr_t *taskmgr,
 {
 	ns_clientmgr_t *manager;
 	isc_result_t result;
+#if NMCTXS > 0
+	int i;
+#endif
 
 	manager = isc_mem_get(mctx, sizeof(*manager));
 	if (manager == NULL)
@@ -2051,6 +2289,11 @@ ns_clientmgr_create(isc_mem_t *mctx, isc_taskmgr_t *taskmgr,
 	ISC_LIST_INIT(manager->active);
 	ISC_LIST_INIT(manager->inactive);
 	ISC_LIST_INIT(manager->recursing);
+#if NMCTXS > 0
+	manager->nextmctx = 0;
+	for (i = 0; i < NMCTXS; i++)
+		manager->mctxpool[i] = NULL; /* will be created on-demand */
+#endif
 	manager->magic = MANAGER_MAGIC;
 
 	MTRACE("create");
@@ -2365,4 +2608,21 @@ ns_client_dumprecursing(FILE *f, ns_clientmgr_t *manager) {
 		client = ISC_LIST_NEXT(client, link);
 	}
 	UNLOCK(&manager->lock);
+}
+
+void
+ns_client_qnamereplace(ns_client_t *client, dns_name_t *name) {
+
+	if (client->manager != NULL)
+		LOCK(&client->manager->lock);
+	if (client->query.restarts > 0) {
+		/*
+		 * client->query.qname was dynamically allocated.
+		 */
+		dns_message_puttempname(client->message,
+					&client->query.qname);
+	}
+	client->query.qname = name;
+	if (client->manager != NULL)
+		UNLOCK(&client->manager->lock);
 }

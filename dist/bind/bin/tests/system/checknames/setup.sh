@@ -12,7 +12,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: setup.sh,v 1.2.2.2 2004/03/06 10:21:50 marka Exp
+# Id: setup.sh,v 1.3 2004/03/05 04:59:26 marka Exp
 
 cp ns1/ignore.example.db.in ns1/ignore.example.db
 cp ns1/warn.example.db.in ns1/warn.example.db

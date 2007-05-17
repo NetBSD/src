@@ -1,20 +1,20 @@
-/*	$NetBSD: base64.c,v 1.8 2002/11/11 01:15:17 thorpej Exp $	*/
+/*	$NetBSD: base64.c,v 1.8.16.1 2007/05/17 00:43:51 jdc Exp $	*/
 
 /*
- * Copyright (c) 1996 by Internet Software Consortium.
+ * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 1996-1999 by Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM DISCLAIMS
- * ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL INTERNET SOFTWARE
- * CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL
- * DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR
- * PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS
- * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
- * SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
+ * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 /*
@@ -44,12 +44,19 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: base64.c,v 1.8 2002/11/11 01:15:17 thorpej Exp $");
+#if 0
+static const char rcsid[] = "Id: base64.c,v 1.3.18.1 2005/04/27 05:01:05 sra Exp";
+#else
+__RCSID("$NetBSD: base64.c,v 1.8.16.1 2007/05/17 00:43:51 jdc Exp $");
+#endif
 #endif /* LIBC_SCCS and not lint */
+
+#include "port_before.h"
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/socket.h>
+
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <arpa/nameser.h>
@@ -58,13 +65,10 @@ __RCSID("$NetBSD: base64.c,v 1.8 2002/11/11 01:15:17 thorpej Exp $");
 #include <ctype.h>
 #include <resolv.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
-#if defined(BSD) && (BSD >= 199103) && defined(AF_INET6)
-# include <stdlib.h>
-# include <string.h>
-#else
-# include "../conf/portability.h"
-#endif
+#include "port_after.h"
 
 #define Assert(Cond) if (!(Cond)) abort()
 
@@ -73,7 +77,7 @@ static const char Base64[] =
 static const char Pad64 = '=';
 
 /* (From RFC1521 and draft-ietf-dnssec-secext-03.txt)
-   The following encoding technique is taken from RFC 1521 by Borenstein
+   The following encoding technique is taken from RFC1521 by Borenstein
    and Freed.  It is reproduced here in a slightly edited form for
    convenience.
 
@@ -136,12 +140,7 @@ static const char Pad64 = '=';
    */
 
 int
-b64_ntop(src, srclength, target, targsize)
-	u_char const *src;
-	size_t srclength;
-	char *target;
-	size_t targsize;
-{
+b64_ntop(u_char const *src, size_t srclength, char *target, size_t targsize) {
 	size_t datalength = 0;
 	u_char input[3];
 	u_char output[4];
@@ -150,7 +149,7 @@ b64_ntop(src, srclength, target, targsize)
 	_DIAGASSERT(src != NULL);
 	_DIAGASSERT(target != NULL);
 
-	while (2 < srclength) {
+	while (2U < srclength) {
 		input[0] = *src++;
 		input[1] = *src++;
 		input[2] = *src++;
@@ -176,7 +175,7 @@ b64_ntop(src, srclength, target, targsize)
 	}
     
 	/* Now we worry about padding. */
-	if (0 != srclength) {
+	if (0U != srclength) {
 		/* Get what's left. */
 		input[0] = input[1] = input[2] = '\0';
 		for (i = 0; i < srclength; i++)
@@ -195,7 +194,7 @@ b64_ntop(src, srclength, target, targsize)
 			return (-1);
 		target[datalength++] = Base64[output[0]];
 		target[datalength++] = Base64[output[1]];
-		if (srclength == 1)
+		if (srclength == 1U)
 			target[datalength++] = Pad64;
 		else
 			target[datalength++] = Base64[output[2]];
@@ -203,7 +202,7 @@ b64_ntop(src, srclength, target, targsize)
 	}
 	if (datalength >= targsize)
 		return (-1);
-	target[datalength] = '\0';	/* Returned value doesn't count \0. */
+	target[datalength] = '\0';	/*%< Returned value doesn't count \\0. */
 	return (datalength);
 }
 
@@ -230,20 +229,20 @@ b64_pton(src, target, targsize)
 	tarindex = 0;
 
 	while ((ch = (u_char) *src++) != '\0') {
-		if (isspace(ch))	/* Skip whitespace anywhere. */
+		if (isspace(ch))	/*%< Skip whitespace anywhere. */
 			continue;
 
 		if (ch == Pad64)
 			break;
 
 		pos = strchr(Base64, ch);
-		if (pos == 0) 		/* A non-base64 character. */
+		if (pos == 0) 		/*%< A non-base64 character. */
 			return (-1);
 
 		switch (state) {
 		case 0:
 			if (target) {
-				if (tarindex >= targsize)
+				if ((size_t)tarindex >= targsize)
 					return (-1);
 				target[tarindex] = (pos - Base64) << 2;
 			}
@@ -251,7 +250,7 @@ b64_pton(src, target, targsize)
 			break;
 		case 1:
 			if (target) {
-				if (tarindex + 1 >= targsize)
+				if ((size_t)tarindex + 1 >= targsize)
 					return (-1);
 				target[tarindex] |= 
 				    (u_int32_t)(pos - Base64) >> 4;
@@ -263,7 +262,7 @@ b64_pton(src, target, targsize)
 			break;
 		case 2:
 			if (target) {
-				if (tarindex + 1 >= targsize)
+				if ((size_t)tarindex + 1 >= targsize)
 					return (-1);
 				target[tarindex] |= 
 					(u_int32_t)(pos - Base64) >> 2;
@@ -275,7 +274,7 @@ b64_pton(src, target, targsize)
 			break;
 		case 3:
 			if (target) {
-				if (tarindex >= targsize)
+				if ((size_t)tarindex >= targsize)
 					return (-1);
 				target[tarindex] |= (pos - Base64);
 			}
@@ -292,14 +291,14 @@ b64_pton(src, target, targsize)
 	 * on a byte boundary, and/or with erroneous trailing characters.
 	 */
 
-	if (ch == Pad64) {		/* We got a pad char. */
-		ch = *src++;		/* Skip it, get next. */
+	if (ch == Pad64) {		/*%< We got a pad char. */
+		ch = *src++;		/*%< Skip it, get next. */
 		switch (state) {
-		case 0:		/* Invalid = in first position */
-		case 1:		/* Invalid = in second position */
+		case 0:		/*%< Invalid = in first position */
+		case 1:		/*%< Invalid = in second position */
 			return (-1);
 
-		case 2:		/* Valid, means one byte of info */
+		case 2:		/*%< Valid, means one byte of info */
 			/* Skip any number of spaces. */
 			for (; ch != '\0'; ch = (u_char) *src++)
 				if (!isspace(ch))
@@ -307,11 +306,11 @@ b64_pton(src, target, targsize)
 			/* Make sure there is another trailing = sign. */
 			if (ch != Pad64)
 				return (-1);
-			ch = *src++;		/* Skip the = */
+			ch = *src++;		/*%< Skip the = */
 			/* Fall through to "single trailing =" case. */
 			/* FALLTHROUGH */
 
-		case 3:		/* Valid, means two bytes of info */
+		case 3:		/*%< Valid, means two bytes of info */
 			/*
 			 * We know this char is an =.  Is there anything but
 			 * whitespace after it?
@@ -340,3 +339,5 @@ b64_pton(src, target, targsize)
 
 	return (tarindex);
 }
+
+/*! \file */

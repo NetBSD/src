@@ -1,4 +1,4 @@
-# Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 1998-2003  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and distribute this software for any
@@ -13,7 +13,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: Makefile.in,v 1.113.2.1.8.10 2005/06/08 02:08:27 marka Exp
+# Id: Makefile.in,v 1.121.18.6 2006/07/21 02:05:57 marka Exp
 
 srcdir =	@srcdir@
 VPATH =		@srcdir@
@@ -135,7 +135,7 @@ XSRCS =		adb_test.c \
 all_tests: ${XTARGETS}
 
 genrandom@EXEEXT@: genrandom.@O@
-	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ genrandom.@O@ @GENRANDOMLIB@
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ genrandom.@O@ @GENRANDOMLIB@ ${LIBS}
 
 adb_test@EXEEXT@: adb_test.@O@ ${ISCDEPLIBS} ${DNSDEPLIBS}
 	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ adb_test.@O@ \

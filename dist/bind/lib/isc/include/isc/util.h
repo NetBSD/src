@@ -1,7 +1,7 @@
-/*	$NetBSD: util.h,v 1.1.1.3 2005/12/21 23:17:30 christos Exp $	*/
+/*	$NetBSD: util.h,v 1.1.1.3.4.1 2007/05/17 00:42:39 jdc Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,17 +17,18 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: util.h,v 1.21.12.5 2004/03/08 09:04:53 marka Exp */
+/* Id: util.h,v 1.24.18.2 2005/04/29 00:17:04 marka Exp */
 
 #ifndef ISC_UTIL_H
 #define ISC_UTIL_H 1
 
-/*
+/*! \file util.h
  * NOTE:
  *
  * This file is not to be included from any <isc/???.h> (or other) library
  * files.
  *
+ * \brief
  * Including this file puts several macros in your name space that are
  * not protected (as all the other ISC functions/macros do) by prepending
  * ISC_ or isc_ to the name.
@@ -37,21 +38,22 @@
  *** General Macros.
  ***/
 
-/*
+/*%
  * Use this to hide unused function arguments.
- *
+ * \code
  * int
  * foo(char *bar)
  * {
  *	UNUSED(bar);
  * }
+ * \endcode
  */
 #define UNUSED(x)      (void)(x)
 
 #define ISC_MAX(a, b)  ((a) > (b) ? (a) : (b))
 #define ISC_MIN(a, b)  ((a) < (b) ? (a) : (b))
 
-/*
+/*%
  * Use this to remove the const qualifier of a variable to assign it to
  * a non-const variable or pass it as a non-const function argument ...
  * but only when you are sure it won't then be changed!
@@ -66,16 +68,15 @@
 		var = _u.v; \
 	} while (0)
 
-/*
+/*%
  * Use this in translation units that would otherwise be empty, to
  * suppress compiler warnings.
  */
 #define EMPTY_TRANSLATION_UNIT static void isc__empty(void) { isc__empty(); }
 
-/*
+/*%
  * We use macros instead of calling the routines directly because
  * the capital letters make the locking stand out.
- *
  * We RUNTIME_CHECK for success since in general there's no way
  * for us to continue if they fail.
  */
@@ -205,9 +206,13 @@
  */
 #include <isc/assertions.h>	/* Contractual promise. */
 
+/*% Require Assertion */
 #define REQUIRE(e)			ISC_REQUIRE(e)
+/*% Ensure Assertion */
 #define ENSURE(e)			ISC_ENSURE(e)
+/*% Insist Assertion */
 #define INSIST(e)			ISC_INSIST(e)
+/*% Invariant Assertion */
 #define INVARIANT(e)			ISC_INVARIANT(e)
 
 /*
@@ -215,11 +220,14 @@
  */
 #include <isc/error.h>		/* Contractual promise. */
 
+/*% Unexpected Error */
 #define UNEXPECTED_ERROR		isc_error_unexpected
+/*% Fatal Error */
 #define FATAL_ERROR			isc_error_fatal
+/*% Runtime Check */
 #define RUNTIME_CHECK(cond)		ISC_ERROR_RUNTIMECHECK(cond)
 
-/*
+/*%
  * Time
  */
 #define TIME_NOW(tp) 	RUNTIME_CHECK(isc_time_now((tp)) == ISC_R_SUCCESS)

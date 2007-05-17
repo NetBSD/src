@@ -1,7 +1,7 @@
-/*	$NetBSD: formatcheck.h,v 1.1.1.3 2005/12/21 23:17:24 christos Exp $	*/
+/*	$NetBSD: formatcheck.h,v 1.1.1.3.4.1 2007/05/17 00:42:28 jdc Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,15 +17,21 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: formatcheck.h,v 1.6.206.1 2004/03/06 08:14:41 marka Exp */
+/* Id: formatcheck.h,v 1.7.18.2 2005/04/29 00:16:54 marka Exp */
 
 #ifndef ISC_FORMATCHECK_H
 #define ISC_FORMATCHECK_H 1
 
-/*
- * fmt is the location of the format string parameter.
- * args is the location of the first argument (or 0 for no argument checking).
- * Note: the first parameter is 1, not 0.
+/*! \file */
+
+/*%
+ * ISC_FORMAT_PRINTF().
+ *
+ * \li fmt is the location of the format string parameter.
+ * \li args is the location of the first argument (or 0 for no argument checking).
+ * 
+ * Note:
+ * \li The first parameter is 1, not 0.
  */
 #ifdef __GNUC__
 #define ISC_FORMAT_PRINTF(fmt, args) __attribute__((__format__(__printf__, fmt, args)))

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.25 2006/10/08 17:52:29 peter Exp $
+#	$NetBSD: Makefile.inc,v 1.25.2.1 2007/05/17 00:43:53 jdc Exp $
 
 .if !defined(BIND9_MAKEFILE_INC)
 BIND9_MAKEFILE_INC=yes
@@ -11,11 +11,7 @@ WARNS?=	1
 NAMED_USE_OPENSSL?=no
 .endif
 
-.if (${MACHINE_ARCH} == "sparc" || ${MACHINE_ARCH} == "sparc64")
-NAMED_USE_PTHREADS?=no
-.else
 NAMED_USE_PTHREADS?=yes
-.endif
 
 NAMED_USE_OPENSSL?=yes
 
@@ -30,6 +26,7 @@ SYSCONFDIR=/etc
 LOCALSTATEDIR=/var
 
 CPPFLAGS+=-I${BIND_SRCDIR}/include \
+	-I${IDIST} \
 	-I${IDIST}/lib/dns/include -I${IDIST}/lib/dns/unix/include \
 	-I${IDIST}/lib/isc/include -I${IDIST}/lib/isc/unix/include \
 	-I${IDIST}/lib/bind9/include \

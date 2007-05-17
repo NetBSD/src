@@ -1,7 +1,7 @@
-/*	$NetBSD: symtab.c,v 1.1.1.3 2005/12/21 23:17:22 christos Exp $	*/
+/*	$NetBSD: symtab.c,v 1.1.1.3.4.1 2007/05/17 00:41:52 jdc Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1996-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,7 +17,9 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: symtab.c,v 1.24.12.3 2004/03/08 09:04:50 marka Exp */
+/* Id: symtab.c,v 1.26.18.2 2005/04/29 00:16:50 marka Exp */
+
+/*! \file */
 
 #include <config.h>
 

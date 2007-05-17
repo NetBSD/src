@@ -1,4 +1,4 @@
-/*	$NetBSD: app.c,v 1.1.1.3 2005/12/21 23:17:41 christos Exp $	*/
+/*	$NetBSD: app.c,v 1.1.1.3.4.1 2007/05/17 00:42:54 jdc Exp $	*/
 
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: app.c,v 1.3.12.3 2004/03/08 09:04:58 marka Exp */
+/* Id: app.c,v 1.5 2004/03/05 05:11:56 marka Exp */
 
 #include <config.h>
 

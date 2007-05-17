@@ -1,7 +1,7 @@
-/*	$NetBSD: ctl_srvr.c,v 1.1.1.3 2005/12/21 23:15:40 christos Exp $	*/
+/*	$NetBSD: ctl_srvr.c,v 1.1.1.3.4.1 2007/05/17 00:40:03 jdc Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
-static const char rcsid[] = "Id: ctl_srvr.c,v 1.3.2.1.4.3 2004/03/17 01:13:35 marka Exp";
+static const char rcsid[] = "Id: ctl_srvr.c,v 1.6.18.2 2006/12/07 04:53:02 marka Exp";
 #endif /* not lint */
 
 /*
@@ -160,7 +160,7 @@ static const struct ctl_verb	fakehelpverb = {
 
 /* Public. */
 
-/*
+/*%
  * void
  * ctl_server()
  *	create, condition, and start a listener on the control port.
@@ -265,7 +265,7 @@ ctl_server(evContext lev, const struct sockaddr *sap, size_t sap_len,
 	return (ctx);
 }
 
-/*
+/*%
  * void
  * ctl_endserver(ctx)
  *	if the control listener is open, close it.  clean out all eventlib
@@ -293,7 +293,7 @@ ctl_endserver(struct ctl_sctx *ctx) {
 	memput(ctx, sizeof *ctx);
 }
 
-/*
+/*%
  * If body is non-NULL then it we add a "." line after it.
  * Caller must have  escaped lines with leading ".".
  */
@@ -566,7 +566,7 @@ static void
 ctl_readable(evContext lev, void *uap, int fd, int evmask) {
 	static const char me[] = "ctl_readable";
 	struct ctl_sess *sess = uap;
-	struct ctl_sctx *ctx = sess->ctx;
+	struct ctl_sctx *ctx;
 	char *eos, tmp[MAX_NTOP];
 	ssize_t n;
 
@@ -574,6 +574,8 @@ ctl_readable(evContext lev, void *uap, int fd, int evmask) {
 	REQUIRE(fd >= 0);
 	REQUIRE(evmask == EV_READ);
 	REQUIRE(sess->state == reading || sess->state == reading_data);
+
+	ctx = sess->ctx;
 	evTouchIdleTimer(lev, sess->rdtiID);
 	if (!allocated_p(sess->inbuf) &&
 	    ctl_bufget(&sess->inbuf, ctx->logger) < 0) {
@@ -780,3 +782,5 @@ ctl_signal_done(struct ctl_sctx *ctx, struct ctl_sess *sess) {
 		sess->donefunc = NULL;
 	}
 }
+
+/*! \file */

@@ -1,7 +1,7 @@
-/*	$NetBSD: x25_19.c,v 1.1.1.3 2005/12/21 23:17:08 christos Exp $	*/
+/*	$NetBSD: x25_19.c,v 1.1.1.3.4.1 2007/05/17 00:41:33 jdc Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,11 +17,11 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: x25_19.c,v 1.31.12.4 2004/03/08 09:04:43 marka Exp */
+/* Id: x25_19.c,v 1.35.18.2 2005/04/29 00:16:40 marka Exp */
 
 /* Reviewed: Thu Mar 16 16:15:57 PST 2000 by bwelling */
 
-/* RFC 1183 */
+/* RFC1183 */
 
 #ifndef RDATA_GENERIC_X25_19_C
 #define RDATA_GENERIC_X25_19_C

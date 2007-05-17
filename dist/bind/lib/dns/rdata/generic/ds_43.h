@@ -1,7 +1,7 @@
-/*	$NetBSD: ds_43.h,v 1.3 2005/12/22 00:26:24 christos Exp $	*/
+/*	$NetBSD: ds_43.h,v 1.3.4.1 2007/05/17 00:41:16 jdc Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,12 +17,13 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: ds_43.h,v 1.3.2.1 2004/03/08 02:08:03 marka Exp */
+/* Id: ds_43.h,v 1.3.20.2 2005/04/29 00:16:32 marka Exp */
 
-/* draft-ietf-dnsext-delegation-signer-05.txt */
 #ifndef GENERIC_DS_43_H
 #define GENERIC_DS_43_H 1
 
+/*!
+ *  \brief per draft-ietf-dnsext-delegation-signer-05.txt */
 typedef struct dns_rdata_ds {
 	dns_rdatacommon_t	common;
 	isc_mem_t		*mctx;

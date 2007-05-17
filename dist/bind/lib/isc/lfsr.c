@@ -1,4 +1,4 @@
-/*	$NetBSD: lfsr.c,v 1.1.1.3 2005/12/21 23:17:17 christos Exp $	*/
+/*	$NetBSD: lfsr.c,v 1.1.1.3.4.1 2007/05/17 00:41:46 jdc Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,9 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: lfsr.c,v 1.11.2.2.2.6 2005/10/14 01:38:50 marka Exp */
+/* Id: lfsr.c,v 1.14.18.4 2005/10/14 01:28:29 marka Exp */
+
+/*! \file */
 
 #include <config.h>
 
@@ -52,7 +54,7 @@ isc_lfsr_init(isc_lfsr_t *lfsr, isc_uint32_t state, unsigned int bits,
 		lfsr->state = 0xffffffffU >> (32 - lfsr->bits);
 }
 
-/*
+/*!
  * Return the next state of the lfsr.
  */
 static inline isc_uint32_t

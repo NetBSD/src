@@ -1,8 +1,8 @@
-/*	$NetBSD: strpbrk.c,v 1.1.1.1 2004/05/17 23:44:40 christos Exp $	*/
+/*	$NetBSD: strpbrk.c,v 1.1.1.1.10.1 2007/05/17 00:39:13 jdc Exp $	*/
 
 #if defined(LIBC_SCCS) && !defined(lint)
 static const char sccsid[] = "@(#)strpbrk.c	8.1 (Berkeley) 6/4/93";
-static const char rcsid[] = "Id: strpbrk.c,v 1.1 2001/03/29 06:30:36 marka Exp";
+static const char rcsid[] = "Id: strpbrk.c,v 1.1.352.1 2005/04/27 05:00:46 sra Exp";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -51,7 +51,7 @@ static const char rcsid[] = "Id: strpbrk.c,v 1.1 2001/03/29 06:30:36 marka Exp";
 int __strpbrk_unneeded__;
 #else
 
-/*
+/*%
  * Find the first occurrence in s1 of a character in s2 (excluding NUL).
  */
 char *
@@ -68,3 +68,5 @@ strpbrk(const char *s1, const char *s2) {
 }
 
 #endif /*NEED_STRPBRK*/
+
+/*! \file */

@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Portions Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+# Portions Copyright (C) 2004, 2006  Internet Systems Consortium, Inc. ("ISC")
 # Portions Copyright (C) 1999-2001  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and distribute this software for any
@@ -15,9 +15,9 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: named-bootconf.sh,v 1.7.206.1 2004/03/06 13:16:11 marka Exp
+# Id: named-bootconf.sh,v 1.8.18.2 2006/10/11 02:33:29 marka Exp
 
-# $NetBSD: named-bootconf.sh,v 1.1.1.3 2005/12/21 23:11:02 christos Exp $
+# $NetBSD: named-bootconf.sh,v 1.1.1.3.4.1 2007/05/17 00:37:34 jdc Exp $
 #
 # Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -54,9 +54,14 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 if [ ${OPTIONFILE-X} = X ]; then
-	OPTIONFILE=/tmp/.options.`date +%s`.$$
-	ZONEFILE=/tmp/.zones.`date +%s`.$$
-	COMMENTFILE=/tmp/.comments.`date +%s`.$$
+	WORKDIR=/tmp/`date +%s`.$$
+	( umask 077 ; mkdir $WORKDIR ) || {
+		echo "unable to create work directory '$WORKDIR'" >&2 
+		exit 1
+	}
+	OPTIONFILE=$WORKDIR/options
+	ZONEFILE=$WORKDIR/zones
+	COMMENTFILE=$WORKDIR/comments
 	export OPTIONFILE ZONEFILE COMMENTFILE
 	touch $OPTIONFILE $ZONEFILE $COMMENTFILE
 	DUMP=1
@@ -303,6 +308,7 @@ if [ $DUMP -eq 1 ]; then
 	cat $ZONEFILE $COMMENTFILE
 
 	rm -f $OPTIONFILE $ZONEFILE $COMMENTFILE
+	rmdir $WORKDIR
 fi
 
 exit 0

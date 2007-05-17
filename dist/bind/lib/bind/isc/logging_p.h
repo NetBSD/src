@@ -1,4 +1,4 @@
-/*	$NetBSD: logging_p.h,v 1.1.1.3 2005/12/21 23:15:44 christos Exp $	*/
+/*	$NetBSD: logging_p.h,v 1.1.1.3.4.1 2007/05/17 00:40:06 jdc Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -36,7 +36,7 @@ typedef union log_output {
 } log_output;
 
 struct log_channel {
-	int level;			/* don't log messages > level */
+	int level;			/*%< don't log messages > level */
 	log_channel_type type;
 	log_output out;
 	unsigned int flags;
@@ -60,3 +60,4 @@ struct log_context {
 };
 
 #endif /* !LOGGING_P_H */
+/*! \file */

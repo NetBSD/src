@@ -1,7 +1,7 @@
-/*	$NetBSD: lwderror.c,v 1.1.1.3 2005/12/21 23:07:56 christos Exp $	*/
+/*	$NetBSD: lwderror.c,v 1.1.1.3.4.1 2007/05/17 00:35:09 jdc Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,7 +17,9 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: lwderror.c,v 1.7.208.1 2004/03/06 10:21:18 marka Exp */
+/* Id: lwderror.c,v 1.8.18.2 2005/04/29 00:15:24 marka Exp */
+
+/*! \file */
 
 #include <config.h>
 
@@ -27,7 +29,7 @@
 #include <named/types.h>
 #include <named/lwdclient.h>
 
-/*
+/*%
  * Generate an error packet for the client, schedule a send, and put us in
  * the SEND state.
  *

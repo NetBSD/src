@@ -1,4 +1,4 @@
-/*	$NetBSD: hex.c,v 1.1.1.3 2005/12/21 23:15:43 christos Exp $	*/
+/*	$NetBSD: hex.c,v 1.1.1.3.4.1 2007/05/17 00:40:06 jdc Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -35,7 +35,7 @@ isc_gethexstring(unsigned char *buf, size_t len, int count, FILE *fp,
 	char *s;
 	int result = count;
 	
-	x = 0; /* silence compiler */
+	x = 0; /*%< silence compiler */
 	n = 0;
 	while (count > 0) {
 		c = fgetc(fp);
@@ -47,8 +47,9 @@ isc_gethexstring(unsigned char *buf, size_t len, int count, FILE *fp,
 			goto formerr;
 		/* comment */
 		if (c == ';') {
-			while ((c = fgetc(fp)) != EOF && c != '\n')
-				/* empty */
+			do {
+				c = fgetc(fp);
+			} while (c != EOF && c != '\n');
 			if (c == '\n' && *multiline)
 				continue;
 			goto formerr;
@@ -116,3 +117,5 @@ isc_tohex(const unsigned char *buf, size_t buflen, char *t) {
 	}
 	*t = '\0';
 }
+
+/*! \file */

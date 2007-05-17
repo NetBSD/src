@@ -1,4 +1,4 @@
-/*	$NetBSD: pathnames.h,v 1.1.1.3 2005/12/21 23:15:36 christos Exp $	*/
+/*	$NetBSD: pathnames.h,v 1.1.1.3.4.1 2007/05/17 00:40:00 jdc Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -18,7 +18,7 @@
  */
 
 /*
- * Id: pathnames.h,v 1.1.206.1 2004/03/09 08:33:39 marka Exp
+ * Id: pathnames.h,v 1.2.18.1 2005/04/27 05:01:04 sra Exp
  */
 
 #ifndef _PATH_IRS_CONF
@@ -50,3 +50,5 @@
 #ifndef _PATH_HESIOD_CONF
 #define _PATH_HESIOD_CONF "/etc/hesiod.conf"
 #endif
+
+/*! \file */

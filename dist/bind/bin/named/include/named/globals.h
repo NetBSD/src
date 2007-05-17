@@ -1,7 +1,7 @@
-/*	$NetBSD: globals.h,v 1.1.1.3 2005/12/21 23:08:10 christos Exp $	*/
+/*	$NetBSD: globals.h,v 1.1.1.3.4.1 2007/05/17 00:35:17 jdc Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,10 +17,12 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: globals.h,v 1.59.68.5 2004/03/08 04:04:20 marka Exp */
+/* Id: globals.h,v 1.64.18.4 2006/03/02 00:37:21 marka Exp */
 
 #ifndef NAMED_GLOBALS_H
 #define NAMED_GLOBALS_H 1
+
+/*! \file */
 
 #include <isc/rwlock.h>
 #include <isc/log.h>
@@ -77,7 +79,7 @@ EXTERN unsigned int		ns_g_debuglevel		INIT(0);
  * Current configuration information.
  */
 EXTERN cfg_obj_t *		ns_g_config		INIT(NULL);
-EXTERN cfg_obj_t *		ns_g_defaults		INIT(NULL);
+EXTERN const cfg_obj_t *	ns_g_defaults		INIT(NULL);
 EXTERN const char *		ns_g_conffile		INIT(NS_SYSCONFDIR
 							     "/named.conf");
 EXTERN const char *		ns_g_keyfile		INIT(NS_SYSCONFDIR

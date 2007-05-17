@@ -1,4 +1,4 @@
-/*	$NetBSD: dns_pw.c,v 1.1.1.3 2005/12/21 23:15:25 christos Exp $	*/
+/*	$NetBSD: dns_pw.c,v 1.1.1.3.4.1 2007/05/17 00:39:46 jdc Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -18,7 +18,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "Id: dns_pw.c,v 1.1.206.1 2004/03/09 08:33:34 marka Exp";
+static const char rcsid[] = "Id: dns_pw.c,v 1.2.18.1 2005/04/27 05:00:55 sra Exp";
 #endif
 
 #include "port_before.h"
@@ -231,3 +231,4 @@ getpwcommon(struct irs_pw *this, const char *arg, const char *type) {
 }
 
 #endif /* WANT_IRS_PW */
+/*! \file */

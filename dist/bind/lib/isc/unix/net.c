@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.1.1.3 2005/12/21 23:17:34 christos Exp $	*/
+/*	$NetBSD: net.c,v 1.1.1.3.4.1 2007/05/17 00:42:49 jdc Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: net.c,v 1.22.2.2.10.9 2005/03/17 03:58:33 marka Exp */
+/* Id: net.c,v 1.29.18.4 2005/03/16 01:22:50 marka Exp */
 
 #include <config.h>
 
@@ -45,6 +45,7 @@ static isc_once_t 	once_ipv6only = ISC_ONCE_INIT;
 static isc_once_t 	once_ipv6pktinfo = ISC_ONCE_INIT;
 static isc_result_t	ipv4_result = ISC_R_NOTFOUND;
 static isc_result_t	ipv6_result = ISC_R_NOTFOUND;
+static isc_result_t	unix_result = ISC_R_NOTFOUND;
 static isc_result_t	ipv6only_result = ISC_R_NOTFOUND;
 static isc_result_t	ipv6pktinfo_result = ISC_R_NOTFOUND;
 
@@ -139,6 +140,9 @@ initialize_action(void) {
 #endif
 #endif
 #endif
+#ifdef ISC_PLATFORM_HAVESYSUNH
+	unix_result = try_proto(PF_UNIX);
+#endif
 }
 
 static void
@@ -156,6 +160,12 @@ isc_result_t
 isc_net_probeipv6(void) {
 	initialize();
 	return (ipv6_result);
+}
+
+isc_result_t
+isc_net_probeunix(void) {
+	initialize();
+	return (unix_result);
 }
 
 #ifdef ISC_PLATFORM_HAVEIPV6

@@ -1,7 +1,7 @@
-/*	$NetBSD: dst_result.c,v 1.1.1.1 2005/12/21 23:16:09 christos Exp $	*/
+/*	$NetBSD: dst_result.c,v 1.1.1.1.6.1 2007/05/17 00:40:35 jdc Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,9 +17,9 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/*
+/*%
  * Principal Author: Brian Wellington
- * Id: dst_result.c,v 1.1.4.1 2004/12/09 04:07:17 marka Exp
+ * Id: dst_result.c,v 1.1.6.3 2005/04/29 00:15:52 marka Exp
  */
 
 #include <config.h>
@@ -31,27 +31,27 @@
 #include <dst/lib.h>
 
 static const char *text[DST_R_NRESULTS] = {
-	"algorithm is unsupported",		/*  0 */
-	"openssl failure",			/*  1 */
-	"built with no crypto support",		/*  2 */
-	"illegal operation for a null key",	/*  3 */
-	"public key is invalid",		/*  4 */
-	"private key is invalid",		/*  5 */
-	"UNUSED6",				/*  6 */
-	"error occurred writing key to disk",	/*  7 */
-	"invalid algorithm specific parameter",	/*  8 */
-	"UNUSED9",				/*  9 */
-	"UNUSED10",				/* 10 */
-	"sign failure",				/* 11 */
-	"UNUSED12",				/* 12 */
-	"UNUSED13",				/* 13 */
-	"verify failure",			/* 14 */
-	"not a public key",			/* 15 */
-	"not a private key",			/* 16 */
-	"not a key that can compute a secret",	/* 17 */
-	"failure computing a shared secret",	/* 18 */
-	"no randomness available",		/* 19 */
-	"bad key type"				/* 20 */
+	"algorithm is unsupported",		/*%< 0 */
+	"openssl failure",			/*%< 1 */
+	"built with no crypto support",		/*%< 2 */
+	"illegal operation for a null key",	/*%< 3 */
+	"public key is invalid",		/*%< 4 */
+	"private key is invalid",		/*%< 5 */
+	"UNUSED6",				/*%< 6 */
+	"error occurred writing key to disk",	/*%< 7 */
+	"invalid algorithm specific parameter",	/*%< 8 */
+	"UNUSED9",				/*%< 9 */
+	"UNUSED10",				/*%< 10 */
+	"sign failure",				/*%< 11 */
+	"UNUSED12",				/*%< 12 */
+	"UNUSED13",				/*%< 13 */
+	"verify failure",			/*%< 14 */
+	"not a public key",			/*%< 15 */
+	"not a private key",			/*%< 16 */
+	"not a key that can compute a secret",	/*%< 17 */
+	"failure computing a shared secret",	/*%< 18 */
+	"no randomness available",		/*%< 19 */
+	"bad key type"				/*%< 20 */
 };
 
 #define DST_RESULT_RESULTSET			2
@@ -86,3 +86,5 @@ void
 dst_result_register(void) {
 	initialize();
 }
+
+/*! \file */

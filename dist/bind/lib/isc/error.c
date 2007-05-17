@@ -1,7 +1,7 @@
-/*	$NetBSD: error.c,v 1.1.1.3 2005/12/21 23:17:15 christos Exp $	*/
+/*	$NetBSD: error.c,v 1.1.1.3.4.1 2007/05/17 00:41:43 jdc Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,7 +17,9 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: error.c,v 1.16.206.1 2004/03/06 08:14:28 marka Exp */
+/* Id: error.c,v 1.17.18.2 2005/04/29 00:16:45 marka Exp */
+
+/*! \file */
 
 #include <config.h>
 
@@ -27,14 +29,17 @@
 #include <isc/error.h>
 #include <isc/msgs.h>
 
+/*% Default unexpected callback. */
 static void
 default_unexpected_callback(const char *, int, const char *, va_list)
      ISC_FORMAT_PRINTF(3, 0);
 
+/*% Default fatal callback. */
 static void
 default_fatal_callback(const char *, int, const char *, va_list)
      ISC_FORMAT_PRINTF(3, 0);
 
+/*% unexpected_callback */
 static isc_errorcallback_t unexpected_callback = default_unexpected_callback;
 static isc_errorcallback_t fatal_callback = default_fatal_callback;
 

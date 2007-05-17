@@ -15,7 +15,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: ans.pl,v 1.5.206.1 2004/03/06 10:22:23 marka Exp
+# Id: ans.pl,v 1.6 2004/03/05 05:02:37 marka Exp
 
 #
 # Ad hoc name server

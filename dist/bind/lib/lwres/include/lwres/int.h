@@ -1,7 +1,7 @@
-/*	$NetBSD: int.h,v 1.1.1.3 2005/12/21 23:18:01 christos Exp $	*/
+/*	$NetBSD: int.h,v 1.1.1.3.4.1 2007/05/17 00:43:27 jdc Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,10 +17,12 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: int.h,v 1.7.206.1 2004/03/06 08:15:34 marka Exp */
+/* Id: int.h,v 1.8.18.2 2005/04/29 00:17:21 marka Exp */
 
 #ifndef LWRES_INT_H
 #define LWRES_INT_H 1
+
+/*! \file */
 
 typedef char				lwres_int8_t;
 typedef unsigned char			lwres_uint8_t;

@@ -1,7 +1,7 @@
-/*	$NetBSD: journalprint.c,v 1.1.1.3 2005/12/21 23:08:21 christos Exp $	*/
+/*	$NetBSD: journalprint.c,v 1.1.1.3.4.1 2007/05/17 00:35:36 jdc Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,7 +17,10 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: journalprint.c,v 1.3.206.3 2005/03/17 03:58:28 marka Exp */
+/* Id: journalprint.c,v 1.4.18.5 2006/08/25 05:25:51 marka Exp */
+
+/*! \file */
+#include <config.h>
 
 #include <isc/mem.h>
 #include <isc/util.h>

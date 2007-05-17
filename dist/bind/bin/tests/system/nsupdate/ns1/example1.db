@@ -13,7 +13,7 @@
 ; OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 ; PERFORMANCE OF THIS SOFTWARE.
 
-; Id: example1.db,v 1.2.12.4 2004/03/08 04:04:42 marka Exp
+; Id: example1.db,v 1.5.18.1 2004/11/23 05:24:45 marka Exp
 
 $ORIGIN .
 $TTL 300	; 5 minutes
@@ -24,9 +24,9 @@ example.nil		IN SOA	ns1.example.nil. hostmaster.example.nil. (
 				1814400    ; expire (3 weeks)
 				3600       ; minimum (1 hour)
 				)
-example.nil.		NS	ns2.example.nil.
+example.nil.		NS	ns1.example.nil.
 ns1.example.nil.	A	10.53.0.1
-example.nil.		NS	ns3.example.nil.
+example.nil.		NS	ns2.example.nil.
 ns2.example.nil.	A	10.53.0.2
 
 $ORIGIN example.nil.

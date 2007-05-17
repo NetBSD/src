@@ -1,7 +1,7 @@
-/*	$NetBSD: tsig_250.h,v 1.1.1.3 2005/12/21 23:17:00 christos Exp $	*/
+/*	$NetBSD: tsig_250.h,v 1.1.1.3.4.1 2007/05/17 00:41:11 jdc Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,13 +17,12 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: tsig_250.h,v 1.20.206.1 2004/03/06 08:14:02 marka Exp */
-
-/* RFC 2845 */
+/* Id: tsig_250.h,v 1.21.18.2 2005/04/29 00:16:29 marka Exp */
 
 #ifndef ANY_255_TSIG_250_H
 #define ANY_255_TSIG_250_H 1
 
+/*% RFC2845 */
 typedef struct dns_rdata_any_tsig {
 	dns_rdatacommon_t	common;
 	isc_mem_t *		mctx;

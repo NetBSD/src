@@ -1,7 +1,7 @@
-/*	$NetBSD: os.c,v 1.1.1.4 2005/12/21 23:08:11 christos Exp $	*/
+/*	$NetBSD: os.c,v 1.1.1.4.4.1 2007/05/17 00:35:22 jdc Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,7 +17,9 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: os.c,v 1.46.2.4.8.22 2005/05/20 01:37:19 marka Exp */
+/* Id: os.c,v 1.66.18.11 2006/02/03 23:51:38 marka Exp */
+
+/*! \file */
 
 #include <config.h>
 #include <stdarg.h>
@@ -116,7 +118,7 @@ static int dfd[2] = { -1, -1 };
 static isc_boolean_t non_root = ISC_FALSE;
 static isc_boolean_t non_root_caps = ISC_FALSE;
 
-/*
+/*%
  * We define _LINUX_FS_H to prevent it from being included.  We don't need
  * anything from it, and the files it includes cause warnings with 2.2
  * kernels, and compilation failures (due to conflicts between <linux/string.h>
@@ -178,7 +180,7 @@ static void
 linux_initialprivs(void) {
 	unsigned int caps;
 
-	/*
+	/*%
 	 * We don't need most privileges, so we drop them right away.
 	 * Later on linux_minprivs() will be called, which will drop our
 	 * capabilities to the minimum needed to run the server.
@@ -233,7 +235,7 @@ static void
 linux_minprivs(void) {
 	unsigned int caps;
 
-	/*
+	/*%
 	 * Drop all privileges except the ability to bind() to privileged
 	 * ports.
 	 *
@@ -260,7 +262,7 @@ linux_minprivs(void) {
 static void
 linux_keepcaps(void) {
 	char strbuf[ISC_STRERRORSIZE];
-	/*
+	/*%
 	 * Ask the kernel to allow us to keep our capabilities after we
 	 * setuid().
 	 */
@@ -498,6 +500,13 @@ ns_os_changeuser(void) {
 
 #if defined(HAVE_LINUX_CAPABILITY_H) && !defined(HAVE_LINUXTHREADS)
 	linux_minprivs();
+#endif
+#if defined(HAVE_SYS_PRCTL_H) && defined(PR_SET_DUMPABLE)
+	/*
+	 * Restore the ability of named to drop core after the setuid()
+	 * call has disabled it.
+	 */
+	prctl(PR_SET_DUMPABLE,1,0,0,0);
 #endif
 }
 
