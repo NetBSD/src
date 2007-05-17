@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.h,v 1.57 2007/05/16 10:04:08 pooka Exp $	*/
+/*	$NetBSD: puffs.h,v 1.58 2007/05/17 14:03:13 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -238,8 +238,7 @@ typedef int (*pu_namemod_fn)(struct puffs_usermount *,
 			     struct puffs_pathobj *, struct puffs_cn *);
 
 enum {
-	PUFFS_STATE_BEFOREMOUNT,
-	PUFFS_STATE_MOUNTING,		PUFFS_STATE_RUNNING,
+	PUFFS_STATE_BEFOREMOUNT,	PUFFS_STATE_RUNNING,
 	PUFFS_STATE_UNMOUNTING,		PUFFS_STATE_UNMOUNTED
 };
 
@@ -362,9 +361,7 @@ enum {
 #define PUFFSOP_SETFSNOP(ops, opname)					\
     (ops)->puffs_fs_##opname = puffs_fsnop_##opname
 
-#define PUFFS_DEVEL_LIBVERSION 18
-#define puffs_mount(a,b,c,d,e,f) \
-    _puffs_mount(PUFFS_DEVEL_LIBVERSION,a,b,c,d,e,f)
+#define PUFFS_DEVEL_LIBVERSION 19
 #define puffs_init(a,b,c,d) \
     _puffs_init(PUFFS_DEVEL_LIBVERSION,a,b,c,d)
 
@@ -407,12 +404,9 @@ typedef void (*puffs_framev_cb)(struct puffs_usermount *,
 
 __BEGIN_DECLS
 
-struct puffs_usermount *_puffs_mount(int, struct puffs_ops *, const char *, int,
-				    const char *, void *, uint32_t);
 struct puffs_usermount *_puffs_init(int, struct puffs_ops *pops, const char *,
 				    void *, uint32_t);
-int		puffs_domount(struct puffs_usermount *, const char *, int);
-int		puffs_start(struct puffs_usermount *, void *, struct statvfs *);
+int		puffs_mount(struct puffs_usermount *, const char *, int, void*);
 int		puffs_exit(struct puffs_usermount *, int);
 int		puffs_mainloop(struct puffs_usermount *, int);
 
@@ -428,6 +422,9 @@ void	puffs_ml_settimeout(struct puffs_usermount *, struct timespec *);
 void			puffs_setroot(struct puffs_usermount *,
 				      struct puffs_node *);
 struct puffs_node 	*puffs_getroot(struct puffs_usermount *);
+void			puffs_setrootinfo(struct puffs_usermount *,
+					  enum vtype, vsize_t, dev_t); 
+
 void			*puffs_getspecific(struct puffs_usermount *);
 void			puffs_setmaxreqlen(struct puffs_usermount *, size_t);
 size_t			puffs_getmaxreqlen(struct puffs_usermount *);
