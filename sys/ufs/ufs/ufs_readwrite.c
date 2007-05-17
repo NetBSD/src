@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.77 2007/04/19 11:05:14 yamt Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.78 2007/05/17 07:26:23 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.77 2007/04/19 11:05:14 yamt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.78 2007/05/17 07:26:23 hannken Exp $");
 
 #ifdef LFS_READWRITE
 #define	BLKSIZE(a, b, c)	blksize(a, b, c)
@@ -105,8 +105,7 @@ READ(void *v)
 	if (uio->uio_resid == 0)
 		return (0);
 
-	if ((error = fstrans_start(vp->v_mount, FSTRANS_SHARED)) != 0)
-		return error;
+	fstrans_start(vp->v_mount, FSTRANS_SHARED);
 
 	if (uio->uio_offset >= ip->i_size)
 		goto out;
@@ -282,8 +281,7 @@ WRITE(void *v)
 	if (uio->uio_resid == 0)
 		return (0);
 
-	if ((error = fstrans_start(vp->v_mount, FSTRANS_SHARED)) != 0)
-		return error;
+	fstrans_start(vp->v_mount, FSTRANS_SHARED);
 
 	flags = ioflag & IO_SYNC ? B_SYNC : 0;
 	async = vp->v_mount->mnt_flag & MNT_ASYNC;

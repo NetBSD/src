@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.152 2007/03/04 06:03:48 christos Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.153 2007/05/17 07:26:23 hannken Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.152 2007/03/04 06:03:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.153 2007/05/17 07:26:23 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -106,8 +106,7 @@ ufs_create(void *v)
 	} */ *ap = v;
 	int	error;
 
-	if ((error = fstrans_start(ap->a_dvp->v_mount, FSTRANS_SHARED)) != 0)
-		return error;
+	fstrans_start(ap->a_dvp->v_mount, FSTRANS_SHARED);
 	error =
 	    ufs_makeinode(MAKEIMODE(ap->a_vap->va_type, ap->a_vap->va_mode),
 			  ap->a_dvp, ap->a_vpp, ap->a_cnp);
@@ -140,8 +139,7 @@ ufs_mknod(void *v)
 
 	vap = ap->a_vap;
 	vpp = ap->a_vpp;
-	if ((error = fstrans_start(ap->a_dvp->v_mount, FSTRANS_SHARED)) != 0)
-		return error;
+	fstrans_start(ap->a_dvp->v_mount, FSTRANS_SHARED);
 	if ((error =
 	    ufs_makeinode(MAKEIMODE(vap->va_type, vap->va_mode),
 	    ap->a_dvp, vpp, ap->a_cnp)) != 0)
@@ -266,9 +264,7 @@ ufs_access(void *v)
 			if (vp->v_mount->mnt_flag & MNT_RDONLY)
 				return (EROFS);
 #ifdef QUOTA
-			if ((error =
-			    fstrans_start(vp->v_mount, FSTRANS_SHARED)) != 0)
-				return error;
+			fstrans_start(vp->v_mount, FSTRANS_SHARED);
 			error = getinoquota(ip);
 			fstrans_done(vp->v_mount);
 			if (error != 0)
@@ -398,8 +394,7 @@ ufs_setattr(void *v)
 		return (EINVAL);
 	}
 
-	if ((error = fstrans_start(vp->v_mount, FSTRANS_SHARED)) != 0)
-		return error;
+	fstrans_start(vp->v_mount, FSTRANS_SHARED);
 
 	if (vap->va_flags != VNOVAL) {
 		if (vp->v_mount->mnt_flag & MNT_RDONLY) {
@@ -699,8 +694,7 @@ ufs_remove(void *v)
 	vp = ap->a_vp;
 	dvp = ap->a_dvp;
 	ip = VTOI(vp);
-	if ((error = fstrans_start(dvp->v_mount, FSTRANS_SHARED)) != 0)
-		return error;
+	fstrans_start(dvp->v_mount, FSTRANS_SHARED);
 	if (vp->v_type == VDIR || (ip->i_flags & (IMMUTABLE | APPEND)) ||
 	    (VTOI(dvp)->i_flags & APPEND))
 		error = EPERM;
@@ -741,8 +735,7 @@ ufs_link(void *v)
 	if ((cnp->cn_flags & HASBUF) == 0)
 		panic("ufs_link: no name");
 #endif
-	if ((error = fstrans_start(dvp->v_mount, FSTRANS_SHARED)) != 0)
-		return error;
+	fstrans_start(dvp->v_mount, FSTRANS_SHARED);
 	if (vp->v_type == VDIR) {
 		VOP_ABORTOP(dvp, cnp);
 		error = EPERM;
@@ -828,8 +821,7 @@ ufs_whiteout(void *v)
 
 	case CREATE:
 		/* create a new directory whiteout */
-		if ((error = fstrans_start(dvp->v_mount, FSTRANS_SHARED)) != 0)
-			return error;
+		fstrans_start(dvp->v_mount, FSTRANS_SHARED);
 #ifdef DIAGNOSTIC
 		if ((cnp->cn_flags & SAVENAME) == 0)
 			panic("ufs_whiteout: missing name");
@@ -850,8 +842,7 @@ ufs_whiteout(void *v)
 
 	case DELETE:
 		/* remove an existing directory whiteout */
-		if ((error = fstrans_start(dvp->v_mount, FSTRANS_SHARED)) != 0)
-			return error;
+		fstrans_start(dvp->v_mount, FSTRANS_SHARED);
 #ifdef DIAGNOSTIC
 		if (ump->um_maxsymlinklen <= 0)
 			panic("ufs_whiteout: old format filesystem");
@@ -1023,8 +1014,7 @@ ufs_rename(void *v)
 		xp = VTOI(tvp);
 
 	mp = fdvp->v_mount;
-	if ((error = fstrans_start(mp, FSTRANS_SHARED)) != 0)
-		return error;
+	fstrans_start(mp, FSTRANS_SHARED);
 
 	/*
 	 * 1) Bump link count while we're moving stuff
@@ -1332,8 +1322,7 @@ ufs_mkdir(void *v)
 	struct ufsmount		*ump = dp->i_ump;
 	int			dirblksiz = ump->um_dirblksiz;
 
-	if ((error = fstrans_start(dvp->v_mount, FSTRANS_SHARED)) != 0)
-		return error;
+	fstrans_start(dvp->v_mount, FSTRANS_SHARED);
 
 #ifdef DIAGNOSTIC
 	if ((cnp->cn_flags & HASBUF) == 0)
@@ -1531,8 +1520,7 @@ ufs_rmdir(void *v)
 		return (EINVAL);
 	}
 
-	if ((error = fstrans_start(dvp->v_mount, FSTRANS_SHARED)) != 0)
-		return error;
+	fstrans_start(dvp->v_mount, FSTRANS_SHARED);
 
 	/*
 	 * Do not remove a directory that is in the process of being renamed.
@@ -1628,8 +1616,7 @@ ufs_symlink(void *v)
 	int		len, error;
 
 	vpp = ap->a_vpp;
-	if ((error = fstrans_start(ap->a_dvp->v_mount, FSTRANS_SHARED)) != 0)
-		return error;
+	fstrans_start(ap->a_dvp->v_mount, FSTRANS_SHARED);
 	error = ufs_makeinode(IFLNK | ap->a_vap->va_mode, ap->a_dvp,
 			      vpp, ap->a_cnp);
 	if (error)

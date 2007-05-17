@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_trans.c,v 1.8 2007/05/16 16:11:56 hannken Exp $	*/
+/*	$NetBSD: vfs_trans.c,v 1.9 2007/05/17 07:26:22 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.8 2007/05/16 16:11:56 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.9 2007/05/17 07:26:22 hannken Exp $");
 
 /*
  * File system transaction operations.
@@ -287,7 +287,6 @@ fstrans_is_owner(struct mount *mp)
 int
 fstrans_setstate(struct mount *mp, enum fstrans_state new_state)
 {
-	int error;
 	struct fstrans_mount_info *fmi;
 
 	if ((fmi = mount_getspecific(mp, mount_data_key)) == NULL)
@@ -296,8 +295,7 @@ fstrans_setstate(struct mount *mp, enum fstrans_state new_state)
 	switch (new_state) {
 	case FSTRANS_SUSPENDING:
 		KASSERT(fmi->fmi_state == FSTRANS_NORMAL);
-		if ((error = fstrans_start(mp, FSTRANS_EXCL)) != 0)
-			return error;
+		fstrans_start(mp, FSTRANS_EXCL);
 		fmi->fmi_state = FSTRANS_SUSPENDING;
 		break;
 
@@ -306,9 +304,8 @@ fstrans_setstate(struct mount *mp, enum fstrans_state new_state)
 			fmi->fmi_state == FSTRANS_SUSPENDING);
 		KASSERT(fmi->fmi_state == FSTRANS_NORMAL ||
 			fstrans_is_owner(mp));
-		if (fmi->fmi_state == FSTRANS_NORMAL &&
-		    (error = fstrans_start(mp, FSTRANS_EXCL)) != 0)
-			return error;
+		if (fmi->fmi_state == FSTRANS_NORMAL)
+			fstrans_start(mp, FSTRANS_EXCL);
 		rw_enter(&fmi->fmi_lazy_lock, RW_WRITER);
 		fmi->fmi_state = FSTRANS_SUSPENDED;
 		break;
