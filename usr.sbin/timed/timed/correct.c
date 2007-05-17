@@ -1,4 +1,4 @@
-/*	$NetBSD: correct.c,v 1.13 2007/01/26 16:12:41 christos Exp $	*/
+/*	$NetBSD: correct.c,v 1.14 2007/05/17 00:36:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)correct.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: correct.c,v 1.13 2007/01/26 16:12:41 christos Exp $");
+__RCSID("$NetBSD: correct.c,v 1.14 2007/05/17 00:36:12 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -140,7 +140,13 @@ adjclock(struct timeval *corr)
 		    && delta < MIN_ROUND*1000) {
 			if (smoother <= 4)
 				smoother++;
-			ndelta = delta >> smoother;
+			ndelta = (unsigned long)delta >> smoother;
+			if (delta < 0) {
+				long mask = (long)~0 & 
+				    ~((1 << ((sizeof(long) * NBBY) - smoother))
+				    - 1);
+				ndelta |= mask;
+			}
 			if (trace)
 				fprintf(fd,
 					"trimming delta %ld usec to %ld\n",
