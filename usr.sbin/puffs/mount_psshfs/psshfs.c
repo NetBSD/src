@@ -1,4 +1,4 @@
-/*	$NetBSD: psshfs.c,v 1.26 2007/05/15 13:46:48 pooka Exp $	*/
+/*	$NetBSD: psshfs.c,v 1.27 2007/05/17 14:13:05 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: psshfs.c,v 1.26 2007/05/15 13:46:48 pooka Exp $");
+__RCSID("$NetBSD: psshfs.c,v 1.27 2007/05/17 14:13:05 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -204,12 +204,8 @@ main(int argc, char *argv[])
 		puffs_setfhsize(pu, sizeof(struct psshfs_fid),
 		    PUFFS_FHFLAG_NFSV2 | PUFFS_FHFLAG_NFSV3);
 
-	if (puffs_domount(pu, argv[1], mntflags) == -1)
-		err(1, "puffs_domount");
-
 	if (psshfs_domount(pu) != 0)
 		errx(1, "psshfs_domount");
-
 	x = 1;
 	if (ioctl(pctx.sshfd, FIONBIO, &x) == -1)
 		err(1, "nonblocking descriptor");
@@ -218,6 +214,9 @@ main(int argc, char *argv[])
 	    puffs_framev_unmountonclose);
 	if (puffs_framev_addfd(pu, pctx.sshfd) == -1)
 		err(1, "framebuf addfd");
+
+	if (puffs_mount(pu, argv[1], mntflags, puffs_getroot(pu)) == -1)
+		err(1, "puffs_mount");
 
 	return puffs_mainloop(pu, lflags);
 }

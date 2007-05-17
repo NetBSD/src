@@ -1,4 +1,4 @@
-/*	$NetBSD: refuse.c,v 1.56 2007/05/17 01:55:43 christos Exp $	*/
+/*	$NetBSD: refuse.c,v 1.57 2007/05/17 14:13:04 pooka Exp $	*/
 
 /*
  * Copyright © 2007 Alistair Crooks.  All rights reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: refuse.c,v 1.56 2007/05/17 01:55:43 christos Exp $");
+__RCSID("$NetBSD: refuse.c,v 1.57 2007/05/17 14:13:04 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -1156,14 +1156,13 @@ fuse_new(struct fuse_chan *fc, struct fuse_args *args,
 	set_refuse_mount_name(&argv0, name, sizeof(name));
 
 	puffs_fakecc = 1; /* XXX */
-	pu = puffs_mount(pops, fc->dir, MNT_NODEV | MNT_NOSUID,
-			 name, fuse,
+	pu = puffs_init(pops, name, fuse,
 			 PUFFS_FLAG_BUILDPATH
 			   | PUFFS_FLAG_HASHPATH
 			   | PUFFS_FLAG_OPDUMP
 			   | PUFFS_KFLAG_NOCACHE);
 	if (pu == NULL) {
-		err(EXIT_FAILURE, "puffs_mount: directory \"%s\"", fc->dir);
+		err(EXIT_FAILURE, "puffs_init");
 	}
 	fc->pu = pu;
 
@@ -1190,8 +1189,8 @@ fuse_new(struct fuse_chan *fc, struct fuse_args *args,
 		fcon.private_data = fuse->op.init(NULL); /* XXX */
 
 	puffs_zerostatvfs(&svfsb);
-	if (puffs_start(pu, pn_root, &svfsb) == -1) {
-		err(EXIT_FAILURE, "puffs_start");
+	if (puffs_mount(pu, fc->dir, MNT_NODEV | MNT_NOSUID, pn_root) == -1) {
+		err(EXIT_FAILURE, "puffs_mount: directory \"%s\"", fc->dir);
 	}
 
 	return fuse;
