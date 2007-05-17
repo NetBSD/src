@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_subr.c,v 1.29 2007/05/08 21:39:03 pooka Exp $	*/
+/*	$NetBSD: puffs_subr.c,v 1.30 2007/05/17 13:59:22 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_subr.c,v 1.29 2007/05/08 21:39:03 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_subr.c,v 1.30 2007/05/17 13:59:22 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -226,7 +226,7 @@ puffs_newnode(struct mount *mp, struct vnode *dvp, struct vnode **vpp,
 	 * not the caller.
 	 */
 	mutex_enter(&pmp->pmp_lock);
-	if (cookie == pmp->pmp_rootcookie
+	if (cookie == pmp->pmp_root_cookie
 	    || puffs_cookie2pnode(pmp, cookie) != NULL) {
 		mutex_exit(&pmp->pmp_lock);
 		error = EEXIST;
@@ -318,7 +318,7 @@ puffs_pnode2vnode(struct puffs_mount *pmp, void *cookie, int lock)
 	 * puffs_root() to get all the right things set.  Lock must
 	 * be set, since VFS_ROOT() always locks the returned vnode.
 	 */
-	if (cookie == pmp->pmp_rootcookie) {
+	if (cookie == pmp->pmp_root_cookie) {
 		if (!lock)
 			return NULL;
 		if (VFS_ROOT(pmp->pmp_mp, &vp))

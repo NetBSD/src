@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vfsops.c,v 1.41 2007/05/01 12:18:40 pooka Exp $	*/
+/*	$NetBSD: puffs_vfsops.c,v 1.42 2007/05/17 13:59:22 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.41 2007/05/01 12:18:40 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.42 2007/05/17 13:59:22 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -170,6 +170,14 @@ puffs_mount(struct mount *mp, const char *path, void *data,
 		goto out;
 	mp->mnt_stat.f_iosize = DEV_BSIZE;
 
+	/*
+	 * We can't handle the VFS_STATVFS() mount_domount() does
+	 * after VFS_MOUNT() because we'd deadlock, so handle it
+	 * here already.
+	 */
+	copy_statvfs_info(&args->pa_svfsb, mp);
+	(void)memcpy(&mp->mnt_stat, &args->pa_svfsb, sizeof(mp->mnt_stat));
+
 	MALLOC(pmp, struct puffs_mount *, sizeof(struct puffs_mount),
 	    M_PUFFS, M_WAITOK | M_ZERO);
 
@@ -202,6 +210,12 @@ puffs_mount(struct mount *mp, const char *path, void *data,
 		goto out;
 	}
 
+	/* XXX: check parameters */
+	pmp->pmp_root_cookie = args->pa_root_cookie;
+	pmp->pmp_root_vtype = args->pa_root_vtype;
+	pmp->pmp_root_vsize = args->pa_root_vsize;
+	pmp->pmp_root_rdev = args->pa_root_rdev;
+
 	mutex_init(&pmp->pmp_lock, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&pmp->pmp_req_waiter_cv, "puffsget");
 	cv_init(&pmp->pmp_refcount_cv, "puffsref");
@@ -224,56 +238,14 @@ puffs_mount(struct mount *mp, const char *path, void *data,
 	return error;
 }
 
-/*
- * This is called from the first "Hello, I'm alive" ioctl
- * from userspace.
- */
-int
-puffs_start2(struct puffs_mount *pmp, struct puffs_startreq *sreq)
-{
-	struct puffs_node *pn;
-	struct mount *mp;
-
-	mp = PMPTOMP(pmp);
-
-	mutex_enter(&pmp->pmp_lock);
-
-	/*
-	 * if someone has issued a VFS_ROOT() already, fill in the
-	 * vnode cookie.
-	 */
-	pn = NULL;
-	if (pmp->pmp_root) {
-		pn = VPTOPP(pmp->pmp_root);
-		pn->pn_cookie = sreq->psr_cookie;
-	}
-
-	/* We're good to fly */
-	pmp->pmp_rootcookie = sreq->psr_cookie;
-	pmp->pmp_status = PUFFSTAT_RUNNING;
-	mutex_exit(&pmp->pmp_lock);
-
-	/* do the VFS_STATVFS() we missed out on in sys_mount() */
-	copy_statvfs_info(&sreq->psr_sb, mp);
-	(void)memcpy(&mp->mnt_stat, &sreq->psr_sb, sizeof(mp->mnt_stat));
-	mp->mnt_stat.f_iosize = DEV_BSIZE;
-
-	DPRINTF(("puffs_start2: root vp %p, cur root pnode %p, cookie %p\n",
-	    pmp->pmp_root, pn, sreq->psr_cookie));
-
-	return 0;
-}
-
 int
 puffs_start(struct mount *mp, int flags, struct lwp *l)
 {
+	struct puffs_mount *pmp = MPTOPUFFSMP(mp);
 
-	/*
-	 * This cannot travel to userspace, as this is called from
-	 * the kernel context of the process doing mount(2).  But
-	 * it's probably a safe bet that the process doing mount(2)
-	 * realizes it needs to start the filesystem also...
-	 */
+	KASSERT(pmp->pmp_status == PUFFSTAT_MOUNTING);
+	pmp->pmp_status = PUFFSTAT_RUNNING;
+
 	return 0;
 }
 
@@ -400,7 +372,8 @@ puffs_root(struct mount *mp, struct vnode **vpp)
 	 * So, didn't have the magic root vnode available.
 	 * No matter, grab another an stuff it with the cookie.
 	 */
-	if (puffs_getvnode(mp, pmp->pmp_rootcookie, VDIR, 0, 0, &vp))
+	if (puffs_getvnode(mp, pmp->pmp_root_cookie, pmp->pmp_root_vtype,
+	    pmp->pmp_root_vsize, pmp->pmp_root_rdev, &vp))
 		panic("sloppy programming");
 
 	mutex_enter(&pmp->pmp_lock);
