@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.87 2006/11/01 10:17:58 yamt Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.87.4.1 2007/05/17 22:53:05 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include "opt_ktrace.h"
 #include "opt_multiprocessor.h"
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.87 2006/11/01 10:17:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.87.4.1 2007/05/17 22:53:05 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -151,9 +151,12 @@ static struct sadata_vp *
 sa_newsavp(struct sadata *sa)
 {
 	struct sadata_vp *vp, *qvp;
+	struct sadata_upcall *sau;
 
 	/* Allocate virtual processor data structure */
 	vp = pool_get(&savp_pool, PR_WAITOK);
+	/* And preallocate an upcall data structure for sleeping */
+	sau = sadata_upcall_alloc(1);
 	/* Initialize. */
 	memset(vp, 0, sizeof(*vp));
 	simple_lock_init(&vp->savp_lock);
@@ -163,6 +166,7 @@ sa_newsavp(struct sadata *sa)
 	vp->savp_ofaultaddr = 0;
 	LIST_INIT(&vp->savp_lwpcache);
 	vp->savp_ncached = 0;
+	vp->savp_sleeper_upcall = sau;
 	SIMPLEQ_INIT(&vp->savp_upcalls);
 
 	simple_lock(&sa->sa_lock);
@@ -269,6 +273,10 @@ sa_release(struct proc *p)
 	p->p_flag &= ~P_SA;
 	while ((vp = SLIST_FIRST(&p->p_sa->sa_vps)) != NULL) {
 		SLIST_REMOVE_HEAD(&p->p_sa->sa_vps, savp_next);
+		if (vp->savp_sleeper_upcall) {
+			sadata_upcall_free(vp->savp_sleeper_upcall);
+			vp->savp_sleeper_upcall = NULL;
+		}
 		pool_put(&savp_pool, vp);
 	}
 	pool_put(&sadata_pool, sa);
@@ -504,6 +512,7 @@ sa_increaseconcurrency(struct lwp *l, int concurrency)
 	vaddr_t uaddr;
 	boolean_t inmem;
 	int addedconcurrency, error, s;
+	struct sadata_vp *vp;
 
 	p = l->l_proc;
 	sa = p->p_sa;
@@ -527,17 +536,22 @@ sa_increaseconcurrency(struct lwp *l, int concurrency)
 			newlwp(l, p, uaddr, inmem, 0, NULL, 0,
 			    child_return, 0, &l2);
 			l2->l_flag |= L_SA;
-			l2->l_savp = sa_newsavp(sa);
-			if (l2->l_savp) {
-				l2->l_savp->savp_lwp = l2;
+			l2->l_savp = vp = sa_newsavp(sa);
+			if (vp) {
+				vp->savp_lwp = l2;
 				cpu_setfunc(l2, sa_switchcall, NULL);
 				error = sa_upcall(l2, SA_UPCALL_NEWPROC,
 				    NULL, NULL, 0, NULL, NULL);
 				if (error) {
 					/* free new savp */
-					SLIST_REMOVE(&sa->sa_vps, l2->l_savp,
+					SLIST_REMOVE(&sa->sa_vps, vp,
 					    sadata_vp, savp_next);
-					pool_put(&savp_pool, l2->l_savp);
+					if (vp->savp_sleeper_upcall) {
+						sadata_upcall_free(
+						    vp->savp_sleeper_upcall);
+						vp->savp_sleeper_upcall = NULL;
+					}
+					pool_put(&savp_pool, vp);
 				}
 			} else
 				error = 1;
@@ -921,12 +935,12 @@ sa_pagefault(struct lwp *l, ucontext_t *l_ctx)
  */
 
 void
-sa_switch(struct lwp *l, struct sadata_upcall *sau, int type)
+sa_switch(struct lwp *l, int type)
 {
 	struct proc *p = l->l_proc;
 	struct sadata_vp *vp = l->l_savp;
+	struct sadata_upcall *sau = NULL;
 	struct lwp *l2;
-	struct sadata_upcall *freesau = NULL;
 	int s;
 
 	DPRINTFN(4,("sa_switch(%d.%d type %d VP %d)\n", p->p_pid, l->l_lid,
@@ -936,7 +950,6 @@ sa_switch(struct lwp *l, struct sadata_upcall *sau, int type)
 
 	if (p->p_flag & P_WEXIT) {
 		mi_switch(l, NULL);
-		sadata_upcall_free(sau);
 		return;
 	}
 
@@ -956,7 +969,6 @@ sa_switch(struct lwp *l, struct sadata_upcall *sau, int type)
 			s = splsched();
 			SCHED_UNLOCK(s);
 		}
-		sadata_upcall_free(sau);
 		return;
 	} else if (vp->savp_lwp == l) {
 		/*
@@ -964,12 +976,18 @@ sa_switch(struct lwp *l, struct sadata_upcall *sau, int type)
 		 * a SA_BLOCKED upcall and allocate resources for the
 		 * UNBLOCKED upcall.
 		 */
+		if (vp->savp_sleeper_upcall) {
+			sau = vp->savp_sleeper_upcall;
+			vp->savp_sleeper_upcall = NULL;
+		}
 
 		if (sau == NULL) {
 #ifdef DIAGNOSTIC
 			printf("sa_switch(%d.%d): no upcall data.\n",
 			    p->p_pid, l->l_lid);
 #endif
+panic("Oops! Don't have a sleeper!\n");
+			/* XXXWRS Shouldn't we just kill the app here? */
 			mi_switch(l, NULL);
 			return;
 		}
@@ -1016,7 +1034,14 @@ sa_switch(struct lwp *l, struct sadata_upcall *sau, int type)
 			cpu_setfunc(l2, sa_switchcall, NULL);
 			sa_putcachelwp(p, l2); /* PHOLD from sa_getcachelwp */
 			mi_switch(l, NULL);
-			sadata_upcall_free(sau);
+			/*
+			 * WRS Not sure how vp->savp_sleeper_upcall != NULL
+			 * but be careful none the less
+			 */
+			if (vp->savp_sleeper_upcall == NULL)
+				vp->savp_sleeper_upcall = sau;
+			else
+				sadata_upcall_free(sau);
 			DPRINTFN(10,("sa_switch(%d.%d) page fault resolved\n",
 				     p->p_pid, l->l_lid));
 			if (vp->savp_faultaddr == vp->savp_ofaultaddr)
@@ -1044,7 +1069,6 @@ sa_switch(struct lwp *l, struct sadata_upcall *sau, int type)
 		 * SA_UNBLOCKED upcall (select and poll cause this
 		 * kind of behavior a lot).
 		 */
-		freesau = sau;
 		l2 = NULL;
 	} else {
 		/* NOTREACHED */
@@ -1054,7 +1078,6 @@ sa_switch(struct lwp *l, struct sadata_upcall *sau, int type)
 	DPRINTFN(4,("sa_switch(%d.%d) switching to LWP %d.\n",
 	    p->p_pid, l->l_lid, l2 ? l2->l_lid : 0));
 	mi_switch(l, l2);
-	sadata_upcall_free(freesau);
 	DPRINTFN(4,("sa_switch(%d.%d flag %x) returned.\n",
 	    p->p_pid, l->l_lid, l->l_flag));
 	KDASSERT(l->l_wchan == 0);
@@ -1062,6 +1085,14 @@ sa_switch(struct lwp *l, struct sadata_upcall *sau, int type)
 	SCHED_ASSERT_UNLOCKED();
 }
 
+/*
+ * sa_switchcall
+ *
+ * We need to pass an upcall to userland. We are now
+ * running on a spare stack and need to allocate a new
+ * one. Also, if we are passed an sa upcall, we need to dispatch
+ * it to the app.
+ */
 static void
 sa_switchcall(void *arg)
 {
@@ -1100,11 +1131,26 @@ sa_switchcall(void *arg)
 			SIMPLEQ_INSERT_TAIL(&vp->savp_upcalls, sau, sau_next);
 			l2->l_flag |= L_SA_UPCALL;
 		} else {
+			/*
+			 * Oops! We're in trouble. The app hasn't
+			 * passeed us in any stacks on which to deliver
+			 * the upcall.
+			 *
+			 * WRS: I think this code is wrong. If we can't
+			 * get a stack, we are dead. We either need
+			 * to block waiting for one (assuming there's a
+			 * live vp still in userland so it can hand back
+			 * stacks, or we should just kill the process
+			 * as we're deadlocked.
+			 */
 #ifdef DIAGNOSTIC
 			printf("sa_switchcall(%d.%d flag %x): Not enough stacks.\n",
 			    p->p_pid, l->l_lid, l->l_flag);
 #endif
-			sadata_upcall_free(sau);
+			if (vp->savp_sleeper_upcall == NULL)
+				vp->savp_sleeper_upcall = sau;
+			else
+				sadata_upcall_free(sau);
 			PHOLD(l2);
 			SCHED_LOCK(s);
 			sa_putcachelwp(p, l2); /* sets L_SA */
@@ -1585,7 +1631,10 @@ sa_makeupcalls(struct lwp *l)
 	}
 	type = sau->sau_type;
 
-	sadata_upcall_free(sau);
+	if (vp->savp_sleeper_upcall == NULL)
+		vp->savp_sleeper_upcall = sau;
+	else
+		sadata_upcall_free(sau);
 
 	DPRINTFN(7,("sa_makeupcalls(%d.%d): type %d\n", p->p_pid,
 	    l->l_lid, type));
