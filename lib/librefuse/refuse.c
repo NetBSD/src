@@ -1,4 +1,4 @@
-/*	$NetBSD: refuse.c,v 1.55 2007/05/16 21:39:08 christos Exp $	*/
+/*	$NetBSD: refuse.c,v 1.56 2007/05/17 01:55:43 christos Exp $	*/
 
 /*
  * Copyright © 2007 Alistair Crooks.  All rights reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: refuse.c,v 1.55 2007/05/16 21:39:08 christos Exp $");
+__RCSID("$NetBSD: refuse.c,v 1.56 2007/05/17 01:55:43 christos Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -220,39 +220,6 @@ puffs_fuse_dirfil(fuse_dirh_t h, const char *name, int type, ino_t ino)
 	return fill_dirbuf(h, name, dino, dtype);
 }
 
-struct fuse_args *
-_fuse_deep_copy_args(int argc, char **argv)
-{
-	struct fuse_args	*ap;
-	size_t			 i;
-
-	if ((ap = malloc(sizeof(*ap))) == NULL)
-		err(1, "_fuse_deep_copy_args");
-	/* deep copy args structure into channel args */
-	ap->allocated = ((argc / 10) + 1) * 10;
-
-	if ((ap->argv = calloc((size_t)ap->allocated,
-	    sizeof(*ap->argv))) == NULL)
-		err(1, "_fuse_deep_copy_args");
-
-	for (i = 0; i < argc; i++) {
-		if ((ap->argv[i] = strdup(argv[i])) == NULL)
-			err(1, "_fuse_deep_copy_args");
-	}
-	return ap;
-}
-
-void
-_fuse_free_args(struct fuse_args *ap)
-{
-	int	i;
-
-	for (i = 0; i < ap->argc; i++) {
-		free(ap->argv[i]);
-	}
-	free(ap);
-}
-
 static void
 set_refuse_mount_name(char **argv, char *name, size_t size)
 {
@@ -302,7 +269,7 @@ fuse_setup(int argc, char **argv, const struct fuse_operations *ops,
 	set_refuse_mount_name(argv, name, sizeof(name));
 
 	/* stuff name into fuse_args */
-	args = _fuse_deep_copy_args(argc, argv);
+	args = fuse_opt_deep_copy_args(argc, argv);
 	if (args->argc > 0) {
 		free(args->argv[0]);
 	}
@@ -315,7 +282,8 @@ fuse_setup(int argc, char **argv, const struct fuse_operations *ops,
 	fc = fuse_mount(*mountpoint = argv[i], args);
 	fuse = fuse_new(fc, args, ops, size, NULL);
 
-	_fuse_free_args(args);
+	fuse_opt_free_args(args);
+	free(args);
 
 	/* XXX - wait for puffs to become multi-threaded */
 	if (multithreaded) {
@@ -1115,7 +1083,7 @@ fuse_mount(const char *dir, struct fuse_args *args)
 	 * systems "clean up" the argument vector for "security
 	 * reasons"
 	 */
-	fc->args = _fuse_deep_copy_args(args->argc, args->argv);
+	fc->args = fuse_opt_deep_copy_args(args->argc, args->argv);
 
 	if (args->argc > 0) {
 		set_refuse_mount_name(args->argv, name, sizeof(name));

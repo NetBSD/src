@@ -1,4 +1,4 @@
-/* $NetBSD: fuse.h,v 1.18 2007/05/16 22:17:52 xtraeme Exp $ */
+/* $NetBSD: fuse.h,v 1.19 2007/05/17 01:55:43 christos Exp $ */
 
 /*
  * Copyright © 2007 Alistair Crooks.  All rights reserved.
@@ -180,9 +180,6 @@ void fuse_unmount_compat22(const char *);
 #define fuse_main(argc, argv, op) \
             fuse_main_real(argc, argv, op, sizeof(*(op)), NULL)
 #endif
-
-struct fuse_args *_fuse_deep_copy_args(int, char **);
-void _fuse_free_args(struct fuse_args *);
 
 #ifdef __cplusplus
 }
