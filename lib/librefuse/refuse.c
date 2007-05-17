@@ -1,4 +1,4 @@
-/*	$NetBSD: refuse.c,v 1.59 2007/05/17 21:00:32 pooka Exp $	*/
+/*	$NetBSD: refuse.c,v 1.60 2007/05/17 21:28:12 pooka Exp $	*/
 
 /*
  * Copyright © 2007 Alistair Crooks.  All rights reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: refuse.c,v 1.59 2007/05/17 21:00:32 pooka Exp $");
+__RCSID("$NetBSD: refuse.c,v 1.60 2007/05/17 21:28:12 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -70,6 +70,7 @@ struct fuse_chan {
 	const char		*dir;
 	struct fuse_args	*args;
 	struct puffs_usermount	*pu;
+	int 			dead;
 };
 
 /* this is the private fuse structure */
@@ -1075,6 +1076,7 @@ fuse_mount(const char *dir, struct fuse_args *args)
 
 	if ((fc = malloc(sizeof(*fc))) == NULL)
 		err(1, "fuse_mount");
+	fc->dead = 0;
 
 	if ((fc->dir = strdup(dir)) == NULL)
 		err(1, "fuse_mount");
@@ -1226,7 +1228,10 @@ void
 fuse_exit(struct fuse *fuse)
 {
 	
-	puffs_exit(fuse->fc->pu, 1);
+	/* XXX: puffs_exit() is WRONG */
+	if (fuse->fc->dead == 0)
+		puffs_exit(fuse->fc->pu, 1);
+	fuse->fc->dead = 1;
 }
 
 /*
@@ -1238,7 +1243,10 @@ void
 fuse_unmount(const char *mp, struct fuse_chan *fc)
 {
 
-	puffs_exit(fc->pu, 1);
+	/* XXX: puffs_exit() is WRONG */
+	if (fc->dead == 0)
+		puffs_exit(fc->pu, 1);
+	fc->dead = 1;
 }
 
 /*ARGSUSED*/
