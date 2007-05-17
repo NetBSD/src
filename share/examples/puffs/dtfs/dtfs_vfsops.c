@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs_vfsops.c,v 1.16 2007/05/07 17:22:50 pooka Exp $	*/
+/*	$NetBSD: dtfs_vfsops.c,v 1.17 2007/05/17 14:10:13 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -42,18 +42,95 @@
 
 #include "dtfs.h"
 
-int
-dtfs_domount(struct puffs_usermount *pu)
+static int
+rtstr(struct puffs_usermount *pu, const char *str, enum vtype vt)
 {
-	struct statvfs sb;
+	struct puffs_node *pn = puffs_getroot(pu);
+	struct vattr *va = &pn->pn_va;
+	struct dtfs_file *df = DTFS_PTOF(pn);
+	char ltarg[256+1];
+
+	if (sscanf(str, "%*s %256s", ltarg) != 1)
+		return 1;
+
+	dtfs_baseattrs(va, vt, 2);
+	df->df_linktarget = estrdup(ltarg);
+
+	va->va_nlink = 1;
+	va->va_size = strlen(df->df_linktarget);
+
+	puffs_setrootinfo(pu, vt, 0, 0);
+
+	return 0;
+}
+
+static int
+rtdev(struct puffs_usermount *pu, const char *str, enum vtype vt)
+{
+	struct puffs_node *pn = puffs_getroot(pu);
+	struct vattr *va = &pn->pn_va;
+	int major, minor;
+
+	if (sscanf(str, "%*s %d %d", &major, &minor) != 2)
+		return 1;
+
+	dtfs_baseattrs(va, vt, 2);
+	va->va_nlink = 1;
+	va->va_rdev = makedev(major, minor);
+
+	if (vt == VBLK)
+		va->va_mode |= S_IFBLK;
+	else
+		va->va_mode |= S_IFCHR;
+
+	puffs_setrootinfo(pu, vt, 0, va->va_rdev);
+
+	return 0;
+}
+
+static int
+rtnorm(struct puffs_usermount *pu, const char *str, enum vtype vt)
+{
+	struct puffs_node *pn = puffs_getroot(pu);
+	struct vattr *va = &pn->pn_va;
+
+	dtfs_baseattrs(va, vt, 2);
+	if (vt == VDIR)
+		va->va_nlink = 2;
+	else
+		va->va_nlink = 1;
+
+	puffs_setrootinfo(pu, vt, 0, 0);
+
+	return 0;
+}
+
+struct rtype {
+	char *tstr;
+	enum vtype vt;
+	int (*pfunc)(struct puffs_usermount *, const char *, enum vtype);
+} rtypes[] = {
+	{ "reg", VREG, rtnorm },
+	{ "dir", VDIR, rtnorm },
+	{ "blk", VBLK, rtdev },
+	{ "chr", VCHR, rtdev },
+	{ "lnk", VLNK, rtstr },
+	{ "sock", VSOCK, rtnorm },
+	{ "fifo", VFIFO, rtnorm }
+};
+#define NTYPES (sizeof(rtypes) / sizeof(rtypes[0]))
+
+int
+dtfs_domount(struct puffs_usermount *pu, const char *typestr)
+{
 	struct dtfs_mount *dtm;
 	struct dtfs_file *dff;
 	struct puffs_node *pn;
-	struct vattr *va;
+	int i;
 
 	/* create mount-local thingie */
 	dtm = puffs_getspecific(pu);
-	dtm->dtm_nextfileid = 2;
+	dtm->dtm_nextfileid = 3;
 	dtm->dtm_nfiles = 1;
 	dtm->dtm_fsizes = 0;
 
@@ -66,19 +143,28 @@ dtfs_domount(struct puffs_usermount *pu)
 	pn = puffs_pn_new(pu, dff);
 	if (!pn)
 		errx(1, "puffs_newpnode");
-
-	va = &pn->pn_va;
-	dtfs_baseattrs(va, VDIR, dtm->dtm_nextfileid++);
-	/* not adddented, so compensate */
-	va->va_nlink = 2;
-
 	puffs_setroot(pu, pn);
 
-	/* XXX: should call dtfs_fs_statvfs */
-	puffs_zerostatvfs(&sb);
-
-	if (puffs_start(pu, pn, &sb) == -1)
-		return errno;
+	if (!typestr) {
+		rtnorm(pu, NULL, VDIR);
+	} else {
+		for (i = 0; i < NTYPES; i++) {
+			if (strncmp(rtypes[i].tstr, typestr,
+			    strlen(rtypes[i].tstr)) == 0) {
+				if (rtypes[i].pfunc(pu, typestr,
+				    rtypes[i].vt) != 0) {
+					fprintf(stderr, "failed to parse "
+					    "\"%s\"\n", typestr);
+					return 1;
+				}
+				break;
+			}
+		}
+		if (i == NTYPES) {
+			fprintf(stderr, "no maching type for %s\n", typestr);
+			return 1;
+		}
+	}
 
 	return 0;
 }
