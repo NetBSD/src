@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.1 2007/05/18 21:44:08 christos Exp $	*/
+/*	$NetBSD: expand.c,v 1.2 2007/05/18 21:46:39 christos Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: expand.c,v 1.1 2007/05/18 21:44:08 christos Exp $");
+__RCSID("$NetBSD: expand.c,v 1.2 2007/05/18 21:46:39 christos Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -61,11 +61,11 @@ static const struct {
 } bltn[] = {
 #define ADD(a)	{ #a, sizeof(#a) - 1 },
 	ADD(HWCAP)	/* SSE, MMX, etc */
-	ADD(ISALIST)	/* uname -p */
+	ADD(ISALIST)	/* XXX */
 	ADD(ORIGIN) 	/* dirname argv[0] */
 	ADD(OSNAME)	/* uname -s */
 	ADD(OSREL)	/* uname -r */
-	ADD(PLATFORM)	/* uname -m */
+	ADD(PLATFORM)	/* uname -p */
 };
 
 static int mib[3][2] = {
