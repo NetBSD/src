@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.52 2007/03/21 10:56:27 tsutsui Exp $	*/
+/*	$NetBSD: cpu.h,v 1.53 2007/05/18 22:58:52 he Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -98,6 +98,7 @@
 #include <sys/cpu_data.h>
 struct cpu_info {
 	struct cpu_data ci_data;	/* MI per-cpu data */
+	int	ci_want_resched;
         int	ci_mtx_count;
         int	ci_mtx_oldspl;
 };
@@ -143,7 +144,7 @@ struct clockframe {
  * Preempt the current process if in interrupt from user mode,
  * or after the current trap/syscall if in system mode.
  */
-#define	cpu_need_resched(ci)	{want_resched = 1; setsoftast();}
+#define	cpu_need_resched(ci,flags)	{ci->ci_want_resched = 1; setsoftast();}
 
 /*
  * Give a profiling tick to the current process from the softclock
@@ -162,7 +163,6 @@ struct clockframe {
 #define setsoftast()	(astpending = 1)
 
 extern int	astpending;	/* need trap before returning to user mode */
-extern int	want_resched;	/* resched() was called */
 
 /*
  * The rest of this should probably be moved to ../atari/ataricpu.h,
