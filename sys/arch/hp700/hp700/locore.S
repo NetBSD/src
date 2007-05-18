@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.22 2007/05/18 12:42:24 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.23 2007/05/18 12:43:41 skrll Exp $	*/
 
 /*	$OpenBSD: locore.S,v 1.46 2001/09/20 18:33:03 mickey Exp $	*/
 
@@ -617,9 +617,8 @@ $hp700_inew_done:
 	/* End stack calling convention. */
 	ldw	HPPA_FRAME_CRP(%r3), %rp
 	ldo	HPPA_FRAME_SIZE(%r3), %sp
-	ldw,mb	-HPPA_FRAME_SIZE(%sp), %r3
 	bv	%r0(%rp)
-	nop
+	ldw,mb	-HPPA_FRAME_SIZE(%sp), %r3
 
 $hp700_inew_descend:
 
