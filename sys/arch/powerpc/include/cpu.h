@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.56 2007/05/17 14:51:26 yamt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.57 2007/05/18 11:16:27 rjs Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -68,7 +68,7 @@ struct cpu_info {
 	int ci_cpuid;
 
 	volatile int ci_astpending;
-	int ci_need_resched;
+	int ci_want_resched;
 	volatile u_long ci_lasttb;
 	volatile int ci_tickspending;
 	volatile int ci_cpl;
@@ -312,8 +312,8 @@ void unmapiodev(vaddr_t, vsize_t);
 
 #define	DELAY(n)		delay(n)
 
-#define	cpu_need_resched(ci, v)	(ci->ci_need_resched = ci->ci_astpending = 1)
-#define	cpu_did_resched()	((void)(curcpu()->ci_need_resched = 0))
+#define	cpu_need_resched(ci, v)	(ci->ci_want_resched = ci->ci_astpending = 1)
+#define	cpu_did_resched()	((void)(curcpu()->ci_want_resched = 0))
 #define	cpu_need_proftick(l)	((l)->l_pflag |= LP_OWEUPC, curcpu()->ci_astpending = 1)
 #define	cpu_signotify(l)	(curcpu()->ci_astpending = 1)	/* XXXSMP */
 
