@@ -1,4 +1,4 @@
-/*	$NetBSD: switch_subr.s,v 1.15 2007/02/09 21:55:06 ad Exp $	*/
+/*	$NetBSD: switch_subr.s,v 1.16 2007/05/18 01:46:39 mhitch Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation.
@@ -109,140 +109,22 @@ GLOBAL(curpcb)
 GLOBAL(masterpaddr)		| XXXcompatibility (debuggers)
 	.long	0
 
-ASBSS(nullpcb,SIZEOF_PCB)
-
-/*
- * void switch_lwp_exit(struct lwp *);
- *
- * At exit of a lwp, do a switch for the last time.
- * Switch to a safe stack and PCB, and select a new lwp to run.  The
- * old stack and u-area will be freed by the reaper.
- *
- * MUST BE CALLED AT SPLHIGH!
- */
-ENTRY(switch_lwp_exit)
-	movl    %sp@(4),%a0
-	/* save state into garbage pcb */
-	movl    #_ASM_LABEL(nullpcb),_C_LABEL(curpcb)
-	lea     _ASM_LABEL(tmpstk),%sp	| goto a tmp stack
-
-	/* Schedule the vmspace and stack to be freed. */
-	movl	%a0,%sp@-		| exit2(l)
-	jbsr	_C_LABEL(lwp_exit2)
-	lea	%sp@(4),%sp		| pop args
-
-	/* Acquire sched_lock */ 
-	jbsr	_C_LABEL(sched_lock_idle)
-
-	jra	_C_LABEL(cpu_switch)
-
 /*
  * When no processes are on the runq, Swtch branches to Idle
  * to wait for something to come ready.
  */
-ASENTRY_NOPROFILE(Idle)
-	/* Release sched_lock */
-	jbsr	_C_LABEL(sched_unlock_idle)
+ASENTRY_NOPROFILE(cpu_idle)
 	stop	#PSL_LOWIPL
 GLOBAL(_Idle)				/* For sun2/sun3's clock.c ... */
-	movw	#PSL_HIGHIPL,%sr
-	/* Acquire sched_lock */
-	jbsr	_C_LABEL(sched_lock_idle)
-	movl    _C_LABEL(sched_whichqs),%d0
-	jeq     _ASM_LABEL(Idle)
-#if defined(M68010)
-	movw	#PSL_LOWIPL,%sr
-#endif
-	jra	Lcpu_switch1
-
-Lcpu_switch_badsw:
-	PANIC("switch")
-	/*NOTREACHED*/
+	rts
 
 /*
- * int cpu_switch(struct lwp *l)
+ * void cpu_switchto(struct lwp *current, struct lwp *next)
  *
- * NOTE: With the new VM layout we now no longer know if an inactive
- * user's PTEs have been changed (formerly denoted by the SPTECHG p_flag
- * bit).  For now, we just always flush the full ATC.
+ * Switch to the specific next LWP.
  */
-ENTRY(cpu_switch)
-	movl	_C_LABEL(curpcb),%a0	| current pcb
-	movw	%sr,%a0@(PCB_PS)	| save sr before changing ipl
-	movl	_C_LABEL(curlwp),%sp@-	| remember last LWP running
-	clrl	_C_LABEL(curlwp)
-
-	/*
-	 * Find the highest-priority queue that isn't empty,
-	 * then take the first proc from that queue.
-	 */
-Lcpu_switch1:
-
-#if defined(M68010)
-	lea	_C_LABEL(sched_whichqs),%a0
-	movl	%a0@,%d0		| Get runqueue bitmap
-	jeq     _ASM_LABEL(Idle)	| Go idle if empty
-1:	moveq	#31,%d1
-2:	lsrl	#1,%d0			| Find first bit set (starting at 0)
-	dbcs	%d1,2b
-	eorib	#31,%d1
-	movw	#PSL_HIGHIPL,%sr
-	movl	%a0@,%d0		| check again
-	btstl	%d1,%d0
-	beqs	1b			| Rescan at HIGHIPL process moved
-	moveq	#1,%d0			| Double check for higher priority
-	lsll	%d1,%d0			| process which may have sneaked in
-	subql	#1,%d0			| while we were finding this one
-	andl	%a0@,%d0
-	bnes	1b			| Yup. Go scan again
-#else
-	movw	#PSL_HIGHIPL,%sr
-	movl	_C_LABEL(sched_whichqs),%d0
-	jeq     _ASM_LABEL(Idle)	| Go idle if empty
-	movl    %d0,%d1
-	negl    %d0
-	andl    %d1,%d0
-	bfffo   %d0{#0:#32},%d1
-	eorib   #31,%d1
-#endif
-	movl    %d1,%d0
-	lslb    #3,%d1			| convert queue number to index
-	addl    #_C_LABEL(sched_qs),%d1	| locate queue (q)
-	movl    %d1,%a1
-	movl    %a1@(L_FORW),%a0	| l = q->l_forw
-	cmpal   %d1,%a0			| anyone on queue?
-	jeq     Lcpu_switch_badsw       | no, panic
-#ifdef DIAGNOSTIC
-	tstl	%a0@(L_WCHAN)
-	jne	Lcpu_switch_badsw
-	cmpl	#LSRUN,%a0@(L_STAT)
-	jne	Lcpu_switch_badsw
-#endif
-	movl    %a0@(L_FORW),%a1@(L_FORW) | q->l_forw = l->l_forw
-	movl    %a0@(L_FORW),%a1	| n = l->l_forw
-	movl    %d1,%a1@(L_BACK)	| n->l_back = q
-	cmpal   %d1,%a1			| anyone left on queue?
-	jne     Lcpu_switch_sw2		| yes, skip
-	movl    _C_LABEL(sched_whichqs),%d1
-	bclr    %d0,%d1			| no, clear bit
-	movl    %d1,_C_LABEL(sched_whichqs)
-Lcpu_switch_sw2:
-	movl	%sp@+,%a1		| Restore saved `curlwp'
-
-Lcpu_switch_common:
-	/* l->l_cpu initialized in fork1() for single-processor */
-	movl	#LSONPROC,%a0@(L_STAT)	| l->l_stat = LSONPROC
-	clrl	%a0@(L_BACK)
-	movl	%a0,_C_LABEL(curlwp)
-	clrl	_C_LABEL(want_resched)
-
-#if 0
-	cmpal	%a0,%a1			| switching to same lwp?
-	jeq	Lcpu_switch_same	| yes, skip save and restore
-#else
-	movl	_C_LABEL(curpcb),%a1
-#endif
-
+ENTRY(cpu_switchto)
+	movl	%sp@(4),%a1		| fetch `current' lwp
 #ifdef M68010
 	movl	%a1,%d0
 	tstl	%d0
@@ -254,9 +136,7 @@ Lcpu_switch_common:
 	/*
 	 * Save state of previous process in its pcb.
 	 */
-#if 0
 	movl	%a1@(L_ADDR),%a1
-#endif
 	moveml	%d2-%d7/%a2-%a7,%a1@(PCB_REGS)	| save non-scratch registers
 	movl	%usp,%a2		| grab USP (a2 has been saved)
 	movl	%a2,%a1@(PCB_USP)	| and save it
@@ -302,19 +182,10 @@ Lcpu_switch_nofpsave:
 #endif	/* !_M68K_CUSTOM_FPU_CTX */
 
 Lcpu_switch_noctxsave:
-	clrl	%a0@(L_BACK)		| clear back link
+	movl	8(%sp),%a0
+	movl	%a0,_C_LABEL(curlwp)
 	movl	%a0@(L_ADDR),%a1	| get l_addr
 	movl	%a1,_C_LABEL(curpcb)
-
-	/*
-	 * Done mucking with the run queues, release the
-	 * scheduler lock, but keep interrupts out.
-	 */
-	movl	%a0,%sp@-		| not args...
-	movl	%a1,%sp@-		| ...just saving
-	jbsr	_C_LABEL(sched_unlock_idle)
-	movl	%sp@+,%a1
-	movl	%sp@+,%a0
 
 #if defined(sun2) || defined(sun3)
 	movl	%a0@(L_PROC),%a2
@@ -426,32 +297,13 @@ Lcpu_switch_resfprest:
 #endif /* !_M68K_CUSTOM_FPU_CTX */
 
 Lcpu_switch_nofprest:
-	subl	%d1,%d0
-	beqs	1f
-	moveq	#1,%d0
-1:	movw	%a1@(PCB_PS),%sr	| no, restore PS
+	movl	%d1,%d0
+	movl	%d0,%a0
 	rts
 
-	/* Switching to the same LWP */
-Lcpu_switch_same:
-	movl	%sp@(4),%d0
-	movl	%a1,%d0
-	movl	%a1@(L_ADDR),%a1	| restore l_addr
-	bras	Lcpu_switch_nofprest
-
-/*
- * void cpu_switchto(struct lwp *current, struct lwp *next)
- *
- * Switch to the specific next LWP.
- */
-ENTRY(cpu_switchto)
-	movl	%sp@(4),%a1		| fetch `current' lwp
-	movl	%a1@(L_ADDR),%a0
-	movw	%sr,%a0@(PCB_PS)	| save sr before changing ipl
-	clrl	_C_LABEL(curlwp)
-	movl	%sp@(8),%a0		| fetch `next' lwp
-	jbra	Lcpu_switch_common
-
+Lcpu_switch_badsw:
+	PANIC("switch")
+	/*NOTREACHED*/
 
 /*
  * savectx(pcb)
