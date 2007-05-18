@@ -1,4 +1,4 @@
-/*	$NetBSD: psshfs.h,v 1.15 2007/05/15 13:46:48 pooka Exp $	*/
+/*	$NetBSD: psshfs.h,v 1.16 2007/05/18 16:13:47 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -111,8 +111,8 @@ struct psshfs_node {
 	size_t dentnext;
 	time_t dentread;
 	int childcount;
-	int reclaimed;
-	int hasfh;
+
+	int stat;
 
 	time_t attrread;
 
@@ -121,6 +121,9 @@ struct psshfs_node {
 	uint32_t fhand_r_len;
 	uint32_t fhand_w_len;
 };
+#define PSN_RECLAIMED	0x01
+#define PSN_HASFH	0x02
+#define PSN_NUKED	0x04
 
 struct psshfs_ctx {
 	int sshfd;
