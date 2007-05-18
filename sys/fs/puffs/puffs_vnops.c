@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.68 2007/05/15 12:48:48 pooka Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.69 2007/05/18 13:53:09 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.68 2007/05/15 12:48:48 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.69 2007/05/18 13:53:09 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/fstrans.h>
@@ -146,9 +146,9 @@ const struct vnodeopv_entry_desc puffs_vnodeop_entries[] = {
         { &vop_islocked_desc, puffs_islocked },		/* REAL islocked */
         { &vop_bwrite_desc, genfs_nullop },		/* REAL bwrite */
         { &vop_mmap_desc, puffs_mmap },			/* REAL mmap */
+        { &vop_poll_desc, puffs_poll },			/* REAL poll */
 
-        { &vop_poll_desc, genfs_eopnotsupp },		/* poll XXX */
-        { &vop_poll_desc, genfs_eopnotsupp },		/* kqfilter XXX */
+        { &vop_kqfilter_desc, genfs_eopnotsupp },	/* kqfilter XXX */
 	{ NULL, NULL }
 };
 const struct vnodeopv_desc puffs_vnodeop_opv_desc =
@@ -174,7 +174,7 @@ const struct vnodeopv_entry_desc puffs_specop_entries[] = {
 	{ &vop_poll_desc, spec_poll },			/* spec_poll */
 	{ &vop_kqfilter_desc, spec_kqfilter },		/* spec_kqfilter */
 	{ &vop_revoke_desc, spec_revoke },		/* genfs_revoke */
-	{ &vop_mmap_desc, spec_mmap },			/* genfs_mmap (dummy) */
+	{ &vop_mmap_desc, spec_mmap },			/* spec_mmap */
 	{ &vop_fsync_desc, spec_fsync },		/* vflushbuf */
 	{ &vop_seek_desc, spec_seek },			/* genfs_nullop */
 	{ &vop_remove_desc, spec_remove },		/* genfs_badop */
@@ -1002,6 +1002,16 @@ puffs_readdir(void *v)
 }
 #undef CSIZE
 
+/*
+ * poll works by consuming the bitmask in pn_revents.  If there are
+ * events available, poll returns immediately.  If not, it issues a
+ * poll to userspace, selrecords itself and returns with no available
+ * events.  When the file server returns, it executes puffs_parkdone_poll(),
+ * where available events are added to the bitmask.  selnotify() is
+ * then also executed by that function causing us to enter here again
+ * and hopefully find the missing bits (unless someone got them first,
+ * in which case it starts all over again).
+ */
 int
 puffs_poll(void *v)
 {
@@ -1011,14 +1021,42 @@ puffs_poll(void *v)
 		int a_events;
 		struct lwp *a_l;
 	} */ *ap = v;
+	struct vnode *vp = ap->a_vp;
+	struct puffs_mount *pmp = MPTOPUFFSMP(vp->v_mount);
+	struct puffs_vnreq_poll *poll_argp;
+	struct puffs_node *pn = vp->v_data;
+	int events;
 
-	PUFFS_VNREQ(poll);
+	if (EXISTSOP(pmp, POLL)) {
+		mutex_enter(&pn->pn_mtx);
+		events = pn->pn_revents & ap->a_events;
+		if (events & ap->a_events) {
+			pn->pn_revents &= ~ap->a_events;
+			mutex_exit(&pn->pn_mtx);
 
-	poll_arg.pvnr_events = ap->a_events;
-	poll_arg.pvnr_pid = puffs_lwp2pid(ap->a_l);
+			return events;
+		} else {
+			puffs_referencenode(pn);
+			mutex_exit(&pn->pn_mtx);
 
-	return puffs_vntouser(MPTOPUFFSMP(ap->a_vp->v_mount), PUFFS_VN_POLL,
-	    &poll_arg, sizeof(poll_arg), 0, ap->a_vp, NULL);
+			/* freed in puffs_parkdone_poll */
+			poll_argp = malloc(sizeof(struct puffs_vnreq_poll),
+			    M_PUFFS, M_ZERO | M_WAITOK);
+
+			poll_argp->pvnr_events = ap->a_events;
+			poll_argp->pvnr_pid = puffs_lwp2pid(ap->a_l);
+
+			puffs_vntouser_call(pmp, PUFFS_VN_POLL,
+			    poll_argp, sizeof(struct puffs_vnreq_poll), 0,
+			    puffs_parkdone_poll, pn,
+			    vp, NULL);
+			selrecord(ap->a_l, &pn->pn_sel);
+
+			return 0;
+		}
+	} else {
+		return genfs_poll(v);
+	}
 }
 
 int
