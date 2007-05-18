@@ -1,4 +1,4 @@
-/*	$NetBSD: load.c,v 1.31 2006/03/21 17:48:10 christos Exp $	 */
+/*	$NetBSD: load.c,v 1.32 2007/05/18 21:44:08 christos Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: load.c,v 1.31 2006/03/21 17:48:10 christos Exp $");
+__RCSID("$NetBSD: load.c,v 1.32 2007/05/18 21:44:08 christos Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -137,11 +137,20 @@ _rtld_load_object(const char *filepath, int mode)
 	}
 
 	if (obj == NULL) { /* First use of this object, so we must map it in */
+		char *p, pathname[MAXPATHLEN];
+		const char *q;
+
 		obj = _rtld_map_object(filepath, fd, &sb);
 		(void)close(fd);
 		if (obj == NULL)
 			return NULL;
-		_rtld_digest_dynamic(obj);
+
+		(void)strlcpy(pathname, filepath, sizeof(pathname));
+		if ((p = strrchr(q = pathname, '/')) != NULL)
+			*p = '\0';
+		else
+			q = ".";
+		_rtld_digest_dynamic(q, obj);
 
 		*_rtld_objtail = obj;
 		_rtld_objtail = &obj->next;

@@ -1,4 +1,4 @@
-/*	$NetBSD: headers.c,v 1.20 2005/01/09 12:43:23 simonb Exp $	 */
+/*	$NetBSD: headers.c,v 1.21 2007/05/18 21:44:08 christos Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: headers.c,v 1.20 2005/01/09 12:43:23 simonb Exp $");
+__RCSID("$NetBSD: headers.c,v 1.21 2007/05/18 21:44:08 christos Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -63,7 +63,7 @@ __RCSID("$NetBSD: headers.c,v 1.20 2005/01/09 12:43:23 simonb Exp $");
  * information in its Obj_Entry structure.
  */
 void
-_rtld_digest_dynamic(Obj_Entry *obj)
+_rtld_digest_dynamic(const char *argv0, Obj_Entry *obj)
 {
 	Elf_Dyn        *dynp;
 	Needed_Entry  **needed_tail = &obj->needed;
@@ -269,7 +269,7 @@ _rtld_digest_dynamic(Obj_Entry *obj)
 #endif
 
 	if (dyn_rpath != NULL) {
-		_rtld_add_paths(&obj->rpaths, obj->strtab +
+		_rtld_add_paths(argv0, &obj->rpaths, obj->strtab +
 		    dyn_rpath->d_un.d_val);
 	}
 }
