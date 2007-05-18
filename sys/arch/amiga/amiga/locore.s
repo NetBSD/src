@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.140 2005/12/11 12:16:26 christos Exp $	*/
+/*	$NetBSD: locore.s,v 1.141 2007/05/18 01:39:52 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990 The Regents of the University of California.
@@ -1026,6 +1026,7 @@ LMMUenable_end:
 	movl	_C_LABEL(proc0paddr),%a1	| proc0 kernel stack
 	lea	%a1@(USPACE),%sp	| set kernel stack to end of area
 	lea	_C_LABEL(lwp0),%a2	| initialize lwp0.p_addr so that
+	movl	%a2,_C_LABEL(curlwp)
 	movl	%a1,%a2@(L_ADDR)	|   we don't dref NULL in trap()
 	movl	#USRSTACK-4,%a2
 	movl	%a2,%usp		| init user SP
@@ -1164,13 +1165,6 @@ ENTRY(qsetjmp)
 	movl	%sp@,%a0@	| and return address
 	moveq	#0,%d0		| return 0
 	rts
-
-BSS(want_resched,4)
-
-/*
- * Use common m68k process manipulation routines.
- */
-#include <m68k/m68k/proc_subr.s>
 
 /*
  * Use common m68k process/lwp switch and context save subroutines.
