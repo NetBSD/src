@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_sys.h,v 1.35 2007/05/17 13:59:22 pooka Exp $	*/
+/*	$NetBSD: puffs_sys.h,v 1.36 2007/05/18 13:53:09 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -177,9 +177,15 @@ struct puffs_mount {
 struct puffs_node {
 	struct genfs_node pn_gnode;	/* genfs glue			*/
 
+	kmutex_t	pn_mtx;
+	int		pn_refcount;
+
 	void		*pn_cookie;	/* userspace pnode cookie	*/
 	struct vnode	*pn_vp;		/* backpointer to vnode		*/
 	uint32_t	pn_stat;	/* node status			*/
+
+	struct selinfo	pn_sel;		/* for selecting on the node	*/
+	short		pn_revents;	/* available events		*/
 
 	/* metacache */
 	struct timespec	pn_mc_atime;
@@ -219,12 +225,17 @@ int	puffs_getvnode(struct mount *, void *, enum vtype, voff_t, dev_t,
 int	puffs_newnode(struct mount *, struct vnode *, struct vnode **,
 		      void *, struct componentname *, enum vtype, dev_t);
 void	puffs_putvnode(struct vnode *);
+
+void	puffs_releasenode(struct puffs_node *);
+void	puffs_referencenode(struct puffs_node *);
+
 struct vnode *puffs_pnode2vnode(struct puffs_mount *, void *, int);
 void	puffs_makecn(struct puffs_kcn *, const struct componentname *);
 void	puffs_credcvt(struct puffs_cred *, kauth_cred_t);
 pid_t	puffs_lwp2pid(struct lwp *);
 
 void	puffs_parkdone_asyncbioread(struct puffs_req *, void *);
+void	puffs_parkdone_poll(struct puffs_req *, void *);
 
 void	puffs_mp_reference(struct puffs_mount *);
 void	puffs_mp_release(struct puffs_mount *);
