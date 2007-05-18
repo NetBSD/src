@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.87.4.2 2007/05/18 01:23:36 wrstuden Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.87.4.3 2007/05/18 01:48:58 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include "opt_ktrace.h"
 #include "opt_multiprocessor.h"
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.87.4.2 2007/05/18 01:23:36 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.87.4.3 2007/05/18 01:48:58 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -768,12 +768,61 @@ sa_yield(struct lwp *l)
 }
 
 
+/*
+ * sys_sa_preempt - preempt a running thread
+ *
+ * Given an lwp id, send it a user upcall. This is a way for libpthread to
+ * kick something into the upcall handler.
+ */
 int
 sys_sa_preempt(struct lwp *l, void *v, register_t *retval)
 {
+	struct sys_sa_preempt_args /* {
+		syscallarg(int) sa_id;
+	} */ *uap = v;
+	struct sadata		*sa = l->l_proc->p_sa;
+	struct sadata_vp	*qvp = l->l_savp;
+	struct lwp		*t;
+	int			target, s, error;
 
-	/* XXX Implement me. */
-	return (ENOSYS);
+	DPRINTFN(11,("sys_sa_preempt(%d.%d)\n", l->l_proc->p_pid,
+		     l->l_lid));
+
+	/* We have to be using scheduler activations */
+	if (sa == NULL)
+		return (EINVAL);
+
+	if ((l->l_proc->p_flag & P_SA) == 0)
+		return (EINVAL);
+
+	if ((target = SCARG(uap, sa_id)) < 1)
+		return (EINVAL);
+
+	SCHED_LOCK(s);
+
+	LIST_FOREACH(t, &p->p_lwps, l_sibling)
+		if (t->l_lid == target)
+			break;
+
+	if (t == NULL) {
+		error = ESRCH;
+		goto exit;
+	}
+
+	/* XXX WRS We really need all of this locking documented */
+	SCHED_UNLOCK(s);
+
+	error = sa_upcall(l, SA_UPCALL_USER | SA_UPCALL_DEFER_EVENT, l, NULL,
+		0, NULL, NULL);
+	if (error)
+		return error;
+
+	return 0;
+
+exit_lock:
+	SCHED_UNLOCK(s);
+
+	return error;
 }
 
 
