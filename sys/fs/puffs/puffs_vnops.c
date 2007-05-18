@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.70 2007/05/18 14:25:30 pooka Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.71 2007/05/18 15:46:09 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.70 2007/05/18 14:25:30 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.71 2007/05/18 15:46:09 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/fstrans.h>
@@ -855,7 +855,7 @@ puffs_inactive(void *v)
 	 * user server thinks it's gone?  then don't be afraid care,
 	 * node's life was already all it would ever be
 	 */
-	if (vnrefs == 0) {
+	if (vnrefs == 0 || (pnode->pn_stat & PNODE_NOREFS)) {
 		pnode->pn_stat |= PNODE_NOREFS;
 		vrecycle(ap->a_vp, NULL, ap->a_l);
 	}

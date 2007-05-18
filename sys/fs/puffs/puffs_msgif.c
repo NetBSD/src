@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.c,v 1.36 2007/05/08 21:16:55 pooka Exp $	*/
+/*	$NetBSD: puffs_msgif.c,v 1.37 2007/05/18 15:46:09 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.36 2007/05/08 21:16:55 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.37 2007/05/18 15:46:09 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/fstrans.h>
@@ -307,6 +307,17 @@ puffs_vntouser(struct puffs_mount *pmp, int optype,
 		if (vp_aux) {
 			pnode = vp_aux->v_data;
 			pnode->pn_stat |= PNODE_DOINACT;
+		}
+	}
+	if (preq->preq_setbacks & PUFFS_SETBACK_NOREF_N1) {
+		pnode = vp_opc->v_data;
+		pnode->pn_stat |= PNODE_NOREFS;
+	}
+	if (preq->preq_setbacks & PUFFS_SETBACK_NOREF_N2) {
+		/* if no vp_aux, just ignore */
+		if (vp_aux) {
+			pnode = vp_aux->v_data;
+			pnode->pn_stat |= PNODE_NOREFS;
 		}
 	}
 
