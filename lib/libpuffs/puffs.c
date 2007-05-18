@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.c,v 1.49 2007/05/17 14:03:13 pooka Exp $	*/
+/*	$NetBSD: puffs.c,v 1.50 2007/05/18 13:24:23 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: puffs.c,v 1.49 2007/05/17 14:03:13 pooka Exp $");
+__RCSID("$NetBSD: puffs.c,v 1.50 2007/05/18 13:24:23 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -490,6 +490,15 @@ puffs_mainloop(struct puffs_usermount *pu, int flags)
 		/* else: do full processing */
 
 		/*
+		 * Do this here, because:
+		 *  a) loopfunc might generate some results
+		 *  b) it's still "after" event handling (except for round 1)
+		 */
+		if (puffs_req_putput(ppr) == -1)
+			goto out;
+		puffs_req_resetput(ppr);
+
+		/*
 		 * Build list of which to enable/disable in writecheck.
 		 * Don't bother worrying about O(n) for now.
 		 */
@@ -532,9 +541,15 @@ puffs_mainloop(struct puffs_usermount *pu, int flags)
 
 		ndone = kevent(pu->pu_kq, pfctrl->evs, nchanges,
 		    pfctrl->evs, pfctrl->nfds+1, pu->pu_ml_timep);
-		if (ndone == -1)
-			goto out;
-		/* micro optimize */
+
+		if (ndone == -1) {
+			if (errno != EINTR)
+				goto out;
+			else
+				continue;
+		}
+
+		/* uoptimize */
 		if (ndone == 0)
 			continue;
 
@@ -574,11 +589,6 @@ puffs_mainloop(struct puffs_usermount *pu, int flags)
 					puffs_framev_output(pu, pfctrl, fio);
 			}
 		}
-
-		/* stuff all replies from both of the above into kernel */
-		if (puffs_req_putput(ppr) == -1)
-			goto out;
-		puffs_req_resetput(ppr);
 
 		/*
 		 * Really free fd's now that we don't have references
