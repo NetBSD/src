@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.69 2007/05/18 13:53:09 pooka Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.70 2007/05/18 14:25:30 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.69 2007/05/18 13:53:09 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.70 2007/05/18 14:25:30 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/fstrans.h>
@@ -1046,11 +1046,11 @@ puffs_poll(void *v)
 			poll_argp->pvnr_events = ap->a_events;
 			poll_argp->pvnr_pid = puffs_lwp2pid(ap->a_l);
 
+			selrecord(ap->a_l, &pn->pn_sel);
 			puffs_vntouser_call(pmp, PUFFS_VN_POLL,
 			    poll_argp, sizeof(struct puffs_vnreq_poll), 0,
 			    puffs_parkdone_poll, pn,
 			    vp, NULL);
-			selrecord(ap->a_l, &pn->pn_sel);
 
 			return 0;
 		}
