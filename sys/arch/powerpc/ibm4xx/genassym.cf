@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.12 2007/05/17 14:51:26 yamt Exp $
+#	$NetBSD: genassym.cf,v 1.13 2007/05/18 11:16:27 rjs Exp $
 
 #
 # Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -161,7 +161,7 @@ define	CI_CURLWP	offsetof(struct cpu_info, ci_curlwp)
 define	CI_CURPCB	offsetof(struct cpu_info, ci_curpcb)
 define	CI_CURPM	offsetof(struct cpu_info, ci_curpm)
 define	CI_ASTPENDING	offsetof(struct cpu_info, ci_astpending)
-define	CI_NEED_RESCHED	offsetof(struct cpu_info, ci_need_resched)
+define	CI_WANT_RESCHED	offsetof(struct cpu_info, ci_want_resched)
 define	CI_CPL		offsetof(struct cpu_info, ci_cpl)
 define	CI_INTRDEPTH	offsetof(struct cpu_info, ci_intrdepth)
 define	CI_INTSTK	offsetof(struct cpu_info, ci_intstk)
