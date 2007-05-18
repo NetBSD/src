@@ -1,4 +1,4 @@
-/*	$NetBSD: node.c,v 1.28 2007/05/18 16:13:47 pooka Exp $	*/
+/*	$NetBSD: node.c,v 1.29 2007/05/18 18:00:07 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: node.c,v 1.28 2007/05/18 16:13:47 pooka Exp $");
+__RCSID("$NetBSD: node.c,v 1.29 2007/05/18 18:00:07 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -272,10 +272,7 @@ psshfs_node_inactive(struct puffs_cc *pcc, void *opc, pid_t pid, int *refcount)
 	}
 
  out:
-	if (psn->stat & PSN_NUKED)
-		*refcount = 0;
-	else
-		*refcount = 1;
+	*refcount = 1;
 	return 0;
 }
 
