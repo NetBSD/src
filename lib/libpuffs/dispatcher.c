@@ -1,4 +1,4 @@
-/*	$NetBSD: dispatcher.c,v 1.3 2007/05/15 13:44:46 pooka Exp $	*/
+/*	$NetBSD: dispatcher.c,v 1.4 2007/05/18 13:53:54 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -33,10 +33,11 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: dispatcher.c,v 1.3 2007/05/15 13:44:46 pooka Exp $");
+__RCSID("$NetBSD: dispatcher.c,v 1.4 2007/05/18 13:53:54 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
+#include <sys/poll.h>
 
 #include <assert.h>
 #include <errno.h>
@@ -796,6 +797,24 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 			break;
 		}
 
+		case PUFFS_VN_POLL:
+		{
+			struct puffs_vnreq_poll *auxt = auxbuf;
+			if (pops->puffs_node_poll == NULL) {
+				error = 0;
+
+				/* emulate genfs_poll() */
+				auxt->pvnr_events &= (POLLIN | POLLOUT
+						    | POLLRDNORM | POLLWRNORM);
+
+				break;
+			}
+
+			error = pops->puffs_node_poll(pcc,
+			    opcookie, &auxt->pvnr_events, auxt->pvnr_pid);
+			break;
+		}
+
 /* holy bitrot, ryydman! */
 #if 0
 		case PUFFS_VN_IOCTL:
@@ -893,19 +912,6 @@ processresult(struct puffs_cc *pcc, struct puffs_putreq *ppr, int how)
 
 
 #if 0
-		case PUFFS_VN_POLL:
-		{
-			struct puffs_vnreq_poll *auxt = auxbuf;
-			if (pops->puffs_node_poll == NULL) {
-				error = 0;
-				break;
-			}
-
-			error = pops->puffs_node_poll(pcc,
-			    opcookie, preq-);
-			break;
-		}
-
 		case PUFFS_VN_KQFILTER:
 		{
 			struct puffs_vnreq_kqfilter *auxt = auxbuf;

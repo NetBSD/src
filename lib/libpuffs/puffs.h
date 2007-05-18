@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.h,v 1.58 2007/05/17 14:03:13 pooka Exp $	*/
+/*	$NetBSD: puffs.h,v 1.59 2007/05/18 13:53:54 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -170,8 +170,7 @@ struct puffs_ops {
 	    void *, struct vattr *, const struct puffs_cred *, pid_t);
 	int (*puffs_node_setattr)(struct puffs_cc *,
 	    void *, const struct vattr *, const struct puffs_cred *, pid_t);
-	int (*puffs_node_poll)(struct puffs_cc *,
-	    void *, struct puffs_vnreq_poll *);
+	int (*puffs_node_poll)(struct puffs_cc *, void *, int *, pid_t);
 	int (*puffs_node_mmap)(struct puffs_cc *,
 	    void *, int, const struct puffs_cred *, pid_t);
 	int (*puffs_node_fsync)(struct puffs_cc *,
@@ -300,8 +299,7 @@ enum {
 	int fsname##_node_setattr(struct puffs_cc *,			\
 	    void *, const struct vattr *, const struct puffs_cred *,	\
 	    pid_t);							\
-	int fsname##_node_poll(struct puffs_cc *,			\
-	    void *, struct puffs_vnreq_poll *);				\
+	int fsname##_node_poll(struct puffs_cc *, void *, int *,pid_t);	\
 	int fsname##_node_mmap(struct puffs_cc *,			\
 	    void *, int, const struct puffs_cred *, pid_t);		\
 	int fsname##_node_fsync(struct puffs_cc *,			\
