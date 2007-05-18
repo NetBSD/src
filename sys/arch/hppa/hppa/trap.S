@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.S,v 1.19 2007/05/17 14:51:19 yamt Exp $	*/
+/*	$NetBSD: trap.S,v 1.20 2007/05/18 13:29:37 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -380,12 +380,7 @@ $syscall:
 
 	/* do a syscall */
 	.import	syscall,code
-	ldil	L%syscall, %r1
-	ldo	R%syscall(%r1), %r1
-	.call
-	blr	%r0, %rp
-	bv,n	0(%r1)
-	nop
+	CALL(syscall, %r1)
 
 	ldil	L%curlwp, %r1
 	ldw	R%curlwp(%r1), %r1
@@ -2184,12 +2179,7 @@ $trapnowvirt:
 	ldo	-HPPA_FRAME_SIZE(%sp), %r3
 #endif
 	.import	trap, code
-	ldil	L%trap,%t1
-	ldo	R%trap(%t1),%t1
-	.call
-	blr	%r0,%rp
-	bv,n	%r0(%t1)
-	nop
+	CALL(trap, %t1)
 
 	ldw	-HPPA_FRAME_SIZE+4(%sp), %t3
 	/* see if curlwp has changed */
