@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.h,v 1.31 2007/05/18 13:53:08 pooka Exp $	*/
+/*	$NetBSD: puffs_msgif.h,v 1.32 2007/05/18 15:46:09 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -246,7 +246,9 @@ struct puffs_req {
 
 #define PUFFS_SETBACK_INACT_N1	0x01	/* set VOP_INACTIVE for node 1 */
 #define PUFFS_SETBACK_INACT_N2	0x02	/* set VOP_INACTIVE for node 2 */
-#define PUFFS_SETBACK_MASK	0x03
+#define PUFFS_SETBACK_NOREF_N1	0x04	/* set pn PN_NOREFS for node 1 */
+#define PUFFS_SETBACK_NOREF_N2	0x08	/* set pn PN_NOREFS for node 2 */
+#define PUFFS_SETBACK_MASK	0x0f
 
 /*
  * Some operations have unknown size requirements.  So as the first
