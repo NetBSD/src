@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.128 2007/03/04 06:00:55 christos Exp $	*/
+/*	$NetBSD: trap.c,v 1.129 2007/05/18 10:18:26 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.128 2007/03/04 06:00:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.129 2007/05/18 10:18:26 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -150,7 +150,6 @@ void straytrap(struct trapframe);
 static void userret(struct lwp *, struct trapframe *, u_quad_t);
 
 int astpending;
-int want_resched;
 
 const char *trap_type[] = {
 	"Bus error",
@@ -266,8 +265,6 @@ trap(int type, u_int code, u_int v, struct trapframe tf)
 	KSI_INIT_TRAP(&ksi);
 	ksi.ksi_trap = type & ~T_USER;
 
-	if (l == NULL)
-		l = &lwp0;
 	p = l->l_proc;
 
 #ifdef	DIAGNOSTIC
@@ -475,7 +472,7 @@ trap(int type, u_int code, u_int v, struct trapframe tf)
 			l->l_pflag &= ~LP_OWEUPC;
 			ADDUPROF(l);
 		}
-		if (want_resched)
+		if (curcpu()->ci_want_resched)
 			preempt();
 		goto douret;
 
