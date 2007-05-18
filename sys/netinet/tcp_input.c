@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.265 2007/05/18 21:31:16 riz Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.266 2007/05/18 21:48:43 riz Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -152,7 +152,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.265 2007/05/18 21:31:16 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.266 2007/05/18 21:48:43 riz Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -2983,7 +2983,6 @@ tcp_dooptions(struct tcpcb *tp, const u_char *cp, int cnt,
 
 			sigp = sigbuf;
 			memcpy(sigbuf, cp + 2, TCP_SIGLEN);
-			memset(cp + 2, 0, TCP_SIGLEN);
 			tp->t_flags |= TF_SIGNATURE;
 			break;
 #endif

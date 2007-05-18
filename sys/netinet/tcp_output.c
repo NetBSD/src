@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.158 2007/05/02 20:40:25 dyoung Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.159 2007/05/18 21:48:43 riz Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -142,7 +142,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.158 2007/05/02 20:40:25 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.159 2007/05/18 21:48:43 riz Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1391,8 +1391,8 @@ send:
 		}
 
 		m->m_pkthdr.len = hdrlen + len;
-		sigp = (void *)th + sizeof(*th) + sigoff;
-		tcp_signature(m, th, (void *)th - mtod(m, void *), sav, sigp);
+		sigp = (char *)th + sizeof(*th) + sigoff;
+		tcp_signature(m, th, (char *)th - mtod(m, char *), sav, sigp);
 
 		key_sa_recordxfer(sav, m);
 #ifdef FAST_IPSEC
