@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_sys.h,v 1.36 2007/05/18 13:53:09 pooka Exp $	*/
+/*	$NetBSD: puffs_sys.h,v 1.37 2007/05/18 15:46:09 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -164,7 +164,7 @@ struct puffs_mount {
 #define PUFFSTAT_DYING		3 /* Do you want your possessions identified? */
 
 
-#define PNODE_NOREFS	0x01	/* vnode inactive, no backend reference	*/
+#define PNODE_NOREFS	0x01	/* no backend reference			*/
 #define PNODE_SUSPEND	0x02	/* issue all operations as FAF		*/
 #define PNODE_DOINACT	0x04	/* if inactive-on-demand, call inactive */
 
