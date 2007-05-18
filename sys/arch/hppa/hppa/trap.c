@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.43 2007/05/17 14:51:19 yamt Exp $	*/
+/*	$NetBSD: trap.c,v 1.44 2007/05/18 13:32:18 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.43 2007/05/17 14:51:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.44 2007/05/18 13:32:18 skrll Exp $");
 
 /* #define INTRDEBUG */
 /* #define TRAPDEBUG */
@@ -276,7 +276,8 @@ trap_kdebug(int type, int code, struct trapframe *frame)
 		 */
 		if (frame->tf_ipsw & PSW_R) {
 #ifdef TRAPDEBUG
-			printf("(single stepping at head 0x%x tail 0x%x)\n", frame->tf_iioq_head, frame->tf_iioq_tail);
+			printf("(single stepping at head 0x%x tail 0x%x)\n",
+			    frame->tf_iioq_head, frame->tf_iioq_tail);
 #endif
 			if (frame->tf_ipsw & PSW_N) {
 #ifdef TRAPDEBUG
@@ -326,7 +327,7 @@ user_backtrace_raw(u_int pc, u_int fp)
 	     frame_number++) {
 
 		printf("%3d: pc=%08x%s fp=0x%08x", frame_number, 
-		    pc & ~HPPA_PC_PRIV_MASK, USERMODE(pc) ? "" : "**", fp);
+		    pc & ~HPPA_PC_PRIV_MASK, USERMODE(pc) ? "  " : "**", fp);
 		for(arg_number = 0; arg_number < 4; arg_number++)
 			printf(" arg%d=0x%08x", arg_number,
 			    (int) fuword(HPPA_FRAME_CARG(arg_number, fp)));
@@ -379,7 +380,7 @@ user_backtrace(struct trapframe *tf, struct lwp *l, int type)
 	fp = tf->tf_sp - HPPA_FRAME_SIZE;
 	printf("pid %d (%s) backtrace, starting with sp 0x%08x pc 0x%08x\n",
 		p->p_pid, p->p_comm, tf->tf_sp, pc);
-	for(pc &= ~HPPA_PC_PRIV_MASK; pc > 0; pc -= sizeof(inst)) {
+	for (pc &= ~HPPA_PC_PRIV_MASK; pc > 0; pc -= sizeof(inst)) {
 		inst = fuword((register_t *) pc);
 		if (inst == -1) {
 			printf("  fuword for inst at pc %08x failed\n", pc);
