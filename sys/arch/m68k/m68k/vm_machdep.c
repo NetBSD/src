@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.20 2007/03/04 06:00:06 christos Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.21 2007/05/18 01:46:40 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.20 2007/03/04 06:00:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.21 2007/05/18 01:46:40 mhitch Exp $");
 
 #include "opt_coredump.h"
 
@@ -192,21 +192,6 @@ cpu_lwp_free2(struct lwp *l)
 {
 
 	/* Nothing to do */
-}
-
-/*
- * cpu_exit is called as the last action during exit.
- *
- * Block context switches and then call switch_exit() which will
- * switch to another process thus we never return.
- */
-void
-cpu_exit(struct lwp *l)
-{
-
-	(void) splhigh();
-	switch_lwp_exit(l);
-	/* NOTREACHED */
 }
 
 #ifdef COREDUMP
