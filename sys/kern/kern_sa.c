@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.87.4.3 2007/05/18 01:48:58 wrstuden Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.87.4.4 2007/05/18 01:52:56 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include "opt_ktrace.h"
 #include "opt_multiprocessor.h"
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.87.4.3 2007/05/18 01:48:58 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.87.4.4 2007/05/18 01:52:56 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -162,6 +162,20 @@ sadata_upcall_free(struct sadata_upcall *sau)
 	pool_put(&saupcall_pool, sau);
 }
 
+/*
+ * sa_newsavp
+ *
+ * Allocate a new virtual processor structure, do some simple
+ * initialization and add it to the passed-in sa. Pre-allocate
+ * an upcall event data structure for when the main thread on
+ * this vp blocks.
+ *
+ * We lock sa_lock while manipulating the list of vp's.
+ *
+ * We allocate the lwp to run on this separately. In the case of the
+ * first lwp/vp for a process, the lwp already exists. It's the
+ * main (only) lwp of the process.
+ */
 static struct sadata_vp *
 sa_newsavp(struct sadata *sa)
 {
@@ -205,6 +219,11 @@ sa_newsavp(struct sadata *sa)
 	return (vp);
 }
 
+/*
+ * sys_sa_register
+ *	Handle copyin and copyout of info for registering the
+ * upcall handler address.
+ */
 int
 sys_sa_register(struct lwp *l, void *v, register_t *retval)
 {
@@ -228,6 +247,25 @@ sys_sa_register(struct lwp *l, void *v, register_t *retval)
 	return 0;
 }
 
+/*
+ * dosa_register
+ *
+ *	Change the upcall address for the process. If needed, allocate
+ * an sadata structure (and initialize it) for the process. If initializing,
+ * set the flags in the sadata structure to those passed in. Flags will
+ * be ignored if the sadata structure already exists (dosa_regiister was
+ * already called).
+ *
+ * Note: changing the upcall handler address for a process that has
+ * concurrency greter than one can yield ambiguous results. The one
+ * guarantee we can offer is that any upcalls generated on all CPUs
+ * after this routine finishes will use the new upcall handler. Note
+ * that any upcalls delivered upon return to user level by the
+ * sys_sa_register() system call that called this routine will use the
+ * new upcall handler. Note that any such upcalls will be delivered
+ * before the old upcall handling address has been returned to
+ * the application.
+ */
 int
 dosa_register(struct lwp *l, sa_upcall_t new, sa_upcall_t *prev, int flags,
     ssize_t stackinfo_offset)
@@ -303,6 +341,14 @@ sa_release(struct proc *p)
 	}
 }
 
+/*
+ * sa_fetchstackgen
+ *
+ *	copyin the generation number for the stack in question.
+ *
+ * WRS: I think this routine needs the SA_LWP_STATE_LOCK() dance, either
+ * here or in its caller.
+ */
 static int
 sa_fetchstackgen(struct sastack *sast, struct sadata *sa, unsigned int *gen)
 {
@@ -316,6 +362,15 @@ sa_fetchstackgen(struct sastack *sast, struct sadata *sa, unsigned int *gen)
 	return error;
 }
 
+/*
+ * sa_stackused
+ *
+ *	Convenience routine to determine if a given stack has been used
+ * or not. We consider a stack to be unused if the kernel's concept
+ * of its generation number matches that of userland.
+ *	We kill the application with SIGILL if there is an error copying
+ * in the userland generation number.
+ */
 static inline int
 sa_stackused(struct sastack *sast, struct sadata *sa)
 {
@@ -331,6 +386,15 @@ sa_stackused(struct sastack *sast, struct sadata *sa)
 	return (sast->sast_gen != gen);
 }
 
+/*
+ * sa_setstackfree
+ *
+ *	Convenience routine to mark a stack as unused in the kernel's
+ * eyes. We do this by setting the kernel's generation number for the stack
+ * to that of userland.
+ *	We kill the application with SIGILL if there is an error copying
+ * in the userland generation number.
+ */
 static inline void
 sa_setstackfree(struct sastack *sast, struct sadata *sa)
 {
@@ -347,7 +411,13 @@ sa_setstackfree(struct sastack *sast, struct sadata *sa)
 }
 
 /*
+ * sa_getstack
+ *
  * Find next free stack, starting at sa->sa_stacknext.
+ *
+ * Caller must have the splay tree locked and should have cleared L_SA for
+ * our thread. This is not the time to go generating upcalls as we aren't
+ * in a position to deliver another one.
  */
 static struct sastack *
 sa_getstack(struct sadata *sa)
@@ -367,6 +437,13 @@ sa_getstack(struct sadata *sa)
 	return sast;
 }
 
+/*
+ * sa_getstack0 -- get the lowest numbered sa stack
+ *
+ *	We walk the splay tree in order and find the lowest-numbered
+ * (as defined by SPLAY_MIN() and SPLAY_NEXT() ordering) stack that
+ * is unused.
+ */
 static inline struct sastack *
 sa_getstack0(struct sadata *sa)
 {
@@ -391,6 +468,12 @@ sa_getstack0(struct sadata *sa)
 	return sa->sa_stacknext;
 }
 
+/*
+ * sast_compare - compare two sastacks
+ *
+ *	We sort stacks according to their userspace addresses.
+ * Stacks are "equal" if their start + size overlap.
+ */
 static inline int
 sast_compare(struct sastack *a, struct sastack *b)
 {
@@ -403,12 +486,21 @@ sast_compare(struct sastack *a, struct sastack *b)
 	return (0);
 }
 
+/*
+ * sa_copyin_stack -- copyin a stack.
+ */
 static int
 sa_copyin_stack(stack_t *stacks, int index, stack_t *dest)
 {
 	return copyin(stacks + index, dest, sizeof(stack_t));
 }
 
+/*
+ * sys_sa_stacks -- the user level threading library is passing us stacks
+ *
+ * We copy in some arguments then call sa_stacks1() to do the main
+ * work. NETBSD32 has its own front-end for this call.
+ */
 int
 sys_sa_stacks(struct lwp *l, void *v, register_t *retval)
 {
@@ -420,6 +512,16 @@ sys_sa_stacks(struct lwp *l, void *v, register_t *retval)
 	return sa_stacks1(l, retval, SCARG(uap, num), SCARG(uap, stacks), sa_copyin_stack);
 }
 
+/*
+ * sa_stacks1
+ *	Process stacks passed-in by the user threading library. At
+ * present we use the kernel lock to lock the SPLAY tree, which we
+ * manipulate to load in the stacks.
+ *
+ * 	It is an error to pass in a stack that we already know about
+ * and which hasn't been used. Passing in a known-but-used one is fine.
+ * We accept up to SA_MAXNUMSTACKS per desired vp (concurrency level).
+ */
 int
 sa_stacks1(struct lwp *l, register_t *retval, int num, stack_t *stacks,
     sa_copyin_stack_t do_sa_copyin_stack)
@@ -484,6 +586,13 @@ sa_stacks1(struct lwp *l, register_t *retval, int num, stack_t *stacks,
 }
 
 
+/*
+ * sys_sa_enable - throw the switch & enable SA
+ *
+ * Fairly simple. Make sure the sadata and vp've been set up for this
+ * process, assign this thread to the vp and initiate the first upcall
+ * (SA_UPCALL_NEWPROC).
+ */
 int
 sys_sa_enable(struct lwp *l, void *v, register_t *retval)
 {
@@ -517,6 +626,15 @@ sys_sa_enable(struct lwp *l, void *v, register_t *retval)
 }
 
 
+/*
+ * sa_increaseconcurrency
+ *	Raise the process's maximum concurrency level to the
+ * requested level. Does nothing if the current maximum councurrency
+ * is greater than the requested.
+ *	Uses the kernel lock to implicitly lock operations. Also
+ * uses sa_lock to lock the vp list and uses SCHED_LOCK() to lock the
+ * scheduler.
+ */
 #ifdef MULTIPROCESSOR
 static int
 sa_increaseconcurrency(struct lwp *l, int concurrency)
@@ -597,6 +715,18 @@ sa_increaseconcurrency(struct lwp *l, int concurrency)
 }
 #endif
 
+/*
+ * sys_sa_setconcurrency
+ *	The user threading library wants to increase the number
+ * of active virtual CPUS we assign to it. We return the number of virt
+ * CPUs we assigned to the process. We limit concurrency to the number
+ * of CPUs in the system.
+ *
+ * WRS: at present, this system call serves two purposes. The first is
+ * for an application to indicate that it wants a certain concurrency
+ * level. The second is for the application to request that the kernel
+ * reacivate previously allocated virtual CPUs.
+ */
 int
 sys_sa_setconcurrency(struct lwp *l, void *v, register_t *retval)
 {
@@ -676,6 +806,11 @@ sys_sa_setconcurrency(struct lwp *l, void *v, register_t *retval)
 	return (0);
 }
 
+/*
+ * sys_sa_yield
+ *	application has nothing for this lwp to do, so let it linger in
+ * the kernel.
+ */
 int
 sys_sa_yield(struct lwp *l, void *v, register_t *retval)
 {
@@ -694,6 +829,12 @@ sys_sa_yield(struct lwp *l, void *v, register_t *retval)
 	return (EJUSTRETURN);
 }
 
+/*
+ * sa_yield
+ *	This lwp has nothing to do, so hang around. Assuming we
+ * are the lwp "on" our vp, tsleep in "sawait" until there's something
+ * to do. If there are upcalls, we deliver them explicitly.
+ */
 void
 sa_yield(struct lwp *l)
 {
@@ -915,6 +1056,11 @@ sa_upcall0(struct sadata_upcall *sau, int type, struct lwp *event,
 	sau->sau_argfreefunc = func;
 }
 
+/*
+ * sa_ucsp
+ *	return the stack pointer (??) for a given context as
+ * reported by the _UC_MACHINE_SP() macro.
+ */
 void *
 sa_ucsp(void *arg)
 {
@@ -923,6 +1069,14 @@ sa_ucsp(void *arg)
 	return (void *)(uintptr_t)_UC_MACHINE_SP(uc);
 }
 
+/*
+ * sa_upcall_getstate
+ *	Fill in the given sau_state with info for the passed-in
+ * lwp, and update the lwp accordingly.
+ * WRS: unwaware of any locking before entry!
+ *	We set L_SA_SWITCHING on the target lwp. We assume that l_flag is
+ * protected by the kernel lock and untouched in interrupt context.
+ */
 static void
 sa_upcall_getstate(union sau_state *ss, struct lwp *l)
 {
@@ -950,6 +1104,8 @@ sa_upcall_getstate(union sau_state *ss, struct lwp *l)
 
 
 /*
+ * sa_pagefault
+ *
  * Detect double pagefaults and pagefaults on upcalls.
  * - double pagefaults are detected by comparing the previous faultaddr
  *   against the current faultaddr
@@ -991,11 +1147,26 @@ sa_pagefault(struct lwp *l, ucontext_t *l_ctx)
 
 
 /*
- * Called by tsleep(). Block current LWP and switch to another.
+ * sa_switch
+ *
+ * Called by tsleep() when it wants to call mi_switch().
+ * Block current LWP and switch to another.
  *
  * WE ARE NOT ALLOWED TO SLEEP HERE!  WE ARE CALLED FROM WITHIN
  * TSLEEP() ITSELF!  We are called with sched_lock held, and must
  * hold it right through the mi_switch() call.
+ *
+ * We return with the scheduler unlocked.
+ *
+ * We are called in one of three conditions:
+ *
+ * 1:		We are an sa_yield thread. If there are any UNBLOCKED
+ *	upcalls to deliver, deliver them (by exiting) instead of sleeping.
+ * 2:		We are the main lwp (we're the lwp on our vp). Trigger
+ *	delivery of a BLOCKED upcall.
+ * 3:		We are not the main lwp on our vp. Chances are we got
+ *	woken up but the sleeper turned around and went back to sleep.
+ *	It seems that select and poll do this a lot. So just go back to sleep.
  */
 
 void
