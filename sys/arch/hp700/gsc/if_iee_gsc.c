@@ -1,4 +1,4 @@
-/* $NetBSD: if_iee_gsc.c,v 1.4 2007/03/04 12:32:44 tsutsui Exp $ */
+/* $NetBSD: if_iee_gsc.c,v 1.5 2007/05/18 08:49:36 skrll Exp $ */
 
 /*
  * Copyright (c) 2003 Jochen Kunz.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iee_gsc.c,v 1.4 2007/03/04 12:32:44 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iee_gsc.c,v 1.5 2007/05/18 08:49:36 skrll Exp $");
 
 /* autoconfig and device stuff */
 #include <sys/param.h>
@@ -89,15 +89,12 @@ static int iee_gsc_match(struct device *, struct cfdata *, void *);
 static void iee_gsc_attach(struct device *, struct device *, void *);
 static int iee_gsc_detach(struct device*, int);
 
-
 struct iee_gsc_softc {
 	struct iee_softc iee_sc;
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
 	void *sc_ih;
 };
-
-
 
 CFATTACH_DECL(
 	iee_gsc,
@@ -108,12 +105,8 @@ CFATTACH_DECL(
     	NULL
 );
 
-
-
 int iee_gsc_cmd(struct iee_softc *, u_int32_t);
 int iee_gsc_reset(struct iee_softc *);
-
-
 
 int
 iee_gsc_cmd(struct iee_softc *sc, u_int32_t cmd)
@@ -134,14 +127,13 @@ iee_gsc_cmd(struct iee_softc *sc, u_int32_t cmd)
 		if (SC_SCB->scb_cmd == 0)
 			break;
 	}
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_shmem_map, IEE_SCB_OFF, IEE_SCB_SZ, 	    BUS_DMASYNC_PREREAD);
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_shmem_map, IEE_SCB_OFF, IEE_SCB_SZ,
+	    BUS_DMASYNC_PREREAD);
 	if (n < 100000)
 		return(0);
 	printf("%s: iee_gsc_cmd: timeout n=%d\n", sc->sc_dev.dv_xname, n);
 	return(-1);
 }
-
-
 
 int
 iee_gsc_reset(struct iee_softc *sc)
@@ -196,8 +188,6 @@ iee_gsc_reset(struct iee_softc *sc)
 	return(-1);
 }
 
-
-
 static int
 iee_gsc_match(struct device *parent, struct cfdata *match, void *aux)
 {
@@ -209,9 +199,6 @@ iee_gsc_match(struct device *parent, struct cfdata *match, void *aux)
 		return(10);
 	return(0);
 }
-
-
-
 
 static void
 iee_gsc_attach(struct device *parent, struct device *self, void *aux)
@@ -293,8 +280,6 @@ iee_gsc_attach(struct device *parent, struct device *self, void *aux)
 	iee_attach(sc, ga->ga_ether_address, media, 2, IFM_ETHER | IFM_AUTO);
 }
 
-
-
 int
 iee_gsc_detach(struct device* self, int flags)
 {
@@ -310,4 +295,3 @@ iee_gsc_detach(struct device* self, int flags)
 	/* There is no hp700_intr_disestablish()! */
 	return(0);
 }
-
