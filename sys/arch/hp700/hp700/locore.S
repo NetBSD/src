@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.21 2007/05/17 14:51:18 yamt Exp $	*/
+/*	$NetBSD: locore.S,v 1.22 2007/05/18 12:42:24 skrll Exp $	*/
 
 /*	$OpenBSD: locore.S,v 1.46 2001/09/20 18:33:03 mickey Exp $	*/
 
@@ -568,7 +568,7 @@ EXIT(hp700_intr_schedule)
  * This assembles the mask of new pending interrupts.
  *
  */
-ENTRY(hp700_intr_ipending_new,64)
+ENTRY(hp700_intr_ipending_new,HPPA_FRAME_SIZE)
 
 	/* Start stack calling convention. */
 	stw	%rp, HPPA_FRAME_CRP(%sp)
@@ -669,7 +669,7 @@ EXIT(hp700_intr_ipending_new)
 /*
  * void cpu_die(void);
  */
-ENTRY(cpu_die, 0)
+LEAF_ENTRY(cpu_die)
 	rsm	RESET_PSW, %r0
 	nop
 	nop
@@ -677,7 +677,7 @@ ENTRY(cpu_die, 0)
 	ldil	L%LBCAST_ADDR, %r25
 	ldi	CMD_RESET, %r26
 	stw	%r26, R%iomod_command(%r25)
-forever:					; Loop until bus reset takes effect.
+forever:				; Loop until bus reset takes effect.
 	b,n	forever
 	nop
 	nop
