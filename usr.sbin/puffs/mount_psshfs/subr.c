@@ -1,4 +1,4 @@
-/*      $NetBSD: subr.c,v 1.18 2007/05/16 10:04:08 pooka Exp $        */
+/*      $NetBSD: subr.c,v 1.19 2007/05/18 16:13:47 pooka Exp $        */
         
 /*      
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
         
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: subr.c,v 1.18 2007/05/16 10:04:08 pooka Exp $");
+__RCSID("$NetBSD: subr.c,v 1.19 2007/05/18 16:13:47 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -423,6 +423,8 @@ doreclaim(struct puffs_node *pn)
 	struct psshfs_node *psn_parent;
 	struct psshfs_dir *dent;
 
+	assert(psn->stat & PSN_NUKED);
+
 	psn_parent = psn->parent->pn_data;
 	psn_parent->childcount--;
 
@@ -455,6 +457,8 @@ nukenode(struct puffs_node *node, const char *entryname, int reclaim)
 	pd->valid = 0;
 	free(pd->entryname);
 	pd->entryname = NULL;
+
+	psn->stat |= PSN_NUKED;
 
 	if (node->pn_va.va_type == VDIR)
 		psn->parent->pn_va.va_nlink--;
