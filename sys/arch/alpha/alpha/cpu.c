@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.74 2007/05/17 14:51:11 yamt Exp $ */
+/* $NetBSD: cpu.c,v 1.75 2007/05/18 02:45:18 mhitch Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.74 2007/05/17 14:51:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.75 2007/05/18 02:45:18 mhitch Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -397,7 +397,7 @@ cpu_boot_secondary_processors(void)
 
 	for (i = 0; i < ALPHA_MAXPROCS; i++) {
 		ci = cpu_info[i];
-		if (ci == NULL || ci->ci_idle_lwp == NULL)
+		if (ci == NULL || ci->ci_data.cpu_idlelwp == NULL)
 			continue;
 		if (ci->ci_flags & CPUF_PRIMARY)
 			continue;
@@ -422,7 +422,7 @@ cpu_boot_secondary(struct cpu_info *ci)
 	struct pcb *pcb;
 	u_long cpumask;
 
-	pcb = &ci->ci_idle_lwp->l_addr->u_pcb;
+	pcb = &ci->ci_data.cpu_idlelwp->l_addr->u_pcb;
 	primary_pcsp = LOCATE_PCS(hwrpb, hwrpb->rpb_primary_cpu_id);
 	pcsp = LOCATE_PCS(hwrpb, ci->ci_cpuid);
 	cpumask = (1UL << ci->ci_cpuid);
