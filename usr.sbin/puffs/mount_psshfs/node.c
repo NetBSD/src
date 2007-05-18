@@ -1,4 +1,4 @@
-/*	$NetBSD: node.c,v 1.27 2007/05/15 13:46:47 pooka Exp $	*/
+/*	$NetBSD: node.c,v 1.28 2007/05/18 16:13:47 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: node.c,v 1.27 2007/05/15 13:46:47 pooka Exp $");
+__RCSID("$NetBSD: node.c,v 1.28 2007/05/18 16:13:47 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -57,7 +57,7 @@ psshfs_node_lookup(struct puffs_cc *pcc, void *opc, void **newnode,
 
 	if (PCNISDOTDOT(pcn)) {
 		psn = psn_dir->parent->pn_data;
-		psn->reclaimed = 0;
+		psn->stat &= ~PSN_RECLAIMED;
 
 		*newnode = psn_dir->parent;
 		*newtype = VDIR;
@@ -99,7 +99,7 @@ psshfs_node_lookup(struct puffs_cc *pcc, void *opc, void **newnode,
 		psn = pn->pn_data;
 	}
 
-	psn->reclaimed = 0;
+	psn->stat &= ~PSN_RECLAIMED;
 
 	*newnode = pn;
 	*newsize = pn->pn_va.va_size;
@@ -272,7 +272,10 @@ psshfs_node_inactive(struct puffs_cc *pcc, void *opc, pid_t pid, int *refcount)
 	}
 
  out:
-	*refcount = 1;
+	if (psn->stat & PSN_NUKED)
+		*refcount = 0;
+	else
+		*refcount = 1;
 	return 0;
 }
 
@@ -422,8 +425,10 @@ psshfs_node_remove(struct puffs_cc *pcc, void *opc, void *targ,
 
 	rv = psbuf_expect_status(pb);
 
-	if (rv == 0)
+	if (rv == 0) {
 		nukenode(pn_targ, pcn->pcn_name, 0);
+		puffs_setback(pcc, PUFFS_SETBACK_NOREF_N2);
+	}
 
  out:
 	PSSHFSRETURN(rv);
@@ -470,8 +475,10 @@ psshfs_node_rmdir(struct puffs_cc *pcc, void *opc, void *targ,
 	GETRESPONSE(pb);
 
 	rv = psbuf_expect_status(pb);
-	if (rv == 0)
+	if (rv == 0) {
 		nukenode(pn_targ, pcn->pcn_name, 0);
+		puffs_setback(pcc, PUFFS_SETBACK_NOREF_N2);
+	}
 
  out:
 	PSSHFSRETURN(rv);
@@ -594,14 +601,14 @@ psshfs_node_reclaim(struct puffs_cc *pcc, void *opc, pid_t pid)
 	 * don't reclaim if we have file handle issued, otherwise
 	 * we can't do fhtonode
 	 */
-	if (psn->hasfh)
+	if (psn->stat & PSN_HASFH)
 		return 0;
 
-	psn->reclaimed = 1;
+	psn->stat |= PSN_RECLAIMED;
 	pn_root = puffs_getroot(pu);
 	for (; pn != pn_root; pn = pn_next) {
 		psn = pn->pn_data;
-		if (psn->reclaimed == 0 || psn->childcount != 0)
+		if ((psn->stat & PSN_RECLAIMED) == 0 || psn->childcount != 0)
 			break;
 
 		pn_next = psn->parent;
