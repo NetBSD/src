@@ -1,4 +1,4 @@
-/*	$NetBSD: dispatcher.c,v 1.4 2007/05/18 13:53:54 pooka Exp $	*/
+/*	$NetBSD: dispatcher.c,v 1.5 2007/05/18 18:01:55 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: dispatcher.c,v 1.4 2007/05/18 13:53:54 pooka Exp $");
+__RCSID("$NetBSD: dispatcher.c,v 1.5 2007/05/18 18:01:55 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -710,6 +710,7 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 				break;
 			}
 
+			auxt->pvnr_backendrefs = 1; /* safe default */
 			error = pops->puffs_node_inactive(pcc,
 			    opcookie, auxt->pvnr_pid,
 			    &auxt->pvnr_backendrefs);
