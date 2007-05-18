@@ -1,4 +1,4 @@
-/* $NetBSD: multiproc.s,v 1.10 2007/05/17 14:51:12 yamt Exp $ */
+/* $NetBSD: multiproc.s,v 1.11 2007/05/18 02:48:06 mhitch Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-__KERNEL_RCSID(5, "$NetBSD: multiproc.s,v 1.10 2007/05/17 14:51:12 yamt Exp $")
+__KERNEL_RCSID(5, "$NetBSD: multiproc.s,v 1.11 2007/05/18 02:48:06 mhitch Exp $")
 
 /*
  * Multiprocessor glue code.
@@ -72,6 +72,7 @@ NESTED_NOPROFILE(cpu_spinup_trampoline,0,0,ra,0,0)
 
 	/* Switch to this CPU's idle thread. */
 	ldq	a0, CPU_INFO_IDLE_LWP(s0)
+	stq	a0, CPU_INFO_CURLWP(s0)	/* set curlwp */
 	ldq	a0, L_MD_PCBPADDR(a0)
 	SWITCH_CONTEXT
 
@@ -88,6 +89,9 @@ NESTED_NOPROFILE(cpu_spinup_trampoline,0,0,ra,0,0)
 	mov	s0, a0
 	CALL(cpu_hatch)
 
+	/* enable all interrupts */
+	mov	zero, a0
+	call_pal PAL_OSF1_swpipl
 	/* Jump into the idle loop! */
 	jmp	zero, idle_loop
 
