@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.87.4.1 2007/05/17 22:53:05 wrstuden Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.87.4.2 2007/05/18 01:23:36 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include "opt_ktrace.h"
 #include "opt_multiprocessor.h"
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.87.4.1 2007/05/17 22:53:05 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.87.4.2 2007/05/18 01:23:36 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,6 +110,21 @@ int	sadebug = 0;
 
 SPLAY_PROTOTYPE(sasttree, sastack, sast_node, sast_compare);
 SPLAY_GENERATE(sasttree, sastack, sast_node, sast_compare);
+
+/*
+ * sa_critpath API
+ * permit other parts of the kernel to make SA_LWP_STATE_{UN,}LOCK calls.
+ */
+void
+sa_critpath_enter(struct lwp *l1, sa_critpath_t *f1)
+{
+	SA_LWP_STATE_LOCK(l1, *f1);
+}
+void
+sa_critpath_exit(struct lwp *l1, sa_critpath_t *f1)
+{
+	SA_LWP_STATE_UNLOCK(l1, *f1);
+}
 
 
 /*

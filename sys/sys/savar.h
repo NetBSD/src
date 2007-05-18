@@ -1,4 +1,4 @@
-/*	$NetBSD: savar.h,v 1.20.10.1 2007/05/17 22:53:07 wrstuden Exp $	*/
+/*	$NetBSD: savar.h,v 1.20.10.2 2007/05/18 01:23:37 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -143,6 +143,19 @@ int	sa_upcall(struct lwp *, int, struct lwp *, struct lwp *, size_t, void *,
 
 void	sa_putcachelwp(struct proc *, struct lwp *);
 struct lwp *sa_getcachelwp(struct sadata_vp *);
+
+/*
+ * API permitting other parts of the kernel to indicate that they
+ * are entering code paths in which blocking events should NOT generate
+ * upcalls to an SA process. These routines should ONLY be used by code
+ * involved in scheduling or process/thread initialization (such as
+ * stack copying). These calls must be balanced. They may be nested, but
+ * MUST be released in a LIFO order. These calls assume that the lwp is
+ * locked.
+ */
+typedef int sa_critpath_t;
+void	sa_critpath_enter(struct lwp *, sa_critpath_t *);
+void	sa_critpath_exit(struct lwp *, sa_critpath_t *);
 
 
 void	sa_unblock_userret(struct lwp *);
