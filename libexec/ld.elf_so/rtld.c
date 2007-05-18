@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.112 2007/04/08 10:02:35 scw Exp $	 */
+/*	$NetBSD: rtld.c,v 1.113 2007/05/18 21:44:08 christos Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rtld.c,v 1.112 2007/04/08 10:02:35 scw Exp $");
+__RCSID("$NetBSD: rtld.c,v 1.113 2007/05/18 21:44:08 christos Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -68,7 +68,7 @@ __RCSID("$NetBSD: rtld.c,v 1.112 2007/04/08 10:02:35 scw Exp $");
 /*
  * Function declarations.
  */
-static void     _rtld_init(caddr_t, caddr_t);
+static void     _rtld_init(caddr_t, caddr_t, const char *);
 static void     _rtld_exit(void);
 
 Elf_Addr        _rtld(Elf_Addr *, Elf_Addr);
@@ -148,7 +148,7 @@ _rtld_call_init_functions(Obj_Entry *first)
  * define __HAVE_FUNCTION_DESCRIPTORS
  */
 static void
-_rtld_init(caddr_t mapbase, caddr_t relocbase)
+_rtld_init(caddr_t mapbase, caddr_t relocbase, const char *argv0)
 {
 
 	/* Conjure up an Obj_Entry structure for the dynamic linker. */
@@ -159,7 +159,7 @@ _rtld_init(caddr_t mapbase, caddr_t relocbase)
 	_rtld_objself.relocbase = relocbase;
 	_rtld_objself.dynamic = (Elf_Dyn *) &_DYNAMIC;
 
-	_rtld_digest_dynamic(&_rtld_objself);
+	_rtld_digest_dynamic(_rtld_path, &_rtld_objself);
 	assert(!_rtld_objself.needed);
 #if !defined(__hppa__)
 	assert(!_rtld_objself.pltrel && !_rtld_objself.pltrela);
@@ -174,7 +174,7 @@ _rtld_init(caddr_t mapbase, caddr_t relocbase)
 	assert(!_rtld_objself.textrel);
 #endif
 
-	_rtld_add_paths(&_rtld_default_paths, RTLD_DEFAULT_LIBRARY_PATH);
+	_rtld_add_paths(argv0, &_rtld_default_paths, RTLD_DEFAULT_LIBRARY_PATH);
 
 	/*
 	 * Set up the _rtld_objlist pointer, so that rtld symbols can be found.
@@ -321,7 +321,7 @@ _rtld(Elf_Addr *sp, Elf_Addr relocbase)
 	}
 	assert(pAUX_pagesz != NULL);
 	_rtld_pagesz = (int)pAUX_pagesz->a_v;
-	_rtld_init((caddr_t)pAUX_base->a_v, (caddr_t)relocbase);
+	_rtld_init((caddr_t)pAUX_base->a_v, (caddr_t)relocbase, argv[0]);
 
 	__progname = _rtld_objself.path;
 	environ = env;
@@ -343,12 +343,13 @@ _rtld(Elf_Addr *sp, Elf_Addr relocbase)
 		if (ld_debug != NULL && *ld_debug != '\0')
 			debug = 1;
 #endif
-		_rtld_add_paths(&_rtld_paths, getenv("LD_LIBRARY_PATH"));
+		_rtld_add_paths(argv[0], &_rtld_paths, getenv("LD_LIBRARY_PATH"));
 	} else {
 		unsetenv("LD_DEBUG");
 		unsetenv("LD_LIBRARY_PATH");
 	}
-	_rtld_process_hints(&_rtld_paths, &_rtld_xforms, _PATH_LD_HINTS);
+	_rtld_process_hints(argv[0], &_rtld_paths, &_rtld_xforms,
+	    _PATH_LD_HINTS);
 	dbg(("dynamic linker is initialized, mapbase=%p, relocbase=%p",
 	     _rtld_objself.mapbase, _rtld_objself.relocbase));
 
@@ -397,7 +398,7 @@ _rtld(Elf_Addr *sp, Elf_Addr relocbase)
 		_rtld_objself.path = xstrdup(_rtld_objmain->interp);
 	dbg(("actual dynamic linker is %s", _rtld_objself.path));
 	
-	_rtld_digest_dynamic(_rtld_objmain);
+	_rtld_digest_dynamic(argv[0], _rtld_objmain);
 
 	/* Link the main program into the list of objects. */
 	*_rtld_objtail = _rtld_objmain;

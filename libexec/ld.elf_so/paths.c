@@ -1,4 +1,4 @@
-/*	$NetBSD: paths.c,v 1.33 2005/06/01 14:57:22 lukem Exp $	 */
+/*	$NetBSD: paths.c,v 1.34 2007/05/18 21:44:08 christos Exp $	 */
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: paths.c,v 1.33 2005/06/01 14:57:22 lukem Exp $");
+__RCSID("$NetBSD: paths.c,v 1.34 2007/05/18 21:44:08 christos Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -58,7 +58,7 @@ __RCSID("$NetBSD: paths.c,v 1.33 2005/06/01 14:57:22 lukem Exp $");
 
 static Search_Path *_rtld_find_path(Search_Path *, const char *, size_t);
 static Search_Path **_rtld_append_path(Search_Path **, Search_Path **,
-    const char *, const char *);
+    const char *, const char *, const char *);
 static void _rtld_process_mapping(Library_Xform **, const char *,
     const char *);
 static char *exstrdup(const char *, const char *);
@@ -171,16 +171,21 @@ _rtld_find_path(Search_Path *path, const char *pathstr, size_t pathlen)
 
 static Search_Path **
 _rtld_append_path(Search_Path **head_p, Search_Path **path_p,
-    const char *bp, const char *ep)
+    const char *argv0, const char *bp, const char *ep)
 {
 	Search_Path *path;
+	char epath[MAXPATHLEN];
+	size_t len;
+
+	if ((len = _rtld_expand_path(epath, sizeof(epath), argv0, bp, ep)) == 0)
+		return path_p;
 
 	if (_rtld_find_path(*head_p, bp, ep - bp) != NULL)
 		return path_p;
 
 	path = NEW(Search_Path);
-	path->sp_pathlen = ep - bp;
-	path->sp_path = exstrdup(bp, ep);
+	path->sp_pathlen = len;
+	path->sp_path = exstrdup(epath, epath + len);
 	path->sp_next = (*path_p);
 	(*path_p) = path;
 	path_p = &path->sp_next;
@@ -190,7 +195,7 @@ _rtld_append_path(Search_Path **head_p, Search_Path **path_p,
 }
 
 void
-_rtld_add_paths(Search_Path **path_p, const char *pathstr)
+_rtld_add_paths(const char *argv0, Search_Path **path_p, const char *pathstr)
 {
 	Search_Path **head_p = path_p;
 
@@ -212,7 +217,7 @@ _rtld_add_paths(Search_Path **path_p, const char *pathstr)
 		if (ep == NULL)
 			ep = &pathstr[strlen(pathstr)];
 
-		path_p = _rtld_append_path(head_p, path_p, bp, ep);
+		path_p = _rtld_append_path(head_p, path_p, argv0, bp, ep);
 
 		if (ep[0] == '\0')
 			break;
@@ -327,8 +332,8 @@ cleanup:
 }
 
 void
-_rtld_process_hints(Search_Path **path_p, Library_Xform **lib_p,
-    const char *fname)
+_rtld_process_hints(const char *argv0, Search_Path **path_p,
+    Library_Xform **lib_p, const char *fname)
 {
 	int fd;
 	char *buf;
@@ -374,7 +379,8 @@ _rtld_process_hints(Search_Path **path_p, Library_Xform **lib_p,
 			 */
 			while (b[-1] == ' ' || b[-1] == '\t')
 				b--;
-			path_p = _rtld_append_path(head_p, path_p, ptr, b);
+			path_p = _rtld_append_path(head_p, path_p, argv0,
+			    ptr, b);
 		} else
 			_rtld_process_mapping(lib_p, ptr, b);
 

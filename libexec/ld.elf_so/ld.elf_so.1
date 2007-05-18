@@ -1,4 +1,4 @@
-.\"	$NetBSD: ld.elf_so.1,v 1.8 2003/02/25 10:34:49 wiz Exp $
+.\"	$NetBSD: ld.elf_so.1,v 1.9 2007/05/18 21:44:08 christos Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd October 23, 2001
+.Dd May 18, 2007
 .Dt LD.ELF_SO 1
 .Os
 .Sh NAME
@@ -103,6 +103,37 @@ This is defined at shared object link time.
 The list of default paths which is set to
 .Pa /usr/lib .
 .El
+.Pp
+.Nm
+will expand the following variables if present in the paths:
+.Bl -tag -width $PLATFORM
+.It $HWCAP
+Processor hardware capabilities, for example FPU, MMX, SSE.
+Currently unimplemented.
+.It $ISALIST
+List of instructions sets this processor can execute.
+Currently unimplemented.
+.It $ORIGIN
+The directory of the main object.
+.It $OSNAME
+The value of the
+.Dv kern.ostype 
+.Xr sysctl 3 .
+.It $OSREL
+The value of the
+.Dv kern.osrelease
+.Xr sysctl 3 .
+.It $PLATFORM
+The value of the
+.Dv hw.machine_arch
+.Xr sysctl 3 .
+.El
+.Pp
+Both
+.Dv ${VARIABLE}
+and
+.Dv $VARIABLE
+are recognized.
 .Pp
 The filename string can be considered free form, however, it will almost
 always take the form lib\*[Lt]name\*[Gt].so.\*[Lt]number\*[Gt],
@@ -190,7 +221,12 @@ library location hints supplied by the system administrator.
 .Xr dlfcn 3 ,
 .Xr elf 5
 .Sh HISTORY
+.Pp
 The ELF shared library model employed first appeared in Sys V R4.
+.Pp
+The path expansion variables first appeared in Solaris 10, and
+in
+.Nx 5 .
 .Sh SECURITY CONSIDERATIONS
 The environment variables
 .Ev LD_LIBRARY_PATH

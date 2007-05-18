@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.73 2006/05/22 19:49:09 drochner Exp $	 */
+/*	$NetBSD: rtld.h,v 1.74 2007/05/18 21:44:09 christos Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -229,8 +229,12 @@ void _rtld_linkmap_delete(Obj_Entry *);
 void _rtld_objlist_add(Objlist *, Obj_Entry *);
 Objlist_Entry *_rtld_objlist_find(Objlist *, const Obj_Entry *);
 
+/* expand.c */
+size_t _rtld_expand_path(char *, size_t, const char *, const char *,\
+    const char *);
+
 /* headers.c */
-void _rtld_digest_dynamic(Obj_Entry *);
+void _rtld_digest_dynamic(const char *, Obj_Entry *);
 Obj_Entry *_rtld_digest_phdr(const Elf_Phdr *, int, caddr_t);
 
 /* load.c */
@@ -239,8 +243,9 @@ int _rtld_load_needed_objects(Obj_Entry *, int);
 int _rtld_preload(const char *);
 
 /* path.c */
-void _rtld_add_paths(Search_Path **, const char *);
-void _rtld_process_hints(Search_Path **, Library_Xform **, const char *);
+void _rtld_add_paths(const char *, Search_Path **, const char *);
+void _rtld_process_hints(const char *, Search_Path **, Library_Xform **,
+    const char *);
 int _rtld_sysctl(const char *, void *, size_t *);
 
 /* reloc.c */
