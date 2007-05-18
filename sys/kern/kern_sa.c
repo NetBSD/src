@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.87.4.4 2007/05/18 01:52:56 wrstuden Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.87.4.5 2007/05/18 02:07:13 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include "opt_ktrace.h"
 #include "opt_multiprocessor.h"
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.87.4.4 2007/05/18 01:52:56 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.87.4.5 2007/05/18 02:07:13 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -257,7 +257,7 @@ sys_sa_register(struct lwp *l, void *v, register_t *retval)
  * already called).
  *
  * Note: changing the upcall handler address for a process that has
- * concurrency greter than one can yield ambiguous results. The one
+ * concurrency greater than one can yield ambiguous results. The one
  * guarantee we can offer is that any upcalls generated on all CPUs
  * after this routine finishes will use the new upcall handler. Note
  * that any upcalls delivered upon return to user level by the
@@ -725,7 +725,7 @@ sa_increaseconcurrency(struct lwp *l, int concurrency)
  * WRS: at present, this system call serves two purposes. The first is
  * for an application to indicate that it wants a certain concurrency
  * level. The second is for the application to request that the kernel
- * reacivate previously allocated virtual CPUs.
+ * reactivate previously allocated virtual CPUs.
  */
 int
 sys_sa_setconcurrency(struct lwp *l, void *v, register_t *retval)
