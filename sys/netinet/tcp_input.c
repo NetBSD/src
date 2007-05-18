@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.264 2007/05/02 20:40:25 dyoung Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.265 2007/05/18 21:31:16 riz Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -152,7 +152,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.264 2007/05/02 20:40:25 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.265 2007/05/18 21:31:16 riz Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -377,7 +377,7 @@ extern struct evcnt tcp_reass_fragdup;
 static int tcp_reass(struct tcpcb *, const struct tcphdr *, struct mbuf *,
     int *);
 static int tcp_dooptions(struct tcpcb *, const u_char *, int,
-    const struct tcphdr *, struct mbuf *, int, struct tcp_opt_info *);
+    struct tcphdr *, struct mbuf *, int, struct tcp_opt_info *);
 
 #ifdef INET
 static void tcp4_log_refused(const struct ip *, const struct tcphdr *);
@@ -2861,7 +2861,7 @@ tcp_signature(struct mbuf *m, struct tcphdr *th, int thoff,
 
 static int
 tcp_dooptions(struct tcpcb *tp, const u_char *cp, int cnt,
-    const struct tcphdr *th,
+    struct tcphdr *th,
     struct mbuf *m, int toff, struct tcp_opt_info *oi)
 {
 	u_int16_t mss;
