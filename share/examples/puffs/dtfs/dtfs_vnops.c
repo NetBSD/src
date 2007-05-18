@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs_vnops.c,v 1.25 2007/05/07 17:18:50 pooka Exp $	*/
+/*	$NetBSD: dtfs_vnops.c,v 1.26 2007/05/18 13:55:21 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -29,6 +29,7 @@
  */
 
 #include <sys/types.h>
+#include <sys/poll.h>
 
 #include <assert.h>
 #include <errno.h>
@@ -36,7 +37,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <ucontext.h>
+#include <unistd.h>
 #include <util.h>
 
 #include "dtfs.h"
@@ -269,6 +270,26 @@ dtfs_node_readdir(struct puffs_cc *pcc, void *opc,
 		(*readoff)++;
 	}
 
+	return 0;
+}
+
+int
+dtfs_node_poll(struct puffs_cc *pcc, void *opc, int *events, pid_t pid)
+{
+	struct dtfs_mount *dtm = puffs_cc_getspecific(pcc);
+	struct dtfs_poll dp;
+	struct itimerval it;
+
+	memset(&it, 0, sizeof(struct itimerval));
+	it.it_value.tv_sec = 4;
+	if (setitimer(ITIMER_REAL, &it, NULL) == -1)
+		return errno;
+
+	dp.dp_pcc = pcc;
+	LIST_INSERT_HEAD(&dtm->dtm_pollent, &dp, dp_entries);
+	puffs_cc_yield(pcc);
+
+	*events = *events & (POLLIN | POLLOUT | POLLRDNORM | POLLWRNORM);
 	return 0;
 }
 

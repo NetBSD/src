@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs.c,v 1.24 2007/05/17 14:10:13 pooka Exp $	*/
+/*	$NetBSD: dtfs.c,v 1.25 2007/05/18 13:55:21 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -53,7 +53,8 @@
 #define FSNAME "dt"
 #endif
 
-static struct puffs_usermount *pu;
+static struct puffs_usermount *gpu;
+static struct dtfs_mount gdtm;
 int dynamicfh;
 
 static void usage(void);
@@ -74,8 +75,32 @@ static void
 dosuspend(int v)
 {
 
-	puffs_fs_suspend(pu);
-	puffs_fs_suspend(pu);
+	puffs_fs_suspend(gpu);
+	puffs_fs_suspend(gpu);
+}
+
+static void
+wipe_the_sleep_out_of_my_eyes(int v)
+{
+
+	gdtm.dtm_needwakeup++;
+}
+
+static void
+loopfun(struct puffs_usermount *pu)
+{
+	struct dtfs_mount *dtm = puffs_getspecific(pu);
+	struct dtfs_poll *dp;
+
+	while (dtm->dtm_needwakeup) {
+		dtm->dtm_needwakeup--;
+		dp = LIST_FIRST(&dtm->dtm_pollent);
+		if (dp == NULL)
+			return;
+
+		LIST_REMOVE(dp, dp_entries);
+		puffs_cc_continue(dp->dp_pcc);
+	}
 }
 
 int
@@ -83,9 +108,10 @@ main(int argc, char *argv[])
 {
 	extern char *optarg;
 	extern int optind;
-	struct dtfs_mount dtm;
+	struct puffs_usermount *pu;
 	struct puffs_pathobj *po_root;
 	struct puffs_ops *pops;
+	struct timespec ts;
 	char *rtstr;
 	mntoptparse_t mp;
 	int pflags, lflags, mntflags;
@@ -156,6 +182,7 @@ main(int argc, char *argv[])
 	PUFFSOP_SET(pops, dtfs, node, create);
 	PUFFSOP_SET(pops, dtfs, node, remove);
 	PUFFSOP_SET(pops, dtfs, node, readdir);
+	PUFFSOP_SET(pops, dtfs, node, poll);
 	PUFFSOP_SET(pops, dtfs, node, mkdir);
 	PUFFSOP_SET(pops, dtfs, node, rmdir);
 	PUFFSOP_SET(pops, dtfs, node, rename);
@@ -170,9 +197,10 @@ main(int argc, char *argv[])
 
 	srandom(time(NULL)); /* for random generation numbers */
 
-	pu = puffs_init(pops, FSNAME, &dtm, pflags);
+	pu = puffs_init(pops, FSNAME, &gdtm, pflags);
 	if (pu == NULL)
 		err(1, "init");
+	gpu = pu;
 
 	puffs_setfhsize(pu, sizeof(struct dtfs_fid),
 	    PUFFS_FHFLAG_NFSV2 | PUFFS_FHFLAG_NFSV3
@@ -181,6 +209,8 @@ main(int argc, char *argv[])
 
 	if (signal(SIGUSR1, dosuspend) == SIG_ERR)
 		warn("cannot set suspend sighandler");
+	if (signal(SIGALRM, wipe_the_sleep_out_of_my_eyes) == SIG_ERR)
+		warn("cannot set alarm sighandler");
 
 	/* init */
 	if (dtfs_domount(pu, rtstr) != 0)
@@ -189,6 +219,12 @@ main(int argc, char *argv[])
 	po_root = puffs_getrootpathobj(pu);
 	po_root->po_path = argv[0];
 	po_root->po_len = strlen(argv[0]);
+
+	/* often enough for testing poll */
+	ts.tv_sec = 1;
+	ts.tv_nsec = 0;
+	puffs_ml_setloopfn(pu, loopfun);
+	puffs_ml_settimeout(pu, &ts);
 
 	if (puffs_mount(pu,  argv[0], mntflags, puffs_getroot(pu)) == -1)
 		err(1, "mount");
