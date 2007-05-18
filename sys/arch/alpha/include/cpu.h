@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.68 2007/05/17 14:51:13 yamt Exp $ */
+/* $NetBSD: cpu.h,v 1.69 2007/05/18 02:45:18 mhitch Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -158,7 +158,6 @@ struct cpu_info {
 	cpuid_t ci_cpuid;		/* our CPU ID */
 	struct lwp *ci_fpcurlwp;	/* current owner of the FPU */
 	paddr_t ci_curpcb;		/* PA of current HW PCB */
-	struct lwp *ci_idle_lwp;	/* our idle LWP */
 	struct cpu_softc *ci_softc;	/* pointer to our device */
 	u_long ci_want_resched;		/* preempt current process */
 	u_long ci_intrdepth;		/* interrupt trap depth */
