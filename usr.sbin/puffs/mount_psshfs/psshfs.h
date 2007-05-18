@@ -1,4 +1,4 @@
-/*	$NetBSD: psshfs.h,v 1.16 2007/05/18 16:13:47 pooka Exp $	*/
+/*	$NetBSD: psshfs.h,v 1.17 2007/05/18 18:00:07 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -123,7 +123,6 @@ struct psshfs_node {
 };
 #define PSN_RECLAIMED	0x01
 #define PSN_HASFH	0x02
-#define PSN_NUKED	0x04
 
 struct psshfs_ctx {
 	int sshfd;
