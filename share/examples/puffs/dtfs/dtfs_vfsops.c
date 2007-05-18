@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs_vfsops.c,v 1.17 2007/05/17 14:10:13 pooka Exp $	*/
+/*	$NetBSD: dtfs_vfsops.c,v 1.18 2007/05/18 13:55:21 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -133,6 +133,7 @@ dtfs_domount(struct puffs_usermount *pu, const char *typestr)
 	dtm->dtm_nextfileid = 3;
 	dtm->dtm_nfiles = 1;
 	dtm->dtm_fsizes = 0;
+	LIST_INIT(&dtm->dtm_pollent);
 
 	/*
 	 * create root directory, do it "by hand" to avoid special-casing

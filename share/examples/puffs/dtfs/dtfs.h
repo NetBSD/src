@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs.h,v 1.15 2007/05/17 14:10:13 pooka Exp $	*/
+/*	$NetBSD: dtfs.h,v 1.16 2007/05/18 13:55:21 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -50,6 +50,9 @@ struct dtfs_mount {
 
 	size_t		dtm_fsizes;	/* sum of file sizes in bytes	*/
 	fsfilcnt_t	dtm_nfiles;	/* number of files		*/
+
+	LIST_HEAD(, dtfs_poll) dtm_pollent;
+	int		dtm_needwakeup;
 };
 
 struct dtfs_file {
@@ -91,6 +94,11 @@ struct dtfs_fid {
 	u_long			dfid_gen;
 };
 #define DTFS_FIDSIZE (sizeof(struct dtfs_fid))
+
+struct dtfs_poll {
+	struct puffs_cc *dp_pcc;
+	LIST_ENTRY(dtfs_poll) dp_entries;
+};
 
 struct puffs_node *	dtfs_genfile(struct puffs_node *,
 				     const struct puffs_cn *, enum vtype);
