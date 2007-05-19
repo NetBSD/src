@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.879 2007/05/16 19:08:52 mrg Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.880 2007/05/19 14:57:44 tsutsui Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.879 2007/05/16 19:07:42 mrg Exp
+ *	NetBSD: pcidevs,v 1.880 2007/05/19 14:56:24 tsutsui Exp
  */
 
 /*
@@ -1888,6 +1888,7 @@
 #define	PCI_PRODUCT_IBM_MCABRIDGE2	0x0020		/* MCA Bridge */
 #define	PCI_PRODUCT_IBM_82351	0x0022		/* 82351 PCI-PCI Bridge */
 #define	PCI_PRODUCT_IBM_SERVERAID	0x002e		/* ServeRAID */
+#define	PCI_PRODUCT_IBM_GXT250P	0x003c		/* GXT-250P */
 #define	PCI_PRODUCT_IBM_OLYMPIC	0x003e		/* 16/4 Token Ring */
 #define	PCI_PRODUCT_IBM_MIAMI	0x0036		/* Miami/PCI */
 #define	PCI_PRODUCT_IBM_82660	0x0037		/* 82660 PowerPC to PCI Bridge and Memory Controller */
