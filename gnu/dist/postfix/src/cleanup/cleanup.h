@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanup.h,v 1.10 2006/11/07 03:09:19 rpaulo Exp $	*/
+/*	$NetBSD: cleanup.h,v 1.11 2007/05/19 17:49:46 heas Exp $	*/
 
 /*++
 /* NAME
@@ -33,6 +33,7 @@
 #include <mail_conf.h>
 #include <mime_state.h>
 #include <string_list.h>
+#include <cleanup_user.h>
 
  /*
   * Milter library.
@@ -70,7 +71,9 @@ typedef struct CLEANUP_STATE {
     BH_TABLE *dups;			/* recipient dup filter */
     void    (*action) (struct CLEANUP_STATE *, int, const char *, ssize_t);
     off_t   data_offset;		/* start of message content */
+    off_t   body_offset;		/* start of body content */
     off_t   xtra_offset;		/* start of extra segment */
+    off_t   cont_length;		/* length including Milter edits */
     off_t   append_rcpt_pt_offset;	/* append recipient here */
     off_t   append_rcpt_pt_target;	/* target of above record */
     off_t   append_hdr_pt_offset;	/* append header here */
@@ -91,6 +94,10 @@ typedef struct CLEANUP_STATE {
 #ifdef DELAY_ACTION
     int     defer_delay;		/* deferred delivery */
 #endif
+
+    /*
+     * Miscellaneous Milter support.
+     */
     MILTERS *milters;			/* mail filters */
     const char *client_name;		/* real or ersatz client */
     const char *reverse_name;		/* real or ersatz client */
@@ -99,6 +106,13 @@ typedef struct CLEANUP_STATE {
     const char *client_port;		/* real or ersatz client */
     VSTRING *milter_ext_from;		/* externalized sender */
     VSTRING *milter_ext_rcpt;		/* externalized recipient */
+
+    /*
+     * Support for Milter body replacement requests.
+     */
+    struct CLEANUP_REGION *free_regions;/* unused regions */
+    struct CLEANUP_REGION *body_regions;/* regions with body content */
+    struct CLEANUP_REGION *curr_body_region;
 } CLEANUP_STATE;
 
  /*
@@ -223,6 +237,11 @@ extern void cleanup_message(CLEANUP_STATE *, int, const char *, ssize_t);
 extern void cleanup_extracted(CLEANUP_STATE *, int, const char *, ssize_t);
 
  /*
+  * cleanup_final.c
+  */
+extern void cleanup_final(CLEANUP_STATE *);
+
+ /*
   * cleanup_rewrite.c
   */
 extern int cleanup_rewrite_external(const char *, VSTRING *, const char *);
@@ -283,6 +302,27 @@ extern void cleanup_milter_emul_data(CLEANUP_STATE *, MILTERS *);
 #define CLEANUP_MILTER_OK(s) \
     (((s)->flags & CLEANUP_FLAG_MILTER) != 0 \
 	&& (s)->errs == 0 && ((s)->flags & CLEANUP_FLAG_DISCARD) == 0)
+
+ /*
+  * cleanup_body_edit.c
+  */
+typedef struct CLEANUP_REGION {
+    off_t   start;			/* start of region */
+    off_t   len;			/* length or zero (open-ended) */
+    off_t   write_offs;			/* write offset */
+    struct CLEANUP_REGION *next;	/* linkage */
+} CLEANUP_REGION;
+
+extern void cleanup_region_init(CLEANUP_STATE *);
+extern CLEANUP_REGION *cleanup_region_open(CLEANUP_STATE *, ssize_t);
+extern void cleanup_region_close(CLEANUP_STATE *, CLEANUP_REGION *);
+extern CLEANUP_REGION *cleanup_region_return(CLEANUP_STATE *, CLEANUP_REGION *);
+extern void cleanup_region_done(CLEANUP_STATE *);
+
+extern int cleanup_body_edit_start(CLEANUP_STATE *);
+extern int cleanup_body_edit_write(CLEANUP_STATE *, int, VSTRING *);
+extern int cleanup_body_edit_finish(CLEANUP_STATE *);
+extern void cleanup_body_edit_free(CLEANUP_STATE *);
 
 /* LICENSE
 /* .ad

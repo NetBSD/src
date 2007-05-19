@@ -1,4 +1,4 @@
-.\"	$NetBSD: postconf.5,v 1.11 2007/02/05 17:56:11 rpaulo Exp $
+.\"	$NetBSD: postconf.5,v 1.12 2007/05/19 17:49:42 heas Exp $
 .\"
 .TH POSTCONF 5 
 .SH NAME
@@ -370,8 +370,8 @@ generates itself.
 The time unit over which client connection rates and other rates
 are calculated.
 .PP
-This feature is implemented by the \fBanvil\fR(8) service which is not
-part of the stable Postfix version 2.1 release.
+This feature is implemented by the \fBanvil\fR(8) service which is available
+in Postfix version 2.2 and later.
 .PP
 The default interval is relatively short. Because of the high
 frequency of updates, the \fBanvil\fR(8) server uses volatile memory
@@ -452,11 +452,13 @@ password file.
 .PP
 Specify a list of user names, "/file/name" or "type:table" patterns,
 separated by commas and/or whitespace. The list is matched left to
-right, and the search stops on the first match. Specify "!name" to
-exclude a name from the list. A "/file/name" pattern is replaced
+right, and the search stops on the first match. A "/file/name"
+pattern is replaced
 by its contents; a "type:table" lookup table is matched when a name
 matches a lookup key (the lookup result is ignored).  Continue long
-lines by starting the next line with whitespace.
+lines by starting the next line with whitespace. Specify "!pattern"
+to exclude a name from the list. The form "!/file/name" is supported
+only in Postfix version 2.4 and later.
 .PP
 This feature is available in Postfix 2.2 and later.
 .SH authorized_mailq_users (default: static:anyone)
@@ -472,11 +474,13 @@ password file.
 .PP
 Specify a list of user names, "/file/name" or "type:table" patterns,
 separated by commas and/or whitespace. The list is matched left to
-right, and the search stops on the first match. Specify "!name" to
-exclude a name from the list. A "/file/name" pattern is replaced
+right, and the search stops on the first match. A "/file/name"
+pattern is replaced
 by its contents; a "type:table" lookup table is matched when a name
 matches a lookup key (the lookup result is ignored).  Continue long
-lines by starting the next line with whitespace.
+lines by starting the next line with whitespace. Specify "!pattern"
+to exclude a user name from the list. The form "!/file/name" is
+supported only in Postfix version 2.4 and later.
 .PP
 This feature is available in Postfix 2.2 and later.
 .SH authorized_submit_users (default: static:anyone)
@@ -492,11 +496,13 @@ submission access to all users specify an empty list.
 .PP
 Specify a list of user names, "/file/name" or "type:table" patterns,
 separated by commas and/or whitespace. The list is matched left to right,
-and the search stops on the first match. Specify "!name" to exclude a
-name from the list. A "/file/name" pattern is replaced by its contents;
+and the search stops on the first match. A "/file/name" pattern is
+replaced by its contents;
 a "type:table" lookup table is matched when a name matches a lookup key
 (the lookup result is ignored).  Continue long lines by starting the
-next line with whitespace.
+next line with whitespace. Specify "!pattern" to exclude a user
+name from the list. The form "!/file/name" is supported only in
+Postfix version 2.4 and later.
 .PP
 Example:
 .PP
@@ -528,7 +534,9 @@ below it),  "/file/name" or "type:table" patterns.  A "/file/name"
 pattern is replaced by its contents; a "type:table" lookup table
 is matched when a table entry matches a lookup string (the lookup
 result is ignored).  Continue long lines by starting the next line
-with whitespace.
+with whitespace. Specify "!pattern" to exclude an address or network
+block from the list. The form "!/file/name" is supported only in
+Postfix version 2.4 and later.
 .PP
 Note: IP version 6 address information must be specified inside
 [] in the authorized_verp_clients value, and in files
@@ -1012,12 +1020,24 @@ When rejecting non-address information (such as the HELO
 command argument or the client hostname/address), the Postfix SMTP
 server will transform a sender or recipient DSN status into a generic
 non-address DSN status (e.g., 4.0.0).
-.SH default_recipient_limit (default: 10000)
+.SH default_recipient_limit (default: 20000)
 The default per-transport upper limit on the number of in-memory
 recipients.  These limits take priority over the global
 qmgr_message_recipient_limit after the message has been assigned
 to the respective transports.  See also default_extra_recipient_limit
 and qmgr_message_recipient_minimum.
+.SH default_recipient_refill_delay (default: 5s)
+The default per-transport maximum delay between recipients refills.
+When not all message recipients fit into the memory at once, keep loading
+more of them at least once every this many seconds.  This is used to
+make sure the recipients are refilled in timely manner even when
+$default_recipient_refill_limit is too high for too slow deliveries.
+.SH default_recipient_refill_limit (default: 100)
+The default per-transport limit on the number of recipients refilled at
+once.  When not all message recipients fit into the memory at once, keep
+loading more of them in batches of at least this many at a time.  See also
+$default_recipient_refill_delay, which may result in recipient batches
+lower than this when this limit is too high for too slow deliveries.
 .SH default_transport (default: smtp)
 The default mail delivery transport and next-hop destination for
 destinations that do not match $mydestination, $inet_interfaces,
@@ -1086,9 +1106,9 @@ precision.
 .PP
 The format of the "delays=a/b/c/d" logging is as follows:
 .IP \(bu
-a = time before the queue manager, including message transmission
+a = time from message arrival to last active queue entry
 .IP \(bu
-b = time in queue manager
+b = time from last active queue entry to connection setup
 .IP \(bu
 c = time in connection setup, including DNS, EHLO and TLS
 .IP \(bu
@@ -1122,7 +1142,7 @@ Time units: s (seconds), m (minutes), h (hours), d (days), w (weeks).
 The default time unit is s (seconds).
 .SH disable_dns_lookups (default: no)
 Disable DNS lookups in the Postfix SMTP and LMTP clients. When
-disabled, hosts are looked up with the gethostbyname() system
+disabled, hosts are looked up with the getaddrinfo() system
 library routine which normally also looks in /etc/hosts.
 .PP
 DNS lookups are enabled by default.
@@ -1512,7 +1532,7 @@ parameter also controls delivery of mail to user@[ip.address].
 Note 1: you need to stop and start Postfix when this parameter changes.
 .PP
 Note 2: address information may be enclosed inside [],
-but this form is not recommended here.
+but this form is not required here.
 .PP
 When inet_interfaces specifies just one IPv4 and/or IPv6 address
 that is not a loopback address, the Postfix SMTP client will use
@@ -1609,10 +1629,10 @@ What categories of Postfix-generated mail are subject to
 before-queue content inspection by non_smtpd_milters, header_checks
 and body_checks.  Specify zero or more of the following, separated
 by whitespace or comma.
-.IP "\fB bounce \fR"
+.IP "\fBbounce\fR"
 Inspect the content of delivery
 status notifications.
-.IP "\fB notify \fR"
+.IP "\fBnotify\fR"
 Inspect the content of postmaster
 notifications by the \fBsmtp\fR(8) and \fBsmtpd\fR(8) processes.
 .PP
@@ -1626,11 +1646,13 @@ HELO or EHLO command parameter is rejected by the reject_invalid_helo_hostname
 restriction.
 .PP
 Do not change this unless you have a complete understanding of RFC 821.
-.SH ipc_idle (default: 100s)
+.SH ipc_idle (default: version dependent)
 The time after which a client closes an idle internal communication
 channel.  The purpose is to allow servers to terminate voluntarily
 after they become idle. This is used, for example, by the address
 resolving and rewriting clients.
+.PP
+With Postfix 2.4 the default value was reduced from 100s to 5s.
 .PP
 Time units: s (seconds), m (minutes), h (hours), d (days), w (weeks).
 The default time unit is s (seconds).
@@ -1785,7 +1807,7 @@ details. The table is not indexed by hostname for consistency with
 smtpd_discard_ehlo_keyword_address_maps.
 .PP
 This feature is available in Postfix 2.3 and later.
-.SH lmtp_discard_lhlo_keywords (default: $myhostname)
+.SH lmtp_discard_lhlo_keywords (default: empty)
 A case insensitive list of LHLO keywords (pipelining, starttls,
 auth, etc.) that the LMTP client will ignore in the LHLO response
 from a remote LMTP server.
@@ -1866,11 +1888,21 @@ The LMTP-specific version of the smtp_pix_workaround_delay_time
 configuration parameter.  See there for details.
 .PP
 This feature is available in Postfix 2.3 and later.
+.SH lmtp_pix_workaround_maps (default: empty)
+The LMTP-specific version of the smtp_pix_workaround_maps
+configuration parameter.  See there for details.
+.PP
+This feature is available in Postfix 2.4 and later.
 .SH lmtp_pix_workaround_threshold_time (default: 500s)
 The LMTP-specific version of the smtp_pix_workaround_threshold_time
 configuration parameter.  See there for details.
 .PP
 This feature is available in Postfix 2.3 and later.
+.SH lmtp_pix_workarounds (default: empty)
+The LMTP-specific version of the smtp_pix_workaround
+configuration parameter.  See there for details.
+.PP
+This feature is available in Postfix 2.4 and later.
 .SH lmtp_quit_timeout (default: 300s)
 The LMTP client time limit for sending the QUIT command, and for
 receiving the server response.
@@ -2166,11 +2198,11 @@ See the append_at_myorigin and append_dot_mydomain parameters
 for details of how domain names are appended to incomplete addresses.
 .PP
 Specify a list of zero or more of the following:
-.IP "\fB permit_inet_interfaces \fR"
+.IP "\fBpermit_inet_interfaces\fR"
 Append the domain name in $myorigin or $mydomain when the
 client IP address matches $inet_interfaces. This is enabled by
 default.
-.IP "\fB permit_mynetworks \fR"
+.IP "\fBpermit_mynetworks\fR"
 Append the domain name in $myorigin or $mydomain when the
 client IP address matches any network or network address listed in
 $mynetworks. This setting will not prevent remote mail header
@@ -2600,11 +2632,13 @@ By default, address masquerading makes no exceptions.
 .PP
 Specify a list of user names, "/file/name" or "type:table" patterns,
 separated by commas and/or whitespace. The list is matched left to
-right, and the search stops on the first match. Specify "!name" to
-exclude a name from the list. A "/file/name" pattern is replaced
+right, and the search stops on the first match. A "/file/name"
+pattern is replaced
 by its contents; a "type:table" lookup table is matched when a name
 matches a lookup key (the lookup result is ignored).  Continue long
-lines by starting the next line with whitespace.
+lines by starting the next line with whitespace. Specify "!pattern"
+to exclude a name from the list. The form "!/file/name" is supported
+only in Postfix version 2.4 and later.
 .PP
 Examples:
 .PP
@@ -2617,15 +2651,18 @@ masquerade_exceptions = root
 .ad
 .ft R
 .SH max_idle (default: 100s)
-The maximum amount of time that an idle Postfix daemon process
-waits for the next service request before exiting.  This parameter
-is ignored by the Postfix queue manager.
+The maximum amount of time that an idle Postfix daemon process waits
+for an incoming connection before terminating voluntarily.  This
+parameter
+is ignored by the Postfix queue manager and by other long-lived
+Postfix daemon processes.
 .PP
 Time units: s (seconds), m (minutes), h (hours), d (days), w (weeks).
 The default time unit is s (seconds).
 .SH max_use (default: 100)
-The maximal number of connection requests before a Postfix daemon
-process terminates. This parameter is ignored by the Postfix queue
+The maximal number of incoming connections that a Postfix daemon
+process will service before terminating voluntarily.  This parameter
+is ignored by the Postfix queue
 manager and by other long-lived Postfix daemon processes.
 .SH maximal_backoff_time (default: 4000s)
 The maximal time between attempts to deliver a deferred message.
@@ -2815,8 +2852,10 @@ The maximal recursion level that the MIME processor will handle.
 Postfix refuses mail that is nested deeper than the specified limit.
 .PP
 This feature is available in Postfix 2.0 and later.
-.SH minimal_backoff_time (default: 1000s)
-The minimal time between attempts to deliver a deferred message.
+.SH minimal_backoff_time (default: 300s)
+The minimal time between attempts to deliver a deferred message;
+prior to Postfix 2.4 the default value was 1000s.
+.PP
 This parameter also limits the time an unreachable destination is
 kept in the short-term, in-memory, destination status cache.
 .PP
@@ -2937,7 +2976,8 @@ lookup string (the lookup result is ignored).
 .PP
 The list is matched left to right, and the search stops on the
 first match.  Specify "!pattern" to exclude an address or network
-block from the list.
+block from the list. The form "!/file/name" is supported only
+in Postfix version 2.4 and later.
 .PP
 Note: IP version 6 address information must be specified inside
 [] in the mynetworks value, and in files specified with
@@ -3219,8 +3259,9 @@ for the file name; when a pattern is a "type:table" table specification,
 table lookup is used instead.
 .PP
 Patterns are separated by whitespace and/or commas. In order to
-reverse the result, precede a non-file name pattern with an
-exclamation point (!).
+reverse the result, precede a pattern with an
+exclamation point (!). The form "!/file/name" is supported only
+in Postfix version 2.4 and later.
 .PP
 Example:
 .PP
@@ -3266,8 +3307,9 @@ value that is at least 1.5*$message_size_limit.
 .PP
 With Postfix versions 2.0 and earlier, a queue_minfree value of
 zero means there is no minimum required amount of free space.
-.SH queue_run_delay (default: 1000s)
-The time between deferred queue scans by the queue manager.
+.SH queue_run_delay (default: 300s)
+The time between deferred queue scans by the queue manager;
+prior to Postfix 2.4 the default value was 1000s.
 .PP
 This parameter should be set less than or equal to
 $minimal_backoff_time. See also $maximal_backoff_time.
@@ -3492,7 +3534,8 @@ or "type:table" lookup tables, separated by commas and/or whitespace.
 Continue long lines by starting the next line with whitespace. A
 "/file/name" pattern is replaced by its contents; a "type:table"
 lookup table is matched when a (parent) domain appears as lookup
-key.
+key. Specify "!pattern" to exclude a domain from the list. The form
+"!/file/name" is supported only in Postfix version 2.4 and later.
 .SH relay_domains_reject_code (default: 554)
 The numerical Postfix SMTP server response code when a client
 request is rejected by the reject_unauth_destination recipient
@@ -3502,7 +3545,10 @@ Do not change this unless you have a complete understanding of RFC 821.
 .SH relay_recipient_maps (default: empty)
 Optional lookup tables with all valid addresses in the domains
 that match $relay_domains. Specify @domain as a wild-card for
-domains that do not have a valid recipient list. Technically, tables
+domains that have no valid recipient list, and become a source of
+backscatter mail: Postfix accepts spam for non-existent recipients
+and then floods innocent people with undeliverable mail.  Technically,
+tables
 listed with $relay_recipient_maps are used as lists: Postfix needs
 to know only if a lookup string is found or not, but it does not
 use the result from table lookup.
@@ -3742,7 +3788,7 @@ sender_canonical_maps = hash:/etc/postfix/sender_canonical
 .ft R
 .SH sender_dependent_relayhost_maps (default: empty)
 A sender-dependent override for the global relayhost parameter
-setting. The tables are searched by the sender address and by the
+setting. The tables are searched by the envelope sender address and
 @domain. This information is overruled with relay_transport,
 default_transport and with the \fBtransport\fR(5) table.
 .PP
@@ -3806,7 +3852,7 @@ IP hosting, but can be a problem on multi-homed firewalls. See the
 inet_interfaces documentation for more detail.
 .PP
 Note 2: address information may be enclosed inside [],
-but this form is not recommended here.
+but this form is not required here.
 .SH smtp_bind_address6 (default: empty)
 An optional numerical network address that the Postfix SMTP client
 should bind to when making an IPv6 connection.
@@ -4151,10 +4197,18 @@ How long the Postfix SMTP client pauses before sending
 .PP
 Choosing a too short time makes this workaround ineffective when
 sending large messages over slow network connections.
+.SH smtp_pix_workaround_maps (default: empty)
+Lookup tables, indexed by the remote SMTP server address, with
+per-destination workarounds for CISCO PIX firewall bugs.  The table
+is not indexed by hostname for consistency with
+smtp_discard_ehlo_keyword_address_maps.
+.PP
+This feature is available in Postfix 2.4 and later.
 .SH smtp_pix_workaround_threshold_time (default: 500s)
-How long a message must be queued before the PIX firewall
-"<CR><LF>.<CR><LF>" bug workaround is turned
-on for delivery through firewalls with "smtp fixup" mode turned on.
+How long a message must be queued before the Postfix SMTP client
+turns on the PIX firewall "<CR><LF>.<CR><LF>"
+bug workaround for delivery through firewalls with "smtp fixup"
+mode turned on.
 .PP
 By default, the workaround is turned off for mail that is queued
 for less than 500 seconds. In other words, the workaround is normally
@@ -4163,6 +4217,23 @@ turned off for the first delivery attempt.
 Specify 0 to enable the PIX firewall
 "<CR><LF>.<CR><LF>" bug workaround upon the
 first delivery attempt.
+.SH smtp_pix_workarounds (default: disable_esmtp, delay_dotcrlf)
+A list that specifies zero or more workarounds for CISCO PIX
+firewall bugs. These workarounds are implemented by the Postfix
+SMTP client. Workaround names are separated by comma or space, and
+are case insensitive.  This parameter setting can be overruled with
+per-destination smtp_pix_workaround_maps settings.
+.IP "\fBdelay_dotcrlf\fR
+Insert a delay before sending
+".<CR><LF>" after the end of the message content.  The
+delay is subject to the smtp_pix_workaround_delay_time and
+smtp_pix_workaround_threshold_time parameter settings.
+.IP "\fBdisable_esmtp\fR
+Disable all extended SMTP commands:
+send HELO instead of EHLO.
+.PP
+This feature is available in Postfix 2.4 and later. The default
+settings are backwards compatible with earlier Postfix versions.
 .SH smtp_quit_timeout (default: 300s)
 The SMTP client time limit for sending the QUIT command, and for
 receiving the server response.
@@ -4229,7 +4300,9 @@ mechanisms the client will take into consideration.
 .PP
 Specify mechanism names, "/file/name" patterns or "type:table"
 lookup tables. The right-hand side result from "type:table" lookups
-is ignored.
+is ignored. Specify "!pattern" to exclude a mechanism name from the
+list. The form "!/file/name" is supported only in Postfix version
+2.4 and later.
 .PP
 This feature is available in Postfix 2.2 and later.
 .PP
@@ -4391,8 +4464,9 @@ smtp_tls_CApath = /etc/postfix/certs
 This feature is available in Postfix 2.2 and later.
 .SH smtp_tls_cert_file (default: empty)
 File with the Postfix SMTP client RSA certificate in PEM format.
-This file may also contain the client private key, and these may
-be the same as the server certificate and key file.
+This file may also contain the Postfix SMTP client private RSA key,
+and these may be the same as the Postfix SMTP server RSA certificate and key
+file.
 .PP
 Do not configure client certificates unless you \fBmust\fR present
 client TLS certificates to one or more servers. Client certificates are
@@ -4420,21 +4494,21 @@ parameters in main.cf if present.
 .PP
 In order to verify certificates, the CA certificate (in case
 of a certificate chain, all CA certificates) must be available.
-You should add these certificates to the server certificate, the
-server certificate first, then the issuing CA(s).
+You should add these certificates to the client certificate, the
+client certificate first, then the issuing CA(s).
 .PP
 Example: the certificate for "client.dom.ain" was issued by
 "intermediate CA" which itself has a certificate of "root CA".
 Create the client.pem file with "cat client_cert.pem intermediate_CA.pem
 root_CA.pem > client.pem".
 .PP
-If you want to accept remote SMTP server certificates issued
-by these CAs yourself, you can also add the CA certificates to the
-smtp_tls_CAfile, in which case it is not necessary to have them in
-the smtp_tls_cert_file or smtp_tls_dcert_file.
+If you also want to verify remote SMTP server certificates issued by
+these CAs, you can also add the CA certificates to the smtp_tls_CAfile,
+in which case it is not necessary to have them in the smtp_tls_cert_file
+or smtp_tls_dcert_file.
 .PP
-A certificate supplied here must be usable as SSL client certificate and
-hence pass the "openssl verify -purpose sslclient ..." test.
+A certificate supplied here must be usable as an SSL client certificate
+and hence pass the "openssl verify -purpose sslclient ..." test.
 .PP
 Example:
 .PP
@@ -4463,7 +4537,7 @@ This feature is available in Postfix version 2.2. It is not used with
 Postfix 2.3 and later; use smtp_tls_mandatory_ciphers instead.
 .SH smtp_tls_dcert_file (default: empty)
 File with the Postfix SMTP client DSA certificate in PEM format.
-This file may also contain the server private key.
+This file may also contain the Postfix SMTP client private DSA key.
 .PP
 See the discussion under smtp_tls_cert_file for more details.
 .PP
@@ -4480,11 +4554,12 @@ smtp_tls_dcert_file = /etc/postfix/client-dsa.pem
 This feature is available in Postfix 2.2 and later.
 .SH smtp_tls_dkey_file (default: $smtp_tls_dcert_file)
 File with the Postfix SMTP client DSA private key in PEM format.
-The private key must not be encrypted. In other words, the key must
-be accessible without password.
+This file may be combined with the Postfix SMTP client DSA certificate
+file specified with $smtp_tls_dcert_file.
 .PP
-This file may be combined with the server certificate file
-specified with $smtp_tls_cert_file.
+The private key must be accessible without a pass-phrase, i.e. it
+must not be encrypted, but file permissions should grant read/write
+access only to the system superuser account ("root").
 .PP
 This feature is available in Postfix 2.2 and later.
 .SH smtp_tls_enforce_peername (default: yes)
@@ -4536,11 +4611,12 @@ key exchange with RSA authentication.
 This feature is available in Postfix 2.3 and later.
 .SH smtp_tls_key_file (default: $smtp_tls_cert_file)
 File with the Postfix SMTP client RSA private key in PEM format.
-This file may be combined with the client certificate file specified
-with $smtp_tls_cert_file.
+This file may be combined with the Postfix SMTP client RSA certificate
+file specified with $smtp_tls_cert_file.
 .PP
-The private key must not be encrypted. In other words, the key
-must be accessible without password.
+The private key must be accessible without a pass-phrase, i.e. it
+must not be encrypted, but file permissions should grant read/write
+access only to the system superuser account ("root").
 .PP
 Example:
 .PP
@@ -5145,7 +5221,9 @@ below it),  "/file/name" or "type:table" patterns.  A "/file/name"
 pattern is replaced by its contents; a "type:table" lookup table
 is matched when a table entry matches a lookup string (the lookup
 result is ignored).  Continue long lines by starting the next line
-with whitespace.
+with whitespace. Specify "!pattern" to exclude an address or network
+block from the list. The form "!/file/name" is supported only in
+Postfix version 2.4 and later.
 .PP
 Note: IP version 6 address information must be specified inside
 [] in the smtpd_authorized_verp_clients value, and in
@@ -5171,7 +5249,9 @@ below it),  "/file/name" or "type:table" patterns.  A "/file/name"
 pattern is replaced by its contents; a "type:table" lookup table
 is matched when a table entry matches a lookup string (the lookup
 result is ignored).  Continue long lines by starting the next line
-with whitespace.
+with whitespace. Specify "!pattern" to exclude an address or network
+block from the list. The form "!/file/name" is supported only in
+Postfix version 2.4 and later.
 .PP
 Note: IP version 6 address information must be specified inside
 [] in the smtpd_authorized_xclient_hosts value, and in
@@ -5196,7 +5276,9 @@ below it),  "/file/name" or "type:table" patterns.  A "/file/name"
 pattern is replaced by its contents; a "type:table" lookup table
 is matched when a table entry matches a lookup string (the lookup
 result is ignored).  Continue long lines by starting the next line
-with whitespace.
+with whitespace. Specify "!pattern" to exclude an address or network
+block from the list. The form "!/file/name" is supported only in
+Postfix version 2.4 and later.
 .PP
 Note: IP version 6 address information must be specified inside
 [] in the smtpd_authorized_xforward_hosts value, and in
@@ -5405,7 +5487,7 @@ This feature is available in Postfix 2.0 and later.
 Reject the request when the client hostname is listed with the
 A record "\fId.d.d.d\fR" under \fIrbl_domain\fR (Postfix version
 2.1 and later only).  If no "\fI=d.d.d.d\fR" is specified, reject
-the request when the reversed client network address is listed with
+the request when the client hostname is listed with
 any A record under \fIrbl_domain\fR. See the reject_rbl_client
 description above for additional RBL related configuration parameters.
 This feature is available in Postfix 2.0 and later.
@@ -5979,7 +6061,7 @@ rejected requests (default: 504).
 Reject the request when the RCPT TO domain is listed with the
 A record "\fId.d.d.d\fR" under \fIrbl_domain\fR (Postfix version
 2.1 and later only).  If no "\fI=d.d.d.d\fR" is specified, reject
-the request when the reversed client network address is listed with
+the request when the RCPT TO domain is listed with
 any A record under \fIrbl_domain\fR.
 .br
 The maps_rbl_reject_code
@@ -6153,7 +6235,10 @@ network part of a host address. You can also "/file/name" or
 "type:table" patterns.  A "/file/name" pattern is replaced by its
 contents; a "type:table" lookup table is matched when a table entry
 matches a lookup string (the lookup result is ignored).  Continue
-long lines by starting the next line with whitespace.
+long lines by starting the next line with whitespace. Specify
+"!pattern" to exclude an address or network block from the list.
+The form "!/file/name" is supported only in Postfix version 2.4 and
+later.
 .PP
 Note: IP version 6 address information must be specified inside
 [] in the smtpd_sasl_exceptions_networks value, and in
@@ -6313,7 +6398,7 @@ rejected requests (default: 504).
 Reject the request when the MAIL FROM domain is listed with
 the A record "\fId.d.d.d\fR" under \fIrbl_domain\fR (Postfix
 version 2.1 and later only).  If no "\fI=d.d.d.d\fR" is specified,
-reject the request when the reversed client network address is
+reject the request when the MAIL FROM domain is
 listed with any A record under \fIrbl_domain\fR.
 .br
 The
@@ -6509,7 +6594,7 @@ root CA issues special CA which then issues the actual certificate...).
 This feature is available in Postfix 2.2 and later.
 .SH smtpd_tls_cert_file (default: empty)
 File with the Postfix SMTP server RSA certificate in PEM format.
-This file may also contain the server private key.
+This file may also contain the Postfix SMTP server private RSA key.
 .PP
 Public Internet MX hosts without certificates signed by a "reputable"
 CA must generate, and be prepared to present to most clients, a
@@ -6543,14 +6628,13 @@ Example: the certificate for "server.dom.ain" was issued by
 Create the server.pem file with "cat server_cert.pem intermediate_CA.pem
 root_CA.pem > server.pem".
 .PP
-If you want to accept certificates issued by these CAs yourself,
-you can also add the CA certificates to the smtpd_tls_CAfile, in
-which case it is not necessary to have them in the smtpd_tls_dcert_file
-or smtpd_tls_cert_file.
+If you also want to verify client certificates issued by these
+CAs, you can add the CA certificates to the smtpd_tls_CAfile, in which
+case it is not necessary to have them in the smtpd_tls_cert_file or
+smtpd_tls_dcert_file.
 .PP
-A certificate supplied here must be usable as SSL server
-certificate and hence pass the "openssl verify -purpose sslserver
-\e&..." test.
+A certificate supplied here must be usable as an SSL server certificate
+and hence pass the "openssl verify -purpose sslserver ..." test.
 .PP
 Example:
 .PP
@@ -6580,7 +6664,7 @@ This feature is available with Postfix version 2.2. It is not used with
 Postfix 2.3 and later; use smtpd_tls_mandatory_ciphers instead.
 .SH smtpd_tls_dcert_file (default: empty)
 File with the Postfix SMTP server DSA certificate in PEM format.
-This file may also contain the server private key.
+This file may also contain the Postfix SMTP server private key.
 .PP
 See the discussion under smtpd_tls_cert_file for more details.
 .PP
@@ -6646,11 +6730,12 @@ smtpd_tls_dh512_param_file = /etc/postfix/dh_512.pem
 This feature is available with Postfix version 2.2.
 .SH smtpd_tls_dkey_file (default: $smtpd_tls_dcert_file)
 File with the Postfix SMTP server DSA private key in PEM format.
-This file may be combined with the server certificate file specified
-with $smtpd_tls_dcert_file.
+This file may be combined with the Postfix SMTP server DSA certificate
+file specified with $smtpd_tls_dcert_file.
 .PP
-The private key must not be encrypted. In other words, the key
-must be accessible without password.
+The private key must be accessible without a pass-phrase, i.e. it
+must not be encrypted, but file permissions should grant read/write
+access only to the system superuser account ("root").
 .PP
 This feature is available in Postfix 2.2 and later.
 .SH smtpd_tls_exclude_ciphers (default: empty)
@@ -6686,11 +6771,13 @@ key exchange with RSA authentication.
 This feature is available in Postfix 2.3 and later.
 .SH smtpd_tls_key_file (default: $smtpd_tls_cert_file)
 File with the Postfix SMTP server RSA private key in PEM format.
-This file may be combined with the server certificate file specified
+This file may be combined with the Postfix SMTP server certificate
+file specified
 with $smtpd_tls_cert_file.
 .PP
-The private key must not be encrypted. In other words, the key
-must be accessible without password.
+The private key must be accessible without a pass-phrase, i.e. it
+must not be encrypted, but file permissions should grant read/write
+access only to the system superuser account ("root").
 .SH smtpd_tls_loglevel (default: 0)
 Enable additional Postfix SMTP server logging of TLS activity.
 Each logging level also includes the information that is logged at
@@ -7071,7 +7158,7 @@ certificates). You are strongly encouraged to not change this
 setting.
 .PP
 This feature is available in Postfix 2.3 and later.
-.SH tls_null_cipherlist (default: !aNULL:eNULL+kRSA)
+.SH tls_null_cipherlist (default: eNULL:!aNULL)
 The OpenSSL cipherlist for "NULL" grade ciphers that provide
 authentication without encryption. This defines the meaning of the "null"
 setting in smtpd_mandatory_tls_ciphers, smtp_tls_mandatory_ciphers and
@@ -7276,7 +7363,9 @@ Specify a list of host or domain names, "/file/name" or
 "/file/name" pattern is replaced by its contents; a "type:table"
 lookup table is matched when a table entry matches a lookup string
 (the lookup result is ignored).  Continue long lines by starting
-the next line with whitespace.
+the next line with whitespace. Specify "!pattern" to exclude a host
+or domain name from the list. The form "!/file/name" is supported
+only in Postfix version 2.4 and later.
 .PP
 See also the VIRTUAL_README and ADDRESS_CLASS_README documents
 for further information.
