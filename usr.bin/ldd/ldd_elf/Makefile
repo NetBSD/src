@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.16 2006/07/08 06:51:36 ross Exp $
+#	$NetBSD: Makefile,v 1.17 2007/05/19 15:35:04 christos Exp $
 
 .include <bsd.own.mk>		# for MKDYNAMICROOT definition
 
 PROG=	ldd
 SRCS=	ldd.c \
-	xmalloc.c debug.c map_object.c load.c search.c headers.c paths.c
+	xmalloc.c debug.c expand.c map_object.c load.c search.c headers.c paths.c
 MAN=	ldd.1
 
 .PATH:	${.CURDIR}/..
