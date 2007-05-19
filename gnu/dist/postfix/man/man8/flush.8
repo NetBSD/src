@@ -1,4 +1,4 @@
-.\"	$NetBSD: flush.8,v 1.1.1.6 2005/08/18 21:04:17 rpaulo Exp $
+.\"	$NetBSD: flush.8,v 1.1.1.7 2007/05/19 16:27:51 heas Exp $
 .\"
 .TH FLUSH 8 
 .ad
@@ -38,9 +38,11 @@ This server implements the following requests:
 .IP "\fBadd\fI sitename queueid\fR"
 Inform the \fBflush\fR(8) server that the message with the specified
 queue ID is queued for the specified destination.
-.IP "\fBsend\fI sitename\fR"
+.IP "\fBsend_site\fI sitename\fR"
 Request delivery of mail that is queued for the specified
 destination.
+.IP "\fBsend_file\fI queueid\fR"
+Request delivery of the specified deferred message.
 .IP \fBrefresh\fR
 Refresh non-empty per-destination logfiles that were not read in
 \fB$fast_flush_refresh_time\fR hours, by simulating
@@ -110,11 +112,11 @@ is deleted.
 The time limit for sending or receiving information over an internal
 communication channel.
 .IP "\fBmax_idle (100s)\fR"
-The maximum amount of time that an idle Postfix daemon process
-waits for the next service request before exiting.
+The maximum amount of time that an idle Postfix daemon process waits
+for an incoming connection before terminating voluntarily.
 .IP "\fBmax_use (100)\fR"
-The maximal number of connection requests before a Postfix daemon
-process terminates.
+The maximal number of incoming connections that a Postfix daemon
+process will service before terminating voluntarily.
 .IP "\fBparent_domain_matches_subdomains (see 'postconf -d' output)\fR"
 What Postfix features match subdomains of "domain.tld" automatically,
 instead of requiring an explicit ".domain.tld" pattern.

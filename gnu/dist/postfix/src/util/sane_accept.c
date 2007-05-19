@@ -1,4 +1,4 @@
-/*	$NetBSD: sane_accept.c,v 1.1.1.6 2005/12/01 21:48:02 rpaulo Exp $	*/
+/*	$NetBSD: sane_accept.c,v 1.1.1.7 2007/05/19 16:28:48 heas Exp $	*/
 
 /*++
 /* NAME
@@ -110,7 +110,11 @@ int     sane_accept(int sock, struct sockaddr * sa, SOCKADDR_SIZE *len)
      * timer.
      */
 #if defined(BROKEN_READ_SELECT_ON_TCP_SOCKET) && defined(SO_KEEPALIVE)
-    else if (sa != 0 && sa->sa_family == AF_INET) {
+    else if (sa && (sa->sa_family == AF_INET
+#ifdef HAS_IPV6
+		    || sa->sa_family == AF_INET6
+#endif
+		    )) {
 	int     on = 1;
 
 	(void) setsockopt(fd, SOL_SOCKET, SO_KEEPALIVE,

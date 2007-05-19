@@ -37,8 +37,8 @@ is given in the <a href="BACKSCATTER_README.html">BACKSCATTER_README</a> documen
 worms and virus outbreaks, it has <a href="#limitations">limitations</a>
 that make it NOT suitable for general junk email and virus detection.
 For that, you should use one of the external content inspection
-methods that are described in the <a href="FILTER_README.html">FILTER_README</a> and <a href="SMTPD_PROXY_README.html">SMTPD_PROXY_README</a>
-documents.  </p>
+methods that are described in the <a href="FILTER_README.html">FILTER_README</a>, <a href="SMTPD_PROXY_README.html">SMTPD_PROXY_README</a>
+and <a href="MILTER_README.html">MILTER_README</a> documents.  </p>
 
 <p> The following diagram gives an over-all picture of how Postfix
 built-in content inspection works: </p>
@@ -353,7 +353,7 @@ Postfix versions do not support the <a href="postconf.5.html#receive_override_op
 </p>
 
 <p> The easiest approach is to configure ONE Postfix instance with
-multiple SMTP server IP addresses in master.cf: </p>
+multiple SMTP server IP addresses in <a href="master.5.html">master.cf</a>: </p>
 
 <ul>
 
@@ -362,7 +362,7 @@ only, with header/body filtering turned off, and a local mail pickup
 service with header/body filtering turned off.  </p>
 
 <pre>
-/etc/postfix.master.cf:
+/etc/postfix.<a href="master.5.html">master.cf</a>:
     # ==================================================================
     # service      type  private unpriv  chroot  wakeup  maxproc command
     #                    (yes)   (yes)   (yes)   (never) (100)
@@ -376,10 +376,10 @@ service with header/body filtering turned off.  </p>
 </pre>
 
 <li> <p> One SMTP server address for mail from outside users with
-header/body filtering turned on via main.cf. </p>
+header/body filtering turned on via <a href="postconf.5.html">main.cf</a>. </p>
 
 <pre>
-/etc/postfix.master.cf:
+/etc/postfix.<a href="master.5.html">master.cf</a>:
     # =================================================================
     # service     type  private unpriv  chroot  wakeup  maxproc command
     #                   (yes)   (yes)   (yes)   (never) (100)
@@ -397,13 +397,13 @@ Postfix versions do not support the <a href="postconf.5.html#receive_override_op
 
 <p> If you are MX service provider and want to apply disable
 head/body checks for some domains, you can configure ONE Postfix
-instance with multiple SMTP server IP addresses in master.cf. Each
+instance with multiple SMTP server IP addresses in <a href="master.5.html">master.cf</a>. Each
 address provides a different service. </p>
 
 <blockquote>
 
 <pre>
-/etc/postfix.master.cf:
+/etc/postfix.<a href="master.5.html">master.cf</a>:
     # =================================================================
     # service     type  private unpriv  chroot  wakeup  maxproc command
     #                   (yes)   (yes)   (yes)   (never) (100)

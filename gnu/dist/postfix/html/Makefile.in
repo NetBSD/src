@@ -25,9 +25,6 @@ MAN2HTML = man2html -t "Postfix manual - `IFS=.; set \`echo $@\`; echo \"$$1($$2
 
 update:	$(DAEMONS) $(COMMANDS) $(CONFIG) $(OTHER)
 
-Makefile: Makefile.in
-	(set -e; echo "# DO NOT EDIT"; $(OPTS) $(SHELL) ../src/makedefs; cat $?) >$@
-
 clean:
 	echo clean
 
@@ -42,7 +39,7 @@ bounce.8.html: ../src/bounce/bounce.c
 
 defer.8.html: bounce.8.html
 	rm -f $@
-	ln -s $? $@
+	ln $? $@
 
 discard.8.html: ../src/discard/discard.c
 	PATH=../mantools:$$PATH; \
@@ -70,7 +67,7 @@ scache.8.html: ../src/scache/scache.c
 
 lmtp.8.html: smtp.8.html
 	rm -f $@
-	ln -s $? $@
+	ln $? $@
 
 local.8.html: ../src/local/local.c
 	PATH=../mantools:$$PATH; \
@@ -133,7 +130,7 @@ tlsmgr.8.html: ../src/tlsmgr/tlsmgr.c
 
 trace.8.html: bounce.8.html
 	rm -f $@
-	ln -s $? $@
+	ln $? $@
 
 trivial-rewrite.8.html: ../src/trivial-rewrite/trivial-rewrite.c
 	PATH=../mantools:$$PATH; \
@@ -193,12 +190,12 @@ sendmail.1.html: ../src/sendmail/sendmail.c
 
 mailq.1.html: sendmail.1.html
 	rm -f $@
-	ln -s $? $@
+	ln $? $@
 
 newaliases.1.html: sendmail.1.html
 	PATH=../mantools:$$PATH; \
 	rm -f $@
-	ln -s $? $@
+	ln $? $@
 
 smtp-source.1.html: ../src/smtpstone/smtp-source.c
 	PATH=../mantools:$$PATH; \

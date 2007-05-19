@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_task.c,v 1.1.1.4 2004/05/31 00:24:32 heas Exp $	*/
+/*	$NetBSD: mail_task.c,v 1.1.1.5 2007/05/19 16:28:13 heas Exp $	*/
 
 /*++
 /* NAME
@@ -58,8 +58,10 @@ const char *mail_task(const char *argv0)
 	canon_name = vstring_alloc(10);
     if ((slash = strrchr(argv0, '/')) != 0 && slash[1])
 	argv0 = slash + 1;
+    /* Setenv()-ed from main.cf, or inherited from master. */
     if ((tag = safe_getenv(CONF_ENV_LOGTAG)) == 0)
-	tag = DEF_SYSLOG_NAME;
+	/* Check main.cf settings directly, in case set-gid. */
+	tag = var_syslog_name ? var_syslog_name : DEF_SYSLOG_NAME;
     vstring_sprintf(canon_name, "%s/%s", tag, argv0);
     return (vstring_str(canon_name));
 }

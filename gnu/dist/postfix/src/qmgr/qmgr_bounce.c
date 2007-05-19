@@ -1,4 +1,4 @@
-/*	$NetBSD: qmgr_bounce.c,v 1.1.1.5 2006/07/19 01:17:38 rpaulo Exp $	*/
+/*	$NetBSD: qmgr_bounce.c,v 1.1.1.6 2007/05/19 16:28:28 heas Exp $	*/
 
 /*++
 /* NAME
@@ -37,11 +37,6 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
-/*
-/*	Scheduler enhancements:
-/*	Patrik Rak
-/*	Modra 6
-/*	155 00, Prague, Czech Republic
 /*--*/
 
 /* System library. */

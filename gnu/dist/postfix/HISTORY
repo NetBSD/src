@@ -9851,7 +9851,7 @@ Apologies for any names omitted.
 	Bugfix: the test for "no debugger_command" was wrong.
 	Leandro Santi. File: global/debugger_command.c.
 
-20040117
+20041117
 
 	Robustness: the master-child protocol now includes a process
 	generation number besides the child process ID.  The process
@@ -10760,7 +10760,7 @@ Apologies for any names omitted.
 	Files: global/mail_params.[hc].
 
 ---------
-  
+
 20050415-20050615
 
 	As of 20050525, DSN support does not involve new queue file
@@ -12628,9 +12628,10 @@ Apologies for any names omitted.
 	limit in the SMTP server didn't work for size limits close
 	enough to INT_MAX. File: smtpd/smtpd.c.
 
-	Bugfix: after an SMTP client was rejected with "smtpd_delay_reject
-	= no", the SMTP server would panic as it generated spurious
-	Milter requests for unrecognized commands.  File: smtpd/smtpd.c.
+	Bugfix (introduced Postfix 2.3): after an SMTP client was
+	rejected with "smtpd_delay_reject = no", the SMTP server
+	would panic as it generated spurious Milter requests for
+	unrecognized commands.  File: smtpd/smtpd.c.
 
 20060727
 
@@ -12640,7 +12641,7 @@ Apologies for any names omitted.
 
 20060805
 
-	Bugfix  (introduced Postfix 2.3): #ifdef damage caused
+	Bugfix (introduced Postfix 2.3): #ifdef damage caused
 	smtp_sasl_start() to be invoked twice. Reported by C-J
 	Lofstedt. File: smtp/smtp_sasl_proto.c.
 
@@ -12661,9 +12662,16 @@ Apologies for any names omitted.
 
 20060812
 
-	Bugfix (introduced Postfix < alpha): safety mechanism in
+	Bugfix (introduced < Postfix alpha): safety mechanism in
 	mail_date() didn't work.  Found in code review.  File:
 	global/mail_date.c.
+
+20060817
+
+	Test programs for host address->name and name->address
+	lookups to debug name service inconsistencies, typically
+	when the Postfix SMTP server claims that a hostname is
+	"unknown".  Files: auxiliary/name-addr-test/*.
 
 20060822
 
@@ -12680,6 +12688,25 @@ Apologies for any names omitted.
 	Bugfix (introduced Postfix 2.2): vstream_fdclose() did not
 	flush unwritten output before disconnecting a stream from
 	its file descriptor(s).  File: util/vstream.c.
+
+	Feature: smtp-sink can capture mail to file, either as one
+	individual message per file, or as multiple messages per
+	file.  After an initial implementation by Weidong Cui. File:
+	smtpstone/smtp-sink.c.
+
+	Bugfix (introduced < Postfix alpha): smtp-sink did not
+	correctly recognize DOT-CR-LF immediately after DATA. File:
+	smtpstone/smtp-sink.c.
+
+	Cleanup: smtp-sink now requires that MAIL FROM, RCPT TO and
+	DATA be send in the correct order. This simplified the
+	implementation of the capture to file feature. File:
+	smtpstone/smtp-sink.c.
+
+20050824
+
+	Portability: inside functions, GCC 4 refuses forward
+	declarations of static functions.  File: smtpstone/smtp-sink.c.
 
 20060825
 
@@ -12727,7 +12754,7 @@ Apologies for any names omitted.
 	no information on how subjectAltNames are managed.  Sam
 	Rushing, ironport.  File: tls/tls_client.c.
 
-	Bugfix (introduced with Postfix 2.2): smtp_generic_maps
+	Bugfix (introduced with Postfix 2.2): smtp_generic_maps 
 	turned on MIME conversion. File: smtp/smtp_proto.c.
 
 	Workaround: don't send SIZE information in the MAIL FROM
@@ -12744,6 +12771,23 @@ Apologies for any names omitted.
 
 	Cleanup: force space between mailq queueid+status and file
 	size items. File: showq/showq.c.
+
+20061005
+
+	Cleanup: make CISCO PIX bug workarounds configurable.  This
+	introduces new parameters: smtp_pix_workarounds (default:
+	disable_esmtp, delay_dotcrlf) and smtp_pix_workaround_maps
+	(workarounds indexed by server IP address).  The default
+	settings are backwards compatible. File: smtp/smtp.c,
+	smtp/smtp_proto.c.
+
+20061006
+
+	Workaround: include the smtpd(8) service name when searching
+	the TLS session cache, to avoid cross-talk between multiple
+	master.cf entries. This does not eliminate cross-talk between
+	multiple (x)inetd.conf entries. Victor Duchovni. Files:
+	smtpd/smtpd.c, tls/tls_server.c.
 
 20061015
 
@@ -12770,6 +12814,30 @@ Apologies for any names omitted.
 	response on a cached SMTP/LMTP connection.  Report by Brian
 	Kantor.  Fix by Victor Duchovni.  File: smtp/smtp_reuse.c.
 
+20061106
+
+	Feature: new retry delivery agent, to avoid the synchronous
+	defer service client in the queue manager. This code is
+	co-located with the error(8) server. File: error/error.c.
+
+	Performance: the queue manager could spend too much time
+	in the synchronous defer service client, causing the watchdog
+	timer to go off.  Where possible, the queue manager now
+	bounces or defers recipients asynchronously, by routing
+	them to the error or the retry delivery agent. Code by
+	Wietse and Patrik Rak. Files: global/recipient_list.c,
+	*qmgr/qmgr_error.c, *qmgr/qmgr_defer.c, *qmgr/qmgr_entry.c,
+	*qmgr/qmgr_deliver.c, *qmgr/qmgr_message.c.
+
+	Performance: refined recipient and job grouping, and more
+	agressive early refill of in-memory recipients to prevent
+	a worst-case scenario where the queue manager became starved
+	until after the last batch of slow in-memory recipients of
+	jumbo multi-recipient mail. Code by Patrik Rak.  Files:
+	global/mail_conf_time.c, qmgr/qmgr_message.c, qmgr/qmgr.c,
+	qmgr/qmgr.h, qmgr/qmgr_entry.c, qmgr/qmgr_job.c,
+	qmgr/qmgr_message.c, qmgr/qmgr_transport.c.
+
 20061113
 
 	Bugfix: the Postfix install/upgrade procedure broke with
@@ -12793,12 +12861,6 @@ Apologies for any names omitted.
 
 20061123
 
-	Workaround: more agressive early refill of in-memory
-	recipients to prevent a worst-case scenario where the queue
-	manager became starved until after the last batch of slow
-	in-memory recipients of jumbo multi-recipient mail. Files:
-	qmgr/qmgr_job.c.
-
 	Safety: don't read more than 5000 recipients at a time, to
 	avoid spending too much time away from interrupts.  File:
 	qmgr/qmgr_message.c.
@@ -12812,7 +12874,6 @@ Apologies for any names omitted.
 	global/resolve_clnt.c, global/verify_clnt.c, global/scache_clnt.c,
 	global/dict_proxy.c.
 
-
 	Safety: the header_size_limit is now enforced more strictly,
 	to avoid inter-operability problems with the Milter protocol.
 	Long headers are truncated at a line boundary if possible,
@@ -12825,10 +12886,78 @@ Apologies for any names omitted.
 	tarpit delays of smtp_rset_timeout or larger, the SMTP
 	client could get out of sync with the server while reusing
 	a connection.  The symptoms were "recipient rejected .. in
-	reply to DATA".  Fix by Victor Duchovni and Wietse.  File:
-	smtp/smtp_proto.c.
+	reply to DATA".  Fix by Victor Duchovni and Wietse.  Files:
+	smtp/smtp_proto.c, smtp/smtp_connect.c.
+
+	Robustness: the vbuf and vstream documentation claimed that
+	their *error() macros reported timeout errors, but they
+	didn't really. The implementation was fixed, and redundant
+	vstream_ftimeout() calls were removed. As a result, many
+	Postfix daemons now properly detect write timeout errors
+	on internal connections.  Files: util/vbuf.h.
+
+	Workaround: some broken SMTP servers reply and hang up in
+	the middle of DATA. The Postfix SMTP client now stops sending
+	and tries to receive the server response. This can help to
+	avoid repeated delivery attempts. Initial implementation
+	by Wietse, later work by Victor Duchovni. Files:
+	smtp/smtp_proto.c, smtpstone/smtp-sink.c, util/vstream.c,
+	plus trivial mods for code thatr calls vstream_fpurge().
+
+20061204
+
+	Compatibility: The Postfix installation/upgrade procedure
+	no longer sets "unknown_local_recipient_code = 450" in
+	main.cf. This was a safety net for upgrades from Postfix
+	1.x. Four years later is no longer needed. File:
+	conf/post-install.
+
+	Cleanup: removed vstream_fclose() error warning in the code
+	that disconnects from a delivery agent. There is no need
+	to report errors here because they would already be reported
+	earlier.  Files: *qmgr/qmgr_deliver.c.
+
+	Robustness: "kill me after N seconds" feature to ensure
+	that a daemon process does not get stuck while preparing
+	for exit after signal arrival. File: util/killme_after.[hc],
+	util/watchdog.c, master/master_sig.c.
+
+20061206
+
+	Robustness: low-cost re-entrancy guard that allows daemons
+	to safely call msg_fatal() etc. from a signal handler,
+	without risking memory corruption, or deadlock on Redhat
+	Linux.  This works provided that the signal handler terminates
+	the process. In that special case we need not guarantee
+	after-the-fact consistency of the thread that was interrupted.
+	File: util/msg_output.c.
+
+	Robustness: replace exit() calls by _exit(). File: util/msg.c,
+	bounce/bounce_cleanup.c.
 
 20061207
+
+	Workaround: on systems with usable futimes() or equivalent
+	(Solaris, *BSD, MacOS, but not Linux), always explicitly
+	set the queue file last modification time stamps while
+	creating a queue file. With this, Postfix can avoid logging
+	warnings when the file system clock is ahead of the local
+	clock.  Clock skew can be a problem, because Postfix does
+	not deliver mail until the local clock catches up with the
+	queue file's last modification time stamp.  File:
+	global/mail_stream.c.
+
+	Workaround: on systems without usable futimes() or equivalent,
+	log a warning when the file system clock is more than 100
+	seconds behind the local clock. This does not cause mail
+	delivery problems, but it just looks silly in message
+	headers. File: global/mail_stream.c.
+
+	On systems without usable futimes() (Linux, and ancient
+	versions of Solaris, SunOS and *BSD) Postfix will keep using
+	the slower utime() system call to update queue file time
+	stamps when the file system clock is off with respect to
+	the local system clock.
 
 	Compatibility with Postfix < 2.3: undo the change to bounce
 	instead of defer after pipe-to-command delivery fails with
@@ -12840,7 +12969,7 @@ Apologies for any names omitted.
 	"<postmaster>" in the Postfix bounce text, because it
 	processes the text as if it were HTML. This confuses users.
 	The bounce template has been updated to remove the < and
-	>. File: bounce/bounce_templates.c.
+	>.  File: bounce/bounce_templates.c.
 
 	Cleanup: when smtp_generic_maps is turned on, don't parse
 	MIME structures in the message body. Victor Duchovni. File:
@@ -12848,19 +12977,10 @@ Apologies for any names omitted.
 
 20061210
 
-	Robustness: low-cost re-entrancy guard that allows daemons
-	to call msg_fatal() etc. from a signal handler, without
-	risking memory corruption, or deadlock on Redhat Linux.
-	This works provided that the signal handler never returns.
-	In that special case we need not guarantee after-the-fact
-	consistency of the interrupted process.  File: util/msg_output.c.
-
-	Robustness: replace exit() calls by _exit(). File: util/msg.c,
-	bounce/bounce_cleanup.c.
-
-	Cleanup: document under what conditions these protections
-	work, with REENTRANCY sections in the relevant man pages.
-	Files: util/vbuf_print.c.  util/msg.c, util/msg_output.c.
+	Cleanup: streamline the signal handler reentrancy protections,
+	and document under what conditions these protections work,
+	with REENTRANCY sections in the relevant man pages. Files:
+	util/vbuf_print.c.  util/msg.c, util/msg_output.c.
 
 20061211
 
@@ -12880,11 +13000,33 @@ Apologies for any names omitted.
 
 20061213
 
+	Bugfix: race condition in "ETRN site", "sendmail -qRsite"
+	and "postqueue -s site". When the command arrived while an
+	incoming queue scan was already in progress, mail could
+	stay deferred instead of being flushed. The fix was to
+	unthrottle the queue manager before moving files from the
+	deferred queue to the incoming queue.  Files: flush/flush.c,
+	qmgr/qmgr_scan.c.
+
 	Cleanup: the sendmail and postqueue commands no longer
 	terminate with a non-standard error status after a run-time
 	error in some Postfix internal routine (typically, some
 	essential file is not accessible, or the system is out of
 	memory). Files: sendmail/sendmail.c, postqueue/postqueue.c.
+
+	Feature: "sendmail -qIqueueid" and "postqueue -i queueid"
+	to flush a specific queue file. Files: sendmail/sendmail.c,
+	postqueue/postqueue.c, global/flush_clnt.c, flush/flush.c.
+
+20061214
+
+	Performance: "sendmail -qIqueueid" and "postqueue -i queueid"
+	unthrottle only the necessary message delivery transports
+	and queues. The unthrottle request now is propagated to the
+	queue manager via queue file group read permission bits.
+	Based on initial implementation by Victor Duchovni.  Files:
+	flush/flush.c, *qmgr/qmgr.c, *qmgr/qmgr_scan.c,
+	*qmgr/qmgr_active.c, *qmgr/qmgr_message.c.
 
 20061220
 
@@ -12900,6 +13042,11 @@ Apologies for any names omitted.
 	N+M) could work as if (N, N) had been specified. Problem
 	reported by Mark Martinec.  File: milter/milter8.c.
 
+20061221
+
+	Feature: time unit suffix support in _command_time_limit.
+	Files: pipe/pipe.c, spawn/spawn.c.
+
 20061227
 
 	Bugfix (introduced with Postfix 2.3): the MX hostname syntax
@@ -12908,36 +13055,370 @@ Apologies for any names omitted.
 	would still accept mail from domains with a zero-length MX
 	hostname.  File: smtpd/smtpd_check.c.
 
+20061229
+
+	Cleanup: use separate TLS_LEGACY_README to document the old
+	TLS user interface. This will simplify TLS_README dramatically.
+
+	Cleanup: untangled spaghetti code. File: util/inet_listen.c.
+
 20070104
 
 	Bugfix (introduced Postfix 2.3): when creating an alias map
 	on a NIS-enabled system, don't case-fold the YP_MASTER_NAME
 	and YP_LAST_MODIFIED lookup keys. This requires that an
-	application can turn off case folding on the fly. This is
-	a point fix. A complete fix requires updates to other map
-	types and to the proxymap protocol, which is too much change
-	for a stable release.  Files: postalias/postalias.c,
-	util/dict_db.c, util/dict_dbm.c, util/dict_cdb.c.
+	application can turn on/off case folding on the fly.  Files:
+	postalias/postalias.c, global/dict_mumble.c, util/dict_mumble.c,
+	proxymap/proxymap.c.
+
+	Cleanup: after the above revision of the proxymap protocol,
+	the proxymap server can now share the same map with clients
+	that have only minor differences in dictionary open/access
+	options.
+
+20070105
+
+	Performance: pipeline of pending delivery agent connections,
+	to improve Linux/Solaris mail delivery performance by another
+	10% while going down-hill with the wind from behind. Design
+	and implementation Victor and Wietse. Files: *qmgr/qmgr.c,
+	*qmgr/qmgr.h, *qmgr/qmgr_transport.c.
+
+20070106
+
+	Cleanup: eliminate the Linux/Solaris "wait for accept()"
+	stage from the queue manager to delivery agent protocol.
+	This alone achieves 99.99% of the Linux/Solaris speed up
+	from the preceding change. The pending connection pipeline
+	takes care of the rest.  Tested on Linux kernels dating
+	back to 2.0.27 (that's more than 10 years ago).  Files:
+	*qmgr/qmgr_transport.c.
 
 20070112
 
-	Bugfix (introduced 20011008): after return from a nested
+	Bugfix (introduced 20011008): after return from nested
 	access restriction, possible longjump into exited stack
-	frame upon configuration error or table lookup error.  Victor
+	frame upon configuration error or table lookup error. Victor
 	Duchovni.  Files: smtpd/smtpd_check.c.
 
-	Workaround: don't insert empty-line header/body separator
-	into malformed MIME attachments, to avoid breaking digital
-	signatures. This change introduces ambiguity. Postfix still
-	treats the remainder of the attachment as body content;
-	header_checks rules will not detect forbidden MIME types
-	inside a message/rfc822 attachment.  With the empty-line
-	header/body separator no longer inserted by Postfix, other
-	software may process the malformed attachment differently,
-	and thus may become exposed to forbidden MIME types.  This
-	is back-ported from Postfix 2.4. File: global/mime_state.c.
+	Workaround: don't insert header/body blank line separator
+	in malformed attachments, to avoid breaking digital signatures.
+	Switch from header to body state, for robust MIME parsing.
+	People concerned about MIME evasion can use a MIME normalizer
+	to corrupt their user's legitimate email.  File:
+	global/mime_state.c.
+
+20070114
+
+	Feature: body replacement support for Milter applications.
+	Postfix 2.3 and older 2.4 versions will be able to deliver
+	body-replaced queue files, but will report the message size
+	as it was before the body was replaced.  Files: milter/milter8.c,
+	cleanup/cleanup_milter.c, cleanup/cleanup_body_region.c.
+
+20070117
+
+	Cleanup: reusable infrastructure for body replacement.
+	Files: cleanup/cleanup_body_edit.c, cleanup/cleanup_region.c.
 
 20070118
 
 	Bugfix: match lists didn't implement ![ipv6address].  Problem
 	reported by Paulo Pacheco. File: util/match_list.c.
+
+	Cleanup: revised the matchlist "!" support, added support
+	for !/file/name, and updated the documentation. File:
+	util/match_list.c.
+
+20070119-21
+
+	Cleanup: pad short message headers with a filler record,
+	so that the result is never shorter than a pointer record.
+	This immensely simplified the support for Milter header
+	modification requests: three complex loops could be replaced
+	by one simpler loop.  The DTXT record type was re-purposed
+	from "deleted header text" to "short header padding", keeping
+	the change backwards compatible.  Files: cleanup/cleanup_out.c,
+	cleanup/cleanup_milter.c, global/record.c.
+
+	Cleanup: the Milter "add recipient" action always added the
+	recipient to the initial envelope segment, causing added
+	recipients to be separate from "sendmail -t" recipients.
+	This violated design, without impact on delivery (always_bcc
+	recipient are always at the end of the queue file even when
+	all other recipients are in the initial segment).  File:
+	global/rec_types.h.
+
+20070123
+
+	Workaround: OpenSSL falsely concludes that AES256 support
+	is present when only AES128 is available.  Code by Victor
+	Duchovni.  File: tls/tls_misc.c.
+
+20070125
+
+	Disable workaround pending completion of updated TLS]
+	support in non-production releases.
+
+20070131
+
+	Assorted code cleanup, portability fixes/workarounds, and
+	minor updates: global/dict_ldap.c, mantools/postlink,
+	tlsmgs/tlsmgr.c, conf/master.cf. LaMont Jones.
+
+20070101
+
+	Portability: GNU Hurd support for multiple kernel environments.
+	LaMont Jones. Files: util/sys_defs.h, makedefs.
+
+	Cleanup: some default settings were adjusted to better fit
+	today's environment: queue_run_delay and minimal_backoff_time
+	were reduced from 1000s to 300s, so that deliveries are
+	retried earlier after the first failure; ipc_idle was reduced
+	from 100s to 5s, so that tlsmgr and scache clients will
+	more quickly release unused file handles. Files:
+	global/mail_params.h, proto/postconf.5.html
+
+20070202
+
+	Catch-up: FreeBSD kqueue support. File: util/events.c.
+
+20070205
+
+	System-V poll(2) support. This is now the preferred method
+	to test a single file descriptor on sufficiently recent
+	versions of FreeBSD, NetBSD, OpenBSD, Solaris and Linux;
+	other systems will be added as evidence becomes available
+	of usable poll(2) implementations. Files: util/read_wait.c,
+	util/write_wait.c, util/readble.c, util/writable.c.
+
+	Streamlined the event_enable_read/write implementation to
+	speed up smtp-source performance, by eliminating expensive
+	kqueue/devpoll/epoll system calls when only the application
+	call-back information changes. On FreeBSD, smtp-sink/source
+	tests now run 5% faster than with the old select(2) based
+	implementation.  File util/events.c.
+
+20070206
+
+	Catch-up: Solaris /dev/poll support. File: util/events.c.
+
+	Bugfix (introduced 20060823): initial state was not in state
+	machine, causing memory access outside the lookup table.
+	File: smtpstone/smtp-sink.c.
+
+20070210
+
+	Catch-up: Linux epoll support. File: util/events.c.
+
+20070211
+
+	Polished the kqueue/devpoll/epoll support; this is now
+	enabled by default on sufficiently recent versions of
+	FreeBSD, NetBSD, OpenBSD, Solaris and Linux; other systems
+	will be added as evidence becomes available of usable
+	implementations. File: util/events.c.
+
+20070212
+
+	Further polish: removed some typos from new code in the
+	events.c handler, undid some unnecessary changes to the
+	{read,write}{_wait,able}.c modules, and addressed Victor's
+	paranoia for multi-client servers with a thousand clients
+	while linked with library routines that can't handle file
+	descriptors >= FD_SETSIZE.
+
+	Cleanup: while debugging the new events.c handler, removed
+	an unnecessary "write after connect" call-back event. File:
+	global/post_mail.c.
+
+20070214
+
+	Robustness: in the queue manager keep a number of free file
+	descriptor slots at the low end, to work around library
+	routines that can't handle file descriptors >= FD_SETSIZE.
+	Files: *qmgr/qmgr_transport.c, util/vstream.[hc]
+
+20070215
+
+	Bugfix (introduced 20070114 with Milter body edit support):
+	the cleanup server terminated with a fatal error when SMTP
+	mail exceeded the message size limit, instead of handling
+	it as a non-fatal error. Files: cleanup/cleanup_extracted.c,
+	cleanup/cleanup_final.c, cleanup/cleanup_bounce.c,
+	cleanup/cleanup_api.c.
+
+20050217
+
+	Streamline the compile time selection of event handling
+	styles, replacing multiple on/off macros by just one
+	multi-valued macro. Files: util/sys_defs.h, util/events.c,
+	master/multi_server.c, *qmgr/qmgr_transport.c.
+
+20070220
+
+	Work-around: Disable SSL/TLS ciphers when the underlying
+	symmetric algorithm is not available in the OpenSSL crypto
+	library at the required bit strength. Problem observed with
+	SunOS 5.10's bundled OpenSSL 0.9.7 and AES 256. Also possible
+	with OpenSSL 0.9.8 and CAMELLIA 256. Root cause fixed in
+	upcoming OpenSSL 0.9.7m, 0.9.8e and 0.9.9 releases. Victor
+	Duchovni, Morgan Stanley. Files: src/smtp/smtp_proto.c,
+	src/smtpd/smtpd.c, src/tls/tls.h, src/tls/tls_client.c,
+	src/tls/tls_misc.c and src/tls/tls_server.c.
+
+20070222
+
+	Workaround: delayed "postfix reload" with ancient FreeBSD4
+	kqueue implementations, causing the first external or
+	internal clients after "postfix reload" to experience a
+	quick disconnect.  Apparently, these kqueue implementations
+	do not deliver a read notification when the master closes
+	the per-service shared master/child status pipe (even when
+	there is only one child; note that the master keeps a handle
+	to both ends of each status pipe).  A child process remains
+	ignorant that the status pipe was closed until the arrival
+	of the next client request, and then terminates.  The
+	workaround is to ignore master status write errors before
+	handling a service request.  Files: master/*_server.c.
+
+	Cleanup: fix race condition that caused unnecessary "premature
+	end-of-input" warning messages when "postfix reload" was
+	issued on a busy mail server. Files: util/attr_scan*c.
+
+20070223
+
+	Cleanup: syslog_name now works as documented with both
+	daemons and commands (including set-gid commands).  Files:
+	global/mail_task.c postlog/postlog.c, global/mail_version.h,
+	sendmail/sendmail.c, postsuper/postsuper.c, postalias/postalias.c,
+	postmap/postmap.c, postqueue/postqueue.c, postdrop/postdrop.c,
+	master/trigger_server.c, master/single_server.c,
+	master/multi_server.c.
+
+20070224
+
+	Workaround: GNU POP3D creates a new mailbox and deletes the
+	old one. Postfix now backs off and retries delivery later,
+	instead of appending mail to a deleted file.  To minimize
+	the use of this workaround, Postfix now by default creates
+	mailbox dotlock files on all systems, and creates dotlock
+	files before opening mailbox files.  Files: util/sys_defs.h,
+	global/mbox_open.c.
+
+20070301
+
+	Workaround: updated workaround for broken Solaris accept().
+	File: util/inet_listen.c.
+
+	Workaround: on some FreeBSD versions, accept(2) can fail
+	with a bogus EINVAL error. We now allow accept(2) to fail
+	for a limited number of times before terminating the process.
+	Files: master/single_server.c, master/multi_server.c.
+
+20070306
+
+	Bugfix (introduced with Postfix 2.3 Milter support): postdrop
+	reported "illegal seek" instead of "file too large".  File:
+	postdrop/postdrop.c.
+
+20070310
+
+	Cleanup: specify "undisclosed_recipients_header =" to disable
+	Postfix's "To: undisclosed-recipients:;" header for mail
+	that lists no recipient. The To: header is not required as
+	of RFC 2822.  The undisclosed_recipients_header parameter
+	value can now be an empty string, a value that was not
+	allowed with earlier Postfix versions. With Postfix 2.5 it
+	will be empty by default. Files: cleanup/cleanup.c,
+	cleanup/cleanup_message.c.
+
+20070312
+
+	Backwards compatibility: don't pad short message header
+	records when Milter support is turned off. This maintains
+	compatibility with Postfix versions that pre-date Milter
+	support. File: cleanup/cleanup_out.c.
+
+20070314
+
+	Bitrot: move the "don't run this daemon by hand" message
+	before other tests. Files: master/*server.c.
+
+20070315
+
+	Bitrot: New OpenLDAP APIs deprecate simplified interfaces,
+	that are the only ones available in Sun's LDAP SDK. Define
+	suitable macros that work with new OpenLDAP and Sun's code.
+	Victor Duchovni, Morgan Stanley. File: src/global/dict_ldap.c
+
+	Cleanup: new "leaf" and "terminal" result attributes support
+	fine-tuning of LDAP group expansion, and provide a solution
+	for the problem case where DN recursion returns both the
+	group address and the addresses of the member objects.
+	Victor Duchovni, Morgan Stanley.  Files: src/global/dict_ldap.c,
+	proto/LDAP_README.html, proto/ldap_table
+
+20070317
+
+	Idioten Sicherheit: stamp every executable file and every
+	core dump file with "mail_version=xxxxx". Adding version
+	stamps and checks to every IPC message is too much change
+	after code freeze, and requires too much time for testing.
+	File: src/global/mail_version.h and every main program file.
+
+20070320
+
+	Bugfix (introduced between 20070120 and 20070121): the
+	cleanup server stored no "delayed mail warning" queue file
+	records with "sendmail -t", and no header_checks filter/redirect
+	records or content encoding records with other mail.  File:
+	global/rec_type.h.
+
+20070321
+
+	Bugfix (introduced 20070224): local(8) or virtual(8) could
+	log a misleading error message after failure to open a
+	mailbox file. File: global/mbox_open.c.
+
+	Bugfix (code should have been updated 20070104): the proxymap
+	client did not propagate changes in case folding flags.
+	Currently, nothing in Postfix uses this functionality.
+	File: global/dict_proxy.c.
+
+20070325
+
+	Bugfix: postfix-install didn't work for symlink or hardlink
+	targets, when the parent directory had a value of "no".
+
+20070326
+
+	Workaround: Eric Raymond's man page formatters don't handle
+	low-level *roff .in or .ti controls. We now use .nf and .fi
+	instead. Files: many.
+
+20070331
+
+	Bugfix (introduced Postfix 2.3): segfault with HOLD action
+	in access/header_checks/body_checks on 64-bit platforms.
+	File: cleanup/cleanup_api.c.
+
+20070402
+
+	Portability (introduced 20070325): the fix for hardlinks
+	and symlinks in postfix-install forgot to work around shells
+	where "IFS=/ command" makes the IFS setting permanent.  This
+	is allowed by some broken standard, and affects Solaris.
+	File: postfix-install.
+
+	Portability (introduced 20070212): the workaround for
+	non-existent library bugs with descriptors >= FD_SETSIZE
+	broke with "fcntl F_DUPFD: Invalid argument" on 64-bit
+	Solaris.  Files: master/multi_server.c, *qmgr/qmgr_transport.c.
+
+20070421
+
+	Cleanup: on (Linux) platforms that cripple signal handlers
+	with deadlock, "postfix stop" now forcefully stops all the
+	processes in the master's process group, not just the master
+	process alone.  File: conf/postfix-script.

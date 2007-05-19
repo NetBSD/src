@@ -1,0 +1,1111 @@
+PPoossttffiixx lleeggaaccyy TTLLSS SSuuppppoorrtt
+
+-------------------------------------------------------------------------------
+
+NNOOTTEE
+
+This document describes an old TLS user interface that is based on a third-
+party TLS patch by Lutz Jänicke. As of Postfix version 2.3, the old user
+interface still exists to allow migration from earlier Postfix releases, but
+its functionality is frozen.
+
+WWhhaatt PPoossttffiixx TTLLSS ssuuppppoorrtt ddooeess ffoorr yyoouu
+
+Transport Layer Security (TLS, formerly called SSL) provides certificate-based
+authentication and encrypted sessions. An encrypted session protects the
+information that is transmitted with SMTP mail or with SASL authentication.
+
+Postfix version 2.2 introduces support for TLS as described in RFC 3207. TLS
+Support for older Postfix versions was available as an add-on patch. The
+section "Compatibility with Postfix < 2.2 TLS support" below discusses the
+differences between these implementations.
+
+Topics covered in this document:
+
+  * How Postfix TLS support works
+  * Building Postfix with TLS support
+  * SMTP Server specific settings
+  * SMTP Client specific settings
+  * TLS manager specific settings
+  * Reporting problems
+  * Compatibility with Postfix < 2.2 TLS support
+  * Credits
+
+And last but not least, for the impatient:
+
+  * Getting started, quick and dirty
+
+HHooww PPoossttffiixx TTLLSS ssuuppppoorrtt wwoorrkkss
+
+The diagram below shows the main elements of the Postfix TLS architecture and
+their relationships. Colored boxes with numbered names represent Postfix daemon
+programs. Other colored boxes represent storage elements.
+
+  * The smtpd(8) server implements the SMTP over TLS server side.
+
+  * The smtp(8) client implements the SMTP over TLS client side.
+
+  * The tlsmgr(8) server maintains the pseudo-random number generator (PRNG)
+    that seeds the TLS engines in the smtpd(8) server and smtp(8) client
+    processes, and maintains the TLS session key cache files.
+
+                    <---seed---              ---seed--->
+Network-> smtpd(8)                tlsmgr(8)                 smtp(8)  ->Network
+                    <-session->              <-session->        
+
+                                /       |    \
+                                        |
+                              /                \
+
+                      smtpd           PRNG         smtp
+                     session         state        session
+                    key cache         file       key cache
+
+BBuuiillddiinngg PPoossttffiixx wwiitthh TTLLSS ssuuppppoorrtt
+
+To build Postfix with TLS support, first we need to generate the make(1) files
+with the necessary definitions. This is done by invoking the command "make
+makefiles" in the Postfix top-level directory and with arguments as shown next.
+
+NNOOTTEE:: DDoo nnoott uussee GGnnuu TTLLSS.. IItt wwiillll ssppoonnttaanneeoouussllyy tteerrmmiinnaattee aa PPoossttffiixx ddaaeemmoonn
+pprroocceessss wwiitthh eexxiitt ssttaattuuss ccooddee 22,, iinnsstteeaadd ooff aalllloowwiinngg PPoossttffiixx ttoo 11)) rreeppoorrtt tthhee
+eerrrroorr ttoo tthhee mmaaiilllloogg ffiillee,, aanndd ttoo 22)) pprroovviiddee ppllaaiinntteexxtt sseerrvviiccee wwhheerree tthhiiss iiss
+aapppprroopprriiaattee..
+
+  * If the OpenSSL include files (such as ssl.h) are in directory /usr/include/
+    openssl, and the OpenSSL libraries (such as libssl.so and libcrypto.so) are
+    in directory /usr/lib:
+
+        % mmaakkee ttiiddyy # if you have left-over files from a previous build
+        % mmaakkee mmaakkeeffiilleess CCCCAARRGGSS==""--DDUUSSEE__TTLLSS"" AAUUXXLLIIBBSS==""--llssssll --llccrryyppttoo""
+
+  * If the OpenSSL include files (such as ssl.h) are in directory /usr/local/
+    include/openssl, and the OpenSSL libraries (such as libssl.so and
+    libcrypto.so) are in directory /usr/local/lib:
+
+        % mmaakkee ttiiddyy # if you have left-over files from a previous build
+        % mmaakkee mmaakkeeffiilleess CCCCAARRGGSS==""--DDUUSSEE__TTLLSS --II//uussrr//llooccaall//iinncclluuddee"" \\
+            AAUUXXLLIIBBSS==""--LL//uussrr//llooccaall//lliibb --llssssll --llccrryyppttoo""
+
+    On Solaris, specify the -R option as shown below:
+
+        % mmaakkee ttiiddyy # if you have left-over files from a previous build
+        % mmaakkee mmaakkeeffiilleess CCCCAARRGGSS==""--DDUUSSEE__TTLLSS --II//uussrr//llooccaall//iinncclluuddee"" \\
+            AAUUXXLLIIBBSS==""--RR//uussrr//llooccaall//lliibb --LL//uussrr//llooccaall//lliibb --llssssll --llccrryyppttoo""
+
+If you need to apply other customizations (such as Berkeley DB databases,
+MySQL, PosgreSQL, LDAP or SASL), see the respective Postfix README documents,
+and combine their "make makefiles" instructions with the instructions above:
+
+    % mmaakkee ttiiddyy # if you have left-over files from a previous build
+    % mmaakkee mmaakkeeffiilleess CCCCAARRGGSS==""--DDUUSSEE__TTLLSS \\
+        ((ootthheerr --DD oorr --II ooppttiioonnss))"" \\
+        AAUUXXLLIIBBSS==""--llssssll --llccrryyppttoo \\
+        ((ootthheerr --ll ooppttiioonnss ffoorr lliibbrraarriieess iinn //uussrr//lliibb)) \\
+        ((--LL//ppaatthh//nnaammee ++ --ll ooppttiioonnss ffoorr ootthheerr lliibbrraarriieess))""
+
+To complete the build process, see the Postfix INSTALL instructions. Postfix
+has TLS support turned off by default, so you can start using Postfix as soon
+as it is installed.
+
+SSMMTTPP SSeerrvveerr ssppeecciiffiicc sseettttiinnggss
+
+Topics covered in this section:
+
+  * Server-side certificate and private key configuration
+  * Server-side TLS activity logging
+  * Enabling TLS in the Postfix SMTP server
+  * Client certificate verification
+  * Supporting AUTH over TLS only
+  * Server-side TLS session cache
+  * Server access control
+  * Server-side cipher controls
+  * Miscellaneous server controls
+
+SSeerrvveerr--ssiiddee cceerrttiiffiiccaattee aanndd pprriivvaattee kkeeyy ccoonnffiigguurraattiioonn
+
+In order to use TLS, the Postfix SMTP server needs a certificate and a private
+key. Both must be in "pem" format. The private key must not be encrypted,
+meaning: the key must be accessible without password. Both certificate and
+private key may be in the same file.
+
+Both RSA and DSA certificates are supported. Typically you will only have RSA
+certificates issued by a commercial CA. In addition, the tools supplied with
+OpenSSL will by default issue RSA certificates. You can have both at the same
+time, in which case the cipher used determines which certificate is presented.
+For Netscape and OpenSSL clients without special cipher choices, the RSA
+certificate is preferred.
+
+In order for remote SMTP clients to check the Postfix SMTP server certificates,
+the CA certificate (in case of a certificate chain, all CA certificates) must
+be available. You should add these certificates to the server certificate, the
+server certificate first, then the issuing CA(s).
+
+Example: the certificate for "server.dom.ain" was issued by "intermediate CA"
+which itself has a certificate issued by "root CA". Create the server.pem file
+with:
+
+    % ccaatt sseerrvveerr__cceerrtt..ppeemm iinntteerrmmeeddiiaattee__CCAA..ppeemm >> sseerrvveerr..ppeemm
+
+A Postfix SMTP server certificate supplied here must be usable as SSL server
+certificate and hence pass the "openssl verify -purpose sslserver ..." test.
+
+A client that trusts the root CA has a local copy of the root CA certificate,
+so it is not necessary to include the root CA certificate here. Leaving it out
+of the "server.pem" file reduces the overhead of the TLS exchange.
+
+If you want the Postfix SMTP server to accept remote SMTP client certificates
+issued by these CAs, append the root certificate to $smtpd_tls_CAfile or
+install it in the $smtpd_tls_CApath directory. When you configure trust in a
+root CA, it is not necessary to explicitly trust intermediary CAs signed by the
+root CA, unless $smtpd_tls_ccert_verifydepth is less than the number of CAs in
+the certificate chain for the clients of interest. With a verify depth of 1 you
+can only verify certificates directly signed by a trusted CA, and all trusted
+intermediary CAs need to be configured explicitly. With a verify depth of 2 you
+can verify clients signed by a root CA or a direct intermediary CA (so long as
+the client is correctly configured to supply its intermediate CA certificate).
+
+RSA key and certificate examples:
+
+    /etc/postfix/main.cf:
+        smtpd_tls_cert_file = /etc/postfix/server.pem
+        smtpd_tls_key_file = $smtpd_tls_cert_file
+
+Their DSA counterparts:
+
+    /etc/postfix/main.cf:
+        smtpd_tls_dcert_file = /etc/postfix/server-dsa.pem
+        smtpd_tls_dkey_file = $smtpd_tls_dcert_file
+
+To verify a remote SMTP client certificate, the Postfix SMTP server needs to
+trust the certificates of the issuing certification authorities. These
+certificates in "pem" format can be stored in a single $smtpd_tls_CAfile or in
+multiple files, one CA per file in the $smtpd_tls_CApath directory. If you use
+a directory, don't forget to create the necessary "hash" links with:
+
+    # $$OOPPEENNSSSSLL__HHOOMMEE//bbiinn//cc__rreehhaasshh //ppaatthh//ttoo//ddiirreeccttoorryy
+
+The $smtpd_tls_CAfile contains the CA certificates of one or more trusted CAs.
+The file is opened (with root privileges) before Postfix enters the optional
+chroot jail and so need not be accessible from inside the chroot jail.
+
+Additional trusted CAs can be specified via the $smtpd_tls_CApath directory, in
+which case the certificates are read (with $mail_owner privileges) from the
+files in the directory when the information is needed. Thus, the
+$smtpd_tls_CApath directory needs to be accessible inside the optional chroot
+jail.
+
+When you configure Postfix to request client certificates (by setting
+$smtpd_tls_ask_ccert = yes), any certificates in $smtpd_tls_CAfile are sent to
+the client, in order to allow it to choose an identity signed by a CA you
+trust. If no $smtpd_tls_CAfile is specified, no preferred CA list is sent, and
+the client is free to choose an identity signed by any CA. Many clients use a
+fixed identity regardless of the preferred CA list and you may be able to
+reduce TLS negotiation overhead by installing client CA certificates mostly or
+only in $smtpd_tls_CApath. In the latter case you need not specify a
+$smtpd_tls_CAfile.
+
+Note, that unless client certificates are used to allow greater access to TLS
+authenticated clients, it is best to not ask for client certificates at all, as
+in addition to increased overhead some clients (notably in some cases qmail)
+are unable to complete the TLS handshake when client certificates are
+requested.
+
+Example:
+
+    /etc/postfix/main.cf:
+        smtpd_tls_CAfile = /etc/postfix/CAcert.pem
+        smtpd_tls_CApath = /etc/postfix/certs
+
+SSeerrvveerr--ssiiddee TTLLSS aaccttiivviittyy llooggggiinngg
+
+To get additional information about Postfix SMTP server TLS activity you can
+increase the loglevel from 0..4. Each logging level also includes the
+information that is logged at a lower logging level.
+
+    0 Disable logging of TLS activity.
+
+    1 Log TLS handshake and certificate information.
+
+    2 Log levels during TLS negotiation.
+
+    3 Log hexadecimal and ASCII dump of TLS negotiation process
+
+    4 Log hexadecimal and ASCII dump of complete transmission after STARTTLS
+
+Use loglevel 3 only in case of problems. Use of loglevel 4 is strongly
+discouraged.
+
+Example:
+
+    /etc/postfix/main.cf:
+        smtpd_tls_loglevel = 0
+
+To include information about the protocol and cipher used as well as the client
+and issuer CommonName into the "Received:" message header, set the
+smtpd_tls_received_header variable to true. The default is no, as the
+information is not necessarily authentic. Only information recorded at the
+final destination is reliable, since the headers may be changed by intermediate
+servers.
+
+Example:
+
+    /etc/postfix/main.cf:
+        smtpd_tls_received_header = yes
+
+EEnnaabblliinngg TTLLSS iinn tthhee PPoossttffiixx SSMMTTPP sseerrvveerr
+
+By default, TLS is disabled in the Postfix SMTP server, so no difference to
+plain Postfix is visible. Explicitly switch it on using "smtpd_use_tls = yes".
+
+Example:
+
+    /etc/postfix/main.cf:
+        smtpd_use_tls = yes
+
+With this, Postfix SMTP server announces STARTTLS support to SMTP clients, but
+does not require that clients use TLS encryption.
+
+Note: when an unprivileged user invokes "sendmail -bs", STARTTLS is never
+offered due to insufficient privileges to access the server private key. This
+is intended behavior.
+
+You can ENFORCE the use of TLS, so that the Postfix SMTP server announces
+STARTTLS and accepts no mail without TLS encryption, by setting
+"smtpd_enforce_tls = yes". According to RFC 2487 this MUST NOT be applied in
+case of a publicly-referenced Postfix SMTP server. This option is off by
+default and should only seldom be used.
+
+Example:
+
+    /etc/postfix/main.cf:
+        smtpd_enforce_tls = yes
+
+TLS is sometimes used in the non-standard "wrapper" mode where a server always
+uses TLS, instead of announcing STARTTLS support and waiting for clients to
+request TLS service. Some clients, namely Outlook [Express] prefer the
+"wrapper" mode. This is true for OE (Win32 < 5.0 and Win32 >=5.0 when run on a
+port<>25 and OE (5.01 Mac on all ports).
+
+It is strictly discouraged to use this mode from main.cf. If you want to
+support this service, enable a special port in master.cf and specify "-
+o smtpd_tls_wrappermode = yes" as an smtpd(8) command line option. Port 465
+(smtps) was once chosen for this feature.
+
+Example:
+
+    /etc/postfix/master.cf:
+        smtps    inet  n       -       n       -       -       smtpd
+          -o smtpd_tls_wrappermode=yes -o smtpd_sasl_auth_enable=yes
+
+CClliieenntt cceerrttiiffiiccaattee vveerriiffiiccaattiioonn
+
+To receive a remote SMTP client certificate, the Postfix SMTP server must
+explicitly ask for one (any contents of $smtpd_tls_CAfile are also sent to the
+client as a hint for choosing a certificate from a suitable CA). Unfortunately,
+Netscape clients will either complain if no matching client certificate is
+available or will offer the user client a list of certificates to choose from.
+Additionally some MTAs (notably some versions of qmail) are unable to complete
+TLS negotiation when client certificates are requested, and abort the SMTP
+session. So this option is "off" by default. You will however need the
+certificate if you want to use certificate based relaying with, for example,
+the permit_tls_clientcerts feature.
+
+Example:
+
+    /etc/postfix/main.cf:
+        smtpd_tls_ask_ccert = no
+
+You may also decide to REQUIRE a remote SMTP client certificate before allowing
+TLS connections. This feature is included for completeness, and implies
+"smtpd_tls_ask_ccert = yes".
+
+Please be aware, that this will inhibit TLS connections without a proper client
+certificate and that it makes sense only when non-TLS submission is disabled
+(smtpd_enforce_tls = yes). Otherwise, clients could bypass the restriction by
+simply not using STARTTLS at all.
+
+When TLS is not enforced, the connection will be handled as if only
+"smtpd_tls_ask_ccert = yes" is specified, and a warning is logged.
+
+Example:
+
+    /etc/postfix/main.cf:
+        smtpd_tls_req_ccert = no
+
+A client certificate verification depth of 1 is sufficient if the certificate
+is directly issued by a CA listed in the CA file. The default value (5) should
+also suffice for longer chains (root CA issues special CA which then issues the
+actual certificate...)
+
+Example:
+
+    /etc/postfix/main.cf:
+        smtpd_tls_ccert_verifydepth = 5
+
+SSuuppppoorrttiinngg AAUUTTHH oovveerr TTLLSS oonnllyy
+
+Sending AUTH data over an unencrypted channel poses a security risk. When TLS
+layer encryption is required (smtpd_enforce_tls = yes), the Postfix SMTP server
+will announce and accept AUTH only after the TLS layer has been activated with
+STARTTLS. When TLS layer encryption is optional (smtpd_enforce_tls = no), it
+may however still be useful to only offer AUTH when TLS is active. To maintain
+compatibility with non-TLS clients, the default is to accept AUTH without
+encryption. In order to change this behavior, set "smtpd_tls_auth_only = yes".
+
+Example:
+
+    /etc/postfix/main.cf:
+        smtpd_tls_auth_only = no
+
+SSeerrvveerr--ssiiddee TTLLSS sseessssiioonn ccaacchhee
+
+The Postfix SMTP server and the remote SMTP client negotiate a session, which
+takes some computer time and network bandwidth. By default, this session
+information is cached only in the smtpd(8) process actually using this session
+and is lost when the process terminates. To share the session information
+between multiple smtpd(8) processes, a persistent session cache can be used.
+You can specify any database type that can store objects of several kbytes and
+that supports the sequence operator. DBM databases are not suitable because
+they can only store small objects. The cache is maintained by the tlsmgr(8)
+process, so there is no problem with concurrent access. Session caching is
+highly recommended, because the cost of repeatedly negotiating TLS session keys
+is high.
+
+Example:
+
+    /etc/postfix/main.cf:
+        smtpd_tls_session_cache_database = btree:/etc/postfix/smtpd_scache
+
+Cached Postfix SMTP server session information expires after a certain amount
+of time. Postfix/TLS does not use the OpenSSL default of 300s, but a longer
+time of 3600sec (=1 hour). RFC 2246 recommends a maximum of 24 hours.
+
+Example:
+
+    /etc/postfix/main.cf:
+        smtpd_tls_session_cache_timeout = 3600s
+
+SSeerrvveerr aacccceessss ccoonnttrrooll
+
+Postfix TLS support introduces three additional features for Postfix SMTP
+server access control:
+
+    permit_tls_clientcerts
+        Allow the remote SMTP client SMTP request if the client certificate
+        passes verification, and if its fingerprint is listed in the list of
+        client certificates (see relay_clientcerts discussion below).
+
+    permit_tls_all_clientcerts
+        Allow the remote client SMTP request if the client certificate passes
+        verification.
+
+    check_ccert_access type:table
+        If the client certificate passes verification, use its fingerprint as a
+        key for the specified access(5) table.
+
+The permit_tls_all_clientcerts feature must be used with caution, because it
+can result in too many access permissions. Use this feature only if a special
+CA issues the client certificates, and only if this CA is listed as trusted CA.
+If other CAs are trusted, any owner of a valid client certificate would be
+authorized. The permit_tls_all_clientcerts feature can be practical for a
+specially created email relay server.
+
+It is however recommended to stay with the permit_tls_clientcerts feature and
+list all certificates via $relay_clientcerts, as permit_tls_all_clientcerts
+does not permit any control when a certificate must no longer be used (e.g. an
+employee leaving).
+
+Example:
+
+    /etc/postfix/main.cf:
+        smtpd_recipient_restrictions =
+            ...
+            permit_tls_clientcerts
+            reject_unauth_destination
+            ...
+
+The Postfix list manipulation routines give special treatment to whitespace and
+some other characters, making the use of certificate names impractical. Instead
+we use the certificate fingerprints as they are difficult to fake but easy to
+use for lookup. Postfix lookup tables are in the form of (key, value) pairs.
+Since we only need the key, the value can be chosen freely, e.g. the name of
+the user or host.
+
+Example:
+
+    /etc/postfix/main.cf:
+        relay_clientcerts = hash:/etc/postfix/relay_clientcerts
+
+    /etc/postfix/relay_clientcerts:
+        D7:04:2F:A7:0B:8C:A5:21:FA:31:77:E1:41:8A:EE:80 lutzpc.at.home
+
+SSeerrvveerr--ssiiddee cciipphheerr ccoonnttrroollss
+
+To influence the Postfix SMTP server cipher selection scheme, you can give
+cipherlist string. A detailed description would go to far here; please refer to
+the OpenSSL documentation. If you don't know what to do with it, simply don't
+touch it and leave the (openssl-)compiled in default!
+
+DO NOT USE " to enclose the string, specify just the string!!!
+
+Example:
+
+    /etc/postfix/main.cf:
+        smtpd_tls_cipherlist = DEFAULT
+
+If you want to take advantage of ciphers with EDH, DH parameters are needed.
+Instead of using the built-in DH parameters for both 1024bit and 512bit, it is
+better to generate "own" parameters, since otherwise it would "pay" for a
+possible attacker to start a brute force attack against parameters that are
+used by everybody. For this reason, the parameters chosen are already different
+from those distributed with other TLS packages.
+
+To generate your own set of DH parameters, use:
+
+    % ooppeennssssll ggeennddhh --oouutt //eettcc//ppoossttffiixx//ddhh__11002244..ppeemm --22 --rraanndd //vvaarr//rruunn//eeggdd--ppooooll
+    11002244
+    % ooppeennssssll ggeennddhh --oouutt //eettcc//ppoossttffiixx//ddhh__551122..ppeemm --22 --rraanndd //vvaarr//rruunn//eeggdd--ppooooll 551122
+
+Examples:
+
+    /etc/postfix/main.cf:
+        smtpd_tls_dh1024_param_file = /etc/postfix/dh_1024.pem
+        smtpd_tls_dh512_param_file = /etc/postfix/dh_512.pem
+
+MMiisscceellllaanneeoouuss sseerrvveerr ccoonnttrroollss
+
+The smtpd_starttls_timeout parameter limits the time of Postfix SMTP server
+write and read operations during TLS startup and shutdown handshake procedures.
+
+Example:
+
+    /etc/postfix/main.cf:
+        smtpd_starttls_timeout = 300s
+
+SSMMTTPP CClliieenntt ssppeecciiffiicc sseettttiinnggss
+
+Topics covered in this section:
+
+  * Client-side certificate and private key configuration
+  * Client-side TLS activity logging
+  * Client-side TLS session cache
+  * Enabling TLS in the Postfix SMTP client
+  * Requiring TLS encryption
+  * Disabling server certificate verification
+  * Per-site TLS policies
+  * Closing a DNS loophole with  per-site TLS policies
+  * Discovering servers that support TLS
+  * Server certificate verification depth
+  * Client-side cipher controls
+  * Miscellaneous client controls
+
+CClliieenntt--ssiiddee cceerrttiiffiiccaattee aanndd pprriivvaattee kkeeyy ccoonnffiigguurraattiioonn
+
+During TLS startup negotiation the Postfix SMTP client may present a
+certificate to the remote SMTP server. The Netscape client is rather clever
+here and lets the user select between only those certificates that match CA
+certificates offered by the remote SMTP server. As the Postfix SMTP client uses
+the "SSL_connect()" function from the OpenSSL package, this is not possible and
+we have to choose just one certificate. So for now the default is to use _no_
+certificate and key unless one is explicitly specified here.
+
+Both RSA and DSA certificates are supported. You can have both at the same
+time, in which case the cipher used determines which certificate is presented.
+
+It is possible for the Postfix SMTP client to use the same key/certificate pair
+as the Postfix SMTP server. If a certificate is to be presented, it must be in
+"pem" format. The private key must not be encrypted, meaning: it must be
+accessible without password. Both parts (certificate and private key) may be in
+the same file.
+
+In order for remote SMTP servers to verify the Postfix SMTP client
+certificates, the CA certificate (in case of a certificate chain, all CA
+certificates) must be available. You should add these certificates to the
+client certificate, the client certificate first, then the issuing CA(s).
+
+Example: the certificate for "client.example.com" was issued by "intermediate
+CA" which itself has a certificate of "root CA". Create the client.pem file
+with:
+
+    % ccaatt cclliieenntt__cceerrtt..ppeemm iinntteerrmmeeddiiaattee__CCAA..ppeemm >> cclliieenntt..ppeemm
+
+A Postfix SMTP client certificate supplied here must be usable as SSL client
+certificate and hence pass the "openssl verify -purpose sslclient ..." test.
+
+A server that trusts the root CA has a local copy of the root CA certificate,
+so it is not necessary to include the root CA certificate here. Leaving it out
+of the "client.pem" file reduces the overhead of the TLS exchange.
+
+If you want the Postfix SMTP client to accept remote SMTP server certificates
+issued by these CAs, append the root certificate to $smtp_tls_CAfile or install
+it in the $smtp_tls_CApath directory. When you configure trust in a root CA, it
+is not necessary to explicitly trust intermediary CAs signed by the root CA,
+unless $smtp_tls_scert_verifydepth is less than the number of CAs in the
+certificate chain for the servers of interest. With a verify depth of 1 you can
+only verify certificates directly signed by a trusted CA, and all trusted
+intermediary CAs need to be configured explicitly. With a verify depth of 2 you
+can verify servers signed by a root CA or a direct intermediary CA (so long as
+the server is correctly configured to supply its intermediate CA certificate).
+
+RSA key and certificate examples:
+
+    /etc/postfix/main.cf:
+        smtp_tls_cert_file = /etc/postfix/client.pem
+        smtp_tls_key_file = $smtp_tls_cert_file
+
+Their DSA counterparts:
+
+    /etc/postfix/main.cf:
+        smtp_tls_dcert_file = /etc/postfix/client-dsa.pem
+        smtp_tls_dkey_file = $smtp_tls_dcert_file
+
+To verify a remote SMTP server certificate, the Postfix SMTP client needs to
+trust the certificates of the issuing certification authorities. These
+certificates in "pem" format can be stored in a single $smtp_tls_CAfile or in
+multiple files, one CA per file in the $smtp_tls_CApath directory. If you use a
+directory, don't forget to create the necessary "hash" links with:
+
+    # $$OOPPEENNSSSSLL__HHOOMMEE//bbiinn//cc__rreehhaasshh //ppaatthh//ttoo//ddiirreeccttoorryy
+
+The $smtp_tls_CAfile contains the CA certificates of one or more trusted CAs.
+The file is opened (with root privileges) before Postfix enters the optional
+chroot jail and so need not be accessible from inside the chroot jail.
+
+Additional trusted CAs can be specified via the $smtp_tls_CApath directory, in
+which case the certificates are read (with $mail_owner privileges) from the
+files in the directory when the information is needed. Thus, the
+$smtp_tls_CApath directory needs to be accessible inside the optional chroot
+jail.
+
+The choice between $smtp_tls_CAfile and $smtp_tls_CApath is a space/time
+tradeoff. If there are many trusted CAs, the cost of preloading them all into
+memory may not pay off in reduced access time when the certificate is needed.
+
+Example:
+
+    /etc/postfix/main.cf:
+        smtp_tls_CAfile = /etc/postfix/CAcert.pem
+        smtp_tls_CApath = /etc/postfix/certs
+
+CClliieenntt--ssiiddee TTLLSS aaccttiivviittyy llooggggiinngg
+
+To get additional information about Postfix SMTP client TLS activity you can
+increase the loglevel from 0..4. Each logging level also includes the
+information that is logged at a lower logging level.
+
+    0 Disable logging of TLS activity.
+
+    1 Log TLS handshake and certificate information.
+
+    2 Log levels during TLS negotiation.
+
+    3 Log hexadecimal and ASCII dump of TLS negotiation process
+
+    4 Log hexadecimal and ASCII dump of complete transmission after STARTTLS
+
+Example:
+
+    /etc/postfix/main.cf:
+        smtp_tls_loglevel = 0
+
+CClliieenntt--ssiiddee TTLLSS sseessssiioonn ccaacchhee
+
+The remote SMTP server and the Postfix SMTP client negotiate a session, which
+takes some computer time and network bandwidth. By default, this session
+information is cached only in the smtp(8) process actually using this session
+and is lost when the process terminates. To share the session information
+between multiple smtp(8) processes, a persistent session cache can be used. You
+can specify any database type that can store objects of several kbytes and that
+supports the sequence operator. DBM databases are not suitable because they can
+only store small objects. The cache is maintained by the tlsmgr(8) process, so
+there is no problem with concurrent access. Session caching is highly
+recommended, because the cost of repeatedly negotiating TLS session keys is
+high. Future Postfix SMTP servers may limit the number of sessions that a
+client is allowed to negotiate per unit time.
+
+Example:
+
+    /etc/postfix/main.cf:
+        smtp_tls_session_cache_database = btree:/etc/postfix/smtp_scache
+
+Cached Postfix SMTP client session information expires after a certain amount
+of time. Postfix/TLS does not use the OpenSSL default of 300s, but a longer
+time of 3600s (=1 hour). RFC 2246 recommends a maximum of 24 hours.
+
+Example:
+
+    /etc/postfix/main.cf:
+        smtp_tls_session_cache_timeout = 3600s
+
+EEnnaabblliinngg TTLLSS iinn tthhee PPoossttffiixx SSMMTTPP cclliieenntt
+
+By default, TLS is disabled in the Postfix SMTP client, so no difference to
+plain Postfix is visible. If you enable TLS, the Postfix SMTP client will send
+STARTTLS when TLS support is announced by the remote SMTP server.
+
+When the server accepts the STARTTLS command, but the subsequent TLS handshake
+fails, and no other server is available, the Postfix SMTP client defers the
+delivery attempt, and the mail stays in the queue. After a handshake failure,
+the communications channel is in an indeterminate state and cannot be used for
+non-TLS deliveries.
+
+Example:
+
+    /etc/postfix/main.cf:
+        smtp_use_tls = yes
+
+RReeqquuiirriinngg TTLLSS eennccrryyppttiioonn
+
+You can ENFORCE the use of TLS, so that the Postfix SMTP client will not
+deliver mail over unencrypted connections. In this mode, the remote SMTP server
+hostname must match the information in the remote server certificate, and the
+server certificate must be issued by a CA that is trusted by the Postfix SMTP
+client. If the remote server certificate doesn't verify or the remote SMTP
+server hostname doesn't match, and no other server is available, the delivery
+attempt is deferred and the mail stays in the queue.
+
+The remote SMTP server hostname is verified against all names provided as
+dNSNames in the SubjectAlternativeName. If no dNSNames are specified, the
+CommonName is checked. Verification may be turned off with the
+smtp_tls_enforce_peername option which is discussed below.
+
+Enforcing the use of TLS is useful if you know that you will only connect to
+servers that support RFC 2487 _and_ that present server certificates that meet
+the above requirements. An example would be a client only sends email to one
+specific mailhub that offers the necessary STARTTLS support.
+
+Example:
+
+    /etc/postfix/main.cf:
+        smtp_enforce_tls = yes
+
+DDiissaabblliinngg sseerrvveerr cceerrttiiffiiccaattee vveerriiffiiccaattiioonn
+
+As of RFC 2487 the requirements for hostname checking for MTA clients are not
+set. When TLS is required (smtp_enforce_tls = yes), the option
+smtp_tls_enforce_peername can be set to "no" to disable strict remote SMTP
+server hostname checking. In this case, the mail delivery will proceed
+regardless of the CommonName etc. listed in the certificate.
+
+Despite the potential for eliminating "man-in-the-middle" and other attacks,
+mandatory certificate/peername verification is not viable as a default Internet
+mail delivery policy at this time. A significant fraction of TLS enabled MTAs
+uses self-signed certificates, or certificates that are signed by a private
+certificate authority. On a machine that delivers mail to the Internet, if you
+set smtp_enforce_tls = yes, you should probably also set
+smtp_tls_enforce_peername = no. You can use the per-site TLS policies (see
+below) to enable full peer verification for specific destinations that are
+known to have verifiable TLS server certificates.
+
+Example:
+
+    /etc/postfix/main.cf:
+        smtp_enforce_tls = yes
+        smtp_tls_enforce_peername = no
+
+PPeerr--ssiittee TTLLSS ppoolliicciieess
+
+A small fraction of servers offer STARTTLS but the negotiation consistently
+fails, leading to mail aging out of the queue and bouncing back to the sender.
+In such cases, you can use the per-site policies to disable TLS for the problem
+sites. Alternatively, you can enable TLS for just a few specific sites and not
+enable it for all sites.
+
+The smtp_tls_per_site table is searched for a policy that matches the following
+information:
+
+    remote SMTP server hostname
+        This is simply the DNS name of the server that the Postfix SMTP client
+        connects to; this name may be obtained from other DNS lookups, such as
+        MX lookups or CNAME lookups.
+    next-hop destination
+        This is normally the domain portion of the recipient address, but it
+        may be overruled by information from the transport(5) table, from the
+        relayhost parameter setting, or from the relay_transport setting. When
+        it's not the recipient domain, the next-hop destination can have the
+        Postfix-specific form "[name]", [name]:port", "name" or "name:port".
+
+When both the hostname lookup and the next-hop lookup succeed, the host policy
+does not automatically override the next-hop policy. Instead, precedence is
+given to either the more specific or the more secure per-site policy as
+described below.
+
+The smtp_tls_per_site table uses a simple "name whitespace value" format.
+Specify host names or next-hop destinations on the left-hand side; no wildcards
+are allowed. On the right hand side specify one of the following keywords:
+
+    NONE
+        Don't use TLS at all. This overrides a less specific MMAAYY lookup result
+        from the alternate host or next-hop lookup key, and overrides the
+        global smtp_use_tls, smtp_enforce_tls, and smtp_tls_enforce_peername
+        settings.
+    MAY
+        Try to use TLS if the server announces support, otherwise use the
+        unencrypted connection. This has less precedence than a more specific
+        result (including NNOONNEE) from the alternate host or next-hop lookup key,
+        and has less precedence than the more specific global "smtp_enforce_tls
+        = yes" or "smtp_tls_enforce_peername = yes".
+    MUST_NOPEERMATCH
+        Require TLS encryption, but do not require that the remote SMTP server
+        hostname matches the information in the remote SMTP server certificate,
+        or that the server certificate was issued by a trusted CA. This
+        overrides a less secure NNOONNEE or a less specific MMAAYY lookup result from
+        the alternate host or next-hop lookup key, and overrides the global
+        smtp_use_tls, smtp_enforce_tls and smtp_tls_enforce_peername settings.
+    MUST
+        Require TLS encryption, require that the remote SMTP server hostname
+        matches the information in the remote SMTP server certificate, and
+        require that the remote SMTP server certificate was issued by a trusted
+        CA. This overrides a less secure NNOONNEE and MMUUSSTT__NNOOPPEEEERRMMAATTCCHH or a less
+        specific MMAAYY lookup result from the alternate host or next-hop lookup
+        key, and overrides the global smtp_use_tls, smtp_enforce_tls and
+        smtp_tls_enforce_peername settings.
+
+The precedences between global (main.cf) and per-site TLS policies can be
+summarized as follows:
+
+  * When neither the remote SMTP server hostname nor the next-hop destination
+    are found in the smtp_tls_per_site table, the policy is based on
+    smtp_use_tls, smtp_enforce_tls and smtp_tls_enforce_peername. Note:
+    "smtp_enforce_tls = yes" and "smtp_tls_enforce_peername = yes" imply
+    "smtp_use_tls = yes".
+
+  * When both hostname and next-hop destination lookups produce a result, the
+    more specific per-site policy (NONE, MUST, etc) overrides the less specific
+    one (MAY), and the more secure per-site policy (MUST, etc) overrides the
+    less secure one (NONE).
+
+  * After the per-site policy lookups are combined, the result generally
+    overrides the global policy. The exception is the less specific MMAAYY per-
+    site policy, which is overruled by the more specific global
+    "smtp_enforce_tls = yes" with server certificate verification as specified
+    with the smtp_tls_enforce_peername parameter.
+
+CClloossiinngg aa DDNNSS lloooopphhoollee wwiitthh  ppeerr--ssiittee TTLLSS ppoolliicciieess
+
+As long as no secure DNS lookup mechanism is available, false hostnames in MX
+or CNAME responses can change the server hostname that Postfix uses for TLS
+policy lookup and server certificate verification. Even with a perfect match
+between the server hostname and the server certificate, there is no guarantee
+that Postfix is connected to the right server. To avoid this loophole take the
+following steps:
+
+  * Eliminate MX lookups. Specify local transport(5) table entries for
+    sensitive domains with explicit smtp:[mailhost] or smtp:[mailhost]:port
+    destinations (you can assure security of this table unlike DNS); in the
+    smtp_tls_per_site table specify the value MMUUSSTT for the key [mailhost] or
+    smtp:[mailhost]:port. This prevents false hostname information in DNS MX
+    records from changing the server hostname that Postfix uses for TLS policy
+    lookup and server certificate verification.
+
+  * Disallow CNAME hostname overrides. In main.cf specify
+    "smtp_cname_overrides_servername = no". This prevents false hostname
+    information in DNS CNAME records from changing the server hostname that
+    Postfix uses for TLS policy lookup and server certificate verification.
+    This feature requires Postfix 2.2.9 or later.
+
+Example:
+
+    /etc/postfix/main.cf:
+        smtp_tls_per_site = hash:/etc/postfix/tls_per_site
+        relayhost = [msa.example.net]:587
+
+    /etc/postfix/tls_per_site:
+        # relayhost exact nexthop match
+        [msa.example.net]:587       MUST
+
+        # TLS should not be used with the example.org MX hosts.
+        example.org                 NONE
+
+        # TLS should not be used with the host smtp.example.com.
+        smtp.example.com             NONE
+
+DDiissccoovveerriinngg sseerrvveerrss tthhaatt ssuuppppoorrtt TTLLSS
+
+As we decide on a "per site" basis whether or not to use TLS, it would be good
+to have a list of sites that offered "STARTTLS". We can collect it ourselves
+with this option.
+
+If the smtp_tls_note_starttls_offer feature is enabled and a server offers
+STARTTLS while TLS is not already enabled for that server, the Postfix SMTP
+client logs a line as follows:
+
+    postfix/smtp[pid]: Host offered STARTTLS: [hostname.example.com]
+
+Example:
+
+    /etc/postfix/main.cf:
+        smtp_tls_note_starttls_offer = yes
+
+SSeerrvveerr cceerrttiiffiiccaattee vveerriiffiiccaattiioonn ddeepptthh
+
+When verifying a remote SMTP server certificate, a verification depth of 1 is
+sufficient if the certificate is directly issued by a CA specified with
+smtp_tls_CAfile or smtp_tls_CApath. The default value of 5 should also suffice
+for longer chains (root CA issues special CA which then issues the actual
+certificate...)
+
+Example:
+
+    /etc/postfix/main.cf:
+        smtp_tls_scert_verifydepth = 5
+
+CClliieenntt--ssiiddee cciipphheerr ccoonnttrroollss
+
+To influence the Postfix SMTP client cipher selection scheme, you can give
+cipherlist string. A detailed description would go to far here; please refer to
+the OpenSSL documentation. If you don't know what to do with it, simply don't
+touch it and leave the (openssl-)compiled in default!
+
+DO NOT USE " to enclose the string, specify just the string!!!
+
+Example:
+
+    /etc/postfix/main.cf:
+        smtp_tls_cipherlist = DEFAULT
+
+MMiisscceellllaanneeoouuss cclliieenntt ccoonnttrroollss
+
+The smtp_starttls_timeout parameter limits the time of Postfix SMTP client
+write and read operations during TLS startup and shutdown handshake procedures.
+In case of problems the Postfix SMTP client tries the next network address on
+the mail exchanger list, and defers delivery if no alternative server is
+available.
+
+Example:
+
+    /etc/postfix/main.cf:
+        smtp_starttls_timeout = 300s
+
+TTLLSS mmaannaaggeerr ssppeecciiffiicc sseettttiinnggss
+
+The security of cryptographic software such as TLS depends critically on the
+ability to generate unpredictable numbers for keys and other information. To
+this end, the tlsmgr(8) process maintains a Pseudo Random Number Generator
+(PRNG) pool. This is queried by the smtp(8) and smtpd(8) processes when they
+initialize. By default, these daemons request 32 bytes, the equivalent to 256
+bits. This is more than sufficient to generate a 128bit (or 168bit) session
+key.
+
+Example:
+
+    /etc/postfix/main.cf:
+        tls_daemon_random_bytes = 32
+
+In order to feed its in-memory PRNG pool, the tlsmgr(8) reads entropy from an
+external source, both at startup and during run-time. Specify a good entropy
+source, like EGD or /dev/urandom; be sure to only use non-blocking sources (on
+OpenBSD, use /dev/arandom when tlsmgr(8) complains about /dev/urandom timeout
+errors). If the entropy source is not a regular file, you must prepend the
+source type to the source name: "dev:" for a device special file, or "egd:" for
+a source with EGD compatible socket interface.
+
+Examples (specify only one in main.cf):
+
+    /etc/postfix/main.cf:
+        tls_random_source = dev:/dev/urandom
+        tls_random_source = egd:/var/run/egd-pool
+
+By default, tlsmgr(8) reads 32 bytes from the external entropy source at each
+seeding event. This amount (256bits) is more than sufficient for generating a
+128bit symmetric key. With EGD and device entropy sources, the tlsmgr(8) limits
+the amount of data read at each step to 255 bytes. If you specify a regular
+file as entropy source, a larger amount of data can be read.
+
+Example:
+
+    /etc/postfix/main.cf:
+        tls_random_bytes = 32
+
+In order to update its in-memory PRNG pool, the tlsmgr(8) queries the external
+entropy source again after a pseudo-random amount of time. The time is
+calculated using the PRNG, and is between 0 and the maximal time specified with
+tls_random_reseed_period. The default maximal time interval is 1 hour.
+
+Example:
+
+    /etc/postfix/main.cf:
+        tls_random_reseed_period = 3600s
+
+The tlsmgr(8) process saves the PRNG state to a persistent exchange file at
+regular times and when the process terminates, so that it can recover the PRNG
+state the next time it starts up. This file is created when it does not exist.
+Its default location is under the Postfix configuration directory, which is not
+the proper place for information that is modified by Postfix. Instead, the file
+location should probably be on the /var partition (but nnoott inside the chroot
+jail).
+
+Examples:
+
+    /etc/postfix/main.cf:
+        tls_random_exchange_name = /etc/postfix/prng_exch
+        tls_random_prng_update_period = 3600s
+
+GGeettttiinngg ssttaarrtteedd,, qquuiicckk aanndd ddiirrttyy
+
+The following steps will get you started quickly. Because you sign your own
+Postfix public key certificate, you get TLS encryption but no TLS
+authentication. This is sufficient for testing, and for exchanging email with
+sites that you have no trust relationship with. For real authentication, your
+Postfix public key certificate needs to be signed by a recognized Certificate
+Authority, and Postfix needs to be configured with a list of public key
+certificates of Certificate Authorities, so that Postfix can verify the public
+key certificates of remote hosts.
+
+In the examples below, user input is shown in bboolldd font, and a "#" prompt
+indicates a super-user shell.
+
+  * Become your own Certificate Authority, so that you can sign your own public
+    keys. This example uses the CA.pl script that ships with OpenSSL. By
+    default, OpenSSL installs this as /usr/local/ssl/misc/CA.pl, but your
+    mileage may vary. The script creates a private key in ./demoCA/private/
+    cakey.pem and a public key in ./demoCA/cacert.pem.
+
+        % //uussrr//llooccaall//ssssll//mmiisscc//CCAA..ppll --nneewwccaa
+        CA certificate filename (or enter to create)
+
+        Making CA certificate ...
+        Using configuration from /etc/ssl/openssl.cnf
+        Generating a 1024 bit RSA private key
+        ....................++++++
+        .....++++++
+        writing new private key to './demoCA/private/cakey.pem'
+        Enter PEM pass phrase:wwhhaatteevveerr
+
+  * Create an unpassworded private key for host FOO and create an unsigned
+    public key certificate.
+
+        % ooppeennssssll rreeqq --nneeww --nnooddeess --kkeeyyoouutt FFOOOO--kkeeyy..ppeemm --oouutt FFOOOO--rreeqq..ppeemm --ddaayyss
+        336655
+        Using configuration from /etc/ssl/openssl.cnf
+        Generating a 1024 bit RSA private key
+        ........................................++++++
+        ....++++++
+        writing new private key to 'FOO-key.pem'
+        -----
+        You are about to be asked to enter information that will be
+        incorporated
+        into your certificate request.
+        What you are about to enter is what is called a Distinguished Name or a
+        DN.
+        There are quite a few fields but you can leave some blank
+        For some fields there will be a default value,
+        If you enter '.', the field will be left blank.
+        -----
+        Country Name (2 letter code) [AU]:UUSS
+        State or Province Name (full name) [Some-State]:NNeeww YYoorrkk
+        Locality Name (eg, city) []:WWeessttcchheesstteerr
+        Organization Name (eg, company) [Internet Widgits Pty Ltd]:PPoorrccuuppiinnee
+        Organizational Unit Name (eg, section) []:
+        Common Name (eg, YOUR name) []:FFOOOO
+        Email Address []:wwiieettssee@@ppoorrccuuppiinnee..oorrgg
+
+        Please enter the following 'extra' attributes
+        to be sent with your certificate request
+        A challenge password []:wwhhaatteevveerr
+        An optional company name []:
+
+  * Sign the public key certificate for host FOO with the Certification
+    Authority private key that we created a few steps ago.
+
+        % ooppeennssssll ccaa --oouutt FFOOOO--cceerrtt..ppeemm --iinnffiilleess FFOOOO--rreeqq..ppeemm
+        Uing configuration from /etc/ssl/openssl.cnf
+        Enter PEM pass phrase:wwhhaatteevveerr
+        Check that the request matches the signature
+        Signature ok
+        The Subjects Distinguished Name is as follows
+        countryName           :PRINTABLE:'US'
+        stateOrProvinceName   :PRINTABLE:'New York'
+        localityName          :PRINTABLE:'Westchester'
+        organizationName      :PRINTABLE:'Porcupine'
+        commonName            :PRINTABLE:'FOO'
+        emailAddress          :IA5STRING:'wietse@porcupine.org'
+        Certificate is to be certified until Nov 21 19:40:56 2005 GMT (365
+        days)
+        Sign the certificate? [y/n]:yy
+
+        1 out of 1 certificate requests certified, commit? [y/n]yy
+        Write out database with 1 new entries
+        Data Base Updated
+
+  * Install the host private key, the host public key certificate, and the
+    Certification Authority certificate files. This requires super-user
+    privileges.
+
+        # ccpp ddeemmooCCAA//ccaacceerrtt..ppeemm FFOOOO--kkeeyy..ppeemm FFOOOO--cceerrtt..ppeemm //eettcc//ppoossttffiixx
+        # cchhmmoodd 664444 //eettcc//ppoossttffiixx//FFOOOO--cceerrtt..ppeemm //eettcc//ppoossttffiixx//ccaacceerrtt..ppeemm
+        # cchhmmoodd 440000 //eettcc//ppoossttffiixx//FFOOOO--kkeeyy..ppeemm
+
+  * Configure Postfix, by adding the following to /etc/postfix/main.cf.
+
+        smtp_tls_CAfile = /etc/postfix/cacert.pem
+        smtp_tls_cert_file = /etc/postfix/FOO-cert.pem
+        smtp_tls_key_file = /etc/postfix/FOO-key.pem
+        smtp_tls_session_cache_database = btree:/var/run/smtp_tls_session_cache
+        smtp_use_tls = yes
+        smtpd_tls_CAfile = /etc/postfix/cacert.pem
+        smtpd_tls_cert_file = /etc/postfix/FOO-cert.pem
+        smtpd_tls_key_file = /etc/postfix/FOO-key.pem
+        smtpd_tls_received_header = yes
+        smtpd_tls_session_cache_database = btree:/var/run/
+        smtpd_tls_session_cache
+        smtpd_use_tls = yes
+        tls_random_source = dev:/dev/urandom
+
+RReeppoorrttiinngg pprroobblleemmss
+
+When reporting a problem, please be thorough in the report. Patches, when
+possible, are greatly appreciated too.
+
+Please differentiate when possible between:
+
+  * Problems in the TLS code: <postfix_tls@aet.tu-cottbus.de>
+  * Problems in vanilla Postfix: <postfix-users@postfix.org>
+
+CCoommppaattiibbiilliittyy wwiitthh PPoossttffiixx <<22..22 TTLLSS ssuuppppoorrtt
+
+Postfix version 2.2 TLS support is based on the Postfix/TLS patch by Lutz
+Jänicke, but differs in a few minor ways.
+
+  * main.cf: Specify "btree" instead of "sdbm" for TLS session cache databases.
+
+    TLS session cache databases are now accessed only by the tlsmgr(8) process,
+    so there are no more concurrency issues. Although Postfix has an sdbm
+    client, the sdbm library (1000 lines of code) is not included with Postfix.
+
+    TLS session caches can use any database that can store objects of several
+    kbytes or more, and that implements the sequence operation. In most cases,
+    btree databases should be adequate.
+
+    NOTE: You cannot use dbm databases. TLS session objects are too large.
+
+  * master.cf: Specify "unix" instead of "fifo" as the tlsmgr service type.
+
+    The smtp(8) and smtpd(8) processes now use a client-server protocol in
+    order to access the tlsmgr(8) pseudo-random number generation (PRNG) pool,
+    and in order to access the TLS session cache databases. Such a protocol
+    cannot be run across fifos.
+
+  * smtp_tls_per_site: the MUST_NOPEERMATCH per-site policy cannot override the
+    global "smtp_tls_enforce_peername = yes" setting.
+
+  * smtp_tls_per_site: a combined (NONE + MAY) lookup result for (hostname and
+    next-hop destination) produces counter-intuitive results for different
+    main.cf settings. TLS is enabled with "smtp_tls_enforce_peername = no", but
+    it is disabled when both "smtp_enforce_tls = yes" and
+    "smtp_tls_enforce_peername = yes".
+
+The smtp_tls_per_site limitations were removed by the end of the Postfix 2.2
+support cycle.
+
+CCrreeddiittss
+
+  * TLS support for Postfix was originally developed by Lutz Jänicke at Cottbus
+    Technical University.
+  * Wietse Venema adopted the code, did some restructuring, and compiled this
+    part of the documentation from Lutz's documents.
+  * Victor Duchovni was instrumental with the re-implementation of the
+    smtp_tls_per_site code in terms of enforcement levels, which simplified the
+    implementation greatly.
+

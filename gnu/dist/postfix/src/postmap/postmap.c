@@ -1,4 +1,4 @@
-/*	$NetBSD: postmap.c,v 1.1.1.10 2007/02/05 17:41:38 rpaulo Exp $	*/
+/*	$NetBSD: postmap.c,v 1.1.1.11 2007/05/19 16:28:27 heas Exp $	*/
 
 /*++
 /* NAME
@@ -15,8 +15,9 @@
 /*	lookup tables, or updates an existing one. The input and output
 /*	file formats are expected to be compatible with:
 /*
-/* .ti +4
-/*	\fBmakemap \fIfile_type\fR \fIfile_name\fR < \fIfile_name\fR
+/* .nf
+/*	    \fBmakemap \fIfile_type\fR \fIfile_name\fR < \fIfile_name\fR
+/* .fi
 /*
 /*	If the result files do not exist they will be created with the
 /*	same group and other read permissions as their source file.
@@ -32,8 +33,9 @@
 /* .IP \(bu
 /*	A table entry has the form
 /* .sp
-/* .ti +5
-/*	\fIkey\fR whitespace \fIvalue\fR
+/* .nf
+/*	     \fIkey\fR whitespace \fIvalue\fR
+/* .fi
 /* .IP \(bu
 /*	Empty lines and whitespace-only lines are ignored, as
 /*	are lines whose first non-whitespace character is a `#'.
@@ -44,7 +46,7 @@
 /*	The \fIkey\fR and \fIvalue\fR are processed as is, except that
 /*	surrounding white space is stripped off. Unlike with Postfix alias
 /*	databases, quotes cannot be used to protect lookup keys that contain
-/*	special characters such as `#' or whitespace. 
+/*	special characters such as `#' or whitespace.
 /*
 /*	By default the lookup key is mapped to lowercase to make
 /*	the lookups case insensitive; as of Postfix 2.3 this case
@@ -247,6 +249,7 @@
 #include <mail_conf.h>
 #include <mail_dict.h>
 #include <mail_params.h>
+#include <mail_version.h>
 #include <mkmap.h>
 #include <mail_task.h>
 
@@ -429,7 +432,7 @@ static int postmap_queries(VSTREAM *in, char **maps, const int map_count,
 /* postmap_query - query a map and print the result to stdout */
 
 static int postmap_query(const char *map_type, const char *map_name,
-			           const char *key, int dict_flags)
+			         const char *key, int dict_flags)
 {
     DICT   *dict;
     const char *value;
@@ -452,7 +455,7 @@ static int postmap_query(const char *map_type, const char *map_name,
 /* postmap_deletes - apply multiple requests from stdin */
 
 static int postmap_deletes(VSTREAM *in, char **maps, const int map_count,
-			             int dict_flags)
+			           int dict_flags)
 {
     int     found = 0;
     VSTRING *keybuf = vstring_alloc(100);
@@ -497,7 +500,7 @@ static int postmap_deletes(VSTREAM *in, char **maps, const int map_count,
 /* postmap_delete - delete a (key, value) pair from a map */
 
 static int postmap_delete(const char *map_type, const char *map_name,
-			            const char *key, int dict_flags)
+			          const char *key, int dict_flags)
 {
     DICT   *dict;
     int     status;
@@ -511,7 +514,7 @@ static int postmap_delete(const char *map_type, const char *map_name,
 /* postmap_seq - print all map entries to stdout */
 
 static void postmap_seq(const char *map_type, const char *map_name,
-			          int dict_flags)
+			        int dict_flags)
 {
     DICT   *dict;
     const char *key;
@@ -545,6 +548,8 @@ static NORETURN usage(char *myname)
 	      myname);
 }
 
+MAIL_VERSION_STAMP_DECLARE;
+
 int     main(int argc, char **argv)
 {
     char   *path_name;
@@ -559,6 +564,11 @@ int     main(int argc, char **argv)
     char   *delkey = 0;
     int     sequence = 0;
     int     found;
+
+    /*
+     * Fingerprint executables and core dumps.
+     */
+    MAIL_VERSION_STAMP_ALLOCATE;
 
     /*
      * Be consistent with file permissions.
@@ -652,6 +662,8 @@ int     main(int argc, char **argv)
 	}
     }
     mail_conf_read();
+    if (strcmp(var_syslog_name, DEF_SYSLOG_NAME) != 0)
+	msg_syslog_init(mail_task(argv[0]), LOG_PID, LOG_FACILITY);
     mail_dict_init();
 
     /*
@@ -663,15 +675,15 @@ int     main(int argc, char **argv)
 	    usage(argv[0]);
 	if (strcmp(delkey, "-") == 0)
 	    exit(postmap_deletes(VSTREAM_IN, argv + optind, argc - optind,
-				   dict_flags | DICT_FLAG_LOCK) == 0);
+				 dict_flags | DICT_FLAG_LOCK) == 0);
 	found = 0;
 	while (optind < argc) {
 	    if ((path_name = split_at(argv[optind], ':')) != 0) {
 		found |= postmap_delete(argv[optind], path_name, delkey,
-					  dict_flags | DICT_FLAG_LOCK);
+					dict_flags | DICT_FLAG_LOCK);
 	    } else {
 		found |= postmap_delete(var_db_type, argv[optind], delkey,
-					  dict_flags | DICT_FLAG_LOCK);
+					dict_flags | DICT_FLAG_LOCK);
 	    }
 	    optind++;
 	}
@@ -681,14 +693,14 @@ int     main(int argc, char **argv)
 	    usage(argv[0]);
 	if (strcmp(query, "-") == 0)
 	    exit(postmap_queries(VSTREAM_IN, argv + optind, argc - optind,
-				   dict_flags | DICT_FLAG_LOCK) == 0);
+				 dict_flags | DICT_FLAG_LOCK) == 0);
 	while (optind < argc) {
 	    if ((path_name = split_at(argv[optind], ':')) != 0) {
 		found = postmap_query(argv[optind], path_name, query,
-					dict_flags | DICT_FLAG_LOCK);
+				      dict_flags | DICT_FLAG_LOCK);
 	    } else {
 		found = postmap_query(var_db_type, argv[optind], query,
-					dict_flags | DICT_FLAG_LOCK);
+				      dict_flags | DICT_FLAG_LOCK);
 	    }
 	    if (found)
 		exit(0);
@@ -699,10 +711,10 @@ int     main(int argc, char **argv)
 	while (optind < argc) {
 	    if ((path_name = split_at(argv[optind], ':')) != 0) {
 		postmap_seq(argv[optind], path_name,
-			      dict_flags | DICT_FLAG_LOCK);
+			    dict_flags | DICT_FLAG_LOCK);
 	    } else {
 		postmap_seq(var_db_type, argv[optind],
-			      dict_flags | DICT_FLAG_LOCK);
+			    dict_flags | DICT_FLAG_LOCK);
 	    }
 	    exit(0);
 	}

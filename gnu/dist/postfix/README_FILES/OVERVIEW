@@ -136,8 +136,7 @@ unnumbered names inside shaded areas represent Postfix queues.
     delivery to mailbox servers such as Cyrus. The advantage of this setup is
     that one Postfix machine can feed multiple mailbox servers over LMTP. The
     opposite is true as well: one mailbox server can be fed over LMTP by
-    multiple Postfix machines. The LMTP_README document gives examples of how
-    to use the lmtp(8) client.
+    multiple Postfix machines.
 
   * The local(8) delivery agent understands UNIX-style mailboxes, qmail-
     compatible maildir files, Sendmail-style system-wide aliases(5) databases,
@@ -210,12 +209,13 @@ queues.
 
     Network -> smtpd(8) <-> anvil(8)
 
-  * The bounce(8), defer(8) and trace(8) servers each maintain their own queue
-    directory trees with per-message logfiles. This information is used to send
-    delivery or non-delivery notifications to the sender.
+  * The bounce(8), defer(8) and trace(8) services each maintain their own queue
+    directory trees with per-message logfiles. Postfix uses this information
+    when sending "failed", "delayed" or "success" delivery status notifications
+    to the sender.
 
-    The trace(8) service implements support for the Postfix "sendmail -bv" and
-    "sendmail -v" commands which produce reports about how Postfix delivers
+    The trace(8) service also implements support for the Postfix "sendmail -bv"
+    and "sendmail -v" commands which produce reports about how Postfix delivers
     mail, and is available with Postfix version 2.1 and later. See DEBUG_README
     for examples.
 
@@ -277,10 +277,20 @@ queues.
 
     When delivering mail to a destination with multiple mail servers,
     connection caching can help to skip over a non-responding server, and thus
-    dramatically speed up delivery.
+    dramatically speed up delivery. SMTP connection caching is available in
+    Postfix version 2.2 and later. More information about this feature is in
+    the CONNECTION_CACHE_README document.
 
-    smtp(8)  <-> scache(8)  <-> smtp(8)
-                                    
+            /-- smtp(8) --> Internet
+
+    qmgr(8)       |  
+                  |
+            \--   | smtp(8) --> Internet
+                  |
+                  ^          
+                  |
+
+                  scache(8)
 
   * The showq(8) servers list the Postfix queue status. This is the queue
     listing service that does the work for the mailq(1) and postqueue(1)

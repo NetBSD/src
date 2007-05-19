@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_unix.c,v 1.1.1.5 2006/07/19 01:17:52 rpaulo Exp $	*/
+/*	$NetBSD: dict_unix.c,v 1.1.1.6 2007/05/19 16:28:45 heas Exp $	*/
 
 /*++
 /* NAME
@@ -76,7 +76,9 @@ static const char *dict_unix_getpwnam(DICT *dict, const char *key)
     /*
      * Optionally fold the key.
      */
-    if (dict->fold_buf) {
+    if (dict->flags & DICT_FLAG_FOLD_FIX) {
+	if (dict->fold_buf == 0)
+	    dict->fold_buf = vstring_alloc(10);
 	vstring_strcpy(dict->fold_buf, key);
 	key = lowercase(vstring_str(dict->fold_buf));
     }
@@ -116,7 +118,9 @@ static const char *dict_unix_getgrnam(DICT *dict, const char *key)
     /*
      * Optionally fold the key.
      */
-    if (dict->fold_buf) {
+    if (dict->flags & DICT_FLAG_FOLD_FIX) {
+	if (dict->fold_buf == 0)
+	    dict->fold_buf = vstring_alloc(10);
 	vstring_strcpy(dict->fold_buf, key);
 	key = lowercase(vstring_str(dict->fold_buf));
     }

@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanup_message.c,v 1.1.1.13 2006/12/21 02:31:34 rpaulo Exp $	*/
+/*	$NetBSD: cleanup_message.c,v 1.1.1.14 2007/05/19 16:28:06 heas Exp $	*/
 
 /*++
 /* NAME
@@ -693,7 +693,7 @@ static void cleanup_header_done_callback(void *context)
 #define VISIBLE_RCPT	((1 << HDR_TO) | (1 << HDR_RESENT_TO) \
 			| (1 << HDR_CC) | (1 << HDR_RESENT_CC))
 
-    if ((state->headers_seen & VISIBLE_RCPT) == 0)
+    if ((state->headers_seen & VISIBLE_RCPT) == 0 && *var_rcpt_witheld)
 	cleanup_out_format(state, REC_TYPE_NORM, "%s", var_rcpt_witheld);
 
     /*
@@ -707,6 +707,7 @@ static void cleanup_header_done_callback(void *context)
 	cleanup_out_format(state, REC_TYPE_PTR, REC_TYPE_PTR_FORMAT, 0L);
 	if ((state->append_hdr_pt_target = vstream_ftell(state->dst)) < 0)
 	    msg_fatal("%s: vstream_ftell %s: %m", myname, cleanup_path);
+	state->body_offset = state->append_hdr_pt_target;
     }
 }
 
@@ -833,6 +834,7 @@ static void cleanup_message_headerbody(CLEANUP_STATE *state, int type,
 	state->mime_state = mime_state_free(state->mime_state);
 	if ((state->xtra_offset = vstream_ftell(state->dst)) < 0)
 	    msg_fatal("%s: vstream_ftell %s: %m", myname, cleanup_path);
+	state->cont_length = state->xtra_offset - state->data_offset;
 	state->action = cleanup_extracted;
     }
 

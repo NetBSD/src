@@ -1,4 +1,4 @@
-/*	$NetBSD: local.c,v 1.1.1.10 2006/11/07 02:58:02 rpaulo Exp $	*/
+/*	$NetBSD: local.c,v 1.1.1.11 2007/05/19 16:28:20 heas Exp $	*/
 
 /*++
 /* NAME
@@ -503,11 +503,11 @@
 /* .IP "\fBlocal_command_shell (empty)\fR"
 /*	Optional shell program for \fBlocal\fR(8) delivery to non-Postfix command.
 /* .IP "\fBmax_idle (100s)\fR"
-/*	The maximum amount of time that an idle Postfix daemon process
-/*	waits for the next service request before exiting.
+/*	The maximum amount of time that an idle Postfix daemon process waits
+/*	for an incoming connection before terminating voluntarily.
 /* .IP "\fBmax_use (100)\fR"
-/*	The maximal number of connection requests before a Postfix daemon
-/*	process terminates.
+/*	The maximal number of incoming connections that a Postfix daemon
+/*	process will service before terminating voluntarily.
 /* .IP "\fBprepend_delivered_header (command, file, forward)\fR"
 /*	The message delivery contexts where the Postfix \fBlocal\fR(8) delivery
 /*	agent prepends a Delivered-To:  message header with the address
@@ -597,6 +597,7 @@
 #include <mail_conf.h>
 #include <been_here.h>
 #include <mail_params.h>
+#include <mail_version.h>
 #include <ext_prop.h>
 #include <maps.h>
 #include <flush_clnt.h>
@@ -847,6 +848,8 @@ static void pre_init(char *unused_name, char **unused_argv)
     flush_init();
 }
 
+MAIL_VERSION_STAMP_DECLARE;
+
 /* main - pass control to the single-threaded skeleton */
 
 int     main(int argc, char **argv)
@@ -897,6 +900,11 @@ int     main(int argc, char **argv)
 	VAR_LUSER_RELAY, DEF_LUSER_RELAY, &var_luser_relay, 0, 0,
 	0,
     };
+
+    /*
+     * Fingerprint executables and core dumps.
+     */
+    MAIL_VERSION_STAMP_ALLOCATE;
 
     single_server_main(argc, argv, local_service,
 		       MAIL_SERVER_INT_TABLE, int_table,

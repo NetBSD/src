@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_conf_time.c,v 1.1.1.4 2006/07/19 01:17:24 rpaulo Exp $	*/
+/*	$NetBSD: mail_conf_time.c,v 1.1.1.5 2007/05/19 16:28:12 heas Exp $	*/
 
 /*++
 /* NAME
@@ -18,12 +18,17 @@
 /*	const char *name;
 /*	const char *value;
 /*
+/*	void	set_mail_conf_time_int(name, value)
+/*	const char *name;
+/*	int     value;
+/*
 /*	void	get_mail_conf_time_table(table)
 /*	CONFIG_TIME_TABLE *table;
 /* AUXILIARY FUNCTIONS
-/*	int	get_mail_conf_time2(name1, name2, defval, min, max);
+/*	int	get_mail_conf_time2(name1, name2, defval, def_unit, min, max);
 /*	const char *name1;
 /*	const char *name2;
+/*	int	defval;
 /*	int	def_unit;
 /*	int	min;
 /*	int	max;
@@ -148,16 +153,14 @@ int     get_mail_conf_time(const char *name, const char *defval, int min, int ma
 /* get_mail_conf_time2 - evaluate integer-valued configuration variable */
 
 int     get_mail_conf_time2(const char *name1, const char *name2,
-			            const char *defval, int min, int max)
+			            int defval, int def_unit, int min, int max)
 {
     int     intval;
     char   *name;
-    int     def_unit;
 
     name = concatenate(name1, name2, (char *) 0);
-    def_unit = get_def_time_unit(name, defval);
     if (convert_mail_conf_time(name, &intval, def_unit) == 0)
-	set_mail_conf_time(name, defval);
+	set_mail_conf_time_int(name, defval);
     if (convert_mail_conf_time(name, &intval, def_unit) == 0)
 	msg_panic("get_mail_conf_time2: parameter not found: %s", name);
     check_mail_conf_time(name, intval, min, max);
@@ -170,6 +173,16 @@ int     get_mail_conf_time2(const char *name1, const char *name2,
 void    set_mail_conf_time(const char *name, const char *value)
 {
     mail_conf_update(name, value);
+}
+
+/* set_mail_conf_time_int - update integer-valued configuration dictionary entry */
+
+void    set_mail_conf_time_int(const char *name, int value)
+{
+    char    buf[BUFSIZ];		/* yeah! crappy code! */
+
+    sprintf(buf, "%ds", value);		        /* yeah! more crappy code! */
+    mail_conf_update(name, buf);
 }
 
 /* get_mail_conf_time_table - look up table of integers */

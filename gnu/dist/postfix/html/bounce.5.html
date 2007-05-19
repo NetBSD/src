@@ -31,8 +31,8 @@ BOUNCE(5)                                                            BOUNCE(5)
        bounce template formats.
 
 <b>GENERAL PROCEDURE</b>
-       To create customized bounce template file, create a tempo-
-       rary  copy  of the file <b>/etc/postfix/bounce.cf.default</b> and
+       To create a customized bounce template file, create a tem-
+       porary copy of the file <b>/etc/postfix/bounce.cf.default</b> and
        edit the temporary file.
 
        To preview the results of $<i>name</i> expansions in the template
@@ -52,7 +52,7 @@ BOUNCE(5)                                                            BOUNCE(5)
        something like:
 
        /etc/postfix/<a href="postconf.5.html">main.cf</a>:
-               <a href="postconf.5.html#bounce_template_file">bounce_template_file</a> = /etc/postfix/bounce.cf
+           <a href="postconf.5.html#bounce_template_file">bounce_template_file</a> = /etc/postfix/bounce.cf
 
 <b>TEMPLATE FILE FORMAT</b>
        The template file can specify templates for  failed  mail,
@@ -86,7 +86,7 @@ BOUNCE(5)                                                            BOUNCE(5)
            If you do so, please include this problem report. You can
            delete your own text from the attached returned message.
 
-                                          The mail system
+                              The mail system
            EOF
 
        The usage and specification of bounce templates is subject

@@ -1,4 +1,4 @@
-/*	$NetBSD: postconf.c,v 1.1.1.9 2007/02/05 17:41:36 rpaulo Exp $	*/
+/*	$NetBSD: postconf.c,v 1.1.1.10 2007/05/19 16:28:26 heas Exp $	*/
 
 /*++
 /* NAME
@@ -962,6 +962,8 @@ static void show_parameters(int mode, char **names)
     }
 }
 
+MAIL_VERSION_STAMP_DECLARE;
+
 /* main */
 
 int     main(int argc, char **argv)
@@ -971,6 +973,11 @@ int     main(int argc, char **argv)
     struct stat st;
     int     junk;
     ARGV   *ext_argv = 0;
+
+    /*
+     * Fingerprint executables and core dumps.
+     */
+    MAIL_VERSION_STAMP_ALLOCATE;
 
     /*
      * Be consistent with file permissions.

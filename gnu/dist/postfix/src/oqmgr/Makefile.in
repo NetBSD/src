@@ -1,10 +1,10 @@
 SHELL	= /bin/sh
 SRCS	= qmgr.c qmgr_active.c qmgr_transport.c qmgr_queue.c qmgr_entry.c \
 	qmgr_message.c qmgr_deliver.c qmgr_move.c \
-	qmgr_defer.c qmgr_enable.c qmgr_scan.c qmgr_bounce.c
+	qmgr_defer.c qmgr_enable.c qmgr_scan.c qmgr_bounce.c qmgr_error.c
 OBJS	= qmgr.o qmgr_active.o qmgr_transport.o qmgr_queue.o qmgr_entry.o \
 	qmgr_message.o qmgr_deliver.o qmgr_move.o \
-	qmgr_defer.o qmgr_enable.o qmgr_scan.o qmgr_bounce.o
+	qmgr_defer.o qmgr_enable.o qmgr_scan.o qmgr_bounce.o qmgr_error.o
 HDRS	= qmgr.h
 TESTSRC	=
 DEFS	= -I. -I$(INC_DIR) -D$(SYSTYPE)
@@ -22,7 +22,7 @@ $(PROG):	$(OBJS) $(LIBS)
 $(OBJS): ../../conf/makedefs.out
 
 Makefile: Makefile.in
-	(cat ../../conf/makedefs.out $?) >$@
+	cat ../../conf/makedefs.out $? >$@
 
 test:	$(TESTPROG)
 
@@ -75,6 +75,7 @@ qmgr.o: ../../include/mail_params.h
 qmgr.o: ../../include/mail_proto.h
 qmgr.o: ../../include/mail_queue.h
 qmgr.o: ../../include/mail_server.h
+qmgr.o: ../../include/mail_version.h
 qmgr.o: ../../include/master_proto.h
 qmgr.o: ../../include/msg.h
 qmgr.o: ../../include/recipient_list.h
@@ -132,6 +133,8 @@ qmgr_defer.o: ../../include/defer.h
 qmgr_defer.o: ../../include/deliver_request.h
 qmgr_defer.o: ../../include/dsn.h
 qmgr_defer.o: ../../include/dsn_buf.h
+qmgr_defer.o: ../../include/iostuff.h
+qmgr_defer.o: ../../include/mail_proto.h
 qmgr_defer.o: ../../include/msg.h
 qmgr_defer.o: ../../include/msg_stats.h
 qmgr_defer.o: ../../include/recipient_list.h
@@ -193,6 +196,17 @@ qmgr_entry.o: ../../include/vstream.h
 qmgr_entry.o: ../../include/vstring.h
 qmgr_entry.o: qmgr.h
 qmgr_entry.o: qmgr_entry.c
+qmgr_error.o: ../../include/dsn.h
+qmgr_error.o: ../../include/mymalloc.h
+qmgr_error.o: ../../include/recipient_list.h
+qmgr_error.o: ../../include/scan_dir.h
+qmgr_error.o: ../../include/stringops.h
+qmgr_error.o: ../../include/sys_defs.h
+qmgr_error.o: ../../include/vbuf.h
+qmgr_error.o: ../../include/vstream.h
+qmgr_error.o: ../../include/vstring.h
+qmgr_error.o: qmgr.h
+qmgr_error.o: qmgr_error.c
 qmgr_message.o: ../../include/argv.h
 qmgr_message.o: ../../include/attr.h
 qmgr_message.o: ../../include/bounce.h

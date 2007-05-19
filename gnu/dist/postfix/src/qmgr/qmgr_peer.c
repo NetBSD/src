@@ -1,4 +1,4 @@
-/*	$NetBSD: qmgr_peer.c,v 1.1.1.3 2006/07/19 01:17:39 rpaulo Exp $	*/
+/*	$NetBSD: qmgr_peer.c,v 1.1.1.4 2007/05/19 16:28:30 heas Exp $	*/
 
 /*++
 /* NAME
@@ -16,6 +16,10 @@
 /*	QMGR_JOB *job;
 /*	QMGR_QUEUE *queue;
 /*
+/*	QMGR_PEER *qmgr_peer_obtain(job, queue)
+/*	QMGR_JOB *job;
+/*	QMGR_QUEUE *queue;
+/*
 /*	void qmgr_peer_free(peer)
 /*	QMGR_PEER *peer;
 /*
@@ -24,7 +28,7 @@
 /*
 /* DESCRIPTION
 /*	These routines add/delete/manipulate per-job peers.
-/*	Each queue corresponds to a specific job and destination.
+/*	Each peer corresponds to a specific job and destination.
 /*      It is similar to per-transport queue structure, but groups
 /*      only the entries of the given job.
 /*
@@ -35,6 +39,9 @@
 /*	qmgr_peer_find() looks up the peer for the named destination
 /*	for the named job. A null result means that the peer
 /*	was not found.
+/*
+/*	qmgr_peer_obtain() looks up the peer for the named destination
+/*	for the named job. If it doesn't exist yet, it creates it.
 /*
 /*	qmgr_peer_free() disposes of a per-job peer after all
 /*	its entries have been taken care of. It is an error to dispose
@@ -110,6 +117,17 @@ void    qmgr_peer_free(QMGR_PEER *peer)
 QMGR_PEER *qmgr_peer_find(QMGR_JOB *job, QMGR_QUEUE *queue)
 {
     return ((QMGR_PEER *) htable_find(job->peer_byname, queue->name));
+}
+
+/* qmgr_peer_obtain - find/create peer associated with given job and queue */
+
+QMGR_PEER *qmgr_peer_obtain(QMGR_JOB *job, QMGR_QUEUE *queue)
+{
+    QMGR_PEER *peer;
+
+    if ((peer = qmgr_peer_find(job, queue)) == 0)
+	peer = qmgr_peer_create(job, queue);
+    return (peer);
 }
 
 /* qmgr_peer_select - select next peer suitable for delivery within given job */

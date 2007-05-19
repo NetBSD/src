@@ -71,7 +71,8 @@ mail.  Applications that use two separate Postfix instances will
 be covered by a later version of this document.  </p>
 
 <p> The after-queue content filter is not to be confused with the
-approach that is described in the <a href="SMTPD_PROXY_README.html">SMTPD_PROXY_README</a> document,
+approaches described in the <a href="SMTPD_PROXY_README.html">SMTPD_PROXY_README</a> or <a href="MILTER_README.html">MILTER_README</a>
+documents,
 where incoming SMTP mail is filtered BEFORE it is stored into the
 Postfix queue.  </p>
 
@@ -125,16 +126,18 @@ all email, as well as several options to filter mail selectively: </p>
 
 <h2><a name="principles">Principles of operation</a> </h2>
 
-<p> An external content filter receives unfiltered mail from Postfix
-(as described further below) and does one of the following: </p>
+<p> An after-queue content filter receives unfiltered mail from Postfix
+(as described further below) and can do one of the following: </p>
 
 <ol>
 
 <li> <p> Re-inject the mail back into Postfix, perhaps after changing
     content and/or destination. </p>
 
+<li> <p> Discard or quarantine the mail. </p>
+
 <li> <p> Reject the mail (by sending a suitable status code back to
-    Postfix). Postfix will return the mail to the sender. </p>
+    Postfix). Postfix will send the mail back to the sender address. </p>
 
 </ol>
 
@@ -146,7 +149,8 @@ suspect so that a human can decide what to do with it. </p>
 
 <h2><a name="simple_filter">Simple content filter example</a></h2>
 
-<p> The first example is simple to set up.  Postfix receives
+<p> The first example is simple to set up, but has major limitations
+that will be addressed in a second example.  Postfix receives
 unfiltered mail from the network with the <a href="smtpd.8.html">smtpd(8)</a> server, and
 delivers unfiltered mail to a content filter with the Postfix
 <a href="pipe.8.html">pipe(8)</a> delivery agent.  The content filter injects filtered mail
@@ -282,21 +286,23 @@ document for an introduction to the Postfix architecture. </p>
 
 <ul>
 
-<li> <p> Line 8: The -G option does nothing before Postfix 2.3,
-otherwise it disables address rewriting of message headers. </p>
+<li> <p> Line 8: The -G option says the filter output is not a local
+mail submission: don't do silly things like appending the local
+domain name to addresses in message headers.  This option does
+nothing before Postfix version 2.3.  </p>
 
 <li> <p> Line 8: The -i option says don't stop reading input when
 a line contains "." only.  </p>
 
 <li> <p> Line 8: NEVER NEVER NEVER use the "-t" command-line option
-here. It will mis-deliver mail, like sending mailing list mail back
-to the mailing list. </p>
+here. It will mis-deliver mail, like sending messages from a mailing
+list back to the mailing list. </p>
 
 <li> <p> Line 21: The idea is to first capture the message to
 file and then run the content through a third-party content filter
 program. </p>
 
-<li> <p> Line 22: If the mail cannot be captured to file, mail
+<li> <p> Line 22: If the message cannot be captured to file, mail
 delivery is deferred by terminating with exit status 75 (EX_TEMPFAIL).
 Postfix places the message in the deferred mail queue and tries
 again later.  </p>
@@ -306,13 +312,14 @@ program here that receives the content on standard input. </p>
 
 <li> <p> Line 26: If the content filter program finds a problem,
 the mail is bounced by terminating with exit status 69 (EX_UNAVAILABLE).
-Postfix will return the message to the sender as undeliverable.
+Postfix will send the message back to the sender as undeliverable
+mail.
 </p>
 
-<li> <p> Note: in this time of mail worms and spam, it is a BAD
+<li> <p> NOTE: in this time of mail worms and spam, it is a BAD
 IDEA to send known viruses or spam back to the sender, because that
-address is likely to be forged. It is safer to discard known to be
-bad content and to quarantine suspicious content so that it can
+address is likely to be forged. It is safer to discard known viruses
+and to quarantine suspicious content so that it can
 be inspected by a human being. </p>
 
 <li> <p> Line 28: If the content is OK, it is given as input to
@@ -331,7 +338,7 @@ as input: </p>
 
 <blockquote>
 <pre>
-% /path/to/script -f sender recipient... &lt;message-file
+% /path/to/script -f sender -- recipient... &lt;message-file
 </pre>
 </blockquote>
 
@@ -381,7 +388,7 @@ entry that defines the Postfix SMTP server: </p>
         -o <a href="postconf.5.html#content_filter">content_filter</a>=filter:dummy
 </pre>
 
-<p> The "<a href="postconf.5.html#content_filter">content_filter</a>" line causes Postfix to add one content
+<p> The "-o <a href="postconf.5.html#content_filter">content_filter</a>" line causes Postfix to add one content
 filter request record to each incoming mail message, with content
 "filter:dummy". This record overrides the normal mail routing
 and causes mail to be given to the content filter instead. </p>
@@ -432,7 +439,7 @@ for filtered mail. </p>
 Postfix SMTP server. </p>
 
 <li> <p> Execute "<b>postsuper -r ALL</b>" to remove content
-filter information from existing queue files. </p>
+filter request records from existing queue files. </p>
 
 <li> <p> Execute another "<b>postfix reload</b>". </p>
 
@@ -553,7 +560,9 @@ document for an introduction to the Postfix architecture. </p>
 
 <p> The example given here filters all mail, including mail that
 arrives via SMTP and mail that is locally submitted via the Postfix
-sendmail command. See examples near the end of this document for
+sendmail command (local submissions enter Postfix via the <a href="pickup.8.html">pickup(8)</a>
+server; to keep the figure simple we omit local submission details).
+See examples near the end of this document for
 how to exclude local users from filtering, or how to configure a
 destination dependent content filter. </p>
 
@@ -638,7 +647,7 @@ for more information. </p>
 <li> <p> The "-o <a href="postconf.5.html#disable_mime_output_conversion">disable_mime_output_conversion</a>=yes" is a workaround
 that prevents the breaking of domainkeys and other digital signatures.
 This is needed because some SMTP-based content filters don't announce
-8BITMIME support, even though they can handle it just fine.  </p>
+8BITMIME support, even though they can handle 8-bit mail. </p>
 
 <li> <p> The "-o <a href="postconf.5.html#smtp_generic_maps">smtp_generic_maps</a>=" is a workaround that prevents
 local address rewriting with <a href="generic.5.html">generic(5)</a> maps. Such rewriting should
@@ -671,6 +680,10 @@ never log in, and can be given a "*" password and non-existent
 shell and home directory.  This user handles all potentially
 dangerous mail content - that is why it should be a separate account.
 </p>
+
+<li> <p> By default, Postfix will terminate a command that runs
+longer than <a href="postconf.5.html#command_time_limit">command_time_limit</a> seconds (default: 1000s). This is a
+safety measure that prevents filters from running forever. </p>
 
 </ul>
 
@@ -711,15 +724,14 @@ that injects mail back into Postfix. </p>
 
 <ul>
 
-<li> <p> Note: do not use spaces around the "=" or "," characters. </p>
+<li> <p> NOTE: do not use spaces around the "=" or "," characters. </p>
 
-<li> <p> Note: the SMTP server must not have a smaller process
+<li> <p> NOTE: the SMTP server must not have a smaller process
 limit than the "filter" <a href="master.5.html">master.cf</a> entry. </p>
 
 <li> <p> The "-o <a href="postconf.5.html#content_filter">content_filter</a>=" overrides <a href="postconf.5.html">main.cf</a> settings, and
 requests no content filtering for mail from the content filter.
-This is required or else mail will stay in the content filtering
-loop. </p>
+This is required or else mail will loop. </p>
 
 <li> <p> The "-o <a href="postconf.5.html#receive_override_options">receive_override_options</a>" overrides <a href="postconf.5.html">main.cf</a> settings
 to avoid duplicating work that was already done before the content
@@ -737,7 +749,7 @@ specified in <a href="postconf.5.html">main.cf</a>: </p>
     <li> <p> We specify "<a href="postconf.5.html#no_milters">no_milters</a>" to disable Milter applications
     (this option is available only in Postfix 2.3 and later).  </p>
 
-    <li> <p> We don't specify "no_address_mapping" here.  This
+    <li> <p> We don't specify "<a href="postconf.5.html#no_address_mappings">no_address_mappings</a>" here.  This
     enables virtual alias expansion, canonical mappings, address
     masquerading, and other address mappings after the content
     filter. The <a href="postconf.5.html">main.cf</a> setting of "<a href="postconf.5.html#receive_override_options">receive_override_options</a>"
@@ -794,7 +806,7 @@ when content filtering is turned off. </p>
 </blockquote>
 
 <li> <p> Execute "<b>postsuper -r ALL</b>" to remove content
-filter information from existing queue files. </p>
+filter request records from existing queue files. </p>
 
 <li> <p> Execute another "<b>postfix reload</b>". </p>
 

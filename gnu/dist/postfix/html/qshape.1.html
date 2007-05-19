@@ -13,6 +13,7 @@ QSHAPE(1)                                                            QSHAPE(1)
        <b>qshape</b> [<b>-s</b>] [<b>-p</b>] [<b>-m</b> <i>min</i><b>_</b><i>subdomains</i>]
                [<b>-b</b> <i>bucket</i><b>_</b><i>count</i>] [<b>-t</b> <i>bucket</i><b>_</b><i>time</i>]
                [<b>-l</b>] [<b>-w</b> <i>terminal</i><b>_</b><i>width</i>]
+               [<b>-N</b> <i>batch</i><b>_</b><i>msg</i><b>_</b><i>count</i>] [<b>-n</b> <i>batch</i><b>_</b><i>top</i><b>_</b><i>domains</i>]
                [<b>-c</b> <i>config</i><b>_</b><i>directory</i>] [<i>queue</i><b>_</b><i>name</i> ...]
 
 <b>DESCRIPTION</b>
@@ -77,26 +78,39 @@ QSHAPE(1)                                                            QSHAPE(1)
               narrow  to  show  the domain name and all the coun-
               ters, the terminal_width limit is violated.
 
+       <b>-N</b> <i>batch</i><b>_</b><i>msg</i><b>_</b><i>count</i>
+              When the output device is a terminal,  intermediate
+              results  are shown each "batch_msg_count" messages.
+              This produces usable results in a  reasonable  time
+              even  when the <a href="QSHAPE_README.html#deferred_queue">deferred queue</a> is large. The default
+              is to show intermediate  results  every  1000  mes-
+              sages.
+
+       <b>-n</b> <i>batch</i><b>_</b><i>top</i><b>_</b><i>domains</i>
+              When  reporting  intermediate or final results to a
+              termainal, report only the top  "batch_top_domains"
+              domains. The default limit is 20 domains.
+
        <b>-c</b> <i>config</i><b>_</b><i>directory</i>
-              The <a href="postconf.5.html"><b>main.cf</b></a> configuration  file  is  in  the  named
+              The  <a href="postconf.5.html"><b>main.cf</b></a>  configuration  file  is  in the named
               directory  instead  of  the  default  configuration
               directory.
 
        Arguments:
 
        <i>queue</i><b>_</b><i>name</i>
-              By default <b>qshape</b> displays the  combined  distribu-
-              tion  of the <a href="QSHAPE_README.html#incoming_queue">incoming</a> and <a href="QSHAPE_README.html#active_queue">active queues</a>. To display
-              a different set of queues, just list  their  direc-
+              By  default  <b>qshape</b> displays the combined distribu-
+              tion of the <a href="QSHAPE_README.html#incoming_queue">incoming</a> and <a href="QSHAPE_README.html#active_queue">active queues</a>. To  display
+              a  different  set of queues, just list their direc-
               tory names on the command line.  Absolute paths are
-              used as is, other paths are taken relative  to  the
-              <a href="postconf.5.html"><b>main.cf</a>  <a href="postconf.5.html#queue_directory">queue_directory</a></b>  parameter setting.  While
-              <a href="postconf.5.html"><b>main.cf</b></a> supports the use of <i>$variable</i> expansion  in
-              the  definition  of  the <b><a href="postconf.5.html#queue_directory">queue_directory</a></b> parameter,
-              the <b>qshape</b> program does not. If you must use  vari-
+              used  as  is, other paths are taken relative to the
+              <a href="postconf.5.html"><b>main.cf</a> <a href="postconf.5.html#queue_directory">queue_directory</a></b> parameter  setting.   While
+              <a href="postconf.5.html"><b>main.cf</b></a>  supports the use of <i>$variable</i> expansion in
+              the definition of  the  <b><a href="postconf.5.html#queue_directory">queue_directory</a></b>  parameter,
+              the  <b>qshape</b> program does not. If you must use vari-
               able expansions in the <b><a href="postconf.5.html#queue_directory">queue_directory</a></b> setting, you
-              must specify an explicit  absolute  path  for  each
-              queue  subdirectory  even  if  you want the default
+              must  specify  an  explicit  absolute path for each
+              queue subdirectory even if  you  want  the  default
               <a href="QSHAPE_README.html#incoming_queue">incoming</a> and <a href="QSHAPE_README.html#active_queue">active queue</a> distribution.
 
 <b>SEE ALSO</b>
@@ -112,7 +126,7 @@ QSHAPE(1)                                                            QSHAPE(1)
        $<a href="postconf.5.html#queue_directory">queue_directory</a>/deferred/, messages postponed for later delivery.
 
 <b>LICENSE</b>
-       The Secure Mailer license must be  distributed  with  this
+       The  Secure  Mailer  license must be distributed with this
        software.
 
 <b>AUTHOR(S)</b>

@@ -1,4 +1,4 @@
-/*	$NetBSD: postqueue.c,v 1.1.1.10 2007/02/05 17:41:38 rpaulo Exp $	*/
+/*	$NetBSD: postqueue.c,v 1.1.1.11 2007/05/19 16:28:27 heas Exp $	*/
 
 /*++
 /* NAME
@@ -7,6 +7,8 @@
 /*	Postfix queue control
 /* SYNOPSIS
 /*	\fBpostqueue\fR [\fB-v\fR] [\fB-c \fIconfig_dir\fR] \fB-f\fR
+/* .br
+/*	\fBpostqueue\fR [\fB-v\fR] [\fB-c \fIconfig_dir\fR] \fB-i \fIqueue_id\fR
 /* .br
 /*	\fBpostqueue\fR [\fB-v\fR] [\fB-c \fIconfig_dir\fR] \fB-p\fR
 /* .br
@@ -32,6 +34,14 @@
 /*
 /*	Warning: flushing undeliverable mail frequently will result in
 /*	poor delivery performance of all other mail.
+/* .IP "\fB-i \fIqueue_id\fR"
+/*	Schedule immediate delivery of deferred mail with the
+/*	specified queue ID.
+/*
+/*	This option implements the traditional \fBsendmail -qI\fR
+/*	command, by contacting the \fBflush\fR(8) server.
+/*
+/*	This feature is available with Postfix version 2.4 and later.
 /* .IP \fB-p\fR
 /*	Produce a traditional sendmail-style queue listing.
 /*	This option implements the traditional \fBmailq\fR command,
@@ -184,10 +194,12 @@
 
 #include <mail_proto.h>
 #include <mail_params.h>
+#include <mail_version.h>
 #include <mail_conf.h>
 #include <mail_task.h>
 #include <mail_run.h>
 #include <mail_flush.h>
+#include <mail_queue.h>
 #include <flush_clnt.h>
 #include <smtp_stream.h>
 #include <user_acl.h>
@@ -211,11 +223,24 @@
 
  /*
   * Modes of operation.
+  * 
+  * XXX To support flush by recipient domain, or for destinations that have no
+  * mapping to logfile, the server has to defend against resource exhaustion
+  * attacks. A malicious user could fork off a postqueue client that starts
+  * an expensive requests and then kills the client immediately; this way she
+  * could create a high Postfix load on the system without ever exceeding her
+  * own per-user process limit. To prevent this, either the server needs to
+  * establish frequent proof of client liveliness with challenge/response, or
+  * the client needs to restrict expensive requests to privileged users only.
+  * 
+  * We don't have this problem with queue listings. The showq server detects an
+  * EPIPE error after reporting a few queue entries.
   */
 #define PQ_MODE_DEFAULT		0	/* noop */
 #define PQ_MODE_MAILQ_LIST	1	/* list mail queue */
 #define PQ_MODE_FLUSH_QUEUE	2	/* flush queue */
 #define PQ_MODE_FLUSH_SITE	3	/* flush site */
+#define PQ_MODE_FLUSH_FILE	4	/* flush message */
 
  /*
   * Silly little macros (SLMs).
@@ -347,7 +372,7 @@ static void flush_site(const char *site)
 
     flush_init();
 
-    switch (status = flush_send(site)) {
+    switch (status = flush_send_site(site)) {
     case FLUSH_STAT_OK:
 	exit(0);
     case FLUSH_STAT_BAD:
@@ -365,6 +390,34 @@ static void flush_site(const char *site)
     }
 }
 
+/* flush_file - flush mail with specific queue ID */
+
+static void flush_file(const char *queue_id)
+{
+    int     status;
+    const char *errstr;
+    uid_t   uid = getuid();
+
+    if (uid != 0 && uid != var_owner_uid
+	&& (errstr = check_user_acl_byuid(var_flush_acl, uid)) != 0)
+	msg_fatal_status(EX_NOPERM,
+		      "User %s(%ld) is not allowed to flush the mail queue",
+			 errstr, (long) uid);
+
+    switch (status = flush_send_file(queue_id)) {
+    case FLUSH_STAT_OK:
+	exit(0);
+    case FLUSH_STAT_BAD:
+	msg_fatal_status(EX_USAGE, "Invalid request: \"%s\"", queue_id);
+    case FLUSH_STAT_FAIL:
+	msg_fatal_status(EX_UNAVAILABLE,
+			 "Cannot flush mail queue - mail system is down");
+    default:
+	msg_fatal_status(EX_SOFTWARE,
+			 "Unexpected flush server reply status %d", status);
+    }
+}
+
 /* unavailable - sanitize exit status from library run-time errors */
 
 static void unavailable(void)
@@ -376,8 +429,10 @@ static void unavailable(void)
 
 static NORETURN usage(void)
 {
-    msg_fatal_status(EX_USAGE, "usage: postqueue -f | postqueue -p | postqueue -s site");
+    msg_fatal_status(EX_USAGE, "usage: postqueue -f | postqueue -i queueid | postqueue -p | postqueue -s site");
 }
+
+MAIL_VERSION_STAMP_DECLARE;
 
 /* main - the main program */
 
@@ -389,8 +444,14 @@ int     main(int argc, char **argv)
     int     fd;
     int     mode = PQ_MODE_DEFAULT;
     char   *site_to_flush = 0;
+    char   *id_to_flush = 0;
     ARGV   *import_env;
     int     bad_site;
+
+    /*
+     * Fingerprint executables and core dumps.
+     */
+    MAIL_VERSION_STAMP_ALLOCATE;
 
     /*
      * Be consistent with file permissions.
@@ -425,7 +486,7 @@ int     main(int argc, char **argv)
      * mail configuration read routine. Don't do complex things until we have
      * completed initializations.
      */
-    while ((c = GETOPT(argc, argv, "c:fps:v")) > 0) {
+    while ((c = GETOPT(argc, argv, "c:fi:ps:v")) > 0) {
 	switch (c) {
 	case 'c':				/* non-default configuration */
 	    if (setenv(CONF_ENV_PATH, optarg, 1) < 0)
@@ -435,6 +496,12 @@ int     main(int argc, char **argv)
 	    if (mode != PQ_MODE_DEFAULT)
 		usage();
 	    mode = PQ_MODE_FLUSH_QUEUE;
+	    break;
+	case 'i':				/* flush queue file */
+	    if (mode != PQ_MODE_DEFAULT)
+		usage();
+	    mode = PQ_MODE_FLUSH_FILE;
+	    id_to_flush = optarg;
 	    break;
 	case 'p':				/* traditional mailq */
 	    if (mode != PQ_MODE_DEFAULT)
@@ -462,6 +529,8 @@ int     main(int argc, char **argv)
      * Further initialization...
      */
     mail_conf_read();
+    if (strcmp(var_syslog_name, DEF_SYSLOG_NAME) != 0)
+	msg_syslog_init(mail_task("postqueue"), LOG_PID, LOG_FACILITY);
     mail_dict_init();				/* proxy, sql, ldap */
     get_mail_conf_str_table(str_table);
 
@@ -499,6 +568,12 @@ int     main(int argc, char **argv)
 	      "Cannot flush mail queue - invalid destination: \"%.100s%s\"",
 		   site_to_flush, strlen(site_to_flush) > 100 ? "..." : "");
     }
+    if (id_to_flush != 0) {
+	if (!mail_queue_id_ok(id_to_flush))
+	    msg_fatal_status(EX_USAGE,
+		       "Cannot flush queue ID - invalid name: \"%.100s%s\"",
+		       id_to_flush, strlen(id_to_flush) > 100 ? "..." : "");
+    }
 
     /*
      * Start processing.
@@ -513,6 +588,10 @@ int     main(int argc, char **argv)
 	break;
     case PQ_MODE_FLUSH_SITE:
 	flush_site(site_to_flush);
+	exit(0);
+	break;
+    case PQ_MODE_FLUSH_FILE:
+	flush_file(id_to_flush);
 	exit(0);
 	break;
     case PQ_MODE_FLUSH_QUEUE:

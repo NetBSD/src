@@ -49,15 +49,17 @@ versions.  </p>
 <h2><a name="no_db">Building Postfix on systems without Berkeley
 DB</a></h2>
 
-<p> Many commercial UNIXes ship without Berkeley DB support. Examples
-are Solaris, HP-UX, IRIX, UNIXWARE. In order to build Postfix with
+<p> Some UNIXes ship without Berkeley DB support; for historical
+reasons these use DBM files instead. A problem with DBM files is
+that they can store only limited amounts of data. To build Postfix
+with
 Berkeley DB support you need to download and install the source
-code from <a href="http://www.sleepycat.com/">http://www.sleepycat.com/</a> </p>
+code from <a href="http://www.oracle.com/database/berkeley-db/">http://www.oracle.com/database/berkeley-db/</a>. </p>
 
 <p> Warning: some Linux system libraries use Berkeley DB, as do
 some third-party libraries such as SASL. If you compile Postfix
 with a different Berkeley DB implementation, then every Postfix
-program will dump core because either the system library, SASL
+program will dump core because either the system library, the SASL
 library, or Postfix itself ends up using the wrong version. </p>
 
 <p>The more recent Berkeley DB versions have a compile-time switch,
@@ -67,7 +69,7 @@ Although wasteful, this may be the only way to keep things from
 falling apart. </p>
 
 <p> To build Postfix after you installed the Berkeley DB from
-<a href="http://www.sleepycat.com/">http://www.sleepycat.com/</a>, use something like: </p>
+source code, use something like: </p>
 
 <blockquote>
 <pre>
@@ -214,7 +216,8 @@ undefined reference to `pthread_mutex_trylock'
 </pre>
 </blockquote>
 
-<p> More information is available at <a href="http://www.sleepycat.com/">http://www.sleepycat.com/</a>. </p>
+<p> More information is available at
+<a href="http://www.oracle.com/database/berkeley-db/">http://www.oracle.com/database/berkeley-db/</a>. </p>
 
 </body>
 

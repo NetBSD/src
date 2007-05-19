@@ -81,18 +81,23 @@ SPAWN(8)                                                              SPAWN(8)
               The  amount  of  time the command is allowed to run
               before it is terminated.
 
+              Postfix 2.4 and later support a suffix that  speci-
+              fies  the  time  unit:  s (seconds), m (minutes), h
+              (hours), d (days), w (weeks). The default time unit
+              is seconds.
+
 <b>MISCELLANEOUS</b>
        <b><a href="postconf.5.html#config_directory">config_directory</a> (see 'postconf -d' output)</b>
-              The default location of  the  Postfix  <a href="postconf.5.html">main.cf</a>  and
+              The  default  location  of  the Postfix <a href="postconf.5.html">main.cf</a> and
               <a href="master.5.html">master.cf</a> configuration files.
 
        <b><a href="postconf.5.html#daemon_timeout">daemon_timeout</a> (18000s)</b>
-              How  much time a Postfix daemon process may take to
-              handle a request  before  it  is  terminated  by  a
+              How much time a Postfix daemon process may take  to
+              handle  a  request  before  it  is  terminated by a
               built-in watchdog timer.
 
        <b><a href="postconf.5.html#export_environment">export_environment</a> (see 'postconf -d' output)</b>
-              The  list  of  environment variables that a Postfix
+              The list of environment variables  that  a  Postfix
               process will export to non-Postfix processes.
 
        <b><a href="postconf.5.html#ipc_timeout">ipc_timeout</a> (3600s)</b>
@@ -104,13 +109,14 @@ SPAWN(8)                                                              SPAWN(8)
               and most Postfix daemon processes.
 
        <b><a href="postconf.5.html#max_idle">max_idle</a> (100s)</b>
-              The maximum amount of time  that  an  idle  Postfix
-              daemon  process  waits for the next service request
-              before exiting.
+              The  maximum  amount  of  time that an idle Postfix
+              daemon process waits  for  an  incoming  connection
+              before terminating voluntarily.
 
        <b><a href="postconf.5.html#max_use">max_use</a> (100)</b>
-              The maximal number of connection requests before  a
-              Postfix daemon process terminates.
+              The  maximal  number of incoming connections that a
+              Postfix daemon process will service  before  termi-
+              nating voluntarily.
 
        <b><a href="postconf.5.html#process_id">process_id</a> (read-only)</b>
               The  process  ID  of  a  Postfix  command or daemon

@@ -134,7 +134,7 @@ file contains bad information, or some packet filter is blocking
 the DNS requests or replies.  </p>
 
 <li> <p> If the number of <a href="smtpd.8.html">smtpd(8)</a> processes has reached the process
-limit as specified in master.cf, new SMTP clients must wait until
+limit as specified in <a href="master.5.html">master.cf</a>, new SMTP clients must wait until
 a process becomes available.  Increase the number of processes if
 memory permits. See the instructions given under "<a
 href="#proc_limit">Tuning the number of Postfix processes</a>".
@@ -159,7 +159,7 @@ by turning off the delay: </p>
 
 <blockquote>
 <pre>
-/etc/postfix/main.cf:
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
     # Not needed with Postfix 2.1
     <a href="postconf.5.html#smtpd_error_sleep_time">smtpd_error_sleep_time</a> = 0
 </pre>
@@ -224,42 +224,56 @@ seconds or $<a href="postconf.5.html#smtpd_error_sleep_time">smtpd_error_sleep_t
 
 <h2><a name="conn_limit">Measures against clients that make too many connections</a></h2>
 
-<p> Note: this feature is not included with Postfix version 2.1. </p>
+<p> Note: these features use the Postfix <a href="anvil.8.html">anvil(8)</a> service, introduced
+with Postfix version 2.2. </p>
 
 <p> The Postfix <a href="smtpd.8.html">smtpd(8)</a> server can limit the number of simultaneous
-connections from the same SMTP client, as well as the number of
-connections that a client is allowed to make per unit time.
+connections from the same SMTP client, as well as the connection
+rate and the rate of certain SMTP commands from the same client.
 These statistics are maintained by the <a href="anvil.8.html">anvil(8)</a> server (translation:
 if <a href="anvil.8.html">anvil(8)</a> breaks, then connection limits stop working). </p>
 
-<p> IMPORTANT: These limits are designed to protect the <a href="smtpd.8.html">smtpd(8)</a> server
-against flagrant abuse. Do not use these limits to regulate legitimate
-traffic: mail will suffer grotesque delays if you do so. </p>
+<p> IMPORTANT: These limits must not be used to regulate legitimate
+traffic: mail will suffer grotesque delays if you do so.  The limits
+are designed to protect the <a href="smtpd.8.html">smtpd(8)</a> server against abuse by
+out-of-control clients.  </p>
 
-<ul>
+<blockquote>
 
-<li> <p> An SMTP client may make up to $<a href="postconf.5.html#smtpd_client_connection_count_limit">smtpd_client_connection_count_limit</a>
-simultaneous connections (default: 50). This is half the default
-process limit. </p>
+<dl>
 
-<li> <p> An SMTP client may make up to $<a href="postconf.5.html#smtpd_client_message_rate_limit">smtpd_client_message_rate_limit</a>
-message delivery requests per unit time (default: no limit). </p>
+<dt> <a href="postconf.5.html#smtpd_client_connection_count_limit">smtpd_client_connection_count_limit</a> (default: 50) </dt> <dd>
+The maximum number of connections than an SMTP client may make
+simultaneously. </dd>
 
-<li> <p> An SMTP client may send up to $<a href="postconf.5.html#smtpd_client_recipient_rate_limit">smtpd_client_recipient_rate_limit</a>
-recipient addresses per unit time (default: no limit). </p>
+<dt> <a href="postconf.5.html#smtpd_client_connection_rate_limit">smtpd_client_connection_rate_limit</a> (default: no limit) </dt>
+<dd> The maximum number of connections that an SMTP client may make
+in the time interval specified with <a href="postconf.5.html#anvil_rate_time_unit">anvil_rate_time_unit</a> (default:
+60s).  </dd>
 
-<li> <p> An SMTP client may make up to $<a href="postconf.5.html#smtpd_client_connection_rate_limit">smtpd_client_connection_rate_limit</a>
-connections per unit time (default: no limit). </p>
+<dt> <a href="postconf.5.html#smtpd_client_message_rate_limit">smtpd_client_message_rate_limit</a> (default: no limit) </dt> <dd>
+The maximum number of message delivery requests that an SMTP client
+may make in the time interval specified with <a href="postconf.5.html#anvil_rate_time_unit">anvil_rate_time_unit</a>
+(default: 60s). </dd>
 
-<li> <p> These limits are not applied to SMTP clients in the networks
-specified with $<a href="postconf.5.html#smtpd_client_event_limit_exceptions">smtpd_client_event_limit_exceptions</a> (default:
-clients in $<a href="postconf.5.html#mynetworks">mynetworks</a> may make an unlimited number of connections).
+<dt> <a href="postconf.5.html#smtpd_client_recipient_rate_limit">smtpd_client_recipient_rate_limit</a> (default: no limit) </dt>
+<dd> The maximum number of recipient addresses that an SMTP client
+may specify in the time interval specified with <a href="postconf.5.html#anvil_rate_time_unit">anvil_rate_time_unit</a>
+(default: 60s). </dd>
 
-<li> <p> The <a href="postconf.5.html#anvil_rate_time_unit">anvil_rate_time_unit</a> parameter specifies the time
-unit over which client connection rates are computed (default:
-60s).
+<dt> <a href="postconf.5.html#smtpd_client_new_tls_session_rate_limit">smtpd_client_new_tls_session_rate_limit</a> (default: no limit)
+</dt> <dd> The maximum number of new TLS sessions (without using
+the TLS session cache) that an SMTP client may negotiate in the
+time interval specified with <a href="postconf.5.html#anvil_rate_time_unit">anvil_rate_time_unit</a> (default: 60s).
+</dd>
 
-</ul>
+<dt> <a href="postconf.5.html#smtpd_client_event_limit_exceptions">smtpd_client_event_limit_exceptions</a> (default: $<a href="postconf.5.html#mynetworks">mynetworks</a>)
+</dt> <dd> SMTP clients that are excluded from connection and rate
+limits specified above. </dd>
+
+</dl>
+
+</blockquote>
 
 <h2><a name="mailing_tips">General mail delivery performance tips</a></h2>
 
@@ -342,7 +356,7 @@ channel. </p>
 <li> <p> The <a href="postconf.5.html#default_destination_concurrency_limit">default_destination_concurrency_limit</a> parameter (default:
 20) controls how many messages may be sent to the same destination
 simultaneously. You can override this setting for specific message
-delivery transports by taking the name of the master.cf entry
+delivery transports by taking the name of the <a href="master.5.html">master.cf</a> entry
 and appending "_destination_concurrency_limit". </p>
 
 </ul>
@@ -359,7 +373,7 @@ is not useful. Another good reason to limit delivery concurrency
 to the same recipient: if the recipient has an expensive shell
 command in her .forward file, or if the recipient is a mailing list
 manager, you don't want to run too many instances of those processes
-the same time.  </p>
+at the same time.  </p>
 
 <li> <p> The default <a href="postconf.5.html#smtp_destination_concurrency_limit">smtp_destination_concurrency_limit</a> of 20 seems
 enough to noticeably load a system without bringing it to its knees.
@@ -404,8 +418,8 @@ as 5s or even 1s can be used to prevent congestion when one or
 more, but not all MX hosts are down. </p>
 
 <p> If necessary, set a higher transport_destination_concurrency_limit
-(in main.cf since this is a queue manager parameter) and a lower
-smtp_connection_timeout (with a "-o" override in master.cf since
+(in <a href="postconf.5.html">main.cf</a> since this is a queue manager parameter) and a lower
+smtp_connection_timeout (with a "-o" override in <a href="master.5.html">master.cf</a> since
 this parameter has no per-transport name) for the relay transport
 and any transports dedicated for specific high volume destinations.
 </p>
@@ -464,10 +478,12 @@ some amount of time. </p>
 
 <dl>
 
-<dt> <a href="postconf.5.html#queue_run_delay">queue_run_delay</a> (default: 1000 seconds) </dt> <dd> How often
+<dt> <a href="postconf.5.html#queue_run_delay">queue_run_delay</a> (default: 300 seconds; before Postfix 2.4:
+1000s) </dt> <dd> How often
 the queue manager scans the queue for deferred mail. </dd>
 
-<dt> <a href="postconf.5.html#minimal_backoff_time">minimal_backoff_time</a> (default: 1000 seconds) </dt> <dd> The
+<dt> <a href="postconf.5.html#minimal_backoff_time">minimal_backoff_time</a> (default: 300 seconds; before Postfix
+2.4: 1000s) </dt> <dd> The
 minimal amount of time a message won't be looked at, and the minimal
 amount of time to stay away from a "dead" destination. </dd>
 
@@ -518,7 +534,8 @@ that usually requires timing out one or more SMTP connections. </p>
 always better than increasing the frequency of delivery attempts.
 However, if you can control only the delivery attempt frequency,
 consider using a dedicated <a href="postconf.5.html#fallback_relay">fallback_relay</a> "graveyard" machine for
-bad destinations so that they do not ruin the performance of normal
+bad destinations, so that these destinations do not ruin the
+performance of normal
 mail deliveries.  </p>
 
 <h2><a name="proc_limit">Tuning the number of Postfix processes</a></h2>
@@ -530,30 +547,30 @@ smtp server processes, and so on.  This may overwhelm systems with
 little memory, as well as networks with low bandwidth.  </p>
 
 <p> You can change the global process limit by specifying a
-non-default <a href="postconf.5.html#default_process_limit">default_process_limit</a> in the main.cf file. For example,
+non-default <a href="postconf.5.html#default_process_limit">default_process_limit</a> in the <a href="postconf.5.html">main.cf</a> file. For example,
 to run up to 10 smtp client processes, 10 smtp server processes,
 and so on: </p>
 
 <blockquote>
 <pre>
-/etc/postfix/main.cf:
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
     <a href="postconf.5.html#default_process_limit">default_process_limit</a> = 10
 </pre>
 </blockquote>
 
 <p> You need to execute "postfix reload" to make the change effective.
 The limits are enforced by the Postfix <a href="master.8.html">master(8)</a> daemon which does
-not automatically read main.cf when it changes. </p>
+not automatically read <a href="postconf.5.html">main.cf</a> when it changes. </p>
 
 <p> You can override the process limit for specific Postfix daemons
-by editing the master.cf file.  For example, if you do not wish to
+by editing the <a href="master.5.html">master.cf</a> file.  For example, if you do not wish to
 receive 100 SMTP messages at the same time, but do not want to
 change the process limits for local mail deliveries, you could
 specify: </p>
 
 <blockquote>
 <pre>
-/etc/postfix/master.cf:
+/etc/postfix/<a href="master.5.html">master.cf</a>:
     # ====================================================================
     # service type  private unpriv  chroot  wakeup  maxproc command + args
     #               (yes)   (yes)   (yes)   (never) (100)
@@ -572,6 +589,20 @@ errors. </p>
 
 <ul>
 
+<li> <p> Depending on your Postfix and operating system versions
+you may need to recompile Postfix if you need more than 1024 file
+descriptors per process: </p>
+
+<ul> <li> <p> No recompilation is needed for Postfix version 2.4
+and later, when it was compiled for systems that support BSD kqueue(2)
+(FreeBSD 4.1, NetBSD 2.0, OpenBSD 2.9), Solaris 8 /dev/poll, or
+Linux 2.6 epoll(4).  </p>
+
+<li> <p> Otherwise, Postfix needs to be recompiled to override the
+default FD_SETSIZE value. </p>
+
+</ul>
+
 <li> <p> Reduce the number of processes as described under "<a
 href="#proc_limit">Tuning the number of Postfix processes</a>" above. 
 Fewer processes need fewer open files and sockets. </p>
@@ -584,7 +615,8 @@ with your system tuning guide:  </p>
 <ul>
 
 <li> <p> Some FreeBSD kernel parameters can be specified in
-/boot/loader.conf, and some can be changed with sysctl commands.
+/boot/loader.conf, and some can be specified in /etc/sysctl.conf
+or changed with sysctl commands.
 Which is which depends on the version.
 </p>
 
@@ -597,7 +629,7 @@ kern.maxfilesperproc="16384"
 </pre>
 
 <li> <p> Linux kernel parameters can be specified in /etc/sysctl.conf
-and can also be changed with sysctl commands: </p>
+or changed with sysctl commands: </p>
 
 <pre>
 fs.file-max=16384
@@ -606,7 +638,7 @@ kernel.threads-max=2048
 
 <li> <p> Solaris kernel parameters can be specified in /etc/system,
 as described in the <a
-href="http://www.science.uva.nl/pub/solaris/solaris2.html#q3.46">Solaris
+href="http://www.science.uva.nl/pub/solaris/solaris2.html#q3.48">Solaris
 FAQ</a> entry titled "How can I increase the number of file
 descriptors per process?" </p>
 

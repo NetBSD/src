@@ -1,4 +1,4 @@
-.\"	$NetBSD: header_checks.5,v 1.1.1.6 2006/07/19 01:16:45 rpaulo Exp $
+.\"	$NetBSD: header_checks.5,v 1.1.1.7 2007/05/19 16:27:48 heas Exp $
 .\"
 .TH HEADER_CHECKS 5 
 .ad
@@ -6,29 +6,33 @@
 .SH NAME
 header_checks
 \-
-Postfix built-in header/body inspection
+Postfix built-in content inspection
 .SH "SYNOPSIS"
 .na
 .nf
+.nf
 \fBheader_checks = pcre:/etc/postfix/header_checks\fR
-.br
 \fBmime_header_checks = pcre:/etc/postfix/mime_header_checks\fR
-.br
 \fBnested_header_checks = pcre:/etc/postfix/nested_header_checks\fR
-.br
 \fBbody_checks = pcre:/etc/postfix/body_checks\fR
 .sp
-\fBpostmap -fq "\fIstring\fB" pcre:/etc/postfix/\fIfilename\fR
-.br
-\fBpostmap -fq - pcre:/etc/postfix/\fIfilename\fR <\fIinputfile\fR
+\fBpostmap -q "\fIstring\fB" pcre:/etc/postfix/\fIfilename\fR
+\fBpostmap -q - pcre:/etc/postfix/\fIfilename\fR <\fIinputfile\fR
+.fi
 .SH DESCRIPTION
 .ad
 .fi
-Postfix provides a simple built-in content inspection mechanism that
-examines incoming mail one message header or one message body line
-at a time. Each input is compared against a list of patterns, and
-when a match is found the corresponding action is executed.
-This feature is implemented by the Postfix \fBcleanup\fR(8) server.
+This document describes access control on the content of
+message headers and message body lines; it is implemented
+by the Postfix \fBcleanup\fR(8) server before mail is queued.
+See \fBaccess\fR(5) for access control on remote SMTP client
+information.
+
+Each message header or message body line is compared against
+a list of patterns.
+When a match is found the corresponding action is executed, and
+the matching process is repeated for the next message header or
+message body line.
 
 For examples, see the EXAMPLES section at the end of this
 manual page.
@@ -62,6 +66,15 @@ message headers is treated as body content.
 Note: message headers are examined one logical header at a time,
 even when a message header spans multiple lines. Body lines are
 always examined one line at a time.
+.SH "COMPATIBILITY"
+.na
+.nf
+.ad
+.fi
+With Postfix version 2.2 and earlier specify "\fBpostmap
+-fq\fR" to query a table that contains case sensitive
+patterns. By default, regexp: and pcre: patterns are case
+insensitive.
 .SH "TABLE FORMAT"
 .na
 .nf
@@ -89,16 +102,17 @@ execute the corresponding \fIaction\fR.
 .IP "\fBif /\fIpattern\fB/\fIflags\fR"
 .IP "\fBendif\fR"
 Match the input string against the patterns between \fBif\fR
-and \fBendif\fR, if and only if the input string also matches
-\fIpattern\fR. The \fBif\fR..\fBendif\fR can nest.
+and \fBendif\fR, if and only if the same input string also
+matches \fIpattern\fR. The \fBif\fR..\fBendif\fR can nest.
 .sp
 Note: do not prepend whitespace to patterns inside
 \fBif\fR..\fBendif\fR.
 .IP "\fBif !/\fIpattern\fB/\fIflags\fR"
 .IP "\fBendif\fR"
 Match the input string against the patterns between \fBif\fR
-and \fBendif\fR, if and only if the input string does \fBnot\fR
-match \fIpattern\fR. The \fBif\fR..\fBendif\fR can nest.
+and \fBendif\fR, if and only if the same input string does
+\fBnot\fR match \fIpattern\fR. The \fBif\fR..\fBendif\fR
+can nest.
 .IP "blank lines and comments"
 Empty lines and whitespace-only lines are ignored, as
 are lines whose first non-whitespace character is a `#'.
@@ -156,13 +170,13 @@ For backwards compatibility reasons, Postfix also accepts
 .sp
 This feature is available in Postfix 2.1 and later.
 .IP "\fBFILTER \fItransport:destination\fR"
-Write a content filter request to the queue file and
+Write a content filter request to the queue file, and
 inspect the next input line.
 After the complete message is received it will be sent through
 the specified external content filter.  More information about
 external content filters is in the Postfix FILTER_README file.
 .sp
-Note: this action overrides the \fBmain.cf content_filter\fR setting,
+Note: this action overrides the \fBcontent_filter\fR setting,
 and affects all recipients of the message. In the case that multiple
 \fBFILTER\fR actions fire, only the last one is executed.
 .sp
@@ -180,16 +194,17 @@ the \fBpostsuper\fR(1) command.
 .sp
 Note: use "\fBpostsuper -r\fR" to release mail that was kept on
 hold for a significant fraction of \fB$maximal_queue_lifetime\fR
-or \fB$bounce_queue_lifetime\fR, or longer.
+or \fB$bounce_queue_lifetime\fR, or longer. Use "\fBpostsuper -H\fR"
+only for mail that will not expire within a few delivery attempts.
 .sp
 Note: this action affects all recipients of the message.
 .sp
 This feature is available in Postfix 2.0 and later.
 .IP \fBIGNORE\fR
-Delete the current line from the input and inspect
+Delete the current line from the input, and inspect
 the next input line.
 .IP "\fBPREPEND \fItext...\fR"
-Prepend one line with the specified text and inspect the next
+Prepend one line with the specified text, and inspect the next
 input line.
 .sp
 Notes:
@@ -211,7 +226,7 @@ This action cannot be used to prepend multi-line text.
 .IP
 This feature is available in Postfix 2.1 and later.
 .IP "\fBREDIRECT \fIuser@domain\fR"
-Write a message redirection request to the queue file and
+Write a message redirection request to the queue file, and
 inspect the next input line. After the message is queued,
 it will be sent to the specified address instead of the
 intended recipient(s).
@@ -222,7 +237,7 @@ fire, only the last one is executed.
 .sp
 This feature is available in Postfix 2.1 and later.
 .IP "\fBREPLACE \fItext...\fR"
-Replace the current line with the specified text and inspect the next
+Replace the current line with the specified text, and inspect the next
 input line.
 .sp
 This feature is available in Postfix 2.2 and later. The
@@ -253,21 +268,27 @@ text...\fR, Postfix inserts a default enhanced status code of
 "5.7.1".
 .IP "\fBWARN \fIoptional text...\fR
 Log a warning with the \fIoptional text...\fR (or log a
-generic message) and inspect the next input line. This
+generic message), and inspect the next input line. This
 action is useful for debugging and for testing a pattern
 before applying more drastic actions.
 .SH BUGS
 .ad
 .fi
 Many people overlook the main limitations of header and body_checks
-rules.  These rules operate on one logical message header or one body
-line at a time, and a decision made for one line is not carried over
-to the next line.  If text in the message body is encoded
-(RFC 2045) then the rules have to specified for the encoded
-form.  Likewise, when message headers are encoded (RFC
+rules.
+.IP \(bu
+These rules operate on one logical message header or one body
+line at a time. A decision made for one line is not carried over
+to the next line.
+.IP \(bu
+If text in the message body is encoded
+(RFC 2045) then the rules need to be specified for the encoded
+form.
+.IP \(bu
+Likewise, when message headers are encoded (RFC
 2047) then the rules need to be specified for the encoded
 form.
-
+.PP
 Message headers added by the \fBcleanup\fR(8) daemon itself
 are excluded from inspection. Examples of such message headers
 are \fBFrom:\fR, \fBTo:\fR, \fBMessage-ID:\fR, \fBDate:\fR.
@@ -318,14 +339,11 @@ Header pattern to block attachments with bad file name extensions.
 .na
 .nf
 /etc/postfix/main.cf:
-.ti +4
-header_checks = regexp:/etc/postfix/header_checks
+    header_checks = regexp:/etc/postfix/header_checks
 
 /etc/postfix/header_checks:
-.ti +4
-/^content-(type|disposition):.*name[[:space:]]*=.*\\.(exe|vbs)/
-.ti +8
-REJECT Bad attachment file name extension: $2
+    /^content-(type|disposition):.*name[[:space:]]*=.*\\.(exe|vbs)/
+        REJECT Bad attachment file name extension: $2
 
 .ad
 .fi
@@ -334,14 +352,11 @@ Body pattern to stop a specific HTML browser vulnerability exploit.
 .na
 .nf
 /etc/postfix/main.cf:
-.ti +4
-body_checks = regexp:/etc/postfix/body_checks
+    body_checks = regexp:/etc/postfix/body_checks
 
 /etc/postfix/body_checks:
-.ti +4
-/^<iframe src=(3D)?cid:.* height=(3D)?0 width=(3D)?0>$/
-.ti +8
-REJECT IFRAME vulnerability exploit
+    /^<iframe src=(3D)?cid:.* height=(3D)?0 width=(3D)?0>$/
+        REJECT IFRAME vulnerability exploit
 .SH "SEE ALSO"
 .na
 .nf

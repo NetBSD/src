@@ -1,4 +1,4 @@
-/*	$NetBSD: string_list.c,v 1.1.1.5 2006/07/19 01:17:29 rpaulo Exp $	*/
+/*	$NetBSD: string_list.c,v 1.1.1.6 2007/05/19 16:28:18 heas Exp $	*/
 
 /*++
 /* NAME
@@ -30,8 +30,8 @@
 /*
 /*	A string matches a string list when it appears in the list of
 /*	string patterns. The matching process is case insensitive.
-/*	In order to reverse the result, precede a non-file name pattern
-/*	with an exclamation point (!).
+/*	In order to reverse the result, precede a pattern with an
+/*	exclamation point (!).
 /*
 /*	string_list_init() performs initializations. The flags argument
 /*	is ignored; pattern_list specifies a list of string patterns.

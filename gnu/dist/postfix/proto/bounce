@@ -24,15 +24,17 @@
 # GENERAL PROCEDURE
 # .ad
 # .fi
-#	To create customized bounce template file, create a temporary
+#	To create a customized bounce template file, create a
+#	temporary
 #	copy of the file \fB/etc/postfix/bounce.cf.default\fR and
 #	edit the temporary file.
 #
 #	To preview the results of $\fIname\fR expansions in the
 #       template text, use the command
 #
-# .ti +4
-#	\fBpostconf -b\fR \fItemporary_file\fR
+# .nf
+#	    \fBpostconf -b\fR \fItemporary_file\fR
+# .fi
 #
 #	Errors in the template will be reported to the standard
 #	error stream and to the syslog daemon.
@@ -45,9 +47,10 @@
 #	Postfix configuration directory and specify in main.cf
 #	something like:
 #
+# .nf
 #	/etc/postfix/main.cf:
-# .ti +4
 #	    bounce_template_file = /etc/postfix/bounce.cf
+# .fi
 # TEMPLATE FILE FORMAT
 # .ad
 # .fi
@@ -65,32 +68,27 @@
 #	it in quotes as with the shell or with Perl (\fItemplate_name\fB
 #	= <<'EOF'\fR). Here is an example:
 #
-# .in +4
 # .nf
-# .na
-#	# The failure template is used for undeliverable mail.
+#	    # The failure template is used for undeliverable mail.
 #
-#	failure_template = <<EOF
-#	Charset: us-ascii
-#	From: MAILER-DAEMON (Mail Delivery System)
-#	Subject: Undelivered Mail Returned to Sender
-#	Postmaster-Subject: Postmaster Copy: Undelivered Mail
-#	
-#	This is the mail system at host $myhostname.
-#	
-#	I'm sorry to have to inform you that your message could not
-#	be delivered to one or more recipients. It's attached below.
-#	
-#	For further assistance, please send mail to postmaster.
-#	
-#	If you do so, please include this problem report. You can
-#	delete your own text from the attached returned message.
+#	    failure_template = <<EOF
+#	    Charset: us-ascii
+#	    From: MAILER-DAEMON (Mail Delivery System)
+#	    Subject: Undelivered Mail Returned to Sender
+#	    Postmaster-Subject: Postmaster Copy: Undelivered Mail
+#	    
+#	    This is the mail system at host $myhostname.
+#	    
+#	    I'm sorry to have to inform you that your message could not
+#	    be delivered to one or more recipients. It's attached below.
+#	    
+#	    For further assistance, please send mail to postmaster.
+#	    
+#	    If you do so, please include this problem report. You can
+#	    delete your own text from the attached returned message.
 #
-# .ti +12
-#	                   The mail system
-#	EOF
-# .in -4
-# .ad
+#	                       The mail system
+#	    EOF
 # .fi
 # .PP
 #	The usage and specification of bounce templates is

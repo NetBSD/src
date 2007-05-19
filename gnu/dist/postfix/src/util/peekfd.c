@@ -1,4 +1,4 @@
-/*	$NetBSD: peekfd.c,v 1.1.1.3 2006/07/19 01:17:54 rpaulo Exp $	*/
+/*	$NetBSD: peekfd.c,v 1.1.1.4 2007/05/19 16:28:48 heas Exp $	*/
 
 /*++
 /* NAME
@@ -17,6 +17,10 @@
 /* DIAGNOSTICS
 /*	peekfd() returns -1 in case of trouble. The global \fIerrno\fR
 /*	variable reflects the nature of the problem.
+/* BUGS
+/*	On some systems, non-blocking read() may fail even after a
+/*	positive return from peekfd(). The smtp-sink program works
+/*	around this by using the readable() function instead.
 /* LICENSE
 /* .ad
 /* .fi

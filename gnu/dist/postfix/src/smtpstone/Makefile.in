@@ -17,7 +17,7 @@ all:	$(PROG)
 $(OBJS): ../../conf/makedefs.out
 
 Makefile: Makefile.in
-	(cat ../../conf/makedefs.out $?) >$@
+	cat ../../conf/makedefs.out $? >$@
 
 smtp-sink: smtp-sink.o $(LIBS)
 	$(CC) $(CFLAGS) -o $@ smtp-sink.o $(LIBS) $(SYSLIBS)
@@ -82,6 +82,7 @@ qmqp-sink.o: ../../include/events.h
 qmqp-sink.o: ../../include/inet_proto.h
 qmqp-sink.o: ../../include/iostuff.h
 qmqp-sink.o: ../../include/listen.h
+qmqp-sink.o: ../../include/mail_version.h
 qmqp-sink.o: ../../include/msg.h
 qmqp-sink.o: ../../include/msg_vstream.h
 qmqp-sink.o: ../../include/mymalloc.h
@@ -99,6 +100,7 @@ qmqp-source.o: ../../include/host_port.h
 qmqp-source.o: ../../include/inet_proto.h
 qmqp-source.o: ../../include/iostuff.h
 qmqp-source.o: ../../include/mail_date.h
+qmqp-source.o: ../../include/mail_version.h
 qmqp-source.o: ../../include/msg.h
 qmqp-source.o: ../../include/msg_vstream.h
 qmqp-source.o: ../../include/myaddrinfo.h
@@ -114,14 +116,20 @@ qmqp-source.o: ../../include/vbuf.h
 qmqp-source.o: ../../include/vstream.h
 qmqp-source.o: ../../include/vstring.h
 qmqp-source.o: qmqp-source.c
+smtp-sink.o: ../../include/chroot_uid.h
 smtp-sink.o: ../../include/events.h
 smtp-sink.o: ../../include/get_hostname.h
 smtp-sink.o: ../../include/inet_proto.h
 smtp-sink.o: ../../include/iostuff.h
 smtp-sink.o: ../../include/listen.h
+smtp-sink.o: ../../include/mail_date.h
+smtp-sink.o: ../../include/mail_version.h
+smtp-sink.o: ../../include/make_dirs.h
 smtp-sink.o: ../../include/msg.h
 smtp-sink.o: ../../include/msg_vstream.h
+smtp-sink.o: ../../include/myaddrinfo.h
 smtp-sink.o: ../../include/mymalloc.h
+smtp-sink.o: ../../include/myrand.h
 smtp-sink.o: ../../include/sane_accept.h
 smtp-sink.o: ../../include/smtp_stream.h
 smtp-sink.o: ../../include/stringops.h
@@ -138,6 +146,7 @@ smtp-source.o: ../../include/host_port.h
 smtp-source.o: ../../include/inet_proto.h
 smtp-source.o: ../../include/iostuff.h
 smtp-source.o: ../../include/mail_date.h
+smtp-source.o: ../../include/mail_version.h
 smtp-source.o: ../../include/msg.h
 smtp-source.o: ../../include/msg_vstream.h
 smtp-source.o: ../../include/myaddrinfo.h

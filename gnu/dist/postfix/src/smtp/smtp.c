@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp.c,v 1.1.1.12 2006/11/07 02:58:36 rpaulo Exp $	*/
+/*	$NetBSD: smtp.c,v 1.1.1.13 2007/05/19 16:28:33 heas Exp $	*/
 
 /*++
 /* NAME
@@ -35,7 +35,7 @@
 /*
 /*	By default, connection caching is enabled temporarily for
 /*	destinations that have a high volume of mail in the active
-/*	queue. Session caching can be enabled permanently for
+/*	queue. Connection caching can be enabled permanently for
 /*	specific destinations.
 /* SMTP DESTINATION SYNTAX
 /* .ad
@@ -122,9 +122,9 @@
 /*	when the client is used for multiple domains.
 /*
 /*	Most smtp_\fIxxx\fR configuration parameters have an
-/*	lmtp_\fIxxx\fR "ghost" parameter for the equivalent LMTP
+/*	lmtp_\fIxxx\fR "mirror" parameter for the equivalent LMTP
 /*	feature. This document describes only those LMTP-related
-/*	parameters that aren't simply "ghost" parameters.
+/*	parameters that aren't simply "mirror" parameters.
 /*
 /*	Changes to \fBmain.cf\fR are picked up automatically, as \fBsmtp\fR(8)
 /*	processes run for only a limited amount of time. Use the command
@@ -151,9 +151,16 @@
 /*	".<CR><LF>" in order to work around the PIX firewall
 /*	"<CR><LF>.<CR><LF>" bug.
 /* .IP "\fBsmtp_pix_workaround_threshold_time (500s)\fR"
-/*	How long a message must be queued before the PIX firewall
-/*	"<CR><LF>.<CR><LF>" bug workaround is turned
-/*	on for delivery through firewalls with "smtp fixup" mode turned on.
+/*	How long a message must be queued before the Postfix SMTP client
+/*	turns on the PIX firewall "<CR><LF>.<CR><LF>"
+/*	bug workaround for delivery through firewalls with "smtp fixup"
+/*	mode turned on.
+/* .IP "\fBsmtp_pix_workarounds (disable_esmtp, delay_dotcrlf)\fR"
+/*	A list that specifies zero or more workarounds for CISCO PIX
+/*	firewall bugs.
+/* .IP "\fBsmtp_pix_workaround_maps (empty)\fR"
+/*	Lookup tables, indexed by the remote SMTP server address, with
+/*	per-destination workarounds for CISCO PIX firewall bugs.
 /* .IP "\fBsmtp_quote_rfc821_envelope (yes)\fR"
 /*	Quote addresses in SMTP MAIL FROM and RCPT TO commands as required
 /*	by RFC 821.
@@ -195,7 +202,7 @@
 /*	case insensitive lists of LHLO keywords (pipelining, starttls,
 /*	auth, etc.) that the LMTP client will ignore in the LHLO response
 /*	from a remote LMTP server.
-/* .IP "\fBlmtp_discard_lhlo_keywords ($myhostname)\fR"
+/* .IP "\fBlmtp_discard_lhlo_keywords (empty)\fR"
 /*	A case insensitive list of LHLO keywords (pipelining, starttls,
 /*	auth, etc.) that the LMTP client will ignore in the LHLO response
 /*	from a remote LMTP server.
@@ -327,7 +334,7 @@
 /*	The OpenSSL cipherlist for "LOW" or higher grade ciphers.
 /* .IP "\fBtls_export_cipherlist (ALL:+RC4:@STRENGTH)\fR"
 /*	The OpenSSL cipherlist for "EXPORT" or higher grade ciphers.
-/* .IP "\fBtls_null_cipherlist (!aNULL:eNULL+kRSA)\fR"
+/* .IP "\fBtls_null_cipherlist (eNULL:!aNULL)\fR"
 /*	The OpenSSL cipherlist for "NULL" grade ciphers that provide
 /*	authentication without encryption.
 /* .PP
@@ -481,11 +488,11 @@
 /* .IP "\fBlmtp_tcp_port (24)\fR"
 /*	The default TCP port that the Postfix LMTP client connects to.
 /* .IP "\fBmax_idle (100s)\fR"
-/*	The maximum amount of time that an idle Postfix daemon process
-/*	waits for the next service request before exiting.
+/*	The maximum amount of time that an idle Postfix daemon process waits
+/*	for an incoming connection before terminating voluntarily.
 /* .IP "\fBmax_use (100)\fR"
-/*	The maximal number of connection requests before a Postfix daemon
-/*	process terminates.
+/*	The maximal number of incoming connections that a Postfix daemon
+/*	process will service before terminating voluntarily.
 /* .IP "\fBprocess_id (read-only)\fR"
 /*	The process ID of a Postfix command or daemon process.
 /* .IP "\fBprocess_name (read-only)\fR"
@@ -597,6 +604,7 @@
 
 #include <deliver_request.h>
 #include <mail_params.h>
+#include <mail_version.h>
 #include <mail_conf.h>
 #include <debug_peer.h>
 #include <flush_clnt.h>
@@ -701,6 +709,8 @@ bool    var_smtp_sender_auth;
 char   *var_lmtp_tcp_port;
 int     var_scache_proto_tmout;
 bool    var_smtp_cname_overr;
+char   *var_smtp_pix_bug_words;
+char   *var_smtp_pix_bug_maps;
 
  /*
   * Global variables.
@@ -711,6 +721,7 @@ SCACHE *smtp_scache;
 MAPS   *smtp_ehlo_dis_maps;
 MAPS   *smtp_generic_maps;
 int     smtp_ext_prop_mask;
+MAPS   *smtp_pix_bug_maps;
 
 #ifdef USE_TLS
 
@@ -908,6 +919,14 @@ static void pre_init(char *unused_name, char **unused_argv)
 					 DICT_FLAG_LOCK);
 
     /*
+     * PIX bug workarounds.
+     */
+    if (*var_smtp_pix_bug_maps)
+	smtp_pix_bug_maps = maps_create(VAR_SMTP_PIX_BUG_MAPS,
+					var_smtp_pix_bug_maps,
+					DICT_FLAG_LOCK);
+
+    /*
      * Generic maps.
      */
     if (*var_prop_extension)
@@ -931,6 +950,8 @@ static void pre_accept(char *unused_name, char **unused_argv)
     }
 }
 
+MAIL_VERSION_STAMP_DECLARE;
+
 /* main - pass control to the single-threaded skeleton */
 
 int     main(int argc, char **argv)
@@ -938,6 +959,11 @@ int     main(int argc, char **argv)
 #include "smtp_params.c"
 #include "lmtp_params.c"
     int     smtp_mode;
+
+    /*
+     * Fingerprint executables and core dumps.
+     */
+    MAIL_VERSION_STAMP_ALLOCATE;
 
     /*
      * XXX At this point, var_procname etc. are not initialized.

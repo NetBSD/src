@@ -1,4 +1,4 @@
-/*	$NetBSD: namadr_list.c,v 1.1.1.5 2006/07/19 01:17:27 rpaulo Exp $	*/
+/*	$NetBSD: namadr_list.c,v 1.1.1.6 2007/05/19 16:28:16 heas Exp $	*/
 
 /*++
 /* NAME
@@ -33,8 +33,8 @@
 /*	type:name table specification, table lookup is used
 /*	instead.
 /*	Patterns are separated by whitespace and/or commas. In
-/*	order to reverse the result, precede a non-file name
-/*	pattern with an exclamation point (!).
+/*	order to reverse the result, precede a pattern with an
+/*	exclamation point (!).
 /*
 /*	A host matches a list when its name or address matches
 /*	a pattern, or when any of its parent domains matches a

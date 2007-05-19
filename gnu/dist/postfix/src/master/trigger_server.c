@@ -1,4 +1,4 @@
-/*	$NetBSD: trigger_server.c,v 1.1.1.7 2006/07/19 01:17:32 rpaulo Exp $	*/
+/*	$NetBSD: trigger_server.c,v 1.1.1.8 2007/05/19 16:28:21 heas Exp $	*/
 
 /*++
 /* NAME
@@ -244,10 +244,12 @@ static void trigger_server_wakeup(int fd)
     int     len;
 
     /*
-     * Commit suicide when the master process disconnected from us.
+     * Commit suicide when the master process disconnected from us. Don't
+     * drop the already accepted client request after "postfix reload"; that
+     * would be rude.
      */
     if (master_notify(var_pid, trigger_server_generation, MASTER_STAT_TAKEN) < 0)
-	trigger_server_abort(EVENT_NULL_TYPE, EVENT_NULL_CONTEXT);
+	 /* void */ ;
     if (trigger_server_in_flow_delay && mail_flow_get(1) < 0)
 	doze(var_in_flow_delay * 1000000);
     if ((len = read(fd, buf, sizeof(buf))) >= 0)
@@ -315,7 +317,7 @@ static void trigger_server_accept_local(int unused_event, char *context)
 	msg_fatal("select unlock: %m");
     if (fd < 0) {
 	if (errno != EAGAIN)
-	    msg_fatal("accept connection: %m");
+	    msg_error("accept connection: %m");
 	if (time_left >= 0)
 	    event_request_timer(trigger_server_timeout, (char *) 0, time_left);
 	return;
@@ -361,7 +363,7 @@ static void trigger_server_accept_pass(int unused_event, char *context)
 	msg_fatal("select unlock: %m");
     if (fd < 0) {
 	if (errno != EAGAIN)
-	    msg_fatal("accept connection: %m");
+	    msg_error("accept connection: %m");
 	if (time_left >= 0)
 	    event_request_timer(trigger_server_timeout, (char *) 0, time_left);
 	return;
@@ -407,6 +409,7 @@ NORETURN trigger_server_main(int argc, char **argv, TRIGGER_SERVER_FN service,..
     char   *oval;
     char   *generation;
     int     msg_vstream_needed = 0;
+    int     redo_syslog_init = 0;
 
     /*
      * Process environment options as early as we can.
@@ -482,9 +485,12 @@ NORETURN trigger_server_main(int argc, char **argv, TRIGGER_SERVER_FN service,..
 	    service_name = optarg;
 	    break;
 	case 'o':
+	    /* XXX Use split_nameval() */
 	    if ((oval = split_at(optarg, '=')) == 0)
 		oval = "";
 	    mail_conf_update(optarg, oval);
+	    if (strcmp(optarg, VAR_SYSLOG_NAME) == 0)
+		redo_syslog_init = 1;
 	    break;
 	case 's':
 	    if ((socket_count = atoi(optarg)) <= 0)
@@ -519,6 +525,16 @@ NORETURN trigger_server_main(int argc, char **argv, TRIGGER_SERVER_FN service,..
      * Initialize generic parameters.
      */
     mail_params_init();
+    if (redo_syslog_init)
+	msg_syslog_init(mail_task(var_procname), LOG_PID, LOG_FACILITY);
+
+    /*
+     * If not connected to stdin, stdin must not be a terminal.
+     */
+    if (daemon_mode && stream == 0 && isatty(STDIN_FILENO)) {
+	msg_vstream_init(var_procname, VSTREAM_ERR);
+	msg_fatal("do not run this command by hand");
+    }
 
     /*
      * Application-specific initialization.
@@ -584,14 +600,6 @@ NORETURN trigger_server_main(int argc, char **argv, TRIGGER_SERVER_FN service,..
 	root_dir = var_queue_dir;
     if (user_name)
 	user_name = var_mail_owner;
-
-    /*
-     * If not connected to stdin, stdin must not be a terminal.
-     */
-    if (daemon_mode && stream == 0 && isatty(STDIN_FILENO)) {
-	msg_vstream_init(var_procname, VSTREAM_ERR);
-	msg_fatal("do not run this command by hand");
-    }
 
     /*
      * Can options be required?

@@ -42,8 +42,8 @@ SMTP(8)                                                                SMTP(8)
 
        By  default, connection caching is enabled temporarily for
        destinations that have a high volume of mail in the active
-       queue. Session caching can be enabled permanently for spe-
-       cific destinations.
+       queue.  Connection  caching can be enabled permanently for
+       specific destinations.
 
 <b>SMTP DESTINATION SYNTAX</b>
        SMTP destinations have the following form:
@@ -142,9 +142,9 @@ SMTP(8)                                                                SMTP(8)
        the client is used for multiple domains.
 
        Most  smtp_<i>xxx</i>  configuration  parameters have an lmtp_<i>xxx</i>
-       "ghost" parameter for the equivalent  LMTP  feature.  This
+       "mirror" parameter for the equivalent LMTP  feature.  This
        document describes only those LMTP-related parameters that
-       aren't simply "ghost" parameters.
+       aren't simply "mirror" parameters.
 
        Changes to <a href="postconf.5.html"><b>main.cf</b></a> are picked up automatically, as <a href="smtp.8.html"><b>smtp</b>(8)</a>
        processes  run  for only a limited amount of time. Use the
@@ -177,10 +177,19 @@ SMTP(8)                                                                SMTP(8)
               firewall "&lt;CR&gt;&lt;LF&gt;.&lt;CR&gt;&lt;LF&gt;" bug.
 
        <b><a href="postconf.5.html#smtp_pix_workaround_threshold_time">smtp_pix_workaround_threshold_time</a> (500s)</b>
-              How  long  a  message must be queued before the PIX
-              firewall  "&lt;CR&gt;&lt;LF&gt;.&lt;CR&gt;&lt;LF&gt;"  bug  workaround   is
-              turned on for delivery through firewalls with "smtp
-              fixup" mode turned on.
+              How  long a message must be queued before the Post-
+              fix  SMTP  client  turns  on   the   PIX   firewall
+              "&lt;CR&gt;&lt;LF&gt;.&lt;CR&gt;&lt;LF&gt;"  bug  workaround  for  delivery
+              through firewalls with "smtp fixup" mode turned on.
+
+       <b><a href="postconf.5.html#smtp_pix_workarounds">smtp_pix_workarounds</a> (disable_esmtp, delay_dotcrlf)</b>
+              A  list that specifies zero or more workarounds for
+              CISCO PIX firewall bugs.
+
+       <b><a href="postconf.5.html#smtp_pix_workaround_maps">smtp_pix_workaround_maps</a> (empty)</b>
+              Lookup tables, indexed by the  remote  SMTP  server
+              address, with per-destination workarounds for CISCO
+              PIX firewall bugs.
 
        <b><a href="postconf.5.html#smtp_quote_rfc821_envelope">smtp_quote_rfc821_envelope</a> (yes)</b>
               Quote addresses in SMTP MAIL FROM and RCPT TO  com-
@@ -238,7 +247,7 @@ SMTP(8)                                                                SMTP(8)
               LMTP client will ignore in the LHLO response from a
               remote LMTP server.
 
-       <b><a href="postconf.5.html#lmtp_discard_lhlo_keywords">lmtp_discard_lhlo_keywords</a> ($<a href="postconf.5.html#myhostname">myhostname</a>)</b>
+       <b><a href="postconf.5.html#lmtp_discard_lhlo_keywords">lmtp_discard_lhlo_keywords</a> (empty)</b>
               A  case insensitive list of LHLO keywords (pipelin-
               ing, starttls, auth, etc.)  that  the  LMTP  client
               will ignore in the LHLO response from a remote LMTP
@@ -432,7 +441,7 @@ SMTP(8)                                                                SMTP(8)
               The OpenSSL cipherlist for "EXPORT" or higher grade
               ciphers.
 
-       <b><a href="postconf.5.html#tls_null_cipherlist">tls_null_cipherlist</a> (!aNULL:eNULL+kRSA)</b>
+       <b><a href="postconf.5.html#tls_null_cipherlist">tls_null_cipherlist</a> (eNULL:!aNULL)</b>
               The  OpenSSL  cipherlist  for  "NULL" grade ciphers
               that provide authentication without encryption.
 
@@ -646,69 +655,70 @@ SMTP(8)                                                                SMTP(8)
 
        <b><a href="postconf.5.html#max_idle">max_idle</a> (100s)</b>
               The maximum amount of time  that  an  idle  Postfix
-              daemon  process  waits for the next service request
-              before exiting.
+              daemon  process  waits  for  an incoming connection
+              before terminating voluntarily.
 
        <b><a href="postconf.5.html#max_use">max_use</a> (100)</b>
-              The maximal number of connection requests before  a
-              Postfix daemon process terminates.
+              The maximal number of incoming connections  that  a
+              Postfix  daemon  process will service before termi-
+              nating voluntarily.
 
        <b><a href="postconf.5.html#process_id">process_id</a> (read-only)</b>
-              The  process  ID  of  a  Postfix  command or daemon
+              The process ID  of  a  Postfix  command  or  daemon
               process.
 
        <b><a href="postconf.5.html#process_name">process_name</a> (read-only)</b>
-              The process name of a  Postfix  command  or  daemon
+              The  process  name  of  a Postfix command or daemon
               process.
 
        <b><a href="postconf.5.html#proxy_interfaces">proxy_interfaces</a> (empty)</b>
               The network interface addresses that this mail sys-
-              tem receives mail on by way of a proxy  or  network
+              tem  receives  mail on by way of a proxy or network
               address translation unit.
 
        <b><a href="postconf.5.html#smtp_bind_address">smtp_bind_address</a> (empty)</b>
-              An  optional  numerical  network  address  that the
-              Postfix SMTP client should bind to when  making  an
+              An optional  numerical  network  address  that  the
+              Postfix  SMTP  client should bind to when making an
               IPv4 connection.
 
        <b><a href="postconf.5.html#smtp_bind_address6">smtp_bind_address6</a> (empty)</b>
-              An  optional  numerical  network  address  that the
-              Postfix SMTP client should bind to when  making  an
+              An optional  numerical  network  address  that  the
+              Postfix  SMTP  client should bind to when making an
               IPv6 connection.
 
        <b><a href="postconf.5.html#smtp_helo_name">smtp_helo_name</a> ($<a href="postconf.5.html#myhostname">myhostname</a>)</b>
-              The  hostname to send in the SMTP EHLO or HELO com-
+              The hostname to send in the SMTP EHLO or HELO  com-
               mand.
 
        <b><a href="postconf.5.html#lmtp_lhloname">lmtp_lhlo_name</a> ($<a href="postconf.5.html#myhostname">myhostname</a>)</b>
               The hostname to send in the LMTP LHLO command.
 
        <b><a href="postconf.5.html#smtp_host_lookup">smtp_host_lookup</a> (dns)</b>
-              What mechanisms when the Postfix SMTP  client  uses
+              What  mechanisms  when the Postfix SMTP client uses
               to look up a host's IP address.
 
        <b><a href="postconf.5.html#smtp_randomize_addresses">smtp_randomize_addresses</a> (yes)</b>
-              Randomize  the  order  of  equal-preference MX host
+              Randomize the order  of  equal-preference  MX  host
               addresses.
 
        <b><a href="postconf.5.html#syslog_facility">syslog_facility</a> (mail)</b>
               The syslog facility of Postfix logging.
 
        <b><a href="postconf.5.html#syslog_name">syslog_name</a> (postfix)</b>
-              The mail system  name  that  is  prepended  to  the
-              process  name  in  syslog  records, so that "smtpd"
+              The  mail  system  name  that  is  prepended to the
+              process name in syslog  records,  so  that  "smtpd"
               becomes, for example, "postfix/smtpd".
 
        Available with Postfix 2.2 and earlier:
 
        <b><a href="postconf.5.html#fallback_relay">fallback_relay</a> (empty)</b>
-              Optional list of relay hosts for SMTP  destinations
+              Optional  list of relay hosts for SMTP destinations
               that can't be found or that are unreachable.
 
        Available with Postfix 2.3 and later:
 
        <b><a href="postconf.5.html#smtp_fallback_relay">smtp_fallback_relay</a> ($<a href="postconf.5.html#fallback_relay">fallback_relay</a>)</b>
-              Optional  list of relay hosts for SMTP destinations
+              Optional list of relay hosts for SMTP  destinations
               that can't be found or that are unreachable.
 
 <b>SEE ALSO</b>
@@ -726,7 +736,7 @@ SMTP(8)                                                                SMTP(8)
        <a href="TLS_README.html">TLS_README</a>, Postfix STARTTLS howto
 
 <b>LICENSE</b>
-       The  Secure  Mailer  license must be distributed with this
+       The Secure Mailer license must be  distributed  with  this
        software.
 
 <b>AUTHOR(S)</b>

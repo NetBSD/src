@@ -129,7 +129,7 @@ being hosted on the local Postfix machine. </p>
 
 <blockquote>
 <pre>
-/etc/postfix/main.cf:
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
     <a href="postconf.5.html#mydestination">mydestination</a> = $<a href="postconf.5.html#myhostname">myhostname</a> localhost.$<a href="postconf.5.html#mydomain">mydomain</a> ... example.com
 </pre>
 </blockquote>
@@ -163,11 +163,11 @@ below shows how to use this mechanism for the example.com domain.
 
 <blockquote>
 <pre>
- 1 /etc/postfix/main.cf:
+ 1 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
  2     <a href="postconf.5.html#virtual_alias_domains">virtual_alias_domains</a> = example.com ...other <a href="VIRTUAL_README.html#canonical">hosted domains</a>...
  3     <a href="postconf.5.html#virtual_alias_maps">virtual_alias_maps</a> = hash:/etc/postfix/virtual
  4 
- 5 /etc/postfix/virtual:
+ 5 /etc/postfix/<a href="virtual.8.html">virtual</a>:
  6     postmaster@example.com postmaster
  7     info@example.com       joe
  8     sales@example.com      jane
@@ -210,7 +210,7 @@ for spam messages that were sent in the name of anything@example.com.
 
 <p>Execute the command "<b>postmap /etc/postfix/virtual</b>" after
 changing the virtual file, and execute the command "<b>postfix
-reload</b>" after changing the main.cf file. </p>
+reload</b>" after changing the <a href="postconf.5.html">main.cf</a> file. </p>
 
 <p> Note: virtual aliases can resolve to a local address or to a
 remote address, or both.  They don't have to resolve to UNIX system
@@ -255,7 +255,7 @@ section at the top of this document.</p>
 
 <blockquote>
 <pre>
- 1 /etc/postfix/main.cf:
+ 1 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
  2     <a href="postconf.5.html#virtual_mailbox_domains">virtual_mailbox_domains</a> = example.com ...more domains...
  3     <a href="postconf.5.html#virtual_mailbox_base">virtual_mailbox_base</a> = /var/mail/vhosts
  4     <a href="postconf.5.html#virtual_mailbox_maps">virtual_mailbox_maps</a> = hash:/etc/postfix/vmailbox
@@ -271,7 +271,7 @@ section at the top of this document.</p>
 14     # @example.com      example.com/catchall
 15     ...virtual mailboxes for more domains...
 16 
-17 /etc/postfix/virtual:
+17 /etc/postfix/<a href="virtual.8.html">virtual</a>:
 18     postmaster@example.com postmaster
 </pre>
 </blockquote>
@@ -329,7 +329,7 @@ mail for example.com's postmaster address to the local postmaster.
 You can use the same mechanism to redirect an address to a remote
 address.  </p>
 
-<li> <p> Line 18: This example assumes that in main.cf, $<a href="postconf.5.html#myorigin">myorigin</a>
+<li> <p> Line 18: This example assumes that in <a href="postconf.5.html">main.cf</a>, $<a href="postconf.5.html#myorigin">myorigin</a>
 is listed under the <a href="postconf.5.html#mydestination">mydestination</a> parameter setting.  If that is
 not the case, specify an explicit domain name on the right-hand
 side of the virtual alias table entries or else mail will go to
@@ -340,7 +340,7 @@ the wrong domain. </p>
 <p> Execute the command "<b>postmap /etc/postfix/virtual</b>" after
 changing the virtual file, execute "<b>postmap /etc/postfix/vmailbox</b>"
 after changing the vmailbox file, and execute the command "<b>postfix
-reload</b>" after changing the main.cf file. </p>
+reload</b>" after changing the <a href="postconf.5.html">main.cf</a> file. </p>
 
 <p> Note: mail delivery happens with the recipient's UID/GID
 privileges specified with <a href="postconf.5.html#virtual_uid_maps">virtual_uid_maps</a> and <a href="postconf.5.html#virtual_gid_maps">virtual_gid_maps</a>.
@@ -375,7 +375,7 @@ to a non-Postfix delivery agent: </p>
 
 <blockquote>
 <pre>
- 1 /etc/postfix/main.cf:
+ 1 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
  2     <a href="postconf.5.html#virtual_transport">virtual_transport</a> = ...see below...
  3     <a href="postconf.5.html#virtual_mailbox_domains">virtual_mailbox_domains</a> = example.com ...more domains...
  4     <a href="postconf.5.html#virtual_mailbox_maps">virtual_mailbox_maps</a> = hash:/etc/postfix/vmailbox
@@ -389,7 +389,7 @@ to a non-Postfix delivery agent: </p>
 12     # @example.com      whatever
 13     ...virtual mailboxes for more domains...
 14 
-15 /etc/postfix/virtual:
+15 /etc/postfix/<a href="virtual.8.html">virtual</a>:
 16     postmaster@example.com postmaster
 </pre>
 </blockquote>
@@ -400,7 +400,7 @@ to a non-Postfix delivery agent: </p>
 
 <li> <p> Line 2: With delivery to a non-Postfix mailbox store for
 <a href="VIRTUAL_README.html#canonical">hosted domains</a>, the <a href="postconf.5.html#virtual_transport">virtual_transport</a> parameter usually specifies
-the Postfix LMTP client, or the name of a master.cf entry that
+the Postfix LMTP client, or the name of a <a href="master.5.html">master.cf</a> entry that
 executes non-Postfix software via the pipe delivery agent.  Typical
 examples (use only one): </p>
 
@@ -414,7 +414,7 @@ examples (use only one): </p>
 
 <p> Postfix comes ready with support for LMTP.  And an example
 maildrop delivery method is already defined in the default Postfix
-master.cf file. See the <a href="MAILDROP_README.html">MAILDROP_README</a> document for more details.
+<a href="master.5.html">master.cf</a> file. See the <a href="MAILDROP_README.html">MAILDROP_README</a> document for more details.
 </p>
 
 <li> <p> Line 3: The <a href="postconf.5.html#virtual_mailbox_domains">virtual_mailbox_domains</a> setting tells Postfix
@@ -432,9 +432,13 @@ domain!  </p>
 
 <li> <p> Lines 4, 7-13: The <a href="postconf.5.html#virtual_mailbox_maps">virtual_mailbox_maps</a> parameter specifies
 the lookup table with all valid recipient addresses. The lookup
-result is ignored by Postfix.  In the above example, info@example.com
-and sales@example.com are listed as valid addresses, and mail for
-anything else is rejected with "User unknown". If you intend to
+result value is ignored by Postfix.  In the above example,
+info@example.com
+and sales@example.com are listed as valid addresses; other mail for
+example.com is rejected with "User unknown" by the Postfix SMTP
+server. It's left up to the non-Postfix delivery agent to reject
+non-existent recipients from local submission or from local alias
+expansion.  If you intend to
 use LDAP, MySQL or PgSQL instead of local files, be sure to review
 the <a href="#local_vs_database"> "local files versus databases"</a>
 section at the top of this document! </p>
@@ -456,7 +460,7 @@ redirect mail for example.com's postmaster address to the local
 postmaster. You can use the same mechanism to redirect any addresses
 to a local or remote address.  </p>
 
-<li> <p> Line 16: This example assumes that in main.cf, $<a href="postconf.5.html#myorigin">myorigin</a>
+<li> <p> Line 16: This example assumes that in <a href="postconf.5.html">main.cf</a>, $<a href="postconf.5.html#myorigin">myorigin</a>
 is listed under the <a href="postconf.5.html#mydestination">mydestination</a> parameter setting.  If that is
 not the case, specify an explicit domain name on the right-hand
 side of the virtual alias table entries or else mail will go to
@@ -467,7 +471,7 @@ the wrong domain. </p>
 <p> Execute the command "<b>postmap /etc/postfix/virtual</b>" after
 changing the virtual file, execute "<b>postmap /etc/postfix/vmailbox</b>"
 after changing the vmailbox file, and execute the command "<b>postfix
-reload</b>" after changing the main.cf file. </p>
+reload</b>" after changing the <a href="postconf.5.html">main.cf</a> file. </p>
 
 <h2><a name="forwarding">Mail forwarding domains</a></h2>
 
@@ -478,11 +482,11 @@ as a mail forwarding domain: </p>
 
 <blockquote>
 <pre>
- 1 /etc/postfix/main.cf:
+ 1 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
  2     <a href="postconf.5.html#virtual_alias_domains">virtual_alias_domains</a> = example.com ...other <a href="VIRTUAL_README.html#canonical">hosted domains</a>...
  3     <a href="postconf.5.html#virtual_alias_maps">virtual_alias_maps</a> = hash:/etc/postfix/virtual
  4 
- 5 /etc/postfix/virtual:
+ 5 /etc/postfix/<a href="virtual.8.html">virtual</a>:
  6     postmaster@example.com postmaster
  7     joe@example.com        joe@somewhere
  8     jane@example.com       jane@somewhere-else
@@ -526,7 +530,7 @@ for spam messages that were sent in the name of anything@example.com.
 
 <p> Execute the command "<b>postmap /etc/postfix/virtual</b>" after
 changing the virtual file, and execute the command "<b>postfix
-reload</b>" after changing the main.cf file. </p>
+reload</b>" after changing the <a href="postconf.5.html">main.cf</a> file. </p>
 
 <p> More details about the virtual alias file are given in the
 <a href="virtual.5.html">virtual(5)</a> manual page, including multiple addresses on the right-hand
@@ -546,10 +550,10 @@ virtual addresses to the local delivery agent: </p>
 
 <blockquote>
 <pre>
-/etc/postfix/main.cf:
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
     <a href="postconf.5.html#virtual_alias_maps">virtual_alias_maps</a> = hash:/etc/postfix/virtual
 
-/etc/postfix/virtual:
+/etc/postfix/<a href="virtual.8.html">virtual</a>:
     listname-request@example.com listname-request
     listname@example.com         listname
     owner-listname@example.com   owner-listname
@@ -561,7 +565,7 @@ virtual addresses to the local delivery agent: </p>
 </pre>
 </blockquote>
 
-<p> This example assumes that in main.cf, $<a href="postconf.5.html#myorigin">myorigin</a> is listed under
+<p> This example assumes that in <a href="postconf.5.html">main.cf</a>, $<a href="postconf.5.html#myorigin">myorigin</a> is listed under
 the <a href="postconf.5.html#mydestination">mydestination</a> parameter setting.  If that is not the case,
 specify an explicit domain name on the right-hand side of the
 virtual alias table entries or else mail will go to the wrong
@@ -594,10 +598,10 @@ table: </p>
 
 <blockquote>
 <pre>
-/etc/postfix/main.cf:
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
     <a href="postconf.5.html#virtual_alias_maps">virtual_alias_maps</a> = hash:/etc/postfix/virtual
 
-/etc/postfix/virtual:
+/etc/postfix/<a href="virtual.8.html">virtual</a>:
     user@domain.tld user@domain.tld, user@domain.tld@autoreply.<a href="postconf.5.html#mydomain">mydomain</a>.tld
 </pre>
 </blockquote>
@@ -613,13 +617,13 @@ reply back to the sender. </p>
 
 <blockquote>
 <pre>
-/etc/postfix/main.cf:
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
     <a href="postconf.5.html#transport_maps">transport_maps</a> = hash:/etc/postfix/transport
 
 /etc/postfix/transport:
     autoreply.<a href="postconf.5.html#mydomain">mydomain</a>.tld  autoreply:
 
-/etc/postfix/master.cf:
+/etc/postfix/<a href="master.5.html">master.cf</a>:
     # =============================================================
     # service type  private unpriv  chroot  wakeup  maxproc command
     #               (yes)   (yes)   (yes)   (never) (100)
@@ -633,7 +637,7 @@ reply back to the sender. </p>
 the user@domain.tld recipient address on the command line. </p>
 
 <p> For more information, see the <a href="pipe.8.html">pipe(8)</a> manual page, and the
-comments in the Postfix master.cf file. </p>
+comments in the Postfix <a href="master.5.html">master.cf</a> file. </p>
 
 </body>
 

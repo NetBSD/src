@@ -1,4 +1,4 @@
-/*	$NetBSD: proxymap.c,v 1.1.1.7 2006/07/19 01:17:37 rpaulo Exp $	*/
+/*	$NetBSD: proxymap.c,v 1.1.1.8 2007/05/19 16:28:28 heas Exp $	*/
 
 /*++
 /* NAME
@@ -18,18 +18,20 @@
 /*	practical to maintain a copy of the passwd file in the chroot
 /*	jail.  The solution:
 /* .sp
+/* .nf
 /*	local_recipient_maps =
-/* .ti +4
-/*	proxy:unix:passwd.byname $alias_maps
+/*	    proxy:unix:passwd.byname $alias_maps
+/* .fi
 /* .IP \(bu
 /*	To consolidate the number of open lookup tables by sharing
 /*	one open table among multiple processes. For example, making
 /*	mysql connections from every Postfix daemon process results
 /*	in "too many connections" errors. The solution:
 /* .sp
+/* .nf
 /*	virtual_alias_maps =
-/* .ti +4
-/*	proxy:mysql:/etc/postfix/virtual_alias.cf
+/*	    proxy:mysql:/etc/postfix/virtual_alias.cf
+/* .fi
 /* .sp
 /*	The total number of connections is limited by the number of
 /*	proxymap server processes.
@@ -104,11 +106,11 @@
 /*	The time limit for sending or receiving information over an internal
 /*	communication channel.
 /* .IP "\fBmax_idle (100s)\fR"
-/*	The maximum amount of time that an idle Postfix daemon process
-/*	waits for the next service request before exiting.
+/*	The maximum amount of time that an idle Postfix daemon process waits
+/*	for an incoming connection before terminating voluntarily.
 /* .IP "\fBmax_use (100)\fR"
-/*	The maximal number of connection requests before a Postfix daemon
-/*	process terminates.
+/*	The maximal number of incoming connections that a Postfix daemon
+/*	process will service before terminating voluntarily.
 /* .IP "\fBprocess_id (read-only)\fR"
 /*	The process ID of a Postfix command or daemon process.
 /* .IP "\fBprocess_name (read-only)\fR"
@@ -161,6 +163,7 @@
 
 #include <mail_conf.h>
 #include <mail_params.h>
+#include <mail_version.h>
 #include <mail_proto.h>
 #include <dict_proxy.h>
 
@@ -239,9 +242,12 @@ static DICT *proxy_map_find(const char *map_type_name, int request_flags,
 
     /*
      * Open one instance of a map for each combination of name+flags.
+     * 
+     * Assume that a map instance can be shared among clients with different
+     * paranoia flag settings and with different map lookup flag settings.
      */
-    vstring_sprintf(map_type_name_flags, "%s:%s",
-		    map_type_name, dict_flags_str(request_flags));
+    vstring_sprintf(map_type_name_flags, "%s:%s", map_type_name,
+		    dict_flags_str(request_flags & DICT_FLAG_NP_INST_MASK));
     if ((dict = dict_handle(STR(map_type_name_flags))) == 0)
 	dict = dict_open(map_type_name, READ_OPEN_FLAGS, request_flags);
     if (dict == 0)
@@ -272,7 +278,9 @@ static void proxymap_lookup_service(VSTREAM *client_stream)
     } else if ((dict = proxy_map_find(STR(request_map), request_flags,
 				      &reply_status)) == 0) {
 	reply_value = "";
-    } else if ((reply_value = dict_get(dict, STR(request_key))) != 0) {
+    } else if (dict->flags = ((dict->flags & ~DICT_FLAG_RQST_MASK)
+			      | (request_flags & DICT_FLAG_RQST_MASK)),
+	       (reply_value = dict_get(dict, STR(request_key))) != 0) {
 	reply_status = PROXY_STAT_OK;
     } else if (dict_errno == 0) {
 	reply_status = PROXY_STAT_NOKEY;
@@ -426,6 +434,8 @@ static void pre_accept(char *unused_name, char **unused_argv)
     }
 }
 
+MAIL_VERSION_STAMP_DECLARE;
+
 /* main - pass control to the multi-threaded skeleton */
 
 int     main(int argc, char **argv)
@@ -446,6 +456,11 @@ int     main(int argc, char **argv)
 	VAR_PROXY_READ_MAPS, DEF_PROXY_READ_MAPS, &var_proxy_read_maps, 0, 0,
 	0,
     };
+
+    /*
+     * Fingerprint executables and core dumps.
+     */
+    MAIL_VERSION_STAMP_ALLOCATE;
 
     multi_server_main(argc, argv, proxymap_service,
 		      MAIL_SERVER_STR_TABLE, str_table,

@@ -1,4 +1,4 @@
-.\"	$NetBSD: pgsql_table.5,v 1.1.1.3 2005/08/18 21:03:56 rpaulo Exp $
+.\"	$NetBSD: pgsql_table.5,v 1.1.1.4 2007/05/19 16:27:49 heas Exp $
 .\"
 .TH PGSQL_TABLE 5 
 .ad
@@ -23,8 +23,9 @@ rewriting or mail routing. These tables are usually in
 Alternatively, lookup tables can be specified as PostgreSQL
 databases.  In order to use PostgreSQL lookups, define a
 PostgreSQL source as a lookup table in main.cf, for example:
-.ti +4
-alias_maps = pgsql:/etc/pgsql-aliases.cf
+.nf
+    alias_maps = pgsql:/etc/pgsql-aliases.cf
+.fi
 
 The file /etc/postfix/pgsql-aliases.cf has the same format as
 the Postfix main.cf file, and can specify the parameters
@@ -62,19 +63,18 @@ phased out, \fBselect_function\fR, \fBselect_field\fR, \fBtable\fR,
 \fBwhere_field\fR and \fBadditional_conditions\fR parameters. To
 migrate to the new interface set:
 
-.ti +4
-\fBquery\fR = SELECT \fIselect_function\fR('%s')
+.nf
+    \fBquery\fR = SELECT \fIselect_function\fR('%s')
+.fi
 
 or in the absence of \fBselection_function\fR, the lower precedence:
 
-.ti +4
-\fBquery\fR = SELECT \fIselect_field\fR
-.ti +8
-FROM \fItable\fR
-.ti +8
-WHERE \fIwhere_field\fR = '%s'
-.ti +12
-\fIadditional_conditions\fR
+.nf
+    \fBquery\fR = SELECT \fIselect_field\fR
+        FROM \fItable\fR
+        WHERE \fIwhere_field\fR = '%s'
+            \fIadditional_conditions\fR
+.fi
 
 Use the value, not the name, of each legacy parameter. Note
 that the \fBadditional_conditions\fR parameter is optional
@@ -108,10 +108,10 @@ return the key itself or a constant value.
 The hosts that Postfix will try to connect to and query from.
 Specify \fIunix:\fR for UNIX-domain sockets, \fIinet:\fR for TCP
 connections (default).  Example:
-.ti +4
-hosts = host1.some.domain host2.some.domain
-.ti +4
-hosts = unix:/file/name
+.nf
+    hosts = host1.some.domain host2.some.domain
+    hosts = unix:/file/name
+.fi
 
 The hosts are tried in random order, with all connections over
 UNIX domain sockets being tried before those over TCP.  The
@@ -126,21 +126,22 @@ connection otherwise.
 .IP "\fBuser, password\fR"
 The user name and password to log into the pgsql server.
 Example:
-.in +4
-user = someone
-.br
-password = some_password
-.in -4
+.nf
+    user = someone
+    password = some_password
+.fi
 .IP "\fBdbname\fR"
 The database name on the servers. Example:
-.ti +4
-dbname = customer_database
+.nf
+    dbname = customer_database
+.fi
 .IP "\fBquery\fR"
 The SQL query template used to search the database, where \fB%s\fR
 is a substitute for the address Postfix is trying to resolve,
 e.g.
-.ti +4
-query = SELECT replacement FROM aliases WHERE mailbox = '%s'
+.nf
+    query = SELECT replacement FROM aliases WHERE mailbox = '%s'
+.fi
 
 This parameter supports the following '%' expansions:
 .RS
@@ -244,8 +245,9 @@ keys with a *non-empty* localpart and a matching domain
 are eligible for lookup: 'user' lookups, bare domain lookups
 and "@domain" lookups are not performed. This can significantly
 reduce the query load on the PostgreSQL server.
-.ti +4
-domain = postfix.org, hash:/etc/postfix/searchdomains
+.nf
+    domain = postfix.org, hash:/etc/postfix/searchdomains
+.fi
 
 It is best not to use SQL to store the domains eligible
 for SQL lookups.
@@ -265,12 +267,14 @@ values.
 Pre-Postfix 2.2 legacy interfaces:
 .IP "\fBselect_function\fR"
 This parameter specifies a database function name. Example:
-.ti +4
-select_function = my_lookup_user_alias
+.nf
+    select_function = my_lookup_user_alias
+.fi
 
 This is equivalent to:
-.ti +4
-query = SELECT my_lookup_user_alias('%s')
+.nf
+    query = SELECT my_lookup_user_alias('%s')
+.fi
 
 This parameter overrides the legacy table-related fields (described
 below). With Postfix versions prior to 2.2, it also overrides the
@@ -283,14 +287,12 @@ The following parameters (with lower precedence than the
 \fBselect_function\fR interface described above) can be used to
 build the SQL select statement as follows:
 
-.ti +4
-SELECT [\fBselect_field\fR]
-.ti +4
-FROM [\fBtable\fR]
-.ti +4
-WHERE [\fBwhere_field\fR] = '%s'
-.ti +10
-[\fBadditional_conditions\fR]
+.nf
+    SELECT [\fBselect_field\fR]
+    FROM [\fBtable\fR]
+    WHERE [\fBwhere_field\fR] = '%s'
+          [\fBadditional_conditions\fR]
+.fi
 
 The specifier %s is replaced with each lookup by the lookup key
 and is escaped so if it contains single quotes or other odd
@@ -304,20 +306,24 @@ are defined, these parameters are ignored. Please migrate to the new
 \fBquery\fR interface as this interface is slated to be phased out.
 .IP "\fBselect_field\fR"
 The SQL "select" parameter. Example:
-.ti +4
-\fBselect_field\fR = forw_addr
+.nf
+    \fBselect_field\fR = forw_addr
+.fi
 .IP "\fBtable\fR"
 The SQL "select .. from" table name. Example:
-.ti +4
-\fBtable\fR = mxaliases
+.nf
+    \fBtable\fR = mxaliases
+.fi
 .IP "\fBwhere_field\fR
 The SQL "select .. where" parameter. Example:
-.ti +4
-\fBwhere_field\fR = alias
+.nf
+    \fBwhere_field\fR = alias
+.fi
 .IP "\fBadditional_conditions\fR
 Additional conditions to the SQL query. Example:
-.ti +4
-\fBadditional_conditions\fR = AND status = 'paid'
+.nf
+    \fBadditional_conditions\fR = AND status = 'paid'
+.fi
 .SH "SEE ALSO"
 .na
 .nf

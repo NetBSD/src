@@ -1,4 +1,4 @@
-/*	$NetBSD: resolve.c,v 1.1.1.10 2006/07/19 01:17:49 rpaulo Exp $	*/
+/*	$NetBSD: resolve.c,v 1.1.1.11 2007/05/19 16:28:41 heas Exp $	*/
 
 /*++
 /* NAME
@@ -622,7 +622,8 @@ static void resolve_addr(RES_CONTEXT *rp, char *sender, char *addr,
 	if ((newloc = mail_addr_find(relocated_maps, STR(nextrcpt),
 				     IGNORE_ADDR_EXTENSION)) != 0) {
 	    vstring_strcpy(channel, MAIL_SERVICE_ERROR);
-	    vstring_sprintf(nexthop, "User has moved to %s", newloc);
+	    /* 5.1.6 is the closest match, but not perfect. */
+	    vstring_sprintf(nexthop, "5.1.6 User has moved to %s", newloc);
 	} else if (dict_errno != 0) {
 	    msg_warn("%s lookup failure", VAR_RELOCATED_MAPS);
 	    *flags |= RESOLVE_FLAG_FAIL;

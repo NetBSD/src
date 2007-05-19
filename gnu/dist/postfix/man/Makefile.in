@@ -23,9 +23,6 @@ TOOLS	= man1/smtp-sink.1 man1/smtp-source.1 man1/qmqp-sink.1 \
 
 update:	$(DAEMONS) $(COMMANDS) $(CONFIG) $(TOOLS)
 
-Makefile: Makefile.in
-	(set -e; echo "# DO NOT EDIT"; $(OPTS) $(SHELL) ../src/makedefs; cat $?) >$@
-
 clean:
 	rm -f cat?/*
 

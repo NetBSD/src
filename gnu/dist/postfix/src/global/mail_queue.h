@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_queue.h,v 1.1.1.6 2006/07/19 01:17:25 rpaulo Exp $	*/
+/*	$NetBSD: mail_queue.h,v 1.1.1.7 2007/05/19 16:28:13 heas Exp $	*/
 
 #ifndef _MAIL_QUEUE_H_INCLUDED_
 #define _MAIL_QUEUE_H_INCLUDED_
@@ -40,9 +40,17 @@
 
  /*
   * Queue file modes.
+  * 
+  * 4.4BSD-like systems don't allow (sticky AND executable) together, so we use
+  * group read permission bits instead. These are more portable, but they
+  * also are more likely to be turned on by accident. It would not be the end
+  * of the world.
   */
 #define MAIL_QUEUE_STAT_READY	(S_IRUSR | S_IWUSR | S_IXUSR)
 #define MAIL_QUEUE_STAT_CORRUPT	(S_IRUSR)
+#ifndef MAIL_QUEUE_STAT_UNTHROTTLE
+#define MAIL_QUEUE_STAT_UNTHROTTLE (S_IRGRP)
+#endif
 
 extern struct VSTREAM *mail_queue_enter(const char *, mode_t, struct timeval *);
 extern struct VSTREAM *mail_queue_open(const char *, const char *, int, mode_t);

@@ -1,4 +1,4 @@
-/*	$NetBSD: vstream.h,v 1.1.1.6 2006/07/19 01:17:57 rpaulo Exp $	*/
+/*	$NetBSD: vstream.h,v 1.1.1.7 2007/05/19 16:28:50 heas Exp $	*/
 
 #ifndef _VSTREAM_H_INCLUDED_
 #define _VSTREAM_H_INCLUDED_
@@ -32,7 +32,7 @@
   * Simple buffered stream. The members of this structure are not part of the
   * official interface and can change without prior notice.
   */
-typedef ssize_t(*VSTREAM_FN) (int, void *, size_t, int, void *);
+typedef ssize_t (*VSTREAM_FN) (int, void *, size_t, int, void *);
 typedef int (*VSTREAM_WAITPID_FN) (pid_t, WAIT_STATUS_T *, int);
 
 typedef struct VSTREAM {
@@ -72,13 +72,17 @@ extern VSTREAM vstream_fstd[];		/* pre-defined streams */
 #define VSTREAM_FLAG_NSEEK	(1<<11)	/* can't seek this file */
 #define VSTREAM_FLAG_DOUBLE	(1<<12)	/* double buffer */
 
+#define VSTREAM_PURGE_READ	(1<<0)	/* flush unread data */
+#define VSTREAM_PURGE_WRITE	(1<<1)	/* flush unwritten data */
+#define VSTREAM_PURGE_BOTH	(VSTREAM_PURGE_READ|VSTREAM_PURGE_WRITE)
+
 #define VSTREAM_BUFSIZE		4096
 
 extern VSTREAM *vstream_fopen(const char *, int, mode_t);
 extern int vstream_fclose(VSTREAM *);
 extern off_t vstream_fseek(VSTREAM *, off_t, int);
 extern off_t vstream_ftell(VSTREAM *);
-extern int vstream_fpurge(VSTREAM *);
+extern int vstream_fpurge(VSTREAM *, int);
 extern int vstream_fflush(VSTREAM *);
 extern int vstream_fputs(const char *, VSTREAM *);
 extern VSTREAM *vstream_fdopen(int, int);
@@ -118,6 +122,9 @@ extern void vstream_control(VSTREAM *, int,...);
 #define VSTREAM_CTL_TIMEOUT	8
 #define VSTREAM_CTL_EXCEPT	9
 #define VSTREAM_CTL_CONTEXT	10
+#ifdef F_DUPFD
+#define VSTREAM_CTL_DUPFD	11
+#endif
 
 extern VSTREAM *PRINTFLIKE(1, 2) vstream_printf(const char *,...);
 extern VSTREAM *PRINTFLIKE(2, 3) vstream_fprintf(VSTREAM *, const char *,...);

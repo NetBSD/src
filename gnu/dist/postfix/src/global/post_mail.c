@@ -1,4 +1,4 @@
-/*	$NetBSD: post_mail.c,v 1.1.1.6 2006/07/19 01:17:27 rpaulo Exp $	*/
+/*	$NetBSD: post_mail.c,v 1.1.1.7 2007/05/19 16:28:16 heas Exp $	*/
 
 /*++
 /* NAME
@@ -273,21 +273,6 @@ static void post_mail_open_event(int event, char *context)
     switch (event) {
 
 	/*
-	 * Connection established. Request notification when the server sends
-	 * the initial response. This intermediate case is necessary for some
-	 * versions of LINUX and perhaps Solaris, where UNIX-domain
-	 * connect(2) blocks until the server performs an accept(2).
-	 */
-    case EVENT_WRITE:
-	if (msg_verbose)
-	    msg_info("%s: write event", myname);
-	event_disable_readwrite(vstream_fileno(state->stream));
-	non_blocking(vstream_fileno(state->stream), BLOCKING);
-	event_enable_read(vstream_fileno(state->stream),
-			  post_mail_open_event, (char *) state);
-	return;
-
-	/*
 	 * Initial server reply. Stop the watchdog timer, disable further
 	 * read events that end up calling this function, and notify the
 	 * requestor.
@@ -297,6 +282,7 @@ static void post_mail_open_event(int event, char *context)
 	    msg_info("%s: read event", myname);
 	event_cancel_timer(post_mail_open_event, context);
 	event_disable_readwrite(vstream_fileno(state->stream));
+	non_blocking(vstream_fileno(state->stream), BLOCKING);
 	post_mail_init(state->stream, state->sender,
 		       state->recipient, state->filter_class,
 		       state->trace_flags, state->queue_id);
@@ -373,7 +359,7 @@ void    post_mail_fopen_async(const char *sender, const char *recipient,
      * same interface as all successes.
      */
     if (stream != 0) {
-	event_enable_write(vstream_fileno(stream), post_mail_open_event,
+	event_enable_read(vstream_fileno(stream), post_mail_open_event,
 			   (void *) state);
 	event_request_timer(post_mail_open_event, (void *) state,
 			    var_daemon_timeout);

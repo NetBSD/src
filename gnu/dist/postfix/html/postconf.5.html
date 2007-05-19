@@ -674,8 +674,8 @@ are calculated.
 </p>
 
 <p>
-This feature is implemented by the <a href="anvil.8.html">anvil(8)</a> service which is not
-part of the stable Postfix version 2.1 release.
+This feature is implemented by the <a href="anvil.8.html">anvil(8)</a> service which is available
+in Postfix version 2.2 and later.
 </p>
 
 <p>
@@ -823,11 +823,13 @@ password file.  </p>
 <p>
 Specify a list of user names, "/file/name" or "<a href="DATABASE_README.html">type:table</a>" patterns,
 separated by commas and/or whitespace. The list is matched left to
-right, and the search stops on the first match. Specify "!name" to
-exclude a name from the list. A "/file/name" pattern is replaced
+right, and the search stops on the first match. A "/file/name"
+pattern is replaced
 by its contents; a "<a href="DATABASE_README.html">type:table</a>" lookup table is matched when a name
 matches a lookup key (the lookup result is ignored).  Continue long
-lines by starting the next line with whitespace.  </p>
+lines by starting the next line with whitespace. Specify "!pattern"
+to exclude a name from the list. The form "!/file/name" is supported
+only in Postfix version 2.4 and later.  </p>
 
 <p>
 This feature is available in Postfix 2.2 and later.
@@ -855,11 +857,13 @@ password file.  </p>
 <p>
 Specify a list of user names, "/file/name" or "<a href="DATABASE_README.html">type:table</a>" patterns,
 separated by commas and/or whitespace. The list is matched left to
-right, and the search stops on the first match. Specify "!name" to
-exclude a name from the list. A "/file/name" pattern is replaced
+right, and the search stops on the first match. A "/file/name"
+pattern is replaced
 by its contents; a "<a href="DATABASE_README.html">type:table</a>" lookup table is matched when a name
 matches a lookup key (the lookup result is ignored).  Continue long
-lines by starting the next line with whitespace.  </p>
+lines by starting the next line with whitespace. Specify "!pattern"
+to exclude a user name from the list. The form "!/file/name" is
+supported only in Postfix version 2.4 and later.  </p>
 
 <p>
 This feature is available in Postfix 2.2 and later.
@@ -887,11 +891,13 @@ submission access to all users specify an empty list.  </p>
 <p>
 Specify a list of user names, "/file/name" or "<a href="DATABASE_README.html">type:table</a>" patterns,
 separated by commas and/or whitespace. The list is matched left to right,
-and the search stops on the first match. Specify "!name" to exclude a
-name from the list. A "/file/name" pattern is replaced by its contents;
+and the search stops on the first match. A "/file/name" pattern is
+replaced by its contents;
 a "<a href="DATABASE_README.html">type:table</a>" lookup table is matched when a name matches a lookup key
 (the lookup result is ignored).  Continue long lines by starting the
-next line with whitespace.  </p>
+next line with whitespace. Specify "!pattern" to exclude a user
+name from the list. The form "!/file/name" is supported only in
+Postfix version 2.4 and later.  </p>
 
 <p>
 Example:
@@ -930,7 +936,9 @@ below it),  "/file/name" or "<a href="DATABASE_README.html">type:table</a>" patt
 pattern is replaced by its contents; a "<a href="DATABASE_README.html">type:table</a>" lookup table
 is matched when a table entry matches a lookup string (the lookup
 result is ignored).  Continue long lines by starting the next line
-with whitespace. </p>
+with whitespace. Specify "!pattern" to exclude an address or network
+block from the list. The form "!/file/name" is supported only in
+Postfix version 2.4 and later. </p>
 
 <p> Note: IP version 6 address information must be specified inside
 <tt>[]</tt> in the <a href="postconf.5.html#authorized_verp_clients">authorized_verp_clients</a> value, and in files
@@ -1848,7 +1856,7 @@ non-address DSN status (e.g., 4.0.0).  </p>
 </DD>
 
 <DT><b><a name="default_recipient_limit">default_recipient_limit</a>
-(default: 10000)</b></DT><DD>
+(default: 20000)</b></DT><DD>
 
 <p>
 The default per-transport upper limit on the number of in-memory
@@ -1856,6 +1864,34 @@ recipients.  These limits take priority over the global
 <a href="postconf.5.html#qmgr_message_recipient_limit">qmgr_message_recipient_limit</a> after the message has been assigned
 to the respective transports.  See also <a href="postconf.5.html#default_extra_recipient_limit">default_extra_recipient_limit</a>
 and <a href="postconf.5.html#qmgr_message_recipient_minimum">qmgr_message_recipient_minimum</a>.
+</p>
+
+
+</DD>
+
+<DT><b><a name="default_recipient_refill_delay">default_recipient_refill_delay</a>
+(default: 5s)</b></DT><DD>
+
+<p>
+The default per-transport maximum delay between recipients refills.
+When not all message recipients fit into the memory at once, keep loading
+more of them at least once every this many seconds.  This is used to
+make sure the recipients are refilled in timely manner even when
+$<a href="postconf.5.html#default_recipient_refill_limit">default_recipient_refill_limit</a> is too high for too slow deliveries.
+</p>
+
+
+</DD>
+
+<DT><b><a name="default_recipient_refill_limit">default_recipient_refill_limit</a>
+(default: 100)</b></DT><DD>
+
+<p>
+The default per-transport limit on the number of recipients refilled at
+once.  When not all message recipients fit into the memory at once, keep
+loading more of them in batches of at least this many at a time.  See also
+$<a href="postconf.5.html#default_recipient_refill_delay">default_recipient_refill_delay</a>, which may result in recipient batches
+lower than this when this limit is too high for too slow deliveries.
 </p>
 
 
@@ -1976,9 +2012,9 @@ precision.  </p>
 
 <ul>
 
-<li> a = time before the queue manager, including message transmission
+<li> a = time from message arrival to last <a href="QSHAPE_README.html#active_queue">active queue</a> entry
 
-<li> b = time in queue manager
+<li> b = time from last <a href="QSHAPE_README.html#active_queue">active queue</a> entry to connection setup
 
 <li> c = time in connection setup, including DNS, EHLO and TLS
 
@@ -2060,7 +2096,7 @@ The default time unit is s (seconds).
 
 <p>
 Disable DNS lookups in the Postfix SMTP and LMTP clients. When
-disabled, hosts are looked up with the gethostbyname() system
+disabled, hosts are looked up with the getaddrinfo() system
 library routine which normally also looks in /etc/hosts.
 </p>
 
@@ -2841,7 +2877,7 @@ Note 1: you need to stop and start Postfix when this parameter changes.
 </p>
 
 <p> Note 2: address information may be enclosed inside <tt>[]</tt>,
-but this form is not recommended here. </p>
+but this form is not required here. </p>
 
 <p> When <a href="postconf.5.html#inet_interfaces">inet_interfaces</a> specifies just one IPv4 and/or IPv6 address
 that is not a loopback address, the Postfix SMTP client will use
@@ -2963,10 +2999,10 @@ by whitespace or comma.  </p>
 
 <dl>
 
-<dt> <b> bounce </b> </dt> <dd> Inspect the content of delivery
+<dt><b>bounce</b></dt> <dd> Inspect the content of delivery
 status notifications. </dd>
 
-<dt> <b> notify </b> </dt> <dd> Inspect the content of postmaster
+<dt><b>notify</b></dt> <dd> Inspect the content of postmaster
 notifications by the <a href="smtp.8.html">smtp(8)</a> and <a href="smtpd.8.html">smtpd(8)</a> processes. </dd>
 
 </dl>
@@ -2996,7 +3032,7 @@ Do not change this unless you have a complete understanding of <a href="http://w
 </DD>
 
 <DT><b><a name="ipc_idle">ipc_idle</a>
-(default: 100s)</b></DT><DD>
+(default: version dependent)</b></DT><DD>
 
 <p>
 The time after which a client closes an idle internal communication
@@ -3004,6 +3040,8 @@ channel.  The purpose is to allow servers to terminate voluntarily
 after they become idle. This is used, for example, by the address
 resolving and rewriting clients.
 </p>
+
+<p> With Postfix 2.4 the default value was reduced from 100s to 5s. </p>
 
 <p>
 Time units: s (seconds), m (minutes), h (hours), d (days), w (weeks).
@@ -3309,7 +3347,7 @@ details. The table is not indexed by hostname for consistency with
 </DD>
 
 <DT><b><a name="lmtp_discard_lhlo_keywords">lmtp_discard_lhlo_keywords</a>
-(default: $<a href="postconf.5.html#myhostname">myhostname</a>)</b></DT><DD>
+(default: empty)</b></DT><DD>
 
 <p> A case insensitive list of LHLO keywords (pipelining, starttls,
 auth, etc.) that the LMTP client will ignore in the LHLO response
@@ -3467,6 +3505,17 @@ configuration parameter.  See there for details. </p>
 
 </DD>
 
+<DT><b><a name="lmtp_pix_workaround_maps">lmtp_pix_workaround_maps</a>
+(default: empty)</b></DT><DD>
+
+<p> The LMTP-specific version of the <a href="postconf.5.html#smtp_pix_workaround_maps">smtp_pix_workaround_maps</a>
+configuration parameter.  See there for details. </p>
+
+<p> This feature is available in Postfix 2.4 and later. </p>
+
+
+</DD>
+
 <DT><b><a name="lmtp_pix_workaround_threshold_time">lmtp_pix_workaround_threshold_time</a>
 (default: 500s)</b></DT><DD>
 
@@ -3474,6 +3523,17 @@ configuration parameter.  See there for details. </p>
 configuration parameter.  See there for details. </p>
 
 <p> This feature is available in Postfix 2.3 and later. </p>
+
+
+</DD>
+
+<DT><b><a name="lmtp_pix_workarounds">lmtp_pix_workarounds</a>
+(default: empty)</b></DT><DD>
+
+<p> The LMTP-specific version of the smtp_pix_workaround
+configuration parameter.  See there for details. </p>
+
+<p> This feature is available in Postfix 2.4 and later. </p>
 
 
 </DD>
@@ -4082,13 +4142,13 @@ for details of how domain names are appended to incomplete addresses.
 
 <dl>
 
-<dt> <b> <a href="postconf.5.html#permit_inet_interfaces">permit_inet_interfaces</a> </b></dt>
+<dt><b><a href="postconf.5.html#permit_inet_interfaces">permit_inet_interfaces</a></b></dt>
 
 <dd> Append the domain name in $<a href="postconf.5.html#myorigin">myorigin</a> or $<a href="postconf.5.html#mydomain">mydomain</a> when the
 client IP address matches $<a href="postconf.5.html#inet_interfaces">inet_interfaces</a>. This is enabled by
 default. </dd>
 
-<dt> <b> <a href="postconf.5.html#permit_mynetworks">permit_mynetworks</a> </b></dt>
+<dt><b><a href="postconf.5.html#permit_mynetworks">permit_mynetworks</a></b></dt>
 
 <dd> Append the domain name in $<a href="postconf.5.html#myorigin">myorigin</a> or $<a href="postconf.5.html#mydomain">mydomain</a> when the
 client IP address matches any network or network address listed in
@@ -4791,11 +4851,13 @@ By default, address masquerading makes no exceptions.
 <p>
 Specify a list of user names, "/file/name" or "<a href="DATABASE_README.html">type:table</a>" patterns,
 separated by commas and/or whitespace. The list is matched left to
-right, and the search stops on the first match. Specify "!name" to
-exclude a name from the list. A "/file/name" pattern is replaced
+right, and the search stops on the first match. A "/file/name"
+pattern is replaced
 by its contents; a "<a href="DATABASE_README.html">type:table</a>" lookup table is matched when a name
 matches a lookup key (the lookup result is ignored).  Continue long
-lines by starting the next line with whitespace.  </p>
+lines by starting the next line with whitespace. Specify "!pattern"
+to exclude a name from the list. The form "!/file/name" is supported
+only in Postfix version 2.4 and later.  </p>
 
 <p>
 Examples:
@@ -4813,9 +4875,11 @@ Examples:
 (default: 100s)</b></DT><DD>
 
 <p>
-The maximum amount of time that an idle Postfix daemon process
-waits for the next service request before exiting.  This parameter
-is ignored by the Postfix queue manager.
+The maximum amount of time that an idle Postfix daemon process waits
+for an incoming connection before terminating voluntarily.  This
+parameter
+is ignored by the Postfix queue manager and by other long-lived
+Postfix daemon processes.
 </p>
 
 <p>
@@ -4830,8 +4894,9 @@ The default time unit is s (seconds).
 (default: 100)</b></DT><DD>
 
 <p>
-The maximal number of connection requests before a Postfix daemon
-process terminates. This parameter is ignored by the Postfix queue
+The maximal number of incoming connections that a Postfix daemon
+process will service before terminating voluntarily.  This parameter
+is ignored by the Postfix queue
 manager and by other long-lived Postfix daemon processes.
 </p>
 
@@ -5189,10 +5254,14 @@ This feature is available in Postfix 2.0 and later.
 </DD>
 
 <DT><b><a name="minimal_backoff_time">minimal_backoff_time</a>
-(default: 1000s)</b></DT><DD>
+(default: 300s)</b></DT><DD>
 
 <p>
-The minimal time between attempts to deliver a deferred message.
+The minimal time between attempts to deliver a deferred message;
+prior to Postfix 2.4 the default value was 1000s.
+</p>
+
+<p>
 This parameter also limits the time an unreachable destination is
 kept in the short-term, in-memory, destination status cache.
 </p>
@@ -5370,7 +5439,8 @@ lookup string (the lookup result is ignored). </p>
 
 <p> The list is matched left to right, and the search stops on the
 first match.  Specify "!pattern" to exclude an address or network
-block from the list.  </p>
+block from the list. The form "!/file/name" is supported only
+in Postfix version 2.4 and later. </p>
 
 <p> Note: IP version 6 address information must be specified inside
 <tt>[]</tt> in the <a href="postconf.5.html#mynetworks">mynetworks</a> value, and in files specified with
@@ -5886,8 +5956,9 @@ table lookup is used instead.  </p>
 
 <p>
 Patterns are separated by whitespace and/or commas. In order to
-reverse the result, precede a non-file name pattern with an
-exclamation point (!).
+reverse the result, precede a pattern with an
+exclamation point (!). The form "!/file/name" is supported only
+in Postfix version 2.4 and later.
 </p>
 
 <p>
@@ -5987,10 +6058,11 @@ zero means there is no minimum required amount of free space.
 </DD>
 
 <DT><b><a name="queue_run_delay">queue_run_delay</a>
-(default: 1000s)</b></DT><DD>
+(default: 300s)</b></DT><DD>
 
 <p>
-The time between <a href="QSHAPE_README.html#deferred_queue">deferred queue</a> scans by the queue manager.
+The time between <a href="QSHAPE_README.html#deferred_queue">deferred queue</a> scans by the queue manager;
+prior to Postfix 2.4 the default value was 1000s.
 </p>
 
 <p> This parameter should be set less than or equal to
@@ -6336,7 +6408,9 @@ or "<a href="DATABASE_README.html">type:table</a>" lookup tables, separated by c
 Continue long lines by starting the next line with whitespace. A
 "/file/name" pattern is replaced by its contents; a "<a href="DATABASE_README.html">type:table</a>"
 lookup table is matched when a (parent) domain appears as lookup
-key.  </p>
+key. Specify "!pattern" to exclude a domain from the list. The form
+"!/file/name" is supported only in Postfix version 2.4 and later.
+</p>
 
 
 </DD>
@@ -6362,7 +6436,10 @@ Do not change this unless you have a complete understanding of <a href="http://w
 
 <p> Optional lookup tables with all valid addresses in the domains
 that match $<a href="postconf.5.html#relay_domains">relay_domains</a>. Specify @domain as a wild-card for
-domains that do not have a valid recipient list. Technically, tables
+domains that have no valid recipient list, and become a source of
+backscatter mail: Postfix accepts spam for non-existent recipients
+and then floods innocent people with undeliverable mail.  Technically,
+tables
 listed with $<a href="postconf.5.html#relay_recipient_maps">relay_recipient_maps</a> are used as lists: Postfix needs
 to know only if a lookup string is found or not, but it does not
 use the result from table lookup.  </p>
@@ -6729,7 +6806,7 @@ Example:
 (default: empty)</b></DT><DD>
 
 <p> A sender-dependent override for the global <a href="postconf.5.html#relayhost">relayhost</a> parameter
-setting. The tables are searched by the sender address and by the
+setting. The tables are searched by the envelope sender address and
 @domain. This information is overruled with <a href="postconf.5.html#relay_transport">relay_transport</a>,
 <a href="postconf.5.html#default_transport">default_transport</a> and with the <a href="transport.5.html">transport(5)</a> table. </p>
 
@@ -6857,7 +6934,7 @@ IP hosting, but can be a problem on multi-homed firewalls. See the
 <a href="postconf.5.html#inet_interfaces">inet_interfaces</a> documentation for more detail. </p>
 
 <p> Note 2: address information may be enclosed inside <tt>[]</tt>,
-but this form is not recommended here. </p>
+but this form is not required here. </p>
 
 
 </DD>
@@ -7456,14 +7533,26 @@ sending large messages over slow network connections.
 
 </DD>
 
+<DT><b><a name="smtp_pix_workaround_maps">smtp_pix_workaround_maps</a>
+(default: empty)</b></DT><DD>
+
+<p> Lookup tables, indexed by the remote SMTP server address, with
+per-destination workarounds for CISCO PIX firewall bugs.  The table
+is not indexed by hostname for consistency with
+<a href="postconf.5.html#smtp_discard_ehlo_keyword_address_maps">smtp_discard_ehlo_keyword_address_maps</a>. </p>
+
+<p> This feature is available in Postfix 2.4 and later. </p>
+
+
+</DD>
+
 <DT><b><a name="smtp_pix_workaround_threshold_time">smtp_pix_workaround_threshold_time</a>
 (default: 500s)</b></DT><DD>
 
-<p>
-How long a message must be queued before the PIX firewall
-"&lt;CR&gt;&lt;LF&gt;.&lt;CR&gt;&lt;LF&gt;" bug workaround is turned
-on for delivery through firewalls with "smtp fixup" mode turned on.
-</p>
+<p> How long a message must be queued before the Postfix SMTP client
+turns on the PIX firewall "&lt;CR&gt;&lt;LF&gt;.&lt;CR&gt;&lt;LF&gt;"
+bug workaround for delivery through firewalls with "smtp fixup"
+mode turned on.  </p>
 
 <p>
 By default, the workaround is turned off for mail that is queued
@@ -7475,6 +7564,34 @@ turned off for the first delivery attempt.
 Specify 0 to enable the PIX firewall
 "&lt;CR&gt;&lt;LF&gt;.&lt;CR&gt;&lt;LF&gt;" bug workaround upon the
 first delivery attempt.
+</p>
+
+
+</DD>
+
+<DT><b><a name="smtp_pix_workarounds">smtp_pix_workarounds</a>
+(default: disable_esmtp, delay_dotcrlf)</b></DT><DD>
+
+<p> A list that specifies zero or more workarounds for CISCO PIX
+firewall bugs. These workarounds are implemented by the Postfix
+SMTP client. Workaround names are separated by comma or space, and
+are case insensitive.  This parameter setting can be overruled with
+per-destination <a href="postconf.5.html#smtp_pix_workaround_maps">smtp_pix_workaround_maps</a> settings. </p>
+
+<dl>
+
+<dt><b>delay_dotcrlf</b><dd> Insert a delay before sending
+".&lt;CR&gt;&lt;LF&gt;" after the end of the message content.  The
+delay is subject to the <a href="postconf.5.html#smtp_pix_workaround_delay_time">smtp_pix_workaround_delay_time</a> and
+<a href="postconf.5.html#smtp_pix_workaround_threshold_time">smtp_pix_workaround_threshold_time</a> parameter settings. </dd>
+
+<dt><b>disable_esmtp</b><dd> Disable all extended SMTP commands:
+send HELO instead of EHLO. </dd>
+
+</dl>
+
+<p> This feature is available in Postfix 2.4 and later. The default
+settings are backwards compatible with earlier Postfix versions.
 </p>
 
 
@@ -7599,7 +7716,9 @@ mechanisms the client will take into consideration.  </p>
 
 <p> Specify mechanism names, "/file/name" patterns or "<a href="DATABASE_README.html">type:table</a>"
 lookup tables. The right-hand side result from "<a href="DATABASE_README.html">type:table</a>" lookups
-is ignored. </p>
+is ignored. Specify "!pattern" to exclude a mechanism name from the
+list. The form "!/file/name" is supported only in Postfix version
+2.4 and later. </p>
 
 <p> This feature is available in Postfix 2.2 and later. </p>
 
@@ -7878,8 +7997,9 @@ must be inside the chroot jail. </p>
 (default: empty)</b></DT><DD>
 
 <p> File with the Postfix SMTP client RSA certificate in PEM format.
-This file may also contain the client private key, and these may
-be the same as the server certificate and key file. </p>
+This file may also contain the Postfix SMTP client private RSA key,
+and these may be the same as the Postfix SMTP server RSA certificate and key
+file. </p>
 
 <p> Do not configure client certificates unless you <b>must</b> present
 client TLS certificates to one or more servers. Client certificates are
@@ -7900,21 +8020,21 @@ parameters in <a href="postconf.5.html">main.cf</a> if present. </p>
 
 <p> In order to verify certificates, the CA certificate (in case
 of a certificate chain, all CA certificates) must be available.
-You should add these certificates to the server certificate, the
-server certificate first, then the issuing CA(s). </p>
+You should add these certificates to the client certificate, the
+client certificate first, then the issuing CA(s). </p>
 
 <p> Example: the certificate for "client.dom.ain" was issued by
 "intermediate CA" which itself has a certificate of "root CA".
 Create the client.pem file with "cat client_cert.pem intermediate_CA.pem
 root_CA.pem &gt; client.pem". </p>
 
-<p> If you want to accept remote SMTP server certificates issued
-by these CAs yourself, you can also add the CA certificates to the
-<a href="postconf.5.html#smtp_tls_CAfile">smtp_tls_CAfile</a>, in which case it is not necessary to have them in
-the <a href="postconf.5.html#smtp_tls_cert_file">smtp_tls_cert_file</a> or <a href="postconf.5.html#smtp_tls_dcert_file">smtp_tls_dcert_file</a>. </p>
+<p> If you also want to verify remote SMTP server certificates issued by
+these CAs, you can also add the CA certificates to the <a href="postconf.5.html#smtp_tls_CAfile">smtp_tls_CAfile</a>,
+in which case it is not necessary to have them in the <a href="postconf.5.html#smtp_tls_cert_file">smtp_tls_cert_file</a>
+or <a href="postconf.5.html#smtp_tls_dcert_file">smtp_tls_dcert_file</a>. </p>
 
-<p> A certificate supplied here must be usable as SSL client certificate and
-hence pass the "openssl verify -purpose sslclient ..." test. </p>
+<p> A certificate supplied here must be usable as an SSL client certificate
+and hence pass the "openssl verify -purpose sslclient ..." test. </p>
 
 <p> Example: </p>
 
@@ -7951,7 +8071,7 @@ Postfix 2.3 and later; use <a href="postconf.5.html#smtp_tls_mandatory_ciphers">
 (default: empty)</b></DT><DD>
 
 <p> File with the Postfix SMTP client DSA certificate in PEM format.
-This file may also contain the server private key. </p>
+This file may also contain the Postfix SMTP client private DSA key. </p>
 
 <p> See the discussion under <a href="postconf.5.html#smtp_tls_cert_file">smtp_tls_cert_file</a> for more details.
 </p>
@@ -7971,11 +8091,12 @@ This file may also contain the server private key. </p>
 (default: $<a href="postconf.5.html#smtp_tls_dcert_file">smtp_tls_dcert_file</a>)</b></DT><DD>
 
 <p> File with the Postfix SMTP client DSA private key in PEM format.
-The private key must not be encrypted. In other words, the key must
-be accessible without password. </p>
+This file may be combined with the Postfix SMTP client DSA certificate
+file specified with $<a href="postconf.5.html#smtp_tls_dcert_file">smtp_tls_dcert_file</a>. </p>
 
-<p> This file may be combined with the server certificate file
-specified with $<a href="postconf.5.html#smtp_tls_cert_file">smtp_tls_cert_file</a>. </p>
+<p> The private key must be accessible without a pass-phrase, i.e. it
+must not be encrypted, but file permissions should grant read/write
+access only to the system superuser account ("root"). </p>
 
 <p> This feature is available in Postfix 2.2 and later.  </p>
 
@@ -8041,11 +8162,12 @@ key exchange with RSA authentication. </p>
 (default: $<a href="postconf.5.html#smtp_tls_cert_file">smtp_tls_cert_file</a>)</b></DT><DD>
 
 <p> File with the Postfix SMTP client RSA private key in PEM format.
-This file may be combined with the client certificate file specified
-with $<a href="postconf.5.html#smtp_tls_cert_file">smtp_tls_cert_file</a>. </p>
+This file may be combined with the Postfix SMTP client RSA certificate
+file specified with $<a href="postconf.5.html#smtp_tls_cert_file">smtp_tls_cert_file</a>. </p>
 
-<p> The private key must not be encrypted. In other words, the key
-must be accessible without password. </p>
+<p> The private key must be accessible without a pass-phrase, i.e. it
+must not be encrypted, but file permissions should grant read/write
+access only to the system superuser account ("root"). </p>
 
 <p> Example: </p>
 
@@ -8352,7 +8474,7 @@ and higher the optional "ciphers" attribute overrides the <a href="postconf.5.ht
 <a href="postconf.5.html#smtp_tls_mandatory_ciphers">smtp_tls_mandatory_ciphers</a> parameter and the optional "protocols"
 keyword overrides the <a href="postconf.5.html">main.cf</a> <a href="postconf.5.html#smtp_tls_mandatory_protocols">smtp_tls_mandatory_protocols</a> parameter.
 In the policy table, multiple protocols must be separated by colons,
-as attribute values may not contain whitespace or commas. </p>
+as attribute values may not contain whitespace or commas. </dd>
 
 <dt><b>verify</b></dt> <dd>Mandatory TLS verification.  At this security
 level, DNS MX lookups are trusted to be secure enough, and the name
@@ -8748,7 +8870,9 @@ below it),  "/file/name" or "<a href="DATABASE_README.html">type:table</a>" patt
 pattern is replaced by its contents; a "<a href="DATABASE_README.html">type:table</a>" lookup table
 is matched when a table entry matches a lookup string (the lookup
 result is ignored).  Continue long lines by starting the next line
-with whitespace.  </p>
+with whitespace. Specify "!pattern" to exclude an address or network
+block from the list. The form "!/file/name" is supported only in
+Postfix version 2.4 and later.  </p>
 
 <p> Note: IP version 6 address information must be specified inside
 <tt>[]</tt> in the <a href="postconf.5.html#smtpd_authorized_verp_clients">smtpd_authorized_verp_clients</a> value, and in
@@ -8787,7 +8911,9 @@ below it),  "/file/name" or "<a href="DATABASE_README.html">type:table</a>" patt
 pattern is replaced by its contents; a "<a href="DATABASE_README.html">type:table</a>" lookup table
 is matched when a table entry matches a lookup string (the lookup
 result is ignored).  Continue long lines by starting the next line
-with whitespace.  </p>
+with whitespace. Specify "!pattern" to exclude an address or network
+block from the list. The form "!/file/name" is supported only in
+Postfix version 2.4 and later.  </p>
 
 <p> Note: IP version 6 address information must be specified inside
 <tt>[]</tt> in the <a href="postconf.5.html#smtpd_authorized_xclient_hosts">smtpd_authorized_xclient_hosts</a> value, and in
@@ -8825,7 +8951,9 @@ below it),  "/file/name" or "<a href="DATABASE_README.html">type:table</a>" patt
 pattern is replaced by its contents; a "<a href="DATABASE_README.html">type:table</a>" lookup table
 is matched when a table entry matches a lookup string (the lookup
 result is ignored).  Continue long lines by starting the next line
-with whitespace.  </p>
+with whitespace. Specify "!pattern" to exclude an address or network
+block from the list. The form "!/file/name" is supported only in
+Postfix version 2.4 and later.  </p>
 
 <p> Note: IP version 6 address information must be specified inside
 <tt>[]</tt> in the <a href="postconf.5.html#smtpd_authorized_xforward_hosts">smtpd_authorized_xforward_hosts</a> value, and in
@@ -9156,7 +9284,7 @@ This feature is available in Postfix 2.0 and later.  </dd>
 <dd>Reject the request when the client hostname is listed with the
 A record "<i>d.d.d.d</i>" under <i>rbl_domain</i> (Postfix version
 2.1 and later only).  If no "<i>=d.d.d.d</i>" is specified, reject
-the request when the reversed client network address is listed with
+the request when the client hostname is listed with
 any A record under <i>rbl_domain</i>. See the <a href="postconf.5.html#reject_rbl_client">reject_rbl_client</a>
 description above for additional RBL related configuration parameters.
 This feature is available in Postfix 2.0 and later.  </dd>
@@ -10065,7 +10193,7 @@ rejected requests (default: 504). </dd>
 <dd>Reject the request when the RCPT TO domain is listed with the
 A record "<i>d.d.d.d</i>" under <i>rbl_domain</i> (Postfix version
 2.1 and later only).  If no "<i>=d.d.d.d</i>" is specified, reject
-the request when the reversed client network address is listed with
+the request when the RCPT TO domain is listed with
 any A record under <i>rbl_domain</i>. <br> The <a href="postconf.5.html#maps_rbl_reject_code">maps_rbl_reject_code</a>
 parameter specifies the response code for rejected requests (default:
 554); the <a href="postconf.5.html#default_rbl_reply">default_rbl_reply</a> parameter specifies the default server
@@ -10318,7 +10446,10 @@ network part of a host address. You can also "/file/name" or
 "<a href="DATABASE_README.html">type:table</a>" patterns.  A "/file/name" pattern is replaced by its
 contents; a "<a href="DATABASE_README.html">type:table</a>" lookup table is matched when a table entry
 matches a lookup string (the lookup result is ignored).  Continue
-long lines by starting the next line with whitespace.  </p>
+long lines by starting the next line with whitespace. Specify
+"!pattern" to exclude an address or network block from the list.
+The form "!/file/name" is supported only in Postfix version 2.4 and
+later.  </p>
 
 <p> Note: IP version 6 address information must be specified inside
 <tt>[]</tt> in the <a href="postconf.5.html#smtpd_sasl_exceptions_networks">smtpd_sasl_exceptions_networks</a> value, and in
@@ -10577,7 +10708,7 @@ rejected requests (default: 504). </dd>
 <dd>Reject the request when the MAIL FROM domain is listed with
 the A record "<i>d.d.d.d</i>" under <i>rbl_domain</i> (Postfix
 version 2.1 and later only).  If no "<i>=d.d.d.d</i>" is specified,
-reject the request when the reversed client network address is
+reject the request when the MAIL FROM domain is
 listed with any A record under <i>rbl_domain</i>. <br> The
 <a href="postconf.5.html#maps_rbl_reject_code">maps_rbl_reject_code</a> parameter specifies the response code for
 rejected requests (default:  554); the <a href="postconf.5.html#default_rbl_reply">default_rbl_reply</a> parameter
@@ -10841,7 +10972,7 @@ root CA issues special CA which then issues the actual certificate...).
 (default: empty)</b></DT><DD>
 
 <p> File with the Postfix SMTP server RSA certificate in PEM format.
-This file may also contain the server private key. </p>
+This file may also contain the Postfix SMTP server private RSA key. </p>
 
 <p> Public Internet MX hosts without certificates signed by a "reputable"
 CA must generate, and be prepared to present to most clients, a
@@ -10875,14 +11006,13 @@ server certificate first, then the issuing CA(s).  </p>
 Create the server.pem file with "cat server_cert.pem intermediate_CA.pem
 root_CA.pem &gt; server.pem". </p>
 
-<p> If you want to accept certificates issued by these CAs yourself,
-you can also add the CA certificates to the <a href="postconf.5.html#smtpd_tls_CAfile">smtpd_tls_CAfile</a>, in
-which case it is not necessary to have them in the <a href="postconf.5.html#smtpd_tls_dcert_file">smtpd_tls_dcert_file</a>
-or <a href="postconf.5.html#smtpd_tls_cert_file">smtpd_tls_cert_file</a>. </p>
+<p> If you also want to verify client certificates issued by these
+CAs, you can add the CA certificates to the <a href="postconf.5.html#smtpd_tls_CAfile">smtpd_tls_CAfile</a>, in which
+case it is not necessary to have them in the <a href="postconf.5.html#smtpd_tls_cert_file">smtpd_tls_cert_file</a> or
+<a href="postconf.5.html#smtpd_tls_dcert_file">smtpd_tls_dcert_file</a>. </p>
 
-<p> A certificate supplied here must be usable as SSL server
-certificate and hence pass the "openssl verify -purpose sslserver
-..." test. </p>
+<p> A certificate supplied here must be usable as an SSL server certificate
+and hence pass the "openssl verify -purpose sslserver ..." test. </p>
 
 <p> Example: </p>
 
@@ -10920,7 +11050,7 @@ Postfix 2.3 and later; use <a href="postconf.5.html#smtpd_tls_mandatory_ciphers"
 (default: empty)</b></DT><DD>
 
 <p> File with the Postfix SMTP server DSA certificate in PEM format.
-This file may also contain the server private key. <p>
+This file may also contain the Postfix SMTP server private key. <p>
 
 <p> See the discussion under <a href="postconf.5.html#smtpd_tls_cert_file">smtpd_tls_cert_file</a> for more details.
 </p>
@@ -10990,11 +11120,12 @@ configuration parameter.  </p>
 (default: $<a href="postconf.5.html#smtpd_tls_dcert_file">smtpd_tls_dcert_file</a>)</b></DT><DD>
 
 <p> File with the Postfix SMTP server DSA private key in PEM format.
-This file may be combined with the server certificate file specified
-with $<a href="postconf.5.html#smtpd_tls_dcert_file">smtpd_tls_dcert_file</a>. </p>
+This file may be combined with the Postfix SMTP server DSA certificate
+file specified with $<a href="postconf.5.html#smtpd_tls_dcert_file">smtpd_tls_dcert_file</a>. </p>
 
-<p> The private key must not be encrypted. In other words, the key
-must be accessible without password. </p>
+<p> The private key must be accessible without a pass-phrase, i.e. it
+must not be encrypted, but file permissions should grant read/write
+access only to the system superuser account ("root"). </p>
 
 <p> This feature is available in Postfix 2.2 and later.  </p>
 
@@ -11038,11 +11169,13 @@ key exchange with RSA authentication. </p>
 (default: $<a href="postconf.5.html#smtpd_tls_cert_file">smtpd_tls_cert_file</a>)</b></DT><DD>
 
 <p> File with the Postfix SMTP server RSA private key in PEM format.
-This file may be combined with the server certificate file specified
+This file may be combined with the Postfix SMTP server certificate
+file specified
 with $<a href="postconf.5.html#smtpd_tls_cert_file">smtpd_tls_cert_file</a>. </p>
 
-<p> The private key must not be encrypted. In other words, the key
-must be accessible without password. </p>
+<p> The private key must be accessible without a pass-phrase, i.e. it
+must not be encrypted, but file permissions should grant read/write
+access only to the system superuser account ("root"). </p>
 
 
 </DD>
@@ -11647,7 +11780,7 @@ setting. </p>
 </DD>
 
 <DT><b><a name="tls_null_cipherlist">tls_null_cipherlist</a>
-(default: !aNULL:eNULL+kRSA)</b></DT><DD>
+(default: eNULL:!aNULL)</b></DT><DD>
 
 <p> The OpenSSL cipherlist for "NULL" grade ciphers that provide
 authentication without encryption. This defines the meaning of the "null"
@@ -12045,7 +12178,9 @@ domain names).
 "/file/name" pattern is replaced by its contents; a "<a href="DATABASE_README.html">type:table</a>"
 lookup table is matched when a table entry matches a lookup string
 (the lookup result is ignored).  Continue long lines by starting
-the next line with whitespace.  </p>
+the next line with whitespace. Specify "!pattern" to exclude a host
+or domain name from the list. The form "!/file/name" is supported
+only in Postfix version 2.4 and later.  </p>
 
 <p>
 See also the <a href="VIRTUAL_README.html">VIRTUAL_README</a> and <a href="ADDRESS_CLASS_README.html">ADDRESS_CLASS_README</a> documents

@@ -21,9 +21,9 @@ This document describes implementations that use a single Postfix instance for
 everything: receiving, filtering and delivering mail. Applications that use two
 separate Postfix instances will be covered by a later version of this document.
 
-The after-queue content filter is not to be confused with the approach that is
-described in the SMTPD_PROXY_README document, where incoming SMTP mail is
-filtered BEFORE it is stored into the Postfix queue.
+The after-queue content filter is not to be confused with the approaches
+described in the SMTPD_PROXY_README or MILTER_README documents, where incoming
+SMTP mail is filtered BEFORE it is stored into the Postfix queue.
 
 This document describes two approaches to content filter all email, as well as
 several options to filter mail selectively:
@@ -50,14 +50,16 @@ several options to filter mail selectively:
 
 PPrriinncciipplleess ooff ooppeerraattiioonn
 
-An external content filter receives unfiltered mail from Postfix (as described
-further below) and does one of the following:
+An after-queue content filter receives unfiltered mail from Postfix (as
+described further below) and can do one of the following:
 
  1. Re-inject the mail back into Postfix, perhaps after changing content and/or
     destination.
 
- 2. Reject the mail (by sending a suitable status code back to Postfix).
-    Postfix will return the mail to the sender.
+ 2. Discard or quarantine the mail.
+
+ 3. Reject the mail (by sending a suitable status code back to Postfix).
+    Postfix will send the mail back to the sender address.
 
 NOTE: in this time of mail worms and forged spam, it is a VERY BAD IDEA to send
 viruses back to the sender address, because the sender address is almost
@@ -67,8 +69,9 @@ it.
 
 SSiimmppllee ccoonntteenntt ffiilltteerr eexxaammppllee
 
-The first example is simple to set up. Postfix receives unfiltered mail from
-the network with the smtpd(8) server, and delivers unfiltered mail to a content
+The first example is simple to set up, but has major limitations that will be
+addressed in a second example. Postfix receives unfiltered mail from the
+network with the smtpd(8) server, and delivers unfiltered mail to a content
 filter with the Postfix pipe(8) delivery agent. The content filter injects
 filtered mail back into Postfix with the Postfix sendmail(1) command, so that
 Postfix can deliver it to the final destination.
@@ -126,33 +129,36 @@ The content filter can be a simple shell script like this:
 
 Notes:
 
-  * Line 8: The -G option does nothing before Postfix 2.3, otherwise it
-    disables address rewriting of message headers.
+  * Line 8: The -G option says the filter output is not a local mail
+    submission: don't do silly things like appending the local domain name to
+    addresses in message headers. This option does nothing before Postfix
+    version 2.3.
 
   * Line 8: The -i option says don't stop reading input when a line contains
     "." only.
 
   * Line 8: NEVER NEVER NEVER use the "-t" command-line option here. It will
-    mis-deliver mail, like sending mailing list mail back to the mailing list.
+    mis-deliver mail, like sending messages from a mailing list back to the
+    mailing list.
 
   * Line 21: The idea is to first capture the message to file and then run the
     content through a third-party content filter program.
 
-  * Line 22: If the mail cannot be captured to file, mail delivery is deferred
-    by terminating with exit status 75 (EX_TEMPFAIL). Postfix places the
-    message in the deferred mail queue and tries again later.
+  * Line 22: If the message cannot be captured to file, mail delivery is
+    deferred by terminating with exit status 75 (EX_TEMPFAIL). Postfix places
+    the message in the deferred mail queue and tries again later.
 
   * Line 25: You will need to specify a real content filter program here that
     receives the content on standard input.
 
   * Line 26: If the content filter program finds a problem, the mail is bounced
-    by terminating with exit status 69 (EX_UNAVAILABLE). Postfix will return
-    the message to the sender as undeliverable.
+    by terminating with exit status 69 (EX_UNAVAILABLE). Postfix will send the
+    message back to the sender as undeliverable mail.
 
-  * Note: in this time of mail worms and spam, it is a BAD IDEA to send known
+  * NOTE: in this time of mail worms and spam, it is a BAD IDEA to send known
     viruses or spam back to the sender, because that address is likely to be
-    forged. It is safer to discard known to be bad content and to quarantine
-    suspicious content so that it can be inspected by a human being.
+    forged. It is safer to discard known viruses and to quarantine suspicious
+    content so that it can be inspected by a human being.
 
   * Line 28: If the content is OK, it is given as input to the Postfix sendmail
     command, and the exit status of the filter command is whatever exit status
@@ -164,7 +170,7 @@ Notes:
 I suggest that you first run this script by hand until you are satisfied with
 the results. Run it with a real message (headers+body) as input:
 
-    % /path/to/script -f sender recipient... <message-file
+    % /path/to/script -f sender -- recipient... <message-file
 
 Once you're satisfied with the content filtering script:
 
@@ -206,10 +212,10 @@ Once you're satisfied with the content filtering script:
       smtp      inet  ...other stuff here, do not change...   smtpd
             -o content_filter=filter:dummy
 
-    The "content_filter" line causes Postfix to add one content filter request
-    record to each incoming mail message, with content "filter:dummy". This
-    record overrides the normal mail routing and causes mail to be given to the
-    content filter instead.
+    The "-o content_filter" line causes Postfix to add one content filter
+    request record to each incoming mail message, with content "filter:dummy".
+    This record overrides the normal mail routing and causes mail to be given
+    to the content filter instead.
 
     The content_filter configuration parameter accepts the same syntax as the
     right-hand side in a Postfix transport table.
@@ -249,7 +255,7 @@ To turn off "simple" content filtering:
   * Edit the master.cf file, remove the "-o content_filter=filter:dummy" text
     from the entry that defines the Postfix SMTP server.
 
-  * Execute "ppoossttssuuppeerr --rr AALLLL" to remove content filter information from
+  * Execute "ppoossttssuuppeerr --rr AALLLL" to remove content filter request records from
     existing queue files.
 
   * Execute another "ppoossttffiixx rreellooaadd".
@@ -285,9 +291,11 @@ architecture.
                                 content filter 10025
 
 The example given here filters all mail, including mail that arrives via SMTP
-and mail that is locally submitted via the Postfix sendmail command. See
-examples near the end of this document for how to exclude local users from
-filtering, or how to configure a destination dependent content filter.
+and mail that is locally submitted via the Postfix sendmail command (local
+submissions enter Postfix via the pickup(8) server; to keep the figure simple
+we omit local submission details). See examples near the end of this document
+for how to exclude local users from filtering, or how to configure a
+destination dependent content filter.
 
 You can expect to lose about a factor of two in Postfix performance for mail
 that arrives and leaves via SMTP, provided that the content filter creates no
@@ -348,7 +356,7 @@ the Postfix master.cf file:
   * The "-o disable_mime_output_conversion=yes" is a workaround that prevents
     the breaking of domainkeys and other digital signatures. This is needed
     because some SMTP-based content filters don't announce 8BITMIME support,
-    even though they can handle it just fine.
+    even though they can handle 8-bit mail.
 
   * The "-o smtp_generic_maps=" is a workaround that prevents local address
     rewriting with generic(5) maps. Such rewriting should happen only when mail
@@ -372,6 +380,10 @@ filtering processes on localhost port 10025:
     can be given a "*" password and non-existent shell and home directory. This
     user handles all potentially dangerous mail content - that is why it should
     be a separate account.
+
+  * By default, Postfix will terminate a command that runs longer than
+    command_time_limit seconds (default: 1000s). This is a safety measure that
+    prevents filters from running forever.
 
 If you want to have your filter listening on port localhost:10025 instead of
 Postfix, then you must run your filter as a stand-alone program, and must not
@@ -405,14 +417,14 @@ without sending `.' on the connection that injects mail back into Postfix.
             -o mynetworks=127.0.0.0/8
             -o smtpd_authorized_xforward_hosts=127.0.0.0/8
 
-  * Note: do not use spaces around the "=" or "," characters.
+  * NOTE: do not use spaces around the "=" or "," characters.
 
-  * Note: the SMTP server must not have a smaller process limit than the
+  * NOTE: the SMTP server must not have a smaller process limit than the
     "filter" master.cf entry.
 
   * The "-o content_filter=" overrides main.cf settings, and requests no
     content filtering for mail from the content filter. This is required or
-    else mail will stay in the content filtering loop.
+    else mail will loop.
 
   * The "-o receive_override_options" overrides main.cf settings to avoid
     duplicating work that was already done before the content filter. These
@@ -426,7 +438,7 @@ without sending `.' on the connection that injects mail back into Postfix.
       o We specify "no_milters" to disable Milter applications (this option is
         available only in Postfix 2.3 and later).
 
-      o We don't specify "no_address_mapping" here. This enables virtual alias
+      o We don't specify "no_address_mappings" here. This enables virtual alias
         expansion, canonical mappings, address masquerading, and other address
         mappings after the content filter. The main.cf setting of
         "receive_override_options" disables these mappings before the content
@@ -470,7 +482,7 @@ To turn off "advanced" content filtering:
             content_filter = scan:localhost:10025
             receive_override_options = no_address_mappings
 
-  * Execute "ppoossttssuuppeerr --rr AALLLL" to remove content filter information from
+  * Execute "ppoossttssuuppeerr --rr AALLLL" to remove content filter request records from
     existing queue files.
 
   * Execute another "ppoossttffiixx rreellooaadd".

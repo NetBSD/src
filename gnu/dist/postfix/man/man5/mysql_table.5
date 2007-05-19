@@ -1,4 +1,4 @@
-.\"	$NetBSD: mysql_table.5,v 1.1.1.3 2005/08/18 21:03:55 rpaulo Exp $
+.\"	$NetBSD: mysql_table.5,v 1.1.1.4 2007/05/19 16:27:49 heas Exp $
 .\"
 .TH MYSQL_TABLE 5 
 .ad
@@ -23,8 +23,9 @@ rewriting or mail routing. These tables are usually in
 Alternatively, lookup tables can be specified as MySQL databases.
 In order to use MySQL lookups, define a MySQL source as a lookup
 table in main.cf, for example:
-.ti +4
-alias_maps = mysql:/etc/mysql-aliases.cf
+.nf
+    alias_maps = mysql:/etc/mysql-aliases.cf
+.fi
 
 The file /etc/postfix/mysql-aliases.cf has the same format as
 the Postfix main.cf file, and can specify the parameters
@@ -58,14 +59,12 @@ query constructed from the \fBselect_field\fR, \fBtable\fR,
 The old interface will be gradually phased out. To migrate to
 the new interface set:
 
-.ti +4
-\fBquery\fR = SELECT [\fIselect_field\fR]
-.ti +8
-FROM [\fItable\fR]
-.ti +8
-WHERE [\fIwhere_field\fR] = '%s'
-.ti +12
-[\fIadditional_conditions\fR]
+.nf
+    \fBquery\fR = SELECT [\fIselect_field\fR]
+        FROM [\fItable\fR]
+        WHERE [\fIwhere_field\fR] = '%s'
+            [\fIadditional_conditions\fR]
+.fi
 
 Insert the value, not the name, of each legacy parameter. Note
 that the \fBadditional_conditions\fR parameter is optional
@@ -99,10 +98,10 @@ return the key itself or a constant value.
 The hosts that Postfix will try to connect to and query from.
 Specify \fIunix:\fR for UNIX domain sockets, \fIinet:\fR for TCP
 connections (default).  Example:
-.ti +4
-hosts = host1.some.domain host2.some.domain
-.ti +4
-hosts = unix:/file/name
+.nf
+    hosts = host1.some.domain host2.some.domain
+    hosts = unix:/file/name
+.fi
 
 The hosts are tried in random order, with all connections over
 UNIX domain sockets being tried before those over TCP.  The
@@ -114,26 +113,28 @@ NOTE: if you specify localhost as a hostname (even if you
 prefix it with \fIinet:\fR), MySQL will connect to the default
 UNIX domain socket.  In order to instruct MySQL to connect to
 localhost over TCP you have to specify
-.ti +4
-hosts = 127.0.0.1
+.nf
+    hosts = 127.0.0.1
+.fi
 .IP "\fBuser, password\fR"
 The user name and password to log into the mysql server.
 Example:
-.in +4
-user = someone
-.br
-password = some_password
-.in -4
+.nf
+    user = someone
+    password = some_password
+.fi
 .IP "\fBdbname\fR"
 The database name on the servers. Example:
-.ti +4
-dbname = customer_database
+.nf
+    dbname = customer_database
+.fi
 .IP "\fBquery\fR"
 The SQL query template used to search the database, where \fB%s\fR
 is a substitute for the address Postfix is trying to resolve,
 e.g.
-.ti +4
-query = SELECT replacement FROM aliases WHERE mailbox = '%s'
+.nf
+    query = SELECT replacement FROM aliases WHERE mailbox = '%s'
+.fi
 
 This parameter supports the following '%' expansions:
 .RS
@@ -180,14 +181,12 @@ the SQL query was built from the separate parameters:
 \fBadditional_conditions\fR. The mapping from the old parameters
 to the equivalent query is:
 
-.ti +4
-SELECT [\fBselect_field\fR]
-.ti +4
-FROM [\fBtable\fR]
-.ti +4
-WHERE [\fBwhere_field\fR] = '%s'
-.ti +10
-[\fBadditional_conditions\fR]
+.nf
+    SELECT [\fBselect_field\fR]
+    FROM [\fBtable\fR]
+    WHERE [\fBwhere_field\fR] = '%s'
+          [\fBadditional_conditions\fR]
+.fi
 
 The '%s' in the \fBWHERE\fR clause expands to the escaped search string.
 With Postfix 2.2 these legacy parameters are used if the \fBquery\fR
@@ -243,8 +242,9 @@ keys with a *non-empty* localpart and a matching domain
 are eligible for lookup: 'user' lookups, bare domain lookups
 and "@domain" lookups are not performed. This can significantly
 reduce the query load on the MySQL server.
-.ti +4
-domain = postfix.org, hash:/etc/postfix/searchdomains
+.nf
+    domain = postfix.org, hash:/etc/postfix/searchdomains
+.fi
 
 It is best not to use SQL to store the domains eligible
 for SQL lookups.
@@ -264,14 +264,12 @@ values.
 The following parameters can be used to fill in a
 SELECT template statement of the form:
 
-.ti +4
-SELECT [\fBselect_field\fR]
-.ti +4
-FROM [\fBtable\fR]
-.ti +4
-WHERE [\fBwhere_field\fR] = '%s'
-.ti +10
-[\fBadditional_conditions\fR]
+.nf
+    SELECT [\fBselect_field\fR]
+    FROM [\fBtable\fR]
+    WHERE [\fBwhere_field\fR] = '%s'
+          [\fBadditional_conditions\fR]
+.fi
 
 The specifier %s is replaced by the search string, and is
 escaped so if it contains single quotes or other odd characters,
@@ -284,20 +282,24 @@ are ignored. Please migrate to the new interface as the legacy
 interface may be removed in a future release.
 .IP "\fBselect_field\fR"
 The SQL "select" parameter. Example:
-.ti +4
-\fBselect_field\fR = forw_addr
+.nf
+    \fBselect_field\fR = forw_addr
+.fi
 .IP "\fBtable\fR"
 The SQL "select .. from" table name. Example:
-.ti +4
-\fBtable\fR = mxaliases
+.nf
+    \fBtable\fR = mxaliases
+.fi
 .IP "\fBwhere_field\fR
 The SQL "select .. where" parameter. Example:
-.ti +4
-\fBwhere_field\fR = alias
+.nf
+    \fBwhere_field\fR = alias
+.fi
 .IP "\fBadditional_conditions\fR
 Additional conditions to the SQL query. Example:
-.ti +4
-\fBadditional_conditions\fR = AND status = 'paid'
+.nf
+    \fBadditional_conditions\fR = AND status = 'paid'
+.fi
 .SH "SEE ALSO"
 .na
 .nf

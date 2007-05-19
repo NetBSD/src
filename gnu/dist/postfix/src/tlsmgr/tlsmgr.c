@@ -1,4 +1,4 @@
-/*	$NetBSD: tlsmgr.c,v 1.1.1.2 2006/07/19 01:17:49 rpaulo Exp $	*/
+/*	$NetBSD: tlsmgr.c,v 1.1.1.3 2007/05/19 16:28:41 heas Exp $	*/
 
 /*++
 /* NAME
@@ -194,6 +194,7 @@
 
 #include <mail_conf.h>
 #include <mail_params.h>
+#include <mail_version.h>
 #include <tls_mgr.h>
 #include <mail_proto.h>
 
@@ -215,6 +216,7 @@
   * Tunables.
   */
 char   *var_tls_rand_source;
+int     var_tls_daemon_rand_bytes;
 int     var_tls_rand_bytes;
 int     var_tls_reseed_period;
 int     var_tls_prng_exch_period;
@@ -877,6 +879,8 @@ static void tlsmgr_before_exit(char *unused_service_name, char **unused_argv)
 	tls_prng_exch_update(rand_exch);
 }
 
+MAIL_VERSION_STAMP_DECLARE;
+
 /* main - the main program */
 
 int     main(int argc, char **argv)
@@ -904,6 +908,11 @@ int     main(int argc, char **argv)
 	VAR_LMTP_TLS_LOGLEVEL, DEF_LMTP_TLS_LOGLEVEL, &var_lmtp_tls_loglevel, 0, 0,
 	0,
     };
+
+    /*
+     * Fingerprint executables and core dumps.
+     */
+    MAIL_VERSION_STAMP_ALLOCATE;
 
     /*
      * Use the multi service skeleton, and require that no-one else is

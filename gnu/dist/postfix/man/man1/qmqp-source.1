@@ -1,4 +1,4 @@
-.\"	$NetBSD: qmqp-source.1,v 1.1.1.5 2006/07/19 01:16:44 rpaulo Exp $
+.\"	$NetBSD: qmqp-source.1,v 1.1.1.6 2007/05/19 16:27:47 heas Exp $
 .\"
 .TH QMQP-SOURCE 1 
 .ad
@@ -23,7 +23,10 @@ or in parallel. The program speaks the QMQP protocol.
 Connections can be made to UNIX-domain and IPv4 or IPv6 servers.
 IPv4 and IPv6 are the default.
 
-Options:
+Note: this is an unsupported test program. No attempt is made
+to maintain compatibility between successive versions.
+
+Arguments:
 .IP \fB-4\fR
 Connect to the server with IPv4. This option has no effect when
 Postfix is built without IPv6 support.

@@ -1,4 +1,4 @@
-.\"	$NetBSD: showq.8,v 1.1.1.5 2005/08/18 21:04:22 rpaulo Exp $
+.\"	$NetBSD: showq.8,v 1.1.1.6 2007/05/19 16:27:52 heas Exp $
 .\"
 .TH SHOWQ 8 
 .ad
@@ -40,12 +40,6 @@ outside world.
 .ad
 .fi
 Problems and transactions are logged to \fBsyslogd\fR(8).
-.SH BUGS
-.ad
-.fi
-The \fBshowq\fR(8) daemon runs at a fixed low privilege; consequently,
-it cannot extract information from queue files in the
-\fBmaildrop\fR directory.
 .SH "CONFIGURATION PARAMETERS"
 .na
 .nf
@@ -73,11 +67,11 @@ The recipient of mail addressed to the null address.
 The time limit for sending or receiving information over an internal
 communication channel.
 .IP "\fBmax_idle (100s)\fR"
-The maximum amount of time that an idle Postfix daemon process
-waits for the next service request before exiting.
+The maximum amount of time that an idle Postfix daemon process waits
+for an incoming connection before terminating voluntarily.
 .IP "\fBmax_use (100)\fR"
-The maximal number of connection requests before a Postfix daemon
-process terminates.
+The maximal number of incoming connections that a Postfix daemon
+process will service before terminating voluntarily.
 .IP "\fBprocess_id (read-only)\fR"
 The process ID of a Postfix command or daemon process.
 .IP "\fBprocess_name (read-only)\fR"

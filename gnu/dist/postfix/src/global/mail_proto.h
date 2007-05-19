@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_proto.h,v 1.1.1.8 2006/07/19 01:17:25 rpaulo Exp $	*/
+/*	$NetBSD: mail_proto.h,v 1.1.1.9 2007/05/19 16:28:13 heas Exp $	*/
 
 #ifndef _MAIL_PROTO_H_INCLUDED_
 #define _MAIL_PROTO_H_INCLUDED_
@@ -52,6 +52,7 @@
 #define MAIL_SERVICE_SMTPD	"smtpd"
 #define MAIL_SERVICE_SHOWQ	"showq"
 #define MAIL_SERVICE_ERROR	"error"
+#define MAIL_SERVICE_RETRY	"retry"
 #define MAIL_SERVICE_FLUSH	"flush"
 #define MAIL_SERVICE_VERIFY	"verify"
 #define MAIL_SERVICE_TRACE	"trace"

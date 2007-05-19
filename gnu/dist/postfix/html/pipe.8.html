@@ -139,11 +139,11 @@ PIPE(8)                                                                PIPE(8)
                      ware.
 
        <b>null_sender</b>=<i>replacement</i> (default: MAILER-DAEMON)
-              Replace the null sender address, which is typically
-              used for delivery status  notifications,  with  the
-              specified  text when expanding the <b>$sender</b> command-
-              line macro, and when generating a From_ or  Return-
-              Path: message header.
+              Replace the null sender address (typically used for
+              delivery status notifications) with  the  specified
+              text when expanding the <b>$sender</b> command-line macro,
+              and when generating a From_ or Return-Path: message
+              header.
 
               If  the null sender replacement text is a non-empty
               string then it  is  affected  by  the  <b>q</b>  flag  for
@@ -278,8 +278,8 @@ PIPE(8)                                                                PIPE(8)
 
               <b>${sasl_sender</b>}
                      This macro expands to the SASL  sender  name
-                     (i.e.  the  original  submitter  as  per RFC
-                     2554) used during the reception of the  mes-
+                     (i.e.  the  original  submitter  as  per <a href="http://www.faqs.org/rfcs/rfc2554.html">RFC</a>
+                     <a href="http://www.faqs.org/rfcs/rfc2554.html">2554</a>) used during the reception of the  mes-
                      sage.
 
                      This  is available in Postfix 2.2 and later.
@@ -373,22 +373,27 @@ PIPE(8)                                                                PIPE(8)
               for delivery via the named <i>transport</i>.  The limit is
               enforced by the pipe delivery agent.
 
+              Postfix 2.4 and later support a suffix that  speci-
+              fies  the  time  unit:  s (seconds), m (minutes), h
+              (hours), d (days), w (weeks). The default time unit
+              is seconds.
+
 <b>MISCELLANEOUS CONTROLS</b>
        <b><a href="postconf.5.html#config_directory">config_directory</a> (see 'postconf -d' output)</b>
-              The default location of  the  Postfix  <a href="postconf.5.html">main.cf</a>  and
+              The  default  location  of  the Postfix <a href="postconf.5.html">main.cf</a> and
               <a href="master.5.html">master.cf</a> configuration files.
 
        <b><a href="postconf.5.html#daemon_timeout">daemon_timeout</a> (18000s)</b>
-              How  much time a Postfix daemon process may take to
-              handle a request  before  it  is  terminated  by  a
+              How much time a Postfix daemon process may take  to
+              handle  a  request  before  it  is  terminated by a
               built-in watchdog timer.
 
        <b><a href="postconf.5.html#delay_logging_resolution_limit">delay_logging_resolution_limit</a> (2)</b>
-              The  maximal  number  of  digits  after the decimal
+              The maximal number  of  digits  after  the  decimal
               point when logging sub-second delay values.
 
        <b><a href="postconf.5.html#export_environment">export_environment</a> (see 'postconf -d' output)</b>
-              The list of environment variables  that  a  Postfix
+              The  list  of  environment variables that a Postfix
               process will export to non-Postfix processes.
 
        <b><a href="postconf.5.html#ipc_timeout">ipc_timeout</a> (3600s)</b>
@@ -400,13 +405,14 @@ PIPE(8)                                                                PIPE(8)
               and most Postfix daemon processes.
 
        <b><a href="postconf.5.html#max_idle">max_idle</a> (100s)</b>
-              The  maximum  amount  of  time that an idle Postfix
-              daemon process waits for the next  service  request
-              before exiting.
+              The maximum amount of time  that  an  idle  Postfix
+              daemon  process  waits  for  an incoming connection
+              before terminating voluntarily.
 
        <b><a href="postconf.5.html#max_use">max_use</a> (100)</b>
-              The  maximal number of connection requests before a
-              Postfix daemon process terminates.
+              The maximal number of incoming connections  that  a
+              Postfix  daemon  process will service before termi-
+              nating voluntarily.
 
        <b><a href="postconf.5.html#process_id">process_id</a> (read-only)</b>
               The process ID  of  a  Postfix  command  or  daemon

@@ -4,11 +4,11 @@ PPoossttffiixx IInnssttaallllaattiioonn FFrroomm SSoou
 
 11 -- PPuurrppoossee ooff tthhiiss ddooccuummeenntt
 
-This is a bootstrap document that helps you get Postfix up and running from
-scratch with the minimal number of steps. If you are using a pre-compiled
-version of Postfix, you should be reading the general Postfix documentation
-which aims to describe the system in more detail. This bootstrap document
-should not be considered part of the general Postfix documentation.
+If you are using a pre-compiled version of Postfix, you should start with
+BASIC_CONFIGURATION_README and the general documentation referenced by it.
+INSTALL is only a bootstrap document to get Postfix up and running from scratch
+with the minimal number of steps; it should not be considered part of the
+general documentation.
 
 This document describes how to build, install and configure a Postfix system so
 that it can do one of the following:
@@ -67,7 +67,7 @@ path.
     % export MANPATH; MANPATH="`pwd`/man:$MANPATH"
     % setenv MANPATH "`pwd`/man:$MANPATH"
 
-Of particular interest is the postconf(5) manual page that lists all the 400+
+Of particular interest is the postconf(5) manual page that lists all the 500+
 configuration parameters. The HTML version of this text makes it easy to
 navigate around.
 
@@ -88,6 +88,7 @@ At some point in time, a version of Postfix was supported on:
     Linux RedHat 3.x (January 2004) - 9.x
     Linux Slackware 3.x, 4.x, 7.x
     Linux SuSE 5.x, 6.x, 7.x
+    Linux Ubuntu 4.10..7.04
     Mac OS X
     NEXTSTEP 3.x
     NetBSD 1.x
@@ -95,8 +96,8 @@ At some point in time, a version of Postfix was supported on:
     OSF1.V3 - OSF1.V5 (Digital UNIX)
     Reliant UNIX 5.x
     Rhapsody 5.x
-    SunOS 4.1.4 (July 2006)
-    SunOS 5.4 - 5.9 (Solaris 2.4..9)
+    SunOS 4.1.4 (March 2007)
+    SunOS 5.4 - 5.10 (Solaris 2.4..10)
     Ultrix 4.x (well, that was long ago)
 
 or something closely resemblant.
@@ -104,7 +105,10 @@ or something closely resemblant.
 44..11 -- GGeettttiinngg ssttaarrtteedd
 
 On Solaris, the "make" command and other utilities for software development are
-in /usr/ccs/bin, so you MUST have /usr/ccs/bin in your command search path.
+in /usr/ccs/bin, so you MUST have /usr/ccs/bin in your command search path. If
+these files do not exist, install the development packages first. See the
+Solaris FAQ item "Which packages do I need to install to support a C
+compiler?".
 
 If you need to build Postfix for multiple architectures, use the "lndir"
 command to build a shadow tree with symbolic links to the source files. "lndir"
@@ -214,9 +218,23 @@ Parameters whose defaults can be specified in this way are:
 
 44..55 -- SSuuppppoorrtt ffoorr tthhoouussaannddss ooff pprroocceesssseess
 
-In order to build Postfix for very large applications, where you expect to run
-more than 1000 mail delivery processes, you may need to override the definition
-of the FD_SETSIZE macro to make select() work correctly:
+The number of connections that Postfix can manage simultaneously is limited by
+the number of processes that it can run. This number in turn is limited by the
+number of files and sockets that a single process can open. For example, the
+Postfix queue manager has a separate connection to each delivery process, and
+the anvil(8) server has one connection per smtpd(8) process.
+
+Postfix version 2.4 and later have no built-in limits on the number of open
+files or sockets, when compiled on systems that support one of the following:
+
+  * BSD kqueue(2) (FreeBSD 4.1, NetBSD 2.0, OpenBSD 2.9),
+  * Solaris 8 /dev/poll,
+  * Linux 2.6 epoll(4).
+
+With other Postfix versions or operating systems, the number of file
+descriptors per process is limited by the value of the FD_SETSIZE macro. If you
+expect to run more than 1000 mail delivery processes, you may need to override
+the definition of the FD_SETSIZE macro to make select() work correctly:
 
     % make makefiles CCARGS=-DFD_SETSIZE=2048
 
@@ -225,6 +243,10 @@ systems the FD_SETSIZE value can be changed only by using undocumented
 interfaces. Currently, that means including <bits/types.h> directly (which is
 not allowed) and overriding the __FD_SETSIZE macro. Beware, undocumented
 interfaces can change at any time and without warning.
+
+But wait, there is more: none of this will work unless the operating system is
+configured to handle thousands of connections. See the TUNING_README guide for
+examples of how to increase the number of open sockets or files.
 
 44..66 -- CCoommppiilliinngg PPoossttffiixx,, aatt llaasstt
 
@@ -267,15 +289,22 @@ to end up placing "#ifdef" sections all over the source code again.
 
 This text describes how to install Postfix from source code. See the
 PACKAGE_README file if you are building a package for distribution to other
-systems. See auxiliary/MacOSX/README-INSTALL.OSX for information about
-installing Postfix from source on Mac OS X.
+systems.
 
 66..11 -- SSaavvee eexxiissttiinngg SSeennddmmaaiill bbiinnaarriieess
 
 IMPORTANT: if you are REPLACING an existing Sendmail installation with Postfix,
 you may need to keep the old sendmail program running for some time in order to
-flush the mail queue. As superuser, execute the following commands (your
-sendmail, newaliases and mailq programs may be in a different place):
+flush the mail queue.
+
+  * Some systems implement a mail switch mechanism where different MTAs
+    (Postfix, Sendmail, etc.) can be installed at the same time, while only one
+    of them is actually being used. Examples of such switching mechanisms are
+    the FreeBSD mailwrapper(8) or the Linux mail switch. In this case you
+    should try to "flip" the switch to "Postfix" before installing Postfix.
+
+  * If your system has no mail switch mechanism, execute the following commands
+    (your sendmail, newaliases and mailq programs may be in a different place):
 
     # mv /usr/sbin/sendmail /usr/sbin/sendmail.OFF
     # mv /usr/bin/newaliases /usr/bin/newaliases.OFF
@@ -320,13 +349,14 @@ following commands as the super-user:
 
     # make upgrade       (non-interactive version, for upgrades)
 
+  * The interactive version ("make install") asks for pathnames for Postfix
+    data and program files, and stores your preferences in the main.cf file. IIff
+    yyoouu ddoonn''tt wwaanntt PPoossttffiixx ttoo oovveerrwwrriittee nnoonn--PPoossttffiixx ""sseennddmmaaiill"",, ""mmaaiillqq"" aanndd
+    ""nneewwaalliiaasseess"" ffiilleess,, ssppeecciiffyy ppaatthhnnaammeess tthhaatt eenndd iinn ""..ppoossttffiixx"".
+
   * The non-interactive version ("make upgrade") needs the /etc/postfix/main.cf
     file from a previous installation. If the file does not exist, use
     interactive installation ("make install") instead.
-
-  * The interactive version offers suggestions for pathnames that you can
-    override interactively, and stores your preferences in /etc/postfix/main.cf
-    for convenient future upgrades.
 
 66..44 -- CCoonnffiigguurree PPoossttffiixx
 
@@ -390,6 +420,12 @@ Alternatively, you can use the Postfix system to send AND receive mail while
 leaving your Sendmail setup intact, by running Postfix on a virtual interface
 address. Simply configure your mail user agent to directly invoke the Postfix
 sendmail program.
+
+To create a virtual network interface address, study your system ifconfig
+manual page. The command syntax could be any of:
+
+    # iiffccoonnffiigg llee00::11 <<aaddddrreessss>> nneettmmaasskk <<mmaasskk>> uupp
+    # iiffccoonnffiigg eenn00 aalliiaass <<aaddddrreessss>> nneettmmaasskk 225555..225555..225555..225555
 
 In the /etc/postfix/main.cf file, I would specify
 
