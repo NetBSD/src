@@ -1,3 +1,5 @@
+.\"	$NetBSD: apmlabel.8,v 1.2 2007/05/19 14:23:25 wiz Exp $
+.\"
 .\" Copyright (C) 1998 Wolfgang Solfrank.
 .\" Copyright (C) 1998 TooLs GmbH.
 .\" All rights reserved.
@@ -27,9 +29,7 @@
 .\" OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 .\" ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$NetBSD: apmlabel.8,v 1.1.1.1 2007/03/05 23:06:53 dillo Exp $
-.\"
-.Dd February 26, 2007
+.Dd May 19, 2007
 .Dt APMLABEL 8
 .Os
 .Sh NAME
@@ -82,12 +82,12 @@ Available options:
 Force an update, even if there has been no change.
 .It Fl q
 Performs operations in a quiet fashion.
-.It Fl w
-Update the in-core label if it has been changed.
 .It Fl r
 In conjunction with
 .Fl w ,
 also update the on-disk label.
+.It Fl w
+Update the in-core label if it has been changed.
 .El
 .Sh SEE ALSO
 .Xr disklabel 8 ,
