@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.234 2007/05/19 22:57:47 mrg Exp $	*/
+/*	$NetBSD: locore.s,v 1.235 2007/05/19 23:08:48 uwe Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -4998,16 +4998,23 @@ ENTRY(snapshot)
 
 
 /*
- * cpu_lwp_fork() arranges for lwp_trampoline() to run after a process gets
- * chosen in switch(). The stack frame will contain a function pointer
- * in %l0, and an argument to pass to it in %l1.   %l2 contains an lwp pointer
- * to pass to lwp_startup() arg 2, %
+ * cpu_lwp_fork() arranges for lwp_trampoline() to run when the
+ * nascent lwp is selected by switch().
+ *
+ * The switch frame will contain pointer to struct lwp of this lwp in
+ * %l2, a pointer to the function to call in %l0, and an argument to
+ * pass to it in %l1 (we abuse the callee-saved registers).
+ *
+ * We enter lwp_trampoline as if we are "returning" from
+ * cpu_switchto(), so %o0 contains previous lwp (the one we are
+ * switching from) that we pass to lwp_startup().
  *
  * If the function *(%l0) returns, we arrange for an immediate return
- * to user mode. This happens in two known cases: after execve(2) of init,
- * and when returning a child to user mode after a fork(2).
+ * to user mode.  This happens in two known cases: after execve(2) of
+ * init, and when returning a child to user mode after a fork(2).
  *
- * If were setting up a kernel thread, the function *(%l0) will not return.
+ * If were setting up a kernel thread, the function *(%l0) will not
+ * return.
  */
 ENTRY(lwp_trampoline)
 	/*
@@ -5016,7 +5023,7 @@ ENTRY(lwp_trampoline)
 	 * `save ... restore'.
 	 */
 
-	! newlwp in %l2, oldlwp alrady in %o0
+	! newlwp in %l2, oldlwp already in %o0
 	call	lwp_startup
 	 mov	%l2, %o1
 
