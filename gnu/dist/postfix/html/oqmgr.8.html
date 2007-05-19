@@ -232,7 +232,7 @@ OQMGR(8)                                                              OQMGR(8)
               Idem, for delivery via the named message <i>transport</i>.
 
 <b>OTHER RESOURCE AND RATE CONTROLS</b>
-       <b><a href="postconf.5.html#minimal_backoff_time">minimal_backoff_time</a> (1000s)</b>
+       <b><a href="postconf.5.html#minimal_backoff_time">minimal_backoff_time</a> (version dependent)</b>
               The minimal time  between  attempts  to  deliver  a
               deferred message.
 
@@ -244,7 +244,7 @@ OQMGR(8)                                                              OQMGR(8)
               The maximal time a message is queued before  it  is
               sent back as undeliverable.
 
-       <b><a href="postconf.5.html#queue_run_delay">queue_run_delay</a> (1000s)</b>
+       <b><a href="postconf.5.html#queue_run_delay">queue_run_delay</a> (version dependent)</b>
               The  time between <a href="QSHAPE_README.html#deferred_queue">deferred queue</a> scans by the queue
               manager.
 

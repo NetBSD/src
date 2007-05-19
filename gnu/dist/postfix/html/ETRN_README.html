@@ -27,11 +27,6 @@ searches the queue for mail to the customer, and delivers that mail
 not delivered via the connection that was used for sending ETRN.
 </p>
 
-<p> Postfix versions before 1.0 (also known as version 20010228)
-implemented the ETRN command in an inefficient manner: they simply
-attempted to deliver all queued mail.  This is slow on mail servers
-that queue mail for many customers.  </p>
-
 <p> As of version 1.0, Postfix has a fast ETRN implementation that
 does not require Postfix to examine every queue file.  Instead,
 Postfix maintains a record of what queue files contain mail for
@@ -74,11 +69,11 @@ font.  </p>
 <blockquote>
 <pre>
 220 my.server.tld ESMTP Postfix
-<b>helo my.client.tld</b>
+<b>HELO my.client.tld</b>
 250 Ok
-<b>etrn some.customer.domain</b>
+<b>ETRN some.customer.domain</b>
 250 Queuing started
-<b>quit</b>
+<b>QUIT</b>
 221 Bye
 </pre>
 </blockquote>
@@ -90,6 +85,8 @@ the connection that was used to send the ETRN command. </p>
 <p> The Postfix operator can request delivery for a specific customer
 by using the command "sendmail -qR<i>destination</i>" and, with
 Postfix version 1.1 and later, "postqueue -s<i>destination</i>".
+Access to this feature is controlled with the <a href="postconf.5.html#authorized_flush_users">authorized_flush_users</a>
+configuration parameter (Postfix version 2.2 and later).
 </p>
 
 <h2><a name="how">How Postfix fast ETRN works</a></h2>
@@ -149,12 +146,13 @@ want to turn on fast ETRN service for every possible destination.
 with queue file names. When a request to "deliver mail now" arrives,
 Postfix will attempt to deliver all recipients in the queue files
 that have mail for the destination in question.  This does not
-perform well when queue files have recipients in many different
-domains.  </p>
+perform well with queue files that have recipients in many different
+domains, such as queue files with outbound mailing list traffic.
+</p>
 
 <li> <p> The <a href="flush.8.html">flush(8)</a> daemon maintains per-destination logfiles
 only for destinations listed with $<a href="postconf.5.html#fast_flush_domains">fast_flush_domains</a>. With other
-destinations it not possible to trigger delivery with "sendmail
+destinations you cannot request delivery with "sendmail
 -qR<i>destination</i>" or, with Postfix version 1.1 and later,
 "postqueue -s<i>destination</i>". </p>
 
@@ -166,19 +164,24 @@ does not ignore the volatile in-memory list of dead domains, and
 the list of message delivery transports specified with the
 <a href="postconf.5.html#defer_transports">defer_transports</a> configuration parameter.  </p>
 
+<li> <p> Up to and including Postfix version 2.3, the "fast flush"
+service may not deliver some messages if the request to "deliver
+mail now" arrives while an <a href="QSHAPE_README.html#incoming_queue">incoming queue</a> scan is already in progress.
+</p>
+
 </ul>
 
 <h2><a name="config">Configuring the Postfix fast ETRN service</a></h2>
 
 <p> The behavior of the <a href="flush.8.html">flush(8)</a> daemon is controlled by parameters
-in the main.cf configuration file. </p>
+in the <a href="postconf.5.html">main.cf</a> configuration file. </p>
 
 <p> By default, Postfix "fast ETRN" service is available only for
 destinations that Postfix is willing to relay mail to:  </p>
 
 <blockquote>
 <pre>
-/etc/postfix/main.cf:
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
     <a href="postconf.5.html#fast_flush_domains">fast_flush_domains</a> = $<a href="postconf.5.html#relay_domains">relay_domains</a>
     <a href="postconf.5.html#smtpd_etrn_restrictions">smtpd_etrn_restrictions</a> = <a href="postconf.5.html#permit_mynetworks">permit_mynetworks</a>, reject
 </pre>
@@ -203,7 +206,7 @@ may execute the ETRN command. By default, any client has permission.
 
 <blockquote>
 <pre>
-/etc/postfix/main.cf:
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
     <a href="postconf.5.html#fast_flush_domains">fast_flush_domains</a> = $<a href="postconf.5.html#relay_domains">relay_domains</a>, some.other.domain
 </pre>
 </blockquote>
@@ -213,7 +216,7 @@ and so that it maintains no per-destination logfiles, specify: </p>
 
 <blockquote>
 <pre>
-/etc/postfix/main.cf:
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
     <a href="postconf.5.html#fast_flush_domains">fast_flush_domains</a> =
 </pre>
 </blockquote>
@@ -240,7 +243,7 @@ for this delivery transport is deferred as soon as it arrives.
 
 <blockquote>
 <pre>
- 1 /etc/postfix/master.cf:
+ 1 /etc/postfix/<a href="master.5.html">master.cf</a>:
  2   # =============================================================
  3   # service type  private unpriv  chroot  wakeup  maxproc command
  4   #               (yes)   (yes)   (yes)   (never) (100)
@@ -249,7 +252,7 @@ for this delivery transport is deferred as soon as it arrives.
  7   relay     unix  -       -       n       -       -       smtp
  8   etrn-only unix  -       -       n       -       -       smtp
  9 
-10 /etc/postfix/main.cf:
+10 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
 11   <a href="postconf.5.html#relay_domains">relay_domains</a> = customer.tld ...other domains...
 12   <a href="postconf.5.html#defer_transports">defer_transports</a> = etrn-only
 13   <a href="postconf.5.html#transport_maps">transport_maps</a> = hash:/etc/postfix/transport
@@ -302,9 +305,9 @@ boldface: </p>
 <blockquote>
 <pre>
 220 my.server.tld ESMTP Postfix
-<b>helo my.client.tld</b>
+<b>HELO my.client.tld</b>
 250 Ok
-<b>etrn some.customer.domain</b>
+<b>ETRN some.customer.domain</b>
 250 Queuing started
 </pre>
 </blockquote>
@@ -338,9 +341,9 @@ commands that you type: </p>
 <blockquote>
 <pre>
 220 my.server.tld ESMTP Postfix
-<b>helo my.client.tld</b>
+<b>HELO my.client.tld</b>
 250 Ok
-<b>etrn some.other.customer.domain</b>
+<b>ETRN some.other.customer.domain</b>
 250 Queuing started
 </pre>
 </blockquote>
@@ -356,9 +359,9 @@ server has mail queued for that destination. </p>
 <blockquote>
 <pre>
 220 my.server.tld ESMTP Postfix
-<b>helo my.client.tld</b>
+<b>HELO my.client.tld</b>
 250 Ok
-<b>etrn not.a.customer.domain</b>
+<b>ETRN not.a.customer.domain</b>
 459 &lt;not.a.customer.domain&gt;: service unavailable
 </pre>
 </blockquote>

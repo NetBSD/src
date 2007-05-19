@@ -18,7 +18,7 @@ $(PROG): $(OBJS) $(LIBS)
 $(OBJS): ../../conf/makedefs.out
 
 Makefile: Makefile.in
-	(cat ../../conf/makedefs.out $?) >$@
+	cat ../../conf/makedefs.out $? >$@
 
 test:	$(TESTPROG)
 
@@ -63,6 +63,7 @@ postkick.o: ../../include/iostuff.h
 postkick.o: ../../include/mail_conf.h
 postkick.o: ../../include/mail_params.h
 postkick.o: ../../include/mail_proto.h
+postkick.o: ../../include/mail_version.h
 postkick.o: ../../include/msg.h
 postkick.o: ../../include/msg_vstream.h
 postkick.o: ../../include/mymalloc.h

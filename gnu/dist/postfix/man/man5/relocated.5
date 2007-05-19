@@ -1,4 +1,4 @@
-.\"	$NetBSD: relocated.5,v 1.1.1.9 2006/07/19 01:16:48 rpaulo Exp $
+.\"	$NetBSD: relocated.5,v 1.1.1.10 2007/05/19 16:27:51 heas Exp $
 .\"
 .TH RELOCATED 5 
 .ad
@@ -21,17 +21,17 @@ Normally, the \fBrelocated\fR(5) table is specified as a text file
 that serves as input to the \fBpostmap\fR(1) command.
 The result, an indexed file in \fBdbm\fR or \fBdb\fR format,
 is used for fast searching by the mail system. Execute the command
-"\fBpostmap /etc/postfix/relocated\fR" in order to rebuild the indexed
-file after changing the relocated table.
+"\fBpostmap /etc/postfix/relocated\fR" to rebuild an indexed
+file after changing the corresponding relocated table.
 
 When the table is provided via other means such as NIS, LDAP
 or SQL, the same lookups are done as for ordinary indexed files.
 
 Alternatively, the table can be provided as a regular-expression
 map where patterns are given as regular expressions, or lookups
-can be directed to TCP-based server. In that case, the lookups are
-done in a slightly different way as described below under
-"REGULAR EXPRESSION TABLES" and "TCP-BASED TABLES".
+can be directed to TCP-based server. In those case, the lookups
+are done in a slightly different way as described below under
+"REGULAR EXPRESSION TABLES" or "TCP-BASED TABLES".
 
 Table lookups are case insensitive.
 .SH "CASE FOLDING"
@@ -51,9 +51,11 @@ lookup fields can match both upper and lower case.
 The input format for the \fBpostmap\fR(1) command is as follows:
 .IP \(bu
 An entry has one of the following form:
-.ti +5
-\fIpattern      new_location\fR
-.br
+
+.nf
+     \fIpattern      new_location\fR
+.fi
+
 Where \fInew_location\fR specifies contact information such as
 an email address, or perhaps a street address or telephone number.
 .IP \(bu
@@ -100,7 +102,7 @@ directed to a TCP-based server. For a description of regular
 expression lookup table syntax, see \fBregexp_table\fR(5) or
 \fBpcre_table\fR(5). For a description of the TCP client/server
 table lookup protocol, see \fBtcp_table\fR(5).
-This feature is not available up to and including Postfix version 2.3.
+This feature is not available up to and including Postfix version 2.4.
 
 Each pattern is a regular expression that is applied to the entire
 address being looked up. Thus, \fIuser@domain\fR mail addresses are not
@@ -121,7 +123,7 @@ pattern can be interpolated as \fB$1\fR, \fB$2\fR and so on.
 This section describes how the table lookups change when lookups
 are directed to a TCP-based server. For a description of the TCP
 client/server lookup protocol, see \fBtcp_table\fR(5).
-This feature is not available up to and including Postfix version 2.3.
+This feature is not available up to and including Postfix version 2.4.
 
 Each lookup operation uses the entire address once.  Thus,
 \fIuser@domain\fR mail addresses are not broken up into their

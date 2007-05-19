@@ -1,4 +1,4 @@
-/*	$NetBSD: milter8.c,v 1.1.1.4 2007/02/05 17:41:24 rpaulo Exp $	*/
+/*	$NetBSD: milter8.c,v 1.1.1.5 2007/05/19 16:28:23 heas Exp $	*/
 
 /*++
 /* NAME
@@ -198,6 +198,7 @@
 
 /* Global library. */
 
+#include <mail_params.h>		/* var_line_limit */
 #include <mail_proto.h>
 #include <rec_type.h>
 #include <record.h>
@@ -868,9 +869,12 @@ static const char *milter8_event(MILTER8 *milter, int event,
     ssize_t data_size;
     const char *smfic_name;
     const char *smfir_name;
-    MILTERS *parent;
+    MILTERS *parent = milter->m.parent;
     UINT32_TYPE index;
-    const char *edit_resp;
+    const char *edit_resp = 0;
+    const char *retval = 0;
+    VSTRING *body_line_buf = 0;
+    int     done = 0;
 
 #define DONT_SKIP_REPLY	0
 
@@ -972,17 +976,30 @@ static const char *milter8_event(MILTER8 *milter, int event,
     /*
      * Receive the reply or replies.
      * 
+     * Intercept all loop exits so that we can do post body replacement
+     * processing.
+     * 
      * XXX Bound the loop iteration count.
      */
 #define IN_CONNECT_EVENT(e) ((e) == SMFIC_CONNECT || (e) == SMFIC_HELO)
 
-    for (;;) {
+    /*
+     * XXX Don't evaluate this macro's argument multiple times. Since we use
+     * "continue" the macro can't be enclosed in do .. while (0).
+     */
+#define MILTER8_EVENT_BREAK(s) { \
+	retval = (s); \
+	done = 1; \
+	continue; \
+    }
+
+    while (done == 0) {
 	char   *cp;
 	char   *rp;
 	char    ch;
 
 	if (milter8_read_resp(milter, event, &cmd, &data_size) != 0)
-	    return (milter->def_reply);
+	    MILTER8_EVENT_BREAK(milter->def_reply);
 	if (msg_verbose)
 	    msg_info("reply: %s data %ld bytes",
 		     (smfir_name = str_name_code(smfir_table, cmd)) != 0 ?
@@ -1003,7 +1020,7 @@ static const char *milter8_event(MILTER8 *milter, int event,
 	case SMFIR_CONTINUE:
 	    if (data_size != 0)
 		break;
-	    return (milter->def_reply);
+	    MILTER8_EVENT_BREAK(milter->def_reply);
 
 	    /*
 	     * Decision: accept this message, or accept all further commands
@@ -1023,7 +1040,7 @@ static const char *milter8_event(MILTER8 *milter, int event,
 		/* No more events for this message. */
 		milter->state = MILTER8_STAT_ACCEPT_MSG;
 	    }
-	    return (milter->def_reply);
+	    MILTER8_EVENT_BREAK(milter->def_reply);
 
 	    /*
 	     * Decision: accept and silently discard this message. According
@@ -1038,11 +1055,11 @@ static const char *milter8_event(MILTER8 *milter, int event,
 		msg_warn("milter %s: DISCARD action is not allowed "
 			 "for connect or helo", milter->m.name);
 		milter8_conf_error(milter);
-		return (milter->def_reply);
+		MILTER8_EVENT_BREAK(milter->def_reply);
 	    } else {
 		/* No more events for this message. */
 		milter->state = MILTER8_STAT_ACCEPT_MSG;
-		return ("D");
+		MILTER8_EVENT_BREAK("D");
 	    }
 
 	    /*
@@ -1057,9 +1074,9 @@ static const char *milter8_event(MILTER8 *milter, int event,
 		milter8_close_stream(milter);
 #endif
 		milter->state = MILTER8_STAT_REJECT_CON;
-		return (milter8_def_reply(milter, "550 5.7.1 Command rejected"));
+		MILTER8_EVENT_BREAK(milter8_def_reply(milter, "550 5.7.1 Command rejected"));
 	    } else {
-		return ("550 5.7.1 Command rejected");
+		MILTER8_EVENT_BREAK("550 5.7.1 Command rejected");
 	    }
 
 	    /*
@@ -1074,10 +1091,10 @@ static const char *milter8_event(MILTER8 *milter, int event,
 		milter8_close_stream(milter);
 #endif
 		milter->state = MILTER8_STAT_REJECT_CON;
-		return (milter8_def_reply(milter,
+		MILTER8_EVENT_BREAK(milter8_def_reply(milter,
 			"451 4.7.1 Service unavailable - try again later"));
 	    } else {
-		return ("451 4.7.1 Service unavailable - try again later");
+		MILTER8_EVENT_BREAK("451 4.7.1 Service unavailable - try again later");
 	    }
 
 	    /*
@@ -1092,7 +1109,7 @@ static const char *milter8_event(MILTER8 *milter, int event,
 	    milter8_close_stream(milter);
 #endif
 	    milter->state = MILTER8_STAT_REJECT_CON;
-	    return (milter8_def_reply(milter, "S"));
+	    MILTER8_EVENT_BREAK(milter8_def_reply(milter, "S"));
 #endif
 
 	    /*
@@ -1109,7 +1126,7 @@ static const char *milter8_event(MILTER8 *milter, int event,
 	    if (milter8_read_data(milter, data_size,
 				  MILTER8_DATA_BUFFER, milter->buf,
 				  MILTER8_DATA_END) != 0)
-		return (milter->def_reply);
+		MILTER8_EVENT_BREAK(milter->def_reply);
 	    if ((STR(milter->buf)[0] != '4' && STR(milter->buf)[0] != '5')
 		|| !ISDIGIT(STR(milter->buf)[1])
 		|| !ISDIGIT(STR(milter->buf)[2])
@@ -1118,7 +1135,7 @@ static const char *milter8_event(MILTER8 *milter, int event,
 		msg_warn("milter %s: malformed reply: %s",
 			 milter->m.name, STR(milter->buf));
 		milter8_conf_error(milter);
-		return (milter->def_reply);
+		MILTER8_EVENT_BREAK(milter->def_reply);
 	    }
 	    if ((rp = cp = strchr(STR(milter->buf), '%')) != 0) {
 		for (;;) {
@@ -1134,9 +1151,9 @@ static const char *milter8_event(MILTER8 *milter, int event,
 		milter8_close_stream(milter);
 #endif
 		milter->state = MILTER8_STAT_REJECT_CON;
-		return (milter8_def_reply(milter, STR(milter->buf)));
+		MILTER8_EVENT_BREAK(milter8_def_reply(milter, STR(milter->buf)));
 	    } else {
-		return (STR(milter->buf));
+		MILTER8_EVENT_BREAK(STR(milter->buf));
 	    }
 
 	    /*
@@ -1150,8 +1167,8 @@ static const char *milter8_event(MILTER8 *milter, int event,
 	    if (milter8_read_data(milter, data_size,
 				  MILTER8_DATA_BUFFER, milter->buf,
 				  MILTER8_DATA_END) != 0)
-		return (milter->def_reply);
-	    return ("H");
+		MILTER8_EVENT_BREAK(milter->def_reply);
+	    MILTER8_EVENT_BREAK("H");
 #endif
 
 	    /*
@@ -1172,8 +1189,7 @@ static const char *milter8_event(MILTER8 *milter, int event,
 					  MILTER8_DATA_STRING, milter->buf,
 					  MILTER8_DATA_STRING, milter->body,
 					  MILTER8_DATA_END) != 0)
-			return (milter->def_reply);
-		    parent = milter->m.parent;
+			MILTER8_EVENT_BREAK(milter->def_reply);
 		    /* XXX Sendmail 8 compatibility. */
 		    if (index == 0)
 			index = 1;
@@ -1181,13 +1197,13 @@ static const char *milter8_event(MILTER8 *milter, int event,
 			msg_warn("milter %s: bad change header index: %ld",
 				 milter->m.name, (long) index);
 			milter8_conf_error(milter);
-			return (milter->def_reply);
+			MILTER8_EVENT_BREAK(milter->def_reply);
 		    }
 		    if (LEN(milter->buf) == 0) {
 			msg_warn("milter %s: null change header name",
 				 milter->m.name);
 			milter8_conf_error(milter);
-			return (milter->def_reply);
+			MILTER8_EVENT_BREAK(milter->def_reply);
 		    }
 		    if (STR(milter->body)[0])
 			edit_resp = parent->upd_header(parent->chg_context,
@@ -1199,7 +1215,7 @@ static const char *milter8_event(MILTER8 *milter, int event,
 						       (ssize_t) index,
 						       STR(milter->buf));
 		    if (edit_resp)
-			return (edit_resp);
+			MILTER8_EVENT_BREAK(edit_resp);
 		    continue;
 #endif
 
@@ -1211,13 +1227,12 @@ static const char *milter8_event(MILTER8 *milter, int event,
 					  MILTER8_DATA_STRING, milter->buf,
 					  MILTER8_DATA_STRING, milter->body,
 					  MILTER8_DATA_END) != 0)
-			return (milter->def_reply);
-		    parent = milter->m.parent;
+			MILTER8_EVENT_BREAK(milter->def_reply);
 		    edit_resp = parent->add_header(parent->chg_context,
 						   STR(milter->buf),
 						   STR(milter->body));
 		    if (edit_resp)
-			return (edit_resp);
+			MILTER8_EVENT_BREAK(edit_resp);
 		    continue;
 
 		    /*
@@ -1233,20 +1248,19 @@ static const char *milter8_event(MILTER8 *milter, int event,
 					  MILTER8_DATA_STRING, milter->buf,
 					  MILTER8_DATA_STRING, milter->body,
 					  MILTER8_DATA_END) != 0)
-			return (milter->def_reply);
+			MILTER8_EVENT_BREAK(milter->def_reply);
 		    if ((ssize_t) index + 1 < 1) {
 			msg_warn("milter %s: bad insert header index: %ld",
 				 milter->m.name, (long) index);
 			milter8_conf_error(milter);
-			return (milter->def_reply);
+			MILTER8_EVENT_BREAK(milter->def_reply);
 		    }
-		    parent = milter->m.parent;
 		    edit_resp = parent->ins_header(parent->chg_context,
 						   (ssize_t) index + 1,
 						   STR(milter->buf),
 						   STR(milter->body));
 		    if (edit_resp)
-			return (edit_resp);
+			MILTER8_EVENT_BREAK(edit_resp);
 		    continue;
 #endif
 
@@ -1257,12 +1271,11 @@ static const char *milter8_event(MILTER8 *milter, int event,
 		    if (milter8_read_data(milter, data_size,
 					  MILTER8_DATA_STRING, milter->buf,
 					  MILTER8_DATA_END) != 0)
-			return (milter->def_reply);
-		    parent = milter->m.parent;
+			MILTER8_EVENT_BREAK(milter->def_reply);
 		    edit_resp = parent->add_rcpt(parent->chg_context,
 						 STR(milter->buf));
 		    if (edit_resp)
-			return (edit_resp);
+			MILTER8_EVENT_BREAK(edit_resp);
 		    continue;
 
 		    /*
@@ -1272,31 +1285,47 @@ static const char *milter8_event(MILTER8 *milter, int event,
 		    if (milter8_read_data(milter, data_size,
 					  MILTER8_DATA_STRING, milter->buf,
 					  MILTER8_DATA_END) != 0)
-			return (milter->def_reply);
-		    parent = milter->m.parent;
+			MILTER8_EVENT_BREAK(milter->def_reply);
 		    edit_resp = parent->del_rcpt(parent->chg_context,
 						 STR(milter->buf));
 		    if (edit_resp)
-			return (edit_resp);
+			MILTER8_EVENT_BREAK(edit_resp);
 		    continue;
 
 		    /*
 		     * Modification request: replace the message body, and
 		     * update the message size.
 		     */
-#if 0
 		case SMFIR_REPLBODY:
 		    if (milter8_read_data(milter, data_size,
 					  MILTER8_DATA_BUFFER, milter->body,
 					  MILTER8_DATA_END) != 0)
-			return (milter->def_reply);
-		    parent = milter->m.parent;
-		    edit_resp = parent->repl_body(parent->chg_context,
-						  milter->body);
-		    if (edit_resp)
-			return (edit_resp);
+			MILTER8_EVENT_BREAK(milter->def_reply);
+		    /* Start body replacement. */
+		    if (body_line_buf == 0) {
+			body_line_buf = vstring_alloc(var_line_limit);
+			edit_resp = parent->repl_body(parent->chg_context,
+						      MILTER_BODY_START,
+						      (VSTRING *) 0);
+		    }
+		    /* Extract lines from the on-the-wire CRLF format. */
+		    for (cp = STR(milter->body); edit_resp == 0
+			 && cp < vstring_end(milter->body); cp++) {
+			ch = *(unsigned char *) cp;
+			if (ch == '\n') {
+			    if (LEN(body_line_buf) > 0
+				&& vstring_end(body_line_buf)[-1] == '\r')
+				vstring_truncate(body_line_buf,
+						 LEN(body_line_buf) - 1);
+			    edit_resp = parent->repl_body(parent->chg_context,
+							  MILTER_BODY_LINE,
+							  body_line_buf);
+			    VSTRING_RESET(body_line_buf);
+			} else {
+			    VSTRING_ADDCH(body_line_buf, ch);
+			}
+		    }
 		    continue;
-#endif
 		}
 	    }
 	    msg_warn("milter %s: unexpected filter response %s after event %s",
@@ -1306,7 +1335,7 @@ static const char *milter8_event(MILTER8 *milter, int event,
 		     (smfic_name = str_name_code(smfic_table, event)) != 0 ?
 		     smfic_name : "(unknown MTA event)");
 	    milter8_comm_error(milter);
-	    return (milter->def_reply);
+	    MILTER8_EVENT_BREAK(milter->def_reply);
 	}
 
 	/*
@@ -1317,8 +1346,40 @@ static const char *milter8_event(MILTER8 *milter, int event,
 	milter->m.name, (smfir_name = str_name_code(smfir_table, cmd)) != 0 ?
 		 smfir_name : "unknown", (long) data_len);
 	milter8_comm_error(milter);
-	return (milter->def_reply);
+	MILTER8_EVENT_BREAK(milter->def_reply);
     }
+
+    /*
+     * Finish message body replacement.
+     */
+    if (body_line_buf != 0) {
+	if (edit_resp == 0) {
+	    /* In case the last body replacement line didn't end in CRLF. */
+	    if (LEN(body_line_buf) > 0)
+		edit_resp = parent->repl_body(parent->chg_context,
+					      MILTER_BODY_LINE,
+					      body_line_buf);
+	    if (edit_resp == 0)
+		edit_resp = parent->repl_body(parent->chg_context,
+					      MILTER_BODY_END,
+					      (VSTRING *) 0);
+	}
+	vstring_free(body_line_buf);
+
+	/*
+	 * Override a non-reject/discard result value after body replacement
+	 * failure.
+	 * 
+	 * XXX Some cleanup clients ask the cleanup server to bounce mail for
+	 * them. In that case we must override a hard reject retval result
+	 * after queue file update failure. This is not a big problem; the
+	 * odds are small that a Milter application sends a hard reject after
+	 * replacing the message body.
+	 */
+	if (edit_resp && (retval == 0 || strchr("DS4", retval[0]) == 0))
+	    retval = edit_resp;
+    }
+    return (retval);
 }
 
 /* milter8_connect - connect to filter */
@@ -1334,7 +1395,7 @@ static void milter8_connect(MILTER8 *milter)
     int     fd;
     const UINT32_TYPE my_actions = (SMFIF_ADDHDRS | SMFIF_ADDRCPT
 				    | SMFIF_DELRCPT | SMFIF_CHGHDRS
-    /* Not yet: | SMFIF_CHGBODY */
+				    | SMFIF_CHGBODY
 #ifdef SMFIF_QUARANTINE
 				    | SMFIF_QUARANTINE
 #endif
@@ -1653,6 +1714,7 @@ static const char *milter8_helo_event(MILTER *m, const char *helo_name,
 	return (milter->def_reply);
     case MILTER8_STAT_ENVELOPE:
     case MILTER8_STAT_ACCEPT_MSG:
+	/* With HELO after MAIL, smtpd(8) calls milter8_abort() next. */
 	if (msg_verbose)
 	    msg_info("%s: milter %s: helo %s",
 		     myname, milter->m.name, helo_name);

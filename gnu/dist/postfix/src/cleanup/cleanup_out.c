@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanup_out.c,v 1.1.1.6 2006/12/21 02:31:37 rpaulo Exp $	*/
+/*	$NetBSD: cleanup_out.c,v 1.1.1.7 2007/05/19 16:28:07 heas Exp $	*/
 
 /*++
 /* NAME
@@ -170,6 +170,7 @@ void    cleanup_out_header(CLEANUP_STATE *state, VSTRING *header_buf)
     char   *start = vstring_str(header_buf);
     char   *line;
     char   *next_line;
+    ssize_t line_len;
 
     /*
      * Prepend a tab to continued header lines that went through the address
@@ -183,17 +184,27 @@ void    cleanup_out_header(CLEANUP_STATE *state, VSTRING *header_buf)
      * 10%, we truncate between line boundaries to avoid losing too much
      * text. This "unkind cut" may result in syntax errors and may trigger
      * warnings from down-stream MTAs.
+     * 
+     * If Milter is enabled, pad a short header record with a dummy record so
+     * that a header record can safely be overwritten by a pointer record.
+     * This simplifies header modification enormously.
      */
     for (line = start; line; line = next_line) {
 	next_line = split_at(line, '\n');
-	if ((next_line ? next_line - 1 : line + strlen(line))
-	    > start + var_header_limit) {
+	line_len = next_line ? next_line - 1 - line : strlen(line);
+	if (line + line_len > start + var_header_limit) {
 	    if (line - start > 0.9 * var_header_limit)	/* nice cut */
 		break;
 	    start[var_header_limit] = 0;	/* unkind cut */
 	    next_line = 0;
 	}
-	if (line == start || IS_SPACE_TAB(*line)) {
+	if (line == start) {
+	    cleanup_out_string(state, REC_TYPE_NORM, line);
+	    if ((state->milters || cleanup_milters)
+		&& line_len < REC_TYPE_PTR_PAYL_SIZE)
+		rec_pad(state->dst, REC_TYPE_DTXT,
+			REC_TYPE_PTR_PAYL_SIZE - line_len);
+	} else if (IS_SPACE_TAB(*line)) {
 	    cleanup_out_string(state, REC_TYPE_NORM, line);
 	} else {
 	    cleanup_out_format(state, REC_TYPE_NORM, "\t%s", line);

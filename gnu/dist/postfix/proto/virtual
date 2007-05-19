@@ -39,17 +39,17 @@
 #	that serves as input to the \fBpostmap\fR(1) command.
 #	The result, an indexed file in \fBdbm\fR or \fBdb\fR format,
 #	is used for fast searching by the mail system. Execute the command
-#	"\fBpostmap /etc/postfix/virtual\fR" in order to rebuild the indexed
-#	file after changing the text file.
+#	"\fBpostmap /etc/postfix/virtual\fR" to rebuild an indexed
+#	file after changing the corresponding text file.
 #
 #	When the table is provided via other means such as NIS, LDAP
 #	or SQL, the same lookups are done as for ordinary indexed files.
 #
 #	Alternatively, the table can be provided as a regular-expression
 #	map where patterns are given as regular expressions, or lookups
-#	can be directed to TCP-based server. In that case, the lookups are
-#	done in a slightly different way as described below under
-#	"REGULAR EXPRESSION TABLES" and "TCP-BASED TABLES".
+#	can be directed to TCP-based server. In those case, the lookups
+#	are done in a slightly different way as described below under
+#	"REGULAR EXPRESSION TABLES" or "TCP-BASED TABLES".
 # CASE FOLDING
 # .ad
 # .fi
@@ -91,6 +91,14 @@
 # .IP "@\fIdomain address, address, ...\fR"
 #	Redirect mail for other users in \fIdomain\fR to \fIaddress\fR.
 #	This form has the lowest precedence.
+# .sp
+#	Note: @\fIdomain\fR is a wild-card. With this form, the
+#	Postfix SMTP server accepts
+#	mail for any recipient in \fIdomain\fR, regardless of whether
+#	that recipient exists.  This may turn your mail system into
+#	a backscatter source: Postfix first accepts mail for
+#	non-existent recipients and then tries to return that mail
+#	as "undeliverable" to the often forged sender address.
 # RESULT ADDRESS REWRITING
 # .ad
 # .fi
@@ -137,24 +145,20 @@
 #
 #	Support for a virtual alias domain looks like:
 #
+# .nf
 #	/etc/postfix/main.cf:
-# .in +4
-#	virtual_alias_maps = hash:/etc/postfix/virtual
+#	    virtual_alias_maps = hash:/etc/postfix/virtual
+# .fi
 #
 #	Note: some systems use \fBdbm\fR databases instead of \fBhash\fR.
 #	See the output from "\fBpostconf -m\fR" for available database types.
 #
-# .ti -4
-#	/etc/postfix/virtual:
 # .nf
-# .na
-#	\fIvirtual-alias.domain	anything\fR (right-hand content does not matter)
-#	\fIpostmaster@virtual-alias.domain	postmaster\fR
-#	\fIuser1@virtual-alias.domain	address1\fR
-#	\fIuser2@virtual-alias.domain	address2, address3\fR
-# .fi
-# .in -4
-# .ad
+#	/etc/postfix/virtual:
+#	    \fIvirtual-alias.domain	anything\fR (right-hand content does not matter)
+#	    \fIpostmaster@virtual-alias.domain	postmaster\fR
+#	    \fIuser1@virtual-alias.domain	address1\fR
+#	    \fIuser2@virtual-alias.domain	address2, address3\fR
 # .fi
 # .sp
 #	The \fIvirtual-alias.domain anything\fR entry is required for a
@@ -199,7 +203,7 @@
 #	This section describes how the table lookups change when lookups
 #	are directed to a TCP-based server. For a description of the TCP
 #	client/server lookup protocol, see \fBtcp_table\fR(5).
-#	This feature is not available up to and including Postfix version 2.3.
+#	This feature is not available up to and including Postfix version 2.4.
 #
 #	Each lookup operation uses the entire address once.  Thus,
 #	\fIuser@domain\fR mail addresses are not broken up into their
@@ -253,8 +257,8 @@
 #	"\fBpostconf html_directory\fR" to locate this information.
 # .na
 # .nf
-#	DATABASE_README, Postfix lookup table overview
 #	ADDRESS_REWRITING_README, address rewriting guide
+#	DATABASE_README, Postfix lookup table overview
 #	VIRTUAL_README, domain hosting guide
 # LICENSE
 # .ad

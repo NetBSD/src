@@ -4,16 +4,16 @@ PPoossttffiixx aanndd LLiinnuuxx
 
 BBeerrkkeelleeyy DDBB iissssuueess
 
-Warning: if you can't compile Postfix because the file "db.h" isn't found, then
-you MUST install the Berkeley DB development package (name: db???-devel-???)
-that matches your system library. You can find out what is installed with the
-rpm command. For example:
+If you can't compile Postfix because the file "db.h" isn't found, then you MUST
+install the Berkeley DB development package (name: db???-devel-???) that
+matches your system library. You can find out what is installed with the rpm
+command. For example:
 
     $ rrppmm --qqff //uussrr//lliibb//lliibbddbb..ssoo
     db4-4.3.29-2
 
 This means that you need to install db4-devel-4.3.29-2 (on some systems,
-specify /lib/libdb.so in the rpm query).
+specify "rrppmm --qqff //lliibb//lliibbddbb..ssoo" instead).
 
 DO NOT download some Berkeley DB version from the network. Every Postfix
 program will dump core when it is built with a different Berkeley DB version
@@ -23,7 +23,9 @@ file for further information.
 PPrrooccmmaaiill iissssuueess
 
 On RedHat Linux 7.1 and later pprrooccmmaaiill no longer has permission to write the
-mail spool directory. Workaround: chmod 1777 /var/spool/mail.
+mail spool directory. Workaround:
+
+    # chmod 1777 /var/spool/mail
 
 SSyyssllooggdd ppeerrffoorrmmaannccee
 

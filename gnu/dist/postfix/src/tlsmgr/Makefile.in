@@ -19,7 +19,7 @@ $(PROG): $(OBJS) $(LIBS)
 $(OBJS): ../../conf/makedefs.out
 
 Makefile: Makefile.in
-	(set -e; echo "# DO NOT EDIT"; $(OPTS) $(SHELL) ../../makedefs && cat $?) >$@
+	cat ../../conf/makedefs.out $? >$@
 
 test:	$(TESTPROG)
 
@@ -68,6 +68,7 @@ tlsmgr.o: ../../include/mail_conf.h
 tlsmgr.o: ../../include/mail_params.h
 tlsmgr.o: ../../include/mail_proto.h
 tlsmgr.o: ../../include/mail_server.h
+tlsmgr.o: ../../include/mail_version.h
 tlsmgr.o: ../../include/master_proto.h
 tlsmgr.o: ../../include/msg.h
 tlsmgr.o: ../../include/mymalloc.h

@@ -1,4 +1,4 @@
-.\"	$NetBSD: master.8,v 1.1.1.8 2006/07/19 01:16:49 rpaulo Exp $
+.\"	$NetBSD: master.8,v 1.1.1.9 2007/05/19 16:27:52 heas Exp $
 .\"
 .TH MASTER 8 
 .ad
@@ -103,11 +103,11 @@ Use the "\fBpostfix reload\fR" command after a configuration change.
 The default maximal number of Postfix child processes that provide
 a given service.
 .IP "\fBmax_idle (100s)\fR"
-The maximum amount of time that an idle Postfix daemon process
-waits for the next service request before exiting.
+The maximum amount of time that an idle Postfix daemon process waits
+for an incoming connection before terminating voluntarily.
 .IP "\fBmax_use (100)\fR"
-The maximal number of connection requests before a Postfix daemon
-process terminates.
+The maximal number of incoming connections that a Postfix daemon
+process will service before terminating voluntarily.
 .IP "\fBservice_throttle_time (60s)\fR"
 How long the Postfix \fBmaster\fR(8) waits before forking a server that
 appears to be malfunctioning.

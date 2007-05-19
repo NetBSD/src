@@ -1,0 +1,50 @@
+MAIN 0	|From: Some One <user@example.com>
+MAIN 32	|To: Some One <user@example.com>
+MAIN 46	|Subject: Test
+MAIN 64	|MIME-Version: 1.0
+mime_state: header_token: Multipart / Mixed
+mime_state: header_token: boundary = top-level-boundary
+mime_state: PUSH boundary top-level-boundary
+MAIN 95	|Content-Type: Multipart/Mixed;
+  boundary="top-level-boundary"
+HEADER END
+BODY N 0	|
+BODY N 1	|--top-level-boundary
+mime_state: header_token: message / rfc822
+MULT 0	|Content-Type: message/rfc822;
+  name="forwarded message"
+mime_state: header_token: quoted-printable  
+MULT 44	|Content-Transfer-Encoding: quoted-printable
+MULT 72	|Content-Disposition: inline
+mime_state: warning: invalid message/* or multipart/* encoding domain: quoted-printable
+BODY N 0	|
+NEST 0	|To: user@example.com
+NEST 36	|=46rom: Some One <user@example.com>
+NEST 60	|Subject: Forwarded Test
+mime_state: header_token: Multipart / Mixed
+mime_state: header_token: boundary = 3D
+mime_state: PUSH boundary 3D
+NEST 91	|Content-Type: Multipart/Mixed;
+  boundary=3D"nested-level-boundary"
+BODY N 0	|
+BODY N 1	|--nested-level-boundary
+BODY N 25	|Content-Type: text/plain;
+BODY N 51	|Content-Transfer-Encoding: quoted-printable
+BODY N 95	|
+BODY N 96	|Blah
+BODY N 101	|
+BODY N 102	|--nested-level-boundary--
+BODY N 128	|
+mime_state: POP boundary 3D
+BODY N 129	|--top-level-boundary
+mime_state: header_token: text / plain
+MULT 0	|Content-Type: text/plain;
+  charset="utf-8"
+mime_state: header_token: quoted-printable  
+MULT 44	|Content-Transfer-Encoding: quoted-printable
+MULT 72	|Content-Disposition: inline
+BODY N 0	|
+BODY N 1	|This is a test
+BODY END
+mime_state: warning: improper message/* or multipart/* encoding domain
+mime_state: POP boundary top-level-boundary

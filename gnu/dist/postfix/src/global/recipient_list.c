@@ -1,4 +1,4 @@
-/*	$NetBSD: recipient_list.c,v 1.1.1.5 2006/07/19 01:17:28 rpaulo Exp $	*/
+/*	$NetBSD: recipient_list.c,v 1.1.1.6 2007/05/19 16:28:17 heas Exp $	*/
 
 /*++
 /* NAME
@@ -45,6 +45,10 @@
 /*	const char *orig_rcpt;
 /*	const char *recipient;
 /*
+/*	void	recipient_list_swap(a, b)
+/*	RECIPIENT_LIST *a;
+/*	RECIPIENT_LIST *b;
+/*
 /*	void	recipient_list_free(list)
 /*	RECIPIENT_LIST *list;
 /*
@@ -73,6 +77,9 @@
 /*
 /*	recipient_list_add() adds a recipient to the specified list.
 /*	Recipient address information is copied with mystrdup().
+/*
+/*	recipient_list_swap() swaps the recipients between
+/*	the given two recipient lists.
 /*
 /*	recipient_list_free() releases memory for the specified list
 /*	of recipient structures.
@@ -113,6 +120,7 @@
 /* Utility library. */
 
 #include <mymalloc.h>
+#include <msg.h>
 
 /* Global library. */
 
@@ -154,6 +162,20 @@ void    recipient_list_add(RECIPIENT_LIST *list, long offset,
     else if (list->variant == RCPT_LIST_INIT_ADDR)
 	list->info[list->len].u.addr_type = 0;
     list->len++;
+}
+
+/* recipient_list_swap - swap recipients between the two recipient lists */
+
+void    recipient_list_swap(RECIPIENT_LIST *a, RECIPIENT_LIST *b)
+{
+    if (b->variant != a->variant)
+	msg_panic("recipient_lists_swap: incompatible recipient list variants");
+
+#define SWAP(t, x)  do { t x = b->x; b->x = a->x ; a->x = x; } while (0)
+
+    SWAP(RECIPIENT *, info);
+    SWAP(int, len);
+    SWAP(int, avail);
 }
 
 /* recipient_list_free - release memory for in-core recipient structure */

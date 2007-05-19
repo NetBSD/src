@@ -1,4 +1,4 @@
-/*	$NetBSD: master_sig.c,v 1.1.1.6 2006/07/19 01:17:32 rpaulo Exp $	*/
+/*	$NetBSD: master_sig.c,v 1.1.1.7 2007/05/19 16:28:21 heas Exp $	*/
 
 /*++
 /* NAME
@@ -47,6 +47,7 @@
 
 #include <msg.h>
 #include <posix_signals.h>
+#include <killme_after.h>
 
 /* Application-specific. */
 
@@ -175,11 +176,9 @@ static void master_sigdeath(int sig)
     pid_t   pid = getpid();
 
     /*
-     * XXX We're running from a signal handler, and really should not call
-     * any msg() routines at all, but it would be even worse to silently
-     * terminate without informing the sysadmin.
+     * Set alarm clock here for suicide after 5s.
      */
-    msg_info("terminating on signal %d", sig);
+    killme_after(5);
 
     /*
      * Terminate all processes in our process group, except ourselves.
@@ -191,6 +190,14 @@ static void master_sigdeath(int sig)
 	msg_fatal("%s: sigaction: %m", myname);
     if (kill(-pid, SIGTERM) < 0)
 	msg_fatal("%s: kill process group: %m", myname);
+
+    /*
+     * XXX We're running from a signal handler, and should not call complex
+     * routines at all, but it would be even worse to silently terminate
+     * without informing the sysadmin. For this reason, msg(3) was made safe
+     * for usage by signal handlers that terminate the process.
+     */
+    msg_info("terminating on signal %d", sig);
 
     /*
      * Deliver the signal to ourselves and clean up. XXX We're running as a

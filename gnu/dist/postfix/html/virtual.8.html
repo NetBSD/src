@@ -253,31 +253,32 @@ VIRTUAL(8)                                                          VIRTUAL(8)
 
        <b><a href="postconf.5.html#max_idle">max_idle</a> (100s)</b>
               The  maximum  amount  of  time that an idle Postfix
-              daemon process waits for the next  service  request
-              before exiting.
+              daemon process waits  for  an  incoming  connection
+              before terminating voluntarily.
 
        <b><a href="postconf.5.html#max_use">max_use</a> (100)</b>
-              The  maximal number of connection requests before a
-              Postfix daemon process terminates.
+              The  maximal  number of incoming connections that a
+              Postfix daemon process will service  before  termi-
+              nating voluntarily.
 
        <b><a href="postconf.5.html#process_id">process_id</a> (read-only)</b>
-              The process ID  of  a  Postfix  command  or  daemon
+              The  process  ID  of  a  Postfix  command or daemon
               process.
 
        <b><a href="postconf.5.html#process_name">process_name</a> (read-only)</b>
-              The  process  name  of  a Postfix command or daemon
+              The process name of a  Postfix  command  or  daemon
               process.
 
        <b><a href="postconf.5.html#queue_directory">queue_directory</a> (see 'postconf -d' output)</b>
-              The location of the Postfix top-level queue  direc-
+              The  location of the Postfix top-level queue direc-
               tory.
 
        <b><a href="postconf.5.html#syslog_facility">syslog_facility</a> (mail)</b>
               The syslog facility of Postfix logging.
 
        <b><a href="postconf.5.html#syslog_name">syslog_name</a> (postfix)</b>
-              The  mail  system  name  that  is  prepended to the
-              process name in syslog  records,  so  that  "smtpd"
+              The mail system  name  that  is  prepended  to  the
+              process  name  in  syslog  records, so that "smtpd"
               becomes, for example, "postfix/smtpd".
 
 <b>SEE ALSO</b>
@@ -290,20 +291,20 @@ VIRTUAL(8)                                                          VIRTUAL(8)
        <a href="VIRTUAL_README.html">VIRTUAL_README</a>, domain hosting howto
 
 <b>LICENSE</b>
-       The  Secure  Mailer  license must be distributed with this
+       The Secure Mailer license must be  distributed  with  this
        software.
 
 <b>HISTORY</b>
-       This delivery agent was originally based  on  the  Postfix
-       local  delivery  agent.  Modifications mainly consisted of
-       removing code that either was not applicable or  that  was
-       not  safe  in this context: aliases, ~user/.forward files,
+       This  delivery  agent  was originally based on the Postfix
+       local delivery agent. Modifications  mainly  consisted  of
+       removing  code  that either was not applicable or that was
+       not safe in this context: aliases,  ~user/.forward  files,
        delivery to "|command" or to /file/name.
 
        The <b>Delivered-To:</b> message header appears in the <b>qmail</b> sys-
        tem by Daniel Bernstein.
 
-       The  <b>maildir</b>  structure  appears  in  the  <b>qmail</b> system by
+       The <b>maildir</b> structure  appears  in  the  <b>qmail</b>  system  by
        Daniel Bernstein.
 
 <b>AUTHOR(S)</b>

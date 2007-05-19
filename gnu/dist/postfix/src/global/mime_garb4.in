@@ -1,0 +1,34 @@
+From: Some One <user@example.com>
+To: Some One <user@example.com>
+Subject: Test
+MIME-Version: 1.0
+Content-Type: Multipart/Mixed;
+  boundary="top-level-boundary"
+
+--top-level-boundary
+Content-Type: message/rfc822;
+  name="forwarded message"
+Content-Transfer-Encoding: quoted-printable
+Content-Disposition: inline
+
+To: user@example.com
+=46rom: Some One <user@example.com>
+Subject: Forwarded Test
+Content-Type: Multipart/Mixed;
+  boundary=3D"nested-level-boundary"
+
+--nested-level-boundary
+Content-Type: text/plain;
+Content-Transfer-Encoding: quoted-printable
+
+Blah
+
+--nested-level-boundary--
+
+--top-level-boundary
+Content-Type: text/plain;
+  charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
+Content-Disposition: inline
+
+This is a test

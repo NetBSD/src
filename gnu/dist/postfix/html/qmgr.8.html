@@ -216,7 +216,7 @@ QMGR(8)                                                                QMGR(8)
               The minimal number of in-memory recipients for  any
               message.
 
-       <b><a href="postconf.5.html#default_recipient_limit">default_recipient_limit</a> (10000)</b>
+       <b><a href="postconf.5.html#default_recipient_limit">default_recipient_limit</a> (20000)</b>
               The default per-transport upper limit on the number
               of in-memory recipients.
 
@@ -229,6 +229,24 @@ QMGR(8)                                                                QMGR(8)
 
        <i>transport</i><b>_extra_recipient_limit    ($default_extra_recipi-</b>
        <b>ent_limit)</b>
+              Idem, for delivery via the named message <i>transport</i>.
+
+       Available in Postfix version 2.4 and later:
+
+       <b><a href="postconf.5.html#default_recipient_refill_limit">default_recipient_refill_limit</a> (100)</b>
+              The  default  per-transport  limit on the number of
+              recipients refilled at once.
+
+       <i>transport</i><b>_recipient_refill_limit         ($default_recipi-</b>
+       <b>ent_refill_limit)</b>
+              Idem, for delivery via the named message <i>transport</i>.
+
+       <b><a href="postconf.5.html#default_recipient_refill_delay">default_recipient_refill_delay</a> (5s)</b>
+              The  default  per-transport  maximum  delay between
+              recipients refills.
+
+       <i>transport</i><b>_recipient_refill_delay         ($default_recipi-</b>
+       <b>ent_refill_delay)</b>
               Idem, for delivery via the named message <i>transport</i>.
 
 <b>DELIVERY CONCURRENCY CONTROLS</b>
@@ -287,7 +305,7 @@ QMGR(8)                                                                QMGR(8)
               Idem, for delivery via the named message <i>transport</i>.
 
 <b>OTHER RESOURCE AND RATE CONTROLS</b>
-       <b><a href="postconf.5.html#minimal_backoff_time">minimal_backoff_time</a> (1000s)</b>
+       <b><a href="postconf.5.html#minimal_backoff_time">minimal_backoff_time</a> (version dependent)</b>
               The minimal time  between  attempts  to  deliver  a
               deferred message.
 
@@ -299,7 +317,7 @@ QMGR(8)                                                                QMGR(8)
               The maximal time a message is queued before  it  is
               sent back as undeliverable.
 
-       <b><a href="postconf.5.html#queue_run_delay">queue_run_delay</a> (1000s)</b>
+       <b><a href="postconf.5.html#queue_run_delay">queue_run_delay</a> (version dependent)</b>
               The  time between <a href="QSHAPE_README.html#deferred_queue">deferred queue</a> scans by the queue
               manager.
 
