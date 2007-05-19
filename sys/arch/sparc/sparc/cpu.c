@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.201 2007/05/17 14:51:29 yamt Exp $ */
+/*	$NetBSD: cpu.c,v 1.202 2007/05/19 23:04:48 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.201 2007/05/17 14:51:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.202 2007/05/19 23:04:48 mrg Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -469,7 +469,7 @@ cpu_attach(struct cpu_softc *sc, int node, int mid)
 		 * Note: `eintstack' is set in alloc_cpuinfo() above.
 		 * The %wim register will be initialized in cpu_hatch().
 		 */
-		cpi->curpcb = cpi->ci_data.cpu_idlelwp->l_addr;
+		cpi->curpcb = (struct pcb *)cpi->ci_data.cpu_idlelwp->l_addr;
 		cpi->curpcb->pcb_wim = 1;
 		getcpuinfo(cpi, node);
 
