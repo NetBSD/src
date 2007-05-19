@@ -1,4 +1,4 @@
-.\"	$NetBSD: local.8,v 1.8 2006/11/07 03:09:19 rpaulo Exp $
+.\"	$NetBSD: local.8,v 1.9 2007/05/19 17:49:43 heas Exp $
 .\"
 .TH LOCAL 8 
 .ad
@@ -547,11 +547,11 @@ communication channel.
 .IP "\fBlocal_command_shell (empty)\fR"
 Optional shell program for \fBlocal\fR(8) delivery to non-Postfix command.
 .IP "\fBmax_idle (100s)\fR"
-The maximum amount of time that an idle Postfix daemon process
-waits for the next service request before exiting.
+The maximum amount of time that an idle Postfix daemon process waits
+for an incoming connection before terminating voluntarily.
 .IP "\fBmax_use (100)\fR"
-The maximal number of connection requests before a Postfix daemon
-process terminates.
+The maximal number of incoming connections that a Postfix daemon
+process will service before terminating voluntarily.
 .IP "\fBprepend_delivered_header (command, file, forward)\fR"
 The message delivery contexts where the Postfix \fBlocal\fR(8) delivery
 agent prepends a Delivered-To:  message header with the address

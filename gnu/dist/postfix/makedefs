@@ -25,6 +25,18 @@
 #	\fIinclude\fR directory.
 #	The following directives are special:
 # .RS
+# .IP \fB-DNO_DEVPOLL\fR
+#	Do not build with Solaris /dev/poll support.
+#	By default, /dev/poll support is compiled in on platforms that
+#	are known to support it.
+# .IP \fB-DNO_EPOLL\fR
+#	Do not build with Linux EPOLL support.
+#	By default, EPOLL support is compiled in on platforms that
+#	are known to support it.
+# .IP \fB-DNO_KQUEUE\fR
+#	Do not build with FreeBSD/NetBSD/OpenBSD KQUEUE support.
+#	By default, KQUEUE support is compiled in on platforms that
+#	are known to support it.
 # .IP \fB-DNO_IPV6\fR
 #	Do not build with IPv6 support.
 #	By default, IPv6 support is compiled in on platforms that
@@ -154,17 +166,17 @@ case "$SYSTEM.$RELEASE" in
     SunOS.5*)	SYSTYPE=SUNOS5
 		RANLIB=echo
 		SYSLIBS="-lresolv -lsocket -lnsl"
-		# Solaris 8 added usleep() and POSIX regular expressions
+		# Solaris 5 added usleep() and POSIX regular expressions
 		case $RELEASE in
 		    5.[0-4]) CCARGS="$CCARGS -DMISSING_USLEEP -DNO_POSIX_REGEXP";;
 		esac
-		# Solaris 8 added IPv6
+		# Solaris 8 added IPv6 and /dev/poll
 		case $RELEASE in
-		    5.[0-7]|5.[0-7].*) CCARGS="$CCARGS -DNO_IPV6";;
+		    5.[0-7]|5.[0-7].*) CCARGS="$CCARGS -DNO_IPV6 -DNO_DEVPOLL";;
 		esac
-		# Solaris 9 added closefrom() and /dev/*random
+		# Solaris 9 added closefrom(), futimesat() and /dev/*random
 		case $RELEASE in
-		    5.[0-8]|5.[0-8].*) CCARGS="$CCARGS -DNO_CLOSEFROM -DNO_DEV_URANDOM";;
+		    5.[0-8]|5.[0-8].*) CCARGS="$CCARGS -DNO_CLOSEFROM -DNO_DEV_URANDOM -DNO_FUTIMESAT";;
 		esac
 		# Work around broken str*casecmp(). Do it all here instead
 		# of having half the solution in the sys_defs.h file.
@@ -262,8 +274,49 @@ case "$SYSTEM.$RELEASE" in
 			}
 		    done
 		done
+		# Kernel 2.4 added IPv6
 		case "$RELEASE" in
 		2.[0-3].*) CCARGS="$CCARGS -DNO_IPV6";;
+		esac
+		# Kernel 2.6 added EPOLL
+		case "$RELEASE" in
+		2.[0-5].*) CCARGS="$CCARGS -DNO_EPOLL";;
+		esac
+		;;
+     GNU.0*|GNU/kFreeBSD.[56]*)
+     		SYSTYPE=GNU0
+		# Postfix no longer needs DB 1.85 compatibility
+		if [ -f /usr/include/db.h ]
+		then
+		    : we are all set
+		elif [ -f /usr/include/db/db.h ]
+		then
+		    CCARGS="$CCARGS -I/usr/include/db"
+		else
+		    # No, we're not going to try db1 db2 db3 etc.
+		    # On a properly installed system, Postfix builds
+		    # by including <db.h> and by linking with -ldb
+		    echo "No <db.h> include file found." 1>&2
+		    echo "Install the appropriate db*-devel package first." 1>&2
+		    echo "See the RELEASE_NOTES file for more information." 1>&2
+		    exit 1
+		fi
+		SYSLIBS="-ldb"
+		for name in nsl resolv
+		do
+		    for lib in /usr/lib64 /lib64 /usr/lib /lib
+		    do
+			test -e $lib/lib$name.a -o -e $lib/lib$name.so && {
+			    SYSLIBS="$SYSLIBS -l$name"
+			    break
+			}
+		    done
+		done
+		case "`uname -s`" in
+		GNU)
+			# currently no IPv6 support on Hurd
+			CCARGS="$CCARGS -DNO_IPV6"
+			;;
 		esac
 		;;
      IRIX*.5.*)	SYSTYPE=IRIX5
