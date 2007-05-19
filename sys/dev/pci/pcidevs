@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.879 2007/05/16 19:07:42 mrg Exp $
+$NetBSD: pcidevs,v 1.880 2007/05/19 14:56:24 tsutsui Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1881,6 +1881,7 @@ product IBM GXT150P	0x001b	GXT-150P 2D Accelerator
 product IBM MCABRIDGE2	0x0020	MCA Bridge
 product IBM 82351	0x0022	82351 PCI-PCI Bridge
 product IBM SERVERAID	0x002e	ServeRAID
+product IBM GXT250P	0x003c	GXT-250P
 product IBM OLYMPIC	0x003e	16/4 Token Ring
 product IBM MIAMI	0x0036	Miami/PCI
 product IBM 82660	0x0037	82660 PowerPC to PCI Bridge and Memory Controller
