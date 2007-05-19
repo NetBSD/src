@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.71 2007/05/17 14:51:32 yamt Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.72 2007/05/19 23:25:54 martin Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.71 2007/05/17 14:51:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.72 2007/05/19 23:25:54 martin Exp $");
 
 #include "opt_coredump.h"
 
@@ -269,7 +269,6 @@ cpu_lwp_fork(l1, l2, stack, stacksize, func, arg)
 	rp->rw_local[0] = (long)func;		/* Function to call */
 	rp->rw_local[1] = (long)arg;		/* and its argument */
 	rp->rw_local[2] = (long)l2;		/* newlwp */
-	rp->rw_local[3] = (long)l1;		/* oldlwp */
 
 	npcb->pcb_pc = (long)lwp_trampoline - 8;
 	npcb->pcb_sp = (long)rp - STACK_OFFSET;
