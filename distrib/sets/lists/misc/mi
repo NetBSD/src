@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.143 2007/01/22 08:00:47 dyoung Exp $
+# $NetBSD: mi,v 1.144 2007/05/19 18:43:39 heas Exp $
 ./etc/mtree/set.misc				misc-sys-root
 ./usr/share/dict/README				misc-reference-share	share
 ./usr/share/dict/american			misc-reference-share	share
@@ -262,7 +262,7 @@
 ./usr/share/doc/html/postfix/IPV6_README.html		misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/LDAP_README.html		misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/LINUX_README.html		misc-obsolete	obsolete
-./usr/share/doc/html/postfix/LMTP_README.html		misc-postfix-htmldoc	postfix,doc
+./usr/share/doc/html/postfix/LMTP_README.html		misc-obsolete	obsolete
 ./usr/share/doc/html/postfix/LOCAL_RECIPIENT_README.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/MAILDROP_README.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/MILTER_README.html		misc-postfix-htmldoc	postfix,doc
@@ -272,7 +272,7 @@
 ./usr/share/doc/html/postfix/PACKAGE_README.html	misc-obsolete	obsolete
 ./usr/share/doc/html/postfix/PCRE_README.html		misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/PGSQL_README.html		misc-postfix-htmldoc	postfix,doc
-./usr/share/doc/html/postfix/QMQP_README.html		misc-postfix-htmldoc	postfix,doc
+./usr/share/doc/html/postfix/QMQP_README.html		misc-obsolete	obsolete
 ./usr/share/doc/html/postfix/QSHAPE_README.html		misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/RESTRICTION_CLASS_README.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/SASL_README.html		misc-postfix-htmldoc	postfix,doc
@@ -282,6 +282,7 @@
 ./usr/share/doc/html/postfix/SMTPD_PROXY_README.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/STANDARD_CONFIGURATION_README.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/TLS_README.html		misc-postfix-htmldoc	postfix,doc
+./usr/share/doc/html/postfix/TLS_LEGACY_README.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/TUNING_README.html		misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/ULTRIX_README.html		misc-obsolete	obsolete
 ./usr/share/doc/html/postfix/UUCP_README.html		misc-postfix-htmldoc	postfix,doc
@@ -713,7 +714,7 @@
 ./usr/share/examples/postfix/IPV6_README	misc-postfix-examples	postfix,doc
 ./usr/share/examples/postfix/LDAP_README	misc-postfix-examples	postfix,doc
 ./usr/share/examples/postfix/LICENSE		misc-postfix-examples	postfix,share
-./usr/share/examples/postfix/LMTP_README	misc-postfix-examples	postfix,doc
+./usr/share/examples/postfix/LMTP_README	misc-obsolete	obsolete
 ./usr/share/examples/postfix/LOCAL_RECIPIENT_README	misc-postfix-examples	postfix,doc
 ./usr/share/examples/postfix/MAILDROP_README	misc-postfix-examples	postfix,doc
 ./usr/share/examples/postfix/MILTER_README	misc-postfix-examples	postfix,doc
@@ -722,7 +723,7 @@
 ./usr/share/examples/postfix/OVERVIEW		misc-postfix-examples	postfix,doc
 ./usr/share/examples/postfix/PCRE_README	misc-postfix-examples	postfix,doc
 ./usr/share/examples/postfix/PGSQL_README	misc-postfix-examples	postfix,doc
-./usr/share/examples/postfix/QMQP_README	misc-postfix-examples	postfix,doc
+./usr/share/examples/postfix/QMQP_README	misc-obsolete	obsolete
 ./usr/share/examples/postfix/QSHAPE_README	misc-postfix-examples	postfix,doc
 ./usr/share/examples/postfix/RELEASE_NOTES	misc-postfix-examples	postfix,doc
 ./usr/share/examples/postfix/RESTRICTION_CLASS_README	misc-postfix-examples	postfix,doc
@@ -734,6 +735,7 @@
 ./usr/share/examples/postfix/STANDARD_CONFIGURATION_README	misc-postfix-examples	postfix,doc
 ./usr/share/examples/postfix/TLS_LICENSE	misc-postfix-examples	postfix,share
 ./usr/share/examples/postfix/TLS_README		misc-postfix-examples	postfix,doc
+./usr/share/examples/postfix/TLS_LEGACY_README	misc-postfix-examples	postfix,doc
 ./usr/share/examples/postfix/TUNING_README	misc-postfix-examples	postfix,doc
 ./usr/share/examples/postfix/UUCP_README	misc-postfix-examples	postfix,doc
 ./usr/share/examples/postfix/VERP_README	misc-postfix-examples	postfix,doc
