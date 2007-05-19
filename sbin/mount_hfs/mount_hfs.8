@@ -1,4 +1,4 @@
-.\" $NetBSD: mount_hfs.8,v 1.4 2007/03/22 21:29:33 dillo Exp $
+.\" $NetBSD: mount_hfs.8,v 1.5 2007/05/19 14:21:36 wiz Exp $
 .\"
 .\" Copyright (c) 2004, 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -62,9 +62,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     @(#)mount_cd9660.8	8.3 (Berkeley) 3/27/94
-.\"
-.Dd March 22, 2007
+.Dd May 19, 2007
 .Dt MOUNT_HFS 8
 .Os
 .Sh NAME
@@ -119,9 +117,16 @@ The
 .Nm
 utility first appeared in
 .Nx 5.0 .
-.\" AUTHORS
-.\" mention GSoC 2005
-.\" mention enhancements by dillo
+.Sh AUTHORS
+.An -nosplit
+.Nm
+was developed by
+.An Yevgeny Binder Aq yevbee@comcast.net
+during the 2005 Google Summer of Code.
+It was improved and imported into
+.Nx
+by
+.An Dieter Baron Aq dillo@NetBSD.org .
 .Sh BUGS
 HFS+ support is still experimental.
 Currently, no write support is present.
