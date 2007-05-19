@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.71 2007/05/18 15:46:09 pooka Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.72 2007/05/19 16:35:01 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.71 2007/05/18 15:46:09 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.72 2007/05/19 16:35:01 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/fstrans.h>
@@ -856,7 +856,7 @@ puffs_inactive(void *v)
 	 * node's life was already all it would ever be
 	 */
 	if (vnrefs == 0 || (pnode->pn_stat & PNODE_NOREFS)) {
-		pnode->pn_stat |= PNODE_NOREFS;
+		pnode->pn_stat |= PNODE_DYING;
 		vrecycle(ap->a_vp, NULL, ap->a_l);
 	}
 
@@ -1085,7 +1085,8 @@ puffs_fsync(void *v)
 	pmp = MPTOPUFFSMP(vp->v_mount);
 
 	/* flush out information from our metacache, see vop_setattr */
-	if (pn->pn_stat & PNODE_METACACHE_MASK) {
+	if (pn->pn_stat & PNODE_METACACHE_MASK
+	    && (pn->pn_stat & PNODE_DYING) == 0) {
 		vattr_null(&va);
 		error = VOP_SETATTR(vp, &va, FSCRED, NULL); 
 		if (error)
@@ -1110,7 +1111,7 @@ puffs_fsync(void *v)
 	 * has references neither in the kernel or the fs server.
 	 * Otherwise we continue to issue fsync() forward.
 	 */
-	if (!EXISTSOP(pmp, FSYNC) || (pn->pn_stat & PNODE_NOREFS))
+	if (!EXISTSOP(pmp, FSYNC) || (pn->pn_stat & PNODE_DYING))
 		return 0;
 
 	dofaf = (ap->a_flags & FSYNC_WAIT) == 0 || ap->a_flags == FSYNC_LAZY;
@@ -1896,7 +1897,8 @@ puffs_strategy(void *v)
 	 * Short-circuit optimization: don't flush buffer in between
 	 * VOP_INACTIVE and VOP_RECLAIM in case the node has no references.
 	 */
-	if (pn->pn_stat & PNODE_NOREFS) {
+	if (pn->pn_stat & PNODE_DYING) {
+		KASSERT((bp->b_flags & B_READ) == 0);
 		bp->b_resid = 0;
 		goto out;
 	}
