@@ -1,4 +1,4 @@
-/*	$NetBSD: ldd.c,v 1.27 2006/04/02 03:50:38 christos Exp $	*/
+/*	$NetBSD: ldd.c,v 1.28 2007/05/19 15:35:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ldd.c,v 1.27 2006/04/02 03:50:38 christos Exp $");
+__RCSID("$NetBSD: ldd.c,v 1.28 2007/05/19 15:35:04 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -153,7 +153,7 @@ main(int argc, char **argv)
 		usage();
 		/*NOTREACHED*/
 	}
-	_rtld_add_paths(&_rtld_default_paths, RTLD_DEFAULT_LIBRARY_PATH);
+	_rtld_add_paths(argv[0], &_rtld_default_paths, RTLD_DEFAULT_LIBRARY_PATH);
 
 	_rtld_pagesz = sysconf(_SC_PAGESIZE);
 
@@ -172,9 +172,9 @@ main(int argc, char **argv)
 		_rtld_paths = NULL;
 		_rtld_trust = (st.st_mode & (S_ISUID | S_ISGID)) == 0;
 		if (_rtld_trust)
-			_rtld_add_paths(&_rtld_paths, getenv("LD_LIBRARY_PATH"));
+			_rtld_add_paths(argv[0], &_rtld_paths, getenv("LD_LIBRARY_PATH"));
 
-		_rtld_process_hints(&_rtld_paths, &_rtld_xforms, _PATH_LD_HINTS);
+		_rtld_process_hints(argv[0], &_rtld_paths, &_rtld_xforms, _PATH_LD_HINTS);
 		_rtld_objmain = _rtld_map_object(xstrdup(*argv), fd, &st);
 		if (_rtld_objmain == NULL) {
 			if (ldd_aout(*argv, fmt1, fmt2, fd) < 0)
@@ -185,7 +185,7 @@ main(int argc, char **argv)
 		close(fd);
 
 		_rtld_objmain->path = xstrdup(*argv);
-		_rtld_digest_dynamic(_rtld_objmain);
+		_rtld_digest_dynamic(argv[0], _rtld_objmain);
 
 		/* Link the main program into the list of objects. */
 		*_rtld_objtail = _rtld_objmain;
