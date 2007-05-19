@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.91 2007/04/26 21:21:44 dsl Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.92 2007/05/19 22:11:22 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.91 2007/04/26 21:21:44 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.92 2007/05/19 22:11:22 christos Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -195,53 +195,6 @@ symlink_magic(struct proc *p, char *cp, int *len)
 #undef VC
 #undef MATCH
 #undef SUBSTITUTE
-
-int
-pathname_get(const char *dirp, enum uio_seg segflg, pathname_t *path)
-{
-	int error;
-
-	if (dirp == NULL)
-		return (EFAULT);
-
-	*path = malloc(sizeof(struct pathname_internal), M_TEMP,
-	    M_ZERO|M_WAITOK);
-
-	if (segflg == UIO_USERSPACE) {
-		(*path)->pathbuf = PNBUF_GET();
-		error = copyinstr(dirp, (*path)->pathbuf, MAXPATHLEN,
-		    NULL);
-		if (error) {
-			PNBUF_PUT((*path)->pathbuf);
-			free(*path, M_TEMP);
-			*path = NULL;
-			return (error);
-		}
-		(*path)->needfree = true;
-	} else {
-		(*path)->pathbuf = __UNCONST(dirp);
-		(*path)->needfree = false;
-	}
-
-	return (0);
-}
-
-const char *
-pathname_path(pathname_t path)
-{
-	KASSERT(path != NULL);
-	return (path->pathbuf);
-}
-
-void
-pathname_put(pathname_t path)
-{
-	if (path != NULL) {
-		if (path->pathbuf != NULL && path->needfree)
-			PNBUF_PUT(path->pathbuf);
-		free(path, M_TEMP);
-	}
-}
 
 /*
  * Convert a pathname into a pointer to a locked vnode.

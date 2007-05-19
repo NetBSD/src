@@ -1,4 +1,4 @@
-/*	$NetBSD: verified_exec.h,v 1.56 2007/05/15 19:47:44 elad Exp $	*/
+/*	$NetBSD: verified_exec.h,v 1.57 2007/05/19 22:11:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -76,6 +76,35 @@ struct vm_page;
 #define	PAGE_FP_FAIL	2	/* mismatch in per-page fingerprints. */
 
 #if defined(_KERNEL) && !defined(HAVE_NBTOOL_CONFIG_H)
+
+#if NVERIEXEC > 0
+#define VERIEXEC_PATH_GET(from, seg, cto, to) \
+	do { \
+		if (seg == UIO_USERSPACE) { \
+			to = PNBUF_GET(); \
+			error = copyinstr(from, to, MAXPATHLEN, NULL); \
+			if (error) \
+				goto out; \
+			cto = to; \
+			seg = UIO_SYSSPACE; \
+		} else { \
+			to = NULL; \
+			cto = from; \
+		} \
+	} while (/*CONSTCOND*/0)
+#define VERIEXEC_PATH_PUT(to) \
+	do { \
+		if (to) \
+			PNBUF_PUT(to); \
+	} while (/*CONSTCOND*/0)
+#else
+#define VERIEXEC_PATH_GET(from, seg, cto, to) \
+	cto = from
+#define VERIEXEC_PATH_PUT(to) \
+	(void)to
+	
+#endif
+
 /*
  * Fingerprint operations vector for Veriexec.
  * Function types: init, update, final.
@@ -101,9 +130,9 @@ int veriexec_convert(struct vnode *, prop_dictionary_t);
 int veriexec_dump(struct lwp *, prop_array_t);
 int veriexec_flush(struct lwp *);
 void veriexec_purge(struct vnode *);
-int veriexec_removechk(struct vnode *, const char *, struct lwp *l);
-int veriexec_renamechk(struct vnode *, const char *, struct vnode *,
-    const char *, struct lwp *);
+int veriexec_removechk(struct lwp *, struct vnode *, const char *);
+int veriexec_renamechk(struct lwp *, struct vnode *, const char *,
+    struct vnode *, const char *);
 int veriexec_unmountchk(struct mount *);
 int veriexec_openchk(struct lwp *, struct vnode *, const char *, int);
 #endif /* _KERNEL */
