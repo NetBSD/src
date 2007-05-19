@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.141 2007/05/12 06:31:19 isaki Exp $	*/
+/*	$NetBSD: machdep.c,v 1.142 2007/05/19 14:19:39 isaki Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.141 2007/05/12 06:31:19 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.142 2007/05/19 14:19:39 isaki Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -477,7 +477,7 @@ void
 cpu_reboot(int howto, char *bootstr)
 {
 	/* take a snap shot before clobbering any registers */
-	if (curlwp && curlwp->l_addr)
+	if (curlwp->l_addr)
 		savectx(&curlwp->l_addr->u_pcb);
 
 	boothowto = howto;
