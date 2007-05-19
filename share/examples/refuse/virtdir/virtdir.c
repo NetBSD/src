@@ -156,6 +156,13 @@ virtdir_find(virtdir_t *tp, const char *name, size_t namelen)
 	return bsearch(&e, tp->v, tp->c, sizeof(tp->v[0]), compare);
 }
 
+/* return the virtual offset in the tree */
+int
+virtdir_offset(virtdir_t *tp, virt_dirent_t *dp)
+{
+	return (int)((dp - tp->v));
+}
+
 /* analogous to opendir(3) - open a directory, save information, and
 * return a pointer to the dynamically allocated structure */
 VIRTDIR *
