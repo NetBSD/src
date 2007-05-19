@@ -1,4 +1,4 @@
-/*	$NetBSD: ninepuffs.c,v 1.11 2007/05/17 14:13:05 pooka Exp $	*/
+/*	$NetBSD: ninepuffs.c,v 1.12 2007/05/19 10:38:23 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ninepuffs.c,v 1.11 2007/05/17 14:13:05 pooka Exp $");
+__RCSID("$NetBSD: ninepuffs.c,v 1.12 2007/05/19 10:38:23 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -165,8 +165,8 @@ main(int argc, char *argv[])
 	PUFFSOP_SET(pops, puffs9p, node, write);
 	PUFFSOP_SET(pops, puffs9p, node, rename);
 	PUFFSOP_SET(pops, puffs9p, node, inactive);
-#if 0
 	PUFFSOP_SET(pops, puffs9p, node, reclaim);
+#if 0
 	PUFFSOP_SET(pops, puffs9p, node, mknod);
 #endif
 

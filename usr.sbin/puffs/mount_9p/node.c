@@ -1,4 +1,4 @@
-/*	$NetBSD: node.c,v 1.11 2007/05/16 09:57:21 pooka Exp $	*/
+/*	$NetBSD: node.c,v 1.12 2007/05/19 10:38:23 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: node.c,v 1.11 2007/05/16 09:57:21 pooka Exp $");
+__RCSID("$NetBSD: node.c,v 1.12 2007/05/19 10:38:23 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -487,6 +487,9 @@ noderemove(struct puffs_cc *pcc, struct p9pnode *p9n)
 	}
 
  out:
+	if (rv == 0)
+		puffs_setback(pcc, PUFFS_SETBACK_NOREF_N2);
+
 	RETURN(rv);
 }
 
@@ -568,10 +571,15 @@ puffs9p_node_rename(struct puffs_cc *pcc, void *opc, void *src,
 int
 puffs9p_node_reclaim(struct puffs_cc *pcc, void *opc, pid_t pid)
 {
-#if 0
-	if (p9n->fid_open != P9P_INVALFID)
-		proto_cc_clunkfid(pcc, p9n->fid_open, 0);
-#endif
+	struct puffs_node *pn = opc;
+	struct p9pnode *p9n = pn->pn_data;
+
+	assert(LIST_EMPTY(&p9n->dir_openlist));
+	assert(p9n->fid_read == P9P_INVALFID && p9n->fid_write == P9P_INVALFID);
+
+	proto_cc_clunkfid(pcc, p9n->fid_base, 0);
+	free(p9n);
+	puffs_pn_put(pn);
 
 	return 0;
 }
