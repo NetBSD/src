@@ -1,4 +1,4 @@
-.\" $NetBSD: MAKEDEV.8.template,v 1.13 2007/05/19 14:15:58 wiz Exp $
+.\" $NetBSD: MAKEDEV.8.template,v 1.14 2007/05/19 14:16:31 wiz Exp $
 .\"
 .\" Copyright (c) 2001, 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -90,7 +90,7 @@ This is used by
 .Xr init 1
 when
 .Pa /dev/console
-does not exit.
+does not exist.
 If the
 .Fl M
 flag is specified more than once, then
