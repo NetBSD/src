@@ -1,4 +1,4 @@
-/*	$NetBSD: framebuf.c,v 1.10 2007/05/16 10:04:08 pooka Exp $	*/
+/*	$NetBSD: framebuf.c,v 1.11 2007/05/19 11:01:21 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: framebuf.c,v 1.10 2007/05/16 10:04:08 pooka Exp $");
+__RCSID("$NetBSD: framebuf.c,v 1.11 2007/05/19 11:01:21 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -67,7 +67,7 @@ struct puffs_framebuf {
 #define ISTAT_INTERNAL	0x02	/* never leaves library			*/
 #define ISTAT_NOREPLY	0x04	/* nuke after sending 			*/
 
-#define PUFBUF_INCRALLOC 65536	/* 64k ought to be enough for anyone */
+#define PUFBUF_INCRALLOC 4096
 #define PUFBUF_REMAIN(p) (p->len - p->offset)
 
 static struct puffs_fctrl_io *
@@ -93,11 +93,11 @@ puffs_framebuf_make()
 	memset(pufbuf, 0, sizeof(struct puffs_framebuf));
 
 	pufbuf->buf = malloc(PUFBUF_INCRALLOC);
-	pufbuf->len = PUFBUF_INCRALLOC;
 	if (pufbuf->buf == NULL) {
 		free(pufbuf);
 		return NULL;
 	}
+	pufbuf->len = PUFBUF_INCRALLOC;
 
 	puffs_framebuf_recycle(pufbuf);
 	return pufbuf;
