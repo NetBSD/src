@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.42 2007/05/17 14:51:32 yamt Exp $
+#	$NetBSD: genassym.cf,v 1.43 2007/05/19 22:10:39 martin Exp $
 
 #
 # Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -143,9 +143,6 @@ define	USIZ		sizeof(struct user)
 
 # VM structure fields
 define	VM_PMAP		offsetof(struct vmspace, vm_map.pmap)
-
-# UVM structure fields
-define	UVM_PAGE_IDLE_ZERO	offsetof(struct uvm, page_idle_zero)
 
 # pmap structure fields
 define	PM_CTX		offsetof(struct pmap, pm_ctx)
