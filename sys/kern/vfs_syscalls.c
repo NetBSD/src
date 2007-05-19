@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.314 2007/05/17 00:46:30 christos Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.315 2007/05/19 22:11:23 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.314 2007/05/17 00:46:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.315 2007/05/19 22:11:23 christos Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -69,10 +69,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.314 2007/05/17 00:46:30 christos 
 #ifdef FILEASSOC
 #include <sys/fileassoc.h>
 #endif /* FILEASSOC */
-#if NVERIEXEC > 0
 #include <sys/verified_exec.h>
-#include <sys/syslog.h>
-#endif /* NVERIEXEC > 0 */
 #include <sys/kauth.h>
 
 #include <miscfs/genfs/genfs.h>
@@ -1752,19 +1749,20 @@ sys_mknod(struct lwp *l, void *v, register_t *retval)
 	struct vnode *vp;
 	struct vattr vattr;
 	int error, optype;
-	char *path;
 	struct nameidata nd;
+	char *path;
+	const char *cpath;
+	enum uio_seg seg = UIO_USERSPACE;
 
 	if ((error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_MKNOD,
 	    0, NULL, NULL, NULL)) != 0)
 		return (error);
 
 	optype = VOP_MKNOD_DESCOFFSET;
-	path = PNBUF_GET();
-	error = copyinstr(SCARG(uap, path), path, MAXPATHLEN, NULL);
-	if (error)
-		goto out;
-	NDINIT(&nd, CREATE, LOCKPARENT | TRYEMULROOT, UIO_SYSSPACE, path, l);
+
+	VERIEXEC_PATH_GET(SCARG(uap, path), seg, cpath, path);
+	NDINIT(&nd, CREATE, LOCKPARENT | TRYEMULROOT, seg, cpath, l);
+
 	if ((error = namei(&nd)) != 0)
 		goto out;
 	vp = nd.ni_vp;
@@ -1837,7 +1835,7 @@ sys_mknod(struct lwp *l, void *v, register_t *retval)
 			vrele(vp);
 	}
 out:
-	PNBUF_PUT(path);
+	VERIEXEC_PATH_PUT(path);
 	return (error);
 }
 
@@ -2014,21 +2012,12 @@ sys_unlink(struct lwp *l, void *v, register_t *retval)
 	struct vnode *vp;
 	int error;
 	struct nameidata nd;
-#if NVERIEXEC > 0
-	pathname_t pathbuf = NULL;
-#endif /* NVERIEXEC > 0 */
+	char *path;
+	const char *cpath;
+	enum uio_seg seg = UIO_USERSPACE;
 
-#if NVERIEXEC > 0
-	error = pathname_get(SCARG(uap, path), UIO_USERSPACE, &pathbuf);
-	if (error)
-		return (error);
-
-	NDINIT(&nd, DELETE, LOCKPARENT | LOCKLEAF, UIO_SYSSPACE,
-	    pathname_path(pathbuf), l);
-#else
-	NDINIT(&nd, DELETE, LOCKPARENT | LOCKLEAF | TRYEMULROOT, UIO_USERSPACE,
-	    SCARG(uap, path), l);
-#endif /* NVERIEXEC > 0 */
+	VERIEXEC_PATH_GET(SCARG(uap, path), seg, cpath, path);
+	NDINIT(&nd, DELETE, LOCKPARENT | LOCKLEAF | TRYEMULROOT, seg, cpath, l);
 
 	if ((error = namei(&nd)) != 0)
 		goto out;
@@ -2050,10 +2039,7 @@ sys_unlink(struct lwp *l, void *v, register_t *retval)
 
 #if NVERIEXEC > 0
 	/* Handle remove requests for veriexec entries. */
-	if (!error)
-		error = veriexec_removechk(vp, pathname_path(pathbuf), l);
-
-	if (error) {
+	if ((error = veriexec_removechk(l, nd.ni_vp, nd.ni_dirp)) != 0) {
 		VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
 		if (nd.ni_dvp == vp)
 			vrele(nd.ni_dvp);
@@ -2071,9 +2057,7 @@ sys_unlink(struct lwp *l, void *v, register_t *retval)
 #endif /* FILEASSOC */
 	error = VOP_REMOVE(nd.ni_dvp, nd.ni_vp, &nd.ni_cnd);
 out:
-#if NVERIEXEC > 0
-	pathname_put(pathbuf);
-#endif /* NVERIEXEC > 0 */
+	VERIEXEC_PATH_PUT(path);
 	return (error);
 }
 
@@ -3340,7 +3324,7 @@ rename_files(const char *from, const char *to, struct lwp *l, int retain)
 		f2 = malloc(tond.ni_cnd.cn_namelen + 1, M_TEMP, M_WAITOK);
 		strlcpy(f1, tond.ni_cnd.cn_nameptr, tond.ni_cnd.cn_namelen);
 
-		error = veriexec_renamechk(fvp, f1, tvp, f2, l);
+		error = veriexec_renamechk(l, fvp, f1, tvp, f2);
 
 		free(f1, M_TEMP);
 		free(f2, M_TEMP);
