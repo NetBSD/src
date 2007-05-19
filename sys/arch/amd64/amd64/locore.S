@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.22 2007/05/17 14:51:14 yamt Exp $	*/
+/*	$NetBSD: locore.S,v 1.23 2007/05/19 20:20:47 fvdl Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -766,7 +766,7 @@ ENTRY(cpu_switchto)
 	 * is deferred until mi_switch(), when cpu_switchto() returns.
 	 */
 2:	movl	$IPL_IPI,CPUVAR(ILEVEL)
-	movq	PCB_CR0(%r14),%rcx
+	movl	PCB_CR0(%r14),%ecx
 	movq	%cr0,%rdx
 
 	/*
