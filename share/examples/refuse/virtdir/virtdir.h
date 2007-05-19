@@ -75,4 +75,6 @@ VIRTDIR *openvirtdir(virtdir_t *, const char *);
 virt_dirent_t *readvirtdir(VIRTDIR *);
 void closevirtdir(VIRTDIR *);
 
+int virtdir_offset(virtdir_t *, virt_dirent_t *);
+
 #endif
