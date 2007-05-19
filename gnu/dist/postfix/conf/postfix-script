@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: postfix-script,v 1.1.1.10 2005/08/18 21:01:47 rpaulo Exp $
+#	$NetBSD: postfix-script,v 1.1.1.11 2007/05/19 16:27:32 heas Exp $
 #
 
 #++
@@ -131,6 +131,15 @@ stop)
 	}
 	$INFO stopping the Postfix mail system
 	kill `sed 1q pid/master.pid`
+	for i in 5 4 3 2 1
+	do
+	    $daemon_directory/master -t && exit 0
+	    $INFO waiting for the Postfix mail system to terminate
+	    sleep 1
+	done
+	$WARN stopping the Postfix mail system with force
+	pid=`awk '{ print $1; exit 0 } END { exit 1 }' pid/master.pid` && 
+		kill -9 -$pid
 	;;
 
 abort)

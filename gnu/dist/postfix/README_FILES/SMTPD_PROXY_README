@@ -12,7 +12,9 @@ TThhee PPoossttffiixx bbeeffoorree--qquueeuuee ccoonnt
 
 As of version 2.1, the Postfix SMTP server can forward all incoming mail to a
 content filtering proxy server that inspects all mail BEFORE it is stored in
-the Postfix mail queue.
+the Postfix mail queue. It is roughly equivalent in capabilities to the
+approach described in MILTER_README, except that the latter uses a dedicated
+protocol instead of SMTP.
 
 The before-queue content filter is meant to be used as follows:
 
@@ -43,7 +45,9 @@ following:
  1. Re-inject the mail back into Postfix via SMTP, perhaps after changing its
     content and/or destination.
 
- 2. Reject the mail by sending a suitable SMTP status code back to Postfix.
+ 2. Discard or quarantine the mail.
+
+ 3. Reject the mail by sending a suitable SMTP status code back to Postfix.
     Postfix passes the status back to the remote SMTP client. This way, Postfix
     does not have to send a bounce message.
 
@@ -135,9 +139,8 @@ master.cf file:
     from using up all 20 SMTP server processes. This limit is not necessary if
     you receive all mail from a trusted relay host.
 
-    Note: this setting is ignored by the stable Postfix 2.1 release. The
-    feature will be available only in the experimental release until Postfix
-    2.2.
+    Note: this setting is available in Postfix version 2.2 and later. Earlier
+    Postfix versions will ignore it.
 
   * The "-o smtpd_proxy_filter=127.0.0.1:10025" tells the before filter SMTP
     server that it should give incoming mail to the content filter that listens

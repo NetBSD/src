@@ -1,4 +1,4 @@
-/*	$NetBSD: dict.h,v 1.1.1.8 2006/07/19 01:17:51 rpaulo Exp $	*/
+/*	$NetBSD: dict.h,v 1.1.1.9 2007/05/19 16:28:43 heas Exp $	*/
 
 #ifndef _DICT_H_INCLUDED_
 #define _DICT_H_INCLUDED_
@@ -48,6 +48,7 @@ extern DICT *dict_alloc(const char *, const char *, ssize_t);
 extern void dict_free(DICT *);
 
 extern DICT *dict_debug(DICT *);
+
 #define DICT_DEBUG(d) ((d)->flags & DICT_FLAG_DEBUG ? dict_debug(d) : (d))
 
 #define DICT_FLAG_NONE		(0)
@@ -71,8 +72,34 @@ extern DICT *dict_debug(DICT *);
 
  /* IMPORTANT: Update the dict_mask[] table when the above changes */
 
+ /*
+  * The subsets of flags that control how a map is used. These are relevant
+  * mainly for proxymap support. Note: some categories overlap.
+  * 
+  * DICT_FLAG_PARANOID - flags that forbid the use of insecure map types for
+  * security-sensitive operations. These flags are specified by the caller,
+  * and are checked by the map implementation itself upon open, lookup etc.
+  * requests.
+  * 
+  * DICT_FLAG_IMPL_MASK - flags that specify properties of the lookup table
+  * implementation. These flags are set by the map implementation itself.
+  * 
+  * DICT_FLAG_INST_MASK - flags that control how a specific table instance is
+  * opened or used. The caller specifies these flags, and the caller may not
+  * change them between open, lookup, etc. requests (although the map itself
+  * may make changes to some of these flags).
+  * 
+  * DICT_FLAG_NP_INST_MASK - ditto, but without the paranoia flags.
+  * 
+  * DICT_FLAG_RQST_MASK - flags that the caller specifies, and that the caller
+  * may change between open, lookup etc. requests.
+  */
 #define DICT_FLAG_PARANOID \
 	(DICT_FLAG_NO_REGSUB | DICT_FLAG_NO_PROXY | DICT_FLAG_NO_UNAUTH)
+#define DICT_FLAG_IMPL_MASK	(DICT_FLAG_FIXED | DICT_FLAG_PATTERN)
+#define DICT_FLAG_RQST_MASK	DICT_FLAG_FOLD_ANY
+#define DICT_FLAG_NP_INST_MASK	~(DICT_FLAG_IMPL_MASK | DICT_FLAG_RQST_MASK)
+#define DICT_FLAG_INST_MASK	(DICT_FLAG_NP_INST_MASK | DICT_FLAG_PARANOID)
 
 extern int dict_unknown_allowed;
 extern int dict_errno;

@@ -18,7 +18,7 @@ $(PROG): $(OBJS) $(LIBS)
 $(OBJS): ../../conf/makedefs.out
 
 Makefile: Makefile.in
-	(cat ../../conf/makedefs.out $?) >$@
+	cat ../../conf/makedefs.out $? >$@
 
 test:	$(TESTPROG)
 
@@ -72,6 +72,7 @@ qmqpd.o: ../../include/mail_params.h
 qmqpd.o: ../../include/mail_proto.h
 qmqpd.o: ../../include/mail_server.h
 qmqpd.o: ../../include/mail_stream.h
+qmqpd.o: ../../include/mail_version.h
 qmqpd.o: ../../include/match_list.h
 qmqpd.o: ../../include/match_ops.h
 qmqpd.o: ../../include/match_parent_style.h

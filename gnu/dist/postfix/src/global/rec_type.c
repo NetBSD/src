@@ -1,4 +1,4 @@
-/*	$NetBSD: rec_type.c,v 1.1.1.5 2006/07/19 01:17:28 rpaulo Exp $	*/
+/*	$NetBSD: rec_type.c,v 1.1.1.6 2007/05/19 16:28:17 heas Exp $	*/
 
 /*++
 /* NAME
@@ -60,7 +60,7 @@ REC_TYPE_NAME rec_type_names[] = {
     REC_TYPE_MESG, "message_content",
     REC_TYPE_CONT, "unterminated_text",
     REC_TYPE_NORM, "regular_text",
-    REC_TYPE_DTXT, "deleted_text",
+    REC_TYPE_DTXT, "padding",
     REC_TYPE_XTRA, "extracted_info",
     REC_TYPE_RRTO, "return_receipt",
     REC_TYPE_ERTO, "errors_to",

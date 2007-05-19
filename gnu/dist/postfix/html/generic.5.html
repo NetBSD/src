@@ -39,8 +39,8 @@ GENERIC(5)                                                          GENERIC(5)
        that serves as  input  to  the  <a href="postmap.1.html"><b>postmap</b>(1)</a>  command.   The
        result,  an  indexed file in <b>dbm</b> or <b>db</b> format, is used for
        fast searching by the mail  system.  Execute  the  command
-       "<b>postmap  /etc/postfix/generic</b>"  in  order  to rebuild the
-       indexed file after changing the text file.
+       "<b>postmap  /etc/postfix/generic</b>" to rebuild an indexed file
+       after changing the corresponding text file.
 
        When the table is provided via other means  such  as  NIS,
        LDAP  or  SQL,  the  same lookups are done as for ordinary
@@ -49,9 +49,9 @@ GENERIC(5)                                                          GENERIC(5)
        Alternatively, the table can be  provided  as  a  regular-
        expression map where patterns are given as regular expres-
        sions, or lookups can be directed to TCP-based server.  In
-       that  case,  the  lookups are done in a slightly different
+       those  case,  the lookups are done in a slightly different
        way as described below under "REGULAR  EXPRESSION  TABLES"
-       and "TCP-BASED TABLES".
+       or "TCP-BASED TABLES".
 
 <b>CASE FOLDING</b>
        The  search  string is folded to lowercase before database
@@ -142,7 +142,7 @@ GENERIC(5)                                                          GENERIC(5)
        lookups are directed to a TCP-based server. For a descrip-
        tion of the TCP client/server lookup protocol, see <a href="tcp_table.5.html"><b>tcp_ta-</b></a>
        <a href="tcp_table.5.html"><b>ble</b>(5)</a>.  This feature is not available up to and including
-       Postfix version 2.3.
+       Postfix version 2.4.
 
        Each lookup operation uses the entire address once.  Thus,
        <i>user@domain</i>  mail  addresses  are not broken up into their
@@ -161,12 +161,12 @@ GENERIC(5)                                                          GENERIC(5)
        that the ISP supports "+" style address extensions).
 
        /etc/postfix/<a href="postconf.5.html">main.cf</a>:
-               <a href="postconf.5.html#smtp_generic_maps">smtp_generic_maps</a> = hash:/etc/postfix/generic
+           <a href="postconf.5.html#smtp_generic_maps">smtp_generic_maps</a> = hash:/etc/postfix/generic
 
        /etc/postfix/generic:
-               his@localdomain.local   hisaccount@hisisp.example
-               her@localdomain.local   heraccount@herisp.example
-               @localdomain.local      hisaccount+local@hisisp.example
+           his@localdomain.local   hisaccount@hisisp.example
+           her@localdomain.local   heraccount@herisp.example
+           @localdomain.local      hisaccount+local@hisisp.example
 
        Execute  the  command "<b>postmap /etc/postfix/generic</b>" when-
        ever the table is changed.  Instead of <b>hash</b>, some  systems

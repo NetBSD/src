@@ -1,4 +1,4 @@
-/*	$NetBSD: vbuf.h,v 1.1.1.3 2006/07/19 01:17:56 rpaulo Exp $	*/
+/*	$NetBSD: vbuf.h,v 1.1.1.4 2007/05/19 16:28:49 heas Exp $	*/
 
 #ifndef _VBUF_H_INCLUDED_
 #define _VBUF_H_INCLUDED_
@@ -67,7 +67,7 @@ struct VBUF {
 #define VBUF_FLAG_BAD	(VBUF_FLAG_ERR | VBUF_FLAG_EOF | VBUF_FLAG_TIMEOUT)
 #define VBUF_FLAG_FIXED	(1<<3)		/* fixed-size buffer */
 
-#define vbuf_error(v)	((v)->flags & VBUF_FLAG_ERR)
+#define vbuf_error(v)	((v)->flags & (VBUF_FLAG_ERR | VBUF_FLAG_TIMEOUT))
 #define vbuf_eof(v)	((v)->flags & VBUF_FLAG_EOF)
 #define vbuf_timeout(v)	((v)->flags & VBUF_FLAG_TIMEOUT)
 #define vbuf_clearerr(v) ((v)->flags &= ~VBUF_FLAG_BAD)

@@ -1,4 +1,4 @@
-/*	$NetBSD: attr_print_plain.c,v 1.1.1.4 2006/07/19 01:17:50 rpaulo Exp $	*/
+/*	$NetBSD: attr_print_plain.c,v 1.1.1.5 2007/05/19 16:28:43 heas Exp $	*/
 
 /*++
 /* NAME
@@ -24,7 +24,7 @@
 /*	attr_scan_plain(). The stream is not flushed.
 /*
 /*	attr_vprint_plain() provides an alternate interface that is convenient
-/*	for calling from within variadoc functions.
+/*	for calling from within variadic functions.
 /*
 /*	Attributes are sent in the requested order as specified with the
 /*	attr_print_plain() argument list. This routine satisfies the formatting

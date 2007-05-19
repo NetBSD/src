@@ -1,4 +1,4 @@
-.\"	$NetBSD: sendmail.1,v 1.1.1.10 2006/11/07 02:55:31 rpaulo Exp $
+.\"	$NetBSD: sendmail.1,v 1.1.1.11 2007/05/19 16:27:48 heas Exp $
 .\"
 .TH SENDMAIL 1 
 .ad
@@ -176,6 +176,11 @@ poor delivery performance of all other mail.
 .IP "\fB-q\fIinterval\fR (ignored)"
 The interval between queue runs. Use the \fBqueue_run_delay\fR
 configuration parameter instead.
+.IP \fB-qI\fIqueueid\fR
+Schedule immediate delivery of mail with the specified queue
+ID.  This option is implemented by executing the
+\fBpostqueue\fR(1) command, and is available with Postfix
+version 2.4 and later.
 .IP \fB-qR\fIsite\fR
 Schedule immediate delivery of all mail that is queued for the named
 \fIsite\fR. This option accepts only \fIsite\fR names that are
@@ -227,7 +232,7 @@ Log mailer traffic. Use the \fBdebug_peer_list\fR and
 .ad
 .fi
 By design, this program is not set-user (or group) id. However,
-it must handle data from untrusted users or untrusted machines.
+it must handle data from untrusted, possibly remote, users.
 Thus, the usual precautions need to be taken against malicious
 inputs.
 .SH DIAGNOSTICS
@@ -305,7 +310,7 @@ The delay between attempts to fork() a child process.
 .IP "\fBhopcount_limit (50)\fR"
 The maximal number of Received:  message headers that is allowed
 in the primary message headers.
-.IP "\fBqueue_run_delay (1000s)\fR"
+.IP "\fBqueue_run_delay (version dependent)\fR"
 The time between deferred queue scans by the queue manager.
 .SH "FAST FLUSH CONTROLS"
 .na
