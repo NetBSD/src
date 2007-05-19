@@ -1,4 +1,4 @@
-/*	$NetBSD: qmgr.c,v 1.1.1.9 2006/07/19 01:17:37 rpaulo Exp $	*/
+/*	$NetBSD: qmgr.c,v 1.1.1.10 2007/05/19 16:28:28 heas Exp $	*/
 
 /*++
 /* NAME
@@ -175,7 +175,7 @@
 /*	in-memory "dead" destination status cache.
 /* .IP "\fBqmgr_message_recipient_minimum (10)\fR"
 /*	The minimal number of in-memory recipients for any message.
-/* .IP "\fBdefault_recipient_limit (10000)\fR"
+/* .IP "\fBdefault_recipient_limit (20000)\fR"
 /*	The default per-transport upper limit on the number of in-memory
 /*	recipients.
 /* .IP "\fItransport\fB_recipient_limit ($default_recipient_limit)\fR"
@@ -184,6 +184,17 @@
 /*	The default value for the extra per-transport limit imposed on the
 /*	number of in-memory recipients.
 /* .IP "\fItransport\fB_extra_recipient_limit ($default_extra_recipient_limit)\fR"
+/*	Idem, for delivery via the named message \fItransport\fR.
+/* .PP
+/*	Available in Postfix version 2.4 and later:
+/* .IP "\fBdefault_recipient_refill_limit (100)\fR"
+/*	The default per-transport limit on the number of recipients refilled at
+/*	once.
+/* .IP "\fItransport\fB_recipient_refill_limit ($default_recipient_refill_limit)\fR"
+/*	Idem, for delivery via the named message \fItransport\fR.
+/* .IP "\fBdefault_recipient_refill_delay (5s)\fR"
+/*	The default per-transport maximum delay between recipients refills.
+/* .IP "\fItransport\fB_recipient_refill_delay ($default_recipient_refill_delay)\fR"
 /*	Idem, for delivery via the named message \fItransport\fR.
 /* DELIVERY CONCURRENCY CONTROLS
 /* .ad
@@ -229,14 +240,14 @@
 /* OTHER RESOURCE AND RATE CONTROLS
 /* .ad
 /* .fi
-/* .IP "\fBminimal_backoff_time (1000s)\fR"
+/* .IP "\fBminimal_backoff_time (version dependent)\fR"
 /*	The minimal time between attempts to deliver a deferred message.
 /* .IP "\fBmaximal_backoff_time (4000s)\fR"
 /*	The maximal time between attempts to deliver a deferred message.
 /* .IP "\fBmaximal_queue_lifetime (5d)\fR"
 /*	The maximal time a message is queued before it is sent back as
 /*	undeliverable.
-/* .IP "\fBqueue_run_delay (1000s)\fR"
+/* .IP "\fBqueue_run_delay (version dependent)\fR"
 /*	The time between deferred queue scans by the queue manager.
 /* .IP "\fBtransport_retry_time (60s)\fR"
 /*	The time between attempts by the Postfix queue manager to contact
@@ -337,6 +348,7 @@
 #include <recipient_list.h>
 #include <mail_conf.h>
 #include <mail_params.h>
+#include <mail_version.h>
 #include <mail_proto.h>			/* QMGR_SCAN constants */
 #include <mail_flow.h>
 #include <flush_clnt.h>
@@ -363,6 +375,8 @@ int     var_qmgr_rcpt_limit;
 int     var_qmgr_msg_rcpt_limit;
 int     var_xport_rcpt_limit;
 int     var_stack_rcpt_limit;
+int     var_xport_refill_limit;
+int     var_xport_refill_delay;
 int     var_delivery_slot_cost;
 int     var_delivery_slot_loan;
 int     var_delivery_slot_discount;
@@ -379,8 +393,11 @@ int     var_proc_limit;
 bool    var_verp_bounce_off;
 int     var_qmgr_clog_warn_time;
 
-static QMGR_SCAN *qmgr_incoming;
-static QMGR_SCAN *qmgr_deferred;
+static QMGR_SCAN *qmgr_scans[2];
+
+#define QMGR_SCAN_IDX_INCOMING 0
+#define QMGR_SCAN_IDX_DEFERRED 1
+#define QMGR_SCAN_IDX_COUNT (sizeof(qmgr_scans) / sizeof(qmgr_scans[0]))
 
 /* qmgr_deferred_run_event - queue manager heartbeat */
 
@@ -391,7 +408,7 @@ static void qmgr_deferred_run_event(int unused_event, char *dummy)
      * This routine runs when it is time for another deferred queue scan.
      * Make sure this routine gets called again in the future.
      */
-    qmgr_scan_request(qmgr_deferred, QMGR_SCAN_START);
+    qmgr_scan_request(qmgr_scans[QMGR_SCAN_IDX_DEFERRED], QMGR_SCAN_START);
     event_request_timer(qmgr_deferred_run_event, dummy, var_queue_run_delay);
 }
 
@@ -416,6 +433,8 @@ static void qmgr_trigger_event(char *buf, int len,
      * request in order. And as long as we don't have conflicting requests we
      * are free to sort them into the most suitable order.
      */
+#define QMGR_FLUSH_BEFORE	(QMGR_FLUSH_ONCE | QMGR_FLUSH_DFXP)
+
     for (i = 0; i < len; i++) {
 	if (msg_verbose)
 	    msg_info("request: %d (%c)",
@@ -429,8 +448,8 @@ static void qmgr_trigger_event(char *buf, int len,
 	    deferred_flag |= QMGR_SCAN_START;
 	    break;
 	case QMGR_REQ_FLUSH_DEAD:
-	    deferred_flag |= QMGR_FLUSH_DEAD;
-	    incoming_flag |= QMGR_FLUSH_DEAD;
+	    deferred_flag |= QMGR_FLUSH_BEFORE;
+	    incoming_flag |= QMGR_FLUSH_BEFORE;
 	    break;
 	case QMGR_REQ_SCAN_ALL:
 	    deferred_flag |= QMGR_SCAN_ALL;
@@ -449,19 +468,22 @@ static void qmgr_trigger_event(char *buf, int len,
      * requested, the request takes effect immediately.
      */
     if (incoming_flag != 0)
-	qmgr_scan_request(qmgr_incoming, incoming_flag);
+	qmgr_scan_request(qmgr_scans[QMGR_SCAN_IDX_INCOMING], incoming_flag);
     if (deferred_flag != 0)
-	qmgr_scan_request(qmgr_deferred, deferred_flag);
+	qmgr_scan_request(qmgr_scans[QMGR_SCAN_IDX_DEFERRED], deferred_flag);
 }
 
 /* qmgr_loop - queue manager main loop */
 
 static int qmgr_loop(char *unused_name, char **unused_argv)
 {
-    char   *in_path = 0;
-    char   *df_path = 0;
+    char   *path;
     int     token_count;
-    int     in_feed = 0;
+    int     feed = 0;
+    int     scan_idx;			/* Priority order scan index */
+    static int first_scan_idx = QMGR_SCAN_IDX_INCOMING;
+    int     last_scan_idx = QMGR_SCAN_IDX_COUNT - 1;
+    int     delay;
 
     /*
      * This routine runs as part of the event handling loop, after the event
@@ -482,15 +504,32 @@ static int qmgr_loop(char *unused_name, char **unused_argv)
 
     /*
      * Let some new blood into the active queue when the queue size is
-     * smaller than some configurable limit. When the system is under heavy
-     * load, favor new mail over old mail.
+     * smaller than some configurable limit.
+     * 
+     * We import one message per interrupt, to optimally tune the input count
+     * for the number of delivery agent protocol wait states, as explained in
+     * qmgr_transport.c.
      */
-    if (qmgr_message_count < var_qmgr_active_limit)
-	if ((in_path = qmgr_scan_next(qmgr_incoming)) != 0)
-	    in_feed = qmgr_active_feed(qmgr_incoming, in_path);
-    if (qmgr_message_count < var_qmgr_active_limit)
-	if ((df_path = qmgr_scan_next(qmgr_deferred)) != 0)
-	    qmgr_active_feed(qmgr_deferred, df_path);
+    delay = WAIT_FOR_EVENT;
+    for (scan_idx = 0; qmgr_message_count < var_qmgr_active_limit
+	 && scan_idx < QMGR_SCAN_IDX_COUNT; ++scan_idx) {
+	last_scan_idx = (scan_idx + first_scan_idx) % QMGR_SCAN_IDX_COUNT;
+	if ((path = qmgr_scan_next(qmgr_scans[last_scan_idx])) != 0) {
+	    delay = DONT_WAIT;
+	    if ((feed = qmgr_active_feed(qmgr_scans[last_scan_idx], path)) != 0)
+		break;
+	}
+    }
+
+    /*
+     * Round-robin the queue scans. When the active queue becomes full,
+     * prefer new mail over deferred mail.
+     */
+    if (qmgr_message_count < var_qmgr_active_limit) {
+	first_scan_idx = (last_scan_idx + 1) % QMGR_SCAN_IDX_COUNT;
+    } else if (first_scan_idx != QMGR_SCAN_IDX_INCOMING) {
+	first_scan_idx = QMGR_SCAN_IDX_INCOMING;
+    }
 
     /*
      * Global flow control. If enabled, slow down receiving processes that
@@ -499,17 +538,15 @@ static int qmgr_loop(char *unused_name, char **unused_argv)
     if (var_in_flow_delay > 0) {
 	token_count = mail_flow_count();
 	if (token_count < var_proc_limit) {
-	    if (in_feed != 0)
+	    if (feed != 0 && last_scan_idx == QMGR_SCAN_IDX_INCOMING)
 		mail_flow_put(1);
-	    else if (qmgr_incoming->handle == 0)
+	    else if (qmgr_scans[QMGR_SCAN_IDX_INCOMING]->handle == 0)
 		mail_flow_put(var_proc_limit - token_count);
 	} else if (token_count > var_proc_limit) {
 	    mail_flow_get(token_count - var_proc_limit);
 	}
     }
-    if (in_path || df_path)
-	return (DONT_WAIT);
-    return (WAIT_FOR_EVENT);
+    return (delay);
 }
 
 /* pre_accept - see if tables have changed */
@@ -575,11 +612,13 @@ static void qmgr_post_init(char *name, char **unused_argv)
     var_use_limit = 0;
     var_idle_limit = 0;
     qmgr_move(MAIL_QUEUE_ACTIVE, MAIL_QUEUE_INCOMING, event_time());
-    qmgr_incoming = qmgr_scan_create(MAIL_QUEUE_INCOMING);
-    qmgr_deferred = qmgr_scan_create(MAIL_QUEUE_DEFERRED);
-    qmgr_scan_request(qmgr_incoming, QMGR_SCAN_START);
+    qmgr_scans[QMGR_SCAN_IDX_INCOMING] = qmgr_scan_create(MAIL_QUEUE_INCOMING);
+    qmgr_scans[QMGR_SCAN_IDX_DEFERRED] = qmgr_scan_create(MAIL_QUEUE_DEFERRED);
+    qmgr_scan_request(qmgr_scans[QMGR_SCAN_IDX_INCOMING], QMGR_SCAN_START);
     qmgr_deferred_run_event(0, (char *) 0);
 }
+
+MAIL_VERSION_STAMP_DECLARE;
 
 /* main - the main program */
 
@@ -597,6 +636,7 @@ int     main(int argc, char **argv)
 	VAR_DSN_QUEUE_TIME, DEF_DSN_QUEUE_TIME, &var_dsn_queue_time, 0, 8640000,
 	VAR_XPORT_RETRY_TIME, DEF_XPORT_RETRY_TIME, &var_transport_retry_time, 1, 0,
 	VAR_QMGR_CLOG_WARN_TIME, DEF_QMGR_CLOG_WARN_TIME, &var_qmgr_clog_warn_time, 0, 0,
+	VAR_XPORT_REFILL_DELAY, DEF_XPORT_REFILL_DELAY, &var_xport_refill_delay, 1, 0,
 	0,
     };
     static CONFIG_INT_TABLE int_table[] = {
@@ -605,6 +645,7 @@ int     main(int argc, char **argv)
 	VAR_QMGR_MSG_RCPT_LIMIT, DEF_QMGR_MSG_RCPT_LIMIT, &var_qmgr_msg_rcpt_limit, 1, 0,
 	VAR_XPORT_RCPT_LIMIT, DEF_XPORT_RCPT_LIMIT, &var_xport_rcpt_limit, 0, 0,
 	VAR_STACK_RCPT_LIMIT, DEF_STACK_RCPT_LIMIT, &var_stack_rcpt_limit, 0, 0,
+	VAR_XPORT_REFILL_LIMIT, DEF_XPORT_REFILL_LIMIT, &var_xport_refill_limit, 1, 0,
 	VAR_DELIVERY_SLOT_COST, DEF_DELIVERY_SLOT_COST, &var_delivery_slot_cost, 0, 0,
 	VAR_DELIVERY_SLOT_LOAN, DEF_DELIVERY_SLOT_LOAN, &var_delivery_slot_loan, 0, 0,
 	VAR_DELIVERY_SLOT_DISCOUNT, DEF_DELIVERY_SLOT_DISCOUNT, &var_delivery_slot_discount, 0, 100,
@@ -622,6 +663,11 @@ int     main(int argc, char **argv)
 	VAR_VERP_BOUNCE_OFF, DEF_VERP_BOUNCE_OFF, &var_verp_bounce_off,
 	0,
     };
+
+    /*
+     * Fingerprint executables and core dumps.
+     */
+    MAIL_VERSION_STAMP_ALLOCATE;
 
     /*
      * Use the trigger service skeleton, because no-one else should be

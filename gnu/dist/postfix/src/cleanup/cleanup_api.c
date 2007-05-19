@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanup_api.c,v 1.1.1.8 2006/07/19 01:17:19 rpaulo Exp $	*/
+/*	$NetBSD: cleanup_api.c,v 1.1.1.9 2007/05/19 16:28:05 heas Exp $	*/
 
 /*++
 /* NAME
@@ -113,6 +113,7 @@
 #include <mail_params.h>
 #include <mail_stream.h>
 #include <mail_flow.h>
+#include <rec_type.h>
 
 /* Milter library. */
 
@@ -237,6 +238,13 @@ int     cleanup_flush(CLEANUP_STATE *state)
     }
 
     /*
+     * Update the preliminary message size and count fields with the actual
+     * values.
+     */
+    if (CLEANUP_OUT_OK(state))
+	cleanup_final(state);
+
+    /*
      * If there was an error that requires us to generate a bounce message
      * (mail submitted with the Postfix sendmail command, mail forwarded by
      * the local(8) delivery agent, or mail re-queued with "postsuper -r"),
@@ -291,8 +299,8 @@ int     cleanup_flush(CLEANUP_STATE *state)
 #endif
 	    mail_stream_ctl(state->handle,
 			    MAIL_STREAM_CTL_QUEUE, state->queue_name,
-			    MAIL_STREAM_CTL_CLASS, 0,
-			    MAIL_STREAM_CTL_SERVICE, 0,
+			    MAIL_STREAM_CTL_CLASS, (char *) 0,
+			    MAIL_STREAM_CTL_SERVICE, (char *) 0,
 #ifdef DELAY_ACTION
 			    MAIL_STREAM_CTL_DELAY, state->defer_delay,
 #endif

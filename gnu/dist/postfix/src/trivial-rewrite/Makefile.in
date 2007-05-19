@@ -23,7 +23,7 @@ $(PROG): $(OBJS) $(LIBS)
 $(OBJS): ../../conf/makedefs.out
 
 Makefile: Makefile.in
-	(cat ../../conf/makedefs.out $?) >$@
+	cat ../../conf/makedefs.out $? >$@
 
 test:	$(TESTPROG)
 
@@ -146,6 +146,7 @@ trivial-rewrite.o: ../../include/mail_conf.h
 trivial-rewrite.o: ../../include/mail_params.h
 trivial-rewrite.o: ../../include/mail_proto.h
 trivial-rewrite.o: ../../include/mail_server.h
+trivial-rewrite.o: ../../include/mail_version.h
 trivial-rewrite.o: ../../include/maps.h
 trivial-rewrite.o: ../../include/msg.h
 trivial-rewrite.o: ../../include/resolve_clnt.h

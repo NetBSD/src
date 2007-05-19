@@ -1,4 +1,4 @@
-/*	$NetBSD: bounce.c,v 1.1.1.7 2006/07/19 01:17:17 rpaulo Exp $	*/
+/*	$NetBSD: bounce.c,v 1.1.1.8 2007/05/19 16:28:04 heas Exp $	*/
 
 /*++
 /* NAME
@@ -21,8 +21,9 @@
 /*	Append a recipient (non-)delivery status record to a per-message
 /*	log file.
 /* .IP \(bu
-/*	Enqueue a bounce message, with a copy of a per-message log file
-/*	and of the corresponding message. When the bounce message is
+/*	Enqueue a delivery status notification message, with a copy
+/*	of a per-message log file and of the corresponding message.
+/*	When the delivery status notification message is
 /*	enqueued successfully, the per-message log file is deleted.
 /* .PP
 /*	The software does a best notification effort. A non-delivery
@@ -93,11 +94,11 @@
 /*	The mail system name that is displayed in Received: headers, in
 /*	the SMTP greeting banner, and in bounced mail.
 /* .IP "\fBmax_idle (100s)\fR"
-/*	The maximum amount of time that an idle Postfix daemon process
-/*	waits for the next service request before exiting.
+/*	The maximum amount of time that an idle Postfix daemon process waits
+/*	for an incoming connection before terminating voluntarily.
 /* .IP "\fBmax_use (100)\fR"
-/*	The maximal number of connection requests before a Postfix daemon
-/*	process terminates.
+/*	The maximal number of incoming connections that a Postfix daemon
+/*	process will service before terminating voluntarily.
 /* .IP "\fBnotify_classes (resource, software)\fR"
 /*	The list of error classes that are reported to the postmaster.
 /* .IP "\fBprocess_id (read-only)\fR"
@@ -156,6 +157,7 @@
 #include <mail_proto.h>
 #include <mail_queue.h>
 #include <mail_params.h>
+#include <mail_version.h>
 #include <mail_conf.h>
 #include <bounce.h>
 #include <mail_addr.h>
@@ -578,8 +580,8 @@ static void post_jail_init(char *service_name, char **unused_argv)
     /*
      * Special case: dump bounce templates. This is not part of the master(5)
      * public interface. This internal interface is used by the postconf
-     * command. It was implemented before bounce templates were isolated
-     * into modules that could have been called directly.
+     * command. It was implemented before bounce templates were isolated into
+     * modules that could have been called directly.
      */
     if (strcmp(service_name, "dump_templates") == 0) {
 	bounce_templates_dump(VSTREAM_OUT, bounce_templates);
@@ -606,6 +608,8 @@ static void post_jail_init(char *service_name, char **unused_argv)
     dsn_buf = dsb_create();
 }
 
+MAIL_VERSION_STAMP_DECLARE;
+
 /* main - the main program */
 
 int     main(int argc, char **argv)
@@ -627,6 +631,11 @@ int     main(int argc, char **argv)
 	VAR_BOUNCE_TMPL, DEF_BOUNCE_TMPL, &var_bounce_tmpl, 0, 0,
 	0,
     };
+
+    /*
+     * Fingerprint executables and core dumps.
+     */
+    MAIL_VERSION_STAMP_ALLOCATE;
 
     /*
      * Pass control to the single-threaded service skeleton.

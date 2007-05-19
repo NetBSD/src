@@ -1,4 +1,4 @@
-/*	$NetBSD: stream_send_fd.c,v 1.1.1.2 2006/07/19 01:17:55 rpaulo Exp $	*/
+/*	$NetBSD: stream_send_fd.c,v 1.1.1.3 2007/05/19 16:28:48 heas Exp $	*/
 
 /*++
 /* NAME
@@ -60,7 +60,7 @@ int     stream_send_fd(int fd, int sendfd)
 
 #ifdef STREAM_CONNECTIONS
     if (ioctl(fd, I_SENDFD, sendfd) < 0)
-	msg_fatal("%s: send file descriptor: %m", myname);
+	msg_fatal("%s: send file descriptor %d: %m", myname, sendfd);
     return (0);
 #else
     msg_fatal("stream connections are not implemented");

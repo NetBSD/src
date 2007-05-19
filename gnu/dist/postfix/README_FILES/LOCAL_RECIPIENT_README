@@ -45,7 +45,11 @@ To turn off unknown local recipient rejects by the SMTP server, specify:
         local_recipient_maps =
 
 That is, an empty value. With this setting, the Postfix SMTP server will not
-reject mail with "User unknown in local recipient table".
+reject mail with "User unknown in local recipient table". DDoonn''tt ddoo tthhiiss oonn
+ssyysstteemmss tthhaatt rreecceeiivvee mmaaiill ddiirreeccttllyy ffrroomm tthhee IInntteerrnneett.. WWiitthh ttooddaayy''ss wwoorrmmss aanndd
+vviirruusseess,, PPoossttffiixx wwiillll bbeeccoommee aa bbaacckkssccaatttteerr ssoouurrccee:: iitt aacccceeppttss mmaaiill ffoorr nnoonn--
+eexxiisstteenntt rreecciippiieennttss aanndd tthheenn ttrriieess ttoo rreettuurrnn tthhaatt mmaaiill aass ""uunnddeelliivveerraabbllee"" ttoo
+tthhee oofftteenn ffoorrggeedd sseennddeerr aaddddrreessss.
 
 WWhheenn yyoouu nneeeedd ttoo cchhaannggee tthhee llooccaall__rreecciippiieenntt__mmaappss sseettttiinngg iinn mmaaiinn..ccff
 

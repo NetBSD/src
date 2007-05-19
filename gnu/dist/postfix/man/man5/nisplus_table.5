@@ -1,4 +1,4 @@
-.\"	$NetBSD: nisplus_table.5,v 1.1.1.1 2005/08/18 21:04:15 rpaulo Exp $
+.\"	$NetBSD: nisplus_table.5,v 1.1.1.2 2007/05/19 16:27:49 heas Exp $
 .\"
 .TH NISPLUS_TABLE 5 
 .ad
@@ -34,8 +34,9 @@ command as described in the SYNOPSIS above.
 Most of the NIS+ query is specified via the NIS+ map name. The
 general format of a Postfix NIS+ map name is as follows:
 
-.ti +4
-\fBnisplus:[\fIname\fB=%s];\fIname.name.name\fB.:\fIcolumn\fR
+.fi
+    \fBnisplus:[\fIname\fB=%s];\fIname.name.name\fB.:\fIcolumn\fR
+.fi
 
 Postfix NIS+ map names differ from what one normally
 would use with commands such as \fBniscat\fR:
@@ -56,13 +57,13 @@ no ":\fIcolumn\fR" is specified the first column (1) is used.
 .SH "EXAMPLE"
 .na
 .nf
+.ad
+.fi
 A NIS+ aliases map might be queried as follows:
 
-.ti +4
-alias_maps = dbm:/etc/mail/aliases,
-.ti +2
+.nf
+    alias_maps = dbm:/etc/mail/aliases,
         nisplus:[alias=%s];mail_aliases.org_dir.$mydomain.:1
-.ad
 .fi
 
 This queries the local aliases file before the NIS+ file.
@@ -94,8 +95,6 @@ UK-HGMP-RC
 Hinxton
 Cambridge
 CB10 1SB, UK
-
-Based on the NIS client code:
 
 Adopted and adapted by:
 Wietse Venema
