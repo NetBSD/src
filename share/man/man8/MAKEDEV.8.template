@@ -1,4 +1,4 @@
-.\" $NetBSD: MAKEDEV.8.template,v 1.12 2007/03/11 15:54:10 apb Exp $
+.\" $NetBSD: MAKEDEV.8.template,v 1.13 2007/05/19 14:15:58 wiz Exp $
 .\"
 .\" Copyright (c) 2001, 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -42,8 +42,7 @@
 .Nd create system and device special files
 .Sh SYNOPSIS
 .Nm
-.Op Fl M
-.Op Fl fs
+.Op Fl fMs
 .Op Fl m Ar mknod
 .Op Fl p Ar pax
 .Bro Ar special | device Brc Op Ar ...
