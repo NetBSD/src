@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_sys.h,v 1.37 2007/05/18 15:46:09 pooka Exp $	*/
+/*	$NetBSD: puffs_sys.h,v 1.38 2007/05/19 16:50:49 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -165,8 +165,9 @@ struct puffs_mount {
 
 
 #define PNODE_NOREFS	0x01	/* no backend reference			*/
-#define PNODE_SUSPEND	0x02	/* issue all operations as FAF		*/
-#define PNODE_DOINACT	0x04	/* if inactive-on-demand, call inactive */
+#define PNODE_DYING	0x02	/* NOREF + inactive 			*/
+#define PNODE_SUSPEND	0x04	/* issue all operations as FAF		*/
+#define PNODE_DOINACT	0x08	/* if inactive-on-demand, call inactive */
 
 #define PNODE_METACACHE_ATIME	0x10	/* cache atime metadata */
 #define PNODE_METACACHE_CTIME	0x20	/* cache atime metadata */
