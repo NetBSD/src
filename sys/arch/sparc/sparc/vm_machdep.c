@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.91 2007/05/17 14:51:31 yamt Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.92 2007/05/19 22:57:48 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.91 2007/05/17 14:51:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.92 2007/05/19 22:57:48 mrg Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_coredump.h"
@@ -274,7 +274,6 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2,
 	rp->rw_local[0] = (int)func;		/* Function to call */
 	rp->rw_local[1] = (int)arg;		/* and its argument */
 	rp->rw_local[2] = (int)l2;		/* the new LWP */
-	rp->rw_local[3] = (int)l1;		/* old LWP */
 
 	npcb->pcb_pc = (int)lwp_trampoline - 8;
 	npcb->pcb_sp = (int)rp;
