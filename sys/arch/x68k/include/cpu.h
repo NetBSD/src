@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.39 2007/05/19 14:19:39 isaki Exp $	*/
+/*	$NetBSD: cpu.h,v 1.40 2007/05/19 14:25:26 isaki Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -157,7 +157,8 @@ struct clockframe {
  * buffer pages are invalid.  On the x68k, request an ast to send us
  * through trap, marking the proc as needing a profiling tick.
  */
-#define	cpu_need_proftick(l)	{ (l)->l_pflag |= LP_OWEUPC; aston(); }
+#define	cpu_need_proftick(l)	\
+	do { (l)->l_pflag |= LP_OWEUPC; aston(); } while (/* CONSTCOND */ 0)
 
 /*
  * Notify the current process (p) that it has a signal pending,
