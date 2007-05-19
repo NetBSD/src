@@ -1,5 +1,4 @@
-#!/bin/sh
-#	$NetBSD: post-install,v 1.12 2007/02/05 17:56:11 rpaulo Exp $
+#	$NetBSD: post-install,v 1.13 2007/05/19 17:49:39 heas Exp $
 #
 
 # To view the formatted manual page of this file, type:
@@ -588,18 +587,9 @@ EOF
 
     # Turn on safety nets for new features that could bounce mail that
     # would be accepted by a previous Postfix version.
-    # This safety net is also documented in LOCAL_RECIPIENT_README.
 
-    unknown_local=unknown_local_recipient_reject_code
-    has_lrm=`$POSTCONF -c $config_directory -n local_recipient_maps`
-    has_lrjc=`$POSTCONF -c $config_directory -n $unknown_local`
-
-    if [ -z "$has_lrm" -a -z "$has_lrjc" ]
-    then
-	echo SAFETY: editing main.cf, setting $unknown_local=450.
-	echo See the LOCAL_RECIPIENT_README file for details.
-	$POSTCONF -c $config_directory -e "$unknown_local = 450" || exit 1
-    fi
+    # [The "unknown_local_recipient_reject_code = 450" safety net,
+    # introduced with Postfix 2.0 and deleted after Postfix 2.3.]
 
     # Add missing proxymap service to master.cf.
 
@@ -658,6 +648,15 @@ EOF
 	echo Editing $config_directory/master.cf, adding missing entry for tlsmgr service
 	cat >>$config_directory/master.cf <<EOF || exit 1
 tlsmgr    unix  -       -       n       1000?   1       tlsmgr
+EOF
+    }
+
+    # Add missing retry service to master.cf.
+
+    grep '^retry.*error' $config_directory/master.cf >/dev/null || {
+	echo Editing $config_directory/master.cf, adding missing entry for retry service
+	cat >>$config_directory/master.cf <<EOF || exit 1
+retry     unix  -       -       n       -       -       error
 EOF
     }
 

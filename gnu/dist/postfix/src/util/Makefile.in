@@ -30,7 +30,7 @@ SRCS	= alldig.c allprint.c argv.c argv_split.c attr_clnt.c attr_print0.c \
 	username.c valid_hostname.c vbuf.c vbuf_print.c vstream.c \
 	vstream_popen.c vstring.c vstring_vstream.c watchdog.c writable.c \
 	write_buf.c write_wait.c sane_basename.c format_tv.c allspace.c \
-	allascii.c load_file.c
+	allascii.c load_file.c killme_after.c
 OBJS	= alldig.o allprint.o argv.o argv_split.o attr_clnt.o attr_print0.o \
 	attr_print64.o attr_print_plain.o attr_scan0.o attr_scan64.o \
 	attr_scan_plain.o auto_clnt.o base64_code.o basename.o binhash.o \
@@ -62,7 +62,7 @@ OBJS	= alldig.o allprint.o argv.o argv_split.o attr_clnt.o attr_print0.o \
 	username.o valid_hostname.o vbuf.o vbuf_print.o vstream.o \
 	vstream_popen.o vstring.o vstring_vstream.o watchdog.o writable.o \
 	write_buf.o write_wait.o sane_basename.o format_tv.o allspace.o \
-	allascii.o load_file.o
+	allascii.o load_file.o killme_after.o
 HDRS	= argv.h attr.h attr_clnt.h auto_clnt.h base64_code.h binhash.h \
 	chroot_uid.h cidr_match.h clean_env.h connect.h ctable.h dict.h \
 	dict_cdb.h dict_cidr.h dict_db.h dict_dbm.h dict_env.h dict_ht.h \
@@ -81,7 +81,7 @@ HDRS	= argv.h attr.h attr_clnt.h auto_clnt.h base64_code.h binhash.h \
 	sigdelay.h sock_addr.h spawn_command.h split_at.h stat_as.h \
 	stringops.h sys_defs.h timed_connect.h timed_wait.h trigger.h \
 	username.h valid_hostname.h vbuf.h vbuf_print.h vstream.h vstring.h \
-	vstring_vstream.h watchdog.h format_tv.h load_file.h
+	vstring_vstream.h watchdog.h format_tv.h load_file.h killme_after.h
 TESTSRC	= fifo_open.c fifo_rdwr_bug.c fifo_rdonly_bug.c select_bug.c \
 	stream_test.c dup2_pass_on_exec.c
 DEFS	= -I. -D$(SYSTYPE)
@@ -110,7 +110,7 @@ all: $(LIB)
 $(OBJS): ../../conf/makedefs.out
 
 Makefile: Makefile.in
-	(cat ../../conf/makedefs.out $?) >$@
+	cat ../../conf/makedefs.out $? >$@
 
 test:	$(TESTPROG)
 
@@ -1122,6 +1122,9 @@ inet_trigger.o: msg.h
 inet_trigger.o: mymalloc.h
 inet_trigger.o: sys_defs.h
 inet_trigger.o: trigger.h
+killme_after.o: killme_after.c
+killme_after.o: killme_after.h
+killme_after.o: sys_defs.h
 line_wrap.o: line_wrap.c
 line_wrap.o: line_wrap.h
 line_wrap.o: sys_defs.h
@@ -1611,6 +1614,7 @@ vstring_vstream.o: vstream.h
 vstring_vstream.o: vstring.h
 vstring_vstream.o: vstring_vstream.c
 vstring_vstream.o: vstring_vstream.h
+watchdog.o: killme_after.h
 watchdog.o: msg.h
 watchdog.o: mymalloc.h
 watchdog.o: posix_signals.h

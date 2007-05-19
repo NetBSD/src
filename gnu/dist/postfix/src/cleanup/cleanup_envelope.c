@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanup_envelope.c,v 1.9 2006/07/19 01:35:40 rpaulo Exp $	*/
+/*	$NetBSD: cleanup_envelope.c,v 1.10 2007/05/19 17:49:47 heas Exp $	*/
 
 /*++
 /* NAME
@@ -91,10 +91,11 @@ void    cleanup_envelope(CLEANUP_STATE *state, int type,
      * first, for backwards compatibility reasons.
      */
     cleanup_out_format(state, REC_TYPE_SIZE, REC_TYPE_SIZE_FORMAT,
-		       (REC_TYPE_SIZE_CAST1) 0,	/* content size */
+		       (REC_TYPE_SIZE_CAST1) 0,	/* extra offs - content offs */
 		       (REC_TYPE_SIZE_CAST2) 0,	/* content offset */
 		       (REC_TYPE_SIZE_CAST3) 0,	/* recipient count */
-		       (REC_TYPE_SIZE_CAST4) 0);	/* qmgr options */
+		       (REC_TYPE_SIZE_CAST4) 0,	/* qmgr options */
+		       (REC_TYPE_SIZE_CAST5) 0);	/* content length */
 
     /*
      * Pass control to the actual envelope processing routine.

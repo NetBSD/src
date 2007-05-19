@@ -1,4 +1,4 @@
-/*	$NetBSD: smtpd_peer.c,v 1.14 2006/07/19 01:35:40 rpaulo Exp $	*/
+/*	$NetBSD: smtpd_peer.c,v 1.15 2007/05/19 17:49:50 heas Exp $	*/
 
 /*++
 /* NAME
@@ -144,6 +144,13 @@ void    smtpd_peer_init(SMTPD_STATE *state)
      * XXX If we make local endpoint (getsockname) information available to
      * Milter applications as {if_name} and {if_addr}, then we also must be
      * able to provide this via the XCLIENT command for Milter testing.
+     * 
+     * XXX If we make local or remote port information available to policy
+     * servers or Milter applications, then we must also make this testable
+     * with the XCLIENT command, otherwise there will be confusion.
+     * 
+     * XXX If we make local or remote port information available via logging,
+     * then we must also support these attributes with the XFORWARD command.
      * 
      * XXX If support were to be added for Milter applications in down-stream
      * MTAs, then consistency demands that we propagate a lot of Sendmail

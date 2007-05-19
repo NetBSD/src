@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp_connect.c,v 1.18 2006/12/21 02:56:37 rpaulo Exp $	*/
+/*	$NetBSD: smtp_connect.c,v 1.19 2007/05/19 17:49:50 heas Exp $	*/
 
 /*++
 /* NAME
@@ -384,7 +384,6 @@ static void smtp_cleanup_session(SMTP_STATE *state)
     if (THIS_SESSION_IS_CACHED
 	/* Redundant tests for safety... */
 	&& vstream_ferror(session->stream) == 0
-	&& vstream_ftimeout(session->stream) == 0
 	&& vstream_feof(session->stream) == 0) {
 	smtp_save_session(state);
     } else {
@@ -499,7 +498,6 @@ static void smtp_connect_local(SMTP_STATE *state, const char *path)
 	    && smtp_helo(state) != 0) {
 	    if (!THIS_SESSION_IS_DEAD
 		&& vstream_ferror(session->stream) == 0
-		&& vstream_ftimeout(session->stream) == 0
 		&& vstream_feof(session->stream) == 0)
 		smtp_quit(state);
 	} else {
@@ -878,7 +876,6 @@ static void smtp_connect_remote(SMTP_STATE *state, const char *nexthop,
 		     */
 		    if (!THIS_SESSION_IS_DEAD
 			&& vstream_ferror(session->stream) == 0
-			&& vstream_ftimeout(session->stream) == 0
 			&& vstream_feof(session->stream) == 0)
 			smtp_quit(state);
 		} else {
