@@ -6,7 +6,7 @@
 .\" *** DO NOT EDIT - any changes will be lost!!!
 .\" *** ------------------------------------------------------------------
 .\"
-.\" $NetBSD: MAKEDEV.8,v 1.21 2007/03/11 15:54:10 apb Exp $
+.\" $NetBSD: MAKEDEV.8,v 1.22 2007/05/19 14:16:09 wiz Exp $
 .\"
 .\" Copyright (c) 2001, 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -50,8 +50,7 @@
 .Nd create system and device special files
 .Sh SYNOPSIS
 .Nm
-.Op Fl M
-.Op Fl fs
+.Op Fl fMs
 .Op Fl m Ar mknod
 .Op Fl p Ar pax
 .Bro Ar special | device Brc Op Ar ...
@@ -217,7 +216,8 @@ IBM PS/2 ESDI disk devices, see
 . It Ar fd#
 ``floppy'' disk drives (3 1/2", 5 1/4"), see
 .Xr \&amiga/fdc 4 ,
-.Xr \&i386/fdc 4
+.Xr \&i386/fdc 4 ,
+.Xr \&sparc64/fdc 4
 . It Ar fss#
 Files system snapshot devices, see
 .Xr \&fss 4
