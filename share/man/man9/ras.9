@@ -1,4 +1,4 @@
-.\"     $NetBSD: ras.9,v 1.8 2007/03/07 00:41:17 dogcow Exp $
+.\"     $NetBSD: ras.9,v 1.9 2007/05/19 14:28:42 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -46,8 +46,8 @@
 .In sys/types.h
 .In sys/proc.h
 .In sys/ras.h
-.Ft void
-*.Fn ras_lookup "struct proc *p" "void *addr"
+.Ft void *
+.Fn ras_lookup "struct proc *p" "void *addr"
 .Ft int
 .Fn ras_fork "struct proc *p1" "struct proc *p2"
 .Ft int
