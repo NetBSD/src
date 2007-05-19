@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2007/05/19 15:39:01 christos Exp $
+# $NetBSD: Makefile,v 1.3 2007/05/19 20:52:03 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -11,9 +11,9 @@ CPPFLAGS+=-I${.CURDIR}/../lib
 ${PROG}: libfoo.so.0
 
 libfoo.so.0:
-	cp ${LIBFOO}/libfoo.so.0 .
+	-@cp ${LIBFOO}/libfoo.so.0 .
 
-CLEANFILES+=libfoo.so
+CLEANFILES+=libfoo.so.0
 
 regress: ${PROG}
 	./${PROG}
