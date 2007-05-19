@@ -1,7 +1,8 @@
+# $NetBSD: Makefile,v 1.2 2007/05/19 15:39:01 christos Exp $
 
 .include <bsd.own.mk>
 
-NOMAN=1
+MKMAN=no
 PROG=origin
 LIBFOO != cd ${.CURDIR}/../lib && ${PRINTOBJDIR}
 LDFLAGS+=-Wl,-R'$${ORIGIN}' -Wl,-L${LIBFOO} -lfoo
