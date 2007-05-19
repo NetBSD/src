@@ -1,4 +1,4 @@
-/*	$NetBSD: dns_lookup.c,v 1.12 2006/07/19 01:35:40 rpaulo Exp $	*/
+/*	$NetBSD: dns_lookup.c,v 1.13 2007/05/19 17:49:47 heas Exp $	*/
 
 /*++
 /* NAME
@@ -102,6 +102,12 @@
 /*	The DNS query succeeded; the requested information was not found.
 /* .IP DNS_INVAL
 /*	The DNS query succeeded; the result failed the valid_hostname() test.
+/*
+/*	NOTE: the valid_hostname() test is skipped for results that
+/*	the caller suppresses explicitly.  For example, when the
+/*	caller requests MX record lookup but specifies a null
+/*	resource record list argument, no syntax check will be done
+/*	for MX server names.
 /* .IP DNS_RETRY
 /*	The query failed, or the reply was malformed.
 /*	The problem is considered transient.

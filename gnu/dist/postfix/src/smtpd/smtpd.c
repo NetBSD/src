@@ -1,4 +1,4 @@
-/*	$NetBSD: smtpd.c,v 1.18 2006/11/07 03:09:19 rpaulo Exp $	*/
+/*	$NetBSD: smtpd.c,v 1.19 2007/05/19 17:49:50 heas Exp $	*/
 
 /*++
 /* NAME
@@ -356,7 +356,7 @@
 /*	The OpenSSL cipherlist for "LOW" or higher grade ciphers.
 /* .IP "\fBtls_export_cipherlist (ALL:+RC4:@STRENGTH)\fR"
 /*	The OpenSSL cipherlist for "EXPORT" or higher grade ciphers.
-/* .IP "\fBtls_null_cipherlist (!aNULL:eNULL+kRSA)\fR"
+/* .IP "\fBtls_null_cipherlist (eNULL:!aNULL)\fR"
 /*	The OpenSSL cipherlist for "NULL" grade ciphers that provide
 /*	authentication without encryption.
 /* OBSOLETE STARTTLS CONTROLS
@@ -777,11 +777,11 @@
 /*	The UNIX system account that owns the Postfix queue and most Postfix
 /*	daemon processes.
 /* .IP "\fBmax_idle (100s)\fR"
-/*	The maximum amount of time that an idle Postfix daemon process
-/*	waits for the next service request before exiting.
+/*	The maximum amount of time that an idle Postfix daemon process waits
+/*	for an incoming connection before terminating voluntarily.
 /* .IP "\fBmax_use (100)\fR"
-/*	The maximal number of connection requests before a Postfix daemon
-/*	process terminates.
+/*	The maximal number of incoming connections that a Postfix daemon
+/*	process will service before terminating voluntarily.
 /* .IP "\fBmyhostname (see 'postconf -d' output)\fR"
 /*	The internet hostname of this mail system.
 /* .IP "\fBmynetworks (see 'postconf -d' output)\fR"
@@ -1710,6 +1710,11 @@ static int mail_open_stream(SMTPD_STATE *state)
 			    MAIL_ATTR_ACT_HELO_NAME, state->helo_name);
 	    rec_fprintf(state->cleanup, REC_TYPE_ATTR, "%s=%u",
 			MAIL_ATTR_ACT_CLIENT_AF, state->addr_family);
+
+	    /*
+	     * Don't send client certificate down the pipeline unless it is
+	     * a) verified or b) just a fingerprint.
+	     */
 	}
 	if (state->verp_delims)
 	    rec_fputs(state->cleanup, REC_TYPE_VERP, state->verp_delims);
@@ -2996,7 +3001,7 @@ static int etrn_cmd(SMTPD_STATE *state, int argc, SMTPD_TOKEN *argv)
 	smtpd_chat_reply(state, "%s", err);
 	return (-1);
     }
-    switch (flush_send(argv[1].strval)) {
+    switch (flush_send_site(argv[1].strval)) {
     case FLUSH_STAT_OK:
 	smtpd_chat_reply(state, "250 Queuing started");
 	return (0);
@@ -3535,6 +3540,7 @@ static void chat_reset(SMTPD_STATE *state, int threshold)
 static void smtpd_start_tls(SMTPD_STATE *state)
 {
     int     rate;
+    tls_server_start_props props;
 
     /*
      * Wrapper mode uses a dedicated port and always requires TLS.
@@ -3545,12 +3551,24 @@ static void smtpd_start_tls(SMTPD_STATE *state)
      * perform SMTP transactions when the client does not use the STARTTLS
      * command. For this reason, Postfix does not require client certificate
      * verification unless TLS is required.
+     * 
+     * XXX We append the service name to the session cache ID, so that there
+     * won't be collisions between multiple master.cf entries that use
+     * different roots of trust. This does not eliminate collisions between
+     * multiple inetd.conf entries that use different roots of trust. For a
+     * universal solution we would have to append the local IP address + port
+     * number information.
      */
-    state->tls_context =
-	tls_server_start(smtpd_tls_ctx, state->client,
-			 var_smtpd_starttls_tmout, var_smtpd_tls_loglevel,
-			 state->name, state->addr,
-		       (var_smtpd_tls_req_ccert && state->tls_enforce_tls));
+    memset((char *) &props, 0, sizeof(props));
+    props.ctx = smtpd_tls_ctx;
+    props.stream = state->client;
+    props.log_level = var_smtpd_tls_loglevel;
+    props.timeout = var_smtpd_starttls_tmout;
+    props.requirecert = (var_smtpd_tls_req_ccert && state->tls_enforce_tls);
+    props.serverid = state->service;
+    props.peername = state->name;
+    props.peeraddr = state->addr;
+    state->tls_context = tls_server_start(&props);
 
     /*
      * XXX The client event count/rate control must be consistent in its use
@@ -4295,6 +4313,8 @@ static void pre_jail_init(char *unused_name, char **unused_argv)
 				    enforce_tls ? var_smtpd_tls_mand_excl :
 				    TLS_END_EXCLUDE,
 				    TLS_END_EXCLUDE);
+		if (props.cipherlist == 0)
+		    msg_panic("NULL export cipherlist");
 	    }
 	    if (havecert || oknocert)
 		smtpd_tls_ctx = tls_server_init(&props);
@@ -4382,6 +4402,8 @@ static void post_jail_init(char *unused_name, char **unused_argv)
 	|| var_smtpd_cntls_limit)
 	anvil_clnt = anvil_clnt_create();
 }
+
+MAIL_VERSION_STAMP_DECLARE;
 
 /* main - the main program */
 
@@ -4553,6 +4575,11 @@ int     main(int argc, char **argv)
 	VAR_DEF_RBL_REPLY, DEF_DEF_RBL_REPLY, &var_def_rbl_reply, 1, 0,
 	0,
     };
+
+    /*
+     * Fingerprint executables and core dumps.
+     */
+    MAIL_VERSION_STAMP_ALLOCATE;
 
     /*
      * Pass control to the single-threaded service skeleton.
