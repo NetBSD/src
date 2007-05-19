@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_stream.c,v 1.1.1.8 2006/07/19 01:17:26 rpaulo Exp $	*/
+/*	$NetBSD: mail_stream.c,v 1.1.1.9 2007/05/19 16:28:14 heas Exp $	*/
 
 /*++
 /* NAME
@@ -158,6 +158,58 @@ void    mail_stream_cleanup(MAIL_STREAM *info)
     myfree((char *) info);
 }
 
+#if defined(HAS_FUTIMES_AT)
+#define CAN_STAMP_BY_STREAM
+
+/* stamp_stream - update open file [am]time stamp */
+
+static int stamp_stream(VSTREAM *fp, time_t when)
+{
+    struct timeval tv;
+
+    if (when != 0) {
+	tv.tv_sec = when;
+	tv.tv_usec = 0;
+	return (futimesat(vstream_fileno(fp), (char *) 0, &tv));
+    } else {
+	return (futimesat(vstream_fileno(fp), (char *) 0, (struct timeval *) 0));
+    }
+}
+
+#elif defined(HAS_FUTIMES)
+#define CAN_STAMP_BY_STREAM
+
+/* stamp_stream - update open file [am]time stamp */
+
+static int stamp_stream(VSTREAM *fp, time_t when)
+{
+    struct timeval tv;
+
+    if (when != 0) {
+	tv.tv_sec = when;
+	tv.tv_usec = 0;
+	return (futimes(vstream_fileno(fp), &tv));
+    } else {
+	return (futimes(vstream_fileno(fp), (struct timeval *) 0));
+    }
+}
+
+#endif
+
+/* stamp_path - update file [am]time stamp by pathname */
+
+static int stamp_path(const char *path, time_t when)
+{
+    struct utimbuf tbuf;
+
+    if (when != 0) {
+	tbuf.actime = tbuf.modtime = when;
+	return (utime(path, &tbuf));
+    } else {
+	return (utime(path, (struct utimbuf *) 0));
+    }
+}
+
 /* mail_stream_finish_file - finish file mail stream */
 
 static int mail_stream_finish_file(MAIL_STREAM *info, VSTRING *unused_why)
@@ -165,13 +217,13 @@ static int mail_stream_finish_file(MAIL_STREAM *info, VSTRING *unused_why)
     int     status = CLEANUP_STAT_OK;
     static char wakeup[] = {TRIGGER_REQ_WAKEUP};
     struct stat st;
-    time_t  now;
-    struct utimbuf tbuf;
     char   *path_to_reset = 0;
     static int incoming_fs_clock_ok = 0;
     static int incoming_clock_warned = 0;
     int     check_incoming_fs_clock;
     int     err;
+    time_t  want_stamp;
+    time_t  expect_stamp;
 
     /*
      * Make sure the message makes it to file. Set the execute bit when no
@@ -188,7 +240,7 @@ static int mail_stream_finish_file(MAIL_STREAM *info, VSTRING *unused_why)
      * Attempt to detect file system clocks that are ahead of local time, but
      * don't check the file system clock all the time. The effect of file
      * system clock drift can be difficult to understand (Postfix ignores new
-     * mail until the next queue run).
+     * mail until the local clock catches up with the file mtime stamp).
      * 
      * This clock drift detection code may not work with file systems that work
      * on a local copy of the file and that update the server only after the
@@ -206,6 +258,9 @@ static int mail_stream_finish_file(MAIL_STREAM *info, VSTRING *unused_why)
      * creates a race even with local filesystems. But Wietse is not
      * confident that utime() before fsync() and close() will work reliably
      * with remote file systems.
+     * 
+     * XXX Don't run the clock skew tests with Postfix sendmail submissions.
+     * Don't whine against unsuspecting users or applications.
      */
     check_incoming_fs_clock =
 	(!incoming_fs_clock_ok && !strcmp(info->queue, MAIL_QUEUE_INCOMING));
@@ -214,12 +269,29 @@ static int mail_stream_finish_file(MAIL_STREAM *info, VSTRING *unused_why)
     if (strcmp(info->queue, MAIL_QUEUE_DEFERRED) != 0)
 	info->delay = 0;
     if (info->delay > 0)
-	tbuf.actime = tbuf.modtime = time(&now) + info->delay;
+	want_stamp = time((time_t *) 0) + info->delay;
+    else
 #endif
+	want_stamp = 0;
 
+    /*
+     * If we can cheaply set the file time stamp (no pathname lookup) do it
+     * anyway, so that we can avoid whining later about file server/client
+     * clock skew.
+     * 
+     * Otherwise, if we must set the file time stamp for delayed delivery, use
+     * whatever means we have to get the job done, no matter if it is
+     * expensive.
+     * 
+     * XXX Unfortunately, Linux futimes() is not usable because it uses /proc.
+     * This may not be available because of chroot, or because of access
+     * restrictions after a process changes privileges.
+     */
     if (vstream_fflush(info->stream)
-#ifdef DELAY_ACTION
-	|| (info->delay > 0 && utime(VSTREAM_PATH(info->stream), &tbuf))
+#ifdef CAN_STAMP_BY_STREAM
+	|| stamp_stream(info->stream, want_stamp)
+#else
+	|| (want_stamp && stamp_path(VSTREAM_PATH(info->stream), want_stamp))
 #endif
 	|| fchmod(vstream_fileno(info->stream), 0700 | info->mode)
 #ifdef HAS_FSYNC
@@ -229,25 +301,32 @@ static int mail_stream_finish_file(MAIL_STREAM *info, VSTRING *unused_why)
 	    && fstat(vstream_fileno(info->stream), &st) < 0)
 	)
 	status = (errno == EFBIG ? CLEANUP_STAT_SIZE : CLEANUP_STAT_WRITE);
-
 #ifdef TEST
     st.st_mtime += 10;
 #endif
 
     /*
-     * Work around file system clocks that are ahead of local time.
+     * Work around file system clock skew. If the file system clock is ahead
+     * of the local clock, Postfix won't deliver mail immediately, which is
+     * bad for performance. If the file system clock falls behind the local
+     * clock, it just looks silly in mail headers.
      */
     if (status == CLEANUP_STAT_OK && check_incoming_fs_clock) {
-	if (st.st_mtime <= time(&now)) {
-	    incoming_fs_clock_ok = 1;
-	} else {
+	/* Do NOT use time() result from before fsync(). */
+	expect_stamp = want_stamp ? want_stamp : time((time_t *) 0);
+	if (st.st_mtime > expect_stamp) {
 	    path_to_reset = mystrdup(VSTREAM_PATH(info->stream));
 	    if (incoming_clock_warned == 0) {
 		msg_warn("file system clock is %d seconds ahead of local clock",
-			 (int) (st.st_mtime - now));
+			 (int) (st.st_mtime - expect_stamp));
 		msg_warn("resetting file time stamps - this hurts performance");
 		incoming_clock_warned = 1;
 	    }
+	} else {
+	    if (st.st_mtime < expect_stamp - 100)
+		msg_warn("file system clock is %d seconds behind local clock",
+			 (int) (expect_stamp - st.st_mtime));
+	    incoming_fs_clock_ok = 1;
 	}
     }
 
@@ -269,8 +348,7 @@ static int mail_stream_finish_file(MAIL_STREAM *info, VSTRING *unused_why)
      */
     if (path_to_reset != 0) {
 	if (status == CLEANUP_STAT_OK) {
-	    tbuf.actime = tbuf.modtime = now;
-	    if (utime(path_to_reset, &tbuf) < 0 && errno != ENOENT)
+	    if (stamp_path(path_to_reset, expect_stamp) < 0 && errno != ENOENT)
 		msg_fatal("%s: update file time stamps: %m", info->id);
 	}
 	myfree(path_to_reset);

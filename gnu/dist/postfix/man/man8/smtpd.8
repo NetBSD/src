@@ -1,4 +1,4 @@
-.\"	$NetBSD: smtpd.8,v 1.1.1.14 2006/11/07 02:55:52 rpaulo Exp $
+.\"	$NetBSD: smtpd.8,v 1.1.1.15 2007/05/19 16:27:53 heas Exp $
 .\"
 .TH SMTPD 8 
 .ad
@@ -388,7 +388,7 @@ The OpenSSL cipherlist for "MEDIUM" or higher grade ciphers.
 The OpenSSL cipherlist for "LOW" or higher grade ciphers.
 .IP "\fBtls_export_cipherlist (ALL:+RC4:@STRENGTH)\fR"
 The OpenSSL cipherlist for "EXPORT" or higher grade ciphers.
-.IP "\fBtls_null_cipherlist (!aNULL:eNULL+kRSA)\fR"
+.IP "\fBtls_null_cipherlist (eNULL:!aNULL)\fR"
 The OpenSSL cipherlist for "NULL" grade ciphers that provide
 authentication without encryption.
 .SH "OBSOLETE STARTTLS CONTROLS"
@@ -831,11 +831,11 @@ the SMTP greeting banner, and in bounced mail.
 The UNIX system account that owns the Postfix queue and most Postfix
 daemon processes.
 .IP "\fBmax_idle (100s)\fR"
-The maximum amount of time that an idle Postfix daemon process
-waits for the next service request before exiting.
+The maximum amount of time that an idle Postfix daemon process waits
+for an incoming connection before terminating voluntarily.
 .IP "\fBmax_use (100)\fR"
-The maximal number of connection requests before a Postfix daemon
-process terminates.
+The maximal number of incoming connections that a Postfix daemon
+process will service before terminating voluntarily.
 .IP "\fBmyhostname (see 'postconf -d' output)\fR"
 The internet hostname of this mail system.
 .IP "\fBmynetworks (see 'postconf -d' output)\fR"

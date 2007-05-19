@@ -18,7 +18,7 @@ $(PROG): $(OBJS) $(LIBS)
 $(OBJS): ../../conf/makedefs.out
 
 Makefile: Makefile.in
-	(cat ../../conf/makedefs.out $?) >$@
+	cat ../../conf/makedefs.out $? >$@
 
 test:	$(TESTPROG)
 
@@ -68,8 +68,10 @@ postqueue.o: ../../include/mail_dict.h
 postqueue.o: ../../include/mail_flush.h
 postqueue.o: ../../include/mail_params.h
 postqueue.o: ../../include/mail_proto.h
+postqueue.o: ../../include/mail_queue.h
 postqueue.o: ../../include/mail_run.h
 postqueue.o: ../../include/mail_task.h
+postqueue.o: ../../include/mail_version.h
 postqueue.o: ../../include/msg.h
 postqueue.o: ../../include/msg_syslog.h
 postqueue.o: ../../include/msg_vstream.h

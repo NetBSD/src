@@ -471,7 +471,7 @@ SMTPD(8)                                                              SMTPD(8)
               The OpenSSL cipherlist for "EXPORT" or higher grade
               ciphers.
 
-       <b><a href="postconf.5.html#tls_null_cipherlist">tls_null_cipherlist</a> (!aNULL:eNULL+kRSA)</b>
+       <b><a href="postconf.5.html#tls_null_cipherlist">tls_null_cipherlist</a> (eNULL:!aNULL)</b>
               The OpenSSL cipherlist  for  "NULL"  grade  ciphers
               that provide authentication without encryption.
 
@@ -1048,35 +1048,36 @@ SMTPD(8)                                                              SMTPD(8)
 
        <b><a href="postconf.5.html#max_idle">max_idle</a> (100s)</b>
               The maximum amount of time  that  an  idle  Postfix
-              daemon  process  waits for the next service request
-              before exiting.
+              daemon  process  waits  for  an incoming connection
+              before terminating voluntarily.
 
        <b><a href="postconf.5.html#max_use">max_use</a> (100)</b>
-              The maximal number of connection requests before  a
-              Postfix daemon process terminates.
+              The maximal number of incoming connections  that  a
+              Postfix  daemon  process will service before termi-
+              nating voluntarily.
 
        <b><a href="postconf.5.html#myhostname">myhostname</a> (see 'postconf -d' output)</b>
               The internet hostname of this mail system.
 
        <b><a href="postconf.5.html#mynetworks">mynetworks</a> (see 'postconf -d' output)</b>
-              The  list  of "trusted" SMTP clients that have more
+              The list of "trusted" SMTP clients that  have  more
               privileges than "strangers".
 
        <b><a href="postconf.5.html#myorigin">myorigin</a> ($<a href="postconf.5.html#myhostname">myhostname</a>)</b>
               The domain name that locally-posted mail appears to
-              come  from,  and that locally posted mail is deliv-
+              come from, and that locally posted mail  is  deliv-
               ered to.
 
        <b><a href="postconf.5.html#process_id">process_id</a> (read-only)</b>
-              The process ID  of  a  Postfix  command  or  daemon
+              The  process  ID  of  a  Postfix  command or daemon
               process.
 
        <b><a href="postconf.5.html#process_name">process_name</a> (read-only)</b>
-              The  process  name  of  a Postfix command or daemon
+              The process name of a  Postfix  command  or  daemon
               process.
 
        <b><a href="postconf.5.html#queue_directory">queue_directory</a> (see 'postconf -d' output)</b>
-              The location of the Postfix top-level queue  direc-
+              The  location of the Postfix top-level queue direc-
               tory.
 
        <b><a href="postconf.5.html#recipient_delimiter">recipient_delimiter</a> (empty)</b>
@@ -1084,22 +1085,22 @@ SMTPD(8)                                                              SMTPD(8)
               sions (user+foo).
 
        <b><a href="postconf.5.html#smtpd_banner">smtpd_banner</a> ($<a href="postconf.5.html#myhostname">myhostname</a> ESMTP $<a href="postconf.5.html#mail_name">mail_name</a>)</b>
-              The text that follows the 220 status  code  in  the
+              The  text  that  follows the 220 status code in the
               SMTP greeting banner.
 
        <b><a href="postconf.5.html#syslog_facility">syslog_facility</a> (mail)</b>
               The syslog facility of Postfix logging.
 
        <b><a href="postconf.5.html#syslog_name">syslog_name</a> (postfix)</b>
-              The  mail  system  name  that  is  prepended to the
-              process name in syslog  records,  so  that  "smtpd"
+              The mail system  name  that  is  prepended  to  the
+              process  name  in  syslog  records, so that "smtpd"
               becomes, for example, "postfix/smtpd".
 
        Available in Postfix version 2.2 and later:
 
        <b><a href="postconf.5.html#smtpd_forbidden_commands">smtpd_forbidden_commands</a> (CONNECT, GET, POST)</b>
-              List  of  commands  that  causes  the  Postfix SMTP
-              server to immediately terminate the session with  a
+              List of  commands  that  causes  the  Postfix  SMTP
+              server  to immediately terminate the session with a
               221 code.
 
 <b>SEE ALSO</b>
@@ -1129,7 +1130,7 @@ SMTPD(8)                                                              SMTPD(8)
        <a href="XFORWARD_README.html">XFORWARD_README</a>, Postfix XFORWARD extension
 
 <b>LICENSE</b>
-       The Secure Mailer license must be  distributed  with  this
+       The  Secure  Mailer  license must be distributed with this
        software.
 
 <b>AUTHOR(S)</b>

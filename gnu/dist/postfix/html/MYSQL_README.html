@@ -57,13 +57,24 @@ make -f Makefile.init makefiles \
 </pre>
 </blockquote>
 
+<p> On Solaris, use this instead: </p>
+
+<blockquote>
+<pre>
+make -f Makefile.init makefiles \
+    'CCARGS=-DHAS_MYSQL -I/usr/local/mysql/include' \
+    'AUXLIBS=-L/usr/local/mysql/lib -R/usr/local/mysql/lib \
+        -lmysqlclient -lz -lm'
+</pre>
+</blockquote>
+
 <p> Then, just run 'make'. This requires libz, the compression
 library.  Older mysql implementations build without libz. </p>
 
 <h2>Using MySQL tables</h2>
 
 <p> Once Postfix is built with mysql support, you can specify a
-map type in main.cf like this: </p>
+map type in <a href="postconf.5.html">main.cf</a> like this: </p>
 
 <blockquote>
 <pre>
@@ -126,7 +137,7 @@ will be deferred until at least one of those hosts is reachable.
 Marcus, IC Group, Inc.</li>
 
 <li> Liviu Daia revised the configuration interface and added the
-main.cf configuration feature.</li>
+<a href="postconf.5.html">main.cf</a> configuration feature.</li>
 
 <li> Liviu Daia with further refinements from Jose Luis Tallon and
 Victor Duchovni developed the common query, result_format, domain and

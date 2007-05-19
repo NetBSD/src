@@ -1,4 +1,4 @@
-/*	$NetBSD: qmgr_entry.c,v 1.1.1.6 2006/07/19 01:17:38 rpaulo Exp $	*/
+/*	$NetBSD: qmgr_entry.c,v 1.1.1.7 2007/05/19 16:28:29 heas Exp $	*/
 
 /*++
 /* NAME
@@ -21,6 +21,10 @@
 /*
 /*	void	qmgr_entry_unselect(queue, entry)
 /*	QMGR_QUEUE *queue;
+/*	QMGR_ENTRY *entry;
+/*
+/*	void	qmgr_entry_move_todo(dst, entry)
+/*	QMGR_QUEUE *dst;
 /*	QMGR_ENTRY *entry;
 /* DESCRIPTION
 /*	These routines add/delete/manipulate per-site message
@@ -59,7 +63,10 @@
 /*
 /*	qmgr_entry_unselect() takes the named entry off the named
 /*	per-site queue's `busy' list and moves it to the queue's
-/*	`todo' list. The entry is also appended to its peer list again.
+/*	`todo' list. The entry is also prepended to its peer list again.
+/*
+/*	qmgr_entry_move_todo() moves the specified "todo" queue entry
+/*	to the specified "todo" queue.
 /* DIAGNOSTICS
 /*	Panic: interface violations, internal inconsistencies.
 /* LICENSE
@@ -180,12 +187,64 @@ void    qmgr_entry_unselect(QMGR_ENTRY *entry)
     QMGR_PEER *peer = entry->peer;
     QMGR_QUEUE *queue = entry->queue;
 
+    /*
+     * Move the entry back to the todo lists. In case of the peer list,
+     * put it back to the beginning, so the select()/unselect() does
+     * not reorder entries. We use this in qmgr_message_assign()
+     * to put recipients into existing entries when possible.
+     */
     QMGR_LIST_UNLINK(queue->busy, QMGR_ENTRY *, entry, queue_peers);
     queue->busy_refcount--;
     QMGR_LIST_APPEND(queue->todo, entry, queue_peers);
     queue->todo_refcount++;
-    QMGR_LIST_APPEND(peer->entry_list, entry, peer_peers);
+    QMGR_LIST_PREPEND(peer->entry_list, entry, peer_peers);
     peer->job->selected_entries--;
+}
+
+/* qmgr_entry_move_todo - move entry between todo queues */
+
+void    qmgr_entry_move_todo(QMGR_QUEUE *dst_queue, QMGR_ENTRY *entry)
+{
+    const char *myname = "qmgr_entry_move_todo";
+    QMGR_TRANSPORT *dst_transport = dst_queue->transport;
+    QMGR_MESSAGE *message = entry->message;
+    QMGR_QUEUE *src_queue = entry->queue;
+    QMGR_PEER *dst_peer, *src_peer = entry->peer;
+    QMGR_JOB *dst_job, *src_job = src_peer->job;
+    QMGR_ENTRY *new_entry;
+    int     rcpt_count = entry->rcpt_list.len;
+
+    if (entry->stream != 0)
+	msg_panic("%s: queue %s entry is busy", myname, src_queue->name);
+    if (QMGR_QUEUE_THROTTLED(dst_queue))
+	msg_panic("%s: destination queue %s is throttled", myname, dst_queue->name);
+    if (QMGR_TRANSPORT_THROTTLED(dst_transport))
+	msg_panic("%s: destination transport %s is throttled",
+		  myname, dst_transport->name);
+
+    /*
+     * Create new entry, swap the recipients between the two entries,
+     * adjusting the job counters accordingly, then dispose of the old entry.
+     * 
+     * Note that qmgr_entry_done() will also take care of adjusting the
+     * recipient limits of all the message jobs, so we do not have to do that
+     * explicitly for the new job here.
+     * 
+     * XXX This does not enforce the per-entry recipient limit, but that is not
+     * a problem as long as qmgr_entry_move_todo() is called only to bounce
+     * or defer mail.
+     */
+    dst_job = qmgr_job_obtain(message, dst_transport);
+    dst_peer = qmgr_peer_obtain(dst_job, dst_queue);
+
+    new_entry = qmgr_entry_create(dst_peer, message);
+
+    recipient_list_swap(&entry->rcpt_list, &new_entry->rcpt_list);
+
+    src_job->rcpt_count -= rcpt_count;
+    dst_job->rcpt_count += rcpt_count;
+
+    qmgr_entry_done(entry, QMGR_QUEUE_TODO);
 }
 
 /* qmgr_entry_done - dispose of queue entry */
@@ -195,8 +254,7 @@ void    qmgr_entry_done(QMGR_ENTRY *entry, int which)
     QMGR_QUEUE *queue = entry->queue;
     QMGR_MESSAGE *message = entry->message;
     QMGR_PEER *peer = entry->peer;
-    QMGR_JOB *sponsor,
-           *job = peer->job;
+    QMGR_JOB *sponsor, *job = peer->job;
     QMGR_TRANSPORT *transport = job->transport;
 
     /*
@@ -329,6 +387,7 @@ QMGR_ENTRY *qmgr_entry_create(QMGR_PEER *peer, QMGR_MESSAGE *message)
     entry->queue = queue;
     QMGR_LIST_APPEND(queue->todo, entry, queue_peers);
     queue->todo_refcount++;
+    peer->job->read_entries++;
 
     /*
      * Warn if a destination is falling behind while the active queue

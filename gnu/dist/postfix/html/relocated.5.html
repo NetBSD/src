@@ -21,8 +21,8 @@ RELOCATED(5)                                                      RELOCATED(5)
        file that serves as input to the <a href="postmap.1.html"><b>postmap</b>(1)</a> command.   The
        result,  an  indexed file in <b>dbm</b> or <b>db</b> format, is used for
        fast searching by the mail  system.  Execute  the  command
-       "<b>postmap  /etc/postfix/relocated</b>"  in order to rebuild the
-       indexed file after changing the relocated table.
+       "<b>postmap  /etc/postfix/relocated</b>"  to  rebuild  an indexed
+       file after changing the corresponding relocated table.
 
        When the table is provided via other means  such  as  NIS,
        LDAP  or  SQL,  the  same lookups are done as for ordinary
@@ -31,9 +31,9 @@ RELOCATED(5)                                                      RELOCATED(5)
        Alternatively, the table can be  provided  as  a  regular-
        expression map where patterns are given as regular expres-
        sions, or lookups can be directed to TCP-based server.  In
-       that  case,  the  lookups are done in a slightly different
+       those  case,  the lookups are done in a slightly different
        way as described below under "REGULAR  EXPRESSION  TABLES"
-       and "TCP-BASED TABLES".
+       or "TCP-BASED TABLES".
 
        Table lookups are case insensitive.
 
@@ -47,7 +47,9 @@ RELOCATED(5)                                                      RELOCATED(5)
        The input format for the <a href="postmap.1.html"><b>postmap</b>(1)</a> command is as follows:
 
        <b>o</b>      An entry has one of the following form:
+
                    <i>pattern      new</i><b>_</b><i>location</i>
+
               Where  <i>new</i><b>_</b><i>location</i>  specifies  contact information
               such as an  email  address,  or  perhaps  a  street
               address or telephone number.
@@ -91,7 +93,7 @@ RELOCATED(5)                                                      RELOCATED(5)
        <a href="regexp_table.5.html"><b>regexp_table</b>(5)</a> or <a href="pcre_table.5.html"><b>pcre_table</b>(5)</a>. For a description of the
        TCP client/server table lookup protocol, see <a href="tcp_table.5.html"><b>tcp_table</b>(5)</a>.
        This feature is not available up to and including  Postfix
-       version 2.3.
+       version 2.4.
 
        Each  pattern  is  a regular expression that is applied to
        the entire address being looked up. Thus, <i>user@domain</i> mail
@@ -112,7 +114,7 @@ RELOCATED(5)                                                      RELOCATED(5)
        lookups are directed to a TCP-based server. For a descrip-
        tion of the TCP client/server lookup protocol, see <a href="tcp_table.5.html"><b>tcp_ta-</b></a>
        <a href="tcp_table.5.html"><b>ble</b>(5)</a>.  This feature is not available up to and including
-       Postfix version 2.3.
+       Postfix version 2.4.
 
        Each lookup operation uses the entire address once.  Thus,
        <i>user@domain</i> mail addresses are not broken  up  into  their

@@ -1,4 +1,4 @@
-/*	$NetBSD: rec_type.h,v 1.1.1.9 2006/07/19 01:17:28 rpaulo Exp $	*/
+/*	$NetBSD: rec_type.h,v 1.1.1.10 2007/05/19 16:28:17 heas Exp $	*/
 
 #ifndef _REC_TYPE_H_INCLUDED_
 #define _REC_TYPE_H_INCLUDED_
@@ -59,7 +59,7 @@
 
 #define REC_TYPE_CONT	'L'		/* long data record */
 #define REC_TYPE_NORM	'N'		/* normal data record */
-#define REC_TYPE_DTXT	'w'		/* deleted data record */
+#define REC_TYPE_DTXT	'w'		/* padding (was: deleted data) */
 
 #define REC_TYPE_XTRA	'X'		/* start extracted records */
 
@@ -84,6 +84,9 @@
   * contains pure recipient sequences only, then the queue manager will not
   * have to read all the queue file records before starting delivery. This is
   * often the case with list mail, where such optimization is desirable.
+  * 
+  * XXX These definitions include the respective segment terminators to avoid
+  * special cases in the cleanup(8) envelope and extracted record processors.
   */
 #define REC_TYPE_ENV_RECIPIENT	"MDRO/Kon"
 #define REC_TYPE_EXT_RECIPIENT	"EDRO/Kon"
@@ -123,11 +126,12 @@
   * 
   * See also: REC_TYPE_PTR_FORMAT below.
   */
-#define REC_TYPE_SIZE_FORMAT	"%15ld %15ld %15ld %15ld"
-#define REC_TYPE_SIZE_CAST1	long
-#define REC_TYPE_SIZE_CAST2	long	/* Postfix 1.0, a.k.a. 20010228 */
-#define REC_TYPE_SIZE_CAST3	long	/* Postfix 1.0, a.k.a. 20010228 */
-#define REC_TYPE_SIZE_CAST4	long	/* Postfix 2.1 */
+#define REC_TYPE_SIZE_FORMAT	"%15ld %15ld %15ld %15ld %15ld"
+#define REC_TYPE_SIZE_CAST1	long	/* Vmailer extra offs - data offs */
+#define REC_TYPE_SIZE_CAST2	long	/* Postfix 1.0 data offset */
+#define REC_TYPE_SIZE_CAST3	long	/* Postfix 1.0 recipient count */
+#define REC_TYPE_SIZE_CAST4	long	/* Postfix 2.1 qmgr flags */
+#define REC_TYPE_SIZE_CAST5	long	/* Postfix 2.4 content length */
 
  /*
   * The warn record specifies when the next warning that the message was
@@ -174,7 +178,7 @@
   * See also: REC_TYPE_SIZE_FORMAT above.
   */
 #define REC_TYPE_PTR_FORMAT	"%15ld"
-#define REC_TYPE_PTR_SIZE	15
+#define REC_TYPE_PTR_PAYL_SIZE	15	/* Payload only, excludes record header. */
 
  /*
   * Programmatic interface.

@@ -1,4 +1,4 @@
-.\"	$NetBSD: qmgr.8,v 1.1.1.8 2006/07/19 01:16:49 rpaulo Exp $
+.\"	$NetBSD: qmgr.8,v 1.1.1.9 2007/05/19 16:27:52 heas Exp $
 .\"
 .TH QMGR 8 
 .ad
@@ -203,7 +203,7 @@ queue manager, and the maximal size of the size of the short-term,
 in-memory "dead" destination status cache.
 .IP "\fBqmgr_message_recipient_minimum (10)\fR"
 The minimal number of in-memory recipients for any message.
-.IP "\fBdefault_recipient_limit (10000)\fR"
+.IP "\fBdefault_recipient_limit (20000)\fR"
 The default per-transport upper limit on the number of in-memory
 recipients.
 .IP "\fItransport\fB_recipient_limit ($default_recipient_limit)\fR"
@@ -212,6 +212,17 @@ Idem, for delivery via the named message \fItransport\fR.
 The default value for the extra per-transport limit imposed on the
 number of in-memory recipients.
 .IP "\fItransport\fB_extra_recipient_limit ($default_extra_recipient_limit)\fR"
+Idem, for delivery via the named message \fItransport\fR.
+.PP
+Available in Postfix version 2.4 and later:
+.IP "\fBdefault_recipient_refill_limit (100)\fR"
+The default per-transport limit on the number of recipients refilled at
+once.
+.IP "\fItransport\fB_recipient_refill_limit ($default_recipient_refill_limit)\fR"
+Idem, for delivery via the named message \fItransport\fR.
+.IP "\fBdefault_recipient_refill_delay (5s)\fR"
+The default per-transport maximum delay between recipients refills.
+.IP "\fItransport\fB_recipient_refill_delay ($default_recipient_refill_delay)\fR"
 Idem, for delivery via the named message \fItransport\fR.
 .SH "DELIVERY CONCURRENCY CONTROLS"
 .na
@@ -265,14 +276,14 @@ Idem, for delivery via the named message \fItransport\fR.
 .nf
 .ad
 .fi
-.IP "\fBminimal_backoff_time (1000s)\fR"
+.IP "\fBminimal_backoff_time (version dependent)\fR"
 The minimal time between attempts to deliver a deferred message.
 .IP "\fBmaximal_backoff_time (4000s)\fR"
 The maximal time between attempts to deliver a deferred message.
 .IP "\fBmaximal_queue_lifetime (5d)\fR"
 The maximal time a message is queued before it is sent back as
 undeliverable.
-.IP "\fBqueue_run_delay (1000s)\fR"
+.IP "\fBqueue_run_delay (version dependent)\fR"
 The time between deferred queue scans by the queue manager.
 .IP "\fBtransport_retry_time (60s)\fR"
 The time between attempts by the Postfix queue manager to contact

@@ -1,4 +1,4 @@
-.\"	$NetBSD: pipe.8,v 1.1.1.9 2006/07/19 01:16:49 rpaulo Exp $
+.\"	$NetBSD: pipe.8,v 1.1.1.10 2007/05/19 16:27:52 heas Exp $
 .\"
 .TH PIPE 8 
 .ad
@@ -39,9 +39,10 @@ or fax machines.
 
 To prevent Postfix from sending multiple recipients per delivery
 request, specify
-
-.ti +4
-\fItransport\fB_destination_recipient_limit = 1\fR
+.sp
+.nf
+    \fItransport\fB_destination_recipient_limit = 1\fR
+.fi
 
 in the Postfix \fBmain.cf\fR file, where \fItransport\fR
 is the name in the first column of the Postfix \fBmaster.cf\fR
@@ -130,8 +131,8 @@ Prepend "\fB>\fR" to lines starting with "\fBFrom \fR". This is expected
 by, for example, \fBUUCP\fR software.
 .RE
 .IP "\fBnull_sender\fR=\fIreplacement\fR (default: MAILER-DAEMON)"
-Replace the null sender address, which is typically used
-for delivery status notifications, with the specified text
+Replace the null sender address (typically used for delivery
+status notifications) with the specified text
 when expanding the \fB$sender\fR command-line macro, and
 when generating a From_ or Return-Path: message header.
 
@@ -147,17 +148,19 @@ Postfix. The empty sender address is not affected by the
 Caution: a null sender address is easily mis-parsed by
 naive software. For example, when the \fBpipe\fR(8) daemon
 executes a command such as:
-
-.ti +4
-command -f$sender -- $recipient (\fIbad\fR)
-
+.sp
+.nf
+    command -f$sender -- $recipient (\fIbad\fR)
+.fi
+.IP
 the command will mis-parse the -f option value when the
 sender address is a null string.  For correct parsing,
 specify \fB$sender\fR as an argument by itself:
-
-.ti +4
-command -f $sender -- $recipient (\fIgood\fR)
-
+.sp
+.nf
+    command -f $sender -- $recipient (\fIgood\fR)
+.fi
+.IP
 This feature is available with Postfix 2.3 and later.
 .IP "\fBsize\fR=\fIsize_limit\fR (optional)"
 Messages greater in size than this limit (in bytes) will
@@ -325,6 +328,10 @@ The limit is enforced by the Postfix queue manager.
 Limit the time for delivery to external command, for delivery via
 the named \fItransport\fR.
 The limit is enforced by the pipe delivery agent.
+
+Postfix 2.4 and later support a suffix that specifies the
+time unit: s (seconds), m (minutes), h (hours), d (days),
+w (weeks). The default time unit is seconds.
 .SH "MISCELLANEOUS CONTROLS"
 .na
 .nf
@@ -349,11 +356,11 @@ communication channel.
 The UNIX system account that owns the Postfix queue and most Postfix
 daemon processes.
 .IP "\fBmax_idle (100s)\fR"
-The maximum amount of time that an idle Postfix daemon process
-waits for the next service request before exiting.
+The maximum amount of time that an idle Postfix daemon process waits
+for an incoming connection before terminating voluntarily.
 .IP "\fBmax_use (100)\fR"
-The maximal number of connection requests before a Postfix daemon
-process terminates.
+The maximal number of incoming connections that a Postfix daemon
+process will service before terminating voluntarily.
 .IP "\fBprocess_id (read-only)\fR"
 The process ID of a Postfix command or daemon process.
 .IP "\fBprocess_name (read-only)\fR"

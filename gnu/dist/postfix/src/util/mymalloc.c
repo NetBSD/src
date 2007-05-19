@@ -1,4 +1,4 @@
-/*	$NetBSD: mymalloc.c,v 1.1.1.5 2006/07/19 01:17:54 rpaulo Exp $	*/
+/*	$NetBSD: mymalloc.c,v 1.1.1.6 2007/05/19 16:28:47 heas Exp $	*/
 
 /*++
 /* NAME
@@ -149,6 +149,11 @@ char   *mymalloc(ssize_t len)
     char   *ptr;
     MBLOCK *real_ptr;
 
+    /*
+     * Note: for safety reasons the request length is a signed type. This
+     * allows us to catch integer overflow problems that weren't already
+     * caught up-stream.
+     */
     if (len < 1)
 	msg_panic("mymalloc: requested length %ld", (long) len);
     if ((real_ptr = (MBLOCK *) malloc(SPACE_FOR(len))) == 0)
@@ -170,6 +175,11 @@ char   *myrealloc(char *ptr, ssize_t len)
 	return (mymalloc(len));
 #endif
 
+    /*
+     * Note: for safety reasons the request length is a signed type. This
+     * allows us to catch integer overflow problems that weren't already
+     * caught up-stream.
+     */
     if (len < 1)
 	msg_panic("myrealloc: requested length %ld", (long) len);
     CHECK_IN_PTR(ptr, real_ptr, old_len, "myrealloc");
