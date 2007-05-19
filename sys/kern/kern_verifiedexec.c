@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_verifiedexec.c,v 1.99 2007/05/15 19:47:45 elad Exp $	*/
+/*	$NetBSD: kern_verifiedexec.c,v 1.100 2007/05/19 22:11:22 christos Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.99 2007/05/15 19:47:45 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.100 2007/05/19 22:11:22 christos Exp $");
 
 #include "opt_veriexec.h"
 
@@ -755,7 +755,7 @@ veriexec_page_verify(struct veriexec_file_entry *vfe, struct vm_page *pg,
  * Veriexec remove policy code.
  */
 int
-veriexec_removechk(struct vnode *vp, const char *pathbuf, struct lwp *l)
+veriexec_removechk(struct lwp *l, struct vnode *vp, const char *pathbuf)
 {
 	struct veriexec_file_entry *vfe;
 
@@ -786,8 +786,8 @@ veriexec_removechk(struct vnode *vp, const char *pathbuf, struct lwp *l)
  * XXX: the new name is absolute (ie., starts with a slash).
  */
 int
-veriexec_renamechk(struct vnode *fromvp, const char *fromname,
-    struct vnode *tovp, const char *toname, struct lwp *l)
+veriexec_renamechk(struct lwp *l, struct vnode *fromvp, const char *fromname,
+    struct vnode *tovp, const char *toname)
 {
 	struct veriexec_file_entry *vfe, *tvfe;
 
