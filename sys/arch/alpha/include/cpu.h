@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.69 2007/05/18 02:45:18 mhitch Exp $ */
+/* $NetBSD: cpu.h,v 1.70 2007/05/19 17:09:35 mhitch Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -142,6 +142,12 @@ struct mchkinfo {
 
 struct cpu_info {
 	/*
+	 * Private members accessed in assembly with 8 bit offsets.
+	 */
+	struct lwp *ci_fpcurlwp;	/* current owner of the FPU */
+	paddr_t ci_curpcb;		/* PA of current HW PCB */
+
+	/*
 	 * Public members.
 	 */
 	struct lwp *ci_curlwp;		/* current owner of the processor */
@@ -156,8 +162,6 @@ struct cpu_info {
 	 */
 	struct mchkinfo ci_mcinfo;	/* machine check info */
 	cpuid_t ci_cpuid;		/* our CPU ID */
-	struct lwp *ci_fpcurlwp;	/* current owner of the FPU */
-	paddr_t ci_curpcb;		/* PA of current HW PCB */
 	struct cpu_softc *ci_softc;	/* pointer to our device */
 	u_long ci_want_resched;		/* preempt current process */
 	u_long ci_intrdepth;		/* interrupt trap depth */
