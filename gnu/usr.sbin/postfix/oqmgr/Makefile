@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2006/07/19 02:04:44 rpaulo Exp $
+#	$NetBSD: Makefile,v 1.3 2007/05/19 18:08:55 heas Exp $
 
 NOMAN=	# defined
 
@@ -13,7 +13,7 @@ BINDIR=	${PFIX_LIBEXECDIR}
 
 SRCS=	qmgr.c qmgr_active.c qmgr_transport.c qmgr_queue.c qmgr_entry.c \
 	qmgr_message.c qmgr_deliver.c qmgr_move.c \
-	qmgr_defer.c qmgr_enable.c qmgr_scan.c qmgr_bounce.c
+	qmgr_defer.c qmgr_enable.c qmgr_scan.c qmgr_bounce.c qmgr_error.c
 
 DPADD+= ${LIBPMASTER} ${LIBPGLOBAL} ${LIBPUTIL}
 LDADD+= ${LIBPMASTER} ${LIBPGLOBAL} ${LIBPUTIL}
