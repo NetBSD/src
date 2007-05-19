@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.233 2007/05/17 14:51:30 yamt Exp $	*/
+/*	$NetBSD: locore.s,v 1.234 2007/05/19 22:57:47 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -4976,7 +4976,7 @@ ENTRY(cpu_idle)
 	call	%o3
 	 nop	! CPUINFO_VA is already in %o0
 1:
-	ret
+	retl
 	 nop
 
 /*
@@ -5016,8 +5016,7 @@ ENTRY(lwp_trampoline)
 	 * `save ... restore'.
 	 */
 
-	! newlwp in %l2, oldlwp is in %l3
-	mov	%l3, %o0
+	! newlwp in %l2, oldlwp alrady in %o0
 	call	lwp_startup
 	 mov	%l2, %o1
 
