@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.21 2007/05/18 01:46:40 mhitch Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.22 2007/05/19 21:00:22 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.21 2007/05/18 01:46:40 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.22 2007/05/19 21:00:22 mhitch Exp $");
 
 #include "opt_coredump.h"
 
@@ -163,7 +163,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	pcb->pcb_regs[6] = (int)func;		/* A2 */
 	pcb->pcb_regs[7] = (int)arg;		/* A3 */
 	pcb->pcb_regs[11] = (int)sf;		/* SSP */
-	pcb->pcb_ps = PSL_LOWIPL;		/* start khreads at IPL 0 */
+	pcb->pcb_ps = PSL_LOWIPL;		/* start kthreads at IPL 0 */
 }
 
 void
