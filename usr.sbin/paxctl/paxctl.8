@@ -1,4 +1,4 @@
-.\"	$NetBSD: paxctl.8,v 1.3 2007/03/04 22:25:00 christos Exp $
+.\"	$NetBSD: paxctl.8,v 1.4 2007/05/19 14:18:33 wiz Exp $
 .\"
 .\" Copyright 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -57,13 +57,17 @@ Explicitly enable PaX Segvguard for
 .Ar program .
 .It m
 Explicitly disable PaX MPROTECT
-.Xr ( mprotect 2
-restrictions) for
+.Po Xr mprotect 2
+restrictions
+.Pc
+for
 .Ar program .
 .It M
 Explicitly enable PaX MPROTECT
-.Xr ( mprotect 2
-restrictions) for
+.Po Xr mprotect 2
+restrictions
+.Pc
+for
 .Ar program .
 .El
 .Sh SEE ALSO
@@ -81,8 +85,9 @@ The
 .Nm
 utility is modeled after a tool of the same name available for Linux from the
 PaX project.
+.Sh AUTHORS
+.An Elad Efrat Aq elad@NetBSD.org
 .Sh BUGS
-.Pp
 The
 .Nm
 utility currently utilizes
@@ -92,5 +97,3 @@ sections to mark executables as PaX Segvguard enabled.
 This will be done using
 .Xr fileassoc 9
 in the future so that we can control who does the marking.
-.Sh AUTHORS
-.An Elad Efrat Aq elad@NetBSD.org
