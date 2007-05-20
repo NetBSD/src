@@ -1,4 +1,4 @@
-/*      $NetBSD: ninebuf.c,v 1.5 2007/05/15 14:22:58 pooka Exp $	*/
+/*      $NetBSD: ninebuf.c,v 1.6 2007/05/20 16:24:37 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ninebuf.c,v 1.5 2007/05/15 14:22:58 pooka Exp $");
+__RCSID("$NetBSD: ninebuf.c,v 1.6 2007/05/20 16:24:37 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -162,7 +162,7 @@ p9pbuf_cmp(struct puffs_usermount *pu,
 	struct puffs_framebuf *c1, struct puffs_framebuf *c2)
 {
 
-	return p9pbuf_get_tag(c1) == p9pbuf_get_tag(c2);
+	return p9pbuf_get_tag(c1) != p9pbuf_get_tag(c2);
 }
 
 struct puffs_framebuf *
