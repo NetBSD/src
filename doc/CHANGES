@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.857 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.858 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -112,3 +112,4 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		[yamt 20070518]
 	ld.elf_so: Support Solaris $ORIGIN etc. expansions in paths.
 		[christos 20070518]
+	postfix(1): Updated to 2.4.1 [heas 20070519]
