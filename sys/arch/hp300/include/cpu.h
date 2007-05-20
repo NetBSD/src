@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.52 2007/05/18 10:15:10 tsutsui Exp $	*/
+/*	$NetBSD: cpu.h,v 1.53 2007/05/20 04:29:48 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -199,7 +199,7 @@ void	m68881_save(struct fpframe *);
 void	m68881_restore(struct fpframe *);
 int	suline(void *, void *);
 void	savectx(struct pcb *);
-void	proc_trampoline(void);
+void	lwp_trampoline(void);
 void	loadustp(int);
 
 void	doboot(void) __attribute__((__noreturn__));

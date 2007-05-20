@@ -1,4 +1,4 @@
-/*	$NetBSD: switch_subr.s,v 1.16 2007/05/18 01:46:39 mhitch Exp $	*/
+/*	$NetBSD: switch_subr.s,v 1.17 2007/05/20 04:29:49 mhitch Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation.
@@ -391,10 +391,15 @@ ENTRY(m68k_make_fpu_idle_frame)
 #endif
 
 /*
- * proc_trampoline: call function in register %a2 with %a3 as an arg
+ * lwp_trampoline: call function in register %a2 with %a3 as an arg
  * and then rei.
+ * %a0 will have old lwp from cpu_switchto(), and %a4 is new lwp
  */
-ENTRY_NOPROFILE(proc_trampoline)
+ENTRY_NOPROFILE(lwp_trampoline)
+	movl	%a4,%sp@-		| new lwp
+	movl	%a0,%sp@-		| old lpw
+	jbsr	_C_LABEL(lwp_startup)
+	addql	#8,%sp
 	movl	%a3,%sp@-		| push function arg
 	jbsr	%a2@			| call function
 	addql	#4,%sp			| pop arg
