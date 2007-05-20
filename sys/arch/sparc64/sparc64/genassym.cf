@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.44 2007/05/20 19:18:15 martin Exp $
+#	$NetBSD: genassym.cf,v 1.45 2007/05/20 21:51:01 martin Exp $
 
 #
 # Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -216,8 +216,6 @@ define	PCB_SP		offsetof(struct pcb, pcb_sp)
 define	PCB_PC		offsetof(struct pcb, pcb_pc)
 define  PCB_LASTCALL	offsetof(struct pcb, lastcall)
 define	PCB_SIZE	sizeof(struct pcb)
-
-define	TF_TSTATE_USERMASK	~((PSTATE_PEF<<TSTATE_PSTATE_SHIFT)|TSTATE_CCR)
 
 # trapframe64 fields
 define	TF_TSTATE	offsetof(struct trapframe64, tf_tstate)

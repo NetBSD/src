@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.247 2007/05/20 20:28:02 martin Exp $	*/
+/*	$NetBSD: locore.s,v 1.248 2007/05/20 21:51:01 martin Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -6771,22 +6771,18 @@ ENTRY(lwp_trampoline)
 	call    lwp_startup
 	 mov    %l2, %o1
 
-	wrpr	%g0, 0, %pil		! Reset interrupt level
 	call	%l0			! re-use current frame
 	 mov	%l1, %o0
 
 	/*
 	 * Going to userland - set proper tstate in trap frame
 	 */
-	ldx	[%sp + CC64FSZ + STKB + TF_TSTATE], %g1
-	setx	TF_TSTATE_USERMASK, %l1, %l0
-	and	%g1, %l0, %g1
+	set	(ASI_PRIMARY_NO_FAULT<<TSTATE_ASI_SHIFT)|((PSTATE_USER)<<TSTATE_PSTATE_SHIFT), %g1
 	stx	%g1, [%sp + CC64FSZ + STKB + TF_TSTATE]
 
 	/*
 	 * Here we finish up as in syscall, but simplified.
 	 */
-	! ldx	[%sp + CC64FSZ + STKB + TF_TSTATE], %g1	! Load this for return_from_trap
 	CHKPT(%o3,%o4,0x35)
 	ba,a,pt	%icc, return_from_trap
 	 nop
