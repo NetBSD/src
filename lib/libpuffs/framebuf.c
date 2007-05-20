@@ -1,4 +1,4 @@
-/*	$NetBSD: framebuf.c,v 1.12 2007/05/20 16:24:37 pooka Exp $	*/
+/*	$NetBSD: framebuf.c,v 1.13 2007/05/20 19:56:56 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: framebuf.c,v 1.12 2007/05/20 16:24:37 pooka Exp $");
+__RCSID("$NetBSD: framebuf.c,v 1.13 2007/05/20 19:56:56 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -66,6 +66,8 @@ struct puffs_framebuf {
 #define ISTAT_NODESTROY	0x01	/* indestructible by framebuf_destroy() */
 #define ISTAT_INTERNAL	0x02	/* never leaves library			*/
 #define ISTAT_NOREPLY	0x04	/* nuke after sending 			*/
+
+#define ISTAT_ONQUEUE	ISTAT_NODESTROY	/* alias */
 
 #define PUFBUF_INCRALLOC 4096
 #define PUFBUF_REMAIN(p) (p->len - p->offset)
@@ -376,6 +378,29 @@ puffs_framev_enqueue_justsend(struct puffs_usermount *pu, int fd,
 		pufbuf->istat |= ISTAT_NOREPLY;
 
 	TAILQ_INSERT_TAIL(&fio->snd_qing, pufbuf, pfb_entries);
+
+	return 0;
+}
+
+/*
+ * this beauty shall remain undocumented for now
+ */
+int
+puffs_framev_framebuf_ccpromote(struct puffs_framebuf *pufbuf,
+	struct puffs_cc *pcc)
+{
+
+	if ((pufbuf->istat & ISTAT_ONQUEUE) == 0) {
+		errno = EBUSY;
+		return -1;
+	}
+
+	pufbuf->pcc = pcc;
+	pufbuf->fcb = NULL;
+	pufbuf->fcb_arg = NULL;
+	pufbuf->istat &= ~ISTAT_NOREPLY;
+
+	puffs_cc_yield(pcc);
 
 	return 0;
 }
