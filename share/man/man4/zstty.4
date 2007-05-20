@@ -1,4 +1,4 @@
-.\"	$NetBSD: zstty.4,v 1.8 2004/05/11 22:42:47 wiz Exp $
+.\"	$NetBSD: zstty.4,v 1.8.12.1 2007/05/20 09:37:46 jdc Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd May 1, 2003
+.Dd May 12, 2007
 .Dt ZSTTY 4
 .Os
 .Sh NAME
@@ -45,10 +45,11 @@
 .Tn Zilog
 8530 serial communications interface
 .Sh SYNOPSIS
-.Ss alpha
+.Ss alpha ( DEC 3000 )
 .Cd "zsc0	at ioasic? offset 0x100000"
 .Cd "zsc1	at ioasic? offset 0x180000"
-.Cd "zstty*	at zsc? channel ?	# serial ports on B channels"
+.Cd "zstty0	at zsc0 channel ?	# serial ports on B channels"
+.Cd "zstty2	at zsc1 channel ?	# serial ports on B channels"
 .Cd "lkkbd0	at zsc1 channel ?	# keyboard port on A channels"
 .Cd "vsms0	at zsc0 channel ?	# mouse port on A channels"
 .Ss cesfic
@@ -146,6 +147,12 @@ chips.
 Input and output for each line may set to any baud rate in the
 range 50 to 38400 (and higher on some machines).
 .Sh FILES
+.Ss alpha
+.Bl -tag -width Pa
+.It Pa /dev/ttyB0
+.It Pa /dev/ttyB1
+.El
+.Ss others
 .Bl -tag -width Pa
 .It Pa /dev/ttya
 .It Pa /dev/ttyb
@@ -182,6 +189,11 @@ driver was derived from the
 driver supplied with
 .Bx 4.4
 .Ux .
+.Sh CAVEATS
+.Pa /dev/ttyB1
+on alpha is created by
+.Xr MAKEDEV 8
+with minor number 2, so the corresponding device should be zstty2, not zstty1.
 .Sh BUGS
 The old
 .Tn Zilog
