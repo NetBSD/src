@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1002 2007/05/20 05:11:43 dogcow Exp $
+# $NetBSD: mi,v 1.1003 2007/05/20 07:44:52 dogcow Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -3923,7 +3923,7 @@
 ./usr/share/man/man4/usbtask.4			man-sys-man		.man
 ./usr/share/man/man4/uscanner.4			man-sys-man		.man
 ./usr/share/man/man4/userconf.4			man-sys-man		.man
-./usr/share/man/cat4/uslsa.4			man-sys-man		.man
+./usr/share/man/man4/uslsa.4			man-sys-man		.man
 ./usr/share/man/man4/usscanner.4		man-sys-man		.man
 ./usr/share/man/man4/ustir.4			man-sys-man		.man
 ./usr/share/man/man4/utoppy.4			man-sys-man		.man
