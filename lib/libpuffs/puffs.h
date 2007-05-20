@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.h,v 1.59 2007/05/18 13:53:54 pooka Exp $	*/
+/*	$NetBSD: puffs.h,v 1.60 2007/05/20 16:24:37 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -359,7 +359,7 @@ enum {
 #define PUFFSOP_SETFSNOP(ops, opname)					\
     (ops)->puffs_fs_##opname = puffs_fsnop_##opname
 
-#define PUFFS_DEVEL_LIBVERSION 19
+#define PUFFS_DEVEL_LIBVERSION 20
 #define puffs_init(a,b,c,d) \
     _puffs_init(PUFFS_DEVEL_LIBVERSION,a,b,c,d)
 
@@ -388,7 +388,7 @@ typedef int (*puffs_framev_readframe_fn)(struct puffs_usermount *,
 typedef	int (*puffs_framev_writeframe_fn)(struct puffs_usermount *,
 					    struct puffs_framebuf *,
 					    int, int *);
-typedef int (*puffs_framev_respcmp_fn)(struct puffs_usermount *,
+typedef int (*puffs_framev_cmpframe_fn)(struct puffs_usermount *,
 					 struct puffs_framebuf *,
 					 struct puffs_framebuf *);
 typedef void (*puffs_framev_fdnotify_fn)(struct puffs_usermount *, int, int);
@@ -592,7 +592,7 @@ int	puffs_fs_suspend(struct puffs_usermount *);
 void	puffs_framev_init(struct puffs_usermount *,
 			  puffs_framev_readframe_fn,
 			  puffs_framev_writeframe_fn,
-			  puffs_framev_respcmp_fn,
+			  puffs_framev_cmpframe_fn,
 			  puffs_framev_fdnotify_fn);
 
 struct puffs_framebuf 	*puffs_framebuf_make(void);

@@ -1,4 +1,4 @@
-.\"	$NetBSD: puffs_framebuf.3,v 1.6 2007/05/16 10:07:11 pooka Exp $
+.\"	$NetBSD: puffs_framebuf.3,v 1.7 2007/05/20 16:24:37 pooka Exp $
 .\"
 .\" Copyright (c) 2007 Antti Kantee.  All rights reserved.
 .\"
@@ -101,7 +101,7 @@
 .Fa "int fd" "int *done"
 .Fc
 .Ft int
-.Fo puffs_framev_respcmp_fn
+.Fo puffs_framev_cmpframe_fn
 .Fa "struct puffs_usermount *pu"
 .Fa "struct puffs_framebuf *cmp1" "struct puffs_framebuf *cmp2"
 .Fc
@@ -113,7 +113,7 @@
 .Fo puffs_framev_init
 .Fa "struct puffs_usermount *pu"
 .Fa "puffs_framebuf_readframe_fn rfb" "puffs_framebuf_writeframe_fn wfb"
-.Fa "puffs_framebuf_respcmp_fn cmpfb"
+.Fa "puffs_framebuf_cmpframe_fn cmpfb"
 .Fa "puffs_framebuf_fdnotify_fn fdnotfn"
 .Fc
 .Ft int
@@ -366,12 +366,16 @@ with the flag
 .Dv MSG_NOSIGNAL
 instead of using
 .Fn write .
-.It Fn puffs_framev_respcmp_fn pu pufbuf_cmp1 pufbuf_cmp2
-Compare if
+.It Fn puffs_framev_cmpframe_fn pu pufbuf_cmp1 pufbuf_cmp2
+Compare the file system internal request tags in
 .Ar pufbuf_cmp1
-is the response to the message in
+and
 .Ar pufbuf_cmp2 .
-Should return 1 if true, 0 if false.
+Should return 0 if the tags are equal, 1 if first buffer's tag is
+greater than the second and \-1 if it is smaller.
+The definitions "greater" and "smaller" are used transparently by
+the library, e.g. like
+.Xr qsort 3 .
 May not block.
 .It Fn puffs_framev_fdnotify_fn pu fd what
 Is called when the read- or write side of the file descriptor
