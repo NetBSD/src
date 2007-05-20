@@ -1,4 +1,4 @@
-/*      $NetBSD: subr.c,v 1.20 2007/05/18 18:00:07 pooka Exp $        */
+/*      $NetBSD: subr.c,v 1.21 2007/05/20 17:47:12 pooka Exp $        */
         
 /*      
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
         
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: subr.c,v 1.20 2007/05/18 18:00:07 pooka Exp $");
+__RCSID("$NetBSD: subr.c,v 1.21 2007/05/20 17:47:12 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -65,6 +65,10 @@ allocdirs(struct psshfs_node *psn)
 	psn->dir = erealloc(psn->dir,
 	    psn->denttot * sizeof(struct psshfs_dir));
 	memset(psn->dir + oldtot, 0, ENTRYCHUNK * sizeof(struct psshfs_dir));
+
+#ifdef SUPERREADDIR
+	psn->da = erealloc(psn->da, psn->denttot * sizeof(struct delayattr));
+#endif
 }
 
 struct psshfs_dir *
@@ -143,7 +147,7 @@ readdir_getattr_resp(struct puffs_usermount *pu,
 	puffs_framebuf_destroy(pb);
 }
 
-static int
+static void
 readdir_getattr(struct puffs_usermount *pu, struct psshfs_node *psn,
 	const char *basepath, int idx)
 {
@@ -154,7 +158,6 @@ readdir_getattr(struct puffs_usermount *pu, struct psshfs_node *psn,
 	struct readdirattr *rda;
 	const char *entryname = pdir[idx].entryname;
 	uint32_t reqid = NEXTREQ(pctx);
-	int rv = 0;
 
 	rda = emalloc(sizeof(struct readdirattr));
 	rda->psn = psn;
@@ -167,10 +170,23 @@ readdir_getattr(struct puffs_usermount *pu, struct psshfs_node *psn,
 
 	pb = psbuf_makeout();
 	psbuf_req_str(pb, SSH_FXP_LSTAT, reqid, path);
-	SENDCB(pb, readdir_getattr_resp, rda);
+	psn->da[psn->nextda].pufbuf = pb;
+	psn->da[psn->nextda].rda = rda;
+	psn->nextda++;
+}
+
+static void
+readdir_getattr_send(struct puffs_usermount *pu, struct psshfs_node *psn)
+{
+	struct psshfs_ctx *pctx = puffs_getspecific(pu);
+	size_t i;
+	int rv = 0;
+
+	for (i = 0; i < psn->nextda; i++)
+		SENDCB(psn->da[i].pufbuf, readdir_getattr_resp, psn->da[i].rda);
 
  out:
-	return rv;
+	return;
 }
 #endif
 
@@ -266,6 +282,9 @@ sftp_readdir(struct puffs_cc *pcc, struct psshfs_ctx *pctx,
 	psn->dentnext = 0;
 	psn->denttot = 0;
 	psn->dir = NULL;
+#ifdef SUPERREADDIR
+	psn->nextda = 0;
+#endif /* SUPERREADDIR */
 
 	for (;;) {
 		reqid = NEXTREQ(pctx);
@@ -315,16 +334,17 @@ sftp_readdir(struct puffs_cc *pcc, struct psshfs_ctx *pctx,
 			 * the server responds to our queries out-of-order.
 			 * fixxxme some day
 			 */
-			rv = readdir_getattr(puffs_cc_getusermount(pcc),
+			readdir_getattr(puffs_cc_getusermount(pcc),
 			    psn, PNPATH(pn), idx);
-			if (rv)
-				goto out;
 #endif
 			psn->dir[idx].valid = 1;
 		}
 	}
 
  out:
+	/* fire off getattr requests */
+	readdir_getattr_send(pu, psn);
+
 	/* XXX: rv */
 	psn->dentnext = idx;
 	freedircache(olddir, nent);
@@ -332,9 +352,9 @@ sftp_readdir(struct puffs_cc *pcc, struct psshfs_ctx *pctx,
 	reqid = NEXTREQ(pctx);
 	psbuf_recycleout(pb);
 	psbuf_req_data(pb, SSH_FXP_CLOSE, reqid, dhand, dhandlen);
-
 	JUSTSEND(pb);
 	free(dhand);
+
 	return rv;
 
  wayout:
@@ -436,8 +456,12 @@ doreclaim(struct puffs_node *pn)
 	if (dent)
 		dent->entry = NULL;
 
-	if (pn->pn_va.va_type == VDIR)
+	if (pn->pn_va.va_type == VDIR) {
 		freedircache(psn->dir, psn->dentnext);
+#ifdef SUPERREADDIR
+		free(psn->da);
+#endif
+	}
 
 	puffs_pn_put(pn);
 }
