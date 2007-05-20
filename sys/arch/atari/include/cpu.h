@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.53 2007/05/18 22:58:52 he Exp $	*/
+/*	$NetBSD: cpu.h,v 1.54 2007/05/20 02:54:11 isaki Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -99,8 +99,8 @@
 struct cpu_info {
 	struct cpu_data ci_data;	/* MI per-cpu data */
 	int	ci_want_resched;
-        int	ci_mtx_count;
-        int	ci_mtx_oldspl;
+	int	ci_mtx_count;
+	int	ci_mtx_oldspl;
 };
 
 extern struct cpu_info cpu_info_store;
