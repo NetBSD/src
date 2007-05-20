@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.83 2007/05/17 22:15:22 rjs Exp $	*/
+/*	$NetBSD: cpu.h,v 1.84 2007/05/20 04:29:48 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -361,7 +361,7 @@ int	suline(void *, void *);
 void	savectx(struct pcb *);
 void	switch_exit(struct lwp *);
 void	switch_lwp_exit(struct lwp *);
-void	proc_trampoline(void);
+void	lwp_trampoline(void);
 void	loadustp(int);
 
 /* sys_machdep.c */
