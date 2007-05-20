@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2006/11/10 17:36:08 christos Exp $
+#	$NetBSD: Makefile,v 1.3 2007/05/20 21:31:05 christos Exp $
 
 MKPRIVATELIB=	yes
 
@@ -9,7 +9,7 @@ LIB=		iberty
 .include "${.CURDIR}/defs.mk"
 
 DIST=		${NETBSDSRCDIR}/gnu/dist/gcc4
-GNUHOSTDIST=	${DIST
+GNUHOSTDIST=	${DIST}
 
 SRCS=		${G_REQUIRED_OFILES:.o=.c} ${G_EXTRA_OFILES:.o=.c} \
 		${G_LIBOBJS:.o=.c} ${G_ALLOCA:.o=.c}
