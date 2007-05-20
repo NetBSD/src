@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.35 2007/03/04 06:00:14 christos Exp $	*/
+3/*	$NetBSD: cpu.h,v 1.36 2007/05/20 04:29:48 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -237,7 +237,7 @@ int	kvtop __P((void *));
 void	savectx __P((struct pcb *));
 void	switch_exit __P((struct lwp *));
 void	switch_lwp_exit __P((struct lwp *));
-void	proc_trampoline __P((void));
+void	lwp_trampoline __P((void));
 void	loadustp __P((paddr_t));
 
 /* Prototypes from sys_machdep.c: */

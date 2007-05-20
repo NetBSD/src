@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.33 2007/03/04 06:00:27 christos Exp $	*/
+/*	$NetBSD: cpu.h,v 1.34 2007/05/20 04:29:49 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -187,7 +187,7 @@ int	suline(void *, void *);
 void	savectx(struct pcb *);
 void	switch_exit(struct lwp *);
 void	switch_lwp_exit(struct lwp *);
-void	proc_trampoline(void);
+void	lwp_trampoline(void);
 void	loadustp(int);
 
 void	doboot(void) __attribute__((__noreturn__));

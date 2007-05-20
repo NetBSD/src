@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.40 2007/05/19 14:25:26 isaki Exp $	*/
+/*	$NetBSD: cpu.h,v 1.41 2007/05/20 04:29:49 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -206,7 +206,7 @@ struct pcb;
 struct fpframe;
 int	suline(void *, void *);
 void	savectx(struct pcb *);
-void	proc_trampoline(void);
+void	lwp_trampoline(void);
 void	loadustp(int);
 void	m68881_save(struct fpframe *);
 void	m68881_restore(struct fpframe *);
