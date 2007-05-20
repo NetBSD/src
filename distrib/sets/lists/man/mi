@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.955.2.8 2007/05/08 10:45:01 pavel Exp $
+# $NetBSD: mi,v 1.955.2.9 2007/05/20 10:30:44 jdc Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -1307,6 +1307,7 @@
 ./usr/share/man/cat4/sparc/xd.0		man-sys-catman		.cat
 ./usr/share/man/cat4/sparc/xy.0		man-sys-catman		.cat
 ./usr/share/man/cat4/sparc/zx.0			man-sys-catman		.cat
+./usr/share/man/cat4/sparc64/fdc.0		man-sys-catman		.cat
 ./usr/share/man/cat4/sparc64/intro.0		man-sys-catman		.cat
 ./usr/share/man/cat4/sparc64/sab.0		man-sys-catman		.cat
 ./usr/share/man/cat4/sparc64/sabtty.0		man-sys-catman		.cat
@@ -3714,6 +3715,7 @@
 ./usr/share/man/man4/sparc/xd.4			man-sys-man		.man
 ./usr/share/man/man4/sparc/xy.4			man-sys-man		.man
 ./usr/share/man/man4/sparc/zx.4			man-sys-man		.man
+./usr/share/man/man4/sparc64/fdc.4		man-sys-man		.man
 ./usr/share/man/man4/sparc64/intro.4		man-sys-man		.man
 ./usr/share/man/man4/sparc64/sab.4		man-sys-man		.man
 ./usr/share/man/man4/sparc64/sabtty.4		man-sys-man		.man
