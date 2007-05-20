@@ -1,4 +1,4 @@
-/*	$NetBSD: psshfs.h,v 1.17 2007/05/18 18:00:07 pooka Exp $	*/
+/*	$NetBSD: psshfs.h,v 1.18 2007/05/20 17:47:12 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -107,6 +107,14 @@ struct psshfs_node {
 	struct puffs_node *parent;
 
 	struct psshfs_dir *dir;	/* only valid if we're of type VDIR */
+#ifdef SUPERREADDIR
+	struct delayattr {
+		struct puffs_framebuf *pufbuf;
+		struct readdirattr *rda;
+	} *da;
+	size_t nextda;
+#endif /* SUPERREADDIR */
+
 	size_t denttot;
 	size_t dentnext;
 	time_t dentread;
