@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.17.10.2 2007/05/12 17:39:36 snj Exp $
+.\"	$NetBSD: hardware,v 1.17.10.3 2007/05/20 10:31:00 jdc Exp $
 .
 .Ss2 Supported machines
 The minimal configuration requires 32 MB of RAM and ~60 MB of disk space.
@@ -194,6 +194,11 @@ Many other PCI IDE controllers should work, but no one has tried them
 Most IDE and ATAPI disk/tape/CD-ROM devices should work
 .bullet)
 .It
+Floppy drives
+.(bullet -offset indent
+.Em fdc ;
+floppy disk drive (SBus based machines only for now).
+.It
 Serial devices
 .(bullet -compact
 On-board Sbus z8530 serial
@@ -230,8 +235,6 @@ been tested on UltraSPARC PCI systems that may
 .(bullet -offset indent
 SMP (NetBSD/sparc64 currently only uses one CPU if more than one is 
 present)
-.It
-Floppy drives
 .It
 smart card reader
 .bullet)
