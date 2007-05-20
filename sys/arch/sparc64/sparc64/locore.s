@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.245 2007/05/19 23:27:42 martin Exp $	*/
+/*	$NetBSD: locore.s,v 1.246 2007/05/20 19:18:15 martin Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -6779,9 +6779,17 @@ ENTRY(lwp_trampoline)
 	 mov	%l1, %o0
 
 	/*
+	 * Going to userland - set proper tstate in trap frame
+	 */
+	ldx	[%sp + CC64FSZ + STKB + TF_TSTATE], %g1
+	setx	TF_TSTATE_USERMASK, %l1, %l0
+	and	%g1, %l0, %g1
+	stx	%g1, [%sp + CC64FSZ + STKB + TF_TSTATE]
+
+	/*
 	 * Here we finish up as in syscall, but simplified.
 	 */
-	ldx	[%sp + CC64FSZ + STKB + TF_TSTATE], %g1	! Load this for return_from_trap
+	! ldx	[%sp + CC64FSZ + STKB + TF_TSTATE], %g1	! Load this for return_from_trap
 	CHKPT(%o3,%o4,0x35)
 	ba,a,pt	%icc, return_from_trap
 	 nop

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.72 2007/05/19 23:25:54 martin Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.73 2007/05/20 19:18:15 martin Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.72 2007/05/19 23:25:54 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.73 2007/05/20 19:18:15 martin Exp $");
 
 #include "opt_coredump.h"
 
@@ -272,15 +272,6 @@ cpu_lwp_fork(l1, l2, stack, stacksize, func, arg)
 
 	npcb->pcb_pc = (long)lwp_trampoline - 8;
 	npcb->pcb_sp = (long)rp - STACK_OFFSET;
-
-	/* Need to create a %tstate if we're forking from proc0 */
-	if (npcb->pcb_pstate & PSTATE_PRIV)
-		tf2->tf_tstate = (ASI_PRIMARY_NO_FAULT<<TSTATE_ASI_SHIFT) |
-			((PSTATE_USER)<<TSTATE_PSTATE_SHIFT);
-	else
-		/* clear condition codes and disable FPU */
-		tf2->tf_tstate &=
-		    ~((PSTATE_PEF<<TSTATE_PSTATE_SHIFT)|TSTATE_CCR);
 
 #ifdef NOTDEF_DEBUG
     {
