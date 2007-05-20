@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.93 2007/05/17 14:51:12 yamt Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.94 2007/05/20 16:57:57 mhitch Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.93 2007/05/17 14:51:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.94 2007/05/20 16:57:57 mhitch Exp $");
 #include "opt_coredump.h"
 
 #include <sys/param.h>
@@ -111,7 +111,7 @@ cpu_lwp_free2(struct lwp *l)
  * Copy and update the pcb and trap frame, making the child ready to run.
  * 
  * Rig the child's kernel stack so that it will start out in
- * proc_trampoline() and call child_return() with p2 as an
+ * lwp_trampoline() and call child_return() with p2 as an
  * argument. This causes the newly-created child process to go
  * directly to user level with an apparent return value of 0 from
  * fork(), while the parent process returns normally.
