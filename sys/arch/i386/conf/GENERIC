@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.827 2007/05/15 17:53:44 bouyer Exp $
+# $NetBSD: GENERIC,v 1.828 2007/05/20 05:13:17 dogcow Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.827 $"
+#ident 		"GENERIC-$Revision: 1.828 $"
 
 maxusers	32		# estimated number of users
 
@@ -1118,6 +1118,9 @@ ucom*	at umct? portno ?
 
 uplcom* at uhub? port ? 	# I/O DATA USB-RSAQ2 serial adapter
 ucom*	at uplcom? portno ?
+
+uslsa*	at uhub? port ?		# Silicon Labs USB-RS232 serial adapter
+ucom*	at uslsa? portno ?
 
 uvscom* at uhub? port ? 	# SUNTAC Slipper U VS-10U serial adapter
 ucom*	at uvscom? portno ?
