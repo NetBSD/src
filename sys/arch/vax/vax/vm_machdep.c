@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.96 2007/05/17 14:51:34 yamt Exp $	     */
+/*	$NetBSD: vm_machdep.c,v 1.97 2007/05/20 17:04:22 mhitch Exp $	     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.96 2007/05/17 14:51:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.97 2007/05/20 17:04:22 mhitch Exp $");
 
 #include "opt_compat_ultrix.h"
 #include "opt_multiprocessor.h"
@@ -70,7 +70,7 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.96 2007/05/17 14:51:34 yamt Exp $")
  * Copy and update the pcb and trap frame, making the child ready to run.
  * 
  * Rig the child's kernel stack so that it will start out in
- * proc_trampoline() and call child_return() with p2 as an
+ * cpu_lwp_bootstrap() and call child_return() with p2 as an
  * argument. This causes the newly-created child process to go
  * directly to user level with an apparent return value of 0 from
  * fork(), while the parent process returns normally.
