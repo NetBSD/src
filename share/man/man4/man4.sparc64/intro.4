@@ -1,4 +1,4 @@
-.\"	$NetBSD: intro.4,v 1.3 2005/06/20 13:25:25 peter Exp $
+.\"	$NetBSD: intro.4,v 1.3.6.1 2007/05/20 10:31:14 jdc Exp $
 .\"
 .\" Copyright (c) 1996 Jonathan Stone.
 .\" All rights reserved.
@@ -28,7 +28,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd March 31, 2004
+.Dd May 10, 2007
 .Dt INTRO 4 sparc64
 .Os
 .Sh NAME
@@ -126,6 +126,8 @@ Sun non-volatile configuration RAM driver
 ESP200 SCSI controller
 .br
 FSBE/S (X1053A, part # 501-2015) Fast SCSI-2/Buffered Ethernet Sbus controller
+.It fdc
+Floppy Disk Controller
 .It ffb
 Creator \*[Am] Creaor3D graphics frame buffer
 .It isp
@@ -175,8 +177,8 @@ either documentation, sample hardware, or willing volunteer:
 .Bl -tag -width cgfourteenXX
 .It atifb
 ATI 3D Rage Pro VGA graphics adapter (Ultra5, Ultra10)
-.It fd
-sun4u floppy drive controllers
+.It fdc
+sun4u floppy drive controllers (EBus based machines only)
 .It cgfourteen
 24 bit Sbus color frame buffer
 .It cgthree
