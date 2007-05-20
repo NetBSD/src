@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.14 2007/05/18 10:18:26 tsutsui Exp $	*/
+/*	$NetBSD: cpu.h,v 1.15 2007/05/20 04:29:49 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -187,7 +187,7 @@ void	netintr(void);
  * more stuff here for lack of a better place.
  */
 struct pcb;
-void	proc_trampoline(void);
+void	lwp_trampoline(void);
 void	savectx(struct pcb *);
 
 #ifndef _SUN3X_

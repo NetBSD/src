@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.27 2007/05/18 10:13:25 tsutsui Exp $	*/
+/*	$NetBSD: cpu.h,v 1.28 2007/05/20 04:29:49 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -236,7 +236,7 @@ void m68881_restore(struct fpframe *);
 
 int suline(void *, void *);
 void savectx(struct pcb *);
-void proc_trampoline(void);
+void lwp_trampoline(void);
 void loadustp(int);
 void badtrap(void);
 void intrhand_vectored(void);
