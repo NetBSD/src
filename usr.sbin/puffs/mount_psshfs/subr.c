@@ -1,4 +1,4 @@
-/*      $NetBSD: subr.c,v 1.22 2007/05/20 20:06:23 pooka Exp $        */
+/*      $NetBSD: subr.c,v 1.23 2007/05/20 20:27:04 pooka Exp $        */
         
 /*      
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
         
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: subr.c,v 1.22 2007/05/20 20:06:23 pooka Exp $");
+__RCSID("$NetBSD: subr.c,v 1.23 2007/05/20 20:27:04 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -115,9 +115,13 @@ readdir_getattr_resp(struct puffs_usermount *pu,
 {
 	struct readdirattr *rda = arg;
 	struct psshfs_node *psn = rda->psn;
-	struct psshfs_node *psn_targ;
-	struct psshfs_dir *pdir;
+	struct psshfs_node *psn_targ = NULL;
+	struct psshfs_dir *pdir = NULL;
 	struct vattr va;
+
+	/* XXX: this is not enough */
+	if (psn->stat & PSN_RECLAIMED)
+		goto out;
 
 	if (error)
 		goto out;
@@ -129,7 +133,6 @@ readdir_getattr_resp(struct puffs_usermount *pu,
 	if (psbuf_expect_attrs(pb, &va))
 		goto out;
 
-	psn_targ = NULL;
 	if (pdir->entry) {
 		psn_targ = pdir->entry->pn_data;
 
@@ -144,7 +147,7 @@ readdir_getattr_resp(struct puffs_usermount *pu,
 	if (psn_targ) {
 		psn_targ->getattr_pb = NULL;
 		assert(pdir->getattr_pb == NULL);
-	} else {
+	} else if (pdir) {
 		pdir->getattr_pb = NULL;
 	}
 		
@@ -225,19 +228,22 @@ getnodeattr(struct puffs_cc *pcc, struct puffs_node *pn)
 	struct puffs_usermount *pu = puffs_cc_getusermount(pcc);
 	struct psshfs_node *psn = pn->pn_data;
 	struct vattr va;
-	int rv;
+	int rv, dohardway;
 
 	if ((time(NULL) - psn->attrread) >= PSSHFS_REFRESHIVAL) {
+		dohardway = 1;
 		if (psn->getattr_pb) {
 			rv=puffs_framev_framebuf_ccpromote(psn->getattr_pb,pcc);
-			assert(rv == 0);
+			if (rv == 0) {
+				rv = psbuf_expect_attrs(psn->getattr_pb, &va);
+				puffs_framebuf_destroy(psn->getattr_pb);
+				psn->getattr_pb = NULL;
+				if (rv == 0)
+					dohardway = 0;
+			}
+		}
 
-			rv = psbuf_expect_attrs(psn->getattr_pb, &va);
-			puffs_framebuf_destroy(psn->getattr_pb);
-			psn->getattr_pb = NULL;
-			if (rv)
-				return rv;
-		} else {
+		if (dohardway) {
 			rv = getpathattr(pcc, PNPATH(pn), &va);
 			if (rv)
 				return rv;
@@ -486,6 +492,7 @@ doreclaim(struct puffs_node *pn)
 
 	if (pn->pn_va.va_type == VDIR) {
 		freedircache(psn->dir, psn->dentnext);
+		psn->denttot = psn->dentnext = 0;
 		free(psn->da);
 	}
 
