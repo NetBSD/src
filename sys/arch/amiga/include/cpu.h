@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.64 2007/05/18 01:39:53 mhitch Exp $	*/
+/*	$NetBSD: cpu.h,v 1.65 2007/05/20 06:01:05 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -238,7 +238,7 @@ void	m68881_restore __P((struct fpframe *));
 #endif
 void	physcopyseg __P((vm_offset_t, vm_offset_t));
 u_int	probeva __P((u_int, u_int));
-void	proc_trampoline __P((void));
+void	lwp_trampoline __P((void));
 void	savectx __P((struct pcb *));
 
 /*
