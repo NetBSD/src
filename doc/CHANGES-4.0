@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.160 2007/05/17 21:30:59 jdc Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.161 2007/05/20 10:36:39 jdc Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -5490,4 +5490,32 @@ lib/libc/resolv/res_state.c			patch
 
 	Add missing BIND 9.4.x include file and library changes.
 	[tron, ticket #662]
+
+sys/arch/sparc64/dev/fdc.c			1.9-1.10 via patch
+
+	Fix floppy disk formatting by waiting for the controller
+	chip to interrupt us.
+	[jnemeth, ticket #647]
+
+share/man/man4/zstty.4				1.9-1.11
+
+	Add information about DEC 3000 serial ports.
+	[pavel, ticket #648]
+
+sys/dev/pci/azalia.c				1.43, 1.46-1.49
+sys/dev/pci/azalia.h				1.15-1.16
+sys/dev/pci/azalia_codec.c			1.28, 1.30-1.42
+
+	Fix some bugs in the Azalia support and add some codecs.
+	PR#34880, PR#35658, PR#36302.
+	[kent, ticket #649]
+
+share/man/man4/man4.sparc64/Makefile		1.4 via patch
+share/man/man4/man4.sparc64/fdc.4		1.1
+distrib/sets/lists/man/mi			1.998-1.999 via patch
+distrib/notes/sparc64/hardware			1.20-1.21
+share/man/man4/man4.sparc64/intro.4		1.4
+
+	Update the floppy disk controller documentation for sparc64.
+	[jnemeth, ticket #650]
 
