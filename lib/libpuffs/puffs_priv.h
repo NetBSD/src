@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_priv.h,v 1.10 2007/05/15 13:44:47 pooka Exp $	*/
+/*	$NetBSD: puffs_priv.h,v 1.11 2007/05/20 16:24:37 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006 Antti Kantee.  All Rights Reserved.
@@ -42,7 +42,7 @@
 struct puffs_framectrl {
 	puffs_framev_readframe_fn rfb;
 	puffs_framev_writeframe_fn wfb;
-	puffs_framev_respcmp_fn cmpfb;
+	puffs_framev_cmpframe_fn cmpfb;
 	puffs_framev_fdnotify_fn fdnotfn;
 
 	struct kevent *evs;

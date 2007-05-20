@@ -1,4 +1,4 @@
-/*	$NetBSD: framebuf.c,v 1.11 2007/05/19 11:01:21 pooka Exp $	*/
+/*	$NetBSD: framebuf.c,v 1.12 2007/05/20 16:24:37 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: framebuf.c,v 1.11 2007/05/19 11:01:21 pooka Exp $");
+__RCSID("$NetBSD: framebuf.c,v 1.12 2007/05/20 16:24:37 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -387,7 +387,7 @@ findbuf(struct puffs_usermount *pu, struct puffs_framectrl *fctrl,
 	struct puffs_framebuf *cand;
 
 	TAILQ_FOREACH(cand, &fio->res_qing, pfb_entries)
-		if (fctrl->cmpfb(pu, findme, cand))
+		if (fctrl->cmpfb(pu, findme, cand) == 0)
 			break;
 
 	if (cand == NULL)
@@ -680,7 +680,7 @@ puffs_framev_unmountonclose(struct puffs_usermount *pu, int fd, int what)
 void
 puffs_framev_init(struct puffs_usermount *pu,
 	puffs_framev_readframe_fn rfb, puffs_framev_writeframe_fn wfb,
-	puffs_framev_respcmp_fn cmpfb, puffs_framev_fdnotify_fn fdnotfn)
+	puffs_framev_cmpframe_fn cmpfb, puffs_framev_fdnotify_fn fdnotfn)
 {
 	struct puffs_framectrl *pfctrl;
 
