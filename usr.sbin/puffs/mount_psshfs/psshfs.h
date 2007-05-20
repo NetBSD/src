@@ -1,4 +1,4 @@
-/*	$NetBSD: psshfs.h,v 1.18 2007/05/20 17:47:12 pooka Exp $	*/
+/*	$NetBSD: psshfs.h,v 1.19 2007/05/20 20:06:23 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -49,9 +49,6 @@
  */
 #define PSSHFS_REFRESHIVAL 30
 
-/* warm getattr cache in readdir */
-#define SUPERREADDIR
-
 PUFFSOP_PROTOS(psshfs);
 
 #define NEXTREQ(pctx) ((pctx->nextreq)++)
@@ -80,7 +77,7 @@ do {									\
 		goto out;						\
 	}								\
 } while (/*CONSTCOND*/0)
-	
+
 #define SENDCB(pb, f, a)						\
 do {									\
 	if (puffs_framev_enqueue_cb(pu, pctx->sshfd, pb, f,a) == -1) {	\
@@ -96,6 +93,8 @@ struct psshfs_dir {
 	char *entryname;
 	struct vattr va;
 	time_t attrread;
+
+	struct puffs_framebuf *getattr_pb;
 };
 
 struct psshfs_fid {
@@ -107,13 +106,11 @@ struct psshfs_node {
 	struct puffs_node *parent;
 
 	struct psshfs_dir *dir;	/* only valid if we're of type VDIR */
-#ifdef SUPERREADDIR
 	struct delayattr {
 		struct puffs_framebuf *pufbuf;
 		struct readdirattr *rda;
 	} *da;
 	size_t nextda;
-#endif /* SUPERREADDIR */
 
 	size_t denttot;
 	size_t dentnext;
@@ -123,6 +120,7 @@ struct psshfs_node {
 	int stat;
 
 	time_t attrread;
+	struct puffs_framebuf *getattr_pb;
 
 	char *fhand_r;
 	char *fhand_w;
