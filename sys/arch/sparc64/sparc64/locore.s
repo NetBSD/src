@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.246 2007/05/20 19:18:15 martin Exp $	*/
+/*	$NetBSD: locore.s,v 1.247 2007/05/20 20:28:02 martin Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -6671,11 +6671,8 @@ ENTRY(cpu_switchto)
 	 * Load the new lwp.  To load, we must change stacks and
 	 * alter cpcb and the window control registers, hence we must
 	 * keep interrupts disabled.
-	 *
-	 * We also must load up the `in' and `local' registers.
 	 */
 
-	LDPTR	[%l7 + %lo(CURLWP)], %i0	! remember old curlwp
 	STPTR	%i1, [%l7 + %lo(CURLWP)]	! curlwp = l;
 	STPTR	%l1, [%l6 + %lo(CPCB)]		! cpcb = newpcb;
 
