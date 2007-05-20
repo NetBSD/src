@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.235 2007/05/19 23:08:48 uwe Exp $	*/
+/*	$NetBSD: locore.s,v 1.236 2007/05/20 23:09:13 macallan Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -4973,7 +4973,7 @@ ENTRY(cpu_idle)
 	tst	%o1
 	bz	1f
 	 nop
-	call	%o3
+	call	%o1
 	 nop	! CPUINFO_VA is already in %o0
 1:
 	retl
