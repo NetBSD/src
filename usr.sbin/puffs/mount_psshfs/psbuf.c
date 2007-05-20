@@ -1,4 +1,4 @@
-/*      $NetBSD: psbuf.c,v 1.8 2007/05/15 13:46:47 pooka Exp $        */
+/*      $NetBSD: psbuf.c,v 1.9 2007/05/20 16:24:37 pooka Exp $        */
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: psbuf.c,v 1.8 2007/05/15 13:46:47 pooka Exp $");
+__RCSID("$NetBSD: psbuf.c,v 1.9 2007/05/20 16:24:37 pooka Exp $");
 #endif /* !lint */
 
 /*
@@ -181,7 +181,7 @@ psbuf_cmp(struct puffs_usermount *pu,
 	struct puffs_framebuf *cmp1, struct puffs_framebuf *cmp2)
 {
 
-	return psbuf_get_reqid(cmp1) == psbuf_get_reqid(cmp2);
+	return psbuf_get_reqid(cmp1) != psbuf_get_reqid(cmp2);
 }
 
 struct puffs_framebuf *
