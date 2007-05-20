@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.h,v 1.60 2007/05/20 16:24:37 pooka Exp $	*/
+/*	$NetBSD: puffs.h,v 1.61 2007/05/20 19:56:56 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -622,6 +622,8 @@ int	puffs_framev_enqueue_cb(struct puffs_usermount *, int,
 				puffs_framev_cb, void *);
 int	puffs_framev_enqueue_justsend(struct puffs_usermount *, int,
 				      struct puffs_framebuf *, int);
+int	puffs_framev_framebuf_ccpromote(struct puffs_framebuf *,
+					struct puffs_cc *);
 
 int	puffs_framev_addfd(struct puffs_usermount *pu, int);
 int	puffs_framev_removefd(struct puffs_usermount *pu, int, int);
