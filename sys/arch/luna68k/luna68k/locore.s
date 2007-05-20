@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.24 2007/03/04 02:23:16 tsutsui Exp $ */
+/* $NetBSD: locore.s,v 1.25 2007/05/20 16:37:54 he Exp $ */
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -955,11 +955,6 @@ Ldorte:
 #include <m68k/m68k/support.s>
 
 /*
- * Use common m68k process manipulation routines.
- */
-#include <m68k/m68k/proc_subr.s>
-
-/*
  * Use common m68k process/lwp switch and context save subroutines.
  */
 #define FPCOPROC	/* XXX: Temp. Reqd. */
@@ -1206,8 +1201,6 @@ nullrp:
 
 GLOBAL(memavail)
 	.long	0
-GLOBAL(want_resched)
-	.long   0
 GLOBAL(proc0paddr)
 	.long	0
 GLOBAL(bootdev)
