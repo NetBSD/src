@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.43 2007/03/04 06:00:04 christos Exp $ */
+/* $NetBSD: trap.c,v 1.44 2007/05/20 16:37:54 he Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.43 2007/03/04 06:00:04 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.44 2007/05/20 16:37:54 he Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -529,7 +529,7 @@ trap(type, code, v, frame)
 			l->l_pflag &= ~LP_OWEUPC;
 			ADDUPROF(p);
 		}
-		if (want_resched)
+		if (curcpu()->ci_want_resched)
 			preempt();
 		goto out;
 

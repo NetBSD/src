@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.17 2007/05/20 04:29:48 mhitch Exp $ */
+/* $NetBSD: cpu.h,v 1.18 2007/05/20 16:37:53 he Exp $ */
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -96,6 +96,7 @@ struct cpu_info {
 	struct cpu_data ci_data;	/* MI per-cpu data */
 	int	ci_mtx_count;
 	int	ci_mtx_oldspl;
+	int	ci_want_resched;
 };
 
 extern struct cpu_info cpu_info_store;
@@ -138,7 +139,7 @@ struct clockframe {
  * Preempt the current process if in interrupt from user mode,
  * or after the current trap/syscall if in system mode.
  */
-#define cpu_need_resched(ci)	{ want_resched = 1; aston(); }
+#define cpu_need_resched(ci,flags)	{ ci->ci_want_resched = 1; aston(); }
 
 /*
  * Give a profiling tick to the current process when the user profiling
@@ -193,6 +194,7 @@ int	suline __P((void *, void *));
 void	savectx __P((struct pcb *));
 void	switch_exit __P((struct lwp *));
 void	switch_lwp_exit __P((struct lwp *));
+void	proc_trampoline(void);
 void	lwp_trampoline __P((void));
 void	loadustp __P((int));
 void	m68881_save __P((struct fpframe *));
