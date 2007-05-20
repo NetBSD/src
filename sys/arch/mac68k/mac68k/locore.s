@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.148 2007/03/08 02:24:40 tsutsui Exp $	*/
+/*	$NetBSD: locore.s,v 1.149 2007/05/20 15:06:40 he Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -998,11 +998,6 @@ Ldorte:
  * Use common m68k support routines.
  */
 #include <m68k/m68k/support.s>
-
-/*
- * Use common m68k process manipulation routines.
- */
-#include <m68k/m68k/proc_subr.s>
 
 /*
  * Use common m68k process/lwp switch and context save subroutines.
