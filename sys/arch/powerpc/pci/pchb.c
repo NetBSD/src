@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.1.2.2 2007/05/02 06:27:47 macallan Exp $	*/
+/*	$NetBSD: pchb.c,v 1.1.2.3 2007/05/21 16:36:58 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.1.2.2 2007/05/02 06:27:47 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.1.2.3 2007/05/21 16:36:58 nisimura Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -271,10 +271,10 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 		case PCI_PRODUCT_MOT_MPC105:
 			mpc105_print(pa, self);
 			break;
-		}
 		case PCI_PRODUCT_MOT_MPC106:
 			mpc106_print(pa, self);
 			break;
+		}
 		break;
 	}
 
