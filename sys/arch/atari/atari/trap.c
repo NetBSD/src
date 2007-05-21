@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.89 2007/05/18 22:58:52 he Exp $	*/
+/*	$NetBSD: trap.c,v 1.90 2007/05/21 15:22:22 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.89 2007/05/18 22:58:52 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.90 2007/05/21 15:22:22 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -387,8 +387,6 @@ trap(type, code, v, frame)
 	KSI_INIT_TRAP(&ksi);
 	ksi.ksi_trap = type & ~T_USER;
 
-	if (l == NULL)
-		l = &lwp0;
 	p = l->l_proc;
 
 #ifdef DIAGNOSTIC
