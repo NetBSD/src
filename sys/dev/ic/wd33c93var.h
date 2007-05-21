@@ -1,4 +1,4 @@
-/*	$NetBSD: wd33c93var.h,v 1.6 2007/05/08 00:20:15 rumble Exp $	*/
+/*	$NetBSD: wd33c93var.h,v 1.7 2007/05/21 19:25:55 rumble Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -222,6 +222,11 @@ struct wd33c93_softc {
 #define	SBIC_CHIP_WD33C93B	3
 
 #define SBIC_CHIP_LIST		{"UNKNOWN", "WD33C93", "WD33C93A", "WD33C93B"}
+
+/* macros for sc_cfflags */
+#define CFFLAGS_NODISC(_cf, _t) ((_cf) & (1 << ( 0 + (_t))))
+#define CFFLAGS_NOSYNC(_cf, _t) ((_cf) & (1 << ( 8 + (_t))))
+#define CFFLAGS_NOTAGS(_cf, _t) ((_cf) & (1 << (16 + (_t))))
 
 /*
  * States returned by our state machine
