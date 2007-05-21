@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.35 2007/05/21 15:06:18 tsutsui Exp $	*/
+/*	$NetBSD: cpu.h,v 1.36 2007/05/21 15:55:43 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -153,7 +153,6 @@ extern volatile unsigned int interrupt_depth;
  * Preempt the current process if in interrupt from user mode,
  * or after the current trap/syscall if in system mode.
  */
-extern int want_resched; 	/* resched() was called */
 #define	cpu_need_resched(ci, flags)	\
 	do { ci->ci_want_resched = 1; aston(); } while (/* CONSTCOND */0)
 
@@ -173,7 +172,6 @@ extern int want_resched; 	/* resched() was called */
 #define aston() (astpending++)
 
 extern	int	astpending;	/* need to trap before returning to user mode */
-extern	int	want_resched;	/* resched() was called */
 
 extern	void (*vectab[])(void);
 
