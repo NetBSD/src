@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.37 2007/05/21 15:06:17 tsutsui Exp $	*/
+/*	$NetBSD: cpu.h,v 1.38 2007/05/21 16:37:03 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -225,24 +225,13 @@ extern	u_int intiobase_phys, intiotop_phys;
 extern	u_long ether_data_buff_size;
 extern	u_char mvme_ea[6];
 
-struct frame;
-struct pcb;
 void	doboot __P((int)) 
 	__attribute__((__noreturn__));
 int	nmihand __P((void *));
 void	mvme68k_abort __P((const char *));
-void	physaccess __P((void *, void *, int, int));
-void	physunaccess __P((void *, int));
 void	*iomap __P((u_long, size_t));
 void	iounmap __P((void *, size_t));
-int	kvtop __P((void *));
-void	savectx __P((struct pcb *));
-void	lwp_trampoline __P((void));
 void	loadustp __P((paddr_t));
-
-/* Prototypes from sys_machdep.c: */
-int	cachectl1 __P((unsigned long, vaddr_t, size_t, struct proc *));
-int	dma_cachectl __P((void *, int));
 
 /* physical memory addresses where mvme147's onboard devices live */
 #define	INTIOBASE147	(0xfffe0000u)

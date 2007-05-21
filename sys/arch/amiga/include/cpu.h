@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.65 2007/05/20 06:01:05 mhitch Exp $	*/
+/*	$NetBSD: cpu.h,v 1.66 2007/05/21 16:37:03 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -227,7 +227,6 @@ void	drsc_handler __P((void));
  */
 struct fpframe;
 struct user;
-struct pcb;
 
 void	clearseg __P((vm_offset_t));
 void	doboot __P((void)) __attribute__((__noreturn__));
@@ -238,8 +237,6 @@ void	m68881_restore __P((struct fpframe *));
 #endif
 void	physcopyseg __P((vm_offset_t, vm_offset_t));
 u_int	probeva __P((u_int, u_int));
-void	lwp_trampoline __P((void));
-void	savectx __P((struct pcb *));
 
 /*
  * Prototypes from machdep.c
@@ -247,21 +244,6 @@ void	savectx __P((struct pcb *));
 int	badaddr __P((void *));
 int	badbaddr __P((void *));
 void	bootsync __P((void));
-void	dumpconf __P((void));
-
-/*
- * Prototypes from sys_machdep.c:
- */
-int	cachectl1 __P((unsigned long, vaddr_t, size_t, struct proc *));
-int	dma_cachectl __P((void *, int));
-
-/*
- * Prototypes from vm_machdep.c
- */
-int	kvtop __P((void *));
-void	physaccess __P((void *,  void *, int, int));
-void	physunaccess __P((void *, int));
-void	setredzone __P((u_int *, void *));
 
 /*
  * Prototypes from pmap.c:
