@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_lockdebug.c,v 1.6 2007/05/02 14:07:03 yamt Exp $	*/
+/*	$NetBSD: subr_lockdebug.c,v 1.7 2007/05/21 11:56:35 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.6 2007/05/02 14:07:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.7 2007/05/21 11:56:35 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -225,7 +225,7 @@ lockdebug_alloc(volatile void *lock, lockops_t *lo)
 	/*
 	 * Pinch a new debug structure.  We may recurse because we call
 	 * kmem_alloc(), which may need to initialize new locks somewhere
-	 * down the path.  If not recursing, we try to maintain at keep
+	 * down the path.  If not recursing, we try to maintain at least
 	 * LD_SLOP structures free, which should hopefully be enough to
 	 * satisfy kmem_alloc().  If we can't provide a structure, not to
 	 * worry: we'll just mark the lock as not having an ID.
