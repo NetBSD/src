@@ -1,4 +1,4 @@
-.\"	$NetBSD: cpu_switchto.9,v 1.6 2007/04/21 17:52:09 yamt Exp $
+.\"	$NetBSD: cpu_switchto.9,v 1.7 2007/05/21 02:30:47 yamt Exp $
 .\"
 .\" Copyright (c)2007 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\" ------------------------------------------------------------
-.Dd April 18, 2007
+.Dd May 21, 2007
 .Dt CPU_SWITCHTO 9
 .Os
 .\" ------------------------------------------------------------
@@ -84,10 +84,16 @@ It must not be
 does not return until another LWP calls
 .Fn cpu_switchto
 to switch to us.
-It returns an lwp from which we have been switched, i.e.,
-an LWP which called
+It returns the
+.Dv oldlwp
+argument of the
+.Fn cpu_switchto
+which is called to switch back to our LWP.
+It's either an LWP which called
 .Fa cpu_switchto
-to switch to us.
+to switch to us or
+.Dv NULL
+in the case that the LWP was exiting.
 .\" ------------------------------------------------------------
 .Sh SEE ALSO
 .Xr swapcontext 3 ,
