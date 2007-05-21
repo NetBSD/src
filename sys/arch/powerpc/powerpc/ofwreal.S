@@ -1,4 +1,4 @@
-/*	$NetBSD: ofwreal.S,v 1.9 2007/01/14 22:11:27 aymeric Exp $	*/
+/*	$NetBSD: ofwreal.S,v 1.10 2007/05/21 02:48:00 simonb Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -141,7 +141,7 @@ fwentry:
 	blr
 
 /*
- * Save everyting related to the mmu to the saveare pointed to by r3.
+ * Save everything related to the mmu to the saveare pointed to by r3.
  */
 savemmu:
 
