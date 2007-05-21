@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.123 2007/05/13 19:51:35 dsl Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.124 2007/05/21 15:35:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.123 2007/05/13 19:51:35 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.124 2007/05/21 15:35:48 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/resourcevar.h>
@@ -676,7 +676,7 @@ timer_create1(timer_t *tid, clockid_t id, struct sigevent *evp,
 	pt->pt_info.ksi_code = 0;
 	pt->pt_info.ksi_pid = p->p_pid;
 	pt->pt_info.ksi_uid = kauth_cred_getuid(l->l_cred);
-	pt->pt_info.ksi_sigval = pt->pt_ev.sigev_value;
+	pt->pt_info.ksi_value = pt->pt_ev.sigev_value;
 
 	pt->pt_type = id;
 	pt->pt_proc = p;
@@ -1391,7 +1391,7 @@ itimerfire(struct ptimer *pt)
 			KSI_INIT(&ksi);
 			ksi.ksi_signo = pt->pt_ev.sigev_signo;
 			ksi.ksi_code = SI_TIMER;
-			ksi.ksi_sigval = pt->pt_ev.sigev_value;
+			ksi.ksi_value = pt->pt_ev.sigev_value;
 			pt->pt_poverruns = pt->pt_overruns;
 			pt->pt_overruns = 0;
 			mutex_enter(&proclist_mutex);

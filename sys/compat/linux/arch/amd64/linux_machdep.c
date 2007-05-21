@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.21 2007/03/14 21:52:17 manu Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.22 2007/05/21 15:35:47 christos Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.21 2007/03/14 21:52:17 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.22 2007/05/21 15:35:47 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -272,7 +272,7 @@ linux_sendsig(ksi, mask)
 		if ((sigframe.info.lsi_signo == LINUX_SIGALRM) ||
 		    (sigframe.info.lsi_signo >= LINUX_SIGRTMIN))
 			sigframe.info._sifields._timer._sigval.sival_ptr =
-			     ksi->ksi_sigval.sival_ptr;
+			     ksi->ksi_value.sival_ptr;
 		break;
 	}
 
