@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.34 2007/05/20 04:29:49 mhitch Exp $	*/
+/*	$NetBSD: cpu.h,v 1.35 2007/05/21 15:06:18 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -107,6 +107,7 @@ struct cpu_info {
 	struct cpu_data ci_data;	/* MI per-cpu data */
 	int	ci_mtx_count;
         int	ci_mtx_oldspl;
+	int	ci_want_resched;
 };
 
 extern struct cpu_info cpu_info_store;
@@ -153,7 +154,8 @@ extern volatile unsigned int interrupt_depth;
  * or after the current trap/syscall if in system mode.
  */
 extern int want_resched; 	/* resched() was called */
-#define	cpu_need_resched(ci)	{ want_resched = 1; aston(); }
+#define	cpu_need_resched(ci, flags)	\
+	do { ci->ci_want_resched = 1; aston(); } while (/* CONSTCOND */0)
 
 /*
  * Give a profiling tick to the current process when the user profiling
@@ -185,8 +187,6 @@ void	m68881_restore(struct fpframe *);
 
 int	suline(void *, void *);
 void	savectx(struct pcb *);
-void	switch_exit(struct lwp *);
-void	switch_lwp_exit(struct lwp *);
 void	lwp_trampoline(void);
 void	loadustp(int);
 
