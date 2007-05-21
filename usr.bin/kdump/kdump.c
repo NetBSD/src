@@ -1,4 +1,4 @@
-/*	$NetBSD: kdump.c,v 1.90 2007/03/19 18:51:09 njoly Exp $	*/
+/*	$NetBSD: kdump.c,v 1.91 2007/05/21 19:29:44 dogcow Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: kdump.c,v 1.90 2007/03/19 18:51:09 njoly Exp $");
+__RCSID("$NetBSD: kdump.c,v 1.91 2007/05/21 19:29:44 dogcow Exp $");
 #endif
 #endif /* not lint */
 
@@ -872,7 +872,7 @@ ktrpsig(void *v, int len)
 			switch (si->si_code) {
 			case SI_TIMER:
 				printf(": code=SI_TIMER sigval %p)\n",
-				    si->si_sigval.sival_ptr);
+				    si->si_value.sival_ptr);
 				return;
 			case SI_QUEUE:
 				code = "SI_QUEUE";
