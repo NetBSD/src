@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.315 2007/05/19 22:11:23 christos Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.316 2007/05/21 18:30:35 dsl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.315 2007/05/19 22:11:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.316 2007/05/21 18:30:35 dsl Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -881,7 +881,7 @@ sys_fstatvfs1(struct lwp *l, void *v, register_t *retval)
 
 	sb = STATVFSBUF_GET();
 	error = do_sys_fstatvfs(l, SCARG(uap, fd), SCARG(uap, flags), sb);
-	if (error != 0)
+	if (error == 0)
 		error = copyout(sb, SCARG(uap, buf), sizeof(*sb));
 	STATVFSBUF_PUT(sb);
 	return error;
