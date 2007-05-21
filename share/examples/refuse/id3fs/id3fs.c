@@ -192,7 +192,8 @@ build_id3_tree(DB *db, virtdir_t *tp)
 		/* add the symbolic link in that directory */
 		(void) snprintf(name, sizeof(name), "%s/%s/%s", d, val, slash);
 		if (!virtdir_find(tp, name, strlen(name))) {
-			virtdir_add(tp, name, strlen(name), 'l', key + 1);
+			virtdir_add(tp, name, strlen(name), 'l', key + 1,
+				strlen(key + 1));
 		}
 	}
 }
@@ -220,5 +221,5 @@ main(int argc, char **argv)
 		warn("null id3 database");
 	}
 	build_id3_tree(db, &id3);
-	return fuse_main(argc, argv, &id3fs_oper);
+	return fuse_main(argc, argv, &id3fs_oper, NULL);
 }
