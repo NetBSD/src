@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.125 2007/05/10 21:30:14 christos Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.126 2007/05/21 15:35:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.125 2007/05/10 21:30:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.126 2007/05/21 15:35:47 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -338,7 +338,7 @@ linux_rt_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 		lsi->lsi_pid = ksi->ksi_pid;
 		if (lsi->lsi_signo == LINUX_SIGALRM ||
 		    lsi->lsi_signo >= LINUX_SIGRTMIN)
-			lsi->lsi_value.sival_ptr = ksi->ksi_sigval.sival_ptr;
+			lsi->lsi_value.sival_ptr = ksi->ksi_value.sival_ptr;
 		break;
 	}
 

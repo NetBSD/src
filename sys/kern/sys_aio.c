@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_aio.c,v 1.2 2007/05/17 14:51:41 yamt Exp $	*/
+/*	$NetBSD: sys_aio.c,v 1.3 2007/05/21 15:35:48 christos Exp $	*/
 
 /*
  * Copyright (c) 2007, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_aio.c,v 1.2 2007/05/17 14:51:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_aio.c,v 1.3 2007/05/21 15:35:48 christos Exp $");
 
 #include <sys/param.h>
 
@@ -401,7 +401,7 @@ aio_sendsig(struct proc *p, struct sigevent *sig)
 	KSI_INIT(&ksi);
 	ksi.ksi_signo = sig->sigev_signo;
 	ksi.ksi_code = SI_ASYNCIO;
-	ksi.ksi_sigval = sig->sigev_value;
+	ksi.ksi_value = sig->sigev_value;
 	mutex_enter(&proclist_mutex);
 	kpsignal(p, &ksi, NULL);
 	mutex_exit(&proclist_mutex);

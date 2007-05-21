@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_signal.c,v 1.23 2007/03/18 21:38:34 dsl Exp $	*/
+/*	$NetBSD: netbsd32_signal.c,v 1.24 2007/05/21 15:35:48 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_signal.c,v 1.23 2007/03/18 21:38:34 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_signal.c,v 1.24 2007/05/21 15:35:48 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -248,7 +248,7 @@ netbsd32_si32_to_si(siginfo_t *si, const siginfo32_t *si32)
 		/*
 		 * XXX sival_ptr is currently unused.
 		 */
-		si->si_sigval.sival_int = si32->si_sigval.sival_int;
+		si->si_value.sival_int = si32->si_value.sival_int;
 		break;
 	case SIGCHLD:
 		si->si_pid = si32->si_pid;
@@ -275,7 +275,7 @@ netbsd32_si_to_si32(siginfo32_t *si32, const siginfo_t *si)
 
 	switch (si32->si_signo) {
 	case 0:	/* SA */
-		si32->si_sigval.sival_int = si->si_sigval.sival_int;
+		si32->si_value.sival_int = si->si_value.sival_int;
 		break;
 	case SIGILL:
 	case SIGBUS:
@@ -293,7 +293,7 @@ netbsd32_si_to_si32(siginfo32_t *si32, const siginfo_t *si)
 		/*
 		 * XXX sival_ptr is currently unused.
 		 */
-		si32->si_sigval.sival_int = si->si_sigval.sival_int;
+		si32->si_value.sival_int = si->si_value.sival_int;
 		break;
 	case SIGCHLD:
 		si32->si_pid = si->si_pid;
