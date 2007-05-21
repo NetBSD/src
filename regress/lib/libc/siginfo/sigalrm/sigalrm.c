@@ -1,4 +1,4 @@
-/* $NetBSD: sigalrm.c,v 1.5 2007/05/21 20:02:40 christos Exp $ */
+/* $NetBSD: sigalrm.c,v 1.6 2007/05/21 20:18:01 dogcow Exp $ */
 
 #include <sys/time.h>
 #include <sys/ucontext.h>
