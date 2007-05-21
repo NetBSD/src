@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.85 2007/05/21 15:34:22 tsutsui Exp $	*/
+/*	$NetBSD: cpu.h,v 1.86 2007/05/21 16:37:03 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -345,9 +345,7 @@ extern	unsigned long		load_addr;
 
 #ifdef _KERNEL
 
-struct frame;
 struct fpframe;
-struct pcb;
 
 /* machdep.c */
 void	mac68k_set_bell_callback(int (*)(void *, int, int, int), void *);
@@ -358,17 +356,7 @@ u_int	get_mapping(void);
 void	m68881_save(struct fpframe *);
 void	m68881_restore(struct fpframe *);
 int	suline(void *, void *);
-void	savectx(struct pcb *);
-void	lwp_trampoline(void);
 void	loadustp(int);
-
-/* sys_machdep.c */
-int	cachectl1(unsigned long, vaddr_t, size_t, struct proc *);
-
-/* vm_machdep.c */
-void	physaccess(void *, void *, int, int);
-void	physunaccess(void *, int);
-int	kvtop(void *);
 
 #endif
 
