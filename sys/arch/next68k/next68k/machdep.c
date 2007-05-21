@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.80 2007/03/05 12:50:17 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.81 2007/05/21 15:06:19 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1998 Darrin B. Jewell
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.80 2007/03/05 12:50:17 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.81 2007/05/21 15:06:19 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -536,7 +536,7 @@ cpu_reboot(int howto, char *bootstr)
 	(void)&howto;
 #endif
 	/* take a snap shot before clobbering any registers */
-	if (curlwp && curlwp->l_addr)
+	if (curlwp->l_addr)
 		savectx(&curlwp->l_addr->u_pcb);
 
 	/* If system is cold, just halt. */
