@@ -1,4 +1,4 @@
-/* $NetBSD: sigalrm.c,v 1.4 2006/05/10 19:07:22 mrg Exp $ */
+/* $NetBSD: sigalrm.c,v 1.5 2007/05/21 20:02:40 christos Exp $ */
 
 #include <sys/time.h>
 #include <sys/ucontext.h>
@@ -17,7 +17,7 @@ sigalrm(int signo, siginfo_t *info, void *ptr)
 		printf("si_signo=%d\n", info->si_signo);
 		printf("si_errno=%d\n", info->si_errno);
 		printf("si_code=%d\n", info->si_code);
-		printf("si_sigval.sival_int=%d\n", info->si_sigval.sival_int);
+		printf("si_value.sival_int=%d\n", info->si_value.sival_int);
 	}
 	if (ptr != NULL) {
 		ucontext_t *ctx = ptr;
@@ -39,7 +39,7 @@ sigalrm(int signo, siginfo_t *info, void *ptr)
 #endif
 	assert(info->si_signo == SIGALRM);
 	assert(info->si_code == SI_TIMER);
-	assert(info->si_sigval.sival_int == ITIMER_REAL);
+	assert(info->si_value.sival_int == ITIMER_REAL);
 	exit(0);
 }
 
