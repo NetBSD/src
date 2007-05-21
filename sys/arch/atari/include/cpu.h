@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.56 2007/05/21 15:34:22 tsutsui Exp $	*/
+/*	$NetBSD: cpu.h,v 1.57 2007/05/21 16:37:03 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -231,22 +231,10 @@ const char *fpu_describe __P((int));
 int	fpu_probe __P((void));
 
 /*
- * Prototypes from vm_machdep.c
- */
-int	badbaddr __P((void *, int));
-void	consinit __P((void));
-void	dumpconf __P((void));
-int	kvtop __P((void *));
-void	physaccess __P((void *, void *, int, int));
-void	physunaccess __P((void *, int));
-void	setredzone __P((u_int *, void *));
-
-/*
  * Prototypes from locore.s
  */
 struct fpframe;
 struct user;
-struct pcb;
 
 void	clearseg __P((paddr_t));
 void	doboot __P((void));
@@ -255,13 +243,13 @@ void	m68881_save __P((struct fpframe *));
 void	m68881_restore __P((struct fpframe *));
 void	physcopyseg __P((paddr_t, paddr_t));
 u_int	probeva __P((u_int, u_int));
-void	lwp_trampoline __P((void));
-void	savectx __P((struct pcb *));
 int	suline __P((void *, void *));
 
 /*
  * Prototypes from machdep.c:
  */
+int	badbaddr __P((void *, int));
+void	consinit __P((void));
 typedef void (*si_farg)(void *, void *);	/* XXX */
 void	init_sicallback __P((void));		/* XXX */
 void	add_sicallback __P((si_farg, void *, void *));
@@ -275,12 +263,6 @@ vaddr_t reserve_dumppages __P((vaddr_t));
  */
 struct uio;
 int	nvram_uio __P((struct uio *));
-
-/*
- * Prototypes from sys_machdep.c:
- */
-int	cachectl1 __P((unsigned long, vaddr_t, size_t, struct proc *));
-int	dma_cachectl __P((void *, int));
 
 /*
  * Prototypes from pci_machdep.c
