@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.15 2007/05/21 16:25:15 tsutsui Exp $	*/
+/*	$NetBSD: isr.c,v 1.16 2007/05/21 17:00:32 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.15 2007/05/21 16:25:15 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.16 2007/05/21 17:00:32 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -141,8 +141,10 @@ isr_autovec(struct clockframe cf)
 	int n, ipl, vec;
 
 	vec = (cf.cf_vo & 0xFFF) >> 2;
+#ifdef DIAGNOSTIC
 	if ((vec < AUTOVEC_BASE) || (vec >= (AUTOVEC_BASE + NUM_LEVELS)))
 		panic("isr_autovec: bad vec");
+#endif
 	ipl = vec - AUTOVEC_BASE;
 
 	n = intrcnt[ipl];
@@ -214,10 +216,12 @@ isr_vectored(struct clockframe cf)
 	intrcnt[ipl]++;
 	uvmexp.intrs++;
 
+#ifdef DIAGNOSTIC
 	if (vec < 64 || vec >= 256) {
 		printf("isr_vectored: vector=0x%x (invalid)\n", vec);
 		goto out;
 	}
+#endif
 	vh = &isr_vector_handlers[vec - 64];
 	if (vh->func == NULL) {
 		printf("isr_vectored: vector=0x%x (nul func)\n", vec);
