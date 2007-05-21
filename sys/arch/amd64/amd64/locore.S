@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.23 2007/05/19 20:20:47 fvdl Exp $	*/
+/*	$NetBSD: locore.S,v 1.24 2007/05/21 08:10:38 fvdl Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -843,6 +843,8 @@ IDTVEC(syscall)
 	movq	CPUVAR(SCRATCH),%r15
 	subq	$32,%rsp
 	INTR_SAVE_GPRS
+	movw	%fs,TF_FS(%rsp)
+	movw	%gs,TF_GS(%rsp)
 	movw	%es,TF_ES(%rsp)
 	movw	$(LSEL(LUDATA_SEL, SEL_UPL)),TF_DS(%rsp)
 	movq	%r11, TF_RFLAGS(%rsp)	/* old rflags from syscall insn */
@@ -883,6 +885,8 @@ syscall_return:
 	cli
 	swapgs
 	movw	TF_ES(%rsp),%es
+	movw	TF_FS(%rsp),%fs
+	movw	TF_GS(%rsp),%gs
 	INTR_RESTORE_GPRS
 	movw	$(LSEL(LUDATA_SEL, SEL_UPL)),%r11
 	movw	%r11,%ds

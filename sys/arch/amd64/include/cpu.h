@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.23 2007/05/17 14:51:15 yamt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.24 2007/05/21 08:10:39 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -250,7 +250,6 @@ void	cpu_reset(void);
 void	x86_64_proc0_tss_ldt_init(void);
 void	x86_64_init_pcb_tss_ldt(struct cpu_info *);
 void	cpu_proc_fork(struct proc *, struct proc *);
-void	load_fsgs32(uint16_t, uint16_t);
 
 struct region_descriptor;
 void	lgdt(struct region_descriptor *);

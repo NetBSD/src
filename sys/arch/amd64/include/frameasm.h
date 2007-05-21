@@ -1,4 +1,4 @@
-/*	$NetBSD: frameasm.h,v 1.3 2007/05/11 14:01:46 fvdl Exp $	*/
+/*	$NetBSD: frameasm.h,v 1.4 2007/05/21 08:10:39 fvdl Exp $	*/
 
 #ifndef _AMD64_MACHINE_FRAMEASM_H
 #define _AMD64_MACHINE_FRAMEASM_H
@@ -52,6 +52,8 @@
 	testq	$SEL_UPL,56(%rsp)	; \
 	je	98f			; \
 	swapgs				; \
+	movw	%gs,0(%rsp)		; \
+	movw	%fs,8(%rsp)		; \
 	movw	%es,16(%rsp)		; \
 	movw	%ds,24(%rsp)		; \
 98: 	INTR_SAVE_GPRS
@@ -62,6 +64,8 @@
 	je	99f			; \
 	cli				; \
 	swapgs				; \
+	movw	0(%rsp),%gs		; \
+	movw	8(%rsp),%fs		; \
 	movw	16(%rsp),%es		; \
 	movw	24(%rsp),%ds		; \
 99:	addq	$48,%rsp		; \
