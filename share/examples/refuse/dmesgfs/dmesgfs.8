@@ -1,0 +1,96 @@
+.\"
+.\" Copyright © 2007 Alistair Crooks.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. The name of the author may not be used to endorse or promote
+.\"    products derived from this software without specific prior written
+.\"    permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
+.\" OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+.\" WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
+.\" DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+.\" GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+.\" WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+.\" NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+.\" SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd May 16, 2007
+.Dt DMESGFS 8
+.Os
+.Sh NAME
+.Nm dmesgfs
+.Nd refuse-based virtual file system to display devices found in dmesg
+.Sh SYNOPSIS
+.Nm
+.Op Fl f
+.Op Fl l
+.Op Fl n Ar nexus
+.Op Fl v
+.Ar mount_point
+.Sh DESCRIPTION
+The
+.Nm
+utility can be used to mount a virtual file system which
+shows the tree of devices present in the computer.
+This tree is found by using the output of the
+.Xr dmesg 8
+command.
+.Pp
+The following arguments can be used:
+.Bl -tag -width Ds
+.It Fl f
+present the attachment information in the virtual file system
+as files.
+.It Fl l
+present the attachment information in the virtual file system
+as symbolic links.
+This is the default mode of operation.
+.It Fl n Ar nexus
+Use the nexus name
+as the root of the device tree.
+The default value for Nexus is
+.Dq mainbus0 .
+.It Fl v
+Produce verbose output
+.El
+.Pp
+The 
+.Nm
+utility makes use of the
+.Xr virtdir 3
+virtual directory routines.
+.Pp
+The
+.Xr refuse 3
+library is used to provide the file system features.
+.Pp
+The mandatory parameter is
+the local mount
+point.
+.Pp
+The
+.Xr dmesg 8
+utility is used to retrieve the information.
+.Sh SEE ALSO
+.Xr librefuse 3 ,
+.Xr puffs 3 ,
+.Xr virtdir 3 ,
+.Xr dmesg 8 .
+.Sh HISTORY
+The
+.Nm
+utility first appeared in
+.Nx 5.0 .
+.Sh AUTHORS
+.An Alistair Crooks Aq agc@NetBSD.org
