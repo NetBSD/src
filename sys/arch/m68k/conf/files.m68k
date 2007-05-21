@@ -1,11 +1,10 @@
-#	$NetBSD: files.m68k,v 1.39 2007/05/21 16:51:13 tsutsui Exp $
+#	$NetBSD: files.m68k,v 1.40 2007/05/21 16:54:00 tsutsui Exp $
 #
 
 defflag	opt_fpsp.h		FPSP
 defflag				FPU_EMULATE
 defflag				PMAP_DEBUG
 
-file	arch/m68k/m68k/bcopy.s
 file	arch/m68k/m68k/copy.s
 file	arch/m68k/m68k/copypage.s
 file	arch/m68k/m68k/db_disasm.c		ddb
