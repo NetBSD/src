@@ -1,4 +1,4 @@
-/*	$NetBSD: psshfs.c,v 1.27 2007/05/17 14:13:05 pooka Exp $	*/
+/*	$NetBSD: psshfs.c,v 1.28 2007/05/21 08:55:04 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: psshfs.c,v 1.27 2007/05/17 14:13:05 pooka Exp $");
+__RCSID("$NetBSD: psshfs.c,v 1.28 2007/05/21 08:55:04 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -53,6 +53,7 @@ __RCSID("$NetBSD: psshfs.c,v 1.27 2007/05/17 14:13:05 pooka Exp $");
 #include <err.h>
 #include <errno.h>
 #include <mntopts.h>
+#include <paths.h>
 #include <poll.h>
 #include <puffs.h>
 #include <signal.h>
@@ -226,6 +227,7 @@ pssh_connect(struct psshfs_ctx *pctx, char **sshargs)
 {
 	int fds[2];
 	pid_t pid;
+	int dnfd;
 
 	if (socketpair(AF_UNIX, SOCK_STREAM, 0, fds) == -1)
 		err(1, "socketpair");
@@ -242,6 +244,11 @@ pssh_connect(struct psshfs_ctx *pctx, char **sshargs)
 			err(1, "child dup2");
 		close(fds[0]);
 		close(fds[1]);
+
+		dnfd = open(_PATH_DEVNULL, O_RDWR);
+		if (dnfd != -1)
+			dup2(dnfd, STDERR_FILENO);
+
 		execvp(sshargs[0], sshargs);
 		break;
 	default:
