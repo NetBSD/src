@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.87.4.5 2007/05/18 02:07:13 simonb Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.87.4.6 2007/05/21 11:52:12 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include "opt_ktrace.h"
 #include "opt_multiprocessor.h"
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.87.4.5 2007/05/18 02:07:13 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.87.4.6 2007/05/21 11:52:12 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -922,7 +922,6 @@ sys_sa_preempt(struct lwp *l, void *v, register_t *retval)
 		syscallarg(int) sa_id;
 	} */ *uap = v;
 	struct sadata		*sa = l->l_proc->p_sa;
-	struct sadata_vp	*qvp = l->l_savp;
 	struct lwp		*t;
 	int			target, s, error;
 
@@ -941,13 +940,13 @@ sys_sa_preempt(struct lwp *l, void *v, register_t *retval)
 
 	SCHED_LOCK(s);
 
-	LIST_FOREACH(t, &p->p_lwps, l_sibling)
+	LIST_FOREACH(t, &l->l_proc->p_lwps, l_sibling)
 		if (t->l_lid == target)
 			break;
 
 	if (t == NULL) {
 		error = ESRCH;
-		goto exit;
+		goto exit_lock;
 	}
 
 	/* XXX WRS We really need all of this locking documented */
