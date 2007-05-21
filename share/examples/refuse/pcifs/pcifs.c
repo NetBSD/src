@@ -170,7 +170,7 @@ build_tree(virtdir_t *tp, int bus)
 			continue;
 		}
 		cc = snprintf(name, sizeof(name), "/%.*s", (int)(cp - buf), buf);
-		virtdir_add(tp, name, cc, 'l', cp + 1);
+		virtdir_add(tp, name, cc, 'l', cp + 1, strlen(cp + 1));
 		if (verbose) {
 			printf("pcifs: adding symbolic link `%s' -> `%s'\n", name, cp + 1);
 		}
