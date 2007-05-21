@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.84 2007/05/20 04:29:48 mhitch Exp $	*/
+/*	$NetBSD: cpu.h,v 1.85 2007/05/21 15:34:22 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -359,8 +359,6 @@ void	m68881_save(struct fpframe *);
 void	m68881_restore(struct fpframe *);
 int	suline(void *, void *);
 void	savectx(struct pcb *);
-void	switch_exit(struct lwp *);
-void	switch_lwp_exit(struct lwp *);
 void	lwp_trampoline(void);
 void	loadustp(int);
 
