@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.55 2007/05/20 04:29:47 mhitch Exp $	*/
+/*	$NetBSD: cpu.h,v 1.56 2007/05/21 15:34:22 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -258,8 +258,6 @@ u_int	probeva __P((u_int, u_int));
 void	lwp_trampoline __P((void));
 void	savectx __P((struct pcb *));
 int	suline __P((void *, void *));
-void	switch_exit __P((struct lwp *));
-void	switch_lwp_exit __P((struct lwp *));
 
 /*
  * Prototypes from machdep.c:
