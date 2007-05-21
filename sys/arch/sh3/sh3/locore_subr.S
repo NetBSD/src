@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.35 2007/05/17 14:51:28 yamt Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.36 2007/05/21 14:05:02 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 #include <sh3/mmu_sh3.h>
 #include <sh3/mmu_sh4.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore_subr.S,v 1.35 2007/05/17 14:51:28 yamt Exp $")
+__KERNEL_RCSID(0, "$NetBSD: locore_subr.S,v 1.36 2007/05/21 14:05:02 tsutsui Exp $")
 
 
 /*
@@ -84,7 +84,7 @@ __KERNEL_RCSID(0, "$NetBSD: locore_subr.S,v 1.35 2007/05/17 14:51:28 yamt Exp $"
 	.text
 	.align 5	/* align cache line size (32B) */
 /*
- * LINTSTUB: Func: void cpu_switchto(struct lwp *olwp, struct lwp *nlwp)
+ * LINTSTUB: Func: struct lwp *cpu_switchto(struct lwp *olwp, struct lwp *nlwp)
  *	Switch to the specified LWP.
  */
 ENTRY(cpu_switchto)
