@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.149 2007/05/20 15:06:40 he Exp $	*/
+/*	$NetBSD: locore.s,v 1.150 2007/05/21 15:19:17 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -340,7 +340,8 @@ Lloaddone:
 /* set kernel stack, user SP, lwp0, and initial pcb */
 	movl	_C_LABEL(proc0paddr),%a1 | get proc0 pcb addr
 	lea	%a1@(USPACE-4),%sp	| set kernel stack to end of area
-	lea	_C_LABEL(lwp0),%a2	| initialize lwp0.l_addr so that
+	lea	_C_LABEL(lwp0),%a2	| initialize lwp0.l_addr
+	movl	%a2,_C_LABEL(curlwp)	|   and curlwp so that
 	movl	%a1,%a2@(L_ADDR)	|   we don't deref NULL in trap()
 	movl	#USRSTACK-4,%a2
 	movl	%a2,%usp		| init %USP
