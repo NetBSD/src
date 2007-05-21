@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.14 2007/03/12 02:51:03 thorpej Exp $	*/
+/*	$NetBSD: isr.c,v 1.15 2007/05/21 16:25:15 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.14 2007/03/12 02:51:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.15 2007/05/21 16:25:15 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,6 +80,7 @@ struct isr {
 struct softintr_head soft_level_heads[_IPL_NSOFT];
 void *softnet_cookie;
 static int softintr_handler(void *);
+static void netintr(void);
 
 void set_vector_entry(int, void *);
 void *get_vector_entry(int);

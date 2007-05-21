@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.15 2007/05/20 04:29:49 mhitch Exp $	*/
+/*	$NetBSD: cpu.h,v 1.16 2007/05/21 16:25:14 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -176,12 +176,6 @@ extern int astpending;	 /* need to trap before returning to user mode */
 void	fb_unblank(void);
 
 int	cachectl1(unsigned long, vaddr_t, size_t, struct proc *);
-
-/*
- * This is needed by sun68k/isr.c.  It's here for lack of a 
- * better place.
- */
-void	netintr(void);
 
 /*
  * more stuff here for lack of a better place.
