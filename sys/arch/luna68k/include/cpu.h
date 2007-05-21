@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.20 2007/05/21 15:34:22 tsutsui Exp $ */
+/* $NetBSD: cpu.h,v 1.21 2007/05/21 15:54:58 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -157,7 +157,6 @@ struct clockframe {
 #define aston()		(astpending = 1)
 
 extern int	astpending;	/* need to trap before returning to user mode */
-extern int	want_resched;	/* resched() was called */
 
 #endif /* _KERNEL */
 
