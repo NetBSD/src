@@ -1,4 +1,4 @@
-/*	 $NetBSD: wcsftime.c,v 1.2 2006/10/04 14:19:16 tnozaki Exp $	*/
+/*	 $NetBSD: wcsftime.c,v 1.3 2007/05/21 15:32:17 tnozaki Exp $	*/
 /*-
  * Copyright (c) 2002 Tim J. Robbins
  * All rights reserved.
@@ -30,7 +30,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/lib/libc/locale/wcsftime.c,v 1.4 2004/04/07 09:47:56 tjr Exp $");
 #else
-__RCSID("$NetBSD: wcsftime.c,v 1.2 2006/10/04 14:19:16 tnozaki Exp $");
+__RCSID("$NetBSD: wcsftime.c,v 1.3 2007/05/21 15:32:17 tnozaki Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -81,7 +81,7 @@ wcsftime(wchar_t *wcs, size_t maxsize,
 	 * the caller's buffer.
 	 */
 	if (SIZE_T_MAX / MB_CUR_MAX <= maxsize) {
-		/* maxsize is preposturously large - avoid int. overflow. */
+		/* maxsize is preposterously large - avoid int. overflow. */
 		errno = EINVAL;
 		goto error;
 	}
