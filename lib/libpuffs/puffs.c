@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.c,v 1.50 2007/05/18 13:24:23 pooka Exp $	*/
+/*	$NetBSD: puffs.c,v 1.51 2007/05/21 08:30:49 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: puffs.c,v 1.50 2007/05/18 13:24:23 pooka Exp $");
+__RCSID("$NetBSD: puffs.c,v 1.51 2007/05/21 08:30:49 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -600,6 +600,7 @@ puffs_mainloop(struct puffs_usermount *pu, int flags)
 		}
 	}
 	errno = 0;
+	puffs_req_putput(ppr);
 
  out:
 	/* store the real error for a while */
