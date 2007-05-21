@@ -1,4 +1,4 @@
-/*	$NetBSD: switch_subr.s,v 1.17 2007/05/20 04:29:49 mhitch Exp $	*/
+/*	$NetBSD: switch_subr.s,v 1.18 2007/05/21 14:01:56 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation.
@@ -119,7 +119,7 @@ GLOBAL(_Idle)				/* For sun2/sun3's clock.c ... */
 	rts
 
 /*
- * void cpu_switchto(struct lwp *current, struct lwp *next)
+ * struct lwp *cpu_switchto(struct lwp *oldlwp, struct lwp *newlwp)
  *
  * Switch to the specific next LWP.
  */
@@ -182,7 +182,7 @@ Lcpu_switch_nofpsave:
 #endif	/* !_M68K_CUSTOM_FPU_CTX */
 
 Lcpu_switch_noctxsave:
-	movl	8(%sp),%a0
+	movl	%sp@(8),%a0		| get newlwp
 	movl	%a0,_C_LABEL(curlwp)
 	movl	%a0@(L_ADDR),%a1	| get l_addr
 	movl	%a1,_C_LABEL(curpcb)
@@ -199,6 +199,7 @@ Lcpu_switch_noctxsave:
 	jbsr	_C_LABEL(_pmap_switch)	| _pmap_switch(pmap)
 	addql	#4,%sp
 	movl	_C_LABEL(curpcb),%a1	| restore p_addr
+| Note: _pmap_switch() will clear the cache if needed.
 #else
 	/* Use this inline version on sun3x when not debugging the pmap. */
 	lea	_C_LABEL(kernel_crp),%a3 | our CPU Root Ptr. (CRP)
@@ -213,16 +214,15 @@ Lcpu_switch_noctxsave:
 	pflusha				| flush entire TLB
 	pmove	%a3@,%crp		| load new user root pointer
 Lsame_mmuctx:
-#endif
-| Note: _pmap_switch() will clear the cache if needed.
-#else
+#endif	/* !defined(_SUN3X_) || defined(PMAP_DEBUG) */
+#else	/* !defined(sun2) && !defined(sun3) */
 	/*
 	 * Activate process's address space.
 	 * XXX Should remember the last USTP value loaded, and call this
 	 * XXX only of it has changed.
 	 */
-	pea	%a0@			| push lwp
-	jbsr	_C_LABEL(pmap_activate)	| pmap_activate(l)
+	pea	%a0@			| push newlwp
+	jbsr	_C_LABEL(pmap_activate)	| pmap_activate(newlwp)
 	/*
 	 *  Check for restartable atomic sequences (RAS)
 	 */
@@ -242,11 +242,11 @@ Lsame_mmuctx:
 	movl	%a1@(L_MD_REGS),%a1
 	movel	%a0,%a1@(TF_PC)
 1:
-	movl	%sp@+,%d0		| restore new lwp
+	movl	%sp@+,%d0		| restore newlwp
 	movl	_C_LABEL(curpcb),%a1	| restore l_addr
 #endif
 
-	movl	%sp@(4),%d1		| cpu_switch(l) - d1 == l
+	movl	%sp@(4),%d1		| restore oldlwp for a return value
 	lea     _ASM_LABEL(tmpstk),%sp	| now goto a tmp stack for NMI
 
 #ifdef PCB_CMAP2
