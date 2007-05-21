@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.44 2007/05/20 16:37:54 he Exp $ */
+/* $NetBSD: trap.c,v 1.45 2007/05/21 15:22:22 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.44 2007/05/20 16:37:54 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.45 2007/05/21 15:22:22 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -286,8 +286,6 @@ trap(type, code, v, frame)
 	KSI_INIT_TRAP(&ksi);
 	ksi.ksi_trap = type & ~T_USER;
 
-	if (l == NULL)
-		l = &lwp0;
 	p = l->l_proc;
 
 #ifdef DIAGNOSTIC
