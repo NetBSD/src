@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.15.38.1 2007/05/19 15:15:41 ober Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.15.38.2 2007/05/21 03:19:47 ober Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.15.38.1 2007/05/19 15:15:41 ober Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.15.38.2 2007/05/21 03:19:47 ober Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,10 +54,10 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.15.38.1 2007/05/19 15:15:41 ober Exp 
 #include <sys/reboot.h>
 #include <sys/device.h>
 
+#include <machine/pte.h>
 #include <machine/intr.h>
-#include <powerpc/pte.h>
 
-static findroot(void);
+static void findroot(void);
 
 /*
  * Determine i/o configuration for a machine.
@@ -93,10 +93,10 @@ u_long	bootdev = 0;		/* should be dev_t, but not until 32 bits */
 void
 findroot(void)
 {
-	int majdev, unit, part;
+	int unit, part;
 	struct device *dv;
-	const char *name;
 	char buf[32];
+	const char *name;
 
 #if 0
 	aprint_normal("howto %x bootdev %x ", boothowto, bootdev);
@@ -105,8 +105,7 @@ findroot(void)
 	if ((bootdev & B_MAGICMASK) != (u_long)B_DEVMAGIC)
 		return;
 
-	majdev = (bootdev >> B_TYPESHIFT) & B_TYPEMASK;
-	name = devsw_blk2name(majdev);
+	name = devsw_blk2name((bootdev >> B_TYPESHIFT) & B_TYPEMASK);
 	if (name == NULL)
 		return;
 
