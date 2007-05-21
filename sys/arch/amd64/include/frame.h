@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.8 2007/05/17 14:51:15 yamt Exp $	*/
+/*	$NetBSD: frame.h,v 1.9 2007/05/21 08:17:41 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -154,7 +154,7 @@ struct intrframe {
 };
 
 /*
- * Stack frame inside cpu_switch()
+ * Stack frame inside cpu_switchto()
  */
 struct switchframe {
 	uint64_t	sf_r15;
