@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.17 2007/05/21 15:06:17 tsutsui Exp $	*/
+/*	$NetBSD: cpu.h,v 1.18 2007/05/21 16:37:03 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -181,16 +181,12 @@ extern int astpending;		/* need to trap before returning to user mode */
 #define	M68K_MMU_MOTOROLA
 #endif /* ! M68K_MMU_MOTOROLA */
 
-struct frame;
 struct fpframe;
-struct pcb;
 
 /* locore.s functions */
 void	m68881_save __P((struct fpframe *));
 void	m68881_restore __P((struct fpframe *));
 int	suline __P((void *, void *));
-void	savectx __P((struct pcb *));
-void	lwp_trampoline __P((void));
 void	loadustp __P((int));
 
 void	doboot __P((void))
@@ -199,14 +195,6 @@ void	doboot __P((void))
 /* machdep.c functions */
 int	badaddr __P((void *));
 int	badbaddr __P((void *));
-
-/* sys_machdep.c functions */
-int	cachectl1 __P((unsigned long, vaddr_t, size_t, struct proc *));
-
-/* vm_machdep.c functions */
-void	physaccess __P((void *, void *, int, int));
-void	physunaccess __P((void *, int));
-int	kvtop __P((void *));
 
 void kgdb_panic __P((void));
 

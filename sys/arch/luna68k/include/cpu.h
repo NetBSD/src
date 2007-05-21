@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.21 2007/05/21 15:54:58 tsutsui Exp $ */
+/* $NetBSD: cpu.h,v 1.22 2007/05/21 16:37:03 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -187,26 +187,14 @@ void	dumpconf __P((void));
 void	dumpsys __P((void));
 
 /* locore.s functions */
-struct pcb;
 struct fpframe;
 int	suline __P((void *, void *));
-void	savectx __P((struct pcb *));
-void	lwp_trampoline __P((void));
 void	loadustp __P((int));
 void	m68881_save __P((struct fpframe *));
 void	m68881_restore __P((struct fpframe *));
 
 /* machdep.c functions */
 int	badaddr __P((void *, int));
-
-/* sys_machdep.c functions */
-int	cachectl1 __P((unsigned long, vaddr_t, size_t, struct proc *));
-int	dma_cachectl __P((void *, int));
-
-/* vm_machdep.c functions */
-void	physaccess __P((void *, void *, int, int));
-void	physunaccess __P((void *, int));
-int	kvtop __P((void *));
 
 #endif
 

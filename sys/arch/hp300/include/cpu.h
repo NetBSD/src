@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.53 2007/05/20 04:29:48 mhitch Exp $	*/
+/*	$NetBSD: cpu.h,v 1.54 2007/05/21 16:37:03 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -190,16 +190,12 @@ extern int astpending;		/* need to trap before returning to user mode */
 extern	char *intiobase, *intiolimit, *extiobase;
 extern	void (*vectab[])(void);
 
-struct frame;
 struct fpframe;
-struct pcb;
 
 /* locore.s functions */
 void	m68881_save(struct fpframe *);
 void	m68881_restore(struct fpframe *);
 int	suline(void *, void *);
-void	savectx(struct pcb *);
-void	lwp_trampoline(void);
 void	loadustp(int);
 
 void	doboot(void) __attribute__((__noreturn__));
@@ -212,14 +208,6 @@ void	hp300_calibrate_delay(void);
 /* machdep.c functions */
 int	badaddr(void *);
 int	badbaddr(void *);
-
-/* sys_machdep.c functions */
-int	cachectl1(unsigned long, vaddr_t, size_t, struct proc *);
-
-/* vm_machdep.c functions */
-void	physaccess(void *, void *, int, int);
-void	physunaccess(void *, int);
-int	kvtop(void *);
 
 /* what is this supposed to do? i.e. how is it different than startrtclock? */
 #define	enablertclock()
