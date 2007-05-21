@@ -73,7 +73,7 @@ mkdirs(virtdir_t *tp, const char *path, size_t size)
 	for (slash = name + 1 ; (slash = strchr(slash + 1, '/')) != NULL ; ) {
 		*slash = 0x0;
 		if ((ep = virtdir_find(tp, name, strlen(name))) == NULL) {
-			virtdir_add(tp, name, strlen(name), 'd', NULL);
+			virtdir_add(tp, name, strlen(name), 'd', NULL, 0);
 		}
 		*slash = '/';
 	}
@@ -97,7 +97,7 @@ virtdir_init(virtdir_t *tp, struct stat *d, struct stat *f, struct stat *l)
 
 /* add an entry to the tree */
 int
-virtdir_add(virtdir_t *tp, const char *name, size_t size, uint8_t type, char *tgt)
+virtdir_add(virtdir_t *tp, const char *name, size_t size, uint8_t type, char *tgt, size_t tgtlen)
 {
 	struct stat	 st;
 
@@ -118,8 +118,8 @@ virtdir_add(virtdir_t *tp, const char *name, size_t size, uint8_t type, char *tg
 	tp->v[tp->c].d_name = strrchr(tp->v[tp->c].name, '/') + 1;
 	tp->v[tp->c].type = type;
 	if (tgt != NULL) {
-		tp->v[tp->c].tgt = strdup(tgt);
-		tp->v[tp->c].tgtlen = strlen(tgt);
+		tp->v[tp->c].tgtlen = tgtlen;
+		tp->v[tp->c].tgt = strnsave(tgt, tgtlen);
 	}
 	tp->c += 1;
 	qsort(tp->v, tp->c, sizeof(tp->v[0]), compare);
@@ -160,7 +160,7 @@ virtdir_find(virtdir_t *tp, const char *name, size_t namelen)
 int
 virtdir_offset(virtdir_t *tp, virt_dirent_t *dp)
 {
-	return (int)((dp - tp->v));
+	return (int)(dp - tp->v);
 }
 
 /* analogous to opendir(3) - open a directory, save information, and
@@ -259,17 +259,17 @@ main(int argc, char **argv)
 
 	(void) memset(&t, 0x0, sizeof(t));
 	stat(".", &st);
-	virtdir_add(&t, ".", 1, 'd', NULL);
+	virtdir_add(&t, ".", 1, 'd', NULL, 0);
 	stat("..", &st);
-	virtdir_add(&t, "..", 2, 'd', NULL);
+	virtdir_add(&t, "..", 2, 'd', NULL, 0);
 	st.st_mode = S_IFREG | 0644;
-	virtdir_add(&t, "file1", 5, 'f', NULL);
+	virtdir_add(&t, "file1", 5, 'f', NULL, 0);
 	ptree(&t);
-	virtdir_add(&t, "file2", 5, 'f', NULL);
-	virtdir_add(&t, "file0", 5, 'f', NULL);
-	virtdir_add(&t, "abcde", 5, 'f', NULL);
-	virtdir_add(&t, "bcdef", 5, 'f', NULL);
-	virtdir_add(&t, "a", 1, 'f', NULL);
+	virtdir_add(&t, "file2", 5, 'f', NULL, 0);
+	virtdir_add(&t, "file0", 5, 'f', NULL, 0);
+	virtdir_add(&t, "abcde", 5, 'f', NULL, 0);
+	virtdir_add(&t, "bcdef", 5, 'f', NULL, 0);
+	virtdir_add(&t, "a", 1, 'f', NULL, 0);
 	ptree(&t);
 	if ((tp = virtdir_find(&t, "a", 1)) == NULL) {
 		printf("borked2\n");
