@@ -1,18 +1,20 @@
-#	$NetBSD: files.ev64260,v 1.9 2007/04/10 02:35:06 macallan Exp $
+#	$NetBSD: files.ev64260,v 1.9.4.1 2007/05/22 15:59:26 matt Exp $
 #
 # Marvell (Galileo) "EV64260" evaluation board's specific configuration info
 #
 defparam opt_ev64260.h	OBIO0_STRIDE OBIO1_STRIDE OBIO2_STRIDE OBIO3_STRIDE
 defparam opt_ev64260.h  PCI0_GPPINTS PCI1_GPPINTS PCI0_SKIPMASK PCI1_SKIPMASK
 
+include "arch/powerpc/pic/files.pic"
+
 file	arch/evbppc/ev64260/autoconf.c
-#file	arch/evbppc/ev64260/bus_space.c
-file	arch/evbppc/ev64260/clock.c
 file	arch/evbppc/ev64260/machdep.c
 #file	arch/evbppc/ev64260/pci_machdep.c
 
-#file	arch/powerpc/marvell/bus_dma.c
-file	arch/powerpc/marvell/extintr.c
+file	arch/powerpc/powerpc/clock.c
+file	arch/powerpc/powerpc/softintr.c
+
+options	PIC_DISCOVERY
 
 include "dev/marvell/files.discovery"
 

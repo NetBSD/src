@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.8 2005/12/11 12:17:12 christos Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.8.38.1 2007/05/22 15:59:26 matt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.8 2005/12/11 12:17:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.8.38.1 2007/05/22 15:59:26 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,41 +54,22 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.8 2005/12/11 12:17:12 christos Exp $"
 #include <sys/reboot.h>
 #include <sys/device.h>
 
-void findroot __P((void));
+void findroot (void);
 
 /*
  * Determine i/o configuration for a machine.
  */
 void
-cpu_configure()
+cpu_configure(void)
 {
-        extern void init_interrupt __P((void));
-        extern void calc_delayconst __P((void));
-
-	extintr_disable();
-
-        init_interrupt();
-        calc_delayconst();
-
 	if (config_rootfound("mainbus", NULL) == NULL)
 		panic("configure: mainbus not configured");
 
-	printf("biomask %x.%x.%x.%x netmask %x.%x.%x.%x ttymask %x.%x.%x.%x\n",
-	    imask[IPL_BIO].bits[0], imask[IPL_BIO].bits[1],
-	    imask[IPL_BIO].bits[2], imask[IPL_BIO].bits[3],
-	    imask[IPL_NET].bits[0], imask[IPL_NET].bits[1],
-	    imask[IPL_NET].bits[2], imask[IPL_NET].bits[3],
-	    imask[IPL_TTY].bits[0], imask[IPL_TTY].bits[1],
-	    imask[IPL_TTY].bits[2], imask[IPL_TTY].bits[3]);
-
-	curcpu()->ci_cpl = IPL_NONE;
-	extintr_enable();
-
-	spl0();
+	genppc_cpu_configure();
 }
 
 void
-cpu_rootconf()
+cpu_rootconf(void)
 {
 	findroot();
 

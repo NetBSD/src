@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.19 2005/12/24 20:07:03 perry Exp $	*/
+/*	$NetBSD: machdep.c,v 1.19.38.1 2007/05/22 15:59:26 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.19 2005/12/24 20:07:03 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.19.38.1 2007/05/22 15:59:26 matt Exp $");
 
 #include "opt_marvell.h"
 #include "opt_ev64260.h"
@@ -73,6 +73,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.19 2005/12/24 20:07:03 perry Exp $");
 
 #include <powerpc/oea/bat.h>
 #include <powerpc/marvell/watchdog.h>
+#include <powerpc/pic/picvar.h>
 
 #include <ddb/db_extern.h>
 
@@ -203,7 +204,7 @@ initppc(startkernel, endkernel, args, btinfo)
 	void *btinfo;
 {
 	oea_batinit(0xf0000000, BAT_BL_256M);
-	oea_init((void (*)(void))ext_intr);
+	oea_init(pic_ext_intr);
 
 	calc_delayconst();			/* Set CPU clock */
 
