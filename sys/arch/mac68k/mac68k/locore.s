@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.150 2007/05/21 15:19:17 tsutsui Exp $	*/
+/*	$NetBSD: locore.s,v 1.151 2007/05/22 00:23:57 rjs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -911,8 +911,6 @@ ENTRY_NOPROFILE(rtclock_intr)
  * necessitating a stack cleanup.
  */
 
-BSS(ssir,1)
-
 ASENTRY_NOPROFILE(rei)
 	tstl	_C_LABEL(astpending)	| AST pending?
 	jeq	Lchksir			| no, go check for SIR
@@ -1511,9 +1509,6 @@ GLOBAL(fputype)
 
 GLOBAL(protorp)
 	.long	0,0		| prototype root pointer
-
-GLOBAL(want_resched)
-	.long	0
 
 GLOBAL(proc0paddr)
 	.long	0		| KVA of lwp0 u-area
