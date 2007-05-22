@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.67 $>
+LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.68 $>
 
 
 Changes from 386bsd 0.1 + patchkit 0.2.2 to NetBSD 0.8:
@@ -8601,3 +8601,4 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 	ug(4): Driver split in three parts to support the new ACPI
 		attachment (ug* at acpi?). Patch from Mihai Chelaru. 
 		[xtraeme 20070508]
+	ipf(8): Updated to version 4.1.22. [martin 20070515]
