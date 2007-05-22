@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.141 2007/01/14 16:19:55 apb Exp $
+#	$NetBSD: bsd.sys.mk,v 1.142 2007/05/22 23:58:54 tls Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -40,6 +40,11 @@ LINTFLAGS+=	${DESTDIR:D-d ${DESTDIR}/usr/include}
 
 .if defined(USE_SSP) && (${USE_SSP} != "no") && (${BINDIR:Ux} != "/usr/mdec")
 COPTS+=		-fstack-protector -Wstack-protector --param ssp-buffer-size=1
+.if !defined(KERNSRCDIR) && !defined(KERN) # not for kernels nor kern modules
+.if !defined(LIB) || (${LIB} != "ssp")
+COPTS+=		-D_FORTIFY_SOURCE=2
+.endif
+.endif
 .endif
 
 .if defined(MKSOFTFLOAT) && (${MKSOFTFLOAT} != "no")
