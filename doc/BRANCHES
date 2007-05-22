@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.193 2007/05/17 14:52:50 yamt Exp $
+#	$NetBSD: BRANCHES,v 1.194 2007/05/22 15:49:05 itohy Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -278,6 +278,20 @@ Base Tag:	gmcgarry_ucred_base
 Maintainer:	Gregory McGarry <gmcgarry@NetBSD.org>
 Scope:		kernel
 Notes:		merge pcred and ucred and poolify
+
+Branch:		itohy-usb1
+Description:	USB stack overhaul, mostly DMA related
+Status:		Active
+Start Date:	22 May 2007
+End Date:
+Base Tag:	itohy-usb1-base
+Maintainer:	ITOH Yasufumi <itohy@NetBSD.org>
+Scope:		kernel
+Notes:		To check out the kernel source tree,
+		1. check out checkout script
+			cvs checkout -ritohy-usb1 src/sys/dev/usb/filelist
+		2. update files in the branch
+			sh -e src/sys/dev/usb/filelist
 
 Branch:		kame
 Description:	KAME Project
