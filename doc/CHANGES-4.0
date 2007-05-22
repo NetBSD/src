@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.161 2007/05/20 10:36:39 jdc Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.162 2007/05/22 23:08:18 pavel Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -5518,4 +5518,41 @@ share/man/man4/man4.sparc64/intro.4		1.4
 
 	Update the floppy disk controller documentation for sparc64.
 	[jnemeth, ticket #650]
+
+sys/dist/ipf/netinet/fil.c		sync with ipfilter-4-1-22-pullup
+sys/dist/ipf/netinet/ip_compat.h	sync with ipfilter-4-1-22-pullup
+sys/dist/ipf/netinet/ip_fil.h		sync with ipfilter-4-1-22-pullup
+sys/dist/ipf/netinet/ip_fil_netbsd.c	sync with ipfilter-4-1-22-pullup
+sys/dist/ipf/netinet/ip_ftp_pxy.c	sync with ipfilter-4-1-22-pullup
+sys/dist/ipf/netinet/ip_nat.c		sync with ipfilter-4-1-22-pullup
+sys/dist/ipf/netinet/ip_nat.h		sync with ipfilter-4-1-22-pullup
+sys/dist/ipf/netinet/ip_proxy.c		sync with ipfilter-4-1-22-pullup
+sys/dist/ipf/netinet/ip_state.c		sync with ipfilter-4-1-22-pullup
+sys/dist/ipf/netinet/ip_state.h		sync with ipfilter-4-1-22-pullup
+sys/dist/ipf/netinet/ipl.h		sync with ipfilter-4-1-22-pullup
+dist/ipf/HISTORY			sync with ipfilter-4-1-22-pullup
+dist/ipf/Makefile			sync with ipfilter-4-1-22-pullup
+dist/ipf/ip_fil.c			sync with ipfilter-4-1-22-pullup
+dist/ipf/ipf.h				sync with ipfilter-4-1-22-pullup
+dist/ipf/mlfk_ipl.c			sync with ipfilter-4-1-22-pullup
+dist/ipf/lib/Makefile			sync with ipfilter-4-1-22-pullup
+dist/ipf/lib/printfr.c			sync with ipfilter-4-1-22-pullup
+dist/ipf/lib/printstate.c		sync with ipfilter-4-1-22-pullup
+dist/ipf/lib/printtqtable.c		sync with ipfilter-4-1-22-pullup
+dist/ipf/man/ipf.8			sync with ipfilter-4-1-22-pullup
+dist/ipf/man/ipfstat.8			sync with ipfilter-4-1-22-pullup
+dist/ipf/tools/ipf.c			sync with ipfilter-4-1-22-pullup
+dist/ipf/tools/ipfcomp.c		sync with ipfilter-4-1-22-pullup
+dist/ipf/tools/ipfstat.c		sync with ipfilter-4-1-22-pullup
+dist/ipf/tools/ipnat.c			sync with ipfilter-4-1-22-pullup
+regress/sys/kern/ipf/Makefile		sync with ipfilter-4-1-22-pullup
+regress/sys/kern/ipf/expected/i11	sync with ipfilter-4-1-22-pullup
+regress/sys/kern/ipf/expected/i4	sync with ipfilter-4-1-22-pullup
+regress/sys/kern/ipf/expected/i9	sync with ipfilter-4-1-22-pullup
+usr.sbin/ipf/libipf/Makefile		sync with ipfilter-4-1-22-pullup
+doc/CHANGES				1.854 via patch
+doc/3RDPARTY				1.525 via patch
+
+	Upgrade IP-Filter to 4.1.22.
+	[martin, ticket #656]
 
