@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.c,v 1.7.4.1 2007/05/07 17:04:21 pavel Exp $	*/
+/*	$NetBSD: ip_fil.c,v 1.7.4.2 2007/05/22 22:54:24 pavel Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -7,7 +7,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_fil.c,v 2.133.2.14 2007/02/17 12:41:42 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_fil.c,v 2.133.2.15 2007/05/01 22:14:59 darrenr Exp";
 #endif
 
 #ifndef	SOLARIS
@@ -64,7 +64,6 @@ struct file;
 #include <stdlib.h>
 #include <ctype.h>
 #include <fcntl.h>
-#include <arpa/inet.h>
 
 #ifdef __hpux
 # define _NET_ROUTE_INCLUDED
@@ -111,6 +110,7 @@ struct file;
 #include <netinet/ip_icmp.h>
 #include <unistd.h>
 #include <syslog.h>
+#include <arpa/inet.h>
 #ifdef __hpux
 # undef _NET_ROUTE_INCLUDED
 #endif
