@@ -1,4 +1,4 @@
-/*	$NetBSD: if_udav.c,v 1.17 2007/03/13 13:51:54 drochner Exp $	*/
+/*	$NetBSD: if_udav.c,v 1.15.10.1 2007/05/22 14:57:38 itohy Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 /*
  * Copyright (c) 2003
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.17 2007/03/13 13:51:54 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.15.10.1 2007/05/22 14:57:38 itohy Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -102,7 +102,7 @@ Static void udav_txeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
 Static void udav_rxeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
 Static void udav_tick(void *);
 Static void udav_tick_task(void *);
-Static int udav_ioctl(struct ifnet *, u_long, void *);
+Static int udav_ioctl(struct ifnet *, u_long, caddr_t);
 Static void udav_stop_task(struct udav_softc *);
 Static void udav_stop(struct ifnet *, int);
 Static void udav_watchdog(struct ifnet *);
@@ -164,6 +164,9 @@ static const struct udav_type {
 USB_MATCH(udav)
 {
 	USB_MATCH_START(udav, uaa);
+
+	if (uaa->iface != NULL)
+		return (UMATCH_NONE);
 
 	return (udav_lookup(uaa->vendor, uaa->product) != NULL ?
 		UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
@@ -915,7 +918,8 @@ udav_rx_list_init(struct udav_softc *sc)
 		if (udav_newbuf(sc, c, NULL) == ENOBUFS)
 			return (ENOBUFS);
 		if (c->udav_xfer == NULL) {
-			c->udav_xfer = usbd_alloc_xfer(sc->sc_udev);
+			c->udav_xfer = usbd_alloc_xfer(sc->sc_udev,
+			    sc->sc_pipe_rx);
 			if (c->udav_xfer == NULL)
 				return (ENOBUFS);
 			c->udav_buf = usbd_alloc_buffer(c->udav_xfer, UDAV_BUFSZ);
@@ -945,7 +949,8 @@ udav_tx_list_init(struct udav_softc *sc)
 		c->udav_idx = i;
 		c->udav_mbuf = NULL;
 		if (c->udav_xfer == NULL) {
-			c->udav_xfer = usbd_alloc_xfer(sc->sc_udev);
+			c->udav_xfer = usbd_alloc_xfer(sc->sc_udev,
+			    sc->sc_pipe_tx);
 			if (c->udav_xfer == NULL)
 				return (ENOBUFS);
 			c->udav_buf = usbd_alloc_buffer(c->udav_xfer, UDAV_BUFSZ);
@@ -1206,7 +1211,7 @@ Static void udav_intr()
 #endif
 
 Static int
-udav_ioctl(struct ifnet *ifp, u_long cmd, void *data)
+udav_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct udav_softc *sc = ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *)data;

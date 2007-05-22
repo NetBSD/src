@@ -1,4 +1,4 @@
-/*	$NetBSD: uplcom.c,v 1.54 2007/03/13 13:51:56 drochner Exp $	*/
+/*	$NetBSD: uplcom.c,v 1.52 2007/01/31 10:11:50 msaitoh Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uplcom.c,v 1.54 2007/03/13 13:51:56 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uplcom.c,v 1.52 2007/01/31 10:11:50 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -135,7 +135,7 @@ Static	void uplcom_break(struct uplcom_softc *, int);
 Static	void uplcom_set_line_state(struct uplcom_softc *);
 Static	void uplcom_get_status(void *, int portno, u_char *lsr, u_char *msr);
 #if TODO
-Static	int  uplcom_ioctl(void *, int, u_long, void *, int, usb_proc_ptr );
+Static	int  uplcom_ioctl(void *, int, u_long, caddr_t, int, usb_proc_ptr );
 #endif
 Static	int  uplcom_param(void *, int, struct termios *);
 Static	int  uplcom_open(void *, int);
@@ -213,6 +213,9 @@ USB_MATCH(uplcom)
 {
 	USB_MATCH_START(uplcom, uaa);
 
+	if (uaa->iface != NULL)
+		return (UMATCH_NONE);
+
 	return (uplcom_lookup(uaa->vendor, uaa->product) != NULL ?
 		UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
 }
@@ -221,6 +224,7 @@ USB_ATTACH(uplcom)
 {
 	USB_ATTACH_START(uplcom, sc, uaa);
 	usbd_device_handle dev = uaa->device;
+	usb_device_descriptor_t *ddesc;
 	usb_config_descriptor_t *cdesc;
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
@@ -253,6 +257,15 @@ USB_ATTACH(uplcom)
 		USB_ATTACH_ERROR_RETURN;
 	}
 
+	/* get the device descriptor */
+	ddesc = usbd_get_device_descriptor(sc->sc_udev);
+	if (ddesc == NULL) {
+		printf("%s: failed to get device descriptor\n",
+		    USBDEVNAME(sc->sc_dev));
+		sc->sc_dying = 1;
+		USB_ATTACH_ERROR_RETURN;
+	}
+
 	/* determine chip type */
 	for (i = 0; uplcom_devs_ext[i].vendor != 0; i++) {
 		if (uplcom_devs_ext[i].vendor == uaa->vendor &&
@@ -269,7 +282,7 @@ USB_ATTACH(uplcom)
 	 * The bcdDevice field should also distinguish these versions,
 	 * but who knows.
 	 */
-	if (uaa->release == 0x0300)
+	if (UGETW(ddesc->bcdDevice) == 0x0300)
 		sc->sc_type = UPLCOM_TYPE_HX;
 	else
 		sc->sc_type = UPLCOM_TYPE_0;
@@ -813,7 +826,7 @@ uplcom_get_status(void *addr, int portno, u_char *lsr, u_char *msr)
 
 #if TODO
 int
-uplcom_ioctl(void *addr, int portno, u_long cmd, void *data, int flag,
+uplcom_ioctl(void *addr, int portno, u_long cmd, caddr_t data, int flag,
 	     usb_proc_ptr p)
 {
 	struct uplcom_softc *sc = addr;

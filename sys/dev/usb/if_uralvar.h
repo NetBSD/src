@@ -1,4 +1,4 @@
-/*	$NetBSD: if_uralvar.h,v 1.7 2007/03/04 06:02:48 christos Exp $ */
+/*	$NetBSD: if_uralvar.h,v 1.6 2006/10/31 21:53:41 joerg Exp $ */
 /*	$OpenBSD: if_ralvar.h,v 1.2 2005/05/13 18:42:50 damien Exp $  */
 
 /*-
@@ -125,7 +125,7 @@ struct ural_softc {
 	int			nb_ant;
 
 #if NBPFILTER > 0
-	void *			sc_drvbpf;
+	caddr_t			sc_drvbpf;
 
 	union {
 		struct ural_rx_radiotap_header th;

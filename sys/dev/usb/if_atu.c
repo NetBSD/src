@@ -1,4 +1,4 @@
-/*	$NetBSD: if_atu.c,v 1.26 2007/03/13 13:51:54 drochner Exp $ */
+/*	$NetBSD: if_atu.c,v 1.24.6.1 2007/05/22 14:57:36 itohy Exp $ */
 /*	$OpenBSD: if_atu.c,v 1.48 2004/12/30 01:53:21 dlg Exp $ */
 /*
  * Copyright (c) 2003, 2004
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.26 2007/03/13 13:51:54 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.24.6.1 2007/05/22 14:57:36 itohy Exp $");
 
 #include "bpfilter.h"
 
@@ -175,7 +175,7 @@ int	atu_newbuf(struct atu_softc *, struct atu_chain *, struct mbuf *);
 void	atu_rxeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
 void	atu_txeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
 void	atu_start(struct ifnet *);
-int	atu_ioctl(struct ifnet *, u_long, void *);
+int	atu_ioctl(struct ifnet *, u_long, caddr_t);
 int	atu_init(struct ifnet *);
 void	atu_stop(struct ifnet *, int);
 void	atu_watchdog(struct ifnet *);
@@ -249,7 +249,7 @@ atu_usb_request(struct atu_softc *sc, u_int8_t type,
 
 	s = splnet();
 
-	xfer = usbd_alloc_xfer(sc->atu_udev);
+	xfer = usbd_alloc_default_xfer(sc->atu_udev);
 	usbd_setup_default_xfer(xfer, sc->atu_udev, 0, 500000, &req, data,
 	    length, USBD_SHORT_XFER_OK, 0);
 
@@ -1024,6 +1024,9 @@ USB_MATCH(atu)
 	USB_MATCH_START(atu, uaa);
 	int			i;
 
+	if (!uaa->iface)
+		return(UMATCH_NONE);
+
 	for (i = 0; i < sizeof(atu_devs)/sizeof(atu_devs[0]); i++) {
 		struct atu_type *t = &atu_devs[i];
 
@@ -1233,6 +1236,8 @@ USB_ATTACH(atu)
 		 */
 		USB_ATTACH_SUCCESS_RETURN;
 	}
+
+	uaa->iface = sc->atu_iface;
 
 	if (mode != MODE_NETCARD) {
 		DPRINTFN(15, ("%s: device needs external firmware\n",
@@ -1481,7 +1486,8 @@ atu_rx_list_init(struct atu_softc *sc)
 		c->atu_sc = sc;
 		c->atu_idx = i;
 		if (c->atu_xfer == NULL) {
-			c->atu_xfer = usbd_alloc_xfer(sc->atu_udev);
+			c->atu_xfer = usbd_alloc_xfer(sc->atu_udev,
+			    sc->atu_ep[ATU_ENDPT_RX]);
 			if (c->atu_xfer == NULL)
 				return (ENOBUFS);
 			c->atu_buf = usbd_alloc_buffer(c->atu_xfer,
@@ -1513,7 +1519,8 @@ atu_tx_list_init(struct atu_softc *sc)
 		c->atu_sc = sc;
 		c->atu_idx = i;
 		if (c->atu_xfer == NULL) {
-			c->atu_xfer = usbd_alloc_xfer(sc->atu_udev);
+			c->atu_xfer = usbd_alloc_xfer(sc->atu_udev,
+			    sc->atu_ep[ATU_ENDPT_TX]);
 			if (c->atu_xfer == NULL)
 				return(ENOBUFS);
 			c->atu_mbuf = NULL;
@@ -2082,7 +2089,7 @@ atu_debug_print(struct atu_softc *sc)
 #endif /* ATU_DEBUG */
 
 int
-atu_ioctl(struct ifnet *ifp, u_long command, void *data)
+atu_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 {
 	struct atu_softc	*sc = ifp->if_softc;
 	struct ifreq		*ifr = (struct ifreq *)data;

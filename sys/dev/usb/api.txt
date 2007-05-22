@@ -1,0 +1,704 @@
+# $NetBSD: api.txt,v 1.1.2.1 2007/05/22 14:57:34 itohy Exp $
+
+usbdi.c:
+int usbd_xfer_isread(usbd_xfer_handle xfer)
+	[nocontext ok]
+	Return nonzero if xfer is IN direction.
+
+usbd_status usbd_open_pipe(usbd_interface_handle iface, u_int8_t address, u_int8_t flags, usbd_pipe_handle *pipe)
+	[need context]
+	Open a pipe with default interval (specified by endpoint descriptor).
+
+usbd_status usbd_open_pipe_ival(usbd_interface_handle iface, u_int8_t address, u_int8_t flags, usbd_pipe_handle *pipe, int ival)
+	[need context]
+	Open a pipe with specified interval.
+
+usbd_status usbd_open_pipe_intr(usbd_interface_handle iface, u_int8_t address, u_int8_t flags, usbd_pipe_handle *pipe, usbd_private_handle priv, void *buffer, u_int32_t len, usbd_callback cb, int ival)
+	[need context]
+	Open an interrupt transfer pipe.
+
+usbd_status usbd_close_pipe(usbd_pipe_handle pipe)
+	[nocontext ok]
+	Close a pipe.
+
+usbd_status usbd_transfer(usbd_xfer_handle xfer)
+	[need context] need context if (no buffer or USBD_SYNCHRONOUS)
+	[nocontext ok] otherwise
+	Start transfer.
+	Wait for done if USBD_SYNCHRONOUS is set.
+
+usbd_status usbd_sync_transfer(usbd_xfer_handle xfer)
+	[need context]
+	Start transfer and wait done.
+
+void *usbd_alloc_buffer(usbd_xfer_handle xfer, u_int32_t size)
+	[need context]
+	Allocate buffer for xfer.
+	If buffer is allocated beforehand, usbd_transfer() wont require context.
+
+Static void usbd_free_buffer_flag(usbd_xfer_handle xfer, enum usbd_waitflg waitflg)
+	[need context] if waitflg == U_WAITOK
+	[nocontext ok] if waitflg == U_NOWAIT
+	Free buffer for xfer.
+
+void usbd_free_buffer(usbd_xfer_handle xfer)
+	[need context]
+	Free buffer for xfer.
+
+void *usbd_get_buffer(usbd_xfer_handle xfer)
+	[nocontext ok]
+	Return kernel address of allocated buffer.
+
++usbd_status usbd_map_alloc(usbd_xfer_handle xfer)
+	[need context]
+	Pre-allocate resources need for mapping buffer/mbuf without sleep.
+
++void usbd_map_free(usbd_xfer_handle xfer)
+	[need context]
+	Release pre-allocated resources.
+
++void usbd_map_buffer(usbd_xfer_handle xfer, void *buf, u_int32_t size)
+	[nocontext ok] map resources must have be allocated by usbd_map_alloc()
+	Map buf (in kernel space) into DMA space.
+
++void usbd_map_buffer_mbuf(usbd_xfer_handle xfer, struct mbuf *chain)
+	[nocontext ok] map resources must have be allocated by usbd_map_alloc()
+	Map an mbuf into DMA space.
+
++void usbd_unmap_buffer(usbd_xfer_handle xfer)
+	[nocontext ok] map resources must have be allocated by usbd_map_alloc()
+	Undo mapping of usbd_map_buffer() or usbd_map_buffer_mbuf().
+
++Static usbd_xfer_handle usbd_alloc_xfer_flag(usbd_device_handle dev, usbd_pipe_handle pipe, enum usbd_waitflg waitflg)
+	[need context] if waitflg == U_WAITOK
+	[nocontext ok] if waitflg == U_NOWAIT
+	Allocate an xfer.
+
+-usbd_xfer_handle usbd_alloc_xfer(usbd_device_handle dev)
++usbd_xfer_handle usbd_alloc_xfer(usbd_device_handle dev, usbd_pipe_handle pipe)
+	[need context]
+	Allocate an xfer.
+
++usbd_xfer_handle usbd_alloc_default_xfer(usbd_device_handle dev)
+	[need context]
+	Allocate an xfer with default pipe.
+
+Static usbd_status usbd_free_xfer_flag(usbd_xfer_handle xfer, enum usbd_waitflg waitflg)
+	[need context] if waitflg == U_WAITOK
+	[nocontext ok] if waitflg == U_NOWAIT
+	Free an xfer.
+	If waitflg == U_NOWAIT and freeing requires context,
+	the actuall freeing is delayed and will be done in the task thread.
+
+usbd_status usbd_free_xfer(usbd_xfer_handle xfer)
+	[need context]
+	Free an xfer.
+
+void usbd_setup_xfer(usbd_xfer_handle xfer, usbd_pipe_handle pipe, usbd_private_handle priv, void *buffer, u_int32_t length, u_int16_t flags, u_int32_t timeout, usbd_callback callback)
+	[nocontext ok]
+	Setup xfer with specified pipe.
+
+void usbd_setup_default_xfer(usbd_xfer_handle xfer, usbd_device_handle dev, usbd_private_handle priv, u_int32_t timeout, usb_device_request_t *req, void *buffer, u_int32_t length, u_int16_t flags, usbd_callback callback)
+	[nocontext ok]
+	Setup xfer with default pipe.
+
+void usbd_setup_isoc_xfer(usbd_xfer_handle xfer, usbd_pipe_handle pipe, usbd_private_handle priv, u_int16_t *frlengths, u_int32_t nframes, u_int16_t flags, usbd_callback callback)
+	[nocontext ok]
+	Setup xfer with specifed isochronous pipe.
+
+void usbd_get_xfer_status(usbd_xfer_handle xfer, usbd_private_handle *priv, void **buffer, u_int32_t *count, usbd_status *status)
+	[nocontext ok]
+	Get status from xfer (priv, buffer, count, status).
+	If an output argument is NULL, it is ignored.
+
+usb_config_descriptor_t *usbd_get_config_descriptor(usbd_device_handle dev)
+	[nocontext ok]
+	Get configuration descriptor of dev.
+
+int usbd_get_speed(usbd_device_handle dev)
+	[nocontext ok]
+	Get speed of dev.
+
+usb_interface_descriptor_t *usbd_get_interface_descriptor(usbd_interface_handle iface)
+	[nocontext ok]
+	Get the interface descriptor of dev.
+
+usb_device_descriptor_t *usbd_get_device_descriptor(usbd_device_handle dev)
+	[nocontext ok]
+	Get the device descriptor of dev.
+
+usb_endpoint_descriptor_t *usbd_interface2endpoint_descriptor(usbd_interface_handle iface, u_int8_t index)
+	[nocontext ok]
+	Get an endpoint descriptor of dev.
+
+usbd_status usbd_abort_pipe(usbd_pipe_handle pipe)
+	[nocontext ok]
+	Abort pipe.
+
+usbd_status usbd_abort_default_pipe(usbd_device_handle dev)
+	[nocontext ok]
+	Abort default pipe.
+
+usbd_status usbd_clear_endpoint_stall(usbd_pipe_handle pipe)
+	[need context]
+	Clear STALL.
+
+usbd_status usbd_clear_endpoint_stall_async(usbd_pipe_handle pipe)
+	[nocontext ok]
+	Clear STALL.
+	Return USBD_IN_PROGRESS if request is scheduled.
+	Return USBD_NOMEM if failed to allocate an xfer.
+	Other error status won't be notified.
+
+void usbd_clear_endpoint_toggle(usbd_pipe_handle pipe)
+	[nocontext ok]
+	Clear toggle.  The next data packet will be DATA0.
+
+usbd_status usbd_endpoint_count(usbd_interface_handle iface, u_int8_t *count)
+	[nocontext ok]
+	Set number of endpoints of the specified interface in *count.
+
+usbd_status usbd_interface_count(usbd_device_handle dev, u_int8_t *count)
+	[nocontext ok]
+	Set number of interfaces of the specified device in *count.
+
+void usbd_interface2device_handle(usbd_interface_handle iface, usbd_device_handle *dev)
+	[nocontext ok]
+	Set device handle of the specified interfaces in *dev.
+
+usbd_status usbd_device2interface_handle(usbd_device_handle dev, u_int8_t ifaceno, usbd_interface_handle *iface)
+	[nocontext ok]
+	Set interface handle of the number ifaceno interface of device
+	in *iface.
+	Return USBD_NORMAL_COMPLETION on success.
+	Return USBD_INVAL if ifaceno is grater than or equal to the number
+	of interfaces that the device dev has.
+	Return USBD_NOT_CONFIGURED if dev doesn't have config descriptor.
+
+usbd_device_handle usbd_pipe2device_handle(usbd_pipe_handle pipe)
+	[nocontext ok]
+	Return device handle of the specified pipe.
+
+usbd_status usbd_set_interface(usbd_interface_handle iface, int altidx)
+	[need context]
+	XXX FIXME
+	Set alternate intaface number altidx.
+
+int usbd_get_no_alts(usb_config_descriptor_t *cdesc, int ifaceno)
+	[nocontext ok]
+	XXX FIXME
+	Return number of alternate interfaces.
+
+int usbd_get_interface_altindex(usbd_interface_handle iface)
+	[nocontext ok]
+	XXX FIXME
+	Return alternate interface number of specified interface.
+
+usbd_status usbd_get_interface(usbd_interface_handle iface, u_int8_t *aiface)
+	[need context]
+	XXX FIXME
+	Read list of alternate interfaces.
+
+/* internal */
+Static usbd_status usbd_ar_pipe(usbd_pipe_handle pipe)
+	[nocontext ok]
+	Dequeue all pipe operations, called at splusb().
+
+/* HC API */
+void usb_transfer_complete(usbd_xfer_handle xfer)
+	[nocontext ok]
+	Finish a trasnfer.
+	Called at splusb().
+
+/* HC API */
+usbd_status usb_insert_transfer(usbd_xfer_handle xfer)
+	[nocontext ok]
+	Add a transfer to run queue.
+
+void usbd_start_next(usbd_pipe_handle pipe)
+	[nocontext ok]
+	Start next transfer in the run queue.
+	Called at splusb().
+
+usbd_status usbd_do_request(usbd_device_handle dev, usb_device_request_t *req, void *data)
+	[need context]
+	Do a request, with default pipe with no flags.
+
+usbd_status usbd_do_request_flags(usbd_device_handle dev, usb_device_request_t *req, void *data, u_int16_t flags, int *actlen, u_int32_t timo)
+	[need context]
+	Do a request, with default pipe.
+
+usbd_status usbd_do_request_flags_pipe(usbd_device_handle dev, usbd_pipe_handle pipe, usb_device_request_t *req, void *data, u_int16_t flags, int *actlen, u_int32_t timeout)
+	[need context]
+	Do a request.
+
+void usbd_do_request_async_cb(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
+	[nocontext ok]
+	(internal)
+
+usbd_status usbd_do_request_async(usbd_device_handle dev, usb_device_request_t *req, void *data)
+	[nocontext ok]
+	Do a request.
+	Return USBD_IN_PROGRESS if request is scheduled.
+	Return USBD_NOMEM if failed to allocate an xfer.
+	Other error status won't be notified.
+
+Static void usbd_do_request_async_task(void *arg)
+	[need context]
+	(internal)
+
+const struct usbd_quirks *usbd_get_quirks(usbd_device_handle dev)
+	[nocontext ok]
+	Return device quirks.
+
+void usbd_dopoll(usbd_interface_handle iface)
+	[nocontext ok]
+	Run interface in polling mode.
+	This is intendend to be used for keyboard driver in non-interrupt mode.
+
+void usbd_set_polling(usbd_device_handle dev, int on)
+	[nocontext ok]
+	If on is nonzero, increase polling count.
+	If on is zero, decrease polling count.
+	If polloing count will be nonzero, call software interrupt handler
+	of HC driver.
+
+usb_endpoint_descriptor_t *usbd_get_endpoint_descriptor(usbd_interface_handle iface, u_int8_t address)
+	[nocontext ok]
+	Return endpoint descriptor of specified number endpoint.
+	Return NULL if the endpoint is not found.
+
+int usbd_ratecheck(struct timeval *last)
+	[nocontext ok]
+	Limit the number of error messages that occurs.
+
+const struct usb_devno *usb_match_device(const struct usb_devno *tbl, u_int nentries, u_int sz, u_int16_t vendor, u_int16_t product)
+	[nocontext ok]
+	Search for a vendor/product pair in an array.  The item size is
+	given as an argument.
+
+void usb_desc_iter_init(usbd_device_handle dev, usbd_desc_iter_t *iter)
+	[nocontext ok]
+	Initialize for enumerate descriptors of a device.
+
+const usb_descriptor_t *usb_desc_iter_next(usbd_desc_iter_t *iter)
+	[nocontext ok]
+	Lookup the next descriptor.
+
+usbd_status usbd_get_string(usbd_device_handle dev, int si, char *buf)
+	[need context]
+	Lookup UNICODE string of index si.
+
+usbd_status usbd_get_string0(usbd_device_handle dev, int si, char *buf, int unicode)
+	[need context]
+	Lookup string of index si.
+
+
+usb_subr.c:
+const char *usbd_errstr(usbd_status err)
+	[nocontext ok]
+	Convert usbdi(9) error number to an error string.
+
+usbd_status usbd_get_string_desc(usbd_device_handle dev, int sindex, int langid, usb_string_descriptor_t *sdesc, int *sizep)
+	[need context]
+	Read string descriptor of index sindex.
+
+static void usbd_trim_spaces(char *p)
+	[nocontext ok]
+	Strip leading and trailing spaces.
+
+Static void usbd_devinfo_vp(usbd_device_handle dev, char *v, char *p, int usedev, int useencoded)
+	[need context]
+	Get devinfo.
+
+int usbd_printBCD(char *cp, size_t l, int bcd)
+	[nocontext ok]
+	Convert BCD number to string.
+
+Static void usbd_devinfo(usbd_device_handle dev, int showclass, char *cp, size_t l)
+	[need context]
+	Get devinfo and store the string to cp.
+
+char *usbd_devinfo_alloc(usbd_device_handle dev, int showclass)
+	[need context]
+	Allocate devinfo.
+
+void usbd_devinfo_free(char *devinfop)
+	[need context]
+	Free devinfo.
+
+void usb_delay_ms(usbd_bus_handle bus, u_int ms)
+void usbd_delay_ms(usbd_device_handle dev, u_int ms)
+	[nocontext ok] if (cold || bus->use_polling)
+	[need context] otherwise
+	Delay specified milliseconds.
+
+usbd_status usbd_reset_port(usbd_device_handle dev, int port, usb_port_status_t *ps)
+	[need context]
+	Reset a hub port.
+
+usb_interface_descriptor_t *usbd_find_idesc(usb_config_descriptor_t *cd, int ifaceidx, int altidx)
+	[nocontext ok]
+	Lookup interface descriptor.
+
+usb_endpoint_descriptor_t *usbd_find_edesc(usb_config_descriptor_t *cd, int ifaceidx, int altidx, int endptidx)
+	[nocontext ok]
+	Lookup endpoint descriptor.
+
+usbd_status usbd_fill_iface_data(usbd_device_handle dev, int ifaceidx, int altidx)
+	[need context]
+	Read descriptors of the interface and fill endpoint structure.
+
+void usbd_free_iface_data(usbd_device_handle dev, int ifcno)
+	[need context]
+	Free endpoint structure of the interface.
+
+Static usbd_status usbd_set_config(usbd_device_handle dev, int conf)
+	[need context]
+	XXX
+
+usbd_status usbd_set_config_no(usbd_device_handle dev, int no, int msg)
+	[need context]
+	XXX
+
+usbd_status usbd_set_config_index(usbd_device_handle dev, int index, int msg)
+	[need context]
+	XXX
+
+usbd_status usbd_setup_pipe(usbd_device_handle dev, usbd_interface_handle iface, struct usbd_endpoint *ep, int ival, usbd_pipe_handle *pipe)
+	[need context]
+	Allocate and initialize pipe structure.
+
+void usbd_kill_pipe(usbd_pipe_handle pipe)
+	[need context]
+	Abort and free the device control pipe.
+
+int usbd_getnewaddr(usbd_bus_handle bus)
+	[nocontext ok]
+	Return bus address of new USB device.
+	Return NULL if number of devices has reached USB_MAX_DEVICES.
+
+usbd_status usbd_probe_and_attach(device_ptr_t parent, usbd_device_handle dev, int port, int addr)
+	[need context]
+	Attach new USB device.
+
+usbd_status usbd_new_device(device_ptr_t parent, usbd_bus_handle bus, int depth, int speed, int port, struct usbd_port *up)
+	[need context]
+	Initialize and attach new USB device.
+
+usbd_status usbd_reload_device_desc(usbd_device_handle dev)
+	[need context]
+	Reload device descriotprs.
+
+void usbd_remove_device(usbd_device_handle dev, struct usbd_port *up)
+	[need context]
+	Remove a device from port.
+
+void usbd_fill_deviceinfo(usbd_device_handle dev, struct usb_device_info *di, int usedev)
+	[need context]
+	Fill device info *di.
+
+void usbd_fill_deviceinfo_old(usbd_device_handle dev, struct usb_device_info_old *di, int usedev)
+	[need context]
+	[COMPAT_30]
+	Fill device info *di.
+
+void usb_free_device(usbd_device_handle dev)
+	[need context]
+	Free a USB device.
+
+void usb_disconnect_port(struct usbd_port *up, device_ptr_t parent)
+	[need context]
+	Called when we discover that a port has been disconnected.
+
+
+usbdi_util.c:
+usbd_status usbd_get_desc(usbd_device_handle dev, int type, int index, int len, void *desc)
+	[need context]
+	Get descriptor from device.
+
+usbd_status usbd_get_config_desc(usbd_device_handle dev, int confidx, usb_config_descriptor_t *d)
+	[need context]
+	Get config descriptor from device.
+
+usbd_status usbd_get_config_desc_full(usbd_device_handle dev, int conf, void *d, int size)
+	[need context]
+	Get full config descriptor from device.
+
+usbd_status usbd_get_device_desc(usbd_device_handle dev, usb_device_descriptor_t *d)
+	[need context]
+	Get device descriptor from device.
+
+usbd_status usbd_get_device_status(usbd_device_handle dev, usb_status_t *st)
+	[need context]
+	Get device status from device.
+
+usbd_status usbd_get_hub_status(usbd_device_handle dev, usb_hub_status_t *st)
+	[need context]
+	Get hub status from device.
+
+usbd_status usbd_set_address(usbd_device_handle dev, int addr)
+	[need context]
+	Set address to device.
+
+usbd_status usbd_get_port_status(usbd_device_handle dev, int port, usb_port_status_t *ps)
+	[need context]
+	Get port status from device
+
+usbd_status usbd_clear_hub_feature(usbd_device_handle dev, int sel)
+	[need context]
+	Clear hub feature sel.
+
+usbd_status usbd_set_hub_feature(usbd_device_handle dev, int sel)
+	[need context]
+	Set hub feature sel.
+
+usbd_status usbd_clear_port_feature(usbd_device_handle dev, int port, int sel)
+	[need context]
+	Clear port feature sel.
+
+usbd_status usbd_set_port_feature(usbd_device_handle dev, int port, int sel)
+	[need context]
+	Set port feature sel.
+
+usbd_status usbd_get_protocol(usbd_interface_handle iface, u_int8_t *report)
+	[need context]
+	???
+
+usbd_status usbd_set_protocol(usbd_interface_handle iface, int report)
+	[need context]
+	???
+
+usbd_status usbd_set_report(usbd_interface_handle iface, int type, int id, void *data, int len)
+	[need context]
+	???
+
+usbd_status usbd_set_report_async(usbd_interface_handle iface, int type, int id, void *data, int len)
+	[nocontext ok]
+
+usbd_status usbd_get_report(usbd_interface_handle iface, int type, int id, void *data, int len)
+	[need context]
+
+usbd_status usbd_set_idle(usbd_interface_handle iface, int duration, int id)
+	[need context]
+
+usbd_status usbd_get_report_descriptor(usbd_device_handle dev, int ifcno, int size, void *d)
+	[need context]
+
+usb_hid_descriptor_t *usbd_get_hid_descriptor(usbd_interface_handle ifc)
+	[nocontext ok]
+
+usbd_status usbd_read_report_desc(usbd_interface_handle ifc, void **descp, int *sizep, usb_malloc_type mem)
+	[need context]
+
+usbd_status usbd_get_config(usbd_device_handle dev, u_int8_t *conf)
+	[need context]
+
+Static void usbd_bulk_transfer_cb(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
+	[nocontext ok]
+	(internal)
+
+usbd_status usbd_bulk_transfer(usbd_xfer_handle xfer, usbd_pipe_handle pipe, u_int16_t flags, u_int32_t timeout, void *buf, u_int32_t *size, const char *lbl)
+	[need context]
+	Request bulk transfer and wait until done.
+
+Static void usbd_intr_transfer_cb(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
+	[nocontext ok]
+	(internal)
+
+usbd_status usbd_intr_transfer(usbd_xfer_handle xfer, usbd_pipe_handle pipe, u_int16_t flags, u_int32_t timeout, void *buf, u_int32_t *size, const char *lbl)
+	[need context]
+	Request interrupt transfer and wait until done.
+
+void usb_detach_wait(device_ptr_t dv)
+	[need context]
+
+void usb_detach_wakeup(device_ptr_t dv)
+	[nocontext ok]
+
+const usb_cdc_descriptor_t *usb_find_desc(usbd_device_handle dev, int type, int subtype)
+	[nocontext ok]
+	Look up a descriptor from device, specified by type/subtype.
+
+const usb_cdc_descriptor_t *usb_find_desc_if(usbd_device_handle dev, int type, int subtype, usb_interface_descriptor_t *id)
+	[nocontext ok]
+	Look up a descriptor from interface, specified by type/subtype.
+
+
+usb.c:
+void usb_add_task(usbd_device_handle dev, struct usb_task *task, int queue)
+	[nocontext ok]
+	Add a task to be performed by the task thread.  This function can be
+	called from any context and the task will be executed in a process
+	context ASAP.
+
+void usb_rem_task(usbd_device_handle dev, struct usb_task *task)
+	[nocontext ok]
+	Remove a task.
+
+void usb_init_task(struct usb_task *task, void (*fun)(void *), void *arg)
+	[nocontext ok]
+	Initialize a task.
+
+void usb_needs_explore(usbd_device_handle dev)
+	[nocontext ok]
+	Request exploring the bus for devices.
+
+void usb_needs_reattach(usbd_device_handle dev)
+	[nocontext ok]
+	Request diconnection and reconnection the device.
+
+/* HC API */
+void usb_schedsoftintr(usbd_bus_handle bus)
+	[nocontext ok]
+	Schedule soft interrupt (called in low priority)
+
+
+/* HC API (usb_mem_dma) */
+usb_mem.h:
+void *KERNADDR(usb_dma_t *ud, int offset)
+	[nocontext ok]
+	Compute adddress in kernel space of given ud and offset.
+
+bus_addr_t DMAADDR(usb_dma_t *ud, int offset)
+	[nocontext ok]
+	Compute adddress in DMA space of given ud and offset.
+
+void USB_MEM_SYNC(bus_dma_tag_t utag, usb_dma_t *ud, int ops)
+	[nocontext ok]
+	Issue bus_dmamap_sync(9) on given ud.
+
+void USB_MEM_SYNC2(bus_dma_tag_t utag, usb_dma_t *ud, int off, int len, int ops)
+	[nocontext ok]
+	Issue bus_dmamap_sync(9) on subregion of given ud.
+	Note this macro is identical to USB_MEM_SYNC() on FreeBSD.
+
+
+/* HC API (usb_mem_dma) */
+usb_mem.c:
+usbd_status usb_allocmem(usb_dma_tag_t *utag, size_t align, size_t size, usb_dma_t *ud)
+	[need context]
+	Allocate generic buffer suitable to DMA operations
+	of specified size and align, and fill *ud.
+
+void usb_freemem(usb_dma_tag_t *utag, usb_dma_t *ud)
+	[nocontext ok] for now, but it may possibly changes to [need context]
+	Free generic DMA buffer, allocated by usb_allocmem().
+
+usbd_status usb_alloc_buffer_dma(usb_dma_tag_t *utag, struct usb_buffer_dma *ud, void *buf, size_t size, void **pbufadr)
+	[need context]
+	Allocate DMA buffer for transfer.
+	Fill the buffer information to *ud and
+	put kernel address of the buffer to *pbufadr.
+
+void usb_free_buffer_dma(usb_dma_tag_t *utag, struct usb_buffer_dma *ud, enum usbd_waitflg waitflg)
+	[nocontext ok] if (waitflg == U_NOWAIT)
+	[need context] otherwise
+	Free DMA buffer for transfer.
+
+void usb_map_dma(usb_dma_tag_t *utag, struct usb_buffer_dma *ud, void *buf, size_t size)
+	[nocontext ok] usb_alloc_dma_resources() must have been called
+	Map buffer into DMA space for transfer.
+
+void usb_map_mbuf_dma(usb_dma_tag_t *utag, struct usb_buffer_dma *ud, struct mbuf *chain)
+	[nocontext ok] usb_alloc_dma_resources() must have been called
+	Map mbuf chain into DMA space for transfer.
+
+void usb_unmap_dma(usb_dma_tag_t *u, struct usb_buffer_dma *)
+	[nocontext ok] usb_alloc_dma_resources() must have been called
+	Unmap DMA buffer, allocated by usb_map_dma() or usb_map_mbuf_dma().
+
+usbd_status usb_alloc_dma_resources(usb_dma_tag_t *utag, struct usb_buffer_dma *ud)
+	[need context]
+	Pre-allocate DMA resources so usb_map_mbuf() or usb_map_mbuf_dma()
+	won't block.
+
+void usb_free_dma_resources(usb_dma_tag_t *utag, struct usb_buffer_dma *ud)
+	[need context]
+	Free pre-allocated DMA resources.
+
+void usb_sync_buffer_dma(usb_dma_tag_t *utag, struct usb_buffer_dma *ud, int ops)
+	[nocontext ok]
+	Issue bus_dmamap_sync(9) on DMA buffer for transfer.
+
+void usb_clean_buffer_dma(usb_dma_tag_t *utag, struct usb_buffer_dma *ud)
+	[need context]
+	Cleanup resources possibly left by usb_free_buffer_dma() with
+	waitflg == U_NOWAIT.
+
+usbd_status usb_insert_transfer_dma(usbd_xfer_handle xfer, usb_dma_tag_t *utag, struct usb_buffer_dma *ud)
+	[nocontext ok]
+	usb_sync_buffer_dma() and usb_insert_transfer().
+
+void usb_transfer_complete_dma(usbd_xfer_handle xfer, usb_dma_tag_t *utag, struct usb_buffer_dma *ud)
+	[nocontext ok]
+	usb_sync_buffer_dma() and usb_transfer_complete().
+
+void usb_dma_tag_init(usb_dma_tag_t *utag)
+	[nocontext ok]
+	Initialize utag.
+
+void usb_dma_tag_finish(usb_dma_tag_t *utag)
+	[need context]
+	Free resources related with utag.
+
+
+/* HC API (usb_mem_nodma) */
+usb_mem_nodma.c:
+usbd_status usb_alloc_buffer_mem(usb_mem_tag_t *utag, void *buf, size_t size, struct usb_buffer_mem *ub, void **pbufadr)
+	[need context]
+	Allocate buffer for transfer.
+
+void usb_free_buffer_mem(usb_mem_tag_t *utag, struct usb_buffer_mem *ub, enum usbd_waitflg waitflg)
+	[nocontext ok] if (waitflg == U_NOWAIT)
+	[need context] otherwise
+	Free buffer for transfer.
+
+void usb_map_mem(struct usb_buffer_mem *ub, void *buf)
+	[nocontext ok]
+	Prepare buffer for transfer.
+	usb_buffer_mem_rewind() must be called before actual usage.
+
+void usb_map_mbuf_mem(struct usb_buffer_mem *ub, struct mbuf *chain)
+	[nocontext ok]
+	Prepare mbuf for transfer.
+	usb_buffer_mem_rewind() must be called before actual usage.
+
+void usb_unmap_mem(struct usb_buffer_mem *ub)
+	[nocontext ok]
+	Finish use of transfer buffer prepared by
+	usb_map_mbuf() or usb_map_mbuf_mem().
+
+void usb_buffer_mem_rewind(struct usb_buffer_mem *ub)
+	[nocontext ok]
+	Reset transfer position at the top of buffer.
+
+void usb_mem_tag_init(usb_mem_tag_t *utag)
+	[nocontext ok]
+	Initialize utag.
+
+void usb_mem_tag_finish(usb_mem_tag_t *utag)
+	[need context]
+	Free resources related with utag.
+
+
+/* callbacks */
+xfer->callback			(device driver) must be async safe
+bus->methods->allocm		(HCI) sleep ok
+bus->methods->freem		(HCI) sleep ok if waitflg == U_WAITOK, async otherwise
++bus->methods->map_alloc	(HCI) sleep ok
++bus->methods->map_free		(HCI) sleep ok
++bus->methods->mapm		(HCI) must be async safe
++bus->methods->mapm_mbuf	(HCI) must be async safe
++bus->methods->unmapm		(HCI) must be async safe
+bus->methods->allocx		(HCI) sleep ok if waitflg == U_WAITOK, async otherwise
+bus->methods->freex		(HCI) must be async safe (for now)
+bus->methods->do_poll		(HCI) must be async safe
+bus->methods->soft_intr		(HCI) must be async safe
+bus->methods->open_pipe		(HCI) sleep ok
+pipe->methods->close		(HCI) must be async safe
+pipe->methods->transfer		(HCI) must be async safe
+pipe->methods->cleartoggle	(HCI) must be async safe
+pipe->methods->abort		(HCI) must be async safe
+pipe->methods->done		(HCI) must be async safe
+pipe->methods->start		(HCI) must be async safe

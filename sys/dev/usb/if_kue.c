@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kue.c,v 1.60 2007/03/13 13:51:54 drochner Exp $	*/
+/*	$NetBSD: if_kue.c,v 1.58.10.1 2007/05/22 14:57:37 itohy Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_kue.c,v 1.60 2007/03/13 13:51:54 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_kue.c,v 1.58.10.1 2007/05/22 14:57:37 itohy Exp $");
 
 #if defined(__NetBSD__)
 #include "opt_inet.h"
@@ -189,7 +189,7 @@ Static int kue_open_pipes(struct kue_softc *);
 Static void kue_rxeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
 Static void kue_txeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
 Static void kue_start(struct ifnet *);
-Static int kue_ioctl(struct ifnet *, u_long, void *);
+Static int kue_ioctl(struct ifnet *, u_long, caddr_t);
 Static void kue_init(void *);
 Static void kue_stop(struct kue_softc *);
 Static void kue_watchdog(struct ifnet *);
@@ -403,6 +403,9 @@ USB_MATCH(kue)
 	USB_MATCH_START(kue, uaa);
 
 	DPRINTFN(25,("kue_match: enter\n"));
+
+	if (uaa->iface != NULL)
+		return (UMATCH_NONE);
 
 	return (kue_lookup(uaa->vendor, uaa->product) != NULL ?
 		UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
@@ -664,7 +667,8 @@ kue_rx_list_init(struct kue_softc *sc)
 		if (kue_newbuf(sc, c, NULL) == ENOBUFS)
 			return (ENOBUFS);
 		if (c->kue_xfer == NULL) {
-			c->kue_xfer = usbd_alloc_xfer(sc->kue_udev);
+			c->kue_xfer = usbd_alloc_xfer(sc->kue_udev,
+			    sc->kue_ep[KUE_ENDPT_RX]);
 			if (c->kue_xfer == NULL)
 				return (ENOBUFS);
 			c->kue_buf = usbd_alloc_buffer(c->kue_xfer, KUE_BUFSZ);
@@ -692,7 +696,8 @@ kue_tx_list_init(struct kue_softc *sc)
 		c->kue_idx = i;
 		c->kue_mbuf = NULL;
 		if (c->kue_xfer == NULL) {
-			c->kue_xfer = usbd_alloc_xfer(sc->kue_udev);
+			c->kue_xfer = usbd_alloc_xfer(sc->kue_udev,
+			    sc->kue_ep[KUE_ENDPT_TX]);
 			if (c->kue_xfer == NULL)
 				return (ENOBUFS);
 			c->kue_buf = usbd_alloc_buffer(c->kue_xfer, KUE_BUFSZ);
@@ -1055,7 +1060,7 @@ kue_open_pipes(struct kue_softc *sc)
 }
 
 Static int
-kue_ioctl(struct ifnet *ifp, u_long command, void *data)
+kue_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 {
 	struct kue_softc	*sc = ifp->if_softc;
 	struct ifaddr 		*ifa = (struct ifaddr *)data;

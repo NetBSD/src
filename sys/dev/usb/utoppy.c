@@ -1,4 +1,4 @@
-/*	$NetBSD: utoppy.c,v 1.10 2007/03/13 13:51:57 drochner Exp $	*/
+/*	$NetBSD: utoppy.c,v 1.8.10.1 2007/05/22 14:57:51 itohy Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: utoppy.c,v 1.10 2007/03/13 13:51:57 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: utoppy.c,v 1.8.10.1 2007/05/22 14:57:51 itohy Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -196,6 +196,9 @@ USB_MATCH(utoppy)
 {
 	USB_MATCH_START(utoppy, uaa);
 
+	if (uaa->iface == NULL)
+		return (UMATCH_NONE);
+
 	if (uaa->vendor == USB_VENDOR_TOPFIELD &&
 	    uaa->product == USB_PRODUCT_TOPFIELD_TF5000PVR)
 		return (UMATCH_VENDOR_PRODUCT);
@@ -207,7 +210,6 @@ USB_ATTACH(utoppy)
 {
 	USB_ATTACH_START(utoppy, sc, uaa);
 	usbd_device_handle dev = uaa->device;
-	usbd_interface_handle iface;
 	usb_endpoint_descriptor_t *ed;
 	char *devinfop;
 	u_int8_t epcount;
@@ -222,14 +224,8 @@ USB_ATTACH(utoppy)
 	sc->sc_refcnt = 0;
 	sc->sc_udev = dev;
 
-	if (usbd_set_config_index(dev, 0, 1)
-	    || usbd_device2interface_handle(dev, 0, &iface)) {
-		printf("%s: Configuration failed\n", USBDEVNAME(sc->sc_dev));
-		USB_ATTACH_ERROR_RETURN;
-	}
-
 	epcount = 0;
-	(void) usbd_endpoint_count(iface, &epcount);
+	(void) usbd_endpoint_count(uaa->iface, &epcount);
 	if (epcount != UTOPPY_NUMENDPOINTS) {
 		printf("%s: Expected %d endpoints, got %d\n",
 		    USBDEVNAME(sc->sc_dev), UTOPPY_NUMENDPOINTS, epcount);
@@ -240,7 +236,7 @@ USB_ATTACH(utoppy)
 	sc->sc_out = -1;
 
 	for (i = 0; i < epcount; i++) {
-		ed = usbd_interface2endpoint_descriptor(iface, i);
+		ed = usbd_interface2endpoint_descriptor(uaa->iface, i);
 		if (ed == NULL) {
 			printf("%s: couldn't get ep %d\n",
 			    USBDEVNAME(sc->sc_dev), i);
@@ -263,10 +259,10 @@ USB_ATTACH(utoppy)
 		USB_ATTACH_ERROR_RETURN;
 	}
 
-	sc->sc_iface = iface;
+	sc->sc_iface = uaa->iface;
 	sc->sc_udev = dev;
 
-	sc->sc_out_xfer = usbd_alloc_xfer(sc->sc_udev);
+	sc->sc_out_xfer = usbd_alloc_xfer(sc->sc_udev, sc->sc_out_pipe);
 	if (sc->sc_out_xfer == NULL) {
 		printf("%s: could not allocate bulk out xfer\n",
 		    USBDEVNAME(sc->sc_dev));
@@ -280,7 +276,7 @@ USB_ATTACH(utoppy)
 		goto fail1;
 	}
 
-	sc->sc_in_xfer = usbd_alloc_xfer(sc->sc_udev);
+	sc->sc_in_xfer = usbd_alloc_xfer(sc->sc_udev, sc->sc_in_pipe);
 	if (sc->sc_in_xfer == NULL) {
 		printf("%s: could not allocate bulk in xfer\n",
 		    USBDEVNAME(sc->sc_dev));
@@ -539,7 +535,7 @@ utoppy_bulk_transfer(usbd_xfer_handle xfer, usbd_pipe_handle pipe,
 		splx(s);
 		return (err);
 	}
-	error = tsleep((void *)xfer, PZERO, lbl, 0);
+	error = tsleep((caddr_t)xfer, PZERO, lbl, 0);
 	splx(s);
 	if (error) {
 		usbd_abort_pipe(pipe);
@@ -1662,7 +1658,7 @@ utoppywrite(dev_t dev, struct uio *uio, int flags)
 }
 
 int
-utoppyioctl(dev_t dev, u_long cmd, void *data, int flag,
+utoppyioctl(dev_t dev, u_long cmd, caddr_t data, int flag,
     struct lwp *l)
 {
 	struct utoppy_softc *sc;

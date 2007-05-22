@@ -1,4 +1,4 @@
-/*	$NetBSD: umidireg.h,v 1.6 2007/03/04 06:02:49 christos Exp $	*/
+/*	$NetBSD: umidireg.h,v 1.5 2007/02/26 13:14:11 drochner Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -79,7 +79,7 @@ typedef struct {
 
 
 #define TO_D(p) ((usb_descriptor_t *)(p))
-#define NEXT_D(desc) TO_D((char *)(desc)+(desc)->bLength)
+#define NEXT_D(desc) TO_D((caddr_t)(desc)+(desc)->bLength)
 #define TO_IFD(desc) ((usb_interface_descriptor_t *)(desc))
 #define TO_CSIFD(desc) ((umidi_cs_interface_descriptor_t *)(desc))
 #define TO_EPD(desc) ((usb_endpoint_descriptor_t *)(desc))

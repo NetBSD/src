@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci_pci.c,v 1.27 2007/02/09 21:55:27 ad Exp $	*/
+/*	$NetBSD: ehci_pci.c,v 1.27.14.1 2007/05/22 14:57:33 itohy Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.27 2007/02/09 21:55:27 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.27.14.1 2007/05/22 14:57:33 itohy Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,7 +129,7 @@ ehci_pci_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_pc = pc;
 	sc->sc_tag = tag;
-	sc->sc.sc_bus.dmatag = pa->pa_dmat;
+	sc->sc.sc_dmatag.tag = pa->pa_dmat;
 
 	/* Enable the device. */
 	csr = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
@@ -257,11 +257,11 @@ ehci_dump_caps(ehci_softc_t *sc, pci_chipset_tag_t pc, pcitag_t tag)
 	addr = EHCI_HCC_EECP(cparams);
 	while (addr != 0) {
 		cap = pci_conf_read(pc, tag, addr);
-		id = EHCI_CAP_GET_ID(cap);
+		id = EHCI_EECP_ID(cap);
 		switch (id) {
-		case EHCI_CAP_ID_LEGACY:
+		case EHCI_EC_LEGSUP:
 			legctlsts = pci_conf_read(pc, tag,
-						  addr + PCI_EHCI_USBLEGCTLSTS);
+						  addr + EHCI_LEGSUP_USBLEGCTLSTS);
 			printf("ehci_dump_caps: legsup=0x%08x "
 			       "legctlsts=0x%08x\n", cap, legctlsts);
 			break;
@@ -271,7 +271,7 @@ ehci_dump_caps(ehci_softc_t *sc, pci_chipset_tag_t pc, pcitag_t tag)
 		}
 		if (--maxdump < 0)
 			break;
-		addr = EHCI_CAP_GET_NEXT(cap);
+		addr = EHCI_EECP_NEXT(cap);
 	}
 }
 #endif
@@ -292,31 +292,31 @@ ehci_get_ownership(ehci_softc_t *sc, pci_chipset_tag_t pc, pcitag_t tag)
 	addr = EHCI_HCC_EECP(cparams);
 	while (addr != 0) {
 		cap = pci_conf_read(pc, tag, addr);
-		if (EHCI_CAP_GET_ID(cap) == EHCI_CAP_ID_LEGACY)
+		if (EHCI_EECP_ID(cap) == EHCI_EC_LEGSUP)
 			break;
 		if (--maxcap < 0) {
 			aprint_normal("%s: broken extended capabilities "
 				      "ignored\n", devname);
 			return;
 		}
-		addr = EHCI_CAP_GET_NEXT(cap);
+		addr = EHCI_EECP_NEXT(cap);
 	}
 
-	legsup = pci_conf_read(pc, tag, addr + PCI_EHCI_USBLEGSUP);
+	legsup = pci_conf_read(pc, tag, addr + EHCI_LEGSUP_LEGSUP);
 	/* Ask BIOS to give up ownership */
-	legsup |= EHCI_LEG_HC_OS_OWNED;
-	pci_conf_write(pc, tag, addr + PCI_EHCI_USBLEGSUP, legsup);
+	legsup |= EHCI_LEGSUP_OSOWNED;
+	pci_conf_write(pc, tag, addr + EHCI_LEGSUP_LEGSUP, legsup);
 	for (ms = 0; ms < EHCI_MAX_BIOS_WAIT; ms++) {
-		legsup = pci_conf_read(pc, tag, addr + PCI_EHCI_USBLEGSUP);
-		if (!(legsup & EHCI_LEG_HC_BIOS_OWNED))
+		legsup = pci_conf_read(pc, tag, addr + EHCI_LEGSUP_LEGSUP);
+		if (!(legsup & EHCI_LEGSUP_BIOSOWNED))
 			break;
 		delay(1000);
 	}
 	if (ms == EHCI_MAX_BIOS_WAIT) {
 		aprint_normal("%s: BIOS refuses to give up ownership, "
 			      "using force\n", devname);
-		pci_conf_write(pc, tag, addr + PCI_EHCI_USBLEGSUP, 0);
-		pci_conf_write(pc, tag, addr + PCI_EHCI_USBLEGCTLSTS, 0);
+		pci_conf_write(pc, tag, addr + EHCI_LEGSUP_LEGSUP, 0);
+		pci_conf_write(pc, tag, addr + EHCI_LEGSUP_USBLEGCTLSTS, 0);
 	} else {
 		aprint_verbose("%s: BIOS has given up ownership\n", devname);
 	}

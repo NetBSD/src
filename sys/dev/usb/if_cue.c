@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cue.c,v 1.50 2007/03/13 13:51:54 drochner Exp $	*/
+/*	$NetBSD: if_cue.c,v 1.48.10.1 2007/05/22 14:57:37 itohy Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.50 2007/03/13 13:51:54 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.48.10.1 2007/05/22 14:57:37 itohy Exp $");
 
 #if defined(__NetBSD__)
 #include "opt_inet.h"
@@ -152,7 +152,7 @@ Static void cue_txeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
 Static void cue_tick(void *);
 Static void cue_tick_task(void *);
 Static void cue_start(struct ifnet *);
-Static int cue_ioctl(struct ifnet *, u_long, void *);
+Static int cue_ioctl(struct ifnet *, u_long, caddr_t);
 Static void cue_init(void *);
 Static void cue_stop(struct cue_softc *);
 Static void cue_watchdog(struct ifnet *);
@@ -465,6 +465,9 @@ USB_MATCH(cue)
 {
 	USB_MATCH_START(cue, uaa);
 
+	if (uaa->iface != NULL)
+		return (UMATCH_NONE);
+
 	return (cue_lookup(uaa->vendor, uaa->product) != NULL ?
 		UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
 }
@@ -713,7 +716,8 @@ cue_rx_list_init(struct cue_softc *sc)
 		if (cue_newbuf(sc, c, NULL) == ENOBUFS)
 			return (ENOBUFS);
 		if (c->cue_xfer == NULL) {
-			c->cue_xfer = usbd_alloc_xfer(sc->cue_udev);
+			c->cue_xfer = usbd_alloc_xfer(sc->cue_udev,
+			    sc->cue_ep[CUE_ENDPT_RX]);
 			if (c->cue_xfer == NULL)
 				return (ENOBUFS);
 			c->cue_buf = usbd_alloc_buffer(c->cue_xfer, CUE_BUFSZ);
@@ -741,7 +745,8 @@ cue_tx_list_init(struct cue_softc *sc)
 		c->cue_idx = i;
 		c->cue_mbuf = NULL;
 		if (c->cue_xfer == NULL) {
-			c->cue_xfer = usbd_alloc_xfer(sc->cue_udev);
+			c->cue_xfer = usbd_alloc_xfer(sc->cue_udev,
+			    sc->cue_ep[CUE_ENDPT_TX]);
 			if (c->cue_xfer == NULL)
 				return (ENOBUFS);
 			c->cue_buf = usbd_alloc_buffer(c->cue_xfer, CUE_BUFSZ);
@@ -1152,7 +1157,7 @@ cue_open_pipes(struct cue_softc	*sc)
 }
 
 Static int
-cue_ioctl(struct ifnet *ifp, u_long command, void *data)
+cue_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 {
 	struct cue_softc	*sc = ifp->if_softc;
 	struct ifaddr 		*ifa = (struct ifaddr *)data;

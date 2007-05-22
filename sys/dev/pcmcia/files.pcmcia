@@ -1,4 +1,4 @@
-#	$NetBSD: files.pcmcia,v 1.54 2007/01/09 19:19:09 cube Exp $
+#	$NetBSD: files.pcmcia,v 1.54.14.1 2007/05/22 14:57:33 itohy Exp $
 #
 # Config.new file and device description for machine-independent PCMCIA code.
 # Included by ports that need it.
@@ -141,3 +141,7 @@ file	dev/pcmcia/opl_esl.c			opl_esl
 device	bt3c: btbus, bluetooth, firmload
 attach	bt3c at pcmcia
 file	dev/pcmcia/bt3c.c			bt3c		needs-flag
+
+# ScanLogic SL811HS USB Host Controller
+attach	slhci at pcmcia with slhci_pcmcia
+file	dev/pcmcia/slhci_pcmcia.c		slhci_pcmcia

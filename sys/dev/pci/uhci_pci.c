@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci_pci.c,v 1.35 2006/12/10 05:14:42 uwe Exp $	*/
+/*	$NetBSD: uhci_pci.c,v 1.35.14.1 2007/05/22 14:57:33 itohy Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci_pci.c,v 1.35 2006/12/10 05:14:42 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci_pci.c,v 1.35.14.1 2007/05/22 14:57:33 itohy Exp $");
 
 #include "ehci.h"
 
@@ -124,7 +124,7 @@ uhci_pci_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_pc = pc;
 	sc->sc_tag = tag;
-	sc->sc.sc_bus.dmatag = pa->pa_dmat;
+	sc->sc.sc_dmatag.tag = pa->pa_dmat;
 
 	/* Enable the device. */
 	csr = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);

@@ -1,7 +1,0 @@
-.\"	$NetBSD: whatis,v 1.12 2006/11/26 16:29:07 hubertf Exp $
-.
-.\"
-.\" Look at src/doc/CHANGES for contents!
-.\"
-The \*M port was improved through a large number of
-machine-independent changes in the general NetBSD base code.

@@ -1,9 +1,0 @@
-#       $NetBSD: INSTALL.ABLE,v 1.2 2005/12/11 12:17:04 christos Exp $
-#
-#       INSTALL.ABLE -- Install kernel, plus ABLE support.
-#
-
-include "arch/cats/conf/INSTALL"
-
-options ABLEELF
-makeoptions    ABLEELF="1"

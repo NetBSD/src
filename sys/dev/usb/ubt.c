@@ -1,4 +1,4 @@
-/*	$NetBSD: ubt.c,v 1.24 2007/03/13 13:51:55 drochner Exp $	*/
+/*	$NetBSD: ubt.c,v 1.22.10.1 2007/05/22 14:57:40 itohy Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.24 2007/03/13 13:51:55 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.22.10.1 2007/05/22 14:57:40 itohy Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -230,9 +230,6 @@ struct ubt_softc {
 
 	/* Protocol structure */
 	struct hci_unit		 sc_unit;
-
-	/* Successfully attached */
-	int			 sc_ok;
 };
 
 /*******************************************************************************
@@ -281,12 +278,11 @@ static int ubt_sysctl_config(SYSCTLFN_PROTO);
 static void ubt_abortdealloc(struct ubt_softc *);
 
 /*
- * Match against the whole device, since we want to take
- * both interfaces. If a device should be ignored then add
+ * If a device should be ignored then add
  *
  *	{ VendorID, ProductID }
  *
- * to the ubt_ignore list.
+ * to this list.
  */
 static const struct usb_devno ubt_ignore[] = {
 	{ USB_VENDOR_BROADCOM, USB_PRODUCT_BROADCOM_BCM2033NF },
@@ -296,16 +292,22 @@ static const struct usb_devno ubt_ignore[] = {
 USB_MATCH(ubt)
 {
 	USB_MATCH_START(ubt, uaa);
+	usb_interface_descriptor_t *id;
 
 	DPRINTFN(50, "ubt_match\n");
+
+	if (uaa->iface == NULL)
+		return UMATCH_NONE;
 
 	if (usb_lookup(ubt_ignore, uaa->vendor, uaa->product))
 		return UMATCH_NONE;
 
-	if (uaa->class == UDCLASS_WIRELESS
-	    && uaa->subclass == UDSUBCLASS_RF
-	    && uaa->proto == UDPROTO_BLUETOOTH)
-		return UMATCH_DEVCLASS_DEVSUBCLASS_DEVPROTO;
+	id = usbd_get_interface_descriptor(uaa->iface);
+	if (id != NULL
+	    && id->bInterfaceClass == UICLASS_WIRELESS
+	    && id->bInterfaceSubClass == UISUBCLASS_RF
+	    && id->bInterfaceProtocol == UIPROTO_BLUETOOTH)
+		return UMATCH_IFACECLASS_IFACESUBCLASS_IFACEPROTO;
 
 	return UMATCH_NONE;
 }
@@ -313,6 +315,7 @@ USB_MATCH(ubt)
 USB_ATTACH(ubt)
 {
 	USB_ATTACH_START(ubt, sc, uaa);
+	usbd_interface_handle iface;
 	usb_config_descriptor_t *cd;
 	usb_endpoint_descriptor_t *ed;
 	const struct sysctlnode *node;
@@ -330,12 +333,11 @@ USB_ATTACH(ubt)
 	usbd_devinfo_free(devinfop);
 
 	/*
-	 * Move the device into the configured state
+	 * We must have at least 2 interfaces.
 	 */
-	err = usbd_set_config_index(sc->sc_udev, 0, 1);
-	if (err) {
-		aprint_error("%s: failed to set configuration idx 0: %s\n",
-		    USBDEVNAME(sc->sc_dev), usbd_errstr(err));
+	if (uaa->nifaces < 2) {
+		aprint_error("%s: need 2 interfaces (got %d)\n",
+			USBDEVNAME(sc->sc_dev), uaa->nifaces);
 
 		USB_ATTACH_ERROR_RETURN;
 	}
@@ -346,7 +348,7 @@ USB_ATTACH(ubt)
 	 *	2) Bulk IN endpoint to receive ACL data
 	 *	3) Bulk OUT endpoint to send ACL data
 	 */
-	err = usbd_device2interface_handle(sc->sc_udev, 0, &sc->sc_iface0);
+	err = usbd_device2interface_handle(sc->sc_udev, 0, &iface);
 	if (err) {
 		aprint_error("%s: Could not get interface 0 handle %s (%d)\n",
 				USBDEVNAME(sc->sc_dev), usbd_errstr(err), err);
@@ -359,12 +361,12 @@ USB_ATTACH(ubt)
 	sc->sc_aclwr_addr = -1;
 
 	count = 0;
-	(void)usbd_endpoint_count(sc->sc_iface0, &count);
+	(void)usbd_endpoint_count(iface, &count);
 
 	for (i = 0 ; i < count ; i++) {
 		int dir, type;
 
-		ed = usbd_interface2endpoint_descriptor(sc->sc_iface0, i);
+		ed = usbd_interface2endpoint_descriptor(iface, i);
 		if (ed == NULL) {
 			aprint_error("%s: could not read endpoint descriptor %d\n",
 			    USBDEVNAME(sc->sc_dev), i);
@@ -402,6 +404,10 @@ USB_ATTACH(ubt)
 		USB_ATTACH_ERROR_RETURN;
 	}
 
+	/* Interface 0 Ok */
+	sc->sc_iface0 = iface;
+	uaa->ifaces[0] = NULL;
+
 	/*
 	 * Interface 1 must have 2 endpoints
 	 *	1) Isochronous IN endpoint to receive SCO data
@@ -411,7 +417,7 @@ USB_ATTACH(ubt)
 	 * via a sysctl variable. We select config 0 to start, which
 	 * means that no SCO data will be available.
 	 */
-	err = usbd_device2interface_handle(sc->sc_udev, 1, &sc->sc_iface1);
+	err = usbd_device2interface_handle(sc->sc_udev, 1, &iface);
 	if (err) {
 		aprint_error("%s: Could not get interface 1 handle %s (%d)\n",
 				USBDEVNAME(sc->sc_dev), usbd_errstr(err), err);
@@ -428,6 +434,10 @@ USB_ATTACH(ubt)
 	}
 
 	sc->sc_alt_config = usbd_get_no_alts(cd, 1);
+
+	/* Interface 1 Ok */
+	sc->sc_iface1 = iface;
+	uaa->ifaces[1] = NULL;
 
 	/* set initial config */
 	err = ubt_set_isoc_config(sc);
@@ -508,7 +518,6 @@ USB_ATTACH(ubt)
 			CTL_CREATE, CTL_EOL);
 	}
 
-	sc->sc_ok = 1;
 	USB_ATTACH_SUCCESS_RETURN;
 }
 
@@ -520,9 +529,6 @@ USB_DETACH(ubt)
 	DPRINTF("sc=%p flags=%d\n", sc, flags);
 
 	sc->sc_dying = 1;
-
-	if (!sc->sc_ok)
-		return 0;
 
 	/* delete sysctl nodes */
 	sysctl_teardown(&sc->sc_log);
@@ -832,7 +838,7 @@ ubt_enable(struct hci_unit *unit)
 	}
 
 	/* Commands */
-	sc->sc_cmd_xfer = usbd_alloc_xfer(sc->sc_udev);
+	sc->sc_cmd_xfer = usbd_alloc_default_xfer(sc->sc_udev);
 	if (sc->sc_cmd_xfer == NULL) {
 		error = ENOMEM;
 		goto bad;
@@ -850,7 +856,7 @@ ubt_enable(struct hci_unit *unit)
 		error = EIO;
 		goto bad;
 	}
-	sc->sc_aclrd_xfer = usbd_alloc_xfer(sc->sc_udev);
+	sc->sc_aclrd_xfer = usbd_alloc_xfer(sc->sc_udev, sc->sc_aclrd_pipe);
 	if (sc->sc_aclrd_xfer == NULL) {
 		error = ENOMEM;
 		goto bad;
@@ -870,7 +876,7 @@ ubt_enable(struct hci_unit *unit)
 		error = EIO;
 		goto bad;
 	}
-	sc->sc_aclwr_xfer = usbd_alloc_xfer(sc->sc_udev);
+	sc->sc_aclwr_xfer = usbd_alloc_xfer(sc->sc_udev, sc->sc_aclwr_pipe);
 	if (sc->sc_aclwr_xfer == NULL) {
 		error = ENOMEM;
 		goto bad;
@@ -891,7 +897,8 @@ ubt_enable(struct hci_unit *unit)
 		}
 
 		for (i = 0 ; i < UBT_NXFERS ; i++) {
-			sc->sc_scord[i].xfer = usbd_alloc_xfer(sc->sc_udev);
+			sc->sc_scord[i].xfer = usbd_alloc_xfer(sc->sc_udev,
+			    sc->sc_scord_pipe);
 			if (sc->sc_scord[i].xfer == NULL) {
 				error = ENOMEM;
 				goto bad;
@@ -918,7 +925,8 @@ ubt_enable(struct hci_unit *unit)
 		}
 
 		for (i = 0 ; i < UBT_NXFERS ; i++) {
-			sc->sc_scowr[i].xfer = usbd_alloc_xfer(sc->sc_udev);
+			sc->sc_scowr[i].xfer = usbd_alloc_xfer(sc->sc_udev,
+			    sc->sc_scowr_pipe);
 			if (sc->sc_scowr[i].xfer == NULL) {
 				error = ENOMEM;
 				goto bad;

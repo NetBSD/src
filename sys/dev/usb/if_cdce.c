@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cdce.c,v 1.14 2007/03/13 13:51:54 drochner Exp $ */
+/*	$NetBSD: if_cdce.c,v 1.12.10.1 2007/05/22 14:57:37 itohy Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.14 2007/03/13 13:51:54 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.12.10.1 2007/05/22 14:57:37 itohy Exp $");
 #include "bpfilter.h"
 
 #include <sys/param.h>
@@ -108,7 +108,7 @@ Static int	 cdce_encap(struct cdce_softc *, struct mbuf *, int);
 Static void	 cdce_rxeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
 Static void	 cdce_txeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
 Static void	 cdce_start(struct ifnet *);
-Static int	 cdce_ioctl(struct ifnet *, u_long, void *);
+Static int	 cdce_ioctl(struct ifnet *, u_long, caddr_t);
 Static void	 cdce_init(void *);
 Static void	 cdce_watchdog(struct ifnet *);
 Static void	 cdce_stop(struct cdce_softc *);
@@ -128,12 +128,20 @@ USB_DECLARE_DRIVER(cdce);
 
 USB_MATCH(cdce)
 {
-	USB_IFMATCH_START(cdce, uaa);
+	USB_MATCH_START(cdce, uaa);
+	usb_interface_descriptor_t *id;
+
+	if (uaa->iface == NULL)
+		return (UMATCH_NONE);
+
+	id = usbd_get_interface_descriptor(uaa->iface);
+	if (id == NULL)
+		return (UMATCH_NONE);
 
 	if (cdce_lookup(uaa->vendor, uaa->product) != NULL)
 		return (UMATCH_VENDOR_PRODUCT);
 
-	if (uaa->class == UICLASS_CDC && uaa->subclass ==
+	if (id->bInterfaceClass == UICLASS_CDC && id->bInterfaceSubClass ==
 	    UISUBCLASS_ETHERNET_NETWORKING_CONTROL_MODEL)
 		return (UMATCH_IFACECLASS_GENERIC);
 
@@ -142,7 +150,7 @@ USB_MATCH(cdce)
 
 USB_ATTACH(cdce)
 {
-	USB_IFATTACH_START(cdce, sc, uaa);
+	USB_ATTACH_START(cdce, sc, uaa);
 	char				 *devinfop;
 	int				 s;
 	struct ifnet			*ifp;
@@ -436,7 +444,7 @@ cdce_stop(struct cdce_softc *sc)
 }
 
 Static int
-cdce_ioctl(struct ifnet *ifp, u_long command, void *data)
+cdce_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 {
 	struct cdce_softc	*sc = ifp->if_softc;
 	struct ifaddr		*ifa = (struct ifaddr *)data;
@@ -609,7 +617,8 @@ cdce_rx_list_init(struct cdce_softc *sc)
 		if (cdce_newbuf(sc, c, NULL) == ENOBUFS)
 			return (ENOBUFS);
 		if (c->cdce_xfer == NULL) {
-			c->cdce_xfer = usbd_alloc_xfer(sc->cdce_udev);
+			c->cdce_xfer = usbd_alloc_xfer(sc->cdce_udev,
+			    sc->cdce_bulkin_pipe);
 			if (c->cdce_xfer == NULL)
 				return (ENOBUFS);
 			c->cdce_buf = usbd_alloc_buffer(c->cdce_xfer, CDCE_BUFSZ);
@@ -635,7 +644,8 @@ cdce_tx_list_init(struct cdce_softc *sc)
 		c->cdce_idx = i;
 		c->cdce_mbuf = NULL;
 		if (c->cdce_xfer == NULL) {
-			c->cdce_xfer = usbd_alloc_xfer(sc->cdce_udev);
+			c->cdce_xfer = usbd_alloc_xfer(sc->cdce_udev,
+			    sc->cdce_bulkout_pipe);
 			if (c->cdce_xfer == NULL)
 				return (ENOBUFS);
 			c->cdce_buf = usbd_alloc_buffer(c->cdce_xfer, CDCE_BUFSZ);

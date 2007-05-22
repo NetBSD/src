@@ -1,6 +1,7 @@
-/*	$NetBSD: ehcivar.h,v 1.24 2007/01/07 16:44:44 drochner Exp $ */
+/*	$NetBSD: ehcivar.h,v 1.24.14.1 2007/05/22 14:57:35 itohy Exp $ */
+/*	$FreeBSD: /repoman/r/ncvs/src/sys/dev/usb/ehcivar.h,v 1.16 2006/09/07 00:06:41 imp Exp $	*/
 
-/*
+/*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
@@ -36,26 +37,43 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+struct ehci_mem_desc {
+	caddr_t		em_top;
+	ehci_physaddr_t	em_topdma;
+	usb_dma_t	em_dma;
+	SIMPLEQ_ENTRY(ehci_mem_desc) em_next;
+};
+
 typedef struct ehci_soft_qtd {
 	ehci_qtd_t qtd;
 	struct ehci_soft_qtd *nextqtd; /* mirrors nextqtd in TD */
-	ehci_physaddr_t physaddr;
+	struct ehci_mem_desc *et_mdesc;
 	usbd_xfer_handle xfer;
 	LIST_ENTRY(ehci_soft_qtd) hnext;
 	u_int16_t len;
 } ehci_soft_qtd_t;
 #define EHCI_SQTD_SIZE ((sizeof (struct ehci_soft_qtd) + EHCI_QTD_ALIGN - 1) / EHCI_QTD_ALIGN * EHCI_QTD_ALIGN)
-#define EHCI_SQTD_CHUNK (EHCI_PAGE_SIZE / EHCI_SQTD_SIZE)
+#define EHCI_SQTD_CHUNK ((EHCI_PAGE_SIZE - sizeof(struct ehci_mem_desc)) / EHCI_SQTD_SIZE)
+#define EHCI_SQTD_DMAADDR(d)	\
+	((d)->et_mdesc->em_topdma + ((caddr_t)(d) - (d)->et_mdesc->em_top))
+#define EHCI_SQTD_SYNC(sc, d, ops)	\
+	USB_MEM_SYNC2(&(sc)->sc_dmatag, &(d)->et_mdesc->em_dma, (caddr_t)(d) - (d)->et_mdesc->em_top , sizeof(ehci_qtd_t), (ops))
 
 typedef struct ehci_soft_qh {
 	ehci_qh_t qh;
 	struct ehci_soft_qh *next;
+	struct ehci_soft_qh *prev;
 	struct ehci_soft_qtd *sqtd;
-	ehci_physaddr_t physaddr;
-	int islot;
+	struct ehci_soft_qtd *inactivesqtd;
+	struct ehci_mem_desc *eh_mdesc;
+	int islot;		/* Interrupt list slot. */
 } ehci_soft_qh_t;
 #define EHCI_SQH_SIZE ((sizeof (struct ehci_soft_qh) + EHCI_QH_ALIGN - 1) / EHCI_QH_ALIGN * EHCI_QH_ALIGN)
-#define EHCI_SQH_CHUNK (EHCI_PAGE_SIZE / EHCI_SQH_SIZE)
+#define EHCI_SQH_CHUNK ((EHCI_PAGE_SIZE - sizeof(struct ehci_mem_desc)) / EHCI_SQH_SIZE)
+#define EHCI_SQH_DMAADDR(d)	\
+	((d)->eh_mdesc->em_topdma + ((caddr_t)(d) - (d)->eh_mdesc->em_top))
+#define EHCI_SQH_SYNC(sc, d, ops)	\
+	USB_MEM_SYNC2(&(sc)->sc_dmatag, &(d)->eh_mdesc->em_dma, (caddr_t)(d) - (d)->eh_mdesc->em_top , sizeof(ehci_qh_t), (ops))
 
 struct ehci_xfer {
 	struct usbd_xfer xfer;
@@ -63,32 +81,54 @@ struct ehci_xfer {
 	LIST_ENTRY(ehci_xfer) inext; /* list of active xfers */
 	ehci_soft_qtd_t *sqtdstart;
 	ehci_soft_qtd_t *sqtdend;
-	int isdone;	/* used only when DIAGNOSTIC is defined */
+	u_int32_t ehci_xfer_flags;
+	struct usb_buffer_dma dmabuf;
+	int rsvd_tds;
+#ifdef DIAGNOSTIC
+	int isdone;
+#endif
 };
-#define EXFER(xfer) ((struct ehci_xfer *)(xfer))
+#define EHCI_XFER_ABORTING	0x0001	/* xfer is aborting. */
+#define EHCI_XFER_ABORTWAIT	0x0002	/* abort completion is being awaited. */
 
-/* Information about an entry in the interrupt list. */
+#if 1	/* make sure the argument is actually an xfer pointer */
+#define EXFER(xfer) ((void)&(xfer)->hcpriv, (struct ehci_xfer *)(xfer))
+#else
+#define EXFER(xfer) ((struct ehci_xfer *)(xfer))
+#endif
+
+/*
+ * Information about an entry in the interrupt list.
+ */
 struct ehci_soft_islot {
-	ehci_soft_qh_t *sqh;	/* Queue Head. */
+	ehci_soft_qh_t *sqh;		/* Queue Head. */
 };
 
 #define EHCI_FRAMELIST_MAXCOUNT	1024
-#define EHCI_IPOLLRATES		8 /* Poll rates (1ms, 2, 4, 8 .. 128) */
+#define EHCI_IPOLLRATES		8	/* Poll rates (1ms, 2, 4, 8 ... 128) */
 #define EHCI_INTRQHS		((1 << EHCI_IPOLLRATES) - 1)
 #define EHCI_MAX_POLLRATE	(1 << (EHCI_IPOLLRATES - 1))
-#define EHCI_IQHIDX(lev, pos) \
+#define EHCI_IQHIDX(lev, pos)	\
 	((((pos) & ((1 << (lev)) - 1)) | (1 << (lev))) - 1)
 #define EHCI_ILEV_IVAL(lev)	(1 << (lev))
 
-
 #define EHCI_HASH_SIZE 128
 #define EHCI_COMPANION_MAX 8
+
+#define EHCI_SCFLG_DONEINIT	0x0001	/* ehci_init() has been called. */
+#define EHCI_SCFLG_LOSTINTRBUG	0x0002	/* workaround for VIA / ATI chipsets */
 
 typedef struct ehci_softc {
 	struct usbd_bus sc_bus;		/* base device */
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
 	bus_size_t sc_size;
+#if defined(__FreeBSD__)
+	void *ih;
+
+	struct resource *io_res;
+	struct resource *irq_res;
+#endif
 	u_int sc_offs;			/* offset to operational regs */
 	int sc_flags;			/* misc flags */
 #define EHCIF_DROPPED_INTR_WORKAROUND	0x01
@@ -97,24 +137,32 @@ typedef struct ehci_softc {
 	int sc_id_vendor;		/* vendor ID for root hub */
 
 	u_int32_t sc_cmd;		/* shadow of cmd reg during suspend */
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 	void *sc_powerhook;		/* cookie from power hook */
 	void *sc_shutdownhook;		/* cookie from shutdown hook */
+#endif
 
 	u_int sc_ncomp;
 	u_int sc_npcomp;
 	struct usbd_bus *sc_comps[EHCI_COMPANION_MAX];
 
+	usb_dma_tag_t sc_dmatag;
 	usb_dma_t sc_fldma;
 	ehci_link_t *sc_flist;
 	u_int sc_flsize;
+#ifndef __FreeBSD__
 	u_int sc_rand;			/* XXX need proper intr scheduling */
+#endif
 
 	struct ehci_soft_islot sc_islots[EHCI_INTRQHS];
 
 	LIST_HEAD(, ehci_xfer) sc_intrhead;
 
+	SIMPLEQ_HEAD(ehci_mdescs, ehci_mem_desc) sc_sqh_chunks, sc_sqtd_chunks;
+
 	ehci_soft_qh_t *sc_freeqhs;
 	ehci_soft_qtd_t *sc_freeqtds;
+	int sc_nfreeqtds;
 
 	int sc_noport;
 	u_int8_t sc_hasppc;		/* has Port Power Control */
@@ -136,12 +184,9 @@ typedef struct ehci_softc {
 	usb_callout_t sc_tmo_intrlist;
 
 #if defined(__NetBSD__) || defined(__OpenBSD__)
-	device_ptr_t sc_child;		/* /dev/usb# device */
+	device_t sc_child;		/* /dev/usb# device */
 #endif
 	char sc_dying;
-#if defined(__NetBSD__)
-	struct usb_dma_reserve sc_dma_reserve;
-#endif
 } ehci_softc_t;
 
 #define EREAD1(sc, a) bus_space_read_1((sc)->iot, (sc)->ioh, (a))
@@ -160,4 +205,11 @@ typedef struct ehci_softc {
 usbd_status	ehci_init(ehci_softc_t *);
 int		ehci_intr(void *);
 int		ehci_detach(ehci_softc_t *, int);
-int		ehci_activate(device_ptr_t, enum devact);
+#if defined(__NetBSD__) || defined(__OpenBSD__)
+int		ehci_activate(device_t, enum devact);
+#endif
+void		ehci_power(int state, void *priv);
+void		ehci_shutdown(void *v);
+
+#define MS_TO_TICKS(ms) ((ms) * hz / 1000)
+

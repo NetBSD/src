@@ -1,8 +1,0 @@
-# $NetBSD: ad.x86_64,v 1.2 2006/09/12 02:36:38 simonb Exp $
-./usr/X11R6/bin/inb
-./usr/X11R6/bin/inl
-./usr/X11R6/bin/inw
-./usr/X11R6/bin/ioport
-./usr/X11R6/bin/outb
-./usr/X11R6/bin/outl
-./usr/X11R6/bin/outw

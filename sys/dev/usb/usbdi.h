@@ -1,7 +1,7 @@
-/*	$NetBSD: usbdi.h,v 1.74 2007/03/13 15:00:07 drochner Exp $	*/
-/*	$FreeBSD: src/sys/dev/usb/usbdi.h,v 1.18 1999/11/17 22:33:49 n_hibma Exp $	*/
+/*	$NetBSD: usbdi.h,v 1.72.10.1 2007/05/22 14:57:49 itohy Exp $	*/
+/*	$FreeBSD: src/sys/dev/usb/usbdi.h,v 1.61 2006/10/19 01:15:58 iedowse Exp $	*/
 
-/*
+/*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
@@ -40,6 +40,8 @@
 
 #ifndef _USBDI_H_
 #define _USBDI_H_
+
+struct mbuf;
 
 typedef struct usbd_bus		*usbd_bus_handle;
 typedef struct usbd_device	*usbd_device_handle;
@@ -91,17 +93,14 @@ typedef void (*usbd_callback)(usbd_xfer_handle, usbd_private_handle,
 #define USBD_NO_TIMEOUT 0
 #define USBD_DEFAULT_TIMEOUT 5000 /* ms = 5 s */
 
-#if defined(__FreeBSD__)
-#define USB_CDEV_MAJOR 108
-#endif
-
 #define DEVINFOSIZE 1024
 
 usbd_status usbd_open_pipe(usbd_interface_handle, u_int8_t,
 			   u_int8_t, usbd_pipe_handle *);
 usbd_status usbd_close_pipe(usbd_pipe_handle);
 usbd_status usbd_transfer(usbd_xfer_handle);
-usbd_xfer_handle usbd_alloc_xfer(usbd_device_handle);
+usbd_xfer_handle usbd_alloc_xfer(usbd_device_handle, usbd_pipe_handle);
+usbd_xfer_handle usbd_alloc_default_xfer(usbd_device_handle);
 usbd_status usbd_free_xfer(usbd_xfer_handle);
 void usbd_setup_xfer(usbd_xfer_handle, usbd_pipe_handle,
 		     usbd_private_handle, void *,
@@ -119,6 +118,7 @@ void usbd_get_xfer_status(usbd_xfer_handle, usbd_private_handle *,
 usb_endpoint_descriptor_t *usbd_interface2endpoint_descriptor
 			(usbd_interface_handle, u_int8_t);
 usbd_status usbd_abort_pipe(usbd_pipe_handle);
+usbd_status usbd_abort_default_pipe(usbd_device_handle);
 usbd_status usbd_clear_endpoint_stall(usbd_pipe_handle);
 usbd_status usbd_clear_endpoint_stall_async(usbd_pipe_handle);
 void usbd_clear_endpoint_toggle(usbd_pipe_handle);
@@ -133,6 +133,11 @@ usbd_device_handle usbd_pipe2device_handle(usbd_pipe_handle);
 void *usbd_alloc_buffer(usbd_xfer_handle, u_int32_t);
 void usbd_free_buffer(usbd_xfer_handle);
 void *usbd_get_buffer(usbd_xfer_handle);
+usbd_status usbd_map_alloc(usbd_xfer_handle);
+void usbd_map_free(usbd_xfer_handle);
+void usbd_map_buffer(usbd_xfer_handle, void *, u_int32_t);
+void usbd_map_buffer_mbuf(usbd_xfer_handle, struct mbuf *);
+void usbd_unmap_buffer(usbd_xfer_handle);
 usbd_status usbd_sync_transfer(usbd_xfer_handle);
 usbd_status usbd_open_pipe_intr(usbd_interface_handle, u_int8_t,
 				u_int8_t, usbd_pipe_handle *,
@@ -149,6 +154,7 @@ usb_interface_descriptor_t *usbd_get_interface_descriptor
 				(usbd_interface_handle);
 usb_config_descriptor_t *usbd_get_config_descriptor(usbd_device_handle);
 usb_device_descriptor_t *usbd_get_device_descriptor(usbd_device_handle);
+int usbd_get_speed(usbd_device_handle);
 usbd_status usbd_set_interface(usbd_interface_handle, int);
 int usbd_get_no_alts(usb_config_descriptor_t *, int);
 usbd_status  usbd_get_interface(usbd_interface_handle, u_int8_t *);
@@ -230,32 +236,19 @@ const struct usb_devno *usb_match_device(const struct usb_devno *,
 /* Attach data */
 struct usb_attach_arg {
 	int			port;
-	int			vendor;
-	int			product;
-	int			release;
-	usbd_device_handle	device;	/* current device */
-	int			class, subclass, proto;
-	int			usegeneric;
-};
-
-struct usbif_attach_arg {
-	int			port;
 	int			configno;
 	int			ifaceno;
 	int			vendor;
 	int			product;
 	int			release;
 	usbd_device_handle	device;	/* current device */
-
 	usbd_interface_handle	iface; /* current interface */
-	int			class, subclass, proto;
-
-	/* XXX need accounting for interfaces not matched to */
-
+	int			usegeneric;
 	usbd_interface_handle  *ifaces;	/* all interfaces */
 	int			nifaces; /* number of interfaces */
 };
 
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 /* Match codes. */
 #define UMATCH_HIGHEST					15
 /* First five codes is for a whole device. */
@@ -278,8 +271,57 @@ struct usbif_attach_arg {
 /* No match */
 #define UMATCH_NONE					 0
 
+#elif defined(__FreeBSD__)
+/* FreeBSD needs values less than zero */
+#define UMATCH_VENDOR_PRODUCT_REV			(-10)
+#define UMATCH_VENDOR_PRODUCT				(-20)
+#define UMATCH_VENDOR_DEVCLASS_DEVPROTO			(-30)
+#define UMATCH_DEVCLASS_DEVSUBCLASS_DEVPROTO		(-40)
+#define UMATCH_DEVCLASS_DEVSUBCLASS			(-50)
+#define UMATCH_VENDOR_PRODUCT_REV_CONF_IFACE		(-60)
+#define UMATCH_VENDOR_PRODUCT_CONF_IFACE		(-70)
+#define UMATCH_VENDOR_IFACESUBCLASS_IFACEPROTO		(-80)
+#define UMATCH_VENDOR_IFACESUBCLASS			(-90)
+#define UMATCH_IFACECLASS_IFACESUBCLASS_IFACEPROTO	(-100)
+#define UMATCH_IFACECLASS_IFACESUBCLASS			(-110)
+#define UMATCH_IFACECLASS				(-120)
+#define UMATCH_IFACECLASS_GENERIC			(-130)
+#define UMATCH_GENERIC					(-140)
+#define UMATCH_NONE					(ENXIO)
+
+#endif
+
+#define USBD_SHOW_DEVICE_CLASS		0x1
+#define USBD_SHOW_INTERFACE_CLASS	0x2
+
+#if defined(__FreeBSD__)
+int usbd_driver_load(module_t mod, int what, void *arg);
+
+Static inline int
+usb_get_port(device_t dev)
+{
+	struct usb_attach_arg *uap = device_get_ivars(dev);
+	return (uap->port);
+}
+
+Static inline struct usbd_interface *
+usb_get_iface(device_t dev)
+{
+	struct usb_attach_arg *uap = device_get_ivars(dev);
+	return (uap->iface);
+}
+#endif	/* defined(__FreeBSD__) */
+
 /* XXX Perhaps USB should have its own levels? */
+#ifdef USB_USE_SOFTINTR
+#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 #define splusb splsoftnet
+#else
+#define	splusb splsoftclock
+#endif /* __HAVE_GENERIC_SOFT_INTERRUPTS */
+#else
+#define splusb splbio
+#endif /* USB_USE_SOFTINTR */
 #define splhardusb splbio
 #define IPL_USB IPL_BIO
 

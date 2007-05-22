@@ -1,7 +1,7 @@
-/*	$NetBSD: sl811hs.c,v 1.11 2006/11/16 01:32:52 christos Exp $	*/
+/*	$NetBSD: sl811hs.c,v 1.11.18.1 2007/05/22 14:57:32 itohy Exp $	*/
 
 /*
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -44,7 +44,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.11 2006/11/16 01:32:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.11.18.1 2007/05/22 14:57:32 itohy Exp $");
+/* __FBSDID("$FreeBSD: src/sys/dev/usb/sl811hs.c,v 1.4 2006/09/07 00:06:41 imp Exp $"); */
 
 #include "opt_slhci.h"
 
@@ -54,23 +55,38 @@ __KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.11 2006/11/16 01:32:52 christos Exp $"
 #include <sys/proc.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
+#include <sys/mbuf.h>
 
 #include <machine/bus.h>
 #include <machine/cpu.h>
+#ifdef __FreeBSD__
+#include <sys/module.h>
+#endif
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdivar.h>
-#include <dev/usb/usb_mem.h>
+#include <dev/usb/usb_mem_nodma.h>
+#ifdef __FreeBSD__
+#include "usbdevs.h"
+#else
 #include <dev/usb/usbdevs.h>
+#endif
 
+#ifdef __FreeBSD__
+#include <dev/usb/sl811hsreg.h>
+#include <dev/usb/sl811hsvar.h>
+#else
 #include <dev/ic/sl811hsreg.h>
 #include <dev/ic/sl811hsvar.h>
+#endif
 
 static inline u_int8_t sl11read(struct slhci_softc *, int);
 static inline void     sl11write(struct slhci_softc *, int, u_int8_t);
-static inline void sl11read_region(struct slhci_softc *, u_char *, int, int);
-static inline void sl11write_region(struct slhci_softc *, int, u_char *, int);
+static inline void sl11read_region(struct slhci_softc *,
+	struct usb_buffer_mem *, int, int);
+static inline void sl11write_region(struct slhci_softc *,
+	int, struct usb_buffer_mem *, int);
 
 static void		sl11_reset(struct slhci_softc *);
 static void		sl11_speed(struct slhci_softc *);
@@ -80,9 +96,19 @@ static void		slhci_softintr(void *);
 static void		slhci_poll(struct usbd_bus *);
 static void		slhci_poll_hub(void *);
 static void		slhci_poll_device(void *arg);
-static usbd_status	slhci_allocm(struct usbd_bus *, usb_dma_t *, u_int32_t);
-static void		slhci_freem(struct usbd_bus *, usb_dma_t *);
-static usbd_xfer_handle slhci_allocx(struct usbd_bus *);
+static usbd_status	slhci_allocm(struct usbd_bus *, usbd_xfer_handle,
+	void *, size_t);
+static void		slhci_freem(struct usbd_bus *, usbd_xfer_handle,
+	enum usbd_waitflg);
+
+static usbd_status	slhci_map_alloc(usbd_xfer_handle);
+static void		slhci_map_free(usbd_xfer_handle);
+static void		slhci_mapm(usbd_xfer_handle, void *, size_t);
+static void		slhci_mapm_mbuf(usbd_xfer_handle, struct mbuf *);
+static void		slhci_unmapm(usbd_xfer_handle);
+
+Static usbd_xfer_handle	slhci_allocx(struct usbd_bus *, usbd_pipe_handle,
+	enum usbd_waitflg);
 static void		slhci_freex(struct usbd_bus *, usbd_xfer_handle);
 
 static int		slhci_str(usb_string_descriptor_t *, int, const char *);
@@ -125,6 +151,8 @@ static void		slhci_device_bulk_done(usbd_xfer_handle);
 
 static int		slhci_transaction(struct slhci_softc *,
 	usbd_pipe_handle, u_int8_t, int, u_char *, u_int8_t);
+static int		slhci_transaction_buf(struct slhci_softc *,
+	usbd_pipe_handle, u_int8_t, int, struct usb_buffer_mem *, u_int8_t);
 static void		slhci_noop(usbd_pipe_handle);
 static void		slhci_abort_xfer(usbd_xfer_handle, usbd_status);
 static void		slhci_device_clear_toggle(usbd_pipe_handle);
@@ -165,6 +193,11 @@ struct usbd_bus_methods slhci_bus_methods = {
 	slhci_poll,
 	slhci_allocm,
 	slhci_freem,
+	slhci_map_alloc,
+	slhci_map_free,
+	slhci_mapm,
+	slhci_mapm_mbuf,
+	slhci_unmapm,
 	slhci_allocx,
 	slhci_freex,
 };
@@ -234,6 +267,9 @@ struct slhci_pipe {
 static inline u_int8_t
 sl11read(struct slhci_softc *sc, int reg)
 {
+#if 0	/* FreeBSD has it.  Is this needed? */
+	DELAY(80);
+#endif
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, SL11_IDX_ADDR, reg);
 	return bus_space_read_1(sc->sc_iot, sc->sc_ioh, SL11_IDX_DATA);
 }
@@ -241,26 +277,99 @@ sl11read(struct slhci_softc *sc, int reg)
 static inline void
 sl11write(struct slhci_softc *sc, int reg, u_int8_t data)
 {
+#if 0	/* FreeBSD has it.  Is this needed? */
+	DELAY(80);
+#endif
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, SL11_IDX_ADDR, reg);
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, SL11_IDX_DATA, data);
 }
 
 static inline void
-sl11read_region(struct slhci_softc *sc, u_char *buf, int reg, int len)
+sl11read_region(struct slhci_softc *sc, struct usb_buffer_mem *ub, int reg,
+	int len)
 {
-	int i;
+	struct mbuf *m;
+	int off, mlen, curlen;
+
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, SL11_IDX_ADDR, reg);
-	for (i = 0; i < len; i++)
-		buf[i] = bus_space_read_1(sc->sc_iot, sc->sc_ioh, SL11_IDX_DATA);
+	switch (ub->ub_type) {
+	default:
+#ifdef DIAGNOSTIC
+		panic("sl11read_region: %d", ub->ub_type);
+#endif
+	case UB_PLAIN:
+		bus_space_read_multi_1(sc->sc_iot, sc->sc_ioh, SL11_IDX_DATA,
+		    ub->u.ub_plain.ubp_cur, len);
+		ub->u.ub_plain.ubp_cur += len;
+		break;
+
+	case UB_MBUF:
+		off = ub->u.ub_mbuf.ubm_off;
+		for (m = ub->u.ub_mbuf.ubm_cur; len && m != NULL;
+		    m = m->m_next, off = 0) {
+			mlen = m->m_len - off;
+			curlen = (mlen > len) ? len : mlen;
+			bus_space_read_multi_1(sc->sc_iot, sc->sc_ioh,
+			    SL11_IDX_DATA, mtod(m, caddr_t) + off, curlen);
+			len -= curlen;
+			off += curlen;
+			if (curlen < mlen)
+				break;
+		}
+		ub->u.ub_mbuf.ubm_off = off;
+		ub->u.ub_mbuf.ubm_cur = m;
+
+		/* len is larger than mbuf --- read data and discard */
+		for (; len; len--) {
+			(void)bus_space_read_1(sc->sc_iot, sc->sc_ioh,
+			    SL11_IDX_DATA);
+		}
+		break;
+	}
 }
 
 static inline void
-sl11write_region(struct slhci_softc *sc, int reg, u_char *buf, int len)
+sl11write_region(struct slhci_softc *sc, int reg, struct usb_buffer_mem *ub,
+	int len)
 {
-	int i;
+	struct mbuf *m;
+	int off, mlen, curlen;
+
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, SL11_IDX_ADDR, reg);
-	for (i = 0; i < len; i++)
-		bus_space_write_1(sc->sc_iot, sc->sc_ioh, SL11_IDX_DATA, buf[i]);
+	switch (ub->ub_type) {
+	default:
+#ifdef DIAGNOSTIC
+		panic("sl11write_region: %d", ub->ub_type);
+#endif
+	case UB_PLAIN:
+		bus_space_write_multi_1(sc->sc_iot, sc->sc_ioh, SL11_IDX_DATA,
+		    ub->u.ub_plain.ubp_cur, len);
+		ub->u.ub_plain.ubp_cur += len;
+		break;
+
+	case UB_MBUF:
+		off = ub->u.ub_mbuf.ubm_off;
+		for (m = ub->u.ub_mbuf.ubm_cur; len && m != NULL;
+		    m = m->m_next, off = 0) {
+			mlen = m->m_len - off;
+			curlen = (mlen > len) ? len : mlen;
+			bus_space_write_multi_1(sc->sc_iot, sc->sc_ioh,
+			    SL11_IDX_DATA, mtod(m, caddr_t) + off, curlen);
+			len -= curlen;
+			off += curlen;
+			if (curlen < mlen)
+				break;
+		}
+		ub->u.ub_mbuf.ubm_off = off;
+		ub->u.ub_mbuf.ubm_cur = m;
+
+		/* len is larger than mbuf --- write dummy data */
+		for (; len; len--) {
+			bus_space_write_1(sc->sc_iot, sc->sc_ioh,
+			    SL11_IDX_DATA, 0 /* dummy */);
+		}
+		break;
+	}
 }
 
 /*
@@ -272,10 +381,18 @@ sl11_reset(struct slhci_softc *sc)
 	u_int8_t r;
 
 	DPRINTF(D_TRACE, ("%s() ", __FUNCTION__));
+#if 0	/* from FreeBSD */
+	r = 0;
+#else
 	r = sl11read(sc, SL11_CTRL);
+#endif
 	sl11write(sc, SL11_CTRL, r | SL11_CTRL_RESETENGINE);
 	delay_ms(250);
+#if 0	/* from FreeBSD */
+	sl11write(sc, SL11_CTRL, r | SL11_CTRL_JKSTATE | SL11_CTRL_RESETENGINE);
+#else
 	sl11write(sc, SL11_CTRL, r | SL11_CTRL_RESETENGINE | SL11_CTRL_SUSPEND);
+#endif
 	delay_ms(150);
 	sl11write(sc, SL11_CTRL, r | SL11_CTRL_RESETENGINE);
 	delay_ms(10);
@@ -346,7 +463,7 @@ sl811hs_find(struct slhci_softc *sc)
  * Attach SL11H/SL811HS. Return 0 if success.
  */
 int
-slhci_attach(struct slhci_softc *sc, struct device *self)
+slhci_attach(struct slhci_softc *sc)
 {
 	int rev;
 
@@ -356,7 +473,7 @@ slhci_attach(struct slhci_softc *sc, struct device *self)
 		return -1;
 
 	printf("%s: ScanLogic %s USB Host Controller",
-		sc->sc_bus.bdev.dv_xname, sltypestr[(rev > 0)]);
+		USBDEVNAME(sc->sc_bus.bdev), sltypestr[(rev > 0)]);
 	switch (rev) {
 	case SLTYPE_SL11H:
 		break;
@@ -376,7 +493,7 @@ slhci_attach(struct slhci_softc *sc, struct device *self)
 	sc->sc_bus.usbrev = USBREV_1_1;
 	sc->sc_bus.methods = &slhci_bus_methods;
 	sc->sc_bus.pipe_size = sizeof(struct slhci_pipe);
-	sc->sc_bus.dmatag = sc->sc_dmat;
+	usb_mem_tag_init(&sc->sc_memtag);
 
 	SIMPLEQ_INIT(&sc->sc_free_xfers);
 
@@ -391,7 +508,11 @@ slhci_attach(struct slhci_softc *sc, struct device *self)
 	delay_ms(40);
 
 	/* Reset USB engine */
+#if 0	/* from FreeBSD */
+	sl11write(sc, SL11_CTRL, SL11_CTRL_JKSTATE | SL11_CTRL_RESETENGINE);
+#else
 	sl11write(sc, SL11_CTRL, SL11_CTRL_RESETENGINE | SL11_CTRL_SUSPEND);
+#endif
 	delay_ms(40);
 	sl11write(sc, SL11_CTRL, 0x00);
 	delay_ms(10);
@@ -409,10 +530,44 @@ slhci_attach(struct slhci_softc *sc, struct device *self)
 	usbdebug = 0;
 #endif
 
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 	/* Attach USB devices */
-	sc->sc_child = config_found(self, &sc->sc_bus, usbctlprint);
+	sc->sc_child = config_found(&sc->sc_bus.bdev, &sc->sc_bus, usbctlprint);
+#endif
 
 	return 0;
+}
+
+int
+slhci_detach(struct slhci_softc *sc, int flags)
+{
+	int rv = 0;
+	usbd_xfer_handle xfer;
+
+#if defined(__NetBSD__) || defined(__OpenBSD__)
+	if (sc->sc_child != NULL)
+		rv = config_detach(sc->sc_child, flags);
+
+	if (rv != 0)
+		return rv;
+#endif
+
+	if (sc->sc_sltype == -1)
+		return rv;
+
+	if (sc->sc_enable_intr)
+		sc->sc_enable_intr(sc->sc_arg, INTR_OFF);
+
+	usb_uncallout(sc->sc_poll_handle, slhci_poll_hub, sc->sc_intr_xfer);
+
+	while ((xfer = SIMPLEQ_FIRST(&sc->sc_free_xfers)) != NULL) {
+		SIMPLEQ_REMOVE_HEAD(&sc->sc_free_xfers, next);
+		free(xfer, M_USB);
+	}
+
+	usb_mem_tag_finish(&sc->sc_memtag);
+
+	return rv;
 }
 
 int
@@ -522,7 +677,7 @@ slhci_poll_hub(void *arg)
 	usb_callout(sc->sc_poll_handle, sc->sc_interval, slhci_poll_hub, xfer);
 
 	/* USB spec 11.13.3 (p.260) */
-	p = KERNADDR(&xfer->dmabuf, 0);
+	p = xfer->hcbuffer;
 	p[0] = 0;
 	if ((sc->sc_flags & (SLF_INSERT | SLF_RESET))) {
 		p[0] = 2;
@@ -543,25 +698,65 @@ slhci_poll_hub(void *arg)
 }
 
 usbd_status
-slhci_allocm(struct usbd_bus *bus, usb_dma_t *dma, u_int32_t size)
+slhci_allocm(struct usbd_bus *bus, usbd_xfer_handle xfer, void *buf, size_t size)
 {
 	struct slhci_softc *sc = (struct slhci_softc *)bus;
 
 	DPRINTF(D_MEM, ("SLallocm"));
-	return usb_allocmem(&sc->sc_bus, size, 0, dma);
+	return usb_alloc_buffer_mem(&sc->sc_memtag, buf, size,
+	    &SLXFER(xfer)->sx_membuf, &xfer->hcbuffer);
 }
 
 void
-slhci_freem(struct usbd_bus *bus, usb_dma_t *dma)
+slhci_freem(struct usbd_bus *bus, usbd_xfer_handle xfer,
+	enum usbd_waitflg waitflg)
 {
 	struct slhci_softc *sc = (struct slhci_softc *)bus;
 
 	DPRINTF(D_MEM, ("SLfreem"));
-	usb_freemem(&sc->sc_bus, dma);
+	usb_free_buffer_mem(&sc->sc_memtag, &SLXFER(xfer)->sx_membuf, waitflg);
+}
+
+/* ARGSUSED */
+static usbd_status
+slhci_map_alloc(usbd_xfer_handle xfer)
+{
+
+	/* nothing to do */
+	return (USBD_NORMAL_COMPLETION);
+}
+
+/* ARGSUSED */
+static void
+slhci_map_free(usbd_xfer_handle xfer)
+{
+	/* nothing to do */
+}
+
+static void
+slhci_mapm(usbd_xfer_handle xfer, void *buf, size_t size)
+{
+
+	usb_map_mem(&SLXFER(xfer)->sx_membuf, buf);
+}
+
+Static void
+slhci_mapm_mbuf(usbd_xfer_handle xfer, struct mbuf *chain)
+{
+
+	usb_map_mbuf_mem(&SLXFER(xfer)->sx_membuf, chain);
+}
+
+Static void
+slhci_unmapm(usbd_xfer_handle xfer)
+{
+
+	usb_unmap_mem(&SLXFER(xfer)->sx_membuf);
 }
 
 usbd_xfer_handle
-slhci_allocx(struct usbd_bus *bus)
+slhci_allocx(struct usbd_bus *bus, usbd_pipe_handle pipe,
+	enum usbd_waitflg waitflg)
 {
 	struct slhci_softc *sc = (struct slhci_softc *)bus;
 	usbd_xfer_handle xfer;
@@ -578,14 +773,16 @@ slhci_allocx(struct usbd_bus *bus)
 		}
 #endif
 	} else {
-		xfer = malloc(sizeof(*xfer), M_USB, M_NOWAIT);
+		xfer = malloc(sizeof(struct slhci_xfer), M_USB,
+		    waitflg == U_WAITOK ? M_WAITOK : M_NOWAIT);
 	}
 
 	if (xfer) {
-		memset(xfer, 0, sizeof(*xfer));
+		memset(xfer, 0, sizeof(struct slhci_xfer));
 #ifdef DIAGNOSTIC
 		xfer->busy_free = XFER_BUSY;
 #endif
+		usb_callout_init(SLXFER(xfer)->sx_callout_t);
 	}
 
 	return xfer;
@@ -705,6 +902,9 @@ slhci_root_ctrl_transfer(usbd_xfer_handle xfer)
 
 	DPRINTF(D_TRACE, ("SLRCtrans "));
 
+	/* set current position at the top of buffer */
+	usb_buffer_mem_rewind(&SLXFER(xfer)->sx_membuf);
+
 	/* Insert last in queue */
 	error = usb_insert_transfer(xfer);
 	if (error) {
@@ -741,7 +941,7 @@ slhci_root_ctrl_start(usbd_xfer_handle xfer)
 	index = UGETW(req->wIndex);
 
 	if (len)
-		buf = KERNADDR(&xfer->dmabuf, 0);
+		buf = xfer->hcbuffer;
 
 #ifdef SLHCI_DEBUG
 	if ((slhci_debug & D_TRACE))
@@ -1077,6 +1277,9 @@ slhci_root_intr_transfer(usbd_xfer_handle xfer)
 
 	DPRINTF(D_TRACE, ("SLRItransfer "));
 
+	/* set current position at the top of buffer */
+	usb_buffer_mem_rewind(&SLXFER(xfer)->sx_membuf);
+
 	/* Insert last in queue */
 	error = usb_insert_transfer(xfer);
 	if (error)
@@ -1133,6 +1336,9 @@ slhci_device_ctrl_transfer(usbd_xfer_handle xfer)
 
 	DPRINTF(D_TRACE, ("C"));
 
+	/* set current position at the top of buffer */
+	usb_buffer_mem_rewind(&SLXFER(xfer)->sx_membuf);
+
 	error = usb_insert_transfer(xfer);
 	if (error)
 		return error;
@@ -1147,7 +1353,6 @@ slhci_device_ctrl_start(usbd_xfer_handle xfer)
 	usbd_pipe_handle pipe = xfer->pipe;
 	struct slhci_softc *sc = (struct slhci_softc *)pipe->device->bus;
 	usbd_status status =  USBD_NORMAL_COMPLETION;
-	u_char *buf;
 	int pid = SL11_PID_OUT;
 	int len, actlen, size;
 	int s;
@@ -1171,15 +1376,14 @@ slhci_device_ctrl_start(usbd_xfer_handle xfer)
 	actlen = 0;
 	len = UGETW(req->wLength);
 	if (len) {
-		buf = KERNADDR(&xfer->dmabuf, 0);
 		if (req->bmRequestType & UT_READ)
 			pid = SL11_PID_IN;
 		for (; actlen < len; ) {
 			size = min(len - actlen, 8/* Minimum size */);
-			if (slhci_transaction(sc, pipe, pid, size, buf, toggle) == -1)
+			if (slhci_transaction_buf(sc, pipe, pid, size,
+			    &SLXFER(xfer)->sx_membuf, toggle) == -1)
 				break;
 			toggle ^= SL11_EPCTRL_DATATOGGLE;
-			buf += size;
 			actlen += size;
 		}
 	}
@@ -1200,7 +1404,7 @@ slhci_device_ctrl_start(usbd_xfer_handle xfer)
 	if((slhci_debug & D_TRACE) && UGETW(req->wLength) > 0){
 		int i;
 		for(i=0; i < UGETW(req->wLength); i++)
-			printf("%02x", *(unsigned char*)(KERNADDR(&xfer->dmabuf, i)));
+			printf("%02x", ((unsigned char *)xfer->hcbuffer)[i]);
 		printf(" ");
 	}
 #endif
@@ -1236,6 +1440,9 @@ slhci_device_intr_transfer(usbd_xfer_handle xfer)
 
 	DPRINTF(D_TRACE, ("INTRtrans "));
 
+	/* set current position at the top of buffer */
+	usb_buffer_mem_rewind(&SLXFER(xfer)->sx_membuf);
+
 	error = usb_insert_transfer(xfer);
 	if (error)
 		return error;
@@ -1247,35 +1454,23 @@ static usbd_status
 slhci_device_intr_start(usbd_xfer_handle xfer)
 {
 	usbd_pipe_handle pipe = xfer->pipe;
-	struct slhci_xfer *sx;
+	struct slhci_xfer *sx = SLXFER(xfer);
 
 	DPRINTF(D_TRACE, ("INTRstart "));
 
-	sx = malloc(sizeof(*sx), M_USB, M_NOWAIT);
-	if (sx == NULL)
-		goto reterr;
-	memset(sx, 0, sizeof(*sx));
-	sx->sx_xfer  = xfer;
-	xfer->hcpriv = sx;
-
-	/* initialize callout */
-	usb_callout_init(sx->sx_callout_t);
 	usb_callout(sx->sx_callout_t,
 		MS_TO_TICKS(pipe->endpoint->edesc->bInterval),
 		slhci_poll_device, sx);
 
 	/* ACK */
 	return USBD_IN_PROGRESS;
-
- reterr:
-	return USBD_IOERROR;
 }
 
 static void
 slhci_poll_device(void *arg)
 {
 	struct slhci_xfer *sx = (struct slhci_xfer *)arg;
-	usbd_xfer_handle xfer = sx->sx_xfer;
+	usbd_xfer_handle xfer = &sx->sx_xfer;
 	usbd_pipe_handle pipe = xfer->pipe;
 	struct slhci_softc *sc = (struct slhci_softc *)pipe->device->bus;
 	void *buf;
@@ -1292,7 +1487,7 @@ slhci_poll_device(void *arg)
 	/* interrupt transfer */
 	pid = (UE_GET_DIR(pipe->endpoint->edesc->bEndpointAddress) == UE_DIR_IN)
 	    ? SL11_PID_IN : SL11_PID_OUT;
-	buf = KERNADDR(&xfer->dmabuf, 0);
+	buf = xfer->hcbuffer;
 
 	r = slhci_transaction(sc, pipe, pid, xfer->length, buf, 0/*toggle*/);
 	if (r < 0) {
@@ -1314,18 +1509,11 @@ slhci_poll_device(void *arg)
 static void
 slhci_device_intr_abort(usbd_xfer_handle xfer)
 {
-	struct slhci_xfer *sx;
+	struct slhci_xfer *sx = SLXFER(xfer);;
 
 	DPRINTF(D_TRACE, ("INTRabort "));
 
-	sx = xfer->hcpriv;
-	if (sx) {
-		usb_uncallout(sx->sx_callout_t, slhci_poll_device, sx);
-		free(sx, M_USB);
-		xfer->hcpriv = NULL;
-	} else {
-		printf("%s: sx == NULL!\n", __FUNCTION__);
-	}
+	usb_uncallout(sx->sx_callout_t, slhci_poll_device, sx);
 	slhci_abort_xfer(xfer, USBD_CANCELLED);
 }
 
@@ -1417,6 +1605,19 @@ static int
 slhci_transaction(struct slhci_softc *sc, usbd_pipe_handle pipe,
 	u_int8_t pid, int len, u_char *buf, u_int8_t toggle)
 {
+	struct usb_buffer_mem ub;
+
+	ub.ub_type = UB_PLAIN;
+	ub.u.ub_plain.ubp_cur = buf;
+	ub.u.ub_plain.ubp_allocbuf = NULL;	/* just in case */
+
+	return slhci_transaction_buf(sc, pipe, pid, len, &ub, toggle);
+}
+
+static int
+slhci_transaction_buf(struct slhci_softc *sc, usbd_pipe_handle pipe,
+	u_int8_t pid, int len, struct usb_buffer_mem *ub, u_int8_t toggle)
+{
 #ifdef SLHCI_DEBUG
 	char str[64];
 	int i;
@@ -1444,7 +1645,7 @@ slhci_transaction(struct slhci_softc *sc, usbd_pipe_handle pipe,
 	/* Set buffer unless PID_IN */
 	if (pid != SL11_PID_IN) {
 		if (len > 0)
-			sl11write_region(sc, 0x40, buf, len);
+			sl11write_region(sc, 0x40, ub, len);
 		cmd = DATA0_WR;
 	}
 
@@ -1493,7 +1694,7 @@ slhci_transaction(struct slhci_softc *sc, usbd_pipe_handle pipe,
 	sl11write(sc, SL11_ISR, 0xff);
 
 	DPRINTF(D_XFER, ("t=%d i=%x ", SLHCI_TIMEOUT - timeout, isr));
-#if SLHCI_DEBUG
+#ifdef SLHCI_DEBUG
 	bitmask_snprintf(result,
 		"\20\x8STALL\7NAK\6OV\5SETUP\4DATA1\3TIMEOUT\2ERR\1ACK",
 		str, sizeof(str));
@@ -1508,8 +1709,8 @@ slhci_transaction(struct slhci_softc *sc, usbd_pipe_handle pipe,
 
 	/* Read buffer if PID_IN */
 	if (pid == SL11_PID_IN && len > 0) {
-		sl11read_region(sc, buf, 0x40, len);
-#if SLHCI_DEBUG
+		sl11read_region(sc, ub, 0x40, len);
+#ifdef SLHCI_DEBUG
 		for (i = 0; i < len; i++)
 			DPRINTF(D_XFER, ("%02X ", buf[i]));
 #endif

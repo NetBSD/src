@@ -1,7 +1,7 @@
-/*	$NetBSD: usbdivar.h,v 1.80 2007/02/26 13:23:59 drochner Exp $	*/
-/*	$FreeBSD: src/sys/dev/usb/usbdivar.h,v 1.11 1999/11/17 22:33:51 n_hibma Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.80.12.1 2007/05/22 14:57:50 itohy Exp $	*/
+/*	$FreeBSD: src/sys/dev/usb/usbdivar.h,v 1.47 2006/09/07 00:06:42 imp Exp $	*/
 
-/*
+/*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
@@ -42,25 +42,42 @@
 #include <sys/callout.h>
 #endif
 
-/* From usb_mem.h */
-DECLARE_USB_DMA_T;
-
 struct usbd_xfer;
 struct usbd_pipe;
+struct mbuf;
 
 struct usbd_endpoint {
 	usb_endpoint_descriptor_t *edesc;
 	int			refcnt;
+	int			savedtoggle;
+};
+
+enum usbd_waitflg {
+	U_NOWAIT,	/* callee is not allowed to sleep */
+	U_WAITOK	/* caller has context and callee is allowed to sleep */
+};
+
+enum usbd_maptype {
+	U_MAP_NONE,	/* driver dosn't provide buffer to be mapped */
+	U_MAP_BUFFER,	/* map plain buffer provided by driver */
+	U_MAP_MBUF	/* map mbuf provided by driver */
 };
 
 struct usbd_bus_methods {
 	usbd_status	      (*open_pipe)(struct usbd_pipe *pipe);
 	void		      (*soft_intr)(void *);
 	void		      (*do_poll)(struct usbd_bus *);
-	usbd_status	      (*allocm)(struct usbd_bus *, usb_dma_t *,
-					u_int32_t bufsize);
-	void		      (*freem)(struct usbd_bus *, usb_dma_t *);
-	struct usbd_xfer *    (*allocx)(struct usbd_bus *);
+	usbd_status	      (*allocm)(struct usbd_bus *, usbd_xfer_handle,
+					void *, size_t);
+	void		      (*freem)(struct usbd_bus *, usbd_xfer_handle,
+				       enum usbd_waitflg);
+	usbd_status	      (*map_alloc)(usbd_xfer_handle);
+	void		      (*map_free)(usbd_xfer_handle);
+	void		      (*mapm)(usbd_xfer_handle, void *, size_t);
+	void		      (*mapm_mbuf)(usbd_xfer_handle, struct mbuf *);
+	void		      (*unmapm)(usbd_xfer_handle);
+	struct usbd_xfer *    (*allocx)(struct usbd_bus *, usbd_pipe_handle,
+					enum usbd_waitflg);
 	void		      (*freex)(struct usbd_bus *, struct usbd_xfer *);
 };
 
@@ -73,11 +90,9 @@ struct usbd_pipe_methods {
 	void		      (*done)(usbd_xfer_handle xfer);
 };
 
-#if 0 /* notyet */
 struct usbd_tt {
 	struct usbd_hub	       *hub;
 };
-#endif
 
 struct usbd_port {
 	usb_port_status_t	status;
@@ -88,9 +103,7 @@ struct usbd_port {
 	u_int8_t		reattach;
 	struct usbd_device     *device;	/* Connected device */
 	struct usbd_device     *parent;	/* The ports hub */
-#if 0
 	struct usbd_tt	       *tt; /* Transaction translator (if any) */
-#endif
 };
 
 struct usbd_hub {
@@ -133,10 +146,6 @@ struct usbd_bus {
 	struct callout		softi;
 #endif
 #endif
-
-#if defined(__NetBSD__) || defined(__OpenBSD__)
-	bus_dma_tag_t		dmatag;	/* DMA tag */
-#endif
 };
 
 struct usbd_device {
@@ -152,7 +161,7 @@ struct usbd_device {
 #define USBD_NOLANG (-1)
 	usb_event_cookie_t	cookie;	       /* unique connection id */
 	struct usbd_port       *powersrc;      /* upstream hub port, or 0 */
-	struct usbd_device     *myhub; 	       /* upstream hub */
+	struct usbd_device     *myhub;	       /* upstream hub */
 	struct usbd_port       *myhsport;      /* closest high speed port */
 	struct usbd_endpoint	def_ep;	       /* for pipe 0 */
 	usb_endpoint_descriptor_t def_ep_desc; /* for pipe 0 */
@@ -162,6 +171,7 @@ struct usbd_device {
 	const struct usbd_quirks     *quirks;  /* device quirks, always set */
 	struct usbd_hub	       *hub;           /* only if this is a hub */
 	device_ptr_t	       *subdevs;       /* sub-devices, 0 terminated */
+	uint8_t		       *ifacenums;     /* sub-device interfacenumbers */
 };
 
 struct usbd_interface {
@@ -203,6 +213,8 @@ struct usbd_xfer {
 	usbd_status		status;
 	usbd_callback		callback;
 	volatile u_int8_t	done;
+#define XFER_DONE_BOTTOM	1
+#define XFER_DONE_TOP		2
 	u_int8_t		busy_free;	/* used for DIAGNOSTIC */
 #define XFER_FREE 0x46
 #define XFER_BUSY 0x55
@@ -212,17 +224,24 @@ struct usbd_xfer {
 	usb_device_request_t	request;
 
 	/* For isoc */
-	u_int16_t		*frlengths;
+	u_int16_t	       *frlengths;
 	int			nframes;
 
 	/* For memory allocation */
 	struct usbd_device     *device;
-	usb_dma_t		dmabuf;
+	void		       *hcbuffer;	/* buffer for HCI driver */
 
-	u_int8_t		rqflags;
-#define URQ_REQUEST	0x01
-#define URQ_AUTO_DMABUF	0x10
-#define URQ_DEV_DMABUF	0x20
+	u_int16_t		rqflags;
+#define URQ_REQUEST		0x0001	/* xfer->request valid */
+#define URQ_AUTO_BUF		0x0010	/* automatically allocated buffer */
+#define URQ_DEV_BUF		0x0020	/* driver requested to allocate buffer*/
+#define URQ_DEV_MAP_PREPARED	0x0040	/* driver requested to prepare map */
+#define URQ_DEV_MAP_BUFFER	0x0080	/* driver requested to map buffer */
+#define URQ_DEV_MAP_MBUF	0x0100	/* driver requested to map mbuf */
+
+#define URQ_MASK_DRV_REQUESTED_BUF	\
+	(URQ_DEV_BUF | URQ_DEV_MAP_BUFFER | URQ_DEV_MAP_MBUF)
+#define URQ_MASK_BUF	(URQ_MASK_DRV_REQUESTED_BUF | URQ_AUTO_BUF)
 
 	SIMPLEQ_ENTRY(usbd_xfer) next;
 
@@ -232,6 +251,7 @@ struct usbd_xfer {
 #define UXFER_ABORTWAIT	0x02	/* abort completion is being awaited. */
 
 	usb_callout_t		timeout_handle;
+	struct usb_task		async_task;
 };
 
 void usbd_init(void);
@@ -260,6 +280,7 @@ int		usbd_printBCD(char *, size_t, int);
 usbd_status	usbd_fill_iface_data(usbd_device_handle, int, int);
 void		usb_free_device(usbd_device_handle);
 
+int		usbd_xfer_isread(usbd_xfer_handle);
 usbd_status	usb_insert_transfer(usbd_xfer_handle);
 void		usb_transfer_complete(usbd_xfer_handle);
 void		usb_disconnect_port(struct usbd_port *, device_ptr_t);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ucycom.c,v 1.17 2007/03/04 06:02:49 christos Exp $	*/
+/*	$NetBSD: ucycom.c,v 1.16 2006/11/16 01:33:26 christos Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ucycom.c,v 1.17 2007/03/04 06:02:49 christos Exp $");
+__RCSID("$NetBSD: ucycom.c,v 1.16 2006/11/16 01:33:26 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -723,7 +723,7 @@ ucycomtty(dev_t dev)
 }
 
 int
-ucycomioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
+ucycomioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct ucycom_softc *sc = ucycom_cd.cd_devs[UCYCOMUNIT(dev)];
 	struct tty *tp = sc->sc_tty;

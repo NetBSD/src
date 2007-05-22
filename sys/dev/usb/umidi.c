@@ -1,4 +1,4 @@
-/*	$NetBSD: umidi.c,v 1.30 2007/03/13 13:51:56 drochner Exp $	*/
+/*	$NetBSD: umidi.c,v 1.29.8.1 2007/05/22 14:57:44 itohy Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.30 2007/03/13 13:51:56 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.29.8.1 2007/05/22 14:57:44 itohy Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -162,15 +162,21 @@ USB_DECLARE_DRIVER(umidi);
 
 USB_MATCH(umidi)
 {
-	USB_IFMATCH_START(umidi, uaa);
+	USB_MATCH_START(umidi, uaa);
+	usb_interface_descriptor_t *id;
 
 	DPRINTFN(1,("umidi_match\n"));
+
+	if (uaa->iface == NULL)
+		return UMATCH_NONE;
 
 	if (umidi_search_quirk(uaa->vendor, uaa->product, uaa->ifaceno))
 		return UMATCH_IFACECLASS_IFACESUBCLASS;
 
-	if (uaa->class == UICLASS_AUDIO &&
-	    uaa->subclass == UISUBCLASS_MIDISTREAM)
+	id = usbd_get_interface_descriptor(uaa->iface);
+	if (id!=NULL &&
+	    id->bInterfaceClass==UICLASS_AUDIO &&
+	    id->bInterfaceSubClass==UISUBCLASS_MIDISTREAM)
 		return UMATCH_IFACECLASS_IFACESUBCLASS;
 
 	return UMATCH_NONE;
@@ -179,7 +185,7 @@ USB_MATCH(umidi)
 USB_ATTACH(umidi)
 {
 	usbd_status err;
-	USB_IFATTACH_START(umidi, sc, uaa);
+	USB_ATTACH_START(umidi, sc, uaa);
 	char *devinfop;
 
 	DPRINTFN(1,("umidi_attach\n"));
@@ -456,7 +462,10 @@ alloc_pipe(struct umidi_endpoint *ep)
 	ep->next_schedule = 0;
 	ep->soliciting = 0;
 	ep->armed = 0;
-	ep->xfer = usbd_alloc_xfer(sc->sc_udev);
+	err = usbd_open_pipe(sc->sc_iface, ep->addr, 0, &ep->pipe);
+	if (err)
+		return err;
+	ep->xfer = usbd_alloc_xfer(sc->sc_udev, ep->pipe);
 	if (ep->xfer == NULL) {
 	    err = USBD_NOMEM;
 	    goto quit;
@@ -468,13 +477,13 @@ alloc_pipe(struct umidi_endpoint *ep)
 	    goto quit;
 	}
 	ep->next_slot = ep->buffer;
-	err = usbd_open_pipe(sc->sc_iface, ep->addr, 0, &ep->pipe);
 	if (err)
 	    usbd_free_xfer(ep->xfer);
 #ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 	ep->solicit_cookie = softintr_establish(IPL_SOFTCLOCK,out_solicit,ep);
 #endif
 quit:
+	usbd_close_pipe(ep->pipe);
 	return err;
 }
 

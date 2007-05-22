@@ -1,11 +1,11 @@
-/*	$NetBSD: uyap.c,v 1.11 2006/11/16 01:33:27 christos Exp $	*/
+/*	$NetBSD: usb_mem_nodma.h,v 1.1.2.1 2007/05/22 14:57:48 itohy Exp $	*/
 
-/*
- * Copyright (c) 2000 The NetBSD Foundation, Inc.
+/*-
+ * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by  Lennart Augustsson <lennart@augustsson.net>.
+ * by ITOH Yasufumi (itohy@NetBSD.org).
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,83 +36,43 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uyap.c,v 1.11 2006/11/16 01:33:27 christos Exp $");
-
-#include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/kernel.h>
-#include <sys/device.h>
-#include <sys/conf.h>
-#include <sys/tty.h>
-
-#include <dev/usb/usb.h>
-#include <dev/usb/usbdi.h>
-#include <dev/usb/usbdevs.h>
-
-#include <dev/usb/ezload.h>
-
-const struct ezdata uyap_firmware[] = {
-#include "dev/usb/uyap_firmware.h"
-};
-const struct ezdata *uyap_firmwares[] = { uyap_firmware, NULL };
-
-struct uyap_softc {
-	USBBASEDEVICE		sc_dev;		/* base device */
+struct usb_buffer_mem {
+	enum { UB_NONE, UB_PLAIN, UB_MBUF } ub_type;
+	union {
+		struct {
+			caddr_t ubp_top;	/* start address */
+			caddr_t ubp_cur;	/* current pointer */
+			void *ubp_allocbuf;	/* allocated buffer or NULL */
+		} ub_plain;
+		struct {
+			struct mbuf *ubm_top;	/* start mbuf */
+			struct mbuf *ubm_cur;	/* current mbuf */
+			int ubm_off;		/* current offset in cur mbuf */
+		} ub_mbuf;
+	} u;
 };
 
-USB_DECLARE_DRIVER(uyap);
+struct usb_buffer_freeq {
+	SIMPLEQ_ENTRY(usb_buffer_freeq)	uf_next;
+};
 
-USB_MATCH(uyap)
-{
-	USB_MATCH_START(uyap, uaa);
+/*
+ * per host controller
+ */
+typedef struct usb_mem_tag {
+	/* for delayed free */
+	SIMPLEQ_HEAD(, usb_buffer_freeq) ubs_tobefreed;
+	/* for statistical and diagnostic purposes */
+	int	nbufs;		/* number of allocated buffers */
+} usb_mem_tag_t;
 
-	if (uaa->iface != NULL)
-		return (UMATCH_NONE);
-
-	/* Match the boot device. */
-	if (uaa->vendor == USB_VENDOR_SILICONPORTALS &&
-	    uaa->product == USB_PRODUCT_SILICONPORTALS_YAPPH_NF)
-		return (UMATCH_VENDOR_PRODUCT);
-
-	return (UMATCH_NONE);
-}
-
-USB_ATTACH(uyap)
-{
-	USB_ATTACH_START(uyap, sc, uaa);
-	usbd_device_handle dev = uaa->device;
-	usbd_status err;
-	char *devinfop;
-
-	devinfop = usbd_devinfo_alloc(dev, 0);
-	USB_ATTACH_SETUP;
-	printf("%s: %s\n", USBDEVNAME(sc->sc_dev), devinfop);
-	usbd_devinfo_free(devinfop);
-
-	printf("%s: downloading firmware\n", USBDEVNAME(sc->sc_dev));
-
-	err = ezload_downloads_and_reset(dev, uyap_firmwares);
-	if (err) {
-		printf("%s: download ezdata error: %s\n",
-		       USBDEVNAME(sc->sc_dev), usbd_errstr(err));
-		USB_ATTACH_ERROR_RETURN;
-	}
-
-	printf("%s: firmware download complete, disconnecting.\n",
-	       USBDEVNAME(sc->sc_dev));
-	USB_ATTACH_SUCCESS_RETURN;
-}
-
-USB_DETACH(uyap)
-{
-	/*USB_DETACH_START(uyap, sc);*/
-
-	return (0);
-}
-
-int
-uyap_activate(device_ptr_t self, enum devact act)
-{
-	return 0;
-}
+usbd_status	usb_alloc_buffer_mem(usb_mem_tag_t *, void *, size_t,
+		    struct usb_buffer_mem *, void **);
+void		usb_free_buffer_mem(usb_mem_tag_t *, struct usb_buffer_mem *,
+		    enum usbd_waitflg);
+void		usb_map_mem(struct usb_buffer_mem *, void *);
+void		usb_map_mbuf_mem(struct usb_buffer_mem *, struct mbuf *);
+void		usb_unmap_mem(struct usb_buffer_mem *);
+void		usb_buffer_mem_rewind(struct usb_buffer_mem *);
+void		usb_mem_tag_init(usb_mem_tag_t *);
+void		usb_mem_tag_finish(usb_mem_tag_t *);

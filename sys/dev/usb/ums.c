@@ -1,4 +1,4 @@
-/*	$NetBSD: ums.c,v 1.68 2007/03/04 06:02:49 christos Exp $	*/
+/*	$NetBSD: ums.c,v 1.67 2006/11/16 01:33:27 christos Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ums.c,v 1.68 2007/03/04 06:02:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ums.c,v 1.67 2006/11/16 01:33:27 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,7 +118,7 @@ Static void ums_intr(struct uhidev *addr, void *ibuf, u_int len);
 
 Static int	ums_enable(void *);
 Static void	ums_disable(void *);
-Static int	ums_ioctl(void *, u_long, void *, int, struct lwp * );
+Static int	ums_ioctl(void *, u_long, caddr_t, int, struct lwp * );
 
 const struct wsmouse_accessops ums_accessops = {
 	ums_enable,
@@ -379,7 +379,7 @@ ums_disable(void *v)
 }
 
 Static int
-ums_ioctl(void *v, u_long cmd, void *data, int flag,
+ums_ioctl(void *v, u_long cmd, caddr_t data, int flag,
     struct lwp * p)
 
 {

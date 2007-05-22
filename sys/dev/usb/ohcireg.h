@@ -1,8 +1,8 @@
-/*	$NetBSD: ohcireg.h,v 1.22 2006/10/08 11:52:48 scw Exp $	*/
-/*	$FreeBSD: src/sys/dev/usb/ohcireg.h,v 1.8 1999/11/17 22:33:40 n_hibma Exp $	*/
+/*	$NetBSD: ohcireg.h,v 1.22.18.1 2007/05/22 14:57:39 itohy Exp $	*/
+/*	$FreeBSD: src/sys/dev/usb/ohcireg.h,v 1.23 2006/05/28 05:27:08 iedowse Exp $	*/
 
 
-/*
+/*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
@@ -127,7 +127,7 @@
 #define OHCI_LES (OHCI_PLE | OHCI_IE | OHCI_CLE | OHCI_BLE)
 #define OHCI_ALL_INTRS (OHCI_SO | OHCI_WDH | OHCI_SF | OHCI_RD | OHCI_UE | \
                         OHCI_FNO | OHCI_RHSC | OHCI_OC)
-#define OHCI_NORMAL_INTRS (OHCI_SO | OHCI_WDH | OHCI_RD | OHCI_UE | OHCI_RHSC)
+#define OHCI_NORMAL_INTRS (OHCI_WDH | OHCI_RD | OHCI_UE | OHCI_RHSC)
 
 #define OHCI_FSMPS(i) (((i-210)*6/7) << 16)
 #define OHCI_PERIODIC(i) ((i)*9/10)
@@ -136,9 +136,9 @@ typedef u_int32_t ohci_physaddr_t;
 
 #define OHCI_NO_INTRS 32
 struct ohci_hcca {
-	volatile ohci_physaddr_t	hcca_interrupt_table[OHCI_NO_INTRS];
-	volatile u_int32_t	hcca_frame_number;
-	volatile ohci_physaddr_t	hcca_done_head;
+	ohci_physaddr_t	hcca_interrupt_table[OHCI_NO_INTRS];
+	u_int32_t	hcca_frame_number;
+	ohci_physaddr_t	hcca_done_head;
 #define OHCI_DONE_INTRS 1
 };
 #define OHCI_HCCA_SIZE 256
@@ -149,7 +149,7 @@ struct ohci_hcca {
 #define OHCI_PAGE_OFFSET(x) ((x) & 0xfff)
 
 typedef struct {
-	volatile u_int32_t	ed_flags;
+	u_int32_t	ed_flags;
 #define OHCI_ED_GET_FA(s)	((s) & 0x7f)
 #define OHCI_ED_ADDRMASK	0x0000007f
 #define OHCI_ED_SET_FA(s)	(s)
@@ -166,18 +166,18 @@ typedef struct {
 #define OHCI_ED_GET_MAXP(s)	(((s) >> 16) & 0x07ff)
 #define OHCI_ED_SET_MAXP(s)	((s) << 16)
 #define OHCI_ED_MAXPMASK	(0x7ff << 16)
-	volatile ohci_physaddr_t	ed_tailp;
-	volatile ohci_physaddr_t	ed_headp;
+	ohci_physaddr_t	ed_tailp;
+	ohci_physaddr_t	ed_headp;
 #define OHCI_HALTED		0x00000001
 #define OHCI_TOGGLECARRY	0x00000002
 #define OHCI_HEADMASK		0xfffffffc
-	volatile ohci_physaddr_t	ed_nexted;
+	ohci_physaddr_t	ed_nexted;
 } ohci_ed_t;
 /* #define OHCI_ED_SIZE 16 */
 #define OHCI_ED_ALIGN 16
 
 typedef struct {
-	volatile u_int32_t	td_flags;
+	u_int32_t	td_flags;
 #define OHCI_TD_R		0x00040000		/* Buffer Rounding  */
 #define OHCI_TD_DP_MASK		0x00180000		/* Direction / PID */
 #define  OHCI_TD_SETUP		0x00000000
@@ -194,16 +194,16 @@ typedef struct {
 #define OHCI_TD_GET_EC(x)	(((x) >> 26) & 3)	/* Error Count */
 #define OHCI_TD_GET_CC(x)	((x) >> 28)		/* Condition Code */
 #define  OHCI_TD_NOCC		0xf0000000
-	volatile ohci_physaddr_t td_cbp;	/* Current Buffer Pointer */
-	volatile ohci_physaddr_t td_nexttd;	/* Next TD */
-	volatile ohci_physaddr_t td_be;		/* Buffer End */
+	ohci_physaddr_t	td_cbp;		/* Current Buffer Pointer */
+	ohci_physaddr_t td_nexttd;	/* Next TD */
+	ohci_physaddr_t td_be;		/* Buffer End */
 } ohci_td_t;
 /* #define OHCI_TD_SIZE 16 */
 #define OHCI_TD_ALIGN 16
 
 #define OHCI_ITD_NOFFSET 8
 typedef struct {
-	volatile u_int32_t	itd_flags;
+	u_int32_t	itd_flags;
 #define OHCI_ITD_GET_SF(x)	((x) & 0x0000ffff)
 #define OHCI_ITD_SET_SF(x)	((x) & 0xffff)
 #define OHCI_ITD_GET_DI(x)	(((x) >> 21) & 7)	/* Delay Interrupt */
@@ -213,13 +213,14 @@ typedef struct {
 #define OHCI_ITD_SET_FC(x)	(((x)-1) << 24)
 #define OHCI_ITD_GET_CC(x)	((x) >> 28)		/* Condition Code */
 #define  OHCI_ITD_NOCC		0xf0000000
-	volatile ohci_physaddr_t itd_bp0;		/* Buffer Page 0 */
-	volatile ohci_physaddr_t itd_nextitd;		/* Next ITD */
-	volatile ohci_physaddr_t itd_be;			/* Buffer End */
-	volatile u_int16_t itd_offset[OHCI_ITD_NOFFSET];/* Buffer offsets */
+	ohci_physaddr_t	itd_bp0;			/* Buffer Page 0 */
+	ohci_physaddr_t	itd_nextitd;			/* Next ITD */
+	ohci_physaddr_t	itd_be;				/* Buffer End */
+	u_int16_t	itd_offset[OHCI_ITD_NOFFSET];	/* Buffer offsets */
 #define itd_pswn itd_offset				/* Packet Status Word*/
 #define OHCI_ITD_PAGE_SELECT	0x00001000
-#define OHCI_ITD_MK_OFFS(len)	(0xe000 | ((len) & 0x1fff))
+#define OHCI_ITD_MK_OFFS(page, off) \
+     (0xe000 | ((page) ? OHCI_ITD_PAGE_SELECT : 0) | ((off) & 0xfff))
 #define OHCI_ITD_PSW_LENGTH(x)	((x) & 0xfff)		/* Transfer length */
 #define OHCI_ITD_PSW_GET_CC(x)	((x) >> 12)		/* Condition Code */
 } ohci_itd_t;
@@ -239,7 +240,7 @@ typedef struct {
 #define OHCI_CC_DATA_UNDERRUN		9
 #define OHCI_CC_BUFFER_OVERRUN		12
 #define OHCI_CC_BUFFER_UNDERRUN		13
-#define OHCI_CC_NOT_ACCESSED		14
+#define OHCI_CC_NOT_ACCESSED		14	/* 111x */
 #define OHCI_CC_NOT_ACCESSED_MASK	14
 
 /* Some delay needed when changing certain registers. */

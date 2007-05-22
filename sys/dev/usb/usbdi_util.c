@@ -1,6 +1,6 @@
-/*	$NetBSD: usbdi_util.c,v 1.49 2007/03/04 06:02:50 christos Exp $	*/
+/*	$NetBSD: usbdi_util.c,v 1.48.4.1 2007/05/22 14:57:50 itohy Exp $	*/
 
-/*
+/*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
@@ -38,7 +38,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi_util.c,v 1.49 2007/03/04 06:02:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi_util.c,v 1.48.4.1 2007/05/22 14:57:50 itohy Exp $");
+/* __FBSDID("$FreeBSD: src/sys/dev/usb/usbdi_util.c,v 1.36 2006/09/07 00:06:42 imp Exp $"); */
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: usbdi_util.c,v 1.49 2007/03/04 06:02:50 christos Exp
 #include <sys/proc.h>
 #include <sys/device.h>
 #elif defined(__FreeBSD__)
+#include <sys/module.h>
 #include <sys/bus.h>
 #endif
 
@@ -383,7 +385,7 @@ usbd_get_hid_descriptor(usbd_interface_handle ifc)
 
 usbd_status
 usbd_read_report_desc(usbd_interface_handle ifc, void **descp, int *sizep,
-		       usb_malloc_type mem)
+		      usb_malloc_type mem)
 {
 	usb_interface_descriptor_t *id;
 	usb_hid_descriptor_t *hid;
@@ -450,7 +452,7 @@ usbd_bulk_transfer(usbd_xfer_handle xfer, usbd_pipe_handle pipe,
 		splx(s);
 		return (err);
 	}
-	error = tsleep((void *)xfer, PZERO | PCATCH, lbl, 0);
+	error = tsleep((caddr_t)xfer, PZERO | PCATCH, lbl, 0);
 	splx(s);
 	if (error) {
 		DPRINTF(("usbd_bulk_transfer: tsleep=%d\n", error));

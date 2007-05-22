@@ -1,4 +1,4 @@
-/*	$NetBSD: uscanner.c,v 1.56 2007/03/13 13:51:56 drochner Exp $	*/
+/*	$NetBSD: uscanner.c,v 1.54.10.1 2007/05/22 14:57:51 itohy Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.56 2007/03/13 13:51:56 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.54.10.1 2007/05/22 14:57:51 itohy Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -309,6 +309,9 @@ USB_MATCH(uscanner)
 {
 	USB_MATCH_START(uscanner, uaa);
 
+	if (uaa->iface != NULL)
+		return UMATCH_NONE;
+
 	return (uscanner_lookup(uaa->vendor, uaa->product) != NULL ?
 		UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
 }
@@ -441,12 +444,12 @@ uscanneropen(dev_t dev, int flag, int mode,
 		}
 	}
 
-	sc->sc_bulkin_xfer = usbd_alloc_xfer(sc->sc_udev);
+	sc->sc_bulkin_xfer = usbd_alloc_xfer(sc->sc_udev, sc->sc_bulkin_pipe);
 	if (sc->sc_bulkin_xfer == NULL) {
 		uscanner_do_close(sc);
 		return (ENOMEM);
 	}
-	sc->sc_bulkout_xfer = usbd_alloc_xfer(sc->sc_udev);
+	sc->sc_bulkout_xfer = usbd_alloc_xfer(sc->sc_udev, sc->sc_bulkout_pipe);
 	if (sc->sc_bulkout_xfer == NULL) {
 		uscanner_do_close(sc);
 		return (ENOMEM);
@@ -766,7 +769,7 @@ uscannerkqfilter(dev_t dev, struct knote *kn)
 }
 
 int
-uscannerioctl(dev_t dev, u_long cmd, void *addr,
+uscannerioctl(dev_t dev, u_long cmd, caddr_t addr,
     int flag, struct lwp *l)
 {
 	return (EINVAL);

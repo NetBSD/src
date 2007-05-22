@@ -1,6 +1,7 @@
-/*	$NetBSD: ehcireg.h,v 1.25 2006/10/09 11:38:54 mlelstv Exp $	*/
+/*	$NetBSD: ehcireg.h,v 1.25.18.1 2007/05/22 14:57:35 itohy Exp $	*/
+/*	$FreeBSD: /repoman/r/ncvs/src/sys/dev/usb/ehcireg.h,v 1.8 2005/09/18 11:45:39 netchild Exp $	*/
 
-/*
+/*-
  * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
@@ -63,15 +64,18 @@
 
 #define PCI_EHCI_PORTWAKECAP	0x62	/* RW Port wake caps (opt)  */
 
-/* Regs at EECP + offset */
-#define PCI_EHCI_USBLEGSUP	0x00
-#define  EHCI_LEG_HC_OS_OWNED		0x01000000
-#define  EHCI_LEG_HC_BIOS_OWNED		0x00010000
-#define PCI_EHCI_USBLEGCTLSTS	0x04
+/* EHCI Extended Capabilities */
+#define EHCI_EC_LEGSUP		0x01
 
-#define EHCI_CAP_GET_ID(cap) ((cap) & 0xff)
-#define EHCI_CAP_GET_NEXT(cap) (((cap) >> 8) & 0xff)
-#define EHCI_CAP_ID_LEGACY 1
+#define EHCI_EECP_NEXT(x)	(((x) >> 8) & 0xff)
+#define EHCI_EECP_ID(x)		((x) & 0xff)
+
+/* Legacy support extended capability */
+/* Regs at EECP + offset */
+#define EHCI_LEGSUP_LEGSUP	0x00
+#define  EHCI_LEGSUP_OSOWNED	0x01000000 /* OS owned semaphore */
+#define  EHCI_LEGSUP_BIOSOWNED	0x00010000 /* BIOS owned semaphore */
+#define EHCI_LEGSUP_USBLEGCTLSTS 0x04
 
 /*** EHCI capability registers ***/
 
@@ -194,14 +198,14 @@ typedef u_int32_t ehci_physaddr_t;
 
 /* Isochronous Transfer Descriptor */
 typedef struct {
-	volatile ehci_link_t	itd_next;
+	ehci_link_t	itd_next;
 	/* XXX many more */
 } ehci_itd_t;
 #define EHCI_ITD_ALIGN 32
 
 /* Split Transaction Isochronous Transfer Descriptor */
 typedef struct {
-	volatile ehci_link_t	sitd_next;
+	ehci_link_t	sitd_next;
 	/* XXX many more */
 } ehci_sitd_t;
 #define EHCI_SITD_ALIGN 32
@@ -209,9 +213,9 @@ typedef struct {
 /* Queue Element Transfer Descriptor */
 #define EHCI_QTD_NBUFFERS 5
 typedef struct {
-	volatile ehci_link_t	qtd_next;
-	volatile ehci_link_t	qtd_altnext;
-	volatile u_int32_t	qtd_status;
+	ehci_link_t	qtd_next;
+	ehci_link_t	qtd_altnext;
+	u_int32_t	qtd_status;
 #define EHCI_QTD_GET_STATUS(x)	(((x) >>  0) & 0xff)
 #define EHCI_QTD_SET_STATUS(x)	((x) <<  0)
 #define  EHCI_QTD_ACTIVE	0x80
@@ -239,15 +243,15 @@ typedef struct {
 #define EHCI_QTD_GET_TOGGLE(x)	(((x) >> 31) &  0x1)
 #define	EHCI_QTD_SET_TOGGLE(x)	((x) << 31)
 #define EHCI_QTD_TOGGLE_MASK	0x80000000
-	volatile ehci_physaddr_t qtd_buffer[EHCI_QTD_NBUFFERS];
-	volatile ehci_physaddr_t qtd_buffer_hi[EHCI_QTD_NBUFFERS];
+	ehci_physaddr_t qtd_buffer[EHCI_QTD_NBUFFERS];
+	ehci_physaddr_t qtd_buffer_hi[EHCI_QTD_NBUFFERS];
 } ehci_qtd_t;
 #define EHCI_QTD_ALIGN 32
 
 /* Queue Head */
 typedef struct {
-	volatile ehci_link_t	qh_link;
-	volatile u_int32_t	qh_endp;
+	ehci_link_t	qh_link;
+	u_int32_t	qh_endp;
 #define EHCI_QH_GET_ADDR(x)	(((x) >>  0) & 0x7f) /* endpoint addr */
 #define EHCI_QH_SET_ADDR(x)	(x)
 #define EHCI_QH_ADDRMASK	0x0000007f
@@ -271,7 +275,7 @@ typedef struct {
 #define EHCI_QH_CTL		0x08000000
 #define EHCI_QH_GET_NRL(x)	(((x) >> 28) & 0x0f) /* NAK reload */
 #define EHCI_QH_SET_NRL(x)	((x) << 28)
-	volatile u_int32_t	qh_endphub;
+	u_int32_t	qh_endphub;
 #define EHCI_QH_GET_SMASK(x)	(((x) >>  0) & 0xff) /* intr sched mask */
 #define EHCI_QH_SET_SMASK(x)	((x) <<  0)
 #define EHCI_QH_GET_CMASK(x)	(((x) >>  8) & 0xff) /* split completion mask */
@@ -282,15 +286,15 @@ typedef struct {
 #define EHCI_QH_SET_PORT(x)	((x) << 23)
 #define EHCI_QH_GET_MULT(x)	(((x) >> 30) & 0x03) /* pipe multiplier */
 #define EHCI_QH_SET_MULT(x)	((x) << 30)
-	volatile ehci_link_t	qh_curqtd;
-	ehci_qtd_t		qh_qtd;
+	ehci_link_t	qh_curqtd;
+	ehci_qtd_t	qh_qtd;
 } ehci_qh_t;
 #define EHCI_QH_ALIGN 32
 
 /* Periodic Frame Span Traversal Node */
 typedef struct {
-	volatile ehci_link_t	fstn_link;
-	volatile ehci_link_t	fstn_back;
+	ehci_link_t	fstn_link;
+	ehci_link_t	fstn_back;
 } ehci_fstn_t;
 #define EHCI_FSTN_ALIGN 32
 

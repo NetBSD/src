@@ -1,4 +1,4 @@
-/*	$NetBSD: slhci_intio.c,v 1.7 2005/12/11 12:19:37 christos Exp $	*/
+/*	$NetBSD: slhci_intio.c,v 1.7.42.1 2007/05/22 14:57:31 itohy Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: slhci_intio.c,v 1.7 2005/12/11 12:19:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: slhci_intio.c,v 1.7.42.1 2007/05/22 14:57:31 itohy Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: slhci_intio.c,v 1.7 2005/12/11 12:19:37 christos Exp
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdivar.h>
+#include <dev/usb/usb_mem_nodma.h>
 
 #include <dev/ic/sl811hsreg.h>
 #include <dev/ic/sl811hsvar.h>
@@ -146,7 +147,6 @@ slhci_intio_attach(struct device *parent, struct device *self, void *aux)
 	/* Initialize sc */
 	sc->sc_sc.sc_iot = iot;
 	sc->sc_sc.sc_ioh = ioh;
-	sc->sc_sc.sc_dmat = ia->ia_dmat;
 	sc->sc_sc.sc_enable_power = slhci_intio_enable_power;
 	sc->sc_sc.sc_enable_intr  = slhci_intio_enable_intr;
 	sc->sc_sc.sc_arg = sc;
@@ -163,7 +163,7 @@ slhci_intio_attach(struct device *parent, struct device *self, void *aux)
 	delay(40000);
 
 	/* Attach SL811HS/T */
-	if (slhci_attach(&sc->sc_sc, self))
+	if (slhci_attach(&sc->sc_sc))
 		return;
 }
 

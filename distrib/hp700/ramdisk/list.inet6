@@ -1,6 +1,0 @@
-#	$NetBSD: list.inet6,v 1.1 2005/05/18 14:04:26 chs Exp $
-
-PROG	sbin/ping6
-PROG	sbin/rtsol
-
-SPECIAL	ping6		srcdir	distrib/utils/x_ping6

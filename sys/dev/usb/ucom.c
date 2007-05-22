@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.70 2007/03/04 06:02:48 christos Exp $	*/
+/*	$NetBSD: ucom.c,v 1.69.10.1 2007/05/22 14:57:40 itohy Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.70 2007/03/04 06:02:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.69.10.1 2007/05/22 14:57:40 itohy Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -155,8 +155,8 @@ Static void	ucom_hwiflow(struct ucom_softc *);
 Static int	ucomparam(struct tty *, struct termios *);
 Static void	ucomstart(struct tty *);
 Static void	ucom_shutdown(struct ucom_softc *);
-Static int	ucom_do_ioctl(struct ucom_softc *, u_long, void *,
-			      int, struct lwp *);
+Static int	ucom_do_ioctl(struct ucom_softc *, u_long, caddr_t,
+			      int, usb_proc_ptr);
 Static void	ucom_dtr(struct ucom_softc *, int);
 Static void	ucom_rts(struct ucom_softc *, int);
 Static void	ucom_break(struct ucom_softc *, int);
@@ -301,7 +301,7 @@ ucom_shutdown(struct ucom_softc *sc)
 }
 
 int
-ucomopen(dev_t dev, int flag, int mode, struct lwp *l)
+ucomopen(dev_t dev, int flag, int mode, usb_proc_ptr l)
 {
 	int unit = UCOMUNIT(dev);
 	usbd_status err;
@@ -421,7 +421,7 @@ ucomopen(dev_t dev, int flag, int mode, struct lwp *l)
 		}
 
 		/* Allocate a request and an input buffer and start reading. */
-		sc->sc_ixfer = usbd_alloc_xfer(sc->sc_udev);
+		sc->sc_ixfer = usbd_alloc_xfer(sc->sc_udev, sc->sc_bulkin_pipe);
 		if (sc->sc_ixfer == NULL) {
 			error = ENOMEM;
 			goto fail_2;
@@ -434,7 +434,8 @@ ucomopen(dev_t dev, int flag, int mode, struct lwp *l)
 			goto fail_3;
 		}
 
-		sc->sc_oxfer = usbd_alloc_xfer(sc->sc_udev);
+		sc->sc_oxfer = usbd_alloc_xfer(sc->sc_udev,
+		    sc->sc_bulkout_pipe);
 		if (sc->sc_oxfer == NULL) {
 			error = ENOMEM;
 			goto fail_3;
@@ -495,7 +496,7 @@ bad:
 }
 
 int
-ucomclose(dev_t dev, int flag, int mode, struct lwp *l)
+ucomclose(dev_t dev, int flag, int mode, usb_proc_ptr l)
 {
 	struct ucom_softc *sc = ucom_cd.cd_devs[UCOMUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
@@ -562,7 +563,7 @@ ucomwrite(dev_t dev, struct uio *uio, int flag)
 }
 
 int
-ucompoll(dev_t dev, int events, struct lwp *l)
+ucompoll(dev_t dev, int events, usb_proc_ptr l)
 {
 	struct ucom_softc *sc = ucom_cd.cd_devs[UCOMUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
@@ -588,7 +589,7 @@ ucomtty(dev_t dev)
 }
 
 int
-ucomioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
+ucomioctl(dev_t dev, u_long cmd, caddr_t data, int flag, usb_proc_ptr l)
 {
 	struct ucom_softc *sc = ucom_cd.cd_devs[UCOMUNIT(dev)];
 	int error;
@@ -601,8 +602,8 @@ ucomioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 }
 
 Static int
-ucom_do_ioctl(struct ucom_softc *sc, u_long cmd, void *data,
-	      int flag, struct lwp *l)
+ucom_do_ioctl(struct ucom_softc *sc, u_long cmd, caddr_t data,
+	      int flag, usb_proc_ptr l)
 {
 	struct tty *tp = sc->sc_tty;
 	int error;
@@ -623,7 +624,7 @@ ucom_do_ioctl(struct ucom_softc *sc, u_long cmd, void *data,
 
 	if (sc->sc_methods->ucom_ioctl != NULL) {
 		error = sc->sc_methods->ucom_ioctl(sc->sc_parent,
-			    sc->sc_portno, cmd, data, flag, l->l_proc);
+			    sc->sc_portno, cmd, data, flag, l);
 		if (error != EPASSTHROUGH)
 			return (error);
 	}

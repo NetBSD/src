@@ -1,4 +1,4 @@
-/*	$NetBSD: ukyopon.c,v 1.7 2007/03/13 13:51:55 drochner Exp $	*/
+/*	$NetBSD: ukyopon.c,v 1.5 2007/01/29 01:52:45 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1998, 2005 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukyopon.c,v 1.7 2007/03/13 13:51:55 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukyopon.c,v 1.5 2007/01/29 01:52:45 hubertf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,7 +90,7 @@ struct ukyopon_softc {
 #define UKYOPON_DATA_IFACE_INDEX	3
 
 Static void	ukyopon_get_status(void *, int, u_char *, u_char *);
-Static int	ukyopon_ioctl(void *, int, u_long, void *, int, usb_proc_ptr);
+Static int	ukyopon_ioctl(void *, int, u_long, caddr_t, int, usb_proc_ptr);
 
 Static struct ucom_methods ukyopon_methods = {
 	ukyopon_get_status,
@@ -107,10 +107,20 @@ USB_DECLARE_DRIVER(ukyopon);
 
 USB_MATCH(ukyopon)
 {
-	USB_IFMATCH_START(ukyopon, uaa);
+	USB_MATCH_START(ukyopon, uaa);
+	usb_device_descriptor_t *dd;
+	usb_interface_descriptor_t *id;
 
-	if (uaa->vendor == USB_VENDOR_KYOCERA &&
-	    uaa->product == USB_PRODUCT_KYOCERA_AHK3001V &&
+	if (uaa->iface == NULL)
+		return (UMATCH_NONE);
+
+	id = usbd_get_interface_descriptor(uaa->iface);
+	dd = usbd_get_device_descriptor(uaa->device);
+	if (id == NULL || dd == NULL)
+		return (UMATCH_NONE);
+
+	if (UGETW(dd->idVendor) == USB_VENDOR_KYOCERA &&
+	    UGETW(dd->idProduct) == USB_PRODUCT_KYOCERA_AHK3001V &&
 	    (uaa->ifaceno == UKYOPON_MODEM_IFACE_INDEX ||
 	     uaa->ifaceno == UKYOPON_DATA_IFACE_INDEX))
 		return (UMATCH_VENDOR_PRODUCT);
@@ -120,7 +130,7 @@ USB_MATCH(ukyopon)
 
 USB_ATTACH(ukyopon)
 {
-	USB_IFATTACH_START(ukyopon, sc, uaa);
+	USB_ATTACH_START(ukyopon, sc, uaa);
 	struct ucom_attach_args uca;
 
 	uca.portno = (uaa->ifaceno == UKYOPON_MODEM_IFACE_INDEX) ?
@@ -150,7 +160,7 @@ ukyopon_get_status(void *addr, int portno, u_char *lsr, u_char *msr)
 }
 
 Static int
-ukyopon_ioctl(void *addr, int portno, u_long cmd, void *data, int flag,
+ukyopon_ioctl(void *addr, int portno, u_long cmd, caddr_t data, int flag,
 	      usb_proc_ptr p)
 {
 	struct ukyopon_softc *sc = addr;

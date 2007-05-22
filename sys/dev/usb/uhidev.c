@@ -1,4 +1,4 @@
-/*	$NetBSD: uhidev.c,v 1.35 2007/03/15 15:11:54 drochner Exp $	*/
+/*	$NetBSD: uhidev.c,v 1.33.10.1 2007/05/22 14:57:42 itohy Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.35 2007/03/15 15:11:54 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.33.10.1 2007/05/22 14:57:42 itohy Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,21 +82,27 @@ Static void uhidev_intr(usbd_xfer_handle, usbd_private_handle, usbd_status);
 
 Static int uhidev_maxrepid(void *, int);
 Static int uhidevprint(void *, const char *);
+Static int uhidevsubmatch(struct device *, struct cfdata *,
+			  const int *, void *);
 
 USB_DECLARE_DRIVER(uhidev);
 
 USB_MATCH(uhidev)
 {
-	USB_IFMATCH_START(uhidev, uaa);
+	USB_MATCH_START(uhidev, uaa);
+	usb_interface_descriptor_t *id;
 
-	if (uaa->class != UICLASS_HID)
+	if (uaa->iface == NULL)
+		return (UMATCH_NONE);
+	id = usbd_get_interface_descriptor(uaa->iface);
+	if (id == NULL || id->bInterfaceClass != UICLASS_HID)
 		return (UMATCH_NONE);
 	return (UMATCH_IFACECLASS_GENERIC);
 }
 
 USB_ATTACH(uhidev)
 {
-	USB_IFATTACH_START(uhidev, sc, uaa);
+	USB_ATTACH_START(uhidev, sc, uaa);
 	usbd_interface_handle iface = uaa->iface;
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
@@ -286,7 +292,7 @@ nomem:
 
 			dev = (struct uhidev *)config_found_sm_loc(self,
 				"uhidbus", locs, &uha,
-				uhidevprint, config_stdsubmatch);
+				uhidevprint, uhidevsubmatch);
 			sc->sc_subdevs[repid] = dev;
 			if (dev != NULL) {
 				dev->sc_in_rep_size = repsizes[repid];
@@ -339,6 +345,17 @@ uhidevprint(void *aux, const char *pnp)
 	if (uha->reportid != 0)
 		aprint_normal(" reportid %d", uha->reportid);
 	return (UNCONF);
+}
+
+int
+uhidevsubmatch(struct device *parent, struct cfdata *cf,
+	       const int *locs, void *aux)
+{
+	if (cf->cf_loc[UHIDBUSCF_REPORTID] != UHIDBUSCF_REPORTID_DEFAULT &&
+	    cf->cf_loc[UHIDBUSCF_REPORTID] != locs[UHIDBUSCF_REPORTID])
+		return (0);
+
+	return (config_match(parent, cf, aux));
 }
 
 int
@@ -515,7 +532,7 @@ uhidev_open(struct uhidev *scd)
 		}
 		DPRINTF(("uhidev_open: sc->sc_opipe=%p\n", sc->sc_opipe));
 
-		sc->sc_oxfer = usbd_alloc_xfer(sc->sc_udev);
+		sc->sc_oxfer = usbd_alloc_xfer(sc->sc_udev, sc->sc_opipe);
 		if (sc->sc_oxfer == NULL) {
 			DPRINTF(("uhidev_open: couldn't allocate an xfer\n"));
 			error = ENOMEM;

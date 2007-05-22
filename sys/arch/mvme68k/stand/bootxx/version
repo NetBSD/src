@@ -1,5 +1,0 @@
-$NetBSD: version,v 1.2 2000/09/24 12:32:37 jdolecek Exp $
-
-1.1:	Boot program for mvme68k, initial revision
-	(import from sun3 port, adapt to mvme68k by Chuck Cranor)
-1.2:	Support verbose/quiet boot.
