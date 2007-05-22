@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.843 2007/05/08 16:48:37 xtraeme Exp $
+#	$NetBSD: files,v 1.831.6.1 2007/05/22 14:57:31 itohy Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -39,7 +39,6 @@ defflag				NEW_BUFQ_STRATEGY	# same as BUFQ_READPRIO
 defparam			SOMAXKVA
 defflag	opt_sock_counters.h	SOSEND_COUNTERS
 defflag	opt_sosend_loan.h	SOSEND_NO_LOAN
-defflag	opt_route.h		RTCACHE_DEBUG RTFLUSH_DEBUG
 
 defflag				MULTIPROCESSOR
 
@@ -233,8 +232,6 @@ defflag	opt_md.h		MEMORY_DISK_HOOKS MEMORY_DISK_IS_ROOT
 				MEMORY_DISK_DYNAMIC
 defparam opt_md.h		MEMORY_DISK_SERVER MEMORY_DISK_ROOT_SIZE
 				MEMORY_RBFLAGS
-
-defflag opt_tftproot.h		TFTPROOT TFTPROOT_DEBUG
 
 # Support for hardware performance monitoring counters
 #
@@ -785,11 +782,6 @@ file	dev/ic/clmpcc.c			clmpcc			needs-flag
 device	lm: sysmon_envsys
 file	dev/ic/nslm7x.c			lm			needs-flag
 
-# Abit uGuru
-#
-device	ug: sysmon_envsys
-file	dev/ic/ug.c			ug			needs-flag
-
 # Essential Communications Corp. HIPPI Interface
 #
 device	esh: hippi, ifnet
@@ -868,8 +860,6 @@ define	ata_dma
 define	ata_udma
 define	ata_piobm
 device	wdc: ata, wdc_common
-
-defflag	opt_ata.h	ATADEBUG
 
 device	atabus: atapi,ata_hl
 attach	atabus at ata
@@ -963,21 +953,10 @@ file	dev/ic/tea5757.c		tea5757
 define	lm700x
 file	dev/ic/lm700x.c			lm700x
 
-# Philips PCF8584 i2c controller
-define	pcf8584
-file	dev/ic/pcf8584.c		pcf8584
-
 # ACPI power management timer (hardware access, independent of ACPI)
 #
 define acpipmtimer
 file	dev/ic/acpipmtimer.c	acpipmtimer
-
-device 	hpet
-file 	dev/ic/hpet.c		hpet			needs-flag
-
-# DRM - Direct Rendering Infrastructure: dev/drm
-define drm {}
-include	dev/drm/files.drm
 
 # Definitions for wscons
 # device attributes: display, display with emulator, keyboard, and mouse
@@ -1006,7 +985,7 @@ defparam opt_vga.h		VGA_CONSOLE_SCREENTYPE
 defflag opt_vga.h 		VGA_CONSOLE_ATI_BROKEN_FONTSEL
 defflag opt_vga.h		VGA_RASTERCONSOLE
 defflag opt_vga.h		VGA_RESET
-device	vga: wsemuldisplaydev, pcdisplayops, drm
+device	vga: wsemuldisplaydev, pcdisplayops
 file	dev/ic/vga.c		vga & !vga_rasterconsole	needs-flag
 file	dev/ic/vga_raster.c	vga_rasterconsole		needs-flag
 file	dev/ic/vga_subr.c	vga | vga_rasterconsole
@@ -1045,23 +1024,25 @@ define	pcmciaslot {[slot = -1]}	# PCMCIA slot itself
 #
 
 defparam USB_MEM_RESERVE
+define	usb_mem_dma
+define	usb_mem_nodma
 
-device	uhci: usbus
+device	uhci: usbus, usb_mem_dma
 file	dev/usb/uhci.c			uhci			needs-flag
 
 # OHCI USB controller
 #
-device	ohci: usbus
+device	ohci: usbus, usb_mem_dma
 file	dev/usb/ohci.c			ohci			needs-flag
 
 # EHCI USB controller
 #
-device	ehci: usbus
+device	ehci: usbus, usb_mem_dma
 file	dev/usb/ehci.c			ehci			needs-flag
 
 # SL811HS/T USB controller
 defflag	opt_slhci.h	SLHCI_DEBUG
-device	slhci: usbus
+device	slhci: usbus, usb_mem_nodma
 file	dev/ic/sl811hs.c		slhci			needs-flag
 
 # Myson MTD803 3-in-1 Fast Ethernet Controller
@@ -1152,7 +1133,6 @@ defpseudo rnd
 defpseudo ksyms
 defpseudo nullcons
 defpseudo lockstat
-defpseudo bio:		sysmon_envsys
 
 defpseudo loop:		ifnet
 defpseudo sl:		ifnet
@@ -1214,7 +1194,6 @@ include "coda/files.coda"
 include "fs/adosfs/files.adosfs"
 include "fs/cd9660/files.cd9660"
 include "fs/filecorefs/files.filecorefs"
-include "fs/hfs/files.hfs"
 include "fs/msdosfs/files.msdosfs"
 include "fs/ntfs/files.ntfs"
 include "fs/ptyfs/files.ptyfs"
@@ -1251,7 +1230,6 @@ file	dev/auconv.c			auconv | mulaw
 file	dev/audio.c			audio | midi | midibus	needs-flag
 file	dev/audiobell.c			audiobell
 file	dev/aurateconv.c		aurateconv		needs-flag
-file	dev/bio.c			bio			needs-flag
 file	dev/ccd.c			ccd			needs-flag
 file	dev/cgd.c			cgd			needs-flag
 file	dev/cgd_crypto.c		cgd
@@ -1360,12 +1338,10 @@ file	kern/subr_prof.c
 file	kern/subr_once.c
 file	kern/subr_optstr.c
 file	kern/subr_specificdata.c
-file	kern/subr_tftproot.c		tftproot
 file	kern/subr_userconf.c		userconf
 file	kern/subr_vmem.c
 file	kern/subr_workqueue.c
 file	kern/subr_xxx.c
-file	kern/sys_aio.c
 file	kern/sys_generic.c
 file	kern/sys_lwp.c
 file	kern/sys_pipe.c			!pipe_socketpair

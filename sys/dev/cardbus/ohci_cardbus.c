@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci_cardbus.c,v 1.23 2006/11/16 01:32:48 christos Exp $	*/
+/*	$NetBSD: ohci_cardbus.c,v 1.23.18.1 2007/05/22 14:57:32 itohy Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci_cardbus.c,v 1.23 2006/11/16 01:32:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci_cardbus.c,v 1.23.18.1 2007/05/22 14:57:32 itohy Exp $");
 
 #include "ehci_cardbus.h"
 
@@ -144,7 +144,7 @@ ohci_cardbus_attach(struct device *parent, struct device *self,
 	sc->sc_cc = cc;
 	sc->sc_cf = cf;
 	sc->sc_ct = ct;
-	sc->sc.sc_bus.dmatag = ca->ca_dmat;
+	sc->sc.sc_dmatag.tag = ca->ca_dmat;
 
 #if rbus
 #else

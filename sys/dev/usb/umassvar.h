@@ -1,4 +1,4 @@
-/*	$NetBSD: umassvar.h,v 1.25 2007/01/09 16:46:02 christos Exp $	*/
+/*	$NetBSD: umassvar.h,v 1.25.14.1 2007/05/22 14:57:44 itohy Exp $	*/
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
  *		      Nick Hibma <n_hibma@freebsd.org>
@@ -196,29 +196,29 @@ struct umass_softc {
 	 */
 	/* indices into array below */
 #define XFER_BBB_CBW		0	/* Bulk-Only */
-#define XFER_BBB_DATA		1
-#define XFER_BBB_DCLEAR		2
-#define XFER_BBB_CSW1		3
-#define XFER_BBB_CSW2		4
-#define XFER_BBB_SCLEAR		5
-#define XFER_BBB_RESET1		6
-#define XFER_BBB_RESET2		7
-#define XFER_BBB_RESET3		8
+#define XFER_BBB_DATAIN		1
+#define XFER_BBB_DATAOUT	2
+#define XFER_BBB_DCLEAR		3
+#define XFER_BBB_CSW1		4
+#define XFER_BBB_CSW2		5
+#define XFER_BBB_SCLEAR		6
+#define XFER_BBB_RESET1		7
+#define XFER_BBB_RESET2		8
+#define XFER_BBB_RESET3		9
 
 #define XFER_CBI_CB		0	/* CBI */
-#define XFER_CBI_DATA		1
-#define XFER_CBI_STATUS		2
-#define XFER_CBI_DCLEAR		3
-#define XFER_CBI_SCLEAR		4
-#define XFER_CBI_RESET1		5
-#define XFER_CBI_RESET2		6
-#define XFER_CBI_RESET3		7
+#define XFER_CBI_DATAIN		1
+#define XFER_CBI_DATAOUT	2
+#define XFER_CBI_STATUS		3
+#define XFER_CBI_DCLEAR		4
+#define XFER_CBI_SCLEAR		5
+#define XFER_CBI_RESET1		6
+#define XFER_CBI_RESET2		7
+#define XFER_CBI_RESET3		8
 
-#define XFER_NR			9	/* maximum number */
+#define XFER_NR			10	/* maximum number */
 
 	usbd_xfer_handle	transfer_xfer[XFER_NR]; /* for ctrl xfers */
-
-	void			*data_buffer;
 
 	int			transfer_dir;		/* data direction */
 	void			*transfer_data;		/* data buffer */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci_pci.c,v 1.31 2006/11/16 01:33:09 christos Exp $	*/
+/*	$NetBSD: ohci_pci.c,v 1.31.18.1 2007/05/22 14:57:33 itohy Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci_pci.c,v 1.31 2006/11/16 01:33:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci_pci.c,v 1.31.18.1 2007/05/22 14:57:33 itohy Exp $");
 
 #include "ehci.h"
 
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: ohci_pci.c,v 1.31 2006/11/16 01:33:09 christos Exp $
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/usb_pci.h>
+#include <dev/pci/pcidevs.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
@@ -115,7 +116,7 @@ ohci_pci_attach(struct device *parent, struct device *self, void *aux)
 			  OHCI_ALL_INTRS);
 
 	sc->sc_pc = pc;
-	sc->sc.sc_bus.dmatag = pa->pa_dmat;
+	sc->sc.sc_dmatag.tag = pa->pa_dmat;
 
 	/* Enable the device. */
 	csr = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
@@ -146,6 +147,11 @@ ohci_pci_attach(struct device *parent, struct device *self, void *aux)
 	else
 		snprintf(sc->sc.sc_vendor, sizeof(sc->sc.sc_vendor),
 		    "vendor 0x%04x", PCI_VENDOR(pa->pa_id));
+
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_CMDTECH) {
+		sc->sc.sc_flags |= OHCI_FLAG_QUIRK_2ND_4KB;
+		printf("%s: enabling CMD Tech errata workaround\n", devname);
+	}
 
 	r = ohci_init(&sc->sc);
 	if (r != USBD_NORMAL_COMPLETION) {

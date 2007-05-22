@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_rum.c,v 1.40 2006/09/18 16:20:20 damien Exp $	*/
-/*	$NetBSD: if_rum.c,v 1.11 2007/05/07 07:14:58 xtraeme Exp $	*/
+/*	$NetBSD: if_rum.c,v 1.6.4.1 2007/05/22 14:57:37 itohy Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 Damien Bergamini <damien.bergamini@free.fr>
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rum.c,v 1.11 2007/05/07 07:14:58 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rum.c,v 1.6.4.1 2007/05/22 14:57:37 itohy Exp $");
 
 #include "bpfilter.h"
 
@@ -80,7 +80,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_rum.c,v 1.11 2007/05/07 07:14:58 xtraeme Exp $");
 #ifdef RUM_DEBUG
 #define DPRINTF(x)	do { if (rum_debug) logprintf x; } while (0)
 #define DPRINTFN(n, x)	do { if (rum_debug >= (n)) logprintf x; } while (0)
-int rum_debug = 1;
+int rum_debug = 0;
 #else
 #define DPRINTF(x)
 #define DPRINTFN(n, x)
@@ -88,37 +88,23 @@ int rum_debug = 1;
 
 /* various supported device vendors/products */
 static const struct usb_devno rum_devs[] = {
-	{ USB_VENDOR_ABOCOM,		USB_PRODUCT_ABOCOM_HWU54DM },
-	{ USB_VENDOR_ABOCOM,		USB_PRODUCT_ABOCOM_RT2573_2 },
-	{ USB_VENDOR_ABOCOM,		USB_PRODUCT_ABOCOM_RT2573_3 },
-	{ USB_VENDOR_ABOCOM,		USB_PRODUCT_ABOCOM_RT2573_4 },
-	{ USB_VENDOR_AMIT,		USB_PRODUCT_AMIT_CGWLUSB2GO },
-	{ USB_VENDOR_ASUSTEK,		USB_PRODUCT_ASUSTEK_WL167G_2 },
-	{ USB_VENDOR_ASUSTEK,		USB_PRODUCT_ASUSTEK_WL167G_3 },
+	{ USB_VENDOR_ABOCOM,		USB_PRODUCT_ABOCOM_RT2573 },
 	{ USB_VENDOR_BELKIN,		USB_PRODUCT_BELKIN_F5D7050A },
 	{ USB_VENDOR_BELKIN,		USB_PRODUCT_BELKIN_F5D9050V3 },
 	{ USB_VENDOR_CISCOLINKSYS,	USB_PRODUCT_CISCOLINKSYS_WUSB54GC },
-	{ USB_VENDOR_CISCOLINKSYS,	USB_PRODUCT_CISCOLINKSYS_WUSB54GR },
 	{ USB_VENDOR_CONCEPTRONIC,	USB_PRODUCT_CONCEPTRONIC_C54RU2 },
 	{ USB_VENDOR_DICKSMITH,		USB_PRODUCT_DICKSMITH_CWD854F },
 	{ USB_VENDOR_DICKSMITH,		USB_PRODUCT_DICKSMITH_RT2573 },
 	{ USB_VENDOR_DLINK2,		USB_PRODUCT_DLINK2_DWLG122C1 },
 	{ USB_VENDOR_DLINK2,		USB_PRODUCT_DLINK2_WUA1340 },
 	{ USB_VENDOR_GIGABYTE,		USB_PRODUCT_GIGABYTE_GNWB01GS },
-	{ USB_VENDOR_GIGABYTE,		USB_PRODUCT_GIGABYTE_GNWI05GS },
 	{ USB_VENDOR_GIGASET,		USB_PRODUCT_GIGASET_RT2573 },
 	{ USB_VENDOR_GOODWAY,		USB_PRODUCT_GOODWAY_RT2573 },
-	{ USB_VENDOR_GUILLEMOT,		USB_PRODUCT_GUILLEMOT_HWGUSB254LB },
-	{ USB_VENDOR_GUILLEMOT,		USB_PRODUCT_GUILLEMOT_HWGUSB254V2AP },
 	{ USB_VENDOR_HUAWEI3COM,	USB_PRODUCT_HUAWEI3COM_RT2573 },
-	{ USB_VENDOR_MELCO,		USB_PRODUCT_MELCO_G54HP },
 	{ USB_VENDOR_MELCO,		USB_PRODUCT_MELCO_SG54HP },
 	{ USB_VENDOR_MSI,		USB_PRODUCT_MSI_RT2573 },
 	{ USB_VENDOR_MSI,		USB_PRODUCT_MSI_RT2573_2 },
 	{ USB_VENDOR_MSI,		USB_PRODUCT_MSI_RT2573_3 },
-	{ USB_VENDOR_MSI,		USB_PRODUCT_MSI_RT2573_4 },
-	{ USB_VENDOR_NOVATECH,		USB_PRODUCT_NOVATECH_RT2573 },
-	{ USB_VENDOR_PLANEX2,		USB_PRODUCT_PLANEX2_GWUS54HP },
 	{ USB_VENDOR_PLANEX2,		USB_PRODUCT_PLANEX2_GWUS54MINI2 },
 	{ USB_VENDOR_PLANEX2,		USB_PRODUCT_PLANEX2_GWUSMM },
 	{ USB_VENDOR_QCOM,		USB_PRODUCT_QCOM_RT2573 },
@@ -160,7 +146,7 @@ Static int		rum_tx_data(struct rum_softc *, struct mbuf *,
 			    struct ieee80211_node *);
 Static void		rum_start(struct ifnet *);
 Static void		rum_watchdog(struct ifnet *);
-Static int		rum_ioctl(struct ifnet *, u_long, void *);
+Static int		rum_ioctl(struct ifnet *, u_long, caddr_t);
 Static void		rum_eeprom_read(struct rum_softc *, uint16_t, void *,
 			    int);
 Static uint32_t		rum_read(struct rum_softc *, uint16_t);
@@ -239,6 +225,9 @@ USB_DECLARE_DRIVER(rum);
 USB_MATCH(rum)
 {
 	USB_MATCH_START(rum, uaa);
+
+	if (uaa->iface != NULL)
+		return UMATCH_NONE;
 
 	return (usb_lookup(rum_devs, uaa->vendor, uaa->product) != NULL) ?
 	    UMATCH_VENDOR_PRODUCT : UMATCH_NONE;
@@ -358,6 +347,7 @@ USB_ATTACH(rum)
 	callout_init(&sc->amrr_ch);
 
 	/* retrieve RT2573 rev. no */
+	tmp = 0;	/* XXX shut up warning */
 	for (ntries = 0; ntries < 1000; ntries++) {
 		if ((tmp = rum_read(sc, RT2573_MAC_CSR0)) != 0)
 			break;
@@ -529,7 +519,7 @@ rum_alloc_tx_list(struct rum_softc *sc)
 
 		data->sc = sc;
 
-		data->xfer = usbd_alloc_xfer(sc->sc_udev);
+		data->xfer = usbd_alloc_xfer(sc->sc_udev, sc->sc_tx_pipeh);
 		if (data->xfer == NULL) {
 			printf("%s: could not allocate tx xfer\n",
 			    USBDEVNAME(sc->sc_dev));
@@ -588,7 +578,7 @@ rum_alloc_rx_list(struct rum_softc *sc)
 
 		data->sc = sc;
 
-		data->xfer = usbd_alloc_xfer(sc->sc_udev);
+		data->xfer = usbd_alloc_xfer(sc->sc_udev, sc->sc_rx_pipeh);
 		if (data->xfer == NULL) {
 			printf("%s: could not allocate rx xfer\n",
 			    USBDEVNAME(sc->sc_dev));
@@ -871,7 +861,7 @@ rum_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 
 	/* finalize mbuf */
 	m->m_pkthdr.rcvif = ifp;
-	m->m_data = (void *)(desc + 1);
+	m->m_data = (caddr_t)(desc + 1);
 	m->m_pkthdr.len = m->m_len = (le32toh(desc->flags) >> 16) & 0xfff;
 
 	s = splnet();
@@ -1139,8 +1129,8 @@ rum_tx_mgt(struct rum_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 	if ((xferlen % 64) == 0)
 		xferlen += 4;
 
-	DPRINTFN(10, ("sending msg frame len=%zu rate=%u xfer len=%u\n",
-	    (size_t)m0->m_pkthdr.len + RT2573_TX_DESC_SIZE,
+	DPRINTFN(10, ("sending msg frame len=%lu rate=%u xfer len=%u\n",
+	    (long unsigned int)m0->m_pkthdr.len + RT2573_TX_DESC_SIZE,
 	    rate, xferlen));
 
 	usbd_setup_xfer(data->xfer, sc->sc_tx_pipeh, data, data->buf, xferlen,
@@ -1230,8 +1220,8 @@ rum_tx_data(struct rum_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 	if ((xferlen % 64) == 0)
 		xferlen += 4;
 
-	DPRINTFN(10, ("sending data frame len=%zu rate=%u xfer len=%u\n",
-	    (size_t)m0->m_pkthdr.len + RT2573_TX_DESC_SIZE,
+	DPRINTFN(10, ("sending data frame len=%lu rate=%u xfer len=%u\n",
+	    (long unsigned int)m0->m_pkthdr.len + RT2573_TX_DESC_SIZE,
 	    rate, xferlen));
 
 	usbd_setup_xfer(data->xfer, sc->sc_tx_pipeh, data, data->buf, xferlen,
@@ -1343,7 +1333,7 @@ rum_watchdog(struct ifnet *ifp)
 }
 
 Static int
-rum_ioctl(struct ifnet *ifp, u_long cmd, void *data)
+rum_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct rum_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
@@ -1991,7 +1981,7 @@ rum_init(struct ifnet *ifp)
 	/*
 	 * Allocate xfer for AMRR statistics requests.
 	 */
-	sc->amrr_xfer = usbd_alloc_xfer(sc->sc_udev);
+	sc->amrr_xfer = usbd_alloc_default_xfer(sc->sc_udev);
 	if (sc->amrr_xfer == NULL) {
 		printf("%s: could not allocate AMRR xfer\n",
 		    USBDEVNAME(sc->sc_dev));

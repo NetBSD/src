@@ -1,4 +1,0 @@
-#	$NetBSD: list,v 1.4 2006/11/18 16:16:19 dsl Exp $
-
-SPECIAL	umount		srcdir	distrib/utils/x_umount
-SPECIAL	gzip		srcdir	distrib/utils/x_gzip

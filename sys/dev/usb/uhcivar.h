@@ -1,7 +1,7 @@
-/*	$NetBSD: uhcivar.h,v 1.40 2005/12/27 04:06:45 chs Exp $	*/
-/*	$FreeBSD: src/sys/dev/usb/uhcivar.h,v 1.14 1999/11/17 22:33:42 n_hibma Exp $	*/
+/*	$NetBSD: uhcivar.h,v 1.40.40.1 2007/05/22 14:57:42 itohy Exp $	*/
+/*	$FreeBSD: src/sys/dev/usb/uhcivar.h,v 1.43 2006/09/07 00:06:41 imp Exp $	*/
 
-/*
+/*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
@@ -75,17 +75,51 @@ typedef struct uhci_intr_info {
 	uhci_soft_td_t *stdstart;
 	uhci_soft_td_t *stdend;
 	LIST_ENTRY(uhci_intr_info) list;
-	int isdone;	/* used only when DIAGNOSTIC is defined */
+#ifdef DIAGNOSTIC
+	int isdone;
+#endif
 } uhci_intr_info_t;
+
+/* for aux memory */
+#define UHCI_AUX_CHUNK_SIZE		4096
+#define UHCI_MAX_PKT_SIZE		1023	/* USB 1.1 specification */
+#define UHCI_AUX_PER_CHUNK(maxp)	(UHCI_AUX_CHUNK_SIZE/(maxp))
+#define UHCI_NCHUNK(naux, maxp)	\
+	(((naux) + UHCI_AUX_PER_CHUNK(maxp) - 1) / UHCI_AUX_PER_CHUNK(maxp))
+struct uhci_aux_mem {
+	usb_dma_t aux_chunk_dma[UHCI_NCHUNK(USB_DMA_NSEG-1, UHCI_MAX_PKT_SIZE)];
+	int	aux_nchunk;	/* number of allocated chunk */
+	int	aux_curchunk;	/* current chunk */
+	int	aux_chunkoff;	/* offset in current chunk */
+	int	aux_naux;	/* number of aux */
+};
 
 struct uhci_xfer {
 	struct usbd_xfer xfer;
 	uhci_intr_info_t iinfo;
 	struct usb_task	abort_task;
 	int curframe;
+	u_int32_t uhci_xfer_flags;
+	struct usb_buffer_dma dmabuf;
+	int rsvd_tds;
+	struct uhci_aux_mem aux;
 };
 
+#define UHCI_XFER_ABORTING	0x0001	/* xfer is aborting. */
+#define UHCI_XFER_ABORTWAIT	0x0002	/* abort completion is being awaited. */
+
+#if 1	/* make sure the argument is actually an xfer pointer */
+#define UXFER(xfer) ((void)&(xfer)->hcpriv, (struct uhci_xfer *)(xfer))
+#else
 #define UXFER(xfer) ((struct uhci_xfer *)(xfer))
+#endif
+
+struct uhci_mem_desc {
+	caddr_t		um_top;
+	uhci_physaddr_t	um_topdma;
+	usb_dma_t	um_dma;
+	SIMPLEQ_ENTRY(uhci_mem_desc) um_next;
+};
 
 /*
  * Extra information that we need for a TD.
@@ -93,7 +127,11 @@ struct uhci_xfer {
 struct uhci_soft_td {
 	uhci_td_t td;			/* The real TD, must be first */
 	uhci_soft_td_qh_t link; 	/* soft version of the td_link field */
-	uhci_physaddr_t physaddr;	/* TD's physical address. */
+	struct uhci_mem_desc *ut_mdesc;	/* DMA memory desc */
+	uhci_physaddr_t aux_dma;	/* Auxillary storage if needed. */
+	void *aux_kern;
+	void *aux_data;			/* Original aux data virtual address. */
+	int aux_len;			/* Auxillary storage size. */
 };
 /*
  * Make the size such that it is a multiple of UHCI_TD_ALIGN.  This way
@@ -102,7 +140,11 @@ struct uhci_soft_td {
  * NOTE: Minimum size is 32 bytes.
  */
 #define UHCI_STD_SIZE ((sizeof (struct uhci_soft_td) + UHCI_TD_ALIGN - 1) / UHCI_TD_ALIGN * UHCI_TD_ALIGN)
-#define UHCI_STD_CHUNK 128 /*(PAGE_SIZE / UHCI_TD_SIZE)*/
+#define UHCI_STD_CHUNK ((PAGE_SIZE - sizeof(struct uhci_mem_desc)) / UHCI_STD_SIZE)
+#define UHCI_STD_DMAADDR(d)	\
+	((d)->ut_mdesc->um_topdma + ((caddr_t)(d) - (d)->ut_mdesc->um_top))
+#define UHCI_STD_SYNC(sc, d, ops)	\
+	USB_MEM_SYNC2(&(sc)->sc_dmatag, &(d)->ut_mdesc->um_dma, (caddr_t)(d) - (d)->ut_mdesc->um_top , sizeof(uhci_td_t), (ops))
 
 /*
  * Extra information that we need for a QH.
@@ -111,12 +153,16 @@ struct uhci_soft_qh {
 	uhci_qh_t qh;			/* The real QH, must be first */
 	uhci_soft_qh_t *hlink;		/* soft version of qh_hlink */
 	uhci_soft_td_t *elink;		/* soft version of qh_elink */
-	uhci_physaddr_t physaddr;	/* QH's physical address. */
+	struct uhci_mem_desc *uq_mdesc;	/* DMA memory desc */
 	int pos;			/* Timeslot position */
 };
 /* See comment about UHCI_STD_SIZE. */
 #define UHCI_SQH_SIZE ((sizeof (struct uhci_soft_qh) + UHCI_QH_ALIGN - 1) / UHCI_QH_ALIGN * UHCI_QH_ALIGN)
-#define UHCI_SQH_CHUNK 128 /*(PAGE_SIZE / UHCI_QH_SIZE)*/
+#define UHCI_SQH_CHUNK ((PAGE_SIZE - sizeof(struct uhci_mem_desc)) / UHCI_SQH_SIZE)
+#define UHCI_SQH_DMAADDR(d)	\
+	((d)->uq_mdesc->um_topdma + ((caddr_t)(d) - (d)->uq_mdesc->um_top))
+#define UHCI_SQH_SYNC(sc, d, ops)	\
+	USB_MEM_SYNC2(&(sc)->sc_dmatag, &(d)->uq_mdesc->um_dma, (caddr_t)(d) - (d)->uq_mdesc->um_top , sizeof(uhci_qh_t), (ops))
 
 /*
  * Information about an entry in the virtual frame list.
@@ -129,12 +175,22 @@ struct uhci_vframe {
 	u_int bandwidth;		/* max bandwidth used by this frame */
 };
 
+#define UHCI_SCFLG_DONEINIT	0x0001	/* uhci_init() done */
+
 typedef struct uhci_softc {
 	struct usbd_bus sc_bus;		/* base device */
+	int sc_flags;
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
 	bus_size_t sc_size;
+#if defined(__FreeBSD__)
+	void *ih;
 
+	struct resource *io_res;
+	struct resource *irq_res;
+#endif
+
+	usb_dma_tag_t sc_dmatag;
 	uhci_physaddr_t *sc_pframes;
 	usb_dma_t sc_dma;
 	struct uhci_vframe sc_vframes[UHCI_VFRAMELIST_COUNT];
@@ -150,6 +206,10 @@ typedef struct uhci_softc {
 
 	uhci_soft_td_t *sc_freetds;	/* TD free list */
 	uhci_soft_qh_t *sc_freeqhs;	/* QH free list */
+	int sc_nfreetds;
+
+	SIMPLEQ_HEAD(uhci_mdescs, uhci_mem_desc)
+		sc_std_chunks, sc_sqh_chunks;
 
 	SIMPLEQ_HEAD(, usbd_xfer) sc_free_xfers; /* free xfers */
 
@@ -169,7 +229,7 @@ typedef struct uhci_softc {
 
 	LIST_HEAD(, uhci_intr_info) sc_intrhead;
 
-	/* Info for the root hub interrupt "pipe". */
+	/* Info for the root hub interrupt channel. */
 	int sc_ival;			/* time between root hub intrs */
 	usbd_xfer_handle sc_intr_xfer;	/* root hub interrupt transfer */
 	usb_callout_t sc_poll_handle;
@@ -177,21 +237,23 @@ typedef struct uhci_softc {
 	char sc_vendor[32];		/* vendor string for root hub */
 	int sc_id_vendor;		/* vendor ID for root hub */
 
+#if defined(__NetBSD__)
 	void *sc_powerhook;		/* cookie from power hook */
 	void *sc_shutdownhook;		/* cookie from shutdown hook */
+#endif
 
 #if defined(__NetBSD__) || defined(__OpenBSD__)
-	device_ptr_t sc_child;		/* /dev/usb# device */
-#endif
-#ifdef __NetBSD__
-	struct usb_dma_reserve sc_dma_reserve;
+	device_t sc_child;		/* /dev/usb# device */
 #endif
 } uhci_softc_t;
 
 usbd_status	uhci_init(uhci_softc_t *);
 int		uhci_intr(void *);
-#if defined(__NetBSD__) || defined(__OpenBSD__)
 int		uhci_detach(uhci_softc_t *, int);
-int		uhci_activate(device_ptr_t, enum devact);
+#if defined(__NetBSD__) || defined(__OpenBSD__)
+int		uhci_activate(device_t, enum devact);
 #endif
+
+void		uhci_shutdown(void *v);
+void		uhci_power(int state, void *priv);
 

@@ -1,7 +1,7 @@
-/*	$NetBSD: ohcivar.h,v 1.39 2005/12/27 04:06:45 chs Exp $	*/
-/*	$FreeBSD: src/sys/dev/usb/ohcivar.h,v 1.13 1999/11/17 22:33:41 n_hibma Exp $	*/
+/*	$NetBSD: ohcivar.h,v 1.39.40.1 2007/05/22 14:57:39 itohy Exp $	*/
+/*	$FreeBSD: src/sys/dev/usb/ohcivar.h,v 1.45 2006/09/07 00:06:41 imp Exp $	*/
 
-/*
+/*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
@@ -38,67 +38,103 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+struct ohci_mem_desc {
+	caddr_t		om_top;
+	ohci_physaddr_t	om_topdma;
+	usb_dma_t	om_dma;
+	SIMPLEQ_ENTRY(ohci_mem_desc) om_next;
+};
+
 typedef struct ohci_soft_ed {
 	ohci_ed_t ed;
 	struct ohci_soft_ed *next;
-	ohci_physaddr_t physaddr;
+	struct ohci_mem_desc *oe_mdesc;
 } ohci_soft_ed_t;
 #define OHCI_SED_SIZE ((sizeof (struct ohci_soft_ed) + OHCI_ED_ALIGN - 1) / OHCI_ED_ALIGN * OHCI_ED_ALIGN)
-#define OHCI_SED_CHUNK 128
-
+#define OHCI_SED_CHUNK	((PAGE_SIZE - sizeof(struct ohci_mem_desc)) / OHCI_SED_SIZE)
+#define OHCI_SED_DMAADDR(d)	\
+	((d)->oe_mdesc->om_topdma + ((caddr_t)(d) - (d)->oe_mdesc->om_top))
+#define OHCI_SED_SYNC(sc, d, ops)	\
+	USB_MEM_SYNC2(&(sc)->sc_dmatag, &(d)->oe_mdesc->om_dma, (caddr_t)(d) - (d)->oe_mdesc->om_top , sizeof(ohci_ed_t), (ops))
 
 typedef struct ohci_soft_td {
 	ohci_td_t td;
 	struct ohci_soft_td *nexttd; /* mirrors nexttd in TD */
 	struct ohci_soft_td *dnext; /* next in done list */
-	ohci_physaddr_t physaddr;
+	struct ohci_mem_desc *ot_mdesc;
 	LIST_ENTRY(ohci_soft_td) hnext;
 	usbd_xfer_handle xfer;
 	u_int16_t len;
 	u_int16_t flags;
 #define OHCI_CALL_DONE	0x0001
 #define OHCI_ADD_LEN	0x0002
+#define OHCI_TD_FREE	0x8000
 } ohci_soft_td_t;
 #define OHCI_STD_SIZE ((sizeof (struct ohci_soft_td) + OHCI_TD_ALIGN - 1) / OHCI_TD_ALIGN * OHCI_TD_ALIGN)
-#define OHCI_STD_CHUNK 128
-
+#define OHCI_STD_CHUNK ((PAGE_SIZE - sizeof(struct ohci_mem_desc)) / OHCI_STD_SIZE)
+#define OHCI_STD_DMAADDR(d)	\
+	((d)->ot_mdesc->om_topdma + ((caddr_t)(d) - (d)->ot_mdesc->om_top))
+#define OHCI_STD_SYNC(sc, d, ops)	\
+	USB_MEM_SYNC2(&(sc)->sc_dmatag, &(d)->ot_mdesc->om_dma, (caddr_t)(d) - (d)->ot_mdesc->om_top, sizeof(ohci_td_t), (ops))
 
 typedef struct ohci_soft_itd {
 	ohci_itd_t itd;
 	struct ohci_soft_itd *nextitd; /* mirrors nexttd in ITD */
 	struct ohci_soft_itd *dnext; /* next in done list */
-	ohci_physaddr_t physaddr;
+	struct ohci_mem_desc *oit_mdesc;
 	LIST_ENTRY(ohci_soft_itd) hnext;
 	usbd_xfer_handle xfer;
 	u_int16_t flags;
-	char isdone;	/* used only when DIAGNOSTIC is defined */
+#define	OHCI_ITD_ACTIVE	0x0010		/* Hardware op in progress */
+#define	OHCI_ITD_INTFIN	0x0020		/* Hw completion interrupt seen.*/
+#define	OHCI_ITD_FREE	0x8000		/* In free list */
+#ifdef DIAGNOSTIC
+	char isdone;
+#endif
 } ohci_soft_itd_t;
 #define OHCI_SITD_SIZE ((sizeof (struct ohci_soft_itd) + OHCI_ITD_ALIGN - 1) / OHCI_ITD_ALIGN * OHCI_ITD_ALIGN)
-#define OHCI_SITD_CHUNK 64
-
+#define OHCI_SITD_CHUNK ((PAGE_SIZE - sizeof(struct ohci_mem_desc)) / OHCI_SITD_SIZE)
+#define OHCI_SITD_DMAADDR(d)	\
+	((d)->oit_mdesc->om_topdma + ((caddr_t)(d) - (d)->oit_mdesc->om_top))
+#define OHCI_SITD_SYNC(sc, d, ops)	\
+	USB_MEM_SYNC2(&(sc)->sc_dmatag, &(d)->oit_mdesc->om_dma, (caddr_t)(d) - (d)->oit_mdesc->om_top, sizeof(ohci_itd_t), (ops))
 
 #define OHCI_NO_EDS (2*OHCI_NO_INTRS-1)
 
 #define OHCI_HASH_SIZE 128
 
+#define OHCI_SCFLG_DONEINIT	0x0001	/* ohci_init() done. */
+
 typedef struct ohci_softc {
 	struct usbd_bus sc_bus;		/* base device */
+	int sc_flags;
+#define OHCI_FLAG_QUIRK_2ND_4KB	0x0001	/* can't touch 2nd 4KB boundary */
+
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
 	bus_size_t sc_size;
 
+#if defined(__FreeBSD__)
+	void *ih;
+
+	struct resource *io_res;
+	struct resource *irq_res;
+#endif
+
+	usb_dma_tag_t sc_dmatag;
 	usb_dma_t sc_hccadma;
 	struct ohci_hcca *sc_hcca;
 	ohci_soft_ed_t *sc_eds[OHCI_NO_EDS];
 	u_int sc_bws[OHCI_NO_INTRS];
 
-	u_int32_t sc_eintrs;
+	u_int32_t sc_eintrs;		/* enabled interrupts */
+
 	ohci_soft_ed_t *sc_isoc_head;
 	ohci_soft_ed_t *sc_ctrl_head;
 	ohci_soft_ed_t *sc_bulk_head;
 
-	LIST_HEAD(, ohci_soft_td)  sc_hash_tds[OHCI_HASH_SIZE];
-	LIST_HEAD(, ohci_soft_itd) sc_hash_itds[OHCI_HASH_SIZE];
+	SIMPLEQ_HEAD(ohci_mdescs, ohci_mem_desc)
+		sc_sed_chunks, sc_std_chunks, sc_sitd_chunks;
 
 	int sc_noport;
 	u_int8_t sc_addr;		/* device address */
@@ -106,8 +142,7 @@ typedef struct ohci_softc {
 
 	int sc_endian;
 #define	OHCI_LITTLE_ENDIAN	0	/* typical (uninitialized default) */
-#define	OHCI_BIG_ENDIAN		1	/* big endian OHCI? never seen it */
-#define	OHCI_HOST_ENDIAN	2	/* if OHCI always matches CPU */
+#define	OHCI_HOST_ENDIAN	1	/* if OHCI always matches CPU */
 
 #ifdef USB_USE_SOFTINTR
 	char sc_softwake;
@@ -116,6 +151,7 @@ typedef struct ohci_softc {
 	ohci_soft_ed_t *sc_freeeds;
 	ohci_soft_td_t *sc_freetds;
 	ohci_soft_itd_t *sc_freeitds;
+	int sc_nfreetds, sc_nfreeitds;
 
 	SIMPLEQ_HEAD(, usbd_xfer) sc_free_xfers; /* free xfers */
 
@@ -135,23 +171,42 @@ typedef struct ohci_softc {
 	struct timeval sc_overrun_ntc;
 
 	usb_callout_t sc_tmo_rhsc;
+
 #if defined(__NetBSD__) || defined(__OpenBSD__)
-	device_ptr_t sc_child;
+	device_t sc_child;
 #endif
 	char sc_dying;
-#ifdef __NetBSD__
-	struct usb_dma_reserve sc_dma_reserve;
-#endif
 } ohci_softc_t;
 
 struct ohci_xfer {
 	struct usbd_xfer xfer;
 	struct usb_task	abort_task;
+	u_int32_t ohci_xfer_flags;
+	struct usb_buffer_dma dmabuf;
+	int rsvd_tds;
 };
+#define OHCI_XFER_ABORTING	0x01	/* xfer is aborting. */
+#define OHCI_XFER_ABORTWAIT	0x02	/* abort completion is being awaited. */
+
+#if 1	/* make sure the argument is actually an xfer pointer */
+#define OXFER(xfer) ((void)&(xfer)->hcpriv, (struct ohci_xfer *)(xfer))
+#else
+#define OXFER(xfer) ((struct ohci_xfer *)(xfer))
+#endif
 
 usbd_status	ohci_init(ohci_softc_t *);
-int		ohci_intr(void *);
 #if defined(__NetBSD__) || defined(__OpenBSD__)
-int		ohci_detach(ohci_softc_t *, int);
-int		ohci_activate(device_ptr_t, enum devact);
+int
+#elif defined(__FreeBSD__)
+void
 #endif
+		ohci_intr(void *);
+int		ohci_detach(ohci_softc_t *, int);
+#if defined(__NetBSD__) || defined(__OpenBSD__)
+int		ohci_activate(device_t, enum devact);
+#endif
+
+#define MS_TO_TICKS(ms) ((ms) * hz / 1000)
+
+void		ohci_shutdown(void *v);
+void		ohci_power(int state, void *priv);

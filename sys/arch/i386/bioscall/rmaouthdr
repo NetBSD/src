@@ -1,4 +1,0 @@
-#!/bin/csh -f
-#	$NetBSD: rmaouthdr,v 1.2 1996/09/09 16:55:11 mycroft Exp $
-
-dd if=$1 of=$2 ibs=32 skip=1 obs=1024b

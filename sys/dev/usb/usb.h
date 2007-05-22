@@ -1,7 +1,7 @@
-/*	$NetBSD: usb.h,v 1.77 2007/02/26 13:58:36 drochner Exp $	*/
-/*	$FreeBSD: src/sys/dev/usb/usb.h,v 1.14 1999/11/17 22:33:46 n_hibma Exp $	*/
+/*	$NetBSD: usb.h,v 1.77.12.1 2007/05/22 14:57:47 itohy Exp $	*/
+/*	$FreeBSD: src/sys/dev/usb/usb.h,v 1.41 2006/09/06 23:44:24 imp Exp $    */
 
-/*
+/*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
@@ -48,15 +48,16 @@
 #if defined(__NetBSD__) || defined(__OpenBSD__)
 #include <sys/ioctl.h>
 #endif
-#if defined(__FreeBSD__)
-/* These two defines are used by usbd to autoload the usb kld */
-#define USB_KLD		"usb"           /* name of usb module */
-#define USB_UHUB	"usb/uhub"      /* root hub */
-#endif
 
 #if defined(_KERNEL)
 #include <dev/usb/usb_port.h>
 #endif /* _KERNEL */
+
+#ifdef __FreeBSD__
+/* These two defines are used by usbd to autoload the usb kld */
+#define USB_KLD		"usb"		/* name of usb module */
+#define USB_UHUB	"usb/uhub"	/* root hub */
+#endif
 
 #define USB_STACK_VERSION 2
 
@@ -99,7 +100,11 @@ typedef u_int8_t uDWord[4];
 #define USETDW(w,v) (*(u_int32_t *)(w) = (v))
 #endif
 
+#if defined(__FreeBSD__) && (__FreeBSD_version > 500014)
+#define UPACKED __packed
+#else
 #define UPACKED __attribute__((__packed__))
+#endif
 
 typedef struct {
 	uByte		bmRequestType;
@@ -258,6 +263,8 @@ typedef struct {
 #define  UE_ISO_SYNC	0x0c
 #define UE_GET_ISO_TYPE(a)	((a) & UE_ISO_TYPE)
 	uWord		wMaxPacketSize;
+#define UE_MAXPKTSZ_MASK	0x07ff		/* [0, 1024] */
+#define UE_MAXPKTSZ(e)		(UGETW((e)->wMaxPacketSize) & UE_MAXPKTSZ_MASK)
 	uByte		bInterval;
 } UPACKED usb_endpoint_descriptor_t;
 #define USB_ENDPOINT_DESCRIPTOR_SIZE 7
@@ -486,6 +493,8 @@ typedef struct {
 #define  UIPROTO_IRDA			0
 
 #define UICLASS_VENDOR		0xff
+#define  UISUBCLASS_XBOX360_CONTROLLER	0x5d
+#define  UIPROTO_XBOX360_GAMEPAD	0x01
 
 
 #define USB_HUB_MAX_DEPTH 5
