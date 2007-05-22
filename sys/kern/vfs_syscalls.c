@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.316 2007/05/21 18:30:35 dsl Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.317 2007/05/22 10:39:10 tnn Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.316 2007/05/21 18:30:35 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.317 2007/05/22 10:39:10 tnn Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -3322,7 +3322,7 @@ rename_files(const char *from, const char *to, struct lwp *l, int retain)
 		strlcpy(f1, fromnd.ni_cnd.cn_nameptr, fromnd.ni_cnd.cn_namelen);
 
 		f2 = malloc(tond.ni_cnd.cn_namelen + 1, M_TEMP, M_WAITOK);
-		strlcpy(f1, tond.ni_cnd.cn_nameptr, tond.ni_cnd.cn_namelen);
+		strlcpy(f2, tond.ni_cnd.cn_nameptr, tond.ni_cnd.cn_namelen);
 
 		error = veriexec_renamechk(l, fvp, f1, tvp, f2);
 
