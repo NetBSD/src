@@ -1,4 +1,4 @@
-/*	$NetBSD: mlfk_ipl.c,v 1.1.1.8.4.1 2007/05/07 17:04:25 pavel Exp $	*/
+/*	$NetBSD: mlfk_ipl.c,v 1.1.1.8.4.2 2007/05/22 22:54:25 pavel Exp $	*/
 
 /*
  * Copyright (C) 2000 by Darren Reed.
@@ -98,8 +98,8 @@ SYSCTL_IPF(_net_inet_ipf, OID_AUTO, fr_chksrc, CTLFLAG_RW, &fr_chksrc, 0, "");
 SYSCTL_IPF(_net_inet_ipf, OID_AUTO, fr_minttl, CTLFLAG_RW, &fr_minttl, 0, "");
 
 #define CDEV_MAJOR 79
-#if __FreeBSD_version >= 501000
-# include <sys/poll.h>
+#include <sys/poll.h>
+#if __FreeBSD_version >= 500043
 # include <sys/select.h>
 static int iplpoll(struct cdev *dev, int events, struct thread *td);
 
@@ -114,12 +114,16 @@ static struct cdevsw ipl_cdevsw = {
 	.d_write =	iplwrite,
 	.d_ioctl =	iplioctl,
 	.d_name =	"ipl",
+# if __FreeBSD_version >= 500043
 	.d_poll =	iplpoll,
+# endif
 # if __FreeBSD_version < 600000
 	.d_maj =	CDEV_MAJOR,
 # endif
 };
 #else
+static int iplpoll(dev_t dev, int events, struct proc *p);
+
 static struct cdevsw ipl_cdevsw = {
 	/* open */	iplopen,
 	/* close */	iplclose,
@@ -137,7 +141,9 @@ static struct cdevsw ipl_cdevsw = {
 # if (__FreeBSD_version < 500043)
 	/* bmaj */	-1,
 # endif
+# if (__FreeBSD_version > 430000)
 	/* kqfilter */	NULL
+# endif
 };
 #endif
 
@@ -284,9 +290,12 @@ sysctl_ipf_int ( SYSCTL_HANDLER_ARGS )
 #endif
 
 
-#if __FreeBSD_version >= 501000
 static int
+#if __FreeBSD_version >= 500043
 iplpoll(struct cdev *dev, int events, struct thread *td)
+#else
+iplpoll(dev_t dev, int events, struct proc *td)
+#endif
 {
 	u_int xmin = GET_MINOR(dev);
 	int revents;
@@ -329,4 +338,3 @@ iplpoll(struct cdev *dev, int events, struct thread *td)
 
 	return revents;
 }
-#endif

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11.4.1 2007/05/07 17:05:28 pavel Exp $
+#	$NetBSD: Makefile,v 1.11.4.2 2007/05/22 22:52:09 pavel Exp $
 #
 # (C)opyright 1993-1996 by Darren Reed.
 #
@@ -86,12 +86,23 @@ ip1:
 	@${HOST_SH} ${.CURDIR}/iptest ${.CURDIR} \
 		`${AWK} "/^$@ / { print; } " ${.CURDIR}/test.format`
 
-ip2:
-	@if [ -d ${MAKEOBJDIRPREFIX}${.CURDIR} ]; then			\
-		mkdir -p ${MAKEOBJDIRPREFIX}${.CURDIR}/input;		\
+${.OBJDIR}/input/ip2.data:
+	@if [ ! -d ${.OBJDIR}/input ]; then				\
+		echo "Creating ${.OBJDIR}/input";			\
+		mkdir -p ${.OBJDIR}/input;				\
+	fi
+	@if [ ! -r ${.OBJDIR}/input/ip2.data ]; then			\
+		echo "Fetching ip2.data from ${.CURDIR}/input";		\
 		cp -f ${.CURDIR}/input/ip2.data				\
 			${MAKEOBJDIRPREFIX}${.CURDIR}/input/ip2.data;	\
 	fi
+	@if ! cmp ${.CURDIR}/input/ip2.data ${.OBJDIR}/input/ip2.data; then\
+		echo "Refetching ip2.data from ${.CURDIR}/input";	\
+		cp -f ${.CURDIR}/input/ip2.data				\
+			${MAKEOBJDIRPREFIX}${.CURDIR}/input/ip2.data;	\
+	fi
+
+ip2: ${.OBJDIR}/input/ip2.data
 	@${HOST_SH} ${.CURDIR}/iptest ${.CURDIR} \
 		`${AWK} "/^$@ / { print; } " ${.CURDIR}/test.format`
 
