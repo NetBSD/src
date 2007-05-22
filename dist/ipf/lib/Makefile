@@ -3,7 +3,7 @@
 # 
 # See the IPFILTER.LICENCE file for details on licencing.  
 #   
-# Id: Makefile,v 1.41.2.12 2006/08/25 22:43:21 darrenr Exp 
+# Id: Makefile,v 1.41.2.13 2007/05/10 06:02:19 darrenr Exp 
 #     
 INCDEP=$(TOP)/ip_compat.h $(TOP)/ip_fil.h $(TOP)/ipf.h
 
@@ -87,6 +87,7 @@ LIBOBJS=$(DEST)/addicmp.o \
      $(DEST)/printpacket6.o \
      $(DEST)/printsbuf.o \
      $(DEST)/printstate.o \
+     $(DEST)/printtqtable.o \
      $(DEST)/printtunable.o \
      $(DEST)/remove_hash.o \
      $(DEST)/remove_hashnode.o \
@@ -278,6 +279,8 @@ $(DEST)/printsbuf.o: $(LIBSRC)/printsbuf.c $(INCDEP)
 	$(CC) $(CCARGS) -c $(LIBSRC)/printsbuf.c -o $@
 $(DEST)/printstate.o: $(LIBSRC)/printstate.c $(INCDEP) $(TOP)/ip_state.h
 	$(CC) $(CCARGS) -c $(LIBSRC)/printstate.c -o $@
+$(DEST)/printtqtable.o: $(LIBSRC)/printtqtable.c $(INCDEP)
+	$(CC) $(CCARGS) -c $(LIBSRC)/printtqtable.c -o $@
 $(DEST)/printtunable.o: $(LIBSRC)/printtunable.c $(INCDEP)
 	$(CC) $(CCARGS) -c $(LIBSRC)/printtunable.c -o $@
 $(DEST)/remove_hash.o: $(LIBSRC)/remove_hash.c $(INCDEP) \
