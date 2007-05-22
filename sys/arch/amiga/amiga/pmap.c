@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.124 2007/05/18 01:39:52 mhitch Exp $	*/
+/*	$NetBSD: pmap.c,v 1.125 2007/05/22 05:05:32 mhitch Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.124 2007/05/18 01:39:52 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.125 2007/05/22 05:05:32 mhitch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -305,7 +305,7 @@ extern paddr_t z2mem_start;
 extern vaddr_t reserve_dumppages(vaddr_t);
 
 bool		pmap_testbit(paddr_t, int);
-void		pmap_enter_ptpage(pmap_t, vaddr_t);
+int		pmap_enter_ptpage(pmap_t, vaddr_t, bool);
 static void	pmap_ptpage_addref(vaddr_t);
 static int	pmap_ptpage_delref(vaddr_t);
 static void	pmap_changebit(vaddr_t, int, bool);
@@ -1086,6 +1086,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 	bool cacheable = true;
 	bool checkpv = true;
 	bool wired = (flags & PMAP_WIRED) != 0;
+	bool can_fail = (flags & PMAP_CANFAIL) != 0;
 
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_ENTER))
@@ -1102,13 +1103,19 @@ pmap_enter(pmap, va, pa, prot, flags)
 	if (pmap->pm_ptab == NULL)
 		pmap->pm_ptab = (pt_entry_t *)
 		    uvm_km_alloc(pt_map, AMIGA_UPTSIZE, 0,
-		    UVM_KMF_VAONLY | UVM_KMF_WAITVA);
+		    UVM_KMF_VAONLY | 
+		    (can_fail ? UVM_KMF_NOWAIT : UVM_KMF_WAITVA));
+		if (pmap->pm_ptab == NULL)
+			return ENOMEM;
 
 	/*
 	 * Segment table entry not valid, we need a new PT page
 	 */
-	if (!pmap_ste_v(pmap, va))
-		pmap_enter_ptpage(pmap, va);
+	if (!pmap_ste_v(pmap, va)) {
+		int err = pmap_enter_ptpage(pmap, va, can_fail);
+		if (err)
+			return err;
+	}
 
 	pte = pmap_pte(pmap, va);
 	opa = pmap_pte_pa(pte);
@@ -1360,7 +1367,7 @@ pmap_kenter_pa(va, pa, prot)
 
 	if (!pmap_ste_v(pmap, va)) {
 		s = splvm();
-		pmap_enter_ptpage(pmap, va);
+		pmap_enter_ptpage(pmap, va, false);
 		splx(s);
 	}
 
@@ -2075,7 +2082,9 @@ pmap_remove_mapping(pmap, va, pte, flags)
 #endif
 			pmap_remove_mapping(pmap_kernel(), ptpva,
 			    NULL, PRM_TFLUSH|PRM_CFLUSH);
+			simple_lock(&uvm.kernel_object->vmobjlock);
 			uvm_pagefree(PHYS_TO_VM_PAGE(_pa));
+			simple_unlock(&uvm.kernel_object->vmobjlock);
 #ifdef DEBUG
 			if (pmapdebug & (PDB_REMOVE|PDB_PTPAGE))
 			    printf("remove: PT page 0x%lx (0x%lx) freed\n",
@@ -2402,10 +2411,11 @@ pmap_changebit(pa, bit, setem)
 }
 
 /* static */
-void
-pmap_enter_ptpage(pmap, va)
+int
+pmap_enter_ptpage(pmap, va, can_fail)
 	pmap_t pmap;
 	vaddr_t va;
+	bool can_fail;
 {
 	paddr_t ptpa;
 	struct vm_page *pg;
@@ -2432,7 +2442,12 @@ pmap_enter_ptpage(pmap, va)
 		/* XXX Atari uses kernel_map here: */
 		pmap->pm_stab = (st_entry_t *)
 		    uvm_km_alloc(kernel_map, AMIGA_STSIZE, 0,
-			UVM_KMF_WIRED | UVM_KMF_ZERO);
+			UVM_KMF_WIRED | UVM_KMF_ZERO |
+		 	(can_fail ? UVM_KMF_NOWAIT : 0));
+		if (pmap->pm_stab == NULL) {
+			pmap->pm_stab = Segtabzero;
+			return ENOMEM;
+		}
 		(void) pmap_extract(pmap_kernel(), (vaddr_t)pmap->pm_stab,
 		    (paddr_t *)&pmap->pm_stpa);
 #if defined(M68040) || defined(M68060)
@@ -2576,11 +2591,15 @@ pmap_enter_ptpage(pmap, va)
 		if (pmapdebug & (PDB_ENTER|PDB_PTPAGE))
 			printf("enter_pt: about to alloc UPT pg at %lx\n", va);
 #endif
+		simple_lock(&uvm.kernel_object->vmobjlock);
 		while ((pg = uvm_pagealloc(uvm.kernel_object,
 					   va - vm_map_min(kernel_map),
 					   NULL, UVM_PGA_ZERO)) == NULL) {
+			simple_unlock(&uvm.kernel_object->vmobjlock);
 			uvm_wait("ptpage");
+			simple_lock(&uvm.kernel_object->vmobjlock);
 		}
+		simple_unlock(&uvm.kernel_object->vmobjlock);
 		pg->flags &= ~(PG_BUSY|PG_FAKE);
 		UVM_PAGE_OWN(pg, NULL);
 		ptpa = VM_PAGE_TO_PHYS(pg);
@@ -2660,6 +2679,8 @@ pmap_enter_ptpage(pmap, va)
 		TBIAU();
 	pmap->pm_ptpages++;
 	splx(s);
+
+	return 0;
 }
 
 #ifdef DEBUG
