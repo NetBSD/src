@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.139 2007/05/15 23:54:19 lukem Exp $	*/
+/*	$NetBSD: util.c,v 1.140 2007/05/22 05:16:48 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-2007 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.139 2007/05/15 23:54:19 lukem Exp $");
+__RCSID("$NetBSD: util.c,v 1.140 2007/05/22 05:16:48 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -717,7 +717,6 @@ remotemodtime(const char *file, int noisy)
 	if (r == COMPLETE) {
 		struct tm timebuf;
 		char *timestr, *frac;
-		int yy, mo, day, hour, min, sec;
 
 		/*
 		 * time-val = 14DIGIT [ "." 1*DIGIT ]
@@ -749,20 +748,13 @@ remotemodtime(const char *file, int noisy)
 			timestr[1] = '0';
 			fprintf(ttyout, "Converted to `%s'\n", timestr);
 		}
+		memset(&timebuf, 0, sizeof(timebuf));
 		if (strlen(timestr) != 14 ||
-		    sscanf(timestr, "%04d%02d%02d%02d%02d%02d",
-			&yy, &mo, &day, &hour, &min, &sec) != 6) {
+		    (strptime(timestr, "%Y%m%d%H%M%S", &timebuf) == NULL)) {
  bad_parse_time:
 			fprintf(ttyout, "Can't parse time `%s'.\n", timestr);
 			goto cleanup_parse_time;
 		}
-		memset(&timebuf, 0, sizeof(timebuf));
-		timebuf.tm_sec = sec;
-		timebuf.tm_min = min;
-		timebuf.tm_hour = hour;
-		timebuf.tm_mday = day;
-		timebuf.tm_mon = mo - 1;
-		timebuf.tm_year = yy - TM_YEAR_BASE;
 		timebuf.tm_isdst = -1;
 		rtime = timegm(&timebuf);
 		if (rtime == -1) {
@@ -771,7 +763,8 @@ remotemodtime(const char *file, int noisy)
 			else
 				goto cleanup_parse_time;
 		} else
-			DPRINTF("parsed date as: %s", ctime(&rtime));
+			DPRINTF("parsed date `%s' as %ld, %s",
+			    timestr, rtime, ctime(&rtime));
 	} else {
 		if (r == ERROR && code == 500 && features[FEAT_MDTM] == -1)
 			features[FEAT_MDTM] = 0;

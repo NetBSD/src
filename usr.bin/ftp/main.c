@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.104 2007/04/17 05:52:03 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.105 2007/05/22 05:16:48 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-2005 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.104 2007/04/17 05:52:03 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.105 2007/05/22 05:16:48 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -123,6 +123,7 @@ __RCSID("$NetBSD: main.c,v 1.104 2007/04/17 05:52:03 lukem Exp $");
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <unistd.h>
 #include <locale.h>
 
@@ -147,6 +148,7 @@ main(int volatile argc, char **volatile argv)
 	size_t len;
 	socklen_t slen;
 
+	tzset();
 	setlocale(LC_ALL, "");
 	setprogname(argv[0]);
 
