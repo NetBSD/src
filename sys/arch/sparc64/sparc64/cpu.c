@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.57 2007/05/17 14:51:31 yamt Exp $ */
+/*	$NetBSD: cpu.c,v 1.58 2007/05/22 15:44:06 martin Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.57 2007/05/17 14:51:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.58 2007/05/22 15:44:06 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -396,9 +396,6 @@ cpu_boot_secondary_processors()
 
 		if (!CPUSET_HAS(cpus_active, ci->ci_number))
 			printf("cpu%d: startup failed\n", ci->ci_upaid);
-		else
-			printf("cpu%d now spinning idle (waited %d iterations)\n",
-			       ci->ci_number, i);
 	}
 
 	printf("\n");
@@ -413,12 +410,9 @@ cpu_hatch()
 	for (i = 0; i < 4*PAGE_SIZE; i += sizeof(long))
 		flush(v + i);
 
-	printf("cpu%d fired up.\n", cpu_number());
 	CPUSET_ADD(cpus_active, cpu_number());
-	for (i = 0; i < 5000000; i++)
-		;
 	cpu_reset_fpustate();
-	printf("cpu%d enters idle loop.\n", cpu_number());
+	curlwp = curcpu()->ci_data.cpu_idlelwp;
 	membar_sync();
 	spl0();
 }
