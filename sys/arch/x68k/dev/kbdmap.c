@@ -1,10 +1,10 @@
-/*	$NetBSD: kbdmap.c,v 1.5 2005/12/11 12:19:37 christos Exp $	*/
+/*	$NetBSD: kbdmap.c,v 1.5.38.1 2007/05/22 17:27:44 matt Exp $	*/
 
 /* from: arch/amiga/dev/kbdmap.c */
 /* modified for X680x0 by Masaru Oki and Makoto MINOURA */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbdmap.c,v 1.5 2005/12/11 12:19:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbdmap.c,v 1.5.38.1 2007/05/22 17:27:44 matt Exp $");
 
 #include "kbdmap.h"
 
@@ -258,14 +258,14 @@ struct kbdmap ascii_kbdmap = {
 	{
 	},
 
-	{	   
+	{
 	  /* string table. If there's a better way to get the offsets into the
 	     above table, please tell me..
-	     
+
 	     NOTE: save yourself and others a lot of grief by *not* using
 	           CSI == 0x9b, using the two-character sequence gives
 	           much less trouble, especially in GNU-Emacs.. */
-	  
+
 	  3, ESC, 'O', 'P',		/* 0x00: F1 (k1) */
 	  3, ESC, 'O', 'Q',		/* 0x04: F2 (k2) */
 	  3, ESC, 'O', 'R',		/* 0x08: F3 (k3) */

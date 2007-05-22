@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.23 2007/03/05 12:50:17 tsutsui Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.23.10.1 2007/05/22 17:27:18 matt Exp $	*/
 
 /*
  * This file was taken from mvme68k/mvme68k/pmap_bootstrap.c
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.23 2007/03/05 12:50:17 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.23.10.1 2007/05/22 17:27:18 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/kcore.h>
@@ -438,7 +438,7 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 		(pt_entry_t *)(kptmpa - firstpa);
 	/*
 	 * Sysmap: kernel page table (as mapped through Sysptmap)
-	 * Immediately follows `nptpages' of static kernel page table.
+	 * Allocated at the end of KVA space.
 	 */
 	RELOC(Sysmap, pt_entry_t *) =
 	    (pt_entry_t *)m68k_ptob((NPTEPG - 2) * NPTEPG);

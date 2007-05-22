@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.c,v 1.29 2007/04/05 13:17:11 tnn Exp $        */
+/*	$NetBSD: pmap_motorola.c,v 1.29.4.1 2007/05/22 17:27:04 matt Exp $        */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -124,7 +124,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.29 2007/04/05 13:17:11 tnn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.29.4.1 2007/05/22 17:27:04 matt Exp $");
 
 #include "opt_compat_hpux.h"
 
@@ -834,7 +834,8 @@ pmap_activate(struct lwp *l)
 	PMAP_DPRINTF(PDB_FOLLOW|PDB_SEGTAB,
 	    ("pmap_activate(%p)\n", l));
 
-	PMAP_ACTIVATE(pmap, curlwp == NULL || l->l_proc == curproc);
+	PMAP_ACTIVATE(pmap, (curlwp->l_flag & LW_IDLE) != 0 ||
+	    l->l_proc == curproc);
 }
 
 /*

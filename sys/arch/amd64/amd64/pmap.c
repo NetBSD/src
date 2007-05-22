@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.33 2007/03/12 18:18:23 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.33.8.1 2007/05/22 17:26:32 matt Exp $	*/
 
 /*
  *
@@ -108,7 +108,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.33 2007/03/12 18:18:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.33.8.1 2007/05/22 17:26:32 matt Exp $");
 
 #ifndef __x86_64__
 #include "opt_cputype.h"
@@ -644,6 +644,7 @@ pmap_map_ptes(pmap, ptepp, pdeppp)
 	pd_entry_t ***pdeppp;
 {
 	pd_entry_t opde, npde;
+	struct pmap *ourpmap;
 
 	/* the kernel's pmap is always accessible */
 	if (pmap == pmap_kernel()) {
@@ -660,12 +661,14 @@ pmap_map_ptes(pmap, ptepp, pdeppp)
 		return;
 	}
 
+	ourpmap = vm_map_pmap(&curlwp->l_proc->p_vmspace->vm_map);
+
 	/* need to lock both curpmap and pmap: use ordered locking */
-	if ((unsigned long) pmap < (unsigned long) curpcb->pcb_pmap) {
+	if ((unsigned long) pmap < (unsigned long) ourpmap) {
 		simple_lock(&pmap->pm_lock);
-		simple_lock(&curpcb->pcb_pmap->pm_lock);
+		simple_lock(&ourpmap->pm_lock);
 	} else {
-		simple_lock(&curpcb->pcb_pmap->pm_lock);
+		simple_lock(&ourpmap->pm_lock);
 		simple_lock(&pmap->pm_lock);
 	}
 
@@ -675,7 +678,7 @@ pmap_map_ptes(pmap, ptepp, pdeppp)
 		npde = (pd_entry_t) (pmap->pm_pdirpa | PG_RW | PG_V);
 		*APDP_PDE = npde;
 		if (pmap_valid_entry(opde))
-			pmap_apte_flush(curpcb->pcb_pmap);
+			pmap_apte_flush(ourpmap);
 	}
 	*ptepp = APTE_BASE;
 	*pdeppp = alternate_pdes;
@@ -695,13 +698,16 @@ pmap_unmap_ptes(pmap)
 	if (pmap_is_curpmap(pmap)) {
 		simple_unlock(&pmap->pm_lock);
 	} else {
+		struct pmap *ourpmap =
+		    vm_map_pmap(&curlwp->l_proc->p_vmspace->vm_map);
+
 #if defined(MULTIPROCESSOR)
 		*APDP_PDE = 0;
-		pmap_apte_flush(curpcb->pcb_pmap);
+		pmap_apte_flush(ourpmap);
 #endif
 		COUNT(apdp_pde_unmap);
 		simple_unlock(&pmap->pm_lock);
-		simple_unlock(&curpcb->pcb_pmap->pm_lock);
+		simple_unlock(&ourpmap->pm_lock);
 	}
 }
 
@@ -902,8 +908,6 @@ pmap_bootstrap(kva_start)
 	 * the above is just a rough estimate and not critical to the proper
 	 * operation of the system.
 	 */
-
-	curpcb->pcb_pmap = kpm;	/* proc0's pcb */
 
 	/*
 	 * enable global TLB entries if they are supported
@@ -1617,6 +1621,7 @@ pmap_free_ptp(struct pmap *pmap, struct vm_page *ptp, vaddr_t va,
 	int level;
 	vaddr_t invaladdr;
 	pd_entry_t opde;
+	struct pmap *curpmap = vm_map_pmap(&curlwp->l_proc->p_vmspace->vm_map);
 
 	level = 1;
 	do {
@@ -1625,7 +1630,7 @@ pmap_free_ptp(struct pmap *pmap, struct vm_page *ptp, vaddr_t va,
 		opde = pmap_pte_set(&pdes[level - 1][index], 0);
 		invaladdr = level == 1 ? (vaddr_t)ptes :
 		    (vaddr_t)pdes[level - 2];
-		pmap_tlb_shootdown(curpcb->pcb_pmap,
+		pmap_tlb_shootdown(curpmap,
 		    invaladdr + index * PAGE_SIZE,
 		    opde, cpumaskp);
 #if defined(MULTIPROCESSOR)
@@ -1994,7 +1999,7 @@ pmap_ldt_cleanup(l)
 		ldt_free(pmap);
 		pmap->pm_ldt_sel = GSYSSEL(GLDT_SEL, SEL_KPL);
 		pcb->pcb_ldt_sel = pmap->pm_ldt_sel;
-		if (pcb == curpcb)
+		if (l == curlwp)
 			lldt(pcb->pcb_ldt_sel);
 		old_ldt = pmap->pm_ldt;
 		len = pmap->pm_ldt_len;
@@ -2013,7 +2018,6 @@ pmap_ldt_cleanup(l)
 /*
  * pmap_activate: activate a process' pmap (fill in %cr3 and LDT info)
  *
- * => called from cpu_switch()
  * => if l is the curlwp, then load it into the MMU
  */
 
@@ -2024,7 +2028,6 @@ pmap_activate(l)
 	struct pcb *pcb = &l->l_addr->u_pcb;
 	struct pmap *pmap = l->l_proc->p_vmspace->vm_map.pmap;
 
-	pcb->pcb_pmap = pmap;
 	pcb->pcb_ldt_sel = pmap->pm_ldt_sel;
 	pcb->pcb_cr3 = pmap->pm_pdirpa;
 	if (l == curlwp) {
@@ -2241,7 +2244,7 @@ pmap_pageidlezero(pa)
 	*zpte = (pa & PG_FRAME) | PG_V | PG_RW;		/* map in */
 	pmap_update_pg((vaddr_t)zerova);		/* flush TLB */
 	for (i = 0, ptr = (int *) zerova; i < PAGE_SIZE / sizeof(int); i++) {
-		if (sched_whichqs != 0) {
+		if (sched_curcpu_runnable_p()) {
 
 			/*
 			 * A process has become ready.  Abort now,

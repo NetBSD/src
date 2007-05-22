@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.59 2007/04/16 19:12:19 ad Exp $
+#	$NetBSD: files.xen,v 1.59.2.1 2007/05/22 17:27:50 matt Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -41,6 +41,7 @@ file	arch/i386/i386/db_trace.c	ddb
 file	kern/subr_disk_mbr.c		disk
 file	arch/xen/i386/gdt.c
 file	arch/xen/i386/hypervisor_machdep.c
+file	arch/xen/i386/idle_machdep.c
 file	arch/i386/i386/in_cksum.S	inet | inet6
 file	arch/i386/i386/ipkdb_glue.c	ipkdb
 file	arch/i386/i386/kgdb_machdep.c	kgdb
@@ -48,7 +49,6 @@ file	arch/xen/i386/machdep.c
 file	arch/xen/i386/identcpu.c
 file	arch/i386/i386/math_emulate.c	math_emulate
 file	arch/i386/i386/mem.c
-file	kern/kern_microtime.c		i586_cpu | i686_cpu
 file	arch/i386/i386/mtrr_k6.c	mtrr
 file	netns/ns_cksum.c		ns
 file	arch/xen/i386/pmap.c
@@ -58,6 +58,7 @@ file	arch/i386/i386/syscall.c
 file	arch/xen/i386/trap.c
 file	arch/i386/i386/vm_machdep.c
 file	arch/xen/i386/xen_machdep.c
+file	arch/xen/i386/xen_intr.c
 file	arch/i386/i386/lock_stubs.S
 
 file	arch/xen/xen/xen_debug.c

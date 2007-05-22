@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.17 2007/03/20 21:22:03 xtraeme Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.17.4.1 2007/05/22 17:26:31 matt Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.17 2007/03/20 21:22:03 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.17.4.1 2007/05/22 17:26:31 matt Exp $");
 
 #include "opt_intel_odcm.h"
 #include "opt_powernow_k8.h"
@@ -63,7 +63,8 @@ identifycpu(struct cpu_info *ci)
 	int vendor;
 	const char *feature_str[3], *feature2_str[1];
 
-	CPUID(1, ci->ci_signature, val, ci->ci_feature2_flags, ci->ci_feature_flags);
+	CPUID(1, ci->ci_signature, val,
+	    ci->ci_feature2_flags, ci->ci_feature_flags);
 	CPUID(0x80000001, dummy, dummy, dummy, val);
 	ci->ci_feature_flags |= val;
 

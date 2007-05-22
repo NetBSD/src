@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.32 2007/03/12 18:18:28 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.32.8.1 2007/05/22 17:27:37 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.32 2007/03/12 18:18:28 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.32.8.1 2007/05/22 17:27:37 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -426,13 +426,9 @@ current_pmap(void)
 	struct vm_map *map;
 	pmap_t	pmap;
 
-	if (curlwp == NULL)
-		pmap = kernel_pmap;
-	else {
-		vm = curproc->p_vmspace;
-		map = &vm->vm_map;
-		pmap = vm_map_pmap(map);
-	}
+	vm = curproc->p_vmspace;
+	map = &vm->vm_map;
+	pmap = vm_map_pmap(map);
 
 	return (pmap);
 }
@@ -2788,7 +2784,7 @@ pmap_activate(struct lwp *l)
 {
 	pmap_t pmap = l->l_proc->p_vmspace->vm_map.pmap;
 
-	if (curlwp && l->l_proc == curproc) {
+	if (l->l_proc == curproc) {
 		_pmap_switch(pmap);
 	}
 }

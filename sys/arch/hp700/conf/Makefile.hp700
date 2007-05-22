@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.hp700,v 1.9 2005/12/11 12:17:24 christos Exp $
+# $NetBSD: Makefile.hp700,v 1.9.38.1 2007/05/22 17:26:51 matt Exp $
 
 # Makefile for NetBSD
 #
@@ -98,7 +98,6 @@ EXTRA_LINKFLAGS= -Map $@.map
 locore.o:   assym.h hppa/asm.h hppa/trap.h hppa/frame.h hppa/reg.h
 locore.o:   ${HPPA}/hppa/trap.S
 locore.o:   ${HPPA}/hppa/copy.S
-locore.o:   ${HPPA}/hppa/proc_subr.S
 locore.o:   ${HPPA}/hppa/support.S
 locore.o:   ${HPPA}/hppa/sigcode.S
 copy.o:     assym.h hppa/asm.h $S/sys/errno.h

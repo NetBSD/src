@@ -1,4 +1,4 @@
-/*	$NetBSD: battery.c,v 1.2.4.1 2007/05/09 02:01:03 macallan Exp $ */
+/*	$NetBSD: battery.c,v 1.2.4.2 2007/05/22 17:27:07 matt Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: battery.c,v 1.2.4.1 2007/05/09 02:01:03 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: battery.c,v 1.2.4.2 2007/05/22 17:27:07 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

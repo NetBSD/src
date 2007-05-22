@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.1 2007/03/20 08:52:00 dyoung Exp $ */
+/* $NetBSD: machdep.c,v 1.1.8.1 2007/05/22 17:26:46 matt Exp $ */
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1 2007/03/20 08:52:00 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1.8.1 2007/05/22 17:26:46 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -442,8 +442,8 @@ mach_init(int argc, char **argv, void *a2, void *a3)
 	v = uvm_pageboot_alloc(USPACE);
 	lwp0.l_addr = proc0paddr = (struct user *)v;
 	lwp0.l_md.md_regs = (struct frame *)(v + USPACE) - 1;
-	curpcb = &lwp0.l_addr->u_pcb;
-	curpcb->pcb_context[11] = MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
+	proc0paddr->u_pcb.pcb_context[11] =
+	    MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
 
 	/*
 	 * Initialize debuggers, and break into them, if appropriate.

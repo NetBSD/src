@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmuvar.h,v 1.3.4.1 2007/05/09 02:01:03 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmuvar.h,v 1.3.4.2 2007/05/22 17:27:08 matt Exp $");
 
 #ifndef PMUVAR_H
 #define PMUVAR_H
