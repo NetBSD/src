@@ -1,8 +1,8 @@
 /*	$OpenBSD: usb_port.h,v 1.18 2000/09/06 22:42:10 rahnds Exp $ */
-/*	$NetBSD: usb_port.h,v 1.75 2007/03/13 13:51:56 drochner Exp $	*/
-/*	$FreeBSD: src/sys/dev/usb/usb_port.h,v 1.21 1999/11/17 22:33:47 n_hibma Exp $	*/
+/*	$NetBSD: usb_port.h,v 1.73.10.1 2007/05/22 14:57:48 itohy Exp $	*/
+/*	$FreeBSD: src/sys/dev/usb/usb_port.h,v 1.82 2006/09/07 00:06:42 imp Exp $       */
 
-/*
+/*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
@@ -104,7 +104,14 @@ MALLOC_DECLARE(M_USBHC);
 #define Static static
 #endif
 
-typedef struct proc *usb_proc_ptr;
+#define USB_KASSERT		KASSERT
+#define USB_KASSERT2(c, m)	KASSERT(c)
+
+typedef struct lwp *usb_proc_ptr;
+typedef struct proc *usb_sigproc_ptr;
+
+#define USB_PROC_LOCK(p)	mutex_enter(&proclist_mutex)
+#define USB_PROC_UNLOCK(p)	mutex_exit(&proclist_mutex)
 
 typedef struct device *device_ptr_t;
 #define USBBASEDEVICE struct device
@@ -114,12 +121,7 @@ typedef struct device *device_ptr_t;
 #define USBDEVPTRNAME(bdevptr) ((bdevptr)->dv_xname)
 #define USBGETSOFTC(d) ((void *)(d))
 
-#define DECLARE_USB_DMA_T \
-	struct usb_dma_block; \
-	typedef struct { \
-		struct usb_dma_block *block; \
-		u_int offs; \
-	} usb_dma_t
+typedef dev_t usb_cdev_t;
 
 typedef struct callout usb_callout_t;
 #define usb_callout_init(h)	callout_init(&(h))
@@ -129,12 +131,16 @@ typedef struct callout usb_callout_t;
 #define usb_lockmgr lockmgr
 
 #define usb_kthread_create1	kthread_create1
+#define usb_kthread_create2	kthread_create1
 #define usb_kthread_create	kthread_create
 
 typedef struct malloc_type *usb_malloc_type;
 
 #define Ether_ifattach ether_ifattach
 #define IF_INPUT(ifp, m) (*(ifp)->if_input)((ifp), (m))
+
+#define USB_PWR_CASE_SUSPEND	case PWR_SUSPEND: case PWR_STANDBY
+#define USB_PWR_CASE_RESUME	case PWR_RESUME
 
 #define logprintf printf
 
@@ -161,9 +167,6 @@ int __CONCAT(dname,_match)(struct device *parent, \
 #define USB_MATCH_START(dname, uaa) \
 	struct usb_attach_arg *uaa = aux
 
-#define USB_IFMATCH_START(dname, uaa) \
-	struct usbif_attach_arg *uaa = aux
-
 #define USB_ATTACH(dname) \
 void __CONCAT(dname,_attach)(struct device *parent, \
     struct device *self, void *aux)
@@ -172,11 +175,6 @@ void __CONCAT(dname,_attach)(struct device *parent, \
 	struct __CONCAT(dname,_softc) *sc = \
 		(struct __CONCAT(dname,_softc) *)self; \
 	struct usb_attach_arg *uaa = aux
-
-#define USB_IFATTACH_START(dname, sc, uaa) \
-	struct __CONCAT(dname,_softc) *sc = \
-		(struct __CONCAT(dname,_softc) *)self; \
-	struct usbif_attach_arg *uaa = aux
 
 /* Returns from attach */
 #define USB_ATTACH_ERROR_RETURN	return
@@ -203,10 +201,6 @@ int __CONCAT(dname,_detach)(struct device *self, int flags)
 
 #define USB_DO_ATTACH(dev, bdev, parent, args, print, sub) \
 	(config_found_sm_loc(parent, "usbdevif", \
-			     NULL, args, print, sub))
-
-#define USB_DO_IFATTACH(dev, bdev, parent, args, print, sub) \
-	(config_found_sm_loc(parent, "usbifif", \
 			     NULL, args, print, sub))
 
 #elif defined(__OpenBSD__)
@@ -239,7 +233,14 @@ int __CONCAT(dname,_detach)(struct device *self, int flags)
 
 #define Static
 
+#define USB_KASSERT		KASSERT
+#define USB_KASSERT2(c, m)	KASSERT(c)
+
 typedef struct proc *usb_proc_ptr;
+typedef struct proc *usb_sigproc_ptr;
+
+#define USB_PROC_LOCK(p)	FIXME
+#define USB_PROC_UNLOCK(p)	FIXME
 
 #define UCOMBUSCF_PORTNO		-1
 #define UCOMBUSCF_PORTNO_DEFAULT	-1
@@ -274,6 +275,7 @@ typedef struct proc *usb_proc_ptr;
 #endif
 
 #define usb_kthread_create1	kthread_create
+#define usb_kthread_create2	kthread_create
 #define usb_kthread_create	kthread_create_deferred
 
 #define usb_lockmgr(lk, mode, ptr) lockmgr(lk, mode, ptr, curproc)
@@ -300,7 +302,9 @@ typedef int usb_malloc_type;
 
 #define powerhook_establish(fn, sc) (fn)
 #define powerhook_disestablish(hdl)
-#define PWR_RESUME 0
+
+#define USB_PWR_CASE_SUSPEND	case PWR_SUSPEND: case PWR_STANDBY
+#define USB_PWR_CASE_RESUME	case PWR_RESUME
 
 #define logprintf printf
 
@@ -321,12 +325,7 @@ typedef struct device *device_ptr_t;
 #define USBDEVPTRNAME(bdevptr) ((bdevptr)->dv_xname)
 #define USBGETSOFTC(d) ((void *)(d))
 
-#define DECLARE_USB_DMA_T \
-	struct usb_dma_block; \
-	typedef struct { \
-		struct usb_dma_block *block; \
-		u_int offs; \
-	} usb_dma_t
+typedef dev_t usb_cdev_t;
 
 typedef char usb_callout_t;
 #define usb_callout_init(h)
@@ -420,7 +419,14 @@ MALLOC_DECLARE(M_USBHC);
 
 #define Static
 
-#define USBVERBOSE
+#define USB_KASSERT(c)		KASSERT(c, (#c))
+#define USB_KASSERT2		KASSERT
+
+typedef struct thread *usb_proc_ptr;
+typedef struct proc *usb_sigproc_ptr;
+
+#define USB_PROC_LOCK(p)	PROC_LOCK(p)
+#define USB_PROC_UNLOCK(p)	PROC_UNLOCK(p)
 
 #define device_ptr_t device_t
 #define USBBASEDEVICE device_t
@@ -430,35 +436,44 @@ MALLOC_DECLARE(M_USBHC);
 #define USBDEVPTRNAME(bdev) device_get_nameunit(bdev)
 #define USBGETSOFTC(bdev) (device_get_softc(bdev))
 
-#define DECLARE_USB_DMA_T typedef void *usb_dma_t
+typedef struct cdev *usb_cdev_t;
 
-typedef struct proc *usb_proc_ptr;
+#define usb_kthread_create1(f, s, p, a0, a1) \
+		kthread_create((f), (s), (p), RFHIGHPID, 0, (a0), (a1))
+#define usb_kthread_create2(f, s, p, a0) \
+		kthread_create((f), (s), (p), RFHIGHPID, 0, (a0))
 
-/* XXX Change this when FreeBSD has memset
- */
-#define	memcpy(d, s, l)		bcopy((s),(d),(l))
-#define	memset(d, v, l)		bzero((d),(l))
-#define bswap32(x)		swap32(x)
-#define kthread_create1(f, s, p, a0, a1) \
-		kthread_create((f), (s), (p), RFHIGHPID, (a0), (a1))
+#define usb_lockmgr(lk, mode, ptr) lockmgr(lk, mode, ptr, curproc)
 
-typedef struct callout_handle usb_callout_t;
-#define usb_callout_init(h) callout_handle_init(&(h))
-#define usb_callout(h, t, f, d) ((h) = timeout((f), (d), (t)))
-#define usb_uncallout(h, f, d) uncallout((f), (d), (h))
+#define	config_pending_incr()
+#define	config_pending_decr()
+
+typedef struct callout usb_callout_t;
+#define usb_callout_init(h)     callout_init(&(h), 0)
+#define usb_callout(h, t, f, d) callout_reset(&(h), (t), (f), (d))
+#define usb_uncallout(h, f, d)  callout_stop(&(h))
+#define usb_uncallout_drain(h, f, d)  callout_drain(&(h))
 
 #define clalloc(p, s, x) (clist_alloc_cblocks((p), (s), (s)), 0)
 #define clfree(p) clist_free_cblocks((p))
 
-#define powerhook_establish(fn, sc) (fn)
-#define powerhook_disestablish(hdl)
 #define PWR_RESUME 0
+#define PWR_SUSPEND 1
 
-#define config_detach(dev, flag) device_delete_child(device_get_parent(dev), dev)
+#define USB_PWR_CASE_SUSPEND	case PWR_SUSPEND
+#define USB_PWR_CASE_RESUME	case PWR_RESUME
+
+#define config_detach(dev, flag) \
+	do { \
+		struct usb_attach_arg *uaap = device_get_ivars(dev); \
+		device_detach(dev); \
+		free(uaap, M_USB); \
+		device_delete_child(device_get_parent(dev), dev); \
+	} while (0)
 
 typedef struct malloc_type *usb_malloc_type;
 
-#define USB_DECLARE_DRIVER_INIT(dname, init) \
+#define USB_DECLARE_DRIVER_INIT(dname, init...) \
 Static device_probe_t __CONCAT(dname,_match); \
 Static device_attach_t __CONCAT(dname,_attach); \
 Static device_detach_t __CONCAT(dname,_detach); \
@@ -477,10 +492,11 @@ Static driver_t __CONCAT(dname,_driver) = { \
         #dname, \
         __CONCAT(dname,_methods), \
         sizeof(struct __CONCAT(dname,_softc)) \
-}
+}; \
+MODULE_DEPEND(dname, usb, 1, 1, 1)
+
 #define METHODS_NONE			{0,0}
 #define USB_DECLARE_DRIVER(dname)	USB_DECLARE_DRIVER_INIT(dname, METHODS_NONE)
-
 
 #define USB_MATCH(dname) \
 Static int \
@@ -502,8 +518,10 @@ __CONCAT(dname,_attach)(device_t self)
 #define USB_ATTACH_SUCCESS_RETURN	return 0
 
 #define USB_ATTACH_SETUP \
-	sc->sc_dev = self; \
-	device_set_desc_copy(self, devinfo)
+	do { \
+		sc->sc_dev = self; \
+		device_set_desc_copy(self, devinfo); \
+	} while (0)
 
 #define USB_DETACH(dname) \
 Static int \
@@ -539,6 +557,10 @@ __CONCAT(dname,_detach)(device_t self)
 #define logprintf(args...)	log(LOG_DEBUG, args)
 */
 #define logprintf		printf
+
+#ifdef SYSCTL_DECL
+SYSCTL_DECL(_hw_usb);
+#endif
 
 #endif /* __FreeBSD__ */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.19 2007/03/13 13:51:54 drochner Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.17.10.1 2007/05/22 14:57:36 itohy Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.19 2007/03/13 13:51:54 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.17.10.1 2007/05/22 14:57:36 itohy Exp $");
 
 #if defined(__NetBSD__)
 #include "opt_inet.h"
@@ -178,7 +178,7 @@ Static void axe_tick_task(void *);
 Static void axe_rxstart(struct ifnet *);
 #endif
 Static void axe_start(struct ifnet *);
-Static int axe_ioctl(struct ifnet *, u_long, void *);
+Static int axe_ioctl(struct ifnet *, u_long, caddr_t);
 Static void axe_init(void *);
 Static void axe_stop(struct axe_softc *);
 Static void axe_watchdog(struct ifnet *);
@@ -426,6 +426,10 @@ axe_reset(struct axe_softc *sc)
 USB_MATCH(axe)
 {
 	USB_MATCH_START(axe, uaa);
+
+	if (!uaa->iface) {
+		return(UMATCH_NONE);
+	}
 
 	return (axe_lookup(uaa->vendor, uaa->product) != NULL ?
 		UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
@@ -726,7 +730,8 @@ axe_rx_list_init(struct axe_softc *sc)
 		if (axe_newbuf(sc, c, NULL) == ENOBUFS)
 			return (ENOBUFS);
 		if (c->axe_xfer == NULL) {
-			c->axe_xfer = usbd_alloc_xfer(sc->axe_udev);
+			c->axe_xfer = usbd_alloc_xfer(sc->axe_udev,
+			    sc->axe_ep[AXE_ENDPT_RX]);
 			if (c->axe_xfer == NULL)
 				return (ENOBUFS);
 			c->axe_buf = usbd_alloc_buffer(c->axe_xfer, AXE_BUFSZ);
@@ -756,7 +761,8 @@ axe_tx_list_init(struct axe_softc *sc)
 		c->axe_idx = i;
 		c->axe_mbuf = NULL;
 		if (c->axe_xfer == NULL) {
-			c->axe_xfer = usbd_alloc_xfer(sc->axe_udev);
+			c->axe_xfer = usbd_alloc_xfer(sc->axe_udev,
+			    sc->axe_ep[AXE_ENDPT_TX]);
 			if (c->axe_xfer == NULL)
 				return (ENOBUFS);
 			c->axe_buf = usbd_alloc_buffer(c->axe_xfer, AXE_BUFSZ);
@@ -1171,7 +1177,7 @@ axe_init(void *xsc)
 }
 
 Static int
-axe_ioctl(struct ifnet *ifp, u_long cmd, void *data)
+axe_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct axe_softc	*sc = ifp->if_softc;
 	struct ifreq		*ifr = (struct ifreq *)data;

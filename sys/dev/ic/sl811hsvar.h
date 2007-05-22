@@ -1,4 +1,5 @@
-/*	$NetBSD: sl811hsvar.h,v 1.1 2002/08/11 13:17:54 isaki Exp $	*/
+/*	$NetBSD: sl811hsvar.h,v 1.1.80.1 2007/05/22 14:57:32 itohy Exp $	*/
+/*      $FreeBSD: src/sys/dev/usb/sl811hsvar.h,v 1.3 2006/09/07 00:06:41 imp Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -50,15 +51,27 @@
 #define SL11_PID_SETUP	(0xd)
 
 struct slhci_xfer {
-	usbd_xfer_handle sx_xfer;
+	struct usbd_xfer sx_xfer;
 	usb_callout_t sx_callout_t;
+	struct usb_buffer_mem sx_membuf;
 };
+#if 1	/* make sure the argument is actually an xfer pointer */
+#define SLXFER(xfer) ((void)&(xfer)->hcpriv, (struct slhci_xfer *)(xfer))
+#else
+#define SLXFER(xfer) ((struct slhci_xfer *)(xfer))
+#endif
 
 struct slhci_softc {
 	struct usbd_bus		 sc_bus;
 	bus_space_tag_t		 sc_iot;
 	bus_space_handle_t	 sc_ioh;
-	bus_dma_tag_t		 sc_dmat;
+	usb_mem_tag_t		 sc_memtag;
+
+#ifdef __FreeBSD__
+	void *ih; 
+	struct resource *io_res;
+	struct resource *irq_res;
+#endif
 
 	void				(*sc_enable_power)(void *, int);
 	void				(*sc_enable_intr)(void *, int);
@@ -69,7 +82,9 @@ struct slhci_softc {
 #define INTR_ON 	(1)
 #define INTR_OFF	(0)
 
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 	device_ptr_t		 sc_child;
+#endif
 
 	struct device		*sc_parent;	/* parent device */
 	int			 sc_sltype;	/* revision */
@@ -98,5 +113,6 @@ struct slhci_softc {
 };
 
 int  sl811hs_find(struct slhci_softc *);
-int  slhci_attach(struct slhci_softc *, struct device *);
+int  slhci_attach(struct slhci_softc *);
+int  slhci_detach(struct slhci_softc *, int);
 int  slhci_intr(void *);

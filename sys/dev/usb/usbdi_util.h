@@ -1,6 +1,7 @@
-/*	$NetBSD: usbdi_util.h,v 1.36 2007/02/26 13:50:06 drochner Exp $	*/
+/*	$NetBSD: usbdi_util.h,v 1.36.12.1 2007/05/22 14:57:50 itohy Exp $	*/
+/*	$FreeBSD: src/sys/dev/usb/usbdi_util.h,v 1.21 2007/01/03 10:50:03 luigi Exp $	*/
 
-/*
+/*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
@@ -37,6 +38,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef _USBI_UTIL_H_
+#define _USBI_UTIL_H_
+
 usbd_status	usbd_get_desc(usbd_device_handle dev, int type,
 			      int index, int len, void *desc);
 usbd_status	usbd_get_config_desc(usbd_device_handle, int,
@@ -64,9 +68,9 @@ usbd_status	usbd_set_report_async(usbd_interface_handle iface, int type,
 				      int id, void *data, int len);
 usbd_status	usbd_get_report(usbd_interface_handle iface, int type, int id,
 				void *data, int len);
-usbd_status	usbd_set_idle(usbd_interface_handle iface, int duration,int id);
+usbd_status	usbd_set_idle(usbd_interface_handle iface, int duration, int id);
 usbd_status	usbd_read_report_desc(usbd_interface_handle ifc, void **descp,
-				       int *sizep, usb_malloc_type mem);
+				      int *sizep, usb_malloc_type mem);
 usbd_status	usbd_get_config(usbd_device_handle dev, u_int8_t *conf);
 usbd_status	usbd_get_string_desc(usbd_device_handle dev, int sindex,
 				     int langid,usb_string_descriptor_t *sdesc,
@@ -82,8 +86,8 @@ usbd_status usbd_bulk_transfer(usbd_xfer_handle, usbd_pipe_handle,
 			       u_int32_t *, const char *);
 
 usbd_status usbd_intr_transfer(usbd_xfer_handle, usbd_pipe_handle,
- 			       u_int16_t, u_int32_t, void *,
- 			       u_int32_t *, const char *);
+			       u_int16_t, u_int32_t, void *,
+			       u_int32_t *, const char *);
 
 void usb_detach_wait(device_ptr_t);
 void usb_detach_wakeup(device_ptr_t);
@@ -102,3 +106,4 @@ const usb_cdc_descriptor_t *usb_find_desc_if(usbd_device_handle dev, int type,
 					 usb_interface_descriptor_t *id);
 #define USBD_CDCSUBTYPE_ANY (~0)
 
+#endif	/* _USBI_UTIL_H_ */

@@ -1,6 +1,6 @@
-/*	$NetBSD: usb.c,v 1.96 2007/03/04 06:02:50 christos Exp $	*/
+/*	$NetBSD: usb.c,v 1.95.4.1 2007/05/22 14:57:46 itohy Exp $	*/
 
-/*
+/*-
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
@@ -44,32 +44,61 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.96 2007/03/04 06:02:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.95.4.1 2007/05/22 14:57:46 itohy Exp $");
+/* __FBSDID("$FreeBSD: src/sys/dev/usb/usb.c,v 1.111 2006/10/19 01:15:58 iedowse Exp $"); */
 
+#if defined(__NetBSD__)
 #include "opt_compat_netbsd.h"
-
 #include "ohci.h"
 #include "uhci.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
+#include <sys/lock.h>
 #include <sys/malloc.h>
+#include <sys/fcntl.h>
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 #include <sys/device.h>
+#include <sys/vnode.h>
+#elif defined(__FreeBSD__)
+#if __FreeBSD_version >= 500000
+#include <sys/mutex.h>
+#endif
+#include <sys/unistd.h>
+#include <sys/module.h>
+#include <sys/bus.h>
+#include <sys/filio.h>
+#include <sys/uio.h>
+#endif
 #include <sys/kthread.h>
 #include <sys/proc.h>
 #include <sys/conf.h>
-#include <sys/fcntl.h>
 #include <sys/poll.h>
+#if defined(__FreeBSD__) && __FreeBSD_version >= 500014
+#include <sys/selinfo.h>
+#else
 #include <sys/select.h>
-#include <sys/vnode.h>
+#endif
 #include <sys/signalvar.h>
+#include <sys/sysctl.h>
+#include <sys/uio.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdi_util.h>
 
-#define USB_DEV_MINOR 255
+#define USBUNIT(d)	(minor(d))	/* usb_discover device nodes, kthread */
+#define USB_DEV_MINOR	255		/* event queue device */
+
+MALLOC_DEFINE(M_USB, "USB", "USB");
+MALLOC_DEFINE(M_USBDEV, "USBdev", "USB device");
+MALLOC_DEFINE(M_USBHC, "USBHC", "USB host controller");
+
+#if defined(__FreeBSD__)
+#include "usb_if.h"
+#endif /* defined(__FreeBSD__) */
 
 #include <machine/bus.h>
 
@@ -97,8 +126,21 @@ int	usb_noexplore = 0;
 #define DPRINTFN(n,x)
 #endif
 
+#ifdef __FreeBSD__
+/* Define this unconditionally in case a kernel module is loaded that
+ * has been compiled with debugging options.
+ */
+SYSCTL_NODE(_hw, OID_AUTO, usb, CTLFLAG_RW, 0, "USB debugging");
+SYSCTL_INT(_hw_usb, OID_AUTO, debug, CTLFLAG_RW,
+	   &usbdebug, 0, "usb debug level");
+#endif
+
 struct usb_softc {
 	USBBASEDEVICE	sc_dev;		/* base device */
+#ifdef __FreeBSD__
+	struct cdev	*sc_usbdev;	/* /dev/usbN device */
+	TAILQ_ENTRY(usb_softc) sc_coldexplist; /* cold needs-explore list */
+#endif
 	usbd_bus_handle sc_bus;		/* USB controller */
 	struct usbd_port sc_port;	/* dummy port for root hub */
 
@@ -114,8 +156,12 @@ struct usb_taskq {
 	int taskcreated;	/* task thread exists. */
 };
 
-static struct usb_taskq usb_taskq[USB_NUM_TASKQS];
+static struct usb_taskq usb_taskq[USB_NUM_TASKQS] = {
+	{ TAILQ_HEAD_INITIALIZER(usb_taskq[0].tasks), NULL, NULL, 0 },
+	{ TAILQ_HEAD_INITIALIZER(usb_taskq[1].tasks), NULL, NULL, 0 }
+};
 
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 dev_type_open(usbopen);
 dev_type_close(usbclose);
 dev_type_read(usbread);
@@ -127,22 +173,54 @@ const struct cdevsw usb_cdevsw = {
 	usbopen, usbclose, usbread, nowrite, usbioctl,
 	nostop, notty, usbpoll, nommap, usbkqfilter, D_OTHER,
 };
+#elif defined(__FreeBSD__)
+d_open_t  usbopen;
+d_close_t usbclose;
+d_read_t usbread;
+d_ioctl_t usbioctl;
+d_poll_t usbpoll;
+
+struct cdevsw usb_cdevsw = {
+	.d_version =	D_VERSION,
+	.d_flags =	D_NEEDGIANT,
+	.d_open =	usbopen,
+	.d_close =	usbclose,
+	.d_read =	usbread,
+	.d_ioctl =	usbioctl,
+	.d_poll =	usbpoll,
+	.d_name =	"usb",
+#if __FreeBSD_version < 500014
+	.d_bmaj =	-1
+#endif
+};
+#endif
 
 Static void	usb_discover(void *);
+#ifdef __FreeBSD__
+Static bus_child_detached_t usb_child_detached;
+#endif
 Static void	usb_create_event_thread(void *);
 Static void	usb_event_thread(void *);
 Static void	usb_task_thread(void *);
 
+Static int usb_nbusses;			/* Number of /dev/usbN busses. */
+#ifdef __FreeBSD__
+Static struct cdev *usb_dev;		/* The /dev/usb device. */
+/* Busses to explore at the end of boot-time device configuration. */
+Static TAILQ_HEAD(, usb_softc) usb_coldexplist =
+    TAILQ_HEAD_INITIALIZER(usb_coldexplist);
+#endif
+
 #define USB_MAX_EVENTS 100
 struct usb_event_q {
 	struct usb_event ue;
-	SIMPLEQ_ENTRY(usb_event_q) next;
+	TAILQ_ENTRY(usb_event_q) next;
 };
-Static SIMPLEQ_HEAD(, usb_event_q) usb_events =
-	SIMPLEQ_HEAD_INITIALIZER(usb_events);
+Static TAILQ_HEAD(, usb_event_q) usb_events =
+	TAILQ_HEAD_INITIALIZER(usb_events);
 Static int usb_nevents = 0;
 Static struct selinfo usb_selevent;
-Static usb_proc_ptr usb_async_proc;  /* process that wants USB SIGIO */
+Static usb_sigproc_ptr usb_async_proc;  /* process that wants USB SIGIO */
 Static int usb_dev_open = 0;
 Static struct usb_event *usb_alloc_event(void);
 Static void usb_free_event(struct usb_event *);
@@ -150,13 +228,23 @@ Static void usb_add_event(int, struct usb_event *);
 
 Static int usb_get_next_event(struct usb_event *);
 
-#ifdef COMPAT_30
+#if defined(__NetBSD__) && defined(COMPAT_30)
 Static void usb_copy_old_devinfo(struct usb_device_info_old *, const struct usb_device_info *);
 #endif
 
 Static const char *usbrev_str[] = USBREV_STR;
 
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 USB_DECLARE_DRIVER(usb);
+#elif defined(__FreeBSD__)
+USB_DECLARE_DRIVER_INIT(usb,
+			DEVMETHOD(bus_child_detached, usb_child_detached),
+			DEVMETHOD(device_suspend, bus_generic_suspend),
+			DEVMETHOD(device_resume, bus_generic_resume),
+			DEVMETHOD(device_shutdown, bus_generic_shutdown)
+			);
+MODULE_VERSION(usb, 1);
+#endif
 
 USB_MATCH(usb)
 {
@@ -166,12 +254,21 @@ USB_MATCH(usb)
 
 USB_ATTACH(usb)
 {
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 	struct usb_softc *sc = (struct usb_softc *)self;
+#elif defined(__FreeBSD__)
+	struct usb_softc *sc = device_get_softc(self);
+	void *aux = device_get_ivars(self);
+#endif
 	usbd_device_handle dev;
 	usbd_status err;
 	int usbrev;
 	int speed;
 	struct usb_event *ue;
+
+#ifdef __FreeBSD__
+	sc->sc_dev = self;
+#endif
 
 	DPRINTF(("usbd_attach\n"));
 
@@ -179,6 +276,9 @@ USB_ATTACH(usb)
 	sc->sc_bus->usbctl = sc;
 	sc->sc_port.power = USB_MAX_POWER;
 
+#if defined(__FreeBSD__)
+	printf("%s", USBDEVNAME(sc->sc_dev));
+#endif
 	usbrev = sc->sc_bus->usbrev;
 	printf(": USB revision %s", usbrev_str[usbrev]);
 	switch (usbrev) {
@@ -236,8 +336,19 @@ USB_ATTACH(usb)
 		 * until the USB event thread is running, which means that
 		 * the keyboard will not work until after cold boot.
 		 */
+#if defined(__FreeBSD__)
+		if (cold) {
+			/* Explore high-speed busses before others. */
+			if (speed == USB_SPEED_HIGH)
+				dev->hub->explore(sc->sc_bus->root_hub);
+			else
+				TAILQ_INSERT_TAIL(&usb_coldexplist, sc,
+				    sc_coldexplist);
+		}
+#else
 		if (cold && (device_cfdata(&sc->sc_dev)->cf_flags & 1))
 			dev->hub->explore(sc->sc_bus->root_hub);
+#endif
 #endif
 	} else {
 		printf("%s: root hub problem, error=%d\n",
@@ -248,14 +359,29 @@ USB_ATTACH(usb)
 		sc->sc_bus->use_polling--;
 
 	config_pending_incr();
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 	usb_kthread_create(usb_create_event_thread, sc);
+#endif
+
+	usb_nbusses++;
+#if defined(__FreeBSD__)
+	usb_create_event_thread(sc);
+	/* The per controller devices (used for usb_discover) */
+	/* XXX This is redundant now, but old usbd's will want it */
+	sc->sc_usbdev = make_dev(&usb_cdevsw, device_get_unit(self), UID_ROOT,
+	    GID_OPERATOR, 0660, "usb%d", device_get_unit(self));
+	if (usb_nbusses == 1) {
+		/* The device spitting out events */
+		usb_dev = make_dev(&usb_cdevsw, USB_DEV_MINOR, UID_ROOT,
+		    GID_OPERATOR, 0660, "usb");
+	}
+#endif
 
 	USB_ATTACH_SUCCESS_RETURN;
 }
 
 static const char *taskq_names[] = USB_TASKQ_NAMES;
 
-#if defined(__NetBSD__) || defined(__OpenBSD__)
 void
 usb_create_event_thread(void *arg)
 {
@@ -264,24 +390,23 @@ usb_create_event_thread(void *arg)
 	int i;
 
 	if (usb_kthread_create1(usb_event_thread, sc, &sc->sc_event_thread,
-			   "%s", sc->sc_dev.dv_xname)) {
+			   "%s", USBDEVNAME(sc->sc_dev))) {
 		printf("%s: unable to create event thread for\n",
-		       sc->sc_dev.dv_xname);
+		       USBDEVNAME(sc->sc_dev));
 		panic("usb_create_event_thread");
 	}
 	for (i = 0; i < USB_NUM_TASKQS; i++) {
 		taskq = &usb_taskq[i];
 
-		if (taskq->taskcreated)
-			continue;
-
-		TAILQ_INIT(&taskq->tasks);
-		taskq->taskcreated = 1;
-		taskq->name = taskq_names[i];
-		if (usb_kthread_create1(usb_task_thread, taskq,
-					&taskq->task_thread_proc, taskq->name)) {
-			printf("unable to create task thread: %s\n", taskq->name);
-			panic("usb_create_event_thread task");
+		if (taskq->taskcreated == 0) {
+			taskq->taskcreated = 1;
+			taskq->name = taskq_names[i];
+			if (usb_kthread_create2(usb_task_thread, taskq,
+			    &taskq->task_thread_proc, taskq->name)) {
+				printf("unable to create task thread: %s\n",
+				    taskq->name);
+				panic("usb_create_event_thread task");
+			}
 		}
 	}
 }
@@ -297,8 +422,8 @@ usb_add_task(usbd_device_handle dev, struct usb_task *task, int queue)
 	struct usb_taskq *taskq;
 	int s;
 
-	taskq = &usb_taskq[queue];
 	s = splusb();
+	taskq = &usb_taskq[queue];
 	if (task->queue == -1) {
 		DPRINTFN(2,("usb_add_task: task=%p\n", task));
 		TAILQ_INSERT_TAIL(&taskq->tasks, task, next);
@@ -316,9 +441,9 @@ usb_rem_task(usbd_device_handle dev, struct usb_task *task)
 	struct usb_taskq *taskq;
 	int s;
 
-	taskq = &usb_taskq[task->queue];
 	s = splusb();
 	if (task->queue != -1) {
+		taskq = &usb_taskq[task->queue];
 		TAILQ_REMOVE(&taskq->tasks, task, next);
 		task->queue = -1;
 	}
@@ -328,19 +453,32 @@ usb_rem_task(usbd_device_handle dev, struct usb_task *task)
 void
 usb_event_thread(void *arg)
 {
+	static int newthread_wchan;
 	struct usb_softc *sc = arg;
+
+#if defined(__FreeBSD__) && __FreeBSD_version >= 500000
+	mtx_lock(&Giant);
+#endif
 
 	DPRINTF(("usb_event_thread: start\n"));
 
 	/*
 	 * In case this controller is a companion controller to an
 	 * EHCI controller we need to wait until the EHCI controller
-	 * has grabbed the port.
-	 * XXX It would be nicer to do this with a tsleep(), but I don't
-	 * know how to synchronize the creation of the threads so it
-	 * will work.
+	 * has grabbed the port.  What we do here is wait until no new
+	 * USB threads have been created in a while. XXX we actually
+	 * just want to wait for the PCI slot to be fully scanned.
+	 *
+	 * Note that when you `kldload usb' it actually attaches the
+	 * devices in order that the drivers appear in the kld, not the
+	 * normal PCI order, since the addition of each driver within
+	 * usb.ko (ohci, ehci etc.) causes a separate PCI bus re-scan.
 	 */
-	usb_delay_ms(sc->sc_bus, 500);
+	wakeup(&newthread_wchan);
+	for (;;) {
+		if (tsleep(&newthread_wchan , PWAIT, "usbets", hz * 4) != 0)
+			break;
+	}
 
 	/* Make sure first discover does something. */
 	sc->sc_bus->needs_explore = 1;
@@ -377,11 +515,16 @@ usb_task_thread(void *arg)
 	struct usb_taskq *taskq;
 	int s;
 
+#if defined(__FreeBSD__) && __FreeBSD_version >= 500000
+	mtx_lock(&Giant);
+#endif
+
 	taskq = arg;
 	DPRINTF(("usb_task_thread: start taskq %s\n", taskq->name));
 
 	s = splusb();
-	for (;;) {
+
+	while (usb_nbusses > 0) {
 		task = TAILQ_FIRST(&taskq->tasks);
 		if (task == NULL) {
 			tsleep(&taskq->tasks, PWAIT, "usbtsk", 0);
@@ -396,8 +539,17 @@ usb_task_thread(void *arg)
 			s = splusb();
 		}
 	}
+
+	splx(s);
+
+	taskq->taskcreated = 0;
+	wakeup(&taskq->taskcreated);
+
+	DPRINTF(("usb_event_thread: exit\n"));
+	kthread_exit(0);
 }
 
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 int
 usbctlprint(void *aux, const char *pnp)
 {
@@ -410,9 +562,9 @@ usbctlprint(void *aux, const char *pnp)
 #endif /* defined(__NetBSD__) || defined(__OpenBSD__) */
 
 int
-usbopen(dev_t dev, int flag, int mode, struct lwp *l)
+usbopen(usb_cdev_t dev, int flag, int mode, usb_proc_ptr p)
 {
-	int unit = minor(dev);
+	int unit = USBUNIT(dev);
 	struct usb_softc *sc;
 
 	if (unit == USB_DEV_MINOR) {
@@ -432,20 +584,20 @@ usbopen(dev_t dev, int flag, int mode, struct lwp *l)
 }
 
 int
-usbread(dev_t dev, struct uio *uio, int flag)
+usbread(usb_cdev_t dev, struct uio *uio, int flag)
 {
 	struct usb_event *ue;
-#ifdef COMPAT_30
+#if defined(__NetBSD__) && defined(COMPAT_30)
 	struct usb_event_old *ueo = NULL;	/* XXXGCC */
+	int useold = 0;
 #endif
-	int s, error, n, useold;
+	int s, error, n;
 
-	if (minor(dev) != USB_DEV_MINOR)
+	if (USBUNIT(dev) != USB_DEV_MINOR)
 		return (ENXIO);
 
-	useold = 0;
 	switch (uio->uio_resid) {
-#ifdef COMPAT_30
+#if defined(__NetBSD__) && defined(COMPAT_30)
 	case sizeof(struct usb_event_old):
 		ueo = malloc(sizeof(struct usb_event_old), M_USBDEV,
 			     M_WAITOK|M_ZERO);
@@ -465,7 +617,13 @@ usbread(dev_t dev, struct uio *uio, int flag)
 		n = usb_get_next_event(ue);
 		if (n != 0)
 			break;
-		if (flag & IO_NDELAY) {
+		if (flag &
+#ifdef __FreeBSD__
+		    O_NONBLOCK
+#else
+		    IO_NDELAY
+#endif
+		    ) {
 			error = EWOULDBLOCK;
 			break;
 		}
@@ -475,7 +633,7 @@ usbread(dev_t dev, struct uio *uio, int flag)
 	}
 	splx(s);
 	if (!error) {
-#ifdef COMPAT_30
+#if defined(__NetBSD__) && defined(COMPAT_30)
 		if (useold) { /* copy fields to old struct */
 			ueo->ue_type = ue->ue_type;
 			memcpy(&ueo->ue_time, &ue->ue_time,
@@ -508,7 +666,7 @@ usbread(dev_t dev, struct uio *uio, int flag)
 			error = uiomove((void *)ue, uio->uio_resid, uio);
 	}
 	usb_free_event(ue);
-#ifdef COMPAT_30
+#if defined(__NetBSD__) && defined(COMPAT_30)
 	if (useold)
 		free(ueo, M_USBDEV);
 #endif
@@ -517,10 +675,9 @@ usbread(dev_t dev, struct uio *uio, int flag)
 }
 
 int
-usbclose(dev_t dev, int flag, int mode,
-    struct lwp *l)
+usbclose(usb_cdev_t dev, int flag, int mode, usb_proc_ptr p)
 {
-	int unit = minor(dev);
+	int unit = USBUNIT(dev);
 
 	if (unit == USB_DEV_MINOR) {
 		usb_async_proc = 0;
@@ -531,10 +688,10 @@ usbclose(dev_t dev, int flag, int mode,
 }
 
 int
-usbioctl(dev_t devt, u_long cmd, void *data, int flag, struct lwp *l)
+usbioctl(usb_cdev_t devt, u_long cmd, caddr_t data, int flag, usb_proc_ptr p)
 {
 	struct usb_softc *sc;
-	int unit = minor(devt);
+	int unit = USBUNIT(devt);
 
 	if (unit == USB_DEV_MINOR) {
 		switch (cmd) {
@@ -544,7 +701,13 @@ usbioctl(dev_t devt, u_long cmd, void *data, int flag, struct lwp *l)
 
 		case FIOASYNC:
 			if (*(int *)data)
-				usb_async_proc = l->l_proc;
+#if defined(__NetBSD__) && __NetBSD_Version__ >= 399001400
+				usb_async_proc = p->l_proc;
+#elif defined(__FreeBSD__) && __FreeBSD_version >= 500000
+				usb_async_proc = p->td_proc;
+#else
+				usb_async_proc = p;
+#endif
 			else
 				usb_async_proc = 0;
 			return (0);
@@ -560,7 +723,7 @@ usbioctl(dev_t devt, u_long cmd, void *data, int flag, struct lwp *l)
 		return (EIO);
 
 	switch (cmd) {
-#ifdef USB_DEBUG
+#if defined(USB_DEBUG)
 	case USB_SETDEBUG:
 		if (!(flag & FWRITE))
 			return (EBADF);
@@ -573,6 +736,11 @@ usbioctl(dev_t devt, u_long cmd, void *data, int flag, struct lwp *l)
 #endif
 		break;
 #endif /* USB_DEBUG */
+#if defined(__FreeBSD__)
+	/* This part should be deleted */
+  	case USB_DISCOVER:
+  		break;
+#endif
 	case USB_REQUEST:
 	{
 		struct usb_ctl_request *ur = (void *)data;
@@ -594,7 +762,7 @@ usbioctl(dev_t devt, u_long cmd, void *data, int flag, struct lwp *l)
 		    sc->sc_bus->devices[addr] == 0)
 			return (EINVAL);
 		if (len != 0) {
-			iov.iov_base = (void *)ur->ucr_data;
+			iov.iov_base = (caddr_t)ur->ucr_data;
 			iov.iov_len = len;
 			uio.uio_iov = &iov;
 			uio.uio_iovcnt = 1;
@@ -603,7 +771,13 @@ usbioctl(dev_t devt, u_long cmd, void *data, int flag, struct lwp *l)
 			uio.uio_rw =
 				ur->ucr_request.bmRequestType & UT_READ ?
 				UIO_READ : UIO_WRITE;
-			uio.uio_vmspace = l->l_proc->p_vmspace;
+#ifdef __NetBSD__
+			uio.uio_vmspace = p->l_proc->p_vmspace;
+#endif
+#ifdef __FreeBSD__
+			uio.uio_segflg = UIO_USERSPACE;
+			uio.uio_td = p;
+#endif
 			ptr = malloc(len, M_TEMP, M_WAITOK);
 			if (uio.uio_rw == UIO_WRITE) {
 				error = uiomove(ptr, len, &uio);
@@ -645,7 +819,7 @@ usbioctl(dev_t devt, u_long cmd, void *data, int flag, struct lwp *l)
 		break;
 	}
 
-#ifdef COMPAT_30
+#if defined(__NetBSD__) && defined(COMPAT_30)
 	case USB_DEVICEINFO_OLD:
 	{
 		usbd_device_handle dev;
@@ -672,11 +846,12 @@ usbioctl(dev_t devt, u_long cmd, void *data, int flag, struct lwp *l)
 }
 
 int
-usbpoll(dev_t dev, int events, struct lwp *l)
+usbpoll(usb_cdev_t dev, int events, usb_proc_ptr p)
 {
 	int revents, mask, s;
+	int unit = USBUNIT(dev);
 
-	if (minor(dev) == USB_DEV_MINOR) {
+	if (unit == USB_DEV_MINOR) {
 		revents = 0;
 		mask = POLLIN | POLLRDNORM;
 
@@ -684,7 +859,7 @@ usbpoll(dev_t dev, int events, struct lwp *l)
 		if (events & mask && usb_nevents > 0)
 			revents |= events & mask;
 		if (revents == 0 && events & mask)
-			selrecord(l, &usb_selevent);
+			selrecord(p, &usb_selevent);
 		splx(s);
 
 		return (revents);
@@ -693,6 +868,7 @@ usbpoll(dev_t dev, int events, struct lwp *l)
 	}
 }
 
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 static void
 filt_usbrdetach(struct knote *kn)
 {
@@ -743,27 +919,35 @@ usbkqfilter(dev_t dev, struct knote *kn)
 
 	return (0);
 }
+#endif /* defined(__NetBSD__) || defined(__OpenBSD__) */
 
 /* Explore device tree from the root. */
 Static void
 usb_discover(void *v)
 {
 	struct usb_softc *sc = v;
+	/* splxxx should be changed to mutexes for preemption safety some day */
+	int s;
 
 	DPRINTFN(2,("usb_discover\n"));
 #ifdef USB_DEBUG
 	if (usb_noexplore > 1)
 		return;
 #endif
+
 	/*
 	 * We need mutual exclusion while traversing the device tree,
 	 * but this is guaranteed since this function is only called
 	 * from the event thread for the controller.
 	 */
+	s = splusb();
 	while (sc->sc_bus->needs_explore && !sc->sc_dying) {
 		sc->sc_bus->needs_explore = 0;
+		splx(s);
 		sc->sc_bus->root_hub->hub->explore(sc->sc_bus->root_hub);
+		s = splusb();
 	}
+	splx(s);
 }
 
 void
@@ -791,7 +975,7 @@ usb_get_next_event(struct usb_event *ue)
 
 	if (usb_nevents <= 0)
 		return (0);
-	ueq = SIMPLEQ_FIRST(&usb_events);
+	ueq = TAILQ_FIRST(&usb_events);
 #ifdef DIAGNOSTIC
 	if (ueq == NULL) {
 		printf("usb: usb_nevents got out of sync! %d\n", usb_nevents);
@@ -801,7 +985,7 @@ usb_get_next_event(struct usb_event *ue)
 #endif
 	if (ue)
 		*ue = ueq->ue;
-	SIMPLEQ_REMOVE_HEAD(&usb_events, next);
+	TAILQ_REMOVE(&usb_events, ueq, next);
 	usb_free_event((struct usb_event *)(void *)ueq);
 	usb_nevents--;
 	return (1);
@@ -855,18 +1039,37 @@ usb_add_event(int type, struct usb_event *uep)
 	TIMEVAL_TO_TIMESPEC(&thetime, &ueq->ue.ue_time);
 
 	s = splusb();
-	if (++usb_nevents >= USB_MAX_EVENTS) {
+	if (USB_EVENT_IS_DETACH(type)) {
+		struct usb_event_q *ueqi, *ueqi_next;
+
+		for (ueqi = TAILQ_FIRST(&usb_events); ueqi; ueqi = ueqi_next) {
+			ueqi_next = TAILQ_NEXT(ueqi, next);
+			if (ueqi->ue.u.ue_driver.ue_cookie.cookie ==
+			    uep->u.ue_device.udi_cookie.cookie) {
+				TAILQ_REMOVE(&usb_events, ueqi, next);
+				free(ueqi, M_USBDEV);
+				usb_nevents--;
+				ueqi_next = TAILQ_FIRST(&usb_events);
+			}
+		}
+	}
+	if (usb_nevents >= USB_MAX_EVENTS) {
 		/* Too many queued events, drop an old one. */
 		DPRINTFN(-1,("usb: event dropped\n"));
 		(void)usb_get_next_event(0);
 	}
-	SIMPLEQ_INSERT_TAIL(&usb_events, ueq, next);
+	TAILQ_INSERT_TAIL(&usb_events, ueq, next);
+	usb_nevents++;
 	wakeup(&usb_events);
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 	selnotify(&usb_selevent, 0);
+#elif defined(__FreeBSD__)
+	selwakeuppri(&usb_selevent, PZERO);
+#endif
 	if (usb_async_proc != NULL) {
-		mutex_enter(&proclist_mutex);
+		USB_PROC_LOCK(usb_async_proc);
 		psignal(usb_async_proc, SIGIO);
-		mutex_exit(&proclist_mutex);
+		USB_PROC_UNLOCK(usb_async_proc);
 	}
 	splx(s);
 }
@@ -892,6 +1095,7 @@ usb_schedsoftintr(usbd_bus_handle bus)
 #endif /* USB_USE_SOFTINTR */
 }
 
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 int
 usb_activate(device_ptr_t self, enum devact act)
 {
@@ -913,12 +1117,14 @@ usb_activate(device_ptr_t self, enum devact act)
 	}
 	return (rv);
 }
+#endif
 
-int
-usb_detach(device_ptr_t self, int flags)
+USB_DETACH(usb)
 {
-	struct usb_softc *sc = (struct usb_softc *)self;
+	USB_DETACH_START(usb, sc);
 	struct usb_event *ue;
+	struct usb_taskq *taskq;
+	int i;
 
 	DPRINTF(("usb_detach: start\n"));
 
@@ -935,6 +1141,25 @@ usb_detach(device_ptr_t self, int flags)
 			printf("%s: event thread didn't die\n",
 			       USBDEVNAME(sc->sc_dev));
 		DPRINTF(("usb_detach: event thread dead\n"));
+	}
+
+#ifdef __FreeBSD__
+	destroy_dev(sc->sc_usbdev);
+#endif
+	if (--usb_nbusses == 0) {
+#ifdef __FreeBSD__
+		destroy_dev(usb_dev);
+		usb_dev = NULL;
+#endif
+		for (i = 0; i < USB_NUM_TASKQS; i++) {
+			taskq = &usb_taskq[i];
+			wakeup(&taskq->tasks);
+			if (tsleep(&taskq->taskcreated, PWAIT, "usbtdt",
+			    hz * 60)) {
+				printf("usb task thread %s didn't die\n",
+				    taskq->name);
+			}
+		}
 	}
 
 #ifdef USB_USE_SOFTINTR
@@ -955,7 +1180,7 @@ usb_detach(device_ptr_t self, int flags)
 	return (0);
 }
 
-#ifdef COMPAT_30
+#if defined(__NetBSD__) && defined(COMPAT_30)
 Static void
 usb_copy_old_devinfo(struct usb_device_info_old *uo,
 		     const struct usb_device_info *ue)
@@ -1012,4 +1237,40 @@ usb_copy_old_devinfo(struct usb_device_info_old *uo,
 		       ue->udi_devnames[n], USB_MAX_DEVNAMELEN);
 	memcpy(uo->udi_ports, ue->udi_ports, sizeof(uo->udi_ports));
 }
+#endif
+
+#if defined(__FreeBSD__)
+Static void
+usb_child_detached(device_t self, device_t child)
+{
+	struct usb_softc *sc = device_get_softc(self);
+
+	/* XXX, should check it is the right device. */
+	sc->sc_port.device = NULL;
+}
+
+/* Explore USB busses at the end of device configuration. */
+Static void
+usb_cold_explore(void *arg)
+{
+	struct usb_softc *sc;
+
+	USB_KASSERT2(cold || TAILQ_EMPTY(&usb_coldexplist),
+	    ("usb_cold_explore: busses to explore when !cold"));
+	while (!TAILQ_EMPTY(&usb_coldexplist)) {
+		sc = TAILQ_FIRST(&usb_coldexplist);
+		TAILQ_REMOVE(&usb_coldexplist, sc, sc_coldexplist);
+
+		sc->sc_bus->use_polling++;
+		sc->sc_port.device->hub->explore(sc->sc_bus->root_hub);
+		sc->sc_bus->use_polling--;
+	}
+}
+
+DRIVER_MODULE(usb, ohci, usb_driver, usb_devclass, 0, 0);
+DRIVER_MODULE(usb, uhci, usb_driver, usb_devclass, 0, 0);
+DRIVER_MODULE(usb, ehci, usb_driver, usb_devclass, 0, 0);
+DRIVER_MODULE(usb, slhci, usb_driver, usb_devclass, 0, 0);
+SYSINIT(usb_cold_explore, SI_SUB_CONFIGURE, SI_ORDER_MIDDLE,
+    usb_cold_explore, NULL);
 #endif

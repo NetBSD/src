@@ -1,4 +1,4 @@
-/*	$NetBSD: slhci_isa.c,v 1.6 2006/11/16 01:33:00 christos Exp $	*/
+/*	$NetBSD: slhci_isa.c,v 1.6.18.1 2007/05/22 14:57:32 itohy Exp $	*/
 
 /*
  * Copyright (c) 2001 Kiyoshi Ikehara. All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: slhci_isa.c,v 1.6 2006/11/16 01:33:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: slhci_isa.c,v 1.6.18.1 2007/05/22 14:57:32 itohy Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,6 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: slhci_isa.c,v 1.6 2006/11/16 01:33:00 christos Exp $
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdivar.h>
+#include <dev/usb/usb_mem_nodma.h>
 
 #include <dev/ic/sl811hsreg.h>
 #include <dev/ic/sl811hsvar.h>
@@ -111,7 +112,6 @@ slhci_isa_attach(struct device *parent, struct device *self, void *aux)
 	/* Initialize sc */
 	sc->sc_iot = iot;
 	sc->sc_ioh = ioh;
-	sc->sc_dmat = ia->ia_dmat;
 	sc->sc_enable_power = NULL;
 	sc->sc_enable_intr  = NULL;
 	sc->sc_arg = isc;
@@ -126,6 +126,6 @@ slhci_isa_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/* Attach SL811HS/T */
-	if (slhci_attach(sc, self))
+	if (slhci_attach(sc))
 		return;
 }

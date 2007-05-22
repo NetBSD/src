@@ -1,4 +1,4 @@
-/*	$NetBSD: urio.c,v 1.28 2007/03/13 13:51:56 drochner Exp $	*/
+/*	$NetBSD: urio.c,v 1.26.10.1 2007/05/22 14:57:46 itohy Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: urio.c,v 1.28 2007/03/13 13:51:56 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: urio.c,v 1.26.10.1 2007/05/22 14:57:46 itohy Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -154,6 +154,9 @@ USB_MATCH(urio)
 	USB_MATCH_START(urio, uaa);
 
 	DPRINTFN(50,("urio_match\n"));
+
+	if (uaa->iface != NULL)
+		return (UMATCH_NONE);
 
 	return (urio_lookup(uaa->vendor, uaa->product) != NULL ?
 		UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
@@ -382,7 +385,7 @@ urioread(dev_t dev, struct uio *uio, int flag)
 	if (sc->sc_dying)
 		return (EIO);
 
-	xfer = usbd_alloc_xfer(sc->sc_udev);
+	xfer = usbd_alloc_xfer(sc->sc_udev, sc->sc_in_pipe);
 	if (xfer == NULL)
 		return (ENOMEM);
 	bufp = usbd_alloc_buffer(xfer, URIO_BSIZE);
@@ -440,7 +443,7 @@ uriowrite(dev_t dev, struct uio *uio, int flag)
 	if (sc->sc_dying)
 		return (EIO);
 
-	xfer = usbd_alloc_xfer(sc->sc_udev);
+	xfer = usbd_alloc_xfer(sc->sc_udev, sc->sc_out_pipe);
 	if (xfer == NULL)
 		return (ENOMEM);
 	bufp = usbd_alloc_buffer(xfer, URIO_BSIZE);
@@ -485,7 +488,7 @@ uriowrite(dev_t dev, struct uio *uio, int flag)
 
 
 int
-urioioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
+urioioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
 {
 	struct urio_softc * sc;
 	int unit = URIOUNIT(dev);
@@ -540,7 +543,7 @@ urioioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 	if (len < 0 || len > 32767)
 		return (EINVAL);
 	if (len != 0) {
-		iov.iov_base = (void *)rcmd->buffer;
+		iov.iov_base = (caddr_t)rcmd->buffer;
 		iov.iov_len = len;
 		uio.uio_iov = &iov;
 		uio.uio_iovcnt = 1;

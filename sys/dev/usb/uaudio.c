@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.110 2007/03/13 13:51:54 drochner Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.109.8.1 2007/05/22 14:57:39 itohy Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.110 2007/03/13 13:51:54 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.109.8.1 2007/05/22 14:57:39 itohy Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -366,11 +366,17 @@ USB_DECLARE_DRIVER(uaudio);
 
 USB_MATCH(uaudio)
 {
-	USB_IFMATCH_START(uaudio, uaa);
+	USB_MATCH_START(uaudio, uaa);
+	usb_interface_descriptor_t *id;
 
+	if (uaa->iface == NULL)
+		return UMATCH_NONE;
+
+	id = usbd_get_interface_descriptor(uaa->iface);
 	/* Trigger on the control interface. */
-	if (uaa->class != UICLASS_AUDIO ||
-	    uaa->subclass != UISUBCLASS_AUDIOCONTROL ||
+	if (id == NULL ||
+	    id->bInterfaceClass != UICLASS_AUDIO ||
+	    id->bInterfaceSubClass != UISUBCLASS_AUDIOCONTROL ||
 	    (usbd_get_quirks(uaa->device)->uq_flags & UQ_BAD_AUDIO))
 		return UMATCH_NONE;
 
@@ -379,7 +385,7 @@ USB_MATCH(uaudio)
 
 USB_ATTACH(uaudio)
 {
-	USB_IFATTACH_START(uaudio, sc, uaa);
+	USB_ATTACH_START(uaudio, sc, uaa);
 	usb_interface_descriptor_t *id;
 	usb_config_descriptor_t *cdesc;
 	char *devinfop;
@@ -2664,7 +2670,7 @@ uaudio_chan_alloc_buffers(struct uaudio_softc *sc, struct chan *ch)
 
 	size = (ch->bytes_per_frame + ch->sample_size) * UAUDIO_NFRAMES;
 	for (i = 0; i < UAUDIO_NCHANBUFS; i++) {
-		xfer = usbd_alloc_xfer(sc->sc_udev);
+		xfer = usbd_alloc_xfer(sc->sc_udev, ch->pipe);
 		if (xfer == 0)
 			goto bad;
 		ch->chanbufs[i].xfer = xfer;

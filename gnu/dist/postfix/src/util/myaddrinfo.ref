@@ -1,8 +1,0 @@
-./myaddrinfo: === hostname belly.porcupine.org ===
-./myaddrinfo: belly.porcupine.org -> family=28 sock=1 proto=6 2001:240:587:0:250:56ff:fe10:bd03
-./myaddrinfo: 2001:240:587:0:250:56ff:fe10:bd03 -> belly.porcupine.org
-./myaddrinfo: belly.porcupine.org -> family=2 sock=1 proto=6 168.100.189.6
-./myaddrinfo: 168.100.189.6 -> belly.porcupine.org
-./myaddrinfo: === host address 168.100.189.2 ===
-./myaddrinfo: 168.100.189.2 -> family=2 sock=1 proto=6 168.100.189.2
-./myaddrinfo: 168.100.189.2 -> spike.porcupine.org
