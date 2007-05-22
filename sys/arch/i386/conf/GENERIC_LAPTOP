@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_LAPTOP,v 1.233 2007/04/26 17:11:35 dyoung Exp $
+#	$NetBSD: GENERIC_LAPTOP,v 1.233.2.1 2007/05/22 17:26:56 matt Exp $
 #	From: NetBSD: GENERIC,v 1.414 2001/07/30 19:59:05 ad Exp
 #
 #	GENERIC_LAPTOP -- GENERIC with cardbus and some USB devices enabled
@@ -8,7 +8,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.233 $"
+#ident 		"GENERIC-$Revision: 1.233.2.1 $"
 
 maxusers	32		# estimated number of users
 
@@ -298,6 +298,7 @@ acpitz* 	at acpi?		# ACPI Thermal Zone
 #npx*		at acpi?		# Math coprocessor
 #pckbc*  	at acpi?		# PC keyboard controller
 #pcppi*		at acpi?                # AT-style speaker sound
+#ug* 		at acpi?		# Abit uGuru Hardware monitor
 #wss* 		at acpi?		# NeoMagic 256AV in wss mode
 #ym* 		at acpi?		# Yamaha OPL3-SA[23] audio
 
@@ -751,6 +752,9 @@ umidi* at uhub? port ? configuration ?
 # USB-IrDA bridge spec
 uirda* at uhub? port ? configuration ? interface ?
 irframe* at uirda?
+
+stuirda* at uhub? port ? configuration ? interface ?
+irframe* at stuirda?
 
 # SigmaTel STIr4200 USB/IrDA Bridge
 ustir* at uhub? port ?

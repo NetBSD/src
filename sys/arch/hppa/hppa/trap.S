@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.S,v 1.16 2007/04/12 10:07:36 skrll Exp $	*/
+/*	$NetBSD: trap.S,v 1.16.2.1 2007/05/22 17:26:54 matt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -187,7 +187,7 @@ $bsd_syscall:
 	.import $syscall,code
 	.call
 	ldil	L%$syscall, %t2
-	be,n	R%$syscall(%sr7, %t2)
+	be,n	R%$syscall(%sr1, %t2)
 	nop
 
 	.align	NBPG
@@ -380,12 +380,7 @@ $syscall:
 
 	/* do a syscall */
 	.import	syscall,code
-	ldil	L%syscall, %r1
-	ldo	R%syscall(%r1), %r1
-	.call
-	blr	%r0, %rp
-	bv,n	0(%r1)
-	nop
+	CALL(syscall, %r1)
 
 	ldil	L%curlwp, %r1
 	ldw	R%curlwp(%r1), %r1
@@ -542,7 +537,6 @@ $syscall_end:
 /*
  * interrupt vector table
  */
-/* XXX - fredette changed sr4 to sr7 below: */
 #define	TLABEL(name)	$trap$name
 #define	TELABEL(num)	__CONCAT(trap_ep_,num)
 #define TRAP(name,num) \
@@ -2185,12 +2179,7 @@ $trapnowvirt:
 	ldo	-HPPA_FRAME_SIZE(%sp), %r3
 #endif
 	.import	trap, code
-	ldil	L%trap,%t1
-	ldo	R%trap(%t1),%t1
-	.call
-	blr	%r0,%rp
-	bv,n	%r0(%t1)
-	nop
+	CALL(trap, %t1)
 
 	ldw	-HPPA_FRAME_SIZE+4(%sp), %t3
 	/* see if curlwp has changed */
@@ -2198,12 +2187,9 @@ $trapnowvirt:
 	bb,>=,n	%arg0, TFF_LAST_POS, $trap_return
 	nop
 
-	/* see if curlwp has really changed */
+	/* load curlwp's trapframe pointer */
 	ldil	L%curlwp, %t1
 	ldw	R%curlwp(%t1), %t2
-	comb,=,n %r0, %t2, $trap_return
-
-	/* means curlwp has actually changed */
 	ldw	L_MD(%t2), %t3
 
 $trap_return:

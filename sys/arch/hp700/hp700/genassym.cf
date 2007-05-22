@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.11 2007/02/09 21:55:03 ad Exp $
+#	$NetBSD: genassym.cf,v 1.11.14.1 2007/05/22 17:26:51 matt Exp $
 
 #	$OpenBSD: genassym.cf,v 1.18 2001/09/20 18:31:14 mickey Exp $
 
@@ -201,8 +201,6 @@ member	P_RASLIST	p_raslist
 member	P_MD		p_md
 
 struct	lwp
-member	L_FORW		l_forw
-member	L_BACK		l_back
 member	L_PROC		l_proc
 member	L_ADDR		l_addr
 member	L_PRIORITY	l_priority
@@ -210,9 +208,6 @@ member	L_STAT		l_stat
 member	L_WCHAN		l_wchan
 member	L_MD		l_md
 member	L_MD_REGS	l_md.md_regs
-
-export	LSRUN
-export	LSONPROC
 
 struct	pcb
 member	PCB_FPREGS	pcb_fpregs

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.125 2007/03/08 02:24:41 tsutsui Exp $	*/
+/*	$NetBSD: trap.c,v 1.125.10.1 2007/05/22 17:27:07 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.125 2007/03/08 02:24:41 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.125.10.1 2007/05/22 17:27:07 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -290,8 +290,6 @@ trap(int type, u_int code, u_int v, struct frame frame)
 	KSI_INIT_TRAP(&ksi);
 	ksi.ksi_trap = type & ~T_USER;
 
-	if (l == NULL)
-		l = &lwp0;
 	p = l->l_proc;
 
 	if (USERMODE(frame.f_sr)) {
@@ -547,7 +545,7 @@ copyfault:
 			l->l_pflag &= ~LP_OWEUPC;
 			ADDUPROF(l);
 		}
-		if (want_resched)
+		if (curcpu()->ci_want_resched)
 			preempt();
 		goto out;
 

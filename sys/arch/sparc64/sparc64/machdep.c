@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.197 2007/03/04 07:54:07 christos Exp $ */
+/*	$NetBSD: machdep.c,v 1.197.10.1 2007/05/22 17:27:35 matt Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.197 2007/03/04 07:54:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.197.10.1 2007/05/22 17:27:35 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -107,6 +107,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.197 2007/03/04 07:54:07 christos Exp $
 #include <sys/syscallargs.h>
 #include <sys/exec.h>
 #include <sys/ucontext.h>
+#include <sys/cpu.h>
 
 #include <uvm/uvm.h>
 
@@ -185,14 +186,11 @@ cpu_startup()
 	int opmapdebug = pmapdebug;
 #endif
 	vaddr_t minaddr, maxaddr;
-	extern struct user *proc0paddr;
 	char pbuf[9];
 
 #ifdef DEBUG
 	pmapdebug = 0;
 #endif
-
-	lwp0.l_addr = proc0paddr;
 
 	/*
 	 * Good {morning,afternoon,evening,night}.
@@ -1945,3 +1943,20 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 	return (0);
 }
 
+/*
+ * Preempt the current process if in interrupt from user mode,
+ * or after the current trap/syscall if in system mode.
+ */
+void
+cpu_need_resched(struct cpu_info *ci, int flags)
+{
+
+	ci->ci_want_resched = 1;
+	ci->ci_want_ast = 1;
+
+#if defined(MULTIPROCESSOR)
+	/* Just interrupt the target CPU, so it can notice its AST */
+	if ((flags & RESCHED_IMMED) || ci->ci_cpuid != cpu_number())
+		sparc64_send_ipi(ci->ci_upaid, sparc64_ipi_nop);
+#endif
+}

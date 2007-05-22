@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.8 2007/02/16 02:53:46 ad Exp $	*/
+/*	$NetBSD: intr.h,v 1.8.14.1 2007/05/22 17:26:52 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2002 The NetBSD Foundation, Inc.
@@ -83,19 +83,18 @@ extern int softnetmask;
 /* 
  * Add a mask to cpl, and return the old value of cpl.
  */
-static __inline int splraise __P((int)); 
 static __inline int  
-splraise(ncpl)
-	register int ncpl;
+splraise(register int ncpl)
 {
 	register int ocpl = cpl;
 
 	cpl = ocpl | ncpl;      
+
 	return (ocpl);  
 }
 
 /* spllower() is in locore.S */
-void spllower __P((int));
+void spllower(int);
  
 /*
  * Miscellaneous
@@ -167,11 +166,11 @@ do {									\
 	splx((s));							\
 } while (/*CONSTCOND*/ 0)
 
-void	*softintr_establish __P((int, void (*)(void *), void *));
-void	softintr_disestablish __P((void *));
-void	softintr_bootstrap __P((void));
-void	softintr_init __P((void));
-int	softintr_dispatch __P((void *));
+void	*softintr_establish(int, void (*)(void *), void *);
+void	softintr_disestablish(void *);
+void	softintr_bootstrap(void);
+void	softintr_init(void);
+int	softintr_dispatch(void *);
 
 #define	softintr_schedule(arg)						\
 do {									\
@@ -188,7 +187,7 @@ do {									\
 	hp700_softintr_unlock(__si, __s);				\
 } while (/*CONSTCOND*/ 0)
 
-void	hp700_intr_schedule __P((int));
+void	hp700_intr_schedule(int);
 
 #endif /* _LOCORE */
 

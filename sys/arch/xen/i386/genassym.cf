@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.11 2007/02/17 22:31:41 pavel Exp $
+#	$NetBSD: genassym.cf,v 1.11.12.1 2007/05/22 17:27:51 matt Exp $
 #	NetBSD: genassym.cf,v 1.40 2004/02/20 17:35:01 yamt Exp 
 
 #
@@ -168,8 +168,7 @@ define	VM_MAXUSER_ADDRESS	(int)VM_MAXUSER_ADDRESS
 define	UVM_PAGE_IDLE_ZERO	offsetof(struct uvm, page_idle_zero)
 
 define	L_ADDR			offsetof(struct lwp, l_addr)
-define	L_BACK			offsetof(struct lwp, l_back)
-define	L_FORW			offsetof(struct lwp, l_forw)
+define	L_FLAG			offsetof(struct lwp, l_flag)
 define	L_PRIORITY		offsetof(struct lwp, l_priority)
 define	L_STAT			offsetof(struct lwp, l_stat)
 define	L_WCHAN			offsetof(struct lwp, l_wchan)
@@ -259,10 +258,8 @@ define	CPU_INFO_WANT_PMAPLOAD	offsetof(struct cpu_info, ci_want_pmapload)
 define	CPU_INFO_TLBSTATE	offsetof(struct cpu_info, ci_tlbstate)
 define	TLBSTATE_VALID		TLBSTATE_VALID
 define	CPU_INFO_CURLWP		offsetof(struct cpu_info, ci_curlwp)
-define	CPU_INFO_CURPCB		offsetof(struct cpu_info, ci_curpcb)
-define	CPU_INFO_IDLE_PCB	offsetof(struct cpu_info, ci_idle_pcb)
-define  CPU_INFO_IDLE_TSS_SEL	offsetof(struct cpu_info, ci_idle_tss_sel)
 define	CPU_INFO_ASTPENDING	offsetof(struct cpu_info, ci_astpending)
+define	CPU_INFO_IDLELWP	offsetof(struct cpu_info, ci_data.cpu_idlelwp)
 
 define	CPU_INFO_LEVEL		offsetof(struct cpu_info, ci_cpuid_level)
 define	CPU_INFO_VENDOR		offsetof(struct cpu_info, ci_vendor[0])

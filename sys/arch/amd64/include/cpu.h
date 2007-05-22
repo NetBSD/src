@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.21 2007/03/21 18:20:59 xtraeme Exp $	*/
+/*	$NetBSD: cpu.h,v 1.21.4.1 2007/05/22 17:26:34 matt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -76,10 +76,6 @@ struct cpu_info {
 	int ci_fpsaving;
 
 	volatile u_int32_t ci_tlb_ipi_mask;
-
-	struct pcb *ci_curpcb;
-	struct pcb *ci_idle_pcb;
-	int ci_idle_tss_sel;
 
 	struct intrsource *ci_isources[MAX_INTR_SOURCES];
 	volatile int	ci_mtx_count;	/* Negative count of spin mutexes */
@@ -163,7 +159,7 @@ extern struct cpu_info *cpu_info_list;
 extern struct cpu_info *cpu_info[X86_MAXPROCS];
 
 void cpu_boot_secondary_processors(void);
-void cpu_init_idle_pcbs(void);    
+void cpu_init_idle_lwps(void);    
 
 
 #else /* !MULTIPROCESSOR */
@@ -183,18 +179,12 @@ extern struct cpu_info cpu_info_primary;
 
 #endif
 
-/*
- * Preempt the current process if in interrupt from user mode,
- * or after the current trap/syscall if in system mode.
- */
-extern void cpu_need_resched(struct cpu_info *);
-
 #define aston(l)	((l)->l_md.md_astpending = 1)
 
 extern u_int32_t cpus_attached;
 
-#define curpcb		curcpu()->ci_curpcb
 #define curlwp		curcpu()->ci_curlwp
+#define curpcb		(&curlwp->l_addr->u_pcb)
 
 /*
  * Arguments to hardclock, softclock and statclock
@@ -267,8 +257,7 @@ void	fillw(short, void *, size_t);
 
 struct pcb;
 void	savectx(struct pcb *);
-void	switch_exit(struct lwp *, void (*)(struct lwp *));
-void	proc_trampoline(void);
+void	lwp_trampoline(void);
 void	child_trampoline(void);
 
 /* clock.c */

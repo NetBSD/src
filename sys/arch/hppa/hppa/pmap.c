@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.35 2007/03/04 05:59:55 christos Exp $	*/
+/*	$NetBSD: pmap.c,v 1.35.10.1 2007/05/22 17:26:53 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.35 2007/03/04 05:59:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.35.10.1 2007/05/22 17:26:53 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1242,6 +1242,7 @@ pmap_pinit(pmap_t pmap)
 	pmap->pmap_refcnt = 1;
 	pmap->pmap_stats.resident_count = 0;
 	pmap->pmap_stats.wired_count = 0;
+	pmap->pmap_vmspace = NULL;
 	splx(s);
 }
 
@@ -1324,27 +1325,29 @@ pmap_destroy(pmap_t pmap)
 void
 pmap_activate(struct lwp *l)
 {
+
 	struct proc *p = l->l_proc;
 	pmap_t pmap = p->p_vmspace->vm_map.pmap;
 	pa_space_t space = pmap->pmap_space;
-	struct trapframe *tf = l->l_md.md_regs;
+	struct pcb *pcb = &l->l_addr->u_pcb;
 
 	/* space is cached for the copy{in,out}'s pleasure */
-	l->l_addr->u_pcb.pcb_space = space;
+	pcb->pcb_space = space;
 
-	/* Load all of the user's space registers. */
-	tf->tf_sr0 = tf->tf_sr1 = tf->tf_sr2 = tf->tf_sr3 =
-	tf->tf_sr4 = tf->tf_sr5 = tf->tf_sr6 = space;
-	tf->tf_iisq_head = tf->tf_iisq_tail = space;
+	if (pmap->pmap_vmspace != l->l_proc->p_vmspace) {
+		struct trapframe *tf = l->l_md.md_regs;
 
-	/*
-	 * Load the protection registers.  NB that
-	 * if p *is* the current process, we set pidr2
-	 * to the new space immediately, so any copyins
-	 * or copyouts that happen before we return to
-	 * userspace work.
-	 */
-	tf->tf_pidr1 = tf->tf_pidr2 = pmap->pmap_pid;
+		pmap->pmap_vmspace = l->l_proc->p_vmspace;
+
+		/* Load all of the user's space registers. */
+		tf->tf_sr0 = tf->tf_sr1 = tf->tf_sr2 = tf->tf_sr3 =
+		tf->tf_sr4 = tf->tf_sr5 = tf->tf_sr6 = space;
+		tf->tf_iisq_head = tf->tf_iisq_tail = space;
+
+		/* Load the protection registers. */
+		tf->tf_pidr1 = tf->tf_pidr2 = pmap->pmap_pid;
+	}
+
 	if (p == curproc)
 		mtctl(pmap->pmap_pid, CR_PIDR2);
 }

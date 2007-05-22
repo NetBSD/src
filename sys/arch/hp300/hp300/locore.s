@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.138 2006/09/09 19:45:49 tsutsui Exp $	*/
+/*	$NetBSD: locore.s,v 1.138.18.1 2007/05/22 17:26:49 matt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -555,7 +555,8 @@ Lenab1:
 /* set kernel stack, user SP, and initial pcb */
 	movl	_C_LABEL(proc0paddr),%a1	| get lwp0 pcb addr
 	lea	%a1@(USPACE-4),%sp	| set kernel stack to end of area
-	lea	_C_LABEL(lwp0),%a2	| initialize lwp0.l_addr so that
+	lea	_C_LABEL(lwp0),%a2	| initialize lwp0.l_addr
+	movl	%a2,_C_LABEL(curlwp)	|   and curlwp so that
 	movl	%a1,%a2@(L_ADDR)	|   we don't deref NULL in trap()
 	movl	#USRSTACK-4,%a2
 	movl	%a2,%usp		| init user SP
@@ -1249,11 +1250,6 @@ Ldorte:
 #include <m68k/m68k/support.s>
 
 /*
- * Use common m68k process manipulation routines.
- */
-#include <m68k/m68k/proc_subr.s>
-
-/*
  * Use common m68k process/lwp switch and context save subroutines.
  */
 #define FPCOPROC	/* XXX: Temp. reqd. */
@@ -1574,9 +1570,6 @@ GLOBAL(prototc)
 
 GLOBAL(internalhpib)
 	.long	1			| has internal HP-IB, default to yes
-
-GLOBAL(want_resched)
-	.long	0
 
 GLOBAL(proc0paddr)
 	.long	0			| KVA of lwp0 u-area

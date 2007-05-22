@@ -1,4 +1,4 @@
-/* $NetBSD: multiproc.s,v 1.9 2001/05/05 02:20:53 thorpej Exp $ */
+/* $NetBSD: multiproc.s,v 1.9.90.1 2007/05/22 17:26:28 matt Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-__KERNEL_RCSID(5, "$NetBSD: multiproc.s,v 1.9 2001/05/05 02:20:53 thorpej Exp $")
+__KERNEL_RCSID(5, "$NetBSD: multiproc.s,v 1.9.90.1 2007/05/22 17:26:28 matt Exp $")
 
 /*
  * Multiprocessor glue code.
@@ -71,7 +71,9 @@ NESTED_NOPROFILE(cpu_spinup_trampoline,0,0,ra,0,0)
 	call_pal PAL_OSF1_wrval
 
 	/* Switch to this CPU's idle thread. */
-	ldq	a0, CPU_INFO_IDLE_PCB_PADDR(s0)
+	ldq	a0, CPU_INFO_IDLE_LWP(s0)
+	stq	a0, CPU_INFO_CURLWP(s0)	/* set curlwp */
+	ldq	a0, L_MD_PCBPADDR(a0)
 	SWITCH_CONTEXT
 
 	/* Invalidate TLB and I-stream. */
@@ -87,9 +89,10 @@ NESTED_NOPROFILE(cpu_spinup_trampoline,0,0,ra,0,0)
 	mov	s0, a0
 	CALL(cpu_hatch)
 
-	/* Acquire the scheduler lock, and then jump into the idle loop! */
-	CALL(sched_lock_idle)
-	mov	zero, s0		/* no outgoing proc */
-	jmp	zero, idle
+	/* enable all interrupts */
+	mov	zero, a0
+	call_pal PAL_OSF1_swpipl
+	/* Jump into the idle loop! */
+	jmp	zero, idle_loop
 
 	END(cpu_spinup_trampoline)

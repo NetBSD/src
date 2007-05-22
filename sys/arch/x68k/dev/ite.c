@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.49 2007/03/11 08:09:24 isaki Exp $	*/
+/*	$NetBSD: ite.c,v 1.49.8.1 2007/05/22 17:27:44 matt Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.49 2007/03/11 08:09:24 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.49.8.1 2007/05/22 17:27:44 matt Exp $");
 
 #include "ite.h"
 #if NITE > 0
@@ -221,7 +221,7 @@ itematch(struct device *pdp, struct cfdata *cdp, void *auxp)
 	return 1;
 }
 
-/* 
+/*
  * iteinit() is the standard entry point for initialization of
  * an ite device, it is also called from ite_cninit().
  */
@@ -252,7 +252,7 @@ iteattach(struct device *pdp, struct device *dp, void *auxp)
 			kbd_ite = ip;
 		printf("\n");
 	} else {
-		if (con_itesoftc.grf != NULL) 
+		if (con_itesoftc.grf != NULL)
 			return;
 		con_itesoftc.grf = gp;
 		con_itesoftc.tabs = cons_tabs;
@@ -459,7 +459,7 @@ int
 itepoll(dev_t dev, int events, struct lwp *l)
 {
 	struct tty *tp = ite_tty[UNIT(dev)];
- 
+
 	return ((*tp->t_linesw->l_poll)(tp, events, l));
 }
 
@@ -708,7 +708,7 @@ ite_cnfilter(u_char c)
 	if (mod & KBD_MOD_SHIFT) {
 		if (mod & KBD_MOD_ALT)
 			key = kbdmap.alt_shift_keys[c];
-		else 
+		else
 			key = kbdmap.shift_keys[c];
 	} else if (mod & KBD_MOD_ALT)
 		key = kbdmap.alt_keys[c];
@@ -768,7 +768,7 @@ ite_filter(u_char c)
 	up = c & 0x80 ? 1 : 0;
 	c &= 0x7f;
 	code = 0;
-  
+
 	mask = 0;
 	if (c >= KBD_LEFT_ALT &&
 	    !(c >= 0x63 && c <= 0x6c)) {	/* 0x63: F1, 0x6c:F10 */
@@ -858,7 +858,7 @@ ite_filter(u_char c)
 	if (mod & KBD_MOD_SHIFT) {
 		if (mod & KBD_MOD_ALT)
 			key = kbdmap.alt_shift_keys[c];
-		else 
+		else
 			key = kbdmap.shift_keys[c];
 	} else if (mod & KBD_MOD_ALT)
 		key = kbdmap.alt_keys[c];
@@ -871,14 +871,14 @@ ite_filter(u_char c)
 			key = kbdmap.shift_keys[c];
 	}
 	code = key.code;
- 
+
 	/* handle dead keys */
 	if (key.mode & KBD_MODE_DEAD) {
 		splx(s);
 		return;
 	}
-  	/* if not string, apply META and CTRL modifiers */
-	if (! (key.mode & KBD_MODE_STRING) 
+	/* if not string, apply META and CTRL modifiers */
+	if (! (key.mode & KBD_MODE_STRING)
 	    && (!(key.mode & KBD_MODE_KPAD) ||
 		(kbd_ite && !kbd_ite->keypad_appmode))) {
 		if ((mod & KBD_MOD_CTRL) &&
@@ -892,7 +892,7 @@ ite_filter(u_char c)
 		static const char * const out = "pqrstuvwxymlnMPQRS";
 		char *cp = strchr(in, code);
 
-		/* 
+		/*
 		 * keypad-appmode sends SS3 followed by the above
 		 * translated character
 		 */
@@ -911,7 +911,7 @@ ite_filter(u_char c)
 		  3, 27, 'O', 'D'};
 
 		str = kbdmap.strings + code;
-		/* 
+		/*
 		 * if this is a cursor key, AND it has the default
 		 * keymap setting, AND we're in app-cursor mode, switch
 		 * to the above table. This is *nasty* !
@@ -921,7 +921,7 @@ ite_filter(u_char c)
 		    strchr("ABCD", str[3]))
 			str = app_cursor + 4 * (str[3] - 'A');
 
-		/* 
+		/*
 		 * using a length-byte instead of 0-termination allows
 		 * to embed \0 into strings, although this is not used
 		 * in the default keymap
@@ -1197,7 +1197,7 @@ ite_zargnum(struct ite_softc *ip)
 	*ip->ap = 0;	/* terminate string */
 	n = atoi(ip->argbuf);
 	*ip->ap = ch;
-  
+
 	return n;	/* don't "n ? n : 1" here, <CSI>0m != <CSI>1m ! */
 }
 
@@ -1232,7 +1232,7 @@ iteputchar(int c, struct ite_softc *ip)
 		case ESC:
 			switch (c) {
 				/* first 7bit equivalents for the 8bit control characters */
-		  
+
 			case 'D':
 				c = IND;
 				ip->escape = 0;
@@ -1308,7 +1308,7 @@ iteputchar(int c, struct ite_softc *ip)
 				break;
 
 
-			/* a lot of character set selections, not yet used... 
+			/* a lot of character set selections, not yet used...
 			   94-character sets: */
 			case '(':	/* G0 */
 			case ')':	/* G1 */
@@ -1610,7 +1610,7 @@ iteputchar(int c, struct ite_softc *ip)
 					break;
 				case 6:
 					/* cursor position report */
-					sprintf(ip->argbuf, "\033[%d;%dR", 
+					sprintf(ip->argbuf, "\033[%d;%dR",
 						 ip->cury + 1, ip->curx + 1);
 					ite_sendstr(ip, ip->argbuf);
 					break;
@@ -1701,7 +1701,7 @@ iteputchar(int c, struct ite_softc *ip)
 				return;
 
 			case 'G':
-				/* this one was *not* in my vt320 manual but in 
+				/* this one was *not* in my vt320 manual but in
 				   a vt320 termcap entry.. who is right?
 				   It's supposed to set the horizontal cursor position. */
 				*ip->ap = 0;
@@ -2156,7 +2156,7 @@ iteputchar(int c, struct ite_softc *ip)
 	case VT:	/* VT is treated like LF */
 	case FF:	/* so is FF */
 	case LF:
-		/* cr->crlf distinction is done here, on output, 
+		/* cr->crlf distinction is done here, on output,
 		   not on input! */
 		if (ip->linefeed_newline)
 			ite_crlf(ip);
@@ -2367,7 +2367,7 @@ itecnprobe(struct consdev *cd)
 	/* locate the major number */
 	maj = cdevsw_lookup_major(&ite_cdevsw);
 
-	/* 
+	/*
 	 * return priority of the best ite (already picked from attach)
 	 * or CN_DEAD.
 	 */
