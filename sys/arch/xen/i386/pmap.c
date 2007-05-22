@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.28 2007/04/16 19:12:19 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.28.2.1 2007/05/22 17:27:52 matt Exp $	*/
 /*	NetBSD: pmap.c,v 1.179 2004/10/10 09:55:24 yamt Exp		*/
 
 /*
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.28 2007/04/16 19:12:19 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.28.2.1 2007/05/22 17:27:52 matt Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"
@@ -2061,7 +2061,7 @@ pmap_ldt_cleanup(l)
 		sel = pmap->pm_ldt_sel;
 		pmap->pm_ldt_sel = GSEL(GLDT_SEL, SEL_KPL);
 		pcb->pcb_ldt_sel = pmap->pm_ldt_sel;
-		if (pcb == curpcb)
+		if (l == curlwp)
 			lldt(pcb->pcb_ldt_sel);
 		old_ldt = pmap->pm_ldt;
 		len = pmap->pm_ldt_len * sizeof(union descriptor);
@@ -2194,8 +2194,7 @@ pmap_load()
 	KASSERT(pmap != pmap_kernel());
 	oldpmap = ci->ci_pmap;
 
-	pcb = ci->ci_curpcb;
-	KASSERT(pcb == &l->l_addr->u_pcb);
+	pcb = &l->l_addr->u_pcb;
 	/* loaded by pmap_activate */
 	KASSERT(pcb->pcb_ldt_sel == pmap->pm_ldt_sel);
 
@@ -2271,22 +2270,12 @@ void
 pmap_deactivate(l)
 	struct lwp *l;
 {
-
-	if (l == curlwp)
-		pmap_deactivate2(l);
-}
-
-/*
- * pmap_deactivate2: context switch version of pmap_deactivate.
- * always treat l as curlwp.
- */
-
-void
-pmap_deactivate2(l)
-	struct lwp *l;
-{
 	struct pmap *pmap;
 	struct cpu_info *ci = curcpu();
+
+	if (l != curlwp) {
+		return;
+	}
 
 	if (ci->ci_want_pmapload) {
 		KASSERT(vm_map_pmap(&l->l_proc->p_vmspace->vm_map)
@@ -2512,7 +2501,7 @@ pmap_pageidlezero(pa)
 	pmap_update_pg((vaddr_t)zerova);		/* flush TLB */
 	for (ptr = (int *) zerova, ep = ptr + PAGE_SIZE / sizeof(int);
 	    ptr < ep; ptr++) {
-		if (sched_whichqs != 0) {
+		if (sched_curcpu_runnable_p()) {
 
 			/*
 			 * A process has become ready.  Abort now,

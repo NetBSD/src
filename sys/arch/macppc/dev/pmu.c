@@ -1,4 +1,4 @@
-/*	$NetBSD: pmu.c,v 1.5.4.2 2007/05/11 00:19:27 macallan Exp $ */
+/*	$NetBSD: pmu.c,v 1.5.4.3 2007/05/22 17:27:07 matt Exp $ */
 
 /*-
  * Copyright (c) 2006 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmu.c,v 1.5.4.2 2007/05/11 00:19:27 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmu.c,v 1.5.4.3 2007/05/22 17:27:07 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

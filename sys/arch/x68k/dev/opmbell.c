@@ -1,4 +1,4 @@
-/*	$NetBSD: opmbell.c,v 1.18 2007/03/11 08:22:33 isaki Exp $	*/
+/*	$NetBSD: opmbell.c,v 1.18.8.1 2007/05/22 17:27:45 matt Exp $	*/
 
 /*
  * Copyright (c) 1995 MINOURA Makoto, Takuya Harakawa.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opmbell.c,v 1.18 2007/03/11 08:22:33 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opmbell.c,v 1.18.8.1 2007/05/22 17:27:45 matt Exp $");
 
 #include "bell.h"
 #if NBELL > 0
@@ -449,7 +449,7 @@ bell_timeout(void *arg)
 {
 	struct bell_softc *sc = &bell_softc[0];
 
-	sc->sc_flags &= ~BELLF_OUT; 
+	sc->sc_flags &= ~BELLF_OUT;
 	bell_off(sc);
 	callout_stop(&bell_ch);
 }

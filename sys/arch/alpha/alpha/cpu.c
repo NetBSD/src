@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.73 2005/12/24 20:06:46 perry Exp $ */
+/* $NetBSD: cpu.c,v 1.73.38.1 2007/05/22 17:26:26 matt Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.73 2005/12/24 20:06:46 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.73.38.1 2007/05/22 17:26:26 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -215,12 +215,6 @@ cpuattach(parent, self, aux)
 #endif
 	u_int32_t major, minor;
 	struct cpu_info *ci;
-#if defined(MULTIPROCESSOR)
-	extern paddr_t avail_start, avail_end;
-	struct pcb *pcb;
-	struct pglist mlist;
-	int error;
-#endif
 
 	p = LOCATE_PCS(hwrpb, ma->ma_slot);
 	major = PCS_CPU_MAJORTYPE(p);
@@ -317,45 +311,6 @@ recognized:
 		printf("%s: PALcode not valid\n", sc->sc_dev.dv_xname);
 		return;
 	}
-
-	/*
-	 * Allocate UPAGES contiguous pages for the idle PCB and stack.
-	 */
-	error = uvm_pglistalloc(USPACE, avail_start, avail_end, 0, 0,
-	    &mlist, 1, 1);
-	if (error != 0) {
-		if (ma->ma_slot == hwrpb->rpb_primary_cpu_id) {
-			panic("cpu_attach: unable to allocate idle stack for"
-			    " primary");
-		}
-		printf("%s: unable to allocate idle stack\n",
-		    sc->sc_dev.dv_xname);
-		return;
-	}
-
-	ci->ci_idle_pcb_paddr = VM_PAGE_TO_PHYS(TAILQ_FIRST(&mlist));
-	pcb = ci->ci_idle_pcb = (struct pcb *)
-	    ALPHA_PHYS_TO_K0SEG(ci->ci_idle_pcb_paddr);
-	memset(pcb, 0, USPACE);
-
-	/*
-	 * Initialize the idle stack pointer, reserving space for an
-	 * (empty) trapframe (XXX is the trapframe really necessary?)
-	 */
-	pcb->pcb_hw.apcb_ksp = pcb->pcb_hw.apcb_backup_ksp =
-	    (u_int64_t)pcb + USPACE - sizeof(struct trapframe);
-
-	/*
-	 * Initialize the idle PCB.
-	 */
-	pcb->pcb_hw.apcb_asn = lwp0.l_addr->u_pcb.pcb_hw.apcb_asn;
-	pcb->pcb_hw.apcb_ptbr = lwp0.l_addr->u_pcb.pcb_hw.apcb_ptbr;
-#if 0
-	printf("%s: hwpcb ksp = 0x%lx\n", sc->sc_dev.dv_xname,
-	    pcb->pcb_hw.apcb_ksp);
-	printf("%s: hwpcb ptbr = 0x%lx\n", sc->sc_dev.dv_xname,
-	    pcb->pcb_hw.apcb_ptbr);
-#endif
 #endif /* MULTIPROCESSOR */
 
 	/*
@@ -371,6 +326,15 @@ recognized:
 #endif /* MULTIPROCESSOR */
 	} else {
 #if defined(MULTIPROCESSOR)
+		int error;
+
+		error = mi_cpu_attach(ci);
+		if (error != 0) {
+			aprint_error("%s: mi_cpu_attach failed with %d\n",
+			    sc->sc_dev.dv_xname, error);
+			return;
+		}
+
 		/*
 		 * Boot the secondary processor.  It will announce its
 		 * extensions, and then spin until we tell it to go
@@ -433,7 +397,7 @@ cpu_boot_secondary_processors(void)
 
 	for (i = 0; i < ALPHA_MAXPROCS; i++) {
 		ci = cpu_info[i];
-		if (ci == NULL || ci->ci_idle_pcb == NULL)
+		if (ci == NULL || ci->ci_data.cpu_idlelwp == NULL)
 			continue;
 		if (ci->ci_flags & CPUF_PRIMARY)
 			continue;
@@ -458,7 +422,7 @@ cpu_boot_secondary(struct cpu_info *ci)
 	struct pcb *pcb;
 	u_long cpumask;
 
-	pcb = ci->ci_idle_pcb;
+	pcb = &ci->ci_data.cpu_idlelwp->l_addr->u_pcb;
 	primary_pcsp = LOCATE_PCS(hwrpb, hwrpb->rpb_primary_cpu_id);
 	pcsp = LOCATE_PCS(hwrpb, ci->ci_cpuid);
 	cpumask = (1UL << ci->ci_cpuid);

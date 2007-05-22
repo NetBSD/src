@@ -1,4 +1,4 @@
-|	$NetBSD: vectors.s,v 1.12 2005/12/11 12:19:45 christos Exp $
+|	$NetBSD: vectors.s,v 1.12.38.1 2007/05/22 17:27:49 matt Exp $
 
 | Copyright (c) 1988 University of Utah
 | Copyright (c) 1990, 1993
@@ -170,7 +170,7 @@ GLOBAL(vectab)
 	VECTOR(intiotrap)	/* 111: unassigned, reserved */
 	VECTOR(intiotrap)	/* 112: Z8530 SCC (onboard) */
 	VECTOR(intiotrap)	/* 113: Z8530 SCC */
-	VECTOR(intiotrap)	/* 114: Z8530 SCC */; 
+	VECTOR(intiotrap)	/* 114: Z8530 SCC */
 	VECTOR(intiotrap)	/* 115: unassigned, reserved */
 	VECTOR(intiotrap)	/* 116: unassigned, reserved */
 	VECTOR(intiotrap)	/* 117: unassigned, reserved */

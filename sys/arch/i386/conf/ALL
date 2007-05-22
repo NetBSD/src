@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.95 2007/04/26 17:21:18 dyoung Exp $
+# $NetBSD: ALL,v 1.95.2.1 2007/05/22 17:26:55 matt Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.95 $"
+#ident 		"ALL-$Revision: 1.95.2.1 $"
 
 maxusers	32		# estimated number of users
 
@@ -211,6 +211,7 @@ options 	IPFILTER_LOG	# ipmon(8) log support
 options 	IPFILTER_LOOKUP	# ippool(8) support
 options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
+options 	TCP_SIGNATURE	# RFC2385 support, used with BGP
 
 options 	ALTQ		# Manipulate network interfaces' output queues
 options 	ALTQ_BLUE	# Stochastic Fair Blue
@@ -354,6 +355,7 @@ mpu*		at acpi?		# Roland MPU-401 MIDI UART
 npx*		at acpi?		# Math coprocessor
 pckbc*  	at acpi?		# PC keyboard controller
 pcppi*		at acpi?                # AT-style speaker sound
+ug* 		at acpi?		# Abit uGuru Hardware monitor
 wss* 		at acpi?		# NeoMagic 256AV in wss mode
 ym* 		at acpi?		# Yamaha OPL3-SA[23] audio
 
@@ -1114,6 +1116,9 @@ ucom*	at umct? portno ?
 uplcom* at uhub? port ? 	# I/O DATA USB-RSAQ2 serial adapter
 ucom*	at uplcom? portno ?
 
+uslsa*	at uhub? port ?		# Silicon Labs USB-RS232 serial adapter
+ucom*	at uslsa? portno ?
+
 uvscom* at uhub? port ? 	# SUNTAC Slipper U VS-10U serial adapter
 ucom*	at uvscom? portno ?
 
@@ -1378,6 +1383,7 @@ pseudo-device	vnd			# disk-like interface to files
 options 	VND_COMPRESSION		# compressed vnd(4)
 
 # network pseudo-devices
+pseudo-device	agr			# Link aggregation agr(4)
 pseudo-device	bpfilter		# Berkeley packet filter
 pseudo-device	carp			# Common Address Redundancy Protocol
 pseudo-device	ipfilter		# IP filter (firewall) and NAT

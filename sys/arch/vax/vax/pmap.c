@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.149 2007/04/11 02:22:36 matt Exp $	   */
+/*	$NetBSD: pmap.c,v 1.149.4.1 2007/05/22 17:27:41 matt Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999, 2003 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.149 2007/04/11 02:22:36 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.149.4.1 2007/05/22 17:27:41 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_cputype.h"
@@ -324,7 +324,7 @@ pmap_bootstrap()
 	scratch = istack + ISTACK_SIZE;
 
 	/* Physical-to-virtual translation table */
-	pv_table = (struct pv_entry *)(scratch + 4 * VAX_NBPG);
+	pv_table = (struct pv_entry *)(scratch + 3 * VAX_NBPG);
 
 	avail_start = (vaddr_t)pv_table + (round_page(avail_end >> PGSHIFT)) *
 	    sizeof(struct pv_entry) - KERNBASE;
@@ -396,11 +396,10 @@ pmap_bootstrap()
 	mtpr(pcb->P0LR, PR_P0LR);
 
 	/* cpu_info struct */
-	pcb->SSP = scratch + VAX_NBPG;
+	pcb->SSP = scratch;
 	mtpr(pcb->SSP, PR_SSP);
-	bzero((void *)pcb->SSP,
+	memset((void *)pcb->SSP, 0,
 	    sizeof(struct cpu_info) + sizeof(struct device));
-	curcpu()->ci_exit = scratch;
 #ifdef MUTEX_COUNT_BIAS
 	curcpu()->ci_mtx_count = MUTEX_COUNT_BIAS;
 #endif

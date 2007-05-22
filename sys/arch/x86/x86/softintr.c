@@ -1,7 +1,7 @@
-/*	$NetBSD: softintr.c,v 1.1 2003/02/26 21:26:12 fvdl Exp $	*/
+/*	$NetBSD: softintr.c,v 1.1.68.1 2007/05/22 17:27:50 matt Exp $	*/
 
 /*-
- * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2000, 2001, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -38,10 +38,13 @@
 
 /*
  * Generic soft interrupt implementation for NetBSD/x86.
+ *
+ * This needs to be refactored so that in order to trigger a soft interrupt,
+ * we do not need to acquire locks.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: softintr.c,v 1.1 2003/02/26 21:26:12 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: softintr.c,v 1.1.68.1 2007/05/22 17:27:50 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -166,4 +169,26 @@ softintr_disestablish(void *arg)
 	x86_softintr_unlock(si, s);
 
 	free(sih, M_DEVBUF);
+}
+
+/*
+ * softintr_schedule:	[interface]
+ *
+ *	From a high level interrupt handler, trigger a software
+ *	interrupt to occur at lower priority.
+ */
+void
+softintr_schedule(void *arg)
+{
+	struct x86_soft_intrhand *sih = arg;
+	struct x86_soft_intr *si = sih->sih_intrhead;
+	int s;
+
+	x86_softintr_lock(si, s);
+	if (sih->sih_pending == 0) {
+		TAILQ_INSERT_TAIL(&si->softintr_q, sih, sih_q);
+		sih->sih_pending = 1;
+		softintr(si->softintr_ssir);
+	}
+	x86_softintr_unlock(si, s);
 }

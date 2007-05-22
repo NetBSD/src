@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.7 2007/03/06 00:48:08 simonb Exp $ */
+/* $NetBSD: machdep.c,v 1.7.10.1 2007/05/22 17:26:48 matt Exp $ */
 
 /*
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -147,7 +147,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.7 2007/03/06 00:48:08 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.7.10.1 2007/05/22 17:26:48 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -314,8 +314,8 @@ mach_init(void)
 	v = (void *) uvm_pageboot_alloc(USPACE);
 	lwp0.l_addr = proc0paddr = (struct user *)v;
 	lwp0.l_md.md_regs = (struct frame *)((char *)v + USPACE) - 1;
-	curpcb = &lwp0.l_addr->u_pcb;
-	curpcb->pcb_context[11] = MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
+	proc0paddr->u_pcb.pcb_context[11] =
+	    MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
 
 	/*
 	 * Initialize busses.

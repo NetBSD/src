@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.34 2007/03/16 02:27:16 uwe Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.34.4.1 2007/05/22 17:27:27 matt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 #include <sh3/mmu_sh3.h>
 #include <sh3/mmu_sh4.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore_subr.S,v 1.34 2007/03/16 02:27:16 uwe Exp $")
+__KERNEL_RCSID(0, "$NetBSD: locore_subr.S,v 1.34.4.1 2007/05/22 17:27:27 matt Exp $")
 
 
 /*
@@ -84,26 +84,27 @@ __KERNEL_RCSID(0, "$NetBSD: locore_subr.S,v 1.34 2007/03/16 02:27:16 uwe Exp $")
 	.text
 	.align 5	/* align cache line size (32B) */
 /*
- * LINTSTUB: Func: int cpu_switch(struct lwp *l, struct lwp *XXX_IGNORED)
- *	Find a runnable lwp and switch to it.  Wait if necessary.
+ * LINTSTUB: Func: struct lwp *cpu_switchto(struct lwp *olwp, struct lwp *nlwp)
+ *	Switch to the specified LWP.
  */
-ENTRY(cpu_switch)
-	/* Save current lwp's context to switchframe */
+ENTRY(cpu_switchto)
+	tst	r4, r4			/* olwp can be NULL */
+	bt	.L_saved
+
+	/* Save old lwp's context to switchframe */
 	mov.l	@(L_MD_PCB, r4), r1	/* l->l_md.md_pcb */
 	SAVEPCB(r1)
+.L_saved:
+	/* free to use callee-save registers now */
 
-.L_find_and_switch:
-	/* Search next lwp. cpu_switch_search may or may not sleep. */
-	mov.l	.L_cpu_switch_search, r0
+	/* old and new lwps are already in r4, r5 */
+	mov.l	.L_cpu_switch_prepare, r0
+	mov	r5, r8		/* preserve nlwp */
 	jsr	@r0
-	 mov	r4,	r8	/* save old lwp */
+	 mov	r4, r9		/* preserve olwp */
 
-	/* Skip context switch if same lwp. */
-	cmp/eq	r8,	r0
-	bt/s	1f
-	 mov	r0,	r4	/* new lwp */
+	mov	r8, r4		/* nlwp */
 
-.L_doswitch:
 	/* Restore new lwp's context from switchframe */
 	mov.l	@(L_MD_PCB, r4), r1	/* l->l_md.md_pcb */
 	/* no additional offset to l->l_md.md_pcb->pcb_sf */
@@ -127,16 +128,10 @@ ENTRY(cpu_switch)
 	__EXCEPTION_UNBLOCK(r0, r1)
 	/* Now OK to use kernel stack. */
 
-	/* Return 1 indicating "we switched". */
-	bra	2f
-	 mov	#1, r2
-
-1:	/* Return 0 indicating "didn't switch". */
-	mov	#0, r2
+	mov	r9, r2		/* olwp */
 
 	/* Finish restoring new lwp's context from switchframe */
-	/* NOTE: r2 has return value! */
-2:	mov.l	@(L_MD_PCB, r4), r1	/* l->l_md.md_pcb */
+	mov.l	@(L_MD_PCB, r4), r1	/* l->l_md.md_pcb */
 	/* no additional offset to l->l_md.md_pcb->pcb_sf */
 	add	#4,	r1		/* r15 already restored */
 	mov.l	@r1+,	r14
@@ -156,78 +151,8 @@ ENTRY(cpu_switch)
 	 mov	r2, r0
 
 	.align	2
-.L_cpu_switch_search:	.long	_C_LABEL(cpu_switch_search)
-FUNC_SYMBOL(switch_resume)
-
-
-
-/*
- * LINTSTUB: Func: void cpu_switchto(struct lwp *current, struct lwp *next)
- *	Switch to the specified next LWP.
- */
-ENTRY(cpu_switchto)
-	/* Save current lwp's context to switchframe. */
-	mov.l	@(L_MD_PCB, r4), r1	/* l->l_md.md_pcb */
-	SAVEPCB(r1)
-
-	/*
-	 * curlwp = NULL;
-	 * XXX Is this necessary?  We know we won't go idle.
-	 */
-	mov.l	.L_curlwp, r0
-	mov	#0, r1
-	mov.l	r1, @r0
-
-	/* old and new lwps are already in r4, r5 */
-	mov.l	.L_cpu_switch_prepare, r0
-	jsr	@r0
-	 nop
-
-	/*
-	 * Put the incoming LWP in r4 and jump into the middle
-	 * of cpu_switch(), and let it do the work to restore the
-	 * incoming LWP's context.
-	 */
-	bra	.L_doswitch
-	 mov	r0, r4
-
-	.align	2
-.L_curlwp:		.long	_C_LABEL(curlwp)
 .L_cpu_switch_prepare:	.long	_C_LABEL(cpu_switch_prepare)
-
-
-/*
- * LINTSTUB: Func: void cpu_do_exit(struct lwp *l)
- *	Switch to the lwp0's kernel stack, then jump into the middle
- *	of cpu_switch to find and switch to a new lwp.
- */
-ENTRY(cpu_do_exit)
-	mov.l	.L_switch_exit_lwp0_pcb, r1
-	mov.l	.L_switch_exit_curpcb, r0
-	mov.l	@r1, r1
-	mov.l	r1, @r0			/* curpcb = lwp0.l_md.md_pcb */
-
-	mov.l	@(SF_R7_BANK, r1), r0	/* stack top */
-	mov.l	@(SF_R6_BANK, r1), r2	/* current frame */
-	mov.l	@(SF_R15, r1), r3	/* current stack */
-
-	/* switch to lwp0's kernel stack */
-	__EXCEPTION_BLOCK(r1, r6)
-	ldc	r0, r7_bank
-	ldc	r2, r6_bank
-	mov	r3, r15
-	__EXCEPTION_UNBLOCK(r0, r1)
-
-	/* proceed to cpu_switch */
-	bra	.L_find_and_switch
-	 mov	#0, r4		/* no "previous" lwp */
-
-	.align 2
-.L_switch_exit_lwp0_pcb:
-	.long	_C_LABEL(lwp0) + L_MD_PCB
-.L_switch_exit_curpcb:
-	.long	_C_LABEL(curpcb)
-	SET_ENTRY_SIZE(cpu_do_exit)
+FUNC_SYMBOL(switch_resume)
 
 
 #ifdef SH3
@@ -451,23 +376,38 @@ NENTRY(_cpu_spin)
 
 
 /*
- * proc_trampoline:
- *	cpu_lwp_fork() and cpu_setfunc() arrange for proc_trampoline()
- *	to run when that process gets chosen in cpu_switch().  The
- *	switch frame will contain a function pointer in r12, and an
- *	argument to pass to it in r11 (we abuse the callee-saved
- *	registers).
+ * lwp_trampoline:
  *
- *	The trampoline calls the function that is indended to do some
- *	additional setup.  When the function returns, the trampoline
- *	returns to the user mode.
+ * cpu_lwp_fork() arranges for lwp_trampoline() to run when that
+ * nascent lwp is selected by cpu_switchto().
+ *
+ * The switch frame will contain pointer to struct lwp of this lwp in
+ * r10, a pointer to the function to call in r12, and an argument to
+ * pass to it in r11 (we abuse the callee-saved registers).
+ *
+ * We enter lwp_trampoline as if we are "returning" from
+ * cpu_switchto(), so r0 contains previous lwp (the one we are
+ * switching from) that we pass to lwp_startup().
+ *
+ * After that the trampoline should call the function that is indended
+ * to do some additional setup.  When the function returns, the
+ * trampoline returns to the user mode.
  */
-NENTRY(proc_trampoline)
+NENTRY(lwp_trampoline)
+	mov.l	.L_lwp_startup, r1
+	mov	r0, r4		/* previous lwp returned by cpu_switchto */
+	jsr	@r1
+	 mov	r10, r5		/* my struct lwp */
+ALTENTRY(lwp_setfunc_trampoline)
 	jsr	@r12
-	 mov	r11,	r4
+	 mov	r11, r4
 	__EXCEPTION_RETURN
 	/* NOTREACHED */
-	SET_ENTRY_SIZE(proc_trampoline)
+
+	.align	2
+.L_lwp_startup:		.long	_C_LABEL(lwp_startup)
+
+	SET_ENTRY_SIZE(lwp_trampoline)
 
 
 #ifdef COMPAT_16

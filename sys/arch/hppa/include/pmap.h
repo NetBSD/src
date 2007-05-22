@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.12 2007/04/07 09:02:07 skrll Exp $	*/
+/*	$NetBSD: pmap.h,v 1.12.4.1 2007/05/22 17:26:55 matt Exp $	*/
 
 /*	$OpenBSD: pmap.h,v 1.14 2001/05/09 15:31:24 art Exp $	*/
 
@@ -92,6 +92,7 @@ struct pmap {
 	pa_space_t		pmap_space;	/* space for this pmap */
 	u_int			pmap_pid;	/* protection id for pmap */
 	struct pmap_statistics	pmap_stats;	/* statistics */
+	struct vmspace		*pmap_vmspace;	/* last vmspace */
 } *pmap_t;
 extern pmap_t	kernel_pmap;			/* The kernel's map */
 

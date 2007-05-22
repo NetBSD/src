@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuvar.h,v 1.70 2007/03/04 06:00:45 christos Exp $ */
+/*	$NetBSD: cpuvar.h,v 1.70.10.1 2007/05/22 17:27:30 matt Exp $ */
 
 /*
  *  Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -144,8 +144,8 @@ struct cpu_info {
 	struct cpu_data ci_data;	/* MI per-cpu data */
 
 	/* Scheduler flags */
-	int	want_ast;
-	int	want_resched;
+	int	ci_want_ast;
+	int	ci_want_resched;
 
 	/*
 	 * SPARC cpu_info structures live at two VAs: one global
@@ -211,7 +211,6 @@ struct cpu_info {
 	 */
 	void		*eintstack;		/* End of interrupt stack */
 #define INT_STACK_SIZE	(128 * 128)		/* 128 128-byte stack frames */
-	struct	pcb	*idle_u;
 	void		*redzone;		/* DEBUG: stack red zone */
 #define REDSIZE		(8*96)			/* some room for bouncing */
 

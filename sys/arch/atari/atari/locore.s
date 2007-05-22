@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.97 2007/03/21 10:56:26 tsutsui Exp $	*/
+/*	$NetBSD: locore.s,v 1.97.4.1 2007/05/22 17:26:41 matt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990 The Regents of the University of California.
@@ -1137,13 +1137,6 @@ ENTRY(qsetjmp)
 	movl	%sp@,%a0@		|  and return address
 	moveq	#0,%d0			|  return 0
 	rts
-
-	BSS(want_resched,4)
-
-/*
- * Use common m68k process manipulation routines.
- */
-#include <m68k/m68k/proc_subr.s>
 
 /*
  * Use common m68k process/lwp switch and context save subroutines.

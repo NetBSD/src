@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.2 2007/02/09 21:55:01 ad Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.2.16.1 2007/05/22 17:26:31 matt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -174,7 +174,7 @@ NENTRY(mutex_spin_exit)				/* 0x0080, 60 bytes */
 	movl	%eax,%ebx
 	jnz,pn	3f
 	cmpxchg8b (CPU_INFO_ISTATE-0x200)(%rsi)	/* swap in new ilevel */
-	jnz,pn	3f
+	jnz,pn	1b
 2:
 	popq	%rbx
 	ret

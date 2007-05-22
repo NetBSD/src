@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.148 2007/03/08 02:24:40 tsutsui Exp $	*/
+/*	$NetBSD: locore.s,v 1.148.10.1 2007/05/22 17:27:06 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -340,7 +340,8 @@ Lloaddone:
 /* set kernel stack, user SP, lwp0, and initial pcb */
 	movl	_C_LABEL(proc0paddr),%a1 | get proc0 pcb addr
 	lea	%a1@(USPACE-4),%sp	| set kernel stack to end of area
-	lea	_C_LABEL(lwp0),%a2	| initialize lwp0.l_addr so that
+	lea	_C_LABEL(lwp0),%a2	| initialize lwp0.l_addr
+	movl	%a2,_C_LABEL(curlwp)	|   and curlwp so that
 	movl	%a1,%a2@(L_ADDR)	|   we don't deref NULL in trap()
 	movl	#USRSTACK-4,%a2
 	movl	%a2,%usp		| init %USP
@@ -910,8 +911,6 @@ ENTRY_NOPROFILE(rtclock_intr)
  * necessitating a stack cleanup.
  */
 
-BSS(ssir,1)
-
 ASENTRY_NOPROFILE(rei)
 	tstl	_C_LABEL(astpending)	| AST pending?
 	jeq	Lchksir			| no, go check for SIR
@@ -998,11 +997,6 @@ Ldorte:
  * Use common m68k support routines.
  */
 #include <m68k/m68k/support.s>
-
-/*
- * Use common m68k process manipulation routines.
- */
-#include <m68k/m68k/proc_subr.s>
 
 /*
  * Use common m68k process/lwp switch and context save subroutines.
@@ -1515,9 +1509,6 @@ GLOBAL(fputype)
 
 GLOBAL(protorp)
 	.long	0,0		| prototype root pointer
-
-GLOBAL(want_resched)
-	.long	0
 
 GLOBAL(proc0paddr)
 	.long	0		| KVA of lwp0 u-area

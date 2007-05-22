@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.82 2007/03/04 06:00:08 christos Exp $	*/
+/*	$NetBSD: cpu.h,v 1.82.10.1 2007/05/22 17:27:05 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -120,6 +120,7 @@ struct cpu_info {
 	struct cpu_data ci_data;	/* MI per-cpu data */
 	int	ci_mtx_oldspl;
 	int	ci_mtx_count;
+	int	ci_want_resched;
 };
 
 extern struct cpu_info cpu_info_store;
@@ -156,8 +157,7 @@ struct clockframe {
  * Preempt the current process if in interrupt from user mode,
  * or after the current trap/syscall if in system mode.
  */
-extern int want_resched;	/* resched() was called */
-#define	cpu_need_resched(ci)	{ want_resched++; aston(); }
+#define	cpu_need_resched(ci, v)	{ ci->ci_want_resched++; aston(); }
 
 /*
  * Give a profiling tick to the current process from the softclock
@@ -345,9 +345,7 @@ extern	unsigned long		load_addr;
 
 #ifdef _KERNEL
 
-struct frame;
 struct fpframe;
-struct pcb;
 
 /* machdep.c */
 void	mac68k_set_bell_callback(int (*)(void *, int, int, int), void *);
@@ -358,19 +356,7 @@ u_int	get_mapping(void);
 void	m68881_save(struct fpframe *);
 void	m68881_restore(struct fpframe *);
 int	suline(void *, void *);
-void	savectx(struct pcb *);
-void	switch_exit(struct lwp *);
-void	switch_lwp_exit(struct lwp *);
-void	proc_trampoline(void);
 void	loadustp(int);
-
-/* sys_machdep.c */
-int	cachectl1(unsigned long, vaddr_t, size_t, struct proc *);
-
-/* vm_machdep.c */
-void	physaccess(void *, void *, int, int);
-void	physunaccess(void *, int);
-int	kvtop(void *);
 
 #endif
 

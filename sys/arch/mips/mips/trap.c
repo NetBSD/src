@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.209 2007/03/04 06:00:12 christos Exp $	*/
+/*	$NetBSD: trap.c,v 1.209.10.1 2007/05/22 17:27:12 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.209 2007/03/04 06:00:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.209.10.1 2007/05/22 17:27:12 matt Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ktrace.h"
@@ -98,6 +98,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.209 2007/03/04 06:00:12 christos Exp $");
 #include <sys/ktrace.h>
 #endif
 #include <sys/kauth.h>
+#include <sys/cpu.h>
 
 #include <mips/cache.h>
 #include <mips/locore.h>
@@ -123,8 +124,6 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.209 2007/03/04 06:00:12 christos Exp $");
 #ifdef KGDB
 #include <sys/kgdb.h>
 #endif
-
-int want_resched;
 
 const char *trap_type[] = {
 	"external interrupt",
@@ -621,7 +620,7 @@ ast(unsigned pc)	/* pc is program counter where to continue */
 
 		userret(l);
 
-		if (want_resched) {
+		if (curcpu()->ci_want_resched) {
 			/*
 			 * We are being preempted.
 			 */
@@ -743,7 +742,6 @@ extern char mips3_KernIntr[];
 extern char mips3_UserIntr[];
 extern char mips3_SystemCall[];
 int main(void *);	/* XXX */
-void mips_idle(void);	/* XXX */
 
 /*
  *  stack trace code, also useful to DDB one day
@@ -969,8 +967,8 @@ static struct { void *addr; const char *name;} names[] = {
 	Name(mips3_UserIntr),
 #endif	/* MIPS3 && !MIPS3_5900 */
 
-	Name(mips_idle),
-	Name(cpu_switch),
+	Name(cpu_idle),
+	Name(cpu_switchto),
 	{0, 0}
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: firepower.c,v 1.16 2006/02/23 05:49:42 thorpej Exp $	*/
+/*	$NetBSD: firepower.c,v 1.16.32.1 2007/05/22 17:27:19 matt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: firepower.c,v 1.16 2006/02/23 05:49:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: firepower.c,v 1.16.32.1 2007/05/22 17:27:19 matt Exp $");
+
+#include "pci.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -297,9 +299,11 @@ firepower_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct firepower_softc *sc = (void *) self;
 	struct firepower_config *cp;
-	struct pcibus_attach_args pba;
 	const char *name;
 	char namestore[sizeof("0xXXXXXXXX")];
+#if NPCI > 0
+	struct pcibus_attach_args pba;
+#endif
 
 	/* Note that we've attached the chipset; can't have two. */
 	firepower_found = 1;
@@ -331,6 +335,7 @@ firepower_attach(struct device *parent, struct device *self, void *aux)
 
 	firepower_dma_init(cp);
 
+#if NPCI > 0
 	pba.pba_iot = &cp->c_iot;
 	pba.pba_memt = &cp->c_memt;
 	pba.pba_dmat = &cp->c_dmat_pci;
@@ -341,4 +346,5 @@ firepower_attach(struct device *parent, struct device *self, void *aux)
 	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED |
 	    PCI_FLAGS_MRL_OKAY | PCI_FLAGS_MRM_OKAY | PCI_FLAGS_MWI_OKAY;
 	(void) config_found_ia(self, "pcibus", &pba, pcibusprint);
+#endif /* NPCI > 0 */
 }

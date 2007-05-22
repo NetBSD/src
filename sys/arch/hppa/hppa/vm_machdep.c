@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.24 2007/03/16 08:02:49 skrll Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.24.4.1 2007/05/22 17:26:54 matt Exp $	*/
 
 /*	$OpenBSD: vm_machdep.c,v 1.25 2001/09/19 20:50:56 mickey Exp $	*/
 
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.24 2007/03/16 08:02:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.24.4.1 2007/05/22 17:26:54 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,6 +121,9 @@ void
 cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
     void (*func)(void *), void *arg)
 {
+	struct proc *p = l2->l_proc;
+	pmap_t pmap = p->p_vmspace->vm_map.pmap;
+	pa_space_t space = pmap->pmap_space;
 	struct pcb *pcbp;
 	struct trapframe *tf;
 	register_t sp, osp;
@@ -147,6 +150,8 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	sp = (register_t)l2->l_addr + PAGE_SIZE;
 	l2->l_md.md_regs = tf = (struct trapframe *)sp;
 	sp += sizeof(struct trapframe);
+
+	/* copy the l1's trapframe to l2 */
 	bcopy(l1->l_md.md_regs, tf, sizeof(*tf));
 
 	/*
@@ -155,8 +160,14 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	 */
 	cpu_swapin(l2);
 
-	/* Activate this process' pmap. */
-	pmap_activate(l2);
+	/* Load all of the user's space registers. */
+	tf->tf_sr0 = tf->tf_sr1 = tf->tf_sr3 = tf->tf_sr2 = 
+	tf->tf_sr4 = tf->tf_sr5 = tf->tf_sr6 = space;
+	tf->tf_iisq_head = tf->tf_iisq_tail = space;
+	tf->tf_pidr1 = tf->tf_pidr2 = pmap->pmap_pid;
+
+	/* record the vmspace just in case it changes underneath us. */
+	pmap->pmap_vmspace = p->p_vmspace;
 
 	/*
 	 * theoretically these could be inherited from the father,
@@ -181,44 +192,26 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 		tf->tf_sp = (register_t)stack;
 
 	/*
-	 * Build a stack frame for the cpu_switch & co.
+	 * Build stack frames for the cpu_switchto & co.
 	 */
 	osp = sp;
 
-	/* std frame + callee-save registers */
+	/* lwp_trampoline's frame */
+	sp += HPPA_FRAME_SIZE;
+
+	*(register_t *)(sp + HPPA_FRAME_PSP) = osp;
+	*(register_t *)(sp + HPPA_FRAME_CRP) = (register_t)lwp_trampoline;
+
+	*HPPA_FRAME_CARG(2, sp) = KERNMODE(func);
+	*HPPA_FRAME_CARG(3, sp) = (register_t)arg;
+
+	/*
+	 * cpu_switchto's frame
+	 * 	stack usage is std frame + callee-save registers
+	 */
 	sp += HPPA_FRAME_SIZE + 16*4;
-	*HPPA_FRAME_CARG(1, sp) = KERNMODE(func);
-	*HPPA_FRAME_CARG(2, sp) = (register_t)arg;
-	*(register_t*)(sp + HPPA_FRAME_PSP) = osp;
-	*(register_t*)(sp + HPPA_FRAME_CRP) = (register_t)switch_trampoline;
 	pcbp->pcb_ksp = sp;
 	fdcache(HPPA_SID_KERNEL, (vaddr_t)l2->l_addr, sp - (vaddr_t)l2->l_addr);
-}
-
-void
-cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
-{
-	struct pcb *pcbp;
-	struct trapframe *tf;
-	register_t sp, osp;
-
-	pcbp = &l->l_addr->u_pcb;
-	sp = (register_t)pcbp + PAGE_SIZE;
-	l->l_md.md_regs = tf = (struct trapframe *)sp;
-	sp += sizeof(struct trapframe);
-
-	cpu_swapin(l);
-
-	osp = sp;
-
-	/* std frame + callee-save registers */
-	sp += HPPA_FRAME_SIZE + 16*4;
-	*HPPA_FRAME_CARG(1, sp) = KERNMODE(func);
-	*HPPA_FRAME_CARG(2, sp) = (register_t)arg;
-	*(register_t*)(sp + HPPA_FRAME_PSP) = osp;
-	*(register_t*)(sp + HPPA_FRAME_CRP) = (register_t)switch_trampoline;
-	pcbp->pcb_ksp = sp;
-	fdcache(HPPA_SID_KERNEL, (vaddr_t)l->l_addr, sp - (vaddr_t)l->l_addr);
 }
 
 void
@@ -238,13 +231,6 @@ cpu_lwp_free2(struct lwp *l)
 {
 
 	(void)l;
-}
-
-void
-cpu_exit(struct lwp *l)
-{
-	(void) splsched();
-	switch_exit(l, lwp_exit2);
 }
 
 /*

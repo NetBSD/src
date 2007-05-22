@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.56 2006/10/21 23:49:29 mrg Exp $ */
+/*	$NetBSD: cpu.c,v 1.56.16.1 2007/05/22 17:27:34 matt Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.56 2006/10/21 23:49:29 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.56.16.1 2007/05/22 17:27:34 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -149,8 +149,6 @@ alloc_cpuinfo(u_int cpu_node)
 	cpi->ci_upaid = portid;
 	cpi->ci_fplwp = NULL;
 	cpi->ci_spinup = NULL;						/* XXX */
-	cpi->ci_idle_u = (struct pcb *)IDLE_U_VA;
-	cpi->ci_cpcb = cpi->ci_idle_u;
 	cpi->ci_initstack = (void *)INITSTACK_VA;
 	cpi->ci_paddr = pa0;
 	cpi->ci_self = cpi;
@@ -223,9 +221,17 @@ cpu_attach(struct device *parent, struct device *dev, void *aux)
 	 * Only do this on the boot cpu.  Other cpu's call
 	 * cpu_reset_fpustate() from cpu_hatch() before they
 	 * call into the idle loop.
+	 * For other cpus, we need to call mi_cpu_attach()
+	 * and complete setting up cpcb.
 	 */
 	if (ci->ci_number == 0)
 		cpu_reset_fpustate();
+#ifdef MULTIPROCESSOR
+	else {
+		mi_cpu_attach(ci);
+		ci->ci_cpcb = (struct pcb *)ci->ci_data.cpu_idlelwp->l_addr;
+	}
+#endif
 
 	clk = prom_getpropint(node, "clock-frequency", 0);
 	if (clk == 0) {
@@ -390,9 +396,6 @@ cpu_boot_secondary_processors()
 
 		if (!CPUSET_HAS(cpus_active, ci->ci_number))
 			printf("cpu%d: startup failed\n", ci->ci_upaid);
-		else
-			printf("cpu%d now spinning idle (waited %d iterations)\n",
-			       ci->ci_number, i);
 	}
 
 	printf("\n");
@@ -407,12 +410,9 @@ cpu_hatch()
 	for (i = 0; i < 4*PAGE_SIZE; i += sizeof(long))
 		flush(v + i);
 
-	printf("cpu%d fired up.\n", cpu_number());
 	CPUSET_ADD(cpus_active, cpu_number());
-	for (i = 0; i < 5000000; i++)
-		;
 	cpu_reset_fpustate();
-	printf("cpu%d enters idle loop.\n", cpu_number());
+	curlwp = curcpu()->ci_data.cpu_idlelwp;
 	membar_sync();
 	spl0();
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.121 2007/03/05 12:50:16 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.121.10.1 2007/05/22 17:27:14 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.121 2007/03/05 12:50:16 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.121.10.1 2007/05/22 17:27:14 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_hpux.h"
@@ -730,7 +730,7 @@ cpu_reboot(howto, bootstr)
 {
 
 	/* take a snap shot before clobbering any registers */
-	if (curlwp && curlwp->l_addr)
+	if (curlwp->l_addr)
 		savectx(&curlwp->l_addr->u_pcb);
 
 	/* Save the RB_SBOOT flag. */

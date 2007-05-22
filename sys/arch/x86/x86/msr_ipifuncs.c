@@ -1,4 +1,4 @@
-/* $NetBSD: msr_ipifuncs.c,v 1.8 2007/03/25 02:44:29 xtraeme Exp $ */
+/* $NetBSD: msr_ipifuncs.c,v 1.8.8.1 2007/05/22 17:27:50 matt Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msr_ipifuncs.c,v 1.8 2007/03/25 02:44:29 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msr_ipifuncs.c,v 1.8.8.1 2007/05/22 17:27:50 matt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -59,11 +59,8 @@ __KERNEL_RCSID(0, "$NetBSD: msr_ipifuncs.c,v 1.8 2007/03/25 02:44:29 xtraeme Exp
 #include <machine/intrdefs.h>
 
 static kmutex_t msr_mtx;
-static volatile uint64_t msr_setvalue;
-static volatile uint64_t msr_setmask;
-static volatile int msr_type;
-static volatile int msr_runcount;
-static volatile int msr_read;
+static volatile uint64_t msr_setvalue, msr_setmask;
+static volatile int msr_type, msr_runcount, msr_read;
 
 
 /*

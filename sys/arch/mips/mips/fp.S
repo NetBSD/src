@@ -1,4 +1,4 @@
-/*	$NetBSD: fp.S,v 1.31 2006/03/25 00:08:11 tsutsui Exp $	*/
+/*	$NetBSD: fp.S,v 1.31.26.1 2007/05/22 17:27:09 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -115,7 +115,7 @@ NESTED(MachEmulateFP, CALLFRAME_SIZ, ra)
 	srl	v0, a0, 21 - 2			# get FMT field
 	andi	v0, v0, 0x1F << 2		# mask FMT field
 #ifdef SOFTFLOAT
-	lw	t0, _C_LABEL(curpcb)		# get pcb of current process
+	lw	t0, L_ADDR(MIPS_CURLWP)		# get pcb of current process
 	lw	a3, fmt_tbl(v0)			# switch on FUNC & FMT
 	lw	a2, U_PCB_FPREGS+FRAME_FSR(t0)
 #else
@@ -493,7 +493,7 @@ func_long_fixed_tbl:
 #ifdef SOFTFLOAT
 mfromc1:
 	srl	t1, a0, 11-2
-	lw	t0, _C_LABEL(curpcb)		# get pcb of current process
+	lw	t0, L_ADDR(MIPS_CURLWP)		# get pcb of current process
 	andi	t1, t1, 0x007C
 	addu	t0, t0, t1
 
@@ -519,7 +519,7 @@ mtoc1:
 	REG_EPILOGUE
 
 	srl	t1, a0, 11-2
-	lw	t0, _C_LABEL(curpcb)		# get pcb of current process
+	lw	t0, L_ADDR(MIPS_CURLWP)		# get pcb of current process
 	andi	t1, t1, 0x007C
 	addu	t0, t0, t1
 
@@ -529,7 +529,7 @@ mtoc1:
 
 cfromc1:
 	srl	t1, a0, 11
-	lw	t0, _C_LABEL(curpcb)		# get pcb of current process
+	lw	t0, L_ADDR(MIPS_CURLWP)		# get pcb of current process
 	andi	t1, t1, 0x001F
 	li	t2, 0x1F
 	move	v0, zero
@@ -565,7 +565,7 @@ ctoc1:
 	REG_PROLOGUE
 	REG_L	v0, FRAME_ZERO(v0)
 	REG_EPILOGUE
-	lw	t0, _C_LABEL(curpcb)		# get pcb of current process
+	lw	t0, L_ADDR(MIPS_CURLWP)		# get pcb of current process
 	#nop
 	sw	v0, U_PCB_FPREGS+FRAME_FSR(t0)
 
@@ -1122,7 +1122,7 @@ div_s:
 	and	v0, a2, MIPS_FPU_ENABLE_DIV0	# trap enabled?
 	bne	v0, zero, fpe_trap
 #ifdef SOFTFLOAT
-	lw	t1, _C_LABEL(curpcb)		# get pcb of current process
+	lw	t1, L_ADDR(MIPS_CURLWP)		# get pcb of current process
 	#nop
 	sw	a2, U_PCB_FPREGS+FRAME_FSR(t1)
 #else
@@ -1202,7 +1202,7 @@ div_d:
 	and	v0, a2, MIPS_FPU_ENABLE_DIV0	# trap enabled?
 	bne	v0, zero, fpe_trap
 #ifdef SOFTFLOAT
-	lw	t1, _C_LABEL(curpcb)		# get pcb of current process
+	lw	t1, L_ADDR(MIPS_CURLWP)		# get pcb of current process
 	#nop
 	sw	a2, U_PCB_FPREGS+FRAME_FSR(t1)
 #else
@@ -1818,7 +1818,7 @@ inexact_w:
 	and	v0, a2, MIPS_FPU_ENABLE_INEXACT
 	bne	v0, zero, fpe_trap
 #ifdef SOFTFLOAT
-	lw	v0, _C_LABEL(curpcb)		# get pcb of current process
+	lw	v0, L_ADDR(MIPS_CURLWP)		# get pcb of current process
 	#nop
 	sw	a2, U_PCB_FPREGS+FRAME_FSR(v0)
 #else
@@ -1930,7 +1930,7 @@ set_cond:
 	or	a2, a2, MIPS_FPU_COND_BIT	# set condition bit
 2:
 #ifdef SOFTFLOAT
-	lw	v0, _C_LABEL(curpcb)		# get pcb of current process
+	lw	v0, L_ADDR(MIPS_CURLWP)		# get pcb of current process
 	#nop
 	sw	a2, U_PCB_FPREGS+FRAME_FSR(v0)
 #else
@@ -1953,7 +1953,7 @@ unordered:
 	bne	v0, zero, fpe_trap
 1:
 #ifdef SOFTFLOAT
-	lw	v0, _C_LABEL(curpcb)		# get pcb of current process
+	lw	v0, L_ADDR(MIPS_CURLWP)		# get pcb of current process
 	#nop
 	sw	a2, U_PCB_FPREGS+FRAME_FSR(v0)
 #else
@@ -2070,7 +2070,7 @@ inexact_nobias_s:
 	and	v0, a2, MIPS_FPU_ENABLE_INEXACT
 	bne	v0, zero, fpe_trap
 #ifdef SOFTFLOAT
-	lw	v0, _C_LABEL(curpcb)		# get pcb of current process
+	lw	v0, L_ADDR(MIPS_CURLWP)		# get pcb of current process
 	#nop
 	sw	a2, U_PCB_FPREGS+FRAME_FSR(v0)
 #else
@@ -2191,7 +2191,7 @@ underflow_s:
 	and	v0, a2, MIPS_FPU_ENABLE_INEXACT
 	bne	v0, zero, fpe_trap
 #ifdef SOFTFLOAT
-	lw	v0, _C_LABEL(curpcb)		# get pcb of current process
+	lw	v0, L_ADDR(MIPS_CURLWP)		# get pcb of current process
 	#nop
 	sw	a2, U_PCB_FPREGS+FRAME_FSR(v0)
 #else
@@ -2332,7 +2332,7 @@ inexact_nobias_d:
 	and	v0, a2, MIPS_FPU_ENABLE_INEXACT
 	bne	v0, zero, fpe_trap
 #ifdef SOFTFLOAT
-	lw	v0, _C_LABEL(curpcb)		# get pcb of current process
+	lw	v0, L_ADDR(MIPS_CURLWP)		# get pcb of current process
 	#nop
 	sw	a2, U_PCB_FPREGS+FRAME_FSR(v0)
 #else
@@ -2475,7 +2475,7 @@ underflow_d:
 	and	v0, a2, MIPS_FPU_ENABLE_INEXACT
 	bne	v0, zero, fpe_trap
 #ifdef SOFTFLOAT
-	lw	v0, _C_LABEL(curpcb)		# get pcb of current process
+	lw	v0, L_ADDR(MIPS_CURLWP)		# get pcb of current process
 	#nop
 	sw	a2, U_PCB_FPREGS+FRAME_FSR(v0)
 #else
@@ -2492,7 +2492,7 @@ invalid_s:					# trap invalid operation
 	and	v0, a2, MIPS_FPU_ENABLE_INVALID
 	bne	v0, zero, fpe_trap
 #ifdef SOFTFLOAT
-	lw	v0, _C_LABEL(curpcb)		# get pcb of current process
+	lw	v0, L_ADDR(MIPS_CURLWP)		# get pcb of current process
 	#nop
 	sw	a2, U_PCB_FPREGS+FRAME_FSR(v0)
 #else
@@ -2513,7 +2513,7 @@ invalid_d:					# trap invalid operation
 	and	v0, a2, MIPS_FPU_ENABLE_INVALID
 	bne	v0, zero, fpe_trap
 #ifdef SOFTFLOAT
-	lw	v0, _C_LABEL(curpcb)		# get pcb of current process
+	lw	v0, L_ADDR(MIPS_CURLWP)		# get pcb of current process
 	#nop
 	sw	a2, U_PCB_FPREGS+FRAME_FSR(v0)
 #else
@@ -2535,7 +2535,7 @@ invalid_w:					# trap invalid operation
 	and	v0, a2, MIPS_FPU_ENABLE_INVALID
 	bne	v0, zero, fpe_trap
 #ifdef SOFTFLOAT
-	lw	v0, _C_LABEL(curpcb)		# get pcb of current process
+	lw	v0, L_ADDR(MIPS_CURLWP)		# get pcb of current process
 	#nop
 	sw	a2, U_PCB_FPREGS+FRAME_FSR(v0)
 #else
@@ -2553,7 +2553,7 @@ invalid_w:					# trap invalid operation
  */
 fpe_trap:
 #ifdef SOFTFLOAT
-	lw	v0, _C_LABEL(curpcb)		# get pcb of current process
+	lw	v0, L_ADDR(MIPS_CURLWP)		# get pcb of current process
 	#nop
 	sw	a2, U_PCB_FPREGS+FRAME_FSR(v0)
 #else
@@ -2561,12 +2561,12 @@ fpe_trap:
 	 * ctc1 with fpe bits set causes FPE in kernel mode panic on 5231.
 	 */
 	sw	a2, CALLFRAME_SIZ + 12(sp)
-	lw	a0, _C_LABEL(fpcurlwp)
+	lw	a0, CPUVAR(FPCURLWP)
 	jal	_C_LABEL(savefpregs)		# on RM5231
 
 	lw	a2, CALLFRAME_SIZ + 12(sp)
 
-	lw	v0, _C_LABEL(curpcb)		# get pcb of current process
+	lw	v0, L_ADDR(MIPS_CURLWP)		# get pcb of current process
 	#nop
 	sw	a2, U_PCB_FPREGS+FRAME_FSR(v0)
 #endif
@@ -2581,7 +2581,7 @@ fpe_trap:
  */
 ill:
 #ifdef SOFTFLOAT
-	lw	v0, _C_LABEL(curpcb)		# get pcb of current process
+	lw	v0, L_ADDR(MIPS_CURLWP)		# get pcb of current process
 	#nop
 	sw	a2, U_PCB_FPREGS+FRAME_FSR(v0)
 #else
@@ -2667,7 +2667,7 @@ END(MachEmulateFP)
 STATIC_LEAF(get_fs_int)
 #ifdef SOFTFLOAT
 	srl	t2, a0, 11-2
-	lw	t0, _C_LABEL(curpcb)		# get pcb of current process
+	lw	t0, L_ADDR(MIPS_CURLWP)		# get pcb of current process
 	andi	t2, t2, 0x0078			# Even regs only
 	addu	t0, t0, t2
 
@@ -2780,7 +2780,7 @@ END(get_fs_int)
 STATIC_LEAF(get_ft_fs_s)
 #ifdef SOFTFLOAT
 	srl	ta0, a0, 16-2
-	lw	ta1, _C_LABEL(curpcb)		# get pcb of current process
+	lw	ta1, L_ADDR(MIPS_CURLWP)		# get pcb of current process
 	andi	ta0, ta0, 0x0078			# Even regs only
 	addu	ta1, ta1, ta0
 
@@ -2897,7 +2897,7 @@ get_ft_s_done:
 STATIC_XLEAF(get_fs_s)
 #ifdef SOFTFLOAT
 	srl	t0, a0, 11-2
-	lw	t1, _C_LABEL(curpcb)		# get pcb of current process
+	lw	t1, L_ADDR(MIPS_CURLWP)		# get pcb of current process
 	andi	t0, t0, 0x0078			# Even regs only
 	addu	t1, t1, t0
 
@@ -3020,7 +3020,7 @@ END(get_ft_fs_s)
 STATIC_LEAF(get_ft_fs_d)
 #ifdef SOFTFLOAT
 	srl	ta3, a0, 16-2
-	lw	ta0, _C_LABEL(curpcb)		# get pcb of current process
+	lw	ta0, L_ADDR(MIPS_CURLWP)		# get pcb of current process
 	andi	ta3, ta3, 0x0078			# Even regs only
 	addu	ta0, ta0, ta3
 
@@ -3155,7 +3155,7 @@ get_ft_d_done:
 STATIC_XLEAF(get_fs_d)
 #ifdef SOFTFLOAT
 	srl	t3, a0, 11-2
-	lw	t0, _C_LABEL(curpcb)		# get pcb of current process
+	lw	t0, L_ADDR(MIPS_CURLWP)		# get pcb of current process
 	andi	t3, t3, 0x0078			# Even regs only
 	addu	t0, t0, t3
 
@@ -3293,7 +3293,7 @@ END(get_ft_fs_d)
 STATIC_LEAF(get_cmp_s)
 #ifdef SOFTFLOAT
 	srl	t1, a0, 11-2
-	lw	ta2, _C_LABEL(curpcb)		# get pcb of current process
+	lw	ta2, L_ADDR(MIPS_CURLWP)		# get pcb of current process
 	andi	t1, t1, 0x0078			# Even regs only
 	addu	t0, ta2, t1
 
@@ -3497,7 +3497,7 @@ END(get_cmp_s)
 STATIC_LEAF(get_cmp_d)
 #ifdef SOFTFLOAT
 	srl	t1, a0, 11-2
-	lw	ta2, _C_LABEL(curpcb)		# get pcb of current process
+	lw	ta2, L_ADDR(MIPS_CURLWP)		# get pcb of current process
 	andi	t1, t1, 0x0078			# Even regs only
 	addu	t0, ta2, t1
 
@@ -3744,7 +3744,7 @@ STATIC_LEAF(set_fd_s)
 STATIC_XLEAF(set_fd_word)
 #ifdef SOFTFLOAT
 	srl	t1, a0, 6-2
-	lw	t0, _C_LABEL(curpcb)		# get pcb of current process
+	lw	t0, L_ADDR(MIPS_CURLWP)		# get pcb of current process
 	andi	t1, t1, 0x0078			# Even regs only
 	addu	t0, t0, t1
 
@@ -3850,7 +3850,7 @@ STATIC_LEAF(set_fd_d)
 	or	t0, t0, t2			# set fraction
 
 	srl	t1, a0, 6-2
-	lw	t2, _C_LABEL(curpcb)		# get pcb of current process
+	lw	t2, L_ADDR(MIPS_CURLWP)		# get pcb of current process
 	andi	t1, t1, 0x0078			# Even regs only
 	addu	t2, t2, t1
 
@@ -4965,7 +4965,7 @@ STATIC_XLEAF(bcemul_sigill)
 	REG_EPILOGUE
 
 	move	a2, a0				# code = instruction
-	lw	a0, _C_LABEL(curlwp)		# get current process
+	move	a0, MIPS_CURLWP			# get current process
 	li	a1, SIGILL
 	j	_C_LABEL(fpemul_trapsignal)
 END(fpemul_sigill)
@@ -4979,7 +4979,7 @@ STATIC_LEAF(fpemul_sigfpe)
 	REG_EPILOGUE
 
 	move	a2, a0				# code = instruction
-	lw	a0, _C_LABEL(curlwp)		# get current process
+	move	a0, MIPS_CURLWP			# get current process
 	li	a1, SIGFPE
 	j	_C_LABEL(fpemul_trapsignal)
 END(fpemul_sigfpe)
@@ -4994,7 +4994,7 @@ STATIC_LEAF(bcemul_sigfpe)
 	REG_EPILOGUE
 
 	move	a2, a0				# code = instruction
-	lw	a0, _C_LABEL(curlwp)		# get current process
+	move	a0, MIPS_CURLWP			# get current process
 	li	a1, SIGFPE
 	j	_C_LABEL(fpemul_trapsignal)
 END(bcemul_sigfpe)

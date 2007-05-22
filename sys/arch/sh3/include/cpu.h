@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.43 2007/02/16 02:53:51 ad Exp $	*/
+/*	$NetBSD: cpu.h,v 1.43.14.1 2007/05/22 17:27:25 matt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -100,12 +100,21 @@ struct clockframe {
  * Preempt the current process if in interrupt from user mode,
  * or after the current trap/syscall if in system mode.
  */
-#define	cpu_need_resched(ci)						\
+#define	cpu_need_resched(ci, flags)					\
 do {									\
 	want_resched = 1;						\
-	if (curlwp != NULL)						\
+	if (curlwp != ci->ci_data.cpu_idlelwp)				\
 		aston(curlwp);						\
 } while (/*CONSTCOND*/0)
+
+/*
+ * MI code calls this with proper locking.
+ */
+#define	cpu_did_resched()						\
+do {									\
+	want_resched = 0;						\
+} while (0)
+
 
 /*
  * Give a profiling tick to the current process when the user profiling

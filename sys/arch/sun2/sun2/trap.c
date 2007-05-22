@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.30 2007/03/16 18:29:35 tsutsui Exp $	*/
+/*	$NetBSD: trap.c,v 1.30.4.1 2007/05/22 17:27:37 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.30 2007/03/16 18:29:35 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.30.4.1 2007/05/22 17:27:37 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -257,8 +257,6 @@ trap(int type, u_int code, u_int v, struct trapframe tf)
 	KSI_INIT_TRAP(&ksi);
 	ksi.ksi_trap = type & ~T_USER;
 
-	if (l == NULL)
-		l = &lwp0;
 	p = l->l_proc;
 
 #ifdef	DIAGNOSTIC
@@ -464,7 +462,7 @@ trap(int type, u_int code, u_int v, struct trapframe tf)
 			l->l_pflag &= ~LP_OWEUPC;
 			ADDUPROF(l);
 		}
-		if (want_resched)
+		if (curcpu()->ci_want_resched)
 			preempt();
 		goto douret;
 
