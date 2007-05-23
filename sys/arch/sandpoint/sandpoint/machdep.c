@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.35.14.9 2007/05/23 03:07:07 nisimura Exp $	*/
+/*	$NetBSD: machdep.c,v 1.35.14.10 2007/05/23 05:32:24 nisimura Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.35.14.9 2007/05/23 03:07:07 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.35.14.10 2007/05/23 05:32:24 nisimura Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -114,6 +114,8 @@ extern void *startsym, *endsym;
 extern struct consdev kcomcons;
 #endif
 
+size_t mpc107memsize(void);
+
 void
 initppc(u_int startkernel, u_int endkernel, u_int args, void *btinfo)
 {
@@ -126,15 +128,17 @@ initppc(u_int startkernel, u_int endkernel, u_int args, void *btinfo)
 		args = RB_SINGLE;	/* boot via S-record loader */
 		
 	/*
-	 * XXX could determine real size by analysing MEMC SDRAM registers XXX
+	 * Determine real size by analysing SDRAM control registers. 
 	 */
 	{
 		struct btinfo_memory *meminfo;
-		size_t memsize = 32 * 1024 * 1024; /* assume 32MB */
+		size_t memsize;
 
 		meminfo = lookup_bootinfo(BTINFO_MEMORY);
 		if (meminfo)
 			memsize = meminfo->memsize & ~PGOFSET;
+		else
+			memsize = mpc107memsize();
 		physmemr[0].start = 0;
 		physmemr[0].size = memsize;
 		availmemr[0].start = (endkernel + PGOFSET) & ~PGOFSET;
@@ -462,6 +466,46 @@ sandpoint_bus_space_init(void)
 	    ex_storage[2], sizeof(ex_storage[2]));
 	if (error)
 		panic("sandpoint_bus_space_init: can't init eumb tag");
+}
+
+#define MPC107_MEMENDADDR1	0x90	/* Memory ending address 1 */
+#define MPC107_EXTMEMENDADDR1	0x98	/* Extd. memory ending address 1 */
+#define MPC107_MEMEN		0xa0	/* Memory enable */
+
+size_t
+mpc107memsize()
+{
+	/*
+	 * assumptions here;
+	 * - first 4 sets of SDRAM controlling register have been
+	 * set right in the ascending order.
+	 * - total SDRAM size is the last valid SDRAM address +1.
+	 */
+	unsigned val, n, bankn, end;
+
+	out32rb(0xfec00000, (1U<<31) | MPC107_MEMEN);
+	val = in32rb(0xfee00000);
+	if ((val & 0xf) == 0)
+		return 32 * 1024 * 1024; /* eeh? */
+
+	bankn = 0;
+	for (n = 0; n < 4; n++) {
+		if ((val & (1U << n)) == 0)
+			break;
+		bankn = n;
+	}
+	bankn = bankn * 8;
+
+	/* the format is "00 xx xxxxxxxx << 20" */
+	out32rb(0xfec00000, (1U<<31) | MPC107_EXTMEMENDADDR1); /* bit 29:28 */
+	val = in32rb(0xfee00000);
+	end =  ((val >> bankn) & 0x03) << 28;
+	out32rb(0xfec00000, (1U<<31) | MPC107_MEMENDADDR1);    /* bit 27:20 */
+	val = in32rb(0xfee00000);
+	end |= ((val >> bankn) & 0xff) << 20;
+	end |= 0xfffff;					       /* bit 19:00 */
+
+	return (end + 1); /* recongize this as the amount of SDRAM */
 }
 
 /* XXX needs to make openpic.c implementation-neutral XXX */
