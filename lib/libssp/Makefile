@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2006/11/08 19:52:11 christos Exp $
+#	$NetBSD: Makefile,v 1.2 2007/05/23 14:41:02 christos Exp $
 
 USE_SHLIBDIR=	yes
 WARNS=4
@@ -11,6 +11,7 @@ SRCS=	gets_chk.c fgets_chk.c memcpy_chk.c memmove_chk.c memset_chk.c \
 
 INCS=	ssp/ssp.h ssp/stdio.h ssp/string.h ssp/unistd.h
 INCSDIR=/usr/include
+MAN=	ssp.3 __builtin_object_size.3
 
 .include <bsd.own.mk>
 .include <bsd.shlib.mk>
