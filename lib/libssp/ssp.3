@@ -1,4 +1,4 @@
-.\"	$NetBSD: ssp.3,v 1.1 2007/05/23 14:41:02 christos Exp $
+.\"	$NetBSD: ssp.3,v 1.2 2007/05/23 15:00:39 christos Exp $
 .\"
 .\" Copyright (c) 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -74,26 +74,26 @@
 .Fn strncat "char *str" "const char *ptr" "size_t len"
 .In ssp/unistd.h
 .Ft ssize_t
-.Fn read "int fd", "void *str" "size_t len"
+.Fn read "int fd" "void *str" "size_t len"
 .Ft int
-.Fn readlink "const char * restrict path", "char * restrict str" "size_t len"
+.Fn readlink "const char * restrict path" "char * restrict str" "size_t len"
 .Ft int
 .Fn getcwd "char *str" "size_t len"
 .Sh DESCRIPTION
 When 
 .Dv _FORTIFY_SOURCE
-bounds checking is enabled as described below, the functions get overwriten
-to utilize the
+bounds checking is enabled as described below, the above functions get
+overwriten to utilize the
 .Xr gcc 1
 .Xr __builtin_object_size 3
 function to compute the size of
 .Fa str
 if known at compile time and perform bounds check on it in order
 to avoid data buffer or stack buffer overflows.
-If such overflow is detected the routines will call
+If an overflow is detected the routines will call
 .Xr abort 3 .
 .Pp
-To enable these functions the following should be added to the
+To enable these function overrides the following should be added to the
 .Xr gcc 1
 command line:
 .Dq \-I/usr/include/ssp
