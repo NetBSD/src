@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.87.4.6 2007/05/21 11:52:12 skrll Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.87.4.7 2007/05/23 02:20:05 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include "opt_ktrace.h"
 #include "opt_multiprocessor.h"
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.87.4.6 2007/05/21 11:52:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.87.4.7 2007/05/23 02:20:05 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1402,6 +1402,15 @@ sa_switchcall(void *arg)
 	upcallret(l2);
 }
 
+/*
+ * sa_newcachelwp
+ *	Allocate a new lwp, attach it to l's vp, and add it to
+ * the vp's idle cache.
+ *	Assumes no locks (other than kernel lock) on entry and exit.
+ * Locks scheduler lock during operation.
+ *	Returns 0 on success or if process is exiting. Returns ENOMEM
+ * if it is unable to allocate a new uarea.
+ */
 static int
 sa_newcachelwp(struct lwp *l)
 {
@@ -1435,8 +1444,10 @@ sa_newcachelwp(struct lwp *l)
 }
 
 /*
- * Take a normal process LWP and place it in the SA cache.
+ * sa_putcachelwp
+ *	Take a normal process LWP and place it in the SA cache.
  * LWP must not be running!
+ *	Scheduler lock held on entry and exit.
  */
 void
 sa_putcachelwp(struct proc *p, struct lwp *l)
@@ -1460,7 +1471,9 @@ sa_putcachelwp(struct proc *p, struct lwp *l)
 }
 
 /*
- * Fetch a LWP from the cache.
+ * sa_getcachelwp
+ *	Fetch a LWP from the cache.
+ * Scheduler lock held on entry and exit.
  */
 struct lwp *
 sa_getcachelwp(struct sadata_vp *vp)
@@ -1566,6 +1579,22 @@ sa_unblock_userret(struct lwp *l)
 	KERNEL_PROC_UNLOCK(l);
 }
 
+/*
+ * sa_upcall_userret
+ *	We are about to exit the kernel and return to userland, and
+ * userret() noticed we have upcalls pending. So deliver them.
+ *
+ *	This is the place where unblocking upcalls get generated. We
+ * allocate the stack & upcall event here. We may block doing so, but
+ * we lock our LWP state (clear L_SA for the moment) while doing so.
+ *
+ *	In the case of delivering multiple upcall events, we will end up
+ * writing multiple stacks out to userland at once. The last one we send
+ * out will be the first one run, then it will notice the others and
+ * run them.
+ *
+ * No locks held on entry or exit. We lock the scheduler during processing.
+ */
 void
 sa_upcall_userret(struct lwp *l)
 {
@@ -1658,6 +1687,18 @@ sa_upcall_userret(struct lwp *l)
 	(*(sae)->sae_sacopyout)((type), (kp), (void *)(up)) : \
 	copyout((kp), (void *)(up), sizeof(*(kp))))
 
+/*
+ * sa_makeupcalls
+ *	We're delivering the first upcall on lwp l, so
+ * copy everything out. We assigned the stack for this upcall
+ * when we enqueued it.
+ *
+ *	KERNEL_PROC_LOCK should be held on entry and exit, and
+ * SA_LWP_STATE should also be locked (L_SA temporarily disabled).
+ *
+ *	If the enqueued event was DEVERED, this is the time when we set
+ * up the upcall event's state.
+ */
 static inline void
 sa_makeupcalls(struct lwp *l)
 {
