@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.127 2007/05/23 17:15:01 christos Exp $	*/
+/*	$NetBSD: in6.c,v 1.128 2007/05/23 17:32:46 christos Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.127 2007/05/23 17:15:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.128 2007/05/23 17:32:46 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_pfil_hooks.h"
@@ -1396,8 +1396,6 @@ in6_purgeaddr(struct ifaddr *ifa)
 
 static void
 in6_unlink_ifa(struct in6_ifaddr *ia, struct ifnet *ifp)
-	struct in6_ifaddr *ia;
-	struct ifnet *ifp;
 {
 	struct in6_ifaddr *oia;
 	int	s = splnet();

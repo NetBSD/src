@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_mroute.c,v 1.81 2007/05/23 17:15:02 christos Exp $	*/
+/*	$NetBSD: ip6_mroute.c,v 1.82 2007/05/23 17:32:46 christos Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.49 2001/07/25 09:21:18 jinmei Exp $	*/
 
 /*
@@ -117,7 +117,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.81 2007/05/23 17:15:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.82 2007/05/23 17:32:46 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_mrouting.h"
@@ -1631,7 +1631,7 @@ phyint_send(struct ip6_hdr *ip6, struct mif6 *mifp, struct mbuf *m)
 }
 
 static int
-register_send(struct ip6_hdr *ip6, struct mif6 *mif, truct mbuf *m)
+register_send(struct ip6_hdr *ip6, struct mif6 *mif, struct mbuf *m)
 {
 	struct mbuf *mm;
 	int i, len = m->m_pkthdr.len;
