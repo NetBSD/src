@@ -1,4 +1,4 @@
-/*	$NetBSD: string.h,v 1.1 2006/11/08 19:52:11 christos Exp $	*/
+/*	$NetBSD: string.h,v 1.2 2007/05/23 21:13:15 tls Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -54,22 +54,22 @@
     __ ## fun ## _ichk(dst, src))
 
 #define __ssp_bos_icheck3_restrict(fun, type1, type2) \
-type1 __ ## fun ## _ichk(type1 __restrict, type2 __restrict, size_t); \
-inline __attribute__((__always_inline__)) type1 \
+static __inline type1 __ ## fun ## _ichk(type1 __restrict, type2 __restrict, size_t); \
+static __inline __attribute__((__always_inline__)) type1 \
 __ ## fun ## _ichk(type1 __restrict dst, type2 __restrict src, size_t len) { \
 	return __builtin___ ## fun ## _chk(dst, src, len, __ssp_bos0(dst)); \
 }
 
 #define __ssp_bos_icheck3(fun, type1, type2) \
-type1 __ ## fun ## _ichk(type1, type2, size_t); \
-inline __attribute__((__always_inline__)) type1 \
+static __inline type1 __ ## fun ## _ichk(type1, type2, size_t); \
+static __inline __attribute__((__always_inline__)) type1 \
 __ ## fun ## _ichk(type1 dst, type2 src, size_t len) { \
 	return __builtin___ ## fun ## _chk(dst, src, len, __ssp_bos0(dst)); \
 }
 
 #define __ssp_bos_icheck2_restrict(fun, type1, type2) \
-type1 __ ## fun ## _ichk(type1, type2); \
-inline __attribute__((__always_inline__)) type1 \
+static __inline type1 __ ## fun ## _ichk(type1, type2); \
+static __inline __attribute__((__always_inline__)) type1 \
 __ ## fun ## _ichk(type1 __restrict dst, type2 __restrict src) { \
 	return __builtin___ ## fun ## _chk(dst, src, __ssp_bos0(dst)); \
 }
