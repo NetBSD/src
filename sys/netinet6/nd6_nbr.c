@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.74 2007/05/17 00:53:26 dyoung Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.75 2007/05/23 17:15:03 christos Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.74 2007/05/17 00:53:26 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.75 2007/05/23 17:15:03 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1043,8 +1043,7 @@ nd6_dad_starttimer(struct dadq *dp, int ticks)
 }
 
 static void
-nd6_dad_stoptimer(dp)
-	struct dadq *dp;
+nd6_dad_stoptimer(struct dadq *dp)
 {
 
 	callout_stop(&dp->dad_timer_ch);
