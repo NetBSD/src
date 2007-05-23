@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.35.14.8 2007/05/23 01:45:11 nisimura Exp $	*/
+/*	$NetBSD: machdep.c,v 1.35.14.9 2007/05/23 03:07:07 nisimura Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.35.14.8 2007/05/23 01:45:11 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.35.14.9 2007/05/23 03:07:07 nisimura Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -110,6 +110,10 @@ struct pic_ops *isa_pic = NULL;
 extern void *startsym, *endsym;
 #endif
 
+#if 1
+extern struct consdev kcomcons;
+#endif
+
 void
 initppc(u_int startkernel, u_int endkernel, u_int args, void *btinfo)
 {
@@ -183,6 +187,14 @@ initppc(u_int startkernel, u_int endkernel, u_int args, void *btinfo)
 	 */
 	oea_init(NULL);
 
+#if 1 /* bumpy ride in pre-dawn time, for people knows what he/she is doing */
+	ksyms_init((int)((u_int)endsym - (u_int)startsym), startsym, endsym);
+	cn_tab = &kcomcons;
+	(*cn_tab->cn_init)(&kcomcons);
+	if (boothowto & RB_KDB)
+		Debugger();
+#endif
+
 	/*	
 	 * Initialize bus_space.
 	 */	
@@ -200,7 +212,7 @@ initppc(u_int startkernel, u_int endkernel, u_int args, void *btinfo)
 	 */
 	pmap_bootstrap(startkernel, endkernel);
 
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if 0 /* NKSYMS || defined(DDB) || defined(LKM) */
 	ksyms_init((int)((u_int)endsym - (u_int)startsym), startsym, endsym);
 #endif
 #ifdef IPKDB
@@ -452,7 +464,7 @@ sandpoint_bus_space_init(void)
 		panic("sandpoint_bus_space_init: can't init eumb tag");
 }
 
-/* XXX XXX XXX */
+/* XXX needs to make openpic.c implementation-neutral XXX */
 
 unsigned epicsteer[] = {
 	0x10200,	/* external irq 0 direct/serial */
@@ -482,3 +494,95 @@ unsigned epicsteer[] = {
 	0x11120,	/* DUART 0, MPC8245 */
 	0x11140,	/* DUART 1, MPC8245 */
 };
+
+/* XXX XXX debug purpose only XXX XXX */
+
+static dev_type_cninit(kcomcninit);
+static dev_type_cngetc(kcomcngetc);
+static dev_type_cnputc(kcomcnputc);
+static dev_type_cnpollc(kcomcnpollc);
+
+struct consdev kcomcons = {
+	NULL, kcomcninit, kcomcngetc, kcomcnputc, kcomcnpollc, NULL,
+	NULL, NULL, NODEV, CN_NORMAL
+};
+
+static unsigned uartbase = 0xfe0003f8;
+#define THR		0
+#define RBR		0
+#define LSR		5
+#define LSR_THRE	0x20
+#define UART_READ(r)		*(volatile char *)(uartbase + (r))
+#define UART_WRITE(r, v)	*(volatile char *)(uartbase + (r)) = (v)
+#define LSR_RFE		0x80
+#define LSR_TXEMPTY		0x20
+#define LSR_BE			0x10
+#define LSR_FE			0x08
+#define LSR_PE			0x04
+#define LSR_OE			0x02
+#define LSR_RXREADY		0x01
+#define LSR_ANYE		(LSR_OE|LSR_PE|LSR_FE|LSR_BE)
+
+static void
+kcomcninit(struct consdev *cn)
+{
+	struct btinfo_console *bi = lookup_bootinfo(BTINFO_CONSOLE);
+
+	if (bi != NULL) {
+		if (strcmp(bi->devname, "com") == 0)
+			uartbase = 0xfe000000 + bi->addr;
+		else if (strcmp(bi->devname, "eumb") == 0)
+			uartbase = 0xfc000000 + bi->addr;
+	}
+	/*
+	 * we do not touch UART operating parameters since bootloader
+	 * is supposed to have done well.
+	 */
+}
+
+static int
+kcomcngetc(dev_t dev)
+{
+	unsigned lsr;
+	int s, c;
+
+	s = splserial();
+#if 1
+	do {
+		lsr = UART_READ(LSR);
+	} while ((lsr & LSR_ANYE) || (lsr & LSR_RXREADY) == 0);
+#else
+    again:
+	do {
+		lsr = UART_READ(LSR);
+	} while ((lsr & LSR_RXREADY) == 0);
+	if (lsr & (LSR_BE | LSR_FE | LSR_PE)) {
+		(void)UART_READ(RBR);
+		goto again;
+	}
+#endif
+	c = UART_READ(RBR);
+	splx(s);
+	return c & 0xff;
+}
+
+static void
+kcomcnputc(dev_t dev, int c)
+{
+	unsigned lsr, timo;
+	int s;
+
+	s = splserial();
+	timo = 150000;
+	do {
+		lsr = UART_READ(LSR);
+	} while (timo-- > 0 && (lsr & LSR_TXEMPTY) == 0);
+	if (timo > 0)
+		UART_WRITE(THR, c);
+	splx(s);
+}
+
+static void
+kcomcnpollc(dev_t dev, int on)
+{
+}
