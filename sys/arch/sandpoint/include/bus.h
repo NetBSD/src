@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.7.38.1 2007/05/04 10:34:13 nisimura Exp $	*/
+/*	$NetBSD: bus.h,v 1.7.38.2 2007/05/23 01:45:10 nisimura Exp $	*/
 /*	$OpenBSD: bus.h,v 1.1 1997/10/13 10:53:42 pefo Exp $	*/
 
 #ifndef _SANDPOINT_BUS_H_
@@ -24,6 +24,7 @@ extern struct powerpc_bus_space sandpoint_io_space_tag;
 extern struct powerpc_bus_space genppc_isa_io_space_tag;
 extern struct powerpc_bus_space sandpoint_mem_space_tag;
 extern struct powerpc_bus_space genppc_isa_mem_space_tag;
+extern struct powerpc_bus_space sandpoint_eumb_space_tag;
 #endif
 
 #include <powerpc/bus.h>
