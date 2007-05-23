@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.164 2007/05/23 22:54:53 pavel Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.165 2007/05/23 23:10:49 riz Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -5590,4 +5590,32 @@ etc/etc.i386/MAKEDEV.conf			patch
 
 	Create /dev/bio.
 	[martti, ticket #657]
+
+sys/arch/amiga/dev/siop.c			1.56
+sys/arch/amiga/dev/siop2.c			1.28
+
+	Fix warnings with DEBUG enabled.
+	[mhitch, ticket #658]
+
+sys/arch/amiga/amiga/amiga_init.c		1.95
+sys/arch/amiga/amiga/pmap.c			1.123
+sys/arch/amiga/include/vmparam.h		1.35
+
+	Final changes to amiga kernel address space layout to match almost
+	all the other m68k ports.  A DEBUG kernel should now boot without
+	panicing.
+	[mhitch, ticket #659]
+
+distrib/utils/sysinst/arch/i386/md.h		1.58
+distrib/utils/sysinst/arch/i386/msg.md.de	1.11
+distrib/utils/sysinst/arch/i386/msg.md.en	1.53
+distrib/utils/sysinst/arch/i386/msg.md.es	1.6
+distrib/utils/sysinst/arch/i386/msg.md.fr	1.43
+distrib/utils/sysinst/arch/i386/msg.md.pl	1.26
+etc/etc.i386/Makefile.inc			1.50
+sys/arch/i386/conf/GENERIC.NOACPI		1.1
+
+	Add GENERIC.NOACPI kernel that offers - surprise! - no ACPI
+	(in contrast to GENERIC).
+	[hubertf, ticket #661]
 
