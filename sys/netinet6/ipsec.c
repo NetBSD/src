@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.118 2007/05/23 17:15:03 christos Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.119 2007/05/23 17:32:47 christos Exp $	*/
 /*	$KAME: ipsec.c,v 1.136 2002/05/19 00:36:39 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.118 2007/05/23 17:15:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.119 2007/05/23 17:32:47 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1407,7 +1407,7 @@ ipsec4_set_policy(struct inpcb *inp, int optname, void *request,
 }
 
 int
-ipsec4_get_policy(struct inpcb *inp, void *request, size_tlen, 
+ipsec4_get_policy(struct inpcb *inp, void *request, size_t len, 
 	struct mbuf **mp)
 {
 	struct sadb_x_policy *xpl;
@@ -1779,7 +1779,7 @@ ipsec4_in_reject_so(struct mbuf *m, struct socket *so)
 }
 
 int
-ipsec4_in_reject(truct mbuf *m, struct inpcb *inp)
+ipsec4_in_reject(struct mbuf *m, struct inpcb *inp)
 {
 	if (inp == NULL)
 		return ipsec4_in_reject_so(m, NULL);
