@@ -1,4 +1,4 @@
-/*	$NetBSD: string.h,v 1.3 2007/05/23 21:38:00 tls Exp $	*/
+/*	$NetBSD: string.h,v 1.4 2007/05/23 22:35:38 tls Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -87,14 +87,6 @@ __END_DECLS
 #define memcpy(dst, src, len) __ssp_bos_check3(memcpy, dst, src, len)
 #define memmove(dst, src, len) __ssp_bos_check3(memmove, dst, src, len)
 #define memset(dst, val, len) __ssp_bos_check3(memset, dst, val, len)
-#define bcopy(src, dst, len) \
-    ((__ssp_bos0(dst) != (size_t)-1) ? \
-    __builtin___memmove_chk(dst, src, __ssp_bos0(dst)) : \
-    __memmove_ichk(dst, src, len))
-#define bzero(dst, len) \
-    ((__ssp_bos0(dst) != (size_t)-1) ? \
-    __builtin___memset_chk(dst, 0, __ssp_bos0(dst)) : \
-    __memset_ichk(dst, src, len))
 #define strcpy(dst, src) __ssp_bos_check2(strcpy, dst, src)
 #define strcat(dst, src) __ssp_bos_check2(strcat, dst, src)
 #define strncpy(dst, src, len) __ssp_bos_check3(strncpy, dst, src, len)
