@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.125 2007/05/22 05:05:32 mhitch Exp $	*/
+/*	$NetBSD: pmap.c,v 1.126 2007/05/23 00:47:03 mhitch Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.125 2007/05/22 05:05:32 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.126 2007/05/23 00:47:03 mhitch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -294,6 +294,9 @@ static int	pmap_ishift;	/* segment table index shift */
 int		protostfree;	/* prototype (default) free ST map */
 #endif
 
+pt_entry_t	*caddr1_pte;	/* PTE for CADDR1 */
+pt_entry_t	*caddr2_pte;	/* PTE for CADDR2 */
+
 extern void *	msgbufaddr;
 extern paddr_t	msgbufpa;
 
@@ -331,7 +334,6 @@ void		pmap_collect1(pmap_t, paddr_t, paddr_t);
  * All those kernel PT submaps that BSD is so fond of
  */
 void 	*CADDR1, *CADDR2, *vmmap;
-u_int	*CMAP1, *CMAP2, *vmpte, *msgbufmap;
 
 #define	PAGE_IS_MANAGED(pa)	(pmap_initialized			\
 				 && vm_physseg_find(atop((pa)), NULL) != -1)
@@ -369,7 +371,6 @@ pmap_bootstrap(firstaddr, loadaddr)
 	paddr_t loadaddr;
 {
 	vaddr_t va;
-	u_int *pte;
 	int i;
 	struct boot_memseg *sp, *esp;
 	paddr_t fromads, toads;
@@ -470,16 +471,14 @@ pmap_bootstrap(firstaddr, loadaddr)
 	/*
 	 * Allocate all the submaps we need
 	 */
-#define	SYSMAP(c, p, v, n)	\
-	v = (c)va; va += ((n)*PAGE_SIZE); p = pte; pte += (n);
+#define	SYSMAP(c, v, n)	\
+	v = (c)va; va += ((n)*PAGE_SIZE);
 
 	va = virtual_avail;
-	pte = pmap_pte(pmap_kernel(), va);
 
-	SYSMAP(void *	,CMAP1	   ,CADDR1	 ,1			)
-	SYSMAP(void *	,CMAP2	   ,CADDR2	 ,1			)
-	SYSMAP(void *	,vmpte	   ,vmmap	 ,1			)
-	SYSMAP(void *	,msgbufmap ,msgbufaddr   ,btoc(MSGBUFSIZE)	)
+	SYSMAP(void *	,CADDR1	 ,1			)
+	SYSMAP(void *	,CADDR2	 ,1			)
+	SYSMAP(void *	,vmmap	 ,1			)
 
 	DCIS();
 
@@ -508,6 +507,13 @@ pmap_init()
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
 		printf("pmap_init()\n");
+	/*
+	 * Before we do anything else, initialize the PTE pointers
+	 * used by pmap_zero_page() and pmap_copy_page().
+	 */
+	caddr1_pte = pmap_pte(pmap_kernel(), CADDR1);
+	caddr2_pte = pmap_pte(pmap_kernel(), CADDR2);
+
 	if (pmapdebug & PDB_INIT) {
 		printf("pmap_init: Sysseg %p, Sysmap %p, Sysptmap %p\n",
 		    Sysseg, Sysmap, Sysptmap);
@@ -1800,7 +1806,7 @@ pmap_zero_page(phys)
 
 	s = splvm();
 
-	*CMAP1 = phys | dst_pte;
+	*caddr1_pte = phys | dst_pte;
 	TBIS((vaddr_t)CADDR1);
 	zeropage(CADDR1);
 
@@ -1809,7 +1815,7 @@ pmap_zero_page(phys)
 	 * XXX: Invalidating is not strictly necessary.... Not doing it
          * is saving us a few cycles
 	 */
-	*CMAP1 = PG_NV;
+	*caddr1_pte = PG_NV;
 	TBIS((vaddr_t)CADDR1);
 #endif
 
@@ -1851,9 +1857,9 @@ pmap_copy_page(src, dst)
 #endif
 
 	s = splvm();
-	*CMAP1 = src | src_pte;
+	*caddr1_pte = src | src_pte;
 	TBIS((vaddr_t)CADDR1);
-	*CMAP2 = dst | dst_pte;
+	*caddr2_pte = dst | dst_pte;
 	TBIS((vaddr_t)CADDR2);
 
 	copypage(CADDR1, CADDR2);
@@ -1863,9 +1869,9 @@ pmap_copy_page(src, dst)
 	 * XXX: Invalidating is not strictly necessary.... Not doing it
          * is saving us a few cycles
 	 */
-	*CMAP1 = PG_NV;
+	*caddr1_pte = PG_NV;
 	TBIS((vaddr_t)CADDR1);
-	*CMAP2 = PG_NV;
+	*caddr2_pte = PG_NV;
 	TBIS((vaddr_t)CADDR2);
 #endif
 
