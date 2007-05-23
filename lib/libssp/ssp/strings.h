@@ -1,4 +1,4 @@
-/*	$NetBSD: strings.h,v 1.1 2007/05/23 22:35:38 tls Exp $	*/
+/*	$NetBSD: strings.h,v 1.2 2007/05/23 22:50:04 tls Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
 #define bzero(dst, len) \
     ((__ssp_bos0(dst) != (size_t)-1) ? \
     __builtin___memset_chk(dst, 0, __ssp_bos0(dst)) : \
-    __memset_ichk(dst, src, len))
+    __memset_ichk(dst, 0, len))
 
 #endif /* __SSP_FORTIFY_LEVEL > 0 */
 #endif /* _SSP_STRINGS_H_ */
