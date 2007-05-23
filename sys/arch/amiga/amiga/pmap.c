@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.118 2006/09/14 01:27:59 mhitch Exp $	*/
+/*	$NetBSD: pmap.c,v 1.118.4.1 2007/05/23 23:04:30 riz Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.118 2006/09/14 01:27:59 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.118.4.1 2007/05/23 23:04:30 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -442,7 +442,6 @@ pmap_bootstrap(firstaddr, loadaddr)
 	}
 
 	mem_size = physmem << PGSHIFT;
-	virtual_avail = VM_MIN_KERNEL_ADDRESS + (firstaddr - loadaddr);
 	virtual_end = VM_MAX_KERNEL_ADDRESS;
 
 	/*
@@ -495,8 +494,6 @@ pmap_bootstrap(firstaddr, loadaddr)
 void
 pmap_init()
 {
-	extern vaddr_t	amigahwaddr;
-	extern u_int	namigahwpg;
 	vaddr_t		addr, addr2;
 	vsize_t		s;
 	u_int		npg;
@@ -511,35 +508,6 @@ pmap_init()
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
 		printf("pmap_init()\n");
-#endif
-	/*
-	 * Now that kernel map has been allocated, we can mark as
-	 * unavailable regions which we have mapped in locore.
-	 * XXX in pmap_bootstrap() ???
-	 */
-	addr = (vaddr_t) amigahwaddr;
-	if (uvm_map(kernel_map, &addr,
-		    ptoa(namigahwpg),
-		    NULL, UVM_UNKNOWN_OFFSET, 0,
-		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE,
-				UVM_INH_NONE, UVM_ADV_RANDOM,
-				UVM_FLAG_FIXED)) != 0)
-		goto bogons;
-	addr = (vaddr_t) Sysmap;
-	if (uvm_map(kernel_map, &addr, AMIGA_KPTSIZE,
-		    NULL, UVM_UNKNOWN_OFFSET, 0,
-		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE,
-				UVM_INH_NONE, UVM_ADV_RANDOM,
-				UVM_FLAG_FIXED)) != 0) {
-		/*
-		 * If this fails, it is probably because the static
-		 * portion of the kernel page table isn't big enough
-		 * and we overran the page table map.
-		 */
- bogons:
-		panic("pmap_init: bogons in the VM system!");
-	}
-#ifdef DEBUG
 	if (pmapdebug & PDB_INIT) {
 		printf("pmap_init: Sysseg %p, Sysmap %p, Sysptmap %p\n",
 		    Sysseg, Sysmap, Sysptmap);
