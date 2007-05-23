@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.238 2007/05/22 18:15:58 mrg Exp $	*/
+/*	$NetBSD: locore.s,v 1.239 2007/05/23 14:51:16 he Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -4410,7 +4410,6 @@ Lgandul:	nop
 	MUNGE(NOP_ON_4M_10)
 	MUNGE(NOP_ON_4M_11)
 	MUNGE(NOP_ON_4M_12)
-	MUNGE(NOP_ON_4M_15)
 	b,a	2f
 
 1:
