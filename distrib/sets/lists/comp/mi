@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1028 2007/05/18 05:09:08 yamt Exp $
+#	$NetBSD: mi,v 1.1029 2007/05/23 14:46:06 christos Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -3962,6 +3962,7 @@
 ./usr/share/man/cat3/__SHIFTIN.0		comp-c-catman		.cat
 ./usr/share/man/cat3/__SHIFTOUT.0		comp-c-catman		.cat
 ./usr/share/man/cat3/__SHIFTOUT_MASK.0		comp-c-catman		.cat
+./usr/share/man/cat3/__builtin_object_size.0	comp-c-catman		.cat
 ./usr/share/man/cat3/__svc_getcallercreds.0	comp-c-catman		.cat
 ./usr/share/man/cat3/_longjmp.0			comp-c-catman		.cat
 ./usr/share/man/cat3/_lwp_makecontext.0		comp-c-catman		.cat
@@ -5972,6 +5973,7 @@
 ./usr/share/man/cat3/srandom.0			comp-c-catman		.cat
 ./usr/share/man/cat3/sscanf.0			comp-c-catman		.cat
 ./usr/share/man/cat3/ssl.0			comp-c-catman		crypto,.cat
+./usr/share/man/cat3/ssp.0			comp-c-catman		.cat
 ./usr/share/man/cat3/standend.0			comp-c-catman		.cat
 ./usr/share/man/cat3/standout.0			comp-c-catman		.cat
 ./usr/share/man/cat3/start_color.0		comp-c-catman		.cat
@@ -8299,6 +8301,7 @@
 ./usr/share/man/man3/__SHIFTIN.3		comp-c-man		.man
 ./usr/share/man/man3/__SHIFTOUT.3		comp-c-man		.man
 ./usr/share/man/man3/__SHIFTOUT_MASK.3		comp-c-man		.man
+./usr/share/man/man3/__builtin_object_size.3	comp-c-man		.man
 ./usr/share/man/man3/__svc_getcallercreds.3	comp-c-man		.man
 ./usr/share/man/man3/_longjmp.3			comp-c-man		.man
 ./usr/share/man/man3/_lwp_makecontext.3		comp-c-man		.man
@@ -10305,6 +10308,7 @@
 ./usr/share/man/man3/srandom.3			comp-c-man		.man
 ./usr/share/man/man3/sscanf.3			comp-c-man		.man
 ./usr/share/man/man3/ssl.3			comp-c-man		crypto,.man
+./usr/share/man/man3/ssp.3			comp-c-man		.man
 ./usr/share/man/man3/standend.3			comp-c-man		.man
 ./usr/share/man/man3/standout.3			comp-c-man		.man
 ./usr/share/man/man3/start_color.3		comp-c-man		.man
