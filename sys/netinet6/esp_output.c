@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_output.c,v 1.27 2007/05/23 17:15:00 christos Exp $	*/
+/*	$NetBSD: esp_output.c,v 1.28 2007/05/23 17:32:46 christos Exp $	*/
 /*	$KAME: esp_output.c,v 1.44 2001/07/26 06:53:15 jinmei Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_output.c,v 1.27 2007/05/23 17:15:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_output.c,v 1.28 2007/05/23 17:32:46 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -733,7 +733,7 @@ esp4_output(struct mbuf *m, struct ipsecrequest *isr)
 
 #ifdef INET6
 int
-esp6_output(truct mbuf *, u_char *nexthdrp, 
+esp6_output(struct mbuf *m, u_char *nexthdrp, 
 	struct mbuf *md, struct ipsecrequest *isr)
 {
 	if (m->m_len < sizeof(struct ip6_hdr)) {
