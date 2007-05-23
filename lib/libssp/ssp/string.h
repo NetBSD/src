@@ -1,4 +1,4 @@
-/*	$NetBSD: string.h,v 1.2 2007/05/23 21:13:15 tls Exp $	*/
+/*	$NetBSD: string.h,v 1.3 2007/05/23 21:38:00 tls Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -97,8 +97,8 @@ __END_DECLS
     __memset_ichk(dst, src, len))
 #define strcpy(dst, src) __ssp_bos_check2(strcpy, dst, src)
 #define strcat(dst, src) __ssp_bos_check2(strcat, dst, src)
-#define strncpy(dst, src, lne) __ssp_bos_check3(strncpy, dst, src, len)
-#define strncat(dst, src, lne) __ssp_bos_check3(strncat, dst, src, len)
+#define strncpy(dst, src, len) __ssp_bos_check3(strncpy, dst, src, len)
+#define strncat(dst, src, len) __ssp_bos_check3(strncat, dst, src, len)
 
 #endif /* __SSP_FORTIFY_LEVEL > 0 */
 #endif /* _SSP_STRING_H_ */
