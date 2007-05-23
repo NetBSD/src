@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.163 2007/05/23 17:28:17 riz Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.164 2007/05/23 22:54:53 pavel Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -5573,4 +5573,21 @@ usr.sbin/etcupdate/etcupdate			1.35
 
 	/etc/services needs special attention.
 	[martti, ticket #654]
+
+sys/netbt/l2cap_signal.c			1.8
+
+	Fix Bluetooth on 64-bit archs.
+	[plunky, ticket #660]
+
+dist/ipf/man/ipmon.8				1.18
+
+	Added missing .TP
+	[martti, ticket #668]
+
+etc/MAKEDEV.tmpl				1.86
+etc/etc.amd64/MAKEDEV.conf			1.10
+etc/etc.i386/MAKEDEV.conf			patch
+
+	Create /dev/bio.
+	[martti, ticket #657]
 
