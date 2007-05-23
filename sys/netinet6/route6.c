@@ -1,4 +1,4 @@
-/*	$NetBSD: route6.c,v 1.19 2007/05/17 11:48:43 yamt Exp $	*/
+/*	$NetBSD: route6.c,v 1.20 2007/05/23 17:15:04 christos Exp $	*/
 /*	$KAME: route6.c,v 1.22 2000/12/03 00:54:00 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route6.c,v 1.19 2007/05/17 11:48:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route6.c,v 1.20 2007/05/23 17:15:04 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -128,10 +128,8 @@ route6_input(struct mbuf **mp, int *offp, int proto)
  * as it was dropped between RFC1883 and RFC2460.
  */
 static int
-ip6_rthdr0(m, ip6, rh0)
-	struct mbuf *m;
-	struct ip6_hdr *ip6;
-	struct ip6_rthdr0 *rh0;
+ip6_rthdr0(struct mbuf *m, struct ip6_hdr *ip6, 
+	struct ip6_rthdr0 *rh0)
 {
 	int addrs, index;
 	struct in6_addr *nextaddr, tmpaddr;

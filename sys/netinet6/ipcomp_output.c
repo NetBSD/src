@@ -1,4 +1,4 @@
-/*	$NetBSD: ipcomp_output.c,v 1.20 2006/11/24 19:47:00 christos Exp $	*/
+/*	$NetBSD: ipcomp_output.c,v 1.21 2007/05/23 17:15:03 christos Exp $	*/
 /*	$KAME: ipcomp_output.c,v 1.24 2001/07/26 06:53:18 jinmei Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipcomp_output.c,v 1.20 2006/11/24 19:47:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipcomp_output.c,v 1.21 2007/05/23 17:15:03 christos Exp $");
 
 #include "opt_inet.h"
 
@@ -100,12 +100,8 @@ static int ipcomp_output __P((struct mbuf *, u_char *, struct mbuf *,
  *	<-----------------> compoff
  */
 static int
-ipcomp_output(m, nexthdrp, md, isr, af)
-	struct mbuf *m;
-	u_char *nexthdrp;
-	struct mbuf *md;
-	struct ipsecrequest *isr;
-	int af;
+ipcomp_output(struct mbuf *m, u_char *nexthdrp, struct mbuf *md, 
+	struct ipsecrequest *isr, int af)
 {
 	struct mbuf *n;
 	struct mbuf *md0;
@@ -345,9 +341,7 @@ fail:
 
 #ifdef INET
 int
-ipcomp4_output(m, isr)
-	struct mbuf *m;
-	struct ipsecrequest *isr;
+ipcomp4_output(struct mbuf *m, struct ipsecrequest *isr)
 {
 	struct ip *ip;
 	if (m->m_len < sizeof(struct ip)) {
@@ -364,11 +358,8 @@ ipcomp4_output(m, isr)
 
 #ifdef INET6
 int
-ipcomp6_output(m, nexthdrp, md, isr)
-	struct mbuf *m;
-	u_char *nexthdrp;
-	struct mbuf *md;
-	struct ipsecrequest *isr;
+ipcomp6_output(struct mbuf *m, u_char *nexthdrp, struct mbuf *md, 
+	struct ipsecrequest *isr)
 {
 	if (m->m_len < sizeof(struct ip6_hdr)) {
 		ipseclog((LOG_DEBUG, "ipcomp6_output: first mbuf too short\n"));
