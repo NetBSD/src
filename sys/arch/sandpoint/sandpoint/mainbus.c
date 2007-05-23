@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.18.38.2 2007/05/09 02:27:15 nisimura Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.18.38.3 2007/05/23 01:45:11 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.18.38.2 2007/05/09 02:27:15 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.18.38.3 2007/05/23 01:45:11 nisimura Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -48,13 +48,16 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.18.38.2 2007/05/09 02:27:15 nisimura E
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pciconf.h>
 
-int	mainbus_match __P((struct device *, struct cfdata *, void *));
-void	mainbus_attach __P((struct device *, struct device *, void *));
+struct conf_args {
+	const char *ca_name;
+};
+
+int	mainbus_match(struct device *, struct cfdata *, void *);
+void	mainbus_attach(struct device *, struct device *, void *);
+int	mainbus_print(void *, const char *);
 
 CFATTACH_DECL(mainbus, sizeof(struct device),
     mainbus_match, mainbus_attach, NULL, NULL);
-
-int	mainbus_print __P((void *, const char *));
 
 struct powerpc_isa_chipset genppc_ict;
 
@@ -79,6 +82,7 @@ mainbus_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
+	struct conf_args ca;
 	struct pcibus_attach_args pba;
 #if defined(PCI_NETBSD_CONFIGURE)
 	struct extent *ioext, *memext;
@@ -86,10 +90,10 @@ mainbus_attach(parent, self, aux)
 
 	printf("\n");
 
-	/*
-	 * Always find the CPU
-	 */
-	config_found_ia(self, "mainbus", NULL, mainbus_print);
+	ca.ca_name = "cpu";
+	config_found_ia(self, "mainbus", &ca, mainbus_print);
+	ca.ca_name = "eumb";
+	config_found_ia(self, "mainbus", &ca, mainbus_print);
 
 	/*
 	 * XXX Note also that the presence of a PCI bus should
@@ -134,7 +138,10 @@ extern struct cfdriver cpu_cd;
 int
 cpu_match(struct device *parent, struct cfdata *cf, void *aux)
 {
+	struct conf_args *ca = aux;
 
+	if (strcmp(ca->ca_name, cpu_cd.cd_name) != 0)
+		return 0;
 	if (cpu_info[0].ci_dev != NULL)
 		return 0;
 
@@ -153,8 +160,9 @@ mainbus_print(aux, pnp)
 	void *aux;
 	const char *pnp;
 {
+	struct conf_args *ca = aux;
 
 	if (pnp)
-		aprint_normal("cpu at %s", pnp);
+		aprint_normal("%s at %s", ca->ca_name, pnp);
 	return (UNCONF);
 }

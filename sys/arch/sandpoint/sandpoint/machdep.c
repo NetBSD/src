@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.35.14.7 2007/05/10 16:23:37 garbled Exp $	*/
+/*	$NetBSD: machdep.c,v 1.35.14.8 2007/05/23 01:45:11 nisimura Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.35.14.7 2007/05/10 16:23:37 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.35.14.8 2007/05/23 01:45:11 nisimura Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -73,26 +73,32 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.35.14.7 2007/05/10 16:23:37 garbled Ex
 
 #include <powerpc/oea/bat.h>
 #include <powerpc/openpic.h>
-#include <arch/powerpc/pic/picvar.h>
+#include <powerpc/pic/picvar.h>
 
 #include <ddb/db_extern.h>
 
 #include <dev/cons.h>
+#include <sys/termios.h>
 
 #include "com.h"
 #if (NCOM > 0)
-#include <sys/termios.h>
 #include <dev/ic/comreg.h>
 #include <dev/ic/comvar.h>
 #endif
 
+#include "com_eumb.h"
+#if (NCOM_EUMB > 0)
+#include <sandpoint/sandpoint/eumbvar.h>
+#endif
+
+#include "pcib.h"
 #include "ksyms.h"
 
 char bootinfo[BOOTINFO_MAXSIZE];
 
 void initppc(u_int, u_int, u_int, void *);
-void sandpoint_bus_space_init(void);
 void consinit(void);
+void sandpoint_bus_space_init(void);
 
 #define	OFMEMREGIONS	32
 struct mem_region physmemr[OFMEMREGIONS], availmemr[OFMEMREGIONS];
@@ -122,8 +128,7 @@ initppc(u_int startkernel, u_int endkernel, u_int args, void *btinfo)
 		struct btinfo_memory *meminfo;
 		size_t memsize = 32 * 1024 * 1024; /* assume 32MB */
 
-		meminfo =
-			(struct btinfo_memory *)lookup_bootinfo(BTINFO_MEMORY);
+		meminfo = lookup_bootinfo(BTINFO_MEMORY);
 		if (meminfo)
 			memsize = meminfo->memsize & ~PGOFSET;
 		physmemr[0].start = 0;
@@ -138,11 +143,12 @@ initppc(u_int startkernel, u_int endkernel, u_int args, void *btinfo)
 	 */
 	{
 		struct btinfo_clock *clockinfo;
-		u_long ticks = 100 * 1000 * 1000; /* assume 100MHz */
+		u_long ticks;
 		extern u_long ticks_per_sec, ns_per_tick;
 
-		clockinfo =
-			(struct btinfo_clock *)lookup_bootinfo(BTINFO_CLOCK);
+		ticks = 1000000000;	/* 100 MHz */
+		ticks /= 4;		/* 4 cycles per DEC tick */
+		clockinfo = lookup_bootinfo(BTINFO_CLOCK);
 		if (clockinfo)
 			ticks = clockinfo->ticks_per_sec;
 		ticks_per_sec = ticks;
@@ -162,7 +168,7 @@ initppc(u_int startkernel, u_int endkernel, u_int args, void *btinfo)
 	oea_batinit(
 	    SANDPOINT_BUS_SPACE_MEM,  BAT_BL_256M,
 	    SANDPOINT_BUS_SPACE_IO,   BAT_BL_32M,
-	    SANDPOINT_BUS_SPACE_EUMB, BAT_BL_256K,
+	    SANDPOINT_BUS_SPACE_EUMB, BAT_BL_32M,
 	    0);
 
 	/*
@@ -236,10 +242,11 @@ cpu_startup(void)
 	 */
 	baseaddr = (void *)(SANDPOINT_BUS_SPACE_EUMB + 0x40000);
 	pic_init();
-#if 1 /* PIC_I8259 */
+#if NPCIB > 0
 	/* set up i8259 as a cascade on EPIC irq 0 */
 	isa_pic = setup_i8259();
 	(void)setup_openpic(baseaddr, 0);
+	/* XXX exceptional SP2 has 17 XXX */
 	intr_establish(16, IST_LEVEL, IPL_NONE, pic_handle_intr, isa_pic);
 #else
 	(void)setup_openpic(baseaddr, 0);
@@ -299,26 +306,31 @@ consinit(void)
 		return;
 	initted = 1;
 
-	consinfo = (struct btinfo_console *)lookup_bootinfo(BTINFO_CONSOLE);
+	consinfo = lookup_bootinfo(BTINFO_CONSOLE);
 	if (consinfo == NULL)
 		consinfo = &bi_cons;
 
 #if (NCOM > 0)
-	if (strcmp(consinfo->devname, "com") == 0
-	    || strcmp(consinfo->devname, "eumb") == 0) {
+	if (strcmp(consinfo->devname, "com") == 0) {
 		bus_space_tag_t tag = &genppc_isa_io_space_tag;
-		int frq = COM_FREQ;	
-#if 0
-		if (strcmp(consinfo->devname, "eumb") == 0) {
-			tag = &genppc_eumb_space_tag;
-			frq = ticks_per_sec;
-		}
-#endif
-		if (comcnattach(tag, consinfo->addr, consinfo->speed,
-		    frq, COM_TYPE_NORMAL,
-		    ((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8)))
-			panic("can't init serial console");
 
+	return;
+		if (comcnattach(tag, consinfo->addr, consinfo->speed,
+		    COM_FREQ, COM_TYPE_NORMAL,
+		    ((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8)))
+			panic("can't init com serial console");
+		return;
+	}
+#endif
+#if (NCOM_EUMB > 0)
+	if (strcmp(consinfo->devname, "eumb") == 0) {
+		bus_space_tag_t tag = &sandpoint_eumb_space_tag;
+		extern u_long ticks_per_sec;
+
+		if (eumbcnattach(tag, consinfo->addr, consinfo->speed,
+		    4 * ticks_per_sec, COM_TYPE_NORMAL,
+		    ((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8)))
+			panic("can't init eumb serial console");
 		return;
 	}
 #endif
@@ -333,44 +345,36 @@ void
 cpu_reboot(int howto, char *what)
 {
 	static int syncing;
-	static char str[256];
-	char *ap = str, *ap1 = ap;
 
 	boothowto = howto;
-	if (!cold && !(howto & RB_NOSYNC) && !syncing) {
-		syncing = 1;
+	if ((howto & RB_NOSYNC) == 0 && syncing == 0) {
+		syncing = 1; 
 		vfs_shutdown();		/* sync */
 		resettodr();		/* set wall clock */
-	}
-	splhigh();
-	if (howto & RB_HALT) {
-		doshutdownhooks();
-		printf("halted\n\n");
-		while(1);
-	}
-	if (!cold && (howto & RB_DUMP))
+	}	    
+	
+	/* Disable intr */
+	splhigh();	
+	
+	/* Do dump if requested */
+	if ((howto & (RB_DUMP | RB_HALT)) == RB_DUMP)
 		oea_dumpsys();
+	
 	doshutdownhooks();
-	printf("rebooting\n\n");
-	if (what && *what) {
-		if (strlen(what) > sizeof str - 5)
-			printf("boot string too large, ignored\n");
-		else {
-			strcpy(str, what);
-			ap1 = ap = str + strlen(str);
-			*ap++ = ' ';
-		}
+	 
+	if (howto & RB_HALT) {
+		printf("\n");
+		printf("The operating system has halted.\n");
+		printf("Please press any key to reboot.\n\n");
+		cnpollc(1);	/* for proper keyboard command handling */
+		cngetc();  
+		cnpollc(0);
 	}
-	*ap++ = '-';
-	if (howto & RB_SINGLE)
-		*ap++ = 's';
-	if (howto & RB_KDB)
-		*ap++ = 'd';
-	*ap++ = 0;
-	if (ap[-2] == '-')
-		*ap1 = 0;
+    
+	printf("rebooting...\n\n");
+
 #if 1
-{ extern void sandpoint_reboot __P((void));
+{ extern void sandpoint_reboot(void);
 	sandpoint_reboot();
 }
 #endif
@@ -401,16 +405,14 @@ struct powerpc_bus_space genppc_isa_mem_space_tag = {
 	.pbs_base = 0x00000000,
 	.pbs_limit = 0xfe000000,	/* ??? */
 };
-#if 0
 struct powerpc_bus_space sandpoint_eumb_space_tag = {
 	.pbs_flags = _BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_MEM_TYPE,
 	.pbs_offset = 0xfc000000,
 	.pbs_base = 0x00000000,
-	.pbs_limit = 0x00040000,
+	.pbs_limit = 0x00100000,
 };
-#endif
 
-static char ex_storage[2][EXTENT_FIXED_STORAGE_SIZE(8)]
+static char ex_storage[4][EXTENT_FIXED_STORAGE_SIZE(8)]
     __attribute__((aligned(8)));
 
 void
@@ -421,30 +423,33 @@ sandpoint_bus_space_init(void)
 	error = bus_space_init(&sandpoint_io_space_tag, "ioport",
 	    ex_storage[0], sizeof(ex_storage[0]));
 	if (error)
-		panic("sandpoint_bus_space_init: can't init ioport tag");
+		panic("sandpoint_bus_space_init: can't init io tag");
 
 	error = extent_alloc_region(sandpoint_io_space_tag.pbs_extent,
-	    0x00010000, 0x7F0000, EX_NOWAIT);
+	    0x10000, 0x7fffff, EX_NOWAIT);
 	if (error)
-		panic("sandpoint_bus_space_init: can't block out reserved"
-		    " I/O space 0x10000-0x7fffff: error=%d", error);
-
-	genppc_isa_io_space_tag.pbs_extent = sandpoint_io_space_tag.pbs_extent;
-	error = bus_space_init(&genppc_isa_io_space_tag, "isa-iomem",
-	    ex_storage[1], sizeof(ex_storage[1]));
-	if (error)
-		panic("sandpoint_bus_space_init: can't init isa iomem tag");
+		panic("sandpoint_bus_space_init: can't block out reserved I/O"
+		    " space 0x10000-0x7fffff: error=%d", error);
 
 	error = bus_space_init(&sandpoint_mem_space_tag, "iomem",
-	    ex_storage[2], sizeof(ex_storage[2]));
+	    ex_storage[1], sizeof(ex_storage[1]));
 	if (error)
-		panic("sandpoint_bus_space_init: can't init iomem tag");
+		panic("sandpoint_bus_space_init: can't init mem tag");
+
+	genppc_isa_io_space_tag.pbs_extent = sandpoint_io_space_tag.pbs_extent;
+	error = bus_space_init(&genppc_isa_io_space_tag, "isa-ioport", NULL, 0);
+	if (error)
+		panic("sandpoint_bus_space_init: can't init isa io tag");
 
 	genppc_isa_mem_space_tag.pbs_extent = sandpoint_mem_space_tag.pbs_extent;
-	error = bus_space_init(&genppc_isa_mem_space_tag, "isa-iomem",
-	    ex_storage[3], sizeof(ex_storage[3]));
+	error = bus_space_init(&genppc_isa_mem_space_tag, "isa-iomem", NULL, 0);
 	if (error)
-		panic("sandpoint_bus_space_init: can't init isa iomem tag");
+		panic("sandpoint_bus_space_init: can't init isa mem tag");
+
+	error = bus_space_init(&sandpoint_eumb_space_tag, "eumb",
+	    ex_storage[2], sizeof(ex_storage[2]));
+	if (error)
+		panic("sandpoint_bus_space_init: can't init eumb tag");
 }
 
 /* XXX XXX XXX */
