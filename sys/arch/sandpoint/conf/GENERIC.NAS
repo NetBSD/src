@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.36.20.1 2007/05/23 01:24:57 nisimura Exp $
+# $NetBSD: GENERIC.NAS,v 1.1.2.1 2007/05/23 01:24:57 nisimura Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,11 +22,11 @@ include 	"arch/sandpoint/conf/std.sandpoint"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.36.20.1 $"
+#ident 		"GENERIC-$Revision: 1.1.2.1 $"
 
 maxusers	32
 
-options 	ALTIVEC		# Include AltiVec support
+#options 	ALTIVEC		# Include AltiVec support
 
 #options 	IPKDBUSERHACK	# Allow access to mapped memory via kgdb
 #options 	DEBUG_BY_TOOLS	# Allow debugging from toolsnet
@@ -127,9 +127,6 @@ pseudo-device	vlan			# IEEE 802.1q encapsulation
 #pseudo-device	ipfilter
 pseudo-device	loop
 
-# mouse & keyboard multiplexor pseudo-devices
-#pseudo-device	wsmux
-
 # miscellaneous pseudo-devices
 pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	vnd		
@@ -146,31 +143,30 @@ pseudo-device	ksyms			# /dev/ksyms
 #
 options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 
-options 	PCIVERBOSE	# verbose PCI device messages
+#options 	PCIVERBOSE	# verbose PCI device messages
 #options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
-options 	PCI_NETBSD_CONFIGURE	# Have NetBSD configure PCI I/O & Mem
+#options 	PCI_NETBSD_CONFIGURE	# Have NetBSD configure PCI I/O & Mem
 
 mainbus0 at root
 
 cpu*	at mainbus0
 pci*	at mainbus0 bus ?
 
+ppb*	at pci? dev ? function ?	# PCI-PCI bridges
+pci*	at ppb? bus ?
+
 pchb*	at pci? dev ? function ?	# PCI host bridge
-pcib*	at pci? dev ? function ?	# Winbond 83C553 PCI-ISA bridges
 
 eumb*	at mainbus0
-com*	at eumb?
+com0	at eumb? unit 0
+com1	at eumb? unit 1
+#com0	at eumb? unit 1
+#com1	at eumb? unit 0
 ociic*	at eumb?
 iic*	at ociic?
-
-isa*	at pcib?			# ISA on PCI-ISA bridge
-
-mcclock0 at isa? port 0x70		# time-of-day clock
+rs5c372rtc* at iic? addr 0x32
 
 # PCI IDE controllers - see pciide(4) for supported hardware.
-#pciide*	at pci? dev ? function ? flags 0x0000	# GENERIC pciide driver
-slide*		at pci? dev ? function ?	# 83C533 IDE controllers
-viaide*		at pci? dev ? function ?	# VIA/AMD/Nvidia IDE controllers
 cmdide*		at pci? dev ? function ?	# CMD tech IDE controllers
 iteide*		at pci? dev ? function ?	# IT Express IDE controllers
 satalink*	at pci? dev ? function ?	# SiI SATALink controllers
@@ -181,10 +177,7 @@ atabus* at ata?
 # IDE drives
 wd*		at atabus? drive ? flags 0x0000	# the drives themselves
 
-#vga*	at pci? dev ? function ?
-
 # PCI network interfaces
-fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
 tlp*	at pci? dev ? function ?	# DEC Tulip and similar
 re*	at pci? dev ? function ?	# Realtek 8139C+/8169/8169S/8110S
 mskc*	at pci? dev ? function ?	# Marvell Yukon 2 Gigabit Ethernet
@@ -200,12 +193,9 @@ ukphy*	at mii? phy ?			# generic unknown PHYs
 # USB Controller and Devices
 ehci*	at pci?	dev ? function ?	# Enhanced Host Controller
 ohci*	at pci?	dev ? function ?	# Open Host Controller
-uhci*	at pci?	dev ? function ?	# Universal Host Controller (Intel)
 
 # USB bus support
-usb*	at ehci?
 usb*	at ohci?
-usb*	at uhci?
 
 # USB Hubs
 uhub*	at usb?
@@ -215,48 +205,8 @@ uhub*	at uhub? port ?
 umass*	at uhub? port ? configuration ? interface ?
 wd*	at umass?
 
-pckbc0		at isa?			# PS/2 keyboard controller
-pckbd*		at pckbc?		# PC keyboard
-pms*		at pckbc?		# PS/2 mouse for wsmouse
-#wsdisplay*	at vga? console ?
-wskbd*	 	at pckbd? console ?
-wsmouse* 	at pms? mux 0
-
-attimer0	at isa?
-pcppi0		at isa?
-midi*		at pcppi?		# MIDI interface to the PC speaker
-#sysbeep0	at pcppi?
-
-com0	at isa? port 0x3f8 irq 4	# standard PC serial ports
-com1	at isa? port 0x2f8 irq 3
-
-lpt0	at isa? port 0x278 irq 7	# standard PC parallel ports
-
-#fdc0	at isa? port 0x3f0 irq 6 drq 2	# standard PC floppy controllers
-#fd*	at fdc? drive ?			# the drives themselves
-
-#adw*	at pci? dev ? function ?	# AdvanSys 9x0UW[D], 3940U[2,3]W SCSI
-#dpt*	at pci? dev ? function ?	# DPT SmartCache/SmartRAID
-siop*	at pci? dev ? function ?	# NCR/Symbios 53c8xx SCSI
-
-#scsibus* at adw?
-#scsibus* at dpt?
-scsibus* at siop?
 scsibus* at umass?
-
 sd*	at scsibus? target ? lun ?	# SCSI disk drives
-#st*	at scsibus? target ? lun ?	# SCSI tape drives
-#cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
-#ch*	at scsibus? target ? lun ?	# SCSI autochangers
-#ses*	at scsibus? target ? lun ?	# SCSI Enclosure Services devices
-#ss*	at scsibus? target ? lun ?	# SCSI scanners
-#uk*	at scsibus? target ? lun ?	# SCSI unknown
-
-#atapibus* at atapi?
-#cd*	at atapibus? drive ? flags 0x0000	# ATAPI CD-ROM drives
-#sd*	at atapibus? drive ? flags 0x0000	# ATAPI disk drives
-#st*	at atapibus? drive ? flags 0x0000	# ATAPI tape drives
-#uk*	at atapibus? drive ? flags 0x0000	# ATAPI unknown
 
 # Veriexec
 #
