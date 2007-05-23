@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_gif.c,v 1.51 2007/05/02 20:40:26 dyoung Exp $	*/
+/*	$NetBSD: in6_gif.c,v 1.52 2007/05/23 17:15:01 christos Exp $	*/
 /*	$KAME: in6_gif.c,v 1.62 2001/07/29 04:27:25 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_gif.c,v 1.51 2007/05/02 20:40:26 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_gif.c,v 1.52 2007/05/23 17:15:01 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -85,11 +85,12 @@ const struct ip6protosw in6_gif_protosw =
 
 extern LIST_HEAD(, gif_softc) gif_softc_list;
 
+/* 
+ * family - family of the packet to be encapsulate. 
+ */
+
 int
-in6_gif_output(ifp, family, m)
-	struct ifnet *ifp;
-	int family; /* family of the packet to be encapsulate. */
-	struct mbuf *m;
+in6_gif_output(struct ifnet *ifp, int family, struct mbuf *m)
 {
 	struct gif_softc *sc = (struct gif_softc*)ifp;
 	struct sockaddr_in6 *sin6_src = (struct sockaddr_in6 *)sc->gif_psrc;
@@ -214,9 +215,7 @@ in6_gif_output(ifp, family, m)
 	return (error);
 }
 
-int in6_gif_input(mp, offp, proto)
-	struct mbuf **mp;
-	int *offp, proto;
+int in6_gif_input(struct mbuf **mp, int *offp, int proto)
 {
 	struct mbuf *m = *mp;
 	struct ifnet *gifp = NULL;
@@ -302,10 +301,8 @@ int in6_gif_input(mp, offp, proto)
  * validate outer address.
  */
 static int
-gif_validate6(ip6, sc, ifp)
-	const struct ip6_hdr *ip6;
-	struct gif_softc *sc;
-	struct ifnet *ifp;
+gif_validate6(const struct ip6_hdr *ip6, struct gif_softc *sc, 
+	struct ifnet *ifp)
 {
 	const struct sockaddr_in6 *src, *dst;
 
@@ -352,11 +349,7 @@ gif_validate6(ip6, sc, ifp)
  * matched the physical addr family.  see gif_encapcheck().
  */
 int
-gif_encapcheck6(m, off, proto, arg)
-	struct mbuf *m;
-	int off;
-	int proto;
-	void *arg;
+gif_encapcheck6(struct mbuf *m, int off, int proto, void *arg)
 {
 	struct ip6_hdr ip6;
 	struct gif_softc *sc;
@@ -373,8 +366,7 @@ gif_encapcheck6(m, off, proto, arg)
 #endif
 
 int
-in6_gif_attach(sc)
-	struct gif_softc *sc;
+in6_gif_attach(struct gif_softc *sc)
 {
 #ifndef GIF_ENCAPCHECK
 	struct sockaddr_in6 mask6;
@@ -399,8 +391,7 @@ in6_gif_attach(sc)
 }
 
 int
-in6_gif_detach(sc)
-	struct gif_softc *sc;
+in6_gif_detach(struct gif_softc *sc)
 {
 	int error;
 
