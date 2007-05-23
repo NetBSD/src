@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.133 2007/02/24 17:55:54 dsl Exp $	*/
+/*	$NetBSD: parse.c,v 1.134 2007/05/23 19:03:56 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.133 2007/02/24 17:55:54 dsl Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.134 2007/05/23 19:03:56 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.133 2007/02/24 17:55:54 dsl Exp $");
+__RCSID("$NetBSD: parse.c,v 1.134 2007/05/23 19:03:56 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2288,11 +2288,6 @@ ParseGetLine(int flags, int *length)
  *---------------------------------------------------------------------
  * ParseReadLine --
  *	Read an entire line from the input file. Called only by Parse_File.
- *	To facilitate escaped newlines and what have you, a character is
- *	buffered in 'lastc', which is '\0' when no characters have been
- *	read. When we break out of the loop, c holds the terminating
- *	character and lastc holds a character that should be added to
- *	the line (unless we don't read anything but a terminator).
  *
  * Results:
  *	A line w/o its newline
