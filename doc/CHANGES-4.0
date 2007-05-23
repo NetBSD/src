@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.162 2007/05/22 23:08:18 pavel Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.163 2007/05/23 17:28:17 riz Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -5555,4 +5555,22 @@ doc/3RDPARTY				1.525 via patch
 
 	Upgrade IP-Filter to 4.1.22.
 	[martin, ticket #656]
+
+sys/kern/kern_lock.c				1.103
+
+	In lockstatus(), report LK_EXCLOTHER if LK_WANT_EXCL or LK_WANT_UPGRADE
+	is set, since the thread that set either of those flags will be the next
+	one to get the lock.  fixes PR 35143.
+	[tls, ticket #652]
+
+usr.sbin/rpcbind/rpcbind.c			1.12
+
+	PR/36319: Michael van Elst: rpcinfo -p requires root privileges
+	Explicitly chmod 777 the local socket.
+	[christos, ticket #651]
+
+usr.sbin/etcupdate/etcupdate			1.35
+
+	/etc/services needs special attention.
+	[martti, ticket #654]
 
