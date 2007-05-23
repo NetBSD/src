@@ -1,4 +1,4 @@
-/*	$NetBSD: strings.h,v 1.2 2007/05/23 22:50:04 tls Exp $	*/
+/*	$NetBSD: strings.h,v 1.3 2007/05/23 23:38:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -46,11 +46,11 @@
 
 #define bcopy(src, dst, len) \
     ((__ssp_bos0(dst) != (size_t)-1) ? \
-    __builtin___memmove_chk(dst, src, __ssp_bos0(dst)) : \
+    __builtin___memmove_chk(dst, src, len, __ssp_bos0(dst)) : \
     __memmove_ichk(dst, src, len))
 #define bzero(dst, len) \
     ((__ssp_bos0(dst) != (size_t)-1) ? \
-    __builtin___memset_chk(dst, 0, __ssp_bos0(dst)) : \
+    __builtin___memset_chk(dst, 0, len, __ssp_bos0(dst)) : \
     __memset_ichk(dst, 0, len))
 
 #endif /* __SSP_FORTIFY_LEVEL > 0 */
