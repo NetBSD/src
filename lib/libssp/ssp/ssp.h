@@ -1,4 +1,4 @@
-/*	$NetBSD: ssp.h,v 1.1 2006/11/08 19:52:11 christos Exp $	*/
+/*	$NetBSD: ssp.h,v 1.2 2007/05/23 21:13:14 tls Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -53,8 +53,8 @@
 #define __ssp_bos(ptr) __builtin_object_size(ptr, __SSP_FORTIFY_LEVEL > 1)
 #define __ssp_bos0(ptr) __builtin_object_size(ptr, 0)
 #define __ssp_redirect_raw(rtype, fun, args, call, bos) \
-    inline __attribute__((__always_inline__)) rtype __ ## fun ## _alias args; \
-    inline __attribute__((__always_inline__)) rtype \
+static __inline __attribute__((__always_inline__)) rtype __ ## fun ## _alias args; \
+static __inline __attribute__((__always_inline__)) rtype \
     __ ## fun ## _alias args { \
 	    if (bos(__buf) != (size_t)-1 && __len > bos(__buf)) \
 		    __chk_fail(); \
