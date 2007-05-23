@@ -1,4 +1,4 @@
-# $NetBSD: ENCPP1,v 1.1.2.4 2007/05/09 04:54:47 nisimura Exp $
+# $NetBSD: ENCPP1,v 1.1.2.5 2007/05/23 01:25:00 nisimura Exp $
 #
 # Ampro EnCorePP1 machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/sandpoint/conf/std.sandpoint"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ENCPP1-$Revision: 1.1.2.4 $"
+#ident 		"ENCPP1-$Revision: 1.1.2.5 $"
 
 maxusers	32
 
@@ -41,8 +41,8 @@ options 	DDB
 options 	KTRACE
 #options 	PMAPCHECK
 #options 	PMAPDEBUG
-options 	SYMTAB_SPACE=300000
-options 	USERCONF	# userconf(4) support
+#options 	SYMTAB_SPACE=300000
+#options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
@@ -102,8 +102,9 @@ config		netbsd	root on ? type ?
 
 # network psuedo-devices
 pseudo-device	bpfilter		# packet filter
-pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
-pseudo-device	bridge			# simple inter-network bridging
+pseudo-device	vlan			# IEEE 802.1q encapsulation
+#pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
+#pseudo-device	bridge			# simple inter-network bridging
 #options	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
 #pseudo-device	ipfilter
 pseudo-device	loop
@@ -126,37 +127,35 @@ pseudo-device	ksyms			# /dev/ksyms
 #
 options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 
-#options 	PCIVERBOSE	# verbose PCI device messages
+options 	PCIVERBOSE	# verbose PCI device messages
 #options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
 #options 	PCI_NETBSD_CONFIGURE	# Have NetBSD configure PCI I/O & Mem
 
 mainbus0 at root
 
 cpu*	at mainbus0
+
+eumb*	at mainbus0
+com*	at eumb?
+ociic*	at eumb?
+iic*	at ociic?
+
 pci*	at mainbus0 bus ?
-
-#eumb*	at mainbus0
-#com*	at eumb0
-#iic*	at eumb0
-
-ppb*	at pci? dev ? function ?	# PCI-PCI bridges
-pci*	at ppb? bus ?
-
 pchb*	at pci? dev ? function ?	# PCI host bridge
+
 pcib*	at pci? dev ? function ?	# VIA 82C686B PCI-ISA bridges
+viaide* at pci? dev ? function ?	# VIA/AMD/Nvidia IDE controllers
+uhci*	at pci?	dev ? function ?	# Universal Host Controller (Intel)
+fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
+
+inphy*	at mii? phy ?			# Intel 82555 PHYs
+
+# ATA (IDE) bus support
+atabus* at ata?
 
 isa*	at pcib?			# ISA on PCI-ISA bridge
 
-pciide* at pci? dev ? function ? flags 0x0000	# GENERIC pciide driver
-viaide* at pci? dev ? function ?	# VIA/AMD/Nvidia IDE controllers
-atabus* at ata?
-
-fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
-inphy*	at mii? phy ?			# Intel 82555 PHYs
-ukphy*	at mii? phy ?			# generic unknown PHYs
-
-uhci*	at pci?	dev ? function ?	# Universal Host Controller (Intel)
-usb*	at uhci?
+mcclock0	at isa? port 0x70	# time-of-day clock
 
 # USB bus support
 usb*	at uhci?
@@ -166,10 +165,6 @@ uhub*	at usb?
 
 # USB HID device
 uhidev*	at uhub? port ? configuration ? interface ?
-
-# USB Mice
-ums*	at uhidev? reportid ?
-wsmouse* at ums? mux 0
 
 # Serial adapters
 uplcom* at uhub? port ? 
@@ -186,6 +181,11 @@ pckbd*		at pckbc?		# PC keyboard
 pms*		at pckbc?		# PS/2 mouse for wsmouse
 wskbd* 		at pckbd? console ?
 wsmouse* 	at pms? mux 0
+
+attimer0	at isa?
+pcppi0		at isa?
+midi*		at pcppi?		# MIDI interface to the PC speaker
+#sysbeep0	at pcppi?
 
 com0	at isa? port 0x3f8 irq 4	# standard PC serial ports
 com1	at isa? port 0x2f8 irq 3
