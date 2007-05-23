@@ -1,4 +1,4 @@
-#	$NetBSD: files.sandpoint,v 1.20.4.2 2007/05/07 18:25:23 garbled Exp $
+#	$NetBSD: files.sandpoint,v 1.20.4.3 2007/05/23 01:32:20 nisimura Exp $
 #
 # Motorola's "SandPoint" evaluation board's specific configuration info
 #
@@ -47,6 +47,15 @@ device	cpu
 attach	cpu at mainbus
 file	arch/sandpoint/sandpoint/mainbus.c	mainbus|cpu needs-flag
 
+device eumb { [ unit = -1 ] }: mainbus
+attach eumb at mainbus
+file	arch/sandpoint/sandpoint/eumb.c		eumb
+attach com at eumb with com_eumb
+file	arch/sandpoint/sandpoint/com_eumb.c	com_eumb needs-flag
+device	ociic: i2cbus, i2cexec
+attach ociic at eumb with iic_eumb
+file	arch/sandpoint/sandpoint/iic_eumb.c	iic_eumb
+
 # generic fb driver
 include "dev/wsfb/files.wsfb"
 
@@ -68,7 +77,7 @@ file	arch/powerpc/pci/pchb.c			pchb
 # PCI-ISA bridges
 device	pcib: isabus
 attach	pcib at pci
-file	arch/powerpc/pci/pcib.c			pcib
+file	arch/powerpc/pci/pcib.c			pcib needs-flag
 
 #
 # ISA and mixed ISA+PCI drivers
