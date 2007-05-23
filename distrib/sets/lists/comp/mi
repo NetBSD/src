@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1029 2007/05/23 14:46:06 christos Exp $
+#	$NetBSD: mi,v 1.1030 2007/05/23 23:41:51 christos Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -1727,6 +1727,7 @@
 ./usr/include/ssp/ssp.h				comp-c-include
 ./usr/include/ssp/stdio.h			comp-c-include
 ./usr/include/ssp/string.h			comp-c-include
+./usr/include/ssp/strings.h			comp-c-include
 ./usr/include/ssp/unistd.h			comp-c-include
 ./usr/include/stab.h				comp-c-include
 ./usr/include/stdarg.h				comp-c-include
