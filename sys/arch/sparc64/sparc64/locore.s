@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.248 2007/05/20 21:51:01 martin Exp $	*/
+/*	$NetBSD: locore.s,v 1.249 2007/05/23 08:16:43 martin Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -9465,8 +9465,9 @@ ENTRY(sparc64_ipi_save_fpstate)
 	sethi	%hi(CPUINFO_VA + CI_FPLWP), %o0
 	ldx	[%o0 + %lo(CPUINFO_VA + CI_FPLWP)], %o0
 	call	savefpstate
-	 ldx	[%o0 + L_FPSTATE], %l1
-	stx	%g0, [%o0]		! fplwp = NULL
+	 ldx	[%o0 + L_FPSTATE], %o0
+	sethi	%hi(CPUINFO_VA + CI_FPLWP), %o0
+	stx	%g0, [%o0 + %lo(CPUINFO_VA + CI_FPLWP)]		! fplwp = NULL
 	mov	%g6, %o5		! restore saved registers
 	mov	%g5, %o4
 	mov	%g4, %o3
