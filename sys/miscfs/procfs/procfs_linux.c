@@ -1,4 +1,4 @@
-/*      $NetBSD: procfs_linux.c,v 1.34 2007/04/01 03:16:44 christos Exp $      */
+/*      $NetBSD: procfs_linux.c,v 1.35 2007/05/24 00:37:40 agc Exp $      */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.34 2007/04/01 03:16:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.35 2007/05/24 00:37:40 agc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,6 +67,52 @@ extern int max_devsw_convs;
 #define PGTOKB(p)	((unsigned long)(p) << (PAGE_SHIFT - 10))
 
 #define LBFSZ (8 * 1024)
+
+static void
+get_proc_size_info(struct lwp *l, unsigned long *stext, unsigned long *etext, unsigned long *sstack)
+{
+	struct proc *p = l->l_proc;
+	struct vmspace *vm;
+	struct vm_map *map;
+	struct vm_map_entry *entry;
+
+	*stext = 0;
+	*etext = 0;
+	*sstack = 0;
+
+	proc_vmspace_getref(p, &vm);
+	map = &vm->vm_map;
+	vm_map_lock_read(map);
+
+	for (entry = map->header.next; entry != &map->header;
+	    entry = entry->next) {
+		if (UVM_ET_ISSUBMAP(entry))
+			continue;
+		/* assume text is the first entry */
+		if (*stext == *etext) {
+			*stext = entry->start;
+			*etext = entry->end;
+			break;
+		}
+	}
+#ifdef LINUX_USRSTACK
+	if (strcmp(p->p_emul->e_name, "linux") == 0 &&
+	    LINUX_USRSTACK < USRSTACK)
+		*sstack = (unsigned long) LINUX_USRSTACK;
+	else
+#endif
+		*sstack = (unsigned long) USRSTACK;
+
+	/*
+	 * jdk 1.6 compares low <= addr && addr < high
+	 * if we put addr == high, then the test fails
+	 * so eat one page.
+	 */
+	*sstack -= PAGE_SIZE;
+
+	vm_map_unlock_read(map);
+	uvmspace_free(vm);
+}
 
 /*
  * Linux compatible /proc/meminfo. Only active when the -o linux
@@ -172,6 +218,143 @@ out:
 }
 
 /*
+ * Linux compatible /proc/stat. Only active when the -o linux
+ * mountflag is used.
+ */
+int
+procfs_docpustat(struct lwp *curl, struct proc *p,
+    struct pfsnode *pfs, struct uio *uio)
+{
+	struct timeval	 runtime;
+        struct cpu_info *ci;
+        CPU_INFO_ITERATOR cii;
+	char		*bf;
+	int	 	 error;
+	int	 	 len;
+	int	 	 i;
+
+	error = ENAMETOOLONG;
+	bf = malloc(LBFSZ, M_TEMP, M_WAITOK);
+
+	len = snprintf(bf, LBFSZ,
+		"cpu %llu %llu %llu %llu\n",
+		curcpu()->ci_schedstate.spc_cp_time[CP_USER],
+		curcpu()->ci_schedstate.spc_cp_time[CP_NICE],
+		curcpu()->ci_schedstate.spc_cp_time[CP_SYS] /*+ [CP_INTR]*/,
+		curcpu()->ci_schedstate.spc_cp_time[CP_IDLE]);
+	if (len == 0)
+		goto out;
+
+	i = 0;
+	for (CPU_INFO_FOREACH(cii, ci)) {
+		len += snprintf(&bf[len], LBFSZ - len, 
+			"cpu%d %llu %llu %llu %llu\n", i,
+			ci->ci_schedstate.spc_cp_time[CP_USER],
+			ci->ci_schedstate.spc_cp_time[CP_NICE],
+			ci->ci_schedstate.spc_cp_time[CP_SYS],
+			ci->ci_schedstate.spc_cp_time[CP_IDLE]);
+		if (len >= LBFSZ)
+			goto out;
+		i += 1;
+	}
+
+	timersub(&curcpu()->ci_schedstate.spc_runtime, &boottime, &runtime);
+	len += snprintf(&bf[len], LBFSZ - len,
+			"disk 0 0 0 0\n"
+			"page %u %u\n"
+			"swap %u %u\n"
+			"intr %u\n"
+			"ctxt %u\n"
+			"btime %lld\n",
+			uvmexp.pageins, uvmexp.pdpageouts,
+			uvmexp.pgswapin, uvmexp.pgswapout,
+			uvmexp.intrs,
+			uvmexp.swtch,
+			(long long)boottime.tv_sec);
+	if (len >= LBFSZ)
+		goto out;
+
+	error = uiomove_frombuf(bf, len, uio);
+out:
+	free(bf, M_TEMP);
+	return error;
+}
+
+/*
+ * Linux compatible /proc/loadavg. Only active when the -o linux
+ * mountflag is used.
+ */
+int
+procfs_doloadavg(struct lwp *curl, struct proc *p,
+    struct pfsnode *pfs, struct uio *uio)
+{
+	char	*bf;
+	int 	 error;
+	int 	 len;
+
+	error = ENAMETOOLONG;
+	bf = malloc(LBFSZ, M_TEMP, M_WAITOK);
+
+	averunnable.fscale = FSCALE;
+	len = snprintf(bf, LBFSZ,
+	        "%d.%02d %d.%02d %d.%02d %d/%d %d\n",
+		(int)(averunnable.ldavg[0] / averunnable.fscale),
+		(int)(averunnable.ldavg[0] * 100 / averunnable.fscale % 100),
+		(int)(averunnable.ldavg[1] / averunnable.fscale),
+		(int)(averunnable.ldavg[1] * 100 / averunnable.fscale % 100),
+		(int)(averunnable.ldavg[2] / averunnable.fscale),
+		(int)(averunnable.ldavg[2] * 100 / averunnable.fscale % 100),
+		1,		/* number of ONPROC processes */
+		nprocs,
+		30000);		/* last pid */
+	if (len == 0)
+		goto out;
+
+	error = uiomove_frombuf(bf, len, uio);
+out:
+	free(bf, M_TEMP);
+	return error;
+}
+
+/*
+ * Linux compatible /proc/<pid>/statm. Only active when the -o linux
+ * mountflag is used.
+ */
+int
+procfs_do_pid_statm(struct lwp *curl, struct lwp *l,
+    struct pfsnode *pfs, struct uio *uio)
+{
+	unsigned long	 stext = 0, etext = 0, sstack = 0;
+	struct proc	*p = l->l_proc;
+	struct rusage	*ru = &p->p_stats->p_ru;
+	char		*bf;
+	int	 	 error;
+	int	 	 len;
+
+	error = ENAMETOOLONG;
+	bf = malloc(LBFSZ, M_TEMP, M_WAITOK);
+
+	get_proc_size_info(l, &stext, &etext, &sstack);
+
+	len = snprintf(bf, LBFSZ,
+	        "%lu %lu %lu %lu %lu %lu %lu\n",
+		(ru->ru_ixrss + ru->ru_idrss + ru->ru_isrss), /* size */
+		ru->ru_maxrss,	/* resident */
+		ru->ru_ixrss,	/* shared */
+		stext,
+		etext,
+		sstack,
+		(unsigned long) 0);
+	if (len == 0)
+		goto out;
+
+	error = uiomove_frombuf(bf, len, uio);
+out:
+	free(bf, M_TEMP);
+	return error;
+}
+
+/*
  * Linux compatible /proc/<pid>/stat. Only active when the -o linux
  * mountflag is used.
  */
@@ -185,47 +368,13 @@ procfs_do_pid_stat(struct lwp *curl, struct lwp *l,
 	struct tty *tty = p->p_session->s_ttyp;
 	struct rusage *ru = &p->p_stats->p_ru;
 	struct rusage *cru = &p->p_stats->p_cru;
-	struct vmspace *vm;
-	struct vm_map *map;
-	struct vm_map_entry *entry;
 	unsigned long stext = 0, etext = 0, sstack = 0;
 	struct timeval rt;
 	int error = 0;
 
 	bf = malloc(LBFSZ, M_TEMP, M_WAITOK);
 
-	proc_vmspace_getref(p, &vm);
-	map = &vm->vm_map;
-	vm_map_lock_read(map);
-
-	for (entry = map->header.next; entry != &map->header;
-	    entry = entry->next) {
-		if (UVM_ET_ISSUBMAP(entry))
-			continue;
-		/* assume text is the first entry */
-		if (stext == etext) {
-			stext = entry->start;
-			etext = entry->end;
-			break;
-		}
-	}
-#ifdef LINUX_USRSTACK
-	if (strcmp(p->p_emul->e_name, "linux") == 0 &&
-	    LINUX_USRSTACK < USRSTACK)
-		sstack = (unsigned long) LINUX_USRSTACK;
-	else
-#endif
-		sstack = (unsigned long) USRSTACK;
-
-	/*
-	 * jdk 1.6 compares low <= addr && addr < high
-	 * if we put addr == high, then the test fails
-	 * so eat one page.
-	 */
-	sstack -= PAGE_SIZE;
-
-	vm_map_unlock_read(map);
-	uvmspace_free(vm);
+	get_proc_size_info(l, &stext, &etext, &sstack);
 
 	mutex_enter(&proclist_lock);
 	mutex_enter(&p->p_mutex);

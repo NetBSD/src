@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs.h,v 1.63 2007/02/09 21:55:36 ad Exp $	*/
+/*	$NetBSD: procfs.h,v 1.64 2007/05/24 00:37:40 agc Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -105,6 +105,9 @@ typedef enum {
 	PFSchroot,	/* the process's current root directory */
 	PFSemul,	/* the process's emulation */
 	PFSdevices,	/* major/device name mappings (if -o linux) */
+	PFScpustat,	/* status info (if -o linux) */
+	PFSloadavg,	/* load average (if -o linux) */
+	PFSstatm,	/* process memory info (if -o linux) */
 #ifdef __HAVE_PROCFS_MACHDEP
 	PROCFS_MACHDEP_NODE_TYPES
 #endif
@@ -207,6 +210,12 @@ int procfs_domeminfo(struct lwp *, struct proc *, struct pfsnode *,
 int procfs_dodevices(struct lwp *, struct proc *, struct pfsnode *,
     struct uio *);
 int procfs_docpuinfo(struct lwp *, struct proc *, struct pfsnode *,
+    struct uio *);
+int procfs_docpustat(struct lwp *, struct proc *, struct pfsnode *,
+    struct uio *);
+int procfs_doloadavg(struct lwp *, struct proc *, struct pfsnode *,
+    struct uio *);
+int procfs_do_pid_statm(struct lwp *, struct lwp *, struct pfsnode *,
     struct uio *);
 int procfs_dofd(struct lwp *, struct proc *, struct pfsnode *,
     struct uio *);
