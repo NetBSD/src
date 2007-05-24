@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.845 2007/05/17 14:51:37 yamt Exp $
+#	$NetBSD: files,v 1.846 2007/05/24 21:30:41 mjacob Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -477,14 +477,17 @@ defflag	opt_isp.h		ISP_DISABLE_1020_SUPPORT
 				ISP_DISABLE_1080_SUPPORT
 				ISP_DISABLE_2100_SUPPORT
 				ISP_DISABLE_2200_SUPPORT
-				ISP_DISABLE_FW ISP_TARGET_MODE
+				ISP_DISABLE_2300_SUPPORT
+				ISP_DISABLE_2400_SUPPORT
+				ISP_DISABLE_FW
+				ISP_TARGET_MODE
 				ISP_FW_CRASH_DUMP
 defparam opt_isp.h		ISP_LOGDEFAULT
 device	isp: scsi
 file	dev/ic/isp.c			isp
+file	dev/ic/isp_library.c		isp
 file	dev/ic/isp_netbsd.c		isp
 file	dev/ic/isp_target.c		isp & isp_target_mode
-
 # LSILogic MegaRAID SAS
 #
 device	mfi: scsi
