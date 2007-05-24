@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_proto.c,v 1.68 2006/11/23 04:07:07 rpaulo Exp $	*/
+/*	$NetBSD: in6_proto.c,v 1.68.2.1 2007/05/24 19:13:16 pavel Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.68 2006/11/23 04:07:07 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.68.2.1 2007/05/24 19:13:16 pavel Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -114,6 +114,13 @@ __KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.68 2006/11/23 04:07:07 rpaulo Exp $"
 #endif
 #include <netinet6/ipcomp.h>
 #endif /* IPSEC */
+
+#ifdef FAST_IPSEC
+#include <netipsec/ipsec.h>
+#include <netipsec/ipsec6.h>
+#include <netipsec/key.h>
+#endif /* FAST_IPSEC */
+
 
 #include "carp.h"
 #if NCARP > 0
@@ -203,6 +210,23 @@ const struct ip6protosw inet6sw[] = {
   0,		0,		0,		0,
 },
 #endif /* IPSEC */
+#ifdef FAST_IPSEC
+{ SOCK_RAW,    &inet6domain,   IPPROTO_AH,     PR_ATOMIC|PR_ADDR,
+  ipsec6_common_input, 0,              ah6_ctlinput,   0,
+  0,
+  0,           0,              0,              0,      
+},
+{ SOCK_RAW,    &inet6domain,   IPPROTO_ESP,    PR_ATOMIC|PR_ADDR,
+  ipsec6_common_input,    0,           esp6_ctlinput,  0,
+  0,
+  0,           0,              0,              0,              
+},
+{ SOCK_RAW,    &inet6domain,   IPPROTO_IPCOMP, PR_ATOMIC|PR_ADDR,
+  ipsec6_common_input,    0,           0,              0,
+  0,
+  0,           0,              0,              0,              
+},
+#endif /* FAST_IPSEC */
 #ifdef INET
 { SOCK_RAW,	&inet6domain,	IPPROTO_IPV4,	PR_ATOMIC|PR_ADDR|PR_LASTHDR,
   encap6_input,	rip6_output, 	encap6_ctlinput, rip6_ctloutput,

@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_input.c,v 1.13 2006/11/16 01:33:49 christos Exp $	*/
+/*	$NetBSD: ipsec_input.c,v 1.13.2.1 2007/05/24 19:13:12 pavel Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec_input.c,v 1.2.4.2 2003/03/28 20:32:53 sam Exp $	*/
 /*	$OpenBSD: ipsec_input.c,v 1.63 2003/02/20 18:35:43 deraadt Exp $	*/
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_input.c,v 1.13 2006/11/16 01:33:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_input.c,v 1.13.2.1 2007/05/24 19:13:12 pavel Exp $");
 
 /*
  * IPsec input processing.
@@ -413,8 +413,9 @@ ipsec4_common_input_cb(struct mbuf *m, struct secasvar *sav,
 
 		m_tag_prepend(m, mtag);
 	} else {
-		mt->m_tag_id = PACKET_TAG_IPSEC_IN_DONE;
-		/* XXX do we need to mark m_flags??? */
+		if (mt != NULL)
+			mt->m_tag_id = PACKET_TAG_IPSEC_IN_DONE;
+			/* XXX do we need to mark m_flags??? */
 	}
 
 	key_sa_recordxfer(sav, m);		/* record data transfer */
@@ -603,7 +604,7 @@ ipsec6_common_input_cb(struct mbuf *m, struct secasvar *sav, int skip, int proto
 
 	/* Sanity check */
 	if (m == NULL) {
-		DPRINTF(("ipsec4_common_input_cb: null mbuf"));
+		DPRINTF(("ipsec6_common_input_cb: null mbuf"));
 		IPSEC_ISTAT(sproto, espstat.esps_badkcr, ahstat.ahs_badkcr,
 		    ipcompstat.ipcomps_badkcr);
 		error = EINVAL;
@@ -614,7 +615,7 @@ ipsec6_common_input_cb(struct mbuf *m, struct secasvar *sav, int skip, int proto
 	if (m->m_len < sizeof(struct ip6_hdr) &&
 	    (m = m_pullup(m, sizeof(struct ip6_hdr))) == NULL) {
 
-		DPRINTF(("ipsec_common_input_cb: processing failed "
+		DPRINTF(("ipsec6_common_input_cb: processing failed "
 		    "for SA %s/%08lx\n", ipsec_address(&sav->sah->saidx.dst),
 		    (u_long) ntohl(sav->spi)));
 
@@ -649,7 +650,7 @@ ipsec6_common_input_cb(struct mbuf *m, struct secasvar *sav, int skip, int proto
 		    (saidx->proxy.sa.sa_family != AF_INET &&
 			saidx->proxy.sa.sa_family != 0)) {
 
-			DPRINTF(("ipsec_common_input_cb: inner "
+			DPRINTF(("ipsec6_common_input_cb: inner "
 			    "source address %s doesn't correspond to "
 			    "expected proxy source %s, SA %s/%08lx\n",
 			    inet_ntoa4(ipn.ip_src),
@@ -657,7 +658,7 @@ ipsec6_common_input_cb(struct mbuf *m, struct secasvar *sav, int skip, int proto
 			    ipsec_address(&saidx->dst),
 			    (u_long) ntohl(sav->spi)));
 
-			IPSEC_ISTATsproto, (espstat.esps_pdrops,
+			IPSEC_ISTAT(sproto, espstat.esps_pdrops,
 			    ahstat.ahs_pdrops, ipcompstat.ipcomps_pdrops);
 			error = EACCES;
 			goto bad;
@@ -686,7 +687,7 @@ ipsec6_common_input_cb(struct mbuf *m, struct secasvar *sav, int skip, int proto
 		    (saidx->proxy.sa.sa_family != AF_INET6 &&
 			saidx->proxy.sa.sa_family != 0)) {
 
-			DPRINTF(("ipsec_common_input_cb: inner "
+			DPRINTF(("ipsec6_common_input_cb: inner "
 			    "source address %s doesn't correspond to "
 			    "expected proxy source %s, SA %s/%08lx\n",
 			    ip6_sprintf(&ip6n.ip6_src),
@@ -729,8 +730,9 @@ ipsec6_common_input_cb(struct mbuf *m, struct secasvar *sav, int skip, int proto
 
 		m_tag_prepend(m, mtag);
 	} else {
-		mt->m_tag_id = PACKET_TAG_IPSEC_IN_DONE;
-		/* XXX do we need to mark m_flags??? */
+		if (mt != NULL)
+			mt->m_tag_id = PACKET_TAG_IPSEC_IN_DONE;
+			/* XXX do we need to mark m_flags??? */
 	}
 
 	key_sa_recordxfer(sav, m);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_forward.c,v 1.49 2006/06/29 16:56:31 liamjfoy Exp $	*/
+/*	$NetBSD: ip6_forward.c,v 1.49.8.1 2007/05/24 19:13:16 pavel Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.109 2002/09/11 08:10:17 sakane Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.49 2006/06/29 16:56:31 liamjfoy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.49.8.1 2007/05/24 19:13:16 pavel Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_pfil_hooks.h"
@@ -64,6 +64,13 @@ __KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.49 2006/06/29 16:56:31 liamjfoy Ex
 #include <netinet6/ipsec.h>
 #include <netkey/key.h>
 #endif /* IPSEC */
+
+#ifdef FAST_IPSEC
+#include <netipsec/ipsec.h>
+#include <netipsec/ipsec6.h>
+#include <netipsec/key.h>
+#include <netipsec/xform.h>
+#endif /* FAST_IPSEC */
 
 #ifdef PFIL_HOOKS
 #include <net/pfil.h>
@@ -107,6 +114,12 @@ ip6_forward(m, srcrt)
 	struct secpolicy *sp = NULL;
 	int ipsecrt = 0;
 #endif
+#ifdef FAST_IPSEC
+    struct secpolicy *sp = NULL;
+    int needipsec = 0;
+    int s;
+#endif
+
 
 #ifdef IPSEC
 	/*
@@ -332,6 +345,24 @@ ip6_forward(m, srcrt)
     }
     skip_ipsec:
 #endif /* IPSEC */
+#ifdef FAST_IPSEC
+	/* Check the security policy (SP) for the packet */
+
+	sp = ipsec6_check_policy(m,NULL,0,&needipsec,&error);
+	if (error != 0) {
+		/*
+		 * Hack: -EINVAL is used to signal that a packet
+		 * should be silently discarded.  This is typically
+		 * because we asked key management for an SA and
+		 * it was delayed (e.g. kicked up to IKE).
+		 */
+	if (error == -EINVAL)
+		error = 0;
+	goto freecopy;
+	}
+#endif /* FAST_IPSEC */
+
+
 
 	dst = &ip6_forward_rt.ro_dst;
 	if (!srcrt) {
@@ -434,6 +465,21 @@ ip6_forward(m, srcrt)
 		m_freem(m);
 		return;
 	}
+#ifdef FAST_IPSEC
+    /*
+     * If we need to encapsulate the packet, do it here
+     * ipsec6_proces_packet will send the packet using ip6_output 
+     */
+	if (needipsec) {
+		s = splsoftnet();
+		error = ipsec6_process_packet(m,sp->req);
+		splx(s);
+		if (mcopy)
+			goto freecopy;
+    }
+#endif   
+
+
 
 	/*
 	 * Destination scope check: if a packet is going to break the scope

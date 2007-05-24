@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.123.2.1 2007/05/12 14:56:38 pavel Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.123.2.2 2007/05/24 19:13:14 pavel Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.123.2.1 2007/05/12 14:56:38 pavel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.123.2.2 2007/05/24 19:13:14 pavel Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -101,6 +101,12 @@ __KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.123.2.1 2007/05/12 14:56:38 pavel Exp $"
 #include <netinet6/ipsec.h>
 #include <netkey/key.h>
 #endif
+
+#ifdef FAST_IPSEC
+#include <netipsec/ipsec.h>
+#include <netipsec/key.h>
+#endif
+
 
 #include "faith.h"
 #if defined(NFAITH) && 0 < NFAITH
@@ -2331,7 +2337,7 @@ icmp6_redirect_input(m, off)
 		sdst.sin6_len = sizeof(struct sockaddr_in6);
 		bcopy(&reddst6, &sdst.sin6_addr, sizeof(struct in6_addr));
 		pfctlinput(PRC_REDIRECT_HOST, (struct sockaddr *)&sdst);
-#ifdef IPSEC
+#if defined(IPSEC) || defined(FAST_IPSEC)
 		key_sa_routechange((struct sockaddr *)&sdst);
 #endif
 	}

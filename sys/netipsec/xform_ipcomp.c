@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ipcomp.c,v 1.8 2006/11/16 01:33:49 christos Exp $	*/
+/*	$NetBSD: xform_ipcomp.c,v 1.8.2.1 2007/05/24 19:13:13 pavel Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ipcomp.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /* $OpenBSD: ip_ipcomp.c,v 1.1 2001/07/05 12:08:52 jjbg Exp $ */
 
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ipcomp.c,v 1.8 2006/11/16 01:33:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ipcomp.c,v 1.8.2.1 2007/05/24 19:13:13 pavel Exp $");
 
 /* IP payload compression protocol (IPComp), see RFC 2393 */
 #include "opt_inet.h"
@@ -72,7 +72,7 @@ __KERNEL_RCSID(0, "$NetBSD: xform_ipcomp.c,v 1.8 2006/11/16 01:33:49 christos Ex
 #include <opencrypto/deflate.h>
 #include <opencrypto/xform.h>
 
-int	ipcomp_enable = 0;
+int	ipcomp_enable = 1;
 struct	ipcompstat ipcompstat;
 
 #ifdef __FreeBSD__
@@ -343,13 +343,10 @@ ipcomp_output(
 {
 	struct secasvar *sav;
 	struct comp_algo *ipcompx;
-	int error, ralen, hlen, maxpacketsize, roff;
-	u_int8_t prot;
+	int error, ralen, hlen, maxpacketsize;
 	struct cryptodesc *crdc;
 	struct cryptop *crp;
 	struct tdb_crypto *tc;
-	struct mbuf *mo;
-	struct ipcomp *ipcomp;
 
 	IPSEC_SPLASSERT_SOFTNET("ipcomp_output");
 	sav = isr->sav;
@@ -358,6 +355,13 @@ ipcomp_output(
 	IPSEC_ASSERT(ipcompx != NULL, ("ipcomp_output: null compression xform"));
 
 	ralen = m->m_pkthdr.len - skip;	/* Raw payload length before comp. */
+    
+    /* Don't process the packet if it is too short */
+	if (ralen < ipcompx->minlen) {
+		ipcompstat.ipcomps_minlen++;
+		return ipsec_process_done(m,isr);
+	}
+
 	hlen = IPCOMP_HLENGTH;
 
 	ipcompstat.ipcomps_output++;
@@ -408,40 +412,6 @@ ipcomp_output(
 		goto bad;
 	}
 
-	/* Inject IPCOMP header */
-	mo = m_makespace(m, skip, hlen, &roff);
-	if (mo == NULL) {
-		ipcompstat.ipcomps_wrap++;
-		DPRINTF(("ipcomp_output: failed to inject IPCOMP header for "
-		    "IPCA %s/%08lx\n",
-		    ipsec_address(&sav->sah->saidx.dst),
-		    (u_long) ntohl(sav->spi)));
-		error = ENOBUFS;
-		goto bad;
-	}
-	ipcomp = (struct ipcomp *)(mtod(mo, caddr_t) + roff);
-
-	/* Initialize the IPCOMP header */
-	/* XXX alignment always correct? */
-	switch (sav->sah->saidx.dst.sa.sa_family) {
-#ifdef INET
-	case AF_INET:
-		ipcomp->comp_nxt = mtod(m, struct ip *)->ip_p;
-		break;
-#endif /* INET */
-#ifdef INET6
-	case AF_INET6:
-		ipcomp->comp_nxt = mtod(m, struct ip6_hdr *)->ip6_nxt;
-		break;
-#endif
-	}
-	ipcomp->comp_flags = 0;
-	ipcomp->comp_cpi = htons((u_int16_t) ntohl(sav->spi));
-
-	/* Fix Next Protocol in IPv4/IPv6 header */
-	prot = IPPROTO_IPCOMP;
-	m_copyback(m, protoff, sizeof(u_int8_t), (u_char *) &prot);
-
 	/* Ok now, we can pass to the crypto processing */
 
 	/* Get crypto descriptors */
@@ -455,10 +425,10 @@ ipcomp_output(
 	crdc = crp->crp_desc;
 
 	/* Compression descriptor */
-	crdc->crd_skip = skip + hlen;
-	crdc->crd_len = m->m_pkthdr.len - (skip + hlen);
+	crdc->crd_skip = skip;
+	crdc->crd_len = m->m_pkthdr.len - skip;
 	crdc->crd_flags = CRD_F_COMP;
-	crdc->crd_inject = skip + hlen;
+	crdc->crd_inject = skip;
 
 	/* Compression operation */
 	crdc->crd_alg = ipcompx->type;
@@ -504,8 +474,12 @@ ipcomp_output_cb(struct cryptop *crp)
 	struct tdb_crypto *tc;
 	struct ipsecrequest *isr;
 	struct secasvar *sav;
-	struct mbuf *m;
-	int s, error, skip, rlen;
+	struct mbuf *m, *mo;
+	int s, error, skip, rlen, roff;
+	u_int8_t prot;
+	u_int16_t cpi;
+	struct ipcomp * ipcomp;
+
 
 	tc = (struct tdb_crypto *) crp->crp_opaque;
 	IPSEC_ASSERT(tc != NULL, ("ipcomp_output_cb: null opaque data area!"));
@@ -551,6 +525,45 @@ ipcomp_output_cb(struct cryptop *crp)
 	ipcompstat.ipcomps_hist[sav->alg_comp]++;
 
 	if (rlen > crp->crp_olen) {
+		/* Inject IPCOMP header */
+		mo = m_makespace(m, skip, IPCOMP_HLENGTH, &roff);
+		if (mo == NULL) {
+			ipcompstat.ipcomps_wrap++;
+			DPRINTF(("ipcomp_output: failed to inject IPCOMP header for "
+					 "IPCA %s/%08lx\n",
+						ipsec_address(&sav->sah->saidx.dst),
+						(u_long) ntohl(sav->spi)));
+			error = ENOBUFS;
+			goto bad;
+		}
+		ipcomp = (struct ipcomp *)(mtod(mo, caddr_t) + roff);
+
+		/* Initialize the IPCOMP header */
+		/* XXX alignment always correct? */
+		switch (sav->sah->saidx.dst.sa.sa_family) {
+#ifdef INET
+		case AF_INET:
+			ipcomp->comp_nxt = mtod(m, struct ip *)->ip_p;
+			 break;
+#endif /* INET */
+#ifdef INET6
+		case AF_INET6:
+			ipcomp->comp_nxt = mtod(m, struct ip6_hdr *)->ip6_nxt;
+		break;
+#endif
+		}
+		ipcomp->comp_flags = 0;
+
+		if ((sav->flags & SADB_X_EXT_RAWCPI) == 0)
+			 cpi = sav->alg_enc;
+		else
+			cpi = ntohl(sav->spi) & 0xffff;
+		ipcomp->comp_cpi = htons(cpi);
+
+		/* Fix Next Protocol in IPv4/IPv6 header */
+		prot = IPPROTO_IPCOMP;
+		m_copyback(m, tc->tc_protoff, sizeof(u_int8_t), (u_char *)&prot);
+
 		/* Adjust the length in the IP header */
 		switch (sav->sah->saidx.dst.sa.sa_family) {
 #ifdef INET
