@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9.c,v 1.66.2.5 2007/05/16 20:46:04 jdc Exp $	*/
+/*	$NetBSD: rtl81x9.c,v 1.66.2.6 2007/05/24 00:03:15 riz Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.66.2.5 2007/05/16 20:46:04 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.66.2.6 2007/05/24 00:03:15 riz Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -1251,6 +1251,10 @@ rtk_intr(void *arg)
 	for (;;) {
 
 		status = CSR_READ_2(sc, RTK_ISR);
+
+		if (status == 0xffff)
+			break; /* Card is gone... */
+
 		if (status)
 			CSR_WRITE_2(sc, RTK_ISR, status);
 
