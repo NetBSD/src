@@ -1,4 +1,4 @@
-/*	$NetBSD: refuse.c,v 1.60 2007/05/17 21:28:12 pooka Exp $	*/
+/*	$NetBSD: refuse.c,v 1.61 2007/05/24 00:55:57 agc Exp $	*/
 
 /*
  * Copyright © 2007 Alistair Crooks.  All rights reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: refuse.c,v 1.60 2007/05/17 21:28:12 pooka Exp $");
+__RCSID("$NetBSD: refuse.c,v 1.61 2007/05/24 00:55:57 agc Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -156,6 +156,7 @@ fill_dirbuf(struct puffs_fuse_dirh *dh, const char *name, ino_t dino,
 	if (dh->bufsize == 0) {
 		if ((dh->dbuf = malloc(DIR_CHUNKSIZE)) == NULL)
 			err(1, "fill_dirbuf");
+		(void) memset(dh->dbuf, 0x0, DIR_CHUNKSIZE);
 		dh->d = dh->dbuf;
 		dh->reslen = dh->bufsize = DIR_CHUNKSIZE;
 	}
@@ -1076,6 +1077,7 @@ fuse_mount(const char *dir, struct fuse_args *args)
 
 	if ((fc = malloc(sizeof(*fc))) == NULL)
 		err(1, "fuse_mount");
+	(void) memset(fc, 0x0, sizeof(*fc));
 	fc->dead = 0;
 
 	if ((fc->dir = strdup(dir)) == NULL)
@@ -1116,6 +1118,7 @@ fuse_new(struct fuse_chan *fc, struct fuse_args *args,
 
 	if ((fuse = malloc(sizeof(*fuse))) == NULL)
 		err(1, "fuse_new");
+	(void) memset(fuse, 0x0, sizeof(*fuse));
 
 	/* copy fuse ops to their own stucture */
 	(void) memcpy(&fuse->op, ops, sizeof(fuse->op));
