@@ -1,4 +1,4 @@
-/* $NetBSD: asm_1080.h,v 1.4 2005/12/11 12:22:27 christos Exp $ */
+/* $NetBSD: asm_1080.h,v 1.5 2007/05/24 22:12:02 mjacob Exp $ */
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, 1999, 2000 Qlogic, Inc.
  * All rights reserved.
@@ -23,7 +23,7 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
+ */ 
 
 #ifndef	ISP_TARGET_MODE
 /************************************************************************
@@ -35,7 +35,7 @@
 /*
  *	Firmware Version 8.15.00 (14:35 Aug 22, 2000)
  */
-static const u_int16_t isp_1080_risc_code[] = {
+static const uint16_t isp_1080_risc_code[] = {
 	0x0078, 0x1041, 0x0000, 0x3d3b, 0x0000, 0x2043, 0x4f50, 0x5952,
 	0x4947, 0x4854, 0x2031, 0x3939, 0x312c, 0x3139, 0x3932, 0x2c31,
 	0x3939, 0x332c, 0x3139, 0x3934, 0x2051, 0x4c4f, 0x4749, 0x4320,
@@ -2008,7 +2008,7 @@ static const u_int16_t isp_1080_risc_code[] = {
  *	Firmware Version 9.11.01 (15:46 May 23, 2000)
  */
 
-static const u_int16_t isp_1080_risc_code[] = {
+static const uint16_t isp_1080_risc_code[] = {
 	0x0078, 0x103a, 0x0000, 0x4f62, 0x0000, 0x2043, 0x4f50, 0x5952,
 	0x4947, 0x4854, 0x2031, 0x3939, 0x3520, 0x514c, 0x4f47, 0x4943,
 	0x2043, 0x4f52, 0x504f, 0x5241, 0x5449, 0x4f4e, 0x2049, 0x5350,
