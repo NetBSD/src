@@ -1,4 +1,4 @@
-/* $NetBSD: test.c,v 1.31 2007/03/28 01:47:25 christos Exp $ */
+/* $NetBSD: test.c,v 1.32 2007/05/24 18:47:08 christos Exp $ */
 
 /*
  * test(1); version 7-like  --  author Erik Baalbergen
@@ -12,7 +12,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: test.c,v 1.31 2007/03/28 01:47:25 christos Exp $");
+__RCSID("$NetBSD: test.c,v 1.32 2007/05/24 18:47:08 christos Exp $");
 #endif
 
 #include <sys/stat.h>
@@ -240,6 +240,8 @@ oexpr(enum token n)
 	int res;
 
 	res = aexpr(n);
+	if (*t_wp == NULL)
+		return res;
 	if (t_lex(*++t_wp) == BOR)
 		return oexpr(t_lex(*++t_wp)) || res;
 	t_wp--;
@@ -252,6 +254,8 @@ aexpr(enum token n)
 	int res;
 
 	res = nexpr(n);
+	if (*t_wp == NULL)
+		return res;
 	if (t_lex(*++t_wp) == BAND)
 		return aexpr(t_lex(*++t_wp)) && res;
 	t_wp--;
