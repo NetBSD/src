@@ -1,4 +1,4 @@
-.\"	$NetBSD: fast_ipsec.4,v 1.4 2006/02/25 02:28:56 wiz Exp $
+.\"	$NetBSD: fast_ipsec.4,v 1.5 2007/05/24 23:03:52 degroote Exp $
 .\"	$FreeBSD: fast_ipsec.4,v 1.2 2003/03/03 11:51:30 ru Exp $
 .\"
 .\" Copyright (c) 2004
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 .\" THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd April 25, 2004
+.Dd April 24, 2007
 .Dt FAST_IPSEC 4
 .Os
 .Sh NAME
@@ -101,28 +101,18 @@ version is a close copy of the
 .Fx
 original, and first appeared in
 .Nx 2.0 .
-.Sh BUGS
-There is presently no support for IPv6.
-Configuring
-.Nm
-in conjunction with INET6
-is explicitly experimental and unsupported.
-At the time of writing, combining
-.Nm
-and INET6 in a single kernel is believed to yield a working IPv6 stack,
-provided that no IPv6 traffic makes any use whatsoever of
-.Xr ipsec 4 .
-Attempting to send or receive
-.Xr ipsec 4
-IPv6 traffic to or from such a kernel may trigger kernel panics, or
-may expose the unprotected plaintext of IPv6 traffic which is configured
-to be secured via
-.Xr ipsec 4 .
-Caveat emptor.
 .Pp
-The
-.Tn IPcomp
-protocol support does not work.
+Support for IPv6 and 
+.Tn IPcomp 
+protocols has been added in
+.Nx 4.0 .
+.Sh BUGS
+There still are some issues in the IPv6 support. In particular
+.Tn FAST_IPSEC
+does not protect packets with IPv6 extension headers.
+.Pp
+.Tn FAST_IPSEC
+still lacks support for Network Address Translator traversal (NAT-T).
 .Pp
 Certain legacy authentication algorithms are not supported because of
 issues with the
