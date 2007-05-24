@@ -1,4 +1,4 @@
-/*	$NetBSD: display.c,v 1.15 2006/09/23 19:46:57 elad Exp $	*/
+/*	$NetBSD: display.c,v 1.16 2007/05/24 20:04:04 ad Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -47,7 +47,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: display.c,v 1.15 2006/09/23 19:46:57 elad Exp $");
+__RCSID("$NetBSD: display.c,v 1.16 2007/05/24 20:04:04 ad Exp $");
 #endif
 
 #include "os.h"
@@ -334,16 +334,17 @@ static char procstates_buffer[MAX_COLS];
  */
 
 void
-i_procstates(total, brkdn)
+i_procstates(total, brkdn, threads)
 
 int total;
 int *brkdn;
+int threads;
 
 {
     register int i;
 
     /* write current number of processes and remember the value */
-    printf("%d processes:", total);
+    printf("%d %s", total, (threads ? "threads:  " : "processes:"));
     ltotal = total;
 
     /* put out enough spaces to get to column 15 */
@@ -362,10 +363,11 @@ int *brkdn;
 }
 
 void
-u_procstates(total, brkdn)
+u_procstates(total, brkdn, threads)
 
 int total;
 int *brkdn;
+int threads;
 
 {
     static char new[MAX_COLS];
@@ -386,7 +388,7 @@ int *brkdn;
 	/* if number of digits differs, rewrite the label */
 	if (digits(total) != digits(ltotal))
 	{
-	    fputs(" processes:", stdout);
+	    printf("%d %s", total, (threads ? "threads:  " : "processes:"));
 	    /* put out enough spaces to get to column 15 */
 	    i = digits(total);
 	    while (i++ < 4)

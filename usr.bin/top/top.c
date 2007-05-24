@@ -1,4 +1,4 @@
-/*	$NetBSD: top.c,v 1.25 2006/11/24 19:47:00 christos Exp $	*/
+/*	$NetBSD: top.c,v 1.26 2007/05/24 20:04:04 ad Exp $	*/
 
 const char copyright[] = "Copyright (c) 1984 through 1996, William LeFebvre";
 
@@ -49,7 +49,7 @@ const char copyright[] = "Copyright (c) 1984 through 1996, William LeFebvre";
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: top.c,v 1.25 2006/11/24 19:47:00 christos Exp $");
+__RCSID("$NetBSD: top.c,v 1.26 2007/05/24 20:04:04 ad Exp $");
 #endif
 
 #include "os.h"
@@ -95,7 +95,7 @@ jmp_buf jmp_int;
 
 /* pointers to display routines */
 void (*d_loadave) __P((int, double *)) = i_loadave;
-void (*d_procstates) __P((int, int *)) = i_procstates;
+void (*d_procstates) __P((int, int *, int)) = i_procstates;
 void (*d_cpustates) __P((int *)) = i_cpustates;
 void (*d_memory) __P((int *)) = i_memory;
 void (*d_swap) __P((int *)) = i_swap;
@@ -153,9 +153,9 @@ char *argv[];
     struct pollfd set[1];
 
 #ifdef ORDER
-    static char command_chars[] = "\f qh?en#sdkrSiIuo";
+    static char command_chars[] = "\f qh?en#sdkrSiIuotp";
 #else
-    static char command_chars[] = "\f qh?en#sdkrSiIu";
+    static char command_chars[] = "\f qh?en#sdkrSiIutp";
 #endif
 /* these defines enumerate the "strchr"s of the commands in command_chars */
 #define CMD_redraw	0
@@ -178,6 +178,8 @@ char *argv[];
 #ifdef ORDER
 #define CMD_order       16
 #endif
+#define	CMD_threads	17
+#define	CMD_pid		18
 
     /* set the buffer for stdout */
 #ifdef DEBUG
@@ -206,6 +208,8 @@ char *argv[];
     ps.system  = Yes;
     ps.uid     = -1;
     ps.command = NULL;
+    ps.threads = No;
+    ps.pid     = -1;
 
     /* get preset options from the environment */
     if ((env_top = getenv("TOP")) != NULL)
@@ -230,7 +234,7 @@ char *argv[];
 	    optind = 1;
 	}
 
-	while ((i = getopt(ac, av, "SIbinquvs:d:U:o:")) != -1)
+	while ((i = getopt(ac, av, "SIbinquvs:td:U:o:")) != -1)
 	{
 	    switch(i)
 	    {
@@ -293,6 +297,10 @@ char *argv[];
 		    warnings++;
 		}
 		break;
+              
+              case 't':
+                ps.threads = !ps.threads;
+                break;
 
 	      case 'q':		/* be quick about it */
 		/* only allow this if user is really root */
@@ -402,7 +410,7 @@ Usage: %s [-bIinqSuv] [-d count] [-o field] [-s time] [-U username] [number]\n",
     init_termcap(interactive);
 
     /* get the string to use for the process area header */
-    header_text = format_header(uname_field);
+    header_text = format_header(uname_field, &ps);
 
     /* initialize display interface */
     if ((max_topn = display_init(&statics)) == -1)
@@ -524,7 +532,8 @@ Usage: %s [-bIinqSuv] [-d count] [-o field] [-s time] [-U username] [number]\n",
 
 	/* display process state breakdown */
 	(*d_procstates)(system_info.p_total,
-			system_info.procstates);
+			system_info.procstates,
+			ps.threads == Yes);
 
 	/* display the CPU state percentage breakdown */
 	if (dostates)	/* but not the first time */
@@ -809,11 +818,33 @@ Usage: %s [-bIinqSuv] [-d count] [-o field] [-s time] [-U username] [number]\n",
 				}
 				break;
 
+			    case CMD_pid:	/* one process */
+				new_message(0, "select pid ");
+				if (readline(tempbuf2, sizeof(tempbuf2), No) > 0)
+				{
+				    ps.pid = atoi(tempbuf2);
+				}
+				else
+				{
+				    ps.pid = -1;
+				    clear_message();
+				}
+				break;
+
 			    case CMD_system:
 				ps.system = !ps.system;
 				new_message(MT_standout | MT_delayed,
 				    " %sisplaying system processes.",
 				    ps.system ? "D" : "Not d");
+				break;
+
+			    case CMD_threads:
+				ps.threads = !ps.threads;
+				new_message(MT_standout | MT_delayed,
+				    " Displaying %s.",
+				    ps.threads ? "threads" : "processes");
+                                header_text = format_header(uname_field, &ps);
+                                reset_display();
 				break;
 
 			    case CMD_idletog:
