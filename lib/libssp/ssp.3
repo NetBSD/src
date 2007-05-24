@@ -1,4 +1,4 @@
-.\"	$NetBSD: ssp.3,v 1.2 2007/05/23 15:00:39 christos Exp $
+.\"	$NetBSD: ssp.3,v 1.3 2007/05/24 20:50:28 christos Exp $
 .\"
 .\" Copyright (c) 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -72,6 +72,11 @@
 .Fn strncpy "char *str" "const char *ptr" "size_t len"
 .Ft char *
 .Fn strncat "char *str" "const char *ptr" "size_t len"
+.In ssp/strings.h
+.Ft void *
+.Fn bcopy "const void *ptr" "void *str" "size_t len"
+.Ft void *
+.Fn bzero "void *str" "size_t len"
 .In ssp/unistd.h
 .Ft ssize_t
 .Fn read "int fd" "void *str" "size_t len"
