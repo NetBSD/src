@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.150 2007/05/15 23:54:19 lukem Exp $	*/
+/*	$NetBSD: ftp.c,v 1.151 2007/05/24 05:05:19 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-2007 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.150 2007/05/15 23:54:19 lukem Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.151 2007/05/24 05:05:19 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -1146,7 +1146,8 @@ recvrequest(const char *cmd, const char *volatile local, const char *remote,
 				if (utimes(local, tval) == -1) {
 					fprintf(ttyout,
 				"Can't change modification time on %s to %s",
-					    local, asctime(localtime(&mtime)));
+					    local,
+					    rfc2822time(localtime(&mtime)));
 				}
 			}
 		}
