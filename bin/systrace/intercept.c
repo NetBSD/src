@@ -1,4 +1,4 @@
-/*	$NetBSD: intercept.c,v 1.28 2007/04/29 20:23:35 msaitoh Exp $	*/
+/*	$NetBSD: intercept.c,v 1.29 2007/05/24 18:18:43 christos Exp $	*/
 /*	$OpenBSD: intercept.c,v 1.29 2002/08/28 03:30:27 itojun Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -30,7 +30,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: intercept.c,v 1.28 2007/04/29 20:23:35 msaitoh Exp $");
+__RCSID("$NetBSD: intercept.c,v 1.29 2007/05/24 18:18:43 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1014,142 +1014,47 @@ intercept_policy_free(int policynr)
 	(*intercept_pfreecb)(policynr, intercept_pfreearg);
 }
 
+/* Like the libc realpath, only we succeed if the last component does
+ * not exist.
+ */
 char *
 intercept_realpath(const char *path, char *resolved)
 {
+	char orig[MAXPATHLEN];
 	struct stat sb;
-	int idx = 0, n, nlnk = 0, serrno = errno;
-	const char *q;
-	char *p, wbuf[2][MAXPATHLEN];
-	size_t len;
+	char *ptr;
 
-	/*
-	 * Build real path one by one with paying an attention to .,
-	 * .. and symbolic link.
-	 */
+	if (stat(path, &sb) != -1)
+		return realpath(path, resolved);
 
-	/*
-	 * `p' is where we'll put a new component with prepending
-	 * a delimiter.
-	 */
-	p = resolved;
+	if (strlcpy(orig, path, sizeof(orig)) >= sizeof(orig))
+		goto toolong;
 
-	if (*path == 0) {
-		*p = 0;
+	/* Remove trailing slashes, while keeping the last one */
+	while ((ptr = strrchr(orig, '/')) != NULL && ptr[1] == '\0')
+		*ptr = '\0';
+		
+	if (ptr == NULL) {
 		errno = ENOENT;
-		return (NULL);
+		return NULL;
 	}
 
-	/* If relative path, start from current working directory. */
-	if (*path != '/') {
-		if (getcwd(resolved, MAXPATHLEN) == NULL) {
-			p[0] = '.';
-			p[1] = 0;
-			return (NULL);
-		}
-		len = strlen(resolved);
-		if (len > 1)
-			p += len;
-	}
+	/* Trim last component */
+	*ptr++ = '\0';
 
-loop:
-	/* Skip any slash. */
-	while (*path == '/')
-		path++;
+	if (realpath(orig, resolved) == NULL)
+		return NULL;
 
-	if (*path == 0) {
-		if (p == resolved)
-			*p++ = '/';
-		*p = 0;
-		return (resolved);
-	}
+	/* Put last component back */
+	if (strlcat(resolved, "/", MAXPATHLEN) >= MAXPATHLEN)
+		goto toolong;
 
-	/* Find the end of this component. */
-	q = path;
-	do
-		q++;
-	while (*q != '/' && *q != 0);
+	if (strlcat(resolved, ptr, MAXPATHLEN) >= MAXPATHLEN)
+		goto toolong;
 
-	/* Test . or .. */
-	if (path[0] == '.') {
-		if (q - path == 1) {
-			path = q;
-			goto loop;
-		}
-		if (path[1] == '.' && q - path == 2) {
-			/* Trim the last component. */
-			if (p != resolved)
-				while (*--p != '/')
-					;
-			path = q;
-			goto loop;
-		}
-	}
+	return resolved;
 
-	/* Append this component. */
-	if (p - resolved + 1 + q - path + 1 > MAXPATHLEN) {
-		errno = ENAMETOOLONG;
-		if (p == resolved)
-			*p++ = '/';
-		*p = 0;
-		return (NULL);
-	}
-	p[0] = '/';
-	memcpy(&p[1], path,
-	    /* LINTED We know q > path. */
-	    q - path);
-	p[1 + q - path] = 0;
-
-	/*
-	 * If this component is a symlink, toss it and prepend link
-	 * target to unresolved path.
-	 */
-	if (lstat(resolved, &sb) == -1) {
-		/* Allow nonexistent component if this is the last one. */
-		while (*q == '/')
-			q++;
-
-		if (*q == 0  && errno == ENOENT) {
-			errno = serrno;
-			return (resolved);
-		}
-
-		return (NULL);
-	}
-	if (S_ISLNK(sb.st_mode)) {
-		if (nlnk++ >= MAXSYMLINKS) {
-			errno = ELOOP;
-			return (NULL);
-		}
-		n = readlink(resolved, wbuf[idx], sizeof(wbuf[0]) - 1);
-		if (n < 0)
-			return (NULL);
-		if (n == 0) {
-			errno = ENOENT;
-			return (NULL);
-		}
-
-		/* Append unresolved path to link target and switch to it. */
-		if (n + (len = strlen(q)) + 1 > sizeof(wbuf[0])) {
-			errno = ENAMETOOLONG;
-			return (NULL);
-		}
-		memcpy(&wbuf[idx][n], q, len + 1);
-		path = wbuf[idx];
-		idx ^= 1;
-
-		/* If absolute symlink, start from root. */
-		if (*path == '/')
-			p = resolved;
-		goto loop;
-	}
-	if (*q == '/' && !S_ISDIR(sb.st_mode)) {
-		errno = ENOTDIR;
-		return (NULL);
-	}
-
-	/* Advance both resolved and unresolved path. */
-	p += 1 + q - path;
-	path = q;
-	goto loop;
+toolong:
+	errno = ENAMETOOLONG;
+	return NULL;
 }
