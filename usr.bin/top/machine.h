@@ -1,4 +1,4 @@
-/*	$NetBSD: machine.h,v 1.9 2005/10/03 05:34:51 christos Exp $	*/
+/*	$NetBSD: machine.h,v 1.10 2007/05/24 20:04:04 ad Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -86,6 +86,8 @@ struct process_select
     int idle;		/* show idle processes */
     int system;		/* show system processes */
     int uid;		/* only this uid (unless uid == -1) */
+    int threads;	/* show threads */
+    int pid;		/* show only this pid */
     char *command;	/* only this command (unless == NULL) */
 };
 
@@ -95,7 +97,7 @@ struct proc;
 extern int (*proc_compares[]) __P((struct proc **, struct proc **));
 
 int machine_init __P((struct statics *));
-char *format_header __P((char *));
+char *format_header __P((char *, struct process_select *));
 void get_system_info __P((struct system_info *));
 caddr_t get_process_info __P((struct system_info *, struct process_select *,
     int (*)(struct proc **, struct proc **)));
