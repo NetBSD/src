@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.22 2007/05/21 15:35:47 christos Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.23 2007/05/24 11:21:52 njoly Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.22 2007/05/21 15:35:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.23 2007/05/24 11:21:52 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -211,6 +211,7 @@ linux_sendsig(ksi, mask)
 	sigframe.uc.luc_mcontext.rbp = tf->tf_rbp;
 	sigframe.uc.luc_mcontext.rbx = tf->tf_rbx;
 	sigframe.uc.luc_mcontext.rdx = tf->tf_rdx;
+	sigframe.uc.luc_mcontext.rax = tf->tf_rax;
 	sigframe.uc.luc_mcontext.rcx = tf->tf_rcx;
 	sigframe.uc.luc_mcontext.rsp = tf->tf_rsp;
 	sigframe.uc.luc_mcontext.rip = tf->tf_rip;
@@ -447,7 +448,7 @@ linux_sys_rt_sigreturn(l, v, retval)
 	mctx->__gregs[_REG_RSI] = lsigctx->rsi;
 	mctx->__gregs[_REG_RBP] = lsigctx->rbp;
 	mctx->__gregs[_REG_RBX] = lsigctx->rbx;
-	mctx->__gregs[_REG_RAX] = tf->tf_rax;
+	mctx->__gregs[_REG_RAX] = lsigctx->rax;
 	mctx->__gregs[_REG_RDX] = lsigctx->rdx;
 	mctx->__gregs[_REG_RCX] = lsigctx->rcx;
 	mctx->__gregs[_REG_RIP] = lsigctx->rip;
@@ -506,8 +507,10 @@ linux_sys_rt_sigreturn(l, v, retval)
 	mutex_enter(&l->l_proc->p_smutex);
 	error = setucontext(l, &uctx);
 	mutex_exit(&l->l_proc->p_smutex);
+	if (error)
+		return error;
 
-	return error;
+	return EJUSTRETURN;
 }
 
 int
