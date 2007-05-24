@@ -1,4 +1,4 @@
-/*      $NetBSD: procfs_linux.c,v 1.35 2007/05/24 00:37:40 agc Exp $      */
+/*      $NetBSD: procfs_linux.c,v 1.36 2007/05/24 05:33:08 dogcow Exp $      */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.35 2007/05/24 00:37:40 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.36 2007/05/24 05:33:08 dogcow Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -237,7 +237,7 @@ procfs_docpustat(struct lwp *curl, struct proc *p,
 	bf = malloc(LBFSZ, M_TEMP, M_WAITOK);
 
 	len = snprintf(bf, LBFSZ,
-		"cpu %llu %llu %llu %llu\n",
+		"cpu %" PRIu64 " %" PRIu64 " %" PRIu64 " %" PRIu64 "\n",
 		curcpu()->ci_schedstate.spc_cp_time[CP_USER],
 		curcpu()->ci_schedstate.spc_cp_time[CP_NICE],
 		curcpu()->ci_schedstate.spc_cp_time[CP_SYS] /*+ [CP_INTR]*/,
@@ -248,7 +248,8 @@ procfs_docpustat(struct lwp *curl, struct proc *p,
 	i = 0;
 	for (CPU_INFO_FOREACH(cii, ci)) {
 		len += snprintf(&bf[len], LBFSZ - len, 
-			"cpu%d %llu %llu %llu %llu\n", i,
+			"cpu%d %" PRIu64 " %" PRIu64 " %" PRIu64 " %" PRIu64
+			"\n", i,
 			ci->ci_schedstate.spc_cp_time[CP_USER],
 			ci->ci_schedstate.spc_cp_time[CP_NICE],
 			ci->ci_schedstate.spc_cp_time[CP_SYS],
