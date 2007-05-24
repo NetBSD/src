@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec6.h,v 1.4 2005/12/10 23:44:08 elad Exp $	*/
+/*	$NetBSD: ipsec6.h,v 1.4.24.1 2007/05/24 19:13:13 pavel Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/ipsec6.h,v 1.1.4.1 2003/01/24 05:11:35 sam Exp $	*/
 /*	$KAME: ipsec.h,v 1.44 2001/03/23 08:08:47 itojun Exp $	*/
 
@@ -70,6 +70,10 @@ extern int ipsec6_set_policy __P((struct in6pcb *inp, int optname,
 	caddr_t request, size_t len, int priv));
 extern int ipsec6_get_policy
 	__P((struct in6pcb *inp, caddr_t request, size_t len, struct mbuf **mp));
+extern struct secpolicy *ipsec6_checkpolicy __P((struct mbuf *, u_int, 
+    u_int, int *, struct in6pcb *));
+struct secpolicy * ipsec6_check_policy(struct mbuf *, 
+				const struct socket *, int, int*,int*);
 extern int ipsec6_in_reject __P((struct mbuf *, struct in6pcb *));
 /*
  * KAME ipsec6_in_reject_so(struct mbuf*, struct so)  compatibility shim
@@ -98,10 +102,8 @@ extern int ipsec6_common_input_cb(struct mbuf *m, struct secasvar *sav,
 extern void esp6_ctlinput(int, struct sockaddr *, void *);
 
 struct ipsec_output_state;
-extern int ipsec6_output_trans __P((struct ipsec_output_state *, u_char *,
-	struct mbuf *, struct secpolicy *, int, int *));
-extern int ipsec6_output_tunnel __P((struct ipsec_output_state *,
-	struct secpolicy *, int));
+
+int ipsec6_process_packet __P((struct mbuf*,struct ipsecrequest *)); 
 #endif /*_KERNEL*/
 
 #endif /* !_NETIPSEC_IPSEC6_H_ */
