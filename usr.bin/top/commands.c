@@ -1,4 +1,4 @@
-/*	$NetBSD: commands.c,v 1.12 2006/05/14 03:00:45 christos Exp $	*/
+/*	$NetBSD: commands.c,v 1.13 2007/05/24 20:09:44 ad Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -37,7 +37,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: commands.c,v 1.12 2006/05/14 03:00:45 christos Exp $");
+__RCSID("$NetBSD: commands.c,v 1.13 2007/05/24 20:09:44 ad Exp $");
 #endif
 
 #include "os.h"
@@ -107,9 +107,11 @@ o       - specify sort order (", stdout);
 	}
 #endif
 	fputs("\
+p       - select a single process by PID\n\
 r       - renice a process\n\
 s       - change number of seconds to delay between updates\n\
 S       - toggle showing system processes\n\
+t       - toggle showing threads\n\
 u       - display processes for only one user (+ selects all users)\n\
 \n\
 \n", stdout);
