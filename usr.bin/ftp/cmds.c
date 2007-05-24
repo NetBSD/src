@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.122 2007/05/10 05:35:31 lukem Exp $	*/
+/*	$NetBSD: cmds.c,v 1.123 2007/05/24 05:05:18 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-2007 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: cmds.c,v 1.122 2007/05/10 05:35:31 lukem Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.123 2007/05/24 05:05:18 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -2495,7 +2495,8 @@ modtime(int argc, char *argv[])
 	}
 	mtime = remotemodtime(argv[1], 1);
 	if (mtime != -1)
-		fprintf(ttyout, "%s\t%s", argv[1], asctime(localtime(&mtime)));
+		fprintf(ttyout, "%s\t%s", argv[1],
+		    rfc2822time(localtime(&mtime)));
 	code = (mtime > 0);
 }
 

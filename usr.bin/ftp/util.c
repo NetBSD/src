@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.142 2007/05/24 02:51:41 lukem Exp $	*/
+/*	$NetBSD: util.c,v 1.143 2007/05/24 05:05:19 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-2007 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.142 2007/05/24 02:51:41 lukem Exp $");
+__RCSID("$NetBSD: util.c,v 1.143 2007/05/24 05:05:19 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -764,7 +764,8 @@ remotemodtime(const char *file, int noisy)
 				goto cleanup_parse_time;
 		} else
 			DPRINTF("parsed date `%s' as " LLF ", %s",
-			    timestr, (LLT)rtime, ctime(&rtime));
+			    timestr, (LLT)rtime,
+			    rfc2822time(localtime(&rtime)));
 	} else {
 		if (r == ERROR && code == 500 && features[FEAT_MDTM] == -1)
 			features[FEAT_MDTM] = 0;
@@ -778,6 +779,21 @@ remotemodtime(const char *file, int noisy)
 	if (rtime == -1)
 		code = ocode;
 	return (rtime);
+}
+
+/*
+ * Format tm in an RFC2822 compatible manner, with a trailing \n.
+ * Returns a pointer to a static string containing the result.
+ */
+const char *
+rfc2822time(const struct tm *tm)
+{
+	static char result[50];
+
+	if (strftime(result, sizeof(result),
+	    "%a, %d %b %Y %H:%M:%S %z\n", tm) == 0)
+		errx(1, "Can't convert RFC2822 time: buffer too small");
+	return result;
 }
 
 /*

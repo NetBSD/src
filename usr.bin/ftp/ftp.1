@@ -1,4 +1,4 @@
-.\" 	$NetBSD: ftp.1,v 1.117 2007/05/15 23:54:19 lukem Exp $
+.\" 	$NetBSD: ftp.1,v 1.118 2007/05/24 05:05:18 lukem Exp $
 .\"
 .\" Copyright (c) 1996-2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -64,7 +64,7 @@
 .\"
 .\"	@(#)ftp.1	8.3 (Berkeley) 10/9/94
 .\"
-.Dd April 16, 2007
+.Dd May 24, 2007
 .Dt FTP 1
 .Os
 .Sh NAME
@@ -787,7 +787,9 @@ The default (and only supported)
 mode is
 .Dq stream .
 .It Ic modtime Ar remote-file
-Show the last modification time of the file on the remote machine.
+Show the last modification time of the file on the remote machine, in
+.Li RFC2822
+format.
 .It Ic more Ar file
 A synonym for
 .Ic page .
@@ -2377,6 +2379,8 @@ attempts to be compliant with:
 .Em FTP Extensions for IPv6 and NATs
 .It Li RFC2616
 .Em Hypertext Transfer Protocol -- HTTP/1.1
+.It Li RFC2822
+.Em Internet Message Format
 .It Li RFC3659
 .Em Extensions to FTP
 .It Li RFC3986
