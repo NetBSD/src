@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.165 2007/05/23 23:10:49 riz Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.166 2007/05/24 19:22:04 pavel Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -5618,4 +5618,27 @@ sys/arch/i386/conf/GENERIC.NOACPI		1.1
 	Add GENERIC.NOACPI kernel that offers - surprise! - no ACPI
 	(in contrast to GENERIC).
 	[hubertf, ticket #661]
+
+sys/netinet/tcp_input.c				1.260
+sys/netinet/tcp_output.c			1.154
+sys/netinet/tcp_subr.c				1.210
+sys/netinet6/icmp6.c				1.129
+sys/netinet6/in6_proto.c			1.70
+sys/netinet6/ip6_forward.c			1.54
+sys/netinet6/ip6_input.c			1.94
+sys/netinet6/ip6_output.c			1.114
+sys/netinet6/raw_ip6.c				1.81
+sys/netipsec/ipcomp_var.h			1.4
+sys/netipsec/ipsec.c				1.26 via patch,1.31-1.32
+sys/netipsec/ipsec6.h				1.5
+sys/netipsec/ipsec_input.c			1.14
+sys/netipsec/ipsec_netbsd.c			1.18,1.26
+sys/netipsec/ipsec_output.c			1.21 via patch
+sys/netipsec/key.c				1.33,1.47
+sys/netipsec/xform_ipcomp.c			1.9
+sys/netipsec/xform_ipip.c			1.15
+sys/opencrypto/deflate.c			1.8
+
+	Add support for IPv6 and ipcomp to FAST_IPSEC.
+	[degroote, ticket #667]
 
