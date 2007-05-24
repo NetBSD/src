@@ -1,7 +1,7 @@
-/*	$NetBSD: aacreg.h,v 1.5 2005/12/11 12:21:25 christos Exp $	*/
+/*	$NetBSD: aacreg.h,v 1.6 2007/05/24 15:07:47 briggs Exp $	*/
 
 /*-
- * Copyright (c) 2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -38,7 +38,7 @@
 
 /*-
  * Copyright (c) 2000 Michael Smith
- * Copyright (c) 2000 Scott Long
+ * Copyright (c) 2000-2001 Scott Long
  * Copyright (c) 2000 BSDi
  * Copyright (c) 2000 Niklas Hallqvist
  * All rights reserved.
@@ -66,6 +66,7 @@
  *
  * from FreeBSD: aacreg.h,v 1.1 2000/09/13 03:20:34 msmith Exp
  * via OpenBSD: aacreg.h,v 1.3 2001/06/12 15:40:29 niklas Exp
+ * incorporating some of: aacreg.h,v 1.23 2005/10/14 16:22:45 scottl Exp
  */
 
 /*
@@ -740,5 +741,316 @@ struct aac_fib {
 #define	AAC_SELF_TEST_FAILED	0x00000004
 #define	AAC_UP_AND_RUNNING	0x00000080
 #define	AAC_KERNEL_PANIC	0x00000100
+
+/*
+ * Data types relating to control and monitoring of the NVRAM/WriteCache 
+ * subsystem.
+ */
+
+#define AAC_NFILESYS	24	/* maximum number of filesystems */
+
+/*
+ * NVRAM/Write Cache subsystem states
+ */
+typedef enum {
+	NVSTATUS_DISABLED = 0,	/* present, clean, not being used */
+	NVSTATUS_ENABLED,	/* present, possibly dirty, ready for use */
+	NVSTATUS_ERROR,		/* present, dirty, contains dirty data */
+	NVSTATUS_BATTERY,	/* present, bad or low battery, may contain
+				 * dirty data */
+	NVSTATUS_UNKNOWN	/* for bad/missing device */
+} AAC_NVSTATUS;
+
+/*
+ * NVRAM/Write Cache subsystem battery component states
+ *
+ */
+typedef enum {
+	NVBATTSTATUS_NONE = 0,	/* battery has no power or is not present */
+	NVBATTSTATUS_LOW,	/* battery is low on power */
+	NVBATTSTATUS_OK,	/* battery is okay - normal operation possible
+				 * only in this state */
+	NVBATTSTATUS_RECONDITIONING	/* no battery present - reconditioning
+					 * in process */
+} AAC_NVBATTSTATUS;
+
+/*
+ * Battery transition type
+ */
+typedef enum {
+	NVBATT_TRANSITION_NONE = 0,	/* battery now has no power or is not
+					 * present */
+	NVBATT_TRANSITION_LOW,		/* battery is now low on power */
+	NVBATT_TRANSITION_OK		/* battery is now okay - normal
+					 * operation possible only in this
+					 * state */
+} AAC_NVBATT_TRANSITION;
+
+/*
+ * NVRAM Info structure returned for NVRAM_GetInfo call
+ */
+struct aac_nvramdevinfo {
+	u_int32_t	NV_Enabled;	/* write caching enabled */
+	u_int32_t	NV_Error;	/* device in error state */
+	u_int32_t	NV_NDirty;	/* count of dirty NVRAM buffers */
+	u_int32_t	NV_NActive;	/* count of NVRAM buffers being
+					 * written */
+} __packed;
+
+struct aac_nvraminfo {
+	AAC_NVSTATUS		NV_Status;	/* nvram subsystem status */
+	AAC_NVBATTSTATUS	NV_BattStatus;	/* battery status */
+	u_int32_t		NV_Size;	/* size of WriteCache NVRAM in
+						 * bytes */
+	u_int32_t		NV_BufSize;	/* size of NVRAM buffers in
+						 * bytes */
+	u_int32_t		NV_NBufs;	/* number of NVRAM buffers */
+	u_int32_t		NV_NDirty;	/* Num dirty NVRAM buffers */
+	u_int32_t		NV_NClean;	/* Num clean NVRAM buffers */
+	u_int32_t		NV_NActive;	/* Num NVRAM buffers being
+						 * written */
+	u_int32_t		NV_NBrokered;	/* Num brokered NVRAM buffers */
+	struct aac_nvramdevinfo	NV_DevInfo[AAC_NFILESYS];	/* per device
+								 * info */
+	u_int32_t		NV_BattNeedsReconditioning;	/* boolean */
+	u_int32_t		NV_TotalSize;	/* size of all non-volatile
+						 * memories in bytes */
+} __packed;
+
+/*
+ * Data types relating to adapter-initiated FIBs
+ *
+ * Based on types and structures in <aifstruc.h>
+ */
+
+/*
+ * Progress Reports
+ */
+typedef enum {
+	AifJobStsSuccess = 1,
+	AifJobStsFinished,
+	AifJobStsAborted,
+	AifJobStsFailed,
+	AifJobStsLastReportMarker = 100,	/* All prior mean last report */
+	AifJobStsSuspended,
+	AifJobStsRunning
+} AAC_AifJobStatus;
+
+typedef enum {
+	AifJobScsiMin = 1,		/* Minimum value for Scsi operation */
+	AifJobScsiZero,			/* SCSI device clear operation */
+	AifJobScsiVerify,		/* SCSI device Verify operation NO
+					 * REPAIR */
+	AifJobScsiExercise,		/* SCSI device Exercise operation */
+	AifJobScsiVerifyRepair,		/* SCSI device Verify operation WITH
+					 * repair */
+	AifJobScsiWritePattern,		/* write pattern */
+	AifJobScsiMax = 99,		/* Max Scsi value */
+	AifJobCtrMin,			/* Min Ctr op value */
+	AifJobCtrZero,			/* Container clear operation */
+	AifJobCtrCopy,			/* Container copy operation */
+	AifJobCtrCreateMirror,		/* Container Create Mirror operation */
+	AifJobCtrMergeMirror,		/* Container Merge Mirror operation */
+	AifJobCtrScrubMirror,		/* Container Scrub Mirror operation */
+	AifJobCtrRebuildRaid5,		/* Container Rebuild Raid5 operation */
+	AifJobCtrScrubRaid5,		/* Container Scrub Raid5 operation */
+	AifJobCtrMorph,			/* Container morph operation */
+	AifJobCtrPartCopy,		/* Container Partition copy operation */
+	AifJobCtrRebuildMirror,		/* Container Rebuild Mirror operation */
+	AifJobCtrCrazyCache,		/* crazy cache */
+	AifJobCtrCopyback,		/* Container Copyback operation */
+	AifJobCtrCompactRaid5D,		/* Container Compaction operation */
+	AifJobCtrExpandRaid5D,		/* Container Expansion operation */
+	AifJobCtrRebuildRaid6,		/* Container Rebuild Raid6 operation */
+	AifJobCtrScrubRaid6,		/* Container Scrub Raid6 operation */
+	AifJobCtrSSBackup,		/* Container snapshot backup task */
+	AifJobCtrMax = 199,		/* Max Ctr type operation */
+	AifJobFsMin,			/* Min Fs type operation */
+	AifJobFsCreate,			/* File System Create operation */
+	AifJobFsVerify,			/* File System Verify operation */
+	AifJobFsExtend,			/* File System Extend operation */
+	AifJobFsMax = 299,		/* Max Fs type operation */
+	AifJobApiFormatNTFS,		/* Format a drive to NTFS */
+	AifJobApiFormatFAT,		/* Format a drive to FAT */
+	AifJobApiUpdateSnapshot,	/* update the read/write half of a
+					 * snapshot */
+	AifJobApiFormatFAT32,		/* Format a drive to FAT32 */
+	AifJobApiMax = 399,		/* Max API type operation */
+	AifJobCtlContinuousCtrVerify,	/* Adapter operation */
+	AifJobCtlMax = 499		/* Max Adapter type operation */
+} AAC_AifJobType;
+
+struct aac_AifContainers {
+	u_int32_t	src;		/* from/master */
+	u_int32_t	dst;		/* to/slave */
+} __packed;
+
+union aac_AifJobClient {
+	struct aac_AifContainers	container;	/* For Container and
+							 * filesystem progress
+							 * ops; */
+	int32_t				scsi_dh;	/* For SCSI progress
+							 * ops */
+};
+
+struct aac_AifJobDesc {
+	u_int32_t		jobID;		/* DO NOT FILL IN! Will be
+						 * filled in by AIF */
+	AAC_AifJobType		type;		/* Operation that is being
+						 * performed */
+	union aac_AifJobClient	client;		/* Details */
+} __packed;
+
+struct aac_AifJobProgressReport {
+	struct aac_AifJobDesc	jd;
+	AAC_AifJobStatus	status;
+	u_int32_t		finalTick;
+	u_int32_t		currentTick;
+	u_int32_t		jobSpecificData1;
+	u_int32_t		jobSpecificData2;
+} __packed;
+
+/*
+ * Event Notification
+ */
+typedef enum {
+	/* General application notifies start here */
+	AifEnGeneric = 1,		/* Generic notification */
+	AifEnTaskComplete,		/* Task has completed */
+	AifEnConfigChange,		/* Adapter config change occurred */
+	AifEnContainerChange,		/* Adapter specific container 
+					 * configuration change */
+	AifEnDeviceFailure,		/* SCSI device failed */
+	AifEnMirrorFailover,		/* Mirror failover started */
+	AifEnContainerEvent,		/* Significant container event */
+	AifEnFileSystemChange,		/* File system changed */
+	AifEnConfigPause,		/* Container pause event */
+	AifEnConfigResume,		/* Container resume event */
+	AifEnFailoverChange,		/* Failover space assignment changed */
+	AifEnRAID5RebuildDone,		/* RAID5 rebuild finished */
+	AifEnEnclosureManagement,	/* Enclosure management event */
+	AifEnBatteryEvent,		/* Significant NV battery event */
+	AifEnAddContainer,		/* A new container was created. */
+	AifEnDeleteContainer,		/* A container was deleted. */
+	AifEnSMARTEvent, 	       	/* SMART Event */
+	AifEnBatteryNeedsRecond,	/* The battery needs reconditioning */
+	AifEnClusterEvent,		/* Some cluster event */
+	AifEnDiskSetEvent,		/* A disk set event occured. */
+	AifDriverNotifyStart=199,	/* Notifies for host driver go here */
+	/* Host driver notifications start here */
+	AifDenMorphComplete, 		/* A morph operation completed */
+	AifDenVolumeExtendComplete 	/* Volume expand operation completed */
+} AAC_AifEventNotifyType;
+
+struct aac_AifEnsGeneric {
+	char	text[132];		/* Generic text */
+} __packed;
+
+struct aac_AifEnsDeviceFailure {
+	u_int32_t	deviceHandle;	/* SCSI device handle */
+} __packed;
+
+struct aac_AifEnsMirrorFailover {
+	u_int32_t	container;	/* Container with failed element */
+	u_int32_t	failedSlice;	/* Old slice which failed */
+	u_int32_t	creatingSlice;	/* New slice used for auto-create */
+} __packed;
+
+struct aac_AifEnsContainerChange {
+	u_int32_t	container[2];	/* container that changed, -1 if no
+					 * container */
+} __packed;
+
+struct aac_AifEnsContainerEvent {
+	u_int32_t	container;	/* container number  */
+	u_int32_t	eventType;	/* event type */
+} __packed;
+
+struct aac_AifEnsEnclosureEvent {
+	u_int32_t	empID;		/* enclosure management proc number  */
+	u_int32_t	unitID;		/* unitId, fan id, power supply id,
+					 * slot id, tempsensor id.  */
+	u_int32_t	eventType;	/* event type */
+} __packed;
+
+struct aac_AifEnsBatteryEvent {
+	AAC_NVBATT_TRANSITION	transition_type;	/* eg from low to ok */
+	AAC_NVBATTSTATUS	current_state;		/* current batt state */
+	AAC_NVBATTSTATUS	prior_state;		/* prev batt state */
+} __packed;
+
+struct aac_AifEnsDiskSetEvent {
+	u_int32_t	eventType;
+	u_int64_t	DsNum;
+	u_int64_t	CreatorId;
+} __packed;
+
+typedef enum {
+	CLUSTER_NULL_EVENT = 0,
+	CLUSTER_PARTNER_NAME_EVENT,	/* change in partner hostname or
+					 * adaptername from NULL to non-NULL */
+	/* (partner's agent may be up) */
+	CLUSTER_PARTNER_NULL_NAME_EVENT	/* change in partner hostname or
+					 * adaptername from non-null to NULL */
+	/* (partner has rebooted) */
+} AAC_ClusterAifEvent;
+
+struct aac_AifEnsClusterEvent {
+	AAC_ClusterAifEvent	eventType;
+} __packed;
+
+struct aac_AifEventNotify {
+	AAC_AifEventNotifyType	type;
+	union {
+		struct aac_AifEnsGeneric		EG;
+		struct aac_AifEnsDeviceFailure		EDF;
+		struct aac_AifEnsMirrorFailover		EMF;
+		struct aac_AifEnsContainerChange	ECC;
+		struct aac_AifEnsContainerEvent		ECE;
+		struct aac_AifEnsEnclosureEvent		EEE;
+		struct aac_AifEnsBatteryEvent		EBE;
+		struct aac_AifEnsDiskSetEvent		EDS;
+/*		struct aac_AifEnsSMARTEvent		ES;*/
+		struct aac_AifEnsClusterEvent		ECLE;
+	} data;
+} __packed;
+
+/*
+ * Adapter Initiated FIB command structures. Start with the adapter
+ * initiated FIBs that really come from the adapter, and get responded
+ * to by the host. 
+ */
+#define AAC_AIF_REPORT_MAX_SIZE 64
+
+typedef enum {
+	AifCmdEventNotify = 1,	/* Notify of event */
+	AifCmdJobProgress,	/* Progress report */
+	AifCmdAPIReport,	/* Report from other user of API */
+	AifCmdDriverNotify,	/* Notify host driver of event */
+	AifReqJobList = 100,	/* Gets back complete job list */
+	AifReqJobsForCtr,	/* Gets back jobs for specific container */
+	AifReqJobsForScsi,	/* Gets back jobs for specific SCSI device */
+	AifReqJobReport,	/* Gets back a specific job report or list */
+	AifReqTerminateJob,	/* Terminates job */
+	AifReqSuspendJob,	/* Suspends a job */
+	AifReqResumeJob,	/* Resumes a job */
+	AifReqSendAPIReport,	/* API generic report requests */
+	AifReqAPIJobStart,	/* Start a job from the API */
+	AifReqAPIJobUpdate,	/* Update a job report from the API */
+	AifReqAPIJobFinish	/* Finish a job from the API */
+} AAC_AifCommand;
+
+struct aac_aif_command {
+	AAC_AifCommand	command;	/* Tell host what type of
+					 * notify this is */
+	u_int32_t	seqNumber;	/* To allow ordering of
+					 * reports (if necessary) */
+	union {
+		struct aac_AifEventNotify	EN;	/* Event notify */
+		struct aac_AifJobProgressReport	PR[1];	/* Progress report */
+		u_int8_t			AR[AAC_AIF_REPORT_MAX_SIZE];
+		u_int8_t			data[AAC_FIB_DATASIZE - 8];
+	} data;
+} __packed;
 
 #endif	/* !_PCI_AACREG_H_ */
