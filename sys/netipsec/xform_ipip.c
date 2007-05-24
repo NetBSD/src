@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ipip.c,v 1.14 2006/11/16 01:33:49 christos Exp $	*/
+/*	$NetBSD: xform_ipip.c,v 1.14.2.1 2007/05/24 19:13:12 pavel Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ipip.c,v 1.3.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ipip.c,v 1.25 2002/06/10 18:04:55 itojun Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ipip.c,v 1.14 2006/11/16 01:33:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ipip.c,v 1.14.2.1 2007/05/24 19:13:12 pavel Exp $");
 
 /*
  * IP-inside-IP processing
@@ -686,21 +686,26 @@ static struct xformsw ipe4_xformsw = {
 	NULL,
 };
 
+#ifdef INET
 extern struct domain inetdomain;
-static struct ipprotosw ipe4_protosw[] = {
-{ SOCK_RAW,	&inetdomain,	IPPROTO_IPV4,	PR_ATOMIC|PR_ADDR|PR_LASTHDR,
+static struct ipprotosw ipe4_protosw = {
+  SOCK_RAW,	&inetdomain,	IPPROTO_IPV4,	PR_ATOMIC|PR_ADDR|PR_LASTHDR,
   ip4_input,	0, 		0,		rip_ctloutput,
   rip_usrreq,
   0,		0,		0,		0,
-},
-#ifdef INET6
-{ SOCK_RAW,	&inetdomain,	IPPROTO_IPV6,	PR_ATOMIC|PR_ADDR|PR_LASTHDR,
-  ip4_input,	0,	 	0,		rip_ctloutput,
-  rip_usrreq,
-  0,		0,		0,		0,
-},
-#endif
 };
+#endif
+#ifdef INET6
+extern struct domain inet6domain;
+static struct ip6protosw ipe4_protosw6 = {
+ SOCK_RAW,     &inet6domain,   IPPROTO_IPV6,PR_ATOMIC|PR_ADDR|PR_LASTHDR,
+ ip4_input6,	0,	0, 	rip6_ctloutput,
+ rip6_usrreq,
+ 0,	0,	0,	0,
+};
+#endif
+
+#endif /* FAST_IPSEC */
 
 /*
  * Check the encapsulated packet to see if we want it
@@ -727,11 +732,13 @@ ipe4_attach(void)
 	xform_register(&ipe4_xformsw);
 	/* attach to encapsulation framework */
 	/* XXX save return cookie for detach on module remove */
+#ifdef INET
 	(void) encap_attach_func(AF_INET, -1,
-		ipe4_encapcheck, (struct protosw*) &ipe4_protosw[0], NULL);
+		ipe4_encapcheck, (struct protosw*) &ipe4_protosw, NULL);
+#endif
 #ifdef INET6
 	(void) encap_attach_func(AF_INET6, -1,
-		ipe4_encapcheck, (struct protosw*) &ipe4_protosw[1], NULL);
+		ipe4_encapcheck, (struct protosw*) &ipe4_protosw6, NULL);
 #endif
 }
 
@@ -739,4 +746,3 @@ ipe4_attach(void)
 SYSINIT(ipe4_xform_init, SI_SUB_PROTO_DOMAIN, SI_ORDER_MIDDLE, ipe4_attach, NULL);
 #endif
 
-#endif	/* FAST_IPSEC */

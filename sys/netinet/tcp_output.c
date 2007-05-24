@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.153 2006/11/25 18:41:36 yamt Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.153.2.1 2007/05/24 19:13:14 pavel Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -142,7 +142,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.153 2006/11/25 18:41:36 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.153.2.1 2007/05/24 19:13:14 pavel Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -185,6 +185,9 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.153 2006/11/25 18:41:36 yamt Exp $"
 #ifdef FAST_IPSEC
 #include <netipsec/ipsec.h>
 #include <netipsec/key.h>
+#ifdef INET6
+#include <netipsec/ipsec6.h>
+#endif
 #endif	/* FAST_IPSEC*/
 #ifdef IPSEC
 #include <netinet6/ipsec.h>
@@ -374,7 +377,7 @@ tcp_segsize(struct tcpcb *tp, int *txsegsizep, int *rxsegsizep,
 	} else
 #endif
 	if (in6p && tp->t_family == AF_INET6) {
-#ifdef IPSEC
+#if defined(IPSEC) || defined(FAST_IPSEC)
 		if (! IPSEC_PCB_SKIP_IPSEC(in6p->in6p_sp, IPSEC_DIR_OUTBOUND))
 			optlen += ipsec6_hdrsiz_tcp(tp);
 #endif
@@ -1160,9 +1163,6 @@ send:
 	TCP_REASS_UNLOCK(tp);
 
 #ifdef TCP_SIGNATURE
-#if defined(INET6) && defined(FAST_IPSEC)
-	if (tp->t_family == AF_INET)
-#endif
 	if (tp->t_flags & TF_SIGNATURE) {
 		u_char *bp;
 		/*
@@ -1378,9 +1378,6 @@ send:
 		tp->snd_up = tp->snd_una;		/* drag it along */
 
 #ifdef TCP_SIGNATURE
-#if defined(INET6) && defined(FAST_IPSEC)
-	if (tp->t_family == AF_INET) /* XXX */
-#endif
 	if (sigoff && (tp->t_flags & TF_SIGNATURE)) {
 		struct secasvar *sav;
 		u_int8_t *sigp;

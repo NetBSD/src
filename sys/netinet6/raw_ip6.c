@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.78 2006/07/23 22:06:13 ad Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.78.8.1 2007/05/24 19:13:15 pavel Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.82 2001/07/23 18:57:56 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.78 2006/07/23 22:06:13 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.78.8.1 2007/05/24 19:13:15 pavel Exp $");
 
 #include "opt_ipsec.h"
 
@@ -97,6 +97,12 @@ __KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.78 2006/07/23 22:06:13 ad Exp $");
 #ifdef IPSEC
 #include <netinet6/ipsec.h>
 #endif /* IPSEC */
+
+#ifdef FAST_IPSEC
+#include <netipsec/ipsec.h>
+#include <netipsec/ipsec_var.h> /* XXX ipsecstat namespace */
+#include <netipsec/ipsec6.h>
+#endif
 
 #include <machine/stdarg.h>
 
@@ -204,6 +210,12 @@ rip6_input(mp, offp, proto)
 				/* do not inject data into pcb */
 			} else
 #endif /* IPSEC */
+#ifdef FAST_IPSEC
+			/*
+			 * Check AH/ESP integrity
+			 */
+			if (!ipsec6_in_reject(m,last)) 
+#endif /* FAST_IPSEC */
 			if ((n = m_copy(m, 0, (int)M_COPYALL)) != NULL) {
 				if (last->in6p_flags & IN6P_CONTROLOPTS)
 					ip6_savecontrol(last, &opts, ip6, n);
@@ -234,6 +246,20 @@ rip6_input(mp, offp, proto)
 		/* do not inject data into pcb */
 	} else
 #endif /* IPSEC */
+#ifdef FAST_IPSEC
+	if (last && ipsec6_in_reject(m, last)) {
+		m_freem(m);
+		/*
+		 * XXX ipsec6_in_reject update stat if there is an error
+		 * so we just need to update stats by hand in the case of last is
+		 * NULL
+		 */
+		if (!last)
+			ipsec6stat.in_polvio++;
+			ip6stat.ip6s_delivered--;
+			/* do not inject data into pcb */
+		} else
+#endif /* FAST_IPSEC */
 	if (last) {
 		if (last->in6p_flags & IN6P_CONTROLOPTS)
 			ip6_savecontrol(last, &opts, ip6, m);
