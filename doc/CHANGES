@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.860 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.861 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -114,3 +114,6 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	postfix(1): Updated to 2.4.1 [heas 20070519]
 	uslsa(4): added CP210x USB-RS232 ucom driver, as submitted by
 		Jonathan A. Kollasch in PR kern/33496 [dogcow 20070520]
+	top(1): Allow a single process to be selected by pid.
+		Add a 'thread mode' that displays LWPs.
+		[ad 20070524]
