@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.71 2007/04/18 01:39:04 lukem Exp $	*/
+/*	$NetBSD: extern.h,v 1.72 2007/05/24 05:05:18 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-2007 The NetBSD Foundation, Inc.
@@ -195,6 +195,7 @@ void	removedir(int, char **);
 void	renamefile(int, char **);
 void	reset(int, char **);
 void	restart(int, char **);
+const char *rfc2822time(const struct tm *);
 void	rmthelp(int, char **);
 void	rmtstatus(int, char **);
 char   *rprompt(void);

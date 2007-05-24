@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.178 2007/05/22 05:16:48 lukem Exp $	*/
+/*	$NetBSD: fetch.c,v 1.179 2007/05/24 05:05:18 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.178 2007/05/22 05:16:48 lukem Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.179 2007/05/24 05:05:18 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -949,7 +949,7 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 					if (ftp_debug && mtime != -1) {
 						fprintf(ttyout,
 						    "parsed date as: %s",
-						    ctime(&mtime));
+						rfc2822time(localtime(&mtime)));
 					}
 #endif
 				}
@@ -1248,7 +1248,7 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 		if (utimes(savefile, tval) == -1) {
 			fprintf(ttyout,
 			    "Can't change modification time to %s",
-			    asctime(localtime(&mtime)));
+			    rfc2822time(localtime(&mtime)));
 		}
 	}
 	if (bytes > 0)
