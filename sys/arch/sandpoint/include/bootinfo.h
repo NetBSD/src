@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo.h,v 1.3.38.1 2007/05/08 16:56:28 nisimura Exp $	*/
+/*	$NetBSD: bootinfo.h,v 1.3.38.2 2007/05/25 12:26:09 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1997
@@ -73,6 +73,7 @@ struct btinfo_bootpath {
 struct btinfo_rootdevice {
 	struct btinfo_common common;
 	char devname[16];
+	unsigned cookie;
 };
 
 #define BOOTINFO_MAXSIZE 4096
