@@ -1,7 +1,8 @@
 #	from: @(#)Makefile	5.8 (Berkeley) 7/28/90
-#	$NetBSD: Makefile,v 1.2 2006/09/29 20:12:01 macallan Exp $
+#	$NetBSD: Makefile,v 1.3 2007/05/25 18:27:25 macallan Exp $
 
-.if ${MACHINE} == "sparc64" || ${MACHINE} == "macppc" || ${MACHINE} == "shark"
+.if ${MACHINE} == "sparc64" || ${MACHINE} == "macppc" || ${MACHINE} == "shark" \
+	|| ${MACHINE} == "sparc"
 
 PROG=	ofctl
 
