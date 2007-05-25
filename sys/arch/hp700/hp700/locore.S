@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.23 2007/05/18 12:43:41 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.24 2007/05/25 12:11:28 skrll Exp $	*/
 
 /*	$OpenBSD: locore.S,v 1.46 2001/09/20 18:33:03 mickey Exp $	*/
 
@@ -890,7 +890,7 @@ EXIT(cpu_switchto)
  * arranges for cpu_switchto() to call us with a frame containing
  * the first kernel function to call, and its argument.
  *
- * cpu_switchto() also makes sure that %arg0 and %arg are (still)
+ * cpu_switchto() also makes sure that %arg0 and %arg1 are (still)
  * curl and newl respectively.
  */
 ENTRY(lwp_trampoline,HPPA_FRAME_SIZE)
