@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.166 2007/05/24 19:22:04 pavel Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.167 2007/05/25 07:35:31 pavel Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -5641,4 +5641,23 @@ sys/opencrypto/deflate.c			1.8
 
 	Add support for IPv6 and ipcomp to FAST_IPSEC.
 	[degroote, ticket #667]
+
+sys/arch/i386/conf/ALL				1.98
+sys/netinet/tcp_input.c				1.265
+sys/netinet/tcp_input.c				1.266
+
+	Fix 'options TCP_SIGNATURE' (rfc2385 support). Add it to the i386/ALL
+	kernel to prevent it from breaking.
+
+	[riz, ticket #670]
+
+sys/dist/ipf/netinet/ip_state.c			1.25
+
+	Fix problems with stateful filtering. Patch received from darrenr@.
+	[martti, ticket #677]
+
+distrib/sets/lists/comp/mi			1.1026
+
+	Add missing bioctl.debug entry.  PR#36304.
+	[jdc, ticket #666]
 
