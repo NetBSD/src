@@ -1,4 +1,4 @@
-/* $NetBSD: isp_pci.c,v 1.101 2007/05/24 21:30:44 mjacob Exp $ */
+/* $NetBSD: isp_pci.c,v 1.102 2007/05/25 01:59:24 mjacob Exp $ */
 /*
  * Copyright (C) 1997, 1998, 1999 National Aeronautics & Space Administration
  * All rights reserved.
@@ -27,12 +27,18 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 /*
  * PCI specific probe and attach routines for Qlogic ISP SCSI adapters.
  */
 
+/*
+ * 24XX 4Gb material support provided by MetrumRG Associates.
+ * Many thanks are due to them.
+ */
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_pci.c,v 1.101 2007/05/24 21:30:44 mjacob Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_pci.c,v 1.102 2007/05/25 01:59:24 mjacob Exp $");
 
 #include <dev/ic/isp_netbsd.h>
 #include <dev/pci/pcireg.h>
