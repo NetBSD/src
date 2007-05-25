@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.58 2007/05/22 15:44:06 martin Exp $ */
+/*	$NetBSD: cpu.c,v 1.59 2007/05/25 12:42:07 martin Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.58 2007/05/22 15:44:06 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.59 2007/05/25 12:42:07 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -358,11 +358,6 @@ cpu_boot_secondary_processors()
 
 	sparc64_ipi_init();
 
-	printf("cpu0: booting secondary processors:\n");
-#ifdef DEBUG
-	printf("mp_tramp: %p\n", (void*)cpu_spinup_trampoline);
-#endif
-
 	for (ci = cpus; ci != NULL; ci = ci->ci_next) {
 		if (ci->ci_upaid == CPU_UPAID)
 			continue;
@@ -371,14 +366,6 @@ cpu_boot_secondary_processors()
 		cpu_args->cb_cpuinfo = ci->ci_paddr;
 		cpu_args->cb_initstack = ci->ci_initstack;
 		membar_sync();
-
-#ifdef DEBUG
-		printf("cpu%d bootargs: node %x, cpuinfo %llx, initstack %p\n",
-		       ci->ci_number,
-		       cpu_args->cb_node,
-		       (unsigned long long)cpu_args->cb_cpuinfo,
-		       cpu_args->cb_initstack);
-#endif
 
 		/* Disable interrupts and start another CPU. */
 		pstate = getpstate();
@@ -397,8 +384,6 @@ cpu_boot_secondary_processors()
 		if (!CPUSET_HAS(cpus_active, ci->ci_number))
 			printf("cpu%d: startup failed\n", ci->ci_upaid);
 	}
-
-	printf("\n");
 }
 
 void
