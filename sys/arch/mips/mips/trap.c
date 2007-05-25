@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.210 2007/05/17 14:51:25 yamt Exp $	*/
+/*	$NetBSD: trap.c,v 1.211 2007/05/25 23:58:43 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.210 2007/05/17 14:51:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.211 2007/05/25 23:58:43 tsutsui Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ktrace.h"
@@ -170,7 +170,7 @@ void MachFPTrap(u_int32_t, u_int32_t, vaddr_t, struct frame *);	/* XXX */
 #define DELAYBRANCH(x) ((int)(x)<0)
 
 /*
- * fork syscall returns directly to user process via proc_trampoline,
+ * fork syscall returns directly to user process via lwp_trampoline(),
  * which will be called the very first time when child gets running.
  */
 void
