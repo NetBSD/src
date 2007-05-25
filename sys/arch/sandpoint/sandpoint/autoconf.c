@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.12.38.2 2007/05/25 12:26:09 nisimura Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.12.38.3 2007/05/25 12:56:39 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,13 +35,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.12.38.2 2007/05/25 12:26:09 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.12.38.3 2007/05/25 12:56:39 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/buf.h>
 #include <sys/conf.h>
-#include <sys/reboot.h>
 #include <sys/device.h>
 #include <dev/pci/pcivar.h>
 
@@ -85,8 +83,6 @@ void
 device_register(struct device *dev, void *aux)
 {
 
-	if (boothowto & RB_ASKNAME)
-		return;
 	if (bi_rdev == NULL)
 		return; /* no clue to determine */
 
