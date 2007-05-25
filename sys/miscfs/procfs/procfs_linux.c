@@ -1,4 +1,4 @@
-/*      $NetBSD: procfs_linux.c,v 1.36 2007/05/24 05:33:08 dogcow Exp $      */
+/*      $NetBSD: procfs_linux.c,v 1.37 2007/05/25 19:20:06 agc Exp $      */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.36 2007/05/24 05:33:08 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.37 2007/05/25 19:20:06 agc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -226,12 +226,14 @@ procfs_docpustat(struct lwp *curl, struct proc *p,
     struct pfsnode *pfs, struct uio *uio)
 {
 	struct timeval	 runtime;
-        struct cpu_info *ci;
-        CPU_INFO_ITERATOR cii;
 	char		*bf;
 	int	 	 error;
 	int	 	 len;
+#if defined(MULTIPROCESSOR)
+        struct cpu_info *ci;
+        CPU_INFO_ITERATOR cii;
 	int	 	 i;
+#endif
 
 	error = ENAMETOOLONG;
 	bf = malloc(LBFSZ, M_TEMP, M_WAITOK);
@@ -245,6 +247,7 @@ procfs_docpustat(struct lwp *curl, struct proc *p,
 	if (len == 0)
 		goto out;
 
+#if defined(MULTIPROCESSOR)
 	i = 0;
 	for (CPU_INFO_FOREACH(cii, ci)) {
 		len += snprintf(&bf[len], LBFSZ - len, 
@@ -258,6 +261,14 @@ procfs_docpustat(struct lwp *curl, struct proc *p,
 			goto out;
 		i += 1;
 	}
+#else
+	len += snprintf(&bf[len], LBFSZ - len, 
+		"cpu0 %" PRIu64 " %" PRIu64 " %" PRIu64 " %" PRIu64 "\n",
+		curcpu()->ci_schedstate.spc_cp_time[CP_USER],
+		curcpu()->ci_schedstate.spc_cp_time[CP_NICE],
+		curcpu()->ci_schedstate.spc_cp_time[CP_SYS],
+		curcpu()->ci_schedstate.spc_cp_time[CP_IDLE]);
+#endif
 
 	timersub(&curcpu()->ci_schedstate.spc_runtime, &boottime, &runtime);
 	len += snprintf(&bf[len], LBFSZ - len,
@@ -325,7 +336,7 @@ int
 procfs_do_pid_statm(struct lwp *curl, struct lwp *l,
     struct pfsnode *pfs, struct uio *uio)
 {
-	unsigned long	 stext = 0, etext = 0, sstack = 0;
+	struct vmspace	*vm;
 	struct proc	*p = l->l_proc;
 	struct rusage	*ru = &p->p_stats->p_ru;
 	char		*bf;
@@ -335,17 +346,22 @@ procfs_do_pid_statm(struct lwp *curl, struct lwp *l,
 	error = ENAMETOOLONG;
 	bf = malloc(LBFSZ, M_TEMP, M_WAITOK);
 
-	get_proc_size_info(l, &stext, &etext, &sstack);
+	/* XXX - we use values from vmspace, since dsl says that ru figures
+	   are always 0 except for zombies. See kvm_proc.c::kvm_getproc2() */
+	if ((error = proc_vmspace_getref(p, &vm)) != 0) {
+		return error;
+	}
 
 	len = snprintf(bf, LBFSZ,
 	        "%lu %lu %lu %lu %lu %lu %lu\n",
-		(ru->ru_ixrss + ru->ru_idrss + ru->ru_isrss), /* size */
-		ru->ru_maxrss,	/* resident */
-		ru->ru_ixrss,	/* shared */
-		stext,
-		etext,
-		sstack,
+		(unsigned long)(vm->vm_tsize + vm->vm_dsize + vm->vm_ssize), /* size */
+		(unsigned long)(vm->vm_rssize),	/* resident */
+		(unsigned long)(ru->ru_ixrss),	/* shared */
+		(unsigned long)(vm->vm_tsize),	/* text size in pages */
+		(unsigned long)(vm->vm_dsize),	/* data size in pages */
+		(unsigned long)(vm->vm_ssize),	/* stack size in pages */
 		(unsigned long) 0);
+
 	if (len == 0)
 		goto out;
 
@@ -354,6 +370,8 @@ out:
 	free(bf, M_TEMP);
 	return error;
 }
+
+#define USEC_2_TICKS(x)		((x) / 10000)
 
 /*
  * Linux compatible /proc/<pid>/stat. Only active when the -o linux
@@ -410,10 +428,10 @@ procfs_do_pid_stat(struct lwp *curl, struct lwp *l,
 	    cru->ru_minflt,
 	    ru->ru_majflt,
 	    cru->ru_majflt,
-	    ru->ru_utime.tv_sec,
-	    ru->ru_stime.tv_sec,
-	    cru->ru_utime.tv_sec,
-	    cru->ru_stime.tv_sec,
+	    USEC_2_TICKS(ru->ru_utime.tv_usec),
+	    USEC_2_TICKS(ru->ru_stime.tv_usec),
+	    USEC_2_TICKS(cru->ru_utime.tv_usec),
+	    USEC_2_TICKS(cru->ru_stime.tv_usec),
 
 	    p->p_nice,					/* XXX: priority */
 	    p->p_nice,
