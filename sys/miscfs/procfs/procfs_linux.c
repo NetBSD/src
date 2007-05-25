@@ -1,4 +1,4 @@
-/*      $NetBSD: procfs_linux.c,v 1.37 2007/05/25 19:20:06 agc Exp $      */
+/*      $NetBSD: procfs_linux.c,v 1.38 2007/05/25 22:26:14 agc Exp $      */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.37 2007/05/25 19:20:06 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.38 2007/05/25 22:26:14 agc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -232,8 +232,8 @@ procfs_docpustat(struct lwp *curl, struct proc *p,
 #if defined(MULTIPROCESSOR)
         struct cpu_info *ci;
         CPU_INFO_ITERATOR cii;
-	int	 	 i;
 #endif
+	int	 	 i;
 
 	error = ENAMETOOLONG;
 	bf = malloc(LBFSZ, M_TEMP, M_WAITOK);
@@ -248,27 +248,26 @@ procfs_docpustat(struct lwp *curl, struct proc *p,
 		goto out;
 
 #if defined(MULTIPROCESSOR)
+#define ALLCPUS	CPU_INFO_FOREACH(cii, ci)
+#define CPUNAME	ci
+#else
+#define ALLCPUS	; i < 1 ;
+#define CPUNAME	curcpu()
+#endif
+
 	i = 0;
-	for (CPU_INFO_FOREACH(cii, ci)) {
+	for (ALLCPUS) {
 		len += snprintf(&bf[len], LBFSZ - len, 
 			"cpu%d %" PRIu64 " %" PRIu64 " %" PRIu64 " %" PRIu64
 			"\n", i,
-			ci->ci_schedstate.spc_cp_time[CP_USER],
-			ci->ci_schedstate.spc_cp_time[CP_NICE],
-			ci->ci_schedstate.spc_cp_time[CP_SYS],
-			ci->ci_schedstate.spc_cp_time[CP_IDLE]);
+			CPUNAME->ci_schedstate.spc_cp_time[CP_USER],
+			CPUNAME->ci_schedstate.spc_cp_time[CP_NICE],
+			CPUNAME->ci_schedstate.spc_cp_time[CP_SYS],
+			CPUNAME->ci_schedstate.spc_cp_time[CP_IDLE]);
 		if (len >= LBFSZ)
 			goto out;
 		i += 1;
 	}
-#else
-	len += snprintf(&bf[len], LBFSZ - len, 
-		"cpu0 %" PRIu64 " %" PRIu64 " %" PRIu64 " %" PRIu64 "\n",
-		curcpu()->ci_schedstate.spc_cp_time[CP_USER],
-		curcpu()->ci_schedstate.spc_cp_time[CP_NICE],
-		curcpu()->ci_schedstate.spc_cp_time[CP_SYS],
-		curcpu()->ci_schedstate.spc_cp_time[CP_IDLE]);
-#endif
 
 	timersub(&curcpu()->ci_schedstate.spc_runtime, &boottime, &runtime);
 	len += snprintf(&bf[len], LBFSZ - len,
@@ -433,7 +432,7 @@ procfs_do_pid_stat(struct lwp *curl, struct lwp *l,
 	    USEC_2_TICKS(cru->ru_utime.tv_usec),
 	    USEC_2_TICKS(cru->ru_stime.tv_usec),
 
-	    p->p_nice,					/* XXX: priority */
+	    l->l_priority,				/* XXX: priority */
 	    p->p_nice,
 	    0,
 
