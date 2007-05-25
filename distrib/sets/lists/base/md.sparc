@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc,v 1.72 2005/11/24 15:47:09 macallan Exp $
+# $NetBSD: md.sparc,v 1.73 2007/05/25 18:28:53 macallan Exp $
 ./lib/libsparc_v8.so.0				base-sys-shlib
 ./lib/libsparc_v8.so.0.0			base-sys-shlib
 ./sbin/edlabel					base-sysutil-root
@@ -23,3 +23,4 @@
 ./usr/sbin/zzz					base-sysutil-bin
 ./usr/sbin/eeprom				base-sysutil-bin
 ./usr/sbin/tadpolectl				base-sysutil-bin
+./usr/sbin/ofctl				base-sysutil-bin
