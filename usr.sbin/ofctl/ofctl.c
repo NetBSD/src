@@ -1,4 +1,4 @@
-/*	$NetBSD: ofctl.c,v 1.2 2006/10/03 02:03:33 wiz Exp $	*/
+/*	$NetBSD: ofctl.c,v 1.3 2007/05/25 18:27:05 macallan Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -505,6 +505,7 @@ ofname(int node, char *buf, size_t buflen)
 	if (parent == 0) {
 
 		parent = OF_parent(node);
+
 		for (;;) {
 			len = OF_getprop(parent, "#size-cells",
 			    address_cells_buf, sizeof(address_cells_buf));
@@ -516,11 +517,22 @@ ofname(int node, char *buf, size_t buflen)
 			if (parent == 0)
 				break;
 		}
-		assert(parent != 0);
+		/* no #size-cells */
+		len = 0;
+	}
+
+	if (len == 0) {
+		/* looks like we're on an OBP2 system */
+		if (reglen > 12)
+			return off;
+		off += snprintf(buf + off, buflen - off, "@");
+		memcpy(reg, reg_buf, 8);
+		off += snprintf(buf + off, buflen - off, "%x,%x", reg[0],
+		    reg[1]);
+		return off;
 	}
 
 	off += snprintf(buf + off, buflen - off, "@");
-
 	address_cells = of_decode_int(address_cells_buf);
 	for (len = 0; len < address_cells; len ++)
 		reg[len] = of_decode_int(&reg_buf[len * 4]);
