@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.167 2007/05/25 07:35:31 pavel Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.168 2007/05/25 08:14:47 pavel Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -5660,4 +5660,23 @@ distrib/sets/lists/comp/mi			1.1026
 
 	Add missing bioctl.debug entry.  PR#36304.
 	[jdc, ticket #666]
+
+sys/dev/isapnp/isapnpdevs			1.64
+sys/dev/isapnp/isapnpdevs.c			regen
+sys/dev/isapnp/isapnpdevs.h			regen
+
+	Add entries to recognize the Farallon Etherwave ISA card via ep(4).
+	From PR kern/36360.
+	[tron, ticket #665]
+
+sys/arch/sparc64/sparc64/pmap.c			1.190
+
+	Fix LKMs on sparc64, they were not being mapped executable.
+	Fixes PR port-sparc64/36376.
+	[martin, ticket #669]
+
+share/man/man4/fast_ipsec.4			1.5
+
+	Note support for IPv6 and IPcomp in FAST_IPSEC.
+	[degroote, ticket #675]
 
