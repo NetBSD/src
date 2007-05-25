@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.18.38.3 2007/05/23 01:45:11 nisimura Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.18.38.4 2007/05/25 03:46:44 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.18.38.3 2007/05/23 01:45:11 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.18.38.4 2007/05/25 03:46:44 nisimura Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -103,7 +103,7 @@ mainbus_attach(parent, self, aux)
 	 */
 #if NPCI > 0
 #if defined(PCI_NETBSD_CONFIGURE)
-	ioext  = extent_create("pciio",  0x00000600, 0x0000ffff, M_DEVBUF,
+	ioext  = extent_create("pciio",  0x00001000, 0x0000ffff, M_DEVBUF,
 	    NULL, 0, EX_NOWAIT);
 	memext = extent_create("pcimem", 0x80000000, 0x8fffffff, M_DEVBUF,
 	    NULL, 0, EX_NOWAIT);
