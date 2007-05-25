@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_state.c,v 1.15.2.3 2007/05/22 22:52:07 pavel Exp $	*/
+/*	$NetBSD: ip_state.c,v 1.15.2.4 2007/05/25 07:19:30 pavel Exp $	*/
 
 /*
  * Copyright (C) 1995-2003 by Darren Reed.
@@ -114,7 +114,7 @@ struct file;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_state.c,v 1.15.2.3 2007/05/22 22:52:07 pavel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_state.c,v 1.15.2.4 2007/05/25 07:19:30 pavel Exp $");
 #else
 static const char sccsid[] = "@(#)ip_state.c	1.8 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_state.c,v 2.186.2.66 2007/05/13 00:08:54 darrenr Exp";
@@ -3510,6 +3510,7 @@ int flags;
 			if ((tcpflags & (TH_FIN|TH_ACK)) == TH_ACK) {
 				nstate = IPF_TCPS_TIME_WAIT;
 			}
+			rval = 1;
 			break;
 
 		case IPF_TCPS_LAST_ACK: /* 8 */
@@ -3547,13 +3548,14 @@ int flags;
 
 		case IPF_TCPS_TIME_WAIT: /* 10 */
 			/* we're in 2MSL timeout now */
+			rval = 2;
 			if (ostate == IPF_TCPS_LAST_ACK) {
 				nstate = IPF_TCPS_CLOSED;
 			}
-			rval = 1;
 			break;
 
 		case IPF_TCPS_CLOSED: /* 11 */
+			rval = 2;
 			break;
 
 		default :
