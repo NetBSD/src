@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.35.14.10 2007/05/23 05:32:24 nisimura Exp $	*/
+/*	$NetBSD: machdep.c,v 1.35.14.11 2007/05/25 03:46:43 nisimura Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.35.14.10 2007/05/23 05:32:24 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.35.14.11 2007/05/25 03:46:43 nisimura Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -179,12 +179,14 @@ initppc(u_int startkernel, u_int endkernel, u_int args, void *btinfo)
 	    SANDPOINT_BUS_SPACE_EUMB, BAT_BL_32M,
 	    0);
 
+#if 0 /* found harmful in mystery. assume bootloader has done well. */
 	/*
 	 * Set EUMB base address.
 	 */
 	out32rb(SANDPOINT_PCI_CONFIG_ADDR, 0x80000078);
 	out32rb(SANDPOINT_PCI_CONFIG_DATA, SANDPOINT_BUS_SPACE_EUMB);
 	out32rb(SANDPOINT_PCI_CONFIG_ADDR, 0);
+#endif
 
 	/*
 	 * Install vectors.
@@ -197,6 +199,9 @@ initppc(u_int startkernel, u_int endkernel, u_int args, void *btinfo)
 	(*cn_tab->cn_init)(&kcomcons);
 	if (boothowto & RB_KDB)
 		Debugger();
+
+	out32rb(0xfec00000, (1U<<31) | 0x78);
+	printf("00:00:00 0x78 = %08x\n", in32rb(0xfee00000));
 #endif
 
 	/*	
@@ -329,8 +334,6 @@ consinit(void)
 #if (NCOM > 0)
 	if (strcmp(consinfo->devname, "com") == 0) {
 		bus_space_tag_t tag = &genppc_isa_io_space_tag;
-
-	return;
 		if (comcnattach(tag, consinfo->addr, consinfo->speed,
 		    COM_FREQ, COM_TYPE_NORMAL,
 		    ((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8)))
@@ -398,34 +401,24 @@ cpu_reboot(int howto, char *what)
 }
 
 struct powerpc_bus_space sandpoint_io_space_tag = {
-	.pbs_flags = _BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_IO_TYPE,
-	.pbs_offset = 0xfe000000,
-	.pbs_base = 0x00000000,
-	.pbs_limit = 0x00c00000,
+	_BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_IO_TYPE,
+	0xfe000000, 0x00000000, 0x00c00000,
 };
 struct powerpc_bus_space genppc_isa_io_space_tag = {
-	.pbs_flags = _BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_IO_TYPE,
-	.pbs_offset = 0xfe000000,
-	.pbs_base = 0x00000000,
-	.pbs_limit = 0x00010000,
+	_BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_IO_TYPE,
+	0xfe000000, 0x00000000, 0x00010000,
 };
 struct powerpc_bus_space sandpoint_mem_space_tag = {
-	.pbs_flags = _BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_MEM_TYPE,
-	.pbs_offset = 0x80000000,
-	.pbs_base = 0x00000000,
-	.pbs_limit = 0xfe000000,	/* ??? */
+	_BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_MEM_TYPE,
+	0x00000000, 0x80000000, 0xfbffffff,
 };
 struct powerpc_bus_space genppc_isa_mem_space_tag = {
-	.pbs_flags = _BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_MEM_TYPE,
-	.pbs_offset = 0xfd000000,	/* ??? */
-	.pbs_base = 0x00000000,
-	.pbs_limit = 0xfe000000,	/* ??? */
+	_BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_MEM_TYPE,
+	0x00000000, 0xfd000000, 0xfe000000,
 };
 struct powerpc_bus_space sandpoint_eumb_space_tag = {
-	.pbs_flags = _BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_MEM_TYPE,
-	.pbs_offset = 0xfc000000,
-	.pbs_base = 0x00000000,
-	.pbs_limit = 0x00100000,
+	_BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_MEM_TYPE,
+	0xfc000000, 0x00000000, 0x00100000,
 };
 
 static char ex_storage[4][EXTENT_FIXED_STORAGE_SIZE(8)]
@@ -457,17 +450,18 @@ sandpoint_bus_space_init(void)
 	if (error)
 		panic("sandpoint_bus_space_init: can't init isa io tag");
 
-	genppc_isa_mem_space_tag.pbs_extent = sandpoint_mem_space_tag.pbs_extent;
-	error = bus_space_init(&genppc_isa_mem_space_tag, "isa-iomem", NULL, 0);
+	error = bus_space_init(&genppc_isa_mem_space_tag, "isa-iomem",
+	    ex_storage[2], sizeof(ex_storage[2]));
 	if (error)
 		panic("sandpoint_bus_space_init: can't init isa mem tag");
 
 	error = bus_space_init(&sandpoint_eumb_space_tag, "eumb",
-	    ex_storage[2], sizeof(ex_storage[2]));
+	    ex_storage[3], sizeof(ex_storage[3]));
 	if (error)
 		panic("sandpoint_bus_space_init: can't init eumb tag");
 }
 
+#define MPC107_EUMBBAR		0x78	/* Eumb base address */
 #define MPC107_MEMENDADDR1	0x90	/* Memory ending address 1 */
 #define MPC107_EXTMEMENDADDR1	0x98	/* Extd. memory ending address 1 */
 #define MPC107_MEMEN		0xa0	/* Memory enable */
