@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.58 2007/05/21 08:10:38 fvdl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.59 2007/05/25 15:09:50 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.58 2007/05/21 08:10:38 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.59 2007/05/25 15:09:50 yamt Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_ddb.h"
@@ -230,6 +230,7 @@ int	cpu_dump(void);
 int	cpu_dumpsize(void);
 u_long	cpu_dump_mempagecnt(void);
 void	dumpsys(void);
+void	dodumpsys(void);
 void	init_x86_64(paddr_t);
 
 /*
@@ -724,7 +725,7 @@ reserve_dumppages(vaddr_t p)
 }
 
 void
-dumpsys(void)
+dodumpsys(void)
 {
 	const struct bdevsw *bdev;
 	u_long totalbytesleft, bytes, i, n, memseg;
@@ -733,9 +734,6 @@ dumpsys(void)
 	daddr_t blkno;
 	int (*dump)(dev_t, daddr_t, void *, size_t);
 	int error;
-
-	/* Save registers. */
-	savectx(&dumppcb);
 
 	if (dumpdev == NODEV)
 		return;
