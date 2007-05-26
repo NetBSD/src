@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.35.14.11 2007/05/25 03:46:43 nisimura Exp $	*/
+/*	$NetBSD: machdep.c,v 1.35.14.12 2007/05/26 06:09:15 nisimura Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.35.14.11 2007/05/25 03:46:43 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.35.14.12 2007/05/26 06:09:15 nisimura Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -64,7 +64,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.35.14.11 2007/05/25 03:46:43 nisimura 
 #include <net/netisr.h>
 
 #include <machine/bus.h>
-#include <machine/db_machdep.h>
 #include <machine/intr.h>
 #include <machine/pmap.h>
 #include <machine/powerpc.h>
@@ -75,7 +74,10 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.35.14.11 2007/05/25 03:46:43 nisimura 
 #include <powerpc/openpic.h>
 #include <powerpc/pic/picvar.h>
 
+#ifdef DDB
+#include <machine/db_machdep.h>
 #include <ddb/db_extern.h>
+#endif
 
 #include <dev/cons.h>
 #include <sys/termios.h>
@@ -99,6 +101,7 @@ char bootinfo[BOOTINFO_MAXSIZE];
 void initppc(u_int, u_int, u_int, void *);
 void consinit(void);
 void sandpoint_bus_space_init(void);
+size_t mpc107memsize(void);
 
 #define	OFMEMREGIONS	32
 struct mem_region physmemr[OFMEMREGIONS], availmemr[OFMEMREGIONS];
@@ -113,8 +116,6 @@ extern void *startsym, *endsym;
 #if 1
 extern struct consdev kcomcons;
 #endif
-
-size_t mpc107memsize(void);
 
 void
 initppc(u_int startkernel, u_int endkernel, u_int args, void *btinfo)
@@ -170,13 +171,14 @@ initppc(u_int startkernel, u_int endkernel, u_int args, void *btinfo)
 
 	/*
 	 * Now setup fixed bat registers
-	 * We setup the memory BAT, the IO space BAT, and a special
-	 * BAT for MPC107/MPC824x EUMB space.
+	 * We setup a pair of BAT to have "Map B" layout, one for the
+	 * PCI memory space, another to cover many; MPC107/MPC824x EUMB,
+	 * ISA mem, PCI/ISA I/O, PCI configuration, PCI interrupt
+	 * acknowledge and flash/ROM space.
 	 */
 	oea_batinit(
-	    SANDPOINT_BUS_SPACE_MEM,  BAT_BL_256M,
-	    SANDPOINT_BUS_SPACE_IO,   BAT_BL_32M,
-	    SANDPOINT_BUS_SPACE_EUMB, BAT_BL_32M,
+	    0x80000000, BAT_BL_256M,	/* SANDPOINT_BUS_SPACE_MEM */
+	    0xfc000000, BAT_BL_64M,	/* _EUMB|_IO */
 	    0);
 
 #if 0 /* found harmful in mystery. assume bootloader has done well. */
@@ -188,15 +190,14 @@ initppc(u_int startkernel, u_int endkernel, u_int args, void *btinfo)
 	out32rb(SANDPOINT_PCI_CONFIG_ADDR, 0);
 #endif
 
-	/*
-	 * Install vectors.
-	 */
+	/* Install vectors and interrupt handler */
 	oea_init(NULL);
 
 #if 1 /* bumpy ride in pre-dawn time, for people knows what he/she is doing */
-	ksyms_init((int)((u_int)endsym - (u_int)startsym), startsym, endsym);
 	cn_tab = &kcomcons;
 	(*cn_tab->cn_init)(&kcomcons);
+
+	ksyms_init((int)((u_int)endsym - (u_int)startsym), startsym, endsym);
 	if (boothowto & RB_KDB)
 		Debugger();
 
@@ -204,21 +205,16 @@ initppc(u_int startkernel, u_int endkernel, u_int args, void *btinfo)
 	printf("00:00:00 0x78 = %08x\n", in32rb(0xfee00000));
 #endif
 
-	/*	
-	 * Initialize bus_space.
-	 */	
+	/* Initialize bus_space */
 	sandpoint_bus_space_init();
 
+	/* Initialize the console */
 	consinit();
 
-        /*
-	 * Set the page size.
-	 */
+	/* Set the page size */
 	uvm_setpagesize();
 
-	/*
-	 * Initialize pmap module.
-	 */
+	/* Initialize pmap module */
 	pmap_bootstrap(startkernel, endkernel);
 
 #if 0 /* NKSYMS || defined(DDB) || defined(LKM) */
@@ -293,8 +289,7 @@ cpu_startup(void)
  * Look up information in bootinfo of boot loader.
  */
 void *
-lookup_bootinfo(type)
-	int type;
+lookup_bootinfo(int type)
 {
 	struct btinfo_common *bt;
 	struct btinfo_common *help = (struct btinfo_common *)bootinfo;
@@ -421,7 +416,7 @@ struct powerpc_bus_space sandpoint_eumb_space_tag = {
 	0xfc000000, 0x00000000, 0x00100000,
 };
 
-static char ex_storage[4][EXTENT_FIXED_STORAGE_SIZE(8)]
+static char ex_storage[5][EXTENT_FIXED_STORAGE_SIZE(8)]
     __attribute__((aligned(8)));
 
 void
@@ -445,18 +440,18 @@ sandpoint_bus_space_init(void)
 	if (error)
 		panic("sandpoint_bus_space_init: can't init mem tag");
 
-	genppc_isa_io_space_tag.pbs_extent = sandpoint_io_space_tag.pbs_extent;
-	error = bus_space_init(&genppc_isa_io_space_tag, "isa-ioport", NULL, 0);
+	error = bus_space_init(&genppc_isa_io_space_tag, "isa-ioport",
+	    ex_storage[2], sizeof(ex_storage[2]));
 	if (error)
 		panic("sandpoint_bus_space_init: can't init isa io tag");
 
 	error = bus_space_init(&genppc_isa_mem_space_tag, "isa-iomem",
-	    ex_storage[2], sizeof(ex_storage[2]));
+	    ex_storage[3], sizeof(ex_storage[3]));
 	if (error)
 		panic("sandpoint_bus_space_init: can't init isa mem tag");
 
 	error = bus_space_init(&sandpoint_eumb_space_tag, "eumb",
-	    ex_storage[3], sizeof(ex_storage[3]));
+	    ex_storage[4], sizeof(ex_storage[4]));
 	if (error)
 		panic("sandpoint_bus_space_init: can't init eumb tag");
 }
@@ -467,7 +462,7 @@ sandpoint_bus_space_init(void)
 #define MPC107_MEMEN		0xa0	/* Memory enable */
 
 size_t
-mpc107memsize()
+mpc107memsize(void)
 {
 	/*
 	 * assumptions here;
