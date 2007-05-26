@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.24 2007/05/21 16:39:52 tsutsui Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.25 2007/05/26 00:08:32 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.24 2007/05/21 16:39:52 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.25 2007/05/26 00:08:32 tsutsui Exp $");
 
 #include "opt_coredump.h"
 
@@ -174,7 +174,7 @@ cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 	struct trapframe *tf = (struct trapframe *)l->l_md.md_regs;
 	struct switchframe *sf = (struct switchframe *)tf - 1;
 
-	sf->sf_pc = (int)lwp_trampoline;
+	sf->sf_pc = (u_int)lwp_trampoline;
 	pcb->pcb_regs[6] = (int)func;		/* A2 */
 	pcb->pcb_regs[7] = (int)arg;		/* A3 */
 	pcb->pcb_regs[11] = (int)sf;		/* SSP */
