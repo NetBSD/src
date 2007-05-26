@@ -1,4 +1,4 @@
-/*	$NetBSD: aac.c,v 1.31 2007/05/24 15:07:47 briggs Exp $	*/
+/*	$NetBSD: aac.c,v 1.32 2007/05/26 12:45:02 briggs Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aac.c,v 1.31 2007/05/24 15:07:47 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aac.c,v 1.32 2007/05/26 12:45:02 briggs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -509,7 +509,17 @@ aac_init(struct aac_softc *sc)
 	    offsetof(struct aac_common, ac_printf));
 	ip->PrintfBufferSize = htole32(AAC_PRINTF_BUFSIZE);
 
-	ip->HostPhysMemPages = 0;	/* not used? */
+	/*
+	 * The adapter assumes that pages are 4K in size, except on some
+	 * broken firmware versions that do the page->byte conversion twice,
+	 * therefore 'assuming' that this value is in 16MB units (2^24).
+	 * Round up since the granularity is so high.
+	 */
+	ip->HostPhysMemPages = ctob(physmem) / AAC_PAGE_SIZE;
+	if (sc->sc_quirks & AAC_QUIRK_BROKEN_MMAP) {
+		ip->HostPhysMemPages = 
+		    (ip->HostPhysMemPages + AAC_PAGE_SIZE) / AAC_PAGE_SIZE;
+	}
 	ip->HostElapsedSeconds = 0;	/* reset later if invalid */
 
 	/*
