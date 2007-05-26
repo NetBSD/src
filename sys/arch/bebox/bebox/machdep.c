@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.89.14.3 2007/05/19 22:41:54 ober Exp $	*/
+/*	$NetBSD: machdep.c,v 1.89.14.4 2007/05/26 22:32:06 ober Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.89.14.3 2007/05/19 22:41:54 ober Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.89.14.4 2007/05/26 22:32:06 ober Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -108,8 +108,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.89.14.3 2007/05/19 22:41:54 ober Exp $
  * Global variables used here and there
  */
 char bootinfo[BOOTINFO_MAXSIZE];
-vaddr_t prep_intr_reg;		/* PReP-compatible interrupt vector register */
-uint32_t prep_intr_reg_off = INTR_VECTOR_REG;
+paddr_t bebox_mb_reg;		/* BeBox MotherBoard register */
 #define	OFMEMREGIONS	32
 struct mem_region physmemr[OFMEMREGIONS], availmemr[OFMEMREGIONS];
 char *bootpath;
@@ -175,9 +174,7 @@ initppc(u_long startkernel, u_long endkernel, void *btinfo)
 	boothowto = args;
 	
 	prep_initppc(startkernel,endkernel,boothowto);
-	
-	(*platform->pic_setup)();
-
+	setup_bebox_intr();
 }
 
 /*
@@ -189,8 +186,8 @@ cpu_startup()
 	/*
 	 * BeBox Mother Board's Register Mapping
 	 */
-	prep_intr_reg = (vaddr_t) mapiodev(MOTHER_BOARD_REG, PAGE_SIZE);
-	if (!prep_intr_reg)
+	bebox_mb_reg = (vaddr_t) mapiodev(MOTHER_BOARD_REG, PAGE_SIZE);
+	if (!bebox_mb_reg)
 		panic("cpu_startup: no room for interrupt register");
 
 	/*
