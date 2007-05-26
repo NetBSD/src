@@ -1,4 +1,4 @@
-/*      $NetBSD: procfs_linux.c,v 1.38 2007/05/25 22:26:14 agc Exp $      */
+/*      $NetBSD: procfs_linux.c,v 1.39 2007/05/26 16:21:04 agc Exp $      */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.38 2007/05/25 22:26:14 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.39 2007/05/26 16:21:04 agc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -348,7 +348,7 @@ procfs_do_pid_statm(struct lwp *curl, struct lwp *l,
 	/* XXX - we use values from vmspace, since dsl says that ru figures
 	   are always 0 except for zombies. See kvm_proc.c::kvm_getproc2() */
 	if ((error = proc_vmspace_getref(p, &vm)) != 0) {
-		return error;
+		goto out;
 	}
 
 	len = snprintf(bf, LBFSZ,
@@ -388,9 +388,14 @@ procfs_do_pid_stat(struct lwp *curl, struct lwp *l,
 	struct rusage *cru = &p->p_stats->p_cru;
 	unsigned long stext = 0, etext = 0, sstack = 0;
 	struct timeval rt;
+	struct vmspace	*vm;
 	int error = 0;
 
 	bf = malloc(LBFSZ, M_TEMP, M_WAITOK);
+
+	if ((error = proc_vmspace_getref(p, &vm)) != 0) {
+		goto out;
+	}
 
 	get_proc_size_info(l, &stext, &etext, &sstack);
 
@@ -433,13 +438,13 @@ procfs_do_pid_stat(struct lwp *curl, struct lwp *l,
 	    USEC_2_TICKS(cru->ru_stime.tv_usec),
 
 	    l->l_priority,				/* XXX: priority */
-	    p->p_nice,
+	    p->p_nice - 20,
 	    0,
 
 	    rt.tv_sec,
 	    p->p_stats->p_start.tv_sec,
-	    ru->ru_ixrss + ru->ru_idrss + ru->ru_isrss,
-	    ru->ru_maxrss,
+	    (unsigned long)(vm->vm_tsize + vm->vm_dsize + vm->vm_ssize), /* size */
+	    (unsigned long)(vm->vm_rssize),	/* resident */
 	    p->p_rlimit[RLIMIT_RSS].rlim_cur,
 
 	    stext,					/* start code */
