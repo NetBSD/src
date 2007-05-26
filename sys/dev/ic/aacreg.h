@@ -1,4 +1,4 @@
-/*	$NetBSD: aacreg.h,v 1.7 2007/05/26 02:09:40 briggs Exp $	*/
+/*	$NetBSD: aacreg.h,v 1.8 2007/05/26 12:45:08 briggs Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -151,10 +151,7 @@ struct aac_queue_table {
  */
 struct aac_adapter_init {
 	u_int32_t InitStructRevision;
-#define	AAC_INIT_STRUCT_REVISION		3
-#define	AAC_INIT_STRUCT_REVISION_4		4
 	u_int32_t MiniPortRevision;
-#define	AAC_INIT_STRUCT_MINIPORT_REVISION	1
 	u_int32_t FilesystemRevision;
 	u_int32_t CommHeaderAddress;
 	u_int32_t FastIoCommAreaAddress;
@@ -168,11 +165,16 @@ struct aac_adapter_init {
 	u_int32_t HostElapsedSeconds;
 	/* ADAPTER_INIT_STRUCT_REVISION_4 begins here */
 	u_int32_t InitFlags;		/* flags for supported features */
-#define AAC_INITFLAGS_NEW_COMM_SUPPORTED	1
 	u_int32_t MaxIoCommands;	/* max outstanding commands */
 	u_int32_t MaxIoSize;		/* largest I/O command */
 	u_int32_t MaxFibSize;		/* largest FIB to adapter */
 } __attribute__((__packed__));
+
+#define	AAC_INIT_STRUCT_REVISION		3
+#define	AAC_INIT_STRUCT_REVISION_4		4
+#define	AAC_INIT_STRUCT_MINIPORT_REVISION	1
+#define AAC_INITFLAGS_NEW_COMM_SUPPORTED	1
+#define AAC_PAGE_SIZE		4096	/* Used to set HostPhysMemPages */
 
 /*
  * Shared data types
