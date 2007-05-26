@@ -1,4 +1,4 @@
-/* $NetBSD: style,v 1.39 2007/04/13 13:23:58 darcy Exp $ */
+/* $NetBSD: style,v 1.40 2007/05/26 18:48:48 christos Exp $ */
 
 /*
  * The revision control tag appears first, with a blank line after it.
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2000\n\
 	The NetBSD Foundation, inc. All rights reserved.\n");
-__RCSID("$NetBSD: style,v 1.39 2007/04/13 13:23:58 darcy Exp $");
+__RCSID("$NetBSD: style,v 1.40 2007/05/26 18:48:48 christos Exp $");
 
 /*
  * VERY important single-line comments look like this.
@@ -255,9 +255,9 @@ main(int argc, char *argv[])
 	 * that may expand to nothing.
 	 */
 #ifdef DEBUG_FOO
-#define DPRINTF(a)
-#else
 #define DPRINTF(a) printf a
+#else
+#define DPRINTF(a)
 #endif
 	if (broken) {
 		DPRINTF(("broken is %d\n", broken));
@@ -274,7 +274,7 @@ main(int argc, char *argv[])
 
 	/* Second level indents are four spaces. */
 	while (cnt < 20)
-		z = a + really + long + statement + that + needs + two lines +
+		z = a + really + long + statement + that + needs + two + lines +
 		    gets + indented + four + spaces + on + the + second +
 		    and + subsequent + lines;
 
