@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.168 2007/05/25 08:14:47 pavel Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.169 2007/05/26 21:58:40 riz Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -5679,4 +5679,11 @@ share/man/man4/fast_ipsec.4			1.5
 
 	Note support for IPv6 and IPcomp in FAST_IPSEC.
 	[degroote, ticket #675]
+
+sys/dev/ic/rtl81x9.c				1.74
+
+	If the interrupt status register reads as 0xffff in rtk_intr, assume
+	that the card is gone and abort the loop. This fixes hot-plugging of
+	cardbus cards. From FreeBSD.
+	[joerg, ticket #663]
 
