@@ -1,2 +1,12 @@
-.\"$NetBSD: whatis,v 1.1 2005/08/21 18:35:26 riz Exp $
+.\"$NetBSD: whatis,v 1.2 2007/05/26 20:45:12 bouyer Exp $
 .
+.Pp
+Some (but not all!) notable \*M-specific improvements include:
+.(bullet
+Default kernels now have ACPI enabled by default. If this cause problems
+on your hardware, use userconf and
+.Ic disable acpi
+to boot without ACPI support.
+.It
+TBD
+.bullet)
