@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.124 2007/04/08 09:35:24 scw Exp $
+.\"	$NetBSD: contents,v 1.125 2007/05/26 20:45:12 bouyer Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -72,6 +72,13 @@ A gzipped
 kernel containing code for everything supported in this release.  This 
 kernel also supports SMP on systems with more than one CPU.
 .\}
+.if \n[i386] \{\
+.			It Pa netbsd-GENERIC.NOACPI.gz
+A gzipped
+.Nx
+kernel containing code for everything supported in this release but without
+ACPI support, for use on legacy hardware.
+.\}
 .
 .if \n[amd64] \{\
 .			It Pa netbsd-INSTALL.gz
@@ -139,6 +146,12 @@ A version of
 .Li INSTALL
 that has USB, PCMCIA and CardBus enabled to allow
 installing on laptop machines.
+.			It Pa netbsd-INSTALL_LARGE.gz
+A version of
+.Li INSTALL
+that has ACPI and some large disk and network driver, to allow installing
+on the newest machines.
+This is the default boot kernel from the ISO images.
 .			It Pa netbsd-INSTALL_PS2.gz
 A version of
 .Li INSTALL
@@ -277,10 +290,14 @@ see below.
 .		It Pa bootfs/
 Netbootable RAM disk kernel and the file system in the RAM disk; see below.
 .\}
-.if \n[alpha]:\n[amiga]:\n[atari]:\n[bebox]:\n[i386]:\n[news68k]:\
+.if \n[alpha]:\n[amd64]:\n[amiga]:\n[atari]:\n[bebox]:\n[i386]:\n[news68k]:\
 \n[newsmips]:\n[pc532]:\n[sparc]:\n[x68k]:\n[prep]:\n[sandpoint] \{\
 .		It Pa floppy/
 \*M boot and installation floppies; see below.
+.\}
+.if \n[i386]:\n[amd64] \{\
+.		It Pa cdrom/
+\*M bootable cdrom images; see below.
 .\}
 .
 .if \n[alpha] \{\
@@ -325,7 +342,7 @@ Method), below.
 \*M miniroot file system image; see below.
 .\}
 .
-.if !\n[cats]:\n[evbppc]:\n[mvme68k]:\n[macppc]:\n[sgimips]:\n[sparc]:\n[xen]:\n[amd64] \{\
+.if !\n[cats]:\n[evbppc]:\n[mvme68k]:\n[macppc]:\n[sgimips]:\n[sparc]:\n[xen] \{\
 .		It Pa misc/
 .
 .ie \n[alpha] \{\
