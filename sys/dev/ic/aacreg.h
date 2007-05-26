@@ -1,4 +1,4 @@
-/*	$NetBSD: aacreg.h,v 1.6 2007/05/24 15:07:47 briggs Exp $	*/
+/*	$NetBSD: aacreg.h,v 1.7 2007/05/26 02:09:40 briggs Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -151,19 +151,27 @@ struct aac_queue_table {
  */
 struct aac_adapter_init {
 	u_int32_t InitStructRevision;
-#define	AAC_INIT_STRUCT_REVISION	3
+#define	AAC_INIT_STRUCT_REVISION		3
+#define	AAC_INIT_STRUCT_REVISION_4		4
 	u_int32_t MiniPortRevision;
+#define	AAC_INIT_STRUCT_MINIPORT_REVISION	1
 	u_int32_t FilesystemRevision;
 	u_int32_t CommHeaderAddress;
 	u_int32_t FastIoCommAreaAddress;
 	u_int32_t AdapterFibsPhysicalAddress;
-	void	*AdapterFibsVirtualAddress;
+	u_int32_t AdapterFibsVirtualAddress;
 	u_int32_t AdapterFibsSize;
 	u_int32_t AdapterFibAlign;
 	u_int32_t PrintfBufferAddress;
 	u_int32_t PrintfBufferSize;
 	u_int32_t HostPhysMemPages;
 	u_int32_t HostElapsedSeconds;
+	/* ADAPTER_INIT_STRUCT_REVISION_4 begins here */
+	u_int32_t InitFlags;		/* flags for supported features */
+#define AAC_INITFLAGS_NEW_COMM_SUPPORTED	1
+	u_int32_t MaxIoCommands;	/* max outstanding commands */
+	u_int32_t MaxIoSize;		/* largest I/O command */
+	u_int32_t MaxFibSize;		/* largest FIB to adapter */
 } __attribute__((__packed__));
 
 /*
@@ -593,8 +601,8 @@ struct aac_close_command {
  * our private command structure and don't touch these)
  */
 struct aac_fib_list_entry {
-	struct fib_list_entry *Flink;
-	struct fib_list_entry *Blink;
+	u_int32_t	Flink;
+	u_int32_t	Blink;
 } __attribute__((__packed__));
 
 /*
