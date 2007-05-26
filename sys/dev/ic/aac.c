@@ -1,4 +1,4 @@
-/*	$NetBSD: aac.c,v 1.32 2007/05/26 12:45:02 briggs Exp $	*/
+/*	$NetBSD: aac.c,v 1.33 2007/05/26 18:10:46 briggs Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aac.c,v 1.32 2007/05/26 12:45:02 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aac.c,v 1.33 2007/05/26 18:10:46 briggs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -763,6 +763,8 @@ aac_intr(void *cookie)
 	AAC_DPRINTF(AAC_D_INTR, ("aac_intr(%p) ", sc));
 
 	reason = AAC_GET_ISTATUS(sc);
+	AAC_CLEAR_ISTATUS(sc, reason);
+
 	AAC_DPRINTF(AAC_D_INTR, ("istatus 0x%04x ", reason));
 
 	/*
@@ -776,7 +778,6 @@ aac_intr(void *cookie)
 		printf("%s:     %.*s", sc->sc_dv.dv_xname,
 			AAC_PRINTF_BUFSIZE, sc->sc_common->ac_printf);
 		sc->sc_common->ac_printf[0] = '\0';
-		AAC_CLEAR_ISTATUS(sc, AAC_DB_PRINTF);
 		AAC_QNOTIFY(sc, AAC_DB_PRINTF);
 		claimed = 1;
 	}
@@ -786,7 +787,6 @@ aac_intr(void *cookie)
 	 */
 	if ((reason & AAC_DB_COMMAND_READY) != 0) {
 		aac_host_command(sc);
-		AAC_CLEAR_ISTATUS(sc, AAC_DB_COMMAND_READY);
 		claimed = 1;
 	}
 
@@ -795,7 +795,6 @@ aac_intr(void *cookie)
 	 */
 	if ((reason & AAC_DB_RESPONSE_READY) != 0) {
 		aac_host_response(sc);
-		AAC_CLEAR_ISTATUS(sc, AAC_DB_RESPONSE_READY);
 		claimed = 1;
 	}
 
@@ -1322,6 +1321,12 @@ aac_dequeue_fib(struct aac_softc *sc, int queue, u_int32_t *fib_size,
 		idx = le32toh((sc->sc_qentries[queue] + ci)->aq_fib_addr);
 		ac = (struct aac_ccb *) ((char *) sc->sc_ccbs + (idx >> 2));
 		*fib_addr = ac->ac_fib;
+		if (idx & 0x01) {
+			ac->ac_fib->Header.XferState |=
+				htole32(AAC_FIBSTATE_DONEADAP);
+			*((u_int32_t*)(ac->ac_fib->data)) =
+				htole32(AAC_ERROR_NORMAL);
+		}
 		break;
 	default:
 		panic("Invalid queue in aac_dequeue_fib()");

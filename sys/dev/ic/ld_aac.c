@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_aac.c,v 1.13 2006/11/16 01:32:51 christos Exp $	*/
+/*	$NetBSD: ld_aac.c,v 1.14 2007/05/26 18:10:46 briggs Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_aac.c,v 1.13 2006/11/16 01:32:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_aac.c,v 1.14 2007/05/26 18:10:46 briggs Exp $");
 
 #include "rnd.h"
 
@@ -155,7 +155,8 @@ ld_aac_dobio(struct ld_aac_softc *sc, void *data, int datasize, int blkno,
 
         fib->Header.XferState = htole32(AAC_FIBSTATE_HOSTOWNED |
 	    AAC_FIBSTATE_INITIALISED | AAC_FIBSTATE_FROMHOST |
-	    AAC_FIBSTATE_REXPECTED | AAC_FIBSTATE_NORM);
+	    AAC_FIBSTATE_REXPECTED | AAC_FIBSTATE_NORM |
+	    AAC_FIBSTATE_ASYNC | AAC_FIBSTATE_FAST_RESPONSE );
 	fib->Header.Command = htole16(ContainerCommand);
 
 	if (dowrite) {
