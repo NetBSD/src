@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.340 2007/05/17 08:56:46 lkundrak Exp $
+.\"	$NetBSD: main,v 1.341 2007/05/26 20:45:13 bouyer Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -117,15 +117,22 @@ Fetch the
 .if \n[i386]:\n[amd64] \{\
 appropriate pair of boot floppy images from the
 .Pa \*M/installation/floppy/
-directory, or a CD-ROM image.
+directory, or a CD-ROM image (the images from
+.Pa \*M/installation/cdrom/
+are bootable, but do no contain binary sets - these are intended for network
+installs, or when different bootblocks are needed).
 Most people will need the
 .Pa boot1.fs
 and
 .Pa boot2.fs
+or
+.Pa boot.iso
 images for VGA console installation, or the
 .Pa boot-com1.fs
 and
 .Pa boot-com2.fs
+or
+.Pa boot-com.iso
 images for installation via serial console.
 .if \n[i386] \{\
 You may also possibly (but not necessarily) want to use
@@ -133,6 +140,25 @@ You may also possibly (but not necessarily) want to use
 and
 .Pa bootlap2.fs
 if installing on a laptop.
+The INSTALL_LAPTOP kernel can be loaded from one of the cdrom images via
+the bootloader:
+.Ic boot Ar nblaptop .
+.\}
+.Pp
+The default kernel on ISO images have ACPI enabled. This is known to cause
+issues on a few older machines which have buggy ACPI tables. To boot with
+ACPI disabled, interrupt the 
+.Nx
+boot loader, and enter:
+.Ic boot Fl c .
+At the userconf prompt, enter:
+.Ic disable acpi
+followed by:
+.Ic quit .
+.if \n[i386] \{\
+The kernel from the two floppy set is also present on the ISO images and can be
+loaded using:
+.Ic boot Ar nbnoacpi .
 .\}
 .\}
 .if \n[macppc] \{\
