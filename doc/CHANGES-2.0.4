@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0.4,v 1.1.2.68 2007/04/08 22:28:05 bouyer Exp $
+#	$NetBSD: CHANGES-2.0.4,v 1.1.2.69 2007/05/27 21:27:41 bouyer Exp $
 
 A complete list of changes from the NetBSD 2.0.3 update to the NetBSD 2.0.4
 update.
@@ -577,4 +577,10 @@ dist/file/src/magic.c   patch
         Fix an integer underflow in file_printf which can lead to an
 	exploitable heap overflow.
 	[adrianp, ticket #11288]
+
+etc/security					1.101
+
+	PR/36058 -- fix check for group/other writable home directories from
+	Jukka Salmi
+	[jnemeth, ticket #11309]
 
