@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.126 2007/05/23 00:47:03 mhitch Exp $	*/
+/*	$NetBSD: pmap.c,v 1.127 2007/05/27 21:33:55 mhitch Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.126 2007/05/23 00:47:03 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.127 2007/05/27 21:33:55 mhitch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -507,6 +507,8 @@ pmap_init()
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
 		printf("pmap_init()\n");
+#endif
+
 	/*
 	 * Before we do anything else, initialize the PTE pointers
 	 * used by pmap_zero_page() and pmap_copy_page().
@@ -514,6 +516,7 @@ pmap_init()
 	caddr1_pte = pmap_pte(pmap_kernel(), CADDR1);
 	caddr2_pte = pmap_pte(pmap_kernel(), CADDR2);
 
+#ifdef DEBUG
 	if (pmapdebug & PDB_INIT) {
 		printf("pmap_init: Sysseg %p, Sysmap %p, Sysptmap %p\n",
 		    Sysseg, Sysmap, Sysptmap);
