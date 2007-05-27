@@ -1,4 +1,4 @@
-#	$NetBSD: IPAQ,v 1.35.2.1 2005/07/18 21:13:50 riz Exp $
+#	$NetBSD: IPAQ,v 1.35.2.2 2007/05/27 20:44:05 bouyer Exp $
 #
 #	iPAQ H3600 -- Windows-CE based PDA
 #
@@ -170,7 +170,9 @@ ne*	at pcmcia? function ?		# NE2000-compatible Ethernet
 ray*	at pcmcia? function ?		# Raytheon Raylink (802.11)
 #sm*	at pcmcia? function ?		# Megahertz Ethernet
 wi*	at pcmcia? function ?		# Lucent WaveLan IEEE (802.11)
-#xi*	at pcmcia? function ?		# Xircom CreditCard Ethernet
+#xirc*	at pcmcia? function ?		# Xircom CreditCard Ethernet
+#com*	at xirc?
+#xi*	at xirc?
 #mhzc*	at pcmcia? function ?		# Megahertz Ethernet/Modem combo cards
 #com*	at mhzc?
 #sm*	at mhzc?
