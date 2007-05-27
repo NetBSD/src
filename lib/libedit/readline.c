@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.70 2006/11/24 00:01:17 christos Exp $	*/
+/*	$NetBSD: readline.c,v 1.71 2007/05/27 19:45:37 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.70 2006/11/24 00:01:17 christos Exp $");
+__RCSID("$NetBSD: readline.c,v 1.71 2007/05/27 19:45:37 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -1206,7 +1206,7 @@ add_history(const char *line)
 HIST_ENTRY *
 remove_history(int num)
 {
-	static HIST_ENTRY she;
+	HIST_ENTRY *she;
 	HistEvent ev;
 
 	if (h == NULL || e == NULL)
@@ -1215,10 +1215,13 @@ remove_history(int num)
 	if (history(h, &ev, H_DEL, num) != 0)
 		return NULL;
 
-	she.line = ev.str;
-	she.data = NULL;
+	if ((she = malloc(sizeof(*she))) == NULL)
+		return NULL;
 
-	return &she;
+	she->line = ev.str;
+	she->data = NULL;
+
+	return she;
 }
 
 
@@ -1833,6 +1836,61 @@ rl_set_screen_size(int rows, int cols)
 	el_set(e, EL_SETTC, "li", buf);
 	(void)snprintf(buf, sizeof(buf), "%d", cols);
 	el_set(e, EL_SETTC, "co", buf);
+}
+
+char **
+rl_completion_matches(const char *str, rl_compentry_func_t *fun)
+{
+	size_t len, max, i, j, min;
+	char **list, *match, *a, *b;
+
+	len = 1;
+	max = 10;
+	if ((list = malloc(max * sizeof(*list))) == NULL)
+		return NULL;
+
+	while ((match = (*fun)(str, (int)(len - 1))) != NULL) {
+		if (len == max) {
+			char **nl;
+			max += 10;
+			if ((nl = realloc(list, max * sizeof(*nl))) == NULL)
+				goto out;
+			list = nl;
+		}
+		list[len++] = match;
+	}
+	if (len == 1)
+		goto out;
+	list[len] = NULL;
+	if (len == 2) {
+		if ((list[0] = strdup(list[1])) == NULL)
+			goto out;
+		return list;
+	}
+	qsort(&list[1], len - 1, sizeof(*list),
+	    (int (*)(const void *, const void *)) strcmp);
+	min = SIZE_T_MAX;
+	for (i = 1, a = list[i]; i < len - 1; i++, a = b) {
+		b = list[i + 1];
+		for (j = 0; a[j] && a[j] == b[j]; j++)
+			continue;
+		if (min > j)
+			min = j;
+	}
+	if (min == 0 && *str) {
+		if ((list[0] = strdup(str)) == NULL)
+			goto out;
+	} else {
+		if ((list[0] = malloc(min + 1)) == NULL)
+			goto out;
+		(void)memcpy(list[0], list[1], min);
+		list[0][min] = '\0';
+	}
+	return list;
+		
+out:
+	free(list);
+	return NULL;
 }
 
 char *
