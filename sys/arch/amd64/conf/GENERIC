@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.42.2.15 2007/03/03 23:30:20 bouyer Exp $
+# $NetBSD: GENERIC,v 1.42.2.16 2007/05/27 20:44:05 bouyer Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.42.2.15 $"
+#ident 		"GENERIC-$Revision: 1.42.2.16 $"
 
 maxusers	32		# estimated number of users
 
@@ -555,7 +555,9 @@ xge*	at pci? dev ? function ?	# Neterion (S2io) Xframe-I 10GbE
 # tr at pcmcia has problems with Cardbus bridges
 #tr*	at pcmcia? function ?		# TROPIC based Token-Ring
 #wi*	at pcmcia? function ?		# Lucent/Intersil WaveLan IEEE (802.11)
-#xi*	at pcmcia? function ?		# Xircom CreditCard Ethernet
+#xirc*	at pcmcia? function ?		# Xircom CreditCard Ethernet
+#com*	at xirc?
+#xi*	at xirc?
 
 #mhzc*	at pcmcia? function ?		# Megahertz Ethernet/Modem combo cards
 #com*	at mhzc?
