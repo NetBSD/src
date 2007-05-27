@@ -72,19 +72,8 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 static const char sccsid[] = "@(#)res_send.c	8.1 (Berkeley) 6/4/93";
-static const char rcsid[] = "$Id: res_send.c,v 1.4 2005/08/11 17:13:26 drochner Exp $";
+static const char rcsid[] = "$Id: res_send.c,v 1.5 2007/05/27 16:27:57 tls Exp $";
 #endif /* LIBC_SCCS and not lint */
-
-/* Rename the I/O functions in case we're tracing. */
-#define send		trace_mr_send
-#define recvfrom	trace_mr_recvfrom
-#define	read		trace_mr_read
-#define connect		trace_mr_connect
-#define socket		trace_mr_socket
-#define bind		trace_mr_bind
-#define close		trace_mr_close
-#define select		trace_mr_select
-#define time		trace_mr_time
 
 /*
  * Send query to name server and wait for reply.
@@ -107,7 +96,24 @@ static const char rcsid[] = "$Id: res_send.c,v 1.4 2005/08/11 17:13:26 drochner 
 #include <string.h>
 #include <unistd.h>
 
+/* Rename the I/O functions in case we're tracing. */
+#define send		trace_mr_send
+#define recvfrom	trace_mr_recvfrom
+ 
+#ifdef _FORTIFY_SOURCE
+#undef read		/* FORTIFY_SOURCE gets this at trace_mr_read anyway */
+#endif
+ 
+#define read		trace_mr_read
+#define connect		trace_mr_connect 
+#define socket		trace_mr_socket 
+#define bind		trace_mr_bind
+#define close		trace_mr_close
+#define select		trace_mr_select
+#define time		trace_mr_time
+
 #include "minires/minires.h"
+#include "omapip/trace_mr.h"
 #include "arpa/nameser.h"
 
 #define	CHECK_SRVR_ADDR
