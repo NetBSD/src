@@ -1,4 +1,4 @@
-.\" $NetBSD: gre.4,v 1.36 2006/12/23 09:11:19 wiz Exp $
+.\" $NetBSD: gre.4,v 1.37 2007/05/27 19:15:48 dyoung Exp $
 .\"
 .\" Copyright 1998 (c) The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -303,21 +303,9 @@ endpoints.
 It can be adjusted via
 .Xr ifconfig 8 .
 .Pp
-For correct operation, the
-.Nm
-device needs a route to the destination that is less specific than the
-one over the tunnel.
-(Basically, there needs to be a route to the decapsulating host that
-does not run over the tunnel, as this would be a loop.
-This is not relevant for IPv6-over-IPv4 tunnels, of course.)
-If the addresses are ambiguous, doing the
-.Xr ifconfig 8
-.Li tunnel
-step before the
-.Xr ifconfig 8
-call to set the
-.Sy gre Ns Ar X
-IP addresses will help to find a route outside the tunnel.
+There needs to be a route to the decapsulating host that does not
+run over the tunnel, as this would be a loop.
+(This is not relevant for IPv6-over-IPv4 tunnels, of course.)
 .Pp
 In order to tell
 .Xr ifconfig 8
