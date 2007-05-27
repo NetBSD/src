@@ -1,7 +1,7 @@
-/*	$NetBSD: iopspvar.h,v 1.6 2003/06/13 02:33:09 thorpej Exp $	*/
+/*	$NetBSD: iopspvar.h,v 1.6.60.1 2007/05/27 00:17:17 ad Exp $	*/
 
 /*-
- * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2000, 2001, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -47,7 +47,6 @@
 #define	IOPSP_TID_ABSENT	0x0000	/* Device is absent */
 #define	IOPSP_TID_INUSE		0xffff	/* Device in use by another module */
 
-#ifdef I2OVERBOSE
 struct iopsp_target {
 	u_int8_t	it_width;
 	u_int8_t	it_syncrate;
@@ -55,7 +54,6 @@ struct iopsp_target {
 	u_int8_t	it_flags;
 };
 #define	IT_PRESENT		0x01	/* Target is present */
-#endif
 
 struct iopsp_softc {
 	struct	device sc_dv;			/* Generic device data */
@@ -65,9 +63,7 @@ struct iopsp_softc {
 	u_short	*sc_tidmap;			/* Target/LUN -> TID map */
 	u_int	sc_chgind;			/* Last LCT change # */
 	int	sc_openings;			/* # command openings */
-#ifdef I2OVERBOSE
 	struct	iopsp_target *sc_targetmap;	/* Target information */
-#endif
 };
 
 #endif	/* !_I2O_IOPSPVAR_H_ */
