@@ -1,4 +1,4 @@
-/*	$NetBSD: driver_netbsd.c,v 1.2 2007/04/26 16:25:56 seanb Exp $	*/
+/*	$NetBSD: driver_netbsd.c,v 1.3 2007/05/27 03:15:34 christos Exp $	*/
 
 /*
  * WPA Supplicant - driver interaction with BSD net80211 layer
@@ -44,6 +44,7 @@ struct wpa_driver_bsd_data {
 	int	route;			/* routing socket for events */
 	char	ifname[IFNAMSIZ+1];	/* interface name */
 	unsigned int ifindex;		/* interface index */
+	int	flags;			/* interface flags */
 	void	*ctx;
 	int	prev_roaming;		/* roaming state to restore on deinit */
 	int	prev_privacy;		/* privacy state to restore on deinit */
@@ -561,7 +562,8 @@ wpa_driver_bsd_event_receive(int sock, void *ctx, void *sock_ctx)
 		ifm = (struct if_msghdr *) rtm;
 		if (ifm->ifm_index != drv->ifindex)
 			break;
-		if ((rtm->rtm_flags & RTF_UP) == 0) {
+		if ((ifm->ifm_flags & IFF_UP) == 0 &&
+		    (drv->flags & IFF_UP) != 0) {
 			strlcpy(event.interface_status.ifname, drv->ifname,
 				sizeof(event.interface_status.ifname));
 			event.interface_status.ievent = EVENT_INTERFACE_REMOVED;
@@ -569,6 +571,16 @@ wpa_driver_bsd_event_receive(int sock, void *ctx, void *sock_ctx)
 				   event.interface_status.ifname);
 			wpa_supplicant_event(ctx, EVENT_INTERFACE_STATUS, &event);
 		}
+		if ((ifm->ifm_flags & IFF_UP) != 0 &&
+		    (drv->flags & IFF_UP) == 0) {
+			strlcpy(event.interface_status.ifname, drv->ifname,
+				sizeof(event.interface_status.ifname));
+			event.interface_status.ievent = EVENT_INTERFACE_ADDED;
+			wpa_printf(MSG_DEBUG, "RTM_IFINFO: Interface '%s' UP",
+				   event.interface_status.ifname);
+			wpa_supplicant_event(ctx, EVENT_INTERFACE_STATUS, &event);
+		}
+		drv->flags = ifm->ifm_flags;
 		break;
 	}
 }
