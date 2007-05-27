@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.2,v 1.1.2.72 2007/05/11 11:49:45 ghen Exp $
+#	$NetBSD: CHANGES-3.2,v 1.1.2.73 2007/05/27 21:07:27 bouyer Exp $
 
 A complete list of changes from the NetBSD 3.1 release to the NetBSD 3.2
 release:
@@ -3192,4 +3192,54 @@ usr.sbin/etcupdate/etcupdate.8			1.12-1.13
 	* Always invoke "postinstall check", even when not using a source dir.
 	* Add a BUGS section saying that using -s srcdir is not recommended.
 	[martti, ticket #1779]
+
+sbin/restore/restore.8				1.50 - 1.51
+
+	Improve example of restoring a complete filesystem with "restore -r":
+	use options and device names that actually exists on NetBSD.
+	[tron, ticket #1771]
+
+lib/libc/arch/x86_64/gen/swapcontext.S		1.4
+
+	Don't clobber callee save registers r12 & r13 in swapcontext.  They
+	were saved in the stack, but the subsequent swapcontext would return
+	to the earlier stack frame and never restore them.
+	[pooka, ticket #1772]
+
+sys/dev/ic/hme.c				1.50
+
+	Fix typo in HW checksum code -- check for TCP & UDP HW checksumming
+	being enabled rather than TCP twice.
+	[hubertf, ticket #1774]
+
+etc/security					1.101
+
+	PR/36058 -- fix check for group/other writable home directories from
+	Jukka Salmi
+	[jnemeth, ticket #1777]
+
+sys/arch/amd64/conf/GENERIC			1.141
+sys/arch/amd64/conf/INSTALL			1.68
+sys/arch/hpcarm/conf/IPAQ			1.50
+sys/arch/i386/conf/SWINGER			1.90
+
+	PR/36234 - Joerg Niendorf -- xi -> xirc
+	[jnemeth, ticket #1778]
+
+sys/dev/pci/azalia.c				1.43, 1.46 - 1.49
+sys/dev/pci/azalia.h				1.15 - 1.16
+sys/dev/pci/azalia_codec.c			1.25, 1.28, 1.30 - 1.42
+
+	Bug fixes, and add support for some more codecs.
+	PR#34880, PR#35658, PR#36302
+	[kent, ticket #1780]
+
+sys/dev/isapnp/isapnpdevs			1.64
+sys/dev/isapnp/isapnpdevs.c			regen
+sys/dev/isapnp/isapnpdevs.h			regen
+
+	Add entries to recognize the Farallon Etherwave ISA card via ep(4).
+	Based on a patch submitted by Randy Beaudreault in PR kern/36360,
+	reviewed by Christos Zoulas.
+	[tron, ticket #1786]
 
