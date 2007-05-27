@@ -1,8 +1,8 @@
-/*	$NetBSD: hwaddr.c,v 1.8 2003/07/14 06:08:05 itojun Exp $	*/
+/*	$NetBSD: hwaddr.c,v 1.9 2007/05/27 16:31:42 tls Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hwaddr.c,v 1.8 2003/07/14 06:08:05 itojun Exp $");
+__RCSID("$NetBSD: hwaddr.c,v 1.9 2007/05/27 16:31:42 tls Exp $");
 #endif
 
 /*
@@ -28,19 +28,12 @@ __RCSID("$NetBSD: hwaddr.c,v 1.8 2003/07/14 06:08:05 itojun Exp $");
 #include <netinet/in.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <strings.h>
 #ifndef	NO_UNISTD
 #include <unistd.h>
 #endif
 #include <syslog.h>
 #include <arpa/inet.h>
-
-#ifndef USE_BFUNCS
-/* Yes, memcpy is OK here (no overlapped copies). */
-#include <memory.h>
-#define bcopy(a,b,c)    memcpy(b,a,c)
-#define bzero(p,l)      memset(p,0,l)
-#define bcmp(a,b,c)     memcmp(a,b,c)
-#endif
 
 #include "bptypes.h"
 #include "hwaddr.h"

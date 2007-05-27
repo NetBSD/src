@@ -1,8 +1,8 @@
-/*	$NetBSD: lookup.c,v 1.5 2002/07/14 00:26:17 wiz Exp $	*/
+/*	$NetBSD: lookup.c,v 1.6 2007/05/27 16:31:42 tls Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: lookup.c,v 1.5 2002/07/14 00:26:17 wiz Exp $");
+__RCSID("$NetBSD: lookup.c,v 1.6 2007/05/27 16:31:42 tls Exp $");
 #endif
 
 /*
@@ -21,12 +21,7 @@ __RCSID("$NetBSD: lookup.c,v 1.5 2002/07/14 00:26:17 wiz Exp $");
 
 #include <netdb.h>
 #include <syslog.h>
-
-#ifndef USE_BFUNCS
-#include <memory.h>
-/* Yes, memcpy is OK here (no overlapped copies). */
-#define bcopy(a,b,c)    memcpy(b,a,c)
-#endif
+#include <strings.h>
 
 #include "bootp.h"
 #include "lookup.h"

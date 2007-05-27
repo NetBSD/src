@@ -1,4 +1,4 @@
-/*	$NetBSD: bootptest.h,v 1.4 2002/07/14 00:07:01 wiz Exp $	*/
+/*	$NetBSD: bootptest.h,v 1.5 2007/05/27 16:31:42 tls Exp $	*/
 
 /* bootptest.h */
 /*
@@ -6,14 +6,6 @@
  */
 #define ESRC(p) (p)
 #define EDST(p) (p)
-
-#ifndef	USE_BFUNCS
-/* Use mem/str functions */
-/* There are no overlapped copies, so memcpy is OK. */
-#define bcopy(a,b,c)    memcpy(b,a,c)
-#define bzero(p,l)      memset(p,0,l)
-#define bcmp(a,b,c)     memcmp(a,b,c)
-#endif
 
 extern int vflag; /* verbose flag */
 

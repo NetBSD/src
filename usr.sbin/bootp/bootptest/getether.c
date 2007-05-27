@@ -1,8 +1,8 @@
-/*	$NetBSD: getether.c,v 1.7 2003/07/14 08:36:34 itojun Exp $	*/
+/*	$NetBSD: getether.c,v 1.8 2007/05/27 16:31:42 tls Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: getether.c,v 1.7 2003/07/14 08:36:34 itojun Exp $");
+__RCSID("$NetBSD: getether.c,v 1.8 2007/05/27 16:31:42 tls Exp $");
 #endif
 
 /*
@@ -20,6 +20,7 @@ __RCSID("$NetBSD: getether.c,v 1.7 2003/07/14 08:36:34 itojun Exp $");
 
 #include <ctype.h>
 #include <string.h>
+#include <strings.h>
 #include <syslog.h>
 #include <unistd.h>
 

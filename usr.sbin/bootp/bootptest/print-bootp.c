@@ -26,7 +26,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-bootp.c,v 1.7 2002/07/14 00:30:02 wiz Exp $");
+__RCSID("$NetBSD: print-bootp.c,v 1.8 2007/05/27 16:31:42 tls Exp $");
 /* 93/10/10 <gwr@mc.com> New data-driven option print routine. */
 #endif
 
@@ -38,6 +38,7 @@ __RCSID("$NetBSD: print-bootp.c,v 1.7 2002/07/14 00:30:02 wiz Exp $");
 #include <net/if.h>
 #include <netinet/in.h>
 #include <string.h>
+#include <strings.h>
 #include <ctype.h>
 
 #include "bootp.h"
