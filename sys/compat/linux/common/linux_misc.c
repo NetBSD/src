@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.167.2.1 2007/04/10 13:26:22 ad Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.167.2.2 2007/05/27 14:35:06 ad Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.167.2.1 2007/04/10 13:26:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.167.2.2 2007/05/27 14:35:06 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ptrace.h"
@@ -97,6 +97,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.167.2.1 2007/04/10 13:26:22 ad Exp 
 #include <sys/wait.h>
 #include <sys/utsname.h>
 #include <sys/unistd.h>
+#include <sys/vfs_syscalls.h>
 #include <sys/swap.h>		/* for SWAP_ON */
 #include <sys/sysctl.h>		/* for KERN_DOMAINNAME */
 #include <sys/kauth.h>
@@ -119,6 +120,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.167.2.1 2007/04/10 13:26:22 ad Exp 
 #include <compat/linux/common/linux_util.h>
 #include <compat/linux/common/linux_misc.h>
 #ifndef COMPAT_LINUX32
+#include <compat/linux/common/linux_statfs.h>
 #include <compat/linux/common/linux_limit.h>
 #endif
 #include <compat/linux/common/linux_ptrace.h>
@@ -139,6 +141,7 @@ const int linux_ptrace_request_map[] = {
 # ifdef PT_STEP
 	LINUX_PTRACE_SINGLESTEP,	PT_STEP,
 # endif
+	LINUX_PTRACE_SYSCALL,	PT_SYSCALL,
 	-1
 };
 
@@ -177,8 +180,6 @@ const int linux_fstypes_cnt = sizeof(linux_fstypes) / sizeof(linux_fstypes[0]);
 # endif
 
 /* Local linux_misc.c functions: */
-static void bsd_to_linux_statfs __P((const struct statvfs *,
-    struct linux_statfs *));
 static void linux_to_bsd_mmap_args __P((struct sys_mmap_args *,
     const struct linux_sys_mmap_args *));
 static int linux_mmap __P((struct lwp *, struct linux_sys_mmap_args *,
@@ -190,23 +191,23 @@ static int linux_mmap __P((struct lwp *, struct linux_sys_mmap_args *,
  * to be converted in order for Linux binaries to get a valid signal
  * number out of it.
  */
-void
-bsd_to_linux_wstat(st)
-	int *st;
+int
+bsd_to_linux_wstat(int st)
 {
 
 	int sig;
 
-	if (WIFSIGNALED(*st)) {
-		sig = WTERMSIG(*st);
+	if (WIFSIGNALED(st)) {
+		sig = WTERMSIG(st);
 		if (sig >= 0 && sig < NSIG)
-			*st= (*st& ~0177) | native_to_linux_signo[sig];
-	} else if (WIFSTOPPED(*st)) {
-		sig = WSTOPSIG(*st);
+			st= (st & ~0177) | native_to_linux_signo[sig];
+	} else if (WIFSTOPPED(st)) {
+		sig = WSTOPSIG(st);
 		if (sig >= 0 && sig < NSIG)
-			*st = (*st & ~0xff00) |
+			st = (st & ~0xff00) |
 			    (native_to_linux_signo[sig] << 8);
 	}
+	return st;
 }
 
 /*
@@ -226,19 +227,11 @@ linux_sys_wait4(l, v, retval)
 		syscallarg(int) options;
 		syscallarg(struct rusage *) rusage;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
-	struct sys_wait4_args w4a;
-	int error, *status, tstat, options, linux_options;
-	void *sg;
-
-	if (SCARG(uap, status) != NULL) {
-		sg = stackgap_init(p, 0);
-		status = (int *) stackgap_alloc(p, &sg, sizeof *status);
-	} else
-		status = NULL;
+	int error, status, options, linux_options, was_zombie;
+	struct rusage ru;
 
 	linux_options = SCARG(uap, options);
-	options = 0;
+	options = WOPTSCHECKED;
 	if (linux_options & ~(LINUX_WAIT4_KNOWNFLAGS))
 		return (EINVAL);
 
@@ -254,29 +247,28 @@ linux_sys_wait4(l, v, retval)
 	if (linux_options & LINUX_WAIT4_WNOTHREAD)
 		printf("WARNING: %s: linux process %d.%d called "
 		       "waitpid with __WNOTHREAD set!",
-		       __FILE__, p->p_pid, l->l_lid);
+		       __FILE__, l->l_proc->p_pid, l->l_lid);
 
 # endif
 
-	SCARG(&w4a, pid) = SCARG(uap, pid);
-	SCARG(&w4a, status) = status;
-	SCARG(&w4a, options) = options;
-	SCARG(&w4a, rusage) = SCARG(uap, rusage);
+	error = do_sys_wait(l, &SCARG(uap, pid), &status, options,
+	    SCARG(uap, rusage) != NULL ? &ru : NULL, &was_zombie);
 
-	if ((error = sys_wait4(l, &w4a, retval)))
+	retval[0] = SCARG(uap, pid);
+	if (SCARG(uap, pid) == 0)
 		return error;
 
-	sigdelset(&p->p_sigpend.sp_set, SIGCHLD);	/* XXXAD ksiginfo leak */
+	sigdelset(&l->l_proc->p_sigpend.sp_set, SIGCHLD);	/* XXXAD ksiginfo leak */
 
-	if (status != NULL) {
-		if ((error = copyin(status, &tstat, sizeof tstat)))
-			return error;
+	if (SCARG(uap, rusage) != NULL)
+		error = copyout(&ru, SCARG(uap, rusage), sizeof(ru));
 
-		bsd_to_linux_wstat(&tstat);
-		return copyout(&tstat, SCARG(uap, status), sizeof tstat);
+	if (error == 0 && SCARG(uap, status) != NULL) {
+		status = bsd_to_linux_wstat(status);
+		error = copyout(&status, SCARG(uap, status), sizeof status);
 	}
 
-	return 0;
+	return error;
 }
 
 /*
@@ -311,57 +303,6 @@ linux_sys_brk(l, v, retval)
 }
 
 /*
- * Convert NetBSD statvfs structure to Linux statfs structure.
- * Linux doesn't have f_flag, and we can't set f_frsize due
- * to glibc statvfs() bug (see below).
- */
-static void
-bsd_to_linux_statfs(bsp, lsp)
-	const struct statvfs *bsp;
-	struct linux_statfs *lsp;
-{
-	int i;
-
-	for (i = 0; i < linux_fstypes_cnt; i++) {
-		if (strcmp(bsp->f_fstypename, linux_fstypes[i].bsd) == 0) {
-			lsp->l_ftype = linux_fstypes[i].linux;
-			break;
-		}
-	}
-
-	if (i == linux_fstypes_cnt) {
-		DPRINTF(("unhandled fstype in linux emulation: %s\n",
-		    bsp->f_fstypename));
-		lsp->l_ftype = LINUX_DEFAULT_SUPER_MAGIC;
-	}
-
-	/*
-	 * The sizes are expressed in number of blocks. The block
-	 * size used for the size is f_frsize for POSIX-compliant
-	 * statvfs. Linux statfs uses f_bsize as the block size
-	 * (f_frsize used to not be available in Linux struct statfs).
-	 * However, glibc 2.3.3 statvfs() wrapper fails to adjust the block
-	 * counts for different f_frsize if f_frsize is provided by the kernel.
-	 * POSIX conforming apps thus get wrong size if f_frsize
-	 * is different to f_bsize. Thus, we just pretend we don't
-	 * support f_frsize.
-	 */
-
-	lsp->l_fbsize = bsp->f_frsize;
-	lsp->l_ffrsize = 0;			/* compat */
-	lsp->l_fblocks = bsp->f_blocks;
-	lsp->l_fbfree = bsp->f_bfree;
-	lsp->l_fbavail = bsp->f_bavail;
-	lsp->l_ffiles = bsp->f_files;
-	lsp->l_fffree = bsp->f_ffree;
-	/* Linux sets the fsid to 0..., we don't */
-	lsp->l_ffsid.val[0] = bsp->f_fsidx.__fsid_val[0];
-	lsp->l_ffsid.val[1] = bsp->f_fsidx.__fsid_val[1];
-	lsp->l_fnamelen = bsp->f_namemax;
-	(void)memset(lsp->l_fspare, 0, sizeof(lsp->l_fspare));
-}
-
-/*
  * Implement the fs stat functions. Straightforward.
  */
 int
@@ -374,34 +315,18 @@ linux_sys_statfs(l, v, retval)
 		syscallarg(const char *) path;
 		syscallarg(struct linux_statfs *) sp;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
-	struct statvfs *btmp, *bsp;
+	struct statvfs *sb;
 	struct linux_statfs ltmp;
-	struct sys_statvfs1_args bsa;
-	void *sg;
 	int error;
 
-	sg = stackgap_init(p, 0);
-	bsp = stackgap_alloc(p, &sg, sizeof (struct statvfs));
-
-	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
-
-	SCARG(&bsa, path) = SCARG(uap, path);
-	SCARG(&bsa, buf) = bsp;
-	SCARG(&bsa, flags) = ST_WAIT;
-
-	if ((error = sys_statvfs1(l, &bsa, retval)))
-		return error;
-
-	btmp = STATVFSBUF_GET();
-	error = copyin(bsp, btmp, sizeof(*btmp));
-	if (error) {
-		goto out;
+	sb = STATVFSBUF_GET();
+	error = do_sys_pstatvfs(l, SCARG(uap, path), ST_WAIT, sb);
+	if (error == 0) {
+		bsd_to_linux_statfs(sb, &ltmp);
+		error = copyout(&ltmp, SCARG(uap, sp), sizeof ltmp);
 	}
-	bsd_to_linux_statfs(btmp, &ltmp);
-	error = copyout(&ltmp, SCARG(uap, sp), sizeof ltmp);
-out:
-	STATVFSBUF_PUT(btmp);
+	STATVFSBUF_PUT(sb);
+
 	return error;
 }
 
@@ -415,32 +340,18 @@ linux_sys_fstatfs(l, v, retval)
 		syscallarg(int) fd;
 		syscallarg(struct linux_statfs *) sp;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
-	struct statvfs *btmp, *bsp;
+	struct statvfs *sb;
 	struct linux_statfs ltmp;
-	struct sys_fstatvfs1_args bsa;
-	void *sg;
 	int error;
 
-	sg = stackgap_init(p, 0);
-	bsp = stackgap_alloc(p, &sg, sizeof (struct statvfs));
-
-	SCARG(&bsa, fd) = SCARG(uap, fd);
-	SCARG(&bsa, buf) = bsp;
-	SCARG(&bsa, flags) = ST_WAIT;
-
-	if ((error = sys_fstatvfs1(l, &bsa, retval)))
-		return error;
-
-	btmp = STATVFSBUF_GET();
-	error = copyin(bsp, btmp, sizeof(*btmp));
-	if (error) {
-		goto out;
+	sb = STATVFSBUF_GET();
+	error = do_sys_fstatvfs(l, SCARG(uap, fd), ST_WAIT, sb);
+	if (error == 0) {
+		bsd_to_linux_statfs(sb, &ltmp);
+		error = copyout(&ltmp, SCARG(uap, sp), sizeof ltmp);
 	}
-	bsd_to_linux_statfs(btmp, &ltmp);
-	error = copyout(&ltmp, SCARG(uap, sp), sizeof ltmp);
-out:
-	STATVFSBUF_PUT(btmp);
+	STATVFSBUF_PUT(sb);
+
 	return error;
 }
 
@@ -462,7 +373,7 @@ linux_sys_uname(struct lwp *l, void *v, register_t *retval)
 	strncpy(luts.l_nodename, hostname, sizeof(luts.l_nodename));
 	strncpy(luts.l_release, linux_release, sizeof(luts.l_release));
 	strncpy(luts.l_version, linux_version, sizeof(luts.l_version));
-	strncpy(luts.l_machine, linux_machine, sizeof(luts.l_machine));
+	strncpy(luts.l_machine, LINUX_UNAME_ARCH, sizeof(luts.l_machine));
 	strncpy(luts.l_domainname, domainname, sizeof(luts.l_domainname));
 
 	return copyout(&luts, SCARG(uap, up), sizeof(luts));
@@ -1639,26 +1550,18 @@ linux_sys_getrlimit(l, v, retval)
 		syscallarg(struct orlimit *) rlp;
 # endif
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
-	void *sg = stackgap_init(p, 0);
-	struct sys_getrlimit_args ap;
-	struct rlimit rl;
 # ifdef LINUX_LARGEFILE64
 	struct rlimit orl;
 # else
 	struct orlimit orl;
 # endif
-	int error;
+	int which;
 
-	SCARG(&ap, which) = linux_to_bsd_limit(SCARG(uap, which));
-	if ((error = SCARG(&ap, which)) < 0)
-		return -error;
-	SCARG(&ap, rlp) = stackgap_alloc(p, &sg, sizeof rl);
-	if ((error = sys_getrlimit(l, &ap, retval)) != 0)
-		return error;
-	if ((error = copyin(SCARG(&ap, rlp), &rl, sizeof(rl))) != 0)
-		return error;
-	bsd_to_linux_rlimit(&orl, &rl);
+	which = linux_to_bsd_limit(SCARG(uap, which));
+	if (which < 0)
+		return -which;
+
+	bsd_to_linux_rlimit(&orl, &l->l_proc->p_rlimit[which]);
 
 	return copyout(&orl, SCARG(uap, rlp), sizeof(orl));
 }
@@ -1677,9 +1580,6 @@ linux_sys_setrlimit(l, v, retval)
 		syscallarg(struct orlimit *) rlp;
 # endif
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
-	void *sg = stackgap_init(p, 0);
-	struct sys_getrlimit_args ap;
 	struct rlimit rl;
 # ifdef LINUX_LARGEFILE64
 	struct rlimit orl;
@@ -1687,17 +1587,17 @@ linux_sys_setrlimit(l, v, retval)
 	struct orlimit orl;
 # endif
 	int error;
+	int which;
 
-	SCARG(&ap, which) = linux_to_bsd_limit(SCARG(uap, which));
-	SCARG(&ap, rlp) = stackgap_alloc(p, &sg, sizeof rl);
-	if ((error = SCARG(&ap, which)) < 0)
-		return -error;
 	if ((error = copyin(SCARG(uap, rlp), &orl, sizeof(orl))) != 0)
 		return error;
+
+	which = linux_to_bsd_limit(SCARG(uap, which));
+	if (which < 0)
+		return -which;
+
 	linux_to_bsd_rlimit(&rl, &orl);
-	if ((error = copyout(&rl, SCARG(&ap, rlp), sizeof(rl))) != 0)
-		return error;
-	return sys_setrlimit(l, &ap, retval);
+	return dosetrlimit(l, l->l_proc, which, &rl);
 }
 
 # if !defined(__mips__) && !defined(__amd64__)

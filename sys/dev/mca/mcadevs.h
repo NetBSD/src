@@ -1,10 +1,10 @@
-/*	$NetBSD: mcadevs.h,v 1.22 2005/12/11 12:22:18 christos Exp $	*/
+/*	$NetBSD: mcadevs.h,v 1.22.30.1 2007/05/27 14:30:12 ad Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: mcadevs,v 1.19 2005/04/03 11:17:49 jdolecek Exp 
+ *	NetBSD: mcadevs,v 1.22 2007/04/12 18:00:05 garbled Exp
  */
 
 /*-
@@ -88,6 +88,8 @@
 #define	MCA_PRODUCT_EVERAM	0x77FB	/* Everex EV-136 4Mb Memory Expansion */
 #define	MCA_PRODUCT_BOCARAM	0x7A7A	/* Boca BOCARAM/2 PLUS Memory Expansion */
 #define	MCA_PRODUCT_NCR53C90	0x7F4F	/* NCR SCSI Host Adapter */
+#define	MCA_PRODUCT_IBM_ETH_RAINBOW	0x8F98	/* IBM 10 Mbps Integrated Ethernet (Rainbow) */
+#define	MCA_PRODUCT_IBM_53C720	0x8FBA	/* IBM NCR 53C720 Integrated SCSI Controller */
 #define	MCA_PRODUCT_IBM_SVGA	0x90EE	/* IBM SVGA Adapter/A */
 #define	MCA_PRODUCT_IBM_ESDIC	0xDDFF	/* IBM ESDI Fixed Disk Controller */
 #define	MCA_PRODUCT_IBM_MPCOM	0xDEFF	/* IBM Multi-Protocol Communications Adapter */
@@ -97,6 +99,7 @@
 #define	MCA_PRODUCT_IBM_WD_2	0xEFD4	/* IBM PS/2 Adapter/A for Ethernet Networks (UTP) */
 #define	MCA_PRODUCT_IBM_WD_T	0xEFD5	/* IBM PS/2 Adapter/A for Ethernet Networks (BNC) */
 #define	MCA_PRODUCT_IBM_WD_O	0xEFE5	/* IBM PS/2 Adapter/A for Ethernet Networks */
+#define	MCA_PRODUCT_IBM_SIO_RAINBOW	0xF6FE	/* IBM Standard I/O Planar (Rainbow) */
 #define	MCA_PRODUCT_IBMRAM1	0xF7F7	/* IBM 2-8Mb 80286 Memory Expansion */
 #define	MCA_PRODUCT_IBMRAM2	0xF7FE	/* IBM Expanded Memory */
 #define	MCA_PRODUCT_IBMRAM3	0xFAFF	/* IBM 32-bit Memory Expansion */

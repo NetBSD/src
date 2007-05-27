@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.22 2007/01/29 01:52:46 hubertf Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.22.6.1 2007/05/27 14:27:07 ad Exp $	*/
 /*	NetBSD: autoconf.c,v 1.75 2003/12/30 12:33:22 pk Exp 	*/
 
 /*-
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.22 2007/01/29 01:52:46 hubertf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.22.6.1 2007/05/27 14:27:07 ad Exp $");
 
 #include "opt_xen.h"
 #include "opt_compat_oldboot.h"
@@ -136,8 +136,6 @@ cpu_configure(void)
 	pcibios_init();
 #endif
 
-	/* kvm86 needs a TSS */
-	i386_proc0_tss_ldt_init();
 #ifdef KVM86
 	kvm86_init();
 #endif
@@ -153,7 +151,7 @@ cpu_configure(void)
 	lwp0.l_addr->u_pcb.pcb_cr0 = rcr0();
 #ifdef MULTIPROCESSOR
 	/* propagate this to the idle pcb's. */
-	cpu_init_idle_pcbs();
+	cpu_init_idle_lwps();
 #endif
 
 	spl0();

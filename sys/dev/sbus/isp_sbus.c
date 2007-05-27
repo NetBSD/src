@@ -1,65 +1,39 @@
-/* $NetBSD: isp_sbus.c,v 1.67 2007/03/04 06:02:40 christos Exp $ */
-/*
- * This driver, which is contained in NetBSD in the files:
- *
- *	sys/dev/ic/isp.c
- *	sys/dev/ic/isp_inline.h
- *	sys/dev/ic/isp_netbsd.c
- *	sys/dev/ic/isp_netbsd.h
- *	sys/dev/ic/isp_target.c
- *	sys/dev/ic/isp_target.h
- *	sys/dev/ic/isp_tpublic.h
- *	sys/dev/ic/ispmbox.h
- *	sys/dev/ic/ispreg.h
- *	sys/dev/ic/ispvar.h
- *	sys/microcode/isp/asm_sbus.h
- *	sys/microcode/isp/asm_1040.h
- *	sys/microcode/isp/asm_1080.h
- *	sys/microcode/isp/asm_12160.h
- *	sys/microcode/isp/asm_2100.h
- *	sys/microcode/isp/asm_2200.h
- *	sys/pci/isp_pci.c
- *	sys/sbus/isp_sbus.c
- *
- * Is being actively maintained by Matthew Jacob (mjacob@NetBSD.org).
- * This driver also is shared source with FreeBSD, OpenBSD, Linux, Solaris,
- * Linux versions. This tends to be an interesting maintenance problem.
- *
- * Please coordinate with Matthew Jacob on changes you wish to make here.
- */
+/* $NetBSD: isp_sbus.c,v 1.67.2.1 2007/05/27 14:30:28 ad Exp $ */
 /*
  * SBus specific probe and attach routines for Qlogic ISP SCSI adapters.
  *
- * Copyright (c) 1997, 2001 by Matthew Jacob
- * NASA AMES Research Center
+ * Copyright (C) 1997, 1998, 1999 National Aeronautics & Space Administration
+ * All rights reserved.
+ *
+ * Additional Copyright (C) 2000-2007 by Matthew Jacob
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
  * 1. Redistributions of source code must retain the above copyright
- *    notice immediately at the beginning of the file, without modification,
- *    this list of conditions, and the following disclaimer.
+ *    notice, this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
+ * 3. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_sbus.c,v 1.67 2007/03/04 06:02:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_sbus.c,v 1.67.2.1 2007/05/27 14:30:28 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,33 +44,35 @@ __KERNEL_RCSID(0, "$NetBSD: isp_sbus.c,v 1.67 2007/03/04 06:02:40 christos Exp $
 #include <dev/ic/isp_netbsd.h>
 #include <machine/intr.h>
 #include <machine/autoconf.h>
-#include <dev/microcode/isp/asm_sbus.h>
 #include <dev/sbus/sbusvar.h>
 #include <sys/reboot.h>
 
+static void isp_sbus_reset0(struct ispsoftc *);
 static void isp_sbus_reset1(struct ispsoftc *);
 static int isp_sbus_intr(void *);
 static int
-isp_sbus_rd_isr(struct ispsoftc *, u_int16_t *, u_int16_t *, u_int16_t *);
-static u_int16_t isp_sbus_rd_reg(struct ispsoftc *, int);
-static void isp_sbus_wr_reg (struct ispsoftc *, int, u_int16_t);
+isp_sbus_rd_isr(struct ispsoftc *, uint32_t *, uint16_t *, uint16_t *);
+static uint32_t isp_sbus_rd_reg(struct ispsoftc *, int);
+static void isp_sbus_wr_reg (struct ispsoftc *, int, uint32_t);
 static int isp_sbus_mbxdma(struct ispsoftc *);
-static int isp_sbus_dmasetup(struct ispsoftc *, XS_T *, ispreq_t *, u_int16_t *,
-    u_int16_t);
-static void isp_sbus_dmateardown(struct ispsoftc *, XS_T *, u_int16_t);
+static int isp_sbus_dmasetup(struct ispsoftc *, XS_T *, ispreq_t *, uint32_t *,
+    uint32_t);
+static void isp_sbus_dmateardown(struct ispsoftc *, XS_T *, uint32_t);
 
-#ifndef	ISP_1000_RISC_CODE
+#ifndef	ISP_DISABLE_FW
+#include <dev/microcode/isp/asm_sbus.h>
+#else
 #define	ISP_1000_RISC_CODE	NULL
 #endif
 
-static struct ispmdvec mdvec = {
+static const struct ispmdvec mdvec = {
 	isp_sbus_rd_isr,
 	isp_sbus_rd_reg,
 	isp_sbus_wr_reg,
 	isp_sbus_mbxdma,
 	isp_sbus_dmasetup,
 	isp_sbus_dmateardown,
-	NULL,
+	isp_sbus_reset0,
 	isp_sbus_reset1,
 	NULL,
 	ISP_1000_RISC_CODE,
@@ -218,16 +194,6 @@ isp_sbus_attach(struct device *parent, struct device *self, void *aux)
 		sbc->sbus_mdvec.dv_conf1 |= BIU_BURST_ENABLE;
 	}
 
-	/*
-	 * Some early versions of the PTI SBus adapter
-	 * would fail in trying to download (via poking)
-	 * FW. We give up on them.
-	 */
-	if (strcmp("PTI,ptisp", sa->sa_name) == 0 ||
-	    strcmp("ptisp", sa->sa_name) == 0) {
-		sbc->sbus_mdvec.dv_ispfw = NULL;
-	}
-
 	isp->isp_mdvec = &sbc->sbus_mdvec;
 	isp->isp_bustype = ISP_BT_SBUS;
 	isp->isp_type = ISP_HA_SCSI_UNKNOWN;
@@ -270,14 +236,21 @@ isp_sbus_attach(struct device *parent, struct device *self, void *aux)
 	 * There's no tool on sparc to set NVRAM for ISPs, so ignore it.
 	 */
 	isp->isp_confopts |= ISP_CFG_NONVRAM;
+
+	/*
+	 * Mark things if we're a PTI SBus adapter.
+	 */
+	if (strcmp("PTI,ptisp", sa->sa_name) == 0 ||
+	    strcmp("ptisp", sa->sa_name) == 0) {
+		SDPARAM(isp)->isp_ptisp = 1;
+	}
 	ISP_LOCK(isp);
-	isp->isp_osinfo.no_mbox_ints = 1;
 	isp_reset(isp);
 	if (isp->isp_state != ISP_RESETSTATE) {
 		ISP_UNLOCK(isp);
 		return;
 	}
-	ENABLE_INTS(isp);
+	ISP_ENABLE_INTS(isp);
 	isp_init(isp);
 	if (isp->isp_state != ISP_INITSTATE) {
 		isp_uninit(isp);
@@ -299,18 +272,22 @@ isp_sbus_attach(struct device *parent, struct device *self, void *aux)
 
 
 static void
+isp_sbus_reset0(struct ispsoftc *isp)
+{
+	ISP_DISABLE_INTS(isp);
+}
+
+static void
 isp_sbus_reset1(struct ispsoftc *isp)
 {
-	if (isp->isp_osinfo.no_mbox_ints == 0) {
-		ENABLE_INTS(isp);
-	}
-
+	ISP_ENABLE_INTS(isp);
 }
 
 static int
 isp_sbus_intr(void *arg)
 {
-	u_int16_t isr, sema, mbox;
+	uint32_t isr;
+	uint16_t sema, mbox;
 	struct ispsoftc *isp = arg;
 
 	if (ISP_READ_ISR(isp, &isr, &sema, &mbox) == 0) {
@@ -333,11 +310,12 @@ isp_sbus_intr(void *arg)
 	bus_space_read_2(sbc->sbus_bustag, sbc->sbus_reg, off)
 
 static int
-isp_sbus_rd_isr(struct ispsoftc *isp, u_int16_t *isrp,
-    u_int16_t *semap, u_int16_t *mbp)
+isp_sbus_rd_isr(struct ispsoftc *isp, uint32_t *isrp,
+    uint16_t *semap, uint16_t *mbp)
 {
 	struct isp_sbussoftc *sbc = (struct isp_sbussoftc *) isp;
-	u_int16_t isr, sema;
+	uint32_t isr;
+	uint16_t sema;
 
 	isr = BXR2(sbc, IspVirt2Off(isp, BIU_ISR));
 	sema = BXR2(sbc, IspVirt2Off(isp, BIU_SEMA));
@@ -354,7 +332,7 @@ isp_sbus_rd_isr(struct ispsoftc *isp, u_int16_t *isrp,
 	return (1);
 }
 
-static u_int16_t
+static uint32_t
 isp_sbus_rd_reg(struct ispsoftc *isp, int regoff)
 {
 	struct isp_sbussoftc *sbc = (struct isp_sbussoftc *) isp;
@@ -364,7 +342,7 @@ isp_sbus_rd_reg(struct ispsoftc *isp, int regoff)
 }
 
 static void
-isp_sbus_wr_reg(struct ispsoftc *isp, int regoff, u_int16_t val)
+isp_sbus_wr_reg(struct ispsoftc *isp, int regoff, uint32_t val)
 {
 	struct isp_sbussoftc *sbc = (struct isp_sbussoftc *) isp;
 	int offset = sbc->sbus_poff[(regoff & _BLK_REG_MASK) >> _BLK_REG_SHFT];
@@ -430,7 +408,7 @@ isp_sbus_mbxdma(struct ispsoftc *isp)
 	}
 	progress++;
 	if (bus_dmamem_map(isp->isp_dmatag, &reqseg, reqrs, len,
-	    (void **)&isp->isp_rquest, BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) {
+	    (void *)&isp->isp_rquest, BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) {
 		goto dmafail;
 	}
 	progress++;
@@ -453,7 +431,7 @@ isp_sbus_mbxdma(struct ispsoftc *isp)
 	}
 	progress++;
 	if (bus_dmamem_map(isp->isp_dmatag, &rspseg, rsprs, len,
-	    (void **)&isp->isp_result, BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) {
+	    (void *)&isp->isp_result, BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) {
 		goto dmafail;
 	}
 	progress++;
@@ -518,7 +496,7 @@ dmafail:
 
 static int
 isp_sbus_dmasetup(struct ispsoftc *isp, XS_T *xs, ispreq_t *rq,
-    u_int16_t *nxtip, u_int16_t optr)
+    uint32_t *nxtip, uint32_t optr)
 {
 	struct isp_sbussoftc *sbc = (struct isp_sbussoftc *) isp;
 	bus_dmamap_t dmap;
@@ -558,7 +536,7 @@ isp_sbus_dmasetup(struct ispsoftc *isp, XS_T *xs, ispreq_t *rq,
 	}
 
 	if (XS_CDBLEN(xs) > 12) {
-		u_int16_t onxti;
+		uint32_t onxti;
 		ispcontreq_t local, *crq = &local, *cqe;
 
 		onxti = *nxtip;
@@ -595,7 +573,7 @@ mbxsync:
 }
 
 static void
-isp_sbus_dmateardown(struct ispsoftc *isp, XS_T *xs, u_int16_t handle)
+isp_sbus_dmateardown(struct ispsoftc *isp, XS_T *xs, uint32_t handle)
 {
 	struct isp_sbussoftc *sbc = (struct isp_sbussoftc *) isp;
 	bus_dmamap_t dmap;

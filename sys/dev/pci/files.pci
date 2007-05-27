@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.277.6.1 2007/04/10 13:24:24 ad Exp $
+#	$NetBSD: files.pci,v 1.277.6.2 2007/05/27 14:30:22 ad Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -14,7 +14,6 @@ defparam opt_bktr.h	BKTR_OVERRIDE_CARD BKTR_OVERRIDE_TUNER BKTR_OVERRIDE_DBX
 
 defflag	opt_pciide.h	PCIIDE_CMD064x_DISABLE PCIIDE_AMD756_ENABLEDMA
 			PCIIDE_CMD0646U_ENABLEUDMA PCIIDE_I31244_DISABLEDMA
-			PCIIDE_SLIDE_SETIRQA
 
 device	pci {[dev = -1], [function = -1]}
 attach	pci at pcibus
@@ -218,9 +217,8 @@ attach	pciide at pci
 file	dev/pci/pciide.c		pciide
 
 # AHCI SATA controllers
-device	ahcisata: ata, ata_dma, ata_udma, sata
-attach	ahcisata at pci
-file	dev/pci/ahcisata.c		ahcisata
+attach	ahcisata at pci with ahcisata_pci
+file	dev/pci/ahcisata_pci.c		ahcisata_pci
 
 # Acard IDE controllers
 device	acardide: ata, ata_dma, ata_udma, pciide_common, wdc_common
@@ -261,6 +259,13 @@ file	dev/pci/hptide.c		hptide
 device	iteide: ata, ata_dma, ata_udma, pciide_common, wdc_common
 attach	iteide at pci
 file	dev/pci/iteide.c		iteide
+
+# Jmicron hybrid IDE/AHCI controllers
+define  jmide_hl { }
+device	jmide: ata, ata_dma, ata_udma, pciide_common, wdc_common, jmide_hl
+attach	jmide at pci
+attach	ahcisata at jmide_hl with jmahci
+file	dev/pci/jmide.c			jmide | jmahci needs-flag
 
 # Opti IDE controllers
 device	optiide: ata, ata_dma, pciide_common, wdc_common
@@ -872,4 +877,4 @@ include "dev/pci/drm/files.pcidrm"
 
 # generic framebuffer console driver, PCI frontend
 attach genfb at pci with genfb_pci
-file	dev/pci/genfb_pci.c	genfb
+file	dev/pci/genfb_pci.c	genfb_pci

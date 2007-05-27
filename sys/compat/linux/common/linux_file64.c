@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file64.c,v 1.36.2.1 2007/03/13 16:50:18 ad Exp $	*/
+/*	$NetBSD: linux_file64.c,v 1.36.2.2 2007/05/27 14:35:05 ad Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file64.c,v 1.36.2.1 2007/03/13 16:50:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file64.c,v 1.36.2.2 2007/05/27 14:35:05 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -154,12 +154,8 @@ linux_do_stat64(l, v, retval, flags)
 {
 	struct linux_stat64 tmplst;
 	struct stat tmpst;
-	void *sg;
 	int error;
 	struct linux_sys_stat64_args *uap = v;
-
-	sg = stackgap_init(l->l_proc, 0);
-	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
 	error = do_sys_stat(l, SCARG(uap, path), flags, &tmpst);
 	if (error != 0)
@@ -209,10 +205,6 @@ linux_sys_truncate64(l, v, retval)
 		syscallarg(off_t) length;
 	} */ *uap = v;
 	struct sys_truncate_args ta;
-	struct proc *p = l->l_proc;
-	void *sg = stackgap_init(p, 0);
-
-	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
 	/* Linux doesn't have the 'pad' pseudo-parameter */
 	SCARG(&ta, path) = SCARG(uap, path);
@@ -306,31 +298,20 @@ linux_sys_fcntl64(l, v, retval)
 		syscallarg(int) cmd;
 		syscallarg(void *) arg;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
-	struct sys_fcntl_args fca;
 	struct linux_flock64 lfl;
-	struct flock bfl, *bfp;
+	struct flock bfl;
 	int error;
-	void *sg;
 	void *arg = SCARG(uap, arg);
 	int cmd = SCARG(uap, cmd);
 	int fd = SCARG(uap, fd);
 
 	switch (cmd) {
 	case LINUX_F_GETLK64:
-		sg = stackgap_init(p, 0);
-		bfp = (struct flock *) stackgap_alloc(p, &sg, sizeof *bfp);
 		if ((error = copyin(arg, &lfl, sizeof lfl)) != 0)
 			return error;
 		linux_to_bsd_flock64(&bfl, &lfl);
-		if ((error = copyout(&bfl, bfp, sizeof bfl)) != 0)
-			return error;
-		SCARG(&fca, fd) = fd;
-		SCARG(&fca, cmd) = F_GETLK;
-		SCARG(&fca, arg) = bfp;
-		if ((error = sys_fcntl(l, &fca, retval)) != 0)
-			return error;
-		if ((error = copyin(bfp, &bfl, sizeof bfl)) != 0)
+		error = do_fcntl_lock(l, fd, F_GETLK, &bfl);
+		if (error != 0)
 			return error;
 		bsd_to_linux_flock64(&lfl, &bfl);
 		return copyout(&lfl, arg, sizeof lfl);
@@ -340,14 +321,7 @@ linux_sys_fcntl64(l, v, retval)
 		if ((error = copyin(arg, &lfl, sizeof lfl)) != 0)
 			return error;
 		linux_to_bsd_flock64(&bfl, &lfl);
-		sg = stackgap_init(p, 0);
-		bfp = (struct flock *) stackgap_alloc(p, &sg, sizeof *bfp);
-		if ((error = copyout(&bfl, bfp, sizeof bfl)) != 0)
-			return error;
-		SCARG(&fca, fd) = fd;
-		SCARG(&fca, cmd) = cmd;
-		SCARG(&fca, arg) = bfp;
-		return sys_fcntl(l, &fca, retval);
+		return do_fcntl_lock(l, fd, cmd, &bfl);
 	default:
 		return linux_sys_fcntl(l, v, retval);
 	}

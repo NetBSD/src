@@ -1,4 +1,4 @@
-/*	$NetBSD: firewirereg.h,v 1.4 2007/03/04 06:02:05 christos Exp $	*/
+/*	$NetBSD: firewirereg.h,v 1.4.2.1 2007/05/27 14:30:09 ad Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -32,7 +32,7 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  * 
- * $FreeBSD: /repoman/r/ncvs/src/sys/dev/firewire/firewirereg.h,v 1.37 2005/01/06 01:42:41 imp Exp $
+ * $FreeBSD: /repoman/r/ncvs/src/sys/dev/firewire/firewirereg.h,v 1.41 2007/03/16 05:39:33 simokawa Exp $
  *
  */
 
@@ -288,7 +288,9 @@ struct fw_bind *fw_bindlookup (struct firewire_comm *, uint16_t, uint32_t);
 void fw_drain_txq (struct firewire_comm *);
 int fwdev_makedev (struct firewire_softc *);
 int fwdev_destroydev (struct firewire_softc *);
-void fwdev_clone (void *, char *, int, DEV_T *);
+#if defined(__FreeBSD__) && __FreeBSD_version >= 500000
+void fwdev_clone (void *, struct ucred *, char *, int, DEV_T *);
+#endif
 
 extern int firewire_debug;
 #if defined(__FreeBSD__)

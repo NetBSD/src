@@ -1,4 +1,4 @@
-/*	$NetBSD: pecoff_exec.c,v 1.34 2006/11/16 01:32:44 christos Exp $	*/
+/*	$NetBSD: pecoff_exec.c,v 1.34.8.1 2007/05/27 14:35:23 ad Exp $	*/
 
 /*
  * Copyright (c) 2000 Masaru OKI
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pecoff_exec.c,v 1.34 2006/11/16 01:32:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pecoff_exec.c,v 1.34.8.1 2007/05/27 14:35:23 ad Exp $");
 
 /*#define DEBUG_PECOFF*/
 
@@ -151,7 +151,6 @@ pecoff_load_file(l, epp, path, vcset, entry, argp)
 	struct pecoff_args *argp;
 {
 	int error, peofs, scnsiz, i;
-	struct nameidata nd;
 	struct vnode *vp;
 	struct vattr attr;
 	struct pecoff_dos_filehdr dh;
@@ -159,36 +158,17 @@ pecoff_load_file(l, epp, path, vcset, entry, argp)
 	struct coff_aouthdr *ap;
 	struct pecoff_opthdr *wp;
 	struct coff_scnhdr *sh = 0;
-	const char *bp;
 
-	/*
-	 * Following has ~same effect as emul_find_interp(), but the code
-	 * needs to do some more checks while having the vnode open.
-	 * emul_find_interp() wouldn't really simplify handling here.
-	 */
-	if ((error = emul_find(l, NULL, epp->ep_esch->es_emul->e_path,
-			       path, &bp, 0))) {
-		char *ptr;
-		int len;
-
-		len = strlen(path) + 1;
-		if (len > MAXPATHLEN)
-			return error;
-		ptr = malloc(len, M_TEMP, M_WAITOK);
-		copystr(path, ptr, len, 0);
-		bp = ptr;
-	}
-
-	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_SYSSPACE, bp, l);
-	if ((error = namei(&nd)) != 0) {
-		/*XXXUNCONST*/
-		free(__UNCONST(bp), M_TEMP);
+	error = emul_find_interp(l, epp, path);
+	if (error != 0)
 		return error;
-	}
-	vp = nd.ni_vp;
+
+	vp = epp->ep_interp;
+	epp->ep_interp = NULL;
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 
 	/*
-	 * Similarly, if it's not marked as executable, or it's not a regular
+	 * If it's not marked as executable, or it's not a regular
 	 * file, we don't allow it to be used.
 	 */
 	if (vp->v_type != VREG) {
@@ -271,7 +251,6 @@ pecoff_load_file(l, epp, path, vcset, entry, argp)
 	free(fp, M_TEMP);
 	free(sh, M_TEMP);
 	/*XXXUNCONST*/
-	free(__UNCONST(bp), M_TEMP);
 	vrele(vp);
 	return 0;
 
@@ -284,7 +263,6 @@ bad:
 	if (sh != 0)
 		free(sh, M_TEMP);
 	/*XXXUNCONST*/
-	free(__UNCONST(bp), M_TEMP);
 	vrele(vp);
 	return error;
 }

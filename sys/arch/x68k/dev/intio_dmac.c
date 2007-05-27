@@ -1,4 +1,4 @@
-/*	$NetBSD: intio_dmac.c,v 1.24.2.1 2007/03/13 16:50:11 ad Exp $	*/
+/*	$NetBSD: intio_dmac.c,v 1.24.2.2 2007/05/27 14:26:59 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intio_dmac.c,v 1.24.2.1 2007/03/13 16:50:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intio_dmac.c,v 1.24.2.2 2007/05/27 14:26:59 ad Exp $");
 
 #include "opt_m680x0.h"
 
@@ -124,7 +124,7 @@ dmac_attach(struct device *parent, struct device *self, void *aux)
 	r = intio_map_allocate_region(parent, ia, INTIO_MAP_ALLOCATE);
 #ifdef DIAGNOSTIC
 	if (r)
-		panic ("IO map for DMAC corruption??");
+		panic("IO map for DMAC corruption??");
 #endif
 
 	((struct intio_softc*) parent)->sc_dmac = self;

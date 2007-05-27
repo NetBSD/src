@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.870.2.2 2007/04/10 13:24:27 ad Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.870.2.3 2007/05/27 14:30:26 ad Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.875 2007/03/27 12:41:39 pooka Exp
+ *	NetBSD: pcidevs,v 1.880 2007/05/19 14:56:24 tsutsui Exp
  */
 
 /*
@@ -2248,6 +2248,10 @@ static const struct pci_vendor pci_vendors[] = {
 	    "Datum Inc. Bancomm-Timing Division",
 	},
 	{
+	    PCI_VENDOR_JMICRON,
+	    "JMicron Technology",
+	},
+	{
 	    PCI_VENDOR_HINT,
 	    "HiNT",
 	},
@@ -2372,7 +2376,7 @@ static const struct pci_vendor pci_vendors[] = {
 	    "INVALID VENDOR ID",
 	},
 };
-const int pci_nvendors = 583;
+const int pci_nvendors = 584;
 
 static const struct pci_product pci_products[] = {
 	{
@@ -6480,6 +6484,10 @@ static const struct pci_product pci_products[] = {
 	    "ServeRAID",
 	},
 	{
+	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_GXT250P,
+	    "GXT-250P",
+	},
+	{
 	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_OLYMPIC,
 	    "16/4 Token Ring",
 	},
@@ -6998,6 +7006,14 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_80K3LAN_SDS_SPT,
 	    "i80003 Gigabit Ethernet (SERDES)",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801H_IFE_GT,
+	    "i82801H IFE (GT) LAN Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801H_IFE_G,
+	    "i82801H IFE (G) LAN Controller",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82815_DC100_HUB,
@@ -8332,6 +8348,30 @@ static const struct pci_product pci_products[] = {
 	    "ITT3204 MPEG Decoder",
 	},
 	{
+	    PCI_VENDOR_JMICRON, PCI_PRODUCT_JMICRON_JMB360,
+	    "JMB360 SATA controller",
+	},
+	{
+	    PCI_VENDOR_JMICRON, PCI_PRODUCT_JMICRON_JMB361,
+	    "JMB361 SATA/PATA controller",
+	},
+	{
+	    PCI_VENDOR_JMICRON, PCI_PRODUCT_JMICRON_JMB363,
+	    "JMB363 SATA/PATA controller",
+	},
+	{
+	    PCI_VENDOR_JMICRON, PCI_PRODUCT_JMICRON_JMB365,
+	    "JMB365 SATA/PATA controller",
+	},
+	{
+	    PCI_VENDOR_JMICRON, PCI_PRODUCT_JMICRON_JMB366,
+	    "JMB366 SATA/PATA controller",
+	},
+	{
+	    PCI_VENDOR_JMICRON, PCI_PRODUCT_JMICRON_JMB368,
+	    "JMB368 PATA controller",
+	},
+	{
 	    PCI_VENDOR_JNI, PCI_PRODUCT_JNI_JNIC1460,
 	    "JNIC-1460 Fibre-Channel adapter",
 	},
@@ -9214,6 +9254,10 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_RIVATNT2M64,
 	    "RIVA TNT2 Model 64",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP04_SMBUS,
+	    "MCP04 SMBus",
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP04_IDE,
@@ -12844,4 +12888,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2617;
+const int pci_nproducts = 2627;

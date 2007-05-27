@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_exec_coff.c,v 1.18 2007/03/04 06:01:16 christos Exp $	*/
+/*	$NetBSD: ibcs2_exec_coff.c,v 1.18.2.1 2007/05/27 14:34:56 ad Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_exec_coff.c,v 1.18 2007/03/04 06:01:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_exec_coff.c,v 1.18.2.1 2007/05/27 14:34:56 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -540,8 +540,7 @@ coff_load_shlib(l, path, epp)
 	 * 2. read filehdr
 	 * 3. map text, data, and bss out of it using VM_*
 	 */
-	CHECK_ALT_EXIST(l, NULL, path);	/* path is on kernel stack */
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, path, l);
+	NDINIT(&nd, LOOKUP, FOLLOW | TRYEMULROOT, UIO_SYSSPACE, path, l);
 	/* first get the vnode */
 	if ((error = namei(&nd)) != 0) {
 		DPRINTF(("coff_load_shlib: can't find library %s\n", path));

@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_exec_elf32.c,v 1.12 2005/12/11 12:20:12 christos Exp $ */
+/*	$NetBSD: irix_exec_elf32.c,v 1.12.30.1 2007/05/27 14:34:58 ad Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_exec_elf32.c,v 1.12 2005/12/11 12:20:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_exec_elf32.c,v 1.12.30.1 2007/05/27 14:34:58 ad Exp $");
 
 #ifndef ELFSIZE
 #define ELFSIZE		32	/* XXX should die */
@@ -88,8 +88,7 @@ ELFNAME2(irix,probe_o32)(l, epp, eh, itp, pos)
 		if (strncmp(itp, "/lib/libc.so", 12) &&
 		    strncmp(itp, "/usr/lib/libc.so", 16))
 			return ENOEXEC;
-		if ((error = emul_find_interp(l,
-		    epp->ep_esch->es_emul->e_path, itp)))
+		if ((error = emul_find_interp(l, epp, itp)))
 			return error;
 		*pos = ELF_LINK_ADDR;
 	}
@@ -126,8 +125,7 @@ ELFNAME2(irix,probe_n32)(l, epp, eh, itp, pos)
 		if (strncmp(itp, "/lib32/libc.so", 14) &&
 		    strncmp(itp, "/usr/lib32/libc.so", 18))
 			return ENOEXEC;
-		if ((error = emul_find_interp(l,
-		    epp->ep_esch->es_emul->e_path, itp)))
+		if ((error = emul_find_interp(l, epp, itp)))
 			return error;
 	}
 #ifdef DEBUG_IRIX
@@ -173,7 +171,7 @@ ELFNAME2(irix,copyargs)(l, pack, arginfo, stackp, argp)
 	if ((error = copyout(&argc, cpp++, sizeof(argc))) != 0)
 		return error;
 
-	dp = (char *) (cpp + argc + envc + 2 + pack->ep_es->es_arglen);
+	dp = (char *) (cpp + argc + envc + 2 + pack->ep_esch->es_arglen);
 
 	/* Align **argv on a 16 bytes boundary */
 	dp = (char *)(((unsigned long)dp + 0xf) & ~0xfUL);

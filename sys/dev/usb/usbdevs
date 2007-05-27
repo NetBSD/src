@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.461 2007/03/08 23:14:05 riz Exp $
+$NetBSD: usbdevs,v 1.461.2.1 2007/05/27 14:30:31 ad Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -403,18 +403,24 @@ vendor SITECOMEU	0x0df6	Sitecom Europe
 vendor HAWKING		0x0e66	Hawking
 vendor OTI		0x0ea0	Ours Technology
 vendor PILOTECH		0x0eaf	Pilotech
+vendor NOVATECH		0x0eb0	Nova Tech
 vendor EGALAX		0x0eef	eGalax
 vendor TOD		0x0ede	TOD
 vendor AIRPRIME		0x0f3d	AirPrime, Incorporated
 vendor VTECH		0x0f88	VTech
 vendor FALCOM		0x0f94	Falcom Wireless Communications GmbH
+vendor DYNASTREAM	0x0fcf	Dynastream Innovations
 vendor QUALCOMM		0x1004	Qualcomm
 vendor GIGABYTE		0x1044	GIGABYTE
 vendor MOTOROLA		0x1063	Motorola
 vendor CCYU		0x1065	CCYU Technology
+vendor SILABS2		0x10a6	SILABS2
+vendor USI              0x10ab  USI
 vendor PLX		0x10b5	PLX
+vendor SILABS		0x10c4	Silicon Labs
 vendor ASANTE		0x10bd	Asante
 vendor JRC		0x1145	Japan Radio Company
+vendor SPHAIRON		0x114b	Sphairon Access Systems GmbH
 vendor SERVERWORKS	0x1166	ServerWorks
 vendor DELORME		0x1163	DeLorme
 vendor ACERCM		0x1189	Acer Communications & Multimedia
@@ -428,6 +434,7 @@ vendor BELKIN2		0x1293	Belkin Components
 vendor AINCOMM		0x12fd	Aincomm
 vendor MOBILITY		0x1342	Mobility
 vendor DICKSMITH	0x1371	Dick Smith Electronics
+vendor BALTECH		0x13ad	Baltech
 vendor CISCOLINKSYS	0x13b1	Cisco-Linksys
 vendor SHARK		0x13d2	Shark
 vendor NOVATEL2		0x1410	Novatel
@@ -436,6 +443,7 @@ vendor SILICOM		0x1485	Silicom
 vendor RALINK		0x1485	Ralink Technology
 vendor RALINK_2		0x148f	Ralink Technology
 vendor CONCEPTRONIC	0x14b2	Conceptronic
+vendor PLANEX3		0x14ea	Planex Communications
 vendor SILICONPORTALS	0x1527	Silicon Portals
 vendor OQO		0x1557	OQO
 vendor SOHOWARE		0x15e8	SOHOware
@@ -446,6 +454,8 @@ vendor ENTREGA		0x1645	Entrega
 vendor ACTIONTEC	0x1668	Actiontec Electronics
 vendor GIGASET		0x1690	Gigaset
 vendor ANYDATA		0x16d5	AnyDATA Inc.
+vendor JABLOTRON	0x16d6	Jablotron
+vendor AMIT		0x18c5	AMIT
 vendor QCOM		0x18e8	Qcom
 vendor LINKSYS3		0x1915	Linksys
 vendor DLINK		0x2001	D-Link
@@ -512,7 +522,11 @@ product ABOCOM XX8		0x4102	XX8
 product ABOCOM XX9		0x4104	XX9
 product ABOCOM UFE2000		0x420a	UFE2000 USB2.0 Fast Ethernet Adapter
 product ABOCOM XX10		0xabc1	XX10
-product ABOCOM RT2573		0xb21d	RT2573
+product ABOCOM HWU54DM		0xb21b	HWU54DM
+product ABOCOM RT2573_2		0xb21c	RT2573
+product ABOCOM RT2573_3		0xb21d	RT2573
+product ABOCOM RT2573_4		0xb21e	RT2573
+product ABOCOM WUG2700		0xb21f	WUG2700
 
 /* Accton products */
 product ACCTON USB320_EC	0x1046	USB320-EC Ethernet Adapter
@@ -605,6 +619,9 @@ product ALTEC ASC495		0xff05	ASC495 Speakers
 /* American Power Conversion products */
 product APC UPSPRO500		0x0002	Back-UPS Pro 500
 
+/* AMIT products */
+product AMIT CGWLUSB2GO		0x0002	CG-WLUSB2GO
+
 /* Anchor products */
 product ANCHOR EZUSB		0x2131	EZUSB
 product ANCHOR EZLINK		0x2720	EZLINK
@@ -634,6 +651,8 @@ product ASIX AX88172		0x1720	USB 2.0 10/100 ethernet controller
 
 /* ASUSTeK computer products */
 product ASUSTEK WL167G		0x1707	WL-167g USB2.0 WLAN Adapter
+product ASUSTEK WL167G_2	0x1723	WL-167g USB2.0 WLAN Adapter (version 2)
+product ASUSTEK WL167G_3	0x1724	WL-167g USB2.0 WLAN Adapter (version 2)
 
 /* ATen products */
 product ATEN UC1284		0x2001	Parallel printer adapter
@@ -668,6 +687,9 @@ product AVISION 1200U		0x0268	1200U scanner
 
 /* B&B Electronics products */
 product BBELECTRONICS USOTL4	0xAC01	uLinks RS-422/485
+
+/* Baltech products */
+product BALTECH CARDREADER	0x9999	Card reader
 
 /* Belkin products */
 /*product BELKIN F5U111		0x????	F5U111 Ethernet adapter*/
@@ -751,7 +773,13 @@ product CHPRODUCTS FIGHTERSTICK 0x00f3	Fighterstick
 product CHPRODUCTS FLIGHTYOKE	0x00ff	Flight Sim Yoke
 
 /* Cisco-Linksys products */
+product CISCOLINKSYS WUSB54G	0x000d	RT2570
+product CISCOLINKSYS WUSB54GP	0x0011	RT2570
+product CISCOLINKSYS USB200MV2	0x0018	USB200M v2
 product CISCOLINKSYS WUSB54GC	0x0020	WUSB54GC
+product CISCOLINKSYS WUSB54GR	0x0023	WUSB54GR
+product CISCOLINKSYS WUSBF54G	0x0024	WUSBF54G
+product CISCOLINKSYS HU200TS	0x001a	HU200-TS
 
 /* Compaq products */
 product COMPAQ IPAQPOCKETPC	0x0003	iPAQ PocketPC
@@ -827,6 +855,7 @@ product DELL TM350		0x8103	TrueMobile 350 Bluetooth USB Adapter
 
 /* DeLorme products */
 product DELORME EARTHMATE	0x0100	Earthmate GPS
+product DELORME EARTHMATE_LT20	0x0200	Earthmate LT-20 GPS
 
 /* Diamond products */
 product DIAMOND RIO500USB	0x0001	Rio 500 USB
@@ -858,6 +887,9 @@ product DLINK DSB650TX_PNA	0x4003	1/10/100 ethernet adapter
 product DLINK DSB650TX3		0x400b	10/100 ethernet adapter
 product DLINK DSB650TX2		0x4102	10/100 ethernet adapter
 product DLINK DSB650		0xabc1	10/100 ethernet adapter
+
+/* Dynastream Innovations */
+product DYNASTREAM ANTDEVBOARD	0x1003	ANT dev board
 
 /* eGalax Products */
 product EGALAX TPANEL		0x0001	Touch Panel
@@ -981,8 +1013,11 @@ product GENESYS GL641USB2IDE_2	0x0701	GL641USB USB-IDE Bridge
 product GENESYS GL641USB2IDE	0x0702	GL641USB USB-IDE Bridge
 
 /* GIGABYTE products */
+product GIGABYTE GNBR402W	0x8002	GN-BR402W
+product GIGABYTE GNWLBM101	0x8003	GN-WLBM101
 product GIGABYTE GNWBKG		0x8007	GN-WBKG
 product GIGABYTE GNWB01GS	0x8008	GN-WB01GS
+product GIGABYTE GNWI05GS	0x800a	GN-WI05GS
 
 /* Gigaset products */
 product GIGASET RT2573		0x0722	RT2573
@@ -1006,6 +1041,8 @@ product GRIFFIN POWERMATE	0x0410	PowerMate Assignable Controller
 /* Guillemot Corporation */
 product GUILLEMOT DALEADER	0xa300	DA Leader
 product GUILLEMOT HWGUSB254	0xe000	HWGUSB2-54 WLAN
+product GUILLEMOT HWGUSB254LB	0xe010	HWGUSB2-54-LB
+product GUILLEMOT HWGUSB254V2AP	0xe020	HWGUSB2-54V2-AP
 
 /* Hagiwara products */
 product HAGIWARA FGSM		0x0002	FlashGate SmartMedia Card Reader
@@ -1166,6 +1203,9 @@ product IOMEGA CDRW		0x0055	CDRW 9602
 product IRIVER IFP_1XX		0x1101	iFP-1xx
 product IRIVER IFP_3XX		0x1103	iFP-3xx
 product IRIVER IFP_5XX		0x1105	iFP-5xx
+
+/* Jablotron products */
+product JABLOTRON PC60B		0x0001	PC-60B
 
 /* Jaton products */
 product JATON EDA		0x5704	Ethernet Device Adapter
@@ -1344,6 +1384,7 @@ product MEDIAGEAR READER9IN1	0x5003	USB2.0 9 in 1 Reader
 /* Melco, Inc products */
 product MELCO LUATX1		0x0001	LUA-TX Ethernet
 product MELCO LUATX5		0x0005	LUA-TX Ethernet
+product MELCO NINWIFI		0x008b	Nintendo Wi-Fi
 product MELCO LUA2TX5		0x0009	LUA2-TX Ethernet
 product MELCO LUAKTX		0x0012	LUA-KTX Ethernet
 product MELCO S11		0x0016	WLI-USB-S11
@@ -1356,6 +1397,8 @@ product MELCO KG54YB		0x005e	WLI-U2-KG54-YB WLAN
 product MELCO KG54		0x0066	WLI-U2-KG54 WLAN
 product MELCO KG54AI		0x0067	WLI-U2-KG54-AI WLAN
 product	MELCO SG54HP		0x00d8	WLI-U2-SG54HP
+product MELCO G54HP		0x00d9	WLI-U2-G54HP
+product MELCO KG54L		0x00da	WLI-U2-KG54L
 
 /* Metricom products */
 product METRICOM RICOCHET_GS	0x0001	Ricochet GS
@@ -1365,9 +1408,10 @@ product MSI BLUETOOTH		0x1967	Bluetooth USB Adapter
 product MSI MS6861		0x6861	MS-6861
 product MSI MS6865		0x6865	MS-6865
 product MSI MS6869		0x6869	MS-6869
-product MSI RT2573		0x6877	RT2573
-product MSI RT2573_2		0xa861	RT2573
-product MSI RT2573_3		0xa874	RT2573
+product MSI RT2573		0x6874	RT2573
+product MSI RT2573_2		0x6877	RT2573
+product MSI RT2573_3		0xa861	RT2573
+product MSI RT2573_4		0xa874	RT2573
 
 /* Micronet Communications products */
 product MICRONET SP128AR	0x0003	SP128AR EtherFast
@@ -1514,6 +1558,10 @@ product NHJ CAM2		0x9120	Camera
 /* Nokia products */
 product NOKIA CA42		0x0802	Mobile Phone adapter
 
+/* Nova Tech products */
+product NOVATECH NV902W		0x9020	NV-902W
+product NOVATECH RT2573		0x9021	RT2573
+
 /* NovAtel products */
 product NOVATEL FLEXPACKGPS	0x0100	NovAtel FlexPack GPS receiver
 product NOVATEL2 CDMA_MODEM	0x1110	Novatel Wireless Merlin CDMA
@@ -1609,8 +1657,14 @@ product PIENGINEERING XKEYS	0x0233	Xkeys Programmable Keyboard
 product PILOTECH CRW600		0x0001	CRW-600 6-in-1 Reader
 
 /* Planex Communications products */
-product PLANEX GW_US11H		0x14ea	GW-US11H WLAN
-product	PLANEX2	GWUS54MINI2	0xab50	GW-US54Mini2
+product PLANEX	GW_US11H	0x14ea	GW-US11H WLAN
+product PLANEX2 GW_US11S	0x3220	GW-US11S WLAN
+product PLANEX2 GWUS54HP	0xab01	GW-US54HP
+product PLANEX3 GU1000T		0xab11	GU-1000T
+product PLANEX3 GWUS54MINI	0xab13	GW-US54Mini
+product PLANEX2 GWUS54MINI2	0xab50	GW-US54Mini2
+product PLANEX2 GWUS54SG	0xc002	GW-US54SG
+product PLANEX2 GWUS54GZL	0xc007	GW-US54GZL
 product PLANEX2 GWUSMM		0xed02	GW-USMM
 
 /* Plantronics products */
@@ -1830,6 +1884,21 @@ product SIIG2 US2308		0x0421	Serial
 /* Silicom products */
 product SILICOM U2E		0x0001	U2E
 
+/* Silicon Labs products */
+product SILABS POLOLU		0x803b	Pololu Serial
+product SILABS ARGUSISP		0x8066	Argussoft ISP
+product SILABS CRUMB128		0x807a	Crumb128
+product SILABS DEGREECONT	0x80ca	Degree Controls
+product SILABS SUNNTO		0x80f6	Suunto sports
+product SILABS DESKTOPMOBILE	0x813d	Burnside Desktop mobile
+product SILABS IPLINK1220	0x815e	IP-Link 1220
+product SILABS LIPOWSKY_JTAG	0x81c8	Lipowsky Baby-JTAG
+product SILABS LIPOWSKY_LIN	0x81e2	Lipowsky Baby-LIN
+product SILABS LIPOWSKY_HARP	0x8218	Lipowsky HARP-1
+product SILABS2 DCU11CLONE	0xaa26	DCU-11 clone
+product SILABS CP210X_1		0xea60	CP210x Serial
+product SILABS CP210X_2		0xea61	CP210x Serial
+
 /* Silicon Portals Inc. */
 product SILICONPORTALS YAPPH_NF 0x0200	YAP Phone (no firmware)
 product SILICONPORTALS YAPPHONE 0x0201	YAP Phone
@@ -1890,6 +1959,9 @@ product SONY CLIE_TJ25		0x0169	Sony Clie tj25
 /* SOURCENEXT products */
 product SOURCENEXT KEIKAI8	0x039f	KeikaiDenwa 8
 product SOURCENEXT KEIKAI8_CHG	0x012e	KeikaiDenwa 8 with charger
+
+/* Sphairon Access Systems GmbH products */
+product SPHAIRON UB801R 	0x0110	UB801R
 
 /* STMicroelectronics products */
 product STMICRO COMMUNICATOR	0x7554	USB Communicator
@@ -2007,6 +2079,9 @@ product UNIACCESS PANACHE	0x0101	Panache Surf USB ISDN Adapter
 
 /* U.S. Robotics products */
 product USR USR1120		0x00eb	USR1120 WLAN
+
+/* USI products */
+product USI MC60		0x10c5	MC60 Serial
 
 /* GNU Radio USRP */
 product USRP USRPv2		0x0002	USRP Revision 2

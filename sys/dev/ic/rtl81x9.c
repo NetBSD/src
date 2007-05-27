@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9.c,v 1.71.2.1 2007/04/10 13:24:31 ad Exp $	*/
+/*	$NetBSD: rtl81x9.c,v 1.71.2.2 2007/05/27 14:30:07 ad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.71.2.1 2007/04/10 13:24:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.71.2.2 2007/05/27 14:30:07 ad Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -159,7 +159,7 @@ STATIC int rtk_enable(struct rtk_softc *);
 STATIC void rtk_disable(struct rtk_softc *);
 STATIC void rtk_power(int, void *);
 
-STATIC int rtk_list_tx_init(struct rtk_softc *);
+STATIC void rtk_list_tx_init(struct rtk_softc *);
 
 #define EE_SET(x)					\
 	CSR_WRITE_1(sc, RTK_EECMD,			\
@@ -797,7 +797,7 @@ rtk_attach(struct rtk_softc *sc)
 /*
  * Initialize the transmit descriptors.
  */
-STATIC int
+STATIC void
 rtk_list_tx_init(struct rtk_softc *sc)
 {
 	struct rtk_tx_desc *txd;
@@ -813,8 +813,6 @@ rtk_list_tx_init(struct rtk_softc *sc)
 		CSR_WRITE_4(sc, txd->txd_txaddr, 0);
 		SIMPLEQ_INSERT_TAIL(&sc->rtk_tx_free, txd, txd_q);
 	}
-
-	return 0;
 }
 
 /*
@@ -1251,6 +1249,10 @@ rtk_intr(void *arg)
 	for (;;) {
 
 		status = CSR_READ_2(sc, RTK_ISR);
+
+		if (status == 0xffff)
+			break; /* Card is gone... */
+
 		if (status)
 			CSR_WRITE_2(sc, RTK_ISR, status);
 

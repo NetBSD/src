@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohcivar.h,v 1.25 2005/12/11 12:22:02 christos Exp $	*/
+/*	$NetBSD: fwohcivar.h,v 1.25.30.1 2007/05/27 14:30:10 ad Exp $	*/
 
 /*-
  * Copyright (c) 2003 Hidetoshi SHimokawa
@@ -33,7 +33,7 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  * 
- * $FreeBSD: /repoman/r/ncvs/src/sys/dev/firewire/fwohcivar.h,v 1.14 2005/01/06 01:42:41 imp Exp $
+ * $FreeBSD: /repoman/r/ncvs/src/sys/dev/firewire/fwohcivar.h,v 1.15 2007/03/16 04:25:02 simokawa Exp $
  *
  */
 

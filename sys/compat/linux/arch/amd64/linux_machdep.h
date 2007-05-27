@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.h,v 1.5.30.1 2007/04/10 13:26:21 ad Exp $ */
+/*	$NetBSD: linux_machdep.h,v 1.5.30.2 2007/05/27 14:35:01 ad Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -70,6 +70,7 @@ struct linux_sigcontext {
 	u_int64_t rbp;
 	u_int64_t rbx;
 	u_int64_t rdx;
+	u_int64_t rax;
 	u_int64_t rcx;
 	u_int64_t rsp;
 	u_int64_t rip;
@@ -112,7 +113,7 @@ __END_DECLS
 #define LINUX_VSYSCALL_SIZE	1024
 #define LINUX_VSYSCALL_MAXNR	3
 
-#define LINUX_UNAME_ARCH machine_arch
+#define LINUX_UNAME_ARCH MACHINE_ARCH
 #define LINUX_NPTL
 #define LINUX_LARGEFILE64
 

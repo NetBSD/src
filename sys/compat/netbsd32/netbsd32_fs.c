@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_fs.c,v 1.36.2.3 2007/04/10 13:26:28 ad Exp $	*/
+/*	$NetBSD: netbsd32_fs.c,v 1.36.2.4 2007/05/27 14:35:19 ad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.36.2.3 2007/04/10 13:26:28 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.36.2.4 2007/05/27 14:35:19 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -66,7 +66,6 @@ static int dofilereadv32 __P((struct lwp *, int, struct file *, struct netbsd32_
 			      int, off_t *, int, register_t *));
 static int dofilewritev32 __P((struct lwp *, int, struct file *, struct netbsd32_iovec *,
 			       int,  off_t *, int, register_t *));
-static int change_utimes32 __P((struct vnode *, netbsd32_timevalp_t, struct lwp *));
 
 int
 netbsd32_readv(l, v, retval)
@@ -315,6 +314,31 @@ out:
 	return (error);
 }
 
+/*
+ * Common routine to set access and modification times given a vnode.
+ */
+static int
+get_utimes32(const netbsd32_timevalp_t *tptr, struct timeval *tv,
+    struct timeval **tvp)
+{
+	int error;
+	struct netbsd32_timeval tv32[2];
+
+	if (tptr == NULL) {
+		*tvp = NULL;
+		return 0;
+	}
+
+	error = copyin(tptr, tv32, sizeof(tv32));
+	if (error)
+		return error;
+	netbsd32_to_timeval(&tv32[0], &tv[0]);
+	netbsd32_to_timeval(&tv32[1], &tv[1]);
+
+	*tvp = tv;
+	return 0;
+}
+
 int
 netbsd32_utimes(l, v, retval)
 	struct lwp *l;
@@ -326,54 +350,28 @@ netbsd32_utimes(l, v, retval)
 		syscallarg(const netbsd32_timevalp_t) tptr;
 	} */ *uap = v;
 	int error;
-	struct nameidata nd;
+	struct timeval tv[2], *tvp;
 
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG_P32(uap, path), l);
-	if ((error = namei(&nd)) != 0)
-		return (error);
+	error = get_utimes32(SCARG_P32(uap, tptr), tv, &tvp);
+	if (error != 0)
+		return error;
 
-	error = change_utimes32(nd.ni_vp, SCARG(uap, tptr), l);
-
-	vrele(nd.ni_vp);
-	return (error);
+	return do_sys_utimes(l, NULL, SCARG_P32(uap, path), FOLLOW,
+			    tvp, UIO_SYSSPACE);
 }
 
-/*
- * Common routine to set access and modification times given a vnode.
- */
 static int
-change_utimes32(vp, tptr, l)
-	struct vnode *vp;
-	netbsd32_timevalp_t tptr;
-	struct lwp *l;
+netbds32_copyout_statvfs(const void *kp, void *up, size_t len)
 {
-	struct netbsd32_timeval tv32[2];
-	struct timeval tv[2];
-	struct vattr vattr;
+	struct netbsd32_statvfs *sbuf_32;
 	int error;
 
-	VATTR_NULL(&vattr);
-	if (NETBSD32PTR64(tptr) == 0) {
-		microtime(&tv[0]);
-		tv[1] = tv[0];
-		vattr.va_vaflags |= VA_UTIMES_NULL;
-	} else {
-		error = copyin(NETBSD32PTR64(tptr), tv32,
-		    sizeof(tv32));
-		if (error)
-			return (error);
-		netbsd32_to_timeval(&tv32[0], &tv[0]);
-		netbsd32_to_timeval(&tv32[1], &tv[1]);
-	}
-	VOP_LEASE(vp, l, l->l_cred, LEASE_WRITE);
-	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-	vattr.va_atime.tv_sec = tv[0].tv_sec;
-	vattr.va_atime.tv_nsec = tv[0].tv_usec * 1000;
-	vattr.va_mtime.tv_sec = tv[1].tv_sec;
-	vattr.va_mtime.tv_nsec = tv[1].tv_usec * 1000;
-	error = VOP_SETATTR(vp, &vattr, l->l_cred, l);
-	VOP_UNLOCK(vp, 0);
-	return (error);
+	sbuf_32 = malloc(sizeof *sbuf_32, M_TEMP, M_WAITOK);
+	netbsd32_from_statvfs(kp, sbuf_32);
+	error = copyout(sbuf_32, up, sizeof(*sbuf_32));
+	free(sbuf_32, M_TEMP);
+
+	return error;
 }
 
 int
@@ -387,31 +385,15 @@ netbsd32_statvfs1(l, v, retval)
 		syscallarg(netbsd32_statvfsp_t) buf;
 		syscallarg(int) flags;
 	} */ *uap = v;
-	struct mount *mp;
-	struct statvfs *sbuf;
-	struct netbsd32_statvfs *s32;
-	struct nameidata nd;
+	struct statvfs *sb;
 	int error;
 
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG_P32(uap, path), l);
-	if ((error = namei(&nd)) != 0)
-		return (error);
-	/* Allocating on the stack would blow it up */
-	sbuf = (struct statvfs *)malloc(sizeof(struct statvfs), M_TEMP,
-	    M_WAITOK);
-	mp = nd.ni_vp->v_mount;
-	vrele(nd.ni_vp);
-	if ((error = dostatvfs(mp, sbuf, l, SCARG(uap, flags), 1)) != 0)
-		goto out;
-	s32 = (struct netbsd32_statvfs *)
-	    malloc(sizeof(struct netbsd32_statvfs), M_TEMP, M_WAITOK);
-	netbsd32_from_statvfs(sbuf, s32);
-	error = copyout(s32, SCARG_P32(uap, buf),
-	    sizeof(struct netbsd32_statvfs));
-	free(s32, M_TEMP);
-out:
-	free(sbuf, M_TEMP);
-	return (error);
+	sb = STATVFSBUF_GET();
+	error = do_sys_pstatvfs(l, SCARG_P32(uap, path), SCARG(uap, flags), sb);
+	if (error == 0)
+		error = netbds32_copyout_statvfs(sb, SCARG_P32(uap, buf), 0);
+	STATVFSBUF_PUT(sb);
+	return error;
 }
 
 int
@@ -425,30 +407,14 @@ netbsd32_fstatvfs1(l, v, retval)
 		syscallarg(netbsd32_statvfsp_t) buf;
 		syscallarg(int) flags;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
-	struct file *fp;
-	struct mount *mp;
-	struct statvfs *sbuf;
-	struct netbsd32_statvfs *s32;
+	struct statvfs *sb;
 	int error;
 
-	/* getvnode() will use the descriptor for us */
-	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
-		return (error);
-	mp = ((struct vnode *)fp->f_data)->v_mount;
-	sbuf = (struct statvfs *)malloc(sizeof(struct statvfs), M_TEMP,
-	    M_WAITOK);
-	if ((error = dostatvfs(mp, sbuf, l, SCARG(uap, flags), 1)) != 0)
-		goto out;
-	s32 = (struct netbsd32_statvfs *)
-	    malloc(sizeof(struct netbsd32_statvfs), M_TEMP, M_WAITOK);
-	netbsd32_from_statvfs(sbuf, s32);
-	error = copyout(s32, SCARG_P32(uap, buf),
-	    sizeof(struct netbsd32_statvfs));
-	free(s32, M_TEMP);
- out:
-	free(sbuf, M_TEMP);
-	FILE_UNUSE(fp, l);
+	sb = STATVFSBUF_GET();
+	error = do_sys_fstatvfs(l, SCARG(uap, fd), SCARG(uap, flags), sb);
+	if (error == 0)
+		error = netbds32_copyout_statvfs(sb, SCARG_P32(uap, buf), 0);
+	STATVFSBUF_PUT(sb);
 	return error;
 }
 
@@ -463,74 +429,10 @@ netbsd32_getvfsstat(l, v, retval)
 		syscallarg(netbsd32_size_t) bufsize;
 		syscallarg(int) flags;
 	} */ *uap = v;
-	int root = 0;
-	struct proc *p = l->l_proc;
-	struct mount *mp, *nmp;
-	struct statvfs *sbuf;
-	struct netbsd32_statvfs *sfsp;
-	struct netbsd32_statvfs *s32;
-	size_t count, maxcount;
-	int error = 0;
 
-	maxcount = SCARG(uap, bufsize) / sizeof(struct netbsd32_statvfs);
-	sfsp = SCARG_P32(uap, buf);
-	sbuf = (struct statvfs *)malloc(sizeof(struct statvfs), M_TEMP,
-	    M_WAITOK);
-	s32 = (struct netbsd32_statvfs *)
-	    malloc(sizeof(struct netbsd32_statvfs), M_TEMP, M_WAITOK);
-	mutex_enter(&mountlist_lock);
-	count = 0;
-	for (mp = CIRCLEQ_FIRST(&mountlist); mp != (void *)&mountlist;
-	     mp = nmp) {
-		if (vfs_busy(mp, LK_NOWAIT, &mountlist_lock)) {
-			nmp = CIRCLEQ_NEXT(mp, mnt_list);
-			continue;
-		}
-		if (sfsp && count < maxcount) {
-			error = dostatvfs(mp, sbuf, l, SCARG(uap, flags), 0);
-			if (error) {
-				mutex_enter(&mountlist_lock);
-				nmp = CIRCLEQ_NEXT(mp, mnt_list);
-				vfs_unbusy(mp);
-				continue;
-			}
-			netbsd32_from_statvfs(sbuf, s32);
-			error = copyout(s32, sfsp, sizeof(*sfsp));
-			if (error) {
-				vfs_unbusy(mp);
-				goto out;
-			}
-			sfsp++;
-			root |= strcmp(sbuf->f_mntonname, "/") == 0;
-		}
-		count++;
-		mutex_enter(&mountlist_lock);
-		nmp = CIRCLEQ_NEXT(mp, mnt_list);
-		vfs_unbusy(mp);
-	}
-	mutex_exit(&mountlist_lock);
-	if (root == 0 && p->p_cwdi->cwdi_rdir) {
-		/*
-		 * fake a root entry
-		 */
-		if ((error = dostatvfs(p->p_cwdi->cwdi_rdir->v_mount, sbuf, l,
-		    SCARG(uap, flags), 1)) != 0)
-			goto out;
-		if (sfsp) {
-			netbsd32_from_statvfs(sbuf, s32);
-			error = copyout(s32, sfsp, sizeof(*sfsp));
-		}
-		count++;
-	}
-	if (sfsp && count > maxcount)
-		*retval = maxcount;
-	else
-		*retval = count;
-
-out:
-	free(s32, M_TEMP);
-	free(sbuf, M_TEMP);
-	return (error);
+	return do_sys_getvfsstat(l, SCARG_P32(uap, buf), SCARG(uap, bufsize),
+	    SCARG(uap, flags), netbds32_copyout_statvfs,
+	    sizeof (struct netbsd32_statvfs), retval);
 }
 
 int
@@ -545,44 +447,18 @@ netbsd32___fhstatvfs140(l, v, retval)
 		syscallarg(netbsd32_statvfsp_t) buf;
 		syscallarg(int) flags;
 	} */ *uap = v;
-	struct statvfs *sbuf;
-	struct netbsd32_statvfs *s32;
-	fhandle_t *fh;
-	struct vnode *vp;
+	struct statvfs *sb;
 	int error;
 
-	/*
-	 * Must be super user
-	 */
-	if ((error = kauth_authorize_system(l->l_cred,
-	    KAUTH_SYSTEM_FILEHANDLE, 0, NULL, NULL, NULL)) != 0)
-		return error;
+	sb = STATVFSBUF_GET();
+	error = do_fhstatvfs(l, SCARG_P32(uap, fhp), SCARG(uap, fh_size), sb,
+	    SCARG(uap, flags));
 
-	if ((error = vfs_copyinfh_alloc(SCARG_P32(uap, fhp),
-	    SCARG(uap, fh_size), &fh)) != 0)
-		goto bad;
-	if ((error = vfs_fhtovp(fh, &vp)) != 0)
-		goto bad;
+	if (error == 0)
+		error = netbds32_copyout_statvfs(sb, SCARG_P32(uap, buf), 0);
+	STATVFSBUF_PUT(sb);
 
-	sbuf = (struct statvfs *)malloc(sizeof(struct statvfs), M_TEMP,
-	    M_WAITOK);
-	error = dostatvfs(vp->v_mount, sbuf, l, SCARG(uap, flags), 1);
-	vput(vp);
-	if (error != 0)
-		goto out;
-
-	s32 = (struct netbsd32_statvfs *)
-	    malloc(sizeof(struct netbsd32_statvfs), M_TEMP, M_WAITOK);
-	netbsd32_from_statvfs(sbuf, s32);
-	error = copyout(s32, SCARG_P32(uap, buf),
-	    sizeof(struct netbsd32_statvfs));
-	free(s32, M_TEMP);
-
-out:
-	free(sbuf, M_TEMP);
-bad:
-	vfs_copyinfh_free(fh);
-	return (error);
+	return error;
 }
 
 int
@@ -597,14 +473,18 @@ netbsd32_futimes(l, v, retval)
 	} */ *uap = v;
 	int error;
 	struct file *fp;
-	struct proc *p = l->l_proc;
+	struct timeval tv[2], *tvp;
+
+	error = get_utimes32(SCARG_P32(uap, tptr), tv, &tvp);
+	if (error != 0)
+		return error;
 
 	/* getvnode() will use the descriptor for us */
-	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
+	if ((error = getvnode(l->l_proc->p_fd, SCARG(uap, fd), &fp)) != 0)
 		return (error);
 
-	error = change_utimes32((struct vnode *)fp->f_data,
-				SCARG(uap, tptr), l);
+	error = do_sys_utimes(l, fp->f_data, NULL, 0, tvp, UIO_SYSSPACE);
+
 	FILE_UNUSE(fp, l);
 	return (error);
 }
@@ -650,16 +530,14 @@ netbsd32_lutimes(l, v, retval)
 		syscallarg(const netbsd32_timevalp_t) tptr;
 	} */ *uap = v;
 	int error;
-	struct nameidata nd;
+	struct timeval tv[2], *tvp;
 
-	NDINIT(&nd, LOOKUP, NOFOLLOW, UIO_USERSPACE, SCARG_P32(uap, path), l);
-	if ((error = namei(&nd)) != 0)
-		return (error);
+	error = get_utimes32(SCARG_P32(uap, tptr), tv, &tvp);
+	if (error != 0)
+		return error;
 
-	error = change_utimes32(nd.ni_vp, SCARG(uap, tptr), l);
-
-	vrele(nd.ni_vp);
-	return (error);
+	return do_sys_utimes(l, NULL, SCARG_P32(uap, path), NOFOLLOW,
+			    tvp, UIO_SYSSPACE);
 }
 
 int
@@ -675,15 +553,13 @@ netbsd32_sys___stat30(l, v, retval)
 	struct netbsd32_stat sb32;
 	struct stat sb;
 	int error;
-	void *sg;
 	const char *path;
-	struct proc *p = l->l_proc;
 
 	path = SCARG_P32(uap, path);
-	sg = stackgap_init(p, 0);
-	CHECK_ALT_EXIST(l, &sg, path);
 
 	error = do_sys_stat(l, path, FOLLOW, &sb);
+	if (error)
+		return (error);
 	netbsd32_from___stat30(&sb, &sb32);
 	error = copyout(&sb32, SCARG_P32(uap, ub), sizeof(sb32));
 	return (error);
@@ -734,13 +610,9 @@ netbsd32_sys___lstat30(l, v, retval)
 	struct netbsd32_stat sb32;
 	struct stat sb;
 	int error;
-	void *sg;
 	const char *path;
-	struct proc *p = l->l_proc;
 
 	path = SCARG_P32(uap, path);
-	sg = stackgap_init(p, 0);
-	CHECK_ALT_EXIST(l, &sg, path);
 
 	error = do_sys_stat(l, path, NOFOLLOW, &sb);
 	if (error)
@@ -763,31 +635,12 @@ int netbsd32___fhstat40(l, v, retval)
 	struct stat sb;
 	struct netbsd32_stat sb32;
 	int error;
-	fhandle_t *fh;
-	struct vnode *vp;
 
-	/*
-	 * Must be super user
-	 */
-	if ((error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_FILEHANDLE,
-	    0, NULL, NULL, NULL)))
-		return error;
-
-	if ((error = vfs_copyinfh_alloc(SCARG_P32(uap, fhp),
-	    SCARG(uap, fh_size), &fh)) != 0)
-		goto bad;
-
-	if ((error = vfs_fhtovp(fh, &vp)) != 0)
-		goto bad;
-
-	error = vn_stat(vp, &sb, l);
-	vput(vp);
-	if (error)
-		goto bad;
-	netbsd32_from___stat30(&sb, &sb32);
-	error = copyout(&sb32, SCARG_P32(uap, sb), sizeof(sb));
-bad:
-	vfs_copyinfh_free(fh);
+	error = do_fhstat(l, SCARG_P32(uap, fhp), SCARG(uap, fh_size), &sb);
+	if (error != 0) {
+		netbsd32_from___stat30(&sb, &sb32);
+		error = copyout(&sb32, SCARG_P32(uap, sb), sizeof(sb));
+	}
 	return error;
 }
 

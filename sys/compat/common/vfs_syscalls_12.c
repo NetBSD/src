@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_12.c,v 1.21 2007/03/10 17:33:29 dsl Exp $	*/
+/*	$NetBSD: vfs_syscalls_12.c,v 1.21.2.1 2007/05/27 14:34:49 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_12.c,v 1.21 2007/03/10 17:33:29 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_12.c,v 1.21.2.1 2007/05/27 14:34:49 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,16 +57,13 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_12.c,v 1.21 2007/03/10 17:33:29 dsl Exp
 #include <sys/syscallargs.h>
 
 #include <compat/sys/stat.h>
-
-static void cvtstat __P((struct stat *, struct stat12 *));
+#include <compat/common/compat_file.h>
 
 /*
  * Convert from a new to an old stat structure.
  */
-static void
-cvtstat(st, ost)
-	struct stat *st;
-	struct stat12 *ost;
+void
+compat_12_stat_conv(const struct stat *st, struct stat12 *ost)
 {
 
 	ost->st_dev = st->st_dev;
@@ -144,7 +141,7 @@ compat_12_sys_stat(struct lwp *l, void *v, register_t *retval)
 	error = do_sys_stat(l, SCARG(uap, path), FOLLOW, &sb);
 	if (error)
 		return (error);
-	cvtstat(&sb, &osb);
+	compat_12_stat_conv(&sb, &osb);
 	error = copyout(&osb, SCARG(uap, ub), sizeof (osb));
 	return (error);
 }
@@ -168,7 +165,7 @@ compat_12_sys_lstat(struct lwp *l, void *v, register_t *retval)
 	error = do_sys_stat(l, SCARG(uap, path), NOFOLLOW, &sb);
 	if (error)
 		return (error);
-	cvtstat(&sb, &osb);
+	compat_12_stat_conv(&sb, &osb);
 	error = copyout(&osb, SCARG(uap, ub), sizeof (osb));
 	return (error);
 }
@@ -200,7 +197,7 @@ compat_12_sys_fstat(struct lwp *l, void *v, register_t *retval)
 	FILE_UNUSE(fp, l);
 
 	if (error == 0) {
-		cvtstat(&ub, &oub);
+		compat_12_stat_conv(&ub, &oub);
 		error = copyout(&oub, SCARG(uap, sb), sizeof (oub));
 	}
 	return (error);

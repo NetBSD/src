@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_machdep.c,v 1.8.2.1 2007/04/10 13:26:24 ad Exp $ */
+/*	$NetBSD: linux32_machdep.c,v 1.8.2.2 2007/05/27 14:35:11 ad Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -31,7 +31,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_machdep.c,v 1.8.2.1 2007/04/10 13:26:24 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_machdep.c,v 1.8.2.2 2007/05/27 14:35:11 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -241,7 +241,7 @@ linux32_rt_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 		if (lsi->lsi_signo == LINUX32_SIGALRM ||
 		    lsi->lsi_signo >= LINUX32_SIGRTMIN)
 			NETBSD32PTR32(lsi->lsi_value.sival_ptr,
-			     ksi->ksi_sigval.sival_ptr);
+			     ksi->ksi_value.sival_ptr);
 		break;
 	}
 

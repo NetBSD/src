@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb.c,v 1.2.2.2 2007/04/10 13:24:53 ad Exp $ */
+/*	$NetBSD: genfb.c,v 1.2.2.3 2007/05/27 14:30:33 ad Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.2.2.2 2007/04/10 13:24:53 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.2.2.3 2007/05/27 14:30:33 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,15 +69,19 @@ extern const u_char rasops_cmap[768];
 struct wsdisplay_accessops genfb_accessops = {
 	genfb_ioctl,
 	genfb_mmap,
-	NULL,	/* load_font */
-	NULL,	/* polls */
-	NULL,	/* scroll */
+	NULL,	/* alloc_screen */
+	NULL,	/* free_screen */
+	NULL,	/* show_screen */
+	NULL, 	/* load_font */
+	NULL,	/* pollc */
+	NULL	/* scroll */
 };
 
 void
 genfb_init(struct genfb_softc *sc)
 {
 	prop_dictionary_t dict;
+	uint64_t cmap_cb;
 	uint32_t fboffset;
 
 	dict = device_properties(&sc->sc_dev);
@@ -99,6 +103,13 @@ genfb_init(struct genfb_softc *sc)
 	if (!prop_dictionary_get_uint32(dict, "linebytes", &sc->sc_stride))
 		sc->sc_stride = (sc->sc_width * sc->sc_depth) >> 3;
 	sc->sc_fbsize = sc->sc_width * sc->sc_stride;
+
+	/* optional colour map callback */
+	sc->sc_cmcb = NULL;
+	if (prop_dictionary_get_uint64(dict, "cmap_callback", &cmap_cb)) {
+		if (cmap_cb != 0)
+			sc->sc_cmcb = (void *)(vaddr_t)cmap_cb;
+	}
 }
 
 int
@@ -116,6 +127,7 @@ genfb_attach(struct genfb_softc *sc, struct genfb_ops *ops)
 		NULL,
 		8, 16,
 		WSSCREEN_WSCOLORS | WSSCREEN_HILIT,
+		NULL
 	};
 	sc->sc_screens[0] = &sc->sc_defaultscreen_descr;
 	sc->sc_screenlist = (struct wsscreen_list){1, sc->sc_screens};
@@ -151,7 +163,11 @@ genfb_attach(struct genfb_softc *sc, struct genfb_ops *ops)
 	}
 
 	j = 0;
-	for (i = 0; i < 256; i++) {
+	for (i = 0; i < (1 << (sc->sc_depth - 1)); i++) {
+
+		sc->sc_cmap_red[i] = rasops_cmap[j];
+		sc->sc_cmap_green[i] = rasops_cmap[j + 1];
+		sc->sc_cmap_blue[i] = rasops_cmap[j + 2];
 		genfb_putpalreg(sc, i, rasops_cmap[j], rasops_cmap[j + 1],
 		    rasops_cmap[j + 2]);
 		j += 3;
@@ -193,6 +209,10 @@ genfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 		case WSDISPLAYIO_PUTCMAP:
 			return genfb_putcmap(sc,
 			    (struct wsdisplay_cmap *)data);
+
+		case WSDISPLAYIO_LINEBYTES:
+			*(u_int *)data = sc->sc_stride;
+			return 0;
 
 		case WSDISPLAYIO_SMODE:
 			{
@@ -323,7 +343,7 @@ genfb_restore_palette(struct genfb_softc *sc)
 {
 	int i;
 
-	for (i = 0; i < 256; i++) {
+	for (i = 0; i < (1 << (sc->sc_depth - 1)); i++) {
 		genfb_putpalreg(sc, i, sc->sc_cmap_red[i],
 		    sc->sc_cmap_green[i], sc->sc_cmap_blue[i]);
 	}
@@ -334,6 +354,11 @@ genfb_putpalreg(struct genfb_softc *sc, uint8_t idx, uint8_t r, uint8_t g,
     uint8_t b)
 {
 
+	if (sc->sc_cmcb) {
+
+		sc->sc_cmcb->gcc_set_mapreg(sc->sc_cmcb->gcc_cookie,
+		    idx, r, g, b);
+	}
 	return 0;
 }
 

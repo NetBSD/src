@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.38 2007/03/04 06:01:07 christos Exp $	*/
+/*	$NetBSD: cpu.h,v 1.38.2.1 2007/05/27 14:27:01 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -106,6 +106,7 @@ struct cpu_info {
 	struct cpu_data ci_data;	/* MI per-cpu data */
 	int	ci_mtx_count;
 	int	ci_mtx_oldspl;
+	int	ci_want_resched;
 };
 
 extern struct cpu_info cpu_info_store;
@@ -148,15 +149,16 @@ struct clockframe {
  * Preempt the current process if in interrupt from user mode,
  * or after the current trap/syscall if in system mode.
  */
-extern int want_resched;	/* resched() was called */
-#define	cpu_need_resched(ci)	{ want_resched++; aston(); }
+#define	cpu_need_resched(ci, flags)	\
+	do { (ci)->ci_want_resched = 1; aston(); } while (/* CONSTCOND */ 0)
 
 /*
  * Give a profiling tick to the current process when the user profiling
  * buffer pages are invalid.  On the x68k, request an ast to send us
  * through trap, marking the proc as needing a profiling tick.
  */
-#define	cpu_need_proftick(l)	{ (l)->l_pflag |= LP_OWEUPC; aston(); }
+#define	cpu_need_proftick(l)	\
+	do { (l)->l_pflag |= LP_OWEUPC; aston(); } while (/* CONSTCOND */ 0)
 
 /*
  * Notify the current process (p) that it has a signal pending,
@@ -196,17 +198,11 @@ void	config_console(void);
 int	fpu_probe(void);
 
 /* machdep.c functions */
-void	dumpconf(void);
 void	dumpsys(void);
 
 /* locore.s functions */
-struct pcb;
 struct fpframe;
 int	suline(void *, void *);
-void	savectx(struct pcb *);
-void	switch_exit(struct lwp *);
-void	switch_lwp_exit(struct lwp *);
-void	proc_trampoline(void);
 void	loadustp(int);
 void	m68881_save(struct fpframe *);
 void	m68881_restore(struct fpframe *);
@@ -214,15 +210,6 @@ void	m68881_restore(struct fpframe *);
 /* machdep.c functions */
 int	badaddr(volatile void*);
 int	badbaddr(volatile void*);
-
-/* sys_machdep.c functions */
-int	cachectl1(unsigned long, vaddr_t, size_t, struct proc *);
-int	dma_cachectl(void *, int);
-
-/* vm_machdep.c functions */
-void	physaccess(void *, void *, int, int);
-void	physunaccess(void *, int);
-int	kvtop(void *);
 
 #endif
 

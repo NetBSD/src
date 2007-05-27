@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.11 2007/03/04 06:01:07 christos Exp $	*/
+/*	$NetBSD: boot.c,v 1.11.2.1 2007/05/27 14:27:01 ad Exp $	*/
 
 /*
  * Copyright (c) 2001 Minoura Makoto
@@ -104,6 +104,7 @@ doboot(const char *file, int flags)
 	int fd;
 	int dev, unit, part;
 	char *name;
+	short *p;
 
 	printf("Starting %s, flags 0x%x\n", file, flags);
 	marks[MARK_START] = 0x100000;
@@ -136,18 +137,16 @@ doboot(const char *file, int flags)
 	       B_X68K_SCSI_LUN(dev),
 	       B_X68K_SCSI_PART(dev) + 'a');
 
-	{
-		short *p = ((short*) marks[MARK_ENTRY]) - 1;
-		printf("Kernel Version: 0x%x\n", *p);
-		if (*p != 0x4e73 && *p != 0) {
-			/*
-			 * XXX temporary solution; compatibility loader
-			 * must be written.
-			 */
-			printf("This kernel is too new to be loaded by "
-			       "this version of /boot.\n");
-			return;
-		}
+	p = ((short*) marks[MARK_ENTRY]) - 1;
+	printf("Kernel Version: 0x%x\n", *p);
+	if (*p != 0x4e73 && *p != 0) {
+		/*
+		 * XXX temporary solution; compatibility loader
+		 * must be written.
+		 */
+		printf("This kernel is too new to be loaded by "
+		       "this version of /boot.\n");
+		return;
 	}
 
 	exec_image(marks[MARK_START], 0, marks[MARK_ENTRY]-marks[MARK_START],

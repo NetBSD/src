@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia.h,v 1.15 2007/02/05 13:52:27 kent Exp $	*/
+/*	$NetBSD: azalia.h,v 1.15.6.1 2007/05/27 14:30:21 ad Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -350,7 +350,7 @@
 #define		CORB_UNSOL_ENABLE	0x80
 #define		CORB_UNSOL_TAG(x)	(x & 0x3f)
 #define CORB_GET_PIN_SENSE		0xf09
-#define		CORB_PS_PRESENSE	0x80000000
+#define		CORB_PS_PRESENCE	0x80000000
 #define		CORB_PS_IMPEDANCE(x)	(x & 0x7fffffff)
 #define CORB_EXECUTE_PIN_SENSE		0x709
 #define		CORB_PS_RIGHT		0x1
@@ -442,7 +442,9 @@
 #define HDA_MAX_CHANNELS	16
 
 
-#define PCI_SUBCLASS_HDAUDIO	0x03
+#ifndef PCI_SUBCLASS_MULTIMEDIA_HDAUDIO
+#define PCI_SUBCLASS_MULTIMEDIA_HDAUDIO	0x03
+#endif
 
 /* memory-mapped types */
 typedef struct {

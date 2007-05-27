@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.72.2.1 2007/03/13 16:50:11 ad Exp $	*/
+/*	$NetBSD: fd.c,v 1.72.2.2 2007/05/27 14:26:58 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.72.2.1 2007/03/13 16:50:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.72.2.2 2007/05/27 14:26:58 ad Exp $");
 
 #include "rnd.h"
 #include "opt_ddb.h"
@@ -224,7 +224,7 @@ struct fd_softc {
 
 	daddr_t	sc_blkno;	/* starting block number */
 	int sc_bcount;		/* byte count left */
- 	int sc_opts;			/* user-set options */
+	int sc_opts;		/* user-set options */
 	int sc_skip;		/* bytes already transferred */
 	int sc_nblks;		/* number of blocks currently transferring */
 	int sc_nbytes;		/* number of bytes currently transferring */
@@ -420,7 +420,7 @@ fdcattach(struct device *parent, struct device *self, void *aux)
 
 	printf("\n");
 
-	callout_init(&fdc->sc_timo_ch); 
+	callout_init(&fdc->sc_timo_ch);
 	callout_init(&fdc->sc_intr_ch);
 
 	/* Re-map the I/O space. */
@@ -533,10 +533,10 @@ retry:
 
 #ifdef FDDEBUG
 	{
-		int i;
+		int _i;
 		DPRINTF(("fdprobe: status"));
-		for (i = 0; i < n; i++)
-			DPRINTF((" %x", fdc->sc_status[i]));
+		for (_i = 0; _i < n; _i++)
+			DPRINTF((" %x", fdc->sc_status[_i]));
 		DPRINTF(("\n"));
 	}
 #endif
@@ -629,14 +629,14 @@ fdstrategy(struct buf *bp)
 	struct fd_softc *fd;
 	int unit = FDUNIT(bp->b_dev);
 	int sz;
- 	int s;
+	int s;
 
 	if (unit >= fd_cd.cd_ndevs ||
 	    (fd = fd_cd.cd_devs[unit]) == 0 ||
 	    bp->b_blkno < 0 ||
 	    (bp->b_bcount % FDC_BSIZE) != 0) {
 		DPRINTF(("fdstrategy: unit=%d, blkno=%" PRId64 ", "
-			 "bcount=%ld\n", unit,
+			 "bcount=%d\n", unit,
 			 bp->b_blkno, bp->b_bcount));
 		bp->b_error = EINVAL;
 		goto bad;
@@ -667,10 +667,10 @@ fdstrategy(struct buf *bp)
 	}
 
 	bp->b_rawblkno = bp->b_blkno;
- 	bp->b_cylinder = bp->b_blkno / (FDC_BSIZE / DEV_BSIZE)
+	bp->b_cylinder = bp->b_blkno / (FDC_BSIZE / DEV_BSIZE)
 		/ (fd->sc_type->seccyl * (1 << (fd->sc_type->secsize - 2)));
 
-	DPRINTF(("fdstrategy: %s b_blkno %" PRId64 " b_bcount %ld cylin %ld\n",
+	DPRINTF(("fdstrategy: %s b_blkno %" PRId64 " b_bcount %d cylin %d\n",
 		 bp->b_flags & B_READ ? "read" : "write",
 		 bp->b_blkno, bp->b_bcount, bp->b_cylinder));
 	/* Queue transfer on drive, activate drive and controller if idle. */
@@ -856,7 +856,7 @@ out_fdc(bus_space_tag_t iot, bus_space_handle_t ioh, u_char x)
 int
 fdopen(dev_t dev, int flags, int mode, struct lwp *l)
 {
- 	int unit;
+	int unit;
 	struct fd_softc *fd;
 	struct fd_type *type;
 	struct fdc_softc *fdc;
@@ -903,7 +903,7 @@ fdopen(dev_t dev, int flags, int mode, struct lwp *l)
 int
 fdclose(dev_t dev, int flags, int mode, struct lwp *l)
 {
- 	int unit = FDUNIT(dev);
+	int unit = FDUNIT(dev);
 	struct fd_softc *fd = fd_cd.cd_devs[unit];
 	struct fdc_softc *fdc = (void *)device_parent(&fd->sc_dev);
 
@@ -1044,7 +1044,7 @@ loop:
 		}
 		/* no drives waiting; end */
 		fdc->sc_state = DEVIDLE;
- 		return 1;
+		return 1;
 	}
 
 	/* Is there a transfer to this drive?  If not, deactivate drive. */
@@ -1183,7 +1183,7 @@ loop:
 			 head, sec, nblks, fd->sc_skip));
 		DPRINTF(("C H R N: %d %d %d %d\n", fd->sc_cylin, head, sec,
 			 type->secsize));
-			 
+
 		if (fd->sc_part != SEC_P11)
 			goto docopy;
 

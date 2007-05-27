@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_stat.c,v 1.3.2.2 2007/04/10 13:26:25 ad Exp $ */
+/*	$NetBSD: linux32_stat.c,v 1.3.2.3 2007/05/27 14:35:13 ad Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_stat.c,v 1.3.2.2 2007/04/10 13:26:25 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_stat.c,v 1.3.2.3 2007/05/27 14:35:13 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -119,15 +119,12 @@ linux32_sys_stat64(l, v, retval)
 	        syscallarg(netbsd32_charp) path;
 	        syscallarg(linux32_statp) sp;
 	} */ *uap = v;
-	void *sg = stackgap_init(l->l_proc, 0);
 	int error;
 	struct stat st;
 	struct linux32_stat64 st32;
 	struct linux32_stat64 *st32p;
 	const char *path = SCARG_P32(uap, path);
 	
-	CHECK_ALT_EXIST(l, &sg, path);
-
 	error = do_sys_stat(l, path, FOLLOW, &st);
 	if (error != 0)
 		return error;
@@ -149,15 +146,12 @@ linux32_sys_lstat64(l, v, retval)
 	        syscallarg(netbsd32_charp) path;
 	        syscallarg(linux32_stat64p) sp;
 	} */ *uap = v;
-	void *sg = stackgap_init(l->l_proc, 0);
 	int error;
 	struct stat st;
 	struct linux32_stat64 st32;
 	struct linux32_stat64 *st32p;
 	const char *path = SCARG_P32(uap, path);
 	
-	CHECK_ALT_EXIST(l, &sg, path);
-		
 	error = do_sys_stat(l, path, NOFOLLOW, &st);
 	if (error != 0)
 		return error;

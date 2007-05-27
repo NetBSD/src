@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_signal.c,v 1.24 2007/03/04 06:01:14 christos Exp $ */
+/*	$NetBSD: darwin_signal.c,v 1.24.2.1 2007/05/27 14:34:52 ad Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_signal.c,v 1.24 2007/03/04 06:01:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_signal.c,v 1.24.2.1 2007/05/27 14:34:52 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -236,7 +236,7 @@ native_to_darwin_siginfo(ksi, dsi)
 	dsi->darwin_si_status = ksi->ksi_status;
 	dsi->darwin_si_addr = ksi->ksi_addr;
 	(void)memcpy(&dsi->darwin_si_value,
-	    &ksi->ksi_sigval, sizeof(dsi->darwin_si_value));
+	    &ksi->ksi_value, sizeof(dsi->darwin_si_value));
 	dsi->darwin_si_band = ksi->ksi_band;
 
 	return;

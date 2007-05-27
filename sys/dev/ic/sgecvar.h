@@ -1,4 +1,4 @@
-/*      $NetBSD: sgecvar.h,v 1.6 2005/12/11 12:21:28 christos Exp $ */
+/*      $NetBSD: sgecvar.h,v 1.6.30.1 2007/05/27 14:30:07 ad Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -47,6 +47,11 @@ struct ze_cdata {
 struct	ze_softc {
 	struct device	sc_dev;		/* Configuration common part	*/
 	struct evcnt	sc_intrcnt;	/* Interrupt counters		*/
+	struct evcnt	sc_rxintrcnt;	/* Interrupt counters		*/
+	struct evcnt	sc_txintrcnt;	/* Interrupt counters		*/
+	struct evcnt	sc_txdraincnt;	/* Interrupt counters		*/
+	struct evcnt	sc_nobufintrcnt; /* Interrupt counters		*/
+	struct evcnt	sc_nointrcnt;	/* Interrupt counters		*/
 	struct ethercom sc_ec;		/* Ethernet common part		*/
 #define sc_if	sc_ec.ec_if		/* network-visible interface	*/
 	bus_space_tag_t sc_iot;
@@ -61,6 +66,7 @@ struct	ze_softc {
 	bus_dmamap_t	sc_rcvmap[RXDESCS];
 	int		sc_intvec;	/* Interrupt vector		*/
 	int		sc_nexttx;
+	int		sc_txcnt;
 	int		sc_inq;
 	int		sc_lastack;
 	int		sc_nextrx;

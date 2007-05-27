@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_exec_elf32.c,v 1.5.16.1 2007/04/10 13:26:24 ad Exp $ */
+/*	$NetBSD: linux32_exec_elf32.c,v 1.5.16.2 2007/05/27 14:35:12 ad Exp $ */
 
 /*-                     
  * Copyright (c) 1995, 1998, 2000, 2001,2006 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_exec_elf32.c,v 1.5.16.1 2007/04/10 13:26:24 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_exec_elf32.c,v 1.5.16.2 2007/05/27 14:35:12 ad Exp $");
 
 #define	ELFSIZE		32
 
@@ -95,8 +95,7 @@ ELFNAME2(linux32,probe)(l, epp, eh, itp, pos)
 			return error;
 
 	if (itp) {
-		if ((error = emul_find_interp(l, epp->ep_esch->es_emul->e_path,
-		    itp)))
+		if ((error = emul_find_interp(l, epp, itp)))
 			return (error);
 	}
 #if 0
