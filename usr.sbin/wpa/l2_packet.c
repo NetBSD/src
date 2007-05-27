@@ -1,4 +1,4 @@
-/*	$NetBSD: l2_packet.c,v 1.4 2006/05/11 08:44:07 mrg Exp $	*/
+/*	$NetBSD: l2_packet.c,v 1.5 2007/05/27 03:14:32 christos Exp $	*/
 
 /*
  * WPA Supplicant - Layer2 packet handling
@@ -285,9 +285,11 @@ l2_packet_init(const char *ifname, const u8 *own_addr, unsigned short protocol,
 void
 l2_packet_deinit(struct l2_packet_data *l2)
 {
-	if (l2 != NULL) {
-		if (l2->pcap)
-			pcap_close(l2->pcap);
-		free(l2);
+	if (l2 == NULL)
+		return;
+	if (l2->pcap) {
+		eloop_unregister_read_sock(pcap_get_selectable_fd(l2->pcap));
+		pcap_close(l2->pcap);
 	}
+	free(l2);
 }
