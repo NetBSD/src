@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.h,v 1.19 2006/11/24 00:01:17 christos Exp $	*/
+/*	$NetBSD: readline.h,v 1.20 2007/05/27 19:45:37 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -44,6 +44,7 @@ typedef void	  VFunction(void);
 typedef void	  VCPFunction(char *);
 typedef char	 *CPFunction(const char *, int);
 typedef char	**CPPFunction(const char *, int, int);
+typedef char     *rl_compentry_func_t(const char *, int);
 
 typedef struct _hist_entry {
 	const char	*line;
@@ -183,6 +184,7 @@ void		 rl_set_screen_size(int, int);
 char 		*rl_filename_completion_function (const char *, int);
 int		 _rl_abort_internal(void);
 int		 _rl_qsort_string_compare(char **, char **);
+char 	       **rl_completion_matches(const char *, rl_compentry_func_t *);
 
 /*
  * The following are not implemented
