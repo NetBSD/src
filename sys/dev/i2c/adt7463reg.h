@@ -1,4 +1,4 @@
-/*	$NetBSD: adt7463reg.h,v 1.2 2006/02/19 08:40:12 xtraeme Exp $ */
+/*	$NetBSD: adt7463reg.h,v 1.2.34.1 2007/05/27 14:29:59 ad Exp $ */
 
 /*
  * Copyright (c) 2005 Anil Gopinath (anil_public@yahoo.com)
@@ -75,10 +75,10 @@
 
 const struct envsys_range adt7463c_ranges[] = {
   
-	{ 0, 0xFF,    ENVSYS_STEMP   },
-	{ 0, 0xFF,    ENVSYS_SFANRPM },
+	{ 5, 7,       ENVSYS_STEMP   },
+	{ 8, 11,      ENVSYS_SFANRPM },
 	{ 1, 0,       ENVSYS_SVOLTS_AC },	/* None */
-	{ 0, 0xFF,    ENVSYS_SVOLTS_DC },
+	{ 0, 4,       ENVSYS_SVOLTS_DC },
 	{ 1, 0,       ENVSYS_SOHMS },	/* None */
 	{ 1, 0,       ENVSYS_SWATTS },	/* None */
 	{ 1, 0,       ENVSYS_SAMPS }	/* None */

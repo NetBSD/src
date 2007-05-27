@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.43.2.1 2007/03/13 16:50:10 ad Exp $	*/
+/*	$NetBSD: com.c,v 1.43.2.2 2007/05/27 14:26:58 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.43.2.1 2007/03/13 16:50:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.43.2.2 2007/05/27 14:26:58 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -282,7 +282,7 @@ comprobeHAYESP(int iobase, struct com_softc *sc)
 
 	printf(": ESP");
 
- 	/* Check ESP Self Test bits. */
+	/* Check ESP Self Test bits. */
 	/* Check for ESP version 2.0: bits 4,5,6 == 010 */
 	outb(iobase + HAYESP_CMD1, HAYESP_GETTEST);
 	val = inb(iobase + HAYESP_STATUS1);	/* Clear reg 1 */
@@ -454,7 +454,7 @@ comopen(dev_t dev, int flag, int mode, struct lwp *l)
 
 			/* Set 16550 compatibility mode */
 			outb(hayespbase + HAYESP_CMD1, HAYESP_SETMODE);
-			outb(hayespbase + HAYESP_CMD2, 
+			outb(hayespbase + HAYESP_CMD2,
 			     HAYESP_MODE_FIFO|HAYESP_MODE_RTS|
 			     HAYESP_MODE_SCALE);
 
@@ -465,7 +465,7 @@ comopen(dev_t dev, int flag, int mode, struct lwp *l)
 
 			/* Set flow control levels */
 			outb(hayespbase + HAYESP_CMD1, HAYESP_SETRXFLOW);
-			outb(hayespbase + HAYESP_CMD2, 
+			outb(hayespbase + HAYESP_CMD2,
 			     HAYESP_HIBYTE(HAYESP_RXHIWMARK));
 			outb(hayespbase + HAYESP_CMD2,
 			     HAYESP_LOBYTE(HAYESP_RXHIWMARK));
@@ -509,7 +509,7 @@ comopen(dev_t dev, int flag, int mode, struct lwp *l)
 
 	return error;
 }
- 
+
 int
 comclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
@@ -546,22 +546,22 @@ comclose(dev_t dev, int flag, int mode, struct lwp *l)
 #endif
 	return 0;
 }
- 
+
 int
 comread(dev_t dev, struct uio *uio, int flag)
 {
 	struct com_softc *sc = xcom_cd.cd_devs[COMUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
- 
+
 	return ((*tp->t_linesw->l_read)(tp, uio, flag));
 }
- 
+
 int
 comwrite(dev_t dev, struct uio *uio, int flag)
 {
 	struct com_softc *sc = xcom_cd.cd_devs[COMUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
- 
+
 	return ((*tp->t_linesw->l_write)(tp, uio, flag));
 }
 
@@ -570,7 +570,7 @@ compoll(dev_t dev, int events, struct lwp *l)
 {
 	struct com_softc *sc = xcom_cd.cd_devs[COMUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
- 
+
 	return ((*tp->t_linesw->l_poll)(tp, events, l));
 }
 
@@ -582,7 +582,7 @@ comtty(dev_t dev)
 
 	return (tp);
 }
- 
+
 static u_char
 tiocm_xxx2mcr(int data)
 {
@@ -684,7 +684,7 @@ comioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		error = kauth_authorize_device_tty(l->l_cred,
 		    KAUTH_DEVICE_TTY_PRIVSET, tp);
 		if (error != 0)
-			return(EPERM); 
+			return(EPERM);
 
 		userbits = *(int *)data;
 		if (ISSET(userbits, TIOCFLAG_SOFTCAR) ||

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.123 2007/03/04 06:01:19 christos Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.123.2.1 2007/05/27 14:35:02 ad Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.123 2007/03/04 06:01:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.123.2.1 2007/05/27 14:35:02 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -338,7 +338,7 @@ linux_rt_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 		lsi->lsi_pid = ksi->ksi_pid;
 		if (lsi->lsi_signo == LINUX_SIGALRM ||
 		    lsi->lsi_signo >= LINUX_SIGRTMIN)
-			lsi->lsi_value.sival_ptr = ksi->ksi_sigval.sival_ptr;
+			lsi->lsi_value.sival_ptr = ksi->ksi_value.sival_ptr;
 		break;
 	}
 
@@ -593,7 +593,7 @@ linux_read_ldt(l, uap, retval)
 	register_t *retval;
 {
 	struct proc *p = l->l_proc;
-	struct i386_get_ldt_args gl;
+	struct x86_get_ldt_args gl;
 	int error;
 	void *sg;
 	char *parms;
@@ -610,7 +610,7 @@ linux_read_ldt(l, uap, retval)
 	if ((error = copyout(&gl, parms, sizeof(gl))) != 0)
 		return (error);
 
-	if ((error = i386_get_ldt(l, parms, retval)) != 0)
+	if ((error = x86_get_ldt(l, parms, retval)) != 0)
 		return (error);
 
 	*retval *= sizeof(union descriptor);
@@ -642,7 +642,7 @@ linux_write_ldt(l, uap, retval)
 	struct proc *p = l->l_proc;
 	struct linux_ldt_info ldt_info;
 	struct segment_descriptor sd;
-	struct i386_set_ldt_args sl;
+	struct x86_set_ldt_args sl;
 	int error;
 	void *sg;
 	char *parms;
@@ -700,7 +700,7 @@ linux_write_ldt(l, uap, retval)
 	if ((error = copyout(&sl, parms, sizeof(sl))) != 0)
 		return (error);
 
-	if ((error = i386_set_ldt(l, parms, retval)) != 0)
+	if ((error = x86_set_ldt(l, parms, retval)) != 0)
 		return (error);
 
 	*retval = 0;
@@ -1182,4 +1182,14 @@ linux_usertrap(struct lwp *l, vaddr_t trapaddr,
     void *arg)
 {
 	return 0;
+}
+
+const char *
+linux_get_uname_arch(void)
+{
+	static char uname_arch[5] = "i386";
+
+	if (uname_arch[1] == '3')
+		uname_arch[1] += cpu_class;
+	return uname_arch;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: intio.c,v 1.30.2.1 2007/03/13 16:50:11 ad Exp $	*/
+/*	$NetBSD: intio.c,v 1.30.2.2 2007/05/27 14:26:59 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998 NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intio.c,v 1.30.2.1 2007/03/13 16:50:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intio.c,v 1.30.2.2 2007/05/27 14:26:59 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -277,7 +277,7 @@ intio_map_allocate_region(struct device *parent, struct intio_attach_args *ia,
 		if (flag != INTIO_MAP_ALLOCATE)
 		extent_free(map, ia->ia_addr, ia->ia_size, 0);
 		return 0;
-	} 
+	}
 
 	return -1;
 }
@@ -485,7 +485,7 @@ _intio_bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 	 * DMAC), we may have to bounce it as well.
 	 */
 	if (avail_end <= t->_bounce_thresh)
-		/* Bouncing not necessary due to memory size. */ 
+		/* Bouncing not necessary due to memory size. */
 		map->x68k_dm_bounce_thresh = 0;
 	cookieflags = 0;
 	if (map->x68k_dm_bounce_thresh != 0 ||

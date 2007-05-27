@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_43.c,v 1.37.2.1 2007/04/10 13:26:27 ad Exp $	*/
+/*	$NetBSD: netbsd32_compat_43.c,v 1.37.2.2 2007/05/27 14:35:17 ad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_43.c,v 1.37.2.1 2007/04/10 13:26:27 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_43.c,v 1.37.2.2 2007/05/27 14:35:17 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_43.h"
@@ -38,14 +38,17 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_43.c,v 1.37.2.1 2007/04/10 13:26:27 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/fcntl.h>
+#include <sys/filedesc.h>
 #include <sys/malloc.h>
 #include <sys/mount.h>
+#include <sys/namei.h>
 #include <sys/socket.h>
 #include <sys/proc.h>
 #include <sys/stat.h>
 #include <sys/syscallargs.h>
 #include <sys/time.h>
 #include <sys/ucred.h>
+#include <sys/vfs_syscalls.h>
 #include <uvm/uvm_extern.h>
 #include <sys/sysctl.h>
 #include <sys/swap.h>
@@ -64,30 +67,28 @@ int compat_43_netbsd32_sigblock __P((struct lwp *, void *, register_t *retval));
 int compat_43_netbsd32_sigblock __P((struct lwp *, void *, register_t *retval));
 int compat_43_netbsd32_sigsetmask __P((struct lwp *, void *, register_t *retval));
 
-void
-netbsd32_from_stat43(sp43, sp32)
-	struct stat43 *sp43;
-	struct netbsd32_stat43 *sp32;
+static void
+netbsd32_from_stat(const struct stat *sb, struct netbsd32_stat43 *sp32)
 {
 
-	sp32->st_dev = sp43->st_dev;
-	sp32->st_ino = sp43->st_ino;
-	sp32->st_mode = sp43->st_mode;
-	sp32->st_nlink = sp43->st_nlink;
-	sp32->st_uid = sp43->st_uid;
-	sp32->st_gid = sp43->st_gid;
-	sp32->st_rdev = sp43->st_rdev;
-	sp32->st_size = sp43->st_size;
-	sp32->st_atimespec.tv_sec = sp43->st_atimespec.tv_sec;
-	sp32->st_atimespec.tv_nsec = sp43->st_atimespec.tv_nsec;
-	sp32->st_mtimespec.tv_sec = sp43->st_mtimespec.tv_sec;
-	sp32->st_mtimespec.tv_nsec = sp43->st_mtimespec.tv_nsec;
-	sp32->st_ctimespec.tv_sec = sp43->st_ctimespec.tv_sec;
-	sp32->st_ctimespec.tv_nsec = sp43->st_ctimespec.tv_nsec;
-	sp32->st_blksize = sp43->st_blksize;
-	sp32->st_blocks = sp43->st_blocks;
-	sp32->st_flags = sp43->st_flags;
-	sp32->st_gen = sp43->st_gen;
+	sp32->st_dev = sb->st_dev;
+	sp32->st_ino = sb->st_ino;
+	sp32->st_mode = sb->st_mode;
+	sp32->st_nlink = sb->st_nlink;
+	sp32->st_uid = sb->st_uid;
+	sp32->st_gid = sb->st_gid;
+	sp32->st_rdev = sb->st_rdev;
+	sp32->st_size = sb->st_size < (quad_t)1 << 32 ? sb->st_size : -2;
+	sp32->st_atimespec.tv_sec = sb->st_atimespec.tv_sec;
+	sp32->st_atimespec.tv_nsec = sb->st_atimespec.tv_nsec;
+	sp32->st_mtimespec.tv_sec = sb->st_mtimespec.tv_sec;
+	sp32->st_mtimespec.tv_nsec = sb->st_mtimespec.tv_nsec;
+	sp32->st_ctimespec.tv_sec = sb->st_ctimespec.tv_sec;
+	sp32->st_ctimespec.tv_nsec = sb->st_ctimespec.tv_nsec;
+	sp32->st_blksize = sb->st_blksize;
+	sp32->st_blocks = sb->st_blocks;
+	sp32->st_flags = sb->st_flags;
+	sp32->st_gen = sb->st_gen;
 }
 
 /* file system syscalls */
@@ -97,19 +98,15 @@ compat_43_netbsd32_ocreat(l, v, retval)
 	void *v;
 	register_t *retval;
 {
-	struct proc *p = l->l_proc;
 	struct compat_43_netbsd32_ocreat_args /* {
 		syscallarg(const netbsd32_charp) path;
 		syscallarg(mode_t) mode;
 	} */ *uap = v;
 	struct sys_open_args  ua;
-	void *sg;
 
 	NETBSD32TOP_UAP(path, const char);
 	NETBSD32TO64_UAP(mode);
 	SCARG(&ua, flags) = O_WRONLY | O_CREAT | O_TRUNC;
-	sg = stackgap_init(p, 0);
-	CHECK_ALT_EXIST(l, &sg, SCARG(&ua, path));
 
 	return (sys_open(l, &ua, retval));
 }
@@ -144,31 +141,20 @@ compat_43_netbsd32_stat43(l, v, retval)
 	void *v;
 	register_t *retval;
 {
-	struct proc *p = l->l_proc;
 	struct compat_43_netbsd32_stat43_args /* {
 		syscallarg(const netbsd32_charp) path;
 		syscallarg(netbsd32_stat43p_t) ub;
 	} */ *uap = v;
-	struct stat43 sb43, *sgsbp;
+	struct stat sb;
 	struct netbsd32_stat43 sb32;
-	struct compat_43_sys_stat_args ua;
-	void *sg = stackgap_init(p, 0);
-	int rv, error;
+	int error;
 
-	NETBSD32TOP_UAP(path, const char);
-	SCARG(&ua, ub) = sgsbp = stackgap_alloc(p, &sg, sizeof(sb43));
-	CHECK_ALT_EXIST(l, &sg, SCARG(&ua, path));
-	rv = compat_43_sys_stat(l, &ua, retval);
-
-	error = copyin(sgsbp, &sb43, sizeof(sb43));
-	if (error)
-		return error;
-	netbsd32_from_stat43(&sb43, &sb32);
-	error = copyout(&sb32, SCARG_P32(uap, ub), sizeof(sb32));
-	if (error)
-		return error;
-
-	return (rv);
+	error = do_sys_stat(l, SCARG_P32(uap, path), FOLLOW, &sb);
+	if (error == 0) {
+		netbsd32_from_stat(&sb, &sb32);
+		error = copyout(&sb32, SCARG_P32(uap, ub), sizeof(sb32));
+	}
+	return error;
 }
 
 int
@@ -177,31 +163,20 @@ compat_43_netbsd32_lstat43(l, v, retval)
 	void *v;
 	register_t *retval;
 {
-	struct proc *p = l->l_proc;
 	struct compat_43_netbsd32_lstat43_args /* {
 		syscallarg(const netbsd32_charp) path;
 		syscallarg(netbsd32_stat43p_t) ub;
 	} */ *uap = v;
-	struct stat43 sb43, *sgsbp;
+	struct stat sb;
 	struct netbsd32_stat43 sb32;
-	struct compat_43_sys_lstat_args ua;
-	void *sg = stackgap_init(p, 0);
-	int rv, error;
+	int error;
 
-	NETBSD32TOP_UAP(path, const char);
-	SCARG(&ua, ub) = sgsbp = stackgap_alloc(p, &sg, sizeof(sb43));
-	CHECK_ALT_EXIST(l, &sg, SCARG(&ua, path));
-	rv = compat_43_sys_stat(l, &ua, retval);
-
-	error = copyin(sgsbp, &sb43, sizeof(sb43));
-	if (error)
-		return error;
-	netbsd32_from_stat43(&sb43, &sb32);
-	error = copyout(&sb32, SCARG_P32(uap, ub), sizeof(sb32));
-	if (error)
-		return error;
-
-	return (rv);
+	error = do_sys_stat(l, SCARG_P32(uap, path), NOFOLLOW, &sb);
+	if (error == 0) {
+		netbsd32_from_stat(&sb, &sb32);
+		error = copyout(&sb32, SCARG_P32(uap, ub), sizeof(sb32));
+	}
+	return error;
 }
 
 int
@@ -210,30 +185,20 @@ compat_43_netbsd32_fstat43(l, v, retval)
 	void *v;
 	register_t *retval;
 {
-	struct proc *p = l->l_proc;
 	struct compat_43_netbsd32_fstat43_args /* {
 		syscallarg(int) fd;
 		syscallarg(netbsd32_stat43p_t) sb;
 	} */ *uap = v;
-	struct stat43 sb43, *sgsbp;
+	struct stat sb;
 	struct netbsd32_stat43 sb32;
-	struct compat_43_sys_fstat_args ua;
-	void *sg = stackgap_init(p, 0);
-	int rv, error;
+	int error;
 
-	NETBSD32TO64_UAP(fd);
-	SCARG(&ua, sb) = sgsbp = stackgap_alloc(p, &sg, sizeof(sb43));
-	rv = compat_43_sys_fstat(l, &ua, retval);
-
-	error = copyin(sgsbp, &sb43, sizeof(sb43));
-	if (error)
-		return error;
-	netbsd32_from_stat43(&sb43, &sb32);
-	error = copyout(&sb32, SCARG_P32(uap, sb), sizeof(sb32));
-	if (error)
-		return error;
-
-	return (rv);
+	error = do_sys_fstat(l, SCARG(uap, fd), &sb);
+	if (error == 0) {
+		netbsd32_from_stat(&sb, &sb32);
+		error = copyout(&sb32, SCARG_P32(uap, sb), sizeof(sb32));
+	}
+	return error;
 }
 
 int

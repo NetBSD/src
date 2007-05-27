@@ -1,4 +1,4 @@
-/*	$NetBSD: mha.c,v 1.43.2.1 2007/03/13 16:50:12 ad Exp $	*/
+/*	$NetBSD: mha.c,v 1.43.2.2 2007/05/27 14:27:00 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996-1999 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mha.c,v 1.43.2.1 2007/03/13 16:50:12 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mha.c,v 1.43.2.2 2007/05/27 14:27:00 ad Exp $");
 
 #include "opt_ddb.h"
 
@@ -381,7 +381,7 @@ mhaattach(struct device *parent, struct device *self, void *aux)
 	WAR = WA_MCSBUFWIN;
 
 	/* drop off */
-	while(SSR & SS_IREQUEST) {
+	while (SSR & SS_IREQUEST) {
 		(void) ISCSR;
 	}
 
@@ -389,7 +389,7 @@ mhaattach(struct device *parent, struct device *self, void *aux)
 
 	SPC_TRACE(("waiting for intr..."));
 	while (!(SSR & SS_IREQUEST))
-	  delay(10);
+		delay(10);
 	mhaintr(sc);
 
 	tmpsc = NULL;
@@ -570,14 +570,13 @@ mhaselect(struct mha_softc *sc, u_char target, u_char lun, u_char *cmd,
 	WAIT;
 #if 1
 	SPC_MISC(("[cmd:"));
-	for (i = 0; i < clen; i++)
-	  {
-	    unsigned c = cmd[i];
-	    if (i == 1)
-	      c |= lun << 5;
-	    SPC_MISC((" %02x", c));
-	    sc->sc_pcx[i] = c;
-	  }
+	for (i = 0; i < clen; i++) {
+		unsigned c = cmd[i];
+		if (i == 1)
+			c |= lun << 5;
+		SPC_MISC((" %02x", c));
+		sc->sc_pcx[i] = c;
+	}
 	SPC_MISC(("], target=%d\n", target));
 #else
 	memcpy(sc->sc_pcx, cmd, clen);

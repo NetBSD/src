@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.57.2.1 2007/04/10 13:23:21 ad Exp $
+#	$NetBSD: files.xen,v 1.57.2.2 2007/05/27 14:27:06 ad Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -41,6 +41,7 @@ file	arch/i386/i386/db_trace.c	ddb
 file	kern/subr_disk_mbr.c		disk
 file	arch/xen/i386/gdt.c
 file	arch/xen/i386/hypervisor_machdep.c
+file	arch/xen/i386/idle_machdep.c
 file	arch/i386/i386/in_cksum.S	inet | inet6
 file	arch/i386/i386/ipkdb_glue.c	ipkdb
 file	arch/i386/i386/kgdb_machdep.c	kgdb
@@ -48,17 +49,16 @@ file	arch/xen/i386/machdep.c
 file	arch/xen/i386/identcpu.c
 file	arch/i386/i386/math_emulate.c	math_emulate
 file	arch/i386/i386/mem.c
-file	kern/kern_microtime.c		i586_cpu | i686_cpu
 file	arch/i386/i386/mtrr_k6.c	mtrr
 file	netns/ns_cksum.c		ns
 file	arch/xen/i386/pmap.c
 file	arch/i386/i386/process_machdep.c
 file	arch/i386/i386/procfs_machdep.c	procfs
-file	arch/xen/i386/sys_machdep.c
 file	arch/i386/i386/syscall.c
 file	arch/xen/i386/trap.c
 file	arch/i386/i386/vm_machdep.c
 file	arch/xen/i386/xen_machdep.c
+file	arch/xen/i386/xen_intr.c
 file	arch/i386/i386/lock_stubs.S
 
 file	arch/xen/xen/xen_debug.c
@@ -106,6 +106,7 @@ file	arch/xen/x86/intr.c
 file	arch/x86/x86/ipi.c		multiprocessor
 file	arch/x86/x86/lock_machdep.c	lockdebug
 file	arch/x86/x86/softintr.c
+file	arch/x86/x86/sys_machdep.c
 file	arch/x86/x86/x86_machdep.c
 
 include	"arch/xen/conf/files.compat"

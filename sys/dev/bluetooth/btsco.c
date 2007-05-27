@@ -1,4 +1,4 @@
-/*	$NetBSD: btsco.c,v 1.12.2.1 2007/04/10 13:24:30 ad Exp $	*/
+/*	$NetBSD: btsco.c,v 1.12.2.2 2007/05/27 14:29:59 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btsco.c,v 1.12.2.1 2007/04/10 13:24:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btsco.c,v 1.12.2.2 2007/05/27 14:29:59 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -215,6 +215,7 @@ static void  btsco_sco_connected(void *);
 static void  btsco_sco_disconnected(void *, int);
 static void *btsco_sco_newconn(void *, struct sockaddr_bt *, struct sockaddr_bt *);
 static void  btsco_sco_complete(void *, int);
+static void  btsco_sco_linkmode(void *, int);
 static void  btsco_sco_input(void *, struct mbuf *);
 
 static const struct btproto btsco_sco_proto = {
@@ -223,6 +224,7 @@ static const struct btproto btsco_sco_proto = {
 	btsco_sco_disconnected,
 	btsco_sco_newconn,
 	btsco_sco_complete,
+	btsco_sco_linkmode,
 	btsco_sco_input,
 };
 
@@ -499,6 +501,14 @@ btsco_sco_complete(void *arg, int count)
 			(*sc->sc_tx_intr)(sc->sc_tx_intrarg);
 	}
 	splx(s);
+}
+
+static void
+btsco_sco_linkmode(void *arg, int new)
+{
+/*	struct btsco_softc *sc = arg;	*/
+
+	/* dont care */
 }
 
 static void

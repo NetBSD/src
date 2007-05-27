@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmreg.h,v 1.21 2006/11/16 06:07:54 yamt Exp $	*/
+/*	$NetBSD: if_wmreg.h,v 1.21.8.1 2007/05/27 14:30:24 ad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -166,6 +166,8 @@ struct livengood_tcpip_ctxdesc {
  * PCI config registers used by the Wiseman.
  */
 #define	WM_PCI_MMBA	PCI_MAPREG_START
+/* registers for FLASH access on ICH8 */
+#define WM_ICH8_FLASH	0x0014
 
 /*
  * Wiseman Control/Status Registers.
@@ -245,6 +247,7 @@ struct livengood_tcpip_ctxdesc {
 					   (based on type) */
 #define	EECD_EE_TYPE	(1U << 13)	/* EEPROM type
 					   (0 = Microwire, 1 = SPI) */
+#define EECD_SEC1VAL	(1U << 22)	/* Sector One Valid */
 
 #define	UWIRE_OPC_ERASE	0x04		/* MicroWire "erase" opcode */
 #define	UWIRE_OPC_WRITE	0x05		/* MicroWire "write" opcode */
@@ -367,6 +370,7 @@ struct livengood_tcpip_ctxdesc {
 #define	RAL_AV		(1U << 31)	/* entry is valid */
 
 #define	WM_RAL_TABSIZE	16
+#define	WM_ICH8_RAL_TABSIZE 7
 
 #define	WMREG_ICR	0x00c0	/* Interrupt Cause Register */
 #define	ICR_TXDW	(1U << 0)	/* Tx desc written back */
@@ -579,11 +583,13 @@ struct livengood_tcpip_ctxdesc {
 #define	WMREG_VFTA	0x0600
 
 #define	WM_MC_TABSIZE	128
+#define	WM_ICH8_MC_TABSIZE 32
 #define	WM_VLAN_TABSIZE	128
 
 #define	WMREG_PBA	0x1000	/* Packet Buffer Allocation */
 #define	PBA_BYTE_SHIFT	10		/* KB -> bytes */
 #define	PBA_ADDR_SHIFT	7		/* KB -> quadwords */
+#define	PBA_8K		0x0008
 #define	PBA_12K		0x000c
 #define	PBA_16K		0x0010		/* 16K, default Tx allocation */
 #define	PBA_22K		0x0016
@@ -592,6 +598,8 @@ struct livengood_tcpip_ctxdesc {
 #define	PBA_32K		0x0020
 #define	PBA_40K		0x0028
 #define	PBA_48K		0x0030		/* 48K, default Rx allocation */
+
+#define	WMREG_PBS	0x1000	/* Packet Buffer Size (ICH8 only ?) */
 
 #define	WMREG_TXDMAC	0x3000	/* Transfer DMA Control */
 #define	TXDMAC_DPP	(1U << 0)	/* disable packet prefetch */
@@ -660,3 +668,63 @@ struct livengood_tcpip_ctxdesc {
 #define	SWFW_MAC_CSR_SM		0x0008
 #define	SWFW_SOFT_SHIFT		0	/* software semaphores */
 #define	SWFW_FIRM_SHIFT		16	/* firmware semaphores */
+
+#define WMREG_EXTCNFCTR		0x0f00  /* Extended Configuration Control */
+#define EXTCNFCTR_PCIE_WRITE_ENABLE	0x00000001
+#define EXTCNFCTR_PHY_WRITE_ENABLE	0x00000002
+#define EXTCNFCTR_D_UD_ENABLE		0x00000004
+#define EXTCNFCTR_D_UD_LATENCY		0x00000008
+#define EXTCNFCTR_D_UD_OWNER		0x00000010
+#define EXTCNFCTR_MDIO_SW_OWNERSHIP	0x00000020
+#define EXTCNFCTR_MDIO_HW_OWNERSHIP	0x00000040
+#define EXTCNFCTR_EXT_CNF_POINTER	0x0FFF0000
+#define E1000_EXTCNF_CTRL_SWFLAG	EXTCNFCTR_MDIO_SW_OWNERSHIP
+
+/* ich8 flash control */
+#define ICH_FLASH_COMMAND_TIMEOUT            5000    /* 5000 uSecs - adjusted */
+#define ICH_FLASH_ERASE_TIMEOUT              3000000 /* Up to 3 seconds - worst case */
+#define ICH_FLASH_CYCLE_REPEAT_COUNT         10      /* 10 cycles */
+#define ICH_FLASH_SEG_SIZE_256               256
+#define ICH_FLASH_SEG_SIZE_4K                4096
+#define ICH_FLASH_SEG_SIZE_64K               65536
+
+#define ICH_CYCLE_READ                       0x0
+#define ICH_CYCLE_RESERVED                   0x1
+#define ICH_CYCLE_WRITE                      0x2
+#define ICH_CYCLE_ERASE                      0x3
+
+#define ICH_FLASH_GFPREG   0x0000
+#define ICH_FLASH_HSFSTS   0x0004 /* Flash Status Register */
+#define HSFSTS_DONE		0x0001 /* Flash Cycle Done */
+#define HSFSTS_ERR		0x0002 /* Flash Cycle Error */
+#define HSFSTS_DAEL		0x0004 /* Direct Access error Log */
+#define HSFSTS_ERSZ_MASK	0x0018 /* Block/Sector Erase Size */
+#define HSFSTS_ERSZ_SHIFT	3
+#define HSFSTS_FLINPRO		0x0020 /* flash SPI cycle in Progress */
+#define HSFSTS_FLDVAL		0x4000 /* Flash Descriptor Valid */
+#define HSFSTS_FLLK		0x8000 /* Flash Configuration Lock-Down */
+#define ICH_FLASH_HSFCTL   0x0006 /* Flash control Register */
+#define HSFCTL_GO		0x0001 /* Flash Cycle Go */
+#define HSFCTL_CYCLE_MASK	0x0006 /* Flash Cycle */
+#define HSFCTL_CYCLE_SHIFT	1
+#define HSFCTL_BCOUNT_MASK	0x0300 /* Data Byte Count */
+#define HSFCTL_BCOUNT_SHIFT	8
+#define ICH_FLASH_FADDR    0x0008
+#define ICH_FLASH_FDATA0   0x0010
+#define ICH_FLASH_FRACC    0x0050
+#define ICH_FLASH_FREG0    0x0054
+#define ICH_FLASH_FREG1    0x0058
+#define ICH_FLASH_FREG2    0x005C
+#define ICH_FLASH_FREG3    0x0060
+#define ICH_FLASH_FPR0     0x0074
+#define ICH_FLASH_FPR1     0x0078
+#define ICH_FLASH_SSFSTS   0x0090
+#define ICH_FLASH_SSFCTL   0x0092
+#define ICH_FLASH_PREOP    0x0094
+#define ICH_FLASH_OPTYPE   0x0096
+#define ICH_FLASH_OPMENU   0x0098
+
+#define ICH_FLASH_REG_MAPSIZE      0x00A0
+#define ICH_FLASH_SECTOR_SIZE      4096
+#define ICH_GFPREG_BASE_MASK       0x1FFF
+#define ICH_FLASH_LINEAR_ADDR_MASK 0x00FFFFFF

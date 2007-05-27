@@ -1,4 +1,4 @@
-/* $NetBSD: asm_sbus.h,v 1.20 2005/12/11 12:22:28 christos Exp $ */
+/* $NetBSD: asm_sbus.h,v 1.20.30.1 2007/05/27 14:30:19 ad Exp $ */
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, 1999 Qlogic, Inc.
  * All rights reserved.
@@ -24,14 +24,13 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#define	ISP_1000_RISC_CODE	isp_1000_risc_code
+#define	ISP_1000_RISC_CODE	(const uint16_t *) isp_1000_risc_code
 
-#if	defined(ISP_COMPILE_FW) || defined(ISP_COMPILE_1000_FW)
 #ifndef	ISP_TARGET_MODE
 /*
  *	Firmware Version 1.37.00 (11:28 Aug 28, 2000)
  */
-static const u_int16_t isp_1000_risc_code[] = {
+static const uint16_t isp_1000_risc_code[] = {
 	0x0078, 0x1041, 0x0000, 0x2757, 0x0000, 0x12ff, 0x2043, 0x4f50,
 	0x5952, 0x4947, 0x4854, 0x2031, 0x3939, 0x312c, 0x3139, 0x3932,
 	0x2c31, 0x3939, 0x332c, 0x3139, 0x3934, 0x2051, 0x4c4f, 0x4749,
@@ -1297,7 +1296,7 @@ static const u_int16_t isp_1000_risc_code[] = {
  * Flakey, not quite functional, target mode code for ISP1000
  * hacked out of PCI 7.55 initiator/target mode code.
  */
-static const u_int16_t isp_1000_risc_code[] = {
+static const uint16_t isp_1000_risc_code[] = {
 	0x0078, 0x103a, 0x0000, 0x3c1f, 0x0000, 0x2043, 0x4f50, 0x5952,
 	0x4947, 0x4854, 0x2031, 0x3939, 0x3520, 0x514c, 0x4f47, 0x4943,
 	0x2043, 0x4f52, 0x504f, 0x5241, 0x5449, 0x4f4e, 0x2049, 0x5350,
@@ -3223,5 +3222,4 @@ static const u_int16_t isp_1000_risc_code[] = {
 	0xa532, 0x84a4, 0x0016, 0xa21c, 0x1035, 0xa8b6, 0xa210, 0x3807,
 	0x300c, 0x817e, 0x872b, 0x8772, 0xa8af, 0x0000, 0xd66f
 };
-#endif
 #endif

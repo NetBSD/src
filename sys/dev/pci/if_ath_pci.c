@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ath_pci.c,v 1.19 2006/11/16 01:33:08 christos Exp $	*/
+/*	$NetBSD: if_ath_pci.c,v 1.19.8.1 2007/05/27 14:30:22 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath_pci.c,v 1.11 2005/01/18 18:08:16 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: if_ath_pci.c,v 1.19 2006/11/16 01:33:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ath_pci.c,v 1.19.8.1 2007/05/27 14:30:22 ad Exp $");
 #endif
 
 /*
@@ -53,19 +53,13 @@ __KERNEL_RCSID(0, "$NetBSD: if_ath_pci.c,v 1.19 2006/11/16 01:33:08 christos Exp
 #include <sys/mbuf.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
-#include <sys/lock.h>
 #include <sys/socket.h>
-#include <sys/sockio.h>
 #include <sys/errno.h>
 #include <sys/device.h>
-
-#include <machine/bus.h>
 
 #include <net/if.h>
 #include <net/if_media.h>
 #include <net/if_ether.h>
-#include <net/if_llc.h>
-#include <net/if_arp.h>
 
 #include <net80211/ieee80211_netbsd.h>
 #include <net80211/ieee80211_var.h>
@@ -82,8 +76,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_ath_pci.c,v 1.19 2006/11/16 01:33:08 christos Exp
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcidevs.h>
 
-#include <sys/device.h>
-
 /*
  * PCI glue.
  */
@@ -91,8 +83,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_ath_pci.c,v 1.19 2006/11/16 01:33:08 christos Exp
 struct ath_pci_softc {
 	struct ath_softc	sc_sc;
 	pci_chipset_tag_t	sc_pc;
-        pcitag_t 		sc_pcitag; 
-        struct pci_conf_state 	sc_pciconf;
+	pcitag_t		sc_pcitag; 
+	struct pci_conf_state	sc_pciconf;
 	void			*sc_ih;		/* interrupt handler */
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
@@ -101,10 +93,11 @@ struct ath_pci_softc {
 
 #define	BS_BAR	0x10
 #define	PCIR_RETRY_TIMEOUT_REG		0x40
-#define	PCIR_RETRY_TIMEOUT_MASK		0x0000ff00
+#define	PCIR_RETRY_TIMEOUT_MASK		__BITS(15,8)
 
-static int ath_pci_match(struct device *, struct cfdata *, void *);
 static void ath_pci_attach(struct device *, struct device *, void *);
+static int ath_pci_detach(struct device *, int);
+static int ath_pci_match(struct device *, struct cfdata *, void *);
 static void ath_pci_shutdown(void *);
 static void ath_pci_powerhook(int, void *);
 static int ath_pci_detach(struct device *, int);
@@ -116,9 +109,10 @@ CFATTACH_DECL(ath_pci,
     ath_pci_detach,
     NULL);
 
+static int ath_pci_setup(struct pci_attach_args *);
+
 static int
-ath_pci_match(struct device *parent, struct cfdata *match,
-    void *aux)
+ath_pci_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	const char* devname;
 	struct pci_attach_args *pa = aux;
@@ -129,36 +123,75 @@ ath_pci_match(struct device *parent, struct cfdata *match,
 	return 0;
 }
 
+static void
+ath_disable_retry(pci_chipset_tag_t pc, pcitag_t tag)
+{
+#if 0
+	pcireg_t retry;
+
+	/*
+	 * Disable retry timeout to keep PCI Tx retries from
+	 * interfering with ACPI C3 CPU state.
+	 */
+	retry = pci_conf_read(pc, tag, PCIR_RETRY_TIMEOUT_REG);
+	pci_conf_write(pc, tag, PCIR_RETRY_TIMEOUT_REG,
+	    retry & ~PCIR_RETRY_TIMEOUT_MASK);
+#endif
+}
+
 static int
 ath_pci_setup(struct pci_attach_args *pa)
 {
 	pci_chipset_tag_t pc = pa->pa_pc;
-	uint32_t res;
+	pcireg_t bhlc, csr, icr, lattimer;
 	/*
 	 * Enable memory mapping and bus mastering.
 	 */
 	pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
 	    pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG) |
 	        PCI_COMMAND_MASTER_ENABLE | PCI_COMMAND_MEM_ENABLE);
-	res = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
+	csr = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
 
-	if ((res & PCI_COMMAND_MEM_ENABLE) == 0) {
+	if ((csr & PCI_COMMAND_MEM_ENABLE) == 0) {
 		aprint_error("couldn't enable memory mapping\n");
 		return 0;
 	}
-	if ((res & PCI_COMMAND_MASTER_ENABLE) == 0) {
+	if ((csr & PCI_COMMAND_MASTER_ENABLE) == 0) {
 		aprint_error("couldn't enable bus mastering\n");
 		return 0;
 	}
 
-	/*
-	 * Disable retry timeout to keep PCI Tx retries from
-	 * interfering with C3 CPU state.
-	 */
-	pci_conf_write(pc, pa->pa_tag, PCIR_RETRY_TIMEOUT_REG,
-	    pci_conf_read(pc, pa->pa_tag, PCIR_RETRY_TIMEOUT_REG) &
-	    ~PCIR_RETRY_TIMEOUT_MASK);
+	ath_disable_retry(pc, pa->pa_tag);
 
+	/*
+	 * XXX Both this comment and code are replicated in
+	 * XXX cardbus_rescan().
+	 *
+	 * Make sure the latency timer is set to some reasonable
+	 * value.
+	 *
+	 * I will set the initial value of the Latency Timer here.
+	 *
+	 * While a PCI device owns the bus, its Latency Timer counts
+	 * down bus cycles from its initial value to 0.  Minimum
+	 * Grant tells for how long the device wants to own the
+	 * bus once it gets access, in units of 250ns.
+	 *
+	 * On a 33 MHz bus, there are 8 cycles per 250ns.  So I
+	 * multiply the Minimum Grant by 8 to find out the initial
+	 * value of the Latency Timer.
+	 *
+	 * I never set a Latency Timer less than 0x10, since that
+	 * is what the old code did.
+	 */
+	bhlc = pci_conf_read(pc, pa->pa_tag, PCI_BHLC_REG);
+	icr = pci_conf_read(pc, pa->pa_tag, PCI_INTERRUPT_REG);
+	lattimer = MAX(0x10, MIN(0xf8, 8 * PCI_MIN_GNT(icr)));
+	if (PCI_LATTIMER(bhlc) < lattimer) {
+		bhlc &= ~(PCI_LATTIMER_MASK << PCI_LATTIMER_SHIFT);
+		bhlc |= (lattimer << PCI_LATTIMER_SHIFT);
+		pci_conf_write(pc, pa->pa_tag, PCI_BHLC_REG, bhlc);
+	}
 	return 1;
 }
 
@@ -283,6 +316,7 @@ ath_pci_powerhook(int why, void *arg)
 		break;
 	case PWR_RESUME:
 		pci_conf_restore(pc, tag, &sc->sc_pciconf);
+		ath_disable_retry(pc, tag);
 		break;
 	}
 

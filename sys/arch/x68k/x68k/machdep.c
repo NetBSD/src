@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.139 2007/03/05 20:51:11 he Exp $	*/
+/*	$NetBSD: machdep.c,v 1.139.2.1 2007/05/27 14:27:03 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.139 2007/03/05 20:51:11 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.139.2.1 2007/05/27 14:27:03 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -119,7 +119,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.139 2007/03/05 20:51:11 he Exp $");
 #endif
 
 #include <net/netisr.h>
-#undef PS	/* XXX netccitt/pk.h conflict with machine/reg.h? */
 
 #include <machine/db_machdep.h>
 #include <ddb/db_sym.h>
@@ -151,10 +150,10 @@ void doboot(void) __attribute__((__noreturn__));
 /* the following is used externally (sysctl_hw) */
 char	machine[] = MACHINE;	/* from <machine/param.h> */
 
-/* Our exported CPU info; we can have only one. */  
+/* Our exported CPU info; we can have only one. */
 struct cpu_info cpu_info_store;
 
-struct vm_map *exec_map = NULL;  
+struct vm_map *exec_map = NULL;
 struct vm_map *mb_map = NULL;
 struct vm_map *phys_map = NULL;
 
@@ -381,7 +380,7 @@ static const char *fpu_descr[] = {
 void
 identifycpu(void)
 {
-        /* there's alot of XXX in here... */
+	/* there's alot of XXX in here... */
 	const char *cpu_type, *mach, *mmu, *fpu;
 	char clock[16];
 
@@ -478,7 +477,7 @@ void
 cpu_reboot(int howto, char *bootstr)
 {
 	/* take a snap shot before clobbering any registers */
-	if (curlwp && curlwp->l_addr)
+	if (curlwp->l_addr)
 		savectx(&curlwp->l_addr->u_pcb);
 
 	boothowto = howto;
@@ -517,10 +516,10 @@ cpu_reboot(int howto, char *bootstr)
 	 *  a2: the power switch is off
 	 *	Remove the power; the simplest way is go back to ROM eg. reboot
 	 * b) RB_HALT
-	 *      call cngetc
-         * c) otherwise
+	 *	call cngetc
+	 * c) otherwise
 	 *	Reboot
-	*/
+	 */
 	if (((howto & RB_POWERDOWN) == RB_POWERDOWN) && power_switch_is_off)
 		doboot();
 	else if (/*((howto & RB_POWERDOWN) == RB_POWERDOWN) ||*/
@@ -996,7 +995,7 @@ nmihand(struct frame frame)
 /*
  * cpu_exec_aout_makecmds():
  *	cpu-dependent a.out format hook for execve().
- * 
+ *
  * Determine of the given exec package refers to something which we
  * understand and, if so, set up the vmcmds for it.
  *
@@ -1118,7 +1117,7 @@ mem_exists(void *mem, u_long basemax)
 	DPRINTF ((" Let's begin. mem=%p, base=%p, m=%p, b=%p\n",
 		  mem, base, m, b));
 
-	(void) *m; 
+	(void) *m;
 	/*
 	 * Can't check by writing if the corresponding
 	 * base address isn't memory.

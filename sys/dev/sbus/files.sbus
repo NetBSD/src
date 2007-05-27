@@ -1,4 +1,4 @@
-#	$NetBSD: files.sbus,v 1.26.8.2 2007/04/10 13:24:33 ad Exp $
+#	$NetBSD: files.sbus,v 1.26.8.3 2007/05/27 14:30:27 ad Exp $
 #
 # Config file and device description for machine-independent SBUS code.
 # Included by ports that need it.
@@ -135,3 +135,6 @@ device	dbri { }: audiobus, auconv
 attach	dbri at sbus
 file	dev/sbus/dbri.c			dbri
 
+# an SBus frontend for genfb
+attach genfb at sbus with genfb_sbus : fb
+file	dev/sbus/genfb_sbus.c	genfb_sbus

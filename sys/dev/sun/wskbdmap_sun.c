@@ -1,4 +1,4 @@
-/*	$NetBSD: wskbdmap_sun.c,v 1.12 2005/12/11 12:23:56 christos Exp $	*/
+/*	$NetBSD: wskbdmap_sun.c,v 1.12.30.1 2007/05/27 14:30:28 ad Exp $	*/
 /*	$OpenBSD: sunkbd.c,v 1.9 2002/09/08 23:22:00 miod Exp $	*/
 
 /*
@@ -38,11 +38,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbdmap_sun.c,v 1.12 2005/12/11 12:23:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbdmap_sun.c,v 1.12.30.1 2007/05/27 14:30:28 ad Exp $");
 
 #include <sys/types.h>
 #include <dev/wscons/wsksymdef.h>
 #include <dev/wscons/wsksymvar.h>
+
+#include "opt_sunkbd.h"
 
 #define KC(n) KS_KEYCODE(n)
 

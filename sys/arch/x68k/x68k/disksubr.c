@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.28 2007/03/05 12:37:53 tsutsui Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.28.2.1 2007/05/27 14:27:02 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.28 2007/03/05 12:37:53 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.28.2.1 2007/05/27 14:27:02 ad Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -297,8 +297,8 @@ setdisklabel(struct disklabel *olp, struct disklabel *nlp, u_long openmask,
 			npp->p_cpg = opp->p_cpg;
 		}
 	}
- 	nlp->d_checksum = 0;
- 	nlp->d_checksum = dkcksum(nlp);
+	nlp->d_checksum = 0;
+	nlp->d_checksum = dkcksum(nlp);
 	*olp = *nlp;
 	return (0);
 }

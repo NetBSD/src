@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.24 2007/02/17 22:31:41 pavel Exp $	*/
+/*	$NetBSD: locore.S,v 1.24.4.1 2007/05/27 14:27:07 ad Exp $	*/
 /*	NetBSD: locore.S,v 1.31 2004/08/26 10:12:33 junyoung Exp	*/
 
 /*
@@ -138,24 +138,6 @@
 /* LINTSTUB: include <sys/systm.h> */
 
 #include <machine/asm.h>
-
-#if defined(MULTIPROCESSOR)
-
-#define SET_CURLWP(lwp,cpu)				\
-	movl	CPUVAR(SELF),cpu		; 	\
-	movl	lwp,CPUVAR(CURLWP)	;	\
-	movl	cpu,L_CPU(lwp)
-
-#else
-
-#define SET_CURLWP(lwp,tcpu)		movl	lwp,CPUVAR(CURLWP)
-#define GET_CURLWP(reg)			movl	CPUVAR(CURLWP),reg
-
-#endif
-
-#define SET_CURPCB(reg)			movl	reg,CPUVAR(CURPCB)
-
-#define CLEAR_RESCHED(reg)		movl	reg,CPUVAR(RESCHED)
 
 /* XXX temporary kluge; these should not be here */
 /* Get definitions for IOM_BEGIN, IOM_END, and IOM_SIZE */
@@ -529,19 +511,20 @@ ENTRY(hypercall_page)
 #endif
 
 /*
- * void proc_trampoline(void);
+ * void lwp_trampoline(void);
  * This is a trampoline function pushed onto the stack of a newly created
  * process in order to do some additional setup.  The trampoline is entered by
  * cpu_switch()ing to the process, so we abuse the callee-saved registers used
  * by cpu_switch() to store the information about the stub to call.
  * NOTE: This function does not have a normal calling sequence!
  */
-/* LINTSTUB: Func: void proc_trampoline(void) */
-NENTRY(proc_trampoline)
-#ifdef MULTIPROCESSOR
-	call	_C_LABEL(proc_trampoline_mp)
-#endif
-	movl	$IPL_NONE,CPUVAR(ILEVEL)
+/* LINTSTUB: Func: void lwp_trampoline(void) */
+NENTRY(lwp_trampoline)
+	pushl	%ebp
+	xorl	%ebp,%ebp
+	pushl	%eax
+	call	_C_LABEL(lwp_startup)
+	addl	$8,%esp
 	pushl	%ebx
 	call	*%esi
 	addl	$4,%esp
@@ -635,7 +618,6 @@ ENTRY(longjmp)
 
 /*****************************************************************************/
 
-	.globl	_C_LABEL(sched_whichqs),_C_LABEL(sched_qs)
 	.globl	_C_LABEL(uvmexp),_C_LABEL(panic)
 
 #ifdef DIAGNOSTIC
@@ -647,406 +629,83 @@ NENTRY(switch_error)
 #endif /* DIAGNOSTIC */
 
 /*
- * void cpu_switch(struct lwp *)
- * Find a runnable lwp and switch to it.  Wait if necessary.  If the new
- * lwp is the same as the old one, we short-circuit the context save and
- * restore.
+ * struct lwp *cpu_switchto(struct lwp *oldlwp, struct newlwp)
+ *
+ *	1. if (oldlwp != NULL), save its context.
+ *	2. then, restore context of newlwp.
  *
  * Note that the stack frame layout is known to "struct switchframe"
- * in <machine/frame.h> and to the code in cpu_fork() which initializes
+ * in <machine/frame.h> and to the code in cpu_lwp_fork() which initializes
  * it for a new lwp.
- */
-ENTRY(cpu_switch)
-	pushl	%ebx
-	pushl	%esi
-	pushl	%edi
-
-#ifdef DEBUG
-	cmpl	$IPL_SCHED,CPUVAR(ILEVEL)
-	jae	1f
-	pushl	$2f
-	call	_C_LABEL(panic)
-	/* NOTREACHED */
-2:	.asciz	"not splsched() in cpu_switch!"
-1:
-#endif /* DEBUG */
-
-	movl	16(%esp),%esi		# current
-
-	/*
-	 * Clear curlwp so that we don't accumulate system time while idle.
-	 * This also insures that schedcpu() will move the old lwp to
-	 * the correct queue if it happens to get called from the spllower()
-	 * below and changes the priority.  (See corresponding comment in
-	 * userret()).
-	 */
-	movl	$0,CPUVAR(CURLWP)
-	/*
-	 * First phase: find new lwp.
-	 *
-	 * Registers:
-	 *   %eax - queue head, scratch, then zero
-	 *   %ebx - queue number
-	 *   %ecx - cached value of whichqs
-	 *   %edx - next lwp in queue
-	 *   %esi - old lwp
-	 *   %edi - new lwp
-	 */
-
-	/* Look for new lwp. */
-	CLI(%ecx)			# splhigh doesn't do a cli
-	movl	_C_LABEL(sched_whichqs),%ecx
-	bsfl	%ecx,%ebx		# find a full q
-	jnz	switch_dequeue
-
-	/*
-	 * idling:	save old context.
-	 *
-	 * Registers:
-	 *   %eax, %ecx - scratch
-	 *   %esi - old lwp, then old pcb
-	 *   %edi - idle pcb
-	 */
-
-	pushl	%esi
-	call	_C_LABEL(pmap_deactivate2)	# pmap_deactivate(oldlwp)
-	addl	$4,%esp
-
-	movl	L_ADDR(%esi),%esi
-
-	/* Save stack pointers. */
-	movl	%esp,PCB_ESP(%esi)
-	movl	%ebp,PCB_EBP(%esi)
-
-	/* Find idle PCB for this CPU */
-#ifndef MULTIPROCESSOR
-	movl	$_C_LABEL(lwp0),%ebx
-	movl	L_ADDR(%ebx),%edi
-	movl	L_MD_TSS_SEL(%ebx),%edx
-#else
-	movl	CPUVAR(IDLE_PCB),%edi
-	movl	CPUVAR(IDLE_TSS_SEL),%edx
-#endif
-	movl	$0,CPUVAR(CURLWP)		/* In case we fault... */
-
-	/* Restore the idle context (avoid interrupts) */
-	CLI(%ecx)
-
-	/* Restore stack pointers. */
-	movl	PCB_ESP(%edi),%esp
-	movl	PCB_EBP(%edi),%ebp
-
-	pushl	%edi
-	call	_C_LABEL(i386_switch_context)
-	addl	$4,%esp
-
-	/* Record new pcb. */
-	SET_CURPCB(%edi)
-
-	xorl	%esi,%esi
-	STI(%eax)
-idle_unlock:
-	call	_C_LABEL(sched_unlock_idle)
-	/* Interrupts are okay again. */
-	pushl	$IPL_NONE		# spl0()
-	call	_C_LABEL(Xspllower)	# process pending interrupts
-	addl	$4,%esp
-	jmp	idle_start
-idle_zero:
-	STIC(%eax)
-    	jz	4f
-	call	_C_LABEL(stipending)
-	testl	%eax,%eax
-	jz	4f
-	pushl	$IPL_NONE
-	call	_C_LABEL(Xspllower)
-	addl	$4,%esp
-	jmp	idle_start
-4:
-	call	_C_LABEL(uvm_pageidlezero)
-	CLI(%eax)
-	cmpl	$0,_C_LABEL(sched_whichqs)
-	jnz	idle_exit
-idle_loop:
-	/* Try to zero some pages. */
-	movl	_C_LABEL(uvm)+UVM_PAGE_IDLE_ZERO,%ecx
-	testl	%ecx,%ecx
-	jnz	idle_zero
-	call	_C_LABEL(idle_block)
-	cmpl	$0,_C_LABEL(sched_whichqs)
-	jnz	idle_exit
-	STIC(%eax)
-    	jz	4f
-	call	_C_LABEL(stipending)
-	testl	%eax,%eax
-	jz	4f
-	pushl	$IPL_NONE
-	call	_C_LABEL(Xspllower)
-	addl	$4,%esp
-	jmp	idle_start
-4:
-#if defined(XEN3) && !defined(XEN_COMPAT_030001)
-	movl    $SCHEDOP_yield,%ebx
-	call	(hypercall_page + (HYPERVISOR_sched_op * 32))
-#else
-	movl	$HYPERVISOR_sched_op,%eax
-	movl	$SCHEDOP_yield,%ebx
-	TRAP_INSTR
-#endif
-NENTRY(mpidle)
-idle_start:
-	CLI(%eax)
-	cmpl	$0,_C_LABEL(sched_whichqs)
-	jz	idle_loop
-idle_exit:
-	movl	$IPL_HIGH,CPUVAR(ILEVEL)		# splhigh
-	STI(%eax)
-	call	_C_LABEL(sched_lock_idle)
-	movl	_C_LABEL(sched_whichqs),%ecx
-	bsfl	%ecx,%ebx
-	jz	idle_unlock
-
-#ifdef XENDEBUG_LOW
-	pushl	%ecx
-	call	_C_LABEL(xen_dbg1)
-	xorl	%ecx,%ecx
-	movl	%ecx,_C_LABEL(xen_once)
-	popl	%ecx
-#endif
-switch_dequeue:
-	/*
-	 * we're running at splhigh(), but it's otherwise okay to take
-	 * interrupts here.
-	 */
-	STI(%edi)
-	leal	_C_LABEL(sched_qs)(,%ebx,8),%eax # select q
-
-	movl	L_FORW(%eax),%edi	# unlink from front of process q
-#ifdef	DIAGNOSTIC
-	cmpl	%edi,%eax		# linked to self (i.e. nothing queued)?
-	je	_C_LABEL(switch_error)	# not possible
-#endif /* DIAGNOSTIC */
-	movl	L_FORW(%edi),%edx
-	movl	%edx,L_FORW(%eax)
-	movl	%eax,L_BACK(%edx)
-
-	cmpl	%edx,%eax		# q empty?
-	jne	3f
-
-	btrl	%ebx,%ecx		# yes, clear to indicate empty
-	movl	%ecx,_C_LABEL(sched_whichqs) # update q status
-
-3:	/* We just did it. */
-	xorl	%eax,%eax
-	CLEAR_RESCHED(%eax)
-
-switch_resume:
-#ifdef	DIAGNOSTIC
-	cmpl	%eax,L_WCHAN(%edi)	# Waiting for something?
-	jne	_C_LABEL(switch_error)	# Yes; shouldn't be queued.
-	cmpb	$LSRUN,L_STAT(%edi)	# In run state?
-	jne	_C_LABEL(switch_error)	# No; shouldn't be queued.
-#endif /* DIAGNOSTIC */
-
-	/* Isolate lwp.  XXX Is this necessary? */
-	movl	%eax,L_BACK(%edi)
-
-	/* Record new lwp. */
-	movb	$LSONPROC,L_STAT(%edi)	# l->l_stat = LSONPROC
-	SET_CURLWP(%edi,%ecx)
-
-	/* Skip context switch if same lwp. */
-	xorl	%ebx,%ebx
-	cmpl	%edi,%esi
-	je	switch_return
-
-	/* If old lwp exited, don't bother. */
-	testl	%esi,%esi
-	jz	switch_exited
-
-	/*
-	 * Second phase: save old context.
-	 *
-	 * Registers:
-	 *   %eax, %ecx - scratch
-	 *   %esi - old lwp, then old pcb
-	 *   %edi - new lwp
-	 */
-
-	pushl	%esi
-	call	_C_LABEL(pmap_deactivate2)	# pmap_deactivate(oldlwp)
-	addl	$4,%esp
-
-	movl	L_ADDR(%esi),%esi
-
-	/* Save stack pointers. */
-	movl	%esp,PCB_ESP(%esi)
-	movl	%ebp,PCB_EBP(%esi)
-
-switch_exited:
-	/*
-	 * Third phase: restore saved context.
-	 *
-	 * Registers:
-	 *   %eax, %ebx, %ecx, %edx - scratch
-	 *   %esi - new pcb
-	 *   %edi - new lwp
-	 */
-
-	/* No interrupts while loading new state. */
-	CLI(%eax)
-	movl	L_ADDR(%edi),%esi
-
-	/* Restore stack pointers. */
-	movl	PCB_ESP(%esi),%esp
-	movl	PCB_EBP(%esi),%ebp
-
-#if 0
-	/* Don't bother with the rest if switching to a system process. */
-	testl	$PK_SYSTEM,L_FLAG(%edi);	XXX NJWLWP lwp's don't have PK_SYSTEM!
-	jnz	switch_restored	; XXX skip stack_switch+pmap_activate
-#endif
-
-	pushl	%edi
-	call	_C_LABEL(pmap_activate)		# pmap_activate(p)
-	addl	$4,%esp
-
-	pushl	%esi
-	call	_C_LABEL(i386_switch_context)
-	addl	$4,%esp
-
-	/* Record new pcb. */
-	SET_CURPCB(%esi)
-
-	/* Interrupts are okay again. */
-	STI(%edi)
-
-/*
- *  Check for restartable atomic sequences (RAS)
- */
-	movl	CPUVAR(CURLWP),%edi
-	movl	L_PROC(%edi),%esi
-	cmpl	$0,P_RASLIST(%esi)
-	jne	2f
-1:
-	movl	$1,%ebx
-
-switch_return:
-	call    _C_LABEL(sched_unlock_idle)
-	cmpl	$0,CPUVAR(IPENDING)
-	jz	3f
-	pushl	$IPL_NONE		# spl0()
-	call	_C_LABEL(Xspllower)	# process pending interrupts
-	addl	$4,%esp
-3:
-	movl	$IPL_HIGH,CPUVAR(ILEVEL)	# splhigh()
-
-	movl	%ebx,%eax
-
-	popl	%edi
-	popl	%esi
-	popl	%ebx
-	ret
-
-2:					# check RAS list
-	movl	L_MD_REGS(%edi),%ebx
-	movl	TF_EIP(%ebx),%eax
-	pushl	%eax
-	pushl	%esi
-	call	_C_LABEL(ras_lookup)
-	addl	$8,%esp
-	cmpl	$-1,%eax
-	je	1b
-	movl	%eax,TF_EIP(%ebx)
-	jmp	1b
-
-/*
- * void cpu_switchto(struct lwp *current, struct lwp *next)
- * Switch to the specified next LWP.
  */
 ENTRY(cpu_switchto)
 	pushl	%ebx
 	pushl	%esi
 	pushl	%edi
 
-#ifdef DEBUG
-	cmpl	$IPL_SCHED,CPUVAR(ILEVEL)
-	jae	1f
-	pushl	$2f
-	call	_C_LABEL(panic)
-	/* NOTREACHED */
-2:	.asciz	"not splsched() in cpu_switchto!"
-1:
-#endif /* DEBUG */
+	movl	16(%esp),%esi		# oldlwp
+	movl	20(%esp),%edi		# newlwp
 
-	movl	16(%esp),%esi		# current
-	movl	20(%esp),%edi		# next
+	testl	%esi,%esi
+	jz	switch_skipsave
 
 	/*
-	 * Clear curlwp so that we don't accumulate system time while idle.
-	 * This also insures that schedcpu() will move the old process to
-	 * the correct queue if it happens to get called from the spllower()
-	 * below and changes the priority.  (See corresponding comment in
-	 * usrret()).
+	 * Save old context.
+	 */
+
+	movl	L_ADDR(%esi),%eax
+	movl	%esp,PCB_ESP(%eax)
+	movl	%ebp,PCB_EBP(%eax)
+
+switch_skipsave:
+
+	/*
+	 * Switch to newlwp's stack.
+	 */
+
+	movl	L_ADDR(%edi),%ebx
+	movl	PCB_EBP(%ebx),%ebp
+	movl	PCB_ESP(%ebx),%esp
+
+	/*
+	 * Restore the rest of newlwp's context.
 	 *
-	 * XXX Is this necessary?  We know we won't go idle.
+	 * Registers:
+	 *   %ebx - new pcb
+	 *   %edi - new lwp
 	 */
-	movl	$0,CPUVAR(CURLWP)
 
-	/*
-	 * We're running at splhigh(), but it's otherwise okay to take
-	 * interrupts here.
-	 */
-	STI(%eax)
-
-	/* Jump into the middle of cpu_switch */
-	xorl	%eax,%eax
-	jmp	switch_resume
-
-/*
- * void cpu_exit(struct lwp *l)
- * Switch to the appropriate idle context (lwp0's if uniprocessor; the CPU's
- * if multiprocessor) and deallocate the address space and kernel stack for p.
- * Then jump into cpu_switch(), as if we were in the idle proc all along.
- */
-#ifndef MULTIPROCESSOR
-	.globl	_C_LABEL(lwp0)
-#endif
-/* LINTSTUB: Func: void cpu_exit(struct lwp *l) */
-ENTRY(cpu_exit)
-	movl	4(%esp),%edi		# old process
-#ifndef MULTIPROCESSOR
-	movl	$_C_LABEL(lwp0),%ebx
-	movl	L_ADDR(%ebx),%esi
-	movl	L_MD_TSS_SEL(%ebx),%edx
-#else
-	movl	CPUVAR(IDLE_PCB),%esi
-	movl	CPUVAR(IDLE_TSS_SEL),%edx
-#endif
-
-	/* Restore the idle context. */
-	CLI(%eax)
-
-	/* Restore stack pointers. */
-	movl	PCB_ESP(%esi),%esp
-	movl	PCB_EBP(%esi),%ebp
-
-	pushl	%esi
+	pushl	%ebx
 	call	_C_LABEL(i386_switch_context)
 	addl	$4,%esp
 
-	/* Record new pcb. */
-	SET_CURPCB(%esi)
+	movl	$0,CPUVAR(RESCHED)
 
-	/* In case we fault... */
-	movl	$0,CPUVAR(CURLWP)
+	/*
+	 *  Check for restartable atomic sequences (RAS)
+	 */
 
-	/* Interrupts are okay again. */
-	STI(%eax)
+	movl	L_PROC(%edi),%ebx
+	cmpl	$0,P_RASLIST(%ebx)
+	jne	check_ras
 
-	/* Jump into cpu_switch() with the right state. */
-	xorl	%esi,%esi
-	jmp	idle_start
+switch_return:
+	movl	%esi,%eax	# return 'oldlwp'
+	popl	%edi
+	popl	%esi
+	popl	%ebx
+	ret
+
+check_ras:
+	movl	L_MD_REGS(%edi),%ebx
+	pushl	TF_EIP(%ebx)
+	pushl	L_PROC(%edi)
+	call	_C_LABEL(ras_lookup)
+	addl	$8,%esp
+	cmpl	$-1,%eax
+	je	switch_return
+	movl	%eax,TF_EIP(%ebx)
+	jmp	switch_return
 
 /*
  * void savectx(struct pcb *pcb);

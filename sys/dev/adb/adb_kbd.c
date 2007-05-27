@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_kbd.c,v 1.5 2007/03/04 06:01:44 christos Exp $	*/
+/*	$NetBSD: adb_kbd.c,v 1.5.2.1 2007/05/27 14:29:58 ad Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb_kbd.c,v 1.5 2007/03/04 06:01:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb_kbd.c,v 1.5.2.1 2007/05/27 14:29:58 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -60,6 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: adb_kbd.c,v 1.5 2007/03/04 06:01:44 christos Exp $")
 #include <dev/adb/adbvar.h>
 #include <dev/adb/adb_keymap.h>
 
+#include "opt_wsdisplay_compat.h"
 #include "adbdebug.h"
 
 struct adbkbd_softc {
@@ -77,12 +78,14 @@ struct adbkbd_softc {
 	int sc_polled_chars;
 	int sc_trans[3];
 	int sc_capslock;
+	uint32_t sc_timestamp;
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 	int sc_rawkbd;
 #endif
 	uint8_t sc_buffer[16];
 	uint8_t sc_pollbuf[16];
 	uint8_t sc_us;
+	uint8_t sc_power, sc_pe;
 };	
 
 /*
@@ -100,12 +103,13 @@ static int	adbkbd_wait(struct adbkbd_softc *, int);
 CFATTACH_DECL(adbkbd, sizeof(struct adbkbd_softc),
     adbkbd_match, adbkbd_attach, NULL, NULL);
 
-extern struct cfdriver akbd_cd;
+extern struct cfdriver adbkbd_cd;
 
 static int adbkbd_enable(void *, int);
 static int adbkbd_ioctl(void *, u_long, void *, int, struct lwp *);
 static void adbkbd_set_leds(void *, int);
 static void adbkbd_handler(void *, int, uint8_t *);
+static void adbkbd_powerbutton(void *);
 
 struct wskbd_accessops adbkbd_accessops = {
 	adbkbd_enable,
@@ -188,8 +192,10 @@ adbkbd_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_capslock = 0;
 	sc->sc_trans[1] = 103;	/* F11 */
 	sc->sc_trans[2] = 111;	/* F12 */
+	sc->sc_power = 0x7f;
+	sc->sc_timestamp = 0;
 
-	printf(" addr %d ", sc->sc_adbdev->current_addr);
+	printf(" addr %d: ", sc->sc_adbdev->current_addr);
 
 	switch (sc->sc_adbdev->handler_id) {
 	case ADB_STDKBD:
@@ -230,9 +236,11 @@ adbkbd_attach(struct device *parent, struct device *self, void *aux)
 		break;
 	case ADB_PBKBD:
 		printf("PowerBook keyboard\n");
+		sc->sc_power = 0x7e;
 		break;
 	case ADB_PBISOKBD:
 		printf("PowerBook keyboard (ISO layout)\n");
+		sc->sc_power = 0x7e;
 		break;
 	case ADB_ADJKPD:
 		printf("adjustable keypad\n");
@@ -248,15 +256,18 @@ adbkbd_attach(struct device *parent, struct device *self, void *aux)
 		break;
 	case ADB_PBEXTISOKBD:
 		printf("PowerBook extended keyboard (ISO layout)\n");
+		sc->sc_power = 0x7e;
 		break;
 	case ADB_PBEXTJAPKBD:
 		printf("PowerBook extended keyboard (Japanese layout)\n");
+		sc->sc_power = 0x7e;
 		break;
 	case ADB_JPKBDII:
 		printf("keyboard II (Japanese layout)\n");
 		break;
 	case ADB_PBEXTKBD:
 		printf("PowerBook extended keyboard\n");
+		sc->sc_power = 0x7e;
 		break;
 	case ADB_DESIGNKBD:
 		printf("extended keyboard\n");
@@ -264,12 +275,15 @@ adbkbd_attach(struct device *parent, struct device *self, void *aux)
 		break;
 	case ADB_PBJPKBD:
 		printf("PowerBook keyboard (Japanese layout)\n");
+		sc->sc_power = 0x7e;
 		break;
 	case ADB_PBG3KBD:
 		printf("PowerBook G3 keyboard\n");
+		sc->sc_power = 0x7e;
 		break;
 	case ADB_PBG3JPKBD:
 		printf("PowerBook G3 keyboard (Japanese layout)\n");
+		sc->sc_power = 0x7e;
 		break;
 	case ADB_IBOOKKBD:
 		printf("iBook keyboard\n");
@@ -363,18 +377,34 @@ adbkbd_keys(struct adbkbd_softc *sc, uint8_t k1, uint8_t k2)
 
 	DPRINTF("[%02x %02x]", k1, k2);
 
-	if (((k1 == k2) && (k1 == 0x7f)) || (k1 == 0x7e)) {
+	if (((k1 == k2) && (k1 == 0x7f)) || (k1 == sc->sc_power)) {
+		uint32_t now = time_second;
+		uint32_t diff = now - sc->sc_timestamp;
 
-		/* power button, report to sysmon */
-		sysmon_pswitch_event(&sc->sc_sm_pbutton, 
-		    ADBK_PRESS(k1) ? PSWITCH_EVENT_PRESSED :
-		    PSWITCH_EVENT_RELEASED);
+		sc->sc_timestamp = now;
+		if ((diff > 1) && (diff < 5)) {
+
+			/* power button, report to sysmon */
+			sc->sc_pe = k1;
+		
+			sysmon_task_queue_sched(0, adbkbd_powerbutton, sc);
+		}
 	} else {
 
 		adbkbd_key(sc, k1);
 		if (k2 != 0xff)
 			adbkbd_key(sc, k2);
 	}
+}
+
+static void
+adbkbd_powerbutton(void *cookie)
+{
+	struct adbkbd_softc *sc = cookie;
+
+	sysmon_pswitch_event(&sc->sc_sm_pbutton, 
+	    ADBK_PRESS(sc->sc_pe) ? PSWITCH_EVENT_PRESSED :
+	    PSWITCH_EVENT_RELEASED);
 }
 
 static inline void
@@ -410,16 +440,11 @@ adbkbd_key(struct adbkbd_softc *sc, uint8_t k)
 	if (sc->sc_rawkbd) {
 		char cbuf[2];
 		int s;
-		int j = 0;
-		int c = keyboard[ADBK_KEYVAL(k)][3]
 
-		if (k & 0x80)
-			cbuf[j++] = 0xe0;
-
-		cbuf[j++] = (c & 0x7f) | (ADBK_PRESS(k)? 0 : 0x80);
+		cbuf[0] = k;
 
 		s = spltty();
-		wskbd_rawinput(sc->sc_wskbddev, cbuf, j);
+		wskbd_rawinput(sc->sc_wskbddev, cbuf, 1);
 		splx(s);
 	} else {
 #endif

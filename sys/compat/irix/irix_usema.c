@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_usema.c,v 1.18 2007/03/04 06:01:18 christos Exp $ */
+/*	$NetBSD: irix_usema.c,v 1.18.2.1 2007/05/27 14:35:00 ad Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_usema.c,v 1.18 2007/03/04 06:01:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_usema.c,v 1.18.2.1 2007/05/27 14:35:00 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -185,11 +185,11 @@ irix_usema_ioctl(v)
 		struct lwp *a_l;
 	} */ *ap = v;
 	u_long cmd = ap->a_command;
-	void *data = ap->a_data;
+	struct irix_ioctl_usrdata *iiu = ap->a_data;
 	struct vnode *vp = ap->a_vp;
 	struct irix_usema_rec *iur;
 	struct irix_waiting_proc_rec *iwpr;
-	struct irix_ioctl_usrdata iiu;
+	void *data;
 	register_t *retval;
 	int error;
 
@@ -201,15 +201,13 @@ irix_usema_ioctl(v)
 	/*
 	 * Some ioctl commands need to set the ioctl return value. In
 	 * irix_sys_ioctl(), we copy the return value address and the
-	 * data argument to the stackgap in a struct irix_ioctl_usrdata.
+	 * original data argument to a struct irix_ioctl_usrdata.
 	 * The address of this structure is passed as the data argument
 	 * to the vnode layer. We therefore need to read this structure
 	 * to get the real data argument and the retval address.
 	 */
-	if ((error = copyin(data, &iiu, sizeof(iiu))) != 0)
-		return error;
-	data = iiu.iiu_data;
-	retval = iiu.iiu_retval;
+	data = iiu->iiu_data;
+	retval = iiu->iiu_retval;
 
 	switch (cmd) {
 	case IRIX_UIOCABLOCKQ: /* semaphore has been blocked */

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.15 2007/03/04 06:01:10 christos Exp $	*/
+/*	$NetBSD: trap.c,v 1.15.2.1 2007/05/27 14:27:09 ad Exp $	*/
 /*	NetBSD: trap.c,v 1.200 2004/03/14 01:08:48 cl Exp 	*/
 
 /*-
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.15 2007/03/04 06:01:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.15.2.1 2007/05/27 14:27:09 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -213,7 +213,7 @@ trap(frame)
 	struct trapframe *frame;
 {
 	struct lwp *l = curlwp;
-	struct proc *p = l ? l->l_proc : 0;
+	struct proc *p;
 	int type = frame->tf_trapno;
 	struct pcb *pcb;
 	extern char fusubail[], kcopy_fault[],
@@ -229,7 +229,16 @@ trap(frame)
 
 	uvmexp.traps++;
 
-	pcb = (l != NULL) ? &l->l_addr->u_pcb : NULL;
+	if (__predict_true(l != NULL)) {
+		pcb = &l->l_addr->u_pcb;
+		p = l->l_proc;
+	} else {
+		/*
+		 * this can happen eg. on break points in early on boot.
+		 */
+		pcb = NULL;
+		p = NULL;
+	}
 #ifdef DEBUG
 	if (trapdebug) {
 		printf("trap %d code %x eip %x cs %x/%x eflags %x cr2 %x cpl %x\n",
@@ -469,8 +478,10 @@ copyfault:
 			KERNEL_UNLOCK_LAST(l);
 		}
 		/* Allow a forced task switch. */
-		if (curcpu()->ci_want_resched) /* XXX CSE me? */
+		if (curcpu()->ci_want_resched) { /* XXX CSE me? */
+			curcpu()->ci_want_resched = 0;
 			preempt();
+		}
 		goto out;
 
 	case T_DNA|T_USER: {

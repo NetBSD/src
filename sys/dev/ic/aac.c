@@ -1,7 +1,7 @@
-/*	$NetBSD: aac.c,v 1.30 2007/03/04 06:01:48 christos Exp $	*/
+/*	$NetBSD: aac.c,v 1.30.2.1 2007/05/27 14:30:00 ad Exp $	*/
 
 /*-
- * Copyright (c) 2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aac.c,v 1.30 2007/03/04 06:01:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aac.c,v 1.30.2.1 2007/05/27 14:30:00 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,6 +101,7 @@ static void	aac_describe_controller(struct aac_softc *);
 static int	aac_dequeue_fib(struct aac_softc *, int, u_int32_t *,
 				struct aac_fib **);
 static int	aac_enqueue_fib(struct aac_softc *, int, struct aac_fib *);
+static int	aac_enqueue_response(struct aac_softc *, int, struct aac_fib *);
 static void	aac_host_command(struct aac_softc *);
 static void	aac_host_response(struct aac_softc *);
 static int	aac_init(struct aac_softc *);
@@ -499,8 +500,7 @@ aac_init(struct aac_softc *sc)
 
 	ip->AdapterFibsPhysicalAddress = htole32(sc->sc_common_seg.ds_addr +
 	    offsetof(struct aac_common, ac_fibs));
-	ip->AdapterFibsVirtualAddress =
-	    (void *)(intptr_t) htole32(&sc->sc_common->ac_fibs[0]);
+	ip->AdapterFibsVirtualAddress = 0;
 	ip->AdapterFibsSize =
 	    htole32(AAC_ADAPTER_FIBS * sizeof(struct aac_fib));
 	ip->AdapterFibAlign = htole32(sizeof(struct aac_fib));
@@ -509,7 +509,17 @@ aac_init(struct aac_softc *sc)
 	    offsetof(struct aac_common, ac_printf));
 	ip->PrintfBufferSize = htole32(AAC_PRINTF_BUFSIZE);
 
-	ip->HostPhysMemPages = 0;	/* not used? */
+	/*
+	 * The adapter assumes that pages are 4K in size, except on some
+	 * broken firmware versions that do the page->byte conversion twice,
+	 * therefore 'assuming' that this value is in 16MB units (2^24).
+	 * Round up since the granularity is so high.
+	 */
+	ip->HostPhysMemPages = ctob(physmem) / AAC_PAGE_SIZE;
+	if (sc->sc_quirks & AAC_QUIRK_BROKEN_MMAP) {
+		ip->HostPhysMemPages = 
+		    (ip->HostPhysMemPages + AAC_PAGE_SIZE) / AAC_PAGE_SIZE;
+	}
 	ip->HostElapsedSeconds = 0;	/* reset later if invalid */
 
 	/*
@@ -753,20 +763,21 @@ aac_intr(void *cookie)
 	AAC_DPRINTF(AAC_D_INTR, ("aac_intr(%p) ", sc));
 
 	reason = AAC_GET_ISTATUS(sc);
+	AAC_CLEAR_ISTATUS(sc, reason);
+
 	AAC_DPRINTF(AAC_D_INTR, ("istatus 0x%04x ", reason));
 
 	/*
 	 * Controller wants to talk to the log.  XXX Should we defer this?
 	 */
 	if ((reason & AAC_DB_PRINTF) != 0) {
-		if (sc->sc_common->ac_printf[0] != '\0') {
-			printf("%s: WARNING: adapter logged message:\n",
-			    sc->sc_dv.dv_xname);
-			printf("%s:     %.*s", sc->sc_dv.dv_xname,
-			    AAC_PRINTF_BUFSIZE, sc->sc_common->ac_printf);
-			sc->sc_common->ac_printf[0] = '\0';
-		}
-		AAC_CLEAR_ISTATUS(sc, AAC_DB_PRINTF);
+		if (sc->sc_common->ac_printf[0] == '\0')
+			sc->sc_common->ac_printf[0] = ' ';
+		printf("%s: WARNING: adapter logged message:\n",
+			sc->sc_dv.dv_xname);
+		printf("%s:     %.*s", sc->sc_dv.dv_xname,
+			AAC_PRINTF_BUFSIZE, sc->sc_common->ac_printf);
+		sc->sc_common->ac_printf[0] = '\0';
 		AAC_QNOTIFY(sc, AAC_DB_PRINTF);
 		claimed = 1;
 	}
@@ -776,7 +787,6 @@ aac_intr(void *cookie)
 	 */
 	if ((reason & AAC_DB_COMMAND_READY) != 0) {
 		aac_host_command(sc);
-		AAC_CLEAR_ISTATUS(sc, AAC_DB_COMMAND_READY);
 		claimed = 1;
 	}
 
@@ -785,7 +795,6 @@ aac_intr(void *cookie)
 	 */
 	if ((reason & AAC_DB_RESPONSE_READY) != 0) {
 		aac_host_response(sc);
-		AAC_CLEAR_ISTATUS(sc, AAC_DB_RESPONSE_READY);
 		claimed = 1;
 	}
 
@@ -828,6 +837,7 @@ aac_host_command(struct aac_softc *sc)
 			aac_handle_aif(sc,
 			    (struct aac_aif_command *)&fib->data[0]);
 #endif
+			AAC_PRINT_FIB(sc, fib);
 			break;
 		default:
 			printf("%s: unknown command from controller\n",
@@ -840,8 +850,35 @@ aac_host_command(struct aac_softc *sc)
 		    (char *)fib - (char *)sc->sc_common, sizeof(*fib),
 		    BUS_DMASYNC_PREREAD);
 
+		if ((fib->Header.XferState == 0) ||
+		    (fib->Header.StructType != AAC_FIBTYPE_TFIB)) {
+			break; // continue; ???
+		}
+
 		/* XXX reply to FIBs requesting responses ?? */
-		/* XXX how do we return these FIBs to the controller? */
+
+		/* Return the AIF/FIB to the controller */
+		if (le32toh(fib->Header.XferState) & AAC_FIBSTATE_FROMADAP) {
+			u_int16_t	size;
+
+			fib->Header.XferState |=
+				htole32(AAC_FIBSTATE_DONEHOST);
+			*(u_int32_t*)fib->data = htole32(ST_OK);
+
+			/* XXX Compute the Size field? */
+			size = le16toh(fib->Header.Size);
+			if (size > sizeof(struct aac_fib)) {
+				size = sizeof(struct aac_fib);
+				fib->Header.Size = htole16(size);
+			}
+
+			/*
+			 * Since we didn't generate this command, it can't
+			 * go through the normal process.
+			 */
+			aac_enqueue_response(sc,
+					AAC_ADAP_NORM_RESP_QUEUE, fib);
+		}
 	}
 }
 
@@ -969,7 +1006,7 @@ aac_sync_fib(struct aac_softc *sc, u_int32_t command, u_int32_t xferstate,
 	fib->Header.StructType = AAC_FIBTYPE_TFIB;
 	fib->Header.Size = htole16(sizeof(*fib) + datasize);
 	fib->Header.SenderSize = htole16(sizeof(*fib));
-	fib->Header.SenderFibAddress = 0; /* htole32((u_int32_t)fib);	* XXX */
+	fib->Header.SenderFibAddress = 0; /* not needed */
 	fib->Header.ReceiverFibAddress = htole32(fibpa);
 
 	/*
@@ -1139,16 +1176,17 @@ aac_ccb_enqueue(struct aac_softc *sc, struct aac_ccb *ac)
 int
 aac_ccb_submit(struct aac_softc *sc, struct aac_ccb *ac)
 {
+	u_int32_t	acidx;
 
 	AAC_DPRINTF(AAC_D_QUEUE, ("aac_ccb_submit(%p, %p) ", sc, ac));
 
+	acidx = (u_int32_t) ((char *)ac - (char *)sc->sc_ccbs);
 	/* Fix up the address values. */
-	ac->ac_fib->Header.SenderFibAddress = htole32((u_int32_t)(intptr_t/*XXX LP64*/)ac->ac_fib);
+	ac->ac_fib->Header.SenderFibAddress = htole32(acidx << 2);
 	ac->ac_fib->Header.ReceiverFibAddress = htole32(ac->ac_fibphys);
 
 	/* Save a pointer to the command for speedy reverse-lookup. */
-	ac->ac_fib->Header.SenderData =
-	    (u_int32_t)((char *)ac - (char *)sc->sc_ccbs) | 0x80000000;
+	ac->ac_fib->Header.SenderData = acidx | 0x80000000;
 
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_fibs_dmamap,
 	    (char *)ac->ac_fib - (char *)sc->sc_fibs, sizeof(*ac->ac_fib),
@@ -1243,7 +1281,8 @@ static int
 aac_dequeue_fib(struct aac_softc *sc, int queue, u_int32_t *fib_size,
 		struct aac_fib **fib_addr)
 {
-	u_int32_t pi, ci;
+	struct aac_ccb *ac;
+	u_int32_t pi, ci, idx;
 	int notify;
 
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_common_dmamap,
@@ -1269,8 +1308,30 @@ aac_dequeue_fib(struct aac_softc *sc, int queue, u_int32_t *fib_size,
 
 	/* Fetch the entry. */
 	*fib_size = le32toh((sc->sc_qentries[queue] + ci)->aq_fib_size);
-	*fib_addr = (void *)(intptr_t) le32toh(
-	    (sc->sc_qentries[queue] + ci)->aq_fib_addr);
+
+	switch (queue) {
+	case AAC_HOST_NORM_CMD_QUEUE:
+	case AAC_HOST_HIGH_CMD_QUEUE:
+		idx = le32toh((sc->sc_qentries[queue] + ci)->aq_fib_addr);
+		idx /= sizeof(struct aac_fib);
+		*fib_addr = &sc->sc_common->ac_fibs[idx];
+		break;
+	case AAC_HOST_NORM_RESP_QUEUE:
+	case AAC_HOST_HIGH_RESP_QUEUE:
+		idx = le32toh((sc->sc_qentries[queue] + ci)->aq_fib_addr);
+		ac = (struct aac_ccb *) ((char *) sc->sc_ccbs + (idx >> 2));
+		*fib_addr = ac->ac_fib;
+		if (idx & 0x01) {
+			ac->ac_fib->Header.XferState |=
+				htole32(AAC_FIBSTATE_DONEADAP);
+			*((u_int32_t*)(ac->ac_fib->data)) =
+				htole32(AAC_ERROR_NORMAL);
+		}
+		break;
+	default:
+		panic("Invalid queue in aac_dequeue_fib()");
+		break;
+	}
 
 	/* Update consumer index. */
 	sc->sc_queues->qt_qindex[queue][AAC_CONSUMER_INDEX] = ci + 1;
@@ -1282,6 +1343,54 @@ aac_dequeue_fib(struct aac_softc *sc, int queue, u_int32_t *fib_size,
 
 	/* If we have made the queue un-full, notify the adapter. */
 	if (notify && (aac_qinfo[queue].notify != 0))
+		AAC_QNOTIFY(sc, aac_qinfo[queue].notify);
+
+	return (0);
+}
+
+/*
+ * Put our response to an adapter-initiated fib (AIF) on the response queue.
+ */
+static int
+aac_enqueue_response(struct aac_softc *sc, int queue, struct aac_fib *fib)
+{
+	u_int32_t fib_size, fib_addr, pi, ci;
+
+	fib_size = le16toh(fib->Header.Size);
+	fib_addr = fib->Header.SenderFibAddress;
+	fib->Header.ReceiverFibAddress = fib_addr;
+
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_common_dmamap,
+	    (char *)sc->sc_common->ac_qbuf - (char *)sc->sc_common,
+	    sizeof(sc->sc_common->ac_qbuf),
+	    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD);
+
+	/* Get the producer/consumer indices.  */
+	pi = le32toh(sc->sc_queues->qt_qindex[queue][AAC_PRODUCER_INDEX]);
+	ci = le32toh(sc->sc_queues->qt_qindex[queue][AAC_CONSUMER_INDEX]);
+
+	/* Wrap the queue? */
+	if (pi >= aac_qinfo[queue].size)
+		pi = 0;
+
+	/* Check for queue full. */
+	if ((pi + 1) == ci)
+		return (EAGAIN);
+
+	/* Populate queue entry. */
+	(sc->sc_qentries[queue] + pi)->aq_fib_size = htole32(fib_size);
+	(sc->sc_qentries[queue] + pi)->aq_fib_addr = htole32(fib_addr);
+
+	/* Update producer index. */
+	sc->sc_queues->qt_qindex[queue][AAC_PRODUCER_INDEX] = htole32(pi + 1);
+
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_common_dmamap,
+	    (char *)sc->sc_common->ac_qbuf - (char *)sc->sc_common,
+	    sizeof(sc->sc_common->ac_qbuf),
+	    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
+
+	/* Notify the adapter if we know how. */
+	if (aac_qinfo[queue].notify != 0)
 		AAC_QNOTIFY(sc, aac_qinfo[queue].notify);
 
 	return (0);

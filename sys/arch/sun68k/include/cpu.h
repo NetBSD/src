@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.13 2007/02/16 02:53:51 ad Exp $	*/
+/*	$NetBSD: cpu.h,v 1.13.6.1 2007/05/27 14:26:55 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -107,6 +107,7 @@ struct cpu_info {
 	struct cpu_data ci_data;	/* MI per-cpu data */
 	int	ci_mtx_count;
 	int	ci_mtx_oldspl;
+	int	ci_want_resched;
 };
 
 extern struct cpu_info cpu_info_store;
@@ -152,8 +153,8 @@ extern int astpending;	 /* need to trap before returning to user mode */
  * Preempt the current process if in interrupt from user mode,
  * or after the current trap/syscall if in system mode.
  */
-extern int want_resched;	 /* resched() was called */
-#define	cpu_need_resched(ci)	{ want_resched = 1; aston(); }
+#define	cpu_need_resched(ci, flags)	\
+	do { ci->ci_want_resched = 1; aston(); } while (/* CONSTCOND */0)
 
 /*
  * Give a profiling tick to the current process when the user profiling
@@ -174,22 +175,9 @@ extern int want_resched;	 /* resched() was called */
  */
 void	fb_unblank(void);
 
-int	cachectl1(unsigned long, vaddr_t, size_t, struct proc *);
-
-/*
- * This is needed by sun68k/isr.c.  It's here for lack of a 
- * better place.
- */
-void	netintr(void);
-
 /*
  * more stuff here for lack of a better place.
  */
-struct pcb;
-void	proc_trampoline(void);
-void	savectx(struct pcb *);
-void	switch_exit(struct lwp *);
-void	switch_lwp_exit(struct lwp *);
 
 #ifndef _SUN3X_
 #define M68K_VAC

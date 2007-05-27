@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_uselib.c,v 1.20 2007/03/04 06:01:24 christos Exp $	*/
+/*	$NetBSD: linux_uselib.c,v 1.20.2.1 2007/05/27 14:35:11 ad Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_uselib.c,v 1.20 2007/03/04 06:01:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_uselib.c,v 1.20.2.1 2007/05/27 14:35:11 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,7 +93,6 @@ linux_sys_uselib(struct lwp *l, void *v, register_t *retval)
 	struct linux_sys_uselib_args /* {
 		syscallarg(const char *) path;
 	} */ *uap = v;
-	void *sg;
 	long bsize, dsize, tsize, taddr, baddr, daddr;
 	struct nameidata ni;
 	struct vnode *vp;
@@ -102,10 +101,7 @@ linux_sys_uselib(struct lwp *l, void *v, register_t *retval)
 	int i, magic, error;
 	size_t rem;
 
-	sg = stackgap_init(l->l_proc, 0);
-	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
-
-	NDINIT(&ni, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path), l);
+	NDINIT(&ni, LOOKUP, FOLLOW | TRYEMULROOT, UIO_USERSPACE, SCARG(uap, path), l);
 
 	if ((error = namei(&ni)))
 		return error;

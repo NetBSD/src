@@ -1,4 +1,4 @@
-/* 	$NetBSD: compat_util.c,v 1.34 2007/03/04 06:01:12 christos Exp $	*/
+/* 	$NetBSD: compat_util.c,v 1.34.2.1 2007/05/27 14:34:48 ad Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_util.c,v 1.34 2007/03/04 06:01:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_util.c,v 1.34.2.1 2007/05/27 14:34:48 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,163 +57,27 @@ __KERNEL_RCSID(0, "$NetBSD: compat_util.c,v 1.34 2007/03/04 06:01:12 christos Ex
 
 #include <compat/common/compat_util.h>
 
-/*
- * Search an alternate path before passing pathname arguments on
- * to system calls. Useful for keeping a separate 'emulation tree'.
- *
- * According to sflag, we either check for existence of the file or if
- * it can be created or if the file is symlink.
- *
- * In case of success, emul_find returns 0:
- * 	If sgp is provided, the path is in user space, and pbuf gets
- *	allocated in user space (in the stackgap). Otherwise the path
- *	is already in kernel space and a kernel buffer gets allocated
- *	and returned in pbuf, that must be freed by the user.
- * In case of error, the error number is returned and *pbuf = path.
- */
-int
-emul_find(l, sgp, prefix, path, pbuf, sflag)
-	struct lwp *l;
-	void *		 *sgp;		/* Pointer to stackgap memory */
-	const char	 *prefix;
-	const char	 *path;
-	const char	**pbuf;
-	int		  sflag;
+void
+emul_find_root(struct lwp *l, struct exec_package *epp)
 {
-	struct nameidata	 nd;
-	struct nameidata	 ndroot;
-	struct vattr		 vat;
-	struct vattr		 vatroot;
-	int			 error;
-	char			*ptr, *tbuf, *cp;
-	const char		*pr;
-	size_t			 sz, len;
+	struct nameidata nd;
+	const char *emul_path;
 
-	tbuf = malloc(MAXPATHLEN, M_TEMP, M_WAITOK);
-	*pbuf = path;
+	if (epp->ep_emul_root != NULL)
+		/* We've already found it */
+		return;
 
-	for (ptr = tbuf, pr = prefix; (*ptr = *pr) != '\0'; ptr++, pr++)
-		continue;
+	emul_path = epp->ep_esch->es_emul->e_path;
+	if (emul_path == NULL)
+		/* Emulation doesn't have a root */
+		return;
 
-	sz = MAXPATHLEN - (ptr - tbuf);
+	NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, emul_path, l);
+	if (namei(&nd) != 0)
+		/* emulation root doesn't exist */
+		return;
 
-	/*
-	 * If sgp is not given then the path is already in kernel space
-	 */
-	if (sgp == NULL)
-		error = copystr(path, ptr, sz, &len);
-	else
-		error = copyinstr(path, ptr, sz, &len);
-
-	if (error)
-		goto bad;
-
-	if (*ptr != '/') {
-		error = EINVAL;
-		goto bad;
-	}
-
-	/*
-	 * We provide an escape method, so that the user can
-	 * always specify the real root. If the path is prefixed
-	 * by /../ we kill the alternate search
-	 */
-	if (ptr[1] == '.' && ptr[2] == '.' && ptr[3] == '/') {
-		len -= 3;
-		(void)memcpy(tbuf, &ptr[3], len);
-		ptr = tbuf;
-		goto good;
-	}
-
-	/*
-	 * We know that there is a / somewhere in this pathname.
-	 * Search backwards for it, to find the file's parent dir
-	 * to see if it exists in the alternate tree. If it does,
-	 * and we want to create a file (sflag is set). We don't
-	 * need to worry about the root comparison in this case.
-	 */
-
-	switch (sflag) {
-	case CHECK_ALT_FL_CREAT:
-		for (cp = &ptr[len] - 1; *cp != '/'; cp--)
-			;
-		*cp = '\0';
-
-		NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, tbuf, l);
-
-		if ((error = namei(&nd)) != 0)
-			goto bad;
-
-		*cp = '/';
-		break;
-	case CHECK_ALT_FL_EXISTS:
-	case CHECK_ALT_FL_SYMLINK:
-		NDINIT(&nd, LOOKUP,
-			(sflag == CHECK_ALT_FL_SYMLINK) ? NOFOLLOW : FOLLOW,
-			UIO_SYSSPACE, tbuf, l);
-
-		if ((error = namei(&nd)) != 0)
-			goto bad;
-
-		/*
-		 * We now compare the vnode of the emulation root to the one
-		 * vnode asked. If they resolve to be the same, then we
-		 * ignore the match so that the real root gets used.
-		 * This avoids the problem of traversing "../.." to find the
-		 * root directory and never finding it, because "/" resolves
-		 * to the emulation root directory. This is expensive :-(
-		 */
-		NDINIT(&ndroot, LOOKUP, FOLLOW, UIO_SYSSPACE, prefix, l);
-
-		if ((error = namei(&ndroot)) != 0)
-			goto bad2;
-
-		if ((error = VOP_GETATTR(nd.ni_vp, &vat, l->l_cred, l)) != 0)
-			goto bad3;
-
-		if ((error = VOP_GETATTR(ndroot.ni_vp, &vatroot, l->l_cred, l))
-		    != 0)
-			goto bad3;
-
-		if (vat.va_fsid == vatroot.va_fsid &&
-		    vat.va_fileid == vatroot.va_fileid) {
-			error = ENOENT;
-			goto bad3;
-		}
-
-		break;
-	}
-
-	vrele(nd.ni_vp);
-	if (sflag == CHECK_ALT_FL_EXISTS)
-		vrele(ndroot.ni_vp);
-
-good:
-	if (sgp == NULL)
-		*pbuf = tbuf;
-	else {
-		sz = &ptr[len] - tbuf;
-		*pbuf = stackgap_alloc(l->l_proc, sgp, sz + 1);
-		if (*pbuf == NULL) {
-			error = ENAMETOOLONG;
-			goto bad;
-		}
-		/*XXXUNCONST*/
-		if ((error = copyout(tbuf, __UNCONST(*pbuf), sz)) != 0) {
-			*pbuf = path;
-			goto bad;
-		}
-		free(tbuf, M_TEMP);
-	}
-	return 0;
-
-bad3:
-	vrele(ndroot.ni_vp);
-bad2:
-	vrele(nd.ni_vp);
-bad:
-	free(tbuf, M_TEMP);
-	return error;
+	epp->ep_emul_root = nd.ni_vp;
 }
 
 /*
@@ -221,31 +85,42 @@ bad:
  * there, check if the interpreter exists in within 'proper' tree.
  */
 int
-emul_find_interp(struct lwp *l, const char *prefix, char *itp)
+emul_find_interp(struct lwp *l, struct exec_package *epp, const char *itp)
 {
-	const char *bp;
 	int error;
+	struct nameidata nd;
+	unsigned int flags;
 
-	if (emul_find(l, NULL, prefix, itp, &bp, CHECK_ALT_FL_EXISTS) == 0) {
-		size_t len;
+	/* If we haven't found the emulation root already, do so now */
+	/* Maybe we should remember failures somehow ? */
+	if (epp->ep_esch->es_emul->e_path != 0 && epp->ep_emul_root == NULL)
+		emul_find_root(l, epp);
 
-		if ((error = copystr(bp, itp, MAXPATHLEN, &len)))
-			return error;
-		/*XXXUNCONST*/
-		free(__UNCONST(bp), M_TEMP);
-	} else {
-		/* check filename without the emul prefix */
-		struct nameidata nd;
+	if (epp->ep_interp != NULL)
+		vrele(epp->ep_interp);
 
-		NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, itp, l);
-
-		if ((error = namei(&nd)))
-			return error;
-
-		vrele(nd.ni_vp);
+	/* We need to use the emulation root for the new program,
+	 * not the one for the current process. */
+	if (epp->ep_emul_root == NULL)
+		flags = FOLLOW;
+	else {
+		nd.ni_erootdir = epp->ep_emul_root;
+		/* hack: Pass in the emulation path for ktrace calls */
+		nd.ni_next = epp->ep_esch->es_emul->e_path;
+		flags = FOLLOW | TRYEMULROOT | EMULROOTSET;
 	}
 
-	return (0);
+	NDINIT(&nd, LOOKUP, flags, UIO_SYSSPACE, itp, l);
+	error = namei(&nd);
+	if (error != 0) {
+		epp->ep_interp = NULL;
+		return error;
+	}
+
+	/* Save interpreter in case we actually need to load it */
+	epp->ep_interp = nd.ni_vp;
+
+	return 0;
 }
 
 /*

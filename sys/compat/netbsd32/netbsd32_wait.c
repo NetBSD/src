@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_wait.c,v 1.12.2.1 2007/04/10 13:26:31 ad Exp $	*/
+/*	$NetBSD: netbsd32_wait.c,v 1.12.2.2 2007/05/27 14:35:20 ad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_wait.c,v 1.12.2.1 2007/04/10 13:26:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_wait.c,v 1.12.2.2 2007/05/27 14:35:20 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,41 +59,29 @@ netbsd32_wait4(l, v, retval)
 		syscallarg(int) options;
 		syscallarg(netbsd32_rusagep_t) rusage;
 	} */ *uap = v;
-	struct sys_wait4_args ua;
-	void *sg;
-	struct rusage *ruup = NULL;
-	int error;
+	int		status, error;
+	int		was_zombie;
+	struct rusage	ru;
+	struct netbsd32_rusage	ru32;
 
-	if (SCARG_P32(uap, rusage)) {
-		sg = stackgap_init(l->l_proc, sizeof(*ruup));
-		ruup = (struct rusage *)stackgap_alloc(l->l_proc, &sg,
-		    sizeof(*ruup));
-		if (ruup == NULL)
-			return ENOMEM;
-	}
+	error = do_sys_wait(l, &SCARG(uap, pid), &status, SCARG(uap, options),
+	    SCARG_P32(uap, rusage) != NULL ? &ru : NULL, &was_zombie);
 
-	NETBSD32TO64_UAP(pid);
-	NETBSD32TOP_UAP(status, int);
-	NETBSD32TO64_UAP(options);
-	SCARG(&ua, rusage) = ruup;
-
-	error = sys_wait4(l, &ua, retval);
-	if (error)
+	retval[0] = SCARG(uap, pid);
+	if (SCARG(uap, pid) == 0)
 		return error;
 
-	if (ruup != NULL) {
-		struct netbsd32_rusage ru32;
-		struct rusage rus;
-
-		error = copyin(ruup, &rus, sizeof(rus));
-		if (error)
-			return error;
-		netbsd32_from_rusage(&rus, &ru32);
+	if (SCARG_P32(uap, rusage)) {
+		netbsd32_from_rusage(&ru, &ru32);
 		error = copyout(&ru32, SCARG_P32(uap, rusage), sizeof(ru32));
 	}
 
+	if (error == 0 && SCARG_P32(uap, status))
+		error = copyout(&status, SCARG_P32(uap, status), sizeof(status));
+
 	return error;
 }
+
 
 int
 netbsd32_getrusage(l, v, retval)

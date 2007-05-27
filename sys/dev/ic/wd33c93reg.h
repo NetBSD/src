@@ -1,4 +1,4 @@
-/*	$NetBSD: wd33c93reg.h,v 1.1 2006/08/26 22:06:37 bjh21 Exp $	*/
+/*	$NetBSD: wd33c93reg.h,v 1.1.20.1 2007/05/27 14:30:08 ad Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -145,7 +145,7 @@
 					/* 11 MHz is invalid */
 #define SBIC_ID_FS_12_15	0x40	/* Input clock is 12-15 MHz */
 #define SBIC_ID_FS_16_20	0x80	/* Input clock is 16-20 MHz */
-#define SBIC_ID_RAF		0x20	/* */
+#define SBIC_ID_RAF		0x20	/* Enable Really Advanced Features */
 #define SBIC_ID_EHP		0x10	/* Enable host parity */
 #define SBIC_ID_EAF		0x08	/* Enable Advanced Features */
 #define SBIC_ID_MASK		0x07
@@ -199,7 +199,8 @@
  * FIFO register
  */
 
-#define SBIC_FIFO_DEEP		12
+#define SBIC_FIFO_93_DEPTH		5
+#define SBIC_FIFO_93AB_DEPTH		12
 
 /*
  * maximum possible size in TC registers. Since this is 24 bit, it's easy
@@ -208,15 +209,20 @@
 
 /*
  * Synchronous xfer register
+ *
+ * NB: SBIC_SYN_FSS only valid on WD33C93B with 16-20MHz clock.
  */
 
 #define SBIC_SYN_OFF_MASK	0x0f
-#define SBIC_SYN_MAX_OFFSET	SBIC_FIFO_DEEP
+#define SBIC_SYN_93_MAX_OFFSET	(SBIC_FIFO_93_DEPTH - 1) /* 4 is recommended */
+#define SBIC_SYN_93AB_MAX_OFFSET SBIC_FIFO_93AB_DEPTH
 #define SBIC_SYN_PER_MASK	0x70
 #define SBIC_SYN_MIN_PERIOD	2	/* upto 8, encoded as 0 */
+#define SBIC_SYN_FSS		0x80	/* Enable Fast SCSI Transfers (10MB/s)*/
 
-#define SBIC_SYN(o,p) \
-    (((o) & SBIC_SYN_OFF_MASK) | (((p) << 4) & SBIC_SYN_PER_MASK))
+#define SBIC_SYN(o,p,f) \
+    (((o) & SBIC_SYN_OFF_MASK) | (((p) << 4) & SBIC_SYN_PER_MASK) | \
+     ((f) ? SBIC_SYN_FSS : 0))
 
 /*
  * Transfer count register

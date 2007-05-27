@@ -1,4 +1,4 @@
-/*	$NetBSD: genfbvar.h,v 1.2.2.2 2007/04/10 13:24:53 ad Exp $ */
+/*	$NetBSD: genfbvar.h,v 1.2.2.3 2007/05/27 14:30:33 ad Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfbvar.h,v 1.2.2.2 2007/04/10 13:24:53 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfbvar.h,v 1.2.2.3 2007/05/27 14:30:33 ad Exp $");
 
 #ifndef GENFBVAR_H
 #define GENFBVAR_H
@@ -53,6 +53,11 @@ struct genfb_ops {
 	paddr_t	(*genfb_mmap)(void *, void *, off_t, int);
 };
 
+struct genfb_colormap_callback {
+	void *gcc_cookie;
+	void (*gcc_set_mapreg)(void *, int, int, int, int);
+};
+
 struct genfb_softc {
 	struct	device sc_dev;
 	struct vcons_data vd;
@@ -61,6 +66,7 @@ struct genfb_softc {
 	struct wsscreen_descr sc_defaultscreen_descr;
 	const struct wsscreen_descr *sc_screens[1];
 	struct wsscreen_list sc_screenlist;
+	struct genfb_colormap_callback *sc_cmcb;
 	void * sc_fbaddr;	/* kva */
 	bus_addr_t sc_fboffset;	/* bus address */
 	int sc_width, sc_height, sc_stride, sc_depth;

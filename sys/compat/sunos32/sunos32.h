@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32.h,v 1.9.30.1 2007/04/10 13:26:31 ad Exp $	 */
+/*	$NetBSD: sunos32.h,v 1.9.30.2 2007/05/27 14:35:29 ad Exp $	 */
 
 /*
  * Copyright (c) 2001 Matthew R. Green
@@ -41,10 +41,10 @@
  * Typedefs for pointer-types.
  */
 /* stime() */
-typedef u_int32_t sunos32_time_tp;
+typedef netbsd32_pointer_t sunos32_time_tp;
 
 /* statfs(), fstatfs() */
-typedef u_int32_t sunos32_statfsp_t;
+typedef netbsd32_pointer_t sunos32_statfsp_t;
 
 /* ustat() */
 typedef netbsd32_pointer_t sunos32_ustatp_t;
@@ -79,11 +79,5 @@ __END_DECLS
 #define	SUNOS32TOP_UAP(name, type)	SUNOS32TOP(uap, &ua, name, type);
 #define	SUNOS32TOX_UAP(name, type)	SUNOS32TOX(uap, &ua, name, type);
 #define	SUNOS32TOX64_UAP(name, type)	SUNOS32TOX64(uap, &ua, name, type);
-
-#define SUNOS32_CHECK_ALT_EXIST(l, sgp, path) \
-    emul_find(l, sgp, p->p_emul->e_path, (char *)(u_long)path, (const char **)&(path), CHECK_ALT_FL_EXISTS)
-
-#define SUNOS32_CHECK_ALT_CREAT(l, sgp, path) \
-    emul_find(l, sgp, l->l_proc->p_emul->e_path, (char *)(u_long)path, (const char **)&(path), CHECK_ALT_FL_CREAT)
 
 #endif /* _COMPAT_SUNOS32_SUNOS32_H_ */

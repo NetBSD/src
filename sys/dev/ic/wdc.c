@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.246.6.1 2007/04/10 13:24:32 ad Exp $ */
+/*	$NetBSD: wdc.c,v 1.246.6.2 2007/05/27 14:30:08 ad Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.246.6.1 2007/04/10 13:24:32 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.246.6.2 2007/05/27 14:30:08 ad Exp $");
 
 #include "opt_ata.h"
 
@@ -906,7 +906,7 @@ wdc_reset_drive(struct ata_drive_datas *drvp, int flags)
 	struct ata_channel *chp = drvp->chnl_softc;
 
 	ATADEBUG_PRINT(("wdc_reset_drive %s:%d for drive %d\n",
-	    atac->atac_dev.dv_xname, chp->ch_channel, drvp->drive),
+	    chp->ch_atac->atac_dev.dv_xname, chp->ch_channel, drvp->drive),
 	    DEBUG_FUNCS);
 
 	ata_reset_channel(chp, flags);

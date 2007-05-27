@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_ms.c,v 1.6 2007/03/04 06:01:44 christos Exp $	*/
+/*	$NetBSD: adb_ms.c,v 1.6.2.1 2007/05/27 14:29:58 ad Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb_ms.c,v 1.6 2007/03/04 06:01:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb_ms.c,v 1.6.2.1 2007/05/27 14:29:58 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -163,7 +163,7 @@ adbms_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_adbdev->cookie = sc;
 	sc->sc_adbdev->handler = adbms_handler;
 	sc->sc_us = ADBTALK(sc->sc_adbdev->current_addr, 0);
-	printf(" addr %d ", sc->sc_adbdev->current_addr);
+	printf(" addr %d: ", sc->sc_adbdev->current_addr);
 
 	sc->sc_class = MSCLASS_MOUSE;
 	sc->sc_buttons = 1;

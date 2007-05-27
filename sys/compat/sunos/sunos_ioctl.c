@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_ioctl.c,v 1.53 2007/03/04 06:01:30 christos Exp $	*/
+/*	$NetBSD: sunos_ioctl.c,v 1.53.2.1 2007/05/27 14:35:28 ad Exp $	*/
 
 /*
  * Copyright (c) 1993 Markus Wild.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_ioctl.c,v 1.53 2007/03/04 06:01:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_ioctl.c,v 1.53.2.1 2007/05/27 14:35:28 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_execfmt.h"
@@ -1022,7 +1022,6 @@ sunos_sys_fcntl(l, v, retval)
 	register_t *retval;
 {
 	struct sunos_sys_fcntl_args *uap = v;
-	struct proc *p = l->l_proc;
 	long flg;
 	int n, ret;
 
@@ -1046,32 +1045,18 @@ sunos_sys_fcntl(l, v, retval)
 		{
 			int error;
 			struct sunos_flock	 ifl;
-			struct flock		*flp, fl;
-			void *sg = stackgap_init(p, 0);
-			struct sys_fcntl_args		fa;
-
-			SCARG(&fa, fd) = SCARG(uap, fd);
-			SCARG(&fa, cmd) = SCARG(uap, cmd);
-
-			flp = stackgap_alloc(p, &sg, sizeof(struct flock));
-			SCARG(&fa, arg) = (void *) flp;
+			struct flock		 fl;
 
 			error = copyin(SCARG(uap, arg), &ifl, sizeof ifl);
 			if (error)
 				return error;
-
 			sunos_to_bsd_flock(&ifl, &fl);
 
-			error = copyout(&fl, flp, sizeof fl);
+			error = do_fcntl_lock(l, SCARG(uap, fd), SCARG(uap, cmd), &fl);
 			if (error)
 				return error;
 
-			error = sys_fcntl(l, &fa, retval);
-			if (error || SCARG(&fa, cmd) != F_GETLK)
-				return error;
-
-			error = copyin(flp, &fl, sizeof fl);
-			if (error)
+			if (error || SCARG(uap, cmd) != F_GETLK)
 				return error;
 
 			bsd_to_sunos_flock(&fl, &ifl);

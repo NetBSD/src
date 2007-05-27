@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_mount.c,v 1.15 2007/03/04 06:01:17 christos Exp $ */
+/*	$NetBSD: irix_mount.c,v 1.15.2.1 2007/05/27 14:34:59 ad Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_mount.c,v 1.15 2007/03/04 06:01:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_mount.c,v 1.15.2.1 2007/05/27 14:34:59 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -67,7 +67,6 @@ irix_sys_getmountid(l, v, retval)
 		syscallarg(const char *) path;
 		syscallarg(irix_mountid_t *) buf;
 	} */ *uap = v;
-	void *sg = stackgap_init(l->l_proc, 0);
 	kauth_cred_t cred;
 	struct vnode *vp;
 	int error = 0;
@@ -75,14 +74,12 @@ irix_sys_getmountid(l, v, retval)
 	irix_mountid_t mountid;
 	void *addr;
 
-	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
-
 	cred = kauth_cred_dup(l->l_cred);
 	kauth_cred_seteuid(cred, kauth_cred_getuid(l->l_cred));
 	kauth_cred_setegid(cred, kauth_cred_getgid(l->l_cred));
 
 	/* Get the vnode for the requested path */
-	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE,
+	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF | TRYEMULROOT, UIO_USERSPACE,
 	    SCARG(uap, path), l);
 	nd.ni_cnd.cn_cred = cred;
 	if ((error = namei(&nd)) != 0)
