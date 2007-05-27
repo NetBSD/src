@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.169.2.5 2007/04/10 13:26:38 ad Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.169.2.6 2007/05/27 00:11:31 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.169.2.5 2007/04/10 13:26:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.169.2.6 2007/05/27 00:11:31 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -850,7 +850,7 @@ proc_free(struct proc *p, struct rusage *caller_ru)
 	struct proc *parent;
 	struct lwp *l;
 	ksiginfo_t ksi;
-	kauth_cred_t cred;
+	kauth_cred_t cred1, cred2;
 	struct vnode *vp;
 	uid_t uid;
 
@@ -919,9 +919,9 @@ proc_free(struct proc *p, struct rusage *caller_ru)
 	mutex_exit(&proclist_mutex);
 	LIST_REMOVE(p, p_sibling);
 
-	uid = kauth_cred_getuid(p->p_cred);
+	cred1 = p->p_cred;
+	uid = kauth_cred_getuid(cred1);
 	vp = p->p_textvp;
-	cred = p->p_cred;
 	ru = p->p_ru;
 
 	l = LIST_FIRST(&p->p_lwps);
@@ -939,6 +939,12 @@ proc_free(struct proc *p, struct rusage *caller_ru)
 	 */
 	plim = p->p_limit;
 	pstats = p->p_stats;
+	cred2 = l->l_cred;
+
+	/*
+	 * Free the last LWP's resources.
+	 */
+	lwp_free(l, false, true);
 
 	/*
 	 * Free the proc structure and let pid be reallocated.  This will
@@ -956,19 +962,14 @@ proc_free(struct proc *p, struct rusage *caller_ru)
 	 */
 	limfree(plim);
 	pstatsfree(pstats);
-	kauth_cred_free(cred);
-	kauth_cred_free(l->l_cred);
+	kauth_cred_free(cred1);
+	kauth_cred_free(cred2);
 
 	/*
 	 * Release reference to text vnode
 	 */
 	if (vp)
 		vrele(vp);
-
-	/*
-	 * Free the last LWP's resources.
-	 */
-	lwp_free(l, false, true);
 
 	/*
 	 * Collect child u-areas.
