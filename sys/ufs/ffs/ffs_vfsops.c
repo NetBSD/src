@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.196.6.6 2007/05/13 17:36:42 ad Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.196.6.7 2007/05/27 00:14:03 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.196.6.6 2007/05/13 17:36:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.196.6.7 2007/05/27 00:14:03 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1339,11 +1339,11 @@ loop:
 		mutex_enter(&vp->v_interlock);
 		nvp = TAILQ_NEXT(vp, v_mntvnodes);
 		ip = VTOI(vp);
-		if ((vp->v_flag & VFREEING) != 0 || vp->v_type == VNON ||
-		    ((ip->i_flag &
-		      (IN_CHANGE | IN_UPDATE | IN_MODIFIED)) == 0 &&
-		     LIST_EMPTY(&vp->v_dirtyblkhd) &&
-		     vp->v_uobj.uo_npages == 0))
+		if (ip == NULL || (vp->v_flag & VFREEING) != 0 ||
+		    vp->v_type == VNON || ((ip->i_flag &
+		    (IN_CHANGE | IN_UPDATE | IN_MODIFIED)) == 0 &&
+		    LIST_EMPTY(&vp->v_dirtyblkhd) &&
+		    vp->v_uobj.uo_npages == 0))
 		{
 			mutex_exit(&vp->v_interlock);
 			continue;

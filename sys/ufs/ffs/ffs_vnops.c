@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.86.4.3 2007/05/13 17:36:43 ad Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.86.4.4 2007/05/27 00:14:03 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.86.4.3 2007/05/13 17:36:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.86.4.4 2007/05/27 00:14:03 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -481,6 +481,7 @@ ffs_reclaim(void *v)
 	struct inode *ip = VTOI(vp);
 	struct mount *mp = vp->v_mount;
 	struct ufsmount *ump = ip->i_ump;
+	void *data;
 	int error;
 
 	if ((error = fstrans_start(mp, FSTRANS_LAZY)) != 0)
@@ -496,12 +497,19 @@ ffs_reclaim(void *v)
 			pool_put(&ffs_dinode2_pool, ip->i_din.ffs2_din);
 	}
 	/*
+	 * To interlock with ffs_sync().
+	 */
+	genfs_node_destroy(vp);
+	mutex_enter(&vp->v_interlock);
+	data = vp->v_data;
+	vp->v_data = NULL;
+	mutex_exit(&vp->v_interlock);
+
+	/*
 	 * XXX MFS ends up here, too, to free an inode.  Should we create
 	 * XXX a separate pool for MFS inodes?
 	 */
-	genfs_node_destroy(vp);
-	pool_put(&ffs_inode_pool, vp->v_data);
-	vp->v_data = NULL;
+	pool_put(&ffs_inode_pool, data);
 	fstrans_done(mp);
 	return (0);
 }
