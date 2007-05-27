@@ -22,7 +22,7 @@ SOFTWARE.
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: bootpef.c,v 1.6 2004/11/17 13:21:09 hira Exp $");
+__RCSID("$NetBSD: bootpef.c,v 1.7 2007/05/27 16:31:41 tls Exp $");
 #endif
 
 
@@ -54,17 +54,10 @@ __RCSID("$NetBSD: bootpef.c,v 1.6 2004/11/17 13:21:09 hira Exp $");
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <strings.h>
 #include <errno.h>
 #include <ctype.h>
 #include <syslog.h>
-
-#ifndef	USE_BFUNCS
-#include <memory.h>
-/* Yes, memcpy is OK here (no overlapped copies). */
-#define bcopy(a,b,c)    memcpy(b,a,c)
-#define bzero(p,l)      memset(p,0,l)
-#define bcmp(a,b,c)     memcmp(a,b,c)
-#endif
 
 #include "bootp.h"
 #include "hash.h"

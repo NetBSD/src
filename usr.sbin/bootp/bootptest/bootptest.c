@@ -1,4 +1,4 @@
-/*	$NetBSD: bootptest.c,v 1.15 2006/05/09 20:18:09 mrg Exp $	*/
+/*	$NetBSD: bootptest.c,v 1.16 2007/05/27 16:31:42 tls Exp $	*/
 
 /*
  * bootptest.c - Test out a bootp server.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: bootptest.c,v 1.15 2006/05/09 20:18:09 mrg Exp $");
+__RCSID("$NetBSD: bootptest.c,v 1.16 2007/05/27 16:31:42 tls Exp $");
 #endif
 
 char *usage = "usage: %s [-f bootfile] [-h] [-m magic_number] server-name\n"
@@ -58,6 +58,7 @@ char *usage = "usage: %s [-f bootfile] [-h] [-m magic_number] server-name\n"
 #include <signal.h>
 #include <stdio.h>
 #include <string.h>
+#include <strings.h>
 #include <errno.h>
 #include <ctype.h>
 #include <netdb.h>
