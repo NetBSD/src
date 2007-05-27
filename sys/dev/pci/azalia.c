@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia.c,v 1.7.2.38 2006/07/30 17:09:50 tron Exp $	*/
+/*	$NetBSD: azalia.c,v 1.7.2.39 2007/05/27 20:58:22 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.7.2.38 2006/07/30 17:09:50 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.7.2.39 2007/05/27 20:58:22 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -181,12 +181,12 @@ static int	azalia_codec_comresp(const codec_t *, nid_t, uint32_t,
 static int	azalia_codec_connect_stream(codec_t *, int, uint16_t, int);
 static int	azalia_codec_disconnect_stream(codec_t *, int);
 
-static int	azalia_widget_init(widget_t *, const codec_t *, int);
-static int	azalia_widget_init_audio(widget_t *, const codec_t *);
+static int	azalia_widget_init(widget_t *, const codec_t *, int, const char *);
+static int	azalia_widget_init_audio(widget_t *, const codec_t *, const char *);
 static int	azalia_widget_print_audio(const widget_t *, const char *, int);
 static int	azalia_widget_init_pin(widget_t *, const codec_t *);
-static int	azalia_widget_print_pin(const widget_t *);
-static int	azalia_widget_init_connection(widget_t *, const codec_t *);
+static int	azalia_widget_print_pin(const widget_t *, const char *);
+static int	azalia_widget_init_connection(widget_t *, const codec_t *, const char *);
 
 static int	azalia_stream_init(stream_t *, azalia_t *, int, int, int);
 static int	azalia_stream_delete(stream_t *, azalia_t *);
@@ -969,6 +969,8 @@ azalia_free_dmamem(const azalia_t *az, azalia_dma_t* d)
 static int
 azalia_codec_init(codec_t *this)
 {
+#define LEAD_LEN	100
+	char lead[LEAD_LEN];
 	uint32_t rev, id, result;
 	int err, addr, n, i;
 
@@ -1075,14 +1077,16 @@ azalia_codec_init(codec_t *this)
 	this->comresp(this, this->audiofunc, CORB_GET_PARAMETER,
 	    COP_OUTPUT_AMPCAP, &result);
 	this->w[this->audiofunc].outamp_cap = result;
+	lead[0] = 0;
 #ifdef AZALIA_DEBUG
-	azalia_widget_print_audio(&this->w[this->audiofunc], "\t", -1);
+	snprintf(lead, LEAD_LEN, "%s:    ", XNAME(this->az));
+	azalia_widget_print_audio(&this->w[this->audiofunc], lead, -1);
 	result = this->w[this->audiofunc].inamp_cap;
-	DPRINTF(("\tinamp: mute=%u size=%u steps=%u offset=%u\n",
+	DPRINTF(("%sinamp: mute=%u size=%u steps=%u offset=%u\n", lead,
 	    (result & COP_AMPCAP_MUTE) != 0, COP_AMPCAP_STEPSIZE(result),
 	    COP_AMPCAP_NUMSTEPS(result), COP_AMPCAP_OFFSET(result)));
 	result = this->w[this->audiofunc].outamp_cap;
-	DPRINTF(("\toutamp: mute=%u size=%u steps=%u offset=%u\n",
+	DPRINTF(("%soutamp: mute=%u size=%u steps=%u offset=%u\n", lead,
 	    (result & COP_AMPCAP_MUTE) != 0, COP_AMPCAP_STEPSIZE(result),
 	    COP_AMPCAP_NUMSTEPS(result), COP_AMPCAP_OFFSET(result)));
 #endif
@@ -1092,10 +1096,91 @@ azalia_codec_init(codec_t *this)
 	strlcpy(this->w[this->audiofunc].name, "hdaudio",
 	    sizeof(this->w[this->audiofunc].name));
 	FOR_EACH_WIDGET(this, i) {
-		err = azalia_widget_init(&this->w[i], this, i);
+		err = azalia_widget_init(&this->w[i], this, i, lead);
 		if (err)
 			return err;
 	}
+#if defined(AZALIA_DEBUG) &&  defined(AZALIA_DEBUG_DOT)
+	DPRINTF(("-------- Graphviz DOT starts\n"));
+	if (this->name == NULL) {
+		DPRINTF(("digraph \"0x%4.4x/0x%4.4x (rev. %u.%u)\" {\n",
+		    id >> 16, id & 0xffff,
+		    COP_RID_REVISION(rev), COP_RID_STEPPING(rev)));
+	} else {
+		DPRINTF(("digraph \"%s (rev. %u.%u)\" {\n", this->name,
+		    COP_RID_REVISION(rev), COP_RID_STEPPING(rev)));
+	}
+	FOR_EACH_WIDGET(this, i) {
+		const widget_t *w;
+		int j;
+		w = &this->w[i];
+		switch (w->type) {
+		case COP_AWTYPE_AUDIO_OUTPUT:
+			DPRINTF((" %s [shape=box,style=filled,fillcolor=\""
+			    "#88ff88\"];\n", w->name));
+			break;
+		case COP_AWTYPE_AUDIO_INPUT:
+			DPRINTF((" %s [shape=box,style=filled,fillcolor=\""
+			    "#ff8888\"];\n", w->name));
+			break;
+		case COP_AWTYPE_AUDIO_MIXER:
+			DPRINTF((" %s [shape=invhouse];\n", w->name));
+			break;
+		case COP_AWTYPE_AUDIO_SELECTOR:
+			DPRINTF((" %s [shape=invtrapezium];\n", w->name));
+			break;
+		case COP_AWTYPE_PIN_COMPLEX:
+			DPRINTF((" %s [label=\"%s\\ndevice=%s\",style=filled",
+			    w->name, w->name, pin_devices[w->d.pin.device]));
+			if (w->d.pin.cap & COP_PINCAP_OUTPUT &&
+			    w->d.pin.cap & COP_PINCAP_INPUT)
+				DPRINTF((",shape=doublecircle,fillcolor=\""
+				    "#ffff88\"];\n"));
+			else if (w->d.pin.cap & COP_PINCAP_OUTPUT)
+				DPRINTF((",shape=circle,fillcolor=\"#88ff88\"];\n"));
+			else
+				DPRINTF((",shape=circle,fillcolor=\"#ff8888\"];\n"));
+			break;
+		}
+		if ((w->widgetcap & COP_AWCAP_CONNLIST) == 0)
+			continue;
+		for (j = 0; j < w->nconnections; j++) {
+			int src = w->connections[j];
+			if (!VALID_WIDGET_NID(src, this))
+				continue;
+			DPRINTF((" %s -> %s [sametail=%s];\n",
+			    this->w[src].name, w->name, this->w[src].name));
+		}
+	}
+
+	DPRINTF((" {rank=min;"));
+	FOR_EACH_WIDGET(this, i) {
+		const widget_t *w;
+		w = &this->w[i];
+		switch (w->type) {
+		case COP_AWTYPE_AUDIO_OUTPUT:
+		case COP_AWTYPE_AUDIO_INPUT:
+			DPRINTF((" %s;", w->name));
+			break;
+		}
+	}
+	DPRINTF(("}\n"));
+
+	DPRINTF((" {rank=max;"));
+	FOR_EACH_WIDGET(this, i) {
+		const widget_t *w;
+		w = &this->w[i];
+		switch (w->type) {
+		case COP_AWTYPE_PIN_COMPLEX:
+			DPRINTF((" %s;", w->name));
+			break;
+		}
+	}
+	DPRINTF(("}\n"));
+
+	DPRINTF(("}\n"));
+	DPRINTF(("-------- Graphviz DOT ends\n"));
+#endif	/* AZALIA_DEBUG && AZALIA_DEBUG_DOT */
 
 	err = this->init_dacgroup(this);
 	if (err)
@@ -1145,7 +1230,7 @@ azalia_codec_construct_format(codec_t *this, int newdac, int newadc)
 	const convgroup_t *group;
 	uint32_t bits_rates;
 	int prev_dac, prev_adc;
-	int pvariation, rvariation;
+	int variation;
 	int nbits, c, chan, i, err;
 	nid_t nid;
 
@@ -1169,7 +1254,7 @@ azalia_codec_construct_format(codec_t *this, int newdac, int newadc)
 		    XNAME(this->az), bits_rates);
 		return -1;
 	}
-	pvariation = group->nconv * nbits;
+	variation = group->nconv * nbits;
 
 	prev_adc = this->adcs.cur;
 	this->adcs.cur = newadc;
@@ -1191,13 +1276,13 @@ azalia_codec_construct_format(codec_t *this, int newdac, int newadc)
 		    XNAME(this->az), bits_rates);
 		return -1;
 	}
-	rvariation = group->nconv * nbits;
+	variation += group->nconv * nbits;
 
 	if (this->formats != NULL)
 		free(this->formats, M_DEVBUF);
 	this->nformats = 0;
-	this->formats = malloc(sizeof(struct audio_format) *
-	    (pvariation + rvariation), M_DEVBUF, M_ZERO | M_NOWAIT);
+	this->formats = malloc(sizeof(struct audio_format) * variation,
+	    M_DEVBUF, M_ZERO | M_NOWAIT);
 	if (this->formats == NULL) {
 		aprint_error("%s: out of memory in %s\n",
 		    XNAME(this->az), __func__);
@@ -1240,6 +1325,15 @@ azalia_codec_construct_format(codec_t *this, int newdac, int newadc)
 		snprintf(flagbuf, FLAGBUFLEN, "%s: recording: ", XNAME(this->az));
 		azalia_widget_print_audio(&this->w[group->conv[0]], flagbuf, chan);
 	}
+
+#ifdef DIAGNOSTIC
+	if (this->nformats > variation) {
+		aprint_error("%s: Internal error: the format buffer is too small: "
+		    "nformats=%d variation=%d\n", XNAME(this->az),
+		    this->nformats, variation);
+		return ENOMEM;
+	}
+#endif
 
 	err = auconv_create_encodings(this->formats, this->nformats,
 	    &this->encodings);
@@ -1297,6 +1391,7 @@ azalia_codec_add_format(codec_t *this, int chan, int valid, int prec,
 	default:
 		f->channel_mask = 0;
 	}
+	f->frequency_type = 0;
 	if (rates & COP_PCM_R80)
 		f->frequency[f->frequency_type++] = 8000;
 	if (rates & COP_PCM_R110)
@@ -1361,6 +1456,7 @@ azalia_codec_connect_stream(codec_t *this, int dir, uint16_t fmt, int number)
 	nchan = (fmt & HDA_SD_FMT_CHAN) + 1;
 	startchan = 0;
 	for (i = 0; i < group->nconv; i++) {
+		uint32_t stream_chan;
 		nid = group->conv[i];
 
 		/* surround and c/lfe handling */
@@ -1373,8 +1469,11 @@ azalia_codec_connect_stream(codec_t *this, int dir, uint16_t fmt, int number)
 		err = this->comresp(this, nid, CORB_SET_CONVERTER_FORMAT, fmt, NULL);
 		if (err)
 			goto exit;
+		stream_chan = (number << 4) | startchan;
+		if (startchan >= nchan)
+			stream_chan = 0; /* stream#0 */
 		err = this->comresp(this, nid, CORB_SET_CONVERTER_STREAM_CHANNEL,
-				    (number << 4) | startchan, NULL);
+				    stream_chan, NULL);
 		if (err)
 			goto exit;
 		if (this->w[nid].widgetcap & COP_AWCAP_DIGITAL) {
@@ -1424,7 +1523,8 @@ azalia_codec_disconnect_stream(codec_t *this, int dir)
  * ================================================================ */
 
 static int
-azalia_widget_init(widget_t *this, const codec_t *codec, nid_t nid)
+azalia_widget_init(widget_t *this, const codec_t *codec,
+		   nid_t nid, const char *lead)
 {
 	char flagbuf[FLAGBUFLEN];
 	uint32_t result;
@@ -1449,12 +1549,12 @@ azalia_widget_init(widget_t *this, const codec_t *codec, nid_t nid)
 	case COP_AWTYPE_AUDIO_OUTPUT:
 		snprintf(this->name, sizeof(this->name), "dac%2.2x", nid);
 		DPRINTF(("%s wcap=%s\n", this->name, flagbuf));
-		azalia_widget_init_audio(this, codec);
+		azalia_widget_init_audio(this, codec, lead);
 		break;
 	case COP_AWTYPE_AUDIO_INPUT:
 		snprintf(this->name, sizeof(this->name), "adc%2.2x", nid);
 		DPRINTF(("%s wcap=%s\n", this->name, flagbuf));
-		azalia_widget_init_audio(this, codec);
+		azalia_widget_init_audio(this, codec, lead);
 		break;
 	case COP_AWTYPE_AUDIO_MIXER:
 		snprintf(this->name, sizeof(this->name), "mix%2.2x", nid);
@@ -1469,7 +1569,7 @@ azalia_widget_init(widget_t *this, const codec_t *codec, nid_t nid)
 		snprintf(this->name, sizeof(this->name), "%s%2.2x",
 		    pin_colors[this->d.pin.color], nid);
 		DPRINTF(("%s wcap=%s\n", this->name, flagbuf));
-		azalia_widget_print_pin(this);
+		azalia_widget_print_pin(this, lead);
 		break;
 	case COP_AWTYPE_POWER:
 		snprintf(this->name, sizeof(this->name), "pow%2.2x", nid);
@@ -1482,7 +1582,7 @@ azalia_widget_init(widget_t *this, const codec_t *codec, nid_t nid)
 		    COP_VOLUME_KNOB_CAPABILITIES, &result);
 		if (!err) {
 			this->d.volume.cap = result;
-			DPRINTF(("\tdelta=%d steps=%d\n",
+			DPRINTF(("%sdelta=%d steps=%d\n", lead,
 			    !!(result & COP_VKCAP_DELTA),
 			    COP_VKCAP_NUMSTEPS(result)));
 		}
@@ -1496,7 +1596,7 @@ azalia_widget_init(widget_t *this, const codec_t *codec, nid_t nid)
 		DPRINTF(("%s wcap=%s\n", this->name, flagbuf));
 		break;
 	}
-	azalia_widget_init_connection(this, codec);
+	azalia_widget_init_connection(this, codec, lead);
 
 	/* amplifier information */
 	if (this->widgetcap & COP_AWCAP_INAMP) {
@@ -1505,8 +1605,8 @@ azalia_widget_init(widget_t *this, const codec_t *codec, nid_t nid)
 			    COP_INPUT_AMPCAP, &this->inamp_cap);
 		else
 			this->inamp_cap = codec->w[codec->audiofunc].inamp_cap;
-		DPRINTF(("\tinamp: mute=%u size=%u steps=%u offset=%u\n",
-		    (this->inamp_cap & COP_AMPCAP_MUTE) != 0,
+		DPRINTF(("%sinamp: mute=%u size=%u steps=%u offset=%u\n",
+		    lead, (this->inamp_cap & COP_AMPCAP_MUTE) != 0,
 		    COP_AMPCAP_STEPSIZE(this->inamp_cap),
 		    COP_AMPCAP_NUMSTEPS(this->inamp_cap),
 		    COP_AMPCAP_OFFSET(this->inamp_cap)));
@@ -1517,8 +1617,8 @@ azalia_widget_init(widget_t *this, const codec_t *codec, nid_t nid)
 			    COP_OUTPUT_AMPCAP, &this->outamp_cap);
 		else
 			this->outamp_cap = codec->w[codec->audiofunc].outamp_cap;
-		DPRINTF(("\toutamp: mute=%u size=%u steps=%u offset=%u\n",
-		    (this->outamp_cap & COP_AMPCAP_MUTE) != 0,
+		DPRINTF(("%soutamp: mute=%u size=%u steps=%u offset=%u\n",
+		    lead, (this->outamp_cap & COP_AMPCAP_MUTE) != 0,
 		    COP_AMPCAP_STEPSIZE(this->outamp_cap),
 		    COP_AMPCAP_NUMSTEPS(this->outamp_cap),
 		    COP_AMPCAP_OFFSET(this->outamp_cap)));
@@ -1529,7 +1629,7 @@ azalia_widget_init(widget_t *this, const codec_t *codec, nid_t nid)
 }
 
 static int
-azalia_widget_init_audio(widget_t *this, const codec_t *codec)
+azalia_widget_init_audio(widget_t *this, const codec_t *codec, const char *lead)
 {
 	uint32_t result;
 	int err;
@@ -1566,7 +1666,7 @@ azalia_widget_init_audio(widget_t *this, const codec_t *codec)
 		    codec->w[codec->audiofunc].d.audio.bits_rates;
 	}
 #ifdef AZALIA_DEBUG
-	azalia_widget_print_audio(this, "\t", -1);
+	azalia_widget_print_audio(this, lead, -1);
 #endif
 	return 0;
 }
@@ -1617,15 +1717,39 @@ azalia_widget_init_pin(widget_t *this, const codec_t *codec)
 	if (err)
 		return err;
 	this->d.pin.cap = result;
+
+	/* input pin */
+	if ((this->d.pin.cap & COP_PINCAP_INPUT) &&
+	    (this->d.pin.cap & COP_PINCAP_OUTPUT) == 0) {
+		err = codec->comresp(codec, this->nid,
+		    CORB_GET_PIN_WIDGET_CONTROL, 0, &result);
+		if (err == 0) {
+			result &= ~CORB_PWC_OUTPUT;
+			result |= CORB_PWC_INPUT;
+			codec->comresp(codec, this->nid,
+			     CORB_SET_PIN_WIDGET_CONTROL, result, NULL);
+		}
+	}
+	/* output pin, or bidirectional pin */
+	if (this->d.pin.cap & COP_PINCAP_OUTPUT) {
+		err = codec->comresp(codec, this->nid,
+		    CORB_GET_PIN_WIDGET_CONTROL, 0, &result);
+		if (err == 0) {
+			result &= ~CORB_PWC_INPUT;
+			result |= CORB_PWC_OUTPUT;
+			codec->comresp(codec, this->nid,
+			    CORB_SET_PIN_WIDGET_CONTROL, result, NULL);
+		}
+	}
 	return 0;
 }
 
 static int
-azalia_widget_print_pin(const widget_t *this)
+azalia_widget_print_pin(const widget_t *this, const char *lead)
 {
 	char flagbuf[FLAGBUFLEN];
 
-	DPRINTF(("\tpin config; device=%s color=%s assoc=%d seq=%d",
+	DPRINTF(("%spin config; device=%s color=%s assoc=%d seq=%d", lead,
 	    pin_devices[this->d.pin.device], pin_colors[this->d.pin.color],
 	    this->d.pin.association, this->d.pin.sequence));
 	bitmask_snprintf(this->d.pin.cap, "\20\021EAPD\07BALANCE\06INPUT"
@@ -1636,7 +1760,8 @@ azalia_widget_print_pin(const widget_t *this)
 }
 
 static int
-azalia_widget_init_connection(widget_t *this, const codec_t *codec)
+azalia_widget_init_connection(widget_t *this, const codec_t *codec,
+			      const char *lead)
 {
 	uint32_t result;
 	int err;
@@ -1684,7 +1809,7 @@ azalia_widget_init_connection(widget_t *this, const codec_t *codec)
 		}
 	}
 	if (length > 0) {
-		DPRINTF(("\tconnections=0x%x", this->connections[0]));
+		DPRINTF(("%sconnections=0x%x", lead, this->connections[0]));
 		for (i = 1; i < length; i++) {
 			DPRINTF((",0x%x", this->connections[i]));
 		}
