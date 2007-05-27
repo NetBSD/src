@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.61.2.9 2007/04/28 22:40:03 ad Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.61.2.10 2007/05/27 00:12:09 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -200,7 +200,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.61.2.9 2007/04/28 22:40:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.61.2.10 2007/05/27 00:12:09 ad Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -651,18 +651,20 @@ newlwp(struct lwp *l1, struct proc *p2, vaddr_t uaddr, bool inmem,
 }
 
 /*
- * Quit the process.  This will call cpu_exit, which will call cpu_switch,
- * so this can only be used meaningfully if you're willing to switch away. 
- * Calling with l!=curlwp would be weird.
+ * Exit an LWP.
  */
 void
 lwp_exit(struct lwp *l)
 {
 	struct proc *p = l->l_proc;
 	struct lwp *l2;
+	bool current;
+
+	current = (l == curlwp);
 
 	DPRINTF(("lwp_exit: %d.%d exiting.\n", p->p_pid, l->l_lid));
 	DPRINTF((" nlwps: %d nzlwps: %d\n", p->p_nlwps, p->p_nzlwps));
+	KASSERT(current || l->l_stat == LSIDL);
 
 	/*
 	 * Verify that we hold no locks other than the kernel lock.
@@ -685,6 +687,7 @@ lwp_exit(struct lwp *l)
 	 */
 	mutex_enter(&p->p_smutex);
 	if (p->p_nlwps - p->p_nzlwps == 1) {
+		KASSERT(current == true);
 		DPRINTF(("lwp_exit: %d.%d calling exit1()\n",
 		    p->p_pid, l->l_lid));
 		exit1(l, 0);
@@ -770,20 +773,22 @@ lwp_exit(struct lwp *l)
 #ifndef __NO_CPU_LWP_FREE
 	cpu_lwp_free(l, 0);
 #endif
-	pmap_deactivate(l);
 
-	/*
-	 * Release the kernel lock, signal another LWP to collect us,
-	 * and switch away into oblivion.
-	 */
+	if (current) {
+		pmap_deactivate(l);
+
+		/*
+		 * Release the kernel lock, and switch away into
+		 * oblivion.
+		 */
 #ifdef notyet
-	/* XXXSMP hold in lwp_userret() */
-	KERNEL_UNLOCK_LAST(l);
+		/* XXXSMP hold in lwp_userret() */
+		KERNEL_UNLOCK_LAST(l);
 #else
-	KERNEL_UNLOCK_ALL(l, NULL);
+		KERNEL_UNLOCK_ALL(l, NULL);
 #endif
-
-	cpu_exit(l);
+		cpu_exit(l);
+	}
 }
 
 /*
