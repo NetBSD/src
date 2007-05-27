@@ -1,4 +1,4 @@
-/*	$NetBSD: eventvar.h,v 1.6.30.1 2007/05/13 17:36:39 ad Exp $	*/
+/*	$NetBSD: eventvar.h,v 1.6.30.2 2007/05/27 00:20:36 ad Exp $	*/
 /*-
  * Copyright (c) 1999,2000 Jonathan Lemon <jlemon@FreeBSD.org>
  * All rights reserved.
@@ -37,11 +37,12 @@
 
 struct kqueue {
 	TAILQ_HEAD(kqlist, knote) kq_head;	/* list of pending event */
-	kmutex_t	kq_lock;		/* mutex for queue access */
-	kcondvar_t	kq_cv;			/* for notification */
 	int		kq_count;		/* number of pending events */
+	struct simplelock kq_lock;		/* mutex for queue access */
 	struct selinfo	kq_sel;
 	struct filedesc *kq_fdp;
+	int		kq_state;
+#define	KQ_SLEEP	0x01
 	struct kevent	kq_kev[KQ_NEVENTS];
 };
 
