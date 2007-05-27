@@ -1,4 +1,4 @@
-/*	$NetBSD: db_xxx.c,v 1.42 2007/02/22 04:38:06 matt Exp $	*/
+/*	$NetBSD: db_xxx.c,v 1.42.4.1 2007/05/27 00:15:12 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -39,7 +39,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.42 2007/02/22 04:38:06 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.42.4.1 2007/05/27 00:15:12 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -125,6 +125,7 @@ db_show_all_procs(db_expr_t addr, bool haddr,
 	struct lwp *l, *cl;
 	struct timeval tv[2];
 	const struct proclist_desc *pd;
+	char nbuf[MAXCOMLEN + 1];
 
 	if (modif[0] == 0)
 		mode = "n";			/* default == normal mode */
@@ -146,8 +147,8 @@ db_show_all_procs(db_expr_t addr, bool haddr,
 		    "COMMAND", "STRUCT PROC *", "UAREA *", "VMSPACE/VM_MAP");
 		break;
 	case 'l':
-		db_printf(" PID        %4s S %9s %18s %18s %-12s\n",
-		    "LID", "FLAGS", "STRUCT LWP *", "UAREA *", "WAIT");
+		db_printf(" PID        %4s S %9s %18s %18s %-8s\n",
+		    "LID", "FLAGS", "STRUCT LWP *", "NAME", "WAIT");
 		break;
 	case 'n':
 		db_printf(" PID       %8s %8s %10s S %7s %4s %16s %7s\n",
@@ -176,17 +177,22 @@ db_show_all_procs(db_expr_t addr, bool haddr,
 			switch (*mode) {
 
 			case 'a':
-				db_printf("%10.10s %18p %18p %18p\n",
-				    p->p_comm, p,
-				    l != NULL ? l->l_addr : 0,
-				    p->p_vmspace);
+				db_printf("%10.10s %18lx %18lx %18lx\n",
+				    p->p_comm, (long)p,
+				    (long)(l != NULL ? l->l_addr : 0),
+				    (long)p->p_vmspace);
 				break;
 			case 'l':
 				 while (l != NULL) {
-					db_printf("%c%4d %d %#9x %18p %18p %s\n",
+				 	if (l->l_name != NULL) {
+				 		snprintf(nbuf, sizeof(nbuf),
+				 		    "%s", l->l_name);
+					} else
+				 		snprintf(nbuf, sizeof(nbuf),
+				 		    "%s", p->p_comm);
+					db_printf("%c%4d %d %9x %18lx %18s %-8s\n",
 					    (cl == l ? '>' : ' '), l->l_lid,
-					    l->l_stat, l->l_flag, l,
-					    l->l_addr,
+					    l->l_stat, l->l_flag, (long)l, nbuf,
 					    (l->l_wchan && l->l_wmesg) ?
 					    l->l_wmesg : "");
 
