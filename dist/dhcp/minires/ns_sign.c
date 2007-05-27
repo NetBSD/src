@@ -22,7 +22,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$Id: ns_sign.c,v 1.4 2005/08/11 17:13:26 drochner Exp $";
+static const char rcsid[] = "$Id: ns_sign.c,v 1.5 2007/05/27 16:27:57 tls Exp $";
 #endif
 
 #if defined (TRACING)
@@ -48,6 +48,7 @@ time_t trace_mr_time (time_t *);
 #include <time.h>
 
 #include "minires/minires.h"
+#include "omapip/trace_mr.h"
 #include "arpa/nameser.h"
 
 #include <isc-dhcp/dst.h>
