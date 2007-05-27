@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0.3,v 1.1.2.38 2007/05/08 09:40:25 ghen Exp $
+#	$NetBSD: CHANGES-3.0.3,v 1.1.2.39 2007/05/27 21:08:03 bouyer Exp $
 
 A complete list of changes from the NetBSD 3.0.2 release to the NetBSD 3.0.3
 release:
@@ -1671,4 +1671,18 @@ usr.bin/passwd/pam_passwd.c			1.4
 
 	Display a message indicating who's password is being changed.
 	[jnemeth, ticket #1776]
+
+etc/security					1.101
+
+	PR/36058 -- fix check for group/other writable home directories from
+	Jukka Salmi
+	[jnemeth, ticket #1777]
+
+sys/arch/amd64/conf/GENERIC			1.141
+sys/arch/amd64/conf/INSTALL			1.68
+sys/arch/hpcarm/conf/IPAQ			1.50
+sys/arch/i386/conf/SWINGER			1.90
+
+	PR/36234 - Joerg Niendorf -- xi -> xirc
+	[jnemeth, ticket #1778]
 
