@@ -1,8 +1,8 @@
-/*	$NetBSD: dumptab.c,v 1.7 2006/02/25 02:28:58 wiz Exp $	*/
+/*	$NetBSD: dumptab.c,v 1.8 2007/05/27 16:31:42 tls Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: dumptab.c,v 1.7 2006/02/25 02:28:58 wiz Exp $");
+__RCSID("$NetBSD: dumptab.c,v 1.8 2007/05/27 16:31:42 tls Exp $");
 #endif
 
 /*
@@ -15,16 +15,9 @@ __RCSID("$NetBSD: dumptab.c,v 1.7 2006/02/25 02:28:58 wiz Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <strings.h>
 #include <syslog.h>
 #include <time.h>
-
-#ifndef USE_BFUNCS
-#include <memory.h>
-/* Yes, memcpy is OK here (no overlapped copies). */
-#define bcopy(a,b,c)    memcpy(b,a,c)
-#define bzero(p,l)      memset(p,0,l)
-#define bcmp(a,b,c)     memcmp(a,b,c)
-#endif
 
 #include "bootp.h"
 #include "hash.h"

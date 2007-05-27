@@ -22,7 +22,7 @@ SOFTWARE.
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: bootpd.c,v 1.20 2006/05/09 20:18:09 mrg Exp $");
+__RCSID("$NetBSD: bootpd.c,v 1.21 2007/05/27 16:31:41 tls Exp $");
 #endif
 
 /*
@@ -63,6 +63,7 @@ __RCSID("$NetBSD: bootpd.c,v 1.20 2006/05/09 20:18:09 mrg Exp $");
 #include <signal.h>
 #include <stdio.h>
 #include <string.h>
+#include <strings.h>
 #include <errno.h>
 #include <ctype.h>
 #include <netdb.h>
@@ -76,14 +77,6 @@ __RCSID("$NetBSD: bootpd.c,v 1.20 2006/05/09 20:18:09 mrg Exp $");
 #ifdef	SVR4
 /* Using sigset() avoids the need to re-arm each time. */
 #define signal sigset
-#endif
-
-#ifndef	USE_BFUNCS
-# include <memory.h>
-/* Yes, memcpy is OK here (no overlapped copies). */
-# define bcopy(a,b,c)    memcpy(b,a,c)
-# define bzero(p,l)      memset(p,0,l)
-# define bcmp(a,b,c)     memcmp(a,b,c)
 #endif
 
 #include "bootp.h"

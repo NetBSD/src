@@ -27,7 +27,7 @@ SOFTWARE.
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: bootpgw.c,v 1.12 2006/05/09 20:18:09 mrg Exp $");
+__RCSID("$NetBSD: bootpgw.c,v 1.13 2007/05/27 16:31:42 tls Exp $");
 #endif
 
 /*
@@ -55,6 +55,7 @@ __RCSID("$NetBSD: bootpgw.c,v 1.12 2006/05/09 20:18:09 mrg Exp $");
 #include <signal.h>
 #include <stdio.h>
 #include <string.h>
+#include <strings.h>
 #include <errno.h>
 #include <ctype.h>
 #include <netdb.h>
@@ -63,14 +64,6 @@ __RCSID("$NetBSD: bootpgw.c,v 1.12 2006/05/09 20:18:09 mrg Exp $");
 
 #ifdef	NO_SETSID
 # include <fcntl.h>		/* for O_RDONLY, etc */
-#endif
-
-#ifndef	USE_BFUNCS
-# include <memory.h>
-/* Yes, memcpy is OK here (no overlapped copies). */
-# define bcopy(a,b,c)    memcpy(b,a,c)
-# define bzero(p,l)      memset(p,0,l)
-# define bcmp(a,b,c)     memcmp(a,b,c)
 #endif
 
 #include "bootp.h"
