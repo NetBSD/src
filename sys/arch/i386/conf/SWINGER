@@ -1,4 +1,4 @@
-#	$NetBSD: SWINGER,v 1.88.8.1 2007/04/10 13:23:03 ad Exp $
+#	$NetBSD: SWINGER,v 1.88.8.2 2007/05/27 12:27:28 ad Exp $
 #	from NetBSD: GENERIC,v 1.325 2000/04/14 14:53:32 augustss Exp
 #
 #	SWINGER -- thorpej's Abit BP6+dual Celeron
@@ -8,7 +8,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"SWINGER-$Revision: 1.88.8.1 $"
+#ident 		"SWINGER-$Revision: 1.88.8.2 $"
 
 maxusers	64		# estimated number of users
 
@@ -530,7 +530,9 @@ rtk*	at pci? dev ? function ?	# Realtek 8129/8139
 #ray*	at pcmcia? function ?		# Raytheon Raylink (802.11)
 #sm*	at pcmcia? function ?		# Megahertz Ethernet
 #wi*	at pcmcia? function ?		# Lucent/Intersil WaveLan IEEE (802.11)
-#xi*	at pcmcia? function ?		# Xircom CreditCard Ethernet
+#xirc*	at pcmcia? function ?		# Xircom CreditCard Ethernet
+#com*	at xirc?
+#xi*	at xirc?
 
 #mhzc*	at pcmcia? function ?		# Megahertz Ethernet/Modem combo cards
 #com*	at mhzc?

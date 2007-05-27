@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.96 2007/03/04 06:00:50 christos Exp $ */
+/*	$NetBSD: db_interface.c,v 1.96.2.1 2007/05/27 12:28:25 ad Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.96 2007/03/04 06:00:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.96.2.1 2007/05/27 12:28:25 ad Exp $");
 
 #include "opt_ddb.h"
 
@@ -767,11 +767,10 @@ db_pmap_cmd(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 				if (c == 'f')
 					full = 1;
 	}
-	if (curlwp && curproc->p_vmspace)
-		pm = curproc->p_vmspace->vm_map.pmap;
-	if (have_addr) {
+	if (curlwp && curlwp->l_proc->p_vmspace)
+		pm = curlwp->l_proc->p_vmspace->vm_map.pmap;
+	if (have_addr)
 		pm = (struct pmap*)addr;
-	}
 
 	db_printf("pmap %p: ctx %x refs %d physaddr %llx psegs %p\n",
 		pm, pm->pm_ctx, pm->pm_refs,
@@ -896,7 +895,7 @@ db_proc_cmd(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 	struct proc *p = NULL;
 
 	if (curlwp)
-		p = curproc;
+		p = curlwp->l_proc;
 	if (have_addr) 
 		p = (struct proc*) addr;
 	if (p == NULL) {
@@ -1185,10 +1184,9 @@ cpu_debug_dump(void)
 	struct cpu_info *ci;
 
 	for (ci = cpus; ci; ci = ci->ci_next) {
-		db_printf("cpu%d: self 0x%08lx lwp 0x%08lx pcb 0x%08lx idle 0x%08lx\n",
+		db_printf("cpu%d: self 0x%08lx lwp 0x%08lx pcb 0x%08lx\n",
 			  ci->ci_number, (u_long)ci->ci_self,
-			  (u_long)ci->ci_curlwp, (u_long)ci->ci_cpcb,
-			  (u_long)ci->ci_idle_u);
+			  (u_long)ci->ci_curlwp, (u_long)ci->ci_cpcb);
 	}
 }
 

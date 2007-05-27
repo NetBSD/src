@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.42 2007/02/23 03:14:32 uwe Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.42.4.1 2007/05/27 12:28:08 ad Exp $	*/
 
 /*-
  * Copyright (C) 2002 UCHIYAMA Yasushi.  All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.42 2007/02/23 03:14:32 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.42.4.1 2007/05/27 12:28:08 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -133,6 +133,8 @@ kdb_trap(int type, int code, db_regs_t *regs)
 
 		kdb_printtrap(type, code);
 		if (db_recover != NULL) {
+			db_printf("[pc %x, pr %x]: ",
+				  regs->tf_spc, regs->tf_pr);
 			db_error("Faulted in DDB; continuing...\n");
 			/*NOTREACHED*/
 		}

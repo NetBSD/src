@@ -1,4 +1,4 @@
-/*	$NetBSD: pmc.h,v 1.7 2003/01/17 23:10:29 thorpej Exp $	*/
+/*	$NetBSD: pmc.h,v 1.7.60.1 2007/05/27 12:27:34 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -63,14 +63,14 @@
 /*
  * LEGACY PMC support
  */
-struct i386_pmc_info_args;
-struct i386_pmc_startstop_args;
-struct i386_pmc_read_args;
-int	pmc_info(struct lwp *, struct i386_pmc_info_args *,
+struct x86_pmc_info_args;
+struct x86_pmc_startstop_args;
+struct x86_pmc_read_args;
+int	pmc_info(struct lwp *, struct x86_pmc_info_args *,
 	    register_t *);
-int	pmc_startstop(struct lwp *, struct i386_pmc_startstop_args *,
+int	pmc_startstop(struct lwp *, struct x86_pmc_startstop_args *,
 	    register_t *);
-int	pmc_read(struct lwp *, struct i386_pmc_read_args *,
+int	pmc_read(struct lwp *, struct x86_pmc_read_args *,
 	    register_t *);
 /* END LEGACY PMC SUPPORT */
 

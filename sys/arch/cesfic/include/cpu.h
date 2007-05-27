@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.15 2007/03/05 13:06:44 tsutsui Exp $	*/
+/*	$NetBSD: cpu.h,v 1.15.2.1 2007/05/27 12:27:13 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -95,6 +95,7 @@ struct cpu_info {
 	struct cpu_data ci_data;	/* MI per-cpu data */
 	int	ci_mtx_count;
 	int	ci_mtx_oldspl;
+	int	ci_want_resched;
 };
 
 extern struct cpu_info cpu_info_store;
@@ -137,15 +138,16 @@ struct clockframe {
  * Preempt the current process if in interrupt from user mode,
  * or after the current trap/syscall if in system mode.
  */
-extern int want_resched;	/* resched() was called */
-#define	cpu_need_resched(ci)	{ want_resched++; aston(); }
+#define	cpu_need_resched(ci, flags)	\
+	do { ci->ci_want_resched = 1; aston(); } while (/* CONSTCOND */0)
 
 /*
  * Give a profiling tick to the current process when the user profiling
  * buffer pages are invalid.  On the hp300, request an ast to send us
  * through trap, marking the proc as needing a profiling tick.
  */
-#define	cpu_need_proftick(l)	{ (l)->l_pflag |= LP_OWEUPC; aston(); }
+#define	cpu_need_proftick(l)	\
+	do { (l)->l_pflag |= LP_OWEUPC; aston(); } while (/* CONSTCOND */0)
 
 /*
  * Notify the current process (p) that it has a signal pending,
@@ -179,18 +181,12 @@ extern int astpending;		/* need to trap before returning to user mode */
 #define	M68K_MMU_MOTOROLA
 #endif /* ! M68K_MMU_MOTOROLA */
 
-struct frame;
 struct fpframe;
-struct pcb;
 
 /* locore.s functions */
 void	m68881_save __P((struct fpframe *));
 void	m68881_restore __P((struct fpframe *));
 int	suline __P((void *, void *));
-void	savectx __P((struct pcb *));
-void	switch_exit __P((struct lwp *));
-void	switch_lwp_exit __P((struct lwp *));
-void	proc_trampoline __P((void));
 void	loadustp __P((int));
 
 void	doboot __P((void))
@@ -199,14 +195,6 @@ void	doboot __P((void))
 /* machdep.c functions */
 int	badaddr __P((void *));
 int	badbaddr __P((void *));
-
-/* sys_machdep.c functions */
-int	cachectl1 __P((unsigned long, vaddr_t, size_t, struct proc *));
-
-/* vm_machdep.c functions */
-void	physaccess __P((void *, void *, int, int));
-void	physunaccess __P((void *, int));
-int	kvtop __P((void *));
 
 void kgdb_panic __P((void));
 

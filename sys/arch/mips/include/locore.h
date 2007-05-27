@@ -1,4 +1,4 @@
-/* $NetBSD: locore.h,v 1.75 2007/03/04 06:00:11 christos Exp $ */
+/* $NetBSD: locore.h,v 1.75.2.1 2007/05/27 12:27:44 ad Exp $ */
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -44,7 +44,7 @@ void	mips1_TBIAP(int);
 void	mips1_TBIS(vaddr_t);
 int	mips1_TLBUpdate(u_int, u_int);
 void	mips1_wbflush(void);
-void	mips1_proc_trampoline(void);
+void	mips1_lwp_trampoline(void);
 void	mips1_cpu_switch_resume(void);
 
 uint32_t tx3900_cp0_config_read(void);
@@ -59,7 +59,7 @@ int	mips3_TLBUpdate(u_int, u_int);
 void	mips3_TLBRead(int, struct tlb *);
 void	mips3_TLBWriteIndexedVPS(int, struct tlb *);
 void	mips3_wbflush(void);
-void	mips3_proc_trampoline(void);
+void	mips3_lwp_trampoline(void);
 void	mips3_cpu_switch_resume(void);
 void	mips3_pagezero(void *dst);
 
@@ -72,7 +72,7 @@ int	mips5900_TLBUpdate(u_int, u_int);
 void	mips5900_TLBRead(int, struct tlb *);
 void	mips5900_TLBWriteIndexedVPS(int, struct tlb *);
 void	mips5900_wbflush(void);
-void	mips5900_proc_trampoline(void);
+void	mips5900_lwp_trampoline(void);
 void	mips5900_cpu_switch_resume(void);
 void	mips5900_pagezero(void *dst);
 #endif
@@ -87,7 +87,7 @@ int	mips32_TLBUpdate(u_int, u_int);
 void	mips32_TLBRead(int, struct tlb *);
 void	mips32_TLBWriteIndexedVPS(int, struct tlb *);
 void	mips32_wbflush(void);
-void	mips32_proc_trampoline(void);
+void	mips32_lwp_trampoline(void);
 void	mips32_cpu_switch_resume(void);
 #endif
 
@@ -100,7 +100,7 @@ int	mips64_TLBUpdate(u_int, u_int);
 void	mips64_TLBRead(int, struct tlb *);
 void	mips64_TLBWriteIndexedVPS(int, struct tlb *);
 void	mips64_wbflush(void);
-void	mips64_proc_trampoline(void);
+void	mips64_lwp_trampoline(void);
 void	mips64_cpu_switch_resume(void);
 void	mips64_pagezero(void *dst);
 #endif
@@ -226,14 +226,14 @@ extern long *mips_locoresw[];
 #define MIPS_TBIS		mips1_TBIS
 #define MachTLBUpdate		mips1_TLBUpdate
 #define wbflush()		mips1_wbflush()
-#define proc_trampoline		mips1_proc_trampoline
+#define lwp_trampoline		mips1_lwp_trampoline
 #elif !defined(MIPS1) &&  defined(MIPS3) && !defined(MIPS32) && !defined(MIPS64) && !defined(MIPS3_5900)
 #define MachSetPID		mips3_SetPID
 #define MIPS_TBIAP()		mips3_TBIAP(mips_num_tlb_entries)
 #define MIPS_TBIS		mips3_TBIS
 #define MachTLBUpdate		mips3_TLBUpdate
 #define MachTLBWriteIndexedVPS	mips3_TLBWriteIndexedVPS
-#define proc_trampoline		mips3_proc_trampoline
+#define lwp_trampoline		mips3_lwp_trampoline
 #define wbflush()		mips3_wbflush()
 #elif !defined(MIPS1) && !defined(MIPS3) &&  defined(MIPS32) && !defined(MIPS64)
 #define MachSetPID		mips32_SetPID
@@ -241,7 +241,7 @@ extern long *mips_locoresw[];
 #define MIPS_TBIS		mips32_TBIS
 #define MachTLBUpdate		mips32_TLBUpdate
 #define MachTLBWriteIndexedVPS	mips32_TLBWriteIndexedVPS
-#define proc_trampoline		mips32_proc_trampoline
+#define lwp_trampoline		mips32_lwp_trampoline
 #define wbflush()		mips32_wbflush()
 #elif !defined(MIPS1) && !defined(MIPS3) && !defined(MIPS32) &&  defined(MIPS64)
  /* all common with mips3 */
@@ -250,7 +250,7 @@ extern long *mips_locoresw[];
 #define MIPS_TBIS		mips64_TBIS
 #define MachTLBUpdate		mips64_TLBUpdate
 #define MachTLBWriteIndexedVPS	mips64_TLBWriteIndexedVPS
-#define proc_trampoline		mips64_proc_trampoline
+#define lwp_trampoline		mips64_lwp_trampoline
 #define wbflush()		mips64_wbflush()
 #elif !defined(MIPS1) &&  defined(MIPS3) && !defined(MIPS32) && !defined(MIPS64) && defined(MIPS3_5900)
 #define MachSetPID		mips5900_SetPID
@@ -258,7 +258,7 @@ extern long *mips_locoresw[];
 #define MIPS_TBIS		mips5900_TBIS
 #define MachTLBUpdate		mips5900_TLBUpdate
 #define MachTLBWriteIndexedVPS	mips5900_TLBWriteIndexedVPS
-#define proc_trampoline		mips5900_proc_trampoline
+#define lwp_trampoline		mips5900_lwp_trampoline
 #define wbflush()		mips5900_wbflush()
 #else
 #define MachSetPID		(*(mips_locore_jumpvec.setTLBpid))
@@ -266,7 +266,7 @@ extern long *mips_locoresw[];
 #define MIPS_TBIS		(*(mips_locore_jumpvec.TBIS))
 #define MachTLBUpdate		(*(mips_locore_jumpvec.tlbUpdate))
 #define wbflush()		(*(mips_locore_jumpvec.wbflush))()
-#define proc_trampoline		(mips_locoresw[1])
+#define lwp_trampoline		(mips_locoresw[1])
 #endif
 
 #define CPU_IDLE		(mips_locoresw[2])

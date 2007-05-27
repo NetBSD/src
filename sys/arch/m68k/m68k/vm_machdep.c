@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.20 2007/03/04 06:00:06 christos Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.20.2.1 2007/05/27 12:27:40 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.20 2007/03/04 06:00:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.20.2.1 2007/05/27 12:27:40 ad Exp $");
 
 #include "opt_coredump.h"
 
@@ -110,7 +110,7 @@ cpu_proc_fork(struct proc *p1, struct proc *p2)
  * Copy and update the pcb and trap frame, making the child ready to run.
  *
  * Rig the child's kernel stack so that it will start out in
- * proc_trampoline() and call child_return() with l2 as an
+ * lwp_trampoline() and call child_return() with l2 as an
  * argument. This causes the newly-created child process to go
  * directly to user level with an apparent return value of 0 from
  * fork(), while the parent process returns normally.
@@ -159,11 +159,12 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 		tf->tf_regs[15] = (u_int)stack + stacksize;
 
 	sf = (struct switchframe *)tf - 1;
-	sf->sf_pc = (u_int)proc_trampoline;
+	sf->sf_pc = (u_int)lwp_trampoline;
 	pcb->pcb_regs[6] = (int)func;		/* A2 */
 	pcb->pcb_regs[7] = (int)arg;		/* A3 */
+	pcb->pcb_regs[8] = (int)l2;		/* A4 */
 	pcb->pcb_regs[11] = (int)sf;		/* SSP */
-	pcb->pcb_ps = PSL_LOWIPL;		/* start khreads at IPL 0 */
+	pcb->pcb_ps = PSL_LOWIPL;		/* start kthreads at IPL 0 */
 }
 
 void
@@ -172,9 +173,8 @@ cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 	struct pcb *pcb = &l->l_addr->u_pcb;
 	struct trapframe *tf = (struct trapframe *)l->l_md.md_regs;
 	struct switchframe *sf = (struct switchframe *)tf - 1;
-	extern void proc_trampoline __P((void));
 
-	sf->sf_pc = (int)proc_trampoline;
+	sf->sf_pc = (u_int)lwp_trampoline;
 	pcb->pcb_regs[6] = (int)func;		/* A2 */
 	pcb->pcb_regs[7] = (int)arg;		/* A3 */
 	pcb->pcb_regs[11] = (int)sf;		/* SSP */
@@ -192,21 +192,6 @@ cpu_lwp_free2(struct lwp *l)
 {
 
 	/* Nothing to do */
-}
-
-/*
- * cpu_exit is called as the last action during exit.
- *
- * Block context switches and then call switch_exit() which will
- * switch to another process thus we never return.
- */
-void
-cpu_exit(struct lwp *l)
-{
-
-	(void) splhigh();
-	switch_lwp_exit(l);
-	/* NOTREACHED */
 }
 
 #ifdef COREDUMP

@@ -1,4 +1,4 @@
-#	$NetBSD: files.gumstix,v 1.3 2007/02/20 17:23:09 kiyohara Exp $
+#	$NetBSD: files.gumstix,v 1.3.4.1 2007/05/27 12:27:16 ad Exp $
 #
 # Genetec corp. G4255EB evaluation board configuration info
 #
@@ -12,6 +12,8 @@ include "dev/bluetooth/files.bluetooth"
 
 include	"dev/pcmcia/files.pcmcia"
 
+#include "dev/sdmmc/files.sdmmc"
+
 # gumstix devices
 device	gxio {[addr = -1], [gpirq = -1]}
 attach	gxio at pxaip
@@ -22,7 +24,6 @@ file	arch/evbarm/gumstix/gxio.c			gxio
 attach	sm at gxio with sm_gxio
 file	arch/evbarm/gumstix/if_sm_gxio.c		sm_gxio
 
-device	gxpcic: pcmciabus
-attach	gxpcic at gxio
-file	arch/arm/sa11x0/sa11xx_pcic.c			gxpcic
-file	arch/evbarm/gumstix/gxpcic.c			gxpcic
+# PCMCIA/CF socket and GPIO controllers
+attach	pxapcic at pxaip with pxapcic_gxpcic
+file	arch/evbarm/gumstix/gxpcic.c			pxapcic_gxpcic

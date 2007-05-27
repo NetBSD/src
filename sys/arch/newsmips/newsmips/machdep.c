@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.91 2007/03/08 22:17:47 he Exp $	*/
+/*	$NetBSD: machdep.c,v 1.91.2.1 2007/05/27 12:27:53 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,7 +76,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.91 2007/03/08 22:17:47 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.91.2.1 2007/05/27 12:27:53 ad Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -402,8 +402,8 @@ mach_init(int x_boothowto, int x_bootdev, int x_bootname, int x_maxmem)
 	v = (char *)uvm_pageboot_alloc(USPACE);
 	lwp0.l_addr = proc0paddr = (struct user *)v;
 	lwp0.l_md.md_regs = (struct frame *)(v + USPACE) - 1;
-	curpcb = &lwp0.l_addr->u_pcb;
-	curpcb->pcb_context[11] = MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
+	proc0paddr->u_pcb.pcb_context[11] =
+	    MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
 
 	/*
 	 * Determine what model of computer we are running on.

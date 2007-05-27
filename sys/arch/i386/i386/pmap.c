@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.202.2.6 2007/04/29 15:50:23 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.202.2.7 2007/05/27 12:27:31 ad Exp $	*/
 
 /*
  *
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.202.2.6 2007/04/29 15:50:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.202.2.7 2007/05/27 12:27:31 ad Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"
@@ -1732,7 +1732,7 @@ pmap_destroy(pmap)
 		 * No need to lock the pmap for ldt_free (or anything else),
 		 * we're the last one to use it.
 		 */
-		ldt_free(pmap);
+		ldt_free(pmap->pm_ldt_sel);
 		uvm_km_free(kernel_map, (vaddr_t)pmap->pm_ldt,
 		    pmap->pm_ldt_len * sizeof(union descriptor), UVM_KMF_WIRED);
 	}
@@ -1766,26 +1766,59 @@ pmap_fork(pmap1, pmap2)
 	struct pmap *pmap1, *pmap2;
 {
 #ifdef USER_LDT
-	mutex_enter(&pmap1->pm_obj.vmobjlock);
-	mutex_enter(&pmap2->pm_obj.vmobjlock);
+	union descriptor *new_ldt;
+	size_t len;
+	int sel;
 
-	/* Copy the LDT, if necessary. */
+ retry:
 	if (pmap1->pm_flags & PMF_USER_LDT) {
-		union descriptor *new_ldt;
-		size_t len;
-
 		len = pmap1->pm_ldt_len * sizeof(union descriptor);
 		new_ldt = (union descriptor *)uvm_km_alloc(kernel_map,
 		    len, 0, UVM_KMF_WIRED);
+		sel = ldt_alloc(new_ldt, len);
+	} else {
+		len = -1;
+		new_ldt = NULL;
+		sel = -1;
+	}
+
+	if ((uintptr_t) pmap1 < (uintptr_t) pmap2) {
+		mutex_enter(&pmap1->pm_obj.vmobjlock);
+		mutex_enter(&pmap2->pm_obj.vmobjlock);
+	} else {
+		mutex_enter(&pmap2->pm_obj.vmobjlock);
+		mutex_enter(&pmap1->pm_obj.vmobjlock);
+	}
+
+ 	/* Copy the LDT, if necessary. */
+ 	if (pmap1->pm_flags & PMF_USER_LDT) {
+		if (len != pmap1->pm_ldt_len * sizeof(union descriptor)) {
+			mutex_exit(&pmap2->pm_obj.vmobjlock);
+			mutex_exit(&pmap1->pm_obj.vmobjlock);
+			if (len != -1) {
+				ldt_free(sel);
+				uvm_km_free(kernel_map, (vaddr_t)new_ldt,
+				    len, UVM_KMF_WIRED);
+			}
+			goto retry;
+		}
+  
 		memcpy(new_ldt, pmap1->pm_ldt, len);
 		pmap2->pm_ldt = new_ldt;
 		pmap2->pm_ldt_len = pmap1->pm_ldt_len;
 		pmap2->pm_flags |= PMF_USER_LDT;
-		ldt_alloc(pmap2, new_ldt, len);
+		pmap2->pm_ldt_sel = sel;
+		len = -1;
 	}
 
 	mutex_exit(&pmap2->pm_obj.vmobjlock);
 	mutex_exit(&pmap1->pm_obj.vmobjlock);
+
+	if (len != -1) {
+		ldt_free(sel);
+		uvm_km_free(kernel_map, (vaddr_t)new_ldt, len,
+		    UVM_KMF_WIRED);
+	}
 #endif /* USER_LDT */
 }
 #endif /* PMAP_FORK */
@@ -1804,14 +1837,15 @@ pmap_ldt_cleanup(l)
 	pmap_t pmap = l->l_proc->p_vmspace->vm_map.pmap;
 	union descriptor *old_ldt = NULL;
 	size_t len = 0;
+	int sel = -1;
 
 	mutex_enter(&pmap->pm_obj.vmobjlock);
 
 	if (pmap->pm_flags & PMF_USER_LDT) {
-		ldt_free(pmap);
+		sel = pmap->pm_ldt_sel;
 		pmap->pm_ldt_sel = GSEL(GLDT_SEL, SEL_KPL);
 		pcb->pcb_ldt_sel = pmap->pm_ldt_sel;
-		if (pcb == curpcb)
+		if (l == curlwp)
 			lldt(pcb->pcb_ldt_sel);
 		old_ldt = pmap->pm_ldt;
 		len = pmap->pm_ldt_len * sizeof(union descriptor);
@@ -1822,6 +1856,8 @@ pmap_ldt_cleanup(l)
 
 	mutex_exit(&pmap->pm_obj.vmobjlock);
 
+	if (sel != -1)
+		ldt_free(sel);
 	if (old_ldt != NULL)
 		uvm_km_free(kernel_map, (vaddr_t)old_ldt, len, UVM_KMF_WIRED);
 }
@@ -1830,7 +1866,6 @@ pmap_ldt_cleanup(l)
 /*
  * pmap_activate: activate a process' pmap
  *
- * => called from cpu_switch()
  * => must be called with kernel preemption disabled
  * => if lwp is the curlwp, then set ci_want_pmapload so that
  *    actual MMU context switch will be done by pmap_load() later
@@ -1953,8 +1988,7 @@ pmap_load()
 	KASSERT(pmap != pmap_kernel());
 	oldpmap = ci->ci_pmap;
 
-	pcb = ci->ci_curpcb;
-	KASSERT(pcb == &l->l_addr->u_pcb);
+	pcb = &l->l_addr->u_pcb;
 	/* loaded by pmap_activate */
 	KASSERT(pcb->pcb_ldt_sel == pmap->pm_ldt_sel);
 
@@ -2041,28 +2075,14 @@ void
 pmap_deactivate(l)
 	struct lwp *l;
 {
-
-	if (l == curlwp) {
-		crit_enter();
-		pmap_deactivate2(l);
-		crit_exit();
-	}
-}
-
-/*
- * pmap_deactivate2: context switch version of pmap_deactivate.
- * always treat l as curlwp.
- *
- * => must be called with kernel preemption disabled.
- */
-
-void
-pmap_deactivate2(l)
-	struct lwp *l;
-{
 	struct pmap *pmap;
 	struct cpu_info *ci;
 
+	if (l != curlwp) {
+		return;
+	}
+
+	crit_enter();
 	ci = curcpu();
 
 	if (ci->ci_want_pmapload) {
@@ -2077,12 +2097,14 @@ pmap_deactivate2(l)
 		 */
 
 		ci->ci_want_pmapload = 0;
+		crit_exit();
 		return;
 	}
 
 	pmap = vm_map_pmap(&l->l_proc->p_vmspace->vm_map);
 
 	if (pmap == pmap_kernel()) {
+		crit_exit();
 		return;
 	}
 
@@ -2091,6 +2113,7 @@ pmap_deactivate2(l)
 
 	KASSERT(ci->ci_tlbstate == TLBSTATE_VALID);
 	ci->ci_tlbstate = TLBSTATE_LAZY;
+	crit_exit();
 }
 
 /*
@@ -2249,7 +2272,7 @@ pmap_pageidlezero(pa)
 	pmap_update_pg((vaddr_t)zerova);		/* flush TLB */
 	for (ptr = (int *) zerova, ep = ptr + PAGE_SIZE / sizeof(int);
 	    ptr < ep; ptr++) {
-		if (sched_whichqs != 0) {
+		if (sched_curcpu_runnable_p()) {
 
 			/*
 			 * A process has become ready.  Abort now,

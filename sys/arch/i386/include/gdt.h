@@ -1,4 +1,4 @@
-/*	$NetBSD: gdt.h,v 1.10 2003/10/27 13:44:20 junyoung Exp $	*/
+/*	$NetBSD: gdt.h,v 1.10.58.1 2007/05/27 12:27:34 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -47,8 +47,8 @@ void gdt_reload_cpu(struct cpu_info *);
 void gdt_alloc_cpu(struct cpu_info *);
 int tss_alloc(struct pcb *);
 void tss_free(int);
-void ldt_alloc(struct pmap *, union descriptor *, size_t);
-void ldt_free(struct pmap *);
+int ldt_alloc(union descriptor *, size_t);
+void ldt_free(int);
 
 #endif /* LOCORE */
 

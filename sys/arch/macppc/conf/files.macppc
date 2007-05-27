@@ -1,4 +1,4 @@
-#	$NetBSD: files.macppc,v 1.80.6.1 2007/04/10 13:23:08 ad Exp $
+#	$NetBSD: files.macppc,v 1.80.6.2 2007/05/27 12:27:42 ad Exp $
 #
 # macppc-specific configuration info
 
@@ -61,6 +61,8 @@ file arch/macppc/macppc/mainbus.c		mainbus
 device cpu: sysmon_envsys
 attach cpu at mainbus
 file arch/macppc/macppc/cpu.c
+
+include "dev/wsfb/files.wsfb"
 
 # PCI bus support
 include "dev/pci/files.pci"

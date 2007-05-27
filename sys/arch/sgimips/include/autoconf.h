@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.8 2005/12/11 12:18:53 christos Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.8.30.1 2007/05/27 12:28:03 ad Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -43,5 +43,5 @@ struct mainbus_attach_args {
 
 extern int ncpus;
 
-void	makebootdev (char *);
+void	makebootdev (const char *);
 

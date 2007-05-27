@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.134.2.2 2007/04/10 13:22:50 ad Exp $
+# $NetBSD: GENERIC,v 1.134.2.3 2007/05/27 12:26:59 ad Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.134.2.2 $"
+#ident 		"GENERIC-$Revision: 1.134.2.3 $"
 
 maxusers	32		# estimated number of users
 
@@ -263,6 +263,7 @@ options 	MPBIOS_SCANPCI		# MPBIOS configures PCI roots
 #pckbc*  	at acpi?		# PC keyboard controller
 #attimer*	at acpi?		# AT Timer
 #pcppi*  	at acpi?                # AT-style speaker sound
+#ug* 		at acpi?		# Abit uGuru Hardware monitor
 #wss* 		at acpi?		# NeoMagic 256AV in wss mode
 
 cpu* 		at mainbus?
@@ -436,7 +437,7 @@ uk*	at scsibus? target ? lun ?	# SCSI unknown
 
 
 # RAID controllers and devices
-#aac*	at pci? dev ? function ?	# Broken -- 32bit assumptions.
+aac*	at pci? dev ? function ?	# Adaptec AAC family
 amr*	at pci? dev ? function ?	# AMI/LSI Logic MegaRAID
 cac*	at pci? dev ? function ?	# Compaq PCI array controllers
 ciss*	at pci? dev ? function ?	# HP Smart Array controllers
@@ -445,6 +446,7 @@ mlx*	at pci? dev ? function ?	# Mylex DAC960 & DEC SWXCR family
 twe*	at pci? dev ? function ?	# 3ware Escalade RAID controllers
 twa*	at pci? dev ? function ?	# 3ware Escalade 9xxx RAID controllers
 
+ld*	at aac? unit ?
 ld*	at amr? unit ?
 ld*	at cac? unit ?
 ld*	at icp? unit ?
@@ -469,6 +471,8 @@ cypide* at pci? dev ? function ?	# Cypress IDE controllers
 hptide* at pci? dev ? function ?	# Triones/HighPoint IDE controllers
 iteide* at pci? dev ? function ?	# IT Express IDE controllers
 ixpide* at pci? dev ? function ?	# ATI IXP IDE controllers
+jmide* at pci? dev ? function ? 	# JMicron PCI-e PATA/SATA controllers
+ahcisata* at jmide?
 optiide* at pci? dev ? function ?	# Opti IDE controllers
 piixide* at pci? dev ? function ?	# Intel IDE controllers
 pdcide* at pci? dev ? function ?	# Promise IDE controllers
@@ -491,6 +495,7 @@ wdc1	at isa? port 0x170 irq 15 flags 0x00
 
 # ATA (IDE) bus support
 atabus* at ata?
+options	ATADEBUG
 
 # IDE drives
 # Flags are used only with controllers that support DMA operations
@@ -586,7 +591,9 @@ xge*	at pci? dev ? function ?	# Neterion (S2io) Xframe-I 10GbE
 # tr at pcmcia has problems with Cardbus bridges
 #tr*	at pcmcia? function ?		# TROPIC based Token-Ring
 #wi*	at pcmcia? function ?		# Lucent/Intersil WaveLan IEEE (802.11)
-#xi*	at pcmcia? function ?		# Xircom CreditCard Ethernet
+#xirc*	at pcmcia? function ?		# Xircom CreditCard Ethernet
+#com*	at xirc?
+#xi*	at xirc?
 
 #mhzc*	at pcmcia? function ?		# Megahertz Ethernet/Modem combo cards
 #com*	at mhzc?
@@ -741,6 +748,7 @@ uscanner* at uhub? port ?
 # USB 802.11 adapters
 atu*	at uhub? port ?		# Atmel at76c50x 802.11b
 ral*	at uhub? port ?		# Ralink Technology RT25x0 802.11a/b/g
+rum* 	at uhub? port ?		# Ralink Technology RT2501/RT2601 802.11a/b/g
 
 # USB scanners that use SCSI emulation, e.g., HP5300
 usscanner* at uhub? port ?
@@ -881,6 +889,7 @@ pseudo-device 	crypto			# /dev/crypto device
 pseudo-device	swcrypto		# software crypto implementation
 
 # disk/mass storage pseudo-devices
+pseudo-device	bio			# RAID control device driver
 pseudo-device	ccd		4	# concatenated/striped disk devices
 #pseudo-device	cgd		4	# cryptographic disk devices
 pseudo-device	raid		8	# RAIDframe disk driver

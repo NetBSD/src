@@ -1,4 +1,4 @@
-#	$NetBSD: files.mace,v 1.4 2005/12/11 12:18:54 christos Exp $
+#	$NetBSD: files.mace,v 1.4.30.1 2007/05/27 12:28:03 ad Exp $
 
 device mace {[offset = -1], [intr = -1], [intrmask = 0] }
 attach mace at mainbus
@@ -10,8 +10,9 @@ file arch/sgimips/mace/com_mace.c	com_mace
 attach lpt at mace with lpt_mace
 file arch/sgimips/mace/lpt_mace.c	lpt_mace
 
-attach pckbc at mace with pckbc_mace
-file arch/sgimips/mace/pckbc_mace.c	pckbc_mace
+device macekbc: pckbport
+attach macekbc at mace
+file arch/sgimips/mace/macekbc.c	macekbc
 
 device mcclock
 attach mcclock at mace with mcclock_mace
@@ -21,9 +22,9 @@ device mec: arp, ether, ifnet, mii
 attach mec at mace
 file arch/sgimips/mace/if_mec.c		mec
 
-device macau: audiobus, ad1848, auconv
-attach macau at mace with macau
-file arch/sgimips/mace/macau_mace.c	macau
+device mavb: audiobus, auconv, mulaw, aurateconv
+attach mavb at mace
+file arch/sgimips/mace/mavb.c		mavb
 
 device macepci: pcibus
 attach macepci at mace

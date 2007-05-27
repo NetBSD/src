@@ -1,4 +1,4 @@
-/*	$NetBSD: gdt.c,v 1.37 2007/02/15 15:40:50 ad Exp $	*/
+/*	$NetBSD: gdt.c,v 1.37.6.1 2007/05/27 12:27:30 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.37 2007/02/15 15:40:50 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.37.6.1 2007/05/27 12:27:30 ad Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -305,22 +305,23 @@ tss_free(int sel)
 /*
  * Caller must have pmap locked for both of these functions.
  */
-void
-ldt_alloc(struct pmap *pmap, union descriptor *ldtp, size_t len)
+int
+ldt_alloc(union descriptor *ldtp, size_t len)
 {
 	int slot;
 
 	slot = gdt_get_slot();
 	setgdt(slot, ldtp, len - 1, SDT_SYSLDT, SEL_KPL, 0, 0);
-	pmap->pm_ldt_sel = GSEL(slot, SEL_KPL);
+
+	return GSEL(slot, SEL_KPL);
 }
 
 void
-ldt_free(struct pmap *pmap)
+ldt_free(int sel)
 {
 	int slot;
 
-	slot = IDXSEL(pmap->pm_ldt_sel);
+	slot = IDXSEL(sel);
 
 	gdt_put_slot(slot);
 }

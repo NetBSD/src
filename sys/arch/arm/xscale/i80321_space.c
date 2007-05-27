@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321_space.c,v 1.9 2005/11/24 13:08:32 yamt Exp $	*/
+/*	$NetBSD: i80321_space.c,v 1.9.30.1 2007/05/27 12:27:09 ad Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i80321_space.c,v 1.9 2005/11/24 13:08:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i80321_space.c,v 1.9.30.1 2007/05/27 12:27:09 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,6 +51,8 @@ __KERNEL_RCSID(0, "$NetBSD: i80321_space.c,v 1.9 2005/11/24 13:08:32 yamt Exp $"
 
 #include <arm/xscale/i80321reg.h>
 #include <arm/xscale/i80321var.h>
+
+#include "opt_i80321.h"
 
 /* Prototypes for all the bus_space structure functions */
 bs_protos(i80321);
@@ -281,11 +283,24 @@ i80321_mem_bs_map(void *t, bus_addr_t bpa, bus_size_t size, int flags,
     bus_space_handle_t *bshp)
 {
 
+#ifndef I80321_USE_DIRECT_WIN
 	struct i80321_softc *sc = t;
+#endif
 	vaddr_t va;
 	uint32_t busbase;
 	paddr_t pa, endpa, physbase;
 
+#ifdef I80321_USE_DIRECT_WIN
+	if (bpa >= (VERDE_OUT_DIRECT_WIN_BASE) &&
+	    bpa < (VERDE_OUT_DIRECT_WIN_BASE + VERDE_OUT_DIRECT_WIN_SIZE)) {
+		busbase = VERDE_OUT_DIRECT_WIN_BASE;
+		physbase = VERDE_OUT_DIRECT_WIN_BASE;
+	} else
+		return (EINVAL);
+	if ((bpa + size) >= (VERDE_OUT_DIRECT_WIN_BASE +
+	    VERDE_OUT_DIRECT_WIN_SIZE))
+		return (EINVAL);
+#else
 	if (bpa >= sc->sc_owin[0].owin_xlate_lo &&
 	    bpa < (sc->sc_owin[0].owin_xlate_lo +
 		   VERDE_OUT_XLATE_MEM_WIN_SIZE)) {
@@ -296,6 +311,7 @@ i80321_mem_bs_map(void *t, bus_addr_t bpa, bus_size_t size, int flags,
 
 	if ((bpa + size) >= (busbase + VERDE_OUT_XLATE_MEM_WIN_SIZE))
 		return (EINVAL);
+#endif
 
 	/*
 	 * Found the window -- PCI MEM space is not mapped by allocating

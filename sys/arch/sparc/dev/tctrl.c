@@ -1,4 +1,4 @@
-/*	$NetBSD: tctrl.c,v 1.37 2007/03/04 06:00:44 christos Exp $	*/
+/*	$NetBSD: tctrl.c,v 1.37.2.1 2007/05/27 12:28:12 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2005, 2006 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tctrl.c,v 1.37 2007/03/04 06:00:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tctrl.c,v 1.37.2.1 2007/05/27 12:28:12 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -215,6 +215,7 @@ static void tctrl_unlock(struct tctrl_softc *);
 CFATTACH_DECL(tctrl, sizeof(struct tctrl_softc),
     tctrl_match, tctrl_attach, NULL, NULL);
 
+static int tadpole_request(struct tctrl_req *, int, int);
 
 /* XXX wtf is this? see i386/apm.c */
 int tctrl_apm_evindex;
@@ -477,8 +478,7 @@ tctrl_setup_bitport_nop(void)
 	req.cmdbuf[2] = 0x00;
 	req.cmdlen = 3;
 	req.rsplen = 2;
-	req.p = NULL;
-	tadpole_request(&req, 1);
+	tadpole_request(&req, 1, 0);
 	s = splts102();
 	sc->sc_bitport = (req.rspbuf[0] & req.cmdbuf[1]) ^ req.cmdbuf[2];
 	splx(s);
@@ -502,8 +502,7 @@ tctrl_setup_bitport(void)
 	req.cmdbuf[1] = ~TS102_BITPORT_TFTPWR;
 	req.cmdlen = 3;
 	req.rsplen = 2;
-	req.p = NULL;
-	tadpole_request(&req, 1);
+	tadpole_request(&req, 1, 0);
 	s = splts102();
 	sc->sc_bitport = (req.rspbuf[0] & req.cmdbuf[1]) ^ req.cmdbuf[2];
 	splx(s);
@@ -540,8 +539,7 @@ tctrl_init_lcd(void)
 	req.cmdbuf[8] =  0x00;	/* ..... */
 	req.cmdbuf[9] =  0x00;	/* ..... */
 	req.cmdbuf[10] = 0x00;	/* ..... */
-	req.p = NULL;
-	tadpole_request(&req, 1);
+	tadpole_request(&req, 1, 0);
 
 	req.cmdbuf[0] = TS102_OP_BLK_DEF_SPCL_CHAR;
 	req.cmdlen = 11;
@@ -556,8 +554,7 @@ tctrl_init_lcd(void)
 	req.cmdbuf[8] =  0x01;	/* ....X */
 	req.cmdbuf[9] =  0x00;	/* ..... */
 	req.cmdbuf[10] = 0x00;	/* ..... */
-	req.p = NULL;
-	tadpole_request(&req, 1);
+	tadpole_request(&req, 1, 0);
 
 	req.cmdbuf[0] = TS102_OP_BLK_DEF_SPCL_CHAR;
 	req.cmdlen = 11;
@@ -572,8 +569,7 @@ tctrl_init_lcd(void)
 	req.cmdbuf[8] =  0x16;	/* X.XX. */
 	req.cmdbuf[9] =  0x0c;	/* .XXX. */
 	req.cmdbuf[10] = 0x00;	/* ..... */
-	req.p = NULL;
-	tadpole_request(&req, 1);
+	tadpole_request(&req, 1, 0);
 
 	req.cmdbuf[0] = TS102_OP_BLK_DEF_SPCL_CHAR;
 	req.cmdlen = 11;
@@ -588,8 +584,7 @@ tctrl_init_lcd(void)
 	req.cmdbuf[8] =  0x0d;	/* .XX.X */
 	req.cmdbuf[9] =  0x0c;	/* .XXX. */
 	req.cmdbuf[10] = 0x00;	/* ..... */
-	req.p = NULL;
-	tadpole_request(&req, 1);
+	tadpole_request(&req, 1, 0);
 
 	req.cmdbuf[0] = TS102_OP_BLK_DEF_SPCL_CHAR;
 	req.cmdlen = 11;
@@ -604,8 +599,7 @@ tctrl_init_lcd(void)
 	req.cmdbuf[8] =  0x04;	/* ..X.. */
 	req.cmdbuf[9] =  0x00;	/* ..... */
 	req.cmdbuf[10] = 0x00;	/* ..... */
-	req.p = NULL;
-	tadpole_request(&req, 1);
+	tadpole_request(&req, 1, 0);
 
 	req.cmdbuf[0] = TS102_OP_BLK_DEF_SPCL_CHAR;
 	req.cmdlen = 11;
@@ -620,8 +614,7 @@ tctrl_init_lcd(void)
 	req.cmdbuf[8] =  0x04;	/* ..X.. */
 	req.cmdbuf[9] =  0x00;	/* ..... */
 	req.cmdbuf[10] = 0x00;	/* ..... */
-	req.p = NULL;
-	tadpole_request(&req, 1);
+	tadpole_request(&req, 1, 0);
 
 	req.cmdbuf[0] = TS102_OP_BLK_DEF_SPCL_CHAR;
 	req.cmdlen = 11;
@@ -636,8 +629,7 @@ tctrl_init_lcd(void)
 	req.cmdbuf[8] =  0x1f;	/* XXXXX */
 	req.cmdbuf[9] =  0x00;	/* ..... */
 	req.cmdbuf[10] = 0x00;	/* ..... */
-	req.p = NULL;
-	tadpole_request(&req, 1);
+	tadpole_request(&req, 1, 0);
 }
 
 /* sc_lcdwanted -> lcd_state */
@@ -678,8 +670,7 @@ tctrl_update_lcd(struct tctrl_softc *sc)
 	req.cmdlen = 5;
 	req.rsplen = 4;
 #endif
-	req.p = NULL;
-	tadpole_request(&req, 1);
+	tadpole_request(&req, 1, 0);
 }
 
 
@@ -722,11 +713,10 @@ tctrl_read_ext_status(void)
 	req.cmdbuf[0] = TS102_OP_RD_EXT_STATUS;
 	req.cmdlen = 1;
 	req.rsplen = 3;
-	req.p = NULL;
 #ifdef TCTRLDEBUG
 	printf("pre read: sc->sc_ext_status = 0x%x\n", sc->sc_ext_status);
 #endif
-	tadpole_request(&req, 1);
+	tadpole_request(&req, 1, 0);
 	s = splts102();
 	sc->sc_ext_status = (req.rspbuf[0] << 8) + req.rspbuf[1];
 	splx(s);
@@ -768,8 +758,7 @@ tctrl_read_event_status(struct tctrl_softc *sc)
 	req.cmdbuf[0] = TS102_OP_RD_EVENT_STATUS;
 	req.cmdlen = 1;
 	req.rsplen = 3;
-	req.p = NULL;
-	tadpole_request(&req, 1);
+	tadpole_request(&req, 1, 0);
 	s = splts102();
 	v = req.rspbuf[0] * 256 + req.rspbuf[1];
 #ifdef TCTRLDEBUG
@@ -862,7 +851,7 @@ tctrl_unlock(struct tctrl_softc *sc)
 }
 
 int
-tadpole_request(struct tctrl_req *req, int spin)
+tadpole_request(struct tctrl_req *req, int spin, int sleep)
 {
 	struct tctrl_softc *sc;
 	int i, s;
@@ -920,7 +909,7 @@ tadpole_request(struct tctrl_req *req, int spin)
 		while (((sc->sc_rspoff != sc->sc_rsplen) ||
 		    (sc->sc_cmdoff != sc->sc_cmdlen)) &&
 		    (i < timeout))
-			if (req->p != NULL) {
+			if (sleep) {
 				tsleep(sc, PWAIT, "tctrl_data", 15);
 				i++;
 			} else
@@ -957,8 +946,7 @@ tadpole_powerdown(void)
 	req.cmdbuf[0] = TS102_OP_ADMIN_POWER_OFF;
 	req.cmdlen = 1;
 	req.rsplen = 1;
-	req.p = NULL;
-	tadpole_request(&req, 1);
+	tadpole_request(&req, 1, 0);
 }
 
 void
@@ -972,7 +960,6 @@ tadpole_set_video(int enabled)
 	while (sc->sc_wantdata != 0)
 		DELAY(1);
 	s = splts102();
-	req.p = NULL;
 	if ((sc->sc_ext_status & TS102_EXT_STATUS_LID_DOWN && !enabled)
 	    || (sc->sc_tft_on)) {
 		req.cmdbuf[2] = TS102_BITPORT_TFTPWR;
@@ -990,7 +977,7 @@ tadpole_set_video(int enabled)
 			splx(s);
 			return;
 		}
-		tadpole_request(&req, 1);
+		tadpole_request(&req, 1, 0);
 		sc->sc_bitport =
 		    (req.rspbuf[0] & req.cmdbuf[1]) ^ req.cmdbuf[2];
 	}
@@ -1129,15 +1116,13 @@ tctrlioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 		req.cmdbuf[0] = TS102_OP_RD_INT_CHARGE_RATE;
 		req.cmdlen = 1;
 		req.rsplen = 2;
-		req.p = l->l_proc;
-		tadpole_request(&req, 0);
+		tadpole_request(&req, 0, l->l_proc ? 1 : 0);
 		if (req.rspbuf[0] > 0x00)
 			powerp->battery_state = APM_BATT_CHARGING;
 		req.cmdbuf[0] = TS102_OP_RD_INT_CHARGE_LEVEL;
 		req.cmdlen = 1;
 		req.rsplen = 3;
-		req.p = l->l_proc;
-		tadpole_request(&req, 0);
+		tadpole_request(&req, 0, l->l_proc ? 1 : 0);
 		c = req.rspbuf[0];
 		powerp->battery_life = c;
 		if (c > 0x70)	/* the tadpole sometimes dips below zero, and */
@@ -1186,8 +1171,7 @@ tctrlioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 		    reqn->cmdbuf[0] < TS102_OP_RD_INT_CHARGE_LEVEL) ||
 		    reqn->cmdbuf[0] > TS102_OP_RD_EXT_CHARGE_LEVEL))
 			return(i);
-		reqn->p = l->l_proc;
-		tadpole_request(reqn, 0);
+		tadpole_request(reqn, 0, l->l_proc ? 1 : 0);
 		break;
 	/* serial power mode (via auxiotwo) */
 	case TCTRL_SERIAL_PWR:
@@ -1413,13 +1397,13 @@ tctrl_gtredata(struct sysmon_envsys *sme, struct envsys_tre_data *tred)
 	struct envsys_tre_data *cur_tre;
 	struct envsys_basic_info *cur_i;
 	struct tctrl_req req;
-	struct proc *p;
+	int sleepable;
 	int i;
 
 	i = tred->sensor;
 	cur_tre = &sme->sme_sensor_data[i];
 	cur_i = &sme->sme_sensor_info[i];
-	p = __curproc();
+	sleepable = curlwp ? 1 : 0;
 
 	switch (i)
 	{
@@ -1427,8 +1411,7 @@ tctrl_gtredata(struct sysmon_envsys *sme, struct envsys_tre_data *tred)
 			req.cmdbuf[0] = TS102_OP_RD_CURRENT_TEMP;
 			req.cmdlen = 1;
 			req.rsplen = 2;
-			req.p = p;
-			tadpole_request(&req, 0);
+			tadpole_request(&req, 0, sleepable);
 			cur_tre->cur.data_us =             /* 273160? */
 			    (uint32_t)((int)((int)req.rspbuf[0] - 32) * 5000000
 			    / 9 + 273150000);
@@ -1436,8 +1419,7 @@ tctrl_gtredata(struct sysmon_envsys *sme, struct envsys_tre_data *tred)
 			req.cmdbuf[0] = TS102_OP_RD_MAX_TEMP;
 			req.cmdlen = 1;
 			req.rsplen = 2;
-			req.p = p;
-			tadpole_request(&req, 0);
+			tadpole_request(&req, 0, sleepable);
 			cur_tre->max.data_us =
 			    (uint32_t)((int)((int)req.rspbuf[0] - 32) * 5000000
 			    / 9 + 273150000);
@@ -1445,8 +1427,7 @@ tctrl_gtredata(struct sysmon_envsys *sme, struct envsys_tre_data *tred)
 			req.cmdbuf[0] = TS102_OP_RD_MIN_TEMP;
 			req.cmdlen = 1;
 			req.rsplen = 2;
-			req.p = p;
-			tadpole_request(&req, 0);
+			tadpole_request(&req, 0, sleepable);
 			cur_tre->min.data_us =
 			    (uint32_t)((int)((int)req.rspbuf[0] - 32) * 5000000
 			    / 9 + 273150000);
@@ -1462,8 +1443,7 @@ tctrl_gtredata(struct sysmon_envsys *sme, struct envsys_tre_data *tred)
 				req.cmdbuf[0] = TS102_OP_RD_INT_BATT_VLT;
 				req.cmdlen = 1;
 				req.rsplen = 2;
-				req.p = p;
-				tadpole_request(&req, 0);
+				tadpole_request(&req, 0, sleepable);
 				cur_tre->cur.data_s = (int32_t)req.rspbuf[0] *
 				    1000000 / 11;
 			}
@@ -1476,8 +1456,7 @@ tctrl_gtredata(struct sysmon_envsys *sme, struct envsys_tre_data *tred)
 				req.cmdbuf[0] = TS102_OP_RD_DC_IN_VLT;
 				req.cmdlen = 1;
 				req.rsplen = 2;
-				req.p = p;
-				tadpole_request(&req, 0);
+				tadpole_request(&req, 0, sleepable);
 				cur_tre->cur.data_s = (int32_t)req.rspbuf[0] *
 				    1000000 / 11;
 			}

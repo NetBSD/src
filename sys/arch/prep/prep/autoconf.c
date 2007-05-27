@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.19 2006/06/23 03:08:41 garbled Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.19.14.1 2007/05/27 12:28:00 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.19 2006/06/23 03:08:41 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.19.14.1 2007/05/27 12:28:00 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,6 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.19 2006/06/23 03:08:41 garbled Exp $"
 #include <machine/intr.h>
 
 #include <dev/pci/pcivar.h>
+#include <dev/pci/pcidevs.h>
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
@@ -129,6 +130,21 @@ device_register(struct device *dev, void *aux)
 	    device_is_a(dev, "wskbd") || device_is_a(dev, "wsmouse") ||
 	    device_is_a(dev, "pms") || device_is_a(dev, "cpu"))
 		return;
+
+	if (device_is_a(dev, "pchb")) {
+		struct pci_attach_args *pa = aux;
+		prop_bool_t rav;
+
+		if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_MOT &&
+		    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_MOT_RAVEN) {
+			rav = prop_bool_create(true);
+			KASSERT(rav != NULL);
+			(void) prop_dictionary_set(
+			    device_properties(device_parent(dev)),
+			    "prep-raven-pchb", rav);
+			prop_object_release(rav);
+		}
+	}
 
 	if (device_is_a(dev, "mainbus")) {
 		str1 = prop_string_create_cstring("/");

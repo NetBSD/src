@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips3.S,v 1.90 2007/02/23 15:11:36 tsutsui Exp $	*/
+/*	$NetBSD: locore_mips3.S,v 1.90.4.1 2007/05/27 12:27:47 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -162,60 +162,14 @@ END(mips3_wbflush)
 /*
  * mips_wait_idle:
  *
- *	When no processes are on the runq, cpu_switch branches to
- *	idle to wait for something to come ready.
- *
- *	NOTE: This is really part of cpu_switch(), but defined here
- *	for kernel profiling.
- *
- *	This version takes advantage of power-saving features on
- *	the QED RM52xx family of CPUs, and MIPS32 & MIPS64 CPUs.
+ *	When no processes are on the runq, cpu_idle branches to
+ *	mips_wait_idle to save power.
  */
 LEAF(mips_wait_idle)
-	sw	zero, _C_LABEL(curlwp)		# set curlwp NULL for stats
-	jal	_C_LABEL(sched_unlock_idle)	# release sched_lock
-	nop
-	li	t0, (MIPS_INT_MASK | MIPS_SR_INT_IE)
-	DYNAMIC_STATUS_MASK(t0,t1)		# machine dependent masking
-	mtc0	t0, MIPS_COP_0_STATUS		# enable all interrupts
-	COP0_SYNC
-	nop
-
-	/* Try to zero some free pages. */
-	lbu	t0, _C_LABEL(uvm) + UVM_PAGE_IDLE_ZERO
-	nop
-	beq	t0, zero, 1f
-	nop
-	jal	_C_LABEL(uvm_pageidlezero)
-	nop
-1:
-#ifdef MIPS_DYNAMIC_STATUS_MASK
-	# Do this again since the mask may have changed.
-	li	t3, (MIPS_INT_MASK | MIPS_SR_INT_IE)
-	DYNAMIC_STATUS_MASK(t3,t1)		# machine dependent masking
-	mtc0	t3, MIPS_COP_0_STATUS		# enable all interrupts
-	COP0_SYNC
-	nop
-#endif
-	lw	t0, _C_LABEL(sched_whichqs)	# look for non-empty queue
-	bne	t0, zero, 1f
-	nop
 	wait
 	nop
 	nop
 	nop
-	b	1b
-	nop
-1:
-	mtc0	zero, MIPS_COP_0_STATUS		# disable all interrupts
-	COP0_SYNC
-	nop
-	nop
-	nop
-	nop
-	jal	_C_LABEL(sched_lock_idle)	# acquire sched_lock
-	nop
-	la	ra, cpu_switch_queuescan
 	j	ra
 	nop
 END(mips_wait_idle)
@@ -473,7 +427,7 @@ END(mips3_sd)
  */
 #if defined(_MIPS_BSD_API) && _MIPS_BSD_API != _MIPS_BSD_API_LP32
 LEAF(badaddr64)
-	lw	v1, _C_LABEL(curpcb)
+	lw	v1, L_ADDR(MIPS_CURLWP)
 	la	v0, _C_LABEL(baderr64)
 
 	/* Enable KX */

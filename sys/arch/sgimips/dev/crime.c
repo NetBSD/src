@@ -1,4 +1,4 @@
-/*	$NetBSD: crime.c,v 1.22 2005/12/10 07:00:40 tsutsui Exp $	*/
+/*	$NetBSD: crime.c,v 1.22.30.1 2007/05/27 12:28:02 ad Exp $	*/
 
 /*
  * Copyright (c) 2004 Christopher SEKIYA
@@ -38,14 +38,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crime.c,v 1.22 2005/12/10 07:00:40 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crime.c,v 1.22.30.1 2007/05/27 12:28:02 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
+#include <sys/cpu.h>
 
-#include <machine/cpu.h>
 #include <machine/locore.h>
 #include <machine/autoconf.h>
 #include <machine/bus.h>
@@ -58,6 +58,8 @@ __KERNEL_RCSID(0, "$NetBSD: crime.c,v 1.22 2005/12/10 07:00:40 tsutsui Exp $");
 #include <sgimips/mace/macevar.h>
 
 #include "locators.h"
+
+#define CRIME_DISABLE_WATCHDOG
 
 static int	crime_match(struct device *, struct cfdata *, void *);
 static void	crime_attach(struct device *, struct device *, void *);
@@ -239,10 +241,10 @@ crime_intr(u_int32_t status, u_int32_t cause, u_int32_t pc, u_int32_t ipending)
 		}
 	}
 
-	crime_ipending &= 0xff00;
+	crime_ipending &= ~0xffff;
 
 	if (crime_ipending)
-		for (i = 0; i < CRIME_NINTR; i++) {
+		for (i = 16; i < CRIME_NINTR; i++) {
 			if ((crime_ipending & (1 << i)) && crime[i].func != NULL)
 				(*crime[i].func)(crime[i].arg);
 		}
@@ -278,10 +280,14 @@ crime_bus_reset(void)
 void
 crime_watchdog_reset(void)
 {
+#ifdef CRIME_WATCHDOG_DISABLE
+	bus_space_write_8(crm_iot, crm_ioh, CRIME_WATCHDOG, 0);
+#else
 	/* enable watchdog timer, clear it */
 	bus_space_write_8(crm_iot, crm_ioh,
 		CRIME_CONTROL, CRIME_CONTROL_DOG_ENABLE);
 	bus_space_write_8(crm_iot, crm_ioh, CRIME_WATCHDOG, 0);
+#endif
 }
 
 void

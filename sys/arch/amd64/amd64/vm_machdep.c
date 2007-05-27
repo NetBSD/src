@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.20 2007/03/04 05:59:13 christos Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.20.2.1 2007/05/27 12:26:59 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.20 2007/03/04 05:59:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.20.2.1 2007/05/27 12:26:59 ad Exp $");
 
 #include "opt_coredump.h"
 #include "opt_user_ldt.h"
@@ -123,7 +123,7 @@ cpu_proc_fork(struct proc *p1, struct proc *p2)
  * Copy and update the pcb and trap frame, making the child ready to run.
  * 
  * Rig the child's kernel stack so that it will start out in
- * proc_trampoline() and call child_return() with l2 as an
+ * lwp_trampoline() and call child_return() with l2 as an
  * argument. This causes the newly-created child process to go
  * directly to user level with an apparent return value of 0 from
  * fork(), while the parent process returns normally.
@@ -146,7 +146,6 @@ cpu_lwp_fork(l1, l2, stack, stacksize, func, arg)
 {
 	struct pcb *pcb = &l2->l_addr->u_pcb;
 	struct trapframe *tf;
-	struct switchframe *sf;
 
 	/*
 	 * If fpuproc != p1, then the fpu h/w state is irrelevant and the
@@ -203,18 +202,11 @@ cpu_lwp_fork(l1, l2, stack, stacksize, func, arg)
 	if (stack != NULL)
 		tf->tf_rsp = (u_int64_t)stack + stacksize;
 
-	sf = (struct switchframe *)tf - 1;
-	sf->sf_r12 = (u_int64_t)func;
-	sf->sf_r13 = (u_int64_t)arg;
-	if (func == child_return && !(l2->l_proc->p_flag & PK_32))
-		sf->sf_rip = (u_int64_t)child_trampoline;
-	else
-		sf->sf_rip = (u_int64_t)proc_trampoline;
-	pcb->pcb_rsp = (u_int64_t)sf;
-	pcb->pcb_rbp = 0;
+	pcb->pcb_flags = 0;
+	pcb->pcb_fs = 0;
+	pcb->pcb_gs = 0;
 
-	pcb->pcb_fs = l1->l_addr->u_pcb.pcb_fs;
-	pcb->pcb_gs = l1->l_addr->u_pcb.pcb_fs;
+	cpu_setfunc(l2, func, arg);
 }
 
 void
@@ -229,9 +221,9 @@ cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 	if (func == child_return && !(l->l_proc->p_flag & PK_32))
 		sf->sf_rip = (u_int64_t)child_trampoline;
 	else
-		sf->sf_rip = (u_int64_t)proc_trampoline;
+		sf->sf_rip = (u_int64_t)lwp_trampoline;
 	pcb->pcb_rsp = (u_int64_t)sf;
-	pcb->pcb_rbp = 0;
+	pcb->pcb_rbp = (u_int64_t)l;
 }
 
 void
@@ -268,20 +260,6 @@ cpu_lwp_free2(struct lwp *l)
 {
 	/* Nuke the TSS. */
 	tss_free(l->l_md.md_tss_sel);
-}
-
-/*
- * cpu_exit is called as the last action during exit.
- *
- * We clean up a little and then call switch_exit() with the old proc as an
- * argument.  switch_exit() first switches to proc0's context, and finally
- * jumps into switch() to wait for another process to wake up.
- */
-void
-cpu_exit(struct lwp *l)
-{
-
-	switch_exit(l, (void (*)(struct lwp *))nullop);
 }
 
 #ifdef COREDUMP
