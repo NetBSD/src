@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.2,v 1.1.2.108 2007/04/08 22:27:40 bouyer Exp $
+#	$NetBSD: CHANGES-2.2,v 1.1.2.109 2007/05/27 21:28:05 bouyer Exp $
 
 A complete list of changes from the NetBSD 2.1 release to the NetBSD 2.2 
 release
@@ -1168,4 +1168,16 @@ distrib/sets/lists/base/mi    patch
 
 	Add missing files from the zoneinfo update (ticket #11134)
 	[adrianp, ticket #11289]
+
+usr.sbin/etcupdate/etcupdate		1.31 via patch
+usr.sbin/etcupdate/etcupdate.8		patch
+	Run pwd_mkdb before running mtree.  Reported by Hauke Fath in PR 35570.
+	Sync man page with HEAD.   
+	[martti, ticket #10953]
+
+etc/security					1.101
+
+	PR/36058 -- fix check for group/other writable home directories from
+	Jukka Salmi
+	[jnemeth, ticket #11309]
 
