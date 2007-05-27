@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.26 2007/03/04 06:00:24 christos Exp $	*/
+/*	$NetBSD: cpu.h,v 1.26.2.1 2007/05/27 12:27:51 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -120,6 +120,7 @@ struct cpu_info {
 	struct cpu_data ci_data;	/* MI per-cpu data */
 	int	ci_mtx_count;
 	int	ci_mtx_oldspl;
+	int	ci_want_resched;
 };
 
 extern struct cpu_info cpu_info_store;
@@ -162,8 +163,8 @@ struct clockframe {
  * Preempt the current process if in interrupt from user mode,
  * or after the current trap/syscall if in system mode.
  */
-extern int want_resched;	/* resched() was called */
-#define cpu_need_resched(ci)	do { want_resched++; aston(); } while(0)
+#define cpu_need_resched(ci, flags)	\
+	do { ci->ci_want_resched = 1; aston(); } while (/* CONSTCOND */0)
 
 /*
  * Give a profiling tick to the current process when the user profiling
@@ -171,7 +172,7 @@ extern int want_resched;	/* resched() was called */
  * through trap, marking the proc as needing a profiling tick.
  */
 #define cpu_need_proftick(l)	\
-	do { (l)->l_flag |= LP_OWEUPC; aston(); } while(0)
+	do { (l)->l_flag |= LP_OWEUPC; aston(); } while (/* CONSTCOND */0)
 
 /*
  * Notify the current process (p) that it has a signal pending,
@@ -181,7 +182,8 @@ extern int want_resched;	/* resched() was called */
 
 extern int astpending;		/* need to trap before returning to user mode */
 extern volatile u_char *ctrl_ast;
-#define aston()		do { astpending++; *ctrl_ast = 0xff; } while(0)
+#define aston()		\
+	do { astpending++; *ctrl_ast = 0xff; } while (/* CONSTCOND */0)
 
 #endif /* _KERNEL */
 
@@ -226,17 +228,12 @@ extern void (*vectab[])(void);
 
 struct frame;
 struct fpframe;
-struct pcb;
 
 /* locore.s functions */
 void m68881_save(struct fpframe *);
 void m68881_restore(struct fpframe *);
 
 int suline(void *, void *);
-void savectx(struct pcb *);
-void switch_exit(struct lwp *);
-void switch_lwp_exit(struct lwp *);
-void proc_trampoline(void);
 void loadustp(int);
 void badtrap(void);
 void intrhand_vectored(void);
@@ -252,14 +249,6 @@ void ecacheoff(void);
 /* machdep.c functions */
 int badaddr(void *, int);
 int badbaddr(void *);
-
-/* sys_machdep.c functions */
-int cachectl1(unsigned long, vaddr_t, size_t, struct proc *);
-
-/* vm_machdep.c functions */
-void physaccess(void *, void *, int, int);
-void physunaccess(void *, int);
-int kvtop(void *);
 
 #endif
 

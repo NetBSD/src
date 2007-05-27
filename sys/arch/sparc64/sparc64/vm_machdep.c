@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.70 2007/03/04 06:00:51 christos Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.70.2.1 2007/05/27 12:28:29 ad Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.70 2007/03/04 06:00:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.70.2.1 2007/05/27 12:28:29 ad Exp $");
 
 #include "opt_coredump.h"
 
@@ -169,7 +169,7 @@ char cpu_forkname[] = "cpu_lwp_fork()";
  * Copy and update the pcb and trap frame, making the child ready to run.
  * 
  * Rig the child's kernel stack so that it will start out in
- * proc_trampoline() and call child_return() with p2 as an
+ * lwp_trampoline() and call child_return() with p2 as an
  * argument. This causes the newly-created child process to go
  * directly to user level with an apparent return value of 0 from
  * fork(), while the parent process returns normally.
@@ -194,13 +194,12 @@ cpu_lwp_fork(l1, l2, stack, stacksize, func, arg)
 	struct pcb *npcb = &l2->l_addr->u_pcb;
 	struct trapframe *tf2;
 	struct rwindow *rp;
-	extern struct lwp lwp0;
 
 	/*
 	 * Save all user registers to l1's stack or, in the case of
 	 * user registers and invalid stack pointers, to opcb.
 	 * We then copy the whole pcb to l2; when switch() selects l2
-	 * to run, it will run at the `proc_trampoline' stub, rather
+	 * to run, it will run at the `lwp_trampoline' stub, rather
 	 * than returning at the copying code below.
 	 *
 	 * If process l1 has an FPU state, we must copy it.  If it is
@@ -221,7 +220,7 @@ cpu_lwp_fork(l1, l2, stack, stacksize, func, arg)
 		opcb->pcb_cwp = getcwp();
 	}
 #ifdef DIAGNOSTIC
-	else if (l1 != &lwp0)
+	else if (l1 != &lwp0)	/* XXX is this valid? */
 		panic("cpu_lwp_fork: curlwp");
 #endif
 #ifdef DEBUG
@@ -269,28 +268,30 @@ cpu_lwp_fork(l1, l2, stack, stacksize, func, arg)
 	*rp = *(struct rwindow *)((u_long)opcb + TOPFRAMEOFF);
 	rp->rw_local[0] = (long)func;		/* Function to call */
 	rp->rw_local[1] = (long)arg;		/* and its argument */
+	rp->rw_local[2] = (long)l2;		/* newlwp */
 
-	npcb->pcb_pc = (long)proc_trampoline - 8;
+	npcb->pcb_pc = (long)lwp_trampoline - 8;
 	npcb->pcb_sp = (long)rp - STACK_OFFSET;
-	/* Need to create a %tstate if we're forking from proc0 */
-	if (l1 == &lwp0)
-		tf2->tf_tstate = (ASI_PRIMARY_NO_FAULT<<TSTATE_ASI_SHIFT) |
-			((PSTATE_USER)<<TSTATE_PSTATE_SHIFT);
-	else
-		/* clear condition codes and disable FPU */
-		tf2->tf_tstate &=
-		    ~((PSTATE_PEF<<TSTATE_PSTATE_SHIFT)|TSTATE_CCR);
-
 
 #ifdef NOTDEF_DEBUG
-	printf("cpu_lwp_fork: Copying over trapframe: otf=%p ntf=%p sp=%p opcb=%p npcb=%p\n", 
-	       (struct trapframe *)((int)opcb + USPACE - sizeof(*tf2)), tf2, rp, opcb, npcb);
-	printf("cpu_lwp_fork: tstate=%x:%x pc=%x:%x npc=%x:%x rsp=%x\n",
-	       (long)(tf2->tf_tstate>>32), (long)tf2->tf_tstate, 
-	       (long)(tf2->tf_pc>>32), (long)tf2->tf_pc,
-	       (long)(tf2->tf_npc>>32), (long)tf2->tf_npc, 
+    {
+	char sbuf[sizeof(TSTATE_BITS) + 64];
+
+	bitmask_snprintf(tf2->tf_tstate, TSTATE_BITS, sbuf, sizeof(sbuf));
+
+	printf("cpu_lwp_fork: Copying over trapframe: otf=%p ntf=%p opcb=%p npcb=%p\n", 
+	       (struct trapframe *)((u_long)opcb + USPACE - sizeof(*tf2)), tf2, opcb, npcb);
+	printf("cpu_lwp_fork: tstate=%s pc=%x:%x npc=%x:%x rsp=%lx\n",
+	       sbuf,
+	       (uint)(tf2->tf_pc>>32), (uint)tf2->tf_pc,
+	       (uint)(tf2->tf_npc>>32), (uint)tf2->tf_npc, 
 	       (long)(tf2->tf_out[6]));
-	Debugger();
+	printf("cpu_lwp_fork: npcb_pc=%x:%x npcb_sp=%x:%x\n",
+	       (uint)(npcb->pcb_pc>>32), (uint)npcb->pcb_pc, 
+	       (uint)(npcb->pcb_sp>>32), (uint)npcb->pcb_sp);
+
+	//Debugger();
+    }
 #endif
 }
 
@@ -318,24 +319,6 @@ save_and_clear_fpstate(struct lwp *l)
 #endif
 }
 
-void
-cpu_setfunc(l, func, arg)
-	struct lwp *l;
-	void (*func)(void *);
-	void *arg;
-{
-	struct pcb *npcb = &l->l_addr->u_pcb;
-	struct rwindow *rp;
-
-
-	/* Construct kernel frame to return to in cpu_switch() */
-	rp = (struct rwindow *)((u_long)npcb + TOPFRAMEOFF);
-	rp->rw_local[0] = (long)func;		/* Function to call */
-	rp->rw_local[1] = (long)arg;		/* and its argument */
-
-	npcb->pcb_pc = (long)proc_trampoline - 8;
-	npcb->pcb_sp = (long)rp - STACK_OFFSET;
-}	
 
 void
 cpu_lwp_free(l, proc)

@@ -1,4 +1,4 @@
-/*      $NetBSD: pccons.c,v 1.30 2007/03/08 20:48:40 matt Exp $       */
+/*      $NetBSD: pccons.c,v 1.30.2.1 2007/05/27 12:28:11 ad Exp $       */
 
 /*
  * Copyright 1997
@@ -135,7 +135,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.30 2007/03/08 20:48:40 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.30.2.1 2007/05/27 12:28:11 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_xserver.h"
@@ -1561,7 +1561,7 @@ pcintr(void *arg)
 **           Meaning           | DDDLLLLLLLLLLLLLGGGGGGGGCCCCCCCC
 **
 **           D - Command direction, in/out/both.
-**           L - Command arguement length.
+**           L - Command argument length.
 **           G - Command group, 't' used for tty.
 **           C - Actual command enumeration.
 ** 

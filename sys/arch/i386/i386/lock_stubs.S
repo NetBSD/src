@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.2 2007/02/09 21:55:04 ad Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.2.8.1 2007/05/27 12:27:30 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -281,8 +281,9 @@ ENTRY(i686_mutex_spin_exit)			/* 64 bytes */
 	movl	(CPU_INFO_ILEVEL-0x150)(%edi), %edx
 	jnz	1f
 	cmpl	%edx, %ecx			/* new level is lower? */
-	movl	(CPU_INFO_IPENDING-0x150)(%edi), %eax
 	jae,pn	1f
+0:
+	movl	(CPU_INFO_IPENDING-0x150)(%edi), %eax
 	testl	%eax,(CPU_INFO_IUNMASK-0x150)(%edi,%ecx,4)
 	movl	%eax, %ebx
 	/*
@@ -291,7 +292,7 @@ ENTRY(i686_mutex_spin_exit)			/* 64 bytes */
 	 */
 	jnz,pn	2f
 	cmpxchg8b (CPU_INFO_ISTATE-0x150)(%edi)	/* swap in new ilevel */
-	jnz,pn	2f
+	jnz,pn	0b
 1:
 	popl	%ebx
 	popl	%edi

@@ -1,4 +1,4 @@
-/*	$NetBSD: macereg.h,v 1.2 2005/12/11 12:18:54 christos Exp $	*/
+/*	$NetBSD: macereg.h,v 1.2.30.1 2007/05/27 12:28:04 ad Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -125,6 +125,7 @@
 /* ISA Ringbase Address and Reset Register */
 
 #define MACE_ISA_RINGBASE	(MACE_ISA + 0x0000)
+#define  MACE_ISA_RING_ALIGN	0x00010000
 
 /* Flash-ROM/LED/DP-RAM/NIC Controller Register */
 
@@ -144,6 +145,10 @@
 
 /* bit definitions */
 #define MACE_ISA_INT_RTC_IRQ	0x00000100
+#define  MACE_ISA_INT_AUDIO_SC	      0x02
+#define  MACE_ISA_INT_AUDIO_DMA1      0x04
+#define  MACE_ISA_INT_AUDIO_DMA2      0x10
+#define  MACE_ISA_INT_AUDIO_DMA3      0x40
 
 
 /********************************

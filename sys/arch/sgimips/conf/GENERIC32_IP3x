@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC32_IP3x,v 1.59.8.1 2007/04/10 13:23:13 ad Exp $
+#	$NetBSD: GENERIC32_IP3x,v 1.59.8.2 2007/05/27 12:28:02 ad Exp $
 #
 # GENERIC32_IP3x machine description file
 # 
@@ -28,7 +28,7 @@ makeoptions	TEXTADDR="0x80069000"	# entry point
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC32_IP3x-$Revision: 1.59.8.1 $"
+#ident		"GENERIC32_IP3x-$Revision: 1.59.8.2 $"
 
 maxusers	32
 
@@ -180,15 +180,23 @@ cpu0 		at mainbus?
 
 # O2 busses
 crime0 		at mainbus0 addr 0x14000000
+crmfb0		at mainbus0 addr 0x16000000
+wsdisplay* 	at crmfb? console ?
 mace0 		at mainbus0 addr 0x1f000000
 macepci0 	at mace0 offset 0x080000 intr 7
 pci0 		at macepci0 bus 0
 pci*		at ppb? bus ?
 options 	PCI_NETBSD_CONFIGURE
 
+options 	WSEMUL_VT100
+options 	WS_KERNEL_FG=WSCOL_GREEN
+options 	WS_KERNEL_BG=WSCOL_BLACK
+options 	WS_DEFAULT_BG=WSCOL_BLACK
+
 # MACE devices
 mec0 		at mace0 offset 0x280000 intr 3
-pckbc0		at mace0 offset 0x320000 intr 5
+mavb0		at mace0 offset 0x300000 intr 6
+macekbc0	at mace0 offset 0x320000 intr 5
 lpt0 		at mace0 offset 0x380000 intr 4 intrmask 0x000f0000
 com0 		at mace0 offset 0x390000 intr 4 intrmask 0x03f00000
 com1 		at mace0 offset 0x398000 intr 4 intrmask 0xfc000000
@@ -277,8 +285,8 @@ ss*     at scsibus? target ? lun ?	# SCSI scanners
 ses*    at scsibus? target ? lun ?	# SCSI SES/SAF-TE devices
 uk*     at scsibus? target ? lun ?	# unknown SCSI
 
-pckbd*		at pckbc?
-pms*		at pckbc?
+pckbd*		at macekbc?
+pms*		at macekbc?
 wskbd*		at pckbd? console ?
 wsmouse* 	at pms? mux 0
 #wsdisplay* 	at foofb? console ?
@@ -450,7 +458,10 @@ pseudo-device	sequencer	1	# MIDI sequencer
 pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
-#pseudo-device	wsfont
+
+# wscons pseudo-devices
+pseudo-device	wsmux			# mouse & keyboard multiplexor
+pseudo-device	wsfont
 
 # a pseudo device needed for Coda	# also needs CODA (above)
 pseudo-device	vcoda		4	# coda minicache <-> venus comm.

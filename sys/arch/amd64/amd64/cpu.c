@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.15 2007/03/05 16:50:59 drochner Exp $ */
+/* $NetBSD: cpu.c,v 1.15.2.1 2007/05/27 12:26:56 ad Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.15 2007/03/05 16:50:59 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.15.2.1 2007/05/27 12:26:56 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -241,8 +241,6 @@ cpu_attach(parent, self, aux)
 	struct cpu_info *ci;
 #if defined(MULTIPROCESSOR)
 	int cpunum = caa->cpu_number;
-	vaddr_t kstack;
-	struct pcb *pcb;
 #endif
 
 	/*
@@ -287,32 +285,21 @@ cpu_attach(parent, self, aux)
 
 	simple_lock_init(&ci->ci_slock);
 
+	if (caa->cpu_role == CPU_ROLE_AP) {
 #if defined(MULTIPROCESSOR)
-	/*
-	 * Allocate UPAGES contiguous pages for the idle PCB and stack.
-	 */
-	kstack = uvm_km_alloc(kernel_map, USPACE, 0, UVM_KMF_WIRED);
-	if (kstack == 0) {
-		if (caa->cpu_role != CPU_ROLE_AP) {
-			panic("cpu_attach: unable to allocate idle stack for"
-			    " primary");
-		}
-		printf("%s: unable to allocate idle stack\n",
-		    sc->sc_dev.dv_xname);
-		return;
-	}
-	pcb = ci->ci_idle_pcb = (struct pcb *) kstack;
-	memset(pcb, 0, USPACE);
+		int error;
 
-	pcb->pcb_tss.tss_rsp0 = kstack + USPACE - 16;
-	pcb->pcb_rbp = pcb->pcb_rsp = kstack + USPACE - 16;
-	pcb->pcb_tss.tss_ist[0] = kstack + PAGE_SIZE - 16;
-	pcb->pcb_tss.tss_ist[1] = (uint64_t)x86_64_doubleflt_stack
-	    + PAGE_SIZE - 16;
-	pcb->pcb_pmap = pmap_kernel();
-	pcb->pcb_cr0 = rcr0();
-	pcb->pcb_cr3 = pcb->pcb_pmap->pm_pdirpa;
+		error = mi_cpu_attach(ci);
+		if (error != 0) {
+			aprint_normal("\n");
+			aprint_error("%s: mi_cpu_attach failed with %d\n",
+			    sc->sc_dev.dv_xname, error);
+			return;
+		}
 #endif
+	} else {
+		KASSERT(ci->ci_data.cpu_idlelwp != NULL);
+	}
 
 	/* further PCB init done later. */
 
@@ -375,10 +362,10 @@ cpu_attach(parent, self, aux)
 
 #if defined(MULTIPROCESSOR)
 	if (mp_verbose) {
-		printf("%s: kstack at 0x%lx for %d bytes\n",
-		    sc->sc_dev.dv_xname, kstack, USPACE);
-		printf("%s: idle pcb at %p, idle sp at 0x%lx\n",
-		    sc->sc_dev.dv_xname, pcb, pcb->pcb_rsp);
+		struct lwp *l = ci->ci_data.cpu_idlelwp;
+
+		aprint_verbose("%s: idle lwp at %p, idle sp at 0x%lx\n",
+		    sc->sc_dev.dv_xname, l, l->l_addr->u_pcb.pcb_rsp);
 	}
 #endif
 }
@@ -422,7 +409,7 @@ cpu_boot_secondary_processors()
 		ci = cpu_info[i];
 		if (ci == NULL)
 			continue;
-		if (ci->ci_idle_pcb == NULL)
+		if (ci->ci_data.cpu_idlelwp == NULL)
 			continue;
 		if ((ci->ci_flags & CPUF_PRESENT) == 0)
 			continue;
@@ -432,21 +419,30 @@ cpu_boot_secondary_processors()
 	}
 }
 
+static void
+cpu_init_idle_lwp(struct cpu_info *ci)
+{
+	struct lwp *l = ci->ci_data.cpu_idlelwp;
+	struct pcb *pcb = &l->l_addr->u_pcb;
+
+	pcb->pcb_cr0 = rcr0();
+}
+
 void
-cpu_init_idle_pcbs()
+cpu_init_idle_lwps()
 {
 	struct cpu_info *ci;
 	u_long i;
 
-	for (i=0; i < X86_MAXPROCS; i++) {
+	for (i = 0; i < X86_MAXPROCS; i++) {
 		ci = cpu_info[i];
 		if (ci == NULL)
 			continue;
-		if (ci->ci_idle_pcb == NULL)
+		if (ci->ci_data.cpu_idlelwp == NULL)
 			continue;
 		if ((ci->ci_flags & CPUF_PRESENT) == 0)
 			continue;
-		x86_64_init_pcb_tss_ldt(ci);
+		cpu_init_idle_lwp(ci);
 	}
 }
 
@@ -454,7 +450,6 @@ void
 cpu_start_secondary (ci)
 	struct cpu_info *ci;
 {
-	struct pcb *pcb;
 	int i;
 	struct pmap *kmp = pmap_kernel();
 	extern u_int64_t mp_pdirpa;
@@ -471,12 +466,11 @@ cpu_start_secondary (ci)
 	} else
 		mp_pdirpa = kmp->pm_pdirpa;
 
-	pcb = ci->ci_idle_pcb;
-
 	ci->ci_flags |= CPUF_AP;
 
 	aprint_debug("%s: starting\n", ci->ci_dev->dv_xname);
 
+	ci->ci_curlwp = ci->ci_data.cpu_idlelwp;
 	CPU_STARTUP(ci);
 
 	/*
@@ -552,7 +546,7 @@ cpu_hatch(void *v)
 		panic("%s: already running!?", ci->ci_dev->dv_xname);
 #endif
 
-	lcr0(ci->ci_idle_pcb->pcb_cr0);
+	lcr0(ci->ci_data.cpu_idlelwp->l_addr->u_pcb.pcb_cr0);
 	cpu_init_idt();
 	lapic_set_lvt();
 	gdt_init_cpu(ci);

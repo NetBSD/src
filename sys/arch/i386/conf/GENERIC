@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.816.2.2 2007/04/10 13:23:01 ad Exp $
+# $NetBSD: GENERIC,v 1.816.2.3 2007/05/27 12:27:27 ad Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.816.2.2 $"
+#ident 		"GENERIC-$Revision: 1.816.2.3 $"
 
 maxusers	32		# estimated number of users
 
@@ -366,6 +366,7 @@ mpu*		at acpi?		# Roland MPU-401 MIDI UART
 npx*		at acpi?		# Math coprocessor
 pckbc*  	at acpi?		# PC keyboard controller
 pcppi*		at acpi?                # AT-style speaker sound
+ug* 		at acpi?		# Abit uGuru Hardware monitor
 wss* 		at acpi?		# NeoMagic 256AV in wss mode
 ym* 		at acpi?		# Yamaha OPL3-SA[23] audio
 
@@ -626,6 +627,9 @@ iic*	at piixpm?			# SMBus on PIIX4
 #nsclpcsio*	at isa?
 #gpio*		at nsclpcsio?
 
+# Abit uGuru Hardware system monitor
+#ug0    at isa? port 0xe0
+
 # VIA VT82C686A/VT8231 Hardware Monitor and Power Management Timer
 #viaenv*	at pci? dev ? function ?
 
@@ -760,6 +764,8 @@ geodeide* 	at pci? dev ? function ?	# AMD Geode IDE controllers
 hptide* 	at pci? dev ? function ?	# Triones/HighPoint IDE controllers
 iteide* 	at pci? dev ? function ?	# IT Express IDE controllers
 ixpide* 	at pci? dev ? function ?	# ATI IXP IDE controllers
+jmide* 		at pci? dev ? function ? 	# JMicron PCI-e PATA/SATA controllers
+ahcisata* 	at jmide?
 optiide* 	at pci? dev ? function ?	# Opti IDE controllers
 piixide* 	at pci? dev ? function ?	# Intel IDE controllers
 pdcide* 	at pci? dev ? function ?	# Promise IDE controllers
@@ -790,6 +796,7 @@ wdc1	at isa? port 0x170 irq 15 flags 0x00
 
 # ATA (IDE) bus support
 atabus* at ata?
+options	ATADEBUG
 
 # IDE drives
 # Flags are used only with controllers that support DMA operations
@@ -1112,6 +1119,9 @@ ucom*	at umct? portno ?
 uplcom* at uhub? port ? 	# I/O DATA USB-RSAQ2 serial adapter
 ucom*	at uplcom? portno ?
 
+uslsa*	at uhub? port ?		# Silicon Labs USB-RS232 serial adapter
+ucom*	at uslsa? portno ?
+
 uvscom* at uhub? port ? 	# SUNTAC Slipper U VS-10U serial adapter
 ucom*	at uvscom? portno ?
 
@@ -1357,6 +1367,7 @@ pseudo-device 	crypto		# /dev/crypto device
 pseudo-device	swcrypto	# software crypto implementation
 
 # disk/mass storage pseudo-devices
+pseudo-device	bio			# RAID control device driver
 pseudo-device	ccd		4	# concatenated/striped disk devices
 #pseudo-device	cgd		4	# cryptographic disk devices
 pseudo-device	raid		8	# RAIDframe disk driver

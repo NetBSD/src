@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.113 2007/03/04 05:59:10 christos Exp $ */
+/* $NetBSD: trap.c,v 1.113.2.1 2007/05/27 12:26:54 ad Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.113 2007/03/04 05:59:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.113.2.1 2007/05/27 12:26:54 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -215,9 +215,8 @@ printtrap(const u_long a0, const u_long a1, const u_long a2,
 	printf("CPU %lu    pv         = 0x%lx\n", cpu_id,
 	    framep->tf_regs[FRAME_T12]);
 	printf("CPU %lu    curlwp    = %p\n", cpu_id, curlwp);
-	if (curlwp != NULL)
-		printf("CPU %lu        pid = %d, comm = %s\n", cpu_id,
-		    curproc->p_pid, curproc->p_comm);
+	printf("CPU %lu        pid = %d, comm = %s\n", cpu_id,
+	    curproc->p_pid, curproc->p_comm);
 	printf("\n");
 }
 

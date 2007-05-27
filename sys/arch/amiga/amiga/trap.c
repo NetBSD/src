@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.112 2007/03/04 05:59:16 christos Exp $	*/
+/*	$NetBSD: trap.c,v 1.112.2.1 2007/05/27 12:27:04 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
 #include "opt_fpu_emulate.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.112 2007/03/04 05:59:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.112.2.1 2007/05/27 12:27:04 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -559,8 +559,6 @@ trap(type, code, v, frame)
 	KSI_INIT_TRAP(&ksi);
 	ksi.ksi_trap = type & ~T_USER;
 
-	if (l == NULL)
-		l = &lwp0;
 	p = l->l_proc;
 
 	if (USERMODE(frame.f_sr)) {
@@ -743,7 +741,7 @@ trap(type, code, v, frame)
 			l->l_pflag &= ~LP_OWEUPC;
 			ADDUPROF(l);
 		}
-		if (want_resched)
+		if (curcpu()->ci_want_resched)
 			preempt();
 
 		userret(l, frame.f_pc, sticks);

@@ -1,4 +1,4 @@
-$NetBSD: version,v 1.11 2006/06/27 23:26:13 garbled Exp $
+$NetBSD: version,v 1.11.14.1 2007/05/27 12:28:00 ad Exp $
 
 NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.  The format of this
 file is important - make sure the entries are appended on end, last item
@@ -12,7 +12,7 @@ is taken as the current.
 1.5:		Support MPC601.
 1.6:		Remove fd.c, video.c.  Compile without DB_MONITOR. Cleanup,
 		KNF.
-1.7:		Rewrite vreset.c, make it work and allways run it. Stop using
+1.7:		Rewrite vreset.c, make it work and always run it. Stop using
 		cd9660 and ufs, replace with nullfs because we don't need one.
-1.8:		Do not allways run vreset.  When resetting, only do the pci
+1.8:		Do not always run vreset.  When resetting, only do the pci
 		stuff when we find an actual pci card.

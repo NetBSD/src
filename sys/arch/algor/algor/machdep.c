@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.34 2007/03/05 18:05:20 he Exp $	*/
+/*	$NetBSD: machdep.c,v 1.34.2.1 2007/05/27 12:26:51 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -113,7 +113,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.34 2007/03/05 18:05:20 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.34.2.1 2007/05/27 12:26:51 ad Exp $");
 
 #include "opt_algor_p4032.h"
 #include "opt_algor_p5064.h" 
@@ -575,8 +575,8 @@ mach_init(int argc, char *argv[], char *envp[])
 	v = (void *) uvm_pageboot_alloc(USPACE);
 	lwp0.l_addr = proc0paddr = (struct user *) v;
 	lwp0.l_md.md_regs = (struct frame *)((char*)v + USPACE) - 1;
-	curpcb = &lwp0.l_addr->u_pcb;
-	curpcb->pcb_context[11] = MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
+	proc0paddr->u_pcb.pcb_context[11] =
+	    MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
 
 	/*
 	 * Initialize debuggers, and break into them, if appropriate.

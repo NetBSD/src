@@ -1,4 +1,4 @@
-/*	$NetBSD: Locore.c,v 1.14 2006/01/27 04:11:41 uwe Exp $	*/
+/*	$NetBSD: Locore.c,v 1.14.28.1 2007/05/27 12:27:55 ad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -50,21 +50,37 @@ __asm(
 "	.text					\n"
 "	.globl	_start				\n"
 "_start:					\n"
-"	li	8,0				\n"
-"	li	9,0x100				\n"
-"	mtctr	9				\n"
+"	li	%r8,0				\n"
+"	li	%r9,0x100			\n"
+"	mtctr	%r9				\n"
 "1:						\n"
-"	dcbf	0,8				\n"
-"	icbi	0,8				\n"
-"	addi	8,8,0x20			\n"
+"	dcbf	0,%r8				\n"
+"	icbi	0,%r8				\n"
+"	addi	%r8,%r8,0x20			\n"
 "	bdnz	1b				\n"
 "	sync					\n"
 "	isync					\n"
-
-"	lis	1,stack@ha			\n"
-"	addi	1,1,stack@l			\n"
-"	addi	1,1,8192			\n"
-"	b	startup				\n"
+"	lis	%r1,stack@ha			\n"
+"	addi	%r1,%r1,stack@l			\n"
+"	addi	%r1,%r1,8192			\n"
+"						\n"
+	/*
+	 * Make sure that .bss is zeroed
+	 */
+"						\n"
+"	li	%r0,0				\n"
+"	lis	%r8,_edata@ha			\n"
+"	addi	%r8,%r8,_edata@l		\n"
+"	lis	%r9,_end@ha			\n"
+"	addi	%r9,%r9,_end@l			\n"
+"						\n"
+"2:	cmpw	0,%r8,%r9			\n"
+"	bge	3f				\n"
+"	stw	%r0,0(%r8)			\n"
+"	addi	%r8,%r8,4			\n"
+"	b	2b				\n"
+"						\n"
+"3:	b	startup				\n"
 );
 
 static int
@@ -82,9 +98,7 @@ openfirmware(void *arg)
 static void
 startup(void *vpd, int res, int (*openfirm)(void *), char *arg, int argl)
 {
-	extern char _end[], _edata[];
 
-	memset(_edata, 0, (_end - _edata));
 	openfirmware_entry = openfirm;
 	setup();
 	main();

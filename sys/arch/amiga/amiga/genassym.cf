@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.22 2007/02/09 21:55:01 ad Exp $
+#	$NetBSD: genassym.cf,v 1.22.6.1 2007/05/27 12:27:02 ad Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -100,8 +100,6 @@ endif
 
 # lwp & proc fields and values
 define	L_ADDR			offsetof(struct lwp, l_addr)
-define	L_BACK			offsetof(struct lwp, l_back)
-define	L_FORW			offsetof(struct lwp, l_forw)
 define	L_PRIORITY		offsetof(struct lwp, l_priority)
 define	L_STAT			offsetof(struct lwp, l_stat)
 define	L_WCHAN			offsetof(struct lwp, l_wchan)
@@ -170,7 +168,6 @@ define	PCB_FLAGS	offsetof(struct pcb, pcb_flags)
 define	PCB_PS		offsetof(struct pcb, pcb_ps)
 define	PCB_USP		offsetof(struct pcb, pcb_usp)
 define	PCB_REGS	offsetof(struct pcb, pcb_regs)
-define	PCB_CMAP2	offsetof(struct pcb, pcb_cmap2)
 define	PCB_ONFAULT	offsetof(struct pcb, pcb_onfault)
 define	PCB_FPCTX	offsetof(struct pcb, pcb_fpregs)
 define	SIZEOF_PCB	sizeof(struct pcb)

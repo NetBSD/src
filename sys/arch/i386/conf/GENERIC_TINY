@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_TINY,v 1.103 2007/01/24 19:46:26 tls Exp $
+#	$NetBSD: GENERIC_TINY,v 1.103.6.1 2007/05/27 12:27:28 ad Exp $
 #
 #	GENERIC_TINY -- suitable default for 4M machines
 #			No EISA, PCI, or SCSI.
@@ -379,6 +379,7 @@ wdc1	at isa? port 0x170 irq 15
 
 # ATA (IDE) bus support
 atabus* at ata?
+#options	ATADEBUG
 
 # IDE drives
 wd*	at atabus? drive ?			# the drives themselves

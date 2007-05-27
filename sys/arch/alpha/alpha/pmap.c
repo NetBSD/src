@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.220.2.2 2007/04/10 13:22:48 ad Exp $ */
+/* $NetBSD: pmap.c,v 1.220.2.3 2007/05/27 12:26:53 ad Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -145,7 +145,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.220.2.2 2007/04/10 13:22:48 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.220.2.3 2007/05/27 12:26:53 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -350,7 +350,7 @@ static struct pmap_asn_info pmap_asn_info[ALPHA_MAXPROCS];
  *	* pm_slock (per-pmap) - This lock protects all of the members
  *	  of the pmap structure itself.  This lock will be asserted
  *	  in pmap_activate() and pmap_deactivate() from a critical
- *	  section of cpu_switch(), and must never sleep.  Note that
+ *	  section of mi_switch(), and must never sleep.  Note that
  *	  in the case of the kernel pmap, interrupts which cause
  *	  memory allocation *must* be blocked while this lock is
  *	  asserted.
@@ -529,8 +529,7 @@ static int	pmap_physpage_delref(void *);
  * This causes pmaps to use an extra page of memory if no mappings
  * are entered in them, but in practice this is probably not going
  * to be a problem, and it allows us to avoid locking pmaps in
- * pmap_activate(), which in turn allows us to avoid a deadlock with
- * sched_lock via cpu_switch().
+ * pmap_activate().
  */
 #define	PMAP_NO_LAZY_LEV1MAP
 
@@ -550,7 +549,8 @@ static int	pmap_physpage_delref(void *);
 	 */								\
 	int isactive_ = PMAP_ISACTIVE_TEST(pm, cpu_id);			\
 									\
-	if (curlwp != NULL && curproc->p_vmspace != NULL &&		\
+	if ((curlwp->l_flag & LW_IDLE) != 0 &&				\
+	    curproc->p_vmspace != NULL &&				\
 	   ((curproc->p_sflag & PS_WEXIT) == 0) &&			\
 	   (isactive_ ^ ((pm) == curproc->p_vmspace->vm_map.pmap)))	\
 		panic("PMAP_ISACTIVE");					\
@@ -2261,9 +2261,6 @@ pmap_collect(pmap_t pmap)
  *	Activate the pmap used by the specified process.  This includes
  *	reloading the MMU context if the current process, and marking
  *	the pmap in use by the processor.
- *
- *	Note: We may use only spin locks here, since we are called
- *	by a critical section in cpu_switch()!
  */
 void
 pmap_activate(struct lwp *l)
@@ -2331,7 +2328,7 @@ pmap_do_reactivate(struct cpu_info *ci, struct trapframe *framep)
 {
 	struct pmap *pmap;
 
-	if (ci->ci_curlwp == NULL)
+	if (ci->ci_curlwp == ci->ci_data.cpu_idlelwp)
 		return;
 
 	pmap = ci->ci_curlwp->l_proc->p_vmspace->vm_map.pmap;
@@ -2435,9 +2432,9 @@ pmap_pageidlezero(paddr_t pa)
 	int i, cnt = PAGE_SIZE / sizeof(u_long);
 
 	for (i = 0, ptr = (u_long *) ALPHA_PHYS_TO_K0SEG(pa); i < cnt; i++) {
-		if (sched_whichqs != 0) {
+		if (sched_curcpu_runnable_p()) {
 			/*
-			 * A process has become ready.  Abort now,
+			 * An LWP has become ready.  Abort now,
 			 * so we don't keep it waiting while we
 			 * finish zeroing the page.
 			 */

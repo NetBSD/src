@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup.c,v 1.35 2007/03/04 05:59:56 christos Exp $	*/
+/*	$NetBSD: acpi_wakeup.c,v 1.35.2.1 2007/05/27 12:27:26 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.35 2007/03/04 05:59:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.35.2.1 2007/05/27 12:27:26 ad Exp $");
 
 /*-
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
@@ -100,8 +100,10 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.35 2007/03/04 05:59:56 christos Ex
 static paddr_t phys_wakeup = 0;
 static int acpi_md_node = CTL_EOL;
 static int acpi_md_vbios_reset = 1;
+static int acpi_md_beep_on_reset = 1;
 
 static int	sysctl_md_acpi_vbios_reset(SYSCTLFN_ARGS);
+static int	sysctl_md_acpi_beep_on_reset(SYSCTLFN_ARGS);
 
 uint32_t
 acpi_md_get_npages_of_wakecode(void)
@@ -366,6 +368,7 @@ acpi_md_sleep(int state)
 		p_gdt->rd_base = vtophys(r_gdt.rd_base);
 
 		WAKECODE_FIXUP(vbios_reset, uint8_t, acpi_md_vbios_reset);
+		WAKECODE_FIXUP(beep_on_reset, uint8_t, acpi_md_beep_on_reset);
 
 		WAKECODE_FIXUP(previous_cr0, uint32_t, r_cr0);
 		WAKECODE_FIXUP(previous_cr2, uint32_t, r_cr2);
@@ -484,6 +487,10 @@ SYSCTL_SETUP(sysctl_md_acpi_setup, "acpi i386 sysctl setup")
 	    CTLTYPE_INT, "acpi_vbios_reset", NULL, sysctl_md_acpi_vbios_reset,
 	    0, NULL, 0, CTL_CREATE, CTL_EOL) != 0)
 		return;
+	if (sysctl_createv(NULL, 0, &node, &ssnode, CTLFLAG_READWRITE,
+	    CTLTYPE_INT, "acpi_beep_on_reset", NULL, sysctl_md_acpi_beep_on_reset,
+	    0, NULL, 0, CTL_CREATE, CTL_EOL) != 0)
+		return;
 
 	acpi_md_node = node->sysctl_num;
 }
@@ -505,6 +512,27 @@ sysctl_md_acpi_vbios_reset(SYSCTLFN_ARGS)
 		return EINVAL;
 
 	acpi_md_vbios_reset = t;
+
+	return 0;
+}
+
+static int
+sysctl_md_acpi_beep_on_reset(SYSCTLFN_ARGS)
+{
+	int error, t;
+	struct sysctlnode node;
+
+	node = *rnode;
+	t = acpi_md_beep_on_reset;
+	node.sysctl_data = &t;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		return error;
+
+	if (t < 0 || t > 1)
+		return EINVAL;
+
+	acpi_md_beep_on_reset = t;
 
 	return 0;
 }

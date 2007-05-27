@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.S,v 1.4 2007/03/04 05:59:12 christos Exp $	*/
+/*	$NetBSD: copy.S,v 1.4.2.1 2007/05/27 12:26:56 ad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -43,6 +43,10 @@
 #include <machine/param.h>
 #include <machine/asm.h>
 
+#define GET_CURPCB(reg)	\
+	movq	CPUVAR(CURLWP), reg; \
+	movq	L_ADDR(reg), reg
+
 /*
  * Copy routines from and to userland, plus a few more. See the
  * section 9 manpages for info. Some cases can be optimized more.
@@ -75,7 +79,7 @@ ENTRY(fillw)
 	ret
 
 ENTRY(kcopy)
-	movq	CPUVAR(CURPCB),%rax
+	GET_CURPCB(%rax)
 	pushq	PCB_ONFAULT(%rax)
 	leaq	_C_LABEL(copy_fault)(%rip),%r11
 	movq	%r11, PCB_ONFAULT(%rax)
@@ -97,7 +101,7 @@ ENTRY(kcopy)
 	rep
 	movsb
 
-	movq	CPUVAR(CURPCB),%rdx
+	GET_CURPCB(%rdx)
 	popq	PCB_ONFAULT(%rdx)
 	xorq	%rax,%rax
 	ret
@@ -118,7 +122,7 @@ ENTRY(kcopy)
 	movsq
 	cld
 
-	movq	CPUVAR(CURPCB),%rdx
+	GET_CURPCB(%rdx)
 	popq	PCB_ONFAULT(%rdx)
 	xorq	%rax,%rax
 	ret
@@ -136,7 +140,7 @@ ENTRY(copyout)
 	cmpq	%r8,%rdx
 	ja	_C_LABEL(copy_efault)
 
-	movq	CPUVAR(CURPCB),%rdx
+	GET_CURPCB(%rdx)
 	leaq	_C_LABEL(copy_fault)(%rip),%r11
 	movq	%r11,PCB_ONFAULT(%rdx)
 
@@ -155,7 +159,7 @@ ENTRY(copyout)
 	ret
 
 ENTRY(copyin)
-	movq	CPUVAR(CURPCB),%rax
+	GET_CURPCB(%rax)
 	pushq	$0
 	leaq	_C_LABEL(copy_fault)(%rip),%r11
 	movq	%r11,PCB_ONFAULT(%rax)
@@ -181,7 +185,7 @@ ENTRY(copyin)
 	rep
 	movsb
 
-	movq	CPUVAR(CURPCB),%rdx
+	GET_CURPCB(%rdx)
 	popq	PCB_ONFAULT(%rdx)
 	xorl	%eax,%eax
 	ret
@@ -190,7 +194,7 @@ NENTRY(copy_efault)
 	movq	$EFAULT,%rax
 
 NENTRY(copy_fault)
-	movq	CPUVAR(CURPCB),%rdx
+	GET_CURPCB(%rdx)
 	popq	PCB_ONFAULT(%rdx)
 	ret
 
@@ -199,7 +203,7 @@ ENTRY(copyoutstr)
 	movq	%rdx,%r8
 	movq	%rcx,%r9
 
-5:	movq	CPUVAR(CURPCB),%rax
+5:	GET_CURPCB(%rax)
 	leaq	_C_LABEL(copystr_fault)(%rip),%r11
 	movq	%r11,PCB_ONFAULT(%rax)
 	/*
@@ -240,7 +244,7 @@ ENTRY(copyinstr)
 	movq	%rdx,%r8
 	movq	%rcx,%r9
 
-	movq	CPUVAR(CURPCB),%rcx
+	GET_CURPCB(%rcx)
 	leaq	_C_LABEL(copystr_fault)(%rip),%r11
 	movq	%r11,PCB_ONFAULT(%rcx)
 
@@ -283,7 +287,7 @@ ENTRY(copystr_efault)
 ENTRY(copystr_fault)
 copystr_return:
 	/* Set *lencopied and return %eax. */
-	movq	CPUVAR(CURPCB),%rcx
+	GET_CURPCB(%rcx)
 	movq	$0,PCB_ONFAULT(%rcx)
 	testq	%r9,%r9
 	jz	8f
@@ -326,7 +330,7 @@ ENTRY(fuword)
 	movq	$VM_MAXUSER_ADDRESS-4,%r11
 	cmpq	%r11,%rdi
 	ja	_C_LABEL(fusuaddrfault)
-	movq	CPUVAR(CURPCB),%rcx
+	GET_CURPCB(%rcx)
 	leaq	_C_LABEL(fusufailure)(%rip),%r11
 	movq	%r11,PCB_ONFAULT(%rcx)
 	movl	(%rdi),%eax
@@ -337,7 +341,7 @@ ENTRY(fusword)
 	movq	$VM_MAXUSER_ADDRESS-2,%r11
 	cmpq	%r11,%rdi
 	ja	_C_LABEL(fusuaddrfault)
-	movq	CPUVAR(CURPCB),%rcx
+	GET_CURPCB(%rcx)
 	leaq	_C_LABEL(fusufailure)(%rip),%r11
 	movq	%r11,PCB_ONFAULT(%rcx)
 	movzwl	(%rdi),%eax
@@ -348,7 +352,7 @@ ENTRY(fuswintr)
 	movq	$VM_MAXUSER_ADDRESS-2,%r11
 	cmpq	%r11,%rdi
 	ja	_C_LABEL(fusuaddrfault)
-	movq	CPUVAR(CURPCB),%rcx
+	GET_CURPCB(%rcx)
 	leaq	_C_LABEL(fusuintrfailure)(%rip),%r11
 	movq	%r11,PCB_ONFAULT(%rcx)
 	movzwl	(%rdi),%eax
@@ -359,7 +363,7 @@ ENTRY(fubyte)
 	movq	$VM_MAXUSER_ADDRESS-1,%r11
 	cmpq	%r11,%rdi
 	ja	_C_LABEL(fusuaddrfault)
-	movq	CPUVAR(CURPCB),%rcx
+	GET_CURPCB(%rcx)
 	leaq	_C_LABEL(fusuintrfailure)(%rip),%r11
 	movq	%r11,PCB_ONFAULT(%rcx)
 	movzbl	(%rdi),%eax
@@ -389,7 +393,7 @@ ENTRY(suword)
 	cmpq	%r11,%rdi
 	ja	_C_LABEL(fusuaddrfault)
 
-	movq	CPUVAR(CURPCB),%rcx
+	GET_CURPCB(%rcx)
 	leaq	_C_LABEL(fusufailure)(%rip),%r11
 	movq	%r11,PCB_ONFAULT(%rcx)
 
@@ -403,7 +407,7 @@ ENTRY(susword)
 	cmpq	%r11,%rdi
 	ja	_C_LABEL(fusuaddrfault)
 
-	movq	CPUVAR(CURPCB),%rcx
+	GET_CURPCB(%rcx)
 	leaq	_C_LABEL(fusufailure)(%rip),%r11
 	movq	%r11,PCB_ONFAULT(%rcx)
 
@@ -416,7 +420,7 @@ ENTRY(suswintr)
 	movq	$VM_MAXUSER_ADDRESS-2,%r11
 	cmpq	%r11,%rdi
 	ja	_C_LABEL(fusuaddrfault)
-	movq	CPUVAR(CURPCB),%rcx
+	GET_CURPCB(%rcx)
 	leaq	_C_LABEL(fusuintrfailure)(%rip),%r11
 	movq	%r11,PCB_ONFAULT(%rcx)
 
@@ -430,7 +434,7 @@ ENTRY(subyte)
 	cmpq	%r11,%rdi
 	ja	_C_LABEL(fusuaddrfault)
 
-	movq	CPUVAR(CURPCB),%rcx
+	GET_CURPCB(%rcx)
 	leaq	_C_LABEL(fusufailure)(%rip),%r11
 	movq	%r11,PCB_ONFAULT(%rcx)
 

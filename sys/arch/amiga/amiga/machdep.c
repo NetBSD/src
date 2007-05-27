@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.202 2007/03/04 05:59:15 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.202.2.1 2007/05/27 12:27:03 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -85,7 +85,7 @@
 #include "opt_panicbutton.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.202 2007/03/04 05:59:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.202.2.1 2007/05/27 12:27:03 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -512,7 +512,7 @@ cpu_reboot(howto, bootstr)
 	char *bootstr;
 {
 	/* take a snap shot before clobbering any registers */
-	if (curlwp)
+	if (curlwp->l_addr)
 		savectx(&curlwp->l_addr->u_pcb);
 
 	boothowto = howto;

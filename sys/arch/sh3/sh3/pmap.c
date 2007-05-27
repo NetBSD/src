@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.61.2.1 2007/03/13 16:50:04 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.61.2.2 2007/05/27 12:28:10 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.61.2.1 2007/03/13 16:50:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.61.2.2 2007/05/27 12:28:10 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,6 +67,9 @@ struct pmap __pmap_kernel;
 STATIC vaddr_t __pmap_kve;	/* VA of last kernel virtual */
 paddr_t avail_start;		/* PA of first available physical page */
 paddr_t avail_end;		/* PA of last available physical page */
+
+/* For the fast tlb miss handler */
+pt_entry_t **curptd;		/* p1 va of curlwp->...->pm_ptp */
 
 /* pmap pool */
 STATIC struct pool __pmap_pmap_pool;
@@ -313,7 +316,9 @@ pmap_activate(struct lwp *l)
 		pmap->pm_asid = __pmap_asid_alloc();
 
 	KDASSERT(pmap->pm_asid >=0 && pmap->pm_asid < 256);
+
 	sh_tlb_set_asid(pmap->pm_asid);
+	curptd = pmap->pm_ptp;
 }
 
 void
@@ -343,7 +348,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 		pvh = &pg->mdpage;
 		entry |= PG_C;	/* always cached */
 
-		/* Modified/reference tracking */
+		/* Seed modified/reference tracking */
 		if (flags & VM_PROT_WRITE) {
 			entry |= PG_V | PG_D;
 			pvh->pvh_flags |= PVH_MODIFIED | PVH_REFERENCED;
@@ -359,7 +364,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 			else
 				entry |= PG_PR_URW;
 		} else {
-			/* RO, COW page */
+			/* RO or COW page */
 			if (kva)
 				entry |= PG_PR_KRO | PG_SH;
 			else

@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.50 2007/02/18 21:32:48 ad Exp $
+#	$NetBSD: genassym.cf,v 1.50.4.1 2007/05/27 12:28:18 ad Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -155,13 +155,11 @@ define	CPUINFO_EINTSTACK	offsetof(struct cpu_info, eintstack)
 define	INT_STACK_SIZE		INT_STACK_SIZE
 define	CPUINFO_REDZONE		offsetof(struct cpu_info, redzone)
 define	REDSIZE			REDSIZE
-define	CPUINFO_IDLE_U		offsetof(struct cpu_info, idle_u)
 define	CPUINFO_CURPCB		offsetof(struct cpu_info, curpcb)
 define	CPUINFO_CURLWP		offsetof(struct cpu_info, ci_curlwp)
 define	CPUINFO_SELF		offsetof(struct cpu_info, ci_self)
 define	CPUINFO_FLAGS		offsetof(struct cpu_info, flags)
-define	CPUINFO_WANT_AST	offsetof(struct cpu_info, want_ast)
-define	CPUINFO_WANT_RESCHED	offsetof(struct cpu_info, want_resched)
+define	CPUINFO_WANT_AST	offsetof(struct cpu_info, ci_want_ast)
 define	CPUINFO_TT		offsetof(struct cpu_info, ci_tt)
 define	CPUINFO_CACHE_LINESZ	offsetof(struct cpu_info, cacheinfo.c_linesize)
 define	CPUINFO_CACHE_NLINES	offsetof(struct cpu_info, cacheinfo.c_nlines)

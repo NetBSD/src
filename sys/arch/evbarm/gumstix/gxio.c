@@ -1,4 +1,4 @@
-/*	$NetBSD: gxio.c,v 1.3 2007/01/18 10:06:47 kiyohara Exp $ */
+/*	$NetBSD: gxio.c,v 1.3.6.1 2007/05/27 12:27:16 ad Exp $ */
 /*
  * Copyright (C) 2005, 2006, 2007 WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -31,7 +31,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gxio.c,v 1.3 2007/01/18 10:06:47 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gxio.c,v 1.3.6.1 2007/05/27 12:27:16 ad Exp $");
 
 #include "opt_gxio.h"
 
@@ -58,7 +58,7 @@ struct gpioconf {
 };
 struct gxioconf {
 	const char *name;
-	void (*config)(struct gxio_softc *);
+	void (*config)(void);
 };
 
 static int gxiomatch(struct device *, struct cfdata *, void *);
@@ -67,14 +67,15 @@ static int gxiosearch(struct device *, struct cfdata *, const int *, void *);
 static int gxioprint(void *, const char *);
 
 void gxio_config_pin(void);
-static void
-    gxio_config_gpio(struct gxio_softc *, const struct gxioconf *, char *);
-static void cfstix_config(struct gxio_softc *);
-static void etherstix_config(struct gxio_softc *);
-static void netcf_config(struct gxio_softc *);
-static void netduommc_config(struct gxio_softc *);
-static void netduo_config(struct gxio_softc *);
-static void netmmc_config(struct gxio_softc *);
+void gxio_config_busheader(char *);
+static void gxio_config_gpio(const struct gxioconf *, char *);
+static void cfstix_config(void);
+static void etherstix_config(void);
+static void netcf_config(void);
+static void netduommc_config(void);
+static void netduo_config(void);
+static void netmmc_config(void);
+static void wifistix_cf_config(void);
 
 CFATTACH_DECL(
     gxio, sizeof(struct gxio_softc), gxiomatch, gxioattach, NULL, NULL);
@@ -137,6 +138,7 @@ static const struct gxioconf busheader_conf[] = {
 	{ "netduo-mmc",		netduommc_config },
 	{ "netduo",		netduo_config },
 	{ "netmmc",		netmmc_config },
+	{ "wifistix-cf",	wifistix_cf_config },
 	{ "wifistix",		cfstix_config },
 	{ NULL }
 };
@@ -173,11 +175,8 @@ gxioattach(struct device *parent, struct device *self, void *aux)
 	    PXA2X0_MEMCTL_BASE, PXA2X0_MEMCTL_SIZE, 0, &sc->sc_ioh))
 		return;
 
-	/* configuration for GPIOs of busheader side */
-	gxio_config_gpio(sc, busheader_conf, busheader);
-
 	/*
-	 *  Attach each gumstix expantion of busheader side devices
+	 *  Attach each gumstix expansion of busheader side devices
 	 */
 	config_search_ia(gxiosearch, self, "gxio", NULL);
 }
@@ -231,9 +230,15 @@ gxio_config_pin()
 		pxa2x0_gpio_set_function(gpioconf[i].pin, gpioconf[i].value);
 }
 
+void
+gxio_config_busheader(char *expansion)
+{
+
+	gxio_config_gpio(busheader_conf, expansion);
+}
+
 static void
-gxio_config_gpio(struct gxio_softc *sc,
-    const struct gxioconf *gxioconflist, char *expansion)
+gxio_config_gpio(const struct gxioconf *gxioconflist, char *expansion)
 {
 	int i, rv;
 
@@ -243,7 +248,7 @@ gxio_config_gpio(struct gxio_softc *sc,
 		rv = strncmp(expansion, gxioconflist[i].name,
 		    strlen(gxioconflist[i].name) + 1);
 		if (rv == 0) {
-			gxioconflist[i].config(sc);
+			gxioconflist[i].config();
 			break;
 		}
 	}
@@ -251,21 +256,17 @@ gxio_config_gpio(struct gxio_softc *sc,
 
 
 static void
-cfstix_config(struct gxio_softc *sc)
+cfstix_config()
 {
 	u_int gpio, npoe_fn;
 
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, MEMCTL_MECR,
-	    bus_space_read_4(sc->sc_iot, sc->sc_ioh, MEMCTL_MECR) & ~MECR_NOS);
-
-	pxa2x0_gpio_set_function(8, GPIO_OUT | GPIO_SET);	/* RESET */
-	delay(50);
-	pxa2x0_gpio_set_function(8, GPIO_OUT | GPIO_CLR);
-
-	pxa2x0_gpio_set_function(4, GPIO_IN); 		    /* nBVD1/~nSTSCHG */
-	pxa2x0_gpio_set_function(27, GPIO_IN);			/* ~INPACK */
-	pxa2x0_gpio_set_function(11, GPIO_IN);			/* nPCD1 */
-	pxa2x0_gpio_set_function(26, GPIO_IN);			/* PRDY/~IRQ */
+#if 1
+	/* this configuration set by pxapcic_attach_common()::pxa2x0_pcic.c */
+#else
+	pxa2x0_gpio_set_function(11, GPIO_IN);		/* PCD1 */
+	pxa2x0_gpio_set_function(26, GPIO_IN);		/* PRDY1/~IRQ1 */
+#endif
+	pxa2x0_gpio_set_function(4, GPIO_IN); 		/* BVD1/~STSCHG1 */
 
 	for (gpio = 48, npoe_fn = 0; gpio <= 53 ; gpio++)
 		npoe_fn |= pxa2x0_gpio_get_function(gpio);
@@ -276,15 +277,15 @@ cfstix_config(struct gxio_softc *sc)
 	pxa2x0_gpio_set_function(50, GPIO_ALT_FN_2_OUT);	/* nPIOR */
 	pxa2x0_gpio_set_function(51, GPIO_ALT_FN_2_OUT);	/* nPIOW */
 	pxa2x0_gpio_set_function(52, GPIO_ALT_FN_2_OUT);	/* nPCE1 */
+	pxa2x0_gpio_set_function(53, GPIO_ALT_FN_2_OUT);	/* nPCE2 */
 	pxa2x0_gpio_set_function(54, GPIO_ALT_FN_2_OUT);	/* pSKTSEL */
 	pxa2x0_gpio_set_function(55, GPIO_ALT_FN_2_OUT);	/* nPREG */
 	pxa2x0_gpio_set_function(56, GPIO_ALT_FN_1_IN);		/* nPWAIT */
 	pxa2x0_gpio_set_function(57, GPIO_ALT_FN_1_IN);		/* nIOIS16 */
 }
 
-/* ARGSUSED */
 static void
-etherstix_config(struct gxio_softc *sc)
+etherstix_config()
 {
 
 	pxa2x0_gpio_set_function(49, GPIO_ALT_FN_2_OUT);	/* nPWE */
@@ -296,27 +297,27 @@ etherstix_config(struct gxio_softc *sc)
 }
 
 static void
-netcf_config(struct gxio_softc *sc)
+netcf_config()
 {
 
-	etherstix_config(sc);
-	cfstix_config(sc);
+	etherstix_config();
+	cfstix_config();
 }
 
 static void
-netduommc_config(struct gxio_softc *sc)
+netduommc_config()
 {
 
-	netduo_config(sc);
+	netduo_config();
 
 	/* mmc not yet... */
 }
 
 static void
-netduo_config(struct gxio_softc *sc)
+netduo_config()
 {
 
-	etherstix_config(sc);
+	etherstix_config();
 
 	pxa2x0_gpio_set_function(78, GPIO_ALT_FN_2_OUT);	/* nCS 2 */
 	pxa2x0_gpio_set_function(52, GPIO_OUT | GPIO_SET);	/* RESET 2 */
@@ -326,10 +327,25 @@ netduo_config(struct gxio_softc *sc)
 }
 
 static void
-netmmc_config(struct gxio_softc *sc)
+netmmc_config()
 {
 
-	etherstix_config(sc);
+	etherstix_config();
 
 	/* mmc not yet... */
+}
+
+static void
+wifistix_cf_config()
+{
+
+#if 1
+	/* this configuration set by pxapcic_attach_common()::pxa2x0_pcic.c */
+#else
+	pxa2x0_gpio_set_function(36, GPIO_IN);		/* PCD2 */
+	pxa2x0_gpio_set_function(27, GPIO_IN);		/* PRDY2/~IRQ2 */
+#endif
+	pxa2x0_gpio_set_function(18, GPIO_IN); 		/* BVD2/~STSCHG2 */
+
+	cfstix_config();
 }

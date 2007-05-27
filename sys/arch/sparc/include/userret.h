@@ -1,4 +1,4 @@
-/*	$NetBSD: userret.h,v 1.5 2007/02/09 21:55:12 ad Exp $ */
+/*	$NetBSD: userret.h,v 1.5.6.1 2007/05/27 12:28:14 ad Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -66,14 +66,14 @@ userret(struct lwp *l, int pc, u_quad_t oticks)
  again:
 	mi_userret(l);
 
-	if (cpuinfo.want_ast) {
-		cpuinfo.want_ast = 0;
+	if (cpuinfo.ci_want_ast) {
+		cpuinfo.ci_want_ast = 0;
 		if (l->l_pflag & LP_OWEUPC) {
 			l->l_pflag &= ~LP_OWEUPC;
 			ADDUPROF(l);
 		}
 	}
-	if (cpuinfo.want_resched) {
+	if (cpuinfo.ci_want_resched) {
 		/*
 		 * We are being preempted.
 		 */

@@ -1,4 +1,4 @@
-#	$NetBSD: files.dev,v 1.6 2006/08/30 23:44:52 rumble Exp $
+#	$NetBSD: files.dev,v 1.6.12.1 2007/05/27 12:28:02 ad Exp $
 
 define giobus {}
 
@@ -17,6 +17,10 @@ file arch/sgimips/dev/pic.c		pic needs-flag
 device crime
 attach crime at mainbus
 file arch/sgimips/dev/crime.c		crime
+
+device crmfb: wsemuldisplaydev, vcons, rasops8, rasops16, rasops32
+attach crmfb at mainbus
+file arch/sgimips/dev/crmfb.c		crmfb needs-flag
 
 device	zsc {[channel = -1]}
 device	zstty: tty

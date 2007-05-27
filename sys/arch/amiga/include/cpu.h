@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.63 2007/03/04 05:59:30 christos Exp $	*/
+/*	$NetBSD: cpu.h,v 1.63.2.1 2007/05/27 12:27:05 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -99,6 +99,7 @@ struct cpu_info {
 	struct cpu_data ci_data;	/* MI per-cpu data */
 	int	ci_mtx_count;
         int	ci_mtx_oldspl;
+        int	ci_want_resched;
 };
 
 extern struct cpu_info cpu_info_store;
@@ -137,8 +138,7 @@ struct clockframe {
  * Preempt the current process if in interrupt from user mode,
  * or after the current trap/syscall if in system mode.
  */
-extern int want_resched;	/* resched() was called */
-#define	cpu_need_resched(ci)	{want_resched = 1; setsoftast();}
+#define	cpu_need_resched(ci,flags)	{ci->ci_want_resched = 1; setsoftast();}
 
 /*
  * Give a profiling tick to the current process from the softclock
@@ -227,7 +227,6 @@ void	drsc_handler __P((void));
  */
 struct fpframe;
 struct user;
-struct pcb;
 
 void	clearseg __P((vm_offset_t));
 void	doboot __P((void)) __attribute__((__noreturn__));
@@ -238,10 +237,6 @@ void	m68881_restore __P((struct fpframe *));
 #endif
 void	physcopyseg __P((vm_offset_t, vm_offset_t));
 u_int	probeva __P((u_int, u_int));
-void	proc_trampoline __P((void));
-void	savectx __P((struct pcb *));
-void	switch_exit __P((struct lwp *));
-void	switch_lwp_exit __P((struct lwp *));
 
 /*
  * Prototypes from machdep.c
@@ -249,21 +244,6 @@ void	switch_lwp_exit __P((struct lwp *));
 int	badaddr __P((void *));
 int	badbaddr __P((void *));
 void	bootsync __P((void));
-void	dumpconf __P((void));
-
-/*
- * Prototypes from sys_machdep.c:
- */
-int	cachectl1 __P((unsigned long, vaddr_t, size_t, struct proc *));
-int	dma_cachectl __P((void *, int));
-
-/*
- * Prototypes from vm_machdep.c
- */
-int	kvtop __P((void *));
-void	physaccess __P((void *,  void *, int, int));
-void	physunaccess __P((void *, int));
-void	setredzone __P((u_int *, void *));
 
 /*
  * Prototypes from pmap.c:

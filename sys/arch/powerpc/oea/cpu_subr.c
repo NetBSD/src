@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.28 2006/10/30 17:52:12 garbled Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.28.8.1 2007/05/27 12:27:57 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.28 2006/10/30 17:52:12 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.28.8.1 2007/05/27 12:27:57 ad Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_multiprocessor.h"
@@ -322,7 +322,6 @@ cpu_attach_common(struct device *self, int id)
 	struct cpu_info *ci;
 	u_int pvr, vers;
 
-	ncpus++;
 	ci = &cpu_info[id];
 #ifndef MULTIPROCESSOR
 	/*
@@ -372,6 +371,9 @@ cpu_attach_common(struct device *self, int id)
 #ifndef MULTIPROCESSOR
 		aprint_normal(" not configured\n");
 		return NULL;
+#else
+		mi_cpu_attach(ci);
+		break;
 #endif
 	}
 	return (ci);

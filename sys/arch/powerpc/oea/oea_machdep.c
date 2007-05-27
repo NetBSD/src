@@ -1,4 +1,4 @@
-/*	$NetBSD: oea_machdep.c,v 1.33 2007/03/04 10:14:51 macallan Exp $	*/
+/*	$NetBSD: oea_machdep.c,v 1.33.2.1 2007/05/27 12:27:57 ad Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.33 2007/03/04 10:14:51 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.33.2.1 2007/05/27 12:27:57 ad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -96,6 +96,7 @@ struct vm_map *phys_map = NULL;
  */
 extern struct user *proc0paddr;
 
+static void trap0(void *);
 
 /* XXXSL: The battable is not initialized to non-zero for PPC_OEA64 and PPC_OEA64_BRIDGE */
 struct bat battable[512];
@@ -252,6 +253,12 @@ oea_init(void (*handler)(void))
 		exc += roundup(size, 32);
 #endif
 	}
+
+	/*
+	 * Install a branch absolute to trap0 to force a panic.
+	 */
+	*(uint32_t *) 0 = 0x7c6802a6;
+	*(uint32_t *) 4 = 0x48000002 | (uintptr_t) trap0;
 
 	/*
 	 * Get the cache sizes because install_extint calls __syncicache.
@@ -840,4 +847,10 @@ unmapiodev(vaddr_t va, vsize_t len)
 	pmap_kremove(faddr, len);
 	pmap_update(pmap_kernel());
 	uvm_km_free(kernel_map, faddr, len, UVM_KMF_VAONLY);
+}
+
+void
+trap0(void *lr)
+{
+	panic("call to null-ptr from %p", lr);
 }
