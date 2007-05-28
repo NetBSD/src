@@ -1134,7 +1134,7 @@ static void wpa_cli_interactive(void)
 		history_set_pos(0);
 		h = next_history();
 		while (h) {
-			char *p = h->line;
+			const char *p = h->line;
 			while (*p == ' ' || *p == '\t')
 				p++;
 			if (strncasecmp(p, "pa", 2) == 0 ||
