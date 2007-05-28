@@ -1,4 +1,4 @@
-/*	$NetBSD: attributes.c,v 1.13.18.3 2007/01/29 11:12:26 blymn Exp $	*/
+/*	$NetBSD: attributes.c,v 1.13.18.4 2007/05/28 14:17:55 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: attributes.c,v 1.13.18.3 2007/01/29 11:12:26 blymn Exp $");
+__RCSID("$NetBSD: attributes.c,v 1.13.18.4 2007/05/28 14:17:55 blymn Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -268,7 +268,6 @@ wattr_off(WINDOW *win, attr_t attr, void *opt)
  * wattr_set --
  *	Set attributes and color pair on stdscr
  */
-/* ARGSUSED */
 int
 wattr_set(WINDOW *win, attr_t attr, short pair, void *opt)
 {
@@ -276,14 +275,13 @@ wattr_set(WINDOW *win, attr_t attr, short pair, void *opt)
 	__CTRACE(__CTRACE_ATTR, "wattr_set: win %p, attr %08x, pair %d\n",
 	    win, attr, pair);
 #endif
-	wattr_on(win, attr, NULL);
-	wattr_off(win, (~attr & ~__COLOR) | ((attr & __COLOR) ? 0 : __COLOR),
-	    NULL);
+ 	wattr_off(win, __ATTRIBUTES, opt);
 	/*
 	 * This overwrites any colour setting from the attributes
 	 * and is compatible with ncurses.
 	 */
-	__wcolor_set(win, (attr_t) COLOR_PAIR(pair));
+ 	attr = (attr & ~__COLOR) | COLOR_PAIR(pair);
+ 	wattr_on(win, attr, opt);
 	return OK;
 }
 
@@ -291,7 +289,6 @@ wattr_set(WINDOW *win, attr_t attr, short pair, void *opt)
  * wattron --
  *	Test and set attributes.
  */
-
 int
 wattron(WINDOW *win, int attr)
 {
@@ -325,10 +322,8 @@ wattrset(WINDOW *win, int attr)
 #ifdef DEBUG
 	__CTRACE(__CTRACE_ATTR, "wattrset: win %p, attr %08x\n", win, attr);
 #endif
+	wattr_off(win, __ATTRIBUTES, NULL);
 	wattr_on(win, (attr_t) attr, NULL);
-	wattr_off(win,
-	    (attr_t) (~attr & ~__COLOR) | ((attr & __COLOR) ? 0 : __COLOR),
-	    NULL);
 	return OK;
 }
 
