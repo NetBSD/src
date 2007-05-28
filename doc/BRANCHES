@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.195 2007/05/25 14:34:11 yamt Exp $
+#	$NetBSD: BRANCHES,v 1.196 2007/05/28 09:29:18 hubertf Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -379,9 +379,11 @@ Base Tag:	ppcoea-renovation-base
 Maintainer:	Tim Rightnour <garbled@netbsd.org>
 Scope:		src/sys/arch
 Notes:		This branch is for a general cleanup of all OEA-based PowerPC
-		ports.  The general concept is to get them all compiling, and
-		sharing as much code as possible.  All developers are welcome
-		to commit to this branch.
+		ports. OEA (Operating Environment Architecture) PowerPC refers
+		to the 601, 603, 604, and similar chips.  Specifically, not the
+		403/401 and other embedded chips. The general concept is to get
+		them all compiling, and sharing as much code as possible.  All
+		developers are welcome to commit to this branch.
 
 Branch:		rpaulo-netinet-merge-pcb
 Description:	merge in6pcb with inpcb
