@@ -1,5 +1,7 @@
-#	$NetBSD: Makefile,v 1.43 2007/02/10 00:23:13 ad Exp $
+#	$NetBSD: Makefile,v 1.44 2007/05/28 12:06:20 tls Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/4/93
+
+USE_FORT?= yes	# used primarily by setgid programs
 
 USE_SHLIBDIR=	yes
 

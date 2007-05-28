@@ -1,5 +1,7 @@
 #	from: @(#)Makefile	8.1 (Berkeley) 6/4/93
-#	$NetBSD: Makefile,v 1.10 2006/05/11 07:19:33 mrg Exp $
+#	$NetBSD: Makefile,v 1.11 2007/05/28 12:06:39 tls Exp $
+
+USE_FORT?= yes	# network server
 
 PROG=	rbootd
 SRCS=	bpf.c conf.c parseconf.c rbootd.c rmpproto.c utils.c

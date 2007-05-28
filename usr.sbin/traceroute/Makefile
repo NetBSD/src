@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.14 2003/05/15 14:47:49 itojun Exp $	
+#	$NetBSD: Makefile,v 1.15 2007/05/28 12:06:42 tls Exp $	
+
+USE_FORT?= yes	# network client
 
 PROG=	traceroute
 MAN=	traceroute.8 

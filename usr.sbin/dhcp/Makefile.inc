@@ -1,8 +1,10 @@
-# $NetBSD: Makefile.inc,v 1.20 2006/05/11 23:16:30 mrg Exp $
+# $NetBSD: Makefile.inc,v 1.21 2007/05/28 12:06:34 tls Exp $
 
 WARNS?=	1
 
 .include <bsd.own.mk>
+
+USE_FORT?= yes	# network client/server
 
 DIST=	${NETBSDSRCDIR}/dist/dhcp
 .PATH:	${DIST}/${DHCPSRCDIR}

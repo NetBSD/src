@@ -1,7 +1,9 @@
-#	$NetBSD: Makefile,v 1.14 2006/12/05 03:52:02 christos Exp $
+#	$NetBSD: Makefile,v 1.15 2007/05/28 12:06:39 tls Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/6/93
 
 .include <bsd.own.mk>
+
+USE_FORT?= yes	# setgid
 
 SRCS=	pstat.c swaplist.c
 PROG=	pstat

@@ -1,7 +1,9 @@
-#	$NetBSD: Makefile,v 1.27 2006/08/26 15:33:20 matt Exp $
+#	$NetBSD: Makefile,v 1.28 2007/05/28 12:06:29 tls Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/12/93
 
 .include <bsd.own.mk>
+
+USE_FORT?= yes	# setgid
 
 PROG=	netstat
 SRCS=	atalk.c bpf.c fast_ipsec.c if.c inet.c inet6.c ipsec.c iso.c \

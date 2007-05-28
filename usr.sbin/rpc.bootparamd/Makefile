@@ -1,6 +1,8 @@
-#	$NetBSD: Makefile,v 1.24 2003/01/06 02:26:53 thorpej Exp $
+#	$NetBSD: Makefile,v 1.25 2007/05/28 12:06:39 tls Exp $
 
 .include <bsd.own.mk>
+
+USE_FORT?= yes	# network server
 
 PROG=	rpc.bootparamd
 SRCS=	bootparamd.c bootparam_prot_svc.c

@@ -1,4 +1,4 @@
-#	$NetBSD: list.ramdisk,v 1.3 2007/05/10 23:22:30 dogcow Exp $
+#	$NetBSD: list.ramdisk,v 1.4 2007/05/28 12:06:17 tls Exp $
 
 SRCDIRS	usr.bin/less
 SRCDIRS	bin sbin usr.bin usr.sbin gnu/usr.bin
@@ -61,7 +61,7 @@ SPECIAL	route		srcdir	distrib/utils/x_route
 ARGVLN	sh -sh
 
 # libhack.o is built by Makefile & included Makefile.inc
-LIBS	libhack.o -lbz2 -ledit -lutil -lcurses -ltermcap -lrmt -lcrypt -ll -lm -lz
+LIBS	libhack.o -lbz2 -ledit -lutil -lcurses -ltermcap -lrmt -lcrypt -ll -lm -lz -lssp
 
 # various files that we need in /etc for the install
 COPY	${NETBSDSRCDIR}/etc/group		etc/group

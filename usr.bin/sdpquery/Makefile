@@ -1,4 +1,6 @@
-# $NetBSD: Makefile,v 1.2 2006/07/26 10:54:49 tron Exp $
+# $NetBSD: Makefile,v 1.3 2007/05/28 12:06:31 tls Exp $
+
+USE_FORT?= yes	# network client
 
 PROG=		sdpquery
 MAN=		sdpquery.1

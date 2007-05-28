@@ -1,6 +1,8 @@
-# $NetBSD: Makefile,v 1.1 2006/06/19 15:44:36 gdamore Exp $
-# $Id: Makefile,v 1.1 2006/06/19 15:44:36 gdamore Exp $
+# $NetBSD: Makefile,v 1.2 2007/05/28 12:06:21 tls Exp $
+# $Id: Makefile,v 1.2 2007/05/28 12:06:21 tls Exp $
 # $FreeBSD: src/lib/libsdp/Makefile,v 1.4 2005/07/22 17:19:03 kensmith Exp $
+
+USE_FORT?= yes	# network protocol library
 
 LIB=		sdp
 MAN=		sdp.3

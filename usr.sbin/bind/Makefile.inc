@@ -1,7 +1,9 @@
-#	$NetBSD: Makefile.inc,v 1.27 2007/05/08 06:23:44 martin Exp $
+#	$NetBSD: Makefile.inc,v 1.28 2007/05/28 12:06:33 tls Exp $
 
 .if !defined(BIND9_MAKEFILE_INC)
 BIND9_MAKEFILE_INC=yes
+
+USE_FORT?= yes	# network client/server
 
 WARNS?=	1
 

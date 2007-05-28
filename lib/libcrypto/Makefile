@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.46 2006/11/09 20:45:01 christos Exp $
+#	$NetBSD: Makefile,v 1.47 2007/05/28 12:06:18 tls Exp $
 
 # RCSid:
 #	Id: Makefile,v 1.33 1998/11/11 11:53:53 sjg Exp
@@ -16,6 +16,8 @@
 #	sjg@quick.com.au
 #
 
+LIB=	crypto
+USE_FORT?= yes	# cryptographic software
 USE_SHLIBDIR=	yes
 USE_FIPS=	no
 
@@ -26,7 +28,6 @@ USE_FIPS=	no
 # XXX There's a bit of work to do before we can enable warnings.
 WARNS=0
 
-LIB=	crypto
 CPPFLAGS+= -Dlib${LIB} -I. -I${OPENSSLSRC}/crypto -I${OPENSSLSRC}
 
 CRYPTODIST=	${NETBSDSRCDIR}/crypto/dist
@@ -40,7 +41,7 @@ CRYPTODIST=	${NETBSDSRCDIR}/crypto/dist
 # XXX
 .if ${OBJECT_FMT} == "ELF"
 AFLAGS+=-DELF
-LIBDPLIBS= crypt ${.CURDIR}/../libcrypt
+LIBDPLIBS+= crypt ${.CURDIR}/../libcrypt
 .else
 AFLAGS+=-DOUT
 # XXX: This is broken because we compile with the wrong des headers.

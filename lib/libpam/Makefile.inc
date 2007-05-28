@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.5 2006/02/05 02:38:25 christos Exp $
+# $NetBSD: Makefile.inc,v 1.6 2007/05/28 12:06:20 tls Exp $
 # Copyright 1998 Juniper Networks, Inc.
 # All rights reserved.
 #
@@ -24,6 +24,8 @@
 # SUCH DAMAGE.
 #
 # $FreeBSD: src/lib/libpam/Makefile.inc,v 1.15 2004/03/15 13:23:20 des Exp $
+
+USE_FORT?= yes	# network client software *and* authentication software
 
 # Include support for static modules.
 CPPFLAGS+= -DOPENPAM_STATIC_MODULES

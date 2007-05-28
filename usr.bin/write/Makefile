@@ -1,8 +1,9 @@
-#	$NetBSD: Makefile,v 1.7 2003/04/20 23:53:04 christos Exp $
+#	$NetBSD: Makefile,v 1.8 2007/05/28 12:06:33 tls Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/6/93
 
 .include <bsd.own.mk>
 
+USE_FORT?= yes	# setgid
 PROG=	write
 SRCS=	write.c utmpentry.c term_chk.c
 BINMODE=2555

@@ -1,8 +1,10 @@
-#	$NetBSD: Makefile.inc,v 1.20 2006/10/08 17:52:29 peter Exp $
+#	$NetBSD: Makefile.inc,v 1.21 2007/05/28 12:06:33 tls Exp $
 
 WARNS?=	1
 
 .include <bsd.own.mk>
+
+USE_FORT?=yes
 
 IDIST=	${NETBSDSRCDIR}/dist/am-utils
 
