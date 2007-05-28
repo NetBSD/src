@@ -1,4 +1,4 @@
-/*	$NetBSD: pflogd.c,v 1.3 2005/07/01 12:43:50 peter Exp $	*/
+/*	$NetBSD: pflogd.c,v 1.4 2007/05/28 11:55:19 tls Exp $	*/
 /*	$OpenBSD: pflogd.c,v 1.33 2005/02/09 12:09:30 henning Exp $	*/
 
 /*
@@ -39,6 +39,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+/*
+ * If we're going to include parts of the libpcap internals we MUST
+ * set the feature-test macros they expect, or they may misbehave.
+ */
+#define HAVE_STRLCPY
+#define HAVE_SNPRINTF
+#define HAVE_VSNPRINTF
 #include <pcap-int.h>
 #include <pcap.h>
 #include <syslog.h>
