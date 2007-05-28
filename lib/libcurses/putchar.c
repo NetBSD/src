@@ -1,4 +1,4 @@
-/*	$NetBSD: putchar.c,v 1.18 2007/01/21 13:25:36 jdc Exp $	*/
+/*	$NetBSD: putchar.c,v 1.19 2007/05/28 15:01:57 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)putchar.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: putchar.c,v 1.18 2007/01/21 13:25:36 jdc Exp $");
+__RCSID("$NetBSD: putchar.c,v 1.19 2007/05/28 15:01:57 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -67,3 +67,24 @@ __cputchar_args(char ch, void *args)
 #endif
 	putc(ch, outfd);
 }
+
+#ifdef HAVE_WCHAR
+int
+__cputwchar(wchar_t wch)
+{
+	return (putwc(wch, _cursesi_screen->outfd));
+}
+
+/*
+ * This is the same as __cputchar but the extra argument holds the file
+ * descriptor to write the output to.  This function can only be used with
+ * the "new" libterm interface.
+ */
+void
+__cputwchar_args(wchar_t wch, void *args)
+{
+	FILE *outfd = (FILE *) args;
+
+	putwc(wch, outfd);
+}
+#endif /* HAVE_WCHAR */

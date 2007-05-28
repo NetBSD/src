@@ -1,4 +1,4 @@
-/*   $NetBSD: insstr.c,v 1.1 2007/01/21 11:38:59 blymn Exp $ */
+/*   $NetBSD: insstr.c,v 1.2 2007/05/28 15:01:56 blymn Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: insstr.c,v 1.1 2007/01/21 11:38:59 blymn Exp $");
+__RCSID("$NetBSD: insstr.c,v 1.2 2007/05/28 15:01:56 blymn Exp $");
 #endif						  /* not lint */
 
 #include <string.h>
@@ -149,14 +149,14 @@ winsnstr(WINDOW *win, const char *str, int n)
 	else
 		for ( scp = str, len = 0; *scp++; ++len );
 #ifdef DEBUG
-	__CTRACE("[winsnstr]len = %d\n", len);
+	__CTRACE(__CTRACE_INPUT, "winsnstr: len = %d\n", len);
 #endif /* DEBUG */
 
 	/* move string */
 	end = &win->lines[win->cury]->line[win->curx];
 	if ( len < win->maxx - win->curx ) {
 #ifdef DEBUG
-		__CTRACE("[winsnstr]shift %d cells\n", len);
+		__CTRACE(__CTRACE_INPUT, "winsnstr: shift %d cells\n", len);
 #endif /* DEBUG */
 		temp1 = &win->lines[win->cury]->line[win->maxx - 1];
 		temp2 = temp1 - len;
@@ -191,9 +191,10 @@ winsnstr(WINDOW *win, const char *str, int n)
 		int i;
 
 		for ( i = win->curx; i < win->curx + len; i++ ) {
-			__CTRACE("[winsnstr](%d,%d)=('%c',%x)\n", win->cury, i,
-					win->lines[ win->cury ]->line[ i ].ch,
-					win->lines[ win->cury ]->line[ i ].attr );
+			__CTRACE(__CTRACE_INPUT,
+			    "winsnstr: (%d,%d)=('%c',%x)\n", win->cury, i,
+			    win->lines[win->cury]->line[i].ch,
+			    win->lines[win->cury]->line[i].attr);
 		}
 	}
 #endif /* DEBUG */

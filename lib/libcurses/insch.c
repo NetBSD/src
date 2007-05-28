@@ -1,4 +1,4 @@
-/*	$NetBSD: insch.c,v 1.20 2006/02/05 17:04:46 jdc Exp $	*/
+/*	$NetBSD: insch.c,v 1.21 2007/05/28 15:01:56 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,11 +34,12 @@
 #if 0
 static char sccsid[] = "@(#)insch.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: insch.c,v 1.20 2006/02/05 17:04:46 jdc Exp $");
+__RCSID("$NetBSD: insch.c,v 1.21 2007/05/28 15:01:56 blymn Exp $");
 #endif
 #endif				/* not lint */
 
 #include <string.h>
+#include <stdlib.h>
 
 #include "curses.h"
 #include "curses_private.h"
@@ -57,7 +58,7 @@ insch(chtype ch)
 
 /*
  * mvinsch --
- *      Do an insert-char on the line at (y, x).
+ *	Do an insert-char on the line at (y, x).
  */
 int
 mvinsch(int y, int x, chtype ch)
@@ -67,7 +68,7 @@ mvinsch(int y, int x, chtype ch)
 
 /*
  * mvwinsch --
- *      Do an insert-char on the line at (y, x) in the given window.
+ *	Do an insert-char on the line at (y, x) in the given window.
  */
 int
 mvwinsch(WINDOW *win, int y, int x, chtype ch)
@@ -110,6 +111,11 @@ winsch(WINDOW *win, chtype ch)
 		temp1->attr |= (win->battr & ~__COLOR);
 	else
 		temp1->attr |= win->battr;
+#ifdef HAVE_WCHAR
+	if (_cursesi_copy_nsp(win->bnsp, temp1) == ERR)
+		return ERR;
+	SET_WCOL(*temp1, 1);
+#endif /* HAVE_WCHAR */
 	__touchline(win, (int) win->cury, (int) win->curx, (int) win->maxx - 1);
 	if (win->cury == LINES - 1 &&
 	    (win->lines[LINES - 1]->line[COLS - 1].ch != ' ' ||

@@ -1,4 +1,4 @@
-/*	$NetBSD: clrtoeol.c,v 1.22 2007/01/21 13:25:36 jdc Exp $	*/
+/*	$NetBSD: clrtoeol.c,v 1.23 2007/05/28 15:01:54 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,10 +34,11 @@
 #if 0
 static char sccsid[] = "@(#)clrtoeol.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: clrtoeol.c,v 1.22 2007/01/21 13:25:36 jdc Exp $");
+__RCSID("$NetBSD: clrtoeol.c,v 1.23 2007/05/28 15:01:54 blymn Exp $");
 #endif
 #endif				/* not lint */
 
+#include <stdlib.h>
 #include "curses.h"
 #include "curses_private.h"
 
@@ -86,17 +87,30 @@ wclrtoeol(WINDOW *win)
 	else
 		attr = 0;
 	for (sp = maxx; sp < end; sp++)
+#ifndef HAVE_WCHAR
 		if (sp->ch != win->bch || sp->attr != attr) {
+#else
+		if (sp->ch != ( wchar_t )btowc(( int ) win->bch ) ||
+		    (sp->attr & WA_ATTRIBUTES) != attr || sp->nsp
+		    || (WCOL(*sp) < 0)) {
+#endif /* HAVE_WCHAR */
 			maxx = sp;
 			if (minx == -1)
 				minx = sp - win->lines[y]->line;
-			sp->ch = win->bch;
 			sp->attr = attr;
+#ifdef HAVE_WCHAR
+			sp->ch = ( wchar_t )btowc(( int ) win->bch);
+			if (_cursesi_copy_nsp(win->bnsp, sp) == ERR)
+				return ERR;
+			SET_WCOL( *sp, 1 );
+#else
+			sp->ch = win->bch;
+#endif /* HAVE_WCHAR */
 		}
 #ifdef DEBUG
-	__CTRACE(__CTRACE_ERASE, "CLRTOEOL: minx = %d, maxx = %d, "
+	__CTRACE(__CTRACE_ERASE, "CLRTOEOL: y = %d, minx = %d, maxx = %d, "
 	    "firstch = %d, lastch = %d\n",
-	    minx, (int) (maxx - win->lines[y]->line),
+	    y, minx, (int) (maxx - win->lines[y]->line),
 	    *win->lines[y]->firstchp, *win->lines[y]->lastchp);
 #endif
 	/* Update firstch and lastch for the line. */

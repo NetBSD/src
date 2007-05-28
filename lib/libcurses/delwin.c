@@ -1,4 +1,4 @@
-/*	$NetBSD: delwin.c,v 1.15 2007/01/21 13:25:36 jdc Exp $	*/
+/*	$NetBSD: delwin.c,v 1.16 2007/05/28 15:01:55 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)delwin.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: delwin.c,v 1.15 2007/01/21 13:25:36 jdc Exp $");
+__RCSID("$NetBSD: delwin.c,v 1.16 2007/05/28 15:01:55 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -57,6 +57,13 @@ delwin(WINDOW *win)
 #ifdef DEBUG
 	__CTRACE(__CTRACE_WINDOW, "delwin(%p)\n", win);
 #endif
+	/*
+	 * Free any storage used by non-spacing characters in the window.
+	 */
+#ifdef HAVE_WCHAR
+	__cursesi_win_free_nsp(win);
+#endif
+
 	if (win->orig == NULL) {
 		/*
 		 * If we are the original window, delete the space for all

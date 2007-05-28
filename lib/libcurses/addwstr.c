@@ -1,4 +1,4 @@
-/*   $NetBSD: addwstr.c,v 1.1 2007/01/21 11:38:59 blymn Exp $ */
+/*   $NetBSD: addwstr.c,v 1.2 2007/05/28 15:01:54 blymn Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: addwstr.c,v 1.1 2007/01/21 11:38:59 blymn Exp $");
+__RCSID("$NetBSD: addwstr.c,v 1.2 2007/05/28 15:01:54 blymn Exp $");
 #endif						  /* not lint */
 
 #include <string.h>
@@ -178,7 +178,7 @@ waddnwstr(WINDOW *win, const wchar_t *s, int n)
 	else
 		len = wcslen(s);
 #ifdef DEBUG
-	__CTRACE("[waddnwstr]string len=%d\n", len );
+	__CTRACE(__CTRACE_INPUT, "waddnwstr: string len=%ld\n", (long) len);
 #endif /* DEBUG */
 
 	p = s;
@@ -190,7 +190,7 @@ waddnwstr(WINDOW *win, const wchar_t *s, int n)
 		if ( wadd_wch( win, &cc ) == ERR )
 			return ERR;
 #ifdef DEBUG
-		__CTRACE("[waddnwstr](%x,%x,%d) added\n", 
+		__CTRACE(__CTRACE_INPUT, "waddnwstr: (%x,%x,%d) added\n", 
 				cc.vals[ 0 ], cc.attributes, cc.elements );
 #endif /* DEBUG */
 		p++, len--;

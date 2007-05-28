@@ -1,4 +1,4 @@
-/*	$NetBSD: getstr.c,v 1.19 2007/01/21 13:25:36 jdc Exp $	*/
+/*	$NetBSD: getstr.c,v 1.20 2007/05/28 15:01:55 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -35,7 +35,7 @@
 #if 0
 static char sccsid[] = "@(#)getstr.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: getstr.c,v 1.19 2007/01/21 13:25:36 jdc Exp $");
+__RCSID("$NetBSD: getstr.c,v 1.20 2007/05/28 15:01:55 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -188,7 +188,7 @@ __wgetnstr(WINDOW *win, char *str, int n)
 				}
 				if (c == KEY_BACKSPACE || c == KEY_LEFT) {
 					/* getch() displays the key sequence */
-					mvwaddch(win, win->cury, win->curx - 1, 
+					mvwaddch(win, win->cury, win->curx - 1,
 					    ' ');
 					mvwaddch(win, win->cury, win->curx - 2,
 					    ' ');

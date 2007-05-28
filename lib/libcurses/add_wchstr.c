@@ -1,4 +1,4 @@
-/*   $NetBSD: add_wchstr.c,v 1.1 2007/01/21 11:38:59 blymn Exp $ */
+/*   $NetBSD: add_wchstr.c,v 1.2 2007/05/28 15:01:53 blymn Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: add_wchstr.c,v 1.1 2007/01/21 11:38:59 blymn Exp $");
+__RCSID("$NetBSD: add_wchstr.c,v 1.2 2007/05/28 15:01:53 blymn Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -174,8 +174,8 @@ wadd_wchnstr(WINDOW *win, const cchar_t *wchstr, int n)
 	__LINE *lnp;
 
 #ifdef DEBUG
-	__CTRACE("wadd_wchnstr: win = %p, wchstr = %p, n = %d\n",
-	    win, wchstr, n);
+	__CTRACE(__CTRACE_INPUT,
+	    "wadd_wchnstr: win = %p, wchstr = %p, n = %d\n", win, wchstr, n);
 #endif
 
 	if (!wchstr)
@@ -190,7 +190,7 @@ wadd_wchnstr(WINDOW *win, const cchar_t *wchstr, int n)
 	else
 		for (chp = wchstr, cnt = 0; chp->vals[0]; chp++, ++cnt);
 #ifdef DEBUG
-	__CTRACE("[wadd_wchnstr]len=%d", cnt);
+	__CTRACE(__CTRACE_INPUT, "wadd_wchnstr: len=%d\n", cnt);
 #endif /* DEBUG */
 	chp = wchstr;
 	x = win->curx;
@@ -227,15 +227,17 @@ wadd_wchnstr(WINDOW *win, const cchar_t *wchstr, int n)
 	/* add characters in the string */
 	ex = x;
 	while (cnt) {
+		x = ex;
 		wc = chp->vals[0];
 #ifdef DEBUG
-		__CTRACE("[wadd_wchnstr]adding %x", wc);
+		__CTRACE(__CTRACE_INPUT, "wadd_wchnstr: adding %x", wc);
 #endif /* DEBUG */
-        cw = wcwidth(wc);
+		cw = wcwidth(wc);
 		if (cw) {
 			/* spacing character */
 #ifdef DEBUG
-			__CTRACE(" as a spacing char(width=%d)\n", cw);
+			__CTRACE(__CTRACE_INPUT,
+			    " as a spacing char(width=%d)\n", cw);
 #endif /* DEBUG */
 			if (cw > win->maxx - ex) {
 				/* clear to EOL */
@@ -278,6 +280,11 @@ wadd_wchnstr(WINDOW *win, const cchar_t *wchstr, int n)
 				}
 			}
 			lp++, ex++;
+#ifdef DEBUG
+			__CTRACE(__CTRACE_INPUT,
+				"wadd_wchnstr: ex = %d, x = %d, cw = %d\n",
+				 ex, x, cw);
+#endif /* DEBUG */
 			while (ex - x <= cw - 1) {
 				np = lp->nsp;
 				if (np) {
@@ -296,7 +303,8 @@ wadd_wchnstr(WINDOW *win, const cchar_t *wchstr, int n)
 		} else {
 			/* non-spacing character */
 #ifdef DEBUG
-			__CTRACE("[wadd_wchnstr]as non-spacing char");
+			__CTRACE(__CTRACE_INPUT,
+				"wadd_wchnstr: as non-spacing char");
 #endif /* DEBUG */
 			for (i = 0; i < chp->elements; i++) {
 				np = (nschar_t *)malloc(sizeof(nschar_t));
@@ -311,7 +319,7 @@ wadd_wchnstr(WINDOW *win, const cchar_t *wchstr, int n)
 	}
 #ifdef DEBUG
 	for (i = sx; i < ex; i++) {
-		__CTRACE("[wadd_wchnstr](%d,%d)=(%x,%x,%p)\n",
+		__CTRACE(__CTRACE_INPUT, "wadd_wchnstr: (%d,%d)=(%x,%x,%p)\n",
 		    win->cury, i, win->lines[win->cury]->line[i].ch,
 		    win->lines[win->cury]->line[i].attr,
 		    win->lines[win->cury]->line[i].nsp);

@@ -1,4 +1,4 @@
-/*	$NetBSD: erase.c,v 1.22 2007/01/21 13:25:36 jdc Exp $	*/
+/*	$NetBSD: erase.c,v 1.23 2007/05/28 15:01:55 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,9 +34,11 @@
 #if 0
 static char sccsid[] = "@(#)erase.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: erase.c,v 1.22 2007/01/21 13:25:36 jdc Exp $");
+__RCSID("$NetBSD: erase.c,v 1.23 2007/05/28 15:01:55 blymn Exp $");
 #endif
 #endif				/* not lint */
+
+#include <stdlib.h>
 
 #include "curses.h"
 #include "curses_private.h"
@@ -78,9 +80,21 @@ werase(WINDOW *win)
 		start = win->lines[y]->line;
 		end = &start[win->maxx];
 		for (sp = start; sp < end; sp++)
+#ifndef HAVE_WCHAR
 			if (sp->ch != win->bch || sp->attr != 0) {
-				sp->ch = win->bch;
+#else
+			if (sp->ch != ( wchar_t )btowc(( int ) win->bch ) ||
+			    (sp->attr & WA_ATTRIBUTES) != 0 || sp->nsp) {
+#endif /* HAVE_WCHAR */
 				sp->attr = attr;
+#ifdef HAVE_WCHAR
+				sp->ch = ( wchar_t )btowc(( int ) win->bch);
+				if (_cursesi_copy_nsp(win->bnsp, sp) == ERR)
+					return ERR;
+				SET_WCOL( *sp, 1 );
+#else
+				sp->ch = win->bch;
+#endif /* HAVE_WCHAR */
 			}
 	}
 	/*

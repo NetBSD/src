@@ -1,4 +1,4 @@
-/*	$NetBSD: getch.c,v 1.47 2007/01/21 13:25:36 jdc Exp $	*/
+/*	$NetBSD: getch.c,v 1.48 2007/05/28 15:01:55 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)getch.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: getch.c,v 1.47 2007/01/21 13:25:36 jdc Exp $");
+__RCSID("$NetBSD: getch.c,v 1.48 2007/05/28 15:01:55 blymn Exp $");
 #endif
 #endif					/* not lint */
 
@@ -44,81 +44,9 @@ __RCSID("$NetBSD: getch.c,v 1.47 2007/01/21 13:25:36 jdc Exp $");
 #include <stdio.h>
 #include "curses.h"
 #include "curses_private.h"
+#include "keymap.h"
 
-int	ESCDELAY = 300;		/* Delay in ms between keys for esc seq's */
-
-/*
- * Keyboard input handler.  Do this by snarfing
- * all the info we can out of the termcap entry for TERM and putting it
- * into a set of keymaps.  A keymap is an array the size of all the possible
- * single characters we can get, the contents of the array is a structure
- * that contains the type of entry this character is (i.e. part/end of a
- * multi-char sequence or a plain char) and either a pointer which will point
- * to another keymap (in the case of a multi-char sequence) OR the data value
- * that this key should return.
- *
- */
-
-/* private data structures for holding the key definitions */
-typedef struct key_entry key_entry_t;
-
-struct key_entry {
-	short   type;		/* type of key this is */
-	bool    enable;         /* true if the key is active */
-	union {
-		keymap_t *next;	/* next keymap is key is multi-key sequence */
-		wchar_t   symbol;	/* key symbol if key is a leaf entry */
-	} value;
-};
-/* Types of key structures we can have */
-#define KEYMAP_MULTI  1		/* part of a multi char sequence */
-#define KEYMAP_LEAF   2		/* key has a symbol associated with it, either
-				 * it is the end of a multi-char sequence or a
-				 * single char key that generates a symbol */
-
-/* allocate this many key_entry structs at once to speed start up must
- * be a power of 2.
- */
-#define KEYMAP_ALLOC_CHUNK 4
-
-/* The max number of different chars we can receive */
-#define MAX_CHAR 256
-
-/*
- * Unused mapping flag.
- */
-#define MAPPING_UNUSED (0 - MAX_CHAR) /* never been used */
-
-struct keymap {
-	int	count;	       /* count of number of key structs allocated */
-	short	mapping[MAX_CHAR]; /* mapping of key to allocated structs */
-	key_entry_t **key;     /* dynamic array of keys */
-};
-
-
-/* Key buffer */
-#define INBUF_SZ 16		/* size of key buffer - must be larger than
-				 * longest multi-key sequence */
-static wchar_t  inbuf[INBUF_SZ];
-static int     start, end, working; /* pointers for manipulating inbuf data */
-
-#define INC_POINTER(ptr)  do {	\
-	(ptr)++;		\
-	ptr %= INBUF_SZ;	\
-} while(/*CONSTCOND*/0)
-
-static short	state;		/* state of the inkey function */
-
-#define INKEY_NORM	 0	/* no key backlog to process */
-#define INKEY_ASSEMBLING 1	/* assembling a multi-key sequence */
-#define INKEY_BACKOUT	 2	/* recovering from an unrecognised key */
-#define INKEY_TIMEOUT	 3	/* multi-key sequence timeout */
-
-/* The termcap data we are interested in and the symbols they map to */
-struct tcdata {
-	const char	*name;	/* name of termcap entry */
-	wchar_t	symbol;		/* the symbol associated with it */
-};
+short	state;		/* state of the inkey function */
 
 static const struct tcdata tc[] = {
 	{"!1", KEY_SSAVE},
@@ -275,14 +203,22 @@ static const struct tcdata tc[] = {
 /* Number of TC entries .... */
 static const int num_tcs = (sizeof(tc) / sizeof(struct tcdata));
 
+int	ESCDELAY = 300;		/* Delay in ms between keys for esc seq's */
+
+/* Key buffer */
+#define INBUF_SZ 16		/* size of key buffer - must be larger than
+				 * longest multi-key sequence */
+static wchar_t  inbuf[INBUF_SZ];
+static int     start, end, working; /* pointers for manipulating inbuf data */
+
 /* prototypes for private functions */
 static void add_key_sequence(SCREEN *screen, char *sequence, int key_type);
-static key_entry_t *add_new_key(keymap_t *current, char chr, int key_type,
-				int symbol);
+static key_entry_t *add_new_key(keymap_t *current, char ch, int key_type,
+        int symbol);
 static void delete_key_sequence(keymap_t *current, int key_type);
 static void do_keyok(keymap_t *current, int key_type, bool flag, int *retval);
-static keymap_t		*new_keymap(void);	/* create a new keymap */
-static key_entry_t	*new_key(void);		/* create a new key entry */
+static keymap_t *new_keymap(void); /* create a new keymap */
+static key_entry_t *new_key(void); /* create a new key entry */
 static wchar_t		inkey(int to, int delay);
 
 /*
@@ -311,7 +247,7 @@ _cursesi_free_keymap(keymap_t *map)
 	free(map);
 }
 
-				
+
 /*
  * Add a new key entry to the keymap pointed to by current.  Entry
  * contains the character to add to the keymap, type is the type of
@@ -336,7 +272,7 @@ add_new_key(keymap_t *current, char chr, int key_type, int symbol)
 			current->mapping[(unsigned char) chr] =
 				current->count;	/* map new entry */
 			ki = current->count;
-			
+
 			  /* make sure we have room in the key array first */
 			if ((current->count & (KEYMAP_ALLOC_CHUNK - 1)) == 0)
 			{
@@ -348,7 +284,7 @@ add_new_key(keymap_t *current, char chr, int key_type, int symbol)
 					  "Could not malloc for key entry\n");
 					exit(1);
 				}
-			
+
 				the_key = new_key();
 				for (i = 0; i < KEYMAP_ALLOC_CHUNK; i++) {
 					current->key[ki + i] = &the_key[i];
@@ -359,12 +295,12 @@ add_new_key(keymap_t *current, char chr, int key_type, int symbol)
 			ki = - current->mapping[(unsigned char) chr];
 			current->mapping[(unsigned char) chr] = ki;
 		}
-		
+
 		current->count++;
-		
+
 		  /* point at the current key array element to use */
 		the_key = current->key[ki];
-                                                
+
 		the_key->type = key_type;
 
 		switch (key_type) {
@@ -440,7 +376,7 @@ delete_key_sequence(keymap_t *current, int key_type)
 		}
 	}
 }
-	
+
 /*
  * Add the sequence of characters given in sequence as the key mapping
  * for the given key symbol.
@@ -452,6 +388,10 @@ add_key_sequence(SCREEN *screen, char *sequence, int key_type)
 	keymap_t *current;
 	int length, j, key_ent;
 
+#ifdef DEBUG
+	__CTRACE(__CTRACE_MISC, "add_key_sequence: add key sequence: %s(%s)\n",
+	    sequence, keyname(key_type));
+#endif /* DEBUG */
 	current = screen->base_keymap;	/* always start with
 					 * base keymap. */
 	length = (int) strlen(sequence);
@@ -459,13 +399,13 @@ add_key_sequence(SCREEN *screen, char *sequence, int key_type)
 	for (j = 0; j < length - 1; j++) {
 		  /* add the entry to the struct */
 		tmp_key = add_new_key(current, sequence[j], KEYMAP_MULTI, 0);
-					
+
 		  /* index into the key array - it's
 		     clearer if we stash this */
 		key_ent = current->mapping[(unsigned char) sequence[j]];
 
 		current->key[key_ent] = tmp_key;
-				
+
 		  /* next key uses this map... */
 		current = current->key[key_ent]->value.next;
 	}
@@ -510,7 +450,7 @@ __init_getch(SCREEN *screen)
 		p = entry;
 		limit = 1023;
 		if (t_getstr(screen->cursesi_genbuf, tc[i].name,
-			     &p, &limit) != NULL) {
+			     &p, &limit) != (char *) NULL) {
 #ifdef DEBUG
 			__CTRACE(__CTRACE_INIT,
 			    "Processing termcap entry %s, sequence ",
@@ -522,7 +462,7 @@ __init_getch(SCREEN *screen)
 #endif
 			add_key_sequence(screen, entry, tc[i].symbol);
 		}
-		
+
 	}
 }
 
@@ -616,7 +556,7 @@ reread:
 				clearerr(infd);
 				return ERR;
 			}
-			
+
 			if (delay && (__notimeout() == ERR))
 				return ERR;
 
@@ -665,7 +605,7 @@ reread:
 				clearerr(infd);
 				return ERR;
 			}
-			
+
 			if ((to || delay) && (__notimeout() == ERR))
 					return ERR;
 
@@ -790,7 +730,7 @@ int
 keyok(int key_type, bool flag)
 {
 	int result = ERR;
-	
+
 	do_keyok(_cursesi_screen->base_keymap, key_type, flag, &result);
 	return result;
 }
@@ -845,7 +785,7 @@ define_key(char *sequence, int symbol)
 
 	return OK;
 }
-	
+
 /*
  * wgetch --
  *	Read in a character from the window.
@@ -931,7 +871,7 @@ wgetch(WINDOW *win)
 			__restore_termios();
 			return ERR;	/* we have timed out */
 		}
-		
+
 		if (ferror(infd)) {
 			clearerr(infd);
 			inp = ERR;

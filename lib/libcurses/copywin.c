@@ -1,4 +1,4 @@
-/*	$NetBSD: copywin.c,v 1.12 2007/01/21 13:25:36 jdc Exp $	*/
+/*	$NetBSD: copywin.c,v 1.13 2007/05/28 15:01:54 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: copywin.c,v 1.12 2007/01/21 13:25:36 jdc Exp $");
+__RCSID("$NetBSD: copywin.c,v 1.13 2007/05/28 15:01:54 blymn Exp $");
 #endif				/* not lint */
 
 #include <ctype.h>
@@ -54,6 +54,10 @@ int copywin(const WINDOW *srcwin, WINDOW *dstwin,
 {
 	int dcol;
 	__LDATA *sp, *end;
+#ifdef HAVE_WCHAR
+	cchar_t cc;
+	nschar_t *np;
+#endif /* HAVE_WCHAR */
 
 	/* overwrite() and overlay() can come here with -ve srcwin coords */
 	if (sminrow < 0) {
@@ -100,6 +104,18 @@ int copywin(const WINDOW *srcwin, WINDOW *dstwin,
 	for (; dminrow <= dmaxrow; sminrow++, dminrow++) {
 		sp = &srcwin->lines[sminrow]->line[smincol];
 		end = sp + dmaxcol - dmincol;
+#ifdef HAVE_WCHAR
+		cc.vals[ 0 ] = sp->ch;
+		cc.attributes = sp->attr;
+		cc.elements = 1;
+		np = sp->nsp;
+		if (np) {
+			while ( np && cc.elements <= CURSES_CCHAR_MAX ) {
+				cc.vals[ cc.elements++ ] = np->ch;
+				np = np->next;
+			}
+		}
+#endif /* HAVE_WCHAR */
 		if (dooverlay) {
 			for (dcol = dmincol; sp <= end; dcol++, sp++) {
 				/* XXX: Perhaps this should check for the
@@ -107,13 +123,21 @@ int copywin(const WINDOW *srcwin, WINDOW *dstwin,
 				 */
 				if (!isspace(sp->ch)) {
 					wmove(dstwin, dminrow, dcol);
+#ifndef HAVE_WCHAR
 					__waddch(dstwin, sp);
+#else
+					wadd_wch( dstwin, &cc );
+#endif /* HAVE_WCHAR */
 				}
 			}
 		} else {
 			wmove(dstwin, dminrow, dmincol);
 			for (; sp <= end; sp++) {
+#ifndef HAVE_WCHAR
 				__waddch(dstwin, sp);
+#else
+				wadd_wch( dstwin, &cc );
+#endif /* HAVE_WCHAR */
 			}
 		}
 	}

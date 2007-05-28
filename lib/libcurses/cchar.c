@@ -1,4 +1,4 @@
-/*   $NetBSD: cchar.c,v 1.1 2007/01/21 11:38:59 blymn Exp $ */
+/*   $NetBSD: cchar.c,v 1.2 2007/05/28 15:01:54 blymn Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: cchar.c,v 1.1 2007/01/21 11:38:59 blymn Exp $");
+__RCSID("$NetBSD: cchar.c,v 1.2 2007/05/28 15:01:54 blymn Exp $");
 #endif						  /* not lint */
 
 #include <string.h>

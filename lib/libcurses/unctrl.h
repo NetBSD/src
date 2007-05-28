@@ -1,4 +1,4 @@
-/*	$NetBSD: unctrl.h,v 1.3 2004/02/14 18:23:45 christos Exp $	*/
+/*	$NetBSD: unctrl.h,v 1.4 2007/05/28 15:01:58 blymn Exp $	*/
 
 /*
  * Copyright (c) 1982, 1993
@@ -35,14 +35,24 @@
 #define _UNCTRL_H_
 
 #include <sys/cdefs.h>
+#ifdef HAVE_WCHAR
+#include <wchar.h>
+#include <curses.h>
+#endif /* HAVE_WCHAR */
 
 __BEGIN_DECLS
 extern const char * const  __unctrl[];		/* Control strings. */
 extern const unsigned char __unctrllen[];	/* Control strings length. */
+#ifdef HAVE_WCHAR
+extern const wchar_t * const  __wunctrl[];	/* Wide char control strings. */
+#endif /* HAVE_WCHAR */
 __END_DECLS
 
 /* 8-bit ASCII characters. */
 #define	unctrl(c)		__unctrl[((unsigned char)c) & 0xff]
-#define	unctrllen(c)		__unctrllen[((unsigned char)c) & 0xff]
+#define	unctrllen(c)	__unctrllen[((unsigned char)c) & 0xff]
 
+#ifdef HAVE_WCHAR
+#define	wunctrl(wc)		__wunctrl[( int )(wc->vals[ 0 ]) & 0xff]
+#endif /* HAVE_WCHAR */
 #endif /* _UNCTRL_H_ */

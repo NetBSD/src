@@ -1,5 +1,15 @@
-#$Id: Makefile,v 1.1 2007/01/21 11:38:59 blymn Exp $
+#$Id: Makefile,v 1.2 2007/05/28 15:01:58 blymn Exp $
 #$Log: Makefile,v $
+#Revision 1.2  2007/05/28 15:01:58  blymn
+#Merge in wide curses code done as a Summer of Code project by
+#Ruibiao Qiu.
+#
+#Revision 1.1.2.2  2007/01/31 10:08:47  blymn
+#Fix up build errors.
+#
+#Revision 1.1.2.1  2007/01/21 12:05:54  blymn
+#Merge wide curses.
+#
 #Revision 1.1  2007/01/21 11:38:59  blymn
 #Wide curses merge
 #
@@ -26,10 +36,10 @@ CFLAGS+= -g
 all: wcview nwview ccview tcview ncview ex1
 
 wcview: view.c
-	gcc -DHAVE_WCHAR -o wcview view.c -I.. $(CFLAGS) -lwcurses -Wl,-rpath,.. -L..
+	gcc -DHAVE_WCHAR -o wcview view.c -I.. $(CFLAGS) -lcurses -Wl,-rpath,.. -L..
 
 nwview: view.c
-	gcc -DHAVE_WCHAR -o nwview view.c -DNCURSES -I/usr/pkg/include $(CFLAGS) -lncursesw -Wl,-rpath,/usr/pkg/lib -L/usr/pkg/lib
+	gcc -DHAVE_WCHAR -o nwview view.c -DNCURSES -I/usr/pkg/include $(CFLAGS) -lcurses -Wl,-rpath,/usr/pkg/lib -L/usr/pkg/lib
 
 ccview: view.c
 	gcc -o ccview view.c -I.. $(CFLAGS) -lcurses -Wl,-rpath,.. -L..
@@ -41,3 +51,4 @@ ncview: view.c
 	gcc -o ncview view.c -I/usr/pkg/include -DNCURSES -L/usr/pkg/lib -Wl,-rpath,/usr/pkg/lib $(CFLAGS) -lncurses
 
 ex1: ex1.c
+	gcc -DHAVE_WCHAR -o ex1 ex1.c -I.. $(CFLAGS) -lcurses -Wl,-rpath,.. -L..

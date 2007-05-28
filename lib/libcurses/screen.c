@@ -1,4 +1,4 @@
-/*	$NetBSD: screen.c,v 1.19 2007/01/21 13:25:36 jdc Exp $	*/
+/*	$NetBSD: screen.c,v 1.20 2007/05/28 15:01:57 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)screen.c	8.2 (blymn) 11/27/2001";
 #else
-__RCSID("$NetBSD: screen.c,v 1.19 2007/01/21 13:25:36 jdc Exp $");
+__RCSID("$NetBSD: screen.c,v 1.20 2007/05/28 15:01:57 blymn Exp $");
 #endif
 #endif					/* not lint */
 
@@ -90,6 +90,9 @@ set_term(SCREEN *new)
 	__virtscr = new->__virtscr;
 
 	_cursesi_reset_acs(new);
+#ifdef HAVE_WCHAR
+    _cursesi_reset_wacs(new);
+#endif /* HAVE_WCHAR */
 
 #ifdef DEBUG
 	__CTRACE(__CTRACE_SCREEN, "set_term: LINES = %d, COLS = %d\n",
@@ -117,10 +120,14 @@ newterm(char *type, FILE *outfd, FILE *infd)
 	if ((new_screen = (SCREEN *) malloc(sizeof(SCREEN))) == NULL)
 		return NULL;
 
+#ifdef DEBUG
+	__CTRACE(__CTRACE_INIT, "newterm\n");
+#endif
+
 	new_screen->infd = infd;
 	new_screen->outfd = outfd;
 	new_screen->echoit = new_screen->nl = 1;
-        new_screen->pfast = new_screen->rawmode = new_screen->noqch = 0;
+	new_screen->pfast = new_screen->rawmode = new_screen->noqch = 0;
 	new_screen->nca = A_NORMAL;
 	new_screen->color_type = COLOR_NONE;
 	new_screen->COLOR_PAIRS = 0;
@@ -166,8 +173,11 @@ newterm(char *type, FILE *outfd, FILE *infd)
 	}
 
 	__init_getch(new_screen);
-
 	__init_acs(new_screen);
+#ifdef HAVE_WCHAR
+	__init_get_wch( new_screen );
+	__init_wacs(new_screen);
+#endif /* HAVE_WCHAR */
 
 	__set_stophandler();
 	__set_winchhandler();

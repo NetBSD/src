@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.c,v 1.21 2003/08/07 16:44:20 agc Exp $	*/
+/*	$NetBSD: curses.c,v 1.22 2007/05/28 15:01:55 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -30,21 +30,23 @@
  */
 
 #include <sys/cdefs.h>
+#include <stdlib.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)curses.c	8.3 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: curses.c,v 1.21 2003/08/07 16:44:20 agc Exp $");
+__RCSID("$NetBSD: curses.c,v 1.22 2007/05/28 15:01:55 blymn Exp $");
 #endif
 #endif				/* not lint */
 
 #include "curses.h"
+#include "curses_private.h"
 
 /* Private. */
 int	__echoit = 1;			 /* If stty indicates ECHO. */
 int	__pfast;
 int	__rawmode = 0;			 /* If stty indicates RAW mode. */
-int	__noqch = 0;			 
+int	__noqch = 0;
 					 /* If terminal doesn't have
 					 * insert/delete line capabilities
 					 * for quick change on refresh.
@@ -76,6 +78,11 @@ char	*__tc_ac, *__tc_AB, *__tc_ae, *__tc_AF, *__tc_AL,
 	*__tc_uc, *__tc_ue, *__tc_UP, *__tc_up, *__tc_us,
 	*__tc_vb, *__tc_ve, *__tc_vi, *__tc_vs;
 
+#ifdef HAVE_WCHAR
+char *__tc_Xh, *__tc_Xl, *__tc_Xo, *__tc_Xr, *__tc_Xt,
+	*__tc_Xv;
+#endif /* HAVE_WCHAR */
+
 /*
  * Public.
  *
@@ -96,3 +103,88 @@ const char	*Def_term = "unknown";	/* Default terminal type. */
 char	 __GT;				/* Gtty indicates tabs. */
 char	 __NONL;			/* Term can't hack LF doing a CR. */
 char	 __UPPERCASE;			/* Terminal is uppercase only. */
+
+#ifdef HAVE_WCHAR
+/*
+ * Copy the non-spacing character list (src_nsp) to the given character,
+ * allocate or free storage as required.
+ */
+int
+_cursesi_copy_nsp(nschar_t *src_nsp, struct __ldata *ch)
+{
+	nschar_t *np, *tnp, *pnp;
+
+	pnp = NULL;
+	np = src_nsp;
+	if (np) {
+		tnp = ch->nsp;
+		while (np) {
+			if (tnp) {
+				tnp->ch = np->ch;
+				pnp = tnp;
+				tnp = tnp->next;
+			} else {
+				tnp = (nschar_t *)malloc(sizeof(nschar_t));
+				if (!tnp)
+					return ERR;
+				tnp->ch = np->ch;
+				pnp->next = tnp;
+				tnp->next = NULL;
+				pnp = tnp;
+				tnp = NULL;
+			}
+			np = np->next;
+		}
+                np = tnp;
+		if (np) {
+			pnp->next = NULL;
+			__cursesi_free_nsp(np);
+		}
+	} else {
+		if (ch->nsp) {
+			__cursesi_free_nsp(ch->nsp);
+			ch->nsp = NULL;
+		}
+	}
+
+	return OK;
+}
+
+/*
+ * Free the storage associated with a non-spacing character - traverse the
+ * linked list until all storage is done.
+ */
+void
+__cursesi_free_nsp(nschar_t *inp)
+{
+	nschar_t *tnp, *np;
+
+	np = inp;
+	if (np) {
+		while (np) {
+			tnp = np->next;
+			free(np);
+			np = tnp;
+		}
+	}
+}
+
+/*
+ * Traverse all the cells in the given window free'ing the non-spacing
+ * character storage.
+ */
+void
+__cursesi_win_free_nsp(WINDOW *win)
+{
+	int     i, j;
+	__LDATA *sp;
+
+	for (i = 0; i < win->maxy; i++) {
+		for (sp = win->lines[i]->line, j = 0; j < win->maxx;
+		     j++, sp++) {
+			__cursesi_free_nsp(sp->nsp);
+		}
+	}
+}
+
+#endif

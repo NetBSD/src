@@ -1,4 +1,4 @@
-/*	$NetBSD: acs.c,v 1.12 2007/01/21 13:25:36 jdc Exp $	*/
+/*	$NetBSD: acs.c,v 1.13 2007/05/28 15:01:53 blymn Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,13 +38,19 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: acs.c,v 1.12 2007/01/21 13:25:36 jdc Exp $");
+__RCSID("$NetBSD: acs.c,v 1.13 2007/05/28 15:01:53 blymn Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
 #include "curses_private.h"
 
 chtype _acs_char[NUM_ACS];
+#ifdef HAVE_WCHAR
+#include <locale.h>
+#include <string.h>
+
+cchar_t _wacs_char[ NUM_ACS ];
+#endif /* HAVE_WCHAR */
 
 /*
  * __init_acs --
@@ -112,7 +118,7 @@ __init_acs(SCREEN *screen)
 
 	if (screen->tc_eA != NULL)
 		t_puts(screen->cursesi_genbuf, screen->tc_eA, 0,
-		       __cputchar_args, screen->outfd);
+		    __cputchar_args, screen->outfd);
 
 out:
 	for (count=0; count < NUM_ACS; count++)
@@ -127,3 +133,127 @@ _cursesi_reset_acs(SCREEN *screen)
 	for (count=0; count < NUM_ACS; count++)
 		_acs_char[count]= screen->acs_char[count];
 }
+
+#ifdef HAVE_WCHAR
+/*
+ * __init_wacs --
+ *	Fill in the ACS characters.  The 'ac' termcap entry is a list of
+ *	character pairs - ACS definition then terminal representation.
+ */
+void
+__init_wacs(SCREEN *screen)
+{
+	int		count;
+	char		*aofac;	/* Address of 'ac' */
+	unsigned char	acs, term;
+	char	*lstr;
+
+	/* Default value '+' for all ACS characters */
+	for (count=0; count < NUM_ACS; count++) {
+		_wacs_char[ count ].vals[ 0 ] = ( wchar_t )btowc( '+' );
+		_wacs_char[ count ].attributes = 0;
+		_wacs_char[ count ].elements = 1;
+	}
+
+	/* Add the SUSv2 defaults (those that are not '+') */
+	lstr = setlocale( LC_ALL, "" );
+	if ((lstr != NULL) && !strcasestr( lstr, "UTF-8" )) {
+#ifdef DEBUG
+		__CTRACE(__CTRACE_INIT, "__init_wacs: setting defaults\n" );
+#endif /* DEBUG */
+		WACS_RARROW  = ( wchar_t )btowc( '>' );
+		WACS_LARROW  = ( wchar_t )btowc( '<' );
+		WACS_UARROW  = ( wchar_t )btowc( '^' );
+		WACS_DARROW  = ( wchar_t )btowc( 'v' );
+		WACS_BLOCK   = ( wchar_t )btowc( '#' );
+		WACS_CKBOARD = ( wchar_t )btowc( ':' );
+		WACS_DEGREE  = ( wchar_t )btowc( 39 );	/* ' */
+		WACS_PLMINUS = ( wchar_t )btowc( '#' );
+		WACS_BOARD   = ( wchar_t )btowc( '#' );
+		WACS_LANTERN = ( wchar_t )btowc( '#' );
+		WACS_HLINE   = ( wchar_t )btowc( '-' );
+		WACS_S1	  = ( wchar_t )btowc( '-' );
+		WACS_S9	  = ( wchar_t )btowc( '_' );
+		WACS_VLINE   = ( wchar_t )btowc( '|' );
+		WACS_BULLET  = ( wchar_t )btowc( 'o' );
+	} else {
+		/* Unicode defaults */
+#ifdef DEBUG
+		__CTRACE(__CTRACE_INIT,
+		    "__init_wacs: setting Unicode defaults\n" );
+#endif /* DEBUG */
+		WACS_RARROW	 = 0x2192;
+		WACS_LARROW	 = 0x2190;
+		WACS_UARROW	 = 0x2192;
+		WACS_DARROW	 = 0x2193;
+		WACS_BLOCK	  = 0x25ae;
+  		WACS_DIAMOND	= 0x25c6;
+		WACS_CKBOARD	= 0x2592;
+		WACS_DEGREE	 = 0x00b0;
+		WACS_PLMINUS	= 0x00b1;
+		WACS_BOARD	  = 0x2592;
+		WACS_LANTERN	= 0x2603;
+  		WACS_LRCORNER   = 0x2518;
+  		WACS_URCORNER   = 0x2510;
+  		WACS_ULCORNER   = 0x250c;
+  		WACS_LLCORNER   = 0x2514;
+  		WACS_PLUS	   = 0x253c;
+		WACS_HLINE	  = 0x2500;
+		WACS_S1		 = 0x23ba;
+		WACS_S9		 = 0x23bd;
+  		WACS_LTEE	   = 0x251c;
+  		WACS_RTEE	   = 0x2524;
+  		WACS_BTEE	   = 0x2534;
+  		WACS_TTEE	   = 0x252c;
+		WACS_VLINE	  = 0x2502;
+		WACS_BULLET	 = 0x00b7;
+	}
+
+	if (screen->tc_ac == NULL) {
+#ifdef DEBUG
+		__CTRACE(__CTRACE_INIT,
+		    "__init_wacs: no alternative characters\n" );
+#endif /* DEBUG */
+		goto out;
+	}
+
+	aofac = screen->tc_ac;
+
+	while (*aofac != '\0') {
+		if ((acs = *aofac) == '\0')
+			return;
+		if (++aofac == '\0')
+			return;
+		if ((term = *aofac) == '\0')
+			return;
+	 	/* Only add characters 1 to 127 */
+		if (acs < NUM_ACS) {
+			_wacs_char[acs].vals[ 0 ] = term;
+			_wacs_char[acs].attributes |= WA_ALTCHARSET;
+		}
+		aofac++;
+#ifdef DEBUG
+		__CTRACE(__CTRACE_INIT, "__init_wacs: %c = %c\n", acs, term);
+#endif
+	}
+
+	if (screen->tc_eA != NULL)
+		t_puts(screen->cursesi_genbuf, screen->tc_eA, 0,
+			   __cputchar_args, screen->outfd);
+
+out:
+	for (count=0; count < NUM_ACS; count++)
+		memcpy(&screen->wacs_char[count], &_wacs_char[count],
+			sizeof(cchar_t));
+}
+
+void
+_cursesi_reset_wacs(SCREEN *screen)
+{
+	int count;
+
+	for (count=0; count < NUM_ACS; count++)
+		memcpy( &_wacs_char[count], &screen->wacs_char[count],
+			sizeof( cchar_t ));
+}
+#endif /* HAVE_WCHAR */
