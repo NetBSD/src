@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.40.10.1 2007/05/22 17:27:20 matt Exp $	*/
+/*	$NetBSD: trap.c,v 1.40.10.2 2007/05/28 20:01:42 freza Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,10 +67,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.40.10.1 2007/05/22 17:27:20 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.40.10.2 2007/05/28 20:01:42 freza Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
+#include "opt_kgdb.h"
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -81,6 +82,10 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.40.10.1 2007/05/22 17:27:20 matt Exp $");
 #include <sys/pool.h>
 #include <sys/userret.h>
 #include <sys/kauth.h>
+
+#if defined(KGDB)
+#include <sys/kgdb.h>
+#endif
 
 #include <uvm/uvm_extern.h>
 
@@ -278,7 +283,7 @@ trap(struct trapframe *frame)
 			ADDUPROF(l);
 		}
 		/* Check whether we are being preempted. */
-		if (curcpu()->ci_need_resched)
+		if (curcpu()->ci_want_resched)
 			preempt();
 		break;
 
@@ -342,7 +347,7 @@ trap(struct trapframe *frame)
 	default:
  brain_damage:
 		printf("trap type 0x%x at 0x%lx\n", type, frame->srr0);
-#ifdef DDB
+#if defined(DDB) || defined(KGDB)
 		if (kdb_trap(type, frame))
 			goto done;
 #endif

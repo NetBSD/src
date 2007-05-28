@@ -1,4 +1,4 @@
-/* 	$NetBSD: design_gsrd2.c,v 1.2 2007/02/22 05:27:47 thorpej Exp $ */
+/* 	$NetBSD: design_gsrd2.c,v 1.2.12.1 2007/05/28 20:01:42 freza Exp $ */
 
 /*
  * Copyright (c) 2006 Jachym Holecek
@@ -32,7 +32,7 @@
 #include "opt_virtex.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: design_gsrd2.c,v 1.2 2007/02/22 05:27:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: design_gsrd2.c,v 1.2.12.1 2007/05/28 20:01:42 freza Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -442,7 +442,7 @@ ll_dmac_intr_disestablish(int chan, void *handle)
 }
 
 int
-virtex_console_tag(const char *xname, bus_space_tag_t *bst)
+virtex_bus_space_tag(const char *xname, bus_space_tag_t *bst)
 {
 	if (strncmp(xname, "xlcom", 5) == 0) {
 		*bst = &opb_bst;

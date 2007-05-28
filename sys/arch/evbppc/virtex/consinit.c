@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.1 2006/12/02 22:18:47 freza Exp $ */
+/*	$NetBSD: consinit.c,v 1.1.20.1 2007/05/28 20:01:42 freza Exp $ */
 
 /*
  * Copyright (c) 2006 Jachym Holecek
@@ -33,7 +33,7 @@
 #include "xlcom.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.1 2006/12/02 22:18:47 freza Exp $");
+__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.1.20.1 2007/05/28 20:01:42 freza Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,11 +49,19 @@ __KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.1 2006/12/02 22:18:47 freza Exp $");
 #if NXLCOM > 0
 extern struct consdev 	consdev_xlcom;
 void    		xlcom_cninit(struct consdev *, bus_addr_t);
+#if defined(KGDB)
+void 			xlcom_kgdbinit(void);
+#endif
 #endif
 
 struct consdev 		*cn_tab = NULL;
 bus_space_tag_t 	consdev_iot;
 bus_space_handle_t 	consdev_ioh;
+
+#if defined(KGDB)
+bus_space_tag_t 	kgdb_iot;
+bus_space_handle_t 	kgdb_ioh;
+#endif
 
 
 /*
@@ -68,10 +76,25 @@ consinit(void)
 		return;
 
 	/* Pick MD knowledge about console. */
-	if (virtex_console_tag(CONS_NAME, &consdev_iot))
+	if (virtex_bus_space_tag(CONS_NAME, &consdev_iot))
 		panic("No bus space for %s console", CONS_NAME);
 
+#if defined(KGDB)
+	if (virtex_bus_space_tag(KGDB_NAME, &kgdb_iot))
+		panic("No bus space for %s kgdb", KGDB_NAME);
+#endif
+
 #if NXLCOM > 0
+#if defined(KGDB)
+	if (strncmp("xlcom", KGDB_NAME, 5)) {
+		xlcom_kgdbinit();
+
+		/* Overtake console device, we're higher priority. */
+		if (strcmp(KGDB_NAME, CONS_NAME) == 0 &&
+		    KGDB_ADDR == CONS_ADDR)
+			goto done;
+	}
+#endif
 	if (strncmp("xlcom", CONS_NAME, 5) == 0) {
 		cn_tab = &consdev_xlcom;
 		xlcom_cninit(cn_tab, CONS_ADDR);
@@ -82,5 +105,6 @@ consinit(void)
 
 	panic("No console"); 	/* XXX really panic? */
  done:
+	/* If kgdb overtook console, cn_tab is NULL and dev/cons.c deals. */
 	initted = 1;
 }

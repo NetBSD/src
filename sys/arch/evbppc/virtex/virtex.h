@@ -1,4 +1,4 @@
-/* 	$NetBSD: virtex.h,v 1.1 2006/12/02 22:18:47 freza Exp $ */
+/* 	$NetBSD: virtex.h,v 1.1.20.1 2007/05/28 20:01:42 freza Exp $ */
 
 /*
  * Copyright (c) 2006 Jachym Holecek
@@ -34,7 +34,14 @@
 
 #ifdef _KERNEL_OPT
 #include "opt_cons.h"
+#include "opt_kgdb.h"
 #endif
+
+/*
+ * Console and kgdb name are just private tags for design_<foo>.c
+ * to identify the right device instance. Should be the same as
+ * device_xname() if there's only one UART available, though.
+ */
 
 #ifndef CONS_NAME
 #define CONS_NAME 	"xlcom0"
@@ -44,17 +51,36 @@
 #define CONS_ADDR 	0x00
 #endif
 
+#if defined(KGDB)
+
+#ifndef KGDB_NAME
+#define	KGDB_NAME 	CONS_NAME
+#endif
+
+#ifndef KGDB_ADDR
+#define	KGDB_ADDR 	CONS_ADDR
+#endif
+
+#endif /* KGDB */
+
 struct mem_region;
 
-/* Setup console bus space. */
-int 	virtex_console_tag(const char *, bus_space_tag_t *);
+/* Early bus space setup, for console and kgdb. Name is purely symbolic. */
+int 	virtex_bus_space_tag(const char *, bus_space_tag_t *);
 
 /* Called after RAM is linear mapped. Translation & console still off. */
 void 	virtex_machdep_init(vaddr_t, vsize_t, struct mem_region *,
 	    struct mem_region *);
 
-/* For use by console. Tag is initialized before <foo>_cninit. */
-extern bus_space_tag_t 		consdev_iot;
-extern bus_space_handle_t 	consdev_ioh;
+/* For use by console and kgdb. Tag is initialized before <foo>_cninit. */
+extern bus_space_tag_t 		consdev_iot; 	/* consinit.c */
+extern bus_space_handle_t 	consdev_ioh; 	/* console device */
+
+#if defined(KGDB)
+
+extern bus_space_tag_t 		kgdb_iot; 	/* consinit.c */
+extern bus_space_handle_t 	kgdb_ioh; 	/* kgdb device */
+
+#endif /* KGDB */
 
 #endif /*_VIRTEX_H_*/
