@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2007/05/28 12:06:40 tls Exp $
+#	$NetBSD: Makefile,v 1.9 2007/05/28 14:49:15 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -9,14 +9,12 @@ WARNS=4
 PROG=	rpcbind
 MAN=	rpcbind.8
 SRCS=	check_bound.c rpcb_stat.c rpcb_svc_4.c rpcbind.c pmap_svc.c \
-	rpcb_svc.c rpcb_svc_com.c security.c warmstart.c util.c \
-	rpc_generic.c
+	rpcb_svc.c rpcb_svc_com.c security.c warmstart.c util.c 
 
 LIBCDIR=        ${NETBSDSRCDIR}/lib/libc
 LIBCRPCDIR=     ${LIBCDIR}/rpc
-LIBCINCLUDE=    ${LIBCDIR}/include
 
-CPPFLAGS+=      -I${LIBCRPCDIR} -I${LIBCINCLUDE} -DPORTMAP -DLIBWRAP
+CPPFLAGS+=	-I${LIBCRPCDIR} -DPORTMAP -DLIBWRAP
 
 .if (${USE_INET6} != "no")
 CPPFLAGS+=	-DINET6
