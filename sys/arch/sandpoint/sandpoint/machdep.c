@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.35.14.12 2007/05/26 06:09:15 nisimura Exp $	*/
+/*	$NetBSD: machdep.c,v 1.35.14.13 2007/05/28 15:28:15 nisimura Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.35.14.12 2007/05/26 06:09:15 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.35.14.13 2007/05/28 15:28:15 nisimura Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -108,6 +108,7 @@ struct mem_region physmemr[OFMEMREGIONS], availmemr[OFMEMREGIONS];
 
 paddr_t avail_end;
 struct pic_ops *isa_pic = NULL;
+extern int primary_pic;
 
 #if NKSYMS || defined(DDB) || defined(LKM)
 extern void *startsym, *endsym;
@@ -263,9 +264,11 @@ cpu_startup(void)
 	/* set up i8259 as a cascade on EPIC irq 0 */
 	isa_pic = setup_i8259();
 	(void)setup_openpic(baseaddr, 0);
+	primary_pic = 1;
 	/* XXX exceptional SP2 has 17 XXX */
 	intr_establish(16, IST_LEVEL, IPL_NONE, pic_handle_intr, isa_pic);
 #else
+	primary_pic = 0;
 	(void)setup_openpic(baseaddr, 0);
 #endif
 	oea_install_extint(pic_ext_intr);
