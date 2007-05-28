@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.154 2007/05/02 16:19:55 yamt Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.155 2007/05/28 16:47:38 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.154 2007/05/02 16:19:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.155 2007/05/28 16:47:38 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -997,6 +997,7 @@ tryagain_cred:
 	KASSERT(cred != NULL);
 	MALLOC(rep, struct nfsreq *, sizeof(struct nfsreq), M_NFSREQ, M_WAITOK);
 	rep->r_nmp = nmp;
+	KASSERT(lwp == NULL || lwp == curlwp);
 	rep->r_lwp = lwp;
 	rep->r_procnum = procnum;
 	i = 0;
@@ -1693,20 +1694,6 @@ nfs_timer(void *arg)
 #endif /* NFSSERVER */
 	splx(s);
 	callout_schedule(&nfs_timer_ch, nfs_ticks);
-}
-
-/*ARGSUSED*/
-void
-nfs_exit(struct proc *p, void *v)
-{
-	struct nfsreq *rp;
-	int s = splsoftnet();
-
-	TAILQ_FOREACH(rp, &nfs_reqq, r_chain) {
-		if (rp->r_lwp && rp->r_lwp->l_proc == p)
-			TAILQ_REMOVE(&nfs_reqq, rp, r_chain);
-	}
-	splx(s);
 }
 
 /*
