@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_LARGE,v 1.3 2007/05/19 18:49:38 pavel Exp $
+#	$NetBSD: INSTALL_LARGE,v 1.4 2007/05/28 21:45:29 pavel Exp $
 #
 #	INSTALL_LARGE -- INSTALL suitable for modern machines
 #
@@ -16,8 +16,15 @@ ioapic* 	at mainbus?
 bnx* 	at pci? dev ? function ?	# Broadcom NetXtremeII gigabit Ethernet
 txp*	at pci? dev ? function ?	# 3com 3cr990
 vge*	at pci? dev ? function ?	# VIATech VT612X Gigabit Ethernet
+nfe*	at pci?	dev ? function ?	# NVIDIA nForce Ethernet
 jmide* 	at pci? dev ? function ? 	# JMicron PCI-e PATA/SATA controllers
 ahcisata* at jmide?
+ahcisata* 	at pci? dev ? function ?	# AHCI SATA controllers
+svwsata* 	at pci? dev ? function ?	# ServerWorks SATA controllers
+
+puc*	at pci? dev ? function ?	# PCI "universal" comm. cards
+com*	at puc? port ?			# 16x50s on "universal" comm boards
+
 
 # CardBus bridge support
 cbb* 		at pci? dev ? function ?
