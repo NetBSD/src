@@ -1,4 +1,6 @@
-# $NetBSD: Makefile,v 1.16 2006/05/11 23:16:28 mrg Exp $
+# $NetBSD: Makefile,v 1.17 2007/05/28 12:06:19 tls Exp $
+
+USE_FORT?= yes	# network protocol library
 
 NOLINT=		# defined
 
@@ -11,7 +13,7 @@ WARNS?=		1
 
 LIB=		gssapi
 
-LIBDPLIBS=	crypto	${.CURDIR}/../libcrypto \
+LIBDPLIBS+=	crypto	${.CURDIR}/../libcrypto \
 		krb5	${.CURDIR}/../libkrb5 \
 		asn1	${.CURDIR}/../libasn1 \
 		roken	${.CURDIR}/../libroken

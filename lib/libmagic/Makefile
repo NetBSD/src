@@ -1,5 +1,7 @@
-#	$NetBSD: Makefile,v 1.5 2006/10/08 08:07:34 pooka Exp $
+#	$NetBSD: Makefile,v 1.6 2007/05/28 12:06:20 tls Exp $
 #
+
+USE_FORT?= yes	# data driven bugs?
 
 .include <bsd.own.mk>
 
@@ -7,7 +9,7 @@ DIST=		${NETBSDSRCDIR}/dist/file
 .PATH:		${DIST}/src ${DIST}/doc
 
 LIB=		magic
-LIBDPLIBS=	z	${.CURDIR}/../libz
+LIBDPLIBS+=	z	${.CURDIR}/../libz
 
 .if ${MACHINE_ARCH} == "i386"
 # Set lint to exit on warnings

@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.9 2002/05/24 05:38:19 itojun Exp $
+#	$NetBSD: Makefile,v 1.10 2007/05/28 12:06:22 tls Exp $
+
+USE_FORT?= yes	# network server
 
 LIB=	wrap
 

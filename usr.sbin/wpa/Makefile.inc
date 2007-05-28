@@ -1,6 +1,8 @@
-# $NetBSD: Makefile.inc,v 1.6 2006/06/25 03:03:41 mrg Exp $
+# $NetBSD: Makefile.inc,v 1.7 2007/05/28 12:06:42 tls Exp $
 
 BINDIR?=	/usr/sbin
+
+USE_FORT?= yes	# network client/server
 
 # Don't define .PATH here.
 

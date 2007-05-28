@@ -1,4 +1,6 @@
-# $NetBSD: Makefile,v 1.16 2005/12/16 16:25:07 jmc Exp $
+# $NetBSD: Makefile,v 1.17 2007/05/28 12:06:19 tls Exp $
+
+USE_FORT?= yes	# network protocol library
 
 USE_SHLIBDIR=	yes
 WARNS=	0	# Will be fixed later

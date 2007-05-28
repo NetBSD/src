@@ -1,7 +1,9 @@
-#	$NetBSD: Makefile,v 1.19 2005/01/10 02:58:59 lukem Exp $
+#	$NetBSD: Makefile,v 1.20 2007/05/28 12:06:42 tls Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/6/93
 
 .include <bsd.own.mk>
+
+USE_FORT?= yes	# network server
 
 PROG=	syslogd
 SRCS=	syslogd.c utmpentry.c

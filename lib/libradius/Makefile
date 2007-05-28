@@ -1,4 +1,6 @@
-# $NetBSD: Makefile,v 1.9 2005/11/26 16:09:30 christos Exp $
+# $NetBSD: Makefile,v 1.10 2007/05/28 12:06:20 tls Exp $
+
+USE_FORT?= yes	# network protocol library
 
 USE_SHLIBDIR=	yes
 .include <bsd.own.mk>
@@ -11,7 +13,7 @@ CPPFLAGS+=	-I.
 
 .if (${MKCRYPTO} != "no")
 CPPFLAGS+=	-DWITH_SSL
-LIBDPLIBS=crypto ${.CURDIR}/../libcrypto
+LIBDPLIBS+=crypto ${.CURDIR}/../libcrypto
 .endif
 
 SRCS=	radlib.c

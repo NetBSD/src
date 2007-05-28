@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.8 2002/08/19 14:55:16 lukem Exp $
+#	$NetBSD: Makefile,v 1.9 2007/05/28 12:06:21 tls Exp $
+
+USE_FORT?= yes	# network protocol library
 
 NOPIC=		# defined
 NOPROFILE=	# defined
