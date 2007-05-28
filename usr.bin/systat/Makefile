@@ -1,8 +1,9 @@
-#	$NetBSD: Makefile,v 1.33 2007/02/18 17:00:08 dsl Exp $
+#	$NetBSD: Makefile,v 1.34 2007/05/28 12:06:32 tls Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/6/93
 
 .include <bsd.own.mk>
 
+USE_FORT?= yes	# setgid
 PROG=	systat
 WARNS=3
 

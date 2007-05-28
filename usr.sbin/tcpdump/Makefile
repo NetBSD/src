@@ -1,6 +1,8 @@
-#	$NetBSD: Makefile,v 1.43 2006/05/12 02:00:46 mrg Exp $	
+#	$NetBSD: Makefile,v 1.44 2007/05/28 12:06:42 tls Exp $	
 
 .include <bsd.own.mk>
+
+USE_FORT?= yes	# network client
 
 SRCDIR=	${NETBSDSRCDIR}/dist/tcpdump
 .PATH:	${SRCDIR}

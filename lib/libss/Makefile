@@ -1,4 +1,6 @@
-# $NetBSD: Makefile,v 1.6 2006/03/17 21:43:16 christos Exp $
+# $NetBSD: Makefile,v 1.7 2007/05/28 12:06:21 tls Exp $
+
+USE_FORT?= yes	# network protocol library
 
 NOLINT=		# defined
 
@@ -11,7 +13,7 @@ WARNS?=		1
 
 LIB=		ss
 
-LIBDPLIBS=	edit ${.CURDIR}/../libedit \
+LIBDPLIBS+=	edit ${.CURDIR}/../libedit \
 		termcap ${.CURDIR}/../libterm \
 		com_err	${.CURDIR}/../libcom_err
 

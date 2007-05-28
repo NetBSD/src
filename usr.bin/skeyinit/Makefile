@@ -1,7 +1,8 @@
-#	$NetBSD: Makefile,v 1.5 2002/09/18 14:00:40 lukem Exp $
+#	$NetBSD: Makefile,v 1.6 2007/05/28 12:06:31 tls Exp $
 
 .include <bsd.own.mk>
 
+USE_FORT?= yes	# setuid
 PROG= skeyinit
 BINOWN=root
 BINMODE=4555

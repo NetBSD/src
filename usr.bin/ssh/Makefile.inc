@@ -1,6 +1,8 @@
-#	$NetBSD: Makefile.inc,v 1.14 2006/09/28 21:24:58 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.15 2007/05/28 12:06:31 tls Exp $
 
 .include <bsd.own.mk>
+
+USE_FORT?= yes	# network client/server
 
 SSHDIST?= ${NETBSDSRCDIR}/crypto/dist/ssh
 

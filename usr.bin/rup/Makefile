@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.6 2005/08/07 16:01:45 christos Exp $
+#	$NetBSD: Makefile,v 1.7 2007/05/28 12:06:30 tls Exp $
+
+USE_FORT?= yes	# network client
 
 PROG=	rup
 WARNS=3

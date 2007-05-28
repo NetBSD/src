@@ -1,7 +1,8 @@
-#	$NetBSD: Makefile,v 1.10 2005/06/26 19:10:49 christos Exp $
+#	$NetBSD: Makefile,v 1.11 2007/05/28 12:06:17 tls Exp $
 
 .include <bsd.own.mk>
 
+USE_FORT?=yes	# setuid
 # XXX Unsupported Kerberos options were removed from man page
 # XXX Don't forget to update the man page if you fix Kerberos
 PROG=	rcmd

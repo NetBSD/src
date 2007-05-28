@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.11 2002/01/27 00:35:16 perry Exp $
+#	$NetBSD: Makefile.inc,v 1.12 2007/05/28 12:06:17 tls Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 5/31/93
 
 MKHIDEGAME?=	no
@@ -7,6 +7,7 @@ MKHIDEGAME?=	no
 BINDIR=		/usr/games/hide
 BINGRP=		games
 .if defined(SETGIDGAME)
+USE_FORT?=	yes
 BINMODE=	2550
 .else
 BINMODE=	550

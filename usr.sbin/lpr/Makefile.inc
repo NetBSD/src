@@ -1,6 +1,8 @@
-#	$NetBSD: Makefile.inc,v 1.6 2005/11/28 03:26:06 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.7 2007/05/28 12:06:37 tls Exp $
 
 .include <bsd.own.mk>
+
+USE_FORT?=yes	# network client/server *and* setgid
 
 WARNS=4
 LIBCOMMON != cd ${.CURDIR}/../common_source && ${PRINTOBJDIR}
