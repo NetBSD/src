@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.186 2007/04/29 10:30:18 yamt Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.187 2007/05/28 16:47:38 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.186 2007/04/29 10:30:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.187 2007/05/28 16:47:38 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -1516,8 +1516,6 @@ nfs_init0(void)
 #if defined(NFSSERVER) || (defined(NFS) && !defined(NFS_V2_ONLY))
 	nfsdreq_init();
 #endif /* defined(NFSSERVER) || (defined(NFS) && !defined(NFS_V2_ONLY)) */
-
-	exithook_establish(nfs_exit, NULL);
 
 	/*
 	 * Initialize reply list and start timer
