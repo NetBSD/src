@@ -1,4 +1,4 @@
-/* 	$NetBSD: xlcom.c,v 1.2 2007/03/04 05:59:46 christos Exp $ */
+/* 	$NetBSD: xlcom.c,v 1.2.10.1 2007/05/28 20:01:42 freza Exp $ */
 
 /*
  * Copyright (c) 2006 Jachym Holecek
@@ -29,10 +29,10 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* TODO: kgdb support */
-
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xlcom.c,v 1.2 2007/03/04 05:59:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xlcom.c,v 1.2.10.1 2007/05/28 20:01:42 freza Exp $");
+
+#include "opt_kgdb.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,6 +46,10 @@ __KERNEL_RCSID(0, "$NetBSD: xlcom.c,v 1.2 2007/03/04 05:59:46 christos Exp $");
 #include <sys/tty.h>
 #include <sys/time.h>
 #include <sys/syslog.h>
+
+#if defined(KGDB)
+#include <sys/kgdb.h>
+#endif /* KGDB */
 
 #include <dev/cons.h>
 
@@ -96,11 +100,21 @@ static int 	xlcom_intr(void *);
 static void 	xlcom_rx_soft(void *);
 static void 	xlcom_tx_soft(void *);
 static void 	xlcom_reset(bus_space_tag_t, bus_space_handle_t);
+static int 	xlcom_busy_getc(bus_space_tag_t, bus_space_handle_t);
+static void 	xlcom_busy_putc(bus_space_tag_t, bus_space_handle_t, int);
 
 /* System console interface. */
 static int 	xlcom_cngetc(dev_t);
 static void 	xlcom_cnputc(dev_t, int);
 void 		xlcom_cninit(struct consdev *);
+
+#if defined(KGDB)
+
+void 		xlcom_kgdbinit(void);
+static void 	xlcom_kgdb_putc(void *, int);
+static int 	xlcom_kgdb_getc(void *);
+
+#endif /* KGDB */
 
 static struct cnm_state 	xlcom_cnm_state;
 
@@ -151,6 +165,14 @@ xlcom_attach(struct device *parent, struct device *self, void *aux)
 	dev_t 				dev;
 
 	printf(": UartLite serial port\n");
+
+#if defined(KGDB)
+	/* We don't want to share kgdb port with the user. */
+	if (sc->sc_iot == kgdb_iot && sc->sc_ioh == kgdb_ioh) {
+		printf("%s: already in use by kgdb\n", device_xname(self));
+		return;
+	}
+#endif /* KGDB */
 
 	if ((sc->sc_ih = intr_establish(vaa->vaa_intr, IST_LEVEL, IPL_SERIAL,
 	    xlcom_intr, sc)) == NULL) {
@@ -616,6 +638,24 @@ xlcom_reset(bus_space_tag_t iot, bus_space_handle_t ioh)
 	bus_space_write_4(iot, ioh, XLCOM_CNTL, CNTL_RX_CLEAR | CNTL_TX_CLEAR);
 }
 
+static int
+xlcom_busy_getc(bus_space_tag_t t, bus_space_handle_t h)
+{
+	while (! (bus_space_read_4(t, h, XLCOM_STAT) & STAT_RX_DATA))
+		;
+
+	return (bus_space_read_4(t, h, XLCOM_RX_FIFO));
+}
+
+static void
+xlcom_busy_putc(bus_space_tag_t t, bus_space_handle_t h, int c)
+{
+	while (bus_space_read_4(t, h, XLCOM_STAT) & STAT_TX_FULL)
+		;
+
+	bus_space_write_4(t, h, XLCOM_TX_FIFO, c);
+}
+
 /*
  * Console on UartLite.
  */
@@ -636,20 +676,42 @@ xlcom_cninit(struct consdev *cn)
 static int 
 xlcom_cngetc(dev_t dev)
 {
-	while (! (bus_space_read_4(consdev_iot, consdev_ioh, XLCOM_STAT) &
-	    STAT_RX_DATA))
-		;
-
-	return (bus_space_read_4(consdev_iot, consdev_ioh,
-	    XLCOM_RX_FIFO));
+	return (xlcom_busy_getc(consdev_iot, consdev_ioh));
 }
 
 static void 
 xlcom_cnputc(dev_t dev, int c)
 {
-	while (bus_space_read_4(consdev_iot, consdev_ioh, XLCOM_STAT) &
-	    STAT_TX_FULL)
-		;
-
-	bus_space_write_4(consdev_iot, consdev_ioh, XLCOM_TX_FIFO, c);
+	xlcom_busy_putc(consdev_iot, consdev_ioh, c);
 }
+
+/*
+ * Remote GDB (aka "kgdb") interface.
+ */
+#if defined(KGDB)
+
+static int
+xlcom_kgdb_getc(void *arg)
+{
+	return (xlcom_busy_getc(kgdb_iot, kgdb_ioh));
+}
+
+static void
+xlcom_kgdb_putc(void *arg, int c)
+{
+	xlcom_busy_putc(kgdb_iot, kgdb_ioh, c);
+}
+
+void
+xlcom_kgdbinit(void)
+{
+	if (bus_space_map(kgdb_iot, KGDB_ADDR, XLCOM_SIZE, 0, &kgdb_ioh))
+		panic("xlcom_kgdbinit: could not map kgdb_ioh");
+
+	xlcom_reset(kgdb_iot, kgdb_ioh);
+
+	kgdb_attach(xlcom_kgdb_getc, xlcom_kgdb_putc, NULL);
+	kgdb_dev = 123; /* arbitrary strictly positive value */
+}
+
+#endif /* KGDB */

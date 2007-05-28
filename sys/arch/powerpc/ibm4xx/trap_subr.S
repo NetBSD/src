@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.S,v 1.10 2005/12/11 12:18:42 christos Exp $	*/
+/*	$NetBSD: trap_subr.S,v 1.10.38.1 2007/05/28 20:01:43 freza Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -177,7 +177,7 @@ _C_LABEL(extint):
 _C_LABEL(extsize) = .-_C_LABEL(extint)
 
 
-#ifdef DDB
+#if defined(DDB) || defined(KGDB)
 #define	ddbsave	0xde0		/* primary save area for DDB */
 /*
  * In case of DDB we want a separate trap catcher for it
@@ -195,7 +195,7 @@ _C_LABEL(ddblow):
 	addi	1,1,ddbstk+INTSTK@l
 	bla	ddbtrap
 _C_LABEL(ddbsize) = .-_C_LABEL(ddblow)
-#endif	/* DDB */
+#endif	/* DDB || KGDB */
 
 #ifdef IPKDB
 #define	ipkdbsave	0xde0		/* primary save area for IPKDB */
@@ -543,7 +543,7 @@ fitint:
 	bl	_C_LABEL(stat_intr)
 	b	intr_exit
 
-#ifdef DDB
+#if defined(DDB) || defined(KGDB)
 /*
  * Deliberate entry to ddbtrap
  */
@@ -562,7 +562,7 @@ _C_LABEL(ddb_trap):
 	mtsrr0	28
 
 /*
- * Now the ddb trap catching code.
+ * Now the ddb/kgdb trap catching code.
  */
 ddbtrap:
 	FRAME_SETUP(ddbsave)
@@ -586,7 +586,7 @@ ddbleave:
 	FRAME_LEAVE(ddbsave)
 	rfi
 	ba	.	/* Protect against prefetch */
-#endif /* DDB */
+#endif /* DDB || KGDB */
 
 #ifdef IPKDB
 /*
