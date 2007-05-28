@@ -1,4 +1,6 @@
-# $NetBSD: Makefile,v 1.2 2006/08/17 20:13:31 plunky Exp $
+# $NetBSD: Makefile,v 1.3 2007/05/28 12:06:41 tls Exp $
+
+USE_FORT?= yes	# network server
 
 PROG=		sdpd
 MAN=		sdpd.8

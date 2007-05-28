@@ -1,6 +1,8 @@
-#	$NetBSD: Makefile.inc,v 1.10 2006/12/20 16:33:34 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.11 2007/05/28 12:06:41 tls Exp $
 
 .include <bsd.own.mk>
+
+USE_FORT?=yes	# network client/server
 
 CPPFLAGS+=-UCMUCS -UCMU -UMACH -DVAR_TMP -DHAS_DAEMON -DHAS_POSIX_DIR \
     -DLIBWRAP -DHAS_FPARSELN -DHAS_VIS -DHAS_FGETLN

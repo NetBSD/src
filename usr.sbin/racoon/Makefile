@@ -1,8 +1,10 @@
-# $NetBSD: Makefile,v 1.17 2007/03/24 02:08:45 christos Exp $
+# $NetBSD: Makefile,v 1.18 2007/05/28 12:06:39 tls Exp $
 
 WARNS=	0	# Will be fixed later
 
 .include <bsd.own.mk>
+
+USE_FORT?= yes	# network client and server
 
 PROG=	racoon
 SRCS=	main.c session.c isakmp.c handler.c 			\

@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.142 2007/05/22 23:58:54 tls Exp $
+#	$NetBSD: bsd.sys.mk,v 1.143 2007/05/28 12:06:23 tls Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -38,13 +38,23 @@ CPPFLAGS+=	${AUDIT:D-D__AUDIT__}
 CFLAGS+=	${CWARNFLAGS} ${NOGCCERROR:D:U-Werror}
 LINTFLAGS+=	${DESTDIR:D-d ${DESTDIR}/usr/include}
 
+.if defined(USE_FORT) && (${USE_FORT} != "no")
+USE_SSP=	yes
+.if !defined(KERNSRCDIR) && !defined(KERN) # not for kernels nor kern modules
+.if defined(LIB)
+.if (${LIB} != "ssp") && (${LIB} != "c")
+COPTS+=		-D_FORTIFY_SOURCE=2 -I/usr/include/ssp
+LIBDPLIBS+=	ssp ${NETBSDSRCDIR}/lib/libssp
+.endif
+.else
+COPTS+=		-D_FORTIFY_SOURCE=2 -I/usr/include/ssp
+LDADD+=		-lssp
+.endif
+.endif
+.endif
+
 .if defined(USE_SSP) && (${USE_SSP} != "no") && (${BINDIR:Ux} != "/usr/mdec")
 COPTS+=		-fstack-protector -Wstack-protector --param ssp-buffer-size=1
-.if !defined(KERNSRCDIR) && !defined(KERN) # not for kernels nor kern modules
-.if !defined(LIB) || (${LIB} != "ssp")
-COPTS+=		-D_FORTIFY_SOURCE=2
-.endif
-.endif
 .endif
 
 .if defined(MKSOFTFLOAT) && (${MKSOFTFLOAT} != "no")

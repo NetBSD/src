@@ -1,7 +1,9 @@
-#	$NetBSD: Makefile,v 1.18 2007/05/11 21:42:42 pooka Exp $
+#	$NetBSD: Makefile,v 1.19 2007/05/28 12:06:20 tls Exp $
 #
 
 .include <bsd.own.mk>
+
+USE_FORT?= yes	# data-driven bugs?
 
 WARNS=		4
 

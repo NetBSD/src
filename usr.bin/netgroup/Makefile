@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.1 1999/03/02 13:59:55 christos Exp $
+#	$NetBSD: Makefile,v 1.2 2007/05/28 12:06:29 tls Exp $
+
+USE_FORT?= yes	# network client
 
 PROG=	netgroup
 

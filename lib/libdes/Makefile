@@ -1,6 +1,8 @@
-#	$NetBSD: Makefile,v 1.15 2006/03/20 04:03:22 christos Exp $
+#	$NetBSD: Makefile,v 1.16 2007/05/28 12:06:18 tls Exp $
 
 .include <bsd.own.mk>
+
+USE_FORT?= yes	# cryptographic software
 
 LIB=	des
 SRCS=	ocbc_cksm.c ocbc_enc.c ocfb64ede.c ocfb64enc.c ocfb_enc.c \

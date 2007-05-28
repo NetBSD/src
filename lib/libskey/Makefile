@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.5 2001/11/10 06:11:10 gmcgarry Exp $
+#	$NetBSD: Makefile,v 1.6 2007/05/28 12:06:21 tls Exp $
+
+USE_FORT?= yes	# authentication software
 
 LIB=	skey
 SRCS=	skeylogin.c skeysubr.c put.c

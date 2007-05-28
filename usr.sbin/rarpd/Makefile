@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.10 2006/05/11 23:16:31 mrg Exp $
+#	$NetBSD: Makefile,v 1.11 2007/05/28 12:06:39 tls Exp $
+
+USE_FORT?= yes	# network server
 
 PROG=	rarpd
 SRCS=	rarpd.c mkarp.c

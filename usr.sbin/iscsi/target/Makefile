@@ -1,8 +1,10 @@
-# $NetBSD: Makefile,v 1.1 2006/02/08 18:57:49 agc Exp $
+# $NetBSD: Makefile,v 1.2 2007/05/28 12:06:35 tls Exp $
 
 .sinclude "${.CURDIR}/../../Makefile.inc"
 
 .include <bsd.own.mk>
+
+USE_FORT?=yes	# network server
 
 DIST=	${.CURDIR}/../../../dist/iscsi
 .PATH:	${DIST}/src

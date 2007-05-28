@@ -1,7 +1,9 @@
-#	$NetBSD: Makefile,v 1.31 2005/06/29 02:31:19 christos Exp $
+#	$NetBSD: Makefile,v 1.32 2007/05/28 12:06:26 tls Exp $
 #	from: @(#)Makefile	8.2 (Berkeley) 4/3/94
 
 .include <bsd.own.mk>
+
+USE_FORT?= yes	# network client
 
 PROG=	ftp
 SRCS=	cmds.c cmdtab.c complete.c domacro.c fetch.c ftp.c main.c \

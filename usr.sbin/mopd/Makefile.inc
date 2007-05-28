@@ -1,6 +1,8 @@
-#	$NetBSD: Makefile.inc,v 1.9 2001/01/07 08:00:58 enami Exp $
+#	$NetBSD: Makefile.inc,v 1.10 2007/05/28 12:06:37 tls Exp $
 
 .include <bsd.own.mk>
+
+USE_FORT?=yes	# network server
 
 LIBCOMMON != cd ${.CURDIR}/../common && ${PRINTOBJDIR}
 CPPFLAGS+=-I${.CURDIR}/../common

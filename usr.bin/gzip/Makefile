@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.10 2006/05/12 02:01:15 mrg Exp $
+#	$NetBSD: Makefile,v 1.11 2007/05/28 12:06:26 tls Exp $
+
+USE_FORT?= yes	# data-driven bugs?
 
 PROG=		gzip
 MAN=		gzip.1 gzexe.1 zdiff.1 zforce.1 zgrep.1 zmore.1 znew.1

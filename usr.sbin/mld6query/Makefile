@@ -1,4 +1,6 @@
-# $NetBSD: Makefile,v 1.2 2000/02/25 08:52:03 mycroft Exp $
+# $NetBSD: Makefile,v 1.3 2007/05/28 12:06:37 tls Exp $
+
+USE_FORT?=yes	# network client
 
 PROG=	mld6query
 SRCS=	mld6.c

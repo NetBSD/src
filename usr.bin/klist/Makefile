@@ -1,8 +1,10 @@
-# $NetBSD: Makefile,v 1.16 2006/03/23 21:48:19 wiz Exp $
+# $NetBSD: Makefile,v 1.17 2007/05/28 12:06:27 tls Exp $
 
 NOLINT= # defined
 
 .include <bsd.own.mk>
+
+USE_FORT?= yes	# cryptographic software
 
 DIST=		${NETBSDSRCDIR}/crypto/dist
 .PATH: ${DIST}/heimdal/kuser

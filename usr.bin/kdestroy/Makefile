@@ -1,4 +1,6 @@
-# $NetBSD: Makefile,v 1.17 2006/03/23 21:48:18 wiz Exp $
+# $NetBSD: Makefile,v 1.18 2007/05/28 12:06:27 tls Exp $
+
+USE_FORT?= yes	# cryptographic software
 
 NOLINT= # defined
 

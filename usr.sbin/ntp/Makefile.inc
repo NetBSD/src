@@ -1,9 +1,11 @@
-#	$NetBSD: Makefile.inc,v 1.17 2007/01/20 16:50:29 kardel Exp $
+#	$NetBSD: Makefile.inc,v 1.18 2007/05/28 12:06:38 tls Exp $
 
 .if !defined(NTP_MAKEFILE_INC)
 NTP_MAKEFILE_INC=1
 
 .include <bsd.own.mk>
+
+USE_FORT?= yes	# network client/server
 
 DIST=		${NETBSDSRCDIR}/dist/ntp
 NTP_HTMLDIR=	${DIST}/html

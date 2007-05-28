@@ -1,8 +1,9 @@
-#	$NetBSD: Makefile,v 1.40 2005/03/04 20:41:09 he Exp $
+#	$NetBSD: Makefile,v 1.41 2007/05/28 12:06:29 tls Exp $
 #	from: @(#)Makefile    8.3 (Berkeley) 4/2/94
 
 .include <bsd.own.mk>
 
+USE_FORT?= yes	# setuid
 PROG=	passwd
 SRCS=	local_passwd.c passwd.c
 MAN=	passwd.1

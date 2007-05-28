@@ -1,7 +1,9 @@
-#	$NetBSD: Makefile,v 1.53 2006/10/22 22:22:39 christos Exp $
+#	$NetBSD: Makefile,v 1.54 2007/05/28 12:06:26 tls Exp $
 
 .include <bsd.own.mk>
 .include <bsd.sys.mk>
+
+USE_FORT?= yes	# data-driven bugs?
 
 DIST=		${NETBSDSRCDIR}/dist/file
 .PATH:		${DIST}/src ${DIST}/doc

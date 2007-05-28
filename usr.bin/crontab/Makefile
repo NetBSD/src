@@ -1,7 +1,8 @@
-#	$NetBSD: Makefile,v 1.24 2006/05/12 03:29:11 mrg Exp $
+#	$NetBSD: Makefile,v 1.25 2007/05/28 12:06:25 tls Exp $
 
 .include <bsd.own.mk>
 
+USE_FORT?= yes	# setuid
 PROG=	crontab
 SRCS=	crontab.c misc.c entry.c env.c
 CPPFLAGS+=-I${.CURDIR} -I${NETBSDSRCDIR}/usr.sbin/cron -DDEBUGGING=1

@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.10 2006/05/21 03:34:57 mrg Exp $
+#	$NetBSD: Makefile,v 1.11 2007/05/28 12:06:18 tls Exp $
+
+USE_FORT?= yes	# data driven bugs?
 
 NOMAN=		# defined
 

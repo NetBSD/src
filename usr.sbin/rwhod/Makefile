@@ -1,7 +1,9 @@
 #	from: @(#)Makefile	5.3 (Berkeley) 5/11/90
-#	$NetBSD: Makefile,v 1.12 2005/06/24 13:22:09 christos Exp $
+#	$NetBSD: Makefile,v 1.13 2007/05/28 12:06:41 tls Exp $
 
 .include <bsd.own.mk>
+
+USE_FORT?= yes	# network server
 
 WARNS=	3
 PROG=	rwhod

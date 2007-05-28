@@ -1,6 +1,8 @@
-# $NetBSD: Makefile,v 1.3 2006/02/12 15:38:34 agc Exp $
+# $NetBSD: Makefile,v 1.4 2007/05/28 12:06:19 tls Exp $
 
 .include <bsd.own.mk>
+
+USE_FORT?= yes	# network protocol library
 
 LIB= iscsi
 SRCS= conffile.c disk.c target.c iscsi.c util.c parameters.c storage.c netmask.c
@@ -14,6 +16,6 @@ WARNS=4
 ISCSIDIST=	${NETBSDSRCDIR}/dist/iscsi
 .PATH:	${ISCSIDIST}/src
 
-LIBDPLIBS=      pthread  ${.CURDIR}/../libpthread
+LIBDPLIBS+=      pthread  ${.CURDIR}/../libpthread
 
 .include <bsd.lib.mk>

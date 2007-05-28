@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.14 2006/08/26 18:12:50 christos Exp $
+# $NetBSD: Makefile,v 1.15 2007/05/28 12:06:21 tls Exp $
 
 NOLINT=		# defined
 
@@ -12,7 +12,7 @@ WARNS?=		1
 LIB=		roken
 
 .if ${OBJECT_FMT} == "ELF"
-LIBDPLIBS= util ${.CURDIR}/../libutil
+LIBDPLIBS+= util ${.CURDIR}/../libutil
 .else
 .PATH: ${NETBSDSRCDIR}/lib/libutil
 SRCS+=	efun.c

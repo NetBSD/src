@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.2 2006/06/24 05:21:11 mrg Exp $
+#	$NetBSD: Makefile,v 1.3 2007/05/28 12:06:38 tls Exp $
+
+USE_FORT?= yes	# network server
 
 PROG=	ndbootd
 SRCS=	ndbootd.c

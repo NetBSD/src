@@ -1,6 +1,8 @@
-# $NetBSD: Makefile,v 1.5 2006/05/11 23:16:30 mrg Exp $
+# $NetBSD: Makefile,v 1.6 2007/05/28 12:06:38 tls Exp $
 
 .include <bsd.own.mk>
+
+USE_FORT?= yes	# reads potentially untrustworthy data
 
 PROG=	mscdlabel
 SRCS=	main.c dkcksum.c iso9660.c

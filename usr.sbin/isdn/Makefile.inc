@@ -1,8 +1,10 @@
-#	$NetBSD: Makefile.inc,v 1.1.1.1 2001/01/06 13:00:10 martin Exp $
+#	$NetBSD: Makefile.inc,v 1.2 2007/05/28 12:06:36 tls Exp $
 
 .if exists(${.CURDIR}/../../Makefile.inc)
 .include "${.CURDIR}/../../Makefile.inc"
 .endif
+
+USE_FORT?=yes	# network server
 
 # optional build configuration:
 # I4B_WITHOUT_CURSES=1	# don't compile curses into the daemon

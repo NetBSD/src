@@ -1,5 +1,7 @@
 #	from: @(#)Makefile	8.2 (Berkeley) 12/15/93
-#	$NetBSD: Makefile,v 1.27 2006/06/25 03:02:19 mrg Exp $
+#	$NetBSD: Makefile,v 1.28 2007/05/28 12:06:22 tls Exp $
+
+USE_FORT?= yes	# network protocol library
 
 MKPRIVATELIB=	yes
 

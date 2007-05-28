@@ -1,4 +1,6 @@
-# $NetBSD: Makefile,v 1.27 2006/05/11 23:16:28 mrg Exp $
+# $NetBSD: Makefile,v 1.28 2007/05/28 12:06:18 tls Exp $
+
+USE_FORT?= yes	# network protocol library
 
 NOLINT=		# defined
 
@@ -10,7 +12,7 @@ DIST=		${NETBSDSRCDIR}/crypto/dist
 WARNS?=		1
 LIB=		asn1
 
-LIBDPLIBS=	com_err	${.CURDIR}/../libcom_err
+LIBDPLIBS+=	com_err	${.CURDIR}/../libcom_err
 
 .if ${USETOOLS} != "yes"
 COMPILEETOBJ!=		cd ${NETBSDSRCDIR}/lib/libcom_err/compile_et && ${PRINTOBJDIR}

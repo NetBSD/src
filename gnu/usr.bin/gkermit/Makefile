@@ -1,6 +1,8 @@
-#	$NetBSD: Makefile,v 1.1 2006/11/01 13:17:38 apb Exp $
+#	$NetBSD: Makefile,v 1.2 2007/05/28 12:06:17 tls Exp $
 
 .include <bsd.own.mk>
+
+USE_FORT?= yes	# data driven bugs?
 
 DIST=		${NETBSDSRCDIR}/gnu/dist/gkermit
 

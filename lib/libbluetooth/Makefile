@@ -1,4 +1,6 @@
-# $NetBSD: Makefile,v 1.2 2006/07/26 11:11:04 tron Exp $
+# $NetBSD: Makefile,v 1.3 2007/05/28 12:06:18 tls Exp $
+
+USE_FORT?= yes	# network protocol library
 
 LIB=	bluetooth
 

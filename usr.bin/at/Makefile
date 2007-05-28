@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.7 2000/10/15 14:51:14 kleink Exp $
+#	$NetBSD: Makefile,v 1.8 2007/05/28 12:06:24 tls Exp $
+
+USE_FORT?=	yes	# setuid
 
 PROG=		at
 SRCS=		at.c panic.c parsetime.c perm.c stime.c

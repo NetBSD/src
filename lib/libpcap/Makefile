@@ -1,6 +1,8 @@
-# $NetBSD: Makefile,v 1.29 2006/05/02 09:59:26 drochner Exp $	
+# $NetBSD: Makefile,v 1.30 2007/05/28 12:06:20 tls Exp $	
 
 .include <bsd.own.mk>
+
+USE_FORT?= yes	# network protocol library
 
 SRCDIR=		${NETBSDSRCDIR}/dist/libpcap
 .PATH:		${SRCDIR}

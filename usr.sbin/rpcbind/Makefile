@@ -1,6 +1,9 @@
-#	$NetBSD: Makefile,v 1.7 2007/05/13 20:03:46 christos Exp $
+#	$NetBSD: Makefile,v 1.8 2007/05/28 12:06:40 tls Exp $
 
 .include <bsd.own.mk>
+
+USE_FORT?= no	# XXX includes libc internal headers
+USE_SSP?= yes	# network client
 
 WARNS=4
 PROG=	rpcbind

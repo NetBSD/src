@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.40 2006/05/11 23:16:30 mrg Exp $
+#	$NetBSD: Makefile,v 1.41 2007/05/28 12:06:32 tls Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -35,6 +35,8 @@
 #
 
 .include <bsd.own.mk>
+
+USE_FORT?= yes	# network client
 
 PROG=	telnet
 

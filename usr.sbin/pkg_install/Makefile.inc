@@ -1,7 +1,9 @@
-# $NetBSD: Makefile.inc,v 1.26 2005/11/05 13:11:02 wiz Exp $
+# $NetBSD: Makefile.inc,v 1.27 2007/05/28 12:06:39 tls Exp $
 # Original from FreeBSD, no rcs id.
 
 .include <bsd.own.mk>
+
+USE_FORT?=yes	# network client
 
 LIBINSTALL != cd ${.CURDIR}/../lib && ${PRINTOBJDIR}
 CPPFLAGS+=-I${.CURDIR}/../lib ${DEBUG} -DBINDIR='"${BINDIR}"'

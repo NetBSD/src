@@ -1,11 +1,13 @@
-#	$NetBSD: Makefile,v 1.24 2006/02/25 12:00:24 simonb Exp $
+#	$NetBSD: Makefile,v 1.25 2007/05/28 12:06:29 tls Exp $
 
 NOMAN=	# defined
 
 .include <bsd.own.mk>
 
+USE_FORT?= yes	# cryptographic software
+
 # RCSid:
-#	$Id: Makefile,v 1.24 2006/02/25 12:00:24 simonb Exp $
+#	$Id: Makefile,v 1.25 2007/05/28 12:06:29 tls Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
