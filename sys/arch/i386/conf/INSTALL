@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.307 2007/05/28 21:45:29 pavel Exp $
+#	$NetBSD: INSTALL,v 1.308 2007/05/28 21:54:38 pavel Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -428,7 +428,7 @@ cypide* 	at pci? dev ? function ?	# Cypress IDE controllers
 geodeide* 	at pci? dev ? function ?	# AMD Geode IDE controllers
 hptide* 	at pci? dev ? function ?	# Triones/HighPoint IDE controllers
 iteide* 	at pci? dev ? function ?	# IT Express IDE controllers
-ixpide*		at pci? dev ? function ?	# ATI IXP IDE controllers
+#ixpide*		at pci? dev ? function ?	# ATI IXP IDE controllers
 optiide* 	at pci? dev ? function ?	# Opti IDE controllers
 piixide* 	at pci? dev ? function ?	# Intel IDE controllers
 pdcide* 	at pci? dev ? function ?	# Promise IDE controllers
