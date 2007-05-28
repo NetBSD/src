@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.3 2007/02/15 22:52:43 ad Exp $	*/
+/*	$NetBSD: mutex.h,v 1.4 2007/05/28 22:56:19 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -108,7 +108,9 @@ struct kmutex {
 };
 
 #define	__HAVE_MUTEX_STUBS	1
+#if 0 /* does not work for MP yet */
 #define	__HAVE_SPIN_MUTEX_STUBS	1
+#endif
 
 #define	mtx_owner	u.mtxu_owner
 #define	mtx_interlock	u.mtxu_interlock
