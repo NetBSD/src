@@ -1,4 +1,4 @@
-/*	$NetBSD: privsep.c,v 1.3 2005/07/01 12:43:50 peter Exp $	*/
+/*	$NetBSD: privsep.c,v 1.4 2007/05/28 11:55:19 tls Exp $	*/
 /*	$OpenBSD: privsep.c,v 1.13 2004/12/22 09:21:02 otto Exp $	*/
 
 /*
@@ -32,6 +32,13 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <pcap.h>
+/*
+ * If we're going to include parts of the libpcap internals we MUST
+ * set the feature-test macros they expect, or they may misbehave.
+ */
+#define HAVE_STRLCPY
+#define HAVE_SNPRINTF
+#define HAVE_VSNPRINTF
 #include <pcap-int.h>
 #include <pwd.h>
 #include <signal.h>
