@@ -1,4 +1,4 @@
-/*	$NetBSD: curses_private.h,v 1.39 2007/01/21 13:25:36 jdc Exp $	*/
+/*	$NetBSD: curses_private.h,v 1.40 2007/05/28 15:01:55 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-2000 Brett Lymn
@@ -27,6 +27,16 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  *
+ */
+
+/* Modified by Ruibiao Qiu <ruibiao@arl.wustl.edu,ruibiao@gmail.com>
+ * to add support for wide characters
+ * Changes:
+ * - Add a compiler variable HAVE_WCHAR for wide character only code
+ * - Add a pointer to liked list of non-spacing characters in __ldata
+ *   and the macro to access the width field in the attribute field
+ * - Add a circular input character buffer in __screen to handle wide
+ *   character input (used in get_wch())
  */
 
 #include <termios.h>
@@ -59,6 +69,19 @@ extern char	*__tc_ac, *__tc_AB, *__tc_ae, *__tc_AF, *__tc_AL,
 		*__tc_uc, *__tc_ue, *__tc_UP, *__tc_up, *__tc_us,
 		*__tc_vb, *__tc_ve, *__tc_vi, *__tc_vs;
 
+#ifdef HAVE_WCHAR
+extern char *__tc_Xh, *__tc_Xl, *__tc_Xo, *__tc_Xr, *__tc_Xt,
+		*__tc_Xv;
+/*
+ * Add a list of non-spacing characters to each spacing
+ * character in a singly linked list
+ */
+typedef struct nschar_t {
+	wchar_t			ch;		/* Non-spacing character */
+	struct nschar_t	*next;	/* Next non-spacing character */
+} nschar_t;
+#endif /* HAVE_WCHAR */
+
 /*
  * A window an array of __LINE structures pointed to by the 'lines' pointer.
  * A line is an array of __LDATA structures pointed to by the 'line' pointer.
@@ -73,14 +96,31 @@ extern char	*__tc_ac, *__tc_AB, *__tc_ae, *__tc_AF, *__tc_AL,
 struct __ldata {
 	wchar_t	ch;			/* Character */
 	attr_t	attr;			/* Attributes */
+#ifdef HAVE_WCHAR
+	nschar_t	*nsp;	/* Foreground non-spacing character pointer */
+#endif /* HAVE_WCHAR */
 };
+
+#ifdef HAVE_WCHAR
+/* macros to extract the width of a wide character */
+#define __WCWIDTH 0xfc000000
+#define WCW_SHIFT 26
+#define WCOL(wc) ((((unsigned) (wc).attr) >> WCW_SHIFT ) > MB_LEN_MAX ? ((int)(((unsigned) (wc).attr ) >> WCW_SHIFT )) - 64 : ((int)(((unsigned) (wc).attr ) >> WCW_SHIFT)))
+#define SET_WCOL(c, w) do { 						\
+	((c).attr) = ((((c).attr) & WA_ATTRIBUTES ) | ((w) << WCW_SHIFT )); \
+} while(/*CONSTCOND*/0)
+#define BGWCOL(wc) ((((wc).battr) >> WCW_SHIFT ) > MB_LEN_MAX ? (((wc).battr ) >> WCW_SHIFT ) - 64 : (((wc).battr ) >> WCW_SHIFT ))
+#define SET_BGWCOL(c, w) do { 						\
+	((c).battr) = ((((c).battr) & WA_ATTRIBUTES ) | ((w) << WCW_SHIFT )); \
+} while(/*CONSTCOND*/0)
+#endif /* HAVE_WCHAR */
 
 #define __LDATASIZE	(sizeof(__LDATA))
 
 struct __line {
 #ifdef DEBUG
 #define SENTINEL_VALUE 0xaac0ffee
-	
+
 	unsigned int sentinel;          /* try to catch line overflows */
 #endif
 #define	__ISDIRTY	0x01		/* Line is dirty. */
@@ -125,11 +165,20 @@ struct __window {		/* Window structure. */
 	int	pbegy, pbegx,
 		sbegy, sbegx,
 		smaxy, smaxx;		/* Saved prefresh() values */
+#ifdef HAVE_WCHAR
+	nschar_t *bnsp;			/* Background non-spacing char list */
+#endif /* HAVE_WCHAR */
 };
 
 /* Set of attributes unset by 'me' - 'mb', 'md', 'mh', 'mk', 'mp' and 'mr'. */
+#ifndef HAVE_WCHAR
 #define	__TERMATTR \
 	(__REVERSE | __BLINK | __DIM | __BOLD | __BLANK | __PROTECT)
+#else
+#define	__TERMATTR \
+	(__REVERSE | __BLINK | __DIM | __BOLD | __BLANK | __PROTECT \
+	| WA_TOP | WA_LOW | WA_LEFT | WA_RIGHT | WA_HORIZONTAL | WA_VERTICAL)
+#endif /* HAVE_WCHAR */
 
 struct __winlist {
 	struct __window		*winp;	/* The window. */
@@ -203,10 +252,18 @@ struct __screen {
 		*tc_SF, *tc_Sf, *tc_sf, *tc_so, *tc_sp,
 		*tc_SR, *tc_sr, *tc_ta, *tc_te, *tc_ti,
 		*tc_uc, *tc_ue, *tc_UP, *tc_up, *tc_us,
+#ifndef HAVE_WCHAR
 		*tc_vb, *tc_ve, *tc_vi, *tc_vs;
+#else
+		*tc_vb, *tc_ve, *tc_vi, *tc_vs, *tc_Xh,
+		*tc_Xl, *tc_Xo, *tc_Xr, *tc_Xt, *tc_Xv;
+#endif /* HAVE_WCHAR */
 	char CA;
 	int str_count;
 	chtype acs_char[NUM_ACS];
+#ifdef HAVE_WCHAR
+	cchar_t wacs_char[ NUM_ACS ];
+#endif /* HAVE_WCHAR */
 	struct __color colours[MAX_COLORS];
 	struct __pair  colour_pairs[MAX_PAIRS];
 	attr_t	nca;
@@ -247,6 +304,15 @@ struct __screen {
 	int notty;
 	int half_delay;
 	int resized;
+#ifdef HAVE_WCHAR
+#define MB_LEN_MAX 8
+#define MAX_CBUF_SIZE MB_LEN_MAX
+	int		cbuf_head;		/* header to cbuf */
+	int		cbuf_tail;		/* tail to cbuf */
+	int		cbuf_cur;		/* the current char in cbuf */
+	mbstate_t	sp;			/* wide char processing state */
+	char		cbuf[ MAX_CBUF_SIZE ];	/* input character buffer */
+#endif /* HAVE_WCHAR */
 };
 
 
@@ -281,6 +347,11 @@ void     __cputchar_args(char, void *);
 void     _cursesi_free_keymap(keymap_t *);
 int      _cursesi_gettmode(SCREEN *);
 void     _cursesi_reset_acs(SCREEN *);
+int	_cursesi_addbyte(WINDOW *, __LINE **, int *, int *, int , attr_t);
+int	_cursesi_addwchar(WINDOW *, __LINE **, int *, int *, const cchar_t *);
+#ifdef HAVE_WCHAR
+void     _cursesi_reset_wacs(SCREEN *);
+#endif /* HAVE_WCHAR */
 void     _cursesi_resetterm(SCREEN *);
 int      _cursesi_setterm(char *, SCREEN *);
 int	 __delay(void);
@@ -289,6 +360,15 @@ u_int	 __hash_more(const void *, size_t, u_int);
 void	 __id_subwins(WINDOW *);
 void	 __init_getch(SCREEN *);
 void	 __init_acs(SCREEN *);
+#ifdef HAVE_WCHAR
+void	 __init_get_wch(SCREEN *);
+void	 __init_wacs(SCREEN *);
+void	__cputwchar_args( wchar_t, void * );
+int     _cursesi_copy_nsp(nschar_t *, struct __ldata *);
+void	__cursesi_free_nsp(nschar_t *);
+void	__cursesi_win_free_nsp(WINDOW *);
+void	__cursesi_putnsp(nschar_t *, const int, const int);
+#endif /* HAVE_WCHAR */
 char	*__longname(char *, char *);	/* Original BSD version */
 int	 __mvcur(int, int, int, int, int);
 WINDOW  *__newwin(SCREEN *, int, int, int, int, int);
@@ -319,6 +399,9 @@ void	 __unsetattr(int);
 void	 __unset_color(WINDOW *win);
 int	 __waddch(WINDOW *, __LDATA *);
 int	 __wgetnstr(WINDOW *, char *, int);
+#ifdef HAVE_WCHAR
+int  __wgetn_wstr(WINDOW *, wchar_t *, int);
+#endif /* HAVE_WCHAR */
 void	 __winch_signal_handler(int);
 
 /* Private #defines. */

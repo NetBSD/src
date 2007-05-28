@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.h,v 1.87 2005/08/09 02:33:38 christos Exp $	*/
+/*	$NetBSD: curses.h,v 1.88 2007/05/28 15:01:55 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -29,6 +29,12 @@
  * SUCH DAMAGE.
  *
  *	@(#)curses.h	8.5 (Berkeley) 4/29/95
+ *
+ *	Modified by Ruibiao Qiu <ruibiao@arl.wustl.edu,ruibiao@gmail.com> 2005
+ *	to add wide character support
+ *  - Add complex character structure (cchar_t)
+ *	- Add definitions of wide character routines
+ *	- Add KEY_CODE_YES
  */
 
 #ifndef _CURSES_H_
@@ -47,6 +53,23 @@
  */
 typedef wchar_t	chtype;
 typedef wchar_t	attr_t;
+
+#ifdef HAVE_WCHAR
+/* 
+ * The complex character structure required by the X/Open reference to be used in 
+ * functions such as in_wchstr(). It includes a string of up to 8 wide characters 
+ * and its length, an attribute, and a color-pair.
+ */
+#define CURSES_CCHAR_MAX 8
+#define CCHARW_MAX       5
+typedef struct {
+	attr_t		attributes;		/* character attributes */
+	unsigned	elements;		/* number of wide char in vals[] */
+	wchar_t		vals[CURSES_CCHAR_MAX]; /* wide chars including non-spacing */
+} cchar_t;
+#else 
+typedef chtype cchar_t;
+#endif /* HAVE_WCHAR */
 
 /* C++ already defines bool. */
 #ifndef __cplusplus
@@ -181,6 +204,7 @@ typedef	char	bool;
 #define    KEY_MOUSE      0x199    /* Mouse event has occurred */
 #define    KEY_RESIZE     0x200    /* Resize event has occurred */
 #define    KEY_MAX        0x240    /* maximum extended key value */
+#define    KEY_CODE_YES   0x241    /* A function key pressed */
 
 #include <unctrl.h>
 
@@ -229,6 +253,25 @@ typedef struct __screen SCREEN;
 #define	A_CHARTEXT	__CHARTEXT
 #define	A_COLOR		__COLOR
 
+#ifdef HAVE_WCHAR
+#define WA_ATTRIBUTES	0x03ffffff	/* Wide character attributes mask */
+#define WA_ALTCHARSET	__ALTCHARSET	/* Alternate character set */
+#define WA_BLINK	__BLINK		/* Blinking */
+#define WA_BOLD		__BOLD		/* Extra bright or bold */
+#define WA_DIM		__DIM		/* Half bright */
+#define WA_PROTECT	__PROTECT	/* Protected */
+#define WA_REVERSE	__REVERSE	/* Reverse video */
+#define WA_STANDOUT	__STANDOUT	/* Best highlighting mode */
+#define WA_UNDERLINE	__UNDERSCORE	/* Underlining */
+#define WA_INVIS	0x00000001	/* Invisible */
+#define WA_LOW		0x00000002	/* Low highlight */
+#define WA_TOP		0x00000004	/* Top highlight */
+#define WA_HORIZONTAL	0x00000008	/* Horizontal highlight */
+#define WA_VERTICAL	0x00000010	/* Vertical highlight */
+#define WA_LEFT		0x00000020	/* Left highlight */
+#define WA_RIGHT	0x00000040	/* Right highlight */
+#endif /* HAVE_WCHAR */
+
 /*
  * Alternate character set definitions
  */
@@ -266,6 +309,36 @@ extern chtype _acs_char[NUM_ACS];
 #define	ACS_TTEE	_acs_char[__UC_CAST('w')]
 #define	ACS_VLINE	_acs_char[__UC_CAST('x')]
 #define	ACS_BULLET	_acs_char[__UC_CAST('~')]
+
+#ifdef HAVE_WCHAR
+extern cchar_t _wacs_char[NUM_ACS];
+
+#define	WACS_RARROW     _wacs_char[(unsigned char)'+'].vals[0]
+#define	WACS_LARROW     _wacs_char[(unsigned char)','].vals[0]
+#define	WACS_UARROW     _wacs_char[(unsigned char)'-'].vals[0]
+#define	WACS_DARROW     _wacs_char[(unsigned char)'.'].vals[0]
+#define	WACS_BLOCK      _wacs_char[(unsigned char)'0'].vals[0]
+#define	WACS_DIAMOND    _wacs_char[(unsigned char)'`'].vals[0]
+#define	WACS_CKBOARD    _wacs_char[(unsigned char)'a'].vals[0]
+#define	WACS_DEGREE     _wacs_char[(unsigned char)'f'].vals[0]
+#define	WACS_PLMINUS    _wacs_char[(unsigned char)'g'].vals[0]
+#define	WACS_BOARD      _wacs_char[(unsigned char)'h'].vals[0]
+#define	WACS_LANTERN    _wacs_char[(unsigned char)'i'].vals[0]
+#define	WACS_LRCORNER   _wacs_char[(unsigned char)'j'].vals[0]
+#define	WACS_URCORNER   _wacs_char[(unsigned char)'k'].vals[0]
+#define	WACS_ULCORNER   _wacs_char[(unsigned char)'l'].vals[0]
+#define	WACS_LLCORNER   _wacs_char[(unsigned char)'m'].vals[0]
+#define	WACS_PLUS       _wacs_char[(unsigned char)'n'].vals[0]
+#define	WACS_HLINE      _wacs_char[(unsigned char)'q'].vals[0]
+#define	WACS_S1         _wacs_char[(unsigned char)'o'].vals[0]
+#define	WACS_S9         _wacs_char[(unsigned char)'s'].vals[0]
+#define	WACS_LTEE       _wacs_char[(unsigned char)'t'].vals[0]
+#define	WACS_RTEE       _wacs_char[(unsigned char)'u'].vals[0]
+#define	WACS_BTEE       _wacs_char[(unsigned char)'v'].vals[0]
+#define	WACS_TTEE       _wacs_char[(unsigned char)'w'].vals[0]
+#define	WACS_VLINE      _wacs_char[(unsigned char)'x'].vals[0]
+#define	WACS_BULLET     _wacs_char[(unsigned char)'~'].vals[0]
+#endif /* HAVE_WCHAR */
 
 /* System V compatibility */
 #define	ACS_SBBS	ACS_LRCORNER
@@ -698,9 +771,135 @@ int	 wunderend(WINDOW *);
 int	 wunderscore(WINDOW *);
 int	 wvline(WINDOW *, chtype, int);
 
+int insnstr(const char *, int);
+int insstr(const char *);
+int mvinsnstr(int, int, const char *, int);
+int mvinsstr(int, int, const char *);
+int mvwinsnstr(WINDOW *, int, int, const char *, int);
+int mvwinsstr(WINDOW *, int, int, const char *);
+int winsnstr(WINDOW *, const char *, int);
+int winsstr(WINDOW *, const char *);
+
+/* wide character support routines */
+/* return ERR when HAVE_WCHAR is not defined */
+/* add */
+int add_wch(const cchar_t *);
+int wadd_wch(WINDOW *, const cchar_t *);
+int mvadd_wch(int, int, const cchar_t *);
+int mvwadd_wch(WINDOW *, int, int, const cchar_t *);
+
+int add_wchnstr(const cchar_t *, int);
+int add_wchstr(const cchar_t *);
+int wadd_wchnstr(WINDOW *, const cchar_t *, int);
+int wadd_wchstr(WINDOW *, const cchar_t *);
+int mvadd_wchnstr(int, int, const cchar_t *, int);
+int mvadd_wchstr(int, int, const cchar_t *);
+int mvwadd_wchnstr(WINDOW *, int, int, const cchar_t *, int);
+int mvwadd_wchstr(WINDOW *, int, int, const cchar_t *);
+
+int addnwstr(const wchar_t *, int);
+int addwstr(const wchar_t *);
+int mvaddnwstr(int, int x, const wchar_t *, int);
+int mvaddwstr(int, int x, const wchar_t *);
+int mvwaddnwstr(WINDOW *, int, int, const wchar_t *, int);
+int mvwaddwstr(WINDOW *, int, int, const wchar_t *);
+int waddnwstr(WINDOW *, const wchar_t *, int);
+int waddwstr(WINDOW *, const wchar_t *);
+
+int echo_wchar(const cchar_t *);
+int wecho_wchar(WINDOW *, const cchar_t *);
+int pecho_wchar(WINDOW *, const cchar_t *);
+
+/* insert */
+int ins_wch(const cchar_t *);
+int wins_wch(WINDOW *, const cchar_t *);
+int mvins_wch(int, int, const cchar_t *);
+int mvwins_wch(WINDOW *, int, int, const cchar_t *);
+
+int ins_nwstr(const wchar_t *, int);
+int ins_wstr(const wchar_t *);
+int mvins_nwstr(int, int, const wchar_t *, int);
+int mvins_wstr(int, int, const wchar_t *);
+int mvwins_nwstr(WINDOW *, int, int, const wchar_t *, int);
+int mvwins_wstr(WINDOW *, int, int, const wchar_t *);
+int wins_nwstr(WINDOW *, const wchar_t *, int);
+int wins_wstr(WINDOW *, const wchar_t *);
+
+/* input */
+int get_wch(wint_t *);
+int unget_wch(const wchar_t);
+int mvget_wch(int, int, wint_t *);
+int mvwget_wch(WINDOW *, int, int, wint_t *);
+int wget_wch(WINDOW *, wint_t *);
+
+int getn_wstr(wchar_t *, int);
+int get_wstr(wchar_t *);
+int mvgetn_wstr(int, int, wchar_t *, int);
+int mvget_wstr(int, int, wchar_t *);
+int mvwgetn_wstr(WINDOW *, int, int, wchar_t *, int);
+int mvwget_wstr(WINDOW *, int, int, wchar_t *);
+int wgetn_wstr(WINDOW *, wchar_t *, int);
+int wget_wstr(WINDOW *, wchar_t *);
+
+int in_wch(cchar_t *);
+int mvin_wch(int, int, cchar_t *);
+int mvwin_wch(WINDOW *, int, int, cchar_t *);
+int win_wch(WINDOW *, cchar_t *);
+
+int in_wchnstr(cchar_t *, int);
+int in_wchstr(cchar_t *);
+int mvin_wchnstr(int, int, cchar_t *, int);
+int mvin_wchstr(int, int, cchar_t *);
+int mvwin_wchnstr(WINDOW *, int, int, cchar_t *, int);
+int mvwin_wchstr(WINDOW *, int, int, cchar_t *);
+int win_wchnstr(WINDOW *, cchar_t *, int);
+int win_wchstr(WINDOW *, cchar_t *);
+
+int innwstr(wchar_t *, int);
+int inwstr(wchar_t *);
+int mvinnwstr(int, int, wchar_t *, int);
+int mvinwstr(int, int, wchar_t *);
+int mvwinnwstr(WINDOW *, int, int, wchar_t *, int);
+int mvwinwstr(WINDOW *, int, int, wchar_t *);
+int winnwstr(WINDOW *, wchar_t *, int);
+int winwstr(WINDOW *, wchar_t *);
+
+/* cchar handlgin */
+int setcchar(cchar_t *, const wchar_t *, const attr_t, short, const void *);
+int getcchar(const cchar_t *, wchar_t *, attr_t *, short *, void *);
+
+/* misc */
+char *key_name( wchar_t );
+int border_set(const cchar_t *, const cchar_t *, const cchar_t *,
+               const cchar_t *, const cchar_t *, const cchar_t *,
+               const cchar_t *, const cchar_t *);
+int wborder_set(WINDOW *, const cchar_t *, const cchar_t *,
+                const cchar_t *, const cchar_t *, const cchar_t *, 
+                const cchar_t *, const cchar_t *, const cchar_t *);
+int box_set(WINDOW *, const cchar_t *, const cchar_t *);
+int erasewchar(wchar_t *);
+int killwchar(wchar_t *);
+int hline_set(const cchar_t *, int);
+int mvhline_set(int, int, const cchar_t *, int);
+int mvvline_set(int, int, const cchar_t *, int);
+int mvwhline_set(WINDOW *, int, int, const cchar_t *, int);
+int mvwvline_set(WINDOW *, int, int, const cchar_t *, int);
+int vline_set(const cchar_t *, int);
+int whline_set(WINDOW *, const cchar_t *, int);
+int wvline_set(WINDOW *, const cchar_t *, int);
+int bkgrnd(const cchar_t *);
+void bkgrndset(const cchar_t *);
+int getbkgrnd(cchar_t *);
+int wbkgrnd(WINDOW *, const cchar_t *);
+void wbkgrndset(WINDOW *, const cchar_t *);
+int wgetbkgrnd(WINDOW *, cchar_t *);
+
 /* Private functions that are needed for user programs prototypes. */
 int	 __cputchar(int);
 int	 __waddbytes(WINDOW *, const char *, int, attr_t);
+#ifdef HAVE_WCHAR
+int __cputwchar( wchar_t );
+#endif /* HAVE_WCHAR */
 __END_DECLS
 
 #endif /* !_CURSES_H_ */

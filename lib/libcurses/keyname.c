@@ -1,4 +1,4 @@
-/*	$NetBSD: keyname.c,v 1.2 2006/03/19 01:53:11 christos Exp $	*/
+/*	$NetBSD: keyname.c,v 1.3 2007/05/28 15:01:56 blymn Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: keyname.c,v 1.2 2006/03/19 01:53:11 christos Exp $");
+__RCSID("$NetBSD: keyname.c,v 1.3 2007/05/28 15:01:56 blymn Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -483,6 +483,34 @@ keyname(int key)
 	}
 	free(name);
 	/* No more names. */
-	return NULL;
+    strncpy(name, "UNKOWN KEY\0", KEYNAMEMAX);
+	return name;
 #endif
 }
+/*
+ * key_name --
+ *	Return name of key or NULL;
+ */
+char *
+key_name(wchar_t key)
+{
+#ifndef HAVE_WCHAR
+	return NULL;
+#else
+/* We don't bother with the large keyname table if SMALL is defined. */
+#ifdef SMALL
+	return NULL;
+#else
+	char *name = keyname(( int )key );
+
+	if ( !name )
+		return NULL;
+	if (!strncmp( name, "M-", 2 )) {
+		free( name );
+		name = NULL;
+	}
+	return name;
+#endif
+#endif /* HAVE_WCHAR */
+}
+

@@ -1,4 +1,4 @@
-/*	$NetBSD: addch.c,v 1.14 2007/01/21 13:25:36 jdc Exp $	*/
+/*	$NetBSD: addch.c,v 1.15 2007/05/28 15:01:53 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)addch.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: addch.c,v 1.14 2007/01/21 13:25:36 jdc Exp $");
+__RCSID("$NetBSD: addch.c,v 1.15 2007/05/28 15:01:53 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -87,14 +87,36 @@ mvwaddch(WINDOW *win, int y, int x, chtype ch)
 int
 waddch(WINDOW *win, chtype ch)
 {
+#ifdef HAVE_WCHAR
+	cchar_t cc;
+#else
 	__LDATA buf;
+#endif
 
+#ifdef HAVE_WCHAR
+	cc.vals[0] = ch & __CHARTEXT;
+	cc.elements = 1;
+	cc.attributes = ch & __ATTRIBUTES;
+#else
 	buf.ch = (wchar_t) ch & __CHARTEXT;
 	buf.attr = (attr_t) ch & __ATTRIBUTES;
+#endif
+
 #ifdef DEBUG
+#ifdef HAVE_WCHAR
+	__CTRACE(__CTRACE_INPUT,
+		 "addch: %d : 0x%x (adding char as wide char)\n",
+		 cc.vals[0], cc.attributes);
+#else
 	__CTRACE(__CTRACE_INPUT, "addch: %d : 0x%x\n", buf.ch, buf.attr);
 #endif
+#endif
+
+#ifdef HAVE_WCHAR
+	return (wadd_wch(win, &cc));
+#else
 	return (__waddch(win, &buf));
+#endif
 }
 
 int

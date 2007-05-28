@@ -1,4 +1,4 @@
-/*	$NetBSD: setterm.c,v 1.40 2007/01/21 13:25:36 jdc Exp $	*/
+/*	$NetBSD: setterm.c,v 1.41 2007/05/28 15:01:57 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)setterm.c	8.8 (Berkeley) 10/25/94";
 #else
-__RCSID("$NetBSD: setterm.c,v 1.40 2007/01/21 13:25:36 jdc Exp $");
+__RCSID("$NetBSD: setterm.c,v 1.41 2007/05/28 15:01:57 blymn Exp $");
 #endif
 #endif /* not lint */
 
@@ -105,8 +105,15 @@ static char	*_PC,
 		&__tc_SR, &__tc_sr, &__tc_ta, &__tc_te, &__tc_ti,
 	/*	      uc        ue        UP        up        us */
 		&__tc_uc, &__tc_ue, &__tc_UP, &__tc_up, &__tc_us,
+#ifndef HAVE_WCHAR
 	/*	      vb        ve        vi        vs           */
 		&__tc_vb, &__tc_ve, &__tc_vi, &__tc_vs
+#else
+	/*	      vb        ve        vi        vs        Xh */
+		&__tc_vb, &__tc_ve, &__tc_vi, &__tc_vs, &__tc_Xh,
+	/*	      Xl        Xo        Xr        Xt        Xv */
+		&__tc_Xl, &__tc_Xo, &__tc_Xr, &__tc_Xt, &__tc_Xv
+#endif /* HAVE_WCHAR */
 	};
 
 attr_t	 __mask_op, __mask_me, __mask_ue, __mask_se;
@@ -167,7 +174,8 @@ _cursesi_setterm(char *type, SCREEN *screen)
 	COLS = screen->COLS;
 
 #ifdef DEBUG
-	__CTRACE(__CTRACE_INIT, "setterm: LINES = %d, COLS = %d\n", LINES, COLS);
+	__CTRACE(__CTRACE_INIT, "setterm: LINES = %d, COLS = %d\n",
+	    LINES, COLS);
 #endif
 	if (!unknown) {
 		if (zap(screen) == ERR) /* Get terminal description.*/
@@ -188,7 +196,7 @@ _cursesi_setterm(char *type, SCREEN *screen)
 	} else
 		screen->CA = 1;
 
-        /*
+	/*
 	 * set the pad char, only take the first char of the pc capability
 	 * as this is all we can use.
 	 */
@@ -221,7 +229,11 @@ _cursesi_setterm(char *type, SCREEN *screen)
 	/*
 	 * Precalculate conflict info for color/attribute end commands.
 	 */
+#ifndef HAVE_WCHAR
 	screen->mask_op = __ATTRIBUTES & ~__COLOR;
+#else
+	screen->mask_op = WA_ATTRIBUTES & ~__COLOR;
+#endif /* HAVE_WCHAR */
 	if (screen->tc_op != NULL) {
 		if (does_esc_m(screen->tc_op))
 			screen->mask_op &=
@@ -245,10 +257,18 @@ _cursesi_setterm(char *type, SCREEN *screen)
 	if (screen->tc_me != NULL && does_ctrl_o(screen->tc_me))
 		screen->mask_me = 0;
 	else
+#ifndef HAVE_WCHAR
 		screen->mask_me = __ALTCHARSET;
+#else
+		screen->mask_me = WA_ALTCHARSET;
+#endif /* HAVE_WCHAR */
 
 	/* Check what turning off the attributes also turns off */
+#ifndef HAVE_WCHAR
 	screen->mask_ue = __ATTRIBUTES & ~__UNDERSCORE;
+#else
+	screen->mask_ue = WA_ATTRIBUTES & ~__UNDERSCORE;
+#endif /* HAVE_WCHAR */
 	if (screen->tc_ue != NULL) {
 		if (does_esc_m(screen->tc_ue))
 			screen->mask_ue &=
@@ -265,7 +285,11 @@ _cursesi_setterm(char *type, SCREEN *screen)
 				screen->mask_ue &= ~__COLOR;
 		}
 	}
+#ifndef HAVE_WCHAR
 	screen->mask_se = __ATTRIBUTES & ~__STANDOUT;
+#else
+	screen->mask_se = WA_ATTRIBUTES & ~__STANDOUT;
+#endif /* HAVE_WCHAR */
 	if (screen->tc_se != NULL) {
 		if (does_esc_m(screen->tc_se))
 			screen->mask_se &=
@@ -354,7 +378,8 @@ zap(SCREEN *screen)
 		*(tmp + 1) = *(namp + 1);
 		*fp++ = t_getflag(screen->cursesi_genbuf, tmp);
 #ifdef DEBUG
-		__CTRACE(__CTRACE_INIT, "%2.2s = %s\n", namp, fp[-1] ? "TRUE" : "FALSE");
+		__CTRACE(__CTRACE_INIT, "%2.2s = %s\n", namp,
+		    fp[-1] ? "TRUE" : "FALSE");
 #endif
 		namp += 2;
 		screen->flag_count++;
@@ -373,7 +398,11 @@ zap(SCREEN *screen)
 		screen->int_count++;
 	} while (*namp);
 
-  	nampstr = "ABacaeAFALalasbcblbtcdceclcmcrcsdcDLdldmDOdoeAedeihoIcicimIpipk0k1k2k3k4k5k6k7k8k9kdkekhklkrkskuLEllmambmdmemhmkmmmompmrndnlocoppcrcRISbscseSFSfsfsospSRsrtatetiucueUPupusvbvevivs";
+#ifndef HAVE_WCHAR
+	nampstr = "ABacaeAFALalasbcblbtcdceclcmcrcsdcDLdldmDOdoeAedeihoIcicimIpipk0k1k2k3k4k5k6k7k8k9kdkekhklkrkskuLEllmambmdmemhmkmmmompmrndnlocoppcrcRISbscseSFSfsfsospSRsrtatetiucueUPupusvbvevivs";
+#else
+	nampstr = "ABacaeAFALalasbcblbtcdceclcmcrcsdcDLdldmDOdoeAedeihoIcicimIpipk0k1k2k3k4k5k6k7k8k9kdkekhklkrkskuLEllmambmdmemhmkmmmompmrndnlocoppcrcRISbscseSFSfsfsospSRsrtatetiucueUPupusvbvevivsXhXlXoXrXtXv";
+#endif /* HAVE_WCHAR */
 
 	namp = nampstr;
 	sp = &screen->tc_AB;
@@ -383,11 +412,13 @@ zap(SCREEN *screen)
 		*(tmp + 1) = *(namp + 1);
 		*sp++ = t_agetstr(screen->cursesi_genbuf, tmp);
 #ifdef DEBUG
-		__CTRACE(__CTRACE_INIT, "%2.2s = %s", namp, sp[-1] == NULL ? "NULL\n" : "\"");
-		if (sp[-1] != NULL) {
+		if (sp[-1] == NULL) 
+			__CTRACE(__CTRACE_INIT, "%2.2s = NULL\n", namp);
+		else {
+			__CTRACE(__CTRACE_INIT, "%2.2s = \"", namp);
 			for (cp = sp[-1]; *cp; cp++)
 				__CTRACE(__CTRACE_INIT, "%s", unctrl(*cp));
-			__CTRACE(__CTRACE_INIT, "\n");
+			__CTRACE(__CTRACE_INIT, "\"\n");
 		}
 #endif
 		namp += 2;
