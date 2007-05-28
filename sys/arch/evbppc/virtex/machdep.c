@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.4 2007/03/04 05:59:46 christos Exp $ */
+/*	$NetBSD: machdep.c,v 1.4.10.1 2007/05/28 20:01:42 freza Exp $ */
 
 /*
  * Copyright (c) 2006 Jachym Holecek
@@ -34,12 +34,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.4 2007/03/04 05:59:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.4.10.1 2007/05/28 20:01:42 freza Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
 #include "opt_virtex.h"
+#include "opt_kgdb.h"
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -80,6 +81,9 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.4 2007/03/04 05:59:46 christos Exp $")
 #include <ddb/db_extern.h>
 #endif
 
+#if defined(KGDB)
+#include <sys/kgdb.h>
+#endif
 
 /*
  * Global variables used here and there
@@ -257,6 +261,12 @@ initppc(u_int startkernel, u_int endkernel)
 	if (boothowto & RB_KDB)
 		ipkdb_connect(0);
 #endif
+#ifdef KGDB
+	/*
+	 * Now trap to KGDB
+	 */
+	kgdb_connect(1);
+#endif /* KGDB */
 }
 
 /*
@@ -423,6 +433,11 @@ cpu_reboot(int howto, char *what)
 		while(1)
 			Debugger();
 #endif
+#ifdef KGDB
+		printf("dropping to kgdb\n");
+		while(1)
+			kgdb_connect(1);
+#endif
 	}
 
 	printf("rebooting\n\n");
@@ -454,6 +469,10 @@ cpu_reboot(int howto, char *what)
 #ifdef DDB
 	while(1)
 		Debugger();
+#endif
+#ifdef KGDB
+	while(1)
+		kgdb_connect(1);
 #else
 	while (1)
 		/* nothing */;

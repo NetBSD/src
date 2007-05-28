@@ -1,8 +1,8 @@
-/*	$NetBSD: db_interface.c,v 1.37 2007/02/22 04:47:07 matt Exp $ */
+/*	$NetBSD: db_interface.c,v 1.37.12.1 2007/05/28 20:01:43 freza Exp $ */
 /*	$OpenBSD: db_interface.c,v 1.2 1996/12/28 06:21:50 rahnds Exp $	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.37 2007/02/22 04:47:07 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.37.12.1 2007/05/28 20:01:43 freza Exp $");
 
 #define USERACC
 
@@ -36,6 +36,7 @@ __KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.37 2007/02/22 04:47:07 matt Exp $
 
 #ifdef KGDB
 #include <sys/kgdb.h>
+#define db_printf printf
 #endif
 
 #include <dev/ofw/openfirm.h>
@@ -191,6 +192,7 @@ branch_taken(int inst, db_addr_t pc, db_regs_t *regs)
 	return (0);
 }
 
+#ifdef DDB
 const struct db_command db_machine_command_table[] = {
 	{ "ctx",	db_ppc4xx_ctx,		0,	0 },
 	{ "pv",		db_ppc4xx_pv,		0,	0 },
@@ -484,5 +486,7 @@ db_ppc4xx_useracc(db_expr_t addr, bool have_addr, db_expr_t count,
 
 }
 #endif
+
+#endif /* DDB */
 
 #endif /* PPC_IBM4XX */

@@ -1,4 +1,4 @@
-/* 	$NetBSD: design_gsrd1.c,v 1.1 2006/12/02 22:18:47 freza Exp $ */
+/* 	$NetBSD: design_gsrd1.c,v 1.1.20.1 2007/05/28 20:01:42 freza Exp $ */
 
 /*
  * Copyright (c) 2006 Jachym Holecek
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: design_gsrd1.c,v 1.1 2006/12/02 22:18:47 freza Exp $");
+__KERNEL_RCSID(0, "$NetBSD: design_gsrd1.c,v 1.1.20.1 2007/05/28 20:01:42 freza Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -400,7 +400,7 @@ ll_dmac_intr_disestablish(int chan, void *handle)
 }
 
 int
-virtex_console_tag(const char *xname, bus_space_tag_t *bst)
+virtex_bus_space_tag(const char *xname, bus_space_tag_t *bst)
 {
 	if (strncmp(xname, "xlcom", 5) == 0) {
 		*bst = &xlcom_bst;
