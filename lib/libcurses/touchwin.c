@@ -1,4 +1,4 @@
-/*	$NetBSD: touchwin.c,v 1.23 2007/01/21 13:25:36 jdc Exp $	*/
+/*	$NetBSD: touchwin.c,v 1.24 2007/05/28 15:01:58 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)touchwin.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: touchwin.c,v 1.23 2007/01/21 13:25:36 jdc Exp $");
+__RCSID("$NetBSD: touchwin.c,v 1.24 2007/05/28 15:01:58 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -43,7 +43,7 @@ __RCSID("$NetBSD: touchwin.c,v 1.23 2007/01/21 13:25:36 jdc Exp $");
 
 /*
  * is_linetouched --
- *    Indicate if line has been touched or not.
+ *	Indicate if line has been touched or not.
  */
 bool
 is_linetouched(WINDOW *win, int line)
@@ -83,7 +83,7 @@ int wredrawln(WINDOW *win, int start, int count)
 
 /*
  * is_wintouched --
- *      Check if the window has been touched.
+ *	Check if the window has been touched.
  */
 bool
 is_wintouched(WINDOW *win)
@@ -127,7 +127,7 @@ redrawwin(WINDOW *win)
 
 /*
  * untouchwin --
- *     Make it look like the window has not been changed.
+ *	 Make it look like the window has not been changed.
  */
 int
 untouchwin(WINDOW *win)
@@ -140,8 +140,8 @@ untouchwin(WINDOW *win)
 
 /*
  * wtouchln --
- *     If changed is 1 then touch n lines starting at line.  If changed
- *     is 0 then mark the lines as unchanged.
+ *	If changed is 1 then touch n lines starting at line.  If changed
+ *	is 0 then mark the lines as unchanged.
  */
 int
 wtouchln(WINDOW *win, int line, int n, int changed)
@@ -176,7 +176,7 @@ wtouchln(WINDOW *win, int line, int n, int changed)
 int
 __touchwin(WINDOW *win)
 {
-	int     y, maxy;
+	int	 y, maxy;
 
 #ifdef DEBUG
 	__CTRACE(__CTRACE_LINE, "__touchwin: (%p)\n", win);

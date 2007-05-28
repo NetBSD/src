@@ -1,4 +1,4 @@
-/*	$NetBSD: cr_put.c,v 1.24 2007/01/21 13:25:36 jdc Exp $	*/
+/*	$NetBSD: cr_put.c,v 1.25 2007/05/28 15:01:54 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cr_put.c	8.3 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: cr_put.c,v 1.24 2007/01/21 13:25:36 jdc Exp $");
+__RCSID("$NetBSD: cr_put.c,v 1.25 2007/05/28 15:01:54 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -75,8 +75,7 @@ __mvcur(int ly, int lx, int y, int x, int in_refresh)
 {
 #ifdef DEBUG
 	__CTRACE(__CTRACE_OUTPUT,
-	    "mvcur: moving cursor from (%d, %d) to (%d, %d)\n",
-	    ly, lx, y, x);
+	    "mvcur: moving cursor from (%d, %d) to (%d, %d)\n", ly, lx, y, x);
 #endif
 	destcol = x;
 	destline = y;
@@ -88,11 +87,14 @@ __mvcur(int ly, int lx, int y, int x, int in_refresh)
 
 static void
 fgoto(in_refresh)
-	int     in_refresh;
+	int	 in_refresh;
 {
-	int     c, l;
+	int	 c, l;
 	char   cgp[128];
 
+#ifdef DEBUG
+	__CTRACE(__CTRACE_OUTPUT, "fgoto: in_refresh=%d\n", in_refresh);
+#endif /* DEBUG */
 	if (destcol >= COLS) {
 		destline += destcol / COLS;
 		destcol %= COLS;
@@ -166,6 +168,9 @@ fgoto(in_refresh)
 		 * Need this condition due to inconsistent behavior
 		 * of backspace on the last column.
 		 */
+#ifdef DEBUG
+		__CTRACE(__CTRACE_OUTPUT, "fgoto: cgp=%s\n", cgp);
+#endif /* DEBUG */
 		if (outcol != COLS - 1 &&
 		    plod((int) strlen(cgp), in_refresh) > 0)
 			plod(0, in_refresh);
@@ -181,13 +186,16 @@ fgoto(in_refresh)
  * Hard thing here is using home cursor on really deficient terminals.
  * Otherwise just use cursor motions, hacking use of tabs and overtabbing
  * and backspace.
+ *
+ * XXX this needs to be revisited for wide characters since we may output
+ * XXX more than one byte for a character.
  */
 
 static int plodcnt, plodflg;
 
 static int
 plodput(c)
-	int     c;
+	int	 c;
 {
 	if (plodflg)
 		--plodcnt;
@@ -198,10 +206,14 @@ plodput(c)
 
 static int
 plod(cnt, in_refresh)
-	int     cnt, in_refresh;
+	int	 cnt, in_refresh;
 {
-	int     i, j, k, soutcol, soutline;
+	int	 i, j, k, soutcol, soutline;
 
+#ifdef DEBUG
+	__CTRACE(__CTRACE_OUTPUT, "plod: cnt=%d, in_refresh=%d\n",
+	    cnt, in_refresh);
+#endif /* DEBUG */
 	plodcnt = plodflg = cnt;
 	soutcol = outcol;
 	soutline = outline;
@@ -390,11 +402,32 @@ dontcr:while (outline < destline) {
 			if (plodflg)	/* Avoid a complex calculation. */
 				plodcnt--;
 			else {
+#ifndef HAVE_WCHAR
 				i = curscr->lines[outline]->line[outcol].ch
 				    & __CHARTEXT;
 				if (curscr->lines[outline]->line[outcol].attr
 				    == curscr->wattr)
 					__cputchar(i);
+#else
+				if ((curscr->lines[outline]->line[outcol].attr
+				    & WA_ATTRIBUTES)
+				    == curscr->wattr ) {
+					if (WCOL(curscr->lines[outline]->line[outcol]) > 0) {
+						__cputwchar(curscr->lines[outline]->line[outcol].ch);
+						__cursesi_putnsp(curscr->lines[outline]->line[outcol].nsp,
+								outline,
+								outcol);
+#ifdef DEBUG
+						__CTRACE(__CTRACE_OUTPUT,
+						    "plod: (%d,%d)WCOL(%d), "
+						    "putwchar(%x)\n",
+						    outline, outcol,
+						    WCOL(curscr->lines[outline]->line[outcol]),
+						    curscr->lines[outline]->line[outcol].ch);
+#endif /* DEBUG */
+					}
+				}
+#endif /* HAVE_WCHAR */
 				else
 					goto nondes;
 			}
@@ -412,6 +445,9 @@ out:	if (plodflg) {
 		outcol = soutcol;
 		outline = soutline;
 	}
+#ifdef DEBUG
+	__CTRACE(__CTRACE_OUTPUT, "plod: returns %d\n", plodcnt);
+#endif /* DEBUG */
 	return (plodcnt);
 }
 /*
@@ -421,9 +457,9 @@ out:	if (plodflg) {
  */
 static int
 tabcol(col, ts)
-	int     col, ts;
+	int	 col, ts;
 {
-	int     offset;
+	int	 offset;
 
 	if (col >= COLS) {
 		offset = COLS * (col / COLS);

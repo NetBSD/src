@@ -1,8 +1,8 @@
-/*	$NetBSD: line.c,v 1.4 2002/01/02 10:38:28 blymn Exp $	*/
+/*	$NetBSD: line.c,v 1.5 2007/05/28 15:01:56 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
- *                         (blymn@baea.com.au, brett_lymn@yahoo.com.au)
+ *						 (blymn@baea.com.au, brett_lymn@yahoo.com.au)
  * All rights reserved.
  *
  * This code has been donated to The NetBSD Foundation by the Author.
@@ -31,15 +31,17 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: line.c,v 1.4 2002/01/02 10:38:28 blymn Exp $");
+__RCSID("$NetBSD: line.c,v 1.5 2007/05/28 15:01:56 blymn Exp $");
 #endif				/* not lint */
+
+#include <string.h>
 
 #include "curses.h"
 #include "curses_private.h"
 
 /*
  * hline --
- *    Draw a horizontal line of character c on stdscr.
+ *	Draw a horizontal line of character c on stdscr.
  */
 int
 hline(chtype ch, int count)
@@ -49,8 +51,8 @@ hline(chtype ch, int count)
 
 /*
  * mvhline --
- *    Move to location (y, x) and draw a horizontal line of character c
- *    on stdscr.
+ *	Move to location (y, x) and draw a horizontal line of character c
+ *	on stdscr.
  */
 int
 mvhline(int y, int x, chtype ch, int count)
@@ -60,8 +62,8 @@ mvhline(int y, int x, chtype ch, int count)
 
 /*
  * mvwhline --
- *    Move to location (y, x) and draw a horizontal line of character c
- *    in the given window.
+ *	Move to location (y, x) and draw a horizontal line of character c
+ *	in the given window.
  */
 int
 mvwhline(WINDOW *win, int y, int x, chtype ch, int count)
@@ -74,9 +76,9 @@ mvwhline(WINDOW *win, int y, int x, chtype ch, int count)
 
 /*
  * whline --
- *    Draw a horizontal line of character c in the given window moving
- *    towards the rightmost column.  At most count characters are drawn
- *    or until the edge of the screen, whichever comes first.
+ *	Draw a horizontal line of character c in the given window moving
+ *	towards the rightmost column.  At most count characters are drawn
+ *	or until the edge of the screen, whichever comes first.
  */
 int
 whline(WINDOW *win, chtype ch, int count)
@@ -97,7 +99,7 @@ whline(WINDOW *win, chtype ch, int count)
 
 /*
  * vline --
- *    Draw a vertical line of character ch on stdscr.
+ *	Draw a vertical line of character ch on stdscr.
  */
 int
 vline(chtype ch, int count)
@@ -107,7 +109,7 @@ vline(chtype ch, int count)
 
 /*
  * mvvline --
- *   Move to the given location an draw a vertical line of character ch.
+ *	Move to the given location an draw a vertical line of character ch.
  */
 int
 mvvline(int y, int x, chtype ch, int count)
@@ -117,8 +119,8 @@ mvvline(int y, int x, chtype ch, int count)
 
 /*
  * mvwvline --
- *    Move to the given location and draw a vertical line of character ch
- *    on the given window.
+ *	Move to the given location and draw a vertical line of character ch
+ *	on the given window.
  */
 int
 mvwvline(WINDOW *win, int y, int x, chtype ch, int count)
@@ -131,9 +133,9 @@ mvwvline(WINDOW *win, int y, int x, chtype ch, int count)
 
 /*
  * wvline --
- *    Draw a vertical line of character ch in the given window moving
- *    towards the bottom of the screen.  At most count characters are drawn
- *    or until the edge of the screen, whichever comes first.
+ *	Draw a vertical line of character ch in the given window moving
+ *	towards the bottom of the screen.  At most count characters are drawn
+ *	or until the edge of the screen, whichever comes first.
  */
 int
 wvline(WINDOW *win, chtype ch, int count)
@@ -151,4 +153,127 @@ wvline(WINDOW *win, chtype ch, int count)
 
 	wmove(win, ocury, ocurx);
 	return OK;
+}
+
+int hline_set(const cchar_t *wch, int n)
+{
+#ifndef HAVE_WCHAR
+	return ERR;
+#else
+	return whline_set( stdscr, wch, n );
+#endif /* HAVE_WCHAR */
+}
+
+int mvhline_set(int y, int x, const cchar_t *wch, int n)
+{
+#ifndef HAVE_WCHAR
+	return ERR;
+#else
+	return mvwhline_set( stdscr, y, x, wch, n );
+#endif /* HAVE_WCHAR */
+}
+
+int mvwhline_set(WINDOW *win, int y, int x, const cchar_t *wch, int n)
+{
+#ifndef HAVE_WCHAR
+	return ERR;
+#else
+	if ( wmove( win, y , x ) == ERR )
+		return ERR;
+
+	return whline_set( win, wch, n );
+#endif /* HAVE_WCHAR */
+}
+
+int whline_set(WINDOW *win, const cchar_t *wch, int n)
+{
+#ifndef HAVE_WCHAR
+	return ERR;
+#else
+	int ocurx, wcn, i, cw;
+	cchar_t cc;
+
+	cw = wcwidth( wch->vals[ 0 ]);
+	if ( ( win->maxx - win->curx ) < cw )
+		return ERR;
+	wcn = min( n, ( win->maxx - win->curx ) / cw );
+#ifdef DEBUG
+	__CTRACE(__CTRACE_LINE, "whline_set: line of %d\n", wcn);
+#endif /* DEBUG */
+	ocurx = win->curx;
+
+	memcpy( &cc, wch, sizeof( cchar_t ));
+	if (!(wch->vals[ 0 ]))
+		cc.vals[ 0 ] |= WACS_HLINE;
+	for (i = 0; i < wcn; i++ ) {
+#ifdef DEBUG
+		__CTRACE(__CTRACE_LINE, "whline_set: (%d,%d)\n",
+		   win->cury, ocurx + i * cw);
+#endif /* DEBUG */
+		mvwadd_wch(win, win->cury, ocurx + i * cw, &cc);
+	}
+		
+	wmove(win, win->cury, ocurx);
+	return OK;
+#endif /* HAVE_WCHAR */
+}
+
+int vline_set(const cchar_t *wch, int n)
+{
+#ifndef HAVE_WCHAR
+	return ERR;
+#else
+	return wvline_set( stdscr, wch, n );
+#endif /* HAVE_WCHAR */
+}
+
+int mvvline_set(int y, int x, const cchar_t *wch, int n)
+{
+#ifndef HAVE_WCHAR
+	return ERR;
+#else
+	return mvwvline_set( stdscr, y, x, wch, n );
+#endif /* HAVE_WCHAR */
+}
+
+int mvwvline_set(WINDOW *win, int y, int x, const cchar_t *wch, int n)
+{
+#ifndef HAVE_WCHAR
+	return ERR;
+#else
+	if ( wmove( win, y, x ) == ERR )
+		return ERR;
+
+	return wvline_set( win, wch, n );
+#endif /* HAVE_WCHAR */
+}
+
+int wvline_set(WINDOW *win, const cchar_t *wch, int n)
+{
+#ifndef HAVE_WCHAR
+	return ERR;
+#else
+	int ocury, ocurx, wcn, i;
+	cchar_t cc;
+
+	wcn = min( n, win->maxy - win->cury);
+#ifdef DEBUG
+	__CTRACE(__CTRACE_LINE, "wvline_set: line of %d\n", wcn);
+#endif /* DEBUG */
+	ocury = win->cury;
+	ocurx = win->curx;
+
+	memcpy( &cc, wch, sizeof( cchar_t ));
+	if (!(wch->vals[ 0 ]))
+		cc.vals[ 0 ] |= WACS_VLINE;
+	for (i = 0; i < wcn; i++) {
+		mvwadd_wch(win, ocury + i, ocurx, &cc);
+#ifdef DEBUG
+		__CTRACE(__CTRACE_LINE, "wvline_set: (%d,%d)\n",
+		    ocury + i, ocurx);
+#endif /* DEBUG */
+	}
+	wmove(win, ocury, ocurx);
+	return OK;
+#endif /* HAVE_WCHAR */
 }

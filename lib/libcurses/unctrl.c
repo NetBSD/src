@@ -1,4 +1,4 @@
-/*	$NetBSD: unctrl.c,v 1.10 2004/02/14 18:23:45 christos Exp $	*/
+/*	$NetBSD: unctrl.c,v 1.11 2007/05/28 15:01:58 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)unctrl.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: unctrl.c,v 1.10 2004/02/14 18:23:45 christos Exp $");
+__RCSID("$NetBSD: unctrl.c,v 1.11 2007/05/28 15:01:58 blymn Exp $");
 #endif
 #endif /* not lint */
 
@@ -110,3 +110,41 @@ const unsigned char    __unctrllen[256] = {
 	4, 4, 4, 4, 4, 4, 4, 4,
 	4, 4, 4, 4, 4, 4, 4, 4,
 };
+
+#ifdef HAVE_WCHAR
+const wchar_t   * const __wunctrl[256] = {
+	L"^@", L"^A", L"^B", L"^C", L"^D", L"^E", L"^F", L"^G",
+	L"^H", L"^I", L"^J", L"^K", L"^L", L"^M", L"^N", L"^O",
+	L"^P", L"^Q", L"^R", L"^S", L"^T", L"^U", L"^V", L"^W",
+	L"^X", L"^Y", L"^Z", L"^[", L"^\\", L"^]", L"^~", L"^_",
+	L" ", L"!", L"\"", L"#", L"$", L"%", L"&", L"'",
+	L"(", L")", L"*", L"+", L",", L"-", L".", L"/",
+	L"0", L"1", L"2", L"3", L"4", L"5", L"6", L"7",
+	L"8", L"9", L":", L";", L"<", L"=", L">", L"?",
+	L"@", L"A", L"B", L"C", L"D", L"E", L"F", L"G",
+	L"H", L"I", L"J", L"K", L"L", L"M", L"N", L"O",
+	L"P", L"Q", L"R", L"S", L"T", L"U", L"V", L"W",
+	L"X", L"Y", L"Z", L"[", L"\\", L"]", L"^", L"_",
+	L"`", L"a", L"b", L"c", L"d", L"e", L"f", L"g",
+	L"h", L"i", L"j", L"k", L"l", L"m", L"n", L"o",
+	L"p", L"q", L"r", L"s", L"t", L"u", L"v", L"w",
+	L"x", L"y", L"z", L"{", L"|", L"}", L"~", L"^?",
+
+	L"0x80", L"0x81", L"0x82", L"0x83", L"0x84", L"0x85", L"0x86", L"0x87",
+	L"0x88", L"0x89", L"0x8a", L"0x8b", L"0x8c", L"0x8d", L"0x8e", L"0x8f",
+	L"0x90", L"0x91", L"0x92", L"0x93", L"0x94", L"0x95", L"0x96", L"0x97",
+	L"0x98", L"0x99", L"0x9a", L"0x9b", L"0x9c", L"0x9d", L"0x9e", L"0x9f",
+	L"0xa0", L"0xa1", L"0xa2", L"0xa3", L"0xa4", L"0xa5", L"0xa6", L"0xa7",
+	L"0xa8", L"0xa9", L"0xaa", L"0xab", L"0xac", L"0xad", L"0xae", L"0xaf",
+	L"0xb0", L"0xb1", L"0xb2", L"0xb3", L"0xb4", L"0xb5", L"0xb6", L"0xb7",
+	L"0xb8", L"0xb9", L"0xba", L"0xbb", L"0xbc", L"0xbd", L"0xbe", L"0xbf",
+	L"0xc0", L"0xc1", L"0xc2", L"0xc3", L"0xc4", L"0xc5", L"0xc6", L"0xc7",
+	L"0xc8", L"0xc9", L"0xca", L"0xcb", L"0xcc", L"0xcd", L"0xce", L"0xcf",
+	L"0xd0", L"0xd1", L"0xd2", L"0xd3", L"0xd4", L"0xd5", L"0xd6", L"0xd7",
+	L"0xd8", L"0xd9", L"0xda", L"0xdb", L"0xdc", L"0xdd", L"0xde", L"0xdf",
+	L"0xe0", L"0xe1", L"0xe2", L"0xe3", L"0xe4", L"0xe5", L"0xe6", L"0xe7",
+	L"0xe8", L"0xe9", L"0xea", L"0xeb", L"0xec", L"0xed", L"0xee", L"0xef",
+	L"0xf0", L"0xf1", L"0xf2", L"0xf3", L"0xf4", L"0xf5", L"0xf6", L"0xf7",
+	L"0xf8", L"0xf9", L"0xfa", L"0xfb", L"0xfc", L"0xfd", L"0xfe", L"0xff",
+};
+#endif /* HAVE_WCHAR */

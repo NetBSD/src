@@ -1,4 +1,4 @@
-/*   $NetBSD: ins_wstr.c,v 1.1 2007/01/21 11:38:59 blymn Exp $ */
+/*   $NetBSD: ins_wstr.c,v 1.2 2007/05/28 15:01:56 blymn Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ins_wstr.c,v 1.1 2007/01/21 11:38:59 blymn Exp $");
+__RCSID("$NetBSD: ins_wstr.c,v 1.2 2007/05/28 15:01:56 blymn Exp $");
 #endif						  /* not lint */
 
 #include <string.h>
@@ -158,7 +158,7 @@ wins_nwstr(WINDOW *win, const wchar_t *wstr, int n)
 		scp++;
 	}
 #ifdef DEBUG
-	__CTRACE("[wins_nwstr]width=%d,len=%d\n", width, len);
+	__CTRACE(__CTRACE_INPUT, "wins_nwstr: width=%d,len=%d\n", width, len);
 #endif /* DEBUG */
 
 	if (cw > win->maxx - win->curx + 1)
@@ -172,7 +172,7 @@ wins_nwstr(WINDOW *win, const wchar_t *wstr, int n)
 		start += pcw;
 	}
 #ifdef DEBUG
-	__CTRACE("[wins_nwstr]start@(%d)\n", sx);
+	__CTRACE(__CTRACE_INPUT, "wins_nwstr: start@(%d)\n", sx);
 #endif /* DEBUG */
 	pcw = WCOL(*start);
 	lnp->flags |= __ISDIRTY;
@@ -182,28 +182,30 @@ wins_nwstr(WINDOW *win, const wchar_t *wstr, int n)
 #ifdef DEBUG
 	{
 		int x;
-		__CTRACE("========before=======\n");
+		__CTRACE(__CTRACE_INPUT, "========before=======\n");
 		for (x = 0; x < win->maxx; x++)
-			__CTRACE("[wins_nwstr](%d,%d)=(%x,%x,%p)\n",
-				(int)win->cury, x,
-				win->lines[win->cury]->line[x].ch,
-				win->lines[win->cury]->line[x].attr,
-				win->lines[win->cury]->line[x].nsp);
+			__CTRACE(__CTRACE_INPUT,
+			    "wins_nwstr: (%d,%d)=(%x,%x,%p)\n",
+			    (int) win->cury, x,
+			    win->lines[win->cury]->line[x].ch,
+			    win->lines[win->cury]->line[x].attr,
+			    win->lines[win->cury]->line[x].nsp);
 	}
 #endif /* DEBUG */
 
 	/* shift all complete characters */
 	if (sx + width + pcw <= win->maxx) {
 #ifdef DEBUG
-		__CTRACE("[wins_nwstr]shift all characters\n");
+		__CTRACE(__CTRACE_INPUT, "wins_nwstr: shift all characters\n");
 #endif /* DEBUG */
 		temp1 = &win->lines[win->cury]->line[win->maxx - 1];
 		temp2 = temp1 - width;
 		pcw = WCOL(*(temp2 + 1));
 		if (pcw < 0) {
 #ifdef DEBUG
-			__CTRACE("[wins_nwstr]clear from %d to EOL(%d)\n",
-					win->maxx + pcw, win->maxx - 1);
+			__CTRACE(__CTRACE_INPUT,
+			    "wins_nwstr: clear from %d to EOL(%d)\n",
+			    win->maxx + pcw, win->maxx - 1);
 #endif /* DEBUG */
 			temp2 += pcw;
 			while (temp1 > temp2 + width) {
@@ -213,8 +215,8 @@ wins_nwstr(WINDOW *win, const wchar_t *wstr, int n)
 				temp1->attr = win->battr;
 				SET_WCOL(*temp1, 1);
 #ifdef DEBUG
-				__CTRACE("[wins_nwstr]empty cell(%p)\n",
-					temp1);
+				__CTRACE(__CTRACE_INPUT,
+				    "wins_nwstr: empty cell(%p)\n", temp1);
 #endif /* DEBUG */
 				temp1--;
 			}
@@ -226,13 +228,14 @@ wins_nwstr(WINDOW *win, const wchar_t *wstr, int n)
 #ifdef DEBUG
 		{
 			int x;
-			__CTRACE("=====after shift====\n");
+			__CTRACE(__CTRACE_INPUT, "=====after shift====\n");
 			for (x = 0; x < win->maxx; x++)
-				__CTRACE("[wins_nwstr](%d,%d)=(%x,%x,%p)\n",
-					(int)win->cury, x,
-					win->lines[win->cury]->line[x].ch,
-					win->lines[win->cury]->line[x].attr,
-					win->lines[win->cury]->line[x].nsp);
+				__CTRACE(__CTRACE_INPUT,
+				    "wins_nwstr: (%d,%d)=(%x,%x,%p)\n",
+				    (int) win->cury, x,
+				    win->lines[win->cury]->line[x].ch,
+				    win->lines[win->cury]->line[x].attr,
+				    win->lines[win->cury]->line[x].nsp);
 		}
 #endif /* DEBUG */
 	}
@@ -273,8 +276,8 @@ wins_nwstr(WINDOW *win, const wchar_t *wstr, int n)
 			SET_WCOL(*temp1, cw);
 			temp1->nsp = NULL;
 #ifdef DEBUG
-			__CTRACE("[wins_nwstr]add spacing char(%x)\n",
-				temp1->ch);
+			__CTRACE(__CTRACE_INPUT,
+			    "wins_nwstr: add spacing char(%x)\n", temp1->ch);
 #endif /* DEBUG */
 			temp2 = temp1++;
 			if (cw > 1) {
@@ -298,21 +301,22 @@ wins_nwstr(WINDOW *win, const wchar_t *wstr, int n)
 			np->next = temp1->nsp;
 			temp1->nsp = np;
 #ifdef DEBUG
-			__CTRACE("[wins_nstr]add non-spacing char(%x)\n",
-				np->ch);
+			__CTRACE(__CTRACE_INPUT,
+			    "wins_nstr: add non-spacing char(%x)\n", np->ch);
 #endif /* DEBUG */
 		}
 	}
 #ifdef DEBUG
 	{
 		int x;
-		__CTRACE("========after=======\n");
+		__CTRACE(__CTRACE_INPUT, "========after=======\n");
 		for (x = 0; x < win->maxx; x++)
-			__CTRACE("[wins_nwstr](%d,%d)=(%x,%x,%p)\n",
-				(int)win->cury, x,
-				win->lines[win->cury]->line[x].ch,
-				win->lines[win->cury]->line[x].attr,
-				win->lines[win->cury]->line[x].nsp);
+			__CTRACE(__CTRACE_INPUT,
+			    "wins_nwstr: (%d,%d)=(%x,%x,%p)\n",
+			    (int) win->cury, x,
+			    win->lines[win->cury]->line[x].ch,
+			    win->lines[win->cury]->line[x].attr,
+			    win->lines[win->cury]->line[x].nsp);
 	}
 #endif /* DEBUG */
 	newx = win->maxx - 1 + win->ch_off;

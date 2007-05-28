@@ -1,4 +1,4 @@
-/*   $NetBSD: ins_wch.c,v 1.1 2007/01/21 11:38:59 blymn Exp $ */
+/*   $NetBSD: ins_wch.c,v 1.2 2007/05/28 15:01:56 blymn Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ins_wch.c,v 1.1 2007/01/21 11:38:59 blymn Exp $");
+__RCSID("$NetBSD: ins_wch.c,v 1.2 2007/05/28 15:01:56 blymn Exp $");
 #endif						  /* not lint */
 
 #include <string.h>
@@ -114,17 +114,17 @@ wins_wch(WINDOW *win, const cchar_t *wch)
 		return wadd_wch( win, wch );
 
 #ifdef DEBUG
-	__CTRACE("--before--\n" );
+	__CTRACE(__CTRACE_INPUT, "--before--\n");
 	for ( x = 0; x < win->maxx; x++ )
-		__CTRACE("[wins_wch](0,%d)=(%x,%x,%p)\n", x,
-			win->lines[ 0 ]->line[ x ].ch,
-			win->lines[ 0 ]->line[ x ].attr,
-			win->lines[ 0 ]->line[ x ].nsp );
+		__CTRACE(__CTRACE_INPUT, "wins_wch: (0,%d)=(%x,%x,%p)\n", x,
+		    win->lines[0]->line[x].ch,
+		    win->lines[0]->line[x].attr,
+		    win->lines[0]->line[x].nsp);
 #endif /* DEBUG */
 	x = win->curx;
 	y = win->cury;
 #ifdef DEBUG
-	__CTRACE("[wins_wch](%d,%d)\n", y, x );
+	__CTRACE(__CTRACE_INPUT, "wins_wch: (%d,%d)\n", y, x);
 #endif /* DEBUG */
 	switch ( wch->vals[ 0 ]) {
 		case L'\b':
@@ -170,14 +170,14 @@ wins_wch(WINDOW *win, const cchar_t *wch)
 
 	/* shift all complete characters */
 #ifdef DEBUG
-	__CTRACE("[wins_wch]shift all characters\n" );
+	__CTRACE(__CTRACE_INPUT, "wins_wch: shift all characters\n");
 #endif /* DEBUG */
 	temp1 = &win->lines[ y ]->line[ win->maxx - 1 ];
 	temp2 = temp1 - cw;
 	pcw = WCOL(*(temp2 + 1));
 	if (pcw < 0) {
 #ifdef DEBUG
-		__CTRACE("[wins_wch]clear EOL\n" );
+		__CTRACE(__CTRACE_INPUT, "wins_wch: clear EOL\n");
 #endif /* DEBUG */
 		temp2 += pcw;
 		while ( temp1 > temp2 + cw ) {
@@ -219,8 +219,8 @@ wins_wch(WINDOW *win, const cchar_t *wch)
 		}
 	}
 #ifdef DEBUG
-	__CTRACE("[wins_wch]insert (%x,%x,%p)\n",
-			start->ch, start->attr, start->nsp );
+	__CTRACE(__CTRACE_INPUT, "wins_wch: insert (%x,%x,%p)\n",
+	    start->ch, start->attr, start->nsp);
 #endif /* DEBUG */
 	temp1 = start + 1;
 	ex = x + 1;
@@ -233,12 +233,13 @@ wins_wch(WINDOW *win, const cchar_t *wch)
 #ifdef DEBUG
 	{
 		int x;
-		__CTRACE("--after---\n");
+		__CTRACE(__CTRACE_INPUT, "--after---\n");
 		for ( x = 0; x < win->maxx; x++ )
-			__CTRACE("[wins_wch](0,%d)=(%x,%x,%p)\n", x,
-				win->lines[ 0 ]->line[ x ].ch,
-				win->lines[ 0 ]->line[ x ].attr,
-				win->lines[ 0 ]->line[ x ].nsp );
+			__CTRACE(__CTRACE_INPUT,
+			    "wins_wch: (0,%d)=(%x,%x,%p)\n", x,
+			    win->lines[0]->line[x].ch,
+			    win->lines[0]->line[x].attr,
+			    win->lines[0]->line[x].nsp);
 	}
 #endif /* DEBUG */
 	newx = win->maxx - 1 + win->ch_off;

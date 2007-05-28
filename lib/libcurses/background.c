@@ -1,4 +1,4 @@
-/*	$NetBSD: background.c,v 1.10 2007/01/21 13:25:36 jdc Exp $	*/
+/*	$NetBSD: background.c,v 1.11 2007/05/28 15:01:54 blymn Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,9 +38,10 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: background.c,v 1.10 2007/01/21 13:25:36 jdc Exp $");
+__RCSID("$NetBSD: background.c,v 1.11 2007/05/28 15:01:54 blymn Exp $");
 #endif				/* not lint */
 
+#include <stdlib.h>
 #include "curses.h"
 #include "curses_private.h"
 
@@ -126,7 +127,7 @@ wbkgd(WINDOW *win, chtype ch)
 /*
  * getbkgd --
  *	Get current background attributes.
- */	
+ */
 chtype
 getbkgd(WINDOW *win)
 {
@@ -138,4 +139,151 @@ getbkgd(WINDOW *win)
 		battr &= ~__default_color;
 
 	return ((chtype) ((win->bch & A_CHARTEXT) | battr));
+}
+
+int bkgrnd(const cchar_t *wch)
+{
+#ifndef HAVE_WCHAR
+	return ERR;
+#else
+	return wbkgrnd( stdscr, wch );
+#endif /* HAVE_WCHAR */
+}
+
+void bkgrndset(const cchar_t *wch)
+{
+#ifdef HAVE_WCHAR
+	wbkgrndset( stdscr, wch );
+#endif /* HAVE_WCHAR */
+}
+
+int getbkgrnd(cchar_t *wch)
+{
+#ifndef HAVE_WCHAR
+	return ERR;
+#else
+	return wgetbkgrnd( stdscr, wch );
+#endif /* HAVE_WCHAR */
+}
+
+int wbkgrnd(WINDOW *win, const cchar_t *wch)
+{
+#ifndef HAVE_WCHAR
+	return ERR;
+#else
+/* 	int	y, x, i; */
+	attr_t battr;
+/* 	nschar_t *np, *tnp, *pnp; */
+
+#ifdef DEBUG
+	__CTRACE(__CTRACE_ATTR, "wbkgrnd: (%p), '%s', %x\n",
+		win, (char *) wunctrl(wch), wch->attributes);
+#endif
+
+	/* ignore multi-column characters */
+	if ( !wch->elements || wcwidth( wch->vals[ 0 ]) > 1 )
+		return ERR;
+
+	/* Background attributes (check colour). */
+	battr = wch->attributes & WA_ATTRIBUTES;
+	if (__using_color && !( battr & __COLOR))
+		battr |= __default_color;
+
+	win->battr = battr;
+	wbkgrndset(win, wch);
+	__touchwin(win);
+	return OK;
+#endif /* HAVE_WCHAR */
+}
+
+void wbkgrndset(WINDOW *win, const cchar_t *wch)
+{
+#ifdef HAVE_WCHAR
+	attr_t battr;
+	nschar_t *np, *tnp;
+	int i;
+
+#ifdef DEBUG
+	__CTRACE(__CTRACE_ATTR, "wbkgrndset: (%p), '%s', %x\n",
+		win, (char *) wunctrl(wch), wch->attributes);
+#endif
+
+	/* ignore multi-column characters */
+	if ( !wch->elements || wcwidth( wch->vals[ 0 ]) > 1 )
+		return;
+
+	/* Background character. */
+	tnp = np = win->bnsp;
+	if ( wcwidth( wch->vals[ 0 ]))
+		win->bch = wch->vals[ 0 ];
+	else {
+		if ( !np ) {
+			np = (nschar_t *)malloc(sizeof(nschar_t));
+			if (!np)
+				return;
+			np->next = NULL;
+			win->bnsp = np;
+		}
+		np->ch = wch->vals[ 0 ];
+		tnp = np;
+		np = np->next;
+	}
+	/* add non-spacing characters */
+	if ( wch->elements > 1 ) {
+		for ( i = 1; i < wch->elements; i++ ) {
+			if ( !np ) {
+				np = (nschar_t *)malloc(sizeof(nschar_t));
+				if (!np)
+					return;
+				np->next = NULL;
+				if ( tnp )
+					tnp->next = np;
+				else
+					win->bnsp = np;
+			}
+			np->ch = wch->vals[ i ];
+			tnp = np;
+			np = np->next;
+		}
+	}
+	/* clear the old non-spacing characters */
+	while ( np ) {
+		tnp = np->next;
+		free( np );
+		np = tnp;
+	}
+
+	/* Background attributes (check colour). */
+	battr = wch->attributes & WA_ATTRIBUTES;
+	if (__using_color && !( battr & __COLOR))
+		battr |= __default_color;
+	win->battr = battr;
+	SET_BGWCOL((*win), 1);
+#endif /* HAVE_WCHAR */
+}
+
+int wgetbkgrnd(WINDOW *win, cchar_t *wch)
+{
+#ifndef HAVE_WCHAR
+	return ERR;
+#else
+	nschar_t *np;
+
+	/* Background attributes (check colour). */
+	wch->attributes = win->battr & WA_ATTRIBUTES;
+	if (__using_color && (( wch->attributes & __COLOR )
+			== __default_color))
+		wch->attributes &= ~__default_color;
+	wch->vals[ 0 ] = win->bch;
+	wch->elements = 1;
+	np = win->bnsp;
+	if (np) {
+		while ( np && wch->elements < CURSES_CCHAR_MAX ) {
+			wch->vals[ wch->elements++ ] = np->ch;
+			np = np->next;
+		}
+	}
+
+	return OK;
+#endif /* HAVE_WCHAR */
 }
