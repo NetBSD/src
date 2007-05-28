@@ -1,4 +1,4 @@
-/*   $NetBSD: get_wstr.c,v 1.1 2007/01/21 11:38:59 blymn Exp $ */
+/*   $NetBSD: get_wstr.c,v 1.2 2007/05/28 15:01:55 blymn Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: get_wstr.c,v 1.1 2007/01/21 11:38:59 blymn Exp $");
+__RCSID("$NetBSD: get_wstr.c,v 1.2 2007/05/28 15:01:55 blymn Exp $");
 #endif						  /* not lint */
 
 #include "curses.h"
@@ -190,7 +190,7 @@ __wgetn_wstr(WINDOW *win, wchar_t *wstr, int n)
 	return ERR;
 #else
 	wchar_t *ostr, ec, kc, sc[ 2 ];
-	int oldx, remain, ret;
+	int oldx, remain;
 	wint_t wc;
 	cchar_t cc;
 
@@ -205,11 +205,12 @@ __wgetn_wstr(WINDOW *win, wchar_t *wstr, int n)
 	oldx = win->curx;
 	remain = n - 1;
 
-	while ((ret = wget_wch(win, &wc)) != ERR 
-			&& wc != L'\n' && wc != L'\r') {
+	while (wget_wch(win, &wc) != ERR
+	       && wc != L'\n' && wc != L'\r') {
 #ifdef DEBUG
-		__CTRACE("__wgetn_wstr: win %p, char 0x%x, remain %d\n", 
-				win, wc, remain);
+		__CTRACE(__CTRACE_INPUT,
+		    "__wgetn_wstr: win %p, char 0x%x, remain %d\n",
+		    win, wc, remain);
 #endif
 		*wstr = wc;
 		touchline(win, win->cury, 1);
@@ -217,15 +218,15 @@ __wgetn_wstr(WINDOW *win, wchar_t *wstr, int n)
 			*wstr = L'\0';
 			if (wstr != ostr) {
 				if ((wchar_t)wc == ec) {
-					mvwadd_wch(win, win->cury, 
+					mvwadd_wch(win, win->cury,
 						win->curx, &cc);
 					wmove(win, win->cury, win->curx - 1);
 				}
 				if (wc == KEY_BACKSPACE || wc == KEY_LEFT) {
 					/* getch() displays the key sequence */
-					mvwadd_wch(win, win->cury, 
+					mvwadd_wch(win, win->cury,
 						win->curx - 1, &cc);
-					mvwadd_wch(win, win->cury, 
+					mvwadd_wch(win, win->cury,
 						win->curx - 2, &cc);
 					wmove(win, win->cury, win->curx - 1);
 				}
@@ -237,7 +238,7 @@ __wgetn_wstr(WINDOW *win, wchar_t *wstr, int n)
 			} else { /* str == ostr */
 				if (wc == KEY_BACKSPACE || wc == KEY_LEFT)
 					/* getch() displays the other keys */
-					mvwadd_wch(win, win->cury, 
+					mvwadd_wch(win, win->cury,
 						win->curx - 1, &cc);
 				wmove(win, win->cury, oldx);
 			}
@@ -248,7 +249,7 @@ __wgetn_wstr(WINDOW *win, wchar_t *wstr, int n)
 				mvwadd_wch(win, win->cury, win->curx - 1, &cc);
 				/* Clear the characters from screen and str */
 				while (wstr != ostr) {
-					mvwadd_wch(win, win->cury, 
+					mvwadd_wch(win, win->cury,
 						win->curx - 1, &cc);
 					wmove(win, win->cury, win->curx - 1);
 					wstr--;

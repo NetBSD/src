@@ -1,4 +1,4 @@
-/*   $NetBSD: add_wch.c,v 1.1 2007/01/21 11:38:59 blymn Exp $ */
+/*   $NetBSD: add_wch.c,v 1.2 2007/05/28 15:01:53 blymn Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation Inc.
@@ -36,12 +36,15 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: add_wch.c,v 1.1 2007/01/21 11:38:59 blymn Exp $");
+__RCSID("$NetBSD: add_wch.c,v 1.2 2007/05/28 15:01:53 blymn Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
 #include "curses.h"
 #include "curses_private.h"
+#ifdef DEBUG
+#include <assert.h>
+#endif
 
 /*
  * add_wch --
@@ -104,256 +107,18 @@ wadd_wch(WINDOW *win, const cchar_t *wch)
 #ifndef HAVE_WCHAR
 	return ERR;
 #else
-	int x = win->curx, y = win->cury, sx = 0, ex = 0, cw = 0, i = 0,
-	    newx = 0;
-	__LDATA *lp = &win->lines[y]->line[x], *tp = NULL;
-	nschar_t *np = NULL, *tnp = NULL;
+	int x = win->curx, y = win->cury;
 	__LINE *lnp = NULL;
-	cchar_t cc;
 
 #ifdef DEBUG
+	int i;
+
 	for (i = 0; i < win->maxy; i++) {
 		assert(win->lines[i]->sentinel == SENTINEL_VALUE);
 	}
-	__CTRACE("[wadd_wch]win(%p)", win);
+	__CTRACE(__CTRACE_INPUT, "wadd_wch: win(%p)", win);
 #endif
-
-	/* special characters handling */
 	lnp = win->lines[y];
-	switch (wch->vals[0]) {
-	case L'\b':
-		if (--x < 0)
-			x = 0;
-		win->curx = x;
-		return OK;
-	case L'\r':
-		win->curx = 0;
-		return OK;
-	case L'\n':
-		wclrtoeol(win);
-		x = win->curx;
-		y = win->cury;
-		x = 0;
-		lnp->flags &= ~__ISPASTEOL;
-		if (y == win->scr_b) {
-			if (!(win->flags & __SCROLLOK))
-				return ERR;
-			win->cury = y;
-			win->curx = x;
-			scroll(win);
-			y = win->cury;
-			x = win->curx;
-		} else {
-			y++;
-		}
-		win->curx = x;
-		win->cury = y;
-		return OK;
-	case L'\t':
-		cc.vals[0] = L' ';
-		cc.elements = 1;
-		cc.attributes = win->wattr;
-		for (i = 0; i < 8 - (x % 8); i++) {
-			if (wadd_wch(win, &cc) == ERR)
-				return ERR;
-		}
-		return OK;
-	}
-
-	/* check for non-spacing character */
-	if (!wcwidth(wch->vals[0])) {
-		cw = WCOL(*lp);
-		if (cw < 0) {
-			lp += cw;
-			x += cw;
-		}
-		for (i = 0; i < wch->elements; i++) {
-			if (!(np = (nschar_t *) malloc(sizeof(nschar_t))))
-				return ERR;;
-			np->ch = wch->vals[i];
-			np->next = lp->nsp;
-			lp->nsp = np;
-		}
-		lnp->flags |= __ISDIRTY;
-		newx = x + win->ch_off;
-		if (newx < *lnp->firstchp)
-			*lnp->firstchp = newx;
-		if (newx > *lnp->lastchp)
-			*lnp->lastchp = newx;
-		__touchline(win, y, x, x);
-		return OK;
-	}
-	/* check for new line first */
-	if (lnp->flags & __ISPASTEOL) {
-		x = 0;
-		lnp->flags &= ~__ISPASTEOL;
-		if (y == win->scr_b) {
-			if (!(win->flags & __SCROLLOK))
-				return ERR;
-			win->cury = y;
-			win->curx = x;
-			scroll(win);
-			y = win->cury;
-			x = win->curx;
-		} else {
-			y++;
-		}
-		lnp = win->lines[y];
-		lp = &win->lines[y]->line[x];
-	}
-	/* clear out the current character */
-	cw = WCOL(*lp);
-	if (cw >= 0) {
-		sx = x;
-	} else {
-		for (sx = x - 1; sx >= max(x + cw, 0); sx--) {
-#ifdef DEBUG
-			__CTRACE("[wadd_wch]clear current char (%d,%d)",
-				 y, sx);
-#endif /* DEBUG */
-			tp = &win->lines[y]->line[sx];
-			tp->ch = (wchar_t) btowc((int) win->bch);
-			if (_cursesi_copy_nsp(win->bnsp, tp) == ERR)
-				return ERR;
-
-			tp->attr = win->battr;
-			SET_WCOL(*tp, 1);
-		}
-		sx = x + cw;
-		lnp->flags |= __ISDIRTY;
-		newx = sx + win->ch_off;
-		if (newx < *lnp->firstchp)
-			*lnp->firstchp = newx;
-	}
-
-	/* check for enough space before the end of line */
-	cw = wcwidth(wch->vals[0]);
-	if (cw > win->maxx - x) {
-#ifdef DEBUG
-		__CTRACE("[wadd_wch]clear EOL (%d,%d)", y, x);
-#endif /* DEBUG */
-		lnp->flags |= __ISDIRTY;
-		newx = x + win->ch_off;
-		if (newx < *lnp->firstchp)
-			*lnp->firstchp = newx;
-		for (tp = lp; x < win->maxx; tp++, x++) {
-			tp->ch = (wchar_t) btowc((int) win->bch);
-			if (_cursesi_copy_nsp(win->bnsp, tp) == ERR)
-				return ERR;
-			tp->attr = win->battr;
-			SET_WCOL(*tp, 1);
-		}
-		newx = win->maxx - 1 + win->ch_off;
-		if (newx > *lnp->lastchp)
-			*lnp->lastchp = newx;
-		__touchline(win, y, sx, (int) win->maxx - 1);
-		sx = x = 0;
-		if (y == win->scr_b) {
-			if (!(win->flags & __SCROLLOK))
-				return ERR;
-			win->curx = x;
-			win->cury = y;
-			scroll(win);
-			x = win->curx;
-			y = win->cury;
-		} else {
-			y++;
-		}
-		lp = &win->lines[y]->line[0];
-		lnp = win->lines[y];
-	}
-	win->cury = y;
-
-	/* add spacing character */
-#ifdef DEBUG
-	__CTRACE("[wadd_wch]add character (%d,%d)%x",
-		y, x, wch->vals[0]);
-#endif /* DEBUG */
-	lnp->flags |= __ISDIRTY;
-	newx = x + win->ch_off;
-	if (newx < *lnp->firstchp)
-		*lnp->firstchp = newx;
-	if (lp->nsp) {
-		np = lp->nsp;
-		while (np) {
-			tnp = np->next;
-			free(np);
-			np = tnp;
-		}
-		lp->nsp = NULL;
-	}
-	lp->ch = wch->vals[0];
-	lp->attr = wch->attributes & WA_ATTRIBUTES;
-	SET_WCOL(*lp, cw);
-	if (wch->elements > 1) {
-		for (i = 1; i < wch->elements; i++) {
-			np = (nschar_t *)malloc(sizeof(nschar_t));
-			if (!np)
-				return ERR;;
-			np->ch = wch->vals[i];
-			np->next = lp->nsp;
-#ifdef DEBUG
-			__CTRACE("[wadd_wch]add non-spacing char 0x%x",
-			    np->ch);
-#endif /* DEBUG */
-			lp->nsp = np;
-		}
-	}
-#ifdef DEBUG
-	__CTRACE("[wadd_wch]non-spacing list header: %p\n", lp->nsp);
-	__CTRACE("[wadd_wch]add rest columns (%d:%d)\n",
-		sx + 1, sx + cw - 1);
-#endif /* DEBUG */
-	for (tp = lp + 1, x = sx + 1; x - sx <= cw - 1; tp++, x++) {
-		if (tp->nsp) {
-			np = tp->nsp;
-			while (np) {
-				tnp = np->next;
-				free(np);
-				np = tnp;
-			}
-			tp->nsp = NULL;
-		}
-		tp->ch = wch->vals[0];
-		tp->attr = wch->attributes & WA_ATTRIBUTES;
-		SET_WCOL(*tp, sx - x);
-	}
-	if (x == win->maxx) {
-		lnp->flags |= __ISPASTEOL;
-		newx = win->maxx - 1 + win->ch_off;
-		if (newx > *lnp->lastchp)
-			*lnp->lastchp = newx;
-		__touchline(win, y, sx, (int) win->maxx - 1);
-		win->curx = sx;
-	} else {
-		win->curx = x;
-
-		/* clear the remining of the current characer */
-		if (x && x < win->maxx) {
-			ex = sx + cw;
-			tp = &win->lines[y]->line[ex];
-			while (ex < win->maxx && WCOL(*tp) < 0) {
-#ifdef DEBUG
-				__CTRACE("[wadd_wch]clear remaining of current char (%d,%d)",
-				    y, ex);
-#endif /* DEBUG */
-				tp->ch = (wchar_t) btowc((int) win->bch);
-				if (_cursesi_copy_nsp(win->bnsp, tp) == ERR)
-					return ERR;
-				tp->attr = win->battr;
-				SET_WCOL(*tp, 1);
-				tp++, ex++;
-			}
-			newx = ex - 1 + win->ch_off;
-			if (newx > *lnp->lastchp)
-				*lnp->lastchp = newx;
-			__touchline(win, y, sx, ex - 1);
-		}
-	}
-
-#ifdef DEBUG
-	__CTRACE("add_wch: %d : 0x%x\n", lp->ch, lp->attr);
-#endif /* DEBUG */
-	return OK;
+	return _cursesi_addwchar(win, &lnp, &y, &x, wch);
 #endif /* HAVE_WCHAR */
 }
