@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.71 2007/03/04 06:01:24 christos Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.72 2007/05/29 21:32:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.71 2007/03/04 06:01:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.72 2007/05/29 21:32:28 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -86,6 +86,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.71 2007/03/04 06:01:24 christos E
 #endif
 
 #include <compat/sys/socket.h>
+#include <compat/sys/sockio.h>
 
 #include <compat/linux/common/linux_types.h>
 #include <compat/linux/common/linux_util.h>
@@ -1292,31 +1293,31 @@ linux_ioctl_socket(l, uap, retval)
 
 	switch (com) {
 	case LINUX_SIOCGIFCONF:
-		SCARG(&ia, com) = OSIOCGIFCONF;
+		SCARG(&ia, com) = OOSIOCGIFCONF;
 		break;
 	case LINUX_SIOCGIFFLAGS:
-		SCARG(&ia, com) = SIOCGIFFLAGS;
+		SCARG(&ia, com) = OSIOCGIFFLAGS;
 		break;
 	case LINUX_SIOCSIFFLAGS:
-		SCARG(&ia, com) = SIOCSIFFLAGS;
+		SCARG(&ia, com) = OSIOCSIFFLAGS;
 		break;
 	case LINUX_SIOCGIFADDR:
-		SCARG(&ia, com) = OSIOCGIFADDR;
+		SCARG(&ia, com) = OOSIOCGIFADDR;
 		break;
 	case LINUX_SIOCGIFDSTADDR:
-		SCARG(&ia, com) = OSIOCGIFDSTADDR;
+		SCARG(&ia, com) = OOSIOCGIFDSTADDR;
 		break;
 	case LINUX_SIOCGIFBRDADDR:
-		SCARG(&ia, com) = OSIOCGIFBRDADDR;
+		SCARG(&ia, com) = OOSIOCGIFBRDADDR;
 		break;
 	case LINUX_SIOCGIFNETMASK:
-		SCARG(&ia, com) = OSIOCGIFNETMASK;
+		SCARG(&ia, com) = OOSIOCGIFNETMASK;
 		break;
 	case LINUX_SIOCADDMULTI:
-		SCARG(&ia, com) = SIOCADDMULTI;
+		SCARG(&ia, com) = OSIOCADDMULTI;
 		break;
 	case LINUX_SIOCDELMULTI:
-		SCARG(&ia, com) = SIOCDELMULTI;
+		SCARG(&ia, com) = OSIOCDELMULTI;
 		break;
 	case LINUX_SIOCGIFHWADDR:
 	        error = linux_getifhwaddr(l, retval, SCARG(uap, fd),

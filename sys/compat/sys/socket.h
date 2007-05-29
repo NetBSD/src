@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.h,v 1.5 2007/03/04 06:01:38 christos Exp $	*/
+/*	$NetBSD: socket.h,v 1.6 2007/05/29 21:32:28 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1985, 1986, 1988, 1993, 1994
@@ -59,7 +59,7 @@ struct omsghdr {
 __BEGIN_DECLS
 struct socket;
 struct proc;
-int compat_ifioctl(struct socket *, u_long, void *, struct lwp *);
+int compat_ifioctl(struct socket *, u_long, u_long, void *, struct lwp *);
 __END_DECLS
 #else
 int	__socket30(int, int, int);
