@@ -1,4 +1,4 @@
-# $NetBSD: QEMU,v 1.9 2006/12/11 15:24:28 yamt Exp $
+# $NetBSD: QEMU,v 1.10 2007/05/29 21:37:09 christos Exp $
 #
 # QEMU machine description file
 #
@@ -11,7 +11,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"QEMU-$Revision: 1.9 $"
+#ident 		"QEMU-$Revision: 1.10 $"
 
 maxusers	32		# estimated number of users
 
@@ -116,6 +116,7 @@ options 	COMPAT_15	# NetBSD 1.5
 options 	COMPAT_16	# NetBSD 1.6
 options 	COMPAT_20	# NetBSD 2.0
 options 	COMPAT_30	# NetBSD 3.0
+options 	COMPAT_40	# NetBSD 4.0
 options 	COMPAT_43	# 4.3BSD, 386BSD, and BSDI
 options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.

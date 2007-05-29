@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.308 2007/05/28 21:54:38 pavel Exp $
+#	$NetBSD: INSTALL,v 1.309 2007/05/29 21:37:08 christos Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -94,6 +94,7 @@ options 	DDB		# in-kernel debugger
 #options 	COMPAT_16	# NetBSD 1.6
 options 	COMPAT_20	# NetBSD 2.0
 options 	COMPAT_30	# NetBSD 3.0 compatibility.
+options 	COMPAT_40	# NetBSD 4.0
 #options 	COMPAT_43	# 4.3BSD, 386BSD, and BSDI
 #options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
