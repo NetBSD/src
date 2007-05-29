@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.143 2007/05/28 12:06:23 tls Exp $
+#	$NetBSD: bsd.sys.mk,v 1.144 2007/05/29 04:56:34 tls Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -43,11 +43,11 @@ USE_SSP=	yes
 .if !defined(KERNSRCDIR) && !defined(KERN) # not for kernels nor kern modules
 .if defined(LIB)
 .if (${LIB} != "ssp") && (${LIB} != "c")
-COPTS+=		-D_FORTIFY_SOURCE=2 -I/usr/include/ssp
+COPTS+=		-D_FORTIFY_SOURCE=2 -I ${DESTDIR}/usr/include/ssp
 LIBDPLIBS+=	ssp ${NETBSDSRCDIR}/lib/libssp
 .endif
 .else
-COPTS+=		-D_FORTIFY_SOURCE=2 -I/usr/include/ssp
+COPTS+=		-D_FORTIFY_SOURCE=2 -I ${DESTDIR}/usr/include/ssp
 LDADD+=		-lssp
 .endif
 .endif
