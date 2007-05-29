@@ -1,4 +1,4 @@
-/*      $NetBSD: multibyte.c,v 1.1 2007/04/02 15:53:25 christos Exp $      */
+/*      $NetBSD: multibyte.c,v 1.2 2007/05/29 17:46:44 he Exp $      */
 
 /*
  * Ignore all multibyte sequences, removes all the citrus code.
@@ -26,10 +26,6 @@ wctob(wint_t x)
 	return x;
 }
 
-#if 0
-/*
- * We don't need these yet.
- */
 wint_t
 btowc(int x) {
 	return x;
@@ -55,16 +51,34 @@ size_t
 mbsrtowcs(wchar_t * __restrict pwcs, const char ** __restrict s, size_t n,
     mbstate_t * __restrict ps)
 {
-	/* XXX: Implement me */
-	return 0;
+	const char *p;
+	wchar_t *d;
+	size_t count;
+
+	for (p = *s, d = pwcs, count = 0; 
+		count <= n;
+		count++, d++, p++)
+	{
+		if (mbrtowc(d, p, 1, ps) == 0)
+			break;
+	}
+	return count;
 }
 
 size_t
 wcsrtombs(char * __restrict s, const wchar_t ** __restrict pwcs, size_t n,
     mbstate_t * __restrict ps)
 {
-	/* XXX: Implement me */
-	return 0;
-}
+	char *d;
+	const wchar_t *p;
+	size_t count;
 
-#endif
+	for (p = *pwcs, d = s, count = 0;
+		count <= n && *p != 0;
+		count++, d++, p++)
+	{
+		wcrtomb(d, *p, ps);
+	}
+	*d = 0;
+	return count;
+}
