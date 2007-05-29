@@ -1,4 +1,4 @@
-/*	$NetBSD: fmt.c,v 1.25 2006/01/15 14:41:45 christos Exp $	*/
+/*	$NetBSD: fmt.c,v 1.26 2007/05/29 15:27:37 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,13 +39,17 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)fmt.c	8.1 (Berkeley) 7/20/93";
 #endif
-__RCSID("$NetBSD: fmt.c,v 1.25 2006/01/15 14:41:45 christos Exp $");
+__RCSID("$NetBSD: fmt.c,v 1.26 2007/05/29 15:27:37 christos Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
 #include <locale.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
+#include <errno.h>
+#include <err.h>
+#include <limits.h>
 #include <string.h>
 #include "buffer.h"
 
@@ -64,6 +68,7 @@ __RCSID("$NetBSD: fmt.c,v 1.25 2006/01/15 14:41:45 christos Exp $");
 static size_t	goal_length;	/* Target or goal line length in output */
 static size_t	max_length;	/* Max line length in output */
 static size_t	pfx;		/* Current leading blank count */
+static int	raw;		/* Don't treat mail specially */
 static int	lineno;		/* Current input line */
 static int	mark;		/* Last place we saw a head line */
 static int	center;
@@ -71,6 +76,8 @@ static struct buffer outbuf;
 
 static const char	*headnames[] = {"To", "Subject", "Cc", 0};
 
+static void	usage(void) __attribute__((__noreturn__));
+static int 	getnum(const char *, const char *, size_t *, int);
 static void	fmt(FILE *);
 static int	ispref(const char *, const char *);
 static void	leadin(void);
@@ -94,7 +101,8 @@ main(int argc, char **argv)
 {
 	FILE *fi;
 	int errs = 0;
-	int number;		/* LIZ@UOM 6/18/85 */
+	int compat = 1;
+	int c;
 
 	goal_length = GOAL_LENGTH;
 	max_length = MAX_LENGTH;
@@ -105,35 +113,52 @@ main(int argc, char **argv)
 	setprogname(*argv);
 	(void)setlocale(LC_ALL, "");
 
+	while ((c = getopt(argc, argv, "Cg:m:r")) != -1)
+		switch (c) {
+		case 'C':
+			center++;
+			break;
+		case 'g':
+			(void)getnum(optarg, "goal", &goal_length, 1);
+			compat = 0;
+			break;
+		case 'm':
+			(void)getnum(optarg, "max", &max_length, 1);
+			compat = 0;
+			break;
+		case 'r':
+			raw++;
+			break;
+		default:
+			usage();
+		}
+
+	argc -= optind;
+	argv += optind;
+
 	/*
-	 * LIZ@UOM 6/18/85 -- Check for goal and max length arguments 
+	 * compatibility with old usage.
 	 */
-	if (argc > 1 && !strcmp(argv[1], "-C")) {
-		center++;
-		argc--;
-		argv++;
-	}
-	if (argc > 1 && (1 == (sscanf(argv[1], "%d", &number)))) {
+	if (compat && getnum(*argv, "goal", &goal_length, 0)) {
 		argv++;
 		argc--;
-		goal_length = abs(number);
-		if (argc > 1 && (1 == (sscanf(argv[1], "%d", &number)))) {
+		if (getnum(*argv, "max", &max_length, 0)) {
 			argv++;
 			argc--;
-			max_length = abs(number);
 		}
 	}
+
 	if (max_length <= goal_length) {
 		errx(1, "Max length (%zu) must be greater than goal "
 		    "length (%zu)", max_length, goal_length);
 	}
-	if (argc < 2) {
+	if (argc == 0) {
 		fmt(stdin);
 		oflush();
 		return 0;
 	}
-	while (--argc) {
-		if ((fi = fopen(*++argv, "r")) == NULL) {
+	while (argc--) {
+		if ((fi = fopen(*argv++, "r")) == NULL) {
 			warn("Cannot open `%s'", *argv);
 			errs++;
 			continue;
@@ -144,6 +169,35 @@ main(int argc, char **argv)
 	oflush();
 	buf_end(&outbuf);
 	return errs;
+}
+
+static void
+usage(void)
+{
+	(void)fprintf(stderr,
+	    "Usage: %s [-Cr] [-g <goal>] [-m <max>] [<files>..]\n"
+	    "\t %s [-Cr] [<goal>] [<max>] [<files>]\n",
+	    getprogname(), getprogname());
+	exit(1);
+}
+
+static int
+getnum(const char *str, const char *what, size_t *res, int badnum)
+{
+	unsigned long ul;
+	char *ep;
+
+	errno = 0;
+	ul = strtoul(str, &ep, 0);
+        if (*str != '\0' && *ep == '\0') {
+		 if ((errno == ERANGE && ul == ULONG_MAX) || ul > SIZE_T_MAX)
+			errx(1, "%s number `%s' too big", what, str);
+		*res = (size_t)ul;
+		return 1;
+	} else if (badnum)
+		errx(1, "Bad %s number `%s'", what, str);
+
+	return 0;
 }
 
 /*
@@ -272,19 +326,22 @@ prefix(const struct buffer *buf, int add_space)
 	 */
 	if (np != pfx && (np > pfx || abs((int)(pfx - np)) > 8))
 		oflush();
-	if ((h = ishead(cp)) != 0) {
-		oflush();
-		mark = lineno;
-	}
-	if (lineno - mark < 3 && lineno - mark > 0)
-		for (hp = &headnames[0]; *hp != NULL; hp++)
-			if (ispref(*hp, cp)) {
-				h = 1;
-				oflush();
-				break;
-			}
-	if (!h && (h = (*cp == '.')))
-		oflush();
+	if (!raw) {
+		if ((h = ishead(cp)) != 0) {
+			oflush();
+			mark = lineno;
+		}
+		if (lineno - mark < 3 && lineno - mark > 0)
+			for (hp = &headnames[0]; *hp != NULL; hp++)
+				if (ispref(*hp, cp)) {
+					h = 1;
+					oflush();
+					break;
+				}
+		if (!h && (h = (*cp == '.')))
+			oflush();
+	} else
+		h = 0;
 	pfx = np;
 	if (h) {
 		pack(cp, (size_t)(buf->ptr - cp));
