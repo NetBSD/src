@@ -1,4 +1,4 @@
-/*	$NetBSD: ctrace.c,v 1.18 2007/01/22 21:14:53 jdc Exp $	*/
+/*	$NetBSD: ctrace.c,v 1.19 2007/05/29 13:20:21 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)ctrace.c	8.2 (Berkeley) 10/5/93";
 #else
-__RCSID("$NetBSD: ctrace.c,v 1.18 2007/01/22 21:14:53 jdc Exp $");
+__RCSID("$NetBSD: ctrace.c,v 1.19 2007/05/29 13:20:21 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -48,10 +48,6 @@ __RCSID("$NetBSD: ctrace.c,v 1.18 2007/01/22 21:14:53 jdc Exp $");
 
 #include "curses.h"
 #include "curses_private.h"
-
-#ifndef TFILE
-#define	TFILE	"__curses.out"
-#endif
 
 static FILE *tracefp = NULL;		/* Curses debugging file descriptor. */
 
@@ -74,9 +70,15 @@ __CTRACE_init()
 		tracemask = (0 - tracemask) ^ __CTRACE_ALL;
 	if (tracemask == 0)
 		return;
+
 	tf = getenv("CURSES_TRACE_FILE");
-	if (tf == NULL || strcmp( tf, "<none>"))
-		tracefp = fopen(tf ? tf : TFILE, "w");
+
+	if ((tf != NULL) && !strcmp( tf, "<none>"))
+		tf = NULL;
+
+	if (tf != NULL)
+		tracefp = fopen(tf, "w");
+
 	init_done = 1;
 	__CTRACE(__CTRACE_ALL, "Trace mask: 0x%08x\n", tracemask);
 }
