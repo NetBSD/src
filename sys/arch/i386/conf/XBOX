@@ -1,4 +1,4 @@
-# $NetBSD: XBOX,v 1.7 2007/03/14 12:27:23 drochner Exp $
+# $NetBSD: XBOX,v 1.8 2007/05/29 21:37:09 christos Exp $
 #
 # XBOX -- A basic Microsoft XBox kernel config file.
 #
@@ -43,6 +43,7 @@ options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 
 # Compatibility options
 options 	COMPAT_30	# NetBSD 3.0
+options 	COMPAT_40	# NetBSD 4.0
 options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # File systems
