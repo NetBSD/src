@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.200 2007/05/28 23:42:56 ad Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.201 2007/05/29 11:30:17 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.200 2007/05/28 23:42:56 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.201 2007/05/29 11:30:17 tsutsui Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1081,14 +1081,14 @@ ffs_oldfscompat_read(struct fs *fs, struct ufsmount *ump, daddr_t sblockloc)
 	}
 
 	if (fs->fs_old_inodefmt < FS_44INODEFMT) {
-		ump->um_maxfilesize = (u_quad_t) 1LL << 39;
+		fs->fs_maxfilesize = (u_quad_t) 1LL << 39;
 		fs->fs_qbmask = ~fs->fs_bmask;
 		fs->fs_qfmask = ~fs->fs_fmask;
 	}
 
 	maxfilesize = (u_int64_t)0x80000000 * fs->fs_bsize - 1;
-	if (ump->um_maxfilesize > maxfilesize)
-		ump->um_maxfilesize = maxfilesize;
+	if (fs->fs_maxfilesize > maxfilesize)
+		fs->fs_maxfilesize = maxfilesize;
 
 	/* Compatibility for old filesystems */
 	if (fs->fs_avgfilesize <= 0)
