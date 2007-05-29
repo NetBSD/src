@@ -1,4 +1,4 @@
-/*	$NetBSD: background.c,v 1.11 2007/05/28 15:01:54 blymn Exp $	*/
+/*	$NetBSD: background.c,v 1.12 2007/05/29 11:10:55 blymn Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: background.c,v 1.11 2007/05/28 15:01:54 blymn Exp $");
+__RCSID("$NetBSD: background.c,v 1.12 2007/05/29 11:10:55 blymn Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -177,7 +177,7 @@ int wbkgrnd(WINDOW *win, const cchar_t *wch)
 
 #ifdef DEBUG
 	__CTRACE(__CTRACE_ATTR, "wbkgrnd: (%p), '%s', %x\n",
-		win, (char *) wunctrl(wch), wch->attributes);
+		win, (const char *) wunctrl(wch), wch->attributes);
 #endif
 
 	/* ignore multi-column characters */
@@ -205,7 +205,7 @@ void wbkgrndset(WINDOW *win, const cchar_t *wch)
 
 #ifdef DEBUG
 	__CTRACE(__CTRACE_ATTR, "wbkgrndset: (%p), '%s', %x\n",
-		win, (char *) wunctrl(wch), wch->attributes);
+		win, (const char *) wunctrl(wch), wch->attributes);
 #endif
 
 	/* ignore multi-column characters */

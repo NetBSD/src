@@ -1,4 +1,4 @@
-/*   $NetBSD: ins_wch.c,v 1.2 2007/05/28 15:01:56 blymn Exp $ */
+/*   $NetBSD: ins_wch.c,v 1.3 2007/05/29 11:10:56 blymn Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ins_wch.c,v 1.2 2007/05/28 15:01:56 blymn Exp $");
+__RCSID("$NetBSD: ins_wch.c,v 1.3 2007/05/29 11:10:56 blymn Exp $");
 #endif						  /* not lint */
 
 #include <string.h>
@@ -232,7 +232,6 @@ wins_wch(WINDOW *win, const cchar_t *wch)
 	}
 #ifdef DEBUG
 	{
-		int x;
 		__CTRACE(__CTRACE_INPUT, "--after---\n");
 		for ( x = 0; x < win->maxx; x++ )
 			__CTRACE(__CTRACE_INPUT,

@@ -1,4 +1,4 @@
-/*   $NetBSD: get_wch.c,v 1.2 2007/05/28 15:01:55 blymn Exp $ */
+/*   $NetBSD: get_wch.c,v 1.3 2007/05/29 11:10:56 blymn Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: get_wch.c,v 1.2 2007/05/28 15:01:55 blymn Exp $");
+__RCSID("$NetBSD: get_wch.c,v 1.3 2007/05/29 11:10:56 blymn Exp $");
 #endif						  /* not lint */
 
 #include <string.h>
@@ -279,7 +279,7 @@ inkey(wchar_t *wc, int to, int delay)
 				    "urrent(%d), tail(%d)]\n",
 				    *start, *working, *end);
 #endif /* DEBUG */
-				ret = mbrtowc( wc, inbuf + (*working), 1,
+				ret = (int) mbrtowc( wc, inbuf + (*working), 1,
 					&_cursesi_screen->sp );
 #ifdef DEBUG
 				__CTRACE(__CTRACE_INPUT,
@@ -368,7 +368,7 @@ inkey(wchar_t *wc, int to, int delay)
 			    "current(%d), tail(%d), mlen(%ld)]\n",
 			    *start, *working, *end, (long) mlen);
 #endif /* DEBUG */
-			ret = mbrtowc( wc, inbuf + (*working), mlen,
+			ret = (int) mbrtowc( wc, inbuf + (*working), mlen,
 				&_cursesi_screen->sp );
 #ifdef DEBUG
 			__CTRACE(__CTRACE_INPUT,
@@ -379,11 +379,12 @@ inkey(wchar_t *wc, int to, int delay)
 				*working = 0;
 				mlen = *end;
 				if ( mlen )
-					ret = mbrtowc( wc, inbuf, mlen,
+					ret = (int) mbrtowc( wc, inbuf, mlen,
 						&_cursesi_screen->sp );
 			}
 			if ( ret == -2 && wstate != INKEY_TIMEOUT ) {
-				*working = (*working + mlen) % MAX_CBUF_SIZE;
+				*working = (*working + (int) mlen)
+					% MAX_CBUF_SIZE;
 				wstate = INKEY_WCASSEMBLING;
 				continue;
 			}
