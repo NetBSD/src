@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.38 2007/03/10 21:40:23 dsl Exp $
+#	$NetBSD: Makefile,v 1.39 2007/05/29 21:32:27 christos Exp $
 
 LIB=		compat
 NOPIC=		# defined
@@ -32,6 +32,9 @@ SRCS+=	vfs_syscalls_20.c
 
 # Compatibility code for NetBSD 3.0
 SRCS+=	vfs_syscalls_30.c uipc_syscalls_30.c
+
+# Compatibility code for NetBSD 4.0
+SRCS+=	uipc_syscalls_40.c
 
 # really, all machines where sizeof(int) != sizeof(long) (LP64)
 .if (${MACHINE_ARCH} != "alpha" && ${MACHINE_ARCH} != "sparc64" \

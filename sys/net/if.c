@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.185 2007/03/18 20:59:38 dyoung Exp $	*/
+/*	$NetBSD: if.c,v 1.186 2007/05/29 21:32:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -97,10 +97,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.185 2007/03/18 20:59:38 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.186 2007/05/29 21:32:29 christos Exp $");
 
 #include "opt_inet.h"
 
+#include "opt_compat_netbsd.h"
 #include "opt_compat_linux.h"
 #include "opt_compat_svr4.h"
 #include "opt_compat_ultrix.h"
@@ -151,7 +152,16 @@ __KERNEL_RCSID(0, "$NetBSD: if.c,v 1.185 2007/03/18 20:59:38 dyoung Exp $");
 #include <netinet/ip_carp.h>
 #endif
 
-#if defined(COMPAT_43) || defined(COMPAT_LINUX) || defined(COMPAT_SVR4) || defined(COMPAT_ULTRIX) || defined(LKM)
+#if defined(COMPAT_09) || defined(COMPAT_10) || defined(COMPAT_11) || \
+    defined(COMPAT_12) || defined(COMPAT_13) || defined(COMPAT_14) || \
+    defined(COMPAT_15) || defined(COMPAT_16) || defined(COMPAT_20) || \
+    defined(COMPAT_30) || defined(COMPAT_40)
+#define COMPAT_OIFREQ
+#include <compat/sys/sockio.h>
+#endif
+
+#if defined(COMPAT_43) || defined(COMPAT_LINUX) || defined(COMPAT_SVR4) || \
+    defined(COMPAT_ULTRIX) || defined(LKM)
 #define COMPAT_OSOCK
 #include <compat/sys/socket.h>
 #endif
@@ -1326,16 +1336,38 @@ ifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 	struct ifcapreq *ifcr;
 	struct ifdatareq *ifdr;
 	int s, error = 0;
+	u_long ocmd;
 	short oif_flags;
+#ifdef COMPAT_OIFREQ
+	struct ifreq ifrb;
+	struct oifreq *oifr;
+#endif
 
 	switch (cmd) {
-	case SIOCGIFCONF:
+#ifdef COMPAT_OIFREQ
 	case OSIOCGIFCONF:
+	case OOSIOCGIFCONF:
+		return compat_ifconf(cmd, data);
+#endif
+	case SIOCGIFCONF:
 		return ifconf(cmd, data);
 	}
-	ifr = (struct ifreq *)data;
-	ifcr = (struct ifcapreq *)data;
-	ifdr = (struct ifdatareq *)data;
+	ocmd = cmd;
+#ifdef COMPAT_OIFREQ
+	cmd = cvtcmd(cmd);
+	if (cmd != ocmd) {
+		oifr = data;
+		data = ifr = &ifrb;
+		ifreqo2n(oifr, ifr);
+#ifdef DEBUG_OIFREQ
+		printf("ifioctl ocmd = %lx cmd = %lx '%c' %u\n",
+		    ocmd, cmd, (char)IOCGROUP(cmd), (u_int)(cmd & 0xff));
+#endif
+	} else
+#endif
+		ifr = data;
+	ifcr = data;
+	ifdr = data;
 
 	ifp = ifunit(ifr->ifr_name);
 
@@ -1561,7 +1593,7 @@ ifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 		if (so->so_proto == NULL)
 			return EOPNOTSUPP;
 #ifdef COMPAT_OSOCK
-		error = compat_ifioctl(so, cmd, data, l);
+		error = compat_ifioctl(so, ocmd, cmd, data, l);
 #else
 		error = ((*so->so_proto->pr_usrreq)(so, PRU_CONTROL,
 		    (struct mbuf *)cmd, (struct mbuf *)data,
@@ -1579,6 +1611,10 @@ ifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 		}
 #endif
 	}
+#ifdef COMPAT_OIFREQ
+	if (cmd != ocmd)
+		ifreqn2o(oifr, ifr);
+#endif
 
 	return error;
 }
@@ -1626,23 +1662,6 @@ ifconf(u_long cmd, void *data)
 
 		TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
 			struct sockaddr *sa = ifa->ifa_addr;
-#ifdef COMPAT_OSOCK
-			if (cmd == OSIOCGIFCONF) {
-				struct osockaddr *osa =
-					 (struct osockaddr *)&ifr.ifr_addr;
-				/*
-				 * If it does not fit, we don't bother with it
-				 */
-				if (sa->sa_len > sizeof(*osa))
-					continue;
-				ifr.ifr_addr = *sa;
-				osa->sa_family = sa->sa_family;
-				if (ifrp != NULL && space >= sz) {
-					error = copyout(&ifr, ifrp, sz);
-					ifrp++;
-				}
-			} else
-#endif
 			if (sa->sa_len <= sizeof(*sa)) {
 				ifr.ifr_addr = *sa;
 				if (ifrp != NULL && space >= sz) {
