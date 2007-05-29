@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls_43.c,v 1.28 2007/03/04 06:01:13 christos Exp $	*/
+/*	$NetBSD: uipc_syscalls_43.c,v 1.29 2007/05/29 21:32:27 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_43.c,v 1.28 2007/03/04 06:01:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_43.c,v 1.29 2007/05/29 21:32:27 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,8 +55,9 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_43.c,v 1.28 2007/03/04 06:01:13 christ
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 
-#include <compat/sys/socket.h>
 #include <net/if.h>
+#include <compat/sys/socket.h>
+#include <compat/sys/sockio.h>
 
 #include <compat/common/compat_util.h>
 
@@ -451,57 +452,60 @@ compat_43_sa_put(from)
 }
 
 int
-compat_ifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
+compat_ifioctl(struct socket *so, u_long ocmd, u_long cmd, void *data,
+    struct lwp *l)
 {
-	int error, ocmd = cmd;
-	struct ifreq *ifr = (struct ifreq *)data;
+	int error;
+	struct ifreq *ifr = data;
 	struct ifnet *ifp = ifunit(ifr->ifr_name);
+	struct sockaddr *sa;
 
 	if (ifp == NULL)
 		return ENXIO;
 
-	switch (cmd) {
-	case SIOCSIFADDR:
-	case SIOCSIFDSTADDR:
-	case SIOCSIFBRDADDR:
-	case SIOCSIFNETMASK:
+	switch (ocmd) {
+	case OSIOCSIFADDR:
+	case OSIOCSIFDSTADDR:
+	case OSIOCSIFBRDADDR:
+	case OSIOCSIFNETMASK:
+		sa = &ifr->ifr_addr;
 #if BYTE_ORDER != BIG_ENDIAN
-		if (ifr->ifr_addr.sa_family == 0 &&
-		    ifr->ifr_addr.sa_len < 16) {
-			ifr->ifr_addr.sa_family = ifr->ifr_addr.sa_len;
-			ifr->ifr_addr.sa_len = 16;
+		if (sa->sa_family == 0 && sa->sa_len < 16) {
+			sa->sa_family = sa->sa_len;
+			sa->sa_len = 16;
 		}
 #else
-		if (ifr->ifr_addr.sa_len == 0)
-			ifr->ifr_addr.sa_len = 16;
+		if (sa->sa_len == 0)
+			sa->sa_len = 16;
 #endif
 		break;
 
-	case OSIOCGIFADDR:
+	case OOSIOCGIFADDR:
 		cmd = SIOCGIFADDR;
 		break;
 
-	case OSIOCGIFDSTADDR:
+	case OOSIOCGIFDSTADDR:
 		cmd = SIOCGIFDSTADDR;
 		break;
 
-	case OSIOCGIFBRDADDR:
+	case OOSIOCGIFBRDADDR:
 		cmd = SIOCGIFBRDADDR;
 		break;
 
-	case OSIOCGIFNETMASK:
+	case OOSIOCGIFNETMASK:
 		cmd = SIOCGIFNETMASK;
 	}
 
 	error = (*so->so_proto->pr_usrreq)(so, PRU_CONTROL,
-	    (struct mbuf *)cmd, (struct mbuf *)data, (struct mbuf *)ifp, l);
+	    (struct mbuf *)cmd, (struct mbuf *)ifr, (struct mbuf *)ifp, l);
 
 	switch (ocmd) {
-	case OSIOCGIFADDR:
-	case OSIOCGIFDSTADDR:
-	case OSIOCGIFBRDADDR:
-	case OSIOCGIFNETMASK:
-		*(u_int16_t *)&ifr->ifr_addr = ifr->ifr_addr.sa_family;
+	case OOSIOCGIFADDR:
+	case OOSIOCGIFDSTADDR:
+	case OOSIOCGIFBRDADDR:
+	case OOSIOCGIFNETMASK:
+		*(u_int16_t *)&ifr->ifr_addr = 
+		    ((struct sockaddr *)&ifr->ifr_addr)->sa_family;
 	}
 	return error;
 }
