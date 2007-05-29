@@ -1,4 +1,4 @@
-/*	$NetBSD: clrtoeol.c,v 1.23 2007/05/28 15:01:54 blymn Exp $	*/
+/*	$NetBSD: clrtoeol.c,v 1.24 2007/05/29 11:10:56 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)clrtoeol.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: clrtoeol.c,v 1.23 2007/05/28 15:01:54 blymn Exp $");
+__RCSID("$NetBSD: clrtoeol.c,v 1.24 2007/05/29 11:10:56 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -96,7 +96,7 @@ wclrtoeol(WINDOW *win)
 #endif /* HAVE_WCHAR */
 			maxx = sp;
 			if (minx == -1)
-				minx = sp - win->lines[y]->line;
+				minx = (int) (sp - win->lines[y]->line);
 			sp->attr = attr;
 #ifdef HAVE_WCHAR
 			sp->ch = ( wchar_t )btowc(( int ) win->bch);
