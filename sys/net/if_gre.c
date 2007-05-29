@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.95 2007/05/29 22:05:01 xtraeme Exp $ */
+/*	$NetBSD: if_gre.c,v 1.96 2007/05/29 23:32:41 christos Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.95 2007/05/29 22:05:01 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.96 2007/05/29 23:32:41 christos Exp $");
 
 #include "opt_gre.h"
 #include "opt_inet.h"
@@ -908,8 +908,8 @@ gre_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	struct sockaddr_in si;
 	struct sockaddr *sa = NULL;
 	int error = 0;
-	u_long ocmd = cmd;
 #ifdef COMPAT_OIFREQ
+	u_long ocmd = cmd;
 	struct oifreq *oifr = NULL;
 	struct ifreq ifrb;
 
