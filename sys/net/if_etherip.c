@@ -1,4 +1,4 @@
-/*      $NetBSD: if_etherip.c,v 1.6 2007/04/23 05:05:03 dyoung Exp $        */
+/*      $NetBSD: if_etherip.c,v 1.7 2007/05/29 21:32:29 christos Exp $        */
 
 /*
  *  Copyright (c) 2006, Hans Rosenfeld <rosenfeld@grumpf.hope-2000.org>
@@ -95,6 +95,7 @@
 #include <sys/cdefs.h>
 
 #include "opt_inet.h"
+#include "opt_compat_netbsd.h"
 #include "bpfilter.h"
 
 #include <sys/param.h>
@@ -139,6 +140,13 @@
 #include <netinet6/in6_gif.h>
 #include <netinet6/ip6protosw.h>
 #endif /* INET6 */
+
+#if defined(COMPAT_09) || defined(COMPAT_10) || defined(COMPAT_11) || \
+    defined(COMPAT_12) || defined(COMPAT_13) || defined(COMPAT_14) || \
+    defined(COMPAT_15) || defined(COMPAT_16) || defined(COMPAT_20) || \
+    defined(COMPAT_30) || defined(COMPAT_40)
+#include <compat/sys/sockio.h>
+#endif
 
 static int etherip_node;
 static int etherip_sysctl_handler(SYSCTLFN_PROTO);
@@ -408,7 +416,7 @@ static int
 etherip_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct etherip_softc *sc = (struct etherip_softc *)ifp->if_softc;
-	struct ifreq *ifr = (struct ifreq *)data;
+	struct ifreq *ifr = data;
 	struct sockaddr *src, *dst;
 	int s, error;
 
@@ -474,6 +482,9 @@ etherip_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		error = 0;
 		break;
 
+#ifdef OSIOCSIFMEDIA
+	case OSIOCSIFMEDIA:
+#endif
 	case SIOCSIFMEDIA:
 	case SIOCGIFMEDIA:
 		s = splnet();

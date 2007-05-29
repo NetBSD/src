@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.28 2007/05/17 18:01:57 christos Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.29 2007/05/29 21:32:30 christos Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004 The NetBSD Foundation.
@@ -43,10 +43,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.28 2007/05/17 18:01:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.29 2007/05/29 21:32:30 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "bpfilter.h"
+#include "opt_compat_netbsd.h"
 #endif
 
 #include <sys/param.h>
@@ -71,6 +72,13 @@ __KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.28 2007/05/17 18:01:57 christos Exp $")
 #include <net/if_tap.h>
 #if NBPFILTER > 0
 #include <net/bpf.h>
+#endif
+
+#if defined(COMPAT_09) || defined(COMPAT_10) || defined(COMPAT_11) || \
+    defined(COMPAT_12) || defined(COMPAT_13) || defined(COMPAT_14) || \
+    defined(COMPAT_15) || defined(COMPAT_16) || defined(COMPAT_20) || \
+    defined(COMPAT_30) || defined(COMPAT_40)
+#include <compat/sys/sockio.h>
 #endif
 
 /*
@@ -492,6 +500,9 @@ tap_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	s = splnet();
 
 	switch (cmd) {
+#ifdef OSIOCSIFMEDIA
+	case OSIOCSIFMEDIA:
+#endif
 	case SIOCSIFMEDIA:
 	case SIOCGIFMEDIA:
 		error = ifmedia_ioctl(ifp, ifr, &sc->sc_im, cmd);
@@ -1033,6 +1044,9 @@ tap_dev_ioctl(int unit, u_long cmd, void *data, struct lwp *l)
 		else
 			sc->sc_flags &= ~TAP_NBIO;
 		break;
+#ifdef OTAPGIFNAME
+	case OTAPGIFNAME:
+#endif
 	case TAPGIFNAME:
 		{
 			struct ifreq *ifr = (struct ifreq *)data;
