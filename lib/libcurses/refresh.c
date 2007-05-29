@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.66 2007/05/29 11:10:56 blymn Exp $	*/
+/*	$NetBSD: refresh.c,v 1.67 2007/05/29 19:07:19 veego Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.7 (Berkeley) 8/13/94";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.66 2007/05/29 11:10:56 blymn Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.67 2007/05/29 19:07:19 veego Exp $");
 #endif
 #endif				/* not lint */
 
@@ -828,7 +828,7 @@ makech(int wy)
 				    win->begx * __LDATASIZE;
 #ifdef DEBUG
 				__CTRACE(__CTRACE_REFRESH,
-				    "makech: clsp = %ld, nlsp = %ld\n",
+				    "makech: clsp = %zu, nlsp = %zu\n",
 				    clsp, nlsp);
 #endif
 				if (((clsp - nlsp >= strlen(__tc_ce) &&
