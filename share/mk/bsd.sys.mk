@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.145 2007/05/29 13:55:31 tls Exp $
+#	$NetBSD: bsd.sys.mk,v 1.146 2007/05/29 21:09:18 tls Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -38,8 +38,8 @@ CPPFLAGS+=	${AUDIT:D-D__AUDIT__}
 CFLAGS+=	${CWARNFLAGS} ${NOGCCERROR:D:U-Werror}
 LINTFLAGS+=	${DESTDIR:D-d ${DESTDIR}/usr/include}
 
-.if (${MACHINE_ARCH} != "alpha") && (${MACHINE_ARCH} != "hppa") && \
-	(${MACHINE_ARCH} != "mips")
+.if (${MACHINE_CPU} != "alpha") && (${MACHINE_CPU} != "hppa") && \
+	(${MACHINE_CPU} != "mips")
 
 .if defined(USE_FORT) && (${USE_FORT} != "no")
 USE_SSP=	yes
