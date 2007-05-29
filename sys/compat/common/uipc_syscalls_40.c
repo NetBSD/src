@@ -1,9 +1,9 @@
-/*	$NetBSD: uipc_syscalls_40.c,v 1.1 2007/05/29 21:32:27 christos Exp $	*/
+/*	$NetBSD: uipc_syscalls_40.c,v 1.2 2007/05/29 23:57:33 christos Exp $	*/
 
 /* written by Pavel Cahyna, 2006. Public domain. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_40.c,v 1.1 2007/05/29 21:32:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_40.c,v 1.2 2007/05/29 23:57:33 christos Exp $");
 
 /*
  * System call interface to the socket abstraction.
@@ -35,8 +35,10 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_40.c,v 1.1 2007/05/29 21:32:27 christo
     defined(COMPAT_12) || defined(COMPAT_13) || defined(COMPAT_14) || \
     defined(COMPAT_15) || defined(COMPAT_16) || defined(COMPAT_20) || \
     defined(COMPAT_30) || defined(COMPAT_40)
+#define COMPAT_OIFREQ
 #include <compat/sys/sockio.h>
 #endif
+#ifdef COMPAT_OIFREQ
 /*
  * Return interface configuration
  * of system.  List may be used
@@ -129,3 +131,4 @@ compat_ifconf(u_long cmd, void *data)
 		ifc->ifc_len = space;
 	return error;
 }
+#endif
