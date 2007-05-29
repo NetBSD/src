@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2007/05/28 12:06:22 tls Exp $
+#	$NetBSD: Makefile,v 1.15 2007/05/29 13:55:31 tls Exp $
 
 # RCSid:
 #	Id: Makefile,v 1.33 1998/11/11 11:53:53 sjg Exp
@@ -18,7 +18,7 @@
 
 .include <bsd.own.mk>
 
-USE_FORT=yes	# cryptographic software and network library
+USE_FORT?=yes	# cryptographic software and network library
 
 # XXX There's a bit of work to do before we can enable warnings.
 WARNS=0
