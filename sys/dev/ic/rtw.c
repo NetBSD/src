@@ -1,4 +1,4 @@
-/* $NetBSD: rtw.c,v 1.86 2007/05/29 18:32:07 dyoung Exp $ */
+/* $NetBSD: rtw.c,v 1.87 2007/05/29 18:33:38 dyoung Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.86 2007/05/29 18:32:07 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.87 2007/05/29 18:33:38 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -634,7 +634,7 @@ rtw_wep_setkeys(struct rtw_softc *sc, struct ieee80211_key *wk, int txkey)
 	regs = &sc->sc_regs;
 	rk = &sc->sc_keys;
 
-	(void)memset(rk->rk_keys, 0, sizeof(rk->rk_keys));
+	(void)memset(rk, 0, sizeof(rk));
 
 	/* Temporarily use software crypto for all keys. */
 	for (i = 0; i < IEEE80211_WEP_NKID; i++) {
@@ -679,8 +679,7 @@ out:
 	RTW_WRITE8(regs, RTW_PSR, psr & ~RTW_PSR_PSEN);
 
 	bus_space_write_region_4(regs->r_bt, regs->r_bh,
-	    RTW_DK0, rk->rk_words,
-	    sizeof(rk->rk_words) / sizeof(rk->rk_words[0]));
+	    RTW_DK0, rk->rk_words, __arraycount(rk->rk_words));
 
 	bus_space_barrier(regs->r_bt, regs->r_bh, RTW_DK0, sizeof(rk->rk_words),
 	    BUS_SPACE_BARRIER_SYNC);
@@ -1523,7 +1522,7 @@ rtw_intr_rx(struct rtw_softc *sc, uint16_t isr)
 		len -= IEEE80211_CRC_LEN;
 
 		hwrate = __SHIFTOUT(hstat, RTW_RXSTAT_RATE_MASK);
-		if (hwrate >= sizeof(ratetbl) / sizeof(ratetbl[0])) {
+		if (hwrate >= __arraycount(ratetbl)) {
 			printf("%s: unknown rate #%" __PRIuBITS "\n",
 			    sc->sc_dev.dv_xname,
 			    __SHIFTOUT(hstat, RTW_RXSTAT_RATE_MASK));
@@ -2645,8 +2644,6 @@ rtw_pktfilt_load(struct rtw_softc *sc)
 	    ("%s: RTW_MAR0 %08x RTW_MAR1 %08x RTW_RCR %08x\n",
 	    sc->sc_dev.dv_xname, RTW_READ(regs, RTW_MAR0),
 	    RTW_READ(regs, RTW_MAR1), RTW_READ(regs, RTW_RCR)));
-
-	return;
 }
 
 static struct mbuf *
