@@ -1,4 +1,4 @@
-/*   $NetBSD: cchar.c,v 1.2 2007/05/28 15:01:54 blymn Exp $ */
+/*   $NetBSD: cchar.c,v 1.3 2007/05/29 11:10:56 blymn Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: cchar.c,v 1.2 2007/05/28 15:01:54 blymn Exp $");
+__RCSID("$NetBSD: cchar.c,v 1.3 2007/05/29 11:10:56 blymn Exp $");
 #endif						  /* not lint */
 
 #include <string.h>
@@ -56,7 +56,7 @@ getcchar(const cchar_t *wcval, wchar_t *wch, attr_t *attrs,
 	return ERR;
 #else
 	wchar_t *wp;
-	int len;
+	size_t len;
 
 	if ( opts )
 		return ERR;
@@ -65,11 +65,11 @@ getcchar(const cchar_t *wcval, wchar_t *wch, attr_t *attrs,
 		? wp - wcval->vals : CCHARW_MAX;
 
 	if (wch == NULL)
-		return len;
+		return (int) len;
 	if (attrs == 0 || color_pair == 0)
 		return ERR;
-	if (len >= 0) {
-		*attrs = wcval -> attributes;
+	if (len > 0) {
+		*attrs = wcval->attributes;
 		*color_pair = COLOR_PAIR( wcval -> attributes );
 		wmemcpy(wch, wcval->vals, (unsigned) len);
 		wch[len] = L'\0';
@@ -90,7 +90,7 @@ setcchar(cchar_t *wcval, const wchar_t *wch, const attr_t attrs,
 	return ERR;
 #else
 	int i;
-	int len;
+	size_t len;
 
 	if (opts || (len = wcslen(wch)) > CCHARW_MAX
 		|| (len > 1 && wcwidth(wch[0]) < 0)) {
@@ -118,4 +118,3 @@ setcchar(cchar_t *wcval, const wchar_t *wch, const attr_t attrs,
 	return OK;
 #endif /* HAVE_WCHAR */
 }
-
