@@ -1,4 +1,4 @@
-/* $NetBSD: rtw.c,v 1.87 2007/05/29 18:33:38 dyoung Exp $ */
+/* $NetBSD: rtw.c,v 1.88 2007/05/29 18:38:20 dyoung Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.87 2007/05/29 18:33:38 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.88 2007/05/29 18:38:20 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -678,7 +678,7 @@ rtw_wep_setkeys(struct rtw_softc *sc, struct ieee80211_key *wk, int txkey)
 out:
 	RTW_WRITE8(regs, RTW_PSR, psr & ~RTW_PSR_PSEN);
 
-	bus_space_write_region_4(regs->r_bt, regs->r_bh,
+	bus_space_write_region_stream_4(regs->r_bt, regs->r_bh,
 	    RTW_DK0, rk->rk_words, __arraycount(rk->rk_words));
 
 	bus_space_barrier(regs->r_bt, regs->r_bh, RTW_DK0, sizeof(rk->rk_words),
