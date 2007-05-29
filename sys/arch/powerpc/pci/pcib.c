@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.1.2.2 2007/05/03 23:30:28 garbled Exp $	*/
+/*	$NetBSD: pcib.c,v 1.1.2.3 2007/05/29 04:53:54 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.1.2.2 2007/05/03 23:30:28 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.1.2.3 2007/05/29 04:53:54 nisimura Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -135,7 +135,7 @@ pcibattach(struct device *parent, struct device *self, void *aux)
 			int i;
 			aprint_verbose("%s:", self->dv_xname);
 			for (i = 0; i < 4; i++, v >>= 8) {
-				if ((v & 80) == 0 && (v & 0x0f) != 0) {
+				if ((v & 0x80) == 0 && (v & 0x0f) != 0) {
 					aprint_verbose(" PIRQ[%d]=%d", i,
 					    v & 0x0f);
 					lvlmask |= (1 << (v & 0x0f));
