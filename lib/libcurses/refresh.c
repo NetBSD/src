@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.65 2007/05/28 15:01:57 blymn Exp $	*/
+/*	$NetBSD: refresh.c,v 1.66 2007/05/29 11:10:56 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.7 (Berkeley) 8/13/94";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.65 2007/05/28 15:01:57 blymn Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.66 2007/05/29 11:10:56 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -634,7 +634,7 @@ makech(int wy)
 	WINDOW	*win;
 	static __LDATA blank;
 	__LDATA *nsp, *csp, *cp, *cep;
-	int	clsp, nlsp;	/* Last space in lines. */
+	size_t	clsp, nlsp;	/* Last space in lines. */
 	int	lch, wx;
 	char	*ce;
 	attr_t	lspc;		/* Last space colour */
@@ -732,9 +732,10 @@ makech(int wy)
 			if (cp-- <= win->lines[wy]->line)
 				break;
 #endif /* HAVE_WCHAR */
-		nlsp = cp - win->lines[wy]->line;
-		if (nlsp < 0)
+		if (win->lines[wy]->line > cp)
 			nlsp = 0;
+		else
+			nlsp = cp - win->lines[wy]->line;
 	}
 	if (!_cursesi_screen->curwin)
 		ce = __tc_ce;
@@ -827,7 +828,7 @@ makech(int wy)
 				    win->begx * __LDATASIZE;
 #ifdef DEBUG
 				__CTRACE(__CTRACE_REFRESH,
-				    "makech: clsp = %d, nlsp = %d\n",
+				    "makech: clsp = %ld, nlsp = %ld\n",
 				    clsp, nlsp);
 #endif
 				if (((clsp - nlsp >= strlen(__tc_ce) &&
@@ -1787,10 +1788,14 @@ __cursesi_putnsp(nschar_t *nsp, const int wy, const int wx)
 {
 	nschar_t *p;
 
+	/* this shuts up gcc warnings about wx and wy not being used */
+	if (wx > wy) {
+	}
+
 	p = nsp;
 	while (p != NULL) {
 		__cputwchar((int) p->ch);
-#ifdef BEBUG
+#ifdef DEBUG
 		__CTRACE(__CTRACE_REFRESH,
 		       "_cursesi_putnsp: (%d,%d) non-spacing putwchar(0x%x)\n",
 			 wy, wx - 1, p->ch);

@@ -1,4 +1,4 @@
-/*	$NetBSD: clrtobot.c,v 1.19 2007/05/28 15:01:54 blymn Exp $	*/
+/*	$NetBSD: clrtobot.c,v 1.20 2007/05/29 11:10:56 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)clrtobot.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: clrtobot.c,v 1.19 2007/05/28 15:01:54 blymn Exp $");
+__RCSID("$NetBSD: clrtobot.c,v 1.20 2007/05/29 11:10:56 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -93,7 +93,7 @@ wclrtobot(WINDOW *win)
 #endif /* HAVE_WCHAR */
 				maxx = sp;
 				if (minx == -1)
-					minx = sp - win->lines[y]->line;
+					minx = (int)(sp - win->lines[y]->line);
 				sp->attr = attr;
 #ifdef HAVE_WCHAR
 				sp->ch = ( wchar_t )btowc(( int ) win->bch);
@@ -107,7 +107,8 @@ wclrtobot(WINDOW *win)
 		}
 
 		if (minx != -1)
-			__touchline(win, y, minx, maxx - win->lines[y]->line);
+			__touchline(win, y, minx,
+				    (int) (maxx - win->lines[y]->line));
 		startx = 0;
 	}
 	return (OK);
