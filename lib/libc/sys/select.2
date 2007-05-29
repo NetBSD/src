@@ -1,4 +1,4 @@
-.\"	$NetBSD: select.2,v 1.29 2005/03/09 22:28:52 kleink Exp $
+.\"	$NetBSD: select.2,v 1.30 2007/05/29 07:54:17 manu Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -65,7 +65,9 @@ The first
 descriptors are checked in each set;
 i.e., the descriptors from 0 through
 .Fa nfds Ns No \-1
-in the descriptor sets are examined.
+in the descriptor sets are examined. This means that
+.Fa nfds
+must be set to the highest file descriptor of the three sets, plus one.
 On return,
 .Fn select
 and
@@ -173,6 +175,80 @@ before any of the selected events occurred.
 .It Bq Er EINVAL
 The specified time limit is invalid.
 One of its components is negative or too large.
+.El
+.Sh EXAMPLE
+.nf
+#include <stdio.h>
+#include <unistd.h>
+#include <string.h>
+#include <err.h>
+#include <errno.h>
+#include <sysexits.h>
+#include <sys/types.h>
+#include <sys/time.h>
+
+int
+main(argc, argv) 
+	int argc;
+	char **argv;
+{
+	fd_set read_set;
+	struct timeval timeout;
+	int ret, fd, i;
+
+	/* file descriptor 1 is stdout */
+	fd = 1;
+
+	/* Wait for ten seconds. */
+	timeout.tv_sec = 10;
+	timeout.tv_usec = 0;
+
+	/* Initialize the read set to null */
+	FD_ZERO(&read_set);
+
+	/* Add file descriptor 1 to read_set */
+	FD_SET(fd, &read_set);
+
+	/* 
+	 * Check if data is ready to be readen on 
+	 * file descriptor 1, give up after 10 seconds.
+	 */
+	ret = select(fd + 1, &read_set, NULL, NULL, &timeout);
+
+	/* 
+	 * Returned value is the number of file 
+	 * descriptors ready for I/O, or -1 on error.
+	 */ 
+	switch (ret) {
+	case \-1:
+		err(EX_OSERR, "select() failed");
+		break;
+
+	case 0:
+		printf("Timeout, no data received.\\n");
+		break;
+
+	default:
+		printf("Data received on %d file desciptor(s)\\n", ret);
+
+		/* 
+		 * select(2) hands back a file descriptor set where 
+		 * only descriptors ready for I/O are set. Theses can 
+		 * be tested using FD_ISSET
+		 */
+		for (i = 0; i <= fd; i++) {
+			if (FD_ISSET(i, &read_set)) {
+				printf("Data on file descriptor %d\\n", i);
+				/* Remove the file descriptor from the set */
+				FD_CLR(fd, &read_set);
+			}
+		}
+		break;
+	}
+
+	return 0;
+}
+.fi
 .El
 .Sh SEE ALSO
 .Xr accept 2 ,
