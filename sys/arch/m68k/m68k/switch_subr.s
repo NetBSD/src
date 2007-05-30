@@ -1,4 +1,4 @@
-/*	$NetBSD: switch_subr.s,v 1.14 2006/05/13 08:56:08 skrll Exp $	*/
+/*	$NetBSD: switch_subr.s,v 1.14.12.1 2007/05/30 23:04:14 riz Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation.
@@ -267,10 +267,6 @@ Lcpu_switch_common:
 	movl	%usp,%a2		| grab USP (a2 has been saved)
 	movl	%a2,%a1@(PCB_USP)	| and save it
 
-#ifdef PCB_CMAP2
-	movl	_C_LABEL(CMAP2),%a1@(PCB_CMAP2)	| XXX: For Amiga
-#endif
-
 #ifdef _M68K_CUSTOM_FPU_CTX
 	jbsr	_ASM_LABEL(m68k_fpuctx_save)
 #else
@@ -385,10 +381,6 @@ Lsame_mmuctx:
 
 	movl	%sp@(4),%d1		| cpu_switch(l) - d1 == l
 	lea     _ASM_LABEL(tmpstk),%sp	| now goto a tmp stack for NMI
-
-#ifdef PCB_CMAP2
-	movl	%a1@(PCB_CMAP2),_C_LABEL(CMAP2)	| XXX: For Amiga
-#endif
 
 	moveml	%a1@(PCB_REGS),%d2-%d7/%a2-%a7	| and registers
 	movl	%a1@(PCB_USP),%a0
