@@ -1,4 +1,4 @@
-/*	$NetBSD: fgets_chk.c,v 1.1 2007/05/30 01:17:31 tls Exp $	*/
+/*	$NetBSD: fgets_chk.c,v 1.2 2007/05/30 21:14:35 tls Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -36,11 +36,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: fgets_chk.c,v 1.1 2007/05/30 01:17:31 tls Exp $");
+__RCSID("$NetBSD: fgets_chk.c,v 1.2 2007/05/30 21:14:35 tls Exp $");
 
 /*LINTLIBRARY*/
 
-#include <ssp.h>
+#include <ssp/ssp.h>
 #include <stdio.h>
 #include <string.h>
 #include <limits.h>

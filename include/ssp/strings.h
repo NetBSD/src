@@ -1,4 +1,4 @@
-/*	$NetBSD: strings.h,v 1.1 2007/05/30 01:17:36 tls Exp $	*/
+/*	$NetBSD: strings.h,v 1.2 2007/05/30 21:14:38 tls Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -38,9 +38,7 @@
 #ifndef _SSP_STRINGS_H_
 #define _SSP_STRINGS_H_
 
-#include <ssp.h>
-#include <string.h>
-#include_next <strings.h>
+#include <ssp/ssp.h>
 
 #if __SSP_FORTIFY_LEVEL > 0
 

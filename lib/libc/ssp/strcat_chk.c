@@ -1,4 +1,4 @@
-/*	$NetBSD: strcat_chk.c,v 1.1 2007/05/30 01:17:33 tls Exp $	*/
+/*	$NetBSD: strcat_chk.c,v 1.2 2007/05/30 21:14:36 tls Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -36,11 +36,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: strcat_chk.c,v 1.1 2007/05/30 01:17:33 tls Exp $");
+__RCSID("$NetBSD: strcat_chk.c,v 1.2 2007/05/30 21:14:36 tls Exp $");
 
 /*LINTLIBRARY*/
 
-#include <ssp.h>
+#include <ssp/ssp.h>
 #include <string.h>
 
 char *
