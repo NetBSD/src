@@ -1,3 +1,8 @@
+2007-05-30  Emmanuel Dreyfus <manu@netbsd.org>
+	From Jianli Liu <jlliu@nortel.com>:
+	* src/racoon/kmpstat.c: Use the specified socket path instead of 
+	  the default location
+
 2007-05-04  Yvan Vanhullebus  <vanhu@netasq.com>
 	* src/racoon/pfkey.c: Force the update of ph2 in pk_recvupdate()
 	  if NAT_T support, to solve some port match problems with the
