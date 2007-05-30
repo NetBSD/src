@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.1 2007/05/30 01:17:31 tls Exp $
+#	$NetBSD: Makefile.inc,v 1.2 2007/05/30 21:14:35 tls Exp $
 
 .PATH: ${.CURDIR}/ssp
 
@@ -9,7 +9,6 @@ SSP_SRCS=	gets_chk.c fgets_chk.c memcpy_chk.c memmove_chk.c memset_chk.c \
 .for i in ${SSP_SRCS}
 SRCS+=${i}
 WARNS.${i}=4
-CPPFLAGS.${i}+=-I${DESTDIR}/usr/include/ssp
 .endfor
 
 MAN+=	ssp.3 __builtin_object_size.3
