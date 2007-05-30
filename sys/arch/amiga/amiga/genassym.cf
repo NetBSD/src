@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.21 2005/12/11 12:16:26 christos Exp $
+#	$NetBSD: genassym.cf,v 1.21.24.1 2007/05/30 23:04:15 riz Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -172,7 +172,6 @@ define	PCB_FLAGS	offsetof(struct pcb, pcb_flags)
 define	PCB_PS		offsetof(struct pcb, pcb_ps)
 define	PCB_USP		offsetof(struct pcb, pcb_usp)
 define	PCB_REGS	offsetof(struct pcb, pcb_regs)
-define	PCB_CMAP2	offsetof(struct pcb, pcb_cmap2)
 define	PCB_ONFAULT	offsetof(struct pcb, pcb_onfault)
 define	PCB_FPCTX	offsetof(struct pcb, pcb_fpregs)
 define	SIZEOF_PCB	sizeof(struct pcb)
