@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.2,v 1.1.2.74 2007/05/30 19:53:54 bouyer Exp $
+#	$NetBSD: CHANGES-3.2,v 1.1.2.75 2007/05/30 20:18:05 bouyer Exp $
 
 A complete list of changes from the NetBSD 3.1 release to the NetBSD 3.2
 release:
@@ -3248,3 +3248,15 @@ src/share/zoneinfo/australasia		patch
 src/share/zoneinfo/northamerica		patch
 	Merge tzdata2007f.
 	[markd, ticket #1787]
+
+sys/arch/i386/acpi/npx_acpi.c			1.14 - 1.15 via patch
+sys/arch/i386/isa/npx.c				1.114 via patch
+sys/arch/i386/isa/npx_isa.c			1.13 - 1.14 via patch
+sys/arch/i386/isa/npxvar.h			1.5 via patch
+sys/arch/i386/pnpbios/npx_pnpbios.c		1.8 - 1.9 via patch
+
+	Make npx work on the AMD Geode LX-800 processor by short-circuiting
+	the npx detection code. Since exception reporting is broken,  check the
+	CPUID_FPU feature.
+	[christos, ticket #1580]
+
