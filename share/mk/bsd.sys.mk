@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.147 2007/05/29 21:24:57 tls Exp $
+#	$NetBSD: bsd.sys.mk,v 1.148 2007/05/30 01:13:21 tls Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -47,11 +47,9 @@ USE_SSP=	yes
 .if defined(LIB)
 .if (${LIB} != "ssp") && (${LIB} != "c")
 COPTS+=		-D_FORTIFY_SOURCE=2 -I ${DESTDIR}/usr/include/ssp
-LIBDPLIBS+=	ssp ${NETBSDSRCDIR}/lib/libssp
 .endif
 .else
 COPTS+=		-D_FORTIFY_SOURCE=2 -I ${DESTDIR}/usr/include/ssp
-LDADD+=		-lssp
 .endif
 .endif
 .endif

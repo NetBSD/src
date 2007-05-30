@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.1 2006/11/08 19:52:11 christos Exp $	*/
+/*	$NetBSD: memmove_chk.c,v 1.1 2007/05/30 01:17:32 tls Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -35,29 +35,19 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef _SSP_UNISTD_H_
-#define _SSP_UNISTD_H_
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: memmove_chk.c,v 1.1 2007/05/30 01:17:32 tls Exp $");
+
+/*LINTLIBRARY*/
 
 #include <ssp.h>
+#include <string.h>
 
-#include_next <unistd.h>
-
-#if __SSP_FORTIFY_LEVEL > 0
-__BEGIN_DECLS
-
-__ssp_redirect0(ssize_t, read, (int __fd, void *__buf, size_t __len), \
-    (__fd, __buf, __len));
-
-__ssp_redirect(int, readlink, (const char *__restrict __path, \
-    char *__restrict __buf, size_t __len), (__path, __buf, __len));
-
-__ssp_redirect(char *, getcwd, (char *__buf, size_t __len), (__buf, __len));
-
-__END_DECLS
-
-#define read(fd, buf, len)		__read_alias(fd, buf, len)
-#define readlink(path, buf, len)	__readlink_alias(path, buf, len)
-#define getcwd(buf, len)		__getcwd_alias(buf, len)
-
-#endif /* __SSP_FORTIFY_LEVEL > 0 */
-#endif /* _SSP_UNISTD_H_ */
+void *
+__memmove_chk(void *dst, void *src, size_t len,
+    size_t slen)
+{
+	if (len > slen)
+		__chk_fail();
+	return memmove(dst, src, len);
+}
