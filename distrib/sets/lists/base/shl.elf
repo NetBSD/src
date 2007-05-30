@@ -1,4 +1,4 @@
-# $NetBSD: shl.elf,v 1.128 2007/04/01 18:52:28 tnozaki Exp $
+# $NetBSD: shl.elf,v 1.129 2007/05/30 16:23:22 tls Exp $
 # Note: libtermcap and libtermlib are hardlinked and share the same version.
 ./lib/libc.so					base-sys-shlib
 ./lib/libc.so.12				base-sys-shlib
@@ -20,8 +20,6 @@
 ./lib/libprop.so.0				base-sys-shlib
 ./lib/libradius.so				base-sys-shlib
 ./lib/libradius.so.1				base-sys-shlib
-./lib/libssp.so					base-sys-shlib
-./lib/libssp.so.0				base-sys-shlib
 ./lib/libtermcap.so				base-sys-shlib
 ./lib/libtermcap.so.0				base-sys-shlib
 ./lib/libtermlib.so				base-sys-shlib
@@ -196,8 +194,6 @@
 ./usr/lib/libssh.so.6				base-secsh-shlib	crypto
 ./usr/lib/libssl.so				base-crypto-shlib	crypto
 ./usr/lib/libssl.so.4				base-crypto-shlib	crypto
-./usr/lib/libssp.so				base-sys-shlib
-./usr/lib/libssp.so.0				base-sys-shlib
 ./usr/lib/libstdc++.so				base-sys-shlib		gcc
 ./usr/lib/libstdc++.so.5			base-sys-shlib		gcc=3
 ./usr/lib/libstdc++.so.6			base-sys-shlib		gcc=4
