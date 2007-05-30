@@ -1,4 +1,4 @@
-/*	$NetBSD: sockio.h,v 1.2 2007/05/30 17:03:30 xtraeme Exp $	*/
+/*	$NetBSD: sockio.h,v 1.3 2007/05/30 21:02:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993, 1994
@@ -31,6 +31,22 @@
 
 #ifndef _COMPAT_SYS_SOCKIO_H_
 #define	_COMPAT_SYS_SOCKIO_H_
+
+#ifdef _KERNEL_OPT
+
+#include "opt_compat_netbsd.h"
+
+#if defined(COMPAT_09) || defined(COMPAT_10) || defined(COMPAT_11) || \
+    defined(COMPAT_12) || defined(COMPAT_13) || defined(COMPAT_14) || \
+    defined(COMPAT_15) || defined(COMPAT_16) || defined(COMPAT_20) || \
+    defined(COMPAT_30) || defined(COMPAT_40)
+#define COMPAT_OIFREQ
+#endif
+
+#else
+#define COMPAT_OIFREQ
+#endif
+
 struct oifreq {
 	char	ifr_name[IFNAMSIZ];		/* if name, e.g. "en0" */
 	union {

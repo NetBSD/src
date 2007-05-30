@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.187 2007/05/29 22:05:01 xtraeme Exp $	*/
+/*	$NetBSD: if.c,v 1.188 2007/05/30 21:02:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -97,15 +97,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.187 2007/05/29 22:05:01 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.188 2007/05/30 21:02:03 christos Exp $");
 
 #include "opt_inet.h"
 
-#include "opt_compat_netbsd.h"
-#include "opt_compat_linux.h"
-#include "opt_compat_svr4.h"
-#include "opt_compat_ultrix.h"
-#include "opt_compat_43.h"
 #include "opt_atalk.h"
 #include "opt_natm.h"
 #include "opt_pfil_hooks.h"
@@ -152,19 +147,8 @@ __KERNEL_RCSID(0, "$NetBSD: if.c,v 1.187 2007/05/29 22:05:01 xtraeme Exp $");
 #include <netinet/ip_carp.h>
 #endif
 
-#if defined(COMPAT_09) || defined(COMPAT_10) || defined(COMPAT_11) || \
-    defined(COMPAT_12) || defined(COMPAT_13) || defined(COMPAT_14) || \
-    defined(COMPAT_15) || defined(COMPAT_16) || defined(COMPAT_20) || \
-    defined(COMPAT_30) || defined(COMPAT_40)
-#define COMPAT_OIFREQ
 #include <compat/sys/sockio.h>
-#endif
-
-#if defined(COMPAT_43) || defined(COMPAT_LINUX) || defined(COMPAT_SVR4) || \
-    defined(COMPAT_ULTRIX) || defined(LKM)
-#define COMPAT_OSOCK
 #include <compat/sys/socket.h>
-#endif
 
 MALLOC_DEFINE(M_IFADDR, "ifaddr", "interface address");
 MALLOC_DEFINE(M_IFMADDR, "ether_multi", "link-level multicast address");

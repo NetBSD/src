@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.96 2007/05/29 23:32:41 christos Exp $ */
+/*	$NetBSD: if_gre.c,v 1.97 2007/05/30 21:02:03 christos Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -48,11 +48,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.96 2007/05/29 23:32:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.97 2007/05/30 21:02:03 christos Exp $");
 
 #include "opt_gre.h"
 #include "opt_inet.h"
-#include "opt_compat_netbsd.h"
 #include "bpfilter.h"
 
 #ifdef INET
@@ -110,13 +109,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.96 2007/05/29 23:32:41 christos Exp $")
 
 #include <net/if_gre.h>
 
-#if defined(COMPAT_09) || defined(COMPAT_10) || defined(COMPAT_11) || \
-    defined(COMPAT_12) || defined(COMPAT_13) || defined(COMPAT_14) || \
-    defined(COMPAT_15) || defined(COMPAT_16) || defined(COMPAT_20) || \
-    defined(COMPAT_30) || defined(COMPAT_40)
-#define COMPAT_OIFREQ
 #include <compat/sys/sockio.h>
-#endif
 /*
  * It is not easy to calculate the right value for a GRE MTU.
  * We leave this task to the admin and use the same default that
