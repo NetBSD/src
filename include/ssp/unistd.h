@@ -1,4 +1,4 @@
-/*	$NetBSD: gets_chk.c,v 1.1 2006/11/08 19:52:11 christos Exp $	*/
+/*	$NetBSD: unistd.h,v 1.1 2007/05/30 01:17:36 tls Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -35,40 +35,29 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#include <sys/cdefs.h>
-__RCSID("$NetBSD: gets_chk.c,v 1.1 2006/11/08 19:52:11 christos Exp $");
+#ifndef _SSP_UNISTD_H_
+#define _SSP_UNISTD_H_
 
 #include <ssp.h>
-#include <stdio.h>
-#include <string.h>
-#include <limits.h>
-#include <stdlib.h>
 
-char *
-__gets_chk(char * __restrict buf, size_t slen)
-{
-	char *abuf;
-	size_t len;
+#include_next <unistd.h>
 
-	if (slen >= (size_t)INT_MAX)
-		return gets(buf);
+#if __SSP_FORTIFY_LEVEL > 0
+__BEGIN_DECLS
 
-	if ((abuf = malloc(slen + 1)) == NULL)
-		return gets(buf);
+__ssp_redirect0(ssize_t, read, (int __fd, void *__buf, size_t __len), \
+    (__fd, __buf, __len));
 
-	if (fgets(abuf, (int)(slen + 1), stdin) == NULL)
-		return NULL;
+__ssp_redirect(int, readlink, (const char *__restrict __path, \
+    char *__restrict __buf, size_t __len), (__path, __buf, __len));
 
-	len = strlen(abuf);
-	if (len > 0 && abuf[len - 1] == '\n')
-		--len;
+__ssp_redirect(char *, getcwd, (char *__buf, size_t __len), (__buf, __len));
 
-	if (len >= slen)
-		__chk_fail();
+__END_DECLS
 
-	(void)memcpy(buf, abuf, len);
+#define read(fd, buf, len)		__read_alias(fd, buf, len)
+#define readlink(path, buf, len)	__readlink_alias(path, buf, len)
+#define getcwd(buf, len)		__getcwd_alias(buf, len)
 
-	buf[len] = '\0';
-	free(abuf);
-	return buf;
-}
+#endif /* __SSP_FORTIFY_LEVEL > 0 */
+#endif /* _SSP_UNISTD_H_ */

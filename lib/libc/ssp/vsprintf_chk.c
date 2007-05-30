@@ -1,4 +1,4 @@
-/*	$NetBSD: memmove_chk.c,v 1.1 2006/11/08 19:52:11 christos Exp $	*/
+/*	$NetBSD: vsprintf_chk.c,v 1.1 2007/05/30 01:17:35 tls Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -36,16 +36,28 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: memmove_chk.c,v 1.1 2006/11/08 19:52:11 christos Exp $");
+__RCSID("$NetBSD: vsprintf_chk.c,v 1.1 2007/05/30 01:17:35 tls Exp $");
+
+/*LINTLIBRARY*/
 
 #include <ssp.h>
-#include <string.h>
+#include <stdio.h>
+#include <limits.h>
+#include <stdarg.h>
 
-void *
-__memmove_chk(void *dst, void *src, size_t len,
-    size_t slen)
+/*ARGSUSED*/
+int
+__vsprintf_chk(char * __restrict buf, int flags, size_t slen,
+    const char * __restrict fmt, va_list ap)
 {
-	if (len > slen)
-		__chk_fail();
-	return memmove(dst, src, len);
+	int rv;
+
+	if (slen > (size_t)INT_MAX)
+		rv = vsprintf(buf, fmt, ap);
+	else {
+		if ((rv = vsnprintf(buf, slen, fmt, ap)) >= 0 && rv >= slen)
+			__chk_fail();
+	}
+
+	return rv;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: strncpy_chk.c,v 1.1 2006/11/08 19:52:11 christos Exp $	*/
+/*	$NetBSD: sprintf_chk.c,v 1.1 2007/05/30 01:17:33 tls Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -36,17 +36,31 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: strncpy_chk.c,v 1.1 2006/11/08 19:52:11 christos Exp $");
+__RCSID("$NetBSD: sprintf_chk.c,v 1.1 2007/05/30 01:17:33 tls Exp $");
+
+/*LINTLIBRARY*/
 
 #include <ssp.h>
-#include <string.h>
+#include <stdio.h>
+#include <limits.h>
+#include <stdarg.h>
 
-char *
-__strncpy_chk(char * __restrict dst, const char * __restrict src, size_t len,
-    size_t slen)
+int
+/*ARGSUSED*/
+__sprintf_chk(char * __restrict buf, int flags, size_t slen,
+    const char * __restrict fmt, ...)
 {
-	if (len > slen)
-		__chk_fail();
+	va_list ap;
+	int rv;
 
-	return strncpy(dst, src, len);
+	va_start(ap, fmt);
+	if (slen > (size_t)INT_MAX)
+		rv = vsprintf(buf, fmt, ap);
+	else {
+		if ((rv = vsnprintf(buf, slen, fmt, ap)) >= 0 && rv >= slen)
+			__chk_fail();
+	}
+	va_end(ap);
+
+	return rv;
 }

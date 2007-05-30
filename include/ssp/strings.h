@@ -1,7 +1,7 @@
-/*	$NetBSD: strncat_chk.c,v 1.1 2006/11/08 19:52:11 christos Exp $	*/
+/*	$NetBSD: strings.h,v 1.1 2007/05/30 01:17:36 tls Exp $	*/
 
 /*-
- * Copyright (c) 2006 The NetBSD Foundation, Inc.
+ * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -35,41 +35,23 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#include <sys/cdefs.h>
-__RCSID("$NetBSD: strncat_chk.c,v 1.1 2006/11/08 19:52:11 christos Exp $");
+#ifndef _SSP_STRINGS_H_
+#define _SSP_STRINGS_H_
 
 #include <ssp.h>
 #include <string.h>
-#include <stdio.h>
+#include_next <strings.h>
 
-char *
-__strncat_chk(char * __restrict dst, char * __restrict src, size_t len,
-    size_t slen)
-{
-	char *d;
+#if __SSP_FORTIFY_LEVEL > 0
 
-	if (len == 0)
-		return dst;
+#define bcopy(src, dst, len) \
+    ((__ssp_bos0(dst) != (size_t)-1) ? \
+    __builtin___memmove_chk(dst, src, len, __ssp_bos0(dst)) : \
+    __memmove_ichk(dst, src, len))
+#define bzero(dst, len) \
+    ((__ssp_bos0(dst) != (size_t)-1) ? \
+    __builtin___memset_chk(dst, 0, len, __ssp_bos0(dst)) : \
+    __memset_ichk(dst, 0, len))
 
-	if (len > slen)
-		__chk_fail();
-
-	for (d = dst; *d; d++) {
-		if (slen-- == 0)
-			__chk_fail();
-	}
-
-	do {
-		if ((*d = *src++) == '\0')
-			break;
-		if (slen-- == 0)
-			__chk_fail();
-		d++;
-	} while (--len != 0);
-
-	if (slen-- == 0)
-		__chk_fail();
-
-	*d = '\0';
-	return dst;
-}
+#endif /* __SSP_FORTIFY_LEVEL > 0 */
+#endif /* _SSP_STRINGS_H_ */
