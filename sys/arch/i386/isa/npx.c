@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.107.4.1 2006/05/12 15:41:46 tron Exp $	*/
+/*	$NetBSD: npx.c,v 1.107.4.2 2007/05/30 20:16:39 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.107.4.1 2006/05/12 15:41:46 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.107.4.2 2007/05/30 20:16:39 bouyer Exp $");
 
 #if 0
 #define IPRINTF(x)	printf x
@@ -201,6 +201,10 @@ npxprobe1(bus_space_tag_t iot, bus_space_handle_t ioh, int irq)
 	int status;
 	unsigned irqmask;
 
+	if (cpu_feature & CPUID_FPU) {
+		i386_fpu_exception = 1;
+		return NPX_CPUID;
+	}
 	save_eflags = read_eflags();
 	disable_intr();
 	save_idt_npxintr = idt[NRSVIDT + irq];

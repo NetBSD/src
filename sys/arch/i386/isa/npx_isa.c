@@ -1,4 +1,4 @@
-/*	$NetBSD: npx_isa.c,v 1.9 2003/08/07 16:28:02 agc Exp $	*/
+/*	$NetBSD: npx_isa.c,v 1.9.14.1 2007/05/30 20:16:39 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npx_isa.c,v 1.9 2003/08/07 16:28:02 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npx_isa.c,v 1.9.14.1 2007/05/30 20:16:39 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,7 +116,7 @@ npx_isa_probe(struct device *parent, struct cfdata *match, void *aux)
 		 * Remember our result -- we don't want to have to npxprobe1()
 		 * again (especially if we've zapped the IRQ).
 		 */
-		ia->ia_aux = (void *)(u_long)result;
+		ia->ia_aux = (void *)(intptr_t)result;
 
 		ia->ia_nio = 1;
 		ia->ia_io[0].ir_addr = 0xf0;
@@ -158,7 +158,12 @@ npx_isa_attach(struct device *parent, struct device *self, void *aux)
 		    IST_EDGE, IPL_NONE, (int (*)(void *))npxintr, 0);
 		break;
 	case NPX_EXCEPTION:
-		printf(": using exception 16\n");
+		/*FALLTHROUGH*/
+	case NPX_CPUID:
+		aprint_verbose("%s:%s using exception 16\n",
+		    sc->sc_dev.dv_xname,
+		    sc->sc_type == NPX_CPUID ? " reported by CPUID;" : "");
+		sc->sc_type = NPX_EXCEPTION;
 		break;
 	case NPX_BROKEN:
 		printf(": error reporting broken; not using\n");
