@@ -1,4 +1,4 @@
-/*	$NetBSD: sockio.h,v 1.1 2007/05/29 21:32:28 christos Exp $	*/
+/*	$NetBSD: sockio.h,v 1.2 2007/05/30 17:03:30 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993, 1994
@@ -100,11 +100,12 @@ struct	oifconf {
 
 /*
  * XXX: The following macro depends on the fact that the only struct
- * sized 0x20 bytes in the ifioctls is struct oifreq. If that changes,
- * then we'll need to use an explicit list here.
+ * sized 0x20 bytes in the ifioctls is struct oifreq and struct ifcapreq.
+ * If that changes, then we'll need to use an explicit list here.
  */
+#define ifcapreq(x) ((x) == SIOCGIFCAP || (x) == SIOCSIFCAP)
 #define cvtcmd(x) \
-    ((IOCPARM_LEN(x) == sizeof(struct oifreq)) ? \
+    ((IOCPARM_LEN(x) == sizeof(struct oifreq) && !ifcapreq(x)) ? \
 	(((x) & ~(IOCPARM_MASK << IOCPARM_SHIFT)) | \
 	 (sizeof(struct ifreq) << IOCPARM_SHIFT)) : (x))
 
