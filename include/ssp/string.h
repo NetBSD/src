@@ -1,4 +1,4 @@
-/*	$NetBSD: string.h,v 1.4 2007/05/23 22:35:38 tls Exp $	*/
+/*	$NetBSD: string.h,v 1.1 2007/05/30 01:17:36 tls Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.

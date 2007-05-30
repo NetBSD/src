@@ -1,4 +1,4 @@
-/*	$NetBSD: memset_chk.c,v 1.1 2006/11/08 19:52:11 christos Exp $	*/
+/*	$NetBSD: gets_chk.c,v 1.1 2007/05/30 01:17:31 tls Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -36,15 +36,41 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: memset_chk.c,v 1.1 2006/11/08 19:52:11 christos Exp $");
+__RCSID("$NetBSD: gets_chk.c,v 1.1 2007/05/30 01:17:31 tls Exp $");
+
+/*LINTLIBRARY*/
 
 #include <ssp.h>
+#include <stdio.h>
 #include <string.h>
+#include <limits.h>
+#include <stdlib.h>
 
-void *
-__memset_chk(void * __restrict dst, int val, size_t len, size_t slen)
+char *
+__gets_chk(char * __restrict buf, size_t slen)
 {
-	if (len > slen)
+	char *abuf;
+	size_t len;
+
+	if (slen >= (size_t)INT_MAX)
+		return gets(buf);
+
+	if ((abuf = malloc(slen + 1)) == NULL)
+		return gets(buf);
+
+	if (fgets(abuf, (int)(slen + 1), stdin) == NULL)
+		return NULL;
+
+	len = strlen(abuf);
+	if (len > 0 && abuf[len - 1] == '\n')
+		--len;
+
+	if (len >= slen)
 		__chk_fail();
-	return memset(dst, val, len);
+
+	(void)memcpy(buf, abuf, len);
+
+	buf[len] = '\0';
+	free(abuf);
+	return buf;
 }

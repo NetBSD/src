@@ -1,4 +1,4 @@
-/*	$NetBSD: strcat_chk.c,v 1.1 2006/11/08 19:52:11 christos Exp $	*/
+/*	$NetBSD: vsnprintf_chk.c,v 1.1 2007/05/30 01:17:34 tls Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -36,30 +36,20 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: strcat_chk.c,v 1.1 2006/11/08 19:52:11 christos Exp $");
+__RCSID("$NetBSD: vsnprintf_chk.c,v 1.1 2007/05/30 01:17:34 tls Exp $");
+
+/*LINTLIBRARY*/
 
 #include <ssp.h>
-#include <string.h>
+#include <stdio.h>
+#include <stdarg.h>
 
-char *
-__strcat_chk(char * __restrict dst, char * __restrict src, size_t slen)
+int
+__vsnprintf_chk(char * __restrict buf, size_t len, int flags, size_t slen,
+    const char * __restrict fmt, va_list ap)
 {
-	char *d;
-
-	for (d = dst; *d; d++) {
-		if (slen-- == 0)
-			__chk_fail();
-	}
-
-	while (*src) {
-		if (slen-- == 0)
-			__chk_fail();
-		*d++ = *src++;
-	}
-
-	if (slen-- == 0)
+	if (len > slen)
 		__chk_fail();
 
-	*d = '\0';
-	return dst;
+	return vsnprintf(buf, len, fmt, ap);
 }

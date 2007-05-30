@@ -1,4 +1,4 @@
-/*	$NetBSD: sprintf_chk.c,v 1.1 2006/11/08 19:52:11 christos Exp $	*/
+/*	$NetBSD: fgets_chk.c,v 1.1 2007/05/30 01:17:31 tls Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -36,29 +36,24 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: sprintf_chk.c,v 1.1 2006/11/08 19:52:11 christos Exp $");
+__RCSID("$NetBSD: fgets_chk.c,v 1.1 2007/05/30 01:17:31 tls Exp $");
+
+/*LINTLIBRARY*/
 
 #include <ssp.h>
 #include <stdio.h>
+#include <string.h>
 #include <limits.h>
-#include <stdarg.h>
+#include <stdlib.h>
 
-int
-/*ARGSUSED*/
-__sprintf_chk(char * __restrict buf, int flags, size_t slen,
-    const char * __restrict fmt, ...)
+char *
+__fgets_chk(char * __restrict buf, int len, size_t slen, FILE *fp)
 {
-	va_list ap;
-	int rv;
+	if (slen >= (size_t)INT_MAX)
+		return fgets(buf, len, fp);
 
-	va_start(ap, fmt);
-	if (slen > (size_t)INT_MAX)
-		rv = vsprintf(buf, fmt, ap);
-	else {
-		if ((rv = vsnprintf(buf, slen, fmt, ap)) >= 0 && rv >= slen)
-			__chk_fail();
-	}
-	va_end(ap);
+	if (len >= 0 && len > slen)
+		__chk_fail();
 
-	return rv;
+	return fgets(buf, len, fp);
 }
