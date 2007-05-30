@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.171 2007/05/30 18:57:10 riz Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.172 2007/05/30 20:00:20 bouyer Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -5725,3 +5725,8 @@ sys/arch/sh3/sh3/exception.c			1.37 via patch
 	Re-enable interrupts in tlb_exception too.
 	[uwe, ticket #681]
 
+src/share/zoneinfo/africa		patch
+src/share/zoneinfo/australasia		patch
+src/share/zoneinfo/northamerica		patch
+	Merge tzdata2007f.
+	[markd, ticket #679]
