@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.c,v 1.33 2007/03/20 11:02:18 njoly Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.c,v 1.34 2007/05/30 00:00:59 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.33 2007/03/20 11:02:18 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.34 2007/05/30 00:00:59 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -72,6 +72,8 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.33 2007/03/20 11:02:18 njoly Ex
 #include <netinet/igmp.h>
 #include <netinet/igmp_var.h>
 #include <netinet/ip_mroute.h>
+
+#include <compat/sys/sockio.h>
 
 #include <compat/netbsd32/netbsd32.h>
 #include <compat/netbsd32/netbsd32_ioctl.h>
