@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.172 2007/05/30 20:00:20 bouyer Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.173 2007/05/30 21:57:05 pavel Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -5730,3 +5730,8 @@ src/share/zoneinfo/australasia		patch
 src/share/zoneinfo/northamerica		patch
 	Merge tzdata2007f.
 	[markd, ticket #679]
+sys/dist/ipf/netinet/fil.c			1.35
+
+	Fix an use-after-free bug in ipf.
+	[darrenr, ticket #688]
+
