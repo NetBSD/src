@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.169 2007/05/26 21:58:40 riz Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.170 2007/05/30 18:28:37 riz Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -5686,4 +5686,31 @@ sys/dev/ic/rtl81x9.c				1.74
 	that the card is gone and abort the loop. This fixes hot-plugging of
 	cardbus cards. From FreeBSD.
 	[joerg, ticket #663]
+
+sys/dev/pci/if_bgereg.h				1.42
+
+	Fix a typo. BGE_HCC_TX_MAX_COAL_BDS_INT is at offset 0x3C24, not 0x3C34
+	[pavel, ticket #671]
+
+sys/arch/i386/conf/INSTALL_LARGE		1.3 via patch
+
+	Add cardbus support. It has been reported that on some laptops
+	(Asus W5A, HP nx6310) the kernel panics without it.
+	[pavel, ticket #672]
+
+sys/compat/linux/arch/amd64/linux_machdep.c	1.23 via patch
+sys/compat/linux/arch/amd64/linux_machdep.h	1.9 via patch
+
+	Fix restart of interrupted system calls.
+	[njoly, ticket #673]
+
+distrib/mac68k/stand/Makefile			1.4
+
+	As `cksum -m` is no longer functional, convert it to `cksum -a MD5`.
+	[hauke, ticket #674]
+
+sbin/reboot/reboot.8				1.22
+
+	Add a caveat about reboot(8) not running shutdown scripts. PR#35067.
+	[jnemeth, ticket #676]
 
