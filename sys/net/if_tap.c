@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.29 2007/05/29 21:32:30 christos Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.30 2007/05/30 21:02:03 christos Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004 The NetBSD Foundation.
@@ -43,11 +43,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.29 2007/05/29 21:32:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.30 2007/05/30 21:02:03 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "bpfilter.h"
-#include "opt_compat_netbsd.h"
 #endif
 
 #include <sys/param.h>
@@ -74,12 +73,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.29 2007/05/29 21:32:30 christos Exp $")
 #include <net/bpf.h>
 #endif
 
-#if defined(COMPAT_09) || defined(COMPAT_10) || defined(COMPAT_11) || \
-    defined(COMPAT_12) || defined(COMPAT_13) || defined(COMPAT_14) || \
-    defined(COMPAT_15) || defined(COMPAT_16) || defined(COMPAT_20) || \
-    defined(COMPAT_30) || defined(COMPAT_40)
 #include <compat/sys/sockio.h>
-#endif
 
 /*
  * sysctl node management

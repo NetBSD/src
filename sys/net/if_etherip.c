@@ -1,4 +1,4 @@
-/*      $NetBSD: if_etherip.c,v 1.7 2007/05/29 21:32:29 christos Exp $        */
+/*      $NetBSD: if_etherip.c,v 1.8 2007/05/30 21:02:03 christos Exp $        */
 
 /*
  *  Copyright (c) 2006, Hans Rosenfeld <rosenfeld@grumpf.hope-2000.org>
@@ -95,7 +95,6 @@
 #include <sys/cdefs.h>
 
 #include "opt_inet.h"
-#include "opt_compat_netbsd.h"
 #include "bpfilter.h"
 
 #include <sys/param.h>
@@ -141,12 +140,7 @@
 #include <netinet6/ip6protosw.h>
 #endif /* INET6 */
 
-#if defined(COMPAT_09) || defined(COMPAT_10) || defined(COMPAT_11) || \
-    defined(COMPAT_12) || defined(COMPAT_13) || defined(COMPAT_14) || \
-    defined(COMPAT_15) || defined(COMPAT_16) || defined(COMPAT_20) || \
-    defined(COMPAT_30) || defined(COMPAT_40)
 #include <compat/sys/sockio.h>
-#endif
 
 static int etherip_node;
 static int etherip_sysctl_handler(SYSCTLFN_PROTO);

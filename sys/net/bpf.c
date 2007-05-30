@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.127 2007/05/29 21:32:29 christos Exp $	*/
+/*	$NetBSD: bpf.c,v 1.128 2007/05/30 21:02:03 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,11 +39,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.127 2007/05/29 21:32:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.128 2007/05/30 21:02:03 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_bpf.h"
-#include "opt_compat_netbsd.h"
 #include "sl.h"
 #include "strip.h"
 #endif
@@ -86,12 +85,7 @@ __KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.127 2007/05/29 21:32:29 christos Exp $");
 #include <netinet/if_inarp.h>
 
 
-#if defined(COMPAT_09) || defined(COMPAT_10) || defined(COMPAT_11) || \
-    defined(COMPAT_12) || defined(COMPAT_13) || defined(COMPAT_14) || \
-    defined(COMPAT_15) || defined(COMPAT_16) || defined(COMPAT_20) || \
-    defined(COMPAT_30) || defined(COMPAT_40)
 #include <compat/sys/sockio.h>
-#endif
 
 #ifndef BPF_BUFSIZE
 /*

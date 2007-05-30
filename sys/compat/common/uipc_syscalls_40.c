@@ -1,19 +1,13 @@
-/*	$NetBSD: uipc_syscalls_40.c,v 1.2 2007/05/29 23:57:33 christos Exp $	*/
+/*	$NetBSD: uipc_syscalls_40.c,v 1.3 2007/05/30 21:02:02 christos Exp $	*/
 
 /* written by Pavel Cahyna, 2006. Public domain. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_40.c,v 1.2 2007/05/29 23:57:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_40.c,v 1.3 2007/05/30 21:02:02 christos Exp $");
 
 /*
  * System call interface to the socket abstraction.
  */
-
-#include "opt_compat_netbsd.h"
-#include "opt_compat_linux.h"
-#include "opt_compat_svr4.h"
-#include "opt_compat_ultrix.h"
-#include "opt_compat_43.h"
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -25,19 +19,9 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_40.c,v 1.2 2007/05/29 23:57:33 christo
 
 #include <net/if.h>
 
-#if defined(COMPAT_43) || defined(COMPAT_LINUX) || defined(COMPAT_SVR4) || \
-    defined(COMPAT_ULTRIX) || defined(LKM)
-#define COMPAT_OSOCK
 #include <compat/sys/socket.h>
-#endif
-
-#if defined(COMPAT_09) || defined(COMPAT_10) || defined(COMPAT_11) || \
-    defined(COMPAT_12) || defined(COMPAT_13) || defined(COMPAT_14) || \
-    defined(COMPAT_15) || defined(COMPAT_16) || defined(COMPAT_20) || \
-    defined(COMPAT_30) || defined(COMPAT_40)
-#define COMPAT_OIFREQ
 #include <compat/sys/sockio.h>
-#endif
+
 #ifdef COMPAT_OIFREQ
 /*
  * Return interface configuration
