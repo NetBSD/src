@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.h,v 1.5.24.3 2007/05/13 22:19:56 pavel Exp $ */
+/*	$NetBSD: linux_machdep.h,v 1.5.24.4 2007/05/30 18:20:35 riz Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -70,6 +70,7 @@ struct linux_sigcontext {
 	u_int64_t rbp;
 	u_int64_t rbx;
 	u_int64_t rdx;
+	u_int64_t rax;
 	u_int64_t rcx;
 	u_int64_t rsp;
 	u_int64_t rip;
