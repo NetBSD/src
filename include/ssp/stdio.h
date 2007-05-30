@@ -1,4 +1,4 @@
-/*	$NetBSD: stdio.h,v 1.1 2007/05/30 01:17:35 tls Exp $	*/
+/*	$NetBSD: stdio.h,v 1.2 2007/05/30 21:14:37 tls Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -38,8 +38,7 @@
 #ifndef _SSP_STDIO_H_
 #define _SSP_STDIO_H_
 
-#include <ssp.h>
-#include_next <stdio.h>
+#include <ssp/ssp.h>
 
 __BEGIN_DECLS
 int __sprintf_chk(char *__restrict, int, size_t, const char *__restrict, ...)

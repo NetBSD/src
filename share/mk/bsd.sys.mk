@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.149 2007/05/30 14:21:31 tls Exp $
+#	$NetBSD: bsd.sys.mk,v 1.150 2007/05/30 21:14:38 tls Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -38,26 +38,27 @@ CPPFLAGS+=	${AUDIT:D-D__AUDIT__}
 CFLAGS+=	${CWARNFLAGS} ${NOGCCERROR:D:U-Werror}
 LINTFLAGS+=	${DESTDIR:D-d ${DESTDIR}/usr/include}
 
-.if (${MACHINE_ARCH} != "alpha") && (${MACHINE_ARCH} != "hppa") && \
-	(${MACHINE_ARCH} != "mipsel") && (${MACHINE_ARCH} != "mipseb")
+.if (${MACHINE_ARCH} == "alpha") || (${MACHINE_ARCH} != "hppa") || \
+	(${MACHINE_ARCH} == "mipsel") || (${MACHINE_ARCH} == "mipseb") \
+	($(MACHINE_ARCH} == "sh3el") || (${MACHINE_ARCH} == "sh3eb")
+HAS_SSP=	no
+.else
+HAS_SSP=	yes
+.endif
 
 .if defined(USE_FORT) && (${USE_FORT} != "no")
-USE_SSP=	yes
+USE_SSP?=	yes
 .if !defined(KERNSRCDIR) && !defined(KERN) # not for kernels nor kern modules
-.if defined(LIB)
-.if (${LIB} != "ssp") && (${LIB} != "c")
-COPTS+=		-D_FORTIFY_SOURCE=2 -I ${DESTDIR}/usr/include/ssp
-.endif
-.else
-COPTS+=		-D_FORTIFY_SOURCE=2 -I ${DESTDIR}/usr/include/ssp
+.if !defined(LIB) || ((${LIB} != "ssp") && (${LIB} != "c"))
+COPTS+=		-D_FORTIFY_SOURCE=2
 .endif
 .endif
 .endif
 
 .if defined(USE_SSP) && (${USE_SSP} != "no") && (${BINDIR:Ux} != "/usr/mdec")
+.if ${HAS_SSP} == "yes"
 COPTS+=		-fstack-protector -Wstack-protector --param ssp-buffer-size=1
 .endif
-
 .endif
 
 .if defined(MKSOFTFLOAT) && (${MKSOFTFLOAT} != "no")
