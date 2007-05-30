@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.173 2007/05/30 21:57:05 pavel Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.174 2007/05/30 23:20:37 riz Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -5730,8 +5730,31 @@ src/share/zoneinfo/australasia		patch
 src/share/zoneinfo/northamerica		patch
 	Merge tzdata2007f.
 	[markd, ticket #679]
+
 sys/dist/ipf/netinet/fil.c			1.35
 
 	Fix an use-after-free bug in ipf.
 	[darrenr, ticket #688]
+
+sys/arch/amiga/amiga/pmap.c			1.125 via patch
+sys/arch/atari/atari/pmap.c			1.99 via patch
+
+	Allow pmap_enter_ptpage to fail, sometimes. Pass WAIT/NOWAIT flags and
+	fix some obvious locking problems. This allows us to run a LOCKDEBUG
+	kernel now.
+	[mhitch, ticket #682]
+
+sys/arch/amiga/amiga/genassym.cf		1.24 via patch
+sys/arch/amiga/include/pcb.h			1.15 via patch
+sys/arch/m68k/m68k/switch_subr.s		1.19 via patch
+
+	Get rid of pcb_cmap2 - it hasn't been used for a long, long time.
+	[mhitch, ticket #683]
+
+sys/arch/amiga/amiga/pmap.c			1.126-1.127 via patch
+
+	Rework pmap_zero_page() and pmap_copy_page() so it doesn't need the
+	pte pointers from pmap_bootstrap(), and make pmap_bootstrap()
+	more compatible with the common m68k pmap_motorola.c.
+	[mhitch, ticket #685]
 
