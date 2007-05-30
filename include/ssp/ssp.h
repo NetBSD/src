@@ -1,4 +1,4 @@
-/*	$NetBSD: snprintf_chk.c,v 1.1 2006/11/08 19:52:11 christos Exp $	*/
+/*	$NetBSD: ssp.h,v 1.1 2007/05/30 01:17:35 tls Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -35,27 +35,40 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+#ifndef _SSP_SSP_H_
+#define _SSP_SSP_H_
+
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: snprintf_chk.c,v 1.1 2006/11/08 19:52:11 christos Exp $");
 
-#include <ssp.h>
-#include <stdio.h>
-#include <stdarg.h>
+#if !defined(__cplusplus)
+# if _FORTIFY_SOURCE > 0 && __OPTIMIZE__ > 0 && __GNUC_PREREQ__(4, 1)
+#  if _FORTIFY_SOURCE > 1
+#   define __SSP_FORTIFY_LEVEL 2
+#  else
+#   define __SSP_FORTIFY_LEVEL 1
+#  endif
+# endif
+#endif
 
-/*ARGSUSED*/
-int
-__snprintf_chk(char * __restrict buf, size_t len, int flags, size_t slen,
-    const char * __restrict fmt, ...)
-{
-	va_list ap;
-	int rv;
+#define __ssp_bos(ptr) __builtin_object_size(ptr, __SSP_FORTIFY_LEVEL > 1)
+#define __ssp_bos0(ptr) __builtin_object_size(ptr, 0)
+#define __ssp_redirect_raw(rtype, fun, args, call, bos) \
+static __inline __attribute__((__always_inline__)) rtype __ ## fun ## _alias args; \
+static __inline __attribute__((__always_inline__)) rtype \
+    __ ## fun ## _alias args { \
+	    if (bos(__buf) != (size_t)-1 && __len > bos(__buf)) \
+		    __chk_fail(); \
+	    return fun call; \
+    } 
 
-	if (len > slen)
-		__chk_fail();
+#define __ssp_redirect(rtype, fun, args, call) \
+    __ssp_redirect_raw(rtype, fun, args, call, __ssp_bos)
+#define __ssp_redirect0(rtype, fun, args, call) \
+    __ssp_redirect_raw(rtype, fun, args, call, __ssp_bos0)
 
-	va_start(ap, fmt);
-	rv = vsnprintf(buf, len, fmt, ap);
-	va_end(ap);
+__BEGIN_DECLS
+void __stack_chk_fail(void) __attribute__((__noreturn__));
+void __chk_fail(void) __attribute__((__noreturn__));
+__END_DECLS
 
-	return rv;
-}
+#endif /* _SSP_SSP_H_ */

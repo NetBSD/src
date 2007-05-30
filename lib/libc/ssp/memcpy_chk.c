@@ -1,4 +1,4 @@
-/*	$NetBSD: ssp.h,v 1.2 2007/05/23 21:13:14 tls Exp $	*/
+/*	$NetBSD: memcpy_chk.c,v 1.1 2007/05/30 01:17:32 tls Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -35,40 +35,19 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef _SSP_SSP_H_
-#define _SSP_SSP_H_
-
 #include <sys/cdefs.h>
+__RCSID("$NetBSD: memcpy_chk.c,v 1.1 2007/05/30 01:17:32 tls Exp $");
 
-#if !defined(__cplusplus)
-# if _FORTIFY_SOURCE > 0 && __OPTIMIZE__ > 0 && __GNUC_PREREQ__(4, 1)
-#  if _FORTIFY_SOURCE > 1
-#   define __SSP_FORTIFY_LEVEL 2
-#  else
-#   define __SSP_FORTIFY_LEVEL 1
-#  endif
-# endif
-#endif
+/*LINTLIBRARY*/
 
-#define __ssp_bos(ptr) __builtin_object_size(ptr, __SSP_FORTIFY_LEVEL > 1)
-#define __ssp_bos0(ptr) __builtin_object_size(ptr, 0)
-#define __ssp_redirect_raw(rtype, fun, args, call, bos) \
-static __inline __attribute__((__always_inline__)) rtype __ ## fun ## _alias args; \
-static __inline __attribute__((__always_inline__)) rtype \
-    __ ## fun ## _alias args { \
-	    if (bos(__buf) != (size_t)-1 && __len > bos(__buf)) \
-		    __chk_fail(); \
-	    return fun call; \
-    } 
+#include <ssp.h>
+#include <string.h>
 
-#define __ssp_redirect(rtype, fun, args, call) \
-    __ssp_redirect_raw(rtype, fun, args, call, __ssp_bos)
-#define __ssp_redirect0(rtype, fun, args, call) \
-    __ssp_redirect_raw(rtype, fun, args, call, __ssp_bos0)
-
-__BEGIN_DECLS
-void __stack_chk_fail(void) __attribute__((__noreturn__));
-void __chk_fail(void) __attribute__((__noreturn__));
-__END_DECLS
-
-#endif /* _SSP_SSP_H_ */
+void *
+__memcpy_chk(void * __restrict dst, const void * __restrict src, size_t len,
+    size_t slen)
+{
+	if (len > slen)
+		__chk_fail();
+	return memcpy(dst, src, len);
+}
