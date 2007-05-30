@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.170 2007/05/30 18:28:37 riz Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.171 2007/05/30 18:57:10 riz Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -5713,4 +5713,15 @@ sbin/reboot/reboot.8				1.22
 
 	Add a caveat about reboot(8) not running shutdown scripts. PR#35067.
 	[jnemeth, ticket #676]
+
+sys/arch/sh3/sh3/mmu_sh3.c			1.12
+
+	In sh3_tlb_update we need to ensure we are not interrupted while
+	messing with the TLB. PR#34706.
+	[uwe, ticket #680]
+
+sys/arch/sh3/sh3/exception.c			1.37 via patch
+
+	Re-enable interrupts in tlb_exception too.
+	[uwe, ticket #681]
 
