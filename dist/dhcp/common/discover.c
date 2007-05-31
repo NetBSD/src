@@ -34,11 +34,12 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: discover.c,v 1.8 2006/11/23 13:07:17 martin Exp $ Copyright (c) 2004-2005 Internet Systems Consortium.  All rights reserved.\n";
+"$Id: discover.c,v 1.9 2007/05/31 02:58:10 christos Exp $ Copyright (c) 2004-2005 Internet Systems Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
 #include <sys/ioctl.h>
+#include <stddef.h>
 
 struct interface_info *interfaces, *dummy_interfaces, *fallback_interface;
 int interfaces_invalidated;
@@ -240,7 +241,8 @@ void discover_interfaces (state)
 				break;
 			memcpy(&ifcpy, (caddr_t)ic.ifc_req + i, 
 			    sizeof(struct ifreq) + ifp->ifr_addr.sa_len);
-			i += (sizeof ifp -> ifr_name) + ifp -> ifr_addr.sa_len;
+			i += offsetof(struct ifreq, ifr_ifru) +
+			    ifp -> ifr_addr.sa_len;
 		} else
 #endif
 			i += sizeof *ifp;
@@ -344,8 +346,8 @@ void discover_interfaces (state)
 			   which we found it. */
 			if (!tmp -> ifp) {
 #ifdef HAVE_SA_LEN
-				unsigned len = ((sizeof ifp -> ifr_name) +
-						ifp -> ifr_addr.sa_len);
+				unsigned len = offsetof(struct ifreq, ifr_ifru)
+				    + ifp -> ifr_addr.sa_len;
 #else
 				unsigned len = sizeof *ifp;
 #endif
