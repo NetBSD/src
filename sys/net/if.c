@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.188 2007/05/30 21:02:03 christos Exp $	*/
+/*	$NetBSD: if.c,v 1.189 2007/05/31 02:56:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.188 2007/05/30 21:02:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.189 2007/05/31 02:56:50 christos Exp $");
 
 #include "opt_inet.h"
 
@@ -1618,7 +1618,8 @@ ifconf(u_long cmd, void *data)
 	struct ifaddr *ifa;
 	struct ifreq ifr, *ifrp;
 	int space = ifc->ifc_len, error = 0;
-	const int sz = (int)sizeof(ifr);
+	const size_t sz = offsetof(struct ifreq, ifr_ifru) +
+	    sizeof(sizeof (struct sockaddr));
 	int sign;
 
 	if ((ifrp = ifc->ifc_req) == NULL) {
@@ -1640,7 +1641,7 @@ ifconf(u_long cmd, void *data)
 					break;
 				ifrp++;
 			}
-			space -= sizeof(ifr) * sign;
+			space -= sz * sign;
 			continue;
 		}
 
