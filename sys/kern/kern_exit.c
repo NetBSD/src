@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.179 2007/05/17 14:51:39 yamt Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.180 2007/05/31 06:24:23 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.179 2007/05/17 14:51:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.180 2007/05/31 06:24:23 rmind Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -240,7 +240,7 @@ exit1(struct lwp *l, int rv)
 		mutex_exit(&p->p_smutex);
 
 	/* Destroy all AIO works */
-	aio_exit(p);
+	aio_exit(p, p->p_aio);
 
 	/*
 	 * Drain all remaining references that procfs, ptrace and others may
