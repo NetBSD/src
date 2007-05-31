@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.302 2007/05/17 14:51:37 yamt Exp $	*/
+/*	$NetBSD: init_main.c,v 1.303 2007/05/31 05:29:43 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.302 2007/05/17 14:51:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.303 2007/05/31 05:29:43 rmind Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_kcont.h"
@@ -357,6 +357,9 @@ main(void)
 
 	/* Initialize fstrans. */
 	fstrans_init();
+
+	/* Initialize asynchronous I/O. */
+	aio_sysinit();
 
 #ifdef __HAVE_TIMECOUNTER
 	inittimecounter();

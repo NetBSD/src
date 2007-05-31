@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_aio.c,v 1.3 2007/05/21 15:35:48 christos Exp $	*/
+/*	$NetBSD: sys_aio.c,v 1.4 2007/05/31 05:29:43 rmind Exp $	*/
 
 /*
  * Copyright (c) 2007, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -32,10 +32,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_aio.c,v 1.3 2007/05/21 15:35:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_aio.c,v 1.4 2007/05/31 05:29:43 rmind Exp $");
+
+#include "opt_ddb.h"
 
 #include <sys/param.h>
-
 #include <sys/condvar.h>
 #include <sys/file.h>
 #include <sys/filedesc.h>
@@ -60,16 +61,31 @@ __KERNEL_RCSID(0, "$NetBSD: sys_aio.c,v 1.3 2007/05/21 15:35:48 christos Exp $")
  * System-wide limits and counter of AIO operations.
  * XXXSMP: We should spin-lock it, or modify atomically.
  */
-static unsigned long aio_listio_max = AIO_LISTIO_MAX;
-static unsigned long aio_max = AIO_MAX;
+static u_int aio_listio_max = AIO_LISTIO_MAX;
+static u_int aio_max = AIO_MAX;
+static u_int aio_jobs_count;
 
-static unsigned long aio_jobs_count = 0;
+static struct pool aio_job_pool;
+static struct pool aio_lio_pool;
 
 /* Prototypes */
 void aio_worker(void *);
 static void aio_process(struct aio_job *);
 static void aio_sendsig(struct proc *, struct sigevent *);
 static int aio_enqueue_job(int, void *, struct lio_req *);
+
+/*
+ * Initialize the AIO system.
+ */
+void
+aio_sysinit(void)
+{
+
+	pool_init(&aio_job_pool, sizeof(struct aio_job), 0, 0, 0,
+	    "aio_jobs_pool", &pool_allocator_nointr, IPL_NONE);
+	pool_init(&aio_lio_pool, sizeof(struct lio_req), 0, 0, 0,
+	    "aio_lio_pool", &pool_allocator_nointr, IPL_NONE);
+}
 
 /*
  * Initialize Asynchronous I/O data structures for the process.
@@ -96,11 +112,7 @@ aio_init(struct proc *p)
 	}
 	p->p_aio = aio;
 
-	/* Initialize pools, queue and their synchronization structures */
-	pool_init(&aio->jobs_pool, sizeof(struct aio_job), 0, 0, 0,
-	    "aio_jobs_pool", &pool_allocator_nointr, IPL_NONE);
-	pool_init(&aio->lio_pool, sizeof(struct lio_req), 0, 0, 0,
-	    "aio_lio_pool", &pool_allocator_nointr, IPL_NONE);
+	/* Initialize queue and their synchronization structures */
 	mutex_init(&aio->aio_mtx, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&aio->aio_worker_cv, "aiowork");
 	cv_init(&aio->done_cv, "aiodone");
@@ -119,8 +131,7 @@ aio_init(struct proc *p)
 		return EAGAIN;
 	}
 	if (newlwp(curlwp, p, uaddr, inmem, 0, NULL, 0,
-	    aio_worker, NULL, &l))
-	{
+	    aio_worker, NULL, &l)) {
 		uvm_uarea_free(uaddr);
 		aio_exit(p);
 		return EAGAIN;
@@ -153,13 +164,11 @@ aio_exit(struct proc *p)
 		return;
 	aio = p->p_aio;
 
-	KASSERT(p->p_aio->aio_worker == NULL);
-
 	/* Free AIO queue */
 	while (!TAILQ_EMPTY(&aio->jobs_queue)) {
 		a_job = TAILQ_FIRST(&aio->jobs_queue);
 		TAILQ_REMOVE(&aio->jobs_queue, a_job, list);
-		pool_put(&aio->jobs_pool, a_job);
+		pool_put(&aio_job_pool, a_job);
 		aio_jobs_count--; /* XXXSMP */
 	}
 
@@ -167,8 +176,6 @@ aio_exit(struct proc *p)
 	cv_destroy(&aio->aio_worker_cv);
 	cv_destroy(&aio->done_cv);
 	mutex_destroy(&aio->aio_mtx);
-	pool_destroy(&aio->jobs_pool);
-	pool_destroy(&aio->lio_pool);
 	kmem_free(aio, sizeof(struct aioproc));
 	p->p_aio = NULL;
 }
@@ -184,7 +191,7 @@ aio_worker(void *arg)
 	struct aio_job *a_job;
 	struct lio_req *lio;
 	sigset_t oss, nss;
-	int error;
+	int error, refcnt;
 
 	/*
 	 * Make an empty signal mask, so it
@@ -193,23 +200,24 @@ aio_worker(void *arg)
 	sigfillset(&nss);
 	mutex_enter(&p->p_smutex);
 	error = sigprocmask1(curlwp, SIG_SETMASK, &nss, &oss);
-	KASSERT(error == 0);
 	mutex_exit(&p->p_smutex);
+	KASSERT(error == 0);
 
 	for (;;) {
 		/*
 		 * Loop for each job in the queue.  If there
-		 * are no jobs - sleep and wait for the signal.
+		 * are no jobs then sleep.
 		 */
 		mutex_enter(&aio->aio_mtx);
 		while ((a_job = TAILQ_FIRST(&aio->jobs_queue)) == NULL) {
 			if (cv_wait_sig(&aio->aio_worker_cv, &aio->aio_mtx)) {
 				/*
-				 * Thread was interrupted by the
-				 * signal - check for exit.
+				 * Thread was interrupted - check for
+				 * pending exit or suspend.
 				 */
-				if (curlwp->l_flag & (LW_WEXIT | LW_WCORE))
-					goto exit;
+				mutex_exit(&aio->aio_mtx);
+				lwp_userret(curlwp);
+				mutex_enter(&aio->aio_mtx);
 			}
 		}
 
@@ -231,13 +239,11 @@ aio_worker(void *arg)
 
 		mutex_enter(&aio->aio_mtx);
 		aio->curjob = NULL;
+
 		/* Decrease a reference counter, if there is a LIO structure */
 		lio = a_job->lio;
-		if (lio) {
-			lio->refcnt--;
-			if (lio->refcnt || lio->dofree == false)
-				lio = NULL;
-		}
+		refcnt = (lio != NULL ? --lio->refcnt : -1);
+
 		/* Notify all suspenders */
 		cv_broadcast(&aio->done_cv);
 		mutex_exit(&aio->aio_mtx);
@@ -246,30 +252,16 @@ aio_worker(void *arg)
 		aio_sendsig(p, &a_job->aiocbp.aio_sigevent);
 
 		/* Destroy the LIO structure */
-		if (lio) {
+		if (refcnt == 0) {
 			aio_sendsig(p, &lio->sig);
-			if (lio->dofree == true)
-				pool_put(&aio->lio_pool, lio);
+			pool_put(&aio_lio_pool, lio);
 		}
 
 		/* Destroy the the job */
-		pool_put(&aio->jobs_pool, a_job);
+		pool_put(&aio_job_pool, a_job);
 	}
 
-exit:
-	/*
-	 * Destroy oneself, the rest will be cared.
-	 */
-	aio->aio_worker = NULL;
-	mutex_exit(&aio->aio_mtx);
-
-	/* Restore the old signal mask */
-	mutex_enter(&p->p_smutex);
-	error = sigprocmask1(curlwp, SIG_SETMASK, &oss, NULL);
-	KASSERT(error == 0);
-	mutex_exit(&p->p_smutex);
-
-	lwp_exit(curlwp);
+	/* NOTREACHED */
 }
 
 static void
@@ -285,7 +277,7 @@ aio_process(struct aio_job *a_job)
 	KASSERT(fdp != NULL);
 	KASSERT(a_job->aio_op != 0);
 
-	if ((a_job->aio_op & AIO_READ) || (a_job->aio_op & AIO_WRITE)) {
+	if ((a_job->aio_op & (AIO_READ | AIO_WRITE)) != 0) {
 		struct iovec aiov;
 		struct uio auio;
 
@@ -344,7 +336,7 @@ aio_process(struct aio_job *a_job)
 		a_job->aiocbp._retval = (error == 0) ?
 		    a_job->aiocbp.aio_nbytes : -1;
 
-	} else if((a_job->aio_op & AIO_SYNC) || (a_job->aio_op & AIO_DSYNC)) {
+	} else if ((a_job->aio_op & (AIO_SYNC | AIO_DSYNC)) != 0) {
 		/*
 		 * Perform a file Sync operation
 		 */
@@ -498,7 +490,7 @@ aio_enqueue_job(int op, void *aiocb_uptr, struct lio_req *lio)
 		return error;
 
 	/* Allocate and initialize a new AIO job */
-	a_job = pool_get(&aio->jobs_pool, PR_WAITOK);
+	a_job = pool_get(&aio_job_pool, PR_WAITOK);
 	memset(a_job, 0, sizeof(struct aio_job));
 
 	/*
@@ -520,7 +512,7 @@ aio_enqueue_job(int op, void *aiocb_uptr, struct lio_req *lio)
 	/* Fail, if the limit was reached */
 	if (aio->jobs_count >= aio_listio_max) {
 		mutex_exit(&aio->aio_mtx);
-		pool_put(&aio->jobs_pool, a_job);
+		pool_put(&aio_job_pool, a_job);
 		return EAGAIN;
 	}
 
@@ -598,11 +590,8 @@ sys_aio_cancel(struct lwp *l, void *v, register_t *retval)
 		aio_jobs_count--; /* XXXSMP */
 		aio->jobs_count--;
 		lio = a_job->lio;
-		if (lio) {
-			lio->refcnt--;
-			if (lio->refcnt || lio->dofree == false)
-				a_job->lio = NULL;
-		}
+		if (lio != NULL && --lio->refcnt != 0)
+			a_job->lio = NULL;
 
 		cn++;
 		if (aiocbp_ptr)
@@ -635,8 +624,8 @@ sys_aio_cancel(struct lwp *l, void *v, register_t *retval)
 		/* Send a signal if any */
 		aio_sendsig(p, &a_job->aiocbp.aio_sigevent);
 		if (a_job->lio)
-			pool_put(&aio->lio_pool, a_job->lio);
-		pool_put(&aio->jobs_pool, a_job);
+			pool_put(&aio_lio_pool, a_job->lio);
+		pool_put(&aio_job_pool, a_job);
 	}
 
 	if (errcnt)
@@ -856,7 +845,6 @@ sys_lio_listio(struct lwp *l, void *v, register_t *retval)
 	struct aioproc *aio;
 	struct aiocb **aiocbp_list;
 	struct lio_req *lio;
-	struct sigevent sig;
 	int i, error, errcnt, mode, nent;
 
 	mode = SCARG(uap, mode);
@@ -867,19 +855,6 @@ sys_lio_listio(struct lwp *l, void *v, register_t *retval)
 		return EINVAL;
 	if (aio_jobs_count + nent > aio_max) /* XXXSMP */
 		return EAGAIN;
-	if (mode != LIO_NOWAIT && mode != LIO_WAIT)
-		return EINVAL;
-
-	/* Check for signal, validate it */
-	if (mode == LIO_NOWAIT && SCARG(uap, sig)) {
-		error = copyin(SCARG(uap, sig), &sig, sizeof(struct sigevent));
-		if (error)
-			return error;
-		if (sig.sigev_signo < 0 || sig.sigev_signo >= NSIG ||
-		    sig.sigev_notify < SIGEV_NONE ||
-		    sig.sigev_notify > SIGEV_SA)
-			return EINVAL;
-	}
 
 	/* Check if AIO structure is initialized, if not - initialize it */
 	if (p->p_aio == NULL)
@@ -888,26 +863,52 @@ sys_lio_listio(struct lwp *l, void *v, register_t *retval)
 	aio = p->p_aio;
 
 	/* Create a LIO structure */
-	lio = pool_get(&aio->lio_pool, PR_WAITOK);
-	if (SCARG(uap, sig))
-		memcpy(&lio->sig, &sig, sizeof(struct sigevent));
-	else
+	lio = pool_get(&aio_lio_pool, PR_WAITOK);
+	lio->refcnt = 1;
+	error = 0;
+
+	switch (mode) {
+	case LIO_WAIT:
 		memset(&lio->sig, 0, sizeof(struct sigevent));
-	lio->dofree = (mode == LIO_WAIT) ? false : true;
-	lio->refcnt = 1; /* XXX: Hack */
+		break;
+	case LIO_NOWAIT:
+		/* Check for signal, validate it */
+		if (SCARG(uap, sig)) {
+			struct sigevent *sig = &lio->sig;
+
+			error = copyin(SCARG(uap, sig), &lio->sig,
+			    sizeof(struct sigevent));
+			if (error == 0 &&
+			    (sig->sigev_signo < 0 ||
+			    sig->sigev_signo >= NSIG ||
+			    sig->sigev_notify < SIGEV_NONE ||
+			    sig->sigev_notify > SIGEV_SA))
+				error = EINVAL;
+		} else
+			memset(&lio->sig, 0, sizeof(struct sigevent));
+		break;
+	default:
+		error = EINVAL;
+		break;
+	}
+
+	if (error != 0) {
+		pool_put(&aio_lio_pool, lio);
+		return error;
+	}
 
 	/* Get the list from user-space */
 	aiocbp_list = kmem_zalloc(nent * sizeof(struct aio_job), KM_SLEEP);
 	error = copyin(SCARG(uap, list), aiocbp_list,
 	    nent * sizeof(struct aiocb));
-	if (error)
+	if (error) {
+		mutex_enter(&aio->aio_mtx);
 		goto err;
+	}
 
 	/* Enqueue all jobs */
 	errcnt = 0;
 	for (i = 0; i < nent; i++) {
-		if (i == (nent - 1)) /* XXX: Hack */
-			lio->refcnt--;
 		error = aio_enqueue_job(AIO_LIO, aiocbp_list[i], lio);
 		/*
 		 * According to POSIX, in such error case it may
@@ -916,6 +917,8 @@ sys_lio_listio(struct lwp *l, void *v, register_t *retval)
 		if (error)
 			errcnt++;
 	}
+
+	mutex_enter(&aio->aio_mtx);
 
 	/* Return an error, if any */
 	if (errcnt) {
@@ -928,22 +931,21 @@ sys_lio_listio(struct lwp *l, void *v, register_t *retval)
 		 * Wait for AIO completion.  In such case,
 		 * the LIO structure will be freed here.
 		 */
-		error = 0;
-		mutex_enter(&aio->aio_mtx);
-		while (lio->refcnt || error)
+		while (lio->refcnt > 1 && error == 0)
 			error = cv_wait_sig(&aio->done_cv, &aio->aio_mtx);
-		mutex_exit(&aio->aio_mtx);
 		if (error)
 			error = EINTR;
 	}
 
 err:
-	kmem_free(aiocbp_list, nent * sizeof(struct aio_job));
-	if (mode == LIO_WAIT) {
-		KASSERT(lio != NULL);
-		pool_put(&aio->lio_pool, lio);
+	if (--lio->refcnt != 0)
+		lio = NULL;
+	mutex_exit(&aio->aio_mtx);
+	if (lio != NULL) {
+		aio_sendsig(p, &lio->sig);
+		pool_put(&aio_lio_pool, lio);
 	}
-
+	kmem_free(aiocbp_list, nent * sizeof(struct aio_job));
 	return error;
 }
 
