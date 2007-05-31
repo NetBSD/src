@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.119.12.1 2007/05/22 14:57:49 itohy Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.119.12.2 2007/05/31 23:15:18 itohy Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.99 2006/11/27 18:39:02 marius Exp $	*/
 
 /*-
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.119.12.1 2007/05/22 14:57:49 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.119.12.2 2007/05/31 23:15:18 itohy Exp $");
 /* __FBSDID("$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.99 2006/11/27 18:39:02 marius Exp $"); */
 
 #ifdef __NetBSD__
@@ -60,6 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.119.12.1 2007/05/22 14:57:49 itohy Exp $
 #endif
 #endif
 #include <sys/malloc.h>
+#include <sys/mbuf.h>
 #include <sys/proc.h>
 
 #include <machine/bus.h>
@@ -314,16 +315,27 @@ usbd_transfer(usbd_xfer_handle xfer)
 			return (err);
 		xfer->rqflags |= URQ_AUTO_BUF;
 	}
+#ifdef DIAGNOSTIC
+	if ((xfer->rqflags & URQ_MASK_DRV_REQUESTED_BUF) != 0 &&
+	    size > xfer->bufsize) {
+		panic("usbd_transfer: buffer size overrun size=%u bufsize=%lu rqflags=%x",
+		    size, (unsigned long)xfer->bufsize, xfer->rqflags);
+	}
+#endif
 
+#ifdef DIAGNOSTIC
+	if ((xfer->flags & USBD_NO_COPY) == 0 && size != 0) {
+		if (xfer->rqflags & URQ_DEV_MAP_BUFFER)
+			printf("usbd_transfer: USBD_NO_COPY recommended with mapped buffer");
+		if (xfer->rqflags & URQ_DEV_MAP_MBUF)
+			panic("usbd_transfer: USBD_NO_COPY required with mapped mbuf");
+	}
+#endif
 	/* Copy data if going out. */
 	if (!(xfer->flags & USBD_NO_COPY) && size != 0 &&
 	    !usbd_xfer_isread(xfer) && xfer->buffer != xfer->hcbuffer) {
 		DPRINTFN(5, ("usbd_transfer: copy %p (alloc) <- %p (buffer), %u bytes\n",
 			     xfer->hcbuffer, xfer->buffer, (unsigned)size));
-#ifdef DIAGNOSTIC
-		if ((xfer->rqflags & (URQ_AUTO_BUF | URQ_DEV_BUF)) == 0)
-			panic("usbd_transfer: USBD_NO_COPY required with mapped buffer");
-#endif
 		memcpy(xfer->hcbuffer, xfer->buffer, size);
 	}
 
@@ -381,6 +393,7 @@ usbd_alloc_buffer(usbd_xfer_handle xfer, u_int32_t size)
 	err = bus->methods->allocm(bus, xfer, NULL, size);
 	if (err)
 		return (NULL);
+	xfer->bufsize = size;
 	xfer->rqflags |= URQ_DEV_BUF;
 	return xfer->hcbuffer;
 }
@@ -394,6 +407,7 @@ usbd_free_buffer_flag(usbd_xfer_handle xfer, enum usbd_waitflg waitflg)
 	    ("usbd_free_buffer_flag: no/auto buffer"));
 
 	xfer->rqflags &= ~(URQ_DEV_BUF | URQ_AUTO_BUF);
+	xfer->bufsize = 0;
 	bus = xfer->device->bus;
 #ifdef DIAGNOSTIC
 	if (waitflg == U_WAITOK && bus->intr_context)
@@ -479,14 +493,16 @@ usbd_map_buffer(usbd_xfer_handle xfer, void *buf, u_int32_t size)
 
 	bus->methods->mapm(xfer, buf, size);
 
+	xfer->bufsize = size;
 	xfer->rqflags |= URQ_DEV_MAP_BUFFER;
 }
 
 /* Map mbuf(9) chain. */
-void
+usbd_status
 usbd_map_buffer_mbuf(usbd_xfer_handle xfer, struct mbuf *chain)
 {
 	struct usbd_bus *bus = xfer->device->bus;
+	usbd_status err;
 
 #ifdef DIAGNOSTIC
 	if ((xfer->rqflags & URQ_MASK_BUF))
@@ -496,9 +512,14 @@ usbd_map_buffer_mbuf(usbd_xfer_handle xfer, struct mbuf *chain)
 		panic("usbd_map_buffer_mbuf: mapm_mbuf (without map_alloc) not in process context");
 #endif
 
-	bus->methods->mapm_mbuf(xfer, chain);
+	err = bus->methods->mapm_mbuf(xfer, chain);
+	if (err != USBD_NORMAL_COMPLETION)
+		return (err);
 
+	xfer->bufsize = chain->m_pkthdr.len;
 	xfer->rqflags |= URQ_DEV_MAP_MBUF;
+
+	return (err);
 }
 
 /* Unmap plain buffer or mbuf(9) chain. */
@@ -517,6 +538,7 @@ usbd_unmap_buffer(usbd_xfer_handle xfer)
 	bus->methods->unmapm(xfer);
 
 	xfer->rqflags &= ~(URQ_DEV_MAP_BUFFER | URQ_DEV_MAP_MBUF);
+	xfer->bufsize = 0;
 }
 
 Static usbd_xfer_handle

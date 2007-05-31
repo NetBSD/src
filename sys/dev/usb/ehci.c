@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.123.12.1 2007/05/22 14:57:34 itohy Exp $ */
+/*	$NetBSD: ehci.c,v 1.123.12.2 2007/05/31 23:15:16 itohy Exp $ */
 
 /*-
  * Copyright (c) 2004, 2005, 2007 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.123.12.1 2007/05/22 14:57:34 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.123.12.2 2007/05/31 23:15:16 itohy Exp $");
 /* __FBSDID("$FreeBSD: /repoman/r/ncvs/src/sys/dev/usb/ehci.c,v 1.52 2006/10/19 01:15:58 iedowse Exp $"); */
 
 #if defined(__NetBSD__) || defined(__OpenBSD__)
@@ -170,7 +170,7 @@ Static void		ehci_freem(struct usbd_bus *, usbd_xfer_handle,
 Static usbd_status	ehci_map_alloc(usbd_xfer_handle);
 Static void		ehci_map_free(usbd_xfer_handle);
 Static void		ehci_mapm(usbd_xfer_handle, void *, size_t);
-Static void		ehci_mapm_mbuf(usbd_xfer_handle, struct mbuf *);
+Static usbd_status	ehci_mapm_mbuf(usbd_xfer_handle, struct mbuf *);
 Static void		ehci_unmapm(usbd_xfer_handle);
 
 Static usbd_xfer_handle	ehci_allocx(struct usbd_bus *, usbd_pipe_handle,
@@ -1335,13 +1335,13 @@ ehci_mapm(usbd_xfer_handle xfer, void *buf, size_t size)
 	usb_map_dma(&sc->sc_dmatag, &exfer->dmabuf, buf, size);
 }
 
-Static void
+Static usbd_status
 ehci_mapm_mbuf(usbd_xfer_handle xfer, struct mbuf *chain)
 {
 	struct ehci_softc *sc = (struct ehci_softc *)xfer->device->bus;
 	struct ehci_xfer *exfer = EXFER(xfer);
 
-	usb_map_mbuf_dma(&sc->sc_dmatag, &exfer->dmabuf, chain);
+	return (usb_map_mbuf_dma(&sc->sc_dmatag, &exfer->dmabuf, chain));
 }
 
 Static void
@@ -1974,8 +1974,12 @@ ehci_root_ctrl_start(usbd_xfer_handle xfer)
 	value = UGETW(req->wValue);
 	index = UGETW(req->wIndex);
 
-	if (len != 0)
+	if (len != 0) {
+		/* mbuf transfer is not supported */
+		if (xfer->rqflags & URQ_DEV_MAP_MBUF)
+			return (USBD_INVAL);
 		buf = xfer->hcbuffer;
+	}
 
 #define C(x,y) ((x) | ((y) << 8))
 	switch(C(req->bRequest, req->bmRequestType)) {
@@ -2415,6 +2419,9 @@ ehci_root_intr_start(usbd_xfer_handle xfer)
 
 	if (sc->sc_dying)
 		return (USBD_IOERROR);
+
+	if (xfer->rqflags & URQ_DEV_MAP_MBUF)
+		return (USBD_INVAL);	/* mbuf transfer is not supported */
 
 	sc->sc_intrxfer = xfer;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_mem_nodma.c,v 1.1.2.1 2007/05/22 14:57:48 itohy Exp $	*/
+/*	$NetBSD: usb_mem_nodma.c,v 1.1.2.2 2007/05/31 23:15:18 itohy Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_mem_nodma.c,v 1.1.2.1 2007/05/22 14:57:48 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_mem_nodma.c,v 1.1.2.2 2007/05/31 23:15:18 itohy Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,7 +109,7 @@ usb_alloc_buffer_mem(usb_mem_tag_t *utag, void *buf, size_t size,
 		usb_mem_free_buffers(utag);
 
 #ifdef DIAGNOSTIC
-	/* trap missings of USB_BUFFER_MEM_REWIND() */
+	/* trap missings of usb_buffer_mem_rewind() */
 	ub->u.ub_plain.ubp_cur = (void *)0xdeadbeef;
 #endif
 
@@ -178,7 +178,7 @@ usb_map_mem(struct usb_buffer_mem *ub, void *buf)
 	ub->u.ub_plain.ubp_top = buf;
 	ub->u.ub_plain.ubp_allocbuf = NULL;
 #ifdef DIAGNOSTIC
-	/* trap missings of USB_BUFFER_MEM_REWIND() */
+	/* trap missings of usb_buffer_mem_rewind() */
 	ub->u.ub_plain.ubp_cur = (void *)0xdeadbeef;
 #endif
 }
@@ -192,7 +192,7 @@ usb_map_mbuf_mem(struct usb_buffer_mem *ub, struct mbuf *chain)
 	ub->ub_type = UB_MBUF;
 	ub->u.ub_mbuf.ubm_top = chain;
 #ifdef DIAGNOSTIC
-	/* trap missings of USB_BUFFER_MEM_REWIND() */
+	/* trap missings of usb_buffer_mem_rewind() */
 	ub->u.ub_mbuf.ubm_cur = (void *)0xdeadbeef;
 	/* ub->u.ub_mbuf.ubm_off = XXX; */
 #endif
