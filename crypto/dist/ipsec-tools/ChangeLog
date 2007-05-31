@@ -1,3 +1,8 @@
+2007-05-31  Emmanuel Dreyfus <manu@netbsd.org>
+	From Joy Latten <latten@austin.ibm.com>
+	* src/racoon/{main.c|policy.h|security.c}: Fix file descriptor 
+	  shortage when using labeled IPsec.
+
 2007-05-30  Emmanuel Dreyfus <manu@netbsd.org>
 	From Jianli Liu <jlliu@nortel.com>:
 	* src/racoon/kmpstat.c: Use the specified socket path instead of 
