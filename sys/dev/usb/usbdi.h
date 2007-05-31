@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.h,v 1.72.10.1 2007/05/22 14:57:49 itohy Exp $	*/
+/*	$NetBSD: usbdi.h,v 1.72.10.2 2007/05/31 23:15:19 itohy Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.h,v 1.61 2006/10/19 01:15:58 iedowse Exp $	*/
 
 /*-
@@ -136,7 +136,7 @@ void *usbd_get_buffer(usbd_xfer_handle);
 usbd_status usbd_map_alloc(usbd_xfer_handle);
 void usbd_map_free(usbd_xfer_handle);
 void usbd_map_buffer(usbd_xfer_handle, void *, u_int32_t);
-void usbd_map_buffer_mbuf(usbd_xfer_handle, struct mbuf *);
+usbd_status usbd_map_buffer_mbuf(usbd_xfer_handle, struct mbuf *);
 void usbd_unmap_buffer(usbd_xfer_handle);
 usbd_status usbd_sync_transfer(usbd_xfer_handle);
 usbd_status usbd_open_pipe_intr(usbd_interface_handle, u_int8_t,

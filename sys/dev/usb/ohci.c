@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.182.12.1 2007/05/22 14:57:39 itohy Exp $	*/
+/*	$NetBSD: ohci.c,v 1.182.12.2 2007/05/31 23:15:17 itohy Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2004, 2005, 2007 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.182.12.1 2007/05/22 14:57:39 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.182.12.2 2007/05/31 23:15:17 itohy Exp $");
 /* __FBSDID("$FreeBSD: src/sys/dev/usb/ohci.c,v 1.167 2006/10/19 01:15:58 iedowse Exp $"); */
 
 #include <sys/param.h>
@@ -172,7 +172,7 @@ Static void		ohci_freem(struct usbd_bus *, usbd_xfer_handle,
 Static usbd_status	ohci_map_alloc(usbd_xfer_handle);
 Static void		ohci_map_free(usbd_xfer_handle);
 Static void		ohci_mapm(usbd_xfer_handle, void *, size_t);
-Static void		ohci_mapm_mbuf(usbd_xfer_handle, struct mbuf *);
+Static usbd_status	ohci_mapm_mbuf(usbd_xfer_handle, struct mbuf *);
 Static void		ohci_unmapm(usbd_xfer_handle);
 
 Static usbd_xfer_handle	ohci_allocx(struct usbd_bus *, usbd_pipe_handle,
@@ -1302,13 +1302,13 @@ ohci_mapm(usbd_xfer_handle xfer, void *buf, size_t size)
 	usb_map_dma(&sc->sc_dmatag, &oxfer->dmabuf, buf, size);
 }
 
-Static void
+Static usbd_status
 ohci_mapm_mbuf(usbd_xfer_handle xfer, struct mbuf *chain)
 {
 	struct ohci_softc *sc = (struct ohci_softc *)xfer->device->bus;
 	struct ohci_xfer *oxfer = OXFER(xfer);
 
-	usb_map_mbuf_dma(&sc->sc_dmatag, &oxfer->dmabuf, chain);
+	return (usb_map_mbuf_dma(&sc->sc_dmatag, &oxfer->dmabuf, chain));
 }
 
 Static void
@@ -2825,8 +2825,12 @@ ohci_root_ctrl_start(usbd_xfer_handle xfer)
 	value = UGETW(req->wValue);
 	index = UGETW(req->wIndex);
 
-	if (len != 0)
+	if (len != 0) {
+		/* mbuf transfer is not supported */
+		if (xfer->rqflags & URQ_DEV_MAP_MBUF)
+			return (USBD_INVAL);
 		buf = xfer->hcbuffer;
+	}
 
 #define C(x,y) ((x) | ((y) << 8))
 	switch(C(req->bRequest, req->bmRequestType)) {
@@ -3154,6 +3158,8 @@ ohci_root_intr_start(usbd_xfer_handle xfer)
 
 	if (sc->sc_dying)
 		return (USBD_IOERROR);
+	if (xfer->rqflags & URQ_DEV_MAP_MBUF)
+		return (USBD_INVAL);	/* mbuf transfer is not supported */
 
 	sc->sc_intrxfer = xfer;
 
