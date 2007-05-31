@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.188 2007/05/17 14:51:40 yamt Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.189 2007/05/31 22:06:09 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.188 2007/05/17 14:51:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.189 2007/05/31 22:06:09 ad Exp $");
 
 #include "opt_kstack.h"
 #include "opt_lockdebug.h"
@@ -556,8 +556,6 @@ setrunnable(struct lwp *l)
 		return;
 	}
 
-	KASSERT(lwp_locked(l, &l->l_cpu->ci_schedstate.spc_lwplock));
-
 	/*
 	 * If the LWP is still on the CPU, mark it as LSONPROC.  It may be
 	 * about to call mi_switch(), in which case it will yield.
@@ -573,8 +571,11 @@ setrunnable(struct lwp *l)
 	 * Set the LWP runnable.  If it's swapped out, we need to wake the swapper
 	 * to bring it back in.  Otherwise, enter it into a run queue.
 	 */
-	spc_lock(l->l_cpu);
-	lwp_unlock_to(l, l->l_cpu->ci_schedstate.spc_mutex);
+	if (l->l_mutex != l->l_cpu->ci_schedstate.spc_mutex) {
+		spc_lock(l->l_cpu);
+		lwp_unlock_to(l, l->l_cpu->ci_schedstate.spc_mutex);
+	}
+
 	sched_setrunnable(l);
 	l->l_stat = LSRUN;
 	l->l_slptime = 0;
