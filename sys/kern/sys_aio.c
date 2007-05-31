@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_aio.c,v 1.4 2007/05/31 05:29:43 rmind Exp $	*/
+/*	$NetBSD: sys_aio.c,v 1.5 2007/05/31 06:24:23 rmind Exp $	*/
 
 /*
  * Copyright (c) 2007, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_aio.c,v 1.4 2007/05/31 05:29:43 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_aio.c,v 1.5 2007/05/31 06:24:23 rmind Exp $");
 
 #include "opt_ddb.h"
 
@@ -103,23 +103,11 @@ aio_init(struct proc *p)
 	if (aio == NULL)
 		return EAGAIN;
 
-	/* Recheck if we are really first */
-	mutex_enter(&p->p_mutex);
-	if (p->p_aio) {
-		mutex_exit(&p->p_mutex);
-		kmem_free(aio, sizeof(struct aioproc));
-		return 0;
-	}
-	p->p_aio = aio;
-
 	/* Initialize queue and their synchronization structures */
 	mutex_init(&aio->aio_mtx, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&aio->aio_worker_cv, "aiowork");
 	cv_init(&aio->done_cv, "aiodone");
 	TAILQ_INIT(&aio->jobs_queue);
-
-	/* It is safe to leave this window without AIO worker set */
-	mutex_exit(&p->p_mutex);
 
 	/*
 	 * Create an AIO worker thread.
@@ -127,15 +115,26 @@ aio_init(struct proc *p)
 	 */
 	inmem = uvm_uarea_alloc(&uaddr);
 	if (uaddr == 0) {
-		aio_exit(p);
+		aio_exit(p, aio);
 		return EAGAIN;
 	}
 	if (newlwp(curlwp, p, uaddr, inmem, 0, NULL, 0,
 	    aio_worker, NULL, &l)) {
 		uvm_uarea_free(uaddr);
-		aio_exit(p);
+		aio_exit(p, aio);
 		return EAGAIN;
 	}
+
+	/* Recheck if we are really first */
+	mutex_enter(&p->p_mutex);
+	if (p->p_aio) {
+		mutex_exit(&p->p_mutex);
+		aio_exit(p, aio);
+		lwp_exit(l);
+		return 0;
+	}
+	p->p_aio = aio;
+	mutex_exit(&p->p_mutex);
 
 	/* Complete the initialization of thread, and run it */
 	mutex_enter(&p->p_smutex);
@@ -155,14 +154,12 @@ aio_init(struct proc *p)
  * Exit of Asynchronous I/O subsystem of process.
  */
 void
-aio_exit(struct proc *p)
+aio_exit(struct proc *p, struct aioproc *aio)
 {
-	struct aioproc *aio;
 	struct aio_job *a_job;
 
-	if (p->p_aio == NULL)
+	if (aio == NULL)
 		return;
-	aio = p->p_aio;
 
 	/* Free AIO queue */
 	while (!TAILQ_EMPTY(&aio->jobs_queue)) {
@@ -177,7 +174,6 @@ aio_exit(struct proc *p)
 	cv_destroy(&aio->done_cv);
 	mutex_destroy(&aio->aio_mtx);
 	kmem_free(aio, sizeof(struct aioproc));
-	p->p_aio = NULL;
 }
 
 /*
