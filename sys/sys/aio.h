@@ -1,4 +1,4 @@
-/*	$NetBSD: aio.h,v 1.2 2007/05/03 22:03:50 rmind Exp $	*/
+/*	$NetBSD: aio.h,v 1.3 2007/05/31 05:29:43 rmind Exp $	*/
 
 /*
  * Copyright (c) 2007, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -99,7 +99,6 @@ struct aio_job {
 struct lio_req {
 	u_int refcnt;		/* Reference counter */
 	struct sigevent sig;	/* Signal of lio_listio() calls */
-	bool dofree;		/* Worker will free the structure */
 };
 
 /* Structure of AIO data for process */
@@ -108,19 +107,16 @@ struct aioproc {
 	kcondvar_t aio_worker_cv;	/* Signals on a new job */
 	kcondvar_t done_cv;		/* Signals when the job is done */
 	struct aio_job *curjob;		/* Currently processing AIO job */
-	struct pool jobs_pool;		/* Jobs pool */
 	unsigned int jobs_count;	/* Count of the jobs */
-	TAILQ_HEAD(, aio_job) jobs_queue;	/* Queue of the AIO jobs */
-	struct pool lio_pool;		/* List of LIO operations */
+	TAILQ_HEAD(, aio_job) jobs_queue;/* Queue of the AIO jobs */
 	struct lwp *aio_worker;		/* AIO worker thread */
 };
 
 /* Prototypes */
-int aio_init(struct proc *);
-void aio_exit(struct proc *);
-#if defined(DDB)
-void aio_print_jobs(void (*pr)(const char *, ...));
-#endif
+void	aio_sysinit(void);
+int	aio_init(struct proc *);
+void	aio_exit(struct proc *);
+void	aio_print_jobs(void (*pr)(const char *, ...));
 
 #endif /* _KERNEL */
 
