@@ -1,5 +1,5 @@
 # Country Code : City Code : City : Country
-#	$NetBSD: inter.phone,v 1.24 2003/04/10 20:27:40 salo Exp $
+#	$NetBSD: inter.phone,v 1.25 2007/05/31 05:57:01 wiz Exp $
 #	@(#)inter.phone	8.1 (Berkeley) 6/9/93
 20:2:Cairo:Egypt, Arab Rep. of
 20:3:Alexandria:Egypt, Arab Rep. of
@@ -89,14 +89,13 @@
 39:95:Catania:Italy
 39:99:Taranto:Italy
 40:0:Bucharest:Romania
-41:1:Zurich:Switzerland
-41:21:Lausanne:Switzerland
 41:22:Geneva:Switzerland
 41:31:Berne:Switzerland
-41:41:Lucerne:Switzerland
+41:43:Zurich:Switzerland
+41:44:Zurich (before March 2005):Switzerland
 41:52:Winterthur:Switzerland
 41:61:Basel:Switzerland
-41:75::Liechtenstein
+423:::Liechtenstein
 43:1:Vienna:Austria
 43:316:Graz:Austria
 43:512:Innsbruck:Austria
