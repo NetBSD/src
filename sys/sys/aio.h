@@ -1,4 +1,4 @@
-/*	$NetBSD: aio.h,v 1.4 2007/05/31 05:39:24 rmind Exp $	*/
+/*	$NetBSD: aio.h,v 1.5 2007/05/31 06:24:23 rmind Exp $	*/
 
 /*
  * Copyright (c) 2007, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -115,7 +115,7 @@ struct aioproc {
 /* Prototypes */
 void	aio_sysinit(void);
 int	aio_init(struct proc *);
-void	aio_exit(struct proc *);
+void	aio_exit(struct proc *, struct aioproc *);
 void	aio_print_jobs(void (*pr)(const char *, ...));
 
 #endif /* _KERNEL */
