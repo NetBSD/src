@@ -1,4 +1,4 @@
-/*	$NetBSD: sl811hs.c,v 1.11.18.1 2007/05/22 14:57:32 itohy Exp $	*/
+/*	$NetBSD: sl811hs.c,v 1.11.18.2 2007/05/31 23:15:19 itohy Exp $	*/
 
 /*
  * Copyright (c) 2001, 2007 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.11.18.1 2007/05/22 14:57:32 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.11.18.2 2007/05/31 23:15:19 itohy Exp $");
 /* __FBSDID("$FreeBSD: src/sys/dev/usb/sl811hs.c,v 1.4 2006/09/07 00:06:41 imp Exp $"); */
 
 #include "opt_slhci.h"
@@ -104,7 +104,7 @@ static void		slhci_freem(struct usbd_bus *, usbd_xfer_handle,
 static usbd_status	slhci_map_alloc(usbd_xfer_handle);
 static void		slhci_map_free(usbd_xfer_handle);
 static void		slhci_mapm(usbd_xfer_handle, void *, size_t);
-static void		slhci_mapm_mbuf(usbd_xfer_handle, struct mbuf *);
+static usbd_status	slhci_mapm_mbuf(usbd_xfer_handle, struct mbuf *);
 static void		slhci_unmapm(usbd_xfer_handle);
 
 Static usbd_xfer_handle	slhci_allocx(struct usbd_bus *, usbd_pipe_handle,
@@ -740,11 +740,12 @@ slhci_mapm(usbd_xfer_handle xfer, void *buf, size_t size)
 	usb_map_mem(&SLXFER(xfer)->sx_membuf, buf);
 }
 
-Static void
+Static usbd_status
 slhci_mapm_mbuf(usbd_xfer_handle xfer, struct mbuf *chain)
 {
 
 	usb_map_mbuf_mem(&SLXFER(xfer)->sx_membuf, chain);
+	return (USBD_NORMAL_COMPLETION);
 }
 
 Static void
@@ -940,8 +941,12 @@ slhci_root_ctrl_start(usbd_xfer_handle xfer)
 	value = UGETW(req->wValue);
 	index = UGETW(req->wIndex);
 
-	if (len)
+	if (len) {
+		/* mbuf transfer is not supported */
+		if (xfer->rqflags & URQ_DEV_MAP_MBUF)
+			return (USBD_INVAL);
 		buf = xfer->hcbuffer;
+	}
 
 #ifdef SLHCI_DEBUG
 	if ((slhci_debug & D_TRACE))
@@ -1300,6 +1305,9 @@ slhci_root_intr_start(usbd_xfer_handle xfer)
 
 	DPRINTF(D_TRACE, ("SLRIstart "));
 
+	if (xfer->rqflags & URQ_DEV_MAP_MBUF)
+		return (USBD_INVAL);	/* mbuf transfer is not supported */
+
 	sc->sc_interval = MS_TO_TICKS(xfer->pipe->endpoint->edesc->bInterval);
 	usb_callout(sc->sc_poll_handle, sc->sc_interval, slhci_poll_hub, xfer);
 	sc->sc_intr_xfer = xfer;
@@ -1401,7 +1409,8 @@ slhci_device_ctrl_start(usbd_xfer_handle xfer)
 	xfer->status = status;
 
 #ifdef SLHCI_DEBUG
-	if((slhci_debug & D_TRACE) && UGETW(req->wLength) > 0){
+	if ((xfer->rqflags & URQ_DEV_MAP_MBUF) == 0 /* XXX */ &&
+	    (slhci_debug & D_TRACE) && UGETW(req->wLength) > 0){
 		int i;
 		for(i=0; i < UGETW(req->wLength); i++)
 			printf("%02x", ((unsigned char *)xfer->hcbuffer)[i]);
@@ -1440,9 +1449,6 @@ slhci_device_intr_transfer(usbd_xfer_handle xfer)
 
 	DPRINTF(D_TRACE, ("INTRtrans "));
 
-	/* set current position at the top of buffer */
-	usb_buffer_mem_rewind(&SLXFER(xfer)->sx_membuf);
-
 	error = usb_insert_transfer(xfer);
 	if (error)
 		return error;
@@ -1473,7 +1479,6 @@ slhci_poll_device(void *arg)
 	usbd_xfer_handle xfer = &sx->sx_xfer;
 	usbd_pipe_handle pipe = xfer->pipe;
 	struct slhci_softc *sc = (struct slhci_softc *)pipe->device->bus;
-	void *buf;
 	int pid;
 	int r;
 	int s;
@@ -1484,12 +1489,15 @@ slhci_poll_device(void *arg)
 		MS_TO_TICKS(pipe->endpoint->edesc->bInterval),
 		slhci_poll_device, sx);
 
+	/* set current position at the top of buffer */
+	usb_buffer_mem_rewind(&SLXFER(xfer)->sx_membuf);
+
 	/* interrupt transfer */
 	pid = (UE_GET_DIR(pipe->endpoint->edesc->bEndpointAddress) == UE_DIR_IN)
 	    ? SL11_PID_IN : SL11_PID_OUT;
-	buf = xfer->hcbuffer;
 
-	r = slhci_transaction(sc, pipe, pid, xfer->length, buf, 0/*toggle*/);
+	r = slhci_transaction_buf(sc, pipe, pid, xfer->length,
+	    &SLXFER(xfer)->sx_membuf, 0/*toggle*/);
 	if (r < 0) {
 		DPRINTF(D_MSG, ("%s error", __FUNCTION__));
 		return;

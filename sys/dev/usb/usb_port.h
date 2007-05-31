@@ -1,5 +1,5 @@
 /*	$OpenBSD: usb_port.h,v 1.18 2000/09/06 22:42:10 rahnds Exp $ */
-/*	$NetBSD: usb_port.h,v 1.73.10.1 2007/05/22 14:57:48 itohy Exp $	*/
+/*	$NetBSD: usb_port.h,v 1.73.10.2 2007/05/31 23:15:18 itohy Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_port.h,v 1.82 2006/09/07 00:06:42 imp Exp $       */
 
 /*-
@@ -472,6 +472,10 @@ typedef struct callout usb_callout_t;
 	} while (0)
 
 typedef struct malloc_type *usb_malloc_type;
+
+#define Ether_ifattach ether_ifattach
+#define if_attach(ifp)
+#define IF_INPUT(ifp, m) (*(ifp)->if_input)((ifp), (m))
 
 #define USB_DECLARE_DRIVER_INIT(dname, init...) \
 Static device_probe_t __CONCAT(dname,_match); \

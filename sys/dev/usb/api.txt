@@ -1,4 +1,4 @@
-# $NetBSD: api.txt,v 1.1.2.1 2007/05/22 14:57:34 itohy Exp $
+# $NetBSD: api.txt,v 1.1.2.2 2007/05/31 23:15:16 itohy Exp $
 
 usbdi.c:
 int usbd_xfer_isread(usbd_xfer_handle xfer)
@@ -61,7 +61,7 @@ void *usbd_get_buffer(usbd_xfer_handle xfer)
 	[nocontext ok] map resources must have be allocated by usbd_map_alloc()
 	Map buf (in kernel space) into DMA space.
 
-+void usbd_map_buffer_mbuf(usbd_xfer_handle xfer, struct mbuf *chain)
++usbd_status usbd_map_buffer_mbuf(usbd_xfer_handle xfer, struct mbuf *chain)
 	[nocontext ok] map resources must have be allocated by usbd_map_alloc()
 	Map an mbuf into DMA space.
 
@@ -600,7 +600,7 @@ void usb_map_dma(usb_dma_tag_t *utag, struct usb_buffer_dma *ud, void *buf, size
 	[nocontext ok] usb_alloc_dma_resources() must have been called
 	Map buffer into DMA space for transfer.
 
-void usb_map_mbuf_dma(usb_dma_tag_t *utag, struct usb_buffer_dma *ud, struct mbuf *chain)
+usbd_status usb_map_mbuf_dma(usb_dma_tag_t *utag, struct usb_buffer_dma *ud, struct mbuf *chain)
 	[nocontext ok] usb_alloc_dma_resources() must have been called
 	Map mbuf chain into DMA space for transfer.
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_mem.h,v 1.23.32.1 2007/05/22 14:57:47 itohy Exp $	*/
+/*	$NetBSD: usb_mem.h,v 1.23.32.2 2007/05/31 23:15:18 itohy Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_mem.h,v 1.21 2005/01/06 01:43:29 imp Exp $	*/
 
 /*-
@@ -236,7 +236,7 @@ void		usb_free_buffer_dma(usb_dma_tag_t *, struct usb_buffer_dma *,
 		    USBMEM_DEBUGPARAMS);
 void		usb_map_dma(usb_dma_tag_t *, struct usb_buffer_dma *,
 		    void *, size_t);
-void		usb_map_mbuf_dma(usb_dma_tag_t *, struct usb_buffer_dma *,
+usbd_status	usb_map_mbuf_dma(usb_dma_tag_t *, struct usb_buffer_dma *,
 		    struct mbuf *);
 void		usb_unmap_dma(usb_dma_tag_t *u, struct usb_buffer_dma *);
 usbd_status	usb_alloc_dma_resources(usb_dma_tag_t *,

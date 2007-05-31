@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.80.12.1 2007/05/22 14:57:50 itohy Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.80.12.2 2007/05/31 23:15:19 itohy Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdivar.h,v 1.47 2006/09/07 00:06:42 imp Exp $	*/
 
 /*-
@@ -74,7 +74,7 @@ struct usbd_bus_methods {
 	usbd_status	      (*map_alloc)(usbd_xfer_handle);
 	void		      (*map_free)(usbd_xfer_handle);
 	void		      (*mapm)(usbd_xfer_handle, void *, size_t);
-	void		      (*mapm_mbuf)(usbd_xfer_handle, struct mbuf *);
+	usbd_status	      (*mapm_mbuf)(usbd_xfer_handle, struct mbuf *);
 	void		      (*unmapm)(usbd_xfer_handle);
 	struct usbd_xfer *    (*allocx)(struct usbd_bus *, usbd_pipe_handle,
 					enum usbd_waitflg);
@@ -230,6 +230,8 @@ struct usbd_xfer {
 	/* For memory allocation */
 	struct usbd_device     *device;
 	void		       *hcbuffer;	/* buffer for HCI driver */
+
+	size_t			bufsize;
 
 	u_int16_t		rqflags;
 #define URQ_REQUEST		0x0001	/* xfer->request valid */

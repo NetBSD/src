@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_mem.c,v 1.31.10.1 2007/05/22 14:57:47 itohy Exp $	*/
+/*	$NetBSD: usb_mem.c,v 1.31.10.2 2007/05/31 23:15:18 itohy Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_mem.c,v 1.10 2006/09/06 23:44:24 imp Exp $	*/
 
 /*-
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.31.10.1 2007/05/22 14:57:47 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.31.10.2 2007/05/31 23:15:18 itohy Exp $");
 /* __FBSDID("$FreeBSD: src/sys/dev/usb/usb_mem.c,v 1.10 2006/09/06 23:44:24 imp Exp $"); */
 
 #include <sys/param.h>
@@ -870,11 +870,12 @@ usb_map_dma(usb_dma_tag_t *utag, struct usb_buffer_dma *ub,
 /*
  * Map mbuf(9) chain into DMA buffer
  */
-void
+usbd_status
 usb_map_mbuf_dma(usb_dma_tag_t *utag, struct usb_buffer_dma *ub,
 	struct mbuf *chain)
 {
 	int err;
+	usbd_status uerr;
 
 	USB_KASSERT((ub->ub_flags & (USB_BUFFL_ASYNCMAP|USB_BUFFL_MAP)) ==
 	    USB_BUFFL_ASYNCMAP);
@@ -889,17 +890,19 @@ usb_map_mbuf_dma(usb_dma_tag_t *utag, struct usb_buffer_dma *ub,
 	    &ub->ub_segs, USB_DMA_NSEG, BUS_DMA_NOWAIT);
 #endif
 
-	/*
-	 * We allocated DMA resources with BUS_DMA_ALLOCNOW, and
-	 * bus_dmamap_load() should never block.
-	 * Any error here means programming error of usbdi device
-	 * driver (missing usbd_unmap_buffer() for previous xfer, etc.).
-	 */
-	if (err)
-		panic("usb_map_mbuf_dma: bus_dmamap_load faled, err = %d\n",
-		    err);
+	switch (err) {
+	case 0:	
+		ub->ub_type = UB_MAP;
+		return (USBD_NORMAL_COMPLETION);
+		/* NOTREACHED */
+		break;
 
-	ub->ub_type = UB_MAP;
+	case EINVAL:	uerr = USBD_INVAL;		break;
+	default:	uerr = USBD_NOMEM;		break;
+	}
+	printf("usb_map_mbuf_dma: bus_dmamap_load faled, err = %d\n", err);
+
+	return (uerr);
 }
 
 /*

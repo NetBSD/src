@@ -1,4 +1,4 @@
-/*	$NetBSD: uhcivar.h,v 1.40.40.1 2007/05/22 14:57:42 itohy Exp $	*/
+/*	$NetBSD: uhcivar.h,v 1.40.40.2 2007/05/31 23:15:17 itohy Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhcivar.h,v 1.43 2006/09/07 00:06:41 imp Exp $	*/
 
 /*-
@@ -103,6 +103,7 @@ struct uhci_xfer {
 	struct usb_buffer_dma dmabuf;
 	int rsvd_tds;
 	struct uhci_aux_mem aux;
+	struct mbuf *mbuf;
 };
 
 #define UHCI_XFER_ABORTING	0x0001	/* xfer is aborting. */
@@ -130,7 +131,15 @@ struct uhci_soft_td {
 	struct uhci_mem_desc *ut_mdesc;	/* DMA memory desc */
 	uhci_physaddr_t aux_dma;	/* Auxillary storage if needed. */
 	void *aux_kern;
-	void *aux_data;			/* Original aux data virtual address. */
+	union uhci_bufptr {
+		struct {
+			caddr_t		p_buf;
+		} ptr_p;
+		struct {
+			struct mbuf	*m_mbuf;
+			int		m_off;
+		} ptr_m;
+	} aux_ptr;			/* Original aux data pointer. */
 	int aux_len;			/* Auxillary storage size. */
 };
 /*
