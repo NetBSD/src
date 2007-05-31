@@ -1,4 +1,4 @@
-.\"	$NetBSD: split.1,v 1.14 2006/12/24 08:35:21 wiz Exp $
+.\"	$NetBSD: split.1,v 1.15 2007/05/31 01:35:35 jschauma Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)split.1	8.3 (Berkeley) 4/16/94
 .\"
-.Dd July 10, 2003
+.Dd May 28, 2007
 .Dt SPLIT 1
 .Os
 .Sh NAME
@@ -41,6 +41,7 @@
 .Oo
 .Fl b Ar byte_count Ns Oo Li k|m Oc |
 .Fl l Ar line_count
+.Fl n Ar chunk_count
 .Oc
 .Op Ar file Op Ar name
 .Sh DESCRIPTION
@@ -81,6 +82,10 @@ megabyte pieces.
 Create smaller files
 .Ar line_count
 lines in length.
+.It Fl n
+Split file into
+.Ar chunk_count
+smaller files.
 .El
 .Pp
 If additional arguments are specified, the first is used as the name
