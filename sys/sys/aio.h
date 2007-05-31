@@ -1,4 +1,4 @@
-/*	$NetBSD: aio.h,v 1.3 2007/05/31 05:29:43 rmind Exp $	*/
+/*	$NetBSD: aio.h,v 1.4 2007/05/31 05:39:24 rmind Exp $	*/
 
 /*
  * Copyright (c) 2007, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -47,16 +47,16 @@
  * Defined in the Base Definitions volume of IEEE Std 1003.1-2001 .
  */
 struct aiocb {
-	int aio_fildes;			/* File descriptor */
 	off_t aio_offset;		/* File offset */
 	volatile void *aio_buf;		/* I/O buffer in process space */
 	size_t aio_nbytes;		/* Length of transfer */
+	int aio_fildes;			/* File descriptor */
+	int aio_lio_opcode;		/* LIO opcode */
 	int aio_reqprio;		/* Request priority offset */
 	struct sigevent aio_sigevent;	/* Signal to deliver */
-	int aio_lio_opcode;		/* LIO opcode */
 
 	/* Internal kernel variables */
-	char _state;			/* State of the job */
+	int _state;			/* State of the job */
 	int _errno;			/* Error value */
 	ssize_t _retval;		/* Return value */
 };
