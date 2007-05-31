@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.6 2006/09/09 16:22:09 manu Exp $	*/
+/*	$NetBSD: main.c,v 1.7 2007/05/31 19:54:55 manu Exp $	*/
 
 /* Id: main.c,v 1.25 2006/06/20 20:31:34 manubsd Exp */
 
@@ -77,6 +77,7 @@
 #include "session.h"
 #include "oakley.h"
 #include "pfkey.h"
+#include "policy.h"
 #include "crypto_openssl.h"
 #include "backupsa.h"
 #include "vendorid.h"
@@ -165,6 +166,9 @@ main(ac, av)
 	DRM_init();
 #endif
 
+#ifdef HAVE_SECCTX
+	init_avc();
+#endif
 	eay_init();
 	initlcconf();
 	initrmconf();

@@ -182,23 +182,22 @@ set_secctx_in_proposal(iph2, spidx)
  * 		1	if the avc could not be initialized
  */
 
-static int
+static int mls_ready = 0;
+
+void
 init_avc(void)
 {
-	int rtn = 0;
-
 	if (!is_selinux_mls_enabled()) {
 		plog(LLV_ERROR, LOCATION, NULL, "racoon: MLS support is not"
 				" enabled.\n");
-		return 1;
+		return;
 	}
 
-	rtn = avc_init("racoon", NULL, NULL, NULL, NULL);
-	if (rtn != 0) {
-		plog(LLV_ERROR, LOCATION, NULL, "racoon: could not initialize avc.\n");
-		rtn = 1;
-	}
-	return rtn;
+	if (avc_init("racoon", NULL, NULL, NULL, NULL) == 0)
+		mls_ready = 1;
+	else
+		plog(LLV_ERROR, LOCATION, NULL, 
+		     "racoon: could not initialize avc.\n");
 }
 
 /*
@@ -225,12 +224,8 @@ within_range(security_context_t sl, security_context_t range)
 	if (!*range)	/* This policy doesn't have security context */
 		return 1;
 
-	rtn = init_avc();
-	if (rtn != 0) {
-		plog(LLV_ERROR, LOCATION, NULL, 
-			"within_range: couldn't initialize the AVC\n");
+	if (!mls_ready)  /* mls may not be enabled */
 		return 0;
-	}
 
 	/*
 	 * Get the sids for the sl and range contexts
