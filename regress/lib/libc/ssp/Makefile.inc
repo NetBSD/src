@@ -1,9 +1,10 @@
-# $NetBSD: Makefile.inc,v 1.2 2007/06/01 16:54:11 martin Exp $
+# $NetBSD: Makefile.inc,v 1.3 2007/06/01 17:15:19 martin Exp $
 
 WARNS=	4
 
 CPPFLAGS+=-D_FORTIFY_SOURCE=2
 CFLAGS+=-fstack-protector-all -Wstack-protector
+LDFLAGS+=-fstack-protector-all -Wstack-protector
 
 # Bootstrap hack
 
