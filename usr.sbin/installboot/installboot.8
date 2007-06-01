@@ -1,4 +1,4 @@
-.\"	$NetBSD: installboot.8,v 1.65 2007/02/17 08:45:36 wiz Exp $
+.\"	$NetBSD: installboot.8,v 1.66 2007/06/01 20:56:23 dyoung Exp $
 .\"
 .\" Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -580,13 +580,12 @@ bootstrap:
 .
 .Pp
 Create a bootable CD-ROM with an ISO9660
-file system for a system with a serial console:
+file system for an i386 system with a serial console:
 .Dl Ic mkdir cdrom
 .Dl Ic cp sys/arch/i386/compile/mykernel/netbsd cdrom/netbsd
 .Dl Ic cp /usr/mdec/boot cdrom/boot
 .Dl Ic cp /usr/mdec/bootxx_cd9660 bootxx
-.Dl Ic installboot -t raw -o console=com0,speed=19200 bootxx \
-	/usr/mdec/bootxx_cd9660
+.Dl Ic installboot -o console=com0,speed=19200 -m i386 -e bootxx
 .Dl Ic makefs -t cd9660 -o 'bootimage=i386;bootxx,no-emul-boot' boot.iso \
 	cdrom
 .
