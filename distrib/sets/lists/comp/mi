@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1031 2007/05/30 16:23:23 tls Exp $
+#	$NetBSD: mi,v 1.1032 2007/06/01 22:54:52 uwe Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -2190,6 +2190,8 @@
 ./usr/lib/libssh_p.a				comp-c-proflib		profile,crypto
 ./usr/lib/libssl.a				comp-c-lib		crypto
 ./usr/lib/libssl_p.a				comp-c-proflib		profile,crypto
+./usr/lib/libssp.a				comp-obsolete		obsolete
+./usr/lib/libssp_p.a				comp-obsolete		obsolete
 ./usr/lib/libstdc++.a				comp-cxx-lib
 ./usr/lib/libstdc++_p.a				comp-cxx-proflib	profile
 ./usr/lib/libsupc++.a				comp-cxx-lib
@@ -3065,6 +3067,7 @@
 ./usr/libdata/lint/llib-lsm.ln			comp-obsolete		obsolete
 ./usr/libdata/lint/llib-lssh.ln			comp-c-lintlib		lint,crypto
 ./usr/libdata/lint/llib-lssl.ln			comp-c-lintlib		lint,crypto
+./usr/libdata/lint/llib-lssp.ln			comp-obsolete		obsolete
 ./usr/libdata/lint/llib-lstdc.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-ltelnet.ln		comp-obsolete		obsolete
 ./usr/libdata/lint/llib-ltermcap.ln		comp-c-lintlib		lint
