@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.72 2007/05/19 16:35:01 pooka Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.73 2007/06/01 15:59:37 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.72 2007/05/19 16:35:01 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.73 2007/06/01 15:59:37 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/fstrans.h>
@@ -1547,7 +1547,7 @@ puffs_write(void *v)
 		struct uio *a_uio;
 		int a_ioflag;
 		kauth_cred_t a_cred;
-	} */ *ap = v;
+	} */ *ap = v;
 	struct puffs_vnreq_write *write_argp;
 	struct puffs_mount *pmp;
 	struct uio *uio;
