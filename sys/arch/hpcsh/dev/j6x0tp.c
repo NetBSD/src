@@ -1,4 +1,4 @@
-/*	$NetBSD: j6x0tp.c,v 1.17 2007/06/01 17:44:46 uwe Exp $ */
+/*	$NetBSD: j6x0tp.c,v 1.18 2007/06/01 18:23:46 uwe Exp $ */
 
 /*
  * Copyright (c) 2003 Valeriy E. Ushakov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: j6x0tp.c,v 1.17 2007/06/01 17:44:46 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: j6x0tp.c,v 1.18 2007/06/01 18:23:46 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -145,7 +145,7 @@ static int	j6x0tp_wskbd_ioctl(void *, u_long, void *, int,
 /* internal driver routines */
 static void	j6x0tp_enable(struct j6x0tp_softc *);
 static void	j6x0tp_disable(struct j6x0tp_softc *);
-static int	j6x0tp_set_enable(struct j6x0tp_softc *, int, int);
+static int	j6x0tp_enable_child(struct j6x0tp_softc *, int, int);
 static int	j6x0tp_intr(void *);
 static void	j6x0tp_start_polling(void *);
 static void	j6x0tp_stop_polling(struct j6x0tp_softc *);
@@ -308,7 +308,7 @@ j6x0tp_disable(struct j6x0tp_softc *sc)
 
 
 static int
-j6x0tp_set_enable(struct j6x0tp_softc *sc, int on, int child)
+j6x0tp_enable_child(struct j6x0tp_softc *sc, int child, int on)
 {
 	int s = spltty();
 
@@ -333,7 +333,7 @@ j6x0tp_wsmouse_enable(void *self)
 	struct j6x0tp_softc *sc = (struct j6x0tp_softc *)self;
 
 	DPRINTFN(1, ("%s: wsmouse enable\n", device_xname(&sc->sc_dev)));
-	return (j6x0tp_set_enable(sc, 1, J6X0TP_WSMOUSE_ENABLED));
+	return (j6x0tp_enable_child(sc, J6X0TP_WSMOUSE_ENABLED, 1));
 }
 
 
@@ -343,7 +343,7 @@ j6x0tp_wsmouse_disable(void *self)
 	struct j6x0tp_softc *sc = (struct j6x0tp_softc *)self;
 
 	DPRINTFN(1, ("%s: wsmouse disable\n", device_xname(&sc->sc_dev)));
-	j6x0tp_set_enable(sc, 0, J6X0TP_WSMOUSE_ENABLED);
+	j6x0tp_enable_child(sc, J6X0TP_WSMOUSE_ENABLED, 0);
 }
 
 
@@ -354,7 +354,7 @@ j6x0tp_wskbd_enable(void *self, int on)
 
 	DPRINTFN(1, ("%s: wskbd %sable\n", device_xname(&sc->sc_dev),
 		     on ? "en" : "dis"));
-	return (j6x0tp_set_enable(sc, on, J6X0TP_WSKBD_ENABLED));
+	return (j6x0tp_enable_child(sc, J6X0TP_WSKBD_ENABLED, on));
 }
 
 
