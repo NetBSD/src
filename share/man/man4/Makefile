@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.430 2007/06/01 11:34:32 jnemeth Exp $
+#	$NetBSD: Makefile,v 1.431 2007/06/01 18:10:00 uwe Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/18/93
 
 MAN=	aac.4 ac97.4 acardide.4 aceride.4 acphy.4 adbbt.4 adbkbd.4 adbms.4 \
@@ -81,7 +81,7 @@ MAN+=	cz.4 epic.4 lmc.4 viaenv.4
 # machine-independent ISA devices
 MAN+=	aha.4 ai.4 aic.4 ast.4 ate.4 boca.4 cs.4 cy.4 ec.4 ef.4 \
 	eg.4 el.4 esp.4 ess.4 ex.4 fmv.4 gus.4 guspnp.4 ix.4 iy.4 \
-	le.4 lm.4 mcd.4 nca.4 rtfps.4 sb.4 sea.4 tcom.4 \
+	le.4 lm.4 mcd.4 nca.4 rtfps.4 sb.4 sea.4 smsc.4 tcom.4 \
 	wds.4 we.4 wss.4 wt.4
 
 # machine-independent PCMCIA devices
