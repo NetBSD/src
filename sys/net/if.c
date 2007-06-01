@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.189 2007/05/31 02:56:50 christos Exp $	*/
+/*	$NetBSD: if.c,v 1.190 2007/06/01 09:35:47 enami Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.189 2007/05/31 02:56:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.190 2007/06/01 09:35:47 enami Exp $");
 
 #include "opt_inet.h"
 
@@ -1617,17 +1617,14 @@ ifconf(u_long cmd, void *data)
 	struct ifnet *ifp;
 	struct ifaddr *ifa;
 	struct ifreq ifr, *ifrp;
-	int space = ifc->ifc_len, error = 0;
-	const size_t sz = offsetof(struct ifreq, ifr_ifru) +
-	    sizeof(sizeof (struct sockaddr));
-	int sign;
+	int space, error = 0;
+	const int sz = offsetof(struct ifreq, ifr_ifru) +
+	    sizeof(struct sockaddr);
 
-	if ((ifrp = ifc->ifc_req) == NULL) {
+	if ((ifrp = ifc->ifc_req) == NULL)
 		space = 0;
-		sign = -1;
-	} else {
-		sign = 1;
-	}
+	else
+		space = ifc->ifc_len;
 	IFNET_FOREACH(ifp) {
 		(void)strncpy(ifr.ifr_name, ifp->if_xname,
 		    sizeof(ifr.ifr_name));
@@ -1635,13 +1632,13 @@ ifconf(u_long cmd, void *data)
 			return ENAMETOOLONG;
 		if (TAILQ_EMPTY(&ifp->if_addrlist)) {
 			memset(&ifr.ifr_addr, 0, sizeof(ifr.ifr_addr));
-			if (ifrp != NULL && space >= sz) {
+			if (space >= sz) {
 				error = copyout(&ifr, ifrp, sz);
 				if (error != 0)
-					break;
+					return (error);
 				ifrp++;
 			}
-			space -= sz * sign;
+			space -= sizeof(struct ifreq);
 			continue;
 		}
 
@@ -1649,35 +1646,32 @@ ifconf(u_long cmd, void *data)
 			struct sockaddr *sa = ifa->ifa_addr;
 			if (sa->sa_len <= sizeof(*sa)) {
 				ifr.ifr_addr = *sa;
-				if (ifrp != NULL && space >= sz) {
+				if (space >= sz) {
 					error = copyout(&ifr, ifrp, sz);
 					ifrp++;
 				}
+				space -= sizeof(struct ifreq);
 			} else {
-				space -= (sa->sa_len - sizeof(*sa)) * sign;
-				if (ifrp != NULL && space >= sz) {
-					error = copyout(&ifr, ifrp,
-					    sizeof(ifr.ifr_name));
-					if (error == 0) {
-						error = copyout(sa,
-						    &ifrp->ifr_addr,
-						    sa->sa_len);
-					}
-					ifrp = (struct ifreq *)
-						(sa->sa_len +
-						 (char *)&ifrp->ifr_addr);
-				}
+				space -= sa->sa_len - sizeof(*sa) + sz;
+				if (space < 0)
+					continue;
+				error = copyout(&ifr, ifrp,
+				    sizeof(ifr.ifr_name));
+				if (error == 0)
+					error = copyout(sa,
+					    &ifrp->ifr_addr, sa->sa_len);
+				ifrp = (struct ifreq *)
+				    (sa->sa_len + (char *)&ifrp->ifr_addr);
 			}
 			if (error != 0)
-				break;
-			space -= sz * sign;
+				return (error);
 		}
 	}
 	if (ifrp != NULL)
 		ifc->ifc_len -= space;
 	else
-		ifc->ifc_len = space;
-	return error;
+		ifc->ifc_len = -space;
+	return (0);
 }
 
 /*
