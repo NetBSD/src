@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.145 2007/05/29 23:21:52 christos Exp $
+# $NetBSD: GENERIC,v 1.146 2007/06/01 14:14:16 blymn Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.145 $"
+#ident 		"GENERIC-$Revision: 1.146 $"
 
 maxusers	32		# estimated number of users
 
@@ -373,6 +373,9 @@ lpt1	at isa? port 0x278
 
 # LM7[89] and compatible hardware monitors
 #lm0	at isa?	port 0x290		# other common ports: 0x280, 0x310
+
+# SMSC LPC47B397 hardware monitor functions
+#smsc0   at isa? port 0x02e
 
 # AMD 768 and 8111 power/ACPI controllers
 amdpm*	at pci? dev ? function ?	# RNG and SMBus 1.0 interface
