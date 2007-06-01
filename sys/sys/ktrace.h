@@ -1,4 +1,4 @@
-/*	$NetBSD: ktrace.h,v 1.47 2007/04/26 16:27:32 dsl Exp $	*/
+/*	$NetBSD: ktrace.h,v 1.48 2007/06/01 20:24:21 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -289,6 +289,7 @@ void ktrsyscall(struct lwp *, register_t, register_t,
     const struct sysent *, register_t []);
 void ktrsysret(struct lwp *, register_t, int, register_t *);
 int ktruser(struct lwp *, const char *, void *, size_t, int);
+void ktrkuser(struct lwp *, const char *, void *, size_t);
 void ktrmmsg(struct lwp *, const void *, size_t);
 void ktrkmem(struct lwp *, int, const void *, size_t);
 void ktrmib(struct lwp *, const int *, u_int);
