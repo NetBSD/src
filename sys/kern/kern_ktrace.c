@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.122 2007/04/26 16:27:32 dsl Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.123 2007/06/01 20:24:21 dsl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.122 2007/04/26 16:27:32 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.123 2007/06/01 20:24:21 dsl Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h"
@@ -816,6 +816,27 @@ ktruser(struct lwp *l, const char *id, void *addr, size_t len, int ustr)
 
 	ktraddentry(l, kte, KTA_WAITOK);
 	return error;
+}
+
+void
+ktrkuser(struct lwp *l, const char *id, void *addr, size_t len)
+{
+	struct ktrace_entry *kte;
+	struct ktr_user *ktp;
+	int error;
+
+	if (len > KTR_USER_MAXLEN)
+		return;
+
+	error = ktealloc(&kte, (void *)&ktp, l, KTR_USER, sizeof(*ktp) + len);
+	if (error != 0)
+		return;
+
+	strlcpy(ktp->ktr_id, id, KTR_USER_MAXIDLEN);
+
+	memcpy(ktp + 1, addr, len);
+
+	ktraddentry(l, kte, KTA_WAITOK);
 }
 
 void
