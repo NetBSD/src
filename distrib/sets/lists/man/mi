@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1004 2007/06/01 11:27:58 jnemeth Exp $
+# $NetBSD: mi,v 1.1005 2007/06/01 14:19:20 blymn Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -1303,6 +1303,7 @@
 ./usr/share/man/cat4/slide.0			man-sys-catman		.cat
 ./usr/share/man/cat4/slip.0			man-sys-catman		.cat
 ./usr/share/man/cat4/sm.0			man-sys-catman		.cat
+./usr/share/man/cat4/smsc.0			man-sys-catman		.cat
 ./usr/share/man/cat4/sound.0			man-sys-catman		.cat
 ./usr/share/man/cat4/sp.0			man-obsolete		obsolete
 ./usr/share/man/cat4/sparc/audioamd.0		man-sys-catman		.cat
@@ -3767,6 +3768,7 @@
 ./usr/share/man/man4/slide.4			man-sys-man		.man
 ./usr/share/man/man4/slip.4			man-sys-man		.man
 ./usr/share/man/man4/sm.4			man-sys-man		.man
+./usr/share/man/man4/smsc.4			man-sys-man		.man
 ./usr/share/man/man4/sound.4			man-sys-man		.man
 ./usr/share/man/man4/sp.4			man-obsolete		obsolete
 ./usr/share/man/man4/sparc/audioamd.4		man-sys-man		.man
