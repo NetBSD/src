@@ -1,4 +1,4 @@
-.\"	$NetBSD: mount_nfs.8,v 1.34 2006/12/27 11:27:37 wiz Exp $
+.\"	$NetBSD: mount_nfs.8,v 1.35 2007/06/01 17:43:19 ginsbach Exp $
 .\"
 .\" Copyright (c) 1992, 1993, 1994, 1995
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)mount_nfs.8	8.3 (Berkeley) 3/29/95
 .\"
-.Dd December 27, 2006
+.Dd June 1, 2007
 .Dt MOUNT_NFS 8
 .Os
 .Sh NAME
@@ -105,7 +105,7 @@ Use the
 Version 3 protocol.
 The default is to try version 3 first, and
 fall back to version 2 if the mount fails.
-.It Fl a
+.It Fl a Ar maxreadahead
 Set the read-ahead count to the specified value.
 This may be in the range of 0 - 4, and determines how many blocks
 will be read ahead when a large file is being read sequentially.
@@ -140,7 +140,7 @@ mount points, do not do a
 This flag is deprecated and connectionless
 .Tn UDP
 mounts are the default.
-.It Fl D
+.It Fl D Ar deadthresh
 Set the
 .Dq "dead server threshold"
 to the specified number of round trip timeout intervals.
@@ -156,14 +156,14 @@ This may be useful for
 mounts that exhibit high retry rates,
 since it is possible that the dynamically estimated timeout interval is too
 short.
-.It Fl g
+.It Fl g Ar maxgroups
 Set the maximum size of the group list for the credentials to the
 specified value.
 This should be used for mounts on old servers that cannot handle a
 group list size of 16, as specified in RFC 1057.
 Try 8, if users in a lot of groups cannot get response from the mount
 point.
-.It Fl I
+.It Fl I Ar readdirsize
 Set the readdir read size to the specified value.
 The value should normally
 be a multiple of
@@ -175,7 +175,7 @@ are delayed due to an unresponsive server will fail with
 .Er EINTR
 when a
 termination signal is posted for the process.
-.It Fl L
+.It Fl L Ar leaseterm
 Ignored.
 It used to be
 .Tn NQNFS
@@ -195,13 +195,83 @@ but tends to flood the attribute and name caches with prefetched entries.
 Try this option and see whether performance improves or degrades.
 Probably most useful for client to server network
 interconnects with a large bandwidth times delay product.
-.It Fl o
+.It Fl o Ar options
 Options are specified with a
 .Fl o
 flag followed by a comma separated string of options.
 See the
 .Xr mount 8
 man page for possible options and their meanings.
+.Pp
+The following
+.Tn NFS
+specific options are also available:
+.Bl -tag -width indent
+.It Cm bg
+Same as
+.Fl b .
+.It Cm conn
+Same as
+.Fl C .
+.It Cm deadthresh Ns = Ns Aq Ar deadthresh
+Same as
+.Fl D Ar deadthresh .
+.It Cm dumbtimer
+Same as
+.Fl d .
+.It Cm intr
+Same as
+.Fl i .
+.It Cm leaseterm Ns = Ns Aq Ar leaseterm
+Same as
+.Fl L Ar leaseterm .
+.It Cm maxgrps Ns = Ns Aq Ar maxgroups
+Same as
+.Fl g Ar maxgroups .
+.It Cm mntudp
+Same as
+.Fl U .
+.It Cm nfsv2
+Same as
+.Fl 2 .
+.It Cm nfsv3
+Same as
+.Fl 3 .
+.It Cm noresvport
+Same as
+.Fl p .
+.It Cm nqnfs
+Same as
+.Fl q .
+.It Cm port Ns = Ns Aq Ar portnumber
+Use the specified port number for
+.Tn NFS
+requests.
+The default is to query the portmapper for the
+.Tn NFS
+port.
+.It Cm rdirplus
+Same as
+.Fl l .
+.It Cm readahead Ns = Ns Aq Ar maxreadahead
+Same as
+.Fl a Ar maxreadahead .
+.It Cm rsize Ns = Ns Aq Ar readsize
+Same as
+.Fl -r Ar readsize .
+.It Cm soft
+Same as
+.Fl s .
+.It Cm tcp
+Same as
+.Fl T .
+.It Cm timeo Ns = Ns Aq Ar timeout
+Same as
+.Fl t Ar timeout .
+.It Cm wsize Ns = Ns Aq Ar writesize
+Same as
+.Fl w Ar writesize .
+.El
 .It Fl P
 Use a reserved socket port number.
 This is the default, and available
@@ -215,9 +285,9 @@ A synonym of
 .Fl 3 .
 It used to specify
 .Tn NQNFS .
-.It Fl R
+.It Fl R Ar retrycnt
 Set the retry count for doing the mount to the specified value.
-.It Fl r
+.It Fl r Ar readsize
 Set the read data size to the specified value in bytes.
 It should normally be a power of 2 greater than or equal to 1024.
 .Pp
@@ -252,7 +322,7 @@ the client.
 Not all
 .Tn NFS
 servers, especially not old ones, support this.
-.It Fl t
+.It Fl t Ar timeout
 Set the initial retransmit timeout to the specified value.
 May be useful for fine tuning
 .Tn UDP
@@ -275,7 +345,7 @@ mounts.
 This is necessary for some old
 .Bx
 servers.
-.It Fl w
+.It Fl w Ar writesize
 Set the write data size to the specified value in bytes.
 .Pp
 The same logic applies for use of this option as with the
@@ -303,7 +373,7 @@ Native
 .Nx
 binaries will never need this option.
 This option introduces some overhead.
-.It Fl x
+.It Fl x Ar retrans
 Set the retransmit timeout count for soft mounts to the specified value.
 .El
 .Sh EXAMPLES
