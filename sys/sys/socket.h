@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.h,v 1.85 2007/05/02 20:40:29 dyoung Exp $	*/
+/*	$NetBSD: socket.h,v 1.86 2007/06/01 22:53:52 dsl Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -461,6 +461,12 @@ struct msghdr {
 #define	MSG_BCAST	0x0100		/* this message was rcvd using link-level brdcst */
 #define	MSG_MCAST	0x0200		/* this message was rcvd using link-level mcast */
 #define	MSG_NOSIGNAL	0x0400		/* do not generate SIGPIPE on EOF */
+
+/* Extra flags used internally only */
+#define	MSG_USERFLAGS	0x0ffffff
+#define MSG_NAMEMBUF	0x1000000	/* msg_name is an mbuf */
+#define MSG_CONTROLMBUF	0x2000000	/* msg_control is an mbuf */
+#define MSG_IOVUSRSPACE	0x4000000	/* msg_iov is in user space */
 
 /*
  * Header for ancillary data objects in msg_control buffer.
