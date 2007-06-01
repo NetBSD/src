@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_ioctl.c,v 1.22 2007/05/29 21:32:28 christos Exp $	*/
+/*	$NetBSD: sunos32_ioctl.c,v 1.23 2007/06/01 10:21:22 hannken Exp $	*/
 /* from: NetBSD: sunos_ioctl.c,v 1.35 2001/02/03 22:20:02 mrg Exp 	*/
 
 /*
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos32_ioctl.c,v 1.22 2007/05/29 21:32:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos32_ioctl.c,v 1.23 2007/06/01 10:21:22 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd32.h"
@@ -659,14 +659,14 @@ sunos32_sys_ioctl(l, v, retval)
 		break;
 
 	case _IOWR('i', 13, struct oifreq):
-		IFREQ_INOUT(OSIOCGIFADDR);
+		IFREQ_INOUT(OOSIOCGIFADDR);
 
 	case _IOW('i', 14, struct oifreq):
 		/* SIOCSIFDSTADDR */
 		break;
 
 	case _IOWR('i', 15, struct oifreq):
-		IFREQ_INOUT(OSIOCGIFDSTADDR);
+		IFREQ_INOUT(OOSIOCGIFDSTADDR);
 
 	case _IOW('i', 16, struct oifreq):
 		/* SIOCSIFFLAGS */
@@ -689,7 +689,7 @@ sunos32_sys_ioctl(l, v, retval)
 		IFREQ_IN(SIOCSIFBRDADDR);
 
 	case _IOWR('i', 25, struct oifreq):
-		IFREQ_INOUT(OSIOCGIFNETMASK);
+		IFREQ_INOUT(OOSIOCGIFNETMASK);
 
 	case _IOW('i', 26, struct oifreq):
 		IFREQ_IN(SIOCSIFNETMASK);
