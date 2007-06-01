@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.190 2007/06/01 09:35:47 enami Exp $	*/
+/*	$NetBSD: if.c,v 1.191 2007/06/01 15:41:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.190 2007/06/01 09:35:47 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.191 2007/06/01 15:41:15 christos Exp $");
 
 #include "opt_inet.h"
 
@@ -1320,7 +1320,9 @@ ifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 	struct ifcapreq *ifcr;
 	struct ifdatareq *ifdr;
 	int s, error = 0;
-	u_long ocmd;
+#if defined(COMPAT_OSOCK) || defined(COMPAT_OIFREQ)
+	u_long ocmd = cmd;
+#endif
 	short oif_flags;
 #ifdef COMPAT_OIFREQ
 	struct ifreq ifrb;
@@ -1336,17 +1338,13 @@ ifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 	case SIOCGIFCONF:
 		return ifconf(cmd, data);
 	}
-	ocmd = cmd;
+
 #ifdef COMPAT_OIFREQ
 	cmd = cvtcmd(cmd);
 	if (cmd != ocmd) {
 		oifr = data;
 		data = ifr = &ifrb;
 		ifreqo2n(oifr, ifr);
-#ifdef DEBUG_OIFREQ
-		printf("ifioctl ocmd = %lx cmd = %lx '%c' %u\n",
-		    ocmd, cmd, (char)IOCGROUP(cmd), (u_int)(cmd & 0xff));
-#endif
 	} else
 #endif
 		ifr = data;
