@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_ioctl.c,v 1.30 2007/05/29 21:32:29 christos Exp $ */
+/*	$NetBSD: ultrix_ioctl.c,v 1.31 2007/06/01 11:36:35 he Exp $ */
 /*	from : NetBSD: sunos_ioctl.c,v 1.21 1995/10/07 06:27:31 mycroft Exp */
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_ioctl.c,v 1.30 2007/05/29 21:32:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_ioctl.c,v 1.31 2007/06/01 11:36:35 he Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_ultrix.h"
@@ -49,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: ultrix_ioctl.c,v 1.30 2007/05/29 21:32:29 christos E
 
 #include <sys/mount.h>
 
+#include <compat/sys/sockio.h>
 #include <compat/ultrix/ultrix_syscallargs.h>
 #include <sys/syscallargs.h>
 
@@ -666,14 +667,14 @@ ultrix_sys_ioctl(struct lwp *l, void *v, register_t *retval)
 		break;
 
 	case _IOWR('i', 13, struct oifreq):
-		IFREQ_INOUT(OSIOCGIFADDR);
+		IFREQ_INOUT(OOSIOCGIFADDR);
 
 	case _IOW('i', 14, struct oifreq):
 		/* SIOCSIFDSTADDR */
 		break;
 
 	case _IOWR('i', 15, struct oifreq):
-		IFREQ_INOUT(OSIOCGIFDSTADDR);
+		IFREQ_INOUT(OOSIOCGIFDSTADDR);
 
 	case _IOW('i', 16, struct oifreq):
 		/* SIOCSIFFLAGS */
@@ -709,7 +710,7 @@ ultrix_sys_ioctl(struct lwp *l, void *v, register_t *retval)
 
 
 	case _IOWR('i', 21, struct oifreq):
-		IFREQ_INOUT(OSIOCGIFNETMASK);
+		IFREQ_INOUT(OOSIOCGIFNETMASK);
 
 	case _IOW('i', 22, struct oifreq):
 		IFREQ_IN(SIOCSIFNETMASK);
