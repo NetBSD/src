@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.155 2007/05/28 16:47:38 yamt Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.156 2007/06/01 11:38:44 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.155 2007/05/28 16:47:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.156 2007/06/01 11:38:44 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -2289,7 +2289,7 @@ nfsdsock_lock(struct nfssvc_sock *slp, bool waitok)
 {
 
 	simple_lock(&slp->ns_lock);
-	while ((slp->ns_flag & (SLP_BUSY|SLP_VALID)) == SLP_BUSY) {
+	while ((~slp->ns_flag & (SLP_BUSY|SLP_VALID)) == 0) {
 		if (!waitok) {
 			simple_unlock(&slp->ns_lock);
 			return EWOULDBLOCK;
