@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.863 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.864 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -120,3 +120,4 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	aac(4): Compile and run on amd64. [briggs 20070525]
 	libcurses: Merge in wide curses work done by Ruibiao Qui as a
 		Google Summer of Code project [blymn 20070529]
+	powerpc: Add booted_kernel and booted_device sysctl [nisimura 20070601]
