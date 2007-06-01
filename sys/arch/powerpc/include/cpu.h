@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.57 2007/05/18 11:16:27 rjs Exp $	*/
+/*	$NetBSD: cpu.h,v 1.58 2007/06/01 14:23:50 nisimura Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -357,8 +357,10 @@ void __syncicache(void *, size_t);
 #define	CPU_CACHEINFO		5
 #define	CPU_ALTIVEC		6
 #define	CPU_MODEL		7
-#define	CPU_POWERSAVE		8
-#define	CPU_MAXID		9
+#define	CPU_POWERSAVE		8	/* int: use CPU powersave mode */
+#define	CPU_BOOTED_DEVICE	9	/* string: device we booted from */
+#define	CPU_BOOTED_KERNEL	10	/* string: kernel we booted */
+#define	CPU_MAXID		11	/* number of valid machdep ids */
 
 #define	CTL_MACHDEP_NAMES { \
 	{ 0, 0 }, \
