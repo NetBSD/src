@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.466 2007/05/20 05:05:06 dogcow Exp $
+$NetBSD: usbdevs,v 1.467 2007/06/01 17:48:56 jmcneill Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -409,6 +409,7 @@ vendor TOD		0x0ede	TOD
 vendor AIRPRIME		0x0f3d	AirPrime, Incorporated
 vendor VTECH		0x0f88	VTech
 vendor FALCOM		0x0f94	Falcom Wireless Communications GmbH
+vendor RIM		0x0fca	Research In Motion
 vendor DYNASTREAM	0x0fcf	Dynastream Innovations
 vendor QUALCOMM		0x1004	Qualcomm
 vendor GIGABYTE		0x1044	GIGABYTE
@@ -887,6 +888,9 @@ product DLINK DSB650TX_PNA	0x4003	1/10/100 ethernet adapter
 product DLINK DSB650TX3		0x400b	10/100 ethernet adapter
 product DLINK DSB650TX2		0x4102	10/100 ethernet adapter
 product DLINK DSB650		0xabc1	10/100 ethernet adapter
+
+/* Research In Motion */
+product RIM BLACKBERRY		0x0001	BlackBerry
 
 /* Dynastream Innovations */
 product DYNASTREAM ANTDEVBOARD	0x1003	ANT dev board
