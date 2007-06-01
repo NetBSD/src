@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.c,v 1.11 2007/06/01 07:04:53 skrll Exp $	*/
+/*	$NetBSD: cpuswitch.c,v 1.12 2007/06/01 07:21:51 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 Ben Harris.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpuswitch.c,v 1.11 2007/06/01 07:04:53 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpuswitch.c,v 1.12 2007/06/01 07:21:51 skrll Exp $");
 
 #include "opt_lockdebug.h"
 
@@ -56,8 +56,6 @@ __KERNEL_RCSID(0, "$NetBSD: cpuswitch.c,v 1.11 2007/06/01 07:04:53 skrll Exp $")
 #include <machine/machdep.h>
 
 struct pcb *curpcb;
-
-extern int want_resched; /* XXX should be in <machine/cpu.h> */
 
 /*
  * Switch to the indicated lwp.
