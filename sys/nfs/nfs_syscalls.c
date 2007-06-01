@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.112 2007/06/01 14:10:02 yamt Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.113 2007/06/01 14:43:17 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.112 2007/06/01 14:10:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.113 2007/06/01 14:43:17 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -514,6 +514,10 @@ nfssvc_nfsd(nsd, argp, l)
 	 * Loop getting rpc requests until SIGKILL.
 	 */
 	for (;;) {
+		if ((curcpu()->ci_schedstate.spc_flags & SPCF_SHOULDYIELD)
+		    != 0) {
+			preempt();
+		}
 		if (nfsd->nfsd_slp == NULL) {
 			mutex_enter(&nfsd_lock);
 			while (nfsd->nfsd_slp == NULL &&
