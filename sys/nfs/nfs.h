@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.h,v 1.65 2007/06/01 11:56:03 yamt Exp $	*/
+/*	$NetBSD: nfs.h,v 1.66 2007/06/01 23:16:33 dogcow Exp $	*/
 /*
  * Copyright (c) 1989, 1993, 1995
  *	The Regents of the University of California.  All rights reserved.
@@ -35,6 +35,9 @@
 
 #ifndef _NFS_NFS_H_
 #define _NFS_NFS_H_
+#ifdef _KERNEL
+#include <sys/condvar.h>
+#endif
 
 /*
  * Tunable constants for nfs
