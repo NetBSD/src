@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stream.c,v 1.63 2007/04/30 14:05:47 dsl Exp $	 */
+/*	$NetBSD: svr4_stream.c,v 1.64 2007/06/01 22:53:53 dsl Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_stream.c,v 1.63 2007/04/30 14:05:47 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_stream.c,v 1.64 2007/06/01 22:53:53 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -62,6 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_stream.c,v 1.63 2007/04/30 14:05:47 dsl Exp $")
 #include <sys/un.h>
 #include <net/if.h>
 #include <netinet/in.h>
+#include <sys/mbuf.h>
 #include <sys/mount.h>
 #include <sys/proc.h>
 #include <sys/vfs_syscalls.h>
@@ -998,7 +999,8 @@ svr4_stream_ti_ioctl(fp, l, retval, fd, cmd, dat)
 	}
 
 
-	if ((error = copyout(SVR4_ADDROF(&sc), skb.buf, sasize)) != 0) {
+	if ((error = copyout(SVR4_ADDROF(&sc), skb.buf,
+			     sasize)) != 0) {
 		DPRINTF(("ti_ioctl: error copying out socket data\n"));
 		return error;
 	}
@@ -1450,11 +1452,14 @@ svr4_sys_putmsg(l, v, retval)
 	struct svr4_strmcmd sc;
 	struct sockaddr_in sain;
 	struct sockaddr_un saun;
-	void *skp, *sup;
+	void *skp;
 	int sasize;
 	struct svr4_strm *st;
 	int error;
-	void *sg;
+	struct mbuf *nam;
+	struct msghdr msg;
+	struct iovec aiov;
+
 
 #ifdef DEBUG_SVR4
 	show_msg(">putmsg", SCARG(uap, fd), SCARG(uap, ctl),
@@ -1467,17 +1472,17 @@ svr4_sys_putmsg(l, v, retval)
 	simple_unlock(&fp->f_slock);
 
 	if (SCARG(uap, ctl) != NULL) {
-		if ((error = copyin(SCARG(uap, ctl), &ctl, sizeof(ctl))) != 0)
+		if ((error = copyin(SCARG(uap, ctl),
+				    &ctl, sizeof(ctl))) != 0)
 			return error;
-	}
-	else
+	} else
 		ctl.len = -1;
 
 	if (SCARG(uap, dat) != NULL) {
-	    	if ((error = copyin(SCARG(uap, dat), &dat, sizeof(dat))) != 0)
+	    	if ((error = copyin(SCARG(uap, dat),
+				    &dat, sizeof(dat))) != 0)
 			return error;
-	}
-	else
+	} else
 		dat.len = -1;
 
 	/*
@@ -1558,44 +1563,31 @@ svr4_sys_putmsg(l, v, retval)
 		return ENOSYS;
 	}
 
-	sg = stackgap_init(p, 0);
-	sup = stackgap_alloc(p, &sg, sasize);
-
-	if ((error = copyout(skp, sup, sasize)) != 0)
-		return error;
+	nam = m_get(M_WAIT, MT_SONAME);
+	nam->m_len = sasize;
+	memcpy(mtod(nam, void *), skp, sasize);
 
 	switch (st->s_cmd = sc.cmd) {
 	case SVR4_TI_CONNECT_REQUEST:	/* connect 	*/
-		{
-			struct sys_connect_args co;
-
-			SCARG(&co, s) = SCARG(uap, fd);
-			SCARG(&co, name) = (void *) sup;
-			SCARG(&co, namelen) = (int) sasize;
-			return sys_connect(l, &co, retval);
-		}
+		return do_sys_connect(l, SCARG(uap, fd), nam);
 
 	case SVR4_TI_SENDTO_REQUEST:	/* sendto 	*/
-		{
-			struct msghdr msg;
-			struct iovec aiov;
+		msg.msg_name = nam;
+		msg.msg_namelen = sasize;
+		msg.msg_iov = &aiov;
+		msg.msg_iovlen = 1;
+		msg.msg_control = NULL;
+		msg.msg_flags = MSG_NAMEMBUF;
+		aiov.iov_base = dat.buf;
+		aiov.iov_len = dat.len;
+		error = do_sys_sendmsg(l, SCARG(uap, fd), &msg,
+			       SCARG(uap, flags), retval);
 
-			msg.msg_name = (void *) sup;
-			msg.msg_namelen = sasize;
-			msg.msg_iov = &aiov;
-			msg.msg_iovlen = 1;
-			msg.msg_control = 0;
-			msg.msg_flags = 0;
-			aiov.iov_base = dat.buf;
-			aiov.iov_len = dat.len;
-			error = sendit(l, SCARG(uap, fd), &msg,
-				       SCARG(uap, flags), retval);
-
-			*retval = 0;
-			return error;
-		}
+		*retval = 0;
+		return error;
 
 	default:
+		m_free(nam);
 		DPRINTF(("putmsg: Unimplemented command %lx\n", sc.cmd));
 		return ENOSYS;
 	}
@@ -1641,19 +1633,19 @@ svr4_sys_getmsg(l, v, retval)
 	simple_unlock(&fp->f_slock);
 
 	if (SCARG(uap, ctl) != NULL) {
-		if ((error = copyin(SCARG(uap, ctl), &ctl, sizeof(ctl))) != 0)
+		if ((error = copyin(SCARG(uap, ctl), &ctl,
+				    sizeof(ctl))) != 0)
 			return error;
-	}
-	else {
+	} else {
 		ctl.len = -1;
 		ctl.maxlen = 0;
 	}
 
 	if (SCARG(uap, dat) != NULL) {
-	    	if ((error = copyin(SCARG(uap, dat), &dat, sizeof(dat))) != 0)
+	    	if ((error = copyin(SCARG(uap, dat), &dat,
+				    sizeof(dat))) != 0)
 			return error;
-	}
-	else {
+	} else {
 		dat.len = -1;
 		dat.maxlen = 0;
 	}
@@ -1923,20 +1915,24 @@ svr4_sys_getmsg(l, v, retval)
 
 	if (SCARG(uap, ctl)) {
 		if (ctl.len != -1)
-			if ((error = copyout(&sc, ctl.buf, ctl.len)) != 0)
+			if ((error = copyout(&sc, ctl.buf,
+					     ctl.len)) != 0)
 				return error;
 
-		if ((error = copyout(&ctl, SCARG(uap, ctl), sizeof(ctl))) != 0)
+		if ((error = copyout(&ctl, SCARG(uap, ctl),
+				     sizeof(ctl))) != 0)
 			return error;
 	}
 
 	if (SCARG(uap, dat)) {
-		if ((error = copyout(&dat, SCARG(uap, dat), sizeof(dat))) != 0)
+		if ((error = copyout(&dat, SCARG(uap, dat),
+				     sizeof(dat))) != 0)
 			return error;
 	}
 
 	if (SCARG(uap, flags)) { /* XXX: Need translation */
-		if ((error = copyout(&fl, SCARG(uap, flags), sizeof(fl))) != 0)
+		if ((error = copyout(&fl, SCARG(uap, flags),
+				     sizeof(fl))) != 0)
 			return error;
 	}
 

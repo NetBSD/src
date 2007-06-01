@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_stream.c,v 1.23 2007/06/01 22:15:38 dsl Exp $	 */
+/*	$NetBSD: svr4_32_stream.c,v 1.24 2007/06/01 22:53:53 dsl Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_stream.c,v 1.23 2007/06/01 22:15:38 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_stream.c,v 1.24 2007/06/01 22:53:53 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -1452,11 +1452,14 @@ svr4_32_sys_putmsg(l, v, retval)
 	struct svr4_32_strmcmd sc;
 	struct sockaddr_in sain;
 	struct sockaddr_un saun;
-	void *skp, *sup;
+	void *skp;
 	int sasize;
 	struct svr4_strm *st;
 	int error;
-	void *sg;
+	struct mbuf *nam;
+	struct msghdr msg;
+	struct iovec aiov;
+
 
 #ifdef DEBUG_SVR4
 	show_msg(">putmsg", SCARG(uap, fd), SCARG(uap, ctl),
@@ -1465,6 +1468,8 @@ svr4_32_sys_putmsg(l, v, retval)
 
 	if ((fp = fd_getfile(fdp, SCARG(uap, fd))) == NULL)
 		return EBADF;
+
+	simple_unlock(&fp->f_slock);
 
 	if (SCARG_P32(uap, ctl) != NULL) {
 		if ((error = copyin(SCARG_P32(uap, ctl),
@@ -1558,44 +1563,31 @@ svr4_32_sys_putmsg(l, v, retval)
 		return ENOSYS;
 	}
 
-	sg = stackgap_init(p, 0);
-	sup = stackgap_alloc(p, &sg, sasize);
-
-	if ((error = copyout(skp, sup, sasize)) != 0)
-		return error;
+	nam = m_get(M_WAIT, MT_SONAME);
+	nam->m_len = sasize;
+	memcpy(mtod(nam, void *), skp, sasize);
 
 	switch (st->s_cmd = sc.cmd) {
 	case SVR4_TI_CONNECT_REQUEST:	/* connect 	*/
-		{
-			struct sys_connect_args co;
-
-			SCARG(&co, s) = SCARG(uap, fd);
-			SCARG(&co, name) = (void *) sup;
-			SCARG(&co, namelen) = (int) sasize;
-			return sys_connect(l, &co, retval);
-		}
+		return do_sys_connect(l, SCARG(uap, fd), nam);
 
 	case SVR4_TI_SENDTO_REQUEST:	/* sendto 	*/
-		{
-			struct msghdr msg;
-			struct iovec aiov;
+		msg.msg_name = nam;
+		msg.msg_namelen = sasize;
+		msg.msg_iov = &aiov;
+		msg.msg_iovlen = 1;
+		msg.msg_control = NULL;
+		msg.msg_flags = MSG_NAMEMBUF;
+		aiov.iov_base = NETBSD32PTR64(dat.buf);
+		aiov.iov_len = dat.len;
+		error = do_sys_sendmsg(l, SCARG(uap, fd), &msg,
+			       SCARG(uap, flags), retval);
 
-			msg.msg_name = (void *) sup;
-			msg.msg_namelen = sasize;
-			msg.msg_iov = &aiov;
-			msg.msg_iovlen = 1;
-			msg.msg_control = 0;
-			msg.msg_flags = 0;
-			aiov.iov_base = NETBSD32PTR64(dat.buf);
-			aiov.iov_len = dat.len;
-			error = sendit(l, SCARG(uap, fd), &msg,
-				       SCARG(uap, flags), retval);
-
-			*retval = 0;
-			return error;
-		}
+		*retval = 0;
+		return error;
 
 	default:
+		m_free(nam);
 		DPRINTF(("putmsg: Unimplemented command %lx\n", sc.cmd));
 		return ENOSYS;
 	}
@@ -1637,6 +1629,8 @@ svr4_32_sys_getmsg(l, v, retval)
 
 	if ((fp = fd_getfile(fdp, SCARG(uap, fd))) == NULL)
 		return EBADF;
+
+	simple_unlock(&fp->f_slock);
 
 	if (SCARG_P32(uap, ctl) != NULL) {
 		if ((error = copyin(SCARG_P32(uap, ctl), &ctl,

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.72 2007/05/29 21:32:28 christos Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.73 2007/06/01 22:53:52 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -42,8 +42,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.72 2007/05/29 21:32:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.73 2007/06/01 22:53:52 dsl Exp $");
 
+#include "opt_ktrace.h"
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
 #endif
@@ -77,6 +78,9 @@ __KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.72 2007/05/29 21:32:28 christos E
 #include <sys/kauth.h>
 
 #include <sys/syscallargs.h>
+#ifdef KTRACE 
+#include <sys/ktrace.h>
+#endif
 
 #include <lib/libkern/libkern.h>
 
@@ -122,8 +126,8 @@ int linux_to_bsd_ip_sockopt __P((int));
 int linux_to_bsd_tcp_sockopt __P((int));
 int linux_to_bsd_udp_sockopt __P((int));
 int linux_getifhwaddr __P((struct lwp *, register_t *, u_int, void *));
-static int linux_sa_get __P((struct lwp *, int, void **, struct sockaddr **,
-		const struct osockaddr *, socklen_t *));
+static int linux_get_sa(struct lwp *, int, struct mbuf **,
+		const struct osockaddr *, int);
 static int linux_sa_put __P((struct osockaddr *osa));
 static int linux_to_bsd_msg_flags __P((int));
 static int bsd_to_linux_msg_flags __P((int));
@@ -383,31 +387,34 @@ linux_sys_sendto(l, v, retval)
 		syscallarg(struct osockaddr *)		to;
 		syscallarg(int)				tolen;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
-	struct sys_sendto_args bsa;
-	socklen_t tolen;
+	struct msghdr   msg;
+	struct iovec    aiov;
+	struct mbuf *nam;
+	int bflags;
+	int error;
 
-	SCARG(&bsa, s) = SCARG(uap, s);
-	SCARG(&bsa, buf) = SCARG(uap, msg);
-	SCARG(&bsa, len) = (size_t) SCARG(uap, len);
-	SCARG(&bsa, flags) = SCARG(uap, flags);
-	tolen = SCARG(uap, tolen);
-	if (SCARG(uap, to)) {
-		struct sockaddr *sa;
-		int error;
-		void *sg = stackgap_init(p, 0);
+	/* Translate message flags.  */
+	bflags = linux_to_bsd_msg_flags(SCARG(uap, flags));
+	if (bflags < 0)
+		/* Some supported flag */
+		return EINVAL;
 
-		error = linux_sa_get(l, SCARG(uap, s), &sg, &sa,
-		    SCARG(uap, to), &tolen);
-		if (error)
-			return (error);
+	/* Read in and convert the sockaddr */
+	error = linux_get_sa(l, SCARG(uap, s), &nam, SCARG(uap, to),
+	    SCARG(uap, tolen));
+	if (error)
+		return (error);
+	msg.msg_flags = MSG_NAMEMBUF;
 
-		SCARG(&bsa, to) = sa;
-	} else
-		SCARG(&bsa, to) = NULL;
-	SCARG(&bsa, tolen) = tolen;
+	msg.msg_name = nam;
+	msg.msg_namelen = SCARG(uap, tolen);
+	msg.msg_iov = &aiov;
+	msg.msg_iovlen = 1;
+	msg.msg_control = 0;
+	aiov.iov_base = __UNCONST(SCARG(uap, msg));
+	aiov.iov_len = SCARG(uap, len);
 
-	return (sys_sendto(l, &bsa, retval));
+	return do_sys_sendmsg(l, SCARG(uap, s), &msg, bflags, retval);
 }
 
 int
@@ -421,53 +428,31 @@ linux_sys_sendmsg(l, v, retval)
 		syscallarg(struct msghdr *) msg;
 		syscallarg(u_int) flags;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	struct msghdr	msg;
 	int		error;
-	struct iovec	aiov[UIO_SMALLIOV], *iov;
-	void *sg = 0;
 	int		bflags;
-	u_int8_t	*control=NULL;
+	struct mbuf     *nam;
+	u_int8_t	*control;
+	struct mbuf     *ctl_mbuf = NULL;
 
-	error = copyin(SCARG(uap, msg), (void *)&msg, sizeof(msg));
-	if (error)
-		return (error);
-	if ((unsigned int)msg.msg_iovlen > UIO_SMALLIOV) {
-		if ((unsigned int)msg.msg_iovlen > IOV_MAX)
-			return (EMSGSIZE);
-		iov = malloc(sizeof(struct iovec) * msg.msg_iovlen,
-		    M_IOV, M_WAITOK);
-	} else
-		iov = aiov;
-	if ((unsigned int)msg.msg_iovlen > 0) {
-		error = copyin((void *)msg.msg_iov, (void *)iov,
-		    (size_t)(msg.msg_iovlen * sizeof(struct iovec)));
-		if (error)
-			goto done;
-	}
-	msg.msg_iov = iov;
-	msg.msg_flags = 0;
-
-	/* Convert the sockaddr if necessary */
-	if (msg.msg_name) {
-		struct sockaddr *sa;
-		sg = stackgap_init(p, 0);
-
-		error = linux_sa_get(l, SCARG(uap, s), &sg, &sa,
-		    (struct osockaddr *) msg.msg_name, &msg.msg_namelen);
-		if (error)
-			goto done;
-		msg.msg_name = sa;
-	}
+	msg.msg_flags = MSG_IOVUSRSPACE;
 
 	/*
 	 * Translate message flags.
 	 */
 	bflags = linux_to_bsd_msg_flags(SCARG(uap, flags));
-	if (bflags < 0) {
+	if (bflags < 0)
 		/* Some supported flag */
-		error = EINVAL;
-		goto done;
+		return EINVAL;
+
+	if (msg.msg_name) {
+		/* Read in and convert the sockaddr */
+		error = linux_get_sa(l, SCARG(uap, s), &nam, msg.msg_name,
+		    msg.msg_namelen);
+		if (error)
+			return (error);
+		msg.msg_flags |= MSG_NAMEMBUF;
+		msg.msg_name = nam;
 	}
 
 	/*
@@ -475,25 +460,12 @@ linux_sys_sendmsg(l, v, retval)
 	 */
 	if (CMSG_FIRSTHDR(&msg)) {
 		struct cmsghdr cmsg, *cc;
-		int changed = 0;
 		ssize_t resid = msg.msg_controllen;
 		size_t clen, cidx = 0, cspace;
 
-		/*
-		 * Limit the size even more than what sockargs() would do,
-		 * We need to fit into stackgap space.
-		 */
-		if (msg.msg_controllen > (STACKGAPLEN / 2)) {
-			/* Sorry guys! */
-			error = EMSGSIZE;
-			goto done;
-		}
-
-		control = malloc((clen = msg.msg_controllen), M_TEMP, M_WAITOK);
-		if (!control) {
-			error = ENOMEM;
-			goto done;
-		}
+		ctl_mbuf = m_get(M_WAIT, MT_CONTROL);
+		clen = MLEN;
+		control = mtod(ctl_mbuf, void *);
 
 		cc = CMSG_FIRSTHDR(&msg);
 		do {
@@ -517,10 +489,8 @@ linux_sys_sendmsg(l, v, retval)
 			switch (cmsg.cmsg_level) {
 			case LINUX_SOL_SOCKET:
 				/* It only differs on some archs */
-				if (LINUX_SOL_SOCKET != SOL_SOCKET) {
+				if (LINUX_SOL_SOCKET != SOL_SOCKET)
 					cmsg.cmsg_level = SOL_SOCKET;
-					changed = 1;
-				}
 
 				switch(cmsg.cmsg_type) {
 				case LINUX_SCM_RIGHTS:
@@ -545,11 +515,19 @@ linux_sys_sendmsg(l, v, retval)
 				u_int8_t *nc;
 
 				clen = cidx + cspace;
-				nc = realloc(control, clen, M_TEMP, M_WAITOK);
+				if (clen >= PAGE_SIZE) {
+					error = EINVAL;
+					goto done;
+				}
+				nc = realloc(clen <= MLEN ? NULL : control,
+						clen, M_TEMP, M_WAITOK);
 				if (!nc) {
 					error = ENOMEM;
 					goto done;
 				}
+				if (cidx <= MLEN)
+					/* Old buffer was in mbuf... */
+					memcpy(nc, control, cidx);
 				control = nc;
 			}
 
@@ -567,66 +545,32 @@ linux_sys_sendmsg(l, v, retval)
 			if (error)
 				goto done;
 
-			/*
-			 * If there is alignment difference, we changed
-			 * layout of cmsg.
-			 */
-			if (LINUX_CMSG_ALIGNDIFF)
-				changed = 1;
-
 			resid -= cspace;
 			cidx += cspace;
 		} while ((cc = LINUX_CMSG_NXTHDR(&msg, cc)) && resid > 0);
 
-		/*
-		 * If any of the passed control message needed
-		 * a change, put the changed data into stackgap
-		 * and adjust msg appropriately.
-		 */
-		if (changed) {
-			char *newc;
-
-			/*
-			 * Check again the total len is maximum half of
-			 * stackgap. The length might change if the
-			 * alignment is different.
-			 */
-			if (clen > STACKGAPLEN/2) {
-				error = EMSGSIZE;
-				goto done;
-			}
-
-			/*
-			 * Allocate space on stack within stackgap, and
-			 * copy changed data there.
-			 */
-			if (!sg)
-				sg = stackgap_init(p, STACKGAPLEN/3);
-			newc = stackgap_alloc(p, &sg, clen);
-			if (!newc) {
-				error = ENOMEM;
-				goto done;
-			}
-
-			error = copyout(control, newc, clen);
-			if (error)
-				goto done;
-
-			msg.msg_control = newc;
-			msg.msg_controllen = clen;
+		/* If we allocated a buffer, attach to mbuf */
+		if (cidx > MLEN) {
+			MEXTADD(ctl_mbuf, control, clen, M_MBUF, NULL, NULL);
+			ctl_mbuf->m_flags |= M_EXT_RW;
 		}
-
-		free(control, M_TEMP);
 		control = NULL;
+		ctl_mbuf->m_len = cidx;
+
+		msg.msg_control = ctl_mbuf;
+		msg.msg_flags |= MSG_CONTROLMBUF;
 	}
 
-	error = sendit(l, SCARG(uap, s), &msg, bflags, retval);
+	error = do_sys_sendmsg(l, SCARG(uap, s), &msg, bflags, retval);
+	/* Freed internally */
+	ctl_mbuf = NULL;
 
 done:
-	if (control)
-		free(control, M_TEMP);
-	if (iov != aiov)
-		free(iov, M_IOV);
+	if (ctl_mbuf != NULL) {
+		if (control != NULL && control != mtod(ctl_mbuf, void *))
+			free(control, M_MBUF);
+		m_free(ctl_mbuf);
+	}
 	return (error);
 }
 
@@ -737,8 +681,7 @@ linux_sys_recvmsg(l, v, retval)
 		goto done;
 
 	/* Fixup sockaddr */
-	error = copyin((void *)SCARG(uap, msg), (void *)&msg,
-		       sizeof(msg));
+	error = copyin(SCARG(uap, msg), &msg, sizeof(msg));
 	if (error)
 		goto done;
 
@@ -1143,7 +1086,7 @@ linux_getifhwaddr(struct lwp *l, register_t *retval, u_int fd,
 		goto out;
 	}
 
-	error = copyin(data, (void *)&lreq, sizeof(lreq));
+	error = copyin(data, &lreq, sizeof(lreq));
 	if (error)
 		goto out;
 	lreq.if_name[IF_NAME_LEN-1] = '\0';		/* just in case */
@@ -1166,14 +1109,12 @@ linux_getifhwaddr(struct lwp *l, register_t *retval, u_int fd,
 				if (sadl->sdl_family != AF_LINK ||
 				    sadl->sdl_type != IFT_ETHER)
 					continue;
-				memcpy((void *)&lreq.hwaddr.sa_data,
-				       LLADDR(sadl),
+				memcpy(&lreq.hwaddr.sa_data, LLADDR(sadl),
 				       MIN(sadl->sdl_alen,
 					   sizeof(lreq.hwaddr.sa_data)));
 				lreq.hwaddr.sa_family =
 					sadl->sdl_family;
-				error = copyout((void *)&lreq, data,
-						sizeof(lreq));
+				error = copyout(&lreq, data, sizeof(lreq));
 				goto out;
 			}
 		} else {
@@ -1210,14 +1151,13 @@ linux_getifhwaddr(struct lwp *l, register_t *retval, u_int fd,
 					if (ifnum--)
 						/* not the reqested iface */
 						continue;
-					memcpy((void *)&lreq.hwaddr.sa_data,
+					memcpy(&lreq.hwaddr.sa_data,
 					       LLADDR(sadl),
 					       MIN(sadl->sdl_alen,
 						   sizeof(lreq.hwaddr.sa_data)));
 					lreq.hwaddr.sa_family =
 						sadl->sdl_family;
-					error = copyout((void *)&lreq, data,
-							sizeof(lreq));
+					error = copyout(&lreq, data, sizeof(lreq));
 					found = 1;
 					break;
 				}
@@ -1253,7 +1193,7 @@ linux_ioctl_socket(l, uap, retval)
 	int (*ioctlf)(struct file *, u_long, void *, struct lwp *);
 	struct ioctl_pt pt;
 
-        fdp = p->p_fd;
+	fdp = p->p_fd;
 	if ((fp = fd_getfile(fdp, SCARG(uap, fd))) == NULL)
 		return (EBADF);
 
@@ -1320,7 +1260,7 @@ linux_ioctl_socket(l, uap, retval)
 		SCARG(&ia, com) = OSIOCDELMULTI;
 		break;
 	case LINUX_SIOCGIFHWADDR:
-	        error = linux_getifhwaddr(l, retval, SCARG(uap, fd),
+		error = linux_getifhwaddr(l, retval, SCARG(uap, fd),
 					 SCARG(uap, data));
 		dosys = 0;
 		break;
@@ -1352,24 +1292,15 @@ linux_sys_connect(l, v, retval)
 		syscallarg(const struct sockaddr *) name;
 		syscallarg(int) namelen;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	int		error;
-	struct sockaddr *sa;
-	struct sys_connect_args bca;
-	void *sg = stackgap_init(p, 0);
-	socklen_t namlen;
+	struct mbuf *nam;
 
-	namlen = SCARG(uap, namelen);
-	error = linux_sa_get(l, SCARG(uap, s), &sg, &sa,
-	    SCARG(uap, name), &namlen);
+	error = linux_get_sa(l, SCARG(uap, s), &nam, SCARG(uap, name),
+	    SCARG(uap, namelen));
 	if (error)
 		return (error);
 
-	SCARG(&bca, s) = SCARG(uap, s);
-	SCARG(&bca, name) = sa;
-	SCARG(&bca, namelen) =  namlen;
-
-	error = sys_connect(l, &bca, retval);
+	error = do_sys_connect(l, SCARG(uap, s), nam);
 
 	if (error == EISCONN) {
 		struct file *fp;
@@ -1377,7 +1308,7 @@ linux_sys_connect(l, v, retval)
 		int s, state, prflags;
 
 		/* getsock() will use the descriptor for us */
-	    	if (getsock(p->p_fd, SCARG(uap, s), &fp) != 0)
+	    	if (getsock(l->l_proc->p_fd, SCARG(uap, s), &fp) != 0)
 		    	return EISCONN;
 
 		s = splsoftnet();
@@ -1410,28 +1341,15 @@ linux_sys_bind(l, v, retval)
 		syscallarg(const struct osockaddr *) name;
 		syscallarg(int) namelen;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	int		error;
-	socklen_t	namlen;
-	struct sys_bind_args bsa;
+	struct mbuf     *nam;
 
-	namlen = SCARG(uap, namelen);
-	SCARG(&bsa, s) = SCARG(uap, s);
-	if (SCARG(uap, name)) {
-		struct sockaddr *sa;
-		void *sg = stackgap_init(p, 0);
+	error = linux_get_sa(l, SCARG(uap, s), &nam, SCARG(uap, name),
+	    SCARG(uap, namelen));
+	if (error)
+		return (error);
 
-		error = linux_sa_get(l, SCARG(uap, s), &sg, &sa,
-		    SCARG(uap, name), &namlen);
-		if (error)
-			return (error);
-
-		SCARG(&bsa, name) = sa;
-	} else
-		SCARG(&bsa, name) = NULL;
-	SCARG(&bsa, namelen) = namlen;
-
-	return (sys_bind(l, &bsa, retval));
+	return do_sys_bind(l, SCARG(uap, s), nam);
 }
 
 int
@@ -1479,60 +1397,66 @@ linux_sys_getpeername(l, v, retval)
 }
 
 /*
- * Copy the osockaddr structure pointed to by osa to kernel, adjust
- * family and convert to sockaddr, allocate stackgap and put the
- * the converted structure there, address on stackgap returned in sap.
+ * Copy the osockaddr structure pointed to by osa to mbuf, adjust
+ * family and convert to sockaddr.
  */
 static int
-linux_sa_get(l, s, sgp, sap, osa, osalen)
-	struct lwp *l;
-	int s;
-	void **sgp;
-	struct sockaddr **sap;
-	const struct osockaddr *osa;
-	socklen_t *osalen;
+linux_get_sa(struct lwp *l, int s, struct mbuf **mp, const struct osockaddr *osa, int salen)
 {
-	int error=0, bdom;
-	struct sockaddr *sa, *usa;
-	struct osockaddr *kosa = (struct osockaddr *) &sa;
-	struct proc *p = l->l_proc;
-	socklen_t alloclen;
-#ifdef INET6
-	int oldv6size;
-	struct sockaddr_in6 *sin6;
-#endif
+	int error, bdom;
+	struct sockaddr *sa;
+	struct osockaddr *kosa;
+	struct mbuf *m;
 
-	if (*osalen < 2 || *osalen > UCHAR_MAX || !osa) {
-		DPRINTF(("bad osa=%p osalen=%d\n", osa, *osalen));
-		return (EINVAL);
+	if (salen == 1 || salen > UCHAR_MAX) {
+		DPRINTF(("bad osa=%p salen=%d\n", osa, salen));
+		return EINVAL;
 	}
 
-	alloclen = *osalen;
-#ifdef INET6
-	oldv6size = 0;
-	/*
-	 * Check for old (pre-RFC2553) sockaddr_in6. We may accept it
-	 * if it's a v4-mapped address, so reserve the proper space
-	 * for it.
-	 */
-	if (alloclen == sizeof (struct sockaddr_in6) - sizeof (u_int32_t)) {
-		alloclen = sizeof (struct sockaddr_in6);
-		oldv6size = 1;
-	}
-#endif
+	/* We'll need the address in an mbuf later, so copy into one here */
+	m = m_get(M_WAIT, MT_SONAME);
+	if (salen > MLEN)
+		MEXTMALLOC(m, salen, M_WAITOK);
 
-	kosa = (struct osockaddr *) malloc(alloclen, M_TEMP, M_WAITOK);
+	m->m_len = salen;
 
-	if ((error = copyin(osa, (void *) kosa, *osalen))) {
-		DPRINTF(("error copying osa %d\n", error));
-		goto out;
+	if (salen == 0)
+		return 0;
+
+	kosa = mtod(m, void *);
+	if ((error = copyin(osa, kosa, salen))) {
+		DPRINTF(("error %d copying osa %p len %d\n",
+				error, osa, salen));
+		goto bad;
 	}
+	if (KTRPOINT(l->l_proc, KTR_USER))
+		ktrkuser(l, "linux sockaddr", kosa, salen);
 
 	bdom = linux_to_bsd_domain(kosa->sa_family);
 	if (bdom == -1) {
 		DPRINTF(("bad linux family=%d\n", kosa->sa_family));
 		error = EINVAL;
-		goto out;
+		goto bad;
+	}
+
+	/*
+	 * If the family is unspecified, use address family of the socket.
+	 * This avoid triggering strict family checks in netinet/in_pcb.c et.al.
+	 */
+	if (bdom == AF_UNSPEC) {
+		struct file *fp;
+		struct socket *so;
+
+		/* getsock() will use the descriptor for us */
+		if ((error = getsock(l->l_proc->p_fd, s, &fp)) != 0)
+			goto bad;
+
+		so = (struct socket *)fp->f_data;
+		bdom = so->so_proto->pr_domain->dom_family;
+
+		FILE_UNUSE(fp, l);
+
+		DPRINTF(("AF_UNSPEC family adjusted to %d\n", bdom));
 	}
 
 #ifdef INET6
@@ -1543,16 +1467,15 @@ linux_sa_get(l, s, sgp, sap, osa, osalen)
 	 *
 	 * Still accept addresses for which the scope id is not used.
 	 */
-	if (oldv6size && bdom == AF_INET6) {
-		sin6 = (struct sockaddr_in6 *)kosa;
-		if (IN6_IS_ADDR_V4MAPPED(&sin6->sin6_addr) ||
-		    (!IN6_IS_ADDR_LINKLOCAL(&sin6->sin6_addr) &&
-		     !IN6_IS_ADDR_SITELOCAL(&sin6->sin6_addr) &&
-		     !IN6_IS_ADDR_V4COMPAT(&sin6->sin6_addr) &&
-		     !IN6_IS_ADDR_UNSPECIFIED(&sin6->sin6_addr) &&
-		     !IN6_IS_ADDR_MULTICAST(&sin6->sin6_addr))) {
-			sin6->sin6_scope_id = 0;
-		} else {
+	if (bdom == AF_INET6 && salen == sizeof (struct sockaddr_in6) - sizeof (u_int32_t)) {
+		struct sockaddr_in6 *sin6 = (struct sockaddr_in6 *)kosa;
+		if (!IN6_IS_ADDR_V4MAPPED(&sin6->sin6_addr) &&
+		    (IN6_IS_ADDR_LINKLOCAL(&sin6->sin6_addr) ||
+		     IN6_IS_ADDR_SITELOCAL(&sin6->sin6_addr) ||
+		     IN6_IS_ADDR_V4COMPAT(&sin6->sin6_addr) ||
+		     IN6_IS_ADDR_UNSPECIFIED(&sin6->sin6_addr) ||
+		     IN6_IS_ADDR_MULTICAST(&sin6->sin6_addr))) {
+			struct proc *p = l->l_proc;
 			int uid = l->l_cred ? kauth_cred_geteuid(l->l_cred) : -1;
 
 			log(LOG_DEBUG,
@@ -1560,40 +1483,23 @@ linux_sa_get(l, s, sgp, sap, osa, osalen)
 			    "sockaddr_in6 rejected",
 			    p->p_pid, p->p_comm, uid);
 			error = EINVAL;
-			goto out;
+			goto bad;
 		}
+		salen = sizeof (struct sockaddr_in6);
+		sin6->sin6_scope_id = 0;
 	}
 #endif
 
-	/*
-	 * If the family is unspecified, use address family of the
-	 * socket. This avoid triggering COMPAT_43 struct socket family check
-	 * in sockargs() on little-endian machines, and strict family checks
-	 * in netinet/in_pcb.c et.al.
-	 */
-	if (bdom == AF_UNSPEC) {
-		struct file *fp;
-		struct socket *so;
-
-		/* getsock() will use the descriptor for us */
-		if ((error = getsock(p->p_fd, s, &fp)) != 0)
-			goto out;
-
-		so = (struct socket *)fp->f_data;
-		bdom = so->so_proto->pr_domain->dom_family;
-
-		FILE_UNUSE(fp, l);
-
-		DPRINTF(("AF_UNSPEC family adjusted to %d\n", bdom));
-	}
-
-	if (bdom == AF_INET) {
-		alloclen = sizeof(struct sockaddr_in);
-	}
+	if (bdom == AF_INET)
+		salen = sizeof(struct sockaddr_in);
 
 	sa = (struct sockaddr *) kosa;
 	sa->sa_family = bdom;
-	sa->sa_len = alloclen;
+	sa->sa_len = salen;
+	m->m_len = salen;
+	if (KTRPOINT(l->l_proc, KTR_USER))
+		ktrkuser(l, "new sockaddr", kosa, salen);
+
 #ifdef DEBUG_LINUX
 	DPRINTF(("family %d, len = %d [ ", sa->sa_family, sa->sa_len));
 	for (bdom = 0; bdom < sizeof(sa->sa_data); bdom++)
@@ -1601,23 +1507,12 @@ linux_sa_get(l, s, sgp, sap, osa, osalen)
 	DPRINTF(("\n"));
 #endif
 
-	usa = (struct sockaddr *) stackgap_alloc(p, sgp, alloclen);
-	if (!usa) {
-		error = ENOMEM;
-		goto out;
-	}
+	*mp = m;
+	return 0;
 
-	if ((error = copyout(sa, usa, alloclen))) {
-		DPRINTF(("error copying out socket %d\n", error));
-		goto out;
-	}
-
-	*sap = usa;
-
-    out:
-	*osalen = alloclen;
-	free(kosa, M_TEMP);
-	return (error);
+    bad:
+	m_free(m);
+	return error;
 }
 
 static int
@@ -1634,7 +1529,7 @@ linux_sa_put(osa)
 	 */
 	len = sizeof(sa.sa_len) + sizeof(sa.sa_family);
 
-	error = copyin((void *) osa, (void *) &sa, len);
+	error = copyin(osa, &sa, len);
 	if (error)
 		return (error);
 
