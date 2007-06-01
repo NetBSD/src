@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socketcall.c,v 1.32 2007/03/04 06:01:24 christos Exp $	*/
+/*	$NetBSD: linux_socketcall.c,v 1.33 2007/06/01 22:42:47 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -37,8 +37,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socketcall.c,v 1.32 2007/03/04 06:01:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socketcall.c,v 1.33 2007/06/01 22:42:47 dsl Exp $");
 
+#include "opt_ktrace.h"
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
@@ -58,6 +59,9 @@ __KERNEL_RCSID(0, "$NetBSD: linux_socketcall.c,v 1.32 2007/03/04 06:01:24 christ
 #include <sys/proc.h>
 #include <sys/vnode.h>
 #include <sys/device.h>
+#ifdef KTRACE
+#include <sys/ktrace.h>
+#endif
 
 #include <sys/syscallargs.h>
 
@@ -133,12 +137,19 @@ linux_sys_socketcall(l, v, retval)
 	if (SCARG(uap, what) < 0 || SCARG(uap, what) > LINUX_MAX_SOCKETCALL)
 		return ENOSYS;
 
-	if ((error = copyin((void *) SCARG(uap, args), (void *) &lda,
+	if ((error = copyin(SCARG(uap, args), &lda,
 	    linux_socketcall[SCARG(uap, what)].argsize))) {
 		DPRINTF(("copyin for %s failed %d\n",
 		linux_socketcall[SCARG(uap, what)].name, error));
 		return error;
 	}
+
+#ifdef KTRACE
+	if (KTRPOINT(l->l_proc, KTR_USER))
+		ktrkuser(l, linux_socketcall[SCARG(uap, what)].name,
+			&lda, linux_socketcall[SCARG(uap, what)].argsize);
+#endif
+
 
 #ifdef DEBUG_LINUX
 	/* dump the passed argument data */
