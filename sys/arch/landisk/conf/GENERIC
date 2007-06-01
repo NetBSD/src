@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.6 2007/03/23 02:19:17 uwe Exp $
+# $NetBSD: GENERIC,v 1.7 2007/06/01 13:20:56 uwe Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include		"arch/landisk/conf/std.landisk"
 
 options         INCLUDE_CONFIG_FILE     # embed config file in kernel binary
 
-#ident          "GENERIC-$Revision: 1.6 $"
+#ident          "GENERIC-$Revision: 1.7 $"
 
 maxusers	16		# estimated number of users
 
@@ -89,6 +89,7 @@ options 	DDB_HISTORY_SIZE=512	# Enable history editing in DDB
 options 	COMPAT_16	# NetBSD 1.6,
 options 	COMPAT_20	# NetBSD 2.0,
 options 	COMPAT_30	# NetBSD 3.0,
+options 	COMPAT_40	# NetBSD 4.0,
 options 	COMPAT_43	# and 4.3BSD
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
