@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_ioctl.c,v 1.55 2007/05/29 21:32:28 christos Exp $	*/
+/*	$NetBSD: sunos_ioctl.c,v 1.56 2007/06/01 11:36:35 he Exp $	*/
 
 /*
  * Copyright (c) 1993 Markus Wild.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_ioctl.c,v 1.55 2007/05/29 21:32:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_ioctl.c,v 1.56 2007/06/01 11:36:35 he Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_execfmt.h"
@@ -50,9 +50,9 @@ __KERNEL_RCSID(0, "$NetBSD: sunos_ioctl.c,v 1.55 2007/05/29 21:32:28 christos Ex
 
 #include <miscfs/specfs/specdev.h>
 
-#include <compat/sys/sockio.h>
-
 #include <net/if.h>
+
+#include <compat/sys/sockio.h>
 
 #include <dev/sun/disklabel.h>
 
@@ -665,10 +665,10 @@ sunos_sys_ioctl(l, v, retval)
 		break;
 
 	case _IOWR('i', 13, struct oifreq):
-		IFREQ_INOUT(OSIOCGIFADDR);
+		IFREQ_INOUT(OOSIOCGIFADDR);
 
 	case _IOWR('i', 15, struct oifreq):
-		IFREQ_INOUT(OSIOCGIFDSTADDR);
+		IFREQ_INOUT(OOSIOCGIFDSTADDR);
 
 	case _IOW('i', 21, struct oifreq):
 		IFREQ_IN(SIOCSIFMTU);
@@ -683,7 +683,7 @@ sunos_sys_ioctl(l, v, retval)
 		IFREQ_IN(SIOCSIFBRDADDR);
 
 	case _IOWR('i', 25, struct oifreq):
-		IFREQ_INOUT(OSIOCGIFNETMASK);
+		IFREQ_INOUT(OOSIOCGIFNETMASK);
 
 	case _IOW('i', 26, struct oifreq):
 		IFREQ_IN(SIOCSIFNETMASK);
