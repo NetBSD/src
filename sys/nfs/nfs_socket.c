@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.156 2007/06/01 11:38:44 yamt Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.157 2007/06/01 11:56:03 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.156 2007/06/01 11:38:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.157 2007/06/01 11:56:03 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -2183,9 +2183,9 @@ nfsrv_rcv(so, arg, waitflag)
 		goto dorecs;
 	}
 #endif
-	simple_lock(&slp->ns_lock);
+	mutex_enter(&slp->ns_lock);
 	slp->ns_flag &= ~SLP_NEEDQ;
-	simple_unlock(&slp->ns_lock);
+	mutex_exit(&slp->ns_lock);
 	if (so->so_type == SOCK_STREAM) {
 #ifndef NFS_TEST_HEAVY
 		/*
@@ -2274,9 +2274,9 @@ dorecs_unlocked:
 	 * Now try and process the request records, non-blocking.
 	 */
 	if (setflags) {
-		simple_lock(&slp->ns_lock);
+		mutex_enter(&slp->ns_lock);
 		slp->ns_flag |= setflags;
-		simple_unlock(&slp->ns_lock);
+		mutex_exit(&slp->ns_lock);
 	}
 	if (waitflag == M_DONTWAIT &&
 	    (slp->ns_rec || (slp->ns_flag & (SLP_DISCONN | SLP_NEEDQ)) != 0)) {
@@ -2288,21 +2288,21 @@ int
 nfsdsock_lock(struct nfssvc_sock *slp, bool waitok)
 {
 
-	simple_lock(&slp->ns_lock);
+	mutex_enter(&slp->ns_lock);
 	while ((~slp->ns_flag & (SLP_BUSY|SLP_VALID)) == 0) {
 		if (!waitok) {
-			simple_unlock(&slp->ns_lock);
+			mutex_exit(&slp->ns_lock);
 			return EWOULDBLOCK;
 		}
-		slp->ns_flag |= SLP_WANT;
-		ltsleep(&slp->ns_flag, PSOCK, "nslock", 0, &slp->ns_lock);
+		cv_wait(&slp->ns_cv, &slp->ns_lock);
 	}
 	if ((slp->ns_flag & SLP_VALID) == 0) {
-		simple_unlock(&slp->ns_lock);
+		mutex_exit(&slp->ns_lock);
 		return EINVAL;
 	}
+	KASSERT((slp->ns_flag & SLP_BUSY) == 0);
 	slp->ns_flag |= SLP_BUSY;
-	simple_unlock(&slp->ns_lock);
+	mutex_exit(&slp->ns_lock);
 
 	return 0;
 }
@@ -2311,14 +2311,11 @@ void
 nfsdsock_unlock(struct nfssvc_sock *slp)
 {
 
+	mutex_enter(&slp->ns_lock);
 	KASSERT((slp->ns_flag & SLP_BUSY) != 0);
-
-	simple_lock(&slp->ns_lock);
-	if ((slp->ns_flag & SLP_WANT) != 0) {
-		wakeup(&slp->ns_flag);
-	}
-	slp->ns_flag &= ~(SLP_BUSY|SLP_WANT);
-	simple_unlock(&slp->ns_lock);
+	cv_broadcast(&slp->ns_cv);
+	slp->ns_flag &= ~SLP_BUSY;
+	mutex_exit(&slp->ns_lock);
 }
 
 int
@@ -2326,18 +2323,17 @@ nfsdsock_drain(struct nfssvc_sock *slp)
 {
 	int error = 0;
 
-	simple_lock(&slp->ns_lock);
+	mutex_enter(&slp->ns_lock);
 	if ((slp->ns_flag & SLP_VALID) == 0) {
 		error = EINVAL;
 		goto done;
 	}
 	slp->ns_flag &= ~SLP_VALID;
 	while ((slp->ns_flag & SLP_BUSY) != 0) {
-		slp->ns_flag |= SLP_WANT;
-		ltsleep(&slp->ns_flag, PSOCK, "nsdrain", 0, &slp->ns_lock);
+		cv_wait(&slp->ns_cv, &slp->ns_lock);
 	}
 done:
-	simple_unlock(&slp->ns_lock);
+	mutex_exit(&slp->ns_lock);
 
 	return error;
 }
@@ -2357,6 +2353,7 @@ nfsrv_getstream(slp, waitflag)
 	u_int32_t recmark;
 	int error = 0;
 
+	KASSERT((slp->ns_flag & SLP_BUSY) != 0);
 	for (;;) {
 		if (slp->ns_reclen == 0) {
 			if (slp->ns_cc < NFSX_UNSIGNED) {
@@ -2489,27 +2486,25 @@ nfsrv_wakenfsd(slp)
 
 	if ((slp->ns_flag & SLP_VALID) == 0)
 		return;
-	simple_lock(&nfsd_slock);
+	mutex_enter(&nfsd_lock);
 	if (slp->ns_flag & SLP_DOREC) {
-		simple_unlock(&nfsd_slock);
+		mutex_exit(&nfsd_lock);
 		return;
 	}
 	nd = SLIST_FIRST(&nfsd_idle_head);
 	if (nd) {
 		SLIST_REMOVE_HEAD(&nfsd_idle_head, nfsd_idle);
-		simple_unlock(&nfsd_slock);
-
 		if (nd->nfsd_slp)
 			panic("nfsd wakeup");
 		slp->ns_sref++;
 		nd->nfsd_slp = slp;
-		wakeup(nd);
-		return;
+		cv_signal(&nd->nfsd_cv);
+	} else {
+		slp->ns_flag |= SLP_DOREC;
+		nfsd_head_flag |= NFSD_CHECKSLP;
+		TAILQ_INSERT_TAIL(&nfssvc_sockpending, slp, ns_pending);
 	}
-	slp->ns_flag |= SLP_DOREC;
-	nfsd_head_flag |= NFSD_CHECKSLP;
-	TAILQ_INSERT_TAIL(&nfssvc_sockpending, slp, ns_pending);
-	simple_unlock(&nfsd_slock);
+	mutex_exit(&nfsd_lock);
 }
 
 int
@@ -2522,15 +2517,15 @@ nfsdsock_sendreply(struct nfssvc_sock *slp, struct nfsrv_descript *nd)
 		nd->nd_mrep = NULL;
 	}
 
-	simple_lock(&slp->ns_lock);
+	mutex_enter(&slp->ns_lock);
 	if ((slp->ns_flag & SLP_SENDING) != 0) {
 		SIMPLEQ_INSERT_TAIL(&slp->ns_sendq, nd, nd_sendq);
-		simple_unlock(&slp->ns_lock);
+		mutex_exit(&slp->ns_lock);
 		return 0;
 	}
 	KASSERT(SIMPLEQ_EMPTY(&slp->ns_sendq));
 	slp->ns_flag |= SLP_SENDING;
-	simple_unlock(&slp->ns_lock);
+	mutex_exit(&slp->ns_lock);
 
 again:
 	error = nfs_send(slp->ns_so, nd->nd_nam2, nd->nd_mreq, NULL, curlwp);
@@ -2539,16 +2534,16 @@ again:
 	}
 	nfsdreq_free(nd);
 
-	simple_lock(&slp->ns_lock);
+	mutex_enter(&slp->ns_lock);
 	KASSERT((slp->ns_flag & SLP_SENDING) != 0);
 	nd = SIMPLEQ_FIRST(&slp->ns_sendq);
 	if (nd != NULL) {
 		SIMPLEQ_REMOVE_HEAD(&slp->ns_sendq, nd_sendq);
-		simple_unlock(&slp->ns_lock);
+		mutex_exit(&slp->ns_lock);
 		goto again;
 	}
 	slp->ns_flag &= ~SLP_SENDING;
-	simple_unlock(&slp->ns_lock);
+	mutex_exit(&slp->ns_lock);
 
 	return error;
 }
