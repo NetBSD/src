@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.40 2006/12/29 21:49:03 yamt Exp $
+#	$NetBSD: INSTALL,v 1.41 2007/06/02 12:07:03 tsutsui Exp $
 #
 # INSTALL
 
@@ -94,8 +94,6 @@ config		netbsd	root on ? type ?
 #
 
 mainbus0 at root
-
-fpu0 at mainbus?			# Floating-Point Coprocessor support
 
 
 # Basic Bus Support
