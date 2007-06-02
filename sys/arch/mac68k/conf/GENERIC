@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.179 2007/03/06 11:28:47 dillo Exp $
+# $NetBSD: GENERIC,v 1.180 2007/06/02 12:07:03 tsutsui Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/mac68k/conf/std.mac68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.179 $"
+#ident 		"GENERIC-$Revision: 1.180 $"
 
 maxusers	16		# estimated number of users
 
@@ -200,8 +200,6 @@ config		netbsd	root on ? type ?
 #
 
 mainbus0 at root
-
-fpu0 at mainbus?			# Floating-Point Coprocessor support
 
 
 # Basic Bus Support
