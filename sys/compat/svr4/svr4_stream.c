@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stream.c,v 1.64 2007/06/01 22:53:53 dsl Exp $	 */
+/*	$NetBSD: svr4_stream.c,v 1.65 2007/06/02 21:39:27 dsl Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -41,10 +41,12 @@
  * Yes, this is gross.
  *
  * ToDo: The state machine for getmsg needs re-thinking
+ *
+ * The svr4_32 version is built from this file as well.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_stream.c,v 1.64 2007/06/01 22:53:53 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_stream.c,v 1.65 2007/06/02 21:39:27 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -72,18 +74,54 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_stream.c,v 1.64 2007/06/01 22:53:53 dsl Exp $")
 
 #include <sys/syscallargs.h>
 
-#include <compat/svr4/svr4_types.h>
-#include <compat/svr4/svr4_util.h>
-#include <compat/svr4/svr4_signal.h>
-#include <compat/svr4/svr4_lwp.h>
-#include <compat/svr4/svr4_ucontext.h>
-#include <compat/svr4/svr4_syscallargs.h>
-#include <compat/svr4/svr4_stropts.h>
-#include <compat/svr4/svr4_timod.h>
-#include <compat/svr4/svr4_sockmod.h>
-#include <compat/svr4/svr4_ioctl.h>
-#include <compat/svr4/svr4_socket.h>
+#ifndef SVR4_32
+#define	compat(name) <compat/svr4/svr4_##name>
+#else
+#define	compat(name) <compat/svr4_32/svr4_32_##name>
+#endif
 
+#include compat(types.h)
+#include compat(util.h)
+#include compat(signal.h)
+#include compat(lwp.h)
+#include compat(ucontext.h)
+#include compat(syscallargs.h)
+#include compat(stropts.h)
+#include compat(timod.h)
+#include <compat/svr4/svr4_sockmod.h>
+#include compat(ioctl.h)
+#include compat(socket.h)
+
+#undef compat
+
+#ifndef SVR4_32
+
+#define SCARG_PTR(uap, arg)	SCARG(uap, arg)
+#define NETBSD32PTR(ptr)	(ptr)
+
+#else
+
+#define SCARG_PTR(uap, arg)	SCARG_P32(uap, arg)
+#define NETBSD32PTR(ptr)	NETBSD32PTR64(ptr)
+
+/* Rename stuff that is different for the svr4_32 build */
+#define	svr4_infocmd		svr4_32_infocmd
+#define	svr4_ino_t		svr4_32_ino_t
+#define	svr4_netaddr_in		svr4_32_netaddr_in
+#define	svr4_netaddr_un		svr4_32_netaddr_un
+#define	svr4_strbuf		svr4_32_strbuf
+#define	svr4_stream_get		svr4_32_stream_get
+#define	svr4_stream_ioctl	svr4_32_stream_ioctl
+#define	svr4_stream_ti_ioctl	svr4_32_stream_ti_ioctl
+#define	svr4_strfdinsert	svr4_32_strfdinsert
+#define	svr4_strioctl		svr4_32_strioctl
+#define	svr4_strmcmd		svr4_32_strmcmd
+#define	svr4_sys_getmsg		svr4_32_sys_getmsg
+#define	svr4_sys_getmsg_args	svr4_32_sys_getmsg_args
+#define	svr4_sys_putmsg		svr4_32_sys_putmsg
+#define	svr4_sys_putmsg_args	svr4_32_sys_putmsg_args
+
+#endif /* SVR4_32 */
 
 /* Utils */
 static int clean_pipe __P((struct lwp *, const char *));
@@ -444,7 +482,7 @@ si_ogetudata(struct file *fp, int fd, struct svr4_strioctl *ioc,
 		return EINVAL;
 	}
 
-	if ((error = copyin(ioc->buf, &ud, sizeof(ud))) != 0)
+	if ((error = copyin(NETBSD32PTR(ioc->buf), &ud, sizeof(ud))) != 0)
 		return error;
 
 	getparm(fp, &pa);
@@ -480,7 +518,7 @@ si_ogetudata(struct file *fp, int fd, struct svr4_strioctl *ioc,
 	/* XXX: Fixme */
 	ud.so_state = 0;
 	ud.so_options = 0;
-	return copyout(&ud, ioc->buf, ioc->len);
+	return copyout(&ud, NETBSD32PTR(ioc->buf), ioc->len);
 }
 
 
@@ -491,7 +529,7 @@ si_sockparams(struct file *fp, int fd, struct svr4_strioctl *ioc,
 	struct svr4_si_sockparms pa;
 
 	getparm(fp, &pa);
-	return copyout(&pa, ioc->buf, sizeof(pa));
+	return copyout(&pa, NETBSD32PTR(ioc->buf), sizeof(pa));
 }
 
 
@@ -514,7 +552,7 @@ si_listen(fp, fd, ioc, l)
 	if (ioc->len > sizeof(lst))
 		return EINVAL;
 
-	if ((error = copyin(ioc->buf, &lst, ioc->len)) != 0)
+	if ((error = copyin(NETBSD32PTR(ioc->buf), &lst, ioc->len)) != 0)
 		return error;
 
 	if (lst.cmd != SVR4_TI_OLD_BIND_REQUEST) {
@@ -556,7 +594,7 @@ si_listen(fp, fd, ioc, l)
 	}
 
 
-	if ((error = copyout(&lst, ioc->buf, ioc->len)) != 0)
+	if ((error = copyout(&lst, NETBSD32PTR(ioc->buf), ioc->len)) != 0)
 		return error;
 
 	return 0;
@@ -576,7 +614,7 @@ si_getudata(struct file *fp, int fd, struct svr4_strioctl *ioc,
 		return EINVAL;
 	}
 
-	if ((error = copyin(ioc->buf, &ud, sizeof(ud))) != 0)
+	if ((error = copyin(NETBSD32PTR(ioc->buf), &ud, sizeof(ud))) != 0)
 		return error;
 
 	getparm(fp, &ud.sockparms);
@@ -613,7 +651,7 @@ si_getudata(struct file *fp, int fd, struct svr4_strioctl *ioc,
 	/* XXX: Fixme */
 	ud.so_state = 0;
 	ud.so_options = 0;
-	return copyout(&ud, ioc->buf, sizeof(ud));
+	return copyout(&ud, NETBSD32PTR(ioc->buf), sizeof(ud));
 }
 
 
@@ -631,7 +669,7 @@ si_shutdown(struct file *fp, int fd, struct svr4_strioctl *ioc,
 		return EINVAL;
 	}
 
-	if ((error = copyin(ioc->buf, &SCARG(&ap, how), ioc->len)) != 0)
+	if ((error = copyin(NETBSD32PTR(ioc->buf), &SCARG(&ap, how), ioc->len)) != 0)
 		return error;
 
 	SCARG(&ap, s) = fd;
@@ -708,7 +746,7 @@ ti_getinfo(struct file *fp, int fd, struct svr4_strioctl *ioc,
 	if (ioc->len > sizeof(info))
 		return EINVAL;
 
-	if ((error = copyin(ioc->buf, &info, ioc->len)) != 0)
+	if ((error = copyin(NETBSD32PTR(ioc->buf), &info, ioc->len)) != 0)
 		return error;
 
 	if (info.cmd != SVR4_TI_INFO_REQUEST)
@@ -727,7 +765,7 @@ ti_getinfo(struct file *fp, int fd, struct svr4_strioctl *ioc,
 	info.provider = 2;
 
 	ioc->len = sizeof(info);
-	if ((error = copyout(&info, ioc->buf, ioc->len)) != 0)
+	if ((error = copyout(&info, NETBSD32PTR(ioc->buf), ioc->len)) != 0)
 		return error;
 
 	return 0;
@@ -761,7 +799,7 @@ ti_bind(fp, fd, ioc, l)
 	if (ioc->len > sizeof(bnd))
 		return EINVAL;
 
-	if ((error = copyin(ioc->buf, &bnd, ioc->len)) != 0)
+	if ((error = copyin(NETBSD32PTR(ioc->buf), &bnd, ioc->len)) != 0)
 		return error;
 
 	if (bnd.cmd != SVR4_TI_OLD_BIND_REQUEST) {
@@ -835,7 +873,7 @@ reply:
 
 	bnd.cmd = SVR4_TI_BIND_REPLY;
 
-	if ((error = copyout(&bnd, ioc->buf, ioc->len)) != 0)
+	if ((error = copyout(&bnd, NETBSD32PTR(ioc->buf), ioc->len)) != 0)
 		return error;
 
 	return 0;
@@ -999,7 +1037,7 @@ svr4_stream_ti_ioctl(fp, l, retval, fd, cmd, dat)
 	}
 
 
-	if ((error = copyout(SVR4_ADDROF(&sc), skb.buf,
+	if ((error = copyout(SVR4_ADDROF(&sc), NETBSD32PTR(skb.buf),
 			     sasize)) != 0) {
 		DPRINTF(("ti_ioctl: error copying out socket data\n"));
 		return error;
@@ -1471,15 +1509,15 @@ svr4_sys_putmsg(l, v, retval)
 
 	simple_unlock(&fp->f_slock);
 
-	if (SCARG(uap, ctl) != NULL) {
-		if ((error = copyin(SCARG(uap, ctl),
+	if (SCARG_PTR(uap, ctl) != NULL) {
+		if ((error = copyin(SCARG_PTR(uap, ctl),
 				    &ctl, sizeof(ctl))) != 0)
 			return error;
 	} else
 		ctl.len = -1;
 
-	if (SCARG(uap, dat) != NULL) {
-	    	if ((error = copyin(SCARG(uap, dat),
+	if (SCARG_PTR(uap, dat) != NULL) {
+	    	if ((error = copyin(SCARG_PTR(uap, dat),
 				    &dat, sizeof(dat))) != 0)
 			return error;
 	} else
@@ -1499,7 +1537,7 @@ svr4_sys_putmsg(l, v, retval)
 		return EINVAL;
 	}
 
-	if ((error = copyin(ctl.buf, &sc, ctl.len)) != 0)
+	if ((error = copyin(NETBSD32PTR(ctl.buf), &sc, ctl.len)) != 0)
 		return error;
 
 	switch (st->s_family) {
@@ -1578,7 +1616,7 @@ svr4_sys_putmsg(l, v, retval)
 		msg.msg_iovlen = 1;
 		msg.msg_control = NULL;
 		msg.msg_flags = MSG_NAMEMBUF;
-		aiov.iov_base = dat.buf;
+		aiov.iov_base = NETBSD32PTR(dat.buf);
 		aiov.iov_len = dat.len;
 		error = do_sys_sendmsg(l, SCARG(uap, fd), &msg,
 			       SCARG(uap, flags), retval);
@@ -1632,8 +1670,8 @@ svr4_sys_getmsg(l, v, retval)
 
 	simple_unlock(&fp->f_slock);
 
-	if (SCARG(uap, ctl) != NULL) {
-		if ((error = copyin(SCARG(uap, ctl), &ctl,
+	if (SCARG_PTR(uap, ctl) != NULL) {
+		if ((error = copyin(SCARG_PTR(uap, ctl), &ctl,
 				    sizeof(ctl))) != 0)
 			return error;
 	} else {
@@ -1641,8 +1679,8 @@ svr4_sys_getmsg(l, v, retval)
 		ctl.maxlen = 0;
 	}
 
-	if (SCARG(uap, dat) != NULL) {
-	    	if ((error = copyin(SCARG(uap, dat), &dat,
+	if (SCARG_PTR(uap, dat) != NULL) {
+	    	if ((error = copyin(SCARG_PTR(uap, dat), &dat,
 				    sizeof(dat))) != 0)
 			return error;
 	} else {
@@ -1822,7 +1860,7 @@ svr4_sys_getmsg(l, v, retval)
 		if (ctl.len > sizeof(sc))
 			ctl.len = sizeof(sc);
 
-		if ((error = copyin(ctl.buf, &sc, ctl.len)) != 0)
+		if ((error = copyin(NETBSD32PTR(ctl.buf), &sc, ctl.len)) != 0)
 			return error;
 
 		switch (st->s_family) {
@@ -1843,7 +1881,7 @@ svr4_sys_getmsg(l, v, retval)
 		msg.msg_iov = &aiov;
 		msg.msg_iovlen = 1;
 		msg.msg_control = 0;
-		aiov.iov_base = dat.buf;
+		aiov.iov_base = NETBSD32PTR(dat.buf);
 		aiov.iov_len = dat.maxlen;
 		msg.msg_flags = 0;
 
@@ -1913,25 +1951,25 @@ svr4_sys_getmsg(l, v, retval)
 		return EINVAL;
 	}
 
-	if (SCARG(uap, ctl)) {
+	if (SCARG_PTR(uap, ctl)) {
 		if (ctl.len != -1)
-			if ((error = copyout(&sc, ctl.buf,
+			if ((error = copyout(&sc, NETBSD32PTR(ctl.buf),
 					     ctl.len)) != 0)
 				return error;
 
-		if ((error = copyout(&ctl, SCARG(uap, ctl),
+		if ((error = copyout(&ctl, SCARG_PTR(uap, ctl),
 				     sizeof(ctl))) != 0)
 			return error;
 	}
 
-	if (SCARG(uap, dat)) {
-		if ((error = copyout(&dat, SCARG(uap, dat),
+	if (SCARG_PTR(uap, dat)) {
+		if ((error = copyout(&dat, SCARG_PTR(uap, dat),
 				     sizeof(dat))) != 0)
 			return error;
 	}
 
-	if (SCARG(uap, flags)) { /* XXX: Need translation */
-		if ((error = copyout(&fl, SCARG(uap, flags),
+	if (SCARG_PTR(uap, flags)) { /* XXX: Need translation */
+		if ((error = copyout(&fl, SCARG_PTR(uap, flags),
 				     sizeof(fl))) != 0)
 			return error;
 	}
