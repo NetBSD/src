@@ -1,4 +1,4 @@
-/* $NetBSD: bus_dma.c,v 1.22 2007/03/05 14:31:08 tsutsui Exp $ */
+/* $NetBSD: bus_dma.c,v 1.23 2007/06/02 11:13:45 tsutsui Exp $ */
 
 /*
  * This file was taken from from alpha/common/bus_dma.c
@@ -46,7 +46,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.22 2007/03/05 14:31:08 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.23 2007/06/02 11:13:45 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -414,118 +414,123 @@ _bus_dmamap_unload(bus_dma_tag_t t, bus_dmamap_t map)
  * Common function for DMA map synchronization.  May be called
  * by chipset-specific DMA map synchronization functions.
  */
+
+/* XXX these should be in <m68k/cpu.h> or <m68k/cacheops.h> */
+#define CACHELINE_SIZE	16
+#define CACHELINE_MASK	(CACHELINE_SIZE - 1)
+
 void
 _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
     bus_size_t len, int ops)
 {
 #if defined(M68040) || defined(M68060)
+	bus_addr_t p, e, ps, pe;
+	bus_size_t seglen;
 	int i;
 #endif
 
+#if defined(M68020) || defined(M68030)
+#if defined(M68040) || defined(M68060)
+	if (cputype == CPU_68020 || cputype == CPU_68030)
+#endif
+		/* assume no L2 physical cache */
+		return;
+#endif
+
+#if defined(M68040) || defined(M68060)
+	/* Short-circuit for unsupported `ops' */
+	if ((ops & (BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE)) == 0)
+		return;
+
 	/*
 	 * flush/purge the cache.
-	 * @@@ should probably be fixed to use offset and len args.
 	 */
+	for (i = 0; i < map->dm_nsegs && len != 0; i++) {
+		if (map->dm_segs[i].ds_len <= offset) {
+			/* Segment irrelevant - before requested offset */
+			offset -= map->dm_segs[i].ds_len;
+			continue;
+		}
 
-#if defined(M68040) || defined(M68060)
-	if (ops & BUS_DMASYNC_PREWRITE) {
-		for (i = 0; i < map->dm_nsegs; i++) {
-			bus_addr_t p = map->dm_segs[i].ds_addr;
-			bus_addr_t e = p+map->dm_segs[i].ds_len;
-			/* If the pointers are unaligned, it's ok to flush surrounding cache line */
-			p -= p % 16;
-			if (e % 16) e += 16 - (e % 16);
-#ifdef DIAGNOSTIC
-			if ((p % 16) || (e % 16)) {
-				panic("unaligned address in _bus_dmamap_sync "
-				    "while flushing. address=0x%08lx, "
-				    "end=0x%08lx, ops=0x%x", p, e, ops);
+		/*
+		 * Now at the first segment to sync; nail
+		 * each segment until we have exhausted the
+		 * length.
+		 */
+		seglen = map->dm_segs[i].ds_len - offset;
+		if (seglen > len)
+			seglen = len;
+
+		ps = map->dm_segs[i].ds_addr + offset;
+		pe = ps + seglen;
+
+		if (ops & BUS_DMASYNC_PREWRITE) {
+			p = ps & ~CACHELINE_MASK;
+			e = (pe + CACHELINE_MASK) & ~CACHELINE_MASK;
+
+			/* flush cacheline */
+			while ((p < e) && (p & PAGE_MASK) != 0) {
+				DCFL(p);
+				p += CACHELINE_SIZE;
 			}
-#endif
-			while ((p < e) && (p % PAGE_SIZE)) {
-				DCFL(p);		/* flush cache line */
-				p += 16;
-			}
+
+			/* flush page */
 			while (p + PAGE_SIZE <= e) {
-				DCFP(p);		/* flush page */
+				DCFP(p);
 				p += PAGE_SIZE;
 			}
-			while (p < e) {
-				DCFL(p);		/* flush cache line */
-				p += 16;
-			}
-#ifdef DIAGNOSTIC
-			if (p != e) {
-				panic("overrun in _bus_dmamap_sync "
-				    "while flushing. address=0x%08lx, "
-				    "end=0x%08lx, ops=0x%x", p, e, ops);
-			}
-#endif
-		}
-	}
-#endif /* M68040 || M68060 */
 
-	if (ops & BUS_DMASYNC_PREREAD) {
-		switch (cputype) {
-		default:
-#ifdef M68020
-		case CPU_68020:
-			break;
-#endif
-#ifdef M68030
-		case CPU_68030:
-			break;
-#endif
-#if defined(M68040) || defined(M68060)
-#ifdef M68040
-		case CPU_68040:
-#endif
-#ifdef M68060
-		case CPU_68060:
-#endif
-			for (i = 0; i < map->dm_nsegs; i++) {
-				bus_addr_t p = map->dm_segs[i].ds_addr;
-				bus_addr_t e = p+map->dm_segs[i].ds_len;
-				if (p % 16) {
-					p -= p % 16;
-					DCFL(p);
-				}
-				if (e % 16) {
-					e += 16 - (e % 16);
-					DCFL(e - 16);
-				}
-#ifdef DIAGNOSTIC
-				if ((p % 16) || (e % 16)) {
-					panic("unaligned address in "
-					    "_bus_dmamap_sync while purging."
-					    "address=0x%08lx, end=0x%08lx, "
-					    "ops=0x%x", p, e, ops);
-				}
-#endif
-				while ((p < e) && (p % PAGE_SIZE)) {
-					DCPL(p);	/* purge cache line */
-					p += 16;
-				}
-				while (p + PAGE_SIZE <= e) {
-					DCPP(p);	/* purge page */
-					p += PAGE_SIZE;
-				}
-				while (p < e) {
-					DCPL(p);	/* purge cache line */
-					p += 16;
-				}
-#ifdef DIAGNOSTIC
-				if (p != e) {
-					panic("overrun in _bus_dmamap_sync "
-					    "while purging. address=0x%08lx, "
-					    "end=0x%08lx, ops=0x%x", p, e, ops);
-				}
-#endif
+			/* flush cacheline */
+			while (p < e) {
+				DCFL(p);
+				p += CACHELINE_SIZE;
 			}
-			break;
-#endif /* M68040 || M68060 */
 		}
+
+		/*
+		 * Normally, the `PREREAD' flag instructs us to purge the
+		 * cache for the specified offset and length. However, if
+		 * the offset/length is not aligned to a cacheline boundary,
+		 * we may end up purging some legitimate data from the
+		 * start/end of the cache. In such a case, *flush* the
+		 * cachelines at the start and end of the required region.
+		 */
+		else if (ops & BUS_DMASYNC_PREREAD) {
+			/* flush cacheline on start boundary */
+			if (ps & CACHELINE_MASK) {
+				DCFL(ps & ~CACHELINE_MASK);
+			}
+
+			p = (ps + CACHELINE_MASK) & ~CACHELINE_MASK;
+			e = pe & ~CACHELINE_MASK;
+
+			/* purge cacheline */
+			while ((p < e) && (p & PAGE_MASK) != 0) {
+				DCPL(p);
+				p += CACHELINE_SIZE;
+			}
+
+			/* purge page */
+			while (p + PAGE_SIZE <= e) {
+				DCPP(p);
+				p += PAGE_SIZE;
+			}
+
+			/* purge cacheline */
+			while (p < e) {
+				DCPL(p);
+				p += CACHELINE_SIZE;
+			}
+
+			/* flush cacheline on end boundary */
+			if (p < pe) {
+				DCFL(p);
+			}
+		}
+		offset = 0;
+		len -= seglen;
 	}
+#endif	/* defined(M68040) || defined(M68060) */
 }
 
 /*
