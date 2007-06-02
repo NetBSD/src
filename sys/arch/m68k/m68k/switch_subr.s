@@ -1,4 +1,4 @@
-/*	$NetBSD: switch_subr.s,v 1.19 2007/05/22 20:29:32 mhitch Exp $	*/
+/*	$NetBSD: switch_subr.s,v 1.20 2007/06/02 23:51:37 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation.
@@ -307,10 +307,6 @@ ENTRY(savectx)
 	movl	%usp,%a0		| grab USP
 	movl	%a0,%a1@(PCB_USP)	| and save it
 	moveml	%d2-%d7/%a2-%a7,%a1@(PCB_REGS)	| save non-scratch registers
-
-#ifdef PCB_CMAP2
-	movl	_C_LABEL(CMAP2),%a1@(PCB_CMAP2) | XXX: For Amiga
-#endif
 
 #ifdef _M68K_CUSTOM_FPU_CTX
 	jbsr	_ASM_LABEL(m68k_fpuctx_save)
