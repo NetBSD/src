@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.h,v 1.66 2007/06/01 23:16:33 dogcow Exp $	*/
+/*	$NetBSD: nfs.h,v 1.67 2007/06/02 03:32:51 yamt Exp $	*/
 /*
  * Copyright (c) 1989, 1993, 1995
  *	The Regents of the University of California.  All rights reserved.
@@ -35,8 +35,12 @@
 
 #ifndef _NFS_NFS_H_
 #define _NFS_NFS_H_
+
 #ifdef _KERNEL
 #include <sys/condvar.h>
+#include <sys/fstypes.h>
+#include <sys/mbuf.h>
+#include <sys/mutex.h>
 #endif
 
 /*
