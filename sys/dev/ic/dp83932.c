@@ -1,4 +1,4 @@
-/*	$NetBSD: dp83932.c,v 1.14 2007/03/04 06:01:54 christos Exp $	*/
+/*	$NetBSD: dp83932.c,v 1.15 2007/06/02 06:41:34 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dp83932.c,v 1.14 2007/03/04 06:01:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dp83932.c,v 1.15 2007/06/02 06:41:34 tsutsui Exp $");
 
 #include "bpfilter.h"
 
@@ -649,11 +649,13 @@ sonic_txintr(struct sonic_softc *sc)
 			    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 			tda32 = &sc->sc_tda32[i];
 			status = sonic32toh(sc, tda32->tda_status);
+			SONIC_CDTXSYNC32(sc, i, BUS_DMASYNC_PREREAD);
 		} else {
 			SONIC_CDTXSYNC16(sc, i,
 			    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 			tda16 = &sc->sc_tda16[i];
 			status = sonic16toh(sc, tda16->tda_status);
+			SONIC_CDTXSYNC16(sc, i, BUS_DMASYNC_PREREAD);
 		}
 
 		if ((status & ~(TCR_EXDIS|TCR_CRCI|TCR_POWC|TCR_PINT)) == 0)
@@ -713,6 +715,7 @@ sonic_rxintr(struct sonic_softc *sc)
 			SONIC_CDRXSYNC32(sc, i,
 			    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 			rda32 = &sc->sc_rda32[i];
+			SONIC_CDRXSYNC32(sc, i, BUS_DMASYNC_PREREAD);
 			if (rda32->rda_inuse != 0)
 				break;
 			status = sonic32toh(sc, rda32->rda_status);
@@ -724,6 +727,7 @@ sonic_rxintr(struct sonic_softc *sc)
 			SONIC_CDRXSYNC16(sc, i,
 			    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 			rda16 = &sc->sc_rda16[i];
+			SONIC_CDRXSYNC16(sc, i, BUS_DMASYNC_PREREAD);
 			if (rda16->rda_inuse != 0)
 				break;
 			status = sonic16toh(sc, rda16->rda_status);
