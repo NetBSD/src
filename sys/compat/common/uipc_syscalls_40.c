@@ -1,9 +1,9 @@
-/*	$NetBSD: uipc_syscalls_40.c,v 1.3 2007/05/30 21:02:02 christos Exp $	*/
+/*	$NetBSD: uipc_syscalls_40.c,v 1.4 2007/06/02 01:29:25 enami Exp $	*/
 
 /* written by Pavel Cahyna, 2006. Public domain. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_40.c,v 1.3 2007/05/30 21:02:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_40.c,v 1.4 2007/06/02 01:29:25 enami Exp $");
 
 /*
  * System call interface to the socket abstraction.
@@ -37,16 +37,13 @@ compat_ifconf(u_long cmd, void *data)
 	struct ifnet *ifp;
 	struct ifaddr *ifa;
 	struct oifreq ifr, *ifrp;
-	int space = ifc->ifc_len, error = 0;
+	int space, error = 0;
 	const int sz = (int)sizeof(ifr);
-	int sign;
 
-	if ((ifrp = ifc->ifc_req) == NULL) {
+	if ((ifrp = ifc->ifc_req) == NULL)
 		space = 0;
-		sign = -1;
-	} else {
-		sign = 1;
-	}
+	else
+		space = ifc->ifc_len;
 	IFNET_FOREACH(ifp) {
 		(void)strncpy(ifr.ifr_name, ifp->if_xname,
 		    sizeof(ifr.ifr_name));
@@ -54,13 +51,13 @@ compat_ifconf(u_long cmd, void *data)
 			return ENAMETOOLONG;
 		if (TAILQ_EMPTY(&ifp->if_addrlist)) {
 			memset(&ifr.ifr_addr, 0, sizeof(ifr.ifr_addr));
-			if (ifrp != NULL && space >= sz) {
+			if (space >= sz) {
 				error = copyout(&ifr, ifrp, sz);
 				if (error != 0)
-					break;
+					return (error);
 				ifrp++;
 			}
-			space -= sizeof(ifr) * sign;
+			space -= sizeof(ifr);
 			continue;
 		}
 
@@ -69,7 +66,7 @@ compat_ifconf(u_long cmd, void *data)
 #ifdef COMPAT_OSOCK
 			if (cmd == OOSIOCGIFCONF) {
 				struct osockaddr *osa =
-					 (struct osockaddr *)&ifr.ifr_addr;
+				    (struct osockaddr *)&ifr.ifr_addr;
 				/*
 				 * If it does not fit, we don't bother with it
 				 */
@@ -77,7 +74,7 @@ compat_ifconf(u_long cmd, void *data)
 					continue;
 				memcpy(&ifr.ifr_addr, sa, sa->sa_len);
 				osa->sa_family = sa->sa_family;
-				if (ifrp != NULL && space >= sz) {
+				if (space >= sz) {
 					error = copyout(&ifr, ifrp, sz);
 					ifrp++;
 				}
@@ -85,13 +82,13 @@ compat_ifconf(u_long cmd, void *data)
 #endif
 			if (sa->sa_len <= sizeof(*sa)) {
 				memcpy(&ifr.ifr_addr, sa, sa->sa_len);
-				if (ifrp != NULL && space >= sz) {
+				if (space >= sz) {
 					error = copyout(&ifr, ifrp, sz);
 					ifrp++;
 				}
 			} else {
-				space -= (sa->sa_len - sizeof(*sa)) * sign;
-				if (ifrp != NULL && space >= sz) {
+				space -= sa->sa_len - sizeof(*sa);
+				if (space >= sz) {
 					error = copyout(&ifr, ifrp,
 					    sizeof(ifr.ifr_name));
 					if (error == 0) {
@@ -105,14 +102,14 @@ compat_ifconf(u_long cmd, void *data)
 				}
 			}
 			if (error != 0)
-				break;
-			space -= sz * sign;
+				return (error);
+			space -= sz;
 		}
 	}
 	if (ifrp != NULL)
 		ifc->ifc_len -= space;
 	else
-		ifc->ifc_len = space;
-	return error;
+		ifc->ifc_len = -space;
+	return (0);
 }
 #endif
