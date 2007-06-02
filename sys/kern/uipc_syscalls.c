@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.111 2007/06/01 22:53:52 dsl Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.112 2007/06/02 01:24:34 enami Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.111 2007/06/01 22:53:52 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.112 2007/06/02 01:24:34 enami Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_pipe.h"
@@ -115,7 +115,8 @@ sys_bind(struct lwp *l, void *v, register_t *retval)
 	struct mbuf	*nam;
 	int		error;
 
-	error = sockargs(&nam, SCARG(uap, name), SCARG(uap, namelen), MT_SONAME);
+	error = sockargs(&nam, SCARG(uap, name), SCARG(uap, namelen),
+	    MT_SONAME);
 	if (error)
 		return error;
 
@@ -272,7 +273,8 @@ sys_connect(struct lwp *l, void *v, register_t *retval)
 	int		error;
 	struct mbuf	*nam;
 
-	error = sockargs(&nam, SCARG(uap, name), SCARG(uap, namelen), MT_SONAME);
+	error = sockargs(&nam, SCARG(uap, name), SCARG(uap, namelen),
+	    MT_SONAME);
 	if (error)
 		return error;
 	return do_sys_connect(l,  SCARG(uap, s), nam);
@@ -465,7 +467,7 @@ do_sys_sendmsg(struct lwp *l, int s, struct msghdr *mp, int flags,
 		to = NULL;
 
 	if (mp->msg_flags & MSG_CONTROLMBUF)
-		to = mp->msg_control;
+		control = mp->msg_control;
 	else
 		control = NULL;
 
@@ -519,9 +521,9 @@ do_sys_sendmsg(struct lwp *l, int s, struct msghdr *mp, int flags,
 		}
 	}
 
-	if (mp->msg_name && to != NULL) {
+	if (mp->msg_name && to == NULL) {
 		error = sockargs(&to, mp->msg_name, mp->msg_namelen,
-				 MT_SONAME);
+		    MT_SONAME);
 		if (error)
 			goto bad;
 	}
@@ -531,9 +533,9 @@ do_sys_sendmsg(struct lwp *l, int s, struct msghdr *mp, int flags,
 			error = EINVAL;
 			goto bad;
 		}
-		if (control != NULL) {
+		if (control == NULL) {
 			error = sockargs(&control, mp->msg_control,
-					 mp->msg_controllen, MT_CONTROL);
+			    mp->msg_controllen, MT_CONTROL);
 			if (error)
 				goto bad;
 		}
