@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.704 2007/05/01 17:18:52 bouyer Exp $
+# $NetBSD: mi,v 1.705 2007/06/02 06:09:08 tnozaki Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -1571,6 +1571,9 @@
 ./usr/share/i18n/csmapper/CP/CP10079%UCS.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/CP/CP10081%UCS.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/CP/CP1026%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/CP1046%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/CP1124%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/CP1125%UCS.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/CP/CP1131%UCS.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/CP/CP1133%UCS.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/CP/CP1250%UCS.mps	base-sysutil-share	nls
@@ -1646,6 +1649,9 @@
 ./usr/share/i18n/csmapper/CP/UCS%CP10079.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/CP/UCS%CP10081.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/CP/UCS%CP1026.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/UCS%CP1046.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/UCS%CP1124.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/UCS%CP1125.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/CP/UCS%CP1131.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/CP/UCS%CP1133.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/CP/UCS%CP1250.mps	base-sysutil-share	nls
@@ -1959,6 +1965,9 @@
 ./usr/share/i18n/esdb/CP/CP10079.esdb		base-sysutil-share	nls
 ./usr/share/i18n/esdb/CP/CP10081.esdb		base-sysutil-share	nls
 ./usr/share/i18n/esdb/CP/CP1026.esdb		base-sysutil-share	nls
+./usr/share/i18n/esdb/CP/CP1046.esdb		base-sysutil-share	nls
+./usr/share/i18n/esdb/CP/CP1124.esdb		base-sysutil-share	nls
+./usr/share/i18n/esdb/CP/CP1125.esdb		base-sysutil-share	nls
 ./usr/share/i18n/esdb/CP/CP1131.esdb		base-sysutil-share	nls
 ./usr/share/i18n/esdb/CP/CP1133.esdb		base-sysutil-share	nls
 ./usr/share/i18n/esdb/CP/CP1250.esdb		base-sysutil-share	nls
