@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.29 2007/05/17 14:51:26 yamt Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.30 2007/06/02 02:41:41 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.29 2007/05/17 14:51:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.30 2007/06/02 02:41:41 nisimura Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_multiprocessor.h"
@@ -202,6 +202,7 @@ static const struct cputab models[] = {
 	{ "7447A",	MPC7447A,	REVFMT_MAJMIN },
 	{ "7448",	MPC7448,	REVFMT_MAJMIN },
 	{ "8240",	MPC8240,	REVFMT_MAJMIN },
+	{ "8245",	MPC8245,	REVFMT_MAJMIN },
 	{ "970",	IBM970,		REVFMT_MAJMIN },
 	{ "970FX",	IBM970FX,	REVFMT_MAJMIN },
 	{ "",		0,		REVFMT_HEX }
