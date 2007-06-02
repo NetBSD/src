@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.12.38.3 2007/05/25 12:56:39 nisimura Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.12.38.4 2007/06/02 02:49:28 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.12.38.3 2007/05/25 12:56:39 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.12.38.4 2007/06/02 02:49:28 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,6 +47,9 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.12.38.3 2007/05/25 12:56:39 nisimura 
 
 static struct btinfo_rootdevice *bi_rdev;
 static struct btinfo_bootpath *bi_path;
+
+#include <dev/cons.h>
+#include <machine/pio.h>
 
 /*
  * Determine i/o configuration for a machine.
@@ -64,18 +67,17 @@ cpu_configure()
 	genppc_cpu_configure();
 }
 
-char *booted_kernel; /* XXX for SYSCTL machdep.kernel XXX */
+char *booted_kernel; /* should be a genuine filename */
 
 void
 cpu_rootconf()
 {
 
 	if (bi_path != NULL)
-		booted_kernel = bi_path->bootpath; /* genuine pathname */
+		booted_kernel = bi_path->bootpath;
 
-	printf("boot device: %s\n",
+	aprint_normal("boot device: %s\n",
 	    booted_device ? booted_device->dv_xname : "<unknown>");
-
 	setroot(booted_device, booted_partition);
 }
 
@@ -89,7 +91,7 @@ device_register(struct device *dev, void *aux)
 	if (dev->dv_class == DV_IFNET) {
 		if (device_is_a(dev, bi_rdev->devname)) {
 			struct pci_attach_args *pa = aux;
-			unsigned tag = (unsigned)pa->pa_tag &~ (1U << 31);
+			unsigned tag = (unsigned)pa->pa_tag;
 
 			if (bi_rdev->cookie == tag)
 				booted_device = dev;
