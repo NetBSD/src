@@ -1,4 +1,4 @@
-/*	$NetBSD: dp83932.c,v 1.15 2007/06/02 06:41:34 tsutsui Exp $	*/
+/*	$NetBSD: dp83932.c,v 1.16 2007/06/02 10:48:24 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dp83932.c,v 1.15 2007/06/02 06:41:34 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dp83932.c,v 1.16 2007/06/02 10:48:24 tsutsui Exp $");
 
 #include "bpfilter.h"
 
@@ -868,9 +868,17 @@ void
 sonic_reset(struct sonic_softc *sc)
 {
 
-	CSR_WRITE(sc, SONIC_CR, 0);	/* ensure RST is clear */
+	/* stop TX, RX and timer, and ensure RST is clear */
+	CSR_WRITE(sc, SONIC_CR, CR_STP | CR_RXDIS | CR_HTX);
+	delay(1000);
+
 	CSR_WRITE(sc, SONIC_CR, CR_RST);
 	delay(1000);
+
+	/* clear all interrupts */
+	CSR_WRITE(sc, SONIC_IMR, 0);
+	CSR_WRITE(sc, SONIC_ISR, IMR_ALL);
+
 	CSR_WRITE(sc, SONIC_CR, 0);
 	delay(1000);
 }
