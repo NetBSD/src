@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.176 2007/05/12 21:07:02 dsl Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.177 2007/06/02 11:51:42 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.176 2007/05/12 21:07:02 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.177 2007/06/02 11:51:42 dsl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ptrace.h"
@@ -87,6 +87,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.176 2007/05/12 21:07:02 dsl Exp $")
 #include <sys/reboot.h>
 #include <sys/resource.h>
 #include <sys/resourcevar.h>
+#include <sys/select.h>
 #include <sys/signal.h>
 #include <sys/signalvar.h>
 #include <sys/socket.h>
@@ -914,17 +915,8 @@ linux_select1(l, retval, nfds, readfds, writefds, exceptfds, timeout)
 	fd_set *readfds, *writefds, *exceptfds;
 	struct timeval *timeout;
 {
-	struct sys_select_args bsa;
-	struct proc *p = l->l_proc;
-	struct timeval tv0, tv1, utv, *tvp;
-	void *sg;
+	struct timeval tv0, tv1, utv;
 	int error;
-
-	SCARG(&bsa, nd) = nfds;
-	SCARG(&bsa, in) = readfds;
-	SCARG(&bsa, ou) = writefds;
-	SCARG(&bsa, ex) = exceptfds;
-	SCARG(&bsa, tv) = timeout;
 
 	/*
 	 * Store current time for computation of the amount of
@@ -938,8 +930,6 @@ linux_select1(l, retval, nfds, readfds, writefds, exceptfds, timeout)
 			 * The timeval was invalid.  Convert it to something
 			 * valid that will act as it does under Linux.
 			 */
-			sg = stackgap_init(p, 0);
-			tvp = stackgap_alloc(p, &sg, sizeof(utv));
 			utv.tv_sec += utv.tv_usec / 1000000;
 			utv.tv_usec %= 1000000;
 			if (utv.tv_usec < 0) {
@@ -948,14 +938,13 @@ linux_select1(l, retval, nfds, readfds, writefds, exceptfds, timeout)
 			}
 			if (utv.tv_sec < 0)
 				timerclear(&utv);
-			if ((error = copyout(&utv, tvp, sizeof(utv))))
-				return error;
-			SCARG(&bsa, tv) = tvp;
 		}
 		microtime(&tv0);
 	}
 
-	error = sys_select(l, &bsa, retval);
+	error = selcommon(l, retval, nfds, readfds, writefds, exceptfds,
+	    &utv, NULL);
+
 	if (error) {
 		/*
 		 * See fs/select.c in the Linux kernel.  Without this,
