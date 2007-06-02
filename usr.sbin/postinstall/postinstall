@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.40 2007/04/11 07:16:28 kiyohara Exp $
+# $NetBSD: postinstall,v 1.41 2007/06/02 21:25:08 pavel Exp $
 #
 # Copyright (c) 2002-2006 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -93,12 +93,24 @@ mkdtemp()
 }
 
 # additem item description
-#	Add item to list of supported items to check/fix.
+#	Add item to list of supported items to check/fix,
+#	which are checked/fixed by default if no item is requested by user.
 #
 additem()
 {
 	[ $# -eq 2 ] || err 2 "USAGE: additem item description"
-	items="${items}${items:+ }$1"
+	defaultitems="${defaultitems}${defaultitems:+ }$1"
+	eval desc_$1=\"$2\"
+}
+
+# adddisableditem item description
+#	Add item to list of supported items to check/fix,
+#	but execute the item only if the user asks for it explicitely.
+#
+adddisableditem()
+{
+	[ $# -eq 2 ] || err 2 "USAGE: adddisableditem item description"
+	otheritems="${otheritems}${otheritems:+ }$1"
 	eval desc_$1=\"$2\"
 }
 
@@ -889,7 +901,7 @@ do_rc()
 #
 #	sendmail
 #
-additem sendmail "remove obsolete sendmail configuration files and scripts"
+adddisableditem sendmail "remove obsolete sendmail configuration files and scripts"
 do_sendmail()
 {
 	[ -n "$1" ] || err 2 "USAGE: do_sendmail  fix|check"
@@ -1148,7 +1160,7 @@ usage()
 Usage: ${PROGNAME} [-s srcdir] [-d destdir] [-m mach] [-a arch] op [item [...]]
 	Perform post-installation checks and/or fixes on a system's
 	configuration files.
-	If no items are provided, all checks or fixes are applied.
+	If no items are provided, a default set of checks or fixes is applied.
 
 	Options:
 	-s {srcdir|tgzfile|tempdir}
@@ -1180,13 +1192,21 @@ _USAGE_
 
 list()
 {
-	echo "Supported items:"
+	echo "Default set of items (to apply if no items are provided by user):"
 	echo "  Item          Description"
 	echo "  ----          -----------"
-	for i in ${items}; do
+	for i in ${defaultitems}; do
 		eval desc="\${desc_${i}}"
 		printf "  %-12s  %s\n" "${i}" "${desc}"
 	done
+	echo "Items disabled by default (must be requested explicitely):"
+	echo "  Item          Description"
+	echo "  ----          -----------"
+	for i in ${otheritems}; do
+		eval desc="\${desc_${i}}"
+		printf "  %-12s  %s\n" "${i}" "${desc}"
+	done
+
 }
 
 
@@ -1309,7 +1329,7 @@ main()
 
 	check|fix)
 		todo="$@"
-		: ${todo:=${items}}
+		: ${todo:=${defaultitems}}
 
 		# ensure that all supplied items are valid
 		#
