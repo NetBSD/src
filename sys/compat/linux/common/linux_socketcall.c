@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socketcall.c,v 1.33 2007/06/01 22:42:47 dsl Exp $	*/
+/*	$NetBSD: linux_socketcall.c,v 1.34 2007/06/02 13:16:19 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -37,9 +37,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socketcall.c,v 1.33 2007/06/01 22:42:47 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socketcall.c,v 1.34 2007/06/02 13:16:19 yamt Exp $");
 
+#if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
+#endif /* defined(_KERNEL_OPT) */
+
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
