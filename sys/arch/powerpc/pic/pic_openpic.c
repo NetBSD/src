@@ -1,4 +1,4 @@
-/*	$NetBSD: pic_openpic.c,v 1.1.2.7 2007/05/04 02:54:33 macallan Exp $ */
+/*	$NetBSD: pic_openpic.c,v 1.1.2.8 2007/06/03 06:49:44 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic_openpic.c,v 1.1.2.7 2007/05/04 02:54:33 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic_openpic.c,v 1.1.2.8 2007/06/03 06:49:44 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -50,25 +50,18 @@ static int  opic_get_irq(struct pic_ops *);
 static void opic_ack_irq(struct pic_ops *, int);
 static void opic_establish_irq(struct pic_ops*, int, int, int);
 
-struct openpic_ops {
-	struct pic_ops pic;
-	uint32_t enable_mask;
-};
-
 volatile unsigned char *openpic_base;
 
 struct pic_ops *
 setup_openpic(void *addr, int passthrough)
 {
-	struct openpic_ops *openpic;
 	struct pic_ops *pic;
 	int irq;
 	u_int x;
 
 	openpic_base = (void *)addr;
-	openpic = malloc(sizeof(struct openpic_ops), M_DEVBUF, M_NOWAIT);
-	KASSERT(openpic != NULL);
-	pic = &openpic->pic;
+	pic = malloc(sizeof(struct pic_ops), M_DEVBUF, M_NOWAIT);
+	KASSERT(pic != NULL);
 
 	x = openpic_read(OPENPIC_FEATURE);
 	aprint_normal("OpenPIC Version 1.%d: "
@@ -86,31 +79,29 @@ setup_openpic(void *addr, int passthrough)
 	strcpy(pic->pic_name, "openpic");
 	pic_add(pic);
 
-	/* disable all interrupts */
-	for (irq = 0; irq < pic->pic_numintrs; irq++)
-		openpic_write(OPENPIC_SRC_VECTOR(irq), OPENPIC_IMASK);
-
+	/*
+	 * the following sequence should make the same effects as openpic
+	 * controller reset by writing a one at the self-clearing
+	 * OPENPIC_CONFIG_RESET bit.  Please check the document of your
+	 * OpenPIC compliant interrupt controller and see whether #else
+	 * portion can work as described.
+	 */
+#if 1
 	openpic_set_priority(0, 15);
 
-	x = openpic_read(OPENPIC_CONFIG);
-	if (passthrough) {
-		x &= ~OPENPIC_CONFIG_8259_PASSTHRU_DISABLE;
-	} else {
-		x |= OPENPIC_CONFIG_8259_PASSTHRU_DISABLE;
-	}
-	openpic_write(OPENPIC_CONFIG, x);
-
 	for (irq = 0; irq < pic->pic_numintrs; irq++) {
-		x = irq;
-		x |= OPENPIC_IMASK;
-		x |= (irq == 0) ?
-		    OPENPIC_POLARITY_POSITIVE :	OPENPIC_POLARITY_NEGATIVE;
-		x |= OPENPIC_SENSE_LEVEL;
-		x |= 8 << OPENPIC_PRIORITY_SHIFT;
-		openpic_write(OPENPIC_SRC_VECTOR(irq), x);
+		/* make sure to keep disabled */
+		openpic_write(OPENPIC_SRC_VECTOR(irq), OPENPIC_IMASK);
 		/* send all interrupts to CPU 0 */
 		openpic_write(OPENPIC_IDEST(irq), 1 << 0);
 	}
+
+	x = openpic_read(OPENPIC_CONFIG);
+	if (passthrough)
+		x &= ~OPENPIC_CONFIG_8259_PASSTHRU_DISABLE;
+	else 
+		x |= OPENPIC_CONFIG_8259_PASSTHRU_DISABLE;
+	openpic_write(OPENPIC_CONFIG, x);
 
 	openpic_write(OPENPIC_SPURIOUS_VECTOR, 0xff);
 
@@ -121,9 +112,19 @@ setup_openpic(void *addr, int passthrough)
 		openpic_read_irq(0);
 		openpic_eoi(0);
 	}
-
-	for (irq = 0; irq < pic->pic_numintrs; irq++)
-		opic_disable_irq(pic, irq);
+#else
+	irq = 0;
+	openpic_write(OPENPIC_CONFIG, OPENPIC_CONFIG_RESET);
+	do {
+		x = openpic_read(OPENPIC_CONFIG);
+	} while (x & OPENPIC_CONFIG_RESET); /* S1C bit */
+	if (passthrough)
+		x &= ~OPENPIC_CONFIG_8259_PASSTHRU_DISABLE;
+	else 
+		x |= OPENPIC_CONFIG_8259_PASSTHRU_DISABLE;
+	openpic_write(OPENPIC_CONFIG, x);
+	openpic_set_priority(0, 0);
+#endif
 
 #ifdef MULTIPROCESSOR
 	x = openpic_read(OPENPIC_IPI_VECTOR(1));
@@ -134,6 +135,7 @@ setup_openpic(void *addr, int passthrough)
 
 	return pic;
 }
+
 static void
 opic_establish_irq(struct pic_ops *pic, int irq, int type, int pri)
 {
@@ -169,11 +171,7 @@ opic_enable_irq(struct pic_ops *pic, int irq, int type)
 	u_int x;
 
 	x = openpic_read(OPENPIC_SRC_VECTOR(irq));
-	x &= ~(OPENPIC_IMASK | OPENPIC_SENSE_LEVEL | OPENPIC_SENSE_EDGE);
-	if (type == IST_LEVEL)
-		x |= OPENPIC_SENSE_LEVEL;
-	else
-		x |= OPENPIC_SENSE_EDGE;
+	x &= ~OPENPIC_IMASK;
 	openpic_write(OPENPIC_SRC_VECTOR(irq), x);
 }
 
