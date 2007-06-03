@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.2 2007/05/30 21:14:38 tls Exp $	*/
+/*	$NetBSD: unistd.h,v 1.3 2007/06/03 17:41:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -53,9 +53,8 @@ __ssp_redirect(char *, getcwd, (char *__buf, size_t __len), (__buf, __len));
 
 __END_DECLS
 
-#define read(fd, buf, len)		__read_alias(fd, buf, len)
-#define readlink(path, buf, len)	__readlink_alias(path, buf, len)
-#define getcwd(buf, len)		__getcwd_alias(buf, len)
-
+#define read(fd, buf, len)		__ssp_alias_func(read, (fd, buf, len))
+#define readlink(path, buf, len)	__ssp_alias_func(readlink, (path, buf, len))
+#define getcwd(buf, len)		__ssp_alias_func(getcwd, (buf, len))
 #endif /* __SSP_FORTIFY_LEVEL > 0 */
 #endif /* _SSP_UNISTD_H_ */
