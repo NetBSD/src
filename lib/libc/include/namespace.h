@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.128 2007/05/10 11:52:28 he Exp $	*/
+/*	$NetBSD: namespace.h,v 1.129 2007/06/03 17:38:07 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -460,8 +460,10 @@
 #define randomid		_randomid
 #define randomid_new		_randomid_new
 #define randomid_delete		_randomid_delete
+#define read			_read
 #define readdir			_readdir
 #define readdir_r		_readdir_r
+#define readlink		_readlink
 #define realpath		_realpath
 #define regcomp			_regcomp
 #define regerror		_regerror
@@ -529,7 +531,9 @@
 #define sl_free			_sl_free
 #define sl_init			_sl_init
 #define sleep			_sleep
+#ifndef snprintf
 #define snprintf		_snprintf
+#endif
 #define snprintf_ss		_snprintf_ss
 #define sradixsort		_sradixsort
 #define srand48			_srand48
@@ -626,7 +630,9 @@
 #define uuid_is_nil		_uuid_is_nil
 #define valloc			_valloc
 #define vis			_vis
+#ifndef vsnprintf
 #define vsnprintf		_vsnprintf
+#endif
 #define vsnprintf_ss		_vsnprintf_ss
 #define vsyslog			_vsyslog
 #define vsyslog_r		_vsyslog_r
