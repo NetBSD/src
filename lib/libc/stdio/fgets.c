@@ -1,4 +1,4 @@
-/*	$NetBSD: fgets.c,v 1.20 2003/12/14 23:56:28 lukem Exp $	*/
+/*	$NetBSD: fgets.c,v 1.21 2007/06/03 17:39:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)fgets.c	8.2 (Berkeley) 12/22/93";
 #else
-__RCSID("$NetBSD: fgets.c,v 1.20 2003/12/14 23:56:28 lukem Exp $");
+__RCSID("$NetBSD: fgets.c,v 1.21 2007/06/03 17:39:26 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -46,6 +46,9 @@ __RCSID("$NetBSD: fgets.c,v 1.20 2003/12/14 23:56:28 lukem Exp $");
 #include <string.h>
 #include "reentrant.h"
 #include "local.h"
+#ifdef _FORTIFY_SOURCE
+#undef fgets
+#endif
 
 /*
  * Read at most n-1 characters from the given file.

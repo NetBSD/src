@@ -1,4 +1,4 @@
-/*	$NetBSD: gets.c,v 1.15 2003/08/07 16:43:27 agc Exp $	*/
+/*	$NetBSD: gets.c,v 1.16 2007/06/03 17:39:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)gets.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: gets.c,v 1.15 2003/08/07 16:43:27 agc Exp $");
+__RCSID("$NetBSD: gets.c,v 1.16 2007/06/03 17:39:26 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -46,6 +46,9 @@ __RCSID("$NetBSD: gets.c,v 1.15 2003/08/07 16:43:27 agc Exp $");
 #include <stdio.h>
 #include "reentrant.h"
 #include "local.h"
+#ifdef _FORTIFY_SOURCE
+#undef gets
+#endif
 
 __warn_references(gets, "warning: this program uses gets(), which is unsafe.")
 
