@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.173 2007/02/10 10:38:25 ad Exp $
+#	$NetBSD: Makefile.inc,v 1.174 2007/06/03 17:35:24 christos Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -81,7 +81,7 @@ ASM=	access.S acct.S \
 		posix_fadvise.S \
 		__posix_fchown.S __posix_lchown.S __posix_rename.S profil.S \
 	quotactl.S \
-	rasctl.S readlink.S reboot.S recvfrom.S recvmsg.S rename.S revoke.S \
+	rasctl.S reboot.S recvfrom.S recvmsg.S rename.S revoke.S \
 		rmdir.S \
 	sa_register.S sa_stacks.S sa_enable.S sa_setconcurrency.S sa_yield.S \
 		sa_preempt.S semconfig.S semget.S semop.S ____semctl13.S \
@@ -100,7 +100,7 @@ ASM=	access.S acct.S \
 WEAKASM= accept.S close.S connect.S execve.S \
 	fcntl.S fdatasync.S fsync.S fsync_range.S \
 	kill.S msgrcv.S msgsnd.S __msync13.S \
-	nanosleep.S open.S poll.S pollts.S pselect.S read.S readv.S \
+	nanosleep.S open.S poll.S pollts.S pselect.S read.S readlink.S readv.S \
 	sched_yield.S select.S __sigprocmask14.S __sigsuspend14.S sysarch.S \
 	wait4.S write.S writev.S
 
