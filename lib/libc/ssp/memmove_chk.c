@@ -1,4 +1,4 @@
-/*	$NetBSD: memmove_chk.c,v 1.2 2007/05/30 21:14:36 tls Exp $	*/
+/*	$NetBSD: memmove_chk.c,v 1.3 2007/06/03 17:34:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -36,12 +36,14 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: memmove_chk.c,v 1.2 2007/05/30 21:14:36 tls Exp $");
+__RCSID("$NetBSD: memmove_chk.c,v 1.3 2007/06/03 17:34:35 christos Exp $");
 
 /*LINTLIBRARY*/
 
 #include <ssp/ssp.h>
 #include <string.h>
+
+#undef memmove
 
 void *
 __memmove_chk(void *dst, void *src, size_t len,
