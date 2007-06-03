@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cdce.c,v 1.12.10.2 2007/06/01 03:18:03 itohy Exp $ */
+/*	$NetBSD: if_cdce.c,v 1.12.10.3 2007/06/03 13:14:31 itohy Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.12.10.2 2007/06/01 03:18:03 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.12.10.3 2007/06/03 13:14:31 itohy Exp $");
 #include "bpfilter.h"
 
 #include <sys/param.h>
@@ -109,9 +109,9 @@ Static void	 cdce_rxeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
 Static void	 cdce_txeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
 Static void	 cdce_start(struct ifnet *);
 Static int	 cdce_ioctl(struct ifnet *, u_long, caddr_t);
-Static void	 cdce_init(void *);
+Static int	 cdce_init(struct ifnet *);
 Static void	 cdce_watchdog(struct ifnet *);
-Static void	 cdce_stop(struct cdce_softc *);
+Static void	 cdce_stop(struct ifnet *, int);
 Static uint32_t	 cdce_crc32(struct mbuf *);
 
 Static const struct cdce_type cdce_devs[] = {
@@ -280,6 +280,8 @@ USB_ATTACH(cdce)
 	ifp->if_ioctl = cdce_ioctl;
 	ifp->if_start = cdce_start;
 	ifp->if_watchdog = cdce_watchdog;
+	ifp->if_init = cdce_init;
+	ifp->if_stop = cdce_stop;
 	strncpy(ifp->if_xname, USBDEVNAME(sc->cdce_dev), IFNAMSIZ);
 
 	IFQ_SET_READY(&ifp->if_snd);
@@ -310,7 +312,7 @@ USB_DETACH(cdce)
 	}
 
 	if (ifp->if_flags & IFF_RUNNING)
-		cdce_stop(sc);
+		cdce_stop(ifp, 1);
 
 	ether_ifdetach(ifp);
 
@@ -382,7 +384,7 @@ cdce_encap(struct cdce_softc *sc, struct mbuf *m, int idx)
 	    m->m_pkthdr.len, USBD_NO_COPY, 10000, cdce_txeof);
 	err = usbd_transfer(c->cdce_xfer);
 	if (err != USBD_IN_PROGRESS) {
-		cdce_stop(sc);
+		cdce_stop(GET_IFP(sc), 0);
 		return (EIO);
 	}
 
@@ -392,10 +394,10 @@ cdce_encap(struct cdce_softc *sc, struct mbuf *m, int idx)
 }
 
 Static void
-cdce_stop(struct cdce_softc *sc)
+cdce_stop(struct ifnet *ifp, int disable)
 {
+	struct cdce_softc	*sc = ifp->if_softc;
 	usbd_status	 err;
-	struct ifnet	*ifp = GET_IFP(sc);
 	int		 i;
 
 	ifp->if_timer = 0;
@@ -462,9 +464,7 @@ Static int
 cdce_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 {
 	struct cdce_softc	*sc = ifp->if_softc;
-	struct ifaddr		*ifa = (struct ifaddr *)data;
-	struct ifreq		*ifr = (struct ifreq *)data;
-	int			 s, error = 0;
+	int			 s, error;
 
 	if (sc->cdce_dying)
 		return (EIO);
@@ -472,42 +472,22 @@ cdce_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 	s = splnet();
 
 	switch(command) {
-	case SIOCSIFADDR:
-		ifp->if_flags |= IFF_UP;
-		cdce_init(sc);
-		switch (ifa->ifa_addr->sa_family) {
-#ifdef INET
-		case AF_INET:
-#if defined(__NetBSD__)
-			arp_ifinit(ifp, ifa);
-#else
-			arp_ifinit(&sc->arpcom, ifa);
+#if 0	/* no media support */
+	case SIOCGIFMEDIA:
+	case SIOCSIFMEDIA:
+		error = EINVAL;
+		break;
 #endif
-			break;
-#endif /* INET */
-		}
-		break;
-
-	case SIOCSIFMTU:
-		if (ifr->ifr_mtu > ETHERMTU)
-			error = EINVAL;
-		else
-			ifp->if_mtu = ifr->ifr_mtu;
-		break;
-
-	case SIOCSIFFLAGS:
-		if (ifp->if_flags & IFF_UP) {
-			if (!(ifp->if_flags & IFF_RUNNING))
-				cdce_init(sc);
-		} else {
-			if (ifp->if_flags & IFF_RUNNING)
-				cdce_stop(sc);
-		}
-		error = 0;
-		break;
 
 	default:
-		error = EINVAL;
+		error = ether_ioctl(ifp, command, data);
+		if (error == ENETRESET) {
+#if 0	/* XXX not yet */
+			if (ifp->if_flags & IFF_RUNNING)
+				cdce_setmulti(sc);
+#endif
+			error = 0;
+		}
 		break;
 	}
 
@@ -528,17 +508,16 @@ cdce_watchdog(struct ifnet *ifp)
 	printf("%s: watchdog timeout\n", USBDEVNAME(sc->cdce_dev));
 }
 
-Static void
-cdce_init(void *xsc)
+Static int
+cdce_init(struct ifnet *ifp)
 {
-	struct cdce_softc	*sc = xsc;
-	struct ifnet		*ifp = GET_IFP(sc);
+	struct cdce_softc	*sc = ifp->if_softc;
 	struct cdce_chain	*c;
 	usbd_status		 err;
 	int			 s, i;
 
 	if (ifp->if_flags & IFF_RUNNING)
-		return;
+		return (EIO);
 
 	s = splnet();
 
@@ -548,7 +527,7 @@ cdce_init(void *xsc)
 		printf("%s: open rx pipe failed: %s\n", USBDEVNAME(sc->cdce_dev),
 		    usbd_errstr(err));
 		splx(s);
-		return;
+		return (EIO);
 	}
 
 	err = usbd_open_pipe(sc->cdce_data_iface, sc->cdce_bulkout_no,
@@ -557,19 +536,19 @@ cdce_init(void *xsc)
 		printf("%s: open tx pipe failed: %s\n", USBDEVNAME(sc->cdce_dev),
 		    usbd_errstr(err));
 		splx(s);
-		return;
+		return (EIO);
 	}
 
 	if (cdce_tx_list_init(sc)) {
 		printf("%s: tx list init failed\n", USBDEVNAME(sc->cdce_dev));
 		splx(s);
-		return;
+		return (EIO);
 	}
 
 	if (cdce_rx_list_init(sc)) {
 		printf("%s: rx list init failed\n", USBDEVNAME(sc->cdce_dev));
 		splx(s);
-		return;
+		return (ENOMEM);
 	}
 
 	/* Maybe set multicast / broadcast here??? */
@@ -587,6 +566,8 @@ cdce_init(void *xsc)
 	ifp->if_flags &= ~IFF_OACTIVE;
 
 	splx(s);
+
+	return (0);
 }
 
 Static int
