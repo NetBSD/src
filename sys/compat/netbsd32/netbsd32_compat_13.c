@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_13.c,v 1.20 2007/06/03 11:09:35 dsl Exp $	*/
+/*	$NetBSD: netbsd32_compat_13.c,v 1.21 2007/06/03 14:59:46 dsl Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_13.c,v 1.20 2007/06/03 11:09:35 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_13.c,v 1.21 2007/06/03 14:59:46 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,43 +46,16 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_13.c,v 1.20 2007/06/03 11:09:35 dsl 
 #include <compat/sys/signal.h>
 #include <compat/sys/signalvar.h>
 
+#include <compat/common/compat_sigaltstack.h>
+
 int
 compat_13_netbsd32_sigaltstack13(l, v, retval)
 	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
-	struct compat_13_netbsd32_sigaltstack13_args /* {
-		syscallarg(const netbsd32_sigaltstack13p_t) nss;
-		syscallarg(netbsd32_sigaltstack13p_t) oss;
-	} */ *uap = v;
-	struct netbsd32_sigaltstack13 s32ss;
-	struct sigaltstack nbss, obss;
-	int error;
-
-	if (SCARG(uap, nss)) {
-		error = copyin(SCARG_P32(uap, nss), &s32ss, sizeof s32ss);
-		if (error)
-			return (error);
-		nss.ss_sp = s32ss.ss_sp;
-		nss.ss_size = s32ss.ss_size;
-		nss.ss_flags = s32ss.ss_flags;
-	}
-
-	error = sigaltstack1(l,
-	    SCARG(uap, nss) ? &nss : 0, SCARG(uap, oss) ? &oss : 0);
-	if (error)
-		return (error);
-
-	if (SCARG(uap, oss)) {
-		s32ss.ss_sp = oss.ss_sp;
-		s32ss.ss_size =onss.ss_size;
-		s32ss.ss_flags = oss.ss_flags;
-		error = copyout(&s32ss, SCARG_P32(uap, oss), sizeof(s32ss));
-		if (error)
-			return (error);
-	}
-	return (0);
+	struct compat_13_netbsd32_sigaltstack13_args *uap = v;
+	compat_sigaltstack(uap, netbsd32_sigaltstack13);
 }
 
 
