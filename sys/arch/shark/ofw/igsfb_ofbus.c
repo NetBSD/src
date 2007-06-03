@@ -1,4 +1,4 @@
-/*	$NetBSD: igsfb_ofbus.c,v 1.2 2007/01/25 02:20:23 macallan Exp $ */
+/*	$NetBSD: igsfb_ofbus.c,v 1.3 2007/06/03 01:31:31 uwe Exp $ */
 
 /*
  * Copyright (c) 2006 Michael Lorenz
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igsfb_ofbus.c,v 1.2 2007/01/25 02:20:23 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igsfb_ofbus.c,v 1.3 2007/06/03 01:31:31 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,7 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: igsfb_ofbus.c,v 1.2 2007/01/25 02:20:23 macallan Exp
 
 #include <dev/ic/igsfbreg.h>
 #include <dev/ic/igsfbvar.h>
-#include "igsfb_ofbusvar.h"
+#include <shark/ofw/igsfb_ofbusvar.h>
 
 static int	igsfb_ofbus_is_console(int);
 
