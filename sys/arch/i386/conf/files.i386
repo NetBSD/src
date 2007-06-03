@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.307 2007/05/30 17:16:55 christos Exp $
+#	$NetBSD: files.i386,v 1.308 2007/06/03 19:37:50 xtraeme Exp $
 #
 # new style config file for i386 architecture
 #
@@ -57,9 +57,6 @@ defflag opt_beep.h		BEEP_ONHALT
 defparam opt_beep.h		BEEP_ONHALT_COUNT=3
 defparam opt_beep.h		BEEP_ONHALT_PITCH=1500
 defparam opt_beep.h		BEEP_ONHALT_PERIOD=250
-
-# Enhanced SpeedStep
-defflag			ENHANCED_SPEEDSTEP
 
 # Multiboot support
 defflag opt_multiboot.h		MULTIBOOT
@@ -533,10 +530,6 @@ defflag opt_vesafb.h	VESAFB_PM
 device vesatext
 attach vesatext at vesabios
 file	arch/i386/bios/vesa_text.c	vesatext
-
-# Enhanced SpeedStep
-file	arch/i386/i386/est.c		enhanced_speedstep
-defflag	opt_est.h	EST_FREQ_USERWRITE
 
 # AMD PowerNow K7
 file   arch/i386/i386/powernow_k7.c	powernow_k7
