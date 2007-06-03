@@ -1,4 +1,4 @@
-/*	$NetBSD: strncat.c,v 1.10 2003/08/07 16:43:51 agc Exp $	*/
+/*	$NetBSD: strncat.c,v 1.11 2007/06/03 17:39:27 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,12 +37,16 @@
 #if 0
 static char sccsid[] = "@(#)strncat.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: strncat.c,v 1.10 2003/08/07 16:43:51 agc Exp $");
+__RCSID("$NetBSD: strncat.c,v 1.11 2007/06/03 17:39:27 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
 #include <string.h>
+
+#ifdef _FORTIFY_SOURCE
+#undef strncat
+#endif
 
 /*
  * Concatenate src on the end of dst.  At most strlen(dst)+n+1 bytes
