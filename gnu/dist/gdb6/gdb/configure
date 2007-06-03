@@ -16751,7 +16751,7 @@ else
 
 for gdb_arg1 in 'int' 'long'; do
  for gdb_arg2 in 'pid_t' 'int' 'long'; do
-  for gdb_arg3 in 'int *' 'caddr_t' 'int' 'long'; do
+  for gdb_arg3 in 'int *' 'caddr_t' 'int' 'long' 'void *'; do
    for gdb_arg4 in 'int' 'long'; do
      cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
