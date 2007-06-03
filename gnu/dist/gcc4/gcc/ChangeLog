@@ -1,3 +1,9 @@
+2007-06-03  Kaz Kojima  <kkojima@gcc.gnu.org>
+
+	PR target/32163
+	* config/sh/sh.md (symGOT_load): Don't schedule insns when
+	the symbol is generated with the stack protector.
+
 2007-01-09  Nicolas Pitre  <nico@cam.org>
 
 	PR target/30173
