@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.208.12.2 2007/05/31 23:15:17 itohy Exp $	*/
+/*	$NetBSD: uhci.c,v 1.208.12.3 2007/06/03 13:10:41 itohy Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.172 2006/10/19 01:15:58 iedowse Exp $	*/
 
 /*-
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.208.12.2 2007/05/31 23:15:17 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.208.12.3 2007/06/03 13:10:41 itohy Exp $");
 /* __FBSDID("$FreeBSD: src/sys/dev/usb/uhci.c,v 1.172 2006/10/19 01:15:58 iedowse Exp $"); */
 
 #include <sys/param.h>
@@ -2266,10 +2266,14 @@ uhci_alloc_std_chain(struct uhci_pipe *upipe, uhci_softc_t *sc, int len,
 			uhci_aux_dma_prepare(p, is_mbuf, rd);
 			p->td.td_buffer = htole32(p->aux_dma);
 
-			l -= segs[seg].ds_len - segoff;
-			seg++;
-			USB_KASSERT2(seg < USB_BUFFER_NSEGS(ub),
-			    ("uhci_alloc_std_chain: too few segments 2"));
+			/* skip handled segments */
+			l += segoff;
+			do {
+				l -= segs[seg].ds_len;
+				seg++;
+				USB_KASSERT2(seg < USB_BUFFER_NSEGS(ub),
+				    ("uhci_alloc_std_chain: too few segments 2"));
+			} while (l > segs[seg].ds_len);
 			segoff = 0;
 		} else {
 			p->td.td_buffer = htole32(segs[seg].ds_addr +
@@ -3143,9 +3147,9 @@ uhci_device_isoc_enter(usbd_xfer_handle xfer)
 
 			/* prepare aux DMA */
 			uhci_aux_dma_prepare(std, is_mbuf, isread);
-
 			std->td.td_buffer = htole32(std->aux_dma);
 
+			/* skip handled segments */
 			segoff += len;
 			while (segoff >= segs[seg].ds_len) {
 				USB_KASSERT2(seg < nsegs - 1 ||
