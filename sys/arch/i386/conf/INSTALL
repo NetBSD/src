@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.309 2007/05/29 21:37:08 christos Exp $
+#	$NetBSD: INSTALL,v 1.310 2007/06/03 03:39:53 dogcow Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -340,7 +340,6 @@ ahd*	at pci? dev ? function ?	# Adaptec 29320, 39320 (aic790x) SCSI
 bha*	at pci? dev ? function ?	# BusLogic 9xx SCSI
 dpt*	at pci? dev ? function ?	# DPT SmartCache/SmartRAID
 iha*	at pci? dev ? function ?	# Initio INIC-940/950 SCSI
-isp*	at pci? dev ? function ?	# Qlogic ISP [12]0x0 SCSI/FibreChannel
 mfi*	at pci? dev ? function ?	# LSI MegaRAID SAS
 mly*	at pci? dev ? function ?	# Mylex AcceleRAID and eXtremeRAID
 mpt*	at pci? dev ? function ?	# LSI Fusion SCSI/FC

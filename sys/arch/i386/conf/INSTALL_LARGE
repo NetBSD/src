@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_LARGE,v 1.5 2007/05/28 21:55:15 pavel Exp $
+#	$NetBSD: INSTALL_LARGE,v 1.6 2007/06/03 03:39:53 dogcow Exp $
 #
 #	INSTALL_LARGE -- INSTALL suitable for modern machines
 #
@@ -22,6 +22,7 @@ ahcisata* at jmide?
 ahcisata* 	at pci? dev ? function ?	# AHCI SATA controllers
 ixpide*		at pci? dev ? function ?	# ATI IXP IDE controllers
 svwsata* 	at pci? dev ? function ?	# ServerWorks SATA controllers
+isp*	at pci? dev ? function ?	# Qlogic ISP [12]0x0 SCSI/FibreChannel
 
 puc*	at pci? dev ? function ?	# PCI "universal" comm. cards
 com*	at puc? port ?			# 16x50s on "universal" comm boards
