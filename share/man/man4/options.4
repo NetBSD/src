@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.350 2007/05/08 06:10:27 manu Exp $
+.\"	$NetBSD: options.4,v 1.351 2007/06/03 19:35:26 xtraeme Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -30,7 +30,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd March 21, 2007
+.Dd June 3, 2007
 .Os
 .Dt OPTIONS 4
 .Sh NAME
@@ -2385,6 +2385,16 @@ on a Shark.
 .El
 .Ss amd64-specific Options
 .Bl -ohang
+.It Cd options ENHANCED_SPEEDSTEP
+Include support for the
+.Tn Enhanced SpeedStep Technology
+present in newer
+.Tn CPU Ns s .
+.It Cd options EST_FREQ_USERWRITE
+Allow any user to change the frequency of an
+.Tn Enhanced SpeedStep Technology
+capable
+.Tn CPU .
 .It Cd options INTEL_ONDEMAND_CLOCKMOD
 This enables the On Demand Clock Modulation by software
 on Intel
