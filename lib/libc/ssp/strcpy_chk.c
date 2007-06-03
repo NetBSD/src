@@ -1,4 +1,4 @@
-/*	$NetBSD: strcpy_chk.c,v 1.2 2007/05/30 21:14:36 tls Exp $	*/
+/*	$NetBSD: strcpy_chk.c,v 1.3 2007/06/03 17:34:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -36,12 +36,14 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: strcpy_chk.c,v 1.2 2007/05/30 21:14:36 tls Exp $");
+__RCSID("$NetBSD: strcpy_chk.c,v 1.3 2007/06/03 17:34:36 christos Exp $");
 
 /*LINTLIBRARY*/
 
 #include <ssp/ssp.h>
 #include <string.h>
+
+#undef memcpy
 
 char *
 __strcpy_chk(char * __restrict dst, const char * __restrict src, size_t slen)
