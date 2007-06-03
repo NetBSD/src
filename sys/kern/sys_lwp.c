@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_lwp.c,v 1.19 2007/05/17 14:51:41 yamt Exp $	*/
+/*	$NetBSD: sys_lwp.c,v 1.20 2007/06/03 09:50:12 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.19 2007/05/17 14:51:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.20 2007/06/03 09:50:12 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -428,24 +428,38 @@ sys__lwp_park(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys__lwp_park_args /* {
 		syscallarg(const struct timespec *)	ts;
-		syscallarg(ucontext_t *)		uc;
+		syscallarg(ucontext_t *)		ucp;
 		syscallarg(const void *)		hint;
 	} */ *uap = v;
-	const struct timespec *tsp;
-	struct timespec ts, tsx;
+	struct timespec ts;
+	int error;
+
+	if (SCARG(uap, ts) == NULL)
+		return do_sys_lwp_park(l, NULL, SCARG(uap, ucp),
+					SCARG(uap, hint));
+
+	if ((error = copyin(SCARG(uap, ts), &ts, sizeof(ts))) != 0)
+		return error;
+
+	return do_sys_lwp_park(l, &ts, SCARG(uap, ucp), SCARG(uap, hint));
+}
+
+int
+do_sys_lwp_park(struct lwp *l, struct timespec *ts, ucontext_t *uc,
+    const void *hint)
+{
+	struct timespec tsx;
 	struct timeval tv;
 	sleepq_t *sq;
 	wchan_t wchan;
 	int timo, error;
 
 	/* Fix up the given timeout value. */
-	if ((tsp = SCARG(uap, ts)) != NULL) {
-		if ((error = copyin(tsp, &ts, sizeof(ts))) != 0)
-			return error;
+	if (ts != NULL) {
 		getnanotime(&tsx);
-		timespecsub(&ts, &tsx, &ts);
-		tv.tv_sec = ts.tv_sec;
-		tv.tv_usec = ts.tv_nsec / 1000;
+		timespecsub(ts, &tsx, ts);
+		tv.tv_sec = ts->tv_sec;
+		tv.tv_usec = ts->tv_nsec / 1000;
 		if (tv.tv_sec < 0 || (tv.tv_sec == 0 && tv.tv_usec < 0))
 			return ETIMEDOUT;
 		if ((error = itimerfix(&tv)) != 0)
@@ -455,7 +469,7 @@ sys__lwp_park(struct lwp *l, void *v, register_t *retval)
 		timo = 0;
 
 	/* Find and lock the sleep queue. */
-	wchan = lwp_park_wchan(l->l_proc, SCARG(uap, hint));
+	wchan = lwp_park_wchan(l->l_proc, hint);
 	sq = sleeptab_lookup(&lwp_park_tab, wchan);
 
 	/*
