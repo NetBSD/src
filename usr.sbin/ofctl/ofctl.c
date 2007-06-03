@@ -1,4 +1,4 @@
-/*	$NetBSD: ofctl.c,v 1.3 2007/05/25 18:27:05 macallan Exp $	*/
+/*	$NetBSD: ofctl.c,v 1.4 2007/06/03 03:01:41 matt Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -46,6 +46,8 @@
 #include <sys/queue.h>
 #include <dev/ofw/openfirmio.h>
 
+#include <prop/proplib.h>
+
 static void oflist(int, const char *, int, void *, size_t);
 static void ofprop(int);
 static void ofgetprop(int, char *);
@@ -78,6 +80,7 @@ struct of_prop {
 struct of_node of_root;
 unsigned long of_node_count;
 unsigned long of_prop_count;
+prop_dictionary_t of_proplib;
 
 int OF_parent(int);
 int OF_child(int);
@@ -90,14 +93,19 @@ int OF_nextprop(int, char *, void *);
 struct of_prop *of_tree_getprop(int, char *);
 
 static void
-of_tree_mkprop(int fd, struct of_node *node, char *name)
+of_tree_mkprop(struct of_node *node, prop_dictionary_t propdict,
+    prop_dictionary_keysym_t key)
 {
-	struct ofiocdesc ofio;
 	struct of_prop *prop;
+	prop_data_t obj;
+	const char *name;
+
+	name = prop_dictionary_keysym_cstring_nocopy(key);
+	obj = prop_dictionary_get_keysym(propdict, key);
 
 	prop = malloc(sizeof(*prop) + strlen(name) + 1);
 	if (prop == NULL)
-		err(1, "malloc(%lu)", (unsigned long) sizeof(*prop));
+		err(1, "malloc(%zu)", sizeof(*prop) + strlen(name) + 1);
 
 	memset(prop, 0, sizeof(*prop));
 	prop->prop_name = (char *) (prop + 1);
@@ -114,47 +122,24 @@ of_tree_mkprop(int fd, struct of_node *node, char *name)
 
 	of_prop_count++;
 
-	ofio.of_nodeid = node->of_nodeid;
-	ofio.of_name = name;
-	ofio.of_namelen = prop->prop_namelen;
-	ofio.of_buf = NULL;
-	ofio.of_buflen = 32;
-
-   again:
-	if (ofio.of_buf != NULL)
-		free(ofio.of_buf);
-	ofio.of_buf = malloc(ofio.of_buflen);
-	if (ofio.of_buf == NULL)
-		err(1, "malloc(%lu)", (unsigned long) ofio.of_buflen);
-	if (ioctl(fd, OFIOCGET, &ofio) < 0) {
-		if (errno == ENOMEM) {
-			ofio.of_buflen *= 2;
-			goto again;
-		}
-		warn("OFIOCGET(%d, \"%s\")", fd, name);
-		prop->prop_data = NULL;
-		prop->prop_length = 0;
-		free(ofio.of_buf);
-		return;
-	}
-	prop->prop_data = (u_int8_t *)ofio.of_buf;
-	prop->prop_length = ofio.of_buflen;
+	prop->prop_length = prop_data_size(obj);
+	if (prop->prop_length)
+		prop->prop_data = prop_data_data(obj);
 }
 
 static struct of_node *
-of_tree_mknode(struct of_node *parent, int nodeid)
+of_tree_mknode(struct of_node *parent)
 {
 	struct of_node *newnode;
 	newnode = malloc(sizeof(*newnode));
 	if (newnode == NULL)
-		err(1, "malloc(%lu)", (unsigned long) sizeof(*newnode));
+		err(1, "malloc(%zu)", sizeof(*newnode));
 
 	of_node_count++;
 
 	memset(newnode, 0, sizeof(*newnode));
 	TAILQ_INIT(&newnode->of_children);
 	TAILQ_INIT(&newnode->of_properties);
-	newnode->of_nodeid = nodeid;
 	newnode->of_parent = parent;
 
 	TAILQ_INSERT_TAIL(&parent->of_children, newnode, of_sibling);
@@ -163,20 +148,102 @@ of_tree_mknode(struct of_node *parent, int nodeid)
 }
 
 static void
-of_tree_fill(int fd, struct of_node *node)
+of_tree_fill(prop_dictionary_t dict, struct of_node *node)
 {
-	int childid = node->of_nodeid;
+	prop_dictionary_t propdict;
+	prop_array_t propkeys;
+	prop_array_t children;
+	unsigned int i, count;
+
+	node->of_nodeid = prop_number_unsigned_integer_value(
+	    prop_dictionary_get(dict, "node"));
+
+	propdict = prop_dictionary_get(dict, "properties");
+	propkeys = prop_dictionary_all_keys(propdict);
+	count = prop_array_count(propkeys);
+
+	for (i = 0; i < count; i++)
+		of_tree_mkprop(node, propdict, prop_array_get(propkeys, i));
+
+	children = prop_dictionary_get(dict, "children");
+	if (children) {
+		count = prop_array_count(children);
+
+		for (i = 0; i < count; i++) {
+			of_tree_fill(
+			    prop_array_get(children, i),
+			    of_tree_mknode(node));
+		}
+	}
+}
+
+static void
+of_tree_init(prop_dictionary_t dict)
+{
+	/*
+	 * Initialize the root node of the OFW tree.
+	 */
+	TAILQ_INIT(&of_root.of_children);
+	TAILQ_INIT(&of_root.of_properties);
+
+	of_tree_fill(dict, &of_root);
+}
+
+static prop_object_t
+of_proplib_mkprop(int fd, int nodeid, char *name)
+{
+	struct ofiocdesc ofio;
+	prop_object_t obj;
+
+	ofio.of_nodeid = nodeid;
+	ofio.of_name = name;
+	ofio.of_namelen = strlen(name);
+	ofio.of_buf = NULL;
+	ofio.of_buflen = 32;
+
+   again:
+	if (ofio.of_buf != NULL)
+		free(ofio.of_buf);
+	ofio.of_buf = malloc(ofio.of_buflen);
+	if (ofio.of_buf == NULL)
+		err(1, "malloc(%zu)", ofio.of_buflen);
+	if (ioctl(fd, OFIOCGET, &ofio) < 0) {
+		if (errno == ENOMEM) {
+			ofio.of_buflen *= 2;
+			goto again;
+		}
+		warn("OFIOCGET(%d, \"%s\")", fd, name);
+		free(ofio.of_buf);
+		return NULL;
+	}
+	obj = prop_data_create_data(ofio.of_buf, ofio.of_buflen);
+	free(ofio.of_buf);
+	return obj;
+}
+
+static prop_dictionary_t
+of_proplib_tree_fill(int fd, int nodeid)
+{
+	int childid = nodeid;
 	struct ofiocdesc ofio;
 	char namebuf[33];
 	char newnamebuf[33];
+	prop_array_t children;
+	prop_dictionary_t dict, propdict;
+	prop_object_t obj;
 
-	ofio.of_nodeid = node->of_nodeid;
+	ofio.of_nodeid = nodeid;
 	ofio.of_name = namebuf;
 	ofio.of_namelen = 1;
 	ofio.of_buf = newnamebuf;
 
 	namebuf[0] = '\0';
 
+	dict = prop_dictionary_create();
+	prop_dictionary_set(dict, "node",
+	    prop_number_create_unsigned_integer(nodeid));
+
+	propdict = prop_dictionary_create();
 	for (;;) {
 		ofio.of_buflen = sizeof(newnamebuf);
 
@@ -192,36 +259,48 @@ of_tree_fill(int fd, struct of_node *node)
 			break;
 		newnamebuf[ofio.of_buflen] = '\0';
 		strcpy(namebuf, newnamebuf);
-		of_tree_mkprop(fd, node, namebuf);
+		obj = of_proplib_mkprop(fd, nodeid, namebuf);
+		if (obj)
+			prop_dictionary_set(propdict, namebuf, obj);
 	}
+	prop_dictionary_set(dict, "properties", propdict);
 
 	if (ioctl(fd, OFIOCGETCHILD, &childid) < 0)
 		err(1, "OFIOCGETCHILD(%d, %#x)", fd, childid);
 
+	children = NULL;
 	while (childid != 0) {
-		of_tree_fill(fd, of_tree_mknode(node, childid));
+		if (children == NULL)
+			children = prop_array_create();
+		prop_array_add(children, of_proplib_tree_fill(fd, childid));
 		if (ioctl(fd, OFIOCGETNEXT, &childid) < 0)
 			err(1, "OFIOCGETNEXT(%d, %#x)", fd, childid);
 	}
+	if (children != NULL) {
+		prop_array_make_immutable(children);
+		prop_dictionary_set(dict, "children", children);
+	}
 
+	return dict;
 }
 
-static void
-of_tree_init(int fd)
+static prop_dictionary_t
+of_proplib_init(const char *file)
 {
+	prop_dictionary_t dict;
 	int rootid = 0;
+	int fd;
+
+	fd = open(file, O_RDONLY);
+	if (fd < 0)
+		err(1, "%s", file);
 
 	if (ioctl(fd, OFIOCGETNEXT, &rootid) < 0)
 		err(1, "OFIOCGETNEXT(%d, %#x)", fd, rootid);
 
-	/*
-	 * Initialize the root node of the OFW tree.
-	 */
-	TAILQ_INIT(&of_root.of_children);
-	TAILQ_INIT(&of_root.of_properties);
-	of_root.of_nodeid = rootid;
-
-	of_tree_fill(fd, &of_root);
+	dict = of_proplib_tree_fill(fd, rootid);
+	close(fd);
+	return dict;
 }
 
 static struct of_node *
@@ -396,7 +475,6 @@ main(int argc, char **argv)
 	u_long of_buf[256];
 	char device_type[33];
 	int phandle;
-	int fd;
 	int errflag = 0;
 	int c;
 	int len;
@@ -405,26 +483,32 @@ main(int argc, char **argv)
 #else
 	const char *file = "/dev/openfirm";
 #endif
+	const char *propfilein = NULL;
+	const char *propfileout = NULL;
 
-	while ((c = getopt(argc, argv, "f:lp")) != EOF) {
+	while ((c = getopt(argc, argv, "f:lpr:w:")) != EOF) {
 		switch (c) {
 		case 'l': lflag++; break;
 		case 'p': pflag++; break;
 		case 'f': file = optarg; break;
+		case 'r': propfilein = optarg; break;
+		case 'w': propfileout = optarg; break;
 		default: errflag++; break;
 		}
 	}
 	if (errflag)
-#if 0
-		errx(1, "usage: ofctl [-lp] [-f file] [node...]\n");
-#else
-		errx(1, "usage: ofctl [-p] [-f file] [node...]\n");
-#endif
-	fd = open(file, O_RDONLY);
-	if (fd < 0)
-		err(1, "%s", file);
+		errx(1, "usage: ofctl [-pl] [-f file] [-r propfile] [-w propfile] [node...]\n");
 
-	of_tree_init(fd);
+	if (propfilein != NULL) {
+		of_proplib = prop_dictionary_internalize_from_file(propfilein);
+	} else {
+		of_proplib = of_proplib_init(file);
+	}
+
+	if (propfileout)
+		prop_dictionary_externalize_to_file(of_proplib, propfileout);
+
+	of_tree_init(of_proplib);
 	printf("[Caching %lu nodes and %lu properties]\n",
 		of_node_count, of_prop_count);
 
@@ -457,7 +541,6 @@ main(int argc, char **argv)
 		printf("%s: OF_finddevice not yet implemented\n", argv[optind]);
 #endif
 	}
-	close(fd);
 	exit(0);
 }
 
