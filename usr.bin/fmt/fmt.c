@@ -1,4 +1,4 @@
-/*	$NetBSD: fmt.c,v 1.26 2007/05/29 15:27:37 christos Exp $	*/
+/*	$NetBSD: fmt.c,v 1.27 2007/06/03 22:39:21 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)fmt.c	8.1 (Berkeley) 7/20/93";
 #endif
-__RCSID("$NetBSD: fmt.c,v 1.26 2007/05/29 15:27:37 christos Exp $");
+__RCSID("$NetBSD: fmt.c,v 1.27 2007/06/03 22:39:21 christos Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -139,10 +139,10 @@ main(int argc, char **argv)
 	/*
 	 * compatibility with old usage.
 	 */
-	if (compat && getnum(*argv, "goal", &goal_length, 0)) {
+	if (compat && argc > 0 && getnum(*argv, "goal", &goal_length, 0)) {
 		argv++;
 		argc--;
-		if (getnum(*argv, "max", &max_length, 0)) {
+		if (argc > 0 && getnum(*argv, "max", &max_length, 0)) {
 			argv++;
 			argc--;
 		}
