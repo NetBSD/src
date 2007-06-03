@@ -1,4 +1,4 @@
-/*	$NetBSD: vsprintf_chk.c,v 1.2 2007/05/30 21:14:37 tls Exp $	*/
+/*	$NetBSD: vsprintf_chk.c,v 1.3 2007/06/03 17:34:37 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: vsprintf_chk.c,v 1.2 2007/05/30 21:14:37 tls Exp $");
+__RCSID("$NetBSD: vsprintf_chk.c,v 1.3 2007/06/03 17:34:37 christos Exp $");
 
 /*LINTLIBRARY*/
 
@@ -44,6 +44,9 @@ __RCSID("$NetBSD: vsprintf_chk.c,v 1.2 2007/05/30 21:14:37 tls Exp $");
 #include <stdio.h>
 #include <limits.h>
 #include <stdarg.h>
+
+#undef vsprintf
+#undef vsnprintf
 
 /*ARGSUSED*/
 int
