@@ -1,7 +1,7 @@
-/*	$NetBSD: main.c,v 1.5 2005/12/22 00:26:23 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.5.6.1 2007/06/03 17:20:12 wrstuden Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,7 +17,9 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: main.c,v 1.119.2.3.2.22 2005/04/29 01:04:47 marka Exp */
+/* Id: main.c,v 1.136.18.17 2006/11/10 18:51:14 marka Exp */
+
+/*! \file */
 
 #include <config.h>
 
@@ -72,6 +74,13 @@
  * Include header files for database drivers here.
  */
 /* #include "xxdb.h" */
+
+/*
+ * Include DLZ drivers if appropriate.
+ */
+#ifdef DLZ
+#include <dlz/dlz_drivers.h>
+#endif
 
 static isc_boolean_t	want_stats = ISC_FALSE;
 static char		program_name[ISC_DIR_NAMEMAX] = "named";
@@ -228,7 +237,7 @@ lwresd_usage(void) {
 		"              [-f|-g] [-n number_of_cpus] [-p port] "
 		"[-P listen-port] [-s]\n"
 		"              [-t chrootdir] [-u username] [-i pidfile]\n"
-		"              [-m {usage|trace|record}]\n");
+		"              [-m {usage|trace|record|size|mctx}]\n");
 }
 
 static void
@@ -241,7 +250,7 @@ usage(void) {
 		"usage: named [-4|-6] [-c conffile] [-d debuglevel] "
 		"[-f|-g] [-n number_of_cpus]\n"
 		"             [-p port] [-s] [-t chrootdir] [-u username]\n"
-		"             [-m {usage|trace|record}]\n");
+		"             [-m {usage|trace|record|size|mctx}]\n");
 }
 
 static void
@@ -309,6 +318,8 @@ static struct flag_def {
 	{ "trace",  ISC_MEM_DEBUGTRACE },
 	{ "record", ISC_MEM_DEBUGRECORD },
 	{ "usage", ISC_MEM_DEBUGUSAGE },
+	{ "size", ISC_MEM_DEBUGSIZE },
+	{ "mctx", ISC_MEM_DEBUGCTX },
 	{ NULL, 0 }
 };
 
@@ -475,7 +486,7 @@ create_managers(void) {
 	result = isc_taskmgr_create(ns_g_mctx, ns_g_cpus, 0, &ns_g_taskmgr);
 	if (result != ISC_R_SUCCESS) {
 		UNEXPECTED_ERROR(__FILE__, __LINE__,
-				 "ns_taskmgr_create() failed: %s",
+				 "isc_taskmgr_create() failed: %s",
 				 isc_result_totext(result));
 		return (ISC_R_UNEXPECTED);
 	}
@@ -483,7 +494,7 @@ create_managers(void) {
 	result = isc_timermgr_create(ns_g_mctx, &ns_g_timermgr);
 	if (result != ISC_R_SUCCESS) {
 		UNEXPECTED_ERROR(__FILE__, __LINE__,
-				 "ns_timermgr_create() failed: %s",
+				 "isc_timermgr_create() failed: %s",
 				 isc_result_totext(result));
 		return (ISC_R_UNEXPECTED);
 	}
@@ -673,6 +684,16 @@ setup(void) {
 	 */
 	/* xxdb_init(); */
 
+#ifdef DLZ
+	/*
+	 * Registyer any DLZ drivers.
+	 */
+	result = dlz_drivers_init();
+	if (result != ISC_R_SUCCESS)
+		ns_main_earlyfatal("dlz_drivers_init() failed: %s",
+				   isc_result_totext(result));
+#endif
+
 	ns_server_create(ns_g_mctx, &ns_g_server);
 }
 
@@ -688,6 +709,15 @@ cleanup(void) {
 	 * Add calls to unregister sdb drivers here.
 	 */
 	/* xxdb_clear(); */
+
+#ifdef DLZ
+	/*
+	 * Unregister any DLZ drivers.
+	 */
+	dlz_drivers_clear();
+#endif
+
+	dns_name_destroy();
 
 	isc_log_write(ns_g_lctx, NS_LOGCATEGORY_GENERAL, NS_LOGMODULE_MAIN,
 		      ISC_LOG_NOTICE, "exiting");
@@ -858,7 +888,7 @@ main(int argc, char *argv[]) {
 		if (result == ISC_R_SUCCESS && instance != NULL) {
 			if (smf_disable_instance(instance, 0) != 0)
 				UNEXPECTED_ERROR(__FILE__, __LINE__,
-						 "smf_disable_instance() ",
+						 "smf_disable_instance() "
 						 "failed for %s : %s",
 						 instance,
 						 scf_strerror(scf_error()));
@@ -884,6 +914,7 @@ main(int argc, char *argv[]) {
 		}
 	}
 	isc_mem_destroy(&ns_g_mctx);
+	isc_mem_checkdestroyed(stderr);
 
 	ns_main_setmemstats(NULL);
 

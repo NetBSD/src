@@ -1,4 +1,4 @@
-/*	$NetBSD: gen_pr.c,v 1.1.1.3 2005/12/21 23:15:28 christos Exp $	*/
+/*	$NetBSD: gen_pr.c,v 1.1.1.3.6.1 2007/06/03 17:23:04 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -18,7 +18,7 @@
  */
 
 #if !defined(LINT) && !defined(CODECENTER)
-static const char rcsid[] = "Id: gen_pr.c,v 1.1.206.1 2004/03/09 08:33:35 marka Exp";
+static const char rcsid[] = "Id: gen_pr.c,v 1.2.18.1 2005/04/27 05:00:56 sra Exp";
 #endif
 
 /* Imports */
@@ -226,3 +226,5 @@ pr_res_set(struct irs_pr *this, struct __res_state *res,
 			(*pr->res_set)(pr, pvt->res, NULL);
 	}
 }
+
+/*! \file */

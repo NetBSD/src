@@ -1,4 +1,4 @@
-/*	$NetBSD: irp_ng.c,v 1.1.1.3 2005/12/21 23:15:32 christos Exp $	*/
+/*	$NetBSD: irp_ng.c,v 1.1.1.3.6.1 2007/06/03 17:23:09 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -18,7 +18,7 @@
  */
 
 #if !defined(LINT) && !defined(CODECENTER)
-static const char rcsid[] = "Id: irp_ng.c,v 1.1.206.1 2004/03/09 08:33:37 marka Exp";
+static const char rcsid[] = "Id: irp_ng.c,v 1.2.18.2 2006/12/07 04:53:02 marka Exp";
 #endif
 
 /* Imports */
@@ -64,13 +64,7 @@ static void		ng_minimize(struct irs_ng *);
 
 /* Public */
 
-
-
-/*
- * struct irs_ng * irs_irp_ng(struct irs_acc *this)
- *
- * Notes:
- *
+/*%
  *	Intialize the irp netgroup module.
  *
  */
@@ -157,15 +151,7 @@ ng_rewind(struct irs_ng *this, const char *group) {
 	return;
 }
 
-
-
-
 /*
- * int ng_next(struct irs_ng *this, const char **host, const char **user,
- *	       const char **domain)
- *
- * Notes:
- *
  *	Get the next netgroup item from the cache.
  *
  */
@@ -207,14 +193,7 @@ ng_next(struct irs_ng *this, const char **host, const char **user,
 	return (rval);
 }
 
-
-
 /*
- * int ng_test(struct irs_ng *this, const char *name, const char *host,
- *		const char *user, const char *domain)
- *
- * Notes:
- *
  *	Search for a match in a netgroup.
  *
  */
@@ -241,13 +220,13 @@ ng_test(struct irs_ng *this, const char *name,
 	}
 
 	if (irs_irp_send_command(pvt->girpdata, "innetgr %s", body) == 0) {
-		memput(body, bodylen);
-
 		code = irs_irp_read_response(pvt->girpdata, text, sizeof text);
 		if (code == IRPD_GETNETGR_MATCHES) {
 			rval = 1;
 		}
 	}
+
+	memput(body, bodylen);
 
 	return (rval);
 }
@@ -272,3 +251,5 @@ ng_minimize(struct irs_ng *this) {
 
 /* Private */
 
+
+/*! \file */

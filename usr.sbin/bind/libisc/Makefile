@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2005/01/10 03:01:18 lukem Exp $
+#	$NetBSD: Makefile,v 1.2.12.1 2007/06/03 17:26:14 wrstuden Exp $
 
 LIB=isc
 
@@ -23,11 +23,11 @@ PTHREAD_SRCS=	condition.c mutex.c thread.c
 
 SRCS=		assertions.c base64.c bitstring.c buffer.c \
 		bufferlist.c commandline.c error.c event.c \
-		hash.c heap.c hex.c hmacmd5.c lex.c lfsr.c \
+		hash.c heap.c hex.c hmacmd5.c hmacsha.c lex.c lfsr.c \
 		lib.c log.c md5.c mem.c mutexblock.c netaddr.c \
 		netscope.c ondestroy.c parseint.c quota.c random.c \
-		ratelimiter.c region.c result.c rwlock.c \
-		serial.c sha1.c sockaddr.c string.c strtoul.c symtab.c \
+		ratelimiter.c refcount.c region.c result.c rwlock.c \
+		serial.c sha1.c sha2.c sockaddr.c string.c strtoul.c symtab.c \
 		task.c taskpool.c timer.c version.c ${UNIX_SRCS} \
 		${NLS_SRCS} ${PTHREAD_SRCS}
 

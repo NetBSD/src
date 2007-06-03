@@ -1,7 +1,7 @@
-/*	$NetBSD: loc_29.h,v 1.1.1.3 2005/12/21 23:17:03 christos Exp $	*/
+/*	$NetBSD: loc_29.h,v 1.1.1.3.6.1 2007/06/03 17:24:14 wrstuden Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -20,9 +20,10 @@
 #ifndef GENERIC_LOC_29_H
 #define GENERIC_LOC_29_H 1
 
-/* Id: loc_29.h,v 1.14.206.1 2004/03/06 08:14:06 marka Exp */
+/* Id: loc_29.h,v 1.15.18.2 2005/04/29 00:16:34 marka Exp */
 
-/* RFC 1876 */
+/*!
+ * \brief Per RFC1876 */
 
 typedef struct dns_rdata_loc_0 {
 	isc_uint8_t	version;	/* must be first and zero */

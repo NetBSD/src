@@ -1,4 +1,4 @@
-/*	$NetBSD: rbt.c,v 1.4 2005/12/22 00:26:24 christos Exp $	*/
+/*	$NetBSD: rbt.c,v 1.4.6.1 2007/06/03 17:23:44 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,9 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: rbt.c,v 1.115.2.2.2.13 2005/06/18 01:03:24 marka Exp */
+/* Id: rbt.c,v 1.128.18.7 2005/10/13 01:26:06 marka Exp */
+
+/*! \file */
 
 /* Principal Authors: DCL */
 
@@ -26,10 +28,11 @@
 #include <isc/mem.h>
 #include <isc/platform.h>
 #include <isc/print.h>
+#include <isc/refcount.h>
 #include <isc/string.h>
 #include <isc/util.h>
 
-/*
+/*%
  * This define is so dns/name.h (included by dns/fixedname.h) uses more
  * efficient macro calls instead of functions for a few operations.
  */
@@ -54,7 +57,7 @@
 
 #ifdef RBT_MEM_TEST
 #undef RBT_HASH_SIZE
-#define RBT_HASH_SIZE 2	/* To give the reallocation code a workout. */
+#define RBT_HASH_SIZE 2	/*%< To give the reallocation code a workout. */
 #endif
 
 struct dns_rbt {
@@ -71,7 +74,7 @@ struct dns_rbt {
 #define RED 0
 #define BLACK 1
 
-/*
+/*%
  * Elements of the rbtnode structure.
  */
 #define PARENT(node)		((node)->parent)
@@ -89,16 +92,15 @@ struct dns_rbt {
 #define IS_ROOT(node)		ISC_TF((node)->is_root == 1)
 #define FINDCALLBACK(node)	ISC_TF((node)->find_callback == 1)
 
-/*
+/*%
  * Structure elements from the rbtdb.c, not
  * used as part of the rbt.c algorithms.
  */
 #define DIRTY(node)	((node)->dirty)
 #define WILD(node)	((node)->wild)
 #define LOCKNUM(node)	((node)->locknum)
-#define REFS(node)	((node)->references)
 
-/*
+/*%
  * The variable length stuff stored after the node.
  */
 #define NAME(node)	((unsigned char *)((node) + 1))
@@ -107,7 +109,7 @@ struct dns_rbt {
 #define NODE_SIZE(node)	(sizeof(*node) + \
 			 NAMELEN(node) + OFFSETLEN(node) + PADBYTES(node))
 
-/*
+/*%
  * Color management.
  */
 #define IS_RED(node)		((node) != NULL && (node)->color == RED)
@@ -115,7 +117,7 @@ struct dns_rbt {
 #define MAKE_RED(node)		((node)->color = RED)
 #define MAKE_BLACK(node)	((node)->color = BLACK)
 
-/*
+/*%
  * Chain management.
  *
  * The "ancestors" member of chains were removed, with their job now
@@ -125,7 +127,7 @@ struct dns_rbt {
 #define ADD_LEVEL(chain, node) \
 			(chain)->levels[(chain)->level_count++] = (node)
 
-/*
+/*%
  * The following macros directly access normally private name variables.
  * These macros are used to avoid a lot of function calls in the critical
  * path of the tree traversal code.
@@ -1312,6 +1314,7 @@ dns_rbt_deletenode(dns_rbt_t *rbt, dns_rbtnode_t *node, isc_boolean_t recurse)
 #if DNS_RBT_USEMAGIC
 	node->magic = 0;
 #endif
+	dns_rbtnode_refdestroy(node);
 	isc_mem_put(rbt->mctx, node, NODE_SIZE(node));
 	rbt->nodecount--;
 
@@ -1436,9 +1439,9 @@ create_node(isc_mem_t *mctx, dns_name_t *name, dns_rbtnode_t **nodep) {
 #endif
 
 	LOCKNUM(node) = 0;
-	REFS(node) = 0;
 	WILD(node) = 0;
 	DIRTY(node) = 0;
+	dns_rbtnode_refinit(node, 0);
 	node->find_callback = 0;
 
 	MAKE_BLACK(node);

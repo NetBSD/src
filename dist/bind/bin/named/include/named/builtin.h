@@ -1,7 +1,7 @@
-/*	$NetBSD: builtin.h,v 1.1.1.1 2004/05/17 23:43:24 christos Exp $	*/
+/*	$NetBSD: builtin.h,v 1.1.1.1.12.1 2007/06/03 17:20:16 wrstuden Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,10 +17,12 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: builtin.h,v 1.1.204.3 2004/03/08 04:04:20 marka Exp */
+/* Id: builtin.h,v 1.2.18.2 2005/04/29 00:15:34 marka Exp */
 
 #ifndef NAMED_BUILTIN_H
 #define NAMED_BUILTIN_H 1
+
+/*! \file */
 
 #include <isc/types.h>
 

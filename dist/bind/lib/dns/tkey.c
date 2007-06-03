@@ -1,4 +1,4 @@
-/*	$NetBSD: tkey.c,v 1.1.1.4 2005/12/21 23:16:39 christos Exp $	*/
+/*	$NetBSD: tkey.c,v 1.1.1.4.6.1 2007/06/03 17:23:48 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
@@ -18,9 +18,9 @@
  */
 
 /*
- * Id: tkey.c,v 1.71.2.1.10.7 2005/06/12 00:02:26 marka Exp
+ * Id: tkey.c,v 1.76.18.5 2005/11/30 03:44:39 marka Exp
  */
-
+/*! \file */
 #include <config.h>
 
 #include <isc/buffer.h>
@@ -443,15 +443,17 @@ process_gsstkey(dns_message_t *msg, dns_name_t *signer, dns_name_t *name,
 					   dstkey, ISC_TRUE, signer,
 					   tkeyin->inception, tkeyin->expire,
 					   msg->mctx, ring, NULL);
+#if 1
 	if (result != ISC_R_SUCCESS)
 		goto failure;
-
+#else
 	if (result == ISC_R_NOTFOUND) {
 		tkeyout->error = dns_tsigerror_badalg;
 		return (ISC_R_SUCCESS);
 	}
 	if (result != ISC_R_SUCCESS)
 		goto failure;
+#endif
 
 	/* This key is good for a long time */
 	isc_stdtime_get(&now);

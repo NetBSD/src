@@ -1,8 +1,8 @@
-/*	$NetBSD: strcasecmp.c,v 1.1.1.1 2004/05/17 23:44:40 christos Exp $	*/
+/*	$NetBSD: strcasecmp.c,v 1.1.1.1.12.1 2007/06/03 17:22:51 wrstuden Exp $	*/
 
 #if defined(LIBC_SCCS) && !defined(lint)
 static const char sccsid[] = "@(#)strcasecmp.c	8.1 (Berkeley) 6/4/93";
-static const char rcsid[] = "Id: strcasecmp.c,v 1.1 2001/03/29 06:30:35 marka Exp";
+static const char rcsid[] = "Id: strcasecmp.c,v 1.1.352.1 2005/04/27 05:00:45 sra Exp";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -52,7 +52,7 @@ static const char rcsid[] = "Id: strcasecmp.c,v 1.1 2001/03/29 06:30:35 marka Ex
 int __strcasecmp_unneeded__;
 #else
 
-/*
+/*%
  * This array is designed for mapping upper and lower case letter
  * together for a case independent comparison.  The mappings are
  * based upon ascii character sequences.
@@ -122,3 +122,5 @@ strncasecmp(const char *s1, const char *s2, size_t n) {
 }
 
 #endif /*NEED_STRCASECMP*/
+
+/*! \file */

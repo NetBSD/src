@@ -1,7 +1,7 @@
-/*	$NetBSD: lib.h,v 1.1.1.3 2005/12/21 23:17:26 christos Exp $	*/
+/*	$NetBSD: lib.h,v 1.1.1.3.6.1 2007/06/03 17:24:44 wrstuden Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,10 +17,12 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: lib.h,v 1.6.12.3 2004/03/08 09:04:51 marka Exp */
+/* Id: lib.h,v 1.8.18.2 2005/04/29 00:16:58 marka Exp */
 
 #ifndef ISC_LIB_H
 #define ISC_LIB_H 1
+
+/*! \file */
 
 #include <isc/types.h>
 #include <isc/lang.h>
@@ -31,8 +33,8 @@ LIBISC_EXTERNAL_DATA extern isc_msgcat_t *isc_msgcat;
 
 void
 isc_lib_initmsgcat(void);
-/*
- * Initialize the ISC library's message catalog, isc_msgcat, if it
+/*!<
+ * \brief Initialize the ISC library's message catalog, isc_msgcat, if it
  * has not already been initialized.
  */
 

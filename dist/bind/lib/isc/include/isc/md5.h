@@ -1,7 +1,7 @@
-/*	$NetBSD: md5.h,v 1.1.1.3 2005/12/21 23:17:27 christos Exp $	*/
+/*	$NetBSD: md5.h,v 1.1.1.3.6.1 2007/06/03 17:24:45 wrstuden Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,10 +17,11 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: md5.h,v 1.8.206.1 2004/03/06 08:14:43 marka Exp */
+/* Id: md5.h,v 1.9.18.4 2006/02/01 00:10:34 marka Exp */
 
-/*
- * This is the header file for the MD5 message-digest algorithm.
+/*! \file 
+ * \brief This is the header file for the MD5 message-digest algorithm.
+ *
  * The algorithm is due to Ron Rivest.  This code was
  * written by Colin Plumb in 1993, no copyright is claimed.
  * This code is in the public domain; do with it what you wish.
@@ -47,7 +48,7 @@
 #include <isc/lang.h>
 #include <isc/types.h>
 
-#define ISC_MD5_DIGESTLENGTH 16
+#define ISC_MD5_DIGESTLENGTH 16U
 
 typedef struct {
 	isc_uint32_t buf[4];

@@ -1,4 +1,4 @@
-/*	$NetBSD: nis.c,v 1.1.1.3 2005/12/21 23:15:35 christos Exp $	*/
+/*	$NetBSD: nis.c,v 1.1.1.3.6.1 2007/06/03 17:23:12 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -18,7 +18,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "Id: nis.c,v 1.1.206.1 2004/03/09 08:33:38 marka Exp";
+static const char rcsid[] = "Id: nis.c,v 1.2.18.1 2005/04/27 05:01:03 sra Exp";
 #endif
 
 /* Imports */
@@ -154,3 +154,5 @@ nis_close(struct irs_acc *this) {
 }
 
 #endif /*WANT_IRS_NIS*/
+
+/*! \file */

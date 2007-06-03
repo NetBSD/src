@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.c,v 1.1.1.3 2005/12/21 23:17:40 christos Exp $	*/
+/*	$NetBSD: mutex.c,v 1.1.1.3.6.1 2007/06/03 17:24:53 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
@@ -17,20 +17,25 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: mutex.c,v 1.6.26.5 2005/03/17 03:58:32 marka Exp */
+/* Id: mutex.c,v 1.8.18.4 2005/07/12 01:22:32 marka Exp */
+
+/*! \file */
 
 #include <config.h>
 
 #include <stdio.h>
 #include <time.h>
 #include <sys/time.h>
+#include <errno.h>
 
 #include <isc/mutex.h>
 #include <isc/util.h>
+#include <isc/strerror.h>
 
 #if ISC_MUTEX_PROFILE
 
-/* Operations on timevals; adapted from FreeBSD's sys/time.h */
+/*@{*/
+/*% Operations on timevals; adapted from FreeBSD's sys/time.h */
 #define timevalclear(tvp)      ((tvp)->tv_sec = (tvp)->tv_usec = 0)
 #define timevaladd(vvp, uvp)                                            \
         do {                                                            \
@@ -51,6 +56,8 @@
                 }                                                       \
         } while (0)
 
+/*@}*/
+
 #define ISC_MUTEX_MAX_LOCKERS 32
 
 typedef struct {
@@ -62,8 +69,8 @@ typedef struct {
 } isc_mutexlocker_t;
 
 struct isc_mutexstats {
-	const char *		file;	/* File mutex was created in. */
-	int 			line;	/* Line mutex was created on. */
+	const char *		file;	/*%< File mutex was created in. */
+	int 			line;	/*%< Line mutex was created on. */
 	unsigned		count;
 	struct timeval		lock_t;
 	struct timeval		locked_total;
@@ -80,10 +87,13 @@ static pthread_mutex_t statslock = PTHREAD_MUTEX_INITIALIZER;
 
 isc_result_t
 isc_mutex_init_profile(isc_mutex_t *mp, const char *file, int line) {
-	int i;
+	int i, err;
 
-	if (pthread_mutex_init(&mp->mutex, NULL) != 0)
-		return ISC_R_UNEXPECTED;
+	err = pthread_mutex_init(&mp->mutex, NULL);
+	if (err == ENOMEM)
+		return (ISC_R_NOMEMORY);
+	if (err != 0)
+		return (ISC_R_UNEXPECTED);
 
 	RUNTIME_CHECK(pthread_mutex_lock(&statslock) == 0);
 
@@ -118,7 +128,7 @@ isc_mutex_init_profile(isc_mutex_t *mp, const char *file, int line) {
 		timevalclear(&mp->stats->lockers[i].wait_total);
 	}
 
-	return ISC_R_SUCCESS;
+	return (ISC_R_SUCCESS);
 }
 
 isc_result_t
@@ -161,7 +171,7 @@ isc_mutex_lock_profile(isc_mutex_t *mp, const char *file, int line) {
 
 	mp->stats->cur_locker = locker;
 
-	return ISC_R_SUCCESS;
+	return (ISC_R_SUCCESS);
 }
 
 isc_result_t
@@ -221,17 +231,18 @@ isc_result_t
 isc_mutex_init_errcheck(isc_mutex_t *mp)
 {
 	pthread_mutexattr_t attr;
+	int err;
 
 	if (pthread_mutexattr_init(&attr) != 0)
-		return ISC_R_UNEXPECTED;
+		return (ISC_R_UNEXPECTED);
 
 	if (pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_ERRORCHECK) != 0)
-		return ISC_R_UNEXPECTED;
+		return (ISC_R_UNEXPECTED);
   
-	if (pthread_mutex_init(mp, &attr) != 0)
-		return ISC_R_UNEXPECTED;
-
-	return ISC_R_SUCCESS;
+	err = pthread_mutex_init(mp, &attr) != 0)
+	if (err == ENOMEM)
+		return (ISC_R_NOMEMORY);
+	return ((err == 0) ? ISC_R_SUCCESS : ISC_R_UNEXPECTED);
 }
 #endif
 
@@ -241,3 +252,21 @@ pthread_mutexattr_t isc__mutex_attrs = {
 	0				/* m_flags, which appears to be unused. */
 };
 #endif
+
+isc_result_t
+isc__mutex_init(isc_mutex_t *mp, const char *file, unsigned int line) {
+	char strbuf[ISC_STRERRORSIZE];
+	isc_result_t result = ISC_R_SUCCESS;
+	int err;
+
+	err = pthread_mutex_init(mp, ISC__MUTEX_ATTRS);
+	if (err == ENOMEM)
+		return (ISC_R_NOMEMORY);
+	if (err != 0) {
+		isc__strerror(errno, strbuf, sizeof(strbuf));
+		UNEXPECTED_ERROR(file, line, "isc_mutex_init() failed: %s",
+				 strbuf);
+		result = ISC_R_UNEXPECTED;
+	}
+	return (result);
+}

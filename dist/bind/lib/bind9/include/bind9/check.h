@@ -1,7 +1,7 @@
-/*	$NetBSD: check.h,v 1.1.1.1 2004/05/17 23:44:48 christos Exp $	*/
+/*	$NetBSD: check.h,v 1.1.1.1.12.1 2007/06/03 17:23:33 wrstuden Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,10 +17,12 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: check.h,v 1.1.200.4 2004/03/08 09:04:28 marka Exp */
+/* Id: check.h,v 1.2.18.4 2006/03/02 00:37:21 marka Exp */
 
 #ifndef BIND9_CHECK_H
 #define BIND9_CHECK_H 1
+
+/*! \file */
 
 #include <isc/lang.h>
 #include <isc/types.h>
@@ -30,25 +32,26 @@
 ISC_LANG_BEGINDECLS
 
 isc_result_t
-bind9_check_namedconf(cfg_obj_t *config, isc_log_t *logctx, isc_mem_t *mctx);
-/*
+bind9_check_namedconf(const cfg_obj_t *config, isc_log_t *logctx,
+		      isc_mem_t *mctx);
+/*%<
  * Check the syntactic validity of a configuration parse tree generated from
  * a named.conf file.
  *
  * Requires:
- *	config is a valid parse tree
+ *\li	config is a valid parse tree
  *
- *	logctx is a valid logging context.
+ *\li	logctx is a valid logging context.
  *
  * Returns:
- * 	ISC_R_SUCCESS
- * 	ISC_R_FAILURE
+ * \li	#ISC_R_SUCCESS
+ * \li	#ISC_R_FAILURE
  */
 
 isc_result_t
-bind9_check_key(cfg_obj_t *config, isc_log_t *logctx);
-/*
- * As above, but for a single 'key' statement.
+bind9_check_key(const cfg_obj_t *config, isc_log_t *logctx);
+/*%<
+ * Same as bind9_check_namedconf(), but for a single 'key' statement.
  */
 
 ISC_LANG_ENDDECLS

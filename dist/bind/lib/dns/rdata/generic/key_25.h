@@ -1,7 +1,7 @@
-/*	$NetBSD: key_25.h,v 1.1.1.3 2005/12/21 23:17:02 christos Exp $	*/
+/*	$NetBSD: key_25.h,v 1.1.1.3.6.1 2007/06/03 17:24:14 wrstuden Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -20,9 +20,10 @@
 #ifndef GENERIC_KEY_25_H
 #define GENERIC_KEY_25_H 1
 
-/* Id: key_25.h,v 1.14.206.1 2004/03/06 08:14:06 marka Exp */
+/* Id: key_25.h,v 1.15.18.2 2005/04/29 00:16:33 marka Exp */
 
-/* RFC 2535 */
+/*!
+ * \brief Per RFC2535 */
 
 typedef struct dns_rdata_key_t {
         dns_rdatacommon_t	common;

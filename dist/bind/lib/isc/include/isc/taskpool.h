@@ -1,7 +1,7 @@
-/*	$NetBSD: taskpool.h,v 1.1.1.3 2005/12/21 23:17:29 christos Exp $	*/
+/*	$NetBSD: taskpool.h,v 1.1.1.3.6.1 2007/06/03 17:24:50 wrstuden Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: taskpool.h,v 1.8.206.1 2004/03/06 08:14:49 marka Exp */
+/* Id: taskpool.h,v 1.9.18.2 2005/04/29 00:17:04 marka Exp */
 
 #ifndef ISC_TASKPOOL_H
 #define ISC_TASKPOOL_H 1
@@ -26,10 +26,8 @@
  ***** Module Info
  *****/
 
-/*
- * Task Pool
- *
- * A task pool is a mechanism for sharing a small number of tasks
+/*! \file
+ * \brief A task pool is a mechanism for sharing a small number of tasks
  * among a large number of objects such that each object is
  * assigned a unique task, but each task may be shared by several
  * objects.
@@ -64,44 +62,44 @@ isc_result_t
 isc_taskpool_create(isc_taskmgr_t *tmgr, isc_mem_t *mctx,
 		    unsigned int ntasks, unsigned int quantum,
 		    isc_taskpool_t **poolp);
-/*
+/*%<
  * Create a task pool of "ntasks" tasks, each with quantum
  * "quantum".
  *
  * Requires:
  *
- *	'tmgr' is a valid task manager.
+ *\li	'tmgr' is a valid task manager.
  *
- *	'mctx' is a valid memory context.
+ *\li	'mctx' is a valid memory context.
  *
- *	poolp != NULL && *poolp == NULL
+ *\li	poolp != NULL && *poolp == NULL
  *
  * Ensures:
  *
- *	On success, '*taskp' points to the new task pool.
+ *\li	On success, '*taskp' points to the new task pool.
  *
  * Returns:
  *
- *     	ISC_R_SUCCESS
- *	ISC_R_NOMEMORY
- *	ISC_R_UNEXPECTED
+ *\li	#ISC_R_SUCCESS
+ *\li	#ISC_R_NOMEMORY
+ *\li	#ISC_R_UNEXPECTED
  */
 
 void 
 isc_taskpool_gettask(isc_taskpool_t *pool, unsigned int hash,
 			  isc_task_t **targetp);
-/*
+/*%<
  * Attach to the task corresponding to the hash value "hash".
  */
 
 void
 isc_taskpool_destroy(isc_taskpool_t **poolp);
-/*
+/*%<
  * Destroy a task pool.  The tasks in the pool are detached but not
  * shut down.
  *
  * Requires:
- * 	'*poolp' is a valid task pool.
+ * \li	'*poolp' is a valid task pool.
  */
 
 ISC_LANG_ENDDECLS

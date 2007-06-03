@@ -13,7 +13,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: b8t.mk,v 1.8.206.1 2004/03/06 10:21:34 marka Exp
+# Id: b8t.mk,v 1.9 2004/03/05 04:58:36 marka Exp
 
 #
 # bind 8 multi-host make

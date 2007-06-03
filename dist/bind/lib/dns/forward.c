@@ -1,4 +1,4 @@
-/*	$NetBSD: forward.c,v 1.1.1.3 2005/12/21 23:16:09 christos Exp $	*/
+/*	$NetBSD: forward.c,v 1.1.1.3.6.1 2007/06/03 17:23:39 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,9 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: forward.c,v 1.5.206.3 2005/03/17 03:58:30 marka Exp */
+/* Id: forward.c,v 1.6.18.4 2005/07/12 01:22:20 marka Exp */
+
+/*! \file */
 
 #include <config.h>
 
@@ -64,13 +66,8 @@ dns_fwdtable_create(isc_mem_t *mctx, dns_fwdtable_t **fwdtablep) {
 		goto cleanup_fwdtable;
 
 	result = isc_rwlock_init(&fwdtable->rwlock, 0, 0);
-	if (result != ISC_R_SUCCESS) {
-		UNEXPECTED_ERROR(__FILE__, __LINE__,
-				 "isc_rwlock_init() failed: %s",
-				 isc_result_totext(result));
-		result = ISC_R_UNEXPECTED;
+	if (result != ISC_R_SUCCESS)
 		goto cleanup_rbt;
-	}
 
 	fwdtable->mctx = NULL;
 	isc_mem_attach(mctx, &fwdtable->mctx);

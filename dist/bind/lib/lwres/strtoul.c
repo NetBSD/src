@@ -1,4 +1,4 @@
-/*	$NetBSD: strtoul.c,v 1.1.1.1 2005/12/21 23:18:01 christos Exp $	*/
+/*	$NetBSD: strtoul.c,v 1.1.1.1.8.1 2007/06/03 17:25:21 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
@@ -55,7 +55,7 @@
 static char sccsid[] = "@(#)strtoul.c	8.1 (Berkeley) 6/4/93";
 #endif /* LIBC_SCCS and not lint */
 
-/* Id: strtoul.c,v 1.2.4.1 2005/06/08 02:08:31 marka Exp */
+/* Id: strtoul.c,v 1.2.2.1 2005/06/08 02:07:59 marka Exp */
 
 #include <config.h>
 

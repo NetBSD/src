@@ -1,7 +1,7 @@
-/*	$NetBSD: minfo_14.h,v 1.1.1.3 2005/12/21 23:17:04 christos Exp $	*/
+/*	$NetBSD: minfo_14.h,v 1.1.1.3.6.1 2007/06/03 17:24:16 wrstuden Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,10 +17,11 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
+/* */
 #ifndef GENERIC_MINFO_14_H
 #define GENERIC_MINFO_14_H 1
 
-/* Id: minfo_14.h,v 1.22.206.1 2004/03/06 08:14:08 marka Exp */
+/* Id: minfo_14.h,v 1.23.18.2 2005/04/29 00:16:35 marka Exp */
 
 typedef struct dns_rdata_minfo {
 	dns_rdatacommon_t	common;

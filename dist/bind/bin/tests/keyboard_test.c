@@ -1,7 +1,7 @@
-/*	$NetBSD: keyboard_test.c,v 1.1.1.3 2005/12/21 23:08:21 christos Exp $	*/
+/*	$NetBSD: keyboard_test.c,v 1.1.1.3.6.1 2007/06/03 17:20:31 wrstuden Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,8 +17,9 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: keyboard_test.c,v 1.8.206.1 2004/03/06 10:21:37 marka Exp */
+/* Id: keyboard_test.c,v 1.9.18.2 2005/04/29 00:15:46 marka Exp */
 
+/*! \file */
 #include <config.h>
 
 #include <stdio.h>

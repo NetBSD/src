@@ -15,7 +15,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: testsock.pl,v 1.13.206.1 2004/03/06 10:21:48 marka Exp
+# Id: testsock.pl,v 1.14 2004/03/05 04:59:13 marka Exp
 
 # Test whether the interfaces on 10.53.0.* are up.
 

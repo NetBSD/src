@@ -1,4 +1,4 @@
-/*	$NetBSD: null_10.c,v 1.1.1.3 2005/12/21 23:17:05 christos Exp $	*/
+/*	$NetBSD: null_10.c,v 1.1.1.3.6.1 2007/06/03 17:24:18 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: null_10.c,v 1.35.2.1.10.4 2004/03/08 09:04:41 marka Exp */
+/* Id: null_10.c,v 1.40 2004/03/05 05:10:16 marka Exp */
 
 /* Reviewed: Thu Mar 16 13:57:50 PST 2000 by explorer */
 

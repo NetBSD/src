@@ -1,7 +1,7 @@
-/*	$NetBSD: nslookup.c,v 1.1.1.4 2005/12/21 23:07:44 christos Exp $	*/
+/*	$NetBSD: nslookup.c,v 1.1.1.4.6.1 2007/06/03 17:20:01 wrstuden Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: nslookup.c,v 1.90.2.4.2.10 2005/07/12 05:47:42 marka Exp */
+/* Id: nslookup.c,v 1.101.18.12 2006/12/07 06:08:02 marka Exp */
 
 #include <config.h>
 
@@ -52,7 +52,8 @@ static isc_boolean_t short_form = ISC_TRUE,
 	comments = ISC_TRUE, section_question = ISC_TRUE,
 	section_answer = ISC_TRUE, section_authority = ISC_TRUE,
 	section_additional = ISC_TRUE, recurse = ISC_TRUE,
-	aaonly = ISC_FALSE;
+	aaonly = ISC_FALSE, nofail = ISC_TRUE;
+
 static isc_boolean_t in_use = ISC_FALSE;
 static char defclass[MXRD] = "IN";
 static char deftype[MXRD] = "A";
@@ -621,8 +622,10 @@ setoption(char *opt) {
 		tcpmode = ISC_FALSE;
  	} else if (strncasecmp(opt, "deb", 3) == 0) {
 		short_form = ISC_FALSE;
+		showsearch = ISC_TRUE;
 	} else if (strncasecmp(opt, "nodeb", 5) == 0) {
 		short_form = ISC_TRUE;
+		showsearch = ISC_FALSE;
  	} else if (strncasecmp(opt, "d2", 2) == 0) {
 		debugging = ISC_TRUE;
 	} else if (strncasecmp(opt, "nod2", 4) == 0) {
@@ -633,6 +636,10 @@ setoption(char *opt) {
 		usesearch = ISC_FALSE;
 	} else if (strncasecmp(opt, "sil", 3) == 0) {
 		/* deprecation_msg = ISC_FALSE; */
+	} else if (strncasecmp(opt, "fail", 3) == 0) {
+		nofail=ISC_FALSE;
+	} else if (strncasecmp(opt, "nofail", 3) == 0) {
+		nofail=ISC_TRUE;
 	} else {
 		printf("*** Invalid option: %s\n", opt);	
 	}
@@ -691,6 +698,8 @@ addlookup(char *opt) {
 	lookup->section_authority = section_authority;
 	lookup->section_additional = section_additional;
 	lookup->new_search = ISC_TRUE;
+	if (nofail)
+		lookup->servfail_stops = ISC_FALSE;
 	ISC_LIST_INIT(lookup->q);
 	ISC_LINK_INIT(lookup, link);
 	ISC_LIST_APPEND(lookup_list, lookup, link);
@@ -710,6 +719,7 @@ get_next_command(void) {
 	if (buf == NULL)
 		fatal("memory allocation failure");
 	fputs("> ", stderr);
+	fflush(stderr);
 	isc_app_block();
 	ptr = fgets(buf, COMMSIZE, stdin);
 	isc_app_unblock();
@@ -729,6 +739,7 @@ get_next_command(void) {
 		 (strcasecmp(ptr, "lserver") == 0)) {
 		isc_app_block();
 		set_nameserver(arg);
+		check_ra = ISC_FALSE;
 		isc_app_unblock();
 		show_settings(ISC_TRUE, ISC_TRUE);
 	} else if (strcasecmp(ptr, "exit") == 0) {
@@ -767,9 +778,10 @@ parse_args(int argc, char **argv) {
 				have_lookup = ISC_TRUE;
 				in_use = ISC_TRUE;
 				addlookup(argv[0]);
-			}
-			else
+			} else {
 				set_nameserver(argv[0]);
+				check_ra = ISC_FALSE;
+			}
 		}
 	}
 }
@@ -844,6 +856,8 @@ main(int argc, char **argv) {
 	ISC_LIST_INIT(lookup_list);
 	ISC_LIST_INIT(server_list);
 	ISC_LIST_INIT(search_list);
+
+	check_ra = ISC_TRUE;
 
 	result = isc_app_start();
 	check_result(result, "isc_app_start");

@@ -1,7 +1,7 @@
-/*	$NetBSD: keytable.c,v 1.1.1.3 2005/12/21 23:16:13 christos Exp $	*/
+/*	$NetBSD: keytable.c,v 1.1.1.3.6.1 2007/06/03 17:23:41 wrstuden Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,7 +17,9 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: keytable.c,v 1.26.12.3 2004/03/08 09:04:30 marka Exp */
+/* Id: keytable.c,v 1.28.18.4 2005/12/05 00:00:03 marka Exp */
+
+/*! \file */
 
 #include <config.h>
 
@@ -89,22 +91,12 @@ dns_keytable_create(isc_mem_t *mctx, dns_keytable_t **keytablep) {
 		goto cleanup_keytable;
 
 	result = isc_mutex_init(&keytable->lock);
-	if (result != ISC_R_SUCCESS) {
-		UNEXPECTED_ERROR(__FILE__, __LINE__,
-				 "isc_mutex_init() failed: %s",
-				 isc_result_totext(result));
-		result = ISC_R_UNEXPECTED;
+	if (result != ISC_R_SUCCESS)
 		goto cleanup_rbt;
-	}
 
 	result = isc_rwlock_init(&keytable->rwlock, 0, 0);
-	if (result != ISC_R_SUCCESS) {
-		UNEXPECTED_ERROR(__FILE__, __LINE__,
-				 "isc_rwlock_init() failed: %s",
-				 isc_result_totext(result));
-		result = ISC_R_UNEXPECTED;
+	if (result != ISC_R_SUCCESS)
 		goto cleanup_lock;
-	}
 
 	keytable->mctx = mctx;
 	keytable->active_nodes = 0;
@@ -246,6 +238,13 @@ dns_keytable_findkeynode(dns_keytable_t *keytable, dns_name_t *name,
 
 	RWLOCK(&keytable->rwlock, isc_rwlocktype_read);
 
+	/*
+	 * Note we don't want the DNS_R_PARTIALMATCH from dns_rbt_findname()
+	 * as that indicates that 'name' was not found.
+	 *
+	 * DNS_R_PARTIALMATCH indicates that the name was found but we
+	 * didn't get a match on algorithm and key id arguments.
+	 */
 	knode = NULL;
 	data = NULL;
 	result = dns_rbt_findname(keytable->table, name, 0, NULL, &data);
@@ -263,7 +262,7 @@ dns_keytable_findkeynode(dns_keytable_t *keytable, dns_name_t *name,
 			UNLOCK(&keytable->lock);
 			*keynodep = knode;
 		} else
-			result = ISC_R_NOTFOUND;
+			result = DNS_R_PARTIALMATCH;
 	} else if (result == DNS_R_PARTIALMATCH)
 		result = ISC_R_NOTFOUND;
 

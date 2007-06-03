@@ -15,7 +15,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: setup.sh,v 1.6.206.2 2004/03/10 01:05:54 marka Exp
+# Id: setup.sh,v 1.8 2004/03/10 01:06:05 marka Exp
 
 #
 # jnl and database files MUST be removed before we start

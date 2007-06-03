@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssectool.h,v 1.1.1.3 2005/12/21 23:07:50 christos Exp $	*/
+/*	$NetBSD: dnssectool.h,v 1.1.1.3.6.1 2007/06/03 17:20:06 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: dnssectool.h,v 1.15.12.3 2004/03/08 04:04:18 marka Exp */
+/* Id: dnssectool.h,v 1.18 2004/03/05 04:57:41 marka Exp */
 
 #ifndef DNSSECTOOL_H
 #define DNSSECTOOL_H 1

@@ -1,4 +1,4 @@
-/*	$NetBSD: lcl_nw.c,v 1.1.1.3 2005/12/21 23:15:34 christos Exp $	*/
+/*	$NetBSD: lcl_nw.c,v 1.1.1.3.6.1 2007/06/03 17:23:11 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -51,7 +51,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "Id: lcl_nw.c,v 1.1.206.2 2004/03/17 00:29:50 marka Exp";
+static const char rcsid[] = "Id: lcl_nw.c,v 1.3.18.1 2005/04/27 05:01:02 sra Exp";
 /* from getgrent.c 8.2 (Berkeley) 3/21/94"; */
 /* from BSDI Id: getgrent.c,v 2.8 1996/05/28 18:15:14 bostic Exp $	*/
 #endif /* LIBC_SCCS and not lint */
@@ -371,3 +371,5 @@ init(struct irs_nw *this) {
 		return (-1);
 	return (0);
 }
+
+/*! \file */

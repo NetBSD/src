@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.91 2006/11/23 13:24:28 martin Exp $
+# $NetBSD: HACKS,v 1.91.4.1 2007/06/03 17:25:50 wrstuden Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -303,6 +303,18 @@ descr
 	GCC 4.1 warns on pointer sign comparision/assignments and lots of
 	code does not conform.  For now we use -Wno-pointer-sign and
 	-fno-strict-aliasing.
+kcah
+
+hack	rbus resource allocation work around
+cdate	10 May 2007
+who	jnemeth
+file	src/sys/dev/pcmcia/aic_pcmcia.c : 1.35
+pr	26909 31245
+descr
+	On some cards, the card align field property value interferes
+	with the rbus resource allocation causing the card not to
+	configure properly.  Setting it to 0 fixes the problem but it
+	is not the proper solution.
 kcah
 
 port	vax

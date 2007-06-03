@@ -1,7 +1,7 @@
-/*	$NetBSD: sshfp_44.c,v 1.3 2005/12/22 00:26:24 christos Exp $	*/
+/*	$NetBSD: sshfp_44.c,v 1.3.6.1 2007/06/03 17:24:23 wrstuden Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2006  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,9 +17,9 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: sshfp_44.c,v 1.1.8.3 2004/03/06 08:14:13 marka Exp */
+/* Id: sshfp_44.c,v 1.3.18.1 2006/03/10 04:04:32 marka Exp */
 
-/* draft-ietf-secsh-dns-05.txt */
+/* RFC 4255 */
 
 #ifndef RDATA_GENERIC_SSHFP_44_C
 #define RDATA_GENERIC_SSHFP_44_C

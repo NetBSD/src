@@ -1,11 +1,11 @@
-/*	$NetBSD: tree.h,v 1.1.1.1 2004/05/17 23:44:41 christos Exp $	*/
+/*	$NetBSD: tree.h,v 1.1.1.1.12.1 2007/06/03 17:22:58 wrstuden Exp $	*/
 
 /* tree.h - declare structures used by tree library
  *
  * vix 22jan93 [revisited; uses RCS, ANSI, POSIX; has bug fixes]
  * vix 27jun86 [broken out of tree.c]
  *
- * Id: tree.h,v 1.1.2.1 2003/06/27 03:51:39 marka Exp
+ * Id: tree.h,v 1.2.164.1 2005/04/27 05:00:52 sra Exp
  */
 
 
@@ -21,7 +21,7 @@
 # endif
 #endif
 
-/*
+/*%
  * tree_t is our package-specific anonymous pointer.
  */
 #if defined(__STDC__) || defined(__GNUC__)
@@ -30,7 +30,7 @@ typedef	void *tree_t;
 typedef	char *tree_t;
 #endif
 
-/*
+/*%
  * Do not taint namespace
  */
 #define	tree_add	__tree_add
@@ -58,3 +58,4 @@ void	tree_mung	__P((tree **, void (*)()));
 
 
 #endif	/* _TREE_H_INCLUDED */
+/*! \file */

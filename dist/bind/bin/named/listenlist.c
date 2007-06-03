@@ -1,7 +1,7 @@
-/*	$NetBSD: listenlist.c,v 1.1.1.3 2005/12/21 23:07:55 christos Exp $	*/
+/*	$NetBSD: listenlist.c,v 1.1.1.3.6.1 2007/06/03 17:20:09 wrstuden Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,7 +17,9 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: listenlist.c,v 1.9.208.1 2004/03/06 10:21:18 marka Exp */
+/* Id: listenlist.c,v 1.10.18.2 2005/04/29 00:15:22 marka Exp */
+
+/*! \file */
 
 #include <config.h>
 

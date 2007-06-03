@@ -13,7 +13,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: setup.sh,v 1.3.206.1 2004/03/06 10:21:54 marka Exp
+# Id: setup.sh,v 1.4 2004/03/05 04:59:51 marka Exp
 
 rm -f ns2/example.bk
 rm -f ns3/example.bk

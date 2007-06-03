@@ -1,7 +1,7 @@
-/*	$NetBSD: strerror.h,v 1.1.1.3 2005/12/21 23:17:40 christos Exp $	*/
+/*	$NetBSD: strerror.h,v 1.1.1.3.6.1 2007/06/03 17:25:00 wrstuden Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,10 +17,12 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: strerror.h,v 1.2.12.3 2004/03/08 09:04:57 marka Exp */
+/* Id: strerror.h,v 1.4.18.2 2005/04/29 00:17:10 marka Exp */
 
 #ifndef ISC_STRERROR_H
 #define ISC_STRERROR_H
+
+/*! \file */
 
 #include <sys/types.h>
 
@@ -28,9 +30,10 @@
 
 ISC_LANG_BEGINDECLS
 
+/*% String Error Size */
 #define ISC_STRERRORSIZE 128
 
-/*
+/*%
  * Provide a thread safe wrapper to strerrror().
  *
  * Requires:

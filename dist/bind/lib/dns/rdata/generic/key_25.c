@@ -1,7 +1,7 @@
-/*	$NetBSD: key_25.c,v 1.1.1.3 2005/12/21 23:17:02 christos Exp $	*/
+/*	$NetBSD: key_25.c,v 1.1.1.3.6.1 2007/06/03 17:24:14 wrstuden Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,13 +17,13 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: key_25.c,v 1.41.12.7 2004/03/08 09:04:41 marka Exp */
+/* Id: key_25.c,v 1.47.18.2 2005/04/29 00:16:33 marka Exp */
 
 /*
  * Reviewed: Wed Mar 15 16:47:10 PST 2000 by halley.
  */
 
-/* RFC 2535 */
+/* RFC2535 */
 
 #ifndef RDATA_GENERIC_KEY_25_C
 #define RDATA_GENERIC_KEY_25_C

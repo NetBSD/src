@@ -1,6 +1,6 @@
 example.nil.		300	IN	SOA	ns1.example.nil. hostmaster.example.nil. 2 2000 2000 1814400 3600
+example.nil.		300	IN	NS	ns1.example.nil.
 example.nil.		300	IN	NS	ns2.example.nil.
-example.nil.		300	IN	NS	ns3.example.nil.
 *.example.nil.		300	IN	MX	10 mail.example.nil.
 a.example.nil.		300	IN	TXT	"foo foo foo"
 a.example.nil.		300	IN	PTR	foo.net.
@@ -21,12 +21,12 @@ dname02.example.nil.	3600	IN	DNAME	dname-target.example.nil.
 dname03.example.nil.	3600	IN	DNAME	.
 e.example.nil.		300	IN	MX	10 mail.example.nil.
 e.example.nil.		300	IN	TXT	"one"
-e.example.nil.		300	IN	TXT	"three"
 e.example.nil.		300	IN	TXT	"two"
+e.example.nil.		300	IN	TXT	"three"
 e.example.nil.		300	IN	A	73.80.65.49
 e.example.nil.		300	IN	A	73.80.65.50
-e.example.nil.		300	IN	A	73.80.65.52
 e.example.nil.		300	IN	A	73.80.65.51
+e.example.nil.		300	IN	A	73.80.65.52
 f.example.nil.		300	IN	A	73.80.65.52
 gpos01.example.nil.	3600	IN	GPOS	"-22.6882" "116.8652" "250.0"
 gpos02.example.nil.	3600	IN	GPOS	"" "" ""
@@ -55,8 +55,8 @@ naptr01.example.nil.	3600	IN	NAPTR	0 0 "" "" "" .
 naptr02.example.nil.	3600	IN	NAPTR	65535 65535 "blurgh" "blorf" "blegh" foo.
 ns1.example.nil.	300	IN	A	10.53.0.1
 ns2.example.nil.	300	IN	A	10.53.0.2
-nsap-ptr01.example.nil.	3600	IN	NSAP-PTR foo.
 nsap-ptr01.example.nil.	3600	IN	NSAP-PTR .
+nsap-ptr01.example.nil.	3600	IN	NSAP-PTR foo.
 nsap01.example.nil.	3600	IN	NSAP	0x47000580005a0000000001e133ffffff00016100
 nsap02.example.nil.	3600	IN	NSAP	0x47000580005a0000000001e133ffffff00016100
 nxt01.example.nil.	3600	IN	NXT	a.secure.example.nil. NS SOA MX SIG KEY LOC NXT
@@ -97,4 +97,3 @@ wks02.example.nil.	3600	IN	WKS	10.0.0.1 17 0 1 2 53
 wks03.example.nil.	3600	IN	WKS	10.0.0.2 6 65535
 x2501.example.nil.	3600	IN	X25	"123456789"
 example.nil.		300	IN	SOA	ns1.example.nil. hostmaster.example.nil. 2 2000 2000 1814400 3600
-

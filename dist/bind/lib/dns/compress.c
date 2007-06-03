@@ -1,7 +1,7 @@
-/*	$NetBSD: compress.c,v 1.1.1.3 2005/12/21 23:16:05 christos Exp $	*/
+/*	$NetBSD: compress.c,v 1.1.1.3.6.1 2007/06/03 17:23:36 wrstuden Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,7 +17,9 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: compress.c,v 1.50.206.2 2004/03/06 08:13:37 marka Exp */
+/* Id: compress.c,v 1.52.18.5 2006/03/02 00:37:21 marka Exp */
+
+/*! \file */
 
 #define DNS_NAME_USEINLINE 1
 
@@ -84,13 +86,31 @@ void
 dns_compress_setmethods(dns_compress_t *cctx, unsigned int allowed) {
 	REQUIRE(VALID_CCTX(cctx));
 
-	cctx->allowed = allowed;
+	cctx->allowed &= ~DNS_COMPRESS_ALL;
+	cctx->allowed |= (allowed & DNS_COMPRESS_ALL);
 }
 
 unsigned int
 dns_compress_getmethods(dns_compress_t *cctx) {
 	REQUIRE(VALID_CCTX(cctx));
-	return (cctx->allowed);
+	return (cctx->allowed & DNS_COMPRESS_ALL);
+}
+
+void
+dns_compress_setsensitive(dns_compress_t *cctx, isc_boolean_t sensitive) {
+	REQUIRE(VALID_CCTX(cctx));
+
+	if (sensitive)
+		cctx->allowed |= DNS_COMPRESS_CASESENSITIVE;
+	else
+		cctx->allowed &= ~DNS_COMPRESS_CASESENSITIVE;
+}
+
+isc_boolean_t
+dns_compress_getsensitive(dns_compress_t *cctx) {
+	REQUIRE(VALID_CCTX(cctx));
+
+	return (ISC_TF((cctx->allowed & DNS_COMPRESS_CASESENSITIVE) != 0));
 }
 
 int
@@ -113,7 +133,7 @@ do { \
  * If no match is found return ISC_FALSE.
  */
 isc_boolean_t
-dns_compress_findglobal(dns_compress_t *cctx, dns_name_t *name,
+dns_compress_findglobal(dns_compress_t *cctx, const dns_name_t *name,
 			dns_name_t *prefix, isc_uint16_t *offset)
 {
 	dns_name_t tname, nname;
@@ -140,8 +160,13 @@ dns_compress_findglobal(dns_compress_t *cctx, dns_name_t *name,
 		for (node = cctx->table[hash]; node != NULL; node = node->next)
 		{
 			NODENAME(node, &nname);
-			if (dns_name_equal(&nname, &tname))
-				break;
+			if ((cctx->allowed & DNS_COMPRESS_CASESENSITIVE) != 0) {
+				if (dns_name_caseequal(&nname, &tname))
+					break;
+			} else {
+				if (dns_name_equal(&nname, &tname))
+					break;
+			}
 		}
 		if (node != NULL)
 			break;
@@ -163,15 +188,15 @@ dns_compress_findglobal(dns_compress_t *cctx, dns_name_t *name,
 }
 
 static inline unsigned int
-name_length(dns_name_t *name) {
+name_length(const dns_name_t *name) {
 	isc_region_t r;
 	dns_name_toregion(name, &r);
 	return (r.length);
 }
 
 void
-dns_compress_add(dns_compress_t *cctx, dns_name_t *name, dns_name_t *prefix,
-		 isc_uint16_t offset)
+dns_compress_add(dns_compress_t *cctx, const dns_name_t *name,
+		 const dns_name_t *prefix, isc_uint16_t offset)
 {
 	dns_name_t tname;
 	unsigned int start;

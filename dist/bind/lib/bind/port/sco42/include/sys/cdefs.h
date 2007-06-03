@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.1.1.4 2005/12/21 23:15:53 christos Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.1.1.4.6.1 2007/06/03 17:23:27 wrstuden Exp $	*/
 
 /*
  * ++Copyright++ 1991, 1993
@@ -57,7 +57,7 @@
 
 /*
  *	@(#)cdefs.h	8.1 (Berkeley) 6/2/93
- *	Id: cdefs.h,v 1.1.206.1 2004/07/19 05:53:50 marka Exp
+ *	Id: cdefs.h,v 1.1.352.1 2004/07/19 05:55:42 marka Exp
  */
 
 #ifndef	_CDEFS_H_

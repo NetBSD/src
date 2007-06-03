@@ -1,7 +1,7 @@
-/*	$NetBSD: region.h,v 1.1.1.3 2005/12/21 23:17:28 christos Exp $	*/
+/*	$NetBSD: region.h,v 1.1.1.3.6.1 2007/06/03 17:24:47 wrstuden Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,10 +17,12 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: region.h,v 1.16.12.3 2004/03/08 09:04:53 marka Exp */
+/* Id: region.h,v 1.19.18.2 2005/04/29 00:17:01 marka Exp */
 
 #ifndef ISC_REGION_H
 #define ISC_REGION_H 1
+
+/*! \file */
 
 #include <isc/types.h>
 
@@ -47,7 +49,8 @@ struct isc_consttextregion {
 	unsigned int	length;
 };
 
-/*
+/*@{*/
+/*!
  * The region structure is not opaque, and is usually directly manipulated.
  * Some macros are defined below for convenience.
  */
@@ -78,20 +81,21 @@ struct isc_consttextregion {
 		_r->base += _l; \
 		_r->length -= _l; \
 	} while (0)
+/*@}*/
 
 int
 isc_region_compare(isc_region_t *r1, isc_region_t *r2);
-/*
+/*%<
  * Compares the contents of two regions 
  *
  * Requires: 
- *	'r1' is a valid region
- *	'r2' is a valid region
+ *\li	'r1' is a valid region
+ *\li	'r2' is a valid region
  *
  * Returns:
- *	 < 0 if r1 is lexicographically less than r2
- *	 = 0 if r1 is lexicographically identical to r2
- *	 > 0 if r1 is lexicographically greater than r2
+ *\li	 < 0 if r1 is lexicographically less than r2
+ *\li	 = 0 if r1 is lexicographically identical to r2
+ *\li	 > 0 if r1 is lexicographically greater than r2
  */
 
 #endif /* ISC_REGION_H */

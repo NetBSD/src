@@ -1,7 +1,7 @@
-/*	$NetBSD: errno2result.c,v 1.1.1.3 2005/12/21 23:17:31 christos Exp $	*/
+/*	$NetBSD: errno2result.c,v 1.1.1.3.6.1 2007/06/03 17:24:55 wrstuden Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,7 +17,9 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: errno2result.c,v 1.8.2.4.8.1 2004/03/06 08:14:59 marka Exp */
+/* Id: errno2result.c,v 1.13.18.2 2005/04/29 00:17:07 marka Exp */
+
+/*! \file */
 
 #include <config.h>
 
@@ -27,7 +29,7 @@
 
 #include "errno2result.h"
 
-/*
+/*%
  * Convert a POSIX errno value into an isc_result_t.  The
  * list of supported errno values is not complete; new users
  * of this function should add any expected errors that are

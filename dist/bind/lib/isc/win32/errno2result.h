@@ -1,4 +1,4 @@
-/*	$NetBSD: errno2result.h,v 1.1.1.3 2005/12/21 23:17:41 christos Exp $	*/
+/*	$NetBSD: errno2result.h,v 1.1.1.3.6.1 2007/06/03 17:25:01 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: errno2result.h,v 1.4.12.5 2005/06/09 23:54:32 marka Exp */
+/* Id: errno2result.h,v 1.6.18.2 2005/06/09 23:55:10 marka Exp */
 
 #ifndef UNIX_ERRNO2RESULT_H
 #define UNIX_ERRNO2RESULT_H 1

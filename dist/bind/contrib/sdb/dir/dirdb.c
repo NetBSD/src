@@ -1,4 +1,4 @@
-/*	$NetBSD: dirdb.c,v 1.1.1.3 2005/12/21 23:10:58 christos Exp $	*/
+/*	$NetBSD: dirdb.c,v 1.1.1.3.6.1 2007/06/03 17:22:09 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: dirdb.c,v 1.9.4.2.8.2 2004/03/08 09:04:22 marka Exp */
+/* Id: dirdb.c,v 1.10 2004/03/05 05:04:30 marka Exp */
 
 /*
  * A simple database driver that returns basic information about

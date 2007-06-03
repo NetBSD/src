@@ -1,7 +1,7 @@
-/*	$NetBSD: net.h,v 1.1.1.3 2005/12/21 23:18:12 christos Exp $	*/
+/*	$NetBSD: net.h,v 1.1.1.3.6.1 2007/06/03 17:25:34 wrstuden Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: net.h,v 1.3.12.3 2004/03/08 09:05:12 marka Exp */
+/* Id: net.h,v 1.5.18.2 2005/04/29 00:17:23 marka Exp */
 
 #ifndef LWRES_NET_H
 #define LWRES_NET_H 1
@@ -26,17 +26,15 @@
  ***** Module Info
  *****/
 
-/*
- * Basic Networking Types
- *
+/*! \file net.h
  * This module is responsible for defining the following basic networking
  * types:
  *
- *		struct in_addr
- *		struct in6_addr
- *		struct sockaddr
- *		struct sockaddr_in
- *		struct sockaddr_in6
+ *\li		struct in_addr
+ *\li		struct in6_addr
+ *\li		struct sockaddr
+ *\li		struct sockaddr_in
+ *\li		struct sockaddr_in6
  *
  * It ensures that the AF_ and PF_ macros are defined.
  *
@@ -44,7 +42,7 @@
  *
  * It declares lwres_net_aton(), lwres_net_ntop(), and lwres_net_pton().
  *
- * It ensures that INADDR_LOOPBACK, INADDR_ANY and IN6ADDR_ANY_INIT
+ * It ensures that #INADDR_LOOPBACK, #INADDR_ANY and #IN6ADDR_ANY_INIT
  * are defined.
  */
 
@@ -81,7 +79,7 @@
 #define in6_addr in_addr6	/* Required for pre RFC2133 implementations. */
 #endif
 
-/*
+/*!
  * Required for some pre RFC2133 implementations.
  * IN6ADDR_ANY_INIT and IN6ADDR_LOOPBACK_INIT were added in
  * draft-ietf-ipngwg-bsd-api-04.txt or draft-ietf-ipngwg-bsd-api-05.txt.  
@@ -96,6 +94,9 @@
 #endif
 #endif
 
+/*!
+ * Initialize address loopback.  See IN6ADDR_ANY_INIT
+ */
 #ifndef IN6ADDR_LOOPBACK_INIT
 #ifdef s6_addr
 #define IN6ADDR_LOOPBACK_INIT { { { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1 } } }
@@ -104,14 +105,18 @@
 #endif
 #endif
 
+/*% Used by AI_ALL */
 #ifndef AF_INET6
 #define AF_INET6 99
 #endif
 
+
+/*% Used to return IPV6 address types. */
 #ifndef PF_INET6
 #define PF_INET6 AF_INET6
 #endif
 
+/*% inaddr Loopback */
 #ifndef INADDR_LOOPBACK
 #define INADDR_LOOPBACK 0x7f000001UL
 #endif

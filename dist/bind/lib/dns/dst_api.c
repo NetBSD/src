@@ -1,7 +1,7 @@
-/*	$NetBSD: dst_api.c,v 1.1.1.1 2005/12/21 23:16:09 christos Exp $	*/
+/*	$NetBSD: dst_api.c,v 1.1.1.1.8.1 2007/06/03 17:23:38 wrstuden Exp $	*/
 
 /*
- * Portions Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 1999-2003  Internet Software Consortium.
  * Portions Copyright (C) 1995-2000 by Network Associates, Inc.
  *
@@ -20,8 +20,10 @@
 
 /*
  * Principal Author: Brian Wellington
- * Id: dst_api.c,v 1.1.4.1 2004/12/09 04:07:16 marka Exp
+ * Id: dst_api.c,v 1.1.6.7 2006/01/27 23:57:44 marka Exp
  */
+
+/*! \file */
 
 #include <config.h>
 
@@ -31,6 +33,7 @@
 #include <isc/dir.h>
 #include <isc/entropy.h>
 #include <isc/fsaccess.h>
+#include <isc/hmacsha.h>
 #include <isc/lex.h>
 #include <isc/mem.h>
 #include <isc/once.h>
@@ -71,10 +74,6 @@ static dst_key_t *	get_key_struct(dns_name_t *name,
 				       unsigned int bits,
 				       dns_rdataclass_t rdclass,
 				       isc_mem_t *mctx);
-static isc_result_t	read_public_key(const char *filename,
-					int type,
-					isc_mem_t *mctx,
-					dst_key_t **keyp);
 static isc_result_t	write_public_key(const dst_key_t *key, int type,
 					 const char *directory);
 static isc_result_t	buildfilename(dns_name_t *name,
@@ -113,6 +112,20 @@ static isc_result_t	addsuffix(char *filename, unsigned int len,
 			return (_r);		\
 	} while (0);				\
 
+static void *
+default_memalloc(void *arg, size_t size) {
+        UNUSED(arg);
+        if (size == 0U)
+                size = 1;
+        return (malloc(size));
+}
+
+static void
+default_memfree(void *arg, void *ptr) {
+        UNUSED(arg);
+        free(ptr);
+}
+
 isc_result_t
 dst_lib_init(isc_mem_t *mctx, isc_entropy_t *ectx, unsigned int eflags) {
 	isc_result_t result;
@@ -128,9 +141,12 @@ dst_lib_init(isc_mem_t *mctx, isc_entropy_t *ectx, unsigned int eflags) {
 	 * When using --with-openssl, there seems to be no good way of not
 	 * leaking memory due to the openssl error handling mechanism.
 	 * Avoid assertions by using a local memory context and not checking
-	 * for leaks on exit.
+	 * for leaks on exit.  Note: as there are leaks we cannot use
+	 * ISC_MEMFLAG_INTERNAL as it will free up memory still being used
+	 * by libcrypto.
 	 */
-	result = isc_mem_create(0, 0, &dst__memory_pool);
+	result = isc_mem_createx2(0, 0, default_memalloc, default_memfree,
+				  NULL, &dst__memory_pool, 0);
 	if (result != ISC_R_SUCCESS)
 		return (result);
 	isc_mem_setdestroycheck(dst__memory_pool, ISC_FALSE);
@@ -144,6 +160,11 @@ dst_lib_init(isc_mem_t *mctx, isc_entropy_t *ectx, unsigned int eflags) {
 
 	memset(dst_t_func, 0, sizeof(dst_t_func));
 	RETERR(dst__hmacmd5_init(&dst_t_func[DST_ALG_HMACMD5]));
+	RETERR(dst__hmacsha1_init(&dst_t_func[DST_ALG_HMACSHA1]));
+	RETERR(dst__hmacsha224_init(&dst_t_func[DST_ALG_HMACSHA224]));
+	RETERR(dst__hmacsha256_init(&dst_t_func[DST_ALG_HMACSHA256]));
+	RETERR(dst__hmacsha384_init(&dst_t_func[DST_ALG_HMACSHA384]));
+	RETERR(dst__hmacsha512_init(&dst_t_func[DST_ALG_HMACSHA512]));
 #ifdef OPENSSL
 	RETERR(dst__openssl_init());
 	RETERR(dst__opensslrsa_init(&dst_t_func[DST_ALG_RSAMD5]));
@@ -394,7 +415,16 @@ dst_key_fromnamedfile(const char *filename, int type, isc_mem_t *mctx,
 	REQUIRE(mctx != NULL);
 	REQUIRE(keyp != NULL && *keyp == NULL);
 
-	result = read_public_key(filename, type, mctx, &pubkey);
+	newfilenamelen = strlen(filename) + 5;
+	newfilename = isc_mem_get(mctx, newfilenamelen);
+	if (newfilename == NULL)
+		return (ISC_R_NOMEMORY);
+	result = addsuffix(newfilename, newfilenamelen, filename, ".key");
+	INSIST(result == ISC_R_SUCCESS);
+
+	result = dst_key_read_public(newfilename, type, mctx, &pubkey);
+	isc_mem_put(mctx, newfilename, newfilenamelen);
+	newfilename = NULL;
 	if (result != ISC_R_SUCCESS)
 		return (result);
 
@@ -484,7 +514,7 @@ dst_key_todns(const dst_key_t *key, isc_buffer_t *target) {
 						    & 0xffff));
 	}
 
-	if (key->opaque == NULL) /* NULL KEY */
+	if (key->opaque == NULL) /*%< NULL KEY */
 		return (ISC_R_SUCCESS);
 
 	return (key->func->todns(key, target));
@@ -631,7 +661,7 @@ dst_key_generate(dns_name_t *name, unsigned int alg,
 	if (key == NULL)
 		return (ISC_R_NOMEMORY);
 
-	if (bits == 0) { /* NULL KEY */
+	if (bits == 0) { /*%< NULL KEY */
 		key->key_flags |= DNS_KEYTYPE_NOKEY;
 		*keyp = key;
 		return (ISC_R_SUCCESS);
@@ -755,8 +785,23 @@ dst_key_sigsize(const dst_key_t *key, unsigned int *n) {
 	case DST_ALG_HMACMD5:
 		*n = 16;
 		break;
+	case DST_ALG_HMACSHA1:
+		*n = ISC_SHA1_DIGESTLENGTH;
+		break;
+	case DST_ALG_HMACSHA224:
+		*n = ISC_SHA224_DIGESTLENGTH;
+		break;
+	case DST_ALG_HMACSHA256:
+		*n = ISC_SHA256_DIGESTLENGTH;
+		break;
+	case DST_ALG_HMACSHA384:
+		*n = ISC_SHA384_DIGESTLENGTH;
+		break;
+	case DST_ALG_HMACSHA512:
+		*n = ISC_SHA512_DIGESTLENGTH;
+		break;
 	case DST_ALG_GSSAPI:
-		*n = 128; /* XXX */
+		*n = 128; /*%< XXX */
 		break;
 	case DST_ALG_DH:
 	default:
@@ -782,7 +827,7 @@ dst_key_secretsize(const dst_key_t *key, unsigned int *n) {
  *** Static methods
  ***/
 
-/*
+/*%
  * Allocates a key structure and fills in some of the fields.
  */
 static dst_key_t *
@@ -824,12 +869,12 @@ get_key_struct(dns_name_t *name, unsigned int alg,
 	return (key);
 }
 
-/*
+/*%
  * Reads a public key from disk
  */
-static isc_result_t
-read_public_key(const char *filename, int type,
-		isc_mem_t *mctx, dst_key_t **keyp)
+isc_result_t
+dst_key_read_public(const char *filename, int type,
+		    isc_mem_t *mctx, dst_key_t **keyp)
 {
 	u_char rdatabuf[DST_KEY_MAXSIZE];
 	isc_buffer_t b;
@@ -839,25 +884,16 @@ read_public_key(const char *filename, int type,
 	isc_result_t ret;
 	dns_rdata_t rdata = DNS_RDATA_INIT;
 	unsigned int opt = ISC_LEXOPT_DNSMULTILINE;
-	char *newfilename;
-	unsigned int newfilenamelen;
 	dns_rdataclass_t rdclass = dns_rdataclass_in;
 	isc_lexspecials_t specials;
 	isc_uint32_t ttl;
 	isc_result_t result;
 	dns_rdatatype_t keytype;
 
-	newfilenamelen = strlen(filename) + 5;
-	newfilename = isc_mem_get(mctx, newfilenamelen);
-	if (newfilename == NULL)
-		return (ISC_R_NOMEMORY);
-	ret = addsuffix(newfilename, newfilenamelen, filename, ".key");
-	INSIST(ret == ISC_R_SUCCESS);
-
 	/*
 	 * Open the file and read its formatted contents
 	 * File format:
-	 *    domain.name [ttl] [class] KEY <flags> <protocol> <algorithm> <key>
+	 *    domain.name [ttl] [class] [KEY|DNSKEY] <flags> <protocol> <algorithm> <key>
 	 */
 
 	/* 1500 should be large enough for any key */
@@ -872,7 +908,7 @@ read_public_key(const char *filename, int type,
 	isc_lex_setspecials(lex, specials);
 	isc_lex_setcomments(lex, ISC_LEXCOMMENT_DNSMASTERFILE);
 
-	ret = isc_lex_openfile(lex, newfilename);
+	ret = isc_lex_openfile(lex, filename);
 	if (ret != ISC_R_SUCCESS)
 		goto cleanup;
 
@@ -920,7 +956,7 @@ read_public_key(const char *filename, int type,
 	if (strcasecmp(DST_AS_STR(token), "DNSKEY") == 0)
 		keytype = dns_rdatatype_dnskey;
 	else if (strcasecmp(DST_AS_STR(token), "KEY") == 0)
-		keytype = dns_rdatatype_key; /* SIG(0), TKEY */
+		keytype = dns_rdatatype_key; /*%< SIG(0), TKEY */
 	else
 		BADTOKEN();
 
@@ -944,8 +980,6 @@ read_public_key(const char *filename, int type,
  cleanup:
 	if (lex != NULL)
 		isc_lex_destroy(&lex);
-	isc_mem_put(mctx, newfilename, newfilenamelen);
-
 	return (ret);
 }
 
@@ -969,7 +1003,7 @@ issymmetric(const dst_key_t *key) {
 	}
 }
 
-/*
+/*%
  * Writes a public key to disk in DNS format.
  */
 static isc_result_t
@@ -1029,8 +1063,10 @@ write_public_key(const dst_key_t *key, int type, const char *directory) {
 	}
 
 	ret = dns_name_print(key->key_name, fp);
-	if (ret != ISC_R_SUCCESS)
+	if (ret != ISC_R_SUCCESS) {
+		fclose(fp);
 		return (ret);
+	}
 
 	fprintf(fp, " ");
 

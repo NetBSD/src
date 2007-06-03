@@ -1,7 +1,7 @@
-/*	$NetBSD: loc_29.c,v 1.1.1.3 2005/12/21 23:17:03 christos Exp $	*/
+/*	$NetBSD: loc_29.c,v 1.1.1.3.6.1 2007/06/03 17:24:14 wrstuden Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,11 +17,11 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: loc_29.c,v 1.30.2.3.2.6 2004/03/06 08:14:06 marka Exp */
+/* Id: loc_29.c,v 1.41.18.2 2005/04/29 00:16:34 marka Exp */
 
 /* Reviewed: Wed Mar 15 18:13:09 PST 2000 by explorer */
 
-/* RFC 1876 */
+/* RFC1876 */
 
 #ifndef RDATA_GENERIC_LOC_29_C
 #define RDATA_GENERIC_LOC_29_C

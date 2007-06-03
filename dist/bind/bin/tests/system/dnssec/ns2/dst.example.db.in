@@ -12,7 +12,7 @@
 ; OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 ; PERFORMANCE OF THIS SOFTWARE.
 
-; Id: dst.example.db.in,v 1.2.2.1 2004/03/08 02:07:45 marka Exp
+; Id: dst.example.db.in,v 1.2 2004/03/05 05:00:15 marka Exp
 
 $TTL 300	; 5 minutes
 @			IN SOA	mname1. . (

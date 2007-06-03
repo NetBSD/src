@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_netof.c,v 1.1.1.1 2004/05/17 23:44:44 christos Exp $	*/
+/*	$NetBSD: inet_netof.c,v 1.1.1.1.12.1 2007/06/03 17:23:00 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -45,7 +45,7 @@ static const char sccsid[] = "@(#)inet_netof.c	8.1 (Berkeley) 6/4/93";
 
 #include "port_after.h"
 
-/*
+/*%
  * Return the network number from an internet
  * address; handles class a/b/c network #'s.
  */
@@ -62,3 +62,5 @@ inet_netof(in)
 	else
 		return (((i)&IN_CLASSC_NET) >> IN_CLASSC_NSHIFT);
 }
+
+/*! \file */

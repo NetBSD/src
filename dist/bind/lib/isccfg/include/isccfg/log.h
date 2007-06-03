@@ -1,7 +1,7 @@
-/*	$NetBSD: log.h,v 1.1.1.3 2005/12/21 23:17:56 christos Exp $	*/
+/*	$NetBSD: log.h,v 1.1.1.3.6.1 2007/06/03 17:25:17 wrstuden Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,10 +17,12 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: log.h,v 1.3.2.1.10.3 2004/03/08 09:05:07 marka Exp */
+/* Id: log.h,v 1.6.18.2 2005/04/29 00:17:16 marka Exp */
 
 #ifndef ISCCFG_LOG_H
 #define ISCCFG_LOG_H 1
+
+/*! \file */
 
 #include <isc/lang.h>
 #include <isc/log.h>
@@ -36,17 +38,17 @@ ISC_LANG_BEGINDECLS
 
 void
 cfg_log_init(isc_log_t *lctx);
-/*
+/*%<
  * Make the libisccfg categories and modules available for use with the
  * ISC logging library.
  *
  * Requires:
- *	lctx is a valid logging context.
+ *\li	lctx is a valid logging context.
  *
- *	cfg_log_init() is called only once.
+ *\li	cfg_log_init() is called only once.
  *
  * Ensures:
- * 	The catgories and modules defined above are available for
+ * \li	The catgories and modules defined above are available for
  * 	use by isc_log_usechannnel() and isc_log_write().
  */
 

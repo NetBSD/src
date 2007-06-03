@@ -1,4 +1,4 @@
-/*	$NetBSD: ipfcomp.c,v 1.2.4.1 2007/05/07 17:05:12 pavel Exp $	*/
+/*	$NetBSD: ipfcomp.c,v 1.2.4.1.2.1 2007/06/03 17:25:47 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 2001-2005 by Darren Reed.
@@ -7,7 +7,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ipfcomp.c,v 1.24.2.6 2007/02/18 15:56:32 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ipfcomp.c,v 1.24.2.7 2007/05/01 22:15:00 darrenr Exp";
 #endif
 
 #include "ipf.h"
@@ -98,6 +98,13 @@ frentry_t *fr;
 		fprintf(fp, "#include <sys/types.h>\n");
 		fprintf(fp, "#include <sys/time.h>\n");
 		fprintf(fp, "#include <sys/socket.h>\n");
+		fprintf(fp, "#if (__FreeBSD_version >= 40000)\n");
+		fprintf(fp, "# if defined(_KERNEL)\n");
+		fprintf(fp, "#  include <sys/libkern.h>\n");
+		fprintf(fp, "# else\n");
+		fprintf(fp, "#  include <sys/unistd.h>\n");
+		fprintf(fp, "# endif\n");
+		fprintf(fp, "#endif\n");
 		fprintf(fp, "#if (__NetBSD_Version__ >= 399000000)\n");
 		fprintf(fp, "#else\n");
 		fprintf(fp, "# if !defined(__FreeBSD__) && !defined(__OpenBSD__) && !defined(__sgi)\n");

@@ -1,11 +1,11 @@
-/*	$NetBSD: ctl_p.h,v 1.1.1.1 2004/05/17 23:44:45 christos Exp $	*/
+/*	$NetBSD: ctl_p.h,v 1.1.1.1.12.1 2007/06/03 17:23:15 wrstuden Exp $	*/
 
 struct ctl_buf {
 	char *			text;
 	size_t			used;
 };
 
-#define	MAX_LINELEN		990	/* Like SMTP. */
+#define	MAX_LINELEN		990	/*%< Like SMTP. */
 #ifndef NO_SOCKADDR_UN
 #define MAX_NTOP			PATH_MAX
 #else
@@ -26,3 +26,5 @@ const char *		ctl_sa_ntop(const struct sockaddr *, char *, size_t,
 				    ctl_logfunc);
 void			ctl_sa_copy(const struct sockaddr *,
 				    struct sockaddr *);
+
+/*! \file */

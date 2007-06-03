@@ -1,7 +1,7 @@
-/*	$NetBSD: message.c,v 1.2 2006/05/14 01:18:41 christos Exp $	*/
+/*	$NetBSD: message.c,v 1.2.6.1 2007/06/03 17:23:42 wrstuden Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,7 +17,9 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: message.c,v 1.194.2.10.2.20 2005/06/07 01:42:23 marka Exp */
+/* Id: message.c,v 1.222.18.10 2006/03/02 23:19:20 marka Exp */
+
+/*! \file */
 
 /***
  *** Imports
@@ -65,7 +67,7 @@
 #define VALID_PSEUDOSECTION(s)	(((s) >= DNS_PSEUDOSECTION_ANY) \
 				 && ((s) < DNS_PSEUDOSECTION_MAX))
 
-/*
+/*%
  * This is the size of each individual scratchpad buffer, and the numbers
  * of various block allocations used within the server.
  * XXXMLG These should come from a config setting.
@@ -77,7 +79,7 @@
 #define RDATALIST_COUNT		  8
 #define RDATASET_COUNT		 RDATALIST_COUNT
 
-/*
+/*%
  * Text representation of the different items, for message_totext
  * functions.
  */
@@ -135,7 +137,7 @@ static const char *rcodetext[] = {
 };
 
 
-/*
+/*%
  * "helper" type, which consists of a block of some type, and is linkable.
  * For it to work, sizeof(dns_msgblock_t) must be a multiple of the pointer
  * size, or the allocated elements will not be alligned correctly.
@@ -803,11 +805,37 @@ findname(dns_name_t **foundname, dns_name_t *target,
 }
 
 isc_result_t
+dns_message_find(dns_name_t *name, dns_rdataclass_t rdclass,
+		 dns_rdatatype_t type, dns_rdatatype_t covers,
+		 dns_rdataset_t **rdataset)
+{
+	dns_rdataset_t *curr;
+
+	if (rdataset != NULL) {
+		REQUIRE(*rdataset == NULL);
+	}
+
+	for (curr = ISC_LIST_TAIL(name->list);
+	     curr != NULL;
+	     curr = ISC_LIST_PREV(curr, link)) {
+		if (curr->rdclass == rdclass &&
+		    curr->type == type && curr->covers == covers) {
+			if (rdataset != NULL)
+				*rdataset = curr;
+			return (ISC_R_SUCCESS);
+		}
+	}
+
+	return (ISC_R_NOTFOUND);
+}
+
+isc_result_t
 dns_message_findtype(dns_name_t *name, dns_rdatatype_t type,
 		     dns_rdatatype_t covers, dns_rdataset_t **rdataset)
 {
 	dns_rdataset_t *curr;
 
+	REQUIRE(name != NULL);
 	if (rdataset != NULL) {
 		REQUIRE(*rdataset == NULL);
 	}
@@ -1032,7 +1060,7 @@ getquestions(isc_buffer_t *source, dns_message_t *msg, dns_decompress_t *dctx,
 		/*
 		 * Can't ask the same question twice.
 		 */
-		result = dns_message_findtype(name, rdtype, 0, NULL);
+		result = dns_message_find(name, rdclass, rdtype, 0, NULL);
 		if (result == ISC_R_SUCCESS)
 			DO_FORMERR;
 
@@ -1192,6 +1220,7 @@ getsection(isc_buffer_t *source, dns_message_t *msg, dns_decompress_t *dctx,
 		    && rdtype != dns_rdatatype_dnskey /* in a TKEY query */
 		    && rdtype != dns_rdatatype_sig /* SIG(0) */
 		    && rdtype != dns_rdatatype_tkey /* Win2000 TKEY */
+		    && msg->rdclass != dns_rdataclass_any
 		    && msg->rdclass != rdclass)
 			DO_FORMERR;
 
@@ -1281,11 +1310,8 @@ getsection(isc_buffer_t *source, dns_message_t *msg, dns_decompress_t *dctx,
 			rdata->type = rdtype;
 			rdata->flags = DNS_RDATA_UPDATE;
 			result = ISC_R_SUCCESS;
-		} else if (rdtype == dns_rdatatype_tsig)
+		} else
 			result = getrdata(source, msg, dctx, rdclass,
-					  rdtype, rdatalen, rdata);
-		else
-			result = getrdata(source, msg, dctx, msg->rdclass,
 					  rdtype, rdatalen, rdata);
 		if (result != ISC_R_SUCCESS)
 			goto cleanup;
@@ -1362,8 +1388,8 @@ getsection(isc_buffer_t *source, dns_message_t *msg, dns_decompress_t *dctx,
 				DO_FORMERR;
 
 			rdataset = NULL;
-			result = dns_message_findtype(name, rdtype, covers,
-						      &rdataset);
+			result = dns_message_find(name, rdclass, rdtype,
+						   covers, &rdataset);
 		}
 
 		/*
@@ -1419,7 +1445,7 @@ getsection(isc_buffer_t *source, dns_message_t *msg, dns_decompress_t *dctx,
 		/*
 		 * Minimize TTLs.
 		 *
-		 * Section 5.2 of RFC 2181 says we should drop
+		 * Section 5.2 of RFC2181 says we should drop
 		 * nonauthoritative rrsets where the TTLs differ, but we
 		 * currently treat them the as if they were authoritative and
 		 * minimize them.
@@ -1801,7 +1827,7 @@ dns_message_rendersection(dns_message_t *msg, dns_section_t sectionid,
 		if (rdataset != NULL &&
 		    (rdataset->attributes & DNS_RDATASETATTR_REQUIREDGLUE) != 0 &&
 		    (rdataset->attributes & DNS_RDATASETATTR_RENDERED) == 0) {
-			void *order_arg = msg->order_arg;
+			const void *order_arg = msg->order_arg;
 			st = *(msg->buffer);
 			count = 0;
 			if (partial)
@@ -2258,6 +2284,18 @@ dns_message_addname(dns_message_t *msg, dns_name_t *name,
 	REQUIRE(VALID_NAMED_SECTION(section));
 
 	ISC_LIST_APPEND(msg->sections[section], name, link);
+}
+
+void
+dns_message_removename(dns_message_t *msg, dns_name_t *name,
+		       dns_section_t section)
+{
+	REQUIRE(msg != NULL);
+	REQUIRE(msg->from_to_wire == DNS_MESSAGE_INTENTRENDER);
+	REQUIRE(name != NULL);
+	REQUIRE(VALID_NAMED_SECTION(section));
+
+	ISC_LIST_UNLINK(msg->sections[section], name, link);
 }
 
 isc_result_t
@@ -3189,7 +3227,7 @@ dns_message_getrawmessage(dns_message_t *msg) {
 
 void
 dns_message_setsortorder(dns_message_t *msg, dns_rdatasetorderfunc_t order,
-			 void *order_arg)
+			 const void *order_arg)
 {
 	REQUIRE(DNS_MESSAGE_VALID(msg));
 	msg->order = order;

@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_cidr_pton.c,v 1.2 2004/05/20 23:12:33 christos Exp $	*/
+/*	$NetBSD: inet_cidr_pton.c,v 1.2.12.1 2007/06/03 17:25:54 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -20,9 +20,9 @@
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
-static const char rcsid[] = "Id: inet_cidr_pton.c,v 1.2.2.1.8.2 2004/03/17 00:29:46 marka Exp";
+static const char rcsid[] = "Id: inet_cidr_pton.c,v 1.5.18.1 2005/04/27 05:00:53 sra Exp";
 #else
-__RCSID("$NetBSD: inet_cidr_pton.c,v 1.2 2004/05/20 23:12:33 christos Exp $");
+__RCSID("$NetBSD: inet_cidr_pton.c,v 1.2.12.1 2007/06/03 17:25:54 wrstuden Exp $");
 #endif
 #endif
 
@@ -61,7 +61,7 @@ static int	inet_cidr_pton_ipv6 __P((const char *src, u_char *dst,
 
 static int	getbits(const char *, int ipv6);
 
-/*
+/*%
  * int
  * inet_cidr_pton(af, src, dst, *bits)
  *	convert network address from presentation to network format.
@@ -216,7 +216,7 @@ inet_cidr_pton_ipv6(const char *src, u_char *dst, int *pbits) {
 		    inet_cidr_pton_ipv4(curtok, tp, &bits, 1) == 0) {
 			tp += NS_INADDRSZ;
 			saw_xdigit = 0;
-			break;	/* '\0' was seen by inet_pton4(). */
+			break;	/*%< '\\0' was seen by inet_pton4(). */
 		}
 		if (ch == '/') {
 			bits = getbits(src, 1);
@@ -268,20 +268,22 @@ getbits(const char *src, int ipv6) {
 	int bits = 0;
 	char *cp, ch;
 	
-	if (*src == '\0')			/* syntax */
+	if (*src == '\0')			/*%< syntax */
 		return (-2);
 	do {
 		ch = *src++;
 		cp = strchr(digits, ch);
-		if (cp == NULL)			/* syntax */
+		if (cp == NULL)			/*%< syntax */
 			return (-2);
 		bits *= 10;
 		bits += cp - digits;
-		if (bits == 0 && *src != '\0')	/* no leading zeros */
+		if (bits == 0 && *src != '\0')	/*%< no leading zeros */
 			return (-2);
-		if (bits > (ipv6 ? 128 : 32))	/* range error */
+		if (bits > (ipv6 ? 128 : 32))	/*%< range error */
 			return (-2);
 	} while (*src != '\0');
 
 	return (bits);
 }
+
+/*! \file */

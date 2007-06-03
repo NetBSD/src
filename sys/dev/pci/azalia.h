@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia.h,v 1.14 2006/07/21 14:40:12 kent Exp $	*/
+/*	$NetBSD: azalia.h,v 1.14.10.1 2007/06/03 17:26:04 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -350,7 +350,7 @@
 #define		CORB_UNSOL_ENABLE	0x80
 #define		CORB_UNSOL_TAG(x)	(x & 0x3f)
 #define CORB_GET_PIN_SENSE		0xf09
-#define		CORB_PS_PRESENSE	0x80000000
+#define		CORB_PS_PRESENCE	0x80000000
 #define		CORB_PS_IMPEDANCE(x)	(x & 0x7fffffff)
 #define CORB_EXECUTE_PIN_SENSE		0x709
 #define		CORB_PS_RIGHT		0x1
@@ -470,6 +470,7 @@ typedef struct {
 
 
 /* #define AZALIA_DEBUG */
+/* #define AZALIA_DEBUG_DOT */
 #ifdef AZALIA_DEBUG
 # define DPRINTF(x)	do { printf x; } while (0/*CONSTCOND*/)
 #else

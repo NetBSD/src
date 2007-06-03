@@ -1,7 +1,7 @@
-/*	$NetBSD: events.h,v 1.1.1.3 2005/12/21 23:17:51 christos Exp $	*/
+/*	$NetBSD: events.h,v 1.1.1.3.6.1 2007/06/03 17:25:13 wrstuden Exp $	*/
 
 /*
- * Portions Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 2001  Internet Software Consortium.
  * Portions Copyright (C) 2001  Nominum, Inc.
  *
@@ -18,14 +18,16 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: events.h,v 1.2.206.1 2004/03/06 08:15:22 marka Exp */
+/* Id: events.h,v 1.3.18.2 2005/04/29 00:17:13 marka Exp */
 
 #ifndef ISCCC_EVENTS_H
 #define ISCCC_EVENTS_H 1
 
+/*! \file */
+
 #include <isc/eventclass.h>
 
-/*
+/*%
  * Registry of ISCCC event numbers.
  */
 

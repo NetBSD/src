@@ -15,7 +15,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: setup.pl,v 1.10.206.1 2004/03/06 10:22:49 marka Exp
+# Id: setup.pl,v 1.11.18.1 2004/11/23 05:24:46 marka Exp
 
 #
 # Set up test data for zone transfer quota tests.
@@ -32,9 +32,11 @@ for ($z = 0; $z < 300; $z++) {
     my $fn = "ns1/$zn.db";
     my $f = new FileHandle($fn, "w") or die "open: $fn: $!";
     print $f "\$TTL 300
-\@	IN SOA 	. . 1 300 120 3600 86400
+\@	IN SOA 	ns1 . 1 300 120 3600 86400
 	NS	ns1
 	NS	ns2
+ns1	A	10.53.0.1
+ns2	A	10.53.0.2
 	MX	10 mail1.isp.example.
 	MX	20 mail2.isp.example.
 www	A	10.0.0.1

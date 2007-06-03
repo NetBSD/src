@@ -1,4 +1,4 @@
-/*	$NetBSD: AccountInfo.h,v 1.1.1.1 2004/05/17 23:43:38 christos Exp $	*/
+/*	$NetBSD: AccountInfo.h,v 1.1.1.1.12.1 2007/06/03 17:21:46 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: AccountInfo.h,v 1.3.226.3 2004/03/08 09:04:21 marka Exp */
+/* Id: AccountInfo.h,v 1.4 2004/03/05 05:04:16 marka Exp */
 
 
 #define RTN_OK		0

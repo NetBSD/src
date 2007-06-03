@@ -1,4 +1,4 @@
-/*	$NetBSD: stdtime.c,v 1.1.1.3 2005/12/21 23:17:38 christos Exp $	*/
+/*	$NetBSD: stdtime.c,v 1.1.1.3.6.1 2007/06/03 17:24:58 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,9 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: stdtime.c,v 1.11.2.1.10.5 2005/06/09 23:54:31 marka Exp */
+/* Id: stdtime.c,v 1.14.18.3 2005/06/08 02:07:57 marka Exp */
+
+/*! \file */
 
 #include <config.h>
 

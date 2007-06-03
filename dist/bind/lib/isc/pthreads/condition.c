@@ -1,7 +1,7 @@
-/*	$NetBSD: condition.c,v 1.1.1.3 2005/12/21 23:17:40 christos Exp $	*/
+/*	$NetBSD: condition.c,v 1.1.1.3.6.1 2007/06/03 17:24:53 wrstuden Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,7 +17,9 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: condition.c,v 1.30.2.1.10.1 2004/03/06 08:14:53 marka Exp */
+/* Id: condition.c,v 1.32.18.2 2005/04/29 00:17:05 marka Exp */
+
+/*! \file */
 
 #include <config.h>
 
@@ -46,7 +48,7 @@ isc_condition_waituntil(isc_condition_t *c, isc_mutex_t *m, isc_time_t *t) {
 	if (result != ISC_R_SUCCESS)
 		return (result);
 
-	/*
+	/*!
 	 * POSIX defines a timespec's tv_nsec as long.  isc_time_nanoseconds
 	 * ensures its return value is < 1 billion, which will fit in a long.
 	 */

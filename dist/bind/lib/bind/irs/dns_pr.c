@@ -1,4 +1,4 @@
-/*	$NetBSD: dns_pr.c,v 1.1.1.3 2005/12/21 23:15:25 christos Exp $	*/
+/*	$NetBSD: dns_pr.c,v 1.1.1.3.6.1 2007/06/03 17:23:02 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -18,7 +18,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "Id: dns_pr.c,v 1.3.206.1 2004/03/09 08:33:34 marka Exp";
+static const char rcsid[] = "Id: dns_pr.c,v 1.4.18.1 2005/04/27 05:00:55 sra Exp";
 #endif
 
 /* Imports */
@@ -266,3 +266,5 @@ parse_hes_list(struct irs_pr *this, char **hes_list) {
 	}
 	return (NULL);
 }
+
+/*! \file */
