@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.73 2007/06/01 14:30:32 uwe Exp $
+# $NetBSD: GENERIC,v 1.74 2007/06/03 19:46:23 uwe Exp $
 #
 # GENERIC machine description file
 #
@@ -52,7 +52,8 @@ options 	SH3
 #options 	PCLOCK=...
 
 # in-kernel bootloader, see kloader(4)
-options 	KLOADER_KERNEL_PATH="\"/netbsd\""
+options 	KLOADER
+#options 	KLOADER_KERNEL_PATH="\"/netbsd\""
 #options 	KLOADER_DEBUG
 
 #options 	HPC_DEBUG_INTERRUPT_MONITOR

@@ -1,4 +1,4 @@
-#	$NetBSD: HPW650PA,v 1.23 2006/09/20 00:41:13 uwe Exp $
+#	$NetBSD: HPW650PA,v 1.24 2007/06/03 19:46:23 uwe Exp $
 #
 #	HITACHI PERSONA HPW650PA
 #
@@ -9,8 +9,10 @@ include 	"arch/hpcsh/conf/std.hpcsh"
 
 maxusers	32			# estimated number of users
 
-options 	KLOADER_KERNEL_PATH="\"/netbsd\""
-options 	KLOADER_DEBUG
+# in-kernel bootloader, see kloader(4)
+options 	KLOADER
+#options 	KLOADER_KERNEL_PATH="\"/netbsd\""
+#options 	KLOADER_DEBUG
 
 options 	SH4			# SH7750V 128MHz
 options 	PCLOCK=32000000		# 32MHz
