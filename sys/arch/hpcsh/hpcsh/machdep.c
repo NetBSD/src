@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.56 2007/03/13 03:00:49 uwe Exp $	*/
+/*	$NetBSD: machdep.c,v 1.57 2007/06/03 19:46:23 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.56 2007/03/13 03:00:49 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.57 2007/06/03 19:46:23 uwe Exp $");
 
 #include "opt_md.h"
 #include "opt_ddb.h"
@@ -42,9 +42,15 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.56 2007/03/13 03:00:49 uwe Exp $");
 #include "fs_mfs.h"
 #include "fs_nfs.h"
 #include "biconsdev.h"
-#include "opt_kloader_kernel_path.h"
 #include "debug_hpc.h"
 #include "hd64465if.h"
+
+#include "opt_kloader.h"
+#ifdef KLOADER
+#if !defined(KLOADER_KERNEL_PATH)
+#define KLOADER_KERNEL_PATH	"/netbsd"
+#endif
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,8 +97,10 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.56 2007/03/13 03:00:49 uwe Exp $");
 #include <machine/bootinfo.h>
 #include <machine/platid.h>
 #include <machine/platid_mask.h>
-#include <machine/autoconf.h>		/* makebootdev() */
+#ifdef KLOADER
 #include <machine/kloader.h>
+#endif
+#include <machine/autoconf.h>		/* makebootdev() */
 #include <machine/intr.h>
 
 #ifdef NFS
@@ -147,7 +155,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.56 2007/03/13 03:00:49 uwe Exp $");
 /* Machine */
 char machine[]		= MACHINE;
 char machine_arch[]	= MACHINE_ARCH;
-struct bootinfo *bootinfo;
 
 /* Physical memory */
 static int	mem_cluster_init(paddr_t);
@@ -158,6 +165,10 @@ static int	__check_dram(paddr_t, paddr_t);
 #endif
 int		mem_cluster_cnt;
 phys_ram_seg_t	mem_clusters[VM_PHYSSEG_MAX];
+
+/* bootinfo */
+static struct bootinfo bootinfo_storage;
+struct bootinfo *bootinfo = &bootinfo_storage;
 
 /* hpcapm: machine_sleep() */
 void (*__sleep_func)(void *);	/* model dependent sleep function holder */
@@ -176,12 +187,15 @@ machine_startup(int argc, char *argv[], struct bootinfo *bi)
 	size_t symbolsize;
 	int i;
 	char *p;
+
+#ifdef KLOADER
 	/*
 	 * this routines stack is never polluted since stack pointer
 	 * is lower than kernel text segment, and at exiting, stack pointer
 	 * is changed to proc0.
 	 */
 	struct kloader_bootinfo kbi;
+#endif
 
 	/* Symbol table size */
 	symbolsize = 0;
@@ -198,8 +212,7 @@ machine_startup(int argc, char *argv[], struct bootinfo *bi)
 	memset(edata, 0, end - edata);
 
 	/* Setup bootinfo */
-	bootinfo = &kbi.bootinfo;
-	memcpy(bootinfo, bi, sizeof(struct bootinfo));
+	memcpy(&bootinfo_storage, bi, sizeof(struct bootinfo));
 	if (bootinfo->magic == BOOTINFO_MAGIC) {
 		platid.dw.dw0 = bootinfo->platid_cpu;
 		platid.dw.dw1 = bootinfo->platid_machine;
@@ -268,8 +281,11 @@ machine_startup(int argc, char *argv[], struct bootinfo *bi)
 #ifdef HPC_DEBUG_LCD
 	dbg_lcd_test();
 #endif
+
+#ifdef KLOADER
 	/* copy boot parameter for kloader */
-	kloader_bootinfo_set(&kbi, argc, argv, bi, true);
+	kloader_bootinfo_set(&kbi, argc, argv, bootinfo, true);
+#endif
 
 	/* Find memory cluster. and load to UVM */
 	physmem = mem_cluster_init(SH3_P1SEG_TO_PHYS(kernend));
@@ -375,7 +391,7 @@ cpu_reboot(int howto, char *bootstr)
 		howto |= RB_HALT;
 	}
 
-#ifdef KLOADER_KERNEL_PATH
+#ifdef KLOADER
 	if ((howto & RB_HALT) == 0)
 		kloader_reboot_setup(KLOADER_KERNEL_PATH);
 #endif
@@ -408,14 +424,14 @@ cpu_reboot(int howto, char *bootstr)
 	doshutdownhooks();
 
 	/* Finally, halt/reboot the system. */
-	if (howto & RB_HALT) {
-		printf("halted.\n");
-	} else {
-#ifdef KLOADER_KERNEL_PATH
+#ifdef KLOADER
+	if ((howto & RB_HALT) == 0) {
 		kloader_reboot();
 		/* NOTREACHED */
-#endif
 	}
+#endif
+
+	printf("halted.\n");
 
 #if NHD64465IF > 0
 	hd64465_shutdown();
