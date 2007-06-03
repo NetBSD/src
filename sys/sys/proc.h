@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.250 2007/05/17 14:51:43 yamt Exp $	*/
+/*	$NetBSD: proc.h,v 1.251 2007/06/03 09:50:12 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -534,6 +534,9 @@ void	cpu_lwp_free(struct lwp *, int);
 void	cpu_lwp_free2(struct lwp *);
 #endif
 #endif
+int	do_sys_lwp_park(struct lwp *, struct timespec *, ucontext_t *,
+	    const void *);
+
 
 #ifdef __HAVE_SYSCALL_INTERN
 void	syscall_intern(struct proc *);
