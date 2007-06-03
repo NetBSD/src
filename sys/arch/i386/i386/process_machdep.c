@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.62 2007/03/04 05:59:57 christos Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.63 2007/06/03 09:38:16 pavel Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -59,10 +59,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.62 2007/03/04 05:59:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.63 2007/06/03 09:38:16 pavel Exp $");
 
 #include "opt_vm86.h"
 #include "opt_ptrace.h"
+#include "opt_coredump.h"
 #include "npx.h"
 
 #include <sys/param.h>
@@ -84,7 +85,7 @@ __KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.62 2007/03/04 05:59:57 christo
 #include <machine/vm86.h>
 #endif
 
-#ifdef PTRACE
+#if defined(PTRACE) || defined(COREDUMP)
 static inline struct trapframe *
 process_frame(struct lwp *l)
 {
@@ -98,7 +99,7 @@ process_fpframe(struct lwp *l)
 
 	return (&l->l_addr->u_pcb.pcb_savefpu);
 }
-#endif /* PTRACE */
+#endif /* defined(PTRACE) || defined(COREDUMP) */
 
 static int
 xmm_to_s87_tag(const uint8_t *fpac, int regno, uint8_t tw)
@@ -214,7 +215,7 @@ process_s87_to_xmm(const struct save87 *s87, struct savexmm *sxmm)
 #endif
 }
 
-#ifdef PTRACE
+#if defined(PTRACE) || defined(COREDUMP)
 int
 process_read_regs(struct lwp *l, struct reg *regs)
 {
@@ -297,7 +298,9 @@ process_read_fpregs(struct lwp *l, struct fpreg *regs)
 		memcpy(regs, &frame->sv_87, sizeof(*regs));
 	return (0);
 }
+#endif /* defined(PTRACE) || defined(COREDUMP) */
 
+#ifdef PTRACE
 int
 process_write_regs(struct lwp *l, const struct reg *regs)
 {
