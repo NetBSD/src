@@ -1,4 +1,4 @@
-.\"	$NetBSD: reboot.8,v 1.22 2007/05/24 23:19:43 jnemeth Exp $
+.\"	$NetBSD: reboot.8,v 1.23 2007/06/03 22:39:47 uwe Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)reboot.8	8.1 (Berkeley) 6/9/93
 .\"
-.Dd May 24, 2007
+.Dd June 3, 2007
 .Dt REBOOT 8
 .Os
 .Sh NAME
@@ -44,6 +44,7 @@
 .Op Fl dlnq
 .Nm
 .Op Fl dlnq
+.Op Ar arg ...
 .Sh DESCRIPTION
 The
 .Nm poweroff ,
@@ -81,6 +82,15 @@ This option is only valid for
 Do not give processes a chance to shut down before halting or restarting.
 This option should not normally be used.
 .El
+.Pp
+If there are any arguments passed to
+.Nm reboot
+they are concatenated with spaces and passed as
+.Fa bootstr
+to
+.Xr reboot 2
+system call.
+The string is passed to the firmware on platforms that support it.
 .Pp
 Normally, the
 .Xr shutdown 8
