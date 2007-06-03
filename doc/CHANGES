@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.866 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.867 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -123,5 +123,5 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	powerpc: Add booted_kernel and booted_device sysctl [nisimura 20070601]
 	smsc(4): Added a driver for the hardware monitoring portion of
 		the SMSC LPC47B397 [blymn 20070601]
-	amd64: The Enhanced Speedstep is now available to use it on
-		EM64T CPUs. [xtraeme 20070603]
+	amd64: The Enhanced Speedstep driver is now able to work on EM64T
+		CPUs running in 64bit mode. [xtraeme 20070603]
