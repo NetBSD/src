@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_13.c,v 1.19 2007/03/18 21:38:33 dsl Exp $	*/
+/*	$NetBSD: netbsd32_compat_13.c,v 1.20 2007/06/03 11:09:35 dsl Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_13.c,v 1.19 2007/03/18 21:38:33 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_13.c,v 1.20 2007/06/03 11:09:35 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,54 +52,36 @@ compat_13_netbsd32_sigaltstack13(l, v, retval)
 	void *v;
 	register_t *retval;
 {
-	struct proc *p = l->l_proc;
 	struct compat_13_netbsd32_sigaltstack13_args /* {
 		syscallarg(const netbsd32_sigaltstack13p_t) nss;
 		syscallarg(netbsd32_sigaltstack13p_t) oss;
 	} */ *uap = v;
-	struct compat_13_sys_sigaltstack_args ua;
-	struct sigaltstack13 ss13, *nss13up, *oss13up;
 	struct netbsd32_sigaltstack13 s32ss;
-	void *sg;
+	struct sigaltstack nbss, obss;
 	int error;
 
-	if (!SCARG_P32(uap, nss))
-		return (EINVAL);
-
-	sg = stackgap_init(p, 0);
-
-	SCARG(&ua, nss) = nss13up = stackgap_alloc(p, &sg, sizeof(*nss13up));
-	if (SCARG_P32(uap, oss))
-		SCARG(&ua, oss) = oss13up = stackgap_alloc(p, &sg, sizeof(*oss13up));
-	else
-		SCARG(&ua, oss) = NULL;
-
-	error = copyin(SCARG_P32(uap, nss), &s32ss, sizeof s32ss);
-	if (error)
-		return (error);
-	ss13.ss_sp = (char *)NETBSD32PTR64(s32ss.ss_sp);
-	ss13.ss_size = s32ss.ss_size;
-	ss13.ss_flags = s32ss.ss_flags;
-	error = copyout(&ss13, nss13up, sizeof *nss13up);
-	if (error)
-		return (error);
-
-	error = compat_13_sys_sigaltstack(l, &ua, retval);
-	if (error)
-		return (error);
-
-	if (SCARG_P32(uap, oss)) {
-		error = copyin(nss13up, &ss13, sizeof *nss13up);
+	if (SCARG(uap, nss)) {
+		error = copyin(SCARG_P32(uap, nss), &s32ss, sizeof s32ss);
 		if (error)
 			return (error);
-		NETBSD32PTR32(s32ss.ss_sp, ss13.ss_sp);
-		s32ss.ss_size = ss13.ss_size;
-		s32ss.ss_flags = ss13.ss_flags;
-		error = copyout(&s32ss, SCARG_P32(uap, nss), sizeof s32ss);
+		nss.ss_sp = s32ss.ss_sp;
+		nss.ss_size = s32ss.ss_size;
+		nss.ss_flags = s32ss.ss_flags;
+	}
+
+	error = sigaltstack1(l,
+	    SCARG(uap, nss) ? &nss : 0, SCARG(uap, oss) ? &oss : 0);
+	if (error)
+		return (error);
+
+	if (SCARG(uap, oss)) {
+		s32ss.ss_sp = oss.ss_sp;
+		s32ss.ss_size =onss.ss_size;
+		s32ss.ss_flags = oss.ss_flags;
+		error = copyout(&s32ss, SCARG_P32(uap, oss), sizeof(s32ss));
 		if (error)
 			return (error);
 	}
-
 	return (0);
 }
 
