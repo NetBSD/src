@@ -1,4 +1,4 @@
-/*	$NetBSD: md5_locl.h,v 1.1.1.3 2005/12/21 23:15:20 christos Exp $	*/
+/*	$NetBSD: md5_locl.h,v 1.1.1.3.6.1 2007/06/03 17:22:53 wrstuden Exp $	*/
 
 /* crypto/md/md5_locl.h */
 /* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
@@ -149,7 +149,8 @@
 	(a)=ROTATE(l,16L); \
 	}
 #endif
-/*
+
+/*%
 #define	F(x,y,z)	(((x) & (y))  |  ((~(x)) & (z)))
 #define	G(x,y,z)	(((x) & (z))  |  ((y) & (~(z))))
 */
@@ -190,3 +191,5 @@
 	a+=((k)+(t)+I((b),(c),(d))); \
 	a=ROTATE(a,s); \
 	a+=b; };
+
+/*! \file */

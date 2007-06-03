@@ -15,7 +15,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: clean.sh,v 1.6.206.1 2004/03/06 10:22:28 marka Exp
+# Id: clean.sh,v 1.7 2004/03/05 05:02:59 marka Exp
 
 #
 # Clean up after stub tests.

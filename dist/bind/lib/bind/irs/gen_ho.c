@@ -1,4 +1,4 @@
-/*	$NetBSD: gen_ho.c,v 1.1.1.3 2005/12/21 23:15:27 christos Exp $	*/
+/*	$NetBSD: gen_ho.c,v 1.1.1.3.6.1 2007/06/03 17:23:03 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -18,7 +18,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "Id: gen_ho.c,v 1.1.206.2 2004/03/17 01:49:39 marka Exp";
+static const char rcsid[] = "Id: gen_ho.c,v 1.3.18.2 2006/03/10 00:20:08 marka Exp";
 #endif /* LIBC_SCCS and not lint */
 
 /* Imports */
@@ -350,7 +350,7 @@ ho_addrinfo(struct irs_ho *this, const char *name, const struct addrinfo *pai)
 		ho = rule->inst->ho;
 		RES_SET_H_ERRNO(pvt->res, NETDB_INTERNAL);
 		errno = 0;
-		if (ho->addrinfo == NULL) /* for safety */
+		if (ho->addrinfo == NULL) /*%< for safety */
 			continue;
 		rval = (*ho->addrinfo)(ho, name, pai);
 		if (rval != NULL)
@@ -373,8 +373,6 @@ ho_addrinfo(struct irs_ho *this, const char *name, const struct addrinfo *pai)
 	}
 	if (softerror != 0 && pvt->res->res_h_errno == HOST_NOT_FOUND)
 		RES_SET_H_ERRNO(pvt->res, therrno);
-	if (rval)
-		freeaddrinfo(rval);
 	return (NULL);
 }
 
@@ -391,3 +389,5 @@ init(struct irs_ho *this) {
 
         return (0);
 }
+
+/*! \file */

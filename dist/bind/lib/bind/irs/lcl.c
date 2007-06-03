@@ -1,4 +1,4 @@
-/*	$NetBSD: lcl.c,v 1.1.1.3 2005/12/21 23:15:33 christos Exp $	*/
+/*	$NetBSD: lcl.c,v 1.1.1.3.6.1 2007/06/03 17:23:10 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -18,7 +18,7 @@
  */
 
 #if !defined(LINT) && !defined(CODECENTER)
-static const char rcsid[] = "Id: lcl.c,v 1.1.206.2 2004/03/17 00:29:49 marka Exp";
+static const char rcsid[] = "Id: lcl.c,v 1.3.18.1 2005/04/27 05:01:02 sra Exp";
 #endif
 
 /* Imports */
@@ -140,3 +140,5 @@ lcl_close(struct irs_acc *this) {
 	}
 	memput(this, sizeof *this);
 }
+
+/*! \file */

@@ -1,7 +1,7 @@
-/*	$NetBSD: acl.c,v 1.1.1.3 2005/12/21 23:16:02 christos Exp $	*/
+/*	$NetBSD: acl.c,v 1.1.1.3.6.1 2007/06/03 17:23:35 wrstuden Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,7 +17,9 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: acl.c,v 1.23.52.4 2004/03/09 05:21:08 marka Exp */
+/* Id: acl.c,v 1.25.18.5 2006/03/02 00:37:21 marka Exp */
+
+/*! \file */
 
 #include <config.h>
 
@@ -43,7 +45,11 @@ dns_acl_create(isc_mem_t *mctx, int n, dns_acl_t **target) {
 		return (ISC_R_NOMEMORY);
 	acl->mctx = mctx;
 	acl->name = NULL;
-	isc_refcount_init(&acl->refcount, 1);
+	result = isc_refcount_init(&acl->refcount, 1);
+	if (result != ISC_R_SUCCESS) {
+		isc_mem_put(mctx, acl, sizeof(*acl));
+		return (result);
+	}
 	acl->elements = NULL;
 	acl->alloc = 0;
 	acl->length = 0;
@@ -70,7 +76,7 @@ dns_acl_create(isc_mem_t *mctx, int n, dns_acl_t **target) {
 }
 
 isc_result_t
-dns_acl_appendelement(dns_acl_t *acl, dns_aclelement_t *elt) {
+dns_acl_appendelement(dns_acl_t *acl, const dns_aclelement_t *elt) {
 	if (acl->length + 1 > acl->alloc) {
 		/*
 		 * Resize the ACL.
@@ -125,12 +131,12 @@ dns_acl_none(isc_mem_t *mctx, dns_acl_t **target) {
 }
 
 isc_result_t
-dns_acl_match(isc_netaddr_t *reqaddr,
-	      dns_name_t *reqsigner,
-	      dns_acl_t *acl,
-	      dns_aclenv_t *env,
+dns_acl_match(const isc_netaddr_t *reqaddr,
+	      const dns_name_t *reqsigner,
+	      const dns_acl_t *acl,
+	      const dns_aclenv_t *env,
 	      int *match,
-	      dns_aclelement_t **matchelt)
+	      dns_aclelement_t const**matchelt)
 {
 	unsigned int i;
 
@@ -152,9 +158,9 @@ dns_acl_match(isc_netaddr_t *reqaddr,
 }
 
 isc_result_t
-dns_acl_elementmatch(dns_acl_t *acl,
-		     dns_aclelement_t *elt,
-		     dns_aclelement_t **matchelt)
+dns_acl_elementmatch(const dns_acl_t *acl,
+		     const dns_aclelement_t *elt,
+		     const dns_aclelement_t **matchelt)
 {
 	unsigned int i;
 
@@ -175,14 +181,14 @@ dns_acl_elementmatch(dns_acl_t *acl,
 }
 
 isc_boolean_t
-dns_aclelement_match(isc_netaddr_t *reqaddr,
-		     dns_name_t *reqsigner,
-		     dns_aclelement_t *e,
-		     dns_aclenv_t *env,
-		     dns_aclelement_t **matchelt)
+dns_aclelement_match(const isc_netaddr_t *reqaddr,
+		     const dns_name_t *reqsigner,
+		     const dns_aclelement_t *e,
+		     const dns_aclenv_t *env,
+		     const dns_aclelement_t **matchelt)
 {
 	dns_acl_t *inner = NULL;
-	isc_netaddr_t *addr;
+	const isc_netaddr_t *addr;
 	isc_netaddr_t v4addr;
 	int indirectmatch;
 	isc_result_t result;
@@ -314,7 +320,7 @@ dns_acl_detach(dns_acl_t **aclp) {
 }
 
 isc_boolean_t
-dns_aclelement_equal(dns_aclelement_t *ea, dns_aclelement_t *eb) {
+dns_aclelement_equal(const dns_aclelement_t *ea, const dns_aclelement_t *eb) {
 	if (ea->type != eb->type)
 		return (ISC_FALSE);
 	switch (ea->type) {
@@ -340,7 +346,7 @@ dns_aclelement_equal(dns_aclelement_t *ea, dns_aclelement_t *eb) {
 }
 
 isc_boolean_t
-dns_acl_equal(dns_acl_t *a, dns_acl_t *b) {
+dns_acl_equal(const dns_acl_t *a, const dns_acl_t *b) {
 	unsigned int i;
 	if (a == b)
 		return (ISC_TRUE);
@@ -355,7 +361,7 @@ dns_acl_equal(dns_acl_t *a, dns_acl_t *b) {
 }
 
 static isc_boolean_t
-is_loopback(dns_aclipprefix_t *p) {
+is_loopback(const dns_aclipprefix_t *p) {
 	switch (p->address.family) {
 	case AF_INET:
 		if (p->prefixlen == 32 &&
@@ -374,7 +380,7 @@ is_loopback(dns_aclipprefix_t *p) {
 }
 
 isc_boolean_t
-dns_acl_isinsecure(dns_acl_t *a) {
+dns_acl_isinsecure(const dns_acl_t *a) {
 	unsigned int i;
 	for (i = 0; i < a->length; i++) {
 		dns_aclelement_t *e = &a->elements[i];

@@ -1,7 +1,7 @@
-/*	$NetBSD: ds.h,v 1.1.1.1 2004/05/17 23:44:57 christos Exp $	*/
+/*	$NetBSD: ds.h,v 1.1.1.1.12.1 2007/06/03 17:23:54 wrstuden Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: ds.h,v 1.3.2.1 2004/03/08 02:08:00 marka Exp */
+/* Id: ds.h,v 1.3.20.5 2006/02/22 23:50:09 marka Exp */
 
 #ifndef DNS_DS_H
 #define DNS_DS_H 1
@@ -27,11 +27,12 @@
 #include <dns/types.h>
 
 #define DNS_DSDIGEST_SHA1 (1)
+#define DNS_DSDIGEST_SHA256 (2)
 
 /*
- * Assuming SHA-1 digest type.
+ * Assuming SHA-256 digest type.
  */
-#define DNS_DS_BUFFERSIZE (24)
+#define DNS_DS_BUFFERSIZE (36)
 
 ISC_LANG_BEGINDECLS
 
@@ -39,18 +40,24 @@ isc_result_t
 dns_ds_buildrdata(dns_name_t *owner, dns_rdata_t *key,
 		  unsigned int digest_type, unsigned char *buffer,
 		  dns_rdata_t *rdata);
-/*
+/*%<
  * Build the rdata of a DS record.
  *
  * Requires:
- *	key	Points to a valid DNS KEY record.
- *	buffer	Points to a temporary buffer of at least
- * 		DNS_DS_BUFFERSIZE bytes.
- *	rdata	Points to an initialized dns_rdata_t.
+ *\li	key	Points to a valid DNS KEY record.
+ *\li	buffer	Points to a temporary buffer of at least
+ * 		#DNS_DS_BUFFERSIZE bytes.
+ *\li	rdata	Points to an initialized dns_rdata_t.
  *
  * Ensures:
- *      *rdata	Contains a valid DS rdata.  The 'data' member refers
+ *  \li    *rdata	Contains a valid DS rdata.  The 'data' member refers
  *		to 'buffer'.
+ */
+
+isc_boolean_t
+dns_ds_digest_supported(unsigned int digest_type);
+/*%<
+ * Is this digest algorithm supported by dns_ds_buildrdata()?
  */
 
 ISC_LANG_ENDDECLS

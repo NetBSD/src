@@ -1,7 +1,7 @@
-/*	$NetBSD: a6_38.h,v 1.1.1.3 2005/12/21 23:17:08 christos Exp $	*/
+/*	$NetBSD: a6_38.h,v 1.1.1.3.6.1 2007/06/03 17:24:25 wrstuden Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -20,9 +20,10 @@
 #ifndef IN_1_A6_38_H
 #define IN_1_A6_38_H 1
 
-/* Id: a6_38.h,v 1.19.206.1 2004/03/06 08:14:15 marka Exp */
+/* Id: a6_38.h,v 1.20.18.2 2005/04/29 00:16:41 marka Exp */
 
-/* RFC2874 */
+/*! 
+ *  \brief Per RFC2874 */
 
 typedef struct dns_rdata_in_a6 {
         dns_rdatacommon_t	common;

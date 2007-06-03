@@ -1,4 +1,4 @@
-/*	$NetBSD: t_tasks.c,v 1.1.1.4 2005/12/21 23:09:31 christos Exp $	*/
+/*	$NetBSD: t_tasks.c,v 1.1.1.4.6.1 2007/06/03 17:21:45 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: t_tasks.c,v 1.29.12.9 2005/07/19 07:08:36 marka Exp */
+/* Id: t_tasks.c,v 1.32.18.6 2005/11/30 03:44:39 marka Exp */
 
 #include <config.h>
 
@@ -2133,6 +2133,7 @@ t13(void) {
 #define T14_NTASKS 10
 #define T14_EXCLTASK 6
 
+int t14_exclusiveerror = ISC_R_SUCCESS;
 int t14_error = 0;
 int t14_done = 0;
 
@@ -2148,8 +2149,12 @@ t14_callback(isc_task_t *task, isc_event_t *event) {
 	t_info("task enter %d\n", taskno);	
 	if (taskno == T14_EXCLTASK) {
 		int	i;
-		isc_task_beginexclusive(task);
-		t_info("task %d got exclusive access\n", taskno);			
+		t14_exclusiveerror = isc_task_beginexclusive(task);
+		if (t14_exclusiveerror == ISC_R_SUCCESS)
+			t_info("task %d got exclusive access\n", taskno);
+		else
+			t_info("task %d failed to got exclusive access: %d\n",
+				taskno, t14_exclusiveerror);
 		for (i = 0; i < T14_NTASKS; i++) {
    		        t_info("task %d state %d\n", i , t14_active[i]);
 			if (t14_active[i])
@@ -2253,8 +2258,11 @@ t_tasks14(void) {
 
 	isc_taskmgr_destroy(&manager);
 
-	if (t14_error) {
-		t_info("mutual access occurred\n");
+	if (t14_exclusiveerror != ISC_R_SUCCESS || t14_error) {
+		if (t14_exclusiveerror != ISC_R_SUCCESS)
+			t_info("isc_task_beginexclusive() failed\n");
+		if (t14_error)
+			t_info("mutual access occurred\n");
 		return(T_FAIL);
 	}
 

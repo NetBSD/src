@@ -1,4 +1,4 @@
-/*	$NetBSD: logging.h,v 1.1.1.3 2005/12/21 23:15:23 christos Exp $	*/
+/*	$NetBSD: logging.h,v 1.1.1.3.6.1 2007/06/03 17:22:57 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -112,3 +112,4 @@ int			log_free_channel(log_channel);
 void			log_close_debug_channels(log_context);
 
 #endif /* !LOGGING_H */
+/*! \file */

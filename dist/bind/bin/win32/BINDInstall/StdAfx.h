@@ -1,9 +1,13 @@
-/*	$NetBSD: StdAfx.h,v 1.1.1.1 2004/05/17 23:43:39 christos Exp $	*/
+/*	$NetBSD: StdAfx.h,v 1.1.1.1.12.1 2007/06/03 17:21:47 wrstuden Exp $	*/
 
 // stdafx.h : include file for standard system include files,
 //  or project specific include files that are used frequently, but
 //      are changed infrequently
 //
+
+#ifndef _CRT_SECURE_NO_DEPRECATE
+#define _CRT_SECURE_NO_DEPRECATE 1
+#endif
 
 #if !defined(AFX_STDAFX_H__61537819_39FC_11D3_A97A_00105A12BD65__INCLUDED_)
 #define AFX_STDAFX_H__61537819_39FC_11D3_A97A_00105A12BD65__INCLUDED_

@@ -1,7 +1,7 @@
-/*	$NetBSD: sortlist.c,v 1.1.1.3 2005/12/21 23:08:06 christos Exp $	*/
+/*	$NetBSD: sortlist.c,v 1.1.1.3.6.1 2007/06/03 17:20:14 wrstuden Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,7 +17,9 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: sortlist.c,v 1.5.12.4 2004/03/08 04:04:19 marka Exp */
+/* Id: sortlist.c,v 1.9.18.4 2006/03/02 00:37:21 marka Exp */
+
+/*! \file */
 
 #include <config.h>
 
@@ -32,7 +34,9 @@
 #include <named/sortlist.h>
 
 ns_sortlisttype_t
-ns_sortlist_setup(dns_acl_t *acl, isc_netaddr_t *clientaddr, void **argp) {
+ns_sortlist_setup(dns_acl_t *acl, isc_netaddr_t *clientaddr,
+		  const void **argp)
+{
 	unsigned int i;
 
 	if (acl == NULL)
@@ -46,7 +50,7 @@ ns_sortlist_setup(dns_acl_t *acl, isc_netaddr_t *clientaddr, void **argp) {
 		dns_aclelement_t *e = &acl->elements[i];
 		dns_aclelement_t *try_elt;
 		dns_aclelement_t *order_elt = NULL;
-		dns_aclelement_t *matched_elt = NULL;
+		const dns_aclelement_t *matched_elt = NULL;
 
 		if (e->type == dns_aclelementtype_nestedacl) {
 			dns_acl_t *inner = e->u.nestedacl;
@@ -108,8 +112,8 @@ ns_sortlist_setup(dns_acl_t *acl, isc_netaddr_t *clientaddr, void **argp) {
 }
 
 int
-ns_sortlist_addrorder2(isc_netaddr_t *addr, void *arg) {
-	dns_acl_t *sortacl = (dns_acl_t *) arg;
+ns_sortlist_addrorder2(const isc_netaddr_t *addr, const void *arg) {
+	const dns_acl_t *sortacl = (const dns_acl_t *) arg;
 	int match;
 
 	(void)dns_acl_match(addr, NULL, sortacl,
@@ -124,8 +128,8 @@ ns_sortlist_addrorder2(isc_netaddr_t *addr, void *arg) {
 }
 
 int
-ns_sortlist_addrorder1(isc_netaddr_t *addr, void *arg) {
-	dns_aclelement_t *matchelt = (dns_aclelement_t *) arg;
+ns_sortlist_addrorder1(const isc_netaddr_t *addr, const void *arg) {
+	const dns_aclelement_t *matchelt = (const dns_aclelement_t *) arg;
 	if (dns_aclelement_match(addr, NULL, matchelt,
 				 &ns_g_server->aclenv,
 				 NULL)) {
@@ -138,7 +142,7 @@ ns_sortlist_addrorder1(isc_netaddr_t *addr, void *arg) {
 void
 ns_sortlist_byaddrsetup(dns_acl_t *sortlist_acl, isc_netaddr_t *client_addr,
 		       dns_addressorderfunc_t *orderp,
-		       void **argp)
+		       const void **argp)
 {
 	ns_sortlisttype_t sortlisttype;
 

@@ -1,7 +1,7 @@
-/*	$NetBSD: ctl_p.c,v 1.1.1.3 2005/12/21 23:15:39 christos Exp $	*/
+/*	$NetBSD: ctl_p.c,v 1.1.1.3.6.1 2007/06/03 17:23:15 wrstuden Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
-static const char rcsid[] = "Id: ctl_p.c,v 1.1.206.2 2004/03/17 00:29:51 marka Exp";
+static const char rcsid[] = "Id: ctl_p.c,v 1.3.18.1 2005/04/27 05:01:05 sra Exp";
 #endif /* not lint */
 
 /*
@@ -58,7 +58,7 @@ const char * const ctl_sevnames[] = {
 
 /* Public. */
 
-/*
+/*%
  * ctl_logger()
  *	if ctl_startup()'s caller didn't specify a logger, this one
  *	is used.  this pollutes stderr with all kinds of trash so it will
@@ -186,3 +186,5 @@ ctl_sa_copy(const struct sockaddr *src, struct sockaddr *dst) {
 		break;
 	}
 }
+
+/*! \file */

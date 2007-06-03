@@ -1,7 +1,7 @@
-/*	$NetBSD: inet_ntop.c,v 1.1.1.4 2005/12/21 23:17:15 christos Exp $	*/
+/*	$NetBSD: inet_ntop.c,v 1.1.1.4.6.1 2007/06/03 17:24:32 wrstuden Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1996-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,9 +17,11 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
+/*! \file */
+
 #if defined(LIBC_SCCS) && !defined(lint)
 static char rcsid[] =
-	"Id: inet_ntop.c,v 1.12.12.4 2004/08/28 06:25:21 marka Exp";
+	"Id: inet_ntop.c,v 1.14.18.3 2005/04/29 00:16:46 marka Exp";
 #endif /* LIBC_SCCS and not lint */
 
 #include <config.h>
@@ -47,12 +49,12 @@ static const char *inet_ntop6(const unsigned char *src, char *dst,
 			      size_t size);
 #endif
 
-/* char *
+/*! char *
  * isc_net_ntop(af, src, dst, size)
  *	convert a network format address to presentation format.
- * return:
+ * \return
  *	pointer to presentation format address (`dst'), or NULL (see errno).
- * author:
+ * \author 
  *	Paul Vixie, 1996.
  */
 const char *
@@ -72,15 +74,16 @@ isc_net_ntop(int af, const void *src, char *dst, size_t size)
 	/* NOTREACHED */
 }
 
-/* const char *
+/*! const char *
  * inet_ntop4(src, dst, size)
  *	format an IPv4 address
- * return:
+ * \return
  *	`dst' (as a const)
- * notes:
+ * \note
  *	(1) uses no statics
+ * \note
  *	(2) takes a unsigned char* not an in_addr as input
- * author:
+ * \author
  *	Paul Vixie, 1996.
  */
 static const char *
@@ -99,10 +102,10 @@ inet_ntop4(const unsigned char *src, char *dst, size_t size)
 	return (dst);
 }
 
-/* const char *
+/*! const char *
  * isc_inet_ntop6(src, dst, size)
  *	convert IPv6 binary address into presentation (printable) format
- * author:
+ * \author
  *	Paul Vixie, 1996.
  */
 #ifdef AF_INET6

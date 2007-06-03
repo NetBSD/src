@@ -12,7 +12,7 @@
 ; OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 ; PERFORMANCE OF THIS SOFTWARE.
 
-; Id: dlv.db.in,v 1.1.4.2 2004/08/19 04:41:06 marka Exp
+; Id: dlv.db.in,v 1.2.18.1 2004/08/19 04:42:43 marka Exp
 
 $TTL 300	; 5 minutes
 @			IN SOA	mname1. . (

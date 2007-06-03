@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.486.2.2 2007/01/28 19:54:41 tron Exp $
+#	$NetBSD: 3RDPARTY,v 1.486.2.2.2.1 2007/06/03 17:25:49 wrstuden Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -76,8 +76,8 @@ Notes:
 bc includes dc, both of which are in the NetBSD tree.
 
 Package:	bind/named
-Version:	libc/includes: 9.3.0, bind: 9.3.2
-Current Vers:	9.3.2
+Version:	libc/includes: 9.4.1, bind: 9.4.1
+Current Vers:	9.4.1
 Maintainer:	Paul Vixie <vixie@vix.com>
 Archive Site:	ftp://ftp.isc.org/isc/bind9/
 Home Page:	http://www.isc.org/sw/bind/
@@ -389,8 +389,8 @@ License:	BSD (3-clause)
 Notes:
 
 Package:	ipf
-Version:	4.1.13
-Current Vers:	4.1.13
+Version:	4.1.22
+Current Vers:	4.1.22
 Maintainer:	Darren Reed
 Archive Site:	http://coombs.anu.edu.au/~avalon/
 Home Page:	http://coombs.anu.edu.au/~avalon/

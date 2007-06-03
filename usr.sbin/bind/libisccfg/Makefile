@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2004/05/18 00:06:58 christos Exp $
+#	$NetBSD: Makefile,v 1.1.1.1.12.1 2007/06/03 17:26:14 wrstuden Exp $
 
 LIB=isccfg
 
@@ -11,6 +11,6 @@ DIST=	${IDIST}/lib/isccfg
 
 .PATH.c:	${DIST}/unix ${DIST}
 
-SRCS=	log.c namedconf.c parser.c version.c 
+SRCS=	aclconf.c log.c namedconf.c parser.c version.c 
 
 .include <bsd.lib.mk>

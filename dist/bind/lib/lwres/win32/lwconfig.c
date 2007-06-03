@@ -1,7 +1,7 @@
-/*	$NetBSD: lwconfig.c,v 1.1.1.1 2004/05/17 23:45:11 christos Exp $	*/
+/*	$NetBSD: lwconfig.c,v 1.1.1.1.12.1 2007/06/03 17:25:35 wrstuden Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2006  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: lwconfig.c,v 1.1.222.3 2004/03/08 09:05:12 marka Exp */
+/* Id: lwconfig.c,v 1.2.18.2 2006/10/03 23:50:51 marka Exp */
 
 /*
  * We do this so that we may incorporate everything in the main routines
@@ -105,7 +105,8 @@ lwres_conf_parse(lwres_context_t *ctx, const char *filename) {
 
 	/* Use the resolver if there is one */
 	ret = generic_lwres_conf_parse(ctx, filename);
-	if (confdata->nsnext > 0)
+	if ((ret != LWRES_R_NOTFOUND && ret != LWRES_R_SUCCESS) ||
+		(ret == LWRES_R_SUCCESS && confdata->nsnext > 0))
 		return (ret);
 
 	/*
@@ -151,5 +152,5 @@ lwres_conf_parse(lwres_context_t *ctx, const char *filename) {
 	}
 
 	GlobalFree(FixedInfo);
-	return (ret);
+	return (LWRES_R_SUCCESS);
 }

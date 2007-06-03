@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2006  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2000-2003  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and distribute this software for any
@@ -15,7 +15,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: sign.sh,v 1.12.12.4 2004/03/10 02:55:54 marka Exp
+# Id: sign.sh,v 1.19.18.2 2006/01/04 00:37:23 marka Exp
 
 SYSTEMTESTTOP=../..
 . $SYSTEMTESTTOP/conf.sh
@@ -31,7 +31,7 @@ zonefile=root.db
 cp ../ns2/keyset-example. .
 cp ../ns2/keyset-dlv. .
 
-keyname=`$KEYGEN -r $RANDFILE -a RSA -b 768 -n zone $zone`
+keyname=`$KEYGEN -r $RANDFILE -a RSAMD5 -b 768 -n zone $zone`
 
 cat $infile $keyname.key > $zonefile
 

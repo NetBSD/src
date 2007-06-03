@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_pton.c,v 1.1.1.3 2005/12/21 23:15:39 christos Exp $	*/
+/*	$NetBSD: inet_pton.c,v 1.1.1.3.6.1 2007/06/03 17:23:00 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -18,7 +18,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "Id: inet_pton.c,v 1.2.206.2 2005/07/28 07:43:18 marka Exp";
+static const char rcsid[] = "Id: inet_pton.c,v 1.3.18.2 2005/07/28 07:38:07 marka Exp";
 #endif /* LIBC_SCCS and not lint */
 
 #include "port_before.h"
@@ -32,7 +32,7 @@ static const char rcsid[] = "Id: inet_pton.c,v 1.2.206.2 2005/07/28 07:43:18 mar
 #include <errno.h>
 #include "port_after.h"
 
-/*
+/*%
  * WARNING: Don't even consider trying to compile this on a system where
  * sizeof(int) < 4.  sizeof(int) > 4 is fine; all the world's not a VAX.
  */
@@ -190,7 +190,7 @@ inet_pton6(src, dst)
 		    inet_pton4(curtok, tp) > 0) {
 			tp += NS_INADDRSZ;
 			seen_xdigits = 0;
-			break;	/* '\0' was seen by inet_pton4(). */
+			break;	/*%< '\\0' was seen by inet_pton4(). */
 		}
 		return (0);
 	}
@@ -221,3 +221,5 @@ inet_pton6(src, dst)
 	memcpy(dst, tmp, NS_IN6ADDRSZ);
 	return (1);
 }
+
+/*! \file */

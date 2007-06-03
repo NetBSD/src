@@ -1,4 +1,4 @@
-/*	$NetBSD: db_test.c,v 1.1.1.3 2005/12/21 23:08:21 christos Exp $	*/
+/*	$NetBSD: db_test.c,v 1.1.1.3.6.1 2007/06/03 17:20:29 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
@@ -17,9 +17,10 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: db_test.c,v 1.56.12.6 2005/03/17 03:58:27 marka Exp */
+/* Id: db_test.c,v 1.59.18.3 2005/04/27 05:00:40 sra Exp */
 
-/*
+/*! \file 
+ * \author
  * Principal Author: Bob Halley
  */
 

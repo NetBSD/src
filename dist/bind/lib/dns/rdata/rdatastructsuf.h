@@ -1,4 +1,4 @@
-/*	$NetBSD: rdatastructsuf.h,v 1.1.1.3 2005/12/21 23:17:00 christos Exp $	*/
+/*	$NetBSD: rdatastructsuf.h,v 1.1.1.3.6.1 2007/06/03 17:24:08 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: rdatastructsuf.h,v 1.7.206.1 2004/03/06 08:14:02 marka Exp */
+/* Id: rdatastructsuf.h,v 1.8 2004/03/05 05:10:04 marka Exp */
 
 ISC_LANG_ENDDECLS
 

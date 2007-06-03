@@ -1,4 +1,4 @@
-/*	$NetBSD: int.h,v 1.1.1.3 2005/12/21 23:18:13 christos Exp $	*/
+/*	$NetBSD: int.h,v 1.1.1.3.6.1 2007/06/03 17:25:36 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: int.h,v 1.1.206.1 2004/03/06 08:15:45 marka Exp */
+/* Id: int.h,v 1.2 2004/03/05 05:13:35 marka Exp */
 
 #ifndef LWRES_INT_H
 #define LWRES_INT_H 1

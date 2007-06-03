@@ -1,7 +1,7 @@
-/*	$NetBSD: hex.h,v 1.1.1.3 2005/12/21 23:17:25 christos Exp $	*/
+/*	$NetBSD: hex.h,v 1.1.1.3.6.1 2007/06/03 17:24:42 wrstuden Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,10 +17,12 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: hex.h,v 1.4.206.1 2004/03/06 08:14:41 marka Exp */
+/* Id: hex.h,v 1.5.18.2 2005/04/29 00:16:55 marka Exp */
 
 #ifndef ISC_HEX_H
 #define ISC_HEX_H 1
+
+/*! \file */
 
 #include <isc/lang.h>
 #include <isc/types.h>
@@ -34,40 +36,40 @@ ISC_LANG_BEGINDECLS
 isc_result_t
 isc_hex_totext(isc_region_t *source, int wordlength,
 	       const char *wordbreak, isc_buffer_t *target);
-/*
- * Convert data into hex encoded text.
+/*!<
+ * \brief Convert data into hex encoded text.
  *
  * Notes:
- *	The hex encoded text in 'target' will be divided into
+ *\li	The hex encoded text in 'target' will be divided into
  *	words of at most 'wordlength' characters, separated by
  * 	the 'wordbreak' string.  No parentheses will surround
  *	the text.
  *
  * Requires:
- *	'source' is a region containing binary data
- *	'target' is a text buffer containing available space
- *	'wordbreak' points to a null-terminated string of
+ *\li	'source' is a region containing binary data
+ *\li	'target' is a text buffer containing available space
+ *\li	'wordbreak' points to a null-terminated string of
  *		zero or more whitespace characters
  *
  * Ensures:
- *	target will contain the hex encoded version of the data
+ *\li	target will contain the hex encoded version of the data
  *	in source.  The 'used' pointer in target will be advanced as
  *	necessary.
  */
 
 isc_result_t
 isc_hex_decodestring(char *cstr, isc_buffer_t *target);
-/*
- * Decode a null-terminated hex string.
+/*!<
+ * \brief Decode a null-terminated hex string.
  *
  * Requires:
- *	'cstr' is non-null.
- *	'target' is a valid buffer.
+ *\li	'cstr' is non-null.
+ *\li	'target' is a valid buffer.
  *
  * Returns:
- *	ISC_R_SUCCESS	-- the entire decoded representation of 'cstring'
+ *\li	#ISC_R_SUCCESS	-- the entire decoded representation of 'cstring'
  *			   fit in 'target'.
- *	ISC_R_BADHEX -- 'cstr' is not a valid hex encoding.
+ *\li	#ISC_R_BADHEX -- 'cstr' is not a valid hex encoding.
  *
  * 	Other error returns are any possible error code from:
  *		isc_lex_create(),
@@ -77,16 +79,16 @@ isc_hex_decodestring(char *cstr, isc_buffer_t *target);
 
 isc_result_t
 isc_hex_tobuffer(isc_lex_t *lexer, isc_buffer_t *target, int length);
-/*
- * Convert hex encoded text from a lexer context into data.
+/*!<
+ * \brief Convert hex encoded text from a lexer context into data.
  *
  * Requires:
- *	'lex' is a valid lexer context
- *	'target' is a buffer containing binary data
- *	'length' is an integer
+ *\li	'lex' is a valid lexer context
+ *\li	'target' is a buffer containing binary data
+ *\li	'length' is an integer
  *
  * Ensures:
- *	target will contain the data represented by the hex encoded
+ *\li	target will contain the data represented by the hex encoded
  *	string parsed by the lexer.  No more than length bytes will be read,
  *	if length is positive.  The 'used' pointer in target will be
  *	advanced as necessary.

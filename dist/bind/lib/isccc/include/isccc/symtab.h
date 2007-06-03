@@ -1,7 +1,7 @@
-/*	$NetBSD: symtab.h,v 1.1.1.3 2005/12/21 23:17:51 christos Exp $	*/
+/*	$NetBSD: symtab.h,v 1.1.1.3.6.1 2007/06/03 17:25:13 wrstuden Exp $	*/
 
 /*
- * Portions Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 2001  Internet Software Consortium.
  * Portions Copyright (C) 2001  Nominum, Inc.
  *
@@ -18,7 +18,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: symtab.h,v 1.2.206.1 2004/03/06 08:15:22 marka Exp */
+/* Id: symtab.h,v 1.3.18.2 2005/04/29 00:17:14 marka Exp */
 
 #ifndef ISCCC_SYMTAB_H
 #define ISCCC_SYMTAB_H 1
@@ -27,9 +27,8 @@
  ***** Module Info
  *****/
 
-/*
- * Symbol Table
- *
+/*! \file 
+ * \brief
  * Provides a simple memory-based symbol table.
  *
  * Keys are C strings.  A type may be specified when looking up,
@@ -41,11 +40,11 @@
  * exists in the table.  What to do in this case is specified by the
  * client.  Possible policies are:
  *
- *	isccc_symexists_reject	Disallow the define, returning ISC_R_EXISTS
- *	isccc_symexists_replace	Replace the old value with the new.  The
+ *\li	isccc_symexists_reject	Disallow the define, returning #ISC_R_EXISTS
+ *\li	isccc_symexists_replace	Replace the old value with the new.  The
  *				undefine action (if provided) will be called
  *				with the old <key, type, value> tuple.
- *	isccc_symexists_add	Add the new tuple, leaving the old tuple in
+ *\li	isccc_symexists_add	Add the new tuple, leaving the old tuple in
  *				the table.  Subsequent lookups will retrieve
  *				the most-recently-defined tuple.
  *

@@ -1,7 +1,7 @@
-/*	$NetBSD: dst_test.c,v 1.1.1.4 2005/12/21 23:08:28 christos Exp $	*/
+/*	$NetBSD: dst_test.c,v 1.1.1.4.6.1 2007/06/03 17:20:37 wrstuden Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: dst_test.c,v 1.37.206.2 2004/06/11 00:30:52 marka Exp */
+/* Id: dst_test.c,v 1.38.18.3 2005/11/30 23:52:53 marka Exp */
 
 #include <config.h>
 
@@ -238,23 +238,34 @@ main(void) {
 	isc_buffer_t b;
 	dns_fixedname_t fname;
 	dns_name_t *name;
+	isc_result_t result;
 
-	isc_mem_create(0, 0, &mctx);
+	result = isc_mem_create(0, 0, &mctx);
+	if (result != ISC_R_SUCCESS)
+		return (1);
 
 	current = isc_mem_get(mctx, 256);
+	if (current == NULL)
+		return (1);
 	getcwd(current, 256);
 
 	dns_result_register();
 
-	isc_entropy_create(mctx, &ectx);
-	isc_entropy_createfilesource(ectx, "randomfile");
+	result = isc_entropy_create(mctx, &ectx);
+	if (result != ISC_R_SUCCESS)
+		return (1);
+	result = isc_entropy_createfilesource(ectx, "randomfile");
+	if (result != ISC_R_SUCCESS)
+		return (1);
 	dst_lib_init(mctx, ectx, ISC_ENTROPY_BLOCKING|ISC_ENTROPY_GOODONLY);
 
 	dns_fixedname_init(&fname);
 	name = dns_fixedname_name(&fname);
 	isc_buffer_init(&b, "test.", 5);
 	isc_buffer_add(&b, 5);
-	dns_name_fromtext(name, &b, NULL, ISC_FALSE, NULL);
+	result = dns_name_fromtext(name, &b, NULL, ISC_FALSE, NULL);
+	if (result != ISC_R_SUCCESS)
+		return (1);
 	io(name, 23616, DST_ALG_DSA, DST_TYPE_PRIVATE|DST_TYPE_PUBLIC, mctx);
 	io(name, 54622, DST_ALG_RSAMD5, DST_TYPE_PRIVATE|DST_TYPE_PUBLIC,
 	   mctx);
@@ -264,7 +275,9 @@ main(void) {
 
 	isc_buffer_init(&b, "dh.", 3);
 	isc_buffer_add(&b, 3);
-	dns_name_fromtext(name, &b, NULL, ISC_FALSE, NULL);
+	result = dns_name_fromtext(name, &b, NULL, ISC_FALSE, NULL);
+	if (result != ISC_R_SUCCESS)
+		return (1);
 	dh(name, 18602, name, 48957, mctx);
 
 	generate(DST_ALG_RSAMD5, mctx);

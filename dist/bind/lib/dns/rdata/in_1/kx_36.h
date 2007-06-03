@@ -1,7 +1,7 @@
-/*	$NetBSD: kx_36.h,v 1.1.1.3 2005/12/21 23:17:10 christos Exp $	*/
+/*	$NetBSD: kx_36.h,v 1.1.1.3.6.1 2007/06/03 17:24:26 wrstuden Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -20,9 +20,10 @@
 #ifndef IN_1_KX_36_H
 #define IN_1_KX_36_H 1
 
-/* Id: kx_36.h,v 1.15.206.1 2004/03/06 08:14:17 marka Exp */
+/* Id: kx_36.h,v 1.16.18.2 2005/04/29 00:16:42 marka Exp */
 
-/* RFC 2230 */
+/*! 
+ *  \brief Per RFC2230 */
 
 typedef struct dns_rdata_in_kx {
 	dns_rdatacommon_t	common;

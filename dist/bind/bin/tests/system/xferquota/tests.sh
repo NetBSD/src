@@ -15,7 +15,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: tests.sh,v 1.20.206.2 2004/03/10 01:05:57 marka Exp
+# Id: tests.sh,v 1.22.18.1 2004/11/23 05:24:46 marka Exp
 
 SYSTEMTESTTOP=..
 . $SYSTEMTESTTOP/conf.sh
@@ -55,7 +55,7 @@ grep ";" dig.out.ns2
 
 $PERL ../digcomp.pl dig.out.ns1 dig.out.ns2 || status=1
 
-sleep 5
+sleep 15
 
 $DIG +tcp +noadd +nosea +nostat +noquest +nocomm +nocmd \
 	a.changing. @10.53.0.1 a -p 5300 > dig.out.ns1 || status=1

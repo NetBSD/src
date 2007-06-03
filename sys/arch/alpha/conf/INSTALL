@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.90.2.1 2006/12/20 22:23:06 bouyer Exp $
+# $NetBSD: INSTALL,v 1.90.2.1.2.1 2007/06/03 17:26:02 wrstuden Exp $
 #
 # Alpha INSTALL kernel.
 
@@ -147,7 +147,9 @@ px*	at	tc? slot ? offset ?
 pxg*	at	tc? slot ? offset ?
 
 # TURBOchannel serial attachments
-zstty*	at	zsc? channel ?			# serial ports on B channels
+zstty0  at      zsc0 channel ?                  # serial port on B channels
+# /dev/ttyB1 has minor number 2 for historical reasons
+zstty2  at      zsc1 channel ?                  # serial port on B channels
 lkkbd0	at	zsc1 channel ?			# keyboard port on A channels
 vsms0	at	zsc0 channel ?			# mouse port on A channels
 

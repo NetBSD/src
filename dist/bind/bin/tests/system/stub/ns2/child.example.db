@@ -13,7 +13,7 @@
 ; OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 ; PERFORMANCE OF THIS SOFTWARE.
 
-; Id: child.example.db,v 1.6.206.1 2004/03/06 10:22:31 marka Exp
+; Id: child.example.db,v 1.7 2004/03/05 05:03:03 marka Exp
 
 $TTL 300	; 5 minutes
 child.example.		IN SOA	ns2.child.example. hostmaster.child.example. (

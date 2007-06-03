@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.h,v 1.1.1.3 2005/12/21 23:15:23 christos Exp $	*/
+/*	$NetBSD: misc.h,v 1.1.1.3.6.1 2007/06/03 17:22:58 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -18,11 +18,13 @@
  */
 
 /*
- * Id: misc.h,v 1.2.2.1.4.1 2004/03/09 08:33:31 marka Exp
+ * Id: misc.h,v 1.4.18.1 2005/04/27 05:00:52 sra Exp
  */
 
 #ifndef _ISC_MISC_H
 #define _ISC_MISC_H
+
+/*! \file */
 
 #include <stdio.h>
 
@@ -39,3 +41,5 @@ extern void		isc_puthexstring(FILE *, const unsigned char *, size_t,
 extern void		isc_tohex(const unsigned char *, size_t, char *);
 
 #endif /*_ISC_MISC_H*/
+
+/*! \file */

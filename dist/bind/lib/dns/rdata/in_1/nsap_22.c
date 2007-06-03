@@ -1,7 +1,7 @@
-/*	$NetBSD: nsap_22.c,v 1.1.1.3 2005/12/21 23:17:10 christos Exp $	*/
+/*	$NetBSD: nsap_22.c,v 1.1.1.3.6.1 2007/06/03 17:24:27 wrstuden Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,11 +17,11 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: nsap_22.c,v 1.33.12.5 2004/03/08 09:04:44 marka Exp */
+/* Id: nsap_22.c,v 1.38.18.2 2005/04/29 00:16:43 marka Exp */
 
 /* Reviewed: Fri Mar 17 10:41:07 PST 2000 by gson */
 
-/* RFC 1706 */
+/* RFC1706 */
 
 #ifndef RDATA_IN_1_NSAP_22_C
 #define RDATA_IN_1_NSAP_22_C

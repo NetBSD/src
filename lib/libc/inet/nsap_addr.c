@@ -1,4 +1,4 @@
-/*	$NetBSD: nsap_addr.c,v 1.2 2004/05/20 23:12:33 christos Exp $	*/
+/*	$NetBSD: nsap_addr.c,v 1.2.12.1 2007/06/03 17:25:54 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -20,9 +20,9 @@
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
-static const char rcsid[] = "Id: nsap_addr.c,v 1.2.206.1 2004/03/09 08:33:33 marka Exp";
+static const char rcsid[] = "Id: nsap_addr.c,v 1.3.18.2 2005/07/28 07:38:08 marka Exp";
 #else
-__RCSID("$NetBSD: nsap_addr.c,v 1.2 2004/05/20 23:12:33 christos Exp $");
+__RCSID("$NetBSD: nsap_addr.c,v 1.2.12.1 2007/06/03 17:25:54 wrstuden Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -40,6 +40,7 @@ __RCSID("$NetBSD: nsap_addr.c,v 1.2 2004/05/20 23:12:33 christos Exp $");
 #include <assert.h>
 #include <ctype.h>
 #include <resolv.h>
+#include <resolv_mt.h>
 
 #include "port_after.h"
 
@@ -96,7 +97,7 @@ char *
 inet_nsap_ntoa(int binlen, const u_char *binary, char *ascii) {
 	int nib;
 	int i;
-	static char tmpbuf[2+255*3];
+	char *tmpbuf = inet_nsap_ntoa_tmpbuf;
 	char *start;
 
 	_DIAGASSERT(binary != NULL);
@@ -125,3 +126,5 @@ inet_nsap_ntoa(int binlen, const u_char *binary, char *ascii) {
 	*ascii = '\0';
 	return (start);
 }
+
+/*! \file */

@@ -1,4 +1,4 @@
-/*	$NetBSD: rwlock_test.c,v 1.1.1.4 2005/12/21 23:08:24 christos Exp $	*/
+/*	$NetBSD: rwlock_test.c,v 1.1.1.4.6.1 2007/06/03 17:20:34 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: rwlock_test.c,v 1.20.206.4 2005/03/17 03:58:28 marka Exp */
+/* Id: rwlock_test.c,v 1.21.18.3 2005/03/17 03:57:08 marka Exp */
 
 #include <config.h>
 
