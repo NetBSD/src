@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.19 2007/05/22 13:56:54 xtraeme Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.20 2007/06/03 19:32:28 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,8 +36,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.19 2007/05/22 13:56:54 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.20 2007/06/03 19:32:28 xtraeme Exp $");
 
+#include "opt_enhanced_speedstep.h"
 #include "opt_intel_odcm.h"
 #include "opt_powernow_k8.h"
 
@@ -142,6 +143,18 @@ identifycpu(struct cpu_info *ci)
 #ifdef INTEL_ONDEMAND_CLOCKMOD
 	clockmod_init();
 #endif
+
+#ifdef ENHANCED_SPEEDSTEP
+	if ((vendor == CPUVENDOR_INTEL) &&
+	    (ci->ci_feature2_flags & CPUID2_EST)) {
+		if (rdmsr(MSR_MISC_ENABLE) & (1 << 16))
+			est_init(CPUVENDOR_INTEL);
+		else
+			aprint_normal("%s: Enhanced SpeedStep disabled by "
+			    "BIOS\n", device_xname(ci->ci_dev));
+	}
+#endif
+
 }
 
 void
