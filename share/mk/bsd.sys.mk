@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.153 2007/05/31 00:17:32 uwe Exp $
+#	$NetBSD: bsd.sys.mk,v 1.154 2007/06/03 17:42:18 christos Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -49,9 +49,7 @@ HAS_SSP=	yes
 .if defined(USE_FORT) && (${USE_FORT} != "no")
 USE_SSP?=	yes
 .if !defined(KERNSRCDIR) && !defined(KERN) # not for kernels nor kern modules
-.if !defined(LIB) || (${LIB} != "c")
 CPPFLAGS+=	-D_FORTIFY_SOURCE=2
-.endif
 .endif
 .endif
 
