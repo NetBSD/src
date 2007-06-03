@@ -1,4 +1,4 @@
-/*	$NetBSD: strncpy.c,v 1.1 2005/12/20 19:28:52 christos Exp $	*/
+/*	$NetBSD: strncpy.c,v 1.2 2007/06/03 17:39:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)strncpy.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: strncpy.c,v 1.1 2005/12/20 19:28:52 christos Exp $");
+__RCSID("$NetBSD: strncpy.c,v 1.2 2007/06/03 17:39:26 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -46,6 +46,10 @@ __RCSID("$NetBSD: strncpy.c,v 1.1 2005/12/20 19:28:52 christos Exp $");
 #include <string.h>
 #else
 #include <lib/libkern/libkern.h>
+#endif
+
+#ifdef _FORTIFY_SOURCE
+#undef strncpy
 #endif
 
 /*
