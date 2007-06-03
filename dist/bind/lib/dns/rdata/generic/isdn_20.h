@@ -1,7 +1,7 @@
-/*	$NetBSD: isdn_20.h,v 1.1.1.3 2005/12/21 23:17:02 christos Exp $	*/
+/*	$NetBSD: isdn_20.h,v 1.1.1.3.6.1 2007/06/03 17:24:13 wrstuden Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -20,9 +20,10 @@
 #ifndef GENERIC_ISDN_20_H
 #define GENERIC_ISDN_20_H 1
 
-/* Id: isdn_20.h,v 1.13.206.1 2004/03/06 08:14:05 marka Exp */
+/* Id: isdn_20.h,v 1.14.18.2 2005/04/29 00:16:33 marka Exp */
 
-/* RFC 1183 */
+/*!
+ * \brief Per RFC1183 */
 
 typedef struct dns_rdata_isdn {
 	dns_rdatacommon_t	common;

@@ -1,4 +1,4 @@
-/*	$NetBSD: getprotoent.c,v 1.1.1.3 2005/12/21 23:15:30 christos Exp $	*/
+/*	$NetBSD: getprotoent.c,v 1.1.1.3.6.1 2007/06/03 17:23:07 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -18,7 +18,7 @@
  */
 
 #if !defined(LINT) && !defined(CODECENTER)
-static const char rcsid[] = "Id: getprotoent.c,v 1.2.206.1 2004/03/09 08:33:36 marka Exp";
+static const char rcsid[] = "Id: getprotoent.c,v 1.3.18.1 2005/04/27 05:00:58 sra Exp";
 #endif
 
 /* Imports */
@@ -174,3 +174,5 @@ init() {
 }
 
 #endif /*__BIND_NOSTATIC*/
+
+/*! \file */

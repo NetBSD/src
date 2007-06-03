@@ -1,4 +1,4 @@
-/*	$NetBSD: ipfstat.c,v 1.12.4.1 2007/05/07 17:05:13 pavel Exp $	*/
+/*	$NetBSD: ipfstat.c,v 1.12.4.1.2.1 2007/06/03 17:25:47 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 2002-2006 by Darren Reed.
@@ -71,7 +71,7 @@
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)fils.c	1.21 4/20/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ipfstat.c,v 1.44.2.19 2007/02/08 22:04:52 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ipfstat.c,v 1.44.2.21 2007/05/11 10:44:16 darrenr Exp";
 #endif
 
 #ifdef __hpux
@@ -95,6 +95,8 @@ int	state_fd = -1;
 int	ipf_fd = -1;
 int	auth_fd = -1;
 int	nat_fd = -1;
+frgroup_t *grtop = NULL;
+frgroup_t *grtail = NULL;
 
 #ifdef STATETOP
 #define	STSTRSIZE 	80
@@ -137,6 +139,7 @@ static	void	showipstates __P((ips_stat_t *));
 static	void	showauthstates __P((fr_authstat_t *));
 static	void	showgroups __P((friostat_t *));
 static	void	usage __P((char *));
+static	void	showtqtable_live __P((int));
 static	void	printlivelist __P((int, int, frentry_t *, char *, char *));
 static	void	printdeadlist __P((int, int, frentry_t *, char *, char *));
 static	void	parse_ipportstr __P((const char *, i6addr_t *, int *));
@@ -478,7 +481,7 @@ u_32_t *frfp;
 		}
 	}
 
-	if (opts & OPT_VERBOSE)
+	if (opts & OPT_DEBUG)
 		PRINTF("opts %#x name %s\n", opts, device);
 
 	if ((opts & OPT_AUTHSTATS) != 0) {
@@ -513,10 +516,11 @@ u_32_t *frfp;
 	static ips_stat_t ipsst, *ipsstp;
 	static ipfrstat_t ifrst, *ifrstp;
 	static friostat_t fio, *fiop;
+	static ipftq_t ipssttab[IPF_TCP_NSTATES];
 	int temp;
 
 	void *rules[2][2];
-	struct nlist deadlist[43] = {
+	struct nlist deadlist[44] = {
 		{ "fr_authstats" },		/* 0 */
 		{ "fae_list" },
 		{ "ipauth" },
@@ -559,6 +563,7 @@ u_32_t *frfp;
 		{ "fr_pass" },
 		{ "fr_flags" },			/* 40 */
 		{ "ipstate_logging" },
+		{ "ips_tqtqb" },
 		{ NULL }
 	};
 
@@ -671,9 +676,12 @@ u_32_t *frfp;
 	 */
 	kmemcpy((char *)ipsstp, (u_long)deadlist[14].n_value, sizeof(*ipsstp));
 	kmemcpy((char *)&temp, (u_long)deadlist[15].n_value, sizeof(temp));
+	kmemcpy((char *)ipssttab, (u_long)deadlist[42].n_value,
+		sizeof(ipssttab));
 	ipsstp->iss_active = temp;
 	ipsstp->iss_table = (void *)deadlist[18].n_value;
 	ipsstp->iss_list = (void *)deadlist[17].n_value;
+	ipsstp->iss_tcptab = ipssttab;
 
 	/*
 	 * Build up the authentiation information stats structure.
@@ -778,10 +786,10 @@ int out, set;
 frentry_t *fp;
 char *group, *comment;
 {
-	frgroup_t *grtop, *grtail, *g;
 	struct	frentry	fb;
 	ipfruleiter_t rule;
 	frentry_t zero;
+	frgroup_t *g;
 	ipfobj_t obj;
 	int n;
 
@@ -792,8 +800,6 @@ char *group, *comment;
 	fb.fr_next = fp;
 	n = 0;
 
-	grtop = NULL;
-	grtail = NULL;
 	rule.iri_inout = out;
 	rule.iri_active = set;
 	rule.iri_rule = &fb;
@@ -853,17 +859,24 @@ char *group, *comment;
 				binprint(fp->fr_data, fp->fr_dsize);
 		}
 		if (fp->fr_grhead[0] != '\0') {
-			g = calloc(1, sizeof(*g));
+			for (g = grtop; g != NULL; g = g->fg_next) {
+				if (!strncmp(fp->fr_grhead, g->fg_name,
+					     FR_GROUPLEN))
+					break;
+			}
+			if (g == NULL) {
+				g = calloc(1, sizeof(*g));
 
-			if (g != NULL) {
-				strncpy(g->fg_name, fp->fr_grhead,
-					FR_GROUPLEN);
-				if (grtop == NULL) {
-					grtop = g;
-					grtail = g;
-				} else {
-					grtail->fg_next = g;
-					grtail = g;
+				if (g != NULL) {
+					strncpy(g->fg_name, fp->fr_grhead,
+						FR_GROUPLEN);
+					if (grtop == NULL) {
+						grtop = g;
+						grtail = g;
+					} else {
+						grtail->fg_next = g;
+						grtail = g;
+					}
 				}
 			}
 		}
@@ -876,11 +889,13 @@ char *group, *comment;
 	n = IPFGENITER_IPF;
 	ioctl(ipf_fd, SIOCIPFDELTOK, &n);
 
-	while ((g = grtop) != NULL) {
-		printf("# Group %s\n", g->fg_name);
-		printlivelist(out, set, NULL, g->fg_name, comment);
-		grtop = g->fg_next;
-		free(g);
+	if (group == NULL) {
+		while ((g = grtop) != NULL) {
+			printf("# Group %s\n", g->fg_name);
+			printlivelist(out, set, NULL, g->fg_name, comment);
+			grtop = g->fg_next;
+			free(g);
+		}
 	}
 }
 
@@ -1029,10 +1044,10 @@ struct	friostat	*fiop;
 		} else
 			return;
 	}
-	if (opts & OPT_VERBOSE)
+	if (opts & OPT_DEBUG)
 		FPRINTF(stderr, "showlist:opts %#x i %d\n", opts, i);
 
-	if (opts & OPT_VERBOSE)
+	if (opts & OPT_DEBUG)
 		PRINTF("fp %p set %d\n", fp, set);
 	if (!fp) {
 		FPRINTF(stderr, "empty list for %s%s\n",
@@ -1090,6 +1105,8 @@ ips_stat_t *ipsp;
 			ipsp->iss_tcp, ipsp->iss_udp, ipsp->iss_icmp);
 		PRINTF("\t%lu hits\n\t%lu misses\n", ipsp->iss_hits,
 			ipsp->iss_miss);
+		PRINTF("\t%lu bucket full\n", ipsp->iss_bucketfull);
+		PRINTF("\t%lu maximum rule references\n", ipsp->iss_maxref);
 		PRINTF("\t%lu maximum\n\t%lu no memory\n\t%lu bkts in use\n",
 			ipsp->iss_max, ipsp->iss_nomem, ipsp->iss_inuse);
 		PRINTF("\t%lu active\n\t%lu expired\n\t%lu closed\n",
@@ -1140,7 +1157,15 @@ ips_stat_t *ipsp;
 		PRINTF("\n");
 
 		free(buckets);
+
+		if (live_kernel == 1) {
+			showtqtable_live(state_fd);
+		} else {
+			printtqtable(ipsp->iss_tcptab);
+		}
+
 		return;
+
 	}
 
 	/*
@@ -2065,4 +2090,22 @@ ipfr_t *frp;
 	if (ioctl(fd, SIOCGENITER, &obj))
 		return EFAULT;
 	return 0;
+}
+
+
+static void showtqtable_live(fd)
+int fd;
+{
+	ipftq_t table[IPF_TCP_NSTATES];
+	ipfobj_t obj;
+
+	bzero((char *)&obj, sizeof(obj));
+	obj.ipfo_rev = IPFILTER_VERSION;
+	obj.ipfo_size = sizeof(table);
+	obj.ipfo_ptr = (void *)table;
+	obj.ipfo_type = IPFOBJ_STATETQTAB;
+
+	if (ioctl(fd, SIOCGTQTAB, &obj) == 0) {
+		printtqtable(table);
+	}
 }

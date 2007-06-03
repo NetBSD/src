@@ -1,7 +1,7 @@
-/*	$NetBSD: tsig.c,v 1.1.1.3 2005/12/21 23:16:41 christos Exp $	*/
+/*	$NetBSD: tsig.c,v 1.1.1.3.6.1 2007/06/03 17:23:48 wrstuden Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -18,9 +18,9 @@
  */
 
 /*
- * Id: tsig.c,v 1.112.2.3.8.6 2005/03/17 03:58:31 marka Exp
+ * Id: tsig.c,v 1.117.18.9 2006/05/02 04:23:12 marka Exp
  */
-
+/*! \file */
 #include <config.h>
 #include <stdlib.h>
 
@@ -50,6 +50,11 @@
 #define is_response(msg) (msg->flags & DNS_MESSAGEFLAG_QR)
 #define algname_is_allocated(algname) \
 	((algname) != dns_tsig_hmacmd5_name && \
+	 (algname) != dns_tsig_hmacsha1_name && \
+	 (algname) != dns_tsig_hmacsha224_name && \
+	 (algname) != dns_tsig_hmacsha256_name && \
+	 (algname) != dns_tsig_hmacsha384_name && \
+	 (algname) != dns_tsig_hmacsha512_name && \
 	 (algname) != dns_tsig_gssapi_name && \
 	 (algname) != dns_tsig_gssapims_name)
 
@@ -98,6 +103,76 @@ static dns_name_t gsstsigms = {
 
 LIBDNS_EXTERNAL_DATA dns_name_t *dns_tsig_gssapims_name = &gsstsigms;
 
+static unsigned char hmacsha1_ndata[] = "\011hmac-sha1";
+static unsigned char hmacsha1_offsets[] = { 0, 10 };
+
+static dns_name_t  hmacsha1 = {
+        DNS_NAME_MAGIC,
+        hmacsha1_ndata, 11, 2,
+        DNS_NAMEATTR_READONLY | DNS_NAMEATTR_ABSOLUTE,
+        hmacsha1_offsets, NULL,
+        {(void *)-1, (void *)-1},
+        {NULL, NULL}
+};
+
+LIBDNS_EXTERNAL_DATA dns_name_t *dns_tsig_hmacsha1_name = &hmacsha1;
+
+static unsigned char hmacsha224_ndata[] = "\013hmac-sha224";
+static unsigned char hmacsha224_offsets[] = { 0, 12 };
+
+static dns_name_t hmacsha224 = {
+        DNS_NAME_MAGIC,
+        hmacsha224_ndata, 13, 2,
+        DNS_NAMEATTR_READONLY | DNS_NAMEATTR_ABSOLUTE,
+        hmacsha224_offsets, NULL,
+        {(void *)-1, (void *)-1},
+        {NULL, NULL}
+};
+
+LIBDNS_EXTERNAL_DATA dns_name_t *dns_tsig_hmacsha224_name = &hmacsha224;
+
+static unsigned char hmacsha256_ndata[] = "\013hmac-sha256";
+static unsigned char hmacsha256_offsets[] = { 0, 12 };
+
+static dns_name_t hmacsha256 = {
+        DNS_NAME_MAGIC,
+        hmacsha256_ndata, 13, 2,
+        DNS_NAMEATTR_READONLY | DNS_NAMEATTR_ABSOLUTE,
+        hmacsha256_offsets, NULL,
+        {(void *)-1, (void *)-1},
+        {NULL, NULL}
+};
+
+LIBDNS_EXTERNAL_DATA dns_name_t *dns_tsig_hmacsha256_name = &hmacsha256;
+
+static unsigned char hmacsha384_ndata[] = "\013hmac-sha384";
+static unsigned char hmacsha384_offsets[] = { 0, 12 };
+
+static dns_name_t hmacsha384 = {
+        DNS_NAME_MAGIC,
+        hmacsha384_ndata, 13, 2,
+        DNS_NAMEATTR_READONLY | DNS_NAMEATTR_ABSOLUTE,
+        hmacsha384_offsets, NULL,
+        {(void *)-1, (void *)-1},
+        {NULL, NULL}
+};
+
+LIBDNS_EXTERNAL_DATA dns_name_t *dns_tsig_hmacsha384_name = &hmacsha384;
+
+static unsigned char hmacsha512_ndata[] = "\013hmac-sha512";
+static unsigned char hmacsha512_offsets[] = { 0, 12 };
+
+static dns_name_t hmacsha512 = {
+        DNS_NAME_MAGIC,
+        hmacsha512_ndata, 13, 2,
+        DNS_NAMEATTR_READONLY | DNS_NAMEATTR_ABSOLUTE,
+        hmacsha512_offsets, NULL,
+        {(void *)-1, (void *)-1},
+        {NULL, NULL}
+};
+
+LIBDNS_EXTERNAL_DATA dns_name_t *dns_tsig_hmacsha512_name = &hmacsha512;
+
 static isc_result_t
 tsig_verify_tcp(isc_buffer_t *source, dns_message_t *msg);
 
@@ -139,6 +214,7 @@ dns_tsigkey_createfromkey(dns_name_t *name, dns_name_t *algorithm,
 	REQUIRE(name != NULL);
 	REQUIRE(algorithm != NULL);
 	REQUIRE(mctx != NULL);
+	REQUIRE(key != NULL || ring != NULL);
 
 	tkey = (dns_tsigkey_t *) isc_mem_get(mctx, sizeof(dns_tsigkey_t));
 	if (tkey == NULL)
@@ -153,6 +229,40 @@ dns_tsigkey_createfromkey(dns_name_t *name, dns_name_t *algorithm,
 	if (dns_name_equal(algorithm, DNS_TSIG_HMACMD5_NAME)) {
 		tkey->algorithm = DNS_TSIG_HMACMD5_NAME;
 		if (dstkey != NULL && dst_key_alg(dstkey) != DST_ALG_HMACMD5) {
+			ret = DNS_R_BADALG;
+			goto cleanup_name;
+		}
+	} else if (dns_name_equal(algorithm, DNS_TSIG_HMACSHA1_NAME)) {
+		tkey->algorithm = DNS_TSIG_HMACSHA1_NAME;
+		if (dstkey != NULL && dst_key_alg(dstkey) != DST_ALG_HMACSHA1) {
+			ret = DNS_R_BADALG;
+			goto cleanup_name;
+		}
+	} else if (dns_name_equal(algorithm, DNS_TSIG_HMACSHA224_NAME)) {
+		tkey->algorithm = DNS_TSIG_HMACSHA224_NAME;
+		if (dstkey != NULL &&
+		    dst_key_alg(dstkey) != DST_ALG_HMACSHA224) {
+			ret = DNS_R_BADALG;
+			goto cleanup_name;
+		}
+	} else if (dns_name_equal(algorithm, DNS_TSIG_HMACSHA256_NAME)) {
+		tkey->algorithm = DNS_TSIG_HMACSHA256_NAME;
+		if (dstkey != NULL &&
+		    dst_key_alg(dstkey) != DST_ALG_HMACSHA256) {
+			ret = DNS_R_BADALG;
+			goto cleanup_name;
+		}
+	} else if (dns_name_equal(algorithm, DNS_TSIG_HMACSHA384_NAME)) {
+		tkey->algorithm = DNS_TSIG_HMACSHA384_NAME;
+		if (dstkey != NULL &&
+		    dst_key_alg(dstkey) != DST_ALG_HMACSHA384) {
+			ret = DNS_R_BADALG;
+			goto cleanup_name;
+		}
+	} else if (dns_name_equal(algorithm, DNS_TSIG_HMACSHA512_NAME)) {
+		tkey->algorithm = DNS_TSIG_HMACSHA512_NAME;
+		if (dstkey != NULL &&
+		    dst_key_alg(dstkey) != DST_ALG_HMACSHA512) {
 			ret = DNS_R_BADALG;
 			goto cleanup_name;
 		}
@@ -204,26 +314,30 @@ dns_tsigkey_createfromkey(dns_name_t *name, dns_name_t *algorithm,
 	tkey->key = dstkey;
 	tkey->ring = ring;
 
-	if (ring != NULL) {
-		RWLOCK(&ring->lock, isc_rwlocktype_write);
-		ret = dns_rbt_addname(ring->keys, name, tkey);
-		if (ret != ISC_R_SUCCESS) {
-			RWUNLOCK(&ring->lock, isc_rwlocktype_write);
-			goto cleanup_algorithm;
-		}
-		refs++;
-		RWUNLOCK(&ring->lock, isc_rwlocktype_write);
-	}
-
 	if (key != NULL)
 		refs++;
-	isc_refcount_init(&tkey->refs, refs);
+	if (ring != NULL)
+		refs++;
+	ret = isc_refcount_init(&tkey->refs, refs);
+	if (ret != ISC_R_SUCCESS)
+		goto cleanup_creator;
+
 	tkey->generated = generated;
 	tkey->inception = inception;
 	tkey->expire = expire;
 	tkey->mctx = mctx;
 
 	tkey->magic = TSIG_MAGIC;
+
+	if (ring != NULL) {
+		RWLOCK(&ring->lock, isc_rwlocktype_write);
+		ret = dns_rbt_addname(ring->keys, name, tkey);
+		if (ret != ISC_R_SUCCESS) {
+			RWUNLOCK(&ring->lock, isc_rwlocktype_write);
+			goto cleanup_refs;
+		}
+		RWUNLOCK(&ring->lock, isc_rwlocktype_write);
+	}
 
 	if (dstkey != NULL && dst_key_size(dstkey) < 64) {
 		char namestr[DNS_NAME_FORMATSIZE];
@@ -238,6 +352,16 @@ dns_tsigkey_createfromkey(dns_name_t *name, dns_name_t *algorithm,
 
 	return (ISC_R_SUCCESS);
 
+ cleanup_refs:
+	tkey->magic = 0;
+	while (refs-- > 0)
+		isc_refcount_decrement(&tkey->refs, NULL);
+	isc_refcount_destroy(&tkey->refs);
+ cleanup_creator:
+	if (tkey->creator != NULL) {
+		dns_name_free(tkey->creator, mctx);
+		isc_mem_put(mctx, tkey->creator, sizeof(dns_name_t));
+	}
  cleanup_algorithm:
 	if (algname_is_allocated(tkey->algorithm)) {
 		if (dns_name_dynamic(tkey->algorithm))
@@ -266,22 +390,93 @@ dns_tsigkey_create(dns_name_t *name, dns_name_t *algorithm,
 	if (length > 0)
 		REQUIRE(secret != NULL);
 
-	if (!dns_name_equal(algorithm, DNS_TSIG_HMACMD5_NAME) && length > 0)
+	if (dns_name_equal(algorithm, DNS_TSIG_HMACMD5_NAME)) {
+		if (secret != NULL) {
+			isc_buffer_t b;
+
+			isc_buffer_init(&b, secret, length);
+			isc_buffer_add(&b, length);
+			result = dst_key_frombuffer(name, DST_ALG_HMACMD5,
+						    DNS_KEYOWNER_ENTITY,
+						    DNS_KEYPROTO_DNSSEC,
+						    dns_rdataclass_in,
+						    &b, mctx, &dstkey);
+				if (result != ISC_R_SUCCESS)
+					return (result);
+		}
+	} else if (dns_name_equal(algorithm, DNS_TSIG_HMACSHA1_NAME)) {
+		if (secret != NULL) {
+			isc_buffer_t b;
+
+			isc_buffer_init(&b, secret, length);
+			isc_buffer_add(&b, length);
+			result = dst_key_frombuffer(name, DST_ALG_HMACSHA1,
+						    DNS_KEYOWNER_ENTITY,
+						    DNS_KEYPROTO_DNSSEC,
+						    dns_rdataclass_in,
+						    &b, mctx, &dstkey);
+				if (result != ISC_R_SUCCESS)
+					return (result);
+		}
+	} else if (dns_name_equal(algorithm, DNS_TSIG_HMACSHA224_NAME)) {
+		if (secret != NULL) {
+			isc_buffer_t b;
+
+			isc_buffer_init(&b, secret, length);
+			isc_buffer_add(&b, length);
+			result = dst_key_frombuffer(name, DST_ALG_HMACSHA224,
+						    DNS_KEYOWNER_ENTITY,
+						    DNS_KEYPROTO_DNSSEC,
+						    dns_rdataclass_in,
+						    &b, mctx, &dstkey);
+				if (result != ISC_R_SUCCESS)
+					return (result);
+		}
+	} else if (dns_name_equal(algorithm, DNS_TSIG_HMACSHA256_NAME)) {
+		if (secret != NULL) {
+			isc_buffer_t b;
+
+			isc_buffer_init(&b, secret, length);
+			isc_buffer_add(&b, length);
+			result = dst_key_frombuffer(name, DST_ALG_HMACSHA256,
+						    DNS_KEYOWNER_ENTITY,
+						    DNS_KEYPROTO_DNSSEC,
+						    dns_rdataclass_in,
+						    &b, mctx, &dstkey);
+				if (result != ISC_R_SUCCESS)
+					return (result);
+		}
+	} else if (dns_name_equal(algorithm, DNS_TSIG_HMACSHA384_NAME)) {
+		if (secret != NULL) {
+			isc_buffer_t b;
+
+			isc_buffer_init(&b, secret, length);
+			isc_buffer_add(&b, length);
+			result = dst_key_frombuffer(name, DST_ALG_HMACSHA384,
+						    DNS_KEYOWNER_ENTITY,
+						    DNS_KEYPROTO_DNSSEC,
+						    dns_rdataclass_in,
+						    &b, mctx, &dstkey);
+				if (result != ISC_R_SUCCESS)
+					return (result);
+		}
+	} else if (dns_name_equal(algorithm, DNS_TSIG_HMACSHA512_NAME)) {
+		if (secret != NULL) {
+			isc_buffer_t b;
+
+			isc_buffer_init(&b, secret, length);
+			isc_buffer_add(&b, length);
+			result = dst_key_frombuffer(name, DST_ALG_HMACSHA512,
+						    DNS_KEYOWNER_ENTITY,
+						    DNS_KEYPROTO_DNSSEC,
+						    dns_rdataclass_in,
+						    &b, mctx, &dstkey);
+				if (result != ISC_R_SUCCESS)
+					return (result);
+		}
+	} else if (length > 0)
 		return (DNS_R_BADALG);
 
-	if (secret != NULL) {
-		isc_buffer_t b;
-
-		isc_buffer_init(&b, secret, length);
-		isc_buffer_add(&b, length);
-		result = dst_key_frombuffer(name, DST_ALG_HMACMD5,
-					    DNS_KEYOWNER_ENTITY,
-					    DNS_KEYPROTO_DNSSEC,
-					    dns_rdataclass_in,
-					    &b, mctx, &dstkey);
-		if (result != ISC_R_SUCCESS)
-			return (result);
-	}
 	result = dns_tsigkey_createfromkey(name, algorithm, dstkey,
 					   generated, creator,
 					   inception, expire, mctx, ring, key);
@@ -365,7 +560,7 @@ dns_tsig_sign(dns_message_t *msg) {
 	isc_buffer_t databuf, sigbuf;
 	isc_buffer_t *dynbuf;
 	dns_name_t *owner;
-	dns_rdata_t *rdata;
+	dns_rdata_t *rdata = NULL;
 	dns_rdatalist_t *datalist;
 	dns_rdataset_t *dataset;
 	isc_region_t r;
@@ -425,6 +620,7 @@ dns_tsig_sign(dns_message_t *msg) {
 	if (key->key != NULL && tsig.error != dns_tsigerror_badsig) {
 		unsigned char header[DNS_MESSAGE_HEADERLEN];
 		isc_buffer_t headerbuf;
+		isc_uint16_t digestbits;
 
 		ret = dst_context_create(key->key, mctx, &ctx);
 		if (ret != ISC_R_SUCCESS)
@@ -551,19 +747,27 @@ dns_tsig_sign(dns_message_t *msg) {
 		if (ret != ISC_R_SUCCESS)
 			goto cleanup_signature;
 		dst_context_destroy(&ctx);
-		tsig.siglen = isc_buffer_usedlength(&sigbuf);
+		digestbits = dst_key_getbits(key->key);
+		if (digestbits != 0) {
+			unsigned int bytes = (digestbits + 1) / 8;
+			if (is_response(msg) && bytes < querytsig.siglen)
+				bytes = querytsig.siglen;
+			if (bytes > isc_buffer_usedlength(&sigbuf))
+				bytes = isc_buffer_usedlength(&sigbuf);
+			tsig.siglen = bytes;
+		} else
+			tsig.siglen = isc_buffer_usedlength(&sigbuf);
 	} else {
 		tsig.siglen = 0;
 		tsig.signature = NULL;
 	}
 
-	rdata = NULL;
 	ret = dns_message_gettemprdata(msg, &rdata);
 	if (ret != ISC_R_SUCCESS)
 		goto cleanup_signature;
 	ret = isc_buffer_allocate(msg->mctx, &dynbuf, 512);
 	if (ret != ISC_R_SUCCESS)
-		goto cleanup_signature;
+		goto cleanup_rdata;
 	ret = dns_rdata_fromstruct(rdata, dns_rdataclass_any,
 				   dns_rdatatype_tsig, &tsig, dynbuf);
 	if (ret != ISC_R_SUCCESS)
@@ -579,7 +783,7 @@ dns_tsig_sign(dns_message_t *msg) {
 	owner = NULL;
 	ret = dns_message_gettempname(msg, &owner);
 	if (ret != ISC_R_SUCCESS)
-		goto cleanup_dynbuf;
+		goto cleanup_rdata;
 	dns_name_init(owner, NULL);
 	ret = dns_name_dup(&key->name, msg->mctx, owner);
 	if (ret != ISC_R_SUCCESS)
@@ -589,16 +793,16 @@ dns_tsig_sign(dns_message_t *msg) {
 	ret = dns_message_gettemprdatalist(msg, &datalist);
 	if (ret != ISC_R_SUCCESS)
 		goto cleanup_owner;
+	dataset = NULL;
+	ret = dns_message_gettemprdataset(msg, &dataset);
+	if (ret != ISC_R_SUCCESS)
+		goto cleanup_rdatalist;
 	datalist->rdclass = dns_rdataclass_any;
 	datalist->type = dns_rdatatype_tsig;
 	datalist->covers = 0;
 	datalist->ttl = 0;
 	ISC_LIST_INIT(datalist->rdata);
 	ISC_LIST_APPEND(datalist->rdata, rdata, link);
-	dataset = NULL;
-	ret = dns_message_gettemprdataset(msg, &dataset);
-	if (ret != ISC_R_SUCCESS)
-		goto cleanup_owner;
 	dns_rdataset_init(dataset);
 	RUNTIME_CHECK(dns_rdatalist_tordataset(datalist, dataset)
 		      == ISC_R_SUCCESS);
@@ -607,16 +811,19 @@ dns_tsig_sign(dns_message_t *msg) {
 
 	return (ISC_R_SUCCESS);
 
-cleanup_owner:
-	if (owner != NULL)
-		dns_message_puttempname(msg, &owner);
-cleanup_dynbuf:
-	if (dynbuf != NULL)
-		isc_buffer_free(&dynbuf);
-cleanup_signature:
+ cleanup_rdatalist:
+	dns_message_puttemprdatalist(msg, &datalist);
+ cleanup_owner:
+	dns_message_puttempname(msg, &owner);
+	goto cleanup_rdata;
+ cleanup_dynbuf:
+	isc_buffer_free(&dynbuf);
+ cleanup_rdata:
+	dns_message_puttemprdata(msg, &rdata);
+ cleanup_signature:
 	if (tsig.signature != NULL)
 		isc_mem_put(mctx, tsig.signature, sigsize);
-cleanup_context:
+ cleanup_context:
 	if (ctx != NULL)
 		dst_context_destroy(&ctx);
 	return (ret);
@@ -640,6 +847,8 @@ dns_tsig_verify(isc_buffer_t *source, dns_message_t *msg,
 	dst_context_t *ctx = NULL;
 	isc_mem_t *mctx;
 	isc_uint16_t addcount, id;
+	unsigned int siglen;
+	unsigned int alg;
 
 	REQUIRE(source != NULL);
 	REQUIRE(DNS_MESSAGE_VALID(msg));
@@ -648,8 +857,11 @@ dns_tsig_verify(isc_buffer_t *source, dns_message_t *msg,
 
 	msg->verify_attempted = 1;
 
-	if (msg->tcp_continuation)
+	if (msg->tcp_continuation) {
+		if (tsigkey == NULL || msg->querytsig == NULL)
+			return (DNS_R_UNEXPECTEDTSIG);
 		return (tsig_verify_tcp(source, msg));
+	}
 
 	/*
 	 * There should be a TSIG record...
@@ -747,6 +959,42 @@ dns_tsig_verify(isc_buffer_t *source, dns_message_t *msg,
 		msg->tsigstatus = dns_tsigerror_badtime;
 		tsig_log(msg->tsigkey, 2, "signature is in the future");
 		return (DNS_R_CLOCKSKEW);
+	}
+
+	/*
+	 * Check digest length.
+	 */
+	alg = dst_key_alg(key);
+	ret = dst_key_sigsize(key, &siglen);
+	if (ret != ISC_R_SUCCESS)
+		return (ret);
+	if (alg == DST_ALG_HMACMD5 || alg == DST_ALG_HMACSHA1 ||
+	    alg == DST_ALG_HMACSHA224 || alg == DST_ALG_HMACSHA256 ||
+	    alg == DST_ALG_HMACSHA384 || alg == DST_ALG_HMACSHA512) {
+		isc_uint16_t digestbits = dst_key_getbits(key);
+		if (tsig.siglen > siglen) {
+			tsig_log(msg->tsigkey, 2, "signature length to big");
+			return (DNS_R_FORMERR);
+		}
+		if (tsig.siglen > 0 &&
+		    (tsig.siglen < 10 || tsig.siglen < ((siglen + 1) / 2))) {
+			tsig_log(msg->tsigkey, 2,
+				 "signature length below minimum");
+			return (DNS_R_FORMERR);
+		}
+		if (tsig.siglen > 0 && digestbits != 0 &&
+		    tsig.siglen < ((digestbits + 1) / 8)) { 
+			msg->tsigstatus = dns_tsigerror_badtrunc;
+			tsig_log(msg->tsigkey, 2,
+				 "truncated signature length too small");
+			return (DNS_R_TSIGVERIFYFAILURE);
+		}
+		if (tsig.siglen > 0 && digestbits == 0 &&
+		    tsig.siglen < siglen) {
+			msg->tsigstatus = dns_tsigerror_badtrunc;
+			tsig_log(msg->tsigkey, 2, "signature length too small");
+			return (DNS_R_TSIGVERIFYFAILURE);
+		}
 	}
 
 	if (tsig.siglen > 0) {
@@ -1183,12 +1431,8 @@ dns_tsigkeyring_create(isc_mem_t *mctx, dns_tsig_keyring_t **ringp) {
 		return (ISC_R_NOMEMORY);
 
 	result = isc_rwlock_init(&ring->lock, 0, 0);
-	if (result != ISC_R_SUCCESS) {
-		UNEXPECTED_ERROR(__FILE__, __LINE__,
-				 "isc_rwlock_init() failed: %s",
-				 isc_result_totext(result));
-		return (ISC_R_UNEXPECTED);
-	}
+	if (result != ISC_R_SUCCESS)
+		return (result);
 
 	ring->keys = NULL;
 	result = dns_rbt_create(mctx, free_tsignode, NULL, &ring->keys);

@@ -1,4 +1,4 @@
-/*	$NetBSD: md5.h,v 1.1.1.2 2005/12/21 23:15:19 christos Exp $	*/
+/*	$NetBSD: md5.h,v 1.1.1.2.6.1 2007/06/03 17:22:53 wrstuden Exp $	*/
 
 /* crypto/md/md5.h */
 /* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
@@ -106,3 +106,5 @@ unsigned char *MD5();
 #else 
 #include <sys/md5.h>
 #endif /* HAVE_MD5 */
+
+/*! \file */

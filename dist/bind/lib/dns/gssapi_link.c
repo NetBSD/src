@@ -1,7 +1,7 @@
-/*	$NetBSD: gssapi_link.c,v 1.1.1.1 2005/12/21 23:16:09 christos Exp $	*/
+/*	$NetBSD: gssapi_link.c,v 1.1.1.1.8.1 2007/06/03 17:23:40 wrstuden Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -18,7 +18,7 @@
  */
 
 /*
- * Id: gssapi_link.c,v 1.1.4.1 2004/12/09 04:07:17 marka Exp
+ * Id: gssapi_link.c,v 1.1.6.3 2005/04/29 00:15:53 marka Exp
  */
 
 #ifdef GSSAPI
@@ -196,17 +196,17 @@ static dst_func_t gssapi_functions = {
 	gssapi_adddata,
 	gssapi_sign,
 	gssapi_verify,
-	NULL, /* computesecret */
+	NULL, /*%< computesecret */
 	gssapi_compare,
-	NULL, /* paramcompare */
+	NULL, /*%< paramcompare */
 	gssapi_generate,
 	gssapi_isprivate,
 	gssapi_destroy,
-	NULL, /* todns */
-	NULL, /* fromdns */
-	NULL, /* tofile */
-	NULL, /* parse */
-	NULL, /* cleanup */
+	NULL, /*%< todns */
+	NULL, /*%< fromdns */
+	NULL, /*%< tofile */
+	NULL, /*%< parse */
+	NULL, /*%< cleanup */
 };
 
 isc_result_t
@@ -220,3 +220,5 @@ dst__gssapi_init(dst_func_t **funcp) {
 #else
 int  gssapi_link_unneeded = 1;
 #endif
+
+/*! \file */

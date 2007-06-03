@@ -1,4 +1,4 @@
-/*	$NetBSD: stdlib.h,v 1.1.1.1 2005/12/21 23:18:03 christos Exp $	*/
+/*	$NetBSD: stdlib.h,v 1.1.1.1.8.1 2007/06/03 17:25:23 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: stdlib.h,v 1.2.4.1 2005/06/08 02:08:32 marka Exp */
+/* Id: stdlib.h,v 1.2.2.1 2005/06/08 02:08:01 marka Exp */
 
 #ifndef LWRES_STDLIB_H
 #define LWRES_STDLIB_H 1

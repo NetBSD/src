@@ -1,4 +1,4 @@
-/*	$NetBSD: rbt_test.c,v 1.1.1.3 2005/12/21 23:08:24 christos Exp $	*/
+/*	$NetBSD: rbt_test.c,v 1.1.1.3.6.1 2007/06/03 17:20:34 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: rbt_test.c,v 1.42.12.5 2005/03/17 03:58:28 marka Exp */
+/* Id: rbt_test.c,v 1.44.18.2 2005/03/17 03:57:07 marka Exp */
 
 #include <config.h>
 

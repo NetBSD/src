@@ -1,7 +1,7 @@
-/*	$NetBSD: rdatalist_p.h,v 1.1.1.3 2005/12/21 23:16:20 christos Exp $	*/
+/*	$NetBSD: rdatalist_p.h,v 1.1.1.3.6.1 2007/06/03 17:23:45 wrstuden Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,10 +17,12 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: rdatalist_p.h,v 1.3.206.2 2004/03/08 02:07:56 marka Exp */
+/* Id: rdatalist_p.h,v 1.5.18.2 2005/04/29 00:16:03 marka Exp */
 
 #ifndef DNS_RDATALIST_P_H
 #define DNS_RDATALIST_P_H
+
+/*! \file */
 
 #include <isc/result.h>
 #include <dns/types.h>

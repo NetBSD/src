@@ -1,7 +1,7 @@
-/*	$NetBSD: ttl.h,v 1.1.1.3 2005/12/21 23:16:57 christos Exp $	*/
+/*	$NetBSD: ttl.h,v 1.1.1.3.6.1 2007/06/03 17:24:04 wrstuden Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,10 +17,12 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: ttl.h,v 1.12.206.1 2004/03/06 08:14:01 marka Exp */
+/* Id: ttl.h,v 1.13.18.2 2005/04/29 00:16:24 marka Exp */
 
 #ifndef DNS_TTL_H
 #define DNS_TTL_H 1
+
+/*! \file */
 
 /***
  ***	Imports
@@ -38,7 +40,7 @@ ISC_LANG_BEGINDECLS
 isc_result_t
 dns_ttl_totext(isc_uint32_t src, isc_boolean_t verbose,
 	       isc_buffer_t *target);
-/*
+/*%<
  * Output a TTL or other time interval in a human-readable form.
  * The time interval is given as a count of seconds in 'src'.
  * The text representation is appended to 'target'.
@@ -49,28 +51,28 @@ dns_ttl_totext(isc_uint32_t src, isc_boolean_t verbose,
  * in "dig", like "1 week 2 days 3 hours 4 minutes 5 seconds".
  *
  * Returns:
- * 	ISC_R_SUCCESS
- * 	ISC_R_NOSPACE
+ * \li	ISC_R_SUCCESS
+ * \li	ISC_R_NOSPACE
  */
 
 isc_result_t
 dns_counter_fromtext(isc_textregion_t *source, isc_uint32_t *ttl);
-/*
+/*%<
  * Converts a counter from either a plain number or a BIND 8 style value.
  *
  * Returns:
- *	ISC_R_SUCCESS
- *	DNS_R_SYNTAX
+ *\li	ISC_R_SUCCESS
+ *\li	DNS_R_SYNTAX
  */
 
 isc_result_t
 dns_ttl_fromtext(isc_textregion_t *source, isc_uint32_t *ttl);
-/*
+/*%<
  * Converts a ttl from either a plain number or a BIND 8 style value.
  *
  * Returns:
- *	ISC_R_SUCCESS
- *	DNS_R_BADTTL
+ *\li	ISC_R_SUCCESS
+ *\li	DNS_R_BADTTL
  */
 
 ISC_LANG_ENDDECLS

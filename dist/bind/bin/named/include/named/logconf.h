@@ -1,7 +1,7 @@
-/*	$NetBSD: logconf.h,v 1.1.1.3 2005/12/21 23:08:10 christos Exp $	*/
+/*	$NetBSD: logconf.h,v 1.1.1.3.6.1 2007/06/03 17:20:17 wrstuden Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,16 +17,18 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: logconf.h,v 1.10.208.1 2004/03/06 10:21:24 marka Exp */
+/* Id: logconf.h,v 1.11.18.4 2006/03/02 00:37:21 marka Exp */
 
 #ifndef NAMED_LOGCONF_H
 #define NAMED_LOGCONF_H 1
 
+/*! \file */
+
 #include <isc/log.h>
 
 isc_result_t
-ns_log_configure(isc_logconfig_t *logconf, cfg_obj_t *logstmt);
-/*
+ns_log_configure(isc_logconfig_t *logconf, const cfg_obj_t *logstmt);
+/*%<
  * Set up the logging configuration in '*logconf' according to
  * the named.conf data in 'logstmt'.
  */

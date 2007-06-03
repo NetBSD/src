@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_print.c,v 1.1.1.4 2005/12/21 23:15:46 christos Exp $	*/
+/*	$NetBSD: ns_print.c,v 1.1.1.4.6.1 2007/06/03 17:23:20 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -18,7 +18,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "Id: ns_print.c,v 1.3.2.1.4.7 2004/09/16 07:01:12 marka Exp";
+static const char rcsid[] = "Id: ns_print.c,v 1.6.18.4 2005/04/27 05:01:09 sra Exp";
 #endif
 
 /* Import. */
@@ -71,12 +71,11 @@ static int	addtab(size_t len, size_t target, int spaced,
 
 /* Public. */
 
-/*
- * int
- * ns_sprintrr(handle, rr, name_ctx, origin, buf, buflen)
+/*%
  *	Convert an RR to presentation format.
+ *
  * return:
- *	Number of characters written to buf, or -1 (check errno).
+ *\li	Number of characters written to buf, or -1 (check errno).
  */
 int
 ns_sprintrr(const ns_msg *handle, const ns_rr *rr,
@@ -92,13 +91,11 @@ ns_sprintrr(const ns_msg *handle, const ns_rr *rr,
 	return (n);
 }
 
-/*
- * int
- * ns_sprintrrf(msg, msglen, name, class, type, ttl, rdata, rdlen,
- *	       name_ctx, origin, buf, buflen)
+/*%
  *	Convert the fields of an RR into presentation format.
+ *
  * return:
- *	Number of characters written to buf, or -1 (check errno).
+ *\li	Number of characters written to buf, or -1 (check errno).
  */
 int
 ns_sprintrrf(const u_char *msg, size_t msglen,
@@ -647,10 +644,10 @@ ns_sprintrrf(const u_char *msg, size_t msglen,
 
 		T(len = addname(msg, msglen, &rdata, origin, &buf, &buflen));
 		T(addstr(" ", 1, &buf, &buflen));
-		rdata += 8; /* time */
+		rdata += 8; /*%< time */
 		n = ns_get16(rdata); rdata += INT16SZ;
-		rdata += n; /* sig */
-		n = ns_get16(rdata); rdata += INT16SZ; /* original id */
+		rdata += n; /*%< sig */
+		n = ns_get16(rdata); rdata += INT16SZ; /*%< original id */
 		sprintf(buf, "%d", ns_get16(rdata));
 		rdata += INT16SZ;
 		addlen(strlen(buf), &buf, &buflen);
@@ -737,7 +734,7 @@ ns_sprintrrf(const u_char *msg, size_t msglen,
 
 /* Private. */
 
-/*
+/*%
  * size_t
  * prune_origin(name, origin)
  *	Find out if the name is at or under the current origin.
@@ -770,7 +767,7 @@ prune_origin(const char *name, const char *origin) {
 	return (name - oname);
 }
 
-/*
+/*%
  * int
  * charstr(rdata, edata, buf, buflen)
  *	Format a <character-string> into the presentation buffer.
@@ -826,7 +823,7 @@ addname(const u_char *msg, size_t msglen,
 
 	n = dn_expand(msg, msg + msglen, *pp, *buf, *buflen);
 	if (n < 0)
-		goto enospc;	/* Guess. */
+		goto enospc;	/*%< Guess. */
 	newlen = prune_origin(*buf, origin);
 	if (**buf == '\0') {
 		goto root;
@@ -898,3 +895,5 @@ addtab(size_t len, size_t target, int spaced, char **buf, size_t *buflen) {
 	}
 	return (spaced);
 }
+
+/*! \file */

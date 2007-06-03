@@ -1,4 +1,4 @@
-/*	$NetBSD: heap.c,v 1.1.1.3 2005/12/21 23:15:42 christos Exp $	*/
+/*	$NetBSD: heap.c,v 1.1.1.3.6.1 2007/06/03 17:23:17 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/*
+/*%
  * Heap implementation of priority queues adapted from the following:
  *
  *	_Introduction to Algorithms_, Cormen, Leiserson, and Rivest,
@@ -28,7 +28,7 @@
  */
 
 #if !defined(LINT) && !defined(CODECENTER)
-static const char rcsid[] = "Id: heap.c,v 1.1.206.1 2004/03/09 08:33:43 marka Exp";
+static const char rcsid[] = "Id: heap.c,v 1.2.18.2 2006/03/10 00:20:08 marka Exp";
 #endif /* not lint */
 
 #include "port_before.h"
@@ -41,7 +41,7 @@ static const char rcsid[] = "Id: heap.c,v 1.1.206.1 2004/03/09 08:33:43 marka Ex
 
 #include <isc/heap.h>
 
-/*
+/*%
  * Note: to make heap_parent and heap_left easy to compute, the first
  * element of the heap array is not used; i.e. heap subscripts are 1-based,
  * not 0-based.
@@ -56,9 +56,13 @@ heap_new(heap_higher_priority_func higher_priority, heap_index_func index,
 	 int array_size_increment) {
 	heap_context ctx;
 
-	ctx = (heap_context)malloc(sizeof (struct heap_context));
-	if (ctx == NULL || higher_priority == NULL)
+	if (higher_priority == NULL)
 		return (NULL);
+
+	ctx = (heap_context)malloc(sizeof (struct heap_context));
+	if (ctx == NULL)
+		return (NULL);
+
 	ctx->array_size = 0;
 	if (array_size_increment == 0)
 		ctx->array_size_increment = ARRAY_SIZE_INCREMENT;
@@ -230,3 +234,5 @@ heap_for_each(heap_context ctx, heap_for_each_func action, void *uap) {
 		(action)(ctx->heap[i], uap);
 	return (0);
 }
+
+/*! \file */

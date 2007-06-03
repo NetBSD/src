@@ -1,7 +1,7 @@
-/*	$NetBSD: mem.h,v 1.1.1.3 2005/12/21 23:17:27 christos Exp $	*/
+/*	$NetBSD: mem.h,v 1.1.1.3.6.1 2007/06/03 17:24:45 wrstuden Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1997-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,10 +17,12 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: mem.h,v 1.54.12.4 2004/10/11 05:55:51 marka Exp */
+/* Id: mem.h,v 1.59.18.9 2006/01/04 23:50:23 marka Exp */
 
 #ifndef ISC_MEM_H
 #define ISC_MEM_H 1
+
+/*! \file */
 
 #include <stdio.h>
 
@@ -38,7 +40,7 @@ typedef void (*isc_mem_water_t)(void *, int);
 typedef void * (*isc_memalloc_t)(void *, size_t);
 typedef void (*isc_memfree_t)(void *, void *);
 
-/*
+/*%
  * Define ISC_MEM_DEBUG=1 to make all functions that free memory
  * set the pointer being freed to NULL after being freed.
  * This is the default; set ISC_MEM_DEBUG=0 to disable it.
@@ -47,7 +49,7 @@ typedef void (*isc_memfree_t)(void *, void *);
 #define ISC_MEM_DEBUG 1
 #endif
 
-/*
+/*%
  * Define ISC_MEM_TRACKLINES=1 to turn on detailed tracing of memory
  * allocation and freeing by file and line number.
  */
@@ -55,7 +57,7 @@ typedef void (*isc_memfree_t)(void *, void *);
 #define ISC_MEM_TRACKLINES 1
 #endif
 
-/*
+/*%
  * Define ISC_MEM_CHECKOVERRUN=1 to turn on checks for using memory outside
  * the requested space.  This will increase the size of each allocation.
  */
@@ -63,7 +65,7 @@ typedef void (*isc_memfree_t)(void *, void *);
 #define ISC_MEM_CHECKOVERRUN 1
 #endif
 
-/*
+/*%
  * Define ISC_MEM_FILL=1 to fill each block of memory returned to the system
  * with the byte string '0xbe'.  This helps track down uninitialized pointers
  * and the like.  On freeing memory, the space is filled with '0xde' for
@@ -73,7 +75,7 @@ typedef void (*isc_memfree_t)(void *, void *);
 #define ISC_MEM_FILL 1
 #endif
 
-/*
+/*%
  * Define ISC_MEMPOOL_NAMES=1 to make memory pools store a symbolic
  * name so that the leaking pool can be more readily identified in
  * case of a memory leak.
@@ -83,27 +85,40 @@ typedef void (*isc_memfree_t)(void *, void *);
 #endif
 
 LIBISC_EXTERNAL_DATA extern unsigned int isc_mem_debugging;
+/*@{*/
 #define ISC_MEM_DEBUGTRACE		0x00000001U
 #define ISC_MEM_DEBUGRECORD		0x00000002U
 #define ISC_MEM_DEBUGUSAGE		0x00000004U
-/*
+#define ISC_MEM_DEBUGSIZE		0x00000008U
+#define ISC_MEM_DEBUGCTX		0x00000010U
+#define ISC_MEM_DEBUGALL		0x0000001FU
+/*!<
  * The variable isc_mem_debugging holds a set of flags for
  * turning certain memory debugging options on or off at
  * runtime.  Its is intialized to the value ISC_MEM_DEGBUGGING,
  * which is 0 by default but may be overridden at compile time.
  * The following flags can be specified:
  *
- * ISC_MEM_DEBUGTRACE
+ * \li #ISC_MEM_DEBUGTRACE
  *	Log each allocation and free to isc_lctx.
  *
- * ISC_MEM_DEBUGRECORD
+ * \li #ISC_MEM_DEBUGRECORD
  *	Remember each allocation, and match them up on free.
  *	Crash if a free doesn't match an allocation.
  *
- * ISC_MEM_DEBUGUSAGE
+ * \li #ISC_MEM_DEBUGUSAGE
  *	If a hi_water mark is set, print the maximium inuse memory
  *	every time it is raised once it exceeds the hi_water mark.
+ *
+ * \li #ISC_MEM_DEBUGSIZE
+ *	Check the size argument being passed to isc_mem_put() matches
+ *	that passed to isc_mem_get().
+ *
+ * \li #ISC_MEM_DEBUGCTX
+ *	Check the mctx argument being passed to isc_mem_put() matches
+ *	that passed to isc_mem_get().
  */
+/*@}*/
 
 #if ISC_MEM_TRACKLINES
 #define _ISC_MEM_FILELINE	, __FILE__, __LINE__
@@ -113,17 +128,43 @@ LIBISC_EXTERNAL_DATA extern unsigned int isc_mem_debugging;
 #define _ISC_MEM_FLARG
 #endif
 
+/*!
+ * Define ISC_MEM_USE_INTERNAL_MALLOC=1 to use the internal malloc()
+ * implementation in preference to the system one.  The internal malloc()
+ * is very space-efficient, and quite fast on uniprocessor systems.  It
+ * performs poorly on multiprocessor machines.
+ * JT: we can overcome the performance issue on multiprocessor machines
+ * by carefully separating memory contexts.
+ */
+
+#ifndef ISC_MEM_USE_INTERNAL_MALLOC
+#define ISC_MEM_USE_INTERNAL_MALLOC 1
+#endif
+
+/*
+ * Flags for isc_mem_create2()calls.
+ */
+#define ISC_MEMFLAG_NOLOCK	0x00000001	 /* no lock is necessary */
+#define ISC_MEMFLAG_INTERNAL	0x00000002	 /* use internal malloc */
+#if ISC_MEM_USE_INTERNAL_MALLOC
+#define ISC_MEMFLAG_DEFAULT 	ISC_MEMFLAG_INTERNAL
+#else
+#define ISC_MEMFLAG_DEFAULT 	0
+#endif
+
+
 #define isc_mem_get(c, s)	isc__mem_get((c), (s) _ISC_MEM_FILELINE)
 #define isc_mem_allocate(c, s)	isc__mem_allocate((c), (s) _ISC_MEM_FILELINE)
 #define isc_mem_strdup(c, p)	isc__mem_strdup((c), (p) _ISC_MEM_FILELINE)
 #define isc_mempool_get(c)	isc__mempool_get((c) _ISC_MEM_FILELINE)
 
-/*
+/*% 
  * isc_mem_putanddetach() is a convienence function for use where you
  * have a structure with an attached memory context.
  *
  * Given:
  *
+ * \code
  * struct {
  *	...
  *	isc_mem_t *mctx;
@@ -133,14 +174,17 @@ LIBISC_EXTERNAL_DATA extern unsigned int isc_mem_debugging;
  * isc_mem_t *mctx;
  *
  * isc_mem_putanddetach(&ptr->mctx, ptr, sizeof(*ptr));
+ * \endcode
  *
  * is the equivalent of:
  *
+ * \code
  * mctx = NULL;
  * isc_mem_attach(ptr->mctx, &mctx);
  * isc_mem_detach(&ptr->mctx);
  * isc_mem_put(mctx, ptr, sizeof(*ptr));
  * isc_mem_detach(&mctx);
+ * \endcode
  */
 
 #if ISC_MEM_DEBUG
@@ -172,25 +216,35 @@ LIBISC_EXTERNAL_DATA extern unsigned int isc_mem_debugging;
 #define isc_mempool_put(c, p)	isc__mempool_put((c), (p) _ISC_MEM_FILELINE)
 #endif
 
+/*@{*/
 isc_result_t 
 isc_mem_create(size_t max_size, size_t target_size,
 	       isc_mem_t **mctxp);
+
+isc_result_t
+isc_mem_create2(size_t max_size, size_t target_size,
+		isc_mem_t **mctxp, unsigned int flags);
 
 isc_result_t 
 isc_mem_createx(size_t max_size, size_t target_size,
 		isc_memalloc_t memalloc, isc_memfree_t memfree,
 		void *arg, isc_mem_t **mctxp);
-/*
- * Create a memory context.
+
+isc_result_t 
+isc_mem_createx2(size_t max_size, size_t target_size,
+		 isc_memalloc_t memalloc, isc_memfree_t memfree,
+		 void *arg, isc_mem_t **mctxp, unsigned int flags);
+
+/*!<
+ * \brief Create a memory context.
  *
  * 'max_size' and 'target_size' are tuning parameters.  When
- * ISC_MEM_USE_INTERNAL_MALLOC is true, allocations smaller than
- * 'max_size' will be satisfied by getting blocks of size
- * 'target_size' from the system allocator and breaking them up into
- * pieces; larger allocations will use the system allocator directly.
- * If 'max_size' and/or 'target_size' are zero, default values will be
- * used.  When ISC_MEM_USE_INTERNAL_MALLOC is false, 'target_size' is
- * ignored.
+ * ISC_MEMFLAG_INTERNAL is set, allocations smaller than 'max_size'
+ * will be satisfied by getting blocks of size 'target_size' from the
+ * system allocator and breaking them up into pieces; larger allocations
+ * will use the system allocator directly. If 'max_size' and/or
+ * 'target_size' are zero, default values will be * used.  When
+ * ISC_MEMFLAG_INTERNAL is not set, 'target_size' is ignored.
  *
  * 'max_size' is also used to size the statistics arrays and the array
  * used to record active memory when ISC_MEM_DEBUGRECORD is set.  Settin
@@ -202,15 +256,23 @@ isc_mem_createx(size_t max_size, size_t target_size,
  * using isc_mem_create() will use the standard library malloc()
  * and free().
  *
+ * If ISC_MEMFLAG_NOLOCK is set in 'flags', the corresponding memory context
+ * will be accessed without locking.  The user who creates the context must
+ * ensure there be no race.  Since this can be a source of bug, it is generally
+ * inadvisable to use this flag unless the user is very sure about the race
+ * condition and the access to the object is highly performance sensitive.
+ *
  * Requires:
  * mctxp != NULL && *mctxp == NULL */
+/*@}*/
 
+/*@{*/
 void 
 isc_mem_attach(isc_mem_t *, isc_mem_t **);
 void 
 isc_mem_detach(isc_mem_t **);
-/*
- * Attach to / detach from a memory context.
+/*!<
+ * \brief Attach to / detach from a memory context.
  *
  * This is intended for applications that use multiple memory contexts
  * in such a way that it is not obvious when the last allocations from
@@ -221,10 +283,11 @@ isc_mem_detach(isc_mem_t **);
  * and destroy it at the end of main(), thereby guaranteeing that it
  * is not destroyed while there are outstanding allocations.
  */
+/*@}*/
 
 void 
 isc_mem_destroy(isc_mem_t **);
-/*
+/*%<
  * Destroy a memory context.
  */
 
@@ -232,38 +295,40 @@ isc_result_t
 isc_mem_ondestroy(isc_mem_t *ctx,
 		  isc_task_t *task,
 		  isc_event_t **event);
-/*
+/*%<
  * Request to be notified with an event when a memory context has
  * been successfully destroyed.
  */
 
 void 
 isc_mem_stats(isc_mem_t *mctx, FILE *out);
-/*
+/*%<
  * Print memory usage statistics for 'mctx' on the stream 'out'.
  */
 
 void 
 isc_mem_setdestroycheck(isc_mem_t *mctx,
 			isc_boolean_t on);
-/*
- * Iff 'on' is ISC_TRUE, 'mctx' will check for memory leaks when
+/*%<
+ * If 'on' is ISC_TRUE, 'mctx' will check for memory leaks when
  * destroyed and abort the program if any are present.
  */
 
+/*@{*/
 void 
 isc_mem_setquota(isc_mem_t *, size_t);
 size_t 
 isc_mem_getquota(isc_mem_t *);
-/*
+/*%<
  * Set/get the memory quota of 'mctx'.  This is a hard limit
  * on the amount of memory that may be allocated from mctx;
  * if it is exceeded, allocations will fail.
  */
+/*@}*/
 
 size_t 
 isc_mem_inuse(isc_mem_t *mctx);
-/*
+/*%<
  * Get an estimate of the number of memory in use in 'mctx', in bytes.
  * This includes quantization overhead, but does not include memory
  * allocated from the system but not yet used.
@@ -272,11 +337,13 @@ isc_mem_inuse(isc_mem_t *mctx);
 void
 isc_mem_setwater(isc_mem_t *mctx, isc_mem_water_t water, void *water_arg,
 		 size_t hiwater, size_t lowater);
-/*
- * Set high and low water marks for this memory context.  When the memory
- * usage of 'mctx' exceeds 'hiwater', '(water)(water_arg, ISC_MEM_HIWATER)'
+/*%<
+ * Set high and low water marks for this memory context.  
+ * 
+ * When the memory
+ * usage of 'mctx' exceeds 'hiwater', '(water)(water_arg, #ISC_MEM_HIWATER)'
  * will be called.  When the usage drops below 'lowater', 'water' will
- * again be called, this time with ISC_MEM_LOWATER.
+ * again be called, this time with #ISC_MEM_LOWATER.
  *
  * If 'water' is NULL then 'water_arg', 'hi_water' and 'lo_water' are
  * ignored and the state is reset.
@@ -287,53 +354,77 @@ isc_mem_setwater(isc_mem_t *mctx, isc_mem_water_t water, void *water_arg,
  *	hi_water >= lo_water
  */
 
+void
+isc_mem_printactive(isc_mem_t *mctx, FILE *file);
+/*%<
+ * Print to 'file' all active memory in 'mctx'.
+ *
+ * Requires ISC_MEM_DEBUGRECORD to have been set.
+ */
+
+void
+isc_mem_printallactive(FILE *file);
+/*%<
+ * Print to 'file' all active memory in all contexts.
+ *
+ * Requires ISC_MEM_DEBUGRECORD to have been set.
+ */
+
+void
+isc_mem_checkdestroyed(FILE *file);
+/*%<
+ * Check that all memory contexts have been destroyed.
+ * Prints out those that have not been.
+ * Fatally fails if there are still active contexts.
+ */
+
 /*
  * Memory pools
  */
 
 isc_result_t
 isc_mempool_create(isc_mem_t *mctx, size_t size, isc_mempool_t **mpctxp);
-/*
+/*%<
  * Create a memory pool.
  *
  * Requires:
- *	mctx is a valid memory context.
- *	size > 0
- *	mpctxp != NULL and *mpctxp == NULL
+ *\li	mctx is a valid memory context.
+ *\li	size > 0
+ *\li	mpctxp != NULL and *mpctxp == NULL
  *
  * Defaults:
- *	maxalloc = UINT_MAX
- *	freemax = 1
- *	fillcount = 1
+ *\li	maxalloc = UINT_MAX
+ *\li	freemax = 1
+ *\li	fillcount = 1
  *
  * Returns:
- *	ISC_R_NOMEMORY		-- not enough memory to create pool
- *	ISC_R_SUCCESS		-- all is well.
+ *\li	#ISC_R_NOMEMORY		-- not enough memory to create pool
+ *\li	#ISC_R_SUCCESS		-- all is well.
  */
 
 void
 isc_mempool_destroy(isc_mempool_t **mpctxp);
-/*
+/*%<
  * Destroy a memory pool.
  *
  * Requires:
- *	mpctxp != NULL && *mpctxp is a valid pool.
- *	The pool has no un"put" allocations outstanding
+ *\li	mpctxp != NULL && *mpctxp is a valid pool.
+ *\li	The pool has no un"put" allocations outstanding
  */
 
 void
 isc_mempool_setname(isc_mempool_t *mpctx, const char *name);
-/*
+/*%<
  * Associate a name with a memory pool.  At most 15 characters may be used.
  *
  * Requires:
- *	mpctx is a valid pool.
- *	name != NULL;
+ *\li	mpctx is a valid pool.
+ *\li	name != NULL;
  */
 
 void
 isc_mempool_associatelock(isc_mempool_t *mpctx, isc_mutex_t *lock);
-/*
+/*%<
  * Associate a lock with this memory pool.
  *
  * This lock is used when getting or putting items using this memory pool,
@@ -348,13 +439,13 @@ isc_mempool_associatelock(isc_mempool_t *mpctx, isc_mutex_t *lock);
  *
  * Requires:
  *
- *	mpctpx is a valid pool.
+ *\li	mpctpx is a valid pool.
  *
- *	lock != NULL.
+ *\li	lock != NULL.
  *
- *	No previous lock is assigned to this pool.
+ *\li	No previous lock is assigned to this pool.
  *
- *	The lock is initialized before calling this function via the normal
+ *\li	The lock is initialized before calling this function via the normal
  *	means of doing that.
  */
 
@@ -374,57 +465,57 @@ isc_mempool_associatelock(isc_mempool_t *mpctx, isc_mutex_t *lock);
 
 unsigned int
 isc_mempool_getfreemax(isc_mempool_t *mpctx);
-/*
+/*%<
  * Returns the maximum allowed size of the free list.
  */
 
 void
 isc_mempool_setfreemax(isc_mempool_t *mpctx, unsigned int limit);
-/*
+/*%<
  * Sets the maximum allowed size of the free list.
  */
 
 unsigned int
 isc_mempool_getfreecount(isc_mempool_t *mpctx);
-/*
+/*%<
  * Returns current size of the free list.
  */
 
 unsigned int
 isc_mempool_getmaxalloc(isc_mempool_t *mpctx);
-/*
+/*!<
  * Returns the maximum allowed number of allocations.
  */
 
 void
 isc_mempool_setmaxalloc(isc_mempool_t *mpctx, unsigned int limit);
-/*
+/*%<
  * Sets the maximum allowed number of allocations.
  *
  * Additional requirements:
- *	limit > 0
+ *\li	limit > 0
  */
 
 unsigned int
 isc_mempool_getallocated(isc_mempool_t *mpctx);
-/*
+/*%<
  * Returns the number of items allocated from this pool.
  */
 
 unsigned int
 isc_mempool_getfillcount(isc_mempool_t *mpctx);
-/*
+/*%<
  * Returns the number of items allocated as a block from the parent memory
  * context when the free list is empty.
  */
 
 void
 isc_mempool_setfillcount(isc_mempool_t *mpctx, unsigned int limit);
-/*
+/*%<
  * Sets the fillcount.
  *
  * Additional requirements:
- *	limit > 0
+ *\li	limit > 0
  */
 
 

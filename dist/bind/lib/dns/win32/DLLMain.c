@@ -1,4 +1,4 @@
-/*	$NetBSD: DLLMain.c,v 1.1.1.3 2005/12/21 23:17:10 christos Exp $	*/
+/*	$NetBSD: DLLMain.c,v 1.1.1.3.6.1 2007/06/03 17:24:28 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: DLLMain.c,v 1.3.206.1 2004/03/06 08:14:26 marka Exp */
+/* Id: DLLMain.c,v 1.4 2004/03/05 05:10:41 marka Exp */
 
 #include <windows.h>
 #include <signal.h>

@@ -43,7 +43,7 @@ RSC=rc.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MT /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "LIBISC_EXPORTS" /YX /FD /c
-# ADD CPP /nologo /MD /W3 /GX /O2 /I "./" /I "../../../" /I "include" /I "../include" /I "win32" /I "../../isccfg/include" /D "WIN32" /D "NDEBUG" /D "__STDC__" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "LIBISC_EXPORTS" /YX /FD /c
+# ADD CPP /nologo /MD /W3 /GX /O2 /I "./" /I "../../../" /I "include" /I "../include" /I "../noatomic/include" /I "win32" /I "../../isccfg/include" /D "WIN32" /D "NDEBUG" /D "__STDC__" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "LIBISC_EXPORTS" /YX /FD /c
 # ADD BASE MTL /nologo /D "NDEBUG" /mktyplib203 /win32
 # ADD MTL /nologo /D "NDEBUG" /mktyplib203 /win32
 # ADD BASE RSC /l 0x409 /d "NDEBUG"
@@ -70,7 +70,7 @@ LINK32=link.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MTd /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "LIBISC_EXPORTS" /YX /FD /GZ /c
-# ADD CPP /nologo /MDd /W3 /Gm /GX /ZI /Od /I "./" /I "../../../" /I "include" /I "../include" /I "win32" /I "../../isccfg/include" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "__STDC__" /D "_MBCS" /D "_USRDLL" /D "LIBISC_EXPORTS" /FR /YX /FD /GZ /c
+# ADD CPP /nologo /MDd /W3 /Gm /GX /ZI /Od /I "./" /I "../../../" /I "include" /I "../include" /I "../noatomic/include" /I "win32" /I "../../isccfg/include" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "__STDC__" /D "_MBCS" /D "_USRDLL" /D "LIBISC_EXPORTS" /FR /YX /FD /GZ /c
 # ADD BASE MTL /nologo /D "_DEBUG" /mktyplib203 /win32
 # ADD MTL /nologo /D "_DEBUG" /mktyplib203 /win32
 # ADD BASE RSC /l 0x409 /d "_DEBUG"
@@ -293,6 +293,10 @@ SOURCE=..\include\isc\hmacmd5.h
 # End Source File
 # Begin Source File
 
+SOURCE=..\include\isc\hmacsha.h
+# End Source File
+# Begin Source File
+
 SOURCE=.\include\isc\int.h
 # End Source File
 # Begin Source File
@@ -421,6 +425,10 @@ SOURCE=..\include\isc\ratelimiter.h
 # End Source File
 # Begin Source File
 
+SOURCE=..\include\isc\refcount.h
+# End Source File
+# Begin Source File
+
 SOURCE=..\include\isc\region.h
 # End Source File
 # Begin Source File
@@ -446,6 +454,10 @@ SOURCE=..\include\isc\serial.h
 # Begin Source File
 
 SOURCE=..\include\isc\sha1.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\include\isc\sha2.h
 # End Source File
 # Begin Source File
 
@@ -585,6 +597,10 @@ SOURCE=..\hmacmd5.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\hmacsha.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\inet_aton.c
 # End Source File
 # Begin Source File
@@ -657,6 +673,10 @@ SOURCE=..\ratelimiter.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\refcount.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\region.c
 # End Source File
 # Begin Source File
@@ -674,6 +694,10 @@ SOURCE=..\serial.c
 # Begin Source File
 
 SOURCE=..\sha1.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\sha2.c
 # End Source File
 # Begin Source File
 
@@ -704,6 +728,10 @@ SOURCE=..\timer.c
 SOURCE=.\win32os.c
 # End Source File
 # End Group
+# Begin Source File
+
+SOURCE=..\noatomic\include\atomic.h
+# End Source File
 # Begin Source File
 
 SOURCE=.\libisc.def

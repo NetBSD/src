@@ -1,4 +1,4 @@
-/*	$NetBSD: irp.c,v 1.1.1.3 2005/12/21 23:15:31 christos Exp $	*/
+/*	$NetBSD: irp.c,v 1.1.1.3.6.1 2007/06/03 17:23:08 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -18,7 +18,7 @@
  */
 
 #if !defined(LINT) && !defined(CODECENTER)
-static const char rcsid[] = "Id: irp.c,v 1.3.2.1.10.2 2004/03/17 01:49:41 marka Exp";
+static const char rcsid[] = "Id: irp.c,v 1.6.18.3 2006/03/10 00:20:08 marka Exp";
 #endif
 
 /* Imports */
@@ -68,7 +68,7 @@ static void		irp_close(struct irs_acc *);
 /* send errors to syslog if true. */
 int irp_log_errors = 1;
 
-/*
+/*%
  * This module handles the irp module connection to irpd.
  *
  * The client expects a synchronous interface to functions like
@@ -76,7 +76,7 @@ int irp_log_errors = 1;
  * the wire (it's used in the server).
  */
 
-/*
+/*%
  * irs_acc *irs_irp_acc(const char *options);
  *
  *	Initialize the irp module.
@@ -139,8 +139,7 @@ irs_irp_connection_setup(struct irp_p *cxndata, int *warned) {
 	return (0);
 }
 
-
-/*
+/*%
  * int irs_irp_connect(void);
  *
  *	Sets up the connection to the remote irpd server.
@@ -247,9 +246,7 @@ irs_irp_connect(struct irp_p *pvt) {
 	return (0);
 }
 
-
-
-/*
+/*%
  * int	irs_irp_is_connected(struct irp_p *pvt);
  *
  * Returns:
@@ -263,9 +260,7 @@ irs_irp_is_connected(struct irp_p *pvt) {
 	return (pvt->fdCxn >= 0);
 }
 
-
-
-/*
+/*%
  * void
  * irs_irp_disconnect(struct irp_p *pvt);
  *
@@ -357,11 +352,7 @@ irs_irp_read_line(struct irp_p *pvt, char *buffer, int len) {
 	return (buffpos);
 }
 
-
-
-
-
-/*
+/*%
  * int irp_read_response(struct irp_p *pvt);
  *
  * Returns:
@@ -401,9 +392,7 @@ irs_irp_read_response(struct irp_p *pvt, char *text, size_t textlen) {
 	return (code);
 }
 
-
-
-/*
+/*%
  * char *irp_read_body(struct irp_p *pvt, size_t *size);
  *
  *	Read in the body of a response. Terminated by a line with
@@ -426,6 +415,9 @@ irs_irp_read_body(struct irp_p *pvt, size_t *size) {
 	size_t len = LINEINCR;
 	char *buffer = memget(len);
 	int idx = 0;
+
+	if (buffer == NULL)
+		return (NULL);
 
 	for (;;) {
 		if (irs_irp_read_line(pvt, line, sizeof line) <= 0 ||
@@ -470,8 +462,7 @@ irs_irp_read_body(struct irp_p *pvt, size_t *size) {
 	return (NULL);
 }
 
-
-/*
+/*%
  * int irs_irp_get_full_response(struct irp_p *pvt, int *code,
  *			char **body, size_t *bodylen);
  *
@@ -514,12 +505,11 @@ irs_irp_get_full_response(struct irp_p *pvt, int *code, char *text,
 	return (0);
 }
 
-
-/*
+/*%
  * int irs_irp_send_command(struct irp_p *pvt, const char *fmt, ...);
  *
  *	Sends command to remote connected via the PVT
- *	struture. FMT and args after it are fprintf-like
+ *	structure. FMT and args after it are fprintf-like
  *	arguments for formatting.
  *
  * Returns:
@@ -571,9 +561,7 @@ irs_irp_send_command(struct irp_p *pvt, const char *fmt, ...) {
 
 /* Methods */
 
-
-
-/*
+/*%
  * void irp_close(struct irs_acc *this)
  *
  */
@@ -592,3 +580,5 @@ irp_close(struct irs_acc *this) {
 
 
 
+
+/*! \file */

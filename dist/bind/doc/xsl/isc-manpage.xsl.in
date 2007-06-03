@@ -1,5 +1,5 @@
 <!--
- - Copyright (C) 2005  Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
  -
  - Permission to use, copy, modify, and distribute this software for any
  - purpose with or without fee is hereby granted, provided that the above
@@ -14,7 +14,7 @@
  - PERFORMANCE OF THIS SOFTWARE.
 -->
 
-<!-- Id: isc-manpage.xsl.in,v 1.4.4.3 2005/09/12 00:05:27 marka Exp -->
+<!-- Id: isc-manpage.xsl.in,v 1.2.2.7 2007/01/27 00:22:48 marka Exp -->
 
 <!-- ISC customizations for Docbook-XSL manual page generator. -->
 
@@ -52,6 +52,7 @@
     - disable chunking, and suppress output of .so files.
    -->
   <xsl:template name="write.text.chunk">
+    <xsl:param name="content"/>
     <xsl:if test="substring($content, 1, 4) != '.so ' or
 		  substring-after($content, '&#10;') != ''">
       <xsl:call-template name="isc.no.blanks">

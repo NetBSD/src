@@ -1,4 +1,4 @@
-/*	$NetBSD: t_sockaddr.c,v 1.1.1.3 2005/12/21 23:08:42 christos Exp $	*/
+/*	$NetBSD: t_sockaddr.c,v 1.1.1.3.6.1 2007/06/03 17:20:40 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: t_sockaddr.c,v 1.11.206.1 2004/03/06 10:21:46 marka Exp */
+/* Id: t_sockaddr.c,v 1.12 2004/03/05 04:59:08 marka Exp */
 
 #include <config.h>
 

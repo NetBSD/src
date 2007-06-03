@@ -1,4 +1,4 @@
-/*	$NetBSD: getpwent_r.c,v 1.1.1.3 2005/12/21 23:15:30 christos Exp $	*/
+/*	$NetBSD: getpwent_r.c,v 1.1.1.3.6.1 2007/06/03 17:23:07 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -18,7 +18,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "Id: getpwent_r.c,v 1.5.206.2 2004/09/17 13:32:37 marka Exp";
+static const char rcsid[] = "Id: getpwent_r.c,v 1.6.18.2 2005/04/27 05:00:59 sra Exp";
 #endif /* LIBC_SCCS and not lint */
 
 #include <port_before.h>
@@ -123,7 +123,7 @@ getpwuid_r(uid_t uid,  struct passwd *pwptr, char *buf, int buflen) {
 }
 #endif
 
-/*
+/*%
  *	These assume a single context is in operation per thread.
  *	If this is not the case we will need to call irs directly
  *	rather than through the base functions.
@@ -275,3 +275,4 @@ copy_passwd(struct passwd *pw, struct passwd *pwptr, char *buf, int buflen) {
 	static int getpwent_r_unknown_system = 0;
 #endif /* PASS_R_RETURN */
 #endif /* !def(_REENTRANT) || !def(DO_PTHREADS) || !def(WANT_IRS_PW) */
+/*! \file */

@@ -1,7 +1,7 @@
-/*	$NetBSD: lwinetaton.c,v 1.1.1.3 2005/12/21 23:17:59 christos Exp $	*/
+/*	$NetBSD: lwinetaton.c,v 1.1.1.3.6.1 2007/06/03 17:25:20 wrstuden Exp $	*/
 
 /*
- * Portions Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 1996-2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -70,9 +70,11 @@
  * SOFTWARE.
  */
 
+/*! \file lwinetaton.c
+ */
 #if defined(LIBC_SCCS) && !defined(lint)
 static char sccsid[] = "@(#)inet_addr.c	8.1 (Berkeley) 6/17/93";
-static char rcsid[] = "Id: lwinetaton.c,v 1.10.2.1.2.1 2004/03/06 08:15:32 marka Exp";
+static char rcsid[] = "Id: lwinetaton.c,v 1.12.18.2 2005/04/29 00:17:19 marka Exp";
 #endif /* LIBC_SCCS and not lint */
 
 #include <config.h>
@@ -86,7 +88,7 @@ static char rcsid[] = "Id: lwinetaton.c,v 1.10.2.1.2.1 2004/03/06 08:15:32 marka
 
 #include "assert_p.h"
 
-/*
+/*!
  * Check whether "cp" is a valid ascii representation
  * of an Internet address and convert to a binary address.
  * Returns 1 if the address is valid, 0 if not.

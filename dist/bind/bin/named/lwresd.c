@@ -1,7 +1,7 @@
-/*	$NetBSD: lwresd.c,v 1.1.1.3 2005/12/21 23:07:58 christos Exp $	*/
+/*	$NetBSD: lwresd.c,v 1.1.1.3.6.1 2007/06/03 17:20:11 wrstuden Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,9 +17,10 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: lwresd.c,v 1.37.2.2.2.5 2004/03/08 04:04:19 marka Exp */
+/* Id: lwresd.c,v 1.46.18.7 2006/03/02 00:37:21 marka Exp */
 
-/*
+/*! \file 
+ * \brief
  * Main program for the Lightweight Resolver Daemon.
  *
  * To paraphrase the old saying about X11, "It's not a lightweight deamon
@@ -61,11 +62,11 @@
 #define LWRESLISTENER_MAGIC	ISC_MAGIC('L', 'W', 'R', 'L')
 #define VALID_LWRESLISTENER(l)	ISC_MAGIC_VALID(l, LWRESLISTENER_MAGIC)
 
-/*
+/*!
  * The total number of clients we can handle will be NTASKS * NRECVS.
  */
-#define NTASKS		2	/* tasks to create to handle lwres queries */
-#define NRECVS		2	/* max clients per task */
+#define NTASKS		2	/*%< tasks to create to handle lwres queries */
+#define NRECVS		2	/*%< max clients per task */
 
 typedef ISC_LIST(ns_lwreslistener_t) ns_lwreslistenerlist_t;
 
@@ -80,7 +81,7 @@ initialize_mutex(void) {
 }
 
 
-/*
+/*%
  * Wrappers around our memory management stuff, for the lwres functions.
  */
 void *
@@ -287,14 +288,14 @@ ns_lwresd_parseeresolvconf(isc_mem_t *mctx, cfg_parser_t *pctx,
  * Handle lwresd manager objects
  */
 isc_result_t
-ns_lwdmanager_create(isc_mem_t *mctx, cfg_obj_t *lwres,
+ns_lwdmanager_create(isc_mem_t *mctx, const cfg_obj_t *lwres,
 		     ns_lwresd_t **lwresdp)
 {
 	ns_lwresd_t *lwresd;
 	const char *vname;
 	dns_rdataclass_t vclass;
-	cfg_obj_t *obj, *viewobj, *searchobj;
-	cfg_listelt_t *element;
+	const cfg_obj_t *obj, *viewobj, *searchobj;
+	const cfg_listelt_t *element;
 	isc_result_t result;
 
 	INSIST(lwresdp != NULL && *lwresdp == NULL);
@@ -358,8 +359,8 @@ ns_lwdmanager_create(isc_mem_t *mctx, cfg_obj_t *lwres,
 		     element != NULL;
 		     element = cfg_list_next(element))
 		{
-			cfg_obj_t *search;
-			char *searchstr;
+			const cfg_obj_t *search;
+			const char *searchstr;
 			isc_buffer_t namebuf;
 			dns_fixedname_t fname;
 			dns_name_t *name;
@@ -409,6 +410,7 @@ ns_lwdmanager_create(isc_mem_t *mctx, cfg_obj_t *lwres,
 		ns_lwsearchlist_detach(&lwresd->search);
 	if (lwresd->mctx != NULL)
 		isc_mem_detach(&lwresd->mctx);
+	isc_mem_put(mctx, lwresd, sizeof(ns_lwresd_t));
 	return (result);
 }
 
@@ -512,13 +514,19 @@ listener_create(isc_mem_t *mctx, ns_lwresd_t *lwresd,
 		ns_lwreslistener_t **listenerp)
 {
 	ns_lwreslistener_t *listener;
+	isc_result_t result;
 
 	REQUIRE(listenerp != NULL && *listenerp == NULL);
 
 	listener = isc_mem_get(mctx, sizeof(ns_lwreslistener_t));
 	if (listener == NULL)
 		return (ISC_R_NOMEMORY);
-	RUNTIME_CHECK(isc_mutex_init(&listener->lock) == ISC_R_SUCCESS);
+
+	result = isc_mutex_init(&listener->lock);
+	if (result != ISC_R_SUCCESS) {
+		isc_mem_put(mctx, listener, sizeof(ns_lwreslistener_t));
+		return (result);
+	}
 
 	listener->magic = LWRESLISTENER_MAGIC;
 	listener->refs = 1;
@@ -746,11 +754,11 @@ configure_listener(isc_sockaddr_t *address, ns_lwresd_t *lwresd,
 }
 
 isc_result_t
-ns_lwresd_configure(isc_mem_t *mctx, cfg_obj_t *config) {
-	cfg_obj_t *lwreslist = NULL;
-	cfg_obj_t *lwres = NULL;
-	cfg_obj_t *listenerslist = NULL;
-	cfg_listelt_t *element = NULL;
+ns_lwresd_configure(isc_mem_t *mctx, const cfg_obj_t *config) {
+	const cfg_obj_t *lwreslist = NULL;
+	const cfg_obj_t *lwres = NULL;
+	const cfg_obj_t *listenerslist = NULL;
+	const cfg_listelt_t *element = NULL;
 	ns_lwreslistener_t *listener;
 	ns_lwreslistenerlist_t newlisteners;
 	isc_result_t result;

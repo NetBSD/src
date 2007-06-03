@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_2.c,v 1.1.1.3 2005/12/21 23:17:04 christos Exp $	*/
+/*	$NetBSD: ns_2.c,v 1.1.1.3.6.1 2007/06/03 17:24:17 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: ns_2.c,v 1.42.206.2 2004/03/06 08:14:09 marka Exp */
+/* Id: ns_2.c,v 1.44 2004/03/05 05:10:15 marka Exp */
 
 /* Reviewed: Wed Mar 15 18:15:00 PST 2000 by bwelling */
 

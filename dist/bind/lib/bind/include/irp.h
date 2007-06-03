@@ -1,4 +1,4 @@
-/*	$NetBSD: irp.h,v 1.1.1.3 2005/12/21 23:15:20 christos Exp $	*/
+/*	$NetBSD: irp.h,v 1.1.1.3.6.1 2007/06/03 17:22:54 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -18,16 +18,18 @@
  */
 
 /*
- * Id: irp.h,v 1.1.2.1.4.1 2004/03/09 08:33:29 marka Exp
+ * Id: irp.h,v 1.3.18.1 2005/04/27 05:00:49 sra Exp
  */
 
 #ifndef _IRP_H_INCLUDED
 #define _IRP_H_INCLUDED
 
-#define IRPD_TIMEOUT 30			/* seconds */
-#define IRPD_MAXSESS 50			/* number of simultaneous sessions. */
-#define IRPD_PORT 6660			/* 10 times the number of the beast. */
-#define IRPD_PATH "/var/run/irpd"	/* af_unix socket path */
+/*! \file */
+
+#define IRPD_TIMEOUT 30			/*%< seconds */
+#define IRPD_MAXSESS 50			/*%< number of simultaneous sessions. */
+#define IRPD_PORT 6660			/*%< 10 times the number of the beast. */
+#define IRPD_PATH "/var/run/irpd"	/*%< af_unix socket path */
 
 /* If sets the environment variable IRPDSERVER to an IP address
    (e.g. "192.5.5.1"), then that's the host the client expects irpd to be
@@ -103,3 +105,5 @@ int	irs_irp_get_full_response(struct irp_p *, int *, char *, size_t,
 int	irs_irp_read_line(struct irp_p *, char *, int);
 
 #endif
+
+/*! \file */

@@ -1,7 +1,7 @@
-/*	$NetBSD: int.h,v 1.1.1.3 2005/12/21 23:17:39 christos Exp $	*/
+/*	$NetBSD: int.h,v 1.1.1.3.6.1 2007/06/03 17:24:59 wrstuden Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,10 +17,12 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: int.h,v 1.11.206.1 2004/03/06 08:15:04 marka Exp */
+/* Id: int.h,v 1.12.18.2 2005/04/29 00:17:09 marka Exp */
 
 #ifndef ISC_INT_H
 #define ISC_INT_H 1
+
+/*! \file */
 
 typedef char				isc_int8_t;
 typedef unsigned char			isc_uint8_t;
@@ -39,7 +41,7 @@ typedef unsigned long long		isc_uint64_t;
 #define ISC_INT16_MAX	32767
 #define ISC_UINT16_MAX	65535
 
-/*
+/*%
  * Note that "int" is 32 bits on all currently supported Unix-like operating
  * systems, but "long" can be either 32 bits or 64 bits, thus the 32 bit
  * constants are not qualified with "L".

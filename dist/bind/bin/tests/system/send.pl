@@ -15,7 +15,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: send.pl,v 1.2.206.1 2004/03/06 10:21:48 marka Exp
+# Id: send.pl,v 1.3 2004/03/05 04:59:12 marka Exp
 
 #
 # Send a file to a given address and port using TCP.  Used for

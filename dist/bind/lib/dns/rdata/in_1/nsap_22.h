@@ -1,7 +1,7 @@
-/*	$NetBSD: nsap_22.h,v 1.1.1.3 2005/12/21 23:17:10 christos Exp $	*/
+/*	$NetBSD: nsap_22.h,v 1.1.1.3.6.1 2007/06/03 17:24:27 wrstuden Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -20,9 +20,10 @@
 #ifndef IN_1_NSAP_22_H
 #define IN_1_NSAP_22_H 1
 
-/* Id: nsap_22.h,v 1.13.206.1 2004/03/06 08:14:18 marka Exp */
+/* Id: nsap_22.h,v 1.14.18.2 2005/04/29 00:16:43 marka Exp */
 
-/* RFC 1706 */
+/*! 
+ *  \brief Per RFC1706 */
 
 typedef struct dns_rdata_in_nsap {
 	dns_rdatacommon_t	common;

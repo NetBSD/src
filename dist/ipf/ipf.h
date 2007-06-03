@@ -1,4 +1,4 @@
-/*	$NetBSD: ipf.h,v 1.11.4.1 2007/05/07 17:04:25 pavel Exp $	*/
+/*	$NetBSD: ipf.h,v 1.11.4.1.2.1 2007/06/03 17:25:43 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 1993-2001, 2003 by Darren Reed.
@@ -6,7 +6,7 @@
  * See the IPFILTER.LICENCE file for details on licencing.
  *
  * @(#)ipf.h	1.12 6/5/96
- * Id: ipf.h,v 2.71.2.13 2007/01/14 14:06:12 darrenr Exp
+ * Id: ipf.h,v 2.71.2.15 2007/05/11 10:44:14 darrenr Exp
  */
 
 #ifndef	__IPF_H__
@@ -285,6 +285,7 @@ extern void printsbuf __P((char *));
 extern void printnat __P((struct ipnat *, int));
 extern void printactivenat __P((struct nat *, int, int, u_long));
 extern void printhostmap __P((struct hostmap *, u_int));
+extern void printtqtable __P((ipftq_t *));
 
 extern void set_variable __P((char *, char *));
 extern char *get_variable __P((char *, char **, int));

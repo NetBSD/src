@@ -43,7 +43,7 @@ RSC=rc.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MT /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "libdns_EXPORTS" /YX /FD /c
-# ADD CPP /nologo /MD /W3 /GX /O2 /I "../../../../../openssl-0.9.6k/inc32/openssl/include" /I "./" /I "../../../" /I "include" /I "../include" /I "../../isc/win32" /I "../../isc/win32/include" /I "../../isc/include" /I "../../../../openssl-0.9.6k/inc32" /D "NDEBUG" /D "WIN32" /D "_WINDOWS" /D "__STDC__" /D "_MBCS" /D "_USRDLL" /D "USE_MD5" /D "OPENSSL" /D "DST_USE_PRIVATE_OPENSSL" /D "LIBDNS_EXPORTS" /YX /FD /c
+# ADD CPP /nologo /MD /W3 /GX /O2 /I "../../../../../openssl-0.9.8d/inc32/openssl/include" /I "./" /I "../../../" /I "include" /I "../include" /I "../../isc/win32" /I "../../isc/win32/include" /I "../../isc/include" /I "../../isc/noatomic/include" /I "../../../../openssl-0.9.8d/inc32" /D "NDEBUG" /D "WIN32" /D "_WINDOWS" /D "__STDC__" /D "_MBCS" /D "_USRDLL" /D "USE_MD5" /D "OPENSSL" /D "DST_USE_PRIVATE_OPENSSL" /D "LIBDNS_EXPORTS" /YX /FD /c
 # SUBTRACT CPP /X
 # ADD BASE MTL /nologo /D "NDEBUG" /mktyplib203 /win32
 # ADD MTL /nologo /D "NDEBUG" /mktyplib203 /win32
@@ -54,7 +54,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /dll /machine:I386
-# ADD LINK32 user32.lib advapi32.lib ws2_32.lib ../../isc/win32/Release/libisc.lib ../../../../openssl-0.9.6k/out32dll/libeay32.lib /nologo /dll /machine:I386 /out:"../../../Build/Release/libdns.dll"
+# ADD LINK32 user32.lib advapi32.lib ws2_32.lib ../../isc/win32/Release/libisc.lib ../../../../openssl-0.9.8d/out32dll/libeay32.lib /nologo /dll /machine:I386 /out:"../../../Build/Release/libdns.dll"
 
 !ELSEIF  "$(CFG)" == "libdns - Win32 Debug"
 
@@ -70,7 +70,7 @@ LINK32=link.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MTd /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "libdns_EXPORTS" /YX /FD /GZ /c
-# ADD CPP /nologo /MDd /W3 /Gm /GX /ZI /Od /I "./" /I "../../../" /I "include" /I "../include" /I "../../isc/win32" /I "../../isc/win32/include" /I "../../isc/include" /I "../../../../openssl-0.9.6k/inc32" /D "_DEBUG" /D "WIN32" /D "_WINDOWS" /D "__STDC__" /D "_MBCS" /D "_USRDLL" /D "USE_MD5" /D "OPENSSL" /D "DST_USE_PRIVATE_OPENSSL" /D "LIBDNS_EXPORTS" /FR /YX /FD /GZ /c
+# ADD CPP /nologo /MDd /W3 /Gm /GX /ZI /Od /I "./" /I "../../../" /I "include" /I "../include" /I "../../isc/win32" /I "../../isc/win32/include" /I "../../isc/include" /I "../../isc/noatomic/include" /I "../../../../openssl-0.9.8d/inc32" /D "_DEBUG" /D "WIN32" /D "_WINDOWS" /D "__STDC__" /D "_MBCS" /D "_USRDLL" /D "USE_MD5" /D "OPENSSL" /D "DST_USE_PRIVATE_OPENSSL" /D "LIBDNS_EXPORTS" /FR /YX /FD /GZ /c
 # SUBTRACT CPP /X
 # ADD BASE MTL /nologo /D "_DEBUG" /mktyplib203 /win32
 # ADD MTL /nologo /D "_DEBUG" /mktyplib203 /win32
@@ -81,7 +81,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /dll /debug /machine:I386 /pdbtype:sept
-# ADD LINK32 user32.lib advapi32.lib ws2_32.lib ../../isc/win32/debug/libisc.lib ../../../../openssl-0.9.6k/out32dll/libeay32.lib /nologo /dll /map /debug /machine:I386 /out:"../../../Build/Debug/libdns.dll" /pdbtype:sept
+# ADD LINK32 user32.lib advapi32.lib ws2_32.lib ../../isc/win32/debug/libisc.lib ../../../../openssl-0.9.8d/out32dll/libeay32.lib /nologo /dll /map /debug /machine:I386 /out:"../../../Build/Debug/libdns.dll" /pdbtype:sept
 
 !ENDIF 
 
@@ -96,6 +96,10 @@ LINK32=link.exe
 # Begin Group "Header Files"
 
 # PROP Default_Filter "h;hpp;hxx;hm;inl"
+# Begin Source File
+
+SOURCE=..\include\dns\acache.h
+# End Source File
 # Begin Source File
 
 SOURCE=..\include\dns\acl.h
@@ -151,6 +155,10 @@ SOURCE=..\include\dns\diff.h
 # Begin Source File
 
 SOURCE=..\include\dns\dispatch.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\include\dns\dlz.h
 # End Source File
 # Begin Source File
 
@@ -314,6 +322,10 @@ SOURCE=..\include\dns\sdb.h
 # End Source File
 # Begin Source File
 
+SOURCE=..\include\dns\sdlz.h
+# End Source File
+# Begin Source File
+
 SOURCE=..\include\dns\secalg.h
 # End Source File
 # Begin Source File
@@ -398,6 +410,10 @@ SOURCE=..\include\dns\zt.h
 # PROP Default_Filter "c"
 # Begin Source File
 
+SOURCE=..\acache.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\acl.c
 # End Source File
 # Begin Source File
@@ -439,6 +455,10 @@ SOURCE=..\diff.c
 # Begin Source File
 
 SOURCE=..\dispatch.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\dlz.c
 # End Source File
 # Begin Source File
 
@@ -571,6 +591,10 @@ SOURCE=..\sdb.c
 # Begin Source File
 
 SOURCE=..\soa.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\sdlz.c
 # End Source File
 # Begin Source File
 

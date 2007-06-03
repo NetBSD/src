@@ -1,7 +1,7 @@
-/*	$NetBSD: platform.h,v 1.1.1.3 2005/12/21 23:17:48 christos Exp $	*/
+/*	$NetBSD: platform.h,v 1.1.1.3.6.1 2007/06/03 17:25:10 wrstuden Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: platform.h,v 1.5.12.6 2004/04/19 06:39:56 marka Exp */
+/* Id: platform.h,v 1.9.18.3 2005/02/24 00:32:23 marka Exp */
 
 #ifndef ISC_PLATFORM_H
 #define ISC_PLATFORM_H 1
@@ -57,6 +57,12 @@
  * and we don't want to redeclare it.
  */
 #define ISC_PLATFORM_NONSTDHERRNO
+
+/*
+ * Define if the platform has <sys/un.h>.
+ */
+#undef ISC_PLATFORM_HAVESYSUNH
+
  /*
  * Set up a macro for importing and exporting from the DLL
  */

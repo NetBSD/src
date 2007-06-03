@@ -1,7 +1,7 @@
-/*	$NetBSD: magic.h,v 1.1.1.3 2005/12/21 23:17:23 christos Exp $	*/
+/*	$NetBSD: magic.h,v 1.1.1.3.6.1 2007/06/03 17:24:44 wrstuden Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,20 +17,21 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: magic.h,v 1.11.206.1 2004/03/06 08:14:43 marka Exp */
+/* Id: magic.h,v 1.12.18.2 2005/04/29 00:16:59 marka Exp */
 
 #ifndef ISC_MAGIC_H
 #define ISC_MAGIC_H 1
+
+/*! \file */
 
 typedef struct {
 	unsigned int magic;
 } isc__magic_t;
 
 
-/*
+/*%
  * To use this macro the magic number MUST be the first thing in the
  * structure, and MUST be of type "unsigned int".
- *
  * The intent of this is to allow magic numbers to be checked even though
  * the object is otherwise opaque.
  */

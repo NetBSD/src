@@ -1,8 +1,7 @@
+# $NetBSD: GENERIC,v 1.301.2.1.2.1 2007/06/03 17:26:01 wrstuden Exp $
 #
 # This machine description file is used to generate the default NetBSD
-# kernel.  The generic kernel on NetBSD/alpha does enough to get booted,
-# etc., but not much more.  For a more complete kernel see the ALPHA
-# machine description file.
+# kernel.
 #
 # The machine description file can be customised for your specific
 # machine to reduce the kernel size and improve its performance.
@@ -16,13 +15,11 @@
 # of each device driver in this file see the section 4 man page for the
 # device.
 
-# If you add stuff to this, please add it to the ALPHA configuration, too.
-
 include		"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.301.2.1 $"
+#ident 		"GENERIC-$Revision: 1.301.2.1.2.1 $"
 
 maxusers 32
 
@@ -59,6 +56,8 @@ options 	NTP			# kernel PLL for NTP
 
 # Diagnostic/debugging support options
 #options 	DIAGNOSTIC		# Cheap kernel consistency checks
+#options 	DEBUG			# Expensive debugging checks/support
+#options 	KMEMSTATS		# Collect kmem usage statistics
 options 	DDB			# kernel debugger
 options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 #makeoptions	DEBUG="-g"
@@ -72,13 +71,22 @@ options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 # File systems
 file-system	FFS		# Fast file system
 file-system	MFS		# Memory-based file system
+file-system	LFS		# Log-structured file system
 file-system	CD9660		# ISO-9660 CD-ROM FS (w/RockRidge extensions)
+file-system	ADOSFS		# AmigaDOS-compatible file system
 file-system	MSDOSFS		# MS-DOS-compatible file system
 file-system	NTFS		# Windows/NT file system (experimental)
+file-system	EXT2FS		# Linux ext2 file system
 file-system	NFS		# Sun NFS-compatible file system client
-file-system	KERNFS		# Kernel variable file system (/kern)
-file-system	PROCFS		# Process file system (/proc)
 file-system	NULLFS		# Null file system layer
+file-system	KERNFS		# Kernel variable file system (/kern)
+file-system	FDESC		# File descriptor file system (/dev/fd)
+file-system	PORTAL		# Portal file system
+file-system	UMAPFS		# User-mapping file system layer
+file-system	PROCFS		# Process file system (/proc)
+file-system	UNION		# union file system
+file-system	CODA		# CODA distributed file system
+file-system	SMBFS		# experimental - CIFS; also needs nsmb (below)
 file-system	PTYFS		# /dev/pts/N support
 #file-system	TMPFS		# Efficient memory file-system
 #file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
@@ -101,13 +109,13 @@ options 	INET6		# IPV6
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
-#options 	ISO,TPIP	# OSI
-#options 	EON		# OSI tunneling over IP
-#options 	NETATALK	# AppleTalk networking protocols
-#options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
-#options 	PPP_DEFLATE	# Deflate compression support for PPP
-#options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
-#options 	PFIL_HOOKS	# pfil(9) packet filter hooks
+options 	ISO,TPIP	# OSI
+options 	EON		# OSI tunneling over IP
+options 	NETATALK	# AppleTalk networking protocols
+options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
+options 	PPP_DEFLATE	# Deflate compression support for PPP
+options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
+options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 options 	IPFILTER_LOG	# ipmon(8) log support
 options 	IPFILTER_LOOKUP	# ippool(8) support
 #options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
@@ -140,23 +148,23 @@ options 	COMPAT_15
 options 	COMPAT_16
 options 	COMPAT_20
 options 	COMPAT_30	# NetBSD 3.0 compatibility.
+#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 # OSF/1 binary compatibility
 options 	COMPAT_OSF1
 
 # Linux binary compatibility
 options 	COMPAT_LINUX
-
 options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # System V-like message queues
 options 	SYSVMSG
+
+# System V-like semaphores
+options 	SYSVSEM
 #options 	SEMMNI=10	# number of semaphore identifiers
 #options 	SEMMNS=60	# number of semaphores in system
 #options 	SEMUME=10	# max number of undo entries per process
 #options 	SEMMNU=30	# number of undo structures in system
-
-# System V-like semaphores
-options 	SYSVSEM
 
 # System V-like shared memory
 options 	SYSVSHM
@@ -179,7 +187,10 @@ options 	MIIVERBOSE		# verbose PHY autoconfig messages
 options 	SCSIVERBOSE		# Verbose SCSI errors
 options 	USBVERBOSE		# verbose USB device autoconfig messages
 options 	TCVERBOSE		# recognize "unknown" TC devices
-#options 	PCMCIAVERBOSE
+options 	PCMCIAVERBOSE		# verbose PCMCIA configuration messages
+#options 	EXTENT_DEBUG		# extent alloc/dealloc code debugging
+options 	FIX_UNALIGNED_VAX_FP	# fix unaligned VAX FP loads & stores
+#options 	NO_KERNEL_RCSIDS	# don't include kernel file RCS IDs
 options 	USERCONF		# userconf(4) support
 #options 	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
@@ -257,7 +268,9 @@ px*	at	tc? slot ? offset ?
 pxg*	at	tc? slot ? offset ?
 
 # TURBOchannel serial attachments
-zstty*	at	zsc? channel ?			# serial ports on B channels
+zstty0	at	zsc0 channel ?			# serial port on B channels
+# /dev/ttyB1 has minor number 2 for historical reasons
+zstty2	at	zsc1 channel ?			# serial port on B channels
 lkkbd0	at	zsc1 channel ?			# keyboard port on A channels
 vsms0	at	zsc0 channel ?			# mouse port on A channels
 
@@ -316,6 +329,7 @@ eap*	at	pci? dev ? function ?		# Ensoniq AudioPCI
 en*	at	pci? dev ? function ?		# ENI PCI ATM (untested)
 ep*	at	pci? dev ? function ?		# 3COM 3c59x/3c90x Ethernet
 epic*	at	pci? dev ? function ?		# SMC EPIC/100 Ethernet
+esh*	at	pci? dev ? function ?		# Essential HIPPI card
 eso*	at	pci? dev ? function ?		# ESS Solo-1 PCI AudioDrive
 ex*	at	pci? dev ? function ?		# 3COM 3c90x[BC] Ethernet
 fpa*	at	pci? dev ? function ?		# DEC DEFPA FDDI
@@ -350,6 +364,7 @@ viaide* at	pci? dev ? function ?		# VIA/AMD/Nvidia IDE controllers
 pcn*	at	pci? dev ? function ?		# AMD PCnet-PCI Ethernet
 pcscp*	at	pci? dev ? function ?		# AMD Am53c974 PCscsi-PCI
 ppb*	at	pci? dev ? function ?		# PCI-PCI Bridges
+puc*	at 	pci? dev ? function ?		# PCI "universal" comm. cards
 re*	at	pci? dev ? function ?		# Realtek 8169 Ethernet
 rtk*	at	pci? dev ? function ?		# Realtek 8129/8139 Ethernet
 sio*	at	pci? dev ? function ?		# Intel PCI-ISA Bridges
@@ -380,6 +395,7 @@ mpu*	at	yds?
 exphy*	at mii? phy ?			# 3Com internal PHYs
 icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS189x
 inphy*	at mii? phy ?			# Intel 82555 PHYs
+iophy*	at mii? phy ?			# Intel 82553 PHYs
 lxtphy*	at mii? phy ?			# Level One LXT-970 PHYs
 gphyter* at mii? phy ?			# NS83861 Gig-E PHY
 makphy*	at mii? phy ?			# Marvell Semiconductor 88E1000 PHYs
@@ -390,6 +406,7 @@ rgephy*	at mii? phy ?			# Realtek 8169S internal PHYs
 rlphy*	at mii? phy ?			# Realtek 8139 PHYs
 sqphy*	at mii? phy ?			# Seeq 80220/80221/80223 PHYs
 tlphy*	at mii? phy ?			# ThunderLAN PHYs
+tqphy*	at mii? phy ?			# TDK Semiconductor PHYs
 ukphy*	at mii? phy ?			# generic unknown PHYs
 
 # ISA/EISA bus support
@@ -446,6 +463,7 @@ uha*	at	isa? port 0x334 irq ? drq ?	# UltraStor [13]4f SCSI (unt.)
 pcic0	at	isa? port 0x3e0 iomem 0xd0000 iosiz 0x10000
 pcic1	at	isa? port 0x3e2 iomem 0xcc000 iosiz 0x10000
 pcmcia*	at	pcic? controller ? socket ?
+#satlink0 at	isa? port 0x300 drq 1		# PlanetConnect Satellite receiver.
 
 # EISA devices
 ahb*	at	eisa? slot ?			# Adaptec 174[024] SCSI (unt.)
@@ -480,13 +498,22 @@ mhzc*	at	pcmcia? function ?	# Megahertz Ethernet/Modem combo cards
 com*	at	mhzc?
 sm*	at	mhzc?
 
+# PUC devices
+com*	at puc? port ?			# 16x50s on "universal" comm boards
+lpt*	at puc? port ?			# || ports on "universal" comm boards
+
 # SCSI bus support
 scsibus* at	scsi?
 
 # SCSI devices
 cd*	at	scsibus? target ? lun ?		# SCSI CD-ROM drives
+ch*	at	scsibus? target ? lun ?		# SCSI autochangers
 sd*	at	scsibus? target ? lun ?		# SCSI disk drives
+se*	at	scsibus? target ? lun ?		# Cabletron SCSI<->Ethernet
+ses*	at	scsibus? target ? lun ?		# SCSI SES/SAF-TE
+ss*	at	scsibus? target ? lun ?		# SCSI scanners
 st*	at	scsibus? target ? lun ?		# SCSI tape drives
+uk*	at	scsibus? target ? lun ?		# SCSI unknown
 
 # ATA (IDE) bus support
 atabus* at ata?
@@ -574,8 +601,8 @@ uftdi*	at uhub? port ?
 ucom*	at uftdi? portno ?
 
 # Kyocera AIR-EDGE PHONE
-#ukyopon* at uhub? port ?
-#ucom*	at ukyopon? portno ?
+ukyopon* at uhub? port ?
+ucom*	at ukyopon? portno ?
 
 # USB scanners
 uscanner* at uhub? port ?
@@ -651,7 +678,7 @@ pseudo-device	swcrypto		# software crypto implementation
 pseudo-device	bpfilter
 #pseudo-device	carp			# Common Address Redundancy Protocol
 pseudo-device	ccd		4
-#pseudo-device	cgd		4	# cryptographic disk devices
+pseudo-device	cgd		4	# cryptographic disk devices
 pseudo-device	raid		8	# RAIDframe disk driver
 options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 # Options to enable various other RAIDframe RAID types.
@@ -670,6 +697,9 @@ pseudo-device	ppp
 pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	sl		
+pseudo-device	strip		
+pseudo-device	tun		
+pseudo-device	tap			# virtual Ethernet
 pseudo-device	vnd		
 #options 	VND_COMPRESSION		# compressed vnd(4)
 #pseudo-device	gre			# generic L3 over IP tunnel
@@ -682,6 +712,10 @@ pseudo-device	bridge			# simple inter-network bridging
 pseudo-device	sequencer	1	# MIDI sequencer
 pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness too
+# a pseudo device needed for Coda	# also needs CODA (above)
+pseudo-device	vcoda		4	# coda minicache <-> venus comm.
+# a pseudo device needed for SMBFS
+pseudo-device	nsmb			# experimental - SMB requester
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	wsfont
 pseudo-device	wsmux			# mouse and keyboad multiplexing

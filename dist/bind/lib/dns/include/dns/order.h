@@ -1,7 +1,7 @@
-/*	$NetBSD: order.h,v 1.1.1.1 2004/05/17 23:44:58 christos Exp $	*/
+/*	$NetBSD: order.h,v 1.1.1.1.12.1 2007/06/03 17:23:58 wrstuden Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,10 +17,12 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: order.h,v 1.2.202.3 2004/03/08 09:04:37 marka Exp */
+/* Id: order.h,v 1.3.18.2 2005/04/29 00:16:17 marka Exp */
 
 #ifndef DNS_ORDER_H
 #define DNS_ORDER_H 1
+
+/*! \file */
 
 #include <isc/lang.h>
 #include <isc/types.h>
@@ -31,67 +33,67 @@ ISC_LANG_BEGINDECLS
 
 isc_result_t
 dns_order_create(isc_mem_t *mctx, dns_order_t **orderp);
-/*
+/*%<
  * Create a order object.
  *
  * Requires:
- * 	'orderp' to be non NULL and '*orderp == NULL'.
- *	'mctx' to be valid.
+ * \li	'orderp' to be non NULL and '*orderp == NULL'.
+ *\li	'mctx' to be valid.
  *
  * Returns:
- *	ISC_R_SUCCESS
- *	ISC_R_NOMEMORY
+ *\li	ISC_R_SUCCESS
+ *\li	ISC_R_NOMEMORY
  */
 
 isc_result_t
 dns_order_add(dns_order_t *order, dns_name_t *name,
 	      dns_rdatatype_t rdtype, dns_rdataclass_t rdclass,
 	      unsigned int mode);
-/*
+/*%<
  * Add a entry to the end of the order list.
  *
  * Requires:
- * 	'order' to be valid.
- *	'name' to be valid.
- *	'mode' to be one of DNS_RDATASERATTR_RANDOMIZE,
- *		DNS_RDATASERATTR_RANDOMIZE or zero (DNS_RDATASERATTR_CYCLIC).
+ * \li	'order' to be valid.
+ *\li	'name' to be valid.
+ *\li	'mode' to be one of #DNS_RDATASERATTR_RANDOMIZE,
+ *		#DNS_RDATASERATTR_RANDOMIZE or zero (#DNS_RDATASERATTR_CYCLIC).
  *
  * Returns:
- *	ISC_R_SUCCESS
- *	ISC_R_NOMEMORY
+ *\li	#ISC_R_SUCCESS
+ *\li	#ISC_R_NOMEMORY
  */
 
 unsigned int
 dns_order_find(dns_order_t *order, dns_name_t *name,
 	       dns_rdatatype_t rdtype, dns_rdataclass_t rdclass);
-/*
+/*%<
  * Find the first matching entry on the list.
  *
  * Requires:
- *	'order' to be valid.
- *	'name' to be valid.
+ *\li	'order' to be valid.
+ *\li	'name' to be valid.
  *
  * Returns the mode set by dns_order_add() or zero.
  */
 
 void
 dns_order_attach(dns_order_t *source, dns_order_t **target);
-/*
+/*%<
  * Attach to the 'source' object.
  *
  * Requires:
- * 	'source' to be valid.
- *	'target' to be non NULL and '*target == NULL'.
+ * \li	'source' to be valid.
+ *\li	'target' to be non NULL and '*target == NULL'.
  */
 
 void
 dns_order_detach(dns_order_t **orderp);
-/*
+/*%<
  * Detach from the object.  Clean up if last this was the last
  * reference.
  *
  * Requires:
- *	'*orderp' to be valid.
+ *\li	'*orderp' to be valid.
  */
 
 ISC_LANG_ENDDECLS

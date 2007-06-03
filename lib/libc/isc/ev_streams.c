@@ -1,4 +1,4 @@
-/*	$NetBSD: ev_streams.c,v 1.2 2004/05/20 19:52:31 christos Exp $	*/
+/*	$NetBSD: ev_streams.c,v 1.2.12.1 2007/06/03 17:25:55 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -24,9 +24,9 @@
 #include <sys/cdefs.h>
 #if !defined(LINT) && !defined(CODECENTER) && !defined(lint)
 #ifdef notdef
-static const char rcsid[] = "Id: ev_streams.c,v 1.2.206.2 2004/03/17 00:29:51 marka Exp";
+static const char rcsid[] = "Id: ev_streams.c,v 1.4.18.1 2005/04/27 05:01:06 sra Exp";
 #else
-__RCSID("$NetBSD: ev_streams.c,v 1.2 2004/05/20 19:52:31 christos Exp $");
+__RCSID("$NetBSD: ev_streams.c,v 1.2.12.1 2007/06/03 17:25:55 wrstuden Exp $");
 #endif
 #endif
 
@@ -315,3 +315,5 @@ readable(evContext opaqueCtx, void *uap, int fd, int evmask) {
 		done(opaqueCtx, str);
 }
 #endif
+
+/*! \file */

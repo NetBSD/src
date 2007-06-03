@@ -1,7 +1,7 @@
-/*	$NetBSD: condition.h,v 1.1.1.3 2005/12/21 23:17:40 christos Exp $	*/
+/*	$NetBSD: condition.h,v 1.1.1.3.6.1 2007/06/03 17:24:54 wrstuden Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,10 +17,12 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: condition.h,v 1.21.206.1 2004/03/06 08:14:56 marka Exp */
+/* Id: condition.h,v 1.22.18.2 2005/04/29 00:17:05 marka Exp */
 
 #ifndef ISC_CONDITION_H
 #define ISC_CONDITION_H 1
+
+/*! \file */
 
 #include <isc/lang.h>
 #include <isc/mutex.h>

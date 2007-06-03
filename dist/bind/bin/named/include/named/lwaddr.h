@@ -1,7 +1,7 @@
-/*	$NetBSD: lwaddr.h,v 1.1.1.3 2005/12/21 23:08:10 christos Exp $	*/
+/*	$NetBSD: lwaddr.h,v 1.1.1.3.6.1 2007/06/03 17:20:17 wrstuden Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,7 +17,9 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: lwaddr.h,v 1.3.208.1 2004/03/06 10:21:24 marka Exp */
+/* Id: lwaddr.h,v 1.4.18.2 2005/04/29 00:15:35 marka Exp */
+
+/*! \file */
 
 #include <lwres/lwres.h>
 #include <lwres/net.h>

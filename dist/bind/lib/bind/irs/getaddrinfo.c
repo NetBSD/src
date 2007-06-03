@@ -1,4 +1,4 @@
-/*	$NetBSD: getaddrinfo.c,v 1.1.1.4 2005/12/21 23:15:27 christos Exp $	*/
+/*	$NetBSD: getaddrinfo.c,v 1.1.1.4.6.1 2007/06/03 17:23:04 wrstuden Exp $	*/
 
 /*	$KAME: getaddrinfo.c,v 1.14 2001/01/06 09:41:15 jinmei Exp $	*/
 
@@ -31,48 +31,52 @@
  * SUCH DAMAGE.
  */
 
-/*
+/*! \file
  * Issues to be discussed:
- * - Thread safe-ness must be checked.
- * - Return values.  There are nonstandard return values defined and used
+ *\li  Thread safe-ness must be checked.
+ *\li  Return values.  There are nonstandard return values defined and used
  *   in the source code.  This is because RFC2553 is silent about which error
  *   code must be returned for which situation.
- * - IPv4 classful (shortened) form.  RFC2553 is silent about it.  XNET 5.2
+ *\li  IPv4 classful (shortened) form.  RFC2553 is silent about it.  XNET 5.2
  *   says to use inet_aton() to convert IPv4 numeric to binary (allows
  *   classful form as a result).
  *   current code - disallow classful form for IPv4 (due to use of inet_pton).
- * - freeaddrinfo(NULL).  RFC2553 is silent about it.  XNET 5.2 says it is
+ *\li  freeaddrinfo(NULL).  RFC2553 is silent about it.  XNET 5.2 says it is
  *   invalid.
  *   current code - SEGV on freeaddrinfo(NULL)
  * Note:
- * - We use getipnodebyname() just for thread-safeness.  There's no intent
+ *\li  We use getipnodebyname() just for thread-safeness.  There's no intent
  *   to let it do PF_UNSPEC (actually we never pass PF_UNSPEC to
  *   getipnodebyname().
- * - The code filters out AFs that are not supported by the kernel,
+ *\li  The code filters out AFs that are not supported by the kernel,
  *   when globbing NULL hostname (to loopback, or wildcard).  Is it the right
  *   thing to do?  What is the relationship with post-RFC2553 AI_ADDRCONFIG
  *   in ai_flags?
- * - (post-2553) semantics of AI_ADDRCONFIG itself is too vague.
+ *\li  (post-2553) semantics of AI_ADDRCONFIG itself is too vague.
  *   (1) what should we do against numeric hostname (2) what should we do
  *   against NULL hostname (3) what is AI_ADDRCONFIG itself.  AF not ready?
  *   non-loopback address configured?  global address configured?
- * - To avoid search order issue, we have a big amount of code duplicate
+ * \par Additional Issue:
+ *  To avoid search order issue, we have a big amount of code duplicate
  *   from gethnamaddr.c and some other places.  The issues that there's no
  *   lower layer function to lookup "IPv4 or IPv6" record.  Calling
  *   gethostbyname2 from getaddrinfo will end up in wrong search order, as
  *   follows:
- *	- The code makes use of following calls when asked to resolver with
+ *	\li The code makes use of following calls when asked to resolver with
  *	  ai_family  = PF_UNSPEC:
- *		getipnodebyname(host, AF_INET6);
+ *\code		getipnodebyname(host, AF_INET6);
  *		getipnodebyname(host, AF_INET);
- *	  This will result in the following queries if the node is configure to
+ *\endcode
+ *	\li  This will result in the following queries if the node is configure to
  *	  prefer /etc/hosts than DNS:
+ *\code
  *		lookup /etc/hosts for IPv6 address
  *		lookup DNS for IPv6 address
  *		lookup /etc/hosts for IPv4 address
  *		lookup DNS for IPv4 address
+ *\endcode
  *	  which may not meet people's requirement.
- *	  The right thing to happen is to have underlying layer which does
+ *	 \li The right thing to happen is to have underlying layer which does
  *	  PF_UNSPEC lookup (lookup both) and return chain of addrinfos.
  *	  This would result in a bit of code duplicate with _dns_ghbyname() and
  *	  friends.
@@ -201,20 +205,20 @@ struct addrinfo *addr2addrinfo __P((const struct addrinfo *,
 #if 0
 static const char *ai_errlist[] = {
 	"Success",
-	"Address family for hostname not supported",	/* EAI_ADDRFAMILY */
-	"Temporary failure in name resolution",		/* EAI_AGAIN      */
-	"Invalid value for ai_flags",		       	/* EAI_BADFLAGS   */
-	"Non-recoverable failure in name resolution", 	/* EAI_FAIL       */
-	"ai_family not supported",			/* EAI_FAMILY     */
-	"Memory allocation failure", 			/* EAI_MEMORY     */
-	"No address associated with hostname", 		/* EAI_NODATA     */
-	"hostname nor servname provided, or not known",	/* EAI_NONAME     */
-	"servname not supported for ai_socktype",	/* EAI_SERVICE    */
-	"ai_socktype not supported", 			/* EAI_SOCKTYPE   */
-	"System error returned in errno", 		/* EAI_SYSTEM     */
-	"Invalid value for hints",			/* EAI_BADHINTS	  */
-	"Resolved protocol is unknown",			/* EAI_PROTOCOL   */
-	"Unknown error", 				/* EAI_MAX        */
+	"Address family for hostname not supported",	/*%< EAI_ADDRFAMILY */
+	"Temporary failure in name resolution",		/*%< EAI_AGAIN */
+	"Invalid value for ai_flags",		       	/*%< EAI_BADFLAGS */
+	"Non-recoverable failure in name resolution", 	/*%< EAI_FAIL */
+	"ai_family not supported",			/*%< EAI_FAMILY */
+	"Memory allocation failure", 			/*%< EAI_MEMORY */
+	"No address associated with hostname", 		/*%< EAI_NODATA */
+	"hostname nor servname provided, or not known",	/*%< EAI_NONAME */
+	"servname not supported for ai_socktype",	/*%< EAI_SERVICE */
+	"ai_socktype not supported", 			/*%< EAI_SOCKTYPE */
+	"System error returned in errno", 		/*%< EAI_SYSTEM */
+	"Invalid value for hints",			/*%< EAI_BADHINTS */
+	"Resolved protocol is unknown",			/*%< EAI_PROTOCOL */
+	"Unknown error", 				/*%< EAI_MAX */
 };
 #endif
 
@@ -247,7 +251,7 @@ do { \
 } while (/*CONSTCOND*/0)
 
 #ifndef SOLARIS2
-#define ERR(err) \
+#define SETERROR(err) \
 do { \
 	/* external reference: error, and label bad */ \
 	error = (err); \
@@ -255,7 +259,7 @@ do { \
 	/*NOTREACHED*/ \
 } while (/*CONSTCOND*/0)
 #else
-#define ERR(err) \
+#define SETERROR(err) \
 do { \
 	/* external reference: error, and label bad */ \
 	error = (err); \
@@ -270,7 +274,7 @@ do { \
 #define MATCH(x, y, w) \
 	((x) == (y) || (/*CONSTCOND*/(w) && ((x) == ANY || (y) == ANY)))
 
-#if 0				/* bind8 has its own version */
+#if 0				/*%< bind8 has its own version */
 char *
 gai_strerror(ecode)
 	int ecode;
@@ -334,7 +338,7 @@ getaddrinfo(hostname, servname, hints, res)
 	pai->ai_family = PF_UNSPEC;
 	pai->ai_socktype = ANY;
 	pai->ai_protocol = ANY;
-#ifdef __sparcv9
+#if defined(sun) && defined(_SOCKLEN_T) && defined(__sparcv9)
 	/*
 	 * clear _ai_pad to preserve binary
 	 * compatibility with previously compiled 64-bit
@@ -342,7 +346,7 @@ getaddrinfo(hostname, servname, hints, res)
 	 * guaranteeing the upper 32-bits are empty.
 	 */
 	pai->_ai_pad = 0;
-#endif /* __sparcv9 */
+#endif
 	pai->ai_addrlen = 0;
 	pai->ai_canonname = NULL;
 	pai->ai_addr = NULL;
@@ -354,20 +358,20 @@ getaddrinfo(hostname, servname, hints, res)
 		/* error check for hints */
 		if (hints->ai_addrlen || hints->ai_canonname ||
 		    hints->ai_addr || hints->ai_next)
-			ERR(EAI_BADHINTS); /* xxx */
+			SETERROR(EAI_BADHINTS); /*%< xxx */
 		if (hints->ai_flags & ~AI_MASK)
-			ERR(EAI_BADFLAGS);
+			SETERROR(EAI_BADFLAGS);
 		switch (hints->ai_family) {
 		case PF_UNSPEC:
 		case PF_INET:
 		case PF_INET6:
 			break;
 		default:
-			ERR(EAI_FAMILY);
+			SETERROR(EAI_FAMILY);
 		}
 		memcpy(pai, hints, sizeof(*pai));
 
-#ifdef __sparcv9
+#if defined(sun) && defined(_SOCKLEN_T) && defined(__sparcv9)
 		/*
 		 * We need to clear _ai_pad to preserve binary
 		 * compatibility.  See prior comment.
@@ -388,7 +392,7 @@ getaddrinfo(hostname, servname, hints, res)
 					continue;
 				if (pai->ai_socktype == ex->e_socktype &&
 				    pai->ai_protocol != ex->e_protocol) {
-					ERR(EAI_BADHINTS);
+					SETERROR(EAI_BADHINTS);
 				}
 			}
 		}
@@ -408,7 +412,7 @@ getaddrinfo(hostname, servname, hints, res)
 	case AI_ALL:
 #if 1
 		/* illegal */
-		ERR(EAI_BADFLAGS);
+		SETERROR(EAI_BADFLAGS);
 #else
 		pai->ai_flags &= ~(AI_ALL | AI_V4MAPPED);
 		break;
@@ -436,7 +440,7 @@ getaddrinfo(hostname, servname, hints, res)
 		}
 		error = get_portmatch(pai, servname);
 		if (error)
-			ERR(error);
+			SETERROR(error);
 
 		*pai = ai0;
 	}
@@ -495,9 +499,9 @@ getaddrinfo(hostname, servname, hints, res)
 		goto good;
 
 	if (pai->ai_flags & AI_NUMERICHOST)
-		ERR(EAI_NONAME);
+		SETERROR(EAI_NONAME);
 	if (hostname == NULL)
-		ERR(EAI_NONAME);
+		SETERROR(EAI_NONAME);
 
 	/*
 	 * hostname as alphabetical name.
@@ -519,7 +523,7 @@ getaddrinfo(hostname, servname, hints, res)
 		goto free;
 	}
 	if (afai == NULL) {
-		error = EAI_NONAME; /* we've had no errors. */
+		error = EAI_NONAME; /*%< we've had no errors. */
 		goto free;
 	}
 
@@ -576,11 +580,7 @@ getaddrinfo(hostname, servname, hints, res)
 			cur = cur->ai_next;
 	}
 
-	freeaddrinfo(afai);	/* afai must not be NULL at this point. */
-
-	/* we must not have got any errors. */
-	if (error != 0) /* just for diagnosis */
-		abort();
+	freeaddrinfo(afai);	/*%< afai must not be NULL at this point. */
 
 	if (sentinel.ai_next) {
 good:
@@ -603,7 +603,7 @@ bad:
 	return(error);
 }
 
-/*
+/*%
  * FQDN hostname, DNS lookup
  */
 static int
@@ -631,7 +631,7 @@ explore_fqdn(pai, hostname, servname, res)
 
 	if (!net_data || !(ho = net_data->ho))
 		return(0);
-#if 0				/* XXX (notyet) */
+#if 0				/*%< XXX (notyet) */
 	if (net_data->ho_stayopen && net_data->ho_last &&
 	    net_data->ho_last->h_addrtype == af) {
 		if (ns_samename(name, net_data->ho_last->h_name) == 1)
@@ -667,7 +667,7 @@ explore_fqdn(pai, hostname, servname, res)
 			error = EAI_NONAME;
 			break;
 		default:
-		case NETDB_SUCCESS: /* should be impossible... */
+		case NETDB_SUCCESS: /*%< should be impossible... */
 			error = EAI_NONAME;
 			break;
 		}
@@ -675,7 +675,7 @@ explore_fqdn(pai, hostname, servname, res)
 	}
 
 	for (cur = result; cur; cur = cur->ai_next) {
-		GET_PORT(cur, servname); /* XXX: redundant lookups... */
+		GET_PORT(cur, servname); /*%< XXX: redundant lookups... */
 		/* canonname should already be filled. */
 	}
 
@@ -691,8 +691,8 @@ free:
 
 static int
 explore_copy(pai, src0, res)
-	const struct addrinfo *pai;	/* seed */
-	const struct addrinfo *src0;	/* source */
+	const struct addrinfo *pai;	/*%< seed */
+	const struct addrinfo *src0;	/*%< source */
 	struct addrinfo **res;
 {
 	int error;
@@ -726,7 +726,7 @@ fail:
 	return error;
 }
 
-/*
+/*%
  * hostname == NULL.
  * passive socket -> anyaddr (0.0.0.0 or ::)
  * non-passive socket -> localhost (127.0.0.1 or ::1)
@@ -774,7 +774,7 @@ free:
 	return error;
 }
 
-/*
+/*%
  * numeric hostname
  */
 static int
@@ -806,10 +806,10 @@ explore_numeric(pai, hostname, servname, res)
 			    pai->ai_family == PF_UNSPEC /*?*/) {
 				GET_AI(cur->ai_next, afd, pton);
 				GET_PORT(cur->ai_next, servname);
-				while (cur && cur->ai_next)
+				while (cur->ai_next)
 					cur = cur->ai_next;
 			} else
-				ERR(EAI_FAMILY);	/*xxx*/
+				SETERROR(EAI_FAMILY);	/*xxx*/
 		}
 		break;
 #endif
@@ -819,10 +819,10 @@ explore_numeric(pai, hostname, servname, res)
 			    pai->ai_family == PF_UNSPEC /*?*/) {
 				GET_AI(cur->ai_next, afd, pton);
 				GET_PORT(cur->ai_next, servname);
-				while (cur && cur->ai_next)
+				while (cur->ai_next)
 					cur = cur->ai_next;
 			} else
-				ERR(EAI_FAMILY);	/*xxx*/
+				SETERROR(EAI_FAMILY);	/*xxx*/
 		}
 		break;
 	}
@@ -837,7 +837,7 @@ bad:
 	return error;
 }
 
-/*
+/*%
  * numeric hostname with scope
  */
 static int
@@ -888,7 +888,7 @@ explore_numeric_scope(pai, hostname, servname, res)
 			sin6 = (struct sockaddr_in6 *)(void *)cur->ai_addr;
 			if (!ip6_str2scopeid(scope, sin6, &scopeid)) {
 				free(hostname2);
-				return(EAI_NONAME); /* XXX: is return OK? */
+				return(EAI_NONAME); /*%< XXX: is return OK? */
 			}
 #ifdef HAVE_SIN6_SCOPE_ID
 			sin6->sin6_scope_id = scopeid;
@@ -1084,7 +1084,7 @@ find_afd(af)
 	return NULL;
 }
 
-/*
+/*%
  * post-2553: AI_ADDRCONFIG check.  if we use getipnodeby* as backend, backend
  * will take care of it.
  * the semantics of AI_ADDRCONFIG is not defined well.  we are not sure
@@ -1142,8 +1142,7 @@ ip6_str2scopeid(char *scope, struct sockaddr_in6 *sin6,
 	if (IN6_IS_ADDR_MC_ORGLOCAL(a6))
 		goto trynumeric;
 	else
-		goto trynumeric;	/* global */
-
+		goto trynumeric;	/*%< global */
 	/* try to convert to a numeric id as a last resort */
 trynumeric:
 	errno = 0;
@@ -1180,7 +1179,7 @@ hostent2addrinfo(hp, pai)
 	cur = &sentinel;
 
 	for (i = 0; (ap = aplist[i]) != NULL; i++) {
-#if 0				/* the trick seems too much */
+#if 0				/*%< the trick seems too much */
 		af = hp->h_addr_list;
 		if (af == AF_INET6 &&
 		    IN6_IS_ADDR_V4MAPPED((struct in6_addr *)ap)) {
@@ -1204,7 +1203,7 @@ hostent2addrinfo(hp, pai)
 			 */
 			GET_CANONNAME(cur->ai_next, hp->h_name);
 		}
-		while (cur && cur->ai_next) /* no need to loop, actually. */
+		while (cur->ai_next) /*%< no need to loop, actually. */
 			cur = cur->ai_next;
 		continue;
 

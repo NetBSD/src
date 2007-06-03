@@ -1,6 +1,6 @@
-.\"	$NetBSD: lwres_getaddrinfo.3,v 1.1.1.3 2005/12/21 23:18:06 christos Exp $
+.\"	$NetBSD: lwres_getaddrinfo.3,v 1.1.1.3.6.1 2007/06/03 17:25:27 wrstuden Exp $
 .\"
-.\" Copyright (C) 2004, 2005 Internet Systems Consortium, Inc. ("ISC")
+.\" Copyright (C) 2004, 2005, 2007 Internet Systems Consortium, Inc. ("ISC")
 .\" Copyright (C) 2000, 2001, 2003 Internet Software Consortium.
 .\" 
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -15,14 +15,17 @@
 .\" OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 .\" PERFORMANCE OF THIS SOFTWARE.
 .\"
-.\" Id: lwres_getaddrinfo.3,v 1.16.2.1.8.6 2005/10/13 02:33:53 marka Exp
+.\" Id: lwres_getaddrinfo.3,v 1.20.18.11 2007/01/30 00:23:45 marka Exp
 .\"
 .hy 0
 .ad l
-.\" ** You probably do not want to edit this file directly **
-.\" It was generated using the DocBook XSL Stylesheets (version 1.69.1).
-.\" Instead of manually editing it, you probably should edit the DocBook XML
-.\" source for it and then use the DocBook XSL Stylesheets to regenerate it.
+.\"     Title: lwres_getaddrinfo
+.\"    Author: 
+.\" Generator: DocBook XSL Stylesheets v1.71.1 <http://docbook.sf.net/>
+.\"      Date: Jun 30, 2000
+.\"    Manual: BIND9
+.\"    Source: BIND9
+.\"
 .TH "LWRES_GETADDRINFO" "3" "Jun 30, 2000" "BIND9" "BIND9"
 .\" disable hyphenation
 .nh
@@ -35,13 +38,14 @@ lwres_getaddrinfo, lwres_freeaddrinfo \- socket address structure to host and se
 #include <lwres/netdb.h>
 .fi
 .HP 22
-\fBint\ \fBlwres_getaddrinfo\fR\fR\fB(\fR\fBconst\ char\ *hostname\fR\fB, \fR\fBconst\ char\ *servname\fR\fB, \fR\fBconst\ struct\ addrinfo\ *hints\fR\fB, \fR\fBstruct\ addrinfo\ **res\fR\fB);\fR
+.BI "int lwres_getaddrinfo(const\ char\ *" "hostname" ", const\ char\ *" "servname" ", const\ struct\ addrinfo\ *" "hints" ", struct\ addrinfo\ **" "res" ");"
 .HP 24
-\fBvoid\ \fBlwres_freeaddrinfo\fR\fR\fB(\fR\fBstruct\ addrinfo\ *ai\fR\fB);\fR
+.BI "void lwres_freeaddrinfo(struct\ addrinfo\ *" "ai" ");"
 .PP
 If the operating system does not provide a
 \fBstruct addrinfo\fR, the following structure is used:
-.sp
+.PP
+.RS 4
 .nf
 struct  addrinfo {
         int             ai_flags;       /* AI_PASSIVE, AI_CANONNAME */
@@ -54,6 +58,7 @@ struct  addrinfo {
         struct addrinfo *ai_next;       /* next structure in linked list */
 };
 .fi
+.RE
 .sp
 .SH "DESCRIPTION"
 .PP
@@ -79,14 +84,17 @@ is either a decimal port number or a service name as listed in
 is an optional pointer to a
 \fBstruct addrinfo\fR. This structure can be used to provide hints concerning the type of socket that the caller supports or wishes to use. The caller can supply the following structure elements in
 \fI*hints\fR:
-.TP
+.PP
 \fBai_family\fR
+.RS 4
 The protocol family that should be used. When
 \fBai_family\fR
 is set to
 \fBPF_UNSPEC\fR, it means the caller will accept any protocol family supported by the operating system.
-.TP
+.RE
+.PP
 \fBai_socktype\fR
+.RS 4
 denotes the type of socket \(em
 \fBSOCK_STREAM\fR,
 \fBSOCK_DGRAM\fR
@@ -95,13 +103,17 @@ or
 \(em that is wanted. When
 \fBai_socktype\fR
 is zero the caller will accept any socket type.
-.TP
+.RE
+.PP
 \fBai_protocol\fR
+.RS 4
 indicates which transport protocol is wanted: IPPROTO_UDP or IPPROTO_TCP. If
 \fBai_protocol\fR
 is zero the caller will accept any protocol.
-.TP
+.RE
+.PP
 \fBai_flags\fR
+.RS 4
 Flag bits. If the
 \fBAI_CANONNAME\fR
 bit is set, a successful call to
@@ -126,11 +138,11 @@ When
 does not set the
 \fBAI_PASSIVE\fR
 bit, the returned socket address structure will be ready for use in a call to
-\fBconnect\fR(2 )
+\fBconnect\fR(2)
 for a connection\-oriented protocol or
 \fBconnect\fR(2),
 \fBsendto\fR(2), or
-\fBsendmsg\fR(2 )
+\fBsendmsg\fR(2)
 if a connectionless protocol was chosen. The IP address portion of the socket address structure will be set to the loopback address if
 \fIhostname\fR
 is a
@@ -147,6 +159,7 @@ is set to
 it indicates that
 \fIhostname\fR
 should be treated as a numeric string defining an IPv4 or IPv6 address and no name resolution should be attempted.
+.RE
 .PP
 All other elements of the
 \fBstruct addrinfo\fR
@@ -205,13 +218,14 @@ created by a call to
 .PP
 \fBlwres_getaddrinfo()\fR
 returns zero on success or one of the error codes listed in
-\fBgai_strerror\fR(3 )
+\fBgai_strerror\fR(3)
 if an error occurs. If both
 \fIhostname\fR
 and
 \fIservname\fR
 are
-\fBNULL\fR\fBlwres_getaddrinfo()\fR
+\fBNULL\fR
+\fBlwres_getaddrinfo()\fR
 returns
 \fBEAI_NONAME\fR.
 .SH "SEE ALSO"
@@ -227,3 +241,8 @@ returns
 \fBsendto\fR(2),
 \fBsendmsg\fR(2),
 \fBsocket\fR(2).
+.SH "COPYRIGHT"
+Copyright \(co 2004, 2005, 2007 Internet Systems Consortium, Inc. ("ISC")
+.br
+Copyright \(co 2000, 2001, 2003 Internet Software Consortium.
+.br
