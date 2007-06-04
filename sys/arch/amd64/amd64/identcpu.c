@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.21 2007/06/04 14:34:37 xtraeme Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.22 2007/06/04 14:45:32 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.21 2007/06/04 14:34:37 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.22 2007/06/04 14:45:32 xtraeme Exp $");
 
 #include "opt_enhanced_speedstep.h"
 #include "opt_intel_odcm.h"
@@ -108,29 +108,34 @@ identifycpu(struct cpu_info *ci)
 	if ((ci->ci_feature_flags & CPUID_MASK1) != 0) {
 		bitmask_snprintf(ci->ci_feature_flags,
 		    feature_str[0], buf, sizeof(buf));
-		aprint_normal("%s: features: %s\n", ci->ci_dev->dv_xname, buf);
+		aprint_verbose("%s: features: %s\n",
+		   ci->ci_dev->dv_xname, buf);
 	}
 	if ((ci->ci_feature_flags & CPUID_MASK2) != 0) {
 		bitmask_snprintf(ci->ci_feature_flags,
 		    feature_str[1], buf, sizeof(buf));
-		aprint_normal("%s: features: %s\n", ci->ci_dev->dv_xname, buf);
+		aprint_verbose("%s: features: %s\n",
+		    ci->ci_dev->dv_xname, buf);
 	}
 	if ((ci->ci_feature_flags & CPUID_MASK3) != 0) {
 		bitmask_snprintf(ci->ci_feature_flags,
 		    feature_str[2], buf, sizeof(buf));
-		aprint_normal("%s: features: %s\n", ci->ci_dev->dv_xname, buf);
+		aprint_verbose("%s: features: %s\n",
+		    ci->ci_dev->dv_xname, buf);
 	}
 
 	if (ci->ci_feature2_flags) {
 		bitmask_snprintf(ci->ci_feature2_flags,
 		    CPUID2_FLAGS, buf, sizeof(buf));
-		aprint_normal("%s: features2: %s\n", ci->ci_dev->dv_xname, buf);
+		aprint_verbose("%s: features2: %s\n",
+		    ci->ci_dev->dv_xname, buf);
 	}
 
 	if ((ci->ci_feature_flags & CPUID_MASK4) != 0) {
 		bitmask_snprintf(ci->ci_feature_flags,
 		    CPUID_FLAGS4, buf, sizeof(buf));
-		aprint_normal("%s: features3: %s\n", ci->ci_dev->dv_xname, buf);
+		aprint_verbose("%s: features3: %s\n",
+		    ci->ci_dev->dv_xname, buf);
 	}
 
 	x86_print_cacheinfo(ci);
