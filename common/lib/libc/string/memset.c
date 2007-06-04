@@ -1,4 +1,4 @@
-/*	$NetBSD: memset.c,v 1.1 2005/12/20 19:28:52 christos Exp $	*/
+/*	$NetBSD: memset.c,v 1.2 2007/06/04 18:19:27 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)memset.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: memset.c,v 1.1 2005/12/20 19:28:52 christos Exp $");
+__RCSID("$NetBSD: memset.c,v 1.2 2007/06/04 18:19:27 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -55,25 +55,25 @@ __RCSID("$NetBSD: memset.c,v 1.1 2005/12/20 19:28:52 christos Exp $");
 #define	wsize	sizeof(u_int)
 #define	wmask	(wsize - 1)
 
+#ifdef _FORTIFY_SOURCE
+#undef bzero
+#undef memset
+#endif
+
 #ifdef BZERO
 #define	RETURN	return
 #define	VAL	0
 #define	WIDEVAL	0
 
 void
-bzero(dst0, length)
-	void *dst0;
-	size_t length;
+bzero(void *dst0, size_t length)
 #else
 #define	RETURN	return (dst0)
 #define	VAL	c0
 #define	WIDEVAL	c
 
 void *
-memset(dst0, c0, length)
-	void *dst0;
-	int c0;
-	size_t length;
+memset(void *dst0, int c0, size_t length)
 #endif
 {
 	size_t t;

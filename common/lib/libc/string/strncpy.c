@@ -1,4 +1,4 @@
-/*	$NetBSD: strncpy.c,v 1.2 2007/06/03 17:39:26 christos Exp $	*/
+/*	$NetBSD: strncpy.c,v 1.3 2007/06/04 18:19:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)strncpy.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: strncpy.c,v 1.2 2007/06/03 17:39:26 christos Exp $");
+__RCSID("$NetBSD: strncpy.c,v 1.3 2007/06/04 18:19:28 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -57,10 +57,7 @@ __RCSID("$NetBSD: strncpy.c,v 1.2 2007/06/03 17:39:26 christos Exp $");
  * Return dst.
  */
 char *
-strncpy(dst, src, n)
-	char *dst;
-	const char *src;
-	size_t n;
+strncpy(char *dst, const char *src, size_t n)
 {
 
 	_DIAGASSERT(dst != NULL);
