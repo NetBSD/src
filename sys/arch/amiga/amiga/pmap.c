@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.118.4.3 2007/05/30 23:13:49 riz Exp $	*/
+/*	$NetBSD: pmap.c,v 1.118.4.4 2007/06/04 19:47:21 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.118.4.3 2007/05/30 23:13:49 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.118.4.4 2007/06/04 19:47:21 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -479,6 +479,7 @@ pmap_bootstrap(firstaddr, loadaddr)
 	SYSMAP(caddr_t	,CADDR1	 ,1			)
 	SYSMAP(caddr_t	,CADDR2	 ,1			)
 	SYSMAP(caddr_t	,vmmap	 ,1			)
+	SYSMAP(caddr_t	,msgbufaddr ,btoc(MSGBUFSIZE)	)
 
 	DCIS();
 
