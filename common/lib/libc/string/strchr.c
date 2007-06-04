@@ -1,4 +1,4 @@
-/*	$NetBSD: strchr.c,v 1.1 2005/12/20 19:28:52 christos Exp $	*/
+/*	$NetBSD: strchr.c,v 1.2 2007/06/04 18:19:27 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)index.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: strchr.c,v 1.1 2005/12/20 19:28:52 christos Exp $");
+__RCSID("$NetBSD: strchr.c,v 1.2 2007/06/04 18:19:27 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -48,11 +48,10 @@ __RCSID("$NetBSD: strchr.c,v 1.1 2005/12/20 19:28:52 christos Exp $");
 
 char *
 #ifdef INDEX
-index(p, ch)
+index(const char *p, int ch)
 #else
-strchr(p, ch)
+strchr(const char *p, int ch)
 #endif
-	const char *p, ch;
 {
 	_DIAGASSERT(p != NULL);
 

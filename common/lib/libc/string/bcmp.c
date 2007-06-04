@@ -1,4 +1,4 @@
-/*	$NetBSD: bcmp.c,v 1.1 2005/12/20 19:28:52 christos Exp $	*/
+/*	$NetBSD: bcmp.c,v 1.2 2007/06/04 18:19:26 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)bcmp.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: bcmp.c,v 1.1 2005/12/20 19:28:52 christos Exp $");
+__RCSID("$NetBSD: bcmp.c,v 1.2 2007/06/04 18:19:26 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -50,9 +50,7 @@ __RCSID("$NetBSD: bcmp.c,v 1.1 2005/12/20 19:28:52 christos Exp $");
  * bcmp -- vax cmpc3 instruction
  */
 int
-bcmp(b1, b2, length)
-	const void *b1, *b2;
-	size_t length;
+bcmp(const void *b1, const void *b2, size_t length)
 {
 	const char *p1 = b1, *p2 = b2;
 

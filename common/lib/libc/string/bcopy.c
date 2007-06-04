@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopy.c,v 1.2 2006/02/05 06:47:48 ross Exp $	*/
+/*	$NetBSD: bcopy.c,v 1.3 2007/06/04 18:19:27 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)bcopy.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: bcopy.c,v 1.2 2006/02/05 06:47:48 ross Exp $");
+__RCSID("$NetBSD: bcopy.c,v 1.3 2007/06/04 18:19:27 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -46,6 +46,12 @@ __RCSID("$NetBSD: bcopy.c,v 1.2 2006/02/05 06:47:48 ross Exp $");
 #include <string.h>
 #else
 #include <lib/libkern/libkern.h>
+#endif
+
+#ifdef _FORTIFY_SOURCE
+#undef bcopy
+#undef memcpy
+#undef memmove
 #endif
 
 /*
@@ -64,19 +70,16 @@ typedef	long word;		/* "word" used for optimal copy speed */
  */
 #ifdef MEMCOPY
 void *
-memcpy(dst0, src0, length)
+memcpy(void *dst0, const void *src0, size_t length)
 #else
 #ifdef MEMMOVE
 void *
-memmove(dst0, src0, length)
+memmove(void *dst0, const void *src0, size_t length)
 #else
 void
-bcopy(src0, dst0, length)
+bcopy(const void *src0, void *dst0, size_t length)
 #endif
 #endif
-	void *dst0;
-	const void *src0;
-	size_t length;
 {
 	char *dst = dst0;
 	const char *src = src0;
