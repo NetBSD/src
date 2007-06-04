@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.174 2007/05/30 23:20:37 riz Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.175 2007/06/04 19:53:06 riz Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -5757,4 +5757,11 @@ sys/arch/amiga/amiga/pmap.c			1.126-1.127 via patch
 	pte pointers from pmap_bootstrap(), and make pmap_bootstrap()
 	more compatible with the common m68k pmap_motorola.c.
 	[mhitch, ticket #685]
+
+sys/ufs/ffs/ffs_vfsops.c			1.201
+
+	Fix EFBIG errors on read(2) and "exec /sbin/init: error 8"
+	problem on mac68k after mountroot() on old 4.3BSD UFS created
+	by the Mkfs tool for MacOS (reported and confirmed on port-mac68k).
+	[tsutsui, ticket #686]
 
