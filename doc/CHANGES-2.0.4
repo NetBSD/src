@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0.4,v 1.1.2.70 2007/05/30 19:55:11 bouyer Exp $
+#	$NetBSD: CHANGES-2.0.4,v 1.1.2.71 2007/06/04 19:26:45 bouyer Exp $
 
 A complete list of changes from the NetBSD 2.0.3 update to the NetBSD 2.0.4
 update.
@@ -589,4 +589,15 @@ src/share/zoneinfo/australasia		patch
 src/share/zoneinfo/northamerica		patch
 	Merge tzdata2007f.
 	[markd, ticket #11320]
+
+sys/netinet6/ip6_input.c: revision 1.102 via patch
+sys/netinet6/route6.c: revision 1.18 via patch
+sys/netinet6/ip6_var.h: revisions 1.41 - 1.42 via patch
+sbin/sysctl/sysctl.8: patch
+	Disable processing of routing header type 0 packets since they can be
+	used of DoS attacks. Provide a sysctl to re-enable them
+	(net.inet6.ip6.rht0).
+	Information from:
+		http://www.secdev.org/conf/IPv6_RH_security-csw07.pdf
+	[adrianp, ticket #11330]
 
