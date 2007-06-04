@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.156 2006/11/11 18:47:12 jmmv Exp $
+# $NetBSD: GENERIC,v 1.157 2007/06/04 08:55:25 martin Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/vax/conf/std.vax"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.156 $"
+#ident 		"GENERIC-$Revision: 1.157 $"
 
 # Here are all different supported CPU types listed.
 #options 	VAX8800		# VAX 8500, 8530, 8550, 8700, 8800
@@ -311,6 +311,7 @@ pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
 #options	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
+pseudo-device	agr			# IEEE 802.3ad link aggregation
 pseudo-device	vnd	
 #options 	VND_COMPRESSION		# compressed vnd(4)
 pseudo-device	ccd	4
