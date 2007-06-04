@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.175 2007/06/04 19:53:06 riz Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.176 2007/06/04 20:05:13 bouyer Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -5764,4 +5764,53 @@ sys/ufs/ffs/ffs_vfsops.c			1.201
 	problem on mac68k after mountroot() on old 4.3BSD UFS created
 	by the Mkfs tool for MacOS (reported and confirmed on port-mac68k).
 	[tsutsui, ticket #686]
+
+sys/arch/amiga/amiga/pmap.c			1.128 via patch
+
+	Got rid of too much - need to allocate virtual space for msgbuf.
+	[mhitch, ticket #689]
+
+regress/sys/kern/ipf/expected/ni2		1.2
+regress/sys/kern/ipf/input/ni2			1.2
+sys/dist/ipf/netinet/ip_nat.c			1.29
+
+	The wrong condition was being tested for when deciding which fields
+	to update in ICMP error messages.  In the test case for this, the
+	wrong input was actually being used (it should be the headers from
+	the previous packet output) and therefore the expected results were
+	also wildly wrong.
+	kern/36309
+	[darrenr, ticket #690]
+
+distrib/sets/lists/man/mi			1.1004
+share/man/man4/Makefile				1.430
+share/man/man4/com.4				1.13
+share/man/man4/xi.4				1.11
+share/man/man4/xirc.4				1.1
+
+	xi now attaches at xirc, not pcmcia - add a xirc man page
+	PR/36310 -- Joerg Niendorf
+	[jnemeth, ticket #691]
+
+usr.sbin/installboot/installboot.8		1.66
+
+	Bring the example concerning a bootable ISO9660 for i386 up-to-date,
+	demonstrating the -e option.
+	[dyoung, ticket #692]
+
+sys/arch/amiga/amiga/amiga_init.c		1.96
+
+	PTE for Sysptmap was not getting set correctly.
+	[mhitch, ticket #693]
+
+sys/arch/amiga/amiga/pmap.c			1.129
+
+	Get rid of one more incompatibility with pmap_motorola.c from
+	pmap_bootstrap().
+	[mhitch, ticket #694]
+
+usr.sbin/pstat/Makefile				1.14
+
+	revert debug flags accidentally committed before.
+	[mlelstv, ticket #695]
 
