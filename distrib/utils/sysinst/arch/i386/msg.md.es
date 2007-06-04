@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.es,v 1.3.4.2 2007/05/07 22:28:09 pavel Exp $	*/
+/*	$NetBSD: msg.md.es,v 1.3.4.2.2.1 2007/06/04 01:54:10 wrstuden Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -168,5 +168,5 @@ message set_kernel_1  {Núcleo (GENERIC)}
 message set_kernel_2  {Núcleo (GENERIC.MP)}
 message set_kernel_3  {Núcleo (GENERIC_LAPTOP)}
 message set_kernel_4  {Núcleo (GENERIC_DIAGNOSTIC)}
-/* message set_kernel_5  {Núcleo (GENERIC_TINY)} */
+message set_kernel_5  {Núcleo (GENERIC.NOACPI)}
 /* message set_kernel_6  {Núcleo (GENERIC_PS2TINY)} */

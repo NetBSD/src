@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.3 2004/06/26 16:09:09 fredb Exp $
+#       $NetBSD: Makefile,v 1.3.12.1 2007/06/04 01:54:07 wrstuden Exp $
 #
 
 .include <bsd.own.mk>
@@ -35,7 +35,7 @@ release: ${UUDECODE_FILES}
 	  (cd ${RELEASEDIR}/${MACHINE}/installation/misc ; \
 	    ${TOOL_CKSUM}     `basename $$i` >> CKSUM) ; \
 	  (cd ${RELEASEDIR}/${MACHINE}/installation/misc ; \
-	    ${TOOL_CKSUM} -m  `basename $$i` >> MD5) ; \
+	    ${TOOL_CKSUM} -a MD5 `basename $$i` >> MD5) ; \
 	  (cd ${RELEASEDIR}/${MACHINE}/installation/misc ; \
 	    ${TOOL_CKSUM} -o2 `basename $$i` >> SYSVSUM) ; \
 	done
@@ -53,7 +53,7 @@ release: ${UUDECODE_FILES}
 	  (cd ${RELEASEDIR}/${MACHINE}/installation/misc/src ; \
 	    ${TOOL_CKSUM}     `basename $$i` >> CKSUM) ; \
 	  (cd ${RELEASEDIR}/${MACHINE}/installation/misc/src ; \
-	    ${TOOL_CKSUM} -m  `basename $$i` >> MD5) ; \
+	    ${TOOL_CKSUM} -a MD5 `basename $$i` >> MD5) ; \
 	  (cd ${RELEASEDIR}/${MACHINE}/installation/misc/src ; \
 	    ${TOOL_CKSUM} -o2 `basename $$i` >> SYSVSUM) ; \
 	done
