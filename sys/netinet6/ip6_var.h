@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_var.h,v 1.32 2003/09/06 03:36:33 itojun Exp $	*/
+/*	$NetBSD: ip6_var.h,v 1.32.6.1 2007/06/04 19:26:08 bouyer Exp $	*/
 /*	$KAME: ip6_var.h,v 1.33 2000/06/11 14:59:20 jinmei Exp $	*/
 
 /*
@@ -241,6 +241,9 @@ extern int   ip6_anonportmin;		/* minimum ephemeral port */
 extern int   ip6_anonportmax;		/* maximum ephemeral port */
 extern int   ip6_lowportmin;		/* minimum reserved port */
 extern int   ip6_lowportmax;		/* maximum reserved port */
+
+extern int	ip6_rht0;		/* processing routing header type 0 */
+
 
 struct in6pcb;
 
