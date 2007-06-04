@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.177 2007/06/02 11:51:42 dsl Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.178 2007/06/04 21:02:22 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.177 2007/06/02 11:51:42 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.178 2007/06/04 21:02:22 dsl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ptrace.h"
@@ -915,7 +915,7 @@ linux_select1(l, retval, nfds, readfds, writefds, exceptfds, timeout)
 	fd_set *readfds, *writefds, *exceptfds;
 	struct timeval *timeout;
 {
-	struct timeval tv0, tv1, utv;
+	struct timeval tv0, tv1, utv, *tv = NULL;
 	int error;
 
 	/*
@@ -939,11 +939,12 @@ linux_select1(l, retval, nfds, readfds, writefds, exceptfds, timeout)
 			if (utv.tv_sec < 0)
 				timerclear(&utv);
 		}
+		tv = &utv;
 		microtime(&tv0);
 	}
 
 	error = selcommon(l, retval, nfds, readfds, writefds, exceptfds,
-	    &utv, NULL);
+	    tv, NULL);
 
 	if (error) {
 		/*
