@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.c,v 1.33 2006/10/08 18:20:42 uwe Exp $	*/
+/*	$NetBSD: exception.c,v 1.33.4.1 2007/06/04 01:54:18 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.33 2006/10/08 18:20:42 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.33.4.1 2007/06/04 01:54:18 wrstuden Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -148,13 +148,11 @@ general_exception(struct lwp *l, struct trapframe *tf, uint32_t va)
 {
 	int expevt = tf->tf_expevt;
 	boolean_t usermode = !KERNELMODE(tf->tf_ssr);
-	int ipl;
 	ksiginfo_t ksi;
 
 	uvmexp.traps++;
 
-	ipl = tf->tf_ssr & PSL_IMASK;
-	splx(ipl);
+	splx(tf->tf_ssr & PSL_IMASK);
 
 	if (l == NULL)
  		goto do_panic;
@@ -279,6 +277,7 @@ tlb_exception(struct lwp *l, struct trapframe *tf, uint32_t va)
 			}				\
 		} while(/*CONSTCOND*/0)
 
+	splx(tf->tf_ssr & PSL_IMASK);
 
 	usermode = !KERNELMODE(tf->tf_ssr);
 	if (usermode) {

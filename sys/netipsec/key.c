@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.30.2.1 2007/05/12 19:24:48 pavel Exp $	*/
+/*	$NetBSD: key.c,v 1.30.2.1.2.1 2007/06/04 01:54:28 wrstuden Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.30.2.1 2007/05/12 19:24:48 pavel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.30.2.1.2.1 2007/06/04 01:54:28 wrstuden Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -102,6 +102,8 @@ __KERNEL_RCSID(0, "$NetBSD: key.c,v 1.30.2.1 2007/05/12 19:24:48 pavel Exp $");
 
 #include <netipsec/xform.h>
 #include <netipsec/ipsec_osdep.h>
+#include <netipsec/ipcomp.h>
+
 
 #include <machine/stdarg.h>
 
@@ -1048,10 +1050,34 @@ key_allocsa(
 	u_int stateidx, state;
 	int s;
 
+	int must_check_spi = 1;
+	int must_check_alg = 0;
+	u_int16_t cpi = 0;
+	u_int8_t algo = 0;
+
 	IPSEC_ASSERT(dst != NULL, ("key_allocsa: null dst address"));
 
 	KEYDEBUG(KEYDEBUG_IPSEC_STAMP,
 		printf("DP key_allocsa from %s:%u\n", where, tag));
+
+	/*
+	 * XXX IPCOMP case 
+	 * We use cpi to define spi here. In the case where cpi <=
+	 * IPCOMP_CPI_NEGOTIATE_MIN, cpi just define the algorithm used, not
+	 * the real spi. In this case, don't check the spi but check the
+	 * algorithm
+	 */
+    
+	if (proto == IPPROTO_IPCOMP) {
+		u_int32_t tmp;
+		tmp = ntohl(spi);
+		cpi = (u_int16_t) tmp;
+		if (cpi < IPCOMP_CPI_NEGOTIATE_MIN) {
+			algo = (u_int8_t) cpi;
+			must_check_spi = 0;
+			must_check_alg = 1;
+		}
+	}
 
 	/*
 	 * searching SAD.
@@ -1075,8 +1101,12 @@ key_allocsa(
 					continue;
 				if (proto != sav->sah->saidx.proto)
 					continue;
-				if (spi != sav->spi)
+				if (must_check_spi && spi != sav->spi)
 					continue;
+				/* XXX only on the ipcomp case */
+				if (must_check_alg && algo != sav->alg_comp)
+					continue;
+
 #if 0	/* don't check src */
 				/* check src address */
 				if (key_sockaddrcmp(&src->sa, &sav->sah->saidx.src.sa, 0) != 0)
@@ -1766,32 +1796,6 @@ key_spdadd(so, m, mhp)
 	src0 = (struct sadb_address *)mhp->ext[SADB_EXT_ADDRESS_SRC];
 	dst0 = (struct sadb_address *)mhp->ext[SADB_EXT_ADDRESS_DST];
 	xpl0 = (struct sadb_x_policy *)mhp->ext[SADB_X_EXT_POLICY];
-
-#if defined(__NetBSD__) && defined(INET6)
-	/*
-	 * On NetBSD, FAST_IPSEC and INET6 can be configured together,
-	 * but FAST_IPSEC does not protect IPv6 traffic.
-	 * Rather than silently leaking IPv6 traffic for which IPsec
-	 * is configured, forbid  specifying IPsec for IPv6 traffic.
-	 *
-	 * (On FreeBSD, both FAST_IPSEC and INET6 gives a compile-time error.)
-	 */
-	if (((const struct sockaddr *)(src0 + 1))->sa_family == AF_INET6 ||
-	    ((const struct sockaddr *)(dst0 + 1))->sa_family == AF_INET6) {
-		static int v6_warned = 0;
-
-		if (v6_warned == 0) {
-			printf("key_spdadd: FAST_IPSEC does not support IPv6.");
-			printf("Check syslog for more per-SPD warnings.\n");
-			v6_warned++;
-		}
-		log(LOG_WARNING,
-		    "FAST_IPSEC does not support PF_INET6 SPDs. "
-		    "Request refused.\n");
-
-		return EOPNOTSUPP;	/* EPROTOTYPE?  EAFNOSUPPORT? */
-	}
-#endif /* __NetBSD__ && INET6 */
 
 	/* make secindex */
 	/* XXX boundary check against sa_len */
@@ -7385,6 +7389,11 @@ key_init()
 	/* system default */
 	ip4_def_policy.policy = IPSEC_POLICY_NONE;
 	ip4_def_policy.refcnt++;	/*never reclaim this*/
+
+#ifdef INET6
+	ip6_def_policy.policy = IPSEC_POLICY_NONE;
+	ip6_def_policy.refcnt++;	/*never reclaim this*/
+#endif
 
 
 #ifndef IPSEC_DEBUG2

@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.157.2.1 2007/06/03 17:25:50 wrstuden Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.157.2.2 2007/06/04 01:54:11 wrstuden Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -5555,4 +5555,206 @@ doc/3RDPARTY				1.525 via patch
 
 	Upgrade IP-Filter to 4.1.22.
 	[martin, ticket #656]
+
+sys/kern/kern_lock.c				1.103
+
+	In lockstatus(), report LK_EXCLOTHER if LK_WANT_EXCL or LK_WANT_UPGRADE
+	is set, since the thread that set either of those flags will be the next
+	one to get the lock.  fixes PR 35143.
+	[tls, ticket #652]
+
+usr.sbin/rpcbind/rpcbind.c			1.12
+
+	PR/36319: Michael van Elst: rpcinfo -p requires root privileges
+	Explicitly chmod 777 the local socket.
+	[christos, ticket #651]
+
+usr.sbin/etcupdate/etcupdate			1.35
+
+	/etc/services needs special attention.
+	[martti, ticket #654]
+
+sys/netbt/l2cap_signal.c			1.8
+
+	Fix Bluetooth on 64-bit archs.
+	[plunky, ticket #660]
+
+dist/ipf/man/ipmon.8				1.18
+
+	Added missing .TP
+	[martti, ticket #668]
+
+etc/MAKEDEV.tmpl				1.86
+etc/etc.amd64/MAKEDEV.conf			1.10
+etc/etc.i386/MAKEDEV.conf			patch
+
+	Create /dev/bio.
+	[martti, ticket #657]
+
+sys/arch/amiga/dev/siop.c			1.56
+sys/arch/amiga/dev/siop2.c			1.28
+
+	Fix warnings with DEBUG enabled.
+	[mhitch, ticket #658]
+
+sys/arch/amiga/amiga/amiga_init.c		1.95
+sys/arch/amiga/amiga/pmap.c			1.123
+sys/arch/amiga/include/vmparam.h		1.35
+
+	Final changes to amiga kernel address space layout to match almost
+	all the other m68k ports.  A DEBUG kernel should now boot without
+	panicing.
+	[mhitch, ticket #659]
+
+distrib/utils/sysinst/arch/i386/md.h		1.58
+distrib/utils/sysinst/arch/i386/msg.md.de	1.11
+distrib/utils/sysinst/arch/i386/msg.md.en	1.53
+distrib/utils/sysinst/arch/i386/msg.md.es	1.6
+distrib/utils/sysinst/arch/i386/msg.md.fr	1.43
+distrib/utils/sysinst/arch/i386/msg.md.pl	1.26
+etc/etc.i386/Makefile.inc			1.50
+sys/arch/i386/conf/GENERIC.NOACPI		1.1
+
+	Add GENERIC.NOACPI kernel that offers - surprise! - no ACPI
+	(in contrast to GENERIC).
+	[hubertf, ticket #661]
+
+sys/netinet/tcp_input.c				1.260
+sys/netinet/tcp_output.c			1.154
+sys/netinet/tcp_subr.c				1.210
+sys/netinet6/icmp6.c				1.129
+sys/netinet6/in6_proto.c			1.70
+sys/netinet6/ip6_forward.c			1.54
+sys/netinet6/ip6_input.c			1.94
+sys/netinet6/ip6_output.c			1.114
+sys/netinet6/raw_ip6.c				1.81
+sys/netipsec/ipcomp_var.h			1.4
+sys/netipsec/ipsec.c				1.26 via patch,1.31-1.32
+sys/netipsec/ipsec6.h				1.5
+sys/netipsec/ipsec_input.c			1.14
+sys/netipsec/ipsec_netbsd.c			1.18,1.26
+sys/netipsec/ipsec_output.c			1.21 via patch
+sys/netipsec/key.c				1.33,1.47
+sys/netipsec/xform_ipcomp.c			1.9
+sys/netipsec/xform_ipip.c			1.15
+sys/opencrypto/deflate.c			1.8
+
+	Add support for IPv6 and ipcomp to FAST_IPSEC.
+	[degroote, ticket #667]
+
+sys/arch/i386/conf/ALL				1.98
+sys/netinet/tcp_input.c				1.265
+sys/netinet/tcp_input.c				1.266
+
+	Fix 'options TCP_SIGNATURE' (rfc2385 support). Add it to the i386/ALL
+	kernel to prevent it from breaking.
+
+	[riz, ticket #670]
+
+sys/dist/ipf/netinet/ip_state.c			1.25
+
+	Fix problems with stateful filtering. Patch received from darrenr@.
+	[martti, ticket #677]
+
+distrib/sets/lists/comp/mi			1.1026
+
+	Add missing bioctl.debug entry.  PR#36304.
+	[jdc, ticket #666]
+
+sys/dev/isapnp/isapnpdevs			1.64
+sys/dev/isapnp/isapnpdevs.c			regen
+sys/dev/isapnp/isapnpdevs.h			regen
+
+	Add entries to recognize the Farallon Etherwave ISA card via ep(4).
+	From PR kern/36360.
+	[tron, ticket #665]
+
+sys/arch/sparc64/sparc64/pmap.c			1.190
+
+	Fix LKMs on sparc64, they were not being mapped executable.
+	Fixes PR port-sparc64/36376.
+	[martin, ticket #669]
+
+share/man/man4/fast_ipsec.4			1.5
+
+	Note support for IPv6 and IPcomp in FAST_IPSEC.
+	[degroote, ticket #675]
+
+sys/dev/ic/rtl81x9.c				1.74
+
+	If the interrupt status register reads as 0xffff in rtk_intr, assume
+	that the card is gone and abort the loop. This fixes hot-plugging of
+	cardbus cards. From FreeBSD.
+	[joerg, ticket #663]
+
+sys/dev/pci/if_bgereg.h				1.42
+
+	Fix a typo. BGE_HCC_TX_MAX_COAL_BDS_INT is at offset 0x3C24, not 0x3C34
+	[pavel, ticket #671]
+
+sys/arch/i386/conf/INSTALL_LARGE		1.3 via patch
+
+	Add cardbus support. It has been reported that on some laptops
+	(Asus W5A, HP nx6310) the kernel panics without it.
+	[pavel, ticket #672]
+
+sys/compat/linux/arch/amd64/linux_machdep.c	1.23 via patch
+sys/compat/linux/arch/amd64/linux_machdep.h	1.9 via patch
+
+	Fix restart of interrupted system calls.
+	[njoly, ticket #673]
+
+distrib/mac68k/stand/Makefile			1.4
+
+	As `cksum -m` is no longer functional, convert it to `cksum -a MD5`.
+	[hauke, ticket #674]
+
+sbin/reboot/reboot.8				1.22
+
+	Add a caveat about reboot(8) not running shutdown scripts. PR#35067.
+	[jnemeth, ticket #676]
+
+sys/arch/sh3/sh3/mmu_sh3.c			1.12
+
+	In sh3_tlb_update we need to ensure we are not interrupted while
+	messing with the TLB. PR#34706.
+	[uwe, ticket #680]
+
+sys/arch/sh3/sh3/exception.c			1.37 via patch
+
+	Re-enable interrupts in tlb_exception too.
+	[uwe, ticket #681]
+
+src/share/zoneinfo/africa		patch
+src/share/zoneinfo/australasia		patch
+src/share/zoneinfo/northamerica		patch
+	Merge tzdata2007f.
+	[markd, ticket #679]
+
+sys/dist/ipf/netinet/fil.c			1.35
+
+	Fix an use-after-free bug in ipf.
+	[darrenr, ticket #688]
+
+sys/arch/amiga/amiga/pmap.c			1.125 via patch
+sys/arch/atari/atari/pmap.c			1.99 via patch
+
+	Allow pmap_enter_ptpage to fail, sometimes. Pass WAIT/NOWAIT flags and
+	fix some obvious locking problems. This allows us to run a LOCKDEBUG
+	kernel now.
+	[mhitch, ticket #682]
+
+sys/arch/amiga/amiga/genassym.cf		1.24 via patch
+sys/arch/amiga/include/pcb.h			1.15 via patch
+sys/arch/m68k/m68k/switch_subr.s		1.19 via patch
+
+	Get rid of pcb_cmap2 - it hasn't been used for a long, long time.
+	[mhitch, ticket #683]
+
+sys/arch/amiga/amiga/pmap.c			1.126-1.127 via patch
+
+	Rework pmap_zero_page() and pmap_copy_page() so it doesn't need the
+	pte pointers from pmap_bootstrap(), and make pmap_bootstrap()
+	more compatible with the common m68k pmap_motorola.c.
+	[mhitch, ticket #685]
 
