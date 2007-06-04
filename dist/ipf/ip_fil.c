@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.c,v 1.12 2007/05/15 22:52:20 martin Exp $	*/
+/*	$NetBSD: ip_fil.c,v 1.13 2007/06/04 12:38:58 martti Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -177,14 +177,14 @@ static int	write_output __P((struct ifnet *, struct mbuf *,
 #endif
 
 
-int iplattach()
+int ipfattach()
 {
 	fr_running = 1;
 	return 0;
 }
 
 
-int ipldetach()
+int ipfdetach()
 {
 	fr_running = -1;
 	return 0;

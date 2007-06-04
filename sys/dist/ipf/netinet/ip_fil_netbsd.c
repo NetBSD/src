@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_netbsd.c,v 1.36 2007/05/15 22:52:49 martin Exp $	*/
+/*	$NetBSD: ip_fil_netbsd.c,v 1.37 2007/06/04 12:38:58 martti Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -282,14 +282,14 @@ void
 ipfilterattach(int count)
 {
 # if 0
-	if (iplattach() != 0)
+	if (ipfattach() != 0)
 		printf("IP Filter failed to attach\n");
 # endif
 }
 #endif
 
 
-int iplattach()
+int ipfattach()
 {
 	int s;
 #if defined(NETBSD_PF) && (__NetBSD_Version__ >= 104200000)
@@ -419,7 +419,7 @@ pfil_error:
  * Disable the filter by removing the hooks from the IP input/output
  * stream.
  */
-int ipldetach()
+int ipfdetach()
 {
 	int s;
 #if defined(NETBSD_PF) && (__NetBSD_Version__ >= 104200000)
