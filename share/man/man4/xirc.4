@@ -1,10 +1,10 @@
-.\" $NetBSD: xi.4,v 1.10.20.1 2007/06/04 19:56:21 bouyer Exp $
+.\" $NetBSD: xirc.4,v 1.1.2.2 2007/06/04 19:56:21 bouyer Exp $
 .\"
-.\" Copyright (c) 2000 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
-.\" by Gregory McGarry.
+.\" by Lennart Augustsson.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -35,73 +35,26 @@
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
 .Dd June 1, 2007
-.Dt XI 4
+.Dt XIRC 4
 .Os
 .Sh NAME
-.Nm xi
-.Nd Xircom CreditCard Ethernet device driver
+.Nm xirc
+.Nd Xircom Ethernet/modem card driver
 .Sh SYNOPSIS
-.Cd "xi* at xirc?"
-.Pp
-Configuration of PHYs may also be necessary.  See
-.Xr mii 4 .
+.Cd "xirc* at pcmcia? function ?"
+.Cd "com*  at xirc?"
+.Cd "xi*   at xirc?"
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for the Xircom CreditCard family of PCMCIA
-Ethernet adapters.  Supported cards include:
-.Pp
-.Bl -item -compact -offset indent
-.It
-Xircom CreditCard Ethernet II
-.It
-Xircom CreditCard 10/100 Ethernet
-.\" .It Xircom CreditCard Ethernet + Modem
-.\" .It Xircom CreditCard 10/100 Ethernet + Modem
-.It
-Xircom RealPort 10/100 Ethernet + Modem (Ethernet function only)
-.It
-Intel EtherExpress Pro/100
-.It
-Compaq Netelligent 10/100
-.El
-.Pp
-Cards which should work, but have not been confirmed include:
-.Pp
-.Bl -item -compact -offset indent
-.It
-Xircom RealPort Ethernet
-.It
-Xircom RealPort 10/100 Ethernet
-.El
-.Pp
-Some Xircom Ethernet products are supported by the
-.Xr tlp 4
-driver.
-.Sh MEDIA SELECTION
-Media selection is done using
-.Xr ifconfig 8
-using the standard
-.Xr ifmedia 4
-mechanism.  Refer to those manual pages for more information.
+device driver provides support for the Xircom combined Ethernet
+and modem cards.
 .Sh SEE ALSO
-.Xr ifmedia 4 ,
-.Xr mii 4 ,
-.Xr netintro 4 ,
+.Xr com 4 ,
 .Xr pcmcia 4 ,
-.Xr tlp 4 ,
-.Xr xirc 4 ,
-.Xr ifconfig 8
+.Xr xi 4
 .Sh HISTORY
 The
 .Nm
-device driver appeared in
-.Nx 1.5 .
-.Sh BUGS
-The driver suffers from poor performance.  Even with the 10/100 cards,
-do not expect more than ~450KB/s.  Some 10/100 cards may not autonegotiate
-reliably and require manual media selection.
-.Pp
-The Xircom multifunction cards which contain both Ethernet and modem
-interfaces are known to have problems.  This is due to the card not
-reporting itself correctly as a multifunction card.
+driver appeared in
+.Nx 3.0 .
