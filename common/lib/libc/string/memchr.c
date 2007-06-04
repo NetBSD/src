@@ -1,4 +1,4 @@
-/*	$NetBSD: memchr.c,v 1.1 2005/12/20 19:28:52 christos Exp $	*/
+/*	$NetBSD: memchr.c,v 1.2 2007/06/04 18:19:27 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)memchr.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: memchr.c,v 1.1 2005/12/20 19:28:52 christos Exp $");
+__RCSID("$NetBSD: memchr.c,v 1.2 2007/06/04 18:19:27 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -49,10 +49,7 @@ __RCSID("$NetBSD: memchr.c,v 1.1 2005/12/20 19:28:52 christos Exp $");
 #endif
 
 void *
-memchr(s, c, n)
-	const void *s;
-	unsigned char c;
-	size_t n;
+memchr(const void *s, int c, size_t n)
 {
 	_DIAGASSERT(s != NULL);
 
