@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.23 2007/06/02 22:59:03 njoly Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.24 2007/06/04 23:15:01 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.23 2007/06/02 22:59:03 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.24 2007/06/04 23:15:01 xtraeme Exp $");
 
 #include "opt_coredump.h"
 #include "opt_user_ldt.h"
@@ -108,7 +108,7 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.23 2007/06/02 22:59:03 njoly Exp $"
 
 extern char x86_64_doubleflt_stack[];
 
-static void setredzone __P((struct lwp *));
+static void setredzone(struct lwp *);
 
 void
 cpu_proc_fork(struct proc *p1, struct proc *p2)
@@ -137,12 +137,8 @@ cpu_proc_fork(struct proc *p1, struct proc *p2)
  * accordingly.
  */
 void
-cpu_lwp_fork(l1, l2, stack, stacksize, func, arg)
-	struct lwp *l1, *l2;
-	void *stack;
-	size_t stacksize;
-	void (*func) __P((void *));
-	void *arg;
+cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
+	     void (*func)(void *), void *arg)
 {
 	struct pcb *pcb = &l2->l_addr->u_pcb;
 	struct trapframe *tf;
@@ -226,15 +222,13 @@ cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 }
 
 void
-cpu_swapin(l)
-	struct lwp *l;
+cpu_swapin(struct lwp *l)
 {
 	setredzone(l);
 }
 
 void
-cpu_swapout(l)
-	struct lwp *l;
+cpu_swapout(struct lwp *l)
 {
 
 	/*
@@ -325,8 +319,7 @@ setredzone(struct lwp *l)
  * Convert kernel VA to physical address
  */
 int
-kvtop(addr)
-	register void *addr;
+kvtop(void *addr)
 {
 	paddr_t pa;
 
@@ -341,9 +334,7 @@ kvtop(addr)
  * do not need to pass an access_type to pmap_enter().   
  */
 void
-vmapbuf(bp, len)
-	struct buf *bp;
-	vsize_t len;
+vmapbuf(struct buf *bp, vsize_t len)
 {
 	vaddr_t faddr, taddr, off;
 	paddr_t fpa;
@@ -382,9 +373,7 @@ vmapbuf(bp, len)
  * Unmap a previously-mapped user I/O request.
  */
 void
-vunmapbuf(bp, len)
-	struct buf *bp;
-	vsize_t len;
+vunmapbuf(struct buf *bp, vsize_t len)
 {
 	vaddr_t addr, off;
 

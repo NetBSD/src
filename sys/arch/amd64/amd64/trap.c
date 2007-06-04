@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.31 2007/05/17 14:51:14 yamt Exp $	*/
+/*	$NetBSD: trap.c,v 1.32 2007/06/04 23:15:01 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.31 2007/05/17 14:51:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.32 2007/06/04 23:15:01 xtraeme Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -117,9 +117,9 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.31 2007/05/17 14:51:14 yamt Exp $");
 #include <sys/kgdb.h>
 #endif
 
-void trap __P((struct trapframe *));
+void trap(struct trapframe *);
 #if defined(I386_CPU)
-int trapwrite __P((unsigned));
+int trapwrite(unsigned);
 #endif
 
 const char *trap_type[] = {
@@ -169,8 +169,7 @@ static void frame_dump(struct trapframe *);
  */
 /*ARGSUSED*/
 void
-trap(frame)
-	struct trapframe *frame;
+trap(struct trapframe *frame)
 {
 	struct lwp *l = curlwp;
 	struct proc *p;
