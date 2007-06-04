@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.37 2007/05/12 15:11:16 abs Exp $
+#	$NetBSD: GENERIC,v 1.38 2007/06/04 08:55:21 martin Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/iyonix/conf/std.iyonix"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.37 $"
+#ident 		"GENERIC-$Revision: 1.38 $"
 
 maxusers	32		# estimated number of users
 
@@ -802,6 +802,7 @@ pseudo-device	loop			# network loopback
 #pseudo-device	vlan			# IEEE 802.1q encapsulation
 #pseudo-device	bridge			# simple inter-network bridging
 #options 	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
+#pseudo-device	agr			# IEEE 802.3ad link aggregation
 #pseudo-device	pf			# PF packet filter
 #pseudo-device	pflog			# PF log if
 # srt is EXPERIMENTAL

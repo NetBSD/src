@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.7 2007/06/01 13:20:56 uwe Exp $
+# $NetBSD: GENERIC,v 1.8 2007/06/04 08:55:21 martin Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include		"arch/landisk/conf/std.landisk"
 
 options         INCLUDE_CONFIG_FILE     # embed config file in kernel binary
 
-#ident          "GENERIC-$Revision: 1.7 $"
+#ident          "GENERIC-$Revision: 1.8 $"
 
 maxusers	16		# estimated number of users
 
@@ -448,6 +448,7 @@ pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
 #options 	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
+pseudo-device	agr			# IEEE 802.3ad link aggregation
 #pseudo-device	pf			# PF packet filter
 #pseudo-device	pflog			# PF log if
 
