@@ -1,4 +1,4 @@
-/*	$NetBSD: strcasecmp.c,v 1.1 2005/12/20 19:28:52 christos Exp $	*/
+/*	$NetBSD: strcasecmp.c,v 1.2 2007/06/04 18:19:27 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)strcasecmp.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: strcasecmp.c,v 1.1 2005/12/20 19:28:52 christos Exp $");
+__RCSID("$NetBSD: strcasecmp.c,v 1.2 2007/06/04 18:19:27 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -53,8 +53,7 @@ __weak_alias(strncasecmp,_strncasecmp)
 #endif 
 
 int
-strcasecmp(s1, s2)
-	const char *s1, *s2;
+strcasecmp(const char *s1, const char *s2)
 {
 	const unsigned char *us1 = (const unsigned char *)s1,
 			*us2 = (const unsigned char *)s2;

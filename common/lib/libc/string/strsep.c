@@ -1,4 +1,4 @@
-/*	$NetBSD: strsep.c,v 1.2 2007/02/19 18:33:09 chs Exp $	*/
+/*	$NetBSD: strsep.c,v 1.3 2007/06/04 18:19:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)strsep.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: strsep.c,v 1.2 2007/02/19 18:33:09 chs Exp $");
+__RCSID("$NetBSD: strsep.c,v 1.3 2007/06/04 18:19:28 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -66,9 +66,7 @@ __weak_alias(strsep,_strsep)
  * If *stringp is NULL, strsep returns NULL.
  */
 char *
-strsep(stringp, delim)
-	char **stringp;
-	const char *delim;
+strsep(char **stringp, const char *delim)
 {
 	char *s;
 	const char *spanp;
