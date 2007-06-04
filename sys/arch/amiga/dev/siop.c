@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.54 2006/03/08 23:46:22 lukem Exp $ */
+/*	$NetBSD: siop.c,v 1.54.20.1 2007/06/04 01:54:15 wrstuden Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -70,7 +70,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop.c,v 1.54 2006/03/08 23:46:22 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop.c,v 1.54.20.1 2007/06/04 01:54:15 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -318,7 +318,7 @@ siop_poll(struct siop_softc *sc, struct siop_acb *acb)
 				    xs->xs_periph->periph_target, acb->cmd.opcode,
 				    rp->siop_sbcl, rp->siop_dsp,
 				    rp->siop_dsp - sc->sc_scriptspa,
-				    *((long *)&rp->siop_dcmd), &acb->ds, acb->xs->timeout);
+				    *((volatile long *)&rp->siop_dcmd), &acb->ds, acb->xs->timeout);
 #endif
 				i = 50000;
 				--to;
@@ -1048,7 +1048,7 @@ siop_checkintr(struct siop_softc *sc, u_char istat, u_char dstat,
 			printf ("Phase mismatch: %x dsp +%lx dcmd %lx\n",
 			    rp->siop_sbcl,
 			    rp->siop_dsp - sc->sc_scriptspa,
-			    *((long *)&rp->siop_dcmd));
+			    *((volatile long *)&rp->siop_dcmd));
 #endif
 		if ((rp->siop_sbcl & SIOP_REQ) == 0) {
 			printf ("Phase mismatch: REQ not asserted! %02x dsp %lx\n",

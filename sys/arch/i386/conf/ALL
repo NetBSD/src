@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.73.2.5 2007/05/13 06:52:51 pavel Exp $
+# $NetBSD: ALL,v 1.73.2.5.2.1 2007/06/04 01:54:17 wrstuden Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.73.2.5 $"
+#ident 		"ALL-$Revision: 1.73.2.5.2.1 $"
 
 maxusers	32		# estimated number of users
 
@@ -203,6 +203,7 @@ options 	IPFILTER_LOG	# ipmon(8) log support
 options 	IPFILTER_LOOKUP	# ippool(8) support
 options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
+options 	TCP_SIGNATURE	# RFC2385 support, used with BGP
 
 options 	ALTQ		# Manipulate network interfaces' output queues
 options 	ALTQ_BLUE	# Stochastic Fair Blue

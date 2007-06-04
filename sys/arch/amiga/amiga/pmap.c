@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.118 2006/09/14 01:27:59 mhitch Exp $	*/
+/*	$NetBSD: pmap.c,v 1.118.8.1 2007/06/04 01:54:14 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.118 2006/09/14 01:27:59 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.118.8.1 2007/06/04 01:54:14 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -294,6 +294,9 @@ static int	pmap_ishift;	/* segment table index shift */
 int		protostfree;	/* prototype (default) free ST map */
 #endif
 
+pt_entry_t	*caddr1_pte;	/* PTE for CADDR1 */
+pt_entry_t	*caddr2_pte;	/* PTE for CADDR2 */
+
 extern caddr_t	msgbufaddr;
 extern paddr_t	msgbufpa;
 
@@ -305,7 +308,7 @@ extern paddr_t z2mem_start;
 extern vaddr_t reserve_dumppages(vaddr_t);
 
 boolean_t	pmap_testbit(paddr_t, int);
-void		pmap_enter_ptpage(pmap_t, vaddr_t);
+int		pmap_enter_ptpage(pmap_t, vaddr_t, boolean_t);
 static void	pmap_ptpage_addref(vaddr_t);
 static int	pmap_ptpage_delref(vaddr_t);
 static void	pmap_changebit(vaddr_t, int, boolean_t);
@@ -331,7 +334,6 @@ void		pmap_collect1(pmap_t, paddr_t, paddr_t);
  * All those kernel PT submaps that BSD is so fond of
  */
 caddr_t	CADDR1, CADDR2, vmmap;
-u_int	*CMAP1, *CMAP2, *vmpte, *msgbufmap;
 
 #define	PAGE_IS_MANAGED(pa)	(pmap_initialized			\
 				 && vm_physseg_find(atop((pa)), NULL) != -1)
@@ -369,7 +371,6 @@ pmap_bootstrap(firstaddr, loadaddr)
 	paddr_t loadaddr;
 {
 	vaddr_t va;
-	u_int *pte;
 	int i;
 	struct boot_memseg *sp, *esp;
 	paddr_t fromads, toads;
@@ -442,7 +443,6 @@ pmap_bootstrap(firstaddr, loadaddr)
 	}
 
 	mem_size = physmem << PGSHIFT;
-	virtual_avail = VM_MIN_KERNEL_ADDRESS + (firstaddr - loadaddr);
 	virtual_end = VM_MAX_KERNEL_ADDRESS;
 
 	/*
@@ -471,16 +471,14 @@ pmap_bootstrap(firstaddr, loadaddr)
 	/*
 	 * Allocate all the submaps we need
 	 */
-#define	SYSMAP(c, p, v, n)	\
-	v = (c)va; va += ((n)*PAGE_SIZE); p = pte; pte += (n);
+#define	SYSMAP(c, v, n)	\
+	v = (c)va; va += ((n)*PAGE_SIZE);
 
 	va = virtual_avail;
-	pte = pmap_pte(pmap_kernel(), va);
 
-	SYSMAP(caddr_t	,CMAP1	   ,CADDR1	 ,1			)
-	SYSMAP(caddr_t	,CMAP2	   ,CADDR2	 ,1			)
-	SYSMAP(caddr_t	,vmpte	   ,vmmap	 ,1			)
-	SYSMAP(caddr_t	,msgbufmap ,msgbufaddr   ,btoc(MSGBUFSIZE)	)
+	SYSMAP(caddr_t	,CADDR1	 ,1			)
+	SYSMAP(caddr_t	,CADDR2	 ,1			)
+	SYSMAP(caddr_t	,vmmap	 ,1			)
 
 	DCIS();
 
@@ -495,8 +493,6 @@ pmap_bootstrap(firstaddr, loadaddr)
 void
 pmap_init()
 {
-	extern vaddr_t	amigahwaddr;
-	extern u_int	namigahwpg;
 	vaddr_t		addr, addr2;
 	vsize_t		s;
 	u_int		npg;
@@ -512,33 +508,14 @@ pmap_init()
 	if (pmapdebug & PDB_FOLLOW)
 		printf("pmap_init()\n");
 #endif
+
 	/*
-	 * Now that kernel map has been allocated, we can mark as
-	 * unavailable regions which we have mapped in locore.
-	 * XXX in pmap_bootstrap() ???
+	 * Before we do anything else, initialize the PTE pointers
+	 * used by pmap_zero_page() and pmap_copy_page().
 	 */
-	addr = (vaddr_t) amigahwaddr;
-	if (uvm_map(kernel_map, &addr,
-		    ptoa(namigahwpg),
-		    NULL, UVM_UNKNOWN_OFFSET, 0,
-		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE,
-				UVM_INH_NONE, UVM_ADV_RANDOM,
-				UVM_FLAG_FIXED)) != 0)
-		goto bogons;
-	addr = (vaddr_t) Sysmap;
-	if (uvm_map(kernel_map, &addr, AMIGA_KPTSIZE,
-		    NULL, UVM_UNKNOWN_OFFSET, 0,
-		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE,
-				UVM_INH_NONE, UVM_ADV_RANDOM,
-				UVM_FLAG_FIXED)) != 0) {
-		/*
-		 * If this fails, it is probably because the static
-		 * portion of the kernel page table isn't big enough
-		 * and we overran the page table map.
-		 */
- bogons:
-		panic("pmap_init: bogons in the VM system!");
-	}
+	caddr1_pte = pmap_pte(pmap_kernel(), CADDR1);
+	caddr2_pte = pmap_pte(pmap_kernel(), CADDR2);
+
 #ifdef DEBUG
 	if (pmapdebug & PDB_INIT) {
 		printf("pmap_init: Sysseg %p, Sysmap %p, Sysptmap %p\n",
@@ -1118,6 +1095,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 	boolean_t cacheable = TRUE;
 	boolean_t checkpv = TRUE;
 	boolean_t wired = (flags & PMAP_WIRED) != 0;
+	boolean_t can_fail = (flags & PMAP_CANFAIL) != 0;
 
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_ENTER))
@@ -1134,13 +1112,19 @@ pmap_enter(pmap, va, pa, prot, flags)
 	if (pmap->pm_ptab == NULL)
 		pmap->pm_ptab = (pt_entry_t *)
 		    uvm_km_alloc(pt_map, AMIGA_UPTSIZE, 0,
-		    UVM_KMF_VAONLY | UVM_KMF_WAITVA);
+		    UVM_KMF_VAONLY | 
+		    (can_fail ? UVM_KMF_NOWAIT : UVM_KMF_WAITVA));
+		if (pmap->pm_ptab == NULL)
+			return ENOMEM;
 
 	/*
 	 * Segment table entry not valid, we need a new PT page
 	 */
-	if (!pmap_ste_v(pmap, va))
-		pmap_enter_ptpage(pmap, va);
+	if (!pmap_ste_v(pmap, va)) {
+		int err = pmap_enter_ptpage(pmap, va, can_fail);
+		if (err)
+			return err;
+	}
 
 	pte = pmap_pte(pmap, va);
 	opa = pmap_pte_pa(pte);
@@ -1392,7 +1376,7 @@ pmap_kenter_pa(va, pa, prot)
 
 	if (!pmap_ste_v(pmap, va)) {
 		s = splvm();
-		pmap_enter_ptpage(pmap, va);
+		pmap_enter_ptpage(pmap, va, false);
 		splx(s);
 	}
 
@@ -1824,7 +1808,7 @@ pmap_zero_page(phys)
 
 	s = splvm();
 
-	*CMAP1 = phys | dst_pte;
+	*caddr1_pte = phys | dst_pte;
 	TBIS((vaddr_t)CADDR1);
 	zeropage(CADDR1);
 
@@ -1833,7 +1817,7 @@ pmap_zero_page(phys)
 	 * XXX: Invalidating is not strictly necessary.... Not doing it
          * is saving us a few cycles
 	 */
-	*CMAP1 = PG_NV;
+	*caddr1_pte = PG_NV;
 	TBIS((vaddr_t)CADDR1);
 #endif
 
@@ -1875,9 +1859,9 @@ pmap_copy_page(src, dst)
 #endif
 
 	s = splvm();
-	*CMAP1 = src | src_pte;
+	*caddr1_pte = src | src_pte;
 	TBIS((vaddr_t)CADDR1);
-	*CMAP2 = dst | dst_pte;
+	*caddr2_pte = dst | dst_pte;
 	TBIS((vaddr_t)CADDR2);
 
 	copypage(CADDR1, CADDR2);
@@ -1887,9 +1871,9 @@ pmap_copy_page(src, dst)
 	 * XXX: Invalidating is not strictly necessary.... Not doing it
          * is saving us a few cycles
 	 */
-	*CMAP1 = PG_NV;
+	*caddr1_pte = PG_NV;
 	TBIS((vaddr_t)CADDR1);
-	*CMAP2 = PG_NV;
+	*caddr2_pte = PG_NV;
 	TBIS((vaddr_t)CADDR2);
 #endif
 
@@ -2106,7 +2090,9 @@ pmap_remove_mapping(pmap, va, pte, flags)
 #endif
 			pmap_remove_mapping(pmap_kernel(), ptpva,
 			    NULL, PRM_TFLUSH|PRM_CFLUSH);
+			simple_lock(&uvm.kernel_object->vmobjlock);
 			uvm_pagefree(PHYS_TO_VM_PAGE(_pa));
+			simple_unlock(&uvm.kernel_object->vmobjlock);
 #ifdef DEBUG
 			if (pmapdebug & (PDB_REMOVE|PDB_PTPAGE))
 			    printf("remove: PT page 0x%lx (0x%lx) freed\n",
@@ -2433,10 +2419,11 @@ pmap_changebit(pa, bit, setem)
 }
 
 /* static */
-void
-pmap_enter_ptpage(pmap, va)
+int
+pmap_enter_ptpage(pmap, va, can_fail)
 	pmap_t pmap;
 	vaddr_t va;
+	boolean_t can_fail;
 {
 	paddr_t ptpa;
 	struct vm_page *pg;
@@ -2463,7 +2450,12 @@ pmap_enter_ptpage(pmap, va)
 		/* XXX Atari uses kernel_map here: */
 		pmap->pm_stab = (st_entry_t *)
 		    uvm_km_alloc(kernel_map, AMIGA_STSIZE, 0,
-			UVM_KMF_WIRED | UVM_KMF_ZERO);
+			UVM_KMF_WIRED | UVM_KMF_ZERO |
+		 	(can_fail ? UVM_KMF_NOWAIT : 0));
+		if (pmap->pm_stab == NULL) {
+			pmap->pm_stab = Segtabzero;
+			return ENOMEM;
+		}
 		(void) pmap_extract(pmap_kernel(), (vaddr_t)pmap->pm_stab,
 		    (paddr_t *)&pmap->pm_stpa);
 #if defined(M68040) || defined(M68060)
@@ -2607,11 +2599,15 @@ pmap_enter_ptpage(pmap, va)
 		if (pmapdebug & (PDB_ENTER|PDB_PTPAGE))
 			printf("enter_pt: about to alloc UPT pg at %lx\n", va);
 #endif
+		simple_lock(&uvm.kernel_object->vmobjlock);
 		while ((pg = uvm_pagealloc(uvm.kernel_object,
 					   va - vm_map_min(kernel_map),
 					   NULL, UVM_PGA_ZERO)) == NULL) {
+			simple_unlock(&uvm.kernel_object->vmobjlock);
 			uvm_wait("ptpage");
+			simple_lock(&uvm.kernel_object->vmobjlock);
 		}
+		simple_unlock(&uvm.kernel_object->vmobjlock);
 		pg->flags &= ~(PG_BUSY|PG_FAKE);
 		UVM_PAGE_OWN(pg, NULL);
 		ptpa = VM_PAGE_TO_PHYS(pg);
@@ -2691,6 +2687,8 @@ pmap_enter_ptpage(pmap, va)
 		TBIAU();
 	pmap->pm_ptpages++;
 	splx(s);
+
+	return 0;
 }
 
 #ifdef DEBUG

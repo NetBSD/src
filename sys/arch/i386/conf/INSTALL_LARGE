@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_LARGE,v 1.1.2.2 2007/03/09 06:59:20 riz Exp $
+#	$NetBSD: INSTALL_LARGE,v 1.1.2.2.2.1 2007/06/04 01:54:17 wrstuden Exp $
 #
 #	INSTALL_LARGE -- INSTALL suitable for modern machines
 #
@@ -16,3 +16,11 @@ ioapic* 	at mainbus?
 bnx* 	at pci? dev ? function ?	# Broadcom NetXtremeII gigabit Ethernet
 txp*	at pci? dev ? function ?	# 3com 3cr990
 vge*	at pci? dev ? function ?	# VIATech VT612X Gigabit Ethernet
+
+# CardBus bridge support
+cbb* 		at pci? dev ? function ?
+cardslot* 	at cbb?
+
+# CardBus bus support
+cardbus* 	at cardslot?
+pcmcia* 	at cardslot?

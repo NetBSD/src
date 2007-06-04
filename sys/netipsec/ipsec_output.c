@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_output.c,v 1.17 2006/11/24 19:47:00 christos Exp $	*/
+/*	$NetBSD: ipsec_output.c,v 1.17.4.1 2007/06/04 01:54:28 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.17 2006/11/24 19:47:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.17.4.1 2007/06/04 01:54:28 wrstuden Exp $");
 
 /*
  * IPsec output processing.
@@ -166,7 +166,21 @@ ipsec_process_done(struct mbuf *m, struct ipsecrequest *isr)
 	 */
 	if (isr->next) {
 		newipsecstat.ips_out_bundlesa++;
-		return ipsec4_process_packet(m, isr->next, 0, 0);
+        switch ( saidx->dst.sa.sa_family ) {
+#ifdef INET
+        case AF_INET:
+			return ipsec4_process_packet(m, isr->next, 0,0);
+#endif /* INET */
+#ifdef INET6
+		case AF_INET6:
+        	return ipsec6_process_packet(m,isr->next);
+#endif /* INET6 */
+		default :
+			DPRINTF(("ipsec_process_done: unknown protocol family %u\n",
+                               saidx->dst.sa.sa_family));
+			error = ENXIO;
+			goto bad;
+        }
 	}
 
 	/*
@@ -499,289 +513,90 @@ bad:
 #endif
 
 #ifdef INET6
-/*
- * Chop IP6 header from the payload.
- */
-static struct mbuf *
-ipsec6_splithdr(struct mbuf *m)
-{
-	struct mbuf *mh;
-	struct ip6_hdr *ip6;
-	int hlen;
-
-	IPSEC_ASSERT(m->m_len >= sizeof (struct ip6_hdr),
-		("ipsec6_splithdr: first mbuf too short, len %u", m->m_len));
-	ip6 = mtod(m, struct ip6_hdr *);
-	hlen = sizeof(struct ip6_hdr);
-	if (m->m_len > hlen) {
-		MGETHDR(mh, M_DONTWAIT, MT_HEADER);
-		if (!mh) {
-			m_freem(m);
-			return NULL;
-		}
-		M_MOVE_PKTHDR(mh, m);
-		MH_ALIGN(mh, hlen);
-		m->m_len -= hlen;
-		m->m_data += hlen;
-		mh->m_next = m;
-		m = mh;
-		m->m_len = hlen;
-		bcopy((caddr_t)ip6, mtod(m, caddr_t), hlen);
-	} else if (m->m_len < hlen) {
-		m = m_pullup(m, hlen);
-		if (!m)
-			return NULL;
-	}
-	return m;
-}
-
-/*
- * IPsec output logic for IPv6, transport mode.
- */
 int
-ipsec6_output_trans(
-    struct ipsec_output_state *state,
-    u_char *nexthdrp,
-    struct mbuf *mprev,
-    struct secpolicy *sp,
-    int flags,
-    int *tun
-)
+ipsec6_process_packet(
+	struct mbuf *m,
+ 	struct ipsecrequest *isr
+    )
 {
-	struct ipsecrequest *isr;
 	struct secasindex saidx;
-	int error = 0;
-	struct mbuf *m;
+	struct secasvar *sav;
+	struct ip6_hdr *ip6;
+	int s, error, i, off; 
 
-	IPSEC_ASSERT(state != NULL, ("ipsec6_output: null state"));
-	IPSEC_ASSERT(state->m != NULL, ("ipsec6_output: null m"));
-	IPSEC_ASSERT(nexthdrp != NULL, ("ipsec6_output: null nexthdrp"));
-	IPSEC_ASSERT(mprev != NULL, ("ipsec6_output: null mprev"));
-	IPSEC_ASSERT(sp != NULL, ("ipsec6_output: null sp"));
-	IPSEC_ASSERT(tun != NULL, ("ipsec6_output: null tun"));
+	IPSEC_ASSERT(m != NULL, ("ipsec6_process_packet: null mbuf"));
+	IPSEC_ASSERT(isr != NULL, ("ipsec6_process_packet: null isr"));
 
-	KEYDEBUG(KEYDEBUG_IPSEC_DATA,
-		printf("ipsec6_output_trans: applyed SP\n");
-		kdebug_secpolicy(sp));
-
-	isr = sp->req;
-	if (isr->saidx.mode == IPSEC_MODE_TUNNEL) {
-		/* the rest will be handled by ipsec6_output_tunnel() */
-		*tun = 1;		/* need tunnel-mode processing */
-		return 0;
-	}
-
-	*tun = 0;
-	m = state->m;
-
+	s = splsoftnet();   /* insure SA contents don't change */
 	isr = ipsec_nextisr(m, isr, AF_INET6, &saidx, &error);
 	if (isr == NULL) {
-#ifdef notdef
-		/* XXX should notification be done for all errors ? */
-		/*
-		 * Notify the fact that the packet is discarded
-		 * to ourselves. I believe this is better than
-		 * just silently discarding. (jinmei@kame.net)
-		 * XXX: should we restrict the error to TCP packets?
-		 * XXX: should we directly notify sockets via
-		 *      pfctlinputs?
-		 */
-		icmp6_error(m, ICMP6_DST_UNREACH,
-			    ICMP6_DST_UNREACH_ADMIN, 0);
-		m = NULL;	/* NB: icmp6_error frees mbuf */
-#endif
+		// XXX Should we send a notification ?
 		goto bad;
 	}
 
-	return (*isr->sav->tdb_xform->xf_output)(m, isr, NULL,
-		sizeof (struct ip6_hdr),
-		offsetof(struct ip6_hdr, ip6_nxt));
+	sav = isr->sav;
+	if (sav->tdb_xform->xf_type != XF_IP4) {
+		i = sizeof(struct ip6_hdr);
+		off = offsetof(struct ip6_hdr, ip6_nxt);
+		error = (*sav->tdb_xform->xf_output)(m, isr, NULL, i, off);
+       } else {
+		union sockaddr_union *dst = &sav->sah->saidx.dst;
+
+        ip6 = mtod(m, struct ip6_hdr *);
+
+		/* Do the appropriate encapsulation, if necessary */
+		if (isr->saidx.mode == IPSEC_MODE_TUNNEL || /* Tunnel requ'd */
+               dst->sa.sa_family != AF_INET6 ||        /* PF mismatch */
+            ((dst->sa.sa_family == AF_INET6) &&
+                (!IN6_IS_ADDR_UNSPECIFIED(&dst->sin6.sin6_addr)) &&
+                (!IN6_ARE_ADDR_EQUAL(&dst->sin6.sin6_addr,
+                &ip6->ip6_dst))) 
+            )
+		{
+			struct mbuf *mp;
+            /* Fix IPv6 header payload length. */
+            if (m->m_len < sizeof(struct ip6_hdr))
+                if ((m = m_pullup(m,sizeof(struct ip6_hdr))) == NULL)
+                   return ENOBUFS;
+
+            if (m->m_pkthdr.len - sizeof(*ip6) > IPV6_MAXPACKET) {
+                /* No jumbogram support. */
+                m_freem(m);
+                return ENXIO;   /*XXX*/
+            }
+            ip6 = mtod(m, struct ip6_hdr *);
+            ip6->ip6_plen = htons(m->m_pkthdr.len - sizeof(*ip6));
+
+			/* Encapsulate the packet */
+			error = ipip_output(m, isr, &mp, 0, 0);
+			if (mp == NULL && !error) {
+				/* Should never happen. */
+				DPRINTF(("ipsec6_process_packet: ipip_output "
+						 "returns no mbuf and no error!"));
+				 error = EFAULT;
+			}
+
+			if (error) {
+				if (mp) {
+					/* XXX: Should never happen! */
+					m_freem(mp);
+				}
+				m = NULL; /* ipip_output() already freed it */
+				goto bad;
+			}
+    
+			m = mp;
+			mp = NULL;
+		}
+	
+		error = ipsec_process_done(m,isr);
+		}
+		splx(s);
+		return error;
 bad:
+	splx(s);
 	if (m)
 		m_freem(m);
-	state->m = NULL;
-	return error;
-}
-
-static int
-ipsec6_encapsulate(struct mbuf *m, struct secasvar *sav)
-{
-	struct ip6_hdr *oip6;
-	struct ip6_hdr *ip6;
-	size_t plen;
-
-	/* can't tunnel between different AFs */
-	if (sav->sah->saidx.src.sa.sa_family != AF_INET6 ||
-	    sav->sah->saidx.dst.sa.sa_family != AF_INET6) {
-		m_freem(m);
-		return EINVAL;
-	}
-	IPSEC_ASSERT(m->m_len != sizeof (struct ip6_hdr),
-		("ipsec6_encapsulate: mbuf wrong size; len %u", m->m_len));
-
-
-	/*
-	 * grow the mbuf to accommodate the new IPv6 header.
-	 */
-	plen = m->m_pkthdr.len;
-	if (M_LEADINGSPACE(m->m_next) < sizeof(struct ip6_hdr)) {
-		struct mbuf *n;
-		MGET(n, M_DONTWAIT, MT_DATA);
-		if (!n) {
-			m_freem(m);
-			return ENOBUFS;
-		}
-		n->m_len = sizeof(struct ip6_hdr);
-		n->m_next = m->m_next;
-		m->m_next = n;
-		m->m_pkthdr.len += sizeof(struct ip6_hdr);
-		oip6 = mtod(n, struct ip6_hdr *);
-	} else {
-		m->m_next->m_len += sizeof(struct ip6_hdr);
-		m->m_next->m_data -= sizeof(struct ip6_hdr);
-		m->m_pkthdr.len += sizeof(struct ip6_hdr);
-		oip6 = mtod(m->m_next, struct ip6_hdr *);
-	}
-	ip6 = mtod(m, struct ip6_hdr *);
-	ovbcopy((caddr_t)ip6, (caddr_t)oip6, sizeof(struct ip6_hdr));
-
-	/* Fake link-local scope-class addresses */
-	if (IN6_IS_SCOPE_LINKLOCAL(&oip6->ip6_src))
-		oip6->ip6_src.s6_addr16[1] = 0;
-	if (IN6_IS_SCOPE_LINKLOCAL(&oip6->ip6_dst))
-		oip6->ip6_dst.s6_addr16[1] = 0;
-
-	/* construct new IPv6 header. see RFC 2401 5.1.2.2 */
-	/* ECN consideration. */
-	ip6_ecn_ingress(ip6_ipsec_ecn, &ip6->ip6_flow, &oip6->ip6_flow);
-	if (plen < IPV6_MAXPACKET - sizeof(struct ip6_hdr))
-		ip6->ip6_plen = htons(plen);
-	else {
-		/* ip6->ip6_plen will be updated in ip6_output() */
-	}
-	ip6->ip6_nxt = IPPROTO_IPV6;
-	sav->sah->saidx.src.sin6.sin6_addr = ip6->ip6_src;
-	sav->sah->saidx.dst.sin6.sin6_addr = ip6->ip6_dst;
-	ip6->ip6_hlim = IPV6_DEFHLIM;
-
-	/* XXX Should ip6_src be updated later ? */
-
-	return 0;
-}
-
-/*
- * IPsec output logic for IPv6, tunnel mode.
- */
-int
-ipsec6_output_tunnel(
-    struct ipsec_output_state *state,
-    struct secpolicy *sp,
-    int flags
-)
-{
-	struct ip6_hdr *ip6;
-	struct ipsecrequest *isr;
-	struct secasindex saidx;
-	int error;
-	struct sockaddr_in6* dst6;
-	struct mbuf *m;
-
-	IPSEC_ASSERT(state != NULL, ("ipsec6_output: null state"));
-	IPSEC_ASSERT(state->m != NULL, ("ipsec6_output: null m"));
-	IPSEC_ASSERT(sp != NULL, ("ipsec6_output: null sp"));
-
-	KEYDEBUG(KEYDEBUG_IPSEC_DATA,
-		printf("ipsec6_output_tunnel: applyed SP\n");
-		kdebug_secpolicy(sp));
-
-	m = state->m;
-	/*
-	 * transport mode ipsec (before the 1st tunnel mode) is already
-	 * processed by ipsec6_output_trans().
-	 */
-	for (isr = sp->req; isr; isr = isr->next) {
-		if (isr->saidx.mode == IPSEC_MODE_TUNNEL)
-			break;
-	}
-	isr = ipsec_nextisr(m, isr, AF_INET6, &saidx, &error);
-	if (isr == NULL)
-		goto bad;
-
-	/*
-	 * There may be the case that SA status will be changed when
-	 * we are refering to one. So calling splsoftnet().
-	 */
-	if (isr->saidx.mode == IPSEC_MODE_TUNNEL) {
-		/*
-		 * build IPsec tunnel.
-		 */
-		/* XXX should be processed with other familiy */
-		if (isr->sav->sah->saidx.src.sa.sa_family != AF_INET6) {
-			ipseclog((LOG_ERR, "ipsec6_output_tunnel: "
-			    "family mismatched between inner and outer, spi=%lu\n",
-			    (u_long)ntohl(isr->sav->spi)));
-			newipsecstat.ips_out_inval++;
-			error = EAFNOSUPPORT;
-			goto bad;
-		}
-
-		m = ipsec6_splithdr(m);
-		if (!m) {
-			newipsecstat.ips_out_nomem++;
-			error = ENOMEM;
-			goto bad;
-		}
-		error = ipsec6_encapsulate(m, isr->sav);
-		if (error) {
-			m = NULL;
-			goto bad;
-		}
-		ip6 = mtod(m, struct ip6_hdr *);
-
-		state->ro = &isr->sav->sah->sa_route;
-		state->dst = (struct sockaddr *)&state->ro->ro_dst;
-		dst6 = (struct sockaddr_in6 *)state->dst;
-		if (state->ro->ro_rt
-		 && ((state->ro->ro_rt->rt_flags & RTF_UP) == 0
-		  || !IN6_ARE_ADDR_EQUAL(&dst6->sin6_addr, &ip6->ip6_dst))) {
-			RTFREE(state->ro->ro_rt);
-			state->ro->ro_rt = NULL;
-		}
-		if (state->ro->ro_rt == 0) {
-			bzero(dst6, sizeof(*dst6));
-			dst6->sin6_family = AF_INET6;
-			dst6->sin6_len = sizeof(*dst6);
-			dst6->sin6_addr = ip6->ip6_dst;
-			rtalloc(state->ro);
-		}
-		if (state->ro->ro_rt == 0) {
-			ip6stat.ip6s_noroute++;
-			newipsecstat.ips_out_noroute++;
-			error = EHOSTUNREACH;
-			goto bad;
-		}
-
-		/* adjust state->dst if tunnel endpoint is offlink */
-		if (state->ro->ro_rt->rt_flags & RTF_GATEWAY) {
-			state->dst = (struct sockaddr *)state->ro->ro_rt->rt_gateway;
-			dst6 = (struct sockaddr_in6 *)state->dst;
-		}
-	}
-
-	m = ipsec6_splithdr(m);
-	if (!m) {
-		newipsecstat.ips_out_nomem++;
-		error = ENOMEM;
-		goto bad;
-	}
-	ip6 = mtod(m, struct ip6_hdr *);
-	return (*isr->sav->tdb_xform->xf_output)(m, isr, NULL,
-		sizeof (struct ip6_hdr),
-		offsetof(struct ip6_hdr, ip6_nxt));
-bad:
-	if (m)
-		m_freem(m);
-	state->m = NULL;
 	return error;
 }
 #endif /*INET6*/

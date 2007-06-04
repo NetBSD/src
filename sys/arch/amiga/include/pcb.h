@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.13 2005/12/11 12:16:36 christos Exp $	*/
+/*	$NetBSD: pcb.h,v 1.13.30.1 2007/06/04 01:54:16 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -90,7 +90,6 @@ struct pcb
 	int	__pcb_spare0;
 	int	pcb_usp;	/* user stack pointer (+8) */
 	int	pcb_regs[12];	/* D2-D7, A2-A7 (+C) */
-	int	pcb_cmap2;	/* temporary copy PTE */
 	caddr_t	pcb_onfault;	/* for copyin/out faults */
 	struct	fpframe pcb_fpregs; /* 68881/2 context save area */
 	int	pcb_exec[16];	/* exec structure for core dumps */

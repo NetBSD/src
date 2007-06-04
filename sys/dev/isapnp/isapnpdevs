@@ -1,4 +1,4 @@
-$NetBSD: isapnpdevs,v 1.63 2006/11/30 22:34:01 christos Exp $
+$NetBSD: isapnpdevs,v 1.63.16.1 2007/06/04 01:54:20 wrstuden Exp $
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -131,6 +131,8 @@ devlogic	ep	TCM5091		0	3Com 3c509B-1
 devlogic	ep	TCM5094		0	3Com 3c509B-4
 devlogic	ep	TCM5095		0	3Com 3c509B-5
 devlogic	ep	TCM5098		0	3Com 3c509B-8
+devlogic	ep	FAR0002		0	Farallon EtherWave ISA
+devcompat	ep	PNP80F8		0	Farallon EtherWave ISA
 
 /*
  * ess
