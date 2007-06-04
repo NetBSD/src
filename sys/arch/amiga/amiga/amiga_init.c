@@ -1,4 +1,4 @@
-/*	$NetBSD: amiga_init.c,v 1.92.16.1 2007/05/23 23:04:29 riz Exp $	*/
+/*	$NetBSD: amiga_init.c,v 1.92.16.2 2007/06/04 19:59:38 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -36,7 +36,7 @@
 #include "opt_devreload.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.92.16.1 2007/05/23 23:04:29 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.92.16.2 2007/06/04 19:59:38 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -523,7 +523,7 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync,
 			*pg++ = PG_NV;
 		}
 		*sg = Sysptmap_pa | SG_RW | SG_V;
-		*pg = Sysptmap_pa | PG_RW | SG_V;
+		*pg = Sysptmap_pa | PG_RW | PG_CI | PG_V;
 		/* XXX zero out rest of page? */
 	}
 
