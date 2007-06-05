@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.176 2007/06/04 20:05:13 bouyer Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.177 2007/06/05 20:54:48 bouyer Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -5813,4 +5813,122 @@ usr.sbin/pstat/Makefile				1.14
 
 	revert debug flags accidentally committed before.
 	[mlelstv, ticket #695]
+
+share/man/man8/security.8			1.10
+
+	Elaborate on SSP.
+	Requested by and okay wiz@.
+	[hubertf, ticket #697]
+
+share/man/man4/options.4			1.344
+
+	Mention options IPSELSRC.
+	[dyoung, ticket #698]
+
+sys/arch/sparc64/conf/Makefile.sparc64		1.63
+sys/arch/sparc64/conf/kern.ldscript		1.9
+sys/arch/sparc64/conf/kern32.ldscript		1.8
+
+	instead of specifying the start of the data section in the makefile,
+	just round it up to the next 4MB boundary in the ldscript.
+	this prevents parts of the kernel-image range from being left unmapped.
+	fixes PR 36388.
+	[martin, ticket #700]
+
+sys/arch/amd64/amd64/identcpu.c			patch
+sys/arch/amd64/include/cpu.h			patch
+sys/arch/x86/include/cputypes.h			1.1
+
+	Print all extended features for Intel EM64T CPUs on amd64.
+	[xtraeme, ticket 702]
+
+sys/miscfs/genfs/genfs.h              1.21
+sys/miscfs/genfs/genfs_vnops.c        1.151 
+sys/ufs/lfs/lfs.h                     1.119, 1.120
+sys/ufs/lfs/lfs_bio.c                 1.99-101
+sys/ufs/lfs/lfs_extern.h              1.89
+sys/ufs/lfs/lfs_inode.c               1.108, 1.109
+sys/ufs/lfs/lfs_segment.c             1.197, 1.199, 1.200
+sys/ufs/lfs/lfs_subr.c                1.69, 1.70
+sys/ufs/lfs/lfs_syscalls.c            1.119
+sys/ufs/lfs/lfs_vfsops.c              1.234, 1.235
+sys/ufs/lfs/lfs_vnops.c               1.195, 1.196, 1.200, 1.202-206
+
+	Reduce busy waiting in lfs_putpages(), and other LFS improvements.
+	[perseant, ticket #703]
+
+sys/nfs/nfs_srvcache.c				1.34
+
+	plug mbuf leaks.
+	[yamt, ticket #704]
+
+sys/nfs/nfs_syscalls.c				1.104
+
+	plug a mbuf leak.
+	[yamt, ticket #705]
+
+sys/ufs/ffs/ffs_softdep.c			1.90
+
+	flush_inodedep_deps: fix access after free.  PR/29724.
+	[yamt, ticket #706]
+
+sys/arch/acorn26/conf/GENERIC			1.50
+sys/arch/acorn32/conf/GENERIC			1.79
+sys/arch/alpha/conf/GENERIC			1.313
+sys/arch/amd64/conf/GENERIC			1.148
+sys/arch/amiga/conf/GENERIC			1.245
+sys/arch/arc/conf/GENERIC			1.146
+sys/arch/bebox/conf/GENERIC			1.105
+sys/arch/cats/conf/GENERIC			1.115
+sys/arch/cobalt/conf/GENERIC			1.108
+sys/arch/dreamcast/conf/GENERIC			1.78
+sys/arch/ews4800mips/conf/GENERIC		1.18
+sys/arch/hp300/conf/GENERIC			1.139
+sys/arch/hp700/conf/GENERIC			1.74
+sys/arch/hpcmips/conf/GENERIC			1.196
+sys/arch/i386/conf/GENERIC			1.831
+sys/arch/iyonix/conf/GENERIC			1.38 via patch
+sys/arch/landisk/conf/GENERIC			1.8 via patch
+sys/arch/luna68k/conf/GENERIC			1.78
+sys/arch/mac68k/conf/GENERIC			1.181
+sys/arch/macppc/conf/GENERIC			1.256 via patch
+sys/arch/mipsco/conf/GENERIC			1.65
+sys/arch/mmeye/conf/GENERIC			1.88
+sys/arch/mvme68k/conf/GENERIC			1.71
+sys/arch/news68k/conf/GENERIC			1.88
+sys/arch/newsmips/conf/GENERIC			1.98
+sys/arch/next68k/conf/GENERIC			1.108
+sys/arch/ofppc/conf/GENERIC			1.98
+sys/arch/pc532/conf/GENERIC			1.70
+sys/arch/pmax/conf/GENERIC			1.152
+sys/arch/prep/conf/GENERIC			1.135
+sys/arch/sbmips/conf/GENERIC			1.61
+sys/arch/sparc/conf/GENERIC			1.199
+sys/arch/sparc64/conf/GENERIC			1.85
+sys/arch/sun3/conf/GENERIC			1.138
+sys/arch/vax/conf/GENERIC			1.157
+sys/arch/x68k/conf/GENERIC			1.134
+
+	Add pseudo-device agr to all GENERIC kernels where it might make sense
+	(commented out in some).
+	[martin, ticket #699]
+
+usr.bin/make/compat.c                           patch
+usr.bin/make/cond.c                             patch
+usr.bin/make/dir.c                              patch
+usr.bin/make/for.c                              patch
+usr.bin/make/main.c                             patch
+usr.bin/make/make.1                             patch
+usr.bin/make/make.c                             patch
+usr.bin/make/make.h                             patch
+usr.bin/make/nonints.h                          patch
+usr.bin/make/parse.c                            patch
+usr.bin/make/str.c                              patch
+usr.bin/make/targ.c                             patch
+usr.bin/make/util.c                             patch
+usr.bin/make/var.c                              patch
+
+	Synchronize make(1) with HEAD branch to increase perfomance and
+	improve stability.
+	[tron, ticket #696]
 
