@@ -1,4 +1,4 @@
-/*	$NetBSD: aac_pci.c,v 1.20 2007/03/10 21:08:16 christos Exp $	*/
+/*	$NetBSD: aac_pci.c,v 1.21 2007/06/05 04:04:14 briggs Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aac_pci.c,v 1.20 2007/03/10 21:08:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aac_pci.c,v 1.21 2007/06/05 04:04:14 briggs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,6 +92,12 @@ __KERNEL_RCSID(0, "$NetBSD: aac_pci.c,v 1.20 2007/03/10 21:08:16 christos Exp $"
 #include <dev/ic/aacreg.h>
 #include <dev/ic/aacvar.h>
 
+struct aac_pci_softc {
+	struct aac_softc	sc_aac;
+	pci_chipset_tag_t	sc_pc;
+	pci_intr_handle_t	sc_ih;
+};
+
 /* i960Rx interface */
 static int	aac_rx_get_fwstatus(struct aac_softc *);
 static void	aac_rx_qnotify(struct aac_softc *, int);
@@ -101,6 +107,9 @@ static void	aac_rx_set_mailbox(struct aac_softc *, u_int32_t, u_int32_t,
 			   u_int32_t, u_int32_t, u_int32_t);
 static uint32_t aac_rx_get_mailbox(struct aac_softc *, int);
 static void	aac_rx_set_interrupts(struct aac_softc *, int);
+static int	aac_rx_send_command(struct aac_softc *, struct aac_ccb *);
+static int	aac_rx_get_outb_queue(struct aac_softc *);
+static void	aac_rx_set_outb_queue(struct aac_softc *, int);
 
 /* StrongARM interface */
 static int	aac_sa_get_fwstatus(struct aac_softc *);
@@ -112,6 +121,19 @@ static void	aac_sa_set_mailbox(struct aac_softc *, u_int32_t, u_int32_t,
 static uint32_t aac_sa_get_mailbox(struct aac_softc *, int);
 static void	aac_sa_set_interrupts(struct aac_softc *, int);
 
+/* Rocket/MIPS interface */
+static int	aac_rkt_get_fwstatus(struct aac_softc *);
+static void	aac_rkt_qnotify(struct aac_softc *, int);
+static int	aac_rkt_get_istatus(struct aac_softc *);
+static void	aac_rkt_clear_istatus(struct aac_softc *, int);
+static void	aac_rkt_set_mailbox(struct aac_softc *, u_int32_t, u_int32_t,
+			   u_int32_t, u_int32_t, u_int32_t);
+static uint32_t aac_rkt_get_mailbox(struct aac_softc *, int);
+static void	aac_rkt_set_interrupts(struct aac_softc *, int);
+static int	aac_rkt_send_command(struct aac_softc *, struct aac_ccb *);
+static int	aac_rkt_get_outb_queue(struct aac_softc *);
+static void	aac_rkt_set_outb_queue(struct aac_softc *, int);
+
 static const struct aac_interface aac_rx_interface = {
 	aac_rx_get_fwstatus,
 	aac_rx_qnotify,
@@ -119,7 +141,10 @@ static const struct aac_interface aac_rx_interface = {
 	aac_rx_clear_istatus,
 	aac_rx_set_mailbox,
 	aac_rx_get_mailbox,
-	aac_rx_set_interrupts
+	aac_rx_set_interrupts,
+	aac_rx_send_command,
+	aac_rx_get_outb_queue,
+	aac_rx_set_outb_queue
 };
 
 static const struct aac_interface aac_sa_interface = {
@@ -129,7 +154,21 @@ static const struct aac_interface aac_sa_interface = {
 	aac_sa_clear_istatus,
 	aac_sa_set_mailbox,
 	aac_sa_get_mailbox,
-	aac_sa_set_interrupts
+	aac_sa_set_interrupts,
+	NULL, NULL, NULL
+};
+
+static const struct aac_interface aac_rkt_interface = {
+	aac_rkt_get_fwstatus,
+	aac_rkt_qnotify,
+	aac_rkt_get_istatus,
+	aac_rkt_clear_istatus,
+	aac_rkt_set_mailbox,
+	aac_rkt_get_mailbox,
+	aac_rkt_set_interrupts,
+	aac_rkt_send_command,
+	aac_rkt_get_outb_queue,
+	aac_rkt_set_outb_queue
 };
 
 static struct aac_ident {
@@ -255,7 +294,7 @@ static struct aac_ident {
 		PCI_VENDOR_ADP2,
 		PCI_PRODUCT_ADP2_ASR2200S_SUB2M,
 		AAC_HWIF_I960RX,
-		0,
+		AAC_QUIRK_NO4GB | AAC_QUIRK_256FIBS,
 		"Adaptec ASR-2200S"
 	},
 	{
@@ -264,7 +303,7 @@ static struct aac_ident {
 		PCI_VENDOR_DELL,
 		PCI_PRODUCT_ADP2_ASR2200S_SUB2M,
 		AAC_HWIF_I960RX,
-		0,
+		AAC_QUIRK_NO4GB | AAC_QUIRK_256FIBS,
 		"Dell PERC 320/DC"
 	},
 	{
@@ -273,7 +312,7 @@ static struct aac_ident {
 		PCI_VENDOR_ADP2,
 		PCI_PRODUCT_ADP2_ASR2200S,
 		AAC_HWIF_I960RX,
-		0,
+		AAC_QUIRK_NO4GB | AAC_QUIRK_256FIBS,
 		"Adaptec ASR-2200S"
 	},
 	{
@@ -282,7 +321,7 @@ static struct aac_ident {
 		PCI_VENDOR_ADP2,
 		PCI_PRODUCT_ADP2_AAR2810SA,
 		AAC_HWIF_I960RX,
-		0,
+		AAC_QUIRK_NO4GB,
 		"Adaptec AAR-2810SA"
 	},
 	{
@@ -291,7 +330,7 @@ static struct aac_ident {
 		PCI_VENDOR_ADP2,
 		PCI_PRODUCT_ADP2_ASR2120S,
 		AAC_HWIF_I960RX,
-		0,
+		AAC_QUIRK_NO4GB | AAC_QUIRK_256FIBS,
 		"Adaptec ASR-2120S"
 	},
 	{
@@ -300,7 +339,7 @@ static struct aac_ident {
 		PCI_VENDOR_ADP2,
 		PCI_PRODUCT_ADP2_ASR2410SA,
 		AAC_HWIF_I960RX,
-		0,
+		AAC_QUIRK_NO4GB,
 		"Adaptec ASR-2410SA"
 	},
 	{
@@ -309,7 +348,7 @@ static struct aac_ident {
 		PCI_VENDOR_HP,
 		PCI_PRODUCT_ADP2_HP_M110_G2,
 		AAC_HWIF_I960RX,
-		0,
+		AAC_QUIRK_NO4GB,
 		"HP ML110 G2 (Adaptec ASR-2610SA)"
 	},
 	{
@@ -327,7 +366,7 @@ static struct aac_ident {
 		PCI_VENDOR_ADP2,
 		PCI_PRODUCT_ADP2_ASR5400S,
 		AAC_HWIF_STRONGARM,
-		0,
+		AAC_QUIRK_BROKEN_MMAP,
 		"Adaptec ASR-5400S"
 	},
 	{
@@ -384,6 +423,22 @@ aac_find_ident(struct pci_attach_args *pa)
 }
 
 static int
+aac_pci_intr_set(struct aac_softc *sc, int (*hand)(void*), void *arg)
+{
+	struct aac_pci_softc	*pcisc;
+
+	pcisc = (struct aac_pci_softc *) sc;
+
+	pci_intr_disestablish(pcisc->sc_pc, sc->sc_ih);
+	sc->sc_ih = pci_intr_establish(pcisc->sc_pc, pcisc->sc_ih,
+				       IPL_BIO, hand, arg);
+	if (sc->sc_ih == NULL) {
+		return ENXIO;
+	}
+	return 0;
+}
+
+static int
 aac_pci_match(struct device *parent, struct cfdata *match,
     void *aux)
 {
@@ -402,18 +457,20 @@ aac_pci_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pci_attach_args *pa;
 	pci_chipset_tag_t pc;
+	struct aac_pci_softc *pcisc;
 	struct aac_softc *sc;
 	u_int16_t command;
 	bus_addr_t membase;
 	bus_size_t memsize;
-	pci_intr_handle_t ih;
 	const char *intrstr;
 	int state;
 	const struct aac_ident *m;
 
 	pa = aux;
 	pc = pa->pa_pc;
-	sc = (struct aac_softc *)self;
+	pcisc = (struct aac_pci_softc *)self;
+	pcisc->sc_pc = pc;
+	sc = &pcisc->sc_aac;
 	state = 0;
 
 	aprint_naive(": RAID controller\n");
@@ -449,12 +506,12 @@ aac_pci_attach(struct device *parent, struct device *self, void *aux)
 	}
 	state++;
 
-	if (pci_intr_map(pa, &ih)) {
+	if (pci_intr_map(pa, &pcisc->sc_ih)) {
 		aprint_error("couldn't map interrupt\n");
 		goto bail_out;
 	}
-	intrstr = pci_intr_string(pc, ih);
-	sc->sc_ih = pci_intr_establish(pc, ih, IPL_BIO, aac_intr, sc);
+	intrstr = pci_intr_string(pc, pcisc->sc_ih);
+	sc->sc_ih = pci_intr_establish(pc, pcisc->sc_ih, IPL_BIO, aac_intr, sc);
 	if (sc->sc_ih == NULL) {
 		aprint_error("couldn't establish interrupt");
 		if (intrstr != NULL)
@@ -486,7 +543,15 @@ aac_pci_attach(struct device *parent, struct device *self, void *aux)
 			    ("set hardware up for StrongARM"));
 			sc->sc_if = aac_sa_interface;
 			break;
+
+		case AAC_HWIF_RKT:
+			AAC_DPRINTF(AAC_D_MISC,
+			    ("set hardware up for MIPS/Rocket"));
+			sc->sc_if = aac_rkt_interface;
+			break;
 	}
+	sc->sc_regsize = memsize;
+	sc->sc_intr_set = aac_pci_intr_set;
 
 	if (!aac_attach(sc))
 		return;
@@ -518,6 +583,13 @@ aac_rx_get_fwstatus(struct aac_softc *sc)
 	return (AAC_GETREG4(sc, AAC_RX_FWSTATUS));
 }
 
+static int
+aac_rkt_get_fwstatus(struct aac_softc *sc)
+{
+
+	return (AAC_GETREG4(sc, AAC_RKT_FWSTATUS));
+}
+
 /*
  * Notify the controller of a change in a given queue
  */
@@ -534,6 +606,13 @@ aac_rx_qnotify(struct aac_softc *sc, int qbit)
 {
 
 	AAC_SETREG4(sc, AAC_RX_IDBR, qbit);
+}
+
+static void
+aac_rkt_qnotify(struct aac_softc *sc, int qbit)
+{
+
+	AAC_SETREG4(sc, AAC_RKT_IDBR, qbit);
 }
 
 /*
@@ -553,6 +632,13 @@ aac_rx_get_istatus(struct aac_softc *sc)
 	return (AAC_GETREG4(sc, AAC_RX_ODBR));
 }
 
+static int
+aac_rkt_get_istatus(struct aac_softc *sc)
+{
+
+	return (AAC_GETREG4(sc, AAC_RKT_ODBR));
+}
+
 /*
  * Clear some interrupt reason bits
  */
@@ -568,6 +654,13 @@ aac_rx_clear_istatus(struct aac_softc *sc, int mask)
 {
 
 	AAC_SETREG4(sc, AAC_RX_ODBR, mask);
+}
+
+static void
+aac_rkt_clear_istatus(struct aac_softc *sc, int mask)
+{
+
+	AAC_SETREG4(sc, AAC_RKT_ODBR, mask);
 }
 
 /*
@@ -599,6 +692,19 @@ aac_rx_set_mailbox(struct aac_softc *sc, u_int32_t command,
 	AAC_SETREG4(sc, AAC_RX_MAILBOX + 16, arg3);
 }
 
+static void
+aac_rkt_set_mailbox(struct aac_softc *sc, u_int32_t command,
+		    u_int32_t arg0, u_int32_t arg1, u_int32_t arg2,
+		    u_int32_t arg3)
+{
+
+	AAC_SETREG4(sc, AAC_RKT_MAILBOX, command);
+	AAC_SETREG4(sc, AAC_RKT_MAILBOX + 4, arg0);
+	AAC_SETREG4(sc, AAC_RKT_MAILBOX + 8, arg1);
+	AAC_SETREG4(sc, AAC_RKT_MAILBOX + 12, arg2);
+	AAC_SETREG4(sc, AAC_RKT_MAILBOX + 16, arg3);
+}
+
 /*
  * Fetch the specified mailbox
  */
@@ -614,6 +720,13 @@ aac_rx_get_mailbox(struct aac_softc *sc, int mb)
 {
 
 	return (AAC_GETREG4(sc, AAC_RX_MAILBOX + (mb * 4)));
+}
+
+static uint32_t
+aac_rkt_get_mailbox(struct aac_softc *sc, int mb)
+{
+
+	return (AAC_GETREG4(sc, AAC_RKT_MAILBOX + (mb * 4)));
 }
 
 /*
@@ -633,8 +746,118 @@ static void
 aac_rx_set_interrupts(struct aac_softc *sc, int enable)
 {
 
-	if (enable)
-		AAC_SETREG4(sc, AAC_RX_OIMR, ~AAC_DB_INTERRUPTS);
-	else
+	if (enable) {
+		if (sc->sc_quirks & AAC_QUIRK_NEW_COMM)
+			AAC_SETREG4(sc, AAC_RX_OIMR, ~AAC_DB_INT_NEW_COMM);
+		else
+			AAC_SETREG4(sc, AAC_RX_OIMR, ~AAC_DB_INTERRUPTS);
+	} else {
 		AAC_SETREG4(sc, AAC_RX_OIMR, ~0);
+	}
+}
+
+static void
+aac_rkt_set_interrupts(struct aac_softc *sc, int enable)
+{
+
+	if (enable) {
+		if (sc->sc_quirks & AAC_QUIRK_NEW_COMM)
+			AAC_SETREG4(sc, AAC_RKT_OIMR, ~AAC_DB_INT_NEW_COMM);
+		else
+			AAC_SETREG4(sc, AAC_RKT_OIMR, ~AAC_DB_INTERRUPTS);
+	} else {
+		AAC_SETREG4(sc, AAC_RKT_OIMR, ~0);
+	}
+}
+
+/*
+ * New comm. interface: Send command functions
+ */
+static int
+aac_rx_send_command(struct aac_softc *sc, struct aac_ccb *ac)
+{
+	u_int32_t	index, device;
+
+	index = AAC_GETREG4(sc, AAC_RX_IQUE);
+	if (index == 0xffffffffL)
+		index = AAC_GETREG4(sc, AAC_RX_IQUE);
+	if (index == 0xffffffffL)
+		return index;
+#ifdef notyet
+	aac_enqueue_busy(ac);
+#endif
+	device = index;
+	AAC_SETREG4(sc, device,
+	    htole32((u_int32_t)(ac->ac_fibphys & 0xffffffffUL)));
+	device += 4;
+	if (sizeof(bus_addr_t) > 4) {
+		AAC_SETREG4(sc, device,
+		    htole32((u_int32_t)((u_int64_t)ac->ac_fibphys >> 32)));
+	} else {
+		AAC_SETREG4(sc, device, 0);
+	}
+	device += 4;
+	AAC_SETREG4(sc, device, ac->ac_fib->Header.Size);
+	AAC_SETREG4(sc, AAC_RX_IQUE, index);
+	return 0;
+}
+
+static int
+aac_rkt_send_command(struct aac_softc *sc, struct aac_ccb *ac)
+{
+	u_int32_t	index, device;
+
+	index = AAC_GETREG4(sc, AAC_RKT_IQUE);
+	if (index == 0xffffffffL)
+		index = AAC_GETREG4(sc, AAC_RKT_IQUE);
+	if (index == 0xffffffffL)
+		return index;
+#ifdef notyet
+	aac_enqueue_busy(ac);
+#endif
+	device = index;
+	AAC_SETREG4(sc, device,
+	    htole32((u_int32_t)(ac->ac_fibphys & 0xffffffffUL)));
+	device += 4;
+	if (sizeof(bus_addr_t) > 4) {
+		AAC_SETREG4(sc, device,
+		    htole32((u_int32_t)((u_int64_t)ac->ac_fibphys >> 32)));
+	} else {
+		AAC_SETREG4(sc, device, 0);
+	}
+	device += 4;
+	AAC_SETREG4(sc, device, ac->ac_fib->Header.Size);
+	AAC_SETREG4(sc, AAC_RKT_IQUE, index);
+	return 0;
+}
+
+/*
+ * New comm. interface: get, set outbound queue index
+ */
+static int
+aac_rx_get_outb_queue(struct aac_softc *sc)
+{
+
+	return AAC_GETREG4(sc, AAC_RX_OQUE);
+}
+
+static int
+aac_rkt_get_outb_queue(struct aac_softc *sc)
+{
+
+	return AAC_GETREG4(sc, AAC_RKT_OQUE);
+}
+
+static void
+aac_rx_set_outb_queue(struct aac_softc *sc, int index)
+{
+
+	AAC_SETREG4(sc, AAC_RX_OQUE, index);
+}
+
+static void
+aac_rkt_set_outb_queue(struct aac_softc *sc, int index)
+{
+
+	AAC_SETREG4(sc, AAC_RKT_OQUE, index);
 }
