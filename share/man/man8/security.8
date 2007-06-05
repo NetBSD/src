@@ -1,4 +1,4 @@
-.\" $NetBSD: security.8,v 1.7.2.1 2007/02/10 14:44:10 tron Exp $
+.\" $NetBSD: security.8,v 1.7.2.2 2007/06/05 20:12:12 bouyer Exp $
 .\"
 .\" Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -258,14 +258,11 @@ includes
 a set of compiler extensions to raise the bar on exploitation attempts via
 corruption of variables to affect program control flow or buffer overruns.
 .Pp
-You are encouraged to use
+Upon detection of a buffer overrun,
 .Em SSP
-for software you build, by providing one of the
-.Fl fstack-protector
-or
-.Fl fstack-protector-all
-flags to
-.Xr gcc 1 .
+will immediately abort execution of the program and send a log message
+to
+.Xr syslog 3 .
 .Pp
 The system (userland, kernel) can be built with
 .Em SSP
@@ -276,6 +273,28 @@ flag in
 .Bd -literal -offset indent
 USE_SSP=yes
 .Ed
+.Pp
+You are encouraged to use
+.Em SSP
+for software you build, by providing one of the
+.Fl fstack-protector
+or
+.Fl fstack-protector-all
+flags to
+.Xr gcc 1 .
+Keep in mind, however, that
+.Em SSP
+will not work for functions that make use of
+.Xr alloca 3 ,
+as the latter modifies the stack size during run-time, while
+.Em SSP
+relies on it being a compile-time static.
+.Pp
+Use of
+.Em SSP
+is especially encouraged on platforms without per-page execute bit granularity
+such as
+.Em i386 .
 .Sh INFORMATION FILTERING
 .Nx
 provides administrators with the ability to restrict information passed from
