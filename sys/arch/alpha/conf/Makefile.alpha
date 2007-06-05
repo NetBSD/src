@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.alpha,v 1.77 2006/09/01 04:58:17 dyoung Exp $
+#	$NetBSD: Makefile.alpha,v 1.78 2007/06/05 12:14:33 yamt Exp $
 
 # Makefile for NetBSD
 #
@@ -54,6 +54,8 @@ locore.o: ${ALPHA}/alpha/locore.s assym.h
 
 transfer.o: ${ALPHA}/alpha/transfer.s
 	${NORMAL_S}
+
+lock_stubs.o: assym.h
 
 ##
 ## (5) link settings
