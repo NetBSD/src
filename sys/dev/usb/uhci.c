@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.208.12.3 2007/06/03 13:10:41 itohy Exp $	*/
+/*	$NetBSD: uhci.c,v 1.208.12.4 2007/06/05 09:32:51 itohy Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.172 2006/10/19 01:15:58 iedowse Exp $	*/
 
 /*-
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.208.12.3 2007/06/03 13:10:41 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.208.12.4 2007/06/05 09:32:51 itohy Exp $");
 /* __FBSDID("$FreeBSD: src/sys/dev/usb/uhci.c,v 1.172 2006/10/19 01:15:58 iedowse Exp $"); */
 
 #include <sys/param.h>
@@ -2368,6 +2368,7 @@ uhci_aux_dma_alloc(uhci_soft_td_t *std, struct uhci_aux_mem *aux,
 	std->aux_ptr = *bufptr;
 	std->aux_len = len;
 
+	aux->aux_chunkoff += len;
 	aux->aux_naux++;
 }
 
@@ -2391,9 +2392,9 @@ uhci_aux_dma_complete(uhci_soft_td_t *std, struct uhci_aux_mem *aux,
 		    is_mbuf);
 	}
 	std->aux_len = 0;
+	USB_KASSERT(aux->aux_naux > 0);
 	if (--aux->aux_naux == 0)
 		uhci_aux_mem_init(aux);
-	USB_KASSERT(aux->aux_naux >= 0);
 }
 
 Static void
