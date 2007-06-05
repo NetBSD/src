@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.81 2007/03/04 06:03:49 christos Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.82 2007/06/05 12:31:36 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.81 2007/03/04 06:03:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.82 2007/06/05 12:31:36 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -212,7 +212,7 @@ uvn_attach(void *arg, vm_prot_t accessprot)
 		UVMHIST_LOG(maphist,"<- done (VOP_GETATTR FAILED!)", 0,0,0,0);
 		return(NULL);
 	}
-	vp->v_size = used_vnode_size;
+	vp->v_size = vp->v_writesize = used_vnode_size;
 
 	}
 
@@ -469,13 +469,33 @@ uvm_vnp_setsize(struct vnode *vp, voff_t newsize)
 	 * toss some pages...
 	 */
 
-	oldsize = vp->v_size;
+	if (vp->v_writesize != VSIZENOTSET) {
+		KASSERT(vp->v_size <= vp->v_writesize);
+		KASSERT(vp->v_size == vp->v_writesize ||
+		    newsize == vp->v_writesize || newsize <= vp->v_size);
+		oldsize = vp->v_writesize;
+	} else {
+		oldsize = vp->v_size;
+	}
 	if (oldsize > pgend && oldsize != VSIZENOTSET) {
 		(void) uvn_put(uobj, pgend, 0, PGO_FREE | PGO_SYNCIO);
 		simple_lock(&uobj->vmobjlock);
 	}
-	vp->v_size = newsize;
+	vp->v_size = vp->v_writesize = newsize;
 	simple_unlock(&uobj->vmobjlock);
+}
+
+void
+uvm_vnp_setwritesize(struct vnode *vp, voff_t newsize)
+{
+
+	simple_lock(&vp->v_interlock);
+	KASSERT(vp->v_size != VSIZENOTSET);
+	KASSERT(vp->v_writesize != VSIZENOTSET);
+	KASSERT(vp->v_size <= vp->v_writesize);
+	KASSERT(vp->v_size <= newsize);
+	vp->v_writesize = newsize;
+	simple_unlock(&vp->v_interlock);
 }
 
 /*
