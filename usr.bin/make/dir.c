@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.51 2006/10/27 21:00:18 dsl Exp $	*/
+/*	$NetBSD: dir.c,v 1.51.2.1 2007/06/05 20:53:28 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: dir.c,v 1.51 2006/10/27 21:00:18 dsl Exp $";
+static char rcsid[] = "$NetBSD: dir.c,v 1.51.2.1 2007/06/05 20:53:28 bouyer Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)dir.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: dir.c,v 1.51 2006/10/27 21:00:18 dsl Exp $");
+__RCSID("$NetBSD: dir.c,v 1.51.2.1 2007/06/05 20:53:28 bouyer Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1054,7 +1054,7 @@ Dir_FindFile(const char *name, Lst path)
     LstNode       ln;			/* a list element */
     char	  *file;		/* the current filename to check */
     Path	  *p;			/* current path member */
-    const char	  *cp;			/* index of first slash, if any */
+    const char	  *cp;			/* Terminal name of file */
     Boolean	  hasLastDot = FALSE;	/* true we should search dot last */
     Boolean	  hasSlash;		/* true if 'name' contains a / */
     struct stat	  stb;			/* Buffer for stat, if necessary */
@@ -1102,7 +1102,7 @@ Dir_FindFile(const char *name, Lst path)
      * directory component is exactly `./', consult the cached contents
      * of each of the directories on the search path.
      */
-    if ((!hasSlash || (cp - name == 2 && *name == '.'))) {
+    if (!hasSlash || (cp - name == 2 && *name == '.')) {
 	    /*
 	     * We look through all the directories on the path seeking one which
 	     * contains the final component of the given name.  If such a beast
@@ -1129,7 +1129,7 @@ Dir_FindFile(const char *name, Lst path)
 		    continue;
 		if ((file = DirLookup(p, name, cp, hasSlash)) != NULL) {
 		    Lst_Close(path);
-			return file;
+		    return file;
 		}
 	    }
 
@@ -1428,8 +1428,12 @@ Dir_MTime(GNode *gn)
     } else if (gn->path == NULL) {
 	if (gn->type & OP_NOPATH)
 	    fullName = NULL;
-	else
+	else {
 	    fullName = Dir_FindFile(gn->name, Suff_FindPath(gn));
+	    if (DEBUG(DIR))
+		fprintf(debug_file, "Found '%s' as '%s'\n",
+			gn->name, fullName ? fullName : "(not found)" );
+	}
     } else {
 	fullName = gn->path;
     }

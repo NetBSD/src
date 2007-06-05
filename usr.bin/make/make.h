@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.64.2.1 2006/12/20 22:42:11 bouyer Exp $	*/
+/*	$NetBSD: make.h,v 1.64.2.2 2007/06/05 20:53:30 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -163,9 +163,7 @@ typedef struct GNode {
 #define DONE_WAIT	0x8	/* Set by Make_ProcessWait() */
 #define DONE_ORDER	0x10	/* Build requested by .ORDER processing */
 #define CYCLE		0x1000  /* Used by MakePrintStatus */
-#define ENDCYCLE	0x2000  /* Used by MakePrintStatus */
-#define ONCYCLE		0x4000  /* Used by MakePrintStatus */
-#define DONECYCLE	0x8000  /* Used by MakePrintStatus */
+#define DONECYCLE	0x2000  /* Used by MakePrintStatus */
     enum enum_made {
 	UNMADE, DEFERRED, REQUESTED, BEINGMADE,
 	MADE, UPTODATE, ERROR, ABORTED
@@ -202,6 +200,7 @@ typedef struct GNode {
 				      cohorts list */
     struct GNode    *centurion;	/* Pointer to the first instance of a ::
 				   node; only set when on a cohorts list */
+    unsigned int    checked;    /* Last time we tried to makle this node */
 
     Hash_Table      context;	/* The local variables */
     Lst             commands;  	/* Creation commands */
@@ -295,17 +294,6 @@ typedef struct GNode {
 #define TARG_NOCREATE	0x00	  /* don't create it */
 #define TARG_CREATE	0x01	  /* create node if not found */
 #define TARG_NOHASH	0x02	  /* don't look in/add to hash table */
-
-/*
- * There are several places where expandable buffers are used (parse.c and
- * var.c). This constant is merely the starting point for those buffers. If
- * lines tend to be much shorter than this, it would be best to reduce BSIZE.
- * If longer, it should be increased. Reducing it will cause more copying to
- * be done for longer lines, but will save space for shorter ones. In any
- * case, it ought to be a power of two simply because most storage allocation
- * schemes allocate in powers of two.
- */
-#define MAKE_BSIZE		256	/* starting size for expandable buffers */
 
 /*
  * These constants are all used by the Str_Concat function to decide how the

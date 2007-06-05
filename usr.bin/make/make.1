@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.128 2006/11/19 10:08:18 dsl Exp $
+.\"	$NetBSD: make.1,v 1.128.2.1 2007/06/05 20:53:29 bouyer Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -1550,13 +1550,13 @@ This ordering does not add targets to the list of targets to be made.
 Since the dependents of a target do not get built until the target itself
 could be built, unless
 .Ql a
-is built by another part of the depenendency graph,
+is built by another part of the dependency graph,
 the following is a dependency loop:
 .Bd -literal
 \&.ORDER a b
 b: a
-
 .Ed
+.Pp
 The ordering imposed by
 .Ic .ORDER
 is only relevant for parallel makes.
@@ -1686,8 +1686,9 @@ system makefile directory
 The basic make syntax is compatible between different versions of make,
 however the special variables, variable modifiers and conditionals are not.
 .Pp
-The way that parallel makes are scheduled changed in NetBSD 4 so that .ORDER
-and .WAIT apply recursively to the dependant nodes.
+The way that parallel makes are scheduled changed in
+.Nx 4.0
+so that .ORDER and .WAIT apply recursively to the dependant nodes.
 The algorithms used may change again in the future.
 .Sh SEE ALSO
 .Xr mkdep 1

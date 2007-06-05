@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.24 2006/10/27 21:00:19 dsl Exp $	*/
+/*	$NetBSD: for.c,v 1.24.2.1 2007/06/05 20:53:29 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -30,14 +30,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: for.c,v 1.24 2006/10/27 21:00:19 dsl Exp $";
+static char rcsid[] = "$NetBSD: for.c,v 1.24.2.1 2007/06/05 20:53:29 bouyer Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)for.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: for.c,v 1.24 2006/10/27 21:00:19 dsl Exp $");
+__RCSID("$NetBSD: for.c,v 1.24.2.1 2007/06/05 20:53:29 bouyer Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -164,7 +164,7 @@ For_Eval(char *line)
 	 * a for.
 	 */
 	if (ptr[0] != 'f' || ptr[1] != 'o' || ptr[2] != 'r' ||
-	    !isspace((unsigned char) ptr[3]))
+		!isspace((unsigned char) ptr[3]))
 	    return FALSE;
 	ptr += 3;
 
@@ -259,21 +259,21 @@ For_Eval(char *line)
 	forLevel++;
 	return 1;
     }
-    else if (*ptr == '.') {
+
+    if (*ptr == '.') {
 
 	for (ptr++; *ptr && isspace((unsigned char) *ptr); ptr++)
 	    continue;
 
 	if (strncmp(ptr, "endfor", 6) == 0 &&
-	    (isspace((unsigned char) ptr[6]) || !ptr[6])) {
+		(isspace((unsigned char) ptr[6]) || !ptr[6])) {
 	    if (DEBUG(FOR))
 		(void)fprintf(debug_file, "For: end for %d\n", forLevel);
 	    if (--forLevel < 0) {
 		Parse_Error(level, "for-less endfor");
 		return 0;
 	    }
-	}
-	else if (strncmp(ptr, "for", 3) == 0 &&
+	} else if (strncmp(ptr, "for", 3) == 0 &&
 		 isspace((unsigned char) ptr[3])) {
 	    forLevel++;
 	    if (DEBUG(FOR))
@@ -286,9 +286,8 @@ For_Eval(char *line)
 	Buf_AddByte(accumFor.buf, (Byte)'\n');
 	return 1;
     }
-    else {
-	return 0;
-    }
+
+    return 0;
 }
 
 
@@ -372,7 +371,7 @@ For_Run(int lineno)
 	    if (old_guy != orig_guy)
 		free(old_guy);
 	}
-	Parse_FromString(guy, lineno);
+	Parse_SetInput(NULL, lineno, -1, guy);
 
 	for (i = 0; i < arg.nvars; i++)
 	    Var_Delete(arg.vars[i], VAR_GLOBAL);

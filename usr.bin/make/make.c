@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.68 2006/11/17 22:07:39 dsl Exp $	*/
+/*	$NetBSD: make.c,v 1.68.2.1 2007/06/05 20:53:29 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: make.c,v 1.68 2006/11/17 22:07:39 dsl Exp $";
+static char rcsid[] = "$NetBSD: make.c,v 1.68.2.1 2007/06/05 20:53:29 bouyer Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)make.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: make.c,v 1.68 2006/11/17 22:07:39 dsl Exp $");
+__RCSID("$NetBSD: make.c,v 1.68.2.1 2007/06/05 20:53:29 bouyer Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -120,6 +120,7 @@ __RCSID("$NetBSD: make.c,v 1.68 2006/11/17 22:07:39 dsl Exp $");
 #include    "dir.h"
 #include    "job.h"
 
+static unsigned int checked = 1;/* Sequence # to detect recursion */
 static Lst     	toBeMade;	/* The current fringe of the graph. These
 				 * are nodes which await examination by
 				 * MakeOODate. It is added to by
@@ -141,9 +142,11 @@ static int MakeBuildParent(ClientData, ClientData);
 static void
 make_abort(GNode *gn, int line)
 {
+    static int two = 2;
+
     fprintf(debug_file, "make_abort from line %d\n", line);
-    Targ_PrintNode(gn, 0);
-    Lst_ForEach(toBeMade, Targ_PrintNode, 0);
+    Targ_PrintNode(gn, &two);
+    Lst_ForEach(toBeMade, Targ_PrintNode, &two);
     Targ_PrintGraph(3);
     abort();
 }
@@ -618,10 +621,10 @@ Make_Recheck(GNode *gn)
      * the target is made now. Otherwise archives with ... rules
      * don't work!
      */
-    if (NoExecute(gn) ||
-	(gn->type & OP_SAVE_CMDS) || mtime == 0) {
+    if (NoExecute(gn) || (gn->type & OP_SAVE_CMDS) ||
+	    (mtime == 0 && !(gn->type & OP_WAIT))) {
 	if (DEBUG(MAKE)) {
-	    fprintf(debug_file, " recheck(%s): update time to now: %s\n",
+	    fprintf(debug_file, " recheck(%s): update time from %s to now\n",
 		   gn->name, Targ_FmtTime(gn->mtime));
 	}
 	gn->mtime = now;
@@ -678,6 +681,9 @@ Make_Update(GNode *cgn)
     Lst		parents;
     GNode	*centurion;
 
+    /* It is save to re-examine any nodes again */
+    checked++;
+
     cname = Var_Value(TARGET, cgn, &p1);
     if (p1)
 	free(p1);
@@ -728,7 +734,7 @@ Make_Update(GNode *cgn)
 		    fprintf(debug_file, "- not needed\n");
 		continue;
 	    }
-	    if (mtime == 0)
+	    if (mtime == 0 && !(cgn->type & OP_WAIT))
 		pgn->flags |= FORCE;
 
 	    /*
@@ -797,10 +803,11 @@ Make_Update(GNode *cgn)
 		continue;
 	    }
 	    if (DEBUG(MAKE)) {
+		static int two = 2;
 		fprintf(debug_file, "- %s%s made, schedule %s%s (made %d)\n",
 			cgn->name, cgn->cohort_num,
 			pgn->name, pgn->cohort_num, pgn->made);
-		Targ_PrintNode(pgn, 0);
+		Targ_PrintNode(pgn, &two);
 	    }
 	    /* Ok, we can schedule the parent again */
 	    pgn->made = REQUESTED;
@@ -987,7 +994,7 @@ Make_DoAllVar(GNode *gn)
  */
 
 static int
-MakeCheckOrder(ClientData v_bn, ClientData ignore)
+MakeCheckOrder(ClientData v_bn, ClientData ignore __unused)
 {
     GNode *bn = v_bn;
 
@@ -1077,6 +1084,16 @@ MakeStartJobs(void)
 
 	    make_abort(gn, __LINE__);
 	}
+
+	if (gn->checked == checked) {
+	    /* We've already looked at this node since a job finished... */
+	    if (DEBUG(MAKE))
+		fprintf(debug_file, "already checked %s%s\n",
+			gn->name, gn->cohort_num);
+	    gn->made = DEFERRED;
+	    continue;
+	}
+	gn->checked = checked;
 
 	if (gn->unmade != 0) {
 	    /*
@@ -1218,29 +1235,27 @@ MakePrintStatus(ClientData gnp, ClientData v_errors)
 		gn->name, gn->cohort_num, gn->unmade);
     /*
      * If printing cycles and came to one that has unmade children,
-     * print out the cycle by recursing on its children. Note a
-     * cycle like:
-     *	a : b
-     *	b : c
-     *	c : b
-     * will cause this to erroneously complain about a being in
-     * the cycle, but this is a good approximation.
+     * print out the cycle by recursing on its children.
      */
-    if (gn->flags & CYCLE) {
-	Error("Graph cycles through `%s%s'", gn->name, gn->cohort_num);
-	gn->flags |= ENDCYCLE | ONCYCLE;
-	/* This will hit all the cycle... */
-	Lst_ForEach(gn->children, MakePrintStatus, errors);
-	if ((*errors)++ > 1000)
-	    return 1;
-	gn->flags &= ~(CYCLE | ENDCYCLE);
-    } else if (!(gn->flags & ENDCYCLE)) {
+    if (!(gn->flags & CYCLE)) {
+	/* Fist time we've seen this node, check all children */
 	gn->flags |= CYCLE;
 	Lst_ForEach(gn->children, MakePrintStatus, errors);
+	/* Mark that this node needn't be processed again */
 	gn->flags |= DONECYCLE;
+	return 0;
     }
 
-    return (0);
+    /* Only output the error once per node */
+    gn->flags |= DONECYCLE;
+    Error("Graph cycles through `%s%s'", gn->name, gn->cohort_num);
+    if ((*errors)++ > 100)
+	/* Abandon the whole error report */
+	return 1;
+
+    /* Reporting for our children will give the rest of the loop */
+    Lst_ForEach(gn->children, MakePrintStatus, errors);
+    return 0;
 }
 
 
