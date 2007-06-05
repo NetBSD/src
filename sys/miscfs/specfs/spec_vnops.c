@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.98 2007/03/04 06:03:14 christos Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.99 2007/06/05 12:31:32 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.98 2007/03/04 06:03:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.99 2007/06/05 12:31:32 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -245,7 +245,8 @@ spec_open(v)
 	if (error)
 		return error;
 	if (!(*d_ioctl)(vp->v_rdev, DIOCGPART, (void *)&pi, FREAD, curlwp))
-		vp->v_size = (voff_t)pi.disklab->d_secsize * pi.part->p_size;
+		uvm_vnp_setsize(vp,
+		    (voff_t)pi.disklab->d_secsize * pi.part->p_size);
 	return 0;
 }
 

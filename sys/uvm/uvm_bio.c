@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.57 2007/05/07 12:39:45 yamt Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.58 2007/06/05 12:31:35 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.57 2007/05/07 12:39:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.58 2007/06/05 12:31:35 yamt Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_ubc.h"
@@ -632,6 +632,50 @@ ubc_release(void *va, int flags)
 	simple_unlock(&ubc_object.uobj.vmobjlock);
 }
 
+/*
+ * ubc_uiomove: move data to/from an object.
+ */
+
+int
+ubc_uiomove(struct uvm_object *uobj, struct uio *uio, vsize_t todo, int flags)
+{
+	voff_t off;
+	const bool overwrite = (flags & UBC_FAULTBUSY) != 0;
+	int error;
+
+	KASSERT(todo <= uio->uio_resid);
+	KASSERT(((flags & UBC_WRITE) != 0 && uio->uio_rw == UIO_WRITE) ||
+	    ((flags & UBC_READ) != 0 && uio->uio_rw == UIO_READ));
+
+	off = uio->uio_offset;
+	error = 0;
+	while (todo > 0) {
+		vsize_t bytelen = todo;
+		void *win;
+
+		win = ubc_alloc(uobj, off, &bytelen, UVM_ADV_NORMAL, flags);
+		if (error == 0) {
+			error = uiomove(win, bytelen, uio);
+		}
+		if (error != 0 && overwrite) {
+			/*
+			 * if we haven't initialized the pages yet,
+			 * do it now.  it's safe to use memset here
+			 * because we just mapped the pages above.
+			 */
+			printf("%s: error=%d\n", __func__, error);
+			memset(win, 0, bytelen);
+		}
+		ubc_release(win, flags);
+		off += bytelen;
+		todo -= bytelen;
+		if (error != 0 && (flags & UBC_PARTIALOK) != 0) {
+			break;
+		}
+	}
+
+	return error;
+}
 
 #if 0 /* notused */
 /*

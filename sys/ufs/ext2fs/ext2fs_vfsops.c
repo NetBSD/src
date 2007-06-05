@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.110 2007/03/12 18:18:37 ad Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.111 2007/06/05 12:31:33 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.110 2007/03/12 18:18:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.111 2007/06/05 12:31:33 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -1038,7 +1038,7 @@ ext2fs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 		if ((vp->v_mount->mnt_flag & MNT_RDONLY) == 0)
 			ip->i_flag |= IN_MODIFIED;
 	}
-	vp->v_size = ext2fs_size(ip);
+	uvm_vnp_setsize(vp, ext2fs_size(ip));
 	*vpp = vp;
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.87 2007/05/17 07:26:23 hannken Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.88 2007/06/05 12:31:34 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.87 2007/05/17 07:26:23 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.88 2007/06/05 12:31:34 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,7 +110,7 @@ const struct vnodeopv_entry_desc ffs_vnodeop_entries[] = {
 	{ &vop_pathconf_desc, ufs_pathconf },		/* pathconf */
 	{ &vop_advlock_desc, ufs_advlock },		/* advlock */
 	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
-	{ &vop_getpages_desc, ffs_getpages },		/* getpages */
+	{ &vop_getpages_desc, genfs_getpages },		/* getpages */
 	{ &vop_putpages_desc, genfs_putpages },		/* putpages */
 	{ &vop_openextattr_desc, ffs_openextattr },	/* openextattr */
 	{ &vop_closeextattr_desc, ffs_closeextattr },	/* closeextattr */
@@ -514,6 +514,7 @@ ffs_reclaim(void *v)
 	return (0);
 }
 
+#if 0
 int
 ffs_getpages(void *v)
 {
@@ -548,6 +549,7 @@ ffs_getpages(void *v)
 	}
 	return genfs_getpages(v);
 }
+#endif
 
 /*
  * Return the last logical file offset that should be written for this file

@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.168 2007/04/08 11:20:50 hannken Exp $	*/
+/*	$NetBSD: vnode.h,v 1.169 2007/06/05 12:31:33 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -98,6 +98,7 @@ struct vnode {
 #define	v_usecount	v_uobj.uo_refs
 #define	v_interlock	v_uobj.vmobjlock
 	voff_t		v_size;			/* size of file */
+	voff_t		v_writesize;		/* new size after write */
 	int		v_flag;			/* flags */
 	int		v_numoutput;		/* number of pending writes */
 	long		v_writecount;		/* reference count of writers */
