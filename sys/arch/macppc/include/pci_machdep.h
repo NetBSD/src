@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.h,v 1.18.38.2 2007/05/06 22:50:18 macallan Exp $	*/
+/*	$NetBSD: pci_machdep.h,v 1.18.38.3 2007/06/05 20:25:43 matt Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -35,7 +35,7 @@
 
 #include <powerpc/pci_machdep.h>
 
-extern struct macppc_bus_dma_tag pci_bus_dma_tag;
+extern struct powerpc_bus_dma_tag pci_bus_dma_tag;
 
 /*
  * Functions provided to machine-independent PCI code.
