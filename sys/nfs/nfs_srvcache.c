@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_srvcache.c,v 1.32.24.1 2007/06/05 20:36:26 bouyer Exp $	*/
+/*	$NetBSD: nfs_srvcache.c,v 1.32.24.2 2007/06/05 20:40:13 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_srvcache.c,v 1.32.24.1 2007/06/05 20:36:26 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_srvcache.c,v 1.32.24.2 2007/06/05 20:40:13 bouyer Exp $");
 
 #include "opt_iso.h"
 
@@ -345,8 +345,6 @@ nfsrv_updatecache(nd, repvalid, repmbuf)
 {
 	struct nfsrvcache *rp;
 
-	if (!nd->nd_nam2)
-		return;
 	simple_lock(&nfsrv_reqcache_lock);
 	rp = nfsrv_lookupcache(nd);
 	simple_unlock(&nfsrv_reqcache_lock);
