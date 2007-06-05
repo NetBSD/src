@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.140 2006/11/30 06:11:03 pooka Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.140.2.1 2007/06/05 20:34:58 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.140 2006/11/30 06:11:03 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.140.2.1 2007/06/05 20:34:58 bouyer Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
@@ -1051,13 +1051,18 @@ genfs_putpages(void *v)
 		voff_t a_offhi;
 		int a_flags;
 	} */ *ap = v;
-	struct vnode *vp = ap->a_vp;
+
+	return genfs_do_putpages(ap->a_vp, ap->a_offlo, ap->a_offhi,
+	    ap->a_flags, NULL);
+}
+
+int
+genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff, int flags,
+	struct vm_page **busypg)
+{
 	struct uvm_object *uobj = &vp->v_uobj;
 	struct simplelock *slock = &uobj->vmobjlock;
-	off_t startoff = ap->a_offlo;
-	off_t endoff = ap->a_offhi;
 	off_t off;
-	int flags = ap->a_flags;
 	/* Even for strange MAXPHYS, the shift rounds down to a page */
 #define maxpages (MAXPHYS >> PAGE_SHIFT)
 	int i, s, error, npages, nback;
@@ -1198,6 +1203,8 @@ genfs_putpages(void *v)
 			if (flags & PGO_BUSYFAIL && pg->flags & PG_BUSY) {
 				UVMHIST_LOG(ubchist, "busyfail %p", pg, 0,0,0);
 				error = EDEADLK;
+				if (busypg != NULL)
+					*busypg = pg;
 				break;
 			}
 			KASSERT(!pagedaemon);

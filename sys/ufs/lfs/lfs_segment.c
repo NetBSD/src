@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.195 2006/11/16 01:33:53 christos Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.195.2.1 2007/06/05 20:35:01 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.195 2006/11/16 01:33:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.195.2.1 2007/06/05 20:35:01 bouyer Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -494,15 +494,9 @@ lfs_writevnodes(struct lfs *fs, struct mount *mp, struct segment *sp, int op)
 	int error = 0;
 
 	ASSERT_SEGLOCK(fs);
-#if 0
+ loop:
 	/* start at last (newest) vnode. */
- loop:
 	TAILQ_FOREACH_REVERSE(vp, &mp->mnt_vnodelist, vnodelst, v_mntvnodes) {
-#else
-	/* start at oldest accessed vnode */
- loop:
-	TAILQ_FOREACH(vp, &mp->mnt_vnodelist, v_mntvnodes) {
-#endif
 		/*
 		 * If the vnode that we are about to sync is no longer
 		 * associated with this mount point, start over.
@@ -653,7 +647,8 @@ lfs_segwrite(struct mount *mp, int flags)
 	else if (!(sp->seg_flags & SEGM_FORCE_CKP)) {
 		do {
 			um_error = lfs_writevnodes(fs, mp, sp, VN_REG);
-			if (!fs->lfs_dirops || !fs->lfs_flushvp) {
+
+			if (do_ckp || fs->lfs_dirops == 0) {
 				if (!writer_set) {
 					lfs_writer_enter(fs, "lfs writer");
 					writer_set = 1;
@@ -1662,6 +1657,9 @@ lfs_updatemeta(struct segment *sp)
 		}
 
 	}
+
+	/* This inode has been modified */
+	LFS_SET_UINO(VTOI(vp), IN_MODIFIED);
 }
 
 /*
@@ -2309,6 +2307,7 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 			lfs_stats.cleanblocks += nblocks - 1;
 		}
 	}
+
 	return (lfs_initseg(fs) || do_again);
 }
 
