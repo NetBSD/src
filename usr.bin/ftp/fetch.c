@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.179 2007/05/24 05:05:18 lukem Exp $	*/
+/*	$NetBSD: fetch.c,v 1.180 2007/06/05 00:31:20 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.179 2007/05/24 05:05:18 lukem Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.180 2007/06/05 00:31:20 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -651,6 +651,11 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 			}
 
 			if (isproxy) {
+				if (restart_point) {
+					warnx("Can't restart via proxy URL `%s'",
+					    proxyenv);
+					goto cleanup_fetch_url;
+				}
 				if (parse_url(proxyenv, "proxy URL", &purltype,
 				    &puser, &ppass, &phost, &pport, &portnum,
 				    &ppath) == -1)
