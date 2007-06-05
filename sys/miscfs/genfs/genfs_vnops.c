@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.153 2007/05/17 07:26:22 hannken Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.154 2007/06/05 12:31:31 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.153 2007/05/17 07:26:22 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.154 2007/06/05 12:31:31 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -425,7 +425,7 @@ genfs_getpages(void *v)
 	int i, error, npages, orignpages, npgs, run, ridx, pidx, pcount;
 	int fs_bshift, fs_bsize, dev_bshift;
 	int flags = ap->a_flags;
-	size_t bytes, iobytes, tailbytes, totalbytes, skipbytes;
+	size_t bytes, iobytes, tailstart, tailbytes, totalbytes, skipbytes;
 	vaddr_t kva;
 	struct buf *bp, *mbp;
 	struct vnode *vp = ap->a_vp;
@@ -465,9 +465,19 @@ startover:
 	orignpages = *ap->a_count;
 	GOP_SIZE(vp, origvsize, &diskeof, 0);
 	if (flags & PGO_PASTEOF) {
+#if defined(DIAGNOSTIC)
+		off_t writeeof;
+#endif /* defined(DIAGNOSTIC) */
+
 		newsize = MAX(origvsize,
 		    origoffset + (orignpages << PAGE_SHIFT));
 		GOP_SIZE(vp, newsize, &memeof, GOP_SIZE_MEM);
+#if defined(DIAGNOSTIC)
+		GOP_SIZE(vp, vp->v_writesize, &writeeof, GOP_SIZE_MEM);
+		if (newsize > round_page(writeeof)) {
+			panic("%s: past eof", __func__);
+		}
+#endif /* defined(DIAGNOSTIC) */
 	} else {
 		GOP_SIZE(vp, origvsize, &memeof, GOP_SIZE_MEM);
 	}
@@ -728,20 +738,22 @@ startover:
 
 	/*
 	 * if EOF is in the middle of the range, zero the part past EOF.
-	 * if the page including EOF is not PG_FAKE, skip over it since
-	 * in that case it has valid data that we need to preserve.
+	 * skip over pages which are not PG_FAKE since in that case they have
+	 * valid data that we need to preserve.
 	 */
 
-	if (tailbytes > 0) {
-		size_t tailstart = bytes;
+	tailstart = bytes;
+	while (tailbytes > 0) {
+		const int len = PAGE_SIZE - (tailstart & PAGE_MASK);
 
-		if ((pgs[bytes >> PAGE_SHIFT]->flags & PG_FAKE) == 0) {
-			tailstart = round_page(tailstart);
-			tailbytes -= tailstart - bytes;
+		KASSERT(len <= tailbytes);
+		if ((pgs[tailstart >> PAGE_SHIFT]->flags & PG_FAKE) != 0) {
+			memset((void *)(kva + tailstart), 0, len);
+			UVMHIST_LOG(ubchist, "tailbytes %p 0x%x 0x%x",
+			    kva, tailstart, len, 0);
 		}
-		UVMHIST_LOG(ubchist, "tailbytes %p 0x%x 0x%x",
-		    kva, tailstart, tailbytes,0);
-		memset((void *)(kva + tailstart), 0, tailbytes);
+		tailstart += len;
+		tailbytes -= len;
 	}
 
 	/*
@@ -1514,7 +1526,8 @@ genfs_do_io(struct vnode *vp, off_t off, vaddr_t kva, size_t len, int flags,
 	UVMHIST_LOG(ubchist, "vp %p kva %p len 0x%x flags 0x%x",
 	    vp, kva, len, flags);
 
-	GOP_SIZE(vp, vp->v_size, &eof, 0);
+	KASSERT(vp->v_size <= vp->v_writesize);
+	GOP_SIZE(vp, vp->v_writesize, &eof, 0);
 	if (vp->v_type != VBLK) {
 		fs_bshift = vp->v_mount->mnt_fs_bshift;
 		dev_bshift = vp->v_mount->mnt_dev_bshift;
