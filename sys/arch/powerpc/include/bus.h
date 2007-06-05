@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.17 2007/03/04 06:00:37 christos Exp $	*/
+/*	$NetBSD: bus.h,v 1.17.10.1 2007/06/05 20:26:33 matt Exp $	*/
 /*	$OpenBSD: bus.h,v 1.1 1997/10/13 10:53:42 pefo Exp $	*/
 
 /*-
@@ -115,62 +115,64 @@
 /*
  * Bus access types.
  */
-typedef u_int32_t bus_addr_t;
-typedef u_int32_t bus_size_t;
-typedef	u_int32_t bus_space_handle_t;
+typedef uint32_t bus_addr_t;
+typedef uint32_t bus_size_t;
+
+#ifndef __HAVE_LOCAL_BUS_SPACE
+typedef	uint32_t bus_space_handle_t;
 typedef	const struct powerpc_bus_space *bus_space_tag_t;
 
 struct extent;
 
 struct powerpc_bus_space_scalar {
-	u_int8_t (*pbss_read_1)(bus_space_tag_t, bus_space_handle_t,
+	uint8_t (*pbss_read_1)(bus_space_tag_t, bus_space_handle_t,
 	    bus_size_t);
-	u_int16_t (*pbss_read_2)(bus_space_tag_t, bus_space_handle_t,
+	uint16_t (*pbss_read_2)(bus_space_tag_t, bus_space_handle_t,
 	    bus_size_t);
-	u_int32_t (*pbss_read_4)(bus_space_tag_t, bus_space_handle_t,
+	uint32_t (*pbss_read_4)(bus_space_tag_t, bus_space_handle_t,
 	    bus_size_t);
-	u_int64_t (*pbss_read_8)(bus_space_tag_t, bus_space_handle_t,
+	uint64_t (*pbss_read_8)(bus_space_tag_t, bus_space_handle_t,
 	    bus_size_t);
 
 	void (*pbss_write_1)(bus_space_tag_t, bus_space_handle_t, bus_size_t,
-	    u_int8_t);
+	    uint8_t);
 	void (*pbss_write_2)(bus_space_tag_t, bus_space_handle_t, bus_size_t,
-	    u_int16_t);
+	    uint16_t);
 	void (*pbss_write_4)(bus_space_tag_t, bus_space_handle_t, bus_size_t,
-	    u_int32_t);
+	    uint32_t);
 	void (*pbss_write_8)(bus_space_tag_t, bus_space_handle_t, bus_size_t,
-	    u_int64_t);
+	    uint64_t);
 };
 
 struct powerpc_bus_space_group {
 	void (*pbsg_read_1)(bus_space_tag_t, bus_space_handle_t,
-	    bus_size_t, u_int8_t *, size_t);
+	    bus_size_t, uint8_t *, size_t);
 	void (*pbsg_read_2)(bus_space_tag_t, bus_space_handle_t,
-	    bus_size_t, u_int16_t *, size_t);
+	    bus_size_t, uint16_t *, size_t);
 	void (*pbsg_read_4)(bus_space_tag_t, bus_space_handle_t,
-	    bus_size_t, u_int32_t *, size_t);
+	    bus_size_t, uint32_t *, size_t);
 	void (*pbsg_read_8)(bus_space_tag_t, bus_space_handle_t,
-	    bus_size_t, u_int64_t *, size_t);
+	    bus_size_t, uint64_t *, size_t);
 
 	void (*pbsg_write_1)(bus_space_tag_t, bus_space_handle_t,
-	    bus_size_t, const u_int8_t *, size_t);
+	    bus_size_t, const uint8_t *, size_t);
 	void (*pbsg_write_2)(bus_space_tag_t, bus_space_handle_t,
-	    bus_size_t, const u_int16_t *, size_t);
+	    bus_size_t, const uint16_t *, size_t);
 	void (*pbsg_write_4)(bus_space_tag_t, bus_space_handle_t,
-	    bus_size_t, const u_int32_t *, size_t);
+	    bus_size_t, const uint32_t *, size_t);
 	void (*pbsg_write_8)(bus_space_tag_t, bus_space_handle_t,
-	    bus_size_t, const u_int64_t *, size_t);
+	    bus_size_t, const uint64_t *, size_t);
 };
 
 struct powerpc_bus_space_set {
 	void (*pbss_set_1)(bus_space_tag_t, bus_space_handle_t,
-	    bus_size_t, u_int8_t, size_t);
+	    bus_size_t, uint8_t, size_t);
 	void (*pbss_set_2)(bus_space_tag_t, bus_space_handle_t,
-	    bus_size_t, u_int16_t, size_t);
+	    bus_size_t, uint16_t, size_t);
 	void (*pbss_set_4)(bus_space_tag_t, bus_space_handle_t,
-	    bus_size_t, u_int32_t, size_t);
+	    bus_size_t, uint32_t, size_t);
 	void (*pbss_set_8)(bus_space_tag_t, bus_space_handle_t,
-	    bus_size_t, u_int64_t, size_t);
+	    bus_size_t, uint64_t, size_t);
 };
 
 struct powerpc_bus_space_copy {
@@ -620,6 +622,8 @@ void bus_space_mallocok(void);
 #define	BUS_SPACE_BARRIER_WRITE	0x02		/* force write barrier */
 
 #define BUS_SPACE_ALIGNED_POINTER(p, t) ALIGNED_POINTER(p, t)
+
+#endif	/* !__HAVE_LOCAL_BUS_SPACE */
 
 /*
  * Bus DMA methods.
