@@ -1,3 +1,4 @@
+# $NetBSD: mail.tildehelp,v 1.5 2007/06/05 17:50:23 christos Exp $
 -----------------------------------------------------------
 The following ~ escapes are defined:
 ~?		Print this message

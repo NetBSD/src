@@ -1,3 +1,4 @@
+# $NetBSD: mail.help,v 1.4 2007/06/05 17:50:23 christos Exp $
     Mail   Commands
 t <message list>		type messages
 n				goto and type next message

@@ -1,4 +1,4 @@
-/*	$NetBSD: cmd3.c,v 1.33 2006/11/28 18:45:32 christos Exp $	*/
+/*	$NetBSD: cmd3.c,v 1.34 2007/06/05 17:50:22 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cmd3.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: cmd3.c,v 1.33 2006/11/28 18:45:32 christos Exp $");
+__RCSID("$NetBSD: cmd3.c,v 1.34 2007/06/05 17:50:22 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -177,16 +177,7 @@ dosh(void *v __unused)
 PUBLIC int
 help(void *v __unused)
 {
-	int c;
-	FILE *f;
-
-	if ((f = Fopen(_PATH_HELP, "r")) == NULL) {
-		warn(_PATH_HELP);
-		return 1;
-	}
-	while ((c = getc(f)) != EOF)
-		(void)putchar(c);
-	(void)Fclose(f);
+	cathelp(_PATH_HELP);
 	return 0;
 }
 

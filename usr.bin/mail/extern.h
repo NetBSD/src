@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.28 2006/12/06 17:55:00 christos Exp $	*/
+/*	$NetBSD: extern.h,v 1.29 2007/06/05 17:50:23 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -29,7 +29,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)extern.h	8.2 (Berkeley) 4/20/95 
- *	$NetBSD: extern.h,v 1.28 2006/12/06 17:55:00 christos Exp $
+ *	$NetBSD: extern.h,v 1.29 2007/06/05 17:50:23 christos Exp $
  */
 
 #ifndef __EXTERN_H__
@@ -295,6 +295,7 @@ int	 source(void *);
 void	 touch(struct message *);
 int	 unstack(void);
 int	 upcase(int);
+void	 cathelp(const char *);
 
 /*
  * from temp.c
