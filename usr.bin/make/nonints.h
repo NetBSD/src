@@ -1,4 +1,4 @@
-/*	$NetBSD: nonints.h,v 1.41 2006/11/17 22:07:39 dsl Exp $	*/
+/*	$NetBSD: nonints.h,v 1.41.2.1 2007/06/05 20:53:30 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -97,7 +97,8 @@ int Compat_Make(ClientData, ClientData);
 /* cond.c */
 int Cond_EvalExpression(int, char *, Boolean *, int);
 int Cond_Eval(char *);
-void Cond_End(void);
+void Cond_restore_depth(unsigned int);
+unsigned int Cond_save_depth(void);
 
 /* for.c */
 int For_Eval(char *);
@@ -133,10 +134,10 @@ Boolean Parse_AnyExport(void);
 Boolean Parse_IsVar(char *);
 void Parse_DoVar(char *, GNode *);
 void Parse_AddIncludeDir(char *);
-void Parse_File(const char *, FILE *);
+void Parse_File(const char *, int);
 void Parse_Init(void);
 void Parse_End(void);
-void Parse_FromString(char *, int);
+void Parse_SetInput(const char *, int, int, char *);
 Lst Parse_MainName(void);
 
 /* str.c */

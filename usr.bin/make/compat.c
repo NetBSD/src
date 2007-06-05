@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.66 2006/11/17 22:07:39 dsl Exp $	*/
+/*	$NetBSD: compat.c,v 1.66.2.1 2007/06/05 20:53:28 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: compat.c,v 1.66 2006/11/17 22:07:39 dsl Exp $";
+static char rcsid[] = "$NetBSD: compat.c,v 1.66.2.1 2007/06/05 20:53:28 bouyer Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)compat.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: compat.c,v 1.66 2006/11/17 22:07:39 dsl Exp $");
+__RCSID("$NetBSD: compat.c,v 1.66.2.1 2007/06/05 20:53:28 bouyer Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -225,10 +225,6 @@ CompatRunCommand(ClientData cmdp, ClientData gnp)
     char	  * volatile cmd = (char *)cmdp;
     GNode	  *gn = (GNode *)gnp;
 
-    /*
-     * Avoid clobbered variable warnings by forcing the compiler
-     * to ``unregister'' variables
-     */
     silent = gn->type & OP_SILENT;
     errCheck = !(gn->type & OP_IGNORE);
     doIt = FALSE;

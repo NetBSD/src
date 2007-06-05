@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.115 2006/10/27 21:00:19 dsl Exp $	*/
+/*	$NetBSD: var.c,v 1.115.2.1 2007/06/05 20:53:31 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.115 2006/10/27 21:00:19 dsl Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.115.2.1 2007/06/05 20:53:31 bouyer Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.115 2006/10/27 21:00:19 dsl Exp $");
+__RCSID("$NetBSD: var.c,v 1.115.2.1 2007/06/05 20:53:31 bouyer Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -389,7 +389,7 @@ VarFind(const char *name, GNode *ctxt, int flags)
 
 	    len = strlen(env);
 
-	    v->val = Buf_Init(len);
+	    v->val = Buf_Init(len + 1);
 	    Buf_AddBytes(v->val, len, (Byte *)env);
 
 	    v->flags = VAR_FROM_ENV;
@@ -1840,7 +1840,7 @@ VarQuote(char *str)
 
     newline = Shell_GetNewline();
 
-    buf = Buf_Init(MAKE_BSIZE);
+    buf = Buf_Init(0);
     for (; *str; str++) {
 	if (*str == '\n' && newline != NULL) {
 	    Buf_AddBytes(buf, strlen(newline), newline);
@@ -1880,7 +1880,7 @@ VarChangeCase(char *str, int upper)
    int            (*modProc)(int);
 
    modProc = (upper ? toupper : tolower);
-   buf = Buf_Init(MAKE_BSIZE);
+   buf = Buf_Init(0);
    for (; *str ; str++) {
        Buf_AddByte(buf, (Byte)modProc(*str));
    }
@@ -3089,7 +3089,7 @@ Var_Parse(const char *str, GNode *ctxt, Boolean errnum, int *lengthPtr,
 
 	startc = str[1];
 	endc = startc == PROPEN ? PRCLOSE : BRCLOSE;
-	buf = Buf_Init(MAKE_BSIZE);
+	buf = Buf_Init(0);
 
 	/*
 	 * Skip to the end character or a colon, whichever comes first.
@@ -3377,7 +3377,7 @@ Var_Subst(const char *var, const char *str, GNode *ctxt, Boolean undefErr)
 				     * been reported to prevent a plethora
 				     * of messages when recursing */
 
-    buf = Buf_Init(MAKE_BSIZE);
+    buf = Buf_Init(0);
     errorReported = FALSE;
     trailingBslash = FALSE;
 
