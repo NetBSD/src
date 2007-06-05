@@ -1,4 +1,4 @@
-/*	$NetBSD: srt0.s,v 1.4 2006/03/04 03:03:31 uwe Exp $	*/
+/*	$NetBSD: srt0.s,v 1.5 2007/06/05 08:52:20 martin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -205,6 +205,10 @@ _C_LABEL(openfirmware):
 	.align	8
 	.globl	_C_LABEL(itlb_va_to_pa)
 _C_LABEL(itlb_va_to_pa):
+	set	_C_LABEL(itlb_slot_max), %o3
+	ld	[%o3], %o3
+	dec	%o3
+	sllx	%o3, 3, %o3
 	clr	%o1
 0:	ldxa	[%o1] ASI_IMMU_TLB_TAG, %o2
 	cmp	%o2, %o0
@@ -217,7 +221,7 @@ _C_LABEL(itlb_va_to_pa):
 	sllx	%o0, PGSHIFT, %o0
 	retl
 	 mov	%o0, %o1
-1:	cmp	%o1, 63<<3
+1:	cmp	%o1, %o3
 	blu	%xcc, 0b
 	 add	%o1, 8, %o1
 	clr	%o0
@@ -234,6 +238,10 @@ _C_LABEL(itlb_va_to_pa):
 	.align	8
 	.globl	_C_LABEL(dtlb_va_to_pa)
 _C_LABEL(dtlb_va_to_pa):
+	set	_C_LABEL(dtlb_slot_max), %o3
+	ld	[%o3], %o3
+	dec	%o3
+	sllx	%o3, 3, %o3
 	clr	%o1
 0:	ldxa	[%o1] ASI_DMMU_TLB_TAG, %o2
 	cmp	%o2, %o0
@@ -246,7 +254,7 @@ _C_LABEL(dtlb_va_to_pa):
 	sllx	%o0, PGSHIFT, %o0
 	retl
 	 mov	%o0, %o1
-1:	cmp	%o1, 63<<3
+1:	cmp	%o1, %o3
 	blu	%xcc, 0b
 	 add	%o1, 8, %o1
 	clr	%o0
@@ -273,6 +281,43 @@ _C_LABEL(itlb_enter):
 	membar	#Sync
 	retl
 	 wrpr	%o4, 0, %pstate
+
+
+/*
+ * void
+ * dtlb_replace(vaddr_t vpn, uint32_t data_hi, uint32_t data_lo)
+ *
+ * Replace mapping in dTLB. Data tag is passed in two different
+ * registers so that it works even with 32-bit compilers.
+ */
+	.align	8
+	.globl	_C_LABEL(dtlb_replace)
+_C_LABEL(dtlb_replace):
+	sllx	%o1, 32, %o1
+	or	%o1, %o2, %o1
+	rdpr	%pstate, %o4
+	wrpr	%o4, PSTATE_IE, %pstate
+	/* loop over dtlb entries */
+	clr	%o5
+0:
+	ldxa	[%o5] ASI_DMMU_TLB_TAG, %o2
+	cmp	%o2, %o0
+	bne,a	%xcc, 1f
+	 nop
+	/* found - modify entry */
+	mov	TLB_TAG_ACCESS, %o2
+	stxa	%o0, [%o2] ASI_DMMU
+	stxa	%o1, [%o5] ASI_DMMU_TLB_DATA
+	membar	#Sync
+	retl
+	 wrpr	%o4, 0, %pstate
+
+	/* advance to next tlb entry */
+1:	cmp	%o5, 63<<3
+	blu	%xcc, 0b
+	 add	%o5, 8, %o5
+	retl
+	 nop
 
 /*
  * void
