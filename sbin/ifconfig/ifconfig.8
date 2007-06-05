@@ -1,4 +1,4 @@
-.\"	$NetBSD: ifconfig.8,v 1.90 2007/01/09 09:19:02 dyoung Exp $
+.\"	$NetBSD: ifconfig.8,v 1.91 2007/06/05 11:15:15 mishka Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -542,13 +542,13 @@ If the driver is a
 pseudo-device, set the virtual host ID to
 .Ar n .
 Acceptable values are 1 to 255.
-.It Cm vlan Ar tag
+.It Cm vlan Ar vid
 If the interface is a
 .Xr vlan 4
-pseudo-interface, set the VLAN tag to
-.Ar tag .
-This is a 16-bit number which is used to create an 802.1Q VLAN header for
-packets sent from the
+pseudo-interface, set the VLAN identifier to
+.Ar vid .
+These are the first 12 bits (0-4095) from a 16-bit integer used
+to create an 802.1Q VLAN header for packets sent from the
 .Xr vlan 4
 interface.
 Note that
