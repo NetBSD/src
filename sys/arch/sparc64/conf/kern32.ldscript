@@ -1,4 +1,4 @@
-/*	$NetBSD: kern32.ldscript,v 1.6 2005/12/11 12:19:08 christos Exp $	*/
+/*	$NetBSD: kern32.ldscript,v 1.6.24.1 2007/06/05 20:22:32 bouyer Exp $	*/
 
 /*
  * Kernel linker script for NetBSD/sparc.  This script is based on
@@ -63,9 +63,10 @@ SECTIONS
   .rodata1   : { *(.rodata1) }
   _etext = .;
   PROVIDE (etext = .);
-  /* Adjust the address for the data segment.  We want to adjust up to
-     the same address within the page on the next page up.  */
-  . = ALIGN(0x10000) + (. & (0x10000 - 1));
+  /* Adjust the address for the data segment.  We push the data segment
+     up to the next 4MB boundary so that we can map the text with large
+     pages. */
+  . = ALIGN(0x400000);
   kernel_data_start = .;
   .data    :
   {
