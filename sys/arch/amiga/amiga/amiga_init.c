@@ -1,4 +1,4 @@
-/*	$NetBSD: amiga_init.c,v 1.96 2007/05/31 22:16:48 mhitch Exp $	*/
+/*	$NetBSD: amiga_init.c,v 1.97 2007/06/05 04:46:27 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -36,7 +36,7 @@
 #include "opt_devreload.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.96 2007/05/31 22:16:48 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.97 2007/06/05 04:46:27 mhitch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -580,7 +580,7 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync,
 	/*
 	 * invalidate remainder of kernel PT
 	 */
-	while (pg < (u_int *) (ptpa + ptsize))
+	while (pg < (pt_entry_t *) (ptpa + ptsize))
 		*pg++ = PG_NV;
 
 	/*
