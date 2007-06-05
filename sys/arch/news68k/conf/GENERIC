@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.86.2.1 2007/02/24 13:32:50 bouyer Exp $
+# $NetBSD: GENERIC,v 1.86.2.2 2007/06/05 20:50:06 bouyer Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/news68k/conf/std.news68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.86.2.1 $"
+#ident 		"GENERIC-$Revision: 1.86.2.2 $"
 
 maxusers	8
 
@@ -256,6 +256,7 @@ pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
 #options 	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
+pseudo-device	agr			# IEEE 802.3ad link aggregation
 pseudo-device	rnd			# /dev/random and in-kernle generator
 #pseudo-device	vcoda		4	# coda minicache <-> venus comm.
 pseudo-device	clockctl		# user control of clock subsystem

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.120.2.8 2007/05/13 06:52:51 pavel Exp $
+# $NetBSD: GENERIC,v 1.120.2.9 2007/06/05 20:50:04 bouyer Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.120.2.8 $"
+#ident 		"GENERIC-$Revision: 1.120.2.9 $"
 
 maxusers	32		# estimated number of users
 
@@ -912,6 +912,7 @@ pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
 #options	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
+pseudo-device	agr			# IEEE 802.3ad link aggregation
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
