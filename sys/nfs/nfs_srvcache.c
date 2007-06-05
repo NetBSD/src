@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_srvcache.c,v 1.32 2005/12/11 12:25:16 christos Exp $	*/
+/*	$NetBSD: nfs_srvcache.c,v 1.32.24.1 2007/06/05 20:36:26 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_srvcache.c,v 1.32 2005/12/11 12:25:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_srvcache.c,v 1.32.24.1 2007/06/05 20:36:26 bouyer Exp $");
 
 #include "opt_iso.h"
 
@@ -141,6 +141,19 @@ static const int nfsv2_repstat[NFS_NPROCS] = {
 	FALSE,	/* READDIR */
 	FALSE,	/* STATFS */
 };
+
+static void
+cleanentry(struct nfsrvcache *rp)
+{
+
+	if ((rp->rc_flag & RC_REPMBUF) != 0) {
+		m_freem(rp->rc_reply);
+	}
+	if ((rp->rc_flag & RC_NAM) != 0) {
+		m_free(rp->rc_nam);
+	}
+	rp->rc_flag &= ~(RC_REPSTATUS|RC_REPMBUF);
+}
 
 /*
  * Initialize the server request cache list
@@ -285,10 +298,7 @@ found:
 		LIST_REMOVE(rp, rc_hash);
 		TAILQ_REMOVE(&nfsrvlruhead, rp, rc_lru);
 		simple_unlock(&nfsrv_reqcache_lock);
-		if (rp->rc_flag & RC_REPMBUF)
-			m_freem(rp->rc_reply);
-		if (rp->rc_flag & RC_NAM)
-			(void) m_free(rp->rc_nam);
+		cleanentry(rp);
 		rp->rc_flag &= (RC_LOCKED | RC_WANTED);
 	}
 	rp->rc_state = RC_INPROG;
@@ -341,6 +351,7 @@ nfsrv_updatecache(nd, repvalid, repmbuf)
 	rp = nfsrv_lookupcache(nd);
 	simple_unlock(&nfsrv_reqcache_lock);
 	if (rp) {
+		cleanentry(rp);
 		rp->rc_state = RC_DONE;
 		/*
 		 * If we have a valid reply update status and save
@@ -376,6 +387,8 @@ nfsrv_cleancache()
 		nextrp = TAILQ_NEXT(rp, rc_lru);
 		LIST_REMOVE(rp, rc_hash);
 		TAILQ_REMOVE(&nfsrvlruhead, rp, rc_lru);
+		KASSERT((rp->rc_flag & (RC_LOCKED|RC_WANTED)) == 0);
+		cleanentry(rp);
 		pool_put(&nfs_reqcache_pool, rp);
 	}
 	numnfsrvcache = 0;
