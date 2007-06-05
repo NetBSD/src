@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.16 2007/04/12 18:41:23 matt Exp $	*/
+/*	$NetBSD: main.c,v 1.17 2007/06/05 21:48:46 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 static char sccsid[] = "@(#)disklabel.c	8.4 (Berkeley) 5/4/95";
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 #else
-__RCSID("$NetBSD: main.c,v 1.16 2007/04/12 18:41:23 matt Exp $");
+__RCSID("$NetBSD: main.c,v 1.17 2007/06/05 21:48:46 dyoung Exp $");
 #endif
 #endif	/* not lint */
 
@@ -101,6 +101,7 @@ __RCSID("$NetBSD: main.c,v 1.16 2007/04/12 18:41:23 matt Exp $");
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <limits.h>
 #include <unistd.h>
 
 #include <ufs/ufs/dinode.h>
@@ -197,7 +198,7 @@ static int set_writable_fd = -1;
 #endif
 
 /* Default location for label - only used if we don't find one to update */
-#define LABEL_OFFSET (GETLABELSECTOR() * DEV_BSIZE + GETLABELOFFSET())
+#define LABEL_OFFSET (dklabel_getlabelsector() * DEV_BSIZE + dklabel_getlabeloffset())
 
 /*
  * For portability it doesn't make sense to use any other value....
@@ -228,6 +229,34 @@ dk_ioctl(int f, void *arg)
 #else
 #define dk_ioctl(f, cmd, arg) ioctl(f, cmd, arg)
 #endif /* HAVE_NBTOOL_CONFIG_H */
+
+static daddr_t
+dklabel_getlabelsector(void)
+{
+	unsigned long int nval;
+	char *end;
+	const char *val;
+
+	if ((val = getenv("DISKLABELSECTOR")) == NULL)
+		return GETLABELSECTOR();
+	if ((nval = strtoul(val, &end, 10)) == ULONG_MAX && errno == ERANGE)
+		err(EXIT_FAILURE, "DISKLABELSECTOR in environment");
+	return nval;
+}
+
+static off_t
+dklabel_getlabeloffset(void)
+{
+	unsigned long int nval;
+	char *end;
+	const char *val;
+
+	if ((val = getenv("DISKLABELOFFSET")) == NULL)
+		return GETLABELOFFSET();
+	if ((nval = strtoul(val, &end, 10)) == ULONG_MAX && errno == ERANGE)
+		err(EXIT_FAILURE, "DISKLABELOFFSET in environment");
+	return nval;
+}
 
 static void
 clear_writable(void)
