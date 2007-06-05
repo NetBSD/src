@@ -1,4 +1,4 @@
-.\"	$NetBSD: vlan.4,v 1.26 2006/11/13 16:33:57 ad Exp $
+.\"	$NetBSD: vlan.4,v 1.27 2007/06/05 11:15:15 mishka Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -57,11 +57,11 @@ connected to many different networks through a single physical interface.
 To use a
 .Nm vlan
 interface, the administrator must first create the interface and then
-specify the
-.Tn VLAN
-tag
+specify the VID
 .Po
-a 16-bit integer which distinguishes each
+.Tn VLAN
+identifier, the first 12 bits from a 16-bit integer which
+distinguishes each
 .Tn VLAN
 from any others
 .Pc
@@ -164,9 +164,7 @@ are also lowered to match.
 .Sh EXAMPLES
 The following will create interface
 .Sy vlan0
-with
-.Tn VLAN
-tag six, on the
+with VID six, on the
 .Tn Ethernet
 interface
 .Sy tlp0 :
@@ -186,9 +184,7 @@ connected to
 .Sy tlp0
 which configure a
 .Tn VLAN
-and use
-.Tn VLAN
-tag six will see all traffic transmitted through
+and use VID six will see all traffic transmitted through
 .Sy vlan0 .
 .Pp
 The same
