@@ -1,4 +1,4 @@
-/*	$NetBSD: support.c,v 1.17 2006/11/28 18:45:32 christos Exp $	*/
+/*	$NetBSD: support.c,v 1.18 2007/06/05 17:50:23 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)aux.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: support.c,v 1.17 2006/11/28 18:45:32 christos Exp $");
+__RCSID("$NetBSD: support.c,v 1.18 2007/06/05 17:50:23 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -700,4 +700,28 @@ isign(const char *field, struct ignoretab ignoretabs[2])
 		return !member(realfld, ignoretabs + 1);
 	else
 		return member(realfld, ignoretabs);
+}
+
+/*
+ * Write a file to stdout, skipping comment lines.
+ */
+PUBLIC void
+cathelp(const char *fname)
+{
+	char *line;
+	FILE *f;
+	size_t len;
+
+	if ((f = Fopen(fname, "r")) == NULL) {
+		warn(fname);
+		return;
+	}
+	while ((line = fgetln(f, &len)) != NULL) {
+		if (*line == '#')
+			continue;
+		if (fwrite(line, 1, len, stdout) != len)
+			break;
+	}
+	(void)Fclose(f);
+	return;
 }
