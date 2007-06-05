@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs.c,v 1.26 2007/05/18 15:53:07 pooka Exp $	*/
+/*	$NetBSD: dtfs.c,v 1.27 2007/06/05 12:20:35 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -124,7 +124,7 @@ main(int argc, char *argv[])
 	lflags = mntflags = 0;
 	khashbuckets = 256;
 	pflags = PUFFS_KFLAG_IAONDEMAND;
-	while ((ch = getopt(argc, argv, "bc:dio:r:s")) != -1) {
+	while ((ch = getopt(argc, argv, "bc:dio:r:st")) != -1) {
 		switch (ch) {
 		case 'b': /* build paths, for debugging the feature */
 			pflags |= PUFFS_FLAG_BUILDPATH;
