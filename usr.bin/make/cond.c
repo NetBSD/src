@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.35.2.1 2006/12/20 22:42:11 bouyer Exp $	*/
+/*	$NetBSD: cond.c,v 1.35.2.2 2007/06/05 20:53:28 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: cond.c,v 1.35.2.1 2006/12/20 22:42:11 bouyer Exp $";
+static char rcsid[] = "$NetBSD: cond.c,v 1.35.2.2 2007/06/05 20:53:28 bouyer Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cond.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: cond.c,v 1.35.2.1 2006/12/20 22:42:11 bouyer Exp $");
+__RCSID("$NetBSD: cond.c,v 1.35.2.2 2007/06/05 20:53:28 bouyer Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -172,7 +172,8 @@ static char 	  *condExpr;	    	/* The expression to parse */
 static Token	  condPushBack=None;	/* Single push-back token used in
 					 * parsing */
 
-static int  	  cond_depth = 0;  	/* current .if nesting level */
+static unsigned int	cond_depth = 0;  	/* current .if nesting level */
+static unsigned int	cond_min_depth = 0;  	/* depth at makefile open */
 
 static int
 istoken(const char *str, const char *tok, size_t len)
@@ -1264,7 +1265,7 @@ Cond_Eval(char *line)
 	    if (!istoken(line + 1, "ndif", 4))
 		return COND_INVALID;
 	    /* End of conditional section */
-	    if (cond_depth == 0) {
+	    if (cond_depth == cond_min_depth) {
 		Parse_Error(level, "if-less endif");
 		return COND_PARSE;
 	    }
@@ -1277,7 +1278,7 @@ Cond_Eval(char *line)
 	line += 2;
 	if (istoken(line, "se", 2)) {
 	    /* It is else... */
-	    if (cond_depth == 0) {
+	    if (cond_depth == cond_min_depth) {
 		Parse_Error(level, "if-less else");
 		return COND_INVALID;
 	    }
@@ -1327,7 +1328,7 @@ Cond_Eval(char *line)
     state = cond_state[cond_depth];
 
     if (isElif) {
-	if (cond_depth == 0) {
+	if (cond_depth == cond_min_depth) {
 	    Parse_Error(level, "if-less elif");
 	    return COND_INVALID;
 	}
@@ -1386,11 +1387,24 @@ Cond_Eval(char *line)
  *-----------------------------------------------------------------------
  */
 void
-Cond_End(void)
+Cond_restore_depth(unsigned int saved_depth)
 {
-    if (cond_depth != 0) {
-	Parse_Error(PARSE_FATAL, "%d open conditional%s", cond_depth,
-		    cond_depth == 1 ? "" : "s");
+    int open_conds = cond_depth - cond_min_depth;
+
+    if (open_conds != 0 || saved_depth > cond_depth) {
+	Parse_Error(PARSE_FATAL, "%d open conditional%s", open_conds,
+		    open_conds == 1 ? "" : "s");
+	cond_depth = cond_min_depth;
     }
-    cond_depth = 0;
+
+    cond_min_depth = saved_depth;
+}
+
+unsigned int
+Cond_save_depth(void)
+{
+    int depth = cond_min_depth;
+
+    cond_min_depth = cond_depth;
+    return depth;
 }
