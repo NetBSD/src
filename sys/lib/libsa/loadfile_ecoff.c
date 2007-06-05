@@ -1,4 +1,4 @@
-/* $NetBSD: loadfile_ecoff.c,v 1.6 2005/12/11 12:24:46 christos Exp $ */
+/* $NetBSD: loadfile_ecoff.c,v 1.7 2007/06/05 08:48:50 martin Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -141,6 +141,7 @@ loadfile_coff(fd, coff, marks, flags)
 	marks[MARK_NSYM] = 1;	/* XXX: Kernel needs >= 0 */
 	marks[MARK_SYM] = LOADADDR(maxp);
 	marks[MARK_END] = LOADADDR(maxp);
+	marks[MARK_DATA] = LOADADDR(coff->a.data);
 	return 0;
 }
 
