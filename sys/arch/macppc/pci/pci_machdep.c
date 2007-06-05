@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.34.14.2 2007/05/06 22:51:40 macallan Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.34.14.3 2007/06/05 20:25:43 matt Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.34.14.2 2007/05/06 22:51:40 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.34.14.3 2007/06/05 20:25:43 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -54,7 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.34.14.2 2007/05/06 22:51:40 macall
 
 #include <uvm/uvm_extern.h>
 
-#define _MACPPC_BUS_DMA_PRIVATE
+#define _POWERPC_BUS_DMA_PRIVATE
 #include <machine/bus.h>
 
 #include <machine/autoconf.h>
@@ -87,21 +87,20 @@ void genppc_pci_indirect_decompose_tag(void *, pcitag_t, int *, int *, int *);
  * PCI doesn't have any special needs; just use the generic versions
  * of these functions.
  */
-struct macppc_bus_dma_tag pci_bus_dma_tag = {
-	0,			/* _bounce_thresh */
-	_bus_dmamap_create, 
-	_bus_dmamap_destroy,
-	_bus_dmamap_load,
-	_bus_dmamap_load_mbuf,
-	_bus_dmamap_load_uio,
-	_bus_dmamap_load_raw,
-	_bus_dmamap_unload,
-	NULL,			/* _dmamap_sync */
-	_bus_dmamem_alloc,
-	_bus_dmamem_free,
-	_bus_dmamem_map,
-	_bus_dmamem_unmap,
-	_bus_dmamem_mmap,
+struct powerpc_bus_dma_tag pci_bus_dma_tag = {
+	._dmamap_create = _bus_dmamap_create, 
+	._dmamap_destroy = _bus_dmamap_destroy,
+	._dmamap_load = _bus_dmamap_load,
+	._dmamap_load_mbuf = _bus_dmamap_load_mbuf,
+	._dmamap_load_uio = _bus_dmamap_load_uio,
+	._dmamap_load_raw = _bus_dmamap_load_raw,
+	._dmamap_unload = _bus_dmamap_unload,
+	._dmamap_sync = NULL,
+	._dmamem_alloc = _bus_dmamem_alloc,
+	._dmamem_free = _bus_dmamem_free,
+	._dmamem_map = _bus_dmamem_map,
+	._dmamem_unmap = _bus_dmamem_unmap,
+	._dmamem_mmap = _bus_dmamem_mmap,
 };
 
 void
