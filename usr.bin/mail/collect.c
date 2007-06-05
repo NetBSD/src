@@ -1,4 +1,4 @@
-/*	$NetBSD: collect.c,v 1.38 2006/12/06 17:55:00 christos Exp $	*/
+/*	$NetBSD: collect.c,v 1.39 2007/06/05 17:50:22 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)collect.c	8.2 (Berkeley) 4/19/94";
 #else
-__RCSID("$NetBSD: collect.c,v 1.38 2006/12/06 17:55:00 christos Exp $");
+__RCSID("$NetBSD: collect.c,v 1.39 2007/06/05 17:50:22 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -730,13 +730,7 @@ cont:
 				goto err;
 			goto cont;
 		case '?':
-			if ((fbuf = Fopen(_PATH_TILDE, "r")) == NULL) {
-				warn(_PATH_TILDE);
-				break;
-			}
-			while ((t = getc(fbuf)) != EOF)
-				(void)putchar(t);
-			(void)Fclose(fbuf);
+			cathelp(_PATH_TILDE);
 			break;
 		case 'p':
 			/*
