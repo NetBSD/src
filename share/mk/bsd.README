@@ -1,9 +1,9 @@
-#	$NetBSD: bsd.README,v 1.194 2007/02/24 18:53:34 pooka Exp $
+#	$NetBSD: bsd.README,v 1.195 2007/06/06 06:18:39 rillig Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
-This is the README file for the new make "include" files for the BSD
-source tree.  The files are installed in /usr/share/mk, and are, by
-convention, named with the suffix ".mk".
+This is the README file for the new (as of 1993) make "include" files
+for the BSD source tree.  The files are installed in /usr/share/mk, and
+are, by convention, named with the suffix ".mk".
 
 Note, this file is not intended to replace reading through the .mk
 files for anything tricky.
