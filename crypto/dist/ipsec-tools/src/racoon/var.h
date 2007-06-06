@@ -1,4 +1,4 @@
-/*	$NetBSD: var.h,v 1.4 2006/09/09 16:22:10 manu Exp $	*/
+/*	$NetBSD: var.h,v 1.5 2007/06/06 15:37:15 vanhu Exp $	*/
 
 /* Id: var.h,v 1.6 2004/11/20 16:16:59 monas Exp */
 
@@ -78,9 +78,9 @@
 do { \
 	if (getnameinfo((x), sysdep_sa_len(x), (y), sizeof(y), (z), sizeof(z), \
 			NIFLAGS) != 0) { \
-		if (y) \
+		if (y != NULL) \
 			strncpy((y), "(invalid)", sizeof(y)); \
-		if (z) \
+		if (z != NULL) \
 			strncpy((z), "(invalid)", sizeof(z)); \
 	} \
 } while (0);
@@ -89,7 +89,7 @@ do { \
 do { \
 	if (getnameinfo((x), sysdep_sa_len(x), (y), sizeof(y), NULL, 0, \
 			NIFLAGS) != 0) { \
-		if (y) \
+		if (y != NULL) \
 			strncpy((y), "(invalid)", sizeof(y)); \
 	} \
 } while (0);
