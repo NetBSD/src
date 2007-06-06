@@ -3,7 +3,9 @@
 	  reloaded configuration.
 	From Jianli Liu <jlliu@nortel.com>:
 	* src/racoon/session.c: speeds up interfaces update when they changed.
-	
+	From Rong-En Fan <rafan@freebsd.org>
+	* src/racoon/{var.h|eaytest.c}: fixed compilation with gcc 4.2
+
 2007-05-30  Emmanuel Dreyfus <manu@netbsd.org>
 	From Jianli Liu <jlliu@nortel.com>:
 	* src/racoon/kmpstat.c: Use the specified socket path instead of 
