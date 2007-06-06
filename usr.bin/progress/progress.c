@@ -1,4 +1,4 @@
-/*	$NetBSD: progress.c,v 1.14 2007/02/07 15:21:21 hubertf Exp $ */
+/*	$NetBSD: progress.c,v 1.15 2007/06/06 17:49:14 briggs Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: progress.c,v 1.14 2007/02/07 15:21:21 hubertf Exp $");
+__RCSID("$NetBSD: progress.c,v 1.15 2007/06/06 17:49:14 briggs Exp $");
 #endif				/* not lint */
 
 #include <sys/types.h>
@@ -73,8 +73,9 @@ static void
 usage(void)
 {
 	fprintf(stderr,
-	    "usage: %s [-ez] [-f file] [-l length] [-p prefix] cmd [args...]\n",
-	    getprogname());
+	    "usage: %s [-ez] [-b buffersize] [-f file] [-l length]\n"
+	    "       %*.s [-p prefix] cmd [args...]\n",
+	    getprogname(), (int) strlen(getprogname()), "");
 	exit(EXIT_FAILURE);
 }
 
@@ -82,13 +83,14 @@ usage(void)
 int
 main(int argc, char *argv[])
 {
-	static char fb_buf[BUFSIZ];
+	char *fb_buf;
 	char *infile = NULL;
 	pid_t pid = 0, gzippid = 0, deadpid;
 	int ch, fd, outpipe[2];
 	int ws, gzipstat, cmdstat;
 	int eflag = 0, lflag = 0, zflag = 0;
 	ssize_t nr, nw, off;
+	size_t buffersize;
 	struct stat statb;
 	struct ttysize ts;
 
@@ -97,10 +99,15 @@ main(int argc, char *argv[])
 	/* defaults: Read from stdin, 0 filesize (no completion estimate) */
 	fd = STDIN_FILENO;
 	filesize = 0;
+	buffersize = 64 * 1024;
 	prefix = NULL;
 
-	while ((ch = getopt(argc, argv, "ef:l:p:z")) != -1)
+	while ((ch = getopt(argc, argv, "b:ef:l:p:z")) != -1)
 		switch (ch) {
+		case 'b':
+			buffersize = (size_t) strsuftoll("buffer size", optarg,
+			    0, SIZE_T_MAX);
+			break;
 		case 'e':
 			eflag++;
 			break;
@@ -202,6 +209,10 @@ main(int argc, char *argv[])
 	else
 		ttywidth = ts.ts_cols;
 
+	fb_buf = malloc(buffersize);
+	if (fb_buf == NULL)
+		err(1, "malloc for buffersize");
+
 	if (pipe(outpipe) < 0)
 		err(1, "output pipe");
 	pid = fork();
@@ -219,7 +230,7 @@ main(int argc, char *argv[])
 	close(outpipe[0]);
 
 	progressmeter(-1);
-	while ((nr = read(fd, fb_buf, BUFSIZ)) > 0)
+	while ((nr = read(fd, fb_buf, buffersize)) > 0)
 		for (off = 0; nr; nr -= nw, off += nw, bytes += nw)
 			if ((nw = write(outpipe[1], fb_buf + off,
 			    (size_t) nr)) < 0)
@@ -255,5 +266,8 @@ main(int argc, char *argv[])
 	}
 
 	progressmeter(1);
+
+	free(fb_buf);
+
 	exit(cmdstat ? cmdstat : gzipstat);
 }
