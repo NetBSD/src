@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.31 2007/06/05 17:48:19 wiz Exp $	*/
+/*	$NetBSD: util.c,v 1.32 2007/06/06 13:21:28 soda Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)util.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: util.c,v 1.31 2007/06/05 17:48:19 wiz Exp $");
+__RCSID("$NetBSD: util.c,v 1.32 2007/06/06 13:21:28 soda Exp $");
 #endif
 #endif /* not lint */
 
@@ -132,11 +132,13 @@ printescaped(const char *src)
 		size_t rv, span = endptr - src;
 
 #if 0
-/* soda says:
- * Comment this out, because if there are redundant escape sequences
- * which exceed 32 bytes, our current implementation doesn't display
- * the pathname correctly with above.
- */
+		/*
+		 * XXX - we should fix libc instead.
+		 * Theoretically this should work, but our current
+		 * implementation of iso2022 module doesn't actually work
+		 * as expected, if there are redundant escape sequences
+		 * which exceed 32 bytes.
+		 */
 		if (span > MB_CUR_MAX)
 			span = MB_CUR_MAX;
 #endif
