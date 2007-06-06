@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.178 2007/06/06 15:59:35 liamjfoy Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.179 2007/06/06 19:21:52 bouyer Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -5908,6 +5908,11 @@ sys/arch/sparc64/conf/GENERIC			1.85
 sys/arch/sun3/conf/GENERIC			1.138
 sys/arch/vax/conf/GENERIC			1.157
 sys/arch/x68k/conf/GENERIC			1.134
+sys/arch/amiga/conf/GENERIC.in			1.59
+sys/arch/sgimips/conf/GENERIC32_IP2x		1.66
+sys/arch/sgimips/conf/GENERIC32_IP3x		1.63
+sys/arch/sun3/conf/GENERIC3X			1.95
+sys/arch/atari/conf/GENERIC.in			1.66
 
 	Add pseudo-device agr to all GENERIC kernels where it might make sense
 	(commented out in some).
