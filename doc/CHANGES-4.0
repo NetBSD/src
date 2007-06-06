@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.177 2007/06/05 20:54:48 bouyer Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.178 2007/06/06 15:59:35 liamjfoy Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -5932,3 +5932,11 @@ usr.bin/make/var.c                              patch
 	improve stability.
 	[tron, ticket #696]
 
+etc/daily					1.70
+etc/monthly					1.11
+etc/security					1.102
+etc/weekly					1.23
+
+	Use "mktemp -d -t xxx" to create the temporary directories. This will use
+	TMPDIR environment variable if set, otherwise use /tmp.  (misc/35544)
+	[martti, ticket #708]
