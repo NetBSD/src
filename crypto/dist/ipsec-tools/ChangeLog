@@ -1,7 +1,9 @@
 2007-06-06  Yvan Vanhullebus  <vanhu@netasq.com>
 	* src/racoon/handler.c: ignore obsolete lifebyte when validating
 	  reloaded configuration.
-
+	From Jianli Liu <jlliu@nortel.com>:
+	* src/racoon/session.c: speeds up interfaces update when they changed.
+	
 2007-05-04  Yvan Vanhullebus  <vanhu@netasq.com>
 	* src/racoon/pfkey.c: Force the update of ph2 in pk_recvupdate()
 	  if NAT_T support, to solve some port match problems with the
