@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.2,v 1.1.2.76 2007/05/30 20:37:34 bouyer Exp $
+#	$NetBSD: CHANGES-3.2,v 1.1.2.77 2007/06/06 12:20:11 liamjfoy Exp $
 
 A complete list of changes from the NetBSD 3.1 release to the NetBSD 3.2
 release:
@@ -3267,3 +3267,13 @@ sys/ufs/ffs/ffs_vfsops.c			1.201
 	by the Mkfs tool for MacOS (reported and confirmed on port-mac68k).
 	[tsutsui, ticket #1798]
 
+sys/fs/smbfs/smbfs_vfsops.c			1.64
+
+	In sync, skip vnodes which have a null v_data pointer.  This is a
+	workaround for the problem analyzed more deeply in kern/30831.  In
+	short, the problem is keeping the vnode on the mount point vnode
+	list during reclaim.  If reclaim happens to sleep (as is a possibility
+	with smbfs due to calling vrele() and therefore possibly VOP_INACTIVE),
+	code going through the entire mountpoint vnode list will hit
+	half-reclaimed vnodes.
+	[pooka, ticket #1759]
