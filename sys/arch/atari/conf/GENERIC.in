@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC.in,v 1.65 2006/11/11 18:47:09 jmmv Exp $
+#	$NetBSD: GENERIC.in,v 1.65.2.1 2007/06/06 19:21:52 bouyer Exp $
 #
 # Generic atari
 #
@@ -259,6 +259,7 @@ pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 #ifndef NO_PHYS_NETWORK
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
+pseudo-device	agr			# IEEE 802.3ad link aggregation
 #endif
 pseudo-device	ccd		4	# concatenating disk driver
 #pseudo-device	cgd		4	# cryptographic disk driver
