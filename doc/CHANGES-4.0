@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.180 2007/06/06 19:27:25 bouyer Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.181 2007/06/06 21:12:14 bouyer Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -5853,6 +5853,7 @@ sys/ufs/lfs/lfs_subr.c                1.69, 1.70
 sys/ufs/lfs/lfs_syscalls.c            1.119
 sys/ufs/lfs/lfs_vfsops.c              1.234, 1.235
 sys/ufs/lfs/lfs_vnops.c               1.195, 1.196, 1.200, 1.202-206
+sys/coda/coda_vnops.c	              patch
 
 	Reduce busy waiting in lfs_putpages(), and other LFS improvements.
 	[perseant, ticket #703]
