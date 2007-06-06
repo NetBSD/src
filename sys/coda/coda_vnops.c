@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vnops.c,v 1.50.8.2 2007/05/13 07:30:41 pavel Exp $	*/
+/*	$NetBSD: coda_vnops.c,v 1.50.8.3 2007/06/06 21:11:18 bouyer Exp $	*/
 
 /*
  *
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.50.8.2 2007/05/13 07:30:41 pavel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.50.8.3 2007/06/06 21:11:18 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,6 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.50.8.2 2007/05/13 07:30:41 pavel Ex
 #include <sys/proc.h>
 #include <sys/select.h>
 #include <sys/user.h>
+#include <sys/vnode.h>
 #include <sys/kauth.h>
 
 #include <miscfs/genfs/genfs.h>
