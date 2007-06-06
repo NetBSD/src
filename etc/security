@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: security,v 1.101 2007/03/27 08:37:58 jnemeth Exp $
+#	$NetBSD: security,v 1.102 2007/06/06 13:30:48 martti Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -40,7 +40,7 @@ if [ ! -d "$work_dir" ]; then
 	mkdir -p "$work_dir"
 fi
 
-SECUREDIR=`mktemp -d /tmp/_securedir.XXXXXX` || exit 1
+SECUREDIR=$(mktemp -d -t _securedir) || exit 1
 
 trap "/bin/rm -rf $SECUREDIR ; exit 0" EXIT INT QUIT PIPE
 
