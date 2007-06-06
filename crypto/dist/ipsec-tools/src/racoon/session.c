@@ -1,4 +1,4 @@
-/*	$NetBSD: session.c,v 1.7 2006/09/30 16:14:18 manu Exp $	*/
+/*	$NetBSD: session.c,v 1.8 2007/06/06 09:47:29 vanhu Exp $	*/
 
 /*	$KAME: session.c,v 1.32 2003/09/24 02:01:17 jinmei Exp $	*/
 
@@ -228,8 +228,9 @@ session(void)
 
 		if (lcconf->rtsock >= 0 && FD_ISSET(lcconf->rtsock, &rfds)) {
 			if (update_myaddrs() && lcconf->autograbaddr)
-				sched_new(5, check_rtsock, NULL);
-			initfds();
+				check_rtsock(NULL);
+			else
+				initfds();
 		}
 	}
 }
