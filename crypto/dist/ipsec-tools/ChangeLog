@@ -1,6 +1,8 @@
 2007-06-06  Yvan Vanhullebus  <vanhu@netasq.com>
 	* src/racoon/handler.c: ignore obsolete lifebyte when validating
 	  reloaded configuration.
+	From Jianli Liu <jlliu@nortel.com>:
+	* src/racoon/session.c: speeds up interfaces update when they changed.
 	
 2007-05-31  Emmanuel Dreyfus <manu@netbsd.org>
 	From Joy Latten <latten@austin.ibm.com>
