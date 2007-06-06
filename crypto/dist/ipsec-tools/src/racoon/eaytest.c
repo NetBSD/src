@@ -1,4 +1,4 @@
-/*	$NetBSD: eaytest.c,v 1.7 2006/10/06 12:02:27 manu Exp $	*/
+/*	$NetBSD: eaytest.c,v 1.8 2007/06/06 15:37:15 vanhu Exp $	*/
 
 /* Id: eaytest.c,v 1.22 2005/06/19 18:02:54 manubsd Exp */
 
@@ -232,8 +232,8 @@ certtest(ac, av)
 	vchar_t *asn1dn = NULL, asn1dn0;
 #ifdef ORIG_DN
 	char dnstr[] = "C=JP, ST=Kanagawa, L=Fujisawa, O=WIDE Project, OU=KAME Project, CN=Shoichi Sakane/Email=sakane@kame.net";
-	char *dnstr_w1 = 0;
-	char *dnstr_w2 = 0;
+	char *dnstr_w1 = NULL;
+	char *dnstr_w2 = NULL;
 	char dn0[] = {
 		0x30,0x81,0x9a,0x31,0x0b,0x30,0x09,0x06,
 		0x03,0x55,0x04,0x06,0x13,0x02,0x4a,0x50,
@@ -313,7 +313,7 @@ certtest(ac, av)
 
 	printf("exact match: succeed.\n");
 
-	if (dnstr_w1) {
+	if (dnstr_w1 != NULL) {
 		asn1dn = eay_str2asn1dn(dnstr_w1, strlen(dnstr_w1));
 		if (asn1dn == NULL || asn1dn->l == asn1dn0.l)
 			errx(1, "asn1dn length wrong for wildcard 1\n");
@@ -323,7 +323,7 @@ certtest(ac, av)
 		printf("wildcard 1 match: succeed.\n");
 	}
 
-	if (dnstr_w1) {
+	if (dnstr_w1 != NULL) {
 		asn1dn = eay_str2asn1dn(dnstr_w2, strlen(dnstr_w2));
 		if (asn1dn == NULL || asn1dn->l == asn1dn0.l)
 			errx(1, "asn1dn length wrong for wildcard 2\n");
