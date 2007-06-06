@@ -1,4 +1,4 @@
-/*	$NetBSD: ofctl.c,v 1.4 2007/06/03 03:01:41 matt Exp $	*/
+/*	$NetBSD: ofctl.c,v 1.5 2007/06/06 23:43:56 rjs Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -206,7 +206,7 @@ of_proplib_mkprop(int fd, int nodeid, char *name)
 		free(ofio.of_buf);
 	ofio.of_buf = malloc(ofio.of_buflen);
 	if (ofio.of_buf == NULL)
-		err(1, "malloc(%zu)", ofio.of_buflen);
+		err(1, "malloc(%d)", ofio.of_buflen);
 	if (ioctl(fd, OFIOCGET, &ofio) < 0) {
 		if (errno == ENOMEM) {
 			ofio.of_buflen *= 2;
