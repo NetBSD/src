@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs_vfsops.c,v 1.18 2007/05/18 13:55:21 pooka Exp $	*/
+/*	$NetBSD: dtfs_vfsops.c,v 1.19 2007/06/06 01:55:02 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -11,9 +11,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. The name of the company nor the name of the author may be used to
- *    endorse or promote products derived from this software without specific
- *    prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED

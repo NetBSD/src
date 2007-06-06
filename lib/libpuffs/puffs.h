@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.h,v 1.61 2007/05/20 19:56:56 pooka Exp $	*/
+/*	$NetBSD: puffs.h,v 1.62 2007/06/06 01:55:01 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -15,9 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. The name of the company nor the name of the author may be used to
- *    endorse or promote products derived from this software without specific
- *    prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
