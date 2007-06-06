@@ -1,4 +1,4 @@
-/*	$NetBSD: handler.c,v 1.9.6.5 2007/05/04 14:34:00 vanhu Exp $	*/
+/*	$NetBSD: handler.c,v 1.9.6.6 2007/06/06 09:20:12 vanhu Exp $	*/
 
 /* Id: handler.c,v 1.28 2006/05/26 12:17:29 manubsd Exp */
 
@@ -1150,11 +1150,15 @@ static int revalidate_ph2(struct ph2handle *iph2){
 			return 0;
 		}
 
+#if 0
+		/* Lifebyte is deprecated, just ignore it
+		 */
 		if (sainfo->lifebyte < approval->lifebyte) {
 			plog(LLV_DEBUG, LOCATION, NULL,
 				 "Reload: lifebyte mismatch\n");
 			return 0;
 		}
+#endif
 
 		if (sainfo->pfs_group &&
 		   sainfo->pfs_group != approval->pfs_group) {
@@ -1166,7 +1170,11 @@ static int revalidate_ph2(struct ph2handle *iph2){
 
 	case PROP_CHECK_EXACT:
 		if (sainfo->lifetime != approval->lifetime ||
+#if 0
+			/* Lifebyte is deprecated, just ignore it
+			 */
 		    sainfo->lifebyte != approval->lifebyte ||
+#endif
 		    sainfo->pfs_group != iph2->approval->pfs_group) {
 			plog(LLV_DEBUG, LOCATION, NULL,
 			    "Reload: lifetime | pfs mismatch\n");
@@ -1406,11 +1414,15 @@ static int revalidate_ph1(struct ph1handle *iph1){
 				continue;
 			}
 
+#if 0
+			/* Lifebyte is deprecated, just ignore it
+			 */
 			if (approval->lifebyte > p->lifebyte) {
 				plog(LLV_DEBUG, LOCATION, NULL,
 					 "Reload: lifebyte mismatch\n");
 				continue;
 			}
+#endif
 			break;
 
 		case PROP_CHECK_EXACT:
@@ -1426,11 +1438,15 @@ static int revalidate_ph1(struct ph1handle *iph1){
 				continue;
 			}
 
+#if 0
+			/* Lifebyte is deprecated, just ignore it
+			 */
 			if (approval->lifebyte != p->lifebyte) {
 				plog(LLV_DEBUG, LOCATION, NULL,
 					 "Reload: lifebyte mismatch\n");
 				continue;
 			}
+#endif
 			break;
 
 		default:
