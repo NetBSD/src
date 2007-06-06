@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.187 2007/05/28 16:47:38 yamt Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.188 2007/06/06 09:23:55 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.187 2007/05/28 16:47:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.188 2007/06/06 09:23:55 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -1813,13 +1813,12 @@ nfs_getattrcache(vp, vaper)
 	vap = np->n_vattr;
 	if (vap->va_size != np->n_size) {
 		if (vap->va_type == VREG) {
-			if (np->n_flag & NMODIFIED) {
-				if (vap->va_size < np->n_size)
-					vap->va_size = np->n_size;
-				else
-					np->n_size = vap->va_size;
-			} else
+			if ((np->n_flag & NMODIFIED) != 0 &&
+			    vap->va_size < np->n_size) {
+				vap->va_size = np->n_size;
+			} else {
 				np->n_size = vap->va_size;
+			}
 			genfs_node_wrlock(vp);
 			uvm_vnp_setsize(vp, np->n_size);
 			genfs_node_unlock(vp);
