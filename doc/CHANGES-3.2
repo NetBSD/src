@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.2,v 1.1.2.77 2007/06/06 12:20:11 liamjfoy Exp $
+#	$NetBSD: CHANGES-3.2,v 1.1.2.78 2007/06/06 14:49:47 liamjfoy Exp $
 
 A complete list of changes from the NetBSD 3.1 release to the NetBSD 3.2
 release:
@@ -3277,3 +3277,19 @@ sys/fs/smbfs/smbfs_vfsops.c			1.64
 	code going through the entire mountpoint vnode list will hit
 	half-reclaimed vnodes.
 	[pooka, ticket #1759]
+
+sys/dev/pci/if_wm.c				1.129
+
+	fix TSO in some rare cases - yamt
+
+	wm_tx_offload: in the case of "txtsopain",
+	m_copyback ip header to the correct offset.
+	[yamt, ticket #1750]
+
+distrib/utils/sysinst/arch/amd64/md.h		1.20
+
+	Add "wd", "sd" and "raid:no_mbr" disks in DISK_NAMES (and xbd:no_mbr,
+	but it's ignored as there's no support for Xen yet).
+
+	From Edgar Fu in PR port-amd64/36116.
+	[xtraeme, ticket #1758]
