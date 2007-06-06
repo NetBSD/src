@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.2,v 1.1.2.78 2007/06/06 14:49:47 liamjfoy Exp $
+#	$NetBSD: CHANGES-3.2,v 1.1.2.79 2007/06/06 16:01:32 liamjfoy Exp $
 
 A complete list of changes from the NetBSD 3.1 release to the NetBSD 3.2
 release:
@@ -3293,3 +3293,16 @@ distrib/utils/sysinst/arch/amd64/md.h		1.20
 
 	From Edgar Fu in PR port-amd64/36116.
 	[xtraeme, ticket #1758]
+
+etc/Makefile					1.342
+etc/etc.sgimips/Makefile.inc			1.15
+
+	Recent versions of mkisofs (I've tested starting with cdrtools-2.01.01a20)
+	can't find the el-torito boot image with the old syntax. This can be
+	fixed by removed the leading "i386/" from the -b argument, but then
+	the mkisofs from the current cdrtools-2.01 package won't find the boot image.
+
+	Change the graf-point specifications so that a trailing / terminates
+	the grafted directories. This way both versions of mkisofs can find the
+	boot loader.
+	[bad, ticket #1753]
