@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.74 2007/06/05 12:31:30 yamt Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.75 2007/06/06 01:33:10 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.74 2007/06/05 12:31:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.75 2007/06/06 01:33:10 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/fstrans.h>
@@ -345,10 +345,7 @@ puffs_checkop(void *v)
 	struct vnodeop_desc *desc = ap->a_desc;
 	struct puffs_mount *pmp;
 	struct vnode *vp;
-	int offset;
-
-	DPRINTF_VERBOSE(("checkop call %s (%d)\n",
-	    ap->a_desc->vdesc_name, ap->a_desc->vdesc_offset));
+	int offset, rv;
 
 	offset = ap->a_desc->vdesc_vp_offsets[0];
 #ifdef DIAGNOSTIC
@@ -357,6 +354,9 @@ puffs_checkop(void *v)
 #endif
 	vp = *VOPARG_OFFSETTO(struct vnode **, offset, ap);
 	pmp = MPTOPUFFSMP(vp->v_mount);
+
+	DPRINTF_VERBOSE(("checkop call %s (%d), vp %p\n",
+	    ap->a_desc->vdesc_name, ap->a_desc->vdesc_offset, vp));
 
 	if (!ALLOPS(pmp)) {
 		switch (desc->vdesc_offset) {
@@ -395,7 +395,12 @@ puffs_checkop(void *v)
 		}
 	}
 
-	return VOCALL(puffs_msgop_p, ap->a_desc->vdesc_offset, v);
+	rv = VOCALL(puffs_msgop_p, ap->a_desc->vdesc_offset, v);
+
+	DPRINTF_VERBOSE(("checkop return %s (%d), vp %p: %d\n",
+	    ap->a_desc->vdesc_name, ap->a_desc->vdesc_offset, vp, rv));
+
+	return rv;
 }
 
 
