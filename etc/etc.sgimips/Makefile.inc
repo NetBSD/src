@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.11.2.3 2005/10/06 11:45:26 tron Exp $
+#	$NetBSD: Makefile.inc,v 1.11.2.4 2007/06/06 15:41:02 liamjfoy Exp $
 #
 #	etc.sgimips/Makefile.inc -- sgimips-specific etc Makefile targets
 #
@@ -16,8 +16,8 @@ INSTALLATION_DIRS+=	installation/netboot \
 iso-image-md-pre:
 	cp ${RELEASEDIR}/${MACHINE}/binary/kernel/netbsd-INSTALL32_IP2x.gz ${RELEASEDIR}/ip2x
 	cp ${RELEASEDIR}/${MACHINE}/binary/kernel/netbsd-INSTALL32_IP3x.gz ${RELEASEDIR}/ip3x
-	echo "ip2x=${RELEASEDIR}/ip2x" >> ${CDROM.pathlist}
-	echo "ip3x=${RELEASEDIR}/ip3x" >> ${CDROM.pathlist}
+	echo "ip2x/=${RELEASEDIR}/ip2x/" >> ${CDROM.pathlist}
+	echo "ip3x/=${RELEASEDIR}/ip3x/" >> ${CDROM.pathlist}
 
 SGI.image= ${RELEASEDIR}/${MACHINE}/installation/cdrom/netbsd-sgimips.img
 
