@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.179 2007/06/06 19:21:52 bouyer Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.180 2007/06/06 19:27:25 bouyer Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -5876,7 +5876,6 @@ sys/arch/acorn26/conf/GENERIC			1.50
 sys/arch/acorn32/conf/GENERIC			1.79
 sys/arch/alpha/conf/GENERIC			1.313
 sys/arch/amd64/conf/GENERIC			1.148
-sys/arch/amiga/conf/GENERIC			1.245
 sys/arch/arc/conf/GENERIC			1.146
 sys/arch/bebox/conf/GENERIC			1.105
 sys/arch/cats/conf/GENERIC			1.115
@@ -5913,6 +5912,18 @@ sys/arch/sgimips/conf/GENERIC32_IP2x		1.66
 sys/arch/sgimips/conf/GENERIC32_IP3x		1.63
 sys/arch/sun3/conf/GENERIC3X			1.95
 sys/arch/atari/conf/GENERIC.in			1.66
+sys/arch/amiga/conf/AMIGA			regen
+sys/arch/amiga/conf/DRACO			regen
+sys/arch/amiga/conf/GENERIC			regen
+sys/arch/amiga/conf/INSTALL			regen
+sys/arch/amiga/conf/WSCONS			regen
+sys/arch/atari/conf/ATARITT			regen
+sys/arch/atari/conf/BOOT			regen
+sys/arch/atari/conf/BOOTX			regen
+sys/arch/atari/conf/FALCON			regen
+sys/arch/atari/conf/HADES			regen
+sys/arch/atari/conf/MILAN-ISAIDE		regen
+sys/arch/atari/conf/MILAN-PCIIDE		regen
 
 	Add pseudo-device agr to all GENERIC kernels where it might make sense
 	(commented out in some).
