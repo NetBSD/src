@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.100.2.7 2007/03/31 15:25:36 bouyer Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.100.2.8 2007/06/06 14:14:55 liamjfoy Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.100.2.7 2007/03/31 15:25:36 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.100.2.8 2007/06/06 14:14:55 liamjfoy Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -1542,7 +1542,7 @@ wm_tx_offload(struct wm_softc *sc, struct wm_txsoft *txs, uint32_t *cmdp,
 
 			ip.ip_len = 0;
 
-			m_copyback(m0, hlen + offsetof(struct ip, ip_len),
+			m_copyback(m0, offset + offsetof(struct ip, ip_len),
 			    sizeof(ip.ip_len), &ip.ip_len);
 
 			th.th_sum = in_cksum_phdr(ip.ip_src.s_addr,
