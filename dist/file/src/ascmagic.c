@@ -1,4 +1,4 @@
-/*	$NetBSD: ascmagic.c,v 1.5 2007/03/04 15:22:09 pooka Exp $	*/
+/*	$NetBSD: ascmagic.c,v 1.6 2007/06/07 11:32:46 pooka Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -52,9 +52,9 @@
 
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)$File: ascmagic.c,v 1.49 2007/01/25 21:05:46 christos Exp $")
+FILE_RCSID("@(#)$File: ascmagic.c,v 1.50 2007/03/15 14:51:00 christos Exp $")
 #else
-__RCSID("$NetBSD: ascmagic.c,v 1.5 2007/03/04 15:22:09 pooka Exp $");
+__RCSID("$NetBSD: ascmagic.c,v 1.6 2007/06/07 11:32:46 pooka Exp $");
 #endif
 #endif	/* lint */
 
@@ -173,7 +173,7 @@ file_ascmagic(struct magic_set *ms, const unsigned char *buf, size_t nbytes)
 	 * I believe Plan 9 troff allows non-ASCII characters in the names
 	 * of macros, so this test might possibly fail on such a file.
 	 */
-	if ((ms->flags & MAGIC_NO_CHECK_TROFF) != 0 && *ubuf == '.') {
+	if ((ms->flags & MAGIC_NO_CHECK_TROFF) == 0 && *ubuf == '.') {
 		unichar *tp = ubuf + 1;
 
 		while (ISSPC(*tp))
@@ -190,7 +190,7 @@ file_ascmagic(struct magic_set *ms, const unsigned char *buf, size_t nbytes)
 		}
 	}
 
-	if ((ms->flags & MAGIC_NO_CHECK_FORTRAN) &&
+	if ((ms->flags & MAGIC_NO_CHECK_FORTRAN) == 0 &&
 	    (*buf == 'c' || *buf == 'C') && ISSPC(buf[1])) {
 		subtype_mime = "text/fortran";
 		subtype = "fortran program";
