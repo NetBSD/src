@@ -1,4 +1,4 @@
-/*	$NetBSD: compress.c,v 1.1.1.10 2007/03/04 14:54:51 pooka Exp $	*/
+/*	$NetBSD: compress.c,v 1.1.1.11 2007/06/07 11:24:35 pooka Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -58,9 +58,9 @@
 
 #ifndef lint
 #if 0
-FILE_RCSID("@(#)$File: compress.c,v 1.50 2007/03/01 22:14:54 christos Exp $")
+FILE_RCSID("@(#)$File: compress.c,v 1.51 2007/03/05 02:41:29 christos Exp $")
 #else
-__RCSID("$NetBSD: compress.c,v 1.1.1.10 2007/03/04 14:54:51 pooka Exp $");
+__RCSID("$NetBSD: compress.c,v 1.1.1.11 2007/06/07 11:24:35 pooka Exp $");
 #endif
 #endif
 
@@ -176,12 +176,12 @@ sread(int fd, void *buf, size_t n, int canbepipe)
 		goto nocheck;
 
 #ifdef FIONREAD
-	if (canbepipe && (ioctl(fd, FIONREAD, &t) == -1) || (t == 0)) {
+	if ((canbepipe && (ioctl(fd, FIONREAD, &t) == -1)) || (t == 0)) {
 #ifdef FD_ZERO
 		for (cnt = 0;; cnt++) {
 			fd_set check;
 			struct timeval tout = {0, 100 * 1000};
-			int rv;
+			int selrv;
 
 			FD_ZERO(&check);
 			FD_SET(fd, &check);
@@ -190,11 +190,11 @@ sread(int fd, void *buf, size_t n, int canbepipe)
 			 * Avoid soft deadlock: do not read if there
 			 * is nothing to read from sockets and pipes.
 			 */
-			rv = select(fd + 1, &check, NULL, NULL, &tout);
-			if (rv == -1) {
+			selrv = select(fd + 1, &check, NULL, NULL, &tout);
+			if (selrv == -1) {
 				if (errno == EINTR || errno == EAGAIN)
 					continue;
-			} else if (rv == 0 && cnt >= 5) {
+			} else if (selrv == 0 && cnt >= 5) {
 				return 0;
 			} else
 				break;

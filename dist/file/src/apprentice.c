@@ -1,4 +1,4 @@
-/*	$NetBSD: apprentice.c,v 1.1.1.11 2007/03/04 14:54:50 pooka Exp $	*/
+/*	$NetBSD: apprentice.c,v 1.1.1.12 2007/06/07 11:24:34 pooka Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -49,9 +49,9 @@
 
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)$File: apprentice.c,v 1.104 2007/01/19 19:54:39 christos Exp $")
+FILE_RCSID("@(#)$File: apprentice.c,v 1.105 2007/05/16 20:51:40 christos Exp $")
 #else
-__RCSID("$NetBSD: apprentice.c,v 1.1.1.11 2007/03/04 14:54:50 pooka Exp $");
+__RCSID("$NetBSD: apprentice.c,v 1.1.1.12 2007/06/07 11:24:34 pooka Exp $");
 #endif
 #endif	/* lint */
 
@@ -333,10 +333,11 @@ file_apprentice(struct magic_set *ms, const char *fn, int action)
 	if (fn == NULL)
 		fn = MAGIC;
 
-	if ((fn = mfn = strdup(fn)) == NULL) {
+	if ((mfn = strdup(fn)) == NULL) {
 		file_oomem(ms, strlen(fn));
 		return NULL;
 	}
+	fn = mfn;
 
 	if ((mlist = malloc(sizeof(*mlist))) == NULL) {
 		free(mfn);
