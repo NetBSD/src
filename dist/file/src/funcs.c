@@ -1,4 +1,4 @@
-/*	$NetBSD: funcs.c,v 1.7 2007/03/04 15:22:10 pooka Exp $	*/
+/*	$NetBSD: funcs.c,v 1.8 2007/06/07 11:32:46 pooka Exp $	*/
 
 /*
  * Copyright (c) Christos Zoulas 2003.
@@ -28,7 +28,6 @@
  */
 #include "file.h"
 #include "magic.h"
-#include <assert.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
@@ -39,12 +38,22 @@
 #if defined(HAVE_WCTYPE_H)
 #include <wctype.h>
 #endif
+#if defined(HAVE_LIMITS_H)
+#include <limits.h>
+#endif
+#ifndef SIZE_T_MAX
+#ifdef __LP64__
+#define SIZE_T_MAX (size_t)0xfffffffffffffffffU
+#else
+#define SIZE_T_MAX (size_t)0xffffffffU
+#endif
+#endif
 
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)$File: funcs.c,v 1.28 2007/03/01 22:14:54 christos Exp $")
+FILE_RCSID("@(#)$File: funcs.c,v 1.32 2007/05/24 17:22:27 christos Exp $")
 #else
-__RCSID("$NetBSD: funcs.c,v 1.7 2007/03/04 15:22:10 pooka Exp $");
+__RCSID("$NetBSD: funcs.c,v 1.8 2007/06/07 11:32:46 pooka Exp $");
 #endif
 #endif	/* lint */
 
@@ -225,6 +234,7 @@ file_reset(struct magic_set *ms)
 		return -1;
 	}
 	ms->o.ptr = ms->o.buf;
+	ms->o.left = ms->o.size;
 	ms->haderr = 0;
 	ms->error = -1;
 	return 0;
@@ -252,8 +262,11 @@ file_getbuffer(struct magic_set *ms)
 
 	len = ms->o.size - ms->o.left;
 	/* * 4 is for octal representation, + 1 is for NUL */
+	if (len > (SIZE_T_MAX - 1) / 4) {
+		file_oomem(ms, len);
+		return NULL;
+	}
 	psize = len * 4 + 1;
-	assert(psize > len);
 	if (ms->o.psize < psize) {
 		if ((pbuf = realloc(ms->o.pbuf, psize)) == NULL) {
 			file_oomem(ms, psize);
@@ -313,6 +326,27 @@ file_getbuffer(struct magic_set *ms)
 	return ms->o.pbuf;
 }
 
+protected int
+file_check_mem(struct magic_set *ms, unsigned int level)
+{
+	size_t len;
+
+	if (level >= ms->c.len) {
+		len = (ms->c.len += 20) * sizeof(*ms->c.li);
+		ms->c.li = (ms->c.li == NULL) ? malloc(len) :
+		    realloc(ms->c.li, len);
+		if (ms->c.li == NULL) {
+			file_oomem(ms, len);
+			return -1;
+		}
+	}
+	ms->c.li[level].got_match = 0;
+#ifdef ENABLE_CONDITIONALS
+	ms->c.li[level].last_match = 0;
+	ms->c.li[level].last_cond = COND_NONE;
+#endif /* ENABLE_CONDITIONALS */
+	return 0;
+}
 /*
  * Yes these wrappers suffer from buffer overflows, but if your OS does not
  * have the real functions, maybe you should consider replacing your OS?

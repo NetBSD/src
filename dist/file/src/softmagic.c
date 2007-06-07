@@ -1,4 +1,4 @@
-/*	$NetBSD: softmagic.c,v 1.8 2007/03/04 15:22:10 pooka Exp $	*/
+/*	$NetBSD: softmagic.c,v 1.9 2007/06/07 11:32:47 pooka Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -41,9 +41,9 @@
 
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)$File: softmagic.c,v 1.91 2007/01/18 05:29:33 ljt Exp $")
+FILE_RCSID("@(#)$File: softmagic.c,v 1.99 2007/05/08 14:44:18 christos Exp $")
 #else
-__RCSID("$NetBSD: softmagic.c,v 1.8 2007/03/04 15:22:10 pooka Exp $");
+__RCSID("$NetBSD: softmagic.c,v 1.9 2007/06/07 11:32:47 pooka Exp $");
 #endif
 #endif	/* lint */
 
@@ -77,32 +77,6 @@ file_softmagic(struct magic_set *ms, const unsigned char *buf, size_t nbytes)
 		if ((rv = match(ms, ml->magic, ml->nmagic, buf, nbytes)) != 0)
 			return rv;
 
-	return 0;
-}
-
-#ifdef ENABLE_CONDITIONALS
-protected int
-#else
-private int
-#endif
-file_check_mem(struct magic_set *ms, unsigned int level)
-{
-	size_t len;
-
-	if (level >= ms->c.len) {
-		len = (ms->c.len += 20) * sizeof(*ms->c.li);
-		ms->c.li = (ms->c.li == NULL) ? malloc(len) :
-		    realloc(ms->c.li, len);
-		if (ms->c.li == NULL) {
-			file_oomem(ms, len);
-			return -1;
-		}
-	}
-	ms->c.li[level].got_match = 0;
-#ifdef ENABLE_CONDITIONALS
-	ms->c.li[level].last_match = 0;
-	ms->c.li[level].last_cond = COND_NONE;
-#endif /* ENABLE_CONDITIONALS */
 	return 0;
 }
 
@@ -1529,10 +1503,20 @@ magiccheck(struct magic_set *ms, struct magic *m)
 		}
 		else {
 			regmatch_t pmatch[1];
+#ifndef REG_STARTEND
+#define	REG_STARTEND	0
+			size_t l = ms->search.s_len - 1;
+			char c = ms->search.s[l];
+			((char *)(intptr_t)ms->search.s)[l] = '\0';
+#else
 			pmatch[0].rm_so = 0;
 			pmatch[0].rm_eo = ms->search.s_len;
+#endif
 			rc = regexec(&rx, (const char *)ms->search.s,
 			    1, pmatch, REG_STARTEND);
+#if REG_STARTEND == 0
+			((char *)(intptr_t)ms->search.s)[l] = c;
+#endif
 			switch (rc) {
 			case 0:
 				ms->search.s += (int)pmatch[0].rm_so;

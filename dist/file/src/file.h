@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.14 2007/03/04 15:22:10 pooka Exp $	*/
+/*	$NetBSD: file.h,v 1.15 2007/06/07 11:32:46 pooka Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -29,7 +29,7 @@
  */
 /*
  * file.h - definitions for file(1) program
- * @(#)$File: file.h,v 1.89 2007/03/01 22:14:54 christos Exp $
+ * @(#)$File: file.h,v 1.91 2007/03/25 03:13:47 christos Exp $
  */
 
 #ifndef __file_h__
@@ -82,14 +82,6 @@
 	 (__GNUC__ > (x)))
 #else
 #define	__GNUC_PREREQ__(x, y)	0
-#endif
-#endif
-
-#ifndef __unused
-#if __GNUC_PREREQ__(2, 7)
-#define	__unused	__attribute__((__unused__))
-#else
-#define	__unused	/* delete */
 #endif
 #endif
 
@@ -338,9 +330,7 @@ protected void file_showstr(FILE *, const char *, size_t);
 protected size_t file_mbswidth(const char *);
 protected const char *file_getbuffer(struct magic_set *);
 protected ssize_t sread(int, void *, size_t, int);
-#ifdef ENABLE_CONDITIONALS
 protected int file_check_mem(struct magic_set *, unsigned int);
-#endif
 
 #ifndef COMPILE_ONLY
 extern const char *file_names[];
