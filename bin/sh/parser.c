@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.64 2007/01/13 18:58:26 christos Exp $	*/
+/*	$NetBSD: parser.c,v 1.65 2007/06/07 20:57:59 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.64 2007/01/13 18:58:26 christos Exp $");
+__RCSID("$NetBSD: parser.c,v 1.65 2007/06/07 20:57:59 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -151,6 +151,7 @@ list(int nlflag)
 {
 	union node *n1, *n2, *n3;
 	int tok;
+	TRACE(("list: entered\n"));
 
 	checkkwd = 2;
 	if (nlflag == 0 && tokendlist[peektoken()])
@@ -222,6 +223,7 @@ andor(void)
 	union node *n1, *n2, *n3;
 	int t;
 
+	TRACE(("andor: entered\n"));
 	n1 = pipeline();
 	for (;;) {
 		if ((t = readtoken()) == TAND) {
@@ -250,10 +252,14 @@ pipeline(void)
 	struct nodelist *lp, *prev;
 	int negate;
 
-	negate = 0;
 	TRACE(("pipeline: entered\n"));
-	while (readtoken() == TNOT)
+
+	negate = 0;
+	checkkwd = 2;
+	while (readtoken() == TNOT) {
+		TRACE(("pipeline: TNOT recognized\n"));
 		negate = !negate;
+	}
 	tokpushback++;
 	n1 = command();
 	if (readtoken() == TPIPE) {
@@ -274,6 +280,7 @@ pipeline(void)
 	}
 	tokpushback++;
 	if (negate) {
+		TRACE(("negate pipeline\n"));
 		n2 = (union node *)stalloc(sizeof (struct nnot));
 		n2->type = NNOT;
 		n2->nnot.com = n1;
@@ -292,6 +299,8 @@ command(void)
 	union node *cp, **cpp;
 	union node *redir, **rpp;
 	int t, negate = 0;
+
+	TRACE(("command: entered\n"));
 
 	checkkwd = 2;
 	redir = NULL;
@@ -517,6 +526,7 @@ TRACE(("expecting DO got %s %s\n", tokname[got], got == TWORD ? wordtext : ""));
 
 checkneg:
 	if (negate) {
+		TRACE(("negate command\n"));
 		n2 = (union node *)stalloc(sizeof (struct nnot));
 		n2->type = NNOT;
 		n2->nnot.com = n1;
@@ -550,7 +560,7 @@ simplecmd(union node **rpp, union node *redir)
 	orig_rpp = rpp;
 
 	while (readtoken() == TNOT) {
-		TRACE(("command: TNOT recognized\n"));
+		TRACE(("simplcmd: TNOT recognized\n"));
 		negate = !negate;
 	}
 	tokpushback++;
@@ -593,6 +603,7 @@ simplecmd(union node **rpp, union node *redir)
 
 checkneg:
 	if (negate) {
+		TRACE(("negate simplecmd\n"));
 		n2 = (union node *)stalloc(sizeof (struct nnot));
 		n2->type = NNOT;
 		n2->nnot.com = n;
@@ -762,12 +773,7 @@ readtoken(void)
 out:
 		checkkwd = (t == TNOT) ? savecheckkwd : 0;
 	}
-#ifdef DEBUG
-	if (!alreadyseen)
-	    TRACE(("token %s %s\n", tokname[t], t == TWORD ? wordtext : ""));
-	else
-	    TRACE(("reread token %s %s\n", tokname[t], t == TWORD ? wordtext : ""));
-#endif
+	TRACE(("%stoken %s %s\n", alreadyseen ? "reread " : "", tokname[t], t == TWORD ? wordtext : ""));
 	return (t);
 }
 
