@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_cfg.c,v 1.12 2006/09/30 21:38:39 manu Exp $	*/
+/*	$NetBSD: isakmp_cfg.c,v 1.12.6.1 2007/06/07 20:06:34 manu Exp $	*/
 
 /* Id: isakmp_cfg.c,v 1.55 2006/08/22 18:17:17 manubsd Exp */
 
@@ -1809,7 +1809,7 @@ isakmp_cfg_appendaddr4(attr, ip, num, max)
 
 	addr = (in_addr_t *)(attr + 1);
 	ip->s_addr = *addr;
-	*num++;
+	(*num)++;
 
 	return;
 }
