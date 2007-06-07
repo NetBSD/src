@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: monthly,v 1.10 2004/04/09 17:35:21 kim Exp $
+#	$NetBSD: monthly,v 1.10.2.1 2007/06/07 11:22:33 liamjfoy Exp $
 #	from: @(#)monthly	8.1 (Berkeley) 6/9/93
 #
 
@@ -19,7 +19,7 @@ echo "To: ${MAILTO:-root}"
 echo "Subject: $host monthly output for $date"
 echo ""
 
-MONTHLYDIR=`mktemp -d /tmp/_monthly.XXXXXX` || exit 1
+MONTHLYDIR=$(mktemp -d -t _monthly) || exit 1
 
 trap "/bin/rm -rf $MONTHLYDIR ; exit 0" EXIT INT QUIT PIPE
 

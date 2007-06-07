@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: weekly,v 1.20 2004/06/27 13:51:55 lukem Exp $
+#	$NetBSD: weekly,v 1.20.2.1 2007/06/07 11:22:33 liamjfoy Exp $
 #	from: @(#)weekly	8.2 (Berkeley) 1/2/94
 #
 
@@ -26,7 +26,7 @@ else
 	exit 1;
 fi
 
-WEEKLYDIR=`mktemp -d /tmp/_weekly.XXXXXX` || exit 1
+WEEKLYDIR=$(mktemp -d -t _weekly) || exit 1
 
 trap "/bin/rm -rf $WEEKLYDIR ; exit 0" EXIT INT QUIT PIPE
 
@@ -50,7 +50,7 @@ TMP=weekly.$$
 #	echo ""
 #	echo "Looking for checked out files:"
 #
-#	TDIR=`mktemp -d /tmp/_checkout.XXXXXX` || exit 1
+#	TDIR=$(mktemp -d -t _checkout) || exit 1
 #	trap "/bin/rm -rf $TDIR ; exit 0" EXIT INT QUIT
 #	for file in `find -f /usr/src ! -fstype local -prune -or \
 #	    -name 'p.*' -print | egrep 'SCCS/p\.'`; do
