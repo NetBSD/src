@@ -1,5 +1,5 @@
 /* config.h.in.  Generated from configure.in by autoheader.  */
-/*	$NetBSD: config.h.in,v 1.12 2007/03/04 15:22:07 pooka Exp $	*/
+/*	$NetBSD: config.h.in,v 1.13 2007/06/07 11:32:44 pooka Exp $	*/
 
 /* Autoheader needs me */
 #undef PACKAGE
@@ -88,6 +88,9 @@
 
 /* Define to 1 if you have the `z' library (-lz). */
 #undef HAVE_LIBZ
+
+/* Define to 1 if you have the <limits.h> header file. */
+#undef HAVE_LIMITS_H
 
 /* Define to 1 if you have the <locale.h> header file. */
 #undef HAVE_LOCALE_H
