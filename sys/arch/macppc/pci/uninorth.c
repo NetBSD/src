@@ -1,4 +1,4 @@
-/*	$NetBSD: uninorth.c,v 1.11.38.2 2007/05/06 05:11:41 macallan Exp $	*/
+/*	$NetBSD: uninorth.c,v 1.11.38.3 2007/06/07 20:30:47 garbled Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uninorth.c,v 1.11.38.2 2007/05/06 05:11:41 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uninorth.c,v 1.11.38.3 2007/06/07 20:30:47 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -38,10 +38,13 @@ __KERNEL_RCSID(0, "$NetBSD: uninorth.c,v 1.11.38.2 2007/05/06 05:11:41 macallan 
 #include <dev/ofw/ofw_pci.h>
 
 #include <machine/autoconf.h>
+#include <machine/pio.h>
 
 struct uninorth_softc {
 	struct device sc_dev;
 	struct genppc_pci_chipset sc_pc;
+	struct powerpc_bus_space sc_iot;
+	struct powerpc_bus_space sc_memt;
 };
 
 static void uninorth_attach(struct device *, struct device *, void *);
@@ -78,11 +81,11 @@ uninorth_attach(struct device *parent, struct device *self, void *aux)
 	struct confargs *ca = aux;
 	struct pcibus_attach_args pba;
 	int len, child, node = ca->ca_node;
-	u_int32_t reg[2], busrange[2];
+	uint32_t reg[2], busrange[2];
 	struct ranges {
-		u_int32_t pci_hi, pci_mid, pci_lo;
-		u_int32_t host;
-		u_int32_t size_hi, size_lo;
+		uint32_t pci_hi, pci_mid, pci_lo;
+		uint32_t host;
+		uint32_t size_hi, size_lo;
 	} ranges[6], *rp = ranges;
 
 	printf("\n");
@@ -95,23 +98,17 @@ uninorth_attach(struct device *parent, struct device *self, void *aux)
 	if (OF_getprop(node, "bus-range", busrange, sizeof(busrange)) != 8)
 		return;
 
-	macppc_pci_get_chipset_tag(pc);
-	pc->pc_node = node;
-	pc->pc_addr = mapiodev(reg[0] + 0x800000, 4);
-	pc->pc_data = mapiodev(reg[0] + 0xc00000, 8);
-	pc->pc_bus = busrange[0];
-	pc->pc_conf_read = uninorth_conf_read;
-	pc->pc_conf_write = uninorth_conf_write;
-	pc->pc_memt = (bus_space_tag_t)0;
-
 	/* find i/o tag */
 	len = OF_getprop(node, "ranges", ranges, sizeof(ranges));
 	if (len == -1)
 		return;
 	while (len >= sizeof(ranges[0])) {
 		if ((rp->pci_hi & OFW_PCI_PHYS_HI_SPACEMASK) ==
-		     OFW_PCI_PHYS_HI_SPACE_IO)
-			pc->pc_iot = (bus_space_tag_t)rp->host;
+		     OFW_PCI_PHYS_HI_SPACE_IO) {
+			sc->sc_iot.pbs_base = rp->host;
+			sc->sc_iot.pbs_limit = rp->host + rp->size_lo;
+			break;
+		}
 		len -= sizeof(ranges[0]);
 		rp++;
 	}
@@ -126,6 +123,28 @@ uninorth_attach(struct device *parent, struct device *self, void *aux)
 		if (strcmp(compat, "gmac") == 0)
 			*gmac_gbclock_en |= 0x02;
 	}
+
+	sc->sc_iot.pbs_flags = _BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_IO_TYPE;
+	sc->sc_iot.pbs_offset = 0;
+	if (ofwoea_map_space(RANGE_TYPE_PCI, RANGE_IO, node, &sc->sc_iot,
+	    "uninorth io-space") != 0)
+		panic("Can't init uninorth io tag");
+
+	sc->sc_memt.pbs_flags = _BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_MEM_TYPE;
+	sc->sc_memt.pbs_base = 0x00000000;
+	if (ofwoea_map_space(RANGE_TYPE_PCI, RANGE_MEM, node, &sc->sc_memt,
+	    "uninorth mem-space") != 0)
+		panic("Can't init uninorth mem tag");
+
+	macppc_pci_get_chipset_tag(pc);
+	pc->pc_node = node;
+	pc->pc_addr = mapiodev(reg[0] + 0x800000, 4);
+	pc->pc_data = mapiodev(reg[0] + 0xc00000, 8);
+	pc->pc_bus = busrange[0];
+	pc->pc_conf_read = uninorth_conf_read;
+	pc->pc_conf_write = uninorth_conf_write;
+	pc->pc_iot = &sc->sc_iot;
+	pc->pc_memt = &sc->sc_memt;
 
 	memset(&pba, 0, sizeof(pba));
 	pba.pba_memt = pc->pc_memt;
@@ -147,7 +166,7 @@ uninorth_conf_read(void *cookie, pcitag_t tag, int reg)
 	int32_t *daddr = pc->pc_data;
 	pcireg_t data;
 	int bus, dev, func, s;
-	u_int32_t x;
+	uint32_t x;
 
 	/* UniNorth seems to have a 64bit data port */
 	if (reg & 0x04)
@@ -189,7 +208,7 @@ uninorth_conf_write(void *cookie, pcitag_t tag, int reg, pcireg_t data)
 	pci_chipset_tag_t pc = cookie;
 	int32_t *daddr = pc->pc_data;
 	int bus, dev, func, s;
-	u_int32_t x;
+	uint32_t x;
 
 	/* UniNorth seems to have a 64bit data port */
 	if (reg & 0x04)

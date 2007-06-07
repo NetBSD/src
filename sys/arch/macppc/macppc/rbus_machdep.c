@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus_machdep.c,v 1.13 2005/12/11 12:18:06 christos Exp $	*/
+/*	$NetBSD: rbus_machdep.c,v 1.13.38.1 2007/06/07 20:30:46 garbled Exp $	*/
 
 /*
  * Copyright (c) 1999
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rbus_machdep.c,v 1.13 2005/12/11 12:18:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rbus_machdep.c,v 1.13.38.1 2007/06/07 20:30:46 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -53,32 +53,21 @@ static void macppc_cardbus_init __P((pci_chipset_tag_t, pcitag_t));
 #endif
 
 int
-md_space_map(t, bpa, size, flags, bshp)
-	bus_space_tag_t t;
-	bus_addr_t bpa;
-	bus_size_t size;
-	int flags;
-	bus_space_handle_t *bshp;
+md_space_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size,
+    int flags, bus_space_handle_t *bshp)
 {
-	DPRINTF("md_space_map: 0x%x, 0x%x, 0x%x\n", t, bpa, size);
+	DPRINTF("md_space_map: %p, 0x%x, 0x%x\n", t, bpa, size);
 
-	/* XXX */
-	*bshp = t + bpa;
-	return 0;
+	return bus_space_map(t, bpa, size, flags, bshp);
 }
 
 void
-md_space_unmap(t, bsh, size, adrp)
-	bus_space_tag_t t;
-	bus_space_handle_t bsh;
-	bus_size_t size;
-	bus_addr_t *adrp;
+md_space_unmap(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size,
+    bus_addr_t *adrp)
 {
-	DPRINTF("md_space_unmap: 0x%x 0x%x\n", t, bsh);
+	DPRINTF("md_space_unmap: %p 0x%x\n", t, bsh);
 
-	/* XXX */
-	if (adrp)
-		*adrp = bsh - t;
+	bus_space_unmap(t, bsh, size);
 }
 
 rbus_tag_t

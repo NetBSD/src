@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.57 2006/08/23 05:58:39 sanjayl Exp $	*/
+/*	$NetBSD: locore.S,v 1.57.20.1 2007/06/07 20:30:46 garbled Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -198,3 +198,8 @@ _C_LABEL(change_hid4):
  * Pull in common trap vector code.
  */
 #include <powerpc/powerpc/trap_subr.S>
+
+/*
+ * Pull in common pio / bus_space code.
+ */
+#include <powerpc/powerpc/pio_subr.S>
