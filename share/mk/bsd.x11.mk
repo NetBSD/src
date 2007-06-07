@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.x11.mk,v 1.54 2006/12/21 01:45:32 macallan Exp $
+#	$NetBSD: bsd.x11.mk,v 1.55 2007/06/07 11:49:17 tron Exp $
 
 .include <bsd.init.mk>
 
@@ -7,6 +7,10 @@ LIBDIR=			${X11USRLIBDIR}
 MANDIR=			${X11MANDIR}
 
 COPTS+=			-fno-strict-aliasing
+
+.if defined(USE_SSP) && (${USE_SSP} != "no")
+CPPFLAGS+=		-DNO_ALLOCA
+.endif
 
 X11FLAGS.VERSION=	-DOSMAJORVERSION=1 -DOSMINORVERSION=6		# XXX
 
