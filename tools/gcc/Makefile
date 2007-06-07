@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.25 2007/06/07 08:58:58 he Exp $
+#	$NetBSD: Makefile,v 1.26 2007/06/07 14:36:27 he Exp $
 
 .include <bsd.own.mk>
 
@@ -23,7 +23,7 @@ MAKE_ARGS=	MACHINE= MAKEINFO=${TOOL_MAKEINFO:Q} \
 		EXTRA_PARTS= CPPFLAGS=-DNETBSD_TOOLS \
 		AR=${HOST_AR:Q} RANLIB=${HOST_RANLIB:Q}
 
-CONFIGURE_ENV+= TARGET_LIBC_PROVIDES_SSP=yes
+CONFIGURE_ENV+= gcc_cv_libc_provides_ssp=yes
 
 MKNATIVE_ENV=	${BINENV} ${CONFIGURE_ENV:NC*:NLD*} \
 			CC_FOR_BUILD=${HOST_CC:Q} \
