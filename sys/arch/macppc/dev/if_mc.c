@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mc.c,v 1.12.10.1 2007/05/11 00:19:27 macallan Exp $	*/
+/*	$NetBSD: if_mc.c,v 1.12.10.2 2007/06/07 20:30:44 garbled Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@bga.com>
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mc.c,v 1.12.10.1 2007/05/11 00:19:27 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mc.c,v 1.12.10.2 2007/06/07 20:30:44 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -52,9 +52,9 @@ __KERNEL_RCSID(0, "$NetBSD: if_mc.c,v 1.12.10.1 2007/05/11 00:19:27 macallan Exp
 
 #include <dev/ofw/openfirm.h>
 
-#include <machine/pio.h>
 #include <machine/bus.h>
 #include <machine/autoconf.h>
+#include <machine/pio.h>
 
 #include <macppc/dev/am79c950reg.h>
 #include <macppc/dev/if_mcvar.h>
@@ -243,19 +243,19 @@ mc_dmaintr(arg)
 
 		cmd = &sc->sc_rxdmacmd[i];
 		/* flushcache(cmd, sizeof(dbdma_command_t)); */
-		status = dbdma_ld16(&cmd->d_status);
-		resid = dbdma_ld16(&cmd->d_resid);
+		status = in16rb(&cmd->d_status);
+		resid = in16rb(&cmd->d_resid);
 
 		/*if ((status & D_ACTIVE) == 0)*/
 		if ((status & 0x40) == 0)
 			continue;
 
 #if 1
-		if (dbdma_ld16(&cmd->d_count) != ETHERMTU + 22)
+		if (in16rb(&cmd->d_count) != ETHERMTU + 22)
 			printf("bad d_count\n");
 #endif
 
-		datalen = dbdma_ld16(&cmd->d_count) - resid;
+		datalen = in16rb(&cmd->d_count) - resid;
 		datalen -= 4;	/* 4 == status bytes */
 
 		if (datalen < 4 + sizeof(struct ether_header)) {
@@ -318,7 +318,7 @@ mc_reset_rxdma(sc)
 
 	DBDMA_BUILD(cmd, DBDMA_CMD_NOP, 0, 0, 0,
 		DBDMA_INT_NEVER, DBDMA_WAIT_NEVER, DBDMA_BRANCH_ALWAYS);
-	dbdma_st32(&cmd->d_cmddep, kvtop((void *)sc->sc_rxdmacmd));
+	out32rb(&cmd->d_cmddep, kvtop((void *)sc->sc_rxdmacmd));
 	cmd++;
 
 	dbdma_start(dmareg, sc->sc_rxdmacmd);

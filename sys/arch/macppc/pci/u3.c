@@ -1,3 +1,5 @@
+/* $NetBSD: u3.c,v 1.1.28.3 2007/06/07 20:30:47 garbled Exp $ */
+
 /*
  * Copyright 2006 Kyma Systems LLC.
  * All rights reserved.
@@ -49,6 +51,8 @@ struct ibmcpc_softc
 {
 	struct device sc_dev;
 	struct genppc_pci_chipset sc_pc[8];
+	struct powerpc_bus_space sc_iot;
+	struct powerpc_bus_space sc_memt;
 };
 
 static void ibmcpc_attach(struct device *, struct device *, void *);
@@ -88,19 +92,18 @@ ibmcpc_attach(struct device *parent, struct device *self, void *aux)
 	struct confargs *ca = aux;
 	struct pcibus_attach_args pba;
 	int node = ca->ca_node, child;
-	u_int32_t reg[6], i;
+	uint32_t reg[6], busrange[2], i;
 	void *pc_data;
 	char name[32];
-	u_int32_t busrange[2];
 
-	printf("\n");
+	aprint_normal("\n");
 
 	/* u3 address */
 	if (OF_getprop(node, "reg", reg, sizeof(reg)) < 24) {
 		return;
 	}
-	printf("Mapping in config space @ pa 0x%08x, size: 0x%08x\n", reg[1],
-	    reg[2]);
+	aprint_normal("Mapping in config space @ pa 0x%08x, size: 0x%08x\n",
+	    reg[1], reg[2]);
 	pc_data = mapiodev(reg[1], reg[2]);
 
 	for (child = OF_child(OF_finddevice("/ht")), i = 1; child;
@@ -114,9 +117,22 @@ ibmcpc_attach(struct device *parent, struct device *self, void *aux)
 		if (strcmp(name, "pci") != 0)
 			continue;
 
-
 		if (OF_getprop(child, "bus-range", busrange, 8) < 8)
 			continue;
+
+		sc->sc_iot.pbs_flags = _BUS_SPACE_LITTLE_ENDIAN |
+		    _BUS_SPACE_IO_TYPE;
+		sc->sc_iot.pbs_base = 0x00000000;
+		if (ofwoea_map_space(RANGE_TYPE_PCI, RANGE_IO, child,
+		    &sc->sc_iot, "ibmcpc io") != 0)
+			panic("Can't init ibmcpc io tag");
+
+		sc->sc_memt.pbs_flags = _BUS_SPACE_LITTLE_ENDIAN |
+		    _BUS_SPACE_MEM_TYPE;
+		sc->sc_memt.pbs_base = 0x00000000;
+		if (ofwoea_map_space(RANGE_TYPE_PCI, RANGE_MEM, child,
+		    &sc->sc_memt, "ibmcpc mem") != 0)
+			panic("Can't init ibmcpc mem tag");
 
 		macppc_pci_get_chipset_tag(pc);
 		pc->pc_node = child;
@@ -125,8 +141,8 @@ ibmcpc_attach(struct device *parent, struct device *self, void *aux)
 		pc->pc_data = pc_data;
 		pc->pc_conf_read = ibmcpc_conf_read;
 		pc->pc_conf_write = ibmcpc_conf_write;
-		pc->pc_memt = (bus_space_tag_t) 0;
-		pc->pc_iot = (bus_space_tag_t) 0;
+		pc->pc_memt = &sc->sc_memt;
+		pc->pc_iot = &sc->sc_iot;
 
 		memset(&pba, 0, sizeof(pba));
 		pba.pba_memt = pc->pc_memt;

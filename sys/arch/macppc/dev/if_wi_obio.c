@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wi_obio.c,v 1.13 2006/09/24 03:53:08 jmcneill Exp $	*/
+/*	$NetBSD: if_wi_obio.c,v 1.13.16.1 2007/06/07 20:30:44 garbled Exp $	*/
 
 /*-
  * Copyright (c) 2001 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wi_obio.c,v 1.13 2006/09/24 03:53:08 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wi_obio.c,v 1.13.16.1 2007/06/07 20:30:44 garbled Exp $");
 
 #include "opt_inet.h"
 
@@ -53,27 +53,27 @@ __KERNEL_RCSID(0, "$NetBSD: if_wi_obio.c,v 1.13 2006/09/24 03:53:08 jmcneill Exp
 #include <dev/ic/wireg.h>
 #include <dev/ic/wivar.h>
 
-int wi_obio_match(struct device *, struct cfdata *, void *);
-void wi_obio_attach(struct device *, struct device *, void *);
-int wi_obio_enable(struct wi_softc *);
-void wi_obio_disable(struct wi_softc *);
-void wi_obio_powerhook(int, void *);
-void wi_obio_shutdown(void *);
+static int wi_obio_match(struct device *, struct cfdata *, void *);
+static void wi_obio_attach(struct device *, struct device *, void *);
+static int wi_obio_enable(struct wi_softc *);
+static void wi_obio_disable(struct wi_softc *);
 
 struct wi_obio_softc {
 	struct wi_softc sc_wi;
 	void *sc_powerhook;
 	void *sc_sdhook;
+	bus_space_tag_t sc_tag;
+	bus_space_handle_t sc_bsh;
+	bus_space_handle_t sc_fcr2h;
+	bus_space_handle_t sc_gpioh;
+	bus_space_handle_t sc_extint_gpioh;
 };
 
 CFATTACH_DECL(wi_obio, sizeof(struct wi_obio_softc),
     wi_obio_match, wi_obio_attach, NULL, NULL);
 
 int
-wi_obio_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+wi_obio_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct confargs *ca = aux;
 
@@ -87,20 +87,22 @@ wi_obio_match(parent, match, aux)
 }
 
 void
-wi_obio_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+wi_obio_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct wi_obio_softc *sc = (void *)self;
-	struct wi_softc *wisc = &sc->sc_wi;
-	struct confargs *ca = aux;
+	struct wi_obio_softc * const sc = (void *)self;
+	struct wi_softc * const wisc = &sc->sc_wi;
+	struct confargs * const ca = aux;
 
-	printf(" irq %d:", ca->ca_intr[0]);
+	aprint_normal(" irq %d:", ca->ca_intr[0]);
 	intr_establish(ca->ca_intr[0], IST_LEVEL, IPL_NET, wi_intr, sc);
 
-	wisc->sc_iot =
-	    macppc_make_bus_space_tag(ca->ca_baseaddr + ca->ca_reg[0], 0);
-	if (bus_space_map(wisc->sc_iot, 0, ca->ca_reg[1], 0, &wisc->sc_ioh)) {
+	wisc->sc_iot = ca->ca_tag;
+	bus_space_map(sc->sc_tag, 0x8000000, 0x20000, 0, &sc->sc_bsh);
+	bus_space_subregion(sc->sc_tag, sc->sc_bsh, 0x40, 4, &sc->sc_fcr2h);
+	bus_space_subregion(sc->sc_tag, sc->sc_bsh, 0x6a, 16, &sc->sc_gpioh);
+	bus_space_subregion(sc->sc_tag, sc->sc_bsh, 0x58, 16, &sc->sc_extint_gpioh);
+
+	if (bus_space_map(wisc->sc_iot, ca->ca_reg[0], ca->ca_reg[1], 0, &wisc->sc_ioh)) {
 		printf(" can't map i/o space\n");
 		return;
 	}
@@ -114,9 +116,10 @@ wi_obio_attach(parent, self, aux)
 		return;
 	}
 
-	sc->sc_sdhook = shutdownhook_establish(wi_obio_shutdown, sc);
-	sc->sc_powerhook = powerhook_establish(self->dv_xname,
-	    wi_obio_powerhook, sc);
+	sc->sc_sdhook = shutdownhook_establish(
+	    (void (*)(void *))wi_shutdown, wisc);
+	sc->sc_powerhook = powerhook_establish(
+	    self->dv_xname, (void (*)(int, void *))wi_power, wisc);
 
 	/* Disable the card. */
 	wisc->sc_enabled = 0;
@@ -124,76 +127,50 @@ wi_obio_attach(parent, self, aux)
 }
 
 int
-wi_obio_enable(sc)
-	struct wi_softc *sc;
+wi_obio_enable(struct wi_softc *wisc)
 {
-	const u_int keywest = 0x80000000;	/* XXX */
-	const u_int fcr2 = keywest + 0x40;
-	const u_int gpio = keywest + 0x6a;
-	const u_int extint_gpio = keywest + 0x58;
-	u_int x;
+	struct wi_obio_softc * const sc = (void *)wisc;
+	uint32_t x;
 
-	x = in32rb(fcr2);
+	x = bus_space_read_4(sc->sc_tag, sc->sc_fcr2h, 0);
 	x |= 0x4;
-	out32rb(fcr2, x);
+	bus_space_write_4(sc->sc_tag, sc->sc_fcr2h, 0, x);
 
 	/* Enable card slot. */
-	out8(gpio + 0x0f, 5);
+	bus_space_write_1(sc->sc_tag, sc->sc_gpioh, 0x0f, 5);
 	delay(1000);
-	out8(gpio + 0x0f, 4);
+	bus_space_write_1(sc->sc_tag, sc->sc_gpioh, 0x0f, 4);
 	delay(1000);
-
-	x = in32rb(fcr2);
+	x = bus_space_read_4(sc->sc_tag, sc->sc_fcr2h, 0);
 	x &= ~0x8000000;
 
-	out32rb(fcr2, x);
+	bus_space_write_4(sc->sc_tag, sc->sc_fcr2h, 0, x);
 	/* out8(gpio + 0x10, 4); */
 
-	out8(extint_gpio + 0x0b, 0);
-	out8(extint_gpio + 0x0a, 0x28);
-	out8(extint_gpio + 0x0d, 0x28);
-	out8(gpio + 0x0d, 0x28);
-	out8(gpio + 0x0e, 0x28);
-	out32rb(keywest + 0x1c000, 0);
+	bus_space_write_1(sc->sc_tag, sc->sc_extint_gpioh, 0x0b, 0);
+	bus_space_write_1(sc->sc_tag, sc->sc_extint_gpioh, 0x0a, 0x28);
+	bus_space_write_1(sc->sc_tag, sc->sc_extint_gpioh, 0x0d, 0x28);
+	bus_space_write_1(sc->sc_tag, sc->sc_gpioh, 0x0d, 0x28);
+	bus_space_write_1(sc->sc_tag, sc->sc_gpioh, 0x0e, 0x28);
+	bus_space_write_4(sc->sc_tag, sc->sc_bsh, 0x1c000, 0);
 
 	/* Initialize the card. */
-	out32rb(keywest + 0x1a3e0, 0x41);
-	x = in32rb(fcr2);
+	bus_space_write_4(sc->sc_tag, sc->sc_bsh, 0x1a3e0, 0x41);
+	x = bus_space_read_4(sc->sc_tag, sc->sc_fcr2h, 0);
 	x |= 0x8000000;
-	out32rb(fcr2, x);
+	bus_space_write_4(sc->sc_tag, sc->sc_fcr2h, 0, x);
 
 	return 0;
 }
 
 void
-wi_obio_disable(sc)
-	struct wi_softc *sc;
+wi_obio_disable(struct wi_softc *wisc)
 {
-	const u_int keywest = 0x80000000;	/* XXX */
-	const u_int fcr2 = keywest + 0x40;
-	u_int x;
+	struct wi_obio_softc * const sc = (void *)wisc;
+	uint32_t x;
 
-	x = in32rb(fcr2);
+	x = bus_space_read_4(sc->sc_tag, sc->sc_fcr2h, 0);
 	x &= ~0x4;
-	out32rb(fcr2, x);
+	bus_space_write_4(sc->sc_tag, sc->sc_fcr2h, 0, x);
 	/* out8(gpio + 0x10, 0); */
-}
-
-void
-wi_obio_powerhook(why, arg)
-	int why;
-	void *arg;
-{
-	struct wi_softc *sc = arg;
-
-	wi_power(sc, why);
-}
-
-void
-wi_obio_shutdown(arg)
-	void *arg;
-{
-	struct wi_softc *sc = arg;
-
-	wi_shutdown(sc);
 }

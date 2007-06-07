@@ -1,4 +1,4 @@
-#	$NetBSD: files.macppc,v 1.84.2.9 2007/06/05 20:25:42 matt Exp $
+#	$NetBSD: files.macppc,v 1.84.2.10 2007/06/07 20:30:42 garbled Exp $
 #
 # macppc-specific configuration info
 
@@ -11,11 +11,11 @@ include "arch/powerpc/conf/files.ofw"
 include "arch/powerpc/pic/files.pic"
 
 file arch/macppc/macppc/autoconf.c
-file arch/powerpc/powerpc/bus_dma.c
 file arch/powerpc/powerpc/clock.c
 file arch/macppc/macppc/disksubr.c		disk
-#file arch/macppc/macppc/extintr.c
 file arch/macppc/macppc/interrupts.c
+file arch/powerpc/oea/ofwoea_machdep.c
+file arch/powerpc/oea/ofw_consinit.c
 file arch/macppc/macppc/machdep.c
 file arch/macppc/dev/ofb_cons.c
 file arch/macppc/dev/dbdma.c
@@ -31,6 +31,8 @@ defflag opt_interrupt.h PIC_HEATHROW: pic_heathrow
 file arch/macppc/macppc/pic_ohare.c		pic_ohare	needs-flag
 file arch/macppc/macppc/pic_heathrow.c		pic_heathrow	needs-flag
 
+file arch/powerpc/powerpc/bus_dma.c
+file arch/powerpc/powerpc/bus_space.c
 file arch/powerpc/powerpc/procfs_machdep.c	procfs
 file arch/powerpc/powerpc/softintr.c
 file dev/cons.c
