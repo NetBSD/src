@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.181 2007/06/06 21:12:14 bouyer Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.182 2007/06/07 15:38:13 liamjfoy Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -5957,3 +5957,13 @@ etc/weekly					1.23
 	Use "mktemp -d -t xxx" to create the temporary directories. This will use
 	TMPDIR environment variable if set, otherwise use /tmp.  (misc/35544)
 	[martti, ticket #708]
+
+distrib/common/Makefile.mdset			1.29
+
+	After ${_FILENAME} got assigned its value when it's "-", we can
+	no longer use it as a copy of ${_F} in the subsequent test for
+	additional targets under the MDSET_SUFFIXES test.
+
+	This brings back builds of srec & bin files for evbarm and img
+	files for evbppc.
+	[he, ticket #709]
