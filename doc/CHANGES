@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.867 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.868 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -125,3 +125,4 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		the SMSC LPC47B397 [blymn 20070601]
 	amd64: The Enhanced Speedstep driver is now able to work on EM64T
 		CPUs running in 64bit mode. [xtraeme 20070603]
+	file(1): update to 4.21.  [pooka 20070607]
