@@ -1,4 +1,4 @@
-/*	$NetBSD: magic.c,v 1.16 2007/03/04 15:22:10 pooka Exp $	*/
+/*	$NetBSD: magic.c,v 1.17 2007/06/07 11:32:46 pooka Exp $	*/
 
 /*
  * Copyright (c) Christos Zoulas 2003.
@@ -66,9 +66,9 @@
 
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)$File: magic.c,v 1.40 2007/03/01 22:14:55 christos Exp $")
+FILE_RCSID("@(#)$File: magic.c,v 1.41 2007/03/26 17:59:50 christos Exp $")
 #else
-__RCSID("$NetBSD: magic.c,v 1.16 2007/03/04 15:22:10 pooka Exp $");
+__RCSID("$NetBSD: magic.c,v 1.17 2007/06/07 11:32:46 pooka Exp $");
 #endif
 #endif	/* lint */
 
@@ -92,7 +92,7 @@ magic_open(int flags)
 {
 	struct magic_set *ms;
 
-	if ((ms = malloc(sizeof(struct magic_set))) == NULL)
+	if ((ms = calloc((size_t)1, sizeof(struct magic_set))) == NULL)
 		return NULL;
 
 	if (magic_setflags(ms, flags) == -1) {
@@ -115,6 +115,8 @@ magic_open(int flags)
 	ms->haderr = 0;
 	ms->error = -1;
 	ms->mlist = NULL;
+	ms->file = "unknown";
+	ms->line = 0;
 	return ms;
 free3:
 	free(ms->o.pbuf);
