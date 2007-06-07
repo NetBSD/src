@@ -1,4 +1,4 @@
-/* $NetBSD: ofwoea_machdep.c,v 1.1.2.1 2007/06/06 17:38:35 garbled Exp $ */
+/* $NetBSD: ofwoea_machdep.c,v 1.1.2.2 2007/06/07 20:30:48 garbled Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.1.2.1 2007/06/06 17:38:35 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.1.2.2 2007/06/07 20:30:48 garbled Exp $");
 
 
 #include "opt_compat_netbsd.h"
@@ -94,13 +94,6 @@ struct ofw_translations {
 #endif
 	int mode;
 }__attribute__((packed));
-
-#define RANGE_TYPE_PCI		1
-#define RANGE_TYPE_ISA		2
-#define RANGE_TYPE_MACIO	3
-#define RANGE_TYPE_FIRSTPCI	4
-#define RANGE_IO		1
-#define RANGE_MEM		2
 
 struct pmap ofw_pmap;
 struct ofw_translations ofmap[32];
@@ -353,18 +346,8 @@ ofwoea_batinit(void)
 
 
 /* we define these partially, as we will fill the rest in later */
-struct powerpc_bus_space ofwoea_io_space_tag = {
-	.pbs_flags = _BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_IO_TYPE,
-	.pbs_base = 0x00000000,
-};
-
 struct powerpc_bus_space genppc_isa_io_space_tag = {
 	.pbs_flags = _BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_IO_TYPE,
-	.pbs_base = 0x00000000,
-};
-
-struct powerpc_bus_space ofwoea_mem_space_tag = {
-	.pbs_flags = _BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_MEM_TYPE,
 	.pbs_base = 0x00000000,
 };
 
@@ -373,7 +356,10 @@ struct powerpc_bus_space genppc_isa_mem_space_tag = {
 	.pbs_base = 0x00000000,
 };
 
-static char ex_storage[2][EXTENT_FIXED_STORAGE_SIZE(8)]
+/* This gives us a maximum of 6 PCI busses, assuming both io/mem on each.
+ * Increase if necc.
+ */
+static char ex_storage[EXSTORAGE_MAX][EXTENT_FIXED_STORAGE_SIZE(8)]
 	__attribute__((aligned(8)));
 
 
@@ -458,17 +444,27 @@ find_lowest_range(rangemap_t *ranges, int nrof, int type)
 		return -1;
 	return low;
 }
-	
-static int
-ofwoea_map_space(int rangetype, int iomem)
+
+/*
+ * Find a region of memory, and create a bus_space_tag for it.
+ * Notes:
+ * For ISA node is ignored.
+ * node is the starting node.  if -1, we start at / and map everything.
+ */
+
+int
+ofwoea_map_space(int rangetype, int iomem, int node,
+    struct powerpc_bus_space *tag, const char *name)
 {
-	int node, i, cur, range, nrofholes, error;
+	int i, cur, range, nrofholes, error;
+	static int exmap=0;
 	u_int32_t addr;
 	rangemap_t region, holes[32], list[32];
 
 	memset(list, 0, sizeof(list));
 	cur = 0;
-	node = OF_finddevice("/");
+	if (rangetype == RANGE_TYPE_ISA || node == -1)
+		node = OF_finddevice("/");
 	if (rangetype == RANGE_TYPE_ISA) {
 		u_int32_t size = 0;
 		rangemap_t regions[32];
@@ -485,26 +481,18 @@ ofwoea_map_space(int rangetype, int iomem)
 			/* the first io range is the one */
 			for (i=0; i < cur; i++)
 				if (list[i].type == RANGE_IO && size) {
-					genppc_isa_io_space_tag.pbs_offset =
-					    list[i].addr;
-					genppc_isa_io_space_tag.pbs_limit =
-					    size;
-					error = bus_space_init(
-					    &genppc_isa_io_space_tag,
-					    "isa-ioport", NULL, 0);
+					tag->pbs_offset = list[i].addr;
+					tag->pbs_limit = size;
+					error = bus_space_init(tag, name, NULL, 0);
 					return error;
 				}
 		} else {
 			for (i=0; i < cur; i++)
 				if (list[i].type == RANGE_MEM &&
 				    list[i].size == size) {
-					genppc_isa_mem_space_tag.pbs_offset =
-					    list[i].addr;
-					genppc_isa_mem_space_tag.pbs_limit =
-					    size;
-					error = bus_space_init(
-					    &genppc_isa_mem_space_tag,
-					    "isa-iomem", NULL, 0);
+					tag->pbs_offset = list[i].addr;
+					tag->pbs_limit = size;
+					error = bus_space_init(tag, name, NULL, 0);
 					return error;
 				}
 		}
@@ -553,39 +541,24 @@ ofwoea_map_space(int rangetype, int iomem)
 		    holes[i].size, holes[i].type);
 	/* AT THIS POINT WE MAP IT */
 
-	if (rangetype == RANGE_TYPE_PCI && iomem == RANGE_IO) {
-		ofwoea_io_space_tag.pbs_offset = region.addr;
-		ofwoea_io_space_tag.pbs_limit = region.size;
-		error = bus_space_init(&ofwoea_io_space_tag, "ioport",
-		    ex_storage[0], sizeof(ex_storage[0]));
+	if (rangetype == RANGE_TYPE_PCI) {
+		if (exmap == EXSTORAGE_MAX)
+			panic("Not enough ex_storage space. "
+			    "Increase EXSTORAGE_MAX");
+		tag->pbs_offset = region.addr;
+		tag->pbs_limit = region.size;
+		error = bus_space_init(tag, name, ex_storage[exmap],
+		    sizeof(ex_storage[exmap]));
+		exmap++;
 		if (error)
-			panic("ofwoea_bus_space_init: can't init io tag");
+			panic("ofwoea_bus_space_init: can't init tag %s", name);
 		for (i=0; i < nrofholes; i++) {
 			error =
-			    extent_alloc_region(ofwoea_io_space_tag.pbs_extent,
+			    extent_alloc_region(tag->pbs_extent,
 				holes[i].addr, holes[i].size, EX_NOWAIT);
 			if (error)
 				panic("ofwoea_bus_space_init: can't block out"
-				    " reserved IO space 0x%x-0x%x: error=%d",
-				    holes[i].addr, holes[i].addr+holes[i].size,
-				    error);
-		}
-		return error;
-	}
-	if (rangetype == RANGE_TYPE_PCI && iomem == RANGE_MEM) {
-		ofwoea_mem_space_tag.pbs_offset = region.addr;
-		ofwoea_mem_space_tag.pbs_limit = region.size;
-		error = bus_space_init(&ofwoea_mem_space_tag, "iomem",
-		    ex_storage[1], sizeof(ex_storage[1]));
-		if (error)
-			panic("ofwoea_bus_space_init: can't init mem tag");
-		for (i=0; i < nrofholes; i++) {
-			error =
-			    extent_alloc_region(ofwoea_io_space_tag.pbs_extent,
-				holes[i].addr, holes[i].size, EX_NOWAIT);
-			if (error)
-				panic("ofwoea_bus_space_init: can't block out"
-				    "reserved MEM space 0x%x-0x%x: error=%d",
+				    " reserved space 0x%x-0x%x: error=%d",
 				    holes[i].addr, holes[i].addr+holes[i].size,
 				    error);
 		}
@@ -599,16 +572,12 @@ ofwoea_bus_space_init(void)
 {
 	int error;
 
-	error = ofwoea_map_space(RANGE_TYPE_PCI, RANGE_IO);
-	if (error)
-		panic("Could not map PCI IO");
-	error = ofwoea_map_space(RANGE_TYPE_PCI, RANGE_MEM);
-	if (error)
-		panic("Could not map PCI MEM");
-	error = ofwoea_map_space(RANGE_TYPE_ISA, RANGE_IO);
+	error = ofwoea_map_space(RANGE_TYPE_ISA, RANGE_IO, -1,
+	    &genppc_isa_io_space_tag, "isa-ioport");
 	if (error > 0)
 		panic("Could not map ISA IO");
-	error = ofwoea_map_space(RANGE_TYPE_ISA, RANGE_MEM);
+	error = ofwoea_map_space(RANGE_TYPE_ISA, RANGE_MEM, -1,
+	    &genppc_isa_mem_space_tag, "isa-iomem");
 	if (error > 0)
 		panic("Could not map ISA MEM");
 }

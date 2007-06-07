@@ -1,4 +1,4 @@
-/*	$NetBSD: am79c950.c,v 1.21 2007/03/05 10:50:01 tsutsui Exp $	*/
+/*	$NetBSD: am79c950.c,v 1.21.10.1 2007/06/07 20:30:43 garbled Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@bga.com>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: am79c950.c,v 1.21 2007/03/05 10:50:01 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: am79c950.c,v 1.21.10.1 2007/06/07 20:30:43 garbled Exp $");
 
 #include "opt_inet.h"
 
@@ -71,7 +71,6 @@ __KERNEL_RCSID(0, "$NetBSD: am79c950.c,v 1.21 2007/03/05 10:50:01 tsutsui Exp $"
 #include <net/bpfdesc.h>
 #endif
 
-#include <machine/pio.h>
 #include <machine/bus.h>
 
 #include <macppc/dev/am79c950reg.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: grackle.c,v 1.10.38.2 2007/05/06 05:11:41 macallan Exp $	*/
+/*	$NetBSD: grackle.c,v 1.10.38.3 2007/06/07 20:30:47 garbled Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grackle.c,v 1.10.38.2 2007/05/06 05:11:41 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grackle.c,v 1.10.38.3 2007/06/07 20:30:47 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -38,10 +38,13 @@ __KERNEL_RCSID(0, "$NetBSD: grackle.c,v 1.10.38.2 2007/05/06 05:11:41 macallan E
 #include <dev/ofw/ofw_pci.h>
 
 #include <machine/autoconf.h>
+#include <machine/pio.h>
 
 struct grackle_softc {
 	struct device sc_dev;
 	struct genppc_pci_chipset sc_pc;
+	struct powerpc_bus_space sc_iot;
+	struct powerpc_bus_space sc_memt;
 };
 
 static void grackle_attach(struct device *, struct device *, void *);
@@ -81,18 +84,45 @@ grackle_attach(struct device *parent, struct device *self, void *aux)
 	struct confargs *ca = aux;
 	struct pcibus_attach_args pba;
 	int len, node = ca->ca_node;
-	u_int32_t busrange[2];
+	uint32_t busrange[2];
 	struct ranges {
-		u_int32_t pci_hi, pci_mid, pci_lo;
-		u_int32_t host;
-		u_int32_t size_hi, size_lo;
+		uint32_t pci_hi, pci_mid, pci_lo;
+		uint32_t host;
+		uint32_t size_hi, size_lo;
 	} ranges[6], *rp = ranges;
 
-	printf("\n");
+	aprint_normal("\n");
 
 	/* PCI bus number */
 	if (OF_getprop(node, "bus-range", busrange, sizeof(busrange)) != 8)
 		return;
+
+	/* find i/o tag */
+	len = OF_getprop(node, "ranges", ranges, sizeof(ranges));
+	if (len == -1)
+		return;
+	while (len >= sizeof(ranges[0])) {
+		if ((rp->pci_hi & OFW_PCI_PHYS_HI_SPACEMASK) ==
+		     OFW_PCI_PHYS_HI_SPACE_IO) {
+			sc->sc_iot.pbs_base = rp->host;
+			sc->sc_iot.pbs_limit = rp->host + rp->size_lo;
+			break;
+		}
+		len -= sizeof(ranges[0]);
+		rp++;
+	}
+
+	sc->sc_iot.pbs_flags = _BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_IO_TYPE;
+	sc->sc_iot.pbs_offset = 0;
+	if (ofwoea_map_space(RANGE_TYPE_PCI, RANGE_IO, node, &sc->sc_iot,
+	    "grackle io") != 0)
+		panic("Can't init grackle io tag");
+
+	sc->sc_memt.pbs_flags = _BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_MEM_TYPE;
+	sc->sc_memt.pbs_base = 0x00000000;
+	if (ofwoea_map_space(RANGE_TYPE_PCI, RANGE_MEM, node, &sc->sc_memt,
+	    "grackle mem") != 0)
+		panic("Can't init grackle mem tag");
 
 	macppc_pci_get_chipset_tag(pc);
 	pc->pc_node = node;
@@ -101,19 +131,8 @@ grackle_attach(struct device *parent, struct device *self, void *aux)
 	pc->pc_bus = busrange[0];
 	pc->pc_conf_read = grackle_conf_read;
 	pc->pc_conf_write = grackle_conf_write;
-	pc->pc_memt = (bus_space_tag_t)0;
-
-	/* find i/o tag */
-	len = OF_getprop(node, "ranges", ranges, sizeof(ranges));
-	if (len == -1)
-		return;
-	while (len >= sizeof(ranges[0])) {
-		if ((rp->pci_hi & OFW_PCI_PHYS_HI_SPACEMASK) ==
-		     OFW_PCI_PHYS_HI_SPACE_IO)
-			pc->pc_iot = (bus_space_tag_t)rp->host;
-		len -= sizeof(ranges[0]);
-		rp++;
-	}
+	pc->pc_memt = &sc->sc_memt;
+	pc->pc_iot = &sc->sc_iot;
 
 	memset(&pba, 0, sizeof(pba));
 	pba.pba_memt = pc->pc_memt;

@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.34.14.3 2007/06/05 20:25:43 matt Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.34.14.4 2007/06/07 20:30:47 garbled Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.34.14.3 2007/06/05 20:25:43 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.34.14.4 2007/06/07 20:30:47 garbled Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -58,7 +58,6 @@ __KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.34.14.3 2007/06/05 20:25:43 matt E
 #include <machine/bus.h>
 
 #include <machine/autoconf.h>
-#include <machine/pio.h>
 #include <machine/intr.h>
 
 #include <dev/pci/pcivar.h>

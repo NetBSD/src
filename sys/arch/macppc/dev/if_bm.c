@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bm.c,v 1.31.10.1 2007/05/11 00:19:27 macallan Exp $	*/
+/*	$NetBSD: if_bm.c,v 1.31.10.2 2007/06/07 20:30:43 garbled Exp $	*/
 
 /*-
  * Copyright (C) 1998, 1999, 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bm.c,v 1.31.10.1 2007/05/11 00:19:27 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bm.c,v 1.31.10.2 2007/06/07 20:30:43 garbled Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -81,7 +81,8 @@ struct bmac_softc {
 	struct ethercom sc_ethercom;
 #define sc_if sc_ethercom.ec_if
 	struct callout sc_tick_ch;
-	vaddr_t sc_regs;
+	bus_space_tag_t sc_iot;
+	bus_space_handle_t sc_ioh;
 	dbdma_regmap_t *sc_txdma;
 	dbdma_regmap_t *sc_rxdma;
 	dbdma_command_t *sc_txcmd;
@@ -97,12 +98,7 @@ struct bmac_softc {
 #define BMAC_BMACPLUS	0x01
 #define BMAC_DEBUGFLAG	0x02
 
-extern u_int *heathrow_FCR;
-
-static inline int bmac_read_reg __P((struct bmac_softc *, int));
-static inline void bmac_write_reg __P((struct bmac_softc *, int, int));
-static inline void bmac_set_bits __P((struct bmac_softc *, int, int));
-static inline void bmac_reset_bits __P((struct bmac_softc *, int, int));
+extern volatile uint32_t *heathrow_FCR;
 
 int bmac_match __P((struct device *, struct cfdata *, void *));
 void bmac_attach __P((struct device *, struct device *, void *));
@@ -133,49 +129,38 @@ void bmac_mbo_write __P((struct device *, u_int32_t));
 CFATTACH_DECL(bm, sizeof(struct bmac_softc),
     bmac_match, bmac_attach, NULL, NULL);
 
-struct mii_bitbang_ops bmac_mbo = {
+const struct mii_bitbang_ops bmac_mbo = {
 	bmac_mbo_read, bmac_mbo_write,
 	{ MIFDO, MIFDI, MIFDC, MIFDIR, 0 }
 };
 
-int
-bmac_read_reg(sc, off)
-	struct bmac_softc *sc;
-	int off;
+static inline uint16_t
+bmac_read_reg(struct bmac_softc *sc, bus_size_t off)
 {
-	return in16rb(sc->sc_regs + off);
+	return bus_space_read_2(sc->sc_iot, sc->sc_ioh, off);
 }
 
-void
-bmac_write_reg(sc, off, val)
-	struct bmac_softc *sc;
-	int off, val;
+static inline void
+bmac_write_reg(struct bmac_softc *sc, bus_size_t off, uint16_t val)
 {
-	out16rb(sc->sc_regs + off, val);
+	bus_space_write_2(sc->sc_iot, sc->sc_ioh, off, val);
 }
 
-void
-bmac_set_bits(sc, off, val)
-	struct bmac_softc *sc;
-	int off, val;
+static inline void
+bmac_set_bits(struct bmac_softc *sc, bus_size_t off, uint16_t val)
 {
 	val |= bmac_read_reg(sc, off);
 	bmac_write_reg(sc, off, val);
 }
 
-void
-bmac_reset_bits(sc, off, val)
-	struct bmac_softc *sc;
-	int off, val;
+static inline void
+bmac_reset_bits(struct bmac_softc *sc, bus_size_t off, uint16_t val)
 {
 	bmac_write_reg(sc, off, bmac_read_reg(sc, off) & ~val);
 }
 
 int
-bmac_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+bmac_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct confargs *ca = aux;
 
@@ -191,9 +176,7 @@ bmac_match(parent, cf, aux)
 }
 
 void
-bmac_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+bmac_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct confargs *ca = aux;
 	struct bmac_softc *sc = (void *)self;
@@ -217,7 +200,12 @@ bmac_attach(parent, self, aux)
 	ca->ca_reg[2] += ca->ca_baseaddr;
 	ca->ca_reg[4] += ca->ca_baseaddr;
 
-	sc->sc_regs = (vaddr_t)mapiodev(ca->ca_reg[0], PAGE_SIZE);
+	sc->sc_iot = ca->ca_tag;
+	if (!bus_space_map(sc->sc_iot, ca->ca_reg[0], PAGE_SIZE, 0,
+	    &sc->sc_ioh)) {
+		aprint_error(": couldn't map %#x", ca->ca_reg[0]);
+		return;
+	}
 
 	bmac_write_reg(sc, INTDISABLE, NoEventsMask);
 
@@ -433,7 +421,7 @@ bmac_init_dma(sc)
 	}
 	DBDMA_BUILD(cmd, DBDMA_CMD_NOP, 0, 0, 0,
 		DBDMA_INT_NEVER, DBDMA_WAIT_NEVER, DBDMA_BRANCH_ALWAYS);
-	dbdma_st32(&cmd->d_cmddep, vtophys((vaddr_t)sc->sc_rxcmd));
+	out32rb(&cmd->d_cmddep, vtophys((vaddr_t)sc->sc_rxcmd));
 
 	sc->sc_rxlast = 0;
 
@@ -484,8 +472,8 @@ bmac_rint(v)
 		if (i == BMAC_RXBUFS)
 			i = 0;
 		cmd = &sc->sc_rxcmd[i];
-		status = dbdma_ld16(&cmd->d_status);
-		resid = dbdma_ld16(&cmd->d_resid);
+		status = in16rb(&cmd->d_status);
+		resid = in16rb(&cmd->d_resid);
 
 #ifdef BMAC_DEBUG
 		if (status != 0 && status != 0x8440 && status != 0x9440)
@@ -494,7 +482,7 @@ bmac_rint(v)
 
 		if ((status & DBDMA_CNTRL_ACTIVE) == 0)	/* 0x9440 | 0x8440 */
 			continue;
-		count = dbdma_ld16(&cmd->d_count);
+		count = in16rb(&cmd->d_count);
 		datalen = count - resid - 2;		/* 2 == framelen */
 		if (datalen < sizeof(struct ether_header)) {
 			printf("%s: short packet len = %d\n",

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.43.16.1 2007/05/29 13:29:37 macallan Exp $	*/
+/*	$NetBSD: cpu.c,v 1.43.16.2 2007/06/07 20:30:46 garbled Exp $	*/
 
 /*-
  * Copyright (c) 2001 Tsubai Masanari.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.43.16.1 2007/05/29 13:29:37 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.43.16.2 2007/06/07 20:30:46 garbled Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_multiprocessor.h"
@@ -42,6 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.43.16.1 2007/05/29 13:29:37 macallan Exp $
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/types.h>
 
 #include <uvm/uvm_extern.h>
 #include <dev/ofw/openfirm.h>

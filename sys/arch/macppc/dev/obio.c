@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.26 2007/01/18 00:19:30 macallan Exp $	*/
+/*	$NetBSD: obio.c,v 1.26.14.1 2007/06/07 20:30:44 garbled Exp $	*/
 
 /*-
  * Copyright (C) 1998	Internet Research Institute, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.26 2007/01/18 00:19:30 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.26.14.1 2007/06/07 20:30:44 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,9 +46,9 @@ __KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.26 2007/01/18 00:19:30 macallan Exp $");
 
 #include <machine/autoconf.h>
 
-static void obio_attach __P((struct device *, struct device *, void *));
-static int obio_match __P((struct device *, struct cfdata *, void *));
-static int obio_print __P((void *, const char *));
+static void obio_attach(struct device *, struct device *, void *);
+static int obio_match(struct device *, struct cfdata *, void *);
+static int obio_print(void *, const char *);
 
 struct obio_softc {
 	struct device sc_dev;
@@ -60,10 +60,7 @@ CFATTACH_DECL(obio, sizeof(struct obio_softc),
     obio_match, obio_attach, NULL, NULL);
 
 int
-obio_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+obio_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -87,14 +84,13 @@ obio_match(parent, cf, aux)
  * Attach all the sub-devices we can find
  */
 void
-obio_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+obio_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct obio_softc *sc = (struct obio_softc *)self;
 	struct pci_attach_args *pa = aux;
 	struct confargs ca;
-	int node, child, namelen;
+	bus_space_handle_t bsh;
+	int node, child, namelen, error;
 	u_int reg[20];
 	int intr[6], parent_intr = 0, parent_nintr = 0;
 	char name[32];
@@ -117,14 +113,14 @@ obio_attach(parent, self, aux)
 		break;
 	case PCI_PRODUCT_APPLE_K2:
 		node = OF_finddevice("mac-io");
-		if (node == -1)
-			panic("macio not found");
 		break;
 
 	default:
-		printf("obio_attach: unknown obio controller\n");
-		return;
+		node = -1;
+		break;
 	}
+	if (node == 1)
+		panic("macio not found or unknown");
 
 	sc->sc_node = node;
 
@@ -139,21 +135,25 @@ obio_attach(parent, self, aux)
 #endif /* PMAC_G5 */
 
 	ca.ca_baseaddr = reg[2];
+	error = bus_space_map (ca.ca_tag, ca.ca_baseaddr, 0x80, 0, &bsh);
+	if (error)
+		panic(": failed to map mac-io %#x", ca.ca_baseaddr);
 
-	printf(": addr 0x%x\n", ca.ca_baseaddr);
+	aprint_verbose(": addr 0x%x\n", ca.ca_baseaddr);
 
 	/* Enable internal modem (KeyLargo) */
 	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_APPLE_KEYLARGO) {
-		printf("enabling KeyLargo internal modem\n");
-		out32rb(ca.ca_baseaddr + 0x40,
-			in32rb(ca.ca_baseaddr + 0x40) & ~((u_int32_t)1<<25));
+		aprint_normal("%s: enabling KeyLargo internal modem\n",
+		    self->dv_xname);
+		bus_space_write_4(ca.ca_tag, bsh, 0x40, 
+		    bus_space_read_4(ca.ca_tag, bsh, 0x40) & ~(1<<25));
 	}
 
 	/* Enable internal modem (Pangea) */
 	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_APPLE_PANGEA_MACIO) {
-		out8(ca.ca_baseaddr + 0x006a + 0x03, 0x04); /* set reset */
-		out8(ca.ca_baseaddr + 0x006a + 0x02, 0x04); /* power modem on */
-		out8(ca.ca_baseaddr + 0x006a + 0x03, 0x05); /* unset reset */ 
+		bus_space_write_1(ca.ca_tag, bsh, 0x006a + 0x03, 0x04); /* set reset */
+		bus_space_write_1(ca.ca_tag, bsh, 0x006a + 0x02, 0x04); /* power modem on */
+		bus_space_write_1(ca.ca_tag, bsh, 0x006a + 0x03, 0x05); /* unset reset */ 
 	}
 
 	/* Gatwick and Paddington use same product ID */
@@ -166,8 +166,9 @@ obio_attach(parent, self, aux)
 	} else {
   		/* Enable CD and microphone sound input. */
 		if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_APPLE_PADDINGTON)
-			out8(ca.ca_baseaddr + 0x37, 0x03);
+			bus_space_write_1(ca.ca_tag, bsh, 0x37, 0x03);
 	}
+	bus_space_unmap(ca.ca_tag, bsh, 0x80);
   
 	for (child = OF_child(node); child; child = OF_peer(child)) {
 		namelen = OF_getprop(child, "name", name, sizeof(name));
@@ -200,7 +201,7 @@ obio_attach(parent, self, aux)
 	}
 }
 
-static const char *skiplist[] = {
+static const char * const skiplist[] = {
 	"interrupt-controller",
 	"gpio",
 	"escc-legacy",

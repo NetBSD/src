@@ -1,4 +1,4 @@
-/*	$NetBSD: dbdma.c,v 1.7 2005/12/24 23:24:01 perry Exp $	*/
+/*	$NetBSD: dbdma.c,v 1.7.38.1 2007/06/07 20:30:43 garbled Exp $	*/
 
 /*
  * Copyright 1991-1998 by Open Software Foundation, Inc. 
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbdma.c,v 1.7 2005/12/24 23:24:01 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbdma.c,v 1.7.38.1 2007/06/07 20:30:43 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -31,11 +31,9 @@ __KERNEL_RCSID(0, "$NetBSD: dbdma.c,v 1.7 2005/12/24 23:24:01 perry Exp $");
 
 #include <uvm/uvm_extern.h>
 
+#include <machine/autoconf.h>
 #include <machine/pio.h>
 #include <macppc/dev/dbdma.h>
-
-#define eieio() __asm volatile("eieio")
-
 
 dbdma_command_t	*dbdma_alloc_commands = NULL;
 
@@ -57,16 +55,14 @@ dbdma_start(dmap, commands)
 					     DBDMA_CNTRL_FLUSH	|
 					     DBDMA_CNTRL_PAUSE	|
 					     DBDMA_CNTRL_RUN      )));      
-	eieio();
      
 	while (DBDMA_LD4_ENDIAN(&dmap->d_status) & DBDMA_CNTRL_ACTIVE)
-		eieio();
+		;
 
-	dmap->d_cmdptrhi = 0;	eieio();/* 64-bit not yet */
-	DBDMA_ST4_ENDIAN(&dmap->d_cmdptrlo, addr); eieio();
+	dmap->d_cmdptrhi = 0;	/* 64-bit not yet */
+	DBDMA_ST4_ENDIAN(&dmap->d_cmdptrlo, addr);
 
 	DBDMA_ST4_ENDIAN(&dmap->d_control, DBDMA_SET_CNTRL(DBDMA_CNTRL_RUN));
-	eieio();
 }
 
 void
@@ -118,10 +114,9 @@ dbdma_pause(dmap)
 	dbdma_regmap_t *dmap;
 {
 	DBDMA_ST4_ENDIAN(&dmap->d_control,DBDMA_SET_CNTRL(DBDMA_CNTRL_PAUSE));
-	eieio();
 
 	while (DBDMA_LD4_ENDIAN(&dmap->d_status) & DBDMA_CNTRL_ACTIVE)
-		eieio();
+		;
 }
 
 dbdma_command_t	*

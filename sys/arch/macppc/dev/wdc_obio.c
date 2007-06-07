@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_obio.c,v 1.46.16.1 2007/05/11 00:19:27 macallan Exp $	*/
+/*	$NetBSD: wdc_obio.c,v 1.46.16.2 2007/06/07 20:30:45 garbled Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.46.16.1 2007/05/11 00:19:27 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.46.16.2 2007/06/07 20:30:45 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.46.16.1 2007/05/11 00:19:27 macallan 
 
 #include <machine/bus.h>
 #include <machine/autoconf.h>
+#include <machine/pio.h>
 
 #include <dev/ata/atareg.h>
 #include <dev/ata/atavar.h>
@@ -70,6 +71,7 @@ __KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.46.16.1 2007/05/11 00:19:27 macallan 
 
 struct wdc_obio_softc {
 	struct wdc_softc sc_wdcdev;
+	struct powerpc_bus_space sc_iot;
 	struct ata_channel *sc_chanptr;
 	struct ata_channel sc_channel;
 	struct ata_queue sc_chqueue;
@@ -158,9 +160,13 @@ wdc_obio_attach(parent, self, aux)
 
 	sc->sc_wdcdev.regs = wdr = &sc->sc_wdc_regs;
 
-	wdr->cmd_iot = wdr->ctl_iot =
-		macppc_make_bus_space_tag(ca->ca_baseaddr + ca->ca_reg[0], 4);
+	sc->sc_iot.pbs_offset = ca->ca_baseaddr + ca->ca_reg[0];
+	sc->sc_iot.pbs_base = 0;
+	sc->sc_iot.pbs_limit = WDC_REG_NPORTS;
+	sc->sc_iot.pbs_flags = _BUS_SPACE_LITTLE_ENDIAN |  4;
+	bus_space_init(&sc->sc_iot, "wdc_obio io", NULL, 0);
 
+	wdr->cmd_iot = wdr->ctl_iot = &sc->sc_iot;
 	if (bus_space_map(wdr->cmd_iot, 0, WDC_REG_NPORTS, 0,
 	    &wdr->cmd_baseioh) ||
 	    bus_space_subregion(wdr->cmd_iot, wdr->cmd_baseioh,
@@ -234,11 +240,11 @@ wdc_obio_attach(parent, self, aux)
 	memset(path, 0, sizeof(path));
 	OF_package_to_path(ca->ca_node, path, sizeof(path));
 	if (strcmp(path, "/bandit@F2000000/ohare@10/ata@21000") == 0) {
-		u_int x;
+		uint32_t x;
 
-		x = in32rb(OHARE_FEATURE_REG);
+		x = in32rb((volatile uint32_t *)OHARE_FEATURE_REG);
 		x |= 8;
-		out32rb(OHARE_FEATURE_REG, x);
+		out32rb((volatile uint32_t *)OHARE_FEATURE_REG, x);
 	}
 
 	wdcattach(chp);
@@ -249,20 +255,20 @@ struct ide_timings {
 	int cycle;	/* minimum cycle time [ns] */
 	int active;	/* minimum command active time [ns] */
 };
-static struct ide_timings pio_timing[5] = {
+static const struct ide_timings pio_timing[5] = {
 	{ 600, 180 },    /* Mode 0 */
 	{ 390, 150 },    /*      1 */
 	{ 240, 105 },    /*      2 */
 	{ 180,  90 },    /*      3 */
 	{ 120,  75 }     /*      4 */
 };
-static struct ide_timings dma_timing[3] = {
+static const struct ide_timings dma_timing[3] = {
 	{ 480, 240 },	/* Mode 0 */
 	{ 165,  90 },	/* Mode 1 */
 	{ 120,  75 }	/* Mode 2 */
 };
 
-static struct ide_timings udma_timing[5] = {
+static const struct ide_timings udma_timing[5] = {
 	{120, 180},	/* Mode 0 */
 	{ 90, 150},	/* Mode 1 */
 	{ 60, 120},	/* Mode 2 */
@@ -443,7 +449,7 @@ wdc_obio_detach(self, flags)
 
 	/* Unmap our i/o space. */
 	bus_space_unmap(sc->sc_wdcdev.regs->cmd_iot,
-			sc->sc_wdcdev.regs->cmd_ioh, WDC_REG_NPORTS);
+			sc->sc_wdcdev.regs->cmd_baseioh, WDC_REG_NPORTS);
 
 	/* Unmap DMA registers. */
 	/* XXX unmapiodev(sc->sc_dmareg); */

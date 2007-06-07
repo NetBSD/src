@@ -1,4 +1,4 @@
-/*	$NetBSD: kauai.c,v 1.19 2006/01/16 20:30:19 bouyer Exp $	*/
+/*	$NetBSD: kauai.c,v 1.19.36.1 2007/06/07 20:30:44 garbled Exp $	*/
 
 /*-
  * Copyright (c) 2003 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kauai.c,v 1.19 2006/01/16 20:30:19 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kauai.c,v 1.19.36.1 2007/06/07 20:30:44 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -37,6 +37,7 @@ __KERNEL_RCSID(0, "$NetBSD: kauai.c,v 1.19 2006/01/16 20:30:19 bouyer Exp $");
 #include <uvm/uvm_extern.h>
 
 #include <machine/bus.h>
+#include <machine/pio.h>
 
 #include <dev/ata/atareg.h>
 #include <dev/ata/atavar.h>
@@ -52,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: kauai.c,v 1.19 2006/01/16 20:30:19 bouyer Exp $");
 
 #define WDC_REG_NPORTS		8
 #define WDC_AUXREG_OFFSET	0x16
+#define WDC_AUXREG_NPORTS	1
 
 #define PIO_CONFIG_REG (0x200 >> 4)	/* PIO and DMA access timing */
 #define DMA_CONFIG_REG (0x210 >> 4)	/* UDMA access timing */
@@ -62,6 +64,7 @@ struct kauai_softc {
 	struct ata_channel sc_channel;
 	struct wdc_regs sc_wdc_regs;
 	struct ata_queue sc_queue;
+	struct powerpc_bus_space sc_iot;
 	dbdma_regmap_t *sc_dmareg;
 	dbdma_command_t	*sc_dmacmd;
 	u_int sc_piotiming_r[2];
@@ -149,9 +152,15 @@ kauai_attach(parent, self, aux)
 
 	sc->sc_wdcdev.regs = wdr = &sc->sc_wdc_regs;
 
-	wdr->cmd_iot = wdr->ctl_iot = macppc_make_bus_space_tag(regbase, 4);
+	sc->sc_iot.pbs_offset = regbase;
+	sc->sc_iot.pbs_base = 0;
+	sc->sc_iot.pbs_limit = WDC_REG_NPORTS;
+	sc->sc_iot.pbs_flags = _BUS_SPACE_LITTLE_ENDIAN |  4;
+	bus_space_init(&sc->sc_iot, "kauai io", NULL, 0);
 
-	if (bus_space_map(wdr->cmd_iot, 0, WDC_REG_NPORTS, 0,
+	wdr->cmd_iot = wdr->ctl_iot = &sc->sc_iot;
+
+	if (bus_space_map(wdr->cmd_iot, regbase, WDC_REG_NPORTS, 0,
 	    &wdr->cmd_baseioh) ||
 	    bus_space_subregion(wdr->cmd_iot, wdr->cmd_baseioh,
 			WDC_AUXREG_OFFSET, 1, &wdr->ctl_ioh)) {

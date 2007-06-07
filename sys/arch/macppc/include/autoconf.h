@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.11.10.2 2007/05/09 03:56:01 macallan Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.11.10.3 2007/06/07 20:30:45 garbled Exp $	*/
 
 /*-
  * Copyright (C) 1998	Internet Research Institute, Inc.
@@ -44,41 +44,41 @@ struct confargs {
 	int ca_nintr;
 	int *ca_intr;
 
-	u_int ca_baseaddr;
+	bus_addr_t ca_baseaddr;
 	bus_space_tag_t ca_tag;
 };
 
 /* there are in locore.S */
-void ofbcopy __P((const void *, void *, size_t));
-int badaddr __P((void *, int));
+void ofbcopy(const void *, void *, size_t);
+int badaddr(volatile void *, int);
 
 /* these are in autoconf.c */
-int getnodebyname __P((int, const char *));
+int getnodebyname(int, const char *);
 
 /* these are in clock.c */
-void calc_delayconst __P((void));
-void decr_intr __P((struct clockframe *));
+void calc_delayconst(void);
+void decr_intr(struct clockframe *);
 
 /* these are in cpu.c */
-void identifycpu __P((char *));
+void identifycpu(char *);
 
 /* these are in machdep.c */
-void initppc __P((u_int, u_int, char *));
-void install_extint __P((void (*) __P((void)))); 
-void *mapiodev __P((paddr_t, psize_t));
-paddr_t kvtop __P((void *));
+void initppc(u_int, u_int, char *);
+void *mapiodev(paddr_t, psize_t);
+paddr_t kvtop(void *);
+void dumpsys(void);
 
 /* these are in extintr.c */
-void init_interrupt __P((void));
+void init_interrupt(void);
 
 /* these are in dev/akbd.c */
-int kbd_intr __P((void *));
-int akbd_cnattach __P((void));
+int kbd_intr(void *);
+int akbd_cnattach(void);
 int adbkbd_cnattach(void);
 
 /* these are in dev/ofb.c */
-int ofb_is_console __P((void));
-int ofb_cnattach __P((void));
+int ofb_is_console(void);
+int ofb_cnattach(void);
 
 extern int console_node;
 extern int console_instance;

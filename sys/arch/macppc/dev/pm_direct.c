@@ -1,4 +1,4 @@
-/*	$NetBSD: pm_direct.c,v 1.31 2007/01/24 13:08:12 hubertf Exp $	*/
+/*	$NetBSD: pm_direct.c,v 1.31.14.1 2007/06/07 20:30:44 garbled Exp $	*/
 
 /*
  * Copyright (C) 1997 Takashi Hamada
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pm_direct.c,v 1.31 2007/01/24 13:08:12 hubertf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pm_direct.c,v 1.31.14.1 2007/06/07 20:30:44 garbled Exp $");
 
 #ifdef DEBUG
 #ifndef ADB_DEBUG
@@ -55,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: pm_direct.c,v 1.31 2007/01/24 13:08:12 hubertf Exp $
 #include <machine/adbsys.h>
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
+#include <machine/pio.h>
 
 #include <dev/ofw/openfirm.h>
 
