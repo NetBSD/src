@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_systrace.c,v 1.72 2007/06/08 17:49:13 christos Exp $	*/
+/*	$NetBSD: kern_systrace.c,v 1.73 2007/06/08 17:51:41 christos Exp $	*/
 
 /*
  * Copyright 2002, 2003 Niels Provos <provos@citi.umich.edu>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.72 2007/06/08 17:49:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.73 2007/06/08 17:51:41 christos Exp $");
 
 #include "opt_systrace.h"
 
@@ -286,7 +286,7 @@ int
 systracef_ioctl(struct file *fp, u_long cmd, void *data, struct lwp *l)
 {
 	int ret = 0;
-	struct fsystrace *fst = (struct fsystrace *)fp->f_data;
+	struct fsystrace *fst = fp->f_data;
 #ifdef __NetBSD__
 	struct proc *p = l->l_proc;
 	struct cwdinfo *cwdp;
@@ -303,6 +303,7 @@ systracef_ioctl(struct file *fp, u_long cmd, void *data, struct lwp *l)
 
 	case STRIOCDETACH:
 	case STRIOCREPORT:
+	case STRIOCGETCWD:
 		pid = *(pid_t *)data;
 		if (!pid)
 			ret = EINVAL;
@@ -319,11 +320,6 @@ systracef_ioctl(struct file *fp, u_long cmd, void *data, struct lwp *l)
 		break;
 	case STRIOCSCRIPTNAME:
 		pid = ((struct systrace_scriptname *)data)->sn_pid;
-		if (!pid)
-			ret = EINVAL;
-		break;
-	case STRIOCGETCWD:
-		pid = *(pid_t *)data;
 		if (!pid)
 			ret = EINVAL;
 		break;
