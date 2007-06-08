@@ -1,4 +1,4 @@
-/*	$NetBSD: cacheops_60.h,v 1.8 2007/06/08 15:44:34 tsutsui Exp $	*/
+/*	$NetBSD: cacheops_60.h,v 1.9 2007/06/08 15:57:17 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@ TBIA_60(void)
 static __inline void __attribute__((__unused__))
 TBIS_60(vaddr_t va)
 {
-	register vaddr_t	r_va __asm("%a0") = va;
+	register uint8_t *r_va __asm("%a0") = (void *)va;
 	int	tmp;
 
 	__asm volatile (" movc   %1, %%dfc;"	/* select supervisor	*/
@@ -145,7 +145,7 @@ DCIU_60(void)
 static __inline void __attribute__((__unused__))
 DCIAS_60(paddr_t pa)
 {
-	register paddr_t	r_pa __asm("%a0") = pa;
+	register uint8_t *r_pa __asm("%a0") = (void *)pa;
 
 	__asm volatile (" .word 0xf468;" : : "a" (r_pa)); /* cpushl dc,%a0@ */
 }
