@@ -19,3 +19,5 @@ EOF
 
 foo=`crud`
 check x$foo x1
+
+check "$( true && ! true | false; echo $? )" 0
