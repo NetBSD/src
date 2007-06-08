@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_output.c,v 1.19 2007/03/04 06:03:31 christos Exp $	*/
+/*	$NetBSD: clnp_output.c,v 1.19.2.1 2007/06/08 14:18:01 ad Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clnp_output.c,v 1.19 2007/03/04 06:03:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clnp_output.c,v 1.19.2.1 2007/06/08 14:18:01 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -466,7 +466,7 @@ clnp_output(struct mbuf *m0, ...)
 		if (argo_debug[D_OUTPUT]) {
 			printf("clnp_output: packet routed to %s\n",
 			    clnp_iso_addrp(
-				 &satosiso(clcp->clc_firsthop)->siso_addr));
+				 &satocsiso(clcp->clc_firsthop)->siso_addr));
 		}
 #endif
 

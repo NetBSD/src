@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_readwrite.c,v 1.45.4.2 2007/05/13 17:36:41 ad Exp $	*/
+/*	$NetBSD: ext2fs_readwrite.c,v 1.45.4.3 2007/06/08 14:18:15 ad Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_readwrite.c,v 1.45.4.2 2007/05/13 17:36:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_readwrite.c,v 1.45.4.3 2007/06/08 14:18:15 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -286,7 +286,9 @@ ext2fs_write(void *v)
 	if (vp->v_type == VREG && p &&
 	    uio->uio_offset + uio->uio_resid >
 	    p->p_rlimit[RLIMIT_FSIZE].rlim_cur) {
+		mutex_enter(&proclist_mutex);
 		psignal(p, SIGXFSZ);
+		mutex_exit(&proclist_mutex);
 		return (EFBIG);
 	}
 	if (uio->uio_resid == 0)

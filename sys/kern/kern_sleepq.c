@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sleepq.c,v 1.7.2.4 2007/04/10 18:34:04 ad Exp $	*/
+/*	$NetBSD: kern_sleepq.c,v 1.7.2.5 2007/06/08 14:17:22 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,15 +42,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.7.2.4 2007/04/10 18:34:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.7.2.5 2007/06/08 14:17:22 ad Exp $");
 
-#include "opt_multiprocessor.h"
-#include "opt_lockdebug.h"
 #include "opt_ktrace.h"
 
 #include <sys/param.h>
 #include <sys/lock.h>
 #include <sys/kernel.h>
+#include <sys/cpu.h>
 #include <sys/pool.h>
 #include <sys/proc.h> 
 #include <sys/resourcevar.h>
@@ -64,7 +63,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.7.2.4 2007/04/10 18:34:04 ad Exp $
 #include <uvm/uvm_extern.h>
 
 int	sleepq_sigtoerror(lwp_t *, int);
-void	updatepri(lwp_t *);
 
 /* General purpose sleep table, used by ltsleep() and condition variables. */
 sleeptab_t	sleeptab;
@@ -81,14 +79,9 @@ sleeptab_init(sleeptab_t *st)
 	int i;
 
 	for (i = 0; i < SLEEPTAB_HASH_SIZE; i++) {
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 		sq = &st->st_queues[i].st_queue;
 		mutex_init(&st->st_queues[i].st_mutex, MUTEX_SPIN, IPL_SCHED);
 		sleepq_init(sq, &st->st_queues[i].st_mutex);
-#else
-		sq = &st->st_queues[i];
-		sleepq_init(sq, &sched_mutex);
-#endif
 	}
 }
 
@@ -116,6 +109,7 @@ sleepq_init(sleepq_t *sq, kmutex_t *mtx)
 int
 sleepq_remove(sleepq_t *sq, lwp_t *l)
 {
+	struct schedstate_percpu *spc;
 	struct cpu_info *ci;
 
 	KASSERT(lwp_locked(l, sq->sq_mutex));
@@ -136,34 +130,27 @@ sleepq_remove(sleepq_t *sq, lwp_t *l)
 	l->l_sleepq = NULL;
 	l->l_flag &= ~LW_SINTR;
 
+	ci = l->l_cpu;
+	spc = &ci->ci_schedstate;
+
 	/*
 	 * If not sleeping, the LWP must have been suspended.  Let whoever
 	 * holds it stopped set it running again.
 	 */
 	if (l->l_stat != LSSLEEP) {
 	 	KASSERT(l->l_stat == LSSTOP || l->l_stat == LSSUSPENDED);
-		lwp_setlock(l, &sched_mutex);
+		lwp_setlock(l, &spc->spc_lwplock);
 		return 0;
 	}
-
-	sched_lock(1);
-	lwp_setlock(l, &sched_mutex);
 
 	/*
 	 * If the LWP is still on the CPU, mark it as LSONPROC.  It may be
 	 * about to call mi_switch(), in which case it will yield.
-	 *
-	 * XXXSMP Will need to change for preemption.
 	 */
-	ci = l->l_cpu;
-#ifdef MULTIPROCESSOR
-	if (ci->ci_curlwp == l) {
-#else
-	if (l == curlwp) {
-#endif
+	if ((l->l_flag & LW_RUNNING) != 0) {
 		l->l_stat = LSONPROC;
 		l->l_slptime = 0;
-		sched_unlock(1);
+		lwp_setlock(l, &spc->spc_lwplock);
 		return 0;
 	}
 
@@ -171,19 +158,19 @@ sleepq_remove(sleepq_t *sq, lwp_t *l)
 	 * Set it running.  We'll try to get the last CPU that ran
 	 * this LWP to pick it up again.
 	 */
-	if (l->l_slptime > 1)
-		updatepri(l);
+	spc_lock(ci);
+	lwp_setlock(l, spc->spc_mutex);
+	sched_setrunnable(l);
 	l->l_stat = LSRUN;
 	l->l_slptime = 0;
 	if ((l->l_flag & LW_INMEM) != 0) {
-		setrunqueue(l);
-		if (lwp_eprio(l) < ci->ci_schedstate.spc_curpriority)
-			cpu_need_resched(ci);
-		sched_unlock(1);
+		sched_enqueue(l, false);
+		if (lwp_eprio(l) < spc->spc_curpriority)
+			cpu_need_resched(ci, 0);
+		spc_unlock(ci);
 		return 0;
 	}
-
-	sched_unlock(1);
+	spc_unlock(ci);
 	return 1;
 }
 
@@ -283,7 +270,7 @@ sleepq_block(int timo, bool catch)
 	if (timo)
 		callout_reset(&l->l_tsleep_ch, timo, sleepq_timeout, l);
 
-	mi_switch(l, NULL);
+	mi_switch(l);
 	l->l_cpu->ci_schedstate.spc_curpriority = l->l_usrpri;
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.135.2.4 2007/04/13 15:49:49 ad Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.135.2.5 2007/06/08 14:17:30 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.135.2.4 2007/04/13 15:49:49 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.135.2.5 2007/06/08 14:17:30 ad Exp $");
 
 #include "fs_union.h"
 #include "veriexec.h"
@@ -72,9 +72,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.135.2.4 2007/04/13 15:49:49 ad Exp $
 int (*vn_union_readdir_hook) (struct vnode **, struct file *, struct lwp *);
 #endif
 
-#if NVERIEXEC > 0
 #include <sys/verified_exec.h>
-#endif /* NVERIEXEC > 0 */
 
 static int vn_read(struct file *fp, off_t *offset, struct uio *uio,
 	    kauth_cred_t cred, int flags);
@@ -103,30 +101,28 @@ vn_open(struct nameidata *ndp, int fmode, int cmode)
 	kauth_cred_t cred = l->l_cred;
 	struct vattr va;
 	int error;
-	pathname_t pn = NULL;
+	char *path;
+
+	ndp->ni_cnd.cn_flags &= TRYEMULROOT;
 
 	if (fmode & O_CREAT) {
 		ndp->ni_cnd.cn_nameiop = CREATE;
-		ndp->ni_cnd.cn_flags = LOCKPARENT | LOCKLEAF;
+		ndp->ni_cnd.cn_flags |= LOCKPARENT | LOCKLEAF;
 		if ((fmode & O_EXCL) == 0 &&
 		    ((fmode & O_NOFOLLOW) == 0))
 			ndp->ni_cnd.cn_flags |= FOLLOW;
 	} else {
 		ndp->ni_cnd.cn_nameiop = LOOKUP;
-		ndp->ni_cnd.cn_flags = LOCKLEAF;
+		ndp->ni_cnd.cn_flags |= LOCKLEAF;
 		if ((fmode & O_NOFOLLOW) == 0)
 			ndp->ni_cnd.cn_flags |= FOLLOW;
 	}
-#if NVERIEXEC > 0
-	error = pathname_get(ndp->ni_dirp, ndp->ni_segflg, &pn);
-	if (error)
-		goto bad2;
-	ndp->ni_dirp = pathname_path(pn);
-	ndp->ni_segflg = UIO_SYSSPACE;
-#endif /* NVERIEXEC > 0 */
+
+	VERIEXEC_PATH_GET(ndp->ni_dirp, ndp->ni_segflg, ndp->ni_dirp, path);
+
 	error = namei(ndp);
 	if (error)
-		goto bad2;
+		goto out;
 
 	vp = ndp->ni_vp;
 
@@ -147,7 +143,7 @@ vn_open(struct nameidata *ndp, int fmode, int cmode)
 			error = VOP_CREATE(ndp->ni_dvp, &ndp->ni_vp,
 					   &ndp->ni_cnd, &va);
 			if (error)
-				goto bad2;
+				goto out;
 			fmode &= ~O_TRUNC;
 			vp = ndp->ni_vp;
 		} else {
@@ -220,10 +216,8 @@ vn_open(struct nameidata *ndp, int fmode, int cmode)
 bad:
 	if (error)
 		vput(vp);
-
-bad2:
-	pathname_put(pn);
-
+out:
+	VERIEXEC_PATH_PUT(path);
 	return (error);
 }
 

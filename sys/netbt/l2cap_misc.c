@@ -1,4 +1,4 @@
-/*	$NetBSD: l2cap_misc.c,v 1.1.24.1 2007/03/13 16:52:01 ad Exp $	*/
+/*	$NetBSD: l2cap_misc.c,v 1.1.24.2 2007/06/08 14:17:41 ad Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: l2cap_misc.c,v 1.1.24.1 2007/03/13 16:52:01 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: l2cap_misc.c,v 1.1.24.2 2007/06/08 14:17:41 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -69,6 +69,33 @@ const l2cap_qos_t l2cap_default_qos = {
  */
 int l2cap_response_timeout = 30;		/* seconds */
 int l2cap_response_extended_timeout = 180;	/* seconds */
+
+/*
+ * Set Link Mode on channel
+ */
+int
+l2cap_setmode(struct l2cap_channel *chan)
+{
+
+	KASSERT(chan != NULL);
+	KASSERT(chan->lc_link != NULL);
+
+	DPRINTF("CID #%d, auth %s, encrypt %s, secure %s\n", chan->lc_lcid,
+		(chan->lc_mode & L2CAP_LM_AUTH ? "yes" : "no"),
+		(chan->lc_mode & L2CAP_LM_ENCRYPT ? "yes" : "no"),
+		(chan->lc_mode & L2CAP_LM_SECURE ? "yes" : "no"));
+
+	if (chan->lc_mode & L2CAP_LM_AUTH)
+		chan->lc_link->hl_flags |= HCI_LINK_AUTH_REQ;
+
+	if (chan->lc_mode & L2CAP_LM_ENCRYPT)
+		chan->lc_link->hl_flags |= HCI_LINK_ENCRYPT_REQ;
+
+	if (chan->lc_mode & L2CAP_LM_SECURE)
+		chan->lc_link->hl_flags |= HCI_LINK_SECURE_REQ;
+
+	return hci_acl_setmode(chan->lc_link);
+}
 
 /*
  * Allocate a new Request structure & ID and set the timer going

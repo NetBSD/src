@@ -1,4 +1,4 @@
-/*	$NetBSD: fstrans.h,v 1.3 2007/01/29 15:42:50 hannken Exp $	*/
+/*	$NetBSD: fstrans.h,v 1.3.10.1 2007/06/08 14:18:10 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -64,7 +64,10 @@ enum fstrans_state {
 };
 
 void	fstrans_init(void);
-#define fstrans_start(mp, t)		_fstrans_start((mp), (t), 1)
+#define fstrans_start(mp, t)						\
+do {									\
+	_fstrans_start((mp), (t), 1);					\
+} while (/* CONSTCOND */ 0)
 #define fstrans_start_nowait(mp, t)	_fstrans_start((mp), (t), 0)
 int	_fstrans_start(struct mount *, enum fstrans_lock_type, int);
 void	fstrans_done(struct mount *);

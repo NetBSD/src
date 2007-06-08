@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.169.2.6 2007/05/27 00:11:31 ad Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.169.2.7 2007/06/08 14:17:18 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.169.2.6 2007/05/27 00:11:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.169.2.7 2007/06/08 14:17:18 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -82,6 +82,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.169.2.6 2007/05/27 00:11:31 ad Exp $
 #include "opt_sysv.h"
 
 #include <sys/param.h>
+#include <sys/aio.h>
 #include <sys/systm.h>
 #include <sys/ioctl.h>
 #include <sys/tty.h>
@@ -127,6 +128,9 @@ int debug_exit = 0;
 #define DPRINTF(x)
 #endif
 
+static int find_stopped_child(struct proc *, pid_t, int, struct proc **, int *);
+static void proc_free(struct proc *, struct rusage *);
+
 /*
  * Fill in the appropriate signal information, and signal the parent.
  */
@@ -153,8 +157,8 @@ exit_psignal(struct proc *p, struct proc *pp, ksiginfo_t *ksi)
 	ksi->ksi_uid = kauth_cred_geteuid(p->p_cred);
 	ksi->ksi_status = p->p_xstat;
 	/* XXX: is this still valid? */
-	ksi->ksi_utime = p->p_ru->ru_utime.tv_sec;
-	ksi->ksi_stime = p->p_ru->ru_stime.tv_sec;
+	ksi->ksi_utime = p->p_stats->p_ru.ru_utime.tv_sec;
+	ksi->ksi_stime = p->p_stats->p_ru.ru_stime.tv_sec;
 }
 
 /*
@@ -229,10 +233,13 @@ exit1(struct lwp *l, int rv)
 		p->p_nrlwps--;
 		l->l_stat = LSSTOP;
 		mutex_exit(&p->p_smutex);
-		mi_switch(l, NULL);
+		mi_switch(l);
 		KERNEL_LOCK(l->l_biglocks, l);
 	} else
 		mutex_exit(&p->p_smutex);
+
+	/* Destroy all AIO works */
+	aio_exit(p);
 
 	/*
 	 * Drain all remaining references that procfs, ptrace and others may
@@ -258,7 +265,6 @@ exit1(struct lwp *l, int rv)
 #ifdef PGINPROF
 	vmsizmon();
 #endif
-	p->p_ru = pool_get(&rusage_pool, PR_WAITOK);
 	timers_free(p, TIMERS_ALL);
 #if defined(__HAVE_RAS)
 	ras_purgeall(p);
@@ -529,13 +535,9 @@ exit1(struct lwp *l, int rv)
 		mutex_exit(&proclist_mutex);
 	}
 
-	/*
-	 * Save final rusage info, adding in child rusage info and self
-	 * times.  It's OK to call caclru() unlocked here.
-	 */
-	*p->p_ru = p->p_stats->p_ru;
-	calcru(p, &p->p_ru->ru_utime, &p->p_ru->ru_stime, NULL, NULL);
-	ruadd(p->p_ru, &p->p_stats->p_cru);
+	/* Calculate the final rusage info.  */
+	calcru(p, &p->p_stats->p_ru.ru_utime, &p->p_stats->p_ru.ru_stime,
+	    NULL, NULL);
 
 	if (wakeinit)
 		cv_signal(&initproc->p_waitcv);
@@ -597,16 +599,7 @@ exit1(struct lwp *l, int rv)
 	KERNEL_UNLOCK_ALL(l, NULL);
 #endif
 
-	/*
-	 * Finally, call machine-dependent code to switch to a new
-	 * context (possibly the idle context).  Once we are no longer
-	 * using the dead lwp's stack, lwp_exit2() will be called.
-	 *
-	 * Note that cpu_exit() will end with a call equivalent to
-	 * cpu_switch(), finishing our execution (pun intended).
-	 */
-	uvmexp.swtch++;	/* XXXSMP unlocked */
-	cpu_exit(l);
+	lwp_exit_switchaway(l);
 }
 
 void
@@ -668,6 +661,45 @@ exit_lwps(struct lwp *l)
 }
 
 int
+do_sys_wait(struct lwp *l, int *pid, int *status, int options,
+    struct rusage *ru, int *was_zombie)
+{
+	struct proc	*child;
+	int		error;
+
+	mutex_enter(&proclist_lock);
+
+	error = find_stopped_child(l->l_proc, *pid, options, &child, status);
+
+	if (child == NULL) {
+		mutex_exit(&proclist_lock);
+		*pid = 0;
+		return error;
+	}
+
+	*pid = child->p_pid;
+
+	if (child->p_stat == SZOMB) {
+		/* proc_free() will release the proclist_lock. */
+		*was_zombie = 1;
+		if (options & WNOWAIT)
+			mutex_exit(&proclist_lock);
+		else {
+			KERNEL_LOCK(1, l);		/* XXXSMP */
+			proc_free(child, ru);
+			KERNEL_UNLOCK_ONE(l);		/* XXXSMP */
+		}
+	} else {
+		/* Child state must have been SSTOP. */
+		*was_zombie = 0;
+		mutex_exit(&proclist_lock);
+		*status = W_STOPCODE(*status);
+	}
+
+	return 0;
+}
+
+int
 sys_wait4(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_wait4_args /* {
@@ -676,55 +708,24 @@ sys_wait4(struct lwp *l, void *v, register_t *retval)
 		syscallarg(int)			options;
 		syscallarg(struct rusage *)	rusage;
 	} */ *uap = v;
-	struct proc	*child, *parent;
 	int		status, error;
+	int		was_zombie;
 	struct rusage	ru;
 
-	parent = l->l_proc;
+	error = do_sys_wait(l, &SCARG(uap, pid), &status, SCARG(uap, options),
+	    SCARG(uap, rusage) != NULL ? &ru : NULL, &was_zombie);
 
+	retval[0] = SCARG(uap, pid);
 	if (SCARG(uap, pid) == 0)
-		SCARG(uap, pid) = -parent->p_pgid;
-	if (SCARG(uap, options) & ~(WUNTRACED|WNOHANG|WALTSIG|WALLSIG))
-		return (EINVAL);
-
-	mutex_enter(&proclist_lock);
-
-	error = find_stopped_child(parent, SCARG(uap,pid), SCARG(uap,options),
-	    &child, &status);
-	if (error != 0) {
-		mutex_exit(&proclist_lock);
 		return error;
-	}
-	if (child == NULL) {
-		mutex_exit(&proclist_lock);
-		*retval = 0;
-		return 0;
-	}
 
-	retval[0] = child->p_pid;
+	if (SCARG(uap, rusage))
+		error = copyout(&ru, SCARG(uap, rusage), sizeof(ru));
 
-	if (P_ZOMBIE(child)) {
-		/* proc_free() will release the proclist_lock. */
-		proc_free(child, (SCARG(uap, rusage) == NULL ? NULL : &ru));
+	if (error == 0 && SCARG(uap, status))
+		error = copyout(&status, SCARG(uap, status), sizeof(status));
 
-		if (SCARG(uap, rusage))
-			error = copyout(&ru, SCARG(uap, rusage), sizeof(ru));
-		if (error == 0 && SCARG(uap, status))
-			error = copyout(&status, SCARG(uap, status),
-			    sizeof(status));
-
-		return error;
-	}
-
-	mutex_exit(&proclist_lock);
-
-	/* Child state must have been SSTOP. */
-	if (SCARG(uap, status)) {
-		status = W_STOPCODE(status);
-		return copyout(&status, SCARG(uap, status), sizeof(status));
-	}
-
-	return 0;
+	return error;
 }
 
 /*
@@ -734,7 +735,7 @@ sys_wait4(struct lwp *l, void *v, register_t *retval)
  * Must be called with the proclist_lock held, and may release
  * while waiting.
  */
-int
+static int
 find_stopped_child(struct proc *parent, pid_t pid, int options,
 		   struct proc **child_p, int *status_p)
 {
@@ -742,6 +743,15 @@ find_stopped_child(struct proc *parent, pid_t pid, int options,
 	int error;
 
 	KASSERT(mutex_owned(&proclist_lock));
+
+	if (options & ~(WUNTRACED|WNOHANG|WALTSIG|WALLSIG)
+	    && !(options & WOPTSCHECKED)) {
+		*child_p = NULL;
+		return EINVAL;
+	}
+
+	if (pid == 0 && !(options & WOPTSCHECKED))
+		pid = -parent->p_pgid;
 
 	for (;;) {
 		error = ECHILD;
@@ -815,8 +825,9 @@ find_stopped_child(struct proc *parent, pid_t pid, int options,
 
 		if (child != NULL || error != 0 ||
 		    ((options & WNOHANG) != 0 && dead == NULL)) {
-		    	if (child != NULL)
+		    	if (child != NULL) {
 			    	*status_p = child->p_xstat;
+			}
 			mutex_exit(&proclist_mutex);
 			*child_p = child;
 			return error;
@@ -830,8 +841,10 @@ find_stopped_child(struct proc *parent, pid_t pid, int options,
 		mutex_exit(&proclist_mutex);
 		mutex_enter(&proclist_lock);
 
-		if (error != 0)
+		if (error != 0) {
+			*child_p = NULL;
 			return error;
+		}
 	}
 }
 
@@ -841,12 +854,11 @@ find_stopped_child(struct proc *parent, pid_t pid, int options,
  *
  * *ru is returned to the caller, and must be freed by the caller.
  */
-void
-proc_free(struct proc *p, struct rusage *caller_ru)
+static void
+proc_free(struct proc *p, struct rusage *ru)
 {
 	struct plimit *plim;
 	struct pstats *pstats;
-	struct rusage *ru;
 	struct proc *parent;
 	struct lwp *l;
 	ksiginfo_t ksi;
@@ -859,9 +871,6 @@ proc_free(struct proc *p, struct rusage *caller_ru)
 	KASSERT(p->p_nzlwps == 1);
 	KASSERT(p->p_nrlwps == 0);
 	KASSERT(p->p_stat == SZOMB);
-
-	if (caller_ru != NULL)
-		memcpy(caller_ru, p->p_ru, sizeof(*caller_ru));
 
 	/*
 	 * If we got the child via ptrace(2) or procfs, and
@@ -901,8 +910,15 @@ proc_free(struct proc *p, struct rusage *caller_ru)
 	leavepgrp(p);
 
 	parent = p->p_pptr;
-	scheduler_wait_hook(parent, p);
-	ruadd(&parent->p_stats->p_cru, p->p_ru);
+	sched_proc_exit(parent, p);
+	/*
+	 * Add child times of exiting process onto its own times.
+	 * This cannot be done any earlier else it might get done twice.
+	 */
+	ruadd(&p->p_stats->p_ru, &p->p_stats->p_cru);
+	ruadd(&parent->p_stats->p_cru, &p->p_stats->p_ru);
+	if (ru != NULL)
+		*ru = p->p_stats->p_ru;
 	p->p_xstat = 0;
 
 	/*
@@ -922,8 +938,6 @@ proc_free(struct proc *p, struct rusage *caller_ru)
 	cred1 = p->p_cred;
 	uid = kauth_cred_getuid(cred1);
 	vp = p->p_textvp;
-	ru = p->p_ru;
-
 	l = LIST_FIRST(&p->p_lwps);
 
 	mutex_destroy(&p->p_rasmutex);
@@ -975,7 +989,6 @@ proc_free(struct proc *p, struct rusage *caller_ru)
 	 * Collect child u-areas.
 	 */
 	uvm_uarea_drain(false);
-	pool_put(&rusage_pool, ru);
 }
 
 /*

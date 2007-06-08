@@ -1,4 +1,4 @@
-/*	$NetBSD: sco_socket.c,v 1.6.2.1 2007/04/10 13:26:49 ad Exp $	*/
+/*	$NetBSD: sco_socket.c,v 1.6.2.2 2007/06/08 14:17:43 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sco_socket.c,v 1.6.2.1 2007/04/10 13:26:49 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sco_socket.c,v 1.6.2.2 2007/06/08 14:17:43 ad Exp $");
 
 /* load symbolic names */
 #ifdef BLUETOOTH_DEBUG
@@ -62,6 +62,7 @@ static void sco_connected(void *);
 static void sco_disconnected(void *, int);
 static void *sco_newconn(void *, struct sockaddr_bt *, struct sockaddr_bt *);
 static void sco_complete(void *, int);
+static void sco_linkmode(void *, int);
 static void sco_input(void *, struct mbuf *);
 
 static const struct btproto sco_proto = {
@@ -70,6 +71,7 @@ static const struct btproto sco_proto = {
 	sco_disconnected,
 	sco_newconn,
 	sco_complete,
+	sco_linkmode,
 	sco_input,
 };
 
@@ -344,6 +346,11 @@ sco_complete(void *arg, int num)
 		sbdroprecord(&so->so_snd);
 
 	sowwakeup(so);
+}
+
+static void
+sco_linkmode(void *arg, int mode)
+{
 }
 
 static void

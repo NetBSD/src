@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.107.2.6 2007/04/28 22:40:03 ad Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.107.2.7 2007/06/08 14:17:20 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.107.2.6 2007/04/28 22:40:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.107.2.7 2007/06/08 14:17:20 ad Exp $");
 
 #include "opt_kstack.h"
 #include "opt_maxuprc.h"
@@ -223,8 +223,6 @@ POOL_INIT(plimit_pool, sizeof(struct plimit), 0, 0, 0, "plimitpl",
     &pool_allocator_nointr, IPL_NONE);
 POOL_INIT(pstats_pool, sizeof(struct pstats), 0, 0, 0, "pstatspl",
     &pool_allocator_nointr, IPL_NONE);
-POOL_INIT(rusage_pool, sizeof(struct rusage), 0, 0, 0, "rusgepl",
-    &pool_allocator_nointr, IPL_NONE);
 POOL_INIT(session_pool, sizeof(struct session), 0, 0, 0, "sessionpl",
     &pool_allocator_nointr, IPL_NONE);
 
@@ -329,6 +327,7 @@ proc0_init(void)
 
 	p->p_nlwps = 1;
 	p->p_nrlwps = 1;
+	p->p_nlwpid = l->l_lid;
 	p->p_refcnt = 1;
 
 	pid_table[0].pt_proc = p;
@@ -357,10 +356,8 @@ proc0_init(void)
 #ifdef __HAVE_SYSCALL_INTERN
 	(*p->p_emul->e_syscall_intern)(p);
 #endif
-	strncpy(p->p_comm, "system", MAXCOMLEN);
-	strncpy(l->l_name, "swapper", MAXCOMLEN);
+	strlcpy(p->p_comm, "system", sizeof(p->p_comm));
 
-	l->l_mutex = &sched_mutex;
 	l->l_flag = LW_INMEM | LW_SYSTEM;
 	l->l_stat = LSONPROC;
 	l->l_ts = &turnstile0;
@@ -371,6 +368,7 @@ proc0_init(void)
 	l->l_usrpri = PRIBIO;
 	l->l_inheritedprio = MAXPRI;
 	SLIST_INIT(&l->l_pi_lenders);
+	l->l_name = __UNCONST("swapper");
 
 	callout_init(&l->l_tsleep_ch);
 	cv_init(&l->l_sigcv, "sigwait");

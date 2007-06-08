@@ -1,4 +1,4 @@
-# $NetBSD: majors,v 1.32.6.1 2007/04/10 13:26:33 ad Exp $
+# $NetBSD: majors,v 1.32.6.2 2007/06/08 14:17:13 ad Exp $
 #
 # Device majors for Machine-Independent drivers.
 #
@@ -30,4 +30,5 @@ device-major	lockstat	char 177		lockstat
 device-major	puffs		char 178		puffs
 device-major	srt		char 179		srt
 device-major	drm		char 180		drmbase
+device-major	bio		char 181		bio
 device-major	twa		char 187		twa

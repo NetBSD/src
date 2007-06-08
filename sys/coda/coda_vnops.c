@@ -6,7 +6,7 @@ mkdir
 rmdir
 symlink
 */
-/*	$NetBSD: coda_vnops.c,v 1.52.2.1 2007/04/05 21:57:43 ad Exp $	*/
+/*	$NetBSD: coda_vnops.c,v 1.52.2.2 2007/06/08 14:14:45 ad Exp $	*/
 
 /*
  *
@@ -54,7 +54,7 @@ symlink
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.52.2.1 2007/04/05 21:57:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.52.2.2 2007/06/08 14:14:45 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,6 +69,7 @@ __KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.52.2.1 2007/04/05 21:57:43 ad Exp $
 #include <sys/proc.h>
 #include <sys/select.h>
 #include <sys/user.h>
+#include <sys/vnode.h>
 #include <sys/kauth.h>
 
 #include <miscfs/genfs/genfs.h>
@@ -408,6 +409,8 @@ coda_rdwr(struct vnode *vp, struct uio *uiop, enum uio_rw rw, int ioflag,
      * pointer if we still have its <device, inode> pair.
      * Otherwise, we must do an internal open to derive the
      * pair.
+     * XXX Integrate this into a coherent strategy for container
+     * file acquisition.
      */
     if (cfvp == NULL) {
 	/*
@@ -416,18 +419,21 @@ coda_rdwr(struct vnode *vp, struct uio *uiop, enum uio_rw rw, int ioflag,
 	 * it's completely written.
 	 */
 	if (cp->c_inode != 0 && !(p && (p->p_acflag & ACORE))) {
+	    printf("coda_rdwr: grabbing container vnode, losing reference\n");
+	    /* Get locked and refed vnode. */
 	    error = coda_grab_vnode(cp->c_device, cp->c_inode, &cfvp);
 	    if (error) {
 		MARK_INT_FAIL(CODA_RDWR_STATS);
 		return(error);
 	    }
-	    /*
-	     * We get the vnode back locked in both Mach and
-	     * NetBSD.  Needs unlocked
+	    /* 
+	     * Drop lock. 
+	     * XXX Where is reference released.
 	     */
 	    VOP_UNLOCK(cfvp, 0);
 	}
 	else {
+	    printf("coda_rdwr: internal VOP_OPEN\n");
 	    opened_internally = 1;
 	    MARK_INT_GEN(CODA_OPEN_STATS);
 	    error = VOP_OPEN(vp, (rw == UIO_READ ? FREAD : FWRITE),
@@ -806,19 +812,19 @@ coda_fsync(void *v)
     return(error);
 }
 
+/*
+ * vp is locked on entry, and we must unlock it.
+ * XXX This routine is suspect and probably needs rewriting.
+ */
 int
 coda_inactive(void *v)
 {
-    /* XXX - at the moment, inactive doesn't look at cred, and doesn't
-       have a proc pointer.  Oops. */
 /* true args */
     struct vop_inactive_args *ap = v;
     struct vnode *vp = ap->a_vp;
     struct cnode *cp = VTOC(vp);
     kauth_cred_t cred __attribute__((unused)) = NULL;
-    struct lwp *l __attribute__((unused)) = curlwp;
-/* upcall decl */
-/* locals */
+    struct lwp *l __attribute__((unused)) = ap->a_l;
 
     /* We don't need to send inactive to venus - DCS */
     MARK_ENTRY(CODA_INACTIVE_STATS);
@@ -849,22 +855,21 @@ coda_inactive(void *v)
     }
 
     if (IS_UNMOUNTING(cp)) {
-#ifdef	DEBUG
-	printf("coda_inactive: IS_UNMOUNTING use %d: vp %p, cp %p\n", vp->v_usecount, vp, cp);
+	/* XXX Do we need to VOP_CLOSE container vnodes? */
+	if (vp->v_usecount > 0)
+	    printf("coda_inactive: IS_UNMOUNTING %p usecount %d\n",
+		   vp, vp->v_usecount);
 	if (cp->c_ovp != NULL)
-	    printf("coda_inactive: cp->ovp != NULL use %d: vp %p, cp %p\n",
-	    	   vp->v_usecount, vp, cp);
-#endif
-	lockmgr(&vp->v_lock, LK_RELEASE, &vp->v_interlock);
+	    printf("coda_inactive: %p ovp != NULL\n", vp);
+	VOP_UNLOCK(vp, 0);
     } else {
-#ifdef OLD_DIAGNOSTIC
-	if (CTOV(cp)->v_usecount) {
-	    panic("coda_inactive: nonzero reference count");
+        /* Sanity checks that perhaps should be panic. */
+	if (vp->v_usecount) {
+	    printf("coda_inactive: %p usecount %d\n", vp, vp->v_usecount);
 	}
 	if (cp->c_ovp != NULL) {
-	    panic("coda_inactive:  cp->ovp != NULL");
+	    printf("coda_inactive: %p ovp != NULL\n", vp);
 	}
-#endif
 	VOP_UNLOCK(vp, 0);
 	vgone(vp);
     }
@@ -874,11 +879,8 @@ coda_inactive(void *v)
 }
 
 /*
- * Remote file system operations having to do with directory manipulation.
- */
-
-/*
- * It appears that in NetBSD, lookup is supposed to return the vnode locked
+ * Coda does not use the normal namecache, but a private version.
+ * Consider how to use the standard facility instead.
  */
 int
 coda_lookup(void *v)
@@ -1933,6 +1935,14 @@ make_coda_node(CodaFid *fid, struct mount *vfsp, short type)
     return cp;
 }
 
+/*
+ * coda_getpages may be called on a vnode which has not been opened,
+ * e.g. to fault in pages to execute a program.  In that case, we must
+ * open the file to get the container.  The vnode may or may not be
+ * locked, and we must leave it in the same state.
+ * XXX The protocol requires v_uobj.vmobjlock to be
+ * held by caller, but this isn't documented in vnodeops(9) or vnode_if.src.
+ */
 int
 coda_getpages(void *v)
 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_extern.h,v 1.88.2.1 2007/03/13 17:51:23 ad Exp $	*/
+/*	$NetBSD: lfs_extern.h,v 1.88.2.2 2007/06/08 14:18:17 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -89,7 +89,8 @@ MALLOC_DECLARE(M_SEGMENT);
 #define LFS_STATS	 6
 #define LFS_DO_RFW	 7
 #define LFS_DEBUGLOG	 8
-#define LFS_MAXID	 9
+#define LFS_IGNORE_LAZY_SYNC	9
+#define LFS_MAXID	 10
 
 struct fid;
 struct mount;

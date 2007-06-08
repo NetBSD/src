@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.110.2.5 2007/04/10 13:26:39 ad Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.110.2.6 2007/06/08 14:17:19 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.110.2.5 2007/04/10 13:26:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.110.2.6 2007/06/08 14:17:19 ad Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_ddb.h"
@@ -644,10 +644,11 @@ lockmgr(volatile struct lock *lkp, u_int flags,
 	case LK_RELEASE:
 		if (lkp->lk_exclusivecount != 0) {
 			if (WEHOLDIT(lkp, pid, lid, cpu_num) == 0) {
-				lockpanic(lkp, "lockmgr: pid %d, not "
-				    "exclusive lock holder %d "
-				    "unlocking", pid,
-				    lkp->lk_lockholder);
+				lockpanic(lkp, "lockmgr: pid %d.%d, not "
+				    "exclusive lock holder %d.%d "
+				    "unlocking", pid, lid,
+				    lkp->lk_lockholder,
+				    lkp->lk_locklwp);
 			}
 			if (lkp->lk_exclusivecount == lkp->lk_recurselevel)
 				lkp->lk_recurselevel = 0;
@@ -763,8 +764,8 @@ assert_sleepable(struct simplelock *interlock, const char *msg)
 {
 
 	LOCKDEBUG_BARRIER(&kernel_lock, 1);
-	if (curlwp == NULL) {
-		panic("assert_sleepable: NULL curlwp");
+	if (CURCPU_IDLE_P()) {
+		panic("assert_sleepable: idle");
 	}
 }
 #endif

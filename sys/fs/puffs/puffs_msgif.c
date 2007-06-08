@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.c,v 1.19.2.2 2007/04/10 13:26:35 ad Exp $	*/
+/*	$NetBSD: puffs_msgif.c,v 1.19.2.3 2007/06/08 14:15:00 ad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.19.2.2 2007/04/10 13:26:35 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.19.2.3 2007/06/08 14:15:00 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/fstrans.h>
@@ -77,6 +77,7 @@ struct puffs_park {
 #define PARKFLAG_ONQUEUE1	0x04
 #define PARKFLAG_ONQUEUE2	0x08
 #define PARKFLAG_CALL		0x10
+#define PARKFLAG_WANTREPLY	0x20
 
 static struct pool_cache parkpc;
 static struct pool parkpool;
@@ -174,13 +175,12 @@ parkqdump(struct puffs_wq *q, int dumpall)
 	struct puffs_park *park;
 	int total = 0;
 
-	DPRINTF(("puffs waitqueue at %p, BEGIN\n", q));
 	TAILQ_FOREACH(park, q, park_entries) {
 		if (dumpall)
 			parkdump(park);
 		total++;
 	}
-	DPRINTF(("puffs waitqueue at %p, END.  %d total\n", q, total));
+	DPRINTF(("puffs waitqueue at %p dumped, %d total\n", q, total));
 
 }
 #endif /* PUFFSDEBUG */
@@ -204,6 +204,7 @@ puffs_reqtofaf(struct puffs_park *park)
 
 	park->park_preq = newpreq;
 	park->park_preq->preq_opclass |= PUFFSOPFLAG_FAF;
+	park->park_flags &= ~PARKFLAG_WANTREPLY;
 }
 
 
@@ -211,8 +212,7 @@ puffs_reqtofaf(struct puffs_park *park)
  * kernel-user-kernel waitqueues
  */
 
-static int touser(struct puffs_mount *, struct puffs_park *, uint64_t,
-		  struct vnode *, struct vnode *);
+static int touser(struct puffs_mount *, struct puffs_park *, uint64_t);
 
 uint64_t
 puffs_getreqid(struct puffs_mount *pmp)
@@ -241,7 +241,7 @@ puffs_vfstouser(struct puffs_mount *pmp, int optype, void *kbuf, size_t buflen)
 	park->park_maxlen = park->park_copylen = buflen;
 	park->park_flags = 0;
 
-	return touser(pmp, park, puffs_getreqid(pmp), NULL, NULL);
+	return touser(pmp, park, puffs_getreqid(pmp));
 }
 
 void
@@ -264,7 +264,7 @@ puffs_suspendtouser(struct puffs_mount *pmp, int status)
 	    = sizeof(struct puffs_vfsreq_suspend);
 	park->park_flags = 0;
 
-	(void)touser(pmp, park, 0, NULL, NULL);
+	(void)touser(pmp, park, 0);
 }
 
 /*
@@ -272,10 +272,14 @@ puffs_suspendtouser(struct puffs_mount *pmp, int status)
  */
 int
 puffs_vntouser(struct puffs_mount *pmp, int optype,
-	void *kbuf, size_t buflen, size_t maxdelta, void *cookie,
-	struct vnode *vp1, struct vnode *vp2)
+	void *kbuf, size_t buflen, size_t maxdelta,
+	struct vnode *vp_opc, struct vnode *vp_aux)
 {
 	struct puffs_park *park;
+	struct puffs_req *preq;
+	void *cookie = VPTOPNC(vp_opc);
+	struct puffs_node *pnode;
+	int rv;
 
 	park = puffs_park_alloc(1);
 	park->park_preq = kbuf;
@@ -288,7 +292,37 @@ puffs_vntouser(struct puffs_mount *pmp, int optype,
 	park->park_maxlen = buflen + maxdelta;
 	park->park_flags = 0;
 
-	return touser(pmp, park, puffs_getreqid(pmp), vp1, vp2);
+	rv = touser(pmp, park, puffs_getreqid(pmp));
+
+	/*
+	 * Check if the user server requests that inactive be called
+	 * when the time is right.
+	 */
+	preq = park->park_preq;
+	if (preq->preq_setbacks & PUFFS_SETBACK_INACT_N1) {
+		pnode = vp_opc->v_data;
+		pnode->pn_stat |= PNODE_DOINACT;
+	}
+	if (preq->preq_setbacks & PUFFS_SETBACK_INACT_N2) {
+		/* if no vp_aux, just ignore */
+		if (vp_aux) {
+			pnode = vp_aux->v_data;
+			pnode->pn_stat |= PNODE_DOINACT;
+		}
+	}
+	if (preq->preq_setbacks & PUFFS_SETBACK_NOREF_N1) {
+		pnode = vp_opc->v_data;
+		pnode->pn_stat |= PNODE_NOREFS;
+	}
+	if (preq->preq_setbacks & PUFFS_SETBACK_NOREF_N2) {
+		/* if no vp_aux, just ignore */
+		if (vp_aux) {
+			pnode = vp_aux->v_data;
+			pnode->pn_stat |= PNODE_NOREFS;
+		}
+	}
+
+	return rv;
 }
 
 /*
@@ -296,10 +330,11 @@ puffs_vntouser(struct puffs_mount *pmp, int optype,
  */
 int
 puffs_vntouser_req(struct puffs_mount *pmp, int optype,
-	void *kbuf, size_t buflen, size_t maxdelta, void *cookie,
-	uint64_t reqid, struct vnode *vp1, struct vnode *vp2)
+	void *kbuf, size_t buflen, size_t maxdelta,
+	uint64_t reqid, struct vnode *vp_opc, struct vnode *vp_aux)
 {
 	struct puffs_park *park;
+	void *cookie = VPTOPNC(vp_opc);
 
 	park = puffs_park_alloc(1);
 	park->park_preq = kbuf;
@@ -312,16 +347,17 @@ puffs_vntouser_req(struct puffs_mount *pmp, int optype,
 	park->park_maxlen = buflen + maxdelta;
 	park->park_flags = 0;
 
-	return touser(pmp, park, reqid, vp1, vp2);
+	return touser(pmp, park, reqid);
 }
 
 void
 puffs_vntouser_call(struct puffs_mount *pmp, int optype,
-	void *kbuf, size_t buflen, size_t maxdelta, void *cookie,
+	void *kbuf, size_t buflen, size_t maxdelta,
 	parkdone_fn donefn, void *donearg,
-	struct vnode *vp1, struct vnode *vp2)
+	struct vnode *vp_opc, struct vnode *vp_aux)
 {
 	struct puffs_park *park;
+	void *cookie = VPTOPNC(vp_opc);
 
 	park = puffs_park_alloc(1);
 	park->park_preq = kbuf;
@@ -336,7 +372,7 @@ puffs_vntouser_call(struct puffs_mount *pmp, int optype,
 	park->park_donearg = donearg;
 	park->park_flags = PARKFLAG_CALL;
 
-	(void) touser(pmp, park, puffs_getreqid(pmp), vp1, vp2);
+	(void) touser(pmp, park, puffs_getreqid(pmp));
 }
 
 /*
@@ -346,9 +382,10 @@ puffs_vntouser_call(struct puffs_mount *pmp, int optype,
  */
 void
 puffs_vntouser_faf(struct puffs_mount *pmp, int optype,
-	void *kbuf, size_t buflen, void *cookie)
+	void *kbuf, size_t buflen, struct vnode *vp_opc)
 {
 	struct puffs_park *park;
+	void *cookie = VPTOPNC(vp_opc);
 
 	/* XXX: is it allowable to sleep here? */
 	park = puffs_park_alloc(0);
@@ -364,7 +401,7 @@ puffs_vntouser_faf(struct puffs_mount *pmp, int optype,
 	park->park_maxlen = park->park_copylen = buflen;
 	park->park_flags = 0;
 
-	(void)touser(pmp, park, 0, NULL, NULL);
+	(void)touser(pmp, park, 0);
 }
 
 void
@@ -380,7 +417,7 @@ puffs_cacheop(struct puffs_mount *pmp, struct puffs_park *park,
 	park->park_maxlen = park->park_copylen = pcilen;
 	park->park_flags = 0;
 
-	(void)touser(pmp, park, 0, NULL, NULL); 
+	(void)touser(pmp, park, 0); 
 }
 
 /*
@@ -394,8 +431,7 @@ puffs_cacheop(struct puffs_mount *pmp, struct puffs_park *park,
  * there's a slight ugly-factor also, but let's not worry about that.
  */
 static int
-touser(struct puffs_mount *pmp, struct puffs_park *park, uint64_t reqid,
-	struct vnode *vp1, struct vnode *vp2)
+touser(struct puffs_mount *pmp, struct puffs_park *park, uint64_t reqid)
 {
 	struct lwp *l = curlwp;
 	struct mount *mp;
@@ -407,6 +443,9 @@ touser(struct puffs_mount *pmp, struct puffs_park *park, uint64_t reqid,
 	preq->preq_id = park->park_id = reqid;
 	preq->preq_buflen = ALIGN(park->park_maxlen);
 
+	if (PUFFSOP_WANTREPLY(preq->preq_opclass))
+		park->park_flags |= PARKFLAG_WANTREPLY;
+
 	/*
 	 * To support PCATCH, yet another movie: check if there are signals
 	 * pending and we are issueing a non-FAF.  If so, return an error
@@ -414,7 +453,7 @@ touser(struct puffs_mount *pmp, struct puffs_park *park, uint64_t reqid,
 	 * it to a FAF, fire off to the file server and return an error.
 	 * Yes, this is bordering disgusting.  Barfbags are on me.
 	 */
-	if (PUFFSOP_WANTREPLY(preq->preq_opclass)
+	if ((park->park_flags & PARKFLAG_WANTREPLY)
 	   && (park->park_flags & PARKFLAG_CALL) == 0
 	   && (l->l_flag & LW_PENDSIG) != 0 && sigispending(l, 0)) {
 		if (PUFFSOP_OPCLASS(preq->preq_opclass) == PUFFSOP_VN
@@ -473,24 +512,9 @@ touser(struct puffs_mount *pmp, struct puffs_park *park, uint64_t reqid,
 
 	TAILQ_INSERT_TAIL(&pmp->pmp_req_touser, park, park_entries);
 	park->park_flags |= PARKFLAG_ONQUEUE1;
-	pmp->pmp_req_waiters++;
+	puffs_mp_reference(pmp);
+	pmp->pmp_req_touser_count++;
 	mutex_exit(&pmp->pmp_lock);
-
-#if 0
-	/*
-	 * Don't do unlock-relock dance yet.  There are a couple of
-	 * unsolved issues with it.  If we don't unlock, we can have
-	 * processes wanting vn_lock in case userspace hangs.  But
-	 * that can be "solved" by killing the userspace process.  It
-	 * would of course be nicer to have antilocking in the userspace
-	 * interface protocol itself.. your patience will be rewarded.
-	 */
-	/* unlock */
-	if (vp2)
-		VOP_UNLOCK(vp2, 0);
-	if (vp1)
-		VOP_UNLOCK(vp1, 0);
-#endif
 
 	DPRINTF(("touser: req %" PRIu64 ", preq: %p, park: %p, "
 	    "c/t: 0x%x/0x%x, f: 0x%x\n", preq->preq_id, preq, park,
@@ -499,7 +523,7 @@ touser(struct puffs_mount *pmp, struct puffs_park *park, uint64_t reqid,
 	cv_broadcast(&pmp->pmp_req_waiter_cv);
 	selnotify(pmp->pmp_sel, 0);
 
-	if (PUFFSOP_WANTREPLY(preq->preq_opclass)
+	if ((park->park_flags & PARKFLAG_WANTREPLY)
 	    && (park->park_flags & PARKFLAG_CALL) == 0) {
 		int error;
 
@@ -525,10 +549,12 @@ touser(struct puffs_mount *pmp, struct puffs_park *park, uint64_t reqid,
 
 				mutex_enter(&pmp->pmp_lock);
 				mutex_enter(&park->park_mtx);
-				if (park->park_flags & PARKFLAG_ONQUEUE1)
+				if (park->park_flags & PARKFLAG_ONQUEUE1) {
 					TAILQ_REMOVE(&pmp->pmp_req_touser,
 					    park, park_entries);
-				park->park_flags &= ~PARKFLAG_ONQUEUE1;
+					pmp->pmp_req_touser_count--;
+					park->park_flags &= ~PARKFLAG_ONQUEUE1;
+				}
 				if ((park->park_flags & PARKFLAG_ONQUEUE2) == 0)
 					puffs_park_release(park, 0);
 				else
@@ -559,19 +585,8 @@ touser(struct puffs_mount *pmp, struct puffs_park *park, uint64_t reqid,
 		mutex_exit(&park->park_mtx);
 	}
 
-#if 0
-	/* relock */
-	if (vp1)
-		KASSERT(vn_lock(vp1, LK_EXCLUSIVE | LK_RETRY) == 0);
-	if (vp2)
-		KASSERT(vn_lock(vp2, LK_EXCLUSIVE | LK_RETRY) == 0);
-#endif
-
 	mutex_enter(&pmp->pmp_lock);
-	if (--pmp->pmp_req_waiters == 0) {
-		KASSERT(cv_has_waiters(&pmp->pmp_req_waitersink_cv) <= 1);
-		cv_signal(&pmp->pmp_req_waitersink_cv);
-	}
+	puffs_mp_release(pmp);
 	mutex_exit(&pmp->pmp_lock);
 
 	return rv;
@@ -644,6 +659,8 @@ puffs_getop(struct puffs_mount *pmp, struct puffs_reqh_get *phg, int nonblock)
 		TAILQ_REMOVE(&pmp->pmp_req_touser, park, park_entries);
 		KASSERT(park->park_flags & PARKFLAG_ONQUEUE1);
 		park->park_flags &= ~PARKFLAG_ONQUEUE1;
+		pmp->pmp_req_touser_count--;
+		KASSERT(pmp->pmp_req_touser_count >= 0);
 		mutex_exit(&pmp->pmp_lock);
 
 		DPRINTF(("puffsgetop: get op %" PRIu64 " (%d.), from %p "
@@ -659,12 +676,19 @@ puffs_getop(struct puffs_mount *pmp, struct puffs_reqh_get *phg, int nonblock)
 			 * to take locks in the correct order.
 			 */
 			mutex_exit(&park->park_mtx);
+
+			/*
+			 * XXX: ONQUEUE1 | ONQUEUE2 invariant doesn't
+			 * hold here
+			 */
+
 			mutex_enter(&pmp->pmp_lock);
 			mutex_enter(&park->park_mtx);
 			if ((park->park_flags & PARKFLAG_WAITERGONE) == 0) {
 				 TAILQ_INSERT_HEAD(&pmp->pmp_req_touser, park,
 				     park_entries);
 				 park->park_flags |= PARKFLAG_ONQUEUE1;
+				 pmp->pmp_req_touser_count++;
 			}
 
 			if (donesome)
@@ -676,8 +700,10 @@ puffs_getop(struct puffs_mount *pmp, struct puffs_reqh_get *phg, int nonblock)
 		phg->phg_buflen -= preq->preq_buflen;
 		donesome++;
 
+		/* XXXfixme: taking this lock in the wrong order */
 		mutex_enter(&pmp->pmp_lock);
-		if (PUFFSOP_WANTREPLY(preq->preq_opclass)) {
+
+		if (park->park_flags & PARKFLAG_WANTREPLY) {
 			TAILQ_INSERT_TAIL(&pmp->pmp_req_replywait, park,
 			    park_entries);
 			park->park_flags |= PARKFLAG_ONQUEUE2;
@@ -689,7 +715,7 @@ puffs_getop(struct puffs_mount *pmp, struct puffs_reqh_get *phg, int nonblock)
 	}
 
  out:
-	phg->phg_more = pmp->pmp_req_waiters;
+	phg->phg_more = pmp->pmp_req_touser_count;
 	mutex_exit(&pmp->pmp_lock);
 
 	phg->phg_nops = donesome;
@@ -784,7 +810,7 @@ puffs_putop(struct puffs_mount *pmp, struct puffs_reqh_put *php)
 		donesome++;
 
  loopout:
-		if (error)
+		if (error && !wgone)
 			park->park_preq->preq_rv = error;
 
 		if (park->park_flags & PARKFLAG_CALL) {
@@ -798,6 +824,7 @@ puffs_putop(struct puffs_mount *pmp, struct puffs_reqh_put *php)
 
 			cv_signal(&park->park_cv);
 		}
+		park->park_flags |= PARKFLAG_DONE;
 		puffs_park_release(park, release);
 
 		mutex_enter(&pmp->pmp_lock);
@@ -822,7 +849,7 @@ puffs_putop(struct puffs_mount *pmp, struct puffs_reqh_put *php)
 void
 puffs_userdead(struct puffs_mount *pmp)
 {
-	struct puffs_park *park;
+	struct puffs_park *park, *park_next;
 
 	/*
 	 * Mark filesystem status as dying so that operations don't
@@ -831,50 +858,70 @@ puffs_userdead(struct puffs_mount *pmp)
 	pmp->pmp_status = PUFFSTAT_DYING;
 
 	/* signal waiters on REQUEST TO file server queue */
-	TAILQ_FOREACH(park, &pmp->pmp_req_touser, park_entries) {
+	for (park = TAILQ_FIRST(&pmp->pmp_req_touser); park; park = park_next) {
 		uint8_t opclass;
 
 		puffs_park_reference(park);
+		park_next = TAILQ_NEXT(park, park_entries);
 
 		KASSERT(park->park_flags & PARKFLAG_ONQUEUE1);
-
-		opclass = park->park_preq->preq_opclass;
-		park->park_preq->preq_rv = ENXIO;
 		TAILQ_REMOVE(&pmp->pmp_req_touser, park, park_entries);
 		park->park_flags &= ~PARKFLAG_ONQUEUE1;
+		pmp->pmp_req_touser_count--;
 
-		if (park->park_flags & PARKFLAG_CALL) {
-			park->park_done(park->park_preq, park->park_donearg);
-			puffs_park_release(park, 1);
-		} else if (!PUFFSOP_WANTREPLY(opclass)) {
-			free(park->park_preq, M_PUFFS);
-			puffs_park_release(park, 1);
-		} else {
-			park->park_preq->preq_rv = ENXIO;
-			cv_signal(&park->park_cv);
+		/*
+		 * If the waiter is gone, we may *NOT* access preq anymore.
+		 */
+		if (park->park_flags & PARKFLAG_WAITERGONE) {
+			KASSERT((park->park_flags & PARKFLAG_CALL) == 0);
+			KASSERT(park->park_flags & PARKFLAG_WANTREPLY);
 			puffs_park_release(park, 0);
+		} else {
+			opclass = park->park_preq->preq_opclass;
+			park->park_preq->preq_rv = ENXIO;
+
+			if (park->park_flags & PARKFLAG_CALL) {
+				park->park_done(park->park_preq,
+				    park->park_donearg);
+				puffs_park_release(park, 1);
+			} else if ((park->park_flags & PARKFLAG_WANTREPLY)==0) {
+				free(park->park_preq, M_PUFFS);
+				puffs_park_release(park, 1);
+			} else {
+				park->park_preq->preq_rv = ENXIO;
+				cv_signal(&park->park_cv);
+				puffs_park_release(park, 0);
+			}
 		}
 	}
 
 	/* signal waiters on RESPONSE FROM file server queue */
-	TAILQ_FOREACH(park, &pmp->pmp_req_replywait, park_entries) {
+	for (park=TAILQ_FIRST(&pmp->pmp_req_replywait); park; park=park_next) {
 		puffs_park_reference(park);
+		park_next = TAILQ_NEXT(park, park_entries);
 
 		KASSERT(park->park_flags & PARKFLAG_ONQUEUE2);
+		KASSERT(park->park_flags & PARKFLAG_WANTREPLY);
 
 		TAILQ_REMOVE(&pmp->pmp_req_replywait, park, park_entries);
 		park->park_flags &= ~PARKFLAG_ONQUEUE2;
 
-		KASSERT(PUFFSOP_WANTREPLY(park->park_preq->preq_opclass));
-
-		park->park_preq->preq_rv = ENXIO;
-		if (park->park_flags & PARKFLAG_CALL) {
-			park->park_done(park->park_preq, park->park_donearg);
-			mutex_enter(&park->park_mtx);
-			puffs_park_release(park, 1);
-		} else {
-			cv_signal(&park->park_cv);
+		/*
+		 * If the waiter is gone, we may *NOT* access preq anymore.
+		 */
+		if (park->park_flags & PARKFLAG_WAITERGONE) {
+			KASSERT((park->park_flags & PARKFLAG_CALL) == 0);
 			puffs_park_release(park, 0);
+		} else {
+			park->park_preq->preq_rv = ENXIO;
+			if (park->park_flags & PARKFLAG_CALL) {
+				park->park_done(park->park_preq,
+				    park->park_donearg);
+				puffs_park_release(park, 1);
+			} else {
+				cv_signal(&park->park_cv);
+				puffs_park_release(park, 0);
+			}
 		}
 	}
 }

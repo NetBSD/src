@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.56.4.2 2007/04/05 21:32:52 ad Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.56.4.3 2007/06/08 14:18:20 ad Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.56.4.2 2007/04/05 21:32:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.56.4.3 2007/06/08 14:18:20 ad Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_ubc.h"
@@ -139,6 +139,7 @@ EVCNT_ATTACH_STATIC(ubc_evcnt_##name);
 
 UBC_EVCNT_DEFINE(wincachehit)
 UBC_EVCNT_DEFINE(wincachemiss)
+UBC_EVCNT_DEFINE(faultbusy)
 
 /*
  * ubc_init
@@ -513,7 +514,9 @@ again:
 		    PGO_NOTIMESTAMP;
 		int i;
 		KDASSERT(flags & UBC_WRITE);
+		KASSERT(umap->refcount == 1);
 
+		UBC_EVCNT_INCR(faultbusy);
 		if (umap->flags & UMAP_MAPPING_CACHED) {
 			umap->flags &= ~UMAP_MAPPING_CACHED;
 			pmap_remove(pmap_kernel(), va, va + ubc_winsize);
@@ -533,6 +536,8 @@ again:
 		}
 		pmap_update(pmap_kernel());
 		umap->flags |= UMAP_PAGES_LOCKED;
+	} else {
+		KASSERT((umap->flags & UMAP_PAGES_LOCKED) == 0);
 	}
 
 out:
@@ -569,6 +574,7 @@ ubc_release(void *va, int flags)
 		int i;
 		bool rv;
 
+		KASSERT((umap->flags & UMAP_MAPPING_CACHED) == 0);
 		if (zerolen) {
 			memset((char *)umapva + endoff, 0, zerolen);
 		}

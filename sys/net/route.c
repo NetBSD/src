@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.87.2.1 2007/03/13 16:52:00 ad Exp $	*/
+/*	$NetBSD: route.c,v 1.87.2.2 2007/06/08 14:17:37 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -97,10 +97,13 @@
  *	@(#)route.c	8.3 (Berkeley) 1/9/95
  */
 
+#include "opt_route.h"
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.87.2.1 2007/03/13 16:52:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.87.2.2 2007/06/08 14:17:37 ad Exp $");
 
 #include <sys/param.h>
+#include <sys/sysctl.h>
 #include <sys/systm.h>
 #include <sys/callout.h>
 #include <sys/proc.h>
@@ -120,6 +123,11 @@ __KERNEL_RCSID(0, "$NetBSD: route.c,v 1.87.2.1 2007/03/13 16:52:00 ad Exp $");
 #include <netinet/in.h>
 #include <netinet/in_var.h>
 
+#ifdef RTFLUSH_DEBUG
+#define	rtcache_debug() __predict_false(_rtcache_debug)
+#else /* RTFLUSH_DEBUG */
+#define	rtcache_debug() 0
+#endif /* RTFLUSH_DEBUG */
 
 struct	route_cb route_cb;
 struct	rtstat	rtstat;
@@ -135,9 +143,35 @@ POOL_INIT(rttimer_pool, sizeof(struct rttimer), 0, 0, 0, "rttmrpl", NULL,
 
 struct callout rt_timer_ch; /* callout for rt_timer_timer() */
 
+#ifdef RTFLUSH_DEBUG
+static int _rtcache_debug = 0;
+#endif /* RTFLUSH_DEBUG */
+
 static int rtdeletemsg(struct rtentry *);
 static int rtflushclone1(struct radix_node *, void *);
 static void rtflushclone(struct radix_node_head *, struct rtentry *);
+
+#ifdef RTFLUSH_DEBUG
+SYSCTL_SETUP(sysctl_net_rtcache_setup, "sysctl net.rtcache.debug setup")
+{
+	const struct sysctlnode *rnode;
+
+	/* XXX do not duplicate */
+	if (sysctl_createv(clog, 0, NULL, &rnode, CTLFLAG_PERMANENT,
+	    CTLTYPE_NODE, "net", NULL, NULL, 0, NULL, 0, CTL_NET, CTL_EOL) != 0)
+		return;
+	if (sysctl_createv(clog, 0, &rnode, &rnode, CTLFLAG_PERMANENT,
+	    CTLTYPE_NODE,
+	    "rtcache", SYSCTL_DESCR("Route cache related settings"),
+	    NULL, 0, NULL, 0, CTL_CREATE, CTL_EOL) != 0)
+		return;
+	if (sysctl_createv(clog, 0, &rnode, &rnode,
+	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE, CTLTYPE_INT,
+	    "debug", SYSCTL_DESCR("Debug route caches"),
+	    NULL, 0, &_rtcache_debug, 0, CTL_CREATE, CTL_EOL) != 0)
+		return;
+}
+#endif /* RTFLUSH_DEBUG */
 
 struct ifaddr *
 rt_get_ifa(struct rtentry *rt)
@@ -203,37 +237,55 @@ route_init(void)
 void
 rtflushall(int family)
 {
-	const struct domain *dom;
+	int s;
+	struct domain *dom;
+	struct route *ro;
 
-	if ((dom = pffinddomain(family)) != NULL && dom->dom_rtflushall != NULL)
-		(*dom->dom_rtflushall)();
+	if (rtcache_debug())
+		printf("%s: enter\n", __func__);
+
+	if ((dom = pffinddomain(family)) == NULL)
+		return;
+
+	s = splnet();
+	while ((ro = LIST_FIRST(&dom->dom_rtcache)) != NULL) {
+		KASSERT(ro->ro_rt != NULL);
+		rtcache_clear(ro);
+	}
+	splx(s);
 }
 
 void
 rtflush(struct route *ro)
 {
-	const struct domain *dom;
-
 	KASSERT(ro->ro_rt != NULL);
+	KASSERT(rtcache_getdst(ro) != NULL);
 
 	RTFREE(ro->ro_rt);
 	ro->ro_rt = NULL;
 
-	if ((dom = pffinddomain(rtcache_getdst(ro)->sa_family)) != NULL &&
-	    dom->dom_rtflush != NULL)
-		(*dom->dom_rtflush)(ro);
+	LIST_REMOVE(ro, ro_rtcache_next);
+ 
+#if 0
+	if (rtcache_debug()) {
+		printf("%s: flushing %s\n", __func__,
+		    inet_ntoa((satocsin(rtcache_getdst(ro)))->sin_addr));
+	}
+#endif
 }
 
 void
 rtcache(struct route *ro)
 {
-	const struct domain *dom;
+	struct domain *dom;
 
 	KASSERT(ro->ro_rt != NULL);
+	KASSERT(rtcache_getdst(ro) != NULL);
 
-	if ((dom = pffinddomain(rtcache_getdst(ro)->sa_family)) != NULL &&
-	    dom->dom_rtcache != NULL)
-		(*dom->dom_rtcache)(ro);
+	if ((dom = pffinddomain(rtcache_getdst(ro)->sa_family)) == NULL)
+		return;
+
+	LIST_INSERT_HEAD(&dom->dom_rtcache, ro, ro_rtcache_next);
 }
 
 /*
@@ -248,7 +300,8 @@ rtalloc(struct route *ro)
 			return;
 		rtflush(ro);
 	}
-	if ((ro->ro_rt = rtalloc1(rtcache_getdst(ro), 1)) == NULL)
+	if (rtcache_getdst(ro) == NULL ||
+	    (ro->ro_rt = rtalloc1(rtcache_getdst(ro), 1)) == NULL)
 		return;
 	rtcache(ro);
 }
@@ -1109,6 +1162,8 @@ _rtcache_init(struct route *ro, int flag)
 	}
 #endif
 
+	if (rtcache_getdst(ro) == NULL)
+		return;
 	ro->ro_rt = rtalloc1(rtcache_getdst(ro), flag);
 	if (ro->ro_rt != NULL) {
 #ifdef RTCACHE_DEBUG
@@ -1135,6 +1190,12 @@ rtcache_init_noclone_debug(const char *caller, struct route *ro)
 	_rtcache_init_debug(caller, ro, 0);
 }
 
+void
+rtcache_update(struct route *ro, int clone)
+{
+	rtcache_clear(ro);
+	_rtcache_init_debug(__func__, ro, clone);
+}
 #else
 void
 rtcache_init(struct route *ro)
@@ -1147,16 +1208,24 @@ rtcache_init_noclone(struct route *ro)
 {
 	_rtcache_init(ro, 0);
 }
+
+void
+rtcache_update(struct route *ro, int clone)
+{
+	rtcache_clear(ro);
+	_rtcache_init(ro, clone);
+}
 #endif
 
 #ifdef RTCACHE_DEBUG
 void
-rtcache_copy_debug(const char *caller, struct route *new_ro, const struct route *old_ro, size_t new_len)
+rtcache_copy_debug(const char *caller, struct route *new_ro, const struct route *old_ro)
 #else
 void
-rtcache_copy(struct route *new_ro, const struct route *old_ro, size_t new_len)
+rtcache_copy(struct route *new_ro, const struct route *old_ro)
 #endif
 {
+	/* XXX i doubt this DTRT any longer --dyoung */
 #ifdef RTCACHE_DEBUG
 	size_t i;
 
@@ -1166,15 +1235,9 @@ rtcache_copy(struct route *new_ro, const struct route *old_ro, size_t new_len)
 	}
 #endif
 
-	memset(new_ro, 0, new_len);
-#if 0
-	if (old_ro->ro_sa != NULL)
-		new_ro->ro_sa = sockaddr_dup(old_ro->ro_sa);
-#else
-	if (old_ro->ro_dst.sa_len + offsetof(struct route, ro_dst) > new_len)
-		panic("rtcache_copy: dst address will overflow new route");
-	memcpy(&new_ro->ro_dst, &old_ro->ro_dst, old_ro->ro_dst.sa_len);
-#endif
+	if (rtcache_getdst(old_ro) == NULL ||
+	    rtcache_setdst(new_ro, rtcache_getdst(old_ro)) != 0)
+		return;
 	new_ro->ro_rt = old_ro->ro_rt;
 	if (new_ro->ro_rt != NULL) {
 #ifdef RTCACHE_DEBUG
@@ -1189,7 +1252,7 @@ rtcache_copy(struct route *new_ro, const struct route *old_ro, size_t new_len)
 	}
 }
 
-static void
+void
 rtcache_clear(struct route *ro)
 {
 #ifdef RTCACHE_DEBUG
@@ -1216,21 +1279,54 @@ rtcache_clear(struct route *ro)
 	ro->ro_rt = NULL;
 }
 
+struct rtentry *
+rtcache_lookup2(struct route *ro, const struct sockaddr *dst, int clone,
+    int *hitp)
+{
+	const struct sockaddr *odst;
+
+	odst = rtcache_getdst(ro);
+
+	if (odst == NULL)
+		;
+	else if (sockaddr_cmp(odst, dst) != 0)
+		rtcache_free(ro);
+	else if (rtcache_down(ro))
+		rtcache_clear(ro);
+
+	if (ro->ro_rt == NULL) {
+		*hitp = 0;
+		rtcache_setdst(ro, dst);
+		_rtcache_init(ro, clone);
+	} else
+		*hitp = 1;
+
+	return ro->ro_rt;
+}
+
 void
 rtcache_free(struct route *ro)
 {
 	rtcache_clear(ro);
-#if 0
 	if (ro->ro_sa != NULL) {
 		sockaddr_free(ro->ro_sa);
 		ro->ro_sa = NULL;
 	}
-#endif
 }
 
-void
-rtcache_update(struct route *ro)
+int
+rtcache_setdst(struct route *ro, const struct sockaddr *sa)
 {
-	rtcache_clear(ro);
-	rtcache_init(ro);
+	KASSERT(sa != NULL);
+
+	if (ro->ro_sa != NULL && ro->ro_sa->sa_family == sa->sa_family) {
+		rtcache_clear(ro);
+		sockaddr_copy(ro->ro_sa, sa);
+		return 0;
+	} else if (ro->ro_sa != NULL)
+		rtcache_free(ro);	/* free ro_sa, wrong family */
+
+	if ((ro->ro_sa = sockaddr_dup(sa, PR_NOWAIT)) == NULL)
+		return ENOMEM;
+	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_kthread.c,v 1.16.6.4 2007/05/13 17:36:34 ad Exp $	*/
+/*	$NetBSD: kern_kthread.c,v 1.16.6.5 2007/06/08 14:17:18 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2007 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_kthread.c,v 1.16.6.4 2007/05/13 17:36:34 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_kthread.c,v 1.16.6.5 2007/06/08 14:17:18 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_kthread.c,v 1.16.6.4 2007/05/13 17:36:34 ad Exp
 #include <sys/kthread.h>
 #include <sys/proc.h>
 #include <sys/sched.h>
+#include <sys/kmem.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -81,6 +82,11 @@ kthread_create(pri_t pri, int flag, struct cpu_info *ci,
 	}
 	uvm_lwp_hold(l);
 	if (fmt != NULL) {
+		l->l_name = kmem_alloc(MAXCOMLEN, KM_SLEEP);
+		if (l->l_name == NULL) {
+			lwp_exit(l);
+			return ENOMEM;
+		}
 		va_start(ap, fmt);
 		vsnprintf(l->l_name, MAXCOMLEN, fmt, ap);
 		va_end(ap);
@@ -118,7 +124,7 @@ kthread_create(pri_t pri, int flag, struct cpu_info *ci,
 	 */
 	if ((flag & KTHREAD_IDLE) == 0) {
 		l->l_stat = LSRUN;
-		setrunqueue(l);
+		sched_enqueue(l, false);
 	}
 
 	/*

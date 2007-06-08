@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.93 2007/03/04 06:03:41 christos Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.93.2.1 2007/06/08 14:18:13 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -162,7 +162,7 @@ do {									\
 					 * hint from sosend to lower layer;
 					 * more data coming
 					 */
-#define	SS_ISAPIPE 		0x800	/* socket is implementing a pipe */
+#define	SS_ISAPIPE 		0x1000	/* socket is implementing a pipe */
 
 
 /*

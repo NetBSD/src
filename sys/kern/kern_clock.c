@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.106.6.1 2007/03/21 20:10:20 ad Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.106.6.2 2007/06/08 14:17:16 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.106.6.1 2007/03/21 20:10:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.106.6.2 2007/06/08 14:17:16 ad Exp $");
 
 #include "opt_ntp.h"
 #include "opt_multiprocessor.h"
@@ -93,9 +93,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.106.6.1 2007/03/21 20:10:20 ad Exp 
 #include <sys/timex.h>
 #include <sys/sched.h>
 #include <sys/time.h>
-#ifdef __HAVE_TIMECOUNTER
 #include <sys/timetc.h>
-#endif
 
 #include <machine/cpu.h>
 #include <machine/intr.h>
@@ -404,13 +402,12 @@ initclocks(void)
 	cpu_initclocks();
 
 	/*
-	 * Compute profhz/stathz/rrticks, and fix profhz if needed.
+	 * Compute profhz and stathz, fix profhz if needed.
 	 */
 	i = stathz ? stathz : hz;
 	if (profhz == 0)
 		profhz = i;
 	psratio = profhz / i;
-	rrticks = hz / 10;
 	if (schedhz == 0) {
 		/* 16Hz is best */
 		statscheddiv = i / 16;
@@ -513,7 +510,7 @@ hardclock(struct clockframe *frame)
 #endif /* __HAVE_TIMECOUNTER */
 
 	l = curlwp;
-	if (l) {
+	if (!CURCPU_IDLE_P()) {
 		p = l->l_proc;
 		/*
 		 * Run current process's virtual and profile time, as needed.
@@ -533,8 +530,8 @@ hardclock(struct clockframe *frame)
 	 */
 	if (stathz == 0)
 		statclock(frame);
-	if ((--ci->ci_schedstate.spc_rrticks) <= 0)
-		roundrobin(ci);
+	if ((--ci->ci_schedstate.spc_ticks) <= 0)
+		sched_tick(ci);
 
 #if defined(MULTIPROCESSOR)
 	/*
@@ -1128,6 +1125,16 @@ proftick(struct clockframe *frame)
 }
 #endif
 
+void
+schedclock(struct lwp *l)
+{
+
+	if ((l->l_flag & LW_IDLE) != 0)
+		return;
+
+	sched_schedclock(l);
+}
+
 /*
  * Statistics clock.  Grab profile sample, and if divider reaches 0,
  * do process and kernel statistics.
@@ -1158,11 +1165,17 @@ statclock(struct clockframe *frame)
 		}
 	}
 	l = curlwp;
-	if ((p = (l ? l->l_proc : NULL)) != NULL)
+	if ((l->l_flag & LW_IDLE) != 0) {
+		/*
+		 * don't account idle lwps as swapper.
+		 */
+		p = NULL;
+	} else {
+		p = l->l_proc;
 		mutex_spin_enter(&p->p_stmutex);
-	if (CLKF_USERMODE(frame)) {
-		KASSERT(p != NULL);
+	}
 
+	if (CLKF_USERMODE(frame)) {
 		if ((p->p_stflag & PST_PROFIL) && profsrc == PROFSRC_CLOCK)
 			addupc_intr(l, CLKF_PC(frame));
 		if (--spc->spc_pscnt > 0) {
@@ -1194,8 +1207,10 @@ statclock(struct clockframe *frame)
 		}
 #endif
 #ifdef LWP_PC
-		if (p && profsrc == PROFSRC_CLOCK && (p->p_stflag & PST_PROFIL))
+		if (p != NULL && profsrc == PROFSRC_CLOCK &&
+		    (p->p_stflag & PST_PROFIL)) {
 			addupc_intr(l, LWP_PC(l));
+		}
 #endif
 		if (--spc->spc_pscnt > 0) {
 			if (p != NULL)
@@ -1215,30 +1230,33 @@ statclock(struct clockframe *frame)
 		 * in ``non-process'' (i.e., interrupt) work.
 		 */
 		if (CLKF_INTR(frame)) {
-			if (p != NULL)
+			if (p != NULL) {
 				p->p_iticks++;
+			}
 			spc->spc_cp_time[CP_INTR]++;
 		} else if (p != NULL) {
 			p->p_sticks++;
 			spc->spc_cp_time[CP_SYS]++;
-		} else
+		} else {
 			spc->spc_cp_time[CP_IDLE]++;
+		}
 	}
 	spc->spc_pscnt = psdiv;
 
 	if (p != NULL) {
-		++p->p_cpticks;
+		++l->l_cpticks;
 		mutex_spin_exit(&p->p_stmutex);
+	}
 
-		/*
-		 * If no separate schedclock is provided, call it here
-		 * at about 16 Hz.
-		 */
-		if (schedhz == 0)
-			if ((int)(--ci->ci_schedstate.spc_schedticks) <= 0) {
-				schedclock(l);
-				ci->ci_schedstate.spc_schedticks = statscheddiv;
-			}
+	/*
+	 * If no separate schedclock is provided, call it here
+	 * at about 16 Hz.
+	 */
+	if (schedhz == 0) {
+		if ((int)(--ci->ci_schedstate.spc_schedticks) <= 0) {
+			schedclock(l);
+			ci->ci_schedstate.spc_schedticks = statscheddiv;
+		}
 	}
 }
 
@@ -1639,5 +1657,11 @@ getmicrotime(struct timeval *tvp)
 	s = splclock();
 	*tvp = time;
 	splx(s);
+}
+
+u_int64_t
+tc_getfrequency(void)
+{
+	return hz;
 }
 #endif /* !__HAVE_TIMECOUNTER */

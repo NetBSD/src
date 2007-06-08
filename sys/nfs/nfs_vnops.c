@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.252.2.2 2007/04/05 21:57:52 ad Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.252.2.3 2007/06/08 14:18:07 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.252.2.2 2007/04/05 21:57:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.252.2.3 2007/06/08 14:18:07 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_nfs.h"
@@ -52,9 +52,11 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.252.2.2 2007/04/05 21:57:52 ad Exp $
 #include <sys/resourcevar.h>
 #include <sys/mount.h>
 #include <sys/buf.h>
+#include <sys/condvar.h>
 #include <sys/disk.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
+#include <sys/mutex.h>
 #include <sys/namei.h>
 #include <sys/vnode.h>
 #include <sys/dirent.h>
@@ -1261,8 +1263,9 @@ nfsmout:
 }
 
 struct nfs_writerpc_context {
-	struct simplelock nwc_slock;
-	volatile int nwc_mbufcount;
+	kmutex_t nwc_lock;
+	kcondvar_t nwc_cv;
+	int nwc_mbufcount;
 };
 
 /*
@@ -1277,11 +1280,11 @@ nfs_writerpc_extfree(struct mbuf *m, void *tbuf, size_t size, void *arg)
 	KASSERT(m != NULL);
 	KASSERT(ctx != NULL);
 	pool_cache_put(&mbpool_cache, m);
-	simple_lock(&ctx->nwc_slock);
+	mutex_enter(&ctx->nwc_lock);
 	if (--ctx->nwc_mbufcount == 0) {
-		wakeup(ctx);
+		cv_signal(&ctx->nwc_cv);
 	}
-	simple_unlock(&ctx->nwc_slock);
+	mutex_exit(&ctx->nwc_lock);
 }
 
 /*
@@ -1306,7 +1309,7 @@ nfs_writerpc(vp, uiop, iomode, pageprotected, stalewriteverfp)
 	int committed = NFSV3WRITE_FILESYNC;
 	struct nfsnode *np = VTONFS(vp);
 	struct nfs_writerpc_context ctx;
-	int s, byte_count;
+	int byte_count;
 	struct lwp *l = NULL;
 	size_t origresid;
 #ifndef NFS_V2_ONLY
@@ -1314,7 +1317,8 @@ nfs_writerpc(vp, uiop, iomode, pageprotected, stalewriteverfp)
 	int rlen, commit;
 #endif
 
-	simple_lock_init(&ctx.nwc_slock);
+	mutex_init(&ctx.nwc_lock, MUTEX_DRIVER, IPL_VM);
+	cv_init(&ctx.nwc_cv, "nfsmblk");
 	ctx.nwc_mbufcount = 1;
 
 	if (vp->v_mount->mnt_flag & MNT_RDONLY) {
@@ -1396,11 +1400,9 @@ retry:
 #endif
 			UIO_ADVANCE(uiop, len);
 			uiop->uio_offset += len;
-			s = splvm();
-			simple_lock(&ctx.nwc_slock);
+			mutex_enter(&ctx.nwc_lock);
 			ctx.nwc_mbufcount++;
-			simple_unlock(&ctx.nwc_slock);
-			splx(s);
+			mutex_exit(&ctx.nwc_lock);
 			nfs_zeropad(mb, 0, nfsm_padlen(len));
 		} else {
 			nfsm_uiotom(uiop, len);
@@ -1497,16 +1499,16 @@ nfsmout:
 		 * retransmitted mbufs can survive longer than rpc requests
 		 * themselves.
 		 */
-		s = splvm();
-		simple_lock(&ctx.nwc_slock);
+		mutex_enter(&ctx.nwc_lock);
 		ctx.nwc_mbufcount--;
 		while (ctx.nwc_mbufcount > 0) {
-			ltsleep(&ctx, PRIBIO, "nfsmblk", 0, &ctx.nwc_slock);
+			cv_wait(&ctx.nwc_cv, &ctx.nwc_lock);
 		}
-		simple_unlock(&ctx.nwc_slock);
-		splx(s);
+		mutex_exit(&ctx.nwc_lock);
 		uvm_lwp_rele(l);
 	}
+	mutex_destroy(&ctx.nwc_lock);
+	cv_destroy(&ctx.nwc_cv);
 	*iomode = committed;
 	if (error)
 		uiop->uio_resid = tsiz;

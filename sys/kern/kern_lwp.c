@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.61.2.10 2007/05/27 00:12:09 ad Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.61.2.11 2007/06/08 14:17:19 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -147,23 +147,25 @@
  *	a multiprocessor kernel, state transitions may cause the LWP's lock
  *	pointer to change.  On uniprocessor kernels, most scheduler and
  *	synchronisation objects such as sleep queues and LWPs are protected
- *	by only one mutex (sched_mutex).  In this case, LWPs' lock pointers
- *	will never change and will always reference sched_mutex.
+ *	by only one mutex (spc_mutex on single CPU).  In this case, LWPs' lock
+ *	pointers will never change and will always reference spc_mutex.
+ *	Please note that in a multiprocessor kernel each CPU has own spc_mutex.
+ *	(spc_mutex here refers to l->l_cpu->ci_schedstate.spc_mutex).
  *
  *	Manipulation of the general lock is not performed directly, but
  *	through calls to lwp_lock(), lwp_relock() and similar.
  *
  *	States and their associated locks:
  *
- *	LSIDL, LSZOMB
+ *	LSIDL, LSZOMB, LSONPROC:
  *
- *		Always covered by sched_mutex.
+ *		Always covered by spc_lwplock, which protects running LWPs.
+ *		This is a per-CPU lock.
  *
- *	LSONPROC, LSRUN:
+ *	LSRUN:
  *
- *		Always covered by sched_mutex, which protects the run queues
- *		and other miscellaneous items.  If the scheduler is changed
- *		to use per-CPU run queues, this may become a per-CPU mutex.
+ *		Always covered by spc_mutex, which protects the run queues.
+ *		This may be a per-CPU lock, depending on the scheduler.
  *
  *	LSSLEEP:
  *
@@ -175,12 +177,14 @@
  *		If the LWP was previously sleeping (l_wchan != NULL), then
  *		l_mutex references the sleep queue mutex.  If the LWP was
  *		runnable or on the CPU when halted, or has been removed from
- *		the sleep queue since halted, then the mutex is sched_mutex.
+ *		the sleep queue since halted, then the mutex is spc_lwplock.
  *
  *	The lock order is as follows:
  *
- *		sleepq_t::sq_mutex  |---> sched_mutex
- *		tschain_t::tc_mutex |
+ *		spc::spc_lwplock ->
+ *		    sleepq_t::sq_mutex ->
+ *			tschain_t::tc_mutex ->
+ *			    spc::spc_mutex
  *
  *	Each process has an scheduler state mutex (proc::p_smutex), and a
  *	number of counters on LWPs and their states: p_nzlwps, p_nrlwps, and
@@ -200,7 +204,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.61.2.10 2007/05/27 00:12:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.61.2.11 2007/06/08 14:17:19 ad Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -209,6 +213,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.61.2.10 2007/05/27 00:12:09 ad Exp $"
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/cpu.h>
 #include <sys/pool.h>
 #include <sys/proc.h>
 #include <sys/syscallargs.h>
@@ -587,10 +592,11 @@ newlwp(struct lwp *l1, struct proc *p2, vaddr_t uaddr, bool inmem,
 	l2->l_priority = l1->l_priority;
 	l2->l_usrpri = l1->l_usrpri;
 	l2->l_inheritedprio = MAXPRI;
-	l2->l_mutex = &sched_mutex;
+	l2->l_mutex = l1->l_cpu->ci_schedstate.spc_mutex;
 	l2->l_cpu = l1->l_cpu;
 	l2->l_flag = inmem ? LW_INMEM : 0;
 	lwp_initspecific(l2);
+	sched_lwp_fork(l2);
 
 	if (p2->p_flag & PK_SYSTEM) {
 		/*
@@ -648,6 +654,27 @@ newlwp(struct lwp *l1, struct proc *p2, vaddr_t uaddr, bool inmem,
 		(*p2->p_emul->e_lwp_fork)(l1, l2);
 
 	return (0);
+}
+
+/*
+ * Called by MD code when a new LWP begins execution.  Must be called
+ * with the previous LWP locked (so at splsched), or if there is no
+ * previous LWP, at splsched.
+ */
+void
+lwp_startup(struct lwp *prev, struct lwp *new)
+{
+
+	curlwp = new;
+	if (prev != NULL) {
+		lwp_unlock(prev);
+	}
+	spl0();
+	pmap_activate(new);
+	LOCKDEBUG_BARRIER(NULL, 0);
+	if ((new->l_pflag & LP_MPSAFE) == 0) {
+		KERNEL_LOCK(1, new);
+	}
 }
 
 /*
@@ -787,19 +814,25 @@ lwp_exit(struct lwp *l)
 #else
 		KERNEL_UNLOCK_ALL(l, NULL);
 #endif
-		cpu_exit(l);
+		lwp_exit_switchaway(l);
 	}
 }
 
-/*
- * We are called from cpu_exit() once it is safe to schedule the dead LWP's
- * resources to be freed (i.e., once we've switched to the idle PCB for the
- * current CPU).
- */
 void
-lwp_exit2(struct lwp *l)
+lwp_exit_switchaway(struct lwp *l)
 {
-	/* XXXSMP re-enable preemption */
+	struct cpu_info *ci;
+	struct lwp *idlelwp;
+
+	/* Unlocked, but is for statistics only. */
+	uvmexp.swtch++;
+
+	(void)splsched();
+	l->l_flag &= ~LW_RUNNING;
+	ci = curcpu();	
+	idlelwp = ci->ci_data.cpu_idlelwp;
+	idlelwp->l_stat = LSONPROC;
+	cpu_switchto(NULL, idlelwp);
 }
 
 /*
@@ -823,6 +856,7 @@ lwp_free(struct lwp *l, bool recycle, bool last)
 		 * This needs to co-incide with coming off p_lwps.
 		 */
 		timeradd(&l->l_rtime, &p->p_rtime, &p->p_rtime);
+		p->p_pctcpu += l->l_pctcpu;
 		LIST_REMOVE(l, l_sibling);
 		p->p_nlwps--;
 		p->p_nzlwps--;
@@ -844,10 +878,12 @@ lwp_free(struct lwp *l, bool recycle, bool last)
 	 * all locks to avoid deadlock against interrupt handlers on
 	 * the target CPU.
 	 */
-	if (l->l_cpu->ci_curlwp == l) {
+	if ((l->l_flag & LW_RUNNING) != 0 || l->l_cpu->ci_curlwp == l) {
 		int count;
+		(void)count; /* XXXgcc */
 		KERNEL_UNLOCK_ALL(curlwp, &count);
-		while (l->l_cpu->ci_curlwp == l)
+		while ((l->l_flag & LW_RUNNING) != 0 ||
+		    l->l_cpu->ci_curlwp == l)
 			SPINLOCK_BACKOFF_HOOK;
 		KERNEL_LOCK(count, curlwp);
 	}
@@ -864,7 +900,7 @@ lwp_free(struct lwp *l, bool recycle, bool last)
 
 	/*
 	 * Free the LWP's turnstile and the LWP structure itself unless the
-	 * caller wants to recycle them. 
+	 * caller wants to recycle them.  Also, free the scheduler specific data.
 	 *
 	 * We can't return turnstile0 to the pool (it didn't come from it),
 	 * so if it comes up just drop it quietly and move on.
@@ -879,6 +915,7 @@ lwp_free(struct lwp *l, bool recycle, bool last)
 	uvm_lwp_exit(l);
 	KASSERT(SLIST_EMPTY(&l->l_pi_lenders));
 	KASSERT(l->l_inheritedprio == MAXPRI);
+	sched_lwp_exit(l);
 	if (!recycle)
 		pool_put(&lwp_pool, l);
 }
@@ -921,6 +958,9 @@ proc_representative_lwp(struct proc *p, int *nrlwps, int locking)
 		onproc = running = sleeping = stopped = suspended = NULL;
 		signalled = NULL;
 		LIST_FOREACH(l, &p->p_lwps, l_sibling) {
+			if ((l->l_flag & LW_IDLE) != 0) {
+				continue;
+			}
 			if (l->l_lid == p->p_sigctx.ps_lwp)
 				signalled = l;
 			switch (l->l_stat) {
@@ -1054,14 +1094,9 @@ lwp_locked(struct lwp *l, kmutex_t *mtx)
 {
 	kmutex_t *cur = l->l_mutex;
 
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	return mutex_owned(cur) && (mtx == cur || mtx == NULL);
-#else
-	return mutex_owned(cur);
-#endif
 }
 
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 /*
  * Lock an LWP.
  */
@@ -1093,7 +1128,6 @@ lwp_lock_retry(struct lwp *l, kmutex_t *old)
 	} while (__predict_false(l->l_mutex != old));
 #endif
 }
-#endif
 
 /*
  * Lend a new mutex to an LWP.  The old mutex must be held.
@@ -1104,12 +1138,8 @@ lwp_setlock(struct lwp *l, kmutex_t *new)
 
 	KASSERT(mutex_owned(l->l_mutex));
 
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	mb_write();
 	l->l_mutex = new;
-#else
-	(void)new;
-#endif
 }
 
 /*
@@ -1124,12 +1154,8 @@ lwp_unlock_to(struct lwp *l, kmutex_t *new)
 	KASSERT(mutex_owned(l->l_mutex));
 
 	old = l->l_mutex;
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	mb_write();
 	l->l_mutex = new;
-#else
-	(void)new;
-#endif
 	mutex_spin_exit(old);
 }
 
@@ -1140,28 +1166,21 @@ lwp_unlock_to(struct lwp *l, kmutex_t *new)
 void
 lwp_relock(struct lwp *l, kmutex_t *new)
 {
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	kmutex_t *old;
-#endif
 
 	KASSERT(mutex_owned(l->l_mutex));
 
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	old = l->l_mutex;
 	if (old != new) {
 		mutex_spin_enter(new);
 		l->l_mutex = new;
 		mutex_spin_exit(old);
 	}
-#else
-	(void)new;
-#endif
 }
 
 int
 lwp_trylock(struct lwp *l)
 {
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	kmutex_t *old;
 
 	for (;;) {
@@ -1171,9 +1190,6 @@ lwp_trylock(struct lwp *l)
 			return 1;
 		mutex_spin_exit(old);
 	}
-#else
-	return mutex_tryenter(l->l_mutex);
-#endif
 }
 
 /*
@@ -1224,7 +1240,7 @@ lwp_userret(struct lwp *l)
 			lwp_lock(l);
 			l->l_stat = LSSUSPENDED;
 			mutex_exit(&p->p_smutex);
-			mi_switch(l, NULL);
+			mi_switch(l);
 		}
 
 		/* Process is exiting. */

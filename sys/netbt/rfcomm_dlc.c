@@ -1,4 +1,4 @@
-/*	$NetBSD: rfcomm_dlc.c,v 1.1.24.1 2007/04/10 13:26:48 ad Exp $	*/
+/*	$NetBSD: rfcomm_dlc.c,v 1.1.24.2 2007/06/08 14:17:42 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rfcomm_dlc.c,v 1.1.24.1 2007/04/10 13:26:48 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rfcomm_dlc.c,v 1.1.24.2 2007/06/08 14:17:42 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -72,7 +72,7 @@ struct rfcomm_dlc *
 rfcomm_dlc_newconn(struct rfcomm_session *rs, int dlci)
 {
 	struct rfcomm_session *ls;
-	struct rfcomm_dlc *dlc, *any, *best;
+	struct rfcomm_dlc *new, *dlc, *any, *best;
 	struct sockaddr_bt laddr, raddr, addr;
 	int chan;
 
@@ -86,6 +86,7 @@ rfcomm_dlc_newconn(struct rfcomm_session *rs, int dlci)
 	l2cap_sockaddr(rs->rs_l2cap, &laddr);
 	l2cap_peeraddr(rs->rs_l2cap, &raddr);
 	chan = RFCOMM_CHANNEL(dlci);
+	new = NULL;
 
 	any = best = NULL;
 	LIST_FOREACH(ls, &rfcomm_session_listen, rs_next) {
@@ -117,27 +118,28 @@ rfcomm_dlc_newconn(struct rfcomm_session *rs, int dlci)
 	 * listening DLC's so all can be checked in turn..
 	 */
 	if (dlc != NULL)
-		dlc = (*dlc->rd_proto->newconn)(dlc->rd_upper, &laddr, &raddr);
+		new = (*dlc->rd_proto->newconn)(dlc->rd_upper, &laddr, &raddr);
 
-	if (dlc == NULL) {
+	if (new == NULL) {
 		rfcomm_session_send_frame(rs, RFCOMM_FRAME_DM, dlci);
 		return NULL;
 	}
 
-	dlc->rd_dlci = dlci;
-	dlc->rd_mtu = rfcomm_mtu_default;
+	new->rd_dlci = dlci;
+	new->rd_mtu = rfcomm_mtu_default;
+	new->rd_mode = dlc->rd_mode;
 
-	memcpy(&dlc->rd_laddr, &laddr, sizeof(struct sockaddr_bt));
-	dlc->rd_laddr.bt_channel = chan;
+	memcpy(&new->rd_laddr, &laddr, sizeof(struct sockaddr_bt));
+	new->rd_laddr.bt_channel = chan;
 
-	memcpy(&dlc->rd_raddr, &raddr, sizeof(struct sockaddr_bt));
-	dlc->rd_raddr.bt_channel = chan;
+	memcpy(&new->rd_raddr, &raddr, sizeof(struct sockaddr_bt));
+	new->rd_raddr.bt_channel = chan;
 
-	dlc->rd_session = rs;
-	dlc->rd_state = RFCOMM_DLC_WAIT_CONNECT;
-	LIST_INSERT_HEAD(&rs->rs_dlcs, dlc, rd_next);
+	new->rd_session = rs;
+	new->rd_state = RFCOMM_DLC_WAIT_CONNECT;
+	LIST_INSERT_HEAD(&rs->rs_dlcs, new, rd_next);
 
-	return dlc;
+	return new;
 }
 
 /*
@@ -207,6 +209,38 @@ rfcomm_dlc_timeout(void *arg)
 }
 
 /*
+ * rfcomm_dlc_setmode(rfcomm_dlc)
+ *
+ * Set link mode for DLC.  This is only called when the session is
+ * already open, so we don't need to worry about any previous mode
+ * settings.
+ */
+int
+rfcomm_dlc_setmode(struct rfcomm_dlc *dlc)
+{
+	int mode = 0;
+
+	KASSERT(dlc->rd_session != NULL);
+	KASSERT(dlc->rd_session->rs_state == RFCOMM_SESSION_OPEN);
+
+	DPRINTF("dlci %d, auth %s, encrypt %s, secure %s\n", dlc->rd_dlci,
+		(dlc->rd_mode & RFCOMM_LM_AUTH ? "yes" : "no"),
+		(dlc->rd_mode & RFCOMM_LM_ENCRYPT ? "yes" : "no"),
+		(dlc->rd_mode & RFCOMM_LM_SECURE ? "yes" : "no"));
+
+	if (dlc->rd_mode & RFCOMM_LM_AUTH)
+		mode |= L2CAP_LM_AUTH;
+
+	if (dlc->rd_mode & RFCOMM_LM_ENCRYPT)
+		mode |= L2CAP_LM_ENCRYPT;
+
+	if (dlc->rd_mode & RFCOMM_LM_SECURE)
+		mode |= L2CAP_LM_SECURE;
+
+	return l2cap_setopt(dlc->rd_session->rs_l2cap, SO_L2CAP_LM, &mode);
+}
+
+/*
  * rfcomm_dlc_connect(rfcomm_dlc)
  *
  * initiate DLC connection (session is already connected)
@@ -225,7 +259,7 @@ rfcomm_dlc_connect(struct rfcomm_dlc *dlc)
 	 * If we have not already sent a PN on the session, we must send
 	 * a PN to negotiate Credit Flow Control, and this setting will
 	 * apply to all future connections for this session. We ask for
-	 * this every time.
+	 * this every time, in order to establish initial credits.
 	 */
 	memset(&pn, 0, sizeof(pn));
 	pn.dlci = dlc->rd_dlci;
@@ -244,6 +278,38 @@ rfcomm_dlc_connect(struct rfcomm_dlc *dlc)
 
 	dlc->rd_state = RFCOMM_DLC_WAIT_CONNECT;
 	callout_schedule(&dlc->rd_timeout, rfcomm_mcc_timeout * hz);
+
+	return 0;
+}
+
+/*
+ * rfcomm_dlc_open(rfcomm_dlc)
+ *
+ * send "Modem Status Command" and mark DLC as open.
+ */
+int
+rfcomm_dlc_open(struct rfcomm_dlc *dlc)
+{
+	struct rfcomm_mcc_msc msc;
+	int err;
+
+	KASSERT(dlc->rd_session != NULL);
+	KASSERT(dlc->rd_session->rs_state == RFCOMM_SESSION_OPEN);
+
+	memset(&msc, 0, sizeof(msc));
+	msc.address = RFCOMM_MKADDRESS(1, dlc->rd_dlci);
+	msc.modem = dlc->rd_lmodem & 0xfe;	/* EA = 0 */
+	msc.brk =	0x00	   | 0x01;	/* EA = 1 */
+
+	err = rfcomm_session_send_mcc(dlc->rd_session, 1,
+				RFCOMM_MCC_MSC, &msc, sizeof(msc));
+	if (err)
+		return err;
+
+	callout_schedule(&dlc->rd_timeout, rfcomm_mcc_timeout * hz);
+
+	dlc->rd_state = RFCOMM_DLC_OPEN;
+	(*dlc->rd_proto->connected)(dlc->rd_upper);
 
 	return 0;
 }

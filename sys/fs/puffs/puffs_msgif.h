@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.h,v 1.19.6.1 2007/04/10 13:26:35 ad Exp $	*/
+/*	$NetBSD: puffs_msgif.h,v 1.19.6.2 2007/06/08 14:15:00 ad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -86,20 +86,42 @@ enum {
 #define PUFFS_VN_MAX PUFFS_VN_SETEXTATTR
 
 #define PUFFSDEVELVERS	0x80000000
-#define PUFFSVERSION	4
+#define PUFFSVERSION	10
 #define PUFFSNAMESIZE	32
-struct puffs_args {
+struct puffs_kargs {
 	unsigned int	pa_vers;
 	int		pa_fd;
 	uint32_t	pa_flags;
+
 	size_t		pa_maxreqlen;
+	int		pa_nhashbuckets;
+
+	size_t		pa_fhsize;
+	int		pa_fhflags;
+
+	void		*pa_root_cookie;
+	enum vtype	pa_root_vtype;
+	voff_t		pa_root_vsize;
+	dev_t		pa_root_rdev;
+
+	struct statvfs	pa_svfsb;
+	
 	char		pa_name[PUFFSNAMESIZE+1];   /* name for puffs type */
 	uint8_t		pa_vnopmask[PUFFS_VN_MAX];
 };
 #define PUFFS_KFLAG_ALLOWCTL	0x01	/* ioctl/fcntl commands allowed */
 #define PUFFS_KFLAG_NOCACHE	0x02	/* flush page cache immediately	*/
 #define PUFFS_KFLAG_ALLOPS	0x04	/* ignore pa_vnopmask, send all */
-#define PUFFS_KFLAG_MASK	0x07
+#define PUFFS_KFLAG_WTCACHE	0x08	/* page cache is write-through  */
+#define PUFFS_KFLAG_IAONDEMAND	0x10	/* call inactive only on demand */
+#define PUFFS_KFLAG_MASK	0x1f
+
+#define PUFFS_FHFLAG_DYNAMIC	0x01
+#define PUFFS_FHFLAG_NFSV2	0x02
+#define PUFFS_FHFLAG_NFSV3	0x04
+#define PUFFS_FHFLAG_PROTOMASK	0x06
+
+#define PUFFS_FHSIZE_MAX	1020	/* XXX: FHANDLE_SIZE_MAX - 4 */
 
 /*
  * This is the device minor number for the cloning device.  Make it
@@ -202,6 +224,7 @@ struct puffs_req {
 		} out;
 		struct {
 			int	rv;		/* cur */
+			int	setbacks;	/* cur */
 			void	*buf;		/* next */
 		} in;
 	} u;
@@ -218,7 +241,14 @@ struct puffs_req {
 #define preq_optype	u.out.optype
 #define preq_cookie	u.out.cookie
 #define preq_rv		u.in.rv
+#define preq_setbacks	u.in.setbacks
 #define preq_nextbuf	u.in.buf
+
+#define PUFFS_SETBACK_INACT_N1	0x01	/* set VOP_INACTIVE for node 1 */
+#define PUFFS_SETBACK_INACT_N2	0x02	/* set VOP_INACTIVE for node 2 */
+#define PUFFS_SETBACK_NOREF_N1	0x04	/* set pn PN_NOREFS for node 1 */
+#define PUFFS_SETBACK_NOREF_N2	0x08	/* set pn PN_NOREFS for node 2 */
+#define PUFFS_SETBACK_MASK	0x0f
 
 /*
  * Some operations have unknown size requirements.  So as the first
@@ -263,15 +293,14 @@ struct puffs_flush {
 /*
  * Available ioctl operations
  */
-#define PUFFSSTARTOP		_IOWR('p', 1, struct puffs_startreq)
-#define PUFFSGETOP		_IOWR('p', 2, struct puffs_reqh_get)
-#define PUFFSPUTOP		_IOWR('p', 3, struct puffs_reqh_put)
-#define PUFFSSIZEOP		_IOWR('p', 4, struct puffs_sizeop)
-#define PUFFSFLUSHOP		_IOW ('p', 5, struct puffs_flush)
+#define PUFFSGETOP		_IOWR('p', 1, struct puffs_reqh_get)
+#define PUFFSPUTOP		_IOWR('p', 2, struct puffs_reqh_put)
+#define PUFFSSIZEOP		_IOWR('p', 3, struct puffs_sizeop)
+#define PUFFSFLUSHOP		_IOW ('p', 4, struct puffs_flush)
 #if 0
-#define PUFFSFLUSHMULTIOP	_IOW ('p', 6, struct puffs_flushmulti)
+#define PUFFSFLUSHMULTIOP	_IOW ('p', 5, struct puffs_flushmulti)
 #endif
-#define PUFFSSUSPENDOP		_IO  ('p', 7)
+#define PUFFSSUSPENDOP		_IO  ('p', 6)
 
 
 /*
@@ -324,6 +353,7 @@ struct puffs_kcn {
 #define PUFFSLOOKUP_NOFOLLOW	0x00008	/* don't follow final symlink */
 #define PUFFSLOOKUP_ISLASTCN	0x08000 /* is last component of lookup */
 
+
 /*
  * Next come the individual requests.  They are all subclassed from
  * puffs_req and contain request-specific fields in addition.  Note
@@ -334,13 +364,6 @@ struct puffs_kcn {
  * by generic routines while the other stuff is supposed to be
  * modified only by specific routines.
  */
-
-struct puffs_startreq {
-	struct puffs_req	psr_pr;
-
-	void			*psr_cookie;	/* IN: root node cookie */
-	struct statvfs		psr_sb;		/* IN: statvfs buffer */
-};
 
 /*
  * aux structures for vfs operations.
@@ -365,6 +388,29 @@ struct puffs_vfsreq_sync {
 	struct puffs_cred	pvfsr_cred;
 	pid_t			pvfsr_pid;
 	int			pvfsr_waitfor;
+};
+
+struct puffs_vfsreq_fhtonode {
+	struct puffs_req	pvfsr_pr;
+
+	void			*pvfsr_fhcookie;	/* IN	*/
+	enum vtype		pvfsr_vtype;		/* IN	*/
+	voff_t			pvfsr_size;		/* IN	*/
+	dev_t			pvfsr_rdev;		/* IN	*/
+
+	size_t			pvfsr_dsize;		/* OUT */
+	uint8_t			pvfsr_data[0]		/* OUT, XXX */
+				    __aligned(ALIGNBYTES+1);
+};
+
+struct puffs_vfsreq_nodetofh {
+	struct puffs_req	pvfsr_pr;
+
+	void			*pvfsr_fhcookie;	/* OUT	*/
+
+	size_t			pvfsr_dsize;		/* OUT/IN  */
+	uint8_t			pvfsr_data[0]		/* IN, XXX */
+				    __aligned(ALIGNBYTES+1);
 };
 
 struct puffs_vfsreq_suspend {
@@ -472,8 +518,8 @@ struct puffs_vnreq_fcnioctl {
 struct puffs_vnreq_poll {
 	struct puffs_req	pvn_pr;
 
-	int			pvnr_events;		/* OUT	*/
-	pid_t			pvnr_pid;		/* OUT	*/
+	int			pvnr_events;		/* IN/OUT */
+	pid_t			pvnr_pid;		/* OUT	  */
 };
 
 struct puffs_vnreq_fsync {
@@ -548,8 +594,12 @@ struct puffs_vnreq_readdir {
 	struct puffs_cred	pvnr_cred;		/* OUT	  */
 	off_t			pvnr_offset;		/* IN/OUT */
 	size_t			pvnr_resid;		/* IN/OUT */
+	size_t			pvnr_ncookies;		/* IN/OUT */
+	int			pvnr_eofflag;		/* IN     */
 
-	struct dirent		pvnr_dent[0];		/* IN  	   */
+	size_t			pvnr_dentoff;		/* OUT    */
+	uint8_t			pvnr_data[0]		/* IN  	  */
+				    __aligned(ALIGNBYTES+1);
 };
 
 struct puffs_vnreq_readlink {

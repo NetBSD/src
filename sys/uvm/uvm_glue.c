@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.104.2.6 2007/04/10 15:41:42 ad Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.104.2.7 2007/06/08 14:18:21 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.104.2.6 2007/04/10 15:41:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.104.2.7 2007/06/08 14:18:21 ad Exp $");
 
 #include "opt_coredump.h"
 #include "opt_kgdb.h"
@@ -84,6 +84,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.104.2.6 2007/04/10 15:41:42 ad Exp $"
 #include <sys/resourcevar.h>
 #include <sys/buf.h>
 #include <sys/user.h>
+#include <sys/syncobj.h>
 
 #include <uvm/uvm.h>
 
@@ -449,7 +450,7 @@ uvm_swapin(struct lwp *l)
 	cpu_swapin(l);
 	lwp_lock(l);
 	if (l->l_stat == LSRUN)
-		setrunqueue(l);
+		sched_enqueue(l, false);
 	l->l_flag |= LW_INMEM;
 	l->l_swtime = 0;
 	lwp_unlock(l);
@@ -583,14 +584,20 @@ uvm_scheduler(void)
 
 /*
  * swappable: is LWP "l" swappable?
- *
- * XXXAD curlwp check should be LW_RUNNING
  */
 
-#define	swappable(l)							\
-	(((l)->l_flag & (LW_INMEM | LW_SYSTEM)) == LW_INMEM &&		\
-	 (l)->l_holdcnt == 0 &&	(l)->l_cpu->ci_curlwp != (l) &&		\
-	 (l)->l_syncobj != &rw_syncobj && (l)->l_syncobj != &mutex_syncobj)
+static bool
+swappable(struct lwp *l)
+{
+
+	if ((l->l_flag & (LW_INMEM|LW_RUNNING|LW_SYSTEM|LW_WEXIT)) != LW_INMEM)
+		return false;
+	if (l->l_holdcnt != 0)
+		return false;
+	if (l->l_syncobj == &rw_syncobj || l->l_syncobj == &mutex_syncobj)
+		return false;
+	return true;
+}
 
 /*
  * swapout_threads: find threads that can be swapped and unwire their
@@ -734,7 +741,7 @@ uvm_swapout(struct lwp *l)
 	l->l_flag &= ~LW_INMEM;
 	l->l_swtime = 0;
 	if (l->l_stat == LSRUN)
-		remrunqueue(l);
+		sched_dequeue(l);
 	lwp_unlock(l);
 	p->p_stats->p_ru.ru_nswap++;	/* XXXSMP */
 	++uvmexp.swapouts;

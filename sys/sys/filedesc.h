@@ -1,4 +1,4 @@
-/*	$NetBSD: filedesc.h,v 1.37.2.2 2007/04/12 23:12:56 ad Exp $	*/
+/*	$NetBSD: filedesc.h,v 1.37.2.3 2007/06/08 14:18:10 ad Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -89,6 +89,7 @@ struct filedesc {
 struct cwdinfo {
 	struct vnode	*cwdi_cdir;	/* current directory */
 	struct vnode	*cwdi_rdir;	/* root directory */
+	struct vnode	*cwdi_edir;	/* emulation root (if known) */
 	krwlock_t	cwdi_lock;	/* lock on entire struct */
 	u_short		cwdi_cmask;	/* mask for file creation */
 	u_short		cwdi_refcnt;	/* reference count */
@@ -163,6 +164,8 @@ int	getsock(struct filedesc *, int, struct file **);
 
 struct stat;
 int	do_sys_fstat(struct lwp *, int, struct stat *);
+struct flock;
+int	do_fcntl_lock(struct lwp *, int, int, struct flock *);
 
 extern kmutex_t filelist_lock;
 

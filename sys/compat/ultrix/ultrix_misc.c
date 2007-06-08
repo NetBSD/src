@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_misc.c,v 1.106 2007/03/04 06:01:38 christos Exp $	*/
+/*	$NetBSD: ultrix_misc.c,v 1.106.2.1 2007/06/08 14:14:45 ad Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_misc.c,v 1.106 2007/03/04 06:01:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_misc.c,v 1.106.2.1 2007/06/08 14:14:45 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
@@ -788,12 +788,9 @@ int
 ultrix_sys_fcntl(struct lwp *l, void *v, register_t *retval)
 {
 	struct ultrix_sys_fcntl_args *uap = v;
-	struct proc *p = l->l_proc;
 	int error;
 	struct ultrix_flock ufl;
-	struct flock fl, *flp = NULL;	/* XXX gcc */
-	void *sg;
-	struct sys_fcntl_args *args, fca;
+	struct flock fl;
 
 	switch (SCARG(uap, cmd)) {
 	case F_GETLK:
@@ -805,35 +802,15 @@ ultrix_sys_fcntl(struct lwp *l, void *v, register_t *retval)
 		error = ultrix_to_bsd_flock(&ufl, &fl);
 		if (error)
 			return (error);
-		sg = stackgap_init(p, 0);
-		flp = (struct flock *)stackgap_alloc(p, &sg, sizeof(*flp));
-		error = copyout(&fl, flp, sizeof(*flp));
-		if (error)
-			return (error);
-
-		SCARG(&fca, fd) = SCARG(uap, fd);
-		SCARG(&fca, cmd) = SCARG(uap, cmd);
-		SCARG(&fca, arg) = flp;
-		args = &fca;
-		break;
-	default:
-		args = v;
-		break;
-	}
-
-	error = sys_fcntl(l, args, retval);
-	if (error)
-		return (error);
-
-	switch (SCARG(uap, cmd)) {
-	case F_GETLK:
-		error = copyin(flp, &fl, sizeof(fl));
-		if (error)
-			return (error);
+		error = do_fcntl_lock(l, SCARG(uap, fd), SCARG(uap, cmd), &fl);
+		if (SCARG(uap, cmd) != F_GETLK || error != 0)
+			return error;
 		bsd_to_ultrix_flock(&fl, &ufl);
-		error = copyout(&ufl, SCARG(uap, arg), sizeof(ufl));
+		return copyout(&ufl, SCARG(uap, arg), sizeof(ufl));
+
+	default:
 		break;
 	}
 
-	return (error);
+	return sys_fcntl(l, v, retval);
 }
