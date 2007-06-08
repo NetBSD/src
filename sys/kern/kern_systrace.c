@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_systrace.c,v 1.71 2007/03/12 18:18:33 ad Exp $	*/
+/*	$NetBSD: kern_systrace.c,v 1.72 2007/06/08 17:49:13 christos Exp $	*/
 
 /*
  * Copyright 2002, 2003 Niels Provos <provos@citi.umich.edu>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.71 2007/03/12 18:18:33 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.72 2007/06/08 17:49:13 christos Exp $");
 
 #include "opt_systrace.h"
 
@@ -425,9 +425,13 @@ systracef_ioctl(struct file *fp, u_long cmd, void *data, struct lwp *l)
 		break;
 	}
 
-	mutex_enter(&p->p_mutex);
-	proc_delref(strp->proc);
-	mutex_exit(&p->p_mutex);
+	if (strp) {
+		struct proc *q = strp->proc;
+
+		mutex_enter(&q->p_mutex);
+		proc_delref(q);
+		mutex_exit(&q->p_mutex);
+	}
  unlock:
 	SYSTRACE_UNLOCK(fst, curlwp);
 
