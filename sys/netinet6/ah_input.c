@@ -1,4 +1,4 @@
-/*	$NetBSD: ah_input.c,v 1.53 2007/03/04 06:03:23 christos Exp $	*/
+/*	$NetBSD: ah_input.c,v 1.53.2.1 2007/06/08 14:17:49 ad Exp $	*/
 /*	$KAME: ah_input.c,v 1.64 2001/09/04 08:43:19 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ah_input.c,v 1.53 2007/03/04 06:03:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ah_input.c,v 1.53.2.1 2007/06/08 14:17:49 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -91,7 +91,7 @@ void
 #if __STDC__
 ah4_input(struct mbuf *m, ...)
 #else
-ah4_input(m, va_alist)
+ah4_input(struct mbuf *m, va_alist)
 	struct mbuf *m;
 	va_dcl
 #endif
@@ -509,10 +509,7 @@ fail:
 
 /* assumes that ip header and ah header are contiguous on mbuf */
 void *
-ah4_ctlinput(cmd, sa, v)
-	int cmd;
-	const struct sockaddr *sa;
-	void *v;
+ah4_ctlinput(int cmd, const struct sockaddr *sa, void *v)
 {
 	struct ip *ip = v;
 	struct ah *ah;

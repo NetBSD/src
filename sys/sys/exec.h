@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.115 2006/12/20 11:35:29 elad Exp $	*/
+/*	$NetBSD: exec.h,v 1.115.6.1 2007/06/08 14:18:09 ad Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -198,8 +198,9 @@ struct exec_package {
 	char	**ep_fa;		/* a fake args vector for scripts */
 	int	ep_fd;			/* a file descriptor we're holding */
 	void	*ep_emul_arg;		/* emulation argument */
-	const struct	execsw *ep_es;	/* appropriate execsw entry */
-	const struct	execsw *ep_esch;/* checked execsw entry */
+	const struct	execsw *ep_esch;/* execsw entry */
+	struct vnode *ep_emul_root;     /* base of emulation filesystem */
+	struct vnode *ep_interp;        /* vnode of (elf) interpeter */
 };
 #define	EXEC_INDIR	0x0001		/* script handling already done */
 #define	EXEC_HASFD	0x0002		/* holding a shell script */
@@ -207,7 +208,6 @@ struct exec_package {
 #define	EXEC_SKIPARG	0x0008		/* don't copy user-supplied argv[0] */
 #define	EXEC_DESTR	0x0010		/* destructive ops performed */
 #define	EXEC_32		0x0020		/* 32-bit binary emulation */
-#define	EXEC_HASES	0x0040		/* don't update exec switch pointer */
 
 struct exec_vmcmd {
 	int	(*ev_proc)(struct lwp *, struct exec_vmcmd *);

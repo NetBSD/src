@@ -1,4 +1,4 @@
-/*	$NetBSD: if_agr.c,v 1.11 2007/03/04 06:03:18 christos Exp $	*/
+/*	$NetBSD: if_agr.c,v 1.11.2.1 2007/06/08 14:17:38 ad Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_agr.c,v 1.11 2007/03/04 06:03:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_agr.c,v 1.11.2.1 2007/06/08 14:17:38 ad Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -135,37 +135,32 @@ agr_input(struct ifnet *ifp_port, struct mbuf *m)
  * EXPORTED AGR-INTERNAL FUNCTIONS
  */
 
-int
+void
 agr_lock(struct agr_softc *sc)
 {
-	int s;
 
-	s = splnet();
-	simple_lock(&sc->sc_lock);
-
-	return s;
+	mutex_enter(&sc->sc_lock);
 }
 
 void
-agr_unlock(struct agr_softc *sc, int savedipl)
+agr_unlock(struct agr_softc *sc)
 {
 
-	simple_unlock(&sc->sc_lock);
-	splx(savedipl);
+	mutex_exit(&sc->sc_lock);
 }
 
 void
 agr_ioctl_lock(struct agr_softc *sc)
 {
 
-	lockmgr(&sc->sc_ioctl_lock, LK_EXCLUSIVE, NULL);
+	mutex_enter(&sc->sc_ioctl_lock);
 }
 
 void
 agr_ioctl_unlock(struct agr_softc *sc)
 {
 
-	lockmgr(&sc->sc_ioctl_lock, LK_RELEASE, NULL);
+	mutex_exit(&sc->sc_ioctl_lock);
 }
 
 /*
@@ -226,8 +221,8 @@ agr_clone_create(struct if_clone *ifc, int unit)
 
 	sc = agr_alloc_softc();
 	TAILQ_INIT(&sc->sc_ports);
-	lockinit(&sc->sc_ioctl_lock, PSOCK, "agrioctl", 0, 0);
-	simple_lock_init(&sc->sc_lock);
+	mutex_init(&sc->sc_ioctl_lock, MUTEX_DRIVER, IPL_NONE);
+	mutex_init(&sc->sc_lock, MUTEX_DRIVER, IPL_NET);
 	agrtimer_init(sc);
 	ifp = &sc->sc_if;
 	snprintf(ifp->if_xname, sizeof(ifp->if_xname), "%s%d",
@@ -261,22 +256,23 @@ agr_clone_destroy(struct ifnet *ifp)
 {
 	struct agr_softc *sc = ifp->if_softc;
 	int error;
-	int s;
 
 	agr_ioctl_lock(sc);
 
-	s = AGR_LOCK(sc);
+	AGR_LOCK(sc);
 	if (sc->sc_nports > 0) {
 		error = EBUSY;
 	} else {
 		error = 0;
 	}
-	AGR_UNLOCK(sc, s);
+	AGR_UNLOCK(sc);
 
 	agr_ioctl_unlock(sc);
 
 	if (error == 0) {
 		if_detach(ifp);
+		mutex_destroy(&sc->sc_ioctl_lock);
+		mutex_destroy(&sc->sc_lock);
 		agr_free_softc(sc);
 	}
 
@@ -317,9 +313,8 @@ agr_start(struct ifnet *ifp)
 {
 	struct agr_softc *sc = ifp->if_softc;
 	struct mbuf *m;
-	int s;
 
-	s = AGR_LOCK(sc);
+	AGR_LOCK(sc);
 
 	while (/* CONSTCOND */ 1) {
 		struct agr_port *port;
@@ -349,7 +344,7 @@ agr_start(struct ifnet *ifp)
 		}
 	}
 
-	AGR_UNLOCK(sc, s);
+	AGR_UNLOCK(sc);
 
 	ifp->if_flags &= ~IFF_OACTIVE;
 }
@@ -472,7 +467,6 @@ agr_addport(struct ifnet *ifp, struct ifnet *ifp_port)
 	struct agr_softc *sc = ifp->if_softc;
 	struct agr_port *port = NULL;
 	int error = 0;
-	int s;
 
 	if (ifp_port->if_ioctl == NULL) {
 		error = EOPNOTSUPP;
@@ -545,7 +539,7 @@ agr_addport(struct ifnet *ifp, struct ifnet *ifp_port)
 	port->port_flags |= AGRPORT_LADDRCHANGED;
 
 	ifp->if_type = ifp_port->if_type;
-	s = AGR_LOCK(sc);
+	AGR_LOCK(sc);
 
 	port->port_ifp = ifp_port;
 	ifp_port->if_agrprivate = port;
@@ -558,7 +552,7 @@ agr_addport(struct ifnet *ifp, struct ifnet *ifp_port)
 
 	port->port_flags |= AGRPORT_ATTACHED;
 
-	AGR_UNLOCK(sc, s);
+	AGR_UNLOCK(sc);
 
 	error = (*sc->sc_iftop->iftop_portinit)(sc, port);
 	if (error) {
@@ -575,9 +569,9 @@ agr_addport(struct ifnet *ifp, struct ifnet *ifp_port)
 		goto cleanup;
 	}
 
-	s = AGR_LOCK(sc);
+	AGR_LOCK(sc);
 	port->port_flags &= ~AGRPORT_LARVAL;
-	AGR_UNLOCK(sc, s);
+	AGR_UNLOCK(sc);
 out:
 	if (error && port) {
 		free(port, M_DEVBUF);
@@ -610,7 +604,6 @@ agr_remport(struct ifnet *ifp, struct ifnet *ifp_port)
 	struct agr_softc *sc = ifp->if_softc;
 	struct agr_port *port;
 	int error = 0;
-	int s;
 
 	if (ifp_port->if_agrprivate == NULL) {
 		error = ENOENT;
@@ -633,9 +626,9 @@ agr_remport(struct ifnet *ifp, struct ifnet *ifp_port)
 	}
 #endif
 
-	s = AGR_LOCK(sc);
+	AGR_LOCK(sc);
 	port->port_flags |= AGRPORT_DETACHING;
-	AGR_UNLOCK(sc, s);
+	AGR_UNLOCK(sc);
 
 	error = (*sc->sc_iftop->iftop_portfini)(sc, port);
 	if (error) {
@@ -681,7 +674,6 @@ agrport_cleanup(struct agr_softc *sc, struct agr_port *port)
 	struct ifnet *ifp_port = port->port_ifp;
 	int error;
 	int result = 0;
-	int s;
 
 	error = agrport_config_promisc(port, false);
 	if (error) {
@@ -728,7 +720,7 @@ agrport_cleanup(struct agr_softc *sc, struct agr_port *port)
 		}
 	}
 
-	s = AGR_LOCK(sc);
+	AGR_LOCK(sc);
 	if ((port->port_flags & AGRPORT_ATTACHED)) {
 		ifp_port->if_agrprivate = NULL;
 
@@ -740,7 +732,7 @@ agrport_cleanup(struct agr_softc *sc, struct agr_port *port)
 
 		port->port_flags &= ~AGRPORT_ATTACHED;
 	}
-	AGR_UNLOCK(sc, s);
+	AGR_UNLOCK(sc);
 
 	return result;
 }

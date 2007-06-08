@@ -1,4 +1,4 @@
-/*	$NetBSD: bluetooth.h,v 1.4 2006/11/16 01:33:44 christos Exp $	*/
+/*	$NetBSD: bluetooth.h,v 1.4.8.1 2007/06/08 14:17:40 ad Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -115,6 +115,7 @@ struct btproto {
 	void (*disconnected)(void *, int);
 	void *(*newconn)(void *, struct sockaddr_bt *, struct sockaddr_bt *);
 	void (*complete)(void *, int);
+	void (*linkmode)(void *, int);
 	void (*input)(void *, struct mbuf *);
 };
 

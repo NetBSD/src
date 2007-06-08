@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.151.2.4 2007/05/13 17:36:38 ad Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.151.2.5 2007/06/08 14:18:05 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.151.2.4 2007/05/13 17:36:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.151.2.5 2007/06/08 14:18:05 ad Exp $");
 
 #include "opt_nfs.h"
 #include "opt_ddb.h"
@@ -509,7 +509,9 @@ nfs_write(v)
 	 */
 	if (l && l->l_proc && uio->uio_offset + uio->uio_resid >
 	      l->l_proc->p_rlimit[RLIMIT_FSIZE].rlim_cur) {
+		mutex_enter(&proclist_mutex);
 		psignal(l->l_proc, SIGXFSZ);
+		mutex_exit(&proclist_mutex);
 		return (EFBIG);
 	}
 
@@ -738,7 +740,8 @@ nfs_asyncio(bp)
 {
 	int i;
 	struct nfsmount *nmp;
-	int gotiod, slpflag = 0, slptimeo = 0, error;
+	int gotiod, slptimeo = 0, error;
+	bool catch = false;
 
 	if (nfs_numasync == 0)
 		return (EIO);
@@ -746,7 +749,7 @@ nfs_asyncio(bp)
 	nmp = VFSTONFS(bp->b_vp->v_mount);
 again:
 	if (nmp->nm_flag & NFSMNT_INT)
-		slpflag = PCATCH;
+		catch = true;
 	gotiod = false;
 
 	/*
@@ -807,15 +810,19 @@ again:
 	  		/* Enque for later, to avoid free-page deadlock */
 			  (void) 0;
 		} else while (nmp->nm_bufqlen >= 2*nfs_numasync) {
-			nmp->nm_bufqwant = true;
-			error = mtsleep(&nmp->nm_bufq,
-			    slpflag | PRIBIO | PNORELOCK,
-			    "nfsaio", slptimeo, &nmp->nm_lock);
+			if (catch) {
+				error = cv_timedwait_sig(&nmp->nm_aiocv,
+				    &nmp->nm_lock, slptimeo);
+			} else {
+				error = cv_timedwait(&nmp->nm_aiocv,
+				    &nmp->nm_lock, slptimeo);
+			}
 			if (error) {
+				mutex_exit(&nmp->nm_lock);
 				if (nfs_sigintr(nmp, NULL, curlwp))
 					return (EINTR);
-				if (slpflag == PCATCH) {
-					slpflag = 0;
+				if (catch) {
+					catch = false;
 					slptimeo = 2 * hz;
 				}
 			}

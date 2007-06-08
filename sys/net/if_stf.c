@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stf.c,v 1.58.2.1 2007/04/10 13:26:47 ad Exp $	*/
+/*	$NetBSD: if_stf.c,v 1.58.2.2 2007/06/08 14:17:36 ad Exp $	*/
 /*	$KAME: if_stf.c,v 1.62 2001/06/07 22:32:16 itojun Exp $ */
 
 /*
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.58.2.1 2007/04/10 13:26:47 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.58.2.2 2007/06/08 14:17:36 ad Exp $");
 
 #include "opt_inet.h"
 
@@ -135,11 +135,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.58.2.1 2007/04/10 13:26:47 ad Exp $");
 
 struct stf_softc {
 	struct ifnet	sc_if;	   /* common area */
-	union {
-		struct route  __sc_ro4;
-		struct route_in6 __sc_ro6; /* just for safety */
-	} __sc_ro46;
-#define sc_ro	__sc_ro46.__sc_ro4
+	struct route	sc_ro;
 	const struct encaptab *encap_cookie;
 	LIST_ENTRY(stf_softc) sc_list;
 };
@@ -239,6 +235,7 @@ stf_clone_destroy(struct ifnet *ifp)
 	bpfdetach(ifp);
 #endif
 	if_detach(ifp);
+	rtcache_free(&sc->sc_ro);
 	free(sc, M_DEVBUF);
 
 	return (0);
@@ -338,11 +335,14 @@ stf_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 	struct stf_softc *sc;
 	const struct sockaddr_in6 *dst6;
 	const struct in_addr *in4;
-	struct sockaddr_in *dst4;
 	u_int8_t tos;
 	struct ip *ip;
 	struct ip6_hdr *ip6;
 	struct in6_ifaddr *ia6;
+	union {
+		struct sockaddr		dst;
+		struct sockaddr_in	dst4;
+	} u;
 
 	sc = (struct stf_softc*)ifp;
 	dst6 = (const struct sockaddr_in6 *)dst;
@@ -416,22 +416,11 @@ stf_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 	else
 		ip_ecn_ingress(ECN_NOCARE, &ip->ip_tos, &tos);
 
-	dst4 = (struct sockaddr_in *)&sc->sc_ro.ro_dst;
-	if (dst4->sin_family != AF_INET ||
-	    bcmp(&dst4->sin_addr, &ip->ip_dst, sizeof(ip->ip_dst)) != 0)
-		rtcache_free(&sc->sc_ro);
-	else
-		rtcache_check(&sc->sc_ro);
-	if (sc->sc_ro.ro_rt == NULL) {
-		dst4->sin_family = AF_INET;
-		dst4->sin_len = sizeof(struct sockaddr_in);
-		bcopy(&ip->ip_dst, &dst4->sin_addr, sizeof(dst4->sin_addr));
-		rtcache_init(&sc->sc_ro);
-		if (sc->sc_ro.ro_rt == NULL) {
-			m_freem(m);
-			ifp->if_oerrors++;
-			return ENETUNREACH;
-		}
+	sockaddr_in_init(&u.dst4, &ip->ip_dst, 0);
+	if (rtcache_lookup(&sc->sc_ro, &u.dst) == NULL) {
+		m_freem(m);
+		ifp->if_oerrors++;
+		return ENETUNREACH;
 	}
 
 	/* If the route constitutes infinite encapsulation, punt. */
@@ -443,8 +432,7 @@ stf_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 	}
 
 	ifp->if_opackets++;
-	return ip_output(m, NULL, &sc->sc_ro, 0,
-	    (struct ip_moptions *)NULL, (struct socket *)NULL);
+	return ip_output(m, NULL, &sc->sc_ro, 0, NULL, NULL);
 }
 
 static int

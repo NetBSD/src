@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.96 2007/03/04 06:03:21 christos Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.96.2.1 2007/06/08 14:17:47 ad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.96 2007/03/04 06:03:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.96.2.1 2007/06/08 14:17:47 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -143,8 +143,8 @@ rip_input(struct mbuf *m, ...)
 	struct ip *ip = mtod(m, struct ip *);
 	struct inpcb_hdr *inph;
 	struct inpcb *inp;
-	struct inpcb *last = 0;
-	struct mbuf *opts = 0;
+	struct inpcb *last = NULL;
+	struct mbuf *n, *opts = NULL;
 	struct sockaddr_in ripsrc;
 	va_list ap;
 
@@ -153,11 +153,7 @@ rip_input(struct mbuf *m, ...)
 	proto = va_arg(ap, int);
 	va_end(ap);
 
-	ripsrc.sin_family = AF_INET;
-	ripsrc.sin_len = sizeof(struct sockaddr_in);
-	ripsrc.sin_addr = ip->ip_src;
-	ripsrc.sin_port = 0;
-	bzero((void *)ripsrc.sin_zero, sizeof(ripsrc.sin_zero));
+	sockaddr_in_init(&ripsrc, &ip->ip_src, 0);
 
 	/*
 	 * XXX Compatibility: programs using raw IP expect ip_len
@@ -179,43 +175,41 @@ rip_input(struct mbuf *m, ...)
 		if (!in_nullhost(inp->inp_faddr) &&
 		    !in_hosteq(inp->inp_faddr, ip->ip_src))
 			continue;
-		if (last) {
-			struct mbuf *n;
-
+		if (last == NULL)
+			;
 #if defined(IPSEC) || defined(FAST_IPSEC)
-			/* check AH/ESP integrity. */
-			if (ipsec4_in_reject_so(m, last->inp_socket)) {
-				ipsecstat.in_polvio++;
-				/* do not inject data to pcb */
-			} else
+		/* check AH/ESP integrity. */
+		else if (ipsec4_in_reject_so(m, last->inp_socket)) {
+			ipsecstat.in_polvio++;
+			/* do not inject data to pcb */
+		}
 #endif /*IPSEC*/
-			if ((n = m_copy(m, 0, (int)M_COPYALL)) != NULL) {
-				if (last->inp_flags & INP_CONTROLOPTS ||
-				    last->inp_socket->so_options & SO_TIMESTAMP)
-					ip_savecontrol(last, &opts, ip, n);
-				if (sbappendaddr(&last->inp_socket->so_rcv,
-				    sintosa(&ripsrc), n, opts) == 0) {
-					/* should notify about lost packet */
-					m_freem(n);
-					if (opts)
-						m_freem(opts);
-				} else
-					sorwakeup(last->inp_socket);
-				opts = NULL;
-			}
+		else if ((n = m_copy(m, 0, M_COPYALL)) != NULL) {
+			if (last->inp_flags & INP_CONTROLOPTS ||
+			    last->inp_socket->so_options & SO_TIMESTAMP)
+				ip_savecontrol(last, &opts, ip, n);
+			if (sbappendaddr(&last->inp_socket->so_rcv,
+			    sintosa(&ripsrc), n, opts) == 0) {
+				/* should notify about lost packet */
+				m_freem(n);
+				if (opts)
+					m_freem(opts);
+			} else
+				sorwakeup(last->inp_socket);
+			opts = NULL;
 		}
 		last = inp;
 	}
 #if defined(IPSEC) || defined(FAST_IPSEC)
 	/* check AH/ESP integrity. */
-	if (last && ipsec4_in_reject_so(m, last->inp_socket)) {
+	if (last != NULL && ipsec4_in_reject_so(m, last->inp_socket)) {
 		m_freem(m);
 		ipsecstat.in_polvio++;
 		ipstat.ips_delivered--;
 		/* do not inject data to pcb */
 	} else
 #endif /*IPSEC*/
-	if (last) {
+	if (last != NULL) {
 		if (last->inp_flags & INP_CONTROLOPTS ||
 		    last->inp_socket->so_options & SO_TIMESTAMP)
 			ip_savecontrol(last, &opts, ip, m);
@@ -226,15 +220,13 @@ rip_input(struct mbuf *m, ...)
 				m_freem(opts);
 		} else
 			sorwakeup(last->inp_socket);
-	} else {
-		if (inetsw[ip_protox[ip->ip_p]].pr_input == rip_input) {
-			icmp_error(m, ICMP_UNREACH, ICMP_UNREACH_PROTOCOL,
-			    0, 0);
-			ipstat.ips_noproto++;
-			ipstat.ips_delivered--;
-		} else
-			m_freem(m);
-	}
+	} else if (inetsw[ip_protox[ip->ip_p]].pr_input == rip_input) {
+		icmp_error(m, ICMP_UNREACH, ICMP_UNREACH_PROTOCOL,
+		    0, 0);
+		ipstat.ips_noproto++;
+		ipstat.ips_delivered--;
+	} else
+		m_freem(m);
 	return;
 }
 

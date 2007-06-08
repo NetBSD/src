@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.28.2.1 2007/04/10 13:26:52 ad Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.28.2.2 2007/06/08 14:18:00 ad Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $	*/
 /*	$KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.28.2.1 2007/04/10 13:26:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.28.2.2 2007/06/08 14:18:00 ad Exp $");
 
 /*
  * IPsec controller part.
@@ -427,14 +427,29 @@ ipsec_invalpcbcacheall(void)
  * Return a held reference to the default SP.
  */
 static struct secpolicy *
-key_allocsp_default(const char* where, int tag)
+key_allocsp_default(int af, const char* where, int tag)
 {
 	struct secpolicy *sp;
 
 	KEYDEBUG(KEYDEBUG_IPSEC_STAMP,
 		printf("DP key_allocsp_default from %s:%u\n", where, tag));
 
-	sp = &ip4_def_policy;
+    switch(af) {
+        case AF_INET:
+	        sp = &ip4_def_policy;
+            break;
+#ifdef INET6
+        case AF_INET6:
+            sp = &ip6_def_policy;
+            break;
+#endif
+        default:
+	        KEYDEBUG(KEYDEBUG_IPSEC_STAMP,
+		    printf("key_allocsp_default : unexpected protocol family %u\n",
+                   af));
+            return NULL;
+    }
+
 	if (sp->policy != IPSEC_POLICY_DISCARD &&
 		sp->policy != IPSEC_POLICY_NONE) {
 		ipseclog((LOG_INFO, "fixed system default policy: %d->%d\n",
@@ -448,8 +463,8 @@ key_allocsp_default(const char* where, int tag)
 			sp, sp->refcnt));
 	return sp;
 }
-#define	KEY_ALLOCSP_DEFAULT() \
-	key_allocsp_default(__FILE__, __LINE__)
+#define	KEY_ALLOCSP_DEFAULT(af) \
+	key_allocsp_default((af),__FILE__, __LINE__)
 
 /*
  * For OUTBOUND packet having a socket. Searching SPD for packet,
@@ -474,7 +489,7 @@ ipsec_getpolicy(struct tdb_ident *tdbi, u_int dir)
 
 	sp = KEY_ALLOCSP2(tdbi->spi, &tdbi->dst, tdbi->proto, dir);
 	if (sp == NULL)			/*XXX????*/
-		sp = KEY_ALLOCSP_DEFAULT();
+		sp = KEY_ALLOCSP_DEFAULT(tdbi->dst.sa.sa_family);
 	IPSEC_ASSERT(sp != NULL, ("ipsec_getpolicy: null SP"));
 	return sp;
 }
@@ -577,7 +592,7 @@ ipsec_getpolicybysock(m, dir, inp, error)
 			/* look for a policy in SPD */
 			sp = KEY_ALLOCSP(&currsp->spidx, dir);
 			if (sp == NULL)		/* no SP found */
-				sp = KEY_ALLOCSP_DEFAULT();
+				sp = KEY_ALLOCSP_DEFAULT(af);
 			break;
 
 		default:
@@ -598,7 +613,7 @@ ipsec_getpolicybysock(m, dir, inp, error)
 				return NULL;
 
 			case IPSEC_POLICY_ENTRUST:
-				sp = KEY_ALLOCSP_DEFAULT();
+				sp = KEY_ALLOCSP_DEFAULT(af);
 				break;
 
 			case IPSEC_POLICY_IPSEC:
@@ -653,22 +668,24 @@ ipsec_getpolicybyaddr(m, dir, flag, error)
 		("ipsec4_getpolicybaddr: invalid direction %u", dir));
 
 	sp = NULL;
-	if (key_havesp(dir)) {
-		/* Make an index to look for a policy. */
-		*error = ipsec_setspidx(m, &spidx,
-					(flag & IP_FORWARDING) ? 0 : 1);
-		if (*error != 0) {
-			DPRINTF(("ipsec_getpolicybyaddr: setpidx failed,"
-				" dir %u flag %u\n", dir, flag));
-			bzero(&spidx, sizeof (spidx));
-			return NULL;
-		}
-		spidx.dir = dir;
 
+	/* Make an index to look for a policy. */
+	*error = ipsec_setspidx(m, &spidx, (flag & IP_FORWARDING) ? 0 : 1);
+	if (*error != 0) {
+		DPRINTF(("ipsec_getpolicybyaddr: setpidx failed,"
+			" dir %u flag %u\n", dir, flag));
+		bzero(&spidx, sizeof (spidx));
+		return NULL;
+	}
+
+	spidx.dir = dir;
+
+	if (key_havesp(dir)) {
 		sp = KEY_ALLOCSP(&spidx, dir);
 	}
+
 	if (sp == NULL)			/* no SP found, use system default */
-		sp = KEY_ALLOCSP_DEFAULT();
+		sp = KEY_ALLOCSP_DEFAULT(spidx.dst.sa.sa_family);
 	IPSEC_ASSERT(sp != NULL, ("ipsec_getpolicybyaddr: null SP"));
 	return sp;
 }

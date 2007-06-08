@@ -1,4 +1,4 @@
-/*	$NetBSD: wait.h,v 1.24 2005/12/11 12:25:21 christos Exp $	*/
+/*	$NetBSD: wait.h,v 1.24.30.1 2007/06/08 14:18:15 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1994
@@ -100,6 +100,7 @@
  */
 #define	WNOWAIT		0x00010000	/* Don't mark child 'P_WAITED' */
 #define	WNOZOMBIE	0x00020000	/* Ignore zombies */
+#define	WOPTSCHECKED	0x00040000	/* Compat call, options verified */
 #endif /* _XOPEN_SOURCE || _NETBSD_SOURCE */
 
 #if defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE)

@@ -1,4 +1,4 @@
-/*	$NetBSD: iso.c,v 1.41 2007/03/04 06:03:32 christos Exp $	*/
+/*	$NetBSD: iso.c,v 1.41.2.1 2007/06/08 14:18:02 ad Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -62,7 +62,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iso.c,v 1.41 2007/03/04 06:03:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iso.c,v 1.41.2.1 2007/06/08 14:18:02 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -454,7 +454,7 @@ iso_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp,
 	 * Find address for this interface, if it exists.
 	 */
 	if (ifp)
-		for (ia = iso_ifaddr.tqh_first; ia != 0; ia = ia->ia_list.tqe_next)
+		TAILQ_FOREACH(ia, &iso_ifaddr, ia_list)
 			if (ia->ia_ifp == ifp)
 				break;
 
@@ -694,14 +694,13 @@ iso_ifwithidi(struct sockaddr *addr)
 		printf("\n");
 	}
 #endif
-	for (ifp = ifnet.tqh_first; ifp != 0; ifp = ifp->if_list.tqe_next) {
+	TAILQ_FOREACH(ifp, &ifnet, if_list) {
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_ROUTE]) {
 			printf("iso_ifwithidi ifnet %s\n", ifp->if_name);
 		}
 #endif
-		for (ifa = ifp->if_addrlist.tqh_first; ifa != 0;
-		     ifa = ifa->ifa_list.tqe_next) {
+		TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
 #ifdef ARGO_DEBUG
 			if (argo_debug[D_ROUTE]) {
 				printf("iso_ifwithidi address ");
@@ -803,17 +802,17 @@ iso_eqtype(
  * NOTES:
  */
 struct iso_ifaddr *
-iso_localifa(struct sockaddr_iso *siso)
+iso_localifa(const struct sockaddr_iso *siso)
 {
 	struct iso_ifaddr *ia;
-	char  *cp1, *cp2, *cp3;
+	const char *cp1, *cp2, *cp3;
 	struct ifnet *ifp;
 	struct iso_ifaddr *ia_maybe = 0;
 	/*
 	 * We make one pass looking for both net matches and an exact
 	 * dst addr.
 	 */
-	for (ia = iso_ifaddr.tqh_first; ia != 0; ia = ia->ia_list.tqe_next) {
+	TAILQ_FOREACH(ia, &iso_ifaddr, ia_list) {
 		if ((ifp = ia->ia_ifp) == 0 || ((ifp->if_flags & IFF_UP) == 0))
 			continue;
 		if (ifp->if_flags & IFF_POINTOPOINT) {

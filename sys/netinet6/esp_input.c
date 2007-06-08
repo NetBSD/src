@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_input.c,v 1.43 2007/03/04 06:03:25 christos Exp $	*/
+/*	$NetBSD: esp_input.c,v 1.43.2.1 2007/06/08 14:17:50 ad Exp $	*/
 /*	$KAME: esp_input.c,v 1.60 2001/09/04 08:43:19 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_input.c,v 1.43 2007/03/04 06:03:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_input.c,v 1.43.2.1 2007/06/08 14:17:50 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -472,10 +472,7 @@ bad:
 
 /* assumes that ip header and esp header are contiguous on mbuf */
 void *
-esp4_ctlinput(cmd, sa, v)
-	int cmd;
-	const struct sockaddr *sa;
-	void *v;
+esp4_ctlinput(int cmd, const struct sockaddr *sa, void *v)
 {
 	struct ip *ip = v;
 	struct esp *esp;

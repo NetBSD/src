@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_core.c,v 1.39 2007/03/04 06:03:23 christos Exp $	*/
+/*	$NetBSD: esp_core.c,v 1.39.2.1 2007/06/08 14:17:50 ad Exp $	*/
 /*	$KAME: esp_core.c,v 1.53 2001/11/27 09:47:30 sakane Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_core.c,v 1.39 2007/03/04 06:03:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_core.c,v 1.39.2.1 2007/06/08 14:17:50 ad Exp $");
 
 #include "opt_inet.h"
 
@@ -150,8 +150,7 @@ static const struct esp_algorithm esp_algorithms[] = {
 };
 
 const struct esp_algorithm *
-esp_algorithm_lookup(idx)
-	int idx;
+esp_algorithm_lookup(int idx)
 {
 
 	switch (idx) {
@@ -209,9 +208,7 @@ esp_max_ivlen()
 }
 
 int
-esp_schedule(algo, sav)
-	const struct esp_algorithm *algo;
-	struct secasvar *sav;
+esp_schedule(const struct esp_algorithm *algo, struct secasvar *sav)
 {
 	int error;
 
@@ -287,8 +284,7 @@ esp_null_encrypt(
 }
 
 static int
-esp_descbc_mature(sav)
-	struct secasvar *sav;
+esp_descbc_mature(struct secasvar *sav)
 {
 	const struct esp_algorithm *algo;
 
@@ -386,8 +382,7 @@ esp_des_blockencrypt(const struct esp_algorithm *algo,
 }
 
 static int
-esp_cbc_mature(sav)
-	struct secasvar *sav;
+esp_cbc_mature(struct secasvar *sav)
 {
 	int keylen;
 	const struct esp_algorithm *algo;
@@ -586,12 +581,8 @@ esp_common_ivlen(const struct esp_algorithm *algo,
 }
 
 static int
-esp_cbc_decrypt(m, off, sav, algo, ivlen)
-	struct mbuf *m;
-	size_t off;
-	struct secasvar *sav;
-	const struct esp_algorithm *algo;
-	int ivlen;
+esp_cbc_decrypt(struct mbuf *m, size_t off, struct secasvar *sav, 
+	const struct esp_algorithm *algo, int ivlen)
 {
 	struct mbuf *s;
 	struct mbuf *d, *d0, *dp;
@@ -995,14 +986,14 @@ esp_cbc_encrypt(
 
 /*------------------------------------------------------------*/
 
-/* does not free m0 on error */
+/* does not free m0 on error 
+ *
+ * skip - offset to ESP header
+ * length - payloadd length
+ */
 int
-esp_auth(m0, skip, length, sav, sum)
-	struct mbuf *m0;
-	size_t skip;	/* offset to ESP header */
-	size_t length;	/* payload length */
-	struct secasvar *sav;
-	u_char *sum;
+esp_auth(struct mbuf *m0, size_t skip, size_t length, 
+	struct secasvar *sav, u_char *sum)
 {
 	struct mbuf *m;
 	size_t off;

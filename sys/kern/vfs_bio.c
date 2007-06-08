@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.170.2.7 2007/05/13 17:36:36 ad Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.170.2.8 2007/06/08 14:17:28 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -82,7 +82,7 @@
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.170.2.7 2007/05/13 17:36:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.170.2.8 2007/06/08 14:17:28 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -577,8 +577,6 @@ bio_doread(struct vnode *vp, daddr_t blkno, int size, kauth_cred_t cred,
     int async)
 {
 	struct buf *bp;
-	struct lwp *l  = (curlwp != NULL ? curlwp : &lwp0);	/* XXX */
-	struct proc *p = l->l_proc;
 	struct mount *mp;
 
 	bp = getblk(vp, blkno, size, 0, 0);
@@ -606,7 +604,7 @@ bio_doread(struct vnode *vp, daddr_t blkno, int size, kauth_cred_t cred,
 		VOP_STRATEGY(vp, bp);
 
 		/* Pay for the read. */
-		p->p_stats->p_ru.ru_inblock++;
+		curproc->p_stats->p_ru.ru_inblock++;
 	} else {
 		mutex_exit(&bp->b_interlock);
 		if (async)
@@ -703,8 +701,6 @@ int
 bwrite(struct buf *bp)
 {
 	int rv, sync, wasdelayed;
-	struct lwp *l  = (curlwp != NULL ? curlwp : &lwp0);	/* XXX */
-	struct proc *p = l->l_proc;
 	struct vnode *vp;
 	struct mount *mp;
 
@@ -758,7 +754,7 @@ bwrite(struct buf *bp)
 	if (wasdelayed)
 		reassignbuf(bp, bp->b_vp);
 	else
-		p->p_stats->p_ru.ru_oublock++;
+		curproc->p_stats->p_ru.ru_oublock++;
 
 	/* Initiate disk write.  Make sure the appropriate party is charged. */
 	V_INCR_NUMOUTPUT(bp->b_vp);
@@ -808,8 +804,6 @@ vn_bwrite(void *v)
 void
 bdwrite(struct buf *bp)
 {
-	struct lwp *l  = (curlwp != NULL ? curlwp : &lwp0);	/* XXX */
-	struct proc *p = l->l_proc;
 	const struct bdevsw *bdev;
 
 	/* If this is a tape block, write the block now. */
@@ -831,7 +825,7 @@ bdwrite(struct buf *bp)
 
 	if (!ISSET(bp->b_flags, B_DELWRI)) {
 		SET(bp->b_flags, B_DELWRI);
-		p->p_stats->p_ru.ru_oublock++;
+		curproc->p_stats->p_ru.ru_oublock++;
 		reassignbuf(bp, bp->b_vp);
 	}
 
@@ -866,8 +860,6 @@ bawrite(struct buf *bp)
 void
 bdirty(struct buf *bp)
 {
-	struct lwp *l  = (curlwp != NULL ? curlwp : &lwp0);	/* XXX */
-	struct proc *p = l->l_proc;
 
 	KASSERT(mutex_owned(&bp->b_interlock));
 	KASSERT(ISSET(bp->b_flags, B_BUSY));
@@ -876,7 +868,7 @@ bdirty(struct buf *bp)
 
 	if (!ISSET(bp->b_flags, B_DELWRI)) {
 		SET(bp->b_flags, B_DELWRI);
-		p->p_stats->p_ru.ru_oublock++;
+		curproc->p_stats->p_ru.ru_oublock++;
 		reassignbuf(bp, bp->b_vp);
 	}
 }

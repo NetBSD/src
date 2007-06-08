@@ -1,4 +1,4 @@
-/*	$NetBSD: hci.h,v 1.9 2007/02/20 16:53:21 kiyohara Exp $	*/
+/*	$NetBSD: hci.h,v 1.9.4.1 2007/06/08 14:17:40 ad Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -54,7 +54,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: hci.h,v 1.9 2007/02/20 16:53:21 kiyohara Exp $
+ * $Id: hci.h,v 1.9.4.1 2007/06/08 14:17:40 ad Exp $
  * $FreeBSD: src/sys/netgraph/bluetooth/include/ng_hci.h,v 1.6 2005/01/07 01:45:43 imp Exp $
  */
 
@@ -2044,6 +2044,7 @@ struct hci_link {
 
 	/* common info */
 	uint16_t		 hl_state;	/* connection state */
+	uint16_t		 hl_flags;	/* link flags */
 	bdaddr_t		 hl_bdaddr;	/* dest address */
 	uint16_t		 hl_handle;	/* connection handle */
 	uint8_t			 hl_type;	/* link type */
@@ -2066,11 +2067,22 @@ struct hci_link {
 	MBUFQ_HEAD()		 hl_data;	/* SCO outgoing data */
 };
 
-/* hci_link state bits */
+/* hci_link state */
 #define HCI_LINK_CLOSED		0  /* closed */
 #define HCI_LINK_WAIT_CONNECT	1  /* waiting to connect */
-#define HCI_LINK_OPEN		2  /* ready and willing */
-#define HCI_LINK_BLOCK		3  /* open but blocking (see hci_acl_start) */
+#define HCI_LINK_WAIT_AUTH	2  /* waiting for auth */
+#define HCI_LINK_WAIT_ENCRYPT	3  /* waiting for encrypt */
+#define HCI_LINK_WAIT_SECURE	4  /* waiting for secure */
+#define HCI_LINK_OPEN		5  /* ready and willing */
+#define HCI_LINK_BLOCK		6  /* open but blocking (see hci_acl_start) */
+
+/* hci_link flags */
+#define HCI_LINK_AUTH_REQ	(1<<0)  /* authentication requested */
+#define HCI_LINK_ENCRYPT_REQ	(1<<1)  /* encryption requested */
+#define HCI_LINK_SECURE_REQ	(1<<2)	/* secure link requested */
+#define HCI_LINK_AUTH		(1<<3)	/* link is authenticated */
+#define HCI_LINK_ENCRYPT	(1<<4)	/* link is encrypted */
+#define HCI_LINK_SECURE		(1<<5)	/* link is secured */
 
 /*
  * Bluetooth Memo
@@ -2166,6 +2178,8 @@ struct hci_link *hci_acl_open(struct hci_unit *, bdaddr_t *);
 struct hci_link *hci_acl_newconn(struct hci_unit *, bdaddr_t *);
 void hci_acl_close(struct hci_link *, int);
 void hci_acl_timeout(void *);
+int hci_acl_setmode(struct hci_link *);
+void hci_acl_linkmode(struct hci_link *);
 void hci_acl_recv(struct mbuf *, struct hci_unit *);
 int hci_acl_send(struct mbuf *, struct hci_link *, struct l2cap_channel *);
 void hci_acl_start(struct hci_link *);

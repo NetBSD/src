@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.42.2.1 2007/04/10 13:26:52 ad Exp $	*/
+/*	$NetBSD: key.c,v 1.42.2.2 2007/06/08 14:18:00 ad Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.42.2.1 2007/04/10 13:26:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.42.2.2 2007/06/08 14:18:00 ad Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -2154,7 +2154,7 @@ key_spddelete2(so, m, mhp)
 	/* Is there SP in SPD ? */
 	if ((sp = key_getspbyid(id)) == NULL) {
 		ipseclog((LOG_DEBUG, "key_spddelete2: no SP found id:%u.\n", id));
-		key_senderror(so, m, EINVAL);
+		return key_senderror(so, m, EINVAL);
 	}
 
 	key_sp_dead(sp);
@@ -2262,7 +2262,8 @@ key_spdget(so, m, mhp)
 		return key_senderror(so, m, ENOENT);
 	}
 
-	n = key_setdumpsp(sp, SADB_X_SPDGET, 0, mhp->msg->sadb_msg_pid);
+	n = key_setdumpsp(sp, SADB_X_SPDGET, mhp->msg->sadb_msg_seq,
+                                         mhp->msg->sadb_msg_pid);
     KEY_FREESP(&sp); /* ref gained by key_getspbyid */
 	if (n != NULL) {
 		m_freem(m);
@@ -7390,6 +7391,11 @@ key_init()
 	/* system default */
 	ip4_def_policy.policy = IPSEC_POLICY_NONE;
 	ip4_def_policy.refcnt++;	/*never reclaim this*/
+
+#ifdef INET6
+	ip6_def_policy.policy = IPSEC_POLICY_NONE;
+	ip6_def_policy.refcnt++;	/*never reclaim this*/
+#endif
 
 
 #ifndef IPSEC_DEBUG2

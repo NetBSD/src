@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_sys.h,v 1.25.2.1 2007/04/10 13:26:36 ad Exp $	*/
+/*	$NetBSD: puffs_sys.h,v 1.25.2.2 2007/06/08 14:15:00 ad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -104,8 +104,13 @@ extern int puffsdebug; /* puffs_subr.c */
 #define FPTOPMP(fp) (((struct puffs_instance *)fp->f_data)->pi_pmp)
 #define FPTOPI(fp) ((struct puffs_instance *)fp->f_data)
 
+/* we don't pass the kernel overlay to userspace */
+#define PUFFS_TOFHSIZE(s) ((s)==0 ? (s) : (s)+4)
+#define PUFFS_FROMFHSIZE(s) ((s)==0 ? (s) : (s)-4)
+
+#define ALLOPS(pmp) (pmp->pmp_flags & PUFFS_KFLAG_ALLOPS)
 #define EXISTSOP(pmp, op) \
- (((pmp)->pmp_flags&PUFFS_KFLAG_ALLOPS) || ((pmp)->pmp_vnopmask[PUFFS_VN_##op]))
+ (ALLOPS(pmp) || ((pmp)->pmp_vnopmask[PUFFS_VN_##op]))
 
 #define PUFFS_DOCACHE(pmp)	(((pmp)->pmp_flags & PUFFS_KFLAG_NOCACHE) == 0)
 
@@ -116,34 +121,39 @@ LIST_HEAD(puffs_node_hashlist, puffs_node);
 struct puffs_mount {
 	kmutex_t	 		pmp_lock;
 
-	struct puffs_args		pmp_args;
+	struct puffs_kargs		pmp_args;
 #define pmp_flags pmp_args.pa_flags
 #define pmp_vnopmask pmp_args.pa_vnopmask
 
 	struct puffs_wq			pmp_req_touser;
+	int				pmp_req_touser_count;
 	kcondvar_t			pmp_req_waiter_cv;
 	size_t				pmp_req_maxsize;
-
-	kcondvar_t			pmp_req_waitersink_cv;
-	size_t				pmp_req_waiters;
 
 	struct puffs_wq			pmp_req_replywait;
 	TAILQ_HEAD(, puffs_sizepark)	pmp_req_sizepark;
 
 	struct puffs_node_hashlist	*pmp_pnodehash;
-	size_t				pmp_npnodehash;
+	int				pmp_npnodehash;
 
 	struct mount			*pmp_mp;
+
 	struct vnode			*pmp_root;
-	void				*pmp_rootcookie;
+	void				*pmp_root_cookie;
+	enum vtype			pmp_root_vtype;
+	vsize_t				pmp_root_vsize;
+	dev_t				pmp_root_rdev;
+
 	struct selinfo			*pmp_sel;	/* in puffs_instance */
 
-	uint8_t				pmp_status;
+	unsigned int			pmp_refcount;
+	kcondvar_t			pmp_refcount_cv;
 
-	uint8_t				pmp_unmounting;
-	uint8_t				pmp_suspend;
 	kcondvar_t			pmp_unmounting_cv;
-	kcondvar_t			pmp_suspend_cv;
+	uint8_t				pmp_unmounting;
+
+	uint8_t				pmp_status;
+	uint8_t				pmp_suspend;
 
 	uint64_t			pmp_nextreq;
 };
@@ -154,8 +164,10 @@ struct puffs_mount {
 #define PUFFSTAT_DYING		3 /* Do you want your possessions identified? */
 
 
-#define PNODE_NOREFS	0x01	/* vnode inactive, no backend reference	*/
-#define PNODE_SUSPEND	0x02	/* issue all operations as FAF		*/
+#define PNODE_NOREFS	0x01	/* no backend reference			*/
+#define PNODE_DYING	0x02	/* NOREF + inactive 			*/
+#define PNODE_SUSPEND	0x04	/* issue all operations as FAF		*/
+#define PNODE_DOINACT	0x08	/* if inactive-on-demand, call inactive */
 
 #define PNODE_METACACHE_ATIME	0x10	/* cache atime metadata */
 #define PNODE_METACACHE_CTIME	0x20	/* cache atime metadata */
@@ -166,9 +178,15 @@ struct puffs_mount {
 struct puffs_node {
 	struct genfs_node pn_gnode;	/* genfs glue			*/
 
+	kmutex_t	pn_mtx;
+	int		pn_refcount;
+
 	void		*pn_cookie;	/* userspace pnode cookie	*/
 	struct vnode	*pn_vp;		/* backpointer to vnode		*/
 	uint32_t	pn_stat;	/* node status			*/
+
+	struct selinfo	pn_sel;		/* for selecting on the node	*/
+	short		pn_revents;	/* available events		*/
 
 	/* metacache */
 	struct timespec	pn_mc_atime;
@@ -189,19 +207,16 @@ void	puffs_msgif_destroy(void);
 void 	*puffs_park_alloc(int);
 void	puffs_park_release(void *, int);
 
-int	puffs_start2(struct puffs_mount *, struct puffs_startreq *);
-
 int	puffs_vfstouser(struct puffs_mount *, int, void *, size_t);
 void	puffs_suspendtouser(struct puffs_mount *, int);
 int	puffs_vntouser(struct puffs_mount *, int, void *, size_t, size_t,
-		       void *, struct vnode *, struct vnode *);
-void	puffs_vntouser_faf(struct puffs_mount *, int, void *, size_t, void *);
+		       struct vnode *, struct vnode *);
 int	puffs_vntouser_req(struct puffs_mount *, int, void *, size_t, size_t,
-			   void *, uint64_t, struct vnode *, struct vnode *);
+			   uint64_t, struct vnode *, struct vnode *);
 void	puffs_vntouser_call(struct puffs_mount *, int, void *, size_t, size_t,
-			    void *, parkdone_fn, void *,
-			    struct vnode *, struct vnode *);
-void	puffs_vntouser_faf(struct puffs_mount *, int, void *, size_t, void *);
+			    parkdone_fn, void *, struct vnode *, struct vnode*);
+void	puffs_vntouser_faf(struct puffs_mount *, int, void *, size_t,
+			   struct vnode *);
 void	puffs_cacheop(struct puffs_mount *, struct puffs_park *,
 		      struct puffs_cacheinfo *, size_t, void *);
 struct puffs_park *puffs_cacheop_alloc(void);
@@ -211,12 +226,20 @@ int	puffs_getvnode(struct mount *, void *, enum vtype, voff_t, dev_t,
 int	puffs_newnode(struct mount *, struct vnode *, struct vnode **,
 		      void *, struct componentname *, enum vtype, dev_t);
 void	puffs_putvnode(struct vnode *);
+
+void	puffs_releasenode(struct puffs_node *);
+void	puffs_referencenode(struct puffs_node *);
+
 struct vnode *puffs_pnode2vnode(struct puffs_mount *, void *, int);
 void	puffs_makecn(struct puffs_kcn *, const struct componentname *);
 void	puffs_credcvt(struct puffs_cred *, kauth_cred_t);
 pid_t	puffs_lwp2pid(struct lwp *);
 
 void	puffs_parkdone_asyncbioread(struct puffs_req *, void *);
+void	puffs_parkdone_poll(struct puffs_req *, void *);
+
+void	puffs_mp_reference(struct puffs_mount *);
+void	puffs_mp_release(struct puffs_mount *);
 
 void	puffs_updatenode(struct vnode *, int);
 #define PUFFS_UPDATEATIME	0x01

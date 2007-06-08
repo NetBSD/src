@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_pathname.c,v 1.26 2007/03/04 06:01:38 christos Exp $	*/
+/*	$NetBSD: ultrix_pathname.c,v 1.26.2.1 2007/06/08 14:14:45 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_pathname.c,v 1.26 2007/03/04 06:01:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_pathname.c,v 1.26.2.1 2007/06/08 14:14:45 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,10 +83,6 @@ ultrix_sys_creat(struct lwp *l, void *v, register_t *retval)
 {
 	struct ultrix_sys_creat_args *uap = v;
 	struct sys_open_args ap;
-	struct proc *p = l->l_proc;
-
-	void *sg = stackgap_init(p, 0);
-	CHECK_ALT_CREAT(l, &sg, SCARG(uap, path));
 
 	SCARG(&ap, path) = SCARG(uap, path);
 	SCARG(&ap, flags) = O_WRONLY | O_CREAT | O_TRUNC;
@@ -100,9 +96,6 @@ int
 ultrix_sys_access(struct lwp *l, void *v, register_t *retval)
 {
 	struct ultrix_sys_access_args *uap = v;
-	struct proc *p = l->l_proc;
-	void *sg = stackgap_init(p, 0);
-	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
 	return (sys_access(l, uap, retval));
 }
@@ -111,9 +104,6 @@ int
 ultrix_sys_stat(struct lwp *l, void *v, register_t *retval)
 {
 	struct ultrix_sys_stat_args *uap = v;
-	struct proc *p = l->l_proc;
-	void *sg = stackgap_init(p, 0);
-	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
 	return (compat_43_sys_stat(l, uap, retval));
 }
@@ -122,9 +112,6 @@ int
 ultrix_sys_lstat(struct lwp *l, void *v, register_t *retval)
 {
 	struct ultrix_sys_lstat_args *uap = v;
-	struct proc *p = l->l_proc;
-	void *sg = stackgap_init(p, 0);
-	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
 	return (compat_43_sys_lstat(l, uap, retval));
 }
@@ -136,12 +123,7 @@ ultrix_sys_execv(struct lwp *l, void *v, register_t *retval)
 		syscallarg(const char *) path;
 		syscallarg(char **) argv;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	struct sys_execve_args ap;
-	void *sg;
-
-	sg = stackgap_init(p, 0);
-	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
 	SCARG(&ap, path) = SCARG(uap, path);
 	SCARG(&ap, argp) = SCARG(uap, argp);
@@ -158,12 +140,7 @@ ultrix_sys_execve(struct lwp *l, void *v, register_t *retval)
 		syscallarg(char **) argv;
 		syscallarg(char **) envp;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	struct sys_execve_args ap;
-	void *sg;
-
-	sg = stackgap_init(p, 0);
-	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
 	SCARG(&ap, path) = SCARG(uap, path);
 	SCARG(&ap, argp) = SCARG(uap, argp);
@@ -181,8 +158,6 @@ ultrix_sys_open(struct lwp *l, void *v, register_t *retval)
 	int noctty;
 	int ret;
 
-	void *sg = stackgap_init(p, 0);
-
 	/* convert open flags into NetBSD flags */
 	q = SCARG(uap, flags);
 	noctty = q & 0x8000;
@@ -192,10 +167,6 @@ ultrix_sys_open(struct lwp *l, void *v, register_t *retval)
 	r |=	((q & 0x0100) ? O_EXLOCK : 0);
 	r |=	((q & 0x2000) ? O_FSYNC : 0);
 
-	if (r & O_CREAT)
-		CHECK_ALT_CREAT(l, &sg, SCARG(uap, path));
-	else
-		CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 	SCARG(uap, flags) = r;
 	ret = sys_open(l, (struct sys_open_args *)uap, retval);
 
@@ -254,16 +225,12 @@ int
 ultrix_sys_statfs(struct lwp *l, void *v, register_t *retval)
 {
 	struct ultrix_sys_statfs_args *uap = v;
-	struct proc *p = l->l_proc;
 	struct mount *mp;
 	struct statvfs *sp;
 	int error;
 	struct nameidata nd;
 
-	void *sg = stackgap_init(p, 0);
-	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
-
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path), l);
+	NDINIT(&nd, LOOKUP, FOLLOW | TRYEMULROOT, UIO_USERSPACE, SCARG(uap, path), l);
 	if ((error = namei(&nd)) != 0)
 		return (error);
 
@@ -309,10 +276,6 @@ int
 ultrix_sys_mknod(struct lwp *l, void *v, register_t *retval)
 {
 	struct ultrix_sys_mknod_args *uap = v;
-	struct proc *p = l->l_proc;
-
-	void *sg = stackgap_init(p, 0);
-	CHECK_ALT_CREAT(l, &sg, SCARG(uap, path));
 
 	if (S_ISFIFO(SCARG(uap, mode)))
 		return sys_mkfifo(l, uap, retval);

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.116.2.2 2007/05/13 17:36:35 ad Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.116.2.3 2007/06/08 14:17:21 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.116.2.2 2007/05/13 17:36:35 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.116.2.3 2007/06/08 14:17:21 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -229,8 +229,7 @@ donice(struct lwp *l, struct proc *chgp, int n)
 		mutex_spin_exit(&chgp->p_stmutex);
 		goto again;
 	}
-	chgp->p_nice = n;
-	(void)resetprocpriority(chgp);
+	sched_nice(chgp, n);
 	mutex_spin_exit(&chgp->p_stmutex);
 	return (0);
 }

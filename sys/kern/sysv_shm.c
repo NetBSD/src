@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_shm.c,v 1.98.2.1 2007/03/13 16:51:57 ad Exp $	*/
+/*	$NetBSD: sysv_shm.c,v 1.98.2.2 2007/06/08 14:17:26 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2007 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.98.2.1 2007/03/13 16:51:57 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.98.2.2 2007/06/08 14:17:26 ad Exp $");
 
 #define SYSVSHM
 
@@ -503,7 +503,7 @@ shmctl1(struct lwp *l, int shmid, int cmd, struct shmid_ds *shmbuf)
 					/*
 					 * In fact, uvm_map_pageable could fail
 					 * only if arguments are invalid,
-					 * otherwise it should allways return 0.
+					 * otherwise it should always return 0.
 					 */
 					return EIO;
 				}

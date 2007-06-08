@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_domain.c,v 1.63 2007/02/17 22:34:07 dyoung Exp $	*/
+/*	$NetBSD: uipc_domain.c,v 1.63.4.1 2007/06/08 14:17:27 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.63 2007/02/17 22:34:07 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.63.4.1 2007/06/08 14:17:27 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -56,6 +56,7 @@ void	pffasttimo(void *);
 void	pfslowtimo(void *);
 
 struct domainhead domains = STAILQ_HEAD_INITIALIZER(domains);
+static struct domain *domain_array[AF_MAX];
 
 struct callout pffasttimo_ch, pfslowtimo_ch;
 
@@ -100,6 +101,8 @@ domain_attach(struct domain *dp)
 	const struct protosw *pr;
 
 	STAILQ_INSERT_TAIL(&domains, dp, dom_link);
+	if (dp->dom_family < __arraycount(domain_array))
+		domain_array[dp->dom_family] = dp;
 
 	if (dp->dom_init)
 		(*dp->dom_init)();
@@ -126,6 +129,9 @@ struct domain *
 pffinddomain(int family)
 {
 	struct domain *dp;
+
+	if (family < __arraycount(domain_array) && domain_array[family] != NULL)
+		return domain_array[family];
 
 	DOMAIN_FOREACH(dp)
 		if (dp->dom_family == family)
@@ -173,6 +179,87 @@ pffindproto(int family, int protocol, int type)
 			maybe = pr;
 	}
 	return (maybe);
+}
+
+struct sockaddr *
+sockaddr_alloc(sa_family_t af, int flags)
+{
+	const struct domain *dom;
+	struct sockaddr *sa;
+
+	if ((dom = pffinddomain(af)) == NULL)
+		return NULL;
+
+	if ((sa = pool_get(dom->dom_sa_pool, flags)) == NULL)
+		return NULL;
+
+	sa->sa_family = af;
+	sa->sa_len = dom->dom_sa_len;
+	return sa;
+}
+
+struct sockaddr *
+sockaddr_copy(struct sockaddr *dst, const struct sockaddr *src)
+{
+	KASSERT(dst->sa_family == src->sa_family);
+	memcpy(dst, src, src->sa_len);
+	return dst;
+}
+
+int
+sockaddr_cmp(const struct sockaddr *sa1, const struct sockaddr *sa2)
+{
+	int len, rc;
+	struct domain *dom;
+
+	if (sa1->sa_family != sa2->sa_family)
+		return sa1->sa_family - sa2->sa_family;
+
+	dom = pffinddomain(sa1->sa_family);
+
+	if (dom != NULL && dom->dom_sockaddr_cmp != NULL)
+		return (*dom->dom_sockaddr_cmp)(sa1, sa2);
+
+	len = MIN(sa1->sa_len, sa2->sa_len);
+
+	if (dom == NULL || dom->dom_sa_cmplen == 0) {
+		if ((rc = memcmp(sa1, sa2, len)) != 0)
+			return rc;
+		return sa1->sa_len - sa2->sa_len;
+	}
+
+	if ((rc = memcmp((const char *)sa1 + dom->dom_sa_cmpofs,
+		         (const char *)sa2 + dom->dom_sa_cmpofs,
+			 MIN(dom->dom_sa_cmplen,
+			     len - MIN(len, dom->dom_sa_cmpofs)))) != 0)
+		return rc;
+
+	return MIN(dom->dom_sa_cmplen + dom->dom_sa_cmpofs, sa1->sa_len) -
+	       MIN(dom->dom_sa_cmplen + dom->dom_sa_cmpofs, sa2->sa_len);
+}
+
+struct sockaddr *
+sockaddr_dup(const struct sockaddr *src, int flags)
+{
+	struct sockaddr *dst;
+
+	if ((dst = sockaddr_alloc(src->sa_family, flags)) == NULL)
+		return NULL;
+
+	KASSERT(dst->sa_len >= src->sa_len);
+
+	return sockaddr_copy(dst, src);
+}
+
+void
+sockaddr_free(struct sockaddr *sa)
+{
+	const struct domain *dom;
+
+	if ((dom = pffinddomain(sa->sa_family)) == NULL)
+		panic("%s: no such domain %d\n", __func__, sa->sa_family);
+
+	pool_put(dom->dom_sa_pool, sa);
 }
 
 /*

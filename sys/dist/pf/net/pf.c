@@ -1,4 +1,4 @@
-/*	$NetBSD: pf.c,v 1.36 2007/03/04 06:02:58 christos Exp $	*/
+/*	$NetBSD: pf.c,v 1.36.2.1 2007/06/08 14:14:59 ad Exp $	*/
 /*	$OpenBSD: pf.c,v 1.487 2005/04/22 09:53:18 dhartmei Exp $ */
 
 /*
@@ -274,10 +274,6 @@ struct pf_pool_limit pf_pool_limits[PF_LIMIT_MAX] = {
 	  (s)->lan.addr.addr32[3] != (s)->gwy.addr.addr32[3])) || \
 	(s)->lan.port != (s)->gwy.port
 
-#define BOUND_IFACE(r, k) (((r)->rule_flag & PFRULE_IFBOUND) ? (k) :   \
-	((r)->rule_flag & PFRULE_GRBOUND) ? (k)->pfik_parent :	       \
-	(k)->pfik_parent->pfik_parent)
-
 #define STATE_INC_COUNTERS(s)				\
 	do {						\
 		s->rule.ptr->states++;			\
@@ -319,6 +315,24 @@ RB_GENERATE(pf_state_tree_id, pf_state,
     u.s.entry_id, pf_state_compare_id);
 RB_GENERATE(pf_anchor_global, pf_anchor, entry_global, pf_anchor_compare);
 RB_GENERATE(pf_anchor_node, pf_anchor, entry_node, pf_anchor_compare);
+
+static inline struct pfi_kif *
+bound_iface(const struct pf_rule *r, const struct pf_rule *nr,
+    struct pfi_kif *k)
+{
+	uint32_t rule_flag;
+
+	rule_flag = r->rule_flag;
+	if (nr != NULL)
+		rule_flag |= nr->rule_flag;
+
+	if ((rule_flag & PFRULE_IFBOUND) != 0)
+		return k;
+	else if ((rule_flag & PFRULE_GRBOUND) != 0)
+		return k->pfik_parent;
+	else
+		return k->pfik_parent->pfik_parent;
+}
 
 static __inline int
 pf_src_compare(struct pf_src_node *a, struct pf_src_node *b)
@@ -2693,41 +2707,32 @@ pf_get_mss(struct mbuf *m, int off, u_int16_t th_off, sa_family_t af)
 u_int16_t
 pf_calc_mss(struct pf_addr *addr, sa_family_t af, u_int16_t offer)
 {
-	struct route *rop = NULL;
-#ifdef INET
-	struct sockaddr_in	*dst;
+	union {
+		struct sockaddr		dst;
+		struct sockaddr_in	dst4;
+		struct sockaddr_in6	dst6;
+	} u;
 	struct route		 ro;
-#endif /* INET */
-#ifdef INET6
-	struct sockaddr_in6	*dst6;
-	struct route_in6	 ro6;
-#endif /* INET6 */
+	struct route *rop = &ro;
 	int			 hlen;
 	u_int16_t		 mss = tcp_mssdflt;
 
 	hlen = 0;	/* XXXGCC - -Wunitialized m68k */
 
+	memset(&ro, 0, sizeof(ro));
 	switch (af) {
 #ifdef INET
 	case AF_INET:
 		hlen = sizeof(struct ip);
-		bzero(&ro, sizeof(ro));
-		dst = (struct sockaddr_in *)&ro.ro_dst;
-		dst->sin_family = AF_INET;
-		dst->sin_len = sizeof(*dst);
-		dst->sin_addr = addr->v4;
-		rop = &ro;
+		sockaddr_in_init(&u.dst4, &addr->v4, 0);
+		rtcache_setdst(rop, &u.dst);
 		break;
 #endif /* INET */
 #ifdef INET6
 	case AF_INET6:
 		hlen = sizeof(struct ip6_hdr);
-		bzero(&ro6, sizeof(ro6));
-		dst6 = (struct sockaddr_in6 *)&ro6.ro_dst;
-		dst6->sin6_family = AF_INET6;
-		dst6->sin6_len = sizeof(*dst6);
-		dst6->sin6_addr = addr->v6;
-		rop = (struct route *)&ro6;
+		sockaddr_in6_init(&u.dst6, &addr->v6, 0, 0, 0);
+		rtcache_setdst(rop, &u.dst);
 		break;
 #endif /* INET6 */
 	}
@@ -3100,7 +3105,7 @@ cleanup:
 			pool_put(&pf_state_pl, s);
 			return (PF_DROP);
 		}
-		if (pf_insert_state(BOUND_IFACE(r, kif), s)) {
+		if (pf_insert_state(bound_iface(r, nr, kif), s)) {
 			pf_normalize_tcp_cleanup(s);
 			REASON_SET(&reason, PFRES_STATEINS);
 			pf_src_tree_remove_state(s);
@@ -3405,7 +3410,7 @@ cleanup:
 			s->nat_src_node = nsn;
 			s->nat_src_node->states++;
 		}
-		if (pf_insert_state(BOUND_IFACE(r, kif), s)) {
+		if (pf_insert_state(bound_iface(r, nr, kif), s)) {
 			REASON_SET(&reason, PFRES_STATEINS);
 			pf_src_tree_remove_state(s);
 			STATE_DEC_COUNTERS(s);
@@ -3695,7 +3700,7 @@ cleanup:
 			s->nat_src_node = nsn;
 			s->nat_src_node->states++;
 		}
-		if (pf_insert_state(BOUND_IFACE(r, kif), s)) {
+		if (pf_insert_state(bound_iface(r, nr, kif), s)) {
 			REASON_SET(&reason, PFRES_STATEINS);
 			pf_src_tree_remove_state(s);
 			STATE_DEC_COUNTERS(s);
@@ -3968,7 +3973,7 @@ cleanup:
 			s->nat_src_node = nsn;
 			s->nat_src_node->states++;
 		}
-		if (pf_insert_state(BOUND_IFACE(r, kif), s)) {
+		if (pf_insert_state(bound_iface(r, nr, kif), s)) {
 			REASON_SET(&reason, PFRES_STATEINS);
 			pf_src_tree_remove_state(s);
 			STATE_DEC_COUNTERS(s);
@@ -5268,33 +5273,28 @@ pf_pull_hdr(struct mbuf *m, int off, void *p, int len,
 int
 pf_routable(struct pf_addr *addr, sa_family_t af)
 {
-	struct sockaddr_in	*dst;
-#ifdef INET6
-	struct sockaddr_in6	*dst6;
-	struct route_in6	 ro;
-#else
-	struct route		 ro;
-#endif
+	int rc = 0;
+	union {
+		struct sockaddr		dst;
+		struct sockaddr_in	dst4;
+		struct sockaddr_in6	dst6;
+	} u;
+	struct route ro;
 
 	bzero(&ro, sizeof(ro));
 	switch (af) {
 	case AF_INET:
-		dst = satosin(&ro.ro_dst);
-		dst->sin_family = AF_INET;
-		dst->sin_len = sizeof(*dst);
-		dst->sin_addr = addr->v4;
+		sockaddr_in_init(&u.dst4, &addr->v4, 0);
 		break;
 #ifdef INET6
 	case AF_INET6:
-		dst6 = (struct sockaddr_in6 *)&ro.ro_dst;
-		dst6->sin6_family = AF_INET6;
-		dst6->sin6_len = sizeof(*dst6);
-		dst6->sin6_addr = addr->v6;
+		sockaddr_in6_init(&u.dst6, &addr->v6, 0, 0, 0);
 		break;
 #endif /* INET6 */
 	default:
 		return (0);
 	}
+	rtcache_setdst(&ro, &u.dst);
 
 #ifdef __OpenBSD__
 	rtalloc_noclone((struct route *)&ro, NO_CLONING);
@@ -5303,14 +5303,12 @@ pf_routable(struct pf_addr *addr, sa_family_t af)
 		return (1);
 	}
 #else
-	rtcache_init((struct route *)&ro);
-	if (ro.ro_rt != NULL) {
-		rtcache_free((struct route *)&ro);
-		return (1);
-	}
+	rtcache_init(&ro);
+	rc = (ro.ro_rt != NULL) ? 1 : 0;
+	rtcache_free(&ro);
 #endif
 
-	return (0);
+	return rc;
 }
 
 int
@@ -5378,7 +5376,11 @@ pf_route(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 	struct m_tag		*mtag;
 	struct route		 iproute;
 	struct route		*ro = NULL;
-	struct sockaddr_in	*dst;
+	const struct sockaddr	*dst;
+	union {
+		struct sockaddr		dst;
+		struct sockaddr_in	dst4;
+	} u;
 	struct ip		*ip;
 	struct ifnet		*ifp = NULL;
 	struct pf_addr		 naddr;
@@ -5425,11 +5427,10 @@ pf_route(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 	ip = mtod(m0, struct ip *);
 
 	ro = &iproute;
-	bzero((void *)ro, sizeof(*ro));
-	dst = satosin(&ro->ro_dst);
-	dst->sin_family = AF_INET;
-	dst->sin_len = sizeof(*dst);
-	dst->sin_addr = ip->ip_dst;
+	memset(ro, 0, sizeof(*ro));
+	sockaddr_in_init(&u.dst4, &ip->ip_dst, 0);
+	dst = &u.dst;
+	rtcache_setdst(ro, dst);
 
 	if (r->rt == PF_FASTROUTE) {
 		rtcache_init(ro);
@@ -5442,7 +5443,7 @@ pf_route(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 		ro->ro_rt->rt_use++;
 
 		if (ro->ro_rt->rt_flags & RTF_GATEWAY)
-			dst = satosin(ro->ro_rt->rt_gateway);
+			dst = ro->ro_rt->rt_gateway;
 	} else {
 		if (TAILQ_EMPTY(&r->rpool.list)) {
 			DPFPRINTF(PF_DEBUG_URGENT,
@@ -5454,13 +5455,12 @@ pf_route(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 			    (const struct pf_addr *)&ip->ip_src,
 			    &naddr, NULL, &sn);
 			if (!PF_AZERO(&naddr, AF_INET))
-				dst->sin_addr.s_addr = naddr.v4.s_addr;
+				u.dst4.sin_addr.s_addr = naddr.v4.s_addr;
 			ifp = r->rpool.cur->kif ?
 			    r->rpool.cur->kif->pfik_ifp : NULL;
 		} else {
 			if (!PF_AZERO(&s->rt_addr, AF_INET))
-				dst->sin_addr.s_addr =
-				    s->rt_addr.v4.s_addr;
+				u.dst4.sin_addr.s_addr = s->rt_addr.v4.s_addr;
 			ifp = s->rt_kif ? s->rt_kif->pfik_ifp : NULL;
 		}
 	}
@@ -5539,7 +5539,7 @@ pf_route(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 		else if (m0->m_pkthdr.csum & M_UDPV4_CSUM_OUT)
 			udpstat.udps_outhwcsum++;
 #endif
-		error = (*ifp->if_output)(ifp, m0, sintosa(dst), NULL);
+		error = (*ifp->if_output)(ifp, m0, dst, NULL);
 		goto done;
 	}
 
@@ -5568,8 +5568,7 @@ pf_route(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 		m1 = m0->m_nextpkt;
 		m0->m_nextpkt = 0;
 		if (error == 0)
-			error = (*ifp->if_output)(ifp, m0, sintosa(dst),
-			    NULL);
+			error = (*ifp->if_output)(ifp, m0, dst, NULL);
 		else
 			m_freem(m0);
 	}
@@ -5783,7 +5782,6 @@ pf_check_proto_cksum(struct mbuf *m, int off, int len, u_int8_t p,
 			m_copydata(m, off, sizeof(uh), &uh); /* XXX */
 			return udp_input_checksum(af, m, &uh, off, len) != 0;
 		}
-		break;
 	}
 #endif /* __NetBSD__ */
 	switch (af) {

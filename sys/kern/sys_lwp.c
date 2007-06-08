@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_lwp.c,v 1.12.2.3 2007/04/10 18:34:05 ad Exp $	*/
+/*	$NetBSD: sys_lwp.c,v 1.12.2.4 2007/06/08 14:17:25 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.12.2.3 2007/04/10 18:34:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.12.2.4 2007/06/08 14:17:25 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,10 +128,10 @@ sys__lwp_create(struct lwp *l, void *v, register_t *retval)
 	    	if (p->p_stat == SSTOP || (p->p_sflag & PS_STOPPING) != 0)
 	    		l2->l_stat = LSSTOP;
 		else {
-			KASSERT(lwp_locked(l2, &sched_mutex));
+			KASSERT(lwp_locked(l2, l2->l_cpu->ci_schedstate.spc_mutex));
 			p->p_nrlwps++;
 			l2->l_stat = LSRUN;
-			setrunqueue(l2);
+			sched_enqueue(l2, false);
 		}
 	} else
 		l2->l_stat = LSSUSPENDED;
@@ -462,16 +462,14 @@ sys__lwp_park(struct lwp *l, void *v, register_t *retval)
 	 * Before going the full route and blocking, check to see if an
 	 * unpark op is pending.
 	 */
-	sleepq_lwp_lock(l);
+	lwp_lock(l);
 	if ((l->l_flag & (LW_CANCELLED | LW_UNPARKED)) != 0) {
 		l->l_flag &= ~(LW_CANCELLED | LW_UNPARKED);
-		sleepq_lwp_unlock(l);
+		lwp_unlock(l);
 		sleepq_unlock(sq);
 		return EALREADY;
 	}
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	lwp_unlock_to(l, sq->sq_mutex);
-#endif
 
 	KERNEL_UNLOCK_ALL(l, &l->l_biglocks); /* XXX for compat32 */
 	sleepq_enqueue(sq, sched_kpri(l), wchan, "parked", &lwp_park_sobj);
@@ -597,14 +595,19 @@ sys__lwp_unpark_all(struct lwp *l, void *v, register_t *retval)
 	if (sz <= sizeof(targets))
 		tp = targets;
 	else {
+		KERNEL_LOCK(1, l);		/* XXXSMP */
 		tp = kmem_alloc(sz, KM_SLEEP);
+		KERNEL_UNLOCK_ONE(l);		/* XXXSMP */
 		if (tp == NULL)
 			return ENOMEM;
 	}
 	error = copyin(SCARG(uap, targets), tp, sz);
 	if (error != 0) {
-		if (tp != targets)
+		if (tp != targets) {
+			KERNEL_LOCK(1, l);	/* XXXSMP */
 			kmem_free(tp, sz);
+			KERNEL_UNLOCK_ONE(l);	/* XXXSMP */
+		}
 		return error;
 	}
 
@@ -662,8 +665,11 @@ sys__lwp_unpark_all(struct lwp *l, void *v, register_t *retval)
 	}
 
 	sleepq_unlock(sq);
-	if (tp != targets)
+	if (tp != targets) {
+		KERNEL_LOCK(1, l);		/* XXXSMP */
 		kmem_free(tp, sz);
+		KERNEL_UNLOCK_ONE(l);		/* XXXSMP */
+	}
 	if (swapin)
 		uvm_kick_scheduler();
 

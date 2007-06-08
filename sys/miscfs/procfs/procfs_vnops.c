@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.154.2.2 2007/04/10 13:26:44 ad Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.154.2.3 2007/06/08 14:17:34 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.154.2.2 2007/04/10 13:26:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.154.2.3 2007/06/08 14:17:34 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -181,6 +181,7 @@ static const struct proc_target {
 	{ DT_LNK, N("cwd"),	PFScwd,		NULL },
 	{ DT_LNK, N("root"),	PFSchroot,	NULL },
 	{ DT_LNK, N("emul"),	PFSemul,	NULL },
+	{ DT_REG, N("statm"),	PFSstatm,	procfs_validfile_linux },
 #ifdef __HAVE_PROCFS_MACHDEP
 	PROCFS_MACHDEP_NODETYPE_DEFNS
 #endif
@@ -200,6 +201,8 @@ static const struct proc_target proc_root_targets[] = {
 	{ DT_REG, N("uptime"),      PFSuptime,         procfs_validfile_linux },
 	{ DT_REG, N("mounts"),	    PFSmounts,	       procfs_validfile_linux },
 	{ DT_REG, N("devices"),     PFSdevices,        procfs_validfile_linux },
+	{ DT_REG, N("stat"),	    PFScpustat,        procfs_validfile_linux },
+	{ DT_REG, N("loadavg"),	    PFSloadavg,        procfs_validfile_linux },
 #undef N
 };
 static const int nproc_root_targets =
@@ -729,6 +732,7 @@ procfs_getattr(v)
 	case PFSmaps:
 	case PFScmdline:
 	case PFSemul:
+	case PFSstatm:
 		vap->va_nlink = 1;
 		vap->va_uid = kauth_cred_geteuid(procp->p_cred);
 		vap->va_gid = kauth_cred_getegid(procp->p_cred);
@@ -738,6 +742,8 @@ procfs_getattr(v)
 	case PFScpuinfo:
 	case PFSuptime:
 	case PFSmounts:
+	case PFScpustat:
+	case PFSloadavg:
 		vap->va_nlink = 1;
 		vap->va_uid = vap->va_gid = 0;
 		break;
@@ -845,6 +851,9 @@ procfs_getattr(v)
 	case PFScpuinfo:
 	case PFSuptime:
 	case PFSmounts:
+	case PFScpustat:
+	case PFSloadavg:
+	case PFSstatm:
 		vap->va_bytes = vap->va_size = 0;
 		break;
 	case PFSmap:

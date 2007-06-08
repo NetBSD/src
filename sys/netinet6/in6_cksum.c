@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_cksum.c,v 1.19 2006/01/27 20:08:11 rpaulo Exp $	*/
+/*	$NetBSD: in6_cksum.c,v 1.19.28.1 2007/06/08 14:17:52 ad Exp $	*/
 /*	$KAME: in6_cksum.c,v 1.9 2000/09/09 15:33:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_cksum.c,v 1.19 2006/01/27 20:08:11 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_cksum.c,v 1.19.28.1 2007/06/08 14:17:52 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -91,10 +91,7 @@ __KERNEL_RCSID(0, "$NetBSD: in6_cksum.c,v 1.19 2006/01/27 20:08:11 rpaulo Exp $"
  */
 
 int
-in6_cksum(m, nxt, off, len)
-	struct mbuf *m;
-	u_int8_t nxt;
-	u_int32_t off, len;
+in6_cksum(struct mbuf *m, u_int8_t nxt, u_int32_t off, u_int32_t len)
 {
 	u_int16_t *w;
 	int sum = 0;

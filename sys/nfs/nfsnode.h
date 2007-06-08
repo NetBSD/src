@@ -1,4 +1,4 @@
-/*	 $NetBSD: nfsnode.h,v 1.61.6.1 2007/03/13 17:51:17 ad Exp $	*/
+/*	 $NetBSD: nfsnode.h,v 1.61.6.2 2007/06/08 14:18:08 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,6 +38,7 @@
 #ifndef _NFS_NFSNODE_H_
 #define _NFS_NFSNODE_H_
 
+#include <sys/condvar.h>
 #include <sys/mutex.h>
 
 #ifndef _NFS_NFS_H_
@@ -217,6 +218,7 @@ LIST_HEAD(nfsnodehashhead, nfsnode);
  */
 struct nfs_iod {
 	kmutex_t nid_lock;
+	kcondvar_t nid_cv;
 	struct proc *nid_proc;
 	struct proc *nid_want;
 	struct nfsmount *nid_mount;

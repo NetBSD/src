@@ -1,4 +1,4 @@
-/*	$NetBSD: siginfo.h,v 1.15 2007/02/09 21:55:37 ad Exp $	 */
+/*	$NetBSD: siginfo.h,v 1.15.6.1 2007/06/08 14:18:12 ad Exp $	 */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@ struct _ksiginfo {
 		struct {
 			pid_t	_pid;
 			uid_t	_uid;
-			sigval_t	_sigval;
+			sigval_t	_value;
 		} _rt;
 
 		struct {
@@ -144,7 +144,7 @@ typedef union siginfo {
 #define	si_code		_info._code
 #define	si_errno	_info._errno
 
-#define	si_sigval	_info._reason._rt._sigval
+#define	si_value	_info._reason._rt._value
 #define	si_pid		_info._reason._child._pid
 #define	si_uid		_info._reason._child._uid
 #define	si_status	_info._reason._child._status
@@ -163,7 +163,7 @@ typedef union siginfo {
 #define	ksi_code	ksi_info._code
 #define	ksi_errno	ksi_info._errno
 
-#define	ksi_sigval	ksi_info._reason._rt._sigval
+#define	ksi_value	ksi_info._reason._rt._value
 #define	ksi_pid		ksi_info._reason._child._pid
 #define	ksi_uid		ksi_info._reason._child._uid
 #define	ksi_status	ksi_info._reason._child._status

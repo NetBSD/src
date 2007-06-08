@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.834.2.1 2007/04/10 13:26:33 ad Exp $
+#	$NetBSD: files,v 1.834.2.2 2007/06/08 14:17:12 ad Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -36,9 +36,12 @@ defflag				BUFQ_PRIOCSCAN
 defflag				BUFQ_READPRIO
 defflag				NEW_BUFQ_STRATEGY	# same as BUFQ_READPRIO
 
+defflag	opt_sched.h		SCHED_4BSD
+
 defparam			SOMAXKVA
 defflag	opt_sock_counters.h	SOSEND_COUNTERS
 defflag	opt_sosend_loan.h	SOSEND_NO_LOAN
+defflag	opt_route.h		RTCACHE_DEBUG RTFLUSH_DEBUG
 
 defflag				MULTIPROCESSOR
 
@@ -232,6 +235,8 @@ defflag	opt_md.h		MEMORY_DISK_HOOKS MEMORY_DISK_IS_ROOT
 				MEMORY_DISK_DYNAMIC
 defparam opt_md.h		MEMORY_DISK_SERVER MEMORY_DISK_ROOT_SIZE
 				MEMORY_RBFLAGS
+
+defflag opt_tftproot.h		TFTPROOT TFTPROOT_DEBUG
 
 # Support for hardware performance monitoring counters
 #
@@ -472,14 +477,17 @@ defflag	opt_isp.h		ISP_DISABLE_1020_SUPPORT
 				ISP_DISABLE_1080_SUPPORT
 				ISP_DISABLE_2100_SUPPORT
 				ISP_DISABLE_2200_SUPPORT
-				ISP_DISABLE_FW ISP_TARGET_MODE
+				ISP_DISABLE_2300_SUPPORT
+				ISP_DISABLE_2400_SUPPORT
+				ISP_DISABLE_FW
+				ISP_TARGET_MODE
 				ISP_FW_CRASH_DUMP
 defparam opt_isp.h		ISP_LOGDEFAULT
 device	isp: scsi
 file	dev/ic/isp.c			isp
+file	dev/ic/isp_library.c		isp
 file	dev/ic/isp_netbsd.c		isp
 file	dev/ic/isp_target.c		isp & isp_target_mode
-
 # LSILogic MegaRAID SAS
 #
 device	mfi: scsi
@@ -782,6 +790,11 @@ file	dev/ic/clmpcc.c			clmpcc			needs-flag
 device	lm: sysmon_envsys
 file	dev/ic/nslm7x.c			lm			needs-flag
 
+# Abit uGuru
+#
+device	ug: sysmon_envsys
+file	dev/ic/ug.c			ug			needs-flag
+
 # Essential Communications Corp. HIPPI Interface
 #
 device	esh: hippi, ifnet
@@ -883,6 +896,11 @@ file	dev/ic/wdc_upc.c		wdc_upc
 file	dev/ic/com_upc.c		com_upc
 file	dev/ic/lpt_upc.c		lpt_upc
 
+# AHCI-compatible SATA controllers
+define ahcisata_core
+file dev/ic/ahcisata_core.c ahcisata_core
+device ahcisata: ata, ata_dma, ata_udma, sata, ahcisata_core
+
 # DECchip 21x4x Ethernet controller family, and assorted clones.
 #
 device	tlp: arp, ether, ifnet, mii, mii_bitbang
@@ -954,6 +972,10 @@ define	tea5757
 file	dev/ic/tea5757.c		tea5757
 define	lm700x
 file	dev/ic/lm700x.c			lm700x
+
+# Philips PCF8584 i2c controller
+define	pcf8584
+file	dev/ic/pcf8584.c		pcf8584
 
 # ACPI power management timer (hardware access, independent of ACPI)
 #
@@ -1140,6 +1162,7 @@ defpseudo rnd
 defpseudo ksyms
 defpseudo nullcons
 defpseudo lockstat
+defpseudo bio:		sysmon_envsys
 
 defpseudo loop:		ifnet
 defpseudo sl:		ifnet
@@ -1238,6 +1261,7 @@ file	dev/auconv.c			auconv | mulaw
 file	dev/audio.c			audio | midi | midibus	needs-flag
 file	dev/audiobell.c			audiobell
 file	dev/aurateconv.c		aurateconv		needs-flag
+file	dev/bio.c			bio			needs-flag
 file	dev/ccd.c			ccd			needs-flag
 file	dev/cgd.c			cgd			needs-flag
 file	dev/cgd_crypto.c		cgd
@@ -1288,11 +1312,13 @@ file	kern/kern_auth.c
 file	kern/kern_clock.c
 file	kern/kern_condvar.c
 file	kern/kern_core.c
+file	kern/kern_cpu.c
 file	kern/kern_descrip.c
 file	kern/kern_event.c
 file	kern/kern_exec.c
 file	kern/kern_exit.c
 file	kern/kern_fork.c
+file	kern/kern_idle.c
 file	kern/kern_kcont.c		kcont
 file	kern/kern_kthread.c
 file	kern/kern_ktrace.c
@@ -1327,6 +1353,7 @@ file	kern/kern_todr.c
 file	kern/kern_uuid.c
 file	kern/kern_xxx.c
 file	kern/kgdb_stub.c		kgdb
+file	kern/sched_4bsd.c		sched_4bsd
 file	kern/subr_autoconf.c
 file	kern/subr_blist.c		vmswap
 file	kern/subr_bufq.c
@@ -1346,10 +1373,12 @@ file	kern/subr_prof.c
 file	kern/subr_once.c
 file	kern/subr_optstr.c
 file	kern/subr_specificdata.c
+file	kern/subr_tftproot.c		tftproot
 file	kern/subr_userconf.c		userconf
 file	kern/subr_vmem.c
 file	kern/subr_workqueue.c
 file	kern/subr_xxx.c
+file	kern/sys_aio.c
 file	kern/sys_generic.c
 file	kern/sys_lwp.c
 file	kern/sys_pipe.c			!pipe_socketpair

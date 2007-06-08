@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_subr.c,v 1.22.2.4 2007/04/10 13:26:35 ad Exp $	*/
+/*	$NetBSD: puffs_subr.c,v 1.22.2.5 2007/06/08 14:15:00 ad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,17 +33,18 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_subr.c,v 1.22.2.4 2007/04/10 13:26:35 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_subr.c,v 1.22.2.5 2007/06/08 14:15:00 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
 #include <sys/hash.h>
+#include <sys/kauth.h>
 #include <sys/malloc.h>
 #include <sys/mount.h>
+#include <sys/namei.h>
+#include <sys/poll.h>
 #include <sys/socketvar.h>
 #include <sys/vnode.h>
-#include <sys/kauth.h>
-#include <sys/namei.h>
 #include <sys/proc.h>
 
 #include <fs/puffs/puffs_msgif.h>
@@ -134,6 +135,9 @@ puffs_getvnode(struct mount *mp, void *cookie, enum vtype type,
 	 * clerical tasks & footwork
 	 */
 
+	/* default size */
+	uvm_vnp_setsize(vp, 0);
+
 	/* dances based on vnode type. almost ufs_vinit(), but not quite */
 	switch (type) {
 	case VCHR:
@@ -185,6 +189,12 @@ puffs_getvnode(struct mount *mp, void *cookie, enum vtype type,
 	pnode = pool_get(&puffs_pnpool, PR_WAITOK);
 	pnode->pn_cookie = cookie;
 	pnode->pn_stat = 0;
+	pnode->pn_refcount = 1;
+
+	mutex_init(&pnode->pn_mtx, MUTEX_DEFAULT, IPL_NONE);
+	SLIST_INIT(&pnode->pn_sel.sel_klist);
+	pnode->pn_revents = 0;
+
 	plist = puffs_cookie2hashlist(pmp, cookie);
 	LIST_INSERT_HEAD(plist, pnode, pn_hashent);
 	vp->v_data = pnode;
@@ -224,7 +234,7 @@ puffs_newnode(struct mount *mp, struct vnode *dvp, struct vnode **vpp,
 	 * not the caller.
 	 */
 	mutex_enter(&pmp->pmp_lock);
-	if (cookie == pmp->pmp_rootcookie
+	if (cookie == pmp->pmp_root_cookie
 	    || puffs_cookie2pnode(pmp, cookie) != NULL) {
 		mutex_exit(&pmp->pmp_lock);
 		error = EEXIST;
@@ -246,6 +256,39 @@ puffs_newnode(struct mount *mp, struct vnode *dvp, struct vnode **vpp,
 	return 0;
 }
 
+/*
+ * Release pnode structure which dealing with references to the
+ * puffs_node instead of the vnode.  Can't use vref()/vrele() on
+ * the vnode there, since that causes the lovely VOP_INACTIVE(),
+ * which in turn causes the lovely deadlock when called by the one
+ * who is supposed to handle it.
+ */
+void
+puffs_releasenode(struct puffs_node *pn)
+{
+
+	mutex_enter(&pn->pn_mtx);
+	if (--pn->pn_refcount == 0) {
+		mutex_exit(&pn->pn_mtx);
+		mutex_destroy(&pn->pn_mtx);
+		pool_put(&puffs_pnpool, pn);
+	} else {
+		mutex_exit(&pn->pn_mtx);
+	}
+}
+
+/*
+ * Add reference to node.
+ *  mutex held on entry and return
+ */
+void
+puffs_referencenode(struct puffs_node *pn)
+{
+
+	KASSERT(mutex_owned(&pn->pn_mtx));
+	pn->pn_refcount++;
+}
+
 void
 puffs_putvnode(struct vnode *vp)
 {
@@ -262,7 +305,7 @@ puffs_putvnode(struct vnode *vp)
 
 	LIST_REMOVE(pnode, pn_hashent);
 	genfs_node_destroy(vp);
-	pool_put(&puffs_pnpool, vp->v_data);
+	puffs_releasenode(pnode);
 	vp->v_data = NULL;
 
 	return;
@@ -316,7 +359,7 @@ puffs_pnode2vnode(struct puffs_mount *pmp, void *cookie, int lock)
 	 * puffs_root() to get all the right things set.  Lock must
 	 * be set, since VFS_ROOT() always locks the returned vnode.
 	 */
-	if (cookie == pmp->pmp_rootcookie) {
+	if (cookie == pmp->pmp_root_cookie) {
 		if (!lock)
 			return NULL;
 		if (VFS_ROOT(pmp->pmp_mp, &vp))
@@ -476,4 +519,43 @@ puffs_parkdone_asyncbioread(struct puffs_req *preq, void *arg)
 
 	biodone(bp);
 	free(preq, M_PUFFS);
+}
+
+void
+puffs_parkdone_poll(struct puffs_req *preq, void *arg)
+{
+	struct puffs_vnreq_poll *poll_argp = (void *)preq;
+	struct puffs_node *pn = arg;
+	int revents;
+
+	if (preq->preq_rv == 0)
+		revents = poll_argp->pvnr_events;
+	else
+		revents = POLLERR;
+
+	mutex_enter(&pn->pn_mtx);
+	pn->pn_revents |= revents;
+	mutex_exit(&pn->pn_mtx);
+
+	selnotify(&pn->pn_sel, 0);
+	free(preq, M_PUFFS);
+
+	puffs_releasenode(pn);
+}
+
+void
+puffs_mp_reference(struct puffs_mount *pmp)
+{
+
+	KASSERT(mutex_owned(&pmp->pmp_lock));
+	pmp->pmp_refcount++;
+}
+
+void
+puffs_mp_release(struct puffs_mount *pmp)
+{
+
+	KASSERT(mutex_owned(&pmp->pmp_lock));
+	if (--pmp->pmp_refcount == 0)
+		cv_broadcast(&pmp->pmp_refcount_cv);
 }

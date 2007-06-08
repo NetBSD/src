@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_offload.h,v 1.2 2006/11/25 18:41:36 yamt Exp $	*/
+/*	$NetBSD: in6_offload.h,v 1.2.14.1 2007/06/08 14:17:53 ad Exp $	*/
 
 /*-
  * Copyright (c)2005, 2006 YAMAMOTO Takashi,
@@ -35,6 +35,6 @@
 
 int tcp6_segment(struct mbuf *, int (*)(void *, struct mbuf *), void *);
 int ip6_tso_output(struct ifnet *, struct ifnet *, struct mbuf *,
-    struct sockaddr_in6 *, struct rtentry *);
+    const struct sockaddr_in6 *, struct rtentry *);
 
 #endif /* !defined(_NETINET6_IN6_OFFLOAD_H_) */

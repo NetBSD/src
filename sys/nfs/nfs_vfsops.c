@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.174.2.1 2007/03/13 17:51:14 ad Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.174.2.2 2007/06/08 14:18:07 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.174.2.1 2007/03/13 17:51:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.174.2.2 2007/06/08 14:18:07 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -892,6 +892,11 @@ nfs_unmount(struct mount *mp, int mntflags, struct lwp *l)
 	m_freem(nmp->nm_nam);
 
 	rw_destroy(&nmp->nm_writeverflock);
+	mutex_destroy(&nmp->nm_lock);
+	cv_destroy(&nmp->nm_rcvcv);
+	cv_destroy(&nmp->nm_sndcv);
+	cv_destroy(&nmp->nm_aiocv);
+	cv_destroy(&nmp->nm_disconcv);
 	free(nmp, M_NFSMNT);
 	return (0);
 }

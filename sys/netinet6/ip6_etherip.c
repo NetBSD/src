@@ -1,4 +1,4 @@
-/*      $NetBSD: ip6_etherip.c,v 1.4 2007/02/17 22:34:13 dyoung Exp $        */
+/*      $NetBSD: ip6_etherip.c,v 1.4.4.1 2007/06/08 14:17:54 ad Exp $        */
 
 /*
  *  Copyright (c) 2006, Hans Rosenfeld <rosenfeld@grumpf.hope-2000.org>
@@ -98,14 +98,15 @@ int
 ip6_etherip_output(struct ifnet *ifp, struct mbuf *m)
 {
 	struct etherip_softc *sc = (struct etherip_softc *)ifp->if_softc;
-	struct sockaddr_in6 *dst, *sin6_src, *sin6_dst;
-	const struct sockaddr_in6 *cdst;
+	struct sockaddr_in6 *sin6_src, *sin6_dst;
 	struct ip6_hdr *ip6;    /* capsule IP header, host byte ordered */
 	struct etherip_header eiphdr;
 	int proto, error;
+	union {
+		struct sockaddr		dst;
+		struct sockaddr_in6	dst6;
+	} u;
 
-	dst = (struct sockaddr_in6 *)&sc->sc_ro.ro_dst;
-	cdst = satocsin6(rtcache_getdst(&sc->sc_ro));
 	sin6_src = (struct sockaddr_in6 *)sc->sc_src;
 	sin6_dst = (struct sockaddr_in6 *)sc->sc_dst;
 
@@ -160,26 +161,14 @@ ip6_etherip_output(struct ifnet *ifp, struct mbuf *m)
 		return ENETUNREACH;
 	}
 
-	if (cdst->sin6_family != sin6_dst->sin6_family ||
-	    !IN6_ARE_ADDR_EQUAL(&cdst->sin6_addr, &sin6_dst->sin6_addr))
-		rtcache_free((struct route *)&sc->sc_ro6);
-	else
-		rtcache_check((struct route *)&sc->sc_ro6);
-
-	if (sc->sc_ro6.ro_rt == NULL) {
-		memset(dst, 0, sizeof(*dst));
-		dst->sin6_family = sin6_dst->sin6_family;
-		dst->sin6_len    = sizeof(struct sockaddr_in6);
-		dst->sin6_addr   = sin6_dst->sin6_addr;
-		rtcache_init((struct route *)&sc->sc_ro6);
-		if (sc->sc_ro6.ro_rt == NULL) {
-			m_freem(m);
-			return ENETUNREACH;
-		}
+	sockaddr_in6_init(&u.dst6, &sin6_dst->sin6_addr, 0, 0, 0);
+	if (rtcache_lookup(&sc->sc_ro, &u.dst) == NULL) {
+		m_freem(m);
+		return ENETUNREACH;
 	}
 	/* if it constitutes infinite encapsulation, punt. */
 	if (sc->sc_ro.ro_rt->rt_ifp == ifp) {
-		rtcache_free((struct route *)&sc->sc_ro6);
+		rtcache_free(&sc->sc_ro);
 		m_freem(m);
 		return ENETUNREACH;     /* XXX */
 	}
@@ -189,8 +178,7 @@ ip6_etherip_output(struct ifnet *ifp, struct mbuf *m)
 	 * it is too painful to ask for resend of inner packet, to achieve
 	 * path MTU discovery for encapsulated packets.
 	 */
-	error = ip6_output(m, 0, &sc->sc_ro6, IPV6_MINMTU,
-			   (struct ip6_moptions *)NULL, (struct socket *)NULL, NULL);
+	error = ip6_output(m, 0, &sc->sc_ro, IPV6_MINMTU, NULL, NULL, NULL);
 
 	return error;
 }

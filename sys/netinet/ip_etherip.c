@@ -1,4 +1,4 @@
-/*      $NetBSD: ip_etherip.c,v 1.4 2007/02/17 22:34:11 dyoung Exp $        */
+/*      $NetBSD: ip_etherip.c,v 1.4.4.1 2007/06/08 14:17:45 ad Exp $        */
 
 /*
  *  Copyright (c) 2006, Hans Rosenfeld <rosenfeld@grumpf.hope-2000.org>
@@ -97,6 +97,10 @@ ip_etherip_output(struct ifnet *ifp, struct mbuf *m)
 	struct ip iphdr;        /* capsule IP header, host byte ordered */
 	struct etherip_header eiphdr;
 	int proto, error;
+	union {
+		struct sockaddr		dst;
+		struct sockaddr_in	dst4;
+	} u;
 
 	sin_src = (struct sockaddr_in *)sc->sc_src;
 	sin_dst = (struct sockaddr_in *)sc->sc_dst;
@@ -152,24 +156,10 @@ ip_etherip_output(struct ifnet *ifp, struct mbuf *m)
 		m = m_pullup(m, sizeof(struct ip));
 	memcpy(mtod(m, struct ip *), &iphdr, sizeof(struct ip));
 
-	if (rtcache_getdst(&sc->sc_ro)->sa_family != sin_dst->sin_family ||
-	    !in_hosteq(satocsin(rtcache_getdst(&sc->sc_ro))->sin_addr,
-	               sin_dst->sin_addr))
-		rtcache_free(&sc->sc_ro);
-	else
-		rtcache_check(&sc->sc_ro);
-
-	if (sc->sc_ro.ro_rt == NULL) {
-		struct sockaddr_in *dst = satosin(&sc->sc_ro.ro_dst);
-		memset(dst, 0, sizeof(struct sockaddr_in));
-		dst->sin_family = sin_dst->sin_family;
-		dst->sin_len    = sizeof(struct sockaddr_in);
-		dst->sin_addr   = sin_dst->sin_addr;
-		rtcache_init(&sc->sc_ro);
-		if (sc->sc_ro.ro_rt == NULL) {
-			m_freem(m);
-			return ENETUNREACH ;
-		}
+	sockaddr_in_init(&u.dst4, &sin_dst->sin_addr, 0);
+	if (rtcache_lookup(&sc->sc_ro, &u.dst) == NULL) {
+		m_freem(m);
+		return ENETUNREACH;
 	}
 
 	/* if it constitutes infinite encapsulation, punt. */

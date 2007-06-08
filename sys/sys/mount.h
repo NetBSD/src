@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.155.2.3 2007/05/13 17:36:40 ad Exp $	*/
+/*	$NetBSD: mount.h,v 1.155.2.4 2007/06/08 14:18:11 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -198,7 +198,7 @@ int	fsname##_sync(struct mount *, int, struct kauth_cred *,		\
 		struct lwp *);						\
 int	fsname##_vget(struct mount *, ino_t, struct vnode **);		\
 int	fsname##_fhtovp(struct mount *, struct fid *, struct vnode **);	\
-int	fsname##_vptofh(struct vnode *, struct fid *);			\
+int	fsname##_vptofh(struct vnode *, struct fid *, size_t *);	\
 void	fsname##_init(void);						\
 void	fsname##_reinit(void);						\
 void	fsname##_done(void);						\

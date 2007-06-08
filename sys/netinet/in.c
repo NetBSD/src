@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.116 2007/03/04 06:03:20 christos Exp $	*/
+/*	$NetBSD: in.c,v 1.116.2.1 2007/06/08 14:17:43 ad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.116 2007/03/04 06:03:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.116.2.1 2007/06/08 14:17:43 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet_conf.h"
@@ -339,7 +339,7 @@ in_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp,
 		/*FALLTHROUGH*/
 	case SIOCGIFADDRPREF:
 	case SIOCGLIFADDR:
-		if (!ifp)
+		if (ifp == NULL)
 			return EINVAL;
 		if (cmd == SIOCGIFADDRPREF || cmd == SIOCSIFADDRPREF)
 			return in_ifaddrpref_ioctl(so, cmd, data, ifp);
@@ -350,7 +350,7 @@ in_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp,
 	/*
 	 * Find address for this interface, if it exists.
 	 */
-	if (ifp)
+	if (ifp != NULL)
 		IFP_TO_IA(ifp, ia);
 
 	switch (cmd) {
@@ -362,7 +362,7 @@ in_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp,
 			LIST_FOREACH(ia,
 			    &IN_IFADDR_HASH(ifra->ifra_addr.sin_addr.s_addr),
 			    ia_hash) {
-				if (ia->ia_ifp == ifp  &&
+				if (ia->ia_ifp == ifp &&
 				    in_hosteq(ia->ia_addr.sin_addr,
 				    ifra->ifra_addr.sin_addr))
 					break;
@@ -383,7 +383,7 @@ in_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp,
 			return (EAFNOSUPPORT);
 		/* FALLTHROUGH */
 	case SIOCSIFNETMASK:
-		if (ifp == 0)
+		if (ifp == NULL)
 			panic("in_control");
 
 		if (cmd == SIOCGIFALIAS)
@@ -475,29 +475,30 @@ in_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp,
 			return (EINVAL);
 		oldaddr = ia->ia_dstaddr;
 		ia->ia_dstaddr = *satosin(&ifr->ifr_dstaddr);
-		if (ifp->if_ioctl && (error = (*ifp->if_ioctl)
-					(ifp, SIOCSIFDSTADDR, (void *)ia))) {
+		if (ifp->if_ioctl != NULL &&
+		    (error = (*ifp->if_ioctl)(ifp, SIOCSIFDSTADDR,
+		                              (void *)ia)) != 0) {
 			ia->ia_dstaddr = oldaddr;
-			return (error);
+			return error;
 		}
 		if (ia->ia_flags & IFA_ROUTE) {
 			ia->ia_ifa.ifa_dstaddr = sintosa(&oldaddr);
-			rtinit(&(ia->ia_ifa), (int)RTM_DELETE, RTF_HOST);
+			rtinit(&ia->ia_ifa, RTM_DELETE, RTF_HOST);
 			ia->ia_ifa.ifa_dstaddr = sintosa(&ia->ia_dstaddr);
-			rtinit(&(ia->ia_ifa), (int)RTM_ADD, RTF_HOST|RTF_UP);
+			rtinit(&ia->ia_ifa, RTM_ADD, RTF_HOST|RTF_UP);
 		}
 		break;
 
 	case SIOCSIFBRDADDR:
 		if ((ifp->if_flags & IFF_BROADCAST) == 0)
-			return (EINVAL);
+			return EINVAL;
 		ia->ia_broadaddr = *satosin(&ifr->ifr_broadaddr);
 		break;
 
 	case SIOCSIFADDR:
 		error = in_ifinit(ifp, ia, satosin(&ifr->ifr_addr), 1);
 #ifdef PFIL_HOOKS
-		if (!error)
+		if (error == 0)
 			(void)pfil_run_hooks(&if_pfil,
 			    (struct mbuf **)SIOCSIFADDR, ifp, PFIL_IFADDR);
 #endif
@@ -513,13 +514,14 @@ in_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp,
 	case SIOCAIFADDR:
 		maskIsNew = 0;
 		hostIsNew = 1;
-		if (ia->ia_addr.sin_family == AF_INET) {
-			if (ifra->ifra_addr.sin_len == 0) {
-				ifra->ifra_addr = ia->ia_addr;
-				hostIsNew = 0;
-			} else if (in_hosteq(ia->ia_addr.sin_addr, ifra->ifra_addr.sin_addr))
-				hostIsNew = 0;
-		}
+		if (ia->ia_addr.sin_family != AF_INET)
+			;
+		else if (ifra->ifra_addr.sin_len == 0) {
+			ifra->ifra_addr = ia->ia_addr;
+			hostIsNew = 0;
+		} else if (in_hosteq(ia->ia_addr.sin_addr,
+		           ifra->ifra_addr.sin_addr))
+			hostIsNew = 0;
 		if (ifra->ifra_mask.sin_len) {
 			in_ifscrub(ifp, ia);
 			ia->ia_sockmask = ifra->ifra_mask;
@@ -540,7 +542,7 @@ in_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp,
 		    (ifra->ifra_broadaddr.sin_family == AF_INET))
 			ia->ia_broadaddr = ifra->ifra_broadaddr;
 #ifdef PFIL_HOOKS
-		if (!error)
+		if (error == 0)
 			(void)pfil_run_hooks(&if_pfil,
 			    (struct mbuf **)SIOCAIFADDR, ifp, PFIL_IFADDR);
 #endif
@@ -555,7 +557,7 @@ in_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp,
 		    (ia->ia_broadaddr.sin_family == AF_INET))
 			ifra->ifra_broadaddr = ia->ia_broadaddr;
 		else
-			bzero(&ifra->ifra_broadaddr,
+			memset(&ifra->ifra_broadaddr, 0,
 			      sizeof(ifra->ifra_broadaddr));
 		break;
 
@@ -575,14 +577,14 @@ in_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp,
 #endif /* MROUTING */
 
 	default:
-		if (ifp == 0 || ifp->if_ioctl == 0)
-			return (EOPNOTSUPP);
+		if (ifp == NULL || ifp->if_ioctl == NULL)
+			return EOPNOTSUPP;
 		error = (*ifp->if_ioctl)(ifp, cmd, data);
 		in_setmaxmtu();
 		break;
 	}
 
-	if (error && newifaddr) {
+	if (error != 0 && newifaddr) {
 		KASSERT(ia != NULL);
 		in_purgeaddr(&ia->ia_ifa, ifp);
 	}

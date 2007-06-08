@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_proto.c,v 1.22 2006/12/09 05:33:09 dyoung Exp $	*/
+/*	$NetBSD: iso_proto.c,v 1.22.6.1 2007/06/08 14:18:03 ad Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -65,7 +65,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iso_proto.c,v 1.22 2006/12/09 05:33:09 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iso_proto.c,v 1.22.6.1 2007/06/08 14:18:03 ad Exp $");
 
 
 #include <sys/param.h>
@@ -173,6 +173,9 @@ const struct protosw  isosw[] = {
 
 extern struct ifqueue clnlintrq;
 
+POOL_INIT(sockaddr_iso_pool, sizeof(struct sockaddr_iso), 0, 0, 0,
+    "sockaddr_iso_pool", NULL, IPL_NET);
+
 struct domain   isodomain = {
 	.dom_family = PF_ISO,
 	.dom_name = "iso-domain",
@@ -189,7 +192,32 @@ struct domain   isodomain = {
 	.dom_ifqueues = { &clnlintrq, NULL },		/* ifqueues */
 	.dom_link = { NULL },
 	.dom_mowner = MOWNER_INIT("",""),
-	.dom_rtcache = NULL,
-	.dom_rtflush = NULL,
-	.dom_rtflushall = NULL
+	.dom_sa_pool = &sockaddr_iso_pool,
+	.dom_sa_len = sizeof(struct sockaddr_iso),
+	.dom_rtcache = LIST_HEAD_INITIALIZER(isodomain.dom_rtcache),
+	.dom_sockaddr_cmp = sockaddr_iso_cmp
 };
+
+int
+sockaddr_iso_cmp(const struct sockaddr *sa1, const struct sockaddr *sa2)
+{
+	int rc;
+	uint_fast8_t len, nlen;
+	const uint_fast8_t addrofs = offsetof(struct sockaddr_iso, siso_data);
+	const struct sockaddr_iso *siso1, *siso2;
+
+	siso1 = satocsiso(sa1);
+	siso2 = satocsiso(sa2);
+
+	len = MIN(siso1->siso_len, siso2->siso_len);
+	/* No siso_nlen present? */ 
+	if (len < addrofs)
+		return siso1->siso_len - siso2->siso_len;
+
+	nlen = MIN(siso1->siso_nlen, siso2->siso_nlen);
+	if (nlen > addrofs &&
+	    (rc = memcmp(siso1->siso_data, siso2->siso_data, nlen)) != 0)
+		return rc;
+
+	return siso1->siso_nlen - siso2->siso_nlen;
+}

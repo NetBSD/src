@@ -1,4 +1,4 @@
-/*	$NetBSD: rfcomm_socket.c,v 1.4.2.1 2007/04/10 13:26:49 ad Exp $	*/
+/*	$NetBSD: rfcomm_socket.c,v 1.4.2.2 2007/06/08 14:17:42 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rfcomm_socket.c,v 1.4.2.1 2007/04/10 13:26:49 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rfcomm_socket.c,v 1.4.2.2 2007/06/08 14:17:42 ad Exp $");
 
 /* load symbolic names */
 #ifdef BLUETOOTH_DEBUG
@@ -64,6 +64,7 @@ static void rfcomm_connected(void *);
 static void rfcomm_disconnected(void *, int);
 static void *rfcomm_newconn(void *, struct sockaddr_bt *, struct sockaddr_bt *);
 static void rfcomm_complete(void *, int);
+static void rfcomm_linkmode(void *, int);
 static void rfcomm_input(void *, struct mbuf *);
 
 static const struct btproto rfcomm_proto = {
@@ -72,6 +73,7 @@ static const struct btproto rfcomm_proto = {
 	rfcomm_disconnected,
 	rfcomm_newconn,
 	rfcomm_complete,
+	rfcomm_linkmode,
 	rfcomm_input,
 };
 
@@ -362,6 +364,29 @@ rfcomm_complete(void *arg, int length)
 
 	sbdrop(&so->so_snd, length);
 	sowwakeup(so);
+}
+
+/*
+ * rfcomm_linkmode(rfcomm_dlc, new)
+ *
+ * link mode change notification.
+ */
+static void
+rfcomm_linkmode(void *arg, int new)
+{
+	struct socket *so = arg;
+	int mode;
+
+	DPRINTF("auth %s, encrypt %s, secure %s\n",
+		(new & RFCOMM_LM_AUTH ? "on" : "off"),
+		(new & RFCOMM_LM_ENCRYPT ? "on" : "off"),
+		(new & RFCOMM_LM_SECURE ? "on" : "off"));
+
+	(void)rfcomm_getopt(so->so_pcb, SO_RFCOMM_LM, &mode);
+	if (((mode & RFCOMM_LM_AUTH) && !(new & RFCOMM_LM_AUTH))
+	    || ((mode & RFCOMM_LM_ENCRYPT) && !(new & RFCOMM_LM_ENCRYPT))
+	    || ((mode & RFCOMM_LM_SECURE) && !(new & RFCOMM_LM_SECURE)))
+		rfcomm_disconnect(so->so_pcb, 0);
 }
 
 /*

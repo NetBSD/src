@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.150.2.5 2007/04/13 15:49:50 ad Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.150.2.6 2007/06/08 14:17:33 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.150.2.5 2007/04/13 15:49:50 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.150.2.6 2007/06/08 14:17:33 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -462,13 +462,13 @@ startover:
 	origvsize = vp->v_size;
 	origoffset = ap->a_offset;
 	orignpages = *ap->a_count;
-	GOP_SIZE(vp, vp->v_size, &diskeof, 0);
+	GOP_SIZE(vp, origvsize, &diskeof, 0);
 	if (flags & PGO_PASTEOF) {
-		newsize = MAX(vp->v_size,
+		newsize = MAX(origvsize,
 		    origoffset + (orignpages << PAGE_SHIFT));
 		GOP_SIZE(vp, newsize, &memeof, GOP_SIZE_MEM);
 	} else {
-		GOP_SIZE(vp, vp->v_size, &memeof, GOP_SIZE_MEM);
+		GOP_SIZE(vp, origvsize, &memeof, GOP_SIZE_MEM);
 	}
 	KASSERT(ap->a_centeridx >= 0 || ap->a_centeridx <= orignpages);
 	KASSERT((origoffset & (PAGE_SIZE - 1)) == 0 && origoffset >= 0);
@@ -598,11 +598,10 @@ startover:
 	UVMHIST_LOG(ubchist, "ridx %d npages %d startoff %ld endoff %ld",
 	    ridx, npages, startoffset, endoffset);
 
-	if (!has_trans &&
-	    (error = fstrans_start(vp->v_mount, FSTRANS_SHARED)) != 0) {
-		goto out_err;
+	if (!has_trans) {
+		fstrans_start(vp->v_mount, FSTRANS_SHARED);
+		has_trans = true;
 	}
-	has_trans = true;
 
 	/*
 	 * hold g_glock to prevent a race with truncate.
@@ -1036,13 +1035,18 @@ genfs_putpages(void *v)
 		voff_t a_offhi;
 		int a_flags;
 	} */ *ap = v;
-	struct vnode *vp = ap->a_vp;
+
+	return genfs_do_putpages(ap->a_vp, ap->a_offlo, ap->a_offhi,
+	    ap->a_flags, NULL);
+}
+
+int
+genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff, int flags,
+	struct vm_page **busypg)
+{
 	struct uvm_object *uobj = &vp->v_uobj;
 	kmutex_t *slock = &uobj->vmobjlock;
-	off_t startoff = ap->a_offlo;
-	off_t endoff = ap->a_offhi;
 	off_t off;
-	int flags = ap->a_flags;
 	/* Even for strange MAXPHYS, the shift rounds down to a page */
 #define maxpages (MAXPHYS >> PAGE_SHIFT)
 	int i, s, error, npages, nback;
@@ -1087,12 +1091,12 @@ genfs_putpages(void *v)
 
 	if ((flags & PGO_CLEANIT) != 0) {
 		mutex_exit(slock);
-		if (pagedaemon)
+		if (pagedaemon) {
 			error = fstrans_start_nowait(vp->v_mount, FSTRANS_LAZY);
-		else
-			error = fstrans_start(vp->v_mount, FSTRANS_LAZY);
-		if (error)
-			return error;
+			if (error)
+				return error;
+		} else
+			fstrans_start(vp->v_mount, FSTRANS_LAZY);
 		has_trans = true;
 		mutex_enter(slock);
 	}
@@ -1194,6 +1198,8 @@ genfs_putpages(void *v)
 			if (flags & PGO_BUSYFAIL && pg->flags & PG_BUSY) {
 				UVMHIST_LOG(ubchist, "busyfail %p", pg, 0,0,0);
 				error = EDEADLK;
+				if (busypg != NULL)
+					*busypg = pg;
 				break;
 			}
 			KASSERT(!pagedaemon);

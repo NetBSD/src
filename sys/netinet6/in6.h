@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.h,v 1.59 2007/02/17 22:34:13 dyoung Exp $	*/
+/*	$NetBSD: in6.h,v 1.59.4.1 2007/06/08 14:17:52 ad Exp $	*/
 /*	$KAME: in6.h,v 1.83 2001/03/29 02:55:07 jinmei Exp $	*/
 
 /*
@@ -375,16 +375,6 @@ extern const struct in6_addr in6addr_linklocal_allrouters;
 #endif
 
 /*
- * IP6 route structure
- */
-#if defined(_NETBSD_SOURCE)
-struct route_in6 {
-	struct	rtentry *ro_rt;
-	struct	sockaddr_in6 ro_dst;
-};
-#endif
-
-/*
  * Options for use with [gs]etsockopt at the IPV6 level.
  * First word of comment is data type; bool is stored in int.
  */
@@ -704,6 +694,7 @@ in6_cksum_phdr(const struct in6_addr *src, const struct in6_addr *dst,
 
 struct mbuf;
 struct ifnet;
+int sockaddr_in6_cmp(const struct sockaddr *, const struct sockaddr *);
 int	in6_cksum __P((struct mbuf *, u_int8_t, u_int32_t, u_int32_t));
 void	in6_delayed_cksum __P((struct mbuf *));
 int	in6_localaddr __P((struct in6_addr *));
@@ -719,7 +710,41 @@ extern	u_char	ip6_protox[];
 #define	satosin6(sa)	((struct sockaddr_in6 *)(sa))
 #define	satocsin6(sa)	((const struct sockaddr_in6 *)(sa))
 #define	sin6tosa(sin6)	((struct sockaddr *)(sin6))
+#define	sin6tocsa(sin6)	((const struct sockaddr *)(sin6))
 #define	ifatoia6(ifa)	((struct in6_ifaddr *)(ifa))
+
+static inline void
+sockaddr_in6_init1(struct sockaddr_in6 *sin6, const struct in6_addr *addr,
+    in_port_t port, uint32_t flowinfo, uint32_t scope_id)
+{
+	sin6->sin6_port = port;
+	sin6->sin6_flowinfo = flowinfo;
+	sin6->sin6_addr = *addr;
+	sin6->sin6_scope_id = scope_id;
+}
+
+static inline void
+sockaddr_in6_init(struct sockaddr_in6 *sin6, const struct in6_addr *addr,
+    in_port_t port, uint32_t flowinfo, uint32_t scope_id)
+{
+	sin6->sin6_family = AF_INET6;
+	sin6->sin6_len = sizeof(*sin6);
+	sockaddr_in6_init1(sin6, addr, port, flowinfo, scope_id);
+}
+
+static inline struct sockaddr *
+sockaddr_in6_alloc(const struct in6_addr *addr, in_port_t port,
+    uint32_t flowinfo, uint32_t scope_id, int flags)
+{
+	struct sockaddr *sa;
+
+	if ((sa = sockaddr_alloc(AF_INET6, flags)) == NULL)
+		return NULL;
+
+	sockaddr_in6_init1(satosin6(sa), addr, port, flowinfo, scope_id);
+
+	return sa;
+}
 #endif /* _KERNEL */
 
 #if defined(_NETBSD_SOURCE)

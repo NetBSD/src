@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_subr.c,v 1.79.2.1 2007/03/13 17:51:09 ad Exp $	*/
+/*	$NetBSD: procfs_subr.c,v 1.79.2.2 2007/06/08 14:17:34 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.79.2.1 2007/03/13 17:51:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.79.2.2 2007/06/08 14:17:34 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -295,10 +295,13 @@ procfs_allocvp(mp, vpp, pid, pfs_type, fd, p)
 	case PFScmdline:	/* /proc/N/cmdline = -r--r--r-- */
 	case PFSemul:	/* /proc/N/emul = -r--r--r-- */
 	case PFSmeminfo:	/* /proc/meminfo = -r--r--r-- */
+	case PFScpustat:	/* /proc/stat = -r--r--r-- */
 	case PFSdevices:	/* /proc/devices = -r--r--r-- */
 	case PFScpuinfo:	/* /proc/cpuinfo = -r--r--r-- */
 	case PFSuptime:	/* /proc/uptime = -r--r--r-- */
 	case PFSmounts:	/* /proc/mounts = -r--r--r-- */
+	case PFSloadavg:	/* /proc/loadavg = -r--r--r-- */
+	case PFSstatm:	/* /proc/N/statm = -r--r--r-- */
 		pfs->pfs_mode = S_IRUSR|S_IRGRP|S_IROTH;
 		vp->v_type = VREG;
 		break;
@@ -434,6 +437,18 @@ procfs_rw(v)
 
 	case PFScpuinfo:
 		error = procfs_docpuinfo(curl, p, pfs, uio);
+		break;
+
+	case PFScpustat:
+		error = procfs_docpustat(curl, p, pfs, uio);
+		break;
+
+	case PFSloadavg:
+		error = procfs_doloadavg(curl, p, pfs, uio);
+		break;
+
+	case PFSstatm:
+		error = procfs_do_pid_statm(curl, l, pfs, uio);
 		break;
 
 	case PFSfd:

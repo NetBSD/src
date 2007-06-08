@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_netbsd.c,v 1.24.2.1 2007/04/10 13:26:52 ad Exp $	*/
+/*	$NetBSD: ipsec_netbsd.c,v 1.24.2.2 2007/06/08 14:18:00 ad Exp $	*/
 /*	$KAME: esp_input.c,v 1.60 2001/09/04 08:43:19 itojun Exp $	*/
 /*	$KAME: ah_input.c,v 1.64 2001/09/04 08:43:19 itojun Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_netbsd.c,v 1.24.2.1 2007/04/10 13:26:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_netbsd.c,v 1.24.2.2 2007/06/08 14:18:00 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -660,3 +660,107 @@ SYSCTL_SETUP(sysctl_net_inet_fast_ipsec_setup, "sysctl net.inet.ipsec subtree se
 		       CTL_CREATE, CTL_EOL);
 #endif
 }
+
+#ifdef INET6
+SYSCTL_SETUP(sysctl_net_inet6_fast_ipsec6_setup,
+	     "sysctl net.inet6.ipsec6 subtree setup")
+{
+
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "net", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_NET, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "inet6", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_NET, PF_INET6, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "ipsec6",
+		       SYSCTL_DESCR("IPv6 related IPSec settings"),
+		       NULL, 0, NULL, 0,
+		       CTL_NET, PF_INET6, IPPROTO_AH, CTL_EOL);
+
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_STRUCT, "stats",
+		       SYSCTL_DESCR("IPSec statistics and counters"),
+		       NULL, 0, &ipsec6stat, sizeof(ipsec6stat),
+		       CTL_NET, PF_INET6, IPPROTO_AH,
+		       IPSECCTL_STATS, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "def_policy",
+		       SYSCTL_DESCR("Default action for non-IPSec packets"),
+		       sysctl_fast_ipsec, 0, &ip6_def_policy, 0,
+		       CTL_NET, PF_INET6, IPPROTO_AH,
+		       IPSECCTL_DEF_POLICY, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "esp_trans_deflev",
+		       SYSCTL_DESCR("Default required security level for "
+				    "transport mode traffic"),
+		       sysctl_fast_ipsec, 0, &ip6_esp_trans_deflev, 0,
+		       CTL_NET, PF_INET6, IPPROTO_AH,
+		       IPSECCTL_DEF_ESP_TRANSLEV, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "esp_net_deflev",
+		       SYSCTL_DESCR("Default required security level for "
+				    "tunneled traffic"),
+		       sysctl_fast_ipsec, 0, &ip6_esp_net_deflev, 0,
+		       CTL_NET, PF_INET6, IPPROTO_AH,
+		       IPSECCTL_DEF_ESP_NETLEV, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "ah_trans_deflev",
+		       SYSCTL_DESCR("Default required security level for "
+				    "transport mode headers"),
+		       sysctl_fast_ipsec, 0, &ip6_ah_trans_deflev, 0,
+		       CTL_NET, PF_INET6, IPPROTO_AH,
+		       IPSECCTL_DEF_AH_TRANSLEV, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "ah_net_deflev",
+		       SYSCTL_DESCR("Default required security level for "
+				    "tunneled headers"),
+		       sysctl_fast_ipsec, 0, &ip6_ah_net_deflev, 0,
+		       CTL_NET, PF_INET6, IPPROTO_AH,
+		       IPSECCTL_DEF_AH_NETLEV, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "ecn",
+		       SYSCTL_DESCR("Behavior of ECN for tunneled traffic"),
+		       NULL, 0, &ip6_ipsec_ecn, 0,
+		       CTL_NET, PF_INET6, IPPROTO_AH,
+		       IPSECCTL_ECN, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "debug",
+		       SYSCTL_DESCR("Enable IPSec debugging output"),
+		       NULL, 0, &ipsec_debug, 0,
+		       CTL_NET, PF_INET6, IPPROTO_AH,
+		       IPSECCTL_DEBUG, CTL_EOL);
+
+	/*
+	 * "aliases" for the ipsec6 subtree
+	 */
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_ALIAS,
+		       CTLTYPE_NODE, "esp6", NULL,
+		       NULL, IPPROTO_AH, NULL, 0,
+		       CTL_NET, PF_INET6, IPPROTO_ESP, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_ALIAS,
+		       CTLTYPE_NODE, "ipcomp6", NULL,
+		       NULL, IPPROTO_AH, NULL, 0,
+		       CTL_NET, PF_INET6, IPPROTO_IPCOMP, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_ALIAS,
+		       CTLTYPE_NODE, "ah6", NULL,
+		       NULL, IPPROTO_AH, NULL, 0,
+		       CTL_NET, PF_INET6, CTL_CREATE, CTL_EOL);
+}
+#endif /* INET6 */

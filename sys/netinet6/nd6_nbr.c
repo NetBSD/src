@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.71.2.1 2007/04/10 13:26:52 ad Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.71.2.2 2007/06/08 14:17:58 ad Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.71.2.1 2007/04/10 13:26:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.71.2.2 2007/06/08 14:17:58 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -354,7 +354,7 @@ nd6_ns_output(struct ifnet *ifp, const struct in6_addr *daddr6,
 	int icmp6len;
 	int maxlen;
 	void *mac;
-	struct route_in6 ro;
+	struct route ro;
 
 	memset(&ro, 0, sizeof(ro));
 
@@ -459,7 +459,7 @@ nd6_ns_output(struct ifnet *ifp, const struct in6_addr *daddr6,
 			dst_sa.sin6_addr = ip6->ip6_dst;
 
 			src = in6_selectsrc(&dst_sa, NULL,
-			    NULL, (struct route *)&ro, NULL, NULL, &error);
+			    NULL, &ro, NULL, NULL, &error);
 			if (src == NULL) {
 				nd6log((LOG_DEBUG,
 				    "nd6_ns_output: source can't be "
@@ -524,11 +524,11 @@ nd6_ns_output(struct ifnet *ifp, const struct in6_addr *daddr6,
 	icmp6_ifstat_inc(ifp, ifs6_out_neighborsolicit);
 	icmp6stat.icp6s_outhist[ND_NEIGHBOR_SOLICIT]++;
 
-	rtcache_free((struct route *)&ro);
+	rtcache_free(&ro);
 	return;
 
   bad:
-	rtcache_free((struct route *)&ro);
+	rtcache_free(&ro);
 	m_freem(m);
 	return;
 }
@@ -806,28 +806,7 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 	}
 	rt->rt_flags &= ~RTF_REJECT;
 	ln->ln_asked = 0;
-	if (ln->ln_hold) {
-		struct mbuf *m_hold, *m_hold_next;
-
-		for (m_hold = ln->ln_hold; m_hold; m_hold = m_hold_next) {
-			struct mbuf *mpkt = NULL;
-			
-			m_hold_next = m_hold->m_nextpkt;
-			mpkt = m_copym(m_hold, 0, M_COPYALL, M_DONTWAIT);
-			if (mpkt == NULL) {
-				m_freem(m_hold);
-				break;
-			}
-			mpkt->m_nextpkt = NULL;
-			/*
-			 * we assume ifp is not a loopback here, so just set
-			 * the 2nd argument as the 1st one.
-			 */
-			nd6_output(ifp, ifp, mpkt,
-			    (struct sockaddr_in6 *)rt_key(rt), rt);
-		}
- 		ln->ln_hold = NULL;
-	}
+	nd6_llinfo_release_pkts(ln, ifp, rt);
 
  freeit:
 	m_freem(m);
@@ -859,11 +838,15 @@ nd6_na_output(ifp, daddr6_0, taddr6, flags, tlladdr, sdl0)
 	struct ip6_hdr *ip6;
 	struct nd_neighbor_advert *nd_na;
 	struct ip6_moptions im6o;
-	struct sockaddr_in6 dst_sa;
+	struct sockaddr *dst;
+	union {
+		struct sockaddr		dst;
+		struct sockaddr_in6	dst6;
+	} u;
 	struct in6_addr *src, daddr6;
 	int icmp6len, maxlen, error;
 	void *mac;
-	struct route_in6 ro;
+	struct route ro;
 
 	mac = NULL;
 	memset(&ro, 0, sizeof(ro));
@@ -925,21 +908,19 @@ nd6_na_output(ifp, daddr6_0, taddr6, flags, tlladdr, sdl0)
 		flags &= ~ND_NA_FLAG_SOLICITED;
 	}
 	ip6->ip6_dst = daddr6;
-	memset(&dst_sa, 0, sizeof(dst_sa));
-	dst_sa.sin6_family = AF_INET6;
-	dst_sa.sin6_len = sizeof(struct sockaddr_in6);
-	dst_sa.sin6_addr = daddr6;
+	sockaddr_in6_init(&u.dst6, &daddr6, 0, 0, 0);
+	dst = &u.dst;
+	rtcache_setdst(&ro, dst);
 
 	/*
 	 * Select a source whose scope is the same as that of the dest.
 	 */
-	ro.ro_dst = dst_sa;
-	src = in6_selectsrc(&dst_sa, NULL, NULL, (struct route *)&ro, NULL,
-	    NULL, &error);
+	src = in6_selectsrc(satosin6(dst), NULL, NULL, &ro, NULL, NULL,
+	    &error);
 	if (src == NULL) {
 		nd6log((LOG_DEBUG, "nd6_na_output: source can't be "
 		    "determined: dst=%s, error=%d\n",
-		    ip6_sprintf(&dst_sa.sin6_addr), error));
+		    ip6_sprintf(&satocsin6(dst)->sin6_addr), error));
 		goto bad;
 	}
 	ip6->ip6_src = *src;
@@ -999,11 +980,11 @@ nd6_na_output(ifp, daddr6_0, taddr6, flags, tlladdr, sdl0)
 	icmp6_ifstat_inc(ifp, ifs6_out_neighboradvert);
 	icmp6stat.icp6s_outhist[ND_NEIGHBOR_ADVERT]++;
 
-	rtcache_free((struct route *)&ro);
+	rtcache_free(&ro);
 	return;
 
   bad:
-	rtcache_free((struct route *)&ro);
+	rtcache_free(&ro);
 	m_freem(m);
 	return;
 }
@@ -1062,8 +1043,7 @@ nd6_dad_starttimer(struct dadq *dp, int ticks)
 }
 
 static void
-nd6_dad_stoptimer(dp)
-	struct dadq *dp;
+nd6_dad_stoptimer(struct dadq *dp)
 {
 
 	callout_stop(&dp->dad_timer_ch);

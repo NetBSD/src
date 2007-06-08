@@ -1,4 +1,4 @@
-/*	$NetBSD: db_xxx.c,v 1.42.4.1 2007/05/27 00:15:12 ad Exp $	*/
+/*	$NetBSD: db_xxx.c,v 1.42.4.2 2007/06/08 14:17:14 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -39,7 +39,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.42.4.1 2007/05/27 00:15:12 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.42.4.2 2007/06/08 14:17:14 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,6 +113,13 @@ db_kgdb_cmd(db_expr_t addr, bool haddr,
 	kgdb_active--;
 }
 #endif
+
+void
+db_show_aio_jobs(db_expr_t addr, bool haddr,
+    db_expr_t count, const char *modif)
+{
+	aio_print_jobs(db_printf);
+}
 
 void
 db_show_all_procs(db_expr_t addr, bool haddr,
@@ -294,35 +301,10 @@ db_dmesg(db_expr_t addr, bool haddr, db_expr_t count,
 		db_printf("\n");
 }
 
-#ifdef __HAVE_BIGENDIAN_BITOPS
-#define	RQMASK(n) (0x80000000 >> (n))
-#else
-#define	RQMASK(n) (0x00000001 << (n))
-#endif
-
 void
 db_show_sched_qs(db_expr_t addr, bool haddr,
     db_expr_t count, const char *modif)
 {
-	struct prochd *ph;
-	struct lwp *l;
-	int i, first;
 
-	for (i = 0; i < RUNQUE_NQS; i++)
-	{
-		first = 1;
-		ph = &sched_qs[i];
-		for (l = ph->ph_link; l != (void *)ph; l = l->l_forw) {
-			if (first) {
-				db_printf("%c%d",
-				    (sched_whichqs & RQMASK(i))
-				    ? ' ' : '!', i);
-				first = 0;
-			}
-			db_printf("\t%d.%d (%s) pri=%d usrpri=%d\n",
-			    l->l_proc->p_pid,
-			    l->l_lid, l->l_proc->p_comm,
-			    (int)l->l_priority, (int)l->l_usrpri);
-		}
-	}
+	sched_print_runqueue(db_printf);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: namei.h,v 1.47.6.1 2007/04/10 13:26:19 ad Exp $	*/
+/*	$NetBSD: namei.h,v 1.47.6.2 2007/06/08 14:18:11 ad Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1991, 1993
@@ -51,6 +51,7 @@ struct nameidata {
 	 */
 	struct	vnode *ni_startdir;	/* starting directory */
 	struct	vnode *ni_rootdir;	/* logical root directory */
+	struct	vnode *ni_erootdir;	/* emulation root directory */
 	/*
 	 * Results: returned from/manipulated by lookup
 	 */
@@ -102,6 +103,8 @@ struct nameidata {
 #define	NOCACHE		0x0020	/* name must not be left in cache */
 #define	FOLLOW		0x0040	/* follow symbolic links */
 #define	NOFOLLOW	0x0000	/* do not follow symbolic links (pseudo) */
+#define	TRYEMULROOT	0x0010	/* try relative to emulation root first */
+#define	EMULROOTSET	0x0080	/* emulation root already in ni_erootdir */
 #define	MODMASK		0x00fc	/* mask of operational modifiers */
 /*
  * Namei parameter descriptors.
@@ -178,8 +181,6 @@ extern struct pool_cache pnbuf_cache;	/* pathname buffer cache */
 #define	PNBUF_GET()	pool_cache_get(&pnbuf_cache, PR_WAITOK)
 #define	PNBUF_PUT(pnb)	pool_cache_put(&pnbuf_cache, (pnb))
 
-typedef struct pathname_internal *pathname_t;
-
 int	namei(struct nameidata *);
 uint32_t namei_hash(const char *, const char **);
 int	lookup(struct nameidata *);
@@ -198,9 +199,6 @@ void	nchreinit(void);
 void	cache_purgevfs(struct mount *);
 void	namecache_print(struct vnode *, void (*)(const char *, ...));
 
-int pathname_get(const char *, enum uio_seg, pathname_t *);
-const char *pathname_path(pathname_t);
-void pathname_put(pathname_t);
 #endif
 
 /*

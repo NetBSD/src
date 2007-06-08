@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.123.2.3 2007/04/10 13:26:40 ad Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.123.2.4 2007/06/08 14:17:25 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -93,7 +93,7 @@
 #include "opt_ktrace.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.123.2.3 2007/04/10 13:26:40 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.123.2.4 2007/06/08 14:17:25 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -933,10 +933,15 @@ process_stoptrace(struct lwp *l)
 	p->p_xstat = SIGTRAP;
 	proc_stop(p, 1, SIGSTOP);
 	KERNEL_UNLOCK_ALL(l, &l->l_biglocks);
-	mutex_exit(&p->p_smutex);
 	mutex_exit(&proclist_mutex);
-	lwp_lock(l);
-	mi_switch(l, NULL);
+
+	/*
+	 * Call issignal() once only, to have it take care of the
+	 * pending stop.  Signal processing will take place as usual
+	 * from userret().
+	 */
+	(void)issignal(l);
+	mutex_exit(&p->p_smutex);
 	KERNEL_LOCK(l->l_biglocks - 1, l);
 }
 #endif	/* KTRACE || PTRACE */

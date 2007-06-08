@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vnops.c,v 1.9.6.1 2007/04/05 21:57:49 ad Exp $ */
+/* $NetBSD: udf_vnops.c,v 1.9.6.2 2007/06/08 14:15:02 ad Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: udf_vnops.c,v 1.9.6.1 2007/04/05 21:57:49 ad Exp $");
+__RCSID("$NetBSD: udf_vnops.c,v 1.9.6.2 2007/06/08 14:15:02 ad Exp $");
 #endif /* not lint */
 
 
@@ -315,7 +315,7 @@ udf_strategy(void *v)
 	    ", sector %d for %d sectors\n",
 	    vp, bp, bp->b_blkno, from, sectors));
 
-	/* check assertions: we OUGHT to allways get multiples of this */
+	/* check assertions: we OUGHT to always get multiples of this */
 	assert(sectors * lb_size == bp->b_bcount);
 
 	/* determine mode */
