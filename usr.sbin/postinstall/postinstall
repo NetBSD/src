@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.41 2007/06/02 21:25:08 pavel Exp $
+# $NetBSD: postinstall,v 1.42 2007/06/08 22:24:08 pavel Exp $
 #
 # Copyright (c) 2002-2006 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -916,7 +916,10 @@ do_sendmail()
 
 	for f in /etc/mail/helpfile /etc/mail/local-host-names \
 	    /etc/mail/sendmail.cf /etc/mail/submit.cf /etc/rc.d/sendmail \
-	    /etc/rc.d/smmsp /var/spool/clientmqueue /var/spool/mqueue; do
+	    /etc/rc.d/smmsp /usr/share/misc/sendmail.hf \
+	    $(find /usr/share/sendmail -type f) \
+	    $(find /usr/share/sendmail -type d) /var/log/sendmail.st \
+	    /var/spool/clientmqueue /var/spool/mqueue; do
 		[ -e "${DEST_DIR}${f}" ] && echo "${f}"
 	done | obsolete_paths ${op}
 	failed=$(( ${failed} + $? ))
