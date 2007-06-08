@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.12.38.3 2007/05/23 01:45:10 nisimura Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.12.38.4 2007/06/08 09:55:51 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.12.38.3 2007/05/23 01:45:10 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.12.38.4 2007/06/08 09:55:51 nisimura Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -59,8 +59,8 @@ __KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.12.38.3 2007/05/23 01:45:10 nisimu
 
 #define _POWERPC_BUS_DMA_PRIVATE
 #include <machine/bus.h>
-#include <machine/pio.h>
 #include <machine/intr.h>
+#include <machine/pio.h>
 
 #include <dev/isa/isavar.h>
 #include <dev/pci/pcivar.h>
@@ -84,6 +84,8 @@ struct powerpc_bus_dma_tag pci_bus_dma_tag = {
 	_bus_dmamem_unmap,
 	_bus_dmamem_mmap,
 };
+
+#define	EPIC_DEBUGIRQ
 
 static int brdtype;
 #define BRD_SANDPOINTX2		2
@@ -131,14 +133,14 @@ pci_attach_hook(parent, self, pba)
 	}
 	tag = pci_make_tag(pba->pba_pc, pba->pba_bus, 15, 0);
 	dev15 = pci_conf_read(pba->pba_pc, tag, PCI_ID_REG);
-	if (PCI_VENDOR(dev15) == PCI_VENDOR_MARVELL) {
-		/* Marvell GbE at dev 15 */
-		brdtype = BRD_SYNOLOGY;
-		return;
-	}
 	if (PCI_VENDOR(dev15) == PCI_VENDOR_INTEL) {
 		/* Intel GbE at dev 15 */
 		brdtype = BRD_QNAPTS101;
+		return;
+	}
+	if (PCI_VENDOR(dev15) == PCI_VENDOR_MARVELL) {
+		/* Marvell GbE at dev 15 */
+		brdtype = BRD_SYNOLOGY;
 		return;
 	}
 	brdtype = BRD_UNKNOWN;
@@ -230,13 +232,11 @@ pci_intr_map(pa, ihp)
 	int	pin = pa->pa_intrpin;
 	int	line = pa->pa_intrline;
 
-	if (pin == 0) {
-		/* No IRQ used. */
+	/* No IRQ used. */
+	if (pin == 0)
 		goto bad;
-	}
-
 	if (pin > 4) {
-		printf("pci_intr_map: bad interrupt pin %d\n", pin);
+		aprint_error("pci_intr_map: bad interrupt pin %d\n", pin);
 		goto bad;
 	}
 
@@ -255,11 +255,13 @@ pci_intr_map(pa, ihp)
 	 * the BIOS has not configured the device.
 	 */
 	if (line == 255) {
-		printf("pci_intr_map: no mapping for pin %c\n", '@' + pin);
+		aprint_error("pci_intr_map: no mapping for pin %c\n",
+		    '@' + pin);
 		goto bad;
 	}
-
+#ifdef EPIC_DEBUGIRQ
 printf("line %d, pin %c", line, pin + '@');
+#endif
 	switch (brdtype) {
 	/* Sandpoint has 4 PCI slots in a weird order.
 	 * From next to MPMC mezzanine card toward the board edge,
@@ -288,7 +290,7 @@ printf("line %d, pin %c", line, pin + '@');
 			break;
 		}
 		if (line < 13 || line > 16) {
-			printf("pci_intr_map: bad interrupt line %d,%c\n",
+			aprint_error("pci_intr_map: bad interrupt line %d,%c\n",
 				line, pin + '@');
 			goto bad;
 		}
@@ -303,7 +305,7 @@ printf("line %d, pin %c", line, pin + '@');
 			break;
 		}
 		if (line < 13 || line > 16) {
-			printf("pci_intr_map: bad interrupt line %d,%c\n",
+			aprint_error("pci_intr_map: bad interrupt line %d,%c\n",
 				line, pin + '@');
 			goto bad;
 		}
@@ -321,6 +323,8 @@ printf("line %d, pin %c", line, pin + '@');
 	 * AD24 pin A,B,C,D -> EPIC IRQ 3,4,1,2.
 	 * AD25 pin A,B,C,D -> EPIC IRQ 4,1,2,3.
 	 */
+		*ihp = pin;
+		break;
 		line -= 22; pin -= 1;
 		*ihp = 1 + ((pin + line) & 3);
 		break;
@@ -333,15 +337,17 @@ printf("line %d, pin %c", line, pin + '@');
 		*ihp = line - 12;
 		break;
 	case BRD_SYNOLOGY:
-		/* map line 13-16 to EPIC IRQ0-3 */
-		*ihp = line - 13;
+		/* map line 12,13-15 to EPIC IRQ4,0-2 */
+		*ihp = (line == 12) ? 4 : line - 13;
 		break;
 	default:
 		/* map line 12-15 to EPIC IRQ0-3 */
 		*ihp = line - 12;
 		break;
 	}
+#ifdef EPIC_DEBUGIRQ
 printf(" = EPIC %d\n", *ihp);
+#endif
 	return 0;
   bad:
 	*ihp = -1;
