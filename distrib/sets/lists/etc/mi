@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.189 2007/03/03 06:37:21 apb Exp $
+# $NetBSD: mi,v 1.190 2007/06/08 22:24:07 pavel Exp $
 #
 # Note: end-user configuration files that are moved to another location
 #	should not be marked "obsolete"; they should just be removed from
@@ -325,7 +325,6 @@
 ./var/log/maillog				etc-sendmail-log
 ./var/log/messages				etc-sys-log
 ./var/log/secure				etc-sys-log
-./var/log/sendmail.st				etc-obsolete		obsolete
 ./var/log/wtmp					etc-sys-log
 ./var/log/wtmpx					etc-sys-log
 ./var/log/xferlog				etc-netutil-log
