@@ -1,4 +1,4 @@
-$NetBSD: isapnpdevs,v 1.64 2007/05/21 19:40:28 tron Exp $
+$NetBSD: isapnpdevs,v 1.65 2007/06/08 17:56:21 wiz Exp $
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -169,6 +169,9 @@ devcompat	joy	PNPB02F		0	generic
  * gus
  */
 devlogic	gus	GRV0000		0	Gravis Ultrasound
+devlogic	gus	GRV0003		0	SB Compatible Audio
+devlogic	gus	GRV0004		0	MPU-401 GM Music
+devlogic	gus	GRV0011		0	ATAPI IDE CD-ROM Interface
 
 /*
  * le
