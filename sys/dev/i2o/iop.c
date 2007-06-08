@@ -1,4 +1,4 @@
-/*	$NetBSD: iop.c,v 1.64.2.5 2007/05/27 00:17:16 ad Exp $	*/
+/*	$NetBSD: iop.c,v 1.64.2.6 2007/06/08 14:09:31 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.64.2.5 2007/05/27 00:17:16 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.64.2.6 2007/06/08 14:09:31 ad Exp $");
 
 #include "opt_i2o.h"
 #include "iop.h"
@@ -633,9 +633,6 @@ iop_reconf_thread(void *cookie)
 	chgind = sc->sc_chgind + 1;
 	l = curlwp;
 
-	uvm_lwp_hold(l);
-	mutex_enter(&sc->sc_conflock);
-
 	for (;;) {
 		DPRINTF(("%s: async reconfig: requested 0x%08x\n",
 		    sc->sc_dv.dv_xname, chgind));
@@ -645,12 +642,13 @@ iop_reconf_thread(void *cookie)
 		DPRINTF(("%s: async reconfig: notified (0x%08x, %d)\n",
 		    sc->sc_dv.dv_xname, le32toh(lct.changeindicator), rv));
 
+		mutex_enter(&sc->sc_conflock);
 		if (rv == 0) {
 			iop_reconfigure(sc, le32toh(lct.changeindicator));
 			chgind = sc->sc_chgind + 1;
 		}
-
 		(void)cv_timedwait(&sc->sc_confcv, &sc->sc_conflock, hz * 10);
+		mutex_exit(&sc->sc_conflock);
 	}
 }
 
