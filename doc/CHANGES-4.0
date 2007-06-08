@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.182 2007/06/07 15:38:13 liamjfoy Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.183 2007/06/08 09:23:11 liamjfoy Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -5967,3 +5967,19 @@ distrib/common/Makefile.mdset			1.29
 	This brings back builds of srec & bin files for evbarm and img
 	files for evbppc.
 	[he, ticket #709]
+
+share/mk/bsd.x11.mk				1.55
+
+	Don't use alloca(3) inside the X11 libraries if we compile with
+	stack protection. XFree86 can now be buildt fine with "USE_SSP=3Dyes".
+	[tron, ticket #710]
+
+dist/ipf/ip_fil.c				1.13
+dist/ipf/ml_ipl.c				1.5
+sys/dist/ipf/netinet/fil.c			1.36
+sys/dist/ipf/netinet/ip_fil.h			1.12
+sys/dist/ipf/netinet/ip_fil_netbsd.c		1.37
+sys/lkm/netinet/if_ipl/mln_ipl.c		1.39
+
+	s/iplattach/ipfattach/ and s/ipldetach/ipfdetach/
+	[martti, ticket #701]
