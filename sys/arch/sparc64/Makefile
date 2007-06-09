@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2007/06/08 22:59:51 dyoung Exp $
+#	$NetBSD: Makefile,v 1.15 2007/06/09 01:34:05 dyoung Exp $
 
 # Makefile for sparc64 tags file and boot blocks
 
@@ -23,19 +23,9 @@ tags:
 	    >> tags
 	sort -o ${TSPARC64} ${TSPARC64}
 
-SYSDIR?= ../..
-.ifmake TAGS
-COMM!=  find ${SYSDIR} -name "arch" -prune -o -name "*.[ch]" -print 
-.endif
-
-TAGS: ${SSPARC64} ${COMM} ${CSPARC64} ${ASPARC64}
-	etags  ${SSPARC64} ${COMM} ${CSPARC64} "--regex=/ENTRY(.*)/" \
-		"--regex=/FUNC(.*)/" "--regex=/SYSCALL(.*)/" ${ASPARC64}
-
 links:
 	-for i in ${DSPARC64}; do \
 	    cd $$i && rm -f tags; ln -s ../tags tags; done
-
 
 SUBDIR= compile include ../sparc/include stand
 
