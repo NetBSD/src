@@ -219,10 +219,15 @@ static const char *fmttime(char *buf, size_t buflen)
 	struct timeval tv;
 	struct tm tm;
 	time_t t;
+
+	if (buflen <= 8)
+		return NULL;
+
 	(void)gettimeofday(&tv, NULL);
 	t = (time_t)tv.tv_sec;
 	(void)localtime_r(&t, &tm);
 	(void)strftime(buf, buflen, "%H:%M:%S", &tm);
+	(void)snprintf(buf + 8, buflen - 8, ".%.3d", (int)(tv.tv_usec / 1000));
 	return buf;
 }
 
