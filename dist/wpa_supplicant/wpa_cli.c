@@ -198,9 +198,38 @@ static void wpa_cli_close_connection(void)
 }
 
 
+static const char *skip_priority(const char *msg)
+{
+	const char *pos = msg;
+
+	if (*msg != '<')
+		return msg;
+
+	for (pos = msg + 1; isdigit((unsigned char)*pos); pos++)
+		continue;
+
+	if (*pos != '>')
+		return msg;
+
+	return ++pos;
+}
+
+static const char *fmttime(char *buf, size_t buflen)
+{
+	struct timeval tv;
+	struct tm tm;
+	time_t t;
+	(void)gettimeofday(&tv, NULL);
+	t = (time_t)tv.tv_sec;
+	(void)localtime_r(&t, &tm);
+	(void)strftime(buf, buflen, "%H:%M:%S", &tm);
+	return buf;
+}
+
 static void wpa_cli_msg_cb(char *msg, size_t len)
 {
-	printf("%s\n", msg);
+	char tbuf[32];
+	printf("%s: %s\n", fmttime(tbuf, sizeof(tbuf)), skip_priority(msg));
 }
 
 
@@ -226,7 +255,7 @@ static int _wpa_ctrl_command(struct wpa_ctrl *ctrl, char *cmd, int print)
 	}
 	if (print) {
 		buf[len] = '\0';
-		printf("%s", buf);
+		wpa_cli_msg_cb(buf, 0);
 	}
 	return 0;
 }
@@ -945,20 +974,9 @@ static int wpa_cli_exec(const char *program, const char *arg1,
 	return 0;
 }
 
-
 static void wpa_cli_action_process(const char *msg)
 {
-	const char *pos;
-
-	pos = msg;
-	if (*pos == '<') {
-		/* skip priority */
-		pos = strchr(pos, '>');
-		if (pos)
-			pos++;
-		else
-			pos = msg;
-	}
+	const char *pos = skip_priority(msg);
 
 	if (str_match(pos, WPA_EVENT_CONNECTED)) {
 		wpa_cli_exec(action_file, ctrl_ifname, "CONNECTED");
@@ -975,7 +993,6 @@ static void wpa_cli_action_cb(char *msg, size_t len)
 {
 	wpa_cli_action_process(msg);
 }
-
 
 static void wpa_cli_recv_pending(struct wpa_ctrl *ctrl, int in_read,
 				 int action_monitor)
@@ -994,7 +1011,7 @@ static void wpa_cli_recv_pending(struct wpa_ctrl *ctrl, int in_read,
 				if (in_read && first)
 					printf("\n");
 				first = 0;
-				printf("%s\n", buf);
+				wpa_cli_msg_cb(buf, 0);
 			}
 		} else {
 			printf("Could not read pending message.\n");
@@ -1142,8 +1159,8 @@ static void wpa_cli_interactive(void)
 			    strncasecmp(p, "n", 1)) {
 				h = remove_history(where_history());
 				if (h) {
-					free(h->line);
-					free(h->data);
+					free(__UNCONST(h->line));
+					free(__UNCONST(h->data));
 					free(h);
 				}
 				h = current_history();
