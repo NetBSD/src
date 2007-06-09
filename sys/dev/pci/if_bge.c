@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.130 2007/05/21 15:36:26 cube Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.131 2007/06/09 21:42:33 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.130 2007/05/21 15:36:26 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.131 2007/06/09 21:42:33 mlelstv Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -3787,7 +3787,7 @@ bge_start(struct ifnet *ifp)
 
 	sc = ifp->if_softc;
 
-	if ((ifp->if_flags & (IFF_RUNNING|IFF_OACTIVE)) != IFF_RUNNING || sc->bge_link == 0)
+	if ((ifp->if_flags & (IFF_RUNNING|IFF_OACTIVE)) != IFF_RUNNING)
 		return;
 
 	prodidx = sc->bge_tx_prodidx;
