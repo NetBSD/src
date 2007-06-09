@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_sig.c,v 1.34 2007/03/04 06:01:16 christos Exp $	*/
+/*	$NetBSD: hpux_sig.c,v 1.35 2007/06/09 21:25:49 ad Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_sig.c,v 1.34 2007/03/04 06:01:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_sig.c,v 1.35 2007/06/09 21:25:49 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -414,7 +414,9 @@ hpux_sys_ssig_6x(l, v, retval)
 	if ((a &~ 0377) ||
 	    (sa->sa_handler != SIG_DFL && sa->sa_handler != SIG_IGN &&
 	     ((int)sa->sa_handler) & 1)) {
+	     	mutex_enter(&proclist_mutex);
 		psignal(p, SIGSYS);
+		mutex_exit(&proclist_mutex);
 		return (0);
 	}
 	if (a <= 0 || a >= NSIG || a == SIGKILL || a == SIGSTOP ||

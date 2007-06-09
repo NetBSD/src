@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_fs.c,v 1.43 2007/05/12 17:28:19 dsl Exp $	*/
+/*	$NetBSD: netbsd32_fs.c,v 1.44 2007/06/09 21:25:50 ad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.43 2007/05/12 17:28:19 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.44 2007/06/09 21:25:50 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -293,8 +293,11 @@ dofilewritev32(l, fd, fp, iovp, iovcnt, offset, flags, retval)
 		if (auio.uio_resid != cnt && (error == ERESTART ||
 		    error == EINTR || error == EWOULDBLOCK))
 			error = 0;
-		if (error == EPIPE)
+		if (error == EPIPE) {
+			mutex_enter(&proclist_mutex);
 			psignal(p, SIGPIPE);
+			mutex_exit(&proclist_mutex);
+		}
 	}
 	cnt -= auio.uio_resid;
 #ifdef KTRACE
