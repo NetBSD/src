@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.85 2007/06/04 08:55:24 martin Exp $
+# $NetBSD: GENERIC,v 1.86 2007/06/09 11:34:04 kiyohara Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.85 $"
+#ident 		"GENERIC-$Revision: 1.86 $"
 
 maxusers	64
 
@@ -604,6 +604,7 @@ url*	at uhub? port ?		# Realtek RTL8150L based adapters
 # USB 802.11 adapters
 atu*	at uhub? port ?		# Atmel AT76C50XX based adapters
 ral*	at uhub? port ?		# Ralink Technology RT25x0 802.11a/b/g
+zyd*	at uhub? port ?		# Zydas ZD1211
 
 # Prolific PL2301/PL2302 host-to-host adapter
 upl*	at uhub? port ?
