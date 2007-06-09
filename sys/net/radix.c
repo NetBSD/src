@@ -1,4 +1,4 @@
-/*	$NetBSD: radix.c,v 1.34 2007/03/04 06:03:18 christos Exp $	*/
+/*	$NetBSD: radix.c,v 1.35 2007/06/09 03:07:21 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radix.c,v 1.34 2007/03/04 06:03:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radix.c,v 1.35 2007/06/09 03:07:21 dyoung Exp $");
 
 #ifndef _NET_RADIX_H_
 #include <sys/param.h>
@@ -1033,7 +1033,6 @@ rn_inithead0(rnh, off)
 	rnh->rnh_deladdr = rn_delete;
 	rnh->rnh_matchaddr = rn_match;
 	rnh->rnh_lookup = rn_lookup;
-	rnh->rnh_walktree = rn_walktree;
 	rnh->rnh_treetop = t;
 	return (1);
 }
