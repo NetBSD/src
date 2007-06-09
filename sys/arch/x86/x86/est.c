@@ -1,4 +1,4 @@
-/*	$NetBSD: est.c,v 1.32.6.1 2007/04/10 13:23:05 ad Exp $	*/
+/*	$NetBSD: est.c,v 1.1.2.2 2007/06/09 21:37:05 ad Exp $	*/
 /*
  * Copyright (c) 2003 Michael Eriksson.
  * All rights reserved.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: est.c,v 1.32.6.1 2007/04/10 13:23:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: est.c,v 1.1.2.2 2007/06/09 21:37:05 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,6 +94,8 @@ __KERNEL_RCSID(0, "$NetBSD: est.c,v 1.32.6.1 2007/04/10 13:23:05 ad Exp $");
 #include <sys/sysctl.h>
 #include <sys/once.h>
 
+#include <x86/cpuvar.h>
+#include <x86/cputypes.h>
 #include <x86/cpu_msr.h>
 
 #include <machine/cpu.h>
@@ -854,13 +856,11 @@ static uint16_t         fake_table[3];      /* guessed est_cpu table */
 static struct fqlist    fake_fqlist;
 static int 		est_node_target, est_node_current;
 static const char 	est_desc[] = "Enhanced SpeedStep";
-static int		lvendor;
-/* bus_clock is assigned in identcpu.c */
-int bus_clock;
+static int		lvendor, bus_clock;
 
-static int est_sysctl_helper(SYSCTLFN_PROTO);
-static int est_init_once(void);
-static void est_init_main(int);
+static int		est_sysctl_helper(SYSCTLFN_PROTO);
+static int		est_init_once(void);
+static void		est_init_main(int);
 
 static int
 est_sysctl_helper(SYSCTLFN_ARGS)
@@ -919,27 +919,33 @@ est_init(int vendor)
 	static ONCE_DECL(est_initialized);
 
 	error = RUN_ONCE(&est_initialized, est_init_once);
-	if (__predict_false(error != 0)) {
+	if (__predict_false(error != 0))
 		return;
-	}
 }
 
 static void
 est_init_main(int vendor)
 {
+#ifdef __i386__
 	const struct fqlist	*fql;
+#endif
 	const struct sysctlnode	*node, *estnode, *freqnode;
 	uint64_t		msr;
 	uint16_t		cur, idhi, idlo;
-	int			i, rc;
-	int			mv;
+	uint8_t			crhi, crlo, crcur;
+	int			i, mv, rc;
 	size_t			len, freq_len;
 	char			*freq_names, *cpuname;
        
 	cpuname	= curcpu()->ci_dev->dv_xname;
 
+	if (CPUID2FAMILY(curcpu()->ci_signature) == 15)
+		bus_clock = p4_get_bus_clock(curcpu());
+	else if (CPUID2FAMILY(curcpu()->ci_signature) == 6)
+		bus_clock = p3_get_bus_clock(curcpu());
+
 	if (bus_clock == 0) {
-		aprint_debug("%s: unknown system bus clock\n", __func__);
+		aprint_normal("%s: unknown system bus clock\n", __func__);
 		return;
 	}
 
@@ -949,18 +955,43 @@ est_init_main(int vendor)
 	idhi = (msr >> 32) & 0xffff;
 	idlo = (msr >> 48) & 0xffff;
 	cur = msr & 0xffff;
+	crhi = (idhi  >> 8) & 0xff;
+	crlo = (idlo  >> 8) & 0xff;
+	crcur = (cur >> 8) & 0xff;
+
+#ifdef __i386__
 	if (idhi == 0 || idlo == 0 || cur == 0 ||
 	    ((cur >> 8) & 0xff) < ((idlo >> 8) & 0xff) ||
 	    ((cur >> 8) & 0xff) > ((idhi >> 8) & 0xff)) {
 		aprint_debug("%s: strange msr value 0x%016llx\n", __func__, msr);
 		return;
 	}
+#endif
+
+#ifdef __amd64__
+	if (crlo == 0 || crhi == crlo) {
+		aprint_debug("%s: crlo == 0 || crhi == crlo\n", __func__);
+		return;
+	}
+
+	if (crhi == 0 || crcur == 0 || crlo > crhi ||
+	    crcur < crlo || crcur > crhi) {
+		/*
+		 * Do complain about other weirdness, because we first want to
+		 * know about it, before we decide what to do with it
+		 */
+		aprint_normal("%s: EST: strange msr value 0x%" PRIu64 "\n",
+		    cpuname, msr);
+		return;
+	}
+#endif
 
 	msr = rdmsr(MSR_PERF_STATUS);
 	mv = MSR2MV(msr);
 	aprint_normal("%s: %s (%d mV) ", cpuname, est_desc, mv);
 	aprint_normal("%d MHz\n", MSR2MHZ(msr, bus_clock));
 
+#ifdef __i386__
 	/*
 	 * Find an entry which matches (vendor, bus_clock, idhi, idlo)
 	 */
@@ -973,6 +1004,7 @@ est_init_main(int vendor)
 			break;
 		}
 	}
+#endif
 
 	if (est_fqlist == NULL) {
                 aprint_normal("%s: unknown Enhanced SpeedStep CPU.\n",
