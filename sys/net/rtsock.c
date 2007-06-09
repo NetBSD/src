@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.93 2007/03/04 06:03:18 christos Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.94 2007/06/09 03:07:22 dyoung Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.93 2007/03/04 06:03:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.94 2007/06/09 03:07:22 dyoung Exp $");
 
 #include "opt_inet.h"
 
@@ -107,7 +107,7 @@ static int rt_msg2(int, struct rt_addrinfo *, void *, struct walkarg *, int *);
 static int rt_xaddrs(u_char, const char *, const char *, struct rt_addrinfo *);
 static struct mbuf *rt_makeifannouncemsg(struct ifnet *, int, int,
     struct rt_addrinfo *);
-static int sysctl_dumpentry(struct radix_node *, void *);
+static int sysctl_dumpentry(struct rtentry *, void *);
 static int sysctl_iflist(int, struct walkarg *, int);
 static int sysctl_rtable(SYSCTLFN_PROTO);
 static inline void rt_adjustcount(int, int);
@@ -928,10 +928,9 @@ rt_ieee80211msg(struct ifnet *ifp, int what, void *data, size_t data_len)
  * This is used in dumping the kernel table via sysctl().
  */
 static int
-sysctl_dumpentry(struct radix_node *rn, void *v)
+sysctl_dumpentry(struct rtentry *rt, void *v)
 {
 	struct walkarg *w = v;
-	struct rtentry *rt = (struct rtentry *)rn;
 	int error = 0, size;
 	struct rt_addrinfo info;
 
@@ -1110,7 +1109,6 @@ sysctl_rtable(SYSCTLFN_ARGS)
 	void 	*where = oldp;
 	size_t	*given = oldlenp;
 	const void *new = newp;
-	struct radix_node_head *rnh;
 	int	i, s, error = EINVAL;
 	u_char  af;
 	struct	walkarg w;
@@ -1145,9 +1143,8 @@ again:
 	case NET_RT_DUMP:
 	case NET_RT_FLAGS:
 		for (i = 1; i <= AF_MAX; i++)
-			if ((rnh = rt_tables[i]) && (af == 0 || af == i) &&
-			    (error = (*rnh->rnh_walktree)(rnh,
-			    sysctl_dumpentry, &w)))
+			if ((af == 0 || af == i) &&
+			    (error = rt_walktree(i, sysctl_dumpentry, &w)))
 				break;
 		break;
 

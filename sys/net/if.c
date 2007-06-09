@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.191 2007/06/01 15:41:15 christos Exp $	*/
+/*	$NetBSD: if.c,v 1.192 2007/06/09 03:07:21 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.191 2007/06/01 15:41:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.192 2007/06/09 03:07:21 dyoung Exp $");
 
 #include "opt_inet.h"
 
@@ -158,7 +158,7 @@ struct	callout if_slowtimo_ch;
 
 int netisr;			/* scheduling bits for network */
 
-static int	if_rt_walktree(struct radix_node *, void *);
+static int	if_rt_walktree(struct rtentry *, void *);
 
 static struct if_clone *if_clone_lookup(const char *, int *);
 static int	if_clone_list(struct if_clonereq *);
@@ -548,7 +548,6 @@ if_detach(struct ifnet *ifp)
 #endif
 	struct domain *dp;
 	const struct protosw *pr;
-	struct radix_node_head *rnh;
 	int s, i, family, purged;
 
 	/*
@@ -642,10 +641,8 @@ again:
 	if_free_sadl(ifp);
 
 	/* Walk the routing table looking for stragglers. */
-	for (i = 0; i <= AF_MAX; i++) {
-		if ((rnh = rt_tables[i]) != NULL)
-			(void) (*rnh->rnh_walktree)(rnh, if_rt_walktree, ifp);
-	}
+	for (i = 0; i <= AF_MAX; i++)
+		(void)rt_walktree(i, if_rt_walktree, ifp);
 
 	DOMAIN_FOREACH(dp) {
 		if (dp->dom_ifdetach != NULL && ifp->if_afdata[dp->dom_family])
@@ -738,10 +735,9 @@ if_detach_queues(struct ifnet *ifp, struct ifqueue *q)
  * ifnet.
  */
 static int
-if_rt_walktree(struct radix_node *rn, void *v)
+if_rt_walktree(struct rtentry *rt, void *v)
 {
 	struct ifnet *ifp = (struct ifnet *)v;
-	struct rtentry *rt = (struct rtentry *)rn;
 	int error;
 
 	if (rt->rt_ifp != ifp)
