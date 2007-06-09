@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_pool.c,v 1.8 2007/04/14 20:34:37 martin Exp $	*/
+/*	$NetBSD: ip_pool.c,v 1.9 2007/06/09 03:07:22 dyoung Exp $	*/
 
 /*
  * Copyright (C) 1993-2001, 2003 by Darren Reed.
@@ -997,13 +997,12 @@ rn_freehead(rnh)
 {
 
 	RADIX_NODE_HEAD_LOCK(rnh);
-	(*rnh->rnh_walktree)(rnh, rn_freenode, rnh);
+	rn_walktree(rnh, rn_freenode, rnh);
 
 	rnh->rnh_addaddr = NULL;
 	rnh->rnh_deladdr = NULL;
 	rnh->rnh_matchaddr = NULL;
 	rnh->rnh_lookup = NULL;
-	rnh->rnh_walktree = NULL;
 	RADIX_NODE_HEAD_UNLOCK(rnh);
 
 	Free(rnh);
