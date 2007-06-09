@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.705 2007/06/02 06:09:08 tnozaki Exp $
+# $NetBSD: mi,v 1.706 2007/06/09 11:20:56 kiyohara Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -114,6 +114,10 @@
 ./libdata/firmware/rum				base-sys-root
 ./libdata/firmware/rum/rum-license		base-sys-root
 ./libdata/firmware/rum/rum-rt2573		base-sys-root
+./libdata/firmware/zyd				base-sys-root
+./libdata/firmware/zyd/zd1211-license		base-sys-root
+./libdata/firmware/zyd/zyd-zd1211		base-sys-root
+./libdata/firmware/zyd/zyd-zd1211b		base-sys-root
 ./libexec					base-sys-root
 ./libexec/lfs_cleanerd				base-sysutil-bin
 ./mnt						base-sys-root
